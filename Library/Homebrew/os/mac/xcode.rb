@@ -324,7 +324,7 @@ module OS
       sig { returns(String) }
       def minimum_version
         case MacOS.version
-        when "11" then "12.0.0"
+        when "11" then "12.5.0"
         when "10.15" then "11.0.0"
         when "10.14" then "10.0.0"
         when "10.13" then "9.0.0"
