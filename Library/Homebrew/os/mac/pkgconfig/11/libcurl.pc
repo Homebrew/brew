@@ -23,7 +23,7 @@
 # This should most probably benefit from getting a "Requires:" field added
 # dynamically by configure.
 #
-homebrew_sdkroot=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk
+homebrew_sdkroot=/Library/Developer/CommandLineTools/SDKs/MacOSX11.sdk
 prefix=${homebrew_sdkroot}/usr
 exec_prefix=/usr
 libdir=${exec_prefix}/lib
