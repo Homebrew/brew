@@ -42,30 +42,12 @@ module RuboCop
             end
           end
 
-          unless method_called_ever?(body_node, :go_resource)
-            # processed_source.ast is passed instead of body_node because `require` would be outside body_node
-            find_method_with_args(processed_source.ast, :require, "language/go") do
-              problem "require \"language/go\" is unnecessary unless using `go_resource`s"
-            end
-          end
-
           find_instance_method_call(body_node, "Formula", :factory) do
             problem "\"Formula.factory(name)\" is deprecated in favor of \"Formula[name]\""
           end
 
           find_method_with_args(body_node, :system, "xcodebuild") do
             problem %q(use "xcodebuild *args" instead of "system 'xcodebuild', *args")
-          end
-
-          find_method_with_args(body_node, :system, "go", "get") do
-            problem "Do not use `go get`. Please ask upstream to implement Go vendoring"
-          end
-
-          find_method_with_args(body_node, :system, "dep", "ensure") do |d|
-            next if parameters_passed?(d, /vendor-only/)
-            next if @formula_name == "goose" # needed in 2.3.0
-
-            problem "use \"dep\", \"ensure\", \"-vendor-only\""
           end
 
           find_method_with_args(body_node, :system, "cargo", "build") do
@@ -109,10 +91,6 @@ module RuboCop
       # @api private
       class Text < FormulaCop
         def audit_formula(_node, _class_node, _parent_class_node, body_node)
-          find_method_with_args(body_node, :go_resource) do
-            problem "`go_resource`s are deprecated. Please ask upstream to implement Go vendoring"
-          end
-
           find_method_with_args(body_node, :env, :userpaths) do
             problem "`env :userpaths` in homebrew/core formulae is deprecated"
           end
