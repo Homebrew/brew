@@ -160,6 +160,8 @@ module Utils
 
     # Check if a URL is protected by CloudFlare (e.g. badlion.net and jaxx.io).
     def url_protected_by_cloudflare?(details)
+      return false unless details[:headers]
+
       [403, 503].include?(details[:status].to_i) &&
         details[:headers].match?(/^Set-Cookie: __cfduid=/i) &&
         details[:headers].match?(/^Server: cloudflare/i)
@@ -167,6 +169,8 @@ module Utils
 
     # Check if a URL is protected by Incapsula (e.g. corsair.com).
     def url_protected_by_incapsula?(details)
+      return false unless details[:headers]
+
       details[:status].to_i == 403 &&
         details[:headers].match?(/^Set-Cookie: visid_incap_/i) &&
         details[:headers].match?(/^Set-Cookie: incap_ses_/i)
@@ -217,7 +221,7 @@ module Utils
       end
 
       if url.start_with?("https://") && Homebrew::EnvConfig.no_insecure_redirect? &&
-         !details[:final_url].start_with?("https://")
+         !details[:final_url]&.start_with?("https://")
         return "The #{url_type} #{url} redirects back to HTTP"
       end
 
@@ -233,7 +237,7 @@ module Utils
       file_match = details[:file_hash] == secure_details[:file_hash]
 
       if (etag_match || content_length_match || file_match) &&
-         secure_details[:final_url].start_with?("https://") &&
+         secure_details[:final_url]&.start_with?("https://") &&
          url.start_with?("http://")
         return "The #{url_type} #{url} should use HTTPS rather than HTTP"
       end
@@ -246,7 +250,7 @@ module Utils
 
       # Check for the same content after removing all protocols
       if (http_content && https_content) && (http_content == https_content) &&
-         url.start_with?("http://") && secure_details[:final_url].start_with?("https://")
+         url.start_with?("http://") && secure_details[:final_url]&.start_with?("https://")
         return "The #{url_type} #{url} should use HTTPS rather than HTTP"
       end
 
@@ -275,30 +279,31 @@ module Utils
         user_agent: user_agent
       )
 
-      status_code = :unknown
-      while status_code == :unknown || status_code.to_s.start_with?("3")
-        headers, _, output = output.partition("\r\n\r\n")
-        status_code = headers[%r{HTTP/.* (\d+)}, 1]
-        location = headers[/^Location:\s*(.*)$/i, 1]
-        final_url = location.chomp if location
-      end
-
       if status.success?
+        parsed_output = parse_curl_output(output)
+        heads = parsed_output[:heads]
+        if heads.present?
+          status_code = curl_response_status_code(heads)
+          final_url = curl_response_last_location(heads)
+
+          headers = heads.last[:headers]
+          etag = headers["etag"][%r{^([wW]/)?"(([^"]|\\")*)"}, 2] if headers["etag"]
+          content_length = headers["content-length"]
+        end
+
         file_contents = File.read(file.path)
         file_hash = Digest::SHA2.hexdigest(file_contents) if hash_needed
       end
 
-      final_url ||= url
-
       {
         url:            url,
         final_url:      final_url,
-        status:         status_code,
-        etag:           headers[%r{ETag: ([wW]/)?"(([^"]|\\")*)"}, 2],
-        content_length: headers[/Content-Length: (\d+)/, 1],
         headers:        headers,
-        file_hash:      file_hash,
+        status:         status_code,
+        etag:           etag,
+        content_length: content_length,
         file:           file_contents,
+        file_hash:      file_hash,
       }
     ensure
       file.unlink
@@ -306,6 +311,85 @@ module Utils
 
     def http_status_ok?(status)
       (100..299).cover?(status.to_i)
+    end
+
+    # Separates the output text from `curl` into an array of response heads and
+    # the final response body.
+    # @param output [String] The output text from `curl` containing
+    #   response head(s), body, or both.
+    # @return [Hash] A hash containing an array of the response heads and the
+    #   body output, if found.
+    def parse_curl_output(output)
+      heads = []
+      return { heads: heads, body: "" } unless output.is_a?(String)
+
+      output = output.lstrip
+      while output.match?(%r{\AHTTP/[\d.]+ \d+})
+        head_text, _, output = output.partition("\r\n\r\n")
+        output = output.lstrip
+        next if head_text.blank?
+
+        head_text.chomp!
+        head = parse_curl_head(head_text)
+        heads << head if head.present?
+      end
+
+      { heads: heads, body: output }
+    end
+
+    # Parses a `curl` response head into a hash containing the status
+    # information and headers.
+    # @param head_text [String] The head text of a `curl` response.
+    # @return [Hash] A hash containing the status information and headers
+    #   (as a hash with header names as keys).
+    def parse_curl_head(head_text)
+      head = {}
+      return head if !head_text.is_a?(String) || !head_text.match?(%r{^HTTP/.* (?<code>\d+)(?: (?<desc>[^\r\n]+))?})
+
+      # Parse and remove the status line
+      match = head_text.match(%r{^HTTP/.* (?<code>\d+)(?: (?<desc>[^\r\n]+))?})
+      head[:status_code] = match["code"] if match["code"]
+      head[:status_desc] = match["desc"] if match["desc"]
+      head_text = head_text.sub(%r{^HTTP/.* (\d+).*$\s*}, "")
+
+      # Create a hash from the headers
+      head[:headers] = head_text.split("\r\n")
+                                .map { |header| header.split(/:\s*/, 2) }
+                                .to_h.transform_keys(&:downcase)
+
+      head
+    end
+
+    # Returns the status code of the last response from cURL output.
+    # @param heads [Array<Hash>] An array of hashes containing response status
+    #   information and headers from `parse_curl_head`.
+    # @return [String, nil] The status code of the last response.
+    def curl_response_status_code(heads)
+      return unless heads.is_a?(Array)
+      return unless heads.last.is_a?(Hash)
+
+      heads.last[:status_code]
+    end
+
+    # Returns the URL from the last location header found in cURL output
+    # response heads.
+    # @param heads [Array<Hash>] An array of hashes containing response status
+    #   information and headers from `parse_curl_head`.
+    # @param url [String, nil] The URL to use as a base for making the
+    #  `location` URL absolute.
+    # @param absolutize [true, false] Whether to make the location URL absolute.
+    # @return [String, nil] The URL from last-occurring `location` header, if
+    #   any, in the responses.
+    def curl_response_last_location(heads, url: nil, absolutize: false)
+      return unless heads.is_a?(Array)
+
+      heads.reverse_each do |head|
+        next if !head[:headers] || !(location = head[:headers]["location"])
+
+        return (absolutize && url.is_a?(String)) ? URI.join(url, location).to_s : location
+      end
+
+      nil
     end
   end
 end

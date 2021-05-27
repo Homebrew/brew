@@ -96,22 +96,18 @@ module Homebrew
             "--max-time", "10"        # Max time allowed for transfer (secs)
           ]
 
-          stdout, _, status = curl_with_workarounds(
+          output, _, status = curl_with_workarounds(
             *args, url,
             print_stdout: false, print_stderr: false,
             debug: false, verbose: false,
-            user_agent: user_agent, retry: false
+            user_agent: user_agent, timeout: 20,
+            retry: false
           )
+          next unless status.success?
 
-          while stdout.match?(/\AHTTP.*\r$/)
-            h, stdout = stdout.split("\r\n\r\n", 2)
-
-            headers << h.split("\r\n").drop(1)
-                        .map { |header| header.split(/:\s*/, 2) }
-                        .to_h.transform_keys(&:downcase)
-          end
-
-          return headers if status.success?
+          parsed_output = parse_curl_output(output)
+          parsed_output[:heads].each { |head| headers << head[:headers] }
+          return headers if headers.present?
         end
 
         headers
@@ -119,6 +115,8 @@ module Homebrew
 
       # Fetches the content at the URL and returns a hash containing the
       # content and, if there are any redirections, the final URL.
+      # If `curl` encounters an error, the hash will contain a `:messages`
+      # array with the error message instead.
       #
       # @param url [String] the URL of the content to check
       # @return [Hash]
@@ -126,18 +124,43 @@ module Homebrew
       def self.page_content(url)
         original_url = url
 
-        # Manually handling `URI#open` redirections allows us to detect the
-        # resolved URL while also supporting HTTPS to HTTP redirections (which
-        # are normally forbidden by `OpenURI`).
-        begin
-          content = URI.parse(url).open(redirect: false, &:read)
-        rescue OpenURI::HTTPRedirect => e
-          url = e.uri.to_s
-          retry
+        args = curl_args(
+          "--compressed",
+          # Include HTTP response headers in output, so we can identify the
+          # final URL after any redirections
+          "--include",
+          # Follow redirections to handle mirrors, relocations, etc.
+          "--location",
+          # cURL's default timeout can be up to two minutes, so we need to
+          # set our own timeout settings to avoid a lengthy wait
+          "--connect-timeout", "10",
+          "--max-time", "15"
+        )
+
+        stdout, stderr, status = curl_with_workarounds(
+          *args, url,
+          print_stdout: false, print_stderr: false,
+          debug: false, verbose: false,
+          user_agent: :default, timeout: 20,
+          retry: false
+        )
+
+        unless status.success?
+          /^(?<error_msg>curl: \(\d+\) .+)/ =~ stderr
+          return { messages: [error_msg] } if error_msg.present?
         end
 
-        data = { content: content }
-        data[:final_url] = url unless url == original_url
+        # stdout contains the header information followed by the page content.
+        # We use #scrub here to avoid "invalid byte sequence in UTF-8" errors.
+        output = stdout.scrub
+
+        # Separate the head(s)/body and identify the final URL (after any
+        # redirections)
+        parsed_output = parse_curl_output(output)
+        final_url = curl_response_last_location(parsed_output[:heads])
+
+        data = { content: parsed_output[:body] }
+        data[:final_url] = final_url if final_url.present? && final_url != original_url
         data
       end
     end

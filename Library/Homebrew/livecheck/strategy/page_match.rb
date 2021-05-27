@@ -1,8 +1,6 @@
 # typed: true
 # frozen_string_literal: true
 
-require "open-uri"
-
 module Homebrew
   module Livecheck
     module Strategy
