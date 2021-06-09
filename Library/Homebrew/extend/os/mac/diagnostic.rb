@@ -425,9 +425,11 @@ module Homebrew
         locator = MacOS.sdk_locator
 
         source = if locator.source == :clt
+          return if MacOS::CLT.below_minimum_version? # Handled by other diagnostics. 
           update_instructions = MacOS::CLT.update_instructions
           "Command Line Tools (CLT)"
         else
+          return if MacOS::Xcode.below_minimum_version? # Handled by other diagnostics. 
           update_instructions = MacOS::Xcode.update_instructions
           "Xcode"
         end

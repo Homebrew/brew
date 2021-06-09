@@ -9,7 +9,8 @@ module OS
     #
     # @api private
     class SDK
-      VERSIONED_SDK_REGEX = /MacOSX(\d+\.\d+)\.sdk$/.freeze
+      # 11.x SDKs are explicitly excluded - we want the MacOSX11.sdk symlink instead.
+      VERSIONED_SDK_REGEX = /MacOSX(10\.\d+|\d+)\.sdk$/.freeze
 
       attr_reader :version, :path, :source
 
@@ -41,22 +42,21 @@ module OS
         # Bail out if there is no SDK prefix at all
         return @all_sdks unless File.directory? sdk_prefix
 
-        # Use unversioned SDK path on Big Sur to avoid issues such as:
-        # https://github.com/Homebrew/homebrew-core/issues/67075
-        unversioned_sdk_path = Pathname.new("#{sdk_prefix}/MacOSX.sdk")
-        version = read_sdk_version(unversioned_sdk_path)
-        if version && version >= :big_sur
-          unversioned_sdk_version = version
-          @all_sdks << SDK.new(unversioned_sdk_version, unversioned_sdk_path, source)
-        end
-
         Dir["#{sdk_prefix}/MacOSX*.sdk"].each do |sdk_path|
           next unless sdk_path.match?(SDK::VERSIONED_SDK_REGEX)
 
           version = read_sdk_version(Pathname.new(sdk_path))
-          next if version.nil? || version == unversioned_sdk_version
+          next if version.nil?
 
           @all_sdks << SDK.new(version, sdk_path, source)
+        end
+
+        # Fall back onto unversioned SDK if we've not found a suitable SDK
+        if @all_sdks.empty?
+          sdk_path = Pathname.new("#{sdk_prefix}/MacOSX.sdk")
+          if (version = read_sdk_version(sdk_path))
+            @all_sdks << SDK.new(version, sdk_path, source)
+          end
         end
 
         @all_sdks
