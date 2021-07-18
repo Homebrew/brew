@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 require "cli/parser"
+require "utils/buildpulse"
 require "fileutils"
 
 module Homebrew
@@ -34,36 +35,6 @@ module Homebrew
 
       named_args :none
     end
-  end
-
-  def use_buildpulse?
-    return @use_buildpulse if defined?(@use_buildpulse)
-
-    @use_buildpulse = ENV["HOMEBREW_BUILDPULSE_ACCESS_KEY_ID"].present? &&
-                      ENV["HOMEBREW_BUILDPULSE_SECRET_ACCESS_KEY"].present? &&
-                      ENV["HOMEBREW_BUILDPULSE_ACCOUNT_ID"].present? &&
-                      ENV["HOMEBREW_BUILDPULSE_REPOSITORY_ID"].present?
-  end
-
-  def run_buildpulse
-    require "formula"
-
-    unless Formula["buildpulse-test-reporter"].any_version_installed?
-      ohai "Installing `buildpulse-test-reporter` for reporting test flakiness..."
-      with_env(HOMEBREW_NO_AUTO_UPDATE: "1", HOMEBREW_NO_BOOTSNAP: "1") do
-        safe_system HOMEBREW_BREW_FILE, "install", "buildpulse-test-reporter"
-      end
-    end
-
-    ENV["BUILDPULSE_ACCESS_KEY_ID"] = ENV["HOMEBREW_BUILDPULSE_ACCESS_KEY_ID"]
-    ENV["BUILDPULSE_SECRET_ACCESS_KEY"] = ENV["HOMEBREW_BUILDPULSE_SECRET_ACCESS_KEY"]
-
-    ohai "Sending test results to BuildPulse"
-
-    safe_system Formula["buildpulse-test-reporter"].opt_bin/"buildpulse-test-reporter",
-                "submit", "#{HOMEBREW_LIBRARY_PATH}/test/junit",
-                "--account-id", ENV["HOMEBREW_BUILDPULSE_ACCOUNT_ID"],
-                "--repository-id", ENV["HOMEBREW_BUILDPULSE_REPOSITORY_ID"]
   end
 
   def tests
@@ -186,7 +157,7 @@ module Homebrew
 
       # Submit test flakiness information using BuildPulse
       # BUILDPULSE used in spec_helper.rb
-      if use_buildpulse?
+      if Utils::Buildpulse.available?
         ENV["BUILDPULSE"] = "1"
         ohai "Running tests with BuildPulse-friendly settings"
       end
@@ -197,7 +168,7 @@ module Homebrew
         system "bundle", "exec", "rspec", *bundle_args, "--", *files
       end
 
-      run_buildpulse if use_buildpulse?
+      Utils::Buildpulse.upload_results(HOMEBREW_LIBRARY_PATH/"test/junit") if Utils::Buildpulse.available?
 
       return if $CHILD_STATUS.success?
 
