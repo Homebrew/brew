@@ -195,11 +195,11 @@ jobs:
       matrix:
         include:
           - name: tests (no-compatibility mode)
-            test-flags: --no-compat --online --coverage
+            test-flags: --no-compat --online
           - name: tests (generic OS)
-            test-flags: --generic --online --coverage
+            test-flags: --generic --online
           - name: tests (Linux)
-            test-flags: --online --coverage
+            test-flags: --online
     steps:
       - name: Set up Homebrew
         id: set-up-homebrew
@@ -233,8 +233,6 @@ jobs:
           brew tests ${{ matrix.test-flags }}
         env:
           HOMEBREW_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - uses: codecov/codecov-action@29386c70ef20e286228c72b668a06fd0e8399192
 
   test-default-formula-linux:
     name: test default formula (Linux)
