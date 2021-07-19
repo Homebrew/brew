@@ -9,6 +9,8 @@ require "ruby-progressbar"
 require "uri"
 
 module Homebrew
+  # rubocop:disable Metrics/ModuleLength
+
   # The {Livecheck} module consists of methods used by the `brew livecheck`
   # command. These methods print the requested livecheck information
   # for formulae.
@@ -82,6 +84,71 @@ module Homebrew
       end
     end
 
+    # Resolve formula/cask references in `livecheck` blocks to a final formula
+    # or cask.
+    sig {
+      params(
+        formula_or_cask:       T.any(Formula, Cask::Cask),
+        first_formula_or_cask: T.any(Formula, Cask::Cask),
+        references:            T::Array[T.any(Formula, Cask::Cask)],
+        full_name:             T::Boolean,
+        debug:                 T::Boolean,
+      ).returns(T.nilable(T::Array[T.untyped]))
+    }
+    def resolve_livecheck_reference(
+      formula_or_cask,
+      first_formula_or_cask = formula_or_cask,
+      references = [],
+      full_name: false,
+      debug: false
+    )
+      livecheck = formula_or_cask.livecheck
+      livecheck_formula = livecheck.formula
+      livecheck_cask = livecheck.cask
+      return [nil, references] if livecheck_formula.blank? && livecheck_cask.blank?
+
+      livecheck_formula_or_cask = if livecheck_formula
+        Formulary.factory(livecheck_formula)
+      elsif livecheck_cask
+        Cask::CaskLoader.load(livecheck_cask)
+      end
+
+      # Error if a `livecheck` block references a formula/cask that was already
+      # referenced (or itself)
+      if livecheck_formula_or_cask == first_formula_or_cask ||
+         livecheck_formula_or_cask == formula_or_cask ||
+         references.include?(livecheck_formula_or_cask)
+        if debug
+          # Print the chain of references for debugging
+          puts "Reference Chain:"
+          puts formula_or_cask_name(first_formula_or_cask, full_name: full_name)
+
+          references << livecheck_formula_or_cask
+          references.each do |ref_formula_or_cask|
+            puts formula_or_cask_name(ref_formula_or_cask, full_name: full_name)
+          end
+        end
+
+        raise "Circular formula/cask reference encountered"
+      end
+
+      references << livecheck_formula_or_cask
+      next_livecheck_formula_or_cask, next_references = resolve_livecheck_reference(
+        livecheck_formula_or_cask,
+        first_formula_or_cask,
+        references,
+        full_name: full_name,
+        debug:     debug,
+      )
+
+      # Returning the references allows us to print the chain of references in
+      # the debug output
+      [
+        next_livecheck_formula_or_cask || livecheck_formula_or_cask,
+        next_references,
+      ]
+    end
+
     # Executes the livecheck logic for each formula/cask in the
     # `formulae_and_casks_to_check` array and prints the results.
     sig {
@@ -139,12 +206,16 @@ module Homebrew
         )
       end
 
+      # rubocop:disable Metrics/BlockLength
       formulae_checked = formulae_and_casks_to_check.map.with_index do |formula_or_cask, i|
         formula = formula_or_cask if formula_or_cask.is_a?(Formula)
         cask = formula_or_cask if formula_or_cask.is_a?(Cask::Cask)
 
         use_full_name = full_name || ambiguous_names.include?(formula_or_cask)
         name = formula_or_cask_name(formula_or_cask, full_name: use_full_name)
+
+        livecheck_formula_or_cask, livecheck_references =
+          resolve_livecheck_reference(formula_or_cask, full_name: use_full_name, debug: debug)
 
         if debug && i.positive?
           puts <<~EOS
@@ -156,7 +227,17 @@ module Homebrew
           puts
         end
 
-        skip_info = SkipConditions.skip_information(formula_or_cask, full_name: use_full_name, verbose: verbose)
+        # Check skip conditions for a referenced formula/cask
+        if livecheck_formula_or_cask
+          skip_info = SkipConditions.referenced_skip_information(
+            livecheck_formula_or_cask,
+            name,
+            full_name: use_full_name,
+            verbose:   verbose,
+          )
+        end
+
+        skip_info ||= SkipConditions.skip_information(formula_or_cask, full_name: use_full_name, verbose: verbose)
         if skip_info.present?
           next skip_info if json
 
@@ -188,7 +269,9 @@ module Homebrew
         else
           version_info = latest_version(
             formula_or_cask,
-            json: json, full_name: use_full_name, verbose: verbose, debug: debug,
+            livecheck_formula_or_cask: livecheck_formula_or_cask,
+            livecheck_references: livecheck_references,
+            json: json, full_name: use_full_name, verbose: verbose, debug: debug
           )
           version_info[:latest] if version_info.present?
         end
@@ -262,6 +345,7 @@ module Homebrew
           nil
         end
       end
+      # rubocop:enable Metrics/BlockLength
 
       puts "No newer upstream versions." if newer_only && !has_a_newer_upstream_version && !debug && !json
 
@@ -444,27 +528,41 @@ module Homebrew
     # the version information. Returns nil if a latest version couldn't be found.
     sig {
       params(
-        formula_or_cask: T.any(Formula, Cask::Cask),
-        json:            T::Boolean,
-        full_name:       T::Boolean,
-        verbose:         T::Boolean,
-        debug:           T::Boolean,
+        formula_or_cask:           T.any(Formula, Cask::Cask),
+        livecheck_formula_or_cask: T.nilable(T.any(Formula, Cask::Cask)),
+        livecheck_references:      T::Array[T.any(Formula, Cask::Cask)],
+        json:                      T::Boolean,
+        full_name:                 T::Boolean,
+        verbose:                   T::Boolean,
+        debug:                     T::Boolean,
       ).returns(T.nilable(Hash))
     }
-    def latest_version(formula_or_cask, json: false, full_name: false, verbose: false, debug: false)
+    def latest_version(
+      formula_or_cask,
+      livecheck_formula_or_cask: nil,
+      livecheck_references: [],
+      json: false, full_name: false, verbose: false, debug: false
+    )
       formula = formula_or_cask if formula_or_cask.is_a?(Formula)
       cask = formula_or_cask if formula_or_cask.is_a?(Cask::Cask)
 
       has_livecheckable = formula_or_cask.livecheckable?
       livecheck = formula_or_cask.livecheck
-      livecheck_url = livecheck.url
-      livecheck_regex = livecheck.regex
-      livecheck_strategy = livecheck.strategy
 
-      livecheck_url_string = livecheck_url_to_string(livecheck_url, formula_or_cask)
+      livecheck_formula_or_cask_livecheck = livecheck_formula_or_cask&.livecheck
+
+      livecheck_url = livecheck.url || livecheck_formula_or_cask_livecheck&.url
+      livecheck_regex = livecheck.regex || livecheck_formula_or_cask_livecheck&.regex
+      livecheck_strategy = livecheck.strategy || livecheck_formula_or_cask_livecheck&.strategy
+      livecheck_strategy_block = livecheck.strategy_block || livecheck_formula_or_cask_livecheck&.strategy_block
+
+      livecheck_url_string = livecheck_url_to_string(
+        livecheck_url,
+        livecheck_formula_or_cask || formula_or_cask,
+      )
 
       urls = [livecheck_url_string] if livecheck_url_string
-      urls ||= checkable_urls(formula_or_cask)
+      urls ||= checkable_urls(livecheck_formula_or_cask || formula_or_cask)
 
       if debug
         if formula
@@ -474,8 +572,18 @@ module Homebrew
           puts "Cask:             #{cask_name(formula_or_cask, full_name: full_name)}"
         end
         puts "Livecheckable?:   #{has_livecheckable ? "Yes" : "No"}"
+
+        livecheck_references.each do |ref_formula_or_cask|
+          case ref_formula_or_cask
+          when Formula
+            puts "Formula Ref:      #{formula_name(ref_formula_or_cask, full_name: full_name)}"
+          when Cask::Cask
+            puts "Cask Ref:         #{cask_name(ref_formula_or_cask, full_name: full_name)}"
+          end
+        end
       end
 
+      # rubocop:disable Metrics/BlockLength
       urls.each_with_index do |original_url, i|
         if debug
           puts
@@ -499,7 +607,7 @@ module Homebrew
           livecheck_strategy: livecheck_strategy,
           url_provided:       livecheck_url.present?,
           regex_provided:     livecheck_regex.present?,
-          block_provided:     livecheck.strategy_block.present?,
+          block_provided:     livecheck_strategy_block.present?,
         )
         strategy = Strategy.from_symbol(livecheck_strategy) || strategies.first
         strategy_name = livecheck_strategy_names[strategy]
@@ -514,7 +622,7 @@ module Homebrew
         end
 
         if livecheck_strategy.present?
-          if livecheck_strategy == :page_match && (livecheck_regex.blank? && livecheck.strategy_block.blank?)
+          if livecheck_strategy == :page_match && (livecheck_regex.blank? && livecheck_strategy_block.blank?)
             odebug "#{strategy_name} strategy requires a regex or block"
             next
           elsif livecheck_url.blank?
@@ -529,7 +637,7 @@ module Homebrew
         next if strategy.blank?
 
         strategy_data = begin
-          strategy.find_versions(url, livecheck_regex, cask: cask, &livecheck.strategy_block)
+          strategy.find_versions(url, livecheck_regex, cask: cask, &livecheck_strategy_block)
         rescue ArgumentError => e
           raise unless e.message.include?("unknown keyword: cask")
 
@@ -584,6 +692,17 @@ module Homebrew
         if json && verbose
           version_info[:meta] = {}
 
+          if livecheck_references.present?
+            version_info[:meta][:references] = livecheck_references.map do |ref_formula_or_cask|
+              case ref_formula_or_cask
+              when Formula
+                { formula: formula_name(ref_formula_or_cask, full_name: full_name) }
+              when Cask::Cask
+                { cask: cask_name(ref_formula_or_cask, full_name: full_name) }
+              end
+            end
+          end
+
           version_info[:meta][:url] = {}
           version_info[:meta][:url][:symbol] = livecheck_url if livecheck_url.is_a?(Symbol) && livecheck_url_string
           version_info[:meta][:url][:original] = original_url
@@ -599,8 +718,10 @@ module Homebrew
 
         return version_info
       end
+      # rubocop:enable Metrics/BlockLength
 
       nil
     end
   end
+  # rubocop:enable Metrics/ModuleLength
 end

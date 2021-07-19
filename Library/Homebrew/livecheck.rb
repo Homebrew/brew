@@ -18,11 +18,49 @@ class Livecheck
 
   def initialize(formula_or_cask)
     @formula_or_cask = formula_or_cask
+    @referenced_cask_name = nil
+    @referenced_formula_name = nil
     @regex = nil
     @skip = false
     @skip_msg = nil
     @strategy = nil
     @url = nil
+  end
+
+  # Sets the `@referenced_cask_name` instance variable to the provided `String`
+  # or returns the `@referenced_cask_name` instance variable when no argument
+  # is provided. Inherited livecheck values from the referenced cask
+  # (e.g. regex) can be overridden in the livecheck block.
+  #
+  # @param cask_name [String] name of cask to inherit livecheck info from
+  # @return [String, nil]
+  def cask(cask_name = nil)
+    case cask_name
+    when nil
+      @referenced_cask_name
+    when String
+      @referenced_cask_name = cask_name
+    else
+      raise TypeError, "Livecheck#cask expects a String"
+    end
+  end
+
+  # Sets the `@referenced_formula_name` instance variable to the provided
+  # `String` or returns the `@referenced_formula_name` instance variable when
+  # no argument is provided. Inherited livecheck values from the referenced
+  # formula (e.g. regex) can be overridden in the livecheck block.
+  #
+  # @param formula_name [String] name of formula to inherit livecheck info from
+  # @return [String, nil]
+  def formula(formula_name = nil)
+    case formula_name
+    when nil
+      @referenced_formula_name
+    when String
+      @referenced_formula_name = formula_name
+    else
+      raise TypeError, "Livecheck#formula expects a String"
+    end
   end
 
   # Sets the `@regex` instance variable to the provided `Regexp` or returns the
@@ -109,6 +147,8 @@ class Livecheck
   # @return [Hash]
   def to_hash
     {
+      "cask"     => @referenced_cask_name,
+      "formula"  => @referenced_formula_name,
       "regex"    => @regex,
       "skip"     => @skip,
       "skip_msg" => @skip_msg,

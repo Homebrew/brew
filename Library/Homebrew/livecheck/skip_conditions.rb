@@ -201,6 +201,54 @@ module Homebrew
         {}
       end
 
+      # Skip conditions for formulae/casks referenced in a `livecheck` block
+      # are treated differently than normal. We only respect certain skip
+      # conditions (returning the related hash) and others are treated as
+      # errors.
+      sig {
+        params(
+          livecheck_formula_or_cask:     T.any(Formula, Cask::Cask),
+          original_formula_or_cask_name: String,
+          full_name:                     T::Boolean,
+          verbose:                       T::Boolean,
+        ).returns(T.nilable(Hash))
+      }
+      def referenced_skip_information(
+        livecheck_formula_or_cask,
+        original_formula_or_cask_name,
+        full_name: false,
+        verbose: false
+      )
+        skip_info = SkipConditions.skip_information(
+          livecheck_formula_or_cask,
+          full_name: full_name,
+          verbose:   verbose,
+        )
+        return if skip_info.blank?
+
+        referenced_name = Livecheck.formula_or_cask_name(livecheck_formula_or_cask, full_name: full_name)
+        referenced_type = case livecheck_formula_or_cask
+        when Formula
+          :formula
+        when Cask::Cask
+          :cask
+        end
+
+        if skip_info[:status] != "error" &&
+           !(skip_info[:status] == "skipped" && livecheck_formula_or_cask.livecheck.skip?)
+          error_msg_end = if skip_info[:status] == "skipped"
+            "automatically skipped"
+          else
+            "skipped as #{skip_info[:status]}"
+          end
+
+          raise "Referenced #{referenced_type} (#{referenced_name}) is #{error_msg_end}"
+        end
+
+        skip_info[referenced_type] = original_formula_or_cask_name
+        skip_info
+      end
+
       # Prints default livecheck output in relation to skip conditions.
       sig { params(skip_hash: Hash).void }
       def print_skip_information(skip_hash)
