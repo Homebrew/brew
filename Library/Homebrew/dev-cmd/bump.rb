@@ -151,14 +151,30 @@ module Homebrew
   end
 
   def livecheck_result(formula_or_cask)
-    skip_result = Livecheck::SkipConditions.skip_information(formula_or_cask)
-    if skip_result.present?
-      return "#{skip_result[:status]}#{" - #{skip_result[:messages].join(", ")}" if skip_result[:messages].present?}"
+    name = Livecheck.formula_or_cask_name(formula_or_cask)
+
+    livecheck_formula_or_cask, =
+      Livecheck.resolve_livecheck_reference(formula_or_cask, full_name: false, debug: false)
+
+    # Check skip conditions for a referenced formula/cask
+    if livecheck_formula_or_cask
+      skip_info = Livecheck::SkipConditions.referenced_skip_information(
+        livecheck_formula_or_cask,
+        name,
+        full_name: false,
+        verbose:   false,
+      )
+    end
+
+    skip_info ||= Livecheck::SkipConditions.skip_information(formula_or_cask, full_name: false, verbose: false)
+    if skip_info.present?
+      return "#{skip_info[:status]}#{" - #{skip_info[:messages].join(", ")}" if skip_info[:messages].present?}"
     end
 
     version_info = Livecheck.latest_version(
       formula_or_cask,
-      json: true, full_name: false, verbose: false, debug: false,
+      livecheck_formula_or_cask: livecheck_formula_or_cask,
+      json: true, full_name: false, verbose: false, debug: false
     )
     latest = version_info[:latest] if version_info.present?
 
