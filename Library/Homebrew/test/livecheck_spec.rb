@@ -28,6 +28,40 @@ describe Livecheck do
   end
   let(:livecheckable_c) { described_class.new(c) }
 
+  describe "#formula" do
+    it "returns nil if not set" do
+      expect(livecheckable_f.formula).to be nil
+    end
+
+    it "returns the String if set" do
+      livecheckable_f.formula("other-formula")
+      expect(livecheckable_f.formula).to eq("other-formula")
+    end
+
+    it "raises a TypeError if the argument isn't a String" do
+      expect {
+        livecheckable_f.formula(123)
+      }.to raise_error(TypeError, "Livecheck#formula expects a String")
+    end
+  end
+
+  describe "#cask" do
+    it "returns nil if not set" do
+      expect(livecheckable_c.cask).to be nil
+    end
+
+    it "returns the String if set" do
+      livecheckable_c.cask("other-cask")
+      expect(livecheckable_c.cask).to eq("other-cask")
+    end
+
+    it "raises a TypeError if the argument isn't a String" do
+      expect {
+        livecheckable_c.cask(123)
+      }.to raise_error(TypeError, "Livecheck#cask expects a String")
+    end
+  end
+
   describe "#regex" do
     it "returns nil if not set" do
       expect(livecheckable_f.regex).to be nil
@@ -128,6 +162,8 @@ describe Livecheck do
     it "returns a Hash of all instance variables" do
       expect(livecheckable_f.to_hash).to eq(
         {
+          "cask"     => nil,
+          "formula"  => nil,
           "regex"    => nil,
           "skip"     => false,
           "skip_msg" => nil,
