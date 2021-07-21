@@ -2052,6 +2052,9 @@ example, run `export HOMEBREW_NO_INSECURE_REDIRECT=1` rather than just
 - `HOMEBREW_NO_INSTALL_UPGRADE`
   <br>If set, `brew install` will not automatically upgrade installed but outdated formulae
 
+- `HOMEBREW_NO_PIN_WARNING`
+  <br>If set, `brew pin` will not display the warning about pinned formulae.
+
 - `HOMEBREW_PRY`
   <br>If set, use Pry for the `brew irb` command.
 

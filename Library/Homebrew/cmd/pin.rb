@@ -14,7 +14,8 @@ module Homebrew
     Homebrew::CLI::Parser.new do
       description <<~EOS
         Pin the specified <formula>, preventing them from being upgraded when
-        issuing the `brew upgrade` <formula> command. See also `unpin`.
+        issuing the `brew upgrade` <formula> command. See also `unpin`. Set
+        `HOMEBREW_NO_PIN_WARNING` to silence the warning about pinned formulae.
       EOS
 
       named_args :installed_formula, min: 1
@@ -22,6 +23,13 @@ module Homebrew
   end
 
   def pin
+    unless ENV["HOMEBREW_NO_PIN_WARNING"]
+      opoo <<~EOS
+        #{Tty.bold}`brew pin` is fragile and can break upgrades to other formulae!#{Tty.reset}
+        If you require a specific version of a formula, use `brew extract` instead.
+      EOS
+    end
+
     args = pin_args.parse
 
     args.named.to_resolved_formulae.each do |f|
