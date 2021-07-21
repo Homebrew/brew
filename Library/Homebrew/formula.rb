@@ -1582,6 +1582,21 @@ class Formula
     end
   end
 
+  sig { params(targets: T.nilable(T.any(Pathname, String))).void }
+  def deuniversalize_machos(*targets)
+    if targets.blank?
+      targets = any_installed_keg.mach_o_files.select do |file|
+        file.arch == :universal && file.archs.include?(Hardware::CPU.arch)
+      end
+    end
+
+    targets.each do |t|
+      macho = MachO::FatFile.new(t)
+      native_slice = macho.extract(Hardware::CPU.arch)
+      native_slice.write t
+    end
+  end
+
   # an array of all core {Formula} names
   # @private
   def self.core_names
