@@ -207,11 +207,11 @@ update-preinstall() {
       HOMEBREW_AUTO_UPDATE_SECS="300"
     fi
 
-    # Skip auto-update if the core tap has been updated in the
+    # Skip auto-update if the repository has been updated in the
     # last $HOMEBREW_AUTO_UPDATE_SECS.
-    tap_fetch_head="${HOMEBREW_CORE_REPOSITORY}/.git/FETCH_HEAD"
-    if [[ -f "${tap_fetch_head}" &&
-          -n "$(find "${tap_fetch_head}" -type f -mtime -"${HOMEBREW_AUTO_UPDATE_SECS}"s 2>/dev/null)" ]]
+    repo_fetch_head="${HOMEBREW_REPOSITORY}/.git/FETCH_HEAD"
+    if [[ -f "${repo_fetch_head}" &&
+          -n "$(find "${repo_fetch_head}" -type f -mtime -"${HOMEBREW_AUTO_UPDATE_SECS}"s 2>/dev/null)" ]]
     then
       return
     fi
