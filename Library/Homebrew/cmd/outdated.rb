@@ -37,7 +37,13 @@ module Homebrew
                           "formula is outdated. Otherwise, the repository's HEAD will only be checked for "\
                           "updates when a new stable or development version has been released."
       switch "--greedy",
-             description: "Print outdated casks with `auto_updates` or `version :latest`."
+             description: "Print outdated casks with `auto_updates true` or `version :latest`."
+
+      switch "--greedy-latest",
+             description: "Print outdated casks including those with `version :latest`."
+
+      switch "--greedy-auto-updates",
+             description: "Print outdated casks including those with `auto_updates true`."
 
       conflicts "--quiet", "--verbose", "--json"
       conflicts "--formula", "--cask"
@@ -119,7 +125,7 @@ module Homebrew
       else
         c = formula_or_cask
 
-        puts c.outdated_info(args.greedy?, verbose?, false)
+        puts c.outdated_info(args.greedy?, verbose?, false, args.greedy_latest?, args.greedy_auto_updates?)
       end
     end
   end
@@ -144,7 +150,8 @@ module Homebrew
       else
         c = formula_or_cask
 
-        c.outdated_info(args.greedy?, verbose?, true)
+        c.outdated_info(args.greedy?, verbose?, true, greedy_latest:       args.greedy_latest?,
+                                                      greedy_auto_updates: args.greedy_auto_updates?)
       end
     end
   end
@@ -194,7 +201,8 @@ module Homebrew
       if formula_or_cask.is_a?(Formula)
         formula_or_cask.outdated?(fetch_head: args.fetch_HEAD?)
       else
-        formula_or_cask.outdated?(greedy: args.greedy?)
+        formula_or_cask.outdated?(greedy: args.greedy?, greedy_latest: args.greedy_latest?,
+                                  greedy_auto_updates: args.greedy_auto_updates?)
       end
     end
   end

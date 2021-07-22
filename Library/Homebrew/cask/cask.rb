@@ -113,16 +113,19 @@ module Cask
       @caskroom_path ||= Caskroom.path.join(token)
     end
 
-    def outdated?(greedy: false)
-      !outdated_versions(greedy: greedy).empty?
+    def outdated?(greedy: false, greedy_latest: false, greedy_auto_updates: false)
+      !outdated_versions(greedy: greedy, greedy_latest: greedy_latest,
+                         greedy_auto_updates: greedy_auto_updates).empty?
     end
 
-    def outdated_versions(greedy: false)
+    def outdated_versions(greedy: false, greedy_latest: false, greedy_auto_updates: false)
       # special case: tap version is not available
       return [] if version.nil?
 
-      if greedy
+      if greedy || (greedy_latest && greedy_auto_updates) || (greedy_auto_updates && auto_updates)
         return versions if version.latest?
+      elsif greedy_latest && version.latest?
+        return versions
       elsif auto_updates
         return []
       end
@@ -137,10 +140,11 @@ module Cask
       installed.reject { |v| v == version }
     end
 
-    def outdated_info(greedy, verbose, json)
+    def outdated_info(greedy, verbose, json, greedy_latest, greedy_auto_updates)
       return token if !verbose && !json
 
-      installed_versions = outdated_versions(greedy: greedy).join(", ")
+      installed_versions = outdated_versions(greedy: greedy, greedy_latest: greedy_latest,
+                                             greedy_auto_updates: greedy_auto_updates).join(", ")
 
       if json
         {
