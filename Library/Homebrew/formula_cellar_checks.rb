@@ -320,14 +320,16 @@ module FormulaCellarChecks
     return if !OS.mac? && !OS.linux?
 
     keg = Keg.new(formula.prefix)
-    mismatches = keg.binary_executable_or_library_files.reject do |file|
-      file.arch == Hardware::CPU.arch
+    mismatches = {}
+    keg.binary_executable_or_library_files.each do |file|
+      farch = file.arch
+      mismatches[file] = farch unless farch == Hardware::CPU.arch
     end
     return if mismatches.empty?
 
-    compatible_universal_binaries, mismatches = mismatches.partition do |file|
-      file.arch == :universal && file.archs.include?(Hardware::CPU.arch)
-    end
+    compatible_universal_binaries, mismatches = mismatches.partition do |file, arch|
+      arch == :universal && file.archs.include?(Hardware::CPU.arch)
+    end.map(&:to_h) # To prevent transformation into nested arrays
 
     universal_binaries_expected = if formula.tap.present? && formula.tap.core_tap?
       tap_audit_exception(:universal_binary_allowlist, formula.name)
@@ -340,9 +342,9 @@ module FormulaCellarChecks
 
     if mismatches.present?
       s += <<~EOS
-        Binaries built for an incompatible architecture were installed into #{formula}'s prefix.
+        Binaries built for a non-native architecture were installed into #{formula}'s prefix.
         The offending files are:
-          #{mismatches * "\n  "}
+          #{mismatches.map { |m| "#{m.first}\t(#{m.last})" } * "\n  "}
       EOS
     end
 
@@ -350,7 +352,7 @@ module FormulaCellarChecks
       s += <<~EOS
         Unexpected universal binaries were found.
         The offending files are:
-          #{compatible_universal_binaries * "\n  "}
+          #{compatible_universal_binaries.keys * "\n  "}
       EOS
     end
 
