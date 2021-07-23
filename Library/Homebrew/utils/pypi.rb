@@ -203,7 +203,7 @@ module PyPI
     end
 
     formula.resources.each do |resource|
-      if !print_only && !resource.url.start_with?(PYTHONHOSTED_URL_PREFIX)
+      if !ignore_non_pypi_packages && !print_only && !resource.url.start_with?(PYTHONHOSTED_URL_PREFIX)
         odie "\"#{formula.name}\" contains non-PyPI resources. Please update the resources manually."
       end
     end
