@@ -342,7 +342,7 @@ module Homebrew
       pr_message += <<~EOS
 
 
-        - [ ] `resource` blocks have been checked for updates.
+        `resource` blocks may require updates.
       EOS
     end
 
