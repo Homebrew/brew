@@ -50,6 +50,18 @@ class Keg
     raise
   end
 
+  def add_rpath(rpath, file)
+    @require_relocation = rpath.start_with?(HOMEBREW_PREFIX.to_s)
+    odebug "Adding rpath #{rpath} in #{file}"
+    file.add_rpath(rpath, strict: false)
+    codesign_patched_binary(file)
+  rescue MachO::MachOError
+    onoe <<~EOS
+      Failed adding rpath #{rpath} in #{file}
+    EOS
+    raise
+  end
+
   def delete_rpath(rpath, file)
     odebug "Deleting rpath #{rpath} in #{file}"
     file.delete_rpath(rpath, strict: false)

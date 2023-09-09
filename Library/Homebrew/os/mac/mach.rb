@@ -59,6 +59,11 @@ module MachOShim
 
   # TODO: See if the `#write!` call can be delayed until
   # we know we're not making any changes to the rpaths.
+  def add_rpath(rpath, **options)
+    macho.add_rpath(rpath, options)
+    macho.write!
+  end
+
   def delete_rpath(rpath, **options)
     candidates = rpaths(resolve_variable_references: false).select do |r|
       resolve_variable_name(r) == resolve_variable_name(rpath)
