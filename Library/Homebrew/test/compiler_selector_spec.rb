@@ -1,4 +1,3 @@
-# typed: false
 # frozen_string_literal: true
 
 require "compilers"
@@ -10,15 +9,15 @@ describe CompilerSelector do
   let(:compilers) { [:clang, :gnu] }
   let(:software_spec) { SoftwareSpec.new }
   let(:cc) { :clang }
-  let(:versions) { class_double(DevelopmentTools, clang_build_version: Version.create("600")) }
+  let(:versions) { class_double(DevelopmentTools, clang_build_version: Version.new("600")) }
 
   before do
     allow(versions).to receive(:gcc_version) do |name|
       case name
-      when "gcc-7" then Version.create("7.1")
-      when "gcc-6" then Version.create("6.1")
-      when "gcc-5" then Version.create("5.1")
-      when "gcc-4.9" then Version.create("4.9.1")
+      when "gcc-7" then Version.new("7.1")
+      when "gcc-6" then Version.new("6.1")
+      when "gcc-5" then Version.new("5.1")
+      when "gcc-4.9" then Version.new("4.9.1")
       else Version::NULL
       end
     end

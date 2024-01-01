@@ -12,8 +12,6 @@ module Homebrew
   #
   # @api private
   module Manpages
-    extend T::Sig
-
     Variables = Struct.new(
       :alumni,
       :commands,
@@ -29,17 +27,15 @@ module Homebrew
       keyword_init: true,
     )
 
-    module_function
-
-    def regenerate_man_pages(quiet:)
-      Homebrew.install_bundler_gems!
+    def self.regenerate_man_pages(quiet:)
+      Homebrew.install_bundler_gems!(groups: ["man"])
 
       markup = build_man_page(quiet: quiet)
       convert_man_page(markup, TARGET_DOC_PATH/"Manpage.md")
       convert_man_page(markup, TARGET_MAN_PATH/"brew.1")
     end
 
-    def build_man_page(quiet:)
+    def self.build_man_page(quiet:)
       template = (SOURCE_PATH/"brew.1.md.erb").read
       readme = HOMEBREW_REPOSITORY/"README.md"
       variables = Variables.new(
@@ -64,12 +60,12 @@ module Homebrew
       ERB.new(template, trim_mode: ">").result(variables.instance_eval { binding })
     end
 
-    def sort_key_for_path(path)
+    def self.sort_key_for_path(path)
       # Options after regular commands (`~` comes after `z` in ASCII table).
       path.basename.to_s.sub(/\.(rb|sh)$/, "").sub(/^--/, "~~")
     end
 
-    def convert_man_page(markup, target)
+    def self.convert_man_page(markup, target)
       manual = target.basename(".1")
       organisation = "Homebrew"
 
@@ -113,7 +109,7 @@ module Homebrew
       end
     end
 
-    def target_path_to_format(target)
+    def self.target_path_to_format(target)
       case target.basename
       when /\.md$/    then ["--markdown", "markdown"]
       when /\.\d$/    then ["--roff", "man page"]
@@ -122,7 +118,7 @@ module Homebrew
       end
     end
 
-    def generate_cmd_manpages(cmd_paths)
+    def self.generate_cmd_manpages(cmd_paths)
       man_page_lines = []
 
       # preserve existing manpage order
@@ -142,15 +138,15 @@ module Homebrew
       man_page_lines.compact.join("\n")
     end
 
-    def cmd_parser_manpage_lines(cmd_parser)
+    def self.cmd_parser_manpage_lines(cmd_parser)
       lines = [format_usage_banner(cmd_parser.usage_banner_text)]
       lines += cmd_parser.processed_options.map do |short, long, _, desc, hidden|
         next if hidden
 
         if long.present?
           next if Homebrew::CLI::Parser.global_options.include?([short, long, desc])
-          next if Homebrew::CLI::Parser.global_cask_options.any? do |_, option, description:, **|
-                    [long, "#{long}="].include?(option) && description == desc
+          next if Homebrew::CLI::Parser.global_cask_options.any? do |_, option, kwargs|
+                    [long, "#{long}="].include?(option) && kwargs.fetch(:description) == desc
                   end
         end
 
@@ -159,7 +155,7 @@ module Homebrew
       lines
     end
 
-    def cmd_comment_manpage_lines(cmd_path)
+    def self.cmd_comment_manpage_lines(cmd_path)
       comment_lines = cmd_path.read.lines.grep(/^#:/)
       return if comment_lines.empty?
       return if comment_lines.first.include?("@hide_from_man_page")
@@ -185,17 +181,17 @@ module Homebrew
     end
 
     sig { returns(String) }
-    def global_cask_options_manpage
+    def self.global_cask_options_manpage
       lines = ["These options are applicable to the `install`, `reinstall`, and `upgrade` " \
-               "subcommands with the `--cask` flag.\n"]
-      lines += Homebrew::CLI::Parser.global_cask_options.map do |_, long, description:, **|
-        generate_option_doc(nil, long.chomp("="), description)
+               "subcommands with the `--cask` switch.\n"]
+      lines += Homebrew::CLI::Parser.global_cask_options.map do |_, long, kwargs|
+        generate_option_doc(nil, long.chomp("="), kwargs.fetch(:description))
       end
       lines.join("\n")
     end
 
     sig { returns(String) }
-    def global_options_manpage
+    def self.global_options_manpage
       lines = ["These options are applicable across multiple subcommands.\n"]
       lines += Homebrew::CLI::Parser.global_options.map do |short, long, desc|
         generate_option_doc(short, long, desc)
@@ -204,7 +200,7 @@ module Homebrew
     end
 
     sig { returns(String) }
-    def env_vars_manpage
+    def self.env_vars_manpage
       lines = Homebrew::EnvConfig::ENVS.flat_map do |env, hash|
         entry = "- `#{env}`:\n  <br>#{hash[:description]}\n"
         default = hash[:default_text]
@@ -216,11 +212,11 @@ module Homebrew
       lines.join("\n")
     end
 
-    def format_opt(opt)
+    def self.format_opt(opt)
       "`#{opt}`" unless opt.nil?
     end
 
-    def generate_option_doc(short, long, desc)
+    def self.generate_option_doc(short, long, desc)
       comma = (short && long) ? ", " : ""
       <<~EOS
         * #{format_opt(short)}#{comma}#{format_opt(long)}:
@@ -228,7 +224,7 @@ module Homebrew
       EOS
     end
 
-    def format_usage_banner(usage_banner)
+    def self.format_usage_banner(usage_banner)
       usage_banner&.sub(/^(#: *\* )?/, "### ")
     end
   end

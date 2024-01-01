@@ -3,7 +3,7 @@
 
 class TestballBottle < Formula
   def initialize(name = "testball_bottle", path = Pathname.new(__FILE__).expand_path, spec = :stable,
-                 alias_path: nil, force_bottle: false)
+                 alias_path: nil, tap: nil, force_bottle: false)
     super
   end
 
@@ -13,7 +13,7 @@ class TestballBottle < Formula
 
     bottle do
       root_url "file://#{TEST_FIXTURE_DIR}/bottles"
-      sha256 cellar: :any_skip_relocation, Utils::Bottles.tag.to_sym => "8f9aecd233463da6a4ea55f5f88fc5841718c013f3e2a7941350d6130f1dc149"
+      sha256 cellar: :any_skip_relocation, Utils::Bottles.tag.to_sym => "d7b9f4e8bf83608b71fe958a99f19f2e5e68bb2582965d32e41759c24f1aef97"
     end
 
     cxxstdlib_check :skip

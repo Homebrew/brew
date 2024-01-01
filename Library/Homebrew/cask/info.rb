@@ -12,6 +12,8 @@ module Cask
 
       output = +"#{title_info(cask)}\n"
       output << "#{Formatter.url(cask.homepage)}\n" if cask.homepage
+      deprecate_disable = DeprecateDisable.message(cask)
+      output << "#{deprecate_disable.capitalize}\n" if deprecate_disable
       output << installation_info(cask)
       repo = repo_info(cask)
       output << "#{repo}\n" if repo
@@ -39,17 +41,14 @@ module Cask
     def self.installation_info(cask)
       return "Not installed\n" unless cask.installed?
 
-      install_info = +""
-      cask.versions.each do |version|
-        versioned_staged_path = cask.caskroom_path.join(version)
-        path_details = if versioned_staged_path.exist?
-          versioned_staged_path.abv
-        else
-          Formatter.error("does not exist")
-        end
-        install_info << "#{versioned_staged_path} (#{path_details})\n"
+      versioned_staged_path = cask.caskroom_path.join(cask.installed_version)
+      path_details = if versioned_staged_path.exist?
+        versioned_staged_path.abv
+      else
+        Formatter.error("does not exist")
       end
-      install_info.freeze
+
+      "#{versioned_staged_path} (#{path_details})\n"
     end
 
     def self.name_info(cask)
@@ -81,7 +80,7 @@ module Cask
       url = if cask.tap.custom_remote? && !cask.tap.remote.nil?
         cask.tap.remote
       else
-        "#{cask.tap.default_remote}/blob/HEAD/Casks/#{cask.token}.rb"
+        "#{cask.tap.default_remote}/blob/HEAD/#{cask.tap.relative_cask_path(cask.token)}"
       end
 
       "From: #{Formatter.url(url)}"

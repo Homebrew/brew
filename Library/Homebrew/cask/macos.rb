@@ -1,8 +1,6 @@
 # typed: true
 # frozen_string_literal: true
 
-require "os/mac/version"
-
 module OS
   module Mac
     module_function

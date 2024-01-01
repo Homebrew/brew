@@ -30,6 +30,7 @@ contributions
 create
 deps
 desc
+determine-test-runners
 developer
 dispatch-build-bottle
 docs
@@ -67,6 +68,7 @@ nodenv-sync
 options
 outdated
 pin
+post_install
 postgresql-upgrade-database
 postinstall
 pr-automerge
@@ -74,6 +76,7 @@ pr-publish
 pr-pull
 pr-upload
 prof
+pyenv-sync
 rbenv-sync
 readall
 reinstall
@@ -83,6 +86,7 @@ rm
 rubocop
 ruby
 search
+setup-ruby
 sh
 shellenv
 style

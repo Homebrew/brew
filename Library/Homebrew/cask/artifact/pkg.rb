@@ -36,8 +36,7 @@ module Cask
       private
 
       def run_installer(command: nil, verbose: false, **_options)
-        ohai "Running installer for #{cask}; your password may be necessary.",
-             "Package installers may write to any location; options such as `--appdir` are ignored."
+        ohai "Running installer for #{cask} with sudo; the password may be necessary."
         unless path.exist?
           pkg = path.relative_path_from(cask.staged_path)
           pkgs = Pathname.glob(cask.staged_path/"**"/"*.pkg").map { |path| path.relative_path_from(cask.staged_path) }
@@ -62,7 +61,14 @@ module Cask
             "USER"     => User.current,
             "USERNAME" => User.current,
           }
-          command.run!("/usr/sbin/installer", sudo: true, args: args, print_stdout: true, env: env)
+          command.run!(
+            "/usr/sbin/installer",
+            sudo:         true,
+            sudo_as_root: true,
+            args:         args,
+            print_stdout: true,
+            env:          env,
+          )
         end
       end
 

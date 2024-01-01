@@ -6,8 +6,6 @@ require "formula_installer"
 require "cli/parser"
 
 module Homebrew
-  extend T::Sig
-
   module_function
 
   sig { returns(CLI::Parser) }
@@ -26,8 +24,13 @@ module Homebrew
 
     args.named.to_resolved_formulae.each do |f|
       ohai "Postinstalling #{f}"
-      fi = FormulaInstaller.new(f, **{ debug: args.debug?, quiet: args.quiet?, verbose: args.verbose? }.compact)
-      fi.post_install
+      f.install_etc_var
+      if f.post_install_defined?
+        fi = FormulaInstaller.new(f, **{ debug: args.debug?, quiet: args.quiet?, verbose: args.verbose? }.compact)
+        fi.post_install
+      else
+        opoo "#{f}: no `post_install` method was defined in the formula!"
+      end
     end
   end
 end

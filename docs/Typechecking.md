@@ -6,9 +6,9 @@ The [Sorbet Documentation] is a good place to get started if you want to dive de
 
 ## Sorbet in the Homebrew Codebase
 
-### Inline Type Annotations
+### Inline type annotations
 
-To add type annotations to a class or module, we extend it with the `T::Sig` module (read this as `Type::Signature`). This adds the `sig` method which is used to annotate method signatures. Here's a simple example:
+The `sig` method is used to annotate method signatures. Here's a simple example:
 
 ```ruby
 class MyClass
@@ -30,7 +30,7 @@ For more information on how to express more complex types, refer to the official
 - [Nilable Types](https://sorbet.org/docs/nilable-types)
 - [Union Types](https://sorbet.org/docs/union-types)
 
-### Ruby Interface Files (`.rbi`)
+### Ruby interface files (`.rbi`)
 
 [RBI files](https://sorbet.org/docs/rbi) help Sorbet learn about constants, ancestors and methods defined in ways it doesn’t understand natively. We can also create an RBI file to help Sorbet understand dynamic definitions.
 
@@ -38,7 +38,7 @@ Sometimes it is necessary to explicitly include the `Kernel` module in order for
 
 [example]: https://github.com/Homebrew/brew/blob/61b79318ed089b5010501e2cbf163fd8e48e2dfc/Library/Homebrew/global.rbi
 
-### The [`Library/Homebrew/sorbet`] Directory
+### The [`Library/Homebrew/sorbet`] directory
 
 [`Library/Homebrew/sorbet`]: https://github.com/Homebrew/brew/tree/master/Library/Homebrew/sorbet
 

@@ -6,8 +6,6 @@ require_relative "uncompressed"
 module UnpackStrategy
   # Strategy for unpacking LuaRock archives.
   class LuaRock < Uncompressed
-    extend T::Sig
-
     sig { returns(T::Array[String]) }
     def self.extensions
       [".rock"]

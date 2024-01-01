@@ -6,6 +6,7 @@
   "files.trimTrailingWhitespace": true,
   "files.insertFinalNewline": true,
   "files.trimFinalNewlines": true,
+  "ruby.useLanguageServer": true,
   "ruby.rubocop.executePath": "Library/Homebrew/shims/gems/",
   "shellcheck.customArgs": [
     "--shell=bash",
@@ -21,7 +22,7 @@
   "[shellscript]": {
     "editor.formatOnSave": true,
     "editor.codeActionsOnSave": {
-      "source.fixAll.shellcheck": true,
+      "source.fixAll.shellcheck": "explicit"
     }
   }
 }

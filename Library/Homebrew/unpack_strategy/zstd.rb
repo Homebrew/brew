@@ -4,8 +4,6 @@
 module UnpackStrategy
   # Strategy for unpacking zstd archives.
   class Zstd
-    extend T::Sig
-
     include UnpackStrategy
 
     sig { returns(T::Array[String]) }

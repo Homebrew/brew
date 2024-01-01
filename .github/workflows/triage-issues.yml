@@ -23,7 +23,7 @@ concurrency:
 jobs:
   stale:
     if: >
-      startsWith(github.repository, 'Homebrew/') && (
+      github.repository_owner == 'Homebrew' && (
         github.event_name != 'issue_comment' || (
           contains(github.event.issue.labels.*.name, 'stale') ||
           contains(github.event.pull_request.labels.*.name, 'stale')
@@ -32,7 +32,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Mark/Close Stale Issues and Pull Requests
-        uses: actions/stale@v8
+        uses: actions/stale@v9
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           days-before-stale: 21
@@ -48,7 +48,7 @@ jobs:
 
   bump-pr-stale:
     if: >
-      startsWith(github.repository, 'Homebrew/') && (
+      github.repository_owner == 'Homebrew' && (
         github.event_name != 'issue_comment' || (
           contains(github.event.issue.labels.*.name, 'stale') ||
           contains(github.event.pull_request.labels.*.name, 'stale')
@@ -57,7 +57,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Mark/Close Stale `bump-formula-pr` and `bump-cask-pr` Pull Requests
-        uses: actions/stale@v8
+        uses: actions/stale@v9
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           days-before-stale: 2
@@ -70,13 +70,14 @@ jobs:
           any-of-labels: "bump-formula-pr,bump-cask-pr"
 
   lock-threads:
-    if: startsWith(github.repository, 'Homebrew/') && github.event_name != 'issue_comment'
+    if: github.repository_owner == 'Homebrew' && github.event_name != 'issue_comment'
     runs-on: ubuntu-latest
     steps:
       - name: Lock Outdated Threads
-        uses: dessant/lock-threads@c1b35aecc5cdb1a34539d14196df55838bb2f836
+        uses: dessant/lock-threads@1bf7ec25051fe7c00bdd17e6a7cf3d7bfb7dc771
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
+          process-only: 'issues, prs'
           issue-inactive-days: 30
           add-issue-labels: outdated
           pr-inactive-days: 30

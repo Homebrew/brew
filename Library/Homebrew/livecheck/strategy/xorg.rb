@@ -38,8 +38,6 @@ module Homebrew
       #
       # @api public
       class Xorg
-        extend T::Sig
-
         NICE_NAME = "X.Org"
 
         # A `Regexp` used in determining if the strategy applies to the URL and

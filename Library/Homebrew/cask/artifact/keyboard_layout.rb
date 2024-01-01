@@ -9,13 +9,6 @@ module Cask
     #
     # @api private
     class KeyboardLayout < Moved
-      extend T::Sig
-
-      sig { returns(String) }
-      def self.english_name
-        "Keyboard Layout"
-      end
-
       def install_phase(**options)
         super(**options)
         delete_keyboard_layout_cache(**options)
@@ -29,7 +22,12 @@ module Cask
       private
 
       def delete_keyboard_layout_cache(command: nil, **_)
-        command.run!("/bin/rm", args: ["-f", "--", "/System/Library/Caches/com.apple.IntlDataCache.le*"], sudo: true)
+        command.run!(
+          "/bin/rm",
+          args:         ["-f", "--", "/System/Library/Caches/com.apple.IntlDataCache.le*"],
+          sudo:         true,
+          sudo_as_root: true,
+        )
       end
     end
   end

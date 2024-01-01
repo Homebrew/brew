@@ -5,8 +5,6 @@ require "cli/parser"
 require "utils/github"
 
 module Homebrew
-  extend T::Sig
-
   module_function
 
   sig { returns(CLI::Parser) }
@@ -19,9 +17,6 @@ module Homebrew
       switch "--autosquash",
              description: "If supported on the target tap, automatically reformat and reword commits " \
                           "to our preferred format."
-      switch "--no-autosquash",
-             description: "Skip automatically reformatting and rewording commits in the pull request " \
-                          "to the preferred format, even if supported on the target tap."
       switch "--large-runner",
              description: "Run the upload job on a large runner."
       flag   "--branch=",
@@ -40,8 +35,6 @@ module Homebrew
 
   def pr_publish
     args = pr_publish_args.parse
-
-    odeprecated "`brew pr-publish --no-autosquash`" if args.no_autosquash?
 
     tap = Tap.fetch(args.tap || CoreTap.instance.name)
     workflow = args.workflow || "publish-commit-bottles.yml"
@@ -66,13 +59,17 @@ module Homebrew
         oh1 "Found `autosquash` label on ##{issue}. Requesting autosquash."
         inputs[:autosquash] = true
       end
+      if pr_labels.include?("large-bottle-upload")
+        oh1 "Found `large-bottle-upload` label on ##{issue}. Requesting upload on large runner."
+        inputs[:large_runner] = true
+      end
 
       if args.tap.present? && !T.must("#{user}/#{repo}".casecmp(tap.full_name)).zero?
         odie "Pull request URL is for #{user}/#{repo} but `--tap=#{tap.full_name}` was specified!"
       end
 
       ohai "Dispatching #{tap} pull request ##{issue}"
-      GitHub.workflow_dispatch_event(user, repo, workflow, ref, inputs)
+      GitHub.workflow_dispatch_event(user, repo, workflow, ref, **inputs)
     end
   end
 end

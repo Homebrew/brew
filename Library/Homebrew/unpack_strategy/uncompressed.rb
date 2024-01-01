@@ -4,8 +4,6 @@
 module UnpackStrategy
   # Strategy for unpacking uncompressed files.
   class Uncompressed
-    extend T::Sig
-
     include UnpackStrategy
 
     sig {

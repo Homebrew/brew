@@ -26,7 +26,7 @@ module SystemConfig
     end
 
     def formula_linked_version(formula)
-      return "N/A" unless CoreTap.instance.installed?
+      return "N/A" if Homebrew::EnvConfig.no_install_from_api? && !CoreTap.instance.installed?
 
       Formulary.factory(formula).any_installed_version || "N/A"
     rescue FormulaUnavailableError

@@ -4,8 +4,6 @@
 module UnpackStrategy
   # Strategy for unpacking pax archives.
   class Pax
-    extend T::Sig
-
     include UnpackStrategy
 
     sig { returns(T::Array[String]) }

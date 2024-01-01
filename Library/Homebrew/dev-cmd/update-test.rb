@@ -3,8 +3,6 @@
 
 require "cli/parser"
 module Homebrew
-  extend T::Sig
-
   sig { returns(CLI::Parser) }
   def self.update_test_args
     Homebrew::CLI::Parser.new do

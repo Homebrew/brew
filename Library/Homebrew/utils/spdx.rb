@@ -8,9 +8,6 @@ require "utils/github"
 #
 # @api private
 module SPDX
-  include Utils::Curl
-  extend Utils::Curl
-
   module_function
 
   DATA_PATH = (HOMEBREW_DATA_PATH/"spdx").freeze
@@ -34,8 +31,8 @@ module SPDX
 
   def download_latest_license_data!(to: DATA_PATH)
     data_url = "https://raw.githubusercontent.com/spdx/license-list-data/#{latest_tag}/json/"
-    curl_download("#{data_url}licenses.json", to: to/"spdx_licenses.json")
-    curl_download("#{data_url}exceptions.json", to: to/"spdx_exceptions.json")
+    Utils::Curl.curl_download("#{data_url}licenses.json", to: to/"spdx_licenses.json")
+    Utils::Curl.curl_download("#{data_url}exceptions.json", to: to/"spdx_exceptions.json")
   end
 
   def parse_license_expression(license_expression)
@@ -199,9 +196,9 @@ module SPDX
 
     name, version, = license_version_info license
 
-    forbidden_licenses.each do |_, license_info|
+    forbidden_licenses.each_value do |license_info|
       forbidden_name, forbidden_version, forbidden_or_later = *license_info
-      next unless forbidden_name == name
+      next if forbidden_name != name
 
       return true if forbidden_or_later && forbidden_version <= version
 

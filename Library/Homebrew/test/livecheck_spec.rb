@@ -1,4 +1,3 @@
-# typed: false
 # frozen_string_literal: true
 
 require "formula"
@@ -12,7 +11,7 @@ describe Livecheck do
       head "https://github.com/Homebrew/brew.git"
     end
   end
-  let(:livecheckable_f) { described_class.new(f) }
+  let(:livecheckable_f) { described_class.new(f.class) }
 
   let(:c) do
     Cask::CaskLoader.load(+<<-RUBY)
@@ -41,7 +40,7 @@ describe Livecheck do
     it "raises a TypeError if the argument isn't a String" do
       expect do
         livecheckable_f.formula(123)
-      end.to raise_error(TypeError, "Livecheck#formula expects a String")
+      end.to raise_error TypeError
     end
   end
 
@@ -54,12 +53,6 @@ describe Livecheck do
       livecheckable_c.cask("other-cask")
       expect(livecheckable_c.cask).to eq("other-cask")
     end
-
-    it "raises a TypeError if the argument isn't a String" do
-      expect do
-        livecheckable_c.cask(123)
-      end.to raise_error(TypeError, "Livecheck#cask expects a String")
-    end
   end
 
   describe "#regex" do
@@ -70,12 +63,6 @@ describe Livecheck do
     it "returns the Regexp if set" do
       livecheckable_f.regex(/foo/)
       expect(livecheckable_f.regex).to eq(/foo/)
-    end
-
-    it "raises a TypeError if the argument isn't a Regexp" do
-      expect do
-        livecheckable_f.regex("foo")
-      end.to raise_error(TypeError, "Livecheck#regex expects a Regexp")
     end
   end
 
@@ -90,12 +77,6 @@ describe Livecheck do
       expect(livecheckable_f.skip("foo")).to be true
       expect(livecheckable_f.instance_variable_get(:@skip)).to be true
       expect(livecheckable_f.instance_variable_get(:@skip_msg)).to eq("foo")
-    end
-
-    it "raises a TypeError if the argument isn't a String" do
-      expect do
-        livecheckable_f.skip(/foo/)
-      end.to raise_error(TypeError, "Livecheck#skip expects a String")
     end
   end
 
@@ -116,12 +97,6 @@ describe Livecheck do
     it "returns the Symbol if set" do
       livecheckable_f.strategy(:page_match)
       expect(livecheckable_f.strategy).to eq(:page_match)
-    end
-
-    it "raises a TypeError if the argument isn't a Symbol" do
-      expect do
-        livecheckable_f.strategy("page_match")
-      end.to raise_error(TypeError, "Livecheck#strategy expects a Symbol")
     end
   end
 
@@ -151,10 +126,10 @@ describe Livecheck do
       expect(livecheckable_c.url).to eq(:url)
     end
 
-    it "raises a TypeError if the argument isn't a String or valid Symbol" do
+    it "raises an ArgumentError if the argument isn't a valid Symbol" do
       expect do
-        livecheckable_f.url(/foo/)
-      end.to raise_error(TypeError, "Livecheck#url expects a String or valid Symbol")
+        livecheckable_f.url(:not_a_valid_symbol)
+      end.to raise_error ArgumentError
     end
   end
 

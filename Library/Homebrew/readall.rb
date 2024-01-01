@@ -9,6 +9,14 @@ require "cask/cask_loader"
 # @api private
 module Readall
   class << self
+    include Cachable
+
+    # TODO: remove this once the `MacOS` module is undefined on Linux
+    MACOS_MODULE_REGEX = /\b(MacOS|OS::Mac)(\.|::)\b/.freeze
+    private_constant :MACOS_MODULE_REGEX
+
+    private :cache
+
     def valid_ruby_syntax?(ruby_files)
       failed = T.let(false, T::Boolean)
       ruby_files.each do |ruby_file|
@@ -31,7 +39,7 @@ module Readall
           failed = true
         end
 
-        if (formula_dir/"#{f.basename}.rb").exist?
+        if formula_dir.glob("**/#{f.basename}.rb").any?(&:exist?)
           onoe "Formula duplicating alias: #{f}"
           failed = true
         end
@@ -39,19 +47,29 @@ module Readall
       !failed
     end
 
-    def valid_formulae?(formulae, bottle_tag: nil)
+    def valid_formulae?(tap, bottle_tag: nil)
+      cache[:valid_formulae] ||= {}
+
       success = T.let(true, T::Boolean)
-      formulae.each do |file|
-        base = Formulary.factory(file)
-        next if bottle_tag.blank? || !base.path.exist? || !base.class.on_system_blocks_exist?
+      tap.formula_files.each do |file|
+        valid = cache[:valid_formulae][file]
+        next if valid == true || valid&.include?(bottle_tag)
 
-        formula_contents = base.path.read
+        formula_name = file.basename(".rb").to_s
+        formula_contents = file.read(encoding: "UTF-8")
 
-        readall_namespace = Formulary.class_s("Readall#{bottle_tag.to_sym.capitalize}")
-        readall_formula_class = Formulary.load_formula(base.name, base.path, formula_contents, readall_namespace,
-                                                       flags: base.class.build_flags, ignore_errors: true)
-        readall_formula_class.new(base.name, base.path, :stable,
-                                  alias_path: base.alias_path, force_bottle: base.force_bottle)
+        readall_namespace = "ReadallNamespace"
+        readall_formula_class = Formulary.load_formula(formula_name, file, formula_contents, readall_namespace,
+                                                       flags: [], ignore_errors: false)
+        readall_formula = readall_formula_class.new(formula_name, file, :stable, tap: tap)
+        readall_formula.to_hash
+        # TODO: Remove check for MACOS_MODULE_REGEX once the `MacOS` module is undefined on Linux
+        cache[:valid_formulae][file] = if readall_formula.on_system_blocks_exist? ||
+                                          formula_contents.match?(MACOS_MODULE_REGEX)
+          [bottle_tag, *cache[:valid_formulae][file]]
+        else
+          true
+        end
       rescue Interrupt
         raise
       rescue Exception => e # rubocop:disable Lint/RescueException
@@ -62,39 +80,33 @@ module Readall
       success
     end
 
-    def valid_casks?(_casks, os_name: nil, arch: nil)
+    def valid_casks?(_tap, os_name: nil, arch: nil)
       true
     end
 
-    def valid_tap?(tap, options = {})
+    def valid_tap?(tap, aliases: false, no_simulate: false, os_arch_combinations: OnSystem::ALL_OS_ARCH_COMBINATIONS)
       success = true
-      if options[:aliases]
+
+      if aliases
         valid_aliases = valid_aliases?(tap.alias_dir, tap.formula_dir)
         success = false unless valid_aliases
       end
-      if options[:no_simulate]
-        success = false unless valid_formulae?(tap.formula_files)
-        success = false unless valid_casks?(tap.cask_files)
+
+      if no_simulate
+        success = false unless valid_formulae?(tap)
+        success = false unless valid_casks?(tap)
       else
-        arches = [:arm, :intel]
-        os_names = [*MacOSVersions::SYMBOLS.keys, :linux]
-        arches.each do |arch|
-          os_names.each do |os_name|
-            bottle_tag = Utils::Bottles::Tag.new(system: os_name, arch: arch)
-            next unless bottle_tag.valid_combination?
+        os_arch_combinations.each do |os, arch|
+          bottle_tag = Utils::Bottles::Tag.new(system: os, arch: arch)
+          next unless bottle_tag.valid_combination?
 
-            begin
-              Homebrew::SimulateSystem.arch = arch
-              Homebrew::SimulateSystem.os = os_name
-
-              success = false unless valid_formulae?(tap.formula_files, bottle_tag: bottle_tag)
-              success = false unless valid_casks?(tap.cask_files, os_name: os_name, arch: arch)
-            ensure
-              Homebrew::SimulateSystem.clear
-            end
+          Homebrew::SimulateSystem.with os: os, arch: arch do
+            success = false unless valid_formulae?(tap, bottle_tag: bottle_tag)
+            success = false unless valid_casks?(tap, os_name: os, arch: arch)
           end
         end
       end
+
       success
     end
 

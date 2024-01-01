@@ -3,12 +3,9 @@
 
 # This should not be made a constant or Tapioca will think it is part of a gem.
 dependency_require_map = {
-  "activesupport" => "active_support",
+  "activesupport" => "active_support/all",
   "ruby-macho"    => "macho",
 }.freeze
-
-# Don't start coverage tracking automatically
-ENV["SIMPLECOV_NO_DEFAULTS"] = "1"
 
 # Freeze lockfile
 Bundler.settings.set_command_option(:frozen, "1")

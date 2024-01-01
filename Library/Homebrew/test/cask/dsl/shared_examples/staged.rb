@@ -1,4 +1,3 @@
-# typed: false
 # frozen_string_literal: true
 
 require "cask/staged"
@@ -68,7 +67,11 @@ shared_examples Cask::Staged do
     allow(staged).to receive(:Pathname).and_return(fake_pathname)
 
     expect(fake_system_command).to receive(:run!)
-      .with("/usr/sbin/chown", args: ["-R", "--", "fake_user:staff", fake_pathname, fake_pathname], sudo: true)
+      .with(
+        "/usr/sbin/chown",
+        args: ["-R", "--", "fake_user:staff", fake_pathname, fake_pathname],
+        sudo: true,
+      )
 
     staged.set_ownership([fake_pathname.to_s, fake_pathname.to_s])
   end
@@ -79,7 +82,11 @@ shared_examples Cask::Staged do
     allow(staged).to receive(:Pathname).and_return(fake_pathname)
 
     expect(fake_system_command).to receive(:run!)
-      .with("/usr/sbin/chown", args: ["-R", "--", "other_user:other_group", fake_pathname], sudo: true)
+      .with(
+        "/usr/sbin/chown",
+        args: ["-R", "--", "other_user:other_group", fake_pathname],
+        sudo: true,
+      )
 
     staged.set_ownership(fake_pathname.to_s, user: "other_user", group: "other_group")
   end

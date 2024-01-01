@@ -1,4 +1,3 @@
-# typed: false
 # frozen_string_literal: true
 
 describe Utils do
@@ -6,6 +5,7 @@ describe Utils do
     subject do
       homebrew_env = ENV.select { |key, _| key.start_with?("HOMEBREW_") }
       Bundler.with_unbundled_env do
+        ENV.delete_if { |key,| key.start_with?("HOMEBREW_") }
         ENV.update(homebrew_env)
         quiet_system "#{HOMEBREW_LIBRARY_PATH}/utils/ruby_check_version_script.rb", required_ruby_version
       end

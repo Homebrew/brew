@@ -28,11 +28,11 @@ An executable script for a command named `extcmd` should be named `brew-extcmd`.
 
 | variable               | description |
 | ---------------------- | ----------- |
-| `HOMEBREW_CACHE`       | Where Homebrew caches downloaded tarballs to, by default `~/Library/Caches/Homebrew`.
-| `HOMEBREW_PREFIX`      | Where Homebrew installs software. `/usr/local` by default for macOS Intel, `/opt/homebrew` for Apple Silicon and `/home/linuxbrew/.linuxbrew` for Linux.
-| `HOMEBREW_CELLAR`      | The location of the Homebrew Cellar, where software is staged. This will be `HOMEBREW_PREFIX/Cellar` if that directory exists, or `HOMEBREW_REPOSITORY/Cellar` otherwise.
-| `HOMEBREW_LIBRARY_PATH`| The directory containing Homebrew’s own application code.
-| `HOMEBREW_REPOSITORY`  | The Git repository directory (i.e. where Homebrew’s `.git` directory lives). Usually either the same as `HOMEBREW_PREFIX` or a `Homebrew` subdirectory.
+| `HOMEBREW_CACHE`       | Where Homebrew caches downloaded tarballs to, by default `~/Library/Caches/Homebrew`. |
+| `HOMEBREW_PREFIX`      | Where Homebrew installs software. `/usr/local` by default for macOS Intel, `/opt/homebrew` for Apple Silicon and `/home/linuxbrew/.linuxbrew` for Linux. |
+| `HOMEBREW_CELLAR`      | The location of the Homebrew Cellar, where software is staged. This will be `HOMEBREW_PREFIX/Cellar` if that directory exists, or `HOMEBREW_REPOSITORY/Cellar` otherwise. |
+| `HOMEBREW_LIBRARY_PATH`| The directory containing Homebrew’s own application code. |
+| `HOMEBREW_REPOSITORY`  | The Git repository directory (i.e. where Homebrew’s `.git` directory lives). Usually either the same as `HOMEBREW_PREFIX` or a `Homebrew` subdirectory. |
 
 ## Providing `--help`
 

@@ -10,8 +10,6 @@ require "fiddle"
 #
 # @api private
 class LinkageChecker
-  extend T::Sig
-
   attr_reader :undeclared_deps, :keg, :formula, :store
 
   def initialize(keg, formula = nil, cache_db:, rebuild_cache: false)
@@ -21,8 +19,6 @@ class LinkageChecker
 
     @system_dylibs    = Set.new
     @broken_dylibs    = Set.new
-    @unexpected_broken_dylibs = nil
-    @unexpected_present_dylibs = nil
     @variable_dylibs  = Set.new
     @brewed_dylibs    = Hash.new { |h, k| h[k] = Set.new }
     @reverse_links    = Hash.new { |h, k| h[k] = Set.new }
@@ -33,6 +29,7 @@ class LinkageChecker
     @unwanted_system_dylibs = []
     @version_conflict_deps = []
     @files_missing_rpaths = []
+    @executable_path_dylibs = []
 
     check_dylibs(rebuild_cache: rebuild_cache)
   end
@@ -41,16 +38,15 @@ class LinkageChecker
     display_items "System libraries", @system_dylibs
     display_items "Homebrew libraries", @brewed_dylibs
     display_items "Indirect dependencies with linkage", @indirect_deps
-    display_items "Variable-referenced libraries", @variable_dylibs
+    display_items "@rpath-referenced libraries", @variable_dylibs
     display_items "Missing libraries", @broken_dylibs
     display_items "Broken dependencies", @broken_deps
     display_items "Undeclared dependencies with linkage", @undeclared_deps
     display_items "Dependencies with no linkage", @unnecessary_deps
     display_items "Unwanted system libraries", @unwanted_system_dylibs
     display_items "Files with missing rpath", @files_missing_rpaths
+    display_items "@executable_path references in libraries", @executable_path_dylibs
   end
-  alias generic_display_normal_output display_normal_output
-  private :generic_display_normal_output
 
   def display_reverse_output
     return if @reverse_links.empty?
@@ -67,8 +63,7 @@ class LinkageChecker
   end
 
   def display_test_output(puts_output: true, strict: false)
-    display_items "Missing libraries", broken_dylibs_with_expectations, puts_output: puts_output
-    display_items "Unused missing linkage information", unexpected_present_dylibs, puts_output: puts_output
+    display_items "Missing libraries", @broken_dylibs, puts_output: puts_output
     display_items "Broken dependencies", @broken_deps, puts_output: puts_output
     display_items "Unwanted system libraries", @unwanted_system_dylibs, puts_output: puts_output
     display_items "Conflicting libraries", @version_conflict_deps, puts_output: puts_output
@@ -76,62 +71,19 @@ class LinkageChecker
 
     display_items "Undeclared dependencies with linkage", @undeclared_deps, puts_output: puts_output
     display_items "Files with missing rpath", @files_missing_rpaths, puts_output: puts_output
+    display_items "@executable_path references in libraries", @executable_path_dylibs, puts_output: puts_output
   end
-  alias generic_display_test_output display_test_output
-  private :generic_display_test_output
 
   sig { params(test: T::Boolean, strict: T::Boolean).returns(T::Boolean) }
   def broken_library_linkage?(test: false, strict: false)
     raise ArgumentError, "Strict linkage checking requires test mode to be enabled." if strict && !test
 
-    issues = [@broken_deps, unexpected_broken_dylibs]
+    issues = [@broken_deps, @broken_dylibs]
     if test
-      issues += [@unwanted_system_dylibs, @version_conflict_deps, unexpected_present_dylibs]
-      issues += [@undeclared_deps, @files_missing_rpaths] if strict
+      issues += [@unwanted_system_dylibs, @version_conflict_deps]
+      issues += [@undeclared_deps, @files_missing_rpaths, @executable_path_dylibs] if strict
     end
     issues.any?(&:present?)
-  end
-  alias generic_broken_library_linkage? broken_library_linkage?
-  private :generic_broken_library_linkage?
-
-  def unexpected_broken_dylibs
-    return @unexpected_broken_dylibs if @unexpected_broken_dylibs
-
-    @unexpected_broken_dylibs = @broken_dylibs.reject do |broken_lib|
-      @formula.class.allowed_missing_libraries.any? do |allowed_missing_lib|
-        case allowed_missing_lib
-        when Regexp
-          allowed_missing_lib.match? broken_lib
-        when String
-          broken_lib.include? allowed_missing_lib
-        end
-      end
-    end
-  end
-
-  def unexpected_present_dylibs
-    @unexpected_present_dylibs ||= @formula.class.allowed_missing_libraries.reject do |allowed_missing_lib|
-      @broken_dylibs.any? do |broken_lib|
-        case allowed_missing_lib
-        when Regexp
-          allowed_missing_lib.match? broken_lib
-        when String
-          broken_lib.include? allowed_missing_lib
-        end
-      end
-    end
-  end
-
-  def broken_dylibs_with_expectations
-    output = {}
-    @broken_dylibs.each do |broken_lib|
-      output[broken_lib] = if unexpected_broken_dylibs.include? broken_lib
-        ["unexpected"]
-      else
-        ["expected"]
-      end
-    end
-    output
   end
 
   private
@@ -184,8 +136,11 @@ class LinkageChecker
 
         checked_dylibs << dylib
 
-        if dylib.start_with? "@"
+        if dylib.start_with? "@rpath"
           @variable_dylibs << dylib
+          next
+        elsif dylib.start_with?("@executable_path") && !Pathname(file).binary_executable?
+          @executable_path_dylibs << dylib
           next
         end
 
@@ -198,9 +153,8 @@ class LinkageChecker
 
           if (dep = dylib_to_dep(dylib))
             @broken_deps[dep] |= [dylib]
-          elsif MacOS.version >= :big_sur && dylib_found_via_dlopen(dylib)
+          elsif system_libraries_exist_in_cache? && dylib_found_via_dlopen(dylib)
             # If we cannot associate the dylib with a dependency, then it may be a system library.
-            # In macOS Big Sur and later, system libraries do not exist on-disk and instead exist in a cache.
             # If dlopen finds the dylib, then the linkage is not broken.
             @system_dylibs << dylib
           elsif !system_framework?(dylib)
@@ -228,6 +182,11 @@ class LinkageChecker
     store&.update!(keg_files_dylibs: keg_files_dylibs)
   end
   alias generic_check_dylibs check_dylibs
+
+  def system_libraries_exist_in_cache?
+    false
+  end
+  alias generic_system_libraries_exist_in_cache? system_libraries_exist_in_cache?
 
   def dylib_found_via_dlopen(dylib)
     Fiddle.dlopen(dylib).close

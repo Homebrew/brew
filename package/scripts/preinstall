@@ -1,32 +1,17 @@
 #!/bin/bash
+set -euo pipefail
 
-# Checked for installed CLT
-if [[ -e "/Library/Developer/CommandLineTools/usr/bin/git" ]]
+homebrew_pkg_user_plist="/var/tmp/.homebrew_pkg_user.plist"
+if [[ -f "${homebrew_pkg_user_plist}" ]] && [[ -n $(defaults read "${homebrew_pkg_user_plist}" HOMEBREW_PKG_USER) ]]
 then
   exit 0
 fi
 
-CLT_PLACEHOLDER="/tmp/.com.apple.dt.CommandLineTools.installondemand.in-progress"
-touch "${CLT_PLACEHOLDER}"
-
-CLT_PACKAGE=$(softwareupdate -l |
-  grep -B 1 "Command Line Tools" |
-  awk -F"*" '/^ *\*/ {print $2}' |
-  sed -e 's/^ *Label: //' -e 's/^ *//' |
-  sort -V |
-  tail -n1)
-softwareupdate -i "${CLT_PACKAGE}"
-rm -f "${CLT_PLACEHOLDER}"
-if ! [[ -f "/Library/Developer/CommandLineTools/usr/bin/git" ]]
+homebrew_pkg_user=$(echo "show State:/Users/ConsoleUser" | scutil | awk '/Name :/ { print $3 }')
+if [[ "${homebrew_pkg_user}" =~ _mbsetupuser|loginwindow|root ]] || [[ -z "${homebrew_pkg_user}" ]]
 then
-  if [[ -z "${COMMAND_LINE_INSTALL}" ]]
-  then
-    echo
-    printf "Requesting user install of Xcode Command Line Tools:"
-    /usr/bin/xcode-select --install
-  else
-    echo
-    printf "Run 'xcode-select --install' to install the Xcode Command Line Tools before running a headless brew install."
-    exit 1
-  fi
+  echo "No valid user for Homebrew installation. Log in before install or specify an install user."
+  exit 1
+else
+  exit 0
 fi

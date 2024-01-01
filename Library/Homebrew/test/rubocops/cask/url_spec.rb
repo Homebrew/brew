@@ -1,139 +1,85 @@
-# typed: false
 # frozen_string_literal: true
 
 require "rubocops/rubocop-cask"
-require "test/rubocops/cask/shared_examples/cask_cop"
 
-describe RuboCop::Cop::Cask::Url do
-  include CaskCop
+describe RuboCop::Cop::Cask::Url, :config do
+  it "accepts a `verified` value that does not start with a protocol" do
+    expect_no_offenses <<~CASK
+      cask "foo" do
+        url "https://example.com/download/foo-v1.2.0.dmg",
+            verified: "example.com/download/"
+      end
+    CASK
+  end
 
-  subject(:cop) { described_class.new }
+  it "reports an offense for a `verified` value that starts with a protocol" do
+    expect_offense <<~CASK
+      cask "foo" do
+        url "https://example.com/download/foo-v1.2.0.dmg",
+            verified: "https://example.com/download/"
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Verified URL parameter value should not contain a URL scheme.
+      end
+    CASK
 
-  context "when url 'verified' value does not start with a protocol" do
-    let(:source) do
-      <<~CASK
+    expect_correction <<~CASK
+      cask "foo" do
+        url "https://example.com/download/foo-v1.2.0.dmg",
+            verified: "example.com/download/"
+      end
+    CASK
+  end
+
+  context "when then URL does not have a path and ends with a /" do
+    it "accepts a `verified` value ending with a /" do
+      expect_no_offenses <<~CASK
         cask "foo" do
-          url "https://example.com/download/foo-v1.2.0.dmg",
-              verified: "example.com/download/"
+          url "https://example.org/",
+              verified: "example.org/"
         end
       CASK
     end
 
-    include_examples "does not report any offenses"
+    it "reports an offense for a `verified` value not ending a /" do
+      expect_offense <<~CASK
+        cask "foo" do
+          url "https://example.org/",
+              verified: "example.org"
+                        ^^^^^^^^^^^^^ Verified URL parameter value should end with a /.
+        end
+      CASK
+
+      expect_correction <<~CASK
+        cask "foo" do
+          url "https://example.org/",
+              verified: "example.org/"
+        end
+      CASK
+    end
   end
 
-  context "when url 'verified' value starts with a protocol" do
-    let(:source) do
-      <<~CASK
+  context "when the URL has a path and does not end with a /" do
+    it "accepts a `verified` value with one path component" do
+      expect_no_offenses <<~CASK
         cask "foo" do
-          url "https://example.com/download/foo-v1.2.0.dmg",
-              verified: "https://example.com/download/"
+          url "https://github.com/Foo",
+              verified: "github.com/Foo"
         end
       CASK
     end
 
-    let(:expected_offenses) do
-      [{
-        message:  "Cask/Url: Verified URL parameter value should not contain a URL scheme.",
-        severity: :convention,
-        line:     3,
-        column:   16,
-        source:   "\"https://example.com/download/\"",
-      }]
-    end
-
-    let(:correct_source) do
-      <<~CASK
+    it "accepts a `verified` value with two path components" do
+      expect_no_offenses <<~CASK
         cask "foo" do
-          url "https://example.com/download/foo-v1.2.0.dmg",
-              verified: "example.com/download/"
+          url "https://github.com/foo/foo.git",
+              verified: "github.com/foo/foo"
         end
       CASK
     end
-
-    include_examples "reports offenses"
-    include_examples "autocorrects source"
   end
 
-  context "when url 'verified' value does not have a path component" do
-    context "when the URL ends with a slash" do
-      let(:source) do
-        <<~CASK
-          cask "foo" do
-            url "https://example.org/",
-                verified: "example.org/"
-          end
-        CASK
-      end
-
-      include_examples "does not report any offenses"
-    end
-
-    context "when the URL does not end with a slash" do
-      let(:source) do
-        <<~CASK
-          cask "foo" do
-            url "https://example.org/",
-                verified: "example.org"
-          end
-        CASK
-      end
-
-      let(:expected_offenses) do
-        [{
-          message:  "Cask/Url: Verified URL parameter value should end with a /.",
-          severity: :convention,
-          line:     3,
-          column:   16,
-          source:   "\"example.org\"",
-        }]
-      end
-
-      let(:correct_source) do
-        <<~CASK
-          cask "foo" do
-            url "https://example.org/",
-                verified: "example.org/"
-          end
-        CASK
-      end
-
-      include_examples "reports offenses"
-      include_examples "autocorrects source"
-    end
-  end
-
-  context "when the URL does not end with a slash" do
-    describe "and it has one path component" do
-      let(:source) do
-        <<~CASK
-          cask "foo" do
-            url "https://github.com/Foo",
-                verified: "github.com/Foo"
-          end
-        CASK
-      end
-
-      include_examples "does not report any offenses"
-    end
-
-    describe "and it has two path components" do
-      let(:source) do
-        <<~CASK
-          cask "foo" do
-            url "https://github.com/foo/foo.git",
-                verified: "github.com/foo/foo"
-          end
-        CASK
-      end
-
-      include_examples "does not report any offenses"
-    end
-  end
-
-  context "when the url ends with a / and the verified value does too" do
-    let(:source) do
-      <<~CASK
+  context "when the url ends with a /" do
+    it "accepts a `verified` value ending with a /" do
+      expect_no_offenses <<~CASK
         cask "foo" do
           url "https://github.com/",
               verified: "github.com/"
@@ -141,58 +87,36 @@ describe RuboCop::Cop::Cask::Url do
       CASK
     end
 
-    include_examples "does not report any offenses"
-  end
-
-  context "when the url ends with a / and the verified value does not" do
-    let(:source) do
-      <<~CASK
+    it "reports an offense for a `verified` value not ending with a /" do
+      expect_offense <<~CASK
         cask "foo" do
           url "https://github.com/",
               verified: "github.com"
+                        ^^^^^^^^^^^^ Verified URL parameter value should end with a /.
         end
       CASK
-    end
 
-    let(:expected_offenses) do
-      [{
-        message:  "Cask/Url: Verified URL parameter value should end with a /.",
-        severity: :convention,
-        line:     3,
-        column:   16,
-        source:   "\"github.com\"",
-      }]
-    end
-
-    let(:correct_source) do
-      <<~CASK
+      expect_correction <<~CASK
         cask "foo" do
           url "https://github.com/",
               verified: "github.com/"
         end
       CASK
     end
-
-    include_examples "reports offenses"
-    include_examples "autocorrects source"
   end
 
-  context "when url 'verified' value has a path component that ends with a /" do
-    let(:source) do
-      <<~CASK
-        cask "foo" do
-          url "https://github.com/Foo/foo/releases/download/v1.2.0/foo-v1.2.0.dmg",
-              verified: "github.com/Foo/foo/"
-        end
-      CASK
-    end
-
-    include_examples "does not report any offenses"
+  it "accepts a `verified` value with a path ending with a /" do
+    expect_no_offenses <<~CASK
+      cask "foo" do
+        url "https://github.com/Foo/foo/releases/download/v1.2.0/foo-v1.2.0.dmg",
+            verified: "github.com/Foo/foo/"
+      end
+    CASK
   end
 
-  context "when the url has interpolation in it and the verified url ends with a /" do
-    let(:source) do
-      <<~CASK
+  context "when the URL uses interpolation" do
+    it "accepts a `verified` value with a path ending with a /" do
+      expect_no_offenses <<~CASK
         cask "foo" do
           version "1.2.3"
           url "Cask/Url: https://example.com/download/foo-v\#{version}.dmg",
@@ -200,40 +124,22 @@ describe RuboCop::Cop::Cask::Url do
         end
       CASK
     end
-
-    include_examples "does not report any offenses"
   end
 
-  context "when the url 'verified' value has a path component that doesn't end with a /" do
-    let(:source) do
-      <<~CASK
-        cask "foo" do
-          url "https://github.com/Foo/foo/releases/download/v1.2.0/foo-v1.2.0.dmg",
-              verified: "github.com/Foo/foo"
-        end
-      CASK
-    end
+  it "reports an offense for a `verified` value with a path component that doesn't end with a /" do
+    expect_offense <<~CASK
+      cask "foo" do
+        url "https://github.com/Foo/foo/releases/download/v1.2.0/foo-v1.2.0.dmg",
+            verified: "github.com/Foo/foo"
+                      ^^^^^^^^^^^^^^^^^^^^ Verified URL parameter value should end with a /.
+      end
+    CASK
 
-    let(:expected_offenses) do
-      [{
-        message:  "Cask/Url: Verified URL parameter value should end with a /.",
-        severity: :convention,
-        line:     3,
-        column:   16,
-        source:   "\"github.com/Foo/foo\"",
-      }]
-    end
-
-    let(:correct_source) do
-      <<~CASK
-        cask "foo" do
-          url "https://github.com/Foo/foo/releases/download/v1.2.0/foo-v1.2.0.dmg",
-              verified: "github.com/Foo/foo/"
-        end
-      CASK
-    end
-
-    include_examples "reports offenses"
-    include_examples "autocorrects source"
+    expect_correction <<~CASK
+      cask "foo" do
+        url "https://github.com/Foo/foo/releases/download/v1.2.0/foo-v1.2.0.dmg",
+            verified: "github.com/Foo/foo/"
+      end
+    CASK
   end
 end

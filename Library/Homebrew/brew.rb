@@ -15,14 +15,6 @@ end
 
 std_trap = trap("INT") { exit! 130 } # no backtrace thanks
 
-# check ruby version before requiring any modules.
-REQUIRED_RUBY_X, REQUIRED_RUBY_Y, = ENV.fetch("HOMEBREW_REQUIRED_RUBY_VERSION").split(".").map(&:to_i)
-RUBY_X, RUBY_Y, = RUBY_VERSION.split(".").map(&:to_i)
-if RUBY_X < REQUIRED_RUBY_X || (RUBY_X == REQUIRED_RUBY_X && RUBY_Y < REQUIRED_RUBY_Y)
-  raise "Homebrew must be run under Ruby #{REQUIRED_RUBY_X}.#{REQUIRED_RUBY_Y}! " \
-        "You're running #{RUBY_VERSION}."
-end
-
 require_relative "global"
 
 begin
@@ -97,7 +89,7 @@ begin
     exit Homebrew.failed? ? 1 : 0
   elsif Commands.external_cmd_path(cmd)
     %w[CACHE LIBRARY_PATH].each do |env|
-      ENV["HOMEBREW_#{env}"] = Object.const_get("HOMEBREW_#{env}").to_s
+      ENV["HOMEBREW_#{env}"] = Object.const_get(:"HOMEBREW_#{env}").to_s
     end
     exec "brew-#{cmd}", *ARGV
   else
@@ -141,7 +133,7 @@ rescue UsageError => e
   Homebrew::Help.help cmd, remaining_args: args.remaining, usage_error: e.message
 rescue SystemExit => e
   onoe "Kernel.exit" if args.debug? && !e.success?
-  $stderr.puts e.backtrace if args.debug?
+  $stderr.puts Utils::Backtrace.clean(e) if args.debug?
   raise
 rescue Interrupt
   $stderr.puts # seemingly a newline is typical
@@ -175,7 +167,7 @@ rescue RuntimeError, SystemCallError => e
   raise if e.message.empty?
 
   onoe e
-  $stderr.puts e.backtrace if args.debug?
+  $stderr.puts Utils::Backtrace.clean(e) if args.debug?
 
   exit 1
 rescue MethodDeprecatedError => e
@@ -184,7 +176,7 @@ rescue MethodDeprecatedError => e
     $stderr.puts "If reporting this issue please do so at (not Homebrew/brew or Homebrew/homebrew-core):"
     $stderr.puts "  #{Formatter.url(e.issues_url)}"
   end
-  $stderr.puts e.backtrace if args.debug?
+  $stderr.puts Utils::Backtrace.clean(e) if args.debug?
   exit 1
 rescue Exception => e # rubocop:disable Lint/RescueException
   onoe e
@@ -196,7 +188,7 @@ rescue Exception => e # rubocop:disable Lint/RescueException
       $stderr.puts "  #{Formatter.url(OS::ISSUES_URL)}"
     end
   end
-  $stderr.puts e.backtrace
+  $stderr.puts Utils::Backtrace.clean(e)
   exit 1
 else
   exit 1 if Homebrew.failed?

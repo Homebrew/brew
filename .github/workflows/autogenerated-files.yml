@@ -24,9 +24,13 @@ jobs:
       - name: Set up Homebrew
         id: set-up-homebrew
         uses: Homebrew/actions/setup-homebrew@master
+        with:
+          core: false
+          cask: false
+          test-bot: true
 
       - name: Cache Bundler RubyGems
-        uses: actions/cache@v1
+        uses: actions/cache@v3
         with:
           path: ${{ steps.set-up-homebrew.outputs.gems-path }}
           key: ${{ runner.os }}-rubygems-${{ steps.set-up-homebrew.outputs.gems-hash }}

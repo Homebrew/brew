@@ -1,4 +1,3 @@
-# typed: false
 # frozen_string_literal: true
 
 require_relative "../../cli/parser"
@@ -29,17 +28,17 @@ describe Homebrew::CLI::Parser do
         expect { args.no_positive? }.to raise_error(NoMethodError)
       end
 
-      it "sets the positive name to false if the negative flag is passed" do
+      it "sets the positive name to false if the negative switch is passed" do
         args = parser.parse(["--no-positive"])
         expect(args).not_to be_positive
       end
 
-      it "sets the positive name to true if the positive flag is passed" do
+      it "sets the positive name to true if the positive switch is passed" do
         args = parser.parse(["--positive"])
         expect(args).to be_positive
       end
 
-      it "does not set the positive name if the positive flag is not passed" do
+      it "does not set the positive name if the positive switch is not passed" do
         args = parser.parse([])
         expect(args.positive?).to be_nil
       end
@@ -63,7 +62,7 @@ describe Homebrew::CLI::Parser do
         end.to raise_error(/invalid option/)
       end
 
-      it "sets the negative name to true if the negative flag is passed" do
+      it "sets the negative name to true if the negative switch is passed" do
         args = parser.parse(["--no-positive"])
         expect(args.no_positive?).to be true
       end
@@ -236,16 +235,14 @@ describe Homebrew::CLI::Parser do
     end
 
     it "prioritizes cli arguments over env vars when they conflict" do
-      allow(Homebrew::EnvConfig).to receive(:switch_a?).and_return(true)
-      allow(Homebrew::EnvConfig).to receive(:switch_b?).and_return(false)
+      allow(Homebrew::EnvConfig).to receive_messages(switch_a?: true, switch_b?: false)
       args = parser.parse(["--switch-b"])
       expect(args.switch_a?).to be false
       expect(args).to be_switch_b
     end
 
     it "raises an exception on constraint violation when both are env vars" do
-      allow(Homebrew::EnvConfig).to receive(:switch_a?).and_return(true)
-      allow(Homebrew::EnvConfig).to receive(:switch_b?).and_return(true)
+      allow(Homebrew::EnvConfig).to receive_messages(switch_a?: true, switch_b?: true)
       expect { parser.parse([]) }.to raise_error(Homebrew::CLI::OptionConflictError)
     end
   end

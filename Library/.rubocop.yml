@@ -12,7 +12,7 @@ inherit_mode:
     - Exclude
 
 AllCops:
-  TargetRubyVersion: 2.6
+  TargetRubyVersion: 3.1
   ActiveSupportExtensionsEnabled: true
   NewCops: enable
   Include:
@@ -24,6 +24,8 @@ AllCops:
     - "Homebrew/bin/*"
     - "Homebrew/vendor/**/*"
     - "Taps/*/*/vendor/**/*"
+  SuggestExtensions:
+    rubocop-minitest: false
 
 Cask/Desc:
   Description: "Ensure that the desc stanza conforms to various content and style checks."
@@ -31,10 +33,6 @@ Cask/Desc:
 
 Cask/HomepageUrlTrailingSlash:
   Description: "Ensure that the homepage url has a slash after the domain name."
-  Enabled: true
-
-Cask/NoDslVersion:
-  Description: "Do not use the deprecated DSL version syntax in your cask header."
   Enabled: true
 
 Cask/StanzaGrouping:
@@ -168,7 +166,6 @@ Naming/HeredocDelimiterNaming:
 Naming/InclusiveLanguage:
   CheckStrings: true
   FlaggedTerms:
-    # TODO: If possible, make this stricter.
     slave:
       AllowedRegex:
         - "gitslave" # Used in formula `gitslave`
@@ -191,13 +188,13 @@ Naming/MethodParameterName:
 Naming/VariableNumber:
   Enabled: false
 
-# Does not hinder readability, so might as well enable it.
-Performance/CaseWhenSplat:
-  Enabled: true
-
 # Makes code less readable for minor performance increases.
 Performance/Caller:
   Enabled: false
+
+# Does not hinder readability, so might as well enable it.
+Performance/CaseWhenSplat:
+  Enabled: true
 
 # Makes code less readable for minor performance increases.
 Performance/MethodObjectAsBlock:
@@ -211,39 +208,20 @@ Rails:
     - "Homebrew/rubocops/**/*"
 
 # These relate to ActiveSupport and not other parts of Rails.
-Rails/ActiveSupportAliases:
-  Enabled: true
 Rails/Blank:
   Enabled: true
 Rails/CompactBlank:
   Enabled: true
-Rails/Delegate:
-  Enabled: false # TODO
-Rails/DelegateAllowBlank:
-  Enabled: true
-Rails/DurationArithmetic:
-  Enabled: true
-Rails/ExpandedDateRange:
-  Enabled: true
-Rails/Inquiry:
-  Enabled: true
 Rails/NegateInclude:
-  Enabled: true
-Rails/PluralizationGrammar:
   Enabled: true
 Rails/Presence:
   Enabled: true
 Rails/Present:
   Enabled: true
-Rails/RelativeDateConstant:
-  Enabled: true
-Rails/SafeNavigation:
-  Enabled: true
+  Exclude:
+    # `present?` is defined as `!blank?` wihin this file
+    - "Homebrew/extend/blank.rb"
 Rails/SafeNavigationWithBlank:
-  Enabled: true
-Rails/StripHeredoc:
-  Enabled: true
-Rails/ToFormattedS:
   Enabled: true
 
 # Intentionally disabled as it doesn't fit with our code style.
@@ -252,6 +230,8 @@ RSpec/AnyInstance:
 RSpec/DescribeClass:
   Enabled: false
 RSpec/FilePath:
+  Enabled: false
+RSpec/SpecFilePathFormat:
   Enabled: false
 RSpec/StubbedMock:
   Enabled: false
@@ -280,20 +260,29 @@ RSpec/Focus:
 Sorbet/ConstantsFromStrings:
   Enabled: false
 
+# This is already the default
 Sorbet/FalseSigil:
+  Enabled: false
+
+# T::Sig is monkey-patched into Module
+Sorbet/RedundantExtendTSig:
+  Enabled: true
+
+Sorbet/StrictSigil:
+  Enabled: true
+  inherit_mode:
+    override:
+      - Include
+  Include:
+    - "**/*.rbi"
+
+Sorbet/TrueSigil:
+  Enabled: true
   Exclude:
     - "Taps/**/*"
     - "/**/{Formula,Casks}/**/*.rb"
     - "**/{Formula,Casks}/**/*.rb"
-    - "Homebrew/test/**/Casks/**/*.rb"
-
-Sorbet/StrictSigil:
-  inherit_mode:
-    override:
-      - Include
-  Enabled: true
-  Include:
-    - "**/*.rbi"
+    - "Homebrew/test/**/*.rb"
 
 # Require &&/|| instead of and/or
 Style/AndOr:
@@ -364,8 +353,18 @@ Style/HashAsLastArrayItem:
     - "/**/Formula/**/*.rb"
     - "**/Formula/**/*.rb"
 
-# would rather freeze too much than too little
+Style/InvertibleUnlessCondition:
+  Enabled: true
+  InverseMethods:
+    # Favor `if a != b` over `unless a == b`
+    :==: :!=
+    # Unset this (prefer `unless a.zero?` over `if a.nonzero?`)
+    :zero?:
+    # Don't require non-standard `exclude?` (for now at least) - it's not available in every file
+    :include?:
+
 Style/MutableConstant:
+  # would rather freeze too much than too little
   EnforcedStyle: strict
 
 # Zero-prefixed octal literals are widely used and understood.
@@ -379,12 +378,12 @@ Style/NumericLiterals:
   Exclude:
     - "**/Brewfile"
 
-# TODO: These are pre-existing violations and should be corrected
-#   to define methods so that call sites can be type-checked.
 Style/OpenStructUse:
   Exclude:
-    - "Homebrew/cli/args.rb"
     - "Taps/**/*.rb"
+    # TODO: This is a pre-existing violation and should be corrected
+    #   to define methods so that call sites can be type-checked.
+    - "Homebrew/cli/args.rb"
 
 # Rescuing `StandardError` is an understood default.
 Style/RescueStandardError:
@@ -418,6 +417,10 @@ Style/StringLiteralsInInterpolation:
 Style/StringMethods:
   Enabled: true
 
+# Treating this the same as Style/MethodCallWithArgsParentheses
+Style/SuperWithArgsParentheses:
+  Enabled: false
+
 # An array of symbols is more readable than a symbol array
 # and also allows for easier grepping.
 Style/SymbolArray:
@@ -443,3 +446,21 @@ Style/UnlessLogicalOperators:
 # a bit confusing to non-Rubyists but useful for longer arrays
 Style/WordArray:
   MinSize: 4
+
+# TODO: Enable these cops once https://github.com/Homebrew/brew/pull/16337#issuecomment-1855668516 is done.
+Lint/RedundantDirGlobSort:
+  Enabled: false
+Naming/BlockForwarding:
+  Enabled: false
+Performance/BindCall:
+  Enabled: false
+Performance/MapCompact:
+  Enabled: false
+Style/ArgumentsForwarding:
+  Enabled: false
+Style/ArrayIntersect:
+  Enabled: false
+Style/HashSyntax:
+  EnforcedShorthandSyntax: either
+Style/RedundantFreeze:
+  Enabled: false

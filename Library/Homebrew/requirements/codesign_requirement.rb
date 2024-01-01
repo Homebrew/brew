@@ -5,8 +5,6 @@
 #
 # @api private
 class CodesignRequirement < Requirement
-  extend T::Sig
-
   fatal true
 
   def initialize(tags)

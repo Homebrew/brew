@@ -1,4 +1,3 @@
-# typed: false
 # frozen_string_literal: true
 
 require "formulary"
@@ -16,8 +15,7 @@ module Test
         allow(Formulary).to receive(:loader_for).and_call_original if call_original
 
         loader = double(get_formula: formula)
-        allow(Formulary).to receive(:loader_for).with(ref, from: :keg).and_return(loader)
-        allow(Formulary).to receive(:loader_for).with(ref, from: nil).and_return(loader)
+        allow(Formulary).to receive(:loader_for).with(ref, any_args).and_return(loader)
       end
     end
   end

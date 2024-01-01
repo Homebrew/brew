@@ -36,10 +36,6 @@ module Homebrew
           lzma is now part of the xz formula:
             brew install xz
         EOS
-        when "sshpass" then <<~EOS
-          We won't add sshpass because it makes it too easy for novice SSH users to
-          ruin SSH's security.
-        EOS
         when "gsutil" then <<~EOS
           gsutil is available through pip:
             pip3 install gsutil

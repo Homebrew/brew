@@ -35,7 +35,7 @@ File.open("#{__dir__}/../../env_config.rbi", "w") do |file|
   def self.#{method}; end
     RUBY
 
-    file.write("\n") unless method == methods.last
+    file.write("\n") if method != methods.last
   end
 
   file.puts "end"

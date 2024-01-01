@@ -29,8 +29,6 @@ module Homebrew
       #
       # @api public
       class Gnu
-        extend T::Sig
-
         NICE_NAME = "GNU"
 
         # The `Regexp` used to determine if the strategy applies to the URL.

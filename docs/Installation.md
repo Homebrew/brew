@@ -2,20 +2,26 @@
 
 Instructions for a supported install of Homebrew are on the [homepage](https://brew.sh).
 
-This script installs Homebrew to its default, supported, best prefix (`/usr/local` for macOS Intel, `/opt/homebrew` for Apple Silicon and `/home/linuxbrew/.linuxbrew` for Linux) so that [you don’t need *sudo* after Homebrew's initial installation](FAQ.md#why-does-homebrew-say-sudo-is-bad) when you `brew install`. This prefix is required for most bottles (binary packages) to be used. It is a careful script; it can be run even if you have stuff installed in the preferred prefix already. It tells you exactly what it will do before it does it too. You have to confirm everything it will do before it starts.
+The script installs Homebrew to its default, supported, best prefix (`/opt/homebrew` for Apple Silicon, `/usr/local` for macOS Intel and `/home/linuxbrew/.linuxbrew` for Linux) so that [you don’t need *sudo* after Homebrew's initial installation](FAQ.md#why-does-homebrew-say-sudo-is-bad) when you `brew install`. This prefix is required for most bottles (binary packages) to be used. It is a careful script; it can be run even if you have stuff installed in the preferred prefix already. It tells you exactly what it will do before it does it too. You have to confirm everything it will do before it starts.
+
+The macOS `.pkg` installer also installs Homebrew to its default prefix (`/opt/homebrew` for Apple Silicon and `/usr/local` for macOS Intel) for the same reasons as above. It's available on [Homebrew/brew's latest GitHub release](https://github.com/Homebrew/brew/releases/latest). To specify an alternate install user, like in situations where the package is installed at the login window before a user has logged in, write a property list file to `/var/tmp/.homebrew_pkg_user.plist` with the value `HOMEBREW_PKG_USER`. For example, `defaults write /var/tmp/.homebrew_pkg_user HOMEBREW_PKG_USER penny`. The file and user must exist prior to install.
 
 ## macOS Requirements
 
 * A 64-bit Intel CPU or Apple Silicon CPU <sup>[1](#1)</sup>
-* macOS Big Sur (11) (or higher) <sup>[2](#2)</sup>
+* macOS Monterey (12) (or higher) <sup>[2](#2)</sup>
 * Command Line Tools (CLT) for Xcode (from `xcode-select --install` or
   [https://developer.apple.com/download/all/](https://developer.apple.com/download/all/)) or
   [Xcode](https://itunes.apple.com/us/app/xcode/id497799835) <sup>[3](#3)</sup>
 * The Bourne-again shell for installation (i.e. `bash`) <sup>[4](#4)</sup>
 
-## Git Remote Mirroring
+## Advanced Configuration
 
-You can use geolocalized Git mirrors to speed up Homebrew's installation and `brew update` by setting `HOMEBREW_BREW_GIT_REMOTE` and/or `HOMEBREW_CORE_GIT_REMOTE` in your shell environment with this script:
+The Homebrew installer offers various advanced configuration settings. **Most users can skip this section and instead follow the instructions on the [homepage](https://brew.sh)!**
+
+### Git Remote Mirroring
+
+If you have issues connecting to GitHub.com, you can use Git mirrors for Homebrew's installation and `brew update` by setting `HOMEBREW_BREW_GIT_REMOTE` and/or `HOMEBREW_CORE_GIT_REMOTE` in your shell environment with this script:
 
 ```bash
 export HOMEBREW_BREW_GIT_REMOTE="..."  # put your Git mirror of Homebrew/brew here
@@ -23,9 +29,11 @@ export HOMEBREW_CORE_GIT_REMOTE="..."  # put your Git mirror of Homebrew/homebre
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)"
 ```
 
-The default Git remote will be used if the corresponding environment variable is unset.
+The default Git remote will be used if the corresponding environment variable is unset and works best for most users.
 
-## Default Tap Cloning
+**Note:** if you set these variables you are granting these repositories the same level of trust you currently grant to Homebrew itself. You should be extremely confident that these repositories will not be compromised.
+
+### Default Tap Cloning
 
 You can instruct Homebrew to return to pre-4.0.0 behaviour by cloning the Homebrew/homebrew-core tap during installation by setting the `HOMEBREW_NO_INSTALL_FROM_API` environment variable with the following:
 
@@ -34,11 +42,9 @@ export HOMEBREW_NO_INSTALL_FROM_API=1
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)"
 ```
 
-This will make Homebrew install formulae and casks from the `homebrew/core` and `homebrew/cask` taps using local checkouts of these repositories instead of Homebrew’s API.
+This will make Homebrew install formulae and casks from the `homebrew/core` and `homebrew/cask` taps using local checkouts of these repositories instead of Homebrew’s API. Unless you are a Homebrew maintainer or contributor, you should probably not globally enable this setting. It can easily be enabled later after installation should it be necessary.
 
-Note, this will take effect in supported configurations (i.e. using the default Homebrew prefix and, if on macOS, on a supported version).
-
-## Unattended installation
+### Unattended installation
 
 If you want a non-interactive run of the Homebrew installer that doesn't prompt for passwords (e.g. in automation scripts), prepend [`NONINTERACTIVE=1`](https://github.com/Homebrew/install/#install-homebrew-on-macos-or-linux) to the installation command.
 
@@ -84,12 +90,12 @@ Create a Homebrew installation wherever you extract the tarball. Whichever `brew
 
 ## Uninstallation
 
-Uninstallation is documented in the [FAQ](FAQ.md).
+Uninstallation is documented in the [FAQ](FAQ.md#how-do-i-uninstall-homebrew).
 
-<a name="1"><sup>1</sup></a> For 32-bit or PPC support see [Tigerbrew](https://github.com/mistydemeo/tigerbrew).
+<a data-proofer-ignore name="1"><sup>1</sup></a> For 32-bit or PPC support see [Tigerbrew](https://github.com/mistydemeo/tigerbrew).
 
-<a name="2"><sup>2</sup></a> macOS 11 (Big Sur) or higher is best and supported, 10.11 (El Capitan) – 10.15 (Catalina) are unsupported but may work and 10.10 (Yosemite) and older will not run Homebrew at all. For 10.4 (Tiger) – 10.6 (Snow Leopard) see [Tigerbrew](https://github.com/mistydemeo/tigerbrew).
+<a data-proofer-ignore name="2"><sup>2</sup></a> macOS 12 (Monterey) or higher is best and supported, 10.11 (El Capitan) – 11 (Big Sur) are unsupported but may work and 10.10 (Yosemite) and older will not run Homebrew at all. For 10.4 (Tiger) – 10.6 (Snow Leopard) see [Tigerbrew](https://github.com/mistydemeo/tigerbrew).
 
-<a name="3"><sup>3</sup></a> You may need to install Xcode, the CLT, or both depending on the formula, to install a bottle (binary package) which is the only supported configuration. Downloading Xcode may require an Apple Developer account on older versions of Mac OS X. Sign up for free at [Apple's website](https://developer.apple.com/register/index.action).
+<a data-proofer-ignore name="3"><sup>3</sup></a> You may need to install Xcode, the CLT, or both depending on the formula, to install a bottle (binary package) which is the only supported configuration. Downloading Xcode may require an Apple Developer account on older versions of Mac OS X. Sign up for free at [Apple's website](https://developer.apple.com/account/).
 
-<a name="4"><sup>4</sup></a> The one-liner installation method found on [brew.sh](https://brew.sh) uses the Bourne-again shell at `/bin/bash`. Notably, `zsh`, `fish`, `tcsh` and `csh` will not work.
+<a data-proofer-ignore name="4"><sup>4</sup></a> The one-liner installation method found on [brew.sh](https://brew.sh) uses the Bourne-again shell at `/bin/bash`. Notably, `zsh`, `fish`, `tcsh` and `csh` will not work.

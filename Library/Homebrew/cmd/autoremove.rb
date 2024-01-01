@@ -1,13 +1,12 @@
-# typed: true
+# typed: strict
 # frozen_string_literal: true
 
 require "cleanup"
 require "cli/parser"
 
 module Homebrew
-  module_function
-
-  def autoremove_args
+  sig { returns(CLI::Parser) }
+  def self.autoremove_args
     Homebrew::CLI::Parser.new do
       description <<~EOS
         Uninstall formulae that were only installed as a dependency of another formula and are now no longer needed.
@@ -19,7 +18,8 @@ module Homebrew
     end
   end
 
-  def autoremove
+  sig { void }
+  def self.autoremove
     args = autoremove_args.parse
 
     Cleanup.autoremove(dry_run: args.dry_run?)

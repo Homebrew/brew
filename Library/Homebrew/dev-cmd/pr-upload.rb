@@ -2,12 +2,11 @@
 # frozen_string_literal: true
 
 require "cli/parser"
+require "formula"
 require "github_packages"
 require "github_releases"
 
 module Homebrew
-  extend T::Sig
-
   module_function
 
   sig { returns(CLI::Parser) }
@@ -93,6 +92,8 @@ module Homebrew
     odie "No bottle JSON files found in the current working directory" if json_files.blank?
     bottles_hash = bottles_hash_from_json_files(json_files, args)
 
+    Homebrew.install_bundler_gems!(groups: ["pr_upload"])
+
     unless args.upload_only?
       bottle_args = ["bottle", "--merge", "--write"]
       bottle_args << "--verbose" if args.verbose?
@@ -125,10 +126,6 @@ module Homebrew
       end
 
       check_bottled_formulae!(bottles_hash)
-
-      # This will be run by `brew bottle` and `brew audit` later so run it first
-      # to not start spamming during normal output.
-      Homebrew.install_bundler_gems!
 
       safe_system HOMEBREW_BREW_FILE, *bottle_args
 

@@ -24,7 +24,7 @@ File.open("#{File.dirname(__FILE__)}/../../utils/tty.rbi", "w") do |file|
   def self.#{method}; end
     RUBY
 
-    file.write("\n") unless methods.last == method
+    file.write("\n") if methods.last != method
   end
 
   file.write("end\n")

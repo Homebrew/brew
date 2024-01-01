@@ -1,6 +1,9 @@
 {
   "token": "everything",
   "full_token": "everything",
+  "old_tokens": [
+
+  ],
   "tap": "homebrew/cask",
   "name": [
     "Everything"
@@ -16,9 +19,8 @@
   },
   "appcast": null,
   "version": "1.2.3",
-  "versions": {
-  },
   "installed": null,
+  "installed_time": null,
   "outdated": false,
   "sha256": "c64c05bdc0be845505d6e55e69e696a7f50d40846e76155f0c85d5ff5e7bbb84",
   "artifacts": [
@@ -73,7 +75,7 @@
       ]
     }
   ],
-  "caveats": "Installing everything might take a while...\n\neverything requires a kernel extension to work.\nIf the installation fails, retry after you enable it in:\n  System Preferences → Security & Privacy → General\n\nFor more information, refer to vendor documentation or this Apple Technical Note:\n  https://developer.apple.com/library/content/technotes/tn2459/_index.html\n",
+  "caveats": "Installing everything might take a while...\n\neverything requires a kernel extension to work.\nIf the installation fails, retry after you enable it in:\n  System Settings → Privacy & Security\n\nFor more information, refer to vendor documentation or this Apple Technical Note:\n  https://developer.apple.com/library/content/technotes/tn2459/_index.html\n",
   "depends_on": {
     "cask": [
       "something"
@@ -88,6 +90,12 @@
     "type": "naked"
   },
   "auto_updates": true,
+  "deprecated": false,
+  "deprecation_date": null,
+  "deprecation_reason": null,
+  "disabled": false,
+  "disable_date": null,
+  "disable_reason": null,
   "tap_git_head": null,
   "languages": [
     "en",

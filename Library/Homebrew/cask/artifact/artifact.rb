@@ -9,8 +9,6 @@ module Cask
     #
     # @api private
     class Artifact < Moved
-      extend T::Sig
-
       sig { returns(String) }
       def self.english_name
         "Generic Artifact"
@@ -22,7 +20,7 @@ module Cask
 
         raise CaskInvalidError.new(cask.token, "No source provided for #{english_name}.") if source.blank?
 
-        unless options.try(:key?, :target)
+        unless options&.key?(:target)
           raise CaskInvalidError.new(cask.token, "#{english_name} '#{source}' requires a target.")
         end
 

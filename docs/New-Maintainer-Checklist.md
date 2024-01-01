@@ -1,6 +1,15 @@
 # New Maintainer Checklist
 
-**This is a guide used by existing maintainers to invite new maintainers. You might find it interesting but there's nothing here users should have to know.**
+**Existing maintainers and project leadership uses this guide to invite and onboard new maintainers and project leaders.**
+**General Homebrew users might find it interesting but there's nothing here _users_ should have to know.**
+
+- [Homebrew Maintainers](#maintainers)
+- [Project Leadership Committee](#plc)
+- [Technical Steering Committee](#tsc)
+- [Owners](#owners)
+- [General Members](#members)
+
+## Maintainers
 
 There's someone who has been making consistently high-quality contributions to Homebrew and shown themselves able to make slightly more advanced contributions than just e.g. formula updates? Let's invite them to be a maintainer!
 
@@ -60,7 +69,7 @@ If they accept, follow a few steps to get them set up:
 
 If there are problems, ask them to step down as a maintainer.
 
-When they step down as a maintainer for any reason, revoke their access to all of the above.
+When they cease to be a maintainer for any reason, revoke their access to all of the above.
 
 In the interests of loosely verifying maintainer identity and building camaraderie, if you find yourself in the same town (e.g living, visiting or at a conference) as another Homebrew maintainer you should make the effort to meet up. If you do so, you can [expense your meal](https://docs.opencollective.com/help/expenses-and-getting-paid/submitting-expenses) (within [Homebrew's reimbursable expense policies](https://opencollective.com/homebrew/expenses)). This is a more relaxed version of similar policies used by other projects, e.g. the Debian system to meet in person to sign keys with legal ID verification.
 
@@ -74,7 +83,7 @@ If a maintainer or member is elected to the Homebrew's [Project Leadership Commi
 - Make them [billing managers](https://github.com/organizations/Homebrew/settings/billing) and [moderators](https://github.com/organizations/Homebrew/settings/moderators) on the Homebrew GitHub organisation
 - Invite them to the [`homebrew` private 1Password](https://homebrew.1password.com/people) and add them to the "plc" group.
 
-When they step down as a PLC member, revoke or downgrade their access to all of the above.
+When they cease to be a PLC member, revoke or downgrade their access to all of the above.
 
 ## TSC
 
@@ -83,7 +92,7 @@ If a maintainer is elected to the Homebrew's [Technical Steering Committee](http
 - Invite them to the [**@Homebrew/tsc** team](https://github.com/orgs/Homebrew/teams/tsc/members)
 - Make them [billing managers](https://github.com/organizations/Homebrew/settings/billing) and [moderators](https://github.com/organizations/Homebrew/settings/moderators) on the Homebrew GitHub organisation
 
-When they step down as a TSC member, revoke or downgrade their access to all of the above.
+When they cease to be a TSC member, revoke or downgrade their access to all of the above.
 
 ## Owners
 
@@ -93,7 +102,7 @@ The Project Leader, one other PLC member (ideally a maintainer) and one other TS
 - Make them owners on the [`machomebrew` private Slack](https://machomebrew.slack.com/admin)
 - Make them owners on the [`homebrew` private 1Password](https://homebrew.1password.com/people)
 
-When they step down as an owner, revoke or downgrade their access to all of the above.
+When they cease to be am owner, revoke or downgrade their access to all of the above.
 
 ## Members
 
@@ -112,3 +121,5 @@ If they are interested in doing ops/infrastructure/system administration work:
 If they are interested in doing security work:
 
 - Invite them to the [`homebrew` private 1Password](https://homebrew.1password.com/people) and add them to the "security" group.
+
+See [Homebrew Governance](Homebrew-Governance.md) for when an individual's membership expires.

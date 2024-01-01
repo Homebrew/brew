@@ -69,8 +69,6 @@ ensure
 end
 
 module Homebrew
-  extend T::Sig
-
   BOTTLE_BLOCK_REGEX = /  bottle (?:do.+?end|:[a-z]+)\n\n/m.freeze
 
   sig { returns(CLI::Parser) }
@@ -90,7 +88,7 @@ module Homebrew
       switch "-f", "--force",
              description: "Overwrite the destination formula if it already exists."
 
-      named_args [:formula, :tap], number: 2
+      named_args [:formula, :tap], number: 2, without_api: true
     end
   end
 
@@ -100,22 +98,23 @@ module Homebrew
     if (match = args.named.first.match(HOMEBREW_TAP_FORMULA_REGEX))
       name = match[3].downcase
       source_tap = Tap.fetch(match[1], match[2])
-      raise TapFormulaUnavailableError.new(source_tap, name) unless source_tap.installed?
     else
       name = args.named.first.downcase
       source_tap = CoreTap.instance
     end
+    raise TapFormulaUnavailableError.new(source_tap, name) unless source_tap.installed?
 
     destination_tap = Tap.fetch(args.named.second)
     unless Homebrew::EnvConfig.developer?
       odie "Cannot extract formula to homebrew/core!" if destination_tap.core_tap?
+      odie "Cannot extract formula to homebrew/cask!" if destination_tap.core_cask_tap?
       odie "Cannot extract formula to the same tap!" if destination_tap == source_tap
     end
     destination_tap.install unless destination_tap.installed?
 
     repo = source_tap.path
     pattern = if source_tap.core_tap?
-      [repo/"Formula/#{name}.rb"]
+      [source_tap.new_formula_path(name), repo/"Formula/#{name}.rb"].uniq
     else
       # A formula can technically live in the root directory of a tap or in any of its subdirectories
       [repo/"#{name}.rb", repo/"**/#{name}.rb"]

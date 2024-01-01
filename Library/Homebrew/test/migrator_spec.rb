@@ -1,4 +1,3 @@
-# typed: false
 # frozen_string_literal: true
 
 require "migrator"
@@ -7,7 +6,7 @@ require "tab"
 require "keg"
 
 describe Migrator do
-  subject(:migrator) { described_class.new(new_formula) }
+  subject(:migrator) { described_class.new(new_formula, old_formula.name) }
 
   let(:new_formula) { Testball.new("newname") }
   let(:old_formula) { Testball.new("oldname") }
@@ -56,15 +55,9 @@ describe Migrator do
   end
 
   describe "::new" do
-    it "raises an error if there is no old name" do
-      expect do
-        described_class.new(old_formula)
-      end.to raise_error(Migrator::MigratorNoOldnameError)
-    end
-
     it "raises an error if there is no old path" do
       expect do
-        described_class.new(new_formula)
+        described_class.new(new_formula, "oldname")
       end.to raise_error(Migrator::MigratorNoOldpathError)
     end
 
@@ -77,7 +70,7 @@ describe Migrator do
       tab.write
 
       expect do
-        described_class.new(new_formula)
+        described_class.new(new_formula, "oldname")
       end.to raise_error(Migrator::MigratorDifferentTapsError)
     end
   end
@@ -213,7 +206,7 @@ describe Migrator do
     tab.tabfile = HOMEBREW_CELLAR/"oldname/0.1/INSTALL_RECEIPT.json"
     tab.source["path"] = "/should/be/the/same"
     tab.write
-    migrator = described_class.new(new_formula)
+    migrator = described_class.new(new_formula, "oldname")
     tab.tabfile.delete
     migrator.backup_old_tabs
     expect(Tab.for_keg(old_keg_record).source["path"]).to eq("/should/be/the/same")

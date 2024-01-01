@@ -9,8 +9,6 @@ module Cask
     #
     # @api private
     class Suite < Moved
-      extend T::Sig
-
       sig { returns(String) }
       def self.english_name
         "App Suite"

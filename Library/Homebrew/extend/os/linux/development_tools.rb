@@ -3,9 +3,7 @@
 
 class DevelopmentTools
   class << self
-    extend T::Sig
-
-    sig { params(tool: String).returns(T.nilable(Pathname)) }
+    sig { params(tool: T.any(String, Symbol)).returns(T.nilable(Pathname)) }
     def locate(tool)
       (@locate ||= {}).fetch(tool) do |key|
         @locate[key] = if needs_build_formulae? &&

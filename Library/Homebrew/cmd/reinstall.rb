@@ -8,19 +8,15 @@ require "install"
 require "reinstall"
 require "cli/parser"
 require "cleanup"
-require "cask/cmd"
 require "cask/utils"
 require "cask/macos"
+require "cask/reinstall"
 require "upgrade"
 require "api"
 
 module Homebrew
-  extend T::Sig
-
-  module_function
-
   sig { returns(CLI::Parser) }
-  def reinstall_args
+  def self.reinstall_args
     Homebrew::CLI::Parser.new do
       description <<~EOS
         Uninstall and then reinstall a <formula> or <cask> using the same options it was
@@ -39,7 +35,7 @@ module Homebrew
              description: "Install without checking for previously installed keg-only or " \
                           "non-migrated versions."
       switch "-v", "--verbose",
-             description: "Print the verification and postinstall steps."
+             description: "Print the verification and post-install steps."
       [
         [:switch, "--formula", "--formulae", { description: "Treat all named arguments as formulae." }],
         [:switch, "-s", "--build-from-source", {
@@ -76,8 +72,29 @@ module Homebrew
       formula_options
       [
         [:switch, "--cask", "--casks", { description: "Treat all named arguments as casks." }],
-        *Cask::Cmd::AbstractCommand::OPTIONS.map(&:dup),
-        *Cask::Cmd::Install::OPTIONS.map(&:dup),
+        [:switch, "--[no-]binaries", {
+          description: "Disable/enable linking of helper executables (default: enabled).",
+          env:         :cask_opts_binaries,
+        }],
+        [:switch, "--require-sha",  {
+          description: "Require all casks to have a checksum.",
+          env:         :cask_opts_require_sha,
+        }],
+        [:switch, "--[no-]quarantine", {
+          description: "Disable/enable quarantining of downloads (default: enabled).",
+          env:         :cask_opts_quarantine,
+        }],
+        [:switch, "--adopt", {
+          description: "Adopt existing artifacts in the destination that are identical to those being installed. " \
+                       "Cannot be combined with --force.",
+        }],
+        [:switch, "--skip-cask-deps", {
+          description: "Skip installing cask dependencies.",
+        }],
+        [:switch, "--zap", {
+          description: "For use with `brew reinstall --cask`. Remove all files associated with a cask. " \
+                       "*May remove files which are shared between applications.*",
+        }],
       ].each do |args|
         options = args.pop
         send(*args, **options)
@@ -91,7 +108,7 @@ module Homebrew
     end
   end
 
-  def reinstall
+  def self.reinstall
     args = reinstall_args.parse
 
     formulae, casks = args.named.to_formulae_and_casks(method: :resolve)
@@ -150,7 +167,7 @@ module Homebrew
     )
 
     if casks.any?
-      Cask::Cmd::Reinstall.reinstall_casks(
+      Cask::Reinstall.reinstall_casks(
         *casks,
         binaries:       args.binaries?,
         verbose:        args.verbose?,

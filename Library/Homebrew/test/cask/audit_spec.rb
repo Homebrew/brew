@@ -1,4 +1,3 @@
-# typed: false
 # frozen_string_literal: true
 
 require "cask/audit"
@@ -6,7 +5,7 @@ require "cask/audit"
 describe Cask::Audit, :cask do
   def include_msg?(problems, msg)
     if msg.is_a?(Regexp)
-      Array(problems).any? { |problem| problem[:message] =~ msg }
+      Array(problems).any? { |problem| msg.match?(problem[:message]) }
     else
       Array(problems).any? { |problem| problem[:message] == msg }
     end
@@ -308,7 +307,7 @@ describe Cask::Audit, :cask do
         let(:cask_token) { "token-beta" }
 
         it "fails if the cask is from an official tap" do
-          allow(cask).to receive(:tap).and_return(Tap.fetch("homebrew/cask"))
+          allow(cask).to receive(:tap).and_return(CoreCaskTap.instance)
 
           expect(run).to error_with(/token contains version designation/)
         end
@@ -370,7 +369,7 @@ describe Cask::Audit, :cask do
 
       context "when cask token is in tap_migrations.json and" do
         let(:cask_token) { "token-migrated" }
-        let(:tap) { Tap.fetch("homebrew/cask") }
+        let(:tap) { CoreCaskTap.instance }
 
         before do
           allow(tap).to receive(:tap_migrations).and_return({ cask_token => "homebrew/core" })
@@ -472,8 +471,7 @@ describe Cask::Audit, :cask do
       let(:unpack_double) { instance_double(UnpackStrategy::Zip) }
 
       before do
-        allow(audit).to receive(:download).and_return(download_double)
-        allow(audit).to receive(:signing?).and_return(true)
+        allow(audit).to receive_messages(download: download_double, signing?: true)
         allow(audit).to receive(:check_https_availability)
       end
 
@@ -483,7 +481,7 @@ describe Cask::Audit, :cask do
             cask 'signing-cask-test' do
               version '1.0'
               url "https://brew.sh/index.html"
-              binary 'Audit.app'
+              artifact "example.pdf", target: "/Library/Application Support/example"
             end
           RUBY
         end
@@ -531,38 +529,50 @@ describe Cask::Audit, :cask do
         it { is_expected.not_to error_with(message) }
       end
 
-      context "when the Cask is discontinued" do
-        let(:cask_token) { "livecheck/discontinued" }
+      context "when the Cask is deprecated" do
+        let(:cask_token) { "livecheck/livecheck-deprecated" }
 
         it { is_expected.not_to error_with(message) }
       end
 
-      context "when the Cask has a livecheck block referencing a discontinued Cask" do
-        let(:cask_token) { "livecheck/discontinued-reference" }
+      context "when the Cask has a livecheck block referencing a deprecated Cask" do
+        let(:cask_token) { "livecheck/livecheck-deprecated-reference" }
+
+        it { is_expected.not_to error_with(message) }
+      end
+
+      context "when the Cask is disabled" do
+        let(:cask_token) { "livecheck/livecheck-disabled" }
+
+        it { is_expected.not_to error_with(message) }
+      end
+
+      context "when the Cask has a livecheck block referencing a disabled Cask" do
+        let(:cask_token) { "livecheck/livecheck-disabled-reference" }
 
         it { is_expected.not_to error_with(message) }
       end
 
       context "when version is :latest" do
-        let(:cask_token) { "livecheck/version-latest" }
+        let(:cask_token) { "livecheck/livecheck-version-latest" }
 
         it { is_expected.not_to error_with(message) }
       end
 
       context "when the Cask has a livecheck block referencing a Cask where version is :latest" do
-        let(:cask_token) { "livecheck/version-latest-reference" }
+        let(:cask_token) { "livecheck/livecheck-version-latest-reference" }
 
         it { is_expected.not_to error_with(message) }
       end
 
       context "when url is unversioned" do
-        let(:cask_token) { "livecheck/url-unversioned" }
+        let(:cask_token) { "livecheck/livecheck-url-unversioned" }
 
         it { is_expected.not_to error_with(message) }
       end
 
       context "when the Cask has a livecheck block referencing a Cask with an unversioned url" do
-        let(:cask_token) { "livecheck/url-unversioned-reference" }
+        let(:cask_token) { "livecheck/livecheck-url-unversioned-reference" }
 
         it { is_expected.not_to error_with(message) }
       end
@@ -828,15 +838,6 @@ describe Cask::Audit, :cask do
 
       context "when the Cask is versioned and has a livecheck" do
         let(:cask_token) { "latest-with-livecheck" }
-
-        it { is_expected.to error_with(message) }
-      end
-    end
-
-    describe "appcast" do
-      context "when the Cask has an appcast" do
-        let(:cask_token) { "with-appcast" }
-        let(:message) { "`appcast` should be replaced with a `livecheck`." }
 
         it { is_expected.to error_with(message) }
       end

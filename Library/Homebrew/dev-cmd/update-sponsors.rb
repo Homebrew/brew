@@ -5,8 +5,6 @@ require "cli/parser"
 require "utils/github"
 
 module Homebrew
-  extend T::Sig
-
   module_function
 
   NAMED_MONTHLY_AMOUNT = 100

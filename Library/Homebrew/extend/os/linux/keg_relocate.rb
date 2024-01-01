@@ -18,7 +18,7 @@ class Keg
   end
 
   def change_rpath(file, old_prefix, new_prefix)
-    return if !file.elf? || !file.dynamic_elf?
+    return false if !file.elf? || !file.dynamic_elf?
 
     updated = {}
     old_rpath = file.rpath
@@ -51,6 +51,7 @@ class Keg
     updated[:interpreter] = new_interpreter if old_interpreter != new_interpreter
 
     file.patch!(interpreter: updated[:interpreter], rpath: updated[:rpath])
+    true
   end
 
   def detect_cxx_stdlibs(options = {})

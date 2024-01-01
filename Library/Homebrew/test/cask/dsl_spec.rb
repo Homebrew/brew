@@ -1,4 +1,3 @@
-# typed: false
 # frozen_string_literal: true
 
 describe Cask::DSL, :cask do
@@ -165,7 +164,7 @@ describe Cask::DSL, :cask do
             "zh-CN"
           end
 
-          language "en-US", default: true do
+          language "en", default: true do
             sha256 "xyz789"
             "en-US"
           end
@@ -550,7 +549,7 @@ describe Cask::DSL, :cask do
         app "App.app"
       end
 
-      expect(cask.artifacts.map(&:class).map(&:dsl_key)).to eq [
+      expect(cask.artifacts.map { |artifact| artifact.class.dsl_key }).to eq [
         :preflight,
         :app,
         :binary,

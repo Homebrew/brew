@@ -21,11 +21,11 @@ We now accept versioned formulae as long as they [meet the requirements](Version
 
 ### We don’t like tools that upgrade themselves
 
-Software that can upgrade itself does not integrate well with Homebrew's own upgrade functionality. The self-update functionality should be disabled (while minimising complication to the formula).
+Software that can upgrade itself does not integrate well with Homebrew formulae's own upgrade functionality. The self-update functionality should be disabled (while minimising complication to the formula). It's fine (and well-supported) for Casks.
 
 ### We don’t like install scripts that download unversioned things
 
-We don't like install scripts that are pulling from the master branch of Git repositories or unversioned, unchecksummed tarballs. These should use `resource` blocks with specific revisions or checksummed tarballs instead. Note that we now allow tools like `cargo`, `gem` and `pip` to download specifically versioned libraries during installation.
+We don't like install scripts that are pulling from the master branch of Git repositories or unversioned, unchecksummed tarballs. These should ideally use `resource` blocks with specific revisions or checksummed tarballs instead. Note that we now allow tools like `cargo`, `gem` and `pip` to download versioned libraries during installation. There's no need to reproduce the functionality of any language package manager with `resource` blocks when we can call it instead.
 
 ### We don’t like binary formulae
 
@@ -73,6 +73,12 @@ Clang is the default C/C++ compiler on macOS (and has been for a long time). Sof
 
 We're a package manager so we want to do things like resolve dependencies and set up applications for our users. If things require too much manual intervention then they aren't useful in a package manager.
 
+### Static libraries
+
+In general, formulae should not ship static libraries since these cannot be updated without a rebuild of the dependant software.
+If a formula gets a lot of requests to install static libraries, they may be installed by the formula.
+Applications in homebrew/core linking against libraries should link against shared libraries not static versions.
+
 ### Stuff that requires vendored versions of Homebrew formulae
 
 Homebrew formulae should avoid having multiple, separate, upstream projects bundled together in a single package to avoid shipping outdated/insecure versions of software that is already a formula. Veracode's [State of Software Security report](https://www.veracode.com/blog/research/announcing-state-software-security-v11-open-source-edition) concludes:
@@ -80,6 +86,8 @@ Homebrew formulae should avoid having multiple, separate, upstream projects bund
 
 For more info see [Debian's](https://www.debian.org/doc/debian-policy/ch-source.html#s-embeddedfiles) and [Fedora's](https://docs.fedoraproject.org/en-US/packaging-guidelines/#bundling) stances on this.
 
+Increasingly, though: this can be (too) hard. Homebrew's primary mission is to be useful rather than ideologically pure. If we cannot package something without using vendored upstream versions: so be it; better to have packaged software in Homebrew than not.
+
 ## Sometimes there are exceptions
 
-Even if all criteria are met we may not accept the formula. Documentation tends to lag behind current decision-making. Although some rejections may seem arbitrary or strange they are based on years of experience making Homebrew work acceptably for our users.
+Even if all criteria are met we may not accept the formula. Even if some criteria are not met we may accept the formula. New formulae are held to a higher standard than existing formulae. Documentation will lag behind current decision-making. Although some rejections may seem arbitrary or strange they are based on years of experience making Homebrew work acceptably for our users.

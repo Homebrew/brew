@@ -31,8 +31,6 @@ module Homebrew
       #
       # @api public
       class Sourceforge
-        extend T::Sig
-
         NICE_NAME = "SourceForge"
 
         # The `Regexp` used to determine if the strategy applies to the URL.

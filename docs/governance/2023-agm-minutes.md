@@ -1,4 +1,4 @@
-# Homebrew Annual General Meeting 2022
+# Homebrew Annual General Meeting 2023
 
 ## Minutes
 
@@ -8,7 +8,7 @@
 
 - 09:15 Project Leader Report (15 min, Mike McQuaid)
 - 09:40 Project Leadership Committee Report (15 min, Sean Molenaar)
-- 10:00 Technical Steering Commitee Report (15 min, Michka Popoff)
+- 10:00 Technical Steering Committee Report (15 min, Michka Popoff)
 
 ## Election Results
 

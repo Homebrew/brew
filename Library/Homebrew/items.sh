@@ -1,6 +1,7 @@
 homebrew-items() {
   local items
   local sed_extended_regex_flag
+  local find_args
   local find_include_filter="$1"
   local find_exclude_filter="$2"
   local sed_filter="$3"
@@ -11,17 +12,19 @@ homebrew-items() {
   if [[ -n "${HOMEBREW_MACOS}" ]]
   then
     sed_extended_regex_flag="-E"
+    find_args=("-E" "${HOMEBREW_REPOSITORY}/Library/Taps")
   else
     sed_extended_regex_flag="-r"
+    find_args=("${HOMEBREW_REPOSITORY}/Library/Taps" "-regextype" "posix-extended")
   fi
 
   # HOMEBREW_REPOSITORY is set by brew.sh
   # shellcheck disable=SC2154
   [[ -d "${HOMEBREW_REPOSITORY}/Library/Taps" ]] || return
   items="$(
-    find "${HOMEBREW_REPOSITORY}/Library/Taps" \
+    find "${find_args[@]}" \
       -type d \( \
-      -name "${find_exclude_filter}" -o \
+      -regex "${find_exclude_filter}" -o \
       -name cmd -o \
       -name .github -o \
       -name lib -o \

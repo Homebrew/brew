@@ -5,16 +5,14 @@ require "formula"
 require "cli/parser"
 
 module Homebrew
-  extend T::Sig
-
   module_function
 
   sig { returns(CLI::Parser) }
   def edit_args
     Homebrew::CLI::Parser.new do
       description <<~EOS
-        Open a <formula> or <cask> in the editor set by `EDITOR` or `HOMEBREW_EDITOR`,
-        or open the Homebrew repository for editing if no formula is provided.
+        Open a <formula>, <cask> or <tap> in the editor set by `EDITOR` or `HOMEBREW_EDITOR`,
+        or open the Homebrew repository for editing if no argument is provided.
       EOS
 
       switch "--formula", "--formulae",
@@ -26,13 +24,68 @@ module Homebrew
 
       conflicts "--formula", "--cask"
 
-      named_args [:formula, :cask]
+      named_args [:formula, :cask, :tap], without_api: true
     end
+  end
+
+  sig { params(path: Pathname).returns(T::Boolean) }
+  def core_formula_path?(path)
+    path.fnmatch?("**/homebrew-core/Formula/**.rb", File::FNM_DOTMATCH)
+  end
+
+  sig { params(path: Pathname).returns(T::Boolean) }
+  def core_cask_path?(path)
+    path.fnmatch?("**/homebrew-cask/Casks/**.rb", File::FNM_DOTMATCH)
+  end
+
+  sig { params(path: Pathname).returns(T::Boolean) }
+  def core_formula_tap?(path)
+    path == CoreTap.instance.path
+  end
+
+  sig { params(path: Pathname).returns(T::Boolean) }
+  def core_cask_tap?(path)
+    path == CoreCaskTap.instance.path
+  end
+
+  sig { params(path: Pathname, cask: T::Boolean).returns(T.noreturn) }
+  def raise_with_message!(path, cask)
+    name = path.basename(".rb").to_s
+
+    if (tap_match = Regexp.new("#{HOMEBREW_TAP_DIR_REGEX.source}$").match(path.to_s))
+      raise TapUnavailableError, CoreTap.instance.name if core_formula_tap?(path)
+      raise TapUnavailableError, CoreCaskTap.instance.name if core_cask_tap?(path)
+
+      raise TapUnavailableError, "#{tap_match[:user]}/#{tap_match[:repo]}"
+    elsif cask || core_cask_path?(path)
+      if !CoreCaskTap.instance.installed? && Homebrew::API::Cask.all_casks.key?(name)
+        command = "brew tap --force #{CoreCaskTap.instance.name}"
+        action = "tap #{CoreCaskTap.instance.name}"
+      else
+        command = "brew create --cask --set-name #{name} $URL"
+        action = "create a new cask"
+      end
+    elsif core_formula_path?(path) &&
+          !CoreTap.instance.installed? &&
+          Homebrew::API::Formula.all_formulae.key?(name)
+      command = "brew tap --force #{CoreTap.instance.name}"
+      action = "tap #{CoreTap.instance.name}"
+    else
+      command = "brew create --set-name #{name} $URL"
+      action = "create a new formula"
+    end
+
+    raise UsageError, <<~EOS
+      #{name} doesn't exist on disk.
+      Run #{Formatter.identifier(command)} to #{action}!
+    EOS
   end
 
   sig { void }
   def edit
     args = edit_args.parse
+
+    ENV["COLORTERM"] = ENV.fetch("HOMEBREW_COLORTERM", nil)
 
     unless (HOMEBREW_REPOSITORY/".git").directory?
       odie <<~EOS
@@ -52,43 +105,22 @@ module Homebrew
         [HOMEBREW_REPOSITORY]
       end
     else
-      args.named.to_paths.select do |path|
-        next path if path.exist?
-
-        not_exist_message = if args.cask?
-          "#{path.basename(".rb")} doesn't exist on disk."
-        else
-          "#{path} doesn't exist on disk."
-        end
-
-        message = if args.cask?
-          <<~EOS
-            #{not_exist_message}
-            Run #{Formatter.identifier("brew create --cask --set-name #{path.basename(".rb")} $URL")} \
-            to create a new cask!
-          EOS
-        else
-          <<~EOS
-            #{not_exist_message}
-            Run #{Formatter.identifier("brew create --formula --set-name #{path.basename} $URL")} \
-            to create a new formula!
-          EOS
-        end
-        raise UsageError, message
-      end.presence
-    end
-
-    if Homebrew::EnvConfig.automatically_set_no_install_from_api? &&
-       !Homebrew::EnvConfig.no_env_hints?
-      paths.each do |path|
-        next if !path.fnmatch?("**/homebrew-core/Formula/**/*.rb") && !path.fnmatch?("**/homebrew-cask/Casks/**/*.rb")
-
-        opoo <<~EOS
-          Unless `HOMEBREW_NO_INSTALL_FROM_API` is set when running
-          `brew install`, it will ignore your locally edited formula.
-        EOS
-        break
+      expanded_paths = args.named.to_paths
+      expanded_paths.each do |path|
+        raise_with_message!(path, args.cask?) unless path.exist?
       end
+
+      if expanded_paths.any? do |path|
+           (core_formula_path?(path) || core_cask_path?(path) || core_formula_tap?(path) || core_cask_tap?(path)) &&
+           !Homebrew::EnvConfig.no_install_from_api? &&
+           !Homebrew::EnvConfig.no_env_hints?
+         end
+        opoo <<~EOS
+          `brew install` ignores locally edited casks and formulae if
+          HOMEBREW_NO_INSTALL_FROM_API is not set.
+        EOS
+      end
+      expanded_paths
     end
 
     if args.print_path?

@@ -5,8 +5,6 @@ require "formula"
 require "cli/parser"
 
 module Homebrew
-  extend T::Sig
-
   module_function
 
   sig { returns(CLI::Parser) }
@@ -15,6 +13,9 @@ module Homebrew
       description <<~EOS
         Pin the specified <formula>, preventing them from being upgraded when
         issuing the `brew upgrade` <formula> command. See also `unpin`.
+
+        Note: Other packages which depend on newer versions of a pinned formula
+        might not install or run correctly.
       EOS
 
       named_args :installed_formula, min: 1

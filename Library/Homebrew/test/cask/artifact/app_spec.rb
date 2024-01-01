@@ -1,9 +1,8 @@
-# typed: false
 # frozen_string_literal: true
 
 describe Cask::Artifact::App, :cask do
   let(:cask) { Cask::CaskLoader.load(cask_path("local-caffeine")) }
-  let(:command) { SystemCommand }
+  let(:command) { NeverSudoSystemCommand }
   let(:adopt) { false }
   let(:force) { false }
   let(:app) { cask.artifacts.find { |a| a.is_a?(described_class) } }
@@ -172,21 +171,12 @@ describe Cask::Artifact::App, :cask do
           end
 
           it "overwrites the existing app" do
-            expect(command).to receive(:run).with(
-              "/bin/chmod", args: [
-                "-R", "--", "u+rwx", target_path
-              ], must_succeed: false
-            ).and_call_original
-            expect(command).to receive(:run).with(
-              "/bin/chmod", args: [
-                "-R", "-N", target_path
-              ], must_succeed: false
-            ).and_call_original
-            expect(command).to receive(:run).with(
-              "/usr/bin/chflags", args: [
-                "-R", "--", "000", target_path
-              ], must_succeed: false
-            ).and_call_original
+            expect(command).to receive(:run).with("/usr/bin/chflags",
+                                                  args: ["-R", "--", "000", target_path]).and_call_original
+            expect(command).to receive(:run).with("/bin/chmod",
+                                                  args: ["-R", "--", "u+rwx", target_path]).and_call_original
+            expect(command).to receive(:run).with("/bin/chmod",
+                                                  args: ["-R", "-N", target_path]).and_call_original
 
             stdout = <<~EOS
               ==> Removing App '#{target_path}'
@@ -308,6 +298,96 @@ describe Cask::Artifact::App, :cask do
     describe "app is missing" do
       it "returns a warning and the supposed path to the app" do
         expect(contents).to match(/.*Missing App.*: #{target_path}/)
+      end
+    end
+  end
+
+  describe "upgrade" do
+    before do
+      install_phase
+    end
+
+    # Fix for https://github.com/Homebrew/homebrew-cask/issues/102721
+    it "reuses the same directory" do
+      contents_path = target_path.join("Contents/Info.plist")
+
+      expect(target_path).to exist
+      inode = target_path.stat.ino
+      expect(contents_path).to exist
+
+      app.uninstall_phase(command: command, force: force, successor: cask)
+
+      expect(target_path).to exist
+      expect(target_path.children).to be_empty
+      expect(contents_path).not_to exist
+
+      app.install_phase(command: command, adopt: adopt, force: force, predecessor: cask)
+      expect(target_path).to exist
+      expect(target_path.stat.ino).to eq(inode)
+
+      expect(contents_path).to exist
+    end
+
+    describe "when the system blocks modifying apps" do
+      it "uninstalls and reinstalls the app" do
+        target_contents_path = target_path.join("Contents")
+
+        expect(File).to receive(:write).with(target_path / ".homebrew-write-test",
+                                             instance_of(String)).and_raise(Errno::EACCES)
+
+        app.uninstall_phase(command: command, force: force, successor: cask)
+        expect(target_path).not_to exist
+
+        app.install_phase(command: command, adopt: adopt, force: force, predecessor: cask)
+        expect(target_contents_path).to exist
+      end
+    end
+
+    describe "when the directory is owned by root" do
+      before do
+        allow(app.target).to receive_messages(writable?: false, owned?: false)
+      end
+
+      it "reuses the same directory" do
+        source_contents_path = source_path.join("Contents")
+        target_contents_path = target_path.join("Contents")
+
+        allow(command).to receive(:run!).with(any_args).and_call_original
+
+        expect(command).to receive(:run!)
+          .with("/bin/cp", args: ["-pR", source_contents_path, target_path],
+                           sudo: true)
+          .and_call_original
+        expect(FileUtils).not_to receive(:move).with(source_contents_path, an_instance_of(Pathname))
+
+        app.uninstall_phase(command: command, force: force, successor: cask)
+        expect(target_contents_path).not_to exist
+        expect(target_path).to exist
+        expect(source_contents_path).to exist
+
+        app.install_phase(command: command, adopt: adopt, force: force, predecessor: cask)
+        expect(target_contents_path).to exist
+      end
+
+      describe "when the system blocks modifying apps" do
+        it "uninstalls and reinstalls the app" do
+          target_contents_path = target_path.join("Contents")
+
+          allow(command).to receive(:run!).with(any_args).and_call_original
+
+          expect(command).to receive(:run!)
+            .with("touch", args:         [target_path / ".homebrew-write-test"],
+                           print_stderr: false,
+                           sudo:         true)
+            .and_raise(ErrorDuringExecution.new([], status: 1,
+output: [[:stderr, "touch: #{target_path}/.homebrew-write-test: Operation not permitted\n"]], secrets: []))
+
+          app.uninstall_phase(command: command, force: force, successor: cask)
+          expect(target_path).not_to exist
+
+          app.install_phase(command: command, adopt: adopt, force: force, predecessor: cask)
+          expect(target_contents_path).to exist
+        end
       end
     end
   end

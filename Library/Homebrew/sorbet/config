@@ -1,5 +1,7 @@
 --dir=.
 --enable-experimental-requires-ancestor
---ignore=/vendor
+--ignore=/vendor/bundle
+--ignore=/vendor/gems
+--ignore=/vendor/portable-ruby
 --ignore=/test/.gem
 --suppress-error-code=7019

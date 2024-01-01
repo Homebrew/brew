@@ -3,8 +3,8 @@
 
 # @private
 module CompilerConstants
-  GNU_GCC_VERSIONS = %w[4.9 5 6 7 8 9 10 11 12].freeze
-  GNU_GCC_REGEXP = /^gcc-(4\.9|[5-9]|10|11|12)$/.freeze
+  GNU_GCC_VERSIONS = %w[4.9 5 6 7 8 9 10 11 12 13].freeze
+  GNU_GCC_REGEXP = /^gcc-(4\.9|[5-9]|10|11|12|13)$/.freeze
   COMPILER_SYMBOL_MAP = {
     "gcc"        => :gcc,
     "clang"      => :clang,
@@ -100,7 +100,6 @@ end
 #
 # @api private
 class CompilerSelector
-  extend T::Sig
   include CompilerConstants
 
   Compiler = Struct.new(:type, :name, :version)
@@ -174,7 +173,7 @@ class CompilerSelector
     when "gcc", GNU_GCC_REGEXP
       versions.gcc_version(name.to_s)
     else
-      versions.send("#{name}_build_version")
+      versions.send(:"#{name}_build_version")
     end
   end
 end

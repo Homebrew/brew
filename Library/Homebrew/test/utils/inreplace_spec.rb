@@ -1,4 +1,3 @@
-# typed: false
 # frozen_string_literal: true
 
 require "tempfile"
@@ -8,7 +7,7 @@ describe Utils::Inreplace do
   let(:file) { Tempfile.new("test") }
 
   before do
-    file.write <<~EOS
+    File.binwrite(file, <<~EOS)
       a
       b
       c
@@ -51,6 +50,20 @@ describe Utils::Inreplace do
       expect do
         described_class.inreplace_pairs(file.path, [[nil, "f"]])
       end.to raise_error(Utils::Inreplace::Error)
+    end
+  end
+
+  describe "#gsub!" do
+    it "substitutes pathname within file" do
+      # For a specific instance of this, see https://github.com/Homebrew/homebrew-core/blob/a8b0b10/Formula/loki.rb#L48
+      described_class.inreplace(file.path) do |s|
+        s.gsub!(Pathname("b"), Pathname("f"))
+      end
+      expect(File.binread(file)).to eq <<~EOS
+        a
+        f
+        c
+      EOS
     end
   end
 end

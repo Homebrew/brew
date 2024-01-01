@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<installer-gui-script minSpecVersion="2">
+  <pkg-ref id="sh.brew.homebrew"/>
+  <options customize="never" hostArchitectures="x86_64,arm64" rootVolumeOnly="true"/>
+  <volume-check>
+    <allowed-os-versions>
+        <os-version min="12.0.0"/>
+    </allowed-os-versions>
+  </volume-check>
+  <choices-outline>
+    <line choice="default">
+      <line choice="sh.brew.homebrew"/>
+    </line>
+  </choices-outline>
+  <choice id="default"/>
+  <choice id="sh.brew.homebrew" visible="false">
+    <pkg-ref id="sh.brew.homebrew"/>
+  </choice>
+  <pkg-ref id="sh.brew.homebrew" onConclusion="none">Homebrew.pkg</pkg-ref>
+
+  <title>Homebrew</title>
+  <organization>sh.brew</organization>
+
+  <background file="Homebrew.png" alignment="bottomleft" scaling="proportional"/>
+  <background-darkAqua file="Homebrew.png" alignment="bottomleft" scaling="proportional"/>
+  <welcome file="WELCOME.rtf"/>
+  <license file="LICENSE.rtf"/>
+  <conclusion file="CONCLUSION.rtf" />
+  <allowed-os-versions>
+    <os-version min="12.0.0"/>
+  </allowed-os-versions>
+
+  <script>
+    // See https://developer.apple.com/documentation/installer_js
+    function installation_check() {
+      if (system.files.fileExistsAtPath("/Library/Developer/CommandLineTools/usr/bin/git")) {
+        return true;
+      } else {
+        my.result.title = "Command Line Tools (CLT) are missing";
+        my.result.message = "You must install the Command Line Tools (CLT) before installing Homebrew by running `xcode-select --install` from a Terminal.";
+        my.result.type = "Fatal";
+        return false;
+      }
+    }
+  </script>
+  <installation-check script="installation_check()" />
+</installer-gui-script>

@@ -1,20 +1,16 @@
 # typed: true
 # frozen_string_literal: true
 
-require "os/mac/version"
-
 module OS
   module Mac
     # Class representing a macOS SDK.
     #
     # @api private
     class SDK
-      extend T::Sig
-
       # 11.x SDKs are explicitly excluded - we want the MacOSX11.sdk symlink instead.
       VERSIONED_SDK_REGEX = /MacOSX(10\.\d+|\d+)\.sdk$/.freeze
 
-      sig { returns(OS::Mac::Version) }
+      sig { returns(MacOSVersion) }
       attr_reader :version
 
       sig { returns(Pathname) }
@@ -23,7 +19,7 @@ module OS
       sig { returns(Symbol) }
       attr_reader :source
 
-      sig { params(version: OS::Mac::Version, path: T.any(String, Pathname), source: Symbol).void }
+      sig { params(version: MacOSVersion, path: T.any(String, Pathname), source: Symbol).void }
       def initialize(version, path, source)
         @version = version
         @path = Pathname.new(path)
@@ -35,14 +31,13 @@ module OS
     #
     # @api private
     class BaseSDKLocator
-      extend T::Sig
       extend T::Helpers
 
       abstract!
 
       class NoSDKError < StandardError; end
 
-      sig { params(version: OS::Mac::Version).returns(SDK) }
+      sig { params(version: MacOSVersion).returns(SDK) }
       def sdk_for(version)
         sdk = all_sdks.find { |s| s.version == version }
         raise NoSDKError if sdk.nil?
@@ -80,7 +75,7 @@ module OS
         @all_sdks
       end
 
-      sig { params(version: T.nilable(OS::Mac::Version)).returns(T.nilable(SDK)) }
+      sig { params(version: T.nilable(MacOSVersion)).returns(T.nilable(SDK)) }
       def sdk_if_applicable(version = nil)
         sdk = begin
           if version.blank?
@@ -113,7 +108,7 @@ module OS
         all_sdks.max_by(&:version)
       end
 
-      sig { params(sdk_path: Pathname).returns(T.nilable(OS::Mac::Version)) }
+      sig { params(sdk_path: Pathname).returns(T.nilable(MacOSVersion)) }
       def read_sdk_version(sdk_path)
         sdk_settings = sdk_path/"SDKSettings.json"
         sdk_settings_string = sdk_settings.read if sdk_settings.exist?
@@ -134,8 +129,8 @@ module OS
         return if version_string.blank?
 
         begin
-          OS::Mac::Version.new(version_string).strip_patch
-        rescue MacOSVersionError
+          MacOSVersion.new(version_string).strip_patch
+        rescue MacOSVersion::Error
           nil
         end
       end
@@ -146,8 +141,6 @@ module OS
     #
     # @api private
     class XcodeSDKLocator < BaseSDKLocator
-      extend T::Sig
-
       sig { override.returns(Symbol) }
       def source
         :xcode
@@ -173,8 +166,6 @@ module OS
     #
     # @api private
     class CLTSDKLocator < BaseSDKLocator
-      extend T::Sig
-
       sig { override.returns(Symbol) }
       def source
         :clt

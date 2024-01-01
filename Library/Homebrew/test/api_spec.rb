@@ -1,4 +1,3 @@
-# typed: false
 # frozen_string_literal: true
 
 require "api"
@@ -66,21 +65,6 @@ describe Homebrew::API do
       expect do
         described_class.fetch_json_api_file("baz.json", target: cache_dir/"baz.json")
       end.to raise_error(SystemExit)
-    end
-  end
-
-  describe "::fetch_file_source" do
-    it "fetches a file" do
-      mock_curl_output stdout: json
-      fetched_json = described_class.fetch_homebrew_cask_source("foo", path: "Casks/foo.rb", git_head: "HEAD")
-      expect(fetched_json).to eq json
-    end
-
-    it "raises an error if the file does not exist" do
-      mock_curl_output success: false
-      expect do
-        described_class.fetch_homebrew_cask_source("bar", path: "Casks/bar.rb", git_head: "HEAD")
-      end.to raise_error(ArgumentError, /No valid file found/)
     end
   end
 end

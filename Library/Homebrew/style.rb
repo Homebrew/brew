@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 require "shellwords"
+require "source_location"
 
 module Homebrew
   # Helper module for running RuboCop.
@@ -81,7 +82,7 @@ module Homebrew
     def self.run_rubocop(files, output_type,
                          fix: false, except_cops: nil, only_cops: nil, display_cop_names: false, reset_cache: false,
                          debug: false, verbose: false)
-      Homebrew.install_bundler_gems!
+      Homebrew.install_bundler_gems!(groups: ["style"])
 
       require "warnings"
 
@@ -101,7 +102,6 @@ module Homebrew
       end
 
       args += ["--extra-details"] if verbose
-      args += ["--display-cop-names"] if display_cop_names || verbose
 
       if except_cops
         except_cops.map! { |cop| RuboCop::Cop::Cop.registry.qualified_cop_name(cop.to_s, "") }
@@ -312,7 +312,8 @@ module Homebrew
         @message = json["message"]
         @cop_name = json["cop_name"]
         @corrected = json["corrected"]
-        @location = LineLocation.new(json["location"])
+        location = json["location"]
+        @location = SourceLocation.new(location.fetch("line"), location["column"])
       end
 
       def severity_code
@@ -321,23 +322,6 @@ module Homebrew
 
       def corrected?
         @corrected
-      end
-    end
-
-    # Source location of a style offense.
-    class LineLocation
-      extend T::Sig
-
-      attr_reader :line, :column
-
-      def initialize(json)
-        @line = json["line"]
-        @column = json["column"]
-      end
-
-      sig { returns(String) }
-      def to_s
-        "#{line}: col #{column}"
       end
     end
   end

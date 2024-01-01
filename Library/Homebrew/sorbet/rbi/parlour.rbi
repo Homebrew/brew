@@ -1,15 +1,29 @@
 # typed: strict
-module Homebrew
-  class Cleanup
-    sig { returns(T::Boolean) }
-    def dry_run?; end
+class PATH
+  sig { params(args: T.untyped, options: T.untyped, block: T.untyped).returns(T.untyped) }
+  def each(*args, **options, &block); end
+end
 
-    sig { returns(T::Boolean) }
-    def scrub?; end
+class Caveats
+  sig { params(args: T.untyped, options: T.untyped, block: T.untyped).returns(T::Boolean) }
+  def empty?(*args, **options, &block); end
 
-    sig { returns(T::Boolean) }
-    def prune?; end
-  end
+  sig { params(args: T.untyped, options: T.untyped, block: T.untyped).returns(String) }
+  def to_s(*args, **options, &block); end
+end
+
+class Checksum
+  sig { params(args: T.untyped, options: T.untyped, block: T.untyped).returns(T::Boolean) }
+  def empty?(*args, **options, &block); end
+
+  sig { params(args: T.untyped, options: T.untyped, block: T.untyped).returns(String) }
+  def to_s(*args, **options, &block); end
+
+  sig { params(args: T.untyped, options: T.untyped, block: T.untyped).returns(T.untyped) }
+  def length(*args, **options, &block); end
+
+  sig { params(args: T.untyped, options: T.untyped, block: T.untyped).returns(T.untyped) }
+  def [](*args, **options, &block); end
 end
 
 module Debrew
@@ -18,6 +32,132 @@ module Debrew
 end
 
 class Formula
+  sig { params(args: T.untyped, options: T.untyped, block: T.untyped).returns(T::Boolean) }
+  def bottle_defined?(*args, **options, &block); end
+
+  sig { params(args: T.untyped, options: T.untyped, block: T.untyped).returns(T::Boolean) }
+  def bottle_tag?(*args, **options, &block); end
+
+  sig { params(args: T.untyped, options: T.untyped, block: T.untyped).returns(T::Boolean) }
+  def bottled?(*args, **options, &block); end
+
+  sig { params(args: T.untyped, options: T.untyped, block: T.untyped).returns(T.untyped) }
+  def bottle_specification(*args, **options, &block); end
+
+  sig { params(args: T.untyped, options: T.untyped, block: T.untyped).returns(T.untyped) }
+  def downloader(*args, **options, &block); end
+
+  sig { params(args: T.untyped, options: T.untyped, block: T.untyped).returns(T.untyped) }
+  def desc(*args, **options, &block); end
+
+  sig { params(args: T.untyped, options: T.untyped, block: T.untyped).returns(T.untyped) }
+  def license(*args, **options, &block); end
+
+  sig { params(args: T.untyped, options: T.untyped, block: T.untyped).returns(T.untyped) }
+  def homepage(*args, **options, &block); end
+
+  sig { params(args: T.untyped, options: T.untyped, block: T.untyped).returns(T.untyped) }
+  def livecheck(*args, **options, &block); end
+
+  sig { params(args: T.untyped, options: T.untyped, block: T.untyped).returns(T::Boolean) }
+  def livecheckable?(*args, **options, &block); end
+
+  sig { params(args: T.untyped, options: T.untyped, block: T.untyped).returns(T::Boolean) }
+  def service?(*args, **options, &block); end
+
+  sig { params(args: T.untyped, options: T.untyped, block: T.untyped).returns(T.untyped) }
+  def version(*args, **options, &block); end
+
+  sig { params(args: T.untyped, options: T.untyped, block: T.untyped).returns(T::Boolean) }
+  def loaded_from_api?(*args, **options, &block); end
+
+  sig { params(args: T.untyped, options: T.untyped, block: T.untyped).returns(T.untyped) }
+  def resource(*args, **options, &block); end
+
+  sig { params(args: T.untyped, options: T.untyped, block: T.untyped).returns(T.untyped) }
+  def deps(*args, **options, &block); end
+
+  sig { params(args: T.untyped, options: T.untyped, block: T.untyped).returns(T.untyped) }
+  def declared_deps(*args, **options, &block); end
+
+  sig { params(args: T.untyped, options: T.untyped, block: T.untyped).returns(T.untyped) }
+  def uses_from_macos_elements(*args, **options, &block); end
+
+  sig { params(args: T.untyped, options: T.untyped, block: T.untyped).returns(T.untyped) }
+  def uses_from_macos_names(*args, **options, &block); end
+
+  sig { params(args: T.untyped, options: T.untyped, block: T.untyped).returns(T.untyped) }
+  def requirements(*args, **options, &block); end
+
+  sig { params(args: T.untyped, options: T.untyped, block: T.untyped).returns(T.untyped) }
+  def cached_download(*args, **options, &block); end
+
+  sig { params(args: T.untyped, options: T.untyped, block: T.untyped).returns(T.untyped) }
+  def clear_cache(*args, **options, &block); end
+
+  sig { params(args: T.untyped, options: T.untyped, block: T.untyped).returns(T.untyped) }
+  def options(*args, **options, &block); end
+
+  sig { params(args: T.untyped, options: T.untyped, block: T.untyped).returns(T.untyped) }
+  def deprecated_options(*args, **options, &block); end
+
+  sig { params(args: T.untyped, options: T.untyped, block: T.untyped).returns(T.untyped) }
+  def deprecated_flags(*args, **options, &block); end
+
+  sig { params(args: T.untyped, options: T.untyped, block: T.untyped).returns(T::Boolean) }
+  def option_defined?(*args, **options, &block); end
+
+  sig { params(args: T.untyped, options: T.untyped, block: T.untyped).returns(T.untyped) }
+  def compiler_failures(*args, **options, &block); end
+
+  sig { params(args: T.untyped, options: T.untyped, block: T.untyped).returns(T.untyped) }
+  def pour_bottle_check_unsatisfied_reason(*args, **options, &block); end
+
+  sig { params(args: T.untyped, options: T.untyped, block: T.untyped).returns(T.untyped) }
+  def keg_only_reason(*args, **options, &block); end
+
+  sig { params(args: T.untyped, options: T.untyped, block: T.untyped).returns(T::Boolean) }
+  def deprecated?(*args, **options, &block); end
+
+  sig { params(args: T.untyped, options: T.untyped, block: T.untyped).returns(T.untyped) }
+  def deprecation_date(*args, **options, &block); end
+
+  sig { params(args: T.untyped, options: T.untyped, block: T.untyped).returns(T.untyped) }
+  def deprecation_reason(*args, **options, &block); end
+
+  sig { params(args: T.untyped, options: T.untyped, block: T.untyped).returns(T::Boolean) }
+  def disabled?(*args, **options, &block); end
+
+  sig { params(args: T.untyped, options: T.untyped, block: T.untyped).returns(T.untyped) }
+  def disable_date(*args, **options, &block); end
+
+  sig { params(args: T.untyped, options: T.untyped, block: T.untyped).returns(T.untyped) }
+  def disable_reason(*args, **options, &block); end
+
+  sig { params(args: T.untyped, options: T.untyped, block: T.untyped).returns(T::Boolean) }
+  def pinnable?(*args, **options, &block); end
+
+  sig { params(args: T.untyped, options: T.untyped, block: T.untyped).returns(T::Boolean) }
+  def pinned?(*args, **options, &block); end
+
+  sig { params(args: T.untyped, options: T.untyped, block: T.untyped).returns(T.untyped) }
+  def pinned_version(*args, **options, &block); end
+
+  sig { params(args: T.untyped, options: T.untyped, block: T.untyped).returns(T.untyped) }
+  def pin(*args, **options, &block); end
+
+  sig { params(args: T.untyped, options: T.untyped, block: T.untyped).returns(T.untyped) }
+  def unpin(*args, **options, &block); end
+
+  sig { params(args: T.untyped, options: T.untyped, block: T.untyped).returns(T.untyped) }
+  def env(*args, **options, &block); end
+
+  sig { params(args: T.untyped, options: T.untyped, block: T.untyped).returns(T.untyped) }
+  def conflicts(*args, **options, &block); end
+
+  sig { returns(T::Boolean) }
+  def self.loaded_from_api?; end
+
   sig { returns(T::Boolean) }
   def self.on_system_blocks_exist?; end
 
@@ -87,6 +227,36 @@ class FormulaInstaller
   def hold_locks?; end
 end
 
+class Livecheck
+  sig { params(args: T.untyped, options: T.untyped, block: T.untyped).returns(T.untyped) }
+  def version(*args, **options, &block); end
+
+  sig { params(args: T.untyped, options: T.untyped, block: T.untyped).returns(T.untyped) }
+  def arch(*args, **options, &block); end
+end
+
+module MachOShim
+  sig { params(args: T.untyped, options: T.untyped, block: T.untyped).returns(T.untyped) }
+  def dylib_id(*args, **options, &block); end
+end
+
+class PkgVersion
+  sig { params(args: T.untyped, options: T.untyped, block: T.untyped).returns(T.untyped) }
+  def major(*args, **options, &block); end
+
+  sig { params(args: T.untyped, options: T.untyped, block: T.untyped).returns(T.untyped) }
+  def minor(*args, **options, &block); end
+
+  sig { params(args: T.untyped, options: T.untyped, block: T.untyped).returns(T.untyped) }
+  def patch(*args, **options, &block); end
+
+  sig { params(args: T.untyped, options: T.untyped, block: T.untyped).returns(T.untyped) }
+  def major_minor(*args, **options, &block); end
+
+  sig { params(args: T.untyped, options: T.untyped, block: T.untyped).returns(T.untyped) }
+  def major_minor_patch(*args, **options, &block); end
+end
+
 class Requirement
   sig { params(arg: T.untyped).returns(T.untyped) }
   def self.fatal(arg = T.unsafe(nil)); end
@@ -108,13 +278,19 @@ class SystemCommand
   def sudo?; end
 
   sig { returns(T::Boolean) }
-  def print_stdout?; end
-
-  sig { returns(T::Boolean) }
-  def print_stderr?; end
+  def sudo_as_root?; end
 
   sig { returns(T::Boolean) }
   def must_succeed?; end
+end
+
+module Utils
+  module AST
+    class FormulaAST
+      sig { params(args: T.untyped, options: T.untyped, block: T.untyped).returns(T.untyped) }
+      def process(*args, **options, &block); end
+    end
+  end
 end
 
 module Cask
@@ -186,5 +362,56 @@ module Cask
 
     sig { returns(T::Boolean) }
     def on_system_blocks_exist?; end
+
+    sig { returns(T::Boolean) }
+    def deprecated?; end
+
+    sig { returns(T::Boolean) }
+    def disabled?; end
+
+    sig { returns(T::Boolean) }
+    def livecheckable?; end
+  end
+end
+
+module Homebrew
+  class Cleanup
+    sig { returns(T::Boolean) }
+    def dry_run?; end
+
+    sig { returns(T::Boolean) }
+    def scrub?; end
+
+    sig { returns(T::Boolean) }
+    def prune?; end
+  end
+
+  class Service
+    sig { params(args: T.untyped, options: T.untyped, block: T.untyped).returns(T.untyped) }
+    def bin(*args, **options, &block); end
+
+    sig { params(args: T.untyped, options: T.untyped, block: T.untyped).returns(T.untyped) }
+    def etc(*args, **options, &block); end
+
+    sig { params(args: T.untyped, options: T.untyped, block: T.untyped).returns(T.untyped) }
+    def libexec(*args, **options, &block); end
+
+    sig { params(args: T.untyped, options: T.untyped, block: T.untyped).returns(T.untyped) }
+    def opt_bin(*args, **options, &block); end
+
+    sig { params(args: T.untyped, options: T.untyped, block: T.untyped).returns(T.untyped) }
+    def opt_libexec(*args, **options, &block); end
+
+    sig { params(args: T.untyped, options: T.untyped, block: T.untyped).returns(T.untyped) }
+    def opt_pkgshare(*args, **options, &block); end
+
+    sig { params(args: T.untyped, options: T.untyped, block: T.untyped).returns(T.untyped) }
+    def opt_prefix(*args, **options, &block); end
+
+    sig { params(args: T.untyped, options: T.untyped, block: T.untyped).returns(T.untyped) }
+    def opt_sbin(*args, **options, &block); end
+
+    sig { params(args: T.untyped, options: T.untyped, block: T.untyped).returns(T.untyped) }
+    def var(*args, **options, &block); end
   end
 end

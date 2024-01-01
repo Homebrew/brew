@@ -23,34 +23,45 @@ concurrency:
 
 jobs:
   syntax:
-    if: github.repository == 'Homebrew/brew'
+    if: github.repository_owner == 'Homebrew'
     runs-on: ubuntu-22.04
     steps:
       - name: Set up Homebrew
         id: set-up-homebrew
         uses: Homebrew/actions/setup-homebrew@master
+        with:
+          core: false
+          cask: false
+          test-bot: false
 
       - name: Cache Bundler RubyGems
         uses: actions/cache@v3
         with:
           path: ${{ steps.set-up-homebrew.outputs.gems-path }}
-          key: ${{ runner.os }}-rubygems-${{ steps.set-up-homebrew.outputs.gems-hash }}
-          restore-keys: ${{ runner.os }}-rubygems-
+          key: ${{ runner.os }}-rubygems-syntax-${{ steps.set-up-homebrew.outputs.gems-hash }}
+          restore-keys: ${{ runner.os }}-rubygems-syntax-
 
       - name: Install Bundler RubyGems
-        run: brew install-bundler-gems --groups=sorbet
+        run: brew install-bundler-gems --groups=style,typecheck
 
       - name: Install shellcheck and shfmt
         run: brew install shellcheck shfmt
 
-      - run: brew style --display-cop-names
+      - name: Cache style cache
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/Homebrew/style
+          key: syntax-style-cache-${{ github.sha }}
+          restore-keys: syntax-style-cache-
+
+      - run: brew style
 
       - run: brew typecheck
 
       - name: Check RuboCop filepaths
         working-directory: ${{ steps.set-up-homebrew.outputs.repository-path }}/Library/Homebrew
         run: |
-          public_apis=$(git grep -l "@api public" | wc -l | tr -d ' ')
+          public_apis=$(git grep -l "@api public" -- :^sorbet/ :^vendor/ | wc -l | tr -d ' ')
           rubocop_docs=$(yq '.Style/Documentation.Include' .rubocop.yml | wc -l | tr -d ' ')
           if [[ public_apis -ne rubocop_docs ]]
           then
@@ -63,39 +74,45 @@ jobs:
   tap-syntax:
     name: tap syntax
     needs: syntax
-    if: startsWith(github.repository, 'Homebrew/')
+    if: github.repository_owner == 'Homebrew'
     runs-on: ubuntu-22.04
-    env:
-      HOMEBREW_NO_INSTALL_FROM_API: 1
     steps:
       - name: Set up Homebrew
         id: set-up-homebrew
         uses: Homebrew/actions/setup-homebrew@master
+        with:
+          core: true
+          cask: true
+          test-bot: true
 
       - name: Cache Bundler RubyGems
         uses: actions/cache@v3
         with:
           path: ${{ steps.set-up-homebrew.outputs.gems-path }}
-          key: ${{ runner.os }}-rubygems-${{ steps.set-up-homebrew.outputs.gems-hash }}
-          restore-keys: ${{ runner.os }}-rubygems-
+          key: ${{ runner.os }}-rubygems-tap-syntax-${{ steps.set-up-homebrew.outputs.gems-hash }}
+          restore-keys: ${{ runner.os }}-rubygems-tap-syntax-
 
       - name: Install Bundler RubyGems
-        run: brew install-bundler-gems --groups=sorbet
+        run: brew install-bundler-gems --groups=style
+
+      - name: Cache style cache
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/Homebrew/style
+          key: tap-syntax-style-cache-${{ github.sha }}
+          restore-keys: tap-syntax-style-cache-
 
       - name: Run brew style on homebrew-core
-        run: brew style --display-cop-names homebrew/core
+        run: brew style homebrew/core
 
       - name: Set up all Homebrew taps
         run: |
           brew tap homebrew/aliases
           brew tap homebrew/autoupdate
           brew tap homebrew/bundle
-          brew tap homebrew/cask
-          brew tap homebrew/cask-drivers
           brew tap homebrew/cask-fonts
           brew tap homebrew/cask-versions
           brew tap homebrew/command-not-found
-          brew tap homebrew/core
           brew tap homebrew/formula-analytics
           brew tap homebrew/portable-ruby
           brew tap homebrew/services
@@ -105,92 +122,78 @@ jobs:
 
       - name: Run brew style on official taps
         run: |
-          brew style --display-cop-names homebrew/bundle \
-                                         homebrew/services \
-                                         homebrew/test-bot
+          brew style homebrew/bundle \
+                     homebrew/services \
+                     homebrew/test-bot
 
-          brew style --display-cop-names homebrew/aliases\
-                                         homebrew/autoupdate\
-                                         homebrew/command-not-found \
-                                         homebrew/formula-analytics \
-                                         homebrew/portable-ruby
+          brew style homebrew/aliases \
+                     homebrew/autoupdate\
+                     homebrew/command-not-found \
+                     homebrew/formula-analytics \
+                     homebrew/portable-ruby
 
       - name: Run brew style on cask taps
         run: |
-          brew style --display-cop-names homebrew/cask \
-                                         homebrew/cask-drivers \
-                                         homebrew/cask-fonts \
-                                         homebrew/cask-versions
+          brew style homebrew/cask \
+                     homebrew/cask-fonts \
+                     homebrew/cask-versions
 
   formula-audit:
     name: formula audit
     needs: syntax
-    if: startsWith(github.repository, 'Homebrew/')
+    if: github.repository_owner == 'Homebrew'
     runs-on: ubuntu-22.04
-    env:
-      HOMEBREW_NO_INSTALL_FROM_API: 1
     steps:
       - name: Set up Homebrew
         id: set-up-homebrew
         uses: Homebrew/actions/setup-homebrew@master
-
-      - name: Cache Bundler RubyGems
-        uses: actions/cache@v1
         with:
-          path: ${{ steps.set-up-homebrew.outputs.gems-path }}
-          key: ${{ runner.os }}-rubygems-${{ steps.set-up-homebrew.outputs.gems-hash }}
-          restore-keys: ${{ runner.os }}-rubygems-
-
-      - name: Install Bundler RubyGems
-        run: brew install-bundler-gems --groups=sorbet
-
-      - name: Set up the homebrew/core tap
-        run: brew tap homebrew/core
+          core: true
+          cask: false
+          test-bot: false
 
       - name: Run brew readall on homebrew/core
-        run: brew readall --aliases homebrew/core
+        run: brew readall --os=all --arch=all --aliases homebrew/core
 
       - name: Run brew audit --skip-style on homebrew/core
         run: brew audit --skip-style --except=version --tap=homebrew/core
 
+      - name: Generate formula API
+        run: brew generate-formula-api --dry-run
+
   cask-audit:
     name: cask audit
     needs: syntax
-    if: startsWith(github.repository, 'Homebrew/')
-    runs-on: macos-12
-    env:
-      HOMEBREW_NO_INSTALL_FROM_API: 1
+    if: github.repository_owner == 'Homebrew'
+    runs-on: macos-13
     steps:
       - name: Set up Homebrew
         id: set-up-homebrew
         uses: Homebrew/actions/setup-homebrew@master
-
-      - name: Cache Bundler RubyGems
-        uses: actions/cache@v1
         with:
-          path: ${{ steps.set-up-homebrew.outputs.gems-path }}
-          key: ${{ runner.os }}-rubygems-${{ steps.set-up-homebrew.outputs.gems-hash }}
-          restore-keys: ${{ runner.os }}-rubygems-
-
-      - name: Install Bundler RubyGems
-        run: brew install-bundler-gems --groups=sorbet
+          core: true
+          cask: true
+          test-bot: false
 
       - name: Set up Homebrew all cask taps
         run: |
-          brew tap homebrew/cask
-          brew tap homebrew/cask-drivers
           brew tap homebrew/cask-fonts
           brew tap homebrew/cask-versions
 
       - name: Run brew readall on all casks
-        run: brew readall homebrew/cask homebrew/cask-drivers homebrew/cask-fonts homebrew/cask-versions
+        run: brew readall --os=all --arch=all homebrew/cask homebrew/cask-fonts homebrew/cask-versions
 
       - name: Run brew audit --skip-style on casks
         run: |
           brew audit --skip-style --except=version --tap=homebrew/cask
-          brew audit --skip-style --except=version --tap=homebrew/cask-drivers
           brew audit --skip-style --except=version --tap=homebrew/cask-fonts
           brew audit --skip-style --except=version --tap=homebrew/cask-versions
+
+      - name: Generate formula API
+        run: brew generate-formula-api --dry-run
+
+      - name: Generate cask API
+        run: brew generate-cask-api --dry-run
 
   vendored-gems:
     name: vendored gems
@@ -200,6 +203,10 @@ jobs:
       - name: Set up Homebrew
         id: set-up-homebrew
         uses: Homebrew/actions/setup-homebrew@master
+        with:
+          core: false
+          cask: false
+          test-bot: false
 
       - name: Configure Git user
         uses: Homebrew/actions/git-user-config@master
@@ -209,7 +216,7 @@ jobs:
       # Can't cache this because we need to check that it doesn't fail the
       # "uncommitted RubyGems" step with a cold cache.
       - name: Install Bundler RubyGems
-        run: brew install-bundler-gems --groups=sorbet
+        run: brew install-bundler-gems --groups=all
 
       - name: Check for uncommitted RubyGems
         working-directory: ${{ steps.set-up-homebrew.outputs.repository-path }}
@@ -222,6 +229,10 @@ jobs:
       - name: Set up Homebrew
         id: set-up-homebrew
         uses: Homebrew/actions/setup-homebrew@master
+        with:
+          core: false
+          cask: false
+          test-bot: false
 
       - name: Build Docker image
         working-directory: ${{ steps.set-up-homebrew.outputs.repository-path }}
@@ -258,22 +269,16 @@ jobs:
         include:
           - name: update-test (Ubuntu 22.04)
             runs-on: ubuntu-22.04
-          - name: update-test (macOS 12)
-            runs-on: macos-12
+          - name: update-test (macOS 13)
+            runs-on: macos-13
     steps:
       - name: Set up Homebrew
         id: set-up-homebrew
         uses: Homebrew/actions/setup-homebrew@master
-
-      - name: Cache Bundler RubyGems
-        uses: actions/cache@v3
         with:
-          path: ${{ steps.set-up-homebrew.outputs.gems-path }}
-          key: ${{ runner.os }}-rubygems-${{ steps.set-up-homebrew.outputs.gems-hash }}
-          restore-keys: ${{ runner.os }}-rubygems-
-
-      - name: Install Bundler RubyGems
-        run: brew install-bundler-gems
+          core: false
+          cask: false
+          test-bot: false
 
       - name: Run brew update-tests
         run: |
@@ -300,25 +305,29 @@ jobs:
           - name: tests (Ubuntu 20.04)
             test-flags: --coverage
             runs-on: ubuntu-20.04
-          - name: tests (macOS 12)
+          - name: tests (macOS 13)
             test-flags: --coverage
-            runs-on: macos-12
+            runs-on: macos-13
     steps:
       - name: Set up Homebrew
         id: set-up-homebrew
         uses: Homebrew/actions/setup-homebrew@master
-        env:
-          HOMEBREW_NO_INSTALL_FROM_API: 1
+        with:
+          core: true
+          cask: false
+          test-bot: false
 
       - name: Cache Bundler RubyGems
         uses: actions/cache@v3
         with:
           path: ${{ steps.set-up-homebrew.outputs.gems-path }}
-          key: ${{ runner.os }}-rubygems-${{ steps.set-up-homebrew.outputs.gems-hash }}
-          restore-keys: ${{ runner.os }}-rubygems-
+          key: ${{ matrix.runs-on }}-tests-rubygems-${{ steps.set-up-homebrew.outputs.gems-hash }}
+          restore-keys: ${{ matrix.runs-on }}-tests-rubygems-
+
+      - run: brew config
 
       - name: Install Bundler RubyGems
-        run: brew install-bundler-gems --groups=sorbet
+        run: brew install-bundler-gems --groups=all
 
       - name: Create parallel test log directory
         run: mkdir tests
@@ -337,6 +346,13 @@ jobs:
       - name: Install brew tests --online dependencies
         if: matrix.name == 'tests (online)'
         run: brew install subversion curl
+
+      - name: Install brew tests macOS dependencies
+        if: runner.os != 'Linux'
+        run: |
+          # Workaround GitHub Actions Python issues
+          brew unlink python && brew link --overwrite python
+          brew install subversion
 
         # brew tests doesn't like world writable directories
       - name: Cleanup permissions
@@ -373,15 +389,15 @@ jobs:
           HOMEBREW_BUILDPULSE_ACCOUNT_ID: 1503512
           HOMEBREW_BUILDPULSE_REPOSITORY_ID: 53238813
 
-      - uses: codecov/codecov-action@d9f34f8cd5cb3b3eb79b3e4b5dae3a16df499a70
+      - uses: codecov/codecov-action@eaaf4bedf32dbdc6b720b63067d99c4d77d6047d
         with:
-          directory: ${{ steps.set-up-homebrew.outputs.repository-path }}
+          root_dir: ${{ steps.set-up-homebrew.outputs.repository-path }}
           files: Library/Homebrew/test/coverage/coverage.xml
 
   test-default-formula:
     name: ${{ matrix.name }}
     needs: syntax
-    if: startsWith(github.repository, 'Homebrew/')
+    if: github.repository_owner == 'Homebrew'
     runs-on: ${{ matrix.runs-on }}
     strategy:
       matrix:
@@ -390,15 +406,21 @@ jobs:
             runs-on: ubuntu-22.04
           - name: test default formula (Ubuntu 20.04)
             runs-on: ubuntu-20.04
-          - name: test default formula (macOS 12)
-            runs-on: macos-12
+          - name: test default formula (macOS 13)
+            runs-on: macos-13
     steps:
       - name: Set up Homebrew
         id: set-up-homebrew
         uses: Homebrew/actions/setup-homebrew@master
+        with:
+          core: true
+          cask: false
+          test-bot: true
 
       - run: brew test-bot --only-cleanup-before
 
       - run: brew test-bot --only-setup
+
+      - run: brew install gnu-tar
 
       - run: brew test-bot --only-formulae --only-json-tab --test-default-formula

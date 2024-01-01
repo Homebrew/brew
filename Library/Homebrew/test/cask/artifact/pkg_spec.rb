@@ -1,4 +1,3 @@
-# typed: false
 # frozen_string_literal: true
 
 describe Cask::Artifact::Pkg, :cask do
@@ -17,6 +16,7 @@ describe Cask::Artifact::Pkg, :cask do
         "/usr/sbin/installer",
         args:         ["-pkg", cask.staged_path.join("MyFancyPkg", "Fancy.pkg"), "-target", "/"],
         sudo:         true,
+        sudo_as_root: true,
         print_stdout: true,
         env:          {
           "LOGNAME"  => ENV.fetch("USER"),
@@ -66,6 +66,7 @@ describe Cask::Artifact::Pkg, :cask do
           cask.staged_path.join("/tmp/choices.xml")
         ],
         sudo:         true,
+        sudo_as_root: true,
         print_stdout: true,
         env:          {
           "LOGNAME"  => ENV.fetch("USER"),

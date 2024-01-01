@@ -1,0 +1,51 @@
+name: actionlint
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - '.github/workflows/*.ya?ml'
+      - '.github/actionlint.yaml'
+  pull_request:
+    paths:
+      - '.github/workflows/*.ya?ml'
+      - '.github/actionlint.yaml'
+  merge_group:
+
+env:
+  HOMEBREW_DEVELOPER: 1
+  HOMEBREW_NO_AUTO_UPDATE: 1
+  HOMEBREW_NO_ENV_HINTS: 1
+
+concurrency:
+  group: "actionlint-${{ github.ref }}"
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  workflow_syntax:
+    if: github.repository_owner == 'Homebrew'
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Set up Homebrew
+        id: setup-homebrew
+        uses: Homebrew/actions/setup-homebrew@master
+        with:
+          core: false
+          cask: false
+          test-bot: false
+
+      - name: Set up actionlint
+        env:
+          HOMEBREW_REPOSITORY: ${{ steps.setup-homebrew.outputs.repository-path }}
+        run: |
+          brew install actionlint shellcheck
+
+          # Annotations work only relative to GITHUB_WORKSPACE
+          (shopt -s dotglob; rm -rf "${GITHUB_WORKSPACE:?}"/*; mv "${HOMEBREW_REPOSITORY:?}"/* "$GITHUB_WORKSPACE")
+          rmdir "$HOMEBREW_REPOSITORY"
+          ln -vs "$GITHUB_WORKSPACE" "$HOMEBREW_REPOSITORY"
+
+          echo "::add-matcher::.github/actionlint-matcher.json"
+
+      - run: actionlint

@@ -10,8 +10,6 @@ require "tempfile"
 #
 # @api private
 class Sandbox
-  extend T::Sig
-
   SANDBOX_EXEC = "/usr/bin/sandbox-exec"
   private_constant :SANDBOX_EXEC
 
@@ -174,7 +172,7 @@ class Sandbox
       logs = Utils.popen_read("syslog", *syslog_args)
 
       # These messages are confusing and non-fatal, so don't report them.
-      logs = logs.lines.reject { |l| l.match(/^.*Python\(\d+\) deny file-write.*pyc$/) }.join
+      logs = logs.lines.grep_v(/^.*Python\(\d+\) deny file-write.*pyc$/).join
 
       unless logs.empty?
         if @logfile
@@ -210,8 +208,6 @@ class Sandbox
 
   # Configuration profile for a sandbox.
   class SandboxProfile
-    extend T::Sig
-
     SEATBELT_ERB = <<~ERB
       (version 1)
       (debug deny) ; log all denied operations to /var/log/system.log

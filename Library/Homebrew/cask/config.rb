@@ -11,8 +11,6 @@ module Cask
   #
   # @api private
   class Config
-    extend T::Sig
-
     DEFAULT_DIRS = {
       appdir:               "/Applications",
       keyboard_layoutdir:   "/Library/Keyboard Layouts",
@@ -80,6 +78,8 @@ module Cask
         key = k.to_sym
 
         if DEFAULT_DIRS.key?(key)
+          raise TypeError, "Invalid path for default dir #{k}: #{v.inspect}" if v.is_a?(Array)
+
           [key, Pathname(v).expand_path]
         else
           [key, v]
@@ -196,12 +196,12 @@ module Cask
     end
 
     sig { params(options: T.untyped).returns(String) }
-    def to_json(**options)
+    def to_json(*options)
       {
         default:  default,
         env:      env,
         explicit: explicit,
-      }.to_json(**options)
+      }.to_json(*options)
     end
   end
 end

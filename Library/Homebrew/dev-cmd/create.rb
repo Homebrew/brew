@@ -9,8 +9,6 @@ require "utils/pypi"
 require "cask/cask_loader"
 
 module Homebrew
-  extend T::Sig
-
   module_function
 
   sig { returns(CLI::Parser) }
@@ -96,14 +94,14 @@ module Homebrew
     token = Cask::Utils.token_from(name)
 
     cask_tap = Tap.fetch(args.tap || "homebrew/cask")
-    raise TapUnavailableError, args.tap unless cask_tap.installed?
+    raise TapUnavailableError, cask_tap.name unless cask_tap.installed?
 
-    cask_path = Cask::CaskLoader.path("#{cask_tap}/#{token}")
+    cask_path = cask_tap.new_cask_path(token)
     cask_path.dirname.mkpath unless cask_path.dirname.exist?
     raise Cask::CaskAlreadyCreatedError, token if cask_path.exist?
 
     version = if args.set_version
-      Version.create(args.set_version)
+      Version.new(args.set_version)
     else
       Version.detect(url.gsub(token, "").gsub(/x86(_64)?/, ""))
     end
@@ -124,6 +122,9 @@ module Homebrew
     end
 
     cask_path.atomic_write <<~RUBY
+      # Documentation: https://docs.brew.sh/Cask-Cookbook
+      #                https://docs.brew.sh/Adding-Software-to-Homebrew#cask-stanzas
+      # PLEASE REMOVE ALL GENERATED COMMENTS BEFORE SUBMITTING YOUR PULL REQUEST!
       cask "#{token}" do
         version "#{version}"
         sha256 "#{sha256}"
@@ -133,7 +134,18 @@ module Homebrew
         desc ""
         homepage ""
 
+        # Documentation: https://docs.brew.sh/Brew-Livecheck
+        livecheck do
+          url ""
+          strategy ""
+        end
+
+        depends_on macos: ""
+
         app ""
+
+        # Documentation: https://docs.brew.sh/Cask-Cookbook#stanza-zap
+        zap trash: ""
       end
     RUBY
 
@@ -142,22 +154,7 @@ module Homebrew
   end
 
   def create_formula(args:)
-    fc = FormulaCreator.new(args)
-    fc.name = if args.set_name.blank?
-      stem = Pathname.new(args.named.first).stem.rpartition("=").last
-      print "Formula name [#{stem}]: "
-      __gets || stem
-    else
-      args.set_name
-    end
-    fc.version = args.set_version
-    fc.license = args.set_license
-    fc.tap = Tap.fetch(args.tap || "homebrew/core")
-    raise TapUnavailableError, args.tap unless fc.tap.installed?
-
-    fc.url = args.named.first
-
-    fc.mode = if args.autotools?
+    mode = if args.autotools?
       :autotools
     elsif args.cmake?
       :cmake
@@ -179,6 +176,25 @@ module Homebrew
       :rust
     end
 
+    fc = FormulaCreator.new(
+      args.set_name,
+      args.set_version,
+      tap:     args.tap,
+      url:     args.named.first,
+      mode:    mode,
+      license: args.set_license,
+      fetch:   !args.no_fetch?,
+      head:    args.HEAD?,
+    )
+    fc.parse_url
+    # ask for confirmation if name wasn't passed explicitly
+    if args.set_name.blank?
+      print "Formula name [#{fc.name}]: "
+      fc.name = __gets || fc.name
+    end
+
+    fc.verify
+
     # Check for disallowed formula, or names that shadow aliases,
     # unless --force is specified.
     unless args.force?
@@ -190,22 +206,27 @@ module Homebrew
         EOS
       end
 
-      if Formula.aliases.include? fc.name
-        realname = Formulary.canonical_name(fc.name)
-        odie <<~EOS
-          The formula '#{realname}' is already aliased to '#{fc.name}'.
-          Please check that you are not creating a duplicate.
-          To force creation use `--force`.
-        EOS
+      Homebrew.with_no_api_env do
+        if Formula.aliases.include? fc.name
+          realname = Formulary.canonical_name(fc.name)
+          odie <<~EOS
+            The formula '#{realname}' is already aliased to '#{fc.name}'.
+            Please check that you are not creating a duplicate.
+            To force creation use `--force`.
+          EOS
+        end
       end
     end
 
-    fc.generate!
+    path = fc.write_formula!
 
-    PyPI.update_python_resources! Formula[fc.name], ignore_non_pypi_packages: true if args.python?
+    formula = Homebrew.with_no_api_env do
+      Formula[fc.name]
+    end
+    PyPI.update_python_resources! formula, ignore_non_pypi_packages: true if args.python?
 
     puts "Please run `brew audit --new #{fc.name}` before submitting, thanks."
-    fc.path
+    path
   end
 
   def __gets

@@ -43,7 +43,7 @@ module Cask
     end
 
     def self.format_versioned(cask)
-      cask.to_s.concat(cask.versions.map(&:to_s).join(" ").prepend(" "))
+      "#{cask}#{cask.installed_version&.prepend(" ")}"
     end
   end
 end

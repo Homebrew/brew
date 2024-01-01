@@ -10,8 +10,6 @@ module Utils
   #
   # @api private
   module Curl
-    extend T::Sig
-
     using TimeRemaining
 
     # This regex is used to extract the part of an ETag within quotation marks,
@@ -25,7 +23,7 @@ module Utils
     HTTP_RESPONSE_BODY_SEPARATOR = "\r\n\r\n"
 
     # This regex is used to isolate the parts of an HTTP status line, namely
-    # the status code and any following descriptive text (e.g., `Not Found`).
+    # the status code and any following descriptive text (e.g. `Not Found`).
     HTTP_STATUS_LINE_REGEX = %r{^HTTP/.* (?<code>\d+)(?: (?<text>[^\r\n]+))?}.freeze
 
     private_constant :ETAG_VALUE_REGEX, :HTTP_RESPONSE_BODY_SEPARATOR, :HTTP_STATUS_LINE_REGEX
@@ -73,7 +71,16 @@ module Utils
       args = []
 
       # do not load .curlrc unless requested (must be the first argument)
-      args << "--disable" unless Homebrew::EnvConfig.curlrc?
+      curlrc = Homebrew::EnvConfig.curlrc
+      if curlrc&.start_with?("/")
+        # If the file exists, we still want to disable loading the default curlrc.
+        args << "--disable" << "--config" << curlrc
+      elsif curlrc
+        # This matches legacy behavior: `HOMEBREW_CURLRC` was a bool,
+        # omitting `--disable` when present.
+      else
+        args << "--disable"
+      end
 
       # echo any cookies received on a redirect
       args << "--cookie" << "/dev/null"
@@ -95,17 +102,17 @@ module Utils
 
       args << "--header" << "Accept-Language: en"
 
-      unless show_output == true
+      if show_output != true
         args << "--fail"
         args << "--progress-bar" unless Context.current.verbose?
         args << "--verbose" if Homebrew::EnvConfig.curl_verbose?
-        args << "--silent" unless $stdout.tty?
+        args << "--silent" if !$stdout.tty? || Context.current.quiet?
       end
 
       args << "--connect-timeout" << connect_timeout.round(3) if connect_timeout.present?
       args << "--max-time" << max_time.round(3) if max_time.present?
 
-      # A non-positive integer (e.g., 0) or `nil` will omit this argument
+      # A non-positive integer (e.g. 0) or `nil` will omit this argument
       args << "--retry" << retries if retries&.positive?
 
       args << "--retry-max-time" << retry_max_time.round if retry_max_time.present?
@@ -175,30 +182,31 @@ module Utils
       destination = Pathname(to)
       destination.dirname.mkpath
 
-      if try_partial
-        range_stdout = curl_output("--location", "--head", *args, **options).stdout
-        parsed_output = parse_curl_output(range_stdout)
+      args = ["--location", *args]
 
-        headers = if parsed_output[:responses].present?
-          parsed_output[:responses].last[:headers]
-        else
+      if try_partial && destination.exist?
+        headers = begin
+          parsed_output = curl_headers(*args, **options, wanted_headers: ["accept-ranges"])
+          parsed_output.fetch(:responses).last&.fetch(:headers) || {}
+        rescue ErrorDuringExecution
+          # Ignore errors here and let actual download fail instead.
           {}
         end
 
-        # Any value for `accept-ranges` other than none indicates that the server supports partial requests.
-        # Its absence indicates no support.
-        supports_partial = headers.key?("accept-ranges") && headers["accept-ranges"] != "none"
+        # Any value for `Accept-Ranges` other than `none` indicates that the server
+        # supports partial requests. Its absence indicates no support.
+        supports_partial = headers.fetch("accept-ranges", "none") != "none"
+        content_length = headers["content-length"]&.to_i
 
-        if supports_partial &&
-           destination.exist? &&
-           destination.size == headers["content-length"].to_i
-          return # We've already downloaded all the bytes
+        if supports_partial
+          # We've already downloaded all bytes.
+          return if destination.size == content_length
+
+          args = ["--continue-at", "-", *args]
         end
       end
 
-      args = ["--location", "--remote-time", "--output", destination, *args]
-      # continue-at shouldn't be used with servers that don't support partial requests.
-      args = ["--continue-at", "-", *args] if destination.exist? && supports_partial
+      args = ["--remote-time", "--output", destination, *args]
 
       curl(*args, **options)
     end
@@ -207,7 +215,7 @@ module Utils
       curl_with_workarounds(*args, print_stderr: false, show_output: true, **options)
     end
 
-    def curl_head(*args, **options)
+    def curl_headers(*args, wanted_headers: [], **options)
       [[], ["--request", "GET"]].each do |request_args|
         result = curl_output(
           "--fail", "--location", "--silent", "--head", *request_args, *args,
@@ -218,9 +226,14 @@ module Utils
         if result.success? || result.exit_status == 22
           parsed_output = parse_curl_output(result.stdout)
 
-          # If we didn't get a `Content-Disposition` header yet, retry using `GET`.
-          next if request_args.empty? &&
-                  parsed_output.fetch(:responses).none? { |r| r.fetch(:headers).key?("content-disposition") }
+          if request_args.empty?
+            # If we didn't get any wanted header yet, retry using `GET`.
+            next if wanted_headers.any? &&
+                    parsed_output.fetch(:responses).none? { |r| (r.fetch(:headers).keys & wanted_headers).any? }
+
+            # Some CDNs respond with 400 codes for `HEAD` but resolve with `GET`.
+            next if (400..499).cover?(parsed_output.fetch(:responses).last&.fetch(:status_code).to_i)
+          end
 
           return parsed_output if result.success?
         end
@@ -238,17 +251,7 @@ module Utils
       return false if response[:headers].blank?
       return false unless [403, 503].include?(response[:status_code].to_i)
 
-      set_cookie_header = Array(response[:headers]["set-cookie"])
-      has_cloudflare_cookie_header = set_cookie_header.compact.any? do |cookie|
-        cookie.match?(/^(__cfduid|__cf_bm)=/i)
-      end
-
-      server_header = Array(response[:headers]["server"])
-      has_cloudflare_server = server_header.compact.any? do |server|
-        server.match?(/^cloudflare/i)
-      end
-
-      has_cloudflare_cookie_header && has_cloudflare_server
+      [*response[:headers]["server"]].any? { |server| server.match?(/^cloudflare/i) }
     end
 
     # Check if a URL is protected by Incapsula (e.g. corsair.com).
@@ -295,9 +298,10 @@ module Utils
       end
 
       details = T.let(nil, T.nilable(T::Hash[Symbol, T.untyped]))
+      attempts = 0
       user_agents.each do |user_agent|
-        details =
-          curl_http_content_headers_and_checksum(
+        loop do
+          details = curl_http_content_headers_and_checksum(
             url,
             specs:             specs,
             hash_needed:       hash_needed,
@@ -305,15 +309,18 @@ module Utils
             user_agent:        user_agent,
             referer:           referer,
           )
+
+          # Retry on network issues
+          break if details[:exit_status] != 52 && details[:exit_status] != 56
+
+          attempts += 1
+          break if attempts >= Homebrew::EnvConfig.curl_retries.to_i
+        end
+
         break if http_status_ok?(details[:status_code])
       end
 
-      unless details[:status_code]
-        # Hack around https://github.com/Homebrew/brew/issues/3199
-        return if MacOS.version == :el_capitan
-
-        return "The #{url_type} #{url} is not reachable"
-      end
+      return "The #{url_type} #{url} is not reachable" unless details[:status_code]
 
       unless http_status_ok?(details[:status_code])
         return if details[:responses].any? do |response|
@@ -402,7 +409,7 @@ module Utils
         next [] if argument == false # No flag.
 
         args = ["--#{option.to_s.tr("_", "-")}"]
-        args << argument unless argument == true # It's a flag.
+        args << argument if argument != true # It's a flag.
         args
       end
 
@@ -444,12 +451,13 @@ module Utils
           end
         end
         file_contents = File.read(T.must(file.path), **open_args)
-        file_hash = Digest::SHA2.hexdigest(file_contents) if hash_needed
+        file_hash = Digest::SHA256.hexdigest(file_contents) if hash_needed
       end
 
       {
         url:            url,
         final_url:      final_url,
+        exit_status:    status.exitstatus,
         status_code:    status_code,
         headers:        headers,
         etag:           etag,
@@ -606,6 +614,3 @@ module Utils
     end
   end
 end
-
-# FIXME: Include `Utils::Curl` explicitly everywhere it is used.
-include Utils::Curl # rubocop:disable Style/MixinUsage

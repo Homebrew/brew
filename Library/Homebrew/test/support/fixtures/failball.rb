@@ -3,7 +3,7 @@
 
 class Failball < Formula
   def initialize(name = "failball", path = Pathname.new(__FILE__).expand_path, spec = :stable,
-                 alias_path: nil, force_bottle: false)
+                 alias_path: nil, tap: nil, force_bottle: false)
     super
   end
 

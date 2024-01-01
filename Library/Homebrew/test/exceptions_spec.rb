@@ -1,4 +1,3 @@
-# typed: false
 # frozen_string_literal: true
 
 require "exceptions"
@@ -132,7 +131,7 @@ describe "Exception" do
   describe TapUnavailableError do
     subject { described_class.new("foo") }
 
-    its(:to_s) { is_expected.to eq("No available tap foo.\n") }
+    its(:to_s) { is_expected.to eq("No available tap foo.\nRun brew tap-new foo to create a new foo tap!\n") }
   end
 
   describe TapAlreadyTappedError do
@@ -142,11 +141,11 @@ describe "Exception" do
   end
 
   describe BuildError do
-    subject { described_class.new(formula, "badprg", %w[arg1 arg2], {}) }
+    subject { described_class.new(formula, "badprg", ["arg1", 2, Pathname.new("arg3"), :arg4], {}) }
 
     let(:formula) { instance_double(Formula, name: "foo") }
 
-    its(:to_s) { is_expected.to eq("Failed executing: badprg arg1 arg2") }
+    its(:to_s) { is_expected.to eq("Failed executing: badprg arg1 2 arg3 arg4") }
   end
 
   describe OperationInProgressError do
@@ -203,10 +202,10 @@ describe "Exception" do
   end
 
   describe ChecksumMismatchError do
-    subject { described_class.new("/file.tar.gz", hash1, hash2) }
+    subject { described_class.new("/file.tar.gz", expected_checksum, actual_checksum) }
 
-    let(:hash1) { instance_double(Checksum, to_s: "deadbeef") }
-    let(:hash2) { instance_double(Checksum, to_s: "deadcafe") }
+    let(:expected_checksum) { instance_double(Checksum, to_s: "deadbeef") }
+    let(:actual_checksum) { instance_double(Checksum, to_s: "deadcafe") }
 
     its(:to_s) { is_expected.to match(/SHA256 mismatch/) }
   end

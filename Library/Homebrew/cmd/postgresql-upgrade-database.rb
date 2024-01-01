@@ -15,12 +15,17 @@ module Homebrew
       EOS
 
       named_args :none
+
+      hide_from_man_page!
     end
   end
 
   sig { void }
   def postgresql_upgrade_database
     postgresql_upgrade_database_args.parse
+
+    odisabled "brew postgresql_upgrade_database",
+              "using new, versioned e.g. `var/postgres@14` datadir and `pg_upgrade`"
 
     name = "postgresql"
     pg = Formula[name]
@@ -52,7 +57,7 @@ module Homebrew
     old_bin ||= begin
       Formula[old_pg_name]
       ohai "brew install #{old_pg_name}"
-      system "brew", "install", old_pg_name
+      system HOMEBREW_BREW_FILE, "install", old_pg_name
       Pathname.glob(old_pg_glob).first
     rescue FormulaUnavailableError
       nil
@@ -69,11 +74,11 @@ module Homebrew
       # Following instructions from:
       # https://www.postgresql.org/docs/10/static/pgupgrade.html
       ohai "Upgrading #{name} data from #{pg_version_data} to #{pg_version_installed}..."
-      services_json_output = Utils.popen_read("brew", "services", "info", "--all", "--json")
+      services_json_output = Utils.popen_read(HOMEBREW_BREW_FILE, "services", "info", "--all", "--json")
       services_json = JSON.parse(services_json_output)
       loaded_service_names = services_json.select { |sj| sj[:loaded] }.map { |sj| sj[:name] }
       if loaded_service_names.include?(name)
-        system "brew", "services", "stop", name
+        system HOMEBREW_BREW_FILE, "services", "stop", name
         service_stopped = true
       elsif quiet_system "#{bin}/pg_ctl", "-D", datadir, "status"
         system "#{bin}/pg_ctl", "-D", datadir, "stop"
@@ -81,7 +86,7 @@ module Homebrew
       end
 
       # Shut down old server if it is up via brew services
-      system "brew", "services", "stop", old_pg_name if loaded_service_names.include?(old_pg_name)
+      system HOMEBREW_BREW_FILE, "services", "stop", old_pg_name if loaded_service_names.include?(old_pg_name)
 
       # get 'lc_collate' from old DB"
       unless quiet_system "#{old_bin}/pg_ctl", "-w", "-D", datadir, "status"
@@ -143,7 +148,7 @@ module Homebrew
         if server_stopped
           safe_system "#{bin}/pg_ctl", "-D", datadir, "start"
         elsif service_stopped
-          safe_system "brew", "services", "start", name
+          safe_system HOMEBREW_BREW_FILE, "services", "start", name
         end
       else
         onoe "Upgrading #{name} data from #{pg_version_data} to #{pg_version_installed} failed!"
@@ -158,7 +163,7 @@ module Homebrew
         if server_stopped
           system "#{bin}/pg_ctl", "-D", datadir, "start"
         elsif service_stopped
-          system "brew", "services", "start", name
+          system HOMEBREW_BREW_FILE, "services", "start", name
         end
       end
     end

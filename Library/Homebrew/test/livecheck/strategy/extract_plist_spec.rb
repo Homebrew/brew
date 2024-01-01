@@ -1,4 +1,3 @@
-# typed: false
 # frozen_string_literal: true
 
 require "livecheck/strategy"
@@ -109,7 +108,7 @@ describe Homebrew::Livecheck::Strategy::ExtractPlist do
 
   describe "::find_versions" do
     it "returns a for an installer artifact" do
-      cask = Cask::CaskLoader.load(cask_path("livecheck/installer-manual-livecheck"))
+      cask = Cask::CaskLoader.load(cask_path("livecheck/livecheck-installer-manual"))
       installer_artifact = cask.artifacts.first
 
       expect(installer_artifact).to be_a(Cask::Artifact::Installer)

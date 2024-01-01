@@ -9,11 +9,10 @@ module Cask
   #
   # @api private
   module Quarantine
-    extend T::Sig
-
     QUARANTINE_ATTRIBUTE = "com.apple.quarantine"
 
     QUARANTINE_SCRIPT = (HOMEBREW_LIBRARY_PATH/"cask/utils/quarantine.swift").freeze
+    COPY_XATTRS_SCRIPT = (HOMEBREW_LIBRARY_PATH/"cask/utils/copy-xattrs.swift").freeze
 
     def self.swift
       @swift ||= DevelopmentTools.locate("swift")
@@ -34,7 +33,7 @@ module Cask
     def self.check_quarantine_support
       odebug "Checking quarantine support"
 
-      if !system_command(xattr, args: ["-h"], print_stderr: false).success?
+      if xattr.nil? || !system_command(xattr, args: ["-h"], print_stderr: false).success?
         odebug "There's no working version of `xattr` on this system."
         :xattr_broken
       elsif swift.nil?
@@ -173,6 +172,86 @@ module Cask
       return if quarantiner.success?
 
       raise CaskQuarantinePropagationError.new(to, quarantiner.stderr)
+    end
+
+    sig { params(from: Pathname, to: Pathname, command: T.class_of(SystemCommand)).void }
+    def self.copy_xattrs(from, to, command:)
+      odebug "Copying xattrs from #{from} to #{to}"
+
+      command.run!(
+        swift,
+        args: [
+          *swift_target_args,
+          COPY_XATTRS_SCRIPT,
+          from,
+          to,
+        ],
+        sudo: !to.writable?,
+      )
+    end
+
+    # Ensures that Homebrew has permission to update apps on macOS Ventura.
+    # This may be granted either through the App Management toggle or the Full Disk Access toggle.
+    # The system will only show a prompt for App Management, so we ask the user to grant that.
+    sig { params(app: Pathname, command: T.class_of(SystemCommand)).returns(T::Boolean) }
+    def self.app_management_permissions_granted?(app:, command:)
+      return true unless app.directory?
+
+      # To get macOS to prompt the user for permissions, we need to actually attempt to
+      # modify a file in the app.
+      test_file = app/".homebrew-write-test"
+
+      # We can't use app.writable? here because that conflates several access checks,
+      # including both file ownership and whether system permissions are granted.
+      # Here we just want to check whether sudo would be needed.
+      looks_writable_without_sudo = if app.owned?
+        (app.lstat.mode & 0200) != 0
+      elsif app.grpowned?
+        (app.lstat.mode & 0020) != 0
+      else
+        (app.lstat.mode & 0002) != 0
+      end
+
+      if looks_writable_without_sudo
+        begin
+          File.write(test_file, "")
+          test_file.delete
+          return true
+        rescue Errno::EACCES, Errno::EPERM
+          # Using error handler below
+        end
+      else
+        begin
+          command.run!(
+            "touch",
+            args:         [
+              test_file,
+            ],
+            print_stderr: false,
+            sudo:         true,
+          )
+          command.run!(
+            "rm",
+            args:         [
+              test_file,
+            ],
+            print_stderr: false,
+            sudo:         true,
+          )
+          return true
+        rescue ErrorDuringExecution => e
+          # We only want to handle "touch" errors here; propagate "sudo" errors up
+          raise e unless e.stderr.include?("touch: #{test_file}: Operation not permitted")
+        end
+      end
+
+      opoo <<~EOF
+        Your terminal does not have App Management permissions, so Homebrew will delete and reinstall the app.
+        This may result in some configurations (like notification settings or location in the Dock/Launchpad) being lost.
+        To fix this, go to System Settings > Privacy & Security > App Management and add or enable your terminal.
+      EOF
+
+      false
     end
   end
 end

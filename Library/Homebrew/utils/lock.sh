@@ -13,7 +13,7 @@ lock() {
     odie <<EOS
 Can't create ${name} lock in ${lock_dir}!
 Fix permissions by running:
-  sudo chown -R \$(whoami) ${HOMEBREW_PREFIX}/var/homebrew
+  sudo chown -R ${USER-\$(whoami)} ${HOMEBREW_PREFIX}/var/homebrew
 EOS
   fi
   # 200 is the file descriptor used in the lock.

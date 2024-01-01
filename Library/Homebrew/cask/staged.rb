@@ -8,8 +8,6 @@ module Cask
   #
   # @api private
   module Staged
-    extend T::Sig
-
     # FIXME: Enable cop again when https://github.com/sorbet/sorbet/issues/3532 is fixed.
     # rubocop:disable Style/MutableConstant
     Paths = T.type_alias { T.any(String, Pathname, T::Array[T.any(String, Pathname)]) }
@@ -29,7 +27,7 @@ module Cask
       full_paths = remove_nonexistent(paths)
       return if full_paths.empty?
 
-      ohai "Changing ownership of paths required by #{@cask}; your password may be necessary."
+      ohai "Changing ownership of paths required by #{@cask} with sudo; the password may be necessary."
       @command.run!("/usr/sbin/chown", args: ["-R", "--", "#{user}:#{group}", *full_paths],
                                        sudo: true)
     end

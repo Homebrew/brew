@@ -10,20 +10,34 @@ module Language
     module Shebang
       module_function
 
-      def detected_perl_shebang(formula = self)
-        perl_path = if formula.deps.map(&:name).include? "perl"
-          Formula["perl"].opt_bin/"perl"
-        elsif formula.uses_from_macos_names.include? "perl"
-          "/usr/bin/perl#{MacOS.preferred_perl_version}"
-        else
-          raise ShebangDetectionError.new("Perl", "formula does not depend on Perl")
-        end
+      # A regex to match potential shebang permutations.
+      PERL_SHEBANG_REGEX = %r{^#! ?/usr/bin/(?:env )?perl( |$)}.freeze
 
+      # The length of the longest shebang matching `SHEBANG_REGEX`.
+      PERL_SHEBANG_MAX_LENGTH = "#! /usr/bin/env perl ".length
+
+      # @private
+      sig { params(perl_path: T.any(String, Pathname)).returns(Utils::Shebang::RewriteInfo) }
+      def perl_shebang_rewrite_info(perl_path)
         Utils::Shebang::RewriteInfo.new(
-          %r{^#! ?/usr/bin/(?:env )?perl( |$)},
-          21, # the length of "#! /usr/bin/env perl "
+          PERL_SHEBANG_REGEX,
+          PERL_SHEBANG_MAX_LENGTH,
           "#{perl_path}\\1",
         )
+      end
+
+      sig { params(formula: T.untyped).returns(Utils::Shebang::RewriteInfo) }
+      def detected_perl_shebang(formula = self)
+        perl_deps = formula.declared_deps.select { |dep| dep.name == "perl" }
+        raise ShebangDetectionError.new("Perl", "formula does not depend on Perl") if perl_deps.empty?
+
+        perl_path = if perl_deps.any? { |dep| !dep.uses_from_macos? || !dep.use_macos_install? }
+          Formula["perl"].opt_bin/"perl"
+        else
+          "/usr/bin/perl#{MacOS.preferred_perl_version}"
+        end
+
+        perl_shebang_rewrite_info(perl_path)
       end
     end
   end

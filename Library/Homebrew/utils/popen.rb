@@ -54,10 +54,10 @@ module Utils
         begin
           exec(*args, options)
         rescue Errno::ENOENT
-          $stderr.puts "brew: command not found: #{args[0]}" unless options[:err] == :close
+          $stderr.puts "brew: command not found: #{args[0]}" if options[:err] != :close
           exit! 127
         rescue SystemCallError
-          $stderr.puts "brew: exec failed: #{args[0]}" unless options[:err] == :close
+          $stderr.puts "brew: exec failed: #{args[0]}" if options[:err] != :close
           exit! 1
         end
       end

@@ -15,7 +15,8 @@ cask "with-uninstall-script-user-relative" do
   end
 
   uninstall script: {
-    executable: "~/MyFancyApp.app/uninstall.sh",
-    sudo:       false,
+    executable:   "~/MyFancyApp.app/uninstall.sh",
+    sudo:         false,
+    sudo_as_root: false,
   }
 end

@@ -7,17 +7,22 @@ require "cask/caskroom"
 require "dependencies_helpers"
 
 module Homebrew
-  extend T::Sig
-
   extend DependenciesHelpers
 
   sig { returns(CLI::Parser) }
   def self.deps_args
     Homebrew::CLI::Parser.new do
       description <<~EOS
-        Show dependencies for <formula>. Additional options specific to <formula>
-        may be appended to the command. When given multiple formula arguments,
-        show the intersection of dependencies for each formula.
+        Show dependencies for <formula>. When given multiple formula arguments,
+        show the intersection of dependencies for each formula. By default, `deps`
+        shows all required and recommended dependencies.
+
+        If any version of each formula argument is installed and no other options
+        are passed, this command displays their actual runtime dependencies (similar
+        to `brew linkage`), which may differ from the current versons' stated
+        dependencies if the installed versions are outdated.
+
+        *Note:* `--missing` and `--skip-recommended` have precedence over `--include-*`.
       EOS
       switch "-n", "--topological",
              description: "Sort dependencies in topological order."
@@ -46,28 +51,30 @@ module Homebrew
              depends_on:  "--graph",
              description: "Show text-based graph description in DOT format."
       switch "--annotate",
-             description: "Mark any build, test, optional, or recommended dependencies as " \
+             description: "Mark any build, test, implicit, optional, or recommended dependencies as " \
                           "such in the output."
       switch "--installed",
              description: "List dependencies for formulae that are currently installed. If <formula> is " \
                           "specified, list only its dependencies that are currently installed."
+      switch "--missing",
+             description: "Show only missing dependencies."
       switch "--eval-all",
              description: "Evaluate all available formulae and casks, whether installed or not, to list " \
                           "their dependencies."
-      switch "--all",
-             hidden:      true
       switch "--for-each",
-             description: "Switch into the mode used by the `--all` option, but only list dependencies " \
+             description: "Switch into the mode used by the `--eval-all` option, but only list dependencies " \
                           "for each provided <formula>, one formula per line. This is used for " \
-                          "debugging the `--installed`/`--all` display mode."
+                          "debugging the `--installed`/`--eval-all` display mode."
+      switch "--HEAD",
+             description: "Show dependencies for HEAD version instead of stable version."
       switch "--formula", "--formulae",
              description: "Treat all named arguments as formulae."
       switch "--cask", "--casks",
              description: "Treat all named arguments as casks."
 
       conflicts "--tree", "--graph"
+      conflicts "--installed", "--missing"
       conflicts "--installed", "--eval-all"
-      conflicts "--installed", "--all"
       conflicts "--formula", "--cask"
       formula_options
 
@@ -79,13 +86,6 @@ module Homebrew
     args = deps_args.parse
 
     all = args.eval_all?
-    if args.all?
-      unless all
-        odisabled "brew deps --all",
-                  "brew deps --eval-all or HOMEBREW_EVAL_ALL"
-      end
-      all = true
-    end
 
     Formulary.enable_factory_cache!
 
@@ -95,10 +95,12 @@ module Homebrew
     @use_runtime_dependencies = installed && recursive &&
                                 !args.tree? &&
                                 !args.graph? &&
+                                !args.HEAD? &&
                                 !args.include_build? &&
                                 !args.include_test? &&
                                 !args.include_optional? &&
-                                !args.skip_recommended?
+                                !args.skip_recommended? &&
+                                !args.missing?
 
     if args.tree? || args.graph?
       dependents = if args.named.present?
@@ -129,7 +131,9 @@ module Homebrew
       puts_deps_tree dependents, recursive: recursive, args: args
       return
     elsif all
-      puts_deps sorted_dependents(Formula.all + Cask::Cask.all), recursive: recursive, args: args
+      puts_deps sorted_dependents(
+        Formula.all(eval_all: args.eval_all?) + Cask::Cask.all(eval_all: args.eval_all?),
+      ), recursive: recursive, args: args
       return
     elsif !args.no_named? && args.for_each?
       puts_deps sorted_dependents(args.named.to_formulae_and_casks), recursive: recursive, args: args
@@ -152,6 +156,7 @@ module Homebrew
     end
 
     dependents = dependents(args.named.to_formulae_and_casks)
+    check_head_spec(dependents) if args.HEAD?
 
     all_deps = deps_for_dependents(dependents, recursive: recursive, args: args, &(args.union? ? :| : :&))
     condense_requirements(all_deps, args: args)
@@ -190,6 +195,7 @@ module Homebrew
       str = "#{str} [test]" if dep.test?
       str = "#{str} [optional]" if dep.optional?
       str = "#{str} [recommended]" if dep.recommended?
+      str = "#{str} [implicit]" if dep.implicit?
     end
 
     str
@@ -204,8 +210,8 @@ module Homebrew
       deps ||= recursive_includes(Dependency, dependency, includes, ignores)
       reqs   = recursive_includes(Requirement, dependency, includes, ignores)
     else
-      deps ||= reject_ignores(dependency.deps, ignores, includes)
-      reqs   = reject_ignores(dependency.requirements, ignores, includes)
+      deps ||= select_includes(dependency.deps, ignores, includes)
+      reqs   = select_includes(dependency.requirements, ignores, includes)
     end
 
     deps + reqs.to_a
@@ -215,7 +221,14 @@ module Homebrew
     dependents.map { |d| deps_for_dependent(d, recursive: recursive, args: args) }.reduce(&block)
   end
 
+  def self.check_head_spec(dependents)
+    headless = dependents.select { |d| d.is_a?(Formula) && d.active_spec_sym != :head }
+                         .to_sentence two_words_connector: " or ", last_word_connector: " or "
+    opoo "No head spec for #{headless}, using stable spec instead" unless headless.empty?
+  end
+
   def self.puts_deps(dependents, args:, recursive: false)
+    check_head_spec(dependents) if args.HEAD?
     dependents.each do |dependent|
       deps = deps_for_dependent(dependent, recursive: recursive, args: args)
       condense_requirements(deps, args: args)
@@ -266,6 +279,7 @@ module Homebrew
   end
 
   def self.puts_deps_tree(dependents, args:, recursive: false)
+    check_head_spec(dependents) if args.HEAD?
     dependents.each do |d|
       puts d.full_name
       recursive_deps_tree(d, dep_stack: [], prefix: "", recursive: recursive, args: args)
@@ -276,8 +290,8 @@ module Homebrew
   def self.dependables(formula, args:)
     includes, ignores = args_includes_ignores(args)
     deps = @use_runtime_dependencies ? formula.runtime_dependencies : formula.deps
-    deps = reject_ignores(deps, ignores, includes)
-    reqs = reject_ignores(formula.requirements, ignores, includes) if args.include_requirements?
+    deps = select_includes(deps, ignores, includes)
+    reqs = select_includes(formula.requirements, ignores, includes) if args.include_requirements?
     reqs ||= []
     reqs + deps
   end

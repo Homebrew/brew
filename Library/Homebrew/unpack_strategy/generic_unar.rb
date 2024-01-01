@@ -4,8 +4,6 @@
 module UnpackStrategy
   # Strategy for unpacking archives with `unar`.
   class GenericUnar
-    extend T::Sig
-
     include UnpackStrategy
 
     sig { returns(T::Array[String]) }

@@ -3,14 +3,11 @@
 
 require "migrator"
 require "cli/parser"
+require "cask/migrator"
 
 module Homebrew
-  extend T::Sig
-
-  module_function
-
   sig { returns(CLI::Parser) }
-  def migrate_args
+  def self.migrate_args
     Homebrew::CLI::Parser.new do
       description <<~EOS
         Migrate renamed packages to new names, where <formula> are old names of
@@ -21,25 +18,27 @@ module Homebrew
                           "the same taps and migrate them anyway."
       switch "-n", "--dry-run",
              description: "Show what would be migrated, but do not actually migrate anything."
+      switch "--formula", "--formulae",
+             description: "Only migrate formulae."
+      switch "--cask", "--casks",
+             description: "Only migrate casks."
 
-      named_args :installed_formula, min: 1
+      conflicts "--formula", "--cask"
+
+      named_args [:installed_formula, :installed_cask], min: 1
     end
   end
 
-  def migrate
+  def self.migrate
     args = migrate_args.parse
 
-    args.named.to_kegs.each do |keg|
-      f = Formulary.from_keg(keg)
-
-      if f.oldname
-        rack = HOMEBREW_CELLAR/f.oldname
-        raise NoSuchKegError, f.oldname if !rack.exist? || rack.subdirs.empty?
-
-        odie "#{rack} is a symlink" if rack.symlink?
+    args.named.to_formulae_and_casks(warn: false).each do |formula_or_cask|
+      case formula_or_cask
+      when Formula
+        Migrator.migrate_if_needed(formula_or_cask, force: args.force?, dry_run: args.dry_run?)
+      when Cask::Cask
+        Cask::Migrator.migrate_if_needed(formula_or_cask, dry_run: args.dry_run?)
       end
-
-      Migrator.migrate_if_needed(f, force: args.force?, dry_run: args.dry_run?)
     end
   end
 end

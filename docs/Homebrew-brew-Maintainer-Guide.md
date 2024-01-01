@@ -41,7 +41,7 @@ There are many checks that run on every PR. The following is a quick list of the
 - `CI / vendored gems`: This checks whether there was a change to the vendored gems on Linux that needs to be committed to the PR branch.
 - `CI / test default formula (Linux)`: This runs `brew test-bot` on Linux to ensure it still works as expected.
 - `CI / syntax`: This is run first to check whether the PR passes `brew style` and `brew typecheck`. If this job fails the following jobs will not run.
-- `CI / tap syntax`: This runs `brew style` and `brew audit` on all official taps (note that although this runs on Linux, it does check all cask repos).
+- `CI / tap syntax`: This runs `brew style` and `brew audit` on all official taps (note that although this runs on Linux, it does check all cask repositories).
 - `CI / docker`: This builds and deploys a new Homebrew Docker image to GitHub Packages and Docker Hub.
 - `CI / test everything (macOS)`: This runs several checks on macOS including `brew tests`, `brew update-tests`, `brew test-bot --only-formulae --test-default-formula`, `brew readall` and `brew doctor`.
 - `CI / tests (generic OS)` and `CI / tests (Linux)`: These run `brew tests` with various options on Linux.

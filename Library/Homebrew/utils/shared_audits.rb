@@ -2,14 +2,12 @@
 # frozen_string_literal: true
 
 require "utils/curl"
+require "utils/github/api"
 
 # Auditing functions for rules common to both casks and formulae.
 #
 # @api private
 module SharedAudits
-  include Utils::Curl
-  extend Utils::Curl
-
   URL_TYPE_HOMEPAGE = "homepage URL"
 
   module_function
@@ -21,6 +19,8 @@ module SharedAudits
     @github_repo_data["#{user}/#{repo}"]
   rescue GitHub::API::HTTPNotFoundError
     nil
+  rescue GitHub::API::AuthenticationFailedError => e
+    raise unless e.message.match?(GitHub::API::GITHUB_IP_ALLOWLIST_ERROR)
   end
 
   def github_release_data(user, repo, tag)
@@ -32,6 +32,8 @@ module SharedAudits
     @github_release_data[id]
   rescue GitHub::API::HTTPNotFoundError
     nil
+  rescue GitHub::API::AuthenticationFailedError => e
+    raise unless e.message.match?(GitHub::API::GITHUB_IP_ALLOWLIST_ERROR)
   end
 
   def github_release(user, repo, tag, formula: nil, cask: nil)
@@ -50,14 +52,16 @@ module SharedAudits
       return "#{tag} is not a GitHub pre-release but '#{name}' is in the GitHub prerelease allowlist."
     end
 
-    return "#{tag} is a GitHub draft." if release["draft"]
+    "#{tag} is a GitHub draft." if release["draft"]
   end
 
   def gitlab_repo_data(user, repo)
     @gitlab_repo_data ||= {}
     @gitlab_repo_data["#{user}/#{repo}"] ||= begin
-      out, _, status = curl_output("https://gitlab.com/api/v4/projects/#{user}%2F#{repo}")
-      JSON.parse(out) if status.success?
+      out, _, status = Utils::Curl.curl_output("https://gitlab.com/api/v4/projects/#{user}%2F#{repo}")
+      json = JSON.parse(out) if status.success?
+      json = nil if json&.dig("message")&.include?("404 Project Not Found")
+      json
     end
   end
 
@@ -65,7 +69,7 @@ module SharedAudits
     id = "#{user}/#{repo}/#{tag}"
     @gitlab_release_data ||= {}
     @gitlab_release_data[id] ||= begin
-      out, _, status = curl_output(
+      out, _, status = Utils::Curl.curl_output(
         "https://gitlab.com/api/v4/projects/#{user}%2F#{repo}/releases/#{tag}", "--fail"
       )
       JSON.parse(out) if status.success?
@@ -122,7 +126,7 @@ module SharedAudits
 
   def bitbucket(user, repo)
     api_url = "https://api.bitbucket.org/2.0/repositories/#{user}/#{repo}"
-    out, _, status= curl_output("--request", "GET", api_url)
+    out, _, status = Utils::Curl.curl_output("--request", "GET", api_url)
     return unless status.success?
 
     metadata = JSON.parse(out)
@@ -134,10 +138,10 @@ module SharedAudits
 
     return "Bitbucket repository too new (<30 days old)" if Date.parse(metadata["created_on"]) >= (Date.today - 30)
 
-    forks_out, _, forks_status= curl_output("--request", "GET", "#{api_url}/forks")
+    forks_out, _, forks_status = Utils::Curl.curl_output("--request", "GET", "#{api_url}/forks")
     return unless forks_status.success?
 
-    watcher_out, _, watcher_status= curl_output("--request", "GET", "#{api_url}/watchers")
+    watcher_out, _, watcher_status = Utils::Curl.curl_output("--request", "GET", "#{api_url}/watchers")
     return unless watcher_status.success?
 
     forks_metadata = JSON.parse(forks_out)
@@ -153,7 +157,7 @@ module SharedAudits
 
   def github_tag_from_url(url)
     url = url.to_s
-    tag = url.match(%r{^https://github\.com/[\w-]+/[\w-]+/archive/([^/]+)\.(tar\.gz|zip)$})
+    tag = url.match(%r{^https://github\.com/[\w-]+/[\w-]+/archive/refs/tags/([^/]+)\.(tar\.gz|zip)$})
              .to_a
              .second
     tag ||= url.match(%r{^https://github\.com/[\w-]+/[\w-]+/releases/download/([^/]+)/})

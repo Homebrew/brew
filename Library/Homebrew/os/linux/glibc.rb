@@ -7,8 +7,6 @@ module OS
     #
     # @api private
     module Glibc
-      extend T::Sig
-
       module_function
 
       sig { returns(Version) }

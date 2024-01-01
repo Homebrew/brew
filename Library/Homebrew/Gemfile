@@ -2,61 +2,80 @@
 
 source "https://rubygems.org"
 
-if ENV.fetch("HOMEBREW_DEVELOPER", "").empty? || ENV.fetch("HOMEBREW_USE_RUBY_FROM_PATH", "").empty?
-  ruby "~> 2.6.0"
+# The default case (no envs), should always be a restrictive bound on the lowest supported minor version.
+# This is the branch that Dependabot will use.
+if ENV.fetch("HOMEBREW_USE_RUBY_FROM_PATH", "").empty?
+  ruby "~> 3.1.0"
 else
-  ruby ">= 2.6.0"
+  ruby ">= 3.1.0"
 end
 
 # disallowed gems (should not be used)
 # * nokogiri - use rexml instead for XML parsing
 
 # installed gems (should all be require: false)
-gem "bootsnap", require: false
-gem "byebug", require: false
-gem "json_schemer", require: false
-gem "minitest", require: false
-gem "parallel_tests", require: false
-gem "pry", require: false
-gem "ronn", require: false
-gem "rspec", require: false
-gem "rspec-github", require: false
-gem "rspec-its", require: false
-gem "rspec_junit_formatter", require: false
-gem "rspec-retry", require: false
-gem "rspec-sorbet", require: false
-gem "rubocop", require: false
-gem "rubocop-ast", require: false
-# NOTE: ruby-prof v1.4.3 is the last version that supports Ruby 2.6.x
-# TODO: remove explicit version when HOMEBREW_REQUIRED_RUBY_VERSION >= 2.7
-gem "ruby-prof", "1.4.3", require: false
-gem "simplecov", require: false
-gem "simplecov-cobertura", require: false
-gem "stackprof", require: false
-gem "warning", require: false
-
-group :sorbet, optional: true do
+# ALL gems that are not vendored should be in a group
+group :ast, optional: true do
+  gem "rubocop-ast", require: false
+end
+group :bootsnap, optional: true do
+  gem "bootsnap", require: false
+end
+group :formula_test, optional: true do
+  gem "minitest", require: false
+end
+group :livecheck, optional: true do
+  gem "ruby-progressbar", require: false
+end
+group :man, optional: true do
+  gem "ronn", require: false
+end
+group :pr_upload, optional: true do
+  gem "json_schemer", require: false
+end
+group :prof, optional: true do
+  gem "ruby-prof", require: false
+  gem "stackprof", require: false
+end
+group :pry, optional: true do
+  gem "pry", require: false
+end
+group :style, optional: true do
+  gem "rubocop", require: false
+  gem "rubocop-performance", require: false
+  gem "rubocop-rails", require: false
+  gem "rubocop-rspec", require: false
+  gem "rubocop-sorbet", require: false
+end
+group :tests, optional: true do
+  gem "byebug", require: false
+  gem "parallel_tests", require: false
+  gem "rspec", require: false
+  gem "rspec-github", require: false
+  gem "rspec-its", require: false
+  gem "rspec_junit_formatter", require: false
+  gem "rspec-retry", require: false
+  gem "rspec-sorbet", require: false
+  gem "simplecov", require: false
+  gem "simplecov-cobertura", require: false
+end
+group :typecheck, optional: true do
   gem "parlour", require: false
   gem "sorbet-static-and-runtime", require: false
   gem "spoom", require: false
   gem "tapioca", require: false
 end
 
-# vendored gems
-gem "activesupport"
+# shared gems (used by multiple groups)
+group :audit, :bump_unversioned_casks, :livecheck, optional: true do
+  gem "rexml", require: false
+end
+
+# vendored gems (no group)
+gem "activesupport", "<7" # we're actively working to remove this: https://github.com/Homebrew/brew/issues/16190
 gem "addressable"
-gem "concurrent-ruby"
-gem "mechanize"
 gem "patchelf"
 gem "plist"
-gem "rubocop-performance"
-gem "rubocop-rails"
-gem "rubocop-rspec"
-gem "rubocop-sorbet"
 gem "ruby-macho"
 gem "sorbet-runtime"
-
-# TODO: remove when HOMEBREW_REQUIRED_RUBY_VERSION >= 2.7
-install_if -> { RUBY_VERSION < "2.7" } do
-  gem "did_you_mean"
-end
+gem "warning"

@@ -13,7 +13,7 @@ then
 fi
 
 # install Homebrew's development gems
-brew install-bundler-gems --groups=sorbet
+brew install-bundler-gems --groups=all
 
 # install Homebrew formulae we might need
 brew install shellcheck shfmt gh gnu-tar

@@ -66,7 +66,7 @@ module RuboCop
 
         def on_send(node)
           TARGET_METHODS.each do |target_class, target_method|
-            next unless node.method_name == target_method
+            next if node.method_name != target_method
 
             target_receivers = if target_class.nil?
               [nil, s(:const, nil, :Kernel), s(:const, nil, :Homebrew)]

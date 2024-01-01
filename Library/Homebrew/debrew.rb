@@ -1,8 +1,8 @@
 # typed: true
 # frozen_string_literal: true
 
+require "attrable"
 require "mutex_m"
-require "debrew/irb"
 require "ignorable"
 
 # Helper module for debugging formulae.
@@ -28,8 +28,6 @@ module Debrew
 
   # Module for displaying a debugging menu.
   class Menu
-    extend T::Sig
-
     Entry = Struct.new(:name, :action)
 
     attr_accessor :prompt, :entries
@@ -77,7 +75,7 @@ module Debrew
   @debugged_exceptions = Set.new
 
   class << self
-    extend Predicable
+    extend Attrable
     attr_predicate :active?
     attr_reader :debugged_exceptions
   end
@@ -102,7 +100,7 @@ module Debrew
     raise(exception) if !active? || !debugged_exceptions.add?(exception) || !mu_try_lock
 
     begin
-      puts exception.backtrace.first.to_s
+      puts exception.backtrace.first
       puts Formatter.error(exception, label: exception.class.name)
 
       loop do
@@ -119,7 +117,10 @@ module Debrew
               set_trace_func proc { |event, _, _, id, binding, klass|
                 if klass == Object && id == :raise && event == "return"
                   set_trace_func(nil)
-                  mu_synchronize { IRB.start_within(binding) }
+                  mu_synchronize do
+                    require "debrew/irb"
+                    IRB.start_within(binding)
+                  end
                 end
               }
 

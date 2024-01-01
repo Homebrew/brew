@@ -33,21 +33,4 @@ setup-analytics() {
     export HOMEBREW_NO_ANALYTICS_THIS_RUN="1"
     return
   fi
-
-  if [[ -n "${HOMEBREW_LINUX}" ]]
-  then
-    # For Homebrew on Linux's analytics.
-    HOMEBREW_ANALYTICS_IDS="UA-76492262-1"
-  else
-    # Otherwise, fall back to Homebrew's analytics.
-    HOMEBREW_ANALYTICS_IDS="UA-76679469-1"
-  fi
-
-  if [[ -n "${HOMEBREW_ADDITIONAL_GOOGLE_ANALYTICS_ID}" ]]
-  then
-    HOMEBREW_ANALYTICS_IDS="${HOMEBREW_ANALYTICS_IDS},${HOMEBREW_ADDITIONAL_GOOGLE_ANALYTICS_ID}"
-  fi
-
-  export HOMEBREW_ANALYTICS_IDS
-  export HOMEBREW_ANALYTICS_USER_UUID
 }

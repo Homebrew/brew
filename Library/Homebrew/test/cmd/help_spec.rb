@@ -1,4 +1,3 @@
-# typed: false
 # frozen_string_literal: true
 
 describe "brew", :integration_test do

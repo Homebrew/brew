@@ -17,6 +17,10 @@ jobs:
       - name: Set up Homebrew
         id: set-up-homebrew
         uses: Homebrew/actions/setup-homebrew@master
+        with:
+          core: false
+          cask: false
+          test-bot: false
 
       - name: Install vale
         run: brew install vale
@@ -28,7 +32,7 @@ jobs:
       - name: Install Ruby
         uses: ruby/setup-ruby@v1
         with:
-          ruby-version: "2.7"
+          ruby-version: "3.1"
           bundler-cache: true
           working-directory: ${{ steps.set-up-homebrew.outputs.repository-path }}/docs
 
@@ -36,9 +40,10 @@ jobs:
         working-directory: ${{ steps.set-up-homebrew.outputs.repository-path }}/docs
         run: bundle exec rake lint
 
-      - name: Build docs site
+      - name: Build the site and check for broken links
         working-directory: ${{ steps.set-up-homebrew.outputs.repository-path }}/docs
-        run: bundle exec rake build
+        run: |
+          bundle exec rake test
 
   rubydoc:
     if: github.repository == 'Homebrew/brew'
@@ -49,9 +54,13 @@ jobs:
       - name: Set up Homebrew
         id: set-up-homebrew
         uses: Homebrew/actions/setup-homebrew@master
+        with:
+          core: false
+          cask: false
+          test-bot: false
 
       - name: Checkout Homebrew/rubydoc.brew.sh
-        uses: actions/checkout@main
+        uses: actions/checkout@v4
         with:
           repository: Homebrew/rubydoc.brew.sh
           path: rubydoc
@@ -59,7 +68,7 @@ jobs:
       - name: Install Ruby
         uses: ruby/setup-ruby@v1
         with:
-          ruby-version: "2.7"
+          ruby-version: "3.1"
           bundler-cache: true
 
       - name: Process rubydoc comments

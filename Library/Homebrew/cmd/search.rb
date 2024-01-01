@@ -8,8 +8,6 @@ require "cli/parser"
 require "search"
 
 module Homebrew
-  extend T::Sig
-
   module_function
 
   PACKAGE_MANAGERS = {
@@ -33,12 +31,11 @@ module Homebrew
       description <<~EOS
         Perform a substring search of cask tokens and formula names for <text>. If <text>
         is flanked by slashes, it is interpreted as a regular expression.
-        The search for <text> is extended online to `homebrew/core` and `homebrew/cask`.
       EOS
       switch "--formula", "--formulae",
-             description: "Search online and locally for formulae."
+             description: "Search for formulae."
       switch "--cask", "--casks",
-             description: "Search online and locally for casks."
+             description: "Search for casks."
       switch "--desc",
              description: "Search for formulae with a description matching <text> and casks with " \
                           "a name or description matching <text>."
@@ -78,13 +75,14 @@ module Homebrew
 
     if args.desc?
       if !args.eval_all? && !Homebrew::EnvConfig.eval_all?
-        odisabled "brew search --desc", "brew search --desc --eval-all or HOMEBREW_EVAL_ALL"
+        raise UsageError, "`brew search --desc` needs `--eval-all` passed or `HOMEBREW_EVAL_ALL` set!"
       end
+
       Search.search_descriptions(string_or_regex, args)
     elsif args.pull_request?
       search_pull_requests(query, args)
     else
-      formulae, casks = Search.search_names(query, string_or_regex, args)
+      formulae, casks = Search.search_names(string_or_regex, args)
       print_results(formulae, casks, query)
     end
 

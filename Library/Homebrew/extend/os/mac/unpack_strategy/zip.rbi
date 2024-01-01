@@ -1,5 +1,5 @@
 # typed: strict
 
 module UnpackStrategy::Zip::MacOSZipExtension
-  include Kernel
+  requires_ancestor { UnpackStrategy }
 end

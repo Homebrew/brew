@@ -1,4 +1,3 @@
-# typed: false
 # frozen_string_literal: true
 
 require "formula"
@@ -8,10 +7,10 @@ describe "patching" do
     Class.new(Formula) do
       # These are defined within an anonymous class to avoid polluting the global namespace.
       # rubocop:disable RSpec/LeakyConstantDeclaration,Lint/ConstantDefinitionInBlock
-      TESTBALL_URL = "file://#{TEST_FIXTURE_DIR}/tarballs/testball-0.1.tbz"
-      TESTBALL_PATCHES_URL = "file://#{TEST_FIXTURE_DIR}/tarballs/testball-0.1-patches.tgz"
-      PATCH_URL_A = "file://#{TEST_FIXTURE_DIR}/patches/noop-a.diff"
-      PATCH_URL_B = "file://#{TEST_FIXTURE_DIR}/patches/noop-b.diff"
+      TESTBALL_URL = "file://#{TEST_FIXTURE_DIR}/tarballs/testball-0.1.tbz".freeze
+      TESTBALL_PATCHES_URL = "file://#{TEST_FIXTURE_DIR}/tarballs/testball-0.1-patches.tgz".freeze
+      PATCH_URL_A = "file://#{TEST_FIXTURE_DIR}/patches/noop-a.diff".freeze
+      PATCH_URL_B = "file://#{TEST_FIXTURE_DIR}/patches/noop-b.diff".freeze
       PATCH_A_CONTENTS = File.read("#{TEST_FIXTURE_DIR}/patches/noop-a.diff").freeze
       PATCH_B_CONTENTS = File.read("#{TEST_FIXTURE_DIR}/patches/noop-b.diff").freeze
       APPLY_A = "noop-a.diff"

@@ -1,4 +1,3 @@
-# typed: false
 # frozen_string_literal: true
 
 describe "globally-scoped helper methods" do
@@ -146,16 +145,16 @@ describe "globally-scoped helper methods" do
   end
 
   describe "#which_all" do
-    let(:cmd1) { dir/"foo" }
-    let(:cmd2) { dir/"bar/foo" }
-    let(:cmd3) { dir/"bar/baz/foo" }
+    let(:cmd_foo) { dir/"foo" }
+    let(:cmd_foo_bar) { dir/"bar/foo" }
+    let(:cmd_bar_baz_foo) { dir/"bar/baz/foo" }
 
     before do
       (dir/"bar/baz").mkpath
 
-      FileUtils.touch cmd2
+      FileUtils.touch cmd_foo_bar
 
-      [cmd1, cmd3].each do |cmd|
+      [cmd_foo, cmd_bar_baz_foo].each do |cmd|
         FileUtils.touch cmd
         cmd.chmod 0744
       end
@@ -167,7 +166,7 @@ describe "globally-scoped helper methods" do
         "#{dir}/baz:#{dir}",
         "~baduserpath",
       ].join(File::PATH_SEPARATOR)
-      expect(which_all("foo", path)).to eq([cmd3, cmd1])
+      expect(which_all("foo", path)).to eq([cmd_bar_baz_foo, cmd_foo])
     end
   end
 

@@ -204,19 +204,6 @@ module Homebrew
         EOS
       end
 
-      def check_ruby_version
-        return if RUBY_VERSION == HOMEBREW_REQUIRED_RUBY_VERSION
-        return if RUBY_VERSION == "2.6.10" # TODO: require 2.6.10
-        return if Homebrew::EnvConfig.developer? && OS::Mac.version.prerelease?
-
-        <<~EOS
-          Ruby version #{RUBY_VERSION} is unsupported on macOS #{MacOS.version}. Homebrew
-          is developed and tested on Ruby #{HOMEBREW_REQUIRED_RUBY_VERSION}, and may not work correctly
-          on other Rubies. Patches are accepted as long as they don't cause breakage
-          on supported Rubies.
-        EOS
-      end
-
       def check_xcode_prefix
         prefix = MacOS::Xcode.prefix
         return if prefix.nil?
@@ -344,7 +331,7 @@ module Homebrew
           nil
         end
         if libiconv&.linked_keg&.directory?
-          unless libiconv.keg_only?
+          unless libiconv&.keg_only?
             <<~EOS
               A libiconv formula is installed and linked.
               This will break stuff. For serious. Unlink it.
@@ -446,7 +433,7 @@ module Homebrew
           path_version = sdk.path.basename.to_s[MacOS::SDK::VERSIONED_SDK_REGEX, 1]
           next true if path_version.blank?
 
-          sdk.version == MacOS::Version.new(path_version).strip_patch
+          sdk.version == MacOSVersion.new(path_version).strip_patch
         end
 
         if locator.source == :clt

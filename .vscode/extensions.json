@@ -1,11 +1,13 @@
 {
   "recommendations": [
     "kaiwood.endwise",
-    "misogi.ruby-rubocop",
+    "lorankloeze.ruby-rubocop-revived",
     "rebornix.ruby",
-    "wingrunr21.vscode-ruby",
+    "sorbet.sorbet-vscode-extension",
+    "github.vscode-github-actions",
     "timonwong.shellcheck",
     "foxundermoon.shell-format",
+    "davidanson.vscode-markdownlint",
     "editorconfig.editorconfig"
   ]
 }

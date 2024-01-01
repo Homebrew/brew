@@ -17,8 +17,6 @@ module Homebrew
       #
       # @api public
       class Hackage
-        extend T::Sig
-
         # A `Regexp` used in determining if the strategy applies to the URL and
         # also as part of extracting the package name from the URL basename.
         PACKAGE_NAME_REGEX = /(?<package_name>.+?)-\d+/i.freeze

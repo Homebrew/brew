@@ -52,7 +52,6 @@ module RuboCop
           ssh-copy-id
           swift
           tcl-tk
-          texinfo
           unifdef
           unzip
           whois
@@ -99,7 +98,12 @@ module RuboCop
         def audit_formula(_node, _class_node, _parent_class_node, body_node)
           return if body_node.nil?
 
+          depends_on_linux = depends_on?(:linux)
+
           find_method_with_args(body_node, :uses_from_macos, /^"(.+)"/).each do |method|
+            @offensive_node = method
+            problem "`uses_from_macos` should not be used when Linux is required." if depends_on_linux
+
             dep = if parameters(method).first.instance_of?(RuboCop::AST::StrNode)
               parameters(method).first
             elsif parameters(method).first.instance_of?(RuboCop::AST::HashNode)

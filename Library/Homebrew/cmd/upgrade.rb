@@ -5,15 +5,12 @@ require "cli/parser"
 require "formula_installer"
 require "install"
 require "upgrade"
-require "cask/cmd"
 require "cask/utils"
 require "cask/upgrade"
 require "cask/macos"
 require "api"
 
 module Homebrew
-  extend T::Sig
-
   module_function
 
   sig { returns(CLI::Parser) }
@@ -38,7 +35,7 @@ module Homebrew
                           "non-migrated versions. When installing casks, overwrite existing files " \
                           "(binaries and symlinks are excluded, unless originally from the same cask)."
       switch "-v", "--verbose",
-             description: "Print the verification and postinstall steps."
+             description: "Print the verification and post-install steps."
       switch "-n", "--dry-run",
              description: "Show what would be upgraded, but do not actually upgrade anything."
       [
@@ -65,6 +62,7 @@ module Homebrew
         }],
         [:switch, "--ignore-pinned", {
           description: "Set a successful exit status even if pinned formulae are not upgraded.",
+          hidden:      true,
         }],
         [:switch, "--keep-tmp", {
           description: "Retain the temporary files created during installation.",
@@ -100,7 +98,18 @@ module Homebrew
         [:switch, "--greedy-auto-updates", {
           description: "Also include casks with `auto_updates true`.",
         }],
-        *Cask::Cmd::AbstractCommand::OPTIONS.map(&:dup),
+        [:switch, "--[no-]binaries", {
+          description: "Disable/enable linking of helper executables (default: enabled).",
+          env:         :cask_opts_binaries,
+        }],
+        [:switch, "--require-sha",  {
+          description: "Require all casks to have a checksum.",
+          env:         :cask_opts_require_sha,
+        }],
+        [:switch, "--[no-]quarantine", {
+          description: "Disable/enable quarantining of downloads (default: enabled).",
+          env:         :cask_opts_quarantine,
+        }],
       ].each do |args|
         options = args.pop
         send(*args, **options)
@@ -117,6 +126,9 @@ module Homebrew
   sig { void }
   def upgrade
     args = upgrade_args.parse
+
+    # Deprecated since this is now the default behavior.
+    odeprecated "`brew upgrade --ignore-pinned`" if args.ignore_pinned?
 
     formulae, casks = args.named.to_resolved_formulae_to_casks
     # If one or more formulae are specified, but no casks were
@@ -183,8 +195,11 @@ module Homebrew
       end
     end
 
-    if !pinned.empty? && !args.ignore_pinned?
-      ofail "Not upgrading #{pinned.count} pinned #{Utils.pluralize("package", pinned.count)}:"
+    if pinned.any?
+      Kernel.public_send(
+        formulae.any? ? :ofail : :opoo, # only fail when pinned formulae are named explicitly
+        "Not upgrading #{pinned.count} pinned #{Utils.pluralize("package", pinned.count)}:",
+      )
       puts pinned.map { |f| "#{f.full_specified_name} #{f.pkg_version}" } * ", "
     end
 

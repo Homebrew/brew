@@ -13,8 +13,6 @@ module Cask
     #
     # @api private
     class AbstractUninstall < AbstractArtifact
-      extend T::Sig
-
       ORDERED_DIRECTIVES = [
         :early_script,
         :launchctl,
@@ -30,12 +28,12 @@ module Cask
       ].freeze
 
       def self.from_args(cask, **directives)
-        new(cask, directives)
+        new(cask, **directives)
       end
 
       attr_reader :directives
 
-      def initialize(cask, directives)
+      def initialize(cask, **directives)
         directives.assert_valid_keys(*ORDERED_DIRECTIVES)
 
         super(cask, **directives)
@@ -74,7 +72,7 @@ module Cask
 
         args = directives[directive_sym]
 
-        send("uninstall_#{directive_sym}", *(args.is_a?(Hash) ? [args] : args), **options)
+        send(:"uninstall_#{directive_sym}", *(args.is_a?(Hash) ? [args] : args), **options)
       end
 
       def stanza
@@ -107,30 +105,47 @@ module Cask
 
         all_services.each do |service|
           ohai "Removing launchctl service #{service}"
-          booleans.each do |with_sudo|
+          booleans.each do |sudo|
             plist_status = command.run(
               "/bin/launchctl",
-              args: ["list", service],
-              sudo: with_sudo, print_stderr: false
+              args:         ["list", service],
+              sudo:         sudo,
+              sudo_as_root: sudo,
+              print_stderr: false,
             ).stdout
             if plist_status.start_with?("{")
-              command.run!("/bin/launchctl", args: ["remove", service], sudo: with_sudo)
+              command.run!(
+                "/bin/launchctl",
+                args:         ["remove", service],
+                sudo:         sudo,
+                sudo_as_root: sudo,
+              )
               sleep 1
             end
             paths = [
               +"/Library/LaunchAgents/#{service}.plist",
               +"/Library/LaunchDaemons/#{service}.plist",
             ]
-            paths.each { |elt| elt.prepend(Dir.home).freeze } unless with_sudo
+            paths.each { |elt| elt.prepend(Dir.home).freeze } unless sudo
             paths = paths.map { |elt| Pathname(elt) }.select(&:exist?)
             paths.each do |path|
-              command.run!("/bin/rm", args: ["-f", "--", path], sudo: with_sudo)
+              command.run!("/bin/rm", args: ["-f", "--", path], sudo: sudo, sudo_as_root: sudo)
             end
             # undocumented and untested: pass a path to uninstall :launchctl
             next unless Pathname(service).exist?
 
-            command.run!("/bin/launchctl", args: ["unload", "-w", "--", service], sudo: with_sudo)
-            command.run!("/bin/rm", args: ["-f", "--", service], sudo: with_sudo)
+            command.run!(
+              "/bin/launchctl",
+              args:         ["unload", "-w", "--", service],
+              sudo:         sudo,
+              sudo_as_root: sudo,
+            )
+            command.run!(
+              "/bin/rm",
+              args:         ["-f", "--", service],
+              sudo:         sudo,
+              sudo_as_root: sudo,
+            )
             sleep 1
           end
         end
@@ -251,12 +266,12 @@ module Cask
       # :signal should come after :quit so it can be used as a backup when :quit fails
       def uninstall_signal(*signals, command: nil, **_)
         signals.each do |pair|
-          raise CaskInvalidError.new(cask, "Each #{stanza} :signal must consist of 2 elements.") unless pair.size == 2
+          raise CaskInvalidError.new(cask, "Each #{stanza} :signal must consist of 2 elements.") if pair.size != 2
 
           signal, bundle_id = pair
           ohai "Signalling '#{signal}' to application ID '#{bundle_id}'"
           pids = running_processes(bundle_id).map(&:first)
-          next unless pids.any?
+          next if pids.none?
 
           # Note that unlike :quit, signals are sent from the current user (not
           # upgraded to the superuser). This is a todo item for the future, but
@@ -264,14 +279,19 @@ module Cask
           # misapplied "kill" by root could bring down the system. The fact that we
           # learned the pid from AppleScript is already some degree of protection,
           # though indirect.
+          # TODO: check the user that owns the PID and don't try to kill those from other users.
           odebug "Unix ids are #{pids.inspect} for processes with bundle identifier #{bundle_id}"
-          Process.kill(signal, *pids)
+          begin
+            Process.kill(signal, *pids)
+          rescue Errno::EPERM => e
+            opoo "Failed to kill #{bundle_id} PIDs #{pids.join(", ")} with signal #{signal}: #{e}"
+          end
           sleep 3
         end
       end
 
-      def uninstall_login_item(*login_items, command: nil, upgrade: false, **_)
-        return if upgrade
+      def uninstall_login_item(*login_items, command: nil, successor: nil, **_)
+        return if successor
 
         apps = cask.artifacts.select { |a| a.class.dsl_key == :app }
         derived_login_items = apps.map { |a| { path: a.target } }
@@ -303,14 +323,35 @@ module Cask
       def uninstall_kext(*kexts, command: nil, **_)
         kexts.each do |kext|
           ohai "Unloading kernel extension #{kext}"
-          is_loaded = system_command!("/usr/sbin/kextstat", args: ["-l", "-b", kext], sudo: true).stdout
+          is_loaded = system_command!(
+            "/usr/sbin/kextstat",
+            args:         ["-l", "-b", kext],
+            sudo:         true,
+            sudo_as_root: true,
+          ).stdout
           if is_loaded.length > 1
-            system_command!("/sbin/kextunload", args: ["-b", kext], sudo: true)
+            system_command!(
+              "/sbin/kextunload",
+              args:         ["-b", kext],
+              sudo:         true,
+              sudo_as_root: true,
+            )
             sleep 1
           end
-          system_command!("/usr/sbin/kextfind", args: ["-b", kext], sudo: true).stdout.chomp.lines.each do |kext_path|
+          found_kexts = system_command!(
+            "/usr/sbin/kextfind",
+            args:         ["-b", kext],
+            sudo:         true,
+            sudo_as_root: true,
+          ).stdout.chomp.lines
+          found_kexts.each do |kext_path|
             ohai "Removing kernel extension #{kext_path}"
-            system_command!("/bin/rm", args: ["-rf", kext_path], sudo: true)
+            system_command!(
+              "/bin/rm",
+              args:         ["-rf", kext_path],
+              sudo:         true,
+              sudo_as_root: true,
+            )
           end
         end
       end
@@ -343,7 +384,7 @@ module Cask
       end
 
       def uninstall_pkgutil(*pkgs, command: nil, **_)
-        ohai "Uninstalling packages; your password may be necessary:"
+        ohai "Uninstalling packages with sudo; the password may be necessary:"
         pkgs.each do |regex|
           ::Cask::Pkg.all_matching(regex, command).each do |pkg|
             puts pkg.package_id
@@ -446,32 +487,48 @@ module Cask
       end
 
       def recursive_rmdir(*directories, command: nil, **_)
-        success = T.let(true, T::Boolean)
-        each_resolved_path(:rmdir, directories) do |_path, resolved_paths|
-          resolved_paths.select(&method(:all_dirs?)).each do |resolved_path|
-            puts resolved_path.sub(Dir.home, "~")
+        directories.all? do |resolved_path|
+          puts resolved_path.sub(Dir.home, "~")
 
-            if (ds_store = resolved_path.join(".DS_Store")).exist?
-              command.run!("/bin/rm", args: ["-f", "--", ds_store], sudo: true, print_stderr: false)
-            end
+          if resolved_path.readable?
+            children = resolved_path.children
 
-            unless recursive_rmdir(*resolved_path.children, command: command)
-              success = false
-              next
-            end
+            next false unless children.all? { |child| child.directory? || child.basename.to_s == ".DS_Store" }
+          else
+            lines = command.run!("/bin/ls", args: ["-A", "-F", "--", resolved_path], sudo: true, print_stderr: false)
+                           .stdout.lines.map(&:chomp)
+                           .flat_map(&:chomp)
 
-            status = command.run("/bin/rmdir", args: ["--", resolved_path], sudo: true, print_stderr: false).success?
-            success &= status
+            # Using `-F` above outputs directories ending with `/`.
+            next false unless lines.all? { |l| l.end_with?("/") || l == ".DS_Store" }
+
+            children = lines.map { |l| resolved_path/l.delete_suffix("/") }
           end
+
+          # Directory counts as empty if it only contains a `.DS_Store`.
+          if children.include?(ds_store = resolved_path/".DS_Store")
+            Utils.gain_permissions_remove(ds_store, command: command)
+            children.delete(ds_store)
+          end
+
+          next false unless recursive_rmdir(*children, command: command)
+
+          Utils.gain_permissions_rmdir(resolved_path, command: command)
+
+          true
         end
-        success
       end
 
-      def uninstall_rmdir(*args, **kwargs)
-        return if args.empty?
+      def uninstall_rmdir(*directories, **kwargs)
+        return if directories.empty?
 
         ohai "Removing directories if empty:"
-        recursive_rmdir(*args, **kwargs)
+
+        each_resolved_path(:rmdir, directories) do |_path, resolved_paths|
+          next unless resolved_paths.all?(&:directory?)
+
+          recursive_rmdir(*resolved_paths, **kwargs)
+        end
       end
     end
   end

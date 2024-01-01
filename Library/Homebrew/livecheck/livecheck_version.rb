@@ -7,8 +7,6 @@ module Homebrew
     #
     # @api private
     class LivecheckVersion
-      extend T::Sig
-
       include Comparable
 
       sig {

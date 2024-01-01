@@ -1,12 +1,10 @@
-# typed: true
+# typed: strict
 # frozen_string_literal: true
 
 require "cli/parser"
 require "completions"
 
 module Homebrew
-  extend T::Sig
-
   module_function
 
   sig { returns(CLI::Parser) }
@@ -27,6 +25,7 @@ module Homebrew
     end
   end
 
+  sig { void }
   def completions
     args = completions_args.parse
 

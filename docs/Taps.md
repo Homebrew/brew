@@ -9,7 +9,7 @@ but the command isn't limited to any one location.
 * `brew tap` without arguments lists all currently tapped repositories. For
   example:
 
-  ```sh
+  ```console
   $ brew tap
   homebrew/cask
   homebrew/core

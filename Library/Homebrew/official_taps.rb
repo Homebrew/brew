@@ -3,7 +3,6 @@
 
 OFFICIAL_CASK_TAPS = %w[
   cask
-  cask-drivers
   cask-fonts
   cask-versions
 ].freeze
@@ -20,6 +19,7 @@ OFFICIAL_CMD_TAPS = {
 DEPRECATED_OFFICIAL_TAPS = %w[
   apache
   binary
+  cask-drivers
   cask-eid
   completions
   devel-only

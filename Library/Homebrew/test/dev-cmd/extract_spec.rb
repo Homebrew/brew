@@ -1,4 +1,3 @@
-# typed: false
 # frozen_string_literal: true
 
 require "cmd/shared_examples/args_parse"
@@ -41,7 +40,7 @@ describe "brew extract" do
         .and not_to_output.to_stderr
         .and be_a_success
       expect(path).to exist
-      expect(Formulary.factory(path).version).to be == "0.2"
+      expect(Formulary.factory(path).version).to eq "0.2"
     end
 
     it "retrieves the specified version of formula", :integration_test do
@@ -51,7 +50,7 @@ describe "brew extract" do
         .and not_to_output.to_stderr
         .and be_a_success
       expect(path).to exist
-      expect(Formulary.factory(path).version).to be == "0.1"
+      expect(Formulary.factory(path).version).to eq "0.1"
     end
 
     it "retrieves the compatible version of formula", :integration_test do
@@ -61,7 +60,7 @@ describe "brew extract" do
         .and not_to_output.to_stderr
         .and be_a_success
       expect(path).to exist
-      expect(Formulary.factory(path).version).to be == "0.2"
+      expect(Formulary.factory(path).version).to eq "0.2"
     end
   end
 end

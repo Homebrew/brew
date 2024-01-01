@@ -7,8 +7,6 @@ require "cask_dependent"
 #
 # @api private
 module InstalledDependents
-  extend T::Sig
-
   module_function
 
   # Given an array of kegs, this method will try to find some other kegs

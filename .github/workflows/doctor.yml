@@ -14,20 +14,34 @@ env:
   HOMEBREW_DEVELOPER: 1
   HOMEBREW_NO_AUTO_UPDATE: 1
 jobs:
+  determine-runners:
+    runs-on: ubuntu-22.04
+    outputs:
+      runners: ${{ steps.determine-runners.outputs.runners }}
+    steps:
+      - name: Set up Homebrew
+        id: set-up-homebrew
+        uses: Homebrew/actions/setup-homebrew@master
+        with:
+          core: false
+          cask: false
+          test-bot: false
+
+      - name: Determine runners to use for this job
+        id: determine-runners
+        env:
+          HOMEBREW_MACOS_TIMEOUT: 30
+        run: brew determine-test-runners --all-supported
+
   tests:
+    needs: determine-runners
     strategy:
       matrix:
-        runner:
-          - "13-arm64-${{github.run_id}}-${{github.run_attempt}}"
-          - "12-arm64"
-          - "12-${{github.run_id}}-${{github.run_attempt}}"
-          - "11-arm64"
-          - "11-${{github.run_id}}-${{github.run_attempt}}"
-          - "10.15-${{github.run_id}}-${{github.run_attempt}}"
+        include: ${{ fromJson(needs.determine-runners.outputs.runners) }}
       fail-fast: false
+    name: ${{ matrix.name }}
     runs-on: ${{ matrix.runner }}
-    env:
-      PATH: "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+    timeout-minutes: ${{ matrix.timeout }}
     defaults:
       run:
         working-directory: /tmp
@@ -35,11 +49,15 @@ jobs:
       - name: Set up Homebrew
         id: set-up-homebrew
         uses: Homebrew/actions/setup-homebrew@master
+        with:
+          core: false
+          cask: false
+          test-bot: true
 
       - run: brew test-bot --only-cleanup-before
-        if: !contains(matrix.runner, github.run_id)
+        if: matrix.cleanup
 
       - run: brew doctor
 
       - run: brew test-bot --only-cleanup-after
-        if: always() && !contains(matrix.runner, github.run_id)
+        if: always() && matrix.cleanup

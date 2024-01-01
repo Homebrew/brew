@@ -4,8 +4,6 @@
 module UnpackStrategy
   # Strategy for unpacking xar archives.
   class Xar
-    extend T::Sig
-
     include UnpackStrategy
 
     sig { returns(T::Array[String]) }

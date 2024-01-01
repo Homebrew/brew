@@ -1,6 +1,6 @@
 ---
-logo: https://brew.sh/assets/img/linuxbrew.png
-image: https://brew.sh/assets/img/linuxbrew.png
+logo: /assets/img/linuxbrew.png
+image: /assets/img/linuxbrew.png
 redirect_from:
   - /linux
   - /Linux
@@ -29,13 +29,12 @@ Technically, you can install Homebrew wherever you want. However, you shouldn't 
 
 The prefix `/home/linuxbrew/.linuxbrew` was chosen so that users without admin access can ask an admin to create a `linuxbrew` role account and still benefit from precompiled binaries. If you do not yourself have admin privileges, consider asking your admin staff to create a `linuxbrew` role account for you with home directory set to `/home/linuxbrew`.
 
-Follow the *Next steps* instructions to add Homebrew to your `PATH` and to your bash shell profile script, either `~/.profile` on Debian/Ubuntu or `~/.bash_profile` on CentOS/Fedora/Red Hat.
+Follow the *Next steps* instructions to add Homebrew to your `PATH` and to your bash shell rcfile, either `~/.bashrc` for `bash` or `~/.zshrc` for `zsh`.
 
 ```sh
 test -d ~/.linuxbrew && eval "$(~/.linuxbrew/bin/brew shellenv)"
 test -d /home/linuxbrew/.linuxbrew && eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
-test -r ~/.bash_profile && echo "eval \"\$($(brew --prefix)/bin/brew shellenv)\"" >> ~/.bash_profile
-echo "eval \"\$($(brew --prefix)/bin/brew shellenv)\"" >> ~/.profile
+echo "eval \"\$($(brew --prefix)/bin/brew shellenv)\"" >> ~/.bashrc
 ```
 
 You're done! Try installing a package:
@@ -65,6 +64,12 @@ To install build tools, paste at a terminal prompt:
   ```sh
   sudo yum groupinstall 'Development Tools'
   sudo yum install procps-ng curl file git
+  ```
+
+- **Arch Linux**
+
+  ```sh
+  sudo pacman -Syu base-devel procps-ng curl file git
   ```
 
 ### ARM (unsupported)

@@ -16,8 +16,6 @@ module Homebrew
       #
       # @api public
       class PageMatch
-        extend T::Sig
-
         NICE_NAME = "Page match"
 
         # A priority of zero causes livecheck to skip the strategy. We do this

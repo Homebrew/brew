@@ -12,8 +12,6 @@ module Homebrew
       #
       # @api private
       class HeaderMatch
-        extend T::Sig
-
         NICE_NAME = "Header match"
 
         # A priority of zero causes livecheck to skip the strategy. We do this

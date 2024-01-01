@@ -4,8 +4,6 @@
 # Performs {Formula#mktemp}'s functionality, and tracks the results.
 # Each instance is only intended to be used once.
 class Mktemp
-  extend T::Sig
-
   include FileUtils
 
   # Path to the tmpdir used in this run, as a {Pathname}.

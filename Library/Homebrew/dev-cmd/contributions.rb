@@ -5,8 +5,6 @@ require "cli/parser"
 require "csv"
 
 module Homebrew
-  extend T::Sig
-
   module_function
 
   PRIMARY_REPOS = %w[brew core cask].freeze
@@ -15,28 +13,32 @@ module Homebrew
     OFFICIAL_CMD_TAPS.keys.map { |t| t.delete_prefix("homebrew/") },
     OFFICIAL_CASK_TAPS.reject { |t| t == "cask" },
   ].flatten.freeze
+  MAX_REPO_COMMITS = 1000
 
   sig { returns(CLI::Parser) }
   def contributions_args
     Homebrew::CLI::Parser.new do
       usage_banner "`contributions` [--user=<email|username>] [<--repositories>`=`] [<--csv>]"
       description <<~EOS
-        Contributions to Homebrew repos.
+        Summarise contributions to Homebrew repositories.
       EOS
 
       comma_array "--repositories",
-                  description: "Specify a comma-separated (no spaces) list of repositories to search. " \
+                  description: "Specify a comma-separated list of repositories to search. " \
                                "Supported repositories: #{SUPPORTED_REPOS.map { |t| "`#{t}`" }.to_sentence}. " \
-                               "Omitting this flag, or specifying `--repositories=all`, searches all repositories. " \
-                               "Use `--repositories=primary` to search only the main repositories: brew,core,cask."
+                               "Omitting this flag, or specifying `--repositories=primary`, searches only the " \
+                               "main repositories: brew,core,cask. " \
+                               "Specifying `--repositories=all`, searches all repositories. "
       flag "--from=",
-           description: "Date (ISO-8601 format) to start searching contributions."
+           description: "Date (ISO-8601 format) to start searching contributions. " \
+                        "Omitting this flag searches the last year."
 
       flag "--to=",
            description: "Date (ISO-8601 format) to stop searching contributions."
 
-      flag "--user=",
-           description: "A GitHub username or email address of a specific person to find contribution data for."
+      comma_array "--user=",
+                  description: "Specify a comma-separated list of GitHub usernames or email addresses to find " \
+                               "contributions from. Omitting this flag searches maintainers."
 
       switch "--csv",
              description: "Print a CSV of contributions across repositories over the time period."
@@ -50,41 +52,47 @@ module Homebrew
     results = {}
     grand_totals = {}
 
-    all_repos = args.repositories.nil? || args.repositories.include?("all")
-    repos = if all_repos
-      SUPPORTED_REPOS
-    elsif args.repositories.include?("primary")
+    repos = if args.repositories.blank? || args.repositories.include?("primary")
       PRIMARY_REPOS
+    elsif args.repositories.include?("all")
+      SUPPORTED_REPOS
     else
       args.repositories
     end
 
-    if args.user
-      user = args.user
-      results[user] = scan_repositories(repos, user, args)
-      grand_totals[user] = total(results[user])
+    from = args.from.presence || Date.today.prev_year.iso8601
 
-      puts "#{user} contributed #{Utils.pluralize("time", grand_totals[user].values.sum,
-                                                  include_count: true)} #{time_period(args)}."
-      puts generate_csv(T.must(user), results[user], grand_totals[user]) if args.csv?
-      return
-    end
+    contribution_types = [:author, :committer, :coauthorship, :review]
 
-    maintainers = GitHub.members_by_team("Homebrew", "maintainers")
-    maintainers.each do |username, _|
+    users = args.user.presence || GitHub.members_by_team("Homebrew", "maintainers").keys
+    users.each do |username|
       # TODO: Using the GitHub username to scan the `git log` undercounts some
       # contributions as people might not always have configured their Git
       # committer details to match the ones on GitHub.
       # TODO: Switch to using the GitHub APIs instead of `git log` if
       # they ever support trailers.
-      results[username] = scan_repositories(repos, username, args)
+      results[username] = scan_repositories(repos, username, args, from: from)
       grand_totals[username] = total(results[username])
 
-      puts "#{username} contributed #{Utils.pluralize("time", grand_totals[username].values.sum,
-                                                      include_count: true)} #{time_period(args)}."
+      contributions = contribution_types.map do |type|
+        type_count = grand_totals[username][type]
+        next if type_count.to_i.zero?
+
+        "#{Utils.pluralize("time", type_count, include_count: true)} (#{type})"
+      end.compact
+      contributions << "#{Utils.pluralize("time", grand_totals[username].values.sum, include_count: true)} (total)"
+
+      puts [
+        "#{username} contributed",
+        *contributions.to_sentence,
+        "#{time_period(from: from, to: args.to)}.",
+      ].join(" ")
     end
 
-    puts generate_maintainers_csv(grand_totals) if args.csv?
+    return unless args.csv?
+
+    puts
+    puts generate_csv(grand_totals)
   end
 
   sig { params(repo: String).returns(Pathname) }
@@ -94,46 +102,27 @@ module Homebrew
     Tap.fetch("homebrew", repo).path
   end
 
-  sig { params(args: Homebrew::CLI::Args).returns(String) }
-  def time_period(args)
-    if args.from && args.to
-      "between #{args.from} and #{args.to}"
-    elsif args.from
-      "after #{args.from}"
-    elsif args.to
-      "before #{args.to}"
+  sig { params(from: T.nilable(String), to: T.nilable(String)).returns(String) }
+  def time_period(from:, to:)
+    if from && to
+      "between #{from} and #{to}"
+    elsif from
+      "after #{from}"
+    elsif to
+      "before #{to}"
     else
       "in all time"
     end
   end
 
   sig { params(totals: Hash).returns(String) }
-  def generate_maintainers_csv(totals)
+  def generate_csv(totals)
     CSV.generate do |csv|
-      csv << %w[user repo author committer coauthorships reviews total]
+      csv << %w[user repo author committer coauthorship review total]
 
       totals.sort_by { |_, v| -v.values.sum }.each do |user, total|
         csv << grand_total_row(user, total)
       end
-    end
-  end
-
-  sig { params(user: String, results: Hash, grand_total: Hash).returns(String) }
-  def generate_csv(user, results, grand_total)
-    CSV.generate do |csv|
-      csv << %w[user repo author committer coauthorships reviews total]
-      results.each do |repo, counts|
-        csv << [
-          user,
-          repo,
-          counts[:author],
-          counts[:committer],
-          counts[:coauthorships],
-          counts[:reviews],
-          counts.values.sum,
-        ]
-      end
-      csv << grand_total_row(user, grand_total)
     end
   end
 
@@ -144,13 +133,13 @@ module Homebrew
       "all",
       grand_total[:author],
       grand_total[:committer],
-      grand_total[:coauthorships],
-      grand_total[:reviews],
+      grand_total[:coauthorship],
+      grand_total[:review],
       grand_total.values.sum,
     ]
   end
 
-  def scan_repositories(repos, person, args)
+  def scan_repositories(repos, person, args, from:)
     data = {}
 
     repos.each do |repo|
@@ -173,11 +162,13 @@ module Homebrew
 
       puts "Determining contributions for #{person} on #{repo_full_name}..." if args.verbose?
 
+      author_commits, committer_commits = GitHub.count_repo_commits(repo_full_name, person, args,
+                                                                    max: MAX_REPO_COMMITS)
       data[repo] = {
-        author:        GitHub.count_repo_commits(repo_full_name, person, "author", args),
-        committer:     GitHub.count_repo_commits(repo_full_name, person, "committer", args),
-        coauthorships: git_log_trailers_cmd(T.must(repo_path), person, "Co-authored-by", args),
-        reviews:       count_reviews(repo_full_name, person, args),
+        author:       author_commits,
+        committer:    committer_commits,
+        coauthorship: git_log_trailers_cmd(T.must(repo_path), person, "Co-authored-by", from: from, to: args.to),
+        review:       count_reviews(repo_full_name, person, args),
       }
     end
 
@@ -186,7 +177,7 @@ module Homebrew
 
   sig { params(results: Hash).returns(Hash) }
   def total(results)
-    totals = { author: 0, committer: 0, coauthorships: 0, reviews: 0 }
+    totals = { author: 0, committer: 0, coauthorship: 0, review: 0 }
 
     results.each_value do |counts|
       counts.each do |kind, count|
@@ -197,12 +188,15 @@ module Homebrew
     totals
   end
 
-  sig { params(repo_path: Pathname, person: String, trailer: String, args: Homebrew::CLI::Args).returns(Integer) }
-  def git_log_trailers_cmd(repo_path, person, trailer, args)
+  sig {
+    params(repo_path: Pathname, person: String, trailer: String, from: T.nilable(String),
+           to: T.nilable(String)).returns(Integer)
+  }
+  def git_log_trailers_cmd(repo_path, person, trailer, from:, to:)
     cmd = ["git", "-C", repo_path, "log", "--oneline"]
     cmd << "--format='%(trailers:key=#{trailer}:)'"
-    cmd << "--before=#{args.to}" if args.to
-    cmd << "--after=#{args.from}" if args.from
+    cmd << "--before=#{to}" if to
+    cmd << "--after=#{from}" if from
 
     Utils.safe_popen_read(*cmd).lines.count { |l| l.include?(person) }
   end

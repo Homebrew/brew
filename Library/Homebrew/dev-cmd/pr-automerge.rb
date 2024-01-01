@@ -5,8 +5,6 @@ require "cli/parser"
 require "utils/github"
 
 module Homebrew
-  extend T::Sig
-
   module_function
 
   sig { returns(CLI::Parser) }
@@ -23,7 +21,8 @@ module Homebrew
              description: "Pull requests must have this label."
       comma_array "--without-labels",
                   description: "Pull requests must not have these labels (default: " \
-                               "`do not merge`, `new formula`, `automerge-skip`, `CI-published-bottle-commits`)."
+                               "`do not merge`, `new formula`, `automerge-skip`, " \
+                               "`pre-release`, `CI-published-bottle-commits`)."
       switch "--without-approval",
              description: "Pull requests do not require approval to be merged."
       switch "--publish",
@@ -33,7 +32,9 @@ module Homebrew
                           "in the pull request to the preferred format."
       switch "--no-autosquash",
              description: "Instruct `brew pr-publish` to skip automatically reformatting and rewording commits " \
-                          "in the pull request to the preferred format."
+                          "in the pull request to the preferred format.",
+             disable:     true, # odisabled: remove this switch with 4.3.0
+             hidden:      true
       switch "--ignore-failures",
              description: "Include pull requests that have failing status checks."
 
@@ -44,12 +45,11 @@ module Homebrew
   def pr_automerge
     args = pr_automerge_args.parse
 
-    odeprecated "`brew pr-publish --no-autosquash`" if args.no_autosquash?
-
     without_labels = args.without_labels || [
       "do not merge",
       "new formula",
       "automerge-skip",
+      "pre-release",
       "CI-published-bottle-commits",
     ]
     tap = Tap.fetch(args.tap || CoreTap.instance.name)

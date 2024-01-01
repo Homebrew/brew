@@ -1,16 +1,13 @@
 # typed: strict
 # frozen_string_literal: true
 
-require "cask/cmd/abstract_command"
 require "cask/info"
 require "cask/cask_loader"
 require "cask/caskroom"
 
 module Homebrew
   module MissingFormula
-    extend T::Sig
     class << self
-      extend T::Sig
       sig { params(name: String).returns(T.nilable(String)) }
       def disallowed_reason(name)
         case name.downcase

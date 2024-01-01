@@ -1,4 +1,3 @@
-# typed: false
 # frozen_string_literal: true
 
 require "keg"
@@ -54,21 +53,21 @@ describe Keg do
     expect(keg).not_to be_an_empty_installation
   end
 
-  specify "#oldname_opt_record" do
-    expect(keg.oldname_opt_record).to be_nil
+  specify "#oldname_opt_records" do
+    expect(keg.oldname_opt_records).to be_empty
     oldname_opt_record = HOMEBREW_PREFIX/"opt/oldfoo"
     oldname_opt_record.make_relative_symlink(HOMEBREW_CELLAR/"foo/1.0")
-    expect(keg.oldname_opt_record).to eq(oldname_opt_record)
+    expect(keg.oldname_opt_records).to eq([oldname_opt_record])
   end
 
-  specify "#remove_oldname_opt_record" do
+  specify "#remove_oldname_opt_records" do
     oldname_opt_record = HOMEBREW_PREFIX/"opt/oldfoo"
     oldname_opt_record.make_relative_symlink(HOMEBREW_CELLAR/"foo/2.0")
-    keg.remove_oldname_opt_record
+    keg.remove_oldname_opt_records
     expect(oldname_opt_record).to be_a_symlink
     oldname_opt_record.unlink
     oldname_opt_record.make_relative_symlink(HOMEBREW_CELLAR/"foo/1.0")
-    keg.remove_oldname_opt_record
+    keg.remove_oldname_opt_records
     expect(oldname_opt_record).not_to be_a_symlink
   end
 

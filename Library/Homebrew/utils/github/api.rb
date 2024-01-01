@@ -10,9 +10,9 @@ module GitHub
   def self.pat_blurb(scopes = ALL_SCOPES)
     <<~EOS
       Create a GitHub personal access token:
-      #{Formatter.url(
-        "https://github.com/settings/tokens/new?scopes=#{scopes.join(",")}&description=Homebrew",
-      )}
+        #{Formatter.url(
+          "https://github.com/settings/tokens/new?scopes=#{scopes.join(",")}&description=Homebrew",
+        )}
       #{Utils::Shell.set_variable_in_profile("HOMEBREW_GITHUB_API_TOKEN", "your_token_here")}
     EOS
   end
@@ -20,6 +20,7 @@ module GitHub
   API_URL = "https://api.github.com"
   API_MAX_PAGES = 50
   API_MAX_ITEMS = 5000
+  PAGINATE_RETRY_COUNT = 3
 
   CREATE_GIST_SCOPES = ["gist"].freeze
   CREATE_ISSUE_FORK_OR_PR_SCOPES = ["repo"].freeze
@@ -31,10 +32,6 @@ module GitHub
   #
   # @api private
   module API
-    extend T::Sig
-
-    module_function
-
     # Generic API error.
     class Error < RuntimeError
       attr_reader :github_message
@@ -64,34 +61,49 @@ module GitHub
       end
     end
 
+    GITHUB_IP_ALLOWLIST_ERROR = Regexp.new("Although you appear to have the correct authorization credentials, " \
+                                           "the `(.+)` organization has an IP allow list enabled, " \
+                                           "and your IP address is not permitted to access this resource").freeze
+
+    NO_CREDENTIALS_MESSAGE = <<~MESSAGE.freeze
+      No GitHub credentials found in macOS Keychain, GitHub CLI or the environment.
+      #{GitHub.pat_blurb}
+    MESSAGE
+
     # Error when authentication fails.
     class AuthenticationFailedError < Error
-      def initialize(github_message)
+      def initialize(credentials_type, github_message)
         @github_message = github_message
         message = +"GitHub API Error: #{github_message}\n"
-        message << if Homebrew::EnvConfig.github_api_token
+        message << case credentials_type
+        when :github_cli_token
           <<~EOS
-            HOMEBREW_GITHUB_API_TOKEN may be invalid or expired; check:
-              #{Formatter.url("https://github.com/settings/tokens")}
+            Your GitHub CLI login session may be invalid.
+            Refresh it with:
+              gh auth login --hostname github.com
           EOS
-        else
+        when :keychain_username_password
           <<~EOS
             The GitHub credentials in the macOS keychain may be invalid.
             Clear them with:
               printf "protocol=https\\nhost=github.com\\n" | git credential-osxkeychain erase
-            #{GitHub.pat_blurb}
           EOS
+        when :env_token
+          <<~EOS
+            HOMEBREW_GITHUB_API_TOKEN may be invalid or expired; check:
+              #{Formatter.url("https://github.com/settings/tokens")}
+          EOS
+        when :none
+          NO_CREDENTIALS_MESSAGE
         end
         super message.freeze
       end
     end
 
-    # Error when the user has no GitHub API credentials set at all (macOS keychain or envvar).
+    # Error when the user has no GitHub API credentials set at all (macOS keychain, GitHub CLI or envvar).
     class MissingAuthenticationError < Error
       def initialize
-        message = +"No GitHub credentials found in macOS Keychain or environment.\n"
-        message << GitHub.pat_blurb
-        super message
+        super NO_CREDENTIALS_MESSAGE
       end
     end
 
@@ -116,15 +128,32 @@ module GitHub
       JSON::ParserError,
     ].freeze
 
+    # Gets the token from the GitHub CLI for github.com.
+    sig { returns(T.nilable(String)) }
+    def self.github_cli_token
+      # Avoid `Formula["gh"].opt_bin` so this method works even with `HOMEBREW_DISABLE_LOAD_FORMULA`.
+      env = { "PATH" => PATH.new(HOMEBREW_PREFIX/"opt/gh/bin", ENV.fetch("PATH")) }
+      gh_out, _, result = system_command "gh",
+                                         args:         ["auth", "token", "--hostname", "github.com"],
+                                         env:          env,
+                                         print_stderr: false
+      return unless result.success?
+
+      gh_out.chomp
+    end
+
     # Gets the password field from `git-credential-osxkeychain` for github.com,
     # but only if that password looks like a GitHub Personal Access Token.
     sig { returns(T.nilable(String)) }
-    def keychain_username_password
-      github_credentials = Utils.popen_write("git", "credential-osxkeychain", "get") do |pipe|
-        pipe.write "protocol=https\nhost=github.com\n"
-      end
-      github_username = github_credentials[/username=(.+)/, 1]
-      github_password = github_credentials[/password=(.+)/, 1]
+    def self.keychain_username_password
+      git_credential_out, _, result = system_command "git",
+                                                     args:         ["credential-osxkeychain", "get"],
+                                                     input:        ["protocol=https\n", "host=github.com\n"],
+                                                     print_stderr: false
+      return unless result.success?
+
+      github_username = git_credential_out[/username=(.+)/, 1]
+      github_password = git_credential_out[/password=(.+)/, 1]
       return unless github_username
 
       # Don't use passwords from the keychain unless they look like
@@ -133,32 +162,34 @@ module GitHub
       return unless GITHUB_PERSONAL_ACCESS_TOKEN_REGEX.match?(github_password)
 
       github_password
-    rescue Errno::EPIPE
-      # The above invocation via `Utils.popen` can fail, causing the pipe to be
-      # prematurely closed (before we can write to it) and thus resulting in a
-      # broken pipe error. The root cause is usually a missing or malfunctioning
-      # `git-credential-osxkeychain` helper.
-      nil
     end
 
-    def credentials
-      @credentials ||= Homebrew::EnvConfig.github_api_token || keychain_username_password
+    def self.credentials
+      @credentials ||= Homebrew::EnvConfig.github_api_token || github_cli_token || keychain_username_password
     end
 
     sig { returns(Symbol) }
-    def credentials_type
-      if Homebrew::EnvConfig.github_api_token
+    def self.credentials_type
+      if Homebrew::EnvConfig.github_api_token.present?
         :env_token
-      elsif keychain_username_password
+      elsif github_cli_token.present?
+        :github_cli_token
+      elsif keychain_username_password.present?
         :keychain_username_password
       else
         :none
       end
     end
 
+    CREDENTIAL_NAMES = {
+      env_token:                  "HOMEBREW_GITHUB_API_TOKEN",
+      github_cli_token:           "GitHub CLI login",
+      keychain_username_password: "macOS Keychain GitHub",
+    }.freeze
+
     # Given an API response from GitHub, warn the user if their credentials
     # have insufficient permissions.
-    def credentials_error_message(response_headers, needed_scopes)
+    def self.credentials_error_message(response_headers, needed_scopes)
       return if response_headers.empty?
 
       scopes = response_headers["x-accepted-oauth-scopes"].to_s.split(", ")
@@ -169,13 +200,7 @@ module GitHub
       needed_scopes = needed_scopes.to_a.join(", ").presence || "none"
       credentials_scopes = "none" if credentials_scopes.blank?
 
-      what = case credentials_type
-      when :keychain_username_password
-        "macOS keychain GitHub"
-      when :env_token
-        "HOMEBREW_GITHUB_API_TOKEN"
-      end
-
+      what = CREDENTIAL_NAMES.fetch(credentials_type)
       @credentials_error_message ||= onoe <<~EOS
         Your #{what} credentials do not have sufficient scope!
         Scopes required: #{needed_scopes}
@@ -184,7 +209,9 @@ module GitHub
       EOS
     end
 
-    def open_rest(url, data: nil, data_binary_path: nil, request_method: nil, scopes: [].freeze, parse_json: true)
+    def self.open_rest(
+      url, data: nil, data_binary_path: nil, request_method: nil, scopes: [].freeze, parse_json: true
+    )
       # This is a no-op if the user is opting out of using the GitHub API.
       return block_given? ? yield({}) : {} if Homebrew::EnvConfig.no_github_api?
 
@@ -194,7 +221,7 @@ module GitHub
       # rubocop:enable Style/FormatStringToken
 
       token = credentials
-      args += ["--header", "Authorization: token #{token}"] unless credentials_type == :none
+      args += ["--header", "Authorization: token #{token}"] if credentials_type != :none
       args += ["--header", "X-GitHub-Api-Version:2022-11-28"]
 
       data_tmpfile = nil
@@ -224,7 +251,7 @@ module GitHub
 
         args += ["--dump-header", T.must(headers_tmpfile.path)]
 
-        output, errors, status = curl_output("--location", url.to_s, *args, secrets: [token])
+        output, errors, status = Utils::Curl.curl_output("--location", url.to_s, *args, secrets: [token])
         output, _, http_code = output.rpartition("\n")
         output, _, http_code = output.rpartition("\n") if http_code == "000"
         headers = headers_tmpfile.read
@@ -253,16 +280,26 @@ module GitHub
       end
     end
 
-    def paginate_rest(url, additional_query_params: nil, per_page: 100)
+    def self.paginate_rest(url, additional_query_params: nil, per_page: 100)
       (1..API_MAX_PAGES).each do |page|
-        result = API.open_rest("#{url}?per_page=#{per_page}&page=#{page}&#{additional_query_params}")
+        retry_count = 1
+        result = begin
+          API.open_rest("#{url}?per_page=#{per_page}&page=#{page}&#{additional_query_params}")
+        rescue Error
+          if retry_count < PAGINATE_RETRY_COUNT
+            retry_count += 1
+            retry
+          end
+
+          raise
+        end
         break if result.blank?
 
         yield(result, page)
       end
     end
 
-    def open_graphql(query, variables: nil, scopes: [].freeze, raise_errors: true)
+    def self.open_graphql(query, variables: nil, scopes: [].freeze, raise_errors: true)
       data = { query: query, variables: variables }
       result = open_rest("#{API_URL}/graphql", scopes: scopes, data: data, request_method: "POST")
 
@@ -277,7 +314,7 @@ module GitHub
       end
     end
 
-    def raise_error(output, errors, http_code, headers, scopes)
+    def self.raise_error(output, errors, http_code, headers, scopes)
       json = begin
         JSON.parse(output)
       rescue
@@ -298,14 +335,14 @@ module GitHub
 
       case http_code
       when "401"
-        raise AuthenticationFailedError, message
+        raise AuthenticationFailedError.new(credentials_type, message)
       when "403"
         if meta.fetch("x-ratelimit-remaining", 1).to_i <= 0
           reset = meta.fetch("x-ratelimit-reset").to_i
           raise RateLimitExceededError.new(reset, message)
         end
 
-        raise AuthenticationFailedError, message
+        raise AuthenticationFailedError.new(credentials_type, message)
       when "404"
         raise MissingAuthenticationError if credentials_type == :none && scopes.present?
 

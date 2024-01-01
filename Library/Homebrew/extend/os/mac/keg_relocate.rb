@@ -21,20 +21,29 @@ class Keg
   def relocate_dynamic_linkage(relocation)
     mach_o_files.each do |file|
       file.ensure_writable do
+        modified = T.let(false, T::Boolean)
+        needs_codesigning = T.let(false, T::Boolean)
+
         if file.dylib?
           id = relocated_name_for(file.dylib_id, relocation)
-          change_dylib_id(id, file)
+          modified = change_dylib_id(id, file)
+          needs_codesigning ||= modified
         end
 
         each_linkage_for(file, :dynamically_linked_libraries) do |old_name|
           new_name = relocated_name_for(old_name, relocation)
-          change_install_name(old_name, new_name, file) if new_name
+          modified = change_install_name(old_name, new_name, file) if new_name
+          needs_codesigning ||= modified
         end
 
         each_linkage_for(file, :rpaths) do |old_name|
           new_name = relocated_name_for(old_name, relocation)
-          change_rpath(old_name, new_name, file) if new_name
+          modified = change_rpath(old_name, new_name, file) if new_name
+          needs_codesigning ||= modified
         end
+
+        # codesign the file if needed
+        codesign_patched_binary(file) if needs_codesigning
       end
     end
   end
@@ -42,30 +51,61 @@ class Keg
   def fix_dynamic_linkage
     mach_o_files.each do |file|
       file.ensure_writable do
-        change_dylib_id(dylib_id_for(file), file) if file.dylib?
+        modified = T.let(false, T::Boolean)
+        needs_codesigning = T.let(false, T::Boolean)
+
+        modified = change_dylib_id(dylib_id_for(file), file) if file.dylib?
+        needs_codesigning ||= modified
 
         each_linkage_for(file, :dynamically_linked_libraries) do |bad_name|
-          # Don't fix absolute paths unless they are rooted in the build directory
-          next if bad_name.start_with?("/") &&
-                  !bad_name.start_with?(HOMEBREW_TEMP.to_s) &&
-                  !bad_name.start_with?(HOMEBREW_TEMP.realpath.to_s)
-
-          new_name = fixed_name(file, bad_name)
-          change_install_name(bad_name, new_name, file) unless new_name == bad_name
+          # Don't fix absolute paths unless they are rooted in the build directory.
+          new_name = if bad_name.start_with?("/") && !rooted_in_build_directory?(bad_name)
+            bad_name
+          else
+            fixed_name(file, bad_name)
+          end
+          loader_name = loader_name_for(file, new_name)
+          modified = change_install_name(bad_name, loader_name, file) if loader_name != bad_name
+          needs_codesigning ||= modified
         end
 
         each_linkage_for(file, :rpaths) do |bad_name|
-          # Strip duplicate rpaths and rpaths rooted in the build directory.
-          next if !bad_name.start_with?(HOMEBREW_TEMP.to_s) &&
-                  !bad_name.start_with?(HOMEBREW_TEMP.realpath.to_s) &&
-                  (file.rpaths.count(bad_name) == 1)
+          new_name = opt_name_for(bad_name)
+          loader_name = loader_name_for(file, new_name)
+          next if loader_name == bad_name
 
-          delete_rpath(bad_name, file)
+          modified = change_rpath(bad_name, loader_name, file)
+          needs_codesigning ||= modified
         end
+
+        # Strip duplicate rpaths and rpaths rooted in the build directory.
+        # We do this separately from the rpath relocation above to avoid
+        # failing to relocate an rpath whose variable duplicate we deleted.
+        each_linkage_for(file, :rpaths, resolve_variable_references: true) do |bad_name|
+          next if !rooted_in_build_directory?(bad_name) && file.rpaths.count(bad_name) == 1
+
+          modified = delete_rpath(bad_name, file)
+          needs_codesigning ||= modified
+        end
+
+        # codesign the file if needed
+        codesign_patched_binary(file) if needs_codesigning
       end
     end
 
     generic_fix_dynamic_linkage
+  end
+
+  def loader_name_for(file, target)
+    # Use @loader_path-relative install names for other Homebrew-installed binaries.
+    if ENV["HOMEBREW_RELOCATABLE_INSTALL_NAMES"] && target.start_with?(HOMEBREW_PREFIX)
+      dylib_suffix = find_dylib_suffix_from(target)
+      target_dir = Pathname.new(target.delete_suffix(dylib_suffix)).cleanpath
+
+      "@loader_path/#{target_dir.relative_path_from(file.dirname)/dylib_suffix}"
+    else
+      target
+    end
   end
 
   # If file is a dylib or bundle itself, look for the dylib named by
@@ -90,11 +130,12 @@ class Keg
     end
   end
 
-  def each_linkage_for(file, linkage_type, &block)
-    links = file.method(linkage_type)
-                .call
-                .grep_v(/^@(loader_|executable_|r)path/)
-    links.each(&block)
+  VARIABLE_REFERENCE_RX = /^@(loader_|executable_|r)path/.freeze
+
+  def each_linkage_for(file, linkage_type, resolve_variable_references: false, &block)
+    file.public_send(linkage_type, resolve_variable_references: resolve_variable_references)
+        .grep_v(VARIABLE_REFERENCE_RX)
+        .each(&block)
   end
 
   def dylib_id_for(file)
@@ -188,5 +229,27 @@ class Keg
     grep_bin = "egrep"
     grep_args = "--files-with-matches"
     [grep_bin, grep_args]
+  end
+
+  private
+
+  CELLAR_RX = %r{\A#{HOMEBREW_CELLAR}/(?<formula_name>[^/]+)/[^/]+}.freeze
+
+  # Replace HOMEBREW_CELLAR references with HOMEBREW_PREFIX/opt references
+  # if the Cellar reference is to a different keg.
+  def opt_name_for(filename)
+    return filename unless filename.start_with?(HOMEBREW_PREFIX.to_s)
+    return filename if filename.start_with?(path.to_s)
+    return filename if (matches = CELLAR_RX.match(filename)).blank?
+
+    filename.sub(CELLAR_RX, "#{HOMEBREW_PREFIX}/opt/#{matches[:formula_name]}")
+  end
+
+  def rooted_in_build_directory?(filename)
+    # CMake normalises `/private/tmp` to `/tmp`.
+    # https://gitlab.kitware.com/cmake/cmake/-/issues/23251
+    return true if HOMEBREW_TEMP.to_s == "/private/tmp" && filename.start_with?("/tmp/")
+
+    filename.start_with?(HOMEBREW_TEMP.to_s) || filename.start_with?(HOMEBREW_TEMP.realpath.to_s)
   end
 end

@@ -8,9 +8,7 @@ module Homebrew
   #
   # @api private
   module Uninstall
-    module_function
-
-    def uninstall_kegs(kegs_by_rack, casks: [], force: false, ignore_dependencies: false, named_args: [])
+    def self.uninstall_kegs(kegs_by_rack, casks: [], force: false, ignore_dependencies: false, named_args: [])
       handle_unsatisfied_dependents(kegs_by_rack,
                                     casks:               casks,
                                     ignore_dependencies: ignore_dependencies,
@@ -97,7 +95,7 @@ module Homebrew
       end
     end
 
-    def handle_unsatisfied_dependents(kegs_by_rack, casks: [], ignore_dependencies: false, named_args: [])
+    def self.handle_unsatisfied_dependents(kegs_by_rack, casks: [], ignore_dependencies: false, named_args: [])
       return if ignore_dependencies
 
       all_kegs = kegs_by_rack.values.flatten(1)
@@ -107,7 +105,7 @@ module Homebrew
       nil
     end
 
-    def check_for_dependents(kegs, casks: [], named_args: [])
+    def self.check_for_dependents(kegs, casks: [], named_args: [])
       return false unless (result = InstalledDependents.find_some_installed_dependents(kegs, casks: casks))
 
       if Homebrew::EnvConfig.developer?
@@ -164,7 +162,7 @@ module Homebrew
       end
     end
 
-    def rm_pin(rack)
+    def self.rm_pin(rack)
       Formulary.from_rack(rack).unpin
     rescue
       nil

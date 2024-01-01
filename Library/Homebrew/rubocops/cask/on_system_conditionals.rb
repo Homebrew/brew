@@ -40,7 +40,7 @@ module RuboCop
             audit_on_system_blocks(stanza.stanza_node, stanza.stanza_name)
           end
 
-          audit_arch_conditionals(cask_body)
+          audit_arch_conditionals(cask_body, allowed_blocks: FLIGHT_STANZA_NAMES)
           audit_macos_version_conditionals(cask_body, recommend_on_system: false)
           simplify_sha256_stanzas
         end

@@ -1,6 +1,6 @@
 # Adding Software To Homebrew
 
-Is your favorite software missing from Homebrew? Then you're the perfect person to resolve this problem.
+Is your favourite software missing from Homebrew? Then you're the perfect person to resolve this problem.
 
 If you want to add software that is either closed source or a GUI-only program, you will want to follow the guide for [Casks](#casks). Otherwise follow the guide for [Formulae](#formulae) (see also: [Homebrew Terminology](Formula-Cookbook.md#homebrew-terminology)).
 
@@ -14,7 +14,7 @@ If everything checks out, you're ready to get started on a new formula!
 
 ### Writing the formula
 
-1. It's a good idea to find existing formulae in Homebrew that have similarities to the software you want to add. This will help you to understand how specific languages, build methods, etc. are typically handled.
+1. It's a good idea to find existing formulae in Homebrew that have similarities to the software you want to add. This will help you to understand how specific languages, build methods, etc. are typically handled. Start by tapping `homebrew/core`: first set `HOMEBREW_NO_INSTALL_FROM_API=1` in your shell environment, then run `brew tap homebrew/core` to clone the `homebrew/core` tap to the path returned by `brew --repository homebrew/core`.
 
 1. If you're starting from scratch, you can use the [`brew create` command](Manpage.md#create-options-url) to produce a basic version of your formula. This command accepts a number of options and you may be able to save yourself some work by using an appropriate template option like `--python`.
 
@@ -22,7 +22,7 @@ If everything checks out, you're ready to get started on a new formula!
 
 1. Make sure you write a good test as part of your formula. Refer to the [Add a test to the formula](Formula-Cookbook.md#add-a-test-to-the-formula) section of the Cookbook for help with this.
 
-1. Try installing your formula using `brew install --build-from-source <formula>`, where \<formula> is the name of your formula. If any errors occur, correct your formula and attempt to install it again. The formula installation should finish without errors by the end of this step.
+1. Try installing your formula using `brew install --build-from-source <formula>`, where *\<formula>* is the name of your formula. If any errors occur, correct your formula and attempt to install it again. The formula installation should finish without errors by the end of this step.
 
 If you're stuck, ask for help on GitHub or the [Homebrew discussion forum](https://github.com/orgs/Homebrew/discussions). The maintainers are very happy to help but we also like to see that you've put effort into trying to find a solution first.
 
@@ -34,7 +34,7 @@ If you're stuck, ask for help on GitHub or the [Homebrew discussion forum](https
 
 ### Submitting the formula
 
-You're finally ready to submit your formula to the [homebrew-core](https://github.com/Homebrew/homebrew-core) repository. If you haven't done this before, you can refer to the [How to Open a Pull Request](How-To-Open-a-Homebrew-Pull-Request.md) documentation for help. Maintainers will review the pull request and provide feedback about any areas that need to be addressed before the formula can be added to Homebrew.
+You're finally ready to submit your formula to the [homebrew-core](https://github.com/Homebrew/homebrew-core) repository. If you haven't done this before, you can refer to the [How to Open a Homebrew Pull Request](How-To-Open-a-Homebrew-Pull-Request.md#formulae-related-pull-request) documentation for help. Maintainers will review the pull request and provide feedback about any areas that need to be addressed before the formula can be added to Homebrew.
 
 If you've made it this far, congratulations on submitting a Homebrew formula! We appreciate the hard work you put into this and you can take satisfaction in knowing that your work may benefit other Homebrew users as well.
 
@@ -47,72 +47,101 @@ If you've made it this far, congratulations on submitting a Homebrew formula! We
 
 ### Writing the cask
 
-Making a new cask is easy. Follow the directions in [Getting Set Up To Contribute](https://github.com/Homebrew/homebrew-cask/blob/HEAD/CONTRIBUTING.md#getting-set-up-to-contribute) to begin.
+Making a new cask is easy. Follow the directions in [How to Open a Homebrew Pull Request](How-To-Open-a-Homebrew-Pull-Request.md#cask-related-pull-request) to begin.
 
 #### Examples
 
-Here’s a cask for `shuttle` as an example. Note the `verified` parameter below the `url`, which is needed when [the url and homepage hostnames differ](Cask-Cookbook.md#when-url-and-homepage-domains-differ-add-verified).
+Here’s a cask for `dixa` as an example. Note the `verified` parameter below the `url`, which is needed when [the url and homepage hostnames differ](Cask-Cookbook.md#when-url-and-homepage-domains-differ-add-verified).
 
 ```ruby
-cask "shuttle" do
-  version "1.2.9"
-  sha256 "0b80bf62922291da391098f979683e69cc7b65c4bdb986a431e3f1d9175fba20"
+cask "dixa" do
+  version "4.0.12"
+  sha256 "a4e1a30d074e724ba24e9e2674a72bc4050f00161fb7dc23295a2c189ecda5bb"
 
-  url "https://github.com/fitztrev/shuttle/releases/download/v#{version}/Shuttle.zip",
-      verified: "github.com/fitztrev/shuttle/"
-  name "Shuttle"
-  desc "Simple shortcut menu"
-  homepage "https://fitztrev.github.io/shuttle/"
+  url "https://github.com/dixahq/dixa-desktop-app-release/releases/download/v#{version}/dixa-#{version}.dmg",
+      verified: "github.com/dixahq/dixa-desktop-app-release/"
+  name "Dixa"
+  desc "Customer service platform"
+  homepage "https://dixa.com/"
 
-  app "Shuttle.app"
+  livecheck do
+    url :url
+    strategy :github_latest
+  end
 
-  zap trash: "~/.shuttle.json"
+  app "Dixa.app"
+
+  zap trash: [
+    "~/Library/Application Support/Dixa",
+    "~/Library/Logs/Dixa",
+    "~/Library/Preferences/dixa.plist",
+    "~/Library/Saved Application State/dixa.savedState",
+  ]
 end
 ```
 
-And here is one for `noisy`. Note that it has an unversioned download (the download `url` does not contain the version number, unlike the example above). It also suppresses the checksum with `sha256 :no_check`, which is necessary because since the download `url` does not contain the version number, its checksum will change when a new version is made available.
+And here is one for `pomello`. Note that it has an unversioned download (the download `url` does not contain the version number, unlike the example above). It also suppresses the checksum with `sha256 :no_check`, which is necessary because since the download `url` does not contain the version number, its checksum will change when a new version is made available.
 
 ```ruby
-cask "noisy" do
-  version "1.3"
+cask "pomello" do
+  version "0.10.17"
   sha256 :no_check
 
-  url "https://github.com/downloads/jonshea/Noisy/Noisy.zip"
-  name "Noisy"
-  desc "White noise generator"
-  homepage "https://github.com/jonshea/Noisy"
+  url "https://pomelloapp.com/download/mac/latest"
+  name "Pomello"
+  desc "Turns your Trello cards into Pomodoro tasks"
+  homepage "https://pomelloapp.com/"
 
-  app "Noisy.app"
+  livecheck do
+    url :url
+    strategy :header_match
+  end
+
+  app "Pomello.app"
+
+  zap trash: [
+    "~/Library/Application Support/com.apple.sharedfilelist/com.apple.LSSharedFileList.ApplicationRecentDocuments/com.tinynudge.pomello.*",
+    "~/Library/Application Support/Pomello",
+    "~/Library/Caches/com.tinynudge.pomello",
+    "~/Library/Caches/com.tinynudge.pomello.ShipIt",
+    "~/Library/HTTPStorages/com.tinynudge.pomello",
+    "~/Library/Preferences/com.tinynudge.pomello.plist",
+    "~/Library/Saved Application State/com.tinynudge.pomello.savedState",
+  ]
 end
 ```
 
-Here is a last example for `airdisplay`, which uses a `pkg` installer to install the application instead of a stand-alone application bundle (`.app`). Note the [`uninstall pkgutil` stanza](Cask-Cookbook.md#uninstall-key-pkgutil), which is needed to uninstall all files that were installed using the installer.
+Here is a last example for `fabfilter-one`, which uses a `pkg` installer to install the application instead of a stand-alone application bundle (`.app`). Note the [`uninstall pkgutil` stanza](Cask-Cookbook.md#uninstall-pkgutil), which is needed to uninstall all files that were installed using the installer.
 
 You will also see how to adapt `version` to the download `url`. Use [our custom `version` methods](Cask-Cookbook.md#version-methods) to do so, resorting to the standard [Ruby String methods](https://ruby-doc.org/core/String.html) when they don’t suffice.
 
 ```ruby
-cask "airdisplay" do
-  version "3.4.2,26581"
-  sha256 "272d14f33b3a4a16e5e0e1ebb2d519db4e0e3da17f95f77c91455b354bee7ee7"
+cask "fabfilter-one" do
+  version "3.37"
+  sha256 "4059594580e365237ded16a213d8d549cbb01c4b8bad80895c61f44bcff7eb68"
 
-  url "https://www.avatron.com/updates/software/airdisplay/ad#{version.before_comma.no_dots}.zip"
-  name "Air Display"
-  desc "Utility for using a tablet as a second monitor"
-  homepage "https://avatron.com/applications/air-display/"
+  url "https://download.fabfilter.com/ffone#{version.no_dots}.dmg"
+  name "FabFilter One"
+  desc "Synthesizer plug-in"
+  homepage "https://www.fabfilter.com/products/volcano-2-powerful-filter-plug-in"
 
   livecheck do
-    url "https://www.avatron.com/updates/software/airdisplay/appcast.xml"
-    strategy :sparkle
+    url "https://www.fabfilter.com/download"
+    strategy :page_match do |page|
+      match = page.match(/ffone(\d)(\d+)\.dmg/i)
+      next if match.blank?
+
+      "#{match[1]}.#{match[2]}"
+    end
   end
 
-  depends_on macos: ">= :mojave"
+  depends_on macos: ">= :sierra"
 
-  pkg "Air Display Installer.pkg"
+  pkg "FabFilter One #{version} Installer.pkg"
 
-  uninstall pkgutil: [
-    "com.avatron.pkg.AirDisplay",
-    "com.avatron.pkg.AirDisplayHost2",
-  ]
+  uninstall pkgutil: "com.fabfilter.One.#{version.major}"
+
+  # No zap stanza required
 end
 ```
 
@@ -120,7 +149,7 @@ end
 
 The cask **token** is the mnemonic string people will use to interact with the cask via `brew install`, etc. The name of the cask **file** is simply the token with the extension `.rb` appended.
 
-The easiest way to generate a token for a cask is to run this command:
+The easiest way to generate a token for a cask is to run `generate_cask_token`:
 
 ```bash
 $(brew --repository homebrew/cask)/developer/bin/generate_cask_token "/full/path/to/new/software.app"
@@ -142,7 +171,7 @@ Once you know the token, create your cask with the handy-dandy `brew create --ca
 brew create --cask download-url --set-name my-new-cask
 ```
 
-This will open `$EDITOR` with a template for your new cask, to be stored in the file `my-new-cask.rb`. Running the `create` command above will get you a template that looks like this:
+This will open `EDITOR` with a template for your new cask, to be stored in the file `my-new-cask.rb`. Running the `create` command above will get you a template that looks like this:
 
 ```ruby
 cask "my-new-cask" do
@@ -154,7 +183,16 @@ cask "my-new-cask" do
   desc ""
   homepage ""
 
+  livecheck do
+    url ""
+    strategy ""
+  end
+
+  depends_on macos: ""
+
   app ""
+
+  zap trash: ""
 end
 ```
 
@@ -164,29 +202,29 @@ Fill in the following stanzas for your cask:
 
 | name               | value       |
 | ------------------ | ----------- |
-| `version`          | application version
-| `sha256`           | SHA-256 checksum of the file downloaded from `url`, calculated by the command `shasum -a 256 <file>`. Can be suppressed by using the special value `:no_check`. (see [`sha256` Stanza Details](Cask-Cookbook.md#stanza-sha256))
-| `url`              | URL to the `.dmg`/`.zip`/`.tgz`/`.tbz2` file that contains the application.<br />A [`verified` parameter](Cask-Cookbook.md#when-url-and-homepage-domains-differ-add-verified) must be added if the hostnames in the `url` and `homepage` stanzas differ. [Block syntax](Cask-Cookbook.md#using-a-block-to-defer-code-execution) is available for URLs that change on every visit.
-| `name`             | the full and proper name defined by the vendor, and any useful alternate names (see [`name` Stanza Details](Cask-Cookbook.md#stanza-name))
-| `desc`             | one-line description of the software (see [`desc` Stanza Details](Cask-Cookbook.md#stanza-desc))
-| `homepage`         | application homepage; used for the `brew home` command
-| `app`              | relative path to an `.app` bundle that should be moved into the `/Applications` folder on installation (see [`app` Stanza Details](Cask-Cookbook.md#stanza-app))
+| `version`          | application version |
+| `sha256`           | SHA-256 checksum of the file downloaded from `url`, calculated by the command `shasum -a 256 <file>`. Can be suppressed by using the special value `:no_check`. (see [`sha256` Stanza Details](Cask-Cookbook.md#stanza-sha256)) |
+| `url`              | URL to the `.dmg`/`.zip`/`.tgz`/`.tbz2` file that contains the application.<br />A [`verified` parameter](Cask-Cookbook.md#when-url-and-homepage-domains-differ-add-verified) must be added if the hostnames in the `url` and `homepage` stanzas differ. [Block syntax](Cask-Cookbook.md#using-a-block-to-defer-code-execution) is available for URLs that change on every visit. |
+| `name`             | the full and proper name defined by the vendor, and any useful alternate names (see [`name` Stanza Details](Cask-Cookbook.md#stanza-name)) |
+| `desc`             | one-line description of the software (see [`desc` Stanza Details](Cask-Cookbook.md#stanza-desc)) |
+| `homepage`         | application homepage; used for the `brew home` command |
+| `livecheck`        | Ruby block describing how to find updates for this cask (see [`livecheck` Stanza Details](Cask-Cookbook.md#stanza-livecheck)) |
+| `app`              | relative path to an `.app` bundle that should be moved into the `/Applications` folder on installation (see [`app` Stanza Details](Cask-Cookbook.md#stanza-app)) |
+| `zap`              | additional procedures for a more complete uninstall, including configuration files and shared resources (see [`zap` Stanza Details](Cask-Cookbook.md#stanza-zap)) |
 
 Other commonly used stanzas are:
 
 | name               | value       |
 | ------------------ | ----------- |
-| `livecheck`        | Ruby block describing how to find updates for this cask (see [`livecheck` Stanza Details](Cask-Cookbook.md#stanza-livecheck))
-| `pkg`              | relative path to a `.pkg` file containing the distribution (see [`pkg` Stanza Details](Cask-Cookbook.md#stanza-pkg))
-| `caveats`          | string or Ruby block providing the user with cask-specific information at install time (see [`caveats` Stanza Details](Cask-Cookbook.md#stanza-caveats))
-| `uninstall`        | procedures to uninstall a cask; optional unless the `pkg` stanza is used (see [`uninstall` Stanza Details](Cask-Cookbook.md#stanza-uninstall))
-| `zap`              | additional procedures for a more complete uninstall, including configuration files and shared resources (see [`zap` Stanza Details](Cask-Cookbook.md#stanza-zap))
+| `pkg`              | relative path to a `.pkg` file containing the distribution (see [`pkg` Stanza Details](Cask-Cookbook.md#stanza-pkg)) |
+| `caveats`          | string or Ruby block providing the user with cask-specific information at install time (see [`caveats` Stanza Details](Cask-Cookbook.md#stanza-caveats)) |
+| `uninstall`        | procedures to uninstall a cask; optional unless the `pkg` stanza is used (see [`uninstall` Stanza Details](Cask-Cookbook.md#stanza-uninstall)) |
 
 Additional [`artifact` stanzas](Cask-Cookbook.md#at-least-one-artifact-stanza-is-also-required) may be needed for special use cases. Even more special-use stanzas are listed at [Optional Stanzas](Cask-Cookbook.md#optional-stanzas).
 
 #### Cask token details
 
-If a token conflicts with an already-existing cask, authors should manually make the new token unique by prepending the vendor name. Example: [unison.rb](https://github.com/Homebrew/homebrew-cask/blob/HEAD/Casks/unison.rb) and [panic-unison.rb](https://github.com/Homebrew/homebrew-cask/blob/HEAD/Casks/panic-unison.rb).
+If a token conflicts with an already-existing cask, authors should manually make the new token unique by prepending the vendor name. Example: [unison.rb](https://github.com/Homebrew/homebrew-cask/blob/HEAD/Casks/u/unison.rb) and [panic-unison.rb](https://github.com/Homebrew/homebrew-cask/blob/HEAD/Casks/p/panic-unison.rb).
 
 If possible, avoid creating tokens that differ only by the placement of hyphens.
 
@@ -198,13 +236,13 @@ When a downloaded archive expands to a subfolder, the subfolder name must be inc
 
 Example:
 
-1. Texmaker is downloaded to the file `TexmakerMacosxLion.zip`.
-1. `TexmakerMacosxLion.zip` unzips to a folder called `TexmakerMacosxLion`.
-1. The folder `TexmakerMacosxLion` contains the application `texmaker.app`.
+1. Simple Floating Clock is downloaded to the file `sfc.zip`.
+1. `sfc.zip` unzips to a folder called `Simple Floating Clock`.
+1. The folder `Simple Floating Clock` contains the application `SimpleFloatingClock.app`.
 1. So, the `app` stanza should include the subfolder as a relative path:
 
    ```ruby
-   app "TexmakerMacosxLion/texmaker.app"
+   app "Simple Floating Clock/SimpleFloatingClock.app"
    ```
 
 ### Testing and auditing the cask
@@ -227,7 +265,7 @@ brew uninstall my-new-cask
 If everything looks good, you’ll also want to make sure your cask passes audit with:
 
 ```bash
-brew audit --new-cask my-new-cask
+brew audit --new --cask my-new-cask
 ```
 
 You should also check stylistic details with `brew style`:
@@ -246,21 +284,20 @@ If your application and Homebrew Cask do not work well together, feel free to [f
 
 See the [Acceptable Casks documentation](Acceptable-Casks.md#finding-a-home-for-your-cask).
 
-Hop into your Tap and check to make sure your new cask is there:
+Hop into your tap and check to make sure your new cask is there:
 
-```bash
+```console
 $ cd "$(brew --repository)"/Library/Taps/homebrew/homebrew-cask
 $ git status
-# On branch master
-# Untracked files:
-#   (use "git add <file>..." to include in what will be committed)
-#
-#       Casks/my-new-cask.rb
+On branch master
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+        Casks/m/my-new-cask.rb
 ```
 
 So far, so good. Now make a feature branch `my-new-cask-branch` that you’ll use in your pull request:
 
-```bash
+```console
 $ git checkout -b my-new-cask-branch
 Switched to a new branch 'my-new-cask-branch'
 ```
@@ -268,7 +305,7 @@ Switched to a new branch 'my-new-cask-branch'
 Stage your cask with:
 
 ```bash
-git add Casks/my-new-cask.rb
+git add Casks/m/my-new-cask.rb
 ```
 
 You can view the changes that are to be committed with:

@@ -17,11 +17,9 @@ module Homebrew
       #
       # @api public
       class Pypi
-        extend T::Sig
-
         NICE_NAME = "PyPI"
 
-        # The `Regexp` used to extract the package name and suffix (e.g., file
+        # The `Regexp` used to extract the package name and suffix (e.g. file
         # extension) from the URL basename.
         FILENAME_REGEX = /
           (?<package_name>.+)- # The package name followed by a hyphen

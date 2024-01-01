@@ -4,8 +4,6 @@
 # A {Messages} object collects messages that may need to be displayed together
 # at the end of a multi-step `brew` command run.
 class Messages
-  extend T::Sig
-
   attr_reader :caveats, :package_count, :install_times
 
   sig { void }

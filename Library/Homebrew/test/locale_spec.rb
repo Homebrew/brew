@@ -1,4 +1,3 @@
-# typed: false
 # frozen_string_literal: true
 
 require "locale"
@@ -7,13 +6,13 @@ describe Locale do
   describe "::parse" do
     it "parses a string in the correct format" do
       expect(described_class.parse("zh")).to eql(described_class.new("zh", nil, nil))
-      expect(described_class.parse("zh-CN")).to eql(described_class.new("zh", "CN", nil))
-      expect(described_class.parse("zh-Hans")).to eql(described_class.new("zh", nil, "Hans"))
-      expect(described_class.parse("zh-Hans-CN")).to eql(described_class.new("zh", "CN", "Hans"))
+      expect(described_class.parse("zh-CN")).to eql(described_class.new("zh", nil, "CN"))
+      expect(described_class.parse("zh-Hans")).to eql(described_class.new("zh", "Hans", nil))
+      expect(described_class.parse("zh-Hans-CN")).to eql(described_class.new("zh", "Hans", "CN"))
     end
 
     it "correctly parses a string with a UN M.49 region code" do
-      expect(described_class.parse("es-419")).to eql(described_class.new("es", "419", nil))
+      expect(described_class.parse("es-419")).to eql(described_class.new("es", nil, "419"))
     end
 
     describe "raises a ParserError when given" do
@@ -42,13 +41,13 @@ describe Locale do
 
     it "raises a ParserError when one of the arguments does not match the locale format" do
       expect { described_class.new("ZH", nil, nil) }.to raise_error(Locale::ParserError)
-      expect { described_class.new(nil, "cn", nil) }.to raise_error(Locale::ParserError)
-      expect { described_class.new(nil, nil, "hans") }.to raise_error(Locale::ParserError)
+      expect { described_class.new(nil, "hans", nil) }.to raise_error(Locale::ParserError)
+      expect { described_class.new(nil, nil, "cn") }.to raise_error(Locale::ParserError)
     end
   end
 
   describe "#include?" do
-    subject { described_class.new("zh", "CN", "Hans") }
+    subject { described_class.new("zh", "Hans", "CN") }
 
     it { is_expected.to include("zh") }
     it { is_expected.to include("zh-CN") }
@@ -59,7 +58,7 @@ describe Locale do
   end
 
   describe "#eql?" do
-    subject(:locale) { described_class.new("zh", "CN", "Hans") }
+    subject(:locale) { described_class.new("zh", "Hans", "CN") }
 
     context "when all parts match" do
       it { is_expected.to eql("zh-Hans-CN") }
@@ -84,9 +83,9 @@ describe Locale do
     let(:locale_groups) { [["zh"], ["zh-TW"]] }
 
     it "finds best matching language code, independent of order" do
-      expect(described_class.new("zh", "TW", nil).detect(locale_groups)).to eql(["zh-TW"])
-      expect(described_class.new("zh", "TW", nil).detect(locale_groups.reverse)).to eql(["zh-TW"])
-      expect(described_class.new("zh", "CN", "Hans").detect(locale_groups)).to eql(["zh"])
+      expect(described_class.new("zh", nil, "TW").detect(locale_groups)).to eql(["zh-TW"])
+      expect(described_class.new("zh", nil, "TW").detect(locale_groups.reverse)).to eql(["zh-TW"])
+      expect(described_class.new("zh", "Hans", "CN").detect(locale_groups)).to eql(["zh"])
     end
   end
 end

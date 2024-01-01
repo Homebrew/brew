@@ -9,18 +9,21 @@ require "zlib"
 #
 # @api private
 class GitHubPackages
-  extend T::Sig
-
   include Context
 
   URL_DOMAIN = "ghcr.io"
-  URL_PREFIX = "https://#{URL_DOMAIN}/v2/"
-  DOCKER_PREFIX = "docker://#{URL_DOMAIN}/"
+  URL_PREFIX = "https://#{URL_DOMAIN}/v2/".freeze
+  DOCKER_PREFIX = "docker://#{URL_DOMAIN}/".freeze
   public_constant :URL_DOMAIN
   private_constant :URL_PREFIX
   private_constant :DOCKER_PREFIX
 
   URL_REGEX = %r{(?:#{Regexp.escape(URL_PREFIX)}|#{Regexp.escape(DOCKER_PREFIX)})([\w-]+)/([\w-]+)}.freeze
+
+  # Valid OCI tag characters
+  # https://github.com/opencontainers/distribution-spec/blob/main/spec.md#workflow-categories
+  VALID_OCI_TAG_REGEX = /^[a-zA-Z0-9_][a-zA-Z0-9._-]{0,127}$/.freeze
+  INVALID_OCI_TAG_CHARS_REGEX = /[^a-zA-Z0-9._-]/.freeze
 
   GZIP_BUFFER_SIZE = 64 * 1024
   private_constant :GZIP_BUFFER_SIZE
@@ -59,9 +62,20 @@ class GitHubPackages
     load_schemas!
 
     bottles_hash.each do |formula_full_name, bottle_hash|
+      # First, check that we won't encounter an error in the middle of uploading bottles.
+      preupload_check(user, token, skopeo, formula_full_name, bottle_hash,
+                      keep_old: keep_old, dry_run: dry_run, warn_on_error: warn_on_error)
+    end
+
+    # We intentionally iterate over `bottles_hash` twice to
+    # avoid erroring out in the middle of uploading bottles.
+    # rubocop:disable Style/CombinableLoops
+    bottles_hash.each do |formula_full_name, bottle_hash|
+      # Next, upload the bottles after checking them all.
       upload_bottle(user, token, skopeo, formula_full_name, bottle_hash,
                     keep_old: keep_old, dry_run: dry_run, warn_on_error: warn_on_error)
     end
+    # rubocop:enable Style/CombinableLoops
   end
 
   def self.version_rebuild(version, rebuild, bottle_tag = nil)
@@ -108,10 +122,11 @@ class GitHubPackages
   end
 
   def self.image_version_rebuild(version_rebuild)
-    # invalid docker tag characters
-    # TODO: consider changing the actual versions here and make an audit to
-    # avoid these weird characters being used
-    version_rebuild.gsub(/[+#~]/, ".")
+    return version_rebuild if version_rebuild.match?(VALID_OCI_TAG_REGEX)
+
+    odeprecated "GitHub Packages versions that do not match #{VALID_OCI_TAG_REGEX.source}",
+                "declaring a new `version` without these characters"
+    version_rebuild.gsub(INVALID_OCI_TAG_CHARS_REGEX, ".")
   end
 
   private
@@ -155,7 +170,7 @@ class GitHubPackages
     # Going forward, this should probably be pinned to tags.
     # We currently use features newer than the last one (v1.0.2).
     url = "https://raw.githubusercontent.com/opencontainers/image-spec/170393e57ed656f7f81c3070bfa8c3346eaa0a5a/schema/#{basename}.json"
-    out, = curl_output(url)
+    out, = Utils::Curl.curl_output(url)
     json = JSON.parse(out)
 
     @schema_json ||= {}
@@ -193,7 +208,7 @@ class GitHubPackages
     end
   end
 
-  def upload_bottle(user, token, skopeo, formula_full_name, bottle_hash, keep_old:, dry_run:, warn_on_error:)
+  def preupload_check(user, token, skopeo, _formula_full_name, bottle_hash, keep_old:, dry_run:, warn_on_error:)
     formula_name = bottle_hash["formula"]["name"]
 
     _, org, repo, = *bottle_hash["bottle"]["root_url"].match(URL_REGEX)
@@ -238,6 +253,16 @@ class GitHubPackages
         end
       end
     end
+
+    [formula_name, org, repo, version, rebuild, version_rebuild, image_name, image_uri, keep_old]
+  end
+
+  def upload_bottle(user, token, skopeo, formula_full_name, bottle_hash, keep_old:, dry_run:, warn_on_error:)
+    # We run the preupload check twice to prevent TOCTOU bugs.
+    result = preupload_check(user, token, skopeo, formula_full_name, bottle_hash,
+                             keep_old: keep_old, dry_run: dry_run, warn_on_error: warn_on_error)
+
+    formula_name, org, repo, version, rebuild, version_rebuild, image_name, image_uri, keep_old = *result
 
     root = Pathname("#{formula_name}--#{version_rebuild}")
     FileUtils.rm_rf root
@@ -356,11 +381,14 @@ class GitHubPackages
 
       documentation = "https://formulae.brew.sh/formula/#{formula_name}" if formula_core_tap
 
+      local_file_size = File.size(local_file)
+
       descriptor_annotations_hash = {
         "org.opencontainers.image.ref.name" => tag,
         "sh.brew.bottle.cpu.variant"        => cpu_variant,
         "sh.brew.bottle.digest"             => tar_gz_sha256,
         "sh.brew.bottle.glibc.version"      => glibc_version,
+        "sh.brew.bottle.size"               => local_file_size.to_s,
         "sh.brew.tab"                       => tab.to_json,
       }.reject { |_, v| v.blank? }
 
@@ -402,12 +430,13 @@ class GitHubPackages
     end
 
     index_json_sha256, index_json_size = write_image_index(manifests, blobs, formula_annotations_hash)
+    raise "Image index too large!" if index_json_size >= 4 * 1024 * 1024 # GitHub will error 500 if too large
 
     write_index_json(index_json_sha256, index_json_size, root,
                      "org.opencontainers.image.ref.name" => version_rebuild)
 
     puts
-    args = ["copy", "--retry-times=2", "--all", "oci:#{root}", image_uri.to_s]
+    args = ["copy", "--retry-times=3", "--format=oci", "--all", "oci:#{root}", image_uri.to_s]
     if dry_run
       puts "#{skopeo} #{args.join(" ")} --dest-creds=#{user}:$HOMEBREW_GITHUB_PACKAGES_TOKEN"
     else
@@ -417,8 +446,8 @@ class GitHubPackages
         system_command!(skopeo, verbose: true, print_stdout: true, args: args)
       rescue ErrorDuringExecution
         retry_count += 1
-        odie "Cannot perform an upload to registry after retrying multiple times!" if retry_count >= 5
-        sleep 5*retry_count
+        odie "Cannot perform an upload to registry after retrying multiple times!" if retry_count >= 10
+        sleep 2 ** retry_count
         retry
       end
 
@@ -436,7 +465,7 @@ class GitHubPackages
   def write_tar_gz(local_file, blobs)
     tar_gz_sha256 = Digest::SHA256.file(local_file)
                                   .hexdigest
-    FileUtils.cp local_file, blobs/tar_gz_sha256
+    FileUtils.ln local_file, blobs/tar_gz_sha256, force: true
     tar_gz_sha256
   end
 

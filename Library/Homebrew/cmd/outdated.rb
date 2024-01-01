@@ -4,13 +4,10 @@
 require "formula"
 require "keg"
 require "cli/parser"
-require "cask/cmd"
 require "cask/caskroom"
 require "api"
 
 module Homebrew
-  extend T::Sig
-
   sig { returns(CLI::Parser) }
   def self.outdated_args
     Homebrew::CLI::Parser.new do

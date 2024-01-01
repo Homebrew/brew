@@ -1,4 +1,3 @@
-# typed: false
 # frozen_string_literal: true
 
 require "livecheck/strategy"
@@ -80,6 +79,24 @@ describe Homebrew::Livecheck::Strategy::Xml do
     EOS
   end
 
+  let(:parent_child_text) { { parent: "1.2.3", child: "4.5.6" } }
+  let(:content_parent_child) do
+    # This XML deliberately includes unnecessary whitespace, to ensure that
+    # Xml#element_text properly strips the retrieved text.
+    <<~EOS
+      <?xml version="1.0" encoding="utf-8"?>
+      <elements>
+        <parent>
+          #{parent_child_text[:parent]}
+          <child> #{parent_child_text[:child]} </child>
+        </parent>
+        <blank-parent>
+          <blank-child></blank-child>
+        </blank-parent>
+      </elements>
+    EOS
+  end
+
   let(:content_matches) { ["1.1.2", "1.1.1", "1.1.0", "1.0.3", "1.0.2", "1.0.1", "1.0.0"] }
   let(:content_simple_matches) { ["1.2.3"] }
 
@@ -124,6 +141,29 @@ describe Homebrew::Livecheck::Strategy::Xml do
     end
   end
 
+  describe "::element_text" do
+    let(:parent_child_doc) { xml.parse_xml(content_parent_child) }
+    let(:parent) { parent_child_doc.get_elements("/elements/parent").first }
+    let(:blank_parent) { parent_child_doc.get_elements("/elements/blank-parent").first }
+
+    it "returns the element text if child_name is not provided" do
+      expect(xml.element_text(parent)).to eq(parent_child_text[:parent])
+    end
+
+    it "returns the child element text if child_name is provided" do
+      expect(xml.element_text(parent, "child")).to eq(parent_child_text[:child])
+    end
+
+    it "returns `nil` if the provided child element does not exist" do
+      expect(xml.element_text(parent, "nonexistent")).to be_nil
+    end
+
+    it "returns `nil` if the retrieved text is blank" do
+      expect(xml.element_text(blank_parent)).to be_nil
+      expect(xml.element_text(blank_parent, "blank-child")).to be_nil
+    end
+  end
+
   describe "::versions_from_content" do
     it "returns an empty array when given a block but content is blank" do
       expect(xml.versions_from_content("", regex) { "1.2.3" }).to eq([])
@@ -143,11 +183,11 @@ describe Homebrew::Livecheck::Strategy::Xml do
 
       # Returning an array of strings from block
       expect(xml.versions_from_content(content_version_text, regex) do |xml, regex|
-        xml.get_elements("versions//version").map { |item| item.text[regex, 1] }
+        xml.get_elements("/versions/version").map { |item| item.text[regex, 1] }
       end).to eq(content_matches)
 
       expect(xml.versions_from_content(content_version_attr, regex) do |xml, regex|
-        xml.get_elements("items//item").map do |item|
+        xml.get_elements("/items/item").map do |item|
           version = item["version"]
           next if version.blank?
 
@@ -174,7 +214,7 @@ describe Homebrew::Livecheck::Strategy::Xml do
   describe "::find_versions?" do
     it "finds versions in provided_content using a block" do
       expect(xml.find_versions(url: http_url, regex: regex, provided_content: content_version_text) do |xml, regex|
-        xml.get_elements("versions//version").map { |item| item.text[regex, 1] }
+        xml.get_elements("/versions/version").map { |item| item.text[regex, 1] }
       end).to eq(find_versions_cached_return_hash)
 
       # NOTE: A regex should be provided using the `#regex` method in a
@@ -183,7 +223,7 @@ describe Homebrew::Livecheck::Strategy::Xml do
       # regex isn't provided.
       expect(xml.find_versions(url: http_url, provided_content: content_version_text) do |xml|
         regex = /^v?(\d+(?:\.\d+)+)$/i.freeze
-        xml.get_elements("versions//version").map { |item| item.text[regex, 1] }
+        xml.get_elements("/versions/version").map { |item| item.text[regex, 1] }
       end).to eq(find_versions_cached_return_hash.merge({ regex: nil }))
     end
 

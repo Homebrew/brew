@@ -9,7 +9,7 @@ require "macho"
 module MachOShim
   extend Forwardable
 
-  delegate [:dylib_id, :rpaths] => :macho
+  delegate [:dylib_id] => :macho
 
   def macho
     @macho ||= MachO.open(to_s)
@@ -60,7 +60,15 @@ module MachOShim
   # TODO: See if the `#write!` call can be delayed until
   # we know we're not making any changes to the rpaths.
   def delete_rpath(rpath, **options)
-    macho.delete_rpath(rpath, options)
+    candidates = rpaths(resolve_variable_references: false).select do |r|
+      resolve_variable_name(r) == resolve_variable_name(rpath)
+    end
+
+    # Delete the last instance to avoid changing the order in which rpaths are searched.
+    rpath_to_delete = candidates.last
+    options[:last] = true
+
+    macho.delete_rpath(rpath_to_delete, options)
     macho.write!
   end
 
@@ -79,10 +87,41 @@ module MachOShim
     macho.write!
   end
 
-  def dynamically_linked_libraries(except: :none)
+  def dynamically_linked_libraries(except: :none, resolve_variable_references: true)
     lcs = macho.dylib_load_commands.reject { |lc| lc.type == except }
+    names = lcs.map { |lc| lc.name.to_s }.uniq
+    names.map!(&method(:resolve_variable_name)) if resolve_variable_references
 
-    lcs.map(&:name).map(&:to_s).uniq
+    names
+  end
+
+  def rpaths(resolve_variable_references: true)
+    names = macho.rpaths
+    # Don't recursively resolve rpaths to avoid infinite loops.
+    names.map! { |name| resolve_variable_name(name, resolve_rpaths: false) } if resolve_variable_references
+
+    names
+  end
+
+  def resolve_variable_name(name, resolve_rpaths: true)
+    if name.start_with? "@loader_path"
+      Pathname(name.sub("@loader_path", dirname)).cleanpath.to_s
+    elsif name.start_with?("@executable_path") && binary_executable?
+      Pathname(name.sub("@executable_path", dirname)).cleanpath.to_s
+    elsif resolve_rpaths && name.start_with?("@rpath") && (target = resolve_rpath(name)).present?
+      target
+    else
+      name
+    end
+  end
+
+  def resolve_rpath(name)
+    target = T.let(nil, T.nilable(String))
+    return unless rpaths(resolve_variable_references: true).find do |rpath|
+      File.exist?(target = File.join(rpath, name.delete_prefix("@rpath")))
+    end
+
+    target
   end
 
   def archs

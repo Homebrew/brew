@@ -8,8 +8,6 @@ module Utils
   #
   # @api private
   module Inreplace
-    extend T::Sig
-
     # Error during text replacement.
     class Error < RuntimeError
       def initialize(errors)
@@ -19,8 +17,6 @@ module Utils
         super formatted_errors.freeze
       end
     end
-
-    module_function
 
     # Sometimes we have to change a bit before we install. Mostly we
     # prefer a patch, but if you need the {Formula#prefix prefix} of
@@ -41,27 +37,32 @@ module Utils
     # @api public
     sig {
       params(
-        paths:        T.any(T::Array[T.untyped], String, Pathname),
-        before:       T.nilable(T.any(Regexp, String)),
-        after:        T.nilable(T.any(String, Symbol)),
+        paths:        T.any(T::Enumerable[T.any(String, Pathname)], String, Pathname),
+        before:       T.nilable(T.any(Pathname, Regexp, String)),
+        after:        T.nilable(T.any(Pathname, String, Symbol)),
         audit_result: T::Boolean,
+        block:        T.nilable(T.proc.params(s: StringInreplaceExtension).void),
       ).void
     }
-    def inreplace(paths, before = nil, after = nil, audit_result = true) # rubocop:disable Style/OptionalBooleanParameter
-      after = after.to_s if after.is_a? Symbol
+    def self.inreplace(paths, before = nil, after = nil, audit_result: true, &block)
+      paths = Array(paths)
+      after &&= after.to_s
+      before = before.to_s if before.is_a?(Pathname)
 
       errors = {}
 
-      errors["`paths` (first) parameter"] = ["`paths` was empty"] if paths.blank?
+      errors["`paths` (first) parameter"] = ["`paths` was empty"] if paths.all?(&:blank?)
 
-      Array(paths).each do |path|
+      paths.each do |path|
         str = File.binread(path)
         s = StringInreplaceExtension.new(str)
 
         if before.nil? && after.nil?
+          raise ArgumentError, "Must supply a block or before/after params" unless block
+
           yield s
         else
-          s.gsub!(T.must(before), after, audit_result)
+          s.gsub!(T.must(before), T.must(after), audit_result)
         end
 
         errors[path] = s.errors unless s.errors.empty?
@@ -73,7 +74,7 @@ module Utils
     end
 
     # @api private
-    def inreplace_pairs(path, replacement_pairs, read_only_run: false, silent: false)
+    def self.inreplace_pairs(path, replacement_pairs, read_only_run: false, silent: false)
       str = File.binread(path)
       contents = StringInreplaceExtension.new(str)
       replacement_pairs.each do |old, new|

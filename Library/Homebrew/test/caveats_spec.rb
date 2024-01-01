@@ -1,4 +1,3 @@
-# typed: false
 # frozen_string_literal: true
 
 require "formula"
@@ -33,6 +32,10 @@ describe Caveats do
 
   describe "#caveats" do
     context "when f.plist is not nil", :needs_macos do
+      before do
+        allow(Utils::Service).to receive(:launchctl?).and_return(true)
+      end
+
       it "prints error when no launchd is present" do
         f = formula do
           url "foo-1.0"
@@ -40,7 +43,7 @@ describe Caveats do
             "plist_test.plist"
           end
         end
-        allow_any_instance_of(Object).to receive(:which).with("launchctl").and_return(nil)
+        expect(Utils::Service).to receive(:launchctl?).once.and_return(false)
         expect(described_class.new(f).caveats).to include("provides a launchd plist which can only be used on macOS!")
       end
 
@@ -51,7 +54,7 @@ describe Caveats do
             "plist_test.plist"
           end
         end
-        expect(described_class.new(f).caveats).to include("login")
+        expect(described_class.new(f).caveats).to include("restart at login")
       end
 
       it "gives information about service" do
@@ -83,24 +86,35 @@ describe Caveats do
         expect(caveats).to include("WARNING:")
         expect(caveats).to include("tmux")
       end
+
+      # @todo This should get deprecated and the service block `plist_name` method should get used instead.
+      it "prints info when there are custom service files" do
+        f = formula do
+          url "foo-1.0"
+          def plist_name
+            "custom.mxcl.foo"
+          end
+        end
+        expect(Utils::Service).to receive(:installed?).with(f).once.and_return(true)
+        expect(Utils::Service).to receive(:running?).with(f).once.and_return(false)
+        expect(described_class.new(f).caveats).to include("restart at login")
+      end
     end
 
-    context "when f.service is not nil" do
+    context "when service block is defined" do
       before do
-        allow_any_instance_of(Object).to receive(:which).with("launchctl").and_return(true)
-        allow_any_instance_of(Object).to receive(:which).with("systemctl").and_return(true)
+        allow(Utils::Service).to receive_messages(launchctl?: true, systemctl?: true)
       end
 
-      it "prints warning when no service deamon is found" do
+      it "prints warning when no service daemon is found" do
         f = formula do
           url "foo-1.0"
           service do
             run [bin/"cmd"]
           end
         end
-
-        allow_any_instance_of(Object).to receive(:which).with("launchctl").and_return(nil)
-        allow_any_instance_of(Object).to receive(:which).with("systemctl").and_return(nil)
+        expect(Utils::Service).to receive(:launchctl?).twice.and_return(false)
+        expect(Utils::Service).to receive(:systemctl?).once.and_return(false)
         expect(described_class.new(f).caveats).to include("service which can only be used on macOS or systemd!")
       end
 
@@ -112,9 +126,7 @@ describe Caveats do
             require_root true
           end
         end
-        cmd = "#{HOMEBREW_CELLAR}/formula_name/1.0/bin/cmd"
-        allow(Homebrew).to receive(:_system).and_return(true)
-        allow(Homebrew).to receive(:_system).with("ps aux | grep #{cmd}").and_return(false)
+        expect(Utils::Service).to receive(:running?).with(f).once.and_return(false)
         expect(described_class.new(f).caveats).to include("startup")
       end
 
@@ -125,10 +137,8 @@ describe Caveats do
             run [bin/"cmd"]
           end
         end
-        cmd = "#{HOMEBREW_CELLAR}/formula_name/1.0/bin/cmd"
-        allow(Homebrew).to receive(:_system).and_return(true)
-        expect(Homebrew).to receive(:_system).with("ps aux | grep #{cmd}").and_return(false)
-        expect(described_class.new(f).caveats).to include("login")
+        expect(Utils::Service).to receive(:running?).with(f).once.and_return(false)
+        expect(described_class.new(f).caveats).to include("restart at login")
       end
 
       it "gives information about require_root restarting services after upgrade" do
@@ -139,10 +149,8 @@ describe Caveats do
             require_root true
           end
         end
-        cmd = "#{HOMEBREW_CELLAR}/formula_name/1.0/bin/cmd"
         f_obj = described_class.new(f)
-        allow(Homebrew).to receive(:_system).and_return(true)
-        expect(Homebrew).to receive(:_system).with("ps aux | grep #{cmd}").and_return(true)
+        expect(Utils::Service).to receive(:running?).with(f).once.and_return(true)
         expect(f_obj.caveats).to include("  sudo brew services restart #{f.full_name}")
       end
 
@@ -153,10 +161,8 @@ describe Caveats do
             run [bin/"cmd"]
           end
         end
-        cmd = "#{HOMEBREW_CELLAR}/formula_name/1.0/bin/cmd"
         f_obj = described_class.new(f)
-        allow(Homebrew).to receive(:_system).and_return(true)
-        expect(Homebrew).to receive(:_system).with("ps aux | grep #{cmd}").and_return(true)
+        expect(Utils::Service).to receive(:running?).with(f).once.and_return(true)
         expect(f_obj.caveats).to include("  brew services restart #{f.full_name}")
       end
 
@@ -168,10 +174,8 @@ describe Caveats do
             require_root true
           end
         end
-        cmd = "#{HOMEBREW_CELLAR}/formula_name/1.0/bin/cmd"
         f_obj = described_class.new(f)
-        allow(Homebrew).to receive(:_system).and_return(true)
-        allow(Homebrew).to receive(:_system).with("ps aux | grep #{cmd}").and_return(false)
+        expect(Utils::Service).to receive(:running?).with(f).once.and_return(false)
         expect(f_obj.caveats).to include("  sudo brew services start #{f.full_name}")
       end
 
@@ -182,10 +186,8 @@ describe Caveats do
             run [bin/"cmd"]
           end
         end
-        cmd = "#{HOMEBREW_CELLAR}/formula_name/1.0/bin/cmd"
         f_obj = described_class.new(f)
-        allow(Homebrew).to receive(:_system).and_return(true)
-        allow(Homebrew).to receive(:_system).with("ps aux | grep #{cmd}").and_return(false)
+        expect(Utils::Service).to receive(:running?).with(f).once.and_return(false)
         expect(f_obj.caveats).to include("  brew services start #{f.full_name}")
       end
 
@@ -202,6 +204,18 @@ describe Caveats do
 
         expect(caveats).to include("if you don't want/need a background service")
         expect(caveats).to include("VAR=\"foo\" #{cmd} start")
+      end
+
+      it "prints info when there are custom service files" do
+        f = formula do
+          url "foo-1.0"
+          service do
+            name macos: "custom.mxcl.foo", linux: "custom.foo"
+          end
+        end
+        expect(Utils::Service).to receive(:installed?).with(f).once.and_return(true)
+        expect(Utils::Service).to receive(:running?).with(f).once.and_return(false)
+        expect(described_class.new(f).caveats).to include("restart at login")
       end
     end
 
@@ -269,6 +283,7 @@ describe Caveats do
         let(:caveats) { described_class.new(f).caveats }
 
         it "adds the correct amount of new lines to the output" do
+          expect(Utils::Service).to receive(:launchctl?).at_least(:once).and_return(true)
           expect(caveats).to include("something else")
           expect(caveats).to include("keg-only")
           expect(caveats).to include("if you don't want/need a background service")
@@ -288,13 +303,11 @@ describe Caveats do
 
       before do
         # don't try to load/fetch gcc/glibc
-        allow(DevelopmentTools).to receive(:needs_libc_formula?).and_return(false)
-        allow(DevelopmentTools).to receive(:needs_compiler_formula?).and_return(false)
+        allow(DevelopmentTools).to receive_messages(needs_libc_formula?: false, needs_compiler_formula?: false)
 
         allow_any_instance_of(Pathname).to receive(:children).and_return([Pathname.new("child")])
         allow_any_instance_of(Object).to receive(:which).with(any_args).and_return(Pathname.new("shell"))
-        allow(Utils::Shell).to receive(:preferred).and_return(nil)
-        allow(Utils::Shell).to receive(:parent).and_return(nil)
+        allow(Utils::Shell).to receive_messages(preferred: nil, parent: nil)
       end
 
       it "gives dir where Bash completions have been installed" do

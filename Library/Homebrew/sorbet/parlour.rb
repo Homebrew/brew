@@ -1,6 +1,7 @@
 # typed: true
 # frozen_string_literal: true
 
+require_relative "../extend/module"
 require_relative "../warnings"
 Warnings.ignore :parser_syntax do
   require "parser/current"
@@ -9,9 +10,7 @@ end
 module Homebrew
   # Parlour type signature generator helper class for Homebrew.
   module Parlour
-    extend T::Sig
-
-    ROOT_DIR = T.let(Pathname(__dir__).parent.realpath.freeze, Pathname).freeze
+    ROOT_DIR = T.let(Pathname(T.must(__dir__)).parent.realpath.freeze, Pathname).freeze
 
     sig { returns(T::Array[Parser::AST::Node]) }
     def self.ast_list

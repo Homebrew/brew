@@ -26,7 +26,7 @@ module RuboCop
             option = string_content(option)
             problem UNI_DEPRECATION_MSG if option == "universal"
 
-            if option !~ /with(out)?-/ &&
+            if !/with(out)?-/.match?(option) &&
                option != "cxx11" &&
                option != "universal"
               problem "Options should begin with with/without. " \

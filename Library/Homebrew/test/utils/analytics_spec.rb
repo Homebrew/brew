@@ -1,4 +1,3 @@
-# typed: false
 # frozen_string_literal: true
 
 require "utils/analytics"
@@ -7,42 +6,6 @@ require "formula_installer"
 describe Utils::Analytics do
   before do
     described_class.clear_cache
-  end
-
-  describe "::label_google" do
-    let(:ci) { ", CI" if ENV["CI"] }
-
-    it "returns OS_VERSION and prefix when HOMEBREW_PREFIX is a custom prefix on intel" do
-      allow(Hardware::CPU).to receive(:in_rosetta2?).and_return(false)
-      expect(Hardware::CPU).to receive(:type).and_return(:intel).at_least(:once)
-      expect(Homebrew).to receive(:default_prefix?).and_return(false)
-      expect(described_class.label_google).to include described_class.custom_prefix_label_google
-    end
-
-    it "returns OS_VERSION, ARM and prefix when HOMEBREW_PREFIX is a custom prefix on arm" do
-      allow(Hardware::CPU).to receive(:in_rosetta2?).and_return(false)
-      expect(Hardware::CPU).to receive(:type).and_return(:arm).at_least(:once)
-      expect(Homebrew).to receive(:default_prefix?).and_return(false).at_least(:once)
-      expect(described_class.label_google).to include described_class.arch_label_google
-      expect(described_class.label_google).to include described_class.custom_prefix_label_google
-    end
-
-    it "returns OS_VERSION, Rosetta and prefix when HOMEBREW_PREFIX is a custom prefix on Rosetta", :needs_macos do
-      allow(Hardware::CPU).to receive(:in_rosetta2?).and_return(true)
-      expect(Hardware::CPU).to receive(:type).and_return(:intel).at_least(:once)
-      expect(Homebrew).to receive(:default_prefix?).and_return(false).at_least(:once)
-      expect(described_class.label_google).to include described_class.custom_prefix_label_google
-    end
-
-    it "does not include prefix when HOMEBREW_PREFIX is the default prefix" do
-      expect(Homebrew).to receive(:default_prefix?).and_return(true)
-      expect(described_class.label_google).not_to include HOMEBREW_PREFIX.to_s
-    end
-
-    it "includes CI when ENV['CI'] is set" do
-      ENV["CI"] = "1"
-      expect(described_class.label_google).to include "CI"
-    end
   end
 
   describe "::default_tags_influx" do
@@ -95,7 +58,6 @@ describe Utils::Analytics do
     context "when ENV vars is set" do
       it "returns nil when HOMEBREW_NO_ANALYTICS is true" do
         ENV["HOMEBREW_NO_ANALYTICS"] = "true"
-        expect(described_class).not_to receive(:report_google)
         expect(described_class).not_to receive(:report_influx)
         described_class.report_event(:install, package_name: package_name, tap_name: tap_name,
           on_request: on_request, options: options)
@@ -103,7 +65,6 @@ describe Utils::Analytics do
 
       it "returns nil when HOMEBREW_NO_ANALYTICS_THIS_RUN is true" do
         ENV["HOMEBREW_NO_ANALYTICS_THIS_RUN"] = "true"
-        expect(described_class).not_to receive(:report_google)
         expect(described_class).not_to receive(:report_influx)
         described_class.report_event(:install, package_name: package_name, tap_name: tap_name,
           on_request: on_request, options: options)
@@ -113,7 +74,6 @@ describe Utils::Analytics do
         ENV.delete("HOMEBREW_NO_ANALYTICS_THIS_RUN")
         ENV.delete("HOMEBREW_NO_ANALYTICS")
         ENV["HOMEBREW_ANALYTICS_DEBUG"] = "true"
-        expect(described_class).to receive(:report_google)
         expect(described_class).to receive(:report_influx)
 
         described_class.report_event(:install, package_name: package_name, tap_name: tap_name,
@@ -121,34 +81,14 @@ describe Utils::Analytics do
       end
     end
 
-    it "passes to the influxdb and google methods" do
+    it "passes to the influxdb method" do
       ENV.delete("HOMEBREW_NO_ANALYTICS_THIS_RUN")
       ENV.delete("HOMEBREW_NO_ANALYTICS")
       ENV["HOMEBREW_ANALYTICS_DEBUG"] = "true"
-      expect(described_class).to receive(:report_google).with(:event,
-                                                              hash_including(ea: "#{package_name} #{options}")).once
       expect(described_class).to receive(:report_influx).with(:install, hash_including(package_name: package_name,
                                                                                        on_request:   on_request)).once
       described_class.report_event(:install, package_name: package_name, tap_name: tap_name,
           on_request: on_request, options: options)
-    end
-
-    it "sends to google twice on request" do
-      ENV.delete("HOMEBREW_NO_ANALYTICS_THIS_RUN")
-      ENV.delete("HOMEBREW_NO_ANALYTICS")
-      ENV["HOMEBREW_ANALYTICS_DEBUG"] = "true"
-      expect(described_class).to receive(:report_google).with(:event,
-                                                              hash_including(ea: "#{package_name} #{options}",
-                                                                             ec: :install)).once
-      expect(described_class).to receive(:report_google).with(:event,
-                                                              hash_including(ea: "#{package_name} #{options}",
-                                                                             ec: :install_on_request)).once
-      expect(described_class).to receive(:report_influx).with(:install,
-                                                              hash_including(package_name: package_name,
-                                                                             on_request:   true)).once
-
-      described_class.report_event(:install, package_name: package_name, tap_name: tap_name,
-          on_request: true, options: options)
     end
   end
 

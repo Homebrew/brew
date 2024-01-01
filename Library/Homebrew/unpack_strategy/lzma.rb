@@ -4,8 +4,6 @@
 module UnpackStrategy
   # Strategy for unpacking LZMA archives.
   class Lzma
-    extend T::Sig
-
     include UnpackStrategy
 
     sig { returns(T::Array[String]) }

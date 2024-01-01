@@ -7,18 +7,9 @@ module SystemConfig
   class << self
     include SystemCommand::Mixin
 
-    undef describe_homebrew_ruby, describe_clang
+    undef describe_clang
 
-    def describe_homebrew_ruby
-      s = describe_homebrew_ruby_version
-
-      if RUBY_PATH.to_s.match?(%r{^/System/Library/Frameworks/Ruby\.framework/Versions/[12]\.[089]/usr/bin/ruby})
-        s
-      else
-        "#{s} => #{RUBY_PATH}"
-      end
-    end
-
+    sig { returns(String) }
     def describe_clang
       return "N/A" if clang.null?
 
@@ -36,6 +27,11 @@ module SystemConfig
 
     def clt
       @clt ||= MacOS::CLT.version if MacOS::CLT.installed?
+    end
+
+    def core_tap_config(out = $stdout)
+      dump_tap_config(CoreTap.instance, out)
+      dump_tap_config(CoreCaskTap.instance, out)
     end
 
     def dump_verbose_config(out = $stdout)

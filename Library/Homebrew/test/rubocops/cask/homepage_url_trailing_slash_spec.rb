@@ -1,65 +1,36 @@
-# typed: false
 # frozen_string_literal: true
 
 require "rubocops/rubocop-cask"
-require "test/rubocops/cask/shared_examples/cask_cop"
 
-describe RuboCop::Cop::Cask::HomepageUrlTrailingSlash do
-  include CaskCop
-
-  subject(:cop) { described_class.new }
-
-  context "when the homepage URL ends with a slash" do
-    let(:source) do
-      <<~CASK
-        cask 'foo' do
-          homepage 'https://foo.brew.sh/'
-        end
-      CASK
-    end
-
-    include_examples "does not report any offenses"
+describe RuboCop::Cop::Cask::HomepageUrlTrailingSlash, :config do
+  it "accepts a homepage URL ending with a slash" do
+    expect_no_offenses <<~CASK
+      cask 'foo' do
+        homepage 'https://foo.brew.sh/'
+      end
+    CASK
   end
 
-  context "when the homepage URL does not end with a slash but has a path" do
-    let(:source) do
-      <<~CASK
-        cask 'foo' do
-          homepage 'https://foo.brew.sh/path'
-        end
-      CASK
-    end
-
-    include_examples "does not report any offenses"
+  it "accepts a homepage URL with a path" do
+    expect_no_offenses <<~CASK
+      cask 'foo' do
+        homepage 'https://foo.brew.sh/path'
+      end
+    CASK
   end
 
-  context "when the homepage URL does not end with a slash and has no path" do
-    let(:source) do
-      <<~CASK
-        cask 'foo' do
-          homepage 'https://foo.brew.sh'
-        end
-      CASK
-    end
-    let(:correct_source) do
-      <<~CASK
-        cask 'foo' do
-          homepage 'https://foo.brew.sh/'
-        end
-      CASK
-    end
-    let(:expected_offenses) do
-      [{
-        message:  "Cask/HomepageUrlTrailingSlash: 'https://foo.brew.sh' must have a slash after the domain.",
-        severity: :convention,
-        line:     2,
-        column:   11,
-        source:   "'https://foo.brew.sh'",
-      }]
-    end
+  it "reports an offense when the homepage URL does not end with a slash and has no path" do
+    expect_offense <<~CASK
+      cask 'foo' do
+        homepage 'https://foo.brew.sh'
+                 ^^^^^^^^^^^^^^^^^^^^^ 'https://foo.brew.sh' must have a slash after the domain.
+      end
+    CASK
 
-    include_examples "reports offenses"
-
-    include_examples "autocorrects source"
+    expect_correction <<~CASK
+      cask 'foo' do
+        homepage 'https://foo.brew.sh/'
+      end
+    CASK
   end
 end

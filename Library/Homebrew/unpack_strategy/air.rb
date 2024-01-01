@@ -4,8 +4,6 @@
 module UnpackStrategy
   # Strategy for unpacking Adobe Air archives.
   class Air
-    extend T::Sig
-
     include UnpackStrategy
 
     sig { returns(T::Array[String]) }

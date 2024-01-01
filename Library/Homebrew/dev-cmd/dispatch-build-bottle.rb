@@ -5,8 +5,6 @@ require "cli/parser"
 require "utils/github"
 
 module Homebrew
-  extend T::Sig
-
   module_function
 
   sig { returns(CLI::Parser) }
@@ -55,9 +53,9 @@ module Homebrew
         os, arch = element.then do |s|
           tag = Utils::Bottles::Tag.from_symbol(s.to_sym)
           [tag.to_macos_version, tag.arch]
-        rescue ArgumentError, MacOSVersionError
+        rescue ArgumentError, MacOSVersion::Error
           os, arch = s.split("-", 2)
-          [MacOS::Version.new(os), arch&.to_sym]
+          [MacOSVersion.new(os), arch&.to_sym]
         end
 
         if arch.present? && arch != :x86_64
@@ -90,7 +88,7 @@ module Homebrew
       inputs[:upload] = args.upload?
 
       ohai "Dispatching #{tap} bottling request of formula \"#{formula.name}\" for #{runners.join(", ")}"
-      GitHub.workflow_dispatch_event(user, repo, workflow, ref, inputs)
+      GitHub.workflow_dispatch_event(user, repo, workflow, ref, **inputs)
     end
   end
 end

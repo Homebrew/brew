@@ -28,7 +28,11 @@ class Keg
 
   def codesign_patched_binary(file)
     return if MacOS.version < :big_sur
-    return unless Hardware::CPU.arm?
+
+    unless Hardware::CPU.arm?
+      result = system_command("codesign", args: ["--verify", file], print_stderr: false)
+      return unless result.stderr.match?(/invalid signature/i)
+    end
 
     odebug "Codesigning #{file}"
     prepare_codesign_writable_files(file) do

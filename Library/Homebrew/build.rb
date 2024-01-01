@@ -12,7 +12,6 @@ require_relative "global"
 require "build_options"
 require "keg"
 require "extend/ENV"
-require "debrew"
 require "fcntl"
 require "socket"
 require "cmd/install"
@@ -57,7 +56,7 @@ class Build
       build = effective_build_options_for(dependent)
       if dep.prune_from_option?(build) ||
          dep.prune_if_build_and_not_dependent?(dependent, formula) ||
-         (dep.test? && !dep.build?)
+         (dep.test? && !dep.build?) || dep.implicit?
         Dependency.prune
       elsif dep.build?
         Dependency.keep_but_prune_recursive_deps
@@ -126,7 +125,10 @@ class Build
     }
 
     with_env(new_env) do
-      formula.extend(Debrew::Formula) if args.debug?
+      if args.debug?
+        require "debrew"
+        formula.extend(Debrew::Formula)
+      end
 
       formula.update_head_version
 

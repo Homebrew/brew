@@ -1,12 +1,10 @@
-# typed: true
+# typed: strict
 # frozen_string_literal: true
 
 require "system_config"
 require "cli/parser"
 
 module Homebrew
-  extend T::Sig
-
   module_function
 
   sig { returns(CLI::Parser) }
@@ -21,6 +19,7 @@ module Homebrew
     end
   end
 
+  sig { void }
   def config
     config_args.parse
 

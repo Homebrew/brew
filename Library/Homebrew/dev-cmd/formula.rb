@@ -5,8 +5,6 @@ require "formula"
 require "cli/parser"
 
 module Homebrew
-  extend T::Sig
-
   module_function
 
   sig { returns(CLI::Parser) }
@@ -16,7 +14,7 @@ module Homebrew
         Display the path where <formula> is located.
       EOS
 
-      named_args :formula, min: 1
+      named_args :formula, min: 1, without_api: true
     end
   end
 
@@ -26,8 +24,7 @@ module Homebrew
     formula_paths = args.named.to_paths(only: :formula).select(&:exist?)
     if formula_paths.blank? && args.named
                                    .to_paths(only: :cask)
-                                   .select(&:exist?)
-                                   .present?
+                                   .any?(&:exist?)
       odie "Found casks but did not find formulae!"
     end
     formula_paths.each(&method(:puts))

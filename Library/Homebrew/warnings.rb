@@ -7,8 +7,6 @@ require "warning"
 #
 # @api private
 module Warnings
-  module_function
-
   COMMON_WARNINGS = {
     parser_syntax: [
       %r{warning: parser/current is loading parser/ruby\d+, which recognizes},
@@ -17,7 +15,7 @@ module Warnings
     ],
   }.freeze
 
-  def ignore(*warnings)
+  def self.ignore(*warnings)
     warnings.map! do |warning|
       next warning if !warning.is_a?(Symbol) || !COMMON_WARNINGS.key?(warning)
 

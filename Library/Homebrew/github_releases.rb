@@ -8,10 +8,7 @@ require "json"
 #
 # @api private
 class GitHubReleases
-  extend T::Sig
-
   include Context
-  include Utils::Curl
 
   URL_REGEX = %r{https://github\.com/([\w-]+)/([\w-]+)?/releases/download/(.+)}.freeze
 

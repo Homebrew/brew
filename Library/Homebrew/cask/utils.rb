@@ -2,9 +2,7 @@
 # frozen_string_literal: true
 
 require "utils/user"
-require "yaml"
 require "open3"
-require "stringio"
 
 BUG_REPORTS_URL = "https://github.com/Homebrew/homebrew-cask#reporting-bugs"
 
@@ -13,21 +11,52 @@ module Cask
   #
   # @api private
   module Utils
-    extend T::Sig
+    def self.gain_permissions_mkpath(path, command: SystemCommand)
+      dir = path.ascend.find(&:directory?)
+      return if path == dir
+
+      if dir.writable?
+        path.mkpath
+      else
+        command.run!("/bin/mkdir", args: ["-p", "--", path], sudo: true, print_stderr: false)
+      end
+    end
+
+    def self.gain_permissions_rmdir(path, command: SystemCommand)
+      gain_permissions(path, [], command) do |p|
+        if p.parent.writable?
+          FileUtils.rmdir p
+        else
+          command.run!("/bin/rmdir", args: ["--", p], sudo: true, print_stderr: false)
+        end
+      end
+    end
 
     def self.gain_permissions_remove(path, command: SystemCommand)
-      if path.respond_to?(:rmtree) && path.exist?
-        gain_permissions(path, ["-R"], command) do |p|
-          if p.parent.writable?
+      directory = false
+      permission_flags = if path.symlink?
+        ["-h"]
+      elsif path.directory?
+        directory = true
+        ["-R"]
+      elsif path.exist?
+        []
+      else
+        # Nothing to remove.
+        return
+      end
+
+      gain_permissions(path, permission_flags, command) do |p|
+        if p.parent.writable?
+          if directory
             p.rmtree
           else
-            command.run("/bin/rm",
-                        args: ["-r", "-f", "--", p],
-                        sudo: true)
+            FileUtils.rm_f p
           end
+        else
+          recursive_flag = directory ? ["-R"] : []
+          command.run!("/bin/rm", args: recursive_flag + ["-f", "--", p], sudo: true, print_stderr: false)
         end
-      elsif File.symlink?(path)
-        gain_permissions(path, ["-h"], command, &FileUtils.method(:rm_f))
       end
     end
 
@@ -44,13 +73,10 @@ module Cask
           #       dependent on whether the file argument has a trailing
           #       slash.  This should do the right thing, but is fragile.
           command.run("/usr/bin/chflags",
-                      must_succeed: false,
                       args:         command_args + ["--", "000", path])
           command.run("/bin/chmod",
-                      must_succeed: false,
                       args:         command_args + ["--", "u+rwx", path])
           command.run("/bin/chmod",
-                      must_succeed: false,
                       args:         command_args + ["-N", path])
           tried_permissions = true
           retry # rmtree

@@ -4,8 +4,6 @@
 module UnpackStrategy
   # Strategy for unpacking xz archives.
   class Xz
-    extend T::Sig
-
     include UnpackStrategy
 
     sig { returns(T::Array[String]) }

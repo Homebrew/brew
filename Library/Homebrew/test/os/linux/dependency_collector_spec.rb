@@ -1,4 +1,3 @@
-# typed: false
 # frozen_string_literal: true
 
 require "dependency_collector"
@@ -15,19 +14,19 @@ describe DependencyCollector do
       it "creates a resource dependency from a '.xz' URL" do
         resource.url("https://brew.sh/foo.xz")
         allow_any_instance_of(Object).to receive(:which).with("xz")
-        expect(collector.add(resource)).to eq(Dependency.new("xz", [:build, :test]))
+        expect(collector.add(resource)).to eq(Dependency.new("xz", [:build, :test, :implicit]))
       end
 
       it "creates a resource dependency from a '.zip' URL" do
         resource.url("https://brew.sh/foo.zip")
         allow_any_instance_of(Object).to receive(:which).with("unzip")
-        expect(collector.add(resource)).to eq(Dependency.new("unzip", [:build, :test]))
+        expect(collector.add(resource)).to eq(Dependency.new("unzip", [:build, :test, :implicit]))
       end
 
       it "creates a resource dependency from a '.bz2' URL" do
         resource.url("https://brew.sh/foo.tar.bz2")
         allow_any_instance_of(Object).to receive(:which).with("bzip2")
-        expect(collector.add(resource)).to eq(Dependency.new("bzip2", [:build, :test]))
+        expect(collector.add(resource)).to eq(Dependency.new("bzip2", [:build, :test, :implicit]))
       end
     end
 

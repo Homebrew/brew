@@ -12,8 +12,6 @@ require "dependencies_helpers"
 require "ostruct"
 
 module Homebrew
-  extend T::Sig
-
   extend DependenciesHelpers
 
   sig { returns(CLI::Parser) }
@@ -24,24 +22,26 @@ module Homebrew
         of <formula>. When given multiple formula arguments, show the intersection
         of formulae that use <formula>. By default, `uses` shows all formulae and casks that
         specify <formula> as a required or recommended dependency for their stable builds.
+
+        *Note:* `--missing` and `--skip-recommended` have precedence over `--include-*`.
       EOS
       switch "--recursive",
              description: "Resolve more than one level of dependencies."
       switch "--installed",
              description: "Only list formulae and casks that are currently installed."
+      switch "--missing",
+             description: "Only list formulae and casks that are not currently installed."
       switch "--eval-all",
              description: "Evaluate all available formulae and casks, whether installed or not, to show " \
                           "their dependents."
-      switch "--all",
-             hidden: true
       switch "--include-build",
-             description: "Include all formulae that specify <formula> as `:build` type dependency."
+             description: "Include formulae that specify <formula> as a `:build` dependency."
       switch "--include-test",
-             description: "Include all formulae that specify <formula> as `:test` type dependency."
+             description: "Include formulae that specify <formula> as a `:test` dependency."
       switch "--include-optional",
-             description: "Include all formulae that specify <formula> as `:optional` type dependency."
+             description: "Include formulae that specify <formula> as an `:optional` dependency."
       switch "--skip-recommended",
-             description: "Skip all formulae that specify <formula> as `:recommended` type dependency."
+             description: "Skip all formulae that specify <formula> as a `:recommended` dependency."
       switch "--formula", "--formulae",
              description: "Include only formulae."
       switch "--cask", "--casks",
@@ -49,6 +49,7 @@ module Homebrew
 
       conflicts "--formula", "--cask"
       conflicts "--installed", "--all"
+      conflicts "--missing", "--installed"
 
       named_args :formula, min: 1
     end
@@ -109,22 +110,28 @@ module Homebrew
       deps
     else
       all = args.eval_all?
-      if args.all?
-        unless all
-          odisabled "brew uses --all",
-                    "brew uses --eval-all or HOMEBREW_EVAL_ALL"
-        end
-        all = true
-      end
 
       if !args.installed? && !(all || Homebrew::EnvConfig.eval_all?)
-        odisabled "brew uses", "brew uses --eval-all or HOMEBREW_EVAL_ALL"
+        raise UsageError, "`brew uses` needs `--installed` or `--eval-all` passed or `HOMEBREW_EVAL_ALL` set!"
       end
+
       if show_formulae_and_casks || args.formula?
-        deps += args.installed? ? Formula.installed : Formula.all
+        deps += args.installed? ? Formula.installed : Formula.all(eval_all: args.eval_all?)
       end
       if show_formulae_and_casks || args.cask?
-        deps += args.installed? ? Cask::Caskroom.casks : Cask::Cask.all
+        deps += args.installed? ? Cask::Caskroom.casks : Cask::Cask.all(eval_all: args.eval_all?)
+      end
+
+      if args.missing?
+        deps.reject! do |dep|
+          case dep
+          when Formula
+            dep.any_version_installed?
+          when Cask::Cask
+            dep.installed?
+          end
+        end
+        ignores.delete(:satisfied?)
       end
 
       select_used_dependents(dependents(deps), used_formulae, recursive, includes, ignores)
@@ -136,7 +143,7 @@ module Homebrew
       deps = if recursive
         recursive_includes(Dependency, d, includes, ignores)
       else
-        reject_ignores(d.deps, ignores, includes)
+        select_includes(d.deps, ignores, includes)
       end
 
       used_formulae.all? do |ff|

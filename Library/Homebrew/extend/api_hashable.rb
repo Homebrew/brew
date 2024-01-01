@@ -8,6 +8,7 @@ module APIHashable
 
     # Apply monkeypatches for API generation
     @old_homebrew_prefix = HOMEBREW_PREFIX
+    @old_homebrew_cellar = HOMEBREW_CELLAR
     @old_home = Dir.home
     Object.send(:remove_const, :HOMEBREW_PREFIX)
     Object.const_set(:HOMEBREW_PREFIX, Pathname.new(HOMEBREW_PREFIX_PLACEHOLDER))

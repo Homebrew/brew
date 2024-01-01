@@ -12,8 +12,6 @@ module Homebrew
       #
       # @api private
       class ElectronBuilder
-        extend T::Sig
-
         NICE_NAME = "electron-builder"
 
         # A priority of zero causes livecheck to skip the strategy. We do this

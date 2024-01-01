@@ -240,6 +240,9 @@ module Homebrew
       sig { returns(T.nilable(T::Array[String])) }
       def only; end
 
+      sig { returns(T.nilable(String)) }
+      def os; end
+
       sig { returns(T.nilable(T::Array[String])) }
       def except; end
 
@@ -269,6 +272,9 @@ module Homebrew
 
       sig { returns(T::Boolean) }
       def s?; end
+
+      sig { returns(T.nilable(String)) }
+      def arch; end
 
       sig { returns(T.nilable(String)) }
       def appdir; end

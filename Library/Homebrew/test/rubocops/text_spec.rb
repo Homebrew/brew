@@ -1,4 +1,3 @@
-# typed: false
 # frozen_string_literal: true
 
 require "rubocops/text"
@@ -21,6 +20,17 @@ describe RuboCop::Cop::FormulaAudit::Text do
         class Foo < Formula
           url "https://brew.sh/foo-1.0.tgz"
           homepage "https://brew.sh"
+        end
+      RUBY
+    end
+
+    it "reports an offense if 'revision 0' is present" do
+      expect_offense(<<~RUBY)
+        class Foo < Formula
+          url "https://brew.sh/foo-1.0.tgz"
+          homepage "https://brew.sh"
+          revision 0
+          ^^^^^^^^^^ FormulaAudit/Text: "revision 0" is unnecessary
         end
       RUBY
     end
@@ -99,7 +109,7 @@ describe RuboCop::Cop::FormulaAudit::Text do
       RUBY
     end
 
-    it "reports an offense if `plist_options` are not defined when using a formula-defined `plist`", :ruby23 do
+    it "reports an offense if `def plist` is used" do
       expect_offense(<<~RUBY)
         class Foo < Formula
           url "https://brew.sh/foo-1.0.tgz"
@@ -111,7 +121,7 @@ describe RuboCop::Cop::FormulaAudit::Text do
           end
 
           def plist
-          ^^^^^^^^^ FormulaAudit/Text: Please set plist_options when using a formula-defined plist.
+          ^^^^^^^^^ FormulaAudit/Text: `def plist` is deprecated. Please use services instead: https://docs.brew.sh/Formula-Cookbook#service-files
             <<~XML
               <?xml version="1.0" encoding="UTF-8"?>
               <!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">

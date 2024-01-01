@@ -1,4 +1,3 @@
-# typed: false
 # frozen_string_literal: true
 
 require "benchmark"
@@ -32,14 +31,26 @@ shared_examples "#uninstall_phase or #zap_phase" do
 
     it "works when job is owned by user" do
       allow(fake_system_command).to receive(:run)
-        .with("/bin/launchctl", args: ["list", "my.fancy.package.service"], print_stderr: false, sudo: false)
+        .with(
+          "/bin/launchctl",
+          args:         ["list", "my.fancy.package.service"],
+          print_stderr: false,
+          sudo:         false,
+          sudo_as_root: false,
+        )
         .and_return(instance_double(SystemCommand::Result, stdout: service_info))
       allow(fake_system_command).to receive(:run)
-        .with("/bin/launchctl", args: ["list", "my.fancy.package.service"], print_stderr: false, sudo: true)
+        .with(
+          "/bin/launchctl",
+          args:         ["list", "my.fancy.package.service"],
+          print_stderr: false,
+          sudo:         true,
+          sudo_as_root: true,
+        )
         .and_return(instance_double(SystemCommand::Result, stdout: unknown_response))
 
       expect(fake_system_command).to receive(:run!)
-        .with("/bin/launchctl", args: ["remove", "my.fancy.package.service"], sudo: false)
+        .with("/bin/launchctl", args: ["remove", "my.fancy.package.service"], sudo: false, sudo_as_root: false)
         .and_return(instance_double(SystemCommand::Result))
 
       subject.public_send(:"#{artifact_dsl_key}_phase", command: fake_system_command)
@@ -47,14 +58,26 @@ shared_examples "#uninstall_phase or #zap_phase" do
 
     it "works when job is owned by system" do
       allow(fake_system_command).to receive(:run)
-        .with("/bin/launchctl", args: ["list", "my.fancy.package.service"], print_stderr: false, sudo: false)
+        .with(
+          "/bin/launchctl",
+          args:         ["list", "my.fancy.package.service"],
+          print_stderr: false,
+          sudo:         false,
+          sudo_as_root: false,
+        )
         .and_return(instance_double(SystemCommand::Result, stdout: unknown_response))
       allow(fake_system_command).to receive(:run)
-        .with("/bin/launchctl", args: ["list", "my.fancy.package.service"], print_stderr: false, sudo: true)
+        .with(
+          "/bin/launchctl",
+          args:         ["list", "my.fancy.package.service"],
+          print_stderr: false,
+          sudo:         true,
+          sudo_as_root: true,
+        )
         .and_return(instance_double(SystemCommand::Result, stdout: service_info))
 
       expect(fake_system_command).to receive(:run!)
-        .with("/bin/launchctl", args: ["remove", "my.fancy.package.service"], sudo: true)
+        .with("/bin/launchctl", args: ["remove", "my.fancy.package.service"], sudo: true, sudo_as_root: true)
         .and_return(instance_double(SystemCommand::Result))
 
       subject.public_send(:"#{artifact_dsl_key}_phase", command: fake_system_command)
@@ -95,14 +118,26 @@ shared_examples "#uninstall_phase or #zap_phase" do
         .and_return(["my.fancy.package.service.12345"])
 
       allow(fake_system_command).to receive(:run)
-        .with("/bin/launchctl", args: ["list", "my.fancy.package.service.12345"], print_stderr: false, sudo: false)
+        .with(
+          "/bin/launchctl",
+          args:         ["list", "my.fancy.package.service.12345"],
+          print_stderr: false,
+          sudo:         false,
+          sudo_as_root: false,
+        )
         .and_return(instance_double(SystemCommand::Result, stdout: unknown_response))
       allow(fake_system_command).to receive(:run)
-        .with("/bin/launchctl", args: ["list", "my.fancy.package.service.12345"], print_stderr: false, sudo: true)
+        .with(
+          "/bin/launchctl",
+          args:         ["list", "my.fancy.package.service.12345"],
+          print_stderr: false,
+          sudo:         true,
+          sudo_as_root: true,
+        )
         .and_return(instance_double(SystemCommand::Result, stdout: service_info))
 
       expect(fake_system_command).to receive(:run!)
-        .with("/bin/launchctl", args: ["remove", "my.fancy.package.service.12345"], sudo: true)
+        .with("/bin/launchctl", args: ["remove", "my.fancy.package.service.12345"], sudo: true, sudo_as_root: true)
         .and_return(instance_double(SystemCommand::Result))
 
       subject.public_send(:"#{artifact_dsl_key}_phase", command: fake_system_command)
@@ -149,19 +184,19 @@ shared_examples "#uninstall_phase or #zap_phase" do
 
     it "is supported" do
       allow(subject).to receive(:system_command!)
-        .with("/usr/sbin/kextstat", args: ["-l", "-b", kext_id], sudo: true)
+        .with("/usr/sbin/kextstat", args: ["-l", "-b", kext_id], sudo: true, sudo_as_root: true)
         .and_return(instance_double("SystemCommand::Result", stdout: "loaded"))
 
       expect(subject).to receive(:system_command!)
-        .with("/sbin/kextunload", args: ["-b", kext_id], sudo: true)
+        .with("/sbin/kextunload", args: ["-b", kext_id], sudo: true, sudo_as_root: true)
         .and_return(instance_double("SystemCommand::Result"))
 
       expect(subject).to receive(:system_command!)
-        .with("/usr/sbin/kextfind", args: ["-b", kext_id], sudo: true)
+        .with("/usr/sbin/kextfind", args: ["-b", kext_id], sudo: true, sudo_as_root: true)
         .and_return(instance_double("SystemCommand::Result", stdout: "/Library/Extensions/FancyPackage.kext\n"))
 
       expect(subject).to receive(:system_command!)
-        .with("/bin/rm", args: ["-rf", "/Library/Extensions/FancyPackage.kext"], sudo: true)
+        .with("/bin/rm", args: ["-rf", "/Library/Extensions/FancyPackage.kext"], sudo: true, sudo_as_root: true)
 
       subject.public_send(:"#{artifact_dsl_key}_phase", command: fake_system_command)
     end
@@ -282,13 +317,14 @@ shared_examples "#uninstall_phase or #zap_phase" do
       it "is supported" do
         allow(fake_system_command).to receive(:run).with(any_args).and_call_original
 
-        expect(fake_system_command).to receive(:run).with(
-          cask.staged_path.join("MyFancyPkg", "FancyUninstaller.tool"),
-          args:         ["--please"],
-          must_succeed: true,
-          print_stdout: true,
-          sudo:         false,
-        )
+        expect(fake_system_command).to receive(:run)
+          .with(
+            cask.staged_path.join("MyFancyPkg", "FancyUninstaller.tool"),
+            args:         ["--please"],
+            must_succeed: true,
+            print_stdout: true,
+            sudo:         false,
+          )
 
         InstallHelper.install_without_artifacts(cask)
         subject.public_send(:"#{artifact_dsl_key}_phase", command: fake_system_command)

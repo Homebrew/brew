@@ -10,7 +10,7 @@ module FormulaCellarChecks
       formula.name.start_with?(formula_name)
     end
 
-    return if formula.name&.match?(Version.formula_optionally_versioned_regex(:php))
+    return if formula.name.match?(Version.formula_optionally_versioned_regex(:php))
     return if formula.keg_only? || !formula.include.directory?
 
     files  = relative_glob(formula.include, "**/*.h")
@@ -32,7 +32,7 @@ module FormulaCellarChecks
     keg = Keg.new(formula.prefix)
     system_openssl = keg.mach_o_files.select do |obj|
       dlls = obj.dynamically_linked_libraries
-      dlls.any? { |dll| %r{/usr/lib/lib(crypto|ssl|tls)\..*dylib}.match dll }
+      dlls.any? { |dll| %r{/usr/lib/lib(crypto|ssl|tls)\..*dylib}.match? dll }
     end
     return if system_openssl.empty?
 
@@ -81,7 +81,7 @@ module FormulaCellarChecks
         output += <<~EOS
           Rebuild this from source with:
             brew reinstall --build-from-source #{formula}
-          If that's successful, file an issue#{formula.tap ? " here:\n  #{formula.tap.issues_url}" : "."}
+          If that's successful, file an issue#{formula.tap ? " here:\n  #{T.must(formula.tap).issues_url}" : "."}
         EOS
       end
       problem_if_output output

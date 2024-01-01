@@ -15,8 +15,6 @@ HIDDEN_DESC_PLACEHOLDER = "@@HIDDEN@@"
 module Homebrew
   module CLI
     class Parser
-      extend T::Sig
-
       attr_reader :processed_options, :hide_from_man_page, :named_args_type
 
       def self.from_cmd_path(cmd_path)
@@ -140,6 +138,7 @@ module Homebrew
         @named_args_type = nil
         @max_named_args = nil
         @min_named_args = nil
+        @named_args_without_api = false
         @description = nil
         @usage_banner = nil
         @hide_from_man_page = false
@@ -161,12 +160,14 @@ module Homebrew
         return if global_switch
 
         description = option_description(description, *names, hidden: hidden)
-        if replacement.nil?
-          process_option(*names, description, type: :switch, hidden: hidden)
-        else
-          description += " (disabled#{"; replaced by #{replacement}" if replacement.present?})"
+        process_option(*names, description, type: :switch, hidden: hidden) unless disable
+
+        if replacement || disable
+          description += " (#{disable ? "disabled" : "deprecated"}#{"; replaced by #{replacement}" if replacement})"
         end
+
         @parser.public_send(method, *names, *wrap_option_desc(description)) do |value|
+          # This odeprecated should stick around indefinitely.
           odeprecated "the `#{names.first}` switch", replacement, disable: disable if !replacement.nil? || disable
           value = true if names.none? { |name| name.start_with?("--[no-]") }
 
@@ -177,16 +178,22 @@ module Homebrew
           set_constraints(name, depends_on: depends_on)
         end
 
-        env_value = env?(env)
+        env_value = value_for_env(env)
         set_switch(*names, value: env_value, from: :env) unless env_value.nil?
       end
       alias switch_option switch
 
-      def env?(env)
+      def value_for_env(env)
         return if env.blank?
 
-        Homebrew::EnvConfig.try(:"#{env}?")
+        method_name = :"#{env}?"
+        if Homebrew::EnvConfig.respond_to?(method_name)
+          Homebrew::EnvConfig.public_send(method_name)
+        else
+          ENV.fetch("HOMEBREW_#{env.upcase}", nil)
+        end
       end
+      private :value_for_env
 
       def description(text = nil)
         return @description if text.blank?
@@ -225,6 +232,7 @@ module Homebrew
           description += " (disabled#{"; replaced by #{replacement}" if replacement.present?})"
         end
         @parser.on(*names, *wrap_option_desc(description), required) do |option_value|
+          # This odisabled should stick around indefinitely.
           odisabled "the `#{names.first}` flag", replacement unless replacement.nil?
           names.each do |name|
             @args[option_to_name(name)] = option_value
@@ -348,7 +356,7 @@ module Homebrew
           check_named_args(named_args)
         end
 
-        @args.freeze_named_args!(named_args, cask_options: @cask_options)
+        @args.freeze_named_args!(named_args, cask_options: @cask_options, without_api: @named_args_without_api)
         @args.freeze_remaining_args!(non_options.empty? ? remaining : [*remaining, "--", non_options])
         @args.freeze_processed_options!(@processed_options)
         @args.freeze
@@ -394,13 +402,14 @@ module Homebrew
 
       sig {
         params(
-          type:   T.any(NilClass, Symbol, T::Array[String], T::Array[Symbol]),
-          number: T.nilable(Integer),
-          min:    T.nilable(Integer),
-          max:    T.nilable(Integer),
+          type:        T.any(NilClass, Symbol, T::Array[String], T::Array[Symbol]),
+          number:      T.nilable(Integer),
+          min:         T.nilable(Integer),
+          max:         T.nilable(Integer),
+          without_api: T::Boolean,
         ).void
       }
-      def named_args(type = nil, number: nil, min: nil, max: nil)
+      def named_args(type = nil, number: nil, min: nil, max: nil, without_api: false)
         if number.present? && (min.present? || max.present?)
           raise ArgumentError, "Do not specify both `number` and `min` or `max`"
         end
@@ -419,6 +428,8 @@ module Homebrew
           @min_named_args = min
           @max_named_args = max
         end
+
+        @named_args_without_api = without_api
       end
 
       sig { void }
@@ -506,8 +517,8 @@ module Homebrew
         end
       end
 
-      def disable_switch(*names)
-        names.each do |name|
+      def disable_switch(*args)
+        args.each do |name|
           @args["#{option_to_name(name)}?"] = if name.start_with?("--[no-]")
             nil
           else
@@ -517,7 +528,7 @@ module Homebrew
       end
 
       def option_passed?(name)
-        @args[name.to_sym] || @args["#{name}?".to_sym]
+        @args[name.to_sym] || @args[:"#{name}?"]
       end
 
       def wrap_option_desc(desc)
@@ -605,6 +616,7 @@ module Homebrew
         @processed_options.reject! { |existing| existing.second == option.long.first } if option.long.first.present?
         @processed_options << [option.short.first, option.long.first, option.arg, option.desc.first, hidden]
 
+        args.pop # last argument is the description
         if type == :switch
           disable_switch(*args)
         else
@@ -643,7 +655,7 @@ module Homebrew
 
           begin
             Formulary.factory(arg, spec, flags: argv.select { |a| a.start_with?("--") })
-          rescue FormulaUnavailableError
+          rescue FormulaUnavailableError, FormulaSpecificationError
             nil
           end
         end.compact.uniq(&:name)
@@ -680,8 +692,6 @@ module Homebrew
     end
 
     class MaxNamedArgumentsError < UsageError
-      extend T::Sig
-
       sig { params(maximum: Integer, types: T::Array[Symbol]).void }
       def initialize(maximum, types: [])
         super case maximum
@@ -698,8 +708,6 @@ module Homebrew
     end
 
     class MinNamedArgumentsError < UsageError
-      extend T::Sig
-
       sig { params(minimum: Integer, types: T::Array[Symbol]).void }
       def initialize(minimum, types: [])
         types << :named if types.empty?
@@ -711,8 +719,6 @@ module Homebrew
     end
 
     class NumberOfNamedArgumentsError < UsageError
-      extend T::Sig
-
       sig { params(minimum: Integer, types: T::Array[Symbol]).void }
       def initialize(minimum, types: [])
         types << :named if types.empty?

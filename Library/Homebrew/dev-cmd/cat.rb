@@ -4,8 +4,6 @@
 require "cli/parser"
 
 module Homebrew
-  extend T::Sig
-
   sig { returns(CLI::Parser) }
   def self.cat_args
     Homebrew::CLI::Parser.new do
@@ -20,7 +18,7 @@ module Homebrew
 
       conflicts "--formula", "--cask"
 
-      named_args [:formula, :cask], min: 1
+      named_args [:formula, :cask], min: 1, without_api: true
     end
   end
 

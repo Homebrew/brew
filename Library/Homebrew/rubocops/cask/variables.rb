@@ -50,7 +50,7 @@ module RuboCop
             replacement_parameters << "intel: #{intel_node.source}" unless blank_node?(intel_node)
             replacement_string += replacement_parameters.join(", ")
 
-            add_offense(node, message: "Use `#{replacement_string}` instead of `#{node.source}`") do |corrector|
+            add_offense(node, message: "Use `#{replacement_string}` instead of `#{node.source}`.") do |corrector|
               corrector.replace(node, replacement_string)
             end
           end

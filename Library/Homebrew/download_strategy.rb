@@ -8,8 +8,12 @@ require "lazy_object"
 require "cgi"
 require "lock_file"
 
-require "mechanize/version"
-require "mechanize/http/content_disposition_parser"
+# Need to define this before requiring Mechanize to avoid:
+#   uninitialized constant Mechanize
+# rubocop:disable Lint/EmptyClass
+class Mechanize; end
+require "vendor/gems/mechanize/lib/mechanize/http/content_disposition_parser"
+# rubocop:enable Lint/EmptyClass
 
 require "utils/curl"
 require "utils/github"
@@ -23,8 +27,6 @@ using TimeRemaining
 #
 # @api private
 class AbstractDownloadStrategy
-  extend T::Sig
-
   extend Forwardable
   include FileUtils
   include Context
@@ -72,12 +74,20 @@ class AbstractDownloadStrategy
 
   # Disable any output during downloading.
   #
-  # TODO: Deprecate once we have an explicitly documented alternative.
-  #
   # @api public
   sig { void }
-  def shutup!
+  def quiet!
     @quiet = true
+  end
+
+  # Disable any output during downloading.
+  #
+  # @deprecated
+  # @api private
+  sig { void }
+  def shutup!
+    odeprecated "AbstractDownloadStrategy#shutup!", "AbstractDownloadStrategy#quiet!"
+    quiet!
   end
 
   def quiet?
@@ -187,7 +197,7 @@ class VCSDownloadStrategy < AbstractDownloadStrategy
     super
     @ref_type, @ref = extract_ref(meta)
     @revision = meta[:revision]
-    @cached_location = @cache/"#{name}--#{cache_tag}"
+    @cached_location = @cache/Utils.safe_filename("#{name}--#{cache_tag}")
   end
 
   # Download and cache the repository at {#cached_location}.
@@ -200,7 +210,7 @@ class VCSDownloadStrategy < AbstractDownloadStrategy
 
     if cached_location.exist? && repo_valid?
       puts "Updating #{cached_location}"
-      update(timeout: timeout)
+      update(timeout: end_time)
     elsif cached_location.exist?
       puts "Removing invalid repository from cache"
       clear_cache
@@ -286,7 +296,7 @@ class AbstractFileDownloadStrategy < AbstractDownloadStrategy
     return @symlink_location if defined?(@symlink_location)
 
     ext = Pathname(parse_basename(url)).extname
-    @symlink_location = @cache/"#{name}--#{version}#{ext}"
+    @symlink_location = @cache/Utils.safe_filename("#{name}--#{version}#{ext}")
   end
 
   # Path for storing the completed download.
@@ -302,7 +312,7 @@ class AbstractFileDownloadStrategy < AbstractDownloadStrategy
     @cached_location = if downloads.count == 1
       downloads.first
     else
-      HOMEBREW_CACHE/"downloads/#{url_sha256}--#{resolved_basename}"
+      HOMEBREW_CACHE/"downloads/#{url_sha256}--#{Utils.safe_filename(resolved_basename)}"
     end
   end
 
@@ -328,8 +338,11 @@ class AbstractFileDownloadStrategy < AbstractDownloadStrategy
     @resolved_url_and_basename = [url, parse_basename(url)]
   end
 
+  sig { params(url: String, search_query: T::Boolean).returns(String) }
   def parse_basename(url, search_query: true)
-    uri_path = if url.match?(URI::DEFAULT_PARSER.make_regexp)
+    components = { path: T.let([], T::Array[String]), query: T.let([], T::Array[String]) }
+
+    if url.match?(URI::DEFAULT_PARSER.make_regexp)
       uri = URI(url)
 
       if uri.query
@@ -340,29 +353,32 @@ class AbstractFileDownloadStrategy < AbstractDownloadStrategy
         end
       end
 
-      if uri.query && search_query
-        "#{uri.path}?#{uri.query}"
-      else
-        uri.path
+      if (uri_path = uri.path.presence)
+        components[:path] = uri_path.split("/").map do |part|
+          URI::DEFAULT_PARSER.unescape(part).presence
+        end.compact
+      end
+
+      if search_query && (uri_query = uri.query.presence)
+        components[:query] = URI.decode_www_form(uri_query).map(&:second)
       end
     else
-      url
+      components[:path] = [url]
     end
-
-    uri_path = URI.decode_www_form_component(uri_path)
-    query_regex = /[^?&]+/
 
     # We need a Pathname because we've monkeypatched extname to support double
     # extensions (e.g. tar.gz).
     # Given a URL like https://example.com/download.php?file=foo-1.0.tar.gz
     # the basename we want is "foo-1.0.tar.gz", not "download.php".
-    Pathname.new(uri_path).ascend do |path|
-      ext = path.extname[query_regex]
-      return path.basename.to_s[/#{query_regex.source}#{Regexp.escape(ext)}/] if ext
+    [*components[:path], *components[:query]].reverse_each do |path|
+      path = Pathname(path)
+      return path.basename.to_s if path.extname.present?
     end
 
-    # Strip query string
-    File.basename(uri_path)[query_regex]
+    filename = components[:path].last
+    return "" if filename.blank?
+
+    File.basename(filename)
   end
 end
 
@@ -375,9 +391,16 @@ class CurlDownloadStrategy < AbstractFileDownloadStrategy
   attr_reader :mirrors
 
   def initialize(url, name, version, **meta)
-    super
     @try_partial = true
     @mirrors = meta.fetch(:mirrors, [])
+
+    # Merge `:header` with `:headers`.
+    if (header = meta.delete(:header))
+      meta[:headers] ||= []
+      meta[:headers] << header
+    end
+
+    super
   end
 
   # Download and cache the file at {#cached_location}.
@@ -394,22 +417,28 @@ class CurlDownloadStrategy < AbstractFileDownloadStrategy
     begin
       url = urls.shift
 
+      if (domain = Homebrew::EnvConfig.artifact_domain)
+        url = url.sub(%r{^https?://#{GitHubPackages::URL_DOMAIN}/}o, "#{domain.chomp("/")}/")
+      end
+
       ohai "Downloading #{url}"
 
-      resolved_url, _, url_time, _, is_redirection =
+      use_cached_location = cached_location.exist?
+      use_cached_location = false if version.respond_to?(:latest?) && version.latest?
+
+      resolved_url, _, last_modified, _, is_redirection = begin
         resolve_url_basename_time_file_size(url, timeout: end_time&.remaining!)
+      rescue ErrorDuringExecution
+        raise unless use_cached_location
+      end
+
       # Authorization is no longer valid after redirects
       meta[:headers]&.delete_if { |header| header.start_with?("Authorization") } if is_redirection
 
-      fresh = if cached_location.exist? && url_time
-        url_time <= cached_location.mtime
-      elsif version.respond_to?(:latest?)
-        !version.latest?
-      else
-        true
-      end
+      # The cached location is no longer fresh if Last-Modified is after the file's timestamp
+      use_cached_location = false if cached_location.exist? && last_modified && last_modified > cached_location.mtime
 
-      if cached_location.exist? && fresh
+      if use_cached_location
         puts "Already downloaded: #{cached_location}"
       else
         begin
@@ -459,11 +488,12 @@ class CurlDownloadStrategy < AbstractFileDownloadStrategy
     @resolved_info_cache ||= {}
     return @resolved_info_cache[url] if @resolved_info_cache.include?(url)
 
-    if (domain = Homebrew::EnvConfig.artifact_domain)
-      url = url.sub(%r{^https?://#{GitHubPackages::URL_DOMAIN}/}o, "#{domain.chomp("/")}/")
+    begin
+      parsed_output = curl_headers(url.to_s, wanted_headers: ["content-disposition"], timeout: timeout)
+    rescue ErrorDuringExecution
+      return [url, parse_basename(url), nil, nil, false]
     end
 
-    parsed_output = curl_head(url.to_s, timeout: timeout)
     parsed_headers = parsed_output.fetch(:responses).map { |r| r.fetch(:headers) }
 
     final_url = curl_response_follow_redirections(parsed_output.fetch(:responses), url)
@@ -543,13 +573,11 @@ class CurlDownloadStrategy < AbstractFileDownloadStrategy
 
     args += ["--user", meta.fetch(:user)] if meta.key?(:user)
 
-    args += [meta[:header], meta[:headers]].flatten.compact.flat_map { |h| ["--header", h.strip] }
+    args += meta.fetch(:headers, []).flat_map { |h| ["--header", h.strip] }
 
     if meta[:insecure]
       unless @insecure_warning_shown
-        opoo "Using --insecure with curl to download `ca-certificates` " \
-             "because we need it installed to download securely from now on. " \
-             "Checksums will still be verified."
+        opoo DevelopmentTools.insecure_download_warning("an updated certificates file")
         @insecure_warning_shown = true
       end
       args += ["--insecure"]
@@ -610,8 +638,10 @@ class CurlGitHubPackagesDownloadStrategy < CurlDownloadStrategy
 
   private
 
-  def resolved_basename
-    @resolved_basename.presence || super
+  def resolve_url_basename_time_file_size(url, timeout: nil)
+    return super if @resolved_basename.blank?
+
+    [url, @resolved_basename, nil, nil, false]
   end
 end
 
@@ -699,8 +729,6 @@ end
 #
 # @api public
 class SubversionDownloadStrategy < VCSDownloadStrategy
-  extend T::Sig
-
   def initialize(url, name, version, **meta)
     super
     @url = @url.sub("svn+http://", "")
@@ -720,7 +748,7 @@ class SubversionDownloadStrategy < VCSDownloadStrategy
   # @api public
   sig { returns(Time) }
   def source_modified_time
-    time = if Version.create(T.must(Utils::Svn.version)) >= Version.create("1.9")
+    time = if Version.new(T.must(Utils::Svn.version)) >= Version.new("1.9")
       out, = silent_command("svn", args: ["info", "--show-item", "last-changed-date"], chdir: cached_location)
       out
     else
@@ -819,6 +847,12 @@ class GitDownloadStrategy < VCSDownloadStrategy
     # constructor calls `cache_tag` and sets the cache path.
     @only_path = meta[:only_path]
 
+    if @only_path.present?
+      # "Cone" mode of sparse checkout requires patterns to be directories
+      @only_path = "/#{@only_path}" unless @only_path.start_with?("/")
+      @only_path = "#{@only_path}/" unless @only_path.end_with?("/")
+    end
+
     super
     @ref_type ||= :branch
     @ref ||= "master"
@@ -909,7 +943,8 @@ class GitDownloadStrategy < VCSDownloadStrategy
 
     args << "--no-checkout" << "--filter=blob:none" if partial_clone_sparse_checkout?
 
-    args << "-c" << "advice.detachedHead=false" # silences detached head warning
+    args << "--config" << "advice.detachedHead=false" # silences detached head warning
+    args << "--config" << "core.fsmonitor=false" # prevent fsmonitor from watching this repo
     args << @url << cached_location.to_s
   end
 
@@ -941,6 +976,9 @@ class GitDownloadStrategy < VCSDownloadStrategy
              chdir: cached_location
     command! "git",
              args:  ["config", "advice.detachedHead", "false"],
+             chdir: cached_location
+    command! "git",
+             args:  ["config", "core.fsmonitor", "false"],
              chdir: cached_location
 
     return unless partial_clone_sparse_checkout?
@@ -1055,9 +1093,12 @@ class GitDownloadStrategy < VCSDownloadStrategy
     command! "git",
              args:  ["config", "core.sparseCheckout", "true"],
              chdir: cached_location
+    command! "git",
+             args:  ["config", "core.sparseCheckoutCone", "true"],
+             chdir: cached_location
 
     (git_dir/"info").mkpath
-    (git_dir/"info"/"sparse-checkout").atomic_write("#{@only_path}\n")
+    (git_dir/"info/sparse-checkout").atomic_write("#{@only_path}\n")
   end
 end
 
@@ -1121,8 +1162,6 @@ end
 #
 # @api public
 class CVSDownloadStrategy < VCSDownloadStrategy
-  extend T::Sig
-
   def initialize(url, name, version, **meta)
     super
     @url = @url.sub(%r{^cvs://}, "")
@@ -1203,8 +1242,6 @@ end
 #
 # @api public
 class MercurialDownloadStrategy < VCSDownloadStrategy
-  extend T::Sig
-
   def initialize(url, name, version, **meta)
     super
     @url = @url.sub(%r{^hg://}, "")
@@ -1245,21 +1282,46 @@ class MercurialDownloadStrategy < VCSDownloadStrategy
 
   sig { params(timeout: T.nilable(Time)).void }
   def clone_repo(timeout: nil)
-    command! "hg", args: ["clone", @url, cached_location], timeout: timeout&.remaining
+    clone_args = %w[clone]
+
+    case @ref_type
+    when :branch
+      clone_args << "--branch" << @ref
+    when :revision, :tag
+      clone_args << "--rev" << @ref
+    end
+
+    clone_args << @url << cached_location.to_s
+    command! "hg", args: clone_args, timeout: timeout&.remaining
   end
 
   sig { params(timeout: T.nilable(Time)).void }
   def update(timeout: nil)
-    command! "hg", args: ["--cwd", cached_location, "pull", "--update"], timeout: timeout&.remaining
+    pull_args = %w[pull]
 
-    update_args = if @ref_type && @ref
-      ohai "Checking out #{@ref_type} #{@ref}"
-      [@ref]
-    else
-      ["--clean"]
+    case @ref_type
+    when :branch
+      pull_args << "--branch" << @ref
+    when :revision, :tag
+      pull_args << "--rev" << @ref
     end
 
-    command! "hg", args: ["--cwd", cached_location, "update", *update_args], timeout: timeout&.remaining
+    command! "hg", args: ["--cwd", cached_location, *pull_args], timeout: timeout&.remaining
+
+    update_args = %w[update --clean]
+    update_args << if @ref_type && @ref
+      ohai "Checking out #{@ref_type} #{@ref}"
+      @ref
+    else
+      "default"
+    end
+
+    command! "hg", args: ["--cwd", cached_location, *update_args], timeout: timeout&.remaining
+  end
+
+  def current_revision
+    out, = silent_command("hg", args: ["--cwd", cached_location, "identify", "--id"])
+    out.strip
   end
 end
 
@@ -1267,11 +1329,9 @@ end
 #
 # @api public
 class BazaarDownloadStrategy < VCSDownloadStrategy
-  extend T::Sig
-
   def initialize(url, name, version, **meta)
     super
-    @url.sub!(%r{^bzr://}, "")
+    @url = @url.sub(%r{^bzr://}, "")
   end
 
   # @see AbstractDownloadStrategy#source_modified_time
@@ -1332,8 +1392,6 @@ end
 #
 # @api public
 class FossilDownloadStrategy < VCSDownloadStrategy
-  extend T::Sig
-
   def initialize(url, name, version, **meta)
     super
     @url = @url.sub(%r{^fossil://}, "")

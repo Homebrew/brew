@@ -22,6 +22,7 @@ module Homebrew
       installed_on_request: false,
       force_bottle: false,
       build_from_source_formulae: [],
+      dependents: false,
       interactive: false,
       keep_tmp: false,
       debug_symbols: false,
@@ -70,6 +71,39 @@ module Homebrew
           )
           unless dry_run
             fi.prelude
+
+            # Don't need to install this bottle if all of the runtime
+            # dependencies have the same or newer version already installed.
+            next if dependents && fi.bottle_tab_runtime_dependencies.presence&.all? do |dependency, hash|
+              dependency_formula = begin
+                Formula[dependency]
+              rescue FormulaUnavailableError
+                nil
+              end
+              next false if dependency_formula.nil?
+
+              next true if dependency_formula.latest_version_installed?
+
+              installed_version = dependency_formula.any_installed_version
+              next false unless installed_version
+
+              next false if hash["version"].blank?
+
+              # Tabs prior to 4.1.18 did not have revision or pkg_version fields.
+              # As a result, we have to be more conversative when we do not have
+              # a revision in the tab and assume that if the formula has a
+              # the same version and a non-zero revision that it needs upgraded.
+              tab_version = Version.new(hash["version"])
+              if hash["revision"].present?
+                tab_pkg_version = PkgVersion.new(tab_version, hash["revision"])
+                installed_version >= tab_pkg_version
+              elsif installed_version.version == tab_version
+                dependency_formula.revision.zero?
+              else
+                installed_version.version > tab_version
+              end
+            end
+
             fi.fetch
           end
           fi
@@ -256,10 +290,12 @@ module Homebrew
       verbose: false
     )
       if Homebrew::EnvConfig.no_installed_dependents_check?
-        opoo <<~EOS
-          HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK is set: not checking for outdated
-          dependents or dependents with broken linkage!
-        EOS
+        unless Homebrew::EnvConfig.no_env_hints?
+          opoo <<~EOS
+            HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK is set: not checking for outdated
+            dependents or dependents with broken linkage!
+          EOS
+        end
         return
       end
 
@@ -269,6 +305,7 @@ module Homebrew
 
       already_broken_dependents = check_broken_dependents(installed_formulae)
 
+      # TODO: this should be refactored to use FormulaInstaller new logic
       outdated_dependents =
         installed_formulae.flat_map(&:runtime_installed_formula_dependents)
                           .uniq
@@ -300,7 +337,7 @@ module Homebrew
 
       if pinned_dependents.present?
         plural = Utils.pluralize("dependent", pinned_dependents.count)
-        ohai "Not upgrading #{pinned_dependents.count} pinned #{plural}:"
+        opoo "Not upgrading #{pinned_dependents.count} pinned #{plural}:"
         puts(pinned_dependents.map do |f|
           "#{f.full_specified_name} #{f.pkg_version}"
         end.join(", "))
@@ -333,6 +370,7 @@ module Homebrew
           installed_on_request:       installed_on_request,
           force_bottle:               force_bottle,
           build_from_source_formulae: build_from_source_formulae,
+          dependents:                 true,
           interactive:                interactive,
           keep_tmp:                   keep_tmp,
           debug_symbols:              debug_symbols,
@@ -424,8 +462,8 @@ module Homebrew
 
     def depends_on(one, two)
       if one.any_installed_keg
-         &.runtime_dependencies
-         &.any? { |dependency| dependency["full_name"] == two.full_name }
+            &.runtime_dependencies
+            &.any? { |dependency| dependency["full_name"] == two.full_name }
         1
       else
         one <=> two

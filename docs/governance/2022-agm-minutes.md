@@ -9,7 +9,7 @@
 - 19:05 Project Leader Report (10 min, Mike McQuaid)
 - 19:15 Project Leadership Committee Report (10 min, Misty De Méo)
 - 19:25 Treasurer's Financial Report (5 min, Jon Chang)
-- 19:30 Technical Steering Commitee Report (10 min, Rylan Polster)
+- 19:30 Technical Steering Committee Report (10 min, Rylan Polster)
 
 ## Election Results
 

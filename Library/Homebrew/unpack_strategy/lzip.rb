@@ -4,8 +4,6 @@
 module UnpackStrategy
   # Strategy for unpacking lzip archives.
   class Lzip
-    extend T::Sig
-
     include UnpackStrategy
 
     sig { returns(T::Array[String]) }

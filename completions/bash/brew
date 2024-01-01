@@ -125,6 +125,7 @@ _brew___cache() {
     -*)
       __brewcomp "
       --HEAD
+      --arch
       --bottle-tag
       --build-from-source
       --cask
@@ -132,6 +133,7 @@ _brew___cache() {
       --force-bottle
       --formula
       --help
+      --os
       --quiet
       --verbose
       "
@@ -346,11 +348,10 @@ _brew_audit() {
   case "${cur}" in
     -*)
       __brewcomp "
+      --arch
       --audit-debug
       --cask
       --debug
-      --display-cop-names
-      --display-failures-only
       --display-filename
       --eval-all
       --except
@@ -365,6 +366,7 @@ _brew_audit() {
       --online
       --only
       --only-cops
+      --os
       --quiet
       --signing
       --skip-style
@@ -439,6 +441,7 @@ _brew_bump() {
       --formula
       --full-name
       --help
+      --installed
       --limit
       --no-pull-requests
       --open-pr
@@ -470,12 +473,13 @@ _brew_bump_cask_pr() {
       --no-browse
       --no-fork
       --no-style
-      --online
       --quiet
       --sha256
       --url
       --verbose
       --version
+      --version-arm
+      --version-intel
       --write-only
       "
       return
@@ -733,6 +737,7 @@ _brew_deps() {
   case "${cur}" in
     -*)
       __brewcomp "
+      --HEAD
       --annotate
       --cask
       --debug
@@ -749,6 +754,7 @@ _brew_deps() {
       --include-requirements
       --include-test
       --installed
+      --missing
       --quiet
       --skip-recommended
       --topological
@@ -786,6 +792,25 @@ _brew_desc() {
   esac
   __brew_complete_formulae
   __brew_complete_casks
+}
+
+_brew_determine_test_runners() {
+  local cur="${COMP_WORDS[COMP_CWORD]}"
+  case "${cur}" in
+    -*)
+      __brewcomp "
+      --all-supported
+      --debug
+      --dependents
+      --eval-all
+      --help
+      --quiet
+      --verbose
+      "
+      return
+      ;;
+    *) ;;
+  esac
 }
 
 _brew_developer() {
@@ -904,6 +929,7 @@ _brew_edit() {
   esac
   __brew_complete_formulae
   __brew_complete_casks
+  __brew_complete_tapped
 }
 
 _brew_environment() {
@@ -951,6 +977,7 @@ _brew_fetch() {
     -*)
       __brewcomp "
       --HEAD
+      --arch
       --bottle-tag
       --build-bottle
       --build-from-source
@@ -962,6 +989,7 @@ _brew_fetch() {
       --formula
       --help
       --no-quarantine
+      --os
       --quarantine
       --quiet
       --retry
@@ -998,6 +1026,7 @@ _brew_generate_cask_api() {
     -*)
       __brewcomp "
       --debug
+      --dry-run
       --help
       --quiet
       --verbose
@@ -1014,6 +1043,7 @@ _brew_generate_formula_api() {
     -*)
       __brewcomp "
       --debug
+      --dry-run
       --help
       --quiet
       --verbose
@@ -1259,6 +1289,7 @@ _brew_install_bundler_gems() {
   case "${cur}" in
     -*)
       __brewcomp "
+      --add-groups
       --debug
       --groups
       --help
@@ -1510,9 +1541,11 @@ _brew_migrate() {
   case "${cur}" in
     -*)
       __brewcomp "
+      --cask
       --debug
       --dry-run
       --force
+      --formula
       --help
       --quiet
       --verbose
@@ -1522,6 +1555,7 @@ _brew_migrate() {
     *) ;;
   esac
   __brew_complete_installed_formulae
+  __brew_complete_installed_casks
 }
 
 _brew_missing() {
@@ -1621,6 +1655,23 @@ _brew_pin() {
   __brew_complete_installed_formulae
 }
 
+_brew_post_install() {
+  local cur="${COMP_WORDS[COMP_CWORD]}"
+  case "${cur}" in
+    -*)
+      __brewcomp "
+      --debug
+      --help
+      --quiet
+      --verbose
+      "
+      return
+      ;;
+    *) ;;
+  esac
+  __brew_complete_installed_formulae
+}
+
 _brew_postgresql_upgrade_database() {
   local cur="${COMP_WORDS[COMP_CWORD]}"
   case "${cur}" in
@@ -1663,7 +1714,6 @@ _brew_pr_automerge() {
       --debug
       --help
       --ignore-failures
-      --no-autosquash
       --publish
       --quiet
       --tap
@@ -1690,7 +1740,6 @@ _brew_pr_publish() {
       --help
       --large-runner
       --message
-      --no-autosquash
       --quiet
       --tap
       --verbose
@@ -1718,7 +1767,6 @@ _brew_pr_pull() {
       --ignore-missing-artifacts
       --keep-old
       --message
-      --no-autosquash
       --no-cherry-pick
       --no-commit
       --no-upload
@@ -1779,6 +1827,22 @@ _brew_prof() {
   __brew_complete_commands
 }
 
+_brew_pyenv_sync() {
+  local cur="${COMP_WORDS[COMP_CWORD]}"
+  case "${cur}" in
+    -*)
+      __brewcomp "
+      --debug
+      --help
+      --quiet
+      --verbose
+      "
+      return
+      ;;
+    *) ;;
+  esac
+}
+
 _brew_rbenv_sync() {
   local cur="${COMP_WORDS[COMP_CWORD]}"
   case "${cur}" in
@@ -1801,10 +1865,12 @@ _brew_readall() {
     -*)
       __brewcomp "
       --aliases
+      --arch
       --debug
       --eval-all
       --help
       --no-simulate
+      --os
       --quiet
       --syntax
       --verbose
@@ -2008,7 +2074,6 @@ _brew_style() {
       __brewcomp "
       --cask
       --debug
-      --display-cop-names
       --except-cops
       --fix
       --formula
@@ -2036,9 +2101,9 @@ _brew_tap() {
       --custom-remote
       --debug
       --eval-all
+      --force
       --force-auto-update
       --help
-      --list-pinned
       --no-force-auto-update
       --quiet
       --repair
@@ -2144,6 +2209,7 @@ _brew_tests() {
       --changed
       --coverage
       --debug
+      --fail-fast
       --generic
       --help
       --online
@@ -2190,6 +2256,7 @@ _brew_unbottled() {
       --dependents
       --eval-all
       --help
+      --lost
       --quiet
       --tag
       --total
@@ -2495,7 +2562,6 @@ _brew_upgrade() {
       --greedy-auto-updates
       --greedy-latest
       --help
-      --ignore-pinned
       --input-methoddir
       --interactive
       --internet-plugindir
@@ -2539,6 +2605,7 @@ _brew_uses() {
       --include-optional
       --include-test
       --installed
+      --missing
       --quiet
       --recursive
       --skip-recommended
@@ -2628,6 +2695,7 @@ _brew() {
     create) _brew_create ;;
     deps) _brew_deps ;;
     desc) _brew_desc ;;
+    determine-test-runners) _brew_determine_test_runners ;;
     developer) _brew_developer ;;
     dispatch-build-bottle) _brew_dispatch_build_bottle ;;
     docs) _brew_docs ;;
@@ -2664,6 +2732,7 @@ _brew() {
     options) _brew_options ;;
     outdated) _brew_outdated ;;
     pin) _brew_pin ;;
+    post_install) _brew_post_install ;;
     postgresql-upgrade-database) _brew_postgresql_upgrade_database ;;
     postinstall) _brew_postinstall ;;
     pr-automerge) _brew_pr_automerge ;;
@@ -2671,6 +2740,7 @@ _brew() {
     pr-pull) _brew_pr_pull ;;
     pr-upload) _brew_pr_upload ;;
     prof) _brew_prof ;;
+    pyenv-sync) _brew_pyenv_sync ;;
     rbenv-sync) _brew_rbenv_sync ;;
     readall) _brew_readall ;;
     reinstall) _brew_reinstall ;;

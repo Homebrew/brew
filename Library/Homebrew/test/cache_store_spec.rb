@@ -1,4 +1,3 @@
-# typed: false
 # frozen_string_literal: true
 
 require "cache_store"
@@ -24,8 +23,7 @@ describe CacheStoreDatabase do
 
     it "sets the value in the `CacheStoreDatabase`" do
       allow(File).to receive(:write)
-      allow(sample_db).to receive(:created?).and_return(true)
-      allow(sample_db).to receive(:db).and_return(db)
+      allow(sample_db).to receive_messages(created?: true, db: db)
 
       expect(db).to receive(:has_key?).with(:foo).and_return(false)
       expect(db).not_to have_key(:foo)
@@ -38,9 +36,8 @@ describe CacheStoreDatabase do
       let(:db) { instance_double(Hash, "db", :[] => "bar") }
 
       it "gets value in the `CacheStoreDatabase` corresponding to the key" do
-        allow(sample_db).to receive(:created?).and_return(true)
         expect(db).to receive(:has_key?).with(:foo).and_return(true)
-        allow(sample_db).to receive(:db).and_return(db)
+        allow(sample_db).to receive_messages(created?: true, db: db)
         expect(db).to have_key(:foo)
         expect(sample_db.get(:foo)).to eq("bar")
       end
@@ -50,8 +47,7 @@ describe CacheStoreDatabase do
       let(:db) { instance_double(Hash, "db", :[] => nil) }
 
       before do
-        allow(sample_db).to receive(:created?).and_return(false)
-        allow(sample_db).to receive(:db).and_return(db)
+        allow(sample_db).to receive_messages(created?: false, db: db)
       end
 
       it "does not get value in the `CacheStoreDatabase` corresponding to key" do
@@ -70,8 +66,7 @@ describe CacheStoreDatabase do
       let(:db) { instance_double(Hash, "db", :[] => { foo: "bar" }) }
 
       before do
-        allow(sample_db).to receive(:created?).and_return(true)
-        allow(sample_db).to receive(:db).and_return(db)
+        allow(sample_db).to receive_messages(created?: true, db: db)
       end
 
       it "deletes value in the `CacheStoreDatabase` corresponding to the key" do
@@ -84,8 +79,7 @@ describe CacheStoreDatabase do
       let(:db) { instance_double(Hash, "db", delete: nil) }
 
       before do
-        allow(sample_db).to receive(:created?).and_return(false)
-        allow(sample_db).to receive(:db).and_return(db)
+        allow(sample_db).to receive_messages(created?: false, db: db)
       end
 
       it "does not call `db.delete` if `CacheStoreDatabase.created?` is `false`" do

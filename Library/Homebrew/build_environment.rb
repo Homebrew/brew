@@ -5,8 +5,6 @@
 #
 # @api private
 class BuildEnvironment
-  extend T::Sig
-
   sig { params(settings: Symbol).void }
   def initialize(*settings)
     @settings = Set.new(settings)
@@ -31,8 +29,6 @@ class BuildEnvironment
 
   # DSL for specifying build environment settings.
   module DSL
-    extend T::Sig
-
     # Initialise @env for each class which may use this DSL (e.g. each formula subclass).
     # `env` may never be called, and it needs to be initialised before the class is frozen.
     def inherited(child)

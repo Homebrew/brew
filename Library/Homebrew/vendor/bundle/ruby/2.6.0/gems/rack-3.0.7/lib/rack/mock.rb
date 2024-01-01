@@ -1,3 +1,0 @@
-# frozen_string_literal: true
-
-require_relative 'mock_request'

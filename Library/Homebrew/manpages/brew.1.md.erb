@@ -30,25 +30,29 @@ Linux distribution without requiring `sudo`.
 
 ## TERMINOLOGY
 
-**formula**: Homebrew package definition built from upstream sources
+**formula**: Homebrew package definition that builds from upstream sources
 
 **cask**: Homebrew package definition that installs macOS native applications
 
-**keg**: installation destination directory of a given **formula** version e.g. `/usr/local/Cellar/foo/0.1`
+**prefix**: path in which Homebrew is installed, e.g. `/usr/local`
 
-**rack**: directory containing one or more versioned kegs e.g. `/usr/local/Cellar/foo`
+**keg**: installation destination directory of a given **formula** version, e.g. `/usr/local/Cellar/foo/0.1`
 
-**keg-only**: a **formula** is **keg-only** if it is not symlinked into Homebrew's prefix (e.g. `/usr/local`)
+**rack**: directory containing one or more versioned **kegs**, e.g. `/usr/local/Cellar/foo`
 
-**cellar**: directory containing one or more named **racks** e.g. `/usr/local/Cellar`
+**keg-only**: a **formula** is *keg-only* if it is not symlinked into Homebrew's prefix
 
-**Caskroom**: directory containing one or more named **casks** e.g. `/usr/local/Caskroom`
+**opt prefix**: a symlink to the active version of a **keg**, e.g. `/usr/local/opt/foo`
+
+**Cellar**: directory containing one or more named **racks**, e.g. `/usr/local/Cellar`
+
+**Caskroom**: directory containing one or more named **casks**, e.g. `/usr/local/Caskroom`
 
 **external command**: `brew` subcommand defined outside of the Homebrew/brew GitHub repository
 
 **tap**: directory (and usually Git repository) of **formulae**, **casks** and/or **external commands**
 
-**bottle**: pre-built **keg** poured into the **cellar**/**rack** instead of building from upstream sources
+**bottle**: pre-built **keg** poured into a **rack** of the **Cellar** instead of building from upstream sources
 
 ## ESSENTIAL COMMANDS
 
@@ -143,6 +147,23 @@ specified the same way as the <formula> arguments described in
 Note that environment variables must have a value set to be detected. For
 example, run `export HOMEBREW_NO_INSECURE_REDIRECT=1` rather than just
 `export HOMEBREW_NO_INSECURE_REDIRECT`.
+
+`HOMEBREW_*` environment variables can also be set in Homebrew's environment
+files:
+
+* `/etc/homebrew/brew.env` (system-wide)
+
+* `$HOMEBREW_PREFIX/etc/homebrew/brew.env` (prefix-specific)
+
+* `$XDG_CONFIG_HOME/homebrew/brew.env` if `$XDG_CONFIG_HOME` is set or
+  `$HOME/.homebrew/brew.env` otherwise (user-specific)
+
+User-specific environment files take precedence over prefix-specific files and
+prefix-specific files take precedence over system-wide files (unless
+`HOMEBREW_SYSTEM_ENV_TAKES_PRIORITY` is set, see below).
+
+Note that these files do not support shell variable expansion e.g. `$HOME` or
+command execution e.g. `$(cat file)`.
 
 <%= environment_variables %>
 

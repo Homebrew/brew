@@ -9,8 +9,6 @@ module Utils
   # @api private
   module Svn
     class << self
-      extend T::Sig
-
       include SystemCommand::Mixin
 
       sig { returns(T::Boolean) }
@@ -42,7 +40,7 @@ module Utils
       def invalid_cert_flags
         opoo "Ignoring Subversion certificate errors!"
         args = ["--non-interactive", "--trust-server-cert"]
-        if Version.create(version || "-1") >= Version.create("1.9")
+        if Version.new(version || "-1") >= Version.new("1.9")
           args << "--trust-server-cert-failures=expired,not-yet-valid"
         end
         args

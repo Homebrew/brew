@@ -1,4 +1,3 @@
-# typed: false
 # frozen_string_literal: true
 
 if ENV["HOMEBREW_TESTS_COVERAGE"]
@@ -110,6 +109,8 @@ RSpec.configure do |config|
 
   config.include(FileUtils)
 
+  config.include(Context)
+
   config.include(RuboCop::RSpec::ExpectOffense)
 
   config.include(Test::Helper::Cask)
@@ -168,7 +169,7 @@ RSpec.configure do |config|
 
   config.before(:each, :needs_homebrew_curl) do
     ENV["HOMEBREW_CURL"] = HOMEBREW_BREWED_CURL_PATH
-    skip "A `curl` with TLS 1.3 support is required." unless curl_supports_tls13?
+    skip "A `curl` with TLS 1.3 support is required." unless Utils::Curl.curl_supports_tls13?
   rescue FormulaUnavailableError
     skip "No `curl` formula is available."
   end
@@ -197,6 +198,7 @@ RSpec.configure do |config|
     Tab.clear_cache
     Dependency.clear_cache
     Requirement.clear_cache
+    Readall.clear_cache if defined?(Readall)
     FormulaInstaller.clear_attempted
     FormulaInstaller.clear_installed
     FormulaInstaller.clear_fetched
@@ -236,6 +238,7 @@ RSpec.configure do |config|
       example.example.set_exception(e)
     ensure
       ENV.replace(@__env)
+      Context.current = Context::ContextStruct.new
 
       $stdout.reopen(@__stdout)
       $stderr.reopen(@__stderr)
@@ -252,6 +255,7 @@ RSpec.configure do |config|
       Tab.clear_cache
       Dependency.clear_cache
       Requirement.clear_cache
+      Readall.clear_cache if defined?(Readall)
 
       FileUtils.rm_rf [
         *TEST_DIRECTORIES,

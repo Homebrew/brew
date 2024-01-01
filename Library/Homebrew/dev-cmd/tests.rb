@@ -5,8 +5,6 @@ require "cli/parser"
 require "fileutils"
 
 module Homebrew
-  extend T::Sig
-
   module_function
 
   sig { returns(CLI::Parser) }
@@ -26,6 +24,8 @@ module Homebrew
              description: "Enable debugging using byebug."
       switch "--changed",
              description: "Only runs tests on files that were changed from the master branch."
+      switch "--fail-fast",
+             description: "Exit early on the first failing test."
       flag   "--only=",
              description: "Run only <test_script>`_spec.rb`. Appending `:`<line_number> will start at a " \
                           "specific line."
@@ -88,7 +88,8 @@ module Homebrew
   def tests
     args = tests_args.parse
 
-    Homebrew.install_bundler_gems!
+    # Given we might be testing various commands, we probably want everything (except sorbet-static)
+    Homebrew.install_bundler_gems!(groups: Homebrew.valid_gem_groups - ["sorbet"])
 
     require "byebug" if args.byebug?
 
@@ -155,6 +156,7 @@ module Homebrew
         --color
         --require spec_helper
       ]
+      bundle_args << "--fail-fast" if args.fail_fast?
 
       # TODO: Refactor and move to extend/os
       # rubocop:disable Homebrew/MoveToExtendOS
@@ -206,8 +208,8 @@ module Homebrew
       HOMEBREW_CACHE
       HOMEBREW_LOGS
       HOMEBREW_TEMP
-      HOMEBREW_USE_RUBY_FROM_PATH
     ]
+    allowed_test_env << "HOMEBREW_USE_RUBY_FROM_PATH" if Homebrew::EnvConfig.developer?
     Homebrew::EnvConfig::ENVS.keys.map(&:to_s).each do |env|
       next if allowed_test_env.include?(env)
 

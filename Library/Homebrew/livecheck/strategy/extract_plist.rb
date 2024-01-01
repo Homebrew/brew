@@ -19,8 +19,6 @@ module Homebrew
       #
       # @api private
       class ExtractPlist
-        extend T::Sig
-
         # A priority of zero causes livecheck to skip the strategy. We do this
         # for {ExtractPlist} so we can selectively apply it when appropriate.
         PRIORITY = 0
@@ -43,8 +41,6 @@ module Homebrew
           :bundle_version,
           keyword_init: true,
         ) do
-          extend T::Sig
-
           extend Forwardable
 
           # @api public
@@ -108,7 +104,7 @@ module Homebrew
 
           unversioned_cask_checker = if url.present? && url != cask.url.to_s
             # Create a copy of the `cask` that uses the `livecheck` block URL
-            cask_copy = Cask::CaskLoader.load(cask.full_name)
+            cask_copy = Cask::CaskLoader.load(cask.sourcefile_path)
             cask_copy.allow_reassignment = true
             cask_copy.url { url }
             UnversionedCaskChecker.new(cask_copy)

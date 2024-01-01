@@ -23,8 +23,6 @@ module Homebrew
       #
       # @api public
       class Json
-        extend T::Sig
-
         NICE_NAME = "JSON"
 
         # A priority of zero causes livecheck to skip the strategy. We do this

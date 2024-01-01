@@ -5,8 +5,6 @@
 #
 # @api private
 class Option
-  extend T::Sig
-
   attr_reader :name, :description, :flag
 
   def initialize(name, description = "")
@@ -44,8 +42,6 @@ end
 #
 # @api private
 class DeprecatedOption
-  extend T::Sig
-
   attr_reader :old, :current
 
   def initialize(old, current)
@@ -73,8 +69,6 @@ end
 #
 # @api private
 class Options
-  extend T::Sig
-
   include Enumerable
 
   def self.create(array)

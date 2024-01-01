@@ -7,6 +7,7 @@ require "cli/parser"
 
 class String
   def f(*args)
+    require "formula"
     Formulary.factory(self, *args)
   end
 
@@ -26,8 +27,6 @@ class Symbol
 end
 
 module Homebrew
-  extend T::Sig
-
   module_function
 
   sig { returns(CLI::Parser) }
@@ -64,6 +63,7 @@ module Homebrew
     end
 
     if args.pry?
+      Homebrew.install_bundler_gems!(groups: ["pry"])
       require "pry"
     else
       require "irb"

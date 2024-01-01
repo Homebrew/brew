@@ -30,8 +30,8 @@ Please consider a regular donation through [GitHub Sponsors](https://github.com/
 ## Community
 
 - [Homebrew/discussions (forum)](https://github.com/orgs/Homebrew/discussions)
-- [@MacHomebrew (Twitter)](https://twitter.com/MacHomebrew)
 - [@homebrew@fosstodon.org (Mastodon)](https://fosstodon.org/@homebrew)
+- [@MacHomebrew (𝕏 (formerly known as Twitter))](https://twitter.com/MacHomebrew)
 
 ## Contributing
 
@@ -39,9 +39,9 @@ We'd love you to contribute to Homebrew. First, please read our [Contribution Gu
 
 We explicitly welcome contributions from people who have never contributed to open-source before: we were all beginners once! We can help build on a partially working pull request with the aim of getting it merged. We are also actively seeking to diversify our contributors and especially welcome contributions from women from all backgrounds and people of colour.
 
-A good starting point for contributing is running `brew audit --strict` with some of the packages you use (e.g. `brew audit --strict wget` if you use `wget`) and then read through the warnings, try to fix them until `brew audit --strict` shows no results and [submit a pull request](https://docs.brew.sh/How-To-Open-a-Homebrew-Pull-Request). If no formulae you use have warnings you can run `brew audit --strict` without arguments to have it run on all packages and pick one.
+A good starting point for contributing is to first [tap `homebrew/core`](https://docs.brew.sh/FAQ#can-i-edit-formulae-myself), then run `brew audit --strict` with some of the packages you use (e.g. `brew audit --strict wget` if you use `wget`) and read through the warnings. Try to fix them until `brew audit --strict` shows no results and [submit a pull request](https://docs.brew.sh/How-To-Open-a-Homebrew-Pull-Request). If no formulae you use have warnings you can run `brew audit --strict` without arguments to have it run on all packages and pick one.
 
-Alternatively, for something more substantial, check out one of the issues labeled `help wanted` in [Homebrew/brew](https://github.com/homebrew/brew/issues?q=is%3Aopen+is%3Aissue+label%3A%22help+wanted%22) or [Homebrew/homebrew-core](https://github.com/homebrew/homebrew-core/issues?q=is%3Aopen+is%3Aissue+label%3A%22help+wanted%22).
+Alternatively, for something more substantial, check out one of the issues labelled `help wanted` in [Homebrew/brew](https://github.com/homebrew/brew/issues?q=is%3Aopen+is%3Aissue+label%3A%22help+wanted%22) or [Homebrew/homebrew-core](https://github.com/homebrew/homebrew-core/issues?q=is%3Aopen+is%3Aissue+label%3A%22help+wanted%22).
 
 Good luck!
 
@@ -53,11 +53,11 @@ Please report security issues by filling in [the security advisory form](https:/
 
 Homebrew's [Project Leader](https://docs.brew.sh/Homebrew-Governance#6-project-leader) is [Mike McQuaid](https://github.com/MikeMcQuaid).
 
-Homebrew's [Project Leadership Committee](https://docs.brew.sh/Homebrew-Governance#4-project-leadership-committee) is [Colin Dean](https://github.com/colindean), [Issy Long](https://github.com/issyl0), [Jonathan Chang](https://github.com/jonchang), [Mike McQuaid](https://github.com/MikeMcQuaid), [Misty De Méo](https://github.com/mistydemeo), and [Sean Molenaar](https://github.com/SMillerDev).
+Homebrew's [Project Leadership Committee](https://docs.brew.sh/Homebrew-Governance#4-project-leadership-committee) is [Colin Dean](https://github.com/colindean), [Issy Long](https://github.com/issyl0), [Mike McQuaid](https://github.com/MikeMcQuaid), [Misty De Méo](https://github.com/mistydemeo) and [Sean Molenaar](https://github.com/SMillerDev).
 
-Homebrew's [Technical Steering Committee](https://docs.brew.sh/Homebrew-Governance#7-technical-steering-committee) is [Bo Anderson](https://github.com/Bo98), [FX Coudert](https://github.com/fxcoudert), [Michka Popoff](https://github.com/iMichka), [Mike McQuaid](https://github.com/MikeMcQuaid), and [Rylan Polster](https://github.com/Rylan12).
+Homebrew's [Technical Steering Committee](https://docs.brew.sh/Homebrew-Governance#7-technical-steering-committee) is [Bo Anderson](https://github.com/Bo98), [FX Coudert](https://github.com/fxcoudert), [Michka Popoff](https://github.com/iMichka), [Mike McQuaid](https://github.com/MikeMcQuaid) and [Rylan Polster](https://github.com/Rylan12).
 
-Homebrew's maintainers are [Alexander Bayandin](https://github.com/bayandin), [Bevan Kay](https://github.com/bevanjkay), [Bo Anderson](https://github.com/Bo98), [Branch Vincent](https://github.com/branchvincent), [Caleb Xu](https://github.com/alebcay), [Carlo Cabrera](https://github.com/carlocab), [Daniel Nachun](https://github.com/danielnachun), [Dawid Dziurla](https://github.com/dawidd6), [Dustin Rodrigues](https://github.com/dtrodrigues), [Eric Knibbe](https://github.com/EricFromCanada), [FX Coudert](https://github.com/fxcoudert), [George Adams](https://github.com/gdams), [Issy Long](https://github.com/issyl0), [Markus Reiter](https://github.com/reitermarkus), [Miccal Matthews](https://github.com/miccal), [Michael Cho](https://github.com/cho-m), [Michka Popoff](https://github.com/iMichka), [Mike McQuaid](https://github.com/MikeMcQuaid), [Nanda H Krishna](https://github.com/nandahkrishna), [Patrick Linnane](https://github.com/p-linnane), [Rui Chen](https://github.com/chenrui333), [Ruoyu Zhong](https://github.com/ZhongRuoyu), [Rylan Polster](https://github.com/Rylan12), [Sam Ford](https://github.com/samford), [Sean Molenaar](https://github.com/SMillerDev), and [Thierry Moisan](https://github.com/Moisan).
+Homebrew's maintainers are [Alexander Bayandin](https://github.com/bayandin), [Bevan Kay](https://github.com/bevanjkay), [Bo Anderson](https://github.com/Bo98), [Branch Vincent](https://github.com/branchvincent), [Caleb Xu](https://github.com/alebcay), [Carlo Cabrera](https://github.com/carlocab), [David Baumgold](https://github.com/singingwolfboy), [Dustin Rodrigues](https://github.com/dtrodrigues), [Eric Knibbe](https://github.com/EricFromCanada), [FX Coudert](https://github.com/fxcoudert), [George Adams](https://github.com/gdams), [Issy Long](https://github.com/issyl0), [Justin Krehel](https://github.com/krehel), [Markus Reiter](https://github.com/reitermarkus), [Miccal Matthews](https://github.com/miccal), [Michael Cho](https://github.com/cho-m), [Michka Popoff](https://github.com/iMichka), [Mike McQuaid](https://github.com/MikeMcQuaid), [Nanda H Krishna](https://github.com/nandahkrishna), [Patrick Linnane](https://github.com/p-linnane), [Razvan Azamfirei](https://github.com/razvanazamfirei), [Rui Chen](https://github.com/chenrui333), [Ruoyu Zhong](https://github.com/ZhongRuoyu), [Rylan Polster](https://github.com/Rylan12), [Sam Ford](https://github.com/samford), [Sean Molenaar](https://github.com/SMillerDev) and [Thierry Moisan](https://github.com/Moisan).
 
 Former maintainers with significant contributions include [Misty De Méo](https://github.com/mistydemeo), [Shaun Jackman](https://github.com/sjackman), [Vítor Galvão](https://github.com/vitorgalvao), [Claudia Pellegrino](https://github.com/claui), [Seeker](https://github.com/SeekingMeaning), [William Woodruff](https://github.com/woodruffw), [Jan Viljanen](https://github.com/javian), [JCount](https://github.com/jcount), [commitay](https://github.com/commitay), [Dominyk Tiller](https://github.com/DomT4), [Tim Smith](https://github.com/tdsmith), [Baptiste Fontaine](https://github.com/bfontaine), [Xu Cheng](https://github.com/xu-cheng), [Martin Afanasjew](https://github.com/UniqMartin), [Brett Koonce](https://github.com/asparagui), [Charlie Sharpsteen](https://github.com/Sharpie), [Jack Nagel](https://github.com/jacknagel), [Adam Vandenberg](https://github.com/adamv), [Andrew Janke](https://github.com/apjanke), [Alex Dunn](https://github.com/dunn), [neutric](https://github.com/neutric), [Tomasz Pajor](https://github.com/nijikon), [Uladzislau Shablinski](https://github.com/vladshablinsky), [Alyssa Ross](https://github.com/alyssais), [ilovezfs](https://github.com/ilovezfs), [Chongyu Zhu](https://github.com/lembacon) and Homebrew's creator: [Max Howell](https://github.com/mxcl).
 
@@ -74,17 +74,17 @@ Our macOS continuous integration infrastructure is hosted by [MacStadium's Orka]
 
 Secure password storage and syncing is provided by [1Password for Teams](https://1password.com/teams/).
 
-[![1Password](https://1password.com/img/redesign/press/logo.c757be5591a513da9c768f8b80829318.svg)](https://1password.com)
+[<img src="https://i.1password.com/akb/featured/1password-icon.svg" alt="1Password" height="64">](https://1password.com)
 
 Flaky test detection and tracking is provided by [BuildPulse](https://buildpulse.io/).
 
-[![BuildPulse](https://user-images.githubusercontent.com/2988/130445500-96f44c87-e7dd-4da0-9877-7e5b1618e144.png)](https://buildpulse.io)
+[![BuildPulse](https://github.com/Homebrew/brew/assets/1699443/87385e9a-6c47-4e59-b17e-fe083e945709)](https://buildpulse.io)
 
 <https://brew.sh>'s DNS is [resolving with DNSimple](https://dnsimple.com/resolving/homebrew).
 
 [![DNSimple](https://cdn.dnsimple.com/assets/resolving-with-us/logo-light.png)](https://dnsimple.com/resolving/homebrew#gh-light-mode-only)
 [![DNSimple](https://cdn.dnsimple.com/assets/resolving-with-us/logo-dark.png)](https://dnsimple.com/resolving/homebrew#gh-dark-mode-only)
 
-Homebrew is generously supported by [GitHub](https://github.com/github), [Custom Ink](https://github.com/customink), [Randy Reddig](https://github.com/ydnar), [Sentry](https://github.com/getsentry), [Codecademy](https://github.com/Codecademy), [Appwrite](https://github.com/appwrite), [Mercedes-Benz Group](https://github.com/mercedes-benz), [embark-studios](https://github.com/embark-studios), [Agilend](https://github.com/Agilend) and many other users and organisations via [GitHub Sponsors](https://github.com/sponsors/Homebrew).
+Homebrew is generously supported by [GitHub](https://github.com/github), [Custom Ink](https://github.com/customink), [Randy Reddig](https://github.com/ydnar), [Codecademy](https://github.com/Codecademy), [MacPaw Inc.](https://github.com/MacPaw), [whorider](https://github.com/whorider), [fly.io](https://github.com/superfly), [embark-studios](https://github.com/embark-studios) and many other users and organisations via [GitHub Sponsors](https://github.com/sponsors/Homebrew).
 
-[![GitHub](https://github.com/github.png?size=64)](https://github.com/github)
+[![GitHub](https://github.com/github.png?size=64)](https://github.com/github)[![fly.io](https://github.com/superfly.png?size=64)](https://github.com/superfly)

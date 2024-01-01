@@ -1,4 +1,3 @@
-# typed: false
 # frozen_string_literal: true
 
 require "utils/autoremove"
@@ -13,13 +12,13 @@ describe Utils::Autoremove do
       end
     end
 
-    let(:formula_is_dep1) do
+    let(:first_formula_dep) do
       formula "one" do
         url "one-1.1"
       end
     end
 
-    let(:formula_is_dep2) do
+    let(:second_formula_dep) do
       formula "two" do
         url "two-1.1"
       end
@@ -34,8 +33,8 @@ describe Utils::Autoremove do
     let(:formulae) do
       [
         formula_with_deps,
-        formula_is_dep1,
-        formula_is_dep2,
+        first_formula_dep,
+        second_formula_dep,
         formula_is_build_dep,
       ]
     end
@@ -43,9 +42,9 @@ describe Utils::Autoremove do
     let(:tab_from_keg) { double }
 
     before do
-      allow(formula_with_deps).to receive(:runtime_formula_dependencies).and_return([formula_is_dep1,
-                                                                                     formula_is_dep2])
-      allow(formula_is_dep1).to receive(:runtime_formula_dependencies).and_return([formula_is_dep2])
+      allow(formula_with_deps).to receive(:runtime_formula_dependencies).and_return([first_formula_dep,
+                                                                                     second_formula_dep])
+      allow(first_formula_dep).to receive(:runtime_formula_dependencies).and_return([second_formula_dep])
 
       allow(Tab).to receive(:for_keg).and_return(tab_from_keg)
     end
@@ -55,7 +54,7 @@ describe Utils::Autoremove do
     include_context "with formulae for dependency testing"
 
     before do
-      allow(Formulary).to receive(:factory).with("three").and_return(formula_is_build_dep)
+      allow(Formulary).to receive(:factory).with("three", { warn: false }).and_return(formula_is_build_dep)
     end
 
     context "when formulae are bottles" do
@@ -116,28 +115,28 @@ describe Utils::Autoremove do
       RUBY
     end
 
-    let(:cask_no_deps1) do
+    let(:first_cask_no_deps) do
       Cask::CaskLoader.load(+<<-RUBY)
         cask "green" do
         end
       RUBY
     end
 
-    let(:cask_no_deps2) do
+    let(:second_cask_no_deps) do
       Cask::CaskLoader.load(+<<-RUBY)
         cask "purple" do
         end
       RUBY
     end
 
-    let(:casks_no_deps) { [cask_no_deps1, cask_no_deps2] }
-    let(:casks_one_dep) { [cask_no_deps1, cask_no_deps2, cask_one_dep] }
-    let(:casks_multiple_deps) { [cask_no_deps1, cask_no_deps2, cask_multiple_deps] }
+    let(:casks_no_deps) { [first_cask_no_deps, second_cask_no_deps] }
+    let(:casks_one_dep) { [first_cask_no_deps, second_cask_no_deps, cask_one_dep] }
+    let(:casks_multiple_deps) { [first_cask_no_deps, second_cask_no_deps, cask_multiple_deps] }
 
     before do
       allow(Formula).to receive("[]").with("zero").and_return(formula_with_deps)
-      allow(Formula).to receive("[]").with("one").and_return(formula_is_dep1)
-      allow(Formula).to receive("[]").with("two").and_return(formula_is_dep2)
+      allow(Formula).to receive("[]").with("one").and_return(first_formula_dep)
+      allow(Formula).to receive("[]").with("two").and_return(second_formula_dep)
     end
   end
 
@@ -151,12 +150,12 @@ describe Utils::Autoremove do
 
     specify "one dependent" do
       expect(described_class.send(:formulae_with_cask_dependents, casks_one_dep))
-        .to eq([formula_is_dep2])
+        .to eq([second_formula_dep])
     end
 
     specify "multiple dependents" do
       expect(described_class.send(:formulae_with_cask_dependents, casks_multiple_deps))
-        .to contain_exactly(formula_with_deps, formula_is_dep1, formula_is_dep2)
+        .to contain_exactly(formula_with_deps, first_formula_dep, second_formula_dep)
     end
   end
 end

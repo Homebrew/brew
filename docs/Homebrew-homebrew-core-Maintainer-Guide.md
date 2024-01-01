@@ -95,8 +95,8 @@ The following checklist is intended to help maintainers decide on whether to mer
 
 - previously opened active PRs, as we would like to be fair to contributors who came first
 - patches/`inreplace` that have been applied to upstream and can be removed
-- comments in formula around `url`, as we do skip some versions (for example [`vim`](https://github.com/Homebrew/homebrew-core/blob/359dbb190bb3776c4d6a1f603a271dd8f186f077/Formula/vim.rb#L4) or [`v8`](https://github.com/Homebrew/homebrew-core/blob/359dbb190bb3776c4d6a1f603a271dd8f186f077/Formula/v8.rb#L4))
-- vendored resources that need updates (for example [`emscripten`](https://github.com/Homebrew/homebrew-core/commit/57126ac765c3ac5201ce53bcdebf7a0e19071eba))
+- comments in formula around `url`, as we do skip some versions (for example [`vim`](https://github.com/Homebrew/homebrew-core/blob/960639ce96ae5dd4a4b60b8887f44c1475dc60db/Formula/v/vim.rb#L4) or [`v8`](https://github.com/Homebrew/homebrew-core/blob/d14753288535e01178a3cd510ef2d64b03901c01/Formula/v/v8.rb#L4))
+- vendored resources that need updates (for example [`emscripten`](https://github.com/Homebrew/homebrew-core/blob/442f9cc511ce6dfe75b96b2c83749d90dde914d2/Formula/e/emscripten.rb#L49-L67))
 - vendored dependencies (for example [`certbot`](https://github.com/Homebrew/homebrew-core/pull/42966/files))
 - stable/announced release:
   - some teams use an odd minor release number for tests and even for stable releases
@@ -165,3 +165,35 @@ end
 ```
 
 For an explanation of why this happens, read the [Ubuntu 11.04 Toolchain documentation](https://wiki.ubuntu.com/NattyNarwhal/ToolchainTransition).
+
+## Staging Branches
+
+### Summary
+
+Some formulae (e.g. Python, OpenSSL, ICU, Boost) have a large number of dependents. This makes updating these formulae (or their dependents) difficult because the standard procedure involves updating a large number of formulae in a single pull request. An alternative procedure that can significantly simplify this process is to use a staging branch.
+
+The idea of using a staging branch is to merge updates and publish bottles for the affected formula to a non-default branch. This allows work to be done incrementally in smaller PRs, instead of in one giant PR that touches many formulae. When the staging branch is ready, it can be merged to the `master`/default branch.
+
+Before making use of a staging branch, there is one important disadvantage to consider: once you have merged bottle updates to the staging branch, it is **very difficult** to take them back. This typically involves deleting uploaded bottles, which will occasionally require an owner of the Homebrew GitHub organisation to delete uploaded bottles one at a time.
+
+### How to use a staging branch
+
+Here is a rough outline of how to use a staging branch:
+
+1. Create the staging branch in [Homebrew/homebrew-core](https://github.com/Homebrew/homebrew-core). The name of the staging branch _must_ start with the name of the root formula, followed by a `-`, and end in `-staging`. You can omit the `@` and anything that follows for versioned formulae (e.g. `icu4c-staging`, `openssl-migration-staging`, `python@3.12-staging`). It might be helpful to look at the [code](https://github.com/Homebrew/brew/blob/3db1acf3e38e270af4e1c3f214622bbfb18f830e/Library/Homebrew/formula_auditor.rb#L357-L375) that parses the branch names to check whether a PR targets a staging branch.
+
+1. Open an issue in homebrew-core inviting contributors to help. Be sure to include instructions for how to do so, and a checklist of formulae that need to be updated. See [Homebrew/homebrew-core#134251](https://github.com/Homebrew/homebrew-core/issues/134251) for an example.
+
+1. Open a _draft_ PR that merges the staging branch into the `master` branch. This allows you to keep track of the work done so far. You may wish to apply the [`no long build conflict`](https://github.com/Homebrew/homebrew-core/labels/no%20long%20build%20conflict) label to this PR to avoid conflicting changes from being merged to the `master` branch.
+
+1. Open PRs targeting the staging branch that update the affected formulae. Each PR should touch as few formulae as possible. The typical PR that targets the staging branch will update only one formula at a time. Staging branch PRs can be merged using the same process as PRs that target the `master` branch. Ideally, these PRs should be opened in [topological order](https://en.wikipedia.org/wiki/Topological_sorting) according to the dependency graph, but we don't currently have good tooling for generating a topological sort. (Help wanted.)
+
+1. Label PRs that target the staging branch with the [`staging-branch-pr`](https://github.com/Homebrew/homebrew-core/labels/staging-branch-pr) label for ease of tracking and review. (TODO: Add some automation for this to homebrew-core.)
+
+1. Monitor the draft PR you created in step 3 above for merge conflicts. If you encounter a merge conflict, you must resolve those conflicts in a staging branch PR that merges the `master` branch into the staging branch.
+
+1. When the staging branch is ready to be merged into `master`, mark the draft PR as ready for review and merge it into the `master` branch. Your PR may spend a long time in the merge queue waiting for the bottle fetch tests to run.
+
+For examples of uses of the staging branch, see homebrew-core PRs labelled [`openssl-3-migration-staging`](https://github.com/Homebrew/homebrew-core/labels/openssl-3-migration), [Homebrew/homebrew-core#134260](https://github.com/Homebrew/homebrew-core/pull/134260), or [Homebrew/homebrew-core#133611](https://github.com/Homebrew/homebrew-core/pull/133611).
+
+Finally: while the use of a staging branch worked extremely well in the two instances it was used (see PRs linked in the previous paragraph), the procedure outlined above is not perfect. Suggestions for improvement are much appreciated.

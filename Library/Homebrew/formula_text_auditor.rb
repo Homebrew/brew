@@ -16,7 +16,7 @@ module Homebrew
     end
 
     def trailing_newline?
-      /\Z\n/ =~ @text
+      /\Z\n/.match?(@text)
     end
 
     def =~(other)
@@ -32,12 +32,12 @@ module Homebrew
     end
 
     def line_number(regex, skip = 0)
-      index = @lines.drop(skip).index { |line| line =~ regex }
+      index = @lines.drop(skip).index { |line| line.match?(regex) }
       index ? index + 1 : nil
     end
 
     def reverse_line_number(regex)
-      index = @lines.reverse.index { |line| line =~ regex }
+      index = @lines.reverse.index { |line| line.match?(regex) }
       index ? @lines.count - index : nil
     end
   end

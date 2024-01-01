@@ -1,4 +1,3 @@
-# typed: false
 # frozen_string_literal: true
 
 describe Cask::Installer, :cask do
@@ -113,9 +112,8 @@ describe Cask::Installer, :cask do
         <<~EOS,
           ==> Downloading file://#{HOMEBREW_LIBRARY_PATH}/test/support/fixtures/cask/caffeine.zip
           ==> Installing Cask with-installer-manual
-          To complete the installation of Cask with-installer-manual, you must also
-          run the installer at:
-            #{with_installer_manual.staged_path.join("Caffeine.app")}
+          Cask with-installer-manual only provides a manual installer. To run it and complete the installation:
+            open #{with_installer_manual.staged_path.join("Caffeine.app")}
           🍺  with-installer-manual was successfully installed!
         EOS
       ).to_stdout
@@ -141,21 +139,6 @@ describe Cask::Installer, :cask do
       expect do
         described_class.new(with_auto_updates, force: true).install
       end.not_to raise_error
-    end
-
-    # unlike the CLI, the internal interface throws exception on double-install
-    it "installer method raises an exception when already-installed Casks are attempted" do
-      transmission = Cask::CaskLoader.load(cask_path("local-transmission"))
-
-      expect(transmission).not_to be_installed
-
-      installer = described_class.new(transmission)
-
-      installer.install
-
-      expect do
-        installer.install
-      end.to raise_error(Cask::CaskAlreadyInstalledError)
     end
 
     it "allows already-installed Casks to be installed if force is provided" do
@@ -241,7 +224,8 @@ describe Cask::Installer, :cask do
       let(:content) { File.read(path) }
 
       it "installs cask" do
-        expect(Homebrew::API::Cask).to receive(:fetch_source).once.and_return(content)
+        source_caffeine = Cask::CaskLoader.load(path)
+        expect(Homebrew::API::Cask).to receive(:source_download).once.and_return(source_caffeine)
 
         caffeine = Cask::CaskLoader.load(path)
         expect(caffeine).to receive(:loaded_from_api?).once.and_return(true)
@@ -308,7 +292,8 @@ describe Cask::Installer, :cask do
       end
 
       it "uninstalls cask" do
-        expect(Homebrew::API::Cask).to receive(:fetch_source).twice.and_return(content)
+        source_caffeine = Cask::CaskLoader.load(path)
+        expect(Homebrew::API::Cask).to receive(:source_download).twice.and_return(source_caffeine)
 
         caffeine = Cask::CaskLoader.load(path)
         expect(caffeine).to receive(:loaded_from_api?).twice.and_return(true)

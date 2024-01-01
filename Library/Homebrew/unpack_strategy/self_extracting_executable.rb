@@ -6,8 +6,6 @@ require_relative "generic_unar"
 module UnpackStrategy
   # Strategy for unpacking self-extracting executables.
   class SelfExtractingExecutable < GenericUnar
-    extend T::Sig
-
     sig { returns(T::Array[String]) }
     def self.extensions
       []

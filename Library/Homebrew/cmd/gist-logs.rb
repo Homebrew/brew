@@ -9,8 +9,6 @@ require "socket"
 require "cli/parser"
 
 module Homebrew
-  extend T::Sig
-
   extend Install
 
   module_function
@@ -75,9 +73,7 @@ module Homebrew
       EOS
     end
 
-    if args.new_issue?
-      url = GitHub.create_issue(formula.tap, "#{formula.name} failed to build on #{MacOS.full_version}", url)
-    end
+    url = GitHub.create_issue(formula.tap, "#{formula.name} failed to build on #{OS_VERSION}", url) if args.new_issue?
 
     puts url if url
   end

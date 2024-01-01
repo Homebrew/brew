@@ -1,4 +1,3 @@
-# typed: false
 # frozen_string_literal: true
 
 require "completions"
@@ -223,7 +222,7 @@ describe Homebrew::Completions do
 
       it "will override global options with local descriptions" do
         options = described_class.command_options("upgrade")
-        expect(options["--verbose"]).to eq "Print the verification and postinstall steps."
+        expect(options["--verbose"]).to eq "Print the verification and post-install steps."
       end
     end
 

@@ -1,4 +1,3 @@
-# typed: false
 # frozen_string_literal: true
 
 require "api"
@@ -44,16 +43,6 @@ describe Homebrew::API::Cask do
       mock_curl_download stdout: casks_json
       casks_output = described_class.all_casks
       expect(casks_output).to eq casks_hash
-    end
-  end
-
-  describe "::fetch_source" do
-    it "fetches the source of a cask (defaulting to master when no `git_head` is passed)" do
-      curl_output = instance_double(SystemCommand::Result, stdout: "foo", success?: true)
-      expect(Utils::Curl).to receive(:curl_output)
-        .with("--fail", "https://raw.githubusercontent.com/Homebrew/homebrew-cask/HEAD/Casks/foo.rb")
-        .and_return(curl_output)
-      described_class.fetch_source("foo", path: "Casks/foo.rb", git_head: "HEAD")
     end
   end
 end

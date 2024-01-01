@@ -9,7 +9,6 @@ module RuboCop
       # This cop audits `patch`es in formulae.
       # TODO: Many of these could be auto-corrected.
       class Patches < FormulaCop
-        extend T::Sig
         extend AutoCorrector
 
         def audit_formula(node, _class_node, _parent_class_node, body)

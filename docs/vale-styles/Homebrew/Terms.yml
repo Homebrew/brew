@@ -3,8 +3,10 @@ extends: substitution
 message: Use '%s' instead of '%s'.
 link: "https://github.com/Homebrew/brew/blob/HEAD/docs/Prose-Style-Guidelines.md#terminology-words-and-word-styling"
 level: error
-scope: $paragraph
+scope: paragraph
+
 swap:
-  Pull Request: pull request
+  "(?<!How to Open a Homebrew )Pull Request": pull request
   repo: repository
+  repos: repositories
   Rubocop: RuboCop

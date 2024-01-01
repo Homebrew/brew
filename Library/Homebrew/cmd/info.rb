@@ -14,8 +14,6 @@ require "deprecate_disable"
 require "api"
 
 module Homebrew
-  extend T::Sig
-
   module_function
 
   VALID_DAYS = %w[30 90 365].freeze
@@ -27,7 +25,6 @@ module Homebrew
     Homebrew::CLI::Parser.new do
       description <<~EOS
         Display brief statistics for your Homebrew installation.
-
         If a <formula> or <cask> is provided, show summary of information about it.
       EOS
       switch "--analytics",
@@ -44,6 +41,9 @@ module Homebrew
                           "The value for <category> must be `install`, `install-on-request` or `build-error`; " \
                           "`cask-install` or `os-version` may be specified if <formula> is not. " \
                           "The default is `install`."
+      switch "--github-packages-downloads",
+             description: "Scrape GitHub Packages download counts from HTML for a core formula.",
+             hidden:      true
       switch "--github",
              description: "Open the GitHub source page for <formula> and <cask> in a browser. " \
                           "To view the history locally: `brew log -p` <formula> or <cask>"
@@ -58,9 +58,6 @@ module Homebrew
              depends_on:  "--json",
              description: "Evaluate all available formulae and casks, whether installed or not, to print their " \
                           "JSON. Implied if `HOMEBREW_EVAL_ALL` is set."
-      switch "--all",
-             hidden:     true,
-             depends_on: "--json"
       switch "--variations",
              depends_on:  "--json",
              description: "Include the variations hash in each formula's JSON output."
@@ -102,10 +99,6 @@ module Homebrew
       print_analytics(args: args)
     elsif args.json
       all = args.eval_all?
-      if !all && args.all? && !Homebrew::EnvConfig.eval_all?
-        odisabled "brew info --all", "brew info --eval-all or HOMEBREW_EVAL_ALL"
-        all = true
-      end
 
       print_json(all, args: args)
     elsif args.github?
@@ -200,7 +193,7 @@ module Homebrew
       raise UsageError, "Cannot specify `--cask` when using `--json=v1`!" if args.cask?
 
       formulae = if all
-        Formula.all.sort
+        Formula.all(eval_all: args.eval_all?).sort
       elsif args.installed?
         Formula.installed.sort
       else
@@ -214,7 +207,10 @@ module Homebrew
       end
     when :v2
       formulae, casks = if all
-        [Formula.all.sort, Cask::Cask.all.sort_by(&:full_name)]
+        [
+          Formula.all(eval_all: args.eval_all?).sort,
+          Cask::Cask.all(eval_all: args.eval_all?).sort_by(&:full_name),
+        ]
       elsif args.installed?
         [Formula.installed.sort, Cask::Caskroom.casks.sort_by(&:full_name)]
       else
@@ -247,18 +243,23 @@ module Homebrew
     end
   end
 
-  def github_info(formula)
-    return formula.path if formula.tap.blank? || formula.tap.remote.blank?
+  def github_info(formula_or_cask)
+    return formula_or_cask.path if formula_or_cask.tap.blank? || formula_or_cask.tap.remote.blank?
 
-    path = case formula
+    path = case formula_or_cask
     when Formula
-      formula.path.relative_path_from(formula.tap.path)
+      formula = formula_or_cask
+      formula.path.relative_path_from(T.must(formula.tap).path)
     when Cask::Cask
-      return "#{formula.tap.default_remote}/blob/HEAD/Casks/#{formula.token}.rb" if formula.sourcefile_path.blank?
+      cask = formula_or_cask
+      if cask.sourcefile_path.blank?
+        return "#{cask.tap.default_remote}/blob/HEAD/#{cask.tap.relative_cask_path(cask.token)}"
+      end
 
-      formula.sourcefile_path.relative_path_from(formula.tap.path)
+      cask.sourcefile_path.relative_path_from(cask.tap.path)
     end
-    github_remote_path(formula.tap.remote, path)
+
+    github_remote_path(formula_or_cask.tap.remote, path)
   end
 
   def info_formula(formula, args:)
@@ -280,14 +281,8 @@ module Homebrew
     puts formula.desc if formula.desc
     puts Formatter.url(formula.homepage) if formula.homepage
 
-    deprecate_disable_type, deprecate_disable_reason = DeprecateDisable.deprecate_disable_info formula
-    if deprecate_disable_type.present?
-      if deprecate_disable_reason.present?
-        puts "#{deprecate_disable_type.capitalize} because it #{deprecate_disable_reason}!"
-      else
-        puts "#{deprecate_disable_type.capitalize}!"
-      end
-    end
+    deprecate_disable_info_string = DeprecateDisable.message(formula)
+    puts deprecate_disable_info_string.capitalize if deprecate_disable_info_string.present?
 
     conflicts = formula.conflicts.map do |conflict|
       reason = " (because #{conflict.reason})" if conflict.reason

@@ -109,6 +109,12 @@ module Hardware
           :arm_firestorm_icestorm
         when 0xda33d83d             # ARMv8.5-A (Blizzard, Avalanche)
           :arm_blizzard_avalanche
+        when 0xfa33415e             # ARMv8.6-A (M3, Ibiza)
+          :arm_ibiza
+        when 0x5f4dea93             # ARMv8.6-A (M3 Pro, Lobos)
+          :arm_lobos
+        when 0x72015832             # ARMv8.6-A (M3 Max, Palma)
+          :arm_palma
         else
           :dunno
         end

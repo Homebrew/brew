@@ -4,8 +4,6 @@
 require "cli/parser"
 
 module Homebrew
-  extend T::Sig
-
   sig { returns(CLI::Parser) }
   def self.typecheck_args
     Homebrew::CLI::Parser.new do
@@ -23,10 +21,6 @@ module Homebrew
       switch "--suggest-typed",
              depends_on:  "--update",
              description: "Try upgrading `typed` sigils."
-      switch "--fail-if-not-changed",
-             hidden:      true,
-             description: "Return a failing status code if all gems are up to date " \
-                          "and gem definitions do not need a tapioca update."
       flag   "--dir=",
              description: "Typecheck all files in a specific directory."
       flag   "--file=",
@@ -45,21 +39,16 @@ module Homebrew
   def self.typecheck
     args = typecheck_args.parse
 
-    Homebrew.install_bundler_gems!(groups: ["sorbet"])
+    update = args.update? || args.update_all?
+    groups = update ? Homebrew.valid_gem_groups : ["typecheck"]
+    Homebrew.install_bundler_gems!(groups: groups)
 
     HOMEBREW_LIBRARY_PATH.cd do
-      if args.update? || args.update_all?
-        odisabled "brew typecheck --update --fail-if-not-changed" if args.fail_if_not_changed?
-
+      if update
         excluded_gems = [
-          "did_you_mean", # RBI file is already provided by Sorbet
-          "webrobots", # RBI file is bugged
-          "sorbet-static-and-runtime", # Unnecessary RBI - remove this entry with Tapioca 0.8
+          "json", # RBI file is already provided by Sorbet
         ]
-        typed_overrides = [
-          "msgpack:false", # Investigate removing this with Tapioca 0.8
-        ]
-        tapioca_args = ["--exclude", *excluded_gems, "--typed-overrides", *typed_overrides]
+        tapioca_args = ["--exclude", *excluded_gems, "--pre", "sorbet/tapioca/prerequire.rb"]
         tapioca_args << "--all" if args.update_all?
 
         ohai "Updating homegrown RBI files..."
@@ -69,12 +58,23 @@ module Homebrew
         ohai "Updating Tapioca RBI files..."
         safe_system "bundle", "exec", "tapioca", "gem", *tapioca_args
         safe_system "bundle", "exec", "parlour"
-        safe_system "bundle", "exec", "srb", "rbi", "hidden-definitions"
-        safe_system "bundle", "exec", "tapioca", "todo"
+
+        safe_system({ "RUBYLIB" => "#{HOMEBREW_LIBRARY_PATH}/sorbet/hidden_definitions_hacks" },
+                    "bundle", "exec", "srb", "rbi", "hidden-definitions")
+        # HACK: we'll phase out hidden-definitions soon
+        tmp_file = "sorbet/rbi/hidden-definitions/hidden.rbi.tmp"
+        orig_file = "sorbet/rbi/hidden-definitions/hidden.rbi"
+        File.open(tmp_file, "w") do |out_file|
+          File.foreach(orig_file) do |line|
+            out_file.puts line unless line.include?("def self.new(*args, **arg, &blk); end")
+          end
+        end
+        File.rename(tmp_file, orig_file)
 
         if args.suggest_typed?
           ohai "Bumping Sorbet `typed` sigils..."
-          safe_system "bundle", "exec", "spoom", "bump"
+          # --sorbet needed because of https://github.com/Shopify/spoom/issues/488
+          safe_system "bundle", "exec", "spoom", "bump", "--dry", "--sorbet", "#{Gem.bin_path("sorbet", "srb")} tc"
         end
 
         return

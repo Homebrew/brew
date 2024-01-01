@@ -9,8 +9,6 @@ module Cask
     #
     # @api private
     class Symlinked < Relocated
-      extend T::Sig
-
       sig { returns(String) }
       def self.link_type_english_name
         "Symlink"
@@ -45,7 +43,7 @@ module Cask
 
       private
 
-      def link(force: false, **options)
+      def link(force: false, command: nil, **_options)
         unless source.exist?
           raise CaskError,
                 "It seems the #{self.class.link_type_english_name.downcase} " \
@@ -59,26 +57,29 @@ module Cask
           if force && target.symlink? &&
              (target.realpath == source.realpath || target.realpath.to_s.start_with?("#{cask.caskroom_path}/"))
             opoo "#{message}; overwriting."
-            target.delete
+            Utils.gain_permissions_remove(target, command: command)
           else
             raise CaskError, "#{message}."
           end
         end
 
         ohai "Linking #{self.class.english_name} '#{source.basename}' to '#{target}'"
-        create_filesystem_link(**options)
+        create_filesystem_link(command: command)
       end
 
-      def unlink(**)
+      def unlink(command: nil, **)
         return unless target.symlink?
 
         ohai "Unlinking #{self.class.english_name} '#{target}'"
-        target.delete
+        Utils.gain_permissions_remove(target, command: command)
       end
 
-      def create_filesystem_link(command: nil, **_)
-        target.dirname.mkpath
-        command.run!("/bin/ln", args: ["-h", "-f", "-s", "--", source, target])
+      def create_filesystem_link(command: nil)
+        Utils.gain_permissions_mkpath(target.dirname, command: command)
+
+        command.run! "/bin/ln", args: ["-h", "-f", "-s", "--", source, target],
+                                sudo: !target.dirname.writable?
+
         add_altname_metadata(source, target.basename, command: command)
       end
     end

@@ -8,8 +8,6 @@ module Homebrew
     # @api private
     module Analytics
       class << self
-        extend T::Sig
-
         sig { returns(String) }
         def analytics_api_path
           "analytics"

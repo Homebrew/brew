@@ -217,6 +217,13 @@ module RuboCop
             problem "Use /archive/ URLs for GitHub tarballs (url is #{url})."
           end
 
+          archive_refs_gh_pattern = %r{https://.*github.+/archive/(?![a-fA-F0-9]{40})(?!refs/(tags|heads)/)(.*)\.tar\.gz$}
+          audit_urls(urls, archive_refs_gh_pattern) do |match, url|
+            next if url.end_with?(".git")
+
+            problem "Use refs/tags/#{match[2]} or refs/heads/#{match[2]} for GitHub references (url is #{url})."
+          end
+
           # Don't use GitHub .zip files
           zip_gh_pattern = %r{https://.*github.*/(archive|releases)/.*\.zip$}
           audit_urls(urls, zip_gh_pattern) do |_, url|
@@ -261,8 +268,6 @@ module RuboCop
       #
       # @api private
       class PyPiUrls < FormulaCop
-        extend T::Sig
-
         def audit_formula(_node, _class_node, _parent_class_node, body_node)
           return if body_node.nil?
 
@@ -297,7 +302,7 @@ module RuboCop
       class GitUrls < FormulaCop
         def audit_formula(_node, _class_node, _parent_class_node, body_node)
           return if body_node.nil?
-          return unless formula_tap == "homebrew-core"
+          return if formula_tap != "homebrew-core"
 
           find_method_calls_by_name(body_node, :url).each do |url|
             next unless string_content(parameters(url).first).match?(/\.git$/)
@@ -321,7 +326,7 @@ module RuboCop
       class GitUrls < FormulaCop
         def audit_formula(_node, _class_node, _parent_class_node, body_node)
           return if body_node.nil?
-          return unless formula_tap == "homebrew-core"
+          return if formula_tap != "homebrew-core"
 
           find_method_calls_by_name(body_node, :url).each do |url|
             next unless string_content(parameters(url).first).match?(/\.git$/)

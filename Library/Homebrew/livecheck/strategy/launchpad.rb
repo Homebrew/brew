@@ -23,8 +23,6 @@ module Homebrew
       #
       # @api public
       class Launchpad
-        extend T::Sig
-
         # The `Regexp` used to determine if the strategy applies to the URL.
         URL_MATCH_REGEX = %r{
           ^https?://(?:[^/]+?\.)*launchpad\.net
@@ -73,15 +71,15 @@ module Homebrew
         sig {
           params(
             url:    String,
-            regex:  T.nilable(Regexp),
+            regex:  Regexp,
             unused: T.nilable(T::Hash[Symbol, T.untyped]),
             block:  T.nilable(Proc),
           ).returns(T::Hash[Symbol, T.untyped])
         }
-        def self.find_versions(url:, regex: nil, **unused, &block)
+        def self.find_versions(url:, regex: DEFAULT_REGEX, **unused, &block)
           generated = generate_input_values(url)
 
-          PageMatch.find_versions(url: generated[:url], regex: regex || DEFAULT_REGEX, **unused, &block)
+          PageMatch.find_versions(url: generated[:url], regex: regex, **unused, &block)
         end
       end
     end

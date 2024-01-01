@@ -19,7 +19,7 @@ class PkgVersion
 
   def self.parse(path)
     _, version, revision = *path.match(REGEX)
-    version = Version.create(version)
+    version = Version.new(version)
     new(version, revision.to_i)
   end
 

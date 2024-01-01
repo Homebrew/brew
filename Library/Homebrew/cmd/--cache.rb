@@ -1,4 +1,4 @@
-# typed: true
+# typed: strict
 # frozen_string_literal: true
 
 require "fetch"
@@ -6,8 +6,6 @@ require "cli/parser"
 require "cask/download"
 
 module Homebrew
-  extend T::Sig
-
   extend Fetch
 
   sig { returns(CLI::Parser) }
@@ -18,6 +16,12 @@ module Homebrew
 
         If <formula> is provided, display the file or directory used to cache <formula>.
       EOS
+      flag   "--os=",
+             description: "Show cache file for the given operating system. " \
+                          "(Pass `all` to show cache files for all operating systems.)"
+      flag   "--arch=",
+             description: "Show cache file for the given CPU architecture. " \
+                          "(Pass `all` to show cache files for all architectures.)"
       switch "-s", "--build-from-source",
              description: "Show the cache file used when building from source."
       switch "--force-bottle",
@@ -33,6 +37,8 @@ module Homebrew
 
       conflicts "--build-from-source", "--force-bottle", "--bottle-tag", "--HEAD", "--cask"
       conflicts "--formula", "--cask"
+      conflicts "--os", "--bottle-tag"
+      conflicts "--arch", "--bottle-tag"
 
       named_args [:formula, :cask]
     end
@@ -48,22 +54,63 @@ module Homebrew
     end
 
     formulae_or_casks = args.named.to_formulae_and_casks
+    os_arch_combinations = args.os_arch_combinations
 
     formulae_or_casks.each do |formula_or_cask|
-      if formula_or_cask.is_a? Formula
-        print_formula_cache formula_or_cask, args: args
+      case formula_or_cask
+      when Formula
+        formula = formula_or_cask
+        ref = formula.loaded_from_api? ? formula.full_name : formula.path
+
+        os_arch_combinations.each do |os, arch|
+          SimulateSystem.with os: os, arch: arch do
+            Formulary.clear_cache
+            formula = Formulary.factory(ref)
+            print_formula_cache(formula, os: os, arch: arch, args: args)
+          end
+        end
       else
-        print_cask_cache formula_or_cask
+        cask = formula_or_cask
+        ref = cask.loaded_from_api? ? cask.full_name : cask.sourcefile_path
+
+        os_arch_combinations.each do |os, arch|
+          next if os == :linux
+
+          SimulateSystem.with os: os, arch: arch do
+            cask = Cask::CaskLoader.load(ref)
+            print_cask_cache(cask)
+          end
+        end
       end
     end
   end
 
-  sig { params(formula: Formula, args: CLI::Args).void }
-  def self.print_formula_cache(formula, args:)
-    if fetch_bottle?(formula, args: args)
-      puts formula.bottle_for_tag(args.bottle_tag&.to_sym)&.cached_download
+  sig { params(formula: Formula, os: Symbol, arch: Symbol, args: CLI::Args).void }
+  def self.print_formula_cache(formula, os:, arch:, args:)
+    if fetch_bottle?(
+      formula,
+      force_bottle:               args.force_bottle?,
+      bottle_tag:                 args.bottle_tag&.to_sym,
+      build_from_source_formulae: args.build_from_source_formulae,
+      os:                         args.os&.to_sym,
+      arch:                       args.arch&.to_sym,
+    )
+      bottle_tag = if (bottle_tag = args.bottle_tag&.to_sym)
+        Utils::Bottles::Tag.from_symbol(bottle_tag)
+      else
+        Utils::Bottles::Tag.new(system: os, arch: arch)
+      end
+
+      bottle = formula.bottle_for_tag(bottle_tag)
+
+      if bottle.nil?
+        opoo "Bottle for tag #{bottle_tag.to_sym.inspect} is unavailable."
+        return
+      end
+
+      puts bottle.cached_download
     elsif args.HEAD?
-      puts formula.head.cached_download
+      puts T.must(formula.head).cached_download
     else
       puts formula.cached_download
     end

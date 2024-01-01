@@ -7,8 +7,6 @@ require "timeout"
 require "cli/parser"
 
 module Homebrew
-  extend T::Sig
-
   module_function
 
   sig { returns(CLI::Parser) }
@@ -24,20 +22,20 @@ module Homebrew
       switch "-f", "--force",
              description: "Test formulae even if they are unlinked."
       switch "--HEAD",
-             description: "Test the head version of a formula."
+             description: "Test the HEAD version of a formula."
       switch "--keep-tmp",
              description: "Retain the temporary files created for the test."
       switch "--retry",
              description: "Retry if a testing fails."
 
-      named_args :installed_formula, min: 1
+      named_args :installed_formula, min: 1, without_api: true
     end
   end
 
   def test
     args = test_args.parse
 
-    Homebrew.install_bundler_gems!(setup_path: false)
+    Homebrew.install_bundler_gems!(groups: ["formula_test"], setup_path: false)
 
     require "formula_assertions"
     require "formula_free_port"
@@ -107,7 +105,7 @@ module Homebrew
       rescue Exception => e # rubocop:disable Lint/RescueException
         retry if retry_test?(f, args: args)
         ofail "#{f.full_name}: failed"
-        $stderr.puts e, e.backtrace
+        $stderr.puts e, Utils::Backtrace.clean(e)
       ensure
         ENV.replace(env)
       end

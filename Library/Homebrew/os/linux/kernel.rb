@@ -7,8 +7,6 @@ module OS
     #
     # @api private
     module Kernel
-      extend T::Sig
-
       module_function
 
       sig { returns(Version) }

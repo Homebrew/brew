@@ -7,8 +7,6 @@ require "style"
 require "cli/parser"
 
 module Homebrew
-  extend T::Sig
-
   module_function
 
   sig { returns(CLI::Parser) }
@@ -24,7 +22,8 @@ module Homebrew
       switch "--fix",
              description: "Fix style violations automatically using RuboCop's auto-correct feature."
       switch "--display-cop-names",
-             description: "Include the RuboCop cop name for each violation in the output."
+             description: "Include the RuboCop cop name for each violation in the output.",
+             hidden:      true
       switch "--reset-cache",
              description: "Reset the RuboCop cache."
       switch "--formula", "--formulae",
@@ -41,7 +40,7 @@ module Homebrew
       conflicts "--formula", "--cask"
       conflicts "--only-cops", "--except-cops"
 
-      named_args [:file, :tap, :formula, :cask]
+      named_args [:file, :tap, :formula, :cask], without_api: true
     end
   end
 
@@ -58,11 +57,10 @@ module Homebrew
     except_cops = args.except_cops
 
     options = {
-      fix:               args.fix?,
-      display_cop_names: args.display_cop_names?,
-      reset_cache:       args.reset_cache?,
-      debug:             args.debug?,
-      verbose:           args.verbose?,
+      fix:         args.fix?,
+      reset_cache: args.reset_cache?,
+      debug:       args.debug?,
+      verbose:     args.verbose?,
     }
     if only_cops
       options[:only_cops] = only_cops

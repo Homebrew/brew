@@ -11,8 +11,8 @@ module Cask
     class Postflight < Base
       include Staged
 
-      def suppress_move_to_applications(options = {})
-        # TODO: Remove from all casks because it is no longer needed
+      def suppress_move_to_applications(_options = {})
+        odisabled "Cask::DSL#suppress_move_to_applications"
       end
     end
   end

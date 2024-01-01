@@ -7,8 +7,6 @@ require "cask/config"
 module Cask
   # @api private
   class Upgrade
-    extend T::Sig
-
     sig {
       params(
         casks:               Cask,
@@ -97,8 +95,7 @@ module Cask
       caught_exceptions = []
 
       upgradable_casks = outdated_casks.map do |c|
-        if !c.installed_caskfile.exist? && c.tap.to_s == "homebrew/cask" &&
-           Homebrew::API::Cask.all_casks.key?(c.token)
+        unless c.installed?
           odie <<~EOS
             The cask '#{c.token}' was affected by a bug and cannot be upgraded as-is. To fix this, run:
               brew reinstall --cask --force #{c.token}
@@ -120,7 +117,9 @@ module Cask
           quarantine: quarantine, require_sha: require_sha
         )
       rescue => e
-        caught_exceptions << e.exception("#{new_cask.full_name}: #{e}")
+        new_exception = e.exception("#{new_cask.full_name}: #{e}")
+        new_exception.set_backtrace(e.backtrace)
+        caught_exceptions << new_exception
         next
       end
 
@@ -131,6 +130,18 @@ module Cask
       false
     end
 
+    sig {
+      params(
+        old_cask:       Cask,
+        new_cask:       Cask,
+        binaries:       T.nilable(T::Boolean),
+        force:          T.nilable(T::Boolean),
+        quarantine:     T.nilable(T::Boolean),
+        require_sha:    T.nilable(T::Boolean),
+        skip_cask_deps: T.nilable(T::Boolean),
+        verbose:        T.nilable(T::Boolean),
+      ).void
+    }
     def self.upgrade_cask(
       old_cask, new_cask,
       binaries:, force:, quarantine:, require_sha:, skip_cask_deps:, verbose:
@@ -182,22 +193,22 @@ module Cask
         new_cask_installer.fetch
 
         # Move the old cask's artifacts back to staging
-        old_cask_installer.start_upgrade
+        old_cask_installer.start_upgrade(successor: new_cask)
         # And flag it so in case of error
         started_upgrade = true
 
         # Install the new cask
         new_cask_installer.stage
 
-        new_cask_installer.install_artifacts
+        new_cask_installer.install_artifacts(predecessor: old_cask)
         new_artifacts_installed = true
 
-        # If successful, wipe the old cask from staging
+        # If successful, wipe the old cask from staging.
         old_cask_installer.finalize_upgrade
       rescue => e
-        new_cask_installer.uninstall_artifacts if new_artifacts_installed
+        new_cask_installer.uninstall_artifacts(successor: old_cask) if new_artifacts_installed
         new_cask_installer.purge_versioned_files
-        old_cask_installer.revert_upgrade if started_upgrade
+        old_cask_installer.revert_upgrade(predecessor: new_cask) if started_upgrade
         raise e
       end
 

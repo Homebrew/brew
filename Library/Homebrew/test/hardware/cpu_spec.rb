@@ -1,4 +1,3 @@
-# typed: false
 # frozen_string_literal: true
 
 require "hardware"
@@ -29,6 +28,7 @@ describe Hardware::CPU do
         :amd_k12,
         :arm,
         :arm_blizzard_avalanche,
+        :arm_everest_sawtooth,
         :arm_firestorm_icestorm,
         :arm_hurricane_zephyr,
         :arm_lightning_thunder,
@@ -78,15 +78,13 @@ describe Hardware::CPU do
       end
 
       it "returns :arm_firestorm_icestorm on ARM" do
-        allow(described_class).to receive(:arm?).and_return(true)
-        allow(described_class).to receive(:intel?).and_return(false)
+        allow(described_class).to receive_messages(arm?: true, intel?: false)
 
         expect(described_class.family).to eq(:arm_firestorm_icestorm)
       end
 
       it "returns :westmere on Intel" do
-        allow(described_class).to receive(:arm?).and_return(false)
-        allow(described_class).to receive(:intel?).and_return(true)
+        allow(described_class).to receive_messages(arm?: false, intel?: true)
 
         expect(described_class.family).to eq(:westmere)
       end

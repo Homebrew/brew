@@ -5,8 +5,6 @@ require "compilers"
 
 # Combination of C++ standard library and compiler.
 class CxxStdlib
-  extend T::Sig
-
   def self.create(type, compiler)
     raise ArgumentError, "Invalid C++ stdlib type: #{type}" if type && [:libstdcxx, :libcxx].exclude?(type)
 

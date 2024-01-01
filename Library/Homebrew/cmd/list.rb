@@ -7,8 +7,6 @@ require "cli/parser"
 require "cask/list"
 
 module Homebrew
-  extend T::Sig
-
   module_function
 
   sig { returns(CLI::Parser) }
@@ -16,7 +14,6 @@ module Homebrew
     Homebrew::CLI::Parser.new do
       description <<~EOS
         List all installed formulae and casks.
-
         If <formula> is provided, summarise the paths within its current keg.
         If <cask> is provided, list its artifacts.
       EOS
@@ -211,8 +208,8 @@ class PrettyListing
       elsif block_given? && yield(pn)
         puts pn
         other = "other "
-      else
-        remaining_root_files << pn unless pn.basename.to_s == ".DS_Store"
+      elsif pn.basename.to_s != ".DS_Store"
+        remaining_root_files << pn
       end
     end
 

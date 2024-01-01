@@ -40,8 +40,6 @@ module Tty
   CODES = COLOR_CODES.merge(STYLE_CODES).freeze
 
   class << self
-    extend T::Sig
-
     sig { params(stream: T.any(IO, StringIO), _block: T.proc.params(arg0: T.any(IO, StringIO)).void).void }
     def with(stream, &_block)
       previous_stream = @stream

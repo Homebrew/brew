@@ -1,4 +1,3 @@
-# typed: false
 # frozen_string_literal: true
 
 describe Cask::Artifact::Installer, :cask do
@@ -18,7 +17,7 @@ describe Cask::Artifact::Installer, :cask do
       it "shows a message prompting to run the installer manually" do
         expect do
           installer.install_phase(command: command)
-        end.to output(%r{run the installer at:\s+#{staged_path}/installer}).to_stdout
+        end.to output(%r{open #{staged_path}/installer}).to_stdout
       end
     end
 

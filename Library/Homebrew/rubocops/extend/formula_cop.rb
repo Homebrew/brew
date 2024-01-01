@@ -9,7 +9,6 @@ module RuboCop
     #
     # @api private
     class FormulaCop < Base
-      extend T::Sig
       extend T::Helpers
       include RangeHelp
       include HelperFunctions
@@ -60,20 +59,22 @@ module RuboCop
         end
       end
 
-      # Returns nil if does not depend on dependency_name.
+      # Returns if the formula depends on dependency_name.
       #
       # @param dependency_name dependency's name
       def depends_on?(dependency_name, *types)
-        return if @body.nil?
+        return false if @body.nil?
 
         types = [:any] if types.empty?
         dependency_nodes = find_every_method_call_by_name(@body, :depends_on)
         idx = dependency_nodes.index do |n|
           types.any? { |type| depends_on_name_type?(n, dependency_name, type) }
         end
-        return if idx.nil?
+        return false if idx.nil?
 
         @offensive_node = dependency_nodes[idx]
+
+        true
       end
 
       # Returns true if given dependency name and dependency type exist in given dependency method call node.
@@ -165,14 +166,37 @@ module RuboCop
         match_obj[1]
       end
 
+      # Returns the style exceptions directory from the file path.
+      def style_exceptions_dir
+        file_directory = File.dirname(@file_path)
+
+        # if we're in a sharded subdirectory, look below that.
+        directory_name = File.basename(file_directory)
+        formula_directory = if directory_name.length == 1 || directory_name == "lib"
+          File.dirname(file_directory)
+        else
+          file_directory
+        end
+
+        # if we're in a Formula or HomebrewFormula subdirectory, look below that.
+        formula_directory_names = ["Formula", "HomebrewFormula"].freeze
+        directory_name = File.basename(formula_directory)
+        tap_root_directory = if formula_directory_names.include?(directory_name)
+          File.dirname(formula_directory)
+        else
+          formula_directory
+        end
+
+        "#{tap_root_directory}/style_exceptions"
+      end
+
       # Returns whether the given formula exists in the given style exception list.
       # Defaults to the current formula being checked.
       def tap_style_exception?(list, formula = nil)
         if @tap_style_exceptions.nil? && !formula_tap.nil?
           @tap_style_exceptions = {}
 
-          style_exceptions_dir = "#{File.dirname(File.dirname(@file_path))}/style_exceptions/*.json"
-          Pathname.glob(style_exceptions_dir).each do |exception_file|
+          Pathname.glob("#{style_exceptions_dir}/*.json").each do |exception_file|
             list_name = exception_file.basename.to_s.chomp(".json").to_sym
             list_contents = begin
               JSON.parse exception_file.read
@@ -209,11 +233,11 @@ module RuboCop
         paths_to_exclude = [%r{/Library/Homebrew/test/}]
         return true if @file_path.nil? # file_path is nil when source is directly passed to the cop, e.g. in specs
 
-        @file_path !~ Regexp.union(paths_to_exclude)
+        !@file_path.match?(Regexp.union(paths_to_exclude))
       end
 
       def on_system_methods
-        @on_system_methods ||= [:intel, :arm, :macos, :linux, :system, *MacOSVersions::SYMBOLS.keys].map do |m|
+        @on_system_methods ||= [:intel, :arm, :macos, :linux, :system, *MacOSVersion::SYMBOLS.keys].map do |m|
           :"on_#{m}"
         end
       end

@@ -9,7 +9,7 @@ module Homebrew
 
       sig { returns(T::Boolean) }
       def simulating_or_running_on_macos?
-        os.blank? || [:macos, *MacOSVersions::SYMBOLS.keys].include?(os)
+        os.blank? || [:macos, *MacOSVersion::SYMBOLS.keys].include?(os)
       end
 
       sig { returns(Symbol) }

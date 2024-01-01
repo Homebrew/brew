@@ -1,4 +1,3 @@
-# typed: false
 # frozen_string_literal: true
 
 require "dependency_collector"
@@ -35,6 +34,6 @@ describe DependencyCollector do
   specify "Resource dependency from a Subversion URL" do
     resource = Resource.new
     resource.url("svn://brew.sh/foo/bar")
-    expect(collector.add(resource)).to eq(Dependency.new("subversion", [:build, :test]))
+    expect(collector.add(resource)).to eq(Dependency.new("subversion", [:build, :test, :implicit]))
   end
 end

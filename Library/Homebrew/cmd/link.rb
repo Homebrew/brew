@@ -6,17 +6,15 @@ require "cli/parser"
 require "unlink"
 
 module Homebrew
-  extend T::Sig
-
   module_function
 
   sig { returns(CLI::Parser) }
   def link_args
     Homebrew::CLI::Parser.new do
       description <<~EOS
-        Symlink all of <formula>'s installed files into Homebrew's prefix. This
-        is done automatically when you install formulae but can be useful for DIY
-        installations.
+        Symlink all of <formula>'s installed files into Homebrew's prefix.
+        This is done automatically when you install formulae but can be useful
+        for manual installations.
       EOS
       switch "--overwrite",
              description: "Delete files that already exist in the prefix while linking."

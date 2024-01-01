@@ -6,8 +6,6 @@ require "resource"
 require "metafiles"
 
 module DiskUsageExtension
-  extend T::Sig
-
   sig { returns(Integer) }
   def disk_usage
     return @disk_usage if defined?(@disk_usage)
@@ -78,8 +76,6 @@ end
 # Homebrew extends Ruby's `Pathname` to make our code more readable.
 # @see https://ruby-doc.org/stdlib-2.6.3/libdoc/pathname/rdoc/Pathname.html Ruby's Pathname API
 class Pathname
-  extend T::Sig
-
   include DiskUsageExtension
 
   # Moves a file from the original location to the {Pathname}'s.
@@ -130,7 +126,7 @@ class Pathname
     #   https://bugs.ruby-lang.org/issues/7707
     # In that case, use the system "mv" command.
     if src.symlink?
-      raise unless Kernel.system "mv", src, dst
+      raise unless Kernel.system "mv", src.to_s, dst
     else
       FileUtils.mv src, dst
     end
@@ -275,7 +271,7 @@ class Pathname
   # @private
   sig { returns(T::Boolean) }
   def text_executable?
-    /^#!\s*\S+/.match?(open("r") { |f| f.read(1024) })
+    /\A#!\s*\S+/.match?(open("r") { |f| f.read(1024) })
   end
 
   sig { returns(String) }
@@ -289,7 +285,7 @@ class Pathname
     raise ChecksumMissingError if expected.blank?
 
     actual = Checksum.new(sha256.downcase)
-    raise ChecksumMismatchError.new(self, expected, actual) unless expected == actual
+    raise ChecksumMismatchError.new(self, expected, actual) if expected != actual
   end
 
   alias to_str to_s
@@ -498,11 +494,7 @@ require "extend/os/pathname"
 
 # @private
 module ObserverPathnameExtension
-  extend T::Sig
-
   class << self
-    extend T::Sig
-
     include Context
 
     sig { returns(Integer) }

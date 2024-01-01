@@ -6,8 +6,6 @@ module Language
   #
   # @api public
   module Java
-    extend T::Sig
-
     sig { params(version: T.nilable(String)).returns(T.nilable(Formula)) }
     def self.find_openjdk_formula(version = nil)
       can_be_newer = version&.end_with?("+")

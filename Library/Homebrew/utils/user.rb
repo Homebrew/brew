@@ -10,8 +10,6 @@ require "system_command"
 #
 # @api private
 class User < SimpleDelegator
-  extend T::Sig
-
   include SystemCommand::Mixin
 
   # Return whether the user has an active GUI session.

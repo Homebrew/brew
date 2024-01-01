@@ -2,8 +2,6 @@
 # frozen_string_literal: true
 
 module Superenv
-  extend T::Sig
-
   class << self
     # The location of Homebrew's shims on macOS.
     def shims_path
@@ -121,6 +119,12 @@ module Superenv
       # works around libev.m4 unsetting ac_cv_func_clock_gettime
       ENV["ac_have_clock_syscall"] = "no"
     end
+
+    # On macOS Sonoma (at least release candidate), iconv() is generally
+    # present and working, but has a minor regression that defeats the
+    # test implemented in gettext's configure script (and used by many
+    # gettext dependents).
+    ENV["am_cv_func_iconv_works"] = "yes" if MacOS.version == "14"
 
     # The tools in /usr/bin proxy to the active developer directory.
     # This means we can use them for any combination of CLT and Xcode.

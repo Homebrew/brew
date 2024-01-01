@@ -1,5 +1,7 @@
 # typed: strict
 
-class URL
-  include Kernel
+module Cask
+  class URL
+    include Kernel
+  end
 end

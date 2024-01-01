@@ -130,13 +130,13 @@ using this quick command:_
 
 ## Pre-planning
 
-### Finding a Meeting Venue
+### Finding a meeting venue
 
 In the past, PLC hosted the AGM at the
 [THON Hotel Brussels City Centre](https://www.thonhotels.com/conference/belgium/brussels/thon-hotel-brussels-city-centre/?Persons=20)
 and arranged for a room block checking in the day before FOSDEM and AGM weekend, generally on Friday, and checking out the day after, generally Tuesday when the AGM is Monday.
 
-### Who Qualifies For AGM Travel Assistance
+### Who qualifies for AGM travel assistance
 
 Travel assistance is available for AGM participants who are expected to attend the AGM in-person.
 Those who have employers able to cover all or a part of the costs of attending FOSDEM should exhaust that
@@ -144,7 +144,8 @@ source of funding before seeking Homebrew funding.
 
 PLC, TSC, PL and maintainers can expect to have all reasonable, in-policy expenses covered while members will be considered on a case-by-case basis.
 
-See also the [Reimbursement Policy](Expense-and-Reimbursement-Policy.md#travel) for process and details on what is covered.
+Read the Expense and Reimbursement policy document in `Homebrew/homebrew-governance-private`.
+It contains the process and details on what is covered.
 It is important that all attendees expecting reimbursement stay in-policy.
 
 ## Ideas for future AGMs

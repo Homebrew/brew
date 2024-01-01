@@ -23,8 +23,6 @@ module Homebrew
       #
       # @api public
       class Yaml
-        extend T::Sig
-
         NICE_NAME = "YAML"
 
         # A priority of zero causes livecheck to skip the strategy. We do this

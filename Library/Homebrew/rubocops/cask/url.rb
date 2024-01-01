@@ -29,7 +29,7 @@ module RuboCop
           return unless hash_node.hash_type?
 
           hash_node.each_pair do |key_node, value_node|
-            next unless key_node.source == "verified"
+            next if key_node.source != "verified"
             next unless value_node.str_type?
 
             if value_node.source.start_with?(%r{^"https?://})

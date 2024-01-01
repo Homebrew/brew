@@ -268,7 +268,7 @@ EOS
     else
       if [[ -n "${UPSTREAM_TAG}" && "${UPSTREAM_BRANCH}" != "master" ]]
       then
-        git checkout --force -B "master" "origin/master" "${QUIET_ARGS[@]}"
+        git branch --force "master" "origin/master" "${QUIET_ARGS[@]}"
       fi
 
       git checkout --force -B "${UPSTREAM_BRANCH}" "${REMOTE_REF}" "${QUIET_ARGS[@]}"
@@ -347,9 +347,15 @@ homebrew-update() {
       --verbose) HOMEBREW_VERBOSE=1 ;;
       --debug) HOMEBREW_DEBUG=1 ;;
       --quiet) HOMEBREW_QUIET=1 ;;
-      --merge) HOMEBREW_MERGE=1 ;;
+      --merge)
+        shift
+        HOMEBREW_MERGE=1
+        ;;
       --force) HOMEBREW_UPDATE_FORCE=1 ;;
-      --simulate-from-current-branch) HOMEBREW_SIMULATE_FROM_CURRENT_BRANCH=1 ;;
+      --simulate-from-current-branch)
+        shift
+        HOMEBREW_SIMULATE_FROM_CURRENT_BRANCH=1
+        ;;
       --auto-update) export HOMEBREW_UPDATE_AUTO=1 ;;
       --*) ;;
       -*)
@@ -405,7 +411,7 @@ EOS
 ${HOMEBREW_REPOSITORY} is not writable. You should change the
 ownership and permissions of ${HOMEBREW_REPOSITORY} back to your
 user account:
-  sudo chown -R \$(whoami) ${HOMEBREW_REPOSITORY}
+  sudo chown -R ${USER-\$(whoami)} ${HOMEBREW_REPOSITORY}
 EOS
   fi
 
@@ -574,8 +580,11 @@ EOS
 
   for DIR in "${HOMEBREW_REPOSITORY}" "${HOMEBREW_LIBRARY}"/Taps/*/*
   do
-    if [[ -z "${HOMEBREW_NO_INSTALL_FROM_API}" && -n "${HOMEBREW_UPDATE_AUTO}" ]] &&
-       [[ "${DIR}" == "${HOMEBREW_CORE_REPOSITORY}" || "${DIR}" == "${HOMEBREW_CASK_REPOSITORY}" ]]
+    if [[ -z "${HOMEBREW_NO_INSTALL_FROM_API}" ]] &&
+       [[ -n "${HOMEBREW_UPDATE_AUTO}" || (-z "${HOMEBREW_DEVELOPER}" && -z "${HOMEBREW_DEV_CMD_RUN}") ]] &&
+       [[ -n "${HOMEBREW_UPDATE_AUTO}" &&
+          (("${DIR}" == "${HOMEBREW_CORE_REPOSITORY}" && -z "${HOMEBREW_AUTO_UPDATE_CORE_TAP}") ||
+          ("${DIR}" == "${HOMEBREW_CASK_REPOSITORY}" && -z "${HOMEBREW_AUTO_UPDATE_CASK_TAP}")) ]]
     then
       continue
     fi
@@ -604,6 +613,11 @@ EOS
     UPSTREAM_BRANCH_DIR="$(upstream_branch)"
     declare UPSTREAM_BRANCH"${TAP_VAR}"="${UPSTREAM_BRANCH_DIR}"
     declare PREFETCH_REVISION"${TAP_VAR}"="$(git rev-parse -q --verify refs/remotes/origin/"${UPSTREAM_BRANCH_DIR}")"
+
+    if [[ -n "${GITHUB_ACTIONS}" && -n "${HOMEBREW_UPDATE_SKIP_BREW}" && "${DIR}" == "${HOMEBREW_REPOSITORY}" ]]
+    then
+      continue
+    fi
 
     # Force a full update if we don't have any tags.
     if [[ "${DIR}" == "${HOMEBREW_REPOSITORY}" && -z "$(git tag --list)" ]]
@@ -730,9 +744,10 @@ EOS
   for DIR in "${HOMEBREW_REPOSITORY}" "${HOMEBREW_LIBRARY}"/Taps/*/*
   do
     if [[ -z "${HOMEBREW_NO_INSTALL_FROM_API}" ]] &&
-       [[ -z "${HOMEBREW_DEVELOPER}" || -n "${HOMEBREW_UPDATE_AUTO}" ]] &&
-       [[ "${DIR}" == "${HOMEBREW_CORE_REPOSITORY}" ||
-          "${DIR}" == "${HOMEBREW_CASK_REPOSITORY}" ]]
+       [[ -n "${HOMEBREW_UPDATE_AUTO}" || (-z "${HOMEBREW_DEVELOPER}" && -z "${HOMEBREW_DEV_CMD_RUN}") ]] &&
+       [[ -n "${HOMEBREW_UPDATE_AUTO}" &&
+          (("${DIR}" == "${HOMEBREW_CORE_REPOSITORY}" && -z "${HOMEBREW_AUTO_UPDATE_CORE_TAP}") ||
+          ("${DIR}" == "${HOMEBREW_CASK_REPOSITORY}" && -z "${HOMEBREW_AUTO_UPDATE_CASK_TAP}")) ]]
     then
       continue
     fi
@@ -759,77 +774,103 @@ EOS
     if [[ -n "${HOMEBREW_SIMULATE_FROM_CURRENT_BRANCH}" ]]
     then
       simulate_from_current_branch "${DIR}" "${TAP_VAR}" "${UPSTREAM_BRANCH}" "${CURRENT_REVISION}"
-    elif [[ -z "${HOMEBREW_UPDATE_FORCE}" ]] &&
-         [[ "${PREFETCH_REVISION}" == "${POSTFETCH_REVISION}" ]] &&
-         [[ "${CURRENT_REVISION}" == "${POSTFETCH_REVISION}" ]]
+    elif [[ -z "${HOMEBREW_UPDATE_FORCE}" &&
+            "${PREFETCH_REVISION}" == "${POSTFETCH_REVISION}" &&
+            "${CURRENT_REVISION}" == "${POSTFETCH_REVISION}" ]] ||
+         [[ -n "${GITHUB_ACTIONS}" && -n "${HOMEBREW_UPDATE_SKIP_BREW}" && "${DIR}" == "${HOMEBREW_REPOSITORY}" ]]
     then
       export HOMEBREW_UPDATE_BEFORE"${TAP_VAR}"="${CURRENT_REVISION}"
       export HOMEBREW_UPDATE_AFTER"${TAP_VAR}"="${CURRENT_REVISION}"
     else
       merge_or_rebase "${DIR}" "${TAP_VAR}" "${UPSTREAM_BRANCH}"
-      [[ -n "${HOMEBREW_VERBOSE}" ]] && echo
     fi
   done
 
   if [[ -z "${HOMEBREW_NO_INSTALL_FROM_API}" ]]
   then
-    mkdir -p "${HOMEBREW_CACHE}/api"
+    local api_cache="${HOMEBREW_CACHE}/api"
+    mkdir -p "${api_cache}"
 
-    for formula_or_cask in formula cask
+    for json in formula cask formula_tap_migrations cask_tap_migrations
     do
-      if [[ -f "${HOMEBREW_CACHE}/api/${formula_or_cask}.jws.json" ]]
+      local filename="${json}.jws.json"
+      local cache_path="${api_cache}/${filename}"
+      if [[ -f "${cache_path}" ]]
       then
-        INITIAL_JSON_BYTESIZE="$(wc -c "${HOMEBREW_CACHE}"/api/"${formula_or_cask}".jws.json)"
+        INITIAL_JSON_BYTESIZE="$(wc -c "${cache_path}")"
       fi
+
+      if [[ -n "${HOMEBREW_VERBOSE}" ]]
+      then
+        echo "Checking if we need to fetch ${filename}..."
+      fi
+
       JSON_URLS=()
       if [[ -n "${HOMEBREW_API_DOMAIN}" && "${HOMEBREW_API_DOMAIN}" != "${HOMEBREW_API_DEFAULT_DOMAIN}" ]]
       then
-        JSON_URLS=("${HOMEBREW_API_DOMAIN}/${formula_or_cask}.jws.json")
+        JSON_URLS=("${HOMEBREW_API_DOMAIN}/${filename}")
       fi
-      JSON_URLS+=("${HOMEBREW_API_DEFAULT_DOMAIN}/${formula_or_cask}.jws.json")
+
+      JSON_URLS+=("${HOMEBREW_API_DEFAULT_DOMAIN}/${filename}")
       for json_url in "${JSON_URLS[@]}"
       do
         time_cond=()
-        if [[ -s "${HOMEBREW_CACHE}/api/${formula_or_cask}.jws.json" ]]
+        if [[ -s "${cache_path}" ]]
         then
-          time_cond=("--time-cond" "${HOMEBREW_CACHE}/api/${formula_or_cask}.jws.json")
+          time_cond=("--time-cond" "${cache_path}")
         fi
         curl \
           "${CURL_DISABLE_CURLRC_ARGS[@]}" \
           --fail --compressed --silent \
           --speed-limit "${HOMEBREW_CURL_SPEED_LIMIT}" --speed-time "${HOMEBREW_CURL_SPEED_TIME}" \
-          --location --remote-time --output "${HOMEBREW_CACHE}/api/${formula_or_cask}.jws.json" \
+          --location --remote-time --output "${cache_path}" \
           "${time_cond[@]}" \
           --user-agent "${HOMEBREW_USER_AGENT_CURL}" \
           "${json_url}"
         curl_exit_code=$?
         [[ ${curl_exit_code} -eq 0 ]] && break
       done
+
+      if [[ "${json}" == "formula" ]] && [[ -f "${api_cache}/formula_names.txt" ]]
+      then
+        mv -f "${api_cache}/formula_names.txt" "${api_cache}/formula_names.before.txt"
+      elif [[ "${json}" == "cask" ]] && [[ -f "${api_cache}/cask_names.txt" ]]
+      then
+        mv -f "${api_cache}/cask_names.txt" "${api_cache}/cask_names.before.txt"
+      fi
+
       if [[ ${curl_exit_code} -eq 0 ]]
       then
-        touch "${HOMEBREW_CACHE}/api/${formula_or_cask}.jws.json"
-        CURRENT_JSON_BYTESIZE="$(wc -c "${HOMEBREW_CACHE}"/api/"${formula_or_cask}".jws.json)"
+        touch "${cache_path}"
+
+        CURRENT_JSON_BYTESIZE="$(wc -c "${cache_path}")"
         if [[ "${INITIAL_JSON_BYTESIZE}" != "${CURRENT_JSON_BYTESIZE}" ]]
         then
-          if [[ -f "${HOMEBREW_CACHE}/api/${formula_or_cask}_names.txt" ]]
-          then
-            mv -f "${HOMEBREW_CACHE}/api/${formula_or_cask}_names.txt" \
-              "${HOMEBREW_CACHE}/api/${formula_or_cask}_names.before.txt"
-          fi
 
-          if [[ "${formula_or_cask}" == "formula" ]]
+          if [[ "${json}" == "formula" ]]
           then
-            rm -f "${HOMEBREW_CACHE}/api/formula_aliases.txt"
+            rm -f "${api_cache}/formula_aliases.txt"
           fi
           HOMEBREW_UPDATED="1"
+
+          if [[ -n "${HOMEBREW_VERBOSE}" ]]
+          then
+            echo "Updated ${filename}."
+          fi
         fi
       else
         echo "Failed to download ${json_url}!" >>"${update_failed_file}"
       fi
 
-      # Not a typo, this is the file we used to download that we should cleanup.
-      rm -f "${HOMEBREW_CACHE}/api/${formula_or_cask}.json"
     done
+
+    # Not a typo, these are the files we used to download that no longer need so should cleanup.
+    rm -f "${HOMEBREW_CACHE}/api/formula.json" "${HOMEBREW_CACHE}/api/cask.json"
+  else
+    if [[ -n "${HOMEBREW_VERBOSE}" ]]
+    then
+      echo "HOMEBREW_NO_INSTALL_FROM_API set: skipping API JSON downloads."
+    fi
   fi
 
   if [[ -f "${update_failed_file}" ]]

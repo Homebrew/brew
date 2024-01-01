@@ -7,8 +7,6 @@ require "cli/parser"
 require "cask/download"
 
 module Homebrew
-  extend T::Sig
-
   extend Fetch
 
   FETCH_MAX_TRIES = 5
@@ -20,12 +18,14 @@ module Homebrew
         Download a bottle (if available) or source packages for <formula>e
         and binaries for <cask>s. For files, also print SHA-256 checksums.
       EOS
-      # This is needed for testing cask downloads on CI.
-      flag "--arch=",
-           description: "Download for the given arch.",
-           hidden:      true
-      flag "--bottle-tag=",
-           description: "Download a bottle for given tag."
+      flag   "--os=",
+             description: "Download for the given operating system. " \
+                          "(Pass `all` to download for all operating systems.)"
+      flag   "--arch=",
+             description: "Download for the given CPU architecture. " \
+                          "(Pass `all` to download for all architectures.)"
+      flag   "--bottle-tag=",
+             description: "Download a bottle for given tag."
       switch "--HEAD",
              description: "Fetch HEAD version instead of stable version."
       switch "-f", "--force",
@@ -62,6 +62,8 @@ module Homebrew
       conflicts "--cask", "--force-bottle"
       conflicts "--cask", "--bottle-tag"
       conflicts "--formula", "--cask"
+      conflicts "--os", "--bottle-tag"
+      conflicts "--arch", "--bottle-tag"
 
       named_args [:formula, :cask], min: 1
     end
@@ -70,17 +72,14 @@ module Homebrew
   def self.fetch
     args = fetch_args.parse
 
-    if (arch = args.arch)
-      SimulateSystem.arch = arch.to_sym
-    end
+    Formulary.enable_factory_cache!
 
     bucket = if args.deps?
       args.named.to_formulae_and_casks.flat_map do |formula_or_cask|
         case formula_or_cask
         when Formula
-          f = formula_or_cask
-
-          [f, *f.recursive_dependencies.map(&:to_formula)]
+          formula = formula_or_cask
+          [formula, *formula.recursive_dependencies.map(&:to_formula)]
         else
           formula_or_cask
         end
@@ -89,51 +88,101 @@ module Homebrew
       args.named.to_formulae_and_casks
     end.uniq
 
+    os_arch_combinations = args.os_arch_combinations
+
     puts "Fetching: #{bucket * ", "}" if bucket.size > 1
     bucket.each do |formula_or_cask|
       case formula_or_cask
       when Formula
-        f = formula_or_cask
+        formula = T.cast(formula_or_cask, Formula)
+        ref = formula.loaded_from_api? ? formula.full_name : formula.path
 
-        f.print_tap_action verb: "Fetching"
+        os_arch_combinations.each do |os, arch|
+          SimulateSystem.with os: os, arch: arch do
+            Formulary.clear_cache
+            formula = Formulary.factory(ref, args.HEAD? ? :head : :stable)
 
-        fetched_bottle = false
-        if fetch_bottle?(f, args: args)
-          begin
-            f.clear_cache if args.force?
-            f.fetch_bottle_tab
-            fetch_formula(f.bottle_for_tag(args.bottle_tag&.to_sym), args: args)
-          rescue Interrupt
-            raise
-          rescue => e
-            raise if Homebrew::EnvConfig.developer?
+            formula.print_tap_action verb: "Fetching"
 
             fetched_bottle = false
-            onoe e.message
-            opoo "Bottle fetch failed, fetching the source instead."
-          else
-            fetched_bottle = true
+            if fetch_bottle?(
+              formula,
+              force_bottle:               args.force_bottle?,
+              bottle_tag:                 args.bottle_tag&.to_sym,
+              build_from_source_formulae: args.build_from_source_formulae,
+              os:                         args.os&.to_sym,
+              arch:                       args.arch&.to_sym,
+            )
+              begin
+                formula.clear_cache if args.force?
+
+                bottle_tag = if (bottle_tag = args.bottle_tag&.to_sym)
+                  Utils::Bottles::Tag.from_symbol(bottle_tag)
+                else
+                  Utils::Bottles::Tag.new(system: os, arch: arch)
+                end
+
+                bottle = formula.bottle_for_tag(bottle_tag)
+
+                if bottle.nil?
+                  opoo "Bottle for tag #{bottle_tag.to_sym.inspect} is unavailable."
+                  next
+                end
+
+                begin
+                  bottle.fetch_tab
+                rescue DownloadError
+                  retry if retry_fetch?(bottle, args: args)
+                  raise
+                end
+                fetch_formula(bottle, args: args)
+              rescue Interrupt
+                raise
+              rescue => e
+                raise if Homebrew::EnvConfig.developer?
+
+                fetched_bottle = false
+                onoe e.message
+                opoo "Bottle fetch failed, fetching the source instead."
+              else
+                fetched_bottle = true
+              end
+            end
+
+            next if fetched_bottle
+
+            fetch_formula(formula, args: args)
+
+            formula.resources.each do |r|
+              fetch_resource(r, args: args)
+              r.patches.each { |p| fetch_patch(p, args: args) if p.external? }
+            end
+
+            formula.patchlist.each { |p| fetch_patch(p, args: args) if p.external? }
           end
         end
-
-        next if fetched_bottle
-
-        fetch_formula(f, args: args)
-
-        f.resources.each do |r|
-          fetch_resource(r, args: args)
-          r.patches.each { |p| fetch_patch(p, args: args) if p.external? }
-        end
-
-        f.patchlist.each { |p| fetch_patch(p, args: args) if p.external? }
       else
         cask = formula_or_cask
+        ref = cask.loaded_from_api? ? cask.full_name : cask.sourcefile_path
 
-        quarantine = args.quarantine?
-        quarantine = true if quarantine.nil?
+        os_arch_combinations.each do |os, arch|
+          next if os == :linux
 
-        download = Cask::Download.new(cask, quarantine: quarantine)
-        fetch_cask(download, args: args)
+          SimulateSystem.with os: os, arch: arch do
+            cask = Cask::CaskLoader.load(ref)
+
+            if cask.url.nil? || cask.sha256.nil?
+              opoo "Cask #{cask} is not supported on os #{os} and arch #{arch}"
+              next
+            end
+
+            quarantine = args.quarantine?
+            quarantine = true if quarantine.nil?
+
+            download = Cask::Download.new(cask, quarantine: quarantine)
+            fetch_cask(download, args: args)
+          end
+        end
       end
     end
   end

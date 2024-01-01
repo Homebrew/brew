@@ -15,8 +15,6 @@ require "development_tools"
 # 7. Simpler formulae that *just work*
 # 8. Build-system agnostic configuration of the toolchain
 module Superenv
-  extend T::Sig
-
   include SharedEnvExtension
 
   # @private
@@ -65,6 +63,7 @@ module Superenv
 
     self["HOMEBREW_ENV"] = "super"
     self["MAKEFLAGS"] ||= "-j#{determine_make_jobs}"
+    self["RUSTFLAGS"] = Hardware.rustflags_target_cpu
     self["PATH"] = determine_path
     self["PKG_CONFIG_PATH"] = determine_pkg_config_path
     self["PKG_CONFIG_LIBDIR"] = determine_pkg_config_libdir
@@ -88,6 +87,9 @@ module Superenv
     self["HOMEBREW_LIBRARY_PATHS"] = determine_library_paths
     self["HOMEBREW_DEPENDENCIES"] = determine_dependencies
     self["HOMEBREW_FORMULA_PREFIX"] = @formula.prefix unless @formula.nil?
+    # Prevent the OpenSSL rust crate from building a vendored OpenSSL.
+    # https://github.com/sfackler/rust-openssl/blob/994e5ff8c63557ab2aa85c85cc6956b0b0216ca7/openssl/src/lib.rs#L65
+    self["OPENSSL_NO_VENDOR"] = "1"
 
     set_debug_symbols if debug_symbols
 
@@ -302,7 +304,7 @@ module Superenv
   # Removes the MAKEFLAGS environment variable, causing make to use a single job.
   # This is useful for makefiles with race conditions.
   # When passed a block, MAKEFLAGS is removed only for the duration of the block and is restored after its completion.
-  sig { params(block: T.proc.returns(T.untyped)).returns(T.untyped) }
+  sig { params(block: T.nilable(T.proc.returns(T.untyped))).returns(T.untyped) }
   def deparallelize(&block)
     old = delete("MAKEFLAGS")
     if block
@@ -371,6 +373,15 @@ module Superenv
       with_env(HOMEBREW_OPTIMIZATION_LEVEL: "O1", &block)
     else
       self["HOMEBREW_OPTIMIZATION_LEVEL"] = "O1"
+    end
+  end
+
+  sig { params(block: T.nilable(T.proc.void)).void }
+  def O3(&block)
+    if block
+      with_env(HOMEBREW_OPTIMIZATION_LEVEL: "O3", &block)
+    else
+      self["HOMEBREW_OPTIMIZATION_LEVEL"] = "O3"
     end
   end
   # rubocop: enable Naming/MethodName

@@ -6,8 +6,6 @@ require_relative "directory"
 module UnpackStrategy
   # Strategy for unpacking Bazaar archives.
   class Bazaar < Directory
-    extend T::Sig
-
     def self.can_extract?(path)
       super && (path/".bzr").directory?
     end

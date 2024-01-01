@@ -1,4 +1,4 @@
-# typed: false
+# typed: true
 # frozen_string_literal: true
 
 require "hardware"
@@ -12,8 +12,6 @@ require "system_command"
 # @api private
 module SystemConfig
   class << self
-    extend T::Sig
-
     include SystemCommand::Mixin
 
     def clang
@@ -32,44 +30,24 @@ module SystemConfig
       end
     end
 
-    sig { returns(Pathname) }
+    sig { returns(GitRepository) }
     def homebrew_repo
-      HOMEBREW_REPOSITORY.dup.extend(GitRepositoryExtension)
+      GitRepository.new(HOMEBREW_REPOSITORY)
     end
 
     sig { returns(String) }
     def head
-      homebrew_repo.git_head || "(none)"
+      homebrew_repo.head_ref || "(none)"
     end
 
     sig { returns(String) }
     def last_commit
-      homebrew_repo.git_last_commit || "never"
+      homebrew_repo.last_committed || "never"
     end
 
     sig { returns(String) }
     def origin
-      homebrew_repo.git_origin || "(none)"
-    end
-
-    sig { returns(String) }
-    def core_tap_head
-      CoreTap.instance.git_head || "(none)"
-    end
-
-    sig { returns(String) }
-    def core_tap_last_commit
-      CoreTap.instance.git_last_commit || "never"
-    end
-
-    sig { returns(String) }
-    def core_tap_branch
-      CoreTap.instance.git_branch || "(none)"
-    end
-
-    sig { returns(String) }
-    def core_tap_origin
-      CoreTap.instance.remote || "(none)"
+      homebrew_repo.origin_url || "(none)"
     end
 
     sig { returns(String) }
@@ -95,18 +73,8 @@ module SystemConfig
     end
 
     sig { returns(String) }
-    def describe_homebrew_ruby_version
-      case RUBY_VERSION
-      when /^1\.[89]/, /^2\.0/
-        "#{RUBY_VERSION}-p#{RUBY_PATCHLEVEL}"
-      else
-        RUBY_VERSION
-      end
-    end
-
-    sig { returns(String) }
     def describe_homebrew_ruby
-      "#{describe_homebrew_ruby_version} => #{RUBY_PATH}"
+      "#{RUBY_VERSION} => #{RUBY_PATH}"
     end
 
     sig { returns(T.nilable(String)) }
@@ -130,28 +98,44 @@ module SystemConfig
 
     sig { returns(String) }
     def describe_curl
-      out, = system_command(curl_executable, args: ["--version"], verbose: false)
+      out, = system_command(Utils::Curl.curl_executable, args: ["--version"], verbose: false)
 
-      if /^curl (?<curl_version>[\d.]+)/ =~ out
-        "#{curl_version} => #{curl_path}"
+      match_data = /^curl (?<curl_version>[\d.]+)/.match(out)
+      if match_data
+        "#{match_data[:curl_version]} => #{Utils::Curl.curl_path}"
       else
         "N/A"
       end
     end
 
-    def core_tap_config(out = $stdout)
-      if CoreTap.instance.installed?
-        out.puts "Core tap origin: #{core_tap_origin}"
-        out.puts "Core tap HEAD: #{core_tap_head}"
-        out.puts "Core tap last commit: #{core_tap_last_commit}"
-        out.puts "Core tap branch: #{core_tap_branch}"
+    def dump_tap_config(tap, out = $stdout)
+      case tap
+      when CoreTap
+        tap_name = "Core tap"
+        json_file_name = "formula.jws.json"
+      when CoreCaskTap
+        tap_name = "Core cask tap"
+        json_file_name = "cask.jws.json"
+      else
+        raise ArgumentError, "Unknown tap: #{tap}"
       end
 
-      if (formula_json = Homebrew::API::HOMEBREW_CACHE_API/"formula.jws.json") && formula_json.exist?
-        out.puts "Core tap JSON: #{formula_json.mtime.utc.strftime("%d %b %H:%M UTC")}"
-      elsif !CoreTap.instance.installed?
-        out.puts "Core tap: N/A"
+      if tap.installed?
+        out.puts "#{tap_name} origin: #{tap.remote}" if tap.remote != tap.default_remote
+        out.puts "#{tap_name} HEAD: #{tap.git_head || "(none)"}"
+        out.puts "#{tap_name} last commit: #{tap.git_last_commit || "never"}"
+        out.puts "#{tap_name} branch: #{tap.git_branch || "(none)"}" if tap.git_branch != "master"
       end
+
+      if (json_file = Homebrew::API::HOMEBREW_CACHE_API/json_file_name) && json_file.exist?
+        out.puts "#{tap_name} JSON: #{json_file.mtime.utc.strftime("%d %b %H:%M UTC")}"
+      elsif !tap.installed?
+        out.puts "#{tap_name}: N/A"
+      end
+    end
+
+    def core_tap_config(out = $stdout)
+      dump_tap_config(CoreTap.instance, out)
     end
 
     def homebrew_config(out = $stdout)

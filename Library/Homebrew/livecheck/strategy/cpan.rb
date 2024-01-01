@@ -18,8 +18,6 @@ module Homebrew
       #
       # @api public
       class Cpan
-        extend T::Sig
-
         NICE_NAME = "CPAN"
 
         # The `Regexp` used to determine if the strategy applies to the URL.

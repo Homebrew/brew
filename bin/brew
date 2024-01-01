@@ -19,17 +19,15 @@ then
   exit 1
 fi
 
-# Fail fast with concise message when requesting unfiltered environment.
-# This is basically odisabled so can be removed at any major release afterwards
-# and definitely if this is still here in 2023.
-if [[ -n "${HOMEBREW_NO_ENV_FILTERING:-}" ]]
+# Fail fast with concise message when HOME is unset
+if [[ -z "${HOME:-}" ]]
 then
-  echo "Error: HOMEBREW_NO_ENV_FILTERING was deprecated for over a year and has now been removed (because it breaks many things)!" >&2
+  echo "Error: \$HOME must be set to run brew." >&2
   exit 1
 fi
 
 quiet_cd() {
-  cd "$@" &>/dev/null || return
+  CDPATH='' cd -- "$@" &>/dev/null || return
 }
 
 symlink_target_directory() {
@@ -77,11 +75,56 @@ then
   then
     HOMEBREW_PREFIX="/usr/local"
   fi
+  unset USR_LOCAL_BREW_FILE_DIRECTORY USR_LOCAL_HOMEBREW_REPOSITORY
 fi
+
+unset BREW_FILE_DIRECTORY
 
 # If the location of HOMEBREW_LIBRARY changes
 # keg_relocate.rb, formula_cellar_checks.rb, and test/global_spec.rb need to change.
 HOMEBREW_LIBRARY="${HOMEBREW_REPOSITORY}/Library"
+
+# Load Homebrew's variable configuration files from disk.
+export_homebrew_env_file() {
+  local env_file
+
+  env_file="${1}"
+  [[ -r "${env_file}" ]] || return 0
+  while read -r line
+  do
+    # only load HOMEBREW_* lines
+    [[ "${line}" = "HOMEBREW_"* ]] || continue
+    export "${line?}"
+  done <"${env_file}"
+}
+
+# First, load the system-wide configuration.
+unset SYSTEM_ENV_TAKES_PRIORITY
+if [[ -n "${HOMEBREW_SYSTEM_ENV_TAKES_PRIORITY-}" ]]
+then
+  SYSTEM_ENV_TAKES_PRIORITY="1"
+else
+  export_homebrew_env_file "/etc/homebrew/brew.env"
+fi
+
+# Next, load the prefix configuration
+export_homebrew_env_file "${HOMEBREW_PREFIX}/etc/homebrew/brew.env"
+
+# Finally, load the user configuration
+if [[ -n "${XDG_CONFIG_HOME-}" ]]
+then
+  HOMEBREW_USER_CONFIG_HOME="${XDG_CONFIG_HOME}/homebrew"
+else
+  HOMEBREW_USER_CONFIG_HOME="${HOME}/.homebrew"
+fi
+
+export_homebrew_env_file "${HOMEBREW_USER_CONFIG_HOME}/brew.env"
+
+# If the system configuration takes priority, load it last.
+if [[ -n "${SYSTEM_ENV_TAKES_PRIORITY-}" ]]
+then
+  export_homebrew_env_file "/etc/homebrew/brew.env"
+fi
 
 # Copy and export all HOMEBREW_* variables previously mentioned in
 # manpage or used elsewhere by Homebrew.
@@ -109,9 +152,13 @@ done
 # We don't want to take the user's value for, e.g., `HOMEBREW_PATH` here!
 USED_BY_HOMEBREW_VARS=(
   CODESPACES
+  COLORTERM
   DBUS_SESSION_BUS_ADDRESS
   PATH
+  SSH_TTY
+  SUDO_USER
   TMUX
+  XDG_CACHE_HOME
   XDG_RUNTIME_DIR
 )
 for VAR in "${USED_BY_HOMEBREW_VARS[@]}"
@@ -130,6 +177,7 @@ export HOMEBREW_BREW_FILE
 export HOMEBREW_PREFIX
 export HOMEBREW_REPOSITORY
 export HOMEBREW_LIBRARY
+export HOMEBREW_USER_CONFIG_HOME
 
 # set from user environment
 # shellcheck disable=SC2154
@@ -148,6 +196,11 @@ then
   export CI="1"
 fi
 
+if [[ -n "${GITHUB_ACTIONS:-}" && -n "${ImageOS:-}" && -n "${ImageVersion:-}" ]]
+then
+  export HOMEBREW_GITHUB_HOSTED_RUNNER=1
+fi
+
 # filter the user environment
 PATH="/usr/bin:/bin:/usr/sbin:/sbin"
 
@@ -155,8 +208,6 @@ FILTERED_ENV=()
 ENV_VAR_NAMES=(
   HOME SHELL PATH TERM TERMINFO TERMINFO_DIRS COLUMNS DISPLAY LOGNAME USER CI SSH_AUTH_SOCK SUDO_ASKPASS
   http_proxy https_proxy ftp_proxy no_proxy all_proxy HTTPS_PROXY FTP_PROXY ALL_PROXY
-  GITHUB_ACTIONS GITHUB_WORKSPACE GITHUB_ACTIONS_HOMEBREW_SELF_HOSTED
-  GITHUB_REPOSITORY GITHUB_RUN_ID GITHUB_RUN_ATTEMPT GITHUB_SHA GITHUB_HEAD_REF GITHUB_BASE_REF GITHUB_REF GITHUB_OUTPUT
 )
 # Filter all but the specific variables.
 for VAR in "${ENV_VAR_NAMES[@]}" "${!HOMEBREW_@}"
@@ -166,6 +217,19 @@ do
 
   FILTERED_ENV+=("${VAR}=${!VAR}")
 done
+
+if [[ -n "${CI:-}" ]]
+then
+  for VAR in "${!GITHUB_@}"
+  do
+    # Skip if variable value is empty.
+    [[ -z "${!VAR:-}" ]] && continue
+    # Skip variables that look like tokens.
+    [[ "${VAR}" = *TOKEN* ]] && continue
+
+    FILTERED_ENV+=("${VAR}=${!VAR}")
+  done
+fi
 unset VAR ENV_VAR_NAMES
 
 exec /usr/bin/env -i "${FILTERED_ENV[@]}" /bin/bash "${HOMEBREW_LIBRARY}/Homebrew/brew.sh" "$@"

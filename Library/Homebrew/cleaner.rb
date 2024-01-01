@@ -5,6 +5,7 @@
 # By default:
 #
 # * removes `.la` files
+# * removes `.tbd` files
 # * removes `perllocal.pod` files
 # * removes `.packlist` files
 # * removes empty directories
@@ -125,7 +126,7 @@ class Cleaner
 
       next if path.directory?
 
-      if path.extname == ".la" || PERL_BASENAMES.include?(path.basename.to_s)
+      if path.extname == ".la" || path.extname == ".tbd" || PERL_BASENAMES.include?(path.basename.to_s)
         path.unlink
       elsif path.symlink?
         # Skip it.

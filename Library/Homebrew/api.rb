@@ -4,6 +4,7 @@
 require "api/analytics"
 require "api/cask"
 require "api/formula"
+require "base64" # TODO: Add this to the Gemfile or remove it before moving to Ruby 3.4.
 require "extend/cachable"
 
 module Homebrew
@@ -11,11 +12,10 @@ module Homebrew
   #
   # @api private
   module API
-    extend T::Sig
-
     extend Cachable
 
     HOMEBREW_CACHE_API = (HOMEBREW_CACHE/"api").freeze
+    HOMEBREW_CACHE_API_SOURCE = (HOMEBREW_CACHE/"api-source").freeze
 
     sig { params(endpoint: String).returns(Hash) }
     def self.fetch(endpoint)
@@ -35,8 +35,11 @@ module Homebrew
       raise ArgumentError, "Invalid JSON file: #{Tty.underline}#{api_url}#{Tty.reset}"
     end
 
-    sig { params(endpoint: String, target: Pathname).returns([T.any(Array, Hash), T::Boolean]) }
-    def self.fetch_json_api_file(endpoint, target:)
+    sig {
+      params(endpoint: String, target: Pathname, stale_seconds: Integer).returns([T.any(Array, Hash), T::Boolean])
+    }
+    def self.fetch_json_api_file(endpoint, target: HOMEBREW_CACHE_API/endpoint,
+                                 stale_seconds: Homebrew::EnvConfig.api_auto_update_secs.to_i)
       retry_count = 0
       url = "#{Homebrew::EnvConfig.api_domain}/#{endpoint}"
       default_url = "#{HOMEBREW_API_DEFAULT_DOMAIN}/#{endpoint}"
@@ -46,27 +49,29 @@ module Homebrew
         odie "Need to download #{url} but cannot as root! Run `brew update` without `sudo` first then try again."
       end
 
-      # TODO: consider using more of Utils::Curl
-      curl_args = %W[
+      curl_args = Utils::Curl.curl_args(retries: 0) + %W[
         --compressed
         --speed-limit #{ENV.fetch("HOMEBREW_CURL_SPEED_LIMIT")}
         --speed-time #{ENV.fetch("HOMEBREW_CURL_SPEED_TIME")}
       ]
-      curl_args << "--progress-bar" unless Context.current.verbose?
-      curl_args << "--verbose" if Homebrew::EnvConfig.curl_verbose?
-      curl_args << "--silent" if !$stdout.tty? || Context.current.quiet?
 
+      insecure_download = DevelopmentTools.ca_file_substitution_required? ||
+                          DevelopmentTools.curl_substitution_required?
       skip_download = target.exist? &&
                       !target.empty? &&
                       (!Homebrew.auto_update_command? ||
                         Homebrew::EnvConfig.no_auto_update? ||
-                      ((Time.now - Homebrew::EnvConfig.api_auto_update_secs.to_i) < target.mtime))
+                      ((Time.now - stale_seconds) < target.mtime))
       skip_download ||= Homebrew.running_as_root_but_not_owned_by_root?
 
       json_data = begin
         begin
           args = curl_args.dup
           args.prepend("--time-cond", target.to_s) if target.exist? && !target.empty?
+          if insecure_download
+            opoo DevelopmentTools.insecure_download_warning(endpoint)
+            args.append("--insecure")
+          end
           unless skip_download
             ohai "Downloading #{url}" if $stdout.tty? && !Context.current.quiet?
             # Disable retries here, we handle them ourselves below.
@@ -89,7 +94,8 @@ module Homebrew
           opoo "#{target.basename}: update failed, falling back to cached version."
         end
 
-        FileUtils.touch(target) unless skip_download
+        mtime = insecure_download ? Time.new(1970, 1, 1) : Time.now
+        FileUtils.touch(target, mtime: mtime) unless skip_download
         JSON.parse(target.read)
       rescue JSON::ParserError
         target.unlink
@@ -114,50 +120,6 @@ module Homebrew
       else
         [json_data, !skip_download]
       end
-    end
-
-    sig {
-      params(name: String, path: T.any(Pathname, String), git_head: String,
-             sha256: T.nilable(String)).returns(String)
-    }
-    def self.fetch_homebrew_cask_source(name, path:, git_head:, sha256: nil)
-      # TODO: unify with formula logic (https://github.com/Homebrew/brew/issues/14746)
-      raw_endpoint = "#{git_head}/#{path}"
-      return cache[raw_endpoint] if cache.present? && cache.key?(raw_endpoint)
-
-      # This API sometimes returns random 404s so needs a fallback at formulae.brew.sh.
-      raw_source_url = "https://raw.githubusercontent.com/Homebrew/homebrew-cask/#{raw_endpoint}"
-      api_source_url = "#{HOMEBREW_API_DEFAULT_DOMAIN}/cask-source/#{name}.rb"
-
-      url = raw_source_url
-      output = Utils::Curl.curl_output("--fail", url)
-
-      if !output.success? || output.blank?
-        url = api_source_url
-        output = Utils::Curl.curl_output("--fail", url)
-        if !output.success? || output.blank?
-          raise ArgumentError, <<~EOS
-            No valid file found at either of:
-            #{Tty.underline}#{raw_source_url}#{Tty.reset}
-            #{Tty.underline}#{api_source_url}#{Tty.reset}
-          EOS
-        end
-      end
-
-      cask_source = output.stdout
-      actual_sha256 = Digest::SHA256.hexdigest(cask_source)
-      if sha256 && actual_sha256 != sha256
-        raise ArgumentError, <<~EOS
-          SHA256 mismatch
-          Expected: #{Formatter.success(sha256.to_s)}
-            Actual: #{Formatter.error(actual_sha256.to_s)}
-               URL: #{url}
-          Check if you can access the URL in your browser.
-          Regardless, try again in a few minutes.
-        EOS
-      end
-
-      cache[raw_endpoint] = cask_source
     end
 
     sig { params(json: Hash).returns(Hash) }
@@ -209,5 +171,32 @@ module Homebrew
 
       [true, JSON.parse(json_data["payload"])]
     end
+
+    sig { params(path: Pathname).returns(T.nilable(Tap)) }
+    def self.tap_from_source_download(path)
+      source_relative_path = path.relative_path_from(Homebrew::API::HOMEBREW_CACHE_API_SOURCE)
+      return if source_relative_path.to_s.start_with?("../")
+
+      org, repo = source_relative_path.each_filename.first(2)
+      return if org.blank? || repo.blank?
+
+      Tap.fetch(org, repo)
+    end
+  end
+
+  # @api private
+  sig { params(block: T.proc.returns(T.untyped)).returns(T.untyped) }
+  def self.with_no_api_env(&block)
+    return yield if Homebrew::EnvConfig.no_install_from_api?
+
+    with_env(HOMEBREW_NO_INSTALL_FROM_API: "1", HOMEBREW_AUTOMATICALLY_SET_NO_INSTALL_FROM_API: "1", &block)
+  end
+
+  # @api private
+  sig { params(condition: T::Boolean, block: T.proc.returns(T.untyped)).returns(T.untyped) }
+  def self.with_no_api_env_if_needed(condition, &block)
+    return yield unless condition
+
+    with_no_api_env(&block)
   end
 end

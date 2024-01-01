@@ -1,4 +1,3 @@
-# typed: false
 # frozen_string_literal: true
 
 require "dependency"
@@ -101,15 +100,20 @@ describe Dependency do
     expect(foo1).not_to eql(foo3)
   end
 
-  describe TapDependency do
-    subject(:dependency) { described_class.new("foo/bar/dog") }
-
-    specify "#tap" do
+  describe "#tap" do
+    it "returns a tap passed a fully-qualified name" do
+      dependency = described_class.new("foo/bar/dog")
       expect(dependency.tap).to eq(Tap.new("foo", "bar"))
     end
 
-    specify "#option_names" do
-      expect(dependency.option_names).to eq(%w[dog])
+    it "returns no tap passed a simple name" do
+      dependency = described_class.new("dog")
+      expect(dependency.tap).to be_nil
     end
+  end
+
+  specify "#option_names" do
+    dependency = described_class.new("foo/bar/dog")
+    expect(dependency.option_names).to eq(%w[dog])
   end
 end

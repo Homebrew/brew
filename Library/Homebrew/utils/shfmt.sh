@@ -97,7 +97,7 @@ fi
 ###
 
 # Check for specific patterns and prompt messages if detected
-no_forbidden_patten() {
+no_forbidden_pattern() {
   local file="$1"
   local tempfile="$2"
   local subject="$3"
@@ -131,7 +131,7 @@ no_tabs() {
   local file="$1"
   local tempfile="$2"
 
-  no_forbidden_patten "${file}" "${tempfile}" \
+  no_forbidden_pattern "${file}" "${tempfile}" \
     "Indent with tab" \
     'Replace tabs with 2 spaces instead.' \
     '^[[:space:]]+' \
@@ -167,7 +167,7 @@ Use the followings instead (keep for statements only one line):
 EOMSG
   )"
 
-  no_forbidden_patten "${file}" "${tempfile}" \
+  no_forbidden_pattern "${file}" "${tempfile}" \
     "Multiline for statement" \
     "${message}" \
     "${regex}"
@@ -197,7 +197,7 @@ Use the followings instead:
 EOMSG
   )"
 
-  no_forbidden_patten "${file}" "${tempfile}" \
+  no_forbidden_pattern "${file}" "${tempfile}" \
     "Pattern \`IFS=\$'\\n'\`" \
     "${message}" \
     "${regex}"

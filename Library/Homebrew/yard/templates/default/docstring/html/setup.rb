@@ -4,7 +4,7 @@
 def init
   # `sorbet` is available transitively through the `yard-sorbet` plugin, but we're
   # outside of the standalone sorbet config, so `checked` is enabled by default
-  T.bind(self, YARD::Templates::Template, checked: false)
+  T.bind(self, T.all(Class, YARD::Templates::Template), checked: false)
   super
 
   return if sections.empty?

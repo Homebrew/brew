@@ -8,7 +8,6 @@ old_trap = trap("INT") { exit! 130 }
 require_relative "global"
 require "extend/ENV"
 require "timeout"
-require "debrew"
 require "formula_assertions"
 require "formula_free_port"
 require "fcntl"
@@ -35,7 +34,10 @@ begin
   formula = T.must(args.named.to_resolved_formulae.first)
   formula.extend(Homebrew::Assertions)
   formula.extend(Homebrew::FreePort)
-  formula.extend(Debrew::Formula) if args.debug?
+  if args.debug?
+    require "debrew"
+    formula.extend(Debrew::Formula)
+  end
 
   ENV.extend(Stdenv)
   ENV.setup_build_environment(formula: formula, testing_formula: true)

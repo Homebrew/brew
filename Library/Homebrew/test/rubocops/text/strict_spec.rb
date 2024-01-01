@@ -1,4 +1,3 @@
-# typed: false
 # frozen_string_literal: true
 
 require "rubocops/text"
@@ -123,7 +122,7 @@ describe RuboCop::Cop::FormulaAuditStrict::Text do
       RUBY
     end
 
-    it %Q(reports no offenses if formula name appears afer "\#{share}/<directory name>") do
+    it %Q(reports no offenses if formula name appears after "\#{share}/<directory name>") do
       expect_no_offenses(<<~RUBY, "/homebrew-core/Formula/foo.rb")
         class Foo < Formula
           def install

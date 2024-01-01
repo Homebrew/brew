@@ -11,7 +11,7 @@ All Homebrew maintainers are encouraged to contribute to all parts of the projec
 - `brew` maintainers: this team maintains the [`Homebrew/brew`](https://github.com/Homebrew/brew) repository. See the [Homebrew/brew Maintainer Guide](Homebrew-brew-Maintainer-Guide.md) for more details about being a `brew` maintainer.
 - Core maintainers: this team maintains the [`Homebrew/homebrew-core`](https://github.com/Homebrew/homebrew-core) repository. See the [Homebrew/homebrew-core Maintainer Guide](Homebrew-homebrew-core-Maintainer-Guide.md) for more details about being a core maintainer.
 - Linux maintainers: this team maintains the [`Homebrew/homebrew-core`](https://github.com/Homebrew/homebrew-core) repository on Linux.
-- Cask maintainers: this team maintains the [`Homebrew/homebrew-cask`](https://github.com/Homebrew/homebrew-cask), [`Homebrew/homebrew-cask-drivers`](https://github.com/Homebrew/homebrew-cask-drivers), [`Homebrew/homebrew-cask-fonts`](https://github.com/Homebrew/homebrew-cask-fonts) and [`Homebrew/homebrew-cask-versions`](https://github.com/Homebrew/homebrew-cask-versions) repositories. See the [Homebrew/homebrew-cask Maintainer Guide](Homebrew-homebrew-cask-Maintainer-Guide.md) for more details about being a cask maintainer.
+- Cask maintainers: this team maintains the [`Homebrew/homebrew-cask`](https://github.com/Homebrew/homebrew-cask), [`Homebrew/homebrew-cask-fonts`](https://github.com/Homebrew/homebrew-cask-fonts) and [`Homebrew/homebrew-cask-versions`](https://github.com/Homebrew/homebrew-cask-versions) repositories. See the [Homebrew/homebrew-cask Maintainer Guide](Homebrew-homebrew-cask-Maintainer-Guide.md) for more details about being a cask maintainer.
 
 These documents are meant to serve as guiding principles. As a maintainer, you can make a call to either request changes from a contributor or help them out based on their comfort and previous contributions. Remember, as a team we [Prioritise Maintainers Over Users](Maintainers-Avoiding-Burnout.md) to avoid burnout. If you wish to change or discuss any of the guidelines: open a PR to suggest a change.
 
@@ -29,6 +29,8 @@ Homebrew aims to be the missing package manager for macOS (and Linux). Its prima
 
 It may be enough to refer to an issue ticket, but make sure changes and context are clear enough so that anyone reading them for the first time can make sense of them. You don't want code you wrote to be removed because the someone new doesn’t understand why it’s there. Regressions suck.
 
+This also applies to issue and PR bodies. Be as explicit as possible. If a pull request is part of a larger initiative: link to a relevant tracking issue. If there isn't a tracking issue yet: create one to improve communication and get consensus.
+
 ### Don’t allow bloated diffs
 
 Amend a cherry-pick to remove commits that are only changes in whitespace. They are not acceptable because our history is important and `git blame` should be useful.
@@ -37,9 +39,9 @@ Whitespace corrections (to Ruby standard etc.) are allowed (in fact this is a go
 
 ### Closing issues/PRs
 
-Maintainers (including the lead maintainer) should not close issues or pull requests (note a merge is not considered a close in this case) opened by other maintainers unless they are stale (i.e. have seen no updates for 28 days) in which case they can be closed by any maintainer. Any maintainer is encouraged to reopen a closed issue when they wish to do additional work on the issue.
+Maintainers (including the project leader) should not close issues or pull requests (note a merge is not considered a close in this case) opened by other maintainers unless they are stale in which case they can be closed by any maintainer. Any maintainer is encouraged to reopen a closed issue when they wish to do additional work on the issue.
 
-Any maintainer can merge any PR they have carefully reviewed and is passing CI that has been opened by any other maintainer. If you do not wish to have other maintainers merge your PRs: please use the `do not merge` label to indicate that until you're ready to merge it yourself.
+Any maintainer can merge any PR they have carefully reviewed and is passing CI that has been opened by any other maintainer. If you do not wish to have other maintainers merge your PRs: please use the draft pull request status to indicate that until you're ready to merge it yourself.
 
 ## Reverting PRs
 
@@ -69,6 +71,6 @@ All communication should ideally occur in public on GitHub. Where this is not po
 
 This makes it easier for other maintainers, contributors and users to follow along with what we're doing (and, more importantly, why we're doing it) and means that decisions have a linkable URL.
 
-All maintainers (and lead maintainer) communication through any medium is bound by [Homebrew's Code of Conduct](https://github.com/Homebrew/.github/blob/HEAD/CODE_OF_CONDUCT.md#code-of-conduct). Abusive behaviour towards other maintainers, contributors or users will not be tolerated; the maintainer will be given a warning and if their behaviour continues they will be removed as a maintainer.
+All maintainers (and project leader) communication through any medium is bound by [Homebrew's Code of Conduct](https://github.com/Homebrew/.github/blob/HEAD/CODE_OF_CONDUCT.md#code-of-conduct). Abusive behaviour towards other maintainers, contributors or users will not be tolerated; the maintainer will be given a warning and if their behaviour continues they will be removed as a maintainer.
 
 Maintainers should feel free to pleasantly disagree with the work and decisions of other maintainers. Healthy, friendly, technical disagreement between maintainers is actively encouraged and should occur in public on the issue tracker to make the project better. Interpersonal issues should be handled privately in Slack, ideally with moderation. If work or decisions are insufficiently documented or explained any maintainer or contributor should feel free to ask for clarification. No maintainer may ever justify a decision with e.g. "because I say so" or "it was I who did X" alone. Off-topic discussions on the issue tracker, [bike-shedding](https://en.wikipedia.org/wiki/Law_of_triviality) and personal attacks are forbidden.

@@ -1,13 +1,13 @@
-# typed: false
 # frozen_string_literal: true
 
 describe Cask::CaskLoader::FromTapLoader do
   let(:cask_name) { "testball" }
   let(:cask_full_name) { "homebrew/cask/#{cask_name}" }
-  let(:cask_path) { Tap.default_cask_tap.cask_dir/"#{cask_name}.rb" }
+  let(:cask_path) { CoreCaskTap.instance.cask_dir/"#{cask_name}.rb" }
 
   describe "#load" do
     before do
+      CoreCaskTap.instance.clear_cache
       cask_path.parent.mkpath
       cask_path.write <<~RUBY
         cask '#{cask_name}' do
@@ -25,7 +25,7 @@ describe Cask::CaskLoader::FromTapLoader do
     end
 
     context "with sharded Cask directory" do
-      let(:cask_path) { Tap.default_cask_tap.cask_dir/cask_name[0]/"#{cask_name}.rb" }
+      let(:cask_path) { CoreCaskTap.instance.cask_dir/cask_name[0]/"#{cask_name}.rb" }
 
       it "returns a Cask" do
         expect(described_class.new(cask_full_name).load(config: nil)).to be_a(Cask::Cask)

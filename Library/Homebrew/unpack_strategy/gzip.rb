@@ -4,8 +4,6 @@
 module UnpackStrategy
   # Strategy for unpacking gzip archives.
   class Gzip
-    extend T::Sig
-
     include UnpackStrategy
 
     sig { returns(T::Array[String]) }

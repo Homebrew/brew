@@ -86,7 +86,7 @@ module Homebrew
     rescue Errno::EACCES, Errno::ENOTEMPTY
       odie <<~EOS
         Could not rename #{keg.name} keg! Check/fix its permissions:
-          sudo chown -R $(whoami) #{keg}
+          sudo chown -R #{ENV.fetch("USER", "$(whoami)")} #{keg}
       EOS
     end
   end

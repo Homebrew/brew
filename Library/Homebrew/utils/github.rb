@@ -11,8 +11,6 @@ require "system_command"
 #
 # @api private
 module GitHub
-  extend T::Sig
-
   include SystemCommand::Mixin
 
   def self.check_runs(repo: nil, commit: nil, pull_request: nil)
@@ -58,14 +56,10 @@ module GitHub
     API.open_rest(url_to("repos", user, repo))
   end
 
-  def self.search_code(repo: nil, user: "Homebrew", path: ["Formula", "Casks", "."], filename: nil, extension: "rb")
-    search_results_items("code", user: user, path: path, filename: filename, extension: extension, repo: repo)
-  end
-
-  def self.issues_for_formula(name, tap: CoreTap.instance, tap_remote_repo: tap&.full_name, state: nil)
+  def self.issues_for_formula(name, tap: CoreTap.instance, tap_remote_repo: tap&.full_name, state: nil, type: nil)
     return [] unless tap_remote_repo
 
-    search_issues(name, repo: tap_remote_repo, state: state, in: "title")
+    search_issues(name, repo: tap_remote_repo, state: state, type: type, in: "title")
   end
 
   def self.user
@@ -510,16 +504,20 @@ module GitHub
     response["license"]["spdx_id"]
   rescue API::HTTPNotFoundError
     nil
+  rescue API::AuthenticationFailedError => e
+    raise unless e.message.match?(API::GITHUB_IP_ALLOWLIST_ERROR)
+  end
+
+  def self.pull_request_title_regex(name, version = nil)
+    return /(^|\s)#{Regexp.quote(name)}(:|,|\s|$)/i.freeze if version.blank?
+
+    /(^|\s)#{Regexp.quote(name)}(:|,|\s)(.*\s)?#{Regexp.quote(version)}(:|,|\s|$)/i.freeze
   end
 
   def self.fetch_pull_requests(name, tap_remote_repo, state: nil, version: nil)
-    if version.present?
-      query = "#{name} #{version} is:pr"
-      regex = /(^|\s)#{Regexp.quote(name)}(:|,|\s)(.*\s)?#{Regexp.quote(version)}(:|,|\s|$)/i
-    else
-      query = "#{name} is:pr"
-      regex = /(^|\s)#{Regexp.quote(name)}(:|,|\s|$)/i
-    end
+    regex = pull_request_title_regex(name, version)
+    query = "is:pr #{name} #{version}".strip
+
     issues_for_formula(query, tap_remote_repo: tap_remote_repo, state: state).select do |pr|
       pr["html_url"].include?("/pull/") && regex.match?(pr["title"])
     end
@@ -528,8 +526,42 @@ module GitHub
     []
   end
 
+  # WARNING: The GitHub API returns results in a slightly different form here compared to `fetch_pull_requests`.
+  def self.fetch_open_pull_requests(name, tap_remote_repo, version: nil)
+    return [] if tap_remote_repo.blank?
+
+    # Bust the cache every three minutes.
+    cache_expiry = 3 * 60
+    cache_epoch = Time.now - (Time.now.to_i % cache_expiry)
+    cache_key = "#{tap_remote_repo}_#{cache_epoch.to_i}"
+
+    @open_pull_requests ||= {}
+    @open_pull_requests[cache_key] ||= begin
+      owner, repo = tap_remote_repo.split("/")
+      endpoint = "repos/#{owner}/#{repo}/pulls"
+      query_parameters = ["state=open", "direction=desc"]
+      pull_requests = []
+
+      API.paginate_rest("#{API_URL}/#{endpoint}", additional_query_params: query_parameters.join("&")) do |page|
+        pull_requests.concat(page)
+      end
+
+      pull_requests
+    end
+
+    regex = pull_request_title_regex(name, version)
+    @open_pull_requests[cache_key].select { |pr| regex.match?(pr["title"]) }
+  end
+
   def self.check_for_duplicate_pull_requests(name, tap_remote_repo, state:, file:, args:, version: nil)
-    pull_requests = fetch_pull_requests(name, tap_remote_repo, state: state, version: version).select do |pr|
+    # `fetch_open_pull_requests` is more reliable but *really* slow, so let's use it only in CI.
+    pull_requests = if state == "open" && ENV["CI"].present?
+      fetch_open_pull_requests(name, tap_remote_repo, version: version)
+    else
+      fetch_pull_requests(name, tap_remote_repo, state: state, version: version)
+    end
+
+    pull_requests.select! do |pr|
       get_pull_request_changed_files(
         tap_remote_repo, pr["number"]
       ).any? { |f| f["filename"] == file }
@@ -580,7 +612,7 @@ module GitHub
     old_contents = info[:old_contents]
     additional_files = info[:additional_files] || []
     remote = info[:remote] || "origin"
-    remote_branch = info[:remote_branch] || tap.path.git_origin_branch
+    remote_branch = info[:remote_branch] || tap.git_repo.origin_branch_name
     branch = info[:branch_name]
     commit_message = info[:commit_message]
     previous_branch = info[:previous_branch] || "-"
@@ -696,7 +728,7 @@ module GitHub
   def self.last_commit(user, repo, ref, version)
     return if Homebrew::EnvConfig.no_github_api?
 
-    output, _, status = curl_output(
+    output, _, status = Utils::Curl.curl_output(
       "--silent", "--head", "--location",
       "--header", "Accept: application/vnd.github.sha",
       url_to("repos", user, repo, "commits", ref).to_s
@@ -712,9 +744,9 @@ module GitHub
   end
 
   def self.multiple_short_commits_exist?(user, repo, commit)
-    return if Homebrew::EnvConfig.no_github_api?
+    return false if Homebrew::EnvConfig.no_github_api?
 
-    output, _, status = curl_output(
+    output, _, status = Utils::Curl.curl_output(
       "--silent", "--head", "--location",
       "--header", "Accept: application/vnd.github.sha",
       url_to("repos", user, repo, "commits", commit).to_s
@@ -726,7 +758,7 @@ module GitHub
     output[/^Status: (200)/, 1] != "200"
   end
 
-  def self.repo_commits_for_user(nwo, user, filter, args)
+  def self.repo_commits_for_user(nwo, user, filter, args, max)
     return if Homebrew::EnvConfig.no_github_api?
 
     params = ["#{filter}=#{user}"]
@@ -736,20 +768,25 @@ module GitHub
     commits = []
     API.paginate_rest("#{API_URL}/repos/#{nwo}/commits", additional_query_params: params.join("&")) do |result|
       commits.concat(result.map { |c| c["sha"] })
+      if max.present? && commits.length >= max
+        opoo "#{user} exceeded #{max} #{nwo} commits as #{filter}, stopped counting!"
+        break
+      end
     end
     commits
   end
 
-  def self.count_repo_commits(nwo, user, filter, args)
-    return if Homebrew::EnvConfig.no_github_api?
+  def self.count_repo_commits(nwo, user, args, max: nil)
+    odie "Cannot count commits, HOMEBREW_NO_GITHUB_API set!" if Homebrew::EnvConfig.no_github_api?
 
-    author_shas = repo_commits_for_user(nwo, user, "author", args)
-    return author_shas.count if filter == "author"
+    author_shas = repo_commits_for_user(nwo, user, "author", args, max)
+    committer_shas = repo_commits_for_user(nwo, user, "committer", args, max)
+    return [0, 0] if author_shas.blank? && committer_shas.blank?
 
-    committer_shas = repo_commits_for_user(nwo, user, "committer", args)
-    return 0 if committer_shas.empty?
-
+    author_count = author_shas.count
     # Only count commits where the author and committer are different.
-    committer_shas.difference(author_shas).count
+    committer_count = committer_shas.difference(author_shas).count
+
+    [author_count, committer_count]
   end
 end

@@ -1,4 +1,3 @@
-# typed: false
 # frozen_string_literal: true
 
 require "test/support/fixtures/testball"
@@ -67,11 +66,11 @@ describe Homebrew::Cleanup do
     end
 
     context "when it can't remove a keg" do
-      let(:f1) { Class.new(Testball) { version "0.1" }.new }
-      let(:f2) { Class.new(Testball) { version "0.2" }.new }
+      let(:formula_zero_dot_one) { Class.new(Testball) { version "0.1" }.new }
+      let(:formula_zero_dot_two) { Class.new(Testball) { version "0.2" }.new }
 
       before do
-        [f1, f2].each do |f|
+        [formula_zero_dot_one, formula_zero_dot_two].each do |f|
           f.brew do
             f.install
           end
@@ -85,13 +84,13 @@ describe Homebrew::Cleanup do
       end
 
       it "doesn't remove any kegs" do
-        cleanup.cleanup_formula f2
-        expect(f1.installed_kegs.size).to eq(2)
+        cleanup.cleanup_formula formula_zero_dot_one
+        expect(formula_zero_dot_one.installed_kegs.size).to eq(2)
       end
 
       it "lists the unremovable kegs" do
-        cleanup.cleanup_formula f2
-        expect(cleanup.unremovable_kegs).to contain_exactly(f1.installed_kegs[0])
+        cleanup.cleanup_formula formula_zero_dot_two
+        expect(cleanup.unremovable_kegs).to contain_exactly(formula_zero_dot_one.installed_kegs[0])
       end
     end
   end
@@ -182,8 +181,8 @@ describe Homebrew::Cleanup do
       it "removes the download for the latest version after 30 days" do
         download = Cask::Cache.path/"#{cask.token}--#{cask.version}"
 
-        allow(download).to receive(:ctime).and_return((DateTime.now - 30).to_time - (60 * 60))
-        allow(download).to receive(:mtime).and_return((DateTime.now - 30).to_time - (60 * 60))
+        allow(download).to receive_messages(ctime: (DateTime.now - 30).to_time - (60 * 60),
+                                            mtime: (DateTime.now - 30).to_time - (60 * 60))
 
         cleanup.cleanup_cask(cask)
 
@@ -334,7 +333,7 @@ describe Homebrew::Cleanup do
         FileUtils.touch testball
         FileUtils.touch testball_resource
         (HOMEBREW_CELLAR/"testball"/"0.0.1").mkpath
-        FileUtils.touch(CoreTap.instance.formula_dir/"testball.rb")
+        FileUtils.touch(CoreTap.instance.new_formula_path("testball"))
       end
 
       it "cleans up file if outdated" do

@@ -1,4 +1,3 @@
-# typed: false
 # frozen_string_literal: true
 
 require "livecheck/livecheck"
@@ -266,7 +265,7 @@ describe Homebrew::Livecheck do
   describe "::preprocess_url" do
     let(:github_git_url_with_extension) { "https://github.com/Homebrew/brew.git" }
 
-    it "returns the unmodified URL for an unparseable URL" do
+    it "returns the unmodified URL for an unparsable URL" do
       # Modeled after the `head` URL in the `ncp` formula
       expect(livecheck.preprocess_url(":something:cvs:@cvs.brew.sh:/cvs"))
         .to eq(":something:cvs:@cvs.brew.sh:/cvs")

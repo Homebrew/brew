@@ -1,4 +1,3 @@
-# typed: false
 # frozen_string_literal: true
 
 module Cask
@@ -13,7 +12,7 @@ module Cask
       let(:downloaded_path) { Pathname.new("cask.zip") }
 
       before do
-        allow(downloaded_path).to receive(:sha256).and_return(computed_sha256)
+        allow(downloaded_path).to receive_messages(file?: true, sha256: computed_sha256)
       end
 
       context "when the expected checksum is :no_check" do

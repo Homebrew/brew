@@ -71,15 +71,36 @@ class Attr < Parlour::Plugin
       tree << element
     elsif node.type == :send && children.shift.nil?
       method_name = children.shift
-      if [:attr_rw, :attr_predicate].include?(method_name)
+
+      case method_name
+      when :attr_rw, :attr_predicate
         children.each do |name_node|
           tree << [method_name, name_node.children.first.to_s]
+        end
+      when :delegate
+        children.each do |name_node|
+          name_node.children.each do |pair|
+            delegated_method = pair.children.first
+            delegated_methods = if delegated_method.type == :array
+              delegated_method.children
+            else
+              [delegated_method]
+            end
+
+            delegated_methods.each do |delegated_method_sym|
+              tree << [method_name, delegated_method_sym.children.first.to_s]
+            end
+          end
         end
       end
     end
 
     tree
   end
+
+  ARRAY_METHODS = T.let(["to_a", "to_ary"].freeze, T::Array[String])
+  HASH_METHODS = T.let(["to_h", "to_hash"].freeze, T::Array[String])
+  STRING_METHODS = T.let(["to_s", "to_str", "to_json"].freeze, T::Array[String])
 
   sig { params(tree: T::Array[T.untyped], namespace: Parlour::RbiGenerator::Namespace, sclass: T::Boolean).void }
   def process_custom_attr(tree, namespace, sclass: false)
@@ -107,6 +128,32 @@ class Attr < Parlour::Plugin
         name = node.shift
         name = "self.#{name}" if sclass
         namespace.create_method(name, return_type: "T::Boolean")
+      when :delegate
+        name = node.shift
+
+        return_type = if name.end_with?("?")
+          "T::Boolean"
+        elsif ARRAY_METHODS.include?(name)
+          "Array"
+        elsif HASH_METHODS.include?(name)
+          "Hash"
+        elsif STRING_METHODS.include?(name)
+          "String"
+        else
+          "T.untyped"
+        end
+
+        name = "self.#{name}" if sclass
+
+        namespace.create_method(
+          name,
+          parameters:  [
+            Parlour::RbiGenerator::Parameter.new("*args"),
+            Parlour::RbiGenerator::Parameter.new("**options"),
+            Parlour::RbiGenerator::Parameter.new("&block"),
+          ],
+          return_type: return_type,
+        )
       else
         raise "Malformed tree."
       end

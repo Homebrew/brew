@@ -43,6 +43,7 @@ Style/Documentation:
     - livecheck/strategy/extract_plist.rb
     - livecheck/strategy/git.rb
     - livecheck/strategy/github_latest.rb
+    - livecheck/strategy/github_releases.rb
     - livecheck/strategy/gnome.rb
     - livecheck/strategy/gnu.rb
     - livecheck/strategy/hackage.rb

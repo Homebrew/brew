@@ -6,7 +6,6 @@ require "utils/spdx"
 require "system_command"
 
 module Homebrew
-  extend T::Sig
   include SystemCommand::Mixin
 
   module_function
@@ -17,18 +16,12 @@ module Homebrew
       description <<~EOS
         Update SPDX license data in the Homebrew repository.
       EOS
-      switch "--fail-if-not-changed",
-             hidden:      true,
-             description: "Return a failing status code if current license data's version is the same as " \
-                          "the upstream. This can be used to notify CI when the SPDX license data is out of date."
-
       named_args :none
     end
   end
 
   def update_license_data
-    args = update_license_data_args.parse
-    odisabled "brew update-license-data --fail-if-not-changed" if args.fail_if_not_changed?
+    update_license_data_args.parse
 
     SPDX.download_latest_license_data!
     diff = system_command "git", args: [

@@ -8,11 +8,11 @@ class DependencyCollector
   def git_dep_if_needed(tags); end
 
   def subversion_dep_if_needed(tags)
-    Dependency.new("subversion", tags)
+    Dependency.new("subversion", [*tags, :implicit])
   end
 
   def cvs_dep_if_needed(tags)
-    Dependency.new("cvs", tags)
+    Dependency.new("cvs", [*tags, :implicit])
   end
 
   def xz_dep_if_needed(tags); end

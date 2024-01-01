@@ -7,15 +7,13 @@ module Cask
     #
     # @api private
     class Version < ::String
-      extend T::Sig
-
       DIVIDERS = {
         "." => :dots,
         "-" => :hyphens,
         "_" => :underscores,
       }.freeze
 
-      DIVIDER_REGEX = /(#{DIVIDERS.keys.map { |v| Regexp.quote(v) }.join('|')})/.freeze
+      DIVIDER_REGEX = /(#{DIVIDERS.keys.map { |v| Regexp.quote(v) }.join("|")})/.freeze
 
       MAJOR_MINOR_PATCH_REGEX = /^([^.,:]+)(?:.([^.,:]+)(?:.([^.,:]+))?)?/.freeze
 

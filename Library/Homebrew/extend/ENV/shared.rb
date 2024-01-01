@@ -11,8 +11,6 @@ require "development_tools"
 # @see Stdenv
 # @see https://www.rubydoc.info/stdlib/Env Ruby's ENV API
 module SharedEnvExtension
-  extend T::Sig
-
   include CompilerConstants
 
   CC_FLAG_VARS = %w[CFLAGS CXXFLAGS OBJCFLAGS OBJCXXFLAGS].freeze
@@ -30,6 +28,7 @@ module SharedEnvExtension
     CMAKE_PREFIX_PATH CMAKE_INCLUDE_PATH CMAKE_FRAMEWORK_PATH
     GOBIN GOPATH GOROOT PERL_MB_OPT PERL_MM_OPT
     LIBRARY_PATH LD_LIBRARY_PATH LD_PRELOAD LD_RUN_PATH
+    RUSTFLAGS
   ].freeze
   private_constant :SANITIZED_VARS
 
@@ -289,7 +288,7 @@ module SharedEnvExtension
     gcc_version_name = "gcc@#{version}"
 
     gcc = Formulary.factory("gcc")
-    if gcc.try(:version_suffix) == version
+    if gcc.respond_to?(:version_suffix) && T.unsafe(gcc).version_suffix == version
       gcc
     else
       Formulary.factory(gcc_version_name)
@@ -349,7 +348,7 @@ module SharedEnvExtension
     COMPILER_SYMBOL_MAP.fetch(value) do |other|
       case other
       when GNU_GCC_REGEXP
-        other
+        other.to_sym
       else
         raise "Invalid value for #{source}: #{other}"
       end

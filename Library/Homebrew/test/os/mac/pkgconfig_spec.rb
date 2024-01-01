@@ -1,4 +1,3 @@
-# typed: false
 # frozen_string_literal: true
 
 # These tests assume the needed SDKs are correctly installed, i.e. `brew doctor` passes.

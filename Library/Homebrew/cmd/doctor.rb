@@ -6,17 +6,16 @@ require "cli/parser"
 require "cask/caskroom"
 
 module Homebrew
-  extend T::Sig
-
   sig { returns(CLI::Parser) }
   def self.doctor_args
     Homebrew::CLI::Parser.new do
       description <<~EOS
         Check your system for potential problems. Will exit with a non-zero status
-        if any potential problems are found. Please note that these warnings are just
-        used to help the Homebrew maintainers with debugging if you file an issue. If
-        everything you use Homebrew for is working fine: please don't worry or file
-        an issue; just ignore this.
+        if any potential problems are found.
+
+        Please note that these warnings are just used to help the Homebrew maintainers
+        with debugging if you file an issue. If everything you use Homebrew for
+        is working fine: please don't worry or file an issue; just ignore this.
       EOS
       switch "--list-checks",
              description: "List all audit methods, which can be run individually " \

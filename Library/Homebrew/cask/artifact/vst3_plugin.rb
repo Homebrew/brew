@@ -9,6 +9,10 @@ module Cask
     #
     # @api private
     class Vst3Plugin < Moved
+      sig { returns(String) }
+      def self.english_name
+        "VST3 Plugin"
+      end
     end
   end
 end

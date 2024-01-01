@@ -9,8 +9,6 @@ module Utils
   #
   # @api private
   module AST
-    extend T::Sig
-
     Node = RuboCop::AST::Node
     SendNode = RuboCop::AST::SendNode
     BlockNode = RuboCop::AST::BlockNode
@@ -79,7 +77,6 @@ module Utils
     #
     # @api private
     class FormulaAST
-      extend T::Sig
       extend Forwardable
       include AST
 

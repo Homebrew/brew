@@ -6,7 +6,6 @@ raise "#{__FILE__} must not be loaded via `require`." if $PROGRAM_NAME != __FILE
 old_trap = trap("INT") { exit! 130 }
 
 require_relative "global"
-require "debrew"
 require "fcntl"
 require "socket"
 require "cli/parser"
@@ -20,7 +19,10 @@ begin
   trap("INT", old_trap)
 
   formula = args.named.to_resolved_formulae.first
-  formula.extend(Debrew::Formula) if args.debug?
+  if args.debug?
+    require "debrew"
+    formula.extend(Debrew::Formula)
+  end
   formula.run_post_install
 rescue Exception => e # rubocop:disable Lint/RescueException
   error_pipe.puts e.to_json

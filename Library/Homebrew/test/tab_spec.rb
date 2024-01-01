@@ -1,4 +1,3 @@
-# typed: false
 # frozen_string_literal: true
 
 require "tab"
@@ -142,7 +141,8 @@ describe Tab do
     tab.homebrew_version = "1.1.6"
     tab.runtime_dependencies = runtime_deps_hash
     expect(tab.runtime_dependencies).to eql(
-      [{ "full_name" => "foo", "version" => "1.0", "declared_directly" => false }],
+      [{ "full_name" => "foo", "version" => "1.0", "revision" => 0, "pkg_version" => "1.0",
+"declared_directly" => false }],
     )
   end
 
@@ -243,8 +243,7 @@ describe Tab do
       stub_const("HOMEBREW_VERSION", "1.1.7")
 
       # don't try to load gcc/glibc
-      allow(DevelopmentTools).to receive(:needs_libc_formula?).and_return(false)
-      allow(DevelopmentTools).to receive(:needs_compiler_formula?).and_return(false)
+      allow(DevelopmentTools).to receive_messages(needs_libc_formula?: false, needs_compiler_formula?: false)
 
       f = formula do
         url "foo-1.0"
@@ -256,6 +255,7 @@ describe Tab do
       tap = Tap.new("user", "repo")
       from_tap = formula("from_tap", path: tap.path/"Formula/from_tap.rb") do
         url "from_tap-1.0"
+        revision 1
       end
       stub_formula_loader from_tap
 
@@ -267,8 +267,10 @@ describe Tab do
       tab = described_class.create(f, compiler, stdlib)
 
       runtime_dependencies = [
-        { "full_name" => "bar", "version" => "2.0", "declared_directly" => true },
-        { "full_name" => "user/repo/from_tap", "version" => "1.0", "declared_directly" => true },
+        { "full_name" => "bar", "version" => "2.0", "revision" => 0, "pkg_version" => "2.0",
+"declared_directly" => true },
+        { "full_name" => "user/repo/from_tap", "version" => "1.0", "revision" => 1, "pkg_version" => "1.0_1",
+"declared_directly" => true },
       ]
       expect(tab.runtime_dependencies).to eq(runtime_dependencies)
 

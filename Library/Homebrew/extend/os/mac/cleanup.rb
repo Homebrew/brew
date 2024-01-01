@@ -8,7 +8,7 @@ module Homebrew
     def use_system_ruby?
       return false if Homebrew::EnvConfig.force_vendor_ruby?
 
-      ENV["HOMEBREW_MACOS_SYSTEM_RUBY_NEW_ENOUGH"].present?
+      Homebrew::EnvConfig.developer? && ENV["HOMEBREW_USE_RUBY_FROM_PATH"].present?
     end
   end
 end

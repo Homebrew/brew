@@ -1,4 +1,3 @@
-# typed: false
 # frozen_string_literal: true
 
 describe SystemCommand do
@@ -10,12 +9,14 @@ describe SystemCommand do
         env:          env,
         must_succeed: true,
         sudo:         sudo,
+        sudo_as_root: sudo_as_root,
       )
     end
 
     let(:env_args) { ["bash", "-c", 'printf "%s" "${A?}" "${B?}" "${C?}"'] }
     let(:env) { { "A" => "1", "B" => "2", "C" => "3" } }
     let(:sudo) { false }
+    let(:sudo_as_root) { false }
 
     context "when given some environment variables" do
       its("run!.stdout") { is_expected.to eq("123") }
@@ -46,8 +47,9 @@ describe SystemCommand do
       end
     end
 
-    context "when given some environment variables and sudo: true" do
+    context "when given some environment variables and sudo: true, sudo_as_root: false" do
       let(:sudo) { true }
+      let(:sudo_as_root) { false }
 
       describe "the resulting command line" do
         it "includes the given variables explicitly" do
@@ -56,6 +58,27 @@ describe SystemCommand do
             .with(
               an_instance_of(Hash), ["/usr/bin/sudo", "/usr/bin/sudo"], "-E",
               "A=1", "B=2", "C=3", "--", "env", *env_args, pgroup: nil
+            )
+            .and_wrap_original do |original_popen3, *_, &block|
+              original_popen3.call("true", &block)
+            end
+
+          command.run!
+        end
+      end
+    end
+
+    context "when given some environment variables and sudo: true, sudo_as_root: true" do
+      let(:sudo) { true }
+      let(:sudo_as_root) { true }
+
+      describe "the resulting command line" do
+        it "includes the given variables explicitly" do
+          expect(Open3)
+            .to receive(:popen3)
+            .with(
+              an_instance_of(Hash), ["/usr/bin/sudo", "/usr/bin/sudo"], "-u", "root",
+              "-E", "A=1", "B=2", "C=3", "--", "env", *env_args, pgroup: nil
             )
             .and_wrap_original do |original_popen3, *_, &block|
               original_popen3.call("true", &block)
@@ -143,7 +166,7 @@ describe SystemCommand do
       include_examples("it returns '1 2 3 4 5 6'")
     end
 
-    context "with print_stdout" do
+    context "with `print_stdout: true`" do
       before do
         options.merge!(print_stdout: true)
       end
@@ -157,7 +180,38 @@ describe SystemCommand do
       include_examples("it returns '1 2 3 4 5 6'")
     end
 
-    context "without print_stderr" do
+    context "with `print_stdout: :debug`" do
+      before do
+        options.merge!(print_stdout: :debug)
+      end
+
+      it "echoes only STDERR output" do
+        expect { described_class.run(command, **options) }
+          .to output("2\n4\n6\n").to_stderr
+          .and not_to_output.to_stdout
+      end
+
+      context "when `debug?` is true" do
+        let(:options) do
+          { args: [
+            "-c",
+            "for i in $(seq 1 2 5); do echo $i; sleep 0.1; echo $(($i + 1)) >&2; sleep 0.1; done",
+          ] }
+        end
+
+        it "echoes the command and all output to STDERR when `debug?` is true" do
+          with_context debug: true do
+            expect { described_class.run(command, **options) }
+              .to output(/\A.*#{Regexp.escape(command)}.*\n1\n2\n3\n4\n5\n6\n\Z/).to_stderr
+              .and not_to_output.to_stdout
+          end
+        end
+      end
+
+      include_examples("it returns '1 2 3 4 5 6'")
+    end
+
+    context "with `print_stderr: false`" do
       before do
         options.merge!(print_stderr: false)
       end
@@ -165,13 +219,13 @@ describe SystemCommand do
       it "echoes nothing" do
         expect do
           described_class.run(command, **options)
-        end.to output("").to_stdout
+        end.not_to output.to_stdout
       end
 
       include_examples("it returns '1 2 3 4 5 6'")
     end
 
-    context "with print_stdout but without print_stderr" do
+    context "with `print_stdout: true` and `print_stderr: false`" do
       before do
         options.merge!(print_stdout: true, print_stderr: false)
       end

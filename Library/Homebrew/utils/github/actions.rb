@@ -9,8 +9,6 @@ module GitHub
   #
   # @api private
   module Actions
-    extend T::Sig
-
     sig { params(string: String).returns(String) }
     def self.escape(string)
       # See https://github.community/t/set-output-truncates-multiline-strings/16852/3.
@@ -39,8 +37,6 @@ module GitHub
 
     # Helper class for formatting annotations on GitHub Actions.
     class Annotation
-      extend T::Sig
-
       ANNOTATION_TYPES = [:notice, :warning, :error].freeze
 
       sig { params(path: T.any(String, Pathname)).returns(T.nilable(Pathname)) }

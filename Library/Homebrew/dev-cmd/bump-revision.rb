@@ -5,8 +5,6 @@ require "formula"
 require "cli/parser"
 
 module Homebrew
-  extend T::Sig
-
   module_function
 
   sig { returns(CLI::Parser) }
@@ -27,7 +25,7 @@ module Homebrew
 
       conflicts "--dry-run", "--write-only"
 
-      named_args :formula, min: 1
+      named_args :formula, min: 1, without_api: true
     end
   end
 
@@ -53,7 +51,7 @@ module Homebrew
           end
         end
       else
-        Homebrew.install_bundler_gems!
+        Homebrew.install_bundler_gems!(groups: ["ast"])
         require "utils/ast"
 
         formula_ast = Utils::AST::FormulaAST.new(formula.path.read)

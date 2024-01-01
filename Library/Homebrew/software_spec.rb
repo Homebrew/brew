@@ -1,6 +1,7 @@
 # typed: true
 # frozen_string_literal: true
 
+require "attrable"
 require "resource"
 require "download_strategy"
 require "checksum"
@@ -11,12 +12,10 @@ require "dependency_collector"
 require "utils/bottles"
 require "patch"
 require "compilers"
-require "os/mac/version"
+require "macos_version"
 require "extend/on_system"
 
 class SoftwareSpec
-  extend T::Sig
-
   extend Forwardable
   include OnSystem::MacOSAndLinux
 
@@ -26,8 +25,7 @@ class SoftwareSpec
   }.freeze
 
   attr_reader :name, :full_name, :owner, :build, :resources, :patches, :options, :deprecated_flags,
-              :deprecated_options, :dependency_collector, :bottle_specification, :compiler_failures,
-              :uses_from_macos_elements
+              :deprecated_options, :dependency_collector, :bottle_specification, :compiler_failures
 
   def_delegators :@resource, :stage, :fetch, :verify_download_integrity, :source_modified_time, :download_name,
                  :cached_download, :clear_cache, :checksum, :mirrors, :specs, :using, :version, :mirror,
@@ -91,15 +89,11 @@ class SoftwareSpec
     @resource.owner = self
     resources.each_value do |r|
       r.owner = self
-      r.version ||= begin
-        raise "#{full_name}: version missing for \"#{r.name}\" resource!" if version.nil?
+      next if r.version
 
-        if version.head?
-          Version.create("HEAD")
-        else
-          version.dup
-        end
-      end
+      raise "#{full_name}: version missing for \"#{r.name}\" resource!" if version.nil?
+
+      r.version(version.head? ? Version.new("HEAD") : version.dup)
     end
     patches.each { |p| p.owner = self }
   end
@@ -160,7 +154,7 @@ class SoftwareSpec
         raise ArgumentError, "option name must be string or symbol; got a #{name.class}: #{name}"
       end
       raise ArgumentError, "option name is required" if name.empty?
-      raise ArgumentError, "option name must be longer than one character: #{name}" unless name.length > 1
+      raise ArgumentError, "option name must be longer than one character: #{name}" if name.length <= 1
       raise ArgumentError, "option name must not start with dashes: #{name}" if name.start_with?("-")
 
       Option.new(name, description)
@@ -201,28 +195,34 @@ class SoftwareSpec
       deps = [bounds.shift].to_h
     end
 
+    spec, tags = deps.is_a?(Hash) ? deps.first : deps
+    raise TypeError, "Dependency name must be a string!" unless spec.is_a?(String)
+
     @uses_from_macos_elements << deps
 
-    # Check whether macOS is new enough for dependency to not be required.
-    if Homebrew::SimulateSystem.simulating_or_running_on_macos?
-      # Assume the oldest macOS version when simulating a generic macOS version
-      return if Homebrew::SimulateSystem.current_os == :macos && !bounds.key?(:since)
-
-      if Homebrew::SimulateSystem.current_os != :macos
-        current_os = MacOS::Version.from_symbol(Homebrew::SimulateSystem.current_os)
-        since_os = MacOS::Version.from_symbol(bounds[:since]) if bounds.key?(:since)
-        return if current_os >= since_os
-      end
-    end
-
-    depends_on deps
+    depends_on UsesFromMacOSDependency.new(spec, Array(tags), bounds: bounds)
   end
 
+  # @deprecated
+  def uses_from_macos_elements
+    # TODO: remove all @uses_from_macos_elements when removing this method
+    # Also remember to remove the delegate from formula.rb
+    odisabled "#uses_from_macos_elements", "#declared_deps"
+    @uses_from_macos_elements
+  end
+
+  # @deprecated
   def uses_from_macos_names
+    # TODO: Remember to remove the delegate from formula.rb
+    odisabled "#uses_from_macos_names", "#declared_deps"
     uses_from_macos_elements.flat_map { |e| e.is_a?(Hash) ? e.keys : e }
   end
 
   def deps
+    dependency_collector.deps.dup_without_system_deps
+  end
+
+  def declared_deps
     dependency_collector.deps
   end
 
@@ -283,7 +283,7 @@ end
 class HeadSoftwareSpec < SoftwareSpec
   def initialize(flags: [])
     super
-    @resource.version = Version.create("HEAD")
+    @resource.version(Version.new("HEAD"))
   end
 
   def verify_download_integrity(_filename)
@@ -293,16 +293,20 @@ end
 
 class Bottle
   class Filename
-    extend T::Sig
-
     attr_reader :name, :version, :tag, :rebuild
 
+    sig { params(formula: Formula, tag: Utils::Bottles::Tag, rebuild: Integer).returns(T.attached_class) }
     def self.create(formula, tag, rebuild)
       new(formula.name, formula.pkg_version, tag, rebuild)
     end
 
+    sig { params(name: String, version: PkgVersion, tag: Utils::Bottles::Tag, rebuild: Integer).void }
     def initialize(name, version, tag, rebuild)
       @name = File.basename name
+
+      raise ArgumentError, "Invalid bottle name" unless Utils.safe_filename?(@name)
+      raise ArgumentError, "Invalid bottle version" unless Utils.safe_filename?(version.to_s)
+
       @version = version
       @tag = tag.to_s
       @rebuild = rebuild
@@ -344,7 +348,6 @@ class Bottle
   def initialize(formula, spec, tag = nil)
     @name = formula.name
     @resource = Resource.new
-    @resource.specs[:bottle] = true
     @resource.owner = formula
     @spec = spec
 
@@ -354,7 +357,7 @@ class Bottle
     @cellar = tag_spec.cellar
     @rebuild = spec.rebuild
 
-    @resource.version = formula.pkg_version.to_s
+    @resource.version(formula.pkg_version.to_s)
     @resource.checksum = tag_spec.checksum
 
     @fetch_tab_retried = false
@@ -472,13 +475,15 @@ class Bottle
         using:   CurlGitHubPackagesDownloadStrategy,
         headers: ["Accept: application/vnd.oci.image.index.v1+json"],
       )
-      resource.downloader.resolved_basename = "#{name}-#{version_rebuild}.bottle_manifest.json"
+      T.cast(resource.downloader, CurlGitHubPackagesDownloadStrategy).resolved_basename =
+        "#{name}-#{version_rebuild}.bottle_manifest.json"
       resource
     end
   end
 
   def select_download_strategy(specs)
     specs[:using] ||= DownloadStrategyDetector.detect(@root_url)
+    specs[:bottle] = true
     specs
   end
 
@@ -508,9 +513,8 @@ class Bottle
 end
 
 class BottleSpecification
+  extend Attrable
   RELOCATABLE_CELLARS = [:any, :any_skip_relocation].freeze
-
-  extend T::Sig
 
   attr_rw :rebuild
   attr_accessor :tap
@@ -541,6 +545,12 @@ class BottleSpecification
     end
   end
 
+  def ==(other)
+    self.class == other.class && rebuild == other.rebuild && collector == other.collector &&
+      root_url == other.root_url && root_url_specs == other.root_url_specs && tap == other.tap
+  end
+  alias eql? ==
+
   sig { params(tag: Utils::Bottles::Tag).returns(T.any(Symbol, String)) }
   def tag_to_cellar(tag = Utils::Bottles.tag)
     spec = collector.specification_for(tag)
@@ -557,7 +567,7 @@ class BottleSpecification
 
     return true if RELOCATABLE_CELLARS.include?(cellar)
 
-    prefix = Pathname(cellar).parent.to_s
+    prefix = Pathname(cellar.to_s).parent.to_s
 
     cellar_relocatable = cellar.size >= HOMEBREW_CELLAR.to_s.size && ENV["HOMEBREW_RELOCATE_BUILD_PREFIX"].present?
     prefix_relocatable = prefix.size >= HOMEBREW_PREFIX.to_s.size && ENV["HOMEBREW_RELOCATE_BUILD_PREFIX"].present?
@@ -618,7 +628,7 @@ class BottleSpecification
       # Give arm64 bottles a higher priority so they are first
       priority = (tag.arch == :arm64) ? "2" : "1"
       "#{priority}.#{version}_#{tag}"
-    rescue MacOSVersionError
+    rescue MacOSVersion::Error
       # Sort non-MacOS tags below MacOS tags.
       "0.#{tag}"
     end

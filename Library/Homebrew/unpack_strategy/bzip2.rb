@@ -4,8 +4,6 @@
 module UnpackStrategy
   # Strategy for unpacking bzip2 archives.
   class Bzip2
-    extend T::Sig
-
     include UnpackStrategy
 
     sig { returns(T::Array[String]) }

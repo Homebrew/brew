@@ -1,0 +1,64 @@
+name: Check Vendor Version
+
+on:
+  pull_request:
+    paths:
+      - .github/workflows/vendor-version.yml
+      - Library/Homebrew/vendor/bundle/ruby/**
+
+permissions:
+  contents: read
+
+jobs:
+  check-vendor-version:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Set up Homebrew
+        id: set-up-homebrew
+        uses: Homebrew/actions/setup-homebrew@master
+        with:
+          core: false
+          cask: false
+          test-bot: false
+
+      - name: Install Bundler RubyGems
+        run: brew install-bundler-gems --groups=all
+
+      - name: Get Ruby ABI version
+        id: ruby-abi
+        run: echo "version=$(brew ruby -e "puts Gem.ruby_api_version")" >> "${GITHUB_OUTPUT}"
+
+      - name: Get gem info
+        id: gem-info
+        working-directory: ${{ steps.set-up-homebrew.outputs.gems-path }}/${{ steps.ruby-abi.outputs.version }}/gems
+        run: |
+          {
+            echo "vendor-version=$(cat ../.homebrew_vendor_version)"
+            echo "ignored<<EOS"
+            git check-ignore -- *
+            echo "EOS"
+          } >> "${GITHUB_OUTPUT}"
+
+      - name: Compare to base ref
+        working-directory: ${{ steps.set-up-homebrew.outputs.gems-path }}/${{ steps.ruby-abi.outputs.version }}
+        run: |
+          git checkout "origin/${GITHUB_BASE_REF}"
+          rm .homebrew_vendor_version
+          brew install-bundler-gems --groups=all
+          if [[ "$(cat .homebrew_vendor_version)" == "${{ steps.gem-info.outputs.vendor-version }}" ]]; then
+            ignored_gems="${{ steps.gem-info.outputs.ignored }}"
+            while IFS= read -r gem; do
+              gem_dir="./gems/${gem}"
+              [[ -d "${gem_dir}" ]] || continue
+              exit_code=0
+              git check-ignore --quiet "${gem_dir}" || exit_code=$?
+              if (( exit_code != 0 )); then
+                if (( exit_code == 1 )); then
+                  echo "::error::VENDOR_VERSION needs bumping in utils/gems.rb" >&2
+                else
+                  echo "::error::git check-ignore failed" >&2
+                fi
+                exit "${exit_code}"
+              fi
+            done <<< "${ignored_gems}"
+          fi

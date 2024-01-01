@@ -9,14 +9,20 @@ module Utils
   # @api private
   module Bottles
     class << self
-      extend T::Sig
-
       # Gets the tag for the running OS.
-      def tag(symbol = nil)
-        return Tag.from_symbol(symbol) if symbol.present?
-
-        @tag ||= Tag.new(system: HOMEBREW_SYSTEM.downcase.to_sym,
-                         arch:   HOMEBREW_PROCESSOR.downcase.to_sym)
+      sig { params(tag: T.nilable(T.any(Symbol, Tag))).returns(Tag) }
+      def tag(tag = nil)
+        case tag
+        when Symbol
+          Tag.from_symbol(tag)
+        when Tag
+          tag
+        else
+          @tag ||= Tag.new(
+            system: HOMEBREW_SYSTEM.downcase.to_sym,
+            arch:   HOMEBREW_PROCESSOR.downcase.to_sym,
+          )
+        end
       end
 
       def built_as?(formula)
@@ -45,7 +51,7 @@ module Utils
 
       def receipt_path(bottle_file)
         bottle_file_list(bottle_file).find do |line|
-          line =~ %r{.+/.+/INSTALL_RECEIPT.json}
+          %r{.+/.+/INSTALL_RECEIPT.json}.match?(line)
         end
       end
 
@@ -59,12 +65,14 @@ module Utils
           receipt_file = file_from_bottle(bottle_file, receipt_file_path)
           tap = Tab.from_file_content(receipt_file, "#{bottle_file}/#{receipt_file_path}").tap
           "#{tap}/#{name}" if tap.present? && !tap.core_tap?
-        elsif (bottle_json_path = Pathname(bottle_file.sub(/\.(\d+\.)?tar\.gz$/, ".json"))) &&
-              bottle_json_path.exist? &&
-              (bottle_json_path_contents = bottle_json_path.read.presence) &&
-              (bottle_json = JSON.parse(bottle_json_path_contents).presence) &&
-              bottle_json.is_a?(Hash)
-          bottle_json.keys.first.presence
+        else
+          bottle_json_path = Pathname(bottle_file.sub(/\.(\d+\.)?tar\.gz$/, ".json"))
+          if bottle_json_path.exist? &&
+             (bottle_json_path_contents = bottle_json_path.read.presence) &&
+             (bottle_json = JSON.parse(bottle_json_path_contents).presence) &&
+             bottle_json.is_a?(Hash)
+            bottle_json.keys.first.presence
+          end
         end
         full_name ||= name
 
@@ -124,8 +132,6 @@ module Utils
 
     # Denotes the arch and OS of a bottle.
     class Tag
-      extend T::Sig
-
       attr_reader :system, :arch
 
       sig { params(value: Symbol).returns(T.attached_class) }
@@ -157,7 +163,7 @@ module Utils
         if other.is_a?(Symbol)
           to_sym == other
         else
-          self.class == other.class && system == other.system && arch == other.arch
+          self.class == other.class && system == other.system && standardized_arch == other.standardized_arch
         end
       end
 
@@ -166,7 +172,7 @@ module Utils
       end
 
       def hash
-        [system, arch].hash
+        [system, standardized_arch].hash
       end
 
       sig { returns(Symbol) }
@@ -184,7 +190,7 @@ module Utils
         elsif macos? && [:x86_64, :intel].include?(arch)
           system
         else
-          "#{standardized_arch}_#{system}".to_sym
+          :"#{standardized_arch}_#{system}"
         end
       end
 
@@ -193,9 +199,9 @@ module Utils
         to_sym.to_s
       end
 
-      sig { returns(OS::Mac::Version) }
+      sig { returns(MacOSVersion) }
       def to_macos_version
-        @to_macos_version ||= OS::Mac::Version.from_symbol(system)
+        @to_macos_version ||= MacOSVersion.from_symbol(system)
       end
 
       sig { returns(T::Boolean) }
@@ -205,10 +211,7 @@ module Utils
 
       sig { returns(T::Boolean) }
       def macos?
-        to_macos_version
-        true
-      rescue MacOSVersionError
-        false
+        MacOSVersion::SYMBOLS.key?(system)
       end
 
       sig { returns(T::Boolean) }
@@ -245,8 +248,6 @@ module Utils
 
     # The specification for a specific tag
     class TagSpecification
-      extend T::Sig
-
       sig { returns(Utils::Bottles::Tag) }
       attr_reader :tag
 
@@ -261,12 +262,15 @@ module Utils
         @checksum = checksum
         @cellar = cellar
       end
+
+      def ==(other)
+        self.class == other.class && tag == other.tag && checksum == other.checksum && cellar == other.cellar
+      end
+      alias eql? ==
     end
 
     # Collector for bottle specifications.
     class Collector
-      extend T::Sig
-
       sig { void }
       def initialize
         @tag_specs = T.let({}, T::Hash[Utils::Bottles::Tag, Utils::Bottles::TagSpecification])
@@ -276,6 +280,11 @@ module Utils
       def tags
         @tag_specs.keys
       end
+
+      def ==(other)
+        self.class == other.class && @tag_specs == other.instance_variable_get(:@tag_specs)
+      end
+      alias eql? ==
 
       sig { params(tag: Utils::Bottles::Tag, checksum: Checksum, cellar: T.any(Symbol, String)).void }
       def add(tag, checksum:, cellar:)

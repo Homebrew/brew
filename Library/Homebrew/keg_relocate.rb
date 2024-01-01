@@ -12,8 +12,6 @@ class Keg
   NULL_BYTE_STRING = "\\x00"
 
   class Relocation
-    extend T::Sig
-
     RELOCATABLE_PATH_REGEX_PREFIX = /(?:(?<=-F|-I|-L|-isystem)|(?<![a-zA-Z0-9]))/.freeze
 
     def initialize
@@ -36,7 +34,7 @@ class Keg
       @replacement_map.fetch(key)
     end
 
-    sig { params(text: String).void }
+    sig { params(text: String).returns(T::Boolean) }
     def replace_text(text)
       replacements = @replacement_map.values.to_h
 
@@ -49,7 +47,7 @@ class Keg
         changed = text.gsub!(key, replacements[key])
         any_changed ||= changed
       end
-      any_changed
+      !any_changed.nil?
     end
 
     sig { params(path: T.any(String, Regexp)).returns(Regexp) }
@@ -330,7 +328,7 @@ class Keg
     Utils.popen_read("strings", "-t", "x", "-", file.to_s) do |io|
       until io.eof?
         str = io.readline.chomp
-        next if ignores.any? { |i| i =~ str }
+        next if ignores.any? { |i| str.match?(i) }
         next unless str.match? path_regex
 
         offset, match = str.split(" ", 2)

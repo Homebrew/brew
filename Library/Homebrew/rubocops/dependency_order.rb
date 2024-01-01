@@ -11,7 +11,6 @@ module RuboCop
       # precedence order:
       # build-time > test > normal > recommended > optional
       class DependencyOrder < FormulaCop
-        extend T::Sig
         extend AutoCorrector
 
         def audit_formula(_node, _class_node, _parent_class_node, body_node)
@@ -156,7 +155,7 @@ module RuboCop
 
         def build_with_dependency_name(node)
           match_nodes = build_with_dependency_node(node)
-          match_nodes = match_nodes.to_a.delete_if(&:nil?)
+          match_nodes = match_nodes.to_a.compact
           match_nodes.map { |n| string_content(n) } unless match_nodes.empty?
         end
 

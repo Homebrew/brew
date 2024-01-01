@@ -7,8 +7,6 @@ require "version"
 #
 # @api private
 module OS
-  extend T::Sig
-
   # Check if the operating system is macOS.
   #
   # @api public
@@ -57,6 +55,7 @@ module OS
 
   if OS.mac?
     require "os/mac"
+    require "hardware"
     # Don't tell people to report issues on unsupported configurations.
     if !OS::Mac.version.prerelease? &&
        !OS::Mac.version.outdated_release? &&

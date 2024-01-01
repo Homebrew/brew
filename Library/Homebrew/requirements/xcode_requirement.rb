@@ -7,8 +7,6 @@ require "requirement"
 #
 # @api private
 class XcodeRequirement < Requirement
-  extend T::Sig
-
   fatal true
 
   attr_reader :version

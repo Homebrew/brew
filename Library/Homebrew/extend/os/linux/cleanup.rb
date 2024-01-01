@@ -15,7 +15,7 @@ module Homebrew
       check_ruby_version = HOMEBREW_LIBRARY_PATH/"utils/ruby_check_version_script.rb"
       rubies.uniq.any? do |ruby|
         quiet_system ruby, "--enable-frozen-string-literal", "--disable=gems,did_you_mean,rubyopt",
-                     check_ruby_version, HOMEBREW_REQUIRED_RUBY_VERSION
+                     check_ruby_version, RUBY_VERSION
       end
     end
   end

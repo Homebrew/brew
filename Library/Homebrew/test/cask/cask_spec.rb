@@ -1,11 +1,10 @@
-# typed: false
 # frozen_string_literal: true
 
 describe Cask::Cask, :cask do
   let(:cask) { described_class.new("versioned-cask") }
 
   context "when multiple versions are installed" do
-    describe "#versions" do
+    describe "#installed_version" do
       context "when there are duplicate versions" do
         it "uses the last unique version" do
           allow(cask).to receive(:timestamped_versions).and_return([
@@ -14,18 +13,18 @@ describe Cask::Cask, :cask do
             ["1.2.2", "1001"],
           ])
 
+          # Installed caskfile must exist to count as installed.
+          allow_any_instance_of(Pathname).to receive(:exist?).and_return(true)
+
           expect(cask).to receive(:timestamped_versions)
-          expect(cask.versions).to eq([
-            "1.2.3",
-            "1.2.2",
-          ])
+          expect(cask.installed_version).to eq("1.2.2")
         end
       end
     end
   end
 
   describe "load" do
-    let(:tap_path) { Tap.default_cask_tap.path }
+    let(:tap_path) { CoreCaskTap.instance.path }
     let(:file_dirname) { Pathname.new(__FILE__).dirname }
     let(:relative_tap_path) { tap_path.relative_path_from(file_dirname) }
 
@@ -42,7 +41,7 @@ describe Cask::Cask, :cask do
     end
 
     it "returns an instance of the Cask from a JSON file" do
-      c = Cask::CaskLoader.load("#{tap_path}/caffeine.json")
+      c = Cask::CaskLoader.load("#{TEST_FIXTURE_DIR}/cask/caffeine.json")
       expect(c).to be_a(described_class)
       expect(c.token).to eq("caffeine")
     end
@@ -90,27 +89,27 @@ describe Cask::Cask, :cask do
     it "ignores the Casks that have auto_updates true (without --greedy)" do
       c = Cask::CaskLoader.load("auto-updates")
       expect(c).not_to be_outdated
-      expect(c.outdated_versions).to be_empty
+      expect(c.outdated_version).to be_nil
     end
 
     it "ignores the Casks that have version :latest (without --greedy)" do
       c = Cask::CaskLoader.load("version-latest-string")
       expect(c).not_to be_outdated
-      expect(c.outdated_versions).to be_empty
+      expect(c.outdated_version).to be_nil
     end
 
     describe "versioned casks" do
-      subject { cask.outdated_versions }
+      subject { cask.outdated_version }
 
       let(:cask) { described_class.new("basic-cask") }
 
       shared_examples "versioned casks" do |tap_version, expectations|
-        expectations.each do |installed_versions, expected_output|
-          context "when versions #{installed_versions.inspect} are installed and the tap version is #{tap_version}" do
+        expectations.each do |installed_version, expected_output|
+          context "when version #{installed_version.inspect} is installed and the tap version is #{tap_version}" do
             it {
-              allow(cask).to receive(:versions).and_return(installed_versions)
-              allow(cask).to receive(:version).and_return(Cask::DSL::Version.new(tap_version))
-              expect(cask).to receive(:outdated_versions).and_call_original
+              allow(cask).to receive_messages(installed_version: installed_version,
+                                              version:           Cask::DSL::Version.new(tap_version))
+              expect(cask).to receive(:outdated_version).and_call_original
               expect(subject).to eq expected_output
             }
           end
@@ -119,16 +118,13 @@ describe Cask::Cask, :cask do
 
       describe "installed version is equal to tap version => not outdated" do
         include_examples "versioned casks", "1.2.3",
-                         ["1.2.3"]          => [],
-                         ["1.2.4", "1.2.3"] => []
+                         "1.2.3" => nil
       end
 
       describe "installed version is different than tap version => outdated" do
         include_examples "versioned casks", "1.2.4",
-                         ["1.2.3"]                   => ["1.2.3"],
-                         ["1.2.4", "1.2.3"]          => ["1.2.3"],
-                         ["1.2.2", "1.2.3"]          => ["1.2.2", "1.2.3"],
-                         ["1.2.2", "1.2.4", "1.2.3"] => ["1.2.2", "1.2.3"]
+                         "1.2.3" => "1.2.3",
+                         "1.2.4" => nil
       end
     end
 
@@ -140,13 +136,13 @@ describe Cask::Cask, :cask do
           context "when versions #{installed_version} are installed and the " \
                   "tap version is #{tap_version}, #{"not " unless greedy}greedy " \
                   "and sha is #{"not " unless outdated_sha}outdated" do
-            subject { cask.outdated_versions(greedy: greedy) }
+            subject { cask.outdated_version(greedy: greedy) }
 
             it {
-              allow(cask).to receive(:versions).and_return(installed_version)
-              allow(cask).to receive(:version).and_return(Cask::DSL::Version.new(tap_version))
-              allow(cask).to receive(:outdated_download_sha?).and_return(outdated_sha)
-              expect(cask).to receive(:outdated_versions).and_call_original
+              allow(cask).to receive_messages(installed_version:      installed_version,
+                                              version:                Cask::DSL::Version.new(tap_version),
+                                              outdated_download_sha?: outdated_sha)
+              expect(cask).to receive(:outdated_version).and_call_original
               expect(subject).to eq expected_output
             }
           end
@@ -155,29 +151,29 @@ describe Cask::Cask, :cask do
 
       describe ":latest version installed, :latest version in tap" do
         include_examples ":latest cask", false, false, "latest",
-                         ["latest"] => []
+                         "latest" => nil
         include_examples ":latest cask", true, false, "latest",
-                         ["latest"] => []
+                         "latest" => nil
         include_examples ":latest cask", true, true, "latest",
-                         ["latest"] => ["latest"]
+                         "latest" => "latest"
       end
 
       describe "numbered version installed, :latest version in tap" do
         include_examples ":latest cask", false, false, "latest",
-                         ["1.2.3"] => []
+                         "1.2.3" => nil
         include_examples ":latest cask", true, false, "latest",
-                         ["1.2.3"] => []
+                         "1.2.3" => nil
         include_examples ":latest cask", true, true, "latest",
-                         ["1.2.3"] => ["1.2.3"]
+                         "1.2.3" => "1.2.3"
       end
 
       describe "latest version installed, numbered version in tap" do
         include_examples ":latest cask", false, false, "1.2.3",
-                         ["latest"] => ["latest"]
+                         "latest" => "latest"
         include_examples ":latest cask", true, false, "1.2.3",
-                         ["latest"] => ["latest"]
+                         "latest" => "latest"
         include_examples ":latest cask", true, true, "1.2.3",
-                         ["latest"] => ["latest"]
+                         "latest" => "latest"
       end
     end
   end
@@ -217,27 +213,22 @@ describe Cask::Cask, :cask do
   end
 
   describe "#to_h" do
-    let(:expected_json) { File.read("#{TEST_FIXTURE_DIR}/cask/everything.json").strip }
-    let(:expected_json_after_ventura) do
-      File.read("#{TEST_FIXTURE_DIR}/cask/everything-systemsettings-caveats.json").strip
-    end
+    let(:expected_json) { (TEST_FIXTURE_DIR/"cask/everything.json").read.strip }
 
     context "when loaded from cask file" do
       it "returns expected hash" do
+        allow(MacOS).to receive(:version).and_return(MacOSVersion.new("13"))
+
         hash = Cask::CaskLoader.load("everything").to_h
 
         expect(hash).to be_a(Hash)
-        if MacOS.version >= :ventura
-          expect(JSON.pretty_generate(hash)).to eq(expected_json_after_ventura)
-        else
-          expect(JSON.pretty_generate(hash)).to eq(expected_json)
-        end
+        expect(JSON.pretty_generate(hash)).to eq(expected_json)
       end
     end
 
     context "when loaded from json file" do
       it "returns expected hash" do
-        expect(Homebrew::API::Cask).not_to receive(:fetch_source)
+        expect(Homebrew::API::Cask).not_to receive(:source_download)
         hash = Cask::CaskLoader::FromAPILoader.new(
           "everything", from_json: JSON.parse(expected_json)
         ).load(config: nil).to_h
@@ -253,16 +244,16 @@ describe Cask::Cask, :cask do
     let(:expected_versions_variations) do
       <<~JSON
         {
-          "arm64_big_sur": {
-            "url": "file://#{TEST_FIXTURE_DIR}/cask/caffeine/darwin-arm64/1.2.0/arm.zip",
-            "version": "1.2.0",
-            "sha256": "8c62a2b791cf5f0da6066a0a4b6e85f62949cd60975da062df44adf887f4370b"
-          },
           "monterey": {
             "url": "file://#{TEST_FIXTURE_DIR}/cask/caffeine/darwin/1.2.3/intel.zip"
           },
           "big_sur": {
             "url": "file://#{TEST_FIXTURE_DIR}/cask/caffeine/darwin/1.2.0/intel.zip",
+            "version": "1.2.0",
+            "sha256": "8c62a2b791cf5f0da6066a0a4b6e85f62949cd60975da062df44adf887f4370b"
+          },
+          "arm64_big_sur": {
+            "url": "file://#{TEST_FIXTURE_DIR}/cask/caffeine/darwin-arm64/1.2.0/arm.zip",
             "version": "1.2.0",
             "sha256": "8c62a2b791cf5f0da6066a0a4b6e85f62949cd60975da062df44adf887f4370b"
           },
@@ -310,7 +301,7 @@ describe Cask::Cask, :cask do
         catalina: "10.15",
         mojave:   "10.14",
       }
-      stub_const("MacOSVersions::SYMBOLS", symbols)
+      stub_const("MacOSVersion::SYMBOLS", symbols)
 
       # For consistency, always run on Monterey and ARM
       MacOS.full_version = "12"

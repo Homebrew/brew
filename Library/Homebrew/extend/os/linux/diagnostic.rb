@@ -51,9 +51,9 @@ module Homebrew
         <<~EOS
           The directory #{HOMEBREW_TEMP} does not permit executing
           programs. It is likely mounted as "noexec". Please set HOMEBREW_TEMP
-          in your #{shell_profile} to a different directory, for example:
+          in your #{Utils::Shell.profile} to a different directory, for example:
             export HOMEBREW_TEMP=~/tmp
-            echo 'export HOMEBREW_TEMP=~/tmp' >> #{shell_profile}
+            echo 'export HOMEBREW_TEMP=~/tmp' >> #{Utils::Shell.profile}
         EOS
       ensure
         f&.unlink
@@ -68,7 +68,7 @@ module Homebrew
           this variable set to include other locations.
           Some programs like `vapigen` may not work correctly.
           Consider adding Homebrew's share directory to XDG_DATA_DIRS like so:
-            echo 'export XDG_DATA_DIRS="#{HOMEBREW_PREFIX}/share:$XDG_DATA_DIRS"' >> #{shell_profile}
+            echo 'export XDG_DATA_DIRS="#{HOMEBREW_PREFIX}/share:$XDG_DATA_DIRS"' >> #{Utils::Shell.profile}
         EOS
       end
 
@@ -78,8 +78,8 @@ module Homebrew
         <<~EOS
           umask is currently set to 000. Directories created by Homebrew cannot
           be world-writable. This issue can be resolved by adding "umask 002" to
-          your #{shell_profile}:
-            echo 'umask 002' >> #{shell_profile}
+          your #{Utils::Shell.profile}:
+            echo 'umask 002' >> #{Utils::Shell.profile}
         EOS
       end
 

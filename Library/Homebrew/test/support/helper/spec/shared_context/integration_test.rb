@@ -1,4 +1,3 @@
-# typed: false
 # frozen_string_literal: true
 
 require "open3"
@@ -55,13 +54,9 @@ RSpec.shared_context "integration test" do # rubocop:disable RSpec/ContextWordin
 
   # Generate unique ID to be able to
   # properly merge coverage results.
-  def command_id_from_args(args)
-    @command_count ||= 0
-    pretty_args = args.join(" ").gsub(TEST_TMPDIR, "@TMPDIR@")
-    file_and_line = caller.second
-                          .sub(/(.*\d+):.*/, '\1')
-                          .sub("#{HOMEBREW_LIBRARY_PATH}/test/", "")
-    "#{file_and_line}:brew #{pretty_args}:#{@command_count += 1}"
+  def command_id
+    Thread.current[:brew_integration_test_number] ||= 0
+    "#{ENV.fetch("TEST_ENV_NUMBER", "")}:#{Thread.current[:brew_integration_test_number] += 1}"
   end
 
   # Runs a `brew` command with the test configuration
@@ -79,13 +74,14 @@ RSpec.shared_context "integration test" do # rubocop:disable RSpec/ContextWordin
     ].compact.join(File::PATH_SEPARATOR)
 
     env.merge!(
-      "PATH"                      => path,
-      "HOMEBREW_PATH"             => path,
-      "HOMEBREW_BREW_FILE"        => HOMEBREW_PREFIX/"bin/brew",
-      "HOMEBREW_INTEGRATION_TEST" => command_id_from_args(args),
-      "HOMEBREW_TEST_TMPDIR"      => TEST_TMPDIR,
-      "HOMEBREW_DEV_CMD_RUN"      => "true",
-      "GEM_HOME"                  => nil,
+      "PATH"                        => path,
+      "HOMEBREW_PATH"               => path,
+      "HOMEBREW_BREW_FILE"          => HOMEBREW_PREFIX/"bin/brew",
+      "HOMEBREW_INTEGRATION_TEST"   => command_id,
+      "HOMEBREW_TEST_TMPDIR"        => TEST_TMPDIR,
+      "HOMEBREW_DEV_CMD_RUN"        => "true",
+      "HOMEBREW_USE_RUBY_FROM_PATH" => ENV.fetch("HOMEBREW_USE_RUBY_FROM_PATH", nil),
+      "GEM_HOME"                    => nil,
     )
 
     @ruby_args ||= begin
@@ -102,19 +98,11 @@ RSpec.shared_context "integration test" do # rubocop:disable RSpec/ContextWordin
             onoe e
           end
         end
-        libs = specs.flat_map do |spec|
-          full_gem_path = spec.full_gem_path
-          # full_require_paths isn't available in RubyGems < 2.2.
-          spec.require_paths.map do |lib|
-            next lib if lib.include?(full_gem_path)
-
-            "#{full_gem_path}/#{lib}"
-          end
-        end
-        libs.each { |lib| ruby_args << "-I" << lib }
+        specs.flat_map(&:full_require_paths).each { |lib| ruby_args << "-I" << lib }
         ruby_args << "-rsimplecov"
       end
       ruby_args << "-r#{HOMEBREW_LIBRARY_PATH}/test/support/helper/integration_mocks"
+      ruby_args << "-e" << "$0 = ARGV.shift; load($0)"
       ruby_args << (HOMEBREW_LIBRARY_PATH/"brew.rb").resolved_path.to_s
     end
 
@@ -130,8 +118,11 @@ RSpec.shared_context "integration test" do # rubocop:disable RSpec/ContextWordin
   end
 
   def brew_sh(*args)
+    env = {
+      "HOMEBREW_USE_RUBY_FROM_PATH" => ENV.fetch("HOMEBREW_USE_RUBY_FROM_PATH", nil),
+    }
     Bundler.with_unbundled_env do
-      stdout, stderr, status = Open3.capture3("#{ENV.fetch("HOMEBREW_PREFIX")}/bin/brew", *args)
+      stdout, stderr, status = Open3.capture3(env, "#{ENV.fetch("HOMEBREW_PREFIX")}/bin/brew", *args)
       $stdout.print stdout
       $stderr.print stderr
       status
@@ -167,10 +158,6 @@ RSpec.shared_context "integration test" do # rubocop:disable RSpec/ContextWordin
 
         # something here
       RUBY
-    when "foo", "gnupg"
-      content = <<~RUBY
-        url "https://brew.sh/#{name}-1.0"
-      RUBY
     when "bar"
       content = <<~RUBY
         url "https://brew.sh/#{name}-1.0"
@@ -180,6 +167,10 @@ RSpec.shared_context "integration test" do # rubocop:disable RSpec/ContextWordin
       content = <<~RUBY
         url "https://brew.sh/#patchelf-1.0"
         license "0BSD"
+      RUBY
+    else
+      content ||= <<~RUBY
+        url "https://brew.sh/#{name}-1.0"
       RUBY
     end
 

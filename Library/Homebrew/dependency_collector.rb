@@ -18,8 +18,6 @@ require "extend/cachable"
 # This class is used by `depends_on` in the formula DSL to turn dependency
 # specifications into the proper kinds of dependencies and requirements.
 class DependencyCollector
-  extend T::Sig
-
   extend Cachable
 
   attr_reader :deps, :requirements
@@ -47,6 +45,8 @@ class DependencyCollector
 
   def add(spec)
     case dep = fetch(spec)
+    when Array
+      dep.compact.each { |dep| @deps << dep }
     when Dependency
       @deps << dep
     when Requirement
@@ -65,11 +65,14 @@ class DependencyCollector
   end
 
   def cache_key(spec)
-    if spec.is_a?(Resource) && spec.download_strategy <= CurlDownloadStrategy
-      File.extname(spec.url)
-    else
-      spec
+    if spec.is_a?(Resource)
+      if spec.download_strategy <= CurlDownloadStrategy
+        return "#{spec.download_strategy}#{File.extname(spec.url).split("?").first}"
+      end
+
+      return spec.download_strategy
     end
+    spec
   end
 
   def build(spec)
@@ -86,37 +89,37 @@ class DependencyCollector
   def git_dep_if_needed(tags)
     return if Utils::Git.available?
 
-    Dependency.new("git", tags)
+    Dependency.new("git", [*tags, :implicit])
   end
 
   def curl_dep_if_needed(tags)
-    Dependency.new("curl", tags)
+    Dependency.new("curl", [*tags, :implicit])
   end
 
   def subversion_dep_if_needed(tags)
     return if Utils::Svn.available?
 
-    Dependency.new("subversion", tags)
+    Dependency.new("subversion", [*tags, :implicit])
   end
 
   def cvs_dep_if_needed(tags)
-    Dependency.new("cvs", tags) unless which("cvs")
+    Dependency.new("cvs", [*tags, :implicit]) unless which("cvs")
   end
 
   def xz_dep_if_needed(tags)
-    Dependency.new("xz", tags) unless which("xz")
+    Dependency.new("xz", [*tags, :implicit]) unless which("xz")
   end
 
   def zstd_dep_if_needed(tags)
-    Dependency.new("zstd", tags) unless which("zstd")
+    Dependency.new("zstd", [*tags, :implicit]) unless which("zstd")
   end
 
   def unzip_dep_if_needed(tags)
-    Dependency.new("unzip", tags) unless which("unzip")
+    Dependency.new("unzip", [*tags, :implicit]) unless which("unzip")
   end
 
   def bzip2_dep_if_needed(tags)
-    Dependency.new("bzip2", tags) unless which("bzip2")
+    Dependency.new("bzip2", [*tags, :implicit]) unless which("bzip2")
   end
 
   def self.tar_needs_xz_dependency?
@@ -128,7 +131,13 @@ class DependencyCollector
   sig { void }
   def init_global_dep_tree_if_needed!; end
 
+  sig {
+    params(spec: T.any(String, Resource, Symbol, Requirement, Dependency, Class),
+           tags: T::Array[Symbol]).returns(T.any(Dependency, Requirement, Array, NilClass))
+  }
   def parse_spec(spec, tags)
+    raise ArgumentError, "Implicit dependencies cannot be manually specified" if tags.include?(:implicit)
+
     case spec
     when String
       parse_string_spec(spec, tags)
@@ -140,17 +149,11 @@ class DependencyCollector
       spec
     when Class
       parse_class_spec(spec, tags)
-    else
-      raise TypeError, "Unsupported type #{spec.class.name} for #{spec.inspect}"
     end
   end
 
   def parse_string_spec(spec, tags)
-    if spec.match?(HOMEBREW_TAP_FORMULA_REGEX)
-      TapDependency.new(spec, tags)
-    else
-      Dependency.new(spec, tags)
-    end
+    Dependency.new(spec, tags)
   end
 
   def parse_symbol_spec(spec, tags)
@@ -179,8 +182,9 @@ class DependencyCollector
     strategy = spec.download_strategy
 
     if strategy <= HomebrewCurlDownloadStrategy
-      @deps << curl_dep_if_needed(tags)
-      parse_url_spec(spec.url, tags)
+      [curl_dep_if_needed(tags), parse_url_spec(spec.url, tags)]
+    elsif strategy <= NoUnzipCurlDownloadStrategy
+      # ensure NoUnzip never adds any dependencies
     elsif strategy <= CurlDownloadStrategy
       parse_url_spec(spec.url, tags)
     elsif strategy <= GitDownloadStrategy
@@ -188,18 +192,17 @@ class DependencyCollector
     elsif strategy <= SubversionDownloadStrategy
       subversion_dep_if_needed(tags)
     elsif strategy <= MercurialDownloadStrategy
-      Dependency.new("mercurial", tags)
+      Dependency.new("mercurial", [*tags, :implicit])
     elsif strategy <= FossilDownloadStrategy
-      Dependency.new("fossil", tags)
+      Dependency.new("fossil", [*tags, :implicit])
     elsif strategy <= BazaarDownloadStrategy
-      Dependency.new("breezy", tags)
+      Dependency.new("breezy", [*tags, :implicit])
     elsif strategy <= CVSDownloadStrategy
       cvs_dep_if_needed(tags)
     elsif strategy < AbstractDownloadStrategy
       # allow unknown strategies to pass through
     else
-      raise TypeError,
-            "#{strategy.inspect} is not an AbstractDownloadStrategy subclass"
+      raise TypeError, "#{strategy.inspect} is not an AbstractDownloadStrategy subclass"
     end
   end
 
@@ -209,10 +212,10 @@ class DependencyCollector
     when ".zst"         then zstd_dep_if_needed(tags)
     when ".zip"         then unzip_dep_if_needed(tags)
     when ".bz2"         then bzip2_dep_if_needed(tags)
-    when ".lha", ".lzh" then Dependency.new("lha", tags)
-    when ".lz"          then Dependency.new("lzip", tags)
-    when ".rar"         then Dependency.new("unrar", tags)
-    when ".7z"          then Dependency.new("p7zip", tags)
+    when ".lha", ".lzh" then Dependency.new("lha", [*tags, :implicit])
+    when ".lz"          then Dependency.new("lzip", [*tags, :implicit])
+    when ".rar"         then Dependency.new("libarchive", [*tags, :implicit])
+    when ".7z"          then Dependency.new("p7zip", [*tags, :implicit])
     end
   end
 end

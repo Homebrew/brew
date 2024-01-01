@@ -4,8 +4,6 @@
 module UnpackStrategy
   # Strategy for unpacking directories.
   class Directory
-    extend T::Sig
-
     include UnpackStrategy
 
     sig { returns(T::Array[String]) }

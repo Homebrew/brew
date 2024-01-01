@@ -2,8 +2,6 @@
 # frozen_string_literal: true
 
 module Homebrew
-  extend T::Sig
-
   module_function
 
   sig { returns(CLI::Parser) }

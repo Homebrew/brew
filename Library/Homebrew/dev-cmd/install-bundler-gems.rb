@@ -4,8 +4,6 @@
 require "cli/parser"
 
 module Homebrew
-  extend T::Sig
-
   module_function
 
   sig { returns(CLI::Parser) }
@@ -15,7 +13,13 @@ module Homebrew
         Install Homebrew's Bundler gems.
       EOS
       comma_array "--groups",
-                  description: "Installs the specified comma-separated list of gem groups (default: last used)."
+                  description: "Installs the specified comma-separated list of gem groups (default: last used). " \
+                               "Replaces any previously installed groups."
+      comma_array "--add-groups",
+                  description: "Installs the specified comma-separated list of gem groups, " \
+                               "in addition to those already installed."
+
+      conflicts "--groups", "--add-groups"
 
       named_args :none
     end
@@ -24,9 +28,14 @@ module Homebrew
   def install_bundler_gems
     args = install_bundler_gems_args.parse
 
-    # Clear previous settings. We want to fully replace - not append.
-    Homebrew::Settings.delete(:gemgroups) if args.groups
+    groups = args.groups || args.add_groups || []
 
-    Homebrew.install_bundler_gems!(groups: args.groups || [])
+    if groups.delete("all")
+      groups |= Homebrew.valid_gem_groups
+    elsif args.groups # if we have been asked to replace
+      Homebrew.forget_user_gem_groups!
+    end
+
+    Homebrew.install_bundler_gems!(groups: groups)
   end
 end

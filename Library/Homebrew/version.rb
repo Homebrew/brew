@@ -2,16 +2,12 @@
 # frozen_string_literal: true
 
 require "pkg_version"
-require "version/head"
-require "version/null"
 require "version/parser"
 
 # A formula's version.
 #
 # @api private
 class Version
-  extend T::Sig
-
   include Comparable
 
   sig { params(name: T.any(String, Symbol), full: T::Boolean).returns(Regexp) }
@@ -21,7 +17,6 @@ class Version
 
   # A part of a {Version}.
   class Token
-    extend T::Sig
     extend T::Helpers
     abstract!
 
@@ -29,8 +24,6 @@ class Version
 
     sig { params(val: String).returns(Token) }
     def self.create(val)
-      raise TypeError, "Token value must be a string; got a #{val.class} (#{val})" unless val.respond_to?(:to_str)
-
       case val
       when /\A#{AlphaToken::PATTERN}\z/o   then AlphaToken
       when /\A#{BetaToken::PATTERN}\z/o    then BetaToken
@@ -105,8 +98,6 @@ class Version
 
   # A pseudo-token representing the absence of a token.
   class NullToken < Token
-    extend T::Sig
-
     sig { override.returns(NilClass) }
     attr_reader :value
 
@@ -174,7 +165,6 @@ class Version
   # A token consisting of only numbers.
   class NumericToken < Token
     PATTERN = /[0-9]+/i.freeze
-    extend T::Sig
 
     sig { override.returns(Integer) }
     attr_reader :value
@@ -351,35 +341,23 @@ class Version
 
   sig { params(val: String).returns(Version) }
   def self.create(val)
-    raise TypeError, "Version value must be a string; got a #{val.class} (#{val})" unless val.respond_to?(:to_str)
-
-    if val.to_str.start_with?("HEAD")
-      HeadVersion.new(val)
-    else
-      Version.new(val)
-    end
+    odisabled "Version.create", "Version.new"
+    new(val)
   end
 
-  sig { params(spec: T.any(String, Pathname), detected_from_url: T::Boolean).returns(Version) }
+  sig { params(spec: T.any(String, Pathname), detected_from_url: T::Boolean).returns(T.attached_class) }
   def self.parse(spec, detected_from_url: false)
-    version = _parse(spec, detected_from_url: detected_from_url)
-    version.nil? ? NULL : new(version, detected_from_url: detected_from_url)
-  end
-
-  sig { params(spec: T.any(String, Pathname), detected_from_url: T::Boolean).returns(T.nilable(String)) }
-  def self._parse(spec, detected_from_url:)
     spec = CGI.unescape(spec.to_s) if detected_from_url
 
-    spec = Pathname.new(spec) unless spec.is_a? Pathname
+    spec = Pathname(spec)
 
     VERSION_PARSERS.each do |parser|
       version = parser.parse(spec)
-      return version if version.present?
+      return new(version, detected_from_url: detected_from_url) if version.present?
     end
 
-    nil
+    NULL
   end
-  private_class_method :_parse
 
   NUMERIC_WITH_OPTIONAL_DOTS = /(?:\d+(?:\.\d+)*)/.source.freeze
   private_constant :NUMERIC_WITH_OPTIONAL_DOTS
@@ -398,8 +376,9 @@ class Version
 
   VERSION_PARSERS = [
     # date-based versioning
+    # e.g. 2023-09-28.tar.gz
     # e.g. ltopers-v2017-04-14.tar.gz
-    StemParser.new(/-v?(\d{4}-\d{2}-\d{2})/),
+    StemParser.new(/(?:^|[._-]?)v?(\d{4}-\d{2}-\d{2})/),
 
     # GitHub tarballs
     # e.g. https://github.com/foo/bar/tarball/v1.2.3
@@ -512,9 +491,10 @@ class Version
 
   sig { params(val: T.any(PkgVersion, String, Version), detected_from_url: T::Boolean).void }
   def initialize(val, detected_from_url: false)
-    raise TypeError, "Version value must be a string; got a #{val.class} (#{val})" unless val.respond_to?(:to_str)
+    version = val.to_str
+    raise ArgumentError, "Version must not be empty" if version.blank?
 
-    @version = val.to_str
+    @version = version
     @detected_from_url = detected_from_url
   end
 
@@ -523,14 +503,36 @@ class Version
     @detected_from_url
   end
 
+  HEAD_VERSION_REGEX = /\AHEAD(?:-(?<commit>.*))?\Z/.freeze
+  private_constant :HEAD_VERSION_REGEX
+
+  # Check if this is a HEAD version.
   sig { returns(T::Boolean) }
   def head?
-    false
+    version&.match?(HEAD_VERSION_REGEX) || false
+  end
+
+  # Return the commit for a HEAD version.
+  sig { returns(T.nilable(String)) }
+  def commit
+    version&.match(HEAD_VERSION_REGEX)&.[](:commit)
+  end
+
+  # Update the commit for a HEAD version.
+  sig { params(commit: T.nilable(String)).void }
+  def update_commit(commit)
+    raise ArgumentError, "Cannot update commit for non-HEAD version." unless head?
+
+    @version = if commit
+      "HEAD-#{commit}"
+    else
+      "HEAD"
+    end
   end
 
   sig { returns(T::Boolean) }
   def null?
-    false
+    version.nil?
   end
 
   sig { params(comparator: String, other: Version).returns(T::Boolean) }
@@ -548,16 +550,47 @@ class Version
 
   sig { params(other: T.untyped).returns(T.nilable(Integer)) }
   def <=>(other)
-    # Needed to retain API compatibility with older string comparisons
-    # for compiler versions, etc.
-    other = Version.new(other) if other.is_a? String
-    # Used by the *_build_version comparisons, which formerly returned Fixnum
-    other = Version.new(other.to_s) if other.is_a? Integer
-    return 1 if other.nil?
-    return 1 if other.respond_to?(:null?) && other.null?
+    other = case other
+    when String
+      if other.blank?
+        # Cannot compare `NULL` to empty string.
+        return if null?
 
-    other = Version.new(other.to_s) if other.is_a? Token
-    return unless other.is_a?(Version)
+        return 1
+      end
+
+      # Needed to retain API compatibility with older string comparisons for compiler versions, etc.
+      Version.new(other)
+    when Integer
+      # Used by the `*_build_version` comparisons, which formerly returned an integer.
+      Version.new(other.to_s)
+    when Token
+      if other.null?
+        # Cannot compare `NULL` to `NULL`.
+        return if null?
+
+        return 1
+      end
+
+      Version.new(other.to_s)
+    when Version
+      if other.null?
+        # Cannot compare `NULL` to `NULL`.
+        return if null?
+
+        return 1
+      end
+
+      other
+    when nil
+      return 1
+    else
+      return
+    end
+
+    # All `other.null?` cases are handled at this point.
+    return -1 if null?
+
     return 0 if version == other.version
     return 1 if head? && !other.head?
     return -1 if !head? && other.head?
@@ -591,41 +624,59 @@ class Version
 
     0
   end
+
+  sig { override.params(other: T.untyped).returns(T::Boolean) }
+  def ==(other)
+    # Makes sure that the same instance of Version::NULL
+    # will never equal itself; normally Comparable#==
+    # will return true for this regardless of the return
+    # value of #<=>
+    return false if null?
+
+    super
+  end
   alias eql? ==
 
   # @api public
   sig { returns(T.nilable(Token)) }
   def major
+    return NULL_TOKEN if null?
+
     tokens.first
   end
 
   # @api public
   sig { returns(T.nilable(Token)) }
   def minor
+    return NULL_TOKEN if null?
+
     tokens.second
   end
 
   # @api public
   sig { returns(T.nilable(Token)) }
   def patch
+    return NULL_TOKEN if null?
+
     tokens.third
   end
 
   # @api public
   sig { returns(T.self_type) }
   def major_minor
-    self.class.new([major, minor].compact.join("."))
+    return self if null?
+
+    major_minor = T.must(tokens[0..1])
+    major_minor.empty? ? NULL : self.class.new(major_minor.join("."))
   end
 
   # @api public
   sig { returns(T.self_type) }
   def major_minor_patch
-    self.class.new([major, minor, patch].compact.join("."))
-  end
+    return self if null?
 
-  sig { returns(T::Boolean) }
-  def empty?
-    version.empty?
+    major_minor_patch = T.must(tokens[0..2])
+    major_minor_patch.empty? ? NULL : self.class.new(major_minor_patch.join("."))
   end
 
   sig { returns(Integer) }
@@ -635,6 +686,8 @@ class Version
 
   sig { returns(Float) }
   def to_f
+    return Float::NAN if null?
+
     version.to_f
   end
 
@@ -645,9 +698,34 @@ class Version
 
   sig { returns(String) }
   def to_s
-    version.dup
+    version.to_s
   end
-  alias to_str to_s
+
+  sig { returns(String) }
+  def to_str
+    raise NoMethodError, "undefined method `to_str' for #{self.class}:NULL" if null?
+
+    T.must(version).to_str
+  end
+
+  sig { params(options: T.untyped).returns(String) }
+  def to_json(*options)
+    version.to_json(*options)
+  end
+
+  sig { params(method: T.any(Symbol, String), include_all: T::Boolean).returns(T::Boolean) }
+  def respond_to?(method, include_all = T.unsafe(nil))
+    return !null? if ["to_str", :to_str].include?(method)
+
+    super
+  end
+
+  sig { returns(String) }
+  def inspect
+    return "#<Version::NULL>" if null?
+
+    super
+  end
 
   sig { returns(T.self_type) }
   def freeze
@@ -657,12 +735,12 @@ class Version
 
   protected
 
-  sig { returns(String) }
+  sig { returns(T.nilable(String)) }
   attr_reader :version
 
   sig { returns(T::Array[Token]) }
   def tokens
-    @tokens ||= tokenize
+    @tokens ||= version&.scan(SCAN_PATTERN)&.map { |token| Token.create(T.cast(token, String)) } || []
   end
 
   private
@@ -672,8 +750,7 @@ class Version
     (first > second) ? first : second
   end
 
-  sig { returns(T::Array[Token]) }
-  def tokenize
-    version.scan(SCAN_PATTERN).map { |token| Token.create(T.cast(token, String)) }
-  end
+  # Represents the absence of a version.
+  # NOTE: Constructor needs to called with an arbitrary non-empty version which is then set to `nil`.
+  NULL = Version.new("NULL").tap { |v| v.instance_variable_set(:@version, nil) }.freeze
 end

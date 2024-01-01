@@ -1,4 +1,3 @@
-# typed: false
 # frozen_string_literal: true
 
 require "utils/git"
@@ -47,11 +46,11 @@ describe Utils::Git do
   let(:file) { "README.md" }
   # Allow instance variables here for a simpler `before do` block.
   # rubocop:disable RSpec/InstanceVariable
-  let(:file_hash1) { @h1[0..6] }
-  let(:file_hash2) { @h2[0..6] }
+  let(:file_hash_one) { @h1[0..6] }
+  let(:file_hash_two) { @h2[0..6] }
   let(:files) { ["README.md", "LICENSE.txt"] }
-  let(:files_hash1) { [@h3[0..6], ["LICENSE.txt"]] }
-  let(:files_hash2) { [@h2[0..6], ["README.md"]] }
+  let(:files_hash_one) { [@h3[0..6], ["LICENSE.txt"]] }
+  let(:files_hash_two) { [@h2[0..6], ["README.md"]] }
   let(:cherry_pick_commit) { @cherry_pick_commit[0..6] }
   # rubocop:enable RSpec/InstanceVariable
 
@@ -63,7 +62,7 @@ describe Utils::Git do
     it "aborts when cherry picking an existing hash" do
       ENV["GIT_MERGE_VERBOSITY"] = "5" # Consistent output across git versions
       expect do
-        described_class.cherry_pick!(HOMEBREW_CACHE, file_hash1)
+        described_class.cherry_pick!(HOMEBREW_CACHE, file_hash_one)
       end.to raise_error(ErrorDuringExecution, /Merge conflict in README.md/)
     end
   end
@@ -72,26 +71,26 @@ describe Utils::Git do
     it "gives last revision commit when before_commit is nil" do
       expect(
         described_class.last_revision_commit_of_file(HOMEBREW_CACHE, file),
-      ).to eq(file_hash1)
+      ).to eq(file_hash_one)
     end
 
     it "gives revision commit based on before_commit when it is not nil" do
       expect(
         described_class.last_revision_commit_of_file(HOMEBREW_CACHE,
                                                      file,
-                                                     before_commit: file_hash2),
-      ).to eq(file_hash2)
+                                                     before_commit: file_hash_two),
+      ).to eq(file_hash_two)
     end
   end
 
   describe "#file_at_commit" do
     it "returns file contents when file exists" do
-      expect(described_class.file_at_commit(HOMEBREW_CACHE, file, file_hash1)).to eq("README")
+      expect(described_class.file_at_commit(HOMEBREW_CACHE, file, file_hash_one)).to eq("README")
     end
 
     it "returns empty when file doesn't exist" do
-      expect(described_class.file_at_commit(HOMEBREW_CACHE, "foo.txt", file_hash1)).to eq("")
-      expect(described_class.file_at_commit(HOMEBREW_CACHE, "LICENSE.txt", file_hash1)).to eq("")
+      expect(described_class.file_at_commit(HOMEBREW_CACHE, "foo.txt", file_hash_one)).to eq("")
+      expect(described_class.file_at_commit(HOMEBREW_CACHE, "LICENSE.txt", file_hash_one)).to eq("")
     end
   end
 
@@ -100,7 +99,7 @@ describe Utils::Git do
       it "gives last revision commit" do
         expect(
           described_class.last_revision_commit_of_files(HOMEBREW_CACHE, files),
-        ).to eq(files_hash1)
+        ).to eq(files_hash_one)
       end
     end
 
@@ -109,8 +108,8 @@ describe Utils::Git do
         expect(
           described_class.last_revision_commit_of_files(HOMEBREW_CACHE,
                                                         files,
-                                                        before_commit: file_hash2),
-        ).to eq(files_hash2)
+                                                        before_commit: file_hash_two),
+        ).to eq(files_hash_two)
       end
     end
   end

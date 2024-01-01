@@ -1,4 +1,3 @@
-# typed: false
 # frozen_string_literal: true
 
 require "rubocops/desc"
@@ -131,6 +130,23 @@ describe RuboCop::Cop::FormulaAudit::Desc do
         class Foo < Formula
           url 'https://brew.sh/foo-1.0.tgz'
           desc 'Description with a full stop at the end'
+        end
+      RUBY
+    end
+
+    it "reports and corrects an offense when the description contains Unicode So characters" do
+      expect_offense(<<~RUBY, "/homebrew-core/Formula/foo.rb")
+        class Foo < Formula
+          url 'https://brew.sh/foo-1.0.tgz'
+          desc 'Description with a 🍺 symbol'
+                                   ^ FormulaAudit/Desc: Description shouldn't contain Unicode emojis or symbols.
+        end
+      RUBY
+
+      expect_correction(<<~RUBY)
+        class Foo < Formula
+          url 'https://brew.sh/foo-1.0.tgz'
+          desc 'Description with a symbol'
         end
       RUBY
     end

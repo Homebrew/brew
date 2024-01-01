@@ -5,8 +5,6 @@
 #
 # @api private
 class PATH
-  extend T::Sig
-
   include Enumerable
   extend Forwardable
 

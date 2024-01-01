@@ -1,4 +1,3 @@
-# typed: false
 # frozen_string_literal: true
 
 describe UnpackStrategy do
@@ -66,7 +65,8 @@ describe UnpackStrategy do
         it "does not make other files writable" do
           strategy.extract_nestedly(to: unpack_dir)
 
-          expect(unpack_dir/executable).not_to be_writable
+          # We don't check `writable?` here as that's always true as root.
+          expect((unpack_dir/executable).stat.mode & 0222).to be_zero
         end
       end
     end

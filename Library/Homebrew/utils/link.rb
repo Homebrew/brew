@@ -6,9 +6,7 @@ module Utils
   #
   # @api private
   module Link
-    module_function
-
-    def link_src_dst_dirs(src_dir, dst_dir, command, link_dir: false)
+    def self.link_src_dst_dirs(src_dir, dst_dir, command, link_dir: false)
       return unless src_dir.exist?
 
       conflicts = []
@@ -42,7 +40,7 @@ module Utils
     end
     private_class_method :link_src_dst_dirs
 
-    def unlink_src_dst_dirs(src_dir, dst_dir, unlink_dir: false)
+    def self.unlink_src_dst_dirs(src_dir, dst_dir, unlink_dir: false)
       return unless src_dir.exist?
 
       src_paths = unlink_dir ? [src_dir] : src_dir.find
@@ -56,27 +54,27 @@ module Utils
     end
     private_class_method :unlink_src_dst_dirs
 
-    def link_manpages(path, command)
+    def self.link_manpages(path, command)
       link_src_dst_dirs(path/"manpages", HOMEBREW_PREFIX/"share/man/man1", command)
     end
 
-    def unlink_manpages(path)
+    def self.unlink_manpages(path)
       unlink_src_dst_dirs(path/"manpages", HOMEBREW_PREFIX/"share/man/man1")
     end
 
-    def link_completions(path, command)
+    def self.link_completions(path, command)
       link_src_dst_dirs(path/"completions/bash", HOMEBREW_PREFIX/"etc/bash_completion.d", command)
       link_src_dst_dirs(path/"completions/zsh", HOMEBREW_PREFIX/"share/zsh/site-functions", command)
       link_src_dst_dirs(path/"completions/fish", HOMEBREW_PREFIX/"share/fish/vendor_completions.d", command)
     end
 
-    def unlink_completions(path)
+    def self.unlink_completions(path)
       unlink_src_dst_dirs(path/"completions/bash", HOMEBREW_PREFIX/"etc/bash_completion.d")
       unlink_src_dst_dirs(path/"completions/zsh", HOMEBREW_PREFIX/"share/zsh/site-functions")
       unlink_src_dst_dirs(path/"completions/fish", HOMEBREW_PREFIX/"share/fish/vendor_completions.d")
     end
 
-    def link_docs(path, command)
+    def self.link_docs(path, command)
       link_src_dst_dirs(path/"docs", HOMEBREW_PREFIX/"share/doc/homebrew", command, link_dir: true)
     end
   end

@@ -14,7 +14,6 @@ module RuboCop
     #
     # @api private
     module HelperFunctions
-      extend T::Sig
       include RangeHelp
 
       # Checks for regex match of pattern in the node and
@@ -110,7 +109,7 @@ module RuboCop
         return if node.nil?
 
         node.each_child_node(:send) do |method_node|
-          next unless method_node.method_name == method_name
+          next if method_node.method_name != method_name
 
           @offensive_node = method_node
           return method_node
@@ -218,7 +217,7 @@ module RuboCop
         return if node.nil?
 
         node.each_descendant(:const) do |const_node|
-          next unless const_node.const_name == const_name
+          next if const_node.const_name != const_name
 
           @offensive_node = const_node
           yield const_node if block_given?
@@ -291,7 +290,7 @@ module RuboCop
       def block_method_called_in_block?(node, method_name)
         node.body.each_child_node do |call_node|
           next if !call_node.block_type? && !call_node.send_type?
-          next unless call_node.method_name == method_name
+          next if call_node.method_name != method_name
 
           @offensive_node = call_node
           return true
@@ -307,7 +306,7 @@ module RuboCop
           return true
         end
         node.each_child_node(:send) do |call_node|
-          next unless call_node.method_name == method_name
+          next if call_node.method_name != method_name
 
           offending_node(call_node)
           return true
@@ -318,7 +317,7 @@ module RuboCop
       # Check if method_name is called among every descendant node of given node.
       def method_called_ever?(node, method_name)
         node.each_descendant(:send) do |call_node|
-          next unless call_node.method_name == method_name
+          next if call_node.method_name != method_name
 
           @offensive_node = call_node
           return true

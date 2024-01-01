@@ -30,6 +30,8 @@ Your taps are Git repositories located at `$(brew --repository)/Library/Taps`.
 
 * [cloudflare/cloudflare](https://github.com/cloudflare/homebrew-cloudflare): Formulae for the applications by Cloudflare, including curl with HTTP/3 support.
 
+* [apple/apple](https://github.com/apple/homebrew-apple): Formulae from Apple, including the Game Porting Toolkit.
+
 ## Unsupported interesting forks
 
 * [mistydemeo/tigerbrew](https://github.com/mistydemeo/tigerbrew): Experimental Tiger/Leopard PowerPC version.

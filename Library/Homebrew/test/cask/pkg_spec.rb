@@ -1,4 +1,3 @@
-# typed: false
 # frozen_string_literal: true
 
 describe Cask::Pkg, :cask do
@@ -15,16 +14,14 @@ describe Cask::Pkg, :cask do
 
     it "removes files and dirs referenced by the pkg" do
       some_files = Array.new(3) { Pathname.new(Tempfile.new("plain_file").path) }
-      allow(pkg).to receive(:pkgutil_bom_files).and_return(some_files)
 
       some_specials = Array.new(3) { Pathname.new(Tempfile.new("special_file").path) }
-      allow(pkg).to receive(:pkgutil_bom_specials).and_return(some_specials)
 
       some_dirs = Array.new(3) { mktmpdir }
-      allow(pkg).to receive(:pkgutil_bom_dirs).and_return(some_dirs)
 
       root_dir = Pathname.new(mktmpdir)
-      allow(pkg).to receive(:root).and_return(root_dir)
+      allow(pkg).to receive_messages(pkgutil_bom_files: some_files, pkgutil_bom_specials: some_specials,
+                                     pkgutil_bom_dirs: some_dirs, root: root_dir)
 
       allow(pkg).to receive(:forget)
 
@@ -64,8 +61,9 @@ describe Cask::Pkg, :cask do
 
         expect(fake_system_command).to receive(:run!).with(
           "/usr/sbin/pkgutil",
-          args: ["--forget", "my.fake.pkg"],
-          sudo: true,
+          args:         ["--forget", "my.fake.pkg"],
+          sudo:         true,
+          sudo_as_root: true,
         )
 
         pkg.uninstall
@@ -82,10 +80,8 @@ describe Cask::Pkg, :cask do
       intact_symlink = fake_dir.join("intact_symlink").tap { |path| path.make_symlink(fake_file) }
       broken_symlink = fake_dir.join("broken_symlink").tap { |path| path.make_symlink("im_nota_file") }
 
-      allow(pkg).to receive(:pkgutil_bom_specials).and_return([])
-      allow(pkg).to receive(:pkgutil_bom_files).and_return([])
-      allow(pkg).to receive(:pkgutil_bom_dirs).and_return([fake_dir])
-      allow(pkg).to receive(:root).and_return(fake_root)
+      allow(pkg).to receive_messages(pkgutil_bom_specials: [], pkgutil_bom_files: [], pkgutil_bom_dirs: [fake_dir],
+                                     root: fake_root)
       allow(pkg).to receive(:forget)
 
       pkg.uninstall
@@ -105,19 +101,18 @@ describe Cask::Pkg, :cask do
       fake_file = fake_dir.join("ima_unrelated_file").tap { |path| FileUtils.touch(path) }
       fake_dir.chmod(0000)
 
-      allow(pkg).to receive(:pkgutil_bom_specials).and_return([])
-      allow(pkg).to receive(:pkgutil_bom_files).and_return([])
-      allow(pkg).to receive(:pkgutil_bom_dirs).and_return([fake_dir])
-      allow(pkg).to receive(:root).and_return(fake_root)
+      allow(pkg).to receive_messages(pkgutil_bom_specials: [], pkgutil_bom_files: [], pkgutil_bom_dirs: [fake_dir],
+                                     root: fake_root)
       allow(pkg).to receive(:forget)
 
       # This is expected to fail in tests since we don't use `sudo`.
       allow(fake_system_command).to receive(:run!).and_call_original
       expect(fake_system_command).to receive(:run!).with(
         "/usr/bin/xargs",
-        args:  ["-0", "--", a_string_including("rmdir")],
-        input: [fake_dir].join("\0"),
-        sudo:  true,
+        args:         ["-0", "--", a_string_including("rmdir")],
+        input:        [fake_dir].join("\0"),
+        sudo:         true,
+        sudo_as_root: true,
       ).and_return(instance_double(SystemCommand::Result, stdout: ""))
 
       pkg.uninstall

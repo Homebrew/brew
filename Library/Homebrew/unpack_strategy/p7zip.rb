@@ -4,8 +4,6 @@
 module UnpackStrategy
   # Strategy for unpacking P7ZIP archives.
   class P7Zip
-    extend T::Sig
-
     include UnpackStrategy
 
     sig { returns(T::Array[String]) }

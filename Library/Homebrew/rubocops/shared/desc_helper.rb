@@ -74,6 +74,9 @@ module RuboCop
           desc_problem "Description shouldn't end with a full stop."
         end
 
+        # Check if the desc contains Unicode emojis or symbols (Unicode Other Symbols category).
+        desc_problem "Description shouldn't contain Unicode emojis or symbols." if regex_match_group(desc, /\p{So}/)
+
         # Check if the desc length exceeds maximum length.
         return if desc_length <= MAX_DESC_LENGTH
 
@@ -103,6 +106,7 @@ module RuboCop
 
           correction.gsub!(/(ommand ?line)/i, "ommand-line")
           correction.gsub!(/(^|[^a-z])#{@name}([^a-z]|$)/i, "\\1\\2")
+          correction.gsub!(/\s?\p{So}/, "")
           correction.gsub!(/^\s+/, "")
           correction.gsub!(/\s+$/, "")
           correction.gsub!(/\.$/, "")

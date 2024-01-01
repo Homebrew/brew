@@ -4,8 +4,6 @@
 require "cli/parser"
 
 module Homebrew
-  extend T::Sig
-
   module_function
 
   sig { returns(CLI::Parser) }
@@ -14,7 +12,6 @@ module Homebrew
       usage_banner "`tap` [<options>] [<user>`/`<repo>] [<URL>]"
       description <<~EOS
         Tap a formula repository.
-
         If no arguments are provided, list all installed taps.
 
         With <URL> unspecified, tap a formula repository from GitHub using HTTPS.
@@ -43,11 +40,11 @@ module Homebrew
              description: "Install or change a tap with a custom remote. Useful for mirrors."
       switch "--repair",
              description: "Migrate tapped formulae from symlink-based to directory-based structure."
-      switch "--list-pinned",
-             description: "List all pinned taps."
       switch "--eval-all",
              description: "Evaluate all the formulae, casks and aliases in the new tap to check validity. " \
                           "Implied if `HOMEBREW_EVAL_ALL` is set."
+      switch "--force",
+             description: "Force install core taps even under API mode."
 
       named_args :tap, max: 2
     end
@@ -60,8 +57,6 @@ module Homebrew
     if args.repair?
       Tap.each(&:link_completions_and_manpages)
       Tap.each(&:fix_remote_configuration)
-    elsif args.list_pinned?
-      puts Tap.select(&:pinned?).map(&:name)
     elsif args.no_named?
       puts Tap.names
     else
@@ -71,7 +66,8 @@ module Homebrew
                     force_auto_update: args.force_auto_update?,
                     custom_remote:     args.custom_remote?,
                     quiet:             args.quiet?,
-                    verify:            args.eval_all? || Homebrew::EnvConfig.eval_all?
+                    verify:            args.eval_all? || Homebrew::EnvConfig.eval_all?,
+                    force:             args.force?
       rescue TapRemoteMismatchError, TapNoCustomRemoteError => e
         odie e
       rescue TapAlreadyTappedError

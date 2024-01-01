@@ -7,8 +7,6 @@ require "requirement"
 #
 # @api private
 class ArchRequirement < Requirement
-  extend T::Sig
-
   fatal true
 
   attr_reader :arch

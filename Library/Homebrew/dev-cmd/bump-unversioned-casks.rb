@@ -10,8 +10,6 @@ require "tap"
 require "unversioned_cask_checker"
 
 module Homebrew
-  extend T::Sig
-
   extend SystemCommand::Mixin
 
   sig { returns(CLI::Parser) }
@@ -27,13 +25,15 @@ module Homebrew
       flag   "--state-file=",
              description: "File for caching state."
 
-      named_args [:cask, :tap], min: 1
+      named_args [:cask, :tap], min: 1, without_api: true
     end
   end
 
   sig { void }
   def self.bump_unversioned_casks
     args = bump_unversioned_casks_args.parse
+
+    Homebrew.install_bundler_gems!(groups: ["bump_unversioned_casks"])
 
     state_file = if args.state_file.present?
       Pathname(args.state_file).expand_path

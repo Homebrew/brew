@@ -42,6 +42,6 @@ unless ENV["HOMEBREW_SORBET_RUNTIME"]
   end
 
   # For any cases the above doesn't handle: make sure we don't let TypeError slip through.
-  T::Configuration.call_validation_error_handler = ->(signature, opts) do end
-  T::Configuration.inline_type_error_handler = ->(error, opts) do end
+  T::Configuration.call_validation_error_handler = ->(signature, opts) {}
+  T::Configuration.inline_type_error_handler = ->(error, opts) {}
 end

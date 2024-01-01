@@ -1,4 +1,3 @@
-# typed: false
 # frozen_string_literal: true
 
 require "diagnostic"
@@ -114,5 +113,23 @@ describe Homebrew::Diagnostic::Checks do
     allow(Homebrew).to receive(:default_prefix?).and_return(false)
     expect(checks.check_homebrew_prefix)
       .to match("Your Homebrew's prefix is not #{Homebrew::DEFAULT_PREFIX}")
+  end
+
+  specify "#check_for_unnecessary_core_tap" do
+    ENV.delete("HOMEBREW_DEVELOPER")
+    ENV.delete("HOMEBREW_NO_INSTALL_FROM_API")
+
+    expect_any_instance_of(CoreTap).to receive(:installed?).and_return(true)
+
+    expect(checks.check_for_unnecessary_core_tap).to match("You have an unnecessary local Core tap")
+  end
+
+  specify "#check_for_unnecessary_cask_tap" do
+    ENV.delete("HOMEBREW_DEVELOPER")
+    ENV.delete("HOMEBREW_NO_INSTALL_FROM_API")
+
+    expect_any_instance_of(CoreCaskTap).to receive(:installed?).and_return(true)
+
+    expect(checks.check_for_unnecessary_cask_tap).to match("unnecessary local Cask tap")
   end
 end

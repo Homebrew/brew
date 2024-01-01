@@ -10,8 +10,6 @@ require "extend/cachable"
 #
 # @api private
 class Keg
-  extend T::Sig
-
   extend Cachable
 
   # Error for when a keg is already linked.
@@ -40,8 +38,6 @@ class Keg
 
   # Error for when a file already exists or belongs to another keg.
   class ConflictError < LinkError
-    extend T::Sig
-
     sig { returns(String) }
     def suggestion
       conflict = Keg.for(dst)
@@ -72,8 +68,6 @@ class Keg
 
   # Error for when a directory is not writable.
   class DirectoryNotWritableError < LinkError
-    extend T::Sig
-
     sig { returns(String) }
     def to_s
       <<~EOS
@@ -173,6 +167,7 @@ class Keg
     @name = path.parent.basename.to_s
     @linked_keg_record = HOMEBREW_LINKED_KEGS/name
     @opt_record = HOMEBREW_PREFIX/"opt/#{name}"
+    @oldname_opt_records = []
     @require_relocation = false
   end
 
@@ -276,7 +271,7 @@ class Keg
     remove_opt_record if optlinked?
     remove_linked_keg_record if linked?
     remove_old_aliases
-    remove_oldname_opt_record
+    remove_oldname_opt_records
   rescue Errno::EACCES, Errno::ENOTEMPTY
     raise if raise_failures
 
@@ -325,13 +320,15 @@ class Keg
     ObserverPathnameExtension.n
   end
 
-  def lock(&block)
+  def lock
     FormulaLock.new(name).with_lock do
-      if oldname_opt_record
-        FormulaLock.new(oldname_opt_record.basename.to_s).with_lock(&block)
-      else
-        yield
+      oldname_locks = oldname_opt_records.map do |record|
+        FormulaLock.new(record.basename.to_s)
       end
+      oldname_locks.each(&:lock)
+      yield
+    ensure
+      oldname_locks&.each(&:unlock)
     end
   end
 
@@ -394,11 +391,15 @@ class Keg
     Formulary.from_keg(self)
   end
 
-  def oldname_opt_record
-    @oldname_opt_record ||= if (opt_dir = HOMEBREW_PREFIX/"opt").directory?
-      opt_dir.subdirs.find do |dir|
+  def oldname_opt_records
+    return @oldname_opt_records unless @oldname_opt_records.empty?
+
+    @oldname_opt_records = if (opt_dir = HOMEBREW_PREFIX/"opt").directory?
+      opt_dir.subdirs.select do |dir|
         dir.symlink? && dir != opt_record && path.parent == dir.resolved_path.parent
       end
+    else
+      []
     end
   end
 
@@ -486,13 +487,14 @@ class Keg
 
   def consistent_reproducible_symlink_permissions!; end
 
-  def remove_oldname_opt_record
-    return unless oldname_opt_record
-    return if oldname_opt_record.resolved_path != path
+  def remove_oldname_opt_records
+    oldname_opt_records.reject! do |record|
+      return false if record.resolved_path != path
 
-    @oldname_opt_record.unlink
-    @oldname_opt_record.parent.rmdir_if_possible
-    @oldname_opt_record = nil
+      record.unlink
+      record.parent.rmdir_if_possible
+      true
+    end
   end
 
   def tab
@@ -517,10 +519,10 @@ class Keg
       make_relative_symlink(alias_opt_record, path, verbose: verbose, dry_run: dry_run, overwrite: overwrite)
     end
 
-    return unless oldname_opt_record
-
-    oldname_opt_record.delete
-    make_relative_symlink(oldname_opt_record, path, verbose: verbose, dry_run: dry_run, overwrite: overwrite)
+    oldname_opt_records.each do |record|
+      record.delete
+      make_relative_symlink(record, path, verbose: verbose, dry_run: dry_run, overwrite: overwrite)
+    end
   end
 
   def delete_pyc_files!

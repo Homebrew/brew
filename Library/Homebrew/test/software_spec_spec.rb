@@ -1,4 +1,3 @@
-# typed: false
 # frozen_string_literal: true
 
 require "software_spec"
@@ -140,80 +139,124 @@ describe SoftwareSpec do
       it "allows specifying dependencies" do
         spec.uses_from_macos("foo")
 
+        expect(spec.declared_deps).not_to be_empty
+        expect(spec.deps).not_to be_empty
         expect(spec.deps.first.name).to eq("foo")
+        expect(spec.deps.first).to be_uses_from_macos
+        expect(spec.deps.first).not_to be_use_macos_install
       end
 
       it "works with tags" do
         spec.uses_from_macos("foo" => :build)
 
+        expect(spec.declared_deps).not_to be_empty
+        expect(spec.deps).not_to be_empty
         expect(spec.deps.first.name).to eq("foo")
         expect(spec.deps.first.tags).to include(:build)
+        expect(spec.deps.first).to be_uses_from_macos
+        expect(spec.deps.first).not_to be_use_macos_install
       end
 
-      it "ignores dependencies with HOMEBREW_SIMULATE_MACOS_ON_LINUX" do
+      it "handles dependencies with HOMEBREW_SIMULATE_MACOS_ON_LINUX" do
         ENV["HOMEBREW_SIMULATE_MACOS_ON_LINUX"] = "1"
         spec.uses_from_macos("foo")
 
         expect(spec.deps).to be_empty
+        expect(spec.declared_deps.first.name).to eq("foo")
+        expect(spec.declared_deps.first.tags).to be_empty
+        expect(spec.declared_deps.first).to be_uses_from_macos
+        expect(spec.declared_deps.first).to be_use_macos_install
       end
 
-      it "ignores dependencies with tags with HOMEBREW_SIMULATE_MACOS_ON_LINUX" do
+      it "handles dependencies with tags with HOMEBREW_SIMULATE_MACOS_ON_LINUX" do
         ENV["HOMEBREW_SIMULATE_MACOS_ON_LINUX"] = "1"
         spec.uses_from_macos("foo" => :build)
 
         expect(spec.deps).to be_empty
+        expect(spec.declared_deps.first.name).to eq("foo")
+        expect(spec.declared_deps.first.tags).to include(:build)
+        expect(spec.declared_deps.first).to be_uses_from_macos
+        expect(spec.declared_deps.first).to be_use_macos_install
       end
 
       it "ignores OS version specifications" do
         spec.uses_from_macos("foo", since: :mojave)
         spec.uses_from_macos("bar" => :build, :since => :mojave)
 
+        expect(spec.deps.count).to eq 2
         expect(spec.deps.first.name).to eq("foo")
+        expect(spec.deps.first).to be_uses_from_macos
+        expect(spec.deps.first).not_to be_use_macos_install
         expect(spec.deps.last.name).to eq("bar")
         expect(spec.deps.last.tags).to include(:build)
+        expect(spec.deps.last).to be_uses_from_macos
+        expect(spec.deps.last).not_to be_use_macos_install
+        expect(spec.declared_deps.count).to eq 2
       end
     end
 
     context "when running on macOS", :needs_macos do
       before do
         allow(OS).to receive(:mac?).and_return(true)
-        allow(OS::Mac).to receive(:version).and_return(OS::Mac::Version.from_symbol(:sierra))
+        allow(OS::Mac).to receive(:version).and_return(MacOSVersion.from_symbol(:sierra))
       end
 
       it "adds a macOS dependency if the OS version meets requirements" do
         spec.uses_from_macos("foo", since: :el_capitan)
 
         expect(spec.deps).to be_empty
-        expect(spec.uses_from_macos_elements.first).to eq("foo")
+        expect(spec.declared_deps).not_to be_empty
+        expect(spec.declared_deps.first).to be_uses_from_macos
+        expect(spec.declared_deps.first).to be_use_macos_install
       end
 
-      it "doesn't add a macOS dependency if the OS version doesn't meet requirements" do
+      it "add a macOS dependency if the OS version doesn't meet requirements" do
         spec.uses_from_macos("foo", since: :high_sierra)
 
+        expect(spec.declared_deps).not_to be_empty
+        expect(spec.deps).not_to be_empty
         expect(spec.deps.first.name).to eq("foo")
-        expect(spec.uses_from_macos_elements).to eq(["foo"])
+        expect(spec.deps.first).to be_uses_from_macos
+        expect(spec.deps.first).not_to be_use_macos_install
       end
 
       it "works with tags" do
         spec.uses_from_macos("foo" => :build, :since => :high_sierra)
 
+        expect(spec.declared_deps).not_to be_empty
+        expect(spec.deps).not_to be_empty
+
         dep = spec.deps.first
 
         expect(dep.name).to eq("foo")
         expect(dep.tags).to include(:build)
+        expect(dep.first).to be_uses_from_macos
+        expect(dep.first).not_to be_use_macos_install
       end
 
-      it "doesn't add a dependency if no OS version is specified" do
+      it "doesn't add an effective dependency if no OS version is specified" do
         spec.uses_from_macos("foo")
         spec.uses_from_macos("bar" => :build)
 
         expect(spec.deps).to be_empty
+        expect(spec.declared_deps).not_to be_empty
+
+        dep = spec.declared_deps.first
+        expect(dep.name).to eq("foo")
+        expect(dep.first).to be_uses_from_macos
+        expect(dep.first).to be_use_macos_install
+
+        dep = spec.declared_deps.last
+        expect(dep.name).to eq("bar")
+        expect(dep.tags).to include(:build)
+        expect(dep.first).to be_uses_from_macos
+        expect(dep.first).to be_use_macos_install
       end
 
       it "raises an error if passing invalid OS versions" do
         expect do
           spec.uses_from_macos("foo", since: :bar)
-        end.to raise_error(MacOSVersionError, "unknown or unsupported macOS version: :bar")
+        end.to raise_error(MacOSVersion::Error, "unknown or unsupported macOS version: :bar")
       end
     end
   end

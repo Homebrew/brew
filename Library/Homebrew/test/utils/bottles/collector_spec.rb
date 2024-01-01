@@ -1,4 +1,3 @@
-# typed: false
 # frozen_string_literal: true
 
 require "utils/bottles"
@@ -36,8 +35,7 @@ describe Utils::Bottles::Collector do
     end
 
     it "does not use older tags when requested not to", :needs_macos do
-      allow(Homebrew::EnvConfig).to receive(:developer?).and_return(true)
-      allow(Homebrew::EnvConfig).to receive(:skip_or_later_bottles?).and_return(true)
+      allow(Homebrew::EnvConfig).to receive_messages(developer?: true, skip_or_later_bottles?: true)
       allow(OS::Mac.version).to receive(:prerelease?).and_return(true)
       collector.add(mojave, checksum: Checksum.new("foo_checksum"), cellar: "foo_cellar")
       expect(collector.send(:find_matching_tag, mojave)).to eq(mojave)

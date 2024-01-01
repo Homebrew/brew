@@ -71,7 +71,7 @@ Some formulae provide Python bindings.
 
 ## Policy for non-brewed Python bindings
 
-These should be installed via `pip install <package>`. To discover, you can use `pip search` or <https://pypi.org>.
+These should be installed via `pip install <package>`. To discover, you can use <https://pypi.org/search>.
 
 **Note:** macOS's system Python does not provide `pip`. Follow the [pip documentation](https://pip.pypa.io/en/stable/installation/) to install it for your system Python if you would like it.
 

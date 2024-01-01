@@ -8,8 +8,6 @@ module Homebrew
   #
   # @api private
   class BundleVersion
-    extend T::Sig
-
     include Comparable
 
     extend SystemCommand::Mixin
@@ -52,6 +50,9 @@ module Homebrew
 
     sig { params(short_version: T.nilable(String), version: T.nilable(String)).void }
     def initialize(short_version, version)
+      # Remove version from short version, if present.
+      short_version = short_version&.sub(/\s*\(#{Regexp.escape(version)}\)\Z/, "") if version
+
       @short_version = short_version.presence
       @version = version.presence
 
@@ -61,8 +62,24 @@ module Homebrew
     end
 
     def <=>(other)
-      [version, short_version].map { |v| v&.yield_self(&Version.public_method(:new)) || Version::NULL } <=>
-        [other.version, other.short_version].map { |v| v&.yield_self(&Version.public_method(:new)) || Version::NULL }
+      return super unless instance_of?(other.class)
+
+      make_version = ->(v) { v ? Version.new(v) : Version::NULL }
+
+      version = self.version.then(&make_version)
+      other_version = other.version.then(&make_version)
+
+      difference = version <=> other_version
+
+      # If `version` is equal or cannot be compared, compare `short_version` instead.
+      if difference.nil? || difference.zero?
+        short_version = self.short_version.then(&make_version)
+        other_short_version = other.short_version.then(&make_version)
+
+        return short_version <=> other_short_version
+      end
+
+      difference
     end
 
     def ==(other)
@@ -80,8 +97,6 @@ module Homebrew
     def nice_parts
       short_version = self.short_version
       version = self.version
-
-      short_version = short_version&.delete_suffix("(#{version})") if version
 
       return [T.must(short_version)] if short_version == version
 

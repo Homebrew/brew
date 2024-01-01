@@ -41,9 +41,7 @@ module Homebrew
     EOS
     private_constant :HOMEBREW_HELP
 
-    module_function
-
-    def help(cmd = nil, empty_argv: false, usage_error: nil, remaining_args: [])
+    def self.help(cmd = nil, empty_argv: false, usage_error: nil, remaining_args: [])
       if cmd.nil?
         # Handle `brew` (no arguments).
         if empty_argv
@@ -75,7 +73,7 @@ module Homebrew
       exit 0
     end
 
-    def command_help(cmd, path, remaining_args:)
+    def self.command_help(cmd, path, remaining_args:)
       # Only some types of commands can have a parser.
       output = if Commands.valid_internal_cmd?(cmd) ||
                   Commands.valid_internal_dev_cmd?(cmd) ||
@@ -94,7 +92,7 @@ module Homebrew
     end
     private_class_method :command_help
 
-    def parser_help(path, remaining_args:)
+    def self.parser_help(path, remaining_args:)
       # Let OptionParser generate help text for commands which have a parser.
       cmd_parser = CLI::Parser.from_cmd_path(path)
       return unless cmd_parser
@@ -105,7 +103,7 @@ module Homebrew
     end
     private_class_method :parser_help
 
-    def command_help_lines(path)
+    def self.command_help_lines(path)
       path.read
           .lines
           .grep(/^#:/)
@@ -113,7 +111,7 @@ module Homebrew
     end
     private_class_method :command_help_lines
 
-    def comment_help(path)
+    def self.comment_help(path)
       # Otherwise read #: lines from the file.
       help_lines = command_help_lines(path)
       return if help_lines.blank?

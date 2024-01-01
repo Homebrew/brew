@@ -57,7 +57,7 @@ class FormulaInfo
 
   def version(spec_type)
     version_str = info["versions"][spec_type.to_s]
-    version_str && Version.create(version_str)
+    version_str && Version.new(version_str)
   end
 
   def pkg_version(spec_type = :stable)

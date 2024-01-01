@@ -1,6 +1,7 @@
 # typed: true
 # frozen_string_literal: true
 
+require "ipaddr"
 require "extend/on_system"
 
 module Homebrew
@@ -8,7 +9,6 @@ module Homebrew
   # `service` block and stores related instance variables. Most of these methods
   # also return the related instance variable when no argument is provided.
   class Service
-    extend T::Sig
     extend Forwardable
     include OnSystem::MacOSAndLinux
 
@@ -29,12 +29,40 @@ module Homebrew
       @run_type = RUN_TYPE_IMMEDIATE
       @run_at_load = true
       @environment_variables = {}
-      @service_block = block
+      instance_eval(&block) if block
     end
 
     sig { returns(Formula) }
     def f
       @formula
+    end
+
+    sig { returns(String) }
+    def default_plist_name
+      "homebrew.mxcl.#{@formula.name}"
+    end
+
+    sig { returns(String) }
+    def plist_name
+      @plist_name ||= default_plist_name
+    end
+
+    sig { returns(String) }
+    def default_service_name
+      "homebrew.#{@formula.name}"
+    end
+
+    sig { returns(String) }
+    def service_name
+      @service_name ||= default_service_name
+    end
+
+    sig { params(macos: T.nilable(String), linux: T.nilable(String)).void }
+    def name(macos: nil, linux: nil)
+      raise TypeError, "Service#name expects at least one String" if [macos, linux].none?(String)
+
+      @plist_name = macos if macos
+      @service_name = linux if linux
     end
 
     sig {
@@ -53,75 +81,63 @@ module Homebrew
       end
 
       command ||= on_system_conditional(macos: macos, linux: linux)
-      case T.unsafe(command)
+      case command
       when nil
         @run
       when String, Pathname
         @run = [command]
       when Array
         @run = command
-      else
-        raise TypeError, "Service#run expects an Array"
       end
     end
 
     sig { params(path: T.nilable(T.any(String, Pathname))).returns(T.nilable(String)) }
     def working_dir(path = nil)
-      case T.unsafe(path)
+      case path
       when nil
         @working_dir
       when String, Pathname
         @working_dir = path.to_s
-      else
-        raise TypeError, "Service#working_dir expects a String"
       end
     end
 
     sig { params(path: T.nilable(T.any(String, Pathname))).returns(T.nilable(String)) }
     def root_dir(path = nil)
-      case T.unsafe(path)
+      case path
       when nil
         @root_dir
       when String, Pathname
         @root_dir = path.to_s
-      else
-        raise TypeError, "Service#root_dir expects a String or Pathname"
       end
     end
 
     sig { params(path: T.nilable(T.any(String, Pathname))).returns(T.nilable(String)) }
     def input_path(path = nil)
-      case T.unsafe(path)
+      case path
       when nil
         @input_path
       when String, Pathname
         @input_path = path.to_s
-      else
-        raise TypeError, "Service#input_path expects a String or Pathname"
       end
     end
 
     sig { params(path: T.nilable(T.any(String, Pathname))).returns(T.nilable(String)) }
     def log_path(path = nil)
-      case T.unsafe(path)
+      case path
       when nil
         @log_path
       when String, Pathname
         @log_path = path.to_s
-      else
-        raise TypeError, "Service#log_path expects a String"
       end
     end
 
     sig { params(path: T.nilable(T.any(String, Pathname))).returns(T.nilable(String)) }
     def error_log_path(path = nil)
-      case T.unsafe(path)
+      case path
       when nil
         @error_log_path
       when String, Pathname
         @error_log_path = path.to_s
-      else
-        raise TypeError, "Service#error_log_path expects a String"
       end
     end
 
@@ -130,7 +146,7 @@ module Homebrew
         .returns(T.nilable(T::Hash[Symbol, T.untyped]))
     }
     def keep_alive(value = nil)
-      case T.unsafe(value)
+      case value
       when nil
         @keep_alive
       when true, false
@@ -142,20 +158,16 @@ module Homebrew
         end
 
         @keep_alive = value
-      else
-        raise TypeError, "Service#keep_alive expects a Boolean or Hash"
       end
     end
 
     sig { params(value: T.nilable(T::Boolean)).returns(T.nilable(T::Boolean)) }
     def require_root(value = nil)
-      case T.unsafe(value)
+      case value
       when nil
         @require_root
       when true, false
         @require_root = value
-      else
-        raise TypeError, "Service#require_root expects a Boolean"
       end
     end
 
@@ -163,35 +175,46 @@ module Homebrew
     # @return [Boolean]
     sig { returns(T::Boolean) }
     def requires_root?
-      eval_service_block
       @require_root.present? && @require_root == true
     end
 
     sig { params(value: T.nilable(T::Boolean)).returns(T.nilable(T::Boolean)) }
     def run_at_load(value = nil)
-      case T.unsafe(value)
+      case value
       when nil
         @run_at_load
       when true, false
         @run_at_load = value
-      else
-        raise TypeError, "Service#run_at_load expects a Boolean"
       end
     end
 
-    sig { params(value: T.nilable(String)).returns(T.nilable(T::Hash[Symbol, String])) }
+    SOCKET_STRING_REGEX = %r{^([a-z]+)://(.+):([0-9]+)$}i.freeze
+
+    sig {
+      params(value: T.nilable(T.any(String, T::Hash[Symbol, String])))
+        .returns(T.nilable(T::Hash[Symbol, T::Hash[Symbol, String]]))
+    }
     def sockets(value = nil)
-      case T.unsafe(value)
-      when nil
-        @sockets
+      return @sockets if value.nil?
+
+      @sockets = case value
       when String
-        match = T.must(value).match(%r{([a-z]+)://([a-z0-9.]+):([0-9]+)}i)
+        { listeners: value }
+      when Hash
+        value
+      end.transform_values do |socket_string|
+        match = socket_string.match(SOCKET_STRING_REGEX)
         raise TypeError, "Service#sockets a formatted socket definition as <type>://<host>:<port>" if match.blank?
 
         type, host, port = match.captures
-        @sockets = { host: host, port: port, type: type }
-      else
-        raise TypeError, "Service#sockets expects a String"
+
+        begin
+          IPAddr.new(host)
+        rescue IPAddr::InvalidAddressError
+          raise TypeError, "Service#sockets expects a valid ipv4 or ipv6 host address"
+        end
+
+        { host: host, port: port, type: type }
       end
     end
 
@@ -199,37 +222,32 @@ module Homebrew
     # @return [Boolean]
     sig { returns(T::Boolean) }
     def keep_alive?
-      eval_service_block
       @keep_alive.present? && @keep_alive[:always] != false
     end
 
     sig { params(value: T.nilable(T::Boolean)).returns(T.nilable(T::Boolean)) }
     def launch_only_once(value = nil)
-      case T.unsafe(value)
+      case value
       when nil
         @launch_only_once
       when true, false
         @launch_only_once = value
-      else
-        raise TypeError, "Service#launch_only_once expects a Boolean"
       end
     end
 
     sig { params(value: T.nilable(Integer)).returns(T.nilable(Integer)) }
     def restart_delay(value = nil)
-      case T.unsafe(value)
+      case value
       when nil
         @restart_delay
       when Integer
         @restart_delay = value
-      else
-        raise TypeError, "Service#restart_delay expects an Integer"
       end
     end
 
     sig { params(value: T.nilable(Symbol)).returns(T.nilable(Symbol)) }
     def process_type(value = nil)
-      case T.unsafe(value)
+      case value
       when nil
         @process_type
       when :background, :standard, :interactive, :adaptive
@@ -238,46 +256,38 @@ module Homebrew
         raise TypeError, "Service#process_type allows: " \
                          "'#{PROCESS_TYPE_BACKGROUND}'/'#{PROCESS_TYPE_STANDARD}'/" \
                          "'#{PROCESS_TYPE_INTERACTIVE}'/'#{PROCESS_TYPE_ADAPTIVE}'"
-      else
-        raise TypeError, "Service#process_type expects a Symbol"
       end
     end
 
     sig { params(value: T.nilable(Symbol)).returns(T.nilable(Symbol)) }
     def run_type(value = nil)
-      case T.unsafe(value)
+      case value
       when nil
         @run_type
       when :immediate, :interval, :cron
         @run_type = value
       when Symbol
         raise TypeError, "Service#run_type allows: '#{RUN_TYPE_IMMEDIATE}'/'#{RUN_TYPE_INTERVAL}'/'#{RUN_TYPE_CRON}'"
-      else
-        raise TypeError, "Service#run_type expects a Symbol"
       end
     end
 
     sig { params(value: T.nilable(Integer)).returns(T.nilable(Integer)) }
     def interval(value = nil)
-      case T.unsafe(value)
+      case value
       when nil
         @interval
       when Integer
         @interval = value
-      else
-        raise TypeError, "Service#interval expects an Integer"
       end
     end
 
     sig { params(value: T.nilable(String)).returns(T.nilable(Hash)) }
     def cron(value = nil)
-      case T.unsafe(value)
+      case value
       when nil
         @cron
       when String
         @cron = parse_cron(T.must(value))
-      else
-        raise TypeError, "Service#cron expects a String"
       end
     end
 
@@ -329,23 +339,19 @@ module Homebrew
 
     sig { params(variables: T::Hash[Symbol, String]).returns(T.nilable(T::Hash[Symbol, String])) }
     def environment_variables(variables = {})
-      case T.unsafe(variables)
+      case variables
       when Hash
         @environment_variables = variables.transform_values(&:to_s)
-      else
-        raise TypeError, "Service#environment_variables expects a hash"
       end
     end
 
     sig { params(value: T.nilable(T::Boolean)).returns(T.nilable(T::Boolean)) }
     def macos_legacy_timers(value = nil)
-      case T.unsafe(value)
+      case value
       when nil
         @macos_legacy_timers
       when true, false
         @macos_legacy_timers = value
-      else
-        raise TypeError, "Service#macos_legacy_timers expects a Boolean"
       end
     end
 
@@ -358,20 +364,22 @@ module Homebrew
 
     sig { returns(T.nilable(T::Array[String])) }
     def command
-      eval_service_block
-      @run&.map(&:to_s)
+      @run&.map(&:to_s)&.map { |arg| arg.start_with?("~") ? File.expand_path(arg) : arg }
+    end
+
+    sig { returns(T::Boolean) }
+    def command?
+      @run.present?
     end
 
     # Returns the `String` command to run manually instead of the service.
     # @return [String]
     sig { returns(String) }
     def manual_command
-      eval_service_block
       vars = @environment_variables.except(:PATH)
                                    .map { |k, v| "#{k}=\"#{v}\"" }
 
-      cmd = command
-      out = vars + cmd if cmd.present?
+      out = vars + T.must(command).map { |arg| Utils::Shell.sh_quote(arg) } if command?
       out.join(" ")
     end
 
@@ -379,7 +387,6 @@ module Homebrew
     # @return [Boolean]
     sig { returns(T::Boolean) }
     def timed?
-      eval_service_block
       @run_type == RUN_TYPE_CRON || @run_type == RUN_TYPE_INTERVAL
     end
 
@@ -389,7 +396,7 @@ module Homebrew
     def to_plist
       # command needs to be first because it initializes all other values
       base = {
-        Label:            @formula.plist_name,
+        Label:            plist_name,
         ProgramArguments: command,
         RunAtLoad:        @run_at_load == true,
       }
@@ -399,11 +406,11 @@ module Homebrew
       base[:TimeOut] = @restart_delay if @restart_delay.present?
       base[:ProcessType] = @process_type.to_s.capitalize if @process_type.present?
       base[:StartInterval] = @interval if @interval.present? && @run_type == RUN_TYPE_INTERVAL
-      base[:WorkingDirectory] = @working_dir if @working_dir.present?
-      base[:RootDirectory] = @root_dir if @root_dir.present?
-      base[:StandardInPath] = @input_path if @input_path.present?
-      base[:StandardOutPath] = @log_path if @log_path.present?
-      base[:StandardErrorPath] = @error_log_path if @error_log_path.present?
+      base[:WorkingDirectory] = File.expand_path(@working_dir) if @working_dir.present?
+      base[:RootDirectory] = File.expand_path(@root_dir) if @root_dir.present?
+      base[:StandardInPath] = File.expand_path(@input_path) if @input_path.present?
+      base[:StandardOutPath] = File.expand_path(@log_path) if @log_path.present?
+      base[:StandardErrorPath] = File.expand_path(@error_log_path) if @error_log_path.present?
       base[:EnvironmentVariables] = @environment_variables unless @environment_variables.empty?
 
       if keep_alive?
@@ -420,12 +427,13 @@ module Homebrew
 
       if @sockets.present?
         base[:Sockets] = {}
-        base[:Sockets][:Listeners] = {
-          SockNodeName:    @sockets[:host],
-          SockServiceName: @sockets[:port],
-          SockProtocol:    @sockets[:type].upcase,
-          SockFamily:      "IPv4v6",
-        }
+        @sockets.each do |name, info|
+          base[:Sockets][name] = {
+            SockNodeName:    info[:host],
+            SockServiceName: info[:port],
+            SockProtocol:    info[:type].upcase,
+          }
+        end
       end
 
       if @cron.present? && @run_type == RUN_TYPE_CRON
@@ -458,7 +466,8 @@ module Homebrew
       EOS
 
       # command needs to be first because it initializes all other values
-      cmd = command&.join(" ")
+      cmd = command&.map { |arg| Utils::Shell.sh_quote(arg) }
+                   &.join(" ")
 
       options = []
       options << "Type=#{(@launch_only_once == true) ? "oneshot" : "simple"}"
@@ -466,11 +475,11 @@ module Homebrew
 
       options << "Restart=always" if @keep_alive.present? && @keep_alive[:always].present?
       options << "RestartSec=#{restart_delay}" if @restart_delay.present?
-      options << "WorkingDirectory=#{@working_dir}" if @working_dir.present?
-      options << "RootDirectory=#{@root_dir}" if @root_dir.present?
-      options << "StandardInput=file:#{@input_path}" if @input_path.present?
-      options << "StandardOutput=append:#{@log_path}" if @log_path.present?
-      options << "StandardError=append:#{@error_log_path}" if @error_log_path.present?
+      options << "WorkingDirectory=#{File.expand_path(@working_dir)}" if @working_dir.present?
+      options << "RootDirectory=#{File.expand_path(@root_dir)}" if @root_dir.present?
+      options << "StandardInput=file:#{File.expand_path(@input_path)}" if @input_path.present?
+      options << "StandardOutput=append:#{File.expand_path(@log_path)}" if @log_path.present?
+      options << "StandardError=append:#{File.expand_path(@error_log_path)}" if @error_log_path.present?
       options += @environment_variables.map { |k, v| "Environment=\"#{k}=#{v}\"" } if @environment_variables.present?
 
       unit + options.join("\n")
@@ -488,10 +497,9 @@ module Homebrew
         WantedBy=timers.target
 
         [Timer]
-        Unit=#{@formula.service_name}
+        Unit=#{service_name}
       EOS
 
-      eval_service_block
       options = []
       options << "Persistent=true" if @run_type == RUN_TYPE_CRON
       options << "OnUnitActiveSec=#{@interval}" if @run_type == RUN_TYPE_INTERVAL
@@ -505,19 +513,15 @@ module Homebrew
       timer + options.join("\n")
     end
 
-    # Only evaluate the service block once.
-    sig { void }
-    def eval_service_block
-      return if @eval_service_block
-
-      instance_eval(&@service_block)
-      @eval_service_block = true
-    end
-
     # Prepare the service hash for inclusion in the formula API JSON.
     sig { returns(Hash) }
     def serialize
-      eval_service_block
+      name_params = {
+        macos: (plist_name if plist_name != default_plist_name),
+        linux: (service_name if service_name != default_service_name),
+      }.compact
+
+      return { name: name_params }.compact_blank if @run_params.blank?
 
       cron_string = if @cron.present?
         [:Minute, :Hour, :Day, :Month, :Weekday]
@@ -525,9 +529,23 @@ module Homebrew
           .join(" ")
       end
 
-      sockets_string = "#{@sockets[:type]}://#{@sockets[:host]}:#{@sockets[:port]}" if @sockets.present?
+      sockets_var = if @sockets.present?
+        @sockets.transform_values { |info| "#{info[:type]}://#{info[:host]}:#{info[:port]}" }
+                .then do |sockets_hash|
+                  # TODO: Remove this code when all users are running on versions of Homebrew
+                  # that can process sockets hashes (this commit or later).
+                  if sockets_hash.size == 1 && sockets_hash.key?(:listeners)
+                    # When original #sockets argument was a string: `sockets "tcp://127.0.0.1:80"`
+                    sockets_hash.fetch(:listeners)
+                  else
+                    # When original #sockets argument was a hash: `sockets http: "tcp://0.0.0.0:80"`
+                    sockets_hash
+                  end
+                end
+      end
 
       {
+        name:                  name_params.presence,
         run:                   @run_params,
         run_type:              @run_type,
         interval:              @interval,
@@ -544,7 +562,7 @@ module Homebrew
         restart_delay:         @restart_delay,
         process_type:          @process_type,
         macos_legacy_timers:   @macos_legacy_timers,
-        sockets:               sockets_string,
+        sockets:               sockets_var,
       }.compact
     end
 
@@ -552,6 +570,12 @@ module Homebrew
     sig { params(api_hash: Hash).returns(Hash) }
     def self.deserialize(api_hash)
       hash = {}
+      hash[:name] = api_hash["name"].transform_keys(&:to_sym) if api_hash.key?("name")
+
+      # The service hash might not have a "run" command if it only documents
+      # an existing service file with the "name" command.
+      return hash unless api_hash.key?("run")
+
       hash[:run] =
         case api_hash["run"]
         when String
@@ -572,8 +596,6 @@ module Homebrew
           raise ArgumentError, "Unexpected run command: #{api_hash["run"]}"
         end
 
-      hash[:keep_alive] = api_hash["keep_alive"].transform_keys(&:to_sym) if api_hash.key?("keep_alive")
-
       if api_hash.key?("environment_variables")
         hash[:environment_variables] = api_hash["environment_variables"].to_h do |key, value|
           [key.to_sym, replace_placeholders(value)]
@@ -592,10 +614,20 @@ module Homebrew
         hash[key.to_sym] = replace_placeholders(value)
       end
 
-      %w[interval cron launch_only_once require_root restart_delay macos_legacy_timers sockets].each do |key|
+      %w[interval cron launch_only_once require_root restart_delay macos_legacy_timers].each do |key|
         next if (value = api_hash[key]).nil?
 
         hash[key.to_sym] = value
+      end
+
+      %w[sockets keep_alive].each do |key|
+        next unless (value = api_hash[key])
+
+        hash[key.to_sym] = if value.is_a?(Hash)
+          value.transform_keys(&:to_sym)
+        else
+          value
+        end
       end
 
       hash
@@ -605,6 +637,7 @@ module Homebrew
     sig { params(string: String).returns(String) }
     def self.replace_placeholders(string)
       string.gsub(HOMEBREW_PREFIX_PLACEHOLDER, HOMEBREW_PREFIX)
+            .gsub(HOMEBREW_CELLAR_PLACEHOLDER, HOMEBREW_CELLAR)
             .gsub(HOMEBREW_HOME_PLACEHOLDER, Dir.home)
     end
   end

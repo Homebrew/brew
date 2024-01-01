@@ -6,24 +6,26 @@ module Homebrew
   #
   # @api private
   class TapAuditor
-    extend T::Sig
-
     attr_reader :name, :path, :formula_names, :formula_aliases, :cask_tokens,
                 :tap_audit_exceptions, :tap_style_exceptions, :tap_pypi_formula_mappings, :problems
 
     sig { params(tap: Tap, strict: T.nilable(T::Boolean)).void }
     def initialize(tap, strict:)
-      @name                      = tap.name
-      @path                      = tap.path
-      @cask_tokens               = tap.cask_tokens
-      @tap_audit_exceptions      = tap.audit_exceptions
-      @tap_style_exceptions      = tap.style_exceptions
-      @tap_pypi_formula_mappings = tap.pypi_formula_mappings
-      @problems                  = []
+      Homebrew.with_no_api_env do
+        @name                      = tap.name
+        @path                      = tap.path
+        @cask_tokens               = tap.cask_tokens
+        @tap_audit_exceptions      = tap.audit_exceptions
+        @tap_style_exceptions      = tap.style_exceptions
+        @tap_pypi_formula_mappings = tap.pypi_formula_mappings
+        @problems                  = []
 
-      @formula_aliases = tap.aliases
-      @formula_names = tap.formula_names.map do |formula_name|
-        formula_name.split("/").last
+        @formula_aliases = tap.aliases.map do |formula_alias|
+          formula_alias.split("/").last
+        end
+        @formula_names = tap.formula_names.map do |formula_name|
+          formula_name.split("/").last
+        end
       end
     end
 
@@ -52,7 +54,7 @@ module Homebrew
 
     sig { params(message: String).void }
     def problem(message)
-      @problems << ({ message: message, location: nil })
+      @problems << ({ message: message, location: nil, corrected: false })
     end
 
     private

@@ -7,7 +7,6 @@ require "system_command"
 #
 # @api private
 module UnpackStrategy
-  extend T::Sig
   extend T::Helpers
 
   include SystemCommand::Mixin
@@ -133,7 +132,7 @@ module UnpackStrategy
 
       children = tmp_unpack_dir.children
 
-      if children.count == 1 && !children.first.directory?
+      if children.size == 1 && !children.fetch(0).directory?
         s = UnpackStrategy.detect(children.first, prioritize_extension: prioritize_extension)
 
         s.extract_nestedly(to: to, verbose: verbose, prioritize_extension: prioritize_extension)

@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 require "language/python"
+require "utils/service"
 
 # A formula's caveats.
 #
@@ -153,33 +154,24 @@ class Caveats
   end
 
   def service_caveats
-    return if !formula.plist && !formula.service? && !keg&.plist_installed?
-    return if formula.service? && formula.service.command.blank?
+    return if !formula.plist && !formula.service? && !Utils::Service.installed?(formula) && !keg&.plist_installed?
+    return if formula.service? && !formula.service.command? && !Utils::Service.installed?(formula)
 
     s = []
 
-    command = if formula.service?
-      formula.service.manual_command
-    else
-      formula.plist_manual
-    end
-
-    return <<~EOS if !which("launchctl") && formula.plist
+    return <<~EOS if !Utils::Service.launchctl? && formula.plist
       #{Formatter.warning("Warning:")} #{formula.name} provides a launchd plist which can only be used on macOS!
-      You can manually execute the service instead with:
-        #{command}
     EOS
 
     # Brew services only works with these two tools
-    return <<~EOS if !which("systemctl") && !which("launchctl") && formula.service?
+    return <<~EOS if !Utils::Service.systemctl? && !Utils::Service.launchctl? && formula.service.command?
       #{Formatter.warning("Warning:")} #{formula.name} provides a service which can only be used on macOS or systemd!
       You can manually execute the service instead with:
-        #{command}
+        #{formula.service.manual_command}
     EOS
 
-    is_running_service = formula.service? && quiet_system("ps aux | grep #{formula.service.command&.first}")
-    startup = formula.service&.requires_root? || formula.plist_startup
-    if is_running_service || (formula.plist && quiet_system("/bin/launchctl list #{formula.plist_name} &>/dev/null"))
+    startup = formula.service.requires_root?
+    if Utils::Service.running?(formula)
       s << "To restart #{formula.full_name} after an upgrade:"
       s << "  #{startup ? "sudo " : ""}brew services restart #{formula.full_name}"
     elsif startup
@@ -190,9 +182,9 @@ class Caveats
       s << "  brew services start #{formula.full_name}"
     end
 
-    if formula.plist_manual || formula.service?
+    if formula.service.command?
       s << "Or, if you don't want/need a background service you can just run:"
-      s << "  #{command}"
+      s << "  #{formula.service.manual_command}"
     end
 
     # pbpaste is the system clipboard tool on macOS and fails with `tmux` by default

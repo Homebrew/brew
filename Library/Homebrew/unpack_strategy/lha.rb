@@ -4,8 +4,6 @@
 module UnpackStrategy
   # Strategy for unpacking LHa archives.
   class Lha
-    extend T::Sig
-
     include UnpackStrategy
 
     sig { returns(T::Array[String]) }

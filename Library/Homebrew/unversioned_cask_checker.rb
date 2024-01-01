@@ -11,9 +11,7 @@ module Homebrew
   #
   # @api private
   class UnversionedCaskChecker
-    extend T::Sig
-
-    sig {  returns(Cask::Cask) }
+    sig { returns(Cask::Cask) }
     attr_reader :cask
 
     sig { params(cask: Cask::Cask).void }
@@ -31,7 +29,7 @@ module Homebrew
       @apps ||= @cask.artifacts.select { |a| a.is_a?(Cask::Artifact::App) }
     end
 
-    sig { returns(T::Array[Cask::Artifact::Qlplugin]) }
+    sig { returns(T::Array[Cask::Artifact::KeyboardLayout]) }
     def keyboard_layouts
       @keyboard_layouts ||= @cask.artifacts.select { |a| a.is_a?(Cask::Artifact::KeyboardLayout) }
     end
@@ -160,7 +158,7 @@ module Homebrew
             top_level_info_plist_paths.each(&parse_info_plist)
           ensure
             Cask::Utils.gain_permissions_remove(extract_dir)
-            extract_dir.mkpath
+            Pathname(extract_dir).mkpath
           end
         end
 
@@ -254,7 +252,7 @@ module Homebrew
                                  }.uniq
           ensure
             Cask::Utils.gain_permissions_remove(extract_dir)
-            extract_dir.mkpath
+            Pathname(extract_dir).mkpath
           end
         end
 

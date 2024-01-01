@@ -28,8 +28,6 @@ module Homebrew
       #
       # @api public
       class Bitbucket
-        extend T::Sig
-
         # The `Regexp` used to determine if the strategy applies to the URL.
         URL_MATCH_REGEX = %r{
           ^https?://bitbucket\.org
@@ -63,24 +61,29 @@ module Homebrew
           match = url.match(URL_MATCH_REGEX)
           return values if match.blank?
 
-          # `/get/` archives are Git tag snapshots, so we need to check that tab
-          # instead of the main `/downloads/` page
-          values[:url] = if match[:dl_type] == "get"
-            "https://bitbucket.org/#{match[:path]}/downloads/?tab=tags"
-          else
-            "https://bitbucket.org/#{match[:path]}/downloads/"
-          end
-
           regex_prefix = Regexp.escape(T.must(match[:prefix])).gsub("\\-", "-")
 
-          # Use `\.t` instead of specific tarball extensions (e.g. .tar.gz)
-          suffix = T.must(match[:suffix]).sub(Strategy::TARBALL_EXTENSION_REGEX, ".t")
-          regex_suffix = Regexp.escape(suffix).gsub("\\-", "-")
+          # `/get/` archives are Git tag snapshots, so we need to check that tab
+          # instead of the main `/downloads/` page
+          if match[:dl_type] == "get"
+            values[:url] = "https://bitbucket.org/#{match[:path]}/downloads/?tab=tags"
 
-          # Example regexes:
-          # * `/href=.*?v?(\d+(?:\.\d+)+)\.t/i`
-          # * `/href=.*?example-v?(\d+(?:\.\d+)+)\.t/i`
-          values[:regex] = /href=.*?#{regex_prefix}v?(\d+(?:\.\d+)+)#{regex_suffix}/i
+            # Example tag regexes:
+            # * `/<td[^>]*?class="name"[^>]*?>\s*v?(\d+(?:\.\d+)+)\s*?</im`
+            # * `/<td[^>]*?class="name"[^>]*?>\s*abc-v?(\d+(?:\.\d+)+)\s*?</im`
+            values[:regex] = /<td[^>]*?class="name"[^>]*?>\s*#{regex_prefix}v?(\d+(?:\.\d+)+)\s*?</im
+          else
+            values[:url] = "https://bitbucket.org/#{match[:path]}/downloads/"
+
+            # Use `\.t` instead of specific tarball extensions (e.g. .tar.gz)
+            suffix = T.must(match[:suffix]).sub(Strategy::TARBALL_EXTENSION_REGEX, ".t")
+            regex_suffix = Regexp.escape(suffix).gsub("\\-", "-")
+
+            # Example file regexes:
+            # * `/href=.*?v?(\d+(?:\.\d+)+)\.t/i`
+            # * `/href=.*?abc-v?(\d+(?:\.\d+)+)\.t/i`
+            values[:regex] = /href=.*?#{regex_prefix}v?(\d+(?:\.\d+)+)#{regex_suffix}/i
+          end
 
           values
         end

@@ -1,55 +1,107 @@
 #!/bin/bash
-# $1 Full path to the installer - unused
-# $2 Location of the temporary brew install we're moving into place
-# $3 Target install location - unused
-# $4 System root directory - unused
-set -e
+# $1 Full path to the installer (unused)
+# $2 Location of the Homebrew installation we may need to move into place
+# $3 Target install location (unused)
+# $4 System root directory (unused)
+set -euo pipefail
 
-# verify the files exist
-tmp_brew="$2"
-if [[ ! -d "${tmp_brew:?}" ]]
+# disable analytics while installing
+export HOMEBREW_NO_ANALYTICS_THIS_RUN=1
+export HOMEBREW_NO_ANALYTICS_MESSAGE_OUTPUT=1
+
+# verify the installation exists
+# default to /opt/homebrew to make development/testing easier
+homebrew_directory="${2:-/opt/homebrew}"
+if [[ ! -d "${homebrew_directory:?}" ]]
 then
-  echo "no directory at ${tmp_brew}, exiting"
+  echo "No directory at ${homebrew_directory}!" >&2
   exit 1
 fi
 
-# pick the correct target
+# add Git to path
+export PATH="/Library/Developer/CommandLineTools/usr/bin:/Applications/Xcode.app/Contents/Developer/usr/bin:${PATH}"
+
+# helpers for setting/unsetting Git's safe directory setting
+set_git_safe_directory() {
+  if git config --global --get-all safe.directory | grep -q "${1}"
+  then
+    return
+  fi
+  SET_GIT_SAFE_DIRECTORY="${1}"
+  git config --global --add safe.directory "${1}"
+}
+unset_git_safe_directory() {
+  if [[ -z "${SET_GIT_SAFE_DIRECTORY-}" ]]
+  then
+    return
+  fi
+
+  git config --global --unset safe.directory "${1}" || git config --global --unset-all safe.directory
+  if [[ ${SET_GIT_SAFE_DIRECTORY-} == "${1}" ]]
+  then
+    unset SET_GIT_SAFE_DIRECTORY
+  fi
+}
+
+# reset Git repository
+cd "${homebrew_directory}"
+set_git_safe_directory "${homebrew_directory}"
+git reset --hard
+git checkout --force master
+git branch | grep -v '\*' | xargs -n 1 git branch --delete --force || true
+unset_git_safe_directory "${homebrew_directory}"
+
+# move to /usr/local if on x86_64
 if [[ $(uname -m) == "x86_64" ]]
 then
-  target="/usr/local"
-else
-  target="/opt/homebrew"
-fi
+  if [[ -f "/usr/local/bin/brew" && -d "/usr/local/Homebrew" ]]
+  then
+    cp -pRL "${homebrew_directory}/.git" "/usr/local/Homebrew/"
+    mv "${homebrew_directory}/cache_api" "/usr/local/Homebrew/"
 
-loggedInUser=$(echo "show State:/Users/ConsoleUser" | scutil | awk '/Name :/ { print $3 }')
-if [[ -f "${target}/bin/brew" ]]
-then
-  if [[ $(sudo -u"${loggedInUser}" git -C "${target}" branch --show-current) != "master" ]]
-  then
-    echo "working on brew modifications, exiting"
-    rm -rf "${tmp_brew:?}/*"
-    exit 0
-  fi
-  if [[ $("${tmp_brew}/bin/brew" --version | head -n1) != $("${target}/bin/brew" --version | head -n1) ]]
-  then
-    echo "already an outdated install at ${target}, updating"
-    sudo -u"${loggedInUser}" "${target}/bin/brew" update --auto-update
+    set_git_safe_directory /usr/local/Homebrew
+    git -C /usr/local/Homebrew reset --hard
+    git -C /usr/local/Homebrew checkout --force master
+    unset_git_safe_directory /usr/local/Homebrew
   else
-    echo "already an up-to-date install at ${target}, exiting"
+    mkdir -vp /usr/local/bin
+    mv "${homebrew_directory}" "/usr/local/Homebrew/"
+
+    # create symlink to /usr/local/bin/brew
+    ln -svf "../Homebrew/bin/brew" "/usr/local/bin/brew"
   fi
 
-  rm -rf "${tmp_brew:?}/*"
-  exit 0
+  rm -rf "${homebrew_directory}"
+  homebrew_directory="/usr/local/Homebrew"
+  cd /usr/local
 fi
 
-group=$(id -gn "${loggedInUser}")
+# create missing directories
+mkdir -vp Cellar Frameworks etc include lib opt sbin share var/homebrew/linked
 
-install -d -o "root" -g "wheel" -m "0755" "${target}"
-
-cp -RX "${tmp_brew}/" "${target}"
+# optionally define an install user at /var/tmp/.homebrew_pkg_user.plist
+homebrew_pkg_user_plist="/var/tmp/.homebrew_pkg_user.plist"
+if [[ -f "${homebrew_pkg_user_plist}" ]] && [[ -n $(defaults read "${homebrew_pkg_user_plist}" HOMEBREW_PKG_USER) ]]
+then
+  homebrew_pkg_user=$(defaults read /var/tmp/.homebrew_pkg_user HOMEBREW_PKG_USER)
+# otherwise, get valid logged in user
+else
+  homebrew_pkg_user=$(echo "show State:/Users/ConsoleUser" | scutil | awk '/Name :/ { print $3 }')
+fi
 
 # set permissions
-chown -R "${loggedInUser}:${group}" "${target}/*"
+if [[ "${homebrew_directory}" == "/usr/local/Homebrew" ]]
+then
+  chown -R "${homebrew_pkg_user}:admin" Cellar Frameworks Homebrew bin etc include lib sbin share var
+else
+  chown -R "${homebrew_pkg_user}:admin" .
+fi
 
-# cleanup
-rm -rf "${tmp_brew:?}/*"
+# move API cache to ~/Library/Caches/Homebrew
+user_home_dir=$(dscl . read /Users/"${homebrew_pkg_user}" NFSHomeDirectory | awk '{ print $2 }')
+user_cache_dir="${user_home_dir}/Library/Caches/Homebrew"
+user_api_cache_dir="${user_cache_dir}/api"
+mkdir -vp "${user_api_cache_dir}"
+mv -v "${homebrew_directory}/cache_api/"* "${user_api_cache_dir}"
+chown -R "${homebrew_pkg_user}:staff" "${user_cache_dir}"
+rm -vrf "${homebrew_directory}/cache_api"
