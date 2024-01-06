@@ -195,9 +195,24 @@ RuboCop::Cop::Capybara::CapybaraHelp::SPECIFIC_OPTIONS = T.let(T.unsafe(nil), Ha
 # source://rubocop-capybara//lib/rubocop/cop/capybara/mixin/capybara_help.rb#35
 RuboCop::Cop::Capybara::CapybaraHelp::SPECIFIC_PSEUDO_CLASSES = T.let(T.unsafe(nil), Array)
 
-# Checks for click button or link style.
+# Checks for methods of button or link clicks.
 #
-# @example EnforcedStyle: strict (default)
+# By default, prefer to use `click_link_or_button` or `click_on`.
+# These methods offer a weaker coupling between the test and HTML,
+# allowing for a more faithful reflection of how the user behaves.
+#
+# You can set `EnforcedStyle: strict` to prefer the use of
+# `click_link` and `click_button`, but this is a deprecated setting.
+#
+# @example EnforcedStyle: link_or_button (default)
+#   # bad
+#   click_link('foo')
+#   click_button('foo')
+#
+#   # good
+#   click_link_or_button('foo')
+#   click_on('foo')
+# @example EnforcedStyle: strict
 #   # bad
 #   click_link_or_button('foo')
 #   click_on('foo')
@@ -205,57 +220,92 @@ RuboCop::Cop::Capybara::CapybaraHelp::SPECIFIC_PSEUDO_CLASSES = T.let(T.unsafe(n
 #   # good
 #   click_link('foo')
 #   click_button('foo')
-# @example EnforcedStyle: link_or_button
-#   # bad
-#   click_link('foo')
-#   click_button('foo')
 #
-#   # good
-#   click_link_or_button('foo')
-#   click_on('foo')
-#
-# source://rubocop-capybara//lib/rubocop/cop/capybara/click_link_or_button_style.rb#26
+# source://rubocop-capybara//lib/rubocop/cop/capybara/click_link_or_button_style.rb#33
 class RuboCop::Cop::Capybara::ClickLinkOrButtonStyle < ::RuboCop::Cop::Base
   include ::RuboCop::Cop::ConfigurableEnforcedStyle
 
-  # source://rubocop-capybara//lib/rubocop/cop/capybara/click_link_or_button_style.rb#37
+  # source://rubocop-capybara//lib/rubocop/cop/capybara/click_link_or_button_style.rb#44
   def on_send(node); end
 
   private
 
   # @return [Boolean]
   #
-  # source://rubocop-capybara//lib/rubocop/cop/capybara/click_link_or_button_style.rb#62
+  # source://rubocop-capybara//lib/rubocop/cop/capybara/click_link_or_button_style.rb#69
   def link_or_button_method?(node); end
 
   # @return [Boolean]
   #
-  # source://rubocop-capybara//lib/rubocop/cop/capybara/click_link_or_button_style.rb#45
+  # source://rubocop-capybara//lib/rubocop/cop/capybara/click_link_or_button_style.rb#52
   def offense?(node); end
 
-  # source://rubocop-capybara//lib/rubocop/cop/capybara/click_link_or_button_style.rb#50
+  # source://rubocop-capybara//lib/rubocop/cop/capybara/click_link_or_button_style.rb#57
   def offense_message(node); end
 
   # @return [Boolean]
   #
-  # source://rubocop-capybara//lib/rubocop/cop/capybara/click_link_or_button_style.rb#58
+  # source://rubocop-capybara//lib/rubocop/cop/capybara/click_link_or_button_style.rb#65
   def strict_method?(node); end
 end
 
-# source://rubocop-capybara//lib/rubocop/cop/capybara/click_link_or_button_style.rb#34
+# source://rubocop-capybara//lib/rubocop/cop/capybara/click_link_or_button_style.rb#41
 RuboCop::Cop::Capybara::ClickLinkOrButtonStyle::CLICK_LINK_OR_BUTTON = T.let(T.unsafe(nil), Array)
 
-# source://rubocop-capybara//lib/rubocop/cop/capybara/click_link_or_button_style.rb#31
+# source://rubocop-capybara//lib/rubocop/cop/capybara/click_link_or_button_style.rb#38
 RuboCop::Cop::Capybara::ClickLinkOrButtonStyle::MSG_CLICK_LINK_OR_BUTTON = T.let(T.unsafe(nil), String)
 
-# source://rubocop-capybara//lib/rubocop/cop/capybara/click_link_or_button_style.rb#29
+# source://rubocop-capybara//lib/rubocop/cop/capybara/click_link_or_button_style.rb#36
 RuboCop::Cop::Capybara::ClickLinkOrButtonStyle::MSG_STRICT = T.let(T.unsafe(nil), String)
 
-# source://rubocop-capybara//lib/rubocop/cop/capybara/click_link_or_button_style.rb#35
+# source://rubocop-capybara//lib/rubocop/cop/capybara/click_link_or_button_style.rb#42
 RuboCop::Cop::Capybara::ClickLinkOrButtonStyle::RESTRICT_ON_SEND = T.let(T.unsafe(nil), Array)
 
-# source://rubocop-capybara//lib/rubocop/cop/capybara/click_link_or_button_style.rb#33
+# source://rubocop-capybara//lib/rubocop/cop/capybara/click_link_or_button_style.rb#40
 RuboCop::Cop::Capybara::ClickLinkOrButtonStyle::STRICT_METHODS = T.let(T.unsafe(nil), Array)
+
+# Css selector parser.
+#
+# @api private
+#
+# source://rubocop-capybara//lib/rubocop/cop/capybara/mixin/css_attributes_parser.rb#8
+class RuboCop::Cop::Capybara::CssAttributesParser
+  # @api private
+  # @return [CssAttributesParser] a new instance of CssAttributesParser
+  #
+  # source://rubocop-capybara//lib/rubocop/cop/capybara/mixin/css_attributes_parser.rb#9
+  def initialize(selector); end
+
+  # @api private
+  # @return [Array<String>]
+  #
+  # source://rubocop-capybara//lib/rubocop/cop/capybara/mixin/css_attributes_parser.rb#18
+  def parse; end
+
+  private
+
+  # @api private
+  # @example
+  #   normalize_value('true') # => true
+  #   normalize_value('false') # => false
+  #   normalize_value(nil) # => nil
+  #   normalize_value("foo") # => "'foo'"
+  # @param value [String]
+  # @return [Boolean, String]
+  #
+  # source://rubocop-capybara//lib/rubocop/cop/capybara/mixin/css_attributes_parser.rb#61
+  def normalize_value(value); end
+
+  # @api private
+  #
+  # source://rubocop-capybara//lib/rubocop/cop/capybara/mixin/css_attributes_parser.rb#42
+  def on_bracket_end; end
+
+  # @api private
+  #
+  # source://rubocop-capybara//lib/rubocop/cop/capybara/mixin/css_attributes_parser.rb#33
+  def on_bracket_start; end
+end
 
 # Helps parsing css selector.
 #
@@ -280,10 +330,11 @@ module RuboCop::Cop::Capybara::CssSelector
   #   attributes('a[foo-bar_baz]') # => {"foo-bar_baz=>nil}
   #   attributes('button[foo][bar=baz]') # => {"foo"=>nil, "bar"=>"'baz'"}
   #   attributes('table[foo=bar]') # => {"foo"=>"'bar'"}
+  #   attributes('[foo="bar[baz][qux]"]') # => {"foo"=>"'bar[baz][qux]'"}
   # @param selector [String]
   # @return [Array<String>]
   #
-  # source://rubocop-capybara//lib/rubocop/cop/capybara/mixin/css_selector.rb#58
+  # source://rubocop-capybara//lib/rubocop/cop/capybara/mixin/css_selector.rb#59
   def attributes(selector); end
 
   # @api private
@@ -326,20 +377,8 @@ module RuboCop::Cop::Capybara::CssSelector
   # @param selector [String]
   # @return [Boolean]
   #
-  # source://rubocop-capybara//lib/rubocop/cop/capybara/mixin/css_selector.rb#88
+  # source://rubocop-capybara//lib/rubocop/cop/capybara/mixin/css_selector.rb#82
   def multiple_selectors?(selector); end
-
-  # @api private
-  # @example
-  #   normalize_value('true') # => true
-  #   normalize_value('false') # => false
-  #   normalize_value(nil) # => nil
-  #   normalize_value("foo") # => "'foo'"
-  # @param value [String]
-  # @return [Boolean, String]
-  #
-  # source://rubocop-capybara//lib/rubocop/cop/capybara/mixin/css_selector.rb#100
-  def normalize_value(value); end
 
   # @api private
   # @example
@@ -348,7 +387,7 @@ module RuboCop::Cop::Capybara::CssSelector
   # @param selector [String]
   # @return [Array<String>]
   #
-  # source://rubocop-capybara//lib/rubocop/cop/capybara/mixin/css_selector.rb#74
+  # source://rubocop-capybara//lib/rubocop/cop/capybara/mixin/css_selector.rb#68
   def pseudo_classes(selector); end
 
   class << self
@@ -367,10 +406,11 @@ module RuboCop::Cop::Capybara::CssSelector
     #   attributes('a[foo-bar_baz]') # => {"foo-bar_baz=>nil}
     #   attributes('button[foo][bar=baz]') # => {"foo"=>nil, "bar"=>"'baz'"}
     #   attributes('table[foo=bar]') # => {"foo"=>"'bar'"}
+    #   attributes('[foo="bar[baz][qux]"]') # => {"foo"=>"'bar[baz][qux]'"}
     # @param selector [String]
     # @return [Array<String>]
     #
-    # source://rubocop-capybara//lib/rubocop/cop/capybara/mixin/css_selector.rb#58
+    # source://rubocop-capybara//lib/rubocop/cop/capybara/mixin/css_selector.rb#59
     def attributes(selector); end
 
     # @api private
@@ -413,20 +453,8 @@ module RuboCop::Cop::Capybara::CssSelector
     # @param selector [String]
     # @return [Boolean]
     #
-    # source://rubocop-capybara//lib/rubocop/cop/capybara/mixin/css_selector.rb#88
+    # source://rubocop-capybara//lib/rubocop/cop/capybara/mixin/css_selector.rb#82
     def multiple_selectors?(selector); end
-
-    # @api private
-    # @example
-    #   normalize_value('true') # => true
-    #   normalize_value('false') # => false
-    #   normalize_value(nil) # => nil
-    #   normalize_value("foo") # => "'foo'"
-    # @param value [String]
-    # @return [Boolean, String]
-    #
-    # source://rubocop-capybara//lib/rubocop/cop/capybara/mixin/css_selector.rb#100
-    def normalize_value(value); end
 
     # @api private
     # @example
@@ -435,7 +463,7 @@ module RuboCop::Cop::Capybara::CssSelector
     # @param selector [String]
     # @return [Array<String>]
     #
-    # source://rubocop-capybara//lib/rubocop/cop/capybara/mixin/css_selector.rb#74
+    # source://rubocop-capybara//lib/rubocop/cop/capybara/mixin/css_selector.rb#68
     def pseudo_classes(selector); end
   end
 end
@@ -571,15 +599,7 @@ RuboCop::Cop::Capybara::MatchStyle::RESTRICT_ON_SEND = T.let(T.unsafe(nil), Arra
 
 # Enforces use of `have_no_*` or `not_to` for negated expectations.
 #
-# @example EnforcedStyle: not_to (default)
-#   # bad
-#   expect(page).to have_no_selector
-#   expect(page).to have_no_css('a')
-#
-#   # good
-#   expect(page).not_to have_selector
-#   expect(page).not_to have_css('a')
-# @example EnforcedStyle: have_no
+# @example EnforcedStyle: have_no (default)
 #   # bad
 #   expect(page).not_to have_selector
 #   expect(page).not_to have_css('a')
@@ -587,6 +607,14 @@ RuboCop::Cop::Capybara::MatchStyle::RESTRICT_ON_SEND = T.let(T.unsafe(nil), Arra
 #   # good
 #   expect(page).to have_no_selector
 #   expect(page).to have_no_css('a')
+# @example EnforcedStyle: not_to
+#   # bad
+#   expect(page).to have_no_selector
+#   expect(page).to have_no_css('a')
+#
+#   # good
+#   expect(page).not_to have_selector
+#   expect(page).not_to have_css('a')
 #
 # source://rubocop-capybara//lib/rubocop/cop/capybara/negation_matcher.rb#26
 class RuboCop::Cop::Capybara::NegationMatcher < ::RuboCop::Cop::Base
@@ -872,6 +900,57 @@ end
 # source://rubocop-capybara//lib/rubocop/cop/capybara/rspec/predicate_matcher.rb#244
 RuboCop::Cop::Capybara::RSpec::PredicateMatcher::RESTRICT_ON_SEND = T.let(T.unsafe(nil), Array)
 
+# Checks for redundant `within find(...)` calls.
+#
+# @example
+#   # bad
+#   within find('foo.bar') do
+#   # ...
+#   end
+#
+#   # good
+#   within 'foo.bar' do
+#   # ...
+#   end
+#
+#   # bad
+#   within find_by_id('foo') do
+#   # ...
+#   end
+#
+#   # good
+#   within '#foo' do
+#   # ...
+#   end
+#
+# source://rubocop-capybara//lib/rubocop/cop/capybara/redundant_within_find.rb#29
+class RuboCop::Cop::Capybara::RedundantWithinFind < ::RuboCop::Cop::Base
+  extend ::RuboCop::Cop::AutoCorrector
+
+  # source://rubocop-capybara//lib/rubocop/cop/capybara/redundant_within_find.rb#41
+  def on_send(node); end
+
+  # source://rubocop-capybara//lib/rubocop/cop/capybara/redundant_within_find.rb#36
+  def within_find(param0 = T.unsafe(nil)); end
+
+  private
+
+  # source://rubocop-capybara//lib/rubocop/cop/capybara/redundant_within_find.rb#51
+  def msg(node); end
+
+  # source://rubocop-capybara//lib/rubocop/cop/capybara/redundant_within_find.rb#55
+  def replaced(node); end
+end
+
+# source://rubocop-capybara//lib/rubocop/cop/capybara/redundant_within_find.rb#33
+RuboCop::Cop::Capybara::RedundantWithinFind::FIND_METHODS = T.let(T.unsafe(nil), Set)
+
+# source://rubocop-capybara//lib/rubocop/cop/capybara/redundant_within_find.rb#31
+RuboCop::Cop::Capybara::RedundantWithinFind::MSG = T.let(T.unsafe(nil), String)
+
+# source://rubocop-capybara//lib/rubocop/cop/capybara/redundant_within_find.rb#32
+RuboCop::Cop::Capybara::RedundantWithinFind::RESTRICT_ON_SEND = T.let(T.unsafe(nil), Array)
+
 # Checks for there is a more specific actions offered by Capybara.
 #
 # @example
@@ -1037,28 +1116,31 @@ class RuboCop::Cop::Capybara::SpecificMatcher < ::RuboCop::Cop::Base
   # source://rubocop-capybara//lib/rubocop/cop/capybara/specific_matcher.rb#41
   def first_argument(param0 = T.unsafe(nil)); end
 
-  # source://rubocop-capybara//lib/rubocop/cop/capybara/specific_matcher.rb#45
+  # source://rubocop-capybara//lib/rubocop/cop/capybara/specific_matcher.rb#50
   def on_send(node); end
+
+  # source://rubocop-capybara//lib/rubocop/cop/capybara/specific_matcher.rb#46
+  def text_with_regexp?(param0); end
 
   private
 
-  # source://rubocop-capybara//lib/rubocop/cop/capybara/specific_matcher.rb#80
+  # source://rubocop-capybara//lib/rubocop/cop/capybara/specific_matcher.rb#86
   def good_matcher(node, matcher); end
 
-  # source://rubocop-capybara//lib/rubocop/cop/capybara/specific_matcher.rb#74
+  # source://rubocop-capybara//lib/rubocop/cop/capybara/specific_matcher.rb#80
   def message(node, matcher); end
 
   # @return [Boolean]
   #
-  # source://rubocop-capybara//lib/rubocop/cop/capybara/specific_matcher.rb#62
+  # source://rubocop-capybara//lib/rubocop/cop/capybara/specific_matcher.rb#67
   def replaceable?(node, arg, matcher); end
 
   # @return [Boolean]
   #
-  # source://rubocop-capybara//lib/rubocop/cop/capybara/specific_matcher.rb#68
+  # source://rubocop-capybara//lib/rubocop/cop/capybara/specific_matcher.rb#74
   def replaceable_attributes?(selector); end
 
-  # source://rubocop-capybara//lib/rubocop/cop/capybara/specific_matcher.rb#57
+  # source://rubocop-capybara//lib/rubocop/cop/capybara/specific_matcher.rb#62
   def specific_matcher(arg); end
 end
 

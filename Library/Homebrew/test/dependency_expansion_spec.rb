@@ -73,15 +73,6 @@ describe Dependency do
     end
   end
 
-  it "merges dependencies and preserves env_proc" do
-    env_proc = double
-    dep = described_class.new("foo", [], env_proc)
-    allow(dep).to receive(:to_formula).and_return \
-      instance_double(Formula, deps: [], name: "foo", full_name: "foo")
-    deps.replace([dep])
-    expect(described_class.expand(formula).first.env_proc).to eq(env_proc)
-  end
-
   it "merges tags without duplicating them" do
     foo2 = build_dep(:foo, ["option"])
     foo3 = build_dep(:foo, ["option"])

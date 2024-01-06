@@ -33,22 +33,18 @@ describe Dependency do
 
   describe "::merge_repeats" do
     it "merges duplicate dependencies" do
-      dep = described_class.new("foo", [:build], nil, "foo")
-      dep2 = described_class.new("foo", ["bar"], nil, "foo2")
-      dep3 = described_class.new("xyz", ["abc"], nil, "foo")
+      dep = described_class.new("foo", [:build])
+      dep2 = described_class.new("foo", ["bar"])
+      dep3 = described_class.new("xyz", ["abc"])
       merged = described_class.merge_repeats([dep, dep2, dep3])
       expect(merged.count).to eq(2)
       expect(merged.first).to be_a described_class
 
       foo_named_dep = merged.find { |d| d.name == "foo" }
       expect(foo_named_dep.tags).to eq(["bar"])
-      expect(foo_named_dep.option_names).to include("foo")
-      expect(foo_named_dep.option_names).to include("foo2")
 
       xyz_named_dep = merged.find { |d| d.name == "xyz" }
       expect(xyz_named_dep.tags).to eq(["abc"])
-      expect(xyz_named_dep.option_names).to include("foo")
-      expect(xyz_named_dep.option_names).not_to include("foo2")
     end
 
     it "merges necessity tags" do

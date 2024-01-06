@@ -47,7 +47,7 @@ GEM
       parser
       rainbow (~> 3.0)
       sorbet-runtime (>= 0.5)
-    parser (3.2.2.4)
+    parser (3.3.0.0)
       ast (~> 2.4.1)
       racc
     patchelf (1.4.0)
@@ -109,7 +109,7 @@ GEM
       unicode-display_width (>= 2.4.0, < 3.0)
     rubocop-ast (1.30.0)
       parser (>= 3.2.1.0)
-    rubocop-capybara (2.19.0)
+    rubocop-capybara (2.20.0)
       rubocop (~> 1.41)
     rubocop-factory_bot (2.24.0)
       rubocop (~> 1.33)

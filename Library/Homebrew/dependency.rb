@@ -11,18 +11,13 @@ class Dependency
   include Dependable
   extend Cachable
 
-  attr_reader :name, :env_proc, :option_names, :tap
+  attr_reader :name, :tap
 
-  DEFAULT_ENV_PROC = proc {}.freeze
-  private_constant :DEFAULT_ENV_PROC
-
-  def initialize(name, tags = [], env_proc = DEFAULT_ENV_PROC, option_names = [name&.split("/")&.last])
+  def initialize(name, tags = [])
     raise ArgumentError, "Dependency must have a name!" unless name
 
     @name = name
     @tags = tags
-    @env_proc = env_proc
-    @option_names = option_names
 
     @tap = Tap.fetch(Regexp.last_match(1), Regexp.last_match(2)) if name =~ HOMEBREW_TAP_FORMULA_REGEX
   end
@@ -90,8 +85,8 @@ class Dependency
     required
   end
 
-  def modify_build_environment
-    env_proc&.call
+  def option_names
+    [name.split("/").last].freeze
   end
 
   sig { overridable.returns(T::Boolean) }
@@ -104,18 +99,9 @@ class Dependency
     "#<#{self.class.name}: #{name.inspect} #{tags.inspect}>"
   end
 
-  # Define marshaling semantics because we cannot serialize @env_proc.
-  def _dump(*)
-    Marshal.dump([name, tags])
-  end
-
-  def self._load(marshaled)
-    new(*Marshal.load(marshaled)) # rubocop:disable Security/MarshalLoad
-  end
-
   sig { params(formula: Formula).returns(T.self_type) }
   def dup_with_formula_name(formula)
-    self.class.new(formula.full_name.to_s, tags, env_proc, option_names)
+    self.class.new(formula.full_name.to_s, tags)
   end
 
   class << self
@@ -202,15 +188,9 @@ class Dependency
         deps = grouped.fetch(name)
         dep  = deps.first
         tags = merge_tags(deps)
-        option_names = deps.flat_map(&:option_names).uniq
         kwargs = {}
         kwargs[:bounds] = dep.bounds if dep.uses_from_macos?
-        # TODO: simpify to just **kwargs when we require Ruby >= 2.7
-        if kwargs.empty?
-          dep.class.new(name, tags, dep.env_proc, option_names)
-        else
-          dep.class.new(name, tags, dep.env_proc, option_names, **kwargs)
-        end
+        dep.class.new(name, tags, **kwargs)
       end
     end
 
@@ -250,8 +230,8 @@ end
 class UsesFromMacOSDependency < Dependency
   attr_reader :bounds
 
-  def initialize(name, tags = [], env_proc = DEFAULT_ENV_PROC, option_names = [name], bounds:)
-    super(name, tags, env_proc, option_names)
+  def initialize(name, tags = [], bounds:)
+    super(name, tags)
 
     @bounds = bounds
   end
@@ -293,7 +273,7 @@ class UsesFromMacOSDependency < Dependency
 
   sig { override.params(formula: Formula).returns(T.self_type) }
   def dup_with_formula_name(formula)
-    self.class.new(formula.full_name.to_s, tags, env_proc, option_names, bounds: bounds)
+    self.class.new(formula.full_name.to_s, tags, bounds: bounds)
   end
 
   sig { returns(String) }

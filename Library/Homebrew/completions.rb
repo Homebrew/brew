@@ -155,7 +155,7 @@ module Homebrew
         name = option.first
         desc = option.second
         if name.start_with? "--[no-]"
-          options[name.remove("[no-]")] = desc
+          options[name.gsub("[no-]", "")] = desc
           options[name.sub("[no-]", "no-")] = desc
         else
           options[name] = desc

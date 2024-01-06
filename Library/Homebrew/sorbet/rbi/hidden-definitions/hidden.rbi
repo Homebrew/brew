@@ -37,6 +37,11 @@ class Array
   def self.try_convert(arg); end
 end
 
+module Attrable
+  extend ::T::Private::Methods::MethodHooks
+  extend ::T::Private::Methods::SingletonMethodHooks
+end
+
 class BasicObject
   def as_null_object(); end
 
@@ -3224,6 +3229,11 @@ module Cask::CaskLoader::ILoader
   extend ::T::Private::Methods::SingletonMethodHooks
 end
 
+module Cask::Caskroom
+  extend ::T::Private::Methods::MethodHooks
+  extend ::T::Private::Methods::SingletonMethodHooks
+end
+
 class Cask::Config
   def appdir(); end
 
@@ -3286,6 +3296,88 @@ class Cask::Config
   def vst_plugindir=(path); end
 end
 
+class Cask::DSL
+  def app(*args, **kwargs); end
+
+  def artifact(*args, **kwargs); end
+
+  def audio_unit_plugin(*args, **kwargs); end
+
+  def binary(*args, **kwargs); end
+
+  def colorpicker(*args, **kwargs); end
+
+  def dictionary(*args, **kwargs); end
+
+  def font(*args, **kwargs); end
+
+  def input_method(*args, **kwargs); end
+
+  def installer(*args, **kwargs); end
+
+  def internet_plugin(*args, **kwargs); end
+
+  def keyboard_layout(*args, **kwargs); end
+
+  def manpage(*args, **kwargs); end
+
+  def mdimporter(*args, **kwargs); end
+
+  def on_arch_conditional(arm: T.unsafe(nil), intel: T.unsafe(nil)); end
+
+  def on_arm(&block); end
+
+  def on_big_sur(or_condition=T.unsafe(nil), &block); end
+
+  def on_catalina(or_condition=T.unsafe(nil), &block); end
+
+  def on_el_capitan(or_condition=T.unsafe(nil), &block); end
+
+  def on_high_sierra(or_condition=T.unsafe(nil), &block); end
+
+  def on_intel(&block); end
+
+  def on_mojave(or_condition=T.unsafe(nil), &block); end
+
+  def on_monterey(or_condition=T.unsafe(nil), &block); end
+
+  def on_sierra(or_condition=T.unsafe(nil), &block); end
+
+  def on_sonoma(or_condition=T.unsafe(nil), &block); end
+
+  def on_ventura(or_condition=T.unsafe(nil), &block); end
+
+  def pkg(*args, **kwargs); end
+
+  def postflight(&block); end
+
+  def preflight(&block); end
+
+  def prefpane(*args, **kwargs); end
+
+  def qlplugin(*args, **kwargs); end
+
+  def screen_saver(*args, **kwargs); end
+
+  def service(*args, **kwargs); end
+
+  def stage_only(*args, **kwargs); end
+
+  def suite(*args, **kwargs); end
+
+  def uninstall(*args, **kwargs); end
+
+  def uninstall_postflight(&block); end
+
+  def uninstall_preflight(&block); end
+
+  def vst3_plugin(*args, **kwargs); end
+
+  def vst_plugin(*args, **kwargs); end
+
+  def zap(*args, **kwargs); end
+end
+
 class Cask::DSL::Caveats
   def depends_on_java(*args); end
 
@@ -3314,6 +3406,15 @@ end
 
 class Cask::DSL::ConflictsWith
   RUBYGEMS_ACTIVATION_MONITOR = ::T.let(nil, ::T.untyped)
+end
+
+class Cask::DSL::DependsOn
+  RUBYGEMS_ACTIVATION_MONITOR = ::T.let(nil, ::T.untyped)
+end
+
+class Cask::DSL::DependsOn
+  extend ::T::Private::Methods::MethodHooks
+  extend ::T::Private::Methods::SingletonMethodHooks
 end
 
 class Cask::DSL::Version
@@ -3347,6 +3448,20 @@ module Cask::Quarantine
 end
 
 module Cask::Staged
+  extend ::T::Private::Methods::MethodHooks
+  extend ::T::Private::Methods::SingletonMethodHooks
+end
+
+class Cask::URL
+  RUBYGEMS_ACTIVATION_MONITOR = ::T.let(nil, ::T.untyped)
+end
+
+module Cask::URL::BlockDSL::PageWithURL
+  extend ::T::Private::Methods::MethodHooks
+  extend ::T::Private::Methods::SingletonMethodHooks
+end
+
+class Cask::URL
   extend ::T::Private::Methods::MethodHooks
   extend ::T::Private::Methods::SingletonMethodHooks
 end
@@ -7219,11 +7334,6 @@ class Parlour::Types::Type
   extend ::T::InterfaceWrapper::Helpers
 end
 
-module Attrable
-  extend ::T::Private::Methods::MethodHooks
-  extend ::T::Private::Methods::SingletonMethodHooks
-end
-
 class Proc
   def <<(arg); end
 
@@ -8966,6 +9076,7 @@ module RuboCop::AST::NodePattern::Sets
   SET_ON_INTEL_ON_ARM = ::T.let(nil, ::T.untyped)
   SET_OR_NEWER_OR_OLDER = ::T.let(nil, ::T.untyped)
   SET_SYSTEM_SHELL_OUTPUT_PIPE_OUTPUT = ::T.let(nil, ::T.untyped)
+  SET_TEXT_EXACT_TEXT = ::T.let(nil, ::T.untyped)
   SET_WITH_WITHOUT = ::T.let(nil, ::T.untyped)
   SET____ETC_5 = ::T.let(nil, ::T.untyped)
 end

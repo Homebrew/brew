@@ -280,7 +280,7 @@ module Cask
 
           url json_cask[:url], **json_cask.fetch(:url_specs, {}) if json_cask[:url].present?
           appcast json_cask[:appcast] if json_cask[:appcast].present?
-          json_cask[:name].each do |cask_name|
+          json_cask[:name]&.each do |cask_name|
             name cask_name
           end
           desc json_cask[:desc]

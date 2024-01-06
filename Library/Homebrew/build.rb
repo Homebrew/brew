@@ -91,7 +91,6 @@ class Build
           env: args.env, cc: args.cc, build_bottle: args.build_bottle?, bottle_arch: args.bottle_arch,
         )
       end
-      deps.each(&:modify_build_environment)
     else
       ENV.setup_build_environment(
         formula:       formula,
@@ -105,7 +104,6 @@ class Build
           env: args.env, cc: args.cc, build_bottle: args.build_bottle?, bottle_arch: args.bottle_arch,
         )
       end
-      deps.each(&:modify_build_environment)
 
       keg_only_deps.each do |dep|
         ENV.prepend_path "PATH", dep.opt_bin.to_s
