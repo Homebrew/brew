@@ -6,6 +6,7 @@ require "fileutils"
 require "formula"
 require "utils/bottles"
 require "tab"
+require "sbom"
 require "keg"
 require "formula_versions"
 require "cli/parser"
@@ -431,6 +432,7 @@ module Homebrew
             Tab.clear_cache
             Dependency.clear_cache
             Requirement.clear_cache
+            SBOM.clear_cache
             tab = Tab.for_keg(keg)
             original_tab = tab.dup
             tab.poured_from_bottle = false
@@ -442,6 +444,9 @@ module Homebrew
             else
               tab.write
             end
+
+            sbom = SBOM.create(formula, nil, nil)
+            sbom.write
 
             keg.consistent_reproducible_symlink_permissions!
 
