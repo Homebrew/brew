@@ -324,13 +324,19 @@ module Homebrew
     end
 
     unless args.dry_run?
+      ignore_non_pypi_packages = formula.tap&.pypi_formula_mappings&.key?(formula.full_name).blank?
+      version_or_url_kwargs = if ignore_non_pypi_packages || PyPI.pypi_url?(new_url)
+        { version: new_formula_version.to_s }
+      else
+        { url: new_url }
+      end
       resources_checked = PyPI.update_python_resources! formula,
-                                                        version:                  new_formula_version.to_s,
                                                         package_name:             args.python_package_name,
                                                         extra_packages:           args.python_extra_packages,
                                                         exclude_packages:         args.python_exclude_packages,
                                                         silent:                   args.quiet?,
-                                                        ignore_non_pypi_packages: true
+                                                        ignore_non_pypi_packages: ignore_non_pypi_packages,
+                                                        **version_or_url_kwargs
     end
 
     run_audit(formula, alias_rename, old_contents, args: args)
