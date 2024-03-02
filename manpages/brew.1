@@ -3224,6 +3224,15 @@ Use this base64 encoded username and password for authenticating with a Docker r
 .br
 Use this bearer token for authenticating with a Docker registry proxying GitHub Packages\. Preferred over \fBHOMEBREW_DOCKER_REGISTRY_BASIC_AUTH_TOKEN\fR\.
 .
+.IP
+\fINote:\fR when authenticating against ghcr\.io, the \fBHOMEBREW_DOCKER_REGISTRY_TOKEN\fR must be a base64 encoded GitHub Personal Access Token (PAT)\.
+.
+.IP
+\fIFor example:\fR \fBbash export HOMEBREW_DOCKER_REGISTRY_TOKEN=$(base64<<<$(git config github\.token))\fR
+.
+.IP
+\fIDefault:\fR \fBQQ==\fR unless \fBHOMEBREW_DOCKER_REGISTRY_BASIC_AUTH_TOKEN\fR is set\.
+.
 .TP
 \fBHOMEBREW_EDITOR\fR
 .

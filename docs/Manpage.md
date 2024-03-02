@@ -2230,7 +2230,17 @@ command execution e.g. `$(cat file)`.
   <br>Use this base64 encoded username and password for authenticating with a Docker registry proxying GitHub Packages. If `HOMEBREW_DOCKER_REGISTRY_TOKEN` is set, it will be used instead.
 
 - `HOMEBREW_DOCKER_REGISTRY_TOKEN`
-  <br>Use this bearer token for authenticating with a Docker registry proxying GitHub Packages. Preferred over `HOMEBREW_DOCKER_REGISTRY_BASIC_AUTH_TOKEN`.
+  <br>Use this bearer token for authenticating with a Docker registry proxying GitHub Packages.
+Preferred over `HOMEBREW_DOCKER_REGISTRY_BASIC_AUTH_TOKEN`.
+
+    *Note:* when authenticating against ghcr.io,     the `HOMEBREW_DOCKER_REGISTRY_TOKEN` must be a base64     encoded GitHub Personal Access Token (PAT).
+
+    *For example:*
+```bash
+export HOMEBREW_DOCKER_REGISTRY_TOKEN=$(base64<<<$(git config github.token))
+```
+
+  *Default:* `QQ==` unless `HOMEBREW_DOCKER_REGISTRY_BASIC_AUTH_TOKEN` is set.
 
 - `HOMEBREW_EDITOR`
   <br>Use this editor when editing a single formula, or several formulae in the same directory.
