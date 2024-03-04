@@ -165,7 +165,7 @@ module Homebrew
                      "proxying GitHub Packages. If `HOMEBREW_DOCKER_REGISTRY_TOKEN` is set, it will be used instead.",
       },
       HOMEBREW_DOCKER_REGISTRY_TOKEN:            {
-        description:  <<~EOF,
+        description:  <<~EOS,
           Use this bearer token for authenticating with a Docker registry proxying GitHub Packages.
           Preferred over `HOMEBREW_DOCKER_REGISTRY_BASIC_AUTH_TOKEN`.
 
@@ -177,7 +177,7 @@ module Homebrew
           ```bash
           export HOMEBREW_DOCKER_REGISTRY_TOKEN=$(base64<<<$(git config github.token))
           ```
-        EOF
+        EOS
         default_text: "`QQ==` unless `HOMEBREW_DOCKER_REGISTRY_BASIC_AUTH_TOKEN` is set.",
       },
       HOMEBREW_EDITOR:                           {
