@@ -215,10 +215,13 @@ module Language
           system_site_packages: T::Boolean,
           without_pip:          T::Boolean,
           link_manpages:        T::Boolean,
+          without:              T.nilable(T.any(String, T::Array[String])),
+          start_with:           T.nilable(T.any(String, T::Array[String])),
+          end_with:             T.nilable(T.any(String, T::Array[String])),
         ).returns(Virtualenv)
       }
       def virtualenv_install_with_resources(using: nil, system_site_packages: true, without_pip: true,
-                                            link_manpages: false)
+                                            link_manpages: false, without: nil, start_with: nil, end_with: nil)
         python = using
         if python.nil?
           wanted = python_names.select { |py| needs_python?(py) }
@@ -228,9 +231,33 @@ module Language
           python = T.must(wanted.first)
           python = "python3" if python == "python"
         end
+
+        venv_resources = if without.blank? && start_with.blank? && end_with.blank?
+          resources
+        else
+          remaining_resources = resources.to_h { |resource| [resource.name, resource] }
+          unless (unknown_resource = Array(without).find { |r| remaining_resources.delete(r).nil? }).nil?
+            raise ArgumentError, "#{__method__} `without` includes unknown resource \"#{unknown_resource}\""
+          end
+
+          start_with = Array(start_with)
+          start_with_resources = start_with.map { |r| remaining_resources.delete(r) }
+          unless (index = start_with_resources.find_index(nil)).nil?
+            raise ArgumentError, "#{__method__} `start_with` includes unknown resource \"#{start_with[index]}\""
+          end
+
+          end_with = Array(end_with)
+          end_with_resources = end_with.map { |r| remaining_resources.delete(r) }
+          unless (index = end_with_resources.find_index(nil)).nil?
+            raise ArgumentError, "#{__method__} `end_with` includes unknown resource \"#{end_with[index]}\""
+          end
+
+          start_with_resources + remaining_resources.values + end_with_resources
+        end
+
         venv = virtualenv_create(libexec, python.delete("@"), system_site_packages: system_site_packages,
                                                               without_pip:          without_pip)
-        venv.pip_install resources
+        venv.pip_install venv_resources
         venv.pip_install_and_link(T.must(buildpath), link_manpages: link_manpages)
         venv
       end
