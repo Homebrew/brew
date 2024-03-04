@@ -18,7 +18,7 @@ module PyPI
       @pypi_info = nil
       @package_string = package_string
       @is_url = is_url
-      @is_pypi_url = package_string.start_with? PYTHONHOSTED_URL_PREFIX
+      @is_pypi_url = PyPI.pypi_url?(package_string)
       @python_name = python_name
     end
 
@@ -195,6 +195,7 @@ module PyPI
     params(
       formula:                  Formula,
       version:                  T.nilable(String),
+      url:                      T.nilable(String),
       package_name:             T.nilable(String),
       extra_packages:           T.nilable(T::Array[String]),
       exclude_packages:         T.nilable(T::Array[String]),
@@ -204,7 +205,7 @@ module PyPI
       ignore_non_pypi_packages: T.nilable(T::Boolean),
     ).returns(T.nilable(T::Boolean))
   }
-  def self.update_python_resources!(formula, version: nil, package_name: nil, extra_packages: nil,
+  def self.update_python_resources!(formula, version: nil, url: nil, package_name: nil, extra_packages: nil,
                                     exclude_packages: nil, print_only: false, silent: false, verbose: false,
                                     ignore_non_pypi_packages: false)
 
@@ -244,11 +245,8 @@ module PyPI
       nil
     else
       stable = T.must(formula.stable)
-      url = if stable.specs[:tag].present?
-        url = "git+#{stable.url}@#{stable.specs[:tag]}"
-      else
-        stable.url
-      end
+      url = stable.url if url.blank?
+      url = "git+#{url}@#{stable.specs[:tag]}" if stable.specs[:tag].present?
       Package.new(url, is_url: true, python_name: python_name)
     end
 
@@ -260,8 +258,8 @@ module PyPI
       else
         return if ignore_non_pypi_packages
 
-        odie "The main package is not a PyPI package, meaning that version-only updates cannot be \
-          performed. Please update its URL manually."
+        odie "The main package is not a PyPI package, meaning that version-only updates cannot be " \
+             "performed. Please update its URL manually."
       end
     end
 
@@ -402,5 +400,10 @@ module PyPI
 
       Package.new "#{name}==#{version}"
     end
+  end
+
+  sig { params(url: String).returns(T::Boolean) }
+  def self.pypi_url?(url)
+    url.start_with?(PYTHONHOSTED_URL_PREFIX)
   end
 end
