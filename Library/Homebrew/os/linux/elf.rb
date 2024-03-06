@@ -3,8 +3,6 @@
 
 # {Pathname} extension for dealing with ELF files.
 # @see https://en.wikipedia.org/wiki/Executable_and_Linkable_Format#File_header
-#
-# @api private
 module ELFShim
   MAGIC_NUMBER_OFFSET = 0
   private_constant :MAGIC_NUMBER_OFFSET
@@ -119,8 +117,6 @@ module ELFShim
   end
 
   # Helper class for reading metadata from an ELF file.
-  #
-  # @api private
   class Metadata
     attr_reader :path, :dylib_id, :dylibs
 

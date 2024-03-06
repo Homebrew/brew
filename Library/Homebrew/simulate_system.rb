@@ -3,8 +3,6 @@
 
 module Homebrew
   # Helper module for simulating different system configurations.
-  #
-  # @api private
   class SimulateSystem
     class << self
       attr_reader :arch, :os

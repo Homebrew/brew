@@ -5,7 +5,6 @@ require "downloadable"
 
 module Homebrew
   module API
-    # @api private
     class DownloadStrategy < CurlDownloadStrategy
       sig { override.returns(Pathname) }
       def symlink_location
@@ -13,7 +12,6 @@ module Homebrew
       end
     end
 
-    # @api private
     class Download < Downloadable
       sig {
         params(

@@ -6,8 +6,6 @@ require "cask/artifact/moved"
 module Cask
   module Artifact
     # Artifact corresponding to the `suite` stanza.
-    #
-    # @api private
     class Suite < Moved
       sig { returns(String) }
       def self.english_name

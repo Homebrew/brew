@@ -7,8 +7,6 @@ require "erb"
 
 module Homebrew
   # Helper functions for generating shell completions.
-  #
-  # @api private
   module Completions
     Variables = Struct.new(
       :aliases,

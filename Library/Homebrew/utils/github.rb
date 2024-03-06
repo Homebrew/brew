@@ -7,9 +7,9 @@ require "utils/github/api"
 
 require "system_command"
 
-# Wrapper functions for the GitHub API.
+# A module that interfaces with GitHub, code like PAT scopes, credential handling and API errors.
 #
-# @api private
+# @api internal
 module GitHub
   extend SystemCommand::Mixin
 

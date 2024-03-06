@@ -10,8 +10,6 @@ require "build_environment"
 # A base class for non-formula requirements needed by formulae.
 # A fatal requirement is one that will fail the build if it is not present.
 # By default, requirements are non-fatal.
-#
-# @api private
 class Requirement
   include Dependable
   extend Cachable

@@ -7,8 +7,6 @@ Warnings.ignore(/warning: callcc is obsolete; use Fiber instead/) do
 end
 
 # Provides the ability to optionally ignore errors raised and continue execution.
-#
-# @api private
 module Ignorable
   # Marks exceptions which can be ignored and provides
   # the ability to jump back to where it was raised.

@@ -4,8 +4,6 @@
 require "utils/shell"
 
 # Checks to perform on a formula's cellar.
-#
-# @api private
 module FormulaCellarChecks
   extend T::Helpers
 

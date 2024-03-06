@@ -30,8 +30,6 @@ require "cask/artifact/zap"
 
 module Cask
   # Module containing all cask artifact classes.
-  #
-  # @api private
   module Artifact
   end
 end

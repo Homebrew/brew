@@ -6,8 +6,6 @@ require "commands"
 
 module Homebrew
   # Helper module for printing help output.
-  #
-  # @api private
   module Help
     # NOTE: Keep the length of vanilla `--help` less than 25 lines!
     #       This is because the default Terminal height is 25 lines. Scrolling sucks

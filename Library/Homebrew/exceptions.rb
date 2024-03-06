@@ -73,8 +73,6 @@ end
 class FormulaSpecificationError < StandardError; end
 
 # Raised when a deprecated method is used.
-#
-# @api private
 class MethodDeprecatedError < StandardError
   attr_accessor :issues_url
 end
@@ -148,8 +146,6 @@ class FormulaUnavailableError < FormulaOrCaskUnavailableError
 end
 
 # Shared methods for formula class errors.
-#
-# @api private
 module FormulaClassUnavailableErrorModule
   attr_reader :path, :class_name, :class_list
 
@@ -192,8 +188,6 @@ class FormulaClassUnavailableError < FormulaUnavailableError
 end
 
 # Shared methods for formula unreadable errors.
-#
-# @api private
 module FormulaUnreadableErrorModule
   attr_reader :formula_error
 

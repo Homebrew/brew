@@ -8,8 +8,6 @@ require "extend/ENV"
 require "system_command"
 
 # Helper module for querying information about the system configuration.
-#
-# @api private
 module SystemConfig
   class << self
     include SystemCommand::Mixin

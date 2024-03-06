@@ -4,8 +4,6 @@
 module Cask
   class DSL
     # Class corresponding to the `version` stanza.
-    #
-    # @api private
     class Version < ::String
       DIVIDERS = {
         "." => :dots,

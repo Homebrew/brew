@@ -7,8 +7,6 @@ require "etc"
 require "system_command"
 
 # A system user.
-#
-# @api private
 class User < SimpleDelegator
   include SystemCommand::Mixin
 

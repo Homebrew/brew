@@ -4,8 +4,6 @@
 require "utils/curl"
 
 # Repology API client.
-#
-# @api private
 module Repology
   HOMEBREW_CORE = "homebrew"
   HOMEBREW_CASK = "homebrew_casks"

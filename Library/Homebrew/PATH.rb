@@ -2,8 +2,6 @@
 # frozen_string_literal: true
 
 # Representation of a `*PATH` environment variable.
-#
-# @api private
 class PATH
   include Enumerable
   extend Forwardable

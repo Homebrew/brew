@@ -4,8 +4,6 @@
 module OS
   module Mac
     # Helper module for querying Xcode information.
-    #
-    # @api private
     module Xcode
       DEFAULT_BUNDLE_PATH = Pathname("/Applications/Xcode.app").freeze
       BUNDLE_ID = "com.apple.dt.Xcode"
@@ -264,8 +262,6 @@ module OS
     end
 
     # Helper module for querying macOS Command Line Tools information.
-    #
-    # @api private
     module CLT
       # The original Mavericks CLT package ID
       EXECUTABLE_PKG_ID = "com.apple.pkg.CLTools_Executables"

@@ -11,8 +11,6 @@ require "extend/api_hashable"
 
 module Cask
   # An instance of a cask.
-  #
-  # @api private
   class Cask
     extend Forwardable
     extend Attrable
@@ -24,7 +22,6 @@ module Cask
 
     attr_predicate :loaded_from_api?
 
-    # @api private
     def self.all(eval_all: false)
       if !eval_all && !Homebrew::EnvConfig.eval_all?
         raise ArgumentError, "Cask::Cask#all cannot be used without `--eval-all` or HOMEBREW_EVAL_ALL"

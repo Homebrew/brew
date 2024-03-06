@@ -193,8 +193,6 @@ module Language
       # "with-python", "without-python", "with-python@2", and "without-python@2"
       # formula options are handled correctly even if not associated with any
       # corresponding depends_on statement.
-      #
-      # @api private
       sig { params(python: String).returns(T::Boolean) }
       def needs_python?(python)
         return true if build.with?(python)

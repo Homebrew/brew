@@ -209,6 +209,8 @@ DEPENDENCIES
   stackprof
   tapioca
   warning
+  yard
+  yard-sorbet
 
 RUBY VERSION
    ruby 3.1.4p223

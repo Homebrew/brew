@@ -7,8 +7,6 @@ module RuboCop
   module Cop
     module FormulaAudit
       # This cop audits the `bottle` block in formulae.
-      #
-      # @api private
       class BottleFormat < FormulaCop
         extend AutoCorrector
 
@@ -54,8 +52,6 @@ module RuboCop
       end
 
       # This cop audits the indentation of the bottle tags in the `bottle` block in formulae.
-      #
-      # @api private
       class BottleTagIndentation < FormulaCop
         extend AutoCorrector
 
@@ -90,8 +86,6 @@ module RuboCop
       end
 
       # This cop audits the indentation of the sha256 digests in the`bottle` block in formulae.
-      #
-      # @api private
       class BottleDigestIndentation < FormulaCop
         extend AutoCorrector
 
@@ -126,8 +120,6 @@ module RuboCop
       end
 
       # This cop audits the order of the `bottle` block in formulae.
-      #
-      # @api private
       class BottleOrder < FormulaCop
         extend AutoCorrector
 

@@ -9,8 +9,6 @@ TARGET_MAN_PATH = (HOMEBREW_REPOSITORY/"manpages").freeze
 TARGET_DOC_PATH = (HOMEBREW_REPOSITORY/"docs").freeze
 module Homebrew
   # Helper functions for generating homebrew manual.
-  #
-  # @api private
   module Manpages
     Variables = Struct.new(
       :alumni,

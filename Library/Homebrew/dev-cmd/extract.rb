@@ -149,7 +149,6 @@ module Homebrew
     path.write result
   end
 
-  # @private
   sig { params(repo: Pathname, name: String, file: Pathname, rev: String).returns(T.nilable(Formula)) }
   def self.formula_at_revision(repo, name, file, rev)
     return if rev.empty?

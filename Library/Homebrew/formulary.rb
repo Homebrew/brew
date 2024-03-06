@@ -13,16 +13,16 @@ require "extend/hash/keys"
 
 # The {Formulary} is responsible for creating instances of {Formula}.
 # It is not meant to be used directly from formulae.
-#
-# @api private
 module Formulary
   extend Context
   extend Cachable
 
   URL_START_REGEX = %r{(https?|ftp|file)://}
+  private_constant :URL_START_REGEX
 
-  # :codesign and custom requirement classes are not supported
+  # `:codesign` and custom requirement classes are not supported.
   API_SUPPORTED_REQUIREMENTS = [:arch, :linux, :macos, :maximum_macos, :xcode].freeze
+  private_constant :API_SUPPORTED_REQUIREMENTS
 
   sig { void }
   def self.enable_factory_cache!
@@ -73,7 +73,6 @@ module Formulary
     super
   end
 
-  # @private
   module PathnameWriteMkpath
     refine Pathname do
       def write(content, offset = nil, **open_args)

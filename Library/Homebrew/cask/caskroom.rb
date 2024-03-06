@@ -5,8 +5,6 @@ require "utils/user"
 
 module Cask
   # Helper functions for interacting with the `Caskroom` directory.
-  #
-  # @api private
   module Caskroom
     sig { returns(Pathname) }
     def self.path

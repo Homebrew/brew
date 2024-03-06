@@ -3,7 +3,6 @@
 
 require "os/mac/xcode"
 
-# @private
 class DevelopmentTools
   class << self
     alias generic_locate locate

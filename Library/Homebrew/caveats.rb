@@ -5,8 +5,6 @@ require "language/python"
 require "utils/service"
 
 # A formula's caveats.
-#
-# @api private
 class Caveats
   extend Forwardable
 

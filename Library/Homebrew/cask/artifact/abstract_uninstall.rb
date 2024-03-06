@@ -12,8 +12,6 @@ require "system_command"
 module Cask
   module Artifact
     # Abstract superclass for uninstall artifacts.
-    #
-    # @api private
     class AbstractUninstall < AbstractArtifact
       include SystemCommand::Mixin
 

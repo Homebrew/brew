@@ -2,8 +2,6 @@
 # frozen_string_literal: true
 
 # A formula's checksum.
-#
-# @api private
 class Checksum
   extend Forwardable
 

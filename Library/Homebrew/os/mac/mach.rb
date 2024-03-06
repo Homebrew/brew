@@ -4,8 +4,6 @@
 require "macho"
 
 # {Pathname} extension for dealing with Mach-O files.
-#
-# @api private
 module MachOShim
   extend Forwardable
 

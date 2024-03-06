@@ -6,8 +6,6 @@ require "cask/cask_loader"
 require "system_command"
 
 # Helper module for validating syntax in taps.
-#
-# @api private
 module Readall
   extend Cachable
   extend SystemCommand::Mixin

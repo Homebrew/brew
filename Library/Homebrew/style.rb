@@ -7,8 +7,6 @@ require "system_command"
 
 module Homebrew
   # Helper module for running RuboCop.
-  #
-  # @api private
   module Style
     extend SystemCommand::Mixin
 

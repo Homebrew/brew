@@ -5,8 +5,6 @@ require "utils/user"
 
 module Cask
   # Helper functions for staged casks.
-  #
-  # @api private
   module Staged
     # FIXME: Enable cop again when https://github.com/sorbet/sorbet/issues/3532 is fixed.
     # rubocop:disable Style/MutableConstant

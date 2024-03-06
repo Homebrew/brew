@@ -4,8 +4,6 @@
 module Homebrew
   module Livecheck
     # Error during a livecheck run.
-    #
-    # @api private
     class Error < RuntimeError
     end
   end

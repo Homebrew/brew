@@ -4,8 +4,6 @@
 require "system_command"
 
 # Module containing all available strategies for unpacking archives.
-#
-# @api private
 module UnpackStrategy
   extend T::Helpers
 

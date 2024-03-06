@@ -6,8 +6,6 @@ require "cask/staged"
 module Cask
   class DSL
     # Class corresponding to the `postflight` stanza.
-    #
-    # @api private
     class Postflight < Base
       include Staged
 

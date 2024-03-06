@@ -45,8 +45,6 @@ module RuboCop
       SHELL_METACHARACTERS = %W[* ? { } [ ] < > ( ) ~ & | \\ $ ; ' ` " \n #].freeze
 
       # This cop makes sure that shell command arguments are separated.
-      #
-      # @api private
       class ShellCommands < Base
         include HelperFunctions
         extend AutoCorrector
@@ -109,8 +107,6 @@ module RuboCop
       end
 
       # This cop disallows shell metacharacters in `exec` calls.
-      #
-      # @api private
       class ExecShellMetacharacters < Base
         include HelperFunctions
 

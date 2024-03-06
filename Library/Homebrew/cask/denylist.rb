@@ -3,8 +3,6 @@
 
 module Cask
   # List of casks which are not allowed in official taps.
-  #
-  # @api private
   module Denylist
     sig { params(name: String).returns(T.nilable(String)) }
     def self.reason(name)

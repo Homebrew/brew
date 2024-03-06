@@ -3,8 +3,6 @@
 
 module Cask
   # Helper functions for the cask cache.
-  #
-  # @api private
   module Cache
     sig { returns(Pathname) }
     def self.path

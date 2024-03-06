@@ -7,8 +7,6 @@ require "pty"
 require "tempfile"
 
 # Helper class for running a sub-process inside of a sandboxed environment.
-#
-# @api private
 class Sandbox
   SANDBOX_EXEC = "/usr/bin/sandbox-exec"
   private_constant :SANDBOX_EXEC

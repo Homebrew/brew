@@ -6,8 +6,6 @@ require "rubocops/shared/helper_functions"
 module RuboCop
   module Cop
     # Abstract base class for all formula cops.
-    #
-    # @api private
     class FormulaCop < Base
       extend T::Helpers
       include RangeHelp

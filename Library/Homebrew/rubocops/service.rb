@@ -7,8 +7,6 @@ module RuboCop
   module Cop
     module FormulaAudit
       # This cop audits the service block.
-      #
-      # @api private
       class Service < FormulaCop
         extend AutoCorrector
 

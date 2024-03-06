@@ -9,8 +9,6 @@ module Homebrew
       #
       # This strategy is not applied automatically and it's necessary to use
       # `strategy :header_match` in a `livecheck` block to apply it.
-      #
-      # @api private
       class HeaderMatch
         NICE_NAME = "Header match"
 

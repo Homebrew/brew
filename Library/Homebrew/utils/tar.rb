@@ -5,8 +5,6 @@ require "system_command"
 
 module Utils
   # Helper functions for interacting with tar files.
-  #
-  # @api private
   module Tar
     class << self
       include SystemCommand::Mixin

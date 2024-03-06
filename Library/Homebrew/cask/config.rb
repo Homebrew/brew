@@ -9,8 +9,6 @@ require "extend/hash/keys"
 
 module Cask
   # Configuration for installing casks.
-  #
-  # @api private
   class Config
     DEFAULT_DIRS = {
       appdir:               "/Applications",

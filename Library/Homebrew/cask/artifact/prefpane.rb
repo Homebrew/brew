@@ -6,8 +6,6 @@ require "cask/artifact/moved"
 module Cask
   module Artifact
     # Artifact corresponding to the `prefpane` stanza.
-    #
-    # @api private
     class Prefpane < Moved
       sig { returns(String) }
       def self.english_name

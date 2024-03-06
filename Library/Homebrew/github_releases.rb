@@ -5,8 +5,6 @@ require "utils/github"
 require "json"
 
 # GitHub Releases client.
-#
-# @api private
 class GitHubReleases
   include Context
 

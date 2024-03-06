@@ -3,8 +3,6 @@
 
 module Homebrew
   # Class handling architecture-specific version information.
-  #
-  # @api private
   class BumpVersionParser
     sig { returns(T.nilable(T.any(Version, Cask::DSL::Version))) }
     attr_reader :arm, :general, :intel

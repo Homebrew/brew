@@ -2,8 +2,6 @@
 # frozen_string_literal: true
 
 # Settings for the build environment.
-#
-# @api private
 class BuildEnvironment
   sig { params(settings: Symbol).void }
   def initialize(*settings)

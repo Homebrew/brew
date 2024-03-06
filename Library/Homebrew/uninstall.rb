@@ -5,8 +5,6 @@ require "installed_dependents"
 
 module Homebrew
   # Helper module for uninstalling kegs.
-  #
-  # @api private
   module Uninstall
     def self.uninstall_kegs(kegs_by_rack, casks: [], force: false, ignore_dependencies: false, named_args: [])
       handle_unsatisfied_dependents(kegs_by_rack,
@@ -117,7 +115,6 @@ module Homebrew
       true
     end
 
-    # @api private
     class DependentsMessage
       attr_reader :reqs, :deps, :named_args
 
@@ -139,7 +136,6 @@ module Homebrew
       end
     end
 
-    # @api private
     class DeveloperDependentsMessage < DependentsMessage
       def output
         opoo <<~EOS
@@ -150,7 +146,6 @@ module Homebrew
       end
     end
 
-    # @api private
     class NondeveloperDependentsMessage < DependentsMessage
       def output
         ofail <<~EOS

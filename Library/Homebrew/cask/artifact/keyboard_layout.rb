@@ -6,8 +6,6 @@ require "cask/artifact/moved"
 module Cask
   module Artifact
     # Artifact corresponding to the `keyboard_layout` stanza.
-    #
-    # @api private
     class KeyboardLayout < Moved
       def install_phase(**options)
         super(**options)

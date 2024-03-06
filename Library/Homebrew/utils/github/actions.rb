@@ -7,7 +7,7 @@ require "utils/tty"
 module GitHub
   # Helper functions for interacting with GitHub Actions.
   #
-  # @api private
+  # @api internal
   module Actions
     sig { params(string: String).returns(String) }
     def self.escape(string)

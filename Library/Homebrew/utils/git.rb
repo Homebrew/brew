@@ -7,7 +7,6 @@ module Utils
   # Helper functions for querying Git information.
   #
   # @see GitRepository
-  # @api private
   module Git
     extend SystemCommand::Mixin
 

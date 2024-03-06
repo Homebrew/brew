@@ -2,10 +2,7 @@
 # frozen_string_literal: true
 
 # Options for a formula build.
-#
-# @api private
 class BuildOptions
-  # @private
   def initialize(args, options)
     @args = args
     @options = options
@@ -70,12 +67,10 @@ class BuildOptions
     !@args.empty? || !@options.empty?
   end
 
-  # @private
   def used_options
     @options & @args
   end
 
-  # @private
   def unused_options
     @options - @args
   end

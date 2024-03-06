@@ -5,8 +5,6 @@ require "system_command"
 
 module Utils
   # Helper functions for querying SVN information.
-  #
-  # @api private
   module Svn
     class << self
       include SystemCommand::Mixin

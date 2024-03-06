@@ -4,8 +4,6 @@
 require "completions"
 
 # Helper functions for commands.
-#
-# @api private
 module Commands
   HOMEBREW_CMD_PATH = (HOMEBREW_LIBRARY_PATH/"cmd").freeze
   HOMEBREW_DEV_CMD_PATH = (HOMEBREW_LIBRARY_PATH/"dev-cmd").freeze

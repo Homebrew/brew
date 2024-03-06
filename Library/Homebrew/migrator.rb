@@ -6,8 +6,6 @@ require "keg"
 require "tab"
 
 # Helper class for migrating a formula from an old to a new name.
-#
-# @api private
 class Migrator
   include Context
 

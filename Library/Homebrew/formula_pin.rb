@@ -4,8 +4,6 @@
 require "keg"
 
 # Helper functions for pinning a formula.
-#
-# @api private
 class FormulaPin
   def initialize(formula)
     @formula = formula

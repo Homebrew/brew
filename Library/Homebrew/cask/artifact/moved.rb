@@ -7,8 +7,6 @@ require "cask/quarantine"
 module Cask
   module Artifact
     # Superclass for all artifacts that are installed by moving them to the target location.
-    #
-    # @api private
     class Moved < Relocated
       sig { returns(String) }
       def self.english_description

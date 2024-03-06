@@ -4,8 +4,6 @@
 module Homebrew
   module API
     # Helper functions for using the analytics JSON API.
-    #
-    # @api private
     module Analytics
       class << self
         sig { returns(String) }

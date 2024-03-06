@@ -6,8 +6,6 @@ require "cask/artifact/moved"
 module Cask
   module Artifact
     # Artifact corresponding to the `colorpicker` stanza.
-    #
-    # @api private
     class Colorpicker < Moved
     end
   end

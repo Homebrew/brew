@@ -4,8 +4,6 @@
 require "requirement"
 
 # A requirement on a specific architecture.
-#
-# @api private
 class ArchRequirement < Requirement
   fatal true
 

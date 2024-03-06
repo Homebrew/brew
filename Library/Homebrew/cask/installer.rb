@@ -15,8 +15,6 @@ require "cgi"
 
 module Cask
   # Installer for a {Cask}.
-  #
-  # @api private
   class Installer
     extend Attrable
 

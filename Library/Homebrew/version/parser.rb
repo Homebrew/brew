@@ -2,7 +2,6 @@
 # frozen_string_literal: true
 
 class Version
-  # @api private
   class Parser
     extend T::Helpers
     abstract!
@@ -11,7 +10,6 @@ class Version
     def parse(spec); end
   end
 
-  # @api private
   class RegexParser < Parser
     extend T::Helpers
     abstract!
@@ -39,7 +37,6 @@ class Version
     def self.process_spec(spec); end
   end
 
-  # @api private
   class UrlParser < RegexParser
     sig { override.params(spec: Pathname).returns(String) }
     def self.process_spec(spec)
@@ -47,7 +44,6 @@ class Version
     end
   end
 
-  # @api private
   class StemParser < RegexParser
     SOURCEFORGE_DOWNLOAD_REGEX = %r{(?:sourceforge\.net|sf\.net)/.*/download$}
     NO_FILE_EXTENSION_REGEX = /\.[^a-zA-Z]+$/

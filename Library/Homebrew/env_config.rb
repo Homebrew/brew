@@ -5,8 +5,6 @@ require "set"
 
 module Homebrew
   # Helper module for querying Homebrew-specific environment variables.
-  #
-  # @api private
   module EnvConfig
     module_function
 

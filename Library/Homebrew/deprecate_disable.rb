@@ -2,8 +2,6 @@
 # frozen_string_literal: true
 
 # Helper module for handling `disable!` and `deprecate!`.
-#
-# @api private
 module DeprecateDisable
   module_function
 

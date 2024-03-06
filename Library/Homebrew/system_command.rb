@@ -11,8 +11,6 @@ require "extend/io"
 require "utils/timer"
 
 # Class for running sub-processes and capturing their output and exit status.
-#
-# @api private
 class SystemCommand
   # Helper functions for calling {SystemCommand.run}.
   module Mixin

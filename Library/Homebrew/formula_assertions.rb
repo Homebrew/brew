@@ -3,8 +3,6 @@
 
 module Homebrew
   # Helper functions available in formula `test` blocks.
-  #
-  # @api private
   module Assertions
     include Context
 

@@ -6,8 +6,6 @@ require "unpack_strategy"
 module Cask
   class DSL
     # Class corresponding to the `container` stanza.
-    #
-    # @api private
     class Container
       attr_accessor :nested, :type
 

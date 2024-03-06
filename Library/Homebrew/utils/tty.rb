@@ -4,8 +4,6 @@
 require "env_config"
 
 # Various helper functions for interacting with TTYs.
-#
-# @api private
 module Tty
   @stream = $stdout
 

@@ -9,7 +9,7 @@ require "extend/module"
 # if assured that there is no performance hit from removing this.
 # There are mechanisms to achieve a middle ground (`default_checked_level`).
 unless ENV["HOMEBREW_SORBET_RUNTIME"]
-  # Redefine T.let etc to make the `checked` parameter default to false rather than true.
+  # Redefine `T.let`, etc. to make the `checked` parameter default to `false` rather than `true`.
   # @private
   module TNoChecks
     def cast(value, type, checked: false)
@@ -35,8 +35,7 @@ unless ENV["HOMEBREW_SORBET_RUNTIME"]
       prepend TNoChecks
     end
 
-    # Redefine T.sig to be noop.
-    # @private
+    # Redefine `T.sig` to be a no-op.
     module Sig
       def sig(arg0 = nil, &blk); end
     end

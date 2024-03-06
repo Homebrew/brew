@@ -8,8 +8,6 @@ require "system_command"
 
 module Utils
   # Helper function for interacting with `curl`.
-  #
-  # @api private
   module Curl
     include SystemCommand::Mixin
     extend SystemCommand::Mixin

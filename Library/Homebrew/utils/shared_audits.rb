@@ -5,8 +5,6 @@ require "utils/curl"
 require "utils/github/api"
 
 # Auditing functions for rules common to both casks and formulae.
-#
-# @api private
 module SharedAudits
   URL_TYPE_HOMEPAGE = "homepage URL"
 

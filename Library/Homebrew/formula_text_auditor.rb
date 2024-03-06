@@ -3,8 +3,6 @@
 
 module Homebrew
   # Auditor for checking common violations in {Formula} text content.
-  #
-  # @api private
   class FormulaTextAuditor
     def initialize(path)
       @text = path.open("rb", &:read)

@@ -9,8 +9,6 @@ require "extend/on_system"
 # Resource is the fundamental representation of an external resource. The
 # primary formula download, along with other declared resources, are instances
 # of this class.
-#
-# @api private
 class Resource < Downloadable
   include FileUtils
   include OnSystem::MacOSAndLinux
@@ -287,8 +285,6 @@ end
 # The context in which a {Resource#stage} occurs. Supports access to both
 # the {Resource} and associated {Mktemp} in a single block argument. The interface
 # is back-compatible with {Resource} itself as used in that context.
-#
-# @api private
 class ResourceStageContext
   extend Forwardable
 
