@@ -10,8 +10,6 @@ require "set"
 
 module Homebrew
   # Helper class for cleaning up the Homebrew cache.
-  #
-  # @api private
   class Cleanup
     CLEANUP_DEFAULT_DAYS = Homebrew::EnvConfig.cleanup_periodic_full_days.to_i.freeze
     private_constant :CLEANUP_DEFAULT_DAYS

@@ -14,8 +14,6 @@ require "utils/shared_audits"
 
 module Cask
   # Audit a cask for various problems.
-  #
-  # @api private
   class Audit
     include SystemCommand::Mixin
     include ::Utils::Curl

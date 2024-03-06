@@ -3,8 +3,6 @@
 
 module Utils
   # Helper functions for creating symlinks.
-  #
-  # @api private
   module Link
     def self.link_src_dst_dirs(src_dir, dst_dir, command, link_dir: false)
       return unless src_dir.exist?

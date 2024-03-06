@@ -6,10 +6,7 @@ require "utils/curl"
 
 module Cask
   # Class corresponding to the `url` stanza.
-  #
-  # @api private
   class URL < Delegator
-    # @api private
     class DSL
       attr_reader :uri, :specs,
                   :verified, :using,
@@ -79,7 +76,6 @@ module Cask
       end
     end
 
-    # @api private
     class BlockDSL
       # To access URL associated with page contents.
       module PageWithURL

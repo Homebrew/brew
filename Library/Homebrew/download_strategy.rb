@@ -23,8 +23,6 @@ require "utils/timer"
 require "github_packages"
 
 # @abstract Abstract superclass for all download strategies.
-#
-# @api private
 class AbstractDownloadStrategy
   extend Forwardable
   include FileUtils
@@ -32,8 +30,6 @@ class AbstractDownloadStrategy
   include SystemCommand::Mixin
 
   # Extension for bottle downloads.
-  #
-  # @api private
   module Pourable
     def stage
       ohai "Pouring #{basename}"
@@ -83,7 +79,6 @@ class AbstractDownloadStrategy
   # Disable any output during downloading.
   #
   # @deprecated
-  # @api private
   sig { void }
   def shutup!
     odeprecated "AbstractDownloadStrategy#shutup!", "AbstractDownloadStrategy#quiet!"
@@ -188,8 +183,6 @@ class AbstractDownloadStrategy
 end
 
 # @abstract Abstract superclass for all download strategies downloading from a version control system.
-#
-# @api private
 class VCSDownloadStrategy < AbstractDownloadStrategy
   REF_TYPES = [:tag, :branch, :revisions, :revision].freeze
 
@@ -278,8 +271,6 @@ class VCSDownloadStrategy < AbstractDownloadStrategy
 end
 
 # @abstract Abstract superclass for all download strategies downloading a single file.
-#
-# @api private
 class AbstractFileDownloadStrategy < AbstractDownloadStrategy
   # Path for storing an incomplete download while the download is still in progress.
   #
@@ -716,8 +707,6 @@ class NoUnzipCurlDownloadStrategy < CurlDownloadStrategy
 end
 
 # Strategy for extracting local binary packages.
-#
-# @api private
 class LocalBottleDownloadStrategy < AbstractFileDownloadStrategy
   def initialize(path) # rubocop:disable Lint/MissingSuper
     @cached_location = path
@@ -1444,8 +1433,6 @@ class FossilDownloadStrategy < VCSDownloadStrategy
 end
 
 # Helper class for detecting a download strategy from a URL.
-#
-# @api private
 class DownloadStrategyDetector
   def self.detect(url, using = nil)
     if using.nil?

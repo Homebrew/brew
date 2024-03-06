@@ -3,8 +3,6 @@
 
 module Homebrew
   # Auditor for checking common violations in {Resource}s.
-  #
-  # @api private
   class ResourceAuditor
     include Utils::Curl
 

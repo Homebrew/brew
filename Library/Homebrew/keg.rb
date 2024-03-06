@@ -7,8 +7,6 @@ require "lock_file"
 require "extend/cachable"
 
 # Installation prefix of a formula.
-#
-# @api private
 class Keg
   extend Cachable
 

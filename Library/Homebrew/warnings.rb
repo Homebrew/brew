@@ -4,8 +4,6 @@
 require "warning"
 
 # Helper module for handling warnings.
-#
-# @api private
 module Warnings
   COMMON_WARNINGS = {
     parser_syntax: [

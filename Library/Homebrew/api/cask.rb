@@ -7,8 +7,6 @@ require "api/download"
 module Homebrew
   module API
     # Helper functions for using the cask JSON API.
-    #
-    # @api private
     module Cask
       extend Cachable
 

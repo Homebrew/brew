@@ -8,8 +8,6 @@ require "cli/args"
 module Homebrew
   module CLI
     # Helper class for loading formulae/casks from named arguments.
-    #
-    # @api private
     class NamedArgs < Array
       sig {
         params(

@@ -6,8 +6,6 @@ require "cask/artifact/abstract_artifact"
 module Cask
   module Artifact
     # Abstract superclass for block artifacts.
-    #
-    # @api private
     class AbstractFlightBlock < AbstractArtifact
       def self.dsl_key
         super.to_s.sub(/_block$/, "").to_sym

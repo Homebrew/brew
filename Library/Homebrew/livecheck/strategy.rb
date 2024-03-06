@@ -7,8 +7,6 @@ module Homebrew
     # as some general-purpose methods for working with them. Within the context
     # of the `brew livecheck` command, strategies are established procedures
     # for finding new software versions at a given source.
-    #
-    # @api private
     module Strategy
       extend Utils::Curl
 

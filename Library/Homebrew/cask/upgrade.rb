@@ -5,7 +5,6 @@ require "env_config"
 require "cask/config"
 
 module Cask
-  # @api private
   class Upgrade
     sig {
       params(

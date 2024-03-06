@@ -5,8 +5,6 @@ require "utils/string_inreplace_extension"
 
 module Utils
   # Helper functions for replacing text in files in-place.
-  #
-  # @api private
   module Inreplace
     # Error during text replacement.
     class Error < RuntimeError
@@ -73,7 +71,6 @@ module Utils
       raise Utils::Inreplace::Error, errors if errors.present?
     end
 
-    # @api private
     def self.inreplace_pairs(path, replacement_pairs, read_only_run: false, silent: false)
       str = File.binread(path)
       contents = StringInreplaceExtension.new(str)

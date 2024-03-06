@@ -4,8 +4,6 @@
 require "cask_dependent"
 
 # Helper functions for dependencies.
-#
-# @api private
 module DependenciesHelpers
   def args_includes_ignores(args)
     includes = [:required?, :recommended?] # included by default

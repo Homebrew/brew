@@ -4,8 +4,6 @@
 require "dependable"
 
 # A dependency on another Homebrew formula.
-#
-# @api private
 class Dependency
   extend Forwardable
   include Dependable

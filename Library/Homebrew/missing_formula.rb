@@ -5,8 +5,6 @@ require "formulary"
 
 module Homebrew
   # Helper module for checking if there is a reason a formula is missing.
-  #
-  # @api private
   module MissingFormula
     class << self
       def reason(name, silent: false, show_info: false)

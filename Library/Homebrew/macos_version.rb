@@ -4,8 +4,6 @@
 require "version"
 
 # A macOS version.
-#
-# @api private
 class MacOSVersion < Version
   # Raised when a macOS version is unsupported.
   class Error < RuntimeError

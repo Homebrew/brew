@@ -32,17 +32,16 @@ module Homebrew
 
   module_function
 
-  # @api private
   def gemfile
     File.join(ENV.fetch("HOMEBREW_LIBRARY"), "Homebrew", "Gemfile")
   end
+  private_class_method :gemfile
 
-  # @api private
   def bundler_definition
     @bundler_definition ||= Bundler::Definition.build(Bundler.default_gemfile, Bundler.default_lockfile, false)
   end
+  private_class_method :bundler_definition
 
-  # @api private
   def valid_gem_groups
     install_bundler!
     require "bundler"
@@ -54,6 +53,7 @@ module Homebrew
       groups.map(&:to_s)
     end
   end
+  private_class_method :valid_gem_groups
 
   def ruby_bindir
     "#{RbConfig::CONFIG["prefix"]}/bin"
@@ -157,6 +157,7 @@ module Homebrew
       File.executable?(File.join(path, executable))
     end
   end
+  private_class_method :find_in_path
 
   def install_bundler!
     old_bundler_version = ENV.fetch("BUNDLER_VERSION", nil)
@@ -181,6 +182,7 @@ module Homebrew
       []
     end
   end
+  private_class_method :user_gem_groups
 
   def write_user_gem_groups(groups)
     return if @user_gem_groups == groups && GEM_GROUPS_FILE.exist?
@@ -203,6 +205,7 @@ module Homebrew
 
     @user_gem_groups = groups
   end
+  private_class_method :write_user_gem_groups
 
   def forget_user_gem_groups!
     GEM_GROUPS_FILE.truncate(0) if GEM_GROUPS_FILE.exist?
@@ -216,6 +219,7 @@ module Homebrew
       0
     end
   end
+  private_class_method :user_vendor_version
 
   def install_bundler_gems!(only_warn_on_failure: false, setup_path: true, groups: [])
     old_path = ENV.fetch("PATH", nil)

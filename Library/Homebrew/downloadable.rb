@@ -4,7 +4,6 @@
 require "url"
 require "checksum"
 
-# @api private
 class Downloadable
   include Context
   extend T::Helpers

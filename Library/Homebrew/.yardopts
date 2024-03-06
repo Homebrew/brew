@@ -3,7 +3,7 @@
 --markup markdown
 --no-private
 --plugin sorbet
---load yard/ignore_directives.rb
+--load ./yard/docstring_parser.rb
 --template-path yard/templates
 --exclude test/
 --exclude vendor/

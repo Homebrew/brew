@@ -82,6 +82,8 @@ class Pathname
   include DiskUsageExtension
 
   # Moves a file from the original location to the {Pathname}'s.
+  #
+  # @api public
   sig {
     params(sources: T.any(
       Resource, Resource::Partial, String, Pathname,
@@ -137,6 +139,8 @@ class Pathname
   private :install_p
 
   # Creates symlinks to sources in this folder.
+  #
+  # @api public
   sig {
     params(
       sources: T.any(String, Pathname, T::Array[T.any(String, Pathname)], T::Hash[T.any(String, Pathname), String]),
@@ -165,6 +169,8 @@ class Pathname
   private :install_symlink_p
 
   # Only appends to a file that is already created.
+  #
+  # @api public
   sig { params(content: String, open_args: T.untyped).void }
   def append_lines(content, **open_args)
     raise "Cannot append file that doesn't exist: #{self}" unless exist?
@@ -173,6 +179,8 @@ class Pathname
   end
 
   # @note This always overwrites.
+  #
+  # @api public
   sig { params(content: String).void }
   def atomic_write(content)
     old_stat = stat if exist?
@@ -202,7 +210,6 @@ class Pathname
     end
   end
 
-  # @private
   def cp_path_sub(pattern, replacement)
     raise "#{self} does not exist" unless exist?
 
@@ -223,6 +230,8 @@ class Pathname
   alias extname_old extname
 
   # Extended to support common double extensions.
+  #
+  # @api public
   sig { returns(String) }
   def extname
     basename = File.basename(self)
@@ -240,6 +249,8 @@ class Pathname
   end
 
   # For filetypes we support, returns basename without extension.
+  #
+  # @api public
   sig { returns(String) }
   def stem
     File.basename(self, extname)
@@ -248,7 +259,6 @@ class Pathname
   # I don't trust the children.length == 0 check particularly, not to mention
   # it is slow to enumerate the whole directory just to see if it is empty,
   # instead rely on good ol' libc and the filesystem
-  # @private
   sig { returns(T::Boolean) }
   def rmdir_if_possible
     rmdir
@@ -264,14 +274,12 @@ class Pathname
     false
   end
 
-  # @private
   sig { returns(Version) }
   def version
     require "version"
     Version.parse(basename)
   end
 
-  # @private
   sig { returns(T::Boolean) }
   def text_executable?
     /\A#!\s*\S+/.match?(open("r") { |f| f.read(1024) })
@@ -293,6 +301,9 @@ class Pathname
 
   alias to_str to_s
 
+  # Change to this directory, optionally executing the given block.
+  #
+  # @api public
   sig {
     type_parameters(:U).params(
       _block: T.proc.params(path: Pathname).returns(T.type_parameter(:U)),
@@ -302,18 +313,19 @@ class Pathname
     Dir.chdir(self) { yield self }
   end
 
+  # Get all sub-directories of this directory.
+  #
+  # @api public
   sig { returns(T::Array[Pathname]) }
   def subdirs
     children.select(&:directory?)
   end
 
-  # @private
   sig { returns(Pathname) }
   def resolved_path
     symlink? ? dirname.join(readlink) : self
   end
 
-  # @private
   sig { returns(T::Boolean) }
   def resolved_path_exists?
     link = readlink
@@ -324,13 +336,11 @@ class Pathname
     dirname.join(link).exist?
   end
 
-  # @private
   def make_relative_symlink(src)
     dirname.mkpath
     File.symlink(src.relative_path_from(dirname), self)
   end
 
-  # @private
   def ensure_writable
     saved_perms = nil
     unless writable_real?
@@ -342,7 +352,6 @@ class Pathname
     chmod saved_perms if saved_perms
   end
 
-  # @private
   def which_install_info
     @which_install_info ||=
       if File.executable?("/usr/bin/install-info")
@@ -352,12 +361,10 @@ class Pathname
       end
   end
 
-  # @private
   def install_info
     quiet_system(which_install_info, "--quiet", to_s, "#{dirname}/dir")
   end
 
-  # @private
   def uninstall_info
     quiet_system(which_install_info, "--delete", "--quiet", to_s, "#{dirname}/dir")
   end
@@ -494,7 +501,6 @@ end
 
 require "extend/os/pathname"
 
-# @private
 module ObserverPathnameExtension
   class << self
     include Context

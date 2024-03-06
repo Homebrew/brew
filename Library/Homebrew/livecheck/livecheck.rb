@@ -13,8 +13,6 @@ module Homebrew
   # The {Livecheck} module consists of methods used by the `brew livecheck`
   # command. These methods print the requested livecheck information
   # for formulae.
-  #
-  # @api private
   module Livecheck
     module_function
 

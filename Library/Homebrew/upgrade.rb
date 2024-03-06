@@ -10,8 +10,6 @@ require "utils/topological_hash"
 
 module Homebrew
   # Helper functions for upgrading formulae.
-  #
-  # @api private
   module Upgrade
     module_function
 

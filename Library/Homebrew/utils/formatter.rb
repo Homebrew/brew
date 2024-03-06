@@ -4,8 +4,6 @@
 require "utils/tty"
 
 # Helper module for formatting output.
-#
-# @api private
 module Formatter
   def self.arrow(string, color: nil)
     prefix("==>", string, color)

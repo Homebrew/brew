@@ -8,8 +8,6 @@ require "extend/hash/keys"
 require "system_command"
 
 # GitHub Packages client.
-#
-# @api private
 class GitHubPackages
   include Context
   include SystemCommand::Mixin

@@ -4,8 +4,6 @@
 require "monitor"
 
 # Module for querying the current execution context.
-#
-# @api private
 module Context
   extend MonitorMixin
 

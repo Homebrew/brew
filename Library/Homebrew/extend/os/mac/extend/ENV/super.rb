@@ -10,7 +10,6 @@ module Superenv
 
     undef bin
 
-    # @private
     def bin
       return unless DevelopmentTools.installed?
 

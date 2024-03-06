@@ -5,8 +5,6 @@ require "resource"
 require "erb"
 
 # Helper module for creating patches.
-#
-# @api private
 module Patch
   def self.create(strip, src, &block)
     case strip
@@ -32,8 +30,6 @@ module Patch
 end
 
 # An abstract class representing a patch embedded into a formula.
-#
-# @api private
 class EmbeddedPatch
   attr_writer :owner
   attr_reader :strip
@@ -62,8 +58,6 @@ class EmbeddedPatch
 end
 
 # A patch at the `__END__` of a formula file.
-#
-# @api private
 class DATAPatch < EmbeddedPatch
   attr_accessor :path
 
@@ -89,8 +83,6 @@ class DATAPatch < EmbeddedPatch
 end
 
 # A string containing a patch.
-#
-# @api private
 class StringPatch < EmbeddedPatch
   def initialize(strip, str)
     super(strip)
@@ -103,8 +95,6 @@ class StringPatch < EmbeddedPatch
 end
 
 # A string containing a patch.
-#
-# @api private
 class ExternalPatch
   extend Forwardable
 

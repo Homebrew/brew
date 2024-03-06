@@ -4,8 +4,6 @@
 require "cask_dependent"
 
 # Helper functions for installed dependents.
-#
-# @api private
 module InstalledDependents
   module_function
 

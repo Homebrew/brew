@@ -5,8 +5,6 @@ require "pkg_version"
 require "version/parser"
 
 # A formula's version.
-#
-# @api private
 class Version
   include Comparable
 

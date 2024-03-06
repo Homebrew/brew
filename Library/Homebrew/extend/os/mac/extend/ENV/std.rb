@@ -2,10 +2,9 @@
 # frozen_string_literal: true
 
 module Stdenv
-  # @private
-
   undef homebrew_extra_pkg_config_paths
 
+  # @private
   def homebrew_extra_pkg_config_paths
     [Pathname("#{HOMEBREW_LIBRARY}/Homebrew/os/mac/pkgconfig/#{MacOS.version}")]
   end

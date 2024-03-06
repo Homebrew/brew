@@ -2,17 +2,17 @@
 # frozen_string_literal: true
 
 class Hash
-  # Validates all keys in a hash match <tt>*valid_keys</tt>, raising
-  # +ArgumentError+ on a mismatch.
+  # Validates all keys in a hash match `*valid_keys`, raising
+  # `ArgumentError` on a mismatch.
   #
   # Note that keys are treated differently than HashWithIndifferentAccess,
   # meaning that string and symbol keys will not match.
   #
-  #   { name: 'Rob', years: '28' }.assert_valid_keys(:name, :age)
-  #   # => raises "ArgumentError: Unknown key: :years. Valid keys are: :name, :age"
-  #   { name: 'Rob', age: '28' }.assert_valid_keys('name', 'age')
-  #   # => raises "ArgumentError: Unknown key: :name. Valid keys are: 'name', 'age'"
-  #   { name: 'Rob', age: '28' }.assert_valid_keys(:name, :age)   # => passes, raises nothing
+  #     { name: 'Rob', years: '28' }.assert_valid_keys(:name, :age)
+  #     # => raises "ArgumentError: Unknown key: :years. Valid keys are: :name, :age"
+  #     { name: 'Rob', age: '28' }.assert_valid_keys('name', 'age')
+  #     # => raises "ArgumentError: Unknown key: :name. Valid keys are: 'name', 'age'"
+  #     { name: 'Rob', age: '28' }.assert_valid_keys(:name, :age)   # => passes, raises nothing
   sig { params(valid_keys: T.untyped).void }
   def assert_valid_keys(*valid_keys)
     valid_keys.flatten!
@@ -28,10 +28,10 @@ class Hash
   # This includes the keys from the root hash and from all
   # nested hashes and arrays.
   #
-  #  hash = { person: { name: 'Rob', age: '28' } }
+  #     hash = { person: { name: 'Rob', age: '28' } }
   #
-  #  hash.deep_transform_keys{ |key| key.to_s.upcase }
-  #  # => {"PERSON"=>{"NAME"=>"Rob", "AGE"=>"28"}}
+  #     hash.deep_transform_keys{ |key| key.to_s.upcase }
+  #     # => {"PERSON"=>{"NAME"=>"Rob", "AGE"=>"28"}}
   def deep_transform_keys(&block) = _deep_transform_keys_in_object(self, &block)
 
   # Destructively converts all keys by using the block operation.
@@ -43,10 +43,10 @@ class Hash
   # This includes the keys from the root hash and from all
   # nested hashes and arrays.
   #
-  #   hash = { person: { name: 'Rob', age: '28' } }
+  #     hash = { person: { name: 'Rob', age: '28' } }
   #
-  #   hash.deep_stringify_keys
-  #   # => {"person"=>{"name"=>"Rob", "age"=>"28"}}
+  #     hash.deep_stringify_keys
+  #     # => {"person"=>{"name"=>"Rob", "age"=>"28"}}
   def deep_stringify_keys = T.unsafe(self).deep_transform_keys(&:to_s)
 
   # Destructively converts all keys to strings.
@@ -58,10 +58,10 @@ class Hash
   # they respond to +to_sym+. This includes the keys from the root hash
   # and from all nested hashes and arrays.
   #
-  #   hash = { 'person' => { 'name' => 'Rob', 'age' => '28' } }
+  #     hash = { 'person' => { 'name' => 'Rob', 'age' => '28' } }
   #
-  #   hash.deep_symbolize_keys
-  #   # => {:person=>{:name=>"Rob", :age=>"28"}}
+  #     hash.deep_symbolize_keys
+  #     # => {:person=>{:name=>"Rob", :age=>"28"}}
   def deep_symbolize_keys
     deep_transform_keys do |key|
       T.unsafe(key).to_sym

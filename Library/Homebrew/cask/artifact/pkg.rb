@@ -10,8 +10,6 @@ require "extend/hash/keys"
 module Cask
   module Artifact
     # Artifact corresponding to the `pkg` stanza.
-    #
-    # @api private
     class Pkg < AbstractArtifact
       attr_reader :path, :stanza_options
 

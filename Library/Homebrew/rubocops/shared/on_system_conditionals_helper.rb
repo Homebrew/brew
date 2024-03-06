@@ -7,8 +7,6 @@ require "rubocops/shared/helper_functions"
 module RuboCop
   module Cop
     # This module performs common checks on `on_{system}` blocks in both formulae and casks.
-    #
-    # @api private
     module OnSystemConditionalsHelper
       extend NodePattern::Macros
       include HelperFunctions

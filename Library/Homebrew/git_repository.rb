@@ -6,7 +6,6 @@ require "utils/popen"
 
 # Given a {Pathname}, provides methods for querying Git repository information.
 # @see Utils::Git
-# @api private
 class GitRepository
   sig { returns(Pathname) }
   attr_reader :pathname

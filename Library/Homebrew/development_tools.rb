@@ -3,7 +3,6 @@
 
 require "version"
 
-# @private
 class DevelopmentTools
   class << self
     sig { params(tool: T.any(String, Symbol)).returns(T.nilable(Pathname)) }

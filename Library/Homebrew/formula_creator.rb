@@ -6,8 +6,6 @@ require "erb"
 
 module Homebrew
   # Class for generating a formula from a template.
-  #
-  # @api private
   class FormulaCreator
     attr_accessor :name
 

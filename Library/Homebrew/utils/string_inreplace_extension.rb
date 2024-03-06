@@ -2,8 +2,6 @@
 # frozen_string_literal: true
 
 # Used by the `inreplace` function (in `utils.rb`).
-#
-# @api private
 class StringInreplaceExtension
   sig { returns(T::Array[String]) }
   attr_accessor :errors

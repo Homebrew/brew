@@ -9,8 +9,6 @@ module RuboCop
   module Cop
     module FormulaAudit
       # This cop checks for various miscellaneous Homebrew coding styles.
-      #
-      # @api private
       class Lines < FormulaCop
         def audit_formula(_node, _class_node, _parent_class_node, _body_node)
           [:automake, :ant, :autoconf, :emacs, :expat, :libtool, :mysql, :perl,
@@ -32,8 +30,6 @@ module RuboCop
       end
 
       # This cop makes sure that a space is used for class inheritance.
-      #
-      # @api private
       class ClassInheritance < FormulaCop
         def audit_formula(_node, class_node, parent_class_node, _body_node)
           begin_pos = start_column(parent_class_node)
@@ -46,8 +42,6 @@ module RuboCop
       end
 
       # This cop makes sure that template comments are removed.
-      #
-      # @api private
       class Comments < FormulaCop
         def audit_formula(_node, _class_node, _parent_class_node, _body_node)
           audit_comments do |comment|
@@ -87,8 +81,6 @@ module RuboCop
       end
 
       # This cop makes sure that idiomatic `assert_*` statements are used.
-      #
-      # @api private
       class AssertStatements < FormulaCop
         def audit_formula(_node, _class_node, _parent_class_node, body_node)
           return if body_node.nil?
@@ -114,8 +106,6 @@ module RuboCop
       end
 
       # This cop makes sure that `option`s are used idiomatically.
-      #
-      # @api private
       class OptionDeclarations < FormulaCop
         def audit_formula(_node, _class_node, _parent_class_node, body_node)
           return if body_node.nil?
@@ -199,8 +189,6 @@ module RuboCop
       end
 
       # This cop makes sure that formulae depend on `open-mpi` instead of `mpich`.
-      #
-      # @api private
       class MpiCheck < FormulaCop
         extend AutoCorrector
 
@@ -220,8 +208,6 @@ module RuboCop
       end
 
       # This cop makes sure that formulae depend on `openssl` instead of `quictls`.
-      #
-      # @api private
       class QuicTLSCheck < FormulaCop
         extend AutoCorrector
 
@@ -242,8 +228,6 @@ module RuboCop
 
       # This cop makes sure that formulae do not depend on `pyoxidizer` at build-time
       # or run-time.
-      #
-      # @api private
       class PyoxidizerCheck < FormulaCop
         def audit_formula(_node, _class_node, _parent_class_node, body_node)
           return if body_node.nil?
@@ -256,8 +240,6 @@ module RuboCop
       end
 
       # This cop makes sure that the safe versions of `popen_*` calls are used.
-      #
-      # @api private
       class SafePopenCommands < FormulaCop
         extend AutoCorrector
 
@@ -287,8 +269,6 @@ module RuboCop
       end
 
       # This cop makes sure that environment variables are passed correctly to `popen_*` calls.
-      #
-      # @api private
       class ShellVariables < FormulaCop
         extend AutoCorrector
 
@@ -319,8 +299,6 @@ module RuboCop
       end
 
       # This cop makes sure that `license` has the correct format.
-      #
-      # @api private
       class LicenseArrays < FormulaCop
         extend AutoCorrector
 
@@ -340,8 +318,6 @@ module RuboCop
       end
 
       # This cop makes sure that nested `license` declarations are split onto multiple lines.
-      #
-      # @api private
       class Licenses < FormulaCop
         def audit_formula(_node, _class_node, _parent_class_node, body_node)
           return if body_node.nil?
@@ -363,8 +339,6 @@ module RuboCop
       end
 
       # This cop makes sure that Python versions are consistent.
-      #
-      # @api private
       class PythonVersions < FormulaCop
         extend AutoCorrector
 
@@ -409,8 +383,6 @@ module RuboCop
       end
 
       # This cop makes sure that OS conditionals are consistent.
-      #
-      # @api private
       class OnSystemConditionals < FormulaCop
         include OnSystemConditionalsHelper
         extend AutoCorrector
@@ -450,8 +422,6 @@ module RuboCop
       end
 
       # This cop makes sure the `MacOS` module is not used in Linux-facing formula code
-      #
-      # @api private
       class MacOSOnLinux < FormulaCop
         include OnSystemConditionalsHelper
 
@@ -465,8 +435,6 @@ module RuboCop
       end
 
       # This cop makes sure that the `generate_completions_from_executable` DSL is used.
-      #
-      # @api private
       class GenerateCompletionsDSL < FormulaCop
         extend AutoCorrector
 
@@ -548,8 +516,6 @@ module RuboCop
 
       # This cop makes sure that the `generate_completions_from_executable` DSL is used with only
       # a single, combined call for all shells.
-      #
-      # @api private
       class SingleGenerateCompletionsDSLCall < FormulaCop
         extend AutoCorrector
 
@@ -610,8 +576,6 @@ module RuboCop
       end
 
       # This cop checks for other miscellaneous style violations.
-      #
-      # @api private
       class Miscellaneous < FormulaCop
         def audit_formula(_node, _class_node, _parent_class_node, body_node)
           return if body_node.nil?
@@ -881,8 +845,6 @@ module RuboCop
 
     module FormulaAuditStrict
       # This cop makes sure that no build-time checks are performed.
-      #
-      # @api private
       class MakeCheck < FormulaCop
         def audit_formula(_node, _class_node, _parent_class_node, body_node)
           return if formula_tap != "homebrew-core"
@@ -917,8 +879,6 @@ module RuboCop
       end
 
       # This cop makes sure that formulae build with `rust` instead of `rustup-init`.
-      #
-      # @api private
       class RustCheck < FormulaCop
         extend AutoCorrector
 

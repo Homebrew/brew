@@ -4,8 +4,6 @@
 require "json"
 
 module Cask
-  #
-  # @api private
   class Info
     def self.get_info(cask)
       require "cask/installer"

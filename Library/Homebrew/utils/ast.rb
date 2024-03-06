@@ -6,8 +6,6 @@ require "rubocop-ast"
 
 module Utils
   # Helper functions for editing Ruby files.
-  #
-  # @api private
   module AST
     Node = RuboCop::AST::Node
     SendNode = RuboCop::AST::SendNode
@@ -74,8 +72,6 @@ module Utils
     end
 
     # Helper class for editing formulae.
-    #
-    # @api private
     class FormulaAST
       extend Forwardable
       include AST

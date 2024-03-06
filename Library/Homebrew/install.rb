@@ -9,8 +9,6 @@ require "upgrade"
 
 module Homebrew
   # Helper module for performing (pre-)install checks.
-  #
-  # @api private
   module Install
     class << self
       def perform_preinstall_checks(all_fatal: false, cc: nil)

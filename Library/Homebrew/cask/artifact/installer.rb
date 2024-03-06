@@ -7,8 +7,6 @@ require "extend/hash/keys"
 module Cask
   module Artifact
     # Artifact corresponding to the `installer` stanza.
-    #
-    # @api private
     class Installer < AbstractArtifact
       VALID_KEYS = Set.new([
         :manual,

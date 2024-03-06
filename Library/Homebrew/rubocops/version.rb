@@ -7,8 +7,6 @@ module RuboCop
   module Cop
     module FormulaAudit
       # This cop makes sure that a `version` is in the correct format.
-      #
-      # @api private
       class Version < FormulaCop
         def audit_formula(_node, _class_node, _parent_class_node, body_node)
           version_node = find_node_method_by_name(body_node, :version)

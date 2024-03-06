@@ -2,8 +2,6 @@
 # frozen_string_literal: true
 
 # Helper module for installing default files.
-#
-# @api private
 module InstallRenamed
   def install_p(_, new_basename)
     super do |src, dst|

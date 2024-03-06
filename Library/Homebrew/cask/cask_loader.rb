@@ -9,8 +9,6 @@ require "extend/hash/keys"
 
 module Cask
   # Loads a cask from various sources.
-  #
-  # @api private
   module CaskLoader
     extend Context
 

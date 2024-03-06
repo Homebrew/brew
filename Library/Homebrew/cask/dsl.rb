@@ -30,8 +30,6 @@ require "extend/on_system"
 
 module Cask
   # Class representing the domain-specific language used for casks.
-  #
-  # @api private
   class DSL
     ORDINARY_ARTIFACT_CLASSES = [
       Artifact::Installer,

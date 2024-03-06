@@ -8,8 +8,6 @@ require "cask/quarantine"
 
 module Cask
   # A download corresponding to a {Cask}.
-  #
-  # @api private
   class Download < ::Downloadable
     include Context
 

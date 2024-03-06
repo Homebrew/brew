@@ -4,8 +4,6 @@
 require "options"
 
 # Shared functions for classes which can be depended upon.
-#
-# @api private
 module Dependable
   # `:run` and `:linked` are no longer used but keep them here to avoid their
   # misuse in future.

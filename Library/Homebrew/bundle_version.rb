@@ -5,8 +5,6 @@ require "system_command"
 
 module Homebrew
   # Representation of a macOS bundle version, commonly found in `Info.plist` files.
-  #
-  # @api private
   class BundleVersion
     include Comparable
 

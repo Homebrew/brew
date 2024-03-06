@@ -22,8 +22,6 @@ module RuboCop
       #       Use `sudo` to run the executable.
       #     EOS
       #   end
-      #
-      # @api private
       class Caveats < FormulaCop
         def audit_formula(_node, _class_node, _parent_class_node, _body_node)
           caveats_strings.each do |n|

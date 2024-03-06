@@ -24,8 +24,6 @@ require "unlink"
 require "service"
 
 # Installer for a formula.
-#
-# @api private
 class FormulaInstaller
   include FormulaCellarChecks
   extend Attrable

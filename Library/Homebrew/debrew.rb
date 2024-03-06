@@ -6,8 +6,6 @@ require "mutex_m"
 require "ignorable"
 
 # Helper module for debugging formulae.
-#
-# @api private
 module Debrew
   extend Mutex_m
 

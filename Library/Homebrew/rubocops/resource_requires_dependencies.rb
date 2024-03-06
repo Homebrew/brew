@@ -9,8 +9,6 @@ module RuboCop
       # This cop audits Python formulae that include certain resources
       # to ensure that they also have the correct `uses_from_macos`
       # dependencies.
-      #
-      # @api private
       class ResourceRequiresDependencies < FormulaCop
         def audit_formula(_node, _class_node, _parent_class_node, body_node)
           return if body_node.nil?

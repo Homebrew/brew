@@ -4,8 +4,6 @@
 require "version"
 
 # Combination of a version and a revision.
-#
-# @api private
 class PkgVersion
   include Comparable
   extend Forwardable

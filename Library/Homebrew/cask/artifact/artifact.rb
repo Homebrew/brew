@@ -6,8 +6,6 @@ require "cask/artifact/moved"
 module Cask
   module Artifact
     # Generic artifact corresponding to the `artifact` stanza.
-    #
-    # @api private
     class Artifact < Moved
       sig { returns(String) }
       def self.english_name

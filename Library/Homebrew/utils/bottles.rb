@@ -5,8 +5,6 @@ require "tab"
 
 module Utils
   # Helper functions for bottles.
-  #
-  # @api private
   module Bottles
     class << self
       # Gets the tag for the running OS.

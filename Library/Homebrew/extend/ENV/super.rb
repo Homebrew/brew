@@ -33,7 +33,6 @@ module Superenv
     HOMEBREW_SHIMS_PATH/"super"
   end
 
-  # @private
   sig { returns(T.nilable(Pathname)) }
   def self.bin; end
 
@@ -161,6 +160,7 @@ module Superenv
     path.existing
   end
 
+  # @private
   sig { returns(T::Array[Pathname]) }
   def homebrew_extra_pkg_config_paths
     []

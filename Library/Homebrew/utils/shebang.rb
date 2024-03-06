@@ -3,14 +3,10 @@
 
 module Utils
   # Helper functions for manipulating shebang lines.
-  #
-  # @api private
   module Shebang
     module_function
 
     # Specification on how to rewrite a given shebang.
-    #
-    # @api private
     class RewriteInfo
       attr_reader :regex, :max_length, :replacement
 

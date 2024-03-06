@@ -3,8 +3,6 @@
 
 module Homebrew
   # Auditor for checking common violations in {Tap}s.
-  #
-  # @api private
   class TapAuditor
     attr_reader :name, :path, :formula_names, :formula_aliases, :formula_renames, :cask_tokens,
                 :tap_audit_exceptions, :tap_style_exceptions, :tap_pypi_formula_mappings, :problems

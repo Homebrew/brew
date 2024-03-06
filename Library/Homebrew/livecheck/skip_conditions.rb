@@ -5,8 +5,6 @@ module Homebrew
   module Livecheck
     # The `Livecheck::SkipConditions` module primarily contains methods that
     # check for various formula/cask/resource conditions where a check should be skipped.
-    #
-    # @api private
     module SkipConditions
       module_function
 

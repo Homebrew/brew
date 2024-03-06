@@ -3,8 +3,6 @@
 
 module Cask
   # Helper module for reading and writing cask metadata.
-  #
-  # @api private
   module Metadata
     METADATA_SUBDIR = ".metadata"
     TIMESTAMP_FORMAT = "%Y%m%d%H%M%S.%L"

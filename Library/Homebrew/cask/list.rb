@@ -4,7 +4,6 @@
 require "cask/artifact/relocated"
 
 module Cask
-  # @api private
   class List
     def self.list_casks(*casks, one: false, full_name: false, versions: false)
       output = if casks.any?

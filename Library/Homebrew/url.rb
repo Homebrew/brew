@@ -4,7 +4,6 @@
 require "download_strategy"
 require "version"
 
-# @api private
 class URL
   attr_reader :specs, :using
 

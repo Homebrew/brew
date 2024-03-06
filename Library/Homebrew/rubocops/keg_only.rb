@@ -7,8 +7,6 @@ module RuboCop
   module Cop
     module FormulaAudit
       # This cop makes sure that a `keg_only` reason has the correct format.
-      #
-      # @api private
       class KegOnly < FormulaCop
         extend AutoCorrector
 

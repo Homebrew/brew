@@ -2,8 +2,6 @@
 # frozen_string_literal: true
 
 # Helper functions for updating PyPI resources.
-#
-# @api private
 module PyPI
   PYTHONHOSTED_URL_PREFIX = "https://files.pythonhosted.org/packages/"
   private_constant :PYTHONHOSTED_URL_PREFIX
@@ -11,7 +9,6 @@ module PyPI
   # Represents a Python package.
   # This package can be a PyPI package (either by name/version or PyPI distribution URL),
   # or it can be a non-PyPI URL.
-  # @api private
   class Package
     sig { params(package_string: String, is_url: T::Boolean, python_name: String).void }
     def initialize(package_string, is_url: false, python_name: "python")

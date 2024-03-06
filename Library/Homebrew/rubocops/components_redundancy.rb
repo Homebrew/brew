@@ -14,8 +14,6 @@ module RuboCop
       # - `stable do` should not be present without a `head` spec
       # - `stable do` should not be present with only `url|checksum|mirror|version`
       # - `head do` should not be present with only `url`
-      #
-      # @api private
       class ComponentsRedundancy < FormulaCop
         HEAD_MSG = "`head` and `head do` should not be simultaneously present"
         BOTTLE_MSG = "`bottle :modifier` and `bottle do` should not be simultaneously present"

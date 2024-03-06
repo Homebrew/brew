@@ -2,7 +2,6 @@
 # frozen_string_literal: true
 
 module Homebrew
-  # @api private
   module Fetch
     sig {
       params(

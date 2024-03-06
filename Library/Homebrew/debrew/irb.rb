@@ -3,7 +3,6 @@
 
 require "irb"
 
-# @private
 module IRB
   def self.start_within(binding)
     unless @setup_done

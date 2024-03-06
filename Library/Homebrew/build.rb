@@ -17,8 +17,6 @@ require "socket"
 require "cmd/install"
 
 # A formula build.
-#
-# @api private
 class Build
   attr_reader :formula, :deps, :reqs, :args
 

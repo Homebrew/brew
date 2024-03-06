@@ -2,8 +2,6 @@
 # frozen_string_literal: true
 
 module Cask
-  #
-  # @api private
   class Reinstall
     def self.reinstall_casks(
       *casks,

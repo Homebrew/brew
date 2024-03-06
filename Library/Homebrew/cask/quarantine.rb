@@ -7,8 +7,6 @@ require "system_command"
 
 module Cask
   # Helper module for quarantining files.
-  #
-  # @api private
   module Quarantine
     extend SystemCommand::Mixin
 

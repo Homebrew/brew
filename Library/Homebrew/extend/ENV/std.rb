@@ -4,14 +4,12 @@
 require "hardware"
 require "extend/ENV/shared"
 
-# @api private
 module Stdenv
   include SharedEnvExtension
 
   # @private
   SAFE_CFLAGS_FLAGS = "-w -pipe"
 
-  # @private
   sig {
     params(
       formula:         T.nilable(Formula),
@@ -72,6 +70,7 @@ module Stdenv
   end
   alias generic_setup_build_environment setup_build_environment
 
+  # @private
   sig { returns(T::Array[Pathname]) }
   def homebrew_extra_pkg_config_paths
     []
@@ -165,6 +164,8 @@ module Stdenv
   end
 
   # Convenience method to set all C compiler flags in one shot.
+  #
+  # @private
   sig { params(val: String).void }
   def define_cflags(val)
     CC_FLAG_VARS.each { |key| self[key] = val }

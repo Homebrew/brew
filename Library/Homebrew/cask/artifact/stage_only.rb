@@ -6,8 +6,6 @@ require "cask/artifact/abstract_artifact"
 module Cask
   module Artifact
     # Artifact corresponding to the `stage_only` stanza.
-    #
-    # @api private
     class StageOnly < AbstractArtifact
       def self.from_args(cask, *args, **kwargs)
         if (args != [true] && args != ["true"]) || kwargs.present?

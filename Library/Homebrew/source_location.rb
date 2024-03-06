@@ -3,8 +3,6 @@
 
 module Homebrew
   # A location in source code.
-  #
-  # @api private
   class SourceLocation
     sig { returns(Integer) }
     attr_reader :line

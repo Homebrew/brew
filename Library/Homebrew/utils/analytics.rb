@@ -8,8 +8,6 @@ require "api"
 
 module Utils
   # Helper module for fetching and reporting analytics data.
-  #
-  # @api private
   module Analytics
     INFLUX_BUCKET = "analytics"
     INFLUX_TOKEN = "iVdsgJ_OjvTYGAA79gOfWlA_fX0QCuj4eYUNdb-qVUTrC3tp3JTWCADVNE9HxV0kp2ZjIK9tuthy_teX4szr9A=="

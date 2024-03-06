@@ -15,8 +15,6 @@ require "system_command"
 
 module Homebrew
   # Module containing diagnostic checks.
-  #
-  # @api private
   module Diagnostic
     def self.missing_deps(formulae, hide = nil)
       missing = {}
