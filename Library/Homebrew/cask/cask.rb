@@ -318,11 +318,15 @@ module Cask
 
     def to_h
       url_specs = url&.specs.dup
-      case url_specs&.dig(:user_agent)
-      when :default
-        url_specs.delete(:user_agent)
-      when Symbol
-        url_specs[:user_agent] = ":#{url_specs[:user_agent]}"
+      mirror_specs = Array(mirror).map { |m| m&.specs.dup }
+
+      [url_specs, *mirror_specs].each do |specs|
+        case specs&.dig(:user_agent)
+        when :default
+          specs.delete(:user_agent)
+        when Symbol
+          specs[:user_agent] = ":#{specs[:user_agent]}"
+        end
       end
 
       {
@@ -335,6 +339,8 @@ module Cask
         "homepage"             => homepage,
         "url"                  => url,
         "url_specs"            => url_specs,
+        "mirror"               => mirror,
+        "mirror_specs"         => mirror_specs,
         "appcast"              => appcast,
         "version"              => version,
         "installed"            => installed_version,

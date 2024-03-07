@@ -83,6 +83,7 @@ module Cask
       :sha256,
       :staged_path,
       :url,
+      :mirror,
       :version,
       :appdir,
       :deprecate!,
@@ -213,6 +214,19 @@ module Cask
         else
           URL.new(*args, **options, caller_location: caller_location)
         end
+      end
+    end
+
+    # @api public
+    def mirror(*args, **options, &block)
+      @mirror ||= []
+      return @mirror if args.empty? && options.empty? && !block
+
+      caller_location = T.must(caller_locations).fetch(0)
+      @mirror << if block
+        URL.new(*args, **options, caller_location: caller_location, dsl: self, &block)
+      else
+        URL.new(*args, **options, caller_location: caller_location)
       end
     end
 

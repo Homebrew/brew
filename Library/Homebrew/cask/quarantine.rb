@@ -122,7 +122,7 @@ module Cask
       raise CaskQuarantineReleaseError.new(download_path, quarantiner.stderr)
     end
 
-    def self.cask!(cask: nil, download_path: nil, action: true)
+    def self.cask!(cask: nil, download_path: nil, action: true, download_url: nil)
       return if cask.nil? || download_path.nil?
 
       return if detect(download_path)
@@ -134,7 +134,7 @@ module Cask
                                      *swift_target_args,
                                      QUARANTINE_SCRIPT,
                                      download_path,
-                                     cask.url.to_s,
+                                     download_url || cask.url.to_s,
                                      cask.homepage.to_s,
                                    ],
                                    print_stderr: false)

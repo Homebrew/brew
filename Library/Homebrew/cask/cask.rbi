@@ -54,6 +54,8 @@ module Cask
 
     def url; end
 
+    def mirror; end
+
     def version; end
   end
 end

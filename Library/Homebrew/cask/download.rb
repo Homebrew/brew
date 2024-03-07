@@ -19,14 +19,16 @@ module Cask
       super()
 
       @cask = cask
+      @urls = [cask.url, *cask.mirror].compact
+      @urls_index = 0
       @quarantine = quarantine
     end
 
     sig { override.returns(T.nilable(::URL)) }
     def url
-      return if cask.url.nil?
+      return if @urls.blank?
 
-      @url ||= ::URL.new(cask.url.to_s, cask.url.specs)
+      @url = ::URL.new(@urls[@urls_index].to_s, @urls[@urls_index].specs)
     end
 
     sig { override.returns(T.nilable(::Checksum)) }
@@ -51,9 +53,17 @@ module Cask
     def fetch(quiet: nil, verify_download_integrity: true, timeout: nil)
       downloader.quiet! if quiet
 
+      @urls_index = 0
       begin
         super(verify_download_integrity: false, timeout: timeout)
       rescue DownloadError => e
+        @urls_index += 1
+        if @urls_index < @urls.length
+          @downloader = nil
+          puts "Trying a mirror..."
+          retry
+        end
+        @urls_index = 0
         error = CaskError.new("Download failed on Cask '#{cask}' with message: #{e.cause}")
         error.set_backtrace e.backtrace
         raise error
@@ -97,7 +107,7 @@ module Cask
       return unless Quarantine.available?
 
       if @quarantine
-        Quarantine.cask!(cask: @cask, download_path: path)
+        Quarantine.cask!(cask: @cask, download_path: path, download_url: @url.to_s)
       else
         Quarantine.release!(download_path: path)
       end

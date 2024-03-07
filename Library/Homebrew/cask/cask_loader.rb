@@ -319,6 +319,15 @@ module Cask
           end
 
           url json_cask[:url], **json_cask.fetch(:url_specs, {}) if json_cask[:url].present?
+          json_cask[:mirror]&.each_with_index do |cask_mirror, cask_mirror_index|
+            cask_mirror_specs = json_cask[:mirror_specs]&.fetch(cask_mirror_index, nil).to_h
+            user_agent = cask_mirror_specs[:user_agent]
+            cask_mirror_specs[:user_agent] = user_agent[1..].to_sym if user_agent && user_agent[0] == ":"
+            if (using = cask_mirror_specs[:using])
+              cask_mirror_specs[:using] = using.to_sym
+            end
+            mirror cask_mirror, **cask_mirror_specs
+          end
           appcast json_cask[:appcast] if json_cask[:appcast].present?
           json_cask[:name]&.each do |cask_name|
             name cask_name
