@@ -170,14 +170,12 @@ module Homebrew
     run_cask_style(cask, old_contents, args: args)
 
     pr_info = {
-      branch_name:     branch_name,
-      commit_message:  commit_message,
-      old_contents:    old_contents,
-      pr_message:      "Created with `brew bump-cask-pr`.",
-      sourcefile_path: cask.sourcefile_path,
-      tap:             cask.tap,
+      branch:     branch_name,
+      commits:    [[commit_message.to_s, cask.sourcefile_path, nil, old_contents]],
+      pr_message: "Created with `brew bump-cask-pr`.",
+      tap:        cask.tap,
     }
-    GitHub.create_bump_pr(pr_info, args: args)
+    GitHub.create_bump_pr(**pr_info, args: args)
   end
 
   sig { params(version: Cask::DSL::Version, cask: Cask::Cask).returns(Cask::DSL::Version) }

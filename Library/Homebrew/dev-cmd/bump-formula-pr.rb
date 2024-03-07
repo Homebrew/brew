@@ -378,19 +378,16 @@ module Homebrew
     end
 
     pr_info = {
-      sourcefile_path:  formula.path,
-      old_contents:     old_contents,
-      additional_files: alias_rename,
-      remote:           remote,
-      remote_branch:    remote_branch,
-      branch_name:      "bump-#{formula.name}-#{new_formula_version}",
-      commit_message:   "#{formula.name} #{new_formula_version}",
-      previous_branch:  previous_branch,
-      tap:              formula.tap,
-      tap_remote_repo:  tap_remote_repo,
-      pr_message:       pr_message,
+      commits:         [["#{formula.name} #{new_formula_version}", formula.path, alias_rename, old_contents]],
+      remote:          remote,
+      remote_branch:   remote_branch,
+      branch:          "bump-#{formula.name}-#{new_formula_version}",
+      previous_branch: previous_branch,
+      tap:             formula.tap,
+      tap_remote_repo: tap_remote_repo,
+      pr_message:      pr_message,
     }
-    GitHub.create_bump_pr(pr_info, args: args)
+    GitHub.create_bump_pr(**pr_info, args: args)
   end
 
   def determine_mirror(url)
