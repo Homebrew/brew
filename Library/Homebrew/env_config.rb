@@ -341,8 +341,9 @@ module Homebrew
         boolean:     true,
       },
       HOMEBREW_UPGRADE_GREEDY:                   {
-        description: "If set, pass `--greedy` to all cask upgrade commands.",
-        boolean:     true,
+        description: "When set to \"auto-updates\", \"latest\", or any other value (e.g. \"1\"), pass " \
+                     "`--greedy-auto-updates`, `--greedy-latest`, or `--greedy` respectively to all cask " \
+                     "upgrade commands.",
       },
       HOMEBREW_SIMULATE_MACOS_ON_LINUX:          {
         description: "If set, running Homebrew on Linux will simulate certain macOS code paths. This is useful " \
@@ -503,6 +504,23 @@ module Homebrew
     sig { returns(T::Boolean) }
     def automatically_set_no_install_from_api?
       ENV["HOMEBREW_AUTOMATICALLY_SET_NO_INSTALL_FROM_API"].present?
+    end
+
+    sig { returns(T::Boolean) }
+    def cask_upgrade_greedy?
+      ENV["HOMEBREW_UPGRADE_GREEDY"].present? &&
+        !cask_upgrade_greedy_latest? &&
+        !cask_upgrade_greedy_auto_updates?
+    end
+
+    sig { returns(T::Boolean) }
+    def cask_upgrade_greedy_latest?
+      ENV["HOMEBREW_UPGRADE_GREEDY"] == "latest"
+    end
+
+    sig { returns(T::Boolean) }
+    def cask_upgrade_greedy_auto_updates?
+      ENV["HOMEBREW_UPGRADE_GREEDY"] == "auto-updates"
     end
   end
 end

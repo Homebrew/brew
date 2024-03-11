@@ -232,8 +232,8 @@ module Homebrew::EnvConfig
   sig { returns(T::Boolean) }
   def self.update_to_tag?; end
 
-  sig { returns(T::Boolean) }
-  def self.upgrade_greedy?; end
+  sig { returns(T.nilable(String)) }
+  def self.upgrade_greedy; end
 
   sig { returns(T::Boolean) }
   def self.verbose?; end

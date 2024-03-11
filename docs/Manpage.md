@@ -2326,7 +2326,7 @@ command execution e.g. `$(cat file)`.
   <br>If set, use Pry for the `brew irb` command.
 
 - `HOMEBREW_UPGRADE_GREEDY`
-  <br>If set, pass `--greedy` to all cask upgrade commands.
+  <br>When set to "auto-updates", "latest", or any other value (e.g. "1"), pass `--greedy-auto-updates`, `--greedy-latest`, or `--greedy` respectively to all cask upgrade commands.
 
 - `HOMEBREW_SIMULATE_MACOS_ON_LINUX`
   <br>If set, running Homebrew on Linux will simulate certain macOS code paths. This is useful when auditing macOS formulae while on Linux.

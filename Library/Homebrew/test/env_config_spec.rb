@@ -63,4 +63,85 @@ RSpec.describe Homebrew::EnvConfig do
       expect(env_config.make_jobs).to eql("16")
     end
   end
+
+  describe ".cask_upgrade_greedy" do
+    it "returns true if \"HOMEBREW_UPGRADE_GREEDY\" set to \"1\"" do
+      ENV["HOMEBREW_UPGRADE_GREEDY"] = "1"
+      expect(env_config.cask_upgrade_greedy?).to be(true)
+    end
+
+    it "returns true if \"HOMEBREW_UPGRADE_GREEDY\" set to \"true\"" do
+      ENV["HOMEBREW_UPGRADE_GREEDY"] = "true"
+      expect(env_config.cask_upgrade_greedy?).to be(true)
+    end
+
+    it "returns false if \"HOMEBREW_UPGRADE_GREEDY\" set to \"latest\"" do
+      ENV["HOMEBREW_UPGRADE_GREEDY"] = "latest"
+      expect(env_config.cask_upgrade_greedy?).to be(false)
+    end
+
+    it "returns false if \"HOMEBREW_UPGRADE_GREEDY\" set to \"auto-updates\"" do
+      ENV["HOMEBREW_UPGRADE_GREEDY"] = "auto-updates"
+      expect(env_config.cask_upgrade_greedy?).to be(false)
+    end
+
+    it "returns false by default" do
+      ENV["HOMEBREW_UPGRADE_GREEDY"] = ""
+      expect(env_config.cask_upgrade_greedy?).to be(false)
+    end
+  end
+
+  describe ".cask_upgrade_greedy_latest" do
+    it "returns false if \"HOMEBREW_UPGRADE_GREEDY\" set to \"1\"" do
+      ENV["HOMEBREW_UPGRADE_GREEDY"] = "1"
+      expect(env_config.cask_upgrade_greedy_latest?).to be(false)
+    end
+
+    it "returns false if \"HOMEBREW_UPGRADE_GREEDY\" set to \"true\"" do
+      ENV["HOMEBREW_UPGRADE_GREEDY"] = "true"
+      expect(env_config.cask_upgrade_greedy_latest?).to be(false)
+    end
+
+    it "returns true if \"HOMEBREW_UPGRADE_GREEDY\" set to \"latest\"" do
+      ENV["HOMEBREW_UPGRADE_GREEDY"] = "latest"
+      expect(env_config.cask_upgrade_greedy_latest?).to be(true)
+    end
+
+    it "returns false if \"HOMEBREW_UPGRADE_GREEDY\" set to \"auto-updates\"" do
+      ENV["HOMEBREW_UPGRADE_GREEDY"] = "auto-updates"
+      expect(env_config.cask_upgrade_greedy_latest?).to be(false)
+    end
+
+    it "returns false by default" do
+      ENV["HOMEBREW_UPGRADE_GREEDY"] = ""
+      expect(env_config.cask_upgrade_greedy_latest?).to be(false)
+    end
+  end
+
+  describe ".cask_upgrade_greedy_auto_updates" do
+    it "returns false if \"HOMEBREW_UPGRADE_GREEDY\" set to \"1\"" do
+      ENV["HOMEBREW_UPGRADE_GREEDY"] = "1"
+      expect(env_config.cask_upgrade_greedy_auto_updates?).to be(false)
+    end
+
+    it "returns false if \"HOMEBREW_UPGRADE_GREEDY\" set to \"true\"" do
+      ENV["HOMEBREW_UPGRADE_GREEDY"] = "true"
+      expect(env_config.cask_upgrade_greedy_auto_updates?).to be(false)
+    end
+
+    it "returns false if \"HOMEBREW_UPGRADE_GREEDY\" set to \"latest\"" do
+      ENV["HOMEBREW_UPGRADE_GREEDY"] = "latest"
+      expect(env_config.cask_upgrade_greedy_auto_updates?).to be(false)
+    end
+
+    it "returns true if \"HOMEBREW_UPGRADE_GREEDY\" set to \"auto-updates\"" do
+      ENV["HOMEBREW_UPGRADE_GREEDY"] = "auto-updates"
+      expect(env_config.cask_upgrade_greedy_auto_updates?).to be(true)
+    end
+
+    it "returns false by default" do
+      ENV["HOMEBREW_UPGRADE_GREEDY"] = ""
+      expect(env_config.cask_upgrade_greedy_auto_updates?).to be(false)
+    end
+  end
 end
