@@ -628,7 +628,7 @@ module Homebrew
 
       regex = %r{^https?://web\.archive\.org}
       if regex.match?(formula.stable.url)
-        problem "Formula with a Wayback Machine `url` should be deprecated with `:repo_removed`"
+        problem "Formula with a Internet Archive Wayback Machine `url` should be deprecated with `:repo_removed`"
       end
 
       if regex.match?(formula.homepage)
