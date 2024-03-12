@@ -639,7 +639,7 @@ module Homebrew
 
       return unless regex.match?(formula.head.url)
 
-      problem "Formula with a Wayback `head` should not have a `head` definition"
+      problem "Remove Internet Archive Wayback Machine `head` URL"
     end
 
     def audit_github_repository_archived
