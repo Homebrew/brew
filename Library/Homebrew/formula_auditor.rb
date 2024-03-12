@@ -632,7 +632,7 @@ module Homebrew
       end
 
       if regex.match?(formula.homepage)
-        problem "Formula with a Wayback Machine `homepage` should find an alternative `homepage`"
+        problem "Formula with a Internet Archive Wayback Machine `homepage` should find an alternative `homepage` or be deprecated."
       end
 
       return unless formula.head
