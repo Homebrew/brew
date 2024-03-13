@@ -627,12 +627,13 @@ module Homebrew
       return if formula.deprecated? || formula.disabled?
 
       regex = %r{^https?://web\.archive\.org}
+      problem_prefix = "Formula with a Internet Archive Wayback Machine"
       if regex.match?(formula.stable.url)
-        problem "Formula with a Internet Archive Wayback Machine `url` should be deprecated with `:repo_removed`"
+        problem "#{problem_prefix} `url` should be deprecated with `:repo_removed`"
       end
 
       if regex.match?(formula.homepage)
-        problem "Formula with a Internet Archive Wayback Machine `homepage` should find an alternative `homepage` or be deprecated."
+        problem "#{problem_prefix} `homepage` should find an alternative `homepage` or be deprecated."
       end
 
       return unless formula.head
