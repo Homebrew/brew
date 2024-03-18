@@ -8,6 +8,7 @@ Homebrew is provided free of charge and run entirely by volunteers in their spar
 
 - If a formula is widely used and is failing often it will enable us to prioritise fixing that formula over others.
 - Collecting the OS version allows us to decide which versions of macOS to prioritise for support and identify build failures that occur only on single versions.
+- If a command is not widely used, it can be deprecated.
 
 ## How Long?
 
@@ -15,7 +16,7 @@ Homebrew's anonymous analytics has a 365 day retention period in InfluxDB.
 
 ## What?
 
-Homebrew's analytics record some shared information for every event:
+Homebrew's analytics record some shared information for every formula or cask event:
 
 - Whether the data is being sent from CI, e.g. `true` if the CI environment variable is set.
 - Whether you are using the default install prefix (e.g. `/opt/homebrew`) or a custom one (e.g. `/home/mike/.brew`). If your prefix is custom, it will be sent as `custom-prefix` to preserve anonymity.
@@ -33,6 +34,8 @@ Homebrew's analytics records the following different events:
 - The `install_on_request` event category and the Homebrew formula from a non-private GitHub tap you have requested to install (e.g. when explicitly named with a `brew install`) plus options. This allows us to differentiate the formulae that users intend to install from those pulled in as dependencies.
 - The `cask_install` event category and the Homebrew cask from a non-private GitHub tap you install as the action. This allows us to identify which casks where work should be prioritised, as well as how to handle possible deprecation or removal of any.
 - The `build_error` event category and the Homebrew formula plus options that failed to install as the action, e.g. `wget --HEAD`. This allows us to identify formulae that may need fixing. The details or logs of the build error are not sent.
+- The `command_run` event category and the command and flags you run as the action. This allows us to identify which commands and flags are most commonly used and which are not used at all.
+- The `test_bot_test` event category is only used in Homebrew's CI environment and is used to record the results of running tests on pull requests.
 
 You can also view all the information that is sent by Homebrew's analytics by setting `HOMEBREW_ANALYTICS_DEBUG=1` in your environment. Please note this will also stop any analytics from being sent.
 

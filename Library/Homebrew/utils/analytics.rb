@@ -101,6 +101,38 @@ module Utils
         report_package_event(:build_error, package_name: formula.name, tap_name: tap.name, options:)
       end
 
+      sig { params(command: String, cli_args: Homebrew::CLI::Args).void }
+      def report_command_run(command, cli_args)
+        return if not_this_run? || disabled?
+
+        args = cli_args[:remaining].sort.uniq.to_a
+
+        # Tags must have low cardinality.
+        tags = {}
+
+        # Fields can have high cardinality.
+        fields = { command:, args: }
+
+        report_influx(:command_run, tags, fields)
+      end
+
+      sig { params(command: String, passed: T::Boolean).void }
+      def report_test_bot_test(command, passed)
+        return if not_this_run? || disabled?
+        return if ENV["HOMEBREW_TEST_BOT_ANALYTICS"].blank?
+
+        # ensure passed is a boolean
+        passed = passed ? true : false
+
+        # Tags must have low cardinality.
+        tags = { passed: }
+
+        # Fields can have high cardinality.
+        fields = { command: }
+
+        report_influx(:test_bot_test, tags, fields)
+      end
+
       def influx_message_displayed?
         config_true?(:influxanalyticsmessage)
       end

@@ -82,7 +82,11 @@ begin
     # `Homebrew::Help.help` never returns, except for unknown commands.
   end
 
-  if internal_cmd || Commands.external_ruby_v2_cmd_path(cmd)
+  if internal_cmd
+    Utils::Analytics.report_command_run(T.must(cmd), args)
+    Homebrew.send Commands.method_name(cmd)
+  elsif Commands.external_ruby_v2_cmd_path(cmd)
+    Utils::Analytics.report_command_run(T.must(cmd), args) if OFFICIAL_CMD_TAPS.values.flatten.include?(cmd)
     Homebrew.send Commands.method_name(cmd)
   elsif (path = Commands.external_ruby_cmd_path(cmd))
     require?(path)
