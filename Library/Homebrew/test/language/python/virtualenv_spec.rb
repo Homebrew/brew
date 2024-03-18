@@ -11,7 +11,7 @@ RSpec.describe Language::Python::Virtualenv::Virtualenv, :needs_python do
   let(:resource) { instance_double(Resource, "resource", stage: true) }
   let(:formula_bin) { dir/"formula_bin" }
   let(:formula_man) { dir/"formula_man" }
-  let(:formula) { instance_double(Formula, "formula", resource: resource, bin: formula_bin, man: formula_man) }
+  let(:formula) { instance_double(Formula, "formula", resource:, bin: formula_bin, man: formula_man) }
 
   describe "#create" do
     it "creates a venv" do

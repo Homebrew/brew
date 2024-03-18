@@ -129,7 +129,7 @@ RSpec.shared_context "integration test" do # rubocop:disable RSpec/ContextWordin
     end
   end
 
-  def setup_test_formula(name, content = nil, bottle_block: nil)
+  def setup_test_formula(name, content = nil, tap: CoreTap.instance, bottle_block: nil)
     case name
     when /^testball/
       tarball = if OS.linux?
@@ -174,20 +174,20 @@ RSpec.shared_context "integration test" do # rubocop:disable RSpec/ContextWordin
       RUBY
     end
 
-    Formulary.core_path(name).tap do |formula_path|
+    Formulary.find_formula_in_tap(name.downcase, tap).tap do |formula_path|
       formula_path.write <<~RUBY
         class #{Formulary.class_s(name)} < Formula
         #{content.gsub(/^(?!$)/, "  ")}
         end
       RUBY
 
-      CoreTap.instance.clear_cache
+      tap.clear_cache
     end
   end
 
   def install_test_formula(name, content = nil, build_bottle: false)
     setup_test_formula(name, content)
-    fi = FormulaInstaller.new(Formula[name], build_bottle: build_bottle)
+    fi = FormulaInstaller.new(Formula[name], build_bottle:)
     fi.prelude
     fi.fetch
     fi.install

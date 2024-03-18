@@ -35,6 +35,18 @@ class DevelopmentTools
       :clang
     end
 
+    sig { returns(Version) }
+    def ld64_version
+      @ld64_version ||= begin
+        json = Utils.popen_read("/usr/bin/ld", "-version_details")
+        if $CHILD_STATUS.success?
+          Version.parse(JSON.parse(json)["version"])
+        else
+          Version::NULL
+        end
+      end
+    end
+
     sig { returns(T::Boolean) }
     def curl_handles_most_https_certificates?
       # The system Curl is too old for some modern HTTPS certificates on

@@ -8,7 +8,7 @@ RSpec.describe "brew log" do
   it "shows the Git log for a given Formula", :integration_test do
     setup_test_formula "testball"
 
-    core_tap = CoreTap.new
+    core_tap = CoreTap.instance
     core_tap.path.cd do
       system "git", "init"
       system "git", "add", "--all"

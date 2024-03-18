@@ -75,9 +75,21 @@ homebrew-update-reset() {
     echo
 
     ohai "Resetting ${DIR}..."
-    head="$(git -C "${DIR}" symbolic-ref refs/remotes/origin/HEAD)"
-    head="${head#refs/remotes/origin/}"
-    git -C "${DIR}" checkout --force -B "${head}" origin/HEAD
+    # HOMEBREW_* variables here may all set by bin/brew or the user
+    # shellcheck disable=SC2154
+    if [[ "${DIR}" == "${HOMEBREW_REPOSITORY}" &&
+       (-n "${HOMEBREW_UPDATE_TO_TAG}" ||
+       (-z "${HOMEBREW_DEVELOPER}" && -z "${HOMEBREW_DEV_CMD_RUN}")) ]]
+    then
+      local latest_git_tag
+      latest_git_tag="$(git -C "${DIR}" tag --list --sort="-version:refname" | head -n1)"
+
+      git -C "${DIR}" checkout --force -B stable "refs/tags/${latest_git_tag}"
+    else
+      head="$(git -C "${DIR}" symbolic-ref refs/remotes/origin/HEAD)"
+      head="${head#refs/remotes/origin/}"
+      git -C "${DIR}" checkout --force -B "${head}" origin/HEAD
+    fi
     echo
   done
 }

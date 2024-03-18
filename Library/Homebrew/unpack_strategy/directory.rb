@@ -23,7 +23,7 @@ module UnpackStrategy
         system_command! "cp",
                         args:    ["-pR", (child.directory? && !child.symlink?) ? "#{child}/." : child,
                                   unpack_dir/child.basename],
-                        verbose: verbose
+                        verbose:
       end
     end
   end

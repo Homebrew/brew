@@ -78,7 +78,7 @@ begin
   # - no arguments are passed
   if empty_argv || help_flag
     require "help"
-    Homebrew::Help.help cmd, remaining_args: args.remaining, empty_argv: empty_argv
+    Homebrew::Help.help cmd, remaining_args: args.remaining, empty_argv:
     # `Homebrew::Help.help` never returns, except for unknown commands.
   end
 
@@ -133,14 +133,14 @@ rescue UsageError => e
   Homebrew::Help.help cmd, remaining_args: args.remaining, usage_error: e.message
 rescue SystemExit => e
   onoe "Kernel.exit" if args.debug? && !e.success?
-  $stderr.puts Utils::Backtrace.clean(e) if args.debug?
+  $stderr.puts Utils::Backtrace.clean(e) if args&.debug? || ARGV.include?("--debug")
   raise
 rescue Interrupt
   $stderr.puts # seemingly a newline is typical
   exit 130
 rescue BuildError => e
   Utils::Analytics.report_build_error(e)
-  e.dump(verbose: args.verbose?)
+  e.dump(verbose: args&.verbose?)
 
   if e.formula.head? || e.formula.deprecated? || e.formula.disabled?
     reason = if e.formula.head?
@@ -167,7 +167,7 @@ rescue RuntimeError, SystemCallError => e
   raise if e.message.empty?
 
   onoe e
-  $stderr.puts Utils::Backtrace.clean(e) if args.debug?
+  $stderr.puts Utils::Backtrace.clean(e) if args&.debug? || ARGV.include?("--debug")
 
   exit 1
 rescue MethodDeprecatedError => e
@@ -176,7 +176,7 @@ rescue MethodDeprecatedError => e
     $stderr.puts "If reporting this issue please do so at (not Homebrew/brew or Homebrew/homebrew-core):"
     $stderr.puts "  #{Formatter.url(e.issues_url)}"
   end
-  $stderr.puts Utils::Backtrace.clean(e) if args.debug?
+  $stderr.puts Utils::Backtrace.clean(e) if args&.debug? || ARGV.include?("--debug")
   exit 1
 rescue Exception => e # rubocop:disable Lint/RescueException
   onoe e

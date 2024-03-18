@@ -113,7 +113,7 @@ module Cask
             plist_status = command.run(
               "/bin/launchctl",
               args:         ["list", service],
-              sudo:         sudo,
+              sudo:,
               sudo_as_root: sudo,
               print_stderr: false,
             ).stdout
@@ -121,7 +121,7 @@ module Cask
               command.run!(
                 "/bin/launchctl",
                 args:         ["remove", service],
-                sudo:         sudo,
+                sudo:,
                 sudo_as_root: sudo,
               )
               sleep 1
@@ -133,7 +133,7 @@ module Cask
             paths.each { |elt| elt.prepend(Dir.home).freeze } unless sudo
             paths = paths.map { |elt| Pathname(elt) }.select(&:exist?)
             paths.each do |path|
-              command.run!("/bin/rm", args: ["-f", "--", path], sudo: sudo, sudo_as_root: sudo)
+              command.run!("/bin/rm", args: ["-f", "--", path], sudo:, sudo_as_root: sudo)
             end
             # undocumented and untested: pass a path to uninstall :launchctl
             next unless Pathname(service).exist?
@@ -141,13 +141,13 @@ module Cask
             command.run!(
               "/bin/launchctl",
               args:         ["unload", "-w", "--", service],
-              sudo:         sudo,
+              sudo:,
               sudo_as_root: sudo,
             )
             command.run!(
               "/bin/rm",
               args:         ["-f", "--", service],
-              sudo:         sudo,
+              sudo:,
               sudo_as_root: sudo,
             )
             sleep 1
@@ -511,13 +511,13 @@ module Cask
 
           # Directory counts as empty if it only contains a `.DS_Store`.
           if children.include?(ds_store = resolved_path/".DS_Store")
-            Utils.gain_permissions_remove(ds_store, command: command)
+            Utils.gain_permissions_remove(ds_store, command:)
             children.delete(ds_store)
           end
 
-          next false unless recursive_rmdir(*children, command: command)
+          next false unless recursive_rmdir(*children, command:)
 
-          Utils.gain_permissions_rmdir(resolved_path, command: command)
+          Utils.gain_permissions_rmdir(resolved_path, command:)
 
           true
         end

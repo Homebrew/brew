@@ -102,7 +102,7 @@ module SPDX
           expressions.push "#{hash_type} with #{license_expression[hash_type][:with]}"
         else
           expressions += license_expression[hash_type].map do |license|
-            license_expression_to_string license, bracket: true, hash_type: hash_type
+            license_expression_to_string license, bracket: true, hash_type:
           end
         end
       else

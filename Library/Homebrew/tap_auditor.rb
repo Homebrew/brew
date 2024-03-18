@@ -14,12 +14,14 @@ module Homebrew
       Homebrew.with_no_api_env do
         @name                      = tap.name
         @path                      = tap.path
-        @cask_tokens               = tap.cask_tokens
         @tap_audit_exceptions      = tap.audit_exceptions
         @tap_style_exceptions      = tap.style_exceptions
         @tap_pypi_formula_mappings = tap.pypi_formula_mappings
         @problems                  = []
 
+        @cask_tokens = tap.cask_tokens.map do |cask_token|
+          cask_token.split("/").last
+        end
         @formula_aliases = tap.aliases.map do |formula_alias|
           formula_alias.split("/").last
         end
@@ -64,7 +66,7 @@ module Homebrew
 
     sig { params(message: String).void }
     def problem(message)
-      @problems << ({ message: message, location: nil, corrected: false })
+      @problems << ({ message:, location: nil, corrected: false })
     end
 
     private
@@ -83,7 +85,7 @@ module Homebrew
       invalid_formulae_casks = list.select do |formula_or_cask_name|
         formula_names.exclude?(formula_or_cask_name) &&
           formula_aliases.exclude?(formula_or_cask_name) &&
-          cask_tokens.exclude?("#{@name}/#{formula_or_cask_name}")
+          cask_tokens.exclude?(formula_or_cask_name)
       end
 
       return if invalid_formulae_casks.empty?

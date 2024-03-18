@@ -28,7 +28,7 @@ module UnpackStrategy
       system_command! "unlzma",
                       args:    [*quiet_flags, "--", unpack_dir/basename],
                       env:     { "PATH" => PATH.new(Formula["xz"].opt_bin, ENV.fetch("PATH")) },
-                      verbose: verbose
+                      verbose:
     end
   end
 end

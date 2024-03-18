@@ -36,6 +36,6 @@ module Homebrew
       Homebrew.forget_user_gem_groups!
     end
 
-    Homebrew.install_bundler_gems!(groups: groups)
+    Homebrew.install_bundler_gems!(groups:)
   end
 end

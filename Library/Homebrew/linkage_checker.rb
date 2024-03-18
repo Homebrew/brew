@@ -31,7 +31,7 @@ class LinkageChecker
     @files_missing_rpaths = []
     @executable_path_dylibs = []
 
-    check_dylibs(rebuild_cache: rebuild_cache)
+    check_dylibs(rebuild_cache:)
   end
 
   def display_normal_output
@@ -63,15 +63,15 @@ class LinkageChecker
   end
 
   def display_test_output(puts_output: true, strict: false)
-    display_items "Missing libraries", @broken_dylibs, puts_output: puts_output
-    display_items "Broken dependencies", @broken_deps, puts_output: puts_output
-    display_items "Unwanted system libraries", @unwanted_system_dylibs, puts_output: puts_output
-    display_items "Conflicting libraries", @version_conflict_deps, puts_output: puts_output
+    display_items("Missing libraries", @broken_dylibs, puts_output:)
+    display_items("Broken dependencies", @broken_deps, puts_output:)
+    display_items("Unwanted system libraries", @unwanted_system_dylibs, puts_output:)
+    display_items("Conflicting libraries", @version_conflict_deps, puts_output:)
     return unless strict
 
-    display_items "Undeclared dependencies with linkage", @undeclared_deps, puts_output: puts_output
-    display_items "Files with missing rpath", @files_missing_rpaths, puts_output: puts_output
-    display_items "@executable_path references in libraries", @executable_path_dylibs, puts_output: puts_output
+    display_items("Undeclared dependencies with linkage", @undeclared_deps, puts_output:)
+    display_items("Files with missing rpath", @files_missing_rpaths, puts_output:)
+    display_items "@executable_path references in libraries", @executable_path_dylibs, puts_output:
   end
 
   sig { params(test: T::Boolean, strict: T::Boolean).returns(T::Boolean) }
@@ -179,7 +179,7 @@ class LinkageChecker
 
     return unless keg_files_dylibs_was_empty
 
-    store&.update!(keg_files_dylibs: keg_files_dylibs)
+    store&.update!(keg_files_dylibs:)
   end
   alias generic_check_dylibs check_dylibs
 

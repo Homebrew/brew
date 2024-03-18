@@ -96,11 +96,11 @@ module Homebrew
         end
       end
 
-      print_analytics(args: args)
+      print_analytics(args:)
     elsif args.json
       all = args.eval_all?
 
-      print_json(all, args: args)
+      print_json(all, args:)
     elsif args.github?
       raise FormulaOrCaskUnspecifiedError if args.no_named?
 
@@ -108,7 +108,7 @@ module Homebrew
     elsif args.no_named?
       print_statistics
     else
-      print_info(args: args)
+      print_info(args:)
     end
   end
 
@@ -123,7 +123,7 @@ module Homebrew
   sig { params(args: CLI::Args).void }
   def print_analytics(args:)
     if args.no_named?
-      Utils::Analytics.output(args: args)
+      Utils::Analytics.output(args:)
       return
     end
 
@@ -132,11 +132,11 @@ module Homebrew
 
       case obj
       when Formula
-        Utils::Analytics.formula_output(obj, args: args)
+        Utils::Analytics.formula_output(obj, args:)
       when Cask::Cask
-        Utils::Analytics.cask_output(obj, args: args)
+        Utils::Analytics.cask_output(obj, args:)
       when FormulaOrCaskUnavailableError
-        Utils::Analytics.output(filter: obj.name, args: args)
+        Utils::Analytics.output(filter: obj.name, args:)
       else
         raise
       end
@@ -150,9 +150,9 @@ module Homebrew
 
       case obj
       when Formula
-        info_formula(obj, args: args)
+        info_formula(obj, args:)
       when Cask::Cask
-        info_cask(obj, args: args)
+        info_cask(obj, args:)
       when FormulaUnreadableError, FormulaClassUnavailableError,
          TapFormulaUnreadableError, TapFormulaClassUnavailableError,
          Cask::CaskUnreadableError
@@ -341,7 +341,7 @@ module Homebrew
     caveats = Caveats.new(formula)
     ohai "Caveats", caveats.to_s unless caveats.empty?
 
-    Utils::Analytics.formula_output(formula, args: args)
+    Utils::Analytics.formula_output(formula, args:)
   end
 
   def decorate_dependencies(dependencies)

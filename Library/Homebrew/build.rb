@@ -80,7 +80,7 @@ class Build
       ENV.deps = formula_deps
       ENV.run_time_deps = run_time_deps
       ENV.setup_build_environment(
-        formula:       formula,
+        formula:,
         cc:            args.cc,
         build_bottle:  args.build_bottle?,
         bottle_arch:   args.bottle_arch,
@@ -93,7 +93,7 @@ class Build
       end
     else
       ENV.setup_build_environment(
-        formula:       formula,
+        formula:,
         cc:            args.cc,
         build_bottle:  args.build_bottle?,
         bottle_arch:   args.bottle_arch,
@@ -139,12 +139,14 @@ class Build
         with_env(
           # For head builds, HOMEBREW_FORMULA_PREFIX should include the commit,
           # which is not known until after the formula has been staged.
-          HOMEBREW_FORMULA_PREFIX: formula.prefix,
+          HOMEBREW_FORMULA_PREFIX:    formula.prefix,
+          # https://reproducible-builds.org/docs/build-path/
+          HOMEBREW_FORMULA_BUILDPATH: formula.buildpath,
           # https://reproducible-builds.org/docs/source-date-epoch/
-          SOURCE_DATE_EPOCH:       formula.source_modified_time.to_i.to_s,
+          SOURCE_DATE_EPOCH:          formula.source_modified_time.to_i.to_s,
           # Avoid make getting confused about timestamps.
           # https://github.com/Homebrew/homebrew-core/pull/87470
-          TZ:                      "UTC0",
+          TZ:                         "UTC0",
         ) do
           formula.patch
 
@@ -225,7 +227,7 @@ begin
 
   formula = args.named.to_formulae.first
   options = Options.create(args.flags_only)
-  build   = Build.new(formula, options, args: args)
+  build   = Build.new(formula, options, args:)
   build.install
 rescue Exception => e # rubocop:disable Lint/RescueException
   error_hash = JSON.parse e.to_json

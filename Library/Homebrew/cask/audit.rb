@@ -41,7 +41,7 @@ module Cask
       download = online || signing if download.nil?
 
       @cask = cask
-      @download = Download.new(cask, quarantine: quarantine) if download
+      @download = Download.new(cask, quarantine:) if download
       @online = online
       @strict = strict
       @signing = signing
@@ -95,7 +95,7 @@ module Cask
       # Only raise non-critical audits if the user specified `--strict`.
       return if strict_only && !@strict
 
-      errors << ({ message: message, location: location, corrected: false })
+      errors << ({ message:, location:, corrected: false })
     end
 
     def result
@@ -407,17 +407,20 @@ module Cask
       add_error "cask token contains non-ascii characters" unless cask.token.ascii_only?
       add_error "cask token + should be replaced by -plus-" if cask.token.include? "+"
       add_error "cask token whitespace should be replaced by hyphens" if cask.token.include? " "
-      add_error "cask token @ should be replaced by -at-" if cask.token.include? "@"
       add_error "cask token underscores should be replaced by hyphens" if cask.token.include? "_"
       add_error "cask token should not contain double hyphens" if cask.token.include? "--"
 
-      if cask.token.match?(/[^a-z0-9-]/)
-        add_error "cask token should only contain lowercase alphanumeric characters and hyphens"
+      if cask.token.match?(/[^@a-z0-9-]/)
+        add_error "cask token should only contain lowercase alphanumeric characters, hyphens and @"
       end
 
-      return if !cask.token.start_with?("-") && !cask.token.end_with?("-")
+      if cask.token.start_with?("-", "@") || cask.token.end_with?("-", "@")
+        add_error "cask token should not have leading or trailing hyphens and/or @"
+      end
 
-      add_error "cask token should not have leading or trailing hyphens"
+      add_error "cask token @ unrelated to versioning should be replaced by -at-" if cask.token.count("@") > 1
+      add_error "cask token should not contain a hyphen followed by @" if cask.token.include? "-@"
+      add_error "cask token should not contain @ followed by a hyphen" if cask.token.include? "@-"
     end
 
     sig { void }
@@ -663,7 +666,7 @@ module Cask
 
       tag = SharedAudits.github_tag_from_url(cask.url)
       tag ||= cask.version
-      error = SharedAudits.github_release(user, repo, tag, cask: cask)
+      error = SharedAudits.github_release(user, repo, tag, cask:)
       add_error error, location: cask.url.location if error
     end
 
@@ -678,7 +681,7 @@ module Cask
 
       tag = SharedAudits.gitlab_tag_from_url(cask.url)
       tag ||= cask.version
-      error = SharedAudits.gitlab_release(user, repo, tag, cask: cask)
+      error = SharedAudits.gitlab_release(user, repo, tag, cask:)
       add_error error, location: cask.url.location if error
     end
 
@@ -783,7 +786,7 @@ module Cask
 
       validate_url_for_https_availability(
         homepage, SharedAudits::URL_TYPE_HOMEPAGE,
-        user_agents:   user_agents,
+        user_agents:,
         check_content: true,
         strict:        strict?
       )
@@ -843,7 +846,7 @@ module Cask
         add_error problem, location: location unless exception
       elsif exception
         add_error "#{url_to_check} is in the secure connection audit skiplist but does not need to be skipped",
-                  location: location
+                  location:
       end
     end
 

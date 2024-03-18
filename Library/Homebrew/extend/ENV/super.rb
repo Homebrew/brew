@@ -109,6 +109,7 @@ module Superenv
     # D - Generate debugging information
     # f - Pass `-no_fixup_chains` to `ld` whenever it
     #     is invoked with `-undefined dynamic_lookup`
+    # o - Pass `-oso_prefix` to `ld` whenever it is invoked
     #
     # These flags will also be present:
     # a - apply fix for apr-1-config path

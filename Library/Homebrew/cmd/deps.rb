@@ -119,7 +119,7 @@ module Homebrew
       end
 
       if args.graph?
-        dot_code = dot_code(dependents, recursive: recursive, args: args)
+        dot_code = dot_code(dependents, recursive:, args:)
         if args.dot?
           puts dot_code
         else
@@ -128,15 +128,15 @@ module Homebrew
         return
       end
 
-      puts_deps_tree dependents, recursive: recursive, args: args
+      puts_deps_tree(dependents, recursive:, args:)
       return
     elsif all
-      puts_deps sorted_dependents(
-        Formula.all(eval_all: args.eval_all?) + Cask::Cask.all(eval_all: args.eval_all?),
-      ), recursive: recursive, args: args
+      puts_deps(sorted_dependents(
+                  Formula.all(eval_all: args.eval_all?) + Cask::Cask.all(eval_all: args.eval_all?),
+                ), recursive:, args:)
       return
     elsif !args.no_named? && args.for_each?
-      puts_deps sorted_dependents(args.named.to_formulae_and_casks), recursive: recursive, args: args
+      puts_deps(sorted_dependents(args.named.to_formulae_and_casks), recursive:, args:)
       return
     end
 
@@ -151,16 +151,16 @@ module Homebrew
       else
         sorted_dependents(Formula.installed + Cask::Caskroom.casks)
       end
-      puts_deps sorted_dependents_formulae_and_casks, recursive: recursive, args: args
+      puts_deps(sorted_dependents_formulae_and_casks, recursive:, args:)
       return
     end
 
     dependents = dependents(args.named.to_formulae_and_casks)
     check_head_spec(dependents) if args.HEAD?
 
-    all_deps = deps_for_dependents(dependents, recursive: recursive, args: args, &(args.union? ? :| : :&))
-    condense_requirements(all_deps, args: args)
-    all_deps.map! { |d| dep_display_name(d, args: args) }
+    all_deps = deps_for_dependents(dependents, recursive:, args:, &(args.union? ? :| : :&))
+    condense_requirements(all_deps, args:)
+    all_deps.map! { |d| dep_display_name(d, args:) }
     all_deps.uniq!
     all_deps.sort! unless args.topological?
     puts all_deps
@@ -218,7 +218,7 @@ module Homebrew
   end
 
   def self.deps_for_dependents(dependents, args:, recursive: false, &block)
-    dependents.map { |d| deps_for_dependent(d, recursive: recursive, args: args) }.reduce(&block)
+    dependents.map { |d| deps_for_dependent(d, recursive:, args:) }.reduce(&block)
   end
 
   def self.check_head_spec(dependents)
@@ -230,10 +230,10 @@ module Homebrew
   def self.puts_deps(dependents, args:, recursive: false)
     check_head_spec(dependents) if args.HEAD?
     dependents.each do |dependent|
-      deps = deps_for_dependent(dependent, recursive: recursive, args: args)
-      condense_requirements(deps, args: args)
+      deps = deps_for_dependent(dependent, recursive:, args:)
+      condense_requirements(deps, args:)
       deps.sort_by!(&:name)
-      deps.map! { |d| dep_display_name(d, args: args) }
+      deps.map! { |d| dep_display_name(d, args:) }
       puts "#{dependent.full_name}: #{deps.join(" ")}"
     end
   end
@@ -241,7 +241,7 @@ module Homebrew
   def self.dot_code(dependents, recursive:, args:)
     dep_graph = {}
     dependents.each do |d|
-      graph_deps(d, dep_graph: dep_graph, recursive: recursive, args: args)
+      graph_deps(d, dep_graph:, recursive:, args:)
     end
 
     dot_code = dep_graph.map do |d, deps|
@@ -264,7 +264,7 @@ module Homebrew
   def self.graph_deps(formula, dep_graph:, recursive:, args:)
     return if dep_graph.key?(formula)
 
-    dependables = dependables(formula, args: args)
+    dependables = dependables(formula, args:)
     dep_graph[formula] = dependables
     return unless recursive
 
@@ -272,9 +272,9 @@ module Homebrew
       next unless dep.is_a? Dependency
 
       graph_deps(Formulary.factory(dep.name),
-                 dep_graph: dep_graph,
+                 dep_graph:,
                  recursive: true,
-                 args:      args)
+                 args:)
     end
   end
 
@@ -282,7 +282,7 @@ module Homebrew
     check_head_spec(dependents) if args.HEAD?
     dependents.each do |d|
       puts d.full_name
-      recursive_deps_tree(d, dep_stack: [], prefix: "", recursive: recursive, args: args)
+      recursive_deps_tree(d, dep_stack: [], prefix: "", recursive:, args:)
       puts
     end
   end
@@ -297,7 +297,7 @@ module Homebrew
   end
 
   def self.recursive_deps_tree(formula, dep_stack:, prefix:, recursive:, args:)
-    dependables = dependables(formula, args: args)
+    dependables = dependables(formula, args:)
     max = dependables.length - 1
     dep_stack.push formula.name
     dependables.each_with_index do |dep, i|
@@ -307,7 +307,7 @@ module Homebrew
         "├──"
       end
 
-      display_s = "#{tree_lines} #{dep_display_name(dep, args: args)}"
+      display_s = "#{tree_lines} #{dep_display_name(dep, args:)}"
 
       # Detect circular dependencies and consider them a failure if present.
       is_circular = dep_stack.include?(dep.name)
@@ -329,10 +329,10 @@ module Homebrew
       next unless dep.is_a? Dependency
 
       recursive_deps_tree(Formulary.factory(dep.name),
-                          dep_stack: dep_stack,
+                          dep_stack:,
                           prefix:    prefix + prefix_addition,
                           recursive: true,
-                          args:      args)
+                          args:)
     end
 
     dep_stack.pop

@@ -21,12 +21,12 @@ class LinuxRunnerSpec < T::Struct
   }
   def to_h
     {
-      name:      name,
-      runner:    runner,
-      container: container,
-      workdir:   workdir,
-      timeout:   timeout,
-      cleanup:   cleanup,
+      name:,
+      runner:,
+      container:,
+      workdir:,
+      timeout:,
+      cleanup:,
     }
   end
 end

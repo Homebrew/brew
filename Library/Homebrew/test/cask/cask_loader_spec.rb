@@ -72,52 +72,88 @@ RSpec.describe Cask::CaskLoader, :cask do
         ENV["HOMEBREW_NO_INSTALL_FROM_API"] = "1"
       end
 
-      context "when a cask is migrated to the default tap" do
+      context "when a cask is migrated" do
         let(:token) { "local-caffeine" }
+
+        let(:core_tap) { CoreTap.instance }
+        let(:core_cask_tap) { CoreCaskTap.instance }
+
         let(:tap_migrations) do
           {
-            token => default_tap.name,
+            token => new_tap.name,
           }
         end
-        let(:old_tap) { CoreTap.instance }
-        let(:default_tap) { CoreCaskTap.instance }
 
         before do
+          old_tap.path.mkpath
+          new_tap.path.mkpath
           (old_tap.path/"tap_migrations.json").write tap_migrations.to_json
         end
 
-        it "does not warn when loading the short token" do
-          expect do
-            described_class.for(token)
-          end.not_to output.to_stderr
+        context "to a formula in the default tap" do
+          let(:old_tap) { core_cask_tap }
+          let(:new_tap) { core_tap }
+
+          let(:formula_file) { new_tap.formula_dir/"#{token}.rb" }
+
+          before do
+            new_tap.formula_dir.mkpath
+            FileUtils.touch formula_file
+          end
+
+          it "warn only once" do
+            expect do
+              described_class.for(token)
+            end.to output(
+              a_string_including("Warning: Cask #{token} was renamed to #{new_tap}/#{token}.").once,
+            ).to_stderr
+          end
         end
 
-        it "does not warn when loading the full token in the default tap" do
-          expect do
-            described_class.for("#{default_tap}/#{token}")
-          end.not_to output.to_stderr
-        end
+        context "to the default tap" do
+          let(:old_tap) { core_tap }
+          let(:new_tap) { core_cask_tap }
 
-        it "warns when loading the full token in the old tap" do
-          expect do
-            described_class.for("#{old_tap}/#{token}")
-          end.to output(%r{Cask #{old_tap}/#{token} was renamed to #{token}\.}).to_stderr
-        end
+          let(:cask_file) { new_tap.cask_dir/"#{token}.rb" }
 
-        # FIXME
-        # context "when there is an infinite tap migration loop" do
-        #   before do
-        #     (default_tap.path/"tap_migrations.json").write({
-        #       token => old_tap.name,
-        #     }.to_json)
-        #   end
-        #
-        #   it "stops recursing" do
-        #     expect do
-        #       described_class.for("#{default_tap}/#{token}")
-        #     end.not_to output.to_stderr
-        #   end
-        # end
+          before do
+            new_tap.cask_dir.mkpath
+            FileUtils.touch cask_file
+          end
+
+          it "does not warn when loading the short token" do
+            expect do
+              described_class.for(token)
+            end.not_to output.to_stderr
+          end
+
+          it "does not warn when loading the full token in the default tap" do
+            expect do
+              described_class.for("#{new_tap}/#{token}")
+            end.not_to output.to_stderr
+          end
+
+          it "warns when loading the full token in the old tap" do
+            expect do
+              described_class.for("#{old_tap}/#{token}")
+            end.to output(%r{Cask #{old_tap}/#{token} was renamed to #{token}\.}).to_stderr
+          end
+
+          # FIXME
+          # context "when there is an infinite tap migration loop" do
+          #   before do
+          #     (new_tap.path/"tap_migrations.json").write({
+          #       token => old_tap.name,
+          #     }.to_json)
+          #   end
+          #
+          #   it "stops recursing" do
+          #     expect do
+          #       described_class.for("#{new_tap}/#{token}")
+          #     end.not_to output.to_stderr
+          #   end
+          # end
+        end
       end
     end
   end

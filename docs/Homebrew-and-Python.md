@@ -6,7 +6,7 @@ Homebrew will install the necessary Python 3 version that is needed to make your
 
 ## Python 3
 
-Homebrew provides formulae for the newest and maintained releases of Python 3 (`python@3.y`) (https://devguide.python.org/versions/).
+Homebrew provides formulae for the newest and maintained releases of Python 3 (`python@3.y`) (<https://devguide.python.org/versions/>).
 We keep older `python@3.y` versions according to our [versioned formulae guidelines](https://docs.brew.sh/Versions).
 
 **Important:** Python may be upgraded to a newer version at any time. Consider using a version
@@ -68,15 +68,11 @@ The reasoning for this location is to preserve your modules between (minor) upgr
 
 Some formulae provide Python bindings.
 
-**Warning!** Python may crash (see [Common Issues](Common-Issues.md)) when you `import <module>` from a brewed Python if you ran `brew install <formula_with_python_bindings>` against the system Python. If you decide to switch to the brewed Python, then reinstall all formulae with Python bindings (e.g. `pyside`, `wxwidgets`, `pyqt`, `pygobject3`, `opencv`, `vtk` and `boost-python`).
-
 ## Policy for non-brewed Python bindings
 
 These should be installed via `pip install <package>`. To discover, you can use <https://pypi.org/search>.
 
 Starting with Python 3.12, we highly recommend you to use a separate virtualenv for this (see the section about [PEP 668](https://peps.python.org/pep-0668/#marking-an-interpreter-as-using-an-external-package-manager) below).
-
-**Note:** macOS's system Python does not provide `pip`. Follow the [pip documentation](https://pip.pypa.io/en/stable/installation/) to install it for your system Python if you would like it.
 
 ## Brewed Python modules
 
@@ -88,11 +84,7 @@ Since the system Python may not know which compiler flags to set when building b
 CFLAGS="-I$(brew --prefix)/include" LDFLAGS="-L$(brew --prefix)/lib" pip install <package>
 ```
 
-**Warning!** When you `brew install` formulae that provide Python bindings, you should **not be in an active virtual environment.**
-
-Activate the virtualenv *after* you have installed your package with brew, or install brew's packages in a fresh terminal window. This will ensure Python modules are installed into Homebrew's `site-packages` and *not* into that of the virtual environment.
-
-## PEP 668 (Python@3.12) and virtualenvs
+## PEP 668 (Python@3.12) and virtual environments
 
 Starting with Python@3.12, Homebrew follows [PEP 668](https://peps.python.org/pep-0668/#marking-an-interpreter-as-using-an-external-package-manager).
 

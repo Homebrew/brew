@@ -87,7 +87,7 @@ module UnpackStrategy
 
     strategy ||= Uncompressed
 
-    strategy.new(path, ref_type: ref_type, ref: ref, merge_xattrs: merge_xattrs)
+    strategy.new(path, ref_type:, ref:, merge_xattrs:)
   end
 
   attr_reader :path, :merge_xattrs
@@ -113,7 +113,7 @@ module UnpackStrategy
     basename ||= path.basename
     unpack_dir = Pathname(to || Dir.pwd).expand_path
     unpack_dir.mkpath
-    extract_to_dir(unpack_dir, basename: Pathname(basename), verbose: verbose)
+    extract_to_dir(unpack_dir, basename: Pathname(basename), verbose:)
   end
 
   sig {
@@ -128,14 +128,14 @@ module UnpackStrategy
     Dir.mktmpdir("homebrew-unpack", HOMEBREW_TEMP) do |tmp_unpack_dir|
       tmp_unpack_dir = Pathname(tmp_unpack_dir)
 
-      extract(to: tmp_unpack_dir, basename: basename, verbose: verbose)
+      extract(to: tmp_unpack_dir, basename:, verbose:)
 
       children = tmp_unpack_dir.children
 
       if children.size == 1 && !children.fetch(0).directory?
-        s = UnpackStrategy.detect(children.first, prioritize_extension: prioritize_extension)
+        s = UnpackStrategy.detect(children.first, prioritize_extension:)
 
-        s.extract_nestedly(to: to, verbose: verbose, prioritize_extension: prioritize_extension)
+        s.extract_nestedly(to:, verbose:, prioritize_extension:)
 
         next
       end
@@ -144,10 +144,10 @@ module UnpackStrategy
       each_directory(tmp_unpack_dir) do |path|
         next if path.writable?
 
-        FileUtils.chmod "u+w", path, verbose: verbose
+        FileUtils.chmod "u+w", path, verbose:
       end
 
-      Directory.new(tmp_unpack_dir).extract(to: to, verbose: verbose)
+      Directory.new(tmp_unpack_dir).extract(to:, verbose:)
     end
   end
 

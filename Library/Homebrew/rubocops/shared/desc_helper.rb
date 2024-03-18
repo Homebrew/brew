@@ -86,7 +86,7 @@ module RuboCop
 
       # Auto correct desc problems. `regex_match_group` must be called before this to populate @offense_source_range.
       def desc_problem(message)
-        add_offense(@offensive_source_range, message: message) do |corrector|
+        add_offense(@offensive_source_range, message:) do |corrector|
           match_data = @offensive_node.source.match(/\A(?<quote>["'])(?<correction>.*)(?:\k<quote>)\Z/)
           correction = match_data[:correction]
           quote = match_data[:quote]

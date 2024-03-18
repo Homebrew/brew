@@ -312,7 +312,7 @@ RSpec.describe Homebrew::CLI::NamedArgs do
 
     it "raises an error for invalid tap" do
       taps = described_class.new("homebrew/foo", "barbaz")
-      expect { taps.to_taps }.to raise_error(RuntimeError, /Invalid tap name/)
+      expect { taps.to_taps }.to raise_error(ArgumentError, /Invalid tap name/)
     end
   end
 
@@ -333,7 +333,7 @@ RSpec.describe Homebrew::CLI::NamedArgs do
 
     it "raises an error for invalid tap" do
       taps = described_class.new("homebrew/foo", "barbaz")
-      expect { taps.to_installed_taps }.to raise_error(RuntimeError, /Invalid tap name/)
+      expect { taps.to_installed_taps }.to raise_error(ArgumentError, /Invalid tap name/)
     end
   end
 end

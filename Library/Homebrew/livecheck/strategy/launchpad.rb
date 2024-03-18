@@ -79,7 +79,7 @@ module Homebrew
         def self.find_versions(url:, regex: DEFAULT_REGEX, **unused, &block)
           generated = generate_input_values(url)
 
-          PageMatch.find_versions(url: generated[:url], regex: regex, **unused, &block)
+          PageMatch.find_versions(url: generated[:url], regex:, **unused, &block)
         end
       end
     end

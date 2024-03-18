@@ -5,7 +5,7 @@
 .DS_Store
 
 # Unignore the contents of `Library` as that's where our code lives.
-!/Library/
+!/Library
 
 # Ignore files within `Library` (again).
 /Library/Homebrew/.npmignore
@@ -82,16 +82,15 @@
 **/vendor/bundle/ruby/*/gems/erubi-*/
 **/vendor/bundle/ruby/*/gems/hana-*/
 **/vendor/bundle/ruby/*/gems/highline-*/
-**/vendor/bundle/ruby/*/gems/hpricot-*/
 **/vendor/bundle/ruby/*/gems/jaro_winkler-*/
 **/vendor/bundle/ruby/*/gems/json-*/
 **/vendor/bundle/ruby/*/gems/json_schemer-*/
+**/vendor/bundle/ruby/*/gems/kramdown-*/
 **/vendor/bundle/ruby/*/gems/language_server-protocol-*/
 **/vendor/bundle/ruby/*/gems/method_source-*/
 **/vendor/bundle/ruby/*/gems/mini_portile2-*/
 **/vendor/bundle/ruby/*/gems/minitest-*/
 **/vendor/bundle/ruby/*/gems/msgpack-*/
-**/vendor/bundle/ruby/*/gems/mustache-*/
 **/vendor/bundle/ruby/*/gems/netrc-*/
 **/vendor/bundle/ruby/*/gems/ntlm-http-*/
 **/vendor/bundle/ruby/*/gems/parallel-*/
@@ -106,10 +105,8 @@
 **/vendor/bundle/ruby/*/gems/racc-*/
 **/vendor/bundle/ruby/*/gems/rainbow-*/
 **/vendor/bundle/ruby/*/gems/rbi-*/
-**/vendor/bundle/ruby/*/gems/rdiscount-*/
 **/vendor/bundle/ruby/*/gems/regexp_parser-*/
 **/vendor/bundle/ruby/*/gems/rexml-*/
-**/vendor/bundle/ruby/*/gems/ronn-*/
 **/vendor/bundle/ruby/*/gems/rspec-*/
 **/vendor/bundle/ruby/*/gems/rspec-core-*/
 **/vendor/bundle/ruby/*/gems/rspec-expectations-*/

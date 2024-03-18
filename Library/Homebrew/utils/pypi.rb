@@ -198,6 +198,8 @@ module PyPI
       package_name:             T.nilable(String),
       extra_packages:           T.nilable(T::Array[String]),
       exclude_packages:         T.nilable(T::Array[String]),
+      dependencies:             T.nilable(T::Array[String]),
+      install_dependencies:     T.nilable(T::Boolean),
       print_only:               T.nilable(T::Boolean),
       silent:                   T.nilable(T::Boolean),
       verbose:                  T.nilable(T::Boolean),
@@ -205,7 +207,8 @@ module PyPI
     ).returns(T.nilable(T::Boolean))
   }
   def self.update_python_resources!(formula, version: nil, package_name: nil, extra_packages: nil,
-                                    exclude_packages: nil, print_only: false, silent: false, verbose: false,
+                                    exclude_packages: nil, dependencies: nil, install_dependencies: false,
+                                    print_only: false, silent: false, verbose: false,
                                     ignore_non_pypi_packages: false)
 
     auto_update_list = formula.tap&.pypi_formula_mappings
@@ -224,7 +227,20 @@ module PyPI
         package_name = list_entry["package_name"]
         extra_packages = list_entry["extra_packages"]
         exclude_packages = list_entry["exclude_packages"]
+        dependencies = list_entry["dependencies"]
       end
+    end
+
+    missing_dependencies = Array(dependencies).reject do |dependency|
+      Formula[dependency].any_version_installed?
+    rescue FormulaUnavailableError
+      odie "Formula \"#{dependency}\" not found but it is a dependency to update \"#{formula.name}\" resources."
+    end
+    if missing_dependencies.present?
+      missing_msg = "formulae required to update \"#{formula.name}\" resources: #{missing_dependencies.join(", ")}"
+      odie "Missing #{missing_msg}" unless install_dependencies
+      ohai "Installing #{missing_msg}"
+      missing_dependencies.each(&method(:ensure_formula_installed!))
     end
 
     python_deps = formula.deps
@@ -239,7 +255,9 @@ module PyPI
     end
 
     main_package = if package_name.present?
-      Package.new(package_name, python_name: python_name)
+      package_string = package_name
+      package_string += "==#{formula.version}" if version.blank? && formula.version.present?
+      Package.new(package_string, python_name:)
     elsif package_name == ""
       nil
     else
@@ -249,7 +267,7 @@ module PyPI
       else
         stable.url
       end
-      Package.new(url, is_url: true, python_name: python_name)
+      Package.new(url, is_url: true, python_name:)
     end
 
     if main_package.nil?
@@ -301,11 +319,11 @@ module PyPI
     # Resolve the dependency tree of all input packages
     show_info = !print_only && !silent
     ohai "Retrieving PyPI dependencies for \"#{input_packages.join(" ")}\"..." if show_info
-    found_packages = pip_report(input_packages, python_name: python_name, print_stderr: verbose && show_info)
+    found_packages = pip_report(input_packages, python_name:, print_stderr: verbose && show_info)
     # Resolve the dependency tree of excluded packages to prune the above
     exclude_packages.delete_if { |package| found_packages.exclude? package }
     ohai "Retrieving PyPI dependencies for excluded \"#{exclude_packages.join(" ")}\"..." if show_info
-    exclude_packages = pip_report(exclude_packages, python_name: python_name, print_stderr: verbose && show_info)
+    exclude_packages = pip_report(exclude_packages, python_name:, print_stderr: verbose && show_info)
     exclude_packages += [Package.new(main_package.name)] unless main_package.nil?
 
     new_resource_blocks = ""
@@ -358,7 +376,7 @@ module PyPI
 
     ohai "Updating resource blocks" unless silent
     Utils::Inreplace.inreplace formula.path do |s|
-      if s.inreplace_string.scan(inreplace_regex).length > 1
+      if T.must(s.inreplace_string.split(/^  test do\b/, 2).first).scan(inreplace_regex).length > 1
         odie "Unable to update resource blocks for \"#{formula.name}\" automatically. Please update them manually."
       end
       s.sub! inreplace_regex, new_resource_blocks

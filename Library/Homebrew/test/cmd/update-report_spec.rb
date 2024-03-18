@@ -9,7 +9,7 @@ RSpec.describe "brew update-report" do
   it_behaves_like "parseable arguments"
 
   describe Reporter do
-    let(:tap) { CoreTap.new }
+    let(:tap) { CoreTap.instance }
     let(:reporter_class) do
       Class.new(described_class) do
         def initialize(tap)
@@ -87,7 +87,7 @@ RSpec.describe "brew update-report" do
     end
 
     context "when updating a Tap other than the core Tap" do
-      let(:tap) { Tap.new("foo", "bar") }
+      let(:tap) { Tap.fetch("foo", "bar") }
 
       before do
         (tap.path/"Formula").mkpath

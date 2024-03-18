@@ -133,7 +133,7 @@ class Keg
   VARIABLE_REFERENCE_RX = /^@(loader_|executable_|r)path/
 
   def each_linkage_for(file, linkage_type, resolve_variable_references: false, &block)
-    file.public_send(linkage_type, resolve_variable_references: resolve_variable_references)
+    file.public_send(linkage_type, resolve_variable_references:)
         .grep_v(VARIABLE_REFERENCE_RX)
         .each(&block)
   end

@@ -16,7 +16,7 @@ module UnpackStrategy
       system_command! "svn",
                       args:    ["export", "--force", ".", unpack_dir],
                       chdir:   path.to_s,
-                      verbose: verbose
+                      verbose:
     end
   end
 end

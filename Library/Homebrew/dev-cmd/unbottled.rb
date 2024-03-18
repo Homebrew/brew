@@ -65,7 +65,7 @@ module Homebrew
       raise "Unknown arch #{@bottle_tag.arch}."
     end
 
-    Homebrew::SimulateSystem.with os: os, arch: arch do
+    Homebrew::SimulateSystem.with(os:, arch:) do
       all = args.eval_all?
       if args.total?
         if !all && !Homebrew::EnvConfig.eval_all?

@@ -96,13 +96,13 @@ module Homebrew
 
     if args.merge?
       Homebrew.install_bundler_gems!(groups: ["ast"])
-      return merge(args: args)
+      return merge(args:)
     end
 
     gnu_tar_formula_ensure_installed_if_needed!(only_json_tab: args.only_json_tab?)
 
     args.named.to_resolved_formulae(uniq: false).each do |formula|
-      bottle_formula formula, args: args
+      bottle_formula formula, args:
     end
   end
 
@@ -153,7 +153,7 @@ module Homebrew
       end
     end
 
-    keg_contain_absolute_symlink_starting_with?(string, keg, args: args) || result
+    keg_contain_absolute_symlink_starting_with?(string, keg, args:) || result
   end
 
   def self.keg_contain_absolute_symlink_starting_with?(string, keg, args:)
@@ -482,7 +482,7 @@ module Homebrew
         else
           HOMEBREW_REPOSITORY
         end.to_s
-        if keg_contain?(repository_reference, keg, ignores + ALLOWABLE_HOMEBREW_REPOSITORY_LINKS, args: args)
+        if keg_contain?(repository_reference, keg, ignores + ALLOWABLE_HOMEBREW_REPOSITORY_LINKS, args:)
           odie "Bottle contains non-relocatable reference to #{repository_reference}!"
         end
 
@@ -490,16 +490,16 @@ module Homebrew
         if args.skip_relocation?
           skip_relocation = true
         else
-          relocatable = false if keg_contain?(prefix_check, keg, ignores, formula_and_runtime_deps_names, args: args)
-          relocatable = false if keg_contain?(cellar, keg, ignores, formula_and_runtime_deps_names, args: args)
-          if keg_contain?(HOMEBREW_LIBRARY.to_s, keg, ignores, formula_and_runtime_deps_names, args: args)
+          relocatable = false if keg_contain?(prefix_check, keg, ignores, formula_and_runtime_deps_names, args:)
+          relocatable = false if keg_contain?(cellar, keg, ignores, formula_and_runtime_deps_names, args:)
+          if keg_contain?(HOMEBREW_LIBRARY.to_s, keg, ignores, formula_and_runtime_deps_names, args:)
             relocatable = false
           end
           if prefix != prefix_check
-            relocatable = false if keg_contain_absolute_symlink_starting_with?(prefix, keg, args: args)
-            relocatable = false if keg_contain?("#{prefix}/etc", keg, ignores, args: args)
-            relocatable = false if keg_contain?("#{prefix}/var", keg, ignores, args: args)
-            relocatable = false if keg_contain?("#{prefix}/share/vim", keg, ignores, args: args)
+            relocatable = false if keg_contain_absolute_symlink_starting_with?(prefix, keg, args:)
+            relocatable = false if keg_contain?("#{prefix}/etc", keg, ignores, args:)
+            relocatable = false if keg_contain?("#{prefix}/var", keg, ignores, args:)
+            relocatable = false if keg_contain?("#{prefix}/share/vim", keg, ignores, args:)
           end
           skip_relocation = relocatable && !keg.require_relocation?
         end
@@ -661,7 +661,7 @@ module Homebrew
           tag.to_sym
         end
 
-        sha256_hash = { cellar: cellar, tag_sym => tag_hash["sha256"] }
+        sha256_hash = { cellar:, tag_sym => tag_hash["sha256"] }
         bottle.sha256 sha256_hash
 
         break if all_bottle
@@ -735,7 +735,7 @@ module Homebrew
 
       require "utils/ast"
       formula_ast = Utils::AST::FormulaAST.new(path.read)
-      checksums = old_checksums(formula, formula_ast, bottle_hash, args: args)
+      checksums = old_checksums(formula, formula_ast, bottle_hash, args:)
       update_or_add = checksums.nil? ? "add" : "update"
 
       checksums&.each(&bottle.method(:sha256))

@@ -29,7 +29,7 @@ class Cmd
   CXX_REGEX = /(?:c|g|clang)\+\+/.freeze
 
   attr_reader :config, :prefix, :cellar, :opt, :cachedir, :tmpdir, :sysroot, :deps
-  attr_reader :archflags, :optflags, :keg_regex, :formula_prefix
+  attr_reader :archflags, :optflags, :keg_regex, :formula_prefix, :formula_buildpath
 
   def initialize(arg0, args)
     @arg0 = arg0
@@ -45,6 +45,7 @@ class Cmd
     @optflags = ENV.fetch("HOMEBREW_OPTFLAGS", "").split
     @deps = Set.new(ENV.fetch("HOMEBREW_DEPENDENCIES", "").split(","))
     @formula_prefix = ENV["HOMEBREW_FORMULA_PREFIX"]
+    @formula_buildpath = ENV["HOMEBREW_FORMULA_BUILDPATH"]
     # matches opt or cellar prefix and formula name
     @keg_regex = %r{(#{Regexp.escape(opt)}|#{Regexp.escape(cellar)})/([\w+-.@]+)}
   end
@@ -310,6 +311,9 @@ class Cmd
     args += path_flags("-isystem", isystem_paths) + path_flags("-I", include_paths)
     # Add -nostdinc when building against glibc@2.13 to avoid mixing system and brewed glibc headers.
     args << "-nostdinc" if @deps.include?("glibc@2.13")
+    # Ideally this would be -ffile-prefix-map, but that requires a minimum of GCC 8, LLVM Clang 10 or Apple Clang 12
+    # and detecting the version dynamically based on what `HOMEBREW_CC` may have been rewritten to point to is awkward
+    args << "-fdebug-prefix-map=#{formula_buildpath}=." if formula_buildpath
     args
   end
 
@@ -319,10 +323,12 @@ class Cmd
       args << "-headerpad_max_install_names"
       args << "-no_weak_imports" if no_weak_imports?
       args << "-no_fixup_chains" if no_fixup_chains?
+      args << "-oso_prefix" << formula_buildpath if oso_prefix? && formula_buildpath
     when :ccld, :cxxld
       args << "-Wl,-headerpad_max_install_names"
       args << "-Wl,-no_weak_imports" if no_weak_imports?
       args << "-Wl,-no_fixup_chains" if no_fixup_chains?
+      args << "-Wl,-oso_prefix,#{formula_buildpath}" if oso_prefix? && formula_buildpath
     end
     args
   end
@@ -429,6 +435,10 @@ class Cmd
 
     # The next flag would produce an error, but we fix it in `refurbish_arg`.
     @args.include?("-undefineddynamic_lookup")
+  end
+
+  def oso_prefix?
+    config.include?("o")
   end
 
   def calls_ld?

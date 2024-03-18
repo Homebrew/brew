@@ -54,7 +54,7 @@ RSpec.describe Homebrew::Livecheck::Strategy::Json do
         "1.0.1" => Version.new("1.0.1"),
         "1.0.0" => Version.new("1.0.0"),
       },
-      regex:   regex,
+      regex:,
       url:     http_url,
     }
   end
@@ -120,7 +120,7 @@ RSpec.describe Homebrew::Livecheck::Strategy::Json do
 
   describe "::find_versions?" do
     it "finds versions in provided_content using a block" do
-      expect(json.find_versions(url: http_url, regex: regex, provided_content: content) do |json, regex|
+      expect(json.find_versions(url: http_url, regex:, provided_content: content) do |json, regex|
         json["versions"].select { |item| item["version"]&.match?(regex) }
                         .map { |item| item["version"][regex, 1] }
       end).to eq(find_versions_cached_return_hash)

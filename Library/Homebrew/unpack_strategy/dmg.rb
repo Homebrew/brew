@@ -91,7 +91,7 @@ module UnpackStrategy
               "diskutil",
               args:         ["info", "-plist", path],
               print_stderr: false,
-              verbose:      verbose,
+              verbose:,
             )
 
             # For HFS, just use <mount-path>
@@ -105,13 +105,13 @@ module UnpackStrategy
               system_command! "diskutil",
                               args:         ["eject", eject_path],
                               print_stderr: false,
-                              verbose:      verbose
+                              verbose:
             end
           else
             system_command! "diskutil",
                             args:         ["unmount", "force", path],
                             print_stderr: false,
-                            verbose:      verbose
+                            verbose:
           end
         rescue ErrorDuringExecution => e
           raise e if (tries -= 1).zero?
@@ -144,12 +144,12 @@ module UnpackStrategy
 
             system_command! "mkbom",
                             args:    ["-s", "-i", filelist.path, "--", bomfile.path],
-                            verbose: verbose
+                            verbose:
           end
 
-          system_command! "ditto",
+          system_command!("ditto",
                           args:    ["--bom", bomfile.path, "--", path, unpack_dir],
-                          verbose: verbose
+                          verbose:)
 
           FileUtils.chmod "u+w", Pathname.glob(unpack_dir/"**/*", File::FNM_DOTMATCH).reject(&:symlink?)
         end
@@ -171,11 +171,11 @@ module UnpackStrategy
 
     sig { override.params(unpack_dir: Pathname, basename: Pathname, verbose: T::Boolean).returns(T.untyped) }
     def extract_to_dir(unpack_dir, basename:, verbose:)
-      mount(verbose: verbose) do |mounts|
+      mount(verbose:) do |mounts|
         raise "No mounts found in '#{path}'; perhaps this is a bad disk image?" if mounts.empty?
 
         mounts.each do |mount|
-          mount.extract(to: unpack_dir, verbose: verbose)
+          mount.extract(to: unpack_dir, verbose:)
         end
       end
     end
@@ -192,7 +192,7 @@ module UnpackStrategy
           ],
           input:        "qn\n",
           print_stderr: false,
-          verbose:      verbose,
+          verbose:,
         )
 
         # If mounting without agreeing to EULA succeeded, there is none.
@@ -208,7 +208,7 @@ module UnpackStrategy
             args:    [
               "convert", *quiet_flag, "-format", "UDTO", "-o", cdr_path, path
             ],
-            verbose: verbose,
+            verbose:,
           )
 
           with_eula = system_command!(
@@ -217,7 +217,7 @@ module UnpackStrategy
               "attach", "-plist", "-nobrowse", "-readonly",
               "-mountrandom", mount_dir, cdr_path
             ],
-            verbose: verbose,
+            verbose:,
           )
 
           if verbose && !(eula_text = without_eula.stdout).empty?
@@ -239,7 +239,7 @@ module UnpackStrategy
           yield mounts
         ensure
           mounts.each do |mount|
-            mount.eject(verbose: verbose)
+            mount.eject(verbose:)
           end
         end
       end

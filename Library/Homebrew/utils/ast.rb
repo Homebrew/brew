@@ -98,7 +98,7 @@ module Utils
 
       sig { params(name: Symbol, type: T.nilable(Symbol)).returns(T.nilable(Node)) }
       def stanza(name, type: nil)
-        children.find { |child| call_node_match?(child, name: name, type: type) }
+        children.find { |child| call_node_match?(child, name:, type:) }
       end
 
       sig { params(bottle_output: String).void }
@@ -113,7 +113,7 @@ module Utils
 
       sig { params(name: Symbol, type: T.nilable(Symbol)).void }
       def remove_stanza(name, type: nil)
-        stanza_node = stanza(name, type: type)
+        stanza_node = stanza(name, type:)
         raise "Could not find '#{name}' stanza!" if stanza_node.blank?
 
         # stanza is probably followed by a newline character
@@ -146,7 +146,7 @@ module Utils
 
       sig { params(name: Symbol, replacement: T.any(Numeric, String, Symbol), type: T.nilable(Symbol)).void }
       def replace_stanza(name, replacement, type: nil)
-        stanza_node = stanza(name, type: type)
+        stanza_node = stanza(name, type:)
         raise "Could not find '#{name}' stanza!" if stanza_node.blank?
 
         tree_rewriter.replace(stanza_node.source_range, stanza_text(name, replacement, indent: 2).lstrip)
@@ -229,8 +229,8 @@ module Utils
           return false if components.any? do |component|
             component_match?(component_name: component[:name],
                              component_type: component[:type],
-                             target_name:    target_name,
-                             target_type:    target_type)
+                             target_name:,
+                             target_type:)
           end
           return true if components.any? do |component|
             call_node_match?(node, name: component[:name], type: component[:type])

@@ -20,7 +20,7 @@ module UnpackStrategy
       system_command! "cabextract",
                       args:    ["-d", unpack_dir, "--", path],
                       env:     { "PATH" => PATH.new(Formula["cabextract"].opt_bin, ENV.fetch("PATH")) },
-                      verbose: verbose
+                      verbose:
     end
 
     def dependencies

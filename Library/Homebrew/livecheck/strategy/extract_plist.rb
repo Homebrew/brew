@@ -100,7 +100,7 @@ module Homebrew
             raise ArgumentError, "The #{Utils.demodulize(T.must(name))} strategy only supports casks."
           end
 
-          match_data = { matches: {}, regex: regex, url: url }
+          match_data = { matches: {}, regex:, url: }
 
           unversioned_cask_checker = if url.present? && url != cask.url.to_s
             # Create a copy of the `cask` that uses the `livecheck` block URL

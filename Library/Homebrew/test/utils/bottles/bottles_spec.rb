@@ -19,7 +19,7 @@ RSpec.describe Utils::Bottles do
       before do
         # setup a testball1
         dep_name = "testball1"
-        dep_path = CoreTap.new.new_formula_path(dep_name)
+        dep_path = CoreTap.instance.new_formula_path(dep_name)
         dep_path.write <<~RUBY
           class #{Formulary.class_s(dep_name)} < Formula
             url "testball1"
@@ -30,7 +30,7 @@ RSpec.describe Utils::Bottles do
 
         # setup a testball2, that depends on testball1
         formula_name = "testball2"
-        formula_path = CoreTap.new.new_formula_path(formula_name)
+        formula_path = CoreTap.instance.new_formula_path(formula_name)
         formula_path.write <<~RUBY
           class #{Formulary.class_s(formula_name)} < Formula
             url "testball2"

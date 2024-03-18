@@ -23,7 +23,7 @@ module Homebrew
 
       value = value.to_s
 
-      return if read(setting, repo: repo) == value
+      return if read(setting, repo:) == value
 
       Kernel.system("git", "-C", repo.to_s, "config", "--replace-all", "homebrew.#{setting}", value, exception: true)
     end
@@ -31,7 +31,7 @@ module Homebrew
     def self.delete(setting, repo: HOMEBREW_REPOSITORY)
       return unless (repo/".git/config").exist?
 
-      return if read(setting, repo: repo).nil?
+      return if read(setting, repo:).nil?
 
       Kernel.system("git", "-C", repo.to_s, "config", "--unset-all", "homebrew.#{setting}", exception: true)
     end

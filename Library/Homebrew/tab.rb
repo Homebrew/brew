@@ -322,11 +322,11 @@ class Tab
   end
 
   def stable_version
-    versions["stable"]&.then(&Version.method(:new))
+    versions["stable"]&.then { Version.new(_1) }
   end
 
   def head_version
-    versions["head"]&.then(&Version.method(:new))
+    versions["head"]&.then { Version.new(_1) }
   end
 
   def version_scheme

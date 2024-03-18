@@ -64,7 +64,7 @@ module RuboCop
 
           range = offense_range(node)
           preferred_method = preferred_method(node)
-          add_offense(range, message: format(MSG, preferred_method: preferred_method)) do |corrector|
+          add_offense(range, message: format(MSG, preferred_method:)) do |corrector|
             corrector.replace(range, preferred_method)
           end
         end

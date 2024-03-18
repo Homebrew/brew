@@ -6,7 +6,7 @@ RSpec.describe Dependency do
   def build_dep(name, tags = [], deps = [])
     dep = described_class.new(name.to_s, tags)
     allow(dep).to receive(:to_formula).and_return \
-      instance_double(Formula, deps: deps, name: name, full_name: name)
+      instance_double(Formula, deps:, name:, full_name: name)
     dep
   end
 
@@ -15,7 +15,7 @@ RSpec.describe Dependency do
   let(:baz) { build_dep(:baz) }
   let(:qux) { build_dep(:qux) }
   let(:deps) { [foo, bar, baz, qux] }
-  let(:formula) { instance_double(Formula, deps: deps, name: "f") }
+  let(:formula) { instance_double(Formula, deps:, name: "f") }
 
   describe "::expand" do
     it "yields dependent and dependency pairs" do
@@ -52,13 +52,13 @@ RSpec.describe Dependency do
 
   it "skips optionals by default" do
     deps = [build_dep(:foo, [:optional]), bar, baz, qux]
-    f = instance_double(Formula, deps: deps, build: instance_double(BuildOptions, with?: false), name: "f")
+    f = instance_double(Formula, deps:, build: instance_double(BuildOptions, with?: false), name: "f")
     expect(described_class.expand(f)).to eq([bar, baz, qux])
   end
 
   it "keeps recommended dependencies by default" do
     deps = [build_dep(:foo, [:recommended]), bar, baz, qux]
-    f = instance_double(Formula, deps: deps, build: instance_double(BuildOptions, with?: true), name: "f")
+    f = instance_double(Formula, deps:, build: instance_double(BuildOptions, with?: true), name: "f")
     expect(described_class.expand(f)).to eq(deps)
   end
 

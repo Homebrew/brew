@@ -6,7 +6,7 @@ require "utils/bottles"
 
 RSpec.describe Formulary do
   let(:formula_name) { "testball_bottle" }
-  let(:formula_path) { CoreTap.new.new_formula_path(formula_name) }
+  let(:formula_path) { CoreTap.instance.new_formula_path(formula_name) }
   let(:formula_content) do
     <<~RUBY
       class #{described_class.class_s(formula_name)} < Formula
@@ -85,7 +85,7 @@ RSpec.describe Formulary do
 
       let(:formula_name) { "testball_sharded" }
       let(:formula_path) do
-        core_tap = CoreTap.new
+        core_tap = CoreTap.instance
         (core_tap.formula_dir/formula_name[0]).mkpath
         core_tap.new_formula_path(formula_name)
       end
@@ -184,8 +184,8 @@ RSpec.describe Formulary do
     end
 
     context "when migrating from a Tap" do
-      let(:tap) { Tap.new("homebrew", "foo") }
-      let(:another_tap) { Tap.new("homebrew", "bar") }
+      let(:tap) { Tap.fetch("homebrew", "foo") }
+      let(:another_tap) { Tap.fetch("homebrew", "bar") }
       let(:tap_migrations_path) { tap.path/"tap_migrations.json" }
       let(:another_tap_formula_path) { another_tap.path/"Formula/#{formula_name}.rb" }
 
@@ -226,8 +226,8 @@ RSpec.describe Formulary do
     end
 
     context "when loading from Tap" do
-      let(:tap) { Tap.new("homebrew", "foo") }
-      let(:another_tap) { Tap.new("homebrew", "bar") }
+      let(:tap) { Tap.fetch("homebrew", "foo") }
+      let(:another_tap) { Tap.fetch("homebrew", "bar") }
       let(:formula_path) { tap.path/"Formula/#{formula_name}.rb" }
       let(:alias_name) { "bar" }
       let(:alias_dir) { tap.alias_dir }
@@ -556,54 +556,90 @@ RSpec.describe Formulary do
         ENV["HOMEBREW_NO_INSTALL_FROM_API"] = "1"
       end
 
-      context "when a formula is migrated to the default tap" do
+      context "when a formula is migrated" do
         let(:token) { "foo" }
+
+        let(:core_tap) { CoreTap.instance }
+        let(:core_cask_tap) { CoreCaskTap.instance }
+
         let(:tap_migrations) do
           {
-            token => default_tap.name,
+            token => new_tap.name,
           }
         end
-        let(:old_tap) { CoreCaskTap.instance }
-        let(:default_tap) { CoreTap.instance }
 
         before do
           old_tap.path.mkpath
+          new_tap.path.mkpath
           (old_tap.path/"tap_migrations.json").write tap_migrations.to_json
-          FileUtils.touch default_tap.formula_dir/"foo.rb"
         end
 
-        it "does not warn when loading the short token" do
-          expect do
-            described_class.loader_for(token)
-          end.not_to output.to_stderr
+        context "to a cask in the default tap" do
+          let(:old_tap) { core_tap }
+          let(:new_tap) { core_cask_tap }
+
+          let(:cask_file) { new_tap.cask_dir/"#{token}.rb" }
+
+          before do
+            new_tap.cask_dir.mkpath
+            FileUtils.touch cask_file
+          end
+
+          it "warn only once" do
+            expect do
+              described_class.loader_for(token)
+            end.to output(
+              a_string_including("Warning: Formula #{token} was renamed to #{new_tap}/#{token}.").once,
+            ).to_stderr
+          end
         end
 
-        it "does not warn when loading the full token in the default tap" do
-          expect do
-            described_class.loader_for("#{default_tap}/#{token}")
-          end.not_to output.to_stderr
-        end
+        context "to the default tap" do
+          let(:old_tap) { core_cask_tap }
+          let(:new_tap) { core_tap }
 
-        it "warns when loading the full token in the old tap" do
-          expect do
-            described_class.loader_for("#{old_tap}/#{token}")
-          end.to output(%r{Formula #{old_tap}/#{token} was renamed to #{token}\.}).to_stderr
-        end
+          let(:formula_file) { new_tap.formula_dir/"#{token}.rb" }
 
-        # FIXME
-        # context "when there is an infinite tap migration loop" do
-        #   before do
-        #     (default_tap.path/"tap_migrations.json").write({
-        #       token => old_tap.name,
-        #     }.to_json)
-        #   end
-        #
-        #   it "stops recursing" do
-        #     expect do
-        #       described_class.loader_for("#{default_tap}/#{token}")
-        #     end.not_to output.to_stderr
-        #   end
-        # end
+          before do
+            new_tap.formula_dir.mkpath
+            FileUtils.touch formula_file
+          end
+
+          it "does not warn when loading the short token" do
+            expect do
+              described_class.loader_for(token)
+            end.not_to output.to_stderr
+          end
+
+          it "does not warn when loading the full token in the default tap" do
+            expect do
+              described_class.loader_for("#{new_tap}/#{token}")
+            end.not_to output.to_stderr
+          end
+
+          it "warns when loading the full token in the old tap" do
+            expect do
+              described_class.loader_for("#{old_tap}/#{token}")
+            end.to output(
+              a_string_including("Formula #{old_tap}/#{token} was renamed to #{token}.").once,
+            ).to_stderr
+          end
+
+          # FIXME
+          # context "when there is an infinite tap migration loop" do
+          #   before do
+          #     (new_tap.path/"tap_migrations.json").write({
+          #       token => old_tap.name,
+          #     }.to_json)
+          #   end
+          #
+          #   it "stops recursing" do
+          #     expect do
+          #       described_class.loader_for("#{new_tap}/#{token}")
+          #     end.not_to output.to_stderr
+          #   end
+          # end
+        end
       end
     end
   end

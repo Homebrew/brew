@@ -36,7 +36,7 @@ module UnpackStrategy
                       args:    ["open", path, *args],
                       chdir:   unpack_dir,
                       env:     { "PATH" => PATH.new(Formula["fossil"].opt_bin, ENV.fetch("PATH")) },
-                      verbose: verbose
+                      verbose:
     end
   end
 end

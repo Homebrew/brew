@@ -525,7 +525,7 @@ RSpec.describe Cask::DSL, :cask do
         appdir: "/Applications/",
       })
 
-      cask = Cask::Cask.new("appdir-trailing-slash", config: config) do
+      cask = Cask::Cask.new("appdir-trailing-slash", config:) do
         binary "#{appdir}/some/path"
       end
 

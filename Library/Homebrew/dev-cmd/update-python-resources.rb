@@ -19,6 +19,8 @@ module Homebrew
              description: "Suppress any output."
       switch "--ignore-non-pypi-packages",
              description: "Don't fail if <formula> is not a PyPI package."
+      switch "--install-dependencies",
+             description: "Install missing dependencies required to update resources."
       flag   "--version=",
              description: "Use the specified <version> when finding resources for <formula>. " \
                           "If no version is specified, the current version for <formula> will be used."
@@ -43,6 +45,7 @@ module Homebrew
                                     package_name:             args.package_name,
                                     extra_packages:           args.extra_packages,
                                     exclude_packages:         args.exclude_packages,
+                                    install_dependencies:     args.install_dependencies?,
                                     print_only:               args.print_only?,
                                     silent:                   args.silent?,
                                     verbose:                  args.verbose?,

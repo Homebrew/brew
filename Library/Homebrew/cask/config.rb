@@ -66,7 +66,7 @@ module Cask
         default:             config.fetch("default",  {}),
         env:                 config.fetch("env",      {}),
         explicit:            config.fetch("explicit", {}),
-        ignore_invalid_keys: ignore_invalid_keys,
+        ignore_invalid_keys:,
       )
     end
 
@@ -199,9 +199,9 @@ module Cask
     sig { params(options: T.untyped).returns(String) }
     def to_json(*options)
       {
-        default:  default,
-        env:      env,
-        explicit: explicit,
+        default:,
+        env:,
+        explicit:,
       }.to_json(*options)
     end
   end

@@ -128,15 +128,15 @@ module Homebrew
             bundle_version = BundleVersion.new(short_version, version) if short_version || version
 
             data = {
-              title:                  title,
-              link:                   link,
-              channel:                channel,
-              release_notes_link:     release_notes_link,
-              pub_date:               pub_date,
-              os:                     os,
-              url:                    url,
-              bundle_version:         bundle_version,
-              minimum_system_version: minimum_system_version,
+              title:,
+              link:,
+              channel:,
+              release_notes_link:,
+              pub_date:,
+              os:,
+              url:,
+              bundle_version:,
+              minimum_system_version:,
             }.compact
             next if data.empty?
 
@@ -229,7 +229,7 @@ module Homebrew
                   "#{Utils.demodulize(T.must(name))} only supports a regex when using a `strategy` block"
           end
 
-          match_data = { matches: {}, regex: regex, url: url }
+          match_data = { matches: {}, regex:, url: }
 
           match_data.merge!(Strategy.page_content(url))
           content = match_data.delete(:content)

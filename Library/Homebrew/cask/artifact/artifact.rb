@@ -31,11 +31,6 @@ module Cask
       def resolve_target(target)
         super(target, base_dir: nil)
       end
-
-      sig { params(cask: Cask, source: T.any(String, Pathname), target: T.any(String, Pathname)).void }
-      def initialize(cask, source, target:)
-        super(cask, source, target: target)
-      end
     end
   end
 end

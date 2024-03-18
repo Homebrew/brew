@@ -206,8 +206,10 @@ class FormulaInstaller
 
       case deprecate_disable_type
       when :deprecated
+        puts "::warning::#{message}" if ENV["GITHUB_ACTIONS"]
         opoo message
       when :disabled
+        puts "::error::#{message}" if ENV["GITHUB_ACTIONS"]
         raise CannotInstallFormulaError, message
       end
     end
@@ -419,8 +421,8 @@ class FormulaInstaller
     oh1 "Installing #{Formatter.identifier(formula.full_name)} #{options}".strip if show_header?
 
     if (tap = formula.tap) && tap.should_report_analytics?
-      Utils::Analytics.report_event(:formula_install, package_name: formula.name, tap_name: tap.name,
-on_request: installed_on_request?, options: options)
+      Utils::Analytics.report_package_event(:formula_install, package_name: formula.name, tap_name: tap.name,
+on_request: installed_on_request?, options:)
     end
 
     self.class.attempted << formula
@@ -597,7 +599,7 @@ on_request: installed_on_request?, options: options)
   def expand_dependencies_for_formula(formula, inherited_options)
     # Cache for this expansion only. FormulaInstaller has a lot of inputs which can alter expansion.
     cache_key = "FormulaInstaller-#{formula.full_name}-#{Time.now.to_f}"
-    Dependency.expand(formula, cache_key: cache_key) do |dependent, dep|
+    Dependency.expand(formula, cache_key:) do |dependent, dep|
       inherited_options[dep.name] |= inherited_options_for(dep)
       build = effective_build_options_for(
         dependent,
@@ -664,7 +666,7 @@ on_request: installed_on_request?, options: options)
       puts "All dependencies for #{formula.full_name} are satisfied."
     elsif !deps.empty?
       oh1 "Installing dependencies for #{formula.full_name}: " \
-          "#{deps.map(&:first).map(&Formatter.method(:identifier)).to_sentence}",
+          "#{deps.map(&:first).map { Formatter.identifier(_1) }.to_sentence}",
           truncate: false
       deps.each { |dep, options| install_dependency(dep, options) }
     end
@@ -732,7 +734,7 @@ on_request: installed_on_request?, options: options)
 
     fi = FormulaInstaller.new(
       df,
-      options:                    options,
+      options:,
       link_keg:                   keg_had_linked_keg ? keg_was_linked : nil,
       installed_as_dependency:    true,
       installed_on_request:       df.any_version_installed? && tab.present? && tab.installed_on_request,
@@ -1184,7 +1186,7 @@ on_request: installed_on_request?, options: options)
     return if deps.empty?
 
     oh1 "Fetching dependencies for #{formula.full_name}: " \
-        "#{deps.map(&:first).map(&Formatter.method(:identifier)).to_sentence}",
+        "#{deps.map(&:first).map { Formatter.identifier(_1) }.to_sentence}",
         truncate: false
 
     deps.each { |(dep, _options)| fetch_dependency(dep) }
@@ -1280,7 +1282,7 @@ on_request: installed_on_request?, options: options)
 
     keg = Keg.new(formula.prefix)
     skip_linkage = formula.bottle_specification.skip_relocation?
-    keg.replace_placeholders_with_locations tab.changed_files, skip_linkage: skip_linkage
+    keg.replace_placeholders_with_locations(tab.changed_files, skip_linkage:)
 
     cellar = formula.bottle_specification.tag_to_cellar(Utils::Bottles.tag)
     return if [:any, :any_skip_relocation].include?(cellar)

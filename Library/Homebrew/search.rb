@@ -81,12 +81,14 @@ module Homebrew
         end
       end
 
-      cask_tokens = Tap.flat_map(&:cask_tokens).filter_map do |c|
-        next if c.start_with?("homebrew/cask/") && !Homebrew::EnvConfig.no_install_from_api?
-
-        c.sub(%r{^homebrew/cask.*/}, "")
-      end
-      cask_tokens |= Homebrew::API::Cask.all_casks.keys unless Homebrew::EnvConfig.no_install_from_api?
+      cask_tokens = Tap.each_with_object([]) do |tap, array|
+        # We can exclude the core cask tap because `CoreCaskTap#cask_tokens` returns short names by default.
+        if tap.official? && !tap.core_cask_tap?
+          tap.cask_tokens.each { |token| array << token.sub(%r{^homebrew/cask.*/}, "") }
+        else
+          tap.cask_tokens.each { |token| array << token }
+        end
+      end.uniq
 
       results = search(cask_tokens, string_or_regex)
       results += DidYouMean::SpellChecker.new(dictionary: cask_tokens)

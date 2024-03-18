@@ -68,7 +68,7 @@ module Cask
       verify_has_sha if require_sha? && !force?
       check_requirements
 
-      download(quiet: quiet, timeout: timeout)
+      download(quiet:, timeout:)
 
       satisfy_cask_and_formula_dependencies
     end
@@ -109,10 +109,10 @@ module Cask
 
       @cask.config = @cask.default_config.merge(old_config)
 
-      install_artifacts(predecessor: predecessor)
+      install_artifacts(predecessor:)
 
       if (tap = @cask.tap) && tap.should_report_analytics?
-        ::Utils::Analytics.report_event(:cask_install, package_name: @cask.token, tap_name: tap.name,
+        ::Utils::Analytics.report_package_event(:cask_install, package_name: @cask.token, tap_name: tap.name,
 on_request: true)
       end
 
@@ -130,11 +130,16 @@ on_request: true)
       deprecate_disable_type = DeprecateDisable.type(@cask)
       return if deprecate_disable_type.nil?
 
+      message = DeprecateDisable.message(@cask)
+      message_full = "#{@cask.token} has been #{message}"
+
       case deprecate_disable_type
       when :deprecated
-        opoo "#{@cask.token} has been #{DeprecateDisable.message(@cask)}"
+        puts "::warning::#{message_full}" if ENV["GITHUB_ACTIONS"]
+        opoo message_full
       when :disabled
-        raise CaskCannotBeInstalledError.new(@cask, DeprecateDisable.message(@cask))
+        puts "::error::#{message_full}" if ENV["GITHUB_ACTIONS"]
+        raise CaskCannotBeInstalledError.new(@cask, message)
       end
     end
 
@@ -178,8 +183,8 @@ on_request: true)
     sig { params(quiet: T.nilable(T::Boolean), timeout: T.nilable(T.any(Integer, Float))).returns(Pathname) }
     def download(quiet: nil, timeout: nil)
       # Store cask download path in cask to prevent multiple downloads in a row when checking if it's outdated
-      @cask.download ||= downloader.fetch(quiet: quiet, verify_download_integrity: @verify_download_integrity,
-                                          timeout: timeout)
+      @cask.download ||= downloader.fetch(quiet:, verify_download_integrity: @verify_download_integrity,
+                                          timeout:)
     end
 
     def verify_has_sha
@@ -209,21 +214,21 @@ on_request: true)
       if (nested_container = @cask.container&.nested)
         Dir.mktmpdir("cask-installer", HOMEBREW_TEMP) do |tmpdir|
           tmpdir = Pathname(tmpdir)
-          primary_container.extract(to: tmpdir, basename: basename, verbose: verbose?)
+          primary_container.extract(to: tmpdir, basename:, verbose: verbose?)
 
           FileUtils.chmod_R "+rw", tmpdir/nested_container, force: true, verbose: verbose?
 
           UnpackStrategy.detect(tmpdir/nested_container, merge_xattrs: true)
-                        .extract_nestedly(to: to, verbose: verbose?)
+                        .extract_nestedly(to:, verbose: verbose?)
         end
       else
-        primary_container.extract_nestedly(to: to, basename: basename, verbose: verbose?)
+        primary_container.extract_nestedly(to:, basename:, verbose: verbose?)
       end
 
       return unless quarantine?
       return unless Quarantine.available?
 
-      Quarantine.propagate(from: primary_container.path, to: to)
+      Quarantine.propagate(from: primary_container.path, to:)
     end
 
     sig { params(predecessor: T.nilable(Cask)).void }
@@ -241,7 +246,7 @@ on_request: true)
         next if artifact.is_a?(Artifact::Binary) && !binaries?
 
         artifact.install_phase(
-          command: @command, verbose: verbose?, adopt: adopt?, force: force?, predecessor: predecessor,
+          command: @command, verbose: verbose?, adopt: adopt?, force: force?, predecessor:,
         )
         already_installed_artifacts.unshift(artifact)
       end
@@ -401,7 +406,7 @@ on_request: true)
     def uninstall(successor: nil)
       load_installed_caskfile!
       oh1 "Uninstalling Cask #{Formatter.identifier(@cask)}"
-      uninstall_artifacts(clear: true, successor: successor)
+      uninstall_artifacts(clear: true, successor:)
       if !reinstall? && !upgrade?
         remove_download_sha
         remove_config_file
@@ -422,7 +427,7 @@ on_request: true)
 
     sig { params(successor: T.nilable(Cask)).void }
     def start_upgrade(successor:)
-      uninstall_artifacts(successor: successor)
+      uninstall_artifacts(successor:)
       backup
     end
 
@@ -445,7 +450,7 @@ on_request: true)
     def revert_upgrade(predecessor:)
       opoo "Reverting upgrade for Cask #{@cask}"
       restore_backup
-      install_artifacts(predecessor: predecessor)
+      install_artifacts(predecessor:)
     end
 
     def finalize_upgrade
@@ -471,7 +476,7 @@ on_request: true)
             verbose:   verbose?,
             skip:      clear,
             force:     force?,
-            successor: successor,
+            successor:,
             upgrade:   upgrade?,
             reinstall: reinstall?,
           )
@@ -485,7 +490,7 @@ on_request: true)
           verbose:   verbose?,
           skip:      clear,
           force:     force?,
-          successor: successor,
+          successor:,
         )
       end
     end

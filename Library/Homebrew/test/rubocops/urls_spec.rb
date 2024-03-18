@@ -197,7 +197,7 @@ RSpec.describe RuboCop::Cop::FormulaAudit::Urls do
                                severity: :convention,
                                line:     3,
                                column:   offense_info["col"],
-                               source:   source }]
+                               source: }]
 
         offenses = inspect_source(source)
 

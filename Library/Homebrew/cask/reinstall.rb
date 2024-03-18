@@ -21,14 +21,14 @@ module Cask
 
       casks.each do |cask|
         Installer.new(cask,
-                      binaries:       binaries,
-                      verbose:        verbose,
-                      force:          force,
-                      skip_cask_deps: skip_cask_deps,
-                      require_sha:    require_sha,
+                      binaries:,
+                      verbose:,
+                      force:,
+                      skip_cask_deps:,
+                      require_sha:,
                       reinstall:      true,
-                      quarantine:     quarantine,
-                      zap:            zap).install
+                      quarantine:,
+                      zap:).install
       end
     end
   end

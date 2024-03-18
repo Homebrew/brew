@@ -94,6 +94,9 @@ class Version
     def null?
       false
     end
+
+    sig { returns(T::Boolean) }
+    def blank? = null?
   end
 
   # A pseudo-token representing the absence of a token.
@@ -126,6 +129,9 @@ class Version
     def null?
       true
     end
+
+    sig { returns(T::Boolean) }
+    def blank? = true
 
     sig { override.returns(String) }
     def inspect
@@ -353,7 +359,7 @@ class Version
 
     VERSION_PARSERS.each do |parser|
       version = parser.parse(spec)
-      return new(version, detected_from_url: detected_from_url) if version.present?
+      return new(version, detected_from_url:) if version.present?
     end
 
     NULL

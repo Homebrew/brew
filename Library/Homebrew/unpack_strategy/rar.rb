@@ -26,7 +26,7 @@ module UnpackStrategy
       system_command! "bsdtar",
                       args:    ["x", "-f", path, "-C", unpack_dir],
                       env:     { "PATH" => PATH.new(Formula["libarchive"].opt_bin, ENV.fetch("PATH")) },
-                      verbose: verbose
+                      verbose:
     end
   end
 end

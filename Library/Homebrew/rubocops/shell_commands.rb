@@ -101,7 +101,7 @@ module RuboCop
             else
               target_method.to_s
             end
-            add_offense(first_arg, message: format(MSG, method: method_string, good_args: good_args)) do |corrector|
+            add_offense(first_arg, message: format(MSG, method: method_string, good_args:)) do |corrector|
               corrector.replace(first_arg.source_range, good_args)
             end
           end

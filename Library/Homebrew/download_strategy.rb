@@ -107,7 +107,7 @@ class AbstractDownloadStrategy
     UnpackStrategy.detect(cached_location,
                           prioritize_extension: true,
                           ref_type: @ref_type, ref: @ref)
-                  .extract_nestedly(basename:             basename,
+                  .extract_nestedly(basename:,
                                     prioritize_extension: true,
                                     verbose:              verbose? && !quiet?)
     chdir(&block) if block
@@ -162,7 +162,7 @@ class AbstractDownloadStrategy
   end
 
   def silent_command(*args, **options)
-    system_command(*args, print_stderr: false, env: env, **options)
+    system_command(*args, print_stderr: false, env:, **options)
   end
 
   def command!(*args, **options)
@@ -442,7 +442,7 @@ class CurlDownloadStrategy < AbstractFileDownloadStrategy
         puts "Already downloaded: #{cached_location}"
       else
         begin
-          _fetch(url: url, resolved_url: resolved_url, timeout: Utils::Timer.remaining!(end_time))
+          _fetch(url:, resolved_url:, timeout: Utils::Timer.remaining!(end_time))
         rescue ErrorDuringExecution
           raise CurlDownloadStrategyError, url
         end
@@ -473,7 +473,7 @@ class CurlDownloadStrategy < AbstractFileDownloadStrategy
   end
 
   def resolved_time_file_size(timeout: nil)
-    _, _, time, file_size = resolve_url_basename_time_file_size(url, timeout: timeout)
+    _, _, time, file_size = resolve_url_basename_time_file_size(url, timeout:)
     [time, file_size]
   end
 
@@ -489,7 +489,7 @@ class CurlDownloadStrategy < AbstractFileDownloadStrategy
     return @resolved_info_cache[url] if @resolved_info_cache.include?(url)
 
     begin
-      parsed_output = curl_headers(url.to_s, wanted_headers: ["content-disposition"], timeout: timeout)
+      parsed_output = curl_headers(url.to_s, wanted_headers: ["content-disposition"], timeout:)
     rescue ErrorDuringExecution
       return [url, parse_basename(url), nil, nil, false]
     end
@@ -559,7 +559,7 @@ class CurlDownloadStrategy < AbstractFileDownloadStrategy
   end
 
   def _curl_download(resolved_url, to, timeout)
-    curl_download resolved_url, to: to, try_partial: @try_partial, timeout: timeout
+    curl_download resolved_url, to:, try_partial: @try_partial, timeout:
   end
 
   # Curl options to be always passed to curl,
@@ -611,7 +611,7 @@ class HomebrewCurlDownloadStrategy < CurlDownloadStrategy
   def _curl_download(resolved_url, to, timeout)
     raise HomebrewCurlDownloadStrategyError, url unless Formula["curl"].any_version_installed?
 
-    curl_download resolved_url, to: to, try_partial: @try_partial, timeout: timeout, use_homebrew_curl: true
+    curl_download resolved_url, to:, try_partial: @try_partial, timeout:, use_homebrew_curl: true
   end
 
   def curl_output(*args, **options)
@@ -666,7 +666,7 @@ class CurlApacheMirrorDownloadStrategy < CurlDownloadStrategy
 
   def resolve_url_basename_time_file_size(url, timeout: nil)
     if url == self.url
-      super("#{apache_mirrors["preferred"]}#{apache_mirrors["path_info"]}", timeout: timeout)
+      super("#{apache_mirrors["preferred"]}#{apache_mirrors["path_info"]}", timeout:)
     else
       super
     end
@@ -698,7 +698,7 @@ class CurlPostDownloadStrategy < CurlDownloadStrategy
       query.nil? ? [url, "-X", "POST"] : [url, "-d", query]
     end
 
-    curl_download(*args, to: temporary_path, try_partial: @try_partial, timeout: timeout)
+    curl_download(*args, to: temporary_path, try_partial: @try_partial, timeout:)
   end
 end
 
@@ -709,7 +709,7 @@ end
 class NoUnzipCurlDownloadStrategy < CurlDownloadStrategy
   def stage
     UnpackStrategy::Uncompressed.new(cached_location)
-                                .extract(basename: basename,
+                                .extract(basename:,
                                          verbose:  verbose? && !quiet?)
     yield if block_given?
   end
@@ -821,18 +821,18 @@ class SubversionDownloadStrategy < VCSDownloadStrategy
   def clone_repo(timeout: nil)
     case @ref_type
     when :revision
-      fetch_repo cached_location, @url, @ref, timeout: timeout
+      fetch_repo cached_location, @url, @ref, timeout:
     when :revisions
       # nil is OK for main_revision, as fetch_repo will then get latest
       main_revision = @ref[:trunk]
-      fetch_repo cached_location, @url, main_revision, ignore_externals: true, timeout: timeout
+      fetch_repo(cached_location, @url, main_revision, ignore_externals: true, timeout:)
 
       externals do |external_name, external_url|
         fetch_repo cached_location/external_name, external_url, @ref[external_name], ignore_externals: true,
-                                                                                     timeout:          timeout
+                                                                                     timeout:
       end
     else
-      fetch_repo cached_location, @url, timeout: timeout
+      fetch_repo cached_location, @url, timeout:
     end
   end
   alias update clone_repo
@@ -893,10 +893,10 @@ class GitDownloadStrategy < VCSDownloadStrategy
   sig { params(timeout: T.nilable(Time)).void }
   def update(timeout: nil)
     config_repo
-    update_repo(timeout: timeout)
-    checkout(timeout: timeout)
+    update_repo(timeout:)
+    checkout(timeout:)
     reset
-    update_submodules(timeout: timeout) if submodules?
+    update_submodules(timeout:) if submodules?
   end
 
   def shallow_dir?
@@ -1018,8 +1018,8 @@ class GitDownloadStrategy < VCSDownloadStrategy
 
     configure_sparse_checkout if partial_clone_sparse_checkout?
 
-    checkout(timeout: timeout)
-    update_submodules(timeout: timeout) if submodules?
+    checkout(timeout:)
+    update_submodules(timeout:) if submodules?
   end
 
   sig { params(timeout: T.nilable(Time)).void }

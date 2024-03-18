@@ -35,7 +35,7 @@ module RuboCop
           # and 'https://example.org#path' into account.
           corrected_source = url_node.source.sub("://#{domain}", "://#{domain}/")
 
-          add_offense(url_node.loc.expression, message: format(MSG_NO_SLASH, url: url)) do |corrector|
+          add_offense(url_node.loc.expression, message: format(MSG_NO_SLASH, url:)) do |corrector|
             corrector.replace(url_node.source_range, corrected_source)
           end
         end

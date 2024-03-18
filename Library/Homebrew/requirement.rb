@@ -75,7 +75,7 @@ class Requirement
     return true unless satisfy
 
     @satisfied_result =
-      satisfy.yielder(env: env, cc: cc, build_bottle: build_bottle, bottle_arch: bottle_arch) do |p|
+      satisfy.yielder(env:, cc:, build_bottle:, bottle_arch:) do |p|
         instance_eval(&p)
       end
     return false unless @satisfied_result
@@ -109,7 +109,7 @@ class Requirement
     ).void
   }
   def modify_build_environment(env: nil, cc: nil, build_bottle: false, bottle_arch: nil)
-    satisfied?(env: env, cc: cc, build_bottle: build_bottle, bottle_arch: bottle_arch)
+    satisfied?(env:, cc:, build_bottle:, bottle_arch:)
     instance_eval(&env_proc) if env_proc
 
     # XXX If the satisfy block returns a Pathname, then make sure that it
@@ -219,7 +219,7 @@ class Requirement
       elsif @options[:build_env]
         require "extend/ENV"
         ENV.with_build_environment(
-          env: env, cc: cc, build_bottle: build_bottle, bottle_arch: bottle_arch,
+          env:, cc:, build_bottle:, bottle_arch:,
         ) do
           yield @proc
         end

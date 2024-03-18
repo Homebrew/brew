@@ -63,9 +63,9 @@ class Locale
     raise ArgumentError, "#{self.class} cannot be empty" if language.nil? && region.nil? && script.nil?
 
     {
-      language: language,
-      script:   script,
-      region:   region,
+      language:,
+      script:,
+      region:,
     }.each do |key, value|
       next if value.nil?
 

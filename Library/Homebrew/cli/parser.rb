@@ -159,8 +159,8 @@ module Homebrew
         global_switch = names.first.is_a?(Symbol)
         return if global_switch
 
-        description = option_description(description, *names, hidden: hidden)
-        process_option(*names, description, type: :switch, hidden: hidden) unless disable
+        description = option_description(description, *names, hidden:)
+        process_option(*names, description, type: :switch, hidden:) unless disable
 
         if replacement || disable
           description += " (#{disable ? "disabled" : "deprecated"}#{"; replaced by #{replacement}" if replacement})"
@@ -171,11 +171,11 @@ module Homebrew
           odeprecated "the `#{names.first}` switch", replacement, disable: disable if !replacement.nil? || disable
           value = true if names.none? { |name| name.start_with?("--[no-]") }
 
-          set_switch(*names, value: value, from: :args)
+          set_switch(*names, value:, from: :args)
         end
 
         names.each do |name|
-          set_constraints(name, depends_on: depends_on)
+          set_constraints(name, depends_on:)
         end
 
         env_value = value_for_env(env)
@@ -211,8 +211,8 @@ module Homebrew
 
       def comma_array(name, description: nil, hidden: false)
         name = name.chomp "="
-        description = option_description(description, name, hidden: hidden)
-        process_option(name, description, type: :comma_array, hidden: hidden)
+        description = option_description(description, name, hidden:)
+        process_option(name, description, type: :comma_array, hidden:)
         @parser.on(name, OptionParser::REQUIRED_ARGUMENT, Array, *wrap_option_desc(description)) do |list|
           @args[option_to_name(name)] = list
         end
@@ -225,9 +225,9 @@ module Homebrew
           [OptionParser::OPTIONAL_ARGUMENT, :optional_flag]
         end
         names.map! { |name| name.chomp "=" }
-        description = option_description(description, *names, hidden: hidden)
+        description = option_description(description, *names, hidden:)
         if replacement.nil?
-          process_option(*names, description, type: flag_type, hidden: hidden)
+          process_option(*names, description, type: flag_type, hidden:)
         else
           description += " (disabled#{"; replaced by #{replacement}" if replacement.present?})"
         end
@@ -240,7 +240,7 @@ module Homebrew
         end
 
         names.each do |name|
-          set_constraints(name, depends_on: depends_on)
+          set_constraints(name, depends_on:)
         end
       end
 
@@ -329,9 +329,9 @@ module Homebrew
               name = o.flag
               description = "`#{f.name}`: #{o.description}"
               if name.end_with? "="
-                flag   name, description: description
+                flag(name, description:)
               else
-                switch name, description: description
+                switch name, description:
               end
 
               conflicts "--cask", name
@@ -339,7 +339,7 @@ module Homebrew
           end
         end
 
-        remaining, non_options = parse_remaining(argv, ignore_invalid_options: ignore_invalid_options)
+        remaining, non_options = parse_remaining(argv, ignore_invalid_options:)
 
         named_args = if ignore_invalid_options
           []
@@ -601,11 +601,11 @@ module Homebrew
 
         exception = if @min_named_args && @max_named_args && @min_named_args == @max_named_args &&
                        args.size != @max_named_args
-          NumberOfNamedArgumentsError.new(@min_named_args, types: types)
+          NumberOfNamedArgumentsError.new(@min_named_args, types:)
         elsif @min_named_args && args.size < @min_named_args
-          MinNamedArgumentsError.new(@min_named_args, types: types)
+          MinNamedArgumentsError.new(@min_named_args, types:)
         elsif @max_named_args && args.size > @max_named_args
-          MaxNamedArgumentsError.new(@max_named_args, types: types)
+          MaxNamedArgumentsError.new(@max_named_args, types:)
         end
 
         raise exception if exception
@@ -679,7 +679,7 @@ module Homebrew
 
     class OptionConflictError < UsageError
       def initialize(args)
-        args_list = args.map(&Formatter.public_method(:option))
+        args_list = args.map { Formatter.option(_1) }
                         .join(" and ")
         super "Options #{args_list} are mutually exclusive."
       end

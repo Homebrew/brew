@@ -100,7 +100,7 @@ class GitHubRunnerMatrix
     raise "Unexpected platform: #{platform}" if VALID_PLATFORMS.exclude?(platform)
     raise "Unexpected arch: #{arch}" if VALID_ARCHES.exclude?(arch)
 
-    runner = GitHubRunner.new(platform: platform, arch: arch, spec: spec, macos_version: macos_version)
+    runner = GitHubRunner.new(platform:, arch:, spec:, macos_version:)
     runner.active = active_runner?(runner)
     runner.freeze
   end
@@ -147,7 +147,7 @@ class GitHubRunnerMatrix
 
       spec = MacOSRunnerSpec.new(
         name:    "macOS #{version}-x86_64",
-        runner:  runner,
+        runner:,
         timeout: runner_timeout,
         cleanup: !runner.end_with?(ephemeral_suffix),
       )
@@ -167,7 +167,7 @@ class GitHubRunnerMatrix
       runner_timeout /= 2 if runner_timeout < GITHUB_ACTIONS_LONG_TIMEOUT
       spec = MacOSRunnerSpec.new(
         name:    "macOS #{version}-arm64",
-        runner:  runner,
+        runner:,
         timeout: runner_timeout,
         cleanup: !runner.end_with?(ephemeral_suffix),
       )
@@ -214,7 +214,7 @@ class GitHubRunnerMatrix
       next false unless formula.public_send(:"#{arch}_compatible?")
       next false if macos_version.present? && !formula.compatible_with?(macos_version)
 
-      compatible_dependents = formula.dependents(platform: platform, arch: arch, macos_version: macos_version&.to_sym)
+      compatible_dependents = formula.dependents(platform:, arch:, macos_version: macos_version&.to_sym)
                                      .dup
 
       compatible_dependents.select! do |dependent_f|

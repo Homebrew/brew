@@ -18,7 +18,17 @@ module Cask
     COPY_XATTRS_SCRIPT = (HOMEBREW_LIBRARY_PATH/"cask/utils/copy-xattrs.swift").freeze
 
     def self.swift
-      @swift ||= DevelopmentTools.locate("swift")
+      @swift ||= begin
+        # /usr/bin/swift (which runs via xcrun) adds `/usr/local/include` to the top of the include path,
+        # which allows really broken local setups to break our Swift usage here. Using the underlying
+        # Swift executable directly however (returned by `xcrun -find`) avoids this CPATH mess.
+        xcrun_swift = ::Utils.popen_read("/usr/bin/xcrun", "-find", "swift", err: :close).chomp
+        if $CHILD_STATUS.success? && File.executable?(xcrun_swift)
+          xcrun_swift
+        else
+          DevelopmentTools.locate("swift")
+        end
+      end
     end
     private_class_method :swift
 

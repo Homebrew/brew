@@ -269,7 +269,7 @@ module Homebrew
                .sort_by(&:name)
                .reject { |f| Cleanup.skip_clean_formula?(f) }
                .each do |formula|
-          cleanup_formula(formula, quiet: quiet, ds_store: false, cache_db: false)
+          cleanup_formula(formula, quiet:, ds_store: false, cache_db: false)
         end
 
         Cleanup.autoremove(dry_run: dry_run?) if Homebrew::EnvConfig.autoremove?
@@ -326,16 +326,16 @@ module Homebrew
     end
 
     def cleanup_formula(formula, quiet: false, ds_store: true, cache_db: true)
-      formula.eligible_kegs_for_cleanup(quiet: quiet)
+      formula.eligible_kegs_for_cleanup(quiet:)
              .each(&method(:cleanup_keg))
-      cleanup_cache(Pathname.glob(cache/"#{formula.name}--*").map { |path| { path: path, type: nil } })
+      cleanup_cache(Pathname.glob(cache/"#{formula.name}--*").map { |path| { path:, type: nil } })
       rm_ds_store([formula.rack]) if ds_store
       cleanup_cache_db(formula.rack) if cache_db
       cleanup_lockfiles(FormulaLock.new(formula.name).path)
     end
 
     def cleanup_cask(cask, ds_store: true)
-      cleanup_cache(Pathname.glob(cache/"Cask/#{cask.token}--*").map { |path| { path: path, type: :cask } })
+      cleanup_cache(Pathname.glob(cache/"Cask/#{cask.token}--*").map { |path| { path:, type: :cask } })
       rm_ds_store([cask.caskroom_path]) if ds_store
       cleanup_lockfiles(CaskLock.new(cask.token).path)
     end
@@ -363,10 +363,10 @@ module Homebrew
       api_source_files = (cache/"api-source").glob("*/*/*/*/*") # org/repo/git_head/type/file.rb
       gh_actions_artifacts = (cache/"gh-actions-artifact").directory? ? (cache/"gh-actions-artifact").children : []
 
-      files.map { |path| { path: path, type: nil } } +
-        cask_files.map { |path| { path: path, type: :cask } } +
-        api_source_files.map { |path| { path: path, type: :api_source } } +
-        gh_actions_artifacts.map { |path| { path: path, type: :gh_actions_artifact } }
+      files.map { |path| { path:, type: nil } } +
+        cask_files.map { |path| { path:, type: :cask } } +
+        api_source_files.map { |path| { path:, type: :api_source } } +
+        gh_actions_artifacts.map { |path| { path:, type: :gh_actions_artifact } }
     end
 
     def cleanup_empty_api_source_directories(directory = cache/"api-source")
@@ -600,6 +600,7 @@ module Homebrew
       ObserverPathnameExtension.reset_counts!
 
       dirs = []
+      children_count = {}
 
       Keg::MUST_EXIST_SUBDIRECTORIES.each do |dir|
         next unless dir.directory?
@@ -612,21 +613,24 @@ module Homebrew
 
               if dry_run?
                 puts "Would remove (broken link): #{path}"
+                children_count[path.dirname] -= 1 if children_count.key?(path.dirname)
               else
                 path.unlink
               end
             end
           elsif path.directory? && Keg::MUST_EXIST_SUBDIRECTORIES.exclude?(path)
             dirs << path
+            children_count[path] = path.children.length if dry_run?
           end
         end
       end
 
       dirs.reverse_each do |d|
-        if dry_run? && d.children.empty?
-          puts "Would remove (empty directory): #{d}"
-        else
+        if !dry_run?
           d.rmdir_if_possible
+        elsif children_count[d].zero?
+          puts "Would remove (empty directory): #{d}"
+          children_count[d.dirname] -= 1 if children_count.key?(d.dirname)
         end
       end
 

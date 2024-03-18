@@ -109,14 +109,14 @@ module Homebrew
         def self.find_versions(url:, regex: nil, provided_content: nil, homebrew_curl: false, **_unused, &block)
           raise ArgumentError, "#{Utils.demodulize(T.must(name))} requires a `strategy` block" if block.blank?
 
-          match_data = { matches: {}, regex: regex, url: url }
+          match_data = { matches: {}, regex:, url: }
           return match_data if url.blank? || block.blank?
 
           content = if provided_content.is_a?(String)
             match_data[:cached] = true
             provided_content
           else
-            match_data.merge!(Strategy.page_content(url, homebrew_curl: homebrew_curl))
+            match_data.merge!(Strategy.page_content(url, homebrew_curl:))
             match_data[:content]
           end
           return match_data if content.blank?

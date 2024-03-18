@@ -18,8 +18,8 @@ class Formula
     ).returns(T::Array[String])
   }
   def std_cmake_args(install_prefix: prefix, install_libdir: "lib", find_framework: "LAST")
-    args = generic_std_cmake_args(install_prefix: install_prefix, install_libdir: install_libdir,
-                                  find_framework: find_framework)
+    args = generic_std_cmake_args(install_prefix:, install_libdir:,
+                                  find_framework:)
 
     # Avoid false positives for clock_gettime support on 10.11.
     # CMake cache entries for other weak symbols may be added here as needed.

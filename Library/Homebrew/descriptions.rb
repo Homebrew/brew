@@ -11,7 +11,7 @@ require "search"
 class Descriptions
   # Given a regex, find all formulae whose specified fields contain a match.
   def self.search(string_or_regex, field, cache_store, eval_all = Homebrew::EnvConfig.eval_all?)
-    cache_store.populate_if_empty!(eval_all: eval_all)
+    cache_store.populate_if_empty!(eval_all:)
 
     results = case field
     when :name

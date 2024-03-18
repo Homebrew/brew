@@ -96,7 +96,7 @@ RSpec.describe "brew pr-pull" do
           safe_system Utils::Git.git, "commit", formula_file, "-m", "revision"
           File.write(formula_file, formula_version)
           safe_system Utils::Git.git, "commit", formula_file, "-m", "version", "--author=#{secondary_author}"
-          described_class.autosquash!(original_hash, tap: tap)
+          described_class.autosquash!(original_hash, tap:)
           expect(tap.git_repo.commit_message).to include("foo 2.0")
           expect(tap.git_repo.commit_message).to include("Co-authored-by: #{secondary_author}")
         end
@@ -111,7 +111,7 @@ RSpec.describe "brew pr-pull" do
           safe_system Utils::Git.git, "commit", cask_file, "-m", "rebuild"
           File.write(cask_file, cask_version)
           safe_system Utils::Git.git, "commit", cask_file, "-m", "version", "--author=#{secondary_author}"
-          described_class.autosquash!(original_hash, tap: tap)
+          described_class.autosquash!(original_hash, tap:)
           git_repo = GitRepository.new(path)
           expect(git_repo.commit_message).to include("food 2.0")
           expect(git_repo.commit_message).to include("Co-authored-by: #{secondary_author}")

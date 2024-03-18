@@ -12,7 +12,7 @@ class String
   end
 
   def c(config: nil)
-    Cask::CaskLoader.load(self, config: config)
+    Cask::CaskLoader.load(self, config:)
   end
 end
 
@@ -22,7 +22,7 @@ class Symbol
   end
 
   def c(config: nil)
-    to_s.c(config: config)
+    to_s.c(config:)
   end
 end
 

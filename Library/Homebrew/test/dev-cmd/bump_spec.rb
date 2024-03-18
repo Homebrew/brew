@@ -20,4 +20,11 @@ RSpec.describe "brew bump" do
         .and be_a_success
     end
   end
+
+  it "gives an error for `--tap` with official taps", :integration_test do
+    expect { brew "bump", "--tap", "Homebrew/core" }
+      .to output(/Invalid usage/).to_stderr
+      .and not_to_output.to_stdout
+      .and be_a_failure
+  end
 end

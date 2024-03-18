@@ -34,8 +34,7 @@ module Homebrew
              replacement: false,
              disable:     true
       switch "--[no-]force-auto-update",
-             description: "Auto-update tap even if it is not hosted on GitHub. By default, only taps " \
-                          "hosted on GitHub are auto-updated (for performance reasons)."
+             hidden: true
       switch "--custom-remote",
              description: "Install or change a tap with a custom remote. Useful for mirrors."
       switch "--repair",
@@ -55,21 +54,20 @@ module Homebrew
     args = tap_args.parse
 
     if args.repair?
-      Tap.select(&:installed?).each do |tap|
+      Tap.installed.each do |tap|
         tap.link_completions_and_manpages
         tap.fix_remote_configuration
       end
     elsif args.no_named?
-      puts Tap.select(&:installed?)
+      puts Tap.installed.sort_by(&:name)
     else
       tap = Tap.fetch(args.named.first)
       begin
-        tap.install clone_target:      args.named.second,
-                    force_auto_update: args.force_auto_update?,
-                    custom_remote:     args.custom_remote?,
-                    quiet:             args.quiet?,
-                    verify:            args.eval_all? || Homebrew::EnvConfig.eval_all?,
-                    force:             args.force?
+        tap.install clone_target:  args.named.second,
+                    custom_remote: args.custom_remote?,
+                    quiet:         args.quiet?,
+                    verify:        args.eval_all? || Homebrew::EnvConfig.eval_all?,
+                    force:         args.force?
       rescue TapRemoteMismatchError, TapNoCustomRemoteError => e
         odie e
       rescue TapAlreadyTappedError

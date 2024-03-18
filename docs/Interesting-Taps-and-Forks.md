@@ -8,6 +8,8 @@ Your taps are Git repositories located at `$(brew --repository)/Library/Taps`.
 
 ## Unsupported interesting taps
 
+* [DomT4/autoupdate](https://github.com/DomT4/homebrew-autoupdate): An external command to automatically run `brew update` (and optionally `brew upgrade` or `brew cleanup`) in the background with `launchd`.
+
 * [homebrew-ffmpeg/ffmpeg](https://github.com/homebrew-ffmpeg/homebrew-ffmpeg): A tap for FFmpeg with additional options, including nonfree additions.
 
 * [denji/nginx](https://github.com/denji/homebrew-nginx): A tap for NGINX modules, intended for its `nginx-full` formula which includes more module options.

@@ -75,6 +75,9 @@ module Homebrew
           env:         :display_install_times,
           description: "Print install times for each package at the end of the run.",
         }],
+        [:switch, "--overwrite", {
+          description: "Delete files that already exist in the prefix while linking.",
+        }],
       ].each do |args|
         options = args.pop
         send(*args, **options)
@@ -137,8 +140,8 @@ module Homebrew
     only_upgrade_formulae = formulae.present? && casks.blank?
     only_upgrade_casks = casks.present? && formulae.blank?
 
-    upgrade_outdated_formulae(formulae, args: args) unless only_upgrade_casks
-    upgrade_outdated_casks(casks, args: args) unless only_upgrade_formulae
+    upgrade_outdated_formulae(formulae, args:) unless only_upgrade_casks
+    upgrade_outdated_casks(casks, args:) unless only_upgrade_formulae
 
     Cleanup.periodic_clean!(dry_run: args.dry_run?)
 
@@ -229,6 +232,7 @@ module Homebrew
       keep_tmp:                   args.keep_tmp?,
       debug_symbols:              args.debug_symbols?,
       force:                      args.force?,
+      overwrite:                  args.overwrite?,
       debug:                      args.debug?,
       quiet:                      args.quiet?,
       verbose:                    args.verbose?,
@@ -269,7 +273,7 @@ module Homebrew
       require_sha:         args.require_sha?,
       skip_cask_deps:      args.skip_cask_deps?,
       verbose:             args.verbose?,
-      args:                args,
+      args:,
     )
   end
 end

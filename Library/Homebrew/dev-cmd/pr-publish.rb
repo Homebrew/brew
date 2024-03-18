@@ -23,7 +23,7 @@ module Homebrew
              description: "Branch to use the workflow from (default: `master`)."
       flag   "--message=",
              depends_on:  "--autosquash",
-             description: "Message to include when autosquashing revision bumps, deletions, and rebuilds."
+             description: "Message to include when autosquashing revision bumps, deletions and rebuilds."
       flag   "--tap=",
              description: "Target tap repository (default: `homebrew/core`)."
       flag   "--workflow=",

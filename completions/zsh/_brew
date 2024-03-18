@@ -496,13 +496,14 @@ _brew_bump() {
     '--debug[Display any debugging information]' \
     '--full-name[Print formulae/casks with fully-qualified names]' \
     '--help[Show this message]' \
-    '--installed[Check formulae and casks that are currently installed]' \
+    '(--tap)--installed[Check formulae and casks that are currently installed]' \
     '--limit[Limit number of package results returned]' \
     '--no-fork[Don'\''t try to fork the repository]' \
     '(--open-pr)--no-pull-requests[Do not retrieve pull requests from GitHub]' \
     '(--no-pull-requests)--open-pr[Open a pull request for the new version if none have been opened yet]' \
     '--quiet[Make some output more quiet]' \
     '--start-with[Letter or word that the list of package results should alphabetically follow]' \
+    '(--installed)--tap[Check formulae and casks within the given tap, specified as user`/`repo]' \
     '--verbose[Make some output more verbose]' \
     - formula \
     '(--cask)--formula[Check only formulae]' \
@@ -546,6 +547,7 @@ _brew_bump_formula_pr() {
     '--force[Remove all mirrors if `--mirror` was not specified]' \
     '--fork-org[Use the specified GitHub organization for forking]' \
     '--help[Show this message]' \
+    '--install-dependencies[Install missing dependencies required to update resources]' \
     '--message[Prepend message to the default pull request message]' \
     '--mirror[Use the specified URL as a mirror URL. If URL is a comma-separated list of URLs, multiple mirrors will be added]' \
     '(--strict --online)--no-audit[Don'\''t run `brew audit` before opening the PR]' \
@@ -680,7 +682,7 @@ _brew_contributions() {
     '--from[Date (ISO-8601 format) to start searching contributions. Omitting this flag searches the last year]' \
     '--help[Show this message]' \
     '--quiet[Make some output more quiet]' \
-    '--repositories[Specify a comma-separated list of repositories to search. Supported repositories: `brew`, `core`, `cask`, `aliases`, `autoupdate`, `bundle`, `command-not-found`, `test-bot`, `services`, `cask-fonts` and `cask-versions`. Omitting this flag, or specifying `--repositories=primary`, searches only the main repositories: brew,core,cask. Specifying `--repositories=all`, searches all repositories. ]' \
+    '--repositories[Specify a comma-separated list of repositories to search. Supported repositories: `brew`, `core`, `cask`, `aliases`, `bundle`, `command-not-found`, `test-bot`, `services`, `cask-fonts` and `cask-versions`. Omitting this flag, or specifying `--repositories=primary`, searches only the main repositories: brew,core,cask. Specifying `--repositories=all`, searches all repositories. ]' \
     '--to[Date (ISO-8601 format) to stop searching contributions]' \
     '--user[Specify a comma-separated list of GitHub usernames or email addresses to find contributions from. Omitting this flag searches maintainers]' \
     '--verbose[Make some output more verbose]'
@@ -1467,7 +1469,7 @@ _brew_pr_publish() {
     '--debug[Display any debugging information]' \
     '--help[Show this message]' \
     '--large-runner[Run the upload job on a large runner]' \
-    '--message[Message to include when autosquashing revision bumps, deletions, and rebuilds]' \
+    '--message[Message to include when autosquashing revision bumps, deletions and rebuilds]' \
     '--quiet[Make some output more quiet]' \
     '--tap[Target tap repository (default: `homebrew/core`)]' \
     '--verbose[Make some output more verbose]' \
@@ -1487,7 +1489,7 @@ _brew_pr_pull() {
     '--help[Show this message]' \
     '--ignore-missing-artifacts[Comma-separated list of workflows which can be ignored if they have not been run]' \
     '--keep-old[If the formula specifies a rebuild version, attempt to preserve its value in the generated DSL]' \
-    '--message[Message to include when autosquashing revision bumps, deletions, and rebuilds]' \
+    '--message[Message to include when autosquashing revision bumps, deletions and rebuilds]' \
     '--no-cherry-pick[Do not cherry-pick commits from the pull request branch]' \
     '--no-commit[Do not generate a new commit before uploading]' \
     '--no-upload[Download the bottles but don'\''t upload them]' \
@@ -1995,6 +1997,7 @@ _brew_update_python_resources() {
     '--extra-packages[Include these additional packages when finding resources]' \
     '--help[Show this message]' \
     '--ignore-non-pypi-packages[Don'\''t fail if formula is not a PyPI package]' \
+    '--install-dependencies[Install missing dependencies required to update resources]' \
     '--package-name[Use the specified package-name when finding resources for formula. If no package name is specified, it will be inferred from the formula'\''s stable URL]' \
     '--print-only[Print the updated resource blocks instead of changing formula]' \
     '--quiet[Make some output more quiet]' \
@@ -2068,6 +2071,7 @@ _brew_upgrade() {
     '(--formula)--mdimporterdir[Target location for Spotlight Plugins (default: `~/Library/Spotlight`)]' \
     '--no-binaries[Disable/enable linking of helper executables (default: enabled)]' \
     '--no-quarantine[Disable/enable quarantining of downloads (default: enabled)]' \
+    '(--cask)--overwrite[Delete files that already exist in the prefix while linking]' \
     '(--formula)--prefpanedir[Target location for Preference Panes (default: `~/Library/PreferencePanes`)]' \
     '(--formula)--qlplugindir[Target location for Quick Look Plugins (default: `~/Library/QuickLook`)]' \
     '(--formula)--quarantine[Disable/enable quarantining of downloads (default: enabled)]' \
@@ -2083,7 +2087,7 @@ _brew_upgrade() {
     '(--casks --skip-cask-deps --greedy --greedy-latest --greedy-auto-updates --binaries --require-sha --quarantine --appdir --keyboard-layoutdir --colorpickerdir --prefpanedir --qlplugindir --mdimporterdir --dictionarydir --fontdir --servicedir --input-methoddir --internet-plugindir --audio-unit-plugindir --vst-plugindir --vst3-plugindir --screen-saverdir --language)--formula[Treat all named arguments as formulae. If no named arguments are specified, upgrade only outdated formulae]' \
     '*::installed_formula:__brew_installed_formulae' \
     - installed_cask \
-    '(--formulae --build-from-source --interactive --force-bottle --fetch-HEAD --ignore-pinned --keep-tmp --debug-symbols --display-times)--cask[Treat all named arguments as casks. If no named arguments are specified, upgrade only outdated casks]' \
+    '(--formulae --build-from-source --interactive --force-bottle --fetch-HEAD --ignore-pinned --keep-tmp --debug-symbols --display-times --overwrite)--cask[Treat all named arguments as casks. If no named arguments are specified, upgrade only outdated casks]' \
     '*::installed_cask:__brew_installed_casks'
 }
 

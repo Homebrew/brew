@@ -83,18 +83,18 @@ module RuboCop
         ARCH_OPTIONS.each do |arch_option|
           else_method = (arch_option == :arm) ? :on_intel : :on_arm
           if_arch_node_search(body_node, arch: :"#{arch_option}?") do |if_node, else_node|
-            next if node_is_allowed?(if_node, allowed_methods: allowed_methods, allowed_blocks: allowed_blocks)
+            next if node_is_allowed?(if_node, allowed_methods:, allowed_blocks:)
 
             if_statement_problem(if_node, "if Hardware::CPU.#{arch_option}?", "on_#{arch_option}",
-                                 else_method: else_method, else_node: else_node)
+                                 else_method:, else_node:)
           end
         end
 
         [:arch, :arm?, :intel?].each do |method|
-          hardware_cpu_search(body_node, method: method) do |method_node|
+          hardware_cpu_search(body_node, method:) do |method_node|
             # These should already be caught by `if_arch_node_search`
             next if method_node.parent.source.start_with? "if #{method_node.source}"
-            next if node_is_allowed?(method_node, allowed_methods: allowed_methods, allowed_blocks: allowed_blocks)
+            next if node_is_allowed?(method_node, allowed_methods:, allowed_blocks:)
 
             offending_node(method_node)
             problem "Don't use `#{method_node.source}`, use `on_arm` and `on_intel` blocks instead."
@@ -110,10 +110,10 @@ module RuboCop
             [:linux?, :on_macos]
           end
           if_base_os_node_search(body_node, base_os: os_method) do |if_node, else_node|
-            next if node_is_allowed?(if_node, allowed_methods: allowed_methods, allowed_blocks: allowed_blocks)
+            next if node_is_allowed?(if_node, allowed_methods:, allowed_blocks:)
 
             if_statement_problem(if_node, "if OS.#{os_method}", "on_#{base_os_option}",
-                                 else_method: else_method, else_node: else_node)
+                                 else_method:, else_node:)
           end
         end
       end
@@ -122,7 +122,7 @@ module RuboCop
                                            recommend_on_system: true)
         MACOS_VERSION_OPTIONS.each do |macos_version_option|
           if_macos_version_node_search(body_node, os_version: macos_version_option) do |if_node, operator, else_node|
-            next if node_is_allowed?(if_node, allowed_methods: allowed_methods, allowed_blocks: allowed_blocks)
+            next if node_is_allowed?(if_node, allowed_methods:, allowed_blocks:)
 
             autocorrect = else_node.blank? && MACOS_VERSION_CONDITIONALS.key?(operator.to_s)
             on_system_method_string = if recommend_on_system && operator == :<
@@ -136,13 +136,13 @@ module RuboCop
             end
 
             if_statement_problem(if_node, "if MacOS.version #{operator} :#{macos_version_option}",
-                                 on_system_method_string, autocorrect: autocorrect)
+                                 on_system_method_string, autocorrect:)
           end
 
           macos_version_comparison_search(body_node, os_version: macos_version_option) do |method_node|
             # These should already be caught by `if_macos_version_node_search`
             next if method_node.parent.source.start_with? "if #{method_node.source}"
-            next if node_is_allowed?(method_node, allowed_methods: allowed_methods, allowed_blocks: allowed_blocks)
+            next if node_is_allowed?(method_node, allowed_methods:, allowed_blocks:)
 
             offending_node(method_node)
             problem "Don't use `#{method_node.source}`, use `on_{macos_version}` blocks instead."
@@ -153,7 +153,7 @@ module RuboCop
       def audit_macos_references(body_node, allowed_methods: [], allowed_blocks: [])
         MACOS_MODULE_NAMES.each do |macos_module_name|
           find_const(body_node, macos_module_name) do |node|
-            next if node_is_allowed?(node, allowed_methods: allowed_methods, allowed_blocks: allowed_blocks)
+            next if node_is_allowed?(node, allowed_methods:, allowed_blocks:)
 
             offending_node(node)
             problem "Don't use `#{macos_module_name}` where it could be called on Linux."

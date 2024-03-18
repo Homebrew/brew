@@ -10,10 +10,10 @@ class MacOSRunnerSpec < T::Struct
   sig { returns({ name: String, runner: String, timeout: Integer, cleanup: T::Boolean }) }
   def to_h
     {
-      name:    name,
-      runner:  runner,
-      timeout: timeout,
-      cleanup: cleanup,
+      name:,
+      runner:,
+      timeout:,
+      cleanup:,
     }
   end
 end

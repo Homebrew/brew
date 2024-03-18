@@ -59,7 +59,7 @@ module Homebrew
 
       # Display command-specific (or generic) help in response to `UsageError`.
       if usage_error
-        $stderr.puts path ? command_help(cmd, path, remaining_args: remaining_args) : HOMEBREW_HELP
+        $stderr.puts path ? command_help(cmd, path, remaining_args:) : HOMEBREW_HELP
         $stderr.puts
         onoe usage_error
         exit 1
@@ -69,7 +69,7 @@ module Homebrew
       return if path.nil?
 
       # Display help for internal command (or generic help if undocumented).
-      puts command_help(cmd, path, remaining_args: remaining_args)
+      puts command_help(cmd, path, remaining_args:)
       exit 0
     end
 
@@ -78,7 +78,7 @@ module Homebrew
       output = if Commands.valid_internal_cmd?(cmd) ||
                   Commands.valid_internal_dev_cmd?(cmd) ||
                   Commands.external_ruby_v2_cmd_path(cmd)
-        parser_help(path, remaining_args: remaining_args)
+        parser_help(path, remaining_args:)
       end
 
       output ||= comment_help(path)

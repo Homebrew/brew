@@ -29,7 +29,7 @@ class LinkageChecker
   private
 
   def check_dylibs(rebuild_cache:)
-    generic_check_dylibs(rebuild_cache: rebuild_cache)
+    generic_check_dylibs(rebuild_cache:)
 
     # glibc and gcc are implicit dependencies.
     # No other linkage to system libraries is expected or desired.

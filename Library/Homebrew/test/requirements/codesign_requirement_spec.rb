@@ -4,7 +4,7 @@ require "requirements/codesign_requirement"
 
 RSpec.describe CodesignRequirement do
   subject(:requirement) do
-    described_class.new([{ identity: identity, with: with, url: url }])
+    described_class.new([{ identity:, with:, url: }])
   end
 
   let(:identity) { "lldb_codesign" }

@@ -9,7 +9,6 @@ OFFICIAL_CASK_TAPS = %w[
 
 OFFICIAL_CMD_TAPS = {
   "homebrew/aliases"           => ["alias", "unalias"],
-  "homebrew/autoupdate"        => ["autoupdate"],
   "homebrew/bundle"            => ["bundle"],
   "homebrew/command-not-found" => ["command-not-found-init", "which-formula", "which-update"],
   "homebrew/test-bot"          => ["test-bot"],

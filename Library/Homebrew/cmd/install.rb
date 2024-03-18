@@ -258,7 +258,7 @@ module Homebrew
           require_sha:    args.require_sha?,
           skip_cask_deps: args.skip_cask_deps?,
           verbose:        args.verbose?,
-          args:           args,
+          args:,
         )
       end
     end

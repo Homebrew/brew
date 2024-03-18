@@ -72,6 +72,8 @@ module Homebrew
                           "or specified <version>."
       switch "-f", "--force",
              description: "Remove all mirrors if `--mirror` was not specified."
+      switch "--install-dependencies",
+             description: "Install missing dependencies required to update resources."
       flag   "--python-package-name=",
              description: "Use the specified <package-name> when finding Python resources for <formula>. " \
                           "If no package name is specified, it will be inferred from the formula's stable URL."
@@ -112,19 +114,13 @@ module Homebrew
     odie "This formula is not in a tap!" if formula.tap.blank?
     odie "This formula's tap is not a Git repository!" unless formula.tap.git?
 
-    if ENV.fetch("HOMEBREW_TEST_BOT_AUTOBUMP", nil).blank? &&
-       (formula.tap.core_tap? &&
-       (autobump_file_path = formula.tap.path/Tap::HOMEBREW_TAP_AUTOBUMP_FILE) &&
-       autobump_file_path.exist? &&
-       autobump_file_path.readlines(chomp: true).include?(formula.name))
-      odie <<~EOS
-        Whoops, the #{formula.name} formula has its version update
-        pull requests automatically opened by BrewTestBot!
-        We'd still love your contributions, though, so try another one
-        that's not in the autobump list:
-          #{Formatter.url("#{formula.tap.remote}/blob/master/.github/autobump.txt")}
-      EOS
-    end
+    odie <<~EOS unless formula.tap.allow_bump?(formula.name)
+      Whoops, the #{formula.name} formula has its version update
+      pull requests automatically opened by BrewTestBot!
+      We'd still love your contributions, though, so try another one
+      that's not in the autobump list:
+        #{Formatter.url("#{formula.tap.remote}/blob/master/.github/autobump.txt")}
+    EOS
 
     formula_spec = formula.stable
     odie "#{formula}: no stable specification found!" if formula_spec.blank?
@@ -138,10 +134,10 @@ module Homebrew
     remote_branch = formula.tap.git_repo.origin_branch_name
     previous_branch = "-"
 
-    check_open_pull_requests(formula, tap_remote_repo, args: args)
+    check_open_pull_requests(formula, tap_remote_repo, args:)
 
     new_version = args.version
-    check_new_version(formula, tap_remote_repo, version: new_version, args: args) if new_version.present?
+    check_new_version(formula, tap_remote_repo, version: new_version, args:) if new_version.present?
 
     opoo "This formula has patches that may be resolved upstream." if formula.patchlist.present?
     if formula.resources.any? { |resource| !resource.name.start_with?("homebrew-") }
@@ -153,7 +149,7 @@ module Homebrew
     new_mirror ||= determine_mirror(new_url)
     new_mirrors ||= [new_mirror] if new_mirror.present?
 
-    check_for_mirrors(formula, old_mirrors, new_mirrors, args: args) if new_url.present?
+    check_for_mirrors(formula, old_mirrors, new_mirrors, args:) if new_url.present?
 
     old_hash = formula_spec.checksum&.hexdigest
     new_hash = args.sha256
@@ -165,10 +161,10 @@ module Homebrew
     old_version = old_formula_version.to_s
     forced_version = new_version.present?
     new_url_hash = if new_url.present? && new_hash.present?
-      check_new_version(formula, tap_remote_repo, url: new_url, args: args) if new_version.blank?
+      check_new_version(formula, tap_remote_repo, url: new_url, args:) if new_version.blank?
       true
     elsif new_tag.present? && new_revision.present?
-      check_new_version(formula, tap_remote_repo, url: old_url, tag: new_tag, args: args) if new_version.blank?
+      check_new_version(formula, tap_remote_repo, url: old_url, tag: new_tag, args:) if new_version.blank?
       false
     elsif old_hash.blank?
       if new_tag.blank? && new_version.blank? && new_revision.blank?
@@ -183,7 +179,7 @@ module Homebrew
             and old tag are both #{new_tag}.
           EOS
         end
-        check_new_version(formula, tap_remote_repo, url: old_url, tag: new_tag, args: args) if new_version.blank?
+        check_new_version(formula, tap_remote_repo, url: old_url, tag: new_tag, args:) if new_version.blank?
         resource_path, forced_version = fetch_resource_and_forced_version(formula, new_version, old_url, tag: new_tag)
         new_revision = Utils.popen_read("git", "-C", resource_path.to_s, "rev-parse", "-q", "--verify", "HEAD")
         new_revision = new_revision.strip
@@ -210,7 +206,7 @@ module Homebrew
             #{new_url}
         EOS
       end
-      check_new_version(formula, tap_remote_repo, url: new_url, args: args) if new_version.blank?
+      check_new_version(formula, tap_remote_repo, url: new_url, args:) if new_version.blank?
       resource_path, forced_version = fetch_resource_and_forced_version(formula, new_version, new_url)
       Utils::Tar.validate_file(resource_path)
       new_hash = resource_path.sha256
@@ -343,11 +339,12 @@ module Homebrew
                                                         package_name:             args.python_package_name,
                                                         extra_packages:           args.python_extra_packages,
                                                         exclude_packages:         args.python_exclude_packages,
+                                                        install_dependencies:     args.install_dependencies?,
                                                         silent:                   args.quiet?,
                                                         ignore_non_pypi_packages: true
     end
 
-    run_audit(formula, alias_rename, old_contents, args: args)
+    run_audit(formula, alias_rename, old_contents, args:)
 
     pr_message = "Created with `brew bump-formula-pr`."
     if resources_checked.nil? && formula.resources.any? { |resource| !resource.name.start_with?("homebrew-") }
@@ -382,18 +379,18 @@ module Homebrew
 
     pr_info = {
       sourcefile_path:  formula.path,
-      old_contents:     old_contents,
+      old_contents:,
       additional_files: alias_rename,
-      remote:           remote,
-      remote_branch:    remote_branch,
+      remote:,
+      remote_branch:,
       branch_name:      "bump-#{formula.name}-#{new_formula_version}",
       commit_message:   "#{formula.name} #{new_formula_version}",
-      previous_branch:  previous_branch,
+      previous_branch:,
       tap:              formula.tap,
-      tap_remote_repo:  tap_remote_repo,
-      pr_message:       pr_message,
+      tap_remote_repo:,
+      pr_message:,
     }
-    GitHub.create_bump_pr(pr_info, args: args)
+    GitHub.create_bump_pr(pr_info, args:)
   end
 
   def determine_mirror(url)
@@ -459,7 +456,7 @@ module Homebrew
     end
 
     check_throttle(formula, version)
-    check_closed_pull_requests(formula, tap_remote_repo, args: args, version: version)
+    check_closed_pull_requests(formula, tap_remote_repo, args:, version:)
   end
 
   def check_throttle(formula, new_version)
@@ -475,7 +472,7 @@ module Homebrew
   def check_closed_pull_requests(formula, tap_remote_repo, args:, version:)
     # if we haven't already found open requests, try for an exact match across closed requests
     GitHub.check_for_duplicate_pull_requests(formula.name, tap_remote_repo,
-                                             version: version,
+                                             version:,
                                              state:   "closed",
                                              file:    formula.path.relative_path_from(formula.tap.path).to_s,
                                              quiet:   args.quiet?)

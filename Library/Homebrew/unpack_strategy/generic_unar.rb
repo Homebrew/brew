@@ -29,7 +29,7 @@ module UnpackStrategy
                         "-output-directory", unpack_dir, "--", path
                       ],
                       env:     { "PATH" => PATH.new(Formula["unar"].opt_bin, ENV.fetch("PATH")) },
-                      verbose: verbose
+                      verbose:
     end
   end
 end

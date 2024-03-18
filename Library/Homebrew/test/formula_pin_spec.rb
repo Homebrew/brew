@@ -6,7 +6,7 @@ RSpec.describe FormulaPin do
   subject(:formula_pin) { described_class.new(formula) }
 
   let(:name) { "double" }
-  let(:formula) { instance_double(Formula, name: name, rack: HOMEBREW_CELLAR/name) }
+  let(:formula) { instance_double(Formula, name:, rack: HOMEBREW_CELLAR/name) }
 
   before do
     formula.rack.mkpath

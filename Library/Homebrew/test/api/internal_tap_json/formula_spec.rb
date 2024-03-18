@@ -17,7 +17,7 @@ RSpec.describe "Internal Tap JSON -- Formula" do
     end
 
     it "creates the expected hash" do
-      api_hash = CoreTap.instance.to_api_hash
+      api_hash = CoreTap.instance.to_internal_api_hash
       api_hash["tap_git_head"] = tap_git_head # tricky to mock
 
       expect(JSON.pretty_generate(api_hash)).to eq(internal_tap_json)
@@ -33,7 +33,7 @@ RSpec.describe "Internal Tap JSON -- Formula" do
         .with("internal/v3/homebrew-core.jws.json")
         .and_return([JSON.parse(internal_tap_json), false])
 
-      # `Tap.reverse_tap_migrations_renames` looks for renames in every
+      # `Tap.tap_migration_oldnames` looks for renames in every
       # tap so `CoreCaskTap.tap_migrations` gets called and tries to
       # fetch stuff from the API. This just avoids errors.
       allow(Homebrew::API).to receive(:fetch_json_api_file)

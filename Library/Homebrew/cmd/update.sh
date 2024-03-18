@@ -622,6 +622,26 @@ EOS
       [[ -n "${SKIP_FETCH_CORE_REPOSITORY}" && "${DIR}" == "${HOMEBREW_CORE_REPOSITORY}" ]] && continue
     fi
 
+    if [[ -z "${UPDATING_MESSAGE_SHOWN}" ]]
+    then
+      if [[ -n "${HOMEBREW_UPDATE_AUTO}" ]]
+      then
+        # Outputting a command but don't want to run it, hence single quotes.
+        # shellcheck disable=SC2016
+        ohai 'Auto-updating Homebrew...' >&2
+        if [[ -z "${HOMEBREW_NO_ENV_HINTS}" && -z "${HOMEBREW_AUTO_UPDATE_SECS}" ]]
+        then
+          # shellcheck disable=SC2016
+          echo 'Adjust how often this is run with HOMEBREW_AUTO_UPDATE_SECS or disable with' >&2
+          # shellcheck disable=SC2016
+          echo 'HOMEBREW_NO_AUTO_UPDATE. Hide these hints with HOMEBREW_NO_ENV_HINTS (see `man brew`).' >&2
+        fi
+      else
+        ohai 'Updating Homebrew...' >&2
+      fi
+      UPDATING_MESSAGE_SHOWN=1
+    fi
+
     # The upstream repository's default branch may not be master;
     # check refs/remotes/origin/HEAD to see what the default
     # origin branch name is, and use that. If not set, fall back to "master".
@@ -693,14 +713,6 @@ EOS
         # Touch FETCH_HEAD to confirm we've checked for an update.
         [[ -f "${DIR}/.git/FETCH_HEAD" ]] && touch "${DIR}/.git/FETCH_HEAD"
         [[ -z "${HOMEBREW_UPDATE_FORCE}" ]] && [[ "${UPSTREAM_SHA_HTTP_CODE}" == "304" ]] && exit
-      elif [[ -n "${HOMEBREW_UPDATE_AUTO}" ]]
-      then
-        FORCE_AUTO_UPDATE="$(git config homebrew.forceautoupdate 2>/dev/null || echo "false")"
-        if [[ "${FORCE_AUTO_UPDATE}" != "true" ]]
-        then
-          # Don't try to do a `git fetch` that may take longer than expected.
-          exit
-        fi
       fi
 
       # HOMEBREW_VERBOSE isn't modified here so ignore subshell warning.

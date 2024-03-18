@@ -43,7 +43,7 @@ module RuboCop
 
             message = format(MSG_EXISTS_AND_NOT_EMPTY, prefer: replacement(var1), current: node.source)
 
-            add_offense(node, message: message) do |corrector|
+            add_offense(node, message:) do |corrector|
               autocorrect(corrector, node)
             end
           end

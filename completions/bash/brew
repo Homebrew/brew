@@ -448,6 +448,7 @@ _brew_bump() {
       --open-pr
       --quiet
       --start-with
+      --tap
       --verbose
       "
       return
@@ -500,6 +501,7 @@ _brew_bump_formula_pr() {
       --force
       --fork-org
       --help
+      --install-dependencies
       --message
       --mirror
       --no-audit
@@ -2471,6 +2473,7 @@ _brew_update_python_resources() {
       --extra-packages
       --help
       --ignore-non-pypi-packages
+      --install-dependencies
       --package-name
       --print-only
       --quiet
@@ -2573,6 +2576,7 @@ _brew_upgrade() {
       --mdimporterdir
       --no-binaries
       --no-quarantine
+      --overwrite
       --prefpanedir
       --qlplugindir
       --quarantine

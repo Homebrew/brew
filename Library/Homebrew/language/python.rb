@@ -6,6 +6,7 @@ module Language
   #
   # @api public
   module Python
+    sig { params(python: T.any(String, Pathname)).returns(T.nilable(Version)) }
     def self.major_minor_version(python)
       version = `#{python} --version 2>&1`.chomp[/(\d\.\d+)/, 1]
       return unless version
@@ -13,10 +14,12 @@ module Language
       Version.new(version)
     end
 
+    sig { params(python: T.any(String, Pathname)).returns(Pathname) }
     def self.homebrew_site_packages(python = "python3.7")
       HOMEBREW_PREFIX/site_packages(python)
     end
 
+    sig { params(python: T.any(String, Pathname)).returns(String) }
     def self.site_packages(python = "python3.7")
       if (python == "pypy") || (python == "pypy3")
         "site-packages"
@@ -38,7 +41,7 @@ module Language
         ENV["PYTHONPATH"] = if python_formula.latest_version_installed?
           nil
         else
-          homebrew_site_packages(python)
+          homebrew_site_packages(python).to_s
         end
         block&.call python, version
       end
@@ -70,6 +73,7 @@ module Language
       quiet_system python, "-c", script
     end
 
+    sig { params(prefix: Pathname, python: T.any(String, Pathname)).returns(T::Array[String]) }
     def self.setup_install_args(prefix, python = "python3")
       shim = <<~PYTHON
         import setuptools, tokenize
@@ -110,8 +114,8 @@ module Language
         )
       end
 
-      sig { params(formula: T.untyped, use_python_from_path: T::Boolean).returns(Utils::Shebang::RewriteInfo) }
-      def detected_python_shebang(formula = self, use_python_from_path: false)
+      sig { params(formula: Formula, use_python_from_path: T::Boolean).returns(Utils::Shebang::RewriteInfo) }
+      def detected_python_shebang(formula = T.cast(self, Formula), use_python_from_path: false)
         python_path = if use_python_from_path
           "/usr/bin/env python3"
         else
@@ -137,12 +141,21 @@ module Language
       #
       # @param venv_root [Pathname, String] the path to the root of the virtualenv
       #   (often `libexec/"venv"`)
-      # @param python [String] which interpreter to use (e.g. "python3"
+      # @param python [String, Pathname] which interpreter to use (e.g. "python3"
       #   or "python3.x")
       # @param formula [Formula] the active {Formula}
       # @return [Virtualenv] a {Virtualenv} instance
-      def virtualenv_create(venv_root, python = "python", formula = self, system_site_packages: true,
-                            without_pip: true)
+      sig {
+        params(
+          venv_root:            T.any(String, Pathname),
+          python:               T.any(String, Pathname),
+          formula:              Formula,
+          system_site_packages: T::Boolean,
+          without_pip:          T::Boolean,
+        ).returns(Virtualenv)
+      }
+      def virtualenv_create(venv_root, python = "python", formula = T.cast(self, Formula),
+                            system_site_packages: true, without_pip: true)
         # Limit deprecation to 3.12+ for now (or if we can't determine the version).
         # Some used this argument for setuptools, which we no longer bundle since 3.12.
         unless without_pip
@@ -154,7 +167,7 @@ module Language
 
         ENV.refurbish_args
         venv = Virtualenv.new formula, venv_root, python
-        venv.create(system_site_packages: system_site_packages, without_pip: without_pip)
+        venv.create(system_site_packages:, without_pip:)
 
         # Find any Python bindings provided by recursive dependencies
         formula_deps = formula.recursive_dependencies
@@ -169,9 +182,7 @@ module Language
 
           "import site; site.addsitedir('#{dep_site_packages}')\n"
         end
-        unless pth_contents.empty?
-          (venv_root/Language::Python.site_packages(python)/"homebrew_deps.pth").write pth_contents.join
-        end
+        (venv.site_packages/"homebrew_deps.pth").write pth_contents.join unless pth_contents.empty?
 
         venv
       end
@@ -184,6 +195,7 @@ module Language
       # corresponding depends_on statement.
       #
       # @api private
+      sig { params(python: String).returns(T::Boolean) }
       def needs_python?(python)
         return true if build.with?(python)
 
@@ -197,6 +209,14 @@ module Language
       # formula preference for python or python@x.y, or to resolve an ambiguous
       # case where it's not clear whether python or python@x.y should be the
       # default guess.
+      sig {
+        params(
+          using:                T.nilable(String),
+          system_site_packages: T::Boolean,
+          without_pip:          T::Boolean,
+          link_manpages:        T::Boolean,
+        ).returns(Virtualenv)
+      }
       def virtualenv_install_with_resources(using: nil, system_site_packages: true, without_pip: true,
                                             link_manpages: false)
         python = using
@@ -205,13 +225,13 @@ module Language
           raise FormulaUnknownPythonError, self if wanted.empty?
           raise FormulaAmbiguousPythonError, self if wanted.size > 1
 
-          python = wanted.first
+          python = T.must(wanted.first)
           python = "python3" if python == "python"
         end
-        venv = virtualenv_create(libexec, python.delete("@"), system_site_packages: system_site_packages,
-                                                              without_pip:          without_pip)
+        venv = virtualenv_create(libexec, python.delete("@"), system_site_packages:,
+                                                              without_pip:)
         venv.pip_install resources
-        venv.pip_install_and_link(buildpath, link_manpages: link_manpages)
+        venv.pip_install_and_link(T.must(buildpath), link_manpages:)
         venv
       end
 
@@ -229,17 +249,29 @@ module Language
         # @param formula [Formula] the active {Formula}
         # @param venv_root [Pathname, String] the path to the root of the
         #   virtualenv
-        # @param python [String] which interpreter to use, e.g. "python" or
-        #   "python2"
+        # @param python [String, Pathname] which interpreter to use, e.g.
+        #   "python" or "python2"
+        sig { params(formula: Formula, venv_root: T.any(String, Pathname), python: T.any(String, Pathname)).void }
         def initialize(formula, venv_root, python)
           @formula = formula
           @venv_root = Pathname.new(venv_root)
           @python = python
         end
 
+        sig { returns(Pathname) }
+        def root
+          @venv_root
+        end
+
+        sig { returns(Pathname) }
+        def site_packages
+          @venv_root/Language::Python.site_packages(@python)
+        end
+
         # Obtains a copy of the virtualenv library and creates a new virtualenv on disk.
         #
         # @return [void]
+        sig { params(system_site_packages: T::Boolean, without_pip: T::Boolean).void }
         def create(system_site_packages: true, without_pip: true)
           return if (@venv_root/"bin/python").exist?
 
@@ -285,14 +317,20 @@ module Language
         #   Multiline strings are allowed and treated as though they represent
         #   the contents of a `requirements.txt`.
         # @return [void]
+        sig {
+          params(
+            targets:         T.any(String, Pathname, Resource, T::Array[T.any(String, Pathname, Resource)]),
+            build_isolation: T::Boolean,
+          ).void
+        }
         def pip_install(targets, build_isolation: true)
           targets = Array(targets)
           targets.each do |t|
-            if t.respond_to? :stage
-              t.stage { do_install(Pathname.pwd, build_isolation: build_isolation) }
+            if t.is_a?(Resource)
+              t.stage { do_install(Pathname.pwd, build_isolation:) }
             else
-              t = t.lines.map(&:strip) if t.respond_to?(:lines) && t.include?("\n")
-              do_install(t, build_isolation: build_isolation)
+              t = t.lines.map(&:strip) if t.is_a?(String) && t.include?("\n")
+              do_install(t, build_isolation:)
             end
           end
         end
@@ -302,11 +340,18 @@ module Language
         #
         # @param (see #pip_install)
         # @return (see #pip_install)
+        sig {
+          params(
+            targets:         T.any(String, Pathname, Resource, T::Array[T.any(String, Pathname, Resource)]),
+            link_manpages:   T::Boolean,
+            build_isolation: T::Boolean,
+          ).void
+        }
         def pip_install_and_link(targets, link_manpages: false, build_isolation: true)
           bin_before = Dir[@venv_root/"bin/*"].to_set
           man_before = Dir[@venv_root/"share/man/man*/*"].to_set if link_manpages
 
-          pip_install(targets, build_isolation: build_isolation)
+          pip_install(targets, build_isolation:)
 
           bin_after = Dir[@venv_root/"bin/*"].to_set
           bin_to_link = (bin_after - bin_before).to_a
@@ -322,9 +367,15 @@ module Language
 
         private
 
+        sig {
+          params(
+            targets:         T.any(String, Pathname, T::Array[T.any(String, Pathname)]),
+            build_isolation: T::Boolean,
+          ).void
+        }
         def do_install(targets, build_isolation: true)
           targets = Array(targets)
-          args = @formula.std_pip_args(prefix: false, build_isolation: build_isolation)
+          args = @formula.std_pip_args(prefix: false, build_isolation:)
           @formula.system @python, "-m", "pip", "--python=#{@venv_root}/bin/python", "install", *args, *targets
         end
       end

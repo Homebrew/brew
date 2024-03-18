@@ -41,7 +41,7 @@ module Homebrew
 
     update = args.update? || args.update_all?
     groups = update ? Homebrew.valid_gem_groups : ["typecheck"]
-    Homebrew.install_bundler_gems!(groups: groups)
+    Homebrew.install_bundler_gems!(groups:)
 
     HOMEBREW_LIBRARY_PATH.cd do
       if update

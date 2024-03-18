@@ -62,7 +62,7 @@ module Readall
       readall_namespace = "ReadallNamespace"
       readall_formula_class = Formulary.load_formula(formula_name, file, formula_contents, readall_namespace,
                                                      flags: [], ignore_errors: false)
-      readall_formula = readall_formula_class.new(formula_name, file, :stable, tap: tap)
+      readall_formula = readall_formula_class.new(formula_name, file, :stable, tap:)
       readall_formula.to_hash
       # TODO: Remove check for MACOS_MODULE_REGEX once the `MacOS` module is undefined on Linux
       cache[:valid_formulae][file] = if readall_formula.on_system_blocks_exist? ||
@@ -99,12 +99,12 @@ module Readall
       success = false unless valid_casks?(tap)
     else
       os_arch_combinations.each do |os, arch|
-        bottle_tag = Utils::Bottles::Tag.new(system: os, arch: arch)
+        bottle_tag = Utils::Bottles::Tag.new(system: os, arch:)
         next unless bottle_tag.valid_combination?
 
-        Homebrew::SimulateSystem.with os: os, arch: arch do
-          success = false unless valid_formulae?(tap, bottle_tag: bottle_tag)
-          success = false unless valid_casks?(tap, os_name: os, arch: arch)
+        Homebrew::SimulateSystem.with(os:, arch:) do
+          success = false unless valid_formulae?(tap, bottle_tag:)
+          success = false unless valid_casks?(tap, os_name: os, arch:)
         end
       end
     end

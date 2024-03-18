@@ -53,7 +53,7 @@ RSpec.describe "brew bottle" do
   end
 
   describe "--merge", :integration_test do
-    let(:core_tap) { CoreTap.new }
+    let(:core_tap) { CoreTap.instance }
     let(:tarball) do
       if OS.linux?
         TEST_FIXTURE_DIR/"tarballs/testball-0.1-linux.tbz"

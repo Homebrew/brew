@@ -15,11 +15,13 @@ class Cleaner
   include Context
 
   # Create a cleaner for the given formula.
+  sig { params(formula: Formula).void }
   def initialize(formula)
     @formula = formula
   end
 
   # Clean the keg of the formula.
+  sig { void }
   def clean
     ObserverPathnameExtension.reset_counts!
 
@@ -48,8 +50,7 @@ class Cleaner
     # [1]: https://github.com/Homebrew/brew/pull/11597
     # [2]: https://github.com/Homebrew/homebrew-core/issues/100190
     # [3]: https://github.com/Homebrew/brew/pull/13215
-    Dir.glob(@formula.info/"**/dir").each do |file|
-      info_dir_file = Pathname(file)
+    @formula.info.glob("**/dir").each do |info_dir_file|
       next unless info_dir_file.file?
       next if info_dir_file == @formula.info/@formula.name/"dir"
       next if @formula.skip_clean?(info_dir_file)
@@ -58,12 +59,14 @@ class Cleaner
     end
 
     rewrite_shebangs
+    clean_python_metadata
 
     prune
   end
 
   private
 
+  sig { params(path: Pathname).void }
   def observe_file_removal(path)
     path.extend(ObserverPathnameExtension).unlink if path.exist?
   end
@@ -71,6 +74,7 @@ class Cleaner
   # Removes any empty directories in the formula's prefix subtree
   # Keeps any empty directories protected by skip_clean
   # Removes any unresolved symlinks
+  sig { void }
   def prune
     dirs = []
     symlinks = []
@@ -99,6 +103,7 @@ class Cleaner
     end
   end
 
+  sig { params(path: Pathname).returns(T::Boolean) }
   def executable_path?(path)
     path.text_executable? || path.executable?
   end
@@ -118,6 +123,7 @@ class Cleaner
   #
   # lib may have a large directory tree (see Erlang for instance), and
   # clean_dir applies cleaning rules to the entire tree
+  sig { params(directory: Pathname).void }
   def clean_dir(directory)
     directory.find do |path|
       path.extend(ObserverPathnameExtension)
@@ -146,6 +152,7 @@ class Cleaner
     end
   end
 
+  sig { void }
   def rewrite_shebangs
     require "language/perl"
     require "utils/shebang"
@@ -160,6 +167,30 @@ class Cleaner
         Utils::Shebang.rewrite_shebang Language::Perl::Shebang.detected_perl_shebang(@formula), path
       rescue ShebangDetectionError
         break
+      end
+    end
+  end
+
+  # Remove non-reproducible pip direct_url.json which records the /tmp build directory.
+  # Remove RECORD files to prevent changes to the installed Python package.
+  # Modify INSTALLER to provide information that files are managed by brew.
+  #
+  # @see https://packaging.python.org/en/latest/specifications/recording-installed-packages/
+  sig { void }
+  def clean_python_metadata
+    basepath = @formula.prefix.realpath
+    basepath.find do |path|
+      Find.prune if @formula.skip_clean?(path)
+
+      next if path.directory? || path.symlink?
+      next if path.parent.extname != ".dist-info"
+
+      case path.basename.to_s
+      when "direct_url.json", "RECORD"
+        observe_file_removal path
+      when "INSTALLER"
+        odebug "Modifying #{path} contents from #{path.read.chomp} to brew"
+        path.atomic_write("brew\n")
       end
     end
   end

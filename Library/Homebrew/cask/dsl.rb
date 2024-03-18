@@ -209,9 +209,9 @@ module Cask
 
       set_unique_stanza(:url, args.empty? && options.empty? && !block) do
         if block
-          URL.new(*args, **options, caller_location: caller_location, dsl: self, &block)
+          URL.new(*args, **options, caller_location:, dsl: self, &block)
         else
-          URL.new(*args, **options, caller_location: caller_location)
+          URL.new(*args, **options, caller_location:)
         end
       end
     end
@@ -249,7 +249,7 @@ module Cask
       set_unique_stanza(:sha256, should_return) do
         @on_system_blocks_exist = true if arm.present? || intel.present?
 
-        val = arg || on_arch_conditional(arm: arm, intel: intel)
+        val = arg || on_arch_conditional(arm:, intel:)
         case val
         when :no_check
           val
@@ -268,7 +268,7 @@ module Cask
       set_unique_stanza(:arch, should_return) do
         @on_system_blocks_exist = true
 
-        on_arch_conditional(arm: arm, intel: intel)
+        on_arch_conditional(arm:, intel:)
       end
     end
 

@@ -192,7 +192,7 @@ module Homebrew
               url,
               wanted_headers:    ["location", "content-disposition"],
               use_homebrew_curl: homebrew_curl,
-              user_agent:        user_agent,
+              user_agent:,
               **DEFAULT_CURL_OPTIONS,
             )
           rescue ErrorDuringExecution
@@ -222,7 +222,7 @@ module Homebrew
             *PAGE_CONTENT_CURL_ARGS, url,
             **DEFAULT_CURL_OPTIONS,
             use_homebrew_curl: homebrew_curl,
-            user_agent:        user_agent
+            user_agent:
           )
           next unless status.success?
 

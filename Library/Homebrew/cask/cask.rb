@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 require "attrable"
+require "bundle_version"
 require "cask/cask_loader"
 require "cask/config"
 require "cask/dsl"
@@ -86,7 +87,7 @@ module Cask
     sig { returns(T::Array[String]) }
     def old_tokens
       @old_tokens ||= if (tap = self.tap)
-        Tap.reverse_tap_migrations_renames.fetch("#{tap}/#{token}", []) +
+        Tap.tap_migration_oldnames(tap, token) +
           tap.cask_reverse_renames.fetch(token, [])
       else
         []
@@ -115,7 +116,7 @@ module Cask
     def timestamped_versions(caskroom_path: self.caskroom_path)
       relative_paths = Pathname.glob(metadata_timestamped_path(
                                        version: "*", timestamp: "*",
-                                       caskroom_path: caskroom_path
+                                       caskroom_path:
                                      ))
                                .map { |p| p.relative_path_from(p.parent.parent) }
       # Sorbet is unaware that Pathname is sortable: https://github.com/sorbet/sorbet/issues/6844
@@ -176,8 +177,20 @@ module Cask
 
     sig { returns(T.nilable(String)) }
     def installed_version
+      return unless (installed_caskfile = self.installed_caskfile)
+
       # <caskroom_path>/.metadata/<version>/<timestamp>/Casks/<token>.{rb,json} -> <version>
-      installed_caskfile&.dirname&.dirname&.dirname&.basename&.to_s
+      installed_caskfile.dirname.dirname.dirname.basename.to_s
+    end
+
+    sig { returns(T.nilable(String)) }
+    def bundle_short_version
+      bundle_version&.short_version
+    end
+
+    sig { returns(T.nilable(String)) }
+    def bundle_long_version
+      bundle_version&.version
     end
 
     def config_path
@@ -214,8 +227,8 @@ module Cask
     end
 
     def outdated?(greedy: false, greedy_latest: false, greedy_auto_updates: false)
-      !outdated_version(greedy: greedy, greedy_latest: greedy_latest,
-                        greedy_auto_updates: greedy_auto_updates).nil?
+      !outdated_version(greedy:, greedy_latest:,
+                        greedy_auto_updates:).nil?
     end
 
     def outdated_version(greedy: false, greedy_latest: false, greedy_auto_updates: false)
@@ -239,8 +252,8 @@ module Cask
     def outdated_info(greedy, verbose, json, greedy_latest, greedy_auto_updates)
       return token if !verbose && !json
 
-      installed_version = outdated_version(greedy: greedy, greedy_latest: greedy_latest,
-                                           greedy_auto_updates: greedy_auto_updates).to_s
+      installed_version = outdated_version(greedy:, greedy_latest:,
+                                           greedy_auto_updates:).to_s
 
       if json
         {
@@ -264,7 +277,7 @@ module Cask
 
     def ruby_source_checksum
       @ruby_source_checksum ||= {
-        "sha256" => Digest::SHA256.file(sourcefile_path).hexdigest,
+        sha256: Digest::SHA256.file(sourcefile_path).hexdigest,
       }.freeze
     end
 
@@ -283,7 +296,11 @@ module Cask
       @tap_git_head = json_cask.fetch(:tap_git_head, "HEAD")
 
       @ruby_source_path = json_cask[:ruby_source_path]
-      @ruby_source_checksum = json_cask[:ruby_source_checksum].freeze
+
+      # TODO: Clean this up when we deprecate the current JSON API and move to the internal JSON v3.
+      ruby_source_sha256 = json_cask.dig(:ruby_source_checksum, :sha256)
+      ruby_source_sha256 ||= json_cask[:ruby_source_sha256]
+      @ruby_source_checksum = { "sha256" => ruby_source_sha256 }
     end
 
     def to_s
@@ -304,14 +321,6 @@ module Cask
     alias == eql?
 
     def to_h
-      url_specs = url&.specs.dup
-      case url_specs&.dig(:user_agent)
-      when :default
-        url_specs.delete(:user_agent)
-      when Symbol
-        url_specs[:user_agent] = ":#{url_specs[:user_agent]}"
-      end
-
       {
         "token"                => token,
         "full_token"           => full_name,
@@ -326,6 +335,8 @@ module Cask
         "version"              => version,
         "installed"            => installed_version,
         "installed_time"       => install_time&.to_i,
+        "bundle_version"       => bundle_long_version,
+        "bundle_short_version" => bundle_short_version,
         "outdated"             => outdated?,
         "sha256"               => sha256,
         "artifacts"            => artifacts_list,
@@ -347,27 +358,76 @@ module Cask
       }
     end
 
-    def to_hash_with_variations
-      if loaded_from_api? && !Homebrew::EnvConfig.no_install_from_api?
-        return api_to_local_hash(Homebrew::API::Cask.all_casks[token].dup)
+    # @private
+    def to_internal_api_hash
+      api_hash = {
+        "token"              => token,
+        "name"               => name,
+        "desc"               => desc,
+        "homepage"           => homepage,
+        "url"                => url,
+        "version"            => version,
+        "sha256"             => sha256,
+        "artifacts"          => artifacts_list(compact: true),
+        "ruby_source_path"   => ruby_source_path,
+        "ruby_source_sha256" => ruby_source_checksum.fetch(:sha256),
+      }
+
+      if deprecation_date
+        api_hash["deprecation_date"] = deprecation_date
+        api_hash["deprecation_reason"] = deprecation_reason
       end
 
-      hash = to_h
-      variations = {}
+      if disable_date
+        api_hash["disable_date"] = disable_date
+        api_hash["disable_reason"] = disable_reason
+      end
 
-      hash_keys_to_skip = %w[outdated installed versions]
+      if (url_specs_hash = url_specs).present?
+        api_hash["url_specs"] = url_specs_hash
+      end
+
+      api_hash["caskfile_only"] = true if caskfile_only?
+      api_hash["conflicts_with"] = conflicts_with if conflicts_with.present?
+      api_hash["depends_on"] = depends_on if depends_on.present?
+      api_hash["container"] = container.pairs if container
+      api_hash["caveats"] = caveats if caveats.present?
+      api_hash["auto_updates"] = auto_updates if auto_updates
+      api_hash["languages"] = languages if languages.present?
+
+      api_hash
+    end
+
+    HASH_KEYS_TO_SKIP = %w[outdated installed versions].freeze
+    private_constant :HASH_KEYS_TO_SKIP
+
+    # @private
+    def to_hash_with_variations(hash_method: :to_h)
+      case hash_method
+      when :to_h
+        if loaded_from_api? && !Homebrew::EnvConfig.no_install_from_api?
+          return api_to_local_hash(Homebrew::API::Cask.all_casks[token].dup)
+        end
+      when :to_internal_api_hash
+        raise ArgumentError, "API Hash must be generated from Ruby source files" if loaded_from_api?
+      else
+        raise ArgumentError, "Unknown hash method #{hash_method.inspect}"
+      end
+
+      hash = public_send(hash_method)
+      variations = {}
 
       if @dsl.on_system_blocks_exist?
         begin
           MacOSVersion::SYMBOLS.keys.product(OnSystem::ARCH_OPTIONS).each do |os, arch|
-            bottle_tag = ::Utils::Bottles::Tag.new(system: os, arch: arch)
+            bottle_tag = ::Utils::Bottles::Tag.new(system: os, arch:)
             next unless bottle_tag.valid_combination?
 
-            Homebrew::SimulateSystem.with os: os, arch: arch do
+            Homebrew::SimulateSystem.with(os:, arch:) do
               refresh
 
-              to_h.each do |key, value|
-                next if hash_keys_to_skip.include? key
+              public_send(hash_method).each do |key, value|
+                next if HASH_KEYS_TO_SKIP.include? key
                 next if value.to_s == hash[key].to_s
 
                 variations[bottle_tag.to_sym] ||= {}
@@ -380,11 +440,19 @@ module Cask
         end
       end
 
-      hash["variations"] = variations
+      hash["variations"] = variations if hash_method != :to_internal_api_hash || variations.present?
       hash
     end
 
     private
+
+    sig { returns(T.nilable(Homebrew::BundleVersion)) }
+    def bundle_version
+      @bundle_version ||= if (bundle = artifacts.find { |a| a.is_a?(Artifact::App) }&.target) &&
+                             (plist = Pathname("#{bundle}/Contents/Info.plist")) && plist.exist?
+        Homebrew::BundleVersion.from_info_plist(plist)
+      end
+    end
 
     def api_to_local_hash(hash)
       hash["token"] = token
@@ -393,14 +461,26 @@ module Cask
       hash
     end
 
-    def artifacts_list
-      artifacts.map do |artifact|
+    def artifacts_list(compact: false)
+      artifacts.filter_map do |artifact|
         case artifact
         when Artifact::AbstractFlightBlock
           # Only indicate whether this block is used as we don't load it from the API
-          { artifact.summarize => nil }
+          # We can skip this entirely once we move to internal JSON v3.
+          { artifact.summarize => nil } unless compact
         else
           { artifact.class.dsl_key => artifact.to_args }
+        end
+      end
+    end
+
+    def url_specs
+      url&.specs.dup.tap do |url_specs|
+        case url_specs&.dig(:user_agent)
+        when :default
+          url_specs.delete(:user_agent)
+        when Symbol
+          url_specs[:user_agent] = ":#{url_specs[:user_agent]}"
         end
       end
     end

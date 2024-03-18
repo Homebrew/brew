@@ -38,7 +38,7 @@ if homebrew_bootsnap_enabled
 
     Bootsnap.setup(
       cache_dir:          cache,
-      ignore_directories: ignore_directories,
+      ignore_directories:,
       load_path_cache:    true,
       compile_cache_iseq: true,
       compile_cache_yaml: true,

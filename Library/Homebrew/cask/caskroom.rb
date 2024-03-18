@@ -44,18 +44,18 @@ module Cask
              "We'll set permissions properly so we won't need sudo in the future."
       end
 
-      SystemCommand.run("/bin/mkdir", args: ["-p", path], sudo: sudo)
-      SystemCommand.run("/bin/chmod", args: ["g+rwx", path], sudo: sudo)
-      SystemCommand.run("/usr/sbin/chown", args: [User.current, path], sudo: sudo)
-      SystemCommand.run("/usr/bin/chgrp", args: ["admin", path], sudo: sudo)
+      SystemCommand.run("/bin/mkdir", args: ["-p", path], sudo:)
+      SystemCommand.run("/bin/chmod", args: ["g+rwx", path], sudo:)
+      SystemCommand.run("/usr/sbin/chown", args: [User.current, path], sudo:)
+      SystemCommand.run("/usr/bin/chgrp", args: ["admin", path], sudo:)
     end
 
     sig { params(config: T.nilable(Config)).returns(T::Array[Cask]) }
     def self.casks(config: nil)
       tokens.sort.filter_map do |token|
-        CaskLoader.load(token, config: config, warn: false)
+        CaskLoader.load(token, config:, warn: false)
       rescue TapCaskAmbiguityError => e
-        T.must(e.loaders.first).load(config: config)
+        T.must(e.loaders.first).load(config:)
       rescue
         # Don't blow up because of a single unavailable cask.
         nil

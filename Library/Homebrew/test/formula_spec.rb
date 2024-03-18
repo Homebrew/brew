@@ -30,7 +30,7 @@ RSpec.describe Formula do
     let(:alias_name) { "baz@1" }
     let(:alias_path) { CoreTap.instance.alias_dir/alias_name }
     let(:f) { klass.new(name, path, spec) }
-    let(:f_alias) { klass.new(name, path, spec, alias_path: alias_path) }
+    let(:f_alias) { klass.new(name, path, spec, alias_path:) }
 
     specify "formula instantiation" do
       expect(f.name).to eq(name)
@@ -59,7 +59,7 @@ RSpec.describe Formula do
     end
 
     context "when in a Tap" do
-      let(:tap) { Tap.new("foo", "bar") }
+      let(:tap) { Tap.fetch("foo", "bar") }
       let(:path) { (tap.path/"Formula/#{name}.rb") }
       let(:full_name) { "#{tap.user}/#{tap.repo}/#{name}" }
       let(:full_alias_name) { "#{tap.user}/#{tap.repo}/#{alias_name}" }
@@ -204,10 +204,10 @@ RSpec.describe Formula do
   end
 
   example "installed alias with tap" do
-    tap = Tap.new("user", "repo")
+    tap = Tap.fetch("user", "repo")
     name = "foo"
     path = tap.path/"Formula/#{name}.rb"
-    f = formula name, path: path do
+    f = formula(name, path:) do
       url "foo-1.0"
     end
 
@@ -417,7 +417,7 @@ RSpec.describe Formula do
     example "alias paths with build options" do
       alias_path = (CoreTap.instance.alias_dir/"another_name")
 
-      f = formula alias_path: alias_path do
+      f = formula(alias_path:) do
         url "foo-1.0"
       end
       f.build = BuildOptions.new(Options.new, f.options)
@@ -430,7 +430,7 @@ RSpec.describe Formula do
       alias_path = (CoreTap.instance.alias_dir/"another_name")
       source_path = CoreTap.instance.new_formula_path("another_other_name")
 
-      f = formula alias_path: alias_path do
+      f = formula(alias_path:) do
         url "foo-1.0"
       end
       f.build = Tab.new(source: { "path" => source_path.to_s })
@@ -443,7 +443,7 @@ RSpec.describe Formula do
       alias_path = (CoreTap.instance.alias_dir/"another_name")
       source_path = (CoreTap.instance.alias_dir/"another_other_name")
 
-      f = formula alias_path: alias_path do
+      f = formula(alias_path:) do
         url "foo-1.0"
       end
       f.build = Tab.new(source: { "path" => source_path.to_s })
@@ -847,7 +847,7 @@ RSpec.describe Formula do
       allow(tap_loader).to receive(:get_formula).and_raise(RuntimeError, "tried resolving tap formula")
       allow(Formulary).to receive(:loader_for).with("foo/bar/f1", from: nil).and_return(tap_loader)
 
-      f2_path = Tap.new("baz", "qux").path/"Formula/f2.rb"
+      f2_path = Tap.fetch("baz", "qux").path/"Formula/f2.rb"
       stub_formula_loader(formula("f2", path: f2_path) { url("f2-1.0") }, "baz/qux/f2")
 
       f3 = formula "f3" do
@@ -859,7 +859,7 @@ RSpec.describe Formula do
 
       expect(f3.runtime_dependencies.map(&:name)).to eq(["baz/qux/f2"])
 
-      f1_path = Tap.new("foo", "bar").path/"Formula/f1.rb"
+      f1_path = Tap.fetch("foo", "bar").path/"Formula/f1.rb"
       stub_formula_loader(formula("f1", path: f1_path) { url("f1-1.0") }, "foo/bar/f1")
 
       f3.build = BuildOptions.new(Options.create(["--with-f1"]), f3.options)
@@ -956,7 +956,7 @@ RSpec.describe Formula do
   end
 
   describe "#to_hash_with_variations", :needs_macos do
-    let(:formula_path) { CoreTap.new.new_formula_path("foo-variations") }
+    let(:formula_path) { CoreTap.instance.new_formula_path("foo-variations") }
     let(:formula_content) do
       <<~RUBY
         class FooVariations < Formula
@@ -1227,13 +1227,13 @@ RSpec.describe Formula do
 
   describe "alias changes" do
     let(:f) do
-      formula "formula_name", alias_path: alias_path do
+      formula("formula_name", alias_path:) do
         url "foo-1.0"
       end
     end
 
     let(:new_formula) do
-      formula "new_formula_name", alias_path: alias_path do
+      formula("new_formula_name", alias_path:) do
         url "foo-1.1"
       end
     end
@@ -1415,7 +1415,7 @@ RSpec.describe Formula do
     end
 
     example "outdated old alias targets installed" do
-      f = formula alias_path: alias_path do
+      f = formula(alias_path:) do
         url "foo-1.0"
       end
 
@@ -1430,7 +1430,7 @@ RSpec.describe Formula do
     end
 
     example "outdated old alias targets not installed" do
-      f = formula alias_path: alias_path do
+      f = formula(alias_path:) do
         url "foo-1.0"
       end
 

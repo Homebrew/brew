@@ -25,7 +25,7 @@ module RuboCop
 
           corrected_url = url.sub("before_comma", "csv.first")&.sub("after_comma", "csv.second")
 
-          add_offense(url_node.loc.expression, message: format(MSG_CSV, url: url)) do |corrector|
+          add_offense(url_node.loc.expression, message: format(MSG_CSV, url:)) do |corrector|
             corrector.replace(url_node.source_range, corrected_url)
           end
         end

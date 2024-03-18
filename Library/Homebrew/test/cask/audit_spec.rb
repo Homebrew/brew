@@ -52,13 +52,13 @@ RSpec.describe Cask::Audit, :cask do
   let(:token_conflicts) { nil }
   let(:signing) { nil }
   let(:audit) do
-    described_class.new(cask, online:          online,
-                              strict:          strict,
-                              new_cask:        new_cask,
-                              token_conflicts: token_conflicts,
-                              signing:         signing,
-                              only:            only,
-                              except:          except)
+    described_class.new(cask, online:,
+                              strict:,
+                              new_cask:,
+                              token_conflicts:,
+                              signing:,
+                              only:,
+                              except:)
   end
 
   describe "#new" do
@@ -220,11 +220,43 @@ RSpec.describe Cask::Audit, :cask do
         end
       end
 
-      context "when cask token has @" do
-        let(:cask_token) { "app@stuff" }
+      context "when cask token is @-versioned with number" do
+        let(:cask_token) { "app@10" }
+
+        it "does not fail" do
+          expect(run).to pass
+        end
+      end
+
+      context "when cask token is @-versioned with word" do
+        let(:cask_token) { "app@beta" }
+
+        it "does not fail" do
+          expect(run).to pass
+        end
+      end
+
+      context "when cask token has multiple @" do
+        let(:cask_token) { "app@stuff@beta" }
 
         it "fails" do
-          expect(run).to error_with(/@ should be replaced by -at-/)
+          expect(run).to error_with(/@ unrelated to versioning should be replaced by -at-/)
+        end
+      end
+
+      context "when cask token has a hyphen followed by @" do
+        let(:cask_token) { "app-@beta" }
+
+        it "fails" do
+          expect(run).to error_with(/should not contain a hyphen followed by @/)
+        end
+      end
+
+      context "when cask token has @ followed by a hyphen" do
+        let(:cask_token) { "app@-beta" }
+
+        it "fails" do
+          expect(run).to error_with(/should not contain @ followed by a hyphen/)
         end
       end
 
@@ -248,7 +280,7 @@ RSpec.describe Cask::Audit, :cask do
         let(:cask_token) { "app(stuff)" }
 
         it "fails" do
-          expect(run).to error_with(/alphanumeric characters and hyphens/)
+          expect(run).to error_with(/alphanumeric characters, hyphens and @/)
         end
       end
 

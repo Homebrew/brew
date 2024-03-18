@@ -83,7 +83,7 @@ RSpec.describe UnpackStrategy do
       end
 
       it "does not pass down the basename of the archive" do
-        strategy.extract_nestedly(to: unpack_dir, basename: basename)
+        strategy.extract_nestedly(to: unpack_dir, basename:)
         expect(unpack_dir/"file.txt").to be_a_file
       end
     end

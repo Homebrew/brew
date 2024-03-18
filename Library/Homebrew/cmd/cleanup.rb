@@ -48,7 +48,7 @@ module Homebrew
       end
     end
 
-    cleanup = Cleanup.new(*args.named, dry_run: args.dry_run?, scrub: args.s?, days: days)
+    cleanup = Cleanup.new(*args.named, dry_run: args.dry_run?, scrub: args.s?, days:)
     if args.prune_prefix?
       cleanup.prune_prefix_symlinks_and_directories
       return

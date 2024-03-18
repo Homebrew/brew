@@ -20,7 +20,7 @@ brew(1) -- The Missing Package Manager for macOS (or Linux)
 ## SYNOPSIS
 
 `brew` `--version`<br>
-`brew` <command> [`--verbose`|`-v`] [<options>] [<formula>] ...
+`brew` <command> \[`--verbose`\|`-v`\] \[<options>\] \[<formula>\] ...
 
 ## DESCRIPTION
 
@@ -30,29 +30,53 @@ Linux distribution without requiring `sudo`.
 
 ## TERMINOLOGY
 
-**formula**: Homebrew package definition that builds from upstream sources
+**formula**
 
-**cask**: Homebrew package definition that installs macOS native applications
+: Homebrew package definition that builds from upstream sources
 
-**prefix**: path in which Homebrew is installed, e.g. `/usr/local`
+**cask**
 
-**keg**: installation destination directory of a given **formula** version, e.g. `/usr/local/Cellar/foo/0.1`
+: Homebrew package definition that installs macOS native applications
 
-**rack**: directory containing one or more versioned **kegs**, e.g. `/usr/local/Cellar/foo`
+**prefix**
 
-**keg-only**: a **formula** is *keg-only* if it is not symlinked into Homebrew's prefix
+: path in which Homebrew is installed, e.g. `/usr/local`
 
-**opt prefix**: a symlink to the active version of a **keg**, e.g. `/usr/local/opt/foo`
+**keg**
 
-**Cellar**: directory containing one or more named **racks**, e.g. `/usr/local/Cellar`
+: installation destination directory of a given **formula** version, e.g. `/usr/local/Cellar/foo/0.1`
 
-**Caskroom**: directory containing one or more named **casks**, e.g. `/usr/local/Caskroom`
+**rack**
 
-**external command**: `brew` subcommand defined outside of the Homebrew/brew GitHub repository
+: directory containing one or more versioned **kegs**, e.g. `/usr/local/Cellar/foo`
 
-**tap**: directory (and usually Git repository) of **formulae**, **casks** and/or **external commands**
+**keg-only**
 
-**bottle**: pre-built **keg** poured into a **rack** of the **Cellar** instead of building from upstream sources
+: a **formula** is *keg-only* if it is not symlinked into Homebrew's prefix
+
+**opt prefix**
+
+: a symlink to the active version of a **keg**, e.g. `/usr/local/opt/foo`
+
+**Cellar**
+
+: directory containing one or more named **racks**, e.g. `/usr/local/Cellar`
+
+**Caskroom**
+
+: directory containing one or more named **casks**, e.g. `/usr/local/Caskroom`
+
+**external command**
+
+: `brew` subcommand defined outside of the Homebrew/brew GitHub repository
+
+**tap**
+
+: directory (and usually Git repository) of **formulae**, **casks** and/or **external commands**
+
+**bottle**
+
+: pre-built **keg** poured into a **rack** of the **Cellar** instead of building from upstream sources
 
 ## ESSENTIAL COMMANDS
 
@@ -79,11 +103,11 @@ Uninstall <formula>.
 
 List all installed formulae.
 
-### `search` [<text>|`/`<text>`/`]
+### `search` \[<text>\|`/`<text>`/`\]
 
 Perform a substring search of cask tokens and formula names for <text>. If
-<text> is flanked by slashes, it is interpreted as a regular expression.
-The search for <text> is extended online to `homebrew/core` and `homebrew/cask`.
+<text> is flanked by slashes, it is interpreted as a regular expression. The
+search for <text> is extended online to `homebrew/core` and `homebrew/cask`.
 If no search term is provided, all locally available formulae are listed.
 
 ## COMMANDS
@@ -110,8 +134,8 @@ If no search term is provided, all locally available formulae are listed.
 
 Homebrew, like `git`(1), supports external commands. These are executable
 scripts that reside somewhere in the `PATH`, named `brew-`<cmdname> or
-`brew-`<cmdname>`.rb`, which can be invoked like `brew` <cmdname>. This allows
-you to create your own commands without modifying Homebrew's internals.
+`brew-`<cmdname>`.rb`, which can be invoked like `brew` <cmdname>. This
+allows you to create your own commands without modifying Homebrew's internals.
 
 Instructions for creating your own commands can be found in the docs:
 <https://docs.brew.sh/External-Commands>
@@ -206,11 +230,14 @@ Homebrew API: <https://rubydoc.brew.sh>
 
 See our issues on GitHub:
 
-  * **Homebrew/brew**:
-    <br><https://github.com/Homebrew/brew/issues>
+**Homebrew/brew**
 
-  * **Homebrew/homebrew-core**:
-    <br><https://github.com/Homebrew/homebrew-core/issues>
+: <https://github.com/Homebrew/brew/issues>
 
-  * **Homebrew/homebrew-cask**:
-    <br><https://github.com/Homebrew/homebrew-cask/issues>
+**Homebrew/homebrew-core**
+
+: <https://github.com/Homebrew/homebrew-core/issues>
+
+**Homebrew/homebrew-cask**
+
+: <https://github.com/Homebrew/homebrew-cask/issues>

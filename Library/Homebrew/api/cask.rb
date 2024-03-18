@@ -83,7 +83,7 @@ module Homebrew
       def self.write_names(regenerate: false)
         download_and_cache_data! unless cache.key?("casks")
 
-        Homebrew::API.write_names_file(all_casks.keys, "cask", regenerate: regenerate)
+        Homebrew::API.write_names_file(all_casks.keys, "cask", regenerate:)
       end
     end
   end

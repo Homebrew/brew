@@ -53,9 +53,9 @@ module Homebrew
           end
 
           Yaml.find_versions(
-            url:              url,
-            regex:            regex,
-            provided_content: provided_content,
+            url:,
+            regex:,
+            provided_content:,
             **unused,
             &block || proc { |yaml| yaml["version"] }
           )

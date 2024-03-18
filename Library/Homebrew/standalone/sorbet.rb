@@ -13,19 +13,19 @@ unless ENV["HOMEBREW_SORBET_RUNTIME"]
   # @private
   module TNoChecks
     def cast(value, type, checked: false)
-      super(value, type, checked: checked)
+      super(value, type, checked:)
     end
 
     def let(value, type, checked: false)
-      super(value, type, checked: checked)
+      super(value, type, checked:)
     end
 
     def bind(value, type, checked: false)
-      super(value, type, checked: checked)
+      super(value, type, checked:)
     end
 
     def assert_type!(value, type, checked: false)
-      super(value, type, checked: checked)
+      super(value, type, checked:)
     end
   end
 

@@ -82,7 +82,7 @@ RSpec.describe FormulaInstaller do
       ENV["HOMEBREW_DEVELOPER"] = "1"
 
       dep_name = "homebrew-test-cyclic"
-      dep_path = CoreTap.new.new_formula_path(dep_name)
+      dep_path = CoreTap.instance.new_formula_path(dep_name)
       dep_path.write <<~RUBY
         class #{Formulary.class_s(dep_name)} < Formula
           url "foo"
@@ -105,7 +105,7 @@ RSpec.describe FormulaInstaller do
 
       formula1_name = "homebrew-test-formula1"
       formula2_name = "homebrew-test-formula2"
-      formula1_path = CoreTap.new.new_formula_path(formula1_name)
+      formula1_path = CoreTap.instance.new_formula_path(formula1_name)
       formula1_path.write <<~RUBY
         class #{Formulary.class_s(formula1_name)} < Formula
           url "foo"
@@ -116,7 +116,7 @@ RSpec.describe FormulaInstaller do
       Formulary.cache.delete(formula1_path)
       formula1 = Formulary.factory(formula1_name)
 
-      formula2_path = CoreTap.new.new_formula_path(formula2_name)
+      formula2_path = CoreTap.instance.new_formula_path(formula2_name)
       formula2_path.write <<~RUBY
         class #{Formulary.class_s(formula2_name)} < Formula
           url "foo"
@@ -135,7 +135,7 @@ RSpec.describe FormulaInstaller do
 
     it "raises on pinned dependency" do
       dep_name = "homebrew-test-dependency"
-      dep_path = CoreTap.new.new_formula_path(dep_name)
+      dep_path = CoreTap.instance.new_formula_path(dep_name)
       dep_path.write <<~RUBY
         class #{Formulary.class_s(dep_name)} < Formula
           url "foo"

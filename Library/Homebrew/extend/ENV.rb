@@ -44,10 +44,10 @@ module EnvActivation
   def with_build_environment(env: nil, cc: nil, build_bottle: false, bottle_arch: nil, debug_symbols: false, &_block)
     old_env = to_hash.dup
     tmp_env = to_hash.dup.extend(EnvActivation)
-    T.cast(tmp_env, EnvActivation).activate_extensions!(env: env)
+    T.cast(tmp_env, EnvActivation).activate_extensions!(env:)
     T.cast(tmp_env, T.any(Superenv, Stdenv))
-     .setup_build_environment(cc: cc, build_bottle: build_bottle, bottle_arch: bottle_arch,
-                              debug_symbols: debug_symbols)
+     .setup_build_environment(cc:, build_bottle:, bottle_arch:,
+                              debug_symbols:)
     replace(tmp_env)
 
     begin

@@ -143,7 +143,7 @@ module Homebrew
           if (http_content_problem = curl_check_http_content(
             url,
             "source URL",
-            specs:             specs,
+            specs:,
             use_homebrew_curl: @use_homebrew_curl,
           ))
             problem http_content_problem

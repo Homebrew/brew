@@ -21,7 +21,7 @@ module Homebrew
     def self.missing_deps(formulae, hide = nil)
       missing = {}
       formulae.each do |f|
-        missing_dependencies = f.missing_dependencies(hide: hide)
+        missing_dependencies = f.missing_dependencies(hide:)
         next if missing_dependencies.empty?
 
         yield f.full_name, missing_dependencies if block_given?
@@ -545,7 +545,7 @@ module Homebrew
         return if ENV["CI"]
         return unless Utils::Git.available?
 
-        commands = Tap.select(&:installed?).filter_map do |tap|
+        commands = Tap.installed.filter_map do |tap|
           next if tap.git_repo.default_origin_branch?
 
           "git -C $(brew --repo #{tap.name}) checkout #{tap.git_repo.origin_branch_name}"
@@ -794,7 +794,7 @@ module Homebrew
 
       def check_for_tap_ruby_files_locations
         bad_tap_files = {}
-        Tap.select(&:installed?).each do |tap|
+        Tap.installed.each do |tap|
           unused_formula_dirs = tap.potential_formula_dirs - [tap.formula_dir]
           unused_formula_dirs.each do |dir|
             next unless dir.exist?
@@ -835,26 +835,20 @@ module Homebrew
 
         deleted_formulae = kegs.filter_map do |keg|
           tap = Tab.for_keg(keg).tap
+          tap_keg_name = tap ? "#{tap}/#{keg.name}" : keg.name
 
           loadable = [
             Formulary::FromAPILoader,
-            Formulary::FromDefaultNameLoader,
+            Formulary::FromTapLoader,
             Formulary::FromNameLoader,
           ].any? do |loader_class|
             loader = begin
-              loader_class.try_new(keg.name, warn: false)
+              loader_class.try_new(tap_keg_name, warn: false)
             rescue TapFormulaAmbiguityError => e
               e.loaders.first
             end
 
-            if loader
-              # If we know the tap, ignore all other taps.
-              next false if tap && loader.tap != tap
-
-              next true
-            end
-
-            false
+            loader.instance_of?(Formulary::FromTapLoader) ? loader.path.exist? : loader.present?
           end
 
           keg.name unless loadable

@@ -124,7 +124,7 @@ RSpec.describe Cask::Uninstall, :cask do
     before do
       app.tap(&:mkpath)
          .join("Contents").tap(&:mkpath)
-         .join("Info.plist").tap(&FileUtils.method(:touch))
+         .join("Info.plist").tap { FileUtils.touch(_1) }
 
       caskroom_path.mkpath
 

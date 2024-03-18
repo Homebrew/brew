@@ -26,7 +26,7 @@ module UnpackStrategy
       system_command! "lha",
                       args:    ["xq2w=#{unpack_dir}", path],
                       env:     { "PATH" => PATH.new(Formula["lha"].opt_bin, ENV.fetch("PATH")) },
-                      verbose: verbose
+                      verbose:
     end
   end
 end

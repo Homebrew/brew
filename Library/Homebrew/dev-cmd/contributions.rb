@@ -71,7 +71,7 @@ module Homebrew
       # committer details to match the ones on GitHub.
       # TODO: Switch to using the GitHub APIs instead of `git log` if
       # they ever support trailers.
-      results[username] = scan_repositories(repos, username, args, from: from)
+      results[username] = scan_repositories(repos, username, args, from:)
       grand_totals[username] = total(results[username])
 
       contributions = contribution_types.filter_map do |type|
@@ -85,7 +85,7 @@ module Homebrew
       puts [
         "#{username} contributed",
         *contributions.to_sentence,
-        "#{time_period(from: from, to: args.to)}.",
+        "#{time_period(from:, to: args.to)}.",
       ].join(" ")
     end
 
@@ -167,7 +167,7 @@ module Homebrew
       data[repo] = {
         author:       author_commits,
         committer:    committer_commits,
-        coauthorship: git_log_trailers_cmd(T.must(repo_path), person, "Co-authored-by", from: from, to: args.to),
+        coauthorship: git_log_trailers_cmd(T.must(repo_path), person, "Co-authored-by", from:, to: args.to),
         review:       count_reviews(repo_full_name, person, args),
       }
     end
@@ -203,7 +203,7 @@ module Homebrew
 
   sig { params(repo_full_name: String, person: String, args: Homebrew::CLI::Args).returns(Integer) }
   def count_reviews(repo_full_name, person, args)
-    GitHub.count_issues("", is: "pr", repo: repo_full_name, reviewed_by: person, review: "approved", args: args)
+    GitHub.count_issues("", is: "pr", repo: repo_full_name, reviewed_by: person, review: "approved", args:)
   rescue GitHub::API::ValidationFailedError
     if args.verbose?
       onoe "Couldn't search GitHub for PRs by #{person}. Their profile might be private. Defaulting to 0."

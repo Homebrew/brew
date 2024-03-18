@@ -9,9 +9,9 @@ RSpec.describe Cask::Utils do
   describe "::gain_permissions_mkpath" do
     it "creates a directory" do
       expect(path).not_to exist
-      described_class.gain_permissions_mkpath path, command: command
+      described_class.gain_permissions_mkpath(path, command:)
       expect(path).to be_a_directory
-      described_class.gain_permissions_mkpath path, command: command
+      described_class.gain_permissions_mkpath(path, command:)
       expect(path).to be_a_directory
     end
 
@@ -27,9 +27,9 @@ RSpec.describe Cask::Utils do
         end
 
         expect(path).not_to exist
-        described_class.gain_permissions_mkpath path, command: command
+        described_class.gain_permissions_mkpath(path, command:)
         expect(path).to be_a_directory
-        described_class.gain_permissions_mkpath path, command: command
+        described_class.gain_permissions_mkpath(path, command:)
         expect(path).to be_a_directory
 
         expect(dir).not_to be_writable
@@ -48,12 +48,12 @@ RSpec.describe Cask::Utils do
       expect(link).to be_a_symlink
       expect(link.realpath).to eq path
 
-      described_class.gain_permissions_remove link, command: command
+      described_class.gain_permissions_remove(link, command:)
 
       expect(path).to be_a_file
       expect(link).not_to exist
 
-      described_class.gain_permissions_remove path, command: command
+      described_class.gain_permissions_remove(path, command:)
 
       expect(path).not_to exist
     end
@@ -66,12 +66,12 @@ RSpec.describe Cask::Utils do
       expect(link).to be_a_symlink
       expect(link.realpath).to eq path
 
-      described_class.gain_permissions_remove link, command: command
+      described_class.gain_permissions_remove(link, command:)
 
       expect(path).to be_a_directory
       expect(link).not_to exist
 
-      described_class.gain_permissions_remove path, command: command
+      described_class.gain_permissions_remove(path, command:)
 
       expect(path).not_to exist
     end

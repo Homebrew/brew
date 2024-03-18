@@ -134,7 +134,7 @@ module Homebrew
           ).returns(T::Hash[Symbol, T.untyped])
         }
         def self.find_versions(url:, regex: DEFAULT_REGEX, **_unused, &block)
-          match_data = { matches: {}, regex: regex, url: url }
+          match_data = { matches: {}, regex:, url: }
 
           generated = generate_input_values(url)
           return match_data if generated.blank?

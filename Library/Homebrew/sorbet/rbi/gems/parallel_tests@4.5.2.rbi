@@ -13,10 +13,10 @@ module ParallelTests
     #
     # @return [Boolean]
     #
-    # source://parallel_tests//lib/parallel_tests.rb#50
+    # source://parallel_tests//lib/parallel_tests.rb#52
     def bundler_enabled?; end
 
-    # source://parallel_tests//lib/parallel_tests.rb#95
+    # source://parallel_tests//lib/parallel_tests.rb#97
     def delta; end
 
     # source://parallel_tests//lib/parallel_tests.rb#16
@@ -24,18 +24,18 @@ module ParallelTests
 
     # @return [Boolean]
     #
-    # source://parallel_tests//lib/parallel_tests.rb#66
+    # source://parallel_tests//lib/parallel_tests.rb#68
     def first_process?; end
 
     # @return [Boolean]
     #
-    # source://parallel_tests//lib/parallel_tests.rb#70
+    # source://parallel_tests//lib/parallel_tests.rb#72
     def last_process?; end
 
-    # source://parallel_tests//lib/parallel_tests.rb#91
+    # source://parallel_tests//lib/parallel_tests.rb#93
     def now; end
 
-    # source://parallel_tests//lib/parallel_tests.rb#87
+    # source://parallel_tests//lib/parallel_tests.rb#89
     def number_of_running_processes; end
 
     # source://parallel_tests//lib/parallel_tests.rb#41
@@ -47,13 +47,13 @@ module ParallelTests
     # source://parallel_tests//lib/parallel_tests.rb#45
     def stop_all_processes; end
 
-    # source://parallel_tests//lib/parallel_tests.rb#82
+    # source://parallel_tests//lib/parallel_tests.rb#84
     def wait_for_other_processes_to_finish; end
 
     # source://parallel_tests//lib/parallel_tests.rb#24
     def with_pid_file; end
 
-    # source://parallel_tests//lib/parallel_tests.rb#78
+    # source://parallel_tests//lib/parallel_tests.rb#80
     def with_ruby_binary(command); end
   end
 end

@@ -35,9 +35,9 @@ module Homebrew
     all = args.eval_all?
 
     if all
-      puts_options Formula.all(eval_all: args.eval_all?).sort, args: args
+      puts_options(Formula.all(eval_all: args.eval_all?).sort, args:)
     elsif args.installed?
-      puts_options Formula.installed.sort, args: args
+      puts_options(Formula.installed.sort, args:)
     elsif args.command.present?
       cmd_options = Commands.command_options(args.command)
       odie "Unknown command: #{args.command}" if cmd_options.nil?
@@ -51,7 +51,7 @@ module Homebrew
     elsif args.no_named?
       raise FormulaUnspecifiedError
     else
-      puts_options args.named.to_formulae, args: args
+      puts_options args.named.to_formulae, args:
     end
   end
 

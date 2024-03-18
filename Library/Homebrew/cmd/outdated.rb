@@ -55,16 +55,16 @@ module Homebrew
       odie "`brew outdated --json=v1` is no longer supported. Use brew outdated --json=v2 instead."
     when :v2, :default
       formulae, casks = if args.formula?
-        [outdated_formulae(args: args), []]
+        [outdated_formulae(args:), []]
       elsif args.cask?
-        [[], outdated_casks(args: args)]
+        [[], outdated_casks(args:)]
       else
-        outdated_formulae_casks args: args
+        outdated_formulae_casks(args:)
       end
 
       json = {
-        "formulae" => json_info(formulae, args: args),
-        "casks"    => json_info(casks, args: args),
+        "formulae" => json_info(formulae, args:),
+        "casks"    => json_info(casks, args:),
       }
       puts JSON.pretty_generate(json)
 
@@ -72,14 +72,14 @@ module Homebrew
 
     else
       outdated = if args.formula?
-        outdated_formulae args: args
+        outdated_formulae(args:)
       elsif args.cask?
-        outdated_casks args: args
+        outdated_casks(args:)
       else
-        outdated_formulae_casks(args: args).flatten
+        outdated_formulae_casks(args:).flatten
       end
 
-      print_outdated(outdated, args: args)
+      print_outdated(outdated, args:)
     end
 
     Homebrew.failed = args.named.present? && outdated.present?
@@ -137,7 +137,7 @@ module Homebrew
 
         { name:               f.full_name,
           installed_versions: outdated_versions.map(&:to_s),
-          current_version:    current_version,
+          current_version:,
           pinned:             f.pinned?,
           pinned_version:     f.pinned_version }
       else
@@ -166,14 +166,14 @@ module Homebrew
   end
 
   def self.outdated_formulae(args:)
-    select_outdated((args.named.to_resolved_formulae.presence || Formula.installed), args: args).sort
+    select_outdated((args.named.to_resolved_formulae.presence || Formula.installed), args:).sort
   end
 
   def self.outdated_casks(args:)
     if args.named.present?
-      select_outdated(args.named.to_casks, args: args)
+      select_outdated(args.named.to_casks, args:)
     else
-      select_outdated(Cask::Caskroom.casks, args: args)
+      select_outdated(Cask::Caskroom.casks, args:)
     end
   end
 
@@ -185,7 +185,7 @@ module Homebrew
       casks = Cask::Caskroom.casks
     end
 
-    [select_outdated(formulae, args: args).sort, select_outdated(casks, args: args)]
+    [select_outdated(formulae, args:).sort, select_outdated(casks, args:)]
   end
 
   def self.select_outdated(formulae_or_casks, args:)

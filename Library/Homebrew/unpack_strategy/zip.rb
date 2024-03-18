@@ -36,7 +36,7 @@ module UnpackStrategy
         result = system_command! "unzip",
                                  args:         [*quiet_flags, "-o", path, "-d", unpack_dir],
                                  env:          { "PATH" => PATH.new(unzip&.opt_bin, ENV.fetch("PATH")) },
-                                 verbose:      verbose,
+                                 verbose:,
                                  print_stderr: false
 
         FileUtils.rm_rf unpack_dir/"__MACOSX"

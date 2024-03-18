@@ -27,7 +27,7 @@ module Cask
       return if new_cask.token == old_cask.token
 
       migrator = new(old_cask, new_cask)
-      migrator.migrate(dry_run: dry_run)
+      migrator.migrate(dry_run:)
     end
 
     sig { params(dry_run: T::Boolean).void }

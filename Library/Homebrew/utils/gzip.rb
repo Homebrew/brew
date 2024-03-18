@@ -54,7 +54,7 @@ module Utils
     def self.compress(*paths, reproducible: true, mtime: ENV["SOURCE_DATE_EPOCH"].to_i)
       if reproducible
         paths.map do |path|
-          compress_with_options(path, mtime: mtime)
+          compress_with_options(path, mtime:)
         end
       else
         paths.map do |path|

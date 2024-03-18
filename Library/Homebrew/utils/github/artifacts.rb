@@ -18,7 +18,7 @@ module GitHub
     # We use a download strategy here to leverage the Homebrew cache
     # to avoid repeated downloads of (possibly large) bottles.
     token = API.credentials
-    downloader = GitHubArtifactDownloadStrategy.new(url, artifact_id, token: token)
+    downloader = GitHubArtifactDownloadStrategy.new(url, artifact_id, token:)
     downloader.fetch
     downloader.stage
   end
@@ -40,10 +40,10 @@ class GitHubArtifactDownloadStrategy < AbstractFileDownloadStrategy
       puts "Already downloaded: #{cached_location}"
     else
       begin
-        Utils::Curl.curl "--location", "--create-dirs", "--output", temporary_path, url,
+        Utils::Curl.curl("--location", "--create-dirs", "--output", temporary_path, url,
                          "--header", "Authorization: token #{@token}",
                          secrets: [@token],
-                         timeout: timeout
+                         timeout:)
       rescue ErrorDuringExecution
         raise CurlDownloadStrategyError, url
       end

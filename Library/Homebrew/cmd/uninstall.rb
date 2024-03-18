@@ -59,7 +59,7 @@ module Homebrew
 
     Uninstall.uninstall_kegs(
       kegs_by_rack,
-      casks:               casks,
+      casks:,
       force:               args.force?,
       ignore_dependencies: args.ignore_dependencies?,
       named_args:          args.named,

@@ -1340,27 +1340,27 @@ class Minitest::Test < ::Minitest::Runnable
 
   # LifecycleHooks
   #
-  # source://minitest//lib/minitest/test.rb#190
+  # source://minitest//lib/minitest/test.rb#191
   def capture_exceptions; end
 
   # source://minitest//lib/minitest/test.rb#15
   def class_name; end
 
-  # source://minitest//lib/minitest/test.rb#207
+  # source://minitest//lib/minitest/test.rb#208
   def neuter_exception(e); end
 
-  # source://minitest//lib/minitest/test.rb#218
+  # source://minitest//lib/minitest/test.rb#219
   def new_exception(klass, msg, bt, kill = T.unsafe(nil)); end
 
   # Runs a single test with setup/teardown hooks.
   #
-  # source://minitest//lib/minitest/test.rb#86
+  # source://minitest//lib/minitest/test.rb#87
   def run; end
 
-  # source://minitest//lib/minitest/test.rb#200
+  # source://minitest//lib/minitest/test.rb#201
   def sanitize_exception(e); end
 
-  # source://minitest//lib/minitest/test.rb#232
+  # source://minitest//lib/minitest/test.rb#233
   def with_info_handler(&block); end
 
   class << self
@@ -1391,18 +1391,19 @@ class Minitest::Test < ::Minitest::Runnable
     # source://minitest//lib/minitest/test.rb#48
     def make_my_diffs_pretty!; end
 
-    # Call this at the top of your tests when you want to run your
-    # tests in parallel. In doing so, you're admitting that you rule
-    # and your tests are awesome.
+    # Call this at the top of your tests (inside the +Minitest::Test+
+    # subclass or +describe+ block) when you want to run your tests in
+    # parallel. In doing so, you're admitting that you rule and your
+    # tests are awesome.
     #
-    # source://minitest//lib/minitest/test.rb#59
+    # source://minitest//lib/minitest/test.rb#60
     def parallelize_me!; end
 
     # Returns all instance methods starting with "test_". Based on
     # #test_order, the methods are either sorted, randomized
     # (default), or run in parallel.
     #
-    # source://minitest//lib/minitest/test.rb#69
+    # source://minitest//lib/minitest/test.rb#70
     def runnable_methods; end
   end
 end
@@ -1411,7 +1412,7 @@ end
 # meant for library writers, NOT for regular test authors. See
 # #before_setup for an example.
 #
-# source://minitest//lib/minitest/test.rb#113
+# source://minitest//lib/minitest/test.rb#114
 module Minitest::Test::LifecycleHooks
   # Runs before every test, after setup. This hook is meant for
   # libraries to extend minitest. It is not meant to be used by
@@ -1419,7 +1420,7 @@ module Minitest::Test::LifecycleHooks
   #
   # See #before_setup for an example.
   #
-  # source://minitest//lib/minitest/test.rb#163
+  # source://minitest//lib/minitest/test.rb#164
   def after_setup; end
 
   # Runs after every test, after teardown. This hook is meant for
@@ -1428,7 +1429,7 @@ module Minitest::Test::LifecycleHooks
   #
   # See #before_setup for an example.
   #
-  # source://minitest//lib/minitest/test.rb#187
+  # source://minitest//lib/minitest/test.rb#188
   def after_teardown; end
 
   # Runs before every test, before setup. This hook is meant for
@@ -1463,7 +1464,7 @@ module Minitest::Test::LifecycleHooks
   #     include MyMinitestPlugin
   #   end
   #
-  # source://minitest//lib/minitest/test.rb#148
+  # source://minitest//lib/minitest/test.rb#149
   def before_setup; end
 
   # Runs after every test, before teardown. This hook is meant for
@@ -1472,19 +1473,19 @@ module Minitest::Test::LifecycleHooks
   #
   # See #before_setup for an example.
   #
-  # source://minitest//lib/minitest/test.rb#172
+  # source://minitest//lib/minitest/test.rb#173
   def before_teardown; end
 
   # Runs before every test. Use this to set up before each test
   # run.
   #
-  # source://minitest//lib/minitest/test.rb#154
+  # source://minitest//lib/minitest/test.rb#155
   def setup; end
 
   # Runs after every test. Use this to clean up after each test
   # run.
   #
-  # source://minitest//lib/minitest/test.rb#178
+  # source://minitest//lib/minitest/test.rb#179
   def teardown; end
 end
 

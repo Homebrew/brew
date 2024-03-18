@@ -145,7 +145,7 @@ module Formulary
   def self.load_formula_from_path(name, path, flags:, ignore_errors:)
     contents = path.open("r") { |f| ensure_utf8_encoding(f).read }
     namespace = "FormulaNamespace#{namespace_key(path.to_s)}"
-    klass = load_formula(name, path, contents, namespace, flags: flags, ignore_errors: ignore_errors)
+    klass = load_formula(name, path, contents, namespace, flags:, ignore_errors:)
     platform_cache[:path] ||= {}
     platform_cache[:path][path] = klass
   end
@@ -305,7 +305,7 @@ module Formulary
           rebuild bottles_stable["rebuild"]
           bottles_stable["files"].each do |tag, bottle_spec|
             cellar = Formulary.convert_to_string_or_symbol bottle_spec["cellar"]
-            sha256 cellar: cellar, tag.to_sym => bottle_spec["sha256"]
+            sha256 cellar:, tag.to_sym => bottle_spec["sha256"]
           end
         end
       end
@@ -434,8 +434,8 @@ module Formulary
     flags: T.unsafe(nil)
   )
     options = {
-      force_bottle: force_bottle,
-      flags:        flags,
+      force_bottle:,
+      flags:,
     }.compact
 
     if name.include?("/") || File.exist?(name)
@@ -523,12 +523,12 @@ module Formulary
     # a formula that was loaded in another way.
     def get_formula(spec, alias_path: nil, force_bottle: false, flags: [], ignore_errors: false)
       alias_path ||= self.alias_path
-      klass(flags: flags, ignore_errors: ignore_errors)
-        .new(name, path, spec, alias_path: alias_path, tap: tap, force_bottle: force_bottle)
+      klass(flags:, ignore_errors:)
+        .new(name, path, spec, alias_path:, tap:, force_bottle:)
     end
 
     def klass(flags:, ignore_errors:)
-      load_file(flags: flags, ignore_errors: ignore_errors) unless Formulary.formula_class_defined_from_path?(path)
+      load_file(flags:, ignore_errors:) unless Formulary.formula_class_defined_from_path?(path)
       Formulary.formula_class_get_from_path(path)
     end
 
@@ -537,7 +537,7 @@ module Formulary
     def load_file(flags:, ignore_errors:)
       raise FormulaUnavailableError, name unless path.file?
 
-      Formulary.load_formula_from_path(name, path, flags: flags, ignore_errors: ignore_errors)
+      Formulary.load_formula_from_path(name, path, flags:, ignore_errors:)
     end
   end
 
@@ -574,9 +574,9 @@ module Formulary
 
     def get_formula(spec, force_bottle: false, flags: [], ignore_errors: false, **)
       formula = begin
-        contents = Utils::Bottles.formula_contents @bottle_filename, name: name
-        Formulary.from_contents(name, path, contents, spec, force_bottle: force_bottle,
-                                flags: flags, ignore_errors: ignore_errors)
+        contents = Utils::Bottles.formula_contents(@bottle_filename, name:)
+        Formulary.from_contents(name, path, contents, spec, force_bottle:,
+                                flags:, ignore_errors:)
       rescue FormulaUnreadableError => e
         opoo <<~EOS
           Unreadable formula in #{@bottle_filename}:
@@ -620,18 +620,18 @@ module Formulary
           path = alias_path.resolved_path
 
           {
-            alias_path: alias_path,
-            tap:        tap,
+            alias_path:,
+            tap:,
           }
         else
           {
-            tap: tap,
+            tap:,
           }
         end
       elsif (tap = Homebrew::API.tap_from_source_download(path))
         # Don't treat cache symlinks as aliases.
         {
-          tap: tap,
+          tap:,
         }
       else
         {}
@@ -651,7 +651,7 @@ module Formulary
 
       options = {
         alias_path: (alias_path if alias_dir == tap&.alias_dir),
-        tap:        tap,
+        tap:,
       }.compact
 
       super(name, path, **options)
@@ -667,7 +667,7 @@ module Formulary
     def self.try_new(ref, from: T.unsafe(nil), warn: false)
       ref = ref.to_s
 
-      new(ref, from: from) if URL_START_REGEX.match?(ref)
+      new(ref, from:) if URL_START_REGEX.match?(ref)
     end
 
     attr_reader :url
@@ -722,7 +722,7 @@ module Formulary
     def self.try_new(ref, from: T.unsafe(nil), warn: false)
       ref = ref.to_s
 
-      return unless (name_tap_type = Formulary.tap_formula_name_type(ref, warn: warn))
+      return unless (name_tap_type = Formulary.tap_formula_name_type(ref, warn:))
 
       name, tap, type = name_tap_type
       path = Formulary.find_formula_in_tap(name, tap)
@@ -734,14 +734,14 @@ module Formulary
         {}
       end
 
-      new(name, path, tap: tap, **options)
+      new(name, path, tap:, **options)
     end
 
     sig { params(name: String, path: Pathname, tap: Tap, alias_name: String).void }
     def initialize(name, path, tap:, alias_name: T.unsafe(nil))
       options = {
         alias_path: (tap.alias_dir/alias_name if alias_name),
-        tap:        tap,
+        tap:,
       }.compact
 
       super(name, path, **options)
@@ -765,22 +765,6 @@ module Formulary
     end
   end
 
-  class FromDefaultNameLoader < FromTapLoader
-    sig {
-      params(ref: T.any(String, Pathname, URI::Generic), from: Symbol, warn: T::Boolean)
-        .returns(T.nilable(T.attached_class))
-    }
-    def self.try_new(ref, from: T.unsafe(nil), warn: false)
-      return unless ref.is_a?(String)
-      return unless (name = ref[HOMEBREW_DEFAULT_TAP_FORMULA_REGEX, :name])
-      return unless (tap = CoreTap.instance).installed?
-
-      return unless (loader = super("#{tap}/#{name}", warn: warn))
-
-      loader if loader.path.exist?
-    end
-  end
-
   # Loads a formula from a name, as long as it exists only in a single tap.
   class FromNameLoader < FromTapLoader
     sig {
@@ -789,11 +773,19 @@ module Formulary
     }
     def self.try_new(ref, from: T.unsafe(nil), warn: false)
       return unless ref.is_a?(String)
-      return if ref.include?("/")
+      return unless ref.match?(/\A#{HOMEBREW_TAP_FORMULA_NAME_REGEX}\Z/o)
 
       name = ref
 
-      loaders = Tap.filter_map { |tap| super("#{tap}/#{name}", warn: warn) }.select { _1.path.exist? }
+      # If it exists in the default tap, never treat it as ambiguous with another tap.
+      if (core_tap = CoreTap.instance).installed? &&
+         (loader = super("#{core_tap}/#{name}", warn:))&.path&.exist?
+        return loader
+      end
+
+      loaders = Tap.select { |tap| tap.installed? && !tap.core_tap? }
+                   .filter_map { |tap| super("#{tap}/#{name}", warn:) }
+                   .select { |tap| tap.path.exist? }
 
       case loaders.count
       when 1
@@ -869,7 +861,7 @@ module Formulary
 
     def klass(flags:, ignore_errors:)
       namespace = "FormulaNamespace#{Digest::MD5.hexdigest(contents.to_s)}"
-      Formulary.load_formula(name, path, contents, namespace, flags: flags, ignore_errors: ignore_errors)
+      Formulary.load_formula(name, path, contents, namespace, flags:, ignore_errors:)
     end
   end
 
@@ -893,7 +885,7 @@ module Formulary
 
       ref = "#{CoreTap.instance}/#{name}"
 
-      return unless (name_tap_type = Formulary.tap_formula_name_type(ref, warn: warn))
+      return unless (name_tap_type = Formulary.tap_formula_name_type(ref, warn:))
 
       name, tap, type = name_tap_type
 
@@ -903,28 +895,28 @@ module Formulary
         {}
       end
 
-      new(name, tap: tap, **options)
+      new(name, tap:, **options)
     end
 
     sig { params(name: String, tap: Tap, alias_name: String).void }
     def initialize(name, tap: T.unsafe(nil), alias_name: T.unsafe(nil))
       options = {
         alias_path: (CoreTap.instance.alias_dir/alias_name if alias_name),
-        tap:        tap,
+        tap:,
       }.compact
 
       super(name, Formulary.core_path(name), **options)
     end
 
     def klass(flags:, ignore_errors:)
-      load_from_api(flags: flags) unless Formulary.formula_class_defined_from_api?(name)
+      load_from_api(flags:) unless Formulary.formula_class_defined_from_api?(name)
       Formulary.formula_class_get_from_api(name)
     end
 
     private
 
     def load_from_api(flags:)
-      Formulary.load_formula_from_api(name, flags: flags)
+      Formulary.load_formula_from_api(name, flags:)
     end
   end
 
@@ -962,11 +954,11 @@ module Formulary
       return platform_cache[:formulary_factory][cache_key]
     end
 
-    loader_options = { from: from, warn: warn }.compact
-    formula_options = { alias_path:    alias_path,
-                        force_bottle:  force_bottle,
-                        flags:         flags,
-                        ignore_errors: ignore_errors }.compact
+    loader_options = { from:, warn: }.compact
+    formula_options = { alias_path:,
+                        force_bottle:,
+                        flags:,
+                        ignore_errors: }.compact
 
     formula = loader_for(ref, **loader_options)
               .get_formula(spec, **formula_options)
@@ -1005,9 +997,9 @@ module Formulary
     keg = kegs.find(&:linked?) || kegs.find(&:optlinked?) || kegs.max_by(&:version)
 
     options = {
-      alias_path:   alias_path,
-      force_bottle: force_bottle,
-      flags:        flags,
+      alias_path:,
+      force_bottle:,
+      flags:,
     }.compact
 
     if keg
@@ -1049,11 +1041,11 @@ module Formulary
     formula_name = keg.rack.basename.to_s
 
     options = {
-      alias_path:   alias_path,
+      alias_path:,
       from:         :keg,
       warn:         false,
-      force_bottle: force_bottle,
-      flags:        flags,
+      force_bottle:,
+      flags:,
     }.compact
 
     f = if tap.nil?
@@ -1096,10 +1088,10 @@ module Formulary
     ignore_errors: T.unsafe(nil)
   )
     options = {
-      alias_path:    alias_path,
-      force_bottle:  force_bottle,
-      flags:         flags,
-      ignore_errors: ignore_errors,
+      alias_path:,
+      force_bottle:,
+      flags:,
+      ignore_errors:,
     }.compact
     FormulaContentsLoader.new(name, path, contents).get_formula(spec, **options)
   end
@@ -1151,9 +1143,7 @@ module Formulary
       new_name = tap.core_tap? ? name : "#{tap}/#{name}"
       type = :rename
     elsif (new_tap_name = tap.tap_migrations[name].presence)
-      new_tap_user, new_tap_repo, new_name = new_tap_name.split("/", 3)
-      new_name ||= name
-      new_tap = Tap.fetch(new_tap_user, new_tap_repo)
+      new_tap, new_name = Tap.with_formula_name(new_tap_name) || [Tap.fetch(new_tap_name), name]
       new_tap.ensure_installed!
       new_tapped_name = "#{new_tap}/#{new_name}"
 
@@ -1176,7 +1166,7 @@ module Formulary
   end
 
   def self.loader_for(ref, from: T.unsafe(nil), warn: true)
-    options = { from: from, warn: warn }.compact
+    options = { from:, warn: }.compact
 
     [
       FromBottleLoader,
@@ -1184,7 +1174,6 @@ module Formulary
       FromAPILoader,
       FromTapLoader,
       FromPathLoader,
-      FromDefaultNameLoader,
       FromNameLoader,
       FromKegLoader,
       FromCacheLoader,

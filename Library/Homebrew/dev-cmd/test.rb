@@ -102,7 +102,7 @@ module Homebrew
           end
         end
       rescue Exception => e # rubocop:disable Lint/RescueException
-        retry if retry_test?(f, args: args)
+        retry if retry_test?(f, args:)
         ofail "#{f.full_name}: failed"
         $stderr.puts e, Utils::Backtrace.clean(e)
       ensure

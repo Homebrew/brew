@@ -262,22 +262,6 @@ check-array-membership() {
   fi
 }
 
-# Let user know we're still updating Homebrew if brew update --auto-update
-# exceeds 3 seconds.
-auto-update-timer() {
-  sleep 3
-  # Outputting a command but don't want to run it, hence single quotes.
-  # shellcheck disable=SC2016
-  echo 'Running `brew update --auto-update`...' >&2
-  if [[ -z "${HOMEBREW_NO_ENV_HINTS}" && -z "${HOMEBREW_AUTO_UPDATE_SECS}" ]]
-  then
-    # shellcheck disable=SC2016
-    echo 'Adjust how often this is run with HOMEBREW_AUTO_UPDATE_SECS or disable with' >&2
-    # shellcheck disable=SC2016
-    echo 'HOMEBREW_NO_AUTO_UPDATE. Hide these hints with HOMEBREW_NO_ENV_HINTS (see `man brew`).' >&2
-  fi
-}
-
 # These variables are set from various Homebrew scripts.
 # shellcheck disable=SC2154
 auto-update() {
@@ -339,19 +323,7 @@ auto-update() {
       return
     fi
 
-    if [[ -z "${HOMEBREW_VERBOSE}" ]]
-    then
-      auto-update-timer &
-      timer_pid=$!
-    fi
-
     brew update --auto-update
-
-    if [[ -n "${timer_pid}" ]]
-    then
-      kill "${timer_pid}" 2>/dev/null
-      wait "${timer_pid}" 2>/dev/null
-    fi
 
     unset HOMEBREW_AUTO_UPDATING
 
@@ -866,7 +838,8 @@ if check-array-membership "${HOMEBREW_COMMAND}" "${AUTO_UPDATE_CORE_TAP_COMMANDS
 then
   export HOMEBREW_AUTO_UPDATE_COMMAND="1"
   export HOMEBREW_AUTO_UPDATE_CORE_TAP="1"
-else
+elif [[ -z "${HOMEBREW_AUTO_UPDATING}" ]]
+then
   unset HOMEBREW_AUTO_UPDATE_CORE_TAP
 fi
 
@@ -880,8 +853,9 @@ if check-array-membership "${HOMEBREW_COMMAND}" "${AUTO_UPDATE_CASK_TAP_COMMANDS
 then
   export HOMEBREW_AUTO_UPDATE_COMMAND="1"
   export HOMEBREW_AUTO_UPDATE_CASK_TAP="1"
-else
-  unset HOMEBREW_AUTO_UPDATE_CORE_TAP
+elif [[ -z "${HOMEBREW_AUTO_UPDATING}" ]]
+then
+  unset HOMEBREW_AUTO_UPDATE_CASK_TAP
 fi
 
 # Disable Ruby options we don't need.

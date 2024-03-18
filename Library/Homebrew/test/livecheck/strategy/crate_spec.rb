@@ -54,7 +54,7 @@ RSpec.describe Homebrew::Livecheck::Strategy::Crate do
         "1.0.1" => Version.new("1.0.1"),
         "1.0.0" => Version.new("1.0.0"),
       },
-      regex:   regex,
+      regex:,
       url:     generated[:url],
     }
   end
@@ -93,28 +93,28 @@ RSpec.describe Homebrew::Livecheck::Strategy::Crate do
       }
 
       {
-        cached:         cached,
+        cached:,
         cached_default: cached.merge({ matches: {} }),
       }
     end
 
     it "finds versions in provided content" do
-      expect(crate.find_versions(url: crate_url, regex: regex, provided_content: content))
-        .to eq(match_data[:cached].merge({ regex: regex }))
+      expect(crate.find_versions(url: crate_url, regex:, provided_content: content))
+        .to eq(match_data[:cached].merge({ regex: }))
 
       expect(crate.find_versions(url: crate_url, provided_content: content))
         .to eq(match_data[:cached])
     end
 
     it "finds versions in provided content using a block" do
-      expect(crate.find_versions(url: crate_url, regex: regex, provided_content: content) do |json, regex|
+      expect(crate.find_versions(url: crate_url, regex:, provided_content: content) do |json, regex|
         json["versions"]&.map do |version|
           next if version["yanked"] == true
           next if (match = version["num"]&.match(regex)).blank?
 
           match[1]
         end
-      end).to eq(match_data[:cached].merge({ regex: regex }))
+      end).to eq(match_data[:cached].merge({ regex: }))
 
       expect(crate.find_versions(url: crate_url, provided_content: content) do |json|
         json["versions"]&.map do |version|

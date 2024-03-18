@@ -77,10 +77,10 @@ module Homebrew
       if command
         @run_params = command
       elsif macos || linux
-        @run_params = { macos: macos, linux: linux }.compact
+        @run_params = { macos:, linux: }.compact
       end
 
-      command ||= on_system_conditional(macos: macos, linux: linux)
+      command ||= on_system_conditional(macos:, linux:)
       case command
       when nil
         @run
@@ -214,7 +214,7 @@ module Homebrew
           raise TypeError, "Service#sockets expects a valid ipv4 or ipv6 host address"
         end
 
-        { host: host, port: port, type: type }
+        { host:, port:, type: }
       end
     end
 

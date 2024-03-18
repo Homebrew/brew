@@ -50,7 +50,7 @@ RSpec.describe Homebrew::Livecheck::Strategy::PageMatch do
         "2.0.0" => Version.new("2.0.0"),
         "1.9.0" => Version.new("1.9.0"),
       },
-      regex:   regex,
+      regex:,
       url:     http_url,
     }
   end
@@ -105,7 +105,7 @@ RSpec.describe Homebrew::Livecheck::Strategy::PageMatch do
 
   describe "::find_versions?" do
     it "finds versions in provided_content" do
-      expect(page_match.find_versions(url: http_url, regex: regex, provided_content: content))
+      expect(page_match.find_versions(url: http_url, regex:, provided_content: content))
         .to eq(find_versions_cached_return_hash)
 
       # NOTE: Ideally, a regex should always be provided to `#find_versions`

@@ -90,7 +90,7 @@ module Cask
                                    .stdout
                                    .split("\n")
                                    .map { |path| root.join(path) }
-                                   .reject(&MacOS.public_method(:undeletable?))
+                                   .reject { MacOS.undeletable?(_1) }
     end
 
     sig { returns(Pathname) }

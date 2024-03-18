@@ -107,7 +107,7 @@ RSpec.describe Cask::Cask, :cask do
         expectations.each do |installed_version, expected_output|
           context "when version #{installed_version.inspect} is installed and the tap version is #{tap_version}" do
             it {
-              allow(cask).to receive_messages(installed_version: installed_version,
+              allow(cask).to receive_messages(installed_version:,
                                               version:           Cask::DSL::Version.new(tap_version))
               expect(cask).to receive(:outdated_version).and_call_original
               expect(subject).to eq expected_output
@@ -136,10 +136,10 @@ RSpec.describe Cask::Cask, :cask do
           context "when versions #{installed_version} are installed and the " \
                   "tap version is #{tap_version}, #{"not " unless greedy}greedy " \
                   "and sha is #{"not " unless outdated_sha}outdated" do
-            subject { cask.outdated_version(greedy: greedy) }
+            subject { cask.outdated_version(greedy:) }
 
             it {
-              allow(cask).to receive_messages(installed_version:      installed_version,
+              allow(cask).to receive_messages(installed_version:,
                                               version:                Cask::DSL::Version.new(tap_version),
                                               outdated_download_sha?: outdated_sha)
               expect(cask).to receive(:outdated_version).and_call_original

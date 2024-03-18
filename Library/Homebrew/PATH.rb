@@ -77,7 +77,7 @@ class PATH
 
   sig { returns(T.nilable(T.self_type)) }
   def existing
-    existing_path = select(&File.method(:directory?))
+    existing_path = select { File.directory?(_1) }
     # return nil instead of empty PATH, to unset environment variables
     existing_path unless existing_path.empty?
   end

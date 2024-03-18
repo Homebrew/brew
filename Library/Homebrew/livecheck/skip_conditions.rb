@@ -44,7 +44,7 @@ module Homebrew
         return {} if !package_or_resource.livecheck.skip? && skip_message.blank?
 
         skip_messages = skip_message ? [skip_message] : nil
-        Livecheck.status_hash(package_or_resource, "skipped", skip_messages, full_name: full_name, verbose: verbose)
+        Livecheck.status_hash(package_or_resource, "skipped", skip_messages, full_name:, verbose:)
       end
 
       sig {
@@ -62,8 +62,8 @@ module Homebrew
           formula,
           "error",
           ["HEAD only formula must be installed to be livecheckable"],
-          full_name: full_name,
-          verbose:   verbose,
+          full_name:,
+          verbose:,
         )
       end
 
@@ -78,7 +78,7 @@ module Homebrew
       def formula_deprecated(formula, livecheckable, full_name: false, verbose: false)
         return {} if !formula.deprecated? || livecheckable
 
-        Livecheck.status_hash(formula, "deprecated", full_name: full_name, verbose: verbose)
+        Livecheck.status_hash(formula, "deprecated", full_name:, verbose:)
       end
 
       sig {
@@ -92,7 +92,7 @@ module Homebrew
       def formula_disabled(formula, livecheckable, full_name: false, verbose: false)
         return {} if !formula.disabled? || livecheckable
 
-        Livecheck.status_hash(formula, "disabled", full_name: full_name, verbose: verbose)
+        Livecheck.status_hash(formula, "disabled", full_name:, verbose:)
       end
 
       sig {
@@ -106,7 +106,7 @@ module Homebrew
       def formula_versioned(formula, livecheckable, full_name: false, verbose: false)
         return {} if !formula.versioned_formula? || livecheckable
 
-        Livecheck.status_hash(formula, "versioned", full_name: full_name, verbose: verbose)
+        Livecheck.status_hash(formula, "versioned", full_name:, verbose:)
       end
 
       sig {
@@ -120,7 +120,7 @@ module Homebrew
       def cask_discontinued(cask, livecheckable, full_name: false, verbose: false)
         return {} if !cask.discontinued? || livecheckable
 
-        Livecheck.status_hash(cask, "discontinued", full_name: full_name, verbose: verbose)
+        Livecheck.status_hash(cask, "discontinued", full_name:, verbose:)
       end
 
       sig {
@@ -134,7 +134,7 @@ module Homebrew
       def cask_deprecated(cask, livecheckable, full_name: false, verbose: false)
         return {} if !cask.deprecated? || livecheckable
 
-        Livecheck.status_hash(cask, "deprecated", full_name: full_name, verbose: verbose)
+        Livecheck.status_hash(cask, "deprecated", full_name:, verbose:)
       end
 
       sig {
@@ -148,7 +148,7 @@ module Homebrew
       def cask_disabled(cask, livecheckable, full_name: false, verbose: false)
         return {} if !cask.disabled? || livecheckable
 
-        Livecheck.status_hash(cask, "disabled", full_name: full_name, verbose: verbose)
+        Livecheck.status_hash(cask, "disabled", full_name:, verbose:)
       end
 
       sig {
@@ -162,7 +162,7 @@ module Homebrew
       def cask_version_latest(cask, livecheckable, full_name: false, verbose: false)
         return {} if !(cask.present? && cask.version&.latest?) || livecheckable
 
-        Livecheck.status_hash(cask, "latest", full_name: full_name, verbose: verbose)
+        Livecheck.status_hash(cask, "latest", full_name:, verbose:)
       end
 
       sig {
@@ -176,7 +176,7 @@ module Homebrew
       def cask_url_unversioned(cask, livecheckable, full_name: false, verbose: false)
         return {} if !(cask.present? && cask.url&.unversioned?) || livecheckable
 
-        Livecheck.status_hash(cask, "unversioned", full_name: full_name, verbose: verbose)
+        Livecheck.status_hash(cask, "unversioned", full_name:, verbose:)
       end
 
       # Skip conditions for formulae.
@@ -227,7 +227,7 @@ module Homebrew
         return {} unless checks
 
         checks.each do |method_name|
-          skip_hash = send(method_name, package_or_resource, livecheckable, full_name: full_name, verbose: verbose)
+          skip_hash = send(method_name, package_or_resource, livecheckable, full_name:, verbose:)
           return skip_hash if skip_hash.present?
         end
 
@@ -254,12 +254,12 @@ module Homebrew
       )
         skip_info = SkipConditions.skip_information(
           livecheck_package_or_resource,
-          full_name: full_name,
-          verbose:   verbose,
+          full_name:,
+          verbose:,
         )
         return if skip_info.blank?
 
-        referenced_name = Livecheck.package_or_resource_name(livecheck_package_or_resource, full_name: full_name)
+        referenced_name = Livecheck.package_or_resource_name(livecheck_package_or_resource, full_name:)
         referenced_type = case livecheck_package_or_resource
         when Formula
           :formula

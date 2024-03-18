@@ -46,7 +46,7 @@ module Homebrew
     raise TapUnavailableError, tap.name unless tap.installed?
 
     unless args.dry_run?
-      directories = ["_data/cask", "api/cask", "api/cask-source", "cask"].freeze
+      directories = ["_data/cask", "api/cask", "api/cask-source", "cask", "api/internal/v3"].freeze
       FileUtils.rm_rf directories
       FileUtils.mkdir_p directories
     end
@@ -74,6 +74,9 @@ module Homebrew
         onoe "Error while generating data for cask '#{path.stem}'."
         raise
       end
+
+      homebrew_cask_tap_json = JSON.generate(tap.to_internal_api_hash)
+      File.write("api/internal/v3/homebrew-cask.json", homebrew_cask_tap_json) unless args.dry_run?
     end
   end
 end

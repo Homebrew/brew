@@ -4,18 +4,11 @@
 module T::NonForcingConstants
   # NOTE: This method is documented on the RBI in Sorbet's payload, so that it
   # shows up in the hover/completion documentation via LSP.
-  T::Sig::WithoutRuntime.sig {params(val: BasicObject, klass: String, package: T.nilable(String)).returns(T::Boolean)}
-  def self.non_forcing_is_a?(val, klass, package: nil)
+  T::Sig::WithoutRuntime.sig {params(val: BasicObject, klass: String).returns(T::Boolean)}
+  def self.non_forcing_is_a?(val, klass)
     method_name = "T::NonForcingConstants.non_forcing_is_a?"
     if klass.empty?
       raise ArgumentError.new("The string given to `#{method_name}` must not be empty")
-    end
-
-    # We don't treat packages differently at runtime, but the static
-    # type-checker still needs to have the package and constant
-    # separated out. This just re-assembles the string as needed
-    if !package.nil?
-      klass = "::#{package}::#{klass}"
     end
 
     current_klass = T.let(nil, T.nilable(Module))
@@ -25,10 +18,7 @@ module T::NonForcingConstants
     parts.each do |part|
       if current_klass.nil?
         # First iteration
-        if part != "" && package.nil?
-          # if we've supplied a package, we're probably running in
-          # package mode, which means absolute references are
-          # meaningless
+        if part != ""
           raise ArgumentError.new("The string given to `#{method_name}` must be an absolute constant reference that starts with `::`")
         end
 
@@ -37,7 +27,7 @@ module T::NonForcingConstants
 
         # if this had a :: prefix, then there's no more loading to
         # do---skip to the next one
-        next if part == ""
+        next
       end
 
       if current_klass.autoload?(part)

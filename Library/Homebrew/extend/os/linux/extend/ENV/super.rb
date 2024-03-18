@@ -15,8 +15,8 @@ module Superenv
   # @private
   def setup_build_environment(formula: nil, cc: nil, build_bottle: false, bottle_arch: nil, testing_formula: false,
                               debug_symbols: false)
-    generic_setup_build_environment(formula: formula, cc: cc, build_bottle: build_bottle, bottle_arch: bottle_arch,
-                                    testing_formula: testing_formula, debug_symbols: debug_symbols)
+    generic_setup_build_environment(formula:, cc:, build_bottle:, bottle_arch:,
+                                    testing_formula:, debug_symbols:)
     self["HOMEBREW_OPTIMIZATION_LEVEL"] = "O2"
     self["HOMEBREW_DYNAMIC_LINKER"] = determine_dynamic_linker_path
     self["HOMEBREW_RPATH_PATHS"] = determine_rpath_paths(@formula)

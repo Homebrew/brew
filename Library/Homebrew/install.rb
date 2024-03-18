@@ -78,7 +78,7 @@ module Homebrew
 
         installed_head_version = formula.latest_head_version
         if installed_head_version &&
-           !formula.head_version_outdated?(installed_head_version, fetch_head: fetch_head)
+           !formula.head_version_outdated?(installed_head_version, fetch_head:)
           new_head_installed = true
         end
         prefix_installed = formula.prefix.exist? && !formula.prefix.children.empty?
@@ -245,30 +245,30 @@ module Homebrew
         skip_post_install: false
       )
         formula_installers = formulae_to_install.filter_map do |formula|
-          Migrator.migrate_if_needed(formula, force: force, dry_run: dry_run)
+          Migrator.migrate_if_needed(formula, force:, dry_run:)
           build_options = formula.build
 
           formula_installer = FormulaInstaller.new(
             formula,
             options:                    build_options.used_options,
-            build_bottle:               build_bottle,
-            force_bottle:               force_bottle,
-            bottle_arch:                bottle_arch,
-            ignore_deps:                ignore_deps,
-            only_deps:                  only_deps,
-            include_test_formulae:      include_test_formulae,
-            build_from_source_formulae: build_from_source_formulae,
-            cc:                         cc,
-            git:                        git,
-            interactive:                interactive,
-            keep_tmp:                   keep_tmp,
-            debug_symbols:              debug_symbols,
-            force:                      force,
-            overwrite:                  overwrite,
-            debug:                      debug,
-            quiet:                      quiet,
-            verbose:                    verbose,
-            skip_post_install:          skip_post_install,
+            build_bottle:,
+            force_bottle:,
+            bottle_arch:,
+            ignore_deps:,
+            only_deps:,
+            include_test_formulae:,
+            build_from_source_formulae:,
+            cc:,
+            git:,
+            interactive:,
+            keep_tmp:,
+            debug_symbols:,
+            force:,
+            overwrite:,
+            debug:,
+            quiet:,
+            verbose:,
+            skip_post_install:,
           )
 
           begin
@@ -355,7 +355,7 @@ module Homebrew
 
         upgrade = formula.linked? && formula.outdated? && !formula.head? && !Homebrew::EnvConfig.no_install_upgrade?
 
-        Upgrade.install_formula(formula_installer, upgrade: upgrade)
+        Upgrade.install_formula(formula_installer, upgrade:)
       end
     end
   end

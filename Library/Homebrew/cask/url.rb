@@ -191,26 +191,26 @@ module Cask
       super(
         if block
           LazyObject.new do
-            uri2, options = *BlockDSL.new(uri, dsl: dsl, &block).call
+            uri2, options = *BlockDSL.new(uri, dsl:, &block).call
             options ||= {}
             DSL.new(uri2, **options)
           end
         else
           DSL.new(
             T.must(uri),
-            verified:   verified,
-            using:      using,
-            tag:        tag,
-            branch:     branch,
-            revisions:  revisions,
-            revision:   revision,
-            trust_cert: trust_cert,
-            cookies:    cookies,
-            referer:    referer,
-            header:     header,
-            user_agent: user_agent,
-            data:       data,
-            only_path:  only_path,
+            verified:,
+            using:,
+            tag:,
+            branch:,
+            revisions:,
+            revision:,
+            trust_cert:,
+            cookies:,
+            referer:,
+            header:,
+            user_agent:,
+            data:,
+            only_path:,
           )
         end
       )

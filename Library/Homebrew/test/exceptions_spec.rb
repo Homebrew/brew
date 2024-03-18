@@ -194,7 +194,7 @@ RSpec.describe "Exception" do
   end
 
   describe ErrorDuringExecution do
-    subject { described_class.new(["badprg", "arg1", "arg2"], status: status) }
+    subject { described_class.new(["badprg", "arg1", "arg2"], status:) }
 
     let(:status) { instance_double(Process::Status, exitstatus: 17, termsig: nil) }
 

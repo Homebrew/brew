@@ -8,10 +8,10 @@ RSpec.describe SystemCommand do
       described_class.new(
         "env",
         args:         env_args,
-        env:          env,
+        env:,
         must_succeed: true,
-        sudo:         sudo,
-        sudo_as_root: sudo_as_root,
+        sudo:,
+        sudo_as_root:,
       )
     end
 

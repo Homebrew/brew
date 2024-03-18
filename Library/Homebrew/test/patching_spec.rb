@@ -25,7 +25,7 @@ RSpec.describe "patching" do
 
   def formula(name = "formula_name", path: Formulary.core_path(name), spec: :stable, alias_path: nil, &block)
     formula_subclass.class_eval(&block)
-    formula_subclass.new(name, path, spec, alias_path: alias_path)
+    formula_subclass.new(name, path, spec, alias_path:)
   end
 
   matcher :be_patched do

@@ -68,7 +68,7 @@ module Homebrew
     else
       query = args.named.join(" ")
       string_or_regex = Search.query_regexp(query)
-      Search.search_descriptions(string_or_regex, args, search_type: search_type)
+      Search.search_descriptions(string_or_regex, args, search_type:)
     end
   end
 end

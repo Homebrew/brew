@@ -10,8 +10,8 @@ RSpec.describe Cask::Artifact::App, :cask do
   let(:source_path) { cask.staged_path.join("Caffeine.app") }
   let(:target_path) { cask.config.appdir.join("Caffeine.app") }
 
-  let(:install_phase) { app.install_phase(command: command, adopt: adopt, force: force) }
-  let(:uninstall_phase) { app.uninstall_phase(command: command, force: force) }
+  let(:install_phase) { app.install_phase(command:, adopt:, force:) }
+  let(:uninstall_phase) { app.uninstall_phase(command:, force:) }
 
   before do
     InstallHelper.install_without_artifacts(cask)
@@ -315,13 +315,13 @@ RSpec.describe Cask::Artifact::App, :cask do
       inode = target_path.stat.ino
       expect(contents_path).to exist
 
-      app.uninstall_phase(command: command, force: force, successor: cask)
+      app.uninstall_phase(command:, force:, successor: cask)
 
       expect(target_path).to exist
       expect(target_path.children).to be_empty
       expect(contents_path).not_to exist
 
-      app.install_phase(command: command, adopt: adopt, force: force, predecessor: cask)
+      app.install_phase(command:, adopt:, force:, predecessor: cask)
       expect(target_path).to exist
       expect(target_path.stat.ino).to eq(inode)
 
@@ -335,10 +335,10 @@ RSpec.describe Cask::Artifact::App, :cask do
         expect(File).to receive(:write).with(target_path / ".homebrew-write-test",
                                              instance_of(String)).and_raise(Errno::EACCES)
 
-        app.uninstall_phase(command: command, force: force, successor: cask)
+        app.uninstall_phase(command:, force:, successor: cask)
         expect(target_path).not_to exist
 
-        app.install_phase(command: command, adopt: adopt, force: force, predecessor: cask)
+        app.install_phase(command:, adopt:, force:, predecessor: cask)
         expect(target_contents_path).to exist
       end
     end
@@ -360,12 +360,12 @@ RSpec.describe Cask::Artifact::App, :cask do
           .and_call_original
         expect(FileUtils).not_to receive(:move).with(source_contents_path, an_instance_of(Pathname))
 
-        app.uninstall_phase(command: command, force: force, successor: cask)
+        app.uninstall_phase(command:, force:, successor: cask)
         expect(target_contents_path).not_to exist
         expect(target_path).to exist
         expect(source_contents_path).to exist
 
-        app.install_phase(command: command, adopt: adopt, force: force, predecessor: cask)
+        app.install_phase(command:, adopt:, force:, predecessor: cask)
         expect(target_contents_path).to exist
       end
 
@@ -382,10 +382,10 @@ RSpec.describe Cask::Artifact::App, :cask do
             .and_raise(ErrorDuringExecution.new([], status: 1,
 output: [[:stderr, "touch: #{target_path}/.homebrew-write-test: Operation not permitted\n"]], secrets: []))
 
-          app.uninstall_phase(command: command, force: force, successor: cask)
+          app.uninstall_phase(command:, force:, successor: cask)
           expect(target_path).not_to exist
 
-          app.install_phase(command: command, adopt: adopt, force: force, predecessor: cask)
+          app.install_phase(command:, adopt:, force:, predecessor: cask)
           expect(target_contents_path).to exist
         end
       end

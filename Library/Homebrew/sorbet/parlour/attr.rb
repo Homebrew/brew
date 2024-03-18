@@ -152,7 +152,7 @@ class Attr < Parlour::Plugin
             Parlour::RbiGenerator::Parameter.new("**options"),
             Parlour::RbiGenerator::Parameter.new("&block"),
           ],
-          return_type: return_type,
+          return_type:,
         )
       else
         raise "Malformed tree."

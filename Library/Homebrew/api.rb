@@ -95,7 +95,7 @@ module Homebrew
         end
 
         mtime = insecure_download ? Time.new(1970, 1, 1) : Time.now
-        FileUtils.touch(target, mtime: mtime) unless skip_download
+        FileUtils.touch(target, mtime:) unless skip_download
         JSON.parse(target.read, freeze: true)
       rescue JSON::ParserError
         target.unlink

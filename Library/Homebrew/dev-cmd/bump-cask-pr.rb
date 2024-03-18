@@ -89,19 +89,13 @@ module Homebrew
     odie "This cask is not in a tap!" if cask.tap.blank?
     odie "This cask's tap is not a Git repository!" unless cask.tap.git?
 
-    if ENV.fetch("HOMEBREW_TEST_BOT_AUTOBUMP", false).blank? &&
-       (cask.tap.core_cask_tap? &&
-       (autobump_file_path = cask.tap.path/Tap::HOMEBREW_TAP_AUTOBUMP_FILE) &&
-       autobump_file_path.exist? &&
-       autobump_file_path.readlines(chomp: true).include?(cask.token))
-      odie <<~EOS
-        Whoops, the #{cask.token} cask has its version update
-        pull requests automatically opened by BrewTestBot!
-        We'd still love your contributions, though, so try another one
-        that's not in the autobump list:
-          #{Formatter.url("#{cask.tap.remote}/blob/master/.github/autobump.txt")}
-      EOS
-    end
+    odie <<~EOS unless cask.tap.allow_bump?(cask.token)
+      Whoops, the #{cask.token} cask has its version update
+      pull requests automatically opened by BrewTestBot!
+      We'd still love your contributions, though, so try another one
+      that's not in the autobump list:
+        #{Formatter.url("#{cask.tap.remote}/blob/master/.github/autobump.txt")}
+    EOS
 
     new_version = BumpVersionParser.new(
       general: args.version,
@@ -129,7 +123,7 @@ module Homebrew
       raise UsageError, "No `--version`, `--url` or `--sha256` argument specified!"
     end
 
-    check_pull_requests(cask, args: args, new_version: new_version)
+    check_pull_requests(cask, args:, new_version:)
 
     replacement_pairs ||= []
     branch_name = "bump-#{cask.token}"
@@ -155,7 +149,7 @@ module Homebrew
       # For simplicity, our naming defers to the arm version if we multiple architectures are specified
       branch_version = new_version.arm || new_version.general
       if branch_version.is_a?(Cask::DSL::Version)
-        commit_version = shortened_version(branch_version, cask: cask)
+        commit_version = shortened_version(branch_version, cask:)
         branch_name = "bump-#{cask.token}-#{branch_version.tr(",:", "-")}"
         commit_message ||= "#{cask.token} #{commit_version}"
       end
@@ -172,18 +166,18 @@ module Homebrew
                                      read_only_run: args.dry_run?,
                                      silent:        args.quiet?)
 
-    run_cask_audit(cask, old_contents, args: args)
-    run_cask_style(cask, old_contents, args: args)
+    run_cask_audit(cask, old_contents, args:)
+    run_cask_style(cask, old_contents, args:)
 
     pr_info = {
-      branch_name:     branch_name,
-      commit_message:  commit_message,
-      old_contents:    old_contents,
+      branch_name:,
+      commit_message:,
+      old_contents:,
       pr_message:      "Created with `brew bump-cask-pr`.",
       sourcefile_path: cask.sourcefile_path,
       tap:             cask.tap,
     }
-    GitHub.create_bump_pr(pr_info, args: args)
+    GitHub.create_bump_pr(pr_info, args:)
   end
 
   sig { params(version: Cask::DSL::Version, cask: Cask::Cask).returns(Cask::DSL::Version) }
@@ -207,7 +201,7 @@ module Homebrew
     # When blocks are absent, arch is not relevant. For consistency, we simulate the arm architecture.
     arch_options = cask.on_system_blocks_exist? ? OnSystem::ARCH_OPTIONS : [:arm]
     arch_options.each do |arch|
-      SimulateSystem.with arch: arch do
+      SimulateSystem.with(arch:) do
         old_cask     = Cask::CaskLoader.load(cask.sourcefile_path)
         old_version  = old_cask.version
         bump_version = new_version.send(arch) || new_version.general
@@ -278,7 +272,7 @@ module Homebrew
         cask.token,
         tap_remote_repo,
         state:   "closed",
-        version: shortened_version(version, cask: cask),
+        version: shortened_version(version, cask:),
         file:    cask.sourcefile_path.relative_path_from(cask.tap.path).to_s,
         quiet:   args.quiet?,
       )

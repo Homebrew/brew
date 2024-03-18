@@ -1,14 +1,13 @@
 # Gems, Eggs and Perl Modules
 
-On a fresh macOS installation there are three empty directories for
+On a fresh macOS installation there are two empty directories for
 add-ons available to all users:
 
 * `/Library/Ruby`
-* `/Library/Python`
 * `/Library/Perl`
 
-You need sudo to install to these like so: `sudo gem install`,
-`sudo easy_install` or `sudo cpan -i`.
+You need sudo to install to these like so: `sudo gem install`
+or `sudo cpan -i`.
 
 ## Python packages (eggs) without sudo using system Python
 

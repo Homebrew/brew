@@ -54,7 +54,7 @@ class CompilerFailure
       version = 9999
       exact_major_match = false
     end
-    new(type, version, exact_major_match: exact_major_match, &block)
+    new(type, version, exact_major_match:, &block)
   end
 
   def fails_with?(compiler)

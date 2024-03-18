@@ -50,7 +50,7 @@ module OS
         when "10.14" then "10.2"
         when "10.13" then "9.0"
         when "10.12" then "8.0"
-        else "2.0"
+        else "7.3"
         end
       end
 
@@ -373,7 +373,7 @@ module OS
         when "10.14" then "10.0.0"
         when "10.13" then "9.0.0"
         when "10.12" then "8.0.0"
-        else              "1.0.0"
+        else              "7.3.0"
         end
       end
 

@@ -12,7 +12,7 @@ module Formatter
   end
 
   def self.headline(string, color: nil)
-    arrow("#{Tty.bold}#{string}#{Tty.reset}", color: color)
+    arrow("#{Tty.bold}#{string}#{Tty.reset}", color:)
   end
 
   def self.identifier(string)

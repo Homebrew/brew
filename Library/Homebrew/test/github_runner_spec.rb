@@ -6,7 +6,7 @@ RSpec.describe GitHubRunner do
   let(:runner) do
     spec = MacOSRunnerSpec.new(name: "macOS 11-arm64", runner: "11-arm64", timeout: 90, cleanup: true)
     version = MacOSVersion.new("11")
-    described_class.new(platform: :macos, arch: :arm64, spec: spec, macos_version: version)
+    described_class.new(platform: :macos, arch: :arm64, spec:, macos_version: version)
   end
 
   it "has immutable attributes" do

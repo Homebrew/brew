@@ -128,7 +128,7 @@ class Keg
   def replace_placeholders_with_locations(files, skip_linkage: false)
     relocation = prepare_relocation_to_locations.freeze
     relocate_dynamic_linkage(relocation) unless skip_linkage
-    replace_text_in_files(relocation, files: files)
+    replace_text_in_files(relocation, files:)
   end
 
   def openjdk_dep_name_if_applicable
@@ -143,7 +143,7 @@ class Keg
     files ||= text_files | libtool_files
 
     changed_files = T.let([], Array)
-    files.map(&path.method(:join)).group_by { |f| f.stat.ino }.each_value do |first, *rest|
+    files.map { path.join(_1) }.group_by { |f| f.stat.ino }.each_value do |first, *rest|
       s = first.open("rb", &:read)
 
       next unless relocation.replace_text(s)

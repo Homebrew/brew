@@ -28,7 +28,7 @@ group :livecheck, optional: true do
   gem "ruby-progressbar", require: false
 end
 group :man, optional: true do
-  gem "ronn", require: false
+  gem "kramdown", require: false
 end
 group :pr_upload, optional: true do
   gem "json_schemer", require: false

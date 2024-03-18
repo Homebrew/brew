@@ -144,7 +144,7 @@ module Homebrew
       end
 
       it "detects no license info" do
-        fa = formula_auditor "foo", <<~RUBY, spdx_license_data: spdx_license_data, new_formula: true, core_tap: true
+        fa = formula_auditor "foo", <<~RUBY, spdx_license_data:, new_formula: true, core_tap: true
           class Foo < Formula
             url "https://brew.sh/foo-1.0.tgz"
           end
@@ -155,7 +155,7 @@ module Homebrew
       end
 
       it "detects if license is not a standard spdx-id" do
-        fa = formula_auditor "foo", <<~RUBY, spdx_license_data: spdx_license_data, new_formula: true
+        fa = formula_auditor "foo", <<~RUBY, spdx_license_data:, new_formula: true
           class Foo < Formula
             url "https://brew.sh/foo-1.0.tgz"
             license "zzz"
@@ -170,7 +170,7 @@ module Homebrew
       end
 
       it "detects if license is a deprecated spdx-id" do
-        fa = formula_auditor "foo", <<~RUBY, spdx_license_data: spdx_license_data, new_formula: true, strict: true
+        fa = formula_auditor "foo", <<~RUBY, spdx_license_data:, new_formula: true, strict: true
           class Foo < Formula
             url "https://brew.sh/foo-1.0.tgz"
             license "#{deprecated_spdx_id}"
@@ -186,7 +186,7 @@ module Homebrew
       end
 
       it "detects if license with AND contains a non-standard spdx-id" do
-        fa = formula_auditor "foo", <<~RUBY, spdx_license_data: spdx_license_data, new_formula: true
+        fa = formula_auditor "foo", <<~RUBY, spdx_license_data:, new_formula: true
           class Foo < Formula
             url "https://brew.sh/foo-1.0.tgz"
             license #{license_all_custom_id}
@@ -201,7 +201,7 @@ module Homebrew
       end
 
       it "detects if license array contains a non-standard spdx-id" do
-        fa = formula_auditor "foo", <<~RUBY, spdx_license_data: spdx_license_data, new_formula: true
+        fa = formula_auditor "foo", <<~RUBY, spdx_license_data:, new_formula: true
           class Foo < Formula
             url "https://brew.sh/foo-1.0.tgz"
             license #{license_any_nonstandard}
@@ -216,7 +216,7 @@ module Homebrew
       end
 
       it "detects if license array contains a deprecated spdx-id" do
-        fa = formula_auditor "foo", <<~RUBY, spdx_license_data: spdx_license_data, new_formula: true, strict: true
+        fa = formula_auditor "foo", <<~RUBY, spdx_license_data:, new_formula: true, strict: true
           class Foo < Formula
             url "https://brew.sh/foo-1.0.tgz"
             license #{license_any_deprecated}
@@ -232,7 +232,7 @@ module Homebrew
       end
 
       it "verifies that a license info is a standard spdx id" do
-        fa = formula_auditor "foo", <<~RUBY, spdx_license_data: spdx_license_data, new_formula: true
+        fa = formula_auditor "foo", <<~RUBY, spdx_license_data:, new_formula: true
           class Foo < Formula
             url "https://brew.sh/foo-1.0.tgz"
             license "0BSD"
@@ -244,7 +244,7 @@ module Homebrew
       end
 
       it "verifies that a license info with plus is a standard spdx id" do
-        fa = formula_auditor "foo", <<~RUBY, spdx_license_data: spdx_license_data, new_formula: true
+        fa = formula_auditor "foo", <<~RUBY, spdx_license_data:, new_formula: true
           class Foo < Formula
             url "https://brew.sh/foo-1.0.tgz"
             license "0BSD+"
@@ -256,7 +256,7 @@ module Homebrew
       end
 
       it "allows :public_domain license" do
-        fa = formula_auditor "foo", <<~RUBY, spdx_license_data: spdx_license_data, new_formula: true
+        fa = formula_auditor "foo", <<~RUBY, spdx_license_data:, new_formula: true
           class Foo < Formula
             url "https://brew.sh/foo-1.0.tgz"
             license :public_domain
@@ -268,7 +268,7 @@ module Homebrew
       end
 
       it "verifies that a license info with multiple licenses are standard spdx ids" do
-        fa = formula_auditor "foo", <<~RUBY, spdx_license_data: spdx_license_data, new_formula: true
+        fa = formula_auditor "foo", <<~RUBY, spdx_license_data:, new_formula: true
           class Foo < Formula
             url "https://brew.sh/foo-1.0.tgz"
             license any_of: ["0BSD", "MIT"]
@@ -286,15 +286,15 @@ module Homebrew
             license "Apache-2.0" => { with: "LLVM-exception" }
           end
         RUBY
-        fa = formula_auditor "foo", formula_text, new_formula: true,
-                             spdx_license_data: spdx_license_data, spdx_exception_data: spdx_exception_data
+        fa = formula_auditor("foo", formula_text, new_formula: true,
+                             spdx_license_data:, spdx_exception_data:)
 
         fa.audit_license
         expect(fa.problems).to be_empty
       end
 
       it "verifies that a license array contains only standard spdx id" do
-        fa = formula_auditor "foo", <<~RUBY, spdx_license_data: spdx_license_data, new_formula: true
+        fa = formula_auditor "foo", <<~RUBY, spdx_license_data:, new_formula: true
           class Foo < Formula
             url "https://brew.sh/foo-1.0.tgz"
             license #{license_any}
@@ -306,7 +306,7 @@ module Homebrew
       end
 
       it "verifies that a license array contains only standard spdx id with plus" do
-        fa = formula_auditor "foo", <<~RUBY, spdx_license_data: spdx_license_data, new_formula: true
+        fa = formula_auditor "foo", <<~RUBY, spdx_license_data:, new_formula: true
           class Foo < Formula
             url "https://brew.sh/foo-1.0.tgz"
             license #{license_any_with_plus}
@@ -318,7 +318,7 @@ module Homebrew
       end
 
       it "verifies that a license array with AND contains only standard spdx ids" do
-        fa = formula_auditor "foo", <<~RUBY, spdx_license_data: spdx_license_data, new_formula: true
+        fa = formula_auditor "foo", <<~RUBY, spdx_license_data:, new_formula: true
           class Foo < Formula
             url "https://brew.sh/foo-1.0.tgz"
             license #{license_nested_conditions}
@@ -338,7 +338,7 @@ module Homebrew
             license "GPL-3.0"
           end
         RUBY
-        fa = formula_auditor "cask", formula_text, spdx_license_data: spdx_license_data,
+        fa = formula_auditor "cask", formula_text, spdx_license_data:,
                              online: true, core_tap: true, new_formula: true
 
         fa.audit_license
@@ -354,7 +354,7 @@ module Homebrew
             license all_of: ["GPL-3.0-or-later", "MIT"]
           end
         RUBY
-        fa = formula_auditor "cask", formula_text, spdx_license_data: spdx_license_data,
+        fa = formula_auditor "cask", formula_text, spdx_license_data:,
                              online: true, core_tap: true, new_formula: true
 
         fa.audit_license
@@ -370,8 +370,8 @@ module Homebrew
             license "GPL-3.0-or-later" => { with: "LLVM-exception" }
           end
         RUBY
-        fa = formula_auditor "cask", formula_text, online: true, core_tap: true, new_formula: true,
-                             spdx_license_data: spdx_license_data, spdx_exception_data: spdx_exception_data
+        fa = formula_auditor("cask", formula_text, online: true, core_tap: true, new_formula: true,
+                             spdx_license_data:, spdx_exception_data:)
 
         fa.audit_license
         expect(fa.problems).to be_empty
@@ -385,8 +385,8 @@ module Homebrew
             license "GPL-3.0-or-later" => { with: "zzz" }
           end
         RUBY
-        fa = formula_auditor "cask", formula_text, core_tap: true, new_formula: true,
-                             spdx_license_data: spdx_license_data, spdx_exception_data: spdx_exception_data
+        fa = formula_auditor("cask", formula_text, core_tap: true, new_formula: true,
+                             spdx_license_data:, spdx_exception_data:)
 
         fa.audit_license
         expect(fa.problems.first[:message]).to match <<~EOS
@@ -404,8 +404,8 @@ module Homebrew
             license "GPL-3.0-or-later" => { with: "#{deprecated_spdx_exception}" }
           end
         RUBY
-        fa = formula_auditor "cask", formula_text, core_tap: true, new_formula: true,
-                             spdx_license_data: spdx_license_data, spdx_exception_data: spdx_exception_data
+        fa = formula_auditor("cask", formula_text, core_tap: true, new_formula: true,
+                             spdx_license_data:, spdx_exception_data:)
 
         fa.audit_license
         expect(fa.problems.first[:message]).to match <<~EOS
@@ -417,7 +417,7 @@ module Homebrew
 
       it "checks online and verifies that a standard license id is in the same exempted license group " \
          "as what is indicated on its GitHub repo", :needs_network do
-        fa = formula_auditor "cask", <<~RUBY, spdx_license_data: spdx_license_data, online: true, new_formula: true
+        fa = formula_auditor "cask", <<~RUBY, spdx_license_data:, online: true, new_formula: true
           class Cask < Formula
             url "https://github.com/cask/cask/archive/v0.8.4.tar.gz"
             head "https://github.com/cask/cask.git"
@@ -431,7 +431,7 @@ module Homebrew
 
       it "checks online and verifies that a standard license array is in the same exempted license group " \
          "as what is indicated on its GitHub repo", :needs_network do
-        fa = formula_auditor "cask", <<~RUBY, spdx_license_data: spdx_license_data, online: true, new_formula: true
+        fa = formula_auditor "cask", <<~RUBY, spdx_license_data:, online: true, new_formula: true
           class Cask < Formula
             url "https://github.com/cask/cask/archive/v0.8.4.tar.gz"
             head "https://github.com/cask/cask.git"
@@ -452,7 +452,7 @@ module Homebrew
             license "0BSD"
           end
         RUBY
-        fa = formula_auditor "cask", formula_text, spdx_license_data: spdx_license_data,
+        fa = formula_auditor "cask", formula_text, spdx_license_data:,
                              online: true, core_tap: true, new_formula: true
 
         fa.audit_license
@@ -469,7 +469,7 @@ module Homebrew
             license "0BSD"
           end
         RUBY
-        fa = formula_auditor "cask", formula_text, spdx_license_data: spdx_license_data,
+        fa = formula_auditor "cask", formula_text, spdx_license_data:,
                              online: true, core_tap: true, new_formula: true,
                              tap_audit_exceptions: { permitted_formula_license_mismatches: ["cask"] }
 
@@ -486,7 +486,7 @@ module Homebrew
             license #{license_any_mismatch}
           end
         RUBY
-        fa = formula_auditor "cask", formula_text, spdx_license_data: spdx_license_data,
+        fa = formula_auditor "cask", formula_text, spdx_license_data:,
                              online: true, core_tap: true, new_formula: true
 
         fa.audit_license
@@ -503,7 +503,7 @@ module Homebrew
             license #{license_any}
           end
         RUBY
-        fa = formula_auditor "cask", formula_text, spdx_license_data: spdx_license_data,
+        fa = formula_auditor "cask", formula_text, spdx_license_data:,
                              online: true, core_tap: true, new_formula: true
 
         fa.audit_license

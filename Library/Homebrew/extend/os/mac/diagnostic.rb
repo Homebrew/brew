@@ -180,7 +180,7 @@ module Homebrew
         xcode += " => #{MacOS::Xcode.prefix}" unless MacOS::Xcode.default_prefix?
 
         <<~EOS
-          Your Xcode (#{xcode}) is too outdated.
+          Your Xcode (#{xcode}) at #{MacOS::Xcode.bundle_path} is too outdated.
           Please update to Xcode #{MacOS::Xcode.latest_version} (or delete it).
           #{MacOS::Xcode.update_instructions}
         EOS

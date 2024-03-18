@@ -130,7 +130,7 @@ module Homebrew
           ).returns(T::Hash[Symbol, T.untyped])
         }
         def self.find_versions(url:, regex: nil, **_unused, &block)
-          match_data = { matches: {}, regex: regex, url: url }
+          match_data = { matches: {}, regex:, url: }
 
           tags_data = tag_info(url, regex)
           tags = tags_data[:tags]

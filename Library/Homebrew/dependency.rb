@@ -74,7 +74,7 @@ class Dependency
   end
 
   def satisfied?(inherited_options = [], minimum_version: nil, minimum_revision: nil)
-    installed?(minimum_version: minimum_version, minimum_revision: minimum_revision) &&
+    installed?(minimum_version:, minimum_revision:) &&
       missing_options(inherited_options).empty?
   end
 
@@ -133,14 +133,14 @@ class Dependency
         when :skip
           next if @expand_stack.include? dep.name
 
-          expanded_deps.concat(expand(dep.to_formula, cache_key: cache_key, &block))
+          expanded_deps.concat(expand(dep.to_formula, cache_key:, &block))
         when :keep_but_prune_recursive_deps
           expanded_deps << dep
         else
           next if @expand_stack.include? dep.name
 
           dep_formula = dep.to_formula
-          expanded_deps.concat(expand(dep_formula, cache_key: cache_key, &block))
+          expanded_deps.concat(expand(dep_formula, cache_key:, &block))
 
           # Fixes names for renamed/aliased formulae.
           dep = dep.dup_with_formula_name(dep_formula)
@@ -249,7 +249,7 @@ class UsesFromMacOSDependency < Dependency
 
   sig { params(minimum_version: T.nilable(Version), minimum_revision: T.nilable(Integer)).returns(T::Boolean) }
   def installed?(minimum_version: nil, minimum_revision: nil)
-    use_macos_install? || super(minimum_version: minimum_version, minimum_revision: minimum_revision)
+    use_macos_install? || super(minimum_version:, minimum_revision:)
   end
 
   sig { returns(T::Boolean) }
@@ -276,7 +276,7 @@ class UsesFromMacOSDependency < Dependency
 
   sig { override.params(formula: Formula).returns(T.self_type) }
   def dup_with_formula_name(formula)
-    self.class.new(formula.full_name.to_s, tags, bounds: bounds)
+    self.class.new(formula.full_name.to_s, tags, bounds:)
   end
 
   sig { returns(String) }

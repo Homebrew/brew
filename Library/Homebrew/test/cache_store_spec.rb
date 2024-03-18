@@ -23,7 +23,7 @@ RSpec.describe CacheStoreDatabase do
 
     it "sets the value in the `CacheStoreDatabase`" do
       allow(File).to receive(:write)
-      allow(sample_db).to receive_messages(created?: true, db: db)
+      allow(sample_db).to receive_messages(created?: true, db:)
 
       expect(db).to receive(:has_key?).with(:foo).and_return(false)
       expect(db).not_to have_key(:foo)
@@ -37,7 +37,7 @@ RSpec.describe CacheStoreDatabase do
 
       it "gets value in the `CacheStoreDatabase` corresponding to the key" do
         expect(db).to receive(:has_key?).with(:foo).and_return(true)
-        allow(sample_db).to receive_messages(created?: true, db: db)
+        allow(sample_db).to receive_messages(created?: true, db:)
         expect(db).to have_key(:foo)
         expect(sample_db.get(:foo)).to eq("bar")
       end
@@ -47,7 +47,7 @@ RSpec.describe CacheStoreDatabase do
       let(:db) { instance_double(Hash, "db", :[] => nil) }
 
       before do
-        allow(sample_db).to receive_messages(created?: false, db: db)
+        allow(sample_db).to receive_messages(created?: false, db:)
       end
 
       it "does not get value in the `CacheStoreDatabase` corresponding to key" do
@@ -66,7 +66,7 @@ RSpec.describe CacheStoreDatabase do
       let(:db) { instance_double(Hash, "db", :[] => { foo: "bar" }) }
 
       before do
-        allow(sample_db).to receive_messages(created?: true, db: db)
+        allow(sample_db).to receive_messages(created?: true, db:)
       end
 
       it "deletes value in the `CacheStoreDatabase` corresponding to the key" do
@@ -79,7 +79,7 @@ RSpec.describe CacheStoreDatabase do
       let(:db) { instance_double(Hash, "db", delete: nil) }
 
       before do
-        allow(sample_db).to receive_messages(created?: false, db: db)
+        allow(sample_db).to receive_messages(created?: false, db:)
       end
 
       it "does not call `db.delete` if `CacheStoreDatabase.created?` is `false`" do

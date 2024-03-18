@@ -366,9 +366,6 @@ Style/HashAsLastArrayItem:
     - "/**/Formula/**/*.rb"
     - "**/Formula/**/*.rb"
 
-Style/HashSyntax:
-  EnforcedShorthandSyntax: either
-
 Style/InverseMethods:
   InverseMethods:
     :blank?: :present?

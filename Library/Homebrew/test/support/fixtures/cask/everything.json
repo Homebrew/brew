@@ -21,6 +21,8 @@
   "version": "1.2.3",
   "installed": null,
   "installed_time": null,
+  "bundle_version": null,
+  "bundle_short_version": null,
   "outdated": false,
   "sha256": "c64c05bdc0be845505d6e55e69e696a7f50d40846e76155f0c85d5ff5e7bbb84",
   "artifacts": [

@@ -525,6 +525,14 @@ class Formula
     end.sort_by(&:version).reverse
   end
 
+  # Whether this {Formula} is version-synced with other formulae.
+  sig { returns(T::Boolean) }
+  def synced_with_other_formulae?
+    return false if @tap.nil?
+
+    @tap.synced_versions_formulae.any? { |synced_formulae| synced_formulae.include?(name) }
+  end
+
   # A named {Resource} for the currently active {SoftwareSpec}.
   # Additional downloads can be defined as {#resource}s.
   # {Resource#stage} will create a temporary directory and yield to a block.
@@ -544,7 +552,7 @@ class Formula
   sig { returns(T::Array[String]) }
   def oldnames
     @oldnames ||= if (tap = self.tap)
-      Tap.reverse_tap_migrations_renames.fetch("#{tap}/#{name}", []) +
+      Tap.tap_migration_oldnames(tap, name) +
         tap.formula_reverse_renames.fetch(name, [])
     else
       []
@@ -1400,7 +1408,7 @@ class Formula
   def brew(fetch: true, keep_tmp: false, debug_symbols: false, interactive: false)
     @prefix_returns_versioned_prefix = true
     active_spec.fetch if fetch
-    stage(interactive: interactive, debug_symbols: debug_symbols) do |staging|
+    stage(interactive:, debug_symbols:) do |staging|
       staging.retain! if keep_tmp || debug_symbols
 
       prepare_patches
@@ -1497,7 +1505,7 @@ class Formula
       end
 
       if current_version ||
-         ((head_version = latest_head_version) && !head_version_outdated?(head_version, fetch_head: fetch_head))
+         ((head_version = latest_head_version) && !head_version_outdated?(head_version, fetch_head:))
         []
       else
         all_kegs += old_installed_formulae.flat_map(&:installed_kegs)
@@ -1556,7 +1564,7 @@ class Formula
   # @private
   sig { params(fetch_head: T::Boolean).returns(T::Boolean) }
   def outdated?(fetch_head: false)
-    !outdated_kegs(fetch_head: fetch_head).empty?
+    !outdated_kegs(fetch_head:).empty?
   rescue Migrator::MigrationNeededError
     true
   end
@@ -2069,14 +2077,14 @@ class Formula
   # @private
   def recursive_dependencies(&block)
     cache_key = "Formula#recursive_dependencies" unless block
-    Dependency.expand(self, cache_key: cache_key, &block)
+    Dependency.expand(self, cache_key:, &block)
   end
 
   # The full set of Requirements for this formula's dependency tree.
   # @private
   def recursive_requirements(&block)
     cache_key = "Formula#recursive_requirements" unless block
-    Requirement.expand(self, cache_key: cache_key, &block)
+    Requirement.expand(self, cache_key:, &block)
   end
 
   # Returns a Keg for the opt_prefix or installed_prefix if they exist.
@@ -2132,8 +2140,8 @@ class Formula
 
     Formula.cache[:runtime_formula_dependencies] ||= {}
     Formula.cache[:runtime_formula_dependencies][cache_key] ||= runtime_dependencies(
-      read_from_tab: read_from_tab,
-      undeclared:    undeclared,
+      read_from_tab:,
+      undeclared:,
     ).filter_map do |d|
       d.to_formula
     rescue FormulaUnavailableError
@@ -2190,7 +2198,7 @@ class Formula
 
     all_dependables.map do |dependable|
       {
-        dependable: dependable,
+        dependable:,
         # Now find the list of specs each dependency was a part of.
         specs:      dependables.filter_map { |spec, spec_deps| spec if spec_deps&.include?(dependable) },
       }
@@ -2285,7 +2293,7 @@ class Formula
   end
 
   # @private
-  def to_api_hash
+  def to_internal_api_hash
     api_hash = {
       "desc"                 => desc,
       "license"              => SPDX.license_expression_to_string(license),
@@ -2348,14 +2356,14 @@ class Formula
 
   # @private
   def to_hash_with_variations(hash_method: :to_hash)
-    if loaded_from_api? && hash_method == :to_api_hash
+    if loaded_from_api? && hash_method == :to_internal_api_hash
       raise ArgumentError, "API Hash must be generated from Ruby source files"
     end
 
     namespace_prefix = case hash_method
     when :to_hash
       "Variations"
-    when :to_api_hash
+    when :to_internal_api_hash
       "APIVariations"
     else
       raise ArgumentError, "Unknown hash method #{hash_method.inspect}"
@@ -2376,15 +2384,15 @@ class Formula
     if path.exist? && on_system_blocks_exist?
       formula_contents = path.read
       OnSystem::ALL_OS_ARCH_COMBINATIONS.each do |os, arch|
-        bottle_tag = Utils::Bottles::Tag.new(system: os, arch: arch)
+        bottle_tag = Utils::Bottles::Tag.new(system: os, arch:)
         next unless bottle_tag.valid_combination?
 
-        Homebrew::SimulateSystem.with os: os, arch: arch do
+        Homebrew::SimulateSystem.with(os:, arch:) do
           variations_namespace = Formulary.class_s("#{namespace_prefix}#{bottle_tag.to_sym.capitalize}")
           variations_formula_class = Formulary.load_formula(name, path, formula_contents, variations_namespace,
                                                             flags: self.class.build_flags, ignore_errors: true)
           variations_formula = variations_formula_class.new(name, path, :stable,
-                                                            alias_path: alias_path, force_bottle: force_bottle)
+                                                            alias_path:, force_bottle:)
 
           variations_formula.public_send(hash_method).each do |key, value|
             next if value.to_s == hash[key].to_s
@@ -2396,7 +2404,7 @@ class Formula
       end
     end
 
-    hash["variations"] = variations if hash_method != :to_api_hash || variations.present?
+    hash["variations"] = variations if hash_method != :to_internal_api_hash || variations.present?
     hash
   end
 
@@ -2555,7 +2563,7 @@ class Formula
 
   # @private
   def fetch(verify_download_integrity: true)
-    active_spec.fetch(verify_download_integrity: verify_download_integrity)
+    active_spec.fetch(verify_download_integrity:)
   end
 
   # @private
@@ -2653,7 +2661,7 @@ class Formula
     ).void
   }
   def inreplace(paths, before = nil, after = nil, audit_result = true, &block) # rubocop:disable Style/OptionalBooleanParameter
-    Utils::Inreplace.inreplace(paths, before, after, audit_result: audit_result, &block)
+    Utils::Inreplace.inreplace(paths, before, after, audit_result:, &block)
   rescue Utils::Inreplace::Error => e
     onoe e.to_s
     raise BuildError.new(self, "inreplace", Array(paths), {})
@@ -2661,15 +2669,8 @@ class Formula
 
   protected
 
+  sig { params(home: Pathname).void }
   def setup_home(home)
-    # keep Homebrew's site-packages in sys.path when using system Python
-    user_site_packages = home/"Library/Python/2.7/lib/python/site-packages"
-    user_site_packages.mkpath
-    (user_site_packages/"homebrew.pth").write <<~PYTHON
-      import site; site.addsitedir("#{HOMEBREW_PREFIX}/lib/python2.7/site-packages")
-      import sys, os; sys.path = (os.environ["PYTHONPATH"].split(os.pathsep) if "PYTHONPATH" in os.environ else []) + ["#{HOMEBREW_PREFIX}/lib/python2.7/site-packages"] + sys.path
-    PYTHON
-
     # Don't let bazel write to tmp directories we don't control or clean.
     (home/".bazelrc").write "startup --output_user_root=#{home}/_bazel"
   end
@@ -2678,7 +2679,7 @@ class Formula
   # @private
   def declared_runtime_dependencies
     cache_key = "Formula#declared_runtime_dependencies" unless build.any_args_or_options?
-    Dependency.expand(self, cache_key: cache_key) do |_, dependency|
+    Dependency.expand(self, cache_key:) do |_, dependency|
       Dependency.prune if dependency.build?
       next if dependency.required?
 
@@ -2976,7 +2977,7 @@ class Formula
   end
 
   def stage(interactive: false, debug_symbols: false)
-    active_spec.stage(debug_symbols: debug_symbols) do |staging|
+    active_spec.stage(debug_symbols:) do |staging|
       @source_modified_time = active_spec.source_modified_time
       @buildpath = Pathname.pwd
       env_home = T.must(buildpath)/".brew_home"
@@ -3249,13 +3250,7 @@ class Formula
     #   sha256                         high_sierra: "91dd0caca9bd3f38c439d5a7b6f68440c4274945615fae035ff0a369264b8a2f"
     # end</pre>
     #
-    # Homebrew maintainers aim to bottle all formulae that require compilation.
-    #
-    # Formulae that can be installed without compilation should be tagged with:
-    # <pre>bottle :unneeded</pre>
-    #
-    # Formulae which should not be bottled should be tagged with:
-    # <pre>bottle :disable, "reasons"</pre>
+    # Homebrew maintainers aim to bottle all formulae.
     sig { params(block: T.proc.bind(BottleSpecification).void).void }
     def bottle(&block)
       stable.bottle(&block)

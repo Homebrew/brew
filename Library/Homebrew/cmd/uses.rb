@@ -69,7 +69,7 @@ module Homebrew
       # If the formula doesn't exist: fake the needed formula object name.
       # This is a legacy use of OpenStruct that should be refactored.
       # rubocop:disable Style/OpenStructUse
-      args.named.map { |name| OpenStruct.new name: name, full_name: name }
+      args.named.map { |name| OpenStruct.new name:, full_name: name }
       # rubocop:enable Style/OpenStructUse
     end
 
@@ -80,7 +80,7 @@ module Homebrew
                              !args.include_optional? &&
                              !args.skip_recommended?
 
-    uses = intersection_of_dependents(use_runtime_dependents, used_formulae, args: args)
+    uses = intersection_of_dependents(use_runtime_dependents, used_formulae, args:)
 
     return if uses.empty?
 

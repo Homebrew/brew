@@ -114,7 +114,7 @@ class Migrator
           next
         end
 
-        migrator = Migrator.new(formula, oldname, force: force)
+        migrator = Migrator.new(formula, oldname, force:)
         migrator.migrate
       end
     rescue => e

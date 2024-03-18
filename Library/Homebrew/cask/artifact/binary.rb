@@ -10,7 +10,7 @@ module Cask
     # @api private
     class Binary < Symlinked
       def link(command: nil, **options)
-        super(command: command, **options)
+        super(command:, **options)
         return if source.executable?
 
         if source.writable?

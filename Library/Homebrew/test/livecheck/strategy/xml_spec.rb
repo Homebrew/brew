@@ -111,7 +111,7 @@ RSpec.describe Homebrew::Livecheck::Strategy::Xml do
         "1.0.1" => Version.new("1.0.1"),
         "1.0.0" => Version.new("1.0.0"),
       },
-      regex:   regex,
+      regex:,
       url:     http_url,
     }
   end
@@ -213,7 +213,7 @@ RSpec.describe Homebrew::Livecheck::Strategy::Xml do
 
   describe "::find_versions?" do
     it "finds versions in provided_content using a block" do
-      expect(xml.find_versions(url: http_url, regex: regex, provided_content: content_version_text) do |xml, regex|
+      expect(xml.find_versions(url: http_url, regex:, provided_content: content_version_text) do |xml, regex|
         xml.get_elements("/versions/version").map { |item| item.text[regex, 1] }
       end).to eq(find_versions_cached_return_hash)
 

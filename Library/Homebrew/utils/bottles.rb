@@ -157,7 +157,7 @@ module Utils
 
         system = match[:system].to_sym
         arch = match[:arch]&.to_sym || :x86_64
-        new(system: system, arch: arch)
+        new(system:, arch:)
       end
 
       sig { params(system: Symbol, arch: Symbol).void }
@@ -295,13 +295,13 @@ module Utils
 
       sig { params(tag: Utils::Bottles::Tag, checksum: Checksum, cellar: T.any(Symbol, String)).void }
       def add(tag, checksum:, cellar:)
-        spec = Utils::Bottles::TagSpecification.new(tag: tag, checksum: checksum, cellar: cellar)
+        spec = Utils::Bottles::TagSpecification.new(tag:, checksum:, cellar:)
         @tag_specs[tag] = spec
       end
 
       sig { params(tag: Utils::Bottles::Tag, no_older_versions: T::Boolean).returns(T::Boolean) }
       def tag?(tag, no_older_versions: false)
-        tag = find_matching_tag(tag, no_older_versions: no_older_versions)
+        tag = find_matching_tag(tag, no_older_versions:)
         tag.present?
       end
 
@@ -315,7 +315,7 @@ module Utils
           .returns(T.nilable(Utils::Bottles::TagSpecification))
       }
       def specification_for(tag, no_older_versions: false)
-        tag = find_matching_tag(tag, no_older_versions: no_older_versions)
+        tag = find_matching_tag(tag, no_older_versions:)
         @tag_specs[tag] if tag
       end
 

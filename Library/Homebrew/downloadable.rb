@@ -75,7 +75,7 @@ class Downloadable
       raise ArgumentError, "attempted to use a Downloadable without a URL!" if primary_url.blank?
 
       download_strategy.new(primary_url, download_name, version,
-                            mirrors: mirrors, cache: cache, **T.must(@url).specs)
+                            mirrors:, cache:, **T.must(@url).specs)
     end
   end
 
@@ -84,7 +84,7 @@ class Downloadable
     cache.mkpath
 
     begin
-      downloader.fetch(timeout: timeout)
+      downloader.fetch(timeout:)
     rescue ErrorDuringExecution, CurlDownloadStrategyError => e
       raise DownloadError.new(self, e)
     end

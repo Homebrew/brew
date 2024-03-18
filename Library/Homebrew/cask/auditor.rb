@@ -86,7 +86,7 @@ module Cask
 
     def audit_languages(languages)
       original_config = cask.config
-      localized_config = original_config.merge(Config.new(explicit: { languages: languages }))
+      localized_config = original_config.merge(Config.new(explicit: { languages: }))
       cask.config = localized_config
 
       audit_cask_instance(cask)

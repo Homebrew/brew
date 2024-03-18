@@ -109,7 +109,7 @@ module RuboCop
         def message(node, receiver, other)
           prefer = replacement(receiver, other, node.left_sibling).gsub(/^\s*|\n/, "")
           current = current(node).gsub(/^\s*|\n/, "")
-          format(MSG, prefer: prefer, current: current)
+          format(MSG, prefer:, current:)
         end
 
         def current(node)

@@ -19,7 +19,7 @@ RSpec.describe CurlDownloadStrategy do
 
   before do
     allow(strategy).to receive(:curl_headers).with(any_args)
-                                             .and_return({ responses: [{ headers: headers }] })
+                                             .and_return({ responses: [{ headers: }] })
   end
 
   it "parses the opts and sets the corresponding args" do

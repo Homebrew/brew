@@ -5,7 +5,7 @@ require "rubocops/present"
 RSpec.describe RuboCop::Cop::Homebrew::Present, :config do
   shared_examples "offense" do |source, correction, message|
     it "registers an offense and corrects" do
-      expect_offense(<<~RUBY, source: source, message: message)
+      expect_offense(<<~RUBY, source:, message:)
         #{source}
         ^{source} #{message}
       RUBY

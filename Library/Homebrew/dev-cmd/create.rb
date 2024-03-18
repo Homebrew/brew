@@ -74,9 +74,9 @@ module Homebrew
     args = create_args.parse
 
     path = if args.cask?
-      create_cask(args: args)
+      create_cask(args:)
     else
-      create_formula(args: args)
+      create_formula(args:)
     end
 
     exec_editor path
@@ -181,7 +181,7 @@ module Homebrew
       args.set_version,
       tap:     args.tap,
       url:     args.named.first,
-      mode:    mode,
+      mode:,
       license: args.set_license,
       fetch:   !args.no_fetch?,
       head:    args.HEAD?,

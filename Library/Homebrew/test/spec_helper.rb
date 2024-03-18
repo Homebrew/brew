@@ -204,7 +204,7 @@ RSpec.configure do |config|
   config.around do |example|
     Homebrew.raise_deprecation_exceptions = true
 
-    Tap.each(&:clear_cache)
+    Tap.installed.each(&:clear_cache)
     Cachable::Registry.clear_all_caches
     FormulaInstaller.clear_attempted
     FormulaInstaller.clear_installed
@@ -244,9 +244,6 @@ RSpec.configure do |config|
     rescue SystemExit => e
       example.example.set_exception(e)
     ensure
-      # This depends on `HOMEBREW_NO_INSTALL_FROM_API`.
-      Tap.each(&:clear_cache)
-
       ENV.replace(@__env)
       Context.current = Context::ContextStruct.new
 
@@ -257,6 +254,7 @@ RSpec.configure do |config|
       @__stderr.close
       @__stdin.close
 
+      Tap.all.each(&:clear_cache)
       Cachable::Registry.clear_all_caches
 
       FileUtils.rm_rf [

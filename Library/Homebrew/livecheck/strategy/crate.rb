@@ -83,7 +83,7 @@ module Homebrew
           ).returns(T::Hash[Symbol, T.untyped])
         }
         def self.find_versions(url:, regex: nil, provided_content: nil, homebrew_curl: false, **_unused, &block)
-          match_data = { matches: {}, regex: regex, url: url }
+          match_data = { matches: {}, regex:, url: }
           match_data[:cached] = true if provided_content.is_a?(String)
 
           generated = generate_input_values(url)
@@ -94,7 +94,7 @@ module Homebrew
           content = if provided_content
             provided_content
           else
-            match_data.merge!(Strategy.page_content(match_data[:url], homebrew_curl: homebrew_curl))
+            match_data.merge!(Strategy.page_content(match_data[:url], homebrew_curl:))
             match_data[:content]
           end
           return match_data unless content

@@ -67,7 +67,7 @@ class GitHubPackages
     bottles_hash.each do |formula_full_name, bottle_hash|
       # First, check that we won't encounter an error in the middle of uploading bottles.
       preupload_check(user, token, skopeo, formula_full_name, bottle_hash,
-                      keep_old: keep_old, dry_run: dry_run, warn_on_error: warn_on_error)
+                      keep_old:, dry_run:, warn_on_error:)
     end
 
     # We intentionally iterate over `bottles_hash` twice to
@@ -76,7 +76,7 @@ class GitHubPackages
     bottles_hash.each do |formula_full_name, bottle_hash|
       # Next, upload the bottles after checking them all.
       upload_bottle(user, token, skopeo, formula_full_name, bottle_hash,
-                    keep_old: keep_old, dry_run: dry_run, warn_on_error: warn_on_error)
+                    keep_old:, dry_run:, warn_on_error:)
     end
     # rubocop:enable Style/CombinableLoops
   end
@@ -207,7 +207,7 @@ class GitHubPackages
       puts "#{skopeo} #{args.join(" ")} --src-creds=#{user}:$HOMEBREW_GITHUB_PACKAGES_TOKEN"
     else
       args << "--src-creds=#{user}:#{token}"
-      system_command!(skopeo, verbose: true, print_stdout: true, args: args)
+      system_command!(skopeo, verbose: true, print_stdout: true, args:)
     end
   end
 
@@ -263,7 +263,7 @@ class GitHubPackages
   def upload_bottle(user, token, skopeo, formula_full_name, bottle_hash, keep_old:, dry_run:, warn_on_error:)
     # We run the preupload check twice to prevent TOCTOU bugs.
     result = preupload_check(user, token, skopeo, formula_full_name, bottle_hash,
-                             keep_old: keep_old, dry_run: dry_run, warn_on_error: warn_on_error)
+                             keep_old:, dry_run:, warn_on_error:)
 
     formula_name, org, repo, version, rebuild, version_rebuild, image_name, image_uri, keep_old = *result
 
@@ -272,7 +272,7 @@ class GitHubPackages
     root.mkpath
 
     if keep_old
-      download(user, token, skopeo, image_uri, root, dry_run: dry_run)
+      download(user, token, skopeo, image_uri, root, dry_run:)
     else
       write_image_layout(root)
     end
@@ -368,8 +368,8 @@ class GitHubPackages
       end
 
       platform_hash = {
-        architecture: architecture,
-        os: os,
+        architecture:,
+        os:,
         "os.version" => os_version,
       }.compact_blank
 
@@ -446,7 +446,7 @@ class GitHubPackages
       args << "--dest-creds=#{user}:#{token}"
       retry_count = 0
       begin
-        system_command!(skopeo, verbose: true, print_stdout: true, args: args)
+        system_command!(skopeo, verbose: true, print_stdout: true, args:)
       rescue ErrorDuringExecution
         retry_count += 1
         odie "Cannot perform an upload to registry after retrying multiple times!" if retry_count >= 10
@@ -486,8 +486,8 @@ class GitHubPackages
   def write_image_index(manifests, blobs, annotations)
     image_index = {
       schemaVersion: 2,
-      manifests:     manifests,
-      annotations:   annotations,
+      manifests:,
+      annotations:,
     }
     validate_schema!(IMAGE_INDEX_SCHEMA_URI, image_index)
     write_hash(blobs, image_index)
@@ -500,7 +500,7 @@ class GitHubPackages
         mediaType:   "application/vnd.oci.image.index.v1+json",
         digest:      "sha256:#{index_json_sha256}",
         size:        index_json_size,
-        annotations: annotations,
+        annotations:,
       }],
     }
     validate_schema!(IMAGE_INDEX_SCHEMA_URI, index_json)

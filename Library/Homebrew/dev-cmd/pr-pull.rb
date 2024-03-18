@@ -51,7 +51,7 @@ module Homebrew
              description: "Specify a committer name and email in `git`'s standard author format."
       flag   "--message=",
              depends_on:  "--autosquash",
-             description: "Message to include when autosquashing revision bumps, deletions, and rebuilds."
+             description: "Message to include when autosquashing revision bumps, deletions and rebuilds."
       flag   "--artifact=",
              description: "Download artifacts with the specified name (default: `bottles`)."
       flag   "--tap=",
@@ -163,12 +163,12 @@ module Homebrew
     package_name = package_file.basename.to_s.chomp(".rb")
 
     odebug "Cherry-picking #{package_file}: #{commit}"
-    Utils::Git.cherry_pick!(git_repo.to_s, commit, verbose: verbose, resolve: resolve)
+    Utils::Git.cherry_pick!(git_repo.to_s, commit, verbose:, resolve:)
 
     old_package = Utils::Git.file_at_commit(git_repo.to_s, file, "HEAD^")
     new_package = Utils::Git.file_at_commit(git_repo.to_s, file, "HEAD")
 
-    bump_subject = determine_bump_subject(old_package, new_package, package_file, reason: reason).strip
+    bump_subject = determine_bump_subject(old_package, new_package, package_file, reason:).strip
     subject, body, trailers = separate_commit_message(git_repo.commit_message)
 
     if subject != bump_subject && !subject.start_with?("#{package_name}:")
@@ -214,13 +214,13 @@ module Homebrew
     trailers = [trailers + co_author_trailers].flatten.uniq.compact
 
     # Apply the patch series but don't commit anything yet.
-    Utils::Git.cherry_pick!(git_repo.pathname, "--no-commit", *commits, verbose: verbose, resolve: resolve)
+    Utils::Git.cherry_pick!(git_repo.pathname, "--no-commit", *commits, verbose:, resolve:)
 
     # Determine the bump subject by comparing the original state of the tree to its current state.
     package_file = git_repo.pathname / file
     old_package = Utils::Git.file_at_commit(git_repo.pathname, file, "#{commits.first}^")
     new_package = package_file.read
-    bump_subject = determine_bump_subject(old_package, new_package, package_file, reason: reason)
+    bump_subject = determine_bump_subject(old_package, new_package, package_file, reason:)
 
     # Commit with the new subject, body, and trailers.
     safe_system("git", "-C", git_repo.pathname, "commit", "--quiet",
@@ -273,14 +273,14 @@ module Homebrew
       if files.length == 1 && files_to_commits[files.first].length == 1
         # If there's a 1:1 mapping of commits to files, just cherry pick and (maybe) reword.
         reword_package_commit(
-          commit, files.first, git_repo: git_repo, reason: reason, verbose: verbose, resolve: resolve
+          commit, files.first, git_repo:, reason:, verbose:, resolve:
         )
         processed_commits << commit
       elsif files.length == 1 && files_to_commits[files.first].length > 1
         # If multiple commits modify a single file, squash them down into a single commit.
         file = files.first
         commits = files_to_commits[file]
-        squash_package_commits(commits, file, git_repo: git_repo, reason: reason, verbose: verbose, resolve: resolve)
+        squash_package_commits(commits, file, git_repo:, reason:, verbose:, resolve:)
         processed_commits += commits
       else
         # We can't split commits (yet) so just raise an error.
@@ -362,7 +362,7 @@ module Homebrew
 
   def self.pr_check_conflicts(repo, pull_request)
     long_build_pr_files = GitHub.issues(
-      repo: repo, state: "open", labels: "no long build conflict",
+      repo:, state: "open", labels: "no long build conflict",
     ).each_with_object({}) do |long_build_pr, hash|
       next unless long_build_pr.key?("pull_request")
 
@@ -459,15 +459,15 @@ module Homebrew
           odebug "Pull request merge-base: #{original_commit}"
 
           unless args.no_commit?
-            cherry_pick_pr!(user, repo, pr, path: tap.path, args: args) unless args.no_cherry_pick?
+            cherry_pick_pr!(user, repo, pr, path: tap.path, args:) unless args.no_cherry_pick?
             if args.autosquash? && !args.dry_run?
-              autosquash!(original_commit, tap: tap, cherry_picked: !args.no_cherry_pick?,
+              autosquash!(original_commit, tap:, cherry_picked: !args.no_cherry_pick?,
                           verbose: args.verbose?, resolve: args.resolve?, reason: args.message)
             end
             signoff!(git_repo, pull_request: pr, dry_run: args.dry_run?) unless args.clean?
           end
 
-          unless formulae_need_bottles?(tap, original_commit, pr_labels, args: args)
+          unless formulae_need_bottles?(tap, original_commit, pr_labels, args:)
             ohai "Skipping artifacts for ##{pr} as the formulae don't need bottles"
             next
           end

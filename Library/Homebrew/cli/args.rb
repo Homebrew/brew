@@ -40,8 +40,8 @@ module Homebrew
         self[:named] = NamedArgs.new(
           *named_args.freeze,
           parent:       self,
-          cask_options: cask_options,
-          without_api:  without_api,
+          cask_options:,
+          without_api:,
           **options,
         )
       end
@@ -131,7 +131,7 @@ module Homebrew
 
         oses.product(arches).select do |os, arch|
           if skip_invalid_combinations
-            bottle_tag = Utils::Bottles::Tag.new(system: os, arch: arch)
+            bottle_tag = Utils::Bottles::Tag.new(system: os, arch:)
             bottle_tag.valid_combination?
           else
             true

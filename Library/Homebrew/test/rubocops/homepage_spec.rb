@@ -163,7 +163,7 @@ RSpec.describe RuboCop::Cop::FormulaAudit::Homepage do
                                 severity: :convention,
                                 line:     2,
                                 column:   11,
-                                source:   source }]
+                                source: }]
 
         expected_offenses.zip([inspect_source(source).last]).each do |expected, actual|
           expect(actual.message).to eq(expected[:message])

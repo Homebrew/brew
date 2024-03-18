@@ -119,7 +119,7 @@ module Homebrew
       def self.write_names_and_aliases(regenerate: false)
         download_and_cache_data! unless cache.key?("formulae")
 
-        return unless Homebrew::API.write_names_file(all_formulae.keys, "formula", regenerate: regenerate)
+        return unless Homebrew::API.write_names_file(all_formulae.keys, "formula", regenerate:)
 
         (HOMEBREW_CACHE_API/"formula_aliases.txt").open("w") do |file|
           all_aliases.each do |alias_name, real_name|

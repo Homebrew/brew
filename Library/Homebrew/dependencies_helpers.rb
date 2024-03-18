@@ -25,7 +25,7 @@ module DependenciesHelpers
 
     cache_key = "recursive_includes_#{includes}_#{ignores}"
 
-    klass.expand(root_dependent, cache_key: cache_key) do |dependent, dep|
+    klass.expand(root_dependent, cache_key:) do |dependent, dep|
       klass.prune if ignores.any? { |ignore| dep.public_send(ignore) }
       klass.prune if includes.none? do |include|
         # Ignore indirect test dependencies

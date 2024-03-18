@@ -174,13 +174,13 @@ RSpec.describe Homebrew::Livecheck::Strategy::Sparkle do
     undefined_namespace = appcast.sub(/\s*xmlns:sparkle="[^"]+"/, "")
 
     {
-      appcast:             appcast,
-      omitted_items:       omitted_items,
-      bad_macos_version:   bad_macos_version,
-      beta_channel_item:   beta_channel_item,
-      no_versions_item:    no_versions_item,
-      no_items:            no_items,
-      undefined_namespace: undefined_namespace,
+      appcast:,
+      omitted_items:,
+      bad_macos_version:,
+      beta_channel_item:,
+      no_versions_item:,
+      no_items:,
+      undefined_namespace:,
     }
   end
 

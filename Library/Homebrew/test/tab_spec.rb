@@ -252,7 +252,7 @@ RSpec.describe Tab do
         depends_on "baz" => :build
       end
 
-      tap = Tap.new("user", "repo")
+      tap = Tap.fetch("user", "repo")
       from_tap = formula("from_tap", path: tap.path/"Formula/from_tap.rb") do
         url "from_tap-1.0"
         revision 1
@@ -279,7 +279,7 @@ RSpec.describe Tab do
 
     it "can create a Tab from an alias" do
       alias_path = CoreTap.instance.alias_dir/"bar"
-      f = formula(alias_path: alias_path) { url "foo-1.0" }
+      f = formula(alias_path:) { url "foo-1.0" }
       compiler = DevelopmentTools.default_compiler
       stdlib = :libcxx
       tab = described_class.create(f, compiler, stdlib)
@@ -313,7 +313,7 @@ RSpec.describe Tab do
 
     it "can create a Tab for for a Formula from an alias" do
       alias_path = CoreTap.instance.alias_dir/"bar"
-      f = formula(alias_path: alias_path) { url "foo-1.0" }
+      f = formula(alias_path:) { url "foo-1.0" }
 
       tab = described_class.for_formula(f)
       expect(tab.source["path"]).to eq(alias_path.to_s)

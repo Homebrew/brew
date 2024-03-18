@@ -48,7 +48,7 @@ module UnpackStrategy
                         args:    ["--extract", "--no-same-owner",
                                   "--file", tar_path,
                                   "--directory", unpack_dir],
-                        verbose: verbose
+                        verbose:
       end
     end
 
@@ -56,7 +56,7 @@ module UnpackStrategy
       params(extractor: T.any(T.class_of(Xz), T.class_of(Zstd)), dir: Pathname, verbose: T::Boolean).returns(Pathname)
     }
     def subextract(extractor, dir, verbose)
-      extractor.new(path).extract(to: dir, verbose: verbose)
+      extractor.new(path).extract(to: dir, verbose:)
       T.must(dir.children.first)
     end
   end

@@ -53,7 +53,7 @@ RSpec.describe Pathname do
       prefixes.each do |new_prefix|
         patch_elfs do |elf|
           interpreter = elf.interpreter.gsub(placeholder_prefix, new_prefix)
-          elf.patch!(interpreter: interpreter)
+          elf.patch!(interpreter:)
 
           modified_elf = elf.dirname/"mod.#{elf.basename}"
           FileUtils.cp(elf, modified_elf)
@@ -67,7 +67,7 @@ RSpec.describe Pathname do
       prefixes.each do |new_prefix|
         patch_elfs do |elf|
           rpath = elf.rpath.gsub(placeholder_prefix, new_prefix)
-          elf.patch!(rpath: rpath)
+          elf.patch!(rpath:)
 
           modified_elf = elf.dirname/"mod.#{elf.basename}"
           FileUtils.cp(elf, modified_elf)
@@ -82,7 +82,7 @@ RSpec.describe Pathname do
         patch_elfs do |elf|
           interpreter = elf.interpreter.gsub(placeholder_prefix, new_prefix)
           rpath = elf.rpath.gsub(placeholder_prefix, new_prefix)
-          elf.patch!(interpreter: interpreter, rpath: rpath)
+          elf.patch!(interpreter:, rpath:)
 
           modified_elf = elf.dirname/"mod.#{elf.basename}"
           FileUtils.cp(elf, modified_elf)

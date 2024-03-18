@@ -23,7 +23,7 @@ module UnpackStrategy
       quiet_flags = verbose ? [] : ["-q"]
       system_command! "bunzip2",
                       args:    [*quiet_flags, unpack_dir/basename],
-                      verbose: verbose
+                      verbose:
     end
   end
 end

@@ -95,7 +95,7 @@ class Resource < Downloadable
     fetch_patches(skip_downloaded: true)
     fetch unless downloaded?
 
-    unpack(target, debug_symbols: debug_symbols, &block)
+    unpack(target, debug_symbols:, &block)
   end
 
   def prepare_patches
@@ -121,7 +121,7 @@ class Resource < Downloadable
   # A target or a block must be given, but not both.
   def unpack(target = nil, debug_symbols: false)
     current_working_directory = Pathname.pwd
-    stage_resource(download_name, debug_symbols: debug_symbols) do |staging|
+    stage_resource(download_name, debug_symbols:) do |staging|
       downloader.stage do
         @source_modified_time = downloader.source_modified_time
         apply_patches
@@ -145,7 +145,7 @@ class Resource < Downloadable
   def fetch(verify_download_integrity: true)
     fetch_patches
 
-    super(verify_download_integrity: verify_download_integrity)
+    super(verify_download_integrity:)
   end
 
   # @!attribute [w] livecheck

@@ -97,7 +97,7 @@ RSpec.describe Cask::List, :cask do
     let(:casks) { [caffeine, transmission] }
 
     it "lists the installed files for those Casks" do
-      casks.each(&InstallHelper.method(:install_without_artifacts_with_caskfile))
+      casks.each { InstallHelper.install_without_artifacts_with_caskfile(_1) }
 
       transmission.artifacts.select { |a| a.is_a?(Cask::Artifact::App) }.each do |artifact|
         artifact.install_phase(command: NeverSudoSystemCommand, force: false)

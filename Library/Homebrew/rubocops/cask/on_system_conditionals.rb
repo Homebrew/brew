@@ -55,7 +55,7 @@ module RuboCop
           nodes = {}
 
           sha256_on_arch_stanzas(cask_body) do |node, method, value|
-            nodes[method.to_s.delete_prefix("on_").to_sym] = { node: node, value: value }
+            nodes[method.to_s.delete_prefix("on_").to_sym] = { node:, value: }
           end
 
           return if !nodes.key?(:arm) || !nodes.key?(:intel)

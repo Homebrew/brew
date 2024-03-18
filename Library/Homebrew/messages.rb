@@ -14,12 +14,12 @@ class Messages
   end
 
   def record_caveats(package, caveats)
-    @caveats.push(package: package, caveats: caveats)
+    @caveats.push(package:, caveats:)
   end
 
   def package_installed(package, elapsed_time)
     @package_count += 1
-    @install_times.push(package: package, time: elapsed_time)
+    @install_times.push(package:, time: elapsed_time)
   end
 
   def display_messages(force_caveats: false, display_times: false)

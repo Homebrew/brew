@@ -1,9 +1,6 @@
 self-hosted-runner:
   # Labels of self-hosted runner in array of strings.
-  labels:
-    # TODO: technically not a self-hosted runner but avoids errors until a new
-    # version of actionlint is released.
-    - macos-14
+  labels: []
 # Configuration variables in array of strings defined in your repository or
 # organization. `null` means disabling configuration variables check.
 # Empty array means no configuration variable is allowed.

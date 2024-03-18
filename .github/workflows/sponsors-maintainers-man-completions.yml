@@ -3,7 +3,7 @@ name: Update sponsors, maintainers, manpage and completions
 on:
   push:
     branches:
-      - "**"
+      - master
     paths:
       - .github/workflows/sponsors-maintainers-man-completions.yml
       - README.md

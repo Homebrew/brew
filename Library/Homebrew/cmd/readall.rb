@@ -57,7 +57,7 @@ module Homebrew
           raise UsageError, "`brew readall` needs a tap or `--eval-all` passed or `HOMEBREW_EVAL_ALL` set!"
         end
 
-        Tap.select(&:installed?)
+        Tap.installed
       else
         args.named.to_installed_taps
       end

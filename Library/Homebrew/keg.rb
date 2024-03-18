@@ -408,16 +408,16 @@ class Keg
 
     ObserverPathnameExtension.reset_counts!
 
-    optlink(verbose: verbose, dry_run: dry_run, overwrite: overwrite) unless dry_run
+    optlink(verbose:, dry_run:, overwrite:) unless dry_run
 
     # yeah indeed, you have to force anything you need in the main tree into
     # these dirs REMEMBER that *NOT* everything needs to be in the main tree
-    link_dir("etc", verbose: verbose, dry_run: dry_run, overwrite: overwrite) { :mkpath }
-    link_dir("bin", verbose: verbose, dry_run: dry_run, overwrite: overwrite) { :skip_dir }
-    link_dir("sbin", verbose: verbose, dry_run: dry_run, overwrite: overwrite) { :skip_dir }
-    link_dir("include", verbose: verbose, dry_run: dry_run, overwrite: overwrite) { :link }
+    link_dir("etc", verbose:, dry_run:, overwrite:) { :mkpath }
+    link_dir("bin", verbose:, dry_run:, overwrite:) { :skip_dir }
+    link_dir("sbin", verbose:, dry_run:, overwrite:) { :skip_dir }
+    link_dir("include", verbose:, dry_run:, overwrite:) { :link }
 
-    link_dir("share", verbose: verbose, dry_run: dry_run, overwrite: overwrite) do |relative_path|
+    link_dir("share", verbose:, dry_run:, overwrite:) do |relative_path|
       case relative_path.to_s
       when INFOFILE_RX then :info
       when "locale/locale.alias",
@@ -436,7 +436,7 @@ class Keg
       end
     end
 
-    link_dir("lib", verbose: verbose, dry_run: dry_run, overwrite: overwrite) do |relative_path|
+    link_dir("lib", verbose:, dry_run:, overwrite:) do |relative_path|
       case relative_path.to_s
       when "charset.alias"
         :skip_file
@@ -462,7 +462,7 @@ class Keg
       end
     end
 
-    link_dir("Frameworks", verbose: verbose, dry_run: dry_run, overwrite: overwrite) do |relative_path|
+    link_dir("Frameworks", verbose:, dry_run:, overwrite:) do |relative_path|
       # Frameworks contain symlinks pointing into a subdir, so we have to use
       # the :link strategy. However, for Foo.framework and
       # Foo.framework/Versions we have to use :mkpath so that multiple formulae
@@ -473,11 +473,9 @@ class Keg
         :link
       end
     end
-    unless dry_run
-      make_relative_symlink(linked_keg_record, path, verbose: verbose, dry_run: dry_run, overwrite: overwrite)
-    end
+    make_relative_symlink(linked_keg_record, path, verbose:, dry_run:, overwrite:) unless dry_run
   rescue LinkError
-    unlink(verbose: verbose)
+    unlink(verbose:)
     raise
   else
     ObserverPathnameExtension.n
@@ -512,16 +510,16 @@ class Keg
 
   def optlink(verbose: false, dry_run: false, overwrite: false)
     opt_record.delete if opt_record.symlink? || opt_record.exist?
-    make_relative_symlink(opt_record, path, verbose: verbose, dry_run: dry_run, overwrite: overwrite)
+    make_relative_symlink(opt_record, path, verbose:, dry_run:, overwrite:)
     aliases.each do |a|
       alias_opt_record = opt_record.parent/a
       alias_opt_record.delete if alias_opt_record.symlink? || alias_opt_record.exist?
-      make_relative_symlink(alias_opt_record, path, verbose: verbose, dry_run: dry_run, overwrite: overwrite)
+      make_relative_symlink(alias_opt_record, path, verbose:, dry_run:, overwrite:)
     end
 
     oldname_opt_records.each do |record|
       record.delete
-      make_relative_symlink(record, path, verbose: verbose, dry_run: dry_run, overwrite: overwrite)
+      make_relative_symlink(record, path, verbose:, dry_run:, overwrite:)
     end
   end
 
@@ -641,10 +639,10 @@ class Keg
         when :info
           next if File.basename(src) == "dir" # skip historical local 'dir' files
 
-          make_relative_symlink dst, src, verbose: verbose, dry_run: dry_run, overwrite: overwrite
+          make_relative_symlink(dst, src, verbose:, dry_run:, overwrite:)
           dst.install_info
         else
-          make_relative_symlink dst, src, verbose: verbose, dry_run: dry_run, overwrite: overwrite
+          make_relative_symlink dst, src, verbose:, dry_run:, overwrite:
         end
       elsif src.directory?
         # if the dst dir already exists, then great! walk the rest of the tree tho
@@ -658,10 +656,10 @@ class Keg
         when :skip_dir
           Find.prune
         when :mkpath
-          dst.mkpath unless resolve_any_conflicts(dst, verbose: verbose, dry_run: dry_run, overwrite: overwrite)
+          dst.mkpath unless resolve_any_conflicts(dst, verbose:, dry_run:, overwrite:)
         else
-          unless resolve_any_conflicts(dst, verbose: verbose, dry_run: dry_run, overwrite: overwrite)
-            make_relative_symlink dst, src, verbose: verbose, dry_run: dry_run, overwrite: overwrite
+          unless resolve_any_conflicts(dst, verbose:, dry_run:, overwrite:)
+            make_relative_symlink(dst, src, verbose:, dry_run:, overwrite:)
             Find.prune
           end
         end

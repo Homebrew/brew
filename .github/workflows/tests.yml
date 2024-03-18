@@ -108,7 +108,6 @@ jobs:
       - name: Set up all Homebrew taps
         run: |
           brew tap homebrew/aliases
-          brew tap homebrew/autoupdate
           brew tap homebrew/bundle
           brew tap homebrew/cask-fonts
           brew tap homebrew/cask-versions
@@ -127,7 +126,6 @@ jobs:
                      homebrew/test-bot
 
           brew style homebrew/aliases \
-                     homebrew/autoupdate\
                      homebrew/command-not-found \
                      homebrew/formula-analytics \
                      homebrew/portable-ruby

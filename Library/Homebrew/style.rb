@@ -23,7 +23,7 @@ module Homebrew
             line = o.location.line
             column = o.location.line
 
-            annotation = GitHub::Actions::Annotation.new(:error, o.message, file: path, line: line, column: column)
+            annotation = GitHub::Actions::Annotation.new(:error, o.message, file: path, line:, column:)
             puts annotation if annotation.relevant?
           end
         end
@@ -54,23 +54,23 @@ module Homebrew
         (output_type == :json) ? [] : true
       else
         run_rubocop(ruby_files, output_type,
-                    fix: fix,
-                    except_cops: except_cops, only_cops: only_cops,
-                    display_cop_names: display_cop_names,
-                    reset_cache: reset_cache,
-                    debug: debug, verbose: verbose)
+                    fix:,
+                    except_cops:, only_cops:,
+                    display_cop_names:,
+                    reset_cache:,
+                    debug:, verbose:)
       end
 
       shellcheck_result = if ruby_files.any? && shell_files.none?
         (output_type == :json) ? [] : true
       else
-        run_shellcheck(shell_files, output_type, fix: fix)
+        run_shellcheck(shell_files, output_type, fix:)
       end
 
       shfmt_result = if ruby_files.any? && shell_files.none?
         true
       else
-        run_shfmt(shell_files, fix: fix)
+        run_shfmt(shell_files, fix:)
       end
 
       if output_type == :json

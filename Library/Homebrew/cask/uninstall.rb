@@ -12,7 +12,7 @@ module Cask
 
         raise CaskNotInstalledError, cask if !cask.installed? && !force
 
-        Installer.new(cask, binaries: binaries, force: force, verbose: verbose).uninstall
+        Installer.new(cask, binaries:, force:, verbose:).uninstall
       end
     end
   end

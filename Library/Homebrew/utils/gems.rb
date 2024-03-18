@@ -143,7 +143,7 @@ module Homebrew
   end
 
   def install_gem_setup_path!(name, version: nil, executable: name, setup_gem_environment: true)
-    install_gem!(name, version: version, setup_gem_environment: setup_gem_environment)
+    install_gem!(name, version:, setup_gem_environment:)
     return if find_in_path(executable)
 
     odie_if_defined <<~EOS

@@ -138,7 +138,7 @@ module GitHub
       env = { "PATH" => PATH.new(HOMEBREW_PREFIX/"opt/gh/bin", ENV.fetch("PATH")) }
       gh_out, _, result = system_command "gh",
                                          args:         ["auth", "token", "--hostname", "github.com"],
-                                         env:          env,
+                                         env:,
                                          print_stderr: false
       return unless result.success?
 
@@ -304,8 +304,8 @@ module GitHub
     end
 
     def self.open_graphql(query, variables: nil, scopes: [].freeze, raise_errors: true)
-      data = { query: query, variables: variables }
-      result = open_rest("#{API_URL}/graphql", scopes: scopes, data: data, request_method: "POST")
+      data = { query:, variables: }
+      result = open_rest("#{API_URL}/graphql", scopes:, data:, request_method: "POST")
 
       if raise_errors
         if result["errors"].present?
@@ -315,6 +315,28 @@ module GitHub
         result["data"]
       else
         result
+      end
+    end
+
+    sig {
+      params(
+        query:     String,
+        variables: T.nilable(T::Hash[Symbol, T.untyped]),
+        _block:    T.proc.params(data: T::Hash[String, T.untyped]).returns(T::Hash[String, T.untyped]),
+      ).void
+    }
+    def self.paginate_graphql(query, variables: nil, &_block)
+      result = API.open_graphql(query, variables:)
+
+      has_next_page = T.let(true, T::Boolean)
+      variables ||= {}
+      while has_next_page
+        page_info = yield result
+        has_next_page = page_info["hasNextPage"]
+        if has_next_page
+          variables[:after] = page_info["endCursor"]
+          result = API.open_graphql(query, variables:)
+        end
       end
     end
 

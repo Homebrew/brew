@@ -99,7 +99,7 @@ RSpec.describe Dependency do
   describe "#tap" do
     it "returns a tap passed a fully-qualified name" do
       dependency = described_class.new("foo/bar/dog")
-      expect(dependency.tap).to eq(Tap.new("foo", "bar"))
+      expect(dependency.tap).to eq(Tap.fetch("foo", "bar"))
     end
 
     it "returns no tap passed a simple name" do

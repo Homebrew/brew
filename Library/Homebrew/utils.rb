@@ -80,7 +80,7 @@ module Homebrew
     at_exit do
       col_width = [$times.keys.map(&:size).max.to_i + 2, 15].max
       $times.sort_by { |_k, v| v }.each do |method, time|
-        puts format("%<method>-#{col_width}s %<time>0.4f sec", method: "#{method}:", time: time)
+        puts format("%<method>-#{col_width}s %<time>0.4f sec", method: "#{method}:", time:)
       end
     end
   end

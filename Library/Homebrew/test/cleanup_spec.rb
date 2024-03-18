@@ -95,6 +95,76 @@ RSpec.describe Homebrew::Cleanup do
     end
   end
 
+  describe "::prune_prefix_symlinks_and_directories" do
+    let(:lib) { HOMEBREW_PREFIX/"lib" }
+
+    before do
+      lib.mkpath
+    end
+
+    it "keeps required empty directories" do
+      cleanup.prune_prefix_symlinks_and_directories
+      expect(lib).to exist
+      expect(lib.children).to be_empty
+    end
+
+    it "removes broken symlinks" do
+      FileUtils.ln_s lib/"foo", lib/"bar"
+      FileUtils.touch lib/"baz"
+
+      cleanup.prune_prefix_symlinks_and_directories
+      expect(lib).to exist
+      expect(lib.children).to eq([lib/"baz"])
+    end
+
+    it "removes empty directories" do
+      dir = lib/"test"
+      dir.mkpath
+      file = lib/"keep/file"
+      file.dirname.mkpath
+      FileUtils.touch file
+
+      cleanup.prune_prefix_symlinks_and_directories
+      expect(dir).not_to exist
+      expect(file).to exist
+    end
+
+    context "when nested directories exist with only broken symlinks" do
+      let(:dir) { HOMEBREW_PREFIX/"lib/foo" }
+      let(:child_dir) { dir/"bar" }
+      let(:grandchild_dir) { child_dir/"baz" }
+      let(:broken_link) { dir/"broken" }
+      let(:link_to_broken_link) { child_dir/"another-broken" }
+
+      before do
+        grandchild_dir.mkpath
+        FileUtils.ln_s dir/"missing", broken_link
+        FileUtils.ln_s broken_link, link_to_broken_link
+      end
+
+      it "removes broken symlinks and resulting empty directories" do
+        cleanup.prune_prefix_symlinks_and_directories
+        expect(dir).not_to exist
+      end
+
+      it "doesn't remove anything and only prints removal steps if `dry_run` is true" do
+        expect do
+          described_class.new(dry_run: true).prune_prefix_symlinks_and_directories
+        end.to output(<<~EOS).to_stdout
+          Would remove (broken link): #{link_to_broken_link}
+          Would remove (broken link): #{broken_link}
+          Would remove (empty directory): #{grandchild_dir}
+          Would remove (empty directory): #{child_dir}
+          Would remove (empty directory): #{dir}
+        EOS
+
+        expect(broken_link).to be_a_symlink
+        expect(link_to_broken_link).to be_a_symlink
+        expect(grandchild_dir).to exist
+      end
+    end
+  end
+
   specify "::cleanup_formula" do
     f1 = Class.new(Testball) do
       version "1.0"

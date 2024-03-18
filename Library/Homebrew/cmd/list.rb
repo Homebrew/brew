@@ -86,10 +86,10 @@ module Homebrew
         puts full_cask_names if full_cask_names.present?
       end
     elsif args.pinned?
-      filtered_list(args: args)
+      filtered_list(args:)
     elsif args.versions?
-      filtered_list(args: args) unless args.cask?
-      list_casks(args: args) if args.cask? || (!args.formula? && !args.multiple? && args.no_named?)
+      filtered_list(args:) unless args.cask?
+      list_casks(args:) if args.cask? || (!args.formula? && !args.multiple? && args.no_named?)
     elsif args.no_named?
       ENV["CLICOLOR"] = nil
 
@@ -117,7 +117,7 @@ module Homebrew
         system_command! "find", args: casks.map(&:caskroom_path) + find_args, print_stdout: true if casks.present?
       else
         kegs.each { |keg| PrettyListing.new keg } if kegs.present?
-        list_casks(args: args) if casks.present?
+        list_casks(args:) if casks.present?
       end
     end
   end

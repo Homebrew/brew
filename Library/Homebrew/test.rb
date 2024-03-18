@@ -40,7 +40,7 @@ begin
   end
 
   ENV.extend(Stdenv)
-  ENV.setup_build_environment(formula: formula, testing_formula: true)
+  ENV.setup_build_environment(formula:, testing_formula: true)
 
   # tests can also return false to indicate failure
   run_test = proc { |_ = nil| raise "test returned false" if formula.run_test(keep_tmp: args.keep_tmp?) == false }

@@ -109,7 +109,7 @@ module Homebrew
     odie "update-report should not be called directly!" if initial_revision.empty? || current_revision.empty?
 
     if initial_revision != current_revision
-      auto_update_header args: args
+      auto_update_header(args:)
 
       updated = true
 
@@ -146,7 +146,7 @@ module Homebrew
     hub = ReporterHub.new
 
     updated_taps = []
-    Tap.select(&:installed?).each do |tap|
+    Tap.installed.each do |tap|
       next if !tap.git? || tap.git_repo.origin_url.nil?
       next if (tap.core_tap? || tap.core_cask_tap?) && !Homebrew::EnvConfig.no_install_from_api?
 
@@ -219,7 +219,7 @@ module Homebrew
     end
 
     unless updated_taps.empty?
-      auto_update_header args: args
+      auto_update_header(args:)
       puts "Updated #{Utils.pluralize("tap", updated_taps.count, include_count: true)} (#{updated_taps.to_sentence})."
       updated = true
     end
@@ -254,7 +254,7 @@ module Homebrew
 
     Commands.rebuild_commands_completion_list
     link_completions_manpages_and_docs
-    Tap.select(&:installed?).each(&:link_completions_and_manpages)
+    Tap.installed.each(&:link_completions_and_manpages)
 
     failed_fetch_dirs = ENV["HOMEBREW_MISSING_REMOTE_REF_DIRS"]&.split("\n")
     if failed_fetch_dirs.present?
@@ -689,7 +689,7 @@ class Reporter
       end
       next if oldnames_to_migrate.empty?
 
-      Migrator.migrate_if_needed(formula, force: force)
+      Migrator.migrate_if_needed(formula, force:)
     end
   end
 
@@ -743,7 +743,7 @@ class ReporterHub
 
   def add(reporter, auto_update: false)
     @reporters << reporter
-    report = reporter.report(auto_update: auto_update).delete_if { |_k, v| v.empty? }
+    report = reporter.report(auto_update:).delete_if { |_k, v| v.empty? }
     @hash.update(report) { |_key, oldval, newval| oldval.concat(newval) }
   end
 

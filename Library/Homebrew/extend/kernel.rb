@@ -55,7 +55,7 @@ module Kernel
   end
 
   def oh1(title, truncate: :auto)
-    puts oh1_title(title, truncate: truncate)
+    puts oh1_title(title, truncate:)
   end
 
   # Print a message prefixed with "Warning" (do this rarely).
@@ -147,16 +147,18 @@ module Kernel
 
     disable = true if disable_for_developers && Homebrew::EnvConfig.developer?
     if disable || Homebrew.raise_deprecation_exceptions?
+      puts "::error::#{message}" if ENV["GITHUB_ACTIONS"]
       exception = MethodDeprecatedError.new(message)
       exception.set_backtrace(backtrace)
       raise exception
     elsif !Homebrew.auditing?
+      puts "::warning::#{message}" if ENV["GITHUB_ACTIONS"]
       opoo message
     end
   end
 
   def odisabled(method, replacement = nil, **options)
-    options = { disable: true, caller: caller }.merge(options)
+    options = { disable: true, caller: }.merge(options)
     # This odeprecated should stick around indefinitely.
     odeprecated(method, replacement, **options)
   end
@@ -364,8 +366,8 @@ module Kernel
       end
       # Call this method itself with redirected stdout
       redirect_stdout(file) do
-        return ensure_formula_installed!(formula_or_name, latest: latest,
-                                         reason: reason, output_to_stderr: false)
+        return ensure_formula_installed!(formula_or_name, latest:,
+                                         reason:, output_to_stderr: false)
       end
     end
 
@@ -403,7 +405,7 @@ module Kernel
     ].compact.first
     return executable if executable.exist?
 
-    ensure_formula_installed!(formula_name, reason: reason).opt_bin/name
+    ensure_formula_installed!(formula_name, reason:).opt_bin/name
   end
 
   def paths
@@ -429,7 +431,7 @@ module Kernel
     if ((size * 10).to_i % 10).zero?
       "#{size.to_i}#{unit}"
     else
-      "#{format("%<size>.1f", size: size)}#{unit}"
+      "#{format("%<size>.1f", size:)}#{unit}"
     end
   end
 

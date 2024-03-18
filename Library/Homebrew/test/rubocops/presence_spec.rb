@@ -321,7 +321,7 @@ RSpec.describe RuboCop::Cop::Homebrew::Presence, :config do
   context "when a right-hand side of the relational operator" do
     %w[< > <= >= == !=].each do |operator|
       it "registers an offense and corrects when `#{operator}`" do
-        expect_offense(<<~RUBY, operator: operator)
+        expect_offense(<<~RUBY, operator:)
           a #{operator} if b.present?
             _{operator} ^^^^^^^^^^^^^ Use `(b.presence || c)` instead of `if b.present? ... end`.
             b

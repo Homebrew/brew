@@ -52,7 +52,7 @@ module Cask
       downloader.quiet! if quiet
 
       begin
-        super(verify_download_integrity: false, timeout: timeout)
+        super(verify_download_integrity: false, timeout:)
       rescue DownloadError => e
         error = CaskError.new("Download failed on Cask '#{cask}' with message: #{e.cause}")
         error.set_backtrace e.backtrace
@@ -68,7 +68,7 @@ module Cask
     def time_file_size(timeout: nil)
       raise ArgumentError, "not supported for this download strategy" unless downloader.is_a?(CurlDownloadStrategy)
 
-      T.cast(downloader, CurlDownloadStrategy).resolved_time_file_size(timeout: timeout)
+      T.cast(downloader, CurlDownloadStrategy).resolved_time_file_size(timeout:)
     end
 
     def basename

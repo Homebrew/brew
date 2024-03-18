@@ -16,7 +16,7 @@ module UnpackStrategy
       system_command! "hg",
                       args:    ["--cwd", path, "archive", "--subrepos", "-y", "-t", "files", unpack_dir],
                       env:     { "PATH" => PATH.new(Formula["mercurial"].opt_bin, ENV.fetch("PATH")) },
-                      verbose: verbose
+                      verbose:
     end
   end
 end

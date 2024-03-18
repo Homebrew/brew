@@ -5,8 +5,9 @@ require "formulary"
 module Test
   module Helper
     module Formula
-      def formula(name = "formula_name", path: Formulary.core_path(name), spec: :stable, alias_path: nil, &block)
-        Class.new(::Formula, &block).new(name, path, spec, alias_path: alias_path)
+      def formula(name = "formula_name", path: Formulary.core_path(name), spec: :stable, alias_path: nil, tap: nil,
+                  &block)
+        Class.new(::Formula, &block).new(name, path, spec, alias_path:, tap:)
       end
 
       # Use a stubbed {Formulary::FormulaLoader} to make a given formula be found
