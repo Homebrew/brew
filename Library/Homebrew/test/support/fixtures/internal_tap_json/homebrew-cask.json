@@ -1,0 +1,76 @@
+{
+  "tap_git_head": "b26c1e550a8b7eed2dcd5306ea8f3da3848258b3",
+  "renames": {
+    "ankerslicer": "ankermake",
+    "autodesk-fusion360": "autodesk-fusion",
+    "betterdummy": "betterdisplay",
+    "factor-lang": "factor",
+    "smlnj-lang": "smlnj"
+  },
+  "tap_migrations": {
+    "azure-cli": "homebrew/core",
+    "basex": "homebrew/core",
+    "borgbackup": "homebrew/core",
+    "chronograf": "homebrew/core",
+    "consul": "homebrew/core"
+  },
+  "casks": {
+    "factor": {
+      "name": [
+        "Factor"
+      ],
+      "desc": "Programming language",
+      "homepage": "https://factorcode.org/",
+      "url": "https://downloads.factorcode.org/releases/0.99/factor-macosx-x86-64-0.99.dmg",
+      "version": "0.99",
+      "sha256": "8a7968b873b5e87c83b5d0f5ddb4d3d76a2460f5e5c14edac6b18fe5957bd7d6",
+      "artifacts": [
+        {
+          "suite": [
+            "factor"
+          ]
+        }
+      ],
+      "ruby_source_path": "Casks/f/factor.rb",
+      "ruby_source_sha256": "a0dabe24c67269e5310b47639cf32e74f49959ba1be454b2c072805b1f04c7e5",
+      "caveats": "To use factor, you may need to add the $APPDIR/factor directory\nto your PATH environment variable, e.g. (for Bash shell):\n  export PATH=$APPDIR/factor:\"$PATH\"\n"
+    },
+    "smlnj": {
+      "name": [
+        "Standard ML of New Jersey"
+      ],
+      "desc": "Compiler for the Standard ML '97 programming language",
+      "homepage": "https://www.smlnj.org/",
+      "url": "http://smlnj.cs.uchicago.edu/dist/working/110.99.4/smlnj-amd64-110.99.4.pkg",
+      "version": "110.99.4",
+      "sha256": "2bf858017b8ba43a70b30527290ed9fbbc81d9eaac1abeba62469d95392019a3",
+      "artifacts": [
+        {
+          "uninstall": [
+            {
+              "pkgutil": "org.smlnj.amd64.pkg"
+            }
+          ]
+        },
+        {
+          "pkg": [
+            "smlnj-amd64-110.99.4.pkg"
+          ]
+        },
+        {
+          "zap": [
+            {
+              "delete": "/usr/local/smlnj"
+            }
+          ]
+        }
+      ],
+      "ruby_source_path": "Casks/s/smlnj.rb",
+      "ruby_source_sha256": "d47f46a88248272314a501741460d42a8c731030912a83ef58d3c7fd1e90034d",
+      "url_specs": {
+        "verified": "smlnj.cs.uchicago.edu/"
+      },
+      "caveats": "To use smlnj, you may need to add the /usr/local/smlnj/bin directory\nto your PATH environment variable, e.g. (for Bash shell):\n  export PATH=/usr/local/smlnj/bin:\"$PATH\"\n"
+    }
+  }
+}

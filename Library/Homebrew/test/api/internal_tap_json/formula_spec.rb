@@ -9,10 +9,10 @@ RSpec.describe "Internal Tap JSON -- Formula" do
       cp_r(TEST_FIXTURE_DIR/"internal_tap_json/homebrew-core", Tap::TAP_DIRECTORY/"homebrew")
 
       # NOTE: Symlinks can't be copied recursively so we create them manually here.
-      (Tap::TAP_DIRECTORY/"homebrew/homebrew-core").tap do |core_tap|
-        mkdir(core_tap/"Aliases")
-        ln_s(core_tap/"Formula/f/fennel.rb", core_tap/"Aliases/fennel-lang")
-        ln_s(core_tap/"Formula/p/ponyc.rb", core_tap/"Aliases/ponyc-lang")
+      CoreTap.instance.path.tap do |core_tap_path|
+        mkdir(core_tap_path/"Aliases")
+        ln_s(core_tap_path/"Formula/f/fennel.rb", core_tap_path/"Aliases/fennel-lang")
+        ln_s(core_tap_path/"Formula/p/ponyc.rb", core_tap_path/"Aliases/ponyc-lang")
       end
     end
 
@@ -37,16 +37,12 @@ RSpec.describe "Internal Tap JSON -- Formula" do
       # tap so `CoreCaskTap.tap_migrations` gets called and tries to
       # fetch stuff from the API. This just avoids errors.
       allow(Homebrew::API).to receive(:fetch_json_api_file)
-        .with("cask_tap_migrations.jws.json", anything)
-        .and_return([{}, false])
+        .with("internal/v3/homebrew-cask.jws.json")
+        .and_return([{ "tap_migrations" => {}, "casks" => {} }, false])
 
       # To allow `formula_names.txt` to be written to the cache.
       (HOMEBREW_CACHE/"api").mkdir
 
-      Homebrew::API::Formula.clear_cache
-    end
-
-    after do
       Homebrew::API::Formula.clear_cache
     end
 

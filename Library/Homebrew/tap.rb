@@ -1380,6 +1380,8 @@ class CoreCaskTap < AbstractCoreTap
   def tap_migrations
     @tap_migrations ||= if Homebrew::EnvConfig.no_install_from_api?
       super
+    elsif Homebrew::API.internal_json_v3?
+      Homebrew::API::Cask.tap_migrations
     else
       migrations, = Homebrew::API.fetch_json_api_file "cask_tap_migrations.jws.json",
                                                       stale_seconds: TAP_MIGRATIONS_STALE_SECONDS

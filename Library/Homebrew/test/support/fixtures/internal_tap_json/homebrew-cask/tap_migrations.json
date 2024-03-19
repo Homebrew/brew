@@ -1,0 +1,7 @@
+{
+  "azure-cli": "homebrew/core",
+  "basex": "homebrew/core",
+  "borgbackup": "homebrew/core",
+  "chronograf": "homebrew/core",
+  "consul": "homebrew/core"
+}

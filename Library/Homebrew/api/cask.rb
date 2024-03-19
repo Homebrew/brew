@@ -42,17 +42,22 @@ module Homebrew
 
       sig { returns(T::Boolean) }
       def self.download_and_cache_data!
-        json_casks, updated = Homebrew::API.fetch_json_api_file "cask.jws.json"
+        if Homebrew::API.internal_json_v3?
+          json_casks, updated = Homebrew::API.fetch_json_api_file "internal/v3/homebrew-cask.jws.json"
+          overwrite_cache! T.cast(json_casks, T::Hash[String, T.untyped])
+        else
+          json_casks, updated = Homebrew::API.fetch_json_api_file "cask.jws.json"
 
-        cache["renames"] = {}
-        cache["casks"] = json_casks.to_h do |json_cask|
-          token = json_cask["token"]
+          cache["renames"] = {}
+          cache["casks"] = json_casks.to_h do |json_cask|
+            token = json_cask["token"]
 
-          json_cask.fetch("old_tokens", []).each do |old_token|
-            cache["renames"][old_token] = token
+            json_cask.fetch("old_tokens", []).each do |old_token|
+              cache["renames"][old_token] = token
+            end
+
+            [token, json_cask.except("token")]
           end
-
-          [token, json_cask.except("token")]
         end
 
         updated
@@ -77,6 +82,28 @@ module Homebrew
         end
 
         cache.fetch("renames")
+      end
+
+      sig { returns(Hash) }
+      def self.tap_migrations
+        # Not sure that we need to reload here.
+        unless cache.key?("tap_migrations")
+          json_updated = download_and_cache_data!
+          write_names(regenerate: json_updated)
+        end
+
+        cache["tap_migrations"]
+      end
+
+      sig { returns(String) }
+      def self.tap_git_head
+        # Note sure we need to reload here.
+        unless cache.key?("tap_git_head")
+          json_updated = download_and_cache_data!
+          write_names(regenerate: json_updated)
+        end
+
+        cache["tap_git_head"]
       end
 
       sig { params(regenerate: T::Boolean).void }

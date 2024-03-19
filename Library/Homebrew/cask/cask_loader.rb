@@ -299,7 +299,12 @@ module Cask
 
         json_cask = Homebrew::API.merge_variations(json_cask).deep_symbolize_keys.freeze
 
-        cask_options[:tap] = Tap.fetch(json_cask[:tap]) if json_cask[:tap].to_s.include?("/")
+        cask_options[:tap] = if json_cask.key?(:tap) # public JSON v2
+          tap_value = json_cask.fetch(:tap)
+          Tap.fetch(tap_value) if tap_value.to_s.include?("/")
+        else # internal JSON v3
+          CoreCaskTap.instance
+        end
 
         user_agent = json_cask.dig(:url_specs, :user_agent)
         json_cask[:url_specs][:user_agent] = user_agent[1..].to_sym if user_agent && user_agent[0] == ":"
