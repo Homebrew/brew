@@ -87,12 +87,12 @@ module Homebrew
     [subject, body, trailers]
   end
 
-  def self.signoff!(git_repo, pull_request: nil, dry_run: false)
+  def self.signoff!(tap, pull_request: nil, dry_run: false)
+    git_repo = tap.git_repo
     subject, body, trailers = separate_commit_message(git_repo.commit_message)
 
     if pull_request
       # This is a tap pull request and approving reviewers should also sign-off.
-      tap = Tap.from_path(git_repo.pathname)
       review_trailers = GitHub.approved_reviews(tap.user, tap.full_name.split("/").last, pull_request).map do |r|
         "Signed-off-by: #{r["name"]} <#{r["email"]}>"
       end
@@ -130,26 +130,24 @@ module Homebrew
     end
   end
 
-  def self.determine_bump_subject(old_contents, new_contents, subject_path, reason: nil)
+  def self.determine_bump_subject(old_contents, new_contents, subject_path, tap:, reason: nil)
     subject_path = Pathname(subject_path)
-    tap          = Tap.from_path(subject_path)
     subject_name = subject_path.basename.to_s.chomp(".rb")
-    is_cask      = subject_path.to_s.start_with?("#{tap.cask_dir}/")
-    name         = is_cask ? "cask" : "formula"
+
+    type = "cask" if tap.cask_file?(subject_path)
+    type = "formula" if tap.formula_file?(subject_path)
 
     new_package = get_package(tap, subject_name, subject_path, new_contents)
-
-    return "#{subject_name}: delete #{reason}".strip if new_package.blank?
+    return "#{subject_name}: delete#{reason&.prepend(" ")}" if new_package.blank?
 
     old_package = get_package(tap, subject_name, subject_path, old_contents)
+    return "#{subject_name} #{new_package.version} (new #{type})" if old_package.blank?
 
-    if old_package.blank?
-      "#{subject_name} #{new_package.version} (new #{name})"
-    elsif old_package.version != new_package.version
+    if old_package.version != new_package.version
       "#{subject_name} #{new_package.version}"
-    elsif !is_cask && old_package.revision != new_package.revision
+    elsif type == "formula" && old_package.revision != new_package.revision
       "#{subject_name}: revision #{reason}".strip
-    elsif is_cask && old_package.sha256 != new_package.sha256
+    elsif type == "cask" && old_package.sha256 != new_package.sha256
       "#{subject_name}: checksum update #{reason}".strip
     else
       "#{subject_name}: #{reason || "rebuild"}".strip
@@ -158,7 +156,9 @@ module Homebrew
 
   # Cherry picks a single commit that modifies a single file.
   # Potentially rewords this commit using {determine_bump_subject}.
-  def self.reword_package_commit(commit, file, git_repo:, reason: "", verbose: false, resolve: false)
+  def self.reword_package_commit(commit, file, tap:, reason: "", verbose: false, resolve: false)
+    git_repo = tap.git_repo
+
     package_file = git_repo.pathname / file
     package_name = package_file.basename.to_s.chomp(".rb")
 
@@ -168,7 +168,7 @@ module Homebrew
     old_package = Utils::Git.file_at_commit(git_repo.to_s, file, "HEAD^")
     new_package = Utils::Git.file_at_commit(git_repo.to_s, file, "HEAD")
 
-    bump_subject = determine_bump_subject(old_package, new_package, package_file, reason:).strip
+    bump_subject = determine_bump_subject(old_package, new_package, package_file, reason:, tap:).strip
     subject, body, trailers = separate_commit_message(git_repo.commit_message)
 
     if subject != bump_subject && !subject.start_with?("#{package_name}:")
@@ -183,8 +183,10 @@ module Homebrew
   # Cherry picks multiple commits that each modify a single file.
   # Words the commit according to {determine_bump_subject} with the body
   # corresponding to all the original commit messages combined.
-  def self.squash_package_commits(commits, file, git_repo:, reason: "", verbose: false, resolve: false)
+  def self.squash_package_commits(commits, file, tap:, reason: "", verbose: false, resolve: false)
     odebug "Squashing #{file}: #{commits.join " "}"
+
+    git_repo = tap.git_repo
 
     # Format commit messages into something similar to `git fmt-merge-message`.
     # * subject 1
@@ -220,7 +222,7 @@ module Homebrew
     package_file = git_repo.pathname / file
     old_package = Utils::Git.file_at_commit(git_repo.pathname, file, "#{commits.first}^")
     new_package = package_file.read
-    bump_subject = determine_bump_subject(old_package, new_package, package_file, reason:)
+    bump_subject = determine_bump_subject(old_package, new_package, package_file, tap:, reason:)
 
     # Commit with the new subject, body, and trailers.
     safe_system("git", "-C", git_repo.pathname, "commit", "--quiet",
@@ -273,14 +275,14 @@ module Homebrew
       if files.length == 1 && files_to_commits[files.first].length == 1
         # If there's a 1:1 mapping of commits to files, just cherry pick and (maybe) reword.
         reword_package_commit(
-          commit, files.first, git_repo:, reason:, verbose:, resolve:
+          commit, files.first, tap:, reason:, verbose:, resolve:
         )
         processed_commits << commit
       elsif files.length == 1 && files_to_commits[files.first].length > 1
         # If multiple commits modify a single file, squash them down into a single commit.
         file = files.first
         commits = files_to_commits[file]
-        squash_package_commits(commits, file, git_repo:, reason:, verbose:, resolve:)
+        squash_package_commits(commits, file, tap:, reason:, verbose:, resolve:)
         processed_commits += commits
       else
         # We can't split commits (yet) so just raise an error.
@@ -464,7 +466,7 @@ module Homebrew
               autosquash!(original_commit, tap:, cherry_picked: !args.no_cherry_pick?,
                           verbose: args.verbose?, resolve: args.resolve?, reason: args.message)
             end
-            signoff!(git_repo, pull_request: pr, dry_run: args.dry_run?) unless args.clean?
+            signoff!(tap, pull_request: pr, dry_run: args.dry_run?) unless args.clean?
           end
 
           unless formulae_need_bottles?(tap, original_commit, pr_labels, args:)

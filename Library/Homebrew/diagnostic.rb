@@ -537,7 +537,7 @@ module Homebrew
         core_cask_tap = CoreCaskTap.instance
         return unless core_cask_tap.installed?
 
-        broken_tap(core_cask_tap) || examine_git_origin(core_cask_tap.git_repo, core_cask_tap.remote)
+        broken_tap(core_cask_tap) || examine_git_origin(core_cask_tap.git_repo, T.must(core_cask_tap.remote))
       end
 
       sig { returns(T.nilable(String)) }

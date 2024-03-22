@@ -128,7 +128,7 @@ RSpec.describe "brew pr-pull" do
           safe_system Utils::Git.git, "add", formula_file
           safe_system Utils::Git.git, "commit", "-m", "foo 1.0 (new formula)"
         end
-        described_class.signoff!(tap.git_repo)
+        described_class.signoff!(tap)
         expect(tap.git_repo.commit_message).to include("Signed-off-by:")
 
         (path/"Casks").mkpath
@@ -137,7 +137,7 @@ RSpec.describe "brew pr-pull" do
           safe_system Utils::Git.git, "add", cask_file
           safe_system Utils::Git.git, "commit", "-m", "food 1.0 (new cask)"
         end
-        described_class.signoff!(tap.git_repo)
+        described_class.signoff!(tap)
         expect(tap.git_repo.commit_message).to include("Signed-off-by:")
       end
     end
@@ -162,41 +162,45 @@ RSpec.describe "brew pr-pull" do
 
     describe "#determine_bump_subject" do
       it "correctly bumps a new formula" do
-        expect(described_class.determine_bump_subject("", formula, formula_file)).to eq("foo 1.0 (new formula)")
+        expect(described_class.determine_bump_subject("", formula, formula_file,
+                                                      tap:)).to eq("foo 1.0 (new formula)")
       end
 
       it "correctly bumps a new cask" do
-        expect(described_class.determine_bump_subject("", cask, cask_file)).to eq("food 1.0 (new cask)")
+        expect(described_class.determine_bump_subject("", cask, cask_file, tap:)).to eq("food 1.0 (new cask)")
       end
 
       it "correctly bumps a formula version" do
-        expect(described_class.determine_bump_subject(formula, formula_version, formula_file)).to eq("foo 2.0")
+        expect(described_class.determine_bump_subject(formula, formula_version, formula_file,
+                                                      tap:)).to eq("foo 2.0")
       end
 
       it "correctly bumps a cask version" do
-        expect(described_class.determine_bump_subject(cask, cask_version, cask_file)).to eq("food 2.0")
+        expect(described_class.determine_bump_subject(cask, cask_version, cask_file, tap:)).to eq("food 2.0")
       end
 
       it "correctly bumps a cask checksum" do
-        expect(described_class.determine_bump_subject(cask, cask_checksum, cask_file)).to eq("food: checksum update")
+        expect(described_class.determine_bump_subject(cask, cask_checksum, cask_file,
+                                                      tap:)).to eq("food: checksum update")
       end
 
       it "correctly bumps a formula revision with reason" do
         expect(described_class.determine_bump_subject(
-                 formula, formula_revision, formula_file, reason: "for fun"
+                 formula, formula_revision, formula_file, tap:, reason: "for fun"
                )).to eq("foo: revision for fun")
       end
 
       it "correctly bumps a formula rebuild" do
-        expect(described_class.determine_bump_subject(formula, formula_rebuild, formula_file)).to eq("foo: rebuild")
+        expect(described_class.determine_bump_subject(formula, formula_rebuild, formula_file,
+                                                      tap:)).to eq("foo: rebuild")
       end
 
       it "correctly bumps a formula deletion" do
-        expect(described_class.determine_bump_subject(formula, "", formula_file)).to eq("foo: delete")
+        expect(described_class.determine_bump_subject(formula, "", formula_file, tap:)).to eq("foo: delete")
       end
 
       it "correctly bumps a cask deletion" do
-        expect(described_class.determine_bump_subject(cask, "", cask_file)).to eq("food: delete")
+        expect(described_class.determine_bump_subject(cask, "", cask_file, tap:)).to eq("food: delete")
       end
     end
   end
