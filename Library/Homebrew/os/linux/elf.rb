@@ -1,6 +1,8 @@
 # typed: true
 # frozen_string_literal: true
 
+require "os/linux/ld"
+
 # {Pathname} extension for dealing with ELF files.
 # @see https://en.wikipedia.org/wiki/Executable_and_Linkable_Format#File_header
 #
@@ -130,19 +132,7 @@ module ELFShim
       @dylib_id, needed = needed_libraries path
       return if needed.empty?
 
-      ldd = DevelopmentTools.locate "ldd"
-      ldd_output = Utils.popen_read(ldd, path.expand_path.to_s).split("\n")
-      return unless $CHILD_STATUS.success?
-
-      ldd_paths = ldd_output.filter_map do |line|
-        match = line.match(/\t.+ => (.+) \(.+\)|\t(.+) => not found/)
-        next unless match
-
-        match.captures.compact.first
-      end
-      @dylibs = ldd_paths.select do |ldd_path|
-        needed.include? File.basename(ldd_path)
-      end
+      @dylibs = needed.map { |lib| find_full_lib_path(lib).to_s }
     end
 
     private
@@ -156,6 +146,57 @@ module ELFShim
     def needed_libraries_using_patchelf_rb(path)
       patcher = path.patchelf_patcher
       [patcher.soname, patcher.needed]
+    end
+
+    def find_full_lib_path(basename)
+      local_paths = (path.patchelf_patcher.runpath || path.patchelf_patcher.rpath)&.split(":")
+
+      # Search for dependencies in the runpath/rpath first
+      local_paths&.each do |local_path|
+        candidate = Pathname(local_path)/basename
+        return candidate if candidate.exist? && candidate.elf?
+      end
+
+      # Check if DF_1_NODEFLIB is set
+      dt_flags_1 = path.patchelf_patcher.elf.segment_by_type(:dynamic)&.tag_by_type(:flags_1)
+      nodeflib_flag = if dt_flags_1.nil?
+        false
+      else
+        dt_flags_1.value & ELFTools::Constants::DF::DF_1_NODEFLIB != 0
+      end
+
+      linker_library_paths = OS::Linux::Ld.library_paths
+      linker_system_dirs = OS::Linux::Ld.system_dirs
+
+      # If DF_1_NODEFLIB is set, exclude any library paths that are subdirectories
+      # of the system dirs
+      if nodeflib_flag
+        linker_library_paths = linker_library_paths.reject do |linker_library_path|
+          child = Pathname(linker_library_path).realdirpath
+
+          linker_system_dirs.any? do |linker_system_dir|
+            parent = Pathname(linker_system_dir).realdirpath
+            child.child_of? parent
+          end
+        end
+      end
+
+      # If not found, search recursively in the paths listed in ld.so.conf (skipping
+      # paths that are subdirectories of the system dirs if DF_1_NODEFLIB is set)
+      linker_library_paths.each do |linker_library_path|
+        candidate = Pathname(linker_library_path)/basename
+        return candidate if candidate.exist? && candidate.elf?
+      end
+
+      # If not found, search in the system dirs, unless DF_1_NODEFLIB is set
+      unless nodeflib_flag
+        linker_system_dirs.each do |linker_system_dir|
+          candidate = Pathname(linker_system_dir)/basename
+          return candidate if candidate.exist? && candidate.elf?
+        end
+      end
+
+      basename
     end
   end
   private_constant :Metadata
