@@ -490,6 +490,12 @@ class Pathname
                  .encode(Encoding::UTF_8, invalid: :replace)
                  .split("\n")
   end
+
+  sig { params(parent: Pathname).returns(T::Boolean) }
+  def child_of?(parent)
+    ascend { |p| return true if p == parent }
+    false
+  end
 end
 
 require "extend/os/pathname"
