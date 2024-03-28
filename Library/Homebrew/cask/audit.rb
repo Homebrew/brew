@@ -410,17 +410,48 @@ module Cask
       add_error "cask token underscores should be replaced by hyphens" if cask.token.include? "_"
       add_error "cask token should not contain double hyphens" if cask.token.include? "--"
 
-      if cask.token.match?(/[^@a-z0-9-]/)
-        add_error "cask token should only contain lowercase alphanumeric characters, hyphens and @"
-      end
-
       if cask.token.start_with?("-", "@") || cask.token.end_with?("-", "@")
         add_error "cask token should not have leading or trailing hyphens and/or @"
       end
 
-      add_error "cask token @ unrelated to versioning should be replaced by -at-" if cask.token.count("@") > 1
-      add_error "cask token should not contain a hyphen followed by @" if cask.token.include? "-@"
-      add_error "cask token should not contain @ followed by a hyphen" if cask.token.include? "@-"
+      unversioned_token, _, version_designation = cask.token.rpartition("@")
+      if unversioned_token.empty?
+        match_data = /-(?<designation>alpha|beta|rc|release-candidate)$/.match(cask.token)
+        if match_data && cask.tap&.official? && cask.tap != "homebrew/cask-versions"
+          add_error "cask token should use @ before version designation '#{match_data[:designation]}'"
+        end
+        unversioned_token = cask.token
+        version_designation = ""
+      end
+
+      add_error "unversioned cask token @ should be replaced by -at-" if unversioned_token.include? "@"
+
+      if unversioned_token.match?(/[^a-z0-9-]/)
+        add_error "unversioned cask token should only contain lowercase alphanumeric characters and hyphens"
+      end
+
+      return if version_designation.empty?
+
+      add_error "unversioned cask token should not have trailing hyphens" if unversioned_token.end_with?("-")
+
+      if version_designation.match?(/[^.a-z0-9-]/)
+        add_error "cask token version designation should only contain " \
+                  "lowercase alphanumeric characters, hyphens and '.'"
+      end
+
+      if version_designation.start_with?("-", ".") || version_designation.end_with?(".")
+        add_error "cask token version designation should not have leading or trailing hyphens and/or '.'"
+      end
+
+      return unless cask.tap&.official?
+      return if cask.tap&.audit_exception(:versioned_no_unversioned_allowlist, cask.token)
+
+      unversioned_full_token = "#{cask.tap}/#{unversioned_token}"
+      begin
+        CaskLoader.load(unversioned_full_token)
+      rescue CaskUnavailableError
+        add_error "versioned cask but no #{unversioned_full_token} cask exists"
+      end
     end
 
     sig { void }
@@ -430,11 +461,6 @@ module Cask
       token = cask.token
 
       add_error "cask token contains .app" if token.end_with? ".app"
-
-      match_data = /-(?<designation>alpha|beta|rc|release-candidate)$/.match(cask.token)
-      if match_data && cask.tap&.official? && cask.tap != "homebrew/cask-versions"
-        add_error "cask token contains version designation '#{match_data[:designation]}'"
-      end
 
       add_error("cask token mentions launcher", strict_only: true) if token.end_with? "launcher"
 
