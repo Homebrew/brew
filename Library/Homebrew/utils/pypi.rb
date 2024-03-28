@@ -76,13 +76,14 @@ module PyPI
         return
       end
 
-      sdist = json["urls"].find { |url| url["packagetype"] == "sdist" }
-      return if sdist.nil?
+      info = json["info"]
+      return if info.nil?
 
-      @pypi_info = [
-        PyPI.normalize_python_package(json["info"]["name"]), sdist["url"],
-        sdist["digests"]["sha256"], json["info"]["version"]
-      ]
+      sdist = json["urls"].find { |url| url["packagetype"] == "sdist" }
+      url = sdist["url"] unless sdist.nil?
+      sha256 = sdist["digests"]["sha256"] unless sdist.nil?
+
+      @pypi_info = [PyPI.normalize_python_package(info["name"]), url, sha256, info["version"]]
     end
 
     sig { returns(String) }
@@ -308,11 +309,7 @@ module PyPI
       input_packages << extra_package unless input_packages.include? extra_package
     end
 
-    formula.resources.each do |resource|
-      if !print_only && !resource.url.start_with?(PYTHONHOSTED_URL_PREFIX)
-        odie "\"#{formula.name}\" contains non-PyPI resources. Please update the resources manually."
-      end
-    end
+    non_pypi_resources = formula.resources.reject { |resource| resource.url.start_with?(PYTHONHOSTED_URL_PREFIX) }
 
     ensure_formula_installed!(python_name)
 
@@ -340,10 +337,17 @@ module PyPI
       if name.blank?
         odie "Unable to resolve some dependencies. Please update the resources for \"#{formula.name}\" manually."
       elsif url.blank? || checksum.blank?
-        odie <<~EOS
-          Unable to find the URL and/or sha256 for the "#{name}" resource.
-          Please update the resources for "#{formula.name}" manually.
-        EOS
+        existing_resource = formula.resource(name)
+        if existing_resource.present? && existing_resource.version == package.version
+          non_pypi_resources.delete existing_resource
+          url = existing_resource.url
+          checksum = existing_resource.checksum
+        else
+          odie <<~EOS
+            Unable to find the URL and/or sha256 for the "#{name}" resource.
+            Please update the resources for "#{formula.name}" manually.
+          EOS
+        end
       end
 
       # Append indented resource block
@@ -361,6 +365,11 @@ module PyPI
     if print_only
       puts new_resource_blocks.chomp
       return
+    elsif non_pypi_resources.present?
+      odie <<~EOS
+        "#{formula.name}" contains non-PyPI resources: #{non_pypi_resources.map(&:name).join(", ")}.
+        Please update the resources manually.
+      EOS
     end
 
     # Check whether resources already exist (excluding virtualenv dependencies)
