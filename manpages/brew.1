@@ -11,10 +11,10 @@ Homebrew is the easiest and most flexible way to install the UNIX tools Apple di
 .SH "TERMINOLOGY"
 .TP
 \fBformula\fP
-Homebrew package definition that builds from upstream sources
+    Homebrew package definition that builds from upstream sources
 .TP
 \fBcask\fP
-Homebrew package definition that installs macOS native applications
+    Homebrew package definition that installs macOS native applications
 .TP
 \fBprefix\fP
 path in which Homebrew is installed, e\.g\. \fB/usr/local\fP
@@ -1982,7 +1982,7 @@ If \fBsudo\fP is passed, operate on \fB/Library/LaunchDaemons\fP/\fB/usr/lib/sys
 List information about all managed services for the current user (or root)\. Provides more output from Homebrew and \fBlaunchctl\fP(1) or \fBsystemctl\fP(1) if run with \fB\-\-debug\fP\&\.
 .TP
 [\fBsudo\fP] \fBbrew services info\fP (\fIformula\fP|\fB\-\-all\fP|\fB\-\-json\fP)
-List all managed services for the current user (or root)\.
+    List all managed services for the current user (or root)\.
 .TP
 [\fBsudo\fP] \fBbrew services run\fP (\fIformula\fP|\fB\-\-all\fP)
 Run the service \fIformula\fP without registering to launch at login (or boot)\.
@@ -2000,7 +2000,7 @@ Stop the service \fIformula\fP immediately but keep it registered to launch at l
 Stop (if necessary) and start the service \fIformula\fP immediately and register it to launch at login (or boot)\.
 .TP
 [\fBsudo\fP] \fBbrew services cleanup\fP
-Remove all unused services\.
+    Remove all unused services\.
 .TP
 \fB\-\-file\fP
 Use the service file from this location to \fBstart\fP the service\.
@@ -2204,7 +2204,7 @@ Linux only: Pass this value to a type name representing the compiler\[u2019]s \f
 .RE
 .TP
 \fBHOMEBREW_ARTIFACT_DOMAIN\fP
-Prefix all download URLs, including those for bottles, with this value\. For example, \fBHOMEBREW_ARTIFACT_DOMAIN=http://localhost:8080\fP will cause a formula with the URL \fBhttps://example\.com/foo\.tar\.gz\fP to instead download from \fBhttp://localhost:8080/https://example\.com/foo\.tar\.gz\fP\&\. Bottle URLs however, have their domain replaced with this prefix\. This results in e\.g\. \fBhttps://ghcr\.io/v2/homebrew/core/gettext/manifests/0\.21\fP to instead be downloaded from \fBhttp://localhost:8080/v2/homebrew/core/gettext/manifests/0\.21\fP
+Prefix all download URLs, including those for bottles, with this value\. For example, \fBHOMEBREW_ARTIFACT_DOMAIN=http://localhost:8080\fR will cause a formula with the URL \fBhttps://example\.com/foo\.tar\.gz\fR to instead download from \fBhttp://localhost:8080/https://example\.com/foo\.tar\.gz\fR\. Bottle URLs however, have their domain replaced with this prefix\. This results in e\.g\. \fBhttps://ghcr\.io/v2/homebrew/core/gettext/manifests/0\.21\fR to instead be downloaded from \fBhttp://localhost:8080/v2/homebrew/core/gettext/manifests/0\.21\fR
 .TP
 \fBHOMEBREW_API_AUTO_UPDATE_SECS\fP
 Check Homebrew\[u2019]s API for new formulae or cask data every \fBHOMEBREW_API_AUTO_UPDATE_SECS\fP seconds\. Alternatively, disable API auto\-update checks entirely with \fBHOMEBREW_NO_AUTO_UPDATE\fP\&\.
@@ -2244,7 +2244,7 @@ Use this as the \fBbat\fP theme for syntax highlighting\.
 If set, use Bootsnap to speed up repeated \fBbrew\fP calls\. A no\-op when using Homebrew\[u2019]s vendored, relocatable Ruby on macOS (as it doesn\[u2019]t work)\.
 .TP
 \fBHOMEBREW_BOTTLE_DOMAIN\fP
-Use this URL as the download mirror for bottles\. If bottles at that URL are temporarily unavailable, the default bottle domain will be used as a fallback mirror\. For example, \fBHOMEBREW_BOTTLE_DOMAIN=http://localhost:8080\fP will cause all bottles to download from the prefix \fBhttp://localhost:8080/\fP\&\. If bottles are not available at \fBHOMEBREW_BOTTLE_DOMAIN\fP they will be downloaded from the default bottle domain\.
+Use this URL as the download mirror for bottles\. If bottles at that URL are temporarily unavailable, the default bottle domain will be used as a fallback mirror\. For example, \fBHOMEBREW_BOTTLE_DOMAIN=http://localhost:8080\fR will cause all bottles to download from the prefix \fBhttp://localhost:8080/\fR\. If bottles are not available at \fBHOMEBREW_BOTTLE_DOMAIN\fR they will be downloaded from the default bottle domain\.
 .RS
 .P
 \fIDefault:\fP \fBhttps://ghcr\.io/v2/homebrew/core\fP\&\.
@@ -2346,6 +2346,15 @@ Use this base64 encoded username and password for authenticating with a Docker r
 .TP
 \fBHOMEBREW_DOCKER_REGISTRY_TOKEN\fP
 Use this bearer token for authenticating with a Docker registry proxying GitHub Packages\. Preferred over \fBHOMEBREW_DOCKER_REGISTRY_BASIC_AUTH_TOKEN\fP\&\.
+.IP
+\fINote:\fR when authenticating against ghcr\.io, the \fBHOMEBREW_DOCKER_REGISTRY_TOKEN\fR must be a base64 encoded GitHub Personal Access Token (PAT)\.
+.
+.IP
+\fIFor example:\fR \fBbash export HOMEBREW_DOCKER_REGISTRY_TOKEN=$(base64<<<$(git config github\.token))\fR
+.
+.IP
+\fIDefault:\fR \fBQQ==\fR unless \fBHOMEBREW_DOCKER_REGISTRY_BASIC_AUTH_TOKEN\fR is set\.
+.
 .TP
 \fBHOMEBREW_EDITOR\fP
 Use this editor when editing a single formula, or several formulae in the same directory\.
@@ -2573,6 +2582,7 @@ For example, to use an unauthenticated HTTP or SOCKS5 proxy:
 .sp
 .RS 4
 .EX
+
 export http_proxy=http://$HOST:$PORT
 
 export all_proxy=socks5://$HOST:$PORT
@@ -2583,6 +2593,7 @@ And for an authenticated HTTP proxy:
 .sp
 .RS 4
 .EX
+
 export http_proxy=http://$USER:$PASSWORD@$HOST:$PORT
 .EE
 .RE
@@ -2620,3 +2631,4 @@ See our issues on GitHub:
 \fBHomebrew/homebrew\-cask\fP
 .UR https://github\.com/Homebrew/homebrew\-cask/issues
 .UE
+
