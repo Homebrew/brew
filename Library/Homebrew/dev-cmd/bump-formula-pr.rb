@@ -120,6 +120,8 @@ module Homebrew
             #{Formatter.url("#{formula.tap.remote}/blob/master/.github/autobump.txt")}
         EOS
 
+        odie "You have too many PRs open: close or merge some first!" if GitHub.too_many_open_prs?(formula.tap)
+
         formula_spec = formula.stable
         odie "#{formula}: no stable specification found!" if formula_spec.blank?
 

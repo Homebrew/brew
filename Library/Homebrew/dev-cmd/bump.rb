@@ -499,6 +499,10 @@ module Homebrew
 
         return unless args.open_pr?
 
+        if GitHub.too_many_open_prs?(formula_or_cask.tap)
+          odie "You have too many PRs open: close or merge some first!"
+        end
+
         if repology_latest.is_a?(Version) &&
            repology_latest > current_version.general &&
            repology_latest > new_version.general &&

@@ -93,6 +93,8 @@ module Homebrew
             #{Formatter.url("#{cask.tap.remote}/blob/master/.github/autobump.txt")}
         EOS
 
+        odie "You have too many PRs open: close or merge some first!" if GitHub.too_many_open_prs?(cask.tap)
+
         new_version = BumpVersionParser.new(
           general: args.version,
           intel:   args.version_intel,

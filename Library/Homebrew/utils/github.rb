@@ -863,4 +863,60 @@ module GitHub
 
     [author_count, committer_count]
   end
+
+  MAXIMUM_OPEN_PRS = 15
+
+  sig { params(tap: T.nilable(Tap)).returns(T::Boolean) }
+  def self.too_many_open_prs?(tap)
+    # We don't enforce unofficial taps.
+    return false if tap.nil? || !tap.official?
+
+    # BrewTestBot can open as many PRs as it wants.
+    return false if ENV["HOMEBREW_TEST_BOT_AUTOBUMP"].present?
+
+    odie "Cannot count PRs, HOMEBREW_NO_GITHUB_API set!" if Homebrew::EnvConfig.no_github_api?
+
+    query = <<~EOS
+      query {
+        viewer {
+          login
+          pullRequests(first: 100, states: OPEN) {
+            nodes {
+              headRepositoryOwner {
+                login
+              }
+            }
+            pageInfo {
+              hasNextPage
+            }
+          }
+        }
+      }
+    EOS
+    graphql_result = API.open_graphql(query)
+    puts
+
+    github_user = graphql_result.dig("viewer", "login")
+    odie "Cannot count PRs, cannot get GitHub username from GraphQL API!" if github_user.blank?
+
+    # BrewTestBot can open as many PRs as it wants.
+    return false if github_user.casecmp("brewtestbot").zero?
+
+    prs = graphql_result.dig("viewer", "pullRequests", "nodes")
+    more_graphql_data = graphql_result.dig("viewer", "pullRequests", "pageInfo", "hasNextPage")
+    return false if !more_graphql_data && prs.length < MAXIMUM_OPEN_PRS
+
+    homebrew_prs_count = graphql_result.dig("viewer", "pullRequests", "nodes").count do |pr|
+      pr["headRepositoryOwner"]["login"] == "Homebrew"
+    end
+    return true if homebrew_prs_count >= MAXIMUM_OPEN_PRS
+    return false unless more_graphql_data
+    return false if tap.nil?
+
+    url = "#{API_URL}/repos/#{tap.full_name}/issues?state=open&creator=#{github_user}"
+    rest_result = API.open_rest(url)
+    repo_prs_count = rest_result.count { |issue_or_pr| issue_or_pr.key?("pull_request") }
+
+    repo_prs_count >= MAXIMUM_OPEN_PRS
+  end
 end
