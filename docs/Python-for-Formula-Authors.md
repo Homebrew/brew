@@ -16,11 +16,11 @@ Applications should unconditionally bundle all their Python-language dependencie
 
 ### Python declarations for applications
 
-Formulae for apps that require Python 3 **should** declare an unconditional dependency on `"python@3.x"`. These apps **must** work with the current Homebrew Python 3.x formula.
+Formulae for apps that require Python 3 **must** declare an unconditional dependency on `"python@3.x"`. These apps **must** work with the current Homebrew Python 3.x formula.
 
 ### Installing applications
 
-Applications should be installed into a Python [virtualenv](https://virtualenv.pypa.io/en/stable/) environment rooted in `libexec`. This prevents the app's Python modules from contaminating the system `site-packages` and vice versa.
+Starting with Python@3.12, Homebrew follows [PEP 668](https://peps.python.org/pep-0668/#marking-an-interpreter-as-using-an-external-package-manager). Applications must be installed into a Python [virtualenv](https://virtualenv.pypa.io/en/stable/) environment rooted in `libexec`. This prevents the app's Python modules from contaminating the system `site-packages` and vice versa.
 
 All the Python module dependencies of the application (and their dependencies, recursively) should be declared as [`resource`](https://rubydoc.brew.sh/Formula#resource-class_method)s in the formula and installed into the virtualenv as well. Each dependency should be explicitly specified; please do not rely on `setup.py` or `pip` to perform automatic dependency resolution, for the [reasons described here](Acceptable-Formulae.md#we-dont-like-install-scripts-that-download-unversioned-things).
 
@@ -173,9 +173,19 @@ Sometimes we have to edit a `Makefile` on-the-fly to use our prefix for the Pyth
 
 Remember: there are very limited cases for libraries (e.g. significant amounts of native code is compiled) so, if in doubt, do not package them.
 
+**We do not use the `python-` prefix for these kind of formulae!**
+
+### Examples of allowed libaries in homebrew-core
+
+* `numpy`, `scipy`: long build time, complex build process
+
+* `cryptography`: builds with `rust`
+
+* `certifi`: patched formula to allow any Python-based formulae to leverage the brewed CA certs (see https://github.com/orgs/Homebrew/discussions/4691).
+
 ### Python declarations for libraries
 
-Libraries built for Python 3 should include `depends_on "python@3.x"`, which will bottle against Homebrew's Python 3.x.
+Libraries built for Python 3 must include `depends_on "python@3.x"`, which will bottle against Homebrew's Python 3.x.
 
 ### Installing libraries
 
@@ -235,4 +245,4 @@ It is probably safe to use `--prefix` with `--root=/`, which should work with ei
 
 ### `pip` vs. `setup.py`
 
-[PEP 453](https://legacy.python.org/dev/peps/pep-0453/#recommendations-for-downstream-distributors) makes a recommendation to downstream distributors (us) that sdist tarballs should be installed with `pip` instead of by invoking `setup.py` directly. We do not do this because Apple's Python distribution does not include pip, so we can't assume that pip is available. We could do something clever to work around Apple's piplessness but the value proposition is not yet clear.
+[PEP 453](https://legacy.python.org/dev/peps/pep-0453/#recommendations-for-downstream-distributors) makes a recommendation to downstream distributors (us) that sdist tarballs should be installed with `pip` instead of by invoking `setup.py` directly. For historical reasons we did not follow PEP 453, so some formulae still use `setup.py` installs. Nowadays, most of the formulae use `pip` as we have migrated them to this better way of installation.
