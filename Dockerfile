@@ -27,7 +27,6 @@ RUN apt-get update \
   git \
   gpg \
   less \
-  libz-dev \
   locales \
   make \
   netbase \
