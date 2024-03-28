@@ -163,6 +163,20 @@ RSpec.describe Homebrew::Cleanup do
         expect(grandchild_dir).to exist
       end
     end
+
+    it "removes broken symlinks for uninstalled migrated Casks" do
+      caskroom = Cask::Caskroom.path
+      old_cask_dir = caskroom/"old"
+      new_cask_dir = caskroom/"new"
+      unrelated_cask_dir = caskroom/"other"
+      unrelated_cask_dir.mkpath
+      FileUtils.ln_s new_cask_dir, old_cask_dir
+
+      cleanup.prune_prefix_symlinks_and_directories
+      expect(unrelated_cask_dir).to exist
+      expect(old_cask_dir).not_to be_a_symlink
+      expect(old_cask_dir).not_to exist
+    end
   end
 
   specify "::cleanup_formula" do

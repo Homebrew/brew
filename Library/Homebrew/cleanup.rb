@@ -634,6 +634,20 @@ module Homebrew
         end
       end
 
+      require "cask/caskroom"
+      if Cask::Caskroom.path.directory?
+        Cask::Caskroom.path.each_child do |path|
+          path.extend(ObserverPathnameExtension)
+          next if !path.symlink? || path.resolved_path_exists?
+
+          if dry_run?
+            puts "Would remove (broken link): #{path}"
+          else
+            path.unlink
+          end
+        end
+      end
+
       return if dry_run?
 
       return if ObserverPathnameExtension.total.zero?
