@@ -4,6 +4,8 @@ GEM
     addressable (2.8.6)
       public_suffix (>= 2.0.2, < 6.0)
     ast (2.4.2)
+    base64 (0.2.0)
+    bigdecimal (3.1.7)
     bindata (2.5.0)
     bootsnap (1.18.3)
       msgpack (~> 1.2)
@@ -19,7 +21,9 @@ GEM
     hana (1.3.7)
     highline (2.0.3)
     json (2.7.1)
-    json_schemer (2.1.1)
+    json_schemer (2.2.1)
+      base64
+      bigdecimal
       hana (~> 1.3)
       regexp_parser (~> 2.0)
       simpleidn (~> 0.2)

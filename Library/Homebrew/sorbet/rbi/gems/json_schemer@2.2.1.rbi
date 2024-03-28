@@ -10,46 +10,62 @@
 # source://json_schemer//lib/json_schemer/version.rb#2
 module JSONSchemer
   class << self
-    # source://json_schemer//lib/json_schemer.rb#157
+    # source://json_schemer//lib/json_schemer.rb#235
+    def configuration; end
+
+    # @yield [configuration]
+    #
+    # source://json_schemer//lib/json_schemer.rb#239
+    def configure; end
+
+    # source://json_schemer//lib/json_schemer.rb#143
     def draft201909; end
 
-    # source://json_schemer//lib/json_schemer.rb#145
+    # source://json_schemer//lib/json_schemer.rb#131
     def draft202012; end
 
-    # source://json_schemer//lib/json_schemer.rb#193
+    # source://json_schemer//lib/json_schemer.rb#179
     def draft4; end
 
-    # source://json_schemer//lib/json_schemer.rb#181
+    # source://json_schemer//lib/json_schemer.rb#167
     def draft6; end
 
-    # source://json_schemer//lib/json_schemer.rb#169
+    # source://json_schemer//lib/json_schemer.rb#155
     def draft7; end
 
-    # source://json_schemer//lib/json_schemer.rb#245
+    # source://json_schemer//lib/json_schemer.rb#231
     def openapi(document, **options); end
 
-    # source://json_schemer//lib/json_schemer.rb#215
+    # source://json_schemer//lib/json_schemer.rb#201
     def openapi30; end
 
-    # source://json_schemer//lib/json_schemer.rb#237
+    # source://json_schemer//lib/json_schemer.rb#223
     def openapi30_document; end
 
-    # source://json_schemer//lib/json_schemer.rb#205
+    # source://json_schemer//lib/json_schemer.rb#191
     def openapi31; end
 
-    # source://json_schemer//lib/json_schemer.rb#229
+    # source://json_schemer//lib/json_schemer.rb#215
     def openapi31_document; end
 
     # source://json_schemer//lib/json_schemer.rb#116
-    def schema(schema, meta_schema: T.unsafe(nil), **options); end
+    def schema(schema, **options); end
 
     # @return [Boolean]
     #
-    # source://json_schemer//lib/json_schemer.rb#137
+    # source://json_schemer//lib/json_schemer.rb#121
     def valid_schema?(schema, **options); end
 
-    # source://json_schemer//lib/json_schemer.rb#141
+    # source://json_schemer//lib/json_schemer.rb#126
     def validate_schema(schema, **options); end
+
+    private
+
+    # source://json_schemer//lib/json_schemer.rb#264
+    def meta_schema(schema, options); end
+
+    # source://json_schemer//lib/json_schemer.rb#245
+    def resolve(schema, options); end
   end
 end
 
@@ -71,6 +87,209 @@ class JSONSchemer::CachedResolver
 
   # source://json_schemer//lib/json_schemer/cached_resolver.rb#9
   def call(*args); end
+end
+
+# source://json_schemer//lib/json_schemer/configuration.rb#3
+class JSONSchemer::Configuration < ::Struct
+  # @return [Configuration] a new instance of Configuration
+  #
+  # source://json_schemer//lib/json_schemer/configuration.rb#9
+  def initialize(base_uri: T.unsafe(nil), meta_schema: T.unsafe(nil), vocabulary: T.unsafe(nil), format: T.unsafe(nil), formats: T.unsafe(nil), content_encodings: T.unsafe(nil), content_media_types: T.unsafe(nil), keywords: T.unsafe(nil), before_property_validation: T.unsafe(nil), after_property_validation: T.unsafe(nil), insert_property_defaults: T.unsafe(nil), property_default_resolver: T.unsafe(nil), ref_resolver: T.unsafe(nil), regexp_resolver: T.unsafe(nil), output_format: T.unsafe(nil), resolve_enumerators: T.unsafe(nil), access_mode: T.unsafe(nil)); end
+
+  # Returns the value of attribute access_mode
+  #
+  # @return [Object] the current value of access_mode
+  def access_mode; end
+
+  # Sets the attribute access_mode
+  #
+  # @param value [Object] the value to set the attribute access_mode to.
+  # @return [Object] the newly set value
+  def access_mode=(_); end
+
+  # Returns the value of attribute after_property_validation
+  #
+  # @return [Object] the current value of after_property_validation
+  def after_property_validation; end
+
+  # Sets the attribute after_property_validation
+  #
+  # @param value [Object] the value to set the attribute after_property_validation to.
+  # @return [Object] the newly set value
+  def after_property_validation=(_); end
+
+  # Returns the value of attribute base_uri
+  #
+  # @return [Object] the current value of base_uri
+  def base_uri; end
+
+  # Sets the attribute base_uri
+  #
+  # @param value [Object] the value to set the attribute base_uri to.
+  # @return [Object] the newly set value
+  def base_uri=(_); end
+
+  # Returns the value of attribute before_property_validation
+  #
+  # @return [Object] the current value of before_property_validation
+  def before_property_validation; end
+
+  # Sets the attribute before_property_validation
+  #
+  # @param value [Object] the value to set the attribute before_property_validation to.
+  # @return [Object] the newly set value
+  def before_property_validation=(_); end
+
+  # Returns the value of attribute content_encodings
+  #
+  # @return [Object] the current value of content_encodings
+  def content_encodings; end
+
+  # Sets the attribute content_encodings
+  #
+  # @param value [Object] the value to set the attribute content_encodings to.
+  # @return [Object] the newly set value
+  def content_encodings=(_); end
+
+  # Returns the value of attribute content_media_types
+  #
+  # @return [Object] the current value of content_media_types
+  def content_media_types; end
+
+  # Sets the attribute content_media_types
+  #
+  # @param value [Object] the value to set the attribute content_media_types to.
+  # @return [Object] the newly set value
+  def content_media_types=(_); end
+
+  # Returns the value of attribute format
+  #
+  # @return [Object] the current value of format
+  def format; end
+
+  # Sets the attribute format
+  #
+  # @param value [Object] the value to set the attribute format to.
+  # @return [Object] the newly set value
+  def format=(_); end
+
+  # Returns the value of attribute formats
+  #
+  # @return [Object] the current value of formats
+  def formats; end
+
+  # Sets the attribute formats
+  #
+  # @param value [Object] the value to set the attribute formats to.
+  # @return [Object] the newly set value
+  def formats=(_); end
+
+  # Returns the value of attribute insert_property_defaults
+  #
+  # @return [Object] the current value of insert_property_defaults
+  def insert_property_defaults; end
+
+  # Sets the attribute insert_property_defaults
+  #
+  # @param value [Object] the value to set the attribute insert_property_defaults to.
+  # @return [Object] the newly set value
+  def insert_property_defaults=(_); end
+
+  # Returns the value of attribute keywords
+  #
+  # @return [Object] the current value of keywords
+  def keywords; end
+
+  # Sets the attribute keywords
+  #
+  # @param value [Object] the value to set the attribute keywords to.
+  # @return [Object] the newly set value
+  def keywords=(_); end
+
+  # Returns the value of attribute meta_schema
+  #
+  # @return [Object] the current value of meta_schema
+  def meta_schema; end
+
+  # Sets the attribute meta_schema
+  #
+  # @param value [Object] the value to set the attribute meta_schema to.
+  # @return [Object] the newly set value
+  def meta_schema=(_); end
+
+  # Returns the value of attribute output_format
+  #
+  # @return [Object] the current value of output_format
+  def output_format; end
+
+  # Sets the attribute output_format
+  #
+  # @param value [Object] the value to set the attribute output_format to.
+  # @return [Object] the newly set value
+  def output_format=(_); end
+
+  # Returns the value of attribute property_default_resolver
+  #
+  # @return [Object] the current value of property_default_resolver
+  def property_default_resolver; end
+
+  # Sets the attribute property_default_resolver
+  #
+  # @param value [Object] the value to set the attribute property_default_resolver to.
+  # @return [Object] the newly set value
+  def property_default_resolver=(_); end
+
+  # Returns the value of attribute ref_resolver
+  #
+  # @return [Object] the current value of ref_resolver
+  def ref_resolver; end
+
+  # Sets the attribute ref_resolver
+  #
+  # @param value [Object] the value to set the attribute ref_resolver to.
+  # @return [Object] the newly set value
+  def ref_resolver=(_); end
+
+  # Returns the value of attribute regexp_resolver
+  #
+  # @return [Object] the current value of regexp_resolver
+  def regexp_resolver; end
+
+  # Sets the attribute regexp_resolver
+  #
+  # @param value [Object] the value to set the attribute regexp_resolver to.
+  # @return [Object] the newly set value
+  def regexp_resolver=(_); end
+
+  # Returns the value of attribute resolve_enumerators
+  #
+  # @return [Object] the current value of resolve_enumerators
+  def resolve_enumerators; end
+
+  # Sets the attribute resolve_enumerators
+  #
+  # @param value [Object] the value to set the attribute resolve_enumerators to.
+  # @return [Object] the newly set value
+  def resolve_enumerators=(_); end
+
+  # Returns the value of attribute vocabulary
+  #
+  # @return [Object] the current value of vocabulary
+  def vocabulary; end
+
+  # Sets the attribute vocabulary
+  #
+  # @param value [Object] the value to set the attribute vocabulary to.
+  # @return [Object] the newly set value
+  def vocabulary=(_); end
+
+  class << self
+    def [](*_arg0); end
+    def inspect; end
+    def keyword_init?; end
+    def members; end
+    def new(*_arg0); end
+  end
 end
 
 # source://json_schemer//lib/json_schemer/content.rb#3
@@ -684,32 +903,38 @@ class JSONSchemer::Draft202012::Vocab::Unevaluated::UnevaluatedItems < ::JSONSch
   def error(formatted_instance_location:, **_arg1); end
 
   # source://json_schemer//lib/json_schemer/draft202012/vocab/unevaluated.rb#11
-  def parse; end
+  def false_schema_error(formatted_instance_location:, **_arg1); end
 
   # source://json_schemer//lib/json_schemer/draft202012/vocab/unevaluated.rb#15
-  def validate(instance, instance_location, keyword_location, context); end
-
-  private
-
-  # source://json_schemer//lib/json_schemer/draft202012/vocab/unevaluated.rb#33
-  def collect_unevaluated_items(result, instance_location, unevaluated_items); end
-end
-
-# source://json_schemer//lib/json_schemer/draft202012/vocab/unevaluated.rb#49
-class JSONSchemer::Draft202012::Vocab::Unevaluated::UnevaluatedProperties < ::JSONSchemer::Keyword
-  # source://json_schemer//lib/json_schemer/draft202012/vocab/unevaluated.rb#50
-  def error(formatted_instance_location:, **_arg1); end
-
-  # source://json_schemer//lib/json_schemer/draft202012/vocab/unevaluated.rb#54
   def parse; end
 
-  # source://json_schemer//lib/json_schemer/draft202012/vocab/unevaluated.rb#58
+  # source://json_schemer//lib/json_schemer/draft202012/vocab/unevaluated.rb#19
   def validate(instance, instance_location, keyword_location, context); end
 
   private
 
-  # source://json_schemer//lib/json_schemer/draft202012/vocab/unevaluated.rb#80
-  def collect_evaluated_keys(result, instance_location, evaluated_keys); end
+  # source://json_schemer//lib/json_schemer/draft202012/vocab/unevaluated.rb#37
+  def collect_unevaluated_items(result, unevaluated_items); end
+end
+
+# source://json_schemer//lib/json_schemer/draft202012/vocab/unevaluated.rb#54
+class JSONSchemer::Draft202012::Vocab::Unevaluated::UnevaluatedProperties < ::JSONSchemer::Keyword
+  # source://json_schemer//lib/json_schemer/draft202012/vocab/unevaluated.rb#55
+  def error(formatted_instance_location:, **_arg1); end
+
+  # source://json_schemer//lib/json_schemer/draft202012/vocab/unevaluated.rb#59
+  def false_schema_error(formatted_instance_location:, **_arg1); end
+
+  # source://json_schemer//lib/json_schemer/draft202012/vocab/unevaluated.rb#63
+  def parse; end
+
+  # source://json_schemer//lib/json_schemer/draft202012/vocab/unevaluated.rb#67
+  def validate(instance, instance_location, keyword_location, context); end
+
+  private
+
+  # source://json_schemer//lib/json_schemer/draft202012/vocab/unevaluated.rb#89
+  def collect_evaluated_keys(result, evaluated_keys); end
 end
 
 # https://datatracker.ietf.org/doc/html/draft-bhutton-json-schema-validation-01#section-6
@@ -1092,12 +1317,12 @@ module JSONSchemer::Format
   extend ::JSONSchemer::Format::URITemplate
 
   class << self
-    # source://json_schemer//lib/json_schemer/format.rb#133
+    # source://json_schemer//lib/json_schemer/format.rb#132
     def iri_escape(data); end
 
     # @raise [::URI::InvalidURIError]
     #
-    # source://json_schemer//lib/json_schemer/format.rb#113
+    # source://json_schemer//lib/json_schemer/format.rb#112
     def parse_uri_scheme(data); end
 
     # source://json_schemer//lib/json_schemer/format.rb#90
@@ -1105,38 +1330,38 @@ module JSONSchemer::Format
 
     # @return [Boolean]
     #
-    # source://json_schemer//lib/json_schemer/format.rb#97
+    # source://json_schemer//lib/json_schemer/format.rb#96
     def valid_date_time?(data); end
 
     # @return [Boolean]
     #
-    # source://json_schemer//lib/json_schemer/format.rb#106
+    # source://json_schemer//lib/json_schemer/format.rb#105
     def valid_ip?(data, family); end
 
     # @return [Boolean]
     #
-    # source://json_schemer//lib/json_schemer/format.rb#137
+    # source://json_schemer//lib/json_schemer/format.rb#136
     def valid_regex?(data); end
 
     # @return [Boolean]
     #
-    # source://json_schemer//lib/json_schemer/format.rb#120
+    # source://json_schemer//lib/json_schemer/format.rb#119
     def valid_uri?(data); end
 
     # @return [Boolean]
     #
-    # source://json_schemer//lib/json_schemer/format.rb#126
+    # source://json_schemer//lib/json_schemer/format.rb#125
     def valid_uri_reference?(data); end
 
     # @return [Boolean]
     #
-    # source://json_schemer//lib/json_schemer/format.rb#143
+    # source://json_schemer//lib/json_schemer/format.rb#142
     def valid_uuid?(data); end
   end
 end
 
 # source://json_schemer//lib/json_schemer/format.rb#79
-JSONSchemer::Format::ASCII_8BIT_TO_PERCENT_ENCODED = T.let(T.unsafe(nil), Hash)
+JSONSchemer::Format::BINARY_TO_PERCENT_ENCODED = T.let(T.unsafe(nil), Hash)
 
 # source://json_schemer//lib/json_schemer/format.rb#8
 JSONSchemer::Format::DATE = T.let(T.unsafe(nil), Proc)
@@ -1689,10 +1914,10 @@ JSONSchemer::Location::JSON_POINTER_TOKEN_ESCAPE_CHARS = T.let(T.unsafe(nil), Ha
 # source://json_schemer//lib/json_schemer/location.rb#5
 JSONSchemer::Location::JSON_POINTER_TOKEN_ESCAPE_REGEX = T.let(T.unsafe(nil), Regexp)
 
-# source://json_schemer//lib/json_schemer.rb#262
+# source://json_schemer//lib/json_schemer.rb#286
 JSONSchemer::META_SCHEMAS_BY_BASE_URI_STR = T.let(T.unsafe(nil), Hash)
 
-# source://json_schemer//lib/json_schemer.rb#250
+# source://json_schemer//lib/json_schemer.rb#274
 JSONSchemer::META_SCHEMA_CALLABLES_BY_BASE_URI_STR = T.let(T.unsafe(nil), Hash)
 
 # source://json_schemer//lib/json_schemer/openapi.rb#3
@@ -1702,18 +1927,18 @@ class JSONSchemer::OpenAPI
   # source://json_schemer//lib/json_schemer/openapi.rb#4
   def initialize(document, **options); end
 
-  # source://json_schemer//lib/json_schemer/openapi.rb#32
+  # source://json_schemer//lib/json_schemer/openapi.rb#30
   def ref(value); end
 
-  # source://json_schemer//lib/json_schemer/openapi.rb#36
+  # source://json_schemer//lib/json_schemer/openapi.rb#34
   def schema(name); end
 
   # @return [Boolean]
   #
-  # source://json_schemer//lib/json_schemer/openapi.rb#24
+  # source://json_schemer//lib/json_schemer/openapi.rb#22
   def valid?; end
 
-  # source://json_schemer//lib/json_schemer/openapi.rb#28
+  # source://json_schemer//lib/json_schemer/openapi.rb#26
   def validate(**options); end
 end
 
@@ -2089,6 +2314,11 @@ class JSONSchemer::Result < ::Struct
   # source://json_schemer//lib/json_schemer/result.rb#163
   def verbose; end
 
+  private
+
+  # source://json_schemer//lib/json_schemer/result.rb#232
+  def default_keyword_instance(schema); end
+
   class << self
     def [](*_arg0); end
     def inspect; end
@@ -2104,211 +2334,214 @@ class JSONSchemer::Schema
 
   # @return [Schema] a new instance of Schema
   #
-  # source://json_schemer//lib/json_schemer/schema.rb#48
-  def initialize(value, parent = T.unsafe(nil), root = T.unsafe(nil), keyword = T.unsafe(nil), base_uri: T.unsafe(nil), meta_schema: T.unsafe(nil), vocabulary: T.unsafe(nil), format: T.unsafe(nil), formats: T.unsafe(nil), content_encodings: T.unsafe(nil), content_media_types: T.unsafe(nil), keywords: T.unsafe(nil), before_property_validation: T.unsafe(nil), after_property_validation: T.unsafe(nil), insert_property_defaults: T.unsafe(nil), property_default_resolver: T.unsafe(nil), ref_resolver: T.unsafe(nil), regexp_resolver: T.unsafe(nil), output_format: T.unsafe(nil), resolve_enumerators: T.unsafe(nil), access_mode: T.unsafe(nil)); end
+  # source://json_schemer//lib/json_schemer/schema.rb#49
+  def initialize(value, parent = T.unsafe(nil), root = T.unsafe(nil), keyword = T.unsafe(nil), configuration: T.unsafe(nil), base_uri: T.unsafe(nil), meta_schema: T.unsafe(nil), vocabulary: T.unsafe(nil), format: T.unsafe(nil), formats: T.unsafe(nil), content_encodings: T.unsafe(nil), content_media_types: T.unsafe(nil), keywords: T.unsafe(nil), before_property_validation: T.unsafe(nil), after_property_validation: T.unsafe(nil), insert_property_defaults: T.unsafe(nil), property_default_resolver: T.unsafe(nil), ref_resolver: T.unsafe(nil), regexp_resolver: T.unsafe(nil), output_format: T.unsafe(nil), resolve_enumerators: T.unsafe(nil), access_mode: T.unsafe(nil)); end
 
-  # source://json_schemer//lib/json_schemer/schema.rb#270
+  # source://json_schemer//lib/json_schemer/schema.rb#267
   def absolute_keyword_location; end
 
   # Returns the value of attribute after_property_validation.
   #
-  # source://json_schemer//lib/json_schemer/schema.rb#46
+  # source://json_schemer//lib/json_schemer/schema.rb#47
   def after_property_validation; end
 
   # Returns the value of attribute base_uri.
   #
-  # source://json_schemer//lib/json_schemer/schema.rb#44
+  # source://json_schemer//lib/json_schemer/schema.rb#45
   def base_uri; end
 
   # Sets the attribute base_uri
   #
   # @param value the value to set the attribute base_uri to.
   #
-  # source://json_schemer//lib/json_schemer/schema.rb#44
+  # source://json_schemer//lib/json_schemer/schema.rb#45
   def base_uri=(_arg0); end
 
   # Returns the value of attribute before_property_validation.
   #
-  # source://json_schemer//lib/json_schemer/schema.rb#46
+  # source://json_schemer//lib/json_schemer/schema.rb#47
   def before_property_validation; end
 
-  # source://json_schemer//lib/json_schemer/schema.rb#221
+  # source://json_schemer//lib/json_schemer/schema.rb#218
   def bundle; end
+
+  # Returns the value of attribute configuration.
+  #
+  # source://json_schemer//lib/json_schemer/schema.rb#46
+  def configuration; end
 
   # Returns the value of attribute content_encodings.
   #
-  # source://json_schemer//lib/json_schemer/schema.rb#46
+  # source://json_schemer//lib/json_schemer/schema.rb#47
   def content_encodings; end
 
   # Returns the value of attribute content_media_types.
   #
-  # source://json_schemer//lib/json_schemer/schema.rb#46
+  # source://json_schemer//lib/json_schemer/schema.rb#47
   def content_media_types; end
 
   # Returns the value of attribute custom_keywords.
   #
-  # source://json_schemer//lib/json_schemer/schema.rb#46
+  # source://json_schemer//lib/json_schemer/schema.rb#47
   def custom_keywords; end
 
-  # source://json_schemer//lib/json_schemer/schema.rb#329
+  # source://json_schemer//lib/json_schemer/schema.rb#326
   def defs_keyword; end
 
-  # source://json_schemer//lib/json_schemer/schema.rb#337
+  # source://json_schemer//lib/json_schemer/schema.rb#334
   def error(formatted_instance_location:, **options); end
 
-  # source://json_schemer//lib/json_schemer/schema.rb#293
+  # source://json_schemer//lib/json_schemer/schema.rb#290
   def error_key; end
 
-  # source://json_schemer//lib/json_schemer/schema.rb#297
+  # source://json_schemer//lib/json_schemer/schema.rb#294
   def fetch(key); end
 
-  # source://json_schemer//lib/json_schemer/schema.rb#309
+  # source://json_schemer//lib/json_schemer/schema.rb#306
   def fetch_content_encoding(content_encoding, *args, &block); end
 
-  # source://json_schemer//lib/json_schemer/schema.rb#317
+  # source://json_schemer//lib/json_schemer/schema.rb#314
   def fetch_content_media_type(content_media_type, *args, &block); end
 
-  # source://json_schemer//lib/json_schemer/schema.rb#301
+  # source://json_schemer//lib/json_schemer/schema.rb#298
   def fetch_format(format, *args, &block); end
 
   # Returns the value of attribute format.
   #
-  # source://json_schemer//lib/json_schemer/schema.rb#46
+  # source://json_schemer//lib/json_schemer/schema.rb#47
   def format; end
 
   # Returns the value of attribute formats.
   #
-  # source://json_schemer//lib/json_schemer/schema.rb#46
+  # source://json_schemer//lib/json_schemer/schema.rb#47
   def formats; end
 
-  # source://json_schemer//lib/json_schemer/schema.rb#325
+  # source://json_schemer//lib/json_schemer/schema.rb#322
   def id_keyword; end
 
   # Returns the value of attribute insert_property_defaults.
   #
-  # source://json_schemer//lib/json_schemer/schema.rb#46
+  # source://json_schemer//lib/json_schemer/schema.rb#47
   def insert_property_defaults; end
 
-  # source://json_schemer//lib/json_schemer/schema.rb#345
+  # source://json_schemer//lib/json_schemer/schema.rb#357
   def inspect; end
 
   # Returns the value of attribute keyword_order.
   #
-  # source://json_schemer//lib/json_schemer/schema.rb#44
+  # source://json_schemer//lib/json_schemer/schema.rb#45
   def keyword_order; end
 
   # Sets the attribute keyword_order
   #
   # @param value the value to set the attribute keyword_order to.
   #
-  # source://json_schemer//lib/json_schemer/schema.rb#44
+  # source://json_schemer//lib/json_schemer/schema.rb#45
   def keyword_order=(_arg0); end
 
   # Returns the value of attribute keywords.
   #
-  # source://json_schemer//lib/json_schemer/schema.rb#44
+  # source://json_schemer//lib/json_schemer/schema.rb#45
   def keywords; end
 
   # Sets the attribute keywords
   #
   # @param value the value to set the attribute keywords to.
   #
-  # source://json_schemer//lib/json_schemer/schema.rb#44
+  # source://json_schemer//lib/json_schemer/schema.rb#45
   def keywords=(_arg0); end
 
   # Returns the value of attribute meta_schema.
   #
-  # source://json_schemer//lib/json_schemer/schema.rb#44
+  # source://json_schemer//lib/json_schemer/schema.rb#45
   def meta_schema; end
 
   # Sets the attribute meta_schema
   #
   # @param value the value to set the attribute meta_schema to.
   #
-  # source://json_schemer//lib/json_schemer/schema.rb#44
+  # source://json_schemer//lib/json_schemer/schema.rb#45
   def meta_schema=(_arg0); end
 
   # Returns the value of attribute parent.
   #
-  # source://json_schemer//lib/json_schemer/schema.rb#45
+  # source://json_schemer//lib/json_schemer/schema.rb#46
   def parent; end
 
   # Returns the value of attribute parsed.
   #
-  # source://json_schemer//lib/json_schemer/schema.rb#45
+  # source://json_schemer//lib/json_schemer/schema.rb#46
   def parsed; end
 
-  # Returns the value of attribute property_default_resolver.
-  #
-  # source://json_schemer//lib/json_schemer/schema.rb#46
-  def property_default_resolver; end
-
-  # source://json_schemer//lib/json_schemer/schema.rb#120
+  # source://json_schemer//lib/json_schemer/schema.rb#123
   def ref(value); end
+
+  # source://json_schemer//lib/json_schemer/schema.rb#342
+  def ref_resolver; end
+
+  # source://json_schemer//lib/json_schemer/schema.rb#346
+  def regexp_resolver; end
 
   # @raise [InvalidRefPointer]
   #
-  # source://json_schemer//lib/json_schemer/schema.rb#166
+  # source://json_schemer//lib/json_schemer/schema.rb#170
   def resolve_ref(uri); end
 
-  # source://json_schemer//lib/json_schemer/schema.rb#217
+  # source://json_schemer//lib/json_schemer/schema.rb#214
   def resolve_regexp(pattern); end
 
-  # source://json_schemer//lib/json_schemer/schema.rb#333
+  # source://json_schemer//lib/json_schemer/schema.rb#330
   def resources; end
 
   # Returns the value of attribute root.
   #
-  # source://json_schemer//lib/json_schemer/schema.rb#45
+  # source://json_schemer//lib/json_schemer/schema.rb#46
   def root; end
 
-  # source://json_schemer//lib/json_schemer/schema.rb#283
+  # source://json_schemer//lib/json_schemer/schema.rb#280
   def schema_pointer; end
 
   # @return [Boolean]
   #
-  # source://json_schemer//lib/json_schemer/schema.rb#96
+  # source://json_schemer//lib/json_schemer/schema.rb#99
   def valid?(instance, **options); end
 
   # @return [Boolean]
   #
-  # source://json_schemer//lib/json_schemer/schema.rb#112
-  def valid_schema?; end
+  # source://json_schemer//lib/json_schemer/schema.rb#115
+  def valid_schema?(**options); end
 
-  # source://json_schemer//lib/json_schemer/schema.rb#100
+  # source://json_schemer//lib/json_schemer/schema.rb#103
   def validate(instance, output_format: T.unsafe(nil), resolve_enumerators: T.unsafe(nil), access_mode: T.unsafe(nil)); end
 
-  # source://json_schemer//lib/json_schemer/schema.rb#124
+  # source://json_schemer//lib/json_schemer/schema.rb#127
   def validate_instance(instance, instance_location, keyword_location, context); end
 
-  # source://json_schemer//lib/json_schemer/schema.rb#116
-  def validate_schema; end
+  # source://json_schemer//lib/json_schemer/schema.rb#119
+  def validate_schema(**options); end
 
   # Returns the value of attribute value.
   #
-  # source://json_schemer//lib/json_schemer/schema.rb#45
+  # source://json_schemer//lib/json_schemer/schema.rb#46
   def value; end
 
   # Returns the value of attribute vocabulary.
   #
-  # source://json_schemer//lib/json_schemer/schema.rb#46
+  # source://json_schemer//lib/json_schemer/schema.rb#47
   def vocabulary; end
 
   private
 
-  # source://json_schemer//lib/json_schemer/schema.rb#351
+  # source://json_schemer//lib/json_schemer/schema.rb#363
   def parse; end
 
-  # source://json_schemer//lib/json_schemer/schema.rb#397
-  def ref_resolver; end
+  # source://json_schemer//lib/json_schemer/schema.rb#409
+  def property_default_resolver; end
 
-  # source://json_schemer//lib/json_schemer/schema.rb#401
-  def regexp_resolver; end
-
-  # source://json_schemer//lib/json_schemer/schema.rb#412
+  # source://json_schemer//lib/json_schemer/schema.rb#413
   def resolve_enumerators!(output); end
 
-  # source://json_schemer//lib/json_schemer/schema.rb#393
+  # source://json_schemer//lib/json_schemer/schema.rb#405
   def root_keyword_location; end
 end
 
@@ -2381,61 +2614,37 @@ class JSONSchemer::Schema::Context < ::Struct
   end
 end
 
-# source://json_schemer//lib/json_schemer/schema.rb#27
-JSONSchemer::Schema::DEFAULT_AFTER_PROPERTY_VALIDATION = T.let(T.unsafe(nil), Array)
-
-# source://json_schemer//lib/json_schemer/schema.rb#21
-JSONSchemer::Schema::DEFAULT_BASE_URI = T.let(T.unsafe(nil), URI::Generic)
-
-# source://json_schemer//lib/json_schemer/schema.rb#26
-JSONSchemer::Schema::DEFAULT_BEFORE_PROPERTY_VALIDATION = T.let(T.unsafe(nil), Array)
-
-# source://json_schemer//lib/json_schemer/schema.rb#23
-JSONSchemer::Schema::DEFAULT_CONTENT_ENCODINGS = T.let(T.unsafe(nil), Hash)
-
-# source://json_schemer//lib/json_schemer/schema.rb#24
-JSONSchemer::Schema::DEFAULT_CONTENT_MEDIA_TYPES = T.let(T.unsafe(nil), Hash)
-
-# source://json_schemer//lib/json_schemer/schema.rb#22
-JSONSchemer::Schema::DEFAULT_FORMATS = T.let(T.unsafe(nil), Hash)
-
-# source://json_schemer//lib/json_schemer/schema.rb#25
-JSONSchemer::Schema::DEFAULT_KEYWORDS = T.let(T.unsafe(nil), Hash)
-
-# source://json_schemer//lib/json_schemer/schema.rb#33
+# source://json_schemer//lib/json_schemer/schema.rb#31
 JSONSchemer::Schema::DEFAULT_PROPERTY_DEFAULT_RESOLVER = T.let(T.unsafe(nil), Proc)
 
-# source://json_schemer//lib/json_schemer/schema.rb#28
-JSONSchemer::Schema::DEFAULT_REF_RESOLVER = T.let(T.unsafe(nil), Proc)
-
-# source://json_schemer//lib/json_schemer/schema.rb#14
-JSONSchemer::Schema::DEFAULT_SCHEMA = T.let(T.unsafe(nil), String)
-
-# source://json_schemer//lib/json_schemer/schema.rb#31
+# source://json_schemer//lib/json_schemer/schema.rb#29
 JSONSchemer::Schema::ECMA_REGEXP_RESOLVER = T.let(T.unsafe(nil), Proc)
 
-# source://json_schemer//lib/json_schemer/schema.rb#17
+# source://json_schemer//lib/json_schemer/schema.rb#22
 JSONSchemer::Schema::ID_KEYWORD_CLASS = JSONSchemer::Draft202012::Vocab::Core::Id
 
-# source://json_schemer//lib/json_schemer/schema.rb#29
+# source://json_schemer//lib/json_schemer/schema.rb#27
 JSONSchemer::Schema::NET_HTTP_REF_RESOLVER = T.let(T.unsafe(nil), Proc)
 
-# source://json_schemer//lib/json_schemer/schema.rb#19
+# source://json_schemer//lib/json_schemer/schema.rb#24
 JSONSchemer::Schema::NOT_KEYWORD_CLASS = JSONSchemer::Draft202012::Vocab::Applicator::Not
 
-# source://json_schemer//lib/json_schemer/schema.rb#20
+# source://json_schemer//lib/json_schemer/schema.rb#25
 JSONSchemer::Schema::PROPERTIES_KEYWORD_CLASS = JSONSchemer::Draft202012::Vocab::Applicator::Properties
 
-# source://json_schemer//lib/json_schemer/schema.rb#30
+# source://json_schemer//lib/json_schemer/schema.rb#28
 JSONSchemer::Schema::RUBY_REGEXP_RESOLVER = T.let(T.unsafe(nil), Proc)
 
-# source://json_schemer//lib/json_schemer/schema.rb#15
+# source://json_schemer//lib/json_schemer/schema.rb#20
 JSONSchemer::Schema::SCHEMA_KEYWORD_CLASS = JSONSchemer::Draft202012::Vocab::Core::Schema
 
-# source://json_schemer//lib/json_schemer/schema.rb#18
+# source://json_schemer//lib/json_schemer/schema.rb#41
+JSONSchemer::Schema::SYMBOL_PROPERTY_DEFAULT_RESOLVER = T.let(T.unsafe(nil), Proc)
+
+# source://json_schemer//lib/json_schemer/schema.rb#23
 JSONSchemer::Schema::UNKNOWN_KEYWORD_CLASS = JSONSchemer::Draft202012::Vocab::Core::UnknownKeyword
 
-# source://json_schemer//lib/json_schemer/schema.rb#16
+# source://json_schemer//lib/json_schemer/schema.rb#21
 JSONSchemer::Schema::VOCABULARY_KEYWORD_CLASS = JSONSchemer::Draft202012::Vocab::Core::Vocabulary
 
 # source://json_schemer//lib/json_schemer.rb#70
@@ -2455,9 +2664,6 @@ class JSONSchemer::UnknownRef < ::StandardError; end
 
 # source://json_schemer//lib/json_schemer.rb#69
 class JSONSchemer::UnknownVocabulary < ::StandardError; end
-
-# source://json_schemer//lib/json_schemer.rb#65
-class JSONSchemer::UnsupportedMetaSchema < ::StandardError; end
 
 # source://json_schemer//lib/json_schemer.rb#66
 class JSONSchemer::UnsupportedOpenAPIVersion < ::StandardError; end
