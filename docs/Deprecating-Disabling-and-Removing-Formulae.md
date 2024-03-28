@@ -16,17 +16,6 @@ If a user attempts to install a deprecated formula, they will be shown a warning
 
 A formula should be deprecated to indicate to users that the formula should not be used and will be disabled in the future. Deprecated formulae should continue to be maintained by the Homebrew maintainers so they still build from source and their bottles continue to work (even if unmaintained upstream). If this is not possible, they should be disabled.
 
-The most common reasons for deprecation are when the upstream project is deprecated, unmaintained, or archived.
-
-Formulae should only be deprecated if at least one of the following are true:
-
-- the formula does not build on any of our supported macOS versions and on Linux
-- the formula has outstanding CVEs
-- the formula has [zero installs in the last 90 days](https://formulae.brew.sh/analytics/install/90d/)
-- the software installed by the formula has been discontinued or abandoned upstream
-
-Formulae with dependents should not be deprecated until or when all dependents are also deprecated.
-
 To deprecate a formula, add a `deprecate!` call. This call should include a deprecation date (in the ISO 8601 format) and a deprecation reason:
 
 ```ruby
@@ -43,17 +32,6 @@ If a user attempts to install a disabled formula, they will be shown an error me
 
 A formula should be disabled to indicate to users that the formula cannot be used and will be removed in the future. Disabled formulae may no longer build from source or have working bottles.
 
-The most common reasons for disabling a formula are:
-
-- it cannot be built from source on all supported OS versions (meaning no new bottles can be built)
-- it has been deprecated for a long time
-- the project has no license
-
-Popular formulae (e.g. have more than 1000 [analytics installs in the last 90 days](https://formulae.brew.sh/analytics/install/90d/)) should not be disabled without a deprecation period of at least six months even if e.g. they do not build from source and do not have a license.
-
-Unpopular formulae (e.g. have fewer than 1000 [analytics installs in the last 90 days](https://formulae.brew.sh/analytics/install/90d/)) can be disabled immediately for any of the reasons above e.g. they cannot be built from source on any supported macOS version or Linux.
-They can be manually removed three months after their disable date.
-
 To disable a formula, add a `disable!` call. This call should include a deprecation date in the ISO 8601 format and a deprecation reason:
 
 ```ruby
@@ -68,7 +46,9 @@ The `because` parameter can be a preset reason (using a symbol) or a custom reas
 
 A formula should be removed if it does not meet our criteria for [acceptable formulae](Acceptable-Formulae.md) or [versioned formulae](Versions.md), has a non-open-source license, or has been disabled for over a year.
 
-**Note: disabled formulae in `homebrew/core` will be automatically removed one year after their disable date.**
+## Deprecation - Disabling - Removal flow
+
+![Flow](assets/img/docs/deprecation.svg)
 
 ## Deprecate and Disable Reasons
 
