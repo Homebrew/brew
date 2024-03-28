@@ -600,6 +600,27 @@ module Homebrew
       problem "Product is EOL since #{metadata["eol"]}, #{see_url}" if Date.parse(metadata["eol"]) <= Date.today
     end
 
+    def audit_wayback_url
+      return unless @core_tap
+      return if formula.deprecated? || formula.disabled?
+
+      regex = %r{^https?://web\.archive\.org}
+      problem_prefix = "Formula with a Internet Archive Wayback Machine"
+      if regex.match?(formula.stable.url)
+        problem "#{problem_prefix} `url` should be deprecated with `:repo_removed`"
+      end
+
+      if regex.match?(formula.homepage)
+        problem "#{problem_prefix} `homepage` should find an alternative `homepage` or be deprecated."
+      end
+
+      return unless formula.head
+
+      return unless regex.match?(formula.head.url)
+
+      problem "Remove Internet Archive Wayback Machine `head` URL"
+    end
+
     def audit_github_repository_archived
       return if formula.deprecated? || formula.disabled?
 
