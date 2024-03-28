@@ -30,9 +30,6 @@ end
 group :man, optional: true do
   gem "kramdown", require: false
 end
-group :pr_upload, optional: true do
-  gem "json_schemer", require: false
-end
 group :prof, optional: true do
   gem "ruby-prof", require: false
   gem "stackprof", require: false
@@ -69,6 +66,9 @@ end
 # shared gems (used by multiple groups)
 group :audit, :bump_unversioned_casks, :livecheck, optional: true do
   gem "rexml", require: false
+end
+group :audit, :pr_upload, optional: true do
+  gem "json_schemer", require: false
 end
 
 # vendored gems (no group)

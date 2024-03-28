@@ -47,6 +47,15 @@ module Homebrew
       rescue JSON::ParserError
         problem "#{file.to_s.delete_prefix("#{@path}/")} contains invalid JSON"
       end
+
+      require "json_schemer"
+      schemer = JSONSchemer.schema(HOMEBREW_DATA_PATH/"schemas/pypi_formula_mappings.schema.json")
+      return if schemer.valid?(@tap_pypi_formula_mappings)
+
+      problem <<~EOS
+        pypi_formula_mappings.json schema validation failed with following errors:
+        #{schemer.validate(@tap_pypi_formula_mappings).map { |error| "* #{error["error"]}" }.join("\n")}
+      EOS
     end
 
     sig { void }
@@ -54,6 +63,13 @@ module Homebrew
       check_formula_list_directory "audit_exceptions", @tap_audit_exceptions
       check_formula_list_directory "style_exceptions", @tap_style_exceptions
       check_formula_list "pypi_formula_mappings", @tap_pypi_formula_mappings
+
+      @tap_pypi_formula_mappings.each_value do |formula_mapping|
+        next unless formula_mapping.is_a?(Hash)
+        next unless formula_mapping.key?("dependencies")
+
+        check_formula_list "pypi_formula_mappings", formula_mapping["dependencies"]
+      end
     end
 
     sig { void }

@@ -1,0 +1,55 @@
+{
+  "$id": "https://brew.sh/pypi_formula_mappings.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "pypi_formula_mappings",
+  "type": "object",
+  "additionalProperties": {
+    "oneOf": [
+      { "$ref": "#/$defs/package_name" },
+      {
+        "type": "object",
+        "properties": {
+          "package_name": {
+            "description": "Normalized PyPI package name with optional extras or empty string to skip main package",
+            "type": "string",
+            "oneOf": [
+              { "$ref": "#/$defs/package_name" },
+              { "maxLength": 0 }
+            ]
+          },
+          "exclude_packages": {
+            "description": "PyPI packages to exclude from result",
+            "type": "array",
+            "items": { "$ref": "#/$defs/package_name" },
+            "minItems": 1
+          },
+          "extra_packages": {
+            "description": "PyPI packages to include with result",
+            "type": "array",
+            "items": { "$ref": "#/$defs/requirement_specifier" },
+            "minItems": 1
+          },
+          "dependencies": {
+            "description": "Formulae that need to be installed to resolve PyPI packages",
+            "type": "array",
+            "items": { "type":"string" },
+            "minItems": 1
+          }
+        },
+        "additionalProperties": false
+      }
+    ]
+  },
+  "$defs": {
+    "package_name": {
+      "description": "Normalized PyPI package name with optional extras",
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]*(\\[[a-z0-9][a-z0-9-]*(,[a-z0-9][a-z0-9-]*)*\\])?$"
+    },
+    "requirement_specifier": {
+      "description": "Normalized PyPI package name with optional extras and optional pinned version",
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]*(\\[[a-z0-9][a-z0-9-]*(,[a-z0-9][a-z0-9-]*)*\\])?(==.*)?$"
+    }
+  }
+}
