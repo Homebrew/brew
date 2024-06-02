@@ -70,9 +70,8 @@ module Homebrew
              !Homebrew::EnvConfig.no_env_hints? &&
              (core_formula_path?(path) || core_cask_path?(path) || core_formula_tap?(path) || core_cask_tap?(path))
            end
-          opoo <<~EOS
-            `brew install` ignores locally edited casks and formulae if
-            HOMEBREW_NO_INSTALL_FROM_API is not set.
+          ohai "To test your local edits, run:", <<~EOS
+            HOMEBREW_NO_INSTALL_FROM_API=1 brew install --build-from-source --verbose --debug #{args.named.join(" ")}
           EOS
         end
       end
