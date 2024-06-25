@@ -476,7 +476,7 @@ RSpec.describe Homebrew::FormulaAuditor do
     end
   end
 
-  describe "#audit_formula_name" do
+  describe "#audit_name" do
     specify "no issue" do
       fa = formula_auditor "foo", <<~RUBY, core_tap: true, strict: true
         class Foo < Formula
@@ -485,7 +485,7 @@ RSpec.describe Homebrew::FormulaAuditor do
         end
       RUBY
 
-      fa.audit_formula_name
+      fa.audit_name
       expect(fa.problems).to be_empty
     end
 
@@ -497,7 +497,7 @@ RSpec.describe Homebrew::FormulaAuditor do
         end
       RUBY
 
-      fa.audit_formula_name
+      fa.audit_name
       expect(fa.problems.first[:message]).to match "must not contain uppercase letters"
     end
   end

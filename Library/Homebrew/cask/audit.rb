@@ -8,6 +8,7 @@ require "digest"
 require "livecheck/livecheck"
 require "source_location"
 require "system_command"
+require "token_auditor"
 require "utils/curl"
 require "utils/git"
 require "utils/shared_audits"
@@ -392,6 +393,15 @@ module Cask
     end
 
     sig { void }
+    def audit_token
+      token_auditor = Homebrew::TokenAuditor.new(cask.token)
+      return if (errors = token_auditor.errors).empty?
+
+      add_error "Cask token '#{cask.token}' must not contain #{errors.to_sentence(two_words_connector: " or ",
+                                                                                  last_word_connector: " or ")}."
+    end
+
+    sig { void }
     def audit_token_conflicts
       return unless token_conflicts?
 
@@ -403,27 +413,6 @@ module Cask
           strict_only: true,
         )
       end
-    end
-
-    sig { void }
-    def audit_token_valid
-      add_error "cask token contains non-ascii characters" unless cask.token.ascii_only?
-      add_error "cask token + should be replaced by -plus-" if cask.token.include? "+"
-      add_error "cask token whitespace should be replaced by hyphens" if cask.token.include? " "
-      add_error "cask token underscores should be replaced by hyphens" if cask.token.include? "_"
-      add_error "cask token should not contain double hyphens" if cask.token.include? "--"
-
-      if cask.token.match?(/[^@a-z0-9-]/)
-        add_error "cask token should only contain lowercase alphanumeric characters, hyphens and @"
-      end
-
-      if cask.token.start_with?("-", "@") || cask.token.end_with?("-", "@")
-        add_error "cask token should not have leading or trailing hyphens and/or @"
-      end
-
-      add_error "cask token @ unrelated to versioning should be replaced by -at-" if cask.token.count("@") > 1
-      add_error "cask token should not contain a hyphen followed by @" if cask.token.include? "-@"
-      add_error "cask token should not contain @ followed by a hyphen" if cask.token.include? "@-"
     end
 
     sig { void }

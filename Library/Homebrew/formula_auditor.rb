@@ -3,6 +3,7 @@
 
 require "deprecate_disable"
 require "formula_versions"
+require "token_auditor"
 require "resource_auditor"
 require "utils/shared_audits"
 
@@ -160,10 +161,14 @@ module Homebrew
       end
     end
 
-    def audit_formula_name
+    def audit_name
       name = formula.name
 
-      problem "Formula name '#{name}' must not contain uppercase letters." if name != name.downcase
+      token_auditor = Homebrew::TokenAuditor.new(name)
+      unless (errors = token_auditor.errors).empty?
+        problem "Formula name '#{name}' must not contain #{errors.to_sentence(two_words_connector: " or ",
+                                                                              last_word_connector: " or ")}."
+      end
 
       return unless @strict
       return unless @core_tap
