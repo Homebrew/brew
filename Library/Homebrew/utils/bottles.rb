@@ -64,7 +64,7 @@ module Utils
         name = bottle_file_list(bottle_file).first.to_s.split("/").first
         full_name = if (receipt_file_path = receipt_path(bottle_file))
           receipt_file = file_from_bottle(bottle_file, receipt_file_path)
-          tap = Tab.from_file_content(receipt_file, "#{bottle_file}/#{receipt_file_path}").tap
+          tap = Tab.from_file_content(receipt_file, "#{bottle_file}/#{receipt_file_path}", type: :formula).tap
           "#{tap}/#{name}" if tap.present? && !tap.core_tap?
         else
           bottle_json_path = Pathname(bottle_file.sub(/\.(\d+\.)?tar\.gz$/, ".json"))
@@ -110,18 +110,18 @@ module Utils
         bottle_json_path = formula.local_bottle_path&.sub(/\.(\d+\.)?tar\.gz$/, ".json")
 
         if (tab_attributes = formula.bottle_tab_attributes.presence)
-          Tab.from_file_content(tab_attributes.to_json, tabfile)
+          Tab.from_file_content(tab_attributes.to_json, tabfile, type: :formula)
         elsif !tabfile.exist? && bottle_json_path&.exist?
           _, tag, = Utils::Bottles.extname_tag_rebuild(formula.local_bottle_path)
           bottle_hash = JSON.parse(File.read(bottle_json_path))
           tab_json = bottle_hash[formula.full_name]["bottle"]["tags"][tag]["tab"].to_json
-          Tab.from_file_content(tab_json, tabfile)
+          Tab.from_file_content(tab_json, tabfile, type: :formula)
         else
           tab = keg.tab
 
           tab.runtime_dependencies = begin
             f_runtime_deps = formula.runtime_dependencies(read_from_tab: false)
-            Tab.runtime_deps_hash(formula, f_runtime_deps)
+            Tab.formula_runtime_deps_hash(formula, f_runtime_deps)
           end
 
           tab

@@ -826,7 +826,7 @@ on_request: installed_on_request?, options:)
     tab = keg.tab
     Tab.clear_cache
     f_runtime_deps = formula.runtime_dependencies(read_from_tab: false)
-    tab.runtime_dependencies = Tab.runtime_deps_hash(formula, f_runtime_deps)
+    tab.runtime_dependencies = Tab.formula_runtime_deps_hash(formula, f_runtime_deps)
     tab.write
 
     # write/update a SBOM file (if we aren't bottling)

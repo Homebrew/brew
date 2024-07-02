@@ -289,8 +289,8 @@ module Cask
       sig { params(token: String, from_json: Hash, path: T.nilable(Pathname)).void }
       def initialize(token, from_json: T.unsafe(nil), path: nil)
         @token = token.sub(%r{^homebrew/(?:homebrew-)?cask/}i, "")
-        @sourcefile_path = path
-        @path = path || CaskLoader.default_path(@token)
+        @sourcefile_path = path || CaskLoader.default_path(@token)
+        @path = @sourcefile_path
         @from_json = from_json
       end
 

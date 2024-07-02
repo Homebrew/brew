@@ -345,6 +345,9 @@ module Cask
     def installed_as_dependency?; end
 
     sig { returns(T::Boolean) }
+    def installed_on_request?; end
+
+    sig { returns(T::Boolean) }
     def quarantine?; end
 
     sig { returns(T::Boolean) }

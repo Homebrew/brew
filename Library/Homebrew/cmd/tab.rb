@@ -10,7 +10,7 @@ module Homebrew
     class TabCmd < AbstractCommand
       cmd_args do
         description <<~EOS
-          Edit tab information for installed formulae.
+          Edit tab information for installed formulae or casks.
 
           This can be useful when you want to control whether an installed
           formula should be removed by `brew autoremove`.
@@ -19,13 +19,18 @@ module Homebrew
         EOS
 
         switch "--installed-on-request",
-               description: "Mark <formula> as installed on request."
+               description: "Mark <installed_formula> or <installed_cask> as installed on request."
         switch "--no-installed-on-request",
-               description: "Mark <formula> as not installed on request."
+               description: "Mark <installed_formula> or <installed_cask> as not installed on request."
+        switch "--formula", "--formulae",
+               description: "Only mark formulae."
+        switch "--cask", "--casks",
+               description: "Only mark casks."
 
+        conflicts "--formula", "--cask"
         conflicts "--installed-on-request", "--no-installed-on-request"
 
-        named_args :formula, min: 1
+        named_args [:installed_formula, :installed_cask], min: 1
       end
 
       sig { override.void }
@@ -37,38 +42,49 @@ module Homebrew
         end
         raise UsageError, "No marking option specified." if installed_on_request.nil?
 
-        formulae = args.named.to_formulae
-        if (formulae_not_installed = formulae.reject(&:any_version_installed?)).any?
-          formula_names = formulae_not_installed.map(&:name)
-          is_or_are = (formula_names.length == 1) ? "is" : "are"
-          odie "#{formula_names.to_sentence} #{is_or_are} not installed."
+        formulae, casks = args.named.to_formulae_to_casks
+        formulae_not_installed = formulae.reject(&:any_version_installed?)
+        casks_not_installed = casks.reject(&:installed?)
+        if formulae_not_installed.any? || casks_not_installed.any?
+          names = formulae_not_installed.map(&:name) + casks_not_installed.map(&:token)
+          is_or_are = (names.length == 1) ? "is" : "are"
+          odie "#{names.to_sentence} #{is_or_are} not installed."
         end
 
         formulae.each do |formula|
-          update_tab formula, installed_on_request:
+          update_tab formula, installed_on_request:, type: :formula
+        end
+
+        casks.each do |cask|
+          update_tab cask, installed_on_request:, type: :cask
         end
       end
 
       private
 
-      sig { params(formula: Formula, installed_on_request: T::Boolean).void }
-      def update_tab(formula, installed_on_request:)
-        tab = Tab.for_formula(formula)
-        unless tab.tabfile.exist?
+      sig { params(formula_or_cask: T.any(Formula, Cask::Cask), installed_on_request: T::Boolean, type: Symbol).void }
+      def update_tab(formula_or_cask, installed_on_request:, type:)
+        name, tab = if type == :formula
+          [T.cast(formula_or_cask, Formula).name, Tab.for_formula(formula_or_cask)]
+        else
+          [T.cast(formula_or_cask, Cask::Cask).token, Tab.for_cask(formula_or_cask)]
+        end
+
+        if tab.tabfile.blank? || !tab.tabfile.exist?
           raise ArgumentError,
-                "Tab file for #{formula.name} does not exist."
+                "Tab file for #{name} does not exist."
         end
 
         installed_on_request_str = "#{"not " unless installed_on_request}installed on request"
         if (tab.installed_on_request && installed_on_request) ||
            (!tab.installed_on_request && !installed_on_request)
-          ohai "#{formula.name} is already marked as #{installed_on_request_str}."
+          ohai "#{name} is already marked as #{installed_on_request_str}."
           return
         end
 
         tab.installed_on_request = installed_on_request
         tab.write
-        ohai "#{formula.name} is now marked as #{installed_on_request_str}."
+        ohai "#{name} is now marked as #{installed_on_request_str}."
       end
     end
   end

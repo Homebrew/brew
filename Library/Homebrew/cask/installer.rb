@@ -21,8 +21,8 @@ module Cask
     def initialize(cask, command: SystemCommand, force: false, adopt: false,
                    skip_cask_deps: false, binaries: true, verbose: false,
                    zap: false, require_sha: false, upgrade: false, reinstall: false,
-                   installed_as_dependency: false, quarantine: true,
-                   verify_download_integrity: true, quiet: false)
+                   installed_as_dependency: false, installed_on_request: true,
+                   quarantine: true, verify_download_integrity: true, quiet: false)
       @cask = cask
       @command = command
       @force = force
@@ -35,13 +35,14 @@ module Cask
       @reinstall = reinstall
       @upgrade = upgrade
       @installed_as_dependency = installed_as_dependency
+      @installed_on_request = installed_on_request
       @quarantine = quarantine
       @verify_download_integrity = verify_download_integrity
       @quiet = quiet
     end
 
     attr_predicate :binaries?, :force?, :adopt?, :skip_cask_deps?, :require_sha?,
-                   :reinstall?, :upgrade?, :verbose?, :zap?, :installed_as_dependency?,
+                   :reinstall?, :upgrade?, :verbose?, :zap?, :installed_as_dependency?, :installed_on_request?,
                    :quarantine?, :quiet?
 
     def self.caveats(cask)
@@ -111,6 +112,11 @@ module Cask
       @cask.config = @cask.default_config.merge(old_config)
 
       install_artifacts(predecessor:)
+
+      tab = Tab.create(@cask)
+      tab.installed_as_dependency = installed_as_dependency?
+      tab.installed_on_request = installed_on_request?
+      tab.write
 
       if (tap = @cask.tap) && tap.should_report_analytics?
         ::Utils::Analytics.report_package_event(:cask_install, package_name: @cask.token, tap_name: tap.name,
@@ -356,6 +362,7 @@ on_request: true)
             binaries:                binaries?,
             verbose:                 verbose?,
             installed_as_dependency: true,
+            installed_on_request:    false,
             force:                   false,
           ).install
         else
@@ -408,11 +415,18 @@ on_request: true)
       oh1 "Uninstalling Cask #{Formatter.identifier(@cask)}"
       uninstall_artifacts(clear: true, successor:)
       if !reinstall? && !upgrade?
+        remove_tabfile
         remove_download_sha
         remove_config_file
       end
       purge_versioned_files
       purge_caskroom_path if force?
+    end
+
+    def remove_tabfile
+      tabfile = @cask.tab.tabfile
+      FileUtils.rm_f tabfile if tabfile.present? && tabfile.exist?
+      @cask.config_path.parent.rmdir_if_possible
     end
 
     def remove_config_file

@@ -18,8 +18,32 @@ RSpec.describe Tab do
     end
   end
 
+  matcher :be_installed_as_dependency do
+    match do |actual|
+      actual.installed_as_dependency == true
+    end
+  end
+
+  matcher :be_installed_on_request do
+    match do |actual|
+      actual.installed_on_request == true
+    end
+  end
+
+  matcher :be_loaded_from_api do
+    match do |actual|
+      actual.loaded_from_api == true
+    end
+  end
+
+  matcher :be_caskfile_only do
+    match do |actual|
+      actual.caskfile_only == true
+    end
+  end
+
   subject(:tab) do
-    described_class.new(
+    attributes = {
       "homebrew_version"     => HOMEBREW_VERSION,
       "used_options"         => used_options.as_flags,
       "unused_options"       => unused_options.as_flags,
@@ -42,7 +66,34 @@ RSpec.describe Tab do
       },
       "arch"                 => Hardware::CPU.arch,
       "built_on"             => DevelopmentTools.build_system_info,
-    )
+    }
+
+    described_class.new(attributes, type: :formula)
+  end
+
+  let(:cask_tab) do
+    attributes = {
+      "homebrew_version"        => HOMEBREW_VERSION,
+      "loaded_from_api"         => false,
+      "caskfile_only"           => true,
+      "installed_as_dependency" => false,
+      "installed_on_request"    => true,
+      "time"                    => time,
+      "runtime_dependencies"    => {
+        "cask" => [{ "full_name" => "bar", "version" => "2.0", "declared_directly" => false }],
+      },
+      "source"                  => {
+        "path"         => CoreCaskTap.instance.path.to_s,
+        "tap"          => CoreCaskTap.instance.to_s,
+        "tap_git_head" => "8b79aa759500f0ffdf65a23e12950cbe3bf8fe17",
+        "version"      => "1.2.3",
+      },
+      "arch"                    => Hardware::CPU.arch,
+      "uninstall_artifacts"     => [{ "app" => ["Foo.app"] }],
+      "built_on"                => DevelopmentTools.build_system_info,
+    }
+
+    described_class.new(attributes, type: :cask)
   end
 
   let(:time) { Time.now.to_i }
@@ -53,7 +104,7 @@ RSpec.describe Tab do
   let(:f_tab_path) { f.prefix/"INSTALL_RECEIPT.json" }
   let(:f_tab_content) { (TEST_FIXTURE_DIR/"receipt.json").read }
 
-  specify "defaults" do
+  specify "formula defaults" do
     # < 1.1.7 runtime_dependencies were wrong so are ignored
     stub_const("HOMEBREW_VERSION", "1.1.7")
 
@@ -77,6 +128,22 @@ RSpec.describe Tab do
     expect(tab.source["path"]).to be_nil
   end
 
+  specify "cask defaults" do
+    stub_const("HOMEBREW_VERSION", "4.3.7")
+
+    tab = described_class.empty(type: :cask)
+
+    expect(tab.homebrew_version).to eq(HOMEBREW_VERSION)
+    expect(tab).not_to be_installed_as_dependency
+    expect(tab).not_to be_installed_on_request
+    expect(tab).not_to be_loaded_from_api
+    expect(tab).not_to be_caskfile_only
+    expect(tab.tap).to be_nil
+    expect(tab.time).to be_nil
+    expect(tab.runtime_dependencies).to be_nil
+    expect(tab.source["path"]).to be_nil
+  end
+
   specify "#include?" do
     expect(tab).to include("with-foo")
     expect(tab).to include("without-bar")
@@ -93,7 +160,7 @@ RSpec.describe Tab do
     tab = described_class.new
     expect(tab.parsed_homebrew_version).to be Version::NULL
 
-    tab = described_class.new(homebrew_version: "1.2.3")
+    tab = described_class.new({ homebrew_version: "1.2.3" })
     expect(tab.parsed_homebrew_version).to eq("1.2.3")
     expect(tab.parsed_homebrew_version).to be < "1.2.3-1-g12789abdf"
     expect(tab.parsed_homebrew_version).to be_a(Version)
@@ -103,7 +170,7 @@ RSpec.describe Tab do
     expect(tab.parsed_homebrew_version).to be > "1.2.4-566-g21789abdf"
     expect(tab.parsed_homebrew_version).to be < "1.2.4-568-g01789abdf"
 
-    tab = described_class.new(homebrew_version: "2.0.0-134-gabcdefabc-dirty")
+    tab = described_class.new({ homebrew_version: "2.0.0-134-gabcdefabc-dirty" })
     expect(tab.parsed_homebrew_version).to be > "2.0.0"
     expect(tab.parsed_homebrew_version).to be > "2.0.0-133-g21789abdf"
     expect(tab.parsed_homebrew_version).to be < "2.0.0-135-g01789abdf"
@@ -132,11 +199,11 @@ RSpec.describe Tab do
     expect(tab.runtime_dependencies).not_to be_nil
   end
 
-  specify "::runtime_deps_hash" do
+  specify "::formula_runtime_deps_hash" do
     runtime_deps = [Dependency.new("foo")]
     foo = formula("foo") { url "foo-1.0" }
     stub_formula_loader foo
-    runtime_deps_hash = described_class.runtime_deps_hash(foo, runtime_deps)
+    runtime_deps_hash = described_class.formula_runtime_deps_hash(foo, runtime_deps)
     tab = described_class.new
     tab.homebrew_version = "1.1.6"
     tab.runtime_dependencies = runtime_deps_hash
@@ -159,7 +226,7 @@ RSpec.describe Tab do
   end
 
   describe "::from_file" do
-    it "parses a Tab from a file" do
+    it "parses a formula Tab from a file" do
       path = Pathname.new("#{TEST_FIXTURE_DIR}/receipt.json")
       tab = described_class.from_file(path)
       source_path = "/usr/local/Library/Taps/homebrew/homebrew-core/Formula/foo.rb"
@@ -183,10 +250,49 @@ RSpec.describe Tab do
       expect(tab.head_version.to_s).to eq("HEAD-0000000")
       expect(tab.source["path"]).to eq(source_path)
     end
+
+    it "parses a cask Tab from a file" do
+      path = Pathname.new("#{TEST_FIXTURE_DIR}/cask_receipt.json")
+      tab = described_class.from_file(path, type: :cask)
+      source_path = "/opt/homebrew/Library/Taps/homebrew/homebrew-cask/Casks/f/foo.rb"
+      runtime_dependencies = {
+        "cask"    => [
+          {
+            "full_name"         => "bar",
+            "version"           => "2.0",
+            "declared_directly" => true,
+          },
+        ],
+        "formula" => [
+          {
+            "full_name"         => "baz",
+            "version"           => "3.0",
+            "revision"          => 0,
+            "pkg_version"       => "3.0",
+            "declared_directly" => true,
+          },
+        ],
+        "macos"   => {
+          ">=" => [
+            "12",
+          ],
+        },
+      }
+
+      expect(tab).not_to be_loaded_from_api
+      expect(tab).to be_caskfile_only
+      expect(tab).not_to be_installed_as_dependency
+      expect(tab).to be_installed_on_request
+      expect(tab.time).to eq(Time.at(1_719_289_256).to_i)
+      expect(tab.runtime_dependencies).to eq(runtime_dependencies)
+      expect(tab.source["path"]).to eq(source_path)
+      expect(tab.cask_version).to eq("1.2.3")
+      expect(tab.tap.name).to eq("homebrew/cask")
+    end
   end
 
   describe "::from_file_content" do
-    it "parses a Tab from a file" do
+    it "parses a formula Tab from a file" do
       path = Pathname.new("#{TEST_FIXTURE_DIR}/receipt.json")
       tab = described_class.from_file_content(path.read, path)
       source_path = "/usr/local/Library/Taps/homebrew/homebrew-core/Formula/foo.rb"
@@ -211,7 +317,47 @@ RSpec.describe Tab do
       expect(tab.source["path"]).to eq(source_path)
     end
 
-    it "can parse an old Tab file" do
+    it "parses a cask Tab from a file" do
+      path = Pathname.new("#{TEST_FIXTURE_DIR}/cask_receipt.json")
+      tab = described_class.from_file_content(path.read, path, type: :cask)
+      source_path = "/opt/homebrew/Library/Taps/homebrew/homebrew-cask/Casks/f/foo.rb"
+      runtime_dependencies = {
+        "cask"    => [
+          {
+            "full_name"         => "bar",
+            "version"           => "2.0",
+            "declared_directly" => true,
+          },
+        ],
+        "formula" => [
+          {
+            "full_name"         => "baz",
+            "version"           => "3.0",
+            "revision"          => 0,
+            "pkg_version"       => "3.0",
+            "declared_directly" => true,
+          },
+        ],
+        "macos"   => {
+          ">=" => [
+            "12",
+          ],
+        },
+      }
+
+      expect(tab).not_to be_loaded_from_api
+      expect(tab).to be_caskfile_only
+      expect(tab).not_to be_installed_as_dependency
+      expect(tab).to be_installed_on_request
+      expect(tab.tabfile).to eq(path)
+      expect(tab.time).to eq(Time.at(1_719_289_256).to_i)
+      expect(tab.runtime_dependencies).to eq(runtime_dependencies)
+      expect(tab.source["path"]).to eq(source_path)
+      expect(tab.cask_version).to eq("1.2.3")
+      expect(tab.tap.name).to eq("homebrew/cask")
+    end
+
+    it "can parse an old formula Tab file" do
       path = Pathname.new("#{TEST_FIXTURE_DIR}/receipt_old.json")
       tab = described_class.from_file_content(path.read, path)
 
@@ -238,7 +384,7 @@ RSpec.describe Tab do
   end
 
   describe "::create" do
-    it "creates a Tab" do
+    it "creates a formula Tab" do
       # < 1.1.7 runtime dependencies were wrong so are ignored
       stub_const("HOMEBREW_VERSION", "1.1.7")
 
@@ -277,7 +423,7 @@ RSpec.describe Tab do
       expect(tab.source["path"]).to eq(f.path.to_s)
     end
 
-    it "can create a Tab from an alias" do
+    it "can create a formula Tab from an alias" do
       alias_path = CoreTap.instance.alias_dir/"bar"
       f = formula(alias_path:) { url "foo-1.0" }
       compiler = DevelopmentTools.default_compiler
@@ -362,25 +508,45 @@ RSpec.describe Tab do
     end
   end
 
-  specify "#to_json" do
-    json_tab = described_class.new(JSON.parse(tab.to_json))
-    expect(json_tab.homebrew_version).to eq(tab.homebrew_version)
-    expect(json_tab.used_options.sort).to eq(tab.used_options.sort)
-    expect(json_tab.unused_options.sort).to eq(tab.unused_options.sort)
-    expect(json_tab.built_as_bottle).to eq(tab.built_as_bottle)
-    expect(json_tab.poured_from_bottle).to eq(tab.poured_from_bottle)
-    expect(json_tab.changed_files).to eq(tab.changed_files)
-    expect(json_tab.tap).to eq(tab.tap)
-    expect(json_tab.spec).to eq(tab.spec)
-    expect(json_tab.time).to eq(tab.time)
-    expect(json_tab.compiler).to eq(tab.compiler)
-    expect(json_tab.stdlib).to eq(tab.stdlib)
-    expect(json_tab.runtime_dependencies).to eq(tab.runtime_dependencies)
-    expect(json_tab.stable_version).to eq(tab.stable_version)
-    expect(json_tab.head_version).to eq(tab.head_version)
-    expect(json_tab.source["path"]).to eq(tab.source["path"])
-    expect(json_tab.arch).to eq(tab.arch.to_s)
-    expect(json_tab.built_on["os"]).to eq(tab.built_on["os"])
+  describe "#to_json" do
+    it "returns a JSON representation of a formula Tab" do
+      json_tab = described_class.new(JSON.parse(tab.to_json))
+      expect(json_tab.homebrew_version).to eq(tab.homebrew_version)
+      expect(json_tab.used_options.sort).to eq(tab.used_options.sort)
+      expect(json_tab.unused_options.sort).to eq(tab.unused_options.sort)
+      expect(json_tab.built_as_bottle).to eq(tab.built_as_bottle)
+      expect(json_tab.poured_from_bottle).to eq(tab.poured_from_bottle)
+      expect(json_tab.changed_files).to eq(tab.changed_files)
+      expect(json_tab.tap).to eq(tab.tap)
+      expect(json_tab.spec).to eq(tab.spec)
+      expect(json_tab.time).to eq(tab.time)
+      expect(json_tab.compiler).to eq(tab.compiler)
+      expect(json_tab.stdlib).to eq(tab.stdlib)
+      expect(json_tab.runtime_dependencies).to eq(tab.runtime_dependencies)
+      expect(json_tab.stable_version).to eq(tab.stable_version)
+      expect(json_tab.head_version).to eq(tab.head_version)
+      expect(json_tab.source["path"]).to eq(tab.source["path"])
+      expect(json_tab.arch).to eq(tab.arch.to_s)
+      expect(json_tab.built_on["os"]).to eq(tab.built_on["os"])
+    end
+
+    it "returns a JSON representation of a cask Tab" do
+      json_tab = described_class.new(JSON.parse(cask_tab.to_json))
+      expect(json_tab.homebrew_version).to eq(cask_tab.homebrew_version)
+      expect(json_tab.loaded_from_api).to eq(cask_tab.loaded_from_api)
+      expect(json_tab.caskfile_only).to eq(cask_tab.caskfile_only)
+      expect(json_tab.installed_as_dependency).to eq(cask_tab.installed_as_dependency)
+      expect(json_tab.installed_on_request).to eq(cask_tab.installed_on_request)
+      expect(json_tab.time).to eq(cask_tab.time)
+      expect(json_tab.runtime_dependencies).to eq(cask_tab.runtime_dependencies)
+      expect(json_tab.source["path"]).to eq(cask_tab.source["path"])
+      expect(json_tab.tap).to eq(cask_tab.tap)
+      expect(json_tab.source["tap_git_head"]).to eq(cask_tab.source["tap_git_head"])
+      expect(json_tab.cask_version).to eq(cask_tab.cask_version)
+      expect(json_tab.arch).to eq(cask_tab.arch.to_s)
+      expect(json_tab.uninstall_artifacts).to eq(cask_tab.uninstall_artifacts)
+      expect(json_tab.built_on["os"]).to eq(cask_tab.built_on["os"])
+    end
   end
 
   specify "#to_bottle_hash" do

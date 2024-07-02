@@ -459,7 +459,7 @@ module Homebrew
           raise "This bottle does not contain the file INSTALL_RECEIPT.json: #{bottle_path}" unless tab_path
 
           tab_json = Utils::Bottles.file_from_bottle(bottle_path, tab_path)
-          tab = Tab.from_file_content(tab_json, tab_path)
+          tab = Tab.from_file_content(tab_json, tab_path, type: :formula)
 
           tag_spec = Formula[formula.name].bottle_specification
                                           .tag_specification_for(bottle_tag, no_older_versions: true)

@@ -180,7 +180,7 @@ RSpec.describe Formula do
 
     build_values_with_no_installed_alias = [
       BuildOptions.new(Options.new, f.options),
-      Tab.new(source: { "path" => f.path.to_s }),
+      Tab.new({ source: { "path" => f.path.to_s } }),
     ]
     build_values_with_no_installed_alias.each do |build|
       f.build = build
@@ -196,7 +196,7 @@ RSpec.describe Formula do
     CoreTap.instance.alias_dir.mkpath
     FileUtils.ln_sf f.path, alias_path
 
-    f.build = Tab.new(source: { "path" => alias_path.to_s })
+    f.build = Tab.new({ source: { "path" => alias_path.to_s } })
 
     expect(f.installed_alias_path).to eq(alias_path)
     expect(f.installed_alias_name).to eq(alias_name)
@@ -215,7 +215,7 @@ RSpec.describe Formula do
 
     build_values_with_no_installed_alias = [
       BuildOptions.new(Options.new, f.options),
-      Tab.new(source: { "path" => f.path.to_s }),
+      Tab.new({ source: { "path" => f.path.to_s } }),
     ]
     build_values_with_no_installed_alias.each do |build|
       f.build = build
@@ -232,7 +232,7 @@ RSpec.describe Formula do
     tap.alias_dir.mkpath
     FileUtils.ln_sf f.path, alias_path
 
-    f.build = Tab.new(source: { "path" => alias_path.to_s })
+    f.build = Tab.new({ source: { "path" => alias_path.to_s } })
 
     expect(f.installed_alias_path).to eq(alias_path)
     expect(f.installed_alias_name).to eq(alias_name)
@@ -435,7 +435,7 @@ RSpec.describe Formula do
       f = formula(alias_path:) do
         url "foo-1.0"
       end
-      f.build = Tab.new(source: { "path" => source_path.to_s })
+      f.build = Tab.new({ source: { "path" => source_path.to_s } })
 
       expect(f.alias_path).to eq(alias_path)
       expect(f.installed_alias_path).to be_nil
@@ -448,7 +448,7 @@ RSpec.describe Formula do
       f = formula(alias_path:) do
         url "foo-1.0"
       end
-      f.build = Tab.new(source: { "path" => source_path.to_s })
+      f.build = Tab.new({ source: { "path" => source_path.to_s } })
       CoreTap.instance.alias_dir.mkpath
       FileUtils.ln_sf f.path, source_path
 

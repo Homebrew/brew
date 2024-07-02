@@ -59,7 +59,7 @@ RSpec.describe SBOM, :needs_network do
           "declared_directly" => true,
         }
       end
-      expect(Tab).to receive(:runtime_deps_hash).and_return(runtime_deps_hash)
+      expect(Tab).to receive(:formula_runtime_deps_hash).and_return(runtime_deps_hash)
       tab = Tab.create(f, DevelopmentTools.default_compiler, :libcxx)
 
       expect(Formulary).to receive(:factory).with("beanstalkd").and_return(beanstalkd)

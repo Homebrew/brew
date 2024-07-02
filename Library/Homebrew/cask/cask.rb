@@ -209,6 +209,10 @@ module Cask
       bundle_version&.version
     end
 
+    def tab
+      Tab.for_cask(self)
+    end
+
     def config_path
       metadata_main_container_path/"config.json"
     end
@@ -465,6 +469,24 @@ module Cask
       hash
     end
 
+    def artifacts_list(compact: false, uninstall_phase_only: false)
+      artifacts.filter_map do |artifact|
+        if uninstall_phase_only &&
+           !artifact.respond_to?(:uninstall_phase) && !artifact.respond_to?(:post_uninstall_phase)
+          next
+        end
+
+        case artifact
+        when Artifact::AbstractFlightBlock
+          # Only indicate whether this block is used as we don't load it from the API
+          # We can skip this entirely once we move to internal JSON v3.
+          { artifact.summarize => nil } unless compact
+        else
+          { artifact.class.dsl_key => artifact.to_args }
+        end
+      end
+    end
+
     private
 
     sig { returns(T.nilable(Homebrew::BundleVersion)) }
@@ -480,19 +502,6 @@ module Cask
       hash["installed"] = installed_version
       hash["outdated"] = outdated?
       hash
-    end
-
-    def artifacts_list(compact: false)
-      artifacts.filter_map do |artifact|
-        case artifact
-        when Artifact::AbstractFlightBlock
-          # Only indicate whether this block is used as we don't load it from the API
-          # We can skip this entirely once we move to internal JSON v3.
-          { artifact.summarize => nil } unless compact
-        else
-          { artifact.class.dsl_key => artifact.to_args }
-        end
-      end
     end
 
     def url_specs
