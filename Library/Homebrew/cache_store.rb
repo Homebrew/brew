@@ -68,6 +68,14 @@ class CacheStoreDatabase
     db.delete(key)
   end
 
+  # Deletes all content from the underlying database (if it already exists).
+  def clear!
+    return unless created?
+
+    dirty!
+    db.clear
+  end
+
   # Closes the underlying database (if it is created and open).
   def write_if_dirty!
     return unless dirty?
