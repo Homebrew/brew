@@ -102,7 +102,19 @@ class Foo < Formula
 
   def install
     system "npm", "install", *Language::Node.std_npm_install_args(libexec)
-    bin.install_symlink Dir["#{libexec}/bin/*"]
+
+    # "link" the executable `foo`, ensuring that the version of node installed by Homebrew is used
+    # (the created `foo` will set the ENV before exec'ing your executable)
+    env = { PATH: "#{HOMEBREW_PREFIX/"bin"}:$PATH" }
+    (bin/"foo").write_env_script "#{libexec}/bin/foo", env
+
+    # Uncomment if you simply want to symlink the executable – note that this means the first
+    # `node` on the PATH will be used (not necessarily the one Homebrew installed)
+    # bin.install_symlink Dir["#{libexec}/bin/*"]
+
+    # Uncomment if you want to write the completion scripts for bash, fish, and zsh (assuming
+    # your executable has a command "completion" which returns a completion script)
+    # generate_completions_from_executable(libexec/"bin/foo", "completion", base_name: 'foo')
   end
 
   test do
