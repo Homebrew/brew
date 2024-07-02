@@ -1,4 +1,4 @@
-# typed: true
+# typed: strict
 # frozen_string_literal: true
 
 require "abstract_command"
@@ -7,12 +7,14 @@ require "cask/cask_loader"
 
 class String
   # @!visibility private
+  sig { params(args: Integer).returns(Formula) }
   def f(*args)
     require "formula"
     Formulary.factory(self, *args)
   end
 
   # @!visibility private
+  sig { params(config: T.nilable(T::Hash[Symbol, T.untyped])).returns(Cask::Cask) }
   def c(config: nil)
     Cask::CaskLoader.load(self, config:)
   end
@@ -20,11 +22,13 @@ end
 
 class Symbol
   # @!visibility private
+  sig { params(args: Integer).returns(Formula) }
   def f(*args)
     to_s.f(*args)
   end
 
   # @!visibility private
+  sig { params(config: T.nilable(T::Hash[Symbol, T.untyped])).returns(Cask::Cask) }
   def c(config: nil)
     to_s.c(config:)
   end
@@ -94,6 +98,7 @@ module Homebrew
 
       # Remove the `--debug`, `--verbose` and `--quiet` options which cause problems
       # for IRB and have already been parsed by the CLI::Parser.
+      sig { returns(T.nilable(T::Array[Symbol])) }
       def clean_argv
         global_options = Homebrew::CLI::Parser
                          .global_options

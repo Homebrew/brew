@@ -1,4 +1,4 @@
-# typed: true
+# typed: strict
 # frozen_string_literal: true
 
 require "abstract_command"
@@ -10,12 +10,12 @@ end
 module Homebrew
   module DevCmd
     class Contributions < AbstractCommand
-      PRIMARY_REPOS = %w[brew core cask].freeze
-      SUPPORTED_REPOS = [
+      PRIMARY_REPOS = T.let(%w[brew core cask].freeze, T::Array[String])
+      SUPPORTED_REPOS = T.let([
         PRIMARY_REPOS,
         OFFICIAL_CMD_TAPS.keys.map { |t| t.delete_prefix("homebrew/") },
         OFFICIAL_CASK_TAPS.reject { |t| t == "cask" },
-      ].flatten.freeze
+      ].flatten.freeze, T::Array[String])
       MAX_REPO_COMMITS = 1000
 
       cmd_args do
@@ -50,9 +50,9 @@ module Homebrew
         results = {}
         grand_totals = {}
 
-        repos = if args.repositories.blank? || T.must(args.repositories).include?("primary")
+        repos = if args.repositories.blank? || args.repositories&.include?("primary")
           PRIMARY_REPOS
-        elsif T.must(args.repositories).include?("all")
+        elsif args.repositories&.include?("all")
           SUPPORTED_REPOS
         else
           args.repositories
@@ -116,7 +116,7 @@ module Homebrew
         end
       end
 
-      sig { params(totals: Hash).returns(String) }
+      sig { params(totals: T::Hash[String, T::Hash[Symbol, Integer]]).returns(String) }
       def generate_csv(totals)
         CSV.generate do |csv|
           csv << %w[user repo author committer coauthor review total]
@@ -127,7 +127,14 @@ module Homebrew
         end
       end
 
-      sig { params(user: String, grand_total: Hash).returns(Array) }
+      sig {
+        params(
+          user:        String,
+          grand_total: T::Hash[Symbol, Integer],
+        ).returns(
+          [String, String, T.nilable(Integer), T.nilable(Integer), T.nilable(Integer), T.nilable(Integer), Integer],
+        )
+      }
       def grand_total_row(user, grand_total)
         [
           user,
@@ -140,7 +147,10 @@ module Homebrew
         ]
       end
 
+      sig { params(repos: T.nilable(T::Array[String]), person: String, from: String).void }
       def scan_repositories(repos, person, from:)
+        return if repos.blank?
+
         data = {}
 
         repos.each do |repo|
@@ -168,7 +178,7 @@ module Homebrew
           data[repo] = {
             author:    author_commits,
             committer: committer_commits,
-            coauthor:  git_log_trailers_cmd(T.must(repo_path), person, "Co-authored-by", from:, to: args.to),
+            coauthor:  git_log_trailers_cmd(repo_path, person, "Co-authored-by", from:, to: args.to),
             review:    count_reviews(repo_full_name, person, from:, to: args.to),
           }
         end
@@ -176,7 +186,7 @@ module Homebrew
         data
       end
 
-      sig { params(results: Hash).returns(Hash) }
+      sig { params(results: T::Hash[Symbol, T.untyped]).returns(T::Hash[Symbol, Integer]) }
       def total(results)
         totals = { author: 0, committer: 0, coauthor: 0, review: 0 }
 

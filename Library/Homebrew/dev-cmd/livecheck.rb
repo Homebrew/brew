@@ -1,4 +1,4 @@
-# typed: true
+# typed: strict
 # frozen_string_literal: true
 
 require "abstract_command"
@@ -113,8 +113,9 @@ module Homebrew
 
       private
 
+      sig { returns(String) }
       def watchlist_path
-        @watchlist_path ||= File.expand_path(Homebrew::EnvConfig.livecheck_watchlist)
+        @watchlist_path ||= T.let(File.expand_path(Homebrew::EnvConfig.livecheck_watchlist), T.nilable(String))
       end
     end
   end

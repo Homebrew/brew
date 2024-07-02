@@ -1,4 +1,4 @@
-# typed: true
+# typed: strict
 # frozen_string_literal: true
 
 require "abstract_command"
@@ -62,14 +62,17 @@ module Homebrew
 
       private
 
+      sig { params(sponsor: T::Hash[Symbol, T.untyped]).returns(T.nilable(String)) }
       def sponsor_name(sponsor)
         sponsor[:name] || sponsor[:login]
       end
 
+      sig { params(sponsor: T::Hash[Symbol, T.untyped]).returns(String) }
       def sponsor_logo(sponsor)
         "https://github.com/#{sponsor[:login]}.png?size=64"
       end
 
+      sig { params(sponsor: T::Hash[Symbol, T.untyped]).returns(String) }
       def sponsor_url(sponsor)
         "https://github.com/#{sponsor[:login]}"
       end

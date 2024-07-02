@@ -1,4 +1,4 @@
-# typed: true
+# typed: strict
 # frozen_string_literal: true
 
 require "abstract_command"
@@ -168,15 +168,17 @@ module Homebrew
 
       private
 
+      sig { returns(T.nilable(T::Boolean)) }
       def use_buildpulse?
         return @use_buildpulse if defined?(@use_buildpulse)
 
-        @use_buildpulse = ENV["HOMEBREW_BUILDPULSE_ACCESS_KEY_ID"].present? &&
+        @use_buildpulse = T.let(ENV["HOMEBREW_BUILDPULSE_ACCESS_KEY_ID"].present? &&
                           ENV["HOMEBREW_BUILDPULSE_SECRET_ACCESS_KEY"].present? &&
                           ENV["HOMEBREW_BUILDPULSE_ACCOUNT_ID"].present? &&
-                          ENV["HOMEBREW_BUILDPULSE_REPOSITORY_ID"].present?
+                          ENV["HOMEBREW_BUILDPULSE_REPOSITORY_ID"].present?, T.nilable(T::Boolean))
       end
 
+      sig { void }
       def run_buildpulse
         require "formula"
 
@@ -198,6 +200,7 @@ module Homebrew
                        ]
       end
 
+      sig { returns(T::Array[String]) }
       def changed_test_files
         changed_files = Utils.popen_read("git", "diff", "--name-only", "master")
 
@@ -215,6 +218,7 @@ module Homebrew
         end.select(&:exist?)
       end
 
+      sig { returns(T::Array[String]) }
       def setup_environment!
         # Cleanup any unwanted user configuration.
         allowed_test_env = %w[

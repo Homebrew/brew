@@ -1,4 +1,4 @@
-# typed: true
+# typed: strict
 # frozen_string_literal: true
 
 require "abstract_command"
@@ -197,6 +197,7 @@ module Homebrew
 
       private
 
+      sig { params(tap: Tap, filename: T.any(String, Pathname), content: String).void }
       def write_path(tap, filename, content)
         path = tap.path/filename
         tap.path.mkpath

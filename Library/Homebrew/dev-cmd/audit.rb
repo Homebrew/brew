@@ -1,4 +1,4 @@
-# typed: true
+# typed: strict
 # frozen_string_literal: true
 
 require "abstract_command"
@@ -329,6 +329,7 @@ module Homebrew
 
       private
 
+      sig { params(results: T::Hash[[Symbol, Pathname], T::Array[T::Hash[Symbol, T.untyped]]]).void }
       def print_problems(results)
         results.each do |(name, path), problems|
           problem_lines = format_problem_lines(problems)
@@ -343,6 +344,7 @@ module Homebrew
         end
       end
 
+      sig { params(problems: T::Array[T::Hash[Symbol, T.untyped]]).returns(T::Array[String]) }
       def format_problem_lines(problems)
         problems.map do |problem|
           status = " #{Formatter.success("[corrected]")}" if problem.fetch(:corrected)

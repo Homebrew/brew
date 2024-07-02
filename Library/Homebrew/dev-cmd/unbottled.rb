@@ -1,4 +1,4 @@
-# typed: true
+# typed: strict
 # frozen_string_literal: true
 
 require "abstract_command"
@@ -34,11 +34,15 @@ module Homebrew
       def run
         Formulary.enable_factory_cache!
 
-        @bottle_tag = if (tag = args.tag)
-          Utils::Bottles::Tag.from_symbol(tag.to_sym)
-        else
-          Utils::Bottles.tag
-        end
+        @bottle_tag = T.let(
+          if (tag = args.tag)
+            Utils::Bottles::Tag.from_symbol(tag.to_sym)
+          else
+            Utils::Bottles.tag
+          end,
+          T.nilable(Utils::Bottles::Tag),
+        )
+        return unless @bottle_tag
 
         if args.lost?
           if args.named.present?
@@ -98,12 +102,17 @@ module Homebrew
             ["installs", formula_installs]
           end
 
+          return if hash.nil?
+
           output_unbottled(formulae, deps_hash, noun, hash, args.named.present?)
         end
       end
 
       private
 
+      sig {
+        params(all: T::Boolean).returns([T::Array[Formula], T::Array[Formula], T.nilable(T::Hash[Symbol, Integer])])
+      }
       def formulae_all_installs_from_args(all)
         if args.named.present?
           formulae = all_formulae = args.named.to_formulae
@@ -115,7 +124,7 @@ module Homebrew
 
           formulae = all_formulae = Formula.all(eval_all: args.eval_all?)
 
-          @sort = " (sorted by number of dependents)"
+          @sort = T.let(" (sorted by number of dependents)", T.nilable(String))
         elsif all
           formulae = all_formulae = Formula.all(eval_all: args.eval_all?)
         else
@@ -142,7 +151,7 @@ module Homebrew
               nil
             end
           end
-          @sort = " (sorted by installs in the last 90 days; top 10,000 only)"
+          @sort = T.let(" (sorted by installs in the last 90 days; top 10,000 only)", T.nilable(String))
 
           all_formulae = Formula.all(eval_all: args.eval_all?)
         end
@@ -151,9 +160,11 @@ module Homebrew
         formulae = Array(formulae).reject(&:deprecated?) if formulae.present?
         all_formulae = Array(all_formulae).reject(&:deprecated?) if all_formulae.present?
 
-        [formulae, all_formulae, formula_installs]
+        [T.let(formulae, T::Array[Formula]), T.let(all_formulae, T::Array[Formula]),
+         T.let(formula_installs, T.nilable(T::Hash[Symbol, Integer]))]
       end
 
+      sig { params(all_formulae: T.untyped).returns([T::Hash[String, T.untyped], T::Hash[String, T.untyped]]) }
       def deps_uses_from_formulae(all_formulae)
         ohai "Populating dependency tree..."
 
@@ -175,7 +186,10 @@ module Homebrew
         [deps_hash, uses_hash]
       end
 
+      sig { params(formulae: T::Array[Formula]).returns(NilClass) }
       def output_total(formulae)
+        return unless @bottle_tag
+
         ohai "Unbottled :#{@bottle_tag} formulae"
         unbottled_formulae = 0
 
@@ -188,7 +202,14 @@ module Homebrew
         puts "#{unbottled_formulae}/#{formulae.length} remaining."
       end
 
+      sig {
+        params(formulae: T::Array[Formula], deps_hash: T::Hash[T.any(Symbol, String), T.untyped],
+               noun: T.nilable(String), hash: T::Hash[T.any(Symbol, String), T.untyped],
+               any_named_args: T::Boolean).returns(NilClass)
+      }
       def output_unbottled(formulae, deps_hash, noun, hash, any_named_args)
+        return unless @bottle_tag
+
         ohai ":#{@bottle_tag} bottle status#{@sort}"
         any_found = T.let(false, T::Boolean)
 
@@ -258,6 +279,7 @@ module Homebrew
         puts "No unbottled dependencies found!"
       end
 
+      sig { returns(NilClass) }
       def output_lost_bottles
         ohai ":#{@bottle_tag} lost bottles"
 

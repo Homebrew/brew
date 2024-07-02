@@ -1,4 +1,4 @@
-# typed: true
+# typed: strict
 # frozen_string_literal: true
 
 require "abstract_command"
@@ -110,8 +110,9 @@ module Homebrew
 
       private
 
+      sig { params(formula: Formula).returns(T::Boolean) }
       def retry_test?(formula)
-        @test_failed ||= Set.new
+        @test_failed ||= T.let(Set.new, T.nilable(T::Set[T.untyped]))
         if args.retry? && @test_failed.add?(formula)
           oh1 "Testing #{formula.full_name} (again)"
           formula.clear_cache
