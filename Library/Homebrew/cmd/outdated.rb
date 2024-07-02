@@ -78,6 +78,7 @@ module Homebrew
           end
 
           print_outdated(outdated)
+          print_disabled(disabled_casks)
         end
 
         Homebrew.failed = args.named.present? && outdated.present?
@@ -121,6 +122,13 @@ module Homebrew
             puts c.outdated_info(args.greedy?, verbose?, false, args.greedy_latest?, args.greedy_auto_updates?)
           end
         end
+      end
+
+      def print_disabled(casks)
+        casks.each do |cask|
+          opoo "#{cask.token} is #{DeprecateDisable.message(cask)}"
+        end
+        puts "Consider looking for alternatives, as they will be removed from Homebrew soon."
       end
 
       def json_info(formulae_or_casks)
@@ -177,6 +185,14 @@ module Homebrew
         end
       end
 
+      def disabled_casks
+        if args.named.present?
+          select_disabled(args.named.to_casks)
+        else
+          select_disabled(Cask::Caskroom.casks)
+        end
+      end
+
       def outdated_formulae_casks
         formulae, casks = args.named.to_resolved_formulae_to_casks
 
@@ -197,6 +213,10 @@ module Homebrew
                                       greedy_auto_updates: args.greedy_auto_updates?)
           end
         end
+      end
+
+      def select_disabled(casks)
+        casks.select(&:disabled?)
       end
     end
   end
