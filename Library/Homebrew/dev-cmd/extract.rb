@@ -140,7 +140,7 @@ module Homebrew
         result.sub!("class #{class_name} < Formula", "class #{versioned_name} < Formula")
 
         # Remove bottle blocks, as they won't work.
-        result.sub!(BOTTLE_BLOCK_REGEX, "")
+        result.sub!(BOTTLE_BLOCK_REGEX, "# The bottles might be available as oci images at docker://ghcr.io/homebrew/core/#{name}:#{version}")
 
         path = destination_tap.path/"Formula/#{name}@#{version_string}.rb"
         if path.exist?

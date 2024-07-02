@@ -63,5 +63,15 @@ RSpec.describe Homebrew::DevCmd::Extract do
       expect(path).to exist
       expect(Formulary.factory(path).version).to eq "0.2"
     end
+
+    it "notes the url where bottles might be found", :integration_test do
+      path = target[:path]/"Formula/testball@0.2.rb"
+      expect { brew "extract", "testball", target[:name] }
+        .to output(/^#{path}$/).to_stdout
+        .and not_to_output.to_stderr
+        .and be_a_success
+      expect(path).to exist
+      expect(File.read(path)).to match(%r{docker://ghcr.io/homebrew/core/testball:0.2})
+    end
   end
 end
