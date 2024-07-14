@@ -75,8 +75,10 @@ end
 
 # vendored gems (no group)
 gem "addressable"
+gem "concurrent-ruby"
 gem "patchelf"
 gem "plist"
 gem "ruby-macho"
 gem "sorbet-runtime"
 gem "warning"
+gem 'whirly'
