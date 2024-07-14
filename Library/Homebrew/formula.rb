@@ -567,7 +567,7 @@ class Formula
     params(name: String, klass: T.class_of(Resource), block: T.nilable(T.proc.bind(Resource).void))
       .returns(T.nilable(Resource))
   }
-  def resource(name, klass = Resource, &block) = active_spec.resource(name, klass, &block)
+  def resource(name = T.unsafe(nil), klass = T.unsafe(nil), &block) = active_spec.resource(*name, *klass, &block)
 
   # Old names for the formula.
   #
@@ -2765,8 +2765,15 @@ class Formula
     self.class.on_system_blocks_exist? || @on_system_blocks_exist
   end
 
-  def fetch(verify_download_integrity: true)
-    active_spec.fetch(verify_download_integrity:)
+  sig {
+    params(
+      verify_download_integrity: T::Boolean,
+      timeout:                   T.nilable(T.any(Integer, Float)),
+      quiet:                     T::Boolean,
+    ).returns(Pathname)
+  }
+  def fetch(verify_download_integrity: true, timeout: nil, quiet: false)
+    active_spec.fetch(verify_download_integrity:, timeout:, quiet:)
   end
 
   def verify_download_integrity(filename)

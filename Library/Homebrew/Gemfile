@@ -81,4 +81,4 @@ gem "plist"
 gem "ruby-macho"
 gem "sorbet-runtime"
 gem "warning"
-gem 'whirly'
+gem "whirly"

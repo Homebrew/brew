@@ -5,6 +5,8 @@ require "abstract_command"
 require "formula"
 require "fetch"
 require "cask/download"
+require "retryable_download"
+require "whirly"
 
 module Homebrew
   module Cmd
@@ -25,6 +27,7 @@ module Homebrew
                             "(Pass `all` to download for all architectures.)"
         flag   "--bottle-tag=",
                description: "Download a bottle for given tag."
+        flag "--concurrency=", description: "Number of concurrent downloads.", hidden: true
         switch "--HEAD",
                description: "Fetch HEAD version instead of stable version."
         switch "-f", "--force",
@@ -65,6 +68,17 @@ module Homebrew
         conflicts "--arch", "--bottle-tag"
 
         named_args [:formula, :cask], min: 1
+      end
+
+      def concurrency
+        @concurrency ||= args.concurrency&.to_i || 1
+      end
+
+      def download_queue
+        @download_queue ||= begin
+          require "download_queue"
+          DownloadQueue.new(concurrency)
+        end
       end
 
       sig { override.void }
@@ -125,13 +139,10 @@ module Homebrew
                       next
                     end
 
-                    begin
-                      bottle.fetch_tab
-                    rescue DownloadError
-                      retry if retry_fetch?(bottle)
-                      raise
+                    if (manifest_resource = bottle.github_packages_manifest_resource)
+                      fetch_downloadable(manifest_resource)
                     end
-                    fetch_formula(bottle)
+                    fetch_downloadable(bottle)
                   rescue Interrupt
                     raise
                   rescue => e
@@ -147,14 +158,14 @@ module Homebrew
 
                 next if fetched_bottle
 
-                fetch_formula(formula)
+                fetch_downloadable(formula.resource)
 
                 formula.resources.each do |r|
-                  fetch_resource(r)
-                  r.patches.each { |p| fetch_patch(p) if p.external? }
+                  fetch_downloadable(r)
+                  r.patches.each { |patch| fetch_downloadable(patch.resource) if patch.external? }
                 end
 
-                formula.patchlist.each { |p| fetch_patch(p) if p.external? }
+                formula.patchlist.each { |patch| fetch_downloadable(patch.resource) if patch.external? }
               end
             end
           else
@@ -176,81 +187,43 @@ module Homebrew
                 quarantine = true if quarantine.nil?
 
                 download = Cask::Download.new(cask, quarantine:)
-                fetch_cask(download)
+                fetch_downloadable(download)
               end
             end
           end
         end
+
+        downloads.each do |downloadable, promise|
+          message = "#{downloadable.download_type.capitalize} #{downloadable.name}"
+          if concurrency > 1
+            Whirly.start spinner: "arc", status: message
+          else
+            puts message
+          end
+
+          promise.wait!
+
+          Whirly.configure stop: "✔︎"
+          Whirly.stop if args.concurrency
+        rescue ChecksumMismatchError => e
+          Whirly.configure stop: "✘"
+          Whirly.stop if args.concurrency
+
+          opoo "#{downloadable.download_type.capitalize} reports different checksum: #{e.expected}"
+          Homebrew.failed = true if downloadable.is_a?(Resource::Patch)
+        end
+
+        download_queue.shutdown
       end
 
       private
 
-      def fetch_resource(resource)
-        puts "Resource: #{resource.name}"
-        fetch_fetchable resource
-      rescue ChecksumMismatchError => e
-        retry if retry_fetch?(resource)
-        opoo "Resource #{resource.name} reports different sha256: #{e.expected}"
+      def downloads
+        @downloads ||= {}
       end
 
-      def fetch_formula(formula)
-        fetch_fetchable(formula)
-      rescue ChecksumMismatchError => e
-        retry if retry_fetch?(formula)
-        opoo "Formula reports different sha256: #{e.expected}"
-      end
-
-      def fetch_cask(cask_download)
-        fetch_fetchable(cask_download)
-      rescue ChecksumMismatchError => e
-        retry if retry_fetch?(cask_download)
-        opoo "Cask reports different sha256: #{e.expected}"
-      end
-
-      def fetch_patch(patch)
-        fetch_fetchable(patch)
-      rescue ChecksumMismatchError => e
-        opoo "Patch reports different sha256: #{e.expected}"
-        Homebrew.failed = true
-      end
-
-      def retry_fetch?(formula)
-        @fetch_tries ||= Hash.new { |h, k| h[k] = 1 }
-        if args.retry? && (@fetch_tries[formula] < FETCH_MAX_TRIES)
-          wait = 2 ** @fetch_tries[formula]
-          remaining = FETCH_MAX_TRIES - @fetch_tries[formula]
-          what = Utils.pluralize("tr", remaining, plural: "ies", singular: "y")
-
-          ohai "Retrying download in #{wait}s... (#{remaining} #{what} left)"
-          sleep wait
-
-          formula.clear_cache
-          @fetch_tries[formula] += 1
-          true
-        else
-          Homebrew.failed = true
-          false
-        end
-      end
-
-      def fetch_fetchable(formula)
-        formula.clear_cache if args.force?
-
-        already_fetched = formula.cached_download.exist?
-
-        begin
-          download = formula.fetch(verify_download_integrity: false)
-        rescue DownloadError
-          retry if retry_fetch?(formula)
-          raise
-        end
-
-        return unless download.file?
-
-        puts "Downloaded to: #{download}" unless already_fetched
-        puts "SHA256: #{download.sha256}"
-
-        formula.verify_download_integrity(download)
+      def fetch_downloadable(downloadable)
+        downloads[downloadable] ||= download_queue.enqueue(RetryableDownload.new(downloadable))
       end
     end
   end
