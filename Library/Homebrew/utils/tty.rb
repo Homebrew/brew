@@ -51,11 +51,36 @@ module Tty
       string.gsub(/\033\[\d+(;\d+)*m/, "")
     end
 
+    sig { returns(String) }
+    def hide_cursor
+      "\033[?25l"
+    end
+
+    sig { returns(String) }
+    def show_cursor
+      "\033[?25h"
+    end
+
+    sig { returns(T.nilable([Integer, Integer])) }
+    def size
+      `/bin/stty size 2>/dev/null`.split&.map(&:to_i)
+    end
+
+    sig { returns(Integer) }
+    def height
+      @height ||= begin
+        height, = size
+        height, = `/usr/bin/tput lines 2>/dev/null`.split if height.zero?
+        height ||= 40
+        height.to_i
+      end
+    end
+
     sig { returns(Integer) }
     def width
       @width ||= begin
-        _, width = `/bin/stty size 2>/dev/null`.split
-        width, = `/usr/bin/tput cols 2>/dev/null`.split if width.to_i.zero?
+        _, width = size
+        width, = `/usr/bin/tput cols 2>/dev/null`.split if width.zero?
         width ||= 80
         width.to_i
       end

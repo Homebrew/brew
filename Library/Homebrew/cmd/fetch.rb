@@ -80,10 +80,36 @@ module Homebrew
         end
       end
 
+      class Spinner
+        FRAMES = [
+          "◜",
+          "◠",
+          "◝",
+          "◞",
+          "◡",
+          "◟",
+        ].freeze
+
+        sig { void }
+        def initialize
+          @start = Time.now
+          @i = 0
+        end
+
+        sig { returns(String) }
+        def to_s
+          now = Time.now
+          if @start + 0.1 < now
+            @start = now
+            @i = (@i + 1) % FRAMES.count
+          end
+
+          FRAMES.fetch(@i)
+        end
+      end
+
       sig { override.void }
       def run
-        require "whirly"
-
         Formulary.enable_factory_cache!
 
         bucket = if args.deps?
@@ -194,24 +220,83 @@ module Homebrew
           end
         end
 
-        downloads.each do |downloadable, promise|
-          message = "#{downloadable.download_type.capitalize} #{downloadable.name}"
-          if concurrency > 1
-            Whirly.start spinner: "arc", status: message
-          else
-            puts message
+        if concurrency == 1
+          downloads.each_value do |promise|
+            promise.wait!
+          rescue ChecksumMismatchError => e
+            opoo "#{downloadable.download_type.capitalize} reports different checksum: #{e.expected}"
+            Homebrew.failed = true if downloadable.is_a?(Resource::Patch)
           end
+        else
 
-          promise.wait!
+          spinner = Spinner.new
 
-          Whirly.configure stop: "#{Tty.green}✔︎#{Tty.reset}"
-          Whirly.stop if args.concurrency
-        rescue ChecksumMismatchError => e
-          Whirly.configure stop: "#{Tty.red}✘#{Tty.reset}"
-          Whirly.stop if args.concurrency
+          remaining_downloads = downloads.dup
 
-          opoo "#{downloadable.download_type.capitalize} reports different checksum: #{e.expected}"
-          Homebrew.failed = true if downloadable.is_a?(Resource::Patch)
+          previous_pending_line_count = 0
+
+          begin
+            print Tty.hide_cursor
+
+            output_message = lambda do |downloadable, promise|
+              status = case promise.state
+              when :fulfilled
+                "#{Tty.green}✔︎#{Tty.reset}"
+              when :rejected
+                "#{Tty.red}✘#{Tty.reset}"
+              when :pending
+                spinner
+              else
+                raise promise.state
+              end
+
+              message = "#{downloadable.download_type.capitalize} #{downloadable.name}"
+              puts "#{status} #{message}"
+
+              if promise.rejected? && (e = promise.reason).is_a?(ChecksumMismatchError)
+                opoo "#{downloadable.download_type.capitalize} reports different checksum: #{e.expected}"
+                Homebrew.failed = true if downloadable.is_a?(Resource::Patch)
+                next 2
+              end
+
+              1
+            end
+
+            until remaining_downloads.empty?
+              begin
+                finished_downloads = {}
+
+                finished_states = [:fulfilled, :rejected]
+                remaining_downloads.each do |downloadable, promise|
+                  break unless finished_states.include?(promise.state)
+
+                  finished_downloads[downloadable] = remaining_downloads.delete(downloadable)
+                end
+
+                finished_downloads.each do |downloadable, promise|
+                  previous_pending_line_count -= 1
+                  output_message.call(downloadable, promise)
+                end
+
+                previous_pending_line_count = 0
+                remaining_downloads.each do |downloadable, promise|
+                  break if previous_pending_line_count >= (Tty.height - 1)
+
+                  previous_pending_line_count += output_message.call(downloadable, promise)
+                end
+
+                if previous_pending_line_count.positive?
+                  $stdout.print "\033[#{previous_pending_line_count}A"
+                  $stdout.flush
+                end
+              rescue Interrupt
+                print "\n" * previous_pending_line_count
+                raise
+              end
+            end
+          ensure
+            print Tty.show_cursor
+          end
         end
 
         download_queue.shutdown
