@@ -223,6 +223,8 @@ module Homebrew
       end
 
       def fetch_downloadable(downloadable)
+        downloadable.clear_cache if args.force?
+
         downloads[downloadable] ||= download_queue.enqueue(RetryableDownload.new(downloadable))
       end
     end
