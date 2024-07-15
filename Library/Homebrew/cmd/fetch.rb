@@ -264,24 +264,23 @@ module Homebrew
 
             until remaining_downloads.empty?
               begin
-                finished_downloads = {}
 
                 finished_states = [:fulfilled, :rejected]
-                remaining_downloads.each do |downloadable, promise|
-                  break unless finished_states.include?(promise.state)
 
-                  finished_downloads[downloadable] = remaining_downloads.delete(downloadable)
-                end
+
+                finished_downloads, remaining_downloads = remaining_downloads.partition { |_,promise| finished_states.include?(promise.state) }
 
                 finished_downloads.each do |downloadable, promise|
                   previous_pending_line_count -= 1
+                  print "\033[K"
                   output_message.call(downloadable, promise)
                 end
 
                 previous_pending_line_count = 0
                 remaining_downloads.each do |downloadable, promise|
-                  break if previous_pending_line_count >= (Tty.height - 1)
+                  break if previous_pending_line_count >= [concurrency, (Tty.height - 1)].min
 
+                  print "\033[K"
                   previous_pending_line_count += output_message.call(downloadable, promise)
                 end
 
@@ -289,6 +288,8 @@ module Homebrew
                   $stdout.print "\033[#{previous_pending_line_count}A"
                   $stdout.flush
                 end
+
+                sleep 0.05
               rescue Interrupt
                 print "\n" * previous_pending_line_count
                 raise
