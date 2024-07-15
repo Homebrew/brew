@@ -2,7 +2,8 @@
 # frozen_string_literal: true
 
 require "downloadable"
-require "concurrent"
+require "concurrent/promise"
+require "concurrent/executors"
 
 module Homebrew
   class DownloadQueue
