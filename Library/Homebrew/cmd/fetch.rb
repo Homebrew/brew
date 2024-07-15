@@ -203,10 +203,10 @@ module Homebrew
 
           promise.wait!
 
-          Whirly.configure stop: "✔︎"
+          Whirly.configure stop: "#{Tty.green}✔︎#{Tty.reset}"
           Whirly.stop if args.concurrency
         rescue ChecksumMismatchError => e
-          Whirly.configure stop: "✘"
+          Whirly.configure stop: "#{Tty.red}✘#{Tty.reset}"
           Whirly.stop if args.concurrency
 
           opoo "#{downloadable.download_type.capitalize} reports different checksum: #{e.expected}"
