@@ -6,7 +6,6 @@ require "formula"
 require "fetch"
 require "cask/download"
 require "retryable_download"
-require "whirly"
 
 module Homebrew
   module Cmd
@@ -83,6 +82,8 @@ module Homebrew
 
       sig { override.void }
       def run
+        require "whirly"
+
         Formulary.enable_factory_cache!
 
         bucket = if args.deps?
