@@ -15,7 +15,9 @@ require "compilers"
 require "macos_version"
 require "extend/on_system"
 
-class SoftwareSpec < Downloadable
+class SoftwareSpec
+  include Downloadable
+
   extend Forwardable
   include OnSystem::MacOSAndLinux
 
@@ -294,7 +296,9 @@ class HeadSoftwareSpec < SoftwareSpec
   end
 end
 
-class Bottle < Downloadable
+class Bottle
+  include Downloadable
+
   class Filename
     attr_reader :name, :version, :tag, :rebuild
 

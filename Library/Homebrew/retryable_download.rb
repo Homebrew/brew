@@ -2,7 +2,9 @@
 # frozen_string_literal: true
 
 module Homebrew
-  class RetryableDownload < Downloadable
+  class RetryableDownload
+    include Downloadable
+
     sig { returns(Downloadable) }
     attr_reader :downloadable
     private :downloadable

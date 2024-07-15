@@ -9,7 +9,8 @@ require "extend/on_system"
 # Resource is the fundamental representation of an external resource. The
 # primary formula download, along with other declared resources, are instances
 # of this class.
-class Resource < Downloadable
+class Resource
+  include Downloadable
   include FileUtils
   include OnSystem::MacOSAndLinux
 

@@ -8,7 +8,9 @@ require "cask/quarantine"
 
 module Cask
   # A download corresponding to a {Cask}.
-  class Download < Downloadable
+  class Download
+    include Downloadable
+
     include Context
 
     attr_reader :cask

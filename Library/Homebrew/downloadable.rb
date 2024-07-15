@@ -5,7 +5,7 @@ require "url"
 require "checksum"
 require "download_strategy"
 
-class Downloadable
+module Downloadable
   include Context
   extend T::Helpers
 
@@ -32,7 +32,7 @@ class Downloadable
     @version = @version.dup
   end
 
-  sig { override.returns(T.self_type) }
+  sig { returns(T.self_type) }
   def freeze
     @checksum.freeze
     @mirrors.freeze
@@ -40,14 +40,12 @@ class Downloadable
     super
   end
 
-  sig { returns(String) }
-  def name
-    ""
-  end
+  sig { abstract.returns(String) }
+  def name; end
 
   sig { returns(String) }
   def download_type
-    T.must(T.must(self.class.name).split("::").last).gsub(/([[:lower:]])([[:upper:]])/, '\1 \2').downcase
+    T.must(self.class.name&.split("::")&.last).gsub(/([[:lower:]])([[:upper:]])/, '\1 \2').downcase
   end
 
   sig { returns(T::Boolean) }
@@ -73,16 +71,16 @@ class Downloadable
     version unless version&.null?
   end
 
-  sig { returns(T.class_of(AbstractDownloadStrategy)) }
+  sig { overridable.returns(T.class_of(AbstractDownloadStrategy)) }
   def download_strategy
     @download_strategy ||= determine_url&.download_strategy
   end
 
-  sig { returns(AbstractDownloadStrategy) }
+  sig { overridable.returns(AbstractDownloadStrategy) }
   def downloader
     @downloader ||= begin
       primary_url, *mirrors = determine_url_mirrors
-      raise ArgumentError, "attempted to use a Downloadable without a URL!" if primary_url.blank?
+      raise ArgumentError, "attempted to use a `Downloadable` without a URL!" if primary_url.blank?
 
       download_strategy.new(primary_url, download_name, version,
                             mirrors:, cache:, **T.must(@url).specs)
@@ -90,7 +88,7 @@ class Downloadable
   end
 
   sig {
-    params(
+    overridable.params(
       verify_download_integrity: T::Boolean,
       timeout:                   T.nilable(T.any(Integer, Float)),
       quiet:                     T::Boolean,
@@ -111,7 +109,7 @@ class Downloadable
     download
   end
 
-  sig { params(filename: Pathname).void }
+  sig { overridable.params(filename: Pathname).void }
   def verify_download_integrity(filename)
     if filename.file?
       ohai "Verifying checksum for '#{filename.basename}'" if verbose?

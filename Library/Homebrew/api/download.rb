@@ -6,13 +6,20 @@ require "downloadable"
 module Homebrew
   module API
     class DownloadStrategy < CurlDownloadStrategy
+      sig { returns(String) }
+      def name # rubocop:disable Lint/UselessMethodDefinition
+        super
+      end
+
       sig { override.returns(Pathname) }
       def symlink_location
         cache/name
       end
     end
 
-    class Download < Downloadable
+    class Download
+      include Downloadable
+
       sig {
         params(
           url:      String,
@@ -29,6 +36,21 @@ module Homebrew
         @cache = cache
       end
 
+      sig { override.returns(API::DownloadStrategy) }
+      def downloader
+        T.cast(super, API::DownloadStrategy)
+      end
+
+      sig { override.returns(String) }
+      def name
+        downloader.name
+      end
+
+      sig { override.returns(String) }
+      def download_type
+        "API"
+      end
+
       sig { override.returns(Pathname) }
       def cache
         @cache || super
@@ -36,7 +58,7 @@ module Homebrew
 
       sig { returns(Pathname) }
       def symlink_location
-        T.cast(downloader, API::DownloadStrategy).symlink_location
+        downloader.symlink_location
       end
     end
   end
