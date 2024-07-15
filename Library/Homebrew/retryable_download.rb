@@ -9,6 +9,15 @@ module Homebrew
     attr_reader :downloadable
     private :downloadable
 
+    sig { override.returns(T.nilable(URL)) }
+    def url = downloadable.url
+
+    sig { override.returns(T.nilable(Checksum)) }
+    def checksum = downloadable.checksum
+
+    sig { override.returns(T::Array[String]) }
+    def mirrors = downloadable.mirrors
+
     sig { params(downloadable: Downloadable, tries: Integer).void }
     def initialize(downloadable, tries: 3)
       super()
@@ -24,11 +33,20 @@ module Homebrew
     sig { override.returns(String) }
     def download_type = downloadable.download_type
 
-    sig { override.returns(T::Boolean) }
-    def downloaded? = downloadable.downloaded?
-
     sig { override.returns(Pathname) }
     def cached_download = downloadable.cached_download
+
+    sig { override.void }
+    def clear_cache = downloadable.clear_cache
+
+    sig { override.returns(T.nilable(Version)) }
+    def version = downloadable.version
+
+    sig { override.returns(T.class_of(AbstractDownloadStrategy)) }
+    def download_strategy = downloadable.download_strategy
+
+    sig { override.returns(AbstractDownloadStrategy) }
+    def downloader = downloadable.downloader
 
     sig {
       override.params(
@@ -68,5 +86,11 @@ module Homebrew
       downloadable.clear_cache
       retry
     end
+
+    sig { override.params(filename: Pathname).void }
+    def verify_download_integrity(filename) = downloadable.verify_download_integrity(filename)
+
+    sig { override.returns(String) }
+    def download_name = downloadable.download_name
   end
 end

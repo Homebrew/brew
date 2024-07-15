@@ -11,13 +11,13 @@ module Downloadable
 
   abstract!
 
-  sig { returns(T.nilable(URL)) }
+  sig { overridable.returns(T.nilable(URL)) }
   attr_reader :url
 
-  sig { returns(T.nilable(Checksum)) }
+  sig { overridable.returns(T.nilable(Checksum)) }
   attr_reader :checksum
 
-  sig { returns(T::Array[String]) }
+  sig { overridable.returns(T::Array[String]) }
   attr_reader :mirrors
 
   sig { void }
@@ -32,7 +32,7 @@ module Downloadable
     @version = @version.dup
   end
 
-  sig { returns(T.self_type) }
+  sig { overridable.returns(T.self_type) }
   def freeze
     @checksum.freeze
     @mirrors.freeze
@@ -48,22 +48,22 @@ module Downloadable
     T.must(self.class.name&.split("::")&.last).gsub(/([[:lower:]])([[:upper:]])/, '\1 \2').downcase
   end
 
-  sig { returns(T::Boolean) }
+  sig(:final) { returns(T::Boolean) }
   def downloaded?
     cached_download.exist?
   end
 
-  sig { returns(Pathname) }
+  sig { overridable.returns(Pathname) }
   def cached_download
     downloader.cached_location
   end
 
-  sig { void }
+  sig { overridable.void }
   def clear_cache
     downloader.clear_cache
   end
 
-  sig { returns(T.nilable(Version)) }
+  sig { overridable.returns(T.nilable(Version)) }
   def version
     return @version if @version && !@version.null?
 
