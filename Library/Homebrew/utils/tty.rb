@@ -63,27 +63,22 @@ module Tty
 
     sig { returns(T.nilable([Integer, Integer])) }
     def size
-      `/bin/stty size 2>/dev/null`.presence&.split&.map(&:to_i)
+      return @size if defined?(@size)
+
+      height, width = `/bin/stty size 2>/dev/null`.presence&.split&.map(&:to_i)
+      return if height.nil? || width.nil?
+
+      @size = [height, width]
     end
 
     sig { returns(Integer) }
     def height
-      @height ||= begin
-        height, = size
-        height, = `/usr/bin/tput lines 2>/dev/null`.split if height.zero?
-        height ||= 40
-        height.to_i
-      end
+      @height ||= size&.first || `/usr/bin/tput lines 2>/dev/null`.presence&.to_i || 40
     end
 
     sig { returns(Integer) }
     def width
-      @width ||= begin
-        _, width = size
-        width, = `/usr/bin/tput cols 2>/dev/null`.split if width.zero?
-        width ||= 80
-        width.to_i
-      end
+      @width ||= size&.second || `/usr/bin/tput cols 2>/dev/null`.presence&.to_i || 80
     end
 
     sig { params(string: String).returns(String) }
