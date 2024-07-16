@@ -264,11 +264,11 @@ module Homebrew
 
             until remaining_downloads.empty?
               begin
-
                 finished_states = [:fulfilled, :rejected]
 
-
-                finished_downloads, remaining_downloads = remaining_downloads.partition { |_,promise| finished_states.include?(promise.state) }
+                finished_downloads, remaining_downloads = remaining_downloads.partition do |_, promise|
+                  finished_states.include?(promise.state)
+                end
 
                 finished_downloads.each do |downloadable, promise|
                   previous_pending_line_count -= 1
