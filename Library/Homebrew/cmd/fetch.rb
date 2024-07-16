@@ -240,23 +240,23 @@ module Homebrew
             $stdout.print Tty.hide_cursor
             $stdout.flush
 
-            output_message = lambda do |downloadable, promise|
-              status = case promise.state
+            output_message = lambda do |downloadable, future|
+              status = case future.state
               when :fulfilled
                 "#{Tty.green}✔︎#{Tty.reset}"
               when :rejected
                 "#{Tty.red}✘#{Tty.reset}"
-              when :pending
+              when :pending, :processing
                 "#{Tty.blue}#{spinner}#{Tty.reset}"
               else
-                raise promise.state
+                raise future.state.to_s
               end
 
               message = "#{downloadable.download_type.capitalize} #{downloadable.name}"
               $stdout.puts "#{status} #{message}"
               $stdout.flush
 
-              if promise.rejected? && (e = promise.reason).is_a?(ChecksumMismatchError)
+              if future.rejected? && (e = future.reason).is_a?(ChecksumMismatchError)
                 opoo "#{downloadable.download_type.capitalize} reports different checksum: #{e.expected}"
                 Homebrew.failed = true if downloadable.is_a?(Resource::Patch)
                 next 2
@@ -269,24 +269,24 @@ module Homebrew
               begin
                 finished_states = [:fulfilled, :rejected]
 
-                finished_downloads, remaining_downloads = remaining_downloads.partition do |_, promise|
-                  finished_states.include?(promise.state)
+                finished_downloads, remaining_downloads = remaining_downloads.partition do |_, future|
+                  finished_states.include?(future.state)
                 end
 
-                finished_downloads.each do |downloadable, promise|
+                finished_downloads.each do |downloadable, future|
                   previous_pending_line_count -= 1
                   print "\033[K"
                   $stdout.flush
-                  output_message.call(downloadable, promise)
+                  output_message.call(downloadable, future)
                 end
 
                 previous_pending_line_count = 0
-                remaining_downloads.each do |downloadable, promise|
+                remaining_downloads.each do |downloadable, future|
                   break if previous_pending_line_count >= [concurrency, (Tty.height - 1)].min
 
                   print "\033[K"
                   $stdout.flush
-                  previous_pending_line_count += output_message.call(downloadable, promise)
+                  previous_pending_line_count += output_message.call(downloadable, future)
                 end
 
                 if previous_pending_line_count.positive?
@@ -317,9 +317,7 @@ module Homebrew
       end
 
       def fetch_downloadable(downloadable)
-        downloadable.clear_cache if args.force?
-
-        downloads[downloadable] ||= download_queue.enqueue(RetryableDownload.new(downloadable))
+        downloads[downloadable] ||= download_queue.enqueue(RetryableDownload.new(downloadable), force: args.force?)
       end
     end
   end
