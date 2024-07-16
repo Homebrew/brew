@@ -82,12 +82,16 @@ module Homebrew
 
       class Spinner
         FRAMES = [
-          "◜",
-          "◠",
-          "◝",
-          "◞",
-          "◡",
-          "◟",
+          "⠋",
+          "⠙",
+          "⠚",
+          "⠞",
+          "⠖",
+          "⠦",
+          "⠴",
+          "⠲",
+          "⠳",
+          "⠓",
         ].freeze
 
         sig { void }
@@ -221,22 +225,20 @@ module Homebrew
         end
 
         if concurrency == 1
-          downloads.each_value do |promise|
+          downloads.each do |downloadable, promise|
             promise.wait!
           rescue ChecksumMismatchError => e
             opoo "#{downloadable.download_type.capitalize} reports different checksum: #{e.expected}"
             Homebrew.failed = true if downloadable.is_a?(Resource::Patch)
           end
         else
-
           spinner = Spinner.new
-
           remaining_downloads = downloads.dup
-
           previous_pending_line_count = 0
 
           begin
-            print Tty.hide_cursor
+            $stdout.print Tty.hide_cursor
+            $stdout.flush
 
             output_message = lambda do |downloadable, promise|
               status = case promise.state
@@ -245,13 +247,14 @@ module Homebrew
               when :rejected
                 "#{Tty.red}✘#{Tty.reset}"
               when :pending
-                spinner
+                "#{Tty.blue}#{spinner}#{Tty.reset}"
               else
                 raise promise.state
               end
 
               message = "#{downloadable.download_type.capitalize} #{downloadable.name}"
-              puts "#{status} #{message}"
+              $stdout.puts "#{status} #{message}"
+              $stdout.flush
 
               if promise.rejected? && (e = promise.reason).is_a?(ChecksumMismatchError)
                 opoo "#{downloadable.download_type.capitalize} reports different checksum: #{e.expected}"
@@ -273,6 +276,7 @@ module Homebrew
                 finished_downloads.each do |downloadable, promise|
                   previous_pending_line_count -= 1
                   print "\033[K"
+                  $stdout.flush
                   output_message.call(downloadable, promise)
                 end
 
@@ -281,6 +285,7 @@ module Homebrew
                   break if previous_pending_line_count >= [concurrency, (Tty.height - 1)].min
 
                   print "\033[K"
+                  $stdout.flush
                   previous_pending_line_count += output_message.call(downloadable, promise)
                 end
 
@@ -292,11 +297,13 @@ module Homebrew
                 sleep 0.05
               rescue Interrupt
                 print "\n" * previous_pending_line_count
+                $stdout.flush
                 raise
               end
             end
           ensure
-            print Tty.show_cursor
+            $stdout.print Tty.show_cursor
+            $stdout.flush
           end
         end
 
