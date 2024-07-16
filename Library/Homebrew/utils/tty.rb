@@ -63,7 +63,7 @@ module Tty
 
     sig { returns(T.nilable([Integer, Integer])) }
     def size
-      `/bin/stty size 2>/dev/null`.split&.map(&:to_i)
+      `/bin/stty size 2>/dev/null`.presence&.split&.map(&:to_i)
     end
 
     sig { returns(Integer) }
