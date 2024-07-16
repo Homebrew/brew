@@ -6,11 +6,6 @@ require "downloadable"
 module Homebrew
   module API
     class DownloadStrategy < CurlDownloadStrategy
-      sig { returns(String) }
-      def name # rubocop:disable Lint/UselessMethodDefinition
-        super
-      end
-
       sig { override.returns(Pathname) }
       def symlink_location
         cache/name
@@ -43,12 +38,12 @@ module Homebrew
 
       sig { override.returns(String) }
       def name
-        downloader.name
+        download_name
       end
 
       sig { override.returns(String) }
       def download_type
-        "API"
+        "API source"
       end
 
       sig { override.returns(Pathname) }
