@@ -296,6 +296,10 @@ module Homebrew
 
                 sleep 0.05
               rescue Interrupt
+                remaining_downloads.each do |_, future|
+                  # FIXME: Implement cancellation of running downloads.
+                end
+
                 print "\n" * previous_pending_line_count
                 $stdout.flush
                 raise

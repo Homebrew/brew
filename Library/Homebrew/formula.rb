@@ -2773,10 +2773,12 @@ class Formula
     ).returns(Pathname)
   }
   def fetch(verify_download_integrity: true, timeout: nil, quiet: false)
+    odeprecated "Formula#fetch", "Resource#fetch on Formula#resource"
     active_spec.fetch(verify_download_integrity:, timeout:, quiet:)
   end
 
   def verify_download_integrity(filename)
+    odeprecated "Formula#verify_download_integrity", "Resource#verify_download_integrity on Formula#resource"
     active_spec.verify_download_integrity(filename)
   end
 

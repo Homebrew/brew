@@ -126,7 +126,7 @@ module Downloadable
 
   sig { overridable.returns(String) }
   def download_name
-    File.basename(determine_url.to_s)
+    @download_name ||= File.basename(determine_url.to_s)
   end
 
   private

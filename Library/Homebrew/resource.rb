@@ -269,6 +269,33 @@ class Resource
     [*extra_urls, *super].uniq
   end
 
+  # A local resource that doesn't need to be downloaded.
+  class Local < Resource
+    def initialize(path)
+      super(File.basename(path))
+      @path = path
+    end
+
+    sig { override.returns(Pathname) }
+    def cached_download
+      @path
+    end
+
+    sig { override.void }
+    def clear_cache; end
+
+    sig {
+      override.params(
+        verify_download_integrity: T::Boolean,
+        timeout:                   T.nilable(T.any(Integer, Float)),
+        quiet:                     T::Boolean,
+      ).returns(Pathname)
+    }
+    def fetch(verify_download_integrity: true, timeout: nil, quiet: false)
+      cached_download
+    end
+  end
+
   # A resource for a formula.
   class Formula < Resource
     sig { override.returns(String) }
