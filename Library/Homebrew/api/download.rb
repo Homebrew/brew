@@ -12,7 +12,9 @@ module Homebrew
       end
     end
 
-    class Download < Downloadable
+    class Download
+      include Downloadable
+
       sig {
         params(
           url:      String,
@@ -29,6 +31,21 @@ module Homebrew
         @cache = cache
       end
 
+      sig { override.returns(API::DownloadStrategy) }
+      def downloader
+        T.cast(super, API::DownloadStrategy)
+      end
+
+      sig { override.returns(String) }
+      def name
+        download_name
+      end
+
+      sig { override.returns(String) }
+      def download_type
+        "API source"
+      end
+
       sig { override.returns(Pathname) }
       def cache
         @cache || super
@@ -36,7 +53,7 @@ module Homebrew
 
       sig { returns(Pathname) }
       def symlink_location
-        T.cast(downloader, API::DownloadStrategy).symlink_location
+        downloader.symlink_location
       end
     end
   end

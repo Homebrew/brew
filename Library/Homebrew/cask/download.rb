@@ -8,7 +8,9 @@ require "cask/quarantine"
 
 module Cask
   # A download corresponding to a {Cask}.
-  class Download < ::Downloadable
+  class Download
+    include Downloadable
+
     include Context
 
     attr_reader :cask
@@ -18,6 +20,11 @@ module Cask
 
       @cask = cask
       @quarantine = quarantine
+    end
+
+    sig { override.returns(String) }
+    def name
+      cask.token
     end
 
     sig { override.returns(T.nilable(::URL)) }
@@ -86,6 +93,11 @@ module Cask
     sig { override.returns(String) }
     def download_name
       cask.token
+    end
+
+    sig { override.returns(String) }
+    def download_type
+      "cask"
     end
 
     private

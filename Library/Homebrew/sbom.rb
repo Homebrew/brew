@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 require "cxxstdlib"
+require "downloadable"
 require "json"
 require "development_tools"
 require "extend/cachable"
@@ -89,43 +90,104 @@ class SBOM
     spdxfile(formula).exist?
   end
 
+  class Schema
+    include Downloadable
+
+    sig { override.void }
+    def initialize
+      super
+
+      @url = URL.new(SCHEMA_URL)
+      @download_name = SCHEMA_FILENAME
+    end
+
+    sig { override.returns(String) }
+    def name
+      download_name
+    end
+
+    sig { override.returns(String) }
+    def download_type
+      "SBOM schema"
+    end
+
+    sig { override.returns(Pathname) }
+    def cached_download
+      cache/download_name
+    end
+
+    sig { override.void }
+    def clear_cache
+      cached_download.unlink
+    end
+
+    sig {
+      override.params(
+        verify_download_integrity: T::Boolean,
+        timeout:                   T.nilable(T.any(Integer, Float)),
+        quiet:                     T::Boolean,
+      ).returns(Pathname)
+    }
+    def fetch(verify_download_integrity: true, timeout: nil, quiet: false)
+      quiet ||= cached_download.exist? && !cached_download.empty?
+
+      curl_args = Utils::Curl.curl_args(retries: 0)
+      curl_args += ["--silent", "--time-cond", cached_download.to_s] if quiet
+
+      unless quiet
+        oh1 "Fetching SBOM schema"
+        ohai "Downloading #{url}"
+      end
+
+      Utils::Curl.curl_download(*curl_args, url.to_s, to: cached_download, retries: 0)
+      FileUtils.touch(cached_download, mtime: Time.now)
+
+      download = cached_download
+      verify_download_integrity(download) if verify_download_integrity
+      download
+    end
+
+    sig { override.params(filename: Pathname).void }
+    def verify_download_integrity(filename)
+      JSON.parse(filename.read)
+    rescue JSON::ParserError => e
+      raise DownloadError.new(self, e)
+    end
+
+    sig { override.returns(Pathname) }
+    def cache
+      super.join("sbom")
+    end
+  end
+
   sig { returns(T::Hash[String, String]) }
   def self.fetch_schema!
     return @schema if @schema.present?
 
-    url = SCHEMA_URL
-    target = SCHEMA_CACHE_TARGET
-    quieter = target.exist? && !target.empty?
-
-    curl_args = Utils::Curl.curl_args(retries: 0)
-    curl_args += ["--silent", "--time-cond", target.to_s] if quieter
+    schema = Schema.new
 
     begin
-      unless quieter
-        oh1 "Fetching SBOM schema"
-        ohai "Downloading #{url}"
-      end
-      Utils::Curl.curl_download(*curl_args, url, to: target, retries: 0)
-      FileUtils.touch(target, mtime: Time.now)
+      schema.fetch
     rescue ErrorDuringExecution
-      target.unlink if target.exist? && target.empty?
+      schema.clear_cache if schema.downloaded? && schema.cached_download.empty?
 
-      if target.exist?
+      if schema.downloaded?
         opoo "SBOM schema update failed, falling back to cached version."
       else
         opoo "Failed to fetch SBOM schema, cannot perform SBOM validation!"
 
         return {}
       end
+    rescue DownloadError => e
+      if e.cause.is_a?(JSON::ParserError)
+        schema.clear_cache
+        opoo "Failed to fetch SBOM schema, cached version corrupted, cannot perform SBOM validation!"
+      end
+
+      return {}
     end
 
-    @schema = begin
-      JSON.parse(target.read, freeze: true)
-    rescue JSON::ParserError
-      target.unlink
-      opoo "Failed to fetch SBOM schema, cached version corrupted, cannot perform SBOM validation!"
-      {}
-    end
+    @schema = JSON.parse(schema.cached_download.read, freeze: true)
   end
 
   sig { params(bottling: T::Boolean).returns(T::Boolean) }

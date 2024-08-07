@@ -1263,11 +1263,11 @@ on_request: installed_on_request?, options:)
 
   def downloader
     if (bottle_path = formula.local_bottle_path)
-      LocalBottleDownloadStrategy.new(bottle_path)
+      Resource::Local.new(bottle_path)
     elsif pour_bottle?
       formula.bottle
     else
-      formula
+      formula.resource
     end
   end
 

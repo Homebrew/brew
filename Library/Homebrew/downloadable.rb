@@ -5,19 +5,19 @@ require "url"
 require "checksum"
 require "download_strategy"
 
-class Downloadable
+module Downloadable
   include Context
   extend T::Helpers
 
   abstract!
 
-  sig { returns(T.nilable(URL)) }
+  sig { overridable.returns(T.nilable(URL)) }
   attr_reader :url
 
-  sig { returns(T.nilable(Checksum)) }
+  sig { overridable.returns(T.nilable(Checksum)) }
   attr_reader :checksum
 
-  sig { returns(T::Array[String]) }
+  sig { overridable.returns(T::Array[String]) }
   attr_reader :mirrors
 
   sig { void }
@@ -32,7 +32,7 @@ class Downloadable
     @version = @version.dup
   end
 
-  sig { override.returns(T.self_type) }
+  sig { overridable.returns(T.self_type) }
   def freeze
     @checksum.freeze
     @mirrors.freeze
@@ -40,22 +40,30 @@ class Downloadable
     super
   end
 
-  sig { returns(T::Boolean) }
+  sig { abstract.returns(String) }
+  def name; end
+
+  sig { returns(String) }
+  def download_type
+    T.must(self.class.name&.split("::")&.last).gsub(/([[:lower:]])([[:upper:]])/, '\1 \2').downcase
+  end
+
+  sig(:final) { returns(T::Boolean) }
   def downloaded?
     cached_download.exist?
   end
 
-  sig { returns(Pathname) }
+  sig { overridable.returns(Pathname) }
   def cached_download
     downloader.cached_location
   end
 
-  sig { void }
+  sig { overridable.void }
   def clear_cache
     downloader.clear_cache
   end
 
-  sig { returns(T.nilable(Version)) }
+  sig { overridable.returns(T.nilable(Version)) }
   def version
     return @version if @version && !@version.null?
 
@@ -63,27 +71,34 @@ class Downloadable
     version unless version&.null?
   end
 
-  sig { returns(T.class_of(AbstractDownloadStrategy)) }
+  sig { overridable.returns(T.class_of(AbstractDownloadStrategy)) }
   def download_strategy
     @download_strategy ||= determine_url&.download_strategy
   end
 
-  sig { returns(AbstractDownloadStrategy) }
+  sig { overridable.returns(AbstractDownloadStrategy) }
   def downloader
     @downloader ||= begin
       primary_url, *mirrors = determine_url_mirrors
-      raise ArgumentError, "attempted to use a Downloadable without a URL!" if primary_url.blank?
+      raise ArgumentError, "attempted to use a `Downloadable` without a URL!" if primary_url.blank?
 
       download_strategy.new(primary_url, download_name, version,
                             mirrors:, cache:, **T.must(@url).specs)
     end
   end
 
-  sig { params(verify_download_integrity: T::Boolean, timeout: T.nilable(T.any(Integer, Float))).returns(Pathname) }
-  def fetch(verify_download_integrity: true, timeout: nil)
+  sig {
+    overridable.params(
+      verify_download_integrity: T::Boolean,
+      timeout:                   T.nilable(T.any(Integer, Float)),
+      quiet:                     T::Boolean,
+    ).returns(Pathname)
+  }
+  def fetch(verify_download_integrity: true, timeout: nil, quiet: false)
     cache.mkpath
 
     begin
+      downloader.quiet! if quiet
       downloader.fetch(timeout:)
     rescue ErrorDuringExecution, CurlDownloadStrategyError => e
       raise DownloadError.new(self, e)
@@ -94,7 +109,7 @@ class Downloadable
     download
   end
 
-  sig { params(filename: Pathname).void }
+  sig { overridable.params(filename: Pathname).void }
   def verify_download_integrity(filename)
     if filename.file?
       ohai "Verifying checksum for '#{filename.basename}'" if verbose?
@@ -111,7 +126,7 @@ class Downloadable
 
   sig { overridable.returns(String) }
   def download_name
-    File.basename(determine_url.to_s)
+    @download_name ||= File.basename(determine_url.to_s)
   end
 
   private

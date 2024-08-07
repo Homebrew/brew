@@ -32,6 +32,9 @@ class Homebrew::Cmd::FetchCmd::Args < Homebrew::CLI::Args
   sig { returns(T::Boolean) }
   def casks?; end
 
+  sig { returns(T.nilable(String)) }
+  def concurrency; end
+
   sig { returns(T::Boolean) }
   def deps?; end
 

@@ -9,7 +9,8 @@ require "extend/on_system"
 # Resource is the fundamental representation of an external resource. The
 # primary formula download, along with other declared resources, are instances
 # of this class.
-class Resource < Downloadable
+class Resource
+  include Downloadable
   include FileUtils
   include OnSystem::MacOSAndLinux
 
@@ -140,7 +141,15 @@ class Resource < Downloadable
     Partial.new(self, files)
   end
 
-  def fetch(verify_download_integrity: true)
+  sig {
+    override
+      .params(
+        verify_download_integrity: T::Boolean,
+        timeout:                   T.nilable(T.any(Integer, Float)),
+        quiet:                     T::Boolean,
+      ).returns(Pathname)
+  }
+  def fetch(verify_download_integrity: true, timeout: nil, quiet: false)
     fetch_patches
 
     super
@@ -194,7 +203,7 @@ class Resource < Downloadable
     @download_strategy = @url.download_strategy
   end
 
-  sig { params(val: T.nilable(T.any(String, Version))).returns(T.nilable(Version)) }
+  sig { override.params(val: T.nilable(T.any(String, Version))).returns(T.nilable(Version)) }
   def version(val = nil)
     return super() if val.nil?
 
@@ -211,7 +220,7 @@ class Resource < Downloadable
   end
 
   def patch(strip = :p1, src = nil, &block)
-    p = Patch.create(strip, src, &block)
+    p = ::Patch.create(strip, src, &block)
     patches << p
   end
 
@@ -258,6 +267,46 @@ class Resource < Downloadable
     end
 
     [*extra_urls, *super].uniq
+  end
+
+  # A local resource that doesn't need to be downloaded.
+  class Local < Resource
+    def initialize(path)
+      super(File.basename(path))
+      @path = path
+    end
+
+    sig { override.returns(Pathname) }
+    def cached_download
+      @path
+    end
+
+    sig { override.void }
+    def clear_cache; end
+
+    sig {
+      override.params(
+        verify_download_integrity: T::Boolean,
+        timeout:                   T.nilable(T.any(Integer, Float)),
+        quiet:                     T::Boolean,
+      ).returns(Pathname)
+    }
+    def fetch(verify_download_integrity: true, timeout: nil, quiet: false)
+      cached_download
+    end
+  end
+
+  # A resource for a formula.
+  class Formula < Resource
+    sig { override.returns(String) }
+    def name
+      T.must(owner).name
+    end
+
+    sig { override.returns(String) }
+    def download_name
+      name
+    end
   end
 
   # A resource containing a Go package.
@@ -320,7 +369,7 @@ class Resource < Downloadable
   end
 
   # A resource containing a patch.
-  class PatchResource < Resource
+  class Patch < Resource
     attr_reader :patch_files
 
     def initialize(&block)

@@ -55,7 +55,7 @@ RSpec.describe Patch do
     subject(:patch) { described_class.create(:p2, nil) }
 
     context "when the patch is empty" do
-      it(:resource) { expect(patch.resource).to be_a Resource::PatchResource }
+      it(:resource) { expect(patch.resource).to be_a Resource::Patch }
       it { expect(patch.patch_files).to eq(patch.resource.patch_files) }
       it { expect(patch.patch_files).to eq([]) }
     end
