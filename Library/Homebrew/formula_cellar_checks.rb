@@ -225,6 +225,29 @@ module FormulaCellarChecks
     EOS
   end
 
+  def check_python_requirements(formula)
+    python = formula.deps.filter { |d| d.name.start_with?("python@") && d.required? }
+                    .map(&:to_formula)
+                    .first
+    return if python.blank?
+
+    pyvenv = formula.prefix.glob("**/pyvenv.cfg").first
+    return if pyvenv.nil?
+
+    venv = pyvenv.dirname/"bin/python"
+    return unless venv.symlink?
+
+    return "Virtualenv's `python` is not installed, so cannot check its requirements" unless venv.exist?
+
+    output = Utils.popen_read(venv.realpath, "-m", "pip", "--isolated", "--python=#{venv}", "check").chomp
+    return if output.blank? || output == "No broken requirements found."
+
+    <<~EOS
+      Broken python requirements found for #{venv}:
+        #{output}
+    EOS
+  end
+
   sig { params(prefix: Pathname).returns(T.nilable(String)) }
   def check_shim_references(prefix)
     return unless prefix.directory?
@@ -426,6 +449,7 @@ module FormulaCellarChecks
     problem_if_output(check_elisp_dirname(formula.share, formula.name))
     problem_if_output(check_elisp_root(formula.share, formula.name))
     problem_if_output(check_python_packages(formula.lib, formula.deps))
+    problem_if_output(check_python_requirements(formula))
     problem_if_output(check_shim_references(formula.prefix))
     problem_if_output(check_plist(formula.prefix, formula.launchd_service_path))
     problem_if_output(check_python_symlinks(formula.name, formula.keg_only?))
