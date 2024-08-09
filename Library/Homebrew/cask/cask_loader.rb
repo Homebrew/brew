@@ -499,12 +499,25 @@ module Cask
                 .returns(T.nilable(T.attached_class))
       }
       def self.try_new(ref, warn: false)
-        return unless ref.is_a?(String)
+        token = if ref.is_a?(String)
+          ref
+        elsif ref.is_a?(Pathname)
+          ref.basename(ref.extname).to_s
+        end
+        return unless token
 
-        possible_installed_cask = Cask.new(ref)
+        possible_installed_cask = Cask.new(token)
         return unless (installed_caskfile = possible_installed_cask.installed_caskfile)
 
         new(installed_caskfile)
+      end
+
+      sig { params(path: T.any(Pathname, String), token: String).void }
+      def initialize(path, token: T.unsafe(nil))
+        super
+
+        installed_tap = Cask.new(@token).tab.tap
+        @tap = installed_tap if installed_tap
       end
     end
 
@@ -592,6 +605,32 @@ module Cask
           return loader
         end
       end
+    end
+
+    sig { params(ref: String, config: T.nilable(Config), warn: T::Boolean).returns(Cask) }
+    def self.load_installed_cask(ref, config: nil, warn: true)
+      tap, token = Tap.with_cask_token(ref)
+      token ||= ref
+      tap ||= Cask.new(ref).tab.tap
+
+      if tap.nil?
+        self.load(token, config:, warn:)
+      else
+        begin
+          self.load("#{tap}/#{token}", config:, warn:)
+        rescue CaskUnavailableError
+          # cask may be migrated to different tap. Try to search in all taps.
+          self.load(token, config:, warn:)
+        end
+      end
+    end
+
+    sig { params(path: Pathname, config: T.nilable(Config), warn: T::Boolean).returns(Cask) }
+    def self.load_from_installed_caskfile(path, config: nil, warn: true)
+      loader = FromInstalledPathLoader.try_new(path, warn:)
+      loader ||= NullLoader.new(path)
+
+      loader.load(config:)
     end
 
     def self.default_path(token)

@@ -19,6 +19,14 @@ RSpec.describe "Exception" do
     end
   end
 
+  describe NoSuchKegFromTapError do
+    subject(:error) { described_class.new("foo", tap) }
+
+    let(:tap) { instance_double(Tap, to_s: "u/r") }
+
+    it(:to_s) { expect(error.to_s).to eq("No such keg: #{HOMEBREW_CELLAR}/foo from tap u/r") }
+  end
+
   describe NoSuchKegError do
     subject(:error) { described_class.new("foo") }
 

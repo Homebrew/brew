@@ -56,7 +56,7 @@ module Cask
     sig { params(config: T.nilable(Config)).returns(T::Array[Cask]) }
     def self.casks(config: nil)
       tokens.sort.filter_map do |token|
-        CaskLoader.load(token, config:, warn: false)
+        CaskLoader.load_installed_cask(token, config:, warn: false)
       rescue TapCaskAmbiguityError => e
         T.must(e.loaders.first).load(config:)
       rescue

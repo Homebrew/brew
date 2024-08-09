@@ -61,6 +61,18 @@ class NoSuchKegError < RuntimeError
   end
 end
 
+# Raised when a keg from a specific tap doesn't exist.
+class NoSuchKegFromTapError < RuntimeError
+  attr_reader :name, :tap
+
+  sig { params(name: String, tap: Tap).void }
+  def initialize(name, tap)
+    @name = name
+    @tap = tap
+    super "No such keg: #{HOMEBREW_CELLAR}/#{name} from tap #{tap}"
+  end
+end
+
 # Raised when an invalid attribute is used in a formula.
 class FormulaValidationError < StandardError
   attr_reader :attr, :formula

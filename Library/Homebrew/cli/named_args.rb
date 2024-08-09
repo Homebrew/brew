@@ -189,7 +189,18 @@ module Homebrew
               if want_keg_like_cask &&
                  (installed_caskfile = candidate_cask.installed_caskfile) &&
                  installed_caskfile.exist?
-                Cask::CaskLoader.load(installed_caskfile)
+                cask = Cask::CaskLoader.load_from_installed_caskfile(installed_caskfile)
+
+                requested_tap, requested_token = Tap.with_cask_token(name)
+                if requested_tap && requested_token
+                  installed_cask_tap = cask.tab.tap
+
+                  if installed_cask_tap && installed_cask_tap != requested_tap
+                    raise Cask::TapCaskUnavailableError.new(requested_tap, requested_token)
+                  end
+                end
+
+                cask
               else
                 candidate_cask
               end
@@ -405,6 +416,16 @@ module Homebrew
         rack = Formulary.to_rack(name.downcase)
 
         kegs = rack.directory? ? rack.subdirs.map { |d| Keg.new(d) } : []
+
+        requested_tap, requested_formula = Tap.with_formula_name(name)
+        if requested_tap && requested_formula
+          kegs = kegs.select do |keg|
+            keg.tab.tap == requested_tap
+          end
+
+          raise NoSuchKegFromTapError.new(requested_formula, requested_tap) if kegs.none?
+        end
+
         raise NoSuchKegError, name if kegs.none?
 
         [rack, kegs]

@@ -217,6 +217,36 @@ RSpec.describe Homebrew::CLI::NamedArgs do
     it "when there are no matching kegs returns an empty array" do
       expect(described_class.new.to_kegs).to be_empty
     end
+
+    it "raises an error when a Keg is unavailable" do
+      expect { described_class.new("baz").to_kegs }.to raise_error NoSuchKegError
+    end
+
+    context "when a keg specifies a tap" do
+      let(:tab) { instance_double(Tab, tap: Tap.fetch("user", "repo")) }
+
+      before do
+        allow_any_instance_of(Keg).to receive(:tab).and_return(tab)
+      end
+
+      it "returns kegs if no tap is specified" do
+        stub_formula_loader bar, "user/repo/bar"
+
+        expect(described_class.new("bar").to_kegs.map(&:name)).to eq ["bar"]
+      end
+
+      it "returns kegs if the tap is specified" do
+        stub_formula_loader bar, "user/repo/bar"
+
+        expect(described_class.new("user/repo/bar").to_kegs.map(&:name)).to eq ["bar"]
+      end
+
+      it "raises an error if there is no tap match" do
+        stub_formula_loader bar, "other/tap/bar"
+
+        expect { described_class.new("other/tap/bar").to_kegs }.to raise_error(NoSuchKegFromTapError)
+      end
+    end
   end
 
   describe "#to_default_kegs" do
