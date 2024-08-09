@@ -23,6 +23,10 @@ jobs:
       fail-fast: false
       matrix:
         version: ["18.04", "20.04", "22.04", "24.04"]
+    permissions:
+      contents: read # for code access
+      attestations: write # for actions/attest-build-provenance
+      id-token: write # for actions/attest-build-provenance
     steps:
       - name: Checkout
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
@@ -51,6 +55,24 @@ jobs:
 
       - name: Run brew test-bot --only-setup
         run: docker run --rm brew brew test-bot --only-setup
+
+      - run: docker image inspect --format=json brew
+      - run: docker image inspect --format='{{.Id}}' brew
+
+      - run: docker images --digests brew
+      - run: docker images --digests brew --format='{{.Digest}}'
+
+      - name: Generate image digest
+        id: digest
+        run: echo "digest=$(docker image inspect --format='{{.Digest}}' brew)" >> "$GITHUB_OUTPUT"
+
+      - name: Generate build provenance
+        uses: actions/attest-build-provenance@5e9cb68e95676991667494a6a4e59b8a2f13e1d0 # v1.3.3
+        id: attest
+        with:
+          subject-name: ghcr.io/homebrew/ubuntu${{matrix.version}}
+          subject-digest: ${{ steps.digest.outputs.digest }}
+          push-to-registry: ${{ startsWith(github.ref, 'refs/tags/') }}
 
       - name: Deploy the tagged Docker image to GitHub Packages
         if: startsWith(github.ref, 'refs/tags/')
