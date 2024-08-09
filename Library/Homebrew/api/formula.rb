@@ -15,9 +15,9 @@ module Homebrew
 
       private_class_method :cache
 
-      sig { params(name: String).returns(Hash) }
-      def self.fetch(name)
-        Homebrew::API.fetch "formula/#{name}.json"
+      sig { params(name: String, timeout: T.nilable(Integer)).returns(Hash) }
+      def self.fetch(name, timeout: nil)
+        Homebrew::API.fetch("formula/#{name}.json", timeout:)
       end
 
       sig { params(formula: ::Formula).returns(::Formula) }

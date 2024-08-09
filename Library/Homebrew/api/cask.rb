@@ -14,9 +14,9 @@ module Homebrew
 
       private_class_method :cache
 
-      sig { params(token: String).returns(Hash) }
-      def self.fetch(token)
-        Homebrew::API.fetch "cask/#{token}.json"
+      sig { params(token: String, timeout: T.nilable(Integer)).returns(Hash) }
+      def self.fetch(token, timeout: nil)
+        Homebrew::API.fetch("cask/#{token}.json", timeout:)
       end
 
       sig { params(cask: ::Cask::Cask).returns(::Cask::Cask) }

@@ -317,19 +317,24 @@ module Utils
         puts "#{number_readable(thirty_day_download_count)} (30 days)"
       end
 
+      # How long we're willing to wait for analytics for `brew info foo`.
+      # Set this to something small because `brew info foo` should be fast.
+      ANALYTICS_DEFAULT_TIMEOUT_UNLESS_REQUESTED = 1
+
       def formula_output(formula, args:)
         return if Homebrew::EnvConfig.no_analytics? || Homebrew::EnvConfig.no_github_api?
 
         require "api"
 
-        json = Homebrew::API::Formula.fetch formula.name
+        timeout = ANALYTICS_DEFAULT_TIMEOUT_UNLESS_REQUESTED unless args.analytics?
+        json = Homebrew::API::Formula.fetch(formula.name, timeout:)
         return if json.blank? || json["analytics"].blank?
 
         output_analytics(json, args:)
         output_github_packages_downloads(formula, args:)
-      rescue ArgumentError
-        # Ignore failed API requests
-        nil
+      rescue ArgumentError, Timeout::Error => e
+        # Ignore failed/timed-out API requests
+        odebug e
       end
 
       def cask_output(cask, args:)
@@ -337,13 +342,14 @@ module Utils
 
         require "api"
 
-        json = Homebrew::API::Cask.fetch cask.token
+        timeout = ANALYTICS_DEFAULT_TIMEOUT_UNLESS_REQUESTED unless args.analytics?
+        json = Homebrew::API::Cask.fetch(cask.token, timeout:)
         return if json.blank? || json["analytics"].blank?
 
         output_analytics(json, args:)
-      rescue ArgumentError
-        # Ignore failed API requests
-        nil
+      rescue ArgumentError, Timeout::Error => e
+        # Ignore failed/timed-out API requests
+        odebug e
       end
 
       sig { returns(T::Hash[Symbol, String]) }

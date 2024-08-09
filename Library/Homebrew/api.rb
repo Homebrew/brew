@@ -17,16 +17,16 @@ module Homebrew
     HOMEBREW_CACHE_API = (HOMEBREW_CACHE/"api").freeze
     HOMEBREW_CACHE_API_SOURCE = (HOMEBREW_CACHE/"api-source").freeze
 
-    sig { params(endpoint: String).returns(Hash) }
-    def self.fetch(endpoint)
+    sig { params(endpoint: String, timeout: T.nilable(Integer)).returns(Hash) }
+    def self.fetch(endpoint, timeout: nil)
       return cache[endpoint] if cache.present? && cache.key?(endpoint)
 
       api_url = "#{Homebrew::EnvConfig.api_domain}/#{endpoint}"
-      output = Utils::Curl.curl_output("--fail", api_url)
+      output = Utils::Curl.curl_output("--fail", api_url, timeout:)
       if !output.success? && Homebrew::EnvConfig.api_domain != HOMEBREW_API_DEFAULT_DOMAIN
         # Fall back to the default API domain and try again
         api_url = "#{HOMEBREW_API_DEFAULT_DOMAIN}/#{endpoint}"
-        output = Utils::Curl.curl_output("--fail", api_url)
+        output = Utils::Curl.curl_output("--fail", api_url, timeout:)
       end
       raise ArgumentError, "No file found at #{Tty.underline}#{api_url}#{Tty.reset}" unless output.success?
 
