@@ -80,17 +80,20 @@ module Cask
 
     sig { params(cask: Cask).returns(T.nilable(String)) }
     def self.deps_info(cask)
-      depends_on = cask.depends_on
+      require "utils/info"
 
-      formula_deps = Array(depends_on[:formula]).map(&:to_s)
-      cask_deps = Array(depends_on[:cask]).map { |dep| "#{dep} (cask)" }
+      return if cask.depends_on.empty?
 
-      all_deps = formula_deps + cask_deps
-      return if all_deps.empty?
+      output_strings = []
+
+      %w[formula cask].each do |type|
+        deps = cask.depends_on.send(type).uniq
+        output_strings << "#{type.capitalize}: #{::Utils::Info.decorate_dependencies(deps)}" unless deps.empty?
+      end
 
       <<~EOS
         #{ohai_title("Dependencies")}
-        #{all_deps.join(", ")}
+        #{output_strings.join("\n")}
       EOS
     end
 

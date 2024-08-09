@@ -9,6 +9,7 @@ require "formula"
 require "keg"
 require "tab"
 require "json"
+require "utils/info"
 require "utils/spdx"
 require "deprecate_disable"
 require "api"
@@ -320,7 +321,7 @@ module Homebrew
           ohai "Dependencies"
           %w[build required recommended optional].map do |type|
             deps = formula.deps.send(type).uniq
-            puts "#{type.capitalize}: #{decorate_dependencies deps}" unless deps.empty?
+            puts "#{type.capitalize}: #{Utils::Info.decorate_dependencies(deps)}" unless deps.empty?
           end
         end
 
@@ -345,29 +346,12 @@ module Homebrew
         Utils::Analytics.formula_output(formula, args:)
       end
 
-      def decorate_dependencies(dependencies)
-        deps_status = dependencies.map do |dep|
-          if dep.satisfied?([])
-            pretty_installed(dep_display_s(dep))
-          else
-            pretty_uninstalled(dep_display_s(dep))
-          end
-        end
-        deps_status.join(", ")
-      end
-
       def decorate_requirements(requirements)
         req_status = requirements.map do |req|
           req_s = req.display_s
           req.satisfied? ? pretty_installed(req_s) : pretty_uninstalled(req_s)
         end
         req_status.join(", ")
-      end
-
-      def dep_display_s(dep)
-        return dep.name if dep.option_tags.empty?
-
-        "#{dep.name} #{dep.option_tags.map { |o| "--#{o}" }.join(" ")}"
       end
 
       def info_cask(cask)
