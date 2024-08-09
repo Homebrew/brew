@@ -52,6 +52,12 @@ module Homebrew
     # @api private
     class GhAuthInvalid < RuntimeError; end
 
+    # Raised if the version of `gh` invoked is too old to support
+    # attestations.
+    #
+    # @api private
+    class GhTooOld < RuntimeError; end
+
     # Returns whether attestation verification is enabled.
     #
     # @api private
@@ -142,6 +148,11 @@ module Homebrew
         end
 
         raise MissingAttestationError, "attestation not found: #{e}" if e.stderr.include?("HTTP 404: Not Found")
+
+        if e.stderr.include?("unknown command \"attestation\" for \"gh\"")
+          raise GhTooOld,
+                "your version of `gh` is too old; run `brew upgrade gh` to continue"
+        end
 
         raise InvalidAttestationError, "attestation verification failed: #{e}"
       end
