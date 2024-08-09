@@ -1,4 +1,4 @@
-# typed: true
+# typed: true # This cannot be `# typed: strict` due to the use of `undef`.
 # frozen_string_literal: true
 
 class Keg
