@@ -301,6 +301,12 @@ module Cask
       end
     end
 
+    # If this is a `@`-versioned cask.
+    sig { returns(T::Boolean) }
+    def versioned_cask?
+      token.include?("@")
+    end
+
     def ruby_source_path
       return @ruby_source_path if defined?(@ruby_source_path)
 

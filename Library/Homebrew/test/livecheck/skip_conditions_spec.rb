@@ -135,6 +135,14 @@ RSpec.describe Homebrew::Livecheck::SkipConditions do
         desc "Latest test cask"
         homepage "https://brew.sh"
       end,
+      versioned:         Cask::Cask.new("test_versioned@1") do
+        version "1.2.3"
+
+        url "https://brew.sh/test-0.0.1.tgz"
+        name "Test Versioned"
+        desc "Versioned test cask"
+        homepage "https://brew.sh"
+      end,
       unversioned:       Cask::Cask.new("test_unversioned") do
         version "1.2.3"
         sha256 :no_check
@@ -274,6 +282,13 @@ RSpec.describe Homebrew::Livecheck::SkipConditions do
             livecheckable: false,
           },
         },
+        versioned:         {
+          cask:   "test_versioned@1",
+          status: "versioned",
+          meta:   {
+            livecheckable: false,
+          },
+        },
         unversioned:       {
           cask:   "test_unversioned",
           status: "unversioned",
@@ -385,6 +400,13 @@ RSpec.describe Homebrew::Livecheck::SkipConditions do
       it "skips" do
         expect(skip_conditions.skip_information(casks[:latest]))
           .to eq(status_hashes[:cask][:latest])
+      end
+    end
+
+    context "when a cask without a livecheckable is versioned" do
+      it "skips" do
+        expect(skip_conditions.skip_information(casks[:versioned]))
+          .to eq(status_hashes[:cask][:versioned])
       end
     end
 

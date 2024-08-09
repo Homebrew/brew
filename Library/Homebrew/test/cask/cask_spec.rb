@@ -178,6 +178,22 @@ RSpec.describe Cask::Cask, :cask do
     end
   end
 
+  describe "versioned_cask?" do
+    context "when it is a versioned cask" do
+      it "returns true" do
+        c = Cask::CaskLoader.load("versioned@1")
+        expect(c.versioned_cask?).to be true
+      end
+    end
+
+    context "when it is not a versioned cask" do
+      it "returns false" do
+        c = Cask::CaskLoader.load("local-caffeine")
+        expect(c.versioned_cask?).to be false
+      end
+    end
+  end
+
   describe "full_name" do
     context "when it is a core cask" do
       it "is the cask token" do

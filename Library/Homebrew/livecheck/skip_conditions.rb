@@ -178,6 +178,20 @@ module Homebrew
           verbose:       T::Boolean,
         ).returns(T::Hash[Symbol, T.untyped])
       }
+      def cask_versioned(cask, livecheckable, full_name: false, verbose: false)
+        return {} if !cask.versioned_cask? || livecheckable
+
+        Livecheck.status_hash(cask, "versioned", full_name:, verbose:)
+      end
+
+      sig {
+        params(
+          cask:          Cask::Cask,
+          livecheckable: T::Boolean,
+          full_name:     T::Boolean,
+          verbose:       T::Boolean,
+        ).returns(T::Hash[Symbol, T.untyped])
+      }
       def cask_url_unversioned(cask, livecheckable, full_name: false, verbose: false)
         return {} if !(cask.present? && cask.url&.unversioned?) || livecheckable
 
@@ -200,6 +214,7 @@ module Homebrew
         :cask_disabled,
         :cask_extract_plist,
         :cask_version_latest,
+        :cask_versioned,
         :cask_url_unversioned,
       ].freeze, T::Array[Symbol])
 

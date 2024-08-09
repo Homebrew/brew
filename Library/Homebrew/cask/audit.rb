@@ -635,7 +635,7 @@ module Cask
 
       # Respect cask skip conditions (e.g. deprecated, disabled, latest, unversioned)
       skip_info ||= Homebrew::Livecheck::SkipConditions.skip_information(cask)
-      return :skip if skip_info.present?
+      return :skip if skip_info.present? && skip_info[:status] != "versioned"
 
       latest_version = Homebrew::Livecheck.latest_version(
         cask,
