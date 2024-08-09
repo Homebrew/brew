@@ -42,7 +42,7 @@ RSpec.describe Formula do
       expect(f.alias_name).to be_nil
       expect(f.full_alias_name).to be_nil
       expect(f.specified_path).to eq(path)
-      [:build, :test, :postinstall].each { |phase| expect(f.network_access_allowed?(phase)).to be(true) }
+      [:build, :test, :postinstall].each { |phase| expect(f.network_access_allowed?(phase)).to be(false) }
       expect { klass.new }.to raise_error(ArgumentError)
     end
 
@@ -56,7 +56,7 @@ RSpec.describe Formula do
       expect(f_alias.specified_path).to eq(Pathname(alias_path))
       expect(f_alias.full_alias_name).to eq(alias_name)
       expect(f_alias.full_specified_name).to eq(alias_name)
-      [:build, :test, :postinstall].each { |phase| expect(f_alias.network_access_allowed?(phase)).to be(true) }
+      [:build, :test, :postinstall].each { |phase| expect(f_alias.network_access_allowed?(phase)).to be(false) }
       expect { klass.new }.to raise_error(ArgumentError)
     end
 

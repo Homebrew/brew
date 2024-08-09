@@ -30,7 +30,7 @@ RSpec.describe Homebrew::DevCmd::Test do
       RUBY
 
       expect { brew "test", "--verbose", "testball_offline_test" }
-        .to output(/curl: \(6\) Could not resolve host: example\.org/).to_stdout
+        .to output(/curl: \(7\) Failed to connect to example.org/).to_stdout
         .and be_a_failure
     end
   end

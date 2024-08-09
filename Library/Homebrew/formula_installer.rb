@@ -944,6 +944,7 @@ on_request: installed_on_request?, options:)
         sandbox.allow_write_xcode
         sandbox.allow_write_cellar(formula)
         sandbox.deny_all_network_except_pipe(error_pipe) unless formula.network_access_allowed?(:build)
+        sandbox.allow_network_localhost
         sandbox.exec(*args)
       else
         exec(*args)
@@ -1172,6 +1173,7 @@ on_request: installed_on_request?, options:)
         sandbox.deny_write_homebrew_repository
         sandbox.allow_write_cellar(formula)
         sandbox.deny_all_network_except_pipe(error_pipe) unless formula.network_access_allowed?(:postinstall)
+        sandbox.allow_network_localhost
         Keg::KEG_LINK_DIRECTORIES.each do |dir|
           sandbox.allow_write_path "#{HOMEBREW_PREFIX}/#{dir}"
         end

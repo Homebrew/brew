@@ -94,6 +94,7 @@ module Homebrew
                 sandbox.allow_write_path(HOMEBREW_PREFIX/"var/log")
                 sandbox.allow_write_path(HOMEBREW_PREFIX/"var/run")
                 sandbox.deny_all_network_except_pipe(error_pipe) unless f.class.network_access_allowed?(:test)
+                sandbox.allow_network_localhost
                 sandbox.exec(*exec_args)
               else
                 exec(*exec_args)

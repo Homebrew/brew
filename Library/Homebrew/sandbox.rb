@@ -131,6 +131,13 @@ class Sandbox
     allow_network path:, type: :literal
   end
 
+  sig { void }
+  def allow_network_localhost
+    add_rule allow: true, operation: "network-inbound", filter: "local ip \"localhost:*\""
+    add_rule allow: true, operation: "network*", filter: "remote ip \"localhost:*\""
+    add_rule allow: true, operation: "network*", filter: "remote unix"
+  end
+
   sig { params(args: T.any(String, Pathname)).void }
   def exec(*args)
     seatbelt = Tempfile.new(["homebrew", ".sb"], HOMEBREW_TEMP)

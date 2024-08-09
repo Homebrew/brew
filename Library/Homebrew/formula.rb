@@ -80,7 +80,7 @@ class Formula
 
   SUPPORTED_NETWORK_ACCESS_PHASES = [:build, :test, :postinstall].freeze
   private_constant :SUPPORTED_NETWORK_ACCESS_PHASES
-  DEFAULT_NETWORK_ACCESS_ALLOWED = true
+  DEFAULT_NETWORK_ACCESS_ALLOWED = false
   private_constant :DEFAULT_NETWORK_ACCESS_ALLOWED
 
   # The name of this {Formula}.
