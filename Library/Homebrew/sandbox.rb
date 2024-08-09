@@ -11,6 +11,9 @@ class Sandbox
   SANDBOX_EXEC = "/usr/bin/sandbox-exec"
   private_constant :SANDBOX_EXEC
 
+  SANDBOX_DSL_RULES = [:write_to_temp, :signal, :network].freeze
+  SANDBOX_DSL_PHASES = [:build, :postinstall, :test].freeze
+
   sig { returns(T::Boolean) }
   def self.available?
     false
@@ -57,11 +60,20 @@ class Sandbox
 
   sig { void }
   def allow_write_temp_and_cache
-    allow_write_path "/private/tmp"
-    allow_write_path "/private/var/tmp"
     allow_write path: "^/private/var/folders/[^/]+/[^/]+/[C,T]/", type: :regex
     allow_write_path HOMEBREW_TEMP
     allow_write_path HOMEBREW_CACHE
+  end
+
+  sig { void }
+  def allow_write_global_temp
+    allow_write_path "/private/tmp"
+    allow_write_path "/private/var/tmp"
+  end
+
+  sig { void }
+  def deny_signal
+    add_rule allow: false, operation: "signal", filter: "target others"
   end
 
   sig { void }

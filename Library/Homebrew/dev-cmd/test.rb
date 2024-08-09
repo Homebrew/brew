@@ -93,7 +93,9 @@ module Homebrew
                 sandbox.allow_write_path(HOMEBREW_PREFIX/"var/homebrew/locks")
                 sandbox.allow_write_path(HOMEBREW_PREFIX/"var/log")
                 sandbox.allow_write_path(HOMEBREW_PREFIX/"var/run")
-                sandbox.deny_all_network_except_pipe(error_pipe) unless f.class.network_access_allowed?(:test)
+                sandbox.deny_all_network_except_pipe(error_pipe) unless f.allowed_in_sandbox?(:network, phase: :test)
+                sandbox.allow_write_global_temp if f.allowed_in_sandbox?(:write_to_temp, phase: :test)
+                sandbox.deny_signal unless f.allowed_in_sandbox?(:signal, phase: :test)
                 sandbox.exec(*exec_args)
               else
                 exec(*exec_args)

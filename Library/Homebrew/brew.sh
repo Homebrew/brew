@@ -53,12 +53,12 @@ if [[ -n "${HOMEBREW_MACOS}" ]]
 then
   HOMEBREW_DEFAULT_CACHE="${HOME}/Library/Caches/Homebrew"
   HOMEBREW_DEFAULT_LOGS="${HOME}/Library/Logs/Homebrew"
-  HOMEBREW_DEFAULT_TEMP="/private/tmp"
+  HOMEBREW_DEFAULT_TEMP="/private/tmp/homebrew"
 else
   CACHE_HOME="${HOMEBREW_XDG_CACHE_HOME:-${HOME}/.cache}"
   HOMEBREW_DEFAULT_CACHE="${CACHE_HOME}/Homebrew"
   HOMEBREW_DEFAULT_LOGS="${CACHE_HOME}/Homebrew/Logs"
-  HOMEBREW_DEFAULT_TEMP="/tmp"
+  HOMEBREW_DEFAULT_TEMP="/tmp/homebrew"
 fi
 
 realpath() {

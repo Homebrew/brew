@@ -943,7 +943,9 @@ on_request: installed_on_request?, options:)
         sandbox.allow_fossil
         sandbox.allow_write_xcode
         sandbox.allow_write_cellar(formula)
-        sandbox.deny_all_network_except_pipe(error_pipe) unless formula.network_access_allowed?(:build)
+        sandbox.deny_all_network_except_pipe(error_pipe) unless formula.allowed_in_sandbox?(:network, phase: :build)
+        sandbox.allow_write_global_temp if formula.allowed_in_sandbox?(:write_to_temp, phase: :build)
+        sandbox.deny_signal unless formula.allowed_in_sandbox?(:signal, phase: :build)
         sandbox.exec(*args)
       else
         exec(*args)
@@ -1171,10 +1173,14 @@ on_request: installed_on_request?, options:)
         sandbox.allow_write_xcode
         sandbox.deny_write_homebrew_repository
         sandbox.allow_write_cellar(formula)
-        sandbox.deny_all_network_except_pipe(error_pipe) unless formula.network_access_allowed?(:postinstall)
         Keg::KEG_LINK_DIRECTORIES.each do |dir|
           sandbox.allow_write_path "#{HOMEBREW_PREFIX}/#{dir}"
         end
+        unless formula.allowed_in_sandbox?(:network, phase: :postinstall)
+          sandbox.deny_all_network_except_pipe(error_pipe)
+        end
+        sandbox.allow_write_global_temp if formula.allowed_in_sandbox?(:write_to_temp, phase: :postinstall)
+        sandbox.deny_signal unless formula.allowed_in_sandbox?(:signal, phase: :postinstall)
         sandbox.exec(*args)
       else
         exec(*args)

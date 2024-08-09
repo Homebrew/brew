@@ -445,7 +445,7 @@ module Homebrew
                       "different volumes, as macOS has trouble moving symlinks across volumes when the target " \
                       "does not yet exist. This issue typically occurs when using FileVault or custom SSD " \
                       "configurations.",
-        default_text: "macOS: `/private/tmp`, Linux: `/tmp`.",
+        default_text: "macOS: `/private/tmp/homebrew`, Linux: `/tmp/homebrew`.",
         default:      HOMEBREW_DEFAULT_TEMP,
       },
       HOMEBREW_UPDATE_TO_TAG:                    {
