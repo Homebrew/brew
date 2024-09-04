@@ -726,8 +726,11 @@ EOS
         if ! git fetch --tags --force "${QUIET_ARGS[@]}" origin \
            "refs/heads/${UPSTREAM_BRANCH_DIR}:refs/remotes/origin/${UPSTREAM_BRANCH_DIR}" 2>>"${tmp_failure_file}"
         then
+          local fetch_error=
+          2>/dev/null read -rd '' fetch_error <"${tmp_failure_file}" || :
+
           # Reprint fetch errors to stderr
-          [[ -f "${tmp_failure_file}" ]] && cat "${tmp_failure_file}" 1>&2
+          echo -ne "${fetch_error:+${fetch_error}\\\n}" 1>&2
 
           if [[ "${UPSTREAM_SHA_HTTP_CODE}" == "404" ]]
           then
@@ -736,8 +739,7 @@ EOS
           else
             echo "Fetching ${DIR} failed!" >>"${update_failed_file}"
 
-            if [[ -f "${tmp_failure_file}" ]] &&
-               [[ "$(cat "${tmp_failure_file}")" == "fatal: couldn't find remote ref refs/heads/${UPSTREAM_BRANCH_DIR}" ]]
+            if [[ ${fetch_error} == "fatal: couldn't find remote ref refs/heads/${UPSTREAM_BRANCH_DIR}" ]]
             then
               echo "${DIR}" >>"${missing_remote_ref_dirs_file}"
             fi
