@@ -80,7 +80,7 @@ Secure password storage and syncing is provided by [1Password for Teams](https:/
 
 Flaky test detection and tracking is provided by [BuildPulse](https://buildpulse.io/).
 
-[![BuildPulse](https://github.com/Homebrew/brew/assets/1699443/87385e9a-6c47-4e59-b17e-fe083e945709)](https://buildpulse.io)
+[![BuildPulse](https://user-images.githubusercontent.com/2988/130445500-96f44c87-e7dd-4da0-9877-7e5b1618e144.png)](https://buildpulse.io)
 
 <https://brew.sh>'s DNS is [resolving with DNSimple](https://dnsimple.com/resolving/homebrew).
 
