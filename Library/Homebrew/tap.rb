@@ -1,4 +1,4 @@
-# typed: true
+# typed: true # rubocop:todo Sorbet/StrictSigil
 # frozen_string_literal: true
 
 require "api"
@@ -13,8 +13,6 @@ require "settings"
 # repository name without the leading `homebrew-`.
 class Tap
   extend Cachable
-
-  TAP_DIRECTORY = (HOMEBREW_LIBRARY/"Taps").freeze
 
   HOMEBREW_TAP_CASK_RENAMES_FILE = "cask_renames.json"
   private_constant :HOMEBREW_TAP_CASK_RENAMES_FILE
@@ -201,7 +199,7 @@ class Tap
     @repository = repository
     @name = "#{@user}/#{@repository}".downcase
     @full_name = "#{@user}/homebrew-#{@repository}"
-    @path = TAP_DIRECTORY/@full_name.downcase
+    @path = HOMEBREW_TAP_DIRECTORY/@full_name.downcase
     @git_repository = GitRepository.new(@path)
   end
 
@@ -286,7 +284,7 @@ class Tap
   sig { returns(String) }
   def repository_var_suffix
     @repository_var_suffix ||= path.to_s
-                                   .delete_prefix(TAP_DIRECTORY.to_s)
+                                   .delete_prefix(HOMEBREW_TAP_DIRECTORY.to_s)
                                    .tr("^A-Za-z0-9", "_")
                                    .upcase
   end
@@ -714,10 +712,10 @@ class Tap
       if formula_dir == path
         # We only want the top level here so we don't treat commands & casks as formulae.
         # Sharding is only supported in Formula/ and HomebrewFormula/.
-        formula_dir.children
+        Pathname.glob(formula_dir/"*.rb")
       else
-        formula_dir.find
-      end.select { formula_file?(_1) }
+        Pathname.glob(formula_dir/"**/*.rb")
+      end
     else
       []
     end
@@ -738,7 +736,7 @@ class Tap
   sig { returns(T::Array[Pathname]) }
   def cask_files
     @cask_files ||= if cask_dir.directory?
-      cask_dir.find.select { ruby_file?(_1) }
+      Pathname.glob(cask_dir/"**/*.rb")
     else
       []
     end
@@ -755,34 +753,40 @@ class Tap
     end
   end
 
-  # Check whether the file has a Ruby extension.
-  sig { params(file: Pathname).returns(T::Boolean) }
-  def ruby_file?(file)
-    file.extname == ".rb"
-  end
-  private :ruby_file?
+  RUBY_FILE_NAME_REGEX = %r{[^/]+\.rb}
+  private_constant :RUBY_FILE_NAME_REGEX
 
-  # Check whether the given path would present a {Formula} file in this {Tap}.
-  # Accepts either an absolute path or a path relative to this {Tap}'s path.
-  sig { params(file: T.any(String, Pathname)).returns(T::Boolean) }
+  ZERO_OR_MORE_SUBDIRECTORIES_REGEX = %r{(?:[^/]+/)*}
+  private_constant :ZERO_OR_MORE_SUBDIRECTORIES_REGEX
+
+  sig { returns(Regexp) }
+  def formula_file_regex
+    @formula_file_regex ||= case formula_dir
+    when path/"Formula"
+      %r{^Formula/#{ZERO_OR_MORE_SUBDIRECTORIES_REGEX.source}#{RUBY_FILE_NAME_REGEX.source}$}o
+    when path/"HomebrewFormula"
+      %r{^HomebrewFormula/#{ZERO_OR_MORE_SUBDIRECTORIES_REGEX.source}#{RUBY_FILE_NAME_REGEX.source}$}o
+    when path
+      /^#{RUBY_FILE_NAME_REGEX.source}$/o
+    else
+      raise ArgumentError, "Unexpected formula_dir: #{formula_dir}"
+    end
+  end
+  private :formula_file_regex
+
+  # accepts the relative path of a file from {Tap}'s path
+  sig { params(file: String).returns(T::Boolean) }
   def formula_file?(file)
-    file = Pathname.new(file) unless file.is_a? Pathname
-    file = file.expand_path(path)
-    return false unless ruby_file?(file)
-    return false if cask_file?(file)
-
-    file.to_s.start_with?("#{formula_dir}/")
+    file.match?(formula_file_regex)
   end
 
-  # Check whether the given path would present a {Cask} file in this {Tap}.
-  # Accepts either an absolute path or a path relative to this {Tap}'s path.
-  sig { params(file: T.any(String, Pathname)).returns(T::Boolean) }
-  def cask_file?(file)
-    file = Pathname.new(file) unless file.is_a? Pathname
-    file = file.expand_path(path)
-    return false unless ruby_file?(file)
+  CASK_FILE_REGEX = %r{^Casks/#{ZERO_OR_MORE_SUBDIRECTORIES_REGEX.source}#{RUBY_FILE_NAME_REGEX.source}$}
+  private_constant :CASK_FILE_REGEX
 
-    file.to_s.start_with?("#{cask_dir}/")
+  # accepts the relative path of a file from {Tap}'s path
+  sig { params(file: String).returns(T::Boolean) }
+  def cask_file?(file)
+    file.match?(CASK_FILE_REGEX)
   end
 
   # An array of all {Formula} names of this {Tap}.
@@ -1021,8 +1025,8 @@ class Tap
   # @api public
   sig { returns(T::Array[Tap]) }
   def self.installed
-    cache[:installed] ||= if TAP_DIRECTORY.directory?
-      TAP_DIRECTORY.subdirs.flat_map(&:subdirs).map { from_path(_1) }
+    cache[:installed] ||= if HOMEBREW_TAP_DIRECTORY.directory?
+      HOMEBREW_TAP_DIRECTORY.subdirs.flat_map(&:subdirs).map { from_path(_1) }
     else
       []
     end
@@ -1058,12 +1062,6 @@ class Tap
     odeprecated "`#{self}.names`"
 
     map(&:name).sort
-  end
-
-  # An array of all tap cmd directory {Pathname}s.
-  sig { returns(T::Array[Pathname]) }
-  def self.cmd_directories
-    Pathname.glob TAP_DIRECTORY/"*/*/cmd"
   end
 
   # An array of official taps that have been manually untapped
@@ -1435,12 +1433,16 @@ class CoreCaskTap < AbstractCoreTap
   def cask_files_by_name
     return super if Homebrew::EnvConfig.no_install_from_api?
 
-    @cask_files_by_name ||= Homebrew::API::Cask.all_casks.each_with_object({}) do |item, hash|
-      name, cask_hash = item
-      # If there's more than one item with the same path: use the longer one to prioritise more specific results.
-      existing_path = hash[name]
-      new_path = path/cask_hash["ruby_source_path"]
-      hash[name] = new_path if existing_path.nil? || existing_path.to_s.length < new_path.to_s.length
+    @cask_files_by_name ||= begin
+      tap_path = path.to_s
+      Homebrew::API::Cask.all_casks.each_with_object({}) do |item, hash|
+        name, cask_hash = item
+        # If there's more than one item with the same path: use the longer one to prioritise more specific results.
+        existing_path = hash[name]
+        # Pathname equivalent is slow in a tight loop
+        new_path = File.join(tap_path, cask_hash.fetch("ruby_source_path"))
+        hash[name] = Pathname(new_path) if existing_path.nil? || existing_path.to_s.length < new_path.length
+      end
     end
   end
 

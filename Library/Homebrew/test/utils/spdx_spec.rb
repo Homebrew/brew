@@ -175,20 +175,20 @@ RSpec.describe SPDX do
     end
 
     it "returns multiple licenses with :any" do
-      expect(described_class.license_expression_to_string({ any_of: ["MIT", "0BSD"] })).to eq "MIT or 0BSD"
+      expect(described_class.license_expression_to_string({ any_of: ["MIT", "0BSD"] })).to eq "MIT OR 0BSD"
     end
 
     it "returns multiple licenses with :all" do
-      expect(described_class.license_expression_to_string({ all_of: ["MIT", "0BSD"] })).to eq "MIT and 0BSD"
+      expect(described_class.license_expression_to_string({ all_of: ["MIT", "0BSD"] })).to eq "MIT AND 0BSD"
     end
 
     it "returns multiple licenses with plus" do
-      expect(described_class.license_expression_to_string({ any_of: ["MIT", "EPL-1.0+"] })).to eq "MIT or EPL-1.0+"
+      expect(described_class.license_expression_to_string({ any_of: ["MIT", "EPL-1.0+"] })).to eq "MIT OR EPL-1.0+"
     end
 
     it "returns license and exception" do
       license_expression = { "MIT" => { with: "LLVM-exception" } }
-      expect(described_class.license_expression_to_string(license_expression)).to eq "MIT with LLVM-exception"
+      expect(described_class.license_expression_to_string(license_expression)).to eq "MIT WITH LLVM-exception"
     end
 
     it "returns licenses and exceptions for complex license expressions" do
@@ -198,16 +198,17 @@ RSpec.describe SPDX do
         all_of: ["0BSD", "Zlib"], # rubocop:disable Style/HashAsLastArrayItem
         "curl" => { with: "LLVM-exception" },
       ] }
-      result = "MIT or Public Domain or (0BSD and Zlib) or (curl with LLVM-exception)"
+      result = "MIT OR LicenseRef-Homebrew-public-domain OR (0BSD AND Zlib) OR (curl WITH LLVM-exception)"
       expect(described_class.license_expression_to_string(license_expression)).to eq result
     end
 
     it "returns :public_domain" do
-      expect(described_class.license_expression_to_string(:public_domain)).to eq "Public Domain"
+      expect(described_class.license_expression_to_string(:public_domain)).to eq "LicenseRef-Homebrew-public-domain"
     end
 
     it "returns :cannot_represent" do
-      expect(described_class.license_expression_to_string(:cannot_represent)).to eq "Cannot Represent"
+      result = "LicenseRef-Homebrew-cannot-represent"
+      expect(described_class.license_expression_to_string(:cannot_represent)).to eq result
     end
   end
 
@@ -223,9 +224,20 @@ RSpec.describe SPDX do
       })
     end
 
+    it "returns the correct result for 'AND', 'OR' and 'WITH'" do
+      expr_string = "Apache-2.0 AND (Apache-2.0 WITH LLVM-exception) AND (MIT OR NCSA)"
+      expect(described_class.string_to_license_expression(expr_string)).to eq({
+        all_of: [
+          "Apache-2.0",
+          { "Apache-2.0" => { with: "LLVM-exception" } },
+          { any_of: ["MIT", "NCSA"] },
+        ],
+      })
+    end
+
     # rubocop:disable Style/HashAsLastArrayItem
     it "handles nested brackets" do
-      expect(described_class.string_to_license_expression("A and (B or (C and D))")).to eq({
+      expect(described_class.string_to_license_expression("A AND (B OR (C AND D))")).to eq({
         all_of: [
           "A",
           any_of: [
@@ -236,6 +248,15 @@ RSpec.describe SPDX do
       })
     end
     # rubocop:enable Style/HashAsLastArrayItem
+
+    it "returns :public_domain" do
+      expect(described_class.string_to_license_expression("LicenseRef-Homebrew-public-domain")).to eq :public_domain
+    end
+
+    it "returns :cannot_represent" do
+      expr_string = "LicenseRef-Homebrew-cannot-represent"
+      expect(described_class.string_to_license_expression(expr_string)).to eq :cannot_represent
+    end
   end
 
   describe ".license_version_info" do

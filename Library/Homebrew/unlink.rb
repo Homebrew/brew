@@ -1,9 +1,10 @@
-# typed: true
+# typed: strict
 # frozen_string_literal: true
 
 module Homebrew
   # Provides helper methods for unlinking formulae and kegs with consistent output.
   module Unlink
+    sig { params(formula: Formula, verbose: T::Boolean).void }
     def self.unlink_versioned_formulae(formula, verbose: false)
       formula.versioned_formulae
              .select(&:keg_only?)
@@ -15,6 +16,7 @@ module Homebrew
       end
     end
 
+    sig { params(keg: Keg, dry_run: T::Boolean, verbose: T::Boolean).void }
     def self.unlink(keg, dry_run: false, verbose: false)
       options = { dry_run:, verbose: }
 

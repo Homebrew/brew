@@ -1,4 +1,4 @@
-# typed: true # This cannot be `# typed: strict` due to the use of `undef`.
+# typed: true # rubocop:disable Sorbet/StrictSigil
 # frozen_string_literal: true
 
 require "abstract_command"

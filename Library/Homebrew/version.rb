@@ -731,12 +731,10 @@ class Version
   def to_s = version.to_s
 
   sig { params(options: T.untyped).returns(String) }
-  def to_json(*options)
-    T.unsafe(version).to_json(*options)
-  end
+  def to_json(*options) = version.to_json(*options)
 
   sig { params(method: T.any(Symbol, String), include_all: T::Boolean).returns(T::Boolean) }
-  def respond_to?(method, include_all = T.unsafe(nil))
+  def respond_to?(method, include_all = false)
     return !null? if ["to_str", :to_str].include?(method)
 
     super

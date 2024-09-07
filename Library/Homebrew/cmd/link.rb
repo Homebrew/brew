@@ -1,4 +1,4 @@
-# typed: true
+# typed: strict
 # frozen_string_literal: true
 
 require "abstract_command"
@@ -123,6 +123,7 @@ module Homebrew
 
       private
 
+      sig { params(keg: Keg).void }
       def puts_keg_only_path_message(keg)
         bin = keg/"bin"
         sbin = keg/"sbin"

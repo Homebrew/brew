@@ -1,4 +1,4 @@
-# typed: true
+# typed: true # rubocop:todo Sorbet/StrictSigil
 # frozen_string_literal: true
 
 require "warning"
@@ -9,13 +9,7 @@ module Warnings
     parser_syntax: [
       %r{warning: parser/current is loading parser/ruby\d+, which recognizes},
       /warning: \d+\.\d+\.\d+-compliant syntax, but you are running \d+\.\d+\.\d+\./,
-      # FIXME: https://github.com/errata-ai/vale/issues/818
-      # <!-- vale off -->
       %r{warning: please see https://github\.com/whitequark/parser#compatibility-with-ruby-mri\.},
-      # <!-- vale on -->
-    ],
-    default_gems:  [
-      /warning: .+\.rb was loaded from the standard library, .+ default gems since Ruby \d+\.\d+\.\d+\./,
     ],
   }.freeze
 

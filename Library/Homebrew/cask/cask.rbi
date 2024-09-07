@@ -46,10 +46,14 @@ module Cask
 
     def on_system_blocks_exist?; end
 
+    sig { returns(T.nilable(MacOSVersion)) }
+    def on_system_block_min_os; end
+
     def sha256; end
 
     def staged_path; end
 
+    sig { returns(T.nilable(::Cask::URL)) }
     def url; end
 
     def version; end

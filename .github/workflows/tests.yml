@@ -211,43 +211,6 @@ jobs:
         working-directory: ${{ steps.set-up-homebrew.outputs.repository-path }}
         run: git diff --stat --exit-code Library/Homebrew/vendor/bundle/ruby
 
-  docker:
-    needs: syntax
-    runs-on: ubuntu-22.04
-    steps:
-      - name: Set up Homebrew
-        id: set-up-homebrew
-        uses: Homebrew/actions/setup-homebrew@master
-        with:
-          core: false
-          cask: false
-          test-bot: false
-
-      - name: Build Docker image
-        working-directory: ${{ steps.set-up-homebrew.outputs.repository-path }}
-        run: |
-          docker build -t brew --build-arg=version=22.04 \
-               --label org.opencontainers.image.created="$(date --rfc-3339=seconds --utc)" \
-               --label org.opencontainers.image.url="https://brew.sh" \
-               --label org.opencontainers.image.documentation="https://docs.brew.sh" \
-               --label org.opencontainers.image.source="https://github.com/${GITHUB_REPOSITORY}" \
-               --label org.opencontainers.image.revision="${GITHUB_SHA}" \
-               --label org.opencontainers.image.vendor="${GITHUB_REPOSITORY_OWNER}" \
-               --label org.opencontainers.image.licenses="BSD-2-Clause" \
-               .
-
-      - name: Deploy the Docker image to GitHub Packages and Docker Hub
-        if: github.ref == 'refs/heads/master'
-        run: |
-          echo ${{secrets.HOMEBREW_BREW_GITHUB_PACKAGES_TOKEN}} |
-            docker login ghcr.io -u BrewTestBot --password-stdin
-          docker tag brew "ghcr.io/homebrew/ubuntu22.04:master"
-          docker push "ghcr.io/homebrew/ubuntu22.04:master"
-          echo ${{secrets.HOMEBREW_BREW_DOCKER_TOKEN}} |
-            docker login -u brewtestbot --password-stdin
-          docker tag brew "homebrew/ubuntu22.04:master"
-          docker push "homebrew/ubuntu22.04:master"
-
   update-test:
     name: ${{ matrix.name }}
     runs-on: ${{ matrix.runs-on }}

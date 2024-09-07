@@ -132,35 +132,51 @@ RSpec.describe RuboCop::Cop::FormulaAuditStrict::Text do
       RUBY
     end
 
-    it 'reports an offense & autocorrects if "\#{bin}/<formula_name>" or other dashed binaries too are present' do
-      expect_offense(<<~RUBY, "/homebrew-core/Formula/foo.rb")
-        class Foo < Formula
-          test do
-            system "\#{bin}/foo", "-v"
-                   ^^^^^^^^^^^^ FormulaAuditStrict/Text: Use `bin/"foo"` instead of `"\#{bin}/foo"`
-            system "\#{bin}/foo-bar", "-v"
-                   ^^^^^^^^^^^^^^^^ FormulaAuditStrict/Text: Use `bin/"foo-bar"` instead of `"\#{bin}/foo-bar"`
+    context "for interpolated bin paths" do
+      it 'reports an offense & autocorrects if "\#{bin}/<formula_name>" or other dashed binaries too are present' do
+        expect_offense(<<~RUBY, "/homebrew-core/Formula/foo.rb")
+          class Foo < Formula
+            test do
+              system "\#{bin}/foo", "-v"
+                     ^^^^^^^^^^^^ FormulaAuditStrict/Text: Use `bin/"foo"` instead of `"\#{bin}/foo"`
+              system "\#{bin}/foo-bar", "-v"
+                     ^^^^^^^^^^^^^^^^ FormulaAuditStrict/Text: Use `bin/"foo-bar"` instead of `"\#{bin}/foo-bar"`
+            end
           end
-        end
-      RUBY
+        RUBY
 
-      expect_correction(<<~RUBY)
-        class Foo < Formula
-          test do
-            system bin/"foo", "-v"
-            system bin/"foo-bar", "-v"
+        expect_correction(<<~RUBY)
+          class Foo < Formula
+            test do
+              system bin/"foo", "-v"
+              system bin/"foo-bar", "-v"
+            end
           end
-        end
-      RUBY
+        RUBY
+      end
+
+      it 'does not report an offense if \#{bin}/foo and then a space and more text' do
+        expect_no_offenses(<<~RUBY, "/homebrew-core/Formula/foo.rb")
+          class Foo < Formula
+            test do
+              shell_output("\#{bin}/foo --version")
+              assert_match "help", shell_output("\#{bin}/foo-something --help 2>&1")
+              assert_match "OK", shell_output("\#{bin}/foo-something_else --check 2>&1")
+            end
+          end
+        RUBY
+      end
     end
 
-    it 'does not report an offense if \#{bin}/foo and then a space and more text' do
+    it 'does not report an offense if "\#{bin}/foo" is in a word array' do
       expect_no_offenses(<<~RUBY, "/homebrew-core/Formula/foo.rb")
         class Foo < Formula
           test do
-            shell_output("\#{bin}/foo --version")
-            assert_match "help", shell_output("\#{bin}/foo-something --help 2>&1")
-            assert_match "OK", shell_output("\#{bin}/foo-something_else --check 2>&1")
+            cmd = %W[
+              \#{bin}/foo
+              version
+            ]
+            assert_match version.to_s, shell_output(cmd)
           end
         end
       RUBY

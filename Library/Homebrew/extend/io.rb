@@ -1,7 +1,8 @@
-# typed: true
+# typed: strict
 # frozen_string_literal: true
 
 class IO
+  sig { params(sep: String).returns(String) }
   def readline_nonblock(sep = $INPUT_RECORD_SEPARATOR)
     line = +""
     buffer = +""

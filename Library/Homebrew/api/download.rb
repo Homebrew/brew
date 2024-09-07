@@ -1,4 +1,4 @@
-# typed: true
+# typed: strict
 # frozen_string_literal: true
 
 require "downloadable"
@@ -23,7 +23,7 @@ module Homebrew
       }
       def initialize(url, checksum, mirrors: [], cache: nil)
         super()
-        @url = URL.new(url, using: API::DownloadStrategy)
+        @url = T.let(URL.new(url, using: API::DownloadStrategy), URL)
         @checksum = checksum
         @mirrors = mirrors
         @cache = cache

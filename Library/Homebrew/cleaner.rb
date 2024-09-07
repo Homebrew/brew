@@ -1,4 +1,4 @@
-# typed: true
+# typed: strict
 # frozen_string_literal: true
 
 # Cleans a newly installed keg.
@@ -113,7 +113,7 @@ class Cleaner
   # pointless conflicts with other formulae. They are removed by Debian,
   # Arch & MacPorts amongst other packagers as well. The files are
   # created as part of installing any Perl module.
-  PERL_BASENAMES = Set.new(%w[perllocal.pod .packlist]).freeze
+  PERL_BASENAMES = T.let(Set.new(%w[perllocal.pod .packlist]).freeze, T::Set[String])
 
   # Clean a top-level (`bin`, `sbin`, `lib`) directory, recursively, by fixing file
   # permissions and removing .la files, unless the files (or parent

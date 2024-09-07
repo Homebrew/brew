@@ -28,6 +28,7 @@ completions
 config
 contributions
 create
+debugger
 deps
 desc
 determine-test-runners

@@ -1,4 +1,4 @@
-# typed: true
+# typed: strict
 # frozen_string_literal: true
 
 require "abstract_command"
@@ -39,12 +39,14 @@ module Homebrew
 
       private
 
+      sig { params(formula: Formula).returns(T::Boolean) }
       def installed_on_request?(formula)
-        formula.any_installed_keg.tab.installed_on_request
+        formula.any_installed_keg&.tab&.installed_on_request
       end
 
+      sig { params(formula: Formula).returns(T::Boolean) }
       def installed_as_dependency?(formula)
-        formula.any_installed_keg.tab.installed_as_dependency
+        formula.any_installed_keg&.tab&.installed_as_dependency
       end
     end
   end

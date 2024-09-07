@@ -182,7 +182,7 @@ RSpec.describe Cask::Audit, :cask do
 
     describe "token validation" do
       let(:strict) { true }
-      let(:only) { ["token_valid"] }
+      let(:only) { ["token"] }
       let(:cask) do
         tmp_cask cask_token.to_s, <<~RUBY
           cask '#{cask_token}' do
@@ -200,7 +200,7 @@ RSpec.describe Cask::Audit, :cask do
         let(:cask_token) { "Upper-Case" }
 
         it "fails" do
-          expect(run).to error_with(/lowercase/)
+          expect(run).to error_with(/not contain uppercase/)
         end
       end
 
@@ -208,15 +208,7 @@ RSpec.describe Cask::Audit, :cask do
         let(:cask_token) { "ascii⌘" }
 
         it "fails" do
-          expect(run).to error_with(/contains non-ascii characters/)
-        end
-      end
-
-      context "when cask token has +" do
-        let(:cask_token) { "app++" }
-
-        it "fails" do
-          expect(run).to error_with(/\+ should be replaced by -plus-/)
+          expect(run).to error_with(/not contain non-ASCII characters/)
         end
       end
 
@@ -240,7 +232,7 @@ RSpec.describe Cask::Audit, :cask do
         let(:cask_token) { "app@stuff@beta" }
 
         it "fails" do
-          expect(run).to error_with(/@ unrelated to versioning should be replaced by -at-/)
+          expect(run).to error_with(/not contain multiple @ symbols/)
         end
       end
 
@@ -248,7 +240,7 @@ RSpec.describe Cask::Audit, :cask do
         let(:cask_token) { "app-@beta" }
 
         it "fails" do
-          expect(run).to error_with(/should not contain a hyphen followed by @/)
+          expect(run).to error_with(/not contain a hyphen followed by an @/)
         end
       end
 
@@ -256,7 +248,7 @@ RSpec.describe Cask::Audit, :cask do
         let(:cask_token) { "app@-beta" }
 
         it "fails" do
-          expect(run).to error_with(/should not contain @ followed by a hyphen/)
+          expect(run).to error_with(/not contain an @ followed by a hyphen/)
         end
       end
 
@@ -264,23 +256,7 @@ RSpec.describe Cask::Audit, :cask do
         let(:cask_token) { "app stuff" }
 
         it "fails" do
-          expect(run).to error_with(/whitespace should be replaced by hyphens/)
-        end
-      end
-
-      context "when cask token has underscores" do
-        let(:cask_token) { "app_stuff" }
-
-        it "fails" do
-          expect(run).to error_with(/underscores should be replaced by hyphens/)
-        end
-      end
-
-      context "when cask token has non-alphanumeric characters" do
-        let(:cask_token) { "app(stuff)" }
-
-        it "fails" do
-          expect(run).to error_with(/alphanumeric characters, hyphens and @/)
+          expect(run).to error_with(/not contain whitespace/)
         end
       end
 
@@ -288,7 +264,7 @@ RSpec.describe Cask::Audit, :cask do
         let(:cask_token) { "app--stuff" }
 
         it "fails" do
-          expect(run).to error_with(/should not contain double hyphens/)
+          expect(run).to error_with(/not contain double hyphens/)
         end
       end
 
@@ -296,7 +272,7 @@ RSpec.describe Cask::Audit, :cask do
         let(:cask_token) { "-app" }
 
         it "fails" do
-          expect(run).to error_with(/should not have leading or trailing hyphens/)
+          expect(run).to error_with(/not contain a leading hyphen/)
         end
       end
 
@@ -304,7 +280,7 @@ RSpec.describe Cask::Audit, :cask do
         let(:cask_token) { "app-" }
 
         it "fails" do
-          expect(run).to error_with(/should not have leading or trailing hyphens/)
+          expect(run).to error_with(/not contain a trailing hyphen/)
         end
       end
     end

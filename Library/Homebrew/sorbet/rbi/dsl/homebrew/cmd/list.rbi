@@ -12,6 +12,9 @@ end
 
 class Homebrew::Cmd::List::Args < Homebrew::CLI::Args
   sig { returns(T::Boolean) }
+  def built_from_source?; end
+
+  sig { returns(T::Boolean) }
   def cask?; end
 
   sig { returns(T::Boolean) }
@@ -40,6 +43,9 @@ class Homebrew::Cmd::List::Args < Homebrew::CLI::Args
 
   sig { returns(T::Boolean) }
   def pinned?; end
+
+  sig { returns(T::Boolean) }
+  def poured_from_bottle?; end
 
   sig { returns(T::Boolean) }
   def r?; end

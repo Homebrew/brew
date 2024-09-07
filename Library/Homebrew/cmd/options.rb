@@ -1,4 +1,4 @@
-# typed: true
+# typed: strict
 # frozen_string_literal: true
 
 require "abstract_command"
@@ -54,6 +54,7 @@ module Homebrew
 
       private
 
+      sig { params(formulae: T::Array[Formula]).void }
       def puts_options(formulae)
         formulae.each do |f|
           next if f.options.empty?

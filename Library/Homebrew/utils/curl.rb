@@ -1,4 +1,4 @@
-# typed: true
+# typed: true # rubocop:todo Sorbet/StrictSigil
 # frozen_string_literal: true
 
 require "open3"
@@ -11,6 +11,9 @@ module Utils
   module Curl
     include SystemCommand::Mixin
     extend SystemCommand::Mixin
+    extend T::Helpers
+
+    requires_ancestor { Kernel }
 
     # Error returned when the server sent data curl could not parse.
     CURL_WEIRD_SERVER_REPLY_EXIT_CODE = 8
@@ -65,7 +68,7 @@ module Utils
         show_error:      T.nilable(T::Boolean),
         user_agent:      T.any(String, Symbol, NilClass),
         referer:         T.nilable(String),
-      ).returns(T::Array[T.untyped])
+      ).returns(T::Array[String])
     }
     def curl_args(
       *extra_args,
@@ -129,7 +132,7 @@ module Utils
 
       args << "--referer" << referer if referer.present?
 
-      args + extra_args
+      (args + extra_args).map(&:to_s)
     end
 
     def curl_with_workarounds(

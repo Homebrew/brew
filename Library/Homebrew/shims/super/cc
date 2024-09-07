@@ -5,6 +5,12 @@ then
   echo "${0##*/}: The build tool has reset ENV; --env=std required." >&2
   exit 1
 fi
+unset HOMEBREW_LD_LIBRARY_PATH
+if [[ -n "${LD_LIBRARY_PATH+set}" ]]
+then
+  export HOMEBREW_LD_LIBRARY_PATH="${LD_LIBRARY_PATH}"
+fi
+unset LD_LIBRARY_PATH
 unset RUBYLIB
 exec "${HOMEBREW_RUBY_PATH}" --enable-frozen-string-literal --disable=gems,did_you_mean,rubyopt -x "$0" "$@"
 #!/usr/bin/env ruby -W0
@@ -288,7 +294,6 @@ class Cmd
 
     return args if !refurbish_args? && !configure?
 
-    args << "-pipe"
     args << "-w" unless configure?
     args << "-#{ENV["HOMEBREW_OPTIMIZATION_LEVEL"]}"
     args.concat(optflags) unless runtime_cpu_detection?
@@ -324,11 +329,13 @@ class Cmd
       args << "-no_weak_imports" if no_weak_imports?
       args << "-no_fixup_chains" if no_fixup_chains?
       args << "-oso_prefix" << formula_buildpath if oso_prefix? && formula_buildpath
+      args << "-ld_classic" if ld_classic?
     when :ccld, :cxxld
       args << "-Wl,-headerpad_max_install_names"
       args << "-Wl,-no_weak_imports" if no_weak_imports?
       args << "-Wl,-no_fixup_chains" if no_fixup_chains?
       args << "-Wl,-oso_prefix,#{formula_buildpath}" if oso_prefix? && formula_buildpath
+      args << "-Wl,-ld_classic" if ld_classic?
     end
     args
   end
@@ -441,6 +448,10 @@ class Cmd
     config.include?("o") && !configure?
   end
 
+  def ld_classic?
+    config.include?("c") && calls_ld? && @args.any? { |arg| arg.match?(/^(-Wl,)?-dead_strip_dylibs$/) }
+  end
+
   def calls_ld?
     return true if mode == :ld
     return false unless [:ccld, :cxxld].include?(mode)
@@ -512,6 +523,8 @@ if __FILE__ == $PROGRAM_NAME
     # those values are not allowed
     ENV["HOMEBREW_CC"] = "clang"
   end
+
+  ENV["LD_LIBRARY_PATH"] = ENV["HOMEBREW_LD_LIBRARY_PATH"]
 
   ####################################################################### main
 

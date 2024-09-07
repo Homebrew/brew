@@ -149,15 +149,6 @@ module Stdenv
     append "CXX", "-stdlib=libc++" if compiler == :clang
   end
 
-  sig { returns(Integer) }
-  def make_jobs
-    Homebrew::EnvConfig.make_jobs.to_i
-  end
-
-  # This method does nothing in {Stdenv} since there is no argument refurbishment.
-  sig { void }
-  def refurbish_args; end
-
   private
 
   sig { params(before: Regexp, after: String).void }

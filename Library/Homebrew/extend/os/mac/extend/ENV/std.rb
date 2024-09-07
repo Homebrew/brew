@@ -1,4 +1,4 @@
-# typed: true
+# typed: true # rubocop:disable Sorbet/StrictSigil
 # frozen_string_literal: true
 
 module Stdenv

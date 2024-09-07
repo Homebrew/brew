@@ -13,6 +13,12 @@ SimpleCov.start do
   # enables branch coverage as well as, the default, line coverage
   enable_coverage :branch
 
+  # enables coverage for `eval`ed code
+  enable_coverage_for_eval
+
+  # ensure that we always default to line coverage
+  primary_coverage :line
+
   # We manage the result cache ourselves and the default of 10 minutes can be
   # too low causing results from some integration tests to be dropped. This
   # causes random fluctuations in test coverage.

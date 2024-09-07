@@ -1,4 +1,4 @@
-# typed: true
+# typed: true # rubocop:todo Sorbet/StrictSigil
 # frozen_string_literal: true
 
 module OS
@@ -315,6 +315,11 @@ module OS
             Install the Command Line Tools for Xcode 11.3.1 from:
               #{Formatter.url(MacOS::Xcode::APPLE_DEVELOPER_DOWNLOAD_URL)}
           EOS
+        elsif OS::Mac.version.prerelease?
+          <<~EOS
+            Install the Command Line Tools for Xcode #{minimum_version.split(".").first} from:
+              #{Formatter.url(MacOS::Xcode::APPLE_DEVELOPER_DOWNLOAD_URL)}
+          EOS
         else
           <<~EOS
             Install the Command Line Tools:
@@ -325,6 +330,8 @@ module OS
 
       sig { returns(String) }
       def self.update_instructions
+        return installation_instructions if OS::Mac.version.prerelease?
+
         software_update_location = if MacOS.version >= "13"
           "System Settings"
         elsif MacOS.version >= "10.14"

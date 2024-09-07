@@ -1,4 +1,4 @@
-# typed: true
+# typed: true # rubocop:disable Sorbet/StrictSigil
 # frozen_string_literal: true
 
 module Homebrew
@@ -130,6 +130,9 @@ module Homebrew
       def check_xcode_up_to_date
         return unless MacOS::Xcode.outdated?
 
+        # avoid duplicate very similar messages
+        return if MacOS::Xcode.below_minimum_version?
+
         # CI images are going to end up outdated so don't complain when
         # `brew test-bot` runs `brew doctor` in the CI for the Homebrew/brew
         # repository. This only needs to support whatever CI providers
@@ -160,6 +163,9 @@ module Homebrew
 
       def check_clt_up_to_date
         return unless MacOS::CLT.outdated?
+
+        # avoid duplicate very similar messages
+        return if MacOS::CLT.below_minimum_version?
 
         # CI images are going to end up outdated so don't complain when
         # `brew test-bot` runs `brew doctor` in the CI for the Homebrew/brew

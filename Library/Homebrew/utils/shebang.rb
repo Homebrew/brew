@@ -4,6 +4,10 @@
 module Utils
   # Helper functions for manipulating shebang lines.
   module Shebang
+    extend T::Helpers
+
+    requires_ancestor { Kernel }
+
     module_function
 
     # Specification on how to rewrite a given shebang.

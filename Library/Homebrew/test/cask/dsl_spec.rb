@@ -501,7 +501,7 @@ RSpec.describe Cask::DSL, :cask do
 
       it "allows installer manual to be specified" do
         installer = cask.artifacts.first
-        expect(installer).to be_a(Cask::Artifact::Installer::ManualInstaller)
+        expect(installer.instance_variable_get(:@manual_install)).to be true
         expect(installer.path).to eq(Pathname("Caffeine.app"))
       end
     end

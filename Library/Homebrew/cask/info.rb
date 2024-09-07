@@ -18,6 +18,8 @@ module Cask
       output << "#{repo}\n" if repo
       output << name_info(cask)
       output << desc_info(cask)
+      deps = deps_info(cask)
+      output << deps if deps
       language = language_info(cask)
       output << language if language
       output << "#{artifact_info(cask)}\n"
@@ -73,6 +75,22 @@ module Cask
       <<~EOS
         #{ohai_title("Description")}
         #{cask.desc.nil? ? Formatter.error("None") : cask.desc}
+      EOS
+    end
+
+    sig { params(cask: Cask).returns(T.nilable(String)) }
+    def self.deps_info(cask)
+      depends_on = cask.depends_on
+
+      formula_deps = Array(depends_on[:formula]).map(&:to_s)
+      cask_deps = Array(depends_on[:cask]).map { |dep| "#{dep} (cask)" }
+
+      all_deps = formula_deps + cask_deps
+      return if all_deps.empty?
+
+      <<~EOS
+        #{ohai_title("Dependencies")}
+        #{all_deps.join(", ")}
       EOS
     end
 

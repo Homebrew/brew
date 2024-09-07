@@ -134,7 +134,7 @@ module Homebrew
             next
           end
           Migrator.migrate_if_needed(formula, force: args.force?)
-          Homebrew.reinstall_formula(
+          Homebrew::Reinstall.reinstall_formula(
             formula,
             flags:                      args.flags_only,
             installed_on_request:       args.named.present?,

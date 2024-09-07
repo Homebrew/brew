@@ -65,23 +65,21 @@ RSpec.describe Homebrew::Livecheck do
     end
   end
 
-  describe "::formula_name" do
-    it "returns the name of the formula" do
-      expect(livecheck.formula_name(f)).to eq("test")
+  describe "::package_or_resource_name" do
+    it "returns the name of a formula" do
+      expect(livecheck.package_or_resource_name(f)).to eq("test")
     end
 
-    it "returns the full name" do
-      expect(livecheck.formula_name(f, full_name: true)).to eq("test")
-    end
-  end
-
-  describe "::cask_name" do
-    it "returns the token of the cask" do
-      expect(livecheck.cask_name(c)).to eq("test")
+    it "returns the full name of a formula" do
+      expect(livecheck.package_or_resource_name(f, full_name: true)).to eq("test")
     end
 
-    it "returns the full name of the cask" do
-      expect(livecheck.cask_name(c, full_name: true)).to eq("test")
+    it "returns the token of a cask" do
+      expect(livecheck.package_or_resource_name(c)).to eq("test")
+    end
+
+    it "returns the full name of a cask" do
+      expect(livecheck.package_or_resource_name(c, full_name: true)).to eq("test")
     end
   end
 
@@ -169,9 +167,6 @@ RSpec.describe Homebrew::Livecheck do
     end
 
     it "returns nil when not given a string or valid symbol" do
-      expect(livecheck.livecheck_url_to_string(nil, f_livecheck_url)).to be_nil
-      expect(livecheck.livecheck_url_to_string(nil, c_livecheck_url)).to be_nil
-      expect(livecheck.livecheck_url_to_string(nil, r_livecheck_url)).to be_nil
       expect(livecheck.livecheck_url_to_string(:invalid_symbol, f_livecheck_url)).to be_nil
       expect(livecheck.livecheck_url_to_string(:invalid_symbol, c_livecheck_url)).to be_nil
       expect(livecheck.livecheck_url_to_string(:invalid_symbol, r_livecheck_url)).to be_nil

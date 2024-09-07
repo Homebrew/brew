@@ -1,4 +1,4 @@
-# typed: true
+# typed: true # rubocop:todo Sorbet/StrictSigil
 # frozen_string_literal: true
 
 class Keg
@@ -96,7 +96,7 @@ class Keg
     end
     relocation.add_replacement_pair(:library, HOMEBREW_LIBRARY.to_s, LIBRARY_PLACEHOLDER, path: true)
     relocation.add_replacement_pair(:perl,
-                                    %r{\A#!(?:/usr/bin/perl\d\.\d+|#{HOMEBREW_PREFIX}/opt/perl/bin/perl)( |$)}o,
+                                    %r{\A#![ \t]*(?:/usr/bin/perl\d\.\d+|#{HOMEBREW_PREFIX}/opt/perl/bin/perl)( |$)}o,
                                     "#!#{PERL_PLACEHOLDER}\\1")
     relocation.add_replacement_pair(:java, JAVA_REGEX, JAVA_PLACEHOLDER)
 

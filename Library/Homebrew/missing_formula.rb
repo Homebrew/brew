@@ -1,4 +1,4 @@
-# typed: true
+# typed: strict
 # frozen_string_literal: true
 
 require "formulary"
@@ -7,11 +7,13 @@ module Homebrew
   # Helper module for checking if there is a reason a formula is missing.
   module MissingFormula
     class << self
+      sig { params(name: String, silent: T::Boolean, show_info: T::Boolean).returns(T.nilable(String)) }
       def reason(name, silent: false, show_info: false)
         cask_reason(name, silent:, show_info:) || disallowed_reason(name) ||
           tap_migration_reason(name) || deleted_reason(name, silent:)
       end
 
+      sig { params(name: String).returns(T.nilable(String)) }
       def disallowed_reason(name)
         case name.downcase
         when "gem", /^rubygems?$/ then <<~EOS
@@ -93,6 +95,7 @@ module Homebrew
       end
       alias generic_disallowed_reason disallowed_reason
 
+      sig { params(name: String).returns(T.nilable(String)) }
       def tap_migration_reason(name)
         message = T.let(nil, T.nilable(String))
 
@@ -127,6 +130,7 @@ module Homebrew
         message
       end
 
+      sig { params(name: String, silent: T::Boolean).returns(T.nilable(String)) }
       def deleted_reason(name, silent: false)
         path = Formulary.path name
         return if File.exist? path

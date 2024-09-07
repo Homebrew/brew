@@ -13,6 +13,7 @@ on:
   issue_comment:
 
 permissions:
+  contents: write
   issues: write
   pull-requests: write
 
@@ -45,6 +46,7 @@ jobs:
             recent activity. It will be closed if no further activity occurs.
           exempt-issue-labels: "gsoc-outreachy,help wanted,in progress"
           exempt-pr-labels: "gsoc-outreachy,help wanted,in progress"
+          delete-branch: true
 
   bump-pr-stale:
     if: >
@@ -68,3 +70,4 @@ jobs:
             pull request open, add a `help wanted` or `in progress` label.
           exempt-pr-labels: "help wanted,in progress"
           any-of-labels: "bump-formula-pr,bump-cask-pr"
+          delete-branch: true

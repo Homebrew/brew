@@ -6,8 +6,6 @@ module Homebrew
     # The `Livecheck::SkipConditions` module primarily contains methods that
     # check for various formula/cask/resource conditions where a check should be skipped.
     module SkipConditions
-      module_function
-
       sig {
         params(
           package_or_resource: T.any(Formula, Cask::Cask, Resource),
@@ -16,7 +14,12 @@ module Homebrew
           verbose:             T::Boolean,
         ).returns(T::Hash[Symbol, T.untyped])
       }
-      def package_or_resource_skip(package_or_resource, livecheckable, full_name: false, verbose: false)
+      private_class_method def self.package_or_resource_skip(
+        package_or_resource,
+        livecheckable,
+        full_name: false,
+        verbose: false
+      )
         formula = package_or_resource if package_or_resource.is_a?(Formula)
 
         if (stable_url = formula&.stable&.url)
@@ -53,7 +56,7 @@ module Homebrew
           verbose:        T::Boolean,
         ).returns(T::Hash[Symbol, T.untyped])
       }
-      def formula_head_only(formula, _livecheckable, full_name: false, verbose: false)
+      private_class_method def self.formula_head_only(formula, _livecheckable, full_name: false, verbose: false)
         return {} if !formula.head_only? || formula.any_version_installed?
 
         Livecheck.status_hash(
@@ -73,7 +76,7 @@ module Homebrew
           verbose:       T::Boolean,
         ).returns(T::Hash[Symbol, T.untyped])
       }
-      def formula_deprecated(formula, livecheckable, full_name: false, verbose: false)
+      private_class_method def self.formula_deprecated(formula, livecheckable, full_name: false, verbose: false)
         return {} if !formula.deprecated? || livecheckable
 
         Livecheck.status_hash(formula, "deprecated", full_name:, verbose:)
@@ -87,7 +90,7 @@ module Homebrew
           verbose:       T::Boolean,
         ).returns(T::Hash[Symbol, T.untyped])
       }
-      def formula_disabled(formula, livecheckable, full_name: false, verbose: false)
+      private_class_method def self.formula_disabled(formula, livecheckable, full_name: false, verbose: false)
         return {} if !formula.disabled? || livecheckable
 
         Livecheck.status_hash(formula, "disabled", full_name:, verbose:)
@@ -101,7 +104,7 @@ module Homebrew
           verbose:       T::Boolean,
         ).returns(T::Hash[Symbol, T.untyped])
       }
-      def formula_versioned(formula, livecheckable, full_name: false, verbose: false)
+      private_class_method def self.formula_versioned(formula, livecheckable, full_name: false, verbose: false)
         return {} if !formula.versioned_formula? || livecheckable
 
         Livecheck.status_hash(formula, "versioned", full_name:, verbose:)
@@ -115,7 +118,7 @@ module Homebrew
           verbose:       T::Boolean,
         ).returns(T::Hash[Symbol, T.untyped])
       }
-      def cask_deprecated(cask, livecheckable, full_name: false, verbose: false)
+      private_class_method def self.cask_deprecated(cask, livecheckable, full_name: false, verbose: false)
         return {} if !cask.deprecated? || livecheckable
 
         Livecheck.status_hash(cask, "deprecated", full_name:, verbose:)
@@ -129,7 +132,7 @@ module Homebrew
           verbose:       T::Boolean,
         ).returns(T::Hash[Symbol, T.untyped])
       }
-      def cask_disabled(cask, livecheckable, full_name: false, verbose: false)
+      private_class_method def self.cask_disabled(cask, livecheckable, full_name: false, verbose: false)
         return {} if !cask.disabled? || livecheckable
 
         Livecheck.status_hash(cask, "disabled", full_name:, verbose:)
@@ -144,7 +147,13 @@ module Homebrew
           extract_plist:  T::Boolean,
         ).returns(T::Hash[Symbol, T.untyped])
       }
-      def cask_extract_plist(cask, _livecheckable, full_name: false, verbose: false, extract_plist: false)
+      private_class_method def self.cask_extract_plist(
+        cask,
+        _livecheckable,
+        full_name: false,
+        verbose: false,
+        extract_plist: false
+      )
         return {} if extract_plist || cask.livecheck.strategy != :extract_plist
 
         Livecheck.status_hash(
@@ -164,7 +173,7 @@ module Homebrew
           verbose:       T::Boolean,
         ).returns(T::Hash[Symbol, T.untyped])
       }
-      def cask_version_latest(cask, livecheckable, full_name: false, verbose: false)
+      private_class_method def self.cask_version_latest(cask, livecheckable, full_name: false, verbose: false)
         return {} if !(cask.present? && cask.version&.latest?) || livecheckable
 
         Livecheck.status_hash(cask, "latest", full_name:, verbose:)
@@ -178,7 +187,7 @@ module Homebrew
           verbose:       T::Boolean,
         ).returns(T::Hash[Symbol, T.untyped])
       }
-      def cask_url_unversioned(cask, livecheckable, full_name: false, verbose: false)
+      private_class_method def self.cask_url_unversioned(cask, livecheckable, full_name: false, verbose: false)
         return {} if !(cask.present? && cask.url&.unversioned?) || livecheckable
 
         Livecheck.status_hash(cask, "unversioned", full_name:, verbose:)
@@ -192,6 +201,7 @@ module Homebrew
         :formula_disabled,
         :formula_versioned,
       ].freeze, T::Array[Symbol])
+      private_constant :FORMULA_CHECKS
 
       # Skip conditions for casks.
       CASK_CHECKS = T.let([
@@ -202,11 +212,13 @@ module Homebrew
         :cask_version_latest,
         :cask_url_unversioned,
       ].freeze, T::Array[Symbol])
+      private_constant :CASK_CHECKS
 
       # Skip conditions for resources.
       RESOURCE_CHECKS = T.let([
         :package_or_resource_skip,
       ].freeze, T::Array[Symbol])
+      private_constant :RESOURCE_CHECKS
 
       # If a formula/cask/resource should be skipped, we return a hash from
       # `Livecheck#status_hash`, which contains a `status` type and sometimes
@@ -219,7 +231,7 @@ module Homebrew
           extract_plist:       T::Boolean,
         ).returns(T::Hash[Symbol, T.untyped])
       }
-      def skip_information(package_or_resource, full_name: false, verbose: false, extract_plist: true)
+      def self.skip_information(package_or_resource, full_name: false, verbose: false, extract_plist: true)
         livecheckable = package_or_resource.livecheckable?
 
         checks = case package_or_resource
@@ -257,7 +269,7 @@ module Homebrew
           extract_plist:                     T::Boolean,
         ).returns(T.nilable(T::Hash[Symbol, T.untyped]))
       }
-      def referenced_skip_information(
+      def self.referenced_skip_information(
         livecheck_package_or_resource,
         original_package_or_resource_name,
         full_name: false,
@@ -299,7 +311,7 @@ module Homebrew
 
       # Prints default livecheck output in relation to skip conditions.
       sig { params(skip_hash: T::Hash[Symbol, T.untyped]).void }
-      def print_skip_information(skip_hash)
+      def self.print_skip_information(skip_hash)
         return unless skip_hash.is_a?(Hash)
 
         name = if skip_hash[:formula].is_a?(String)

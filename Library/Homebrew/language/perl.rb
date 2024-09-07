@@ -8,6 +8,10 @@ module Language
   module Perl
     # Helper module for replacing `perl` shebangs.
     module Shebang
+      extend T::Helpers
+
+      requires_ancestor { Formula }
+
       module_function
 
       # A regex to match potential shebang permutations.
@@ -28,7 +32,7 @@ module Language
 
       sig { params(formula: Formula).returns(Utils::Shebang::RewriteInfo) }
       def detected_perl_shebang(formula = T.cast(self, Formula))
-        perl_deps = formula.declared_deps.select { |dep| dep.name == "perl" }
+        perl_deps = formula.declared_deps.select { |dep| dep.required? && dep.name == "perl" }
         raise ShebangDetectionError.new("Perl", "formula does not depend on Perl") if perl_deps.empty?
 
         perl_path = if perl_deps.any? { |dep| !dep.uses_from_macos? || !dep.use_macos_install? }

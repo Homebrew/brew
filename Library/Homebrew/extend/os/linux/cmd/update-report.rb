@@ -1,13 +1,15 @@
-# typed: true
+# typed: strict
 # frozen_string_literal: true
 
 module Homebrew
   module_function
 
+  sig { returns(String) }
   def no_changes_message
     "No changes to formulae."
   end
 
+  sig { void }
   def migrate_gcc_dependents_if_needed
     return if Settings.read("gcc-rpaths.fixed") == "true"
 

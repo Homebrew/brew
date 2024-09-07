@@ -25,6 +25,44 @@ RSpec.describe Cask::Info, :cask do
     EOS
   end
 
+  it "prints cask dependencies if the Cask has any" do
+    expect do
+      described_class.info(Cask::CaskLoader.load("with-depends-on-cask-multiple"))
+    end.to output(<<~EOS).to_stdout
+      ==> with-depends-on-cask-multiple: 1.2.3
+      https://brew.sh/with-depends-on-cask-multiple
+      Not installed
+      From: https://github.com/Homebrew/homebrew-cask/blob/HEAD/Casks/w/with-depends-on-cask-multiple.rb
+      ==> Name
+      None
+      ==> Description
+      None
+      ==> Dependencies
+      local-caffeine (cask), local-transmission (cask)
+      ==> Artifacts
+      Caffeine.app (App)
+    EOS
+  end
+
+  it "prints cask and formulas dependencies if the Cask has both" do
+    expect do
+      described_class.info(Cask::CaskLoader.load("with-depends-on-everything"))
+    end.to output(<<~EOS).to_stdout
+      ==> with-depends-on-everything: 1.2.3
+      https://brew.sh/with-depends-on-everything
+      Not installed
+      From: https://github.com/Homebrew/homebrew-cask/blob/HEAD/Casks/w/with-depends-on-everything.rb
+      ==> Name
+      None
+      ==> Description
+      None
+      ==> Dependencies
+      unar, local-caffeine (cask), with-depends-on-cask (cask)
+      ==> Artifacts
+      Caffeine.app (App)
+    EOS
+  end
+
   it "prints auto_updates if the Cask has `auto_updates true`" do
     expect do
       described_class.info(Cask::CaskLoader.load("with-auto-updates"))

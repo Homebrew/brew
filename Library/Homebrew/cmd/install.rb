@@ -63,7 +63,7 @@ module Homebrew
           }],
           [:flag, "--cc=", {
             description: "Attempt to compile using the specified <compiler>, which should be the name of the " \
-                         "compiler's executable, e.g. `gcc-7` for GCC 7. In order to use LLVM's clang, specify " \
+                         "compiler's executable, e.g. `gcc-9` for GCC 9. In order to use LLVM's clang, specify " \
                          "`llvm_clang`. To use the Apple-provided clang, specify `clang`. This option will only " \
                          "accept compilers that are provided by Homebrew or bundled with macOS. Please do not " \
                          "file issues if you encounter errors while using this option.",

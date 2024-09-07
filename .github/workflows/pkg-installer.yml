@@ -17,7 +17,7 @@ env:
   HOMEBREW_NO_ANALYTICS_MESSAGE_OUTPUT: 1
 jobs:
   build:
-    if: github.repository_owner == 'Homebrew'
+    if: github.repository_owner == 'Homebrew' && github.actor != 'dependabot[bot]'
     runs-on: macos-latest
     outputs:
       installer_path: "Homebrew-${{ steps.homebrew-version.outputs.version }}.pkg"
@@ -120,7 +120,7 @@ jobs:
           fi
 
       - name: Upload installer to GitHub Actions
-        uses: actions/upload-artifact@89ef406dd8d7e03cfd12d9e0a4a378f454709029 # v4
+        uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874 # v4
         with:
           name: Homebrew-${{ steps.homebrew-version.outputs.version }}.pkg
           path: Homebrew-${{ steps.homebrew-version.outputs.version }}.pkg

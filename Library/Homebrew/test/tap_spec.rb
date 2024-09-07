@@ -3,12 +3,13 @@
 RSpec.describe Tap do
   include FileUtils
 
+  alias_matcher :have_cask_file, :be_cask_file
   alias_matcher :have_formula_file, :be_formula_file
   alias_matcher :have_custom_remote, :be_custom_remote
 
   subject(:homebrew_foo_tap) { described_class.fetch("Homebrew", "foo") }
 
-  let(:path) { Tap::TAP_DIRECTORY/"homebrew/homebrew-foo" }
+  let(:path) { HOMEBREW_TAP_DIRECTORY/"homebrew/homebrew-foo" }
   let(:formula_file) { path/"Formula/foo.rb" }
   let(:alias_file) { path/"Aliases/bar" }
   let(:cmd_file) { path/"cmd/brew-tap-cmd.rb" }
@@ -172,7 +173,7 @@ RSpec.describe Tap do
 
   specify "#issues_url" do
     t = described_class.fetch("someone", "foo")
-    path = Tap::TAP_DIRECTORY/"someone/homebrew-foo"
+    path = HOMEBREW_TAP_DIRECTORY/"someone/homebrew-foo"
     path.mkpath
     cd path do
       system "git", "init"
@@ -182,7 +183,7 @@ RSpec.describe Tap do
     expect(t.issues_url).to eq("https://github.com/someone/homebrew-foo/issues")
     expect(homebrew_foo_tap.issues_url).to eq("https://github.com/Homebrew/homebrew-foo/issues")
 
-    (Tap::TAP_DIRECTORY/"someone/homebrew-no-git").mkpath
+    (HOMEBREW_TAP_DIRECTORY/"someone/homebrew-no-git").mkpath
     expect(described_class.fetch("someone", "no-git").issues_url).to be_nil
   ensure
     path.parent.rmtree
@@ -201,7 +202,6 @@ RSpec.describe Tap do
     expect(homebrew_foo_tap.tap_migrations).to eq("removed-formula" => "homebrew/foo")
     expect(homebrew_foo_tap.command_files).to eq([cmd_file])
     expect(homebrew_foo_tap.to_hash).to be_a(Hash)
-    expect(homebrew_foo_tap).to have_formula_file(formula_file)
     expect(homebrew_foo_tap).to have_formula_file("Formula/foo.rb")
     expect(homebrew_foo_tap).not_to have_formula_file("bar.rb")
     expect(homebrew_foo_tap).not_to have_formula_file("Formula/baz.sh")
@@ -378,7 +378,7 @@ RSpec.describe Tap do
       end.to raise_error(ErrorDuringExecution)
 
       expect(tap).not_to be_installed
-      expect(Tap::TAP_DIRECTORY/"user").not_to exist
+      expect(HOMEBREW_TAP_DIRECTORY/"user").not_to exist
     end
   end
 
@@ -632,6 +632,103 @@ RSpec.describe Tap do
         expect(homebrew_foo_tap.pypi_formula_mappings).to eq expected_result
       end
     end
+
+    describe "#formula_file?" do
+      it "matches files from Formula/" do
+        tap = described_class.fetch("hard/core")
+        FileUtils.mkdir_p(tap.path/"Formula")
+
+        %w[
+          kvazaar.rb
+          Casks/kvazaar.rb
+          Casks/k/kvazaar.rb
+          Formula/kvazaar.sh
+          HomebrewFormula/kvazaar.rb
+          HomebrewFormula/k/kvazaar.rb
+        ].each do |relative_path|
+          expect(tap).not_to have_formula_file(relative_path)
+        end
+
+        %w[
+          Formula/kvazaar.rb
+          Formula/k/kvazaar.rb
+        ].each do |relative_path|
+          expect(tap).to have_formula_file(relative_path)
+        end
+      ensure
+        FileUtils.rm_rf(tap.path.parent) if tap
+      end
+
+      it "matches files from HomebrewFormula/" do
+        tap = described_class.fetch("hard/core")
+        FileUtils.mkdir_p(tap.path/"HomebrewFormula")
+
+        %w[
+          kvazaar.rb
+          Casks/kvazaar.rb
+          Casks/k/kvazaar.rb
+          Formula/kvazaar.rb
+          Formula/k/kvazaar.rb
+          HomebrewFormula/kvazaar.sh
+        ].each do |relative_path|
+          expect(tap).not_to have_formula_file(relative_path)
+        end
+
+        %w[
+          HomebrewFormula/kvazaar.rb
+          HomebrewFormula/k/kvazaar.rb
+        ].each do |relative_path|
+          expect(tap).to have_formula_file(relative_path)
+        end
+      ensure
+        FileUtils.rm_rf(tap.path.parent) if tap
+      end
+
+      it "matches files from the top-level directory" do
+        tap = described_class.fetch("hard/core")
+        FileUtils.mkdir_p(tap.path)
+
+        %w[
+          kvazaar.sh
+          Casks/kvazaar.rb
+          Casks/k/kvazaar.rb
+          Formula/kvazaar.rb
+          Formula/k/kvazaar.rb
+          HomebrewFormula/kvazaar.rb
+          HomebrewFormula/k/kvazaar.rb
+        ].each do |relative_path|
+          expect(tap).not_to have_formula_file(relative_path)
+        end
+
+        expect(tap).to have_formula_file("kvazaar.rb")
+      ensure
+        FileUtils.rm_rf(tap.path.parent) if tap
+      end
+    end
+
+    describe "#cask_file?" do
+      it "matches files from Casks/" do
+        tap = described_class.fetch("hard/core")
+
+        %w[
+          kvazaar.rb
+          Casks/kvazaar.sh
+          Formula/kvazaar.rb
+          Formula/k/kvazaar.rb
+          HomebrewFormula/kvazaar.rb
+          HomebrewFormula/k/kvazaar.rb
+        ].each do |relative_path|
+          expect(tap).not_to have_cask_file(relative_path)
+        end
+
+        %w[
+          Casks/kvazaar.rb
+          Casks/k/kvazaar.rb
+        ].each do |relative_path|
+          expect(tap).to have_cask_file(relative_path)
+        end
+      end
+    end
   end
 
   describe CoreTap do
@@ -652,7 +749,7 @@ RSpec.describe Tap do
     end
 
     specify "files" do
-      path = Tap::TAP_DIRECTORY/"homebrew/homebrew-core"
+      path = HOMEBREW_TAP_DIRECTORY/"homebrew/homebrew-core"
       formula_file = core_tap.formula_dir/"foo.rb"
       core_tap.formula_dir.mkpath
       formula_file.write <<~RUBY

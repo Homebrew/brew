@@ -1,8 +1,9 @@
-# typed: true
+# typed: true # rubocop:todo Sorbet/StrictSigil
 # frozen_string_literal: true
 
 require "deprecate_disable"
 require "formula_versions"
+require "formula_name_cask_token_auditor"
 require "resource_auditor"
 require "utils/shared_audits"
 
@@ -160,10 +161,14 @@ module Homebrew
       end
     end
 
-    def audit_formula_name
+    def audit_name
       name = formula.name
 
-      problem "Formula name '#{name}' must not contain uppercase letters." if name != name.downcase
+      name_auditor = Homebrew::FormulaNameCaskTokenAuditor.new(name)
+      if (errors = name_auditor.errors).any?
+        problem "Formula name '#{name}' must not contain #{errors.to_sentence(two_words_connector: " or ",
+                                                                              last_word_connector: " or ")}."
+      end
 
       return unless @strict
       return unless @core_tap
@@ -194,14 +199,34 @@ module Homebrew
       "LGPL-3.0" => ["LGPL-3.0-only", "LGPL-3.0-or-later"],
     }.freeze
 
+    # The following licenses are non-free/open based on multiple sources (e.g. Debian, Fedora, FSF, OSI, ...)
+    INCOMPATIBLE_LICENSES = [
+      "Aladdin",    # https://www.gnu.org/licenses/license-list.html#Aladdin
+      "CPOL-1.02",  # https://www.gnu.org/licenses/license-list.html#cpol
+      "gSOAP-1.3b", # https://salsa.debian.org/ellert/gsoap/-/blob/master/debian/copyright
+      "JSON",       # https://wiki.debian.org/DFSGLicenses#JSON_evil_license
+      "MS-LPL",     # https://github.com/spdx/license-list-XML/issues/1432#issuecomment-1077680709
+      "OPL-1.0",    # https://wiki.debian.org/DFSGLicenses#Open_Publication_License_.28OPL.29_v1.0
+    ].freeze
+    INCOMPATIBLE_LICENSE_PREFIXES = [
+      "BUSL",     # https://spdx.org/licenses/BUSL-1.1.html#notes
+      "CC-BY-NC", # https://people.debian.org/~bap/dfsg-faq.html#no_commercial
+      "Elastic",  # https://www.elastic.co/licensing/elastic-license#Limitations
+      "SSPL",     # https://fedoraproject.org/wiki/Licensing/SSPL#License_Notes
+    ].freeze
+
     def audit_license
       if formula.license.present?
         licenses, exceptions = SPDX.parse_license_expression formula.license
 
-        sspl_licensed = licenses.any? { |license| license.to_s.start_with?("SSPL") }
-        if sspl_licensed && @core_tap
+        incompatible_licenses = licenses.select do |license|
+          license.to_s.start_with?(*INCOMPATIBLE_LICENSE_PREFIXES) || INCOMPATIBLE_LICENSES.include?(license.to_s)
+        end
+        if incompatible_licenses.present? && @core_tap
           problem <<~EOS
-            Formula #{formula.name} is SSPL-licensed. Software under the SSPL must not be packaged in homebrew/core.
+            Formula #{formula.name} contains incompatible licenses: #{incompatible_licenses}.
+            Formulae in homebrew/core must either use a Debian Free Software Guidelines license
+            or be released into the public domain. See #{Formatter.url("https://docs.brew.sh/License-Guidelines")}
           EOS
         end
 
@@ -213,7 +238,7 @@ module Homebrew
           EOS
         end
 
-        if @strict
+        if @strict || @core_tap
           deprecated_licenses = licenses.select do |license|
             SPDX.deprecated_license? license
           end
@@ -250,7 +275,7 @@ module Homebrew
 
         problem "Formula license #{licenses} does not match GitHub license #{Array(github_license)}."
 
-      elsif @new_formula && @core_tap
+      elsif @core_tap && !formula.disabled?
         problem "Formulae in homebrew/core must specify a license."
       end
     end
@@ -579,18 +604,20 @@ module Homebrew
 
       return if formula.tap&.audit_exception :eol_date_blocklist, name
 
-      metadata = SharedAudits.eol_data(name, formula.version.major)
-      metadata ||= SharedAudits.eol_data(name, formula.version.major_minor)
+      metadata = SharedAudits.eol_data(name, formula.version.major.to_s)
+      metadata ||= SharedAudits.eol_data(name, formula.version.major_minor.to_s)
 
-      return if metadata.blank? || metadata["eol"] == false
+      return if metadata.blank? || (eol = metadata["eol"]).blank?
 
-      see_url = "see #{Formatter.url("https://endoflife.date/#{name}")}"
-      if metadata["eol"] == true
-        problem "Product is EOL, #{see_url}"
-        return
-      end
+      is_eol = eol == true
+      is_eol ||= eol.is_a?(String) && (eol_date = Date.parse(eol)) <= Date.today
+      return unless is_eol
 
-      problem "Product is EOL since #{metadata["eol"]}, #{see_url}" if Date.parse(metadata["eol"]) <= Date.today
+      message = "Product is EOL"
+      message += " since #{eol_date}" if eol_date.present?
+      message += ", see #{Formatter.url("https://endoflife.date/#{name}")}"
+
+      problem message
     end
 
     def audit_wayback_url
@@ -778,24 +805,24 @@ module Homebrew
         problem "#{stable.version} is a development release"
 
       when %r{https?://gitlab\.com/([\w-]+)/([\w-]+)}
-        owner = Regexp.last_match(1)
-        repo = Regexp.last_match(2)
+        owner = T.must(Regexp.last_match(1))
+        repo = T.must(Regexp.last_match(2))
 
         tag = SharedAudits.gitlab_tag_from_url(url)
         tag ||= stable.specs[:tag]
-        tag ||= stable.version
+        tag ||= stable.version.to_s
 
         if @online
           error = SharedAudits.gitlab_release(owner, repo, tag, formula:)
           problem error if error
         end
       when %r{^https://github.com/([\w-]+)/([\w-]+)}
-        owner = Regexp.last_match(1)
-        repo = Regexp.last_match(2)
+        owner = T.must(Regexp.last_match(1))
+        repo = T.must(Regexp.last_match(2))
         tag = SharedAudits.github_tag_from_url(url)
         tag ||= formula.stable.specs[:tag]
 
-        if @online
+        if @online && !tag.nil?
           error = SharedAudits.github_release(owner, repo, tag, formula:)
           problem error if error
         end

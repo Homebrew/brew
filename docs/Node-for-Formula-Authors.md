@@ -4,13 +4,11 @@ This document explains how to successfully use Node and npm in a Node module bas
 
 ## Running `npm install`
 
-Homebrew provides two helper methods in a `Language::Node` module: `std_npm_install_args` and `local_npm_install_args`. They both set up the correct environment for npm and return arguments for `npm install` for their specific use cases. Your formula should use these instead of invoking `npm install` explicitly. The syntax for a standard Node module installation is:
+Homebrew provides a helper method `std_npm_args` to set up the correct environment for npm and return arguments for `npm install`. Your formula should use this when invoking `npm install`. The syntax for a standard Node module installation is:
 
 ```ruby
-system "npm", "install", *Language::Node.std_npm_install_args(libexec)
+system "npm", "install", *std_npm_args
 ```
-
-where `libexec` is the destination prefix (usually the `libexec` variable).
 
 ## Download URL
 
@@ -30,7 +28,7 @@ Node modules which are compatible with the latest Node version should declare a 
 depends_on "node"
 ```
 
-If your formula requires being executed with an older Node version you should use one of its versioned formulae (e.g. `node@12`).
+If your formula requires being executed with an older Node version you should use one of its versioned formulae (e.g. `node@20`).
 
 ### Special requirements for native addons
 
@@ -48,23 +46,17 @@ Node modules should be installed to `libexec`. This prevents the Node modules fr
 
 In the following we distinguish between two types of Node modules installed using formulae:
 
-* formulae for standard Node modules compatible with npm's global module format which should use [`std_npm_install_args`](#installing-global-style-modules-with-std_npm_install_args-to-libexec) (like [`apollo-cli`](https://github.com/Homebrew/homebrew-core/blob/HEAD/Formula/a/apollo-cli.rb) or [`webpack`](https://github.com/Homebrew/homebrew-core/blob/HEAD/Formula/w/webpack.rb))
-* formulae where the `npm install` call is not the only required install step (e.g. need to also compile non-JavaScript sources) which have to use [`local_npm_install_args`](#installing-module-dependencies-locally-with-local_npm_install_args) (like [`emscripten`](https://github.com/Homebrew/homebrew-core/blob/HEAD/Formula/e/emscripten.rb) or [`grunt-cli`](https://github.com/Homebrew/homebrew-core/blob/HEAD/Formula/g/grunt-cli.rb))
+- formulae for standard Node modules compatible with npm's global module format which should use [`std_npm_args`](#installing-global-style-modules-with-std_npm_args-to-libexec) (like [`angular-cli`](https://github.com/Homebrew/homebrew-core/blob/master/Formula/a/angular-cli.rb) or [`webpack`](https://github.com/Homebrew/homebrew-core/blob/HEAD/Formula/w/webpack.rb))
+- formulae where the `npm install` call is not the only required install step (e.g. need to also compile non-JavaScript sources) which have to use [`std_npm_args`](#installing-module-dependencies-locally-with-std_npm_args) (like [`emscripten`](https://github.com/Homebrew/homebrew-core/blob/HEAD/Formula/e/emscripten.rb) or [`grunt-cli`](https://github.com/Homebrew/homebrew-core/blob/HEAD/Formula/g/grunt-cli.rb))
 
 What both methods have in common is that they are setting the correct environment for using npm inside Homebrew and are returning the arguments for invoking `npm install` for their specific use cases. This includes fixing an important edge case with the npm cache (caused by Homebrew's redirection of `HOME` during the build and test process) by using our own custom `npm_cache` inside `HOMEBREW_CACHE`, which would otherwise result in very long build times and high disk space usage.
 
-To use them you have to require the Node language module at the beginning of your formula file with:
+### Installing global style modules with `std_npm_args` to `libexec`
+
+In your formula's `install` method, simply `cd` to the top level of your Node module if necessary and then use `system` to invoke `npm install` with `std_npm_args` like:
 
 ```ruby
-require "language/node"
-```
-
-### Installing global style modules with `std_npm_install_args` to `libexec`
-
-In your formula's `install` method, simply `cd` to the top level of your Node module if necessary and then use `system` to invoke `npm install` with `Language::Node.std_npm_install_args` like:
-
-```ruby
-system "npm", "install", *Language::Node.std_npm_install_args(libexec)
+system "npm", "install", *std_npm_args
 ```
 
 This will install your Node module in npm's global module style with a custom prefix to `libexec`. All your modules' executables will be automatically resolved by npm into `libexec/bin` for you, which are not symlinked into Homebrew's prefix. To make sure these are installed, we need to symlink all executables to `bin` with:
@@ -73,12 +65,12 @@ This will install your Node module in npm's global module style with a custom pr
 bin.install_symlink Dir["#{libexec}/bin/*"]
 ```
 
-### Installing module dependencies locally with `local_npm_install_args`
+### Installing module dependencies locally with `std_npm_args`
 
-In your formula's `install` method, do any installation steps which need to be done before the `npm install` step and then `cd` to the top level of the included Node module. Then, use `system` to invoke `npm install` with `Language::Node.local_npm_install_args` like:
+In your formula's `install` method, do any installation steps which need to be done before the `npm install` step and then `cd` to the top level of the included Node module. Then, use `system` to invoke `npm install` with `std_npm_args(prefix: false)` like:
 
 ```ruby
-system "npm", "install", *Language::Node.local_npm_install_args
+system "npm", "install", *std_npm_args(prefix: false)
 ```
 
 This will install all of your Node modules' dependencies to your local build path. You can now continue with your build steps and handle the installation into the Homebrew prefix on your own, following the [general Homebrew formula instructions](Formula-Cookbook.md).
@@ -88,8 +80,6 @@ This will install all of your Node modules' dependencies to your local build pat
 Installing a standard Node module based formula would look like this:
 
 ```ruby
-require "language/node"
-
 class Foo < Formula
   desc "An example formula"
   homepage "https://example.com"
@@ -101,7 +91,7 @@ class Foo < Formula
   # depends_on "python" => :build
 
   def install
-    system "npm", "install", *Language::Node.std_npm_install_args(libexec)
+    system "npm", "install", *std_npm_args
     bin.install_symlink Dir["#{libexec}/bin/*"]
   end
 

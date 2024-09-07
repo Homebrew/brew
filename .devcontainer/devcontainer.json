@@ -9,6 +9,20 @@
   "onCreateCommand": ".devcontainer/on-create-command.sh",
 
   "customizations": {
+    "codespaces": {
+      "repositories": {
+        "Homebrew/homebrew-bundle": {
+          "permissions": {
+            "contents": "write"
+          }
+        },
+        "Homebrew/homebrew-services": {
+          "permissions": {
+            "contents": "write"
+          }
+        }
+      }
+    },
     "vscode": {
       // Installing all necessary extensions for vscode
       // Taken from: .vscode/extensions.json
@@ -16,9 +30,15 @@
         "Shopify.ruby-lsp",
         "sorbet.sorbet-vscode-extension",
         "github.vscode-github-actions",
-        "timonwong.shellcheck",
-        "foxundermoon.shell-format",
+        "anykeyh.simplecov-vscode",
+        "ms-azuretools.vscode-docker",
+        "github.vscode-pull-request-github",
         "davidanson.vscode-markdownlint",
+        "foxundermoon.shell-format",
+        "timonwong.shellcheck",
+        "ban.spellright",
+        "redhat.vscode-yaml",
+        "koichisasada.vscode-rdbg",
         "editorconfig.editorconfig"
       ]
     }

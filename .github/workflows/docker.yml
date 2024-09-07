@@ -1,23 +1,22 @@
 name: Docker
+
 on:
   pull_request:
-    paths:
-      - .github/workflows/docker.yml
-      - Dockerfile
   push:
-    paths:
-      - .github/workflows/docker.yml
-      - Dockerfile
-    branches-ignore:
+    branches:
       - master
+  merge_group:
   release:
     types:
       - published
+
 permissions:
   contents: read
+
 jobs:
   ubuntu:
-    if: startsWith(github.repository, 'Homebrew/')
+    if: github.repository_owner == 'Homebrew'
+    name: docker (Ubuntu ${{ matrix.version }})
     runs-on: ubuntu-22.04
     strategy:
       fail-fast: false
@@ -33,53 +32,103 @@ jobs:
       - name: Fetch origin/master from Git
         run: git fetch origin master
 
-      - name: Build Docker image
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@988b5a0280414f521da01fcc63a27aeeb4b104db # v3
+
+      - name: Determine build attributes
+        id: attributes
         run: |
+          date="$(date --rfc-3339=seconds --utc)"
           brew_version="$(git describe --tags --dirty --abbrev=7)"
-          echo "Building for Homebrew ${brew_version}"
-          docker build -t brew \
-               --build-arg=version=${{matrix.version}} \
-               --label org.opencontainers.image.created="$(date --rfc-3339=seconds --utc)" \
-               --label org.opencontainers.image.url="https://brew.sh" \
-               --label org.opencontainers.image.documentation="https://docs.brew.sh" \
-               --label org.opencontainers.image.source="https://github.com/${GITHUB_REPOSITORY}" \
-               --label org.opencontainers.image.version="${brew_version}" \
-               --label org.opencontainers.image.revision="${GITHUB_SHA}" \
-               --label org.opencontainers.image.vendor="${GITHUB_REPOSITORY_OWNER}" \
-               --label org.opencontainers.image.licenses="BSD-2-Clause" \
-               .
+
+          DELIMITER="END_LABELS_$(LC_ALL=C tr -dc '[:alnum:]' </dev/urandom | head -c20)"
+          cat <<EOS | tee -a "${GITHUB_OUTPUT}"
+          labels<<${DELIMITER}
+          org.opencontainers.image.created=${date}
+          org.opencontainers.image.url=https://brew.sh
+          org.opencontainers.image.documentation=https://docs.brew.sh
+          org.opencontainers.image.source=https://github.com/${GITHUB_REPOSITORY}
+          org.opencontainers.image.version=${brew_version}
+          org.opencontainers.image.revision=${GITHUB_SHA}
+          org.opencontainers.image.vendor=${GITHUB_REPOSITORY_OWNER}
+          org.opencontainers.image.licenses=BSD-2-Clause
+          ${DELIMITER}
+          EOS
+
+          tags=()
+          if [[ "${GITHUB_EVENT_NAME}" == "release" ]]; then
+            tags+=(
+              "ghcr.io/homebrew/ubuntu${{matrix.version}}:${brew_version}"
+              "ghcr.io/homebrew/ubuntu${{matrix.version}}:latest"
+              "homebrew/ubuntu${{matrix.version}}:${brew_version}"
+              "homebrew/ubuntu${{matrix.version}}:latest"
+            )
+            if [[ "${{ matrix.version }}" == "22.04" ]]; then
+              tags+=(
+                "ghcr.io/homebrew/brew:${brew_version}"
+                "ghcr.io/homebrew/brew:latest"
+                "homebrew/brew:${brew_version}"
+                "homebrew/brew:latest"
+              )
+            fi
+          elif [[ "${GITHUB_EVENT_NAME}" == "push" &&
+                  "${GITHUB_REF}" == "refs/heads/master" &&
+                  "${{ matrix.version }}" == "22.04" ]]; then
+            tags+=(
+              "ghcr.io/homebrew/ubuntu${{ matrix.version }}:master"
+              "homebrew/ubuntu${{matrix.version}}:master"
+            )
+          fi
+
+          {
+            if [[ "${#tags[@]}" -ne 0 ]]; then
+              DELIMITER="END_TAGS_$(LC_ALL=C tr -dc '[:alnum:]' </dev/urandom | head -c20)"
+              echo "tags<<${DELIMITER}"
+              printf "%s\n" "${tags[@]}"
+              echo "${DELIMITER}"
+              echo "push=true"
+            else
+              echo "push=false"
+            fi
+          } | tee -a "${GITHUB_OUTPUT}"
+
+      - name: Build Docker image
+        uses: docker/build-push-action@5cd11c3a4ced054e52742c5fd54dca954e0edd85 # v6
+        with:
+          context: .
+          load: true
+          tags: brew
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: version=${{ matrix.version }}
+          labels: ${{ steps.attributes.outputs.labels }}
 
       - name: Run brew test-bot --only-setup
         run: docker run --rm brew brew test-bot --only-setup
 
-      - name: Deploy the tagged Docker image to GitHub Packages
-        if: startsWith(github.ref, 'refs/tags/')
-        run: |
-          brew_version="${GITHUB_REF:10}"
-          echo "brew_version=${brew_version}" >> "${GITHUB_ENV}"
-          echo ${{secrets.HOMEBREW_BREW_GITHUB_PACKAGES_TOKEN}} | docker login ghcr.io -u BrewTestBot --password-stdin
-          docker tag brew "ghcr.io/homebrew/ubuntu${{matrix.version}}:${brew_version}"
-          docker push "ghcr.io/homebrew/ubuntu${{matrix.version}}:${brew_version}"
-          docker tag brew "ghcr.io/homebrew/ubuntu${{matrix.version}}:latest"
-          docker push "ghcr.io/homebrew/ubuntu${{matrix.version}}:latest"
+      - name: Log in to GitHub Packages
+        if: steps.attributes.outputs.push == 'true'
+        uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # v3
+        with:
+          registry: ghcr.io
+          username: BrewTestBot
+          password: ${{ secrets.HOMEBREW_BREW_GITHUB_PACKAGES_TOKEN }}
 
-      - name: Deploy the tagged Docker image to Docker Hub
-        if: startsWith(github.ref, 'refs/tags/')
-        run: |
-          echo ${{secrets.HOMEBREW_BREW_DOCKER_TOKEN}} | docker login -u brewtestbot --password-stdin
-          docker tag brew "homebrew/ubuntu${{matrix.version}}:${brew_version}"
-          docker push "homebrew/ubuntu${{matrix.version}}:${brew_version}"
-          docker tag brew "homebrew/ubuntu${{matrix.version}}:latest"
-          docker push "homebrew/ubuntu${{matrix.version}}:latest"
+      - name: Log in to Docker Hub
+        if: steps.attributes.outputs.push == 'true'
+        uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # v3
+        with:
+          username: brewtestbot
+          password: ${{ secrets.HOMEBREW_BREW_DOCKER_TOKEN }}
 
-      - name: Deploy the homebrew/brew Docker image to GitHub Packages and Docker Hub
-        if: startsWith(github.ref, 'refs/tags/') && matrix.version == '22.04'
-        run: |
-          docker tag brew "ghcr.io/homebrew/brew:${brew_version}"
-          docker push "ghcr.io/homebrew/brew:${brew_version}"
-          docker tag brew "ghcr.io/homebrew/brew:latest"
-          docker push "ghcr.io/homebrew/brew:latest"
-          docker tag brew "homebrew/brew:${brew_version}"
-          docker push "homebrew/brew:${brew_version}"
-          docker tag brew "homebrew/brew:latest"
-          docker push "homebrew/brew:latest"
+      - name: Deploy the tagged Docker image
+        if: steps.attributes.outputs.push == 'true'
+        uses: docker/build-push-action@5cd11c3a4ced054e52742c5fd54dca954e0edd85 # v6
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.attributes.outputs.tags }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: version=${{ matrix.version }}
+          labels: ${{ steps.attributes.outputs.labels }}

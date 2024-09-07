@@ -1,4 +1,4 @@
-# typed: true
+# typed: strict
 # frozen_string_literal: true
 
 module Utils
@@ -21,6 +21,7 @@ module Utils
 
       alias generic_find_matching_tag find_matching_tag
 
+      sig { params(tag: Utils::Bottles::Tag, no_older_versions: T::Boolean).returns(T.nilable(Utils::Bottles::Tag)) }
       def find_matching_tag(tag, no_older_versions: false)
         # Used primarily by developers testing beta macOS releases.
         if no_older_versions ||
@@ -35,6 +36,7 @@ module Utils
       end
 
       # Find a bottle built for a previous version of macOS.
+      sig { params(tag: Utils::Bottles::Tag).returns(T.nilable(Utils::Bottles::Tag)) }
       def find_older_compatible_tag(tag)
         tag_version = begin
           tag.to_macos_version

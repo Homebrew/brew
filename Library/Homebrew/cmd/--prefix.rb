@@ -1,4 +1,4 @@
-# typed: true
+# typed: strict
 # frozen_string_literal: true
 
 require "abstract_command"
@@ -91,6 +91,7 @@ module Homebrew
 
       private
 
+      sig { void }
       def list_unbrewed
         dirs  = HOMEBREW_PREFIX.subdirs.map { |dir| dir.basename.to_s }
         dirs -= %w[Library Cellar Caskroom .git]

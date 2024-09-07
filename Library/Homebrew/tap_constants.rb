@@ -15,7 +15,7 @@ HOMEBREW_DEFAULT_TAP_FORMULA_REGEX = T.let(
 )
 
 # Match a cask token.
-HOMEBREW_TAP_CASK_TOKEN_REGEX = T.let(/(?<token>[a-z0-9\-_]+(?:@[a-z0-9\-_.]+)?)/, Regexp)
+HOMEBREW_TAP_CASK_TOKEN_REGEX = T.let(/(?<token>[\w+\-.@]+)/, Regexp)
 # Match taps' casks, e.g. `someuser/sometap/somecask`.
 HOMEBREW_TAP_CASK_REGEX = T.let(
   %r{\A(?<user>[^/]+)/(?<repo>[^/]+)/#{HOMEBREW_TAP_CASK_TOKEN_REGEX.source}\Z},

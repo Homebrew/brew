@@ -1,4 +1,4 @@
-# typed: true
+# typed: true # rubocop:todo Sorbet/StrictSigil
 # frozen_string_literal: true
 
 require "cxxstdlib"
@@ -10,9 +10,7 @@ require "utils/curl"
 # Rather than calling `new` directly, use one of the class methods like {SBOM.create}.
 class SBOM
   FILENAME = "sbom.spdx.json"
-  SCHEMA_URL = "https://spdx.github.io/spdx-3-model/model.jsonld"
-  SCHEMA_FILENAME = "sbom.spdx.schema.3.json"
-  SCHEMA_CACHE_TARGET = (HOMEBREW_CACHE/"sbom/#{SCHEMA_FILENAME}").freeze
+  SCHEMA_FILE = (HOMEBREW_LIBRARY_PATH/"data/schemas/sbom.json").freeze
 
   # Instantiates a {SBOM} for a new installation of a formula.
   sig { params(formula: Formula, tab: Tab).returns(T.attached_class) }
@@ -24,18 +22,11 @@ class SBOM
     end
     active_spec_sym = formula.active_spec_sym
 
-    homebrew_version_maybe_dev = if (match_data = HOMEBREW_VERSION.match(/^[\d.]+/))
-      suffix = "-dev" if HOMEBREW_VERSION.include?("-")
-      match_data[0] + suffix.to_s
-    else
-      HOMEBREW_VERSION
-    end
-
     attributes = {
       name:                 formula.name,
-      homebrew_version:     homebrew_version_maybe_dev,
+      homebrew_version:     HOMEBREW_VERSION,
       spdxfile:             SBOM.spdxfile(formula),
-      time:                 tab.time,
+      time:                 tab.time || Time.now,
       source_modified_time: tab.source_modified_time.to_i,
       compiler:             tab.compiler,
       stdlib:               tab.stdlib,
@@ -89,68 +80,32 @@ class SBOM
     spdxfile(formula).exist?
   end
 
-  sig { returns(T::Hash[String, String]) }
-  def self.fetch_schema!
-    return @schema if @schema.present?
+  sig { returns(T::Hash[String, T.untyped]) }
+  def self.schema
+    @schema ||= JSON.parse(SCHEMA_FILE.read, freeze: true)
+  end
 
-    url = SCHEMA_URL
-    target = SCHEMA_CACHE_TARGET
-    quieter = target.exist? && !target.empty?
-
-    curl_args = Utils::Curl.curl_args(retries: 0)
-    curl_args += ["--silent", "--time-cond", target.to_s] if quieter
-
-    begin
-      unless quieter
-        oh1 "Fetching SBOM schema"
-        ohai "Downloading #{url}"
-      end
-      Utils::Curl.curl_download(*curl_args, url, to: target, retries: 0)
-      FileUtils.touch(target, mtime: Time.now)
-    rescue ErrorDuringExecution
-      target.unlink if target.exist? && target.empty?
-
-      if target.exist?
-        opoo "SBOM schema update failed, falling back to cached version."
-      else
-        opoo "Failed to fetch SBOM schema, cannot perform SBOM validation!"
-
-        return {}
-      end
+  sig { params(bottling: T::Boolean).returns(T::Array[T::Hash[String, T.untyped]]) }
+  def schema_validation_errors(bottling: false)
+    unless require? "json_schemer"
+      error_message = "Need json_schemer to validate SBOM, run `brew install-bundler-gems --add-groups=bottle`!"
+      odie error_message if ENV["HOMEBREW_ENFORCE_SBOM"]
+      return []
     end
 
-    @schema = begin
-      JSON.parse(target.read, freeze: true)
-    rescue JSON::ParserError
-      target.unlink
-      opoo "Failed to fetch SBOM schema, cached version corrupted, cannot perform SBOM validation!"
-      {}
-    end
+    schemer = JSONSchemer.schema(SBOM.schema)
+    data = to_spdx_sbom(bottling:)
+
+    schemer.validate(data).map { |error| error["error"] }
   end
 
   sig { params(bottling: T::Boolean).returns(T::Boolean) }
   def valid?(bottling: false)
-    unless require? "json_schemer"
-      error_message = "Need json_schemer to validate SBOM, run `brew install-bundler-gems --add-groups=bottle`!"
-      odie error_message if ENV["HOMEBREW_ENFORCE_SBOM"]
-      return true
-    end
-
-    schema = SBOM.fetch_schema!
-    if schema.blank?
-      error_message = "Could not fetch JSON schema to validate SBOM!"
-      ENV["HOMEBREW_ENFORCE_SBOM"] ? odie(error_message) : opoo(error_message)
-      return false
-    end
-
-    schemer = JSONSchemer.schema(schema)
-    data = to_spdx_sbom(bottling:)
-    return true if schemer.valid?(data)
+    validation_errors = schema_validation_errors(bottling:)
+    return true if validation_errors.empty?
 
     opoo "SBOM validation errors:"
-    schemer.validate(data).to_a.each do |error|
-      puts error["error"]
-    end
+    validation_errors.each(&:puts)
 
     odie "Failed to validate SBOM against JSON schema!" if ENV["HOMEBREW_ENFORCE_SBOM"]
 
@@ -253,7 +208,7 @@ class SBOM
         filesAnalyzed:    false,
         licenseDeclared:  assert_value(nil),
         builtDate:        source_modified_time.to_s,
-        licenseConcluded: license,
+        licenseConcluded: assert_value(license),
         downloadLocation: bottle_info.fetch("url"),
         copyrightText:    assert_value(nil),
         externalRefs:     [
@@ -336,7 +291,7 @@ class SBOM
           {
             referenceCategory: "PACKAGE-MANAGER",
             referenceLocator:  "pkg:brew/#{dependency["full_name"]}@#{dependency["pkg_version"]}",
-            referenceType:     :purl,
+            referenceType:     "purl",
           },
         ],
       }
@@ -366,8 +321,8 @@ class SBOM
     if stdlib.present?
       compiler_info["SPDXRef-Stdlib"] = {
         SPDXID:           "SPDXRef-Stdlib",
-        name:             stdlib,
-        versionInfo:      stdlib,
+        name:             stdlib.to_s,
+        versionInfo:      stdlib.to_s,
         filesAnalyzed:    false,
         licenseDeclared:  assert_value(nil),
         licenseConcluded: assert_value(nil),
@@ -378,15 +333,21 @@ class SBOM
       }
     end
 
+    # Improve reproducibility when bottling.
+    if bottling
+      created = source_modified_time.iso8601
+      creators = ["Tool: https://github.com/Homebrew/brew"]
+    else
+      created = Time.at(time).utc.iso8601
+      creators = ["Tool: https://github.com/Homebrew/brew@#{homebrew_version}"]
+    end
+
     packages = generate_packages_json(runtime_full, compiler_info, bottling:)
     {
       SPDXID:            "SPDXRef-DOCUMENT",
       spdxVersion:       "SPDX-2.3",
       name:              "SBOM-SPDX-#{name}-#{spec_version}",
-      creationInfo:      {
-        created:  (Time.at(time).utc if time.present? && !bottling),
-        creators: ["Tool: https://github.com/homebrew/brew@#{homebrew_version}"],
-      },
+      creationInfo:      { created:, creators: },
       dataLicense:       "CC0-1.0",
       documentNamespace: "https://formulae.brew.sh/spdx/#{name}-#{spec_version}.json",
       documentDescribes: packages.map { |dependency| dependency[:SPDXID] },

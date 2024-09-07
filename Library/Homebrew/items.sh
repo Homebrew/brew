@@ -29,7 +29,8 @@ homebrew-items() {
       -name .github -o \
       -name lib -o \
       -name spec -o \
-      -name vendor \
+      -name vendor -o \
+      -name .git \
       \) \
       -prune -false -o -path "${find_include_filter}" |
       sed "${sed_extended_regex_flag}" \

@@ -50,9 +50,9 @@ module Homebrew
 
           parallel = true
 
-          files = if args.only
-            # FIXME: This is safe once args are namespaced by command
-            test_name, line = T.unsafe(args.only).split(":", 2)
+          only = args.only
+          files = if only
+            test_name, line = only.split(":", 2)
 
             if line.nil?
               Dir.glob("test/{#{test_name},#{test_name}/**/*}_spec.rb")
@@ -67,7 +67,7 @@ module Homebrew
           end
 
           if files.blank?
-            raise UsageError, "The `--only` argument requires a valid file or folder name!" if args.only
+            raise UsageError, "The `--only` argument requires a valid file or folder name!" if only
 
             if args.changed?
               opoo "No tests are directly associated with the changed files!"

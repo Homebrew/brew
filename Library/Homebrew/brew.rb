@@ -48,7 +48,7 @@ begin
   ARGV.delete_at(help_cmd_index) if help_cmd_index
 
   require "cli/parser"
-  args = Homebrew::CLI::Parser.new.parse(ARGV.dup.freeze, ignore_invalid_options: true)
+  args = Homebrew::CLI::Parser.new(Homebrew::Cmd::Brew).parse(ARGV.dup.freeze, ignore_invalid_options: true)
   Context.current = args.context
 
   path = PATH.new(ENV.fetch("PATH"))
@@ -65,10 +65,8 @@ begin
   internal_cmd = Commands.valid_internal_cmd?(cmd) || Commands.valid_internal_dev_cmd?(cmd) if cmd
 
   unless internal_cmd
-    require "tap"
-
     # Add contributed commands to PATH before checking.
-    homebrew_path.append(Tap.cmd_directories)
+    homebrew_path.append(Commands.tap_cmd_directories)
 
     # External commands expect a normal PATH
     ENV["PATH"] = homebrew_path.to_s

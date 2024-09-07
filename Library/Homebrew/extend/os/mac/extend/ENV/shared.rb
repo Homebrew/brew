@@ -21,7 +21,6 @@ module SharedEnvExtension
     # Normalise the system Perl version used, where multiple may be available
     self["VERSIONER_PERL_VERSION"] = MacOS.preferred_perl_version
   end
-  private :setup_build_environment
 
   sig { returns(T::Boolean) }
   def no_weak_imports_support?

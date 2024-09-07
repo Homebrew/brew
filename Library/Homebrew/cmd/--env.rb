@@ -31,7 +31,7 @@ module Homebrew
       sig { override.void }
       def run
         ENV.activate_extensions!
-        ENV.deps = args.named.to_formulae if superenv?(nil)
+        T.cast(ENV, Superenv).deps = args.named.to_formulae if superenv?(nil)
         ENV.setup_build_environment
 
         shell = if args.plain?

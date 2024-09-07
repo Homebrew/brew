@@ -1,4 +1,4 @@
-# typed: true
+# typed: true # rubocop:todo Sorbet/StrictSigil
 # frozen_string_literal: true
 
 # Helper functions for commands.
@@ -41,6 +41,11 @@ module Commands
     require?(HOMEBREW_DEV_CMD_PATH/cmd)
   end
 
+  def self.valid_ruby_cmd?(cmd)
+    (valid_internal_cmd?(cmd) || valid_internal_dev_cmd?(cmd) || external_ruby_v2_cmd_path(cmd)) &&
+      Homebrew::AbstractCommand.command(cmd)&.ruby_cmd?
+  end
+
   def self.method_name(cmd)
     cmd.to_s
        .tr("-", "_")
@@ -70,23 +75,17 @@ module Commands
 
   # Ruby commands which can be `require`d without being run.
   def self.external_ruby_v2_cmd_path(cmd)
-    require "tap"
-
-    path = which("#{cmd}.rb", Tap.cmd_directories)
+    path = which("#{cmd}.rb", tap_cmd_directories)
     path if require?(path)
   end
 
   # Ruby commands which are run by being `require`d.
   def self.external_ruby_cmd_path(cmd)
-    require "tap"
-
-    which("brew-#{cmd}.rb", PATH.new(ENV.fetch("PATH")).append(Tap.cmd_directories))
+    which("brew-#{cmd}.rb", PATH.new(ENV.fetch("PATH")).append(tap_cmd_directories))
   end
 
   def self.external_cmd_path(cmd)
-    require "tap"
-
-    which("brew-#{cmd}", PATH.new(ENV.fetch("PATH")).append(Tap.cmd_directories))
+    which("brew-#{cmd}", PATH.new(ENV.fetch("PATH")).append(tap_cmd_directories))
   end
 
   def self.path(cmd)
@@ -105,6 +104,12 @@ module Commands
     cmds += external_commands if external
     cmds += internal_commands_aliases if aliases
     cmds.sort
+  end
+
+  # An array of all tap cmd directory {Pathname}s.
+  sig { returns(T::Array[Pathname]) }
+  def self.tap_cmd_directories
+    Pathname.glob HOMEBREW_TAP_DIRECTORY/"*/*/cmd"
   end
 
   def self.internal_commands_paths
@@ -144,9 +149,7 @@ module Commands
   end
 
   def self.external_commands
-    require "tap"
-
-    Tap.cmd_directories.flat_map do |path|
+    tap_cmd_directories.flat_map do |path|
       find_commands(path).select(&:executable?)
                          .map { basename_without_extension(_1) }
                          .map { |p| p.to_s.delete_prefix("brew-").strip }
@@ -196,7 +199,7 @@ module Commands
     return if path.blank?
 
     if (cmd_parser = Homebrew::CLI::Parser.from_cmd_path(path))
-      cmd_parser.processed_options.filter_map do |short, long, _, desc, hidden|
+      cmd_parser.processed_options.filter_map do |short, long, desc, hidden|
         next if hidden
 
         [long || short, desc]

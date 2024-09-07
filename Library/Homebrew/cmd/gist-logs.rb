@@ -1,4 +1,4 @@
-# typed: true
+# typed: strict
 # frozen_string_literal: true
 
 require "abstract_command"
@@ -33,11 +33,14 @@ module Homebrew
       def run
         Install.perform_preinstall_checks(all_fatal: true)
         Install.perform_build_from_source_checks(all_fatal: true)
-        gistify_logs(args.named.to_resolved_formulae.first)
+        return unless (formula = args.named.to_resolved_formulae.first)
+
+        gistify_logs(formula)
       end
 
       private
 
+      sig { params(formula: Formula).void }
       def gistify_logs(formula)
         files = load_logs(formula.logs)
         build_time = formula.logs.ctime
@@ -86,6 +89,7 @@ module Homebrew
         puts url if url
       end
 
+      sig { params(formula: Formula, with_hostname: T::Boolean).returns(String) }
       def brief_build_info(formula, with_hostname:)
         build_time_string = formula.logs.ctime.strftime("%Y-%m-%d %H:%M:%S")
         string = +<<~EOS
@@ -100,6 +104,7 @@ module Homebrew
       end
 
       # Causes some terminals to display secure password entry indicators.
+      sig { void }
       def noecho_gets
         system "stty", "-echo"
         result = $stdin.gets
@@ -108,6 +113,7 @@ module Homebrew
         result
       end
 
+      sig { params(dir: Pathname, basedir: Pathname).returns(T::Hash[String, T::Hash[Symbol, String]]) }
       def load_logs(dir, basedir = dir)
         logs = {}
         if dir.exist?

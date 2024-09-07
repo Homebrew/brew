@@ -1,0 +1,23 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "rdbg",
+      "name": "Debug Homebrew command",
+      "request": "launch",
+      "rdbgPath": "${workspaceFolder}/Library/Homebrew/shims/gems/rdbg",
+      "command": "brew debugger --",
+      "script": "${fileBasenameNoExtension}",
+      "askParameters": true
+    },
+    {
+      "type": "rdbg",
+      "name": "Attach to Homebrew debugger",
+      "request": "attach",
+      "rdbgPath": "${workspaceFolder}/Library/Homebrew/shims/gems/rdbg",
+      "env": {
+        "TMPDIR": "/private/tmp/",
+      }
+    }
+  ]
+}

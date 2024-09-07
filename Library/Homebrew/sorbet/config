@@ -4,4 +4,7 @@
 --ignore=/vendor/gems
 --ignore=/vendor/portable-ruby
 --ignore=/test/.gem
+--ignore=Formula
+--ignore=Casks
+--suppress-error-code=3008
 --suppress-error-code=7019

@@ -585,6 +585,15 @@ __fish_brew_complete_arg 'create' -l tap -d 'Generate the new formula within the
 __fish_brew_complete_arg 'create' -l verbose -d 'Make some output more verbose'
 
 
+__fish_brew_complete_cmd 'debugger' 'Run the specified Homebrew command in debug mode'
+__fish_brew_complete_arg 'debugger' -l debug -d 'Display any debugging information'
+__fish_brew_complete_arg 'debugger' -l help -d 'Show this message'
+__fish_brew_complete_arg 'debugger' -l open -d 'Start remote debugging over a Unix socket'
+__fish_brew_complete_arg 'debugger' -l quiet -d 'Make some output more quiet'
+__fish_brew_complete_arg 'debugger' -l verbose -d 'Make some output more verbose'
+__fish_brew_complete_arg 'debugger' -a '(__fish_brew_suggest_commands)'
+
+
 __fish_brew_complete_cmd 'deps' 'Show dependencies for formula'
 __fish_brew_complete_arg 'deps' -l HEAD -d 'Show dependencies for HEAD version instead of stable version'
 __fish_brew_complete_arg 'deps' -l annotate -d 'Mark any build, test, implicit, optional, or recommended dependencies as such in the output'
@@ -853,7 +862,7 @@ __fish_brew_complete_arg 'instal' -l bottle-arch -d 'Optimise bottles for the sp
 __fish_brew_complete_arg 'instal' -l build-bottle -d 'Prepare the formula for eventual bottling during installation, skipping any post-install steps'
 __fish_brew_complete_arg 'instal' -l build-from-source -d 'Compile formula from source even if a bottle is provided. Dependencies will still be installed from bottles if they are available'
 __fish_brew_complete_arg 'instal' -l cask -d 'Treat all named arguments as casks'
-__fish_brew_complete_arg 'instal' -l cc -d 'Attempt to compile using the specified compiler, which should be the name of the compiler\'s executable, e.g. `gcc-7` for GCC 7. In order to use LLVM\'s clang, specify `llvm_clang`. To use the Apple-provided clang, specify `clang`. This option will only accept compilers that are provided by Homebrew or bundled with macOS. Please do not file issues if you encounter errors while using this option'
+__fish_brew_complete_arg 'instal' -l cc -d 'Attempt to compile using the specified compiler, which should be the name of the compiler\'s executable, e.g. `gcc-9` for GCC 9. In order to use LLVM\'s clang, specify `llvm_clang`. To use the Apple-provided clang, specify `clang`. This option will only accept compilers that are provided by Homebrew or bundled with macOS. Please do not file issues if you encounter errors while using this option'
 __fish_brew_complete_arg 'instal' -l colorpickerdir -d 'Target location for Color Pickers (default: `~/Library/ColorPickers`)'
 __fish_brew_complete_arg 'instal' -l debug -d 'If brewing fails, open an interactive debugging session with access to IRB or a shell inside the temporary build directory'
 __fish_brew_complete_arg 'instal' -l debug-symbols -d 'Generate debug symbols on build. Source will be retained in a cache directory'
@@ -907,7 +916,7 @@ __fish_brew_complete_arg 'install' -l bottle-arch -d 'Optimise bottles for the s
 __fish_brew_complete_arg 'install' -l build-bottle -d 'Prepare the formula for eventual bottling during installation, skipping any post-install steps'
 __fish_brew_complete_arg 'install' -l build-from-source -d 'Compile formula from source even if a bottle is provided. Dependencies will still be installed from bottles if they are available'
 __fish_brew_complete_arg 'install' -l cask -d 'Treat all named arguments as casks'
-__fish_brew_complete_arg 'install' -l cc -d 'Attempt to compile using the specified compiler, which should be the name of the compiler\'s executable, e.g. `gcc-7` for GCC 7. In order to use LLVM\'s clang, specify `llvm_clang`. To use the Apple-provided clang, specify `clang`. This option will only accept compilers that are provided by Homebrew or bundled with macOS. Please do not file issues if you encounter errors while using this option'
+__fish_brew_complete_arg 'install' -l cc -d 'Attempt to compile using the specified compiler, which should be the name of the compiler\'s executable, e.g. `gcc-9` for GCC 9. In order to use LLVM\'s clang, specify `llvm_clang`. To use the Apple-provided clang, specify `clang`. This option will only accept compilers that are provided by Homebrew or bundled with macOS. Please do not file issues if you encounter errors while using this option'
 __fish_brew_complete_arg 'install' -l colorpickerdir -d 'Target location for Color Pickers (default: `~/Library/ColorPickers`)'
 __fish_brew_complete_arg 'install' -l debug -d 'If brewing fails, open an interactive debugging session with access to IRB or a shell inside the temporary build directory'
 __fish_brew_complete_arg 'install' -l debug-symbols -d 'Generate debug symbols on build. Source will be retained in a cache directory'
@@ -1022,6 +1031,7 @@ __fish_brew_complete_arg 'linkage' -a '(__fish_brew_suggest_formulae_installed)'
 
 
 __fish_brew_complete_cmd 'list' 'List all installed formulae and casks'
+__fish_brew_complete_arg 'list' -l built-from-source -d 'List the formulae compiled from source'
 __fish_brew_complete_arg 'list' -l cask -d 'List only casks, or treat all named arguments as casks'
 __fish_brew_complete_arg 'list' -l debug -d 'Display any debugging information'
 __fish_brew_complete_arg 'list' -l formula -d 'List only formulae, or treat all named arguments as formulae'
@@ -1031,6 +1041,7 @@ __fish_brew_complete_arg 'list' -l installed-as-dependency -d 'List the formulae
 __fish_brew_complete_arg 'list' -l installed-on-request -d 'List the formulae installed on request'
 __fish_brew_complete_arg 'list' -l multiple -d 'Only show formulae with multiple versions installed'
 __fish_brew_complete_arg 'list' -l pinned -d 'List only pinned formulae, or only the specified (pinned) formulae if formula are provided. See also `pin`, `unpin`'
+__fish_brew_complete_arg 'list' -l poured-from-bottle -d 'List the formulae installed from a bottle'
 __fish_brew_complete_arg 'list' -l quiet -d 'Make some output more quiet'
 __fish_brew_complete_arg 'list' -l verbose -d 'Make some output more verbose'
 __fish_brew_complete_arg 'list' -l versions -d 'Show the version number for installed formulae, or only the specified formulae if formula are provided'
@@ -1090,6 +1101,7 @@ __fish_brew_complete_arg 'log; and not __fish_seen_argument -l formula -l formul
 
 
 __fish_brew_complete_cmd 'ls' 'List all installed formulae and casks'
+__fish_brew_complete_arg 'ls' -l built-from-source -d 'List the formulae compiled from source'
 __fish_brew_complete_arg 'ls' -l cask -d 'List only casks, or treat all named arguments as casks'
 __fish_brew_complete_arg 'ls' -l debug -d 'Display any debugging information'
 __fish_brew_complete_arg 'ls' -l formula -d 'List only formulae, or treat all named arguments as formulae'
@@ -1099,6 +1111,7 @@ __fish_brew_complete_arg 'ls' -l installed-as-dependency -d 'List the formulae i
 __fish_brew_complete_arg 'ls' -l installed-on-request -d 'List the formulae installed on request'
 __fish_brew_complete_arg 'ls' -l multiple -d 'Only show formulae with multiple versions installed'
 __fish_brew_complete_arg 'ls' -l pinned -d 'List only pinned formulae, or only the specified (pinned) formulae if formula are provided. See also `pin`, `unpin`'
+__fish_brew_complete_arg 'ls' -l poured-from-bottle -d 'List the formulae installed from a bottle'
 __fish_brew_complete_arg 'ls' -l quiet -d 'Make some output more quiet'
 __fish_brew_complete_arg 'ls' -l verbose -d 'Make some output more verbose'
 __fish_brew_complete_arg 'ls' -l versions -d 'Show the version number for installed formulae, or only the specified formulae if formula are provided'
@@ -1525,6 +1538,7 @@ __fish_brew_complete_arg 'tc' -l suggest-typed -d 'Try upgrading `typed` sigils'
 __fish_brew_complete_arg 'tc' -l update -d 'Update RBI files'
 __fish_brew_complete_arg 'tc' -l update-all -d 'Update all RBI files rather than just updated gems'
 __fish_brew_complete_arg 'tc' -l verbose -d 'Make some output more verbose'
+__fish_brew_complete_arg 'tc' -a '(__fish_brew_suggest_taps_installed)'
 
 
 __fish_brew_complete_cmd 'test' 'Run the test method provided by an installed formula'
@@ -1567,6 +1581,7 @@ __fish_brew_complete_arg 'typecheck' -l suggest-typed -d 'Try upgrading `typed` 
 __fish_brew_complete_arg 'typecheck' -l update -d 'Update RBI files'
 __fish_brew_complete_arg 'typecheck' -l update-all -d 'Update all RBI files rather than just updated gems'
 __fish_brew_complete_arg 'typecheck' -l verbose -d 'Make some output more verbose'
+__fish_brew_complete_arg 'typecheck' -a '(__fish_brew_suggest_taps_installed)'
 
 
 __fish_brew_complete_cmd 'unbottled' 'Show the unbottled dependents of formulae'

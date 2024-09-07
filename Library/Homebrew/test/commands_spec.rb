@@ -53,7 +53,7 @@ RSpec.describe Commands do
 
       FileUtils.touch "#{dir}/brew-t4"
 
-      allow(Tap).to receive(:cmd_directories).and_return([dir])
+      allow(described_class).to receive(:tap_cmd_directories).and_return([dir])
 
       cmds = described_class.external_commands
 

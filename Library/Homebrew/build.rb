@@ -1,4 +1,4 @@
-# typed: true
+# typed: true # rubocop:todo Sorbet/StrictSigil
 # frozen_string_literal: true
 
 # This script is loaded by formula_installer as a separate instance.
@@ -75,9 +75,10 @@ class Build
     ENV.activate_extensions!(env: args.env)
 
     if superenv?(args.env)
-      ENV.keg_only_deps = keg_only_deps
-      ENV.deps = formula_deps
-      ENV.run_time_deps = run_time_deps
+      superenv = T.cast(ENV, Superenv)
+      superenv.keg_only_deps = keg_only_deps
+      superenv.deps = formula_deps
+      superenv.run_time_deps = run_time_deps
       ENV.setup_build_environment(
         formula:,
         cc:            args.cc,

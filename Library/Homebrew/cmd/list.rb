@@ -1,4 +1,4 @@
-# typed: true
+# typed: strict
 # frozen_string_literal: true
 
 require "abstract_command"
@@ -41,6 +41,10 @@ module Homebrew
                description: "List the formulae installed on request."
         switch "--installed-as-dependency",
                description: "List the formulae installed as dependencies."
+        switch "--poured-from-bottle",
+               description: "List the formulae installed from a bottle."
+        switch "--built-from-source",
+               description: "List the formulae compiled from source."
 
         # passed through to ls
         switch "-1",
@@ -60,7 +64,8 @@ module Homebrew
         conflicts "--pinned", "--cask"
         conflicts "--multiple", "--cask"
         conflicts "--pinned", "--multiple"
-        ["--installed-on-request", "--installed-as-dependency"].each do |flag|
+        ["--installed-on-request", "--installed-as-dependency",
+         "--poured-from-bottle", "--built-from-source"].each do |flag|
           conflicts "--cask", flag
           conflicts "--versions", flag
           conflicts "--pinned", flag
@@ -71,6 +76,7 @@ module Homebrew
         end
         ["--versions", "--pinned",
          "---installed-on-request", "--installed-as-dependency",
+         "--poured-from-bottle", "--built-from-source",
          "-l", "-r", "-t"].each do |flag|
           conflicts "--full-name", flag
         end
@@ -104,25 +110,31 @@ module Homebrew
         elsif args.versions?
           filtered_list unless args.cask?
           list_casks if args.cask? || (!args.formula? && !args.multiple? && args.no_named?)
-        elsif args.installed_on_request? || args.installed_as_dependency?
-          unless args.no_named?
-            raise UsageError,
-                  "Cannot use `--installed-on-request` or " \
-                  "`--installed-as-dependency` with formula arguments."
-          end
+        elsif args.installed_on_request? ||
+              args.installed_as_dependency? ||
+              args.poured_from_bottle? ||
+              args.built_from_source?
+          flags = []
+          flags << "`--installed-on-request`" if args.installed_on_request?
+          flags << "`--installed-as-dependency`" if args.installed_as_dependency?
+          flags << "`--poured-from-bottle`" if args.poured_from_bottle?
+          flags << "`--built-from-source`" if args.built_from_source?
+
+          raise UsageError, "Cannot use #{flags.join(", ")} with formula arguments." unless args.no_named?
 
           Formula.installed.sort.each do |formula|
             tab = Tab.for_formula(formula)
 
-            if args.installed_on_request? && args.installed_as_dependency?
-              statuses = []
-              statuses << "installed on request" if tab.installed_on_request
-              statuses << "installed as dependency" if tab.installed_as_dependency
-              next if statuses.empty?
+            statuses = []
+            statuses << "installed on request" if args.installed_on_request? && tab.installed_on_request
+            statuses << "installed as dependency" if args.installed_as_dependency? && tab.installed_as_dependency
+            statuses << "poured from bottle" if args.poured_from_bottle? && tab.poured_from_bottle
+            statuses << "built from source" if args.built_from_source? && !tab.poured_from_bottle
+            next if statuses.empty?
 
+            if flags.count > 1
               puts "#{formula.name}: #{statuses.join(", ")}"
-            elsif (args.installed_on_request? && tab.installed_on_request) ||
-                  (args.installed_as_dependency? && tab.installed_as_dependency)
+            else
               puts formula.name
             end
           end
@@ -160,6 +172,7 @@ module Homebrew
 
       private
 
+      sig { void }
       def filtered_list
         names = if args.no_named?
           Formula.racks
@@ -189,6 +202,7 @@ module Homebrew
         end
       end
 
+      sig { void }
       def list_casks
         casks = if args.no_named?
           Cask::Caskroom.casks
@@ -212,6 +226,7 @@ module Homebrew
     end
 
     class PrettyListing
+      sig { params(path: T.any(String, Pathname, Keg)).void }
       def initialize(path)
         Pathname.new(path).children.sort_by { |p| p.to_s.downcase }.each do |pn|
           case pn.basename.to_s
@@ -240,7 +255,8 @@ module Homebrew
 
       private
 
-      def print_dir(root)
+      sig { params(root: Pathname, block: T.nilable(T.proc.params(arg0: Pathname).returns(T::Boolean))).void }
+      def print_dir(root, &block)
         dirs = []
         remaining_root_files = []
         other = ""
@@ -248,7 +264,7 @@ module Homebrew
         root.children.sort.each do |pn|
           if pn.directory?
             dirs << pn
-          elsif block_given? && yield(pn)
+          elsif block && yield(pn)
             puts pn
             other = "other "
           elsif pn.basename.to_s != ".DS_Store"
@@ -265,6 +281,7 @@ module Homebrew
         print_remaining_files remaining_root_files, root, other
       end
 
+      sig { params(files: T::Array[Pathname], root: Pathname, other: String).void }
       def print_remaining_files(files, root, other = "")
         if files.length == 1
           puts files

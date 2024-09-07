@@ -254,25 +254,18 @@ module Homebrew
       def check_pull_requests(cask, new_version:)
         tap_remote_repo = cask.tap.full_name || cask.tap.remote_repo
 
+        file = cask.sourcefile_path.relative_path_from(cask.tap.path).to_s
+        quiet = args.quiet?
         GitHub.check_for_duplicate_pull_requests(cask.token, tap_remote_repo,
-                                                 state:   "open",
-                                                 version: nil,
-                                                 file:    cask.sourcefile_path.relative_path_from(cask.tap.path).to_s,
-                                                 quiet:   args.quiet?)
+                                                 state: "open", file:, quiet:)
 
-        # if we haven't already found open requests, try for an exact match across closed requests
+        # if we haven't already found open requests, try for an exact match across all pull requests
         new_version.instance_variables.each do |version_type|
-          version = new_version.instance_variable_get(version_type)
-          next if version.blank?
+          version_type_version = new_version.instance_variable_get(version_type)
+          next if version_type_version.blank?
 
-          GitHub.check_for_duplicate_pull_requests(
-            cask.token,
-            tap_remote_repo,
-            state:   "closed",
-            version: shortened_version(version, cask:),
-            file:    cask.sourcefile_path.relative_path_from(cask.tap.path).to_s,
-            quiet:   args.quiet?,
-          )
+          version = shortened_version(version_type_version, cask:)
+          GitHub.check_for_duplicate_pull_requests(cask.token, tap_remote_repo, version:, file:, quiet:)
         end
       end
 

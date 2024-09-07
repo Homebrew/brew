@@ -81,21 +81,21 @@ module Homebrew
 
             exec_args << "--HEAD" if f.head?
 
-            Utils.safe_fork do |error_pipe|
-              if Sandbox.available?
-                sandbox = Sandbox.new
-                f.logs.mkpath
-                sandbox.record_log(f.logs/"test.sandbox.log")
-                sandbox.allow_write_temp_and_cache
-                sandbox.allow_write_log(f)
-                sandbox.allow_write_xcode
-                sandbox.allow_write_path(HOMEBREW_PREFIX/"var/cache")
-                sandbox.allow_write_path(HOMEBREW_PREFIX/"var/homebrew/locks")
-                sandbox.allow_write_path(HOMEBREW_PREFIX/"var/log")
-                sandbox.allow_write_path(HOMEBREW_PREFIX/"var/run")
-                sandbox.deny_all_network_except_pipe(error_pipe) unless f.class.network_access_allowed?(:test)
-                sandbox.exec(*exec_args)
-              else
+            if Sandbox.available?
+              sandbox = Sandbox.new
+              f.logs.mkpath
+              sandbox.record_log(f.logs/"test.sandbox.log")
+              sandbox.allow_write_temp_and_cache
+              sandbox.allow_write_log(f)
+              sandbox.allow_write_xcode
+              sandbox.allow_write_path(HOMEBREW_PREFIX/"var/cache")
+              sandbox.allow_write_path(HOMEBREW_PREFIX/"var/homebrew/locks")
+              sandbox.allow_write_path(HOMEBREW_PREFIX/"var/log")
+              sandbox.allow_write_path(HOMEBREW_PREFIX/"var/run")
+              sandbox.deny_all_network unless f.class.network_access_allowed?(:test)
+              sandbox.run(*exec_args)
+            else
+              Utils.safe_fork do
                 exec(*exec_args)
               end
             end

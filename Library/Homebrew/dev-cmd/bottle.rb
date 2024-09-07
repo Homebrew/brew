@@ -359,11 +359,11 @@ module Homebrew
         gnu_tar_formula
       end
 
-      sig { params(mtime: String).returns([String, T::Array[String]]) }
-      def setup_tar_and_args!(mtime)
+      sig { params(mtime: String, default_tar: T::Boolean).returns([String, T::Array[String]]) }
+      def setup_tar_and_args!(mtime, default_tar: false)
         # Without --only-json-tab bottles are never reproducible
         default_tar_args = ["tar", tar_args].freeze
-        return default_tar_args unless args.only_json_tab?
+        return default_tar_args if !args.only_json_tab? || default_tar
 
         # Use gnu-tar as it can be set up for reproducibility better than libarchive
         # and to be consistent between macOS and Linux.
@@ -540,7 +540,7 @@ module Homebrew
               sudo_purge
               # Tar then gzip for reproducible bottles.
               tar_mtime = tab.source_modified_time.strftime("%Y-%m-%d %H:%M:%S")
-              tar, tar_args = setup_tar_and_args!(tar_mtime)
+              tar, tar_args = setup_tar_and_args!(tar_mtime, default_tar: formula.name == "gnu-tar")
               safe_system tar, "--create", "--numeric-owner",
                           *tar_args,
                           "--file", tar_path, "#{formula.name}/#{formula.pkg_version}"
@@ -661,6 +661,7 @@ module Homebrew
           all_files = keg.find
                          .select(&:file?)
                          .map { |path| path.to_s.delete_prefix(keg_prefix) }
+          installed_size = keg.disk_usage
         end
 
         json = {
@@ -684,7 +685,9 @@ module Homebrew
               "root_url" => bottle.root_url,
               "cellar"   => bottle_cellar.to_s,
               "rebuild"  => bottle.rebuild,
-              "date"     => Pathname(filename.to_s).mtime.strftime("%F"),
+              # date is used for org.opencontainers.image.created which is an RFC 3339 date-time.
+              # Time#iso8601 produces an XML Schema date-time that meets RFC 3339 ABNF.
+              "date"     => Pathname(filename.to_s).mtime.utc.iso8601,
               "tags"     => {
                 bottle_tag.to_s => {
                   "filename"        => filename.url_encode,
@@ -693,6 +696,7 @@ module Homebrew
                   "tab"             => tab.to_bottle_hash,
                   "path_exec_files" => path_exec_files,
                   "all_files"       => all_files,
+                  "installed_size"  => installed_size,
                 },
               },
             },

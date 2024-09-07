@@ -31,6 +31,9 @@ module Tapioca
       sig { override.void }
       def decorate
         cmd = T.cast(constant, T.class_of(Homebrew::AbstractCommand))
+        # This is a dummy class to make the `brew` command parsable
+        return if cmd == Homebrew::Cmd::Brew
+
         args_class_name = T.must(T.must(cmd.args_class).name)
         root.create_class(args_class_name, superclass_name: "Homebrew::CLI::Args") do |klass|
           create_args_methods(klass, cmd.parser)

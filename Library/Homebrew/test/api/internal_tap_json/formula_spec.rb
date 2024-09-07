@@ -8,10 +8,10 @@ RSpec.describe "Internal Tap JSON -- Formula", type: :system do
 
   context "when generating JSON", :needs_macos do
     before do
-      cp_r(TEST_FIXTURE_DIR/"internal_tap_json/homebrew-core", Tap::TAP_DIRECTORY/"homebrew")
+      cp_r(TEST_FIXTURE_DIR/"internal_tap_json/homebrew-core", HOMEBREW_TAP_DIRECTORY/"homebrew")
 
       # NOTE: Symlinks can't be copied recursively so we create them manually here.
-      (Tap::TAP_DIRECTORY/"homebrew/homebrew-core").tap do |core_tap|
+      (HOMEBREW_TAP_DIRECTORY/"homebrew/homebrew-core").tap do |core_tap|
         mkdir(core_tap/"Aliases")
         ln_s(core_tap/"Formula/f/fennel.rb", core_tap/"Aliases/fennel-lang")
         ln_s(core_tap/"Formula/p/ponyc.rb", core_tap/"Aliases/ponyc-lang")

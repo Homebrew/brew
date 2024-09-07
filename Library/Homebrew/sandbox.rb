@@ -5,11 +5,18 @@ require "erb"
 require "io/console"
 require "pty"
 require "tempfile"
+require "utils/fork"
 
 # Helper class for running a sub-process inside of a sandboxed environment.
 class Sandbox
   SANDBOX_EXEC = "/usr/bin/sandbox-exec"
   private_constant :SANDBOX_EXEC
+
+  # This is defined in the macOS SDK but Ruby unfortunately does not expose it.
+  # This value can be found by compiling a C program that prints TIOCSCTTY.
+  # The value is different on Linux but that's not a problem as we only support macOS in this file.
+  TIOCSCTTY = 0x20007461
+  private_constant :TIOCSCTTY
 
   sig { returns(T::Boolean) }
   def self.available?
@@ -125,108 +132,122 @@ class Sandbox
     add_rule allow: false, operation: "network*"
   end
 
-  sig { params(path: T.any(String, Pathname)).void }
-  def deny_all_network_except_pipe(path)
-    deny_all_network
-    allow_network path:, type: :literal
-  end
-
   sig { params(args: T.any(String, Pathname)).void }
-  def exec(*args)
-    seatbelt = Tempfile.new(["homebrew", ".sb"], HOMEBREW_TEMP)
-    seatbelt.write(@profile.dump)
-    seatbelt.close
-    @start = T.let(Time.now, T.nilable(Time))
+  def run(*args)
+    Dir.mktmpdir("homebrew-sandbox", HOMEBREW_TEMP) do |tmpdir|
+      allow_network path: File.join(tmpdir, "socket"), type: :literal # Make sure we have access to the error pipe.
 
-    begin
-      command = [SANDBOX_EXEC, "-f", seatbelt.path, *args]
-      # Start sandbox in a pseudoterminal to prevent access of the parent terminal.
-      PTY.spawn(*command) do |r, w, pid|
-        # Set the PTY's window size to match the parent terminal.
-        # Some formula tests are sensitive to the terminal size and fail if this is not set.
-        winch = proc do |_sig|
-          w.winsize = if $stdout.tty?
-            # We can only use IO#winsize if the IO object is a TTY.
-            $stdout.winsize
-          else
-            # Otherwise, default to tput, if available.
-            # This relies on ncurses rather than the system's ioctl.
-            [Utils.popen_read("tput", "lines").to_i, Utils.popen_read("tput", "cols").to_i]
-          end
-        end
+      seatbelt = File.new(File.join(tmpdir, "homebrew.sb"), "wx")
+      seatbelt.write(@profile.dump)
+      seatbelt.close
+      @start = T.let(Time.now, T.nilable(Time))
 
-        write_to_pty = proc do
-          # Don't hang if stdin is not able to be used - throw EIO instead.
-          old_ttin = trap(:TTIN, "IGNORE")
-
-          # Update the window size whenever the parent terminal's window size changes.
-          old_winch = trap(:WINCH, &winch)
-          winch.call(nil)
-
-          stdin_thread = Thread.new do
-            IO.copy_stream($stdin, w)
-          rescue Errno::EIO
-            # stdin is unavailable - move on.
+      begin
+        command = [SANDBOX_EXEC, "-f", seatbelt.path, *args]
+        # Start sandbox in a pseudoterminal to prevent access of the parent terminal.
+        PTY.open do |controller, worker|
+          # Set the PTY's window size to match the parent terminal.
+          # Some formula tests are sensitive to the terminal size and fail if this is not set.
+          winch = proc do |_sig|
+            controller.winsize = if $stdout.tty?
+              # We can only use IO#winsize if the IO object is a TTY.
+              $stdout.winsize
+            else
+              # Otherwise, default to tput, if available.
+              # This relies on ncurses rather than the system's ioctl.
+              [Utils.popen_read("tput", "lines").to_i, Utils.popen_read("tput", "cols").to_i]
+            end
           end
 
-          r.each_char { |c| print(c) }
+          write_to_pty = proc do
+            # Don't hang if stdin is not able to be used - throw EIO instead.
+            old_ttin = trap(:TTIN, "IGNORE")
 
-          Process.wait(pid)
-        ensure
-          stdin_thread&.kill
-          trap(:TTIN, old_ttin)
-          trap(:WINCH, old_winch)
-        end
+            # Update the window size whenever the parent terminal's window size changes.
+            old_winch = trap(:WINCH, &winch)
+            winch.call(nil)
 
-        if $stdin.tty?
-          # If stdin is a TTY, use io.raw to set stdin to a raw, passthrough
-          # mode while we copy the input/output of the process spawned in the
-          # PTY. After we've finished copying to/from the PTY process, io.raw
-          # will restore the stdin TTY to its original state.
-          begin
-            # Ignore SIGTTOU as setting raw mode will hang if the process is in the background.
-            old_ttou = trap(:TTOU, "IGNORE")
-            $stdin.raw(&write_to_pty)
+            stdin_thread = Thread.new do
+              IO.copy_stream($stdin, controller)
+            rescue Errno::EIO
+              # stdin is unavailable - move on.
+            end
+
+            stdout_thread = Thread.new do
+              controller.each_char { |c| print(c) }
+            end
+
+            Utils.safe_fork(directory: tmpdir, yield_parent: true) do |error_pipe|
+              if error_pipe
+                # Child side
+                Process.setsid
+                controller.close
+                worker.ioctl(TIOCSCTTY, 0) # Make this the controlling terminal.
+                File.open("/dev/tty", Fcntl::O_WRONLY).close # Workaround for https://developer.apple.com/forums/thread/663632
+                worker.close_on_exec = true
+                exec(*command, in: worker, out: worker, err: worker) # And map everything to the PTY.
+              else
+                # Parent side
+                worker.close
+              end
+            end
+          rescue ChildProcessError => e
+            raise ErrorDuringExecution.new(command, status: e.status)
           ensure
-            trap(:TTOU, old_ttou)
+            stdin_thread&.kill
+            stdout_thread&.kill
+            trap(:TTIN, old_ttin)
+            trap(:WINCH, old_winch)
           end
-        else
-          write_to_pty.call
-        end
-      end
-      raise ErrorDuringExecution.new(command, status: $CHILD_STATUS) unless $CHILD_STATUS.success?
-    rescue
-      @failed = true
-      raise
-    ensure
-      seatbelt.unlink
-      sleep 0.1 # wait for a bit to let syslog catch up the latest events.
-      syslog_args = [
-        "-F", "$((Time)(local)) $(Sender)[$(PID)]: $(Message)",
-        "-k", "Time", "ge", @start.to_i.to_s,
-        "-k", "Message", "S", "deny",
-        "-k", "Sender", "kernel",
-        "-o",
-        "-k", "Time", "ge", @start.to_i.to_s,
-        "-k", "Message", "S", "deny",
-        "-k", "Sender", "sandboxd"
-      ]
-      logs = Utils.popen_read("syslog", *syslog_args)
 
-      # These messages are confusing and non-fatal, so don't report them.
-      logs = logs.lines.grep_v(/^.*Python\(\d+\) deny file-write.*pyc$/).join
-
-      unless logs.empty?
-        if @logfile
-          File.open(@logfile, "w") do |log|
-            log.write logs
-            log.write "\nWe use time to filter sandbox log. Therefore, unrelated logs may be recorded.\n"
+          if $stdin.tty?
+            # If stdin is a TTY, use io.raw to set stdin to a raw, passthrough
+            # mode while we copy the input/output of the process spawned in the
+            # PTY. After we've finished copying to/from the PTY process, io.raw
+            # will restore the stdin TTY to its original state.
+            begin
+              # Ignore SIGTTOU as setting raw mode will hang if the process is in the background.
+              old_ttou = trap(:TTOU, "IGNORE")
+              $stdin.raw(&write_to_pty)
+            ensure
+              trap(:TTOU, old_ttou)
+            end
+          else
+            write_to_pty.call
           end
         end
+      rescue
+        @failed = true
+        raise
+      ensure
+        sleep 0.1 # wait for a bit to let syslog catch up the latest events.
+        syslog_args = [
+          "-F", "$((Time)(local)) $(Sender)[$(PID)]: $(Message)",
+          "-k", "Time", "ge", @start.to_i.to_s,
+          "-k", "Message", "S", "deny",
+          "-k", "Sender", "kernel",
+          "-o",
+          "-k", "Time", "ge", @start.to_i.to_s,
+          "-k", "Message", "S", "deny",
+          "-k", "Sender", "sandboxd"
+        ]
+        logs = Utils.popen_read("syslog", *syslog_args)
 
-        if @failed && Homebrew::EnvConfig.verbose?
-          ohai "Sandbox Log", logs
-          $stdout.flush # without it, brew test-bot would fail to catch the log
+        # These messages are confusing and non-fatal, so don't report them.
+        logs = logs.lines.grep_v(/^.*Python\(\d+\) deny file-write.*pyc$/).join
+
+        unless logs.empty?
+          if @logfile
+            File.open(@logfile, "w") do |log|
+              log.write logs
+              log.write "\nWe use time to filter sandbox log. Therefore, unrelated logs may be recorded.\n"
+            end
+          end
+
+          if @failed && Homebrew::EnvConfig.verbose?
+            ohai "Sandbox Log", logs
+            $stdout.flush # without it, brew test-bot would fail to catch the log
+          end
         end
       end
     end

@@ -1,4 +1,4 @@
-# typed: true
+# typed: true # rubocop:todo Sorbet/StrictSigil
 # frozen_string_literal: true
 
 require "rubocops/extend/formula_cop"
@@ -140,6 +140,8 @@ module RuboCop
           end
 
           interpolated_bin_path_starts_with(body_node, "/#{@formula_name}") do |bin_node|
+            next if bin_node.ancestors.any?(&:array_type?)
+
             offending_node(bin_node)
             cmd = bin_node.source.match(%r{\#{bin}/(\S+)})[1]&.delete_suffix('"') || @formula_name
             problem "Use `bin/\"#{cmd}\"` instead of `\"\#{bin}/#{cmd}\"`" do |corrector|

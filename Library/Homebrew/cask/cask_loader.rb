@@ -1,4 +1,4 @@
-# typed: true
+# typed: true # rubocop:todo Sorbet/StrictSigil
 # frozen_string_literal: true
 
 require "cask/cache"
@@ -51,10 +51,14 @@ module Cask
 
     # Loads a cask from a string.
     class FromContentLoader < AbstractContentLoader
+      sig {
+        params(ref: T.any(Pathname, String, Cask, URI::Generic), warn: T::Boolean)
+          .returns(T.nilable(T.attached_class))
+      }
       def self.try_new(ref, warn: false)
-        return false unless ref.respond_to?(:to_str)
+        return if ref.is_a?(Cask)
 
-        content = T.unsafe(ref).to_str
+        content = ref.to_str
 
         # Cache compiled regex
         @regex ||= begin

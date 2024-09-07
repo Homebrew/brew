@@ -4,34 +4,51 @@
 homebrew-list() {
   case "$1" in
     # check we actually have list and not e.g. listsomething
-    list) ;;
-    list*) return 1 ;;
+    list | ls) ;;
+    list* | ls*) return 1 ;;
     *) ;;
   esac
 
+  local ls_env=()
   local ls_args=()
-  local formula=""
-  local cask=""
-
-  for arg in "$@"
-  do
-    case "${arg}" in
-      # check for flags passed to ls
-      -1 | -l | -r | -t) ls_args+=("${arg}") ;;
-      --formula | --formulae) formula=1 ;;
-      --cask | --casks) cask=1 ;;
-      # reject all other flags
-      -* | *) return 1 ;;
-    esac
-  done
 
   local tty
   if [[ -t 1 ]]
   then
     tty=1
+    ls_args+=("-Cq")
+    source "${HOMEBREW_LIBRARY}/Homebrew/utils/helpers.sh"
+    ls_env+=("COLUMNS=$(columns)")
   fi
 
-  local error_string="LS_ERRORED"
+  local formula=""
+  local cask=""
+
+  # `OPTIND` is used internally by `getopts` to track parsing position
+  local OPTIND=2 # skip $1 (and localise OPTIND to this function)
+  while getopts ":1lrt-:" arg
+  do
+    case "${arg}" in
+      # check for flags passed to ls
+      1 | l | r | t) ls_args+=("-${arg}") ;;
+      -)
+        local parsed_index=$((OPTIND - 1)) # Parse full arg to reject e.g. -r-formula
+        case "${!parsed_index}" in
+          --formula | --formulae) formula=1 ;;
+          --cask | --casks) cask=1 ;;
+          *) return 1 ;;
+        esac
+        ;;
+      # reject all other flags
+      *) return 1 ;;
+    esac
+  done
+  # If we haven't reached the end of the arg list, we have named args.
+  if ((OPTIND - 1 != $#))
+  then
+    return 1
+  fi
+
   if [[ -z "${cask}" && -d "${HOMEBREW_CELLAR}" ]]
   then
     if [[ -n "${tty}" && -z "${formula}" ]]
@@ -40,11 +57,8 @@ homebrew-list() {
     fi
 
     local formula_output
-    formula_output="$(ls "${ls_args[@]}" "${HOMEBREW_CELLAR}" || echo "${error_string}")"
-    if [[ "${formula_output}" == "${error_string}" ]]
-    then
-      exit 1
-    elif [[ -n "${formula_output}" ]]
+    formula_output="$(/usr/bin/env "${ls_env[@]}" ls "${ls_args[@]}" "${HOMEBREW_CELLAR}")" || exit 1
+    if [[ -n "${formula_output}" ]]
     then
       echo "${formula_output}"
     fi
@@ -63,11 +77,8 @@ homebrew-list() {
     fi
 
     local cask_output
-    cask_output="$(ls "${ls_args[@]}" "${HOMEBREW_CASKROOM}" || echo "${error_string}")"
-    if [[ "${cask_output}" == "${error_string}" ]]
-    then
-      exit 1
-    elif [[ -n "${cask_output}" ]]
+    cask_output="$(/usr/bin/env "${ls_env[@]}" ls "${ls_args[@]}" "${HOMEBREW_CASKROOM}")" || exit 1
+    if [[ -n "${cask_output}" ]]
     then
       echo "${cask_output}"
     fi

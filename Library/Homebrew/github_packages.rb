@@ -1,4 +1,4 @@
-# typed: true
+# typed: true # rubocop:todo Sorbet/StrictSigil
 # frozen_string_literal: true
 
 require "utils/curl"
@@ -291,6 +291,7 @@ class GitHubPackages
       remote
     end
 
+    license = bottle_hash["formula"]["license"].to_s
     created_date = bottle_hash["bottle"]["date"]
     if keep_old
       index = JSON.parse((root/"index.json").read)
@@ -301,12 +302,20 @@ class GitHubPackages
       formula_annotations_hash = image_index["annotations"]
       manifests = image_index["manifests"]
     else
+      image_license = if license.length <= 256
+        license
+      else
+        # TODO: Consider generating a truncated license when over the limit
+        require "utils/spdx"
+        SPDX.license_expression_to_string(:cannot_represent)
+      end
+
       formula_annotations_hash = {
         "com.github.package.type"                => GITHUB_PACKAGE_TYPE,
         "org.opencontainers.image.created"       => created_date,
         "org.opencontainers.image.description"   => bottle_hash["formula"]["desc"],
         "org.opencontainers.image.documentation" => documentation,
-        "org.opencontainers.image.license"       => bottle_hash["formula"]["license"],
+        "org.opencontainers.image.licenses"      => image_license,
         "org.opencontainers.image.ref.name"      => version_rebuild,
         "org.opencontainers.image.revision"      => git_revision,
         "org.opencontainers.image.source"        => source,
@@ -394,6 +403,8 @@ class GitHubPackages
         "sh.brew.bottle.digest"             => tar_gz_sha256,
         "sh.brew.bottle.glibc.version"      => glibc_version,
         "sh.brew.bottle.size"               => local_file_size.to_s,
+        "sh.brew.bottle.installed_size"     => tag_hash["installed_size"].to_s,
+        "sh.brew.license"                   => license,
         "sh.brew.tab"                       => tab.to_json,
         "sh.brew.path_exec_files"           => path_exec_files_string,
       }.compact_blank

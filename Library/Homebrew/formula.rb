@@ -1,4 +1,4 @@
-# typed: true
+# typed: true # rubocop:todo Sorbet/StrictSigil
 # frozen_string_literal: true
 
 require "attrable"
@@ -2863,14 +2863,21 @@ class Formula
   # @api public
   sig {
     params(
-      paths:        T.any(T::Enumerable[T.any(String, Pathname)], String, Pathname),
-      before:       T.nilable(T.any(Pathname, Regexp, String)),
-      after:        T.nilable(T.any(Pathname, String, Symbol)),
-      audit_result: T::Boolean,
-      block:        T.nilable(T.proc.params(s: StringInreplaceExtension).void),
+      paths:            T.any(T::Enumerable[T.any(String, Pathname)], String, Pathname),
+      before:           T.nilable(T.any(Pathname, Regexp, String)),
+      after:            T.nilable(T.any(Pathname, String, Symbol)),
+      old_audit_result: T.nilable(T::Boolean),
+      audit_result:     T::Boolean,
+      block:            T.nilable(T.proc.params(s: StringInreplaceExtension).void),
     ).void
   }
-  def inreplace(paths, before = nil, after = nil, audit_result = true, &block) # rubocop:disable Style/OptionalBooleanParameter
+  def inreplace(paths, before = nil, after = nil, old_audit_result = nil, audit_result: true, &block)
+    # NOTE: must check for `#nil?` and not `#blank?`, or else `old_audit_result = false` will not call `odeprecated`.
+    unless old_audit_result.nil?
+      # odeprecated "inreplace(paths, before, after, #{old_audit_result})",
+      #             "inreplace(paths, before, after, audit_result: #{old_audit_result})"
+      audit_result = old_audit_result
+    end
     Utils::Inreplace.inreplace(paths, before, after, audit_result:, &block)
   rescue Utils::Inreplace::Error => e
     onoe e.to_s
@@ -3124,7 +3131,7 @@ class Formula
     removed = ENV.remove_cc_etc
 
     begin
-      T.unsafe(self).system("xcodebuild", *args)
+      self.system("xcodebuild", *args)
     ensure
       ENV.update(removed)
     end
@@ -3349,7 +3356,7 @@ class Formula
     #
     # @!attribute [w] license
     # @see https://docs.brew.sh/License-Guidelines Homebrew License Guidelines
-    # @see https://spdx.github.io/spdx-spec/appendix-IV-SPDX-license-expressions/ SPDX license expression guide
+    # @see https://spdx.github.io/spdx-spec/latest/annexes/spdx-license-expressions/ SPDX license expression guide
     # @api public
     def license(args = nil)
       if args.nil?

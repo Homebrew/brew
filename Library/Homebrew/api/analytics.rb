@@ -1,4 +1,4 @@
-# typed: true
+# typed: strict
 # frozen_string_literal: true
 
 module Homebrew
@@ -12,7 +12,7 @@ module Homebrew
         end
         alias generic_analytics_api_path analytics_api_path
 
-        sig { params(category: String, days: T.any(Integer, String)).returns(Hash) }
+        sig { params(category: String, days: T.any(Integer, String)).returns(T::Hash[String, T.untyped]) }
         def fetch(category, days)
           Homebrew::API.fetch "#{analytics_api_path}/#{category}/#{days}d.json"
         end

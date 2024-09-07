@@ -1,4 +1,4 @@
-# typed: true
+# typed: true # rubocop:todo Sorbet/StrictSigil
 # frozen_string_literal: true
 
 require "fcntl"
@@ -6,33 +6,37 @@ require "socket"
 
 module Utils
   def self.rewrite_child_error(child_error)
-    error = if child_error.inner["cmd"] &&
-               child_error.inner_class == ErrorDuringExecution
-      ErrorDuringExecution.new(child_error.inner["cmd"],
-                               status: child_error.inner["status"],
-                               output: child_error.inner["output"])
-    elsif child_error.inner["cmd"] &&
-          child_error.inner_class == BuildError
+    inner_class = Object.const_get(child_error["json_class"])
+    error = if child_error["cmd"] && inner_class == ErrorDuringExecution
+      ErrorDuringExecution.new(child_error["cmd"],
+                               status: child_error["status"],
+                               output: child_error["output"])
+    elsif child_error["cmd"] && inner_class == BuildError
       # We fill `BuildError#formula` and `BuildError#options` in later,
       # when we rescue this in `FormulaInstaller#build`.
-      BuildError.new(nil, child_error.inner["cmd"],
-                     child_error.inner["args"], child_error.inner["env"])
-    elsif child_error.inner_class == Interrupt
+      BuildError.new(nil, child_error["cmd"], child_error["args"], child_error["env"])
+    elsif inner_class == Interrupt
       Interrupt.new
     else
       # Everything other error in the child just becomes a RuntimeError.
-      RuntimeError.new(child_error.message)
+      RuntimeError.new <<~EOS
+        An exception occurred within a child process:
+          #{inner_class}: #{child_error["m"]}
+      EOS
     end
 
-    error.set_backtrace child_error.backtrace
+    error.set_backtrace child_error["b"]
 
     error
   end
 
-  def self.safe_fork
+  # When using this function, remember to call `exec` as soon as reasonably possible.
+  # This function does not protect against the pitfalls of what you can do pre-exec in a fork.
+  # See `man fork` for more information.
+  def self.safe_fork(directory: nil, yield_parent: false)
     require "json/add/exception"
 
-    Dir.mktmpdir("homebrew", HOMEBREW_TEMP) do |tmpdir|
+    block = proc do |tmpdir|
       UNIXServer.open("#{tmpdir}/socket") do |server|
         read, write = IO.pipe
 
@@ -78,6 +82,8 @@ module Utils
         pid = T.must(pid)
 
         begin
+          yield(nil) if yield_parent
+
           begin
             socket = server.accept_nonblock
           rescue Errno::EAGAIN, Errno::EWOULDBLOCK, Errno::ECONNABORTED, Errno::EPROTO, Errno::EINTR
@@ -100,14 +106,17 @@ module Utils
 
         if data.present?
           error_hash = JSON.parse(T.must(data.lines.first))
-
-          e = ChildProcessError.new(error_hash)
-
-          raise rewrite_child_error(e)
+          raise rewrite_child_error(error_hash)
         end
 
-        raise "Forked child process failed: #{$CHILD_STATUS}" unless $CHILD_STATUS.success?
+        raise ChildProcessError, $CHILD_STATUS unless $CHILD_STATUS.success?
       end
+    end
+
+    if directory
+      block.call(directory)
+    else
+      Dir.mktmpdir("homebrew-fork", HOMEBREW_TEMP, &block)
     end
   end
 end

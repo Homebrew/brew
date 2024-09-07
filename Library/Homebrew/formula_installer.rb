@@ -1,4 +1,4 @@
-# typed: true
+# typed: true # rubocop:todo Sorbet/StrictSigil
 # frozen_string_literal: true
 
 require "formula"
@@ -931,21 +931,21 @@ on_request: installed_on_request?, options:)
       formula.specified_path,
     ].concat(build_argv)
 
-    Utils.safe_fork do |error_pipe|
-      if Sandbox.available?
-        sandbox = Sandbox.new
-        formula.logs.mkpath
-        sandbox.record_log(formula.logs/"build.sandbox.log")
-        sandbox.allow_write_path(Dir.home) if interactive?
-        sandbox.allow_write_temp_and_cache
-        sandbox.allow_write_log(formula)
-        sandbox.allow_cvs
-        sandbox.allow_fossil
-        sandbox.allow_write_xcode
-        sandbox.allow_write_cellar(formula)
-        sandbox.deny_all_network_except_pipe(error_pipe) unless formula.network_access_allowed?(:build)
-        sandbox.exec(*args)
-      else
+    if Sandbox.available?
+      sandbox = Sandbox.new
+      formula.logs.mkpath
+      sandbox.record_log(formula.logs/"build.sandbox.log")
+      sandbox.allow_write_path(Dir.home) if interactive?
+      sandbox.allow_write_temp_and_cache
+      sandbox.allow_write_log(formula)
+      sandbox.allow_cvs
+      sandbox.allow_fossil
+      sandbox.allow_write_xcode
+      sandbox.allow_write_cellar(formula)
+      sandbox.deny_all_network unless formula.network_access_allowed?(:build)
+      sandbox.run(*args)
+    else
+      Utils.safe_fork do
         exec(*args)
       end
     end
@@ -1161,22 +1161,22 @@ on_request: installed_on_request?, options:)
 
     args << post_install_formula_path
 
-    Utils.safe_fork do |error_pipe|
-      if Sandbox.available?
-        sandbox = Sandbox.new
-        formula.logs.mkpath
-        sandbox.record_log(formula.logs/"postinstall.sandbox.log")
-        sandbox.allow_write_temp_and_cache
-        sandbox.allow_write_log(formula)
-        sandbox.allow_write_xcode
-        sandbox.deny_write_homebrew_repository
-        sandbox.allow_write_cellar(formula)
-        sandbox.deny_all_network_except_pipe(error_pipe) unless formula.network_access_allowed?(:postinstall)
-        Keg::KEG_LINK_DIRECTORIES.each do |dir|
-          sandbox.allow_write_path "#{HOMEBREW_PREFIX}/#{dir}"
-        end
-        sandbox.exec(*args)
-      else
+    if Sandbox.available?
+      sandbox = Sandbox.new
+      formula.logs.mkpath
+      sandbox.record_log(formula.logs/"postinstall.sandbox.log")
+      sandbox.allow_write_temp_and_cache
+      sandbox.allow_write_log(formula)
+      sandbox.allow_write_xcode
+      sandbox.deny_write_homebrew_repository
+      sandbox.allow_write_cellar(formula)
+      sandbox.deny_all_network unless formula.network_access_allowed?(:postinstall)
+      Keg::KEG_LINK_DIRECTORIES.each do |dir|
+        sandbox.allow_write_path "#{HOMEBREW_PREFIX}/#{dir}"
+      end
+      sandbox.run(*args)
+    else
+      Utils.safe_fork do
         exec(*args)
       end
     end
@@ -1239,8 +1239,6 @@ on_request: installed_on_request?, options:)
   sig { void }
   def fetch
     return if previously_fetched_formula
-
-    SBOM.fetch_schema! if Homebrew::EnvConfig.developer?
 
     fetch_dependencies
 

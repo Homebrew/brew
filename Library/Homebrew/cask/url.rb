@@ -1,4 +1,4 @@
-# typed: true
+# typed: true # rubocop:todo Sorbet/StrictSigil
 # frozen_string_literal: true
 
 require "source_location"
@@ -155,7 +155,7 @@ module Cask
       # @api public
       def method_missing(method, *args, &block)
         if @dsl.respond_to?(method)
-          T.unsafe(@dsl).public_send(method, *args, &block)
+          @dsl.public_send(method, *args, &block)
         else
           super
         end

@@ -1,4 +1,4 @@
-# typed: true
+# typed: strict
 # frozen_string_literal: true
 
 require "abstract_command"
@@ -87,6 +87,7 @@ module Homebrew
 
       private
 
+      sig { params(use_runtime_dependents: T::Boolean, used_formulae: T::Array[Formula]).returns(T::Array[Formula]) }
       def intersection_of_dependents(use_runtime_dependents, used_formulae)
         recursive = args.recursive?
         show_formulae_and_casks = !args.formula? && !args.cask?
@@ -137,6 +138,14 @@ module Homebrew
         end
       end
 
+      sig {
+        params(
+          dependents: T::Array[Formula], used_formulae: T::Array[Formula], recursive: T::Boolean,
+          includes: T::Array[Symbol], ignores: T::Array[Symbol]
+        ).returns(
+          T::Array[Formula],
+        )
+      }
       def select_used_dependents(dependents, used_formulae, recursive, includes, ignores)
         dependents.select do |d|
           deps = if recursive

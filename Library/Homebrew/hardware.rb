@@ -1,4 +1,4 @@
-# typed: true
+# typed: strict
 # frozen_string_literal: true
 
 require "utils/popen"
@@ -9,23 +9,24 @@ module Hardware
   class CPU
     INTEL_32BIT_ARCHS = [:i386].freeze
     INTEL_64BIT_ARCHS = [:x86_64].freeze
-    INTEL_ARCHS       = (INTEL_32BIT_ARCHS + INTEL_64BIT_ARCHS).freeze
+    INTEL_ARCHS       = T.let((INTEL_32BIT_ARCHS + INTEL_64BIT_ARCHS).freeze, T::Array[Symbol])
     PPC_32BIT_ARCHS   = [:ppc, :ppc32, :ppc7400, :ppc7450, :ppc970].freeze
     PPC_64BIT_ARCHS   = [:ppc64, :ppc64le, :ppc970].freeze
-    PPC_ARCHS         = (PPC_32BIT_ARCHS + PPC_64BIT_ARCHS).freeze
+    PPC_ARCHS         = T.let((PPC_32BIT_ARCHS + PPC_64BIT_ARCHS).freeze, T::Array[Symbol])
     ARM_64BIT_ARCHS   = [:arm64, :aarch64].freeze
     ARM_ARCHS         = ARM_64BIT_ARCHS
-    ALL_ARCHS = [
+    ALL_ARCHS = T.let([
       *INTEL_ARCHS,
       *PPC_ARCHS,
       *ARM_ARCHS,
-    ].freeze
+    ].freeze, T::Array[Symbol])
 
     INTEL_64BIT_OLDEST_CPU = :core2
 
     class << self
+      sig { returns(T::Hash[Symbol, String]) }
       def optimization_flags
-        @optimization_flags ||= {
+        @optimization_flags ||= T.let({
           native:             arch_flag("native"),
           ivybridge:          "-march=ivybridge",
           sandybridge:        "-march=sandybridge",
@@ -38,7 +39,7 @@ module Hardware
           armv8:              "-march=armv8-a",
           ppc64:              "-mcpu=powerpc64",
           ppc64le:            "-mcpu=powerpc64le",
-        }.freeze
+        }.freeze, T.nilable(T::Hash[Symbol, String]))
       end
       alias generic_optimization_flags optimization_flags
 
@@ -70,6 +71,7 @@ module Hardware
         end
       end
 
+      sig { returns(Symbol) }
       def arch
         case bits
         when 32
@@ -96,19 +98,21 @@ module Hardware
         :dunno
       end
 
+      sig { returns(Integer) }
       def cores
         return @cores if @cores
 
         @cores = Utils.popen_read("getconf", "_NPROCESSORS_ONLN").chomp.to_i
-        @cores = 1 unless $CHILD_STATUS.success?
+        @cores = T.let(1, T.nilable(Integer)) unless $CHILD_STATUS.success?
         @cores
       end
 
+      sig { returns(T.nilable(Integer)) }
       def bits
-        @bits ||= case RUBY_PLATFORM
+        @bits ||= T.let(case RUBY_PLATFORM
         when /x86_64/, /ppc64|powerpc64/, /aarch64|arm64/ then 64
         when /i\d86/, /ppc/, /arm/ then 32
-        end
+        end, T.nilable(Integer))
       end
 
       sig { returns(T::Boolean) }
@@ -116,30 +120,37 @@ module Hardware
         RUBY_PLATFORM.to_s.include?("x86_64")
       end
 
+      sig { returns(T::Boolean) }
       def is_32_bit?
         bits == 32
       end
 
+      sig { returns(T::Boolean) }
       def is_64_bit?
         bits == 64
       end
 
+      sig { returns(T::Boolean) }
       def intel?
         type == :intel
       end
 
+      sig { returns(T::Boolean) }
       def ppc?
         type == :ppc
       end
 
+      sig { returns(T::Boolean) }
       def ppc32?
         ppc? && is_32_bit?
       end
 
+      sig { returns(T::Boolean) }
       def ppc64le?
         ppc? && is_64_bit? && little_endian?
       end
 
+      sig { returns(T::Boolean) }
       def ppc64?
         ppc? && is_64_bit? && big_endian?
       end
@@ -152,26 +163,32 @@ module Hardware
         type == :arm
       end
 
+      sig { returns(T::Boolean) }
       def little_endian?
         !big_endian?
       end
 
+      sig { returns(T::Boolean) }
       def big_endian?
         [1].pack("I") == [1].pack("N")
       end
 
+      sig { returns(FalseClass) }
       def virtualized?
         false
       end
 
+      sig { returns(T::Array[Symbol]) }
       def features
         []
       end
 
+      sig { params(name: Symbol).returns(T::Boolean) }
       def feature?(name)
         features.include?(name)
       end
 
+      sig { params(arch: T.any(String, Symbol)).returns(String) }
       def arch_flag(arch)
         return "-mcpu=#{arch}" if ppc?
 
@@ -186,6 +203,7 @@ module Hardware
   end
 
   class << self
+    sig { returns(String) }
     def cores_as_words
       case Hardware::CPU.cores
       when 1 then "single"
@@ -195,7 +213,7 @@ module Hardware
       when 8 then "octa"
       when 12 then "dodeca"
       else
-        Hardware::CPU.cores
+        Hardware::CPU.cores.to_s
       end
     end
 
@@ -231,12 +249,12 @@ module Hardware
       # Rust already defaults to the oldest supported cpu for each target-triplet
       # so it's safe to ignore generic archs such as :armv6 here.
       # Rust defaults to apple-m1 since Rust 1.71 for aarch64-apple-darwin.
-      @target_cpu ||= case arch
+      @target_cpu ||= T.let(case arch
       when :core
         :prescott
       when :native, :ivybridge, :sandybridge, :westmere, :nehalem, :core2
         arch
-      end
+      end, T.nilable(Symbol))
       return if @target_cpu.blank?
 
       "--codegen target-cpu=#{@target_cpu}"

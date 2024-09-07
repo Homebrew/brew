@@ -51,6 +51,9 @@ HOMEBREW_TEMP = Pathname(ENV.fetch("HOMEBREW_TEMP")).then do |tmp|
   tmp.realpath
 end.freeze
 
+# Where installed taps live
+HOMEBREW_TAP_DIRECTORY = (HOMEBREW_LIBRARY/"Taps").freeze
+
 # The Ruby path and args to use for forked Ruby calls
 HOMEBREW_RUBY_EXEC_ARGS = [
   RUBY_PATH,

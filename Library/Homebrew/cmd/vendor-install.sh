@@ -362,11 +362,4 @@ homebrew-vendor-install() {
   lock "vendor-install ${VENDOR_NAME}"
   fetch
   install
-
-  # Bootsnap needs cleaned up on a new Ruby version.
-  # It's cleaned up by every `brew cleanup` run anyway so not a big deal to do it here, too.
-  if [[ "${VENDOR_NAME}" == "ruby" ]]
-  then
-    rm -rf "${HOMEBREW_CACHE}/bootsnap"
-  fi
 }

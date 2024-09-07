@@ -64,7 +64,7 @@ _create_lock() {
     flock -n "${lock_file_descriptor}"
   elif [[ -x "${python}" ]]
   then
-    "${python}" -c "import fcntl; fcntl.flock(${lock_fd}, fcntl.LOCK_EX | fcntl.LOCK_NB)"
+    "${python}" -c "import fcntl; fcntl.flock(${lock_file_descriptor}, fcntl.LOCK_EX | fcntl.LOCK_NB)"
   else
     onoe "Cannot create \`brew ${command_name_and_args}\` lock due to missing/too old ruby/flock/python, please avoid running Homebrew in parallel."
   fi

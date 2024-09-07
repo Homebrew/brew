@@ -16,7 +16,7 @@ RSpec.describe Sandbox, :needs_macos do
 
   specify "#allow_write" do
     sandbox.allow_write path: file
-    sandbox.exec "touch", file
+    sandbox.run "touch", file
 
     expect(file).to exist
   end
@@ -65,10 +65,10 @@ RSpec.describe Sandbox, :needs_macos do
     end
   end
 
-  describe "#exec" do
+  describe "#run" do
     it "fails when writing to file not specified with ##allow_write" do
       expect do
-        sandbox.exec "touch", file
+        sandbox.run "touch", file
       end.to raise_error(ErrorDuringExecution)
 
       expect(file).not_to exist
@@ -80,7 +80,7 @@ RSpec.describe Sandbox, :needs_macos do
       allow(Utils).to receive(:popen_read).and_call_original
       allow(Utils).to receive(:popen_read).with("syslog", any_args).and_return("foo")
 
-      expect { sandbox.exec "false" }
+      expect { sandbox.run "false" }
         .to raise_error(ErrorDuringExecution)
         .and output(/foo/).to_stdout
     end
@@ -96,7 +96,7 @@ RSpec.describe Sandbox, :needs_macos do
       allow(Utils).to receive(:popen_read).and_call_original
       allow(Utils).to receive(:popen_read).with("syslog", any_args).and_return(with_bogus_error)
 
-      expect { sandbox.exec "false" }
+      expect { sandbox.run "false" }
         .to raise_error(ErrorDuringExecution)
         .and output(a_string_matching(/foo/).and(matching(/bar/).and(not_matching(/Python/)))).to_stdout
     end
@@ -104,28 +104,28 @@ RSpec.describe Sandbox, :needs_macos do
 
   describe "#disallow chmod on some directory" do
     it "formula does a chmod to opt" do
-      expect { sandbox.exec "chmod", "ug-w", HOMEBREW_PREFIX }.to raise_error(ErrorDuringExecution)
+      expect { sandbox.run "chmod", "ug-w", HOMEBREW_PREFIX }.to raise_error(ErrorDuringExecution)
     end
 
     it "allows chmod on a path allowed to write" do
       mktmpdir do |path|
         FileUtils.touch path/"foo"
         sandbox.allow_write_path(path)
-        expect { sandbox.exec "chmod", "ug-w", path/"foo" }.not_to raise_error(ErrorDuringExecution)
+        expect { sandbox.run "chmod", "ug-w", path/"foo" }.not_to raise_error(ErrorDuringExecution)
       end
     end
   end
 
   describe "#disallow chmod SUID or SGID on some directory" do
     it "formula does a chmod 4000 to opt" do
-      expect { sandbox.exec "chmod", "4000", HOMEBREW_PREFIX }.to raise_error(ErrorDuringExecution)
+      expect { sandbox.run "chmod", "4000", HOMEBREW_PREFIX }.to raise_error(ErrorDuringExecution)
     end
 
     it "allows chmod 4000 on a path allowed to write" do
       mktmpdir do |path|
         FileUtils.touch path/"foo"
         sandbox.allow_write_path(path)
-        expect { sandbox.exec "chmod", "4000", path/"foo" }.not_to raise_error(ErrorDuringExecution)
+        expect { sandbox.run "chmod", "4000", path/"foo" }.not_to raise_error(ErrorDuringExecution)
       end
     end
   end

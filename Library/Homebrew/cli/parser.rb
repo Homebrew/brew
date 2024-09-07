@@ -16,7 +16,6 @@ module Homebrew
       # FIXME: Enable cop again when https://github.com/sorbet/sorbet/issues/3532 is fixed.
       # rubocop:disable Style/MutableConstant
       ArgType = T.type_alias { T.any(NilClass, Symbol, T::Array[String], T::Array[Symbol]) }
-      OptionsType = T.type_alias { T::Array[[String, T.nilable(String), T.nilable(String), String, T::Boolean]] }
       # rubocop:enable Style/MutableConstant
       HIDDEN_DESC_PLACEHOLDER = "@@HIDDEN@@"
       SYMBOL_TO_USAGE_MAPPING = T.let({
@@ -25,7 +24,7 @@ module Homebrew
       }.freeze, T::Hash[Symbol, String])
       private_constant :ArgType, :HIDDEN_DESC_PLACEHOLDER, :SYMBOL_TO_USAGE_MAPPING
 
-      sig { returns(OptionsType) }
+      sig { returns(Args::OptionsType) }
       attr_reader :processed_options
 
       sig { returns(T::Boolean) }
@@ -167,12 +166,17 @@ module Homebrew
           @command_name = T.let(T.must(cmd_location.label).chomp("_args").tr("_", "-"), String)
           @is_dev_cmd = T.let(T.must(cmd_location.absolute_path).start_with?(Commands::HOMEBREW_DEV_CMD_PATH),
                               T::Boolean)
+          # odeprecated(
+          #   "`brew #{@command_name}'. This command needs to be refactored, as it is written in a style that",
+          #   "inheritance from `Homebrew::AbstractCommand' ( see https://docs.brew.sh/External-Commands )",
+          #   disable_for_developers: false,
+          # )
         end
 
         @constraints = T.let([], T::Array[[String, String]])
         @conflicts = T.let([], T::Array[T::Array[String]])
         @switch_sources = T.let({}, T::Hash[String, Symbol])
-        @processed_options = T.let([], OptionsType)
+        @processed_options = T.let([], Args::OptionsType)
         @non_global_processed_options = T.let([], T::Array[[String, ArgType]])
         @named_args_type = T.let(nil, T.nilable(ArgType))
         @max_named_args = T.let(nil, T.nilable(Integer))
@@ -666,7 +670,7 @@ module Homebrew
       def process_option(*args, type:, hidden: false)
         option, = @parser.make_switch(args)
         @processed_options.reject! { |existing| existing.second == option.long.first } if option.long.first.present?
-        @processed_options << [option.short.first, option.long.first, option.arg, option.desc.first, hidden]
+        @processed_options << [option.short.first, option.long.first, option.desc.first, hidden]
 
         args.pop # last argument is the description
         if type == :switch

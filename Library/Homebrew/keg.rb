@@ -1,4 +1,4 @@
-# typed: true
+# typed: true # rubocop:todo Sorbet/StrictSigil
 # frozen_string_literal: true
 
 require "keg_relocate"
@@ -316,7 +316,7 @@ class Keg
     unless dry_run
       remove_old_aliases
       remove_linked_keg_record if linked?
-      dirs.reverse_each(&:rmdir_if_possible)
+      (dirs - MUST_EXIST_SUBDIRECTORIES).reverse_each(&:rmdir_if_possible)
     end
 
     ObserverPathnameExtension.n

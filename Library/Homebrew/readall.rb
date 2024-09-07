@@ -1,4 +1,4 @@
-# typed: true
+# typed: strict
 # frozen_string_literal: true
 
 require "formula"
@@ -16,6 +16,7 @@ module Readall
 
   private_class_method :cache
 
+  sig { params(ruby_files: T::Array[Pathname]).returns(T::Boolean) }
   def self.valid_ruby_syntax?(ruby_files)
     failed = T.let(false, T::Boolean)
     ruby_files.each do |ruby_file|
@@ -25,6 +26,7 @@ module Readall
     !failed
   end
 
+  sig { params(alias_dir: Pathname, formula_dir: Pathname).returns(T::Boolean) }
   def self.valid_aliases?(alias_dir, formula_dir)
     return true unless alias_dir.directory?
 
@@ -46,6 +48,7 @@ module Readall
     !failed
   end
 
+  sig { params(tap: Tap, bottle_tag: T.nilable(Utils::Bottles::Tag)).returns(T::Boolean) }
   def self.valid_formulae?(tap, bottle_tag: nil)
     cache[:valid_formulae] ||= {}
 
@@ -55,7 +58,7 @@ module Readall
       next if valid == true || valid&.include?(bottle_tag)
 
       formula_name = file.basename(".rb").to_s
-      formula_contents = file.read(encoding: "UTF-8")
+      formula_contents = file.read.force_encoding("UTF-8")
 
       readall_namespace = "ReadallNamespace"
       readall_formula_class = Formulary.load_formula(formula_name, file, formula_contents, readall_namespace,
@@ -79,10 +82,16 @@ module Readall
     success
   end
 
+  sig { params(_tap: Tap, os_name: T.nilable(Symbol), arch: T.nilable(Symbol)).returns(T::Boolean) }
   def self.valid_casks?(_tap, os_name: nil, arch: nil)
     true
   end
 
+  sig {
+    params(
+      tap: Tap, aliases: T::Boolean, no_simulate: T::Boolean, os_arch_combinations: T::Array[T::Array[String]],
+    ).returns(T::Boolean)
+  }
   def self.valid_tap?(tap, aliases: false, no_simulate: false,
                       os_arch_combinations: OnSystem::ALL_OS_ARCH_COMBINATIONS)
     success = true
@@ -110,6 +119,7 @@ module Readall
     success
   end
 
+  sig { params(filename: Pathname).returns(T::Boolean) }
   private_class_method def self.syntax_errors_or_warnings?(filename)
     # Retrieve messages about syntax errors/warnings printed to `$stderr`.
     _, err, status = system_command(RUBY_PATH, args: ["-c", "-w", filename], print_stderr: false)

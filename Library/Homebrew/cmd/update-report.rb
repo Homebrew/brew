@@ -1,4 +1,4 @@
-# typed: true
+# typed: true # rubocop:todo Sorbet/StrictSigil
 # frozen_string_literal: true
 
 require "abstract_command"
@@ -820,6 +820,8 @@ class ReporterHub
   end
 
   def dump_new_cask_report
+    return if Homebrew::SimulateSystem.simulating_or_running_on_linux?
+
     casks = select_formula_or_cask(:AC).sort.filter_map do |name|
       name.split("/").last unless cask_installed?(name)
     end
@@ -836,6 +838,8 @@ class ReporterHub
   end
 
   def dump_deleted_cask_report
+    return if Homebrew::SimulateSystem.simulating_or_running_on_linux?
+
     casks = select_formula_or_cask(:DC).sort.filter_map do |name|
       name = name.split("/").last
       pretty_uninstalled(name) if cask_installed?(name)

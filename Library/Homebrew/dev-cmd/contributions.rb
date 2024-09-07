@@ -124,10 +124,7 @@ module Homebrew
 
       sig { params(totals: T::Hash[String, T::Hash[Symbol, Integer]]).returns(String) }
       def generate_csv(totals)
-        require "warnings"
-        Warnings.ignore :default_gems do
-          require "csv"
-        end
+        require "csv" # TODO: this will be removed from Ruby 3.4
 
         CSV.generate do |csv|
           csv << %w[user repo author committer coauthor review total]

@@ -34,7 +34,7 @@ RSpec.describe Homebrew::MissingFormula do
     subject { described_class.tap_migration_reason(formula) }
 
     before do
-      tap_path = Tap::TAP_DIRECTORY/"homebrew/homebrew-foo"
+      tap_path = HOMEBREW_TAP_DIRECTORY/"homebrew/homebrew-foo"
       tap_path.mkpath
       (tap_path/"tap_migrations.json").write <<~JSON
         { "migrated-formula": "homebrew/bar" }
@@ -58,7 +58,7 @@ RSpec.describe Homebrew::MissingFormula do
     subject { described_class.deleted_reason(formula, silent: true) }
 
     before do
-      tap_path = Tap::TAP_DIRECTORY/"homebrew/homebrew-foo"
+      tap_path = HOMEBREW_TAP_DIRECTORY/"homebrew/homebrew-foo"
       (tap_path/"Formula").mkpath
       (tap_path/"Formula/deleted-formula.rb").write "placeholder"
       ENV.delete "GIT_AUTHOR_DATE"

@@ -1,8 +1,12 @@
-# typed: true
+# typed: true # rubocop:todo Sorbet/StrictSigil
 # frozen_string_literal: true
 
 module Utils
   module Shell
+    extend T::Helpers
+
+    requires_ancestor { Kernel }
+
     module_function
 
     # Take a path and heuristically convert it to a shell name,

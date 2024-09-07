@@ -1,4 +1,4 @@
-# typed: true
+# typed: strict
 # frozen_string_literal: true
 
 require "abstract_command"
@@ -42,6 +42,7 @@ module Homebrew
 
       private
 
+      sig { params(taps: T::Array[Tap]).void }
       def print_tap_info(taps)
         if taps.none?
           tap_count = 0
@@ -58,7 +59,7 @@ module Homebrew
           info += ", #{private_count} private"
           info += ", #{Utils.pluralize("formula", formula_count, plural: "e", include_count: true)}"
           info += ", #{Utils.pluralize("command", command_count, include_count: true)}"
-          info += ", #{Tap::TAP_DIRECTORY.dup.abv}" if Tap::TAP_DIRECTORY.directory?
+          info += ", #{HOMEBREW_TAP_DIRECTORY.dup.abv}" if HOMEBREW_TAP_DIRECTORY.directory?
           puts info
         else
           info = ""
@@ -83,6 +84,7 @@ module Homebrew
         end
       end
 
+      sig { params(taps: T::Array[Tap]).void }
       def print_tap_json(taps)
         puts JSON.pretty_generate(taps.map(&:to_hash))
       end

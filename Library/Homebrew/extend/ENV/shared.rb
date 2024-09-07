@@ -1,4 +1,4 @@
-# typed: true
+# typed: true # rubocop:todo Sorbet/StrictSigil
 # frozen_string_literal: true
 
 require "compilers"
@@ -51,8 +51,8 @@ module SharedEnvExtension
     @debug_symbols = debug_symbols
     reset
   end
-  private :setup_build_environment
   alias generic_shared_setup_build_environment setup_build_environment
+  private :generic_shared_setup_build_environment
 
   sig { void }
   def reset
@@ -315,6 +315,14 @@ module SharedEnvExtension
 
   sig { void }
   def permit_arch_flags; end
+
+  sig { returns(Integer) }
+  def make_jobs
+    Homebrew::EnvConfig.make_jobs.to_i
+  end
+
+  sig { void }
+  def refurbish_args; end
 
   private
 

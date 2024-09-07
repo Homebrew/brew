@@ -587,7 +587,7 @@ upgrade *`formula`* if it is already installed but outdated.
 `--cc`
 
 : Attempt to compile using the specified *`compiler`*, which should be the name
-  of the compiler's executable, e.g. `gcc-7` for GCC 7. In order to use LLVM's
+  of the compiler's executable, e.g. `gcc-9` for GCC 9. In order to use LLVM's
   clang, specify `llvm_clang`. To use the Apple-provided clang, specify `clang`.
   This option will only accept compilers that are provided by Homebrew or
   bundled with macOS. Please do not file issues if you encounter errors while
@@ -760,6 +760,14 @@ paths within its current keg. If *`cask`* is provided, list its artifacts.
 `--installed-as-dependency`
 
 : List the formulae installed as dependencies.
+
+`--poured-from-bottle`
+
+: List the formulae installed from a bottle.
+
+`--built-from-source`
+
+: List the formulae compiled from source.
 
 `-1`
 
@@ -2142,6 +2150,17 @@ see: <https://rubydoc.brew.sh/Formula>
 
 : Ignore errors for disallowed formula names and names that shadow aliases.
 
+### `debugger` \[`--open`\] *`command`* \[...\]
+
+Run the specified Homebrew command in debug mode.
+
+To pass flags to the command, use `--` to separate them from the `brew` flags.
+For example: `brew debugger -- list --formula`.
+
+`-O`, `--open`
+
+: Start remote debugging over a Unix socket.
+
 ### `dispatch-build-bottle` \[*`options`*\] *`formula`* \[...\]
 
 Build bottles for these formulae with GitHub Actions.
@@ -2751,7 +2770,7 @@ Run Homebrew's unit and integration tests.
 
 : Randomise tests with the specified *`value`* instead of a random seed.
 
-### `typecheck`, `tc` \[*`options`*\]
+### `typecheck`, `tc` \[*`options`*\] \[*`tap`* ...\]
 
 Check for typechecking errors using Sorbet.
 
@@ -3066,6 +3085,9 @@ a local machine).
 This workflow is useful for maintainers or testers who regularly install lots of
 formulae.
 
+Unless `--force` is passed, this returns a 1 exit code if anything would be
+removed.
+
 `brew bundle check`
 
 : Check if all dependencies present in the `Brewfile` are installed.
@@ -3177,9 +3199,9 @@ the output is not to a tty, print the appropriate handler script for your shell.
 Manage background services with macOS' `launchctl`(1) daemon manager or Linux's
 `systemctl`(1) service manager.
 
-If `sudo` is passed, operate on
-`/Library/LaunchDaemons`/`/usr/lib/systemd/system` (started at boot). Otherwise,
-operate on `~/Library/LaunchAgents`/`~/.config/systemd/user` (started at login).
+If `sudo` is passed, operate on `/Library/LaunchDaemons` or
+`/usr/lib/systemd/system` (started at boot). Otherwise, operate on
+`~/Library/LaunchAgents` or `~/.config/systemd/user` (started at login).
 
 \[`sudo`\] `brew services` \[`list`\] (`--json`) (`--debug`)
 
@@ -4136,14 +4158,14 @@ Popoff, Mike McQuaid and Rylan Polster.
 
 Homebrew's maintainers are Alexander Bayandin, Bevan Kay, Bo Anderson, Branch
 Vincent, Caleb Xu, Carlo Cabrera, Douglas Eichelberger, Dustin Rodrigues, Eric
-Knibbe, FX Coudert, Issy Long, Justin Krehel, Klaus Hipp, Markus Reiter, Miccal
-Matthews, Michael Cho, Michka Popoff, Mike McQuaid, Nanda H Krishna, Patrick
-Linnane, Razvan Azamfirei, Rui Chen, Ruoyu Zhong, Rylan Polster, Sam Ford, Sean
-Molenaar, Thierry Moisan, Timothy Sutton, William Woodruff and Štefan Baebler.
+Knibbe, FX Coudert, Issy Long, Justin Krehel, Klaus Hipp, Markus Reiter, Michael
+Cho, Michka Popoff, Mike McQuaid, Nanda H Krishna, Patrick Linnane, Rui Chen,
+Ruoyu Zhong, Rylan Polster, Sam Ford, Sean Molenaar, Thierry Moisan, Timothy
+Sutton, William Woodruff and Štefan Baebler.
 
-Former maintainers with significant contributions include Misty De Méo, Shaun
-Jackman, Vítor Galvão, Claudia Pellegrino, Seeker, Jan Viljanen, JCount,
-commitay, Dominyk Tiller, Tim Smith, Baptiste Fontaine, Xu Cheng, Martin
+Former maintainers with significant contributions include Miccal Matthews, Misty
+De Méo, Shaun Jackman, Vítor Galvão, Claudia Pellegrino, Seeker, Jan Viljanen,
+JCount, commitay, Dominyk Tiller, Tim Smith, Baptiste Fontaine, Xu Cheng, Martin
 Afanasjew, Brett Koonce, Charlie Sharpsteen, Jack Nagel, Adam Vandenberg, Andrew
 Janke, Alex Dunn, neutric, Tomasz Pajor, Uladzislau Shablinski, Alyssa Ross,
 ilovezfs, Chongyu Zhu and Homebrew's creator: Max Howell.

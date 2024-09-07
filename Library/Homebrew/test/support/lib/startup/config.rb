@@ -33,6 +33,7 @@ HOMEBREW_LOCKS         = (HOMEBREW_PREFIX.parent/"locks").freeze
 HOMEBREW_CELLAR        = (HOMEBREW_PREFIX.parent/"cellar").freeze
 HOMEBREW_LOGS          = (HOMEBREW_PREFIX.parent/"logs").freeze
 HOMEBREW_TEMP          = (HOMEBREW_PREFIX.parent/"temp").freeze
+HOMEBREW_TAP_DIRECTORY = (HOMEBREW_LIBRARY/"Taps").freeze
 HOMEBREW_RUBY_EXEC_ARGS = [
   RUBY_PATH,
   ENV.fetch("HOMEBREW_RUBY_WARNINGS"),

@@ -751,7 +751,7 @@ RSpec.describe Formulary do
           end
 
           after do
-            FileUtils.rm_rf Tap::TAP_DIRECTORY/"another"
+            FileUtils.rm_rf HOMEBREW_TAP_DIRECTORY/"another"
           end
 
           # FIXME

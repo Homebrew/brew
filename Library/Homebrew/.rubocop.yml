@@ -24,6 +24,7 @@ Style/Documentation:
   AllowedConstants:
     - Homebrew
   Include:
+    - abstract_command.rb
     - cask/cask.rb
     - cask/dsl.rb
     - cask/dsl/version.rb

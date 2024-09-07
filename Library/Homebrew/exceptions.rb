@@ -1,4 +1,4 @@
-# typed: true
+# typed: true # rubocop:todo Sorbet/StrictSigil
 # frozen_string_literal: true
 
 # Raised when a command is used wrong.
@@ -755,21 +755,14 @@ class BottleFormulaUnavailableError < RuntimeError
   end
 end
 
-# Raised when a child process sends us an exception over its error pipe.
+# Raised when a `Utils.safe_fork` exits with a non-zero code.
 class ChildProcessError < RuntimeError
-  attr_reader :inner, :inner_class
+  attr_reader :status
 
-  def initialize(inner)
-    @inner = inner
-    @inner_class = Object.const_get inner["json_class"]
+  def initialize(status)
+    @status = status
 
-    super <<~EOS
-      An exception occurred within a child process:
-        #{inner_class}: #{inner["m"]}
-    EOS
-
-    # Clobber our real (but irrelevant) backtrace with that of the inner exception.
-    set_backtrace inner["b"]
+    super "Forked child process failed: #{status}"
   end
 end
 

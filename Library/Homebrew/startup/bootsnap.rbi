@@ -1,5 +1,10 @@
 # typed: strict
 
+module Homebrew
+  sig { returns(String) }
+  def self.bootsnap_key; end
+end
+
 module Bootsnap
   sig {
     params(

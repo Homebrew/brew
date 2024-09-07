@@ -157,6 +157,7 @@ __brew_internal_commands() {
     'config:Show Homebrew and system configuration info useful for debugging'
     'contributions:Summarise contributions to Homebrew repositories'
     'create:Generate a formula or, with `--cask`, a cask for the downloadable file at URL and open it in the editor'
+    'debugger:Run the specified Homebrew command in debug mode'
     'deps:Show dependencies for formula'
     'desc:Display formula'\''s name and one-line description'
     'determine-test-runners:Determines the runners used to test formulae or their dependents'
@@ -517,7 +518,7 @@ _brew_bump() {
     '(--installed)--eval-all[Evaluate all formulae and casks]' \
     '--full-name[Print formulae/casks with fully-qualified names]' \
     '--help[Show this message]' \
-    '(--tap --eval-all)--installed[Check formulae and casks that are currently installed]' \
+    '(--tap --eval-all --auto)--installed[Check formulae and casks that are currently installed]' \
     '--no-fork[Don'\''t try to fork the repository]' \
     '(--open-pr)--no-pull-requests[Do not retrieve pull requests from GitHub]' \
     '(--no-pull-requests)--open-pr[Open a pull request for the new version if none have been opened yet]' \
@@ -743,6 +744,18 @@ _brew_create() {
     '--set-version[Explicitly set the version of the new formula or cask]' \
     '--tap[Generate the new formula within the given tap, specified as user`/`repo]' \
     '--verbose[Make some output more verbose]'
+}
+
+# brew debugger
+_brew_debugger() {
+  _arguments \
+    '--debug[Display any debugging information]' \
+    '--help[Show this message]' \
+    '--open[Start remote debugging over a Unix socket]' \
+    '--quiet[Make some output more quiet]' \
+    '--verbose[Make some output more verbose]' \
+    - command \
+    '*::command:__brew_commands'
 }
 
 # brew deps
@@ -1078,7 +1091,7 @@ _brew_instal() {
     '(--cask)--bottle-arch[Optimise bottles for the specified architecture rather than the oldest architecture supported by the version of macOS the bottles are built on]' \
     '(--cask --build-from-source --force-bottle)--build-bottle[Prepare the formula for eventual bottling during installation, skipping any post-install steps]' \
     '(--cask --build-bottle --force-bottle)--build-from-source[Compile formula from source even if a bottle is provided. Dependencies will still be installed from bottles if they are available]' \
-    '(--cask)--cc[Attempt to compile using the specified compiler, which should be the name of the compiler'\''s executable, e.g. `gcc-7` for GCC 7. In order to use LLVM'\''s clang, specify `llvm_clang`. To use the Apple-provided clang, specify `clang`. This option will only accept compilers that are provided by Homebrew or bundled with macOS. Please do not file issues if you encounter errors while using this option]' \
+    '(--cask)--cc[Attempt to compile using the specified compiler, which should be the name of the compiler'\''s executable, e.g. `gcc-9` for GCC 9. In order to use LLVM'\''s clang, specify `llvm_clang`. To use the Apple-provided clang, specify `clang`. This option will only accept compilers that are provided by Homebrew or bundled with macOS. Please do not file issues if you encounter errors while using this option]' \
     '(--formula)--colorpickerdir[Target location for Color Pickers (default: `~/Library/ColorPickers`)]' \
     '--debug[If brewing fails, open an interactive debugging session with access to IRB or a shell inside the temporary build directory]' \
     '(--cask)--debug-symbols[Generate debug symbols on build. Source will be retained in a cache directory]' \
@@ -1136,7 +1149,7 @@ _brew_install() {
     '(--cask)--bottle-arch[Optimise bottles for the specified architecture rather than the oldest architecture supported by the version of macOS the bottles are built on]' \
     '(--cask --build-from-source --force-bottle)--build-bottle[Prepare the formula for eventual bottling during installation, skipping any post-install steps]' \
     '(--cask --build-bottle --force-bottle)--build-from-source[Compile formula from source even if a bottle is provided. Dependencies will still be installed from bottles if they are available]' \
-    '(--cask)--cc[Attempt to compile using the specified compiler, which should be the name of the compiler'\''s executable, e.g. `gcc-7` for GCC 7. In order to use LLVM'\''s clang, specify `llvm_clang`. To use the Apple-provided clang, specify `clang`. This option will only accept compilers that are provided by Homebrew or bundled with macOS. Please do not file issues if you encounter errors while using this option]' \
+    '(--cask)--cc[Attempt to compile using the specified compiler, which should be the name of the compiler'\''s executable, e.g. `gcc-9` for GCC 9. In order to use LLVM'\''s clang, specify `llvm_clang`. To use the Apple-provided clang, specify `clang`. This option will only accept compilers that are provided by Homebrew or bundled with macOS. Please do not file issues if you encounter errors while using this option]' \
     '(--formula)--colorpickerdir[Target location for Color Pickers (default: `~/Library/ColorPickers`)]' \
     '--debug[If brewing fails, open an interactive debugging session with access to IRB or a shell inside the temporary build directory]' \
     '(--cask)--debug-symbols[Generate debug symbols on build. Source will be retained in a cache directory]' \
@@ -1272,16 +1285,18 @@ _brew_linkage() {
 # brew list
 _brew_list() {
   _arguments \
+    '(--cask --versions --pinned --full-name)--built-from-source[List the formulae compiled from source]' \
     '--debug[Display any debugging information]' \
-    '(--versions --pinned ---installed-on-request --installed-as-dependency --l --r --t)--full-name[Print formulae with fully-qualified names. Unless `--full-name`, `--versions` or `--pinned` are passed, other options (i.e. `-1`, `-l`, `-r` and `-t`) are passed to `ls`(1) which produces the actual output]' \
+    '(--versions --pinned ---installed-on-request --installed-as-dependency --poured-from-bottle --built-from-source --l --r --t)--full-name[Print formulae with fully-qualified names. Unless `--full-name`, `--versions` or `--pinned` are passed, other options (i.e. `-1`, `-l`, `-r` and `-t`) are passed to `ls`(1) which produces the actual output]' \
     '--help[Show this message]' \
     '(--cask --versions --pinned --full-name)--installed-as-dependency[List the formulae installed as dependencies]' \
     '(--cask --versions --pinned)--installed-on-request[List the formulae installed on request]' \
     '(--cask --pinned)--multiple[Only show formulae with multiple versions installed]' \
-    '(--cask --multiple --installed-on-request --installed-as-dependency --1 --l --r --t --full-name)--pinned[List only pinned formulae, or only the specified (pinned) formulae if formula are provided. See also `pin`, `unpin`]' \
+    '(--cask --multiple --installed-on-request --installed-as-dependency --poured-from-bottle --built-from-source --1 --l --r --t --full-name)--pinned[List only pinned formulae, or only the specified (pinned) formulae if formula are provided. See also `pin`, `unpin`]' \
+    '(--cask --versions --pinned --full-name)--poured-from-bottle[List the formulae installed from a bottle]' \
     '--quiet[Make some output more quiet]' \
     '--verbose[Make some output more verbose]' \
-    '(--installed-on-request --installed-as-dependency --1 --l --r --t --full-name)--versions[Show the version number for installed formulae, or only the specified formulae if formula are provided]' \
+    '(--installed-on-request --installed-as-dependency --poured-from-bottle --built-from-source --1 --l --r --t --full-name)--versions[Show the version number for installed formulae, or only the specified formulae if formula are provided]' \
     '-1[Force output to be one entry per line. This is the default when output is not to a terminal]' \
     '-l[List formulae and/or casks in long format. Has no effect when a formula or cask name is passed as an argument]' \
     '-r[Reverse the order of the formulae and/or casks sort to list the oldest entries first. Has no effect when a formula or cask name is passed as an argument]' \
@@ -1290,7 +1305,7 @@ _brew_list() {
     '(--cask)--formula[List only formulae, or treat all named arguments as formulae]' \
     '*::installed_formula:__brew_installed_formulae' \
     - installed_cask \
-    '(--formula --pinned --multiple --installed-on-request --installed-as-dependency)--cask[List only casks, or treat all named arguments as casks]' \
+    '(--formula --pinned --multiple --installed-on-request --installed-as-dependency --poured-from-bottle --built-from-source)--cask[List only casks, or treat all named arguments as casks]' \
     '*::installed_cask:__brew_installed_casks'
 }
 
@@ -1355,16 +1370,18 @@ _brew_log() {
 # brew ls
 _brew_ls() {
   _arguments \
+    '(--cask --versions --pinned --full-name)--built-from-source[List the formulae compiled from source]' \
     '--debug[Display any debugging information]' \
-    '(--versions --pinned ---installed-on-request --installed-as-dependency --l --r --t)--full-name[Print formulae with fully-qualified names. Unless `--full-name`, `--versions` or `--pinned` are passed, other options (i.e. `-1`, `-l`, `-r` and `-t`) are passed to `ls`(1) which produces the actual output]' \
+    '(--versions --pinned ---installed-on-request --installed-as-dependency --poured-from-bottle --built-from-source --l --r --t)--full-name[Print formulae with fully-qualified names. Unless `--full-name`, `--versions` or `--pinned` are passed, other options (i.e. `-1`, `-l`, `-r` and `-t`) are passed to `ls`(1) which produces the actual output]' \
     '--help[Show this message]' \
     '(--cask --versions --pinned --full-name)--installed-as-dependency[List the formulae installed as dependencies]' \
     '(--cask --versions --pinned)--installed-on-request[List the formulae installed on request]' \
     '(--cask --pinned)--multiple[Only show formulae with multiple versions installed]' \
-    '(--cask --multiple --installed-on-request --installed-as-dependency --1 --l --r --t --full-name)--pinned[List only pinned formulae, or only the specified (pinned) formulae if formula are provided. See also `pin`, `unpin`]' \
+    '(--cask --multiple --installed-on-request --installed-as-dependency --poured-from-bottle --built-from-source --1 --l --r --t --full-name)--pinned[List only pinned formulae, or only the specified (pinned) formulae if formula are provided. See also `pin`, `unpin`]' \
+    '(--cask --versions --pinned --full-name)--poured-from-bottle[List the formulae installed from a bottle]' \
     '--quiet[Make some output more quiet]' \
     '--verbose[Make some output more verbose]' \
-    '(--installed-on-request --installed-as-dependency --1 --l --r --t --full-name)--versions[Show the version number for installed formulae, or only the specified formulae if formula are provided]' \
+    '(--installed-on-request --installed-as-dependency --poured-from-bottle --built-from-source --1 --l --r --t --full-name)--versions[Show the version number for installed formulae, or only the specified formulae if formula are provided]' \
     '-1[Force output to be one entry per line. This is the default when output is not to a terminal]' \
     '-l[List formulae and/or casks in long format. Has no effect when a formula or cask name is passed as an argument]' \
     '-r[Reverse the order of the formulae and/or casks sort to list the oldest entries first. Has no effect when a formula or cask name is passed as an argument]' \
@@ -1373,7 +1390,7 @@ _brew_ls() {
     '(--cask)--formula[List only formulae, or treat all named arguments as formulae]' \
     '*::installed_formula:__brew_installed_formulae' \
     - installed_cask \
-    '(--formula --pinned --multiple --installed-on-request --installed-as-dependency)--cask[List only casks, or treat all named arguments as casks]' \
+    '(--formula --pinned --multiple --installed-on-request --installed-as-dependency --poured-from-bottle --built-from-source)--cask[List only casks, or treat all named arguments as casks]' \
     '*::installed_cask:__brew_installed_casks'
 }
 
@@ -1889,7 +1906,9 @@ _brew_tc() {
     '--suggest-typed[Try upgrading `typed` sigils]' \
     '(--lsp)--update[Update RBI files]' \
     '(--lsp)--update-all[Update all RBI files rather than just updated gems]' \
-    '--verbose[Make some output more verbose]'
+    '--verbose[Make some output more verbose]' \
+    - tap \
+    '*::tap:__brew_any_tap'
 }
 
 # brew test
@@ -1938,7 +1957,9 @@ _brew_typecheck() {
     '--suggest-typed[Try upgrading `typed` sigils]' \
     '(--lsp)--update[Update RBI files]' \
     '(--lsp)--update-all[Update all RBI files rather than just updated gems]' \
-    '--verbose[Make some output more verbose]'
+    '--verbose[Make some output more verbose]' \
+    - tap \
+    '*::tap:__brew_any_tap'
 }
 
 # brew unbottled

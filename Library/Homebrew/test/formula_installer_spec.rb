@@ -443,7 +443,6 @@ RSpec.describe FormulaInstaller do
 
     it "shows audit problems if HOMEBREW_DEVELOPER is set" do
       ENV["HOMEBREW_DEVELOPER"] = "1"
-      expect(SBOM).to receive(:fetch_schema!).and_return({})
       formula_installer.fetch
       formula_installer.install
       expect(formula_installer).to receive(:audit_installed).and_call_original

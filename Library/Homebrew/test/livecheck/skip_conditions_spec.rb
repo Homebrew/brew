@@ -650,10 +650,6 @@ RSpec.describe Homebrew::Livecheck::SkipConditions do
         expect { skip_conditions.print_skip_information({}) }
           .to not_to_output.to_stdout
           .and not_to_output.to_stderr
-
-        expect { skip_conditions.print_skip_information(nil) }
-          .to not_to_output.to_stdout
-          .and not_to_output.to_stderr
       end
     end
   end

@@ -101,7 +101,7 @@ RSpec.describe Homebrew::Diagnostic::Checks do
           FileUtils.chmod 0755, cmd
         end
 
-        allow(Tap).to receive(:cmd_directories).and_return([path1, path2])
+        allow(Commands).to receive(:tap_cmd_directories).and_return([path1, path2])
 
         expect(checks.check_for_external_cmd_name_conflict)
           .to match("brew-foo")

@@ -1,4 +1,4 @@
-# typed: true
+# typed: true # rubocop:todo Sorbet/StrictSigil
 # frozen_string_literal: true
 
 # from https://github.com/lsegal/yard/issues/484#issuecomment-442586899

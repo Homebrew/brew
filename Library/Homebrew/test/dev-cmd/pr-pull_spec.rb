@@ -80,7 +80,7 @@ RSpec.describe Homebrew::DevCmd::PrPull do
   let(:tap) { Tap.fetch("Homebrew", "foo") }
   let(:formula_file) { tap.path/"Formula/foo.rb" }
   let(:cask_file) { tap.cask_dir/"food.rb" }
-  let(:path) { Pathname(Tap::TAP_DIRECTORY/"homebrew/homebrew-foo") }
+  let(:path) { Pathname(HOMEBREW_TAP_DIRECTORY/"homebrew/homebrew-foo") }
 
   it_behaves_like "parseable arguments"
 

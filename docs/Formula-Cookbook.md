@@ -175,7 +175,7 @@ conflicts_with "blueduck", because: "yellowduck also ships a duck binary"
 
 In Homebrew we sometimes accept formulae updates that don’t include a version bump. These include resource updates, new patches or fixing a security issue with a formula.
 
-Occasionally, these updates require a forced-recompile of the formula itself or its dependents to either ensure formulae continue to function as expected or to close a security issue. This forced-recompile is known as a [`revision`](https://rubydoc.brew.sh/Formula#revision%3D-class_method) and is inserted underneath the [`homepage`](https://rubydoc.brew.sh/Formula#homepage%3D-class_method)/[`url`](https://rubydoc.brew.sh/Formula#url-class_method)/[`sha256`](https://rubydoc.brew.sh/Formula#sha256%3D-class_method) block.
+Occasionally, these updates require a forced-recompile of the formula itself or its dependents to either ensure formulae continue to function as expected or to close a security issue. This forced-recompile is known as a [`revision`](https://rubydoc.brew.sh/Formula#revision%3D-class_method) and is inserted underneath the [`homepage`](https://rubydoc.brew.sh/Formula#homepage%3D-class_method)/[`url`](https://rubydoc.brew.sh/Formula#url-class_method)/[`sha256`](https://rubydoc.brew.sh/Formula#sha256%3D-class_method)/[`license`](https://rubydoc.brew.sh/Formula#license-class_method) block.
 
 When a dependent of a formula fails to build against a new version of that dependency it must receive a [`revision`](https://rubydoc.brew.sh/Formula#revision%3D-class_method). An example of such failure is in [this issue report](https://github.com/Homebrew/legacy-homebrew/issues/31195) and [its fix](https://github.com/Homebrew/legacy-homebrew/pull/31207).
 
@@ -995,7 +995,7 @@ class Foo < Formula
   url "https://example.com/foo-1.0.tar.gz"
 
   def post_install
-    rm_f pkgetc/"cert.pem"
+    rm pkgetc/"cert.pem" if File.exist?(pkgetc/"cert.pem")
     pkgetc.install_symlink Formula["ca-certificates"].pkgetc/"cert.pem"
   end
   # ...

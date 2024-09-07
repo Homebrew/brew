@@ -1,4 +1,4 @@
-# typed: true
+# typed: true # rubocop:todo Sorbet/StrictSigil
 # frozen_string_literal: true
 
 raise "#{__FILE__} must not be loaded via `require`." if $PROGRAM_NAME != __FILE__

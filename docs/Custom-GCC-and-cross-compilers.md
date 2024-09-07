@@ -5,7 +5,7 @@ Homebrew depends on having an up-to-date version of Xcode because it comes with 
 Rather than merging formulae for either of these cases at this time, we're listing them on this page. If you come up with a formula for a new version of GCC or cross-compiler suite, please link to it here.
 
 - Homebrew provides a `gcc` formula for use with Xcode 4.2+.
-- Homebrew provides older GCC formulae, e.g. `gcc@7`.
+- Homebrew provides older GCC formulae, e.g. `gcc@9`.
 - Homebrew provides some cross-compilers and toolchains, but these are named to avoid clashing with the default tools, e.g. `i686-elf-gcc`, `x86_64-elf-gcc`.
 - Homebrew provides LLVM's Clang, which is bundled with the `llvm` formula.
 - [RISC-V](https://github.com/riscv/homebrew-riscv) provides the RISC-V toolchain including binutils and GCC.

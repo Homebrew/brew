@@ -274,11 +274,12 @@ Sorbet/RedundantExtendTSig:
 
 Sorbet/StrictSigil:
   Enabled: true
-  inherit_mode:
-    override:
-      - Include
-  Include:
-    - "**/*.rbi"
+  Exclude:
+    - "Taps/**/*"
+    - "/**/{Formula,Casks}/**/*.rb"
+    - "**/{Formula,Casks}/**/*.rb"
+    - "Homebrew/{standalone,startup}/*.rb" # These are loaded before sorbet-runtime
+    - "Homebrew/test/**/*.rb"
 
 Sorbet/TrueSigil:
   Enabled: true
@@ -405,6 +406,13 @@ Style/OpenStructUse:
     #   to define methods so that call sites can be type-checked.
     - "Homebrew/cli/args.rb"
     - "Homebrew/cli/args.rbi"
+
+Style/OptionalBooleanParameter:
+  AllowedMethods:
+    # These are overrides of core library methods
+    # see https://ruby-doc.org/3.3.4/Object.html#method-i-respond_to-3F
+    - respond_to?
+    - respond_to_missing?
 
 # Rescuing `StandardError` is an understood default.
 Style/RescueStandardError:

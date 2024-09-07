@@ -1,6 +1,15 @@
 {
+  "search.exclude": {
+    "Library/Homebrew/vendor/bundle/ruby/": true,
+    "Library/Homebrew/vendor/gems/": true,
+    "Library/Homebrew/vendor/portable-ruby/": true
+  },
   "editor.insertSpaces": true,
   "editor.tabSize": 2,
+  "editor.rulers": [
+    80,
+    118
+  ],
   "files.encoding": "utf8",
   "files.eol": "\n",
   "files.trimTrailingWhitespace": true,
@@ -9,6 +18,13 @@
   "rubyLsp.rubyVersionManager": {
     "identifier": "custom"
   },
+  "spellright.language": [
+    "en_GB",
+    "en_US"
+  ],
+  "spellright.documentTypes": [
+    "markdown",
+  ],
   "rubyLsp.customRubyCommand": "source ../../.vscode/ruby-lsp-activate.sh",
   "rubyLsp.bundleGemfile": "Library/Homebrew/Gemfile",
   "rubyLsp.formatter": "rubocop",
@@ -49,5 +65,7 @@
     "editor.codeActionsOnSave": {
       "source.fixAll.shellcheck": "explicit"
     }
-  }
+  },
+  "simplecov-vscode.path": "Library/Homebrew/test/coverage/.resultset.json",
+  "simplecov-vscode.enabled": false
 }

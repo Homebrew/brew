@@ -26,7 +26,7 @@ license :cannot_represent
 
 ## Complex SPDX License Expressions
 
-Some formulae have multiple licenses that need to be combined in different ways. In these cases, a more complex license expression can be used. These expressions are based on the [SPDX License Expression Guidelines](https://spdx.github.io/spdx-spec/latest/SPDX-license-expressions/).
+Some formulae have multiple licenses that need to be combined in different ways. In these cases, a more complex license expression can be used. These expressions are based on the [SPDX License Expression Guidelines](https://spdx.github.io/spdx-spec/latest/annexes/spdx-license-expressions/).
 
 Add a `+` to indicate that the user can choose a later version of the same license:
 

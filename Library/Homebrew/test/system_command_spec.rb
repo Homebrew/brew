@@ -324,7 +324,7 @@ RSpec.describe SystemCommand do
                                args:    %w[--user username:hunter2],
                                verbose: true,
                                secrets: %w[hunter2]
-        end.to raise_error.with_message(redacted_msg).and output(redacted_msg).to_stderr
+        end.to raise_error(ErrorDuringExecution, redacted_msg).and output(redacted_msg).to_stderr
       end
 
       it "does not leak the secrets set by environment" do
@@ -334,7 +334,7 @@ RSpec.describe SystemCommand do
           described_class.run! "curl",
                                args:    %w[--user username:hunter2],
                                verbose: true
-        end.to raise_error.with_message(redacted_msg).and output(redacted_msg).to_stderr
+        end.to raise_error(ErrorDuringExecution, redacted_msg).and output(redacted_msg).to_stderr
       end
     end
 

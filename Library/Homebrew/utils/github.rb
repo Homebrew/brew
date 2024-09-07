@@ -1,4 +1,4 @@
-# typed: true
+# typed: true # rubocop:todo Sorbet/StrictSigil
 # frozen_string_literal: true
 
 require "uri"
@@ -434,56 +434,49 @@ module GitHub
       )
   }
   def self.sponsorships(user)
-    has_next_page = T.let(true, T::Boolean)
-    after = ""
-    sponsorships = T.let([], T::Array[Hash])
-    errors = T.let([], T::Array[Hash])
-    while has_next_page
-      query = <<~EOS
-          { organization(login: "#{user}") {
-            sponsorshipsAsMaintainer(first: 100 #{after}) {
-              pageInfo {
-                startCursor
-                hasNextPage
-                endCursor
-              }
-              totalCount
-              nodes {
-                tier {
+    query = <<~EOS
+        query($user: String!, $after: String) { organization(login: $user) {
+          sponsorshipsAsMaintainer(first: 100, after: $after) {
+            pageInfo {
+              hasNextPage
+              endCursor
+            }
+            nodes {
+              tier {
+                monthlyPriceInDollars
+                closestLesserValueTier {
                   monthlyPriceInDollars
-                  closestLesserValueTier {
-                    monthlyPriceInDollars
-                  }
                 }
-                sponsorEntity {
-                  __typename
-                  ... on Organization { login name }
-                  ... on User { login name }
-                }
+              }
+              sponsorEntity {
+                ... on Organization { login name }
+                ... on User { login name }
               }
             }
           }
         }
-      EOS
+      }
+    EOS
+
+    sponsorships = T.let([], T::Array[Hash])
+    errors = T.let([], T::Array[Hash])
+
+    API.paginate_graphql(query, variables: { user: }, scopes: ["user"], raise_errors: false) do |result|
       # Some organisations do not permit themselves to be queried through the
       # API like this and raise an error so handle these errors later.
       # This has been reported to GitHub.
-      result = API.open_graphql(query, scopes: ["user"], raise_errors: false)
       errors += result["errors"] if result["errors"].present?
 
-      current_sponsorships = result["data"]["organization"]["sponsorshipsAsMaintainer"]
+      current_sponsorships = result.dig("data", "organization", "sponsorshipsAsMaintainer")
+      # if `current_sponsorships` is blank, then there should be errors to report.
+      next { "hasNextPage" => false } if current_sponsorships.blank?
 
       # The organisations mentioned above will show up as nil nodes.
       if (nodes = current_sponsorships["nodes"].compact.presence)
         sponsorships += nodes
       end
 
-      if (page_info = current_sponsorships["pageInfo"].presence) &&
-         page_info["hasNextPage"].presence
-        after = %Q(, after: "#{page_info["endCursor"]}")
-      else
-        has_next_page = false
-      end
+      current_sponsorships.fetch("pageInfo")
     end
 
     # Only raise errors if we didn't get any sponsorships.
@@ -636,7 +629,17 @@ module GitHub
     pull_requests || []
   end
 
-  def self.check_for_duplicate_pull_requests(name, tap_remote_repo, state:, file:, quiet:, version: nil)
+  sig {
+    params(
+      name:            String,
+      tap_remote_repo: String,
+      file:            String,
+      quiet:           T::Boolean,
+      state:           T.nilable(String),
+      version:         T.nilable(String),
+    ).void
+  }
+  def self.check_for_duplicate_pull_requests(name, tap_remote_repo, file:, quiet: false, state: nil, version: nil)
     pull_requests = fetch_pull_requests(name, tap_remote_repo, state:, version:)
 
     pull_requests.select! do |pr|
@@ -646,19 +649,25 @@ module GitHub
     end
     return if pull_requests.blank?
 
+    confidence = version ? "are" : "might be"
     duplicates_message = <<~EOS
-      These #{state} pull requests may be duplicates:
+      These #{state} pull requests #{confidence} duplicates:
       #{pull_requests.map { |pr| "#{pr["title"]} #{pr["html_url"]}" }.join("\n")}
     EOS
     error_message = <<~EOS
-      Duplicate PRs should not be opened.
-      Manually open these PRs if you are sure that they are not duplicates.
+      Duplicate PRs must not be opened.
+      Manually open these PRs if you are sure that they are not duplicates (and tell us that in the PR).
     EOS
 
-    if quiet
-      odie error_message
-    else
+    if version
       odie <<~EOS
+        #{duplicates_message.chomp}
+        #{error_message}
+      EOS
+    elsif quiet
+      opoo error_message
+    else
+      opoo <<~EOS
         #{duplicates_message.chomp}
         #{error_message}
       EOS
@@ -671,7 +680,7 @@ module GitHub
 
   private_class_method def self.add_auth_token_to_url!(url)
     if API.credentials_type == :env_token
-      url.sub!(%r{^https://github\.com/}, "https://#{API.credentials}@github.com/")
+      url.sub!(%r{^https://github\.com/}, "https://x-access-token:#{API.credentials}@github.com/")
     end
     url
   end
@@ -890,46 +899,48 @@ module GitHub
     odie "Cannot count PRs, HOMEBREW_NO_GITHUB_API set!" if Homebrew::EnvConfig.no_github_api?
 
     query = <<~EOS
-      query {
+      query($after: String) {
         viewer {
           login
-          pullRequests(first: 100, states: OPEN) {
+          pullRequests(first: 100, states: OPEN, after: $after) {
+            totalCount
             nodes {
-              headRepositoryOwner {
-                login
+              baseRepository {
+                owner {
+                  login
+                }
               }
             }
             pageInfo {
               hasNextPage
+              endCursor
             }
           }
         }
       }
     EOS
-    graphql_result = API.open_graphql(query)
     puts
 
-    github_user = graphql_result.dig("viewer", "login")
-    odie "Cannot count PRs, cannot get GitHub username from GraphQL API!" if github_user.blank?
+    homebrew_prs_count = 0
 
-    # BrewTestBot can open as many PRs as it wants.
-    return false if github_user.casecmp("brewtestbot").zero?
+    API.paginate_graphql(query) do |result|
+      data = result.fetch("viewer")
+      github_user = data.fetch("login")
 
-    prs = graphql_result.dig("viewer", "pullRequests", "nodes")
-    more_graphql_data = graphql_result.dig("viewer", "pullRequests", "pageInfo", "hasNextPage")
-    return false if !more_graphql_data && prs.length < MAXIMUM_OPEN_PRS
+      # BrewTestBot can open as many PRs as it wants.
+      return false if github_user.casecmp?("brewtestbot")
 
-    homebrew_prs_count = graphql_result.dig("viewer", "pullRequests", "nodes").count do |pr|
-      pr["headRepositoryOwner"]["login"] == "Homebrew"
+      pull_requests = data.fetch("pullRequests")
+      return false if pull_requests.fetch("totalCount") < MAXIMUM_OPEN_PRS
+
+      homebrew_prs_count += pull_requests.fetch("nodes").count do |node|
+        node.dig("baseRepository", "owner", "login").casecmp?("homebrew")
+      end
+      return true if homebrew_prs_count >= MAXIMUM_OPEN_PRS
+
+      pull_requests.fetch("pageInfo")
     end
-    return true if homebrew_prs_count >= MAXIMUM_OPEN_PRS
-    return false unless more_graphql_data
-    return false if tap.nil?
 
-    url = "#{API_URL}/repos/#{tap.full_name}/issues?state=open&creator=#{github_user}"
-    rest_result = API.open_rest(url)
-    repo_prs_count = rest_result.count { |issue_or_pr| issue_or_pr.key?("pull_request") }
-
-    repo_prs_count >= MAXIMUM_OPEN_PRS
+    false
   end
 end

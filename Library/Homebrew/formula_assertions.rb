@@ -5,6 +5,9 @@ module Homebrew
   # Helper functions available in formula `test` blocks.
   module Assertions
     include Context
+    extend T::Helpers
+
+    requires_ancestor { Kernel }
 
     require "minitest"
     require "minitest/assertions"

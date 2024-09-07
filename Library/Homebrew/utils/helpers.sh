@@ -82,7 +82,25 @@ which() {
 }
 
 numeric() {
-  # Condense the exploded argument into a single return value.
-  # shellcheck disable=SC2086,SC2183
-  printf "%01d%02d%02d%03d" ${1//[.rc]/ } 2>/dev/null
+  local -a version_array
+  IFS=".rc" read -r -a version_array <<<"${1}"
+  printf "%01d%02d%02d%03d" "${version_array[@]}" 2>/dev/null
+}
+
+columns() {
+  if [[ -n "${COLUMNS}" ]]
+  then
+    echo "${COLUMNS}"
+    return
+  fi
+
+  local columns
+  read -r _ columns < <(stty size 2>/dev/null)
+
+  if [[ -z "${columns}" ]] && tput cols >/dev/null 2>&1
+  then
+    columns="$(tput cols)"
+  fi
+
+  echo "${columns:-80}"
 }

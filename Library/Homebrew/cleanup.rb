@@ -1,4 +1,4 @@
-# typed: true
+# typed: true # rubocop:todo Sorbet/StrictSigil
 # frozen_string_literal: true
 
 require "utils/bottles"
@@ -295,6 +295,7 @@ module Homebrew
 
         cleanup_cache
         cleanup_empty_api_source_directories
+        cleanup_bootsnap
         cleanup_logs
         cleanup_lockfiles
         cleanup_python_site_packages
@@ -314,7 +315,6 @@ module Homebrew
         return if periodic
 
         cleanup_portable_ruby
-        cleanup_bootsnap
       else
         args.each do |arg|
           formula = begin
@@ -528,9 +528,11 @@ module Homebrew
 
     def cleanup_bootsnap
       bootsnap = cache/"bootsnap"
-      return unless bootsnap.exist?
+      return unless bootsnap.directory?
 
-      cleanup_path(bootsnap) { bootsnap.rmtree }
+      bootsnap.each_child do |subdir|
+        cleanup_path(subdir) { subdir.rmtree } if subdir.basename.to_s != Homebrew.bootsnap_key
+      end
     end
 
     def cleanup_cache_db(rack = nil)

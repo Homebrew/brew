@@ -1,4 +1,4 @@
-# typed: true
+# typed: true # rubocop:todo Sorbet/StrictSigil
 # frozen_string_literal: true
 
 require "system_command"
@@ -348,13 +348,15 @@ module GitHub
 
     sig {
       params(
-        query:     String,
-        variables: T.nilable(T::Hash[Symbol, T.untyped]),
-        _block:    T.proc.params(data: T::Hash[String, T.untyped]).returns(T::Hash[String, T.untyped]),
+        query:        String,
+        variables:    T.nilable(T::Hash[Symbol, T.untyped]),
+        scopes:       T::Array[String],
+        raise_errors: T::Boolean,
+        _block:       T.proc.params(data: T::Hash[String, T.untyped]).returns(T::Hash[String, T.untyped]),
       ).void
     }
-    def self.paginate_graphql(query, variables: nil, &_block)
-      result = API.open_graphql(query, variables:)
+    def self.paginate_graphql(query, variables: nil, scopes: [].freeze, raise_errors: true, &_block)
+      result = API.open_graphql(query, variables:, scopes:, raise_errors:)
 
       has_next_page = T.let(true, T::Boolean)
       variables ||= {}
@@ -363,7 +365,7 @@ module GitHub
         has_next_page = page_info["hasNextPage"]
         if has_next_page
           variables[:after] = page_info["endCursor"]
-          result = API.open_graphql(query, variables:)
+          result = API.open_graphql(query, variables:, scopes:, raise_errors:)
         end
       end
     end

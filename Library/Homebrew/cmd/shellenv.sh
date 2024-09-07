@@ -18,22 +18,44 @@ homebrew-shellenv() {
     HOMEBREW_SHELL_NAME="$(/bin/ps -p "${PPID}" -c -o comm=)"
   fi
 
+  if [[ -n "${HOMEBREW_MACOS}" ]] &&
+     [[ "${HOMEBREW_MACOS_VERSION_NUMERIC}" -ge "140000" ]] &&
+     [[ -x /usr/libexec/path_helper ]]
+  then
+    HOMEBREW_PATHS_FILE="${HOMEBREW_PREFIX}/etc/paths"
+
+    if [[ ! -f "${HOMEBREW_PATHS_FILE}" ]]
+    then
+      printf '%s/bin\n%s/sbin\n' "${HOMEBREW_PREFIX}" "${HOMEBREW_PREFIX}" >"${HOMEBREW_PATHS_FILE}" 2>/dev/null
+    fi
+
+    if [[ -r "${HOMEBREW_PATHS_FILE}" ]]
+    then
+      PATH_HELPER_ROOT="${HOMEBREW_PREFIX}"
+    fi
+  fi
+
   case "${HOMEBREW_SHELL_NAME}" in
     fish | -fish)
       echo "set -gx HOMEBREW_PREFIX \"${HOMEBREW_PREFIX}\";"
       echo "set -gx HOMEBREW_CELLAR \"${HOMEBREW_CELLAR}\";"
       echo "set -gx HOMEBREW_REPOSITORY \"${HOMEBREW_REPOSITORY}\";"
       echo "fish_add_path -gP \"${HOMEBREW_PREFIX}/bin\" \"${HOMEBREW_PREFIX}/sbin\";"
-      echo "set -q MANPATH; and set MANPATH[1] \":\$(string trim --left --chars=\":\" \$MANPATH[1])\";"
-      echo "! set -q INFOPATH; and set INFOPATH ''; set -gx INFOPATH \"${HOMEBREW_PREFIX}/share/info\" \$INFOPATH;"
+      echo "if test -n \"\$MANPATH[1]\"; set -gx MANPATH '' \$MANPATH; end;"
+      echo "if not contains \"${HOMEBREW_PREFIX}/share/info\" \$INFOPATH; set -gx INFOPATH \"${HOMEBREW_PREFIX}/share/info\" \$INFOPATH; end;"
       ;;
     csh | -csh | tcsh | -tcsh)
       echo "setenv HOMEBREW_PREFIX ${HOMEBREW_PREFIX};"
       echo "setenv HOMEBREW_CELLAR ${HOMEBREW_CELLAR};"
       echo "setenv HOMEBREW_REPOSITORY ${HOMEBREW_REPOSITORY};"
-      echo "setenv PATH ${HOMEBREW_PREFIX}/bin:${HOMEBREW_PREFIX}/sbin:\$PATH;"
-      echo "if ( \${?MANPATH} == 1 ) setenv MANPATH :\${MANPATH};"
-      echo "setenv INFOPATH ${HOMEBREW_PREFIX}/share/info\`if ( \${?INFOPATH} == 1 ) echo \":\${INFOPATH}\"\`;"
+      if [[ -n "${PATH_HELPER_ROOT}" ]]
+      then
+        PATH_HELPER_ROOT="${PATH_HELPER_ROOT}" PATH="${HOMEBREW_PATH}" /usr/libexec/path_helper -c
+      else
+        echo "setenv PATH ${HOMEBREW_PREFIX}/bin:${HOMEBREW_PREFIX}/sbin:\$PATH;"
+      fi
+      echo "test \${?MANPATH} -eq 1 && setenv MANPATH :\${MANPATH};"
+      echo "setenv INFOPATH ${HOMEBREW_PREFIX}/share/info\`test \${?INFOPATH} -eq 1 && echo :\${INFOPATH}\`;"
       ;;
     pwsh | -pwsh | pwsh-preview | -pwsh-preview)
       echo "[System.Environment]::SetEnvironmentVariable('HOMEBREW_PREFIX','${HOMEBREW_PREFIX}',[System.EnvironmentVariableTarget]::Process)"
@@ -47,7 +69,12 @@ homebrew-shellenv() {
       echo "export HOMEBREW_PREFIX=\"${HOMEBREW_PREFIX}\";"
       echo "export HOMEBREW_CELLAR=\"${HOMEBREW_CELLAR}\";"
       echo "export HOMEBREW_REPOSITORY=\"${HOMEBREW_REPOSITORY}\";"
-      echo "export PATH=\"${HOMEBREW_PREFIX}/bin:${HOMEBREW_PREFIX}/sbin\${PATH+:\$PATH}\";"
+      if [[ -n "${PATH_HELPER_ROOT}" ]]
+      then
+        PATH_HELPER_ROOT="${PATH_HELPER_ROOT}" PATH="${HOMEBREW_PATH}" /usr/libexec/path_helper -s
+      else
+        echo "export PATH=\"${HOMEBREW_PREFIX}/bin:${HOMEBREW_PREFIX}/sbin\${PATH+:\$PATH}\";"
+      fi
       echo "[ -z \"\${MANPATH-}\" ] || export MANPATH=\":\${MANPATH#:}\";"
       echo "export INFOPATH=\"${HOMEBREW_PREFIX}/share/info:\${INFOPATH:-}\";"
       ;;

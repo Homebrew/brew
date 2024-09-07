@@ -105,6 +105,10 @@ module Language
 
     # Mixin module for {Formula} adding shebang rewrite features.
     module Shebang
+      extend T::Helpers
+
+      requires_ancestor { Formula }
+
       module_function
 
       # A regex to match potential shebang permutations.
@@ -128,7 +132,7 @@ module Language
         python_path = if use_python_from_path
           "/usr/bin/env python3"
         else
-          python_deps = formula.deps.map(&:name).grep(/^python(@.+)?$/)
+          python_deps = formula.deps.select(&:required?).map(&:name).grep(/^python(@.+)?$/)
           raise ShebangDetectionError.new("Python", "formula does not depend on Python") if python_deps.empty?
           if python_deps.length > 1
             raise ShebangDetectionError.new("Python", "formula has multiple Python dependencies")
@@ -144,6 +148,10 @@ module Language
 
     # Mixin module for {Formula} adding virtualenv support features.
     module Virtualenv
+      extend T::Helpers
+
+      requires_ancestor { Formula }
+
       # Instantiates, creates and yields a {Virtualenv} object for use from
       # {Formula#install}, which provides helper methods for instantiating and
       # installing packages into a Python virtualenv.
@@ -322,8 +330,9 @@ module Language
           # Robustify symlinks to survive python patch upgrades
           @venv_root.find do |f|
             next unless f.symlink?
-            next unless (rp = f.realpath.to_s).start_with? HOMEBREW_CELLAR
+            next unless f.readlink.expand_path.to_s.start_with? HOMEBREW_CELLAR
 
+            rp = f.realpath.to_s
             version = rp.match %r{^#{HOMEBREW_CELLAR}/python@(.*?)/}o
             version = "@#{version.captures.first}" unless version.nil?
 
@@ -340,6 +349,18 @@ module Language
 
             prefix_path.sub! %r{^#{HOMEBREW_CELLAR}/python#{version}/[^/]+}, Formula["python#{version}"].opt_prefix
             prefix_file.atomic_write prefix_path
+          end
+
+          # Reduce some differences between macOS and Linux venv
+          lib64 = @venv_root/"lib64"
+          lib64.make_symlink "lib" unless lib64.exist?
+          if (cfg_file = @venv_root/"pyvenv.cfg").exist?
+            cfg = cfg_file.read
+            framework = "Frameworks/Python.framework/Versions"
+            cfg.match(%r{= *(#{HOMEBREW_CELLAR}/(python@[\d.]+)/[^/]+(?:/#{framework}/[\d.]+)?/bin)}) do |match|
+              cfg.sub! match[1].to_s, Formula[match[2]].opt_bin
+              cfg_file.atomic_write cfg
+            end
           end
 
           # Remove unnecessary activate scripts

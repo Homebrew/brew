@@ -210,7 +210,7 @@ RSpec.shared_context "integration test" do # rubocop:disable RSpec/ContextWordin
   end
 
   def setup_test_tap
-    path = Tap::TAP_DIRECTORY/"homebrew/homebrew-foo"
+    path = HOMEBREW_TAP_DIRECTORY/"homebrew/homebrew-foo"
     path.mkpath
     path.cd do
       system "git", "init"

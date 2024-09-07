@@ -32,3 +32,11 @@ Style/RedundantRegexpArgument:
 # Want to be able to display partial formulae in the docs.
 Style/TopLevelMethodDefinition:
   Enabled: false
+
+# Formulae and Casks no longer use `rm_f`/`rm_rf`, so the docs need to match.
+Lint/NonAtomicFileOperation:
+  Enabled: false
+
+# The markdown linter config files don't need to be typed strict.
+Sorbet/StrictSigil:
+  Enabled: false

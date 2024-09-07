@@ -18,4 +18,6 @@ RSpec.describe Homebrew::Cmd::List do
       .and not_to_output.to_stderr
       .and be_a_success
   end
+
+  # TODO: add a test for the shell fast-path (`brew_sh`)
 end

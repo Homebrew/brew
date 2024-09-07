@@ -1,4 +1,4 @@
-# typed: true
+# typed: strict
 # frozen_string_literal: true
 
 require "utils/curl"
@@ -8,10 +8,9 @@ require "utils/github/api"
 module SharedAudits
   URL_TYPE_HOMEPAGE = "homepage URL"
 
-  module_function
-
-  def eol_data(product, cycle)
-    @eol_data ||= {}
+  sig { params(product: String, cycle: String).returns(T.nilable(T::Hash[String, T.untyped])) }
+  def self.eol_data(product, cycle)
+    @eol_data ||= T.let({}, T.nilable(T::Hash[String, T.untyped]))
     @eol_data["#{product}/#{cycle}"] ||= begin
       out, _, status = Utils::Curl.curl_output("--location", "https://endoflife.date/api/#{product}/#{cycle}.json")
       json = JSON.parse(out) if status.success?
@@ -20,8 +19,9 @@ module SharedAudits
     end
   end
 
-  def github_repo_data(user, repo)
-    @github_repo_data ||= {}
+  sig { params(user: String, repo: String).returns(T.nilable(T::Hash[String, T.untyped])) }
+  def self.github_repo_data(user, repo)
+    @github_repo_data ||= T.let({}, T.nilable(T::Hash[String, T.untyped]))
     @github_repo_data["#{user}/#{repo}"] ||= GitHub.repository(user, repo)
 
     @github_repo_data["#{user}/#{repo}"]
@@ -31,10 +31,11 @@ module SharedAudits
     raise unless e.message.match?(GitHub::API::GITHUB_IP_ALLOWLIST_ERROR)
   end
 
-  def github_release_data(user, repo, tag)
+  sig { params(user: String, repo: String, tag: String).returns(T.nilable(T::Hash[String, T.untyped])) }
+  private_class_method def self.github_release_data(user, repo, tag)
     id = "#{user}/#{repo}/#{tag}"
     url = "#{GitHub::API_URL}/repos/#{user}/#{repo}/releases/tags/#{tag}"
-    @github_release_data ||= {}
+    @github_release_data ||= T.let({}, T.nilable(T::Hash[String, T.untyped]))
     @github_release_data[id] ||= GitHub::API.open_rest(url)
 
     @github_release_data[id]
@@ -44,7 +45,14 @@ module SharedAudits
     raise unless e.message.match?(GitHub::API::GITHUB_IP_ALLOWLIST_ERROR)
   end
 
-  def github_release(user, repo, tag, formula: nil, cask: nil)
+  sig {
+    params(
+      user: String, repo: String, tag: String, formula: T.nilable(Formula), cask: T.nilable(Cask::Cask),
+    ).returns(
+      T.nilable(String),
+    )
+  }
+  def self.github_release(user, repo, tag, formula: nil, cask: nil)
     release = github_release_data(user, repo, tag)
     return unless release
 
@@ -63,8 +71,9 @@ module SharedAudits
     "#{tag} is a GitHub draft." if release["draft"]
   end
 
-  def gitlab_repo_data(user, repo)
-    @gitlab_repo_data ||= {}
+  sig { params(user: String, repo: String).returns(T.nilable(T::Hash[String, T.untyped])) }
+  def self.gitlab_repo_data(user, repo)
+    @gitlab_repo_data ||= T.let({}, T.nilable(T::Hash[String, T.untyped]))
     @gitlab_repo_data["#{user}/#{repo}"] ||= begin
       out, _, status = Utils::Curl.curl_output("https://gitlab.com/api/v4/projects/#{user}%2F#{repo}")
       json = JSON.parse(out) if status.success?
@@ -73,9 +82,10 @@ module SharedAudits
     end
   end
 
-  def gitlab_release_data(user, repo, tag)
+  sig { params(user: String, repo: String, tag: String).returns(T.nilable(T::Hash[String, T.untyped])) }
+  private_class_method def self.gitlab_release_data(user, repo, tag)
     id = "#{user}/#{repo}/#{tag}"
-    @gitlab_release_data ||= {}
+    @gitlab_release_data ||= T.let({}, T.nilable(T::Hash[String, T.untyped]))
     @gitlab_release_data[id] ||= begin
       out, _, status = Utils::Curl.curl_output(
         "https://gitlab.com/api/v4/projects/#{user}%2F#{repo}/releases/#{tag}", "--fail"
@@ -84,7 +94,14 @@ module SharedAudits
     end
   end
 
-  def gitlab_release(user, repo, tag, formula: nil, cask: nil)
+  sig {
+    params(
+      user: String, repo: String, tag: String, formula: T.nilable(Formula), cask: T.nilable(Cask::Cask),
+    ).returns(
+      T.nilable(String),
+    )
+  }
+  def self.gitlab_release(user, repo, tag, formula: nil, cask: nil)
     release = gitlab_release_data(user, repo, tag)
     return unless release
 
@@ -100,7 +117,8 @@ module SharedAudits
     "#{tag} is a GitLab pre-release."
   end
 
-  def github(user, repo)
+  sig { params(user: String, repo: String).returns(T.nilable(String)) }
+  def self.github(user, repo)
     metadata = github_repo_data(user, repo)
 
     return if metadata.nil?
@@ -117,7 +135,8 @@ module SharedAudits
     "GitHub repository too new (<30 days old)"
   end
 
-  def gitlab(user, repo)
+  sig { params(user: String, repo: String).returns(T.nilable(String)) }
+  def self.gitlab(user, repo)
     metadata = gitlab_repo_data(user, repo)
 
     return if metadata.nil?
@@ -132,7 +151,8 @@ module SharedAudits
     "GitLab repository too new (<30 days old)"
   end
 
-  def bitbucket(user, repo)
+  sig { params(user: String, repo: String).returns(T.nilable(String)) }
+  def self.bitbucket(user, repo)
     api_url = "https://api.bitbucket.org/2.0/repositories/#{user}/#{repo}"
     out, _, status = Utils::Curl.curl_output("--request", "GET", api_url)
     return unless status.success?
@@ -163,21 +183,14 @@ module SharedAudits
     "Bitbucket repository not notable enough (<30 forks and <75 watchers)"
   end
 
-  def github_tag_from_url(url)
-    url = url.to_s
-    tag = url.match(%r{^https://github\.com/[\w-]+/[\w-]+/archive/refs/tags/([^/]+)\.(tar\.gz|zip)$})
-             .to_a
-             .second
-    tag ||= url.match(%r{^https://github\.com/[\w-]+/[\w-]+/releases/download/([^/]+)/})
-               .to_a
-               .second
-    tag
+  sig { params(url: String).returns(T.nilable(String)) }
+  def self.github_tag_from_url(url)
+    tag = url[%r{^https://github\.com/[\w-]+/[\w.-]+/archive/refs/tags/(.+)\.(tar\.gz|zip)$}, 1]
+    tag || url[%r{^https://github\.com/[\w-]+/[\w.-]+/releases/download/([^/]+)/}, 1]
   end
 
-  def gitlab_tag_from_url(url)
-    url = url.to_s
-    url.match(%r{^https://gitlab\.com/[\w-]+/[\w-]+/-/archive/([^/]+)/})
-       .to_a
-       .second
+  sig { params(url: String).returns(T.nilable(String)) }
+  def self.gitlab_tag_from_url(url)
+    url[%r{^https://gitlab\.com/(?:\w[\w.-]*/){2,}-/archive/([^/]+)/}, 1]
   end
 end

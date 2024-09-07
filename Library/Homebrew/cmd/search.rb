@@ -1,4 +1,4 @@
-# typed: true
+# typed: strict
 # frozen_string_literal: true
 
 require "abstract_command"
@@ -10,7 +10,7 @@ require "search"
 module Homebrew
   module Cmd
     class SearchCmd < AbstractCommand
-      PACKAGE_MANAGERS = {
+      PACKAGE_MANAGERS = T.let({
         repology:  ->(query) { "https://repology.org/projects/?search=#{query}" },
         macports:  ->(query) { "https://ports.macports.org/search/?q=#{query}" },
         fink:      ->(query) { "https://pdb.finkproject.org/pdb/browse.php?summary=#{query}" },
@@ -23,7 +23,7 @@ module Homebrew
         ubuntu:    lambda { |query|
           "https://packages.ubuntu.com/search?keywords=#{query}&searchon=names&suite=all&section=all"
         },
-      }.freeze
+      }.freeze, T::Hash[Symbol, T.proc.params(query: String).returns(String)])
 
       cmd_args do
         description <<~EOS
@@ -89,6 +89,7 @@ module Homebrew
 
       private
 
+      sig { void }
       def print_regex_help
         return unless $stdout.tty?
 
@@ -105,6 +106,7 @@ module Homebrew
         EOS
       end
 
+      sig { returns(T::Boolean) }
       def search_package_manager
         package_manager = PACKAGE_MANAGERS.find { |name,| args[:"#{name}?"] }
         return false if package_manager.nil?
@@ -114,6 +116,7 @@ module Homebrew
         true
       end
 
+      sig { params(query: String).returns(String) }
       def search_pull_requests(query)
         only = if args.open? && !args.closed?
           "open"
@@ -124,6 +127,7 @@ module Homebrew
         GitHub.print_pull_requests_matching(query, only)
       end
 
+      sig { params(all_formulae: T::Array[String], all_casks: T::Array[String], query: String).void }
       def print_results(all_formulae, all_casks, query)
         count = all_formulae.size + all_casks.size
 
@@ -148,6 +152,7 @@ module Homebrew
         odie "No formulae or casks found for #{query.inspect}." if count.zero?
       end
 
+      sig { params(query: String, found_matches: T::Boolean).void }
       def print_missing_formula_help(query, found_matches)
         return unless $stdout.tty?
 
