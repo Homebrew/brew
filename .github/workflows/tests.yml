@@ -178,9 +178,6 @@ jobs:
         run: |
           brew audit --skip-style --except=version --tap=homebrew/cask
 
-      - name: Generate formula API
-        run: brew generate-formula-api --dry-run
-
       - name: Generate cask API
         run: brew generate-cask-api --dry-run
 
