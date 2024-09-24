@@ -17,10 +17,6 @@ permissions:
   issues: write
   pull-requests: write
 
-defaults:
-  run:
-    shell: bash -xeuo pipefail {0}
-
 concurrency:
   group: stale-issues
   cancel-in-progress: ${{ github.event_name != 'issue_comment' }}
