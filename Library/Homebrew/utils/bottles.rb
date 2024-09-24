@@ -265,10 +265,18 @@ module Utils
       sig { returns(T.any(Symbol, String)) }
       attr_reader :cellar
 
-      def initialize(tag:, checksum:, cellar:)
+      sig { returns(T.nilable(Integer)) }
+      attr_reader :bottle_size
+
+      sig { returns(T.nilable(Integer)) }
+      attr_reader :installed_size
+
+      def initialize(tag:, checksum:, cellar:, bottle_size: nil, installed_size: nil)
         @tag = tag
         @checksum = checksum
         @cellar = cellar
+        @bottle_size = bottle_size
+        @installed_size = installed_size
       end
 
       def ==(other)
@@ -294,9 +302,17 @@ module Utils
       end
       alias eql? ==
 
-      sig { params(tag: Utils::Bottles::Tag, checksum: Checksum, cellar: T.any(Symbol, String)).void }
-      def add(tag, checksum:, cellar:)
-        spec = Utils::Bottles::TagSpecification.new(tag:, checksum:, cellar:)
+      sig {
+        params(
+          tag:            Utils::Bottles::Tag,
+          checksum:       Checksum,
+          cellar:         T.any(Symbol, String),
+          bottle_size:    T.nilable(Integer),
+          installed_size: T.nilable(Integer),
+        ).void
+      }
+      def add(tag, checksum:, cellar:, bottle_size: nil, installed_size: nil)
+        spec = Utils::Bottles::TagSpecification.new(tag:, checksum:, cellar:, bottle_size:, installed_size:)
         @tag_specs[tag] = spec
       end
 
