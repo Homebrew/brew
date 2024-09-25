@@ -2623,6 +2623,13 @@ class Formula
       end
       file_hash["sha256"] = checksum
 
+      if (bottle = bottle_for_tag(tag))
+        bottle_size = bottle.bottle_size
+        installed_size = bottle.installed_size
+        file_hash["bottle_size"] = bottle_size if bottle_size
+        file_hash["installed_size"] = installed_size if installed_size
+      end
+
       hash["files"][tag.to_sym] = file_hash
     end
     hash

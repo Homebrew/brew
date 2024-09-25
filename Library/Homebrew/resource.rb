@@ -306,6 +306,7 @@ class Resource
     def initialize(bottle)
       super("#{bottle.name}_bottle_manifest")
       @bottle = bottle
+      @manifest_annotations = nil
     end
 
     def verify_download_integrity(_filename)
@@ -314,6 +315,29 @@ class Resource
     end
 
     def tab
+      tab = manifest_annotations["sh.brew.tab"]
+      raise Error, "Couldn't find tab from manifest." if tab.blank?
+
+      begin
+        JSON.parse(tab)
+      rescue JSON::ParserError
+        raise Error, "Couldn't parse tab JSON."
+      end
+    end
+
+    def bottle_size
+      manifest_annotations["sh.brew.bottle.size"]&.to_i
+    end
+
+    def installed_size
+      manifest_annotations["sh.brew.bottle.installed_size"]&.to_i
+    end
+
+    private
+
+    def manifest_annotations
+      return @manifest_annotations if @manifest_annotations.present?
+
       json = begin
         JSON.parse(cached_download.read)
       rescue JSON::ParserError
@@ -336,14 +360,7 @@ class Resource
       end
       raise Error, "Couldn't find manifest matching bottle checksum." if manifest_annotations.blank?
 
-      tab = manifest_annotations["sh.brew.tab"]
-      raise Error, "Couldn't find tab from manifest." if tab.blank?
-
-      begin
-        JSON.parse(tab)
-      rescue JSON::ParserError
-        raise Error, "Couldn't parse tab JSON."
-      end
+      @manifest_annotations = manifest_annotations
     end
   end
 

@@ -47,6 +47,8 @@ module Homebrew
         switch "--force-bottle",
                description: "Download a bottle if it exists for the current or newest version of macOS, " \
                             "even if it would not be used during installation."
+        switch "--only-manifests",
+               description: "Only download GitHub Packages manifests."
         switch "--[no-]quarantine",
                description: "Disable/enable quarantining of downloads (default: enabled).",
                env:         :cask_opts_quarantine
@@ -62,6 +64,7 @@ module Homebrew
         conflicts "--cask", "--build-bottle"
         conflicts "--cask", "--force-bottle"
         conflicts "--cask", "--bottle-tag"
+        conflicts "--cask", "--only-manifests"
         conflicts "--formula", "--cask"
         conflicts "--os", "--bottle-tag"
         conflicts "--arch", "--bottle-tag"
@@ -173,7 +176,7 @@ module Homebrew
                     if (manifest_resource = bottle.github_packages_manifest_resource)
                       fetch_downloadable(manifest_resource)
                     end
-                    fetch_downloadable(bottle)
+                    fetch_downloadable(bottle) unless args.only_manifests?
                   rescue Interrupt
                     raise
                   rescue => e
@@ -187,7 +190,7 @@ module Homebrew
                   end
                 end
 
-                next if fetched_bottle
+                next if fetched_bottle || args.only_manifests?
 
                 fetch_downloadable(formula.resource)
 

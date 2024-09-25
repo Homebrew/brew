@@ -350,7 +350,8 @@ module Formulary
           rebuild bottles_stable["rebuild"]
           bottles_stable["files"].each do |tag, bottle_spec|
             cellar = Formulary.convert_to_string_or_symbol bottle_spec["cellar"]
-            sha256 cellar:, tag.to_sym => bottle_spec["sha256"]
+            sizes = bottle_spec.slice("bottle_size", "installed_size").transform_keys!(&:to_sym)
+            sha256 cellar:, tag.to_sym => bottle_spec["sha256"], **sizes
           end
         end
       end

@@ -367,6 +367,8 @@ class Bottle
     @tag = tag_spec.tag
     @cellar = tag_spec.cellar
     @rebuild = spec.rebuild
+    @bottle_size = tag_spec.bottle_size
+    @installed_size = tag_spec.installed_size
 
     @resource.version(formula.pkg_version.to_s)
     @resource.checksum = tag_spec.checksum
@@ -434,6 +436,22 @@ class Bottle
     end
 
     {}
+  end
+
+  sig { returns(T.nilable(Integer)) }
+  def bottle_size
+    return @bottle_size unless @bottle_size.nil?
+    return unless (resource = github_packages_manifest_resource)&.downloaded?
+
+    resource.bottle_size
+  end
+
+  sig { returns(T.nilable(Integer)) }
+  def installed_size
+    return @installed_size unless @installed_size.nil?
+    return unless (resource = github_packages_manifest_resource)&.downloaded?
+
+    resource.installed_size
   end
 
   sig { returns(Filename) }
@@ -596,7 +614,7 @@ class BottleSpecification
 
     cellar ||= tag.default_cellar
 
-    collector.add(tag, checksum: Checksum.new(digest), cellar:)
+    collector.add(tag, checksum: Checksum.new(digest), cellar:, **hash.slice(:bottle_size, :installed_size))
   end
 
   sig {
