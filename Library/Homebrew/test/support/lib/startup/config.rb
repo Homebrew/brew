@@ -20,7 +20,12 @@ end.freeze
 # Use the minimal amount of randomness to avoid collisions while allowing parallel tests.
 require "securerandom"
 random_hex = SecureRandom.hex(2)
-HOMEBREW_TEMP = Pathname("#{homebrew_temp}/brewtests#{random_hex}".squeeze("/")).freeze
+test_base = if homebrew_temp.length < 49
+  "brew-tests-"
+else
+  "brwtst"
+end
+HOMEBREW_TEMP = Pathname("#{homebrew_temp}/#{test_base}#{random_hex}".squeeze("/")).freeze
 HOMEBREW_TEMP.mkpath
 
 # Paths pointing into the Homebrew code base that persist across test runs
