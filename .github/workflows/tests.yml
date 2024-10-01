@@ -29,7 +29,7 @@ concurrency:
 jobs:
   syntax:
     if: github.repository_owner == 'Homebrew'
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
       - name: Set up Homebrew
         id: set-up-homebrew
@@ -193,7 +193,7 @@ jobs:
   vendored-gems:
     name: vendored gems
     needs: syntax
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
       - name: Set up Homebrew
         id: set-up-homebrew
@@ -225,8 +225,8 @@ jobs:
     strategy:
       matrix:
         include:
-          - name: update-test (Ubuntu 22.04)
-            runs-on: ubuntu-22.04
+          - name: update-test (Ubuntu 24.04)
+            runs-on: ubuntu-24.04
           - name: update-test (macOS)
             runs-on: macos-14
     steps:
@@ -257,9 +257,9 @@ jobs:
           - name: tests (generic OS)
             test-flags: --generic --coverage
             runs-on: ubuntu-latest
-          - name: tests (Ubuntu 22.04)
+          - name: tests (Ubuntu 24.04)
             test-flags: --coverage
-            runs-on: ubuntu-22.04
+            runs-on: ubuntu-24.04
           - name: tests (Ubuntu 20.04)
             test-flags: --coverage
             runs-on: ubuntu-20.04
@@ -369,9 +369,9 @@ jobs:
     strategy:
       matrix:
         include:
-          - name: test default formula (Ubuntu 22.04)
+          - name: test default formula (Ubuntu 24.04)
             runs-on: ubuntu-latest
-            container: ghcr.io/homebrew/ubuntu22.04:master
+            container: ghcr.io/homebrew/ubuntu24.04:master
           - name: test default formula (Ubuntu 20.04)
             runs-on: ubuntu-latest
             container: ghcr.io/homebrew/ubuntu20.04
