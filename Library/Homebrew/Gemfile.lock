@@ -44,7 +44,7 @@ GEM
     patchelf (1.5.1)
       elftools (>= 1.3)
     plist (3.7.1)
-    prism (1.0.0)
+    prism (1.1.0)
     pry (0.14.2)
       coderay (~> 1.1)
       method_source (~> 1.0)
@@ -154,7 +154,6 @@ GEM
 
 PLATFORMS
   aarch64-linux
-  arm-linux
   arm64-darwin
   x86_64-darwin
   x86_64-linux
