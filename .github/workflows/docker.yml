@@ -36,6 +36,9 @@ jobs:
       - name: Fetch origin/master from Git
         run: git fetch origin master
 
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@49b3bc8e6bdd4a60e6116a5414239cba5943d3cf # v3
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@988b5a0280414f521da01fcc63a27aeeb4b104db # v3
 
@@ -110,6 +113,7 @@ jobs:
           tags: brew
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          platforms: linux/amd64,linux/arm64
           build-args: version=${{ matrix.version }}
           labels: ${{ steps.attributes.outputs.labels }}
 
@@ -140,5 +144,6 @@ jobs:
           tags: ${{ steps.attributes.outputs.tags }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          platforms: linux/amd64,linux/arm64
           build-args: version=${{ matrix.version }}
           labels: ${{ steps.attributes.outputs.labels }}
