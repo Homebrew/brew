@@ -129,7 +129,7 @@ module Homebrew
         # spamming during normal output.
         Homebrew.install_bundler_gems!(groups: ["audit", "style"]) unless args.no_audit?
 
-        tap_remote_repo = formula.tap.full_name || formula.tap.remote_repository
+        tap_remote_repo = formula.tap.remote_repository
         remote = "origin"
         remote_branch = formula.tap.git_repository.origin_branch_name
         previous_branch = "-"
