@@ -279,7 +279,7 @@ class Tap
     @remote_repository ||= remote.delete_prefix("https://")
                                  .delete_prefix("git@")
                                  .delete_suffix(".git")
-                                 .split("/")[-2..].join("/")
+                                 .split(/[:\/]/)[-2..].join("/")
   end
 
   # @deprecated
