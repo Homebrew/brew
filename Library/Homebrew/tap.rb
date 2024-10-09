@@ -276,9 +276,10 @@ class Tap
   def remote_repository
     return unless (remote = self.remote)
 
-    @remote_repository ||= remote.delete_prefix("https://github.com/")
-                                 .delete_prefix("git@github.com:")
+    @remote_repository ||= remote.delete_prefix("https://")
+                                 .delete_prefix("git@")
                                  .delete_suffix(".git")
+                                 .split("/")[-2..-1].join("/")
   end
 
   # @deprecated
