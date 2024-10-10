@@ -289,6 +289,7 @@ module Homebrew
             only_dependencies: args.only_dependencies?,
             force:             args.force?,
             quiet:             args.quiet?,
+            overwrite:         args.overwrite?,
           )
         end
 

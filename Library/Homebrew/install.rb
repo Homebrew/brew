@@ -60,7 +60,8 @@ module Homebrew
         fetch_head: false,
         only_dependencies: false,
         force: false,
-        quiet: false
+        quiet: false,
+        overwrite: false
       )
         # head-only without --HEAD is an error
         if !head && formula.stable.nil?
@@ -132,7 +133,7 @@ module Homebrew
                 The currently linked version is: #{formula.linked_version}
               EOS
             end
-          elsif only_dependencies
+          elsif only_dependencies || (!formula.linked? && overwrite)
             msg = nil
             return true
           elsif !formula.linked? || formula.keg_only?

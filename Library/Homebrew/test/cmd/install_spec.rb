@@ -84,4 +84,20 @@ RSpec.describe Homebrew::Cmd::InstallCmd do
     expect(HOMEBREW_CELLAR/"testball1/0.1/bin/test.dSYM/Contents/Resources/DWARF/test").to be_a_file if OS.mac?
     expect(HOMEBREW_CACHE/"Sources/testball1").to be_a_directory
   end
+
+  it "ignores an unlinked Formula if --overwrite is not passed", :integration_test do
+    install_test_formula "testball1"
+    Formula["testball1"].any_installed_keg.unlink
+
+    expect { brew "install", "testball1" }
+      .to output(/it's just not linked/).to_stderr
+      .and be_a_success
+  end
+
+  it "installs an unlinked Formula if --overwrite is passed", :integration_test do
+    install_test_formula "testball1"
+    Formula["testball1"].any_installed_keg.unlink
+
+    expect { brew "install", "testball1", "--overwrite", "--debug" }.to be_a_success
+  end
 end
