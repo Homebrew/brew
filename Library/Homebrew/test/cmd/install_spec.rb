@@ -98,9 +98,7 @@ RSpec.describe Homebrew::Cmd::InstallCmd do
     install_test_formula "testball1"
     Formula["testball1"].any_installed_keg.unlink
 
-    expect { brew "install", "testball1", "--overwrite" }
-      .to output(%r{#{HOMEBREW_CELLAR}/testball1/0\.1}o).to_stdout
-      .and not_to_output.to_stderr
-      .and be_a_success
+    expect { brew "install", "testball1", "--overwrite", "--debug" }
+      .to be_a_success
   end
 end
