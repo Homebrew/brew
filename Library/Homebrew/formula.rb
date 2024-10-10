@@ -1939,6 +1939,48 @@ class Formula
     end
   end
 
+  # Replace duplicate files with links to reduce disk space.
+  #
+  # FIXME: Hardlinks are not fully supported so using `hardlink: true` will only
+  # reduce the bottle size or source build but will be duplicated on bottle pour.
+  #
+  # ### Example
+  #
+  # ```ruby
+  # make_deduplication_links_in libexec, extension: "jar"
+  # ```
+  sig { params(dir: Pathname, extension: T.nilable(String), allow_noop: T::Boolean, hardlink: T::Boolean).void }
+  def make_deduplication_links_in(dir, extension: nil, allow_noop: false, hardlink: false)
+    raise ArgumentError, "#{dir} is not a valid directory!" if !dir.directory? || dir.symlink?
+    raise ArgumentError, "#{dir} must be within #{prefix}!" unless dir.realpath.to_s.start_with?(prefix.realpath)
+
+    # Use Pathname.new to avoid caching information during build
+    odebug "Pre-deduplication disk usage of #{dir}: #{disk_usage_readable(Pathname.new(dir).disk_usage)}"
+
+    pattern = "**/*"
+    pattern += ".#{extension}" if extension
+    base_files = {}
+
+    nlinks = dir.realpath.glob(pattern).count do |path|
+      next false if !path.file? || path.symlink?
+
+      base_file = base_files[path.basename.to_s] ||= path
+      next false if base_file == path || !compare_file(base_file, path)
+
+      rm(path)
+      if hardlink
+        path.make_link base_file
+      else
+        path.parent.install_symlink base_file
+      end
+      true
+    end
+
+    odebug "Post-deduplication disk usage of #{dir}: #{disk_usage_readable(Pathname.new(dir).disk_usage)}"
+    odebug "#{nlinks} #{Utils.pluralize("#{hardlink ? "hard" : "sym"}link", nlinks)} created"
+    raise "No links were created!" if !allow_noop && nlinks.zero?
+  end
+
   # Replaces a universal binary with its native slice.
   #
   # If called with no parameters, does this with all compatible
