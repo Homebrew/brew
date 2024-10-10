@@ -15,6 +15,7 @@ module Homebrew
         @tap_audit_exceptions      = tap.audit_exceptions
         @tap_style_exceptions      = tap.style_exceptions
         @tap_pypi_formula_mappings = tap.pypi_formula_mappings
+        @tap_autobump              = tap.autobump
         @problems                  = []
 
         @cask_tokens = tap.cask_tokens.map do |cask_token|
@@ -52,6 +53,7 @@ module Homebrew
       check_formula_list_directory "audit_exceptions", @tap_audit_exceptions
       check_formula_list_directory "style_exceptions", @tap_style_exceptions
       check_formula_list "pypi_formula_mappings", @tap_pypi_formula_mappings
+      check_formula_list ".github/autobump.txt", @tap_autobump
     end
 
     sig { void }
@@ -71,9 +73,10 @@ module Homebrew
 
     sig { params(list_file: String, list: T.untyped).void }
     def check_formula_list(list_file, list)
+      list_file += ".json" if File.extname(list_file).empty?
       unless [Hash, Array].include? list.class
         problem <<~EOS
-          #{list_file}.json should contain a JSON array
+          #{list_file} should contain a JSON array
           of formula names or a JSON object mapping formula names to values
         EOS
         return
@@ -89,7 +92,7 @@ module Homebrew
       return if invalid_formulae_casks.empty?
 
       problem <<~EOS
-        #{list_file}.json references
+        #{list_file} references
         formulae or casks that are not found in the #{@name} tap.
         Invalid formulae or casks: #{invalid_formulae_casks.join(", ")}
       EOS
