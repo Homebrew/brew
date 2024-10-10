@@ -104,7 +104,7 @@ module Homebrew
             # Create a copy of the `cask` that uses the `livecheck` block URL
             cask_copy = Cask::CaskLoader.load(cask.sourcefile_path)
             cask_copy.allow_reassignment = true
-            cask_copy.url { url }
+            cask_copy.url url
             UnversionedCaskChecker.new(cask_copy)
           else
             UnversionedCaskChecker.new(cask)

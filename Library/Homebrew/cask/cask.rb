@@ -118,7 +118,7 @@ module Cask
     end
 
     ::Cask::DSL::DSL_METHODS.each do |method_name|
-      define_method(method_name) { |&block| @dsl.send(method_name, &block) }
+      define_method(method_name) { |*args, &block| @dsl.send(method_name, *args, &block) }
     end
 
     sig { params(caskroom_path: Pathname).returns(T::Array[[String, String]]) }

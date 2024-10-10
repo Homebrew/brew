@@ -114,5 +114,15 @@ RSpec.describe Homebrew::Livecheck::Strategy::ExtractPlist do
       expect(installer_artifact).to be_a(Cask::Artifact::Installer)
       expect(installer_artifact.path).to be_a(Pathname)
     end
+
+    it "uses the provided livecheck url", :needs_macos do
+      cask = Cask::CaskLoader.load(cask_path("livecheck/livecheck-extract-plist"))
+      livecheck_url = "file://#{TEST_FIXTURE_DIR}/cask/caffeine-with-plist.zip"
+
+      expect(Homebrew::UnversionedCaskChecker).to receive(:new).with(cask).and_call_original
+      result = described_class.find_versions(cask:, url: livecheck_url)
+      expect(result)
+        .to eq({ matches: { "1.2.3"=> @version="1.2.3" }, regex: nil, url: livecheck_url })
+    end
   end
 end
