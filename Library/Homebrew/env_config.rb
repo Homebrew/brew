@@ -219,9 +219,11 @@ module Homebrew
                      "formula if it or any of its dependencies is in a tap on this list.",
       },
       HOMEBREW_FORBID_PACKAGES_FROM_PATHS:       {
-        description: "If set, Homebrew will refuse to read formulae or casks provided from file paths, " \
-                     "e.g. `brew install ./package.rb`.",
-        boolean:     true,
+        description:  "If set, Homebrew will refuse to read formulae or casks provided from file paths, " \
+                      "e.g. `brew install ./package.rb`.",
+        boolean:      true,
+        default_text: "Enabled unless `HOMEBREW_DEVELOPER` is set.",
+        default:      -> { !developer? },
       },
       HOMEBREW_FORCE_BREWED_CA_CERTIFICATES:     {
         description: "If set, always use a Homebrew-installed `ca-certificates` rather than the system version. " \
@@ -504,6 +506,7 @@ module Homebrew
     CUSTOM_IMPLEMENTATIONS = T.let(Set.new([
       :HOMEBREW_MAKE_JOBS,
       :HOMEBREW_CASK_OPTS,
+      :HOMEBREW_FORBID_PACKAGES_FROM_PATHS,
     ]).freeze, T::Set[Symbol])
 
     ENVS.each do |env, hash|
@@ -537,6 +540,15 @@ module Homebrew
           ENV[env].presence
         end
       end
+    end
+
+    sig { returns(T::Boolean) }
+    def forbid_packages_from_paths?
+      return true if ENV["HOMEBREW_FORBID_PACKAGES_FROM_PATHS"].present?
+
+      ENVS.fetch(:HOMEBREW_FORBID_PACKAGES_FROM_PATHS)
+          .fetch(:default)
+          .call
     end
 
     # Needs a custom implementation.
