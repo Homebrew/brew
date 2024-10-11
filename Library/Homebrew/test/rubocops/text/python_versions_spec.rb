@@ -197,6 +197,23 @@ RSpec.describe RuboCop::Cop::FormulaAudit::PythonVersions do
       RUBY
     end
 
+    it "reports no offenses for a mix of runtime and non-runtime Python dependencies" do
+      expect_no_offenses(<<~RUBY)
+        class Foo < Formula
+          depends_on "python@3.12" => :build
+          depends_on "python@3.13"
+
+          def install
+            puts "python3.12"
+          end
+
+          test do
+            puts "python3.13"
+          end
+        end
+      RUBY
+    end
+
     it "reports and corrects Python references that mismatch single non-runtime Python dependency" do
       expect_offense(<<~RUBY)
         class Foo < Formula
