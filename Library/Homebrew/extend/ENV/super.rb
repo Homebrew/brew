@@ -80,6 +80,7 @@ module Superenv
     self["CMAKE_FRAMEWORK_PATH"] = determine_cmake_frameworks_path
     self["CMAKE_INCLUDE_PATH"] = determine_cmake_include_path
     self["CMAKE_LIBRARY_PATH"] = determine_cmake_library_path
+    self["CMAKE_BUILD_PARALLEL_LEVEL"] = determine_make_jobs.to_s
     self["ACLOCAL_PATH"] = determine_aclocal_path
     self["M4"] = "#{HOMEBREW_PREFIX}/opt/m4/bin/m4" if deps.any? { |d| d.name == "libtool" }
     self["HOMEBREW_ISYSTEM_PATHS"] = determine_isystem_paths
