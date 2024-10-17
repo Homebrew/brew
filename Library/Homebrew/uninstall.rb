@@ -38,6 +38,14 @@ module Homebrew
               nil
             end
 
+            etc_var_files = if !keg.tab.poured_from_bottle || f.nil?
+              nil
+            elsif f.bottle_prefix.exist?
+              f.bottle_prefix.find.filter_map { |path| path.sub(f.bottle_prefix.to_s, HOMEBREW_PREFIX) if path.file? }
+            else
+              []
+            end
+
             keg.lock do
               puts "Uninstalling #{keg}... (#{keg.abv})"
               keg.unlink
@@ -57,14 +65,21 @@ module Homebrew
               next unless f
 
               paths = f.pkgetc.find.map(&:to_s) if f.pkgetc.exist?
+              if etc_var_files
+                paths ||= []
+                paths += etc_var_files.filter_map { |file| file.to_s if file.exist? }
+                paths += etc_var_files.filter_map { |file| "#{file}.default" if File.exist?("#{file}.default") }
+              end
               if paths.present?
                 puts
                 opoo <<~EOS
-                  The following #{f.name} configuration files have not been removed!
+                  The following #{f.name} configuration/data files have not been removed!
                   If desired, remove them manually with `rm -rf`:
                     #{paths.sort.uniq.join("\n  ")}
                 EOS
               end
+
+              next unless etc_var_files.nil?
 
               unversioned_name = f.name.gsub(/@.+$/, "")
               maybe_paths = Dir.glob("#{f.etc}/*#{unversioned_name}*")
@@ -72,7 +87,8 @@ module Homebrew
               if maybe_paths.present?
                 puts
                 opoo <<~EOS
-                  The following may be #{f.name} configuration files and have not been removed!
+                  The following MAY be #{f.name} configuration files and have not been removed.
+                  Do not remove these unless you are confident that they are related to #{f.name}.
                   If desired, remove them manually with `rm -rf`:
                     #{maybe_paths.sort.uniq.join("\n  ")}
                 EOS
