@@ -148,6 +148,11 @@ module Cask
     end
 
     sig { returns(Pathname) }
+    def exec_scriptdir
+      binarydir
+    end
+
+    sig { returns(Pathname) }
     def manpagedir
       @manpagedir ||= HOMEBREW_PREFIX/"share/man"
     end
