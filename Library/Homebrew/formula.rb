@@ -1536,6 +1536,13 @@ class Formula
   # @see .deprecate!
   delegate deprecation_reason: :"self.class"
 
+  # The time before the {Formula} becomes disabled
+  # Returns `nil` if no date is specified.
+  # @!method deprecation_period
+  # @return [String, Symbol]
+  # @see .deprecate!
+  delegate deprecation_period: :"self.class"
+
   # Whether this {Formula} is disabled (i.e. cannot be installed).
   # Defaults to false.
   # @!method disabled?
@@ -4233,10 +4240,11 @@ class Formula
     # @see https://docs.brew.sh/Deprecating-Disabling-and-Removing-Formulae
     # @see DeprecateDisable::FORMULA_DEPRECATE_DISABLE_REASONS
     # @api public
-    def deprecate!(date:, because:)
+    def deprecate!(date:, because:, deprecation_period: :long)
       @deprecation_date = Date.parse(date)
       return if @deprecation_date > Date.today
 
+      @deprecation_period = deprecation_period
       @deprecation_reason = because
       @deprecated = true
     end
@@ -4262,6 +4270,13 @@ class Formula
     # @return [String, Symbol]
     # @see .deprecate!
     attr_reader :deprecation_reason
+
+    # The time before the {Formula} becomes disabled.
+    #
+    # @return [nil] if no reason was provided or the formula is not deprecated.
+    # @return [String, Symbol]
+    # @see .deprecate!
+    attr_reader :deprecation_period
 
     # Disables a {Formula} (on the given date) so it cannot be
     # installed. If the date has not yet passed the formula

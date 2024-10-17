@@ -26,6 +26,8 @@ module Cask
 
     def deprecation_reason; end
 
+    def deprecation_period; end
+
     def disabled?; end
 
     def disable_date; end
