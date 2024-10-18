@@ -20,29 +20,34 @@ module UnpackStrategy
 
     sig { override.params(unpack_dir: Pathname, basename: Pathname, verbose: T::Boolean).void }
     def extract_to_dir(unpack_dir, basename:, verbose:)
-      path_children = path.children
-      return if path_children.empty?
+      path.find(ignore_error: false) do |src|
+        next if src == path
 
-      existing = unpack_dir.children
+        dst = unpack_dir/src.relative_path_from(path)
 
-      # We run a few cp attempts in the following order:
-      #
-      # 1. Start with `-al` to create hardlinks rather than copying files if the source and
-      #    target are on the same filesystem. On macOS, this is the only cp option that can
-      #    preserve hardlinks but it is only available since macOS 12.3 (file_cmds-353.100.22).
-      # 2. Try `-a` as GNU `cp -a` preserves hardlinks. macOS `cp -a` is identical to `cp -pR`.
-      # 3. Fall back on `-pR` to handle the case where GNU `cp -a` failed. This may happen if
-      #    installing into a filesystem that doesn't support hardlinks like an exFAT USB drive.
-      cp_arg_attempts = ["-a", "-pR"]
-      cp_arg_attempts.unshift("-al") if path.stat.dev == unpack_dir.stat.dev
+        if dst.directory? && !dst.symlink?
+          # Output same error as `cp` when trying to copy over an existing directory
+          raise "#{dst}: Is a directory" if !src.directory? || src.symlink?
 
-      cp_arg_attempts.each do |arg|
-        args = [arg, *path_children, unpack_dir]
-        must_succeed = print_stderr = (arg == cp_arg_attempts.last)
-        result = system_command("cp", args:, verbose:, must_succeed:, print_stderr:)
-        break if result.success?
-
-        FileUtils.rm_r(unpack_dir.children - existing)
+          begin
+            # Fix group caused by unpacking into tmp dir. Try to copy valid group over
+            FileUtils.chown(nil, src.lstat.gid == "wheel" ? dst.parent.lstat.gid : src_gid, dst)
+            FileUtils.chown(src.lstat.uid, nil, dst)
+          rescue Errno::EPERM, Errno::EACCES
+            # Keep behavior similar to `cp -p` which does not error on user/group ID changes
+          end
+          FileUtils.chmod(src.lstat.mode, dst)
+          FileUtils.touch(dst, mtime: src.mtime, nocreate: true)
+        else
+          FileUtils.mv(src, dst)
+          begin
+            # Fix group caused by unpacking into tmp dir
+            FileUtils.chown_R(nil, dst.parent.lstat.gid, dst) if dst.lstat.gid == "wheel"
+          rescue Errno::EPERM, Errno::EACCES
+            # Keep behavior similar to `cp -p` which does not error on user/group ID changes
+          end
+          Find.prune
+        end
       end
     end
   end
