@@ -59,6 +59,7 @@ class Cleaner
       observe_file_removal info_dir_file
     end
 
+    rewrite_pkgconfig
     rewrite_shebangs
     clean_python_metadata
 
@@ -150,6 +151,48 @@ class Cleaner
         end
         path.chmod perms
       end
+    end
+  end
+
+  sig { void }
+  def rewrite_pkgconfig
+    basepath = @formula.prefix.realpath
+    pc_files = %w[lib share].flat_map do |subdir|
+      pc_dir = basepath/subdir/"pkgconfig"
+      next [] if !pc_dir.exist? || @formula.skip_clean?(basepath/subdir) || @formula.skip_clean?(pc_dir)
+
+      pc_dir.glob("*.pc").reject { |pc_file| @formula.skip_clean?(pc_file) }
+    end
+    return if pc_files.empty?
+
+    # TODO: Add support for `brew unlink`-ed formulae and check on recursive dependencies
+    deps_pc_files = @formula.deps
+                            .filter_map { |dep| dep.to_formula if !dep.build? && !dep.test? }
+                            .select(&:keg_only?)
+                            .flat_map { |f| f.opt_prefix.glob("{lib,share}/pkgconfig/*.pc") }
+                            .to_h { |pc_file| [pc_file.basename(".pc").to_s.downcase, pc_file.to_s] }
+    deps_pc_modules_pattern = deps_pc_files.keys.map { |mod| Regexp.escape(mod) }.join("|")
+
+    pc_files.each do |pc_file|
+      modified_lines = pc_file.each_line.map do |line|
+        rewrote_prefix = line.gsub!(@formula.prefix.realpath.to_s, @formula.opt_prefix.to_s).present?
+        next [line, rewrote_prefix] if deps_pc_files.empty? || !line.start_with?(/Requires(?:\.private)?:/)
+
+        # pkgconf's pc.5 man page defines dependency list ABNF syntax as:
+        #
+        # > package-list = *WSP *( package-spec *( package-sep ) )
+        # > package-sep  = WSP / ","
+        # > package-spec = package-key [ ver-op package-version ]
+        # > ver-op       = "<" / "<=" / "=" / "!=" / ">=" / ">"
+        #
+        # A simplified regular expression is used to lookahead/lookbehind for common
+        # separator characters to extract the modules used in Requires/Requires.private
+        rewrote_module = line.gsub!(/(?<=[:,\s])(#{deps_pc_modules_pattern})(?=[<=>!,\s])/io, deps_pc_files).present?
+        [line, rewrote_prefix || rewrote_module]
+      end
+      next if modified_lines.none?(&:second)
+
+      pc_file.atomic_write(modified_lines.map(&:first).join)
     end
   end
 
