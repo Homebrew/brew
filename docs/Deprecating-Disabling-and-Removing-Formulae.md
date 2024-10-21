@@ -30,12 +30,14 @@ Formulae with dependents should not be deprecated until or when all dependents a
 To deprecate a formula, add a `deprecate!` call. This call should include a deprecation date (in the ISO 8601 format) and a deprecation reason:
 
 ```ruby
-deprecate! date: "YYYY-MM-DD", because: :reason
+deprecate! date: "YYYY-MM-DD", because: :reason, deprecation_period: :short
 ```
 
 The `date` parameter should be set to the date that the deprecation period should begin, which is usually today's date. If the `date` parameter is set to a date in the future, the formula will not become deprecated until that date. This can be useful if the upstream developers have indicated a date when the project or version will stop being supported. Do not backdate the `date` parameter as it causes confusion for users and maintainers.
 
 The `because` parameter can be a preset reason (using a symbol) or a custom reason. See the [Deprecate and Disable Reasons](#deprecate-and-disable-reasons) section below for more details about the `because` parameter.
+
+The `deprecation_period:` can be either :short or :long (1 or 6 months). After this period a formula should be disabled.
 
 ## Disabling
 
@@ -49,10 +51,9 @@ The most common reasons for disabling a formula are:
 - it has been deprecated for a long time
 - the project has no license
 
-Popular formulae (e.g. have more than 1000 [analytics installs in the last 90 days](https://formulae.brew.sh/analytics/install/90d/)) should not be disabled without a deprecation period of at least six months even if e.g. they do not build from source and do not have a license.
+Popular formulae (e.g. have more than 1000 [analytics installs in the last 90 days](https://formulae.brew.sh/analytics/install/90d/)) should not be disabled without a deprecation period of six months even if e.g. they do not build from source and do not have a license.
 
-Unpopular formulae (e.g. have fewer than 1000 [analytics installs in the last 90 days](https://formulae.brew.sh/analytics/install/90d/)) can be disabled immediately for any of the reasons above e.g. they cannot be built from source on any supported macOS version or Linux.
-They can be manually removed three months after their disable date.
+Unpopular formulae (e.g. have fewer than 1000 [analytics installs in the last 90 days](https://formulae.brew.sh/analytics/install/90d/)) can be disabled after one month for any of the reasons above e.g. they cannot be built from source on any supported macOS version or Linux.
 
 To disable a formula, add a `disable!` call. This call should include a deprecation date in the ISO 8601 format and a deprecation reason:
 

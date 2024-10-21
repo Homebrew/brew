@@ -87,6 +87,7 @@ module Cask
       :deprecated?,
       :deprecation_date,
       :deprecation_reason,
+      :deprecation_period,
       :disable!,
       :disabled?,
       :disable_date,
@@ -105,7 +106,13 @@ module Cask
     extend Attrable
     include OnSystem::MacOSOnly
 
-    attr_reader :cask, :token, :deprecation_date, :deprecation_reason, :disable_date, :disable_reason,
+    attr_reader :cask,
+                :token,
+                :deprecation_date,
+                :deprecation_reason,
+                :disable_date,
+                :disable_reason,
+                :deprecation_period,
                 :on_system_block_min_os
 
     attr_predicate :deprecated?, :disabled?, :livecheckable?, :on_system_blocks_exist?, :depends_on_set_in_block?
@@ -442,10 +449,11 @@ module Cask
     # NOTE: A warning will be shown when trying to install this cask.
     #
     # @api public
-    def deprecate!(date:, because:)
+    def deprecate!(date:, because:, deprecation_period: :long)
       @deprecation_date = Date.parse(date)
       return if @deprecation_date > Date.today
 
+      @deprecation_period = deprecation_period
       @deprecation_reason = because
       @deprecated = true
     end
