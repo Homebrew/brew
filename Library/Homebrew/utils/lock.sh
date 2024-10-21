@@ -56,12 +56,16 @@ _create_lock() {
 
   local utils_lock_sh="${HOMEBREW_LIBRARY}/Homebrew/utils/lock_sh"
   local oldest_ruby_with_flock="1.8.7"
-  if [[ -x "${ruby}" ]] && "${ruby}" "${utils_lock_sh}/ruby_check_version.rb" "${oldest_ruby_with_flock}"
+
+  if [[ -x "$(type -P lockf)" ]]
   then
-    "${ruby}" "${utils_lock_sh}/ruby_lock_file_descriptor.rb" "${lock_file_descriptor}"
+    lockf -t 0 "${lock_file_descriptor}"
   elif [[ -x "$(type -P flock)" ]]
   then
     flock -n "${lock_file_descriptor}"
+  elif [[ -x "${ruby}" ]] && "${ruby}" "${utils_lock_sh}/ruby_check_version.rb" "${oldest_ruby_with_flock}"
+  then
+    "${ruby}" "${utils_lock_sh}/ruby_lock_file_descriptor.rb" "${lock_file_descriptor}"
   elif [[ -x "${python}" ]]
   then
     "${python}" -c "import fcntl; fcntl.flock(${lock_file_descriptor}, fcntl.LOCK_EX | fcntl.LOCK_NB)"
