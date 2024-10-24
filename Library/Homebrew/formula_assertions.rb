@@ -53,5 +53,31 @@ module Homebrew
       puts output if verbose?
       raise
     end
+
+    # Asserts that the given block raises an exception of the specified type.
+    #
+    # @api public
+    sig { params(exception: T.class_of(Exception), message: T.nilable(String)).void }
+    def assert_raises(exception, message = nil, &block)
+      raised = false
+      begin
+        block.call
+      rescue exception
+        raised = true
+      end
+      assert raised, message || "Expected #{exception} to be raised"
+    end
+
+    # Asserts that the given block does not raise any exceptions.
+    #
+    # @api public
+    sig { params(message: T.nilable(String)).void }
+    def assert_nothing_raised(message = nil, &block)
+      begin
+        block.call
+      rescue Exception => e
+        flunk message || "Expected no exceptions, but raised #{e.class}: #{e.message}"
+      end
+    end
   end
 end

@@ -985,7 +985,12 @@ module Homebrew
         next if only_audits&.exclude?(name)
         next if except_audits&.include?(name)
 
-        send(audit_method_name)
+        begin
+          send(audit_method_name)
+        rescue => e
+          problem "Error during audit: #{e.message}"
+          next
+        end
       end
     end
 
