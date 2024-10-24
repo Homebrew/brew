@@ -99,6 +99,7 @@ module Homebrew
           [versioned_aliases, valid_main_alias_names, valid_other_alias_names].each do |array|
             array.map! { |a| "#{formula.tap}/#{a}" }
           end
+
         end
 
         valid_versioned_aliases = versioned_aliases & valid_main_alias_names
