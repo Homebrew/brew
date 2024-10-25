@@ -811,6 +811,7 @@ on_request: installed_on_request?, options:)
       debug:                      debug?,
       quiet:                      quiet?,
       verbose:                    verbose?,
+      overwrite:                  overwrite?,
     )
     oh1 "Installing #{formula.full_name} dependency: #{Formatter.identifier(dep.name)}"
     fi.install
