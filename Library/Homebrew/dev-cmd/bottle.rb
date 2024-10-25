@@ -15,11 +15,13 @@ require "utils/gzip"
 require "api"
 require "extend/hash/deep_merge"
 require "metafiles"
+require "system_command"
 
 module Homebrew
   module DevCmd
     class Bottle < AbstractCommand
       include FileUtils
+      include SystemCommand::Mixin
 
       BOTTLE_ERB = T.let(<<-EOS.freeze, String)
   bottle do
@@ -345,8 +347,25 @@ module Homebrew
         ].freeze
       end
 
+      sig { returns(T::Boolean) }
+      def system_gnu_tar?
+        return @system_gnu_tar unless @system_gnu_tar.nil?
+
+        @system_gnu_tar = T.let(false, T.nilable(T::Boolean))
+        stdout, _, status = system_command("tar", args: ["--version"], print_stderr: false)
+        return false unless status.success?
+
+        tar_version = stdout[/\(GNU tar\) (\d+(?:\.\d+)*)$/, 1]
+        return false unless tar_version
+
+        # `--sort=name` was added in GNU tar 1.28
+        @system_gnu_tar = Version.new(tar_version) >= Version.new("1.28")
+      end
+
       sig { returns(T.nilable(Formula)) }
       def gnu_tar_formula_ensure_installed_if_needed!
+        return if system_gnu_tar?
+
         gnu_tar_formula = begin
           Formula["gnu-tar"]
         rescue FormulaUnavailableError
@@ -359,18 +378,24 @@ module Homebrew
         gnu_tar_formula
       end
 
-      sig { params(mtime: String, default_tar: T::Boolean).returns([String, T::Array[String]]) }
-      def setup_tar_and_args!(mtime, default_tar: false)
+      sig { params(mtime: String).returns([String, T::Array[String]]) }
+      def setup_tar_and_args!(mtime)
         # Without --only-json-tab bottles are never reproducible
         default_tar_args = ["tar", tar_args].freeze
-        return default_tar_args if !args.only_json_tab? || default_tar
+        return default_tar_args unless args.only_json_tab?
 
         # Use gnu-tar as it can be set up for reproducibility better than libarchive
         # and to be consistent between macOS and Linux.
-        gnu_tar_formula = gnu_tar_formula_ensure_installed_if_needed!
-        return default_tar_args if gnu_tar_formula.blank?
+        tar = if system_gnu_tar?
+          "tar"
+        else
+          gnu_tar_formula = gnu_tar_formula_ensure_installed_if_needed!
+          return default_tar_args if gnu_tar_formula.blank?
 
-        [gnu_tar(gnu_tar_formula), reproducible_gnutar_args(mtime)].freeze
+          gnu_tar(gnu_tar_formula)
+        end
+
+        [tar, reproducible_gnutar_args(mtime)].freeze
       end
 
       sig { params(formula: T.untyped).returns(T::Array[T.untyped]) }
@@ -540,7 +565,7 @@ module Homebrew
               sudo_purge
               # Tar then gzip for reproducible bottles.
               tar_mtime = tab.source_modified_time.strftime("%Y-%m-%d %H:%M:%S")
-              tar, tar_args = setup_tar_and_args!(tar_mtime, default_tar: formula.name == "gnu-tar")
+              tar, tar_args = setup_tar_and_args!(tar_mtime)
               safe_system tar, "--create", "--numeric-owner",
                           *tar_args,
                           "--file", tar_path, "#{formula.name}/#{formula.pkg_version}"
