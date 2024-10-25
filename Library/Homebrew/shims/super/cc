@@ -299,6 +299,7 @@ class Cmd
     args.concat(archflags)
     args << "-std=#{@arg0}" if /c[89]9/.match?(@arg0)
     args << "-g" if debug_symbols?
+    args += ["-mllvm", "-enable-constraint-elimination=0"] if disable_contraint_elimination?
     args
   end
 
@@ -433,6 +434,10 @@ class Cmd
   def linker_flags
     @args.select { |arg| arg.start_with?("-Wl,") }
          .flat_map { |arg| arg.delete_prefix("-Wl,").split(",") }
+  end
+
+  def disable_contraint_elimination?
+    config.include?("E")
   end
 
   def no_fixup_chains?

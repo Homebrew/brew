@@ -39,4 +39,16 @@ module SharedEnvExtension
     # https://en.wikipedia.org/wiki/Xcode#Xcode_11.0_-_14.x_(since_SwiftUI_framework)_2
     OS::Mac::DevelopmentTools.ld64_version >= 711
   end
+
+  # ConstraintEliminiationPass can silently miscompile some formulae.
+  # https://github.com/Homebrew/homebrew-core/issues/195325
+  sig { returns(T::Boolean) }
+  def disable_contraint_elimination?
+    return false if compiler != :clang
+
+    return false if !MacOS::Xcode.version.null? && MacOS::Xcode.version.major != 16
+    return false if !MacOS::CLT.version.null? && MacOS::CLT.version.major != 16
+
+    true
+  end
 end

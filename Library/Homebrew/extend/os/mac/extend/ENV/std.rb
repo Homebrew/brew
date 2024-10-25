@@ -114,4 +114,8 @@ module Stdenv
   def no_fixup_chains
     append "LDFLAGS", "-Wl,-no_fixup_chains" if no_fixup_chains_support?
   end
+
+  def disable_constraint_elimination_if_needed
+    append_to_cflags "-mllvm -enable-constraint-elimination=0" if disable_contraint_elimination?
+  end
 end

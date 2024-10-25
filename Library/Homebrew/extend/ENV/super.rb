@@ -120,6 +120,7 @@ module Superenv
     # o - Pass `-oso_prefix` to `ld` whenever it is invoked
     # c - Pass `-ld_classic` to `ld` whenever it is invoked
     #     with `-dead_strip_dylibs`
+    # E - Pass `-mllvm -enable-constraint-elimination=0` to clang.
     #
     # These flags will also be present:
     # a - apply fix for apr-1-config path

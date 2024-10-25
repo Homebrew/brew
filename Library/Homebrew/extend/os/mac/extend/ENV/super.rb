@@ -159,6 +159,9 @@ module Superenv
     if OS::Mac::DevelopmentTools.ld64_version >= "1015.7" && OS::Mac::DevelopmentTools.ld64_version <= "1022.1"
       append_to_cccfg "c"
     end
+
+    # https://github.com/Homebrew/homebrew-core/issues/195325
+    disable_constraint_elimination_if_needed
   end
 
   def no_weak_imports
@@ -167,5 +170,9 @@ module Superenv
 
   def no_fixup_chains
     append_to_cccfg "f" if no_fixup_chains_support?
+  end
+
+  def disable_constraint_elimination_if_needed
+    append_to_cccfg "E" if disable_contraint_elimination?
   end
 end
