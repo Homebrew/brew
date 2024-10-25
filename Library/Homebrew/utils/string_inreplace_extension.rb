@@ -1,7 +1,7 @@
-# typed: strict
+# typed: strong
 # frozen_string_literal: true
 
-# Used by the `inreplace` function (in `utils.rb`).
+# Used by the {Utils::Inreplace.inreplace} function.
 class StringInreplaceExtension
   sig { returns(T::Array[String]) }
   attr_accessor :errors
@@ -18,10 +18,10 @@ class StringInreplaceExtension
   # Same as `String#sub!`, but warns if nothing was replaced.
   #
   # @api public
-  sig { params(before: T.any(Regexp, String), after: String).returns(T.nilable(String)) }
-  def sub!(before, after)
+  sig { params(before: T.any(Regexp, String), after: String, audit_result: T::Boolean).returns(T.nilable(String)) }
+  def sub!(before, after, audit_result: true)
     result = inreplace_string.sub!(before, after)
-    errors << "expected replacement of #{before.inspect} with #{after.inspect}" unless result
+    errors << "expected replacement of #{before.inspect} with #{after.inspect}" if audit_result && result.nil?
     result
   end
 

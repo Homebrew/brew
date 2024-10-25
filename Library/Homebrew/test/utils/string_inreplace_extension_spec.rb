@@ -249,11 +249,19 @@ RSpec.describe StringInreplaceExtension do
     it "replaces the first occurrence" do
       string_extension.sub!("o", "e")
       expect(string_extension.inreplace_string).to eq("feo")
+      expect(string_extension.errors).to be_empty
     end
 
     it "adds an error to #errors when no replacement was made" do
       string_extension.sub! "not here", "test"
+      expect(string_extension.inreplace_string).to eq(string)
       expect(string_extension.errors).to eq(['expected replacement of "not here" with "test"'])
+    end
+
+    it "doesn't add an error to #errors when no replace was made and `audit_result: false`" do
+      string_extension.sub! "not here", "test", audit_result: false
+      expect(string_extension.inreplace_string).to eq(string)
+      expect(string_extension.errors).to be_empty
     end
   end
 

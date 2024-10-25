@@ -47,10 +47,11 @@ module Utils
         before:       T.nilable(T.any(Pathname, Regexp, String)),
         after:        T.nilable(T.any(Pathname, String, Symbol)),
         audit_result: T::Boolean,
+        global:       T::Boolean,
         block:        T.nilable(T.proc.params(s: StringInreplaceExtension).void),
       ).void
     }
-    def self.inreplace(paths, before = nil, after = nil, audit_result: true, &block)
+    def self.inreplace(paths, before = nil, after = nil, audit_result: true, global: true, &block)
       paths = Array(paths)
       after &&= after.to_s
       before = before.to_s if before.is_a?(Pathname)
@@ -67,8 +68,10 @@ module Utils
           raise ArgumentError, "Must supply a block or before/after params" unless block
 
           yield s
-        else
+        elsif global
           s.gsub!(T.must(before), T.must(after), audit_result:)
+        else
+          s.sub!(T.must(before), T.must(after), audit_result:)
         end
 
         errors[path] = s.errors unless s.errors.empty?
