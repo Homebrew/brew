@@ -280,6 +280,9 @@ module Homebrew::EnvConfig
     sig { returns(String) }
     def temp; end
 
+    sig { returns(Integer) }
+    def test_timeout_secs; end
+
     sig { returns(T::Boolean) }
     def update_to_tag?; end
 

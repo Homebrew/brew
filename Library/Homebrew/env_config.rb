@@ -448,6 +448,10 @@ module Homebrew
         default_text: "macOS: `/private/tmp`, Linux: `/tmp`.",
         default:      HOMEBREW_DEFAULT_TEMP,
       },
+      HOMEBREW_TEST_TIMEOUT_SECS:                {
+        description: "If set, use this value in seconds as the timeout for formula test runs.",
+        default:     300,
+      },
       HOMEBREW_UPDATE_TO_TAG:                    {
         description: "If set, always use the latest stable tag (even if developer commands " \
                      "have been run).",

@@ -16,8 +16,6 @@ require "cli/parser"
 require "dev-cmd/test"
 require "json/add/exception"
 
-TEST_TIMEOUT_SECONDS = 5 * 60
-
 begin
   ENV.delete("HOMEBREW_FORBID_PACKAGES_FROM_PATHS")
   args = Homebrew::DevCmd::Test.new.args
@@ -49,7 +47,7 @@ begin
   if args.debug? # --debug is interactive
     run_test.call
   else
-    Timeout.timeout(TEST_TIMEOUT_SECONDS, &run_test)
+    Timeout.timeout(Homebrew::EnvConfig.test_timeout_secs.to_i, &run_test)
   end
 rescue Exception => e # rubocop:disable Lint/RescueException
   error_pipe.puts e.to_json
