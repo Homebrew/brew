@@ -30,6 +30,8 @@ module Homebrew
       cache[endpoint] = JSON.parse(output.stdout, freeze: true)
     rescue JSON::ParserError
       raise ArgumentError, "Invalid JSON file: #{Tty.underline}#{api_url}#{Tty.reset}"
+    rescue => e
+      raise "An error occurred while fetching the API response: #{e.message}"
     end
 
     sig {
@@ -104,6 +106,8 @@ module Homebrew
         odie "Cannot download non-corrupt #{url}!" if retry_count > Homebrew::EnvConfig.curl_retries.to_i
 
         retry
+      rescue => e
+        raise "An error occurred while fetching the JSON API file: #{e.message}"
       end
 
       if endpoint.end_with?(".jws.json")

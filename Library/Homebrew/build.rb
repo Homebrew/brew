@@ -188,6 +188,9 @@ class Build
           end
         end
       end
+    rescue => e
+      onoe "An error occurred during the installation of #{formula.full_name}: #{e.message}"
+      raise
     end
   end
 

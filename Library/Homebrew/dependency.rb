@@ -78,6 +78,8 @@ class Dependency
     else
       installed_version.version > minimum_version
     end
+  rescue => e
+    raise "Error checking if dependency is installed: #{e.message}"
   end
 
   def satisfied?(inherited_options = [], minimum_version: nil, minimum_revision: nil)
@@ -138,6 +140,10 @@ class Dependency
 
       deps.each do |dep|
         next if dependent.name == dep.name
+
+        if @expand_stack.include?(dep.name)
+          raise "Circular dependency detected: #{dependent.name} -> #{dep.name}"
+        end
 
         case action(dependent, dep, &block)
         when :prune

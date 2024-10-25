@@ -791,3 +791,24 @@ class CyclicDependencyError < RuntimeError
     EOS
   end
 end
+
+# Raised when a dependency is missing.
+class MissingDependencyError < RuntimeError
+  def initialize(dependency)
+    super "Missing dependency: #{dependency}"
+  end
+end
+
+# Raised when a circular dependency is detected.
+class CircularDependencyError < RuntimeError
+  def initialize(dependency)
+    super "Circular dependency detected: #{dependency}"
+  end
+end
+
+# Raised when a dependency installation fails.
+class DependencyInstallationError < RuntimeError
+  def initialize(dependency, reason)
+    super "Failed to install dependency #{dependency}: #{reason}"
+  end
+end

@@ -480,7 +480,7 @@ on_request: installed_on_request?, options:)
     if pour_bottle?
       begin
         pour
-      rescue Exception # rubocop:disable Lint/RescueException
+      rescue Exception => e # rubocop:disable Lint/RescueException
         # any exceptions must leave us with nothing installed
         ignore_interrupts do
           begin
@@ -530,6 +530,9 @@ on_request: installed_on_request?, options:)
     opoo "Nothing was installed to #{formula.prefix}" unless formula.latest_version_installed?
     end_time = Time.now
     Homebrew.messages.package_installed(formula.name, end_time - start_time)
+  rescue Exception => e # rubocop:disable Lint/RescueException
+    onoe "An error occurred during the installation of #{formula.full_name}: #{e.message}"
+    raise
   end
 
   sig { void }

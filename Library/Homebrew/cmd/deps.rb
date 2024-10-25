@@ -226,10 +226,18 @@ module Homebrew
         end
 
         deps + reqs.to_a
+      rescue => e
+        onoe "Error processing dependency: #{dependency.name}"
+        onoe e.message
+        []
       end
 
       def deps_for_dependents(dependents, recursive: false, &block)
         dependents.map { |d| deps_for_dependent(d, recursive:) }.reduce(&block)
+      rescue => e
+        onoe "Error processing dependents"
+        onoe e.message
+        []
       end
 
       def check_head_spec(dependents)

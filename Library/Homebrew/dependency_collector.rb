@@ -151,6 +151,8 @@ class DependencyCollector
       spec
     when Class
       parse_class_spec(spec, tags)
+    else
+      raise ArgumentError, "Unsupported dependency specification: #{spec.inspect}"
     end
   end
 
@@ -218,6 +220,8 @@ class DependencyCollector
     when ".lz"          then Dependency.new("lzip", [*tags, :implicit])
     when ".rar"         then Dependency.new("libarchive", [*tags, :implicit])
     when ".7z"          then Dependency.new("p7zip", [*tags, :implicit])
+    else
+      raise ArgumentError, "Unsupported URL extension: #{File.extname(url)}"
     end
   end
 end

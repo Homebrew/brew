@@ -15,6 +15,8 @@ class CaskDependent
   attr_reader :cask
 
   def initialize(cask)
+    raise ArgumentError, "Cask cannot be nil" if cask.nil?
+
     @cask = cask
   end
 
@@ -27,6 +29,8 @@ class CaskDependent
   end
 
   def runtime_dependencies
+    raise "Cask is not installed" unless @cask.installed?
+
     deps.flat_map { |dep| [dep, *dep.to_formula.runtime_dependencies] }.uniq
   end
 

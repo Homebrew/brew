@@ -130,10 +130,30 @@ module Debrew
             puts "When you exit this shell, you will return to the menu."
             interactive_shell
           end
+
+          menu.choice(:log) do
+            puts "Logging exception details to a file."
+            log_exception_details(exception)
+          end
+
+          menu.choice(:retry) do
+            puts "Retrying the operation."
+            return :retry
+          end
         end
       end
     ensure
       mu_unlock
+    end
+  end
+
+  def self.log_exception_details(exception)
+    File.open("debrew_exception.log", "a") do |file|
+      file.puts "Exception: #{exception.class.name}"
+      file.puts "Message: #{exception.message}"
+      file.puts "Backtrace:"
+      exception.backtrace.each { |line| file.puts line }
+      file.puts "-" * 40
     end
   end
 end
