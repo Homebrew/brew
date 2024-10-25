@@ -611,7 +611,12 @@ module Homebrew
 
       referenced_package = referenced_formula_or_cask || formula_or_cask
 
-      livecheck_url_string = livecheck_url_to_string(livecheck_url, referenced_package) if livecheck_url
+      if livecheck_url
+        livecheck_url_string = livecheck_url_to_string(livecheck_url, referenced_package)
+        if livecheck_url.is_a?(Symbol) && !livecheck_url_string
+          raise ArgumentError, "`url :#{livecheck_url}` does not reference a checkable URL"
+        end
+      end
 
       urls = [livecheck_url_string] if livecheck_url_string
       urls ||= checkable_urls(referenced_package)

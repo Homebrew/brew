@@ -20,7 +20,27 @@ RSpec.describe Homebrew::DevCmd::LivecheckCmd do
       .and be_a_success
   end
 
-  it "gives an error when no arguments are given and there's no watchlist", :integration_test do
+  it "errors when a `livecheck` block URL symbol does not correspond to a checkable URL", :integration_test do
+    content = <<~RUBY
+      desc "Some test"
+      homepage "https://github.com/Homebrew/brew"
+      url "https://brew.sh/test-1.0.0.tgz"
+
+      # This is deliberately wrong, as `:url` should only be used in casks
+      # (the equivalent for formulae is `:stable`).
+      livecheck do
+        url :url
+      end
+    RUBY
+    setup_test_formula("test", content)
+
+    expect { brew "livecheck", "test" }
+      .to output(/`url :url` does not reference a checkable URL/).to_stderr
+      .and not_to_output.to_stdout
+      .and be_a_failure
+  end
+
+  it "errors when no arguments are given and there's no watchlist", :integration_test do
     expect { brew "livecheck", "HOMEBREW_LIVECHECK_WATCHLIST" => ".this_should_not_exist" }
       .to output(/Invalid usage: A watchlist file is required when no arguments are given\./).to_stderr
       .and not_to_output.to_stdout
