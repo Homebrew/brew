@@ -56,6 +56,7 @@ class GitHubRunnerMatrix
     @dependent_matrix = T.let(dependent_matrix, T::Boolean)
     @compatible_testing_formulae = T.let({}, T::Hash[GitHubRunner, T::Array[TestRunnerFormula]])
     @formulae_with_untested_dependents = T.let({}, T::Hash[GitHubRunner, T::Array[TestRunnerFormula]])
+    @deploy_new_x86_64_runner = T.let(all_supported, T::Boolean)
 
     @runners = T.let([], T::Array[GitHubRunner])
     generate_runners!
@@ -118,11 +119,28 @@ class GitHubRunnerMatrix
 
   NEWEST_HOMEBREW_CORE_MACOS_RUNNER = :sequoia
   OLDEST_HOMEBREW_CORE_MACOS_RUNNER = :ventura
-  NEWEST_HOMEBREW_CORE_INTEL_MACOS_RUNNER = :sonoma
+  NEWEST_DEFAULT_HOMEBREW_CORE_INTEL_MACOS_RUNNER = :sonoma
 
   sig { params(macos_version: MacOSVersion).returns(T::Boolean) }
   def runner_enabled?(macos_version)
     macos_version <= NEWEST_HOMEBREW_CORE_MACOS_RUNNER && macos_version >= OLDEST_HOMEBREW_CORE_MACOS_RUNNER
+  end
+
+  NEW_INTEL_MACOS_MUST_BUILD_FORMULAE = %w[pkg-config pkgconf].freeze
+
+  sig { returns(T::Boolean) }
+  def deploy_new_x86_64_runner?
+    return true if @testing_formulae.any? { |f| NEW_INTEL_MACOS_MUST_BUILD_FORMULAE.include?(f.name) }
+    return true if @testing_formulae.any? { |f| f.formula.class.pour_bottle_only_if == :clt_installed }
+
+    Formula.all.any? do |formula|
+      next false if formula.class.pour_bottle_only_if != :clt_installed
+
+      non_test_dependencies = Dependency.expand(formula, cache_key: "determine-test-runners") do |_, dependency|
+        Dependency.prune if dependency.test?
+      end
+      non_test_dependencies.any? { |dep| @testing_formulae.map(&:name).include?(dep.name) }
+    end
   end
 
   NEWEST_GITHUB_ACTIONS_INTEL_MACOS_RUNNER = :ventura
@@ -177,7 +195,13 @@ class GitHubRunnerMatrix
       )
       @runners << create_runner(:macos, :arm64, spec, macos_version)
 
-      next if !@all_supported && macos_version > NEWEST_HOMEBREW_CORE_INTEL_MACOS_RUNNER
+      # `#deploy_new_x86_64_runner?` is expensive, so:
+      #  - avoid calling it if we don't have to
+      #  - cache the result to a variable to avoid calling it multiple times
+      if macos_version > NEWEST_DEFAULT_HOMEBREW_CORE_INTEL_MACOS_RUNNER &&
+         !(@deploy_new_x86_64_runner ||= deploy_new_x86_64_runner?)
+        next
+      end
 
       github_runner_available = macos_version <= NEWEST_GITHUB_ACTIONS_INTEL_MACOS_RUNNER &&
                                 macos_version >= OLDEST_GITHUB_ACTIONS_INTEL_MACOS_RUNNER
