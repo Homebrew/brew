@@ -641,6 +641,8 @@ patch :p0, "..."
 
 In embedded patches, the string "HOMEBREW\_PREFIX" is replaced with the value of the constant `HOMEBREW_PREFIX` before the patch is applied.
 
+In external patches, the string "@@HOMEBREW\_PREFIX@@" is replaced with the value of the constant `HOMEBREW_PREFIX` before the patch is applied.
+
 ### Creating the diff
 
 ```sh

@@ -94,7 +94,7 @@ class StringPatch < EmbeddedPatch
   end
 end
 
-# A string containing a patch.
+# A file containing a patch.
 class ExternalPatch
   extend Forwardable
 
@@ -140,7 +140,12 @@ class ExternalPatch
         patch_files.each do |patch_file|
           ohai "Applying #{patch_file}"
           patch_file = patch_dir/patch_file
-          safe_system "patch", "-g", "0", "-f", "-#{strip}", "-i", patch_file
+          Utils.safe_popen_write("patch", "-g", "0", "-f", "-#{strip}") do |p|
+            File.foreach(patch_file) do |line|
+              data = line.gsub("@@HOMEBREW_PREFIX@@", HOMEBREW_PREFIX)
+              p.write(data)
+            end
+          end
         end
       end
     end

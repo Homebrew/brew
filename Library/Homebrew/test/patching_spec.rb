@@ -11,11 +11,13 @@ RSpec.describe "patching", type: :system do
       TESTBALL_PATCHES_URL = "file://#{TEST_FIXTURE_DIR}/tarballs/testball-0.1-patches.tgz".freeze
       PATCH_URL_A = "file://#{TEST_FIXTURE_DIR}/patches/noop-a.diff".freeze
       PATCH_URL_B = "file://#{TEST_FIXTURE_DIR}/patches/noop-b.diff".freeze
+      PATCH_URL_D = "file://#{TEST_FIXTURE_DIR}/patches/noop-d.diff".freeze
       PATCH_A_CONTENTS = File.read("#{TEST_FIXTURE_DIR}/patches/noop-a.diff").freeze
       PATCH_B_CONTENTS = File.read("#{TEST_FIXTURE_DIR}/patches/noop-b.diff").freeze
       APPLY_A = "noop-a.diff"
       APPLY_B = "noop-b.diff"
       APPLY_C = "noop-c.diff"
+      APPLY_D = "noop-d.diff"
       # rubocop:enable RSpec/LeakyConstantDeclaration,Lint/ConstantDefinitionInBlock
 
       url TESTBALL_URL
@@ -35,6 +37,18 @@ RSpec.describe "patching", type: :system do
         s = File.read("libexec/NOOP")
         expect(s).not_to include("NOOP"), "libexec/NOOP was not patched as expected"
         expect(s).to include("ABCD"), "libexec/NOOP was not patched as expected"
+      end
+    end
+  end
+
+  matcher :be_patched_with_homebrew_prefix do
+    match do |formula|
+      formula.brew do
+        formula.patch
+        s = File.read("libexec/NOOP")
+        expect(s).not_to include("NOOP"), "libexec/NOOP was not patched as expected"
+        expect(s).not_to include("@@HOMEBREW_PREFIX@@"), "libexec/NOOP was not patched as expected"
+        expect(s).to include(HOMEBREW_PREFIX.to_s), "libexec/NOOP was not patched as expected"
       end
     end
   end
@@ -226,6 +240,17 @@ RSpec.describe "patching", type: :system do
       end
 
       f.brew { |formula, _staging| formula.patch }
-    end.to raise_error(BuildError)
+    end.to raise_error(Errno::ENOENT)
+  end
+
+  specify "patch_dsl_with_homebrew_prefix" do
+    expect(
+      formula do
+        patch do
+          url PATCH_URL_D
+          sha256 PATCH_D_SHA256
+        end
+      end,
+    ).to be_patched_with_homebrew_prefix
   end
 end
