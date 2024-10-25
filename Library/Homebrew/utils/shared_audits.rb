@@ -62,9 +62,9 @@ module SharedAudits
       [cask.tap&.audit_exception(:github_prerelease_allowlist, cask.token), cask.token, cask.version]
     end
 
-    return "#{tag} is a GitHub pre-release." if release["prerelease"] && [version, "all"].exclude?(exception)
+    return "#{tag} is a GitHub pre-release." if release["prerelease"] && [version, "all", "any"].exclude?(exception)
 
-    if !release["prerelease"] && exception
+    if !release["prerelease"] && exception && exception != "any"
       return "#{tag} is not a GitHub pre-release but '#{name}' is in the GitHub prerelease allowlist."
     end
 
