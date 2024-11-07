@@ -4,28 +4,18 @@
 module OS
   module Mac
     module LinkageChecker
-      private
+      extend T::Helpers
 
-      sig { returns(T::Boolean) }
-      def system_libraries_exist_in_cache?
-        # In macOS Big Sur and later, system libraries do not exist on-disk and instead exist in a cache.
-        MacOS.version >= :big_sur
-      end
+      requires_ancestor { ::LinkageChecker }
+
+      private
 
       sig { params(dylib: String).returns(T::Boolean) }
       def dylib_found_in_shared_cache?(dylib)
-        Kernel.require "fiddle"
-        @dyld_shared_cache_contains_path ||= T.let(begin
-          libc = Fiddle.dlopen("/usr/lib/libSystem.B.dylib")
+        return false if MacOS.version < :big_sur
 
-          Fiddle::Function.new(
-            libc["_dyld_shared_cache_contains_path"],
-            [Fiddle::TYPE_CONST_STRING],
-            Fiddle::TYPE_BOOL,
-          )
-        end, T.nilable(Fiddle::Function))
-
-        @dyld_shared_cache_contains_path.call(dylib)
+        require "os/mac/ffi"
+        MacOS::FFI.dyld_shared_cache_contains_path(dylib)
       end
     end
   end
