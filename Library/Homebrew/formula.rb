@@ -4271,12 +4271,10 @@ class Formula
     # @see https://docs.brew.sh/Deprecating-Disabling-and-Removing-Formulae
     # @see DeprecateDisable::FORMULA_DEPRECATE_DISABLE_REASONS
     # @api public
-    def deprecate!(date:, because:)
+    def deprecate!(date:, because: nil)
       @deprecation_date = Date.parse(date)
-      return if @deprecation_date > Date.today
-
-      @deprecation_reason = because
-      @deprecated = true
+      @deprecated = !disabled? && @deprecation_date <= Date.today
+      @deprecation_reason = because if because
     end
 
     # Whether this {Formula} is deprecated (i.e. warns on installation).
@@ -4322,8 +4320,8 @@ class Formula
       @disable_date = Date.parse(date)
 
       if @disable_date > Date.today
-        @deprecation_reason = because
-        @deprecated = true
+        @deprecation_reason ||= because
+        @deprecated = true if deprecation_date.nil?
         return
       end
 

@@ -45,15 +45,15 @@ module RuboCop
         sig { override.params(formula_nodes: FormulaNodes).void }
         def audit_formula(formula_nodes)
           body_node = formula_nodes.body_node
+          reason_nodes = T.let([], T::Array[T.any(AST::StrNode, AST::SymbolNode)])
 
-          [:deprecate!, :disable!].each do |method|
+          [:disable!, :deprecate!].each do |method|
             node = find_node_method_by_name(body_node, method)
 
             next if node.nil?
 
-            reason_found = T.let(false, T::Boolean)
             reason(node) do |reason_node|
-              reason_found = true
+              reason_nodes << reason_node
               next if reason_node.sym_type?
 
               offending_node(reason_node)
@@ -72,7 +72,7 @@ module RuboCop
               end
             end
 
-            next if reason_found
+            next unless reason_nodes.empty?
 
             case method
             when :deprecate!
@@ -80,6 +80,18 @@ module RuboCop
             when :disable!
               problem 'Add a reason for disabling: `disable! because: "..."`'
             end
+          end
+
+          return if reason_nodes.length < 2
+
+          disable_reason_node = T.must(reason_nodes.first)
+          deprecate_reason_node = T.must(reason_nodes.second)
+          return if disable_reason_node.value != deprecate_reason_node.value
+
+          offending_node(deprecate_reason_node.parent)
+          problem "Remove deprecate reason when disable reason is identical" do |corrector|
+            range = deprecate_reason_node.parent.source_range
+            corrector.remove(range_with_surrounding_comma(range_with_surrounding_space(range:, side: :left)))
           end
         end
 

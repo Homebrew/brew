@@ -324,4 +324,65 @@ RSpec.describe RuboCop::Cop::FormulaAudit::DeprecateDisableReason do
       RUBY
     end
   end
+
+  context "when auditing `deprecate!` and `disable!`" do
+    it "reports no offense if deprecate `reason` is absent" do
+      expect_no_offenses(<<~RUBY)
+        class Foo < Formula
+          url 'https://brew.sh/foo-1.0.tgz'
+          disable! date: "2021-08-28", because: :does_not_build
+          deprecate! date: "2020-08-28"
+        end
+      RUBY
+    end
+
+    it "reports offense if disable `reason` is absent`" do
+      expect_offense(<<~RUBY)
+        class Foo < Formula
+          url 'https://brew.sh/foo-1.0.tgz'
+          disable! date: "2021-08-28"
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^ FormulaAudit/DeprecateDisableReason: Add a reason for disabling: `disable! because: "..."`
+          deprecate! date: "2020-08-28", because: :does_not_build
+        end
+      RUBY
+    end
+
+    it "reports and corrects an offense if disable and deprecate `reason` are identical symbols" do
+      expect_offense(<<~RUBY)
+        class Foo < Formula
+          url 'https://brew.sh/foo-1.0.tgz'
+          disable! date: "2021-08-28", because: :does_not_build
+          deprecate! date: "2020-08-28", because: :does_not_build
+                                         ^^^^^^^^^^^^^^^^^^^^^^^^ FormulaAudit/DeprecateDisableReason: Remove deprecate reason when disable reason is identical
+        end
+      RUBY
+
+      expect_correction(<<~RUBY)
+        class Foo < Formula
+          url 'https://brew.sh/foo-1.0.tgz'
+          disable! date: "2021-08-28", because: :does_not_build
+          deprecate! date: "2020-08-28"
+        end
+      RUBY
+    end
+
+    it "reports and corrects an offense if disable and deprecate `reason` are identical strings" do
+      expect_offense(<<~RUBY)
+        class Foo < Formula
+          url 'https://brew.sh/foo-1.0.tgz'
+          disable! date: "2021-08-28", because: "is broken"
+          deprecate! date: "2020-08-28", because: "is broken"
+                                         ^^^^^^^^^^^^^^^^^^^^ FormulaAudit/DeprecateDisableReason: Remove deprecate reason when disable reason is identical
+        end
+      RUBY
+
+      expect_correction(<<~RUBY)
+        class Foo < Formula
+          url 'https://brew.sh/foo-1.0.tgz'
+          disable! date: "2021-08-28", because: "is broken"
+          deprecate! date: "2020-08-28"
+        end
+      RUBY
+    end
+  end
 end
