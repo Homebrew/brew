@@ -1,0 +1,35 @@
+#!/bin/bash -p
+
+# HOMEBREW_LIBRARY is set by bin/brew
+# HOMEBREW_CURL_CONFIG is set by brew.sh
+# shellcheck disable=SC2154
+source "${HOMEBREW_LIBRARY}/Homebrew/shims/utils.sh"
+
+# Check if HOMEBREW_CURL_CONFIG is set, fallback to system curl-config if not.
+curl_config_exec="${HOMEBREW_CURL_CONFIG:-/usr/bin/curl-config}"
+
+# Intercept --features and append HTTP2 if needed
+if [[ "$1" == "--features" ]]
+then
+  output="$("${curl_config_exec}" "$@")"
+
+  # Check if HTTP2 is missing but supported
+  if [[ ! "${output}" =~ HTTP2 ]]
+  then
+    curl_version="$("${HOMEBREW_CURL:-curl}" -V)"
+    if [[ "${curl_version}" =~ HTTP/2 ]]
+    then
+      output="${output} HTTP2"
+    fi
+  fi
+
+  echo "${output}"
+  exit 0
+fi
+
+# Fall back to executing the original curl-config
+try_exec_non_system "${curl_config_exec}" "$@"
+safe_exec "/usr/bin/curl-config" "$@"
+
+echo "Could not execute curl-config. Try HOMEBREW_FORCE_BREWED_CURL_CONFIG=1" >&2
+exit 1
