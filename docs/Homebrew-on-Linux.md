@@ -1,4 +1,3 @@
----
 logo: /assets/img/linuxbrew.png
 image: /assets/img/linuxbrew.png
 redirect_from:
