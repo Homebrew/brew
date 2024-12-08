@@ -22,7 +22,7 @@ RSpec.describe Homebrew::AbstractCommand do
       end
 
       it "allows access to args" do
-        expect(TestCat.new(["--bar", "baz"]).args[:bar]).to eq("baz")
+        expect(TestCat.new(["--bar", "baz"]).args.bar).to eq("baz")
       end
 
       it "raises on invalid args" do

@@ -108,7 +108,7 @@ module Homebrew
 
       sig { returns(T::Boolean) }
       def search_package_manager
-        package_manager = PACKAGE_MANAGERS.find { |name,| args[:"#{name}?"] }
+        package_manager = PACKAGE_MANAGERS.find { |name,| args.public_send(:"#{name}?") }
         return false if package_manager.nil?
 
         _, url = package_manager

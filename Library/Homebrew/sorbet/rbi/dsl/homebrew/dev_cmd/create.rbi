@@ -64,7 +64,4 @@ class Homebrew::DevCmd::Create::Args < Homebrew::CLI::Args
 
   sig { returns(T.nilable(String)) }
   def set_version; end
-
-  sig { returns(T.nilable(String)) }
-  def tap; end
 end
