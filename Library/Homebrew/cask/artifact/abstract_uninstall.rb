@@ -468,9 +468,7 @@ module Cask
         trashed = trashed.split(":")
         untrashable = untrashable.split(":")
 
-        return trashed, untrashable if untrashable.empty?
-
-        untrashable.delete_if do |path|
+        trashed_with_permissions, untrashable = untrashable.partition do |path|
           Utils.gain_permissions(path, ["-R"], SystemCommand) do
             system_command! HOMEBREW_LIBRARY_PATH/"cask/utils/trash.swift",
                             args:         [path],
@@ -481,6 +479,10 @@ module Cask
         rescue
           false
         end
+
+        trashed += trashed_with_permissions
+
+        return trashed, untrashable if untrashable.empty?
 
         opoo "The following files could not be trashed, please do so manually:"
         $stderr.puts untrashable
