@@ -201,6 +201,50 @@ RSpec.describe Cleaner do
 
       expect(file.read).to eq "brew\n"
     end
+
+    it "modifies Cellar prefix in pkg-config files" do
+      file = f.lib/"pkgconfig/test.pc"
+      file.dirname.mkpath
+      file.write <<~EOS
+        prefix=#{f.prefix}
+        includedir=#{f.include}
+        libdir=#{f.lib}
+        Name: test
+        Description: test module
+        Version: 1.2.3
+        Cflags: -I${includedir}
+      EOS
+
+      cleaner.clean
+
+      expect(file.read).to eq <<~EOS
+        prefix=#{f.opt_prefix}
+        includedir=#{f.opt_include}
+        libdir=#{f.opt_lib}
+        Name: test
+        Description: test module
+        Version: 1.2.3
+        Cflags: -I${includedir}
+      EOS
+    end
+
+    it "does not modify pkg-config files with no rewrites" do
+      file = f.lib/"pkgconfig/test.pc"
+      file.dirname.mkpath
+      file.write <<~EOS
+        prefix=#{f.opt_prefix}
+        includedir=${prefix}/include
+        Name: test
+        Description: test module
+        Version: 1.2.3
+        Cflags: -I${includedir}
+      EOS
+      start_mtime = file.mtime
+
+      cleaner.clean
+
+      expect(file.mtime).to eq start_mtime
+    end
   end
 
   describe "::skip_clean" do
