@@ -107,11 +107,6 @@ RSpec.describe Homebrew::Livecheck::Strategy::Json do
       expect(json.versions_from_content(content_simple, regex) { next }).to eq([])
     end
 
-    it "errors if a block uses two arguments but a regex is not given" do
-      expect { json.versions_from_content(content_simple) { |json, regex| json["version"][regex, 1] } }
-        .to raise_error("Two arguments found in `strategy` block but no regex provided.")
-    end
-
     it "errors on an invalid return type from a block" do
       expect { json.versions_from_content(content_simple, regex) { 123 } }
         .to raise_error(TypeError, Homebrew::Livecheck::Strategy::INVALID_BLOCK_RETURN_VALUE_MSG)

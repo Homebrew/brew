@@ -20,10 +20,14 @@ module Homebrew
 
         # The default `strategy` block used to extract version information when
         # a `strategy` block isn't provided.
-        DEFAULT_BLOCK = T.let(proc do |json|
-          json.dig("info", "version").presence
+        DEFAULT_BLOCK = T.let(proc do |json, regex|
+          version = json.dig("info", "version")
+          next if version.blank?
+
+          regex ? version[regex, 1] : version
         end.freeze, T.proc.params(
-          arg0: T::Hash[String, T.untyped],
+          json:  T::Hash[String, T.untyped],
+          regex: T.nilable(Regexp),
         ).returns(T.nilable(String)))
 
         # The `Regexp` used to extract the package name and suffix (e.g. file
