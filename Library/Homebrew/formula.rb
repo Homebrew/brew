@@ -1848,10 +1848,12 @@ class Formula
       install_prefix: T.any(String, Pathname),
       install_libdir: T.any(String, Pathname),
       find_framework: String,
+      program_path:   T.nilable(T::Array[String]),
     ).returns(T::Array[String])
   }
-  def std_cmake_args(install_prefix: prefix, install_libdir: "lib", find_framework: "LAST")
-    %W[
+  def std_cmake_args(install_prefix: prefix, install_libdir: "lib", find_framework: "LAST",
+                     program_path: ENV["PATH"]&.split(File::PATH_SEPARATOR))
+    args = %W[
       -DCMAKE_INSTALL_PREFIX=#{install_prefix}
       -DCMAKE_INSTALL_LIBDIR=#{install_libdir}
       -DCMAKE_BUILD_TYPE=Release
@@ -1861,6 +1863,12 @@ class Formula
       -Wno-dev
       -DBUILD_TESTING=OFF
     ]
+    # Since we set CMAKE_PREFIX_PATH environment variable, find_program prioritizes
+    # those paths over PATH which causes shims (e.g. clang, ninja) to be skipped.
+    # We can't fix this in {Superenv} as CMAKE_PROGRAM_PATH environment variable has
+    # lower priority. Instead, we use the cache variable which has higher priority.
+    args << "-DCMAKE_PROGRAM_PATH=#{program_path.join(";")}" if program_path.present?
+    args
   end
 
   # Standard parameters for configure builds.
