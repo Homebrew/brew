@@ -574,13 +574,6 @@ RSpec.describe Homebrew::CLI::Parser do
         end
       end
 
-      it "throws an error when defined" do
-        expect { parser.parse(["--cask"]) }
-          .to output("Error: Invalid `--cask` usage: Casks do not work on Linux\n").to_stderr
-          .and not_to_output.to_stdout
-          .and raise_exception SystemExit
-      end
-
       # Developers want to be able to use `audit` and `bump`
       # commands for formulae and casks on Linux.
       it "succeeds for developer commands" do
@@ -599,18 +592,9 @@ RSpec.describe Homebrew::CLI::Parser do
         end
       end
 
-      it "throws an error when --cask defined" do
-        expect { parser.parse(["--cask"]) }
-          .to output("Error: Invalid `--cask` usage: Casks do not work on Linux\n").to_stderr
-          .and not_to_output.to_stdout
-          .and raise_exception SystemExit
-      end
-
       it "throws an error when both defined" do
         expect { parser.parse(["--cask", "--formula"]) }
-          .to output("Error: Invalid `--cask` usage: Casks do not work on Linux\n").to_stderr
-          .and not_to_output.to_stdout
-          .and raise_exception SystemExit
+          .to raise_exception Homebrew::CLI::OptionConflictError
       end
     end
   end
