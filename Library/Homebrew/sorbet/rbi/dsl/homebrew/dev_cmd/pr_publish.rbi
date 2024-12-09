@@ -24,8 +24,5 @@ class Homebrew::DevCmd::PrPublish::Args < Homebrew::CLI::Args
   def message; end
 
   sig { returns(T.nilable(String)) }
-  def tap; end
-
-  sig { returns(T.nilable(String)) }
   def workflow; end
 end

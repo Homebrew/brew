@@ -39,11 +39,8 @@ module Tapioca
         end
       end
 
-      sig { params(parser: Homebrew::CLI::Parser).returns(T::Hash[Symbol, T.untyped]) }
-      def args_table(parser)
-        # we exclude non-args from the table, such as :named and :remaining
-        parser.instance_variable_get(:@args).instance_variable_get(:@table).except(:named, :remaining)
-      end
+      sig { params(parser: Homebrew::CLI::Parser).returns(T::Array[Symbol]) }
+      def args_table(parser) = parser.args.methods(false)
 
       sig { params(parser: Homebrew::CLI::Parser).returns(T::Array[Symbol]) }
       def comma_arrays(parser)
@@ -51,11 +48,11 @@ module Tapioca
               .filter_map { |k, v| parser.option_to_name(k).to_sym if v == :comma_array }
       end
 
-      sig { params(method_name: Symbol, value: T.untyped, comma_array_methods: T::Array[Symbol]).returns(String) }
-      def get_return_type(method_name, value, comma_array_methods)
+      sig { params(method_name: Symbol, comma_array_methods: T::Array[Symbol]).returns(String) }
+      def get_return_type(method_name, comma_array_methods)
         if comma_array_methods.include?(method_name)
           "T.nilable(T::Array[String])"
-        elsif [true, false].include?(value)
+        elsif method_name.end_with?("?")
           "T::Boolean"
         else
           "T.nilable(String)"
@@ -67,11 +64,11 @@ module Tapioca
       sig { params(klass: RBI::Scope, parser: Homebrew::CLI::Parser).void }
       def create_args_methods(klass, parser)
         comma_array_methods = comma_arrays(parser)
-        args_table(parser).each do |method_name, value|
+        args_table(parser).each do |method_name|
           method_name_str = method_name.to_s
           next if GLOBAL_OPTIONS.include?(method_name_str)
 
-          return_type = get_return_type(method_name, value, comma_array_methods)
+          return_type = get_return_type(method_name, comma_array_methods)
           klass.create_method(method_name_str, return_type:)
         end
       end

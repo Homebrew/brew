@@ -14,30 +14,6 @@ class Homebrew::CLI::Args
   sig { returns(T::Boolean) }
   def quiet?; end
 
-  sig { returns(T::Array[String]) }
-  def remaining; end
-
   sig { returns(T::Boolean) }
   def verbose?; end
-
-  # FIXME: The methods below are not defined by Args, but are valid because Args inherits from OpenStruct
-  # We should instead be using type guards to check if the method is defined on the object before calling it
-
-  sig { returns(T.nilable(String)) }
-  def arch; end
-
-  sig { returns(T::Boolean) }
-  def build_from_source?; end
-
-  sig { returns(T::Boolean) }
-  def cask?; end
-
-  sig { returns(T::Boolean) }
-  def formula?; end
-
-  sig { returns(T::Boolean) }
-  def include_test?; end
-
-  sig { returns(T.nilable(String)) }
-  def os; end
 end

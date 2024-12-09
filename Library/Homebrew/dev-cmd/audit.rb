@@ -125,7 +125,7 @@ module Homebrew
 
         audit_formulae, audit_casks = Homebrew.with_no_api_env do # audit requires full Ruby source
           if args.tap
-            Tap.fetch(T.must(args.tap)).then do |tap|
+            Tap.fetch(args.tap).then do |tap|
               [
                 tap.formula_files.map { |path| Formulary.factory(path) },
                 tap.cask_files.map { |path| Cask::CaskLoader.load(path) },
