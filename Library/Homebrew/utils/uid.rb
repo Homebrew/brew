@@ -15,5 +15,14 @@ module Utils
         Process::Sys.seteuid(original_euid)
       end
     end
+
+    sig { returns(T.nilable(String)) }
+    def self.uid_home
+      require "etc"
+      Etc.getpwuid(Process.uid)&.dir
+    rescue ArgumentError
+      # Cover for misconfigured NSS setups
+      nil
+    end
   end
 end
