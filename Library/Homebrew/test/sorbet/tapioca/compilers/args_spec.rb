@@ -18,36 +18,19 @@ RSpec.describe Tapioca::Compilers::Args do
 
   describe "#args_table" do
     it "returns a mapping of list args to default values" do
-      expect(compiler.args_table(list_parser).keys).to contain_exactly(
-        :"1?", :built_from_source?, :cask?, :casks?, :d?, :debug?,
-        :formula?, :formulae?, :full_name?, :h?, :help?,
-        :installed_as_dependency?, :installed_on_request?, :l?,
-        :multiple?, :pinned?, :poured_from_bottle?, :q?, :quiet?,
-        :r?, :t?, :v?, :verbose?, :versions?
+      expect(compiler.args_table(list_parser)).to contain_exactly(
+        :"1?", :built_from_source?, :cask?, :casks?, :d?, :debug?, :formula?, :formulae?, :full_name?, :h?, :help?,
+        :installed_as_dependency?, :installed_on_request?, :l?, :multiple?, :pinned?, :poured_from_bottle?, :q?,
+        :quiet?, :r?, :t?, :v?, :verbose?, :versions?
       )
     end
 
     it "returns a mapping of update-python-resources args to default values" do
-      expect(compiler.args_table(update_python_resources_parser)).to eq({
-        d?:                        false,
-        debug?:                    false,
-        exclude_packages:          nil,
-        extra_packages:            nil,
-        h?:                        false,
-        help?:                     false,
-        ignore_non_pypi_packages?: false,
-        install_dependencies?:     false,
-        p?:                        false,
-        package_name:              nil,
-        print_only?:               false,
-        q?:                        false,
-        quiet?:                    false,
-        s?:                        false,
-        silent?:                   false,
-        v?:                        false,
-        verbose?:                  false,
-        version:                   nil,
-      })
+      expect(compiler.args_table(update_python_resources_parser)).to contain_exactly(
+        :d?, :debug?, :exclude_packages, :extra_packages, :h?, :help?, :ignore_non_pypi_packages?,
+        :install_dependencies?, :p?, :package_name, :print_only?, :q?, :quiet?, :s?, :silent?, :v?, :verbose?,
+        :version
+      )
     end
   end
 
@@ -65,15 +48,15 @@ RSpec.describe Tapioca::Compilers::Args do
     let(:comma_arrays) { compiler.comma_arrays(update_python_resources_parser) }
 
     it "returns the correct type for switches" do
-      expect(compiler.get_return_type(:silent?, false, comma_arrays)).to eq("T::Boolean")
+      expect(compiler.get_return_type(:silent?, comma_arrays)).to eq("T::Boolean")
     end
 
     it "returns the correct type for flags" do
-      expect(compiler.get_return_type(:package_name, nil, comma_arrays)).to eq("T.nilable(String)")
+      expect(compiler.get_return_type(:package_name, comma_arrays)).to eq("T.nilable(String)")
     end
 
     it "returns the correct type for comma_arrays" do
-      expect(compiler.get_return_type(:extra_packages, nil, comma_arrays)).to eq("T.nilable(T::Array[String])")
+      expect(compiler.get_return_type(:extra_packages, comma_arrays)).to eq("T.nilable(T::Array[String])")
     end
   end
 end

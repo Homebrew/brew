@@ -27,9 +27,6 @@ class Homebrew::DevCmd::DispatchBuildBottle::Args < Homebrew::CLI::Args
   def macos; end
 
   sig { returns(T.nilable(String)) }
-  def tap; end
-
-  sig { returns(T.nilable(String)) }
   def timeout; end
 
   sig { returns(T::Boolean) }

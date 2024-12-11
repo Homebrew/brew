@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 require "utils/curl"
+require "utils/gzip"
 require "json"
 require "zlib"
 require "extend/hash/keys"
@@ -25,9 +26,6 @@ class GitHubPackages
   # https://github.com/opencontainers/distribution-spec/blob/main/spec.md#workflow-categories
   VALID_OCI_TAG_REGEX = /^[a-zA-Z0-9_][a-zA-Z0-9._-]{0,127}$/
   INVALID_OCI_TAG_CHARS_REGEX = /[^a-zA-Z0-9._-]/
-
-  GZIP_BUFFER_SIZE = 64 * 1024
-  private_constant :GZIP_BUFFER_SIZE
 
   # Translate Homebrew tab.arch to OCI platform.architecture
   TAB_ARCH_TO_PLATFORM_ARCHITECTURE = {
@@ -382,7 +380,7 @@ class GitHubPackages
 
       tar_sha256 = Digest::SHA256.new
       Zlib::GzipReader.open(local_file) do |gz|
-        while (data = gz.read(GZIP_BUFFER_SIZE))
+        while (data = gz.read(Utils::Gzip::GZIP_BUFFER_SIZE))
           tar_sha256 << data
         end
       end

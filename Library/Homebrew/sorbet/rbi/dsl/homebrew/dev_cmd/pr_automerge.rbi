@@ -21,9 +21,6 @@ class Homebrew::DevCmd::PrAutomerge::Args < Homebrew::CLI::Args
   def publish?; end
 
   sig { returns(T.nilable(String)) }
-  def tap; end
-
-  sig { returns(T.nilable(String)) }
   def with_label; end
 
   sig { returns(T::Boolean) }

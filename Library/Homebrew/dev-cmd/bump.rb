@@ -86,7 +86,7 @@ module Homebrew
               Formulary.factory(qualified_name)
             end
           elsif args.tap
-            tap = Tap.fetch(T.must(args.tap))
+            tap = Tap.fetch(args.tap)
             raise UsageError, "`--tap` requires `--auto` for official taps." if tap.official?
 
             formulae = args.cask? ? [] : tap.formula_files.map { |path| Formulary.factory(path) }

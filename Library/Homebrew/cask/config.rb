@@ -42,6 +42,8 @@ module Cask
 
     sig { params(args: Homebrew::CLI::Args).returns(T.attached_class) }
     def self.from_args(args)
+      # FIXME: T.unsafe is a workaround for methods that are only defined when `cask_options`
+      # is invoked on the parser. (These could be captured by a DSL compiler instead.)
       args = T.unsafe(args)
       new(explicit: {
         appdir:               args.appdir,

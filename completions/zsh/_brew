@@ -1304,15 +1304,15 @@ _brew_linkage() {
 # brew list
 _brew_list() {
   _arguments \
-    '(--cask --versions --pinned -l --full-name)--built-from-source[List the formulae compiled from source]' \
+    '(--cask --versions --pinned -l)--built-from-source[List the formulae compiled from source]' \
     '--debug[Display any debugging information]' \
-    '(--versions --pinned --installed-on-request --installed-as-dependency --poured-from-bottle --built-from-source -l -r -t)--full-name[Print formulae with fully-qualified names. Unless `--full-name`, `--versions` or `--pinned` are passed, other options (i.e. `-1`, `-l`, `-r` and `-t`) are passed to `ls`(1) which produces the actual output]' \
+    '(--versions --pinned -l -r -t)--full-name[Print formulae with fully-qualified names. Unless `--full-name`, `--versions` or `--pinned` are passed, other options (i.e. `-1`, `-l`, `-r` and `-t`) are passed to `ls`(1) which produces the actual output]' \
     '--help[Show this message]' \
-    '(--cask --versions --pinned -l --full-name)--installed-as-dependency[List the formulae installed as dependencies]' \
-    '(--cask --versions --pinned -l --full-name)--installed-on-request[List the formulae installed on request]' \
+    '(--cask --versions --pinned -l)--installed-as-dependency[List the formulae installed as dependencies]' \
+    '(--cask --versions --pinned -l)--installed-on-request[List the formulae installed on request]' \
     '(--cask --pinned)--multiple[Only show formulae with multiple versions installed]' \
     '(--cask --multiple --installed-on-request --installed-as-dependency --poured-from-bottle --built-from-source -1 -l -r -t --full-name)--pinned[List only pinned formulae, or only the specified (pinned) formulae if formula are provided. See also `pin`, `unpin`]' \
-    '(--cask --versions --pinned -l --full-name)--poured-from-bottle[List the formulae installed from a bottle]' \
+    '(--cask --versions --pinned -l)--poured-from-bottle[List the formulae installed from a bottle]' \
     '--quiet[Make some output more quiet]' \
     '--verbose[Make some output more verbose]' \
     '(--installed-on-request --installed-as-dependency --poured-from-bottle --built-from-source -1 -l -r -t --full-name)--versions[Show the version number for installed formulae, or only the specified formulae if formula are provided]' \
@@ -1389,15 +1389,15 @@ _brew_log() {
 # brew ls
 _brew_ls() {
   _arguments \
-    '(--cask --versions --pinned -l --full-name)--built-from-source[List the formulae compiled from source]' \
+    '(--cask --versions --pinned -l)--built-from-source[List the formulae compiled from source]' \
     '--debug[Display any debugging information]' \
-    '(--versions --pinned --installed-on-request --installed-as-dependency --poured-from-bottle --built-from-source -l -r -t)--full-name[Print formulae with fully-qualified names. Unless `--full-name`, `--versions` or `--pinned` are passed, other options (i.e. `-1`, `-l`, `-r` and `-t`) are passed to `ls`(1) which produces the actual output]' \
+    '(--versions --pinned -l -r -t)--full-name[Print formulae with fully-qualified names. Unless `--full-name`, `--versions` or `--pinned` are passed, other options (i.e. `-1`, `-l`, `-r` and `-t`) are passed to `ls`(1) which produces the actual output]' \
     '--help[Show this message]' \
-    '(--cask --versions --pinned -l --full-name)--installed-as-dependency[List the formulae installed as dependencies]' \
-    '(--cask --versions --pinned -l --full-name)--installed-on-request[List the formulae installed on request]' \
+    '(--cask --versions --pinned -l)--installed-as-dependency[List the formulae installed as dependencies]' \
+    '(--cask --versions --pinned -l)--installed-on-request[List the formulae installed on request]' \
     '(--cask --pinned)--multiple[Only show formulae with multiple versions installed]' \
     '(--cask --multiple --installed-on-request --installed-as-dependency --poured-from-bottle --built-from-source -1 -l -r -t --full-name)--pinned[List only pinned formulae, or only the specified (pinned) formulae if formula are provided. See also `pin`, `unpin`]' \
-    '(--cask --versions --pinned -l --full-name)--poured-from-bottle[List the formulae installed from a bottle]' \
+    '(--cask --versions --pinned -l)--poured-from-bottle[List the formulae installed from a bottle]' \
     '--quiet[Make some output more quiet]' \
     '--verbose[Make some output more verbose]' \
     '(--installed-on-request --installed-as-dependency --poured-from-bottle --built-from-source -1 -l -r -t --full-name)--versions[Show the version number for installed formulae, or only the specified formulae if formula are provided]' \

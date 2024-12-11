@@ -4,9 +4,6 @@
 require "cli/parser"
 require "erb"
 
-SOURCE_PATH = (HOMEBREW_LIBRARY_PATH/"manpages").freeze
-TARGET_MAN_PATH = (HOMEBREW_REPOSITORY/"manpages").freeze
-TARGET_DOC_PATH = (HOMEBREW_REPOSITORY/"docs").freeze
 module Homebrew
   # Helper functions for generating homebrew manual.
   module Manpages
@@ -24,6 +21,10 @@ module Homebrew
       :tsc,
       keyword_init: true,
     )
+
+    SOURCE_PATH = (HOMEBREW_LIBRARY_PATH/"manpages").freeze
+    TARGET_MAN_PATH = (HOMEBREW_REPOSITORY/"manpages").freeze
+    TARGET_DOC_PATH = (HOMEBREW_REPOSITORY/"docs").freeze
 
     def self.regenerate_man_pages(quiet:)
       require "kramdown"
