@@ -280,9 +280,16 @@ on_request: true)
       end
     end
 
+    sig { void }
     def check_requirements
+      check_stanza_os_requirements
       check_macos_requirements
       check_arch_requirements
+    end
+
+    sig { void }
+    def check_stanza_os_requirements
+      nil
     end
 
     def check_macos_requirements
@@ -710,3 +717,5 @@ on_request: true)
     end
   end
 end
+
+require "extend/os/cask/installer"
