@@ -132,11 +132,16 @@ export_homebrew_env_file() {
 
 # First, load the system-wide configuration.
 unset SYSTEM_ENV_TAKES_PRIORITY
+
+if [[ -f "/etc/homebrew/brew.env" ]]
+then
+  # Initial load of homebrew system env
+  export_homebrew_env_file "/etc/homebrew/brew.env"
+fi
+
 if [[ -n "${HOMEBREW_SYSTEM_ENV_TAKES_PRIORITY-}" ]]
 then
   SYSTEM_ENV_TAKES_PRIORITY="1"
-else
-  export_homebrew_env_file "/etc/homebrew/brew.env"
 fi
 
 # Next, load the prefix configuration
@@ -152,7 +157,7 @@ fi
 
 export_homebrew_env_file "${HOMEBREW_USER_CONFIG_HOME}/brew.env"
 
-# If the system configuration takes priority, load it last.
+# If the system configuration takes priority, reload it last.
 if [[ -n "${SYSTEM_ENV_TAKES_PRIORITY-}" ]]
 then
   export_homebrew_env_file "/etc/homebrew/brew.env"
