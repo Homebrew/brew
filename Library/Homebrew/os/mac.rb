@@ -69,6 +69,7 @@ module OS
       end
     end
 
+    sig { returns(T::Array[String]) }
     def self.languages
       return @languages if @languages
 

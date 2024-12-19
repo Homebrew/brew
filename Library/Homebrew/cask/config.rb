@@ -30,14 +30,12 @@ module Cask
         vst3_plugindir:       "~/Library/Audio/Plug-Ins/VST3",
         screen_saverdir:      "~/Library/Screen Savers",
       }.freeze,
-      T::Hash[Symbol, String],
+      T::Hash[Symbol, T.nilable(String)],
     )
 
     sig { returns(T::Hash[Symbol, T.untyped]) }
     def self.defaults
-      {
-        languages: LazyObject.new { MacOS.languages },
-      }.merge(DEFAULT_DIRS).freeze
+      DEFAULT_DIRS.freeze
     end
 
     sig { params(args: Homebrew::CLI::Args).returns(T.attached_class) }
@@ -223,3 +221,5 @@ module Cask
     end
   end
 end
+
+require "extend/os/cask/config"

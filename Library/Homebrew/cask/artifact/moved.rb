@@ -180,7 +180,7 @@ module Cask
 
       def delete(target, force: false, successor: nil, command: nil, **_)
         ohai "Removing #{self.class.english_name} '#{target}'"
-        raise CaskError, "Cannot remove undeletable #{self.class.english_name}." if MacOS.undeletable?(target)
+        raise CaskError, "Cannot remove undeletable #{self.class.english_name}." if undeletable?(target)
 
         return unless Utils.path_occupied?(target)
 
@@ -196,6 +196,10 @@ module Cask
           Utils.gain_permissions_remove(target, command:)
         end
       end
+
+      def undeletable?(target); end
     end
   end
 end
+
+require "extend/os/cask/artifact/moved"
