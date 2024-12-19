@@ -13,7 +13,9 @@ module OS
 
         sig { void }
         def check_stanza_os_requirements
-          raise ::Cask::CaskError, "macOS is required for this software."
+          raise ::Cask::CaskError, "macOS is required for this software." unless artifacts.reject do |k|
+            k.is_a?(::Cask::Artifact::Font)
+          end.empty?
         end
       end
     end
