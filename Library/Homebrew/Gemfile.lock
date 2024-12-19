@@ -139,7 +139,7 @@ GEM
     unicode-display_width (3.1.2)
       unicode-emoji (~> 4.0, >= 4.0.4)
     unicode-emoji (4.0.4)
-    vernier (1.4.0)
+    vernier (1.5.0)
     warning (1.4.0)
     yard (0.9.37)
     yard-sorbet (0.9.0)
