@@ -353,11 +353,12 @@ jobs:
           HOMEBREW_BUILDPULSE_ACCOUNT_ID: 1503512
           HOMEBREW_BUILDPULSE_REPOSITORY_ID: 53238813
 
-      - id: junit_xml
+      - name: Get RSpec JUnit XML filenames
+        id: junit_xml
         working-directory: ${{ steps.set-up-homebrew.outputs.repository-path }}
         run: |
-          mkdir -p test/junit
-          filenames=$(find test/junit -name 'rspec*.xml' -print | tr '\n' ',')
+          mkdir -p Library/Homebrew/test/junit
+          filenames=$(find Library/Homebrew/test/junit -name 'rspec*.xml' -print | tr '\n' ',')
           echo "filenames=${filenames%,}" >> "$GITHUB_OUTPUT"
 
       - uses: codecov/test-results-action@9739113ad922ea0a9abb4b2c0f8bf6a4aa8ef820 # v1.0.1
