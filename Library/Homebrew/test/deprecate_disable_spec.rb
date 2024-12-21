@@ -3,13 +3,23 @@
 require "deprecate_disable"
 
 RSpec.describe DeprecateDisable do
+  let(:deprecate_date) { Date.parse("2020-01-01") }
+  let(:disable_date) { deprecate_date >> DeprecateDisable::REMOVE_DISABLED_TIME_WINDOW }
   let(:deprecated_formula) do
     instance_double(Formula, deprecated?: true, disabled?: false, deprecation_reason: :does_not_build,
                     deprecation_replacement: nil, deprecation_date: nil, disable_date: nil)
   end
+  let(:deprecated_formula_with_date) do
+    instance_double(Formula, deprecated?: true, disabled?: false, deprecation_reason: :does_not_build,
+                    deprecation_replacement: nil, deprecation_date: deprecate_date, disable_date: nil)
+  end
   let(:disabled_formula) do
     instance_double(Formula, deprecated?: false, disabled?: true, disable_reason: "is broken",
                     disable_replacement: nil, deprecation_date: nil, disable_date: nil)
+  end
+  let(:disabled_formula_with_date) do
+    instance_double(Formula, deprecated?: false, disabled?: true, disable_reason: :does_not_build,
+                    disable_replacement: nil, deprecation_date: nil, disable_date: disable_date)
   end
   let(:deprecated_cask) do
     instance_double(Cask::Cask, deprecated?: true, disabled?: false, deprecation_reason: :discontinued,
@@ -39,7 +49,9 @@ RSpec.describe DeprecateDisable do
   before do
     formulae = [
       deprecated_formula,
+      deprecated_formula_with_date,
       disabled_formula,
+      disabled_formula_with_date,
       deprecated_formula_with_replacement,
       disabled_formula_with_replacement,
     ]
@@ -86,9 +98,20 @@ RSpec.describe DeprecateDisable do
         .to eq "deprecated because it does not build!"
     end
 
+    it "returns a deprecation message with disable date" do
+      allow(Date).to receive(:today).and_return(deprecate_date + 1)
+      expect(described_class.message(deprecated_formula_with_date))
+        .to eq "deprecated because it does not build! It will be disabled on #{disable_date}."
+    end
+
     it "returns a disable message with a custom reason" do
       expect(described_class.message(disabled_formula))
         .to eq "disabled because it is broken!"
+    end
+
+    it "returns a disable message with disable date" do
+      expect(described_class.message(disabled_formula_with_date))
+        .to eq "disabled because it does not build! It was disabled on #{disable_date}."
     end
 
     it "returns a deprecation message with a preset cask reason" do

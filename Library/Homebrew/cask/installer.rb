@@ -134,11 +134,12 @@ on_request: true)
       raise
     end
 
+    sig { void }
     def check_deprecate_disable
       deprecate_disable_type = DeprecateDisable.type(@cask)
       return if deprecate_disable_type.nil?
 
-      message = DeprecateDisable.message(@cask)
+      message = DeprecateDisable.message(@cask).to_s
       message_full = "#{@cask.token} has been #{message}"
 
       case deprecate_disable_type
