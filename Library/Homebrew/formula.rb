@@ -4286,9 +4286,11 @@ class Formula
         lambda do |_|
           on_macos do
             T.bind(self, PourBottleCheck)
-            reason(+<<~EOS)
-              The bottle needs the Apple Command Line Tools to be installed.
-                You can install them, if desired, with:
+            reason(<<~EOS)
+              The bottle needs the Xcode Command Line Tools to be installed at /Library/Developer/CommandLineTools.
+              Development tools provided by Xcode.app are not sufficient.
+
+              You can install the Xcode Command Line Tools, if desired, with:
                   xcode-select --install
             EOS
             satisfy { MacOS::CLT.installed? }
