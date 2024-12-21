@@ -266,3 +266,5 @@ module Cask
     end
   end
 end
+
+require "extend/os/cask/quarantine"
