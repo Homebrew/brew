@@ -55,12 +55,31 @@ module Homebrew
         patch_version = version.patch.to_i
 
         (0..patch_version).each do |patch|
+          # Create folder symlinks for all patch versions to the latest patch version
+          # (eg. 3.11.0 -> 3.11.3).
           link_path = pyenv_versions/"#{major_version}.#{minor_version}.#{patch}"
+
           # Don't clobber existing user installations.
           next if link_path.exist? && !link_path.symlink?
 
           FileUtils.rm_f link_path
           FileUtils.ln_sf path, link_path
+
+          # Create an unversioned symlinks
+          # This is what pyenv expects to find in ~/.pyenv/versions/___/bin'.
+          # Without this, `python3`, `pip3` do not exist and pyenv falls back to system Python.
+          # (eg. python3 -> python3.11, pip3 -> pip3.11)
+
+          executables = %w[python3 pip3 wheel3 idle3 pydoc3]
+          executables.each do |executable|
+            major_link_path = link_path/"bin/#{executable}"
+
+            # Don't clobber existing user installations.
+            next if major_link_path.exist? && !major_link_path.symlink?
+
+            FileUtils.rm_f major_link_path
+            FileUtils.ln_s link_path/"bin/#{executable}.#{minor_version}", major_link_path
+          end
         end
       end
     end
