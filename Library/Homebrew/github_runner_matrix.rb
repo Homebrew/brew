@@ -73,6 +73,7 @@ class GitHubRunnerMatrix
   private
 
   SELF_HOSTED_LINUX_RUNNER = "linux-self-hosted-1"
+  SELF_HOSTED_LINUX_TIMEOUT = 4320 # 72 hours
   # ARM macOS timeout, keep this under 1/2 of GitHub's job execution time limit for self-hosted runners.
   # https://docs.github.com/en/actions/hosting-your-own-runners/managing-self-hosted-runners/about-self-hosted-runners#usage-limits
   GITHUB_ACTIONS_LONG_TIMEOUT = 2160 # 36 hours
@@ -90,7 +91,7 @@ class GitHubRunnerMatrix
         options: "--user=linuxbrew -e GITHUB_ACTIONS_HOMEBREW_SELF_HOSTED",
       },
       workdir:   "/github/home",
-      timeout:   GITHUB_ACTIONS_LONG_TIMEOUT,
+      timeout:   SELF_HOSTED_LINUX_TIMEOUT,
       cleanup:   linux_runner == SELF_HOSTED_LINUX_RUNNER,
     )
   end
