@@ -15,7 +15,6 @@ module Homebrew
       formulae_to_install,
       flags:,
       dry_run: false,
-      installed_on_request: false,
       force_bottle: false,
       build_from_source_formulae: [],
       dependents: false,
@@ -55,7 +54,6 @@ module Homebrew
           fi = create_formula_installer(
             formula,
             flags:,
-            installed_on_request:,
             force_bottle:,
             build_from_source_formulae:,
             interactive:,
@@ -114,7 +112,6 @@ module Homebrew
     private_class_method def self.create_formula_installer(
       formula,
       flags:,
-      installed_on_request: false,
       force_bottle: false,
       build_from_source_formulae: [],
       interactive: false,
@@ -126,15 +123,23 @@ module Homebrew
       quiet: false,
       verbose: false
     )
-      if formula.opt_prefix.directory?
-        keg = Keg.new(formula.opt_prefix.resolved_path)
-        keg_had_linked_opt = true
-        keg_was_linked = keg.linked?
+      keg = if formula.optlinked?
+        Keg.new(formula.opt_prefix.resolved_path)
+      else
+        formula.installed_kegs.find(&:optlinked?)
       end
 
-      if formula.opt_prefix.directory?
-        keg = Keg.new(formula.opt_prefix.resolved_path)
+      if keg
         tab = keg.tab
+        link_keg = keg.linked?
+        installed_as_dependency = tab.installed_as_dependency
+        installed_on_request = tab.installed_on_request
+        build_bottle = tab.built_bottle?
+      else
+        link_keg = nil
+        installed_as_dependency = false
+        installed_on_request = true
+        build_bottle = false
       end
 
       build_options = BuildOptions.new(Options.create(flags), formula.options)
@@ -146,10 +151,10 @@ module Homebrew
         formula,
         **{
           options:,
-          link_keg:                   keg_had_linked_opt ? keg_was_linked : nil,
-          installed_as_dependency:    tab&.installed_as_dependency,
-          installed_on_request:       installed_on_request || tab&.installed_on_request,
-          build_bottle:               tab&.built_bottle?,
+          link_keg:,
+          installed_as_dependency:,
+          installed_on_request:,
+          build_bottle:,
           force_bottle:,
           build_from_source_formulae:,
           interactive:,
@@ -338,7 +343,6 @@ module Homebrew
         upgrade_formulae(
           upgradeable_dependents,
           flags:,
-          installed_on_request:,
           force_bottle:,
           build_from_source_formulae:,
           dependents:                 true,

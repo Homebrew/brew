@@ -1,4 +1,4 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
 
 module RuboCop
@@ -26,16 +26,31 @@ module RuboCop
 
           return unless block_node.cask_block?
 
-          @file_path = processed_source.file_path
+          @file_path = T.let(processed_source.file_path, T.nilable(String))
 
           cask_block = RuboCop::Cask::AST::CaskBlock.new(block_node, comments)
           on_cask(cask_block)
         end
 
+        sig {
+          params(
+            cask_stanzas: T::Array[RuboCop::Cask::AST::Stanza],
+          ).returns(
+            T::Array[RuboCop::Cask::AST::Stanza],
+          )
+        }
         def on_system_methods(cask_stanzas)
           cask_stanzas.select(&:on_system_block?)
         end
 
+        sig {
+          params(
+            block_node: RuboCop::AST::BlockNode,
+            comments:   T::Array[String],
+          ).returns(
+            T::Array[RuboCop::Cask::AST::Stanza],
+          )
+        }
         def inner_stanzas(block_node, comments)
           block_contents = block_node.child_nodes.select(&:begin_type?)
           inner_nodes = block_contents.map(&:child_nodes).flatten.select(&:send_type?)
@@ -44,7 +59,7 @@ module RuboCop
 
         sig { returns(T.nilable(String)) }
         def cask_tap
-          return unless (match_obj = @file_path.match(%r{/(homebrew-\w+)/}))
+          return unless (match_obj = @file_path&.match(%r{/(homebrew-\w+)/}))
 
           match_obj[1]
         end

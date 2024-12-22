@@ -259,6 +259,8 @@ module Homebrew
           formula_installer = FormulaInstaller.new(
             formula,
             options:                    build_options.used_options,
+            installed_on_request:       true,
+            installed_as_dependency:    false,
             build_bottle:,
             force_bottle:,
             bottle_arch:,

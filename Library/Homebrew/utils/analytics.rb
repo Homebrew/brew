@@ -54,7 +54,7 @@ module Utils
         require "utils/curl"
 
         curl = Utils::Curl.curl_executable
-        args = Utils::Curl.curl_args(*args, "--silent", "--output", "/dev/null", show_error: false)
+        args = Utils::Curl.curl_args(*args, "--silent", "--output", File::NULL, show_error: false)
         if ENV["HOMEBREW_ANALYTICS_DEBUG"]
           puts "#{curl} #{args.join(" ")} \"#{url}\""
           puts Utils.popen_read(curl, *args, url)

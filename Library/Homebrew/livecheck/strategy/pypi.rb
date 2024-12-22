@@ -4,20 +4,31 @@
 module Homebrew
   module Livecheck
     module Strategy
-      # The {Pypi} strategy identifies versions of software at pypi.org by
-      # checking project pages for archive files.
+      # The {Pypi} strategy identifies the newest version of a PyPI package by
+      # checking the JSON API endpoint for the project and using the
+      # `info.version` field from the response.
       #
-      # PyPI URLs have a standard format but the hexadecimal text between
-      # `/packages/` and the filename varies:
+      # PyPI URLs have a standard format:
+      #   `https://files.pythonhosted.org/packages/<hex>/<hex>/<long_hex>/example-1.2.3.tar.gz`
       #
-      # * `https://files.pythonhosted.org/packages/<hex>/<hex>/<long_hex>/example-1.2.3.tar.gz`
-      #
-      # As such, the default regex only targets the filename at the end of the
-      # URL.
+      # Upstream documentation for the PyPI JSON API can be found at:
+      #   https://docs.pypi.org/api/json/#get-a-project
       #
       # @api public
       class Pypi
         NICE_NAME = "PyPI"
+
+        # The default `strategy` block used to extract version information when
+        # a `strategy` block isn't provided.
+        DEFAULT_BLOCK = T.let(proc do |json, regex|
+          version = json.dig("info", "version")
+          next if version.blank?
+
+          regex ? version[regex, 1] : version
+        end.freeze, T.proc.params(
+          json:  T::Hash[String, T.untyped],
+          regex: T.nilable(Regexp),
+        ).returns(T.nilable(String)))
 
         # The `Regexp` used to extract the package name and suffix (e.g. file
         # extension) from the URL basename.
@@ -44,10 +55,8 @@ module Homebrew
           URL_MATCH_REGEX.match?(url)
         end
 
-        # Extracts information from a provided URL and uses it to generate
-        # various input values used by the strategy to check for new versions.
-        # Some of these values act as defaults and can be overridden in a
-        # `livecheck` block.
+        # Extracts the package name from the provided URL and uses it to
+        # generate the PyPI JSON API URL for the project.
         #
         # @param url [String] the URL used to generate values
         # @return [Hash]
@@ -58,40 +67,41 @@ module Homebrew
           match = File.basename(url).match(FILENAME_REGEX)
           return values if match.blank?
 
-          # It's not technically necessary to have the `#files` fragment at the
-          # end of the URL but it makes the debug output a bit more useful.
-          values[:url] = "https://pypi.org/project/#{T.must(match[:package_name]).gsub(/%20|_/, "-")}/#files"
-
-          # Use `\.t` instead of specific tarball extensions (e.g. .tar.gz)
-          suffix = T.must(match[:suffix]).sub(Strategy::TARBALL_EXTENSION_REGEX, ".t")
-          regex_suffix = Regexp.escape(suffix).gsub("\\-", "-")
-
-          # Example regex: `%r{href=.*?/packages.*?/example[._-]v?(\d+(?:\.\d+)*(?:[._-]post\d+)?)\.t}i`
-          regex_name = Regexp.escape(T.must(match[:package_name])).gsub(/\\[_-]/, "[_-]")
-          values[:regex] =
-            %r{href=.*?/packages.*?/#{regex_name}[._-]v?(\d+(?:\.\d+)*(?:[._-]post\d+)?)#{regex_suffix}}i
+          values[:url] = "https://pypi.org/pypi/#{T.must(match[:package_name]).gsub(/%20|_/, "-")}/json"
 
           values
         end
 
-        # Generates a URL and regex (if one isn't provided) and passes them
-        # to {PageMatch.find_versions} to identify versions in the content.
+        # Generates a PyPI JSON API URL for the project and identifies new
+        # versions using {Json#find_versions} with a block.
         #
         # @param url [String] the URL of the content to check
         # @param regex [Regexp] a regex used for matching versions in content
+        # @param provided_content [String, nil] content to check instead of
+        #   fetching
         # @return [Hash]
         sig {
           params(
-            url:    String,
-            regex:  T.nilable(Regexp),
-            unused: T.untyped,
-            block:  T.nilable(Proc),
+            url:              String,
+            regex:            T.nilable(Regexp),
+            provided_content: T.nilable(String),
+            unused:           T.untyped,
+            block:            T.nilable(Proc),
           ).returns(T::Hash[Symbol, T.untyped])
         }
-        def self.find_versions(url:, regex: nil, **unused, &block)
-          generated = generate_input_values(url)
+        def self.find_versions(url:, regex: nil, provided_content: nil, **unused, &block)
+          match_data = { matches: {}, regex:, url: }
 
-          PageMatch.find_versions(url: generated[:url], regex: regex || generated[:regex], **unused, &block)
+          generated = generate_input_values(url)
+          return match_data if generated.blank?
+
+          Json.find_versions(
+            url:              generated[:url],
+            regex:,
+            provided_content:,
+            **unused,
+            &block || DEFAULT_BLOCK
+          )
         end
       end
     end

@@ -109,18 +109,19 @@ module Homebrew
 
         odie "This formula is disabled!" if formula.disabled?
         odie "This formula is deprecated and does not build!" if formula.deprecation_reason == :does_not_build
-        odie "This formula is not in a tap!" if formula.tap.blank?
-        odie "This formula's tap is not a Git repository!" unless formula.tap.git?
+        tap = formula.tap
+        odie "This formula is not in a tap!" if tap.blank?
+        odie "This formula's tap is not a Git repository!" unless tap.git?
 
-        odie <<~EOS unless formula.tap.allow_bump?(formula.name)
+        odie <<~EOS unless tap.allow_bump?(formula.name)
           Whoops, the #{formula.name} formula has its version update
           pull requests automatically opened by BrewTestBot every ~3 hours!
           We'd still love your contributions, though, so try another one
           that's not in the autobump list:
-            #{Formatter.url("#{formula.tap.remote}/blob/master/.github/autobump.txt")}
+            #{Formatter.url("#{tap.remote}/blob/master/.github/autobump.txt")}
         EOS
 
-        odie "You have too many PRs open: close or merge some first!" if GitHub.too_many_open_prs?(formula.tap)
+        odie "You have too many PRs open: close or merge some first!" if GitHub.too_many_open_prs?(tap)
 
         formula_spec = formula.stable
         odie "#{formula}: no stable specification found!" if formula_spec.blank?
@@ -129,9 +130,9 @@ module Homebrew
         # spamming during normal output.
         Homebrew.install_bundler_gems!(groups: ["audit", "style"]) unless args.no_audit?
 
-        tap_remote_repo = formula.tap.remote_repository
+        tap_remote_repo = T.must(tap.remote_repository)
         remote = "origin"
-        remote_branch = formula.tap.git_repository.origin_branch_name
+        remote_branch = tap.git_repository.origin_branch_name
         previous_branch = "-"
 
         check_pull_requests(formula, tap_remote_repo, state: "open")
@@ -333,7 +334,7 @@ module Homebrew
         alias_rename = alias_update_pair(formula, new_formula_version)
         if alias_rename.present?
           ohai "Renaming alias #{alias_rename.first} to #{alias_rename.last}"
-          alias_rename.map! { |a| formula.tap.alias_dir/a }
+          alias_rename.map! { |a| tap.alias_dir/a }
         end
 
         unless args.dry_run?
@@ -389,7 +390,7 @@ module Homebrew
           branch_name:      "bump-#{formula.name}-#{new_formula_version}",
           commit_message:   "#{formula.name} #{new_formula_version}",
           previous_branch:,
-          tap:              formula.tap,
+          tap:              tap,
           tap_remote_repo:,
           pr_message:,
         }

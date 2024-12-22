@@ -1,4 +1,4 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
 
 require "utils/user"
@@ -10,7 +10,7 @@ module Cask
   module Caskroom
     sig { returns(Pathname) }
     def self.path
-      @path ||= HOMEBREW_PREFIX/"Caskroom"
+      @path ||= T.let(HOMEBREW_PREFIX/"Caskroom", T.nilable(Pathname))
     end
 
     # Return all paths for installed casks.

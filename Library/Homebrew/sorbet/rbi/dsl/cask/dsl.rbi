@@ -16,7 +16,7 @@ class Cask::DSL
   def disabled?; end
 
   sig { returns(T::Boolean) }
-  def livecheckable?; end
+  def livecheck_defined?; end
 
   sig { returns(T::Boolean) }
   def on_system_blocks_exist?; end

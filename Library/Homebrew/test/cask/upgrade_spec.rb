@@ -19,7 +19,11 @@ RSpec.describe Cask::Upgrade, :cask do
   let(:renamed_app) { Cask::CaskLoader.load("renamed-app") }
   let(:renamed_app_old_path) { renamed_app.config.appdir.join("OldApp.app") }
   let(:renamed_app_new_path) { renamed_app.config.appdir.join("NewApp.app") }
-  let(:args) { Homebrew::CLI::Args.new }
+  let(:args) do
+    parser = Homebrew::CLI::Parser.new(Homebrew::Cmd::Brew)
+    parser.cask_options
+    parser.args
+  end
 
   before do
     installed.each do |cask|

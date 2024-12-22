@@ -10,7 +10,6 @@ module Homebrew
     def self.reinstall_formula(
       formula,
       flags:,
-      installed_on_request: false,
       force_bottle: false,
       build_from_source_formulae: [],
       interactive: false,
@@ -25,9 +24,16 @@ module Homebrew
       if formula.opt_prefix.directory?
         keg = Keg.new(formula.opt_prefix.resolved_path)
         tab = keg.tab
-        keg_had_linked_opt = true
-        keg_was_linked = keg.linked?
+        link_keg = keg.linked?
+        installed_as_dependency = tab.installed_as_dependency
+        installed_on_request = tab.installed_on_request
+        build_bottle = tab.built_bottle?
         backup keg
+      else
+        link_keg = nil
+        installed_as_dependency = false
+        installed_on_request = true
+        build_bottle = false
       end
 
       build_options = BuildOptions.new(Options.create(flags), formula.options)
@@ -39,10 +45,10 @@ module Homebrew
         formula,
         **{
           options:,
-          link_keg:                   keg_had_linked_opt ? keg_was_linked : nil,
-          installed_as_dependency:    tab&.installed_as_dependency,
-          installed_on_request:       installed_on_request || tab&.installed_on_request,
-          build_bottle:               tab&.built_bottle?,
+          link_keg:,
+          installed_as_dependency:,
+          installed_on_request:,
+          build_bottle:,
           force_bottle:,
           build_from_source_formulae:,
           git:,
@@ -65,7 +71,7 @@ module Homebrew
     rescue FormulaInstallationAlreadyAttemptedError
       nil
     rescue Exception # rubocop:disable Lint/RescueException
-      ignore_interrupts { restore_backup(keg, keg_was_linked, verbose:) }
+      ignore_interrupts { restore_backup(keg, link_keg, verbose:) }
       raise
     else
       begin

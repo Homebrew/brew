@@ -77,7 +77,7 @@ RSpec.describe Homebrew::Livecheck do
   end
 
   describe "::resolve_livecheck_reference" do
-    context "when a formula/cask has a livecheck block without formula/cask methods" do
+    context "when a formula/cask has a `livecheck` block without formula/cask methods" do
       it "returns [nil, []]" do
         expect(livecheck.resolve_livecheck_reference(f)).to eq([nil, []])
         expect(livecheck.resolve_livecheck_reference(c)).to eq([nil, []])
@@ -111,7 +111,7 @@ RSpec.describe Homebrew::Livecheck do
           status:   "error",
           messages: ["Unable to get versions"],
           meta:     {
-            livecheckable: true,
+            livecheck_defined: true,
           },
         })
     end
@@ -123,7 +123,7 @@ RSpec.describe Homebrew::Livecheck do
           status:   "error",
           messages: ["Unable to get versions"],
           meta:     {
-            livecheckable: true,
+            livecheck_defined: true,
           },
         })
     end

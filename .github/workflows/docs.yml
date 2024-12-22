@@ -1,10 +1,8 @@
 name: Documentation CI
 
 on:
-  push:
-    branches:
-      - master
   pull_request:
+  merge_group:
 
 permissions:
   contents: read
@@ -34,7 +32,7 @@ jobs:
           test-bot: false
 
       - name: Checkout repository
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           persist-credentials: false
 
@@ -55,7 +53,7 @@ jobs:
         run: vale docs/
 
       - name: Install Ruby
-        uses: ruby/setup-ruby@a2bbe5b1b236842c1cb7dd11e8e3b51e0a616acc # v1.202.0
+        uses: ruby/setup-ruby@401c19e14f474b54450cd3905bb8b86e2c8509cf # v1.204.0
         with:
           bundler-cache: true
           working-directory: docs

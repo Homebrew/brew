@@ -38,7 +38,6 @@ module Cask
       quarantine: nil,
       require_sha: nil
     )
-
       quarantine = true if quarantine.nil?
 
       greedy = true if Homebrew::EnvConfig.upgrade_greedy?

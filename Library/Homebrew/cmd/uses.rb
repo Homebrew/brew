@@ -5,7 +5,6 @@ require "abstract_command"
 require "formula"
 require "cask/caskroom"
 require "dependencies_helpers"
-require "ostruct"
 
 module Homebrew
   module Cmd
@@ -14,6 +13,11 @@ module Homebrew
     # The intersection is harder to achieve with shell tools.
     class Uses < AbstractCommand
       include DependenciesHelpers
+
+      class UnavailableFormula < T::Struct
+        const :name, String
+        const :full_name, String
+      end
 
       cmd_args do
         description <<~EOS
@@ -64,10 +68,7 @@ module Homebrew
           opoo e
           used_formulae_missing = true
           # If the formula doesn't exist: fake the needed formula object name.
-          # This is a legacy use of OpenStruct that should be refactored.
-          # rubocop:disable Style/OpenStructUse
-          args.named.map { |name| OpenStruct.new name:, full_name: name }
-          # rubocop:enable Style/OpenStructUse
+          args.named.map { |name| UnavailableFormula.new name:, full_name: name }
         end
 
         use_runtime_dependents = args.installed? &&
@@ -87,7 +88,10 @@ module Homebrew
 
       private
 
-      sig { params(use_runtime_dependents: T::Boolean, used_formulae: T::Array[Formula]).returns(T::Array[Formula]) }
+      sig {
+        params(use_runtime_dependents: T::Boolean, used_formulae: T::Array[T.any(Formula, UnavailableFormula)])
+          .returns(T::Array[Formula])
+      }
       def intersection_of_dependents(use_runtime_dependents, used_formulae)
         recursive = args.recursive?
         show_formulae_and_casks = !args.formula? && !args.cask?
@@ -95,6 +99,8 @@ module Homebrew
 
         deps = []
         if use_runtime_dependents
+          # We can only get here if `used_formulae_missing` is false, thus there are no UnavailableFormula.
+          used_formulae = T.cast(used_formulae, T::Array[Formula])
           if show_formulae_and_casks || args.formula?
             deps += used_formulae.map(&:runtime_installed_formula_dependents)
                                  .reduce(&:&)
@@ -140,8 +146,8 @@ module Homebrew
 
       sig {
         params(
-          dependents: T::Array[Formula], used_formulae: T::Array[Formula], recursive: T::Boolean,
-          includes: T::Array[Symbol], ignores: T::Array[Symbol]
+          dependents: T::Array[Formula], used_formulae: T::Array[T.any(Formula, UnavailableFormula)],
+          recursive: T::Boolean, includes: T::Array[Symbol], ignores: T::Array[Symbol]
         ).returns(
           T::Array[Formula],
         )

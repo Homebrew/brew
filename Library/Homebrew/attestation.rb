@@ -164,7 +164,12 @@ module Homebrew
 
       # `gh attestation verify` returns a JSON array of one or more results,
       # for all attestations that match the input's digest. We want to additionally
-      # filter these down to just the attestation whose subject matches the bottle's name.
+      # filter these down to just the attestation whose subject(s) contain the bottle's name.
+      # As of 2024-12-04 GitHub's Artifact Attestation feature can put multiple subjects
+      # in a single attestation, so we check every subject in each attestation
+      # and select the first attestation with a matching subject.
+      # In particular, this happens with v2.0.0 and later of the
+      # `actions/attest-build-provenance` action.
       subject = bottle.filename.to_s if subject.blank?
 
       attestation = if bottle.tag.to_sym == :all
@@ -175,12 +180,15 @@ module Homebrew
         # This is sound insofar as the signature has already been verified. However,
         # longer term, we should also directly attest to `:all`-tagged bottles.
         attestations.find do |a|
-          actual_subject = a.dig("verificationResult", "statement", "subject", 0, "name")
-          actual_subject.start_with? "#{bottle.filename.name}--#{bottle.filename.version}"
+          candidate_subjects = a.dig("verificationResult", "statement", "subject")
+          candidate_subjects.any? do |candidate|
+            candidate["name"].start_with? "#{bottle.filename.name}--#{bottle.filename.version}"
+          end
         end
       else
         attestations.find do |a|
-          a.dig("verificationResult", "statement", "subject", 0, "name") == subject
+          candidate_subjects = a.dig("verificationResult", "statement", "subject")
+          candidate_subjects.any? { |candidate| candidate["name"] == subject }
         end
       end
 

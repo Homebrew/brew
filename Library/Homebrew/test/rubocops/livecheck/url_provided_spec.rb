@@ -5,7 +5,7 @@ require "rubocops/livecheck"
 RSpec.describe RuboCop::Cop::FormulaAudit::LivecheckUrlProvided do
   subject(:cop) { described_class.new }
 
-  it "reports an offense when a `url` is not specified in a livecheck block" do
+  it "reports an offense when a `url` is not specified in a `livecheck` block" do
     expect_offense(<<~RUBY)
       class Foo < Formula
         url "https://brew.sh/foo-1.0.tgz"
@@ -29,7 +29,7 @@ RSpec.describe RuboCop::Cop::FormulaAudit::LivecheckUrlProvided do
     RUBY
   end
 
-  it "reports no offenses when a `url` and `regex` are specified in the livecheck block" do
+  it "reports no offenses when a `url` and `regex` are specified in the `livecheck` block" do
     expect_no_offenses(<<~RUBY)
       class Foo < Formula
         url "https://brew.sh/foo-1.0.tgz"
@@ -42,7 +42,7 @@ RSpec.describe RuboCop::Cop::FormulaAudit::LivecheckUrlProvided do
     RUBY
   end
 
-  it "reports no offenses when a `url` and `strategy` are specified in the livecheck block" do
+  it "reports no offenses when a `url` and `strategy` are specified in the `livecheck` block" do
     expect_no_offenses(<<~RUBY)
       class Foo < Formula
         url "https://brew.sh/foo-1.0.tgz"

@@ -675,7 +675,11 @@ module GitHub
   end
 
   def self.get_pull_request_changed_files(tap_remote_repo, pull_request)
-    API.open_rest(url_to("repos", tap_remote_repo, "pulls", pull_request, "files"))
+    files = []
+    API.paginate_rest(url_to("repos", tap_remote_repo, "pulls", pull_request, "files")) do |result|
+      files.concat(result)
+    end
+    files
   end
 
   private_class_method def self.add_auth_token_to_url!(url)

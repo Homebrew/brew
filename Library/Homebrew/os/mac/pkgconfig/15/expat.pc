@@ -5,7 +5,7 @@ libdir=${exec_prefix}/lib
 includedir=${prefix}/include
 
 Name: expat
-Version: 2.6.1
+Version: 2.6.3
 Description: expat XML parser
 URL: https://libexpat.github.io/
 Libs: -L${libdir} -lexpat

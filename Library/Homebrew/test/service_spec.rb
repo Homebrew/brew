@@ -718,7 +718,7 @@ RSpec.describe Homebrew::Service do
 
       unit = f.service.to_systemd_unit
       std_path = "#{HOMEBREW_PREFIX}/bin:#{HOMEBREW_PREFIX}/sbin:/usr/bin:/bin:/usr/sbin:/sbin"
-      unit_expect = <<~EOS
+      unit_expect = <<~SYSTEMD
         [Unit]
         Description=Homebrew generated unit for formula_name
 
@@ -727,7 +727,7 @@ RSpec.describe Homebrew::Service do
 
         [Service]
         Type=simple
-        ExecStart=#{HOMEBREW_PREFIX}/opt/#{name}/bin/beanstalkd test
+        ExecStart="#{HOMEBREW_PREFIX}/opt/#{name}/bin/beanstalkd" "test"
         Restart=always
         RestartSec=30
         WorkingDirectory=#{HOMEBREW_PREFIX}/var
@@ -737,8 +737,8 @@ RSpec.describe Homebrew::Service do
         StandardError=append:#{HOMEBREW_PREFIX}/var/log/beanstalkd.error.log
         Environment="PATH=#{std_path}"
         Environment="FOO=BAR"
-      EOS
-      expect(unit).to eq(unit_expect.strip)
+      SYSTEMD
+      expect(unit).to eq(unit_expect)
     end
 
     it "returns valid partial oneshot unit" do
@@ -751,7 +751,7 @@ RSpec.describe Homebrew::Service do
       end
 
       unit = f.service.to_systemd_unit
-      unit_expect = <<~EOS
+      unit_expect = <<~SYSTEMD
         [Unit]
         Description=Homebrew generated unit for formula_name
 
@@ -760,9 +760,9 @@ RSpec.describe Homebrew::Service do
 
         [Service]
         Type=oneshot
-        ExecStart=#{HOMEBREW_PREFIX}/opt/#{name}/bin/beanstalkd
-      EOS
-      expect(unit).to eq(unit_expect.strip)
+        ExecStart="#{HOMEBREW_PREFIX}/opt/#{name}/bin/beanstalkd"
+      SYSTEMD
+      expect(unit).to eq(unit_expect)
     end
 
     it "expands paths" do
@@ -774,7 +774,7 @@ RSpec.describe Homebrew::Service do
       end
 
       unit = f.service.to_systemd_unit
-      unit_expect = <<~EOS
+      unit_expect = <<~SYSTEMD
         [Unit]
         Description=Homebrew generated unit for formula_name
 
@@ -783,10 +783,10 @@ RSpec.describe Homebrew::Service do
 
         [Service]
         Type=simple
-        ExecStart=#{HOMEBREW_PREFIX}/opt/#{name}/bin/beanstalkd
+        ExecStart="#{HOMEBREW_PREFIX}/opt/#{name}/bin/beanstalkd"
         WorkingDirectory=#{Dir.home}
-      EOS
-      expect(unit).to eq(unit_expect.strip)
+      SYSTEMD
+      expect(unit).to eq(unit_expect)
     end
   end
 
@@ -801,7 +801,7 @@ RSpec.describe Homebrew::Service do
       end
 
       unit = f.service.to_systemd_timer
-      unit_expect = <<~EOS
+      unit_expect = <<~SYSTEMD
         [Unit]
         Description=Homebrew generated timer for formula_name
 
@@ -811,8 +811,8 @@ RSpec.describe Homebrew::Service do
         [Timer]
         Unit=homebrew.formula_name
         OnUnitActiveSec=5
-      EOS
-      expect(unit).to eq(unit_expect.strip)
+      SYSTEMD
+      expect(unit).to eq(unit_expect)
     end
 
     it "returns valid partial timer" do
@@ -824,7 +824,7 @@ RSpec.describe Homebrew::Service do
       end
 
       unit = f.service.to_systemd_timer
-      unit_expect = <<~EOS
+      unit_expect = <<~SYSTEMD
         [Unit]
         Description=Homebrew generated timer for formula_name
 
@@ -833,7 +833,8 @@ RSpec.describe Homebrew::Service do
 
         [Timer]
         Unit=homebrew.formula_name
-      EOS
+
+      SYSTEMD
       expect(unit).to eq(unit_expect)
     end
 
@@ -872,7 +873,7 @@ RSpec.describe Homebrew::Service do
         end
 
         unit = f.service.to_systemd_timer
-        unit_expect = <<~EOS
+        unit_expect = <<~SYSTEMD
           [Unit]
           Description=Homebrew generated timer for formula_name
 
@@ -883,8 +884,8 @@ RSpec.describe Homebrew::Service do
           Unit=homebrew.formula_name
           Persistent=true
           OnCalendar=#{calendar}
-        EOS
-        expect(unit).to eq(unit_expect.chomp)
+        SYSTEMD
+        expect(unit).to eq(unit_expect)
       end
     end
   end

@@ -60,6 +60,11 @@ RSpec.describe Formula do
       expect { klass.new }.to raise_error(ArgumentError)
     end
 
+    specify "formula instantiation without a subclass" do
+      expect { described_class.new(name, path, spec) }
+        .to raise_error(RuntimeError, "Do not call `Formula.new' directly without a subclass.")
+    end
+
     context "when in a Tap" do
       let(:tap) { Tap.fetch("foo", "bar") }
       let(:path) { (tap.path/"Formula/#{name}.rb") }
@@ -699,16 +704,16 @@ RSpec.describe Formula do
     expect(f.livecheck.regex).to eq(/test-v?(\d+(?:\.\d+)+)\.t/i)
   end
 
-  describe "#livecheckable?" do
-    specify "no livecheck block defined" do
+  describe "#livecheck_defined?" do
+    specify "no `livecheck` block defined" do
       f = formula do
         url "https://brew.sh/test-1.0.tbz"
       end
 
-      expect(f.livecheckable?).to be false
+      expect(f.livecheck_defined?).to be false
     end
 
-    specify "livecheck block defined" do
+    specify "`livecheck` block defined" do
       f = formula do
         url "https://brew.sh/test-1.0.tbz"
         livecheck do
@@ -716,7 +721,7 @@ RSpec.describe Formula do
         end
       end
 
-      expect(f.livecheckable?).to be true
+      expect(f.livecheck_defined?).to be true
     end
 
     specify "livecheck references Formula URL" do
@@ -1892,9 +1897,9 @@ RSpec.describe Formula do
 
     it "generates completion scripts" do
       f.brew { f.install }
-      expect(f.bash_completion/"testball").to be_a_file
-      expect(f.zsh_completion/"_testball").to be_a_file
-      expect(f.fish_completion/"testball.fish").to be_a_file
+      expect(f.bash_completion/"foo").to be_a_file
+      expect(f.zsh_completion/"_foo").to be_a_file
+      expect(f.fish_completion/"foo.fish").to be_a_file
     end
   end
 

@@ -42,7 +42,7 @@ module Homebrew
         end
         raise UsageError, "No marking option specified." if installed_on_request.nil?
 
-        formulae, casks = args.named.to_formulae_to_casks
+        formulae, casks = T.cast(args.named.to_formulae_to_casks, [T::Array[Formula], T::Array[Cask::Cask]])
         formulae_not_installed = formulae.reject(&:any_version_installed?)
         casks_not_installed = casks.reject(&:installed?)
         if formulae_not_installed.any? || casks_not_installed.any?

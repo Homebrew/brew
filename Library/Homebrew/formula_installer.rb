@@ -84,7 +84,7 @@ class FormulaInstaller
     formula,
     link_keg: false,
     installed_as_dependency: false,
-    installed_on_request: true,
+    installed_on_request: false,
     show_header: false,
     build_bottle: false,
     skip_post_install: false,
@@ -254,8 +254,12 @@ class FormulaInstaller
       when :deprecated
         opoo message
       when :disabled
-        GitHub::Actions.puts_annotation_if_env_set(:error, message)
-        raise CannotInstallFormulaError, message
+        if force?
+          opoo message
+        else
+          GitHub::Actions.puts_annotation_if_env_set(:error, message)
+          raise CannotInstallFormulaError, message
+        end
       end
     end
 
@@ -1317,6 +1321,7 @@ on_request: installed_on_request?, options:)
 
       formula.fetch_patches
       formula.resources.each(&:fetch)
+      downloadable_object = downloadable
 
       false
     end

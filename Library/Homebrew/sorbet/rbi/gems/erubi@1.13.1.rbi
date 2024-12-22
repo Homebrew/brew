@@ -67,44 +67,49 @@ class Erubi::Engine
 
   private
 
+  # :nocov:
+  #
+  # source://erubi//lib/erubi.rb#209
+  def _dup_string_if_frozen(string); end
+
   # Add ruby code to the template
   #
-  # source://erubi//lib/erubi.rb#223
+  # source://erubi//lib/erubi.rb#232
   def add_code(code); end
 
   # Add the given ruby expression result to the template,
   # escaping it based on the indicator given and escape flag.
   #
-  # source://erubi//lib/erubi.rb#232
+  # source://erubi//lib/erubi.rb#241
   def add_expression(indicator, code); end
 
   # Add the result of Ruby expression to the template
   #
-  # source://erubi//lib/erubi.rb#241
+  # source://erubi//lib/erubi.rb#250
   def add_expression_result(code); end
 
   # Add the escaped result of Ruby expression to the template
   #
-  # source://erubi//lib/erubi.rb#246
+  # source://erubi//lib/erubi.rb#255
   def add_expression_result_escaped(code); end
 
   # Add the given postamble to the src.  Can be overridden in subclasses
   # to make additional changes to src that depend on the current state.
   #
-  # source://erubi//lib/erubi.rb#252
+  # source://erubi//lib/erubi.rb#261
   def add_postamble(postamble); end
 
   # Add raw text to the template.  Modifies argument if argument is mutable as a memory optimization.
   # Must be called with a string, cannot be called with nil (Rails's subclass depends on it).
   #
-  # source://erubi//lib/erubi.rb#210
+  # source://erubi//lib/erubi.rb#222
   def add_text(text); end
 
   # Raise an exception, as the base engine class does not support handling other indicators.
   #
   # @raise [ArgumentError]
   #
-  # source://erubi//lib/erubi.rb#258
+  # source://erubi//lib/erubi.rb#267
   def handle(indicator, code, tailch, rspace, lspace); end
 
   # Make sure that any current expression has been terminated.
@@ -112,7 +117,7 @@ class Erubi::Engine
   # the chain_appends option is used, expressions may not be
   # terminated.
   #
-  # source://erubi//lib/erubi.rb#286
+  # source://erubi//lib/erubi.rb#295
   def terminate_expression; end
 
   # Make sure the buffer variable is the target of the next append
@@ -122,7 +127,7 @@ class Erubi::Engine
   # This method should only be called if the block will result in
   # code where << will append to the bufvar.
   #
-  # source://erubi//lib/erubi.rb#268
+  # source://erubi//lib/erubi.rb#277
   def with_buffer; end
 end
 

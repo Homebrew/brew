@@ -2,8 +2,6 @@ name: actionlint
 
 on:
   push:
-    branches:
-      - master
     paths:
       - '.github/workflows/*.ya?ml'
       - '.github/actionlint.yaml'
@@ -11,7 +9,6 @@ on:
     paths:
       - '.github/workflows/*.ya?ml'
       - '.github/actionlint.yaml'
-  merge_group:
 
 env:
   HOMEBREW_DEVELOPER: 1
@@ -60,7 +57,7 @@ jobs:
           zizmor --format sarif . > results.sarif || true
 
       - name: Upload SARIF file
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@6f51ac03b9356f520e9adb1b1b7802705f340c2b # v4.5.0
         with:
           name: results.sarif
           path: results.sarif
@@ -75,13 +72,13 @@ jobs:
       security-events: write
     steps:
       - name: Download SARIF file
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
         with:
           name: results.sarif
           path: results.sarif
 
       - name: Upload SARIF file
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@48ab28a6f5dbc2a99bf1e0131198dd8f1df78169 # v3.28.0
         with:
           sarif_file: results.sarif
           category: zizmor

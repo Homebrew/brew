@@ -178,30 +178,30 @@ RSpec.describe Homebrew::Livecheck::SkipConditions do
           formula: "test_deprecated",
           status:  "deprecated",
           meta:    {
-            livecheckable: false,
+            livecheck_defined: false,
           },
         },
         disabled:            {
           formula: "test_disabled",
           status:  "disabled",
           meta:    {
-            livecheckable: false,
+            livecheck_defined: false,
           },
         },
         versioned:           {
           formula: "test@0.0.1",
           status:  "versioned",
           meta:    {
-            livecheckable: false,
+            livecheck_defined: false,
           },
         },
         head_only:           {
           formula:  "test_head_only",
           status:   "error",
-          messages: ["HEAD only formula must be installed to be livecheckable"],
+          messages: ["HEAD only formula must be installed to be checkable"],
           meta:     {
-            head_only:     true,
-            livecheckable: false,
+            livecheck_defined: false,
+            head_only:         true,
           },
         },
         gist:                {
@@ -209,7 +209,7 @@ RSpec.describe Homebrew::Livecheck::SkipConditions do
           status:   "skipped",
           messages: ["Stable URL is a GitHub Gist"],
           meta:     {
-            livecheckable: false,
+            livecheck_defined: false,
           },
         },
         google_code_archive: {
@@ -217,7 +217,7 @@ RSpec.describe Homebrew::Livecheck::SkipConditions do
           status:   "skipped",
           messages: ["Stable URL is from Google Code Archive"],
           meta:     {
-            livecheckable: false,
+            livecheck_defined: false,
           },
         },
         internet_archive:    {
@@ -225,14 +225,14 @@ RSpec.describe Homebrew::Livecheck::SkipConditions do
           status:   "skipped",
           messages: ["Stable URL is from Internet Archive"],
           meta:     {
-            livecheckable: false,
+            livecheck_defined: false,
           },
         },
         skip:                {
           formula: "test_skip",
           status:  "skipped",
           meta:    {
-            livecheckable: true,
+            livecheck_defined: true,
           },
         },
         skip_with_message:   {
@@ -240,7 +240,7 @@ RSpec.describe Homebrew::Livecheck::SkipConditions do
           status:   "skipped",
           messages: ["Not maintained"],
           meta:     {
-            livecheckable: true,
+            livecheck_defined: true,
           },
         },
       },
@@ -249,14 +249,14 @@ RSpec.describe Homebrew::Livecheck::SkipConditions do
           cask:   "test_deprecated",
           status: "deprecated",
           meta:   {
-            livecheckable: false,
+            livecheck_defined: false,
           },
         },
         disabled:          {
           cask:   "test_disabled",
           status: "disabled",
           meta:   {
-            livecheckable: false,
+            livecheck_defined: false,
           },
         },
         extract_plist:     {
@@ -264,28 +264,28 @@ RSpec.describe Homebrew::Livecheck::SkipConditions do
           status:   "skipped",
           messages: ["Use `--extract-plist` to enable checking multiple casks with ExtractPlist strategy"],
           meta:     {
-            livecheckable: true,
+            livecheck_defined: true,
           },
         },
         latest:            {
           cask:   "test_latest",
           status: "latest",
           meta:   {
-            livecheckable: false,
+            livecheck_defined: false,
           },
         },
         unversioned:       {
           cask:   "test_unversioned",
           status: "unversioned",
           meta:   {
-            livecheckable: false,
+            livecheck_defined: false,
           },
         },
         skip:              {
           cask:   "test_skip",
           status: "skipped",
           meta:   {
-            livecheckable: true,
+            livecheck_defined: true,
           },
         },
         skip_with_message: {
@@ -293,7 +293,7 @@ RSpec.describe Homebrew::Livecheck::SkipConditions do
           status:   "skipped",
           messages: ["Not maintained"],
           meta:     {
-            livecheckable: true,
+            livecheck_defined: true,
           },
         },
       },
@@ -301,21 +301,21 @@ RSpec.describe Homebrew::Livecheck::SkipConditions do
   end
 
   describe "::skip_information" do
-    context "when a formula without a livecheckable is deprecated" do
+    context "when a formula without a `livecheck` block is deprecated" do
       it "skips" do
         expect(skip_conditions.skip_information(formulae[:deprecated]))
           .to eq(status_hashes[:formula][:deprecated])
       end
     end
 
-    context "when a formula without a livecheckable is disabled" do
+    context "when a formula without a `livecheck` block is disabled" do
       it "skips" do
         expect(skip_conditions.skip_information(formulae[:disabled]))
           .to eq(status_hashes[:formula][:disabled])
       end
     end
 
-    context "when a formula without a livecheckable is versioned" do
+    context "when a formula without a `livecheck` block is versioned" do
       it "skips" do
         expect(skip_conditions.skip_information(formulae[:versioned]))
           .to eq(status_hashes[:formula][:versioned])
@@ -329,21 +329,21 @@ RSpec.describe Homebrew::Livecheck::SkipConditions do
       end
     end
 
-    context "when a formula without a livecheckable has a GitHub Gist stable URL" do
+    context "when a formula without a `livecheck` block has a GitHub Gist stable URL" do
       it "skips" do
         expect(skip_conditions.skip_information(formulae[:gist]))
           .to eq(status_hashes[:formula][:gist])
       end
     end
 
-    context "when a formula without a livecheckable has a Google Code Archive stable URL" do
+    context "when a formula without a `livecheck` block has a Google Code Archive stable URL" do
       it "skips" do
         expect(skip_conditions.skip_information(formulae[:google_code_archive]))
           .to eq(status_hashes[:formula][:google_code_archive])
       end
     end
 
-    context "when a formula without a livecheckable has an Internet Archive stable URL" do
+    context "when a formula without a `livecheck` block has an Internet Archive stable URL" do
       it "skips" do
         expect(skip_conditions.skip_information(formulae[:internet_archive]))
           .to eq(status_hashes[:formula][:internet_archive])
@@ -360,14 +360,14 @@ RSpec.describe Homebrew::Livecheck::SkipConditions do
       end
     end
 
-    context "when a cask without a livecheckable is deprecated" do
+    context "when a cask without a `livecheck` block is deprecated" do
       it "skips" do
         expect(skip_conditions.skip_information(casks[:deprecated]))
           .to eq(status_hashes[:cask][:deprecated])
       end
     end
 
-    context "when a cask without a livecheckable is disabled" do
+    context "when a cask without a `livecheck` block is disabled" do
       it "skips" do
         expect(skip_conditions.skip_information(casks[:disabled]))
           .to eq(status_hashes[:cask][:disabled])
@@ -381,14 +381,14 @@ RSpec.describe Homebrew::Livecheck::SkipConditions do
       end
     end
 
-    context "when a cask without a livecheckable has `version :latest`" do
+    context "when a cask without a `livecheck` block has `version :latest`" do
       it "skips" do
         expect(skip_conditions.skip_information(casks[:latest]))
           .to eq(status_hashes[:cask][:latest])
       end
     end
 
-    context "when a cask without a livecheckable has an unversioned URL" do
+    context "when a cask without a `livecheck` block has an unversioned URL" do
       it "skips" do
         expect(skip_conditions.skip_information(casks[:unversioned]))
           .to eq(status_hashes[:cask][:unversioned])
@@ -417,21 +417,21 @@ RSpec.describe Homebrew::Livecheck::SkipConditions do
   describe "::referenced_skip_information" do
     let(:original_name) { "original" }
 
-    context "when a formula without a livecheckable is deprecated" do
+    context "when a formula without a `livecheck` block is deprecated" do
       it "errors" do
         expect { skip_conditions.referenced_skip_information(formulae[:deprecated], original_name) }
           .to raise_error(RuntimeError, "Referenced formula (test_deprecated) is skipped as deprecated")
       end
     end
 
-    context "when a formula without a livecheckable is disabled" do
+    context "when a formula without a `livecheck` block is disabled" do
       it "errors" do
         expect { skip_conditions.referenced_skip_information(formulae[:disabled], original_name) }
           .to raise_error(RuntimeError, "Referenced formula (test_disabled) is skipped as disabled")
       end
     end
 
-    context "when a formula without a livecheckable is versioned" do
+    context "when a formula without a `livecheck` block is versioned" do
       it "errors" do
         expect { skip_conditions.referenced_skip_information(formulae[:versioned], original_name) }
           .to raise_error(RuntimeError, "Referenced formula (test@0.0.1) is skipped as versioned")
@@ -445,21 +445,21 @@ RSpec.describe Homebrew::Livecheck::SkipConditions do
       end
     end
 
-    context "when a formula without a livecheckable has a GitHub Gist stable URL" do
+    context "when a formula without a `livecheck` block has a GitHub Gist stable URL" do
       it "errors" do
         expect { skip_conditions.referenced_skip_information(formulae[:gist], original_name) }
           .to raise_error(RuntimeError, "Referenced formula (test_gist) is automatically skipped")
       end
     end
 
-    context "when a formula without a livecheckable has a Google Code Archive stable URL" do
+    context "when a formula without a `livecheck` block has a Google Code Archive stable URL" do
       it "errors" do
         expect { skip_conditions.referenced_skip_information(formulae[:google_code_archive], original_name) }
           .to raise_error(RuntimeError, "Referenced formula (test_google_code_archive) is automatically skipped")
       end
     end
 
-    context "when a formula without a livecheckable has an Internet Archive stable URL" do
+    context "when a formula without a `livecheck` block has an Internet Archive stable URL" do
       it "errors" do
         expect { skip_conditions.referenced_skip_information(formulae[:internet_archive], original_name) }
           .to raise_error(RuntimeError, "Referenced formula (test_internet_archive) is automatically skipped")
@@ -476,14 +476,14 @@ RSpec.describe Homebrew::Livecheck::SkipConditions do
       end
     end
 
-    context "when a cask without a livecheckable is deprecated" do
+    context "when a cask without a `livecheck` block is deprecated" do
       it "errors" do
         expect { skip_conditions.referenced_skip_information(casks[:deprecated], original_name) }
           .to raise_error(RuntimeError, "Referenced cask (test_deprecated) is skipped as deprecated")
       end
     end
 
-    context "when a cask without a livecheckable is disabled" do
+    context "when a cask without a `livecheck` block is disabled" do
       it "errors" do
         expect { skip_conditions.referenced_skip_information(casks[:disabled], original_name) }
           .to raise_error(RuntimeError, "Referenced cask (test_disabled) is skipped as disabled")
@@ -499,14 +499,14 @@ RSpec.describe Homebrew::Livecheck::SkipConditions do
       end
     end
 
-    context "when a cask without a livecheckable has `version :latest`" do
+    context "when a cask without a `livecheck` block has `version :latest`" do
       it "errors" do
         expect { skip_conditions.referenced_skip_information(casks[:latest], original_name) }
           .to raise_error(RuntimeError, "Referenced cask (test_latest) is skipped as latest")
       end
     end
 
-    context "when a cask without a livecheckable has an unversioned URL" do
+    context "when a cask without a `livecheck` block has an unversioned URL" do
       it "errors" do
         expect { skip_conditions.referenced_skip_information(casks[:unversioned], original_name) }
           .to raise_error(RuntimeError, "Referenced cask (test_unversioned) is skipped as unversioned")
@@ -533,7 +533,7 @@ RSpec.describe Homebrew::Livecheck::SkipConditions do
   end
 
   describe "::print_skip_information" do
-    context "when a formula without a livecheckable is deprecated" do
+    context "when a formula without a `livecheck` block is deprecated" do
       it "prints skip information" do
         expect { skip_conditions.print_skip_information(status_hashes[:formula][:deprecated]) }
           .to output("test_deprecated: deprecated\n").to_stdout
@@ -541,7 +541,7 @@ RSpec.describe Homebrew::Livecheck::SkipConditions do
       end
     end
 
-    context "when a formula without a livecheckable is disabled" do
+    context "when a formula without a `livecheck` block is disabled" do
       it "prints skip information" do
         expect { skip_conditions.print_skip_information(status_hashes[:formula][:disabled]) }
           .to output("test_disabled: disabled\n").to_stdout
@@ -549,7 +549,7 @@ RSpec.describe Homebrew::Livecheck::SkipConditions do
       end
     end
 
-    context "when a formula without a livecheckable is versioned" do
+    context "when a formula without a `livecheck` block is versioned" do
       it "prints skip information" do
         expect { skip_conditions.print_skip_information(status_hashes[:formula][:versioned]) }
           .to output("test@0.0.1: versioned\n").to_stdout
@@ -560,7 +560,7 @@ RSpec.describe Homebrew::Livecheck::SkipConditions do
     context "when a formula is HEAD-only and not installed" do
       it "prints skip information" do
         expect { skip_conditions.print_skip_information(status_hashes[:formula][:head_only]) }
-          .to output("test_head_only: HEAD only formula must be installed to be livecheckable\n").to_stdout
+          .to output("test_head_only: HEAD only formula must be installed to be checkable\n").to_stdout
           .and not_to_output.to_stderr
       end
     end
@@ -601,7 +601,7 @@ RSpec.describe Homebrew::Livecheck::SkipConditions do
       end
     end
 
-    context "when the cask is deprecated without a livecheckable" do
+    context "when the cask is deprecated without a `livecheck` block" do
       it "prints skip information" do
         expect { skip_conditions.print_skip_information(status_hashes[:cask][:deprecated]) }
           .to output("test_deprecated: deprecated\n").to_stdout
@@ -609,7 +609,7 @@ RSpec.describe Homebrew::Livecheck::SkipConditions do
       end
     end
 
-    context "when the cask is disabled without a livecheckable" do
+    context "when the cask is disabled without a `livecheck` block" do
       it "prints skip information" do
         expect { skip_conditions.print_skip_information(status_hashes[:cask][:disabled]) }
           .to output("test_disabled: disabled\n").to_stdout
@@ -617,7 +617,7 @@ RSpec.describe Homebrew::Livecheck::SkipConditions do
       end
     end
 
-    context "when the cask has `version :latest` without a livecheckable" do
+    context "when the cask has `version :latest` without a `livecheck` block" do
       it "prints skip information" do
         expect { skip_conditions.print_skip_information(status_hashes[:cask][:latest]) }
           .to output("test_latest: latest\n").to_stdout
@@ -625,7 +625,7 @@ RSpec.describe Homebrew::Livecheck::SkipConditions do
       end
     end
 
-    context "when the cask has an unversioned URL without a livecheckable" do
+    context "when the cask has an unversioned URL without a `livecheck` block" do
       it "prints skip information" do
         expect { skip_conditions.print_skip_information(status_hashes[:cask][:unversioned]) }
           .to output("test_unversioned: unversioned\n").to_stdout

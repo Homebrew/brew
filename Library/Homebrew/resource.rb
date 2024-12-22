@@ -29,7 +29,7 @@ class Resource
     @name = name
     @patches = []
     @livecheck = Livecheck.new(self)
-    @livecheckable = false
+    @livecheck_defined = false
     @insecure = false
     instance_eval(&block) if block
   end
@@ -51,20 +51,6 @@ class Resource
   def owner=(owner)
     @owner = owner
     patches.each { |p| p.owner = owner }
-
-    return if !owner.respond_to?(:full_name) || owner.full_name != "ca-certificates"
-    return if Homebrew::EnvConfig.no_insecure_redirect?
-
-    @insecure = !specs[:bottle] && (DevelopmentTools.ca_file_substitution_required? ||
-                                    DevelopmentTools.curl_substitution_required?)
-    return if @url.nil?
-
-    specs = if @insecure
-      @url.specs.merge({ insecure: true })
-    else
-      @url.specs.except(:insecure)
-    end
-    @url = URL.new(@url.to_s, specs)
   end
 
   # Removes /s from resource names; this allows Go package names
@@ -156,7 +142,7 @@ class Resource
   end
 
   # {Livecheck} can be used to check for newer versions of the software.
-  # This method evaluates the DSL specified in the livecheck block of the
+  # This method evaluates the DSL specified in the `livecheck` block of the
   # {Resource} (if it exists) and sets the instance variables of a {Livecheck}
   # object accordingly. This is used by `brew livecheck` to check for newer
   # versions of the software.
@@ -174,15 +160,28 @@ class Resource
   def livecheck(&block)
     return @livecheck unless block
 
-    @livecheckable = true
+    @livecheck_defined = true
     @livecheck.instance_eval(&block)
   end
 
   # Whether a livecheck specification is defined or not.
-  # It returns true when a `livecheck` block is present in the {Resource} and
-  # false otherwise and is used by livecheck.
+  #
+  # It returns `true` when a `livecheck` block is present in the {Resource}
+  # and `false` otherwise.
+  sig { returns(T::Boolean) }
+  def livecheck_defined?
+    @livecheck_defined == true
+  end
+
+  # Whether a livecheck specification is defined or not. This is a legacy alias
+  # for `#livecheck_defined?`.
+  #
+  # It returns `true` when a `livecheck` block is present in the {Resource}
+  # and `false` otherwise.
+  sig { returns(T::Boolean) }
   def livecheckable?
-    @livecheckable == true
+    # odeprecated "`livecheckable?`", "`livecheck_defined?`"
+    @livecheck_defined == true
   end
 
   def sha256(val)

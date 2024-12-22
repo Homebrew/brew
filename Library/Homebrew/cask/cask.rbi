@@ -44,6 +44,8 @@ module Cask
 
     def livecheck; end
 
+    def livecheck_defined?; end
+
     def livecheckable?; end
 
     def name; end

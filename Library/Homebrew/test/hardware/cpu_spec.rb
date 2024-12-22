@@ -29,6 +29,7 @@ RSpec.describe Hardware::CPU do
         :amd_k12,
         :arm,
         :arm_blizzard_avalanche,
+        :arm_brava,
         :arm_donan,
         :arm_firestorm_icestorm,
         :arm_hurricane_zephyr,

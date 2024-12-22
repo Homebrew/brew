@@ -3068,16 +3068,6 @@ to one or more of the following environment variables:
 `HOMEBREW_BUNDLE_MAS_SKIP`, `HOMEBREW_BUNDLE_WHALEBREW_SKIP`,
 `HOMEBREW_BUNDLE_TAP_SKIP`.
 
-`brew bundle` will output a `Brewfile.lock.json` in the same directory as the
-`Brewfile` if all dependencies are installed successfully. This contains
-dependency and system status information which can be useful for debugging `brew
-bundle` failures and replicating a "last known good build" state. You can
-opt-out of this behaviour by setting the `HOMEBREW_BUNDLE_NO_LOCK` environment
-variable or passing the `--no-lock` option. You may wish to check this file into
-the same version control system as your `Brewfile` (or ensure your version
-control system ignores it if you'd prefer to rely on debugging information from
-a local machine).
-
 `brew bundle dump`
 
 : Write all installed casks/formulae/images/taps into a `Brewfile` in the
@@ -3147,10 +3137,6 @@ flags which will help with finding keg-only dependencies like `openssl`,
 : `install` performs cleanup operation, same as running `cleanup --force`. This
   is enabled by default if `HOMEBREW_BUNDLE_INSTALL_CLEANUP` is set and
   `--global` is passed.
-
-`--no-lock`
-
-: `install` does not output a `Brewfile.lock.json`.
 
 `--all`
 
@@ -4189,8 +4175,8 @@ Homebrew's maintainers are Alexander Bayandin, Bevan Kay, Bo Anderson, Branch
 Vincent, Caleb Xu, Carlo Cabrera, Daeho Ro, Douglas Eichelberger, Dustin
 Rodrigues, Eric Knibbe, FX Coudert, Issy Long, Justin Krehel, Klaus Hipp, Markus
 Reiter, Michael Cho, Michka Popoff, Mike McQuaid, Nanda H Krishna, Patrick
-Linnane, Rui Chen, Ruoyu Zhong, Rylan Polster, Sam Ford, Sean Molenaar, Thierry
-Moisan, Timothy Sutton, William Woodruff and Štefan Baebler.
+Linnane, Rui Chen, Ruoyu Zhong, Rylan Polster, Sam Ford, Sean Molenaar, Štefan
+Baebler, Thierry Moisan, Timothy Sutton and William Woodruff.
 
 Former maintainers with significant contributions include Miccal Matthews, Misty
 De Méo, Shaun Jackman, Vítor Galvão, Claudia Pellegrino, Seeker, Jan Viljanen,

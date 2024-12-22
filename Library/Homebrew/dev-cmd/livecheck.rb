@@ -60,7 +60,7 @@ module Homebrew
 
         formulae_and_casks_to_check = Homebrew.with_no_api_env do
           if args.tap
-            tap = Tap.fetch(T.must(args.tap))
+            tap = Tap.fetch(args.tap)
             formulae = args.cask? ? [] : tap.formula_files.map { |path| Formulary.factory(path) }
             casks = args.formula? ? [] : tap.cask_files.map { |path| Cask::CaskLoader.load(path) }
             formulae + casks

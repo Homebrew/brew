@@ -9,14 +9,14 @@ module Homebrew
       sig {
         params(
           package_or_resource: T.any(Formula, Cask::Cask, Resource),
-          livecheckable:       T::Boolean,
+          livecheck_defined:   T::Boolean,
           full_name:           T::Boolean,
           verbose:             T::Boolean,
         ).returns(T::Hash[Symbol, T.untyped])
       }
       private_class_method def self.package_or_resource_skip(
         package_or_resource,
-        livecheckable,
+        livecheck_defined,
         full_name: false,
         verbose: false
       )
@@ -32,7 +32,7 @@ module Homebrew
 
         skip_message = if package_or_resource.livecheck.skip_msg.present?
           package_or_resource.livecheck.skip_msg
-        elsif !livecheckable
+        elsif !livecheck_defined
           if stable_from_google_code_archive
             "Stable URL is from Google Code Archive"
           elsif stable_from_internet_archive
@@ -50,19 +50,19 @@ module Homebrew
 
       sig {
         params(
-          formula:        Formula,
-          _livecheckable: T::Boolean,
-          full_name:      T::Boolean,
-          verbose:        T::Boolean,
+          formula:            Formula,
+          _livecheck_defined: T::Boolean,
+          full_name:          T::Boolean,
+          verbose:            T::Boolean,
         ).returns(T::Hash[Symbol, T.untyped])
       }
-      private_class_method def self.formula_head_only(formula, _livecheckable, full_name: false, verbose: false)
+      private_class_method def self.formula_head_only(formula, _livecheck_defined, full_name: false, verbose: false)
         return {} if !formula.head_only? || formula.any_version_installed?
 
         Livecheck.status_hash(
           formula,
           "error",
-          ["HEAD only formula must be installed to be livecheckable"],
+          ["HEAD only formula must be installed to be checkable"],
           full_name:,
           verbose:,
         )
@@ -70,86 +70,86 @@ module Homebrew
 
       sig {
         params(
-          formula:       Formula,
-          livecheckable: T::Boolean,
-          full_name:     T::Boolean,
-          verbose:       T::Boolean,
+          formula:           Formula,
+          livecheck_defined: T::Boolean,
+          full_name:         T::Boolean,
+          verbose:           T::Boolean,
         ).returns(T::Hash[Symbol, T.untyped])
       }
-      private_class_method def self.formula_deprecated(formula, livecheckable, full_name: false, verbose: false)
-        return {} if !formula.deprecated? || livecheckable
+      private_class_method def self.formula_deprecated(formula, livecheck_defined, full_name: false, verbose: false)
+        return {} if !formula.deprecated? || livecheck_defined
 
         Livecheck.status_hash(formula, "deprecated", full_name:, verbose:)
       end
 
       sig {
         params(
-          formula:       Formula,
-          livecheckable: T::Boolean,
-          full_name:     T::Boolean,
-          verbose:       T::Boolean,
+          formula:           Formula,
+          livecheck_defined: T::Boolean,
+          full_name:         T::Boolean,
+          verbose:           T::Boolean,
         ).returns(T::Hash[Symbol, T.untyped])
       }
-      private_class_method def self.formula_disabled(formula, livecheckable, full_name: false, verbose: false)
-        return {} if !formula.disabled? || livecheckable
+      private_class_method def self.formula_disabled(formula, livecheck_defined, full_name: false, verbose: false)
+        return {} if !formula.disabled? || livecheck_defined
 
         Livecheck.status_hash(formula, "disabled", full_name:, verbose:)
       end
 
       sig {
         params(
-          formula:       Formula,
-          livecheckable: T::Boolean,
-          full_name:     T::Boolean,
-          verbose:       T::Boolean,
+          formula:           Formula,
+          livecheck_defined: T::Boolean,
+          full_name:         T::Boolean,
+          verbose:           T::Boolean,
         ).returns(T::Hash[Symbol, T.untyped])
       }
-      private_class_method def self.formula_versioned(formula, livecheckable, full_name: false, verbose: false)
-        return {} if !formula.versioned_formula? || livecheckable
+      private_class_method def self.formula_versioned(formula, livecheck_defined, full_name: false, verbose: false)
+        return {} if !formula.versioned_formula? || livecheck_defined
 
         Livecheck.status_hash(formula, "versioned", full_name:, verbose:)
       end
 
       sig {
         params(
-          cask:          Cask::Cask,
-          livecheckable: T::Boolean,
-          full_name:     T::Boolean,
-          verbose:       T::Boolean,
+          cask:              Cask::Cask,
+          livecheck_defined: T::Boolean,
+          full_name:         T::Boolean,
+          verbose:           T::Boolean,
         ).returns(T::Hash[Symbol, T.untyped])
       }
-      private_class_method def self.cask_deprecated(cask, livecheckable, full_name: false, verbose: false)
-        return {} if !cask.deprecated? || livecheckable
+      private_class_method def self.cask_deprecated(cask, livecheck_defined, full_name: false, verbose: false)
+        return {} if !cask.deprecated? || livecheck_defined
 
         Livecheck.status_hash(cask, "deprecated", full_name:, verbose:)
       end
 
       sig {
         params(
-          cask:          Cask::Cask,
-          livecheckable: T::Boolean,
-          full_name:     T::Boolean,
-          verbose:       T::Boolean,
+          cask:              Cask::Cask,
+          livecheck_defined: T::Boolean,
+          full_name:         T::Boolean,
+          verbose:           T::Boolean,
         ).returns(T::Hash[Symbol, T.untyped])
       }
-      private_class_method def self.cask_disabled(cask, livecheckable, full_name: false, verbose: false)
-        return {} if !cask.disabled? || livecheckable
+      private_class_method def self.cask_disabled(cask, livecheck_defined, full_name: false, verbose: false)
+        return {} if !cask.disabled? || livecheck_defined
 
         Livecheck.status_hash(cask, "disabled", full_name:, verbose:)
       end
 
       sig {
         params(
-          cask:           Cask::Cask,
-          _livecheckable: T::Boolean,
-          full_name:      T::Boolean,
-          verbose:        T::Boolean,
-          extract_plist:  T::Boolean,
+          cask:               Cask::Cask,
+          _livecheck_defined: T::Boolean,
+          full_name:          T::Boolean,
+          verbose:            T::Boolean,
+          extract_plist:      T::Boolean,
         ).returns(T::Hash[Symbol, T.untyped])
       }
       private_class_method def self.cask_extract_plist(
         cask,
-        _livecheckable,
+        _livecheck_defined,
         full_name: false,
         verbose: false,
         extract_plist: false
@@ -167,28 +167,28 @@ module Homebrew
 
       sig {
         params(
-          cask:          Cask::Cask,
-          livecheckable: T::Boolean,
-          full_name:     T::Boolean,
-          verbose:       T::Boolean,
+          cask:              Cask::Cask,
+          livecheck_defined: T::Boolean,
+          full_name:         T::Boolean,
+          verbose:           T::Boolean,
         ).returns(T::Hash[Symbol, T.untyped])
       }
-      private_class_method def self.cask_version_latest(cask, livecheckable, full_name: false, verbose: false)
-        return {} if !(cask.present? && cask.version&.latest?) || livecheckable
+      private_class_method def self.cask_version_latest(cask, livecheck_defined, full_name: false, verbose: false)
+        return {} if !(cask.present? && cask.version&.latest?) || livecheck_defined
 
         Livecheck.status_hash(cask, "latest", full_name:, verbose:)
       end
 
       sig {
         params(
-          cask:          Cask::Cask,
-          livecheckable: T::Boolean,
-          full_name:     T::Boolean,
-          verbose:       T::Boolean,
+          cask:              Cask::Cask,
+          livecheck_defined: T::Boolean,
+          full_name:         T::Boolean,
+          verbose:           T::Boolean,
         ).returns(T::Hash[Symbol, T.untyped])
       }
-      private_class_method def self.cask_url_unversioned(cask, livecheckable, full_name: false, verbose: false)
-        return {} if !(cask.present? && cask.url&.unversioned?) || livecheckable
+      private_class_method def self.cask_url_unversioned(cask, livecheck_defined, full_name: false, verbose: false)
+        return {} if !(cask.present? && cask.url&.unversioned?) || livecheck_defined
 
         Livecheck.status_hash(cask, "unversioned", full_name:, verbose:)
       end
@@ -232,7 +232,7 @@ module Homebrew
         ).returns(T::Hash[Symbol, T.untyped])
       }
       def self.skip_information(package_or_resource, full_name: false, verbose: false, extract_plist: true)
-        livecheckable = package_or_resource.livecheckable?
+        livecheck_defined = package_or_resource.livecheck_defined?
 
         checks = case package_or_resource
         when Formula
@@ -246,9 +246,9 @@ module Homebrew
         checks.each do |method_name|
           skip_hash = case method_name
           when :cask_extract_plist
-            send(method_name, package_or_resource, livecheckable, full_name:, verbose:, extract_plist:)
+            send(method_name, package_or_resource, livecheck_defined, full_name:, verbose:, extract_plist:)
           else
-            send(method_name, package_or_resource, livecheckable, full_name:, verbose:)
+            send(method_name, package_or_resource, livecheck_defined, full_name:, verbose:)
           end
           return skip_hash if skip_hash.present?
         end

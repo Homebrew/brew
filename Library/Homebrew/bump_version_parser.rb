@@ -48,5 +48,12 @@ module Homebrew
     def blank?
       @general.blank? && @arm.blank? && @intel.blank?
     end
+
+    sig { params(other: T.untyped).returns(T::Boolean) }
+    def ==(other)
+      return false unless other.is_a?(BumpVersionParser)
+
+      (general == other.general) && (arm == other.arm) && (intel == other.intel)
+    end
   end
 end

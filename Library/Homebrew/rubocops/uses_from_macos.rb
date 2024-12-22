@@ -83,6 +83,7 @@ module RuboCop
           git
           groff
           gzip
+          jq
           less
           mandoc
           openssl

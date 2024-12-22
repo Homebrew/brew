@@ -1,13 +1,10 @@
 // For format details, see https://aka.ms/devcontainer.json.
 {
   "name": "Homebrew/brew",
-  "image": "ghcr.io/homebrew/brew:latest",
-
+  "image": "ghcr.io/homebrew/brew:master",
   "workspaceFolder": "/home/linuxbrew/.linuxbrew/Homebrew",
   "workspaceMount": "source=${localWorkspaceFolder},target=/home/linuxbrew/.linuxbrew/Homebrew,type=bind,consistency=cached",
-
   "onCreateCommand": ".devcontainer/on-create-command.sh",
-
   "customizations": {
     "codespaces": {
       "repositories": {
@@ -43,7 +40,6 @@
       ]
     }
   },
-
   "remoteEnv": {
     "HOMEBREW_GITHUB_API_TOKEN": "${localEnv:GITHUB_TOKEN}"
   }

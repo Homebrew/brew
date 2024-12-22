@@ -304,7 +304,11 @@ module Homebrew
       return unless command_gets_completions? command
 
       command_description = format_description Commands.command_description(command, short: true), fish: true
-      lines = ["__fish_brew_complete_cmd '#{command}' '#{command_description}'"]
+      lines = if COMPLETIONS_EXCLUSION_LIST.include?(command)
+        []
+      else
+        ["__fish_brew_complete_cmd '#{command}' '#{command_description}'"]
+      end
 
       options = command_options(command).sort.filter_map do |opt, desc|
         arg_line = "__fish_brew_complete_arg '#{command}' -l #{opt.sub(/^-+/, "")}"

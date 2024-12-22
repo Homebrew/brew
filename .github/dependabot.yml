@@ -10,7 +10,6 @@ updates:
     # The actions in triage-issues.yml are updated in the Homebrew/.github repo
     ignore:
       - dependency-name: actions/stale
-      - dependency-name: dessant/lock-threads
     groups:
       artifacts:
         patterns:
@@ -22,6 +21,10 @@ updates:
       interval: daily
     allow:
       - dependency-type: all
+    groups:
+      sorbet:
+        patterns:
+          - "sorbet*"
 
   - package-ecosystem: npm
     directory: /

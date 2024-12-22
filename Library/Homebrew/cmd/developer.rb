@@ -24,28 +24,35 @@ module Homebrew
 
       sig { override.void }
       def run
-        env_vars = []
-        env_vars << "HOMEBREW_DEVELOPER" if Homebrew::EnvConfig.developer?
-        env_vars << "HOMEBREW_UPDATE_TO_TAG" if Homebrew::EnvConfig.update_to_tag?
-        env_vars.map! do |var|
-          "#{Tty.bold}#{var}#{Tty.reset}"
-        end
-
         case args.named.first
         when nil, "state"
-          if env_vars.any?
-            verb = (env_vars.count == 1) ? "is" : "are"
-            puts "Developer mode is enabled because #{env_vars.to_sentence} #{verb} set."
+          if Homebrew::EnvConfig.developer?
+            puts "Developer mode is enabled because #{Tty.bold}HOMEBREW_DEVELOPER#{Tty.reset} is set."
           elsif Homebrew::EnvConfig.devcmdrun?
-            puts "Developer mode is enabled."
+            puts "Developer mode is enabled because a developer command or `brew developer on` was run."
           else
             puts "Developer mode is disabled."
           end
+          if Homebrew::EnvConfig.developer? || Homebrew::EnvConfig.devcmdrun?
+            if Homebrew::EnvConfig.update_to_tag?
+              puts "However, `brew update` will update to the latest stable tag because " \
+                   "#{Tty.bold}HOMEBREW_UPDATE_TO_TAG#{Tty.reset} is set."
+            else
+              puts "`brew update` will update to the latest commit on the `master` branch."
+            end
+          else
+            puts "`brew update` will update to the latest stable tag."
+          end
         when "on"
           Homebrew::Settings.write "devcmdrun", true
+          if Homebrew::EnvConfig.update_to_tag?
+            puts "To fully enable developer mode, you must unset #{Tty.bold}HOMEBREW_UPDATE_TO_TAG#{Tty.reset}."
+          end
         when "off"
           Homebrew::Settings.delete "devcmdrun"
-          puts "To fully disable developer mode, you must unset #{env_vars.to_sentence}." if env_vars.any?
+          if Homebrew::EnvConfig.developer?
+            puts "To fully disable developer mode, you must unset #{Tty.bold}HOMEBREW_DEVELOPER#{Tty.reset}."
+          end
         else
           raise UsageError, "unknown subcommand: #{args.named.first}"
         end

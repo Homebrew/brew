@@ -5,7 +5,7 @@ require "rubocops/livecheck"
 RSpec.describe RuboCop::Cop::FormulaAudit::LivecheckSkip do
   subject(:cop) { described_class.new }
 
-  it "reports an offense when a skipped formula's livecheck block contains other information" do
+  it "reports an offense when a skipped formula's `livecheck` block contains other information" do
     expect_offense(<<~RUBY)
       class Foo < Formula
         url "https://brew.sh/foo-1.0.tgz"
@@ -29,7 +29,7 @@ RSpec.describe RuboCop::Cop::FormulaAudit::LivecheckSkip do
     RUBY
   end
 
-  it "reports no offenses when a skipped formula's livecheck block contains no other information" do
+  it "reports no offenses when a skipped formula's `livecheck` block contains no other information" do
     expect_no_offenses(<<~RUBY)
       class Foo < Formula
         url "https://brew.sh/foo-1.0.tgz"

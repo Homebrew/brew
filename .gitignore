@@ -138,6 +138,7 @@
 **/vendor/bundle/ruby/*/gems/tapioca-*/
 **/vendor/bundle/ruby/*/gems/thor-*/
 **/vendor/bundle/ruby/*/gems/unicode-display_width-*/
+**/vendor/bundle/ruby/*/gems/unicode-emoji-*/
 **/vendor/bundle/ruby/*/gems/unparser-*/
 **/vendor/bundle/ruby/*/gems/uri_template-*/
 **/vendor/bundle/ruby/*/gems/vernier-*/

@@ -38,7 +38,7 @@ jobs:
       pull-requests: write
     steps:
       - name: Mark/Close Stale Issues and Pull Requests
-        uses: actions/stale@28ca1036281a5e5922ead5184a1bbf96e5fc984e # v9
+        uses: actions/stale@28ca1036281a5e5922ead5184a1bbf96e5fc984e # v9.0.0
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           days-before-stale: 21
@@ -68,7 +68,7 @@ jobs:
       pull-requests: write
     steps:
       - name: Mark/Close Stale `bump-formula-pr` and `bump-cask-pr` Pull Requests
-        uses: actions/stale@28ca1036281a5e5922ead5184a1bbf96e5fc984e # v9
+        uses: actions/stale@28ca1036281a5e5922ead5184a1bbf96e5fc984e # v9.0.0
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           days-before-stale: 2

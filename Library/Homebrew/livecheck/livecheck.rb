@@ -79,7 +79,7 @@ module Homebrew
       full_name: false,
       debug: false
     )
-      # Check the livecheck block for a formula or cask reference
+      # Check the `livecheck` block for a formula or cask reference
       livecheck = formula_or_cask.livecheck
       livecheck_formula = livecheck.formula
       livecheck_cask = livecheck.cask
@@ -347,7 +347,7 @@ module Homebrew
           newer_than_upstream: is_newer_than_upstream,
         }.compact
         info[:meta] = {
-          livecheckable: formula_or_cask.livecheckable?,
+          livecheck_defined: formula_or_cask.livecheck_defined?,
         }
         info[:meta][:head_only] = true if formula&.head_only?
         info[:meta].merge!(version_info[:meta]) if version_info.present? && version_info.key?(:meta)
@@ -465,7 +465,7 @@ module Homebrew
       status_hash[:messages] = messages if messages.is_a?(Array)
 
       status_hash[:meta] = {
-        livecheckable: package_or_resource.livecheckable?,
+        livecheck_defined: package_or_resource.livecheck_defined?,
       }
       status_hash[:meta][:head_only] = true if formula&.head_only?
 
@@ -478,7 +478,7 @@ module Homebrew
       package_or_resource_s = info[:resource].present? ? "  " : ""
       package_or_resource_s += "#{Tty.blue}#{info[:formula] || info[:cask] || info[:resource]}#{Tty.reset}"
       package_or_resource_s += " (cask)" if ambiguous_cask
-      package_or_resource_s += " (guessed)" if verbose && !info[:meta][:livecheckable]
+      package_or_resource_s += " (guessed)" if verbose && !info[:meta][:livecheck_defined]
 
       current_s = if info[:version][:newer_than_upstream]
         "#{Tty.red}#{info[:version][:current]}#{Tty.reset}"
@@ -608,7 +608,7 @@ module Homebrew
       formula = formula_or_cask if formula_or_cask.is_a?(Formula)
       cask = formula_or_cask if formula_or_cask.is_a?(Cask::Cask)
 
-      has_livecheckable = formula_or_cask.livecheckable?
+      livecheck_defined = formula_or_cask.livecheck_defined?
       livecheck = formula_or_cask.livecheck
       referenced_livecheck = referenced_formula_or_cask&.livecheck
 
@@ -632,7 +632,7 @@ module Homebrew
         elsif cask
           puts "Cask:             #{cask_name(formula_or_cask, full_name:)}"
         end
-        puts "Livecheckable?:   #{has_livecheckable ? "Yes" : "No"}"
+        puts "livecheck block?: #{livecheck_defined ? "Yes" : "No"}"
         puts "Throttle:         #{livecheck_throttle}" if livecheck_throttle
 
         livecheck_references.each do |ref_formula_or_cask|
@@ -736,7 +736,7 @@ module Homebrew
 
         match_version_map.delete_if do |_match, version|
           next true if version.blank?
-          next false if has_livecheckable
+          next false if livecheck_defined
 
           UNSTABLE_VERSION_KEYWORDS.any? do |rejection|
             version.to_s.include?(rejection)
@@ -839,12 +839,12 @@ module Homebrew
       quiet: false,
       verbose: false
     )
-      has_livecheckable = resource.livecheckable?
+      livecheck_defined = resource.livecheck_defined?
 
       if debug
         puts "\n\n"
         puts "Resource:         #{resource.name}"
-        puts "Livecheckable?:   #{has_livecheckable ? "Yes" : "No"}"
+        puts "livecheck block?: #{livecheck_defined ? "Yes" : "No"}"
       end
 
       resource_version_info = {}
@@ -939,7 +939,7 @@ module Homebrew
 
         match_version_map.delete_if do |_match, version|
           next true if version.blank?
-          next false if has_livecheckable
+          next false if livecheck_defined
 
           UNSTABLE_VERSION_KEYWORDS.any? do |rejection|
             version.to_s.include?(rejection)
@@ -978,7 +978,10 @@ module Homebrew
           },
         }
 
-        resource_version_info[:meta] = { livecheckable: has_livecheckable, url: {} }
+        resource_version_info[:meta] = {
+          livecheck_defined: livecheck_defined,
+          url:               {},
+        }
         if livecheck_url.is_a?(Symbol) && livecheck_url_string
           resource_version_info[:meta][:url][:symbol] = livecheck_url
         end

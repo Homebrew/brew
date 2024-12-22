@@ -3,6 +3,8 @@
 require "utils"
 
 RSpec.describe Cask::Info, :cask do
+  let(:args) { instance_double(Homebrew::Cmd::Info::Args) }
+
   before do
     # Prevent unnecessary network requests in `Utils::Analytics.cask_output`
     ENV["HOMEBREW_NO_ANALYTICS"] = "1"
@@ -10,7 +12,7 @@ RSpec.describe Cask::Info, :cask do
 
   it "displays some nice info about the specified Cask" do
     expect do
-      described_class.info(Cask::CaskLoader.load("local-transmission"))
+      described_class.info(Cask::CaskLoader.load("local-transmission"), args:)
     end.to output(<<~EOS).to_stdout
       ==> local-transmission: 2.61
       https://transmissionbt.com/
@@ -27,7 +29,7 @@ RSpec.describe Cask::Info, :cask do
 
   it "prints cask dependencies if the Cask has any" do
     expect do
-      described_class.info(Cask::CaskLoader.load("with-depends-on-cask-multiple"))
+      described_class.info(Cask::CaskLoader.load("with-depends-on-cask-multiple"), args:)
     end.to output(<<~EOS).to_stdout
       ==> with-depends-on-cask-multiple: 1.2.3
       https://brew.sh/with-depends-on-cask-multiple
@@ -46,7 +48,7 @@ RSpec.describe Cask::Info, :cask do
 
   it "prints cask and formulas dependencies if the Cask has both" do
     expect do
-      described_class.info(Cask::CaskLoader.load("with-depends-on-everything"))
+      described_class.info(Cask::CaskLoader.load("with-depends-on-everything"), args:)
     end.to output(<<~EOS).to_stdout
       ==> with-depends-on-everything: 1.2.3
       https://brew.sh/with-depends-on-everything
@@ -65,7 +67,7 @@ RSpec.describe Cask::Info, :cask do
 
   it "prints auto_updates if the Cask has `auto_updates true`" do
     expect do
-      described_class.info(Cask::CaskLoader.load("with-auto-updates"))
+      described_class.info(Cask::CaskLoader.load("with-auto-updates"), args:)
     end.to output(<<~EOS).to_stdout
       ==> with-auto-updates: 1.0 (auto_updates)
       https://brew.sh/autoupdates
@@ -82,7 +84,7 @@ RSpec.describe Cask::Info, :cask do
 
   it "prints caveats if the Cask provided one" do
     expect do
-      described_class.info(Cask::CaskLoader.load("with-caveats"))
+      described_class.info(Cask::CaskLoader.load("with-caveats"), args:)
     end.to output(<<~EOS).to_stdout
       ==> with-caveats: 1.2.3
       https://brew.sh/
@@ -109,7 +111,7 @@ RSpec.describe Cask::Info, :cask do
 
   it 'does not print "Caveats" section divider if the caveats block has no output' do
     expect do
-      described_class.info(Cask::CaskLoader.load("with-conditional-caveats"))
+      described_class.info(Cask::CaskLoader.load("with-conditional-caveats"), args:)
     end.to output(<<~EOS).to_stdout
       ==> with-conditional-caveats: 1.2.3
       https://brew.sh/
@@ -126,7 +128,7 @@ RSpec.describe Cask::Info, :cask do
 
   it "prints languages specified in the Cask" do
     expect do
-      described_class.info(Cask::CaskLoader.load("with-languages"))
+      described_class.info(Cask::CaskLoader.load("with-languages"), args:)
     end.to output(<<~EOS).to_stdout
       ==> with-languages: 1.2.3
       https://brew.sh/
@@ -145,7 +147,7 @@ RSpec.describe Cask::Info, :cask do
 
   it 'does not print "Languages" section divider if the languages block has no output' do
     expect do
-      described_class.info(Cask::CaskLoader.load("without-languages"))
+      described_class.info(Cask::CaskLoader.load("without-languages"), args:)
     end.to output(<<~EOS).to_stdout
       ==> without-languages: 1.2.3
       https://brew.sh/
@@ -173,7 +175,7 @@ RSpec.describe Cask::Info, :cask do
       expect(Cask::Tab).to receive(:for_cask).with(cask).and_return(tab)
 
       expect do
-        described_class.info(cask)
+        described_class.info(cask, args:)
       end.to output(<<~EOS).to_stdout
         ==> local-transmission: 2.61
         https://transmissionbt.com/

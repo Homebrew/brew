@@ -108,21 +108,23 @@ __brew_complete_tapped() {
 
 __brew_complete_commands() {
   # Auto-complete Homebrew commands
-  # Do NOT auto-complete "*instal" aliases for "*install" commands
 
   local cur="${COMP_WORDS[COMP_CWORD]}"
   local cmds
+  local -a cmd_aliases
 
   if [[ -n ${__HOMEBREW_COMMANDS} ]]
   then
     cmds=${__HOMEBREW_COMMANDS}
   elif [[ -n ${HOMEBREW_CACHE:-} && -f ${HOMEBREW_CACHE}/all_commands_list.txt ]]
   then
-    cmds="$(< "${HOMEBREW_CACHE}/all_commands_list.txt" \grep -v instal$)"
+    cmds="$(< "${HOMEBREW_CACHE}/all_commands_list.txt")"
   elif [[ -n ${HOMEBREW_REPOSITORY:-} && -f ${HOMEBREW_REPOSITORY}/completions/internal_commands_list.txt ]]
   then
-    cmds="$(< "${HOMEBREW_REPOSITORY}/completions/internal_commands_list.txt" \grep -v instal$)"
+    cmds="$(< "${HOMEBREW_REPOSITORY}/completions/internal_commands_list.txt")"
   fi
+  while read -r alias; do cmd_aliases+=("${alias}"); done < <(compgen -W "$(__brew_list_aliases)")
+  [[ -n ${cmd_aliases[*]+"${cmd_aliases[*]}"} ]] && cmds+=" ${cmd_aliases[*]} alias unalias"
   while read -r line; do COMPREPLY+=("${line}"); done < <(compgen -W "${cmds}" -- "${cur}")
   export __HOMEBREW_COMMANDS=${cmds}
 }
@@ -130,6 +132,26 @@ __brew_complete_commands() {
 # compopt is only available in newer versions of bash
 __brew_complete_files() {
   command -v compopt &> /dev/null && compopt -o default
+}
+
+# https://github.com/Homebrew/homebrew-aliases
+__brew_list_aliases() {
+  local aliases_dir="${HOME}/.brew-aliases"
+  local pattern="^# alias: brew ([[:alnum:]-]+)$"
+  local -a aliases
+
+  [[ ! -d ${aliases_dir} ]] && return
+
+  for file in "${aliases_dir}"/*; do
+    [[ ! -f ${file} ]] && continue
+    while read -r line; do
+      if [[ ${line} =~ ${pattern} ]]; then
+        aliases+=("${BASH_REMATCH[1]}")
+        break
+      fi
+    done < "${file}"
+  done
+  [[ -n ${aliases[*]+"${aliases[*]}"} ]] && echo "${aliases[@]}"
 }
 
 <%= completion_functions.join("\n") %>

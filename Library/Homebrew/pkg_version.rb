@@ -1,4 +1,4 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
 
 require "version"
@@ -11,21 +11,28 @@ class PkgVersion
   REGEX = /\A(.+?)(?:_(\d+))?\z/
   private_constant :REGEX
 
-  attr_reader :version, :revision
+  sig { returns(Version) }
+  attr_reader :version
+
+  sig { returns(Integer) }
+  attr_reader :revision
 
   delegate [:major, :minor, :patch, :major_minor, :major_minor_patch] => :version
 
+  sig { params(path: String).returns(PkgVersion) }
   def self.parse(path)
     _, version, revision = *path.match(REGEX)
-    version = Version.new(version)
+    version = Version.new(version.to_s)
     new(version, revision.to_i)
   end
 
+  sig { params(version: Version, revision: Integer).void }
   def initialize(version, revision)
-    @version = version
-    @revision = revision
+    @version = T.let(version, Version)
+    @revision = T.let(revision, Integer)
   end
 
+  sig { returns(T::Boolean) }
   def head?
     version.head?
   end
@@ -42,9 +49,8 @@ class PkgVersion
   sig { returns(String) }
   def to_s = to_str
 
+  sig { params(other: PkgVersion).returns(T.nilable(Integer)) }
   def <=>(other)
-    return unless other.is_a?(PkgVersion)
-
     version_comparison = (version <=> other.version)
     return if version_comparison.nil?
 
@@ -52,6 +58,7 @@ class PkgVersion
   end
   alias eql? ==
 
+  sig { returns(Integer) }
   def hash
     [version, revision].hash
   end

@@ -163,7 +163,7 @@ class RuboCop::Cop::RSpec::AroundBlock < ::RuboCop::Cop::RSpec::Base
   # source://rubocop-rspec//lib/rubocop/cop/rspec/around_block.rb#67
   def add_no_arg_offense(node); end
 
-  # source://rubocop-rspec//lib/rubocop/cop/rspec/around_block.rb#84
+  # source://rubocop-rspec//lib/rubocop/cop/rspec/around_block.rb#82
   def check_for_numblock(block); end
 
   # source://rubocop-rspec//lib/rubocop/cop/rspec/around_block.rb#71
@@ -1665,7 +1665,7 @@ class RuboCop::Cop::RSpec::EmptyMetadata < ::RuboCop::Cop::RSpec::Base
 
   private
 
-  # source://rubocop-rspec//lib/rubocop/cop/rspec/empty_metadata.rb#32
+  # source://rubocop-rspec//lib/rubocop/cop/rspec/empty_metadata.rb#33
   def remove_empty_metadata(corrector, node); end
 end
 
@@ -4014,7 +4014,7 @@ class RuboCop::Cop::RSpec::MultipleExpectations < ::RuboCop::Cop::RSpec::Base
   # source://rubocop-rspec//lib/rubocop/cop/rspec/multiple_expectations.rb#86
   def expect?(param0 = T.unsafe(nil)); end
 
-  # source://rubocop/1.67.0/lib/rubocop/cop/exclude_limit.rb#11
+  # source://rubocop/1.69.1/lib/rubocop/cop/exclude_limit.rb#11
   def max=(value); end
 
   # source://rubocop-rspec//lib/rubocop/cop/rspec/multiple_expectations.rb#93
@@ -4129,7 +4129,7 @@ RuboCop::Cop::RSpec::MultipleExpectations::TRUE_NODE = T.let(T.unsafe(nil), Proc
 class RuboCop::Cop::RSpec::MultipleMemoizedHelpers < ::RuboCop::Cop::RSpec::Base
   include ::RuboCop::Cop::RSpec::Variable
 
-  # source://rubocop/1.67.0/lib/rubocop/cop/exclude_limit.rb#11
+  # source://rubocop/1.69.1/lib/rubocop/cop/exclude_limit.rb#11
   def max=(value); end
 
   # source://rubocop-rspec//lib/rubocop/cop/rspec/multiple_memoized_helpers.rb#91
@@ -4471,7 +4471,7 @@ end
 class RuboCop::Cop::RSpec::NestedGroups < ::RuboCop::Cop::RSpec::Base
   include ::RuboCop::Cop::RSpec::TopLevelGroup
 
-  # source://rubocop/1.67.0/lib/rubocop/cop/exclude_limit.rb#11
+  # source://rubocop/1.69.1/lib/rubocop/cop/exclude_limit.rb#11
   def max=(value); end
 
   # source://rubocop-rspec//lib/rubocop/cop/rspec/nested_groups.rb#107
@@ -6035,16 +6035,16 @@ class RuboCop::Cop::RSpec::SingleArgumentMessageChain < ::RuboCop::Cop::RSpec::B
   # source://rubocop-rspec//lib/rubocop/cop/rspec/single_argument_message_chain.rb#49
   def autocorrect(corrector, node, method, arg); end
 
-  # source://rubocop-rspec//lib/rubocop/cop/rspec/single_argument_message_chain.rb#77
+  # source://rubocop-rspec//lib/rubocop/cop/rspec/single_argument_message_chain.rb#76
   def autocorrect_array_arg(corrector, arg); end
 
   # source://rubocop-rspec//lib/rubocop/cop/rspec/single_argument_message_chain.rb#69
   def autocorrect_hash_arg(corrector, arg); end
 
-  # source://rubocop-rspec//lib/rubocop/cop/rspec/single_argument_message_chain.rb#83
+  # source://rubocop-rspec//lib/rubocop/cop/rspec/single_argument_message_chain.rb#82
   def key_to_arg(node); end
 
-  # source://rubocop-rspec//lib/rubocop/cop/rspec/single_argument_message_chain.rb#87
+  # source://rubocop-rspec//lib/rubocop/cop/rspec/single_argument_message_chain.rb#86
   def replacement(method); end
 
   # @return [Boolean]
@@ -6335,7 +6335,7 @@ RuboCop::Cop::RSpec::StringAsInstanceDoubleConstant::RESTRICT_ON_SEND = T.let(T.
 #
 # source://rubocop-rspec//lib/rubocop/cop/rspec/stubbed_mock.rb#16
 class RuboCop::Cop::RSpec::StubbedMock < ::RuboCop::Cop::RSpec::Base
-  # source://rubocop-rspec//lib/rubocop/cop/rspec/stubbed_mock.rb#42
+  # source://rubocop-rspec//lib/rubocop/cop/rspec/stubbed_mock.rb#43
   def configured_response?(param0 = T.unsafe(nil)); end
 
   # Match expectation
@@ -6349,7 +6349,7 @@ class RuboCop::Cop::RSpec::StubbedMock < ::RuboCop::Cop::RSpec::Base
   # @param node [RuboCop::AST::Node]
   # @yield [RuboCop::AST::Node] expectation, method name, matcher
   #
-  # source://rubocop-rspec//lib/rubocop/cop/rspec/stubbed_mock.rb#61
+  # source://rubocop-rspec//lib/rubocop/cop/rspec/stubbed_mock.rb#62
   def expectation(param0 = T.unsafe(nil)); end
 
   # Match matcher with a configured response in block-pass
@@ -6363,7 +6363,7 @@ class RuboCop::Cop::RSpec::StubbedMock < ::RuboCop::Cop::RSpec::Base
   # @param node [RuboCop::AST::Node]
   # @yield [RuboCop::AST::Node] matcher
   #
-  # source://rubocop-rspec//lib/rubocop/cop/rspec/stubbed_mock.rb#129
+  # source://rubocop-rspec//lib/rubocop/cop/rspec/stubbed_mock.rb#130
   def matcher_with_blockpass(param0 = T.unsafe(nil)); end
 
   # Match matcher with a configured response
@@ -6377,7 +6377,7 @@ class RuboCop::Cop::RSpec::StubbedMock < ::RuboCop::Cop::RSpec::Base
   # @param node [RuboCop::AST::Node]
   # @yield [RuboCop::AST::Node] matcher
   #
-  # source://rubocop-rspec//lib/rubocop/cop/rspec/stubbed_mock.rb#81
+  # source://rubocop-rspec//lib/rubocop/cop/rspec/stubbed_mock.rb#82
   def matcher_with_configured_response(param0 = T.unsafe(nil)); end
 
   # Match matcher with a configured response defined as a hash
@@ -6389,7 +6389,7 @@ class RuboCop::Cop::RSpec::StubbedMock < ::RuboCop::Cop::RSpec::Base
   # @param node [RuboCop::AST::Node]
   # @yield [RuboCop::AST::Node] matcher
   #
-  # source://rubocop-rspec//lib/rubocop/cop/rspec/stubbed_mock.rb#108
+  # source://rubocop-rspec//lib/rubocop/cop/rspec/stubbed_mock.rb#109
   def matcher_with_hash(param0 = T.unsafe(nil)); end
 
   # Match matcher with a return block
@@ -6399,7 +6399,7 @@ class RuboCop::Cop::RSpec::StubbedMock < ::RuboCop::Cop::RSpec::Base
   # @param node [RuboCop::AST::Node]
   # @yield [RuboCop::AST::Node] matcher
   #
-  # source://rubocop-rspec//lib/rubocop/cop/rspec/stubbed_mock.rb#93
+  # source://rubocop-rspec//lib/rubocop/cop/rspec/stubbed_mock.rb#94
   def matcher_with_return_block(param0 = T.unsafe(nil)); end
 
   # Match message expectation matcher
@@ -6413,28 +6413,28 @@ class RuboCop::Cop::RSpec::StubbedMock < ::RuboCop::Cop::RSpec::Base
   # @param node [RuboCop::AST::Node]
   # @return [Array<RuboCop::AST::Node>] matching nodes
   #
-  # source://rubocop-rspec//lib/rubocop/cop/rspec/stubbed_mock.rb#34
+  # source://rubocop-rspec//lib/rubocop/cop/rspec/stubbed_mock.rb#35
   def message_expectation?(param0 = T.unsafe(nil)); end
 
-  # source://rubocop-rspec//lib/rubocop/cop/rspec/stubbed_mock.rb#138
+  # source://rubocop-rspec//lib/rubocop/cop/rspec/stubbed_mock.rb#137
   def on_send(node); end
 
   private
 
-  # source://rubocop-rspec//lib/rubocop/cop/rspec/stubbed_mock.rb#157
+  # source://rubocop-rspec//lib/rubocop/cop/rspec/stubbed_mock.rb#156
   def msg(method_name); end
 
-  # source://rubocop-rspec//lib/rubocop/cop/rspec/stubbed_mock.rb#146
+  # source://rubocop-rspec//lib/rubocop/cop/rspec/stubbed_mock.rb#145
   def on_expectation(expectation, method_name, matcher); end
 
-  # source://rubocop-rspec//lib/rubocop/cop/rspec/stubbed_mock.rb#163
+  # source://rubocop-rspec//lib/rubocop/cop/rspec/stubbed_mock.rb#164
   def replacement(method_name); end
 end
 
 # source://rubocop-rspec//lib/rubocop/cop/rspec/stubbed_mock.rb#17
 RuboCop::Cop::RSpec::StubbedMock::MSG = T.let(T.unsafe(nil), String)
 
-# source://rubocop-rspec//lib/rubocop/cop/rspec/stubbed_mock.rb#136
+# source://rubocop-rspec//lib/rubocop/cop/rspec/stubbed_mock.rb#19
 RuboCop::Cop::RSpec::StubbedMock::RESTRICT_ON_SEND = T.let(T.unsafe(nil), Array)
 
 # Ensure that subject is defined using subject helper.
@@ -6576,33 +6576,38 @@ RuboCop::Cop::RSpec::SubjectStub::MSG = T.let(T.unsafe(nil), String)
 module RuboCop::Cop::RSpec::TopLevelGroup
   extend ::RuboCop::AST::NodePattern::Macros
 
-  # source://rubocop-rspec//lib/rubocop/cop/rspec/mixin/top_level_group.rb#10
+  # source://rubocop-rspec//lib/rubocop/cop/rspec/mixin/top_level_group.rb#14
   def on_new_investigation; end
 
-  # source://rubocop-rspec//lib/rubocop/cop/rspec/mixin/top_level_group.rb#19
+  # source://rubocop-rspec//lib/rubocop/cop/rspec/mixin/top_level_group.rb#23
   def top_level_groups; end
 
   private
 
   # Dummy methods to be overridden in the consumer
   #
-  # source://rubocop-rspec//lib/rubocop/cop/rspec/mixin/top_level_group.rb#27
+  # source://rubocop-rspec//lib/rubocop/cop/rspec/mixin/top_level_group.rb#31
   def on_top_level_example_group(_node); end
 
-  # source://rubocop-rspec//lib/rubocop/cop/rspec/mixin/top_level_group.rb#29
+  # source://rubocop-rspec//lib/rubocop/cop/rspec/mixin/top_level_group.rb#33
   def on_top_level_group(_node); end
 
-  # source://rubocop-rspec//lib/rubocop/cop/rspec/mixin/top_level_group.rb#48
+  # source://rubocop-rspec//lib/rubocop/cop/rspec/mixin/top_level_group.rb#55
   def root_node; end
 
+  # @deprecated All callers of this method have been removed.
+  # @private
   # @return [Boolean]
   #
-  # source://rubocop-rspec//lib/rubocop/cop/rspec/mixin/top_level_group.rb#31
+  # source://rubocop-rspec//lib/rubocop/cop/rspec/mixin/top_level_group.rb#37
   def top_level_group?(node); end
 
-  # source://rubocop-rspec//lib/rubocop/cop/rspec/mixin/top_level_group.rb#35
+  # source://rubocop-rspec//lib/rubocop/cop/rspec/mixin/top_level_group.rb#42
   def top_level_nodes(node); end
 end
+
+# source://rubocop-rspec//lib/rubocop/cop/rspec/mixin/top_level_group.rb#10
+RuboCop::Cop::RSpec::TopLevelGroup::DEPRECATED_MODULE_METHOD_WARNING = T.let(T.unsafe(nil), String)
 
 # Description should be descriptive.
 #

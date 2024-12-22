@@ -101,7 +101,7 @@ module Utils
       end
 
       # echo any cookies received on a redirect
-      args << "--cookie" << "/dev/null"
+      args << "--cookie" << File::NULL
 
       args << "--globoff"
 
@@ -256,7 +256,7 @@ module Utils
           if request_args.empty?
             # If we didn't get any wanted header yet, retry using `GET`.
             next if wanted_headers.any? &&
-                    parsed_output.fetch(:responses).none? { |r| (r.fetch(:headers).keys & wanted_headers).any? }
+                    parsed_output.fetch(:responses).none? { |r| r.fetch(:headers).keys.intersect?(wanted_headers) }
 
             # Some CDNs respond with 400 codes for `HEAD` but resolve with `GET`.
             next if (400..499).cover?(parsed_output.fetch(:responses).last&.fetch(:status_code).to_i)

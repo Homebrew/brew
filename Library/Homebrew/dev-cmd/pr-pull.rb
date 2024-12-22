@@ -93,7 +93,7 @@ module Homebrew
           arg = "#{tap.default_remote}/pull/#{arg}" if arg.to_i.positive?
           url_match = arg.match HOMEBREW_PULL_OR_COMMIT_URL_REGEX
           _, user, repo, pr = *url_match
-          odie "Not a GitHub pull request: #{arg}" unless pr
+          odie "Not a GitHub pull request: #{arg}" if !user || !repo || !pr
 
           git_repo = tap.git_repository
           if !git_repo.default_origin_branch? && !args.branch_okay? && !args.no_commit? && !args.no_cherry_pick?

@@ -35,6 +35,11 @@ module SystemConfig
     end
 
     sig { returns(String) }
+    def branch
+      homebrew_repo.branch_name || "(none)"
+    end
+
+    sig { returns(String) }
     def head
       homebrew_repo.head_ref || "(none)"
     end
@@ -142,6 +147,7 @@ module SystemConfig
       out.puts "ORIGIN: #{origin}"
       out.puts "HEAD: #{head}"
       out.puts "Last commit: #{last_commit}"
+      out.puts "Branch: #{branch}"
     end
 
     def homebrew_env_config(out = $stdout)

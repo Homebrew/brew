@@ -35,7 +35,7 @@ module Homebrew
         members.each do |group, hash|
           hash.replace(hash.slice(*public_members))
           hash.each { |login, name| hash[login] = "[#{name}](https://github.com/#{login})" }
-          sentences[group] = hash.values.sort.to_sentence
+          sentences[group] = hash.values.sort_by { |s| s.unicode_normalize(:nfd).gsub(/\P{L}+/, "") }.to_sentence
         end
 
         readme = HOMEBREW_REPOSITORY/"README.md"

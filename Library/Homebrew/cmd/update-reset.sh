@@ -86,6 +86,7 @@ homebrew-update-reset() {
       head="${head#refs/remotes/origin/}"
       git -C "${DIR}" checkout --force -B "${head}" origin/HEAD
     fi
+    rm -rf "${DIR}/.git/describe-cache"
     echo
   done
 }

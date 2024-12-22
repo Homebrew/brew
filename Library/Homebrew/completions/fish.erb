@@ -147,9 +147,9 @@ end
 
 function __fish_brew_suggest_commands -d "Lists all commands names, including aliases"
     if test -f (brew --cache)/all_commands_list.txt
-        cat (brew --cache)/all_commands_list.txt | \grep -v instal\$
+        cat (brew --cache)/all_commands_list.txt
     else
-        cat (brew --repo)/completions/internal_commands_list.txt | \grep -v instal\$
+        cat (brew --repo)/completions/internal_commands_list.txt
     end
 end
 

@@ -1,4 +1,4 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
 
 module RuboCop
@@ -7,6 +7,7 @@ module RuboCop
       class SharedFilelistGlob < Base
         extend AutoCorrector
 
+        sig { params(node: RuboCop::AST::SendNode).void }
         def on_send(node)
           return if node.method_name != :zap
 

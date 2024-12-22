@@ -408,10 +408,6 @@ Style/NumericLiterals:
 Style/OpenStructUse:
   Exclude:
     - "Taps/**/*"
-    # TODO: This is a pre-existing violation and should be corrected
-    #   to define methods so that call sites can be type-checked.
-    - "Homebrew/cli/args.rb"
-    - "Homebrew/cli/args.rbi"
 
 Style/OptionalBooleanParameter:
   AllowedMethods:

@@ -81,7 +81,7 @@ module Homebrew
 
       sig { returns(Pathname) }
       def create_cask
-        url = args.named.first
+        url = args.named.fetch(0)
         name = if args.set_name.blank?
           stem = Pathname.new(url).stem.rpartition("=").last
           print "Cask name [#{stem}]: "
@@ -179,7 +179,7 @@ module Homebrew
           args.set_name,
           args.set_version,
           tap:     args.tap,
-          url:     args.named.first,
+          url:     args.named.fetch(0),
           mode:,
           license: args.set_license,
           fetch:   !args.no_fetch?,

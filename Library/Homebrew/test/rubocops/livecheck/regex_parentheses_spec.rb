@@ -5,7 +5,7 @@ require "rubocops/livecheck"
 RSpec.describe RuboCop::Cop::FormulaAudit::LivecheckRegexParentheses do
   subject(:cop) { described_class.new }
 
-  it "reports an offense when the `regex` call in the livecheck block does not use parentheses" do
+  it "reports an offense when the `regex` call in the `livecheck` block does not use parentheses" do
     expect_offense(<<~RUBY)
       class Foo < Formula
         url "https://brew.sh/foo-1.0.tgz"
@@ -30,7 +30,7 @@ RSpec.describe RuboCop::Cop::FormulaAudit::LivecheckRegexParentheses do
     RUBY
   end
 
-  it "reports no offenses when the `regex` call in the livecheck block uses parentheses" do
+  it "reports no offenses when the `regex` call in the `livecheck` block uses parentheses" do
     expect_no_offenses(<<~RUBY)
       class Foo < Formula
         url "https://brew.sh/foo-1.0.tgz"

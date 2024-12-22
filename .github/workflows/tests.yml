@@ -40,7 +40,7 @@ jobs:
           test-bot: false
 
       - name: Cache Bundler RubyGems
-        uses: actions/cache@6849a6489940f00c2f30c0fb92c6274307ccb58a # v4
+        uses: actions/cache@1bd1e32a3bdc45362d1e726936510720a7c30a57 # v4.2.0
         with:
           path: ${{ steps.set-up-homebrew.outputs.gems-path }}
           key: ${{ runner.os }}-rubygems-syntax-${{ steps.set-up-homebrew.outputs.gems-hash }}
@@ -53,7 +53,7 @@ jobs:
         run: brew install shellcheck shfmt
 
       - name: Cache style cache
-        uses: actions/cache@6849a6489940f00c2f30c0fb92c6274307ccb58a # v4
+        uses: actions/cache@1bd1e32a3bdc45362d1e726936510720a7c30a57 # v4.2.0
         with:
           path: ~/.cache/Homebrew/style
           key: syntax-style-cache-${{ github.sha }}
@@ -92,7 +92,7 @@ jobs:
           test-bot: true
 
       - name: Cache Bundler RubyGems
-        uses: actions/cache@6849a6489940f00c2f30c0fb92c6274307ccb58a # v4
+        uses: actions/cache@1bd1e32a3bdc45362d1e726936510720a7c30a57 # v4.2.0
         with:
           path: ${{ steps.set-up-homebrew.outputs.gems-path }}
           key: ${{ runner.os }}-rubygems-tap-syntax-${{ steps.set-up-homebrew.outputs.gems-hash }}
@@ -102,7 +102,7 @@ jobs:
         run: brew install-bundler-gems --groups=style
 
       - name: Cache style cache
-        uses: actions/cache@6849a6489940f00c2f30c0fb92c6274307ccb58a # v4
+        uses: actions/cache@1bd1e32a3bdc45362d1e726936510720a7c30a57 # v4.2.0
         with:
           path: ~/.cache/Homebrew/style
           key: tap-syntax-style-cache-${{ github.sha }}
@@ -141,7 +141,7 @@ jobs:
   formula-audit:
     name: formula audit
     needs: syntax
-    if: github.repository_owner == 'Homebrew'
+    if: github.repository_owner == 'Homebrew' && github.event_name != 'push'
     runs-on: ubuntu-latest
     container:
       image: ghcr.io/homebrew/brew:master
@@ -166,7 +166,7 @@ jobs:
   cask-audit:
     name: cask audit
     needs: syntax
-    if: github.repository_owner == 'Homebrew'
+    if: github.repository_owner == 'Homebrew' && github.event_name != 'push'
     runs-on: macos-15
     steps:
       - name: Set up Homebrew
@@ -221,7 +221,7 @@ jobs:
     name: ${{ matrix.name }}
     runs-on: ${{ matrix.runs-on }}
     needs: syntax
-    if: github.event_name == 'pull_request' || github.event_name == 'merge_group'
+    if: github.event_name != 'push'
     strategy:
       matrix:
         include:
@@ -245,6 +245,7 @@ jobs:
           brew update-test --commit=HEAD
 
   tests:
+    if: github.event_name != 'push'
     name: ${{ matrix.name }}
     needs: syntax
     runs-on: ${{ matrix.runs-on }}
@@ -285,7 +286,7 @@ jobs:
           test-bot: false
 
       - name: Cache Bundler RubyGems
-        uses: actions/cache@6849a6489940f00c2f30c0fb92c6274307ccb58a # v4
+        uses: actions/cache@1bd1e32a3bdc45362d1e726936510720a7c30a57 # v4.2.0
         with:
           path: ${{ steps.set-up-homebrew.outputs.gems-path }}
           key: ${{ matrix.runs-on }}-tests-rubygems-${{ steps.set-up-homebrew.outputs.gems-hash }}
@@ -300,7 +301,7 @@ jobs:
         run: mkdir tests
 
       - name: Cache parallel tests log
-        uses: actions/cache@6849a6489940f00c2f30c0fb92c6274307ccb58a # v4
+        uses: actions/cache@1bd1e32a3bdc45362d1e726936510720a7c30a57 # v4.2.0
         with:
           path: tests
           key: ${{ runner.os }}-${{ matrix.test-flags }}-parallel_runtime_rspec-${{ github.sha }}
@@ -356,7 +357,22 @@ jobs:
           HOMEBREW_BUILDPULSE_ACCOUNT_ID: 1503512
           HOMEBREW_BUILDPULSE_REPOSITORY_ID: 53238813
 
-      - uses: codecov/codecov-action@5c47607acb93fed5485fdbf7232e8a31425f672a # v5.0.2
+      - name: Get RSpec JUnit XML filenames
+        id: junit_xml
+        working-directory: ${{ steps.set-up-homebrew.outputs.repository-path }}
+        run: |
+          mkdir -p Library/Homebrew/test/junit
+          filenames=$(find Library/Homebrew/test/junit -name 'rspec*.xml' -print | tr '\n' ',')
+          echo "filenames=${filenames%,}" >> "$GITHUB_OUTPUT"
+
+      - uses: codecov/test-results-action@9739113ad922ea0a9abb4b2c0f8bf6a4aa8ef820 # v1.0.1
+        with:
+          working-directory: ${{ steps.set-up-homebrew.outputs.repository-path }}
+          files: ${{ steps.junit_xml.outputs.filenames }}
+          disable_search: true
+          token: ${{ secrets.CODECOV_TOKEN }}
+
+      - uses: codecov/codecov-action@1e68e06f1dbfde0e4cefc87efeba9e4643565303 # v5.1.2
         with:
           working-directory: ${{ steps.set-up-homebrew.outputs.repository-path }}
           files: Library/Homebrew/test/coverage/coverage.xml
@@ -366,7 +382,7 @@ jobs:
   test-default-formula:
     name: ${{ matrix.name }}
     needs: syntax
-    if: github.repository_owner == 'Homebrew'
+    if: github.repository_owner == 'Homebrew' && github.event_name != 'push'
     runs-on: ${{ matrix.runs-on }}
     container: ${{ matrix.container }}
     strategy:

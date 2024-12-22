@@ -74,7 +74,6 @@ module Cask
         data: nil,
         only_path: nil
       )
-
         @uri = URI(uri)
 
         header = Array(header) unless header.nil?

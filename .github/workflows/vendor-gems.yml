@@ -94,7 +94,7 @@ jobs:
           fi
 
       - name: Generate push token
-        uses: actions/create-github-app-token@5d869da34e18e7287c1daad50e0b8ea0f506ce69 # v1
+        uses: actions/create-github-app-token@c1a285145b9d317df6ced56c09f525b5c2b6f755 # v1.11.1
         id: app-token
         if: github.event_name == 'workflow_dispatch'
         with:

@@ -5,6 +5,9 @@ require "fcntl"
 
 # A lock file to prevent multiple Homebrew processes from modifying the same path.
 class LockFile
+  class OpenFileChangedOnDisk < RuntimeError; end
+  private_constant :OpenFileChangedOnDisk
+
   attr_reader :path
 
   sig { params(type: Symbol, locked_path: Pathname).void }
@@ -15,19 +18,61 @@ class LockFile
     @lockfile = nil
   end
 
+  sig { void }
   def lock
-    @path.parent.mkpath
-    create_lockfile
-    return if @lockfile.flock(File::LOCK_EX | File::LOCK_NB)
+    ignore_interrupts do
+      next if @lockfile.present?
 
-    raise OperationInProgressError, @locked_path
+      path.dirname.mkpath
+
+      begin
+        lockfile = begin
+          path.open(File::RDWR | File::CREAT)
+        rescue Errno::EMFILE
+          odie "The maximum number of open files on this system has been reached. " \
+               "Use `ulimit -n` to increase this limit."
+        end
+        lockfile.fcntl(Fcntl::F_SETFD, Fcntl::FD_CLOEXEC)
+
+        if lockfile.flock(File::LOCK_EX | File::LOCK_NB)
+          # This prevents a race condition in case the file we locked doesn't exist on disk anymore, e.g.:
+          #
+          # 1. Process A creates and opens the file.
+          # 2. Process A locks the file.
+          # 3. Process B opens the file.
+          # 4. Process A unlinks the file.
+          # 5. Process A unlocks the file.
+          # 6. Process B locks the file.
+          # 7. Process C creates and opens the file.
+          # 8. Process C locks the file.
+          # 9. Process B and C hold locks to files with different inode numbers. 💥
+          if !path.exist? || lockfile.stat.ino != path.stat.ino
+            lockfile.close
+            raise OpenFileChangedOnDisk
+          end
+
+          @lockfile = lockfile
+          next
+        end
+      rescue OpenFileChangedOnDisk
+        retry
+      end
+
+      lockfile.close
+      raise OperationInProgressError, @locked_path
+    end
   end
 
-  def unlock
-    return if @lockfile.nil? || @lockfile.closed?
+  sig { params(unlink: T::Boolean).void }
+  def unlock(unlink: false)
+    ignore_interrupts do
+      next if @lockfile.nil?
 
-    @lockfile.flock(File::LOCK_UN)
-    @lockfile.close
+      @path.unlink if unlink
+      @lockfile.flock(File::LOCK_UN)
+      @lockfile.close
+      @lockfile = nil
+    end
   end
 
   def with_lock
@@ -35,19 +80,6 @@ class LockFile
     yield
   ensure
     unlock
-  end
-
-  private
-
-  def create_lockfile
-    return if @lockfile.present? && !@lockfile.closed?
-
-    begin
-      @lockfile = @path.open(File::RDWR | File::CREAT)
-    rescue Errno::EMFILE
-      odie "The maximum number of open files on this system has been reached. Use `ulimit -n` to increase this limit."
-    end
-    @lockfile.fcntl(Fcntl::F_SETFD, Fcntl::FD_CLOEXEC)
   end
 end
 

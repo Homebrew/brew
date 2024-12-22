@@ -1,8 +1,11 @@
 # Documentation defined in Library/Homebrew/cmd/vendor-install.rb
 
-# HOMEBREW_CURLRC, HOMEBREW_LIBRARY is from the user environment
-# HOMEBREW_CACHE, HOMEBREW_CURL, HOMEBREW_LINUX, HOMEBREW_LINUX_MINIMUM_GLIBC_VERSION, HOMEBREW_MACOS,
-# HOMEBREW_MACOS_VERSION_NUMERIC and HOMEBREW_PROCESSOR are set by brew.sh
+# HOMEBREW_ARTIFACT_DOMAIN, HOMEBREW_ARTIFACT_DOMAIN_NO_FALLBACK, HOMEBREW_BOTTLE_DOMAIN, HOMEBREW_CACHE,
+# HOMEBREW_CURLRC, HOMEBREW_DEVELOPER, HOMEBREW_DEBUG, HOMEBREW_VERBOSE are from the user environment
+# HOMEBREW_PORTABLE_RUBY_VERSION is set by utils/ruby.sh
+# HOMEBREW_LIBRARY, HOMEBREW_PREFIX are set by bin/brew
+# HOMEBREW_CURL, HOMEBREW_GITHUB_PACKAGES_AUTH, HOMEBREW_LINUX, HOMEBREW_LINUX_MINIMUM_GLIBC_VERSION, HOMEBREW_MACOS,
+# HOMEBREW_PHYSICAL_PROCESSOR, HOMEBREW_PROCESSOR, HOMEBREW_USER_AGENT_CURL are set by brew.sh
 # shellcheck disable=SC2154
 source "${HOMEBREW_LIBRARY}/Homebrew/utils/lock.sh"
 source "${HOMEBREW_LIBRARY}/Homebrew/utils/ruby.sh"
@@ -127,11 +130,6 @@ fetch() {
   elif [[ -z "${HOMEBREW_VERBOSE}" ]]
   then
     curl_args[${#curl_args[*]}]="--progress-bar"
-  fi
-
-  if [[ "${HOMEBREW_MACOS_VERSION_NUMERIC}" -lt "100600" ]]
-  then
-    curl_args[${#curl_args[*]}]="--insecure"
   fi
 
   temporary_path="${CACHED_LOCATION}.incomplete"

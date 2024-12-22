@@ -39,9 +39,9 @@ module Homebrew
           raise UsageError, "`--all-supported` is mutually exclusive to other arguments."
         end
 
-        testing_formulae = args.named.first&.split(",").to_a
-        testing_formulae.map! { |name| TestRunnerFormula.new(Formulary.factory(name), eval_all: args.eval_all?) }
-                        .freeze
+        testing_formulae = args.named.first&.split(",").to_a.map do |name|
+          TestRunnerFormula.new(Formulary.factory(name), eval_all: args.eval_all?)
+        end.freeze
         deleted_formulae = args.named.second&.split(",").to_a.freeze
         runner_matrix = GitHubRunnerMatrix.new(testing_formulae, deleted_formulae,
                                                all_supported:    args.all_supported?,

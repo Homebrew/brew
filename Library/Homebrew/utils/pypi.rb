@@ -219,7 +219,6 @@ module PyPI
                                     exclude_packages: nil, dependencies: nil, install_dependencies: false,
                                     print_only: false, silent: false, verbose: false,
                                     ignore_non_pypi_packages: false)
-
     auto_update_list = formula.tap&.pypi_formula_mappings
     if auto_update_list.present? && auto_update_list.key?(formula.full_name) &&
        package_name.blank? && extra_packages.blank? && exclude_packages.blank?

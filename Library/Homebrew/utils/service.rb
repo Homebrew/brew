@@ -48,5 +48,30 @@ module Utils
     def self.systemctl?
       !systemctl.nil?
     end
+
+    # Quote a string for use in systemd command lines, e.g., in `ExecStart`.
+    # https://www.freedesktop.org/software/systemd/man/latest/systemd.syntax.html#Quoting
+    sig { params(str: String).returns(String) }
+    def self.systemd_quote(str)
+      result = +"\""
+      # No need to escape single quotes and spaces, as we're always double
+      # quoting the entire string.
+      str.each_char do |char|
+        result << case char
+        when "\a" then "\\a"
+        when "\b" then "\\b"
+        when "\f" then "\\f"
+        when "\n" then "\\n"
+        when "\r" then "\\r"
+        when "\t" then "\\t"
+        when "\v" then "\\v"
+        when "\\" then "\\\\"
+        when "\"" then "\\\""
+        else char
+        end
+      end
+      result << "\""
+      result.freeze
+    end
   end
 end

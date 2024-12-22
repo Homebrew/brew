@@ -37,12 +37,12 @@ module Homebrew
         if (tap_with_name = args.named.first&.then { Tap.with_formula_name(_1) })
           source_tap, name = tap_with_name
         else
-          name = args.named.first.downcase
+          name = args.named.fetch(0).downcase
           source_tap = CoreTap.instance
         end
         raise TapFormulaUnavailableError.new(source_tap, name) unless source_tap.installed?
 
-        destination_tap = Tap.fetch(args.named.second)
+        destination_tap = Tap.fetch(args.named.fetch(1))
         unless Homebrew::EnvConfig.developer?
           odie "Cannot extract formula to homebrew/core!" if destination_tap.core_tap?
           odie "Cannot extract formula to homebrew/cask!" if destination_tap.core_cask_tap?

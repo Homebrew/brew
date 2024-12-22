@@ -44,7 +44,7 @@ module Homebrew
         casks = args.named.to_paths(only: :cask, recurse_tap: true).map { |path| Cask::CaskLoader.load(path) }
 
         unversioned_casks = casks.select do |cask|
-          cask.url&.unversioned? && !cask.livecheckable?
+          cask.url&.unversioned? && !cask.livecheck_defined?
         end
 
         ohai "Unversioned Casks: #{unversioned_casks.count} (#{state.size} cached)"

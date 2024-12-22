@@ -65,9 +65,6 @@ class Homebrew::DevCmd::PrPull::Args < Homebrew::CLI::Args
   sig { returns(T.nilable(String)) }
   def root_url_using; end
 
-  sig { returns(T.nilable(String)) }
-  def tap; end
-
   sig { returns(T::Boolean) }
   def warn_on_upload_failure?; end
 

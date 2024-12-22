@@ -37,7 +37,7 @@ class Livecheck
   # Sets the `@referenced_cask_name` instance variable to the provided `String`
   # or returns the `@referenced_cask_name` instance variable when no argument
   # is provided. Inherited livecheck values from the referenced cask
-  # (e.g. regex) can be overridden in the livecheck block.
+  # (e.g. regex) can be overridden in the `livecheck` block.
   sig {
     params(
       # Name of cask to inherit livecheck info from.
@@ -56,7 +56,7 @@ class Livecheck
   # Sets the `@referenced_formula_name` instance variable to the provided
   # `String` or returns the `@referenced_formula_name` instance variable when
   # no argument is provided. Inherited livecheck values from the referenced
-  # formula (e.g. regex) can be overridden in the livecheck block.
+  # formula (e.g. regex) can be overridden in the `livecheck` block.
   sig {
     params(
       # Name of formula to inherit livecheck info from.
@@ -177,11 +177,7 @@ class Livecheck
 
   delegate version: :@package_or_resource
   delegate arch: :@package_or_resource
-  # FIXME: false positive: https://github.com/rubocop/rubocop/issues/13453
-  # rubocop:disable Style/AccessModifierDeclarations
   private :version, :arch
-  # rubocop:enable Style/AccessModifierDeclarations
-
   # Returns a `Hash` of all instance variable values.
   # @return [Hash]
   sig { returns(T::Hash[String, T.untyped]) }

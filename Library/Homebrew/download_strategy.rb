@@ -392,60 +392,63 @@ class CurlDownloadStrategy < AbstractFileDownloadStrategy
     end_time = Time.now + timeout if timeout
 
     download_lock = DownloadLock.new(temporary_path)
-    download_lock.lock
-
-    urls = [url, *mirrors]
-
     begin
-      url = urls.shift
+      download_lock.lock
 
-      if (domain = Homebrew::EnvConfig.artifact_domain)
-        url = url.sub(%r{^https?://#{GitHubPackages::URL_DOMAIN}/}o, "#{domain.chomp("/")}/")
-        urls = [] if Homebrew::EnvConfig.artifact_domain_no_fallback?
-      end
+      urls = [url, *mirrors]
 
-      ohai "Downloading #{url}"
+      begin
+        url = urls.shift
 
-      use_cached_location = cached_location.exist?
-      use_cached_location = false if version.respond_to?(:latest?) && version.latest?
-
-      resolved_url, _, last_modified, _, is_redirection = begin
-        resolve_url_basename_time_file_size(url, timeout: Utils::Timer.remaining!(end_time))
-      rescue ErrorDuringExecution
-        raise unless use_cached_location
-      end
-
-      # Authorization is no longer valid after redirects
-      meta[:headers]&.delete_if { |header| header.start_with?("Authorization") } if is_redirection
-
-      # The cached location is no longer fresh if Last-Modified is after the file's timestamp
-      use_cached_location = false if cached_location.exist? && last_modified && last_modified > cached_location.mtime
-
-      if use_cached_location
-        puts "Already downloaded: #{cached_location}"
-      else
-        begin
-          _fetch(url:, resolved_url:, timeout: Utils::Timer.remaining!(end_time))
-        rescue ErrorDuringExecution
-          raise CurlDownloadStrategyError, url
+        if (domain = Homebrew::EnvConfig.artifact_domain)
+          url = url.sub(%r{^https?://#{GitHubPackages::URL_DOMAIN}/}o, "#{domain.chomp("/")}/")
+          urls = [] if Homebrew::EnvConfig.artifact_domain_no_fallback?
         end
-        cached_location.dirname.mkpath
-        temporary_path.rename(cached_location)
+
+        ohai "Downloading #{url}"
+
+        use_cached_location = cached_location.exist?
+        use_cached_location = false if version.respond_to?(:latest?) && version.latest?
+
+        resolved_url, _, last_modified, _, is_redirection = begin
+          resolve_url_basename_time_file_size(url, timeout: Utils::Timer.remaining!(end_time))
+        rescue ErrorDuringExecution
+          raise unless use_cached_location
+        end
+
+        # Authorization is no longer valid after redirects
+        meta[:headers]&.delete_if { |header| header.start_with?("Authorization") } if is_redirection
+
+        # The cached location is no longer fresh if Last-Modified is after the file's timestamp
+        if cached_location.exist? && last_modified && last_modified > cached_location.mtime
+          use_cached_location = false
+        end
+
+        if use_cached_location
+          puts "Already downloaded: #{cached_location}"
+        else
+          begin
+            _fetch(url:, resolved_url:, timeout: Utils::Timer.remaining!(end_time))
+          rescue ErrorDuringExecution
+            raise CurlDownloadStrategyError, url
+          end
+          cached_location.dirname.mkpath
+          temporary_path.rename(cached_location)
+        end
+
+        symlink_location.dirname.mkpath
+        FileUtils.ln_s cached_location.relative_path_from(symlink_location.dirname), symlink_location, force: true
+      rescue CurlDownloadStrategyError
+        raise if urls.empty?
+
+        puts "Trying a mirror..."
+        retry
+      rescue Timeout::Error => e
+        raise Timeout::Error, "Timed out downloading #{self.url}: #{e}"
       end
-
-      symlink_location.dirname.mkpath
-      FileUtils.ln_s cached_location.relative_path_from(symlink_location.dirname), symlink_location, force: true
-    rescue CurlDownloadStrategyError
-      raise if urls.empty?
-
-      puts "Trying a mirror..."
-      retry
-    rescue Timeout::Error => e
-      raise Timeout::Error, "Timed out downloading #{self.url}: #{e}"
+    ensure
+      download_lock.unlock(unlink: true)
     end
-  ensure
-    download_lock&.unlock
-    download_lock&.path&.unlink
   end
 
   def clear_cache
@@ -558,14 +561,6 @@ class CurlDownloadStrategy < AbstractFileDownloadStrategy
     args += ["--user", meta.fetch(:user)] if meta.key?(:user)
 
     args += meta.fetch(:headers, []).flat_map { |h| ["--header", h.strip] }
-
-    if meta[:insecure]
-      unless @insecure_warning_shown
-        opoo DevelopmentTools.insecure_download_warning("an updated certificates file")
-        @insecure_warning_shown = true
-      end
-      args += ["--insecure"]
-    end
 
     args
   end

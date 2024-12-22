@@ -4,9 +4,10 @@ module Warning
   module Processor
     # Map of symbols to regexps for warning messages to ignore.
     IGNORE_MAP = {
-      ambiguous_slash: /: warning: ambiguous first argument; put parentheses or a space even after [`']\/' operator\n\z|: warning: ambiguity between regexp and two divisions: wrap regexp in parentheses or add a space after [`']\/' operator\n\z/,
-      arg_prefix: /: warning: [`'][&\*]' interpreted as argument prefix\n\z/,
+      ambiguous_slash: /: warning: ambiguous first argument; put parentheses or a space even after [`']\/' operator\n\z|: warning: ambiguity between regexp and two divisions: wrap regexp in parentheses or add a space after [`']\/' operator\n\z|ambiguous `\/`; wrap regexp in parentheses or add a space after `\/` operator\n\z/,
+      arg_prefix: /: warning: ([`'][&\*]'||ambiguous `[\*&]` has been) interpreted as( an)? argument prefix\n\z/,
       bignum: /: warning: constant ::Bignum is deprecated\n\z/,
+      default_gem_removal: /: warning: .+? was loaded from the standard library, but will no longer be part of the default gems starting from Ruby [\d.]+\./,
       fixnum: /: warning: constant ::Fixnum is deprecated\n\z/,
       ignored_block: /: warning: the block passed to '.+' defined at .+:\d+ may be ignored\n\z/,
       method_redefined: /: warning: method redefined; discarding old .+\n\z|: warning: previous definition of .+ was here\n\z/,
@@ -95,6 +96,8 @@ module Warning
     # :arg_prefix :: Ignore warnings when using * or & as an argument prefix
     # :ambiguous_slash :: Ignore warnings for things like <tt>method /regexp/</tt>
     # :bignum :: Ignore warnings when referencing the ::Bignum constant.
+    # :default_gem_removal :: Ignore warnings that a gem will be removed from the default gems
+    #                         in a future Ruby version.
     # :fixnum :: Ignore warnings when referencing the ::Fixnum constant.
     # :keyword_separation :: Ignore warnings related to keyword argument separation.
     # :method_redefined :: Ignore warnings when defining a method in a class/module where a

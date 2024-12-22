@@ -164,7 +164,16 @@ module Cask
         source.dirname.mkpath
 
         # We need to preserve extended attributes between copies.
-        command.run!("/bin/cp", args: ["-pR", target, source], sudo: !source.parent.writable?)
+        # This may fail and need sudo if the source has files with restricted permissions.
+        [!source.parent.writable?, true].uniq.each do |sudo|
+          result = command.run(
+            "/bin/cp",
+            args:         ["-pR", target, source],
+            must_succeed: sudo,
+            sudo:,
+          )
+          break if result.success?
+        end
 
         delete(target, force:, command:, **options)
       end

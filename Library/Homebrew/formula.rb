@@ -77,6 +77,9 @@ class Formula
   extend Cachable
   extend Attrable
   extend APIHashable
+  extend T::Helpers
+
+  abstract!
 
   SUPPORTED_NETWORK_ACCESS_PHASES = [:build, :test, :postinstall].freeze
   private_constant :SUPPORTED_NETWORK_ACCESS_PHASES
@@ -452,6 +455,11 @@ class Formula
   delegate livecheck: :"self.class"
 
   # Is a livecheck specification defined for the software?
+  # @!method livecheck_defined?
+  # @see .livecheck_defined?
+  delegate livecheck_defined?: :"self.class"
+
+  # Is a livecheck specification defined for the software?
   # @!method livecheckable?
   # @see .livecheckable?
   delegate livecheckable?: :"self.class"
@@ -714,8 +722,10 @@ class Formula
   # This directory points to {#opt_prefix} if it exists and if {#prefix} is not
   # called from within the same formula's {#install} or {#post_install} methods.
   # Otherwise, return the full path to the formula's versioned cellar.
+  sig { params(version: T.any(String, PkgVersion)).returns(Pathname) }
   def prefix(version = pkg_version)
     versioned_prefix = versioned_prefix(version)
+    version = PkgVersion.parse(version) if version.is_a?(String)
     if !@prefix_returns_versioned_prefix && version == pkg_version &&
        versioned_prefix.directory? && Keg.new(versioned_prefix).optlinked?
       opt_prefix
@@ -1596,7 +1606,11 @@ class Formula
 
   # Yields |self,staging| with current working directory set to the uncompressed tarball
   # where staging is a {Mktemp} staging context.
-  def brew(fetch: true, keep_tmp: false, debug_symbols: false, interactive: false)
+  sig(:final) {
+    params(fetch: T::Boolean, keep_tmp: T::Boolean, debug_symbols: T::Boolean, interactive: T::Boolean,
+           _blk: T.proc.params(arg0: Formula, arg1: Mktemp).void).void
+  }
+  def brew(fetch: true, keep_tmp: false, debug_symbols: false, interactive: false, &_blk)
     @prefix_returns_versioned_prefix = true
     active_spec.fetch if fetch
     stage(interactive:, debug_symbols:) do |staging|
@@ -1991,6 +2005,8 @@ class Formula
   # If called with no parameters, does this with all compatible
   # universal binaries in a {Formula}'s {Keg}.
   #
+  # Raises an error if no universal binaries are found to deuniversalize.
+  #
   # @api public
   sig { params(targets: T.nilable(T.any(Pathname, String))).void }
   def deuniversalize_machos(*targets)
@@ -1999,6 +2015,8 @@ class Formula
         file.arch == :universal && file.archs.include?(Hardware::CPU.arch)
       end
     end
+
+    raise "No universal binaries found to deuniversalize" if targets.blank?
 
     targets&.each do |target|
       extract_macho_slice_from(Pathname(target), Hardware::CPU.arch)
@@ -2087,6 +2105,15 @@ class Formula
   #                                                     bin/"foo")
   # ```
   #
+  # Using predefined `shell_parameter_format :clap`.
+  #
+  # ```ruby
+  # generate_completions_from_executable(bin/"foo", shell_parameter_format: :clap, shells: [:zsh])
+  #
+  # # translates to
+  # (zsh_completion/"_foo").write Utils.safe_popen_read({ "SHELL" => "zsh", "COMPLETE" => "zsh" }, bin/"foo")
+  # ```
+  #
   # Using custom `shell_parameter_format`.
   #
   # ```ruby
@@ -2102,23 +2129,29 @@ class Formula
   # @param commands
   #   the path to the executable and any passed subcommand(s) to use for generating the completion scripts.
   # @param base_name
-  #   the base name of the generated completion script. Defaults to the formula name.
+  #   the base name of the generated completion script. Defaults to the name of the executable if installed
+  #   within formula's bin or sbin. Otherwise falls back to the formula name.
   # @param shells
   #   the shells to generate completion scripts for. Defaults to `[:bash, :zsh, :fish]`.
   # @param shell_parameter_format
   #   specify how `shells` should each be passed to the `executable`. Takes either a String representing a
-  #   prefix, or one of `[:flag, :arg, :none, :click]`. Defaults to plainly passing the shell.
+  #   prefix, or one of `[:flag, :arg, :none, :click, :clap]`. Defaults to plainly passing the shell.
   sig {
     params(
-      commands: T.any(Pathname, String),
-      base_name: String, shells: T::Array[Symbol],
-      shell_parameter_format: T.nilable(T.any(Symbol, String))
+      commands:               T.any(Pathname, String),
+      base_name:              T.nilable(String),
+      shells:                 T::Array[Symbol],
+      shell_parameter_format: T.nilable(T.any(Symbol, String)),
     ).void
   }
   def generate_completions_from_executable(*commands,
-                                           base_name: name,
+                                           base_name: nil,
                                            shells: [:bash, :zsh, :fish],
                                            shell_parameter_format: nil)
+    executable = commands.first.to_s
+    base_name ||= File.basename(executable) if executable.start_with?(bin.to_s, sbin.to_s)
+    base_name ||= name
+
     completion_script_path_map = {
       bash: bash_completion/base_name,
       zsh:  zsh_completion/"_#{base_name}",
@@ -2137,8 +2170,11 @@ class Formula
       elsif shell_parameter_format == :none
         nil
       elsif shell_parameter_format == :click
-        prog_name = File.basename(commands.first.to_s).upcase.tr("-", "_")
+        prog_name = File.basename(executable).upcase.tr("-", "_")
         popen_read_env["_#{prog_name}_COMPLETE"] = "#{shell}_source"
+        nil
+      elsif shell_parameter_format == :clap
+        popen_read_env["COMPLETE"] = shell.to_s
         nil
       else
         "#{shell_parameter_format}#{shell}"
@@ -2879,7 +2915,7 @@ class Formula
 
   sig { returns(T::Boolean) }
   def test_defined?
-    false
+    method(:test).owner != Formula
   end
 
   def test; end
@@ -2935,17 +2971,18 @@ class Formula
       after:            T.nilable(T.any(Pathname, String, Symbol)),
       old_audit_result: T.nilable(T::Boolean),
       audit_result:     T::Boolean,
+      global:           T::Boolean,
       block:            T.nilable(T.proc.params(s: StringInreplaceExtension).void),
     ).void
   }
-  def inreplace(paths, before = nil, after = nil, old_audit_result = nil, audit_result: true, &block)
+  def inreplace(paths, before = nil, after = nil, old_audit_result = nil, audit_result: true, global: true, &block)
     # NOTE: must check for `#nil?` and not `#blank?`, or else `old_audit_result = false` will not call `odeprecated`.
     unless old_audit_result.nil?
       odeprecated "inreplace(paths, before, after, #{old_audit_result})",
                   "inreplace(paths, before, after, audit_result: #{old_audit_result})"
       audit_result = old_audit_result
     end
-    Utils::Inreplace.inreplace(paths, before, after, audit_result:, &block)
+    Utils::Inreplace.inreplace(paths, before, after, audit_result:, global:, &block)
   rescue Utils::Inreplace::Error => e
     onoe e.to_s
     raise BuildError.new(self, "inreplace", Array(paths), {})
@@ -3341,17 +3378,6 @@ class Formula
       end
     end
 
-    def method_added(method)
-      super
-
-      case method
-      when :brew
-        raise "You cannot override Formula#brew in class #{name}"
-      when :test
-        define_method(:test_defined?) { true }
-      end
-    end
-
     def freeze
       specs.each(&:freeze)
       @livecheck.freeze
@@ -3540,8 +3566,19 @@ class Formula
     # It returns `true` when a `livecheck` block is present in the {Formula}
     # and `false` otherwise.
     sig { returns(T::Boolean) }
+    def livecheck_defined?
+      @livecheck_defined == true
+    end
+
+    # Checks whether a `livecheck` specification is defined or not. This is a
+    # legacy alias for `#livecheck_defined?`.
+    #
+    # It returns `true` when a `livecheck` block is present in the {Formula}
+    # and `false` otherwise.
+    sig { returns(T::Boolean) }
     def livecheckable?
-      @livecheckable == true
+      # odeprecated "`livecheckable?`", "`livecheck_defined?`"
+      @livecheck_defined == true
     end
 
     # Checks whether a service specification is defined or not.
@@ -4166,7 +4203,7 @@ class Formula
     end
 
     # {Livecheck} can be used to check for newer versions of the software.
-    # This method evaluates the DSL specified in the livecheck block of the
+    # This method evaluates the DSL specified in the `livecheck` block of the
     # {Formula} (if it exists) and sets the instance variables of a {Livecheck}
     # object accordingly. This is used by `brew livecheck` to check for newer
     # versions of the software.
@@ -4186,7 +4223,7 @@ class Formula
     def livecheck(&block)
       return @livecheck unless block
 
-      @livecheckable = true
+      @livecheck_defined = true
       @livecheck.instance_eval(&block)
     end
 

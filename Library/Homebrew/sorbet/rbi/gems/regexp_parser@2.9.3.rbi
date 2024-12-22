@@ -2607,17 +2607,17 @@ Regexp::Parser::VERSION = T.let(T.unsafe(nil), String)
 class Regexp::Scanner
   # Emits an array with the details of the scanned pattern
   #
-  # source://regexp_parser//lib/regexp_parser/scanner.rb#2406
+  # source://regexp_parser//lib/regexp_parser/scanner.rb#2363
   def emit(type, token, text); end
 
   # only public for #||= to work on ruby <= 2.5
   #
-  # source://regexp_parser//lib/regexp_parser/scanner.rb#2431
+  # source://regexp_parser//lib/regexp_parser/scanner.rb#2388
   def literal_run; end
 
   # only public for #||= to work on ruby <= 2.5
   #
-  # source://regexp_parser//lib/regexp_parser/scanner.rb#2431
+  # source://regexp_parser//lib/regexp_parser/scanner.rb#2388
   def literal_run=(_arg0); end
 
   # @raise [PrematureEndError]
@@ -2630,168 +2630,168 @@ class Regexp::Scanner
   # Appends one or more characters to the literal buffer, to be emitted later
   # by a call to emit_literal.
   #
-  # source://regexp_parser//lib/regexp_parser/scanner.rb#2468
+  # source://regexp_parser//lib/regexp_parser/scanner.rb#2425
   def append_literal(data, ts, te); end
 
   # Returns the value of attribute block.
   #
-  # source://regexp_parser//lib/regexp_parser/scanner.rb#2435
+  # source://regexp_parser//lib/regexp_parser/scanner.rb#2392
   def block; end
 
   # Sets the attribute block
   #
   # @param value the value to set the attribute block to.
   #
-  # source://regexp_parser//lib/regexp_parser/scanner.rb#2435
+  # source://regexp_parser//lib/regexp_parser/scanner.rb#2392
   def block=(_arg0); end
 
   # Returns the value of attribute char_pos.
   #
-  # source://regexp_parser//lib/regexp_parser/scanner.rb#2435
+  # source://regexp_parser//lib/regexp_parser/scanner.rb#2392
   def char_pos; end
 
   # Sets the attribute char_pos
   #
   # @param value the value to set the attribute char_pos to.
   #
-  # source://regexp_parser//lib/regexp_parser/scanner.rb#2435
+  # source://regexp_parser//lib/regexp_parser/scanner.rb#2392
   def char_pos=(_arg0); end
 
   # Returns the value of attribute collect_tokens.
   #
-  # source://regexp_parser//lib/regexp_parser/scanner.rb#2435
+  # source://regexp_parser//lib/regexp_parser/scanner.rb#2392
   def collect_tokens; end
 
   # Sets the attribute collect_tokens
   #
   # @param value the value to set the attribute collect_tokens to.
   #
-  # source://regexp_parser//lib/regexp_parser/scanner.rb#2435
+  # source://regexp_parser//lib/regexp_parser/scanner.rb#2392
   def collect_tokens=(_arg0); end
 
   # Returns the value of attribute conditional_stack.
   #
-  # source://regexp_parser//lib/regexp_parser/scanner.rb#2435
+  # source://regexp_parser//lib/regexp_parser/scanner.rb#2392
   def conditional_stack; end
 
   # Sets the attribute conditional_stack
   #
   # @param value the value to set the attribute conditional_stack to.
   #
-  # source://regexp_parser//lib/regexp_parser/scanner.rb#2435
+  # source://regexp_parser//lib/regexp_parser/scanner.rb#2392
   def conditional_stack=(_arg0); end
 
   # Copy from ts to te from data as text
   #
-  # source://regexp_parser//lib/regexp_parser/scanner.rb#2462
+  # source://regexp_parser//lib/regexp_parser/scanner.rb#2419
   def copy(data, ts, te); end
 
   # Emits the literal run collected by calls to the append_literal method.
   #
-  # source://regexp_parser//lib/regexp_parser/scanner.rb#2473
+  # source://regexp_parser//lib/regexp_parser/scanner.rb#2430
   def emit_literal; end
 
-  # source://regexp_parser//lib/regexp_parser/scanner.rb#2508
+  # source://regexp_parser//lib/regexp_parser/scanner.rb#2465
   def emit_meta_control_sequence(data, ts, te, token); end
 
-  # source://regexp_parser//lib/regexp_parser/scanner.rb#2479
+  # source://regexp_parser//lib/regexp_parser/scanner.rb#2436
   def emit_options(text); end
 
   # Returns the value of attribute free_spacing.
   #
-  # source://regexp_parser//lib/regexp_parser/scanner.rb#2435
+  # source://regexp_parser//lib/regexp_parser/scanner.rb#2392
   def free_spacing; end
 
   # Sets the attribute free_spacing
   #
   # @param value the value to set the attribute free_spacing to.
   #
-  # source://regexp_parser//lib/regexp_parser/scanner.rb#2435
+  # source://regexp_parser//lib/regexp_parser/scanner.rb#2392
   def free_spacing=(_arg0); end
 
   # @return [Boolean]
   #
-  # source://regexp_parser//lib/regexp_parser/scanner.rb#2441
+  # source://regexp_parser//lib/regexp_parser/scanner.rb#2398
   def free_spacing?(input_object, options); end
 
   # Returns the value of attribute group_depth.
   #
-  # source://regexp_parser//lib/regexp_parser/scanner.rb#2435
+  # source://regexp_parser//lib/regexp_parser/scanner.rb#2392
   def group_depth; end
 
   # Sets the attribute group_depth
   #
   # @param value the value to set the attribute group_depth to.
   #
-  # source://regexp_parser//lib/regexp_parser/scanner.rb#2435
+  # source://regexp_parser//lib/regexp_parser/scanner.rb#2392
   def group_depth=(_arg0); end
 
   # @return [Boolean]
   #
-  # source://regexp_parser//lib/regexp_parser/scanner.rb#2453
+  # source://regexp_parser//lib/regexp_parser/scanner.rb#2410
   def in_group?; end
 
   # @return [Boolean]
   #
-  # source://regexp_parser//lib/regexp_parser/scanner.rb#2457
+  # source://regexp_parser//lib/regexp_parser/scanner.rb#2414
   def in_set?; end
 
   # Returns the value of attribute prev_token.
   #
-  # source://regexp_parser//lib/regexp_parser/scanner.rb#2435
+  # source://regexp_parser//lib/regexp_parser/scanner.rb#2392
   def prev_token; end
 
   # Sets the attribute prev_token
   #
   # @param value the value to set the attribute prev_token to.
   #
-  # source://regexp_parser//lib/regexp_parser/scanner.rb#2435
+  # source://regexp_parser//lib/regexp_parser/scanner.rb#2392
   def prev_token=(_arg0); end
 
   # Returns the value of attribute set_depth.
   #
-  # source://regexp_parser//lib/regexp_parser/scanner.rb#2435
+  # source://regexp_parser//lib/regexp_parser/scanner.rb#2392
   def set_depth; end
 
   # Sets the attribute set_depth
   #
   # @param value the value to set the attribute set_depth to.
   #
-  # source://regexp_parser//lib/regexp_parser/scanner.rb#2435
+  # source://regexp_parser//lib/regexp_parser/scanner.rb#2392
   def set_depth=(_arg0); end
 
   # Returns the value of attribute spacing_stack.
   #
-  # source://regexp_parser//lib/regexp_parser/scanner.rb#2435
+  # source://regexp_parser//lib/regexp_parser/scanner.rb#2392
   def spacing_stack; end
 
   # Sets the attribute spacing_stack
   #
   # @param value the value to set the attribute spacing_stack to.
   #
-  # source://regexp_parser//lib/regexp_parser/scanner.rb#2435
+  # source://regexp_parser//lib/regexp_parser/scanner.rb#2392
   def spacing_stack=(_arg0); end
 
   # Returns the value of attribute tokens.
   #
-  # source://regexp_parser//lib/regexp_parser/scanner.rb#2435
+  # source://regexp_parser//lib/regexp_parser/scanner.rb#2392
   def tokens; end
 
   # Sets the attribute tokens
   #
   # @param value the value to set the attribute tokens to.
   #
-  # source://regexp_parser//lib/regexp_parser/scanner.rb#2435
+  # source://regexp_parser//lib/regexp_parser/scanner.rb#2392
   def tokens=(_arg0); end
 
   class << self
-    # source://regexp_parser//lib/regexp_parser/scanner.rb#2392
+    # source://regexp_parser//lib/regexp_parser/scanner.rb#2349
     def long_prop_map; end
 
-    # source://regexp_parser//lib/regexp_parser/scanner.rb#2396
+    # source://regexp_parser//lib/regexp_parser/scanner.rb#2353
     def parse_prop_map(name); end
 
-    # source://regexp_parser//lib/regexp_parser/scanner.rb#2400
+    # source://regexp_parser//lib/regexp_parser/scanner.rb#2357
     def posix_classes; end
 
     # Scans the given regular expression text, or Regexp object and collects the
@@ -2806,7 +2806,7 @@ class Regexp::Scanner
 
     # lazy-load property maps when first needed
     #
-    # source://regexp_parser//lib/regexp_parser/scanner.rb#2388
+    # source://regexp_parser//lib/regexp_parser/scanner.rb#2345
     def short_prop_map; end
   end
 end
@@ -2889,7 +2889,7 @@ end
 
 # Base for all scanner validation errors
 #
-# source://regexp_parser//lib/regexp_parser/scanner/errors/validation_error.rb#4
+# source://regexp_parser//lib/regexp_parser/scanner/errors/validation_error.rb#3
 class Regexp::Scanner::ValidationError < ::Regexp::Scanner::ScannerError
   class << self
     # Centralizes and unifies the handling of validation related errors.
@@ -3070,7 +3070,7 @@ class Regexp::Syntax::Base
 end
 
 # source://regexp_parser//lib/regexp_parser/syntax/versions.rb#8
-Regexp::Syntax::CURRENT = Regexp::Syntax::V3_1_0
+Regexp::Syntax::CURRENT = Regexp::Syntax::V3_2_0
 
 # source://regexp_parser//lib/regexp_parser/syntax/version_lookup.rb#6
 class Regexp::Syntax::InvalidVersionNameError < ::Regexp::Syntax::SyntaxError

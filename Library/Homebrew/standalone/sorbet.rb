@@ -8,7 +8,9 @@ require "extend/module"
 # In the future we should consider not doing this monkey patch,
 # if assured that there is no performance hit from removing this.
 # There are mechanisms to achieve a middle ground (`default_checked_level`).
-unless ENV["HOMEBREW_SORBET_RUNTIME"]
+if ENV["HOMEBREW_SORBET_RUNTIME"]
+  T::Configuration.enable_final_checks_on_hooks
+else
   # Redefine `T.let`, etc. to make the `checked` parameter default to `false` rather than `true`.
   # @private
   module TNoChecks

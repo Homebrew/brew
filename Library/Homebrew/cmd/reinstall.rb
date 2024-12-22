@@ -108,10 +108,7 @@ module Homebrew
 
       sig { override.void }
       def run
-        formulae, casks = T.cast(
-          args.named.to_resolved_formulae_to_casks,
-          [T::Array[Formula], T::Array[Cask::Cask]],
-        )
+        formulae, casks = args.named.to_resolved_formulae_to_casks
 
         if args.build_from_source?
           unless DevelopmentTools.installed?
@@ -138,7 +135,6 @@ module Homebrew
             Homebrew::Reinstall.reinstall_formula(
               formula,
               flags:                      args.flags_only,
-              installed_on_request:       args.named.present?,
               force_bottle:               args.force_bottle?,
               build_from_source_formulae: args.build_from_source_formulae,
               interactive:                args.interactive?,
@@ -156,7 +152,6 @@ module Homebrew
           Upgrade.check_installed_dependents(
             formulae,
             flags:                      args.flags_only,
-            installed_on_request:       args.named.present?,
             force_bottle:               args.force_bottle?,
             build_from_source_formulae: args.build_from_source_formulae,
             interactive:                args.interactive?,

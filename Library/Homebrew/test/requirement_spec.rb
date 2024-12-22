@@ -10,6 +10,13 @@ RSpec.describe Requirement do
 
   let(:klass) { Class.new(described_class) }
 
+  describe "base class" do
+    it "raises an error when instantiated" do
+      expect { described_class.new }
+        .to raise_error(RuntimeError, "Requirement is declared as abstract; it cannot be instantiated")
+    end
+  end
+
   describe "#tags" do
     subject(:req) { klass.new(tags) }
 

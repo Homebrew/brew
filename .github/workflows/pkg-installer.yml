@@ -79,7 +79,7 @@ jobs:
         run: rm -f "${RUNNER_TEMP}/${TEMPORARY_CERTIFICATE_FILE}"
 
       - name: Checkout another Homebrew to brew subdirectory
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           path: brew
           fetch-depth: 0
@@ -133,12 +133,12 @@ jobs:
           fi
 
       - name: Generate build provenance
-        uses: actions/attest-build-provenance@ef244123eb79f2f7a7e75d99086184180e6d0018 # v1.4.4
+        uses: actions/attest-build-provenance@7668571508540a607bdfd90a87a560489fe372eb # v2.1.0
         with:
           subject-path: Homebrew-${{ steps.homebrew-version.outputs.version }}.pkg
 
       - name: Upload installer to GitHub Actions
-        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4
+        uses: actions/upload-artifact@6f51ac03b9356f520e9adb1b1b7802705f340c2b # v4.5.0
         with:
           name: Homebrew-${{ steps.homebrew-version.outputs.version }}.pkg
           path: Homebrew-${{ steps.homebrew-version.outputs.version }}.pkg
@@ -160,7 +160,7 @@ jobs:
             name: macos-15-arm64
     steps:
       - name: Download installer from GitHub Actions
-        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4
+        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
         with:
           name: "${{ needs.build.outputs.installer_path }}"
 
@@ -213,7 +213,7 @@ jobs:
       contents: write
     steps:
       - name: Download installer from GitHub Actions
-        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4
+        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
         with:
           name: "${{ needs.build.outputs.installer_path }}"
 

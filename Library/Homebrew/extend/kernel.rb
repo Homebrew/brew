@@ -285,8 +285,8 @@ module Kernel
     Homebrew._system(cmd, *args) do
       # Redirect output streams to `/dev/null` instead of closing as some programs
       # will fail to execute if they can't write to an open stream.
-      $stdout.reopen("/dev/null")
-      $stderr.reopen("/dev/null")
+      $stdout.reopen(File::NULL)
+      $stderr.reopen(File::NULL)
     end
   end
 

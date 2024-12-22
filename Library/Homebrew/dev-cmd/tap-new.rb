@@ -4,6 +4,7 @@
 require "abstract_command"
 require "fileutils"
 require "tap"
+require "utils/uid"
 
 module Homebrew
   module DevCmd
@@ -172,16 +173,32 @@ module Homebrew
         write_path(tap, ".github/workflows/publish.yml", actions_publish)
 
         unless args.no_git?
-          cd tap.path do
+          cd tap.path do |path|
             Utils::Git.set_name_email!
             Utils::Git.setup_gpg!
 
             # Would be nice to use --initial-branch here but it's not available in
             # older versions of Git that we support.
             safe_system "git", "-c", "init.defaultBranch=#{branch}", "init"
-            safe_system "git", "add", "--all"
-            safe_system "git", "commit", "-m", "Create #{tap} tap"
-            safe_system "git", "branch", "-m", branch
+
+            args = []
+            git_owner = File.stat(File.join(path, ".git")).uid
+            if git_owner != Process.uid && git_owner == Process.euid
+              # Under Homebrew user model, EUID is permitted to execute commands under the UID.
+              # Root users are never allowed (see brew.sh).
+              args << "-c" << "safe.directory=#{path}"
+            end
+
+            # Use the configuration of the original user, which will have author information and signing keys.
+            Utils::UID.drop_euid do
+              env = { HOME: Utils::UID.uid_home }.compact
+              env[:TMPDIR] = nil if (tmpdir = ENV.fetch("TMPDIR", nil)) && !File.writable?(tmpdir)
+              with_env(env) do
+                safe_system "git", *args, "add", "--all"
+                safe_system "git", *args, "commit", "-m", "Create #{tap} tap"
+                safe_system "git", *args, "branch", "-m", branch
+              end
+            end
           end
         end
 

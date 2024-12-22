@@ -277,7 +277,7 @@ module Cask
     sig { void }
     def audit_latest_with_livecheck
       return unless cask.version&.latest?
-      return unless cask.livecheckable?
+      return unless cask.livecheck_defined?
       return if cask.livecheck.skip?
 
       add_error "Casks with a `livecheck` should not use `version :latest`."
@@ -299,7 +299,7 @@ module Cask
       return if cask.version&.latest?
       return if (url = cask.url).nil?
       return if block_url_offline?
-      return if cask.livecheckable?
+      return if cask.livecheck_defined?
       return if livecheck_result == :auto_detected
 
       add_livecheck = "please add a livecheck. See #{Formatter.url(LIVECHECK_REFERENCE_URL)}"
@@ -693,7 +693,7 @@ module Cask
     sig { returns(T.nilable(MacOSVersion)) }
     def livecheck_min_os
       return unless online?
-      return unless cask.livecheckable?
+      return unless cask.livecheck_defined?
       return if cask.livecheck.strategy != :sparkle
 
       # `Sparkle` strategy blocks that use the `items` argument (instead of
@@ -924,7 +924,7 @@ module Cask
     sig { void }
     def audit_livecheck_https_availability
       return unless online?
-      return unless cask.livecheckable?
+      return unless cask.livecheck_defined?
       return unless (url = cask.livecheck.url)
       return if url.is_a?(Symbol)
 
