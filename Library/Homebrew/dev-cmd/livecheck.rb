@@ -14,7 +14,7 @@ module Homebrew
           Check for newer versions of formulae and/or casks from upstream.
           If no formula or cask argument is passed, the list of formulae and
           casks to check is taken from `HOMEBREW_LIVECHECK_WATCHLIST` or
-          `~/.homebrew/livecheck_watchlist.txt`.
+          `~/.homebrew/livecheck_watchlist.txt`, excluding autobumped formulae.
         EOS
         switch "--full-name",
                description: "Print formulae and casks with fully-qualified names."
@@ -90,6 +90,20 @@ module Homebrew
           end
         end
 
+        # Skip packages that are autobumped by BrewTestBot, if there are any.
+        if autobump_core_path.exist? && autobump_cask_path.exist?
+          autobump_core = File.read(autobump_core_path).lines.map(&:strip)
+          autobump_cask = File.read(autobump_cask_path).lines.map(&:strip)
+
+          formulae_and_casks_to_check = formulae_and_casks_to_check.reject do |formula_or_cask|
+            name = formula_or_cask.respond_to?(:token) ? formula_or_cask.token : formula_or_cask.name
+            if (autobump_core + autobump_cask).include?(name)
+              odebug "Skipping #{name} as it is autobumped."
+              true
+            end
+          end
+        end
+
         formulae_and_casks_to_check = formulae_and_casks_to_check.sort_by do |formula_or_cask|
           formula_or_cask.respond_to?(:token) ? formula_or_cask.token : formula_or_cask.name
         end
@@ -116,6 +130,16 @@ module Homebrew
       sig { returns(String) }
       def watchlist_path
         @watchlist_path ||= T.let(File.expand_path(Homebrew::EnvConfig.livecheck_watchlist), T.nilable(String))
+      end
+
+      sig { returns(Pathname) }
+      def autobump_core_path
+        @autobump_core_path ||= T.let(Tap.fetch("homebrew/core").path/".github/autobump.txt", T.nilable(Pathname))
+      end
+
+      sig { returns(Pathname) }
+      def autobump_cask_path
+        @autobump_cask_path ||= T.let(Tap.fetch("homebrew/cask").path/".github/autobump.txt", T.nilable(Pathname))
       end
     end
   end
