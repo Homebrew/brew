@@ -20,7 +20,7 @@ module OS
 
         success = T.let(true, T::Boolean)
         tap.cask_files.each do |file|
-          cask = Cask::CaskLoader.load(file)
+          cask = ::Cask::CaskLoader.load(file)
 
           # Fine to have missing URLs for unsupported macOS
           macos_req = cask.depends_on.macos

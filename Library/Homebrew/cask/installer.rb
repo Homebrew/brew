@@ -76,6 +76,7 @@ module Cask
       satisfy_cask_and_formula_dependencies
     end
 
+    sig { void }
     def stage
       odebug "Cask::Installer#stage"
 
@@ -88,6 +89,7 @@ module Cask
       raise e
     end
 
+    sig { void }
     def install
       start_time = Time.now
       odebug "Cask::Installer#install"
@@ -151,6 +153,7 @@ on_request: true)
       end
     end
 
+    sig { void }
     def check_conflicts
       return unless @cask.conflicts_with
 
@@ -167,6 +170,7 @@ on_request: true)
       end
     end
 
+    sig { void }
     def uninstall_existing_cask
       return unless @cask.installed?
 
@@ -195,6 +199,7 @@ on_request: true)
                                           timeout:)
     end
 
+    sig { void }
     def verify_has_sha
       odebug "Checking cask has checksum"
       return if @cask.sha256 != :no_check
@@ -212,6 +217,12 @@ on_request: true)
       end
     end
 
+    sig { returns(ArtifactSet) }
+    def artifacts
+      @cask.artifacts
+    end
+
+    sig { params(to: Pathname).void }
     def extract_primary_container(to: @cask.staged_path)
       odebug "Extracting primary container"
 
@@ -241,7 +252,6 @@ on_request: true)
 
     sig { params(predecessor: T.nilable(Cask)).void }
     def install_artifacts(predecessor: nil)
-      artifacts = @cask.artifacts
       already_installed_artifacts = []
 
       odebug "Installing artifacts"
@@ -300,6 +310,7 @@ on_request: true)
       raise CaskError, @cask.depends_on.macos.message(type: :cask)
     end
 
+    sig { void }
     def check_arch_requirements
       return if @cask.depends_on.arch.nil?
 
@@ -315,6 +326,7 @@ on_request: true)
             "but you are running #{@current_arch}."
     end
 
+    sig { returns(T::Array[T.untyped]) }
     def cask_and_formula_dependencies
       return @cask_and_formula_dependencies if @cask_and_formula_dependencies
 
@@ -488,8 +500,6 @@ on_request: true)
 
     sig { params(clear: T::Boolean, successor: T.nilable(Cask)).void }
     def uninstall_artifacts(clear: false, successor: nil)
-      artifacts = @cask.artifacts
-
       odebug "Uninstalling artifacts"
       odebug "#{::Utils.pluralize("artifact", artifacts.length, include_count: true)} defined", artifacts
 
