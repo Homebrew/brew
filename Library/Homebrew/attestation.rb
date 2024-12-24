@@ -197,6 +197,13 @@ module Homebrew
       attestation
     end
 
+    ATTESTATION_CACHE_DIRECTORY = T.let((HOMEBREW_CACHE/"attestation").freeze, Pathname)
+
+    sig { params(bottle: Bottle).returns(Pathname) }
+    def self.cached_attestation_path(bottle)
+      ATTESTATION_CACHE_DIRECTORY/bottle.filename.attestation_json(bottle.resource.checksum.hexdigest)
+    end
+
     ATTESTATION_MAX_RETRIES = 5
 
     # Verifies the given bottle against a cryptographic attestation of build provenance
@@ -211,6 +218,16 @@ module Homebrew
     # @api private
     sig { params(bottle: Bottle).returns(T::Hash[T.untyped, T.untyped]) }
     def self.check_core_attestation(bottle)
+      cached_attestation = cached_attestation_path(bottle)
+
+      if cached_attestation.exist?
+        begin
+          return JSON.parse(cached_attestation.read)
+        rescue JSON::ParserError
+          cached_attestation.unlink
+        end
+      end
+
       begin
         # Ideally, we would also constrain the signing workflow here, but homebrew-core
         # currently uses multiple signing workflows to produce bottles
@@ -224,6 +241,8 @@ module Homebrew
         # workflow, which would then be our sole identity. However, GitHub's
         # attestations currently do not include reusable workflow state by default.
         attestation = check_attestation bottle, HOMEBREW_CORE_REPO
+        ATTESTATION_CACHE_DIRECTORY.mkpath
+        cached_attestation.atomic_write attestation.to_json
         return attestation
       rescue MissingAttestationError
         odebug "falling back on backfilled attestation for #{bottle}"
@@ -265,6 +284,8 @@ module Homebrew
         end
       end
 
+      ATTESTATION_CACHE_DIRECTORY.mkpath
+      cached_attestation.atomic_write backfill_attestation.to_json
       backfill_attestation
     rescue InvalidAttestationError
       @attestation_retry_count ||= T.let(Hash.new(0), T.nilable(T::Hash[Bottle, Integer]))
