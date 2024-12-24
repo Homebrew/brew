@@ -11,6 +11,7 @@ module DependenciesHelpers
 
   def args_includes_ignores(args)
     includes = [:required?, :recommended?] # included by default
+    includes << :implicit? if args.include_implicit?
     includes << :build? if args.include_build?
     includes << :test? if args.include_test?
     includes << :optional? if args.include_optional?

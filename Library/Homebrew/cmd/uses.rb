@@ -37,6 +37,8 @@ module Homebrew
         switch "--eval-all",
                description: "Evaluate all available formulae and casks, whether installed or not, to show " \
                             "their dependents."
+        switch "--include-implicit",
+               description: "Include formulae that specify <formula> as a `:build` dependency."
         switch "--include-build",
                description: "Include formulae that specify <formula> as a `:build` dependency."
         switch "--include-test",
@@ -73,6 +75,7 @@ module Homebrew
 
         use_runtime_dependents = args.installed? &&
                                  !used_formulae_missing &&
+                                 !args.include_implicit? &&
                                  !args.include_build? &&
                                  !args.include_test? &&
                                  !args.include_optional? &&

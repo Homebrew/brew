@@ -31,6 +31,8 @@ module Homebrew
                description: "Show the union of dependencies for multiple <formula>, instead of the intersection."
         switch "--full-name",
                description: "List dependencies by their full name."
+        switch "--include-implicit",
+               description: "Include implicit dependencies used to download and unpack source files"
         switch "--include-build",
                description: "Include `:build` dependencies for <formula>."
         switch "--include-optional",
@@ -102,6 +104,7 @@ module Homebrew
                                       !args.tree? &&
                                       !args.graph? &&
                                       !args.HEAD? &&
+                                      !args.include_implicit? &&
                                       !args.include_build? &&
                                       !args.include_test? &&
                                       !args.include_optional? &&
