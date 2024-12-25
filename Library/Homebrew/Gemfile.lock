@@ -46,7 +46,7 @@ GEM
     rbi (0.2.2)
       prism (~> 1.0)
       sorbet-runtime (>= 0.5.9204)
-    rbs (3.7.0)
+    rbs (3.8.0)
       logger
     redcarpet (3.6.0)
     regexp_parser (2.9.3)
