@@ -3418,7 +3418,7 @@ class Pry::Command::ListInspectors < ::Pry::ClassCommand
   def selected_text; end
 end
 
-# source://pry//lib/pry/commands/ls/config.rb#5
+# source://pry//lib/pry/commands/ls/config.rb#7
 class Pry::Command::Ls < ::Pry::ClassCommand
   # Exclude -q, -v and --grep because they,
   # don't specify what the user wants to see.
@@ -3443,229 +3443,153 @@ class Pry::Command::Ls < ::Pry::ClassCommand
   def raise_errors_if_arguments_are_weird; end
 end
 
-# source://pry//lib/pry/commands/ls/config.rb#6
+# source://pry//lib/pry/commands/ls/config.rb#8
 class Pry::Command::Ls::Config
-  # Returns the value of attribute builtin_global_color.
+  extend ::Forwardable
+  extend ::Pry::Forwardable
+
+  # @return [Config] a new instance of Config
   #
-  # source://pry//lib/pry/commands/ls/config.rb#7
+  # source://pry//lib/pry/commands/ls/config.rb#44
+  def initialize(config); end
+
+  # source://forwardable/1.3.3/forwardable.rb#231
+  def [](*args, **_arg1, &block); end
+
+  # source://forwardable/1.3.3/forwardable.rb#231
+  def []=(*args, **_arg1, &block); end
+
+  # source://pry//lib/pry/commands/ls/config.rb#33
   def builtin_global_color; end
 
-  # Sets the attribute builtin_global_color
-  #
-  # @param value the value to set the attribute builtin_global_color to.
-  #
-  # source://pry//lib/pry/commands/ls/config.rb#7
-  def builtin_global_color=(_arg0); end
+  # source://pry//lib/pry/commands/ls/config.rb#37
+  def builtin_global_color=(value); end
 
-  # Returns the value of attribute ceiling.
-  #
-  # source://pry//lib/pry/commands/ls/config.rb#7
+  # source://pry//lib/pry/commands/ls/config.rb#33
   def ceiling; end
 
-  # Sets the attribute ceiling
-  #
-  # @param value the value to set the attribute ceiling to.
-  #
-  # source://pry//lib/pry/commands/ls/config.rb#7
-  def ceiling=(_arg0); end
+  # source://pry//lib/pry/commands/ls/config.rb#37
+  def ceiling=(value); end
 
-  # Returns the value of attribute class_constant_color.
-  #
-  # source://pry//lib/pry/commands/ls/config.rb#7
+  # source://pry//lib/pry/commands/ls/config.rb#33
   def class_constant_color; end
 
-  # Sets the attribute class_constant_color
-  #
-  # @param value the value to set the attribute class_constant_color to.
-  #
-  # source://pry//lib/pry/commands/ls/config.rb#7
-  def class_constant_color=(_arg0); end
+  # source://pry//lib/pry/commands/ls/config.rb#37
+  def class_constant_color=(value); end
 
-  # Returns the value of attribute class_var_color.
-  #
-  # source://pry//lib/pry/commands/ls/config.rb#7
+  # source://pry//lib/pry/commands/ls/config.rb#33
   def class_var_color; end
 
-  # Sets the attribute class_var_color
-  #
-  # @param value the value to set the attribute class_var_color to.
-  #
-  # source://pry//lib/pry/commands/ls/config.rb#7
-  def class_var_color=(_arg0); end
+  # source://pry//lib/pry/commands/ls/config.rb#37
+  def class_var_color=(value); end
 
-  # Returns the value of attribute constant_color.
-  #
-  # source://pry//lib/pry/commands/ls/config.rb#7
+  # source://pry//lib/pry/commands/ls/config.rb#33
   def constant_color; end
 
-  # Sets the attribute constant_color
-  #
-  # @param value the value to set the attribute constant_color to.
-  #
-  # source://pry//lib/pry/commands/ls/config.rb#7
-  def constant_color=(_arg0); end
+  # source://pry//lib/pry/commands/ls/config.rb#37
+  def constant_color=(value); end
 
-  # Returns the value of attribute exception_constant_color.
-  #
-  # source://pry//lib/pry/commands/ls/config.rb#7
+  # source://forwardable/1.3.3/forwardable.rb#231
+  def each(*args, **_arg1, &block); end
+
+  # source://forwardable/1.3.3/forwardable.rb#231
+  def each_pair(*args, **_arg1, &block); end
+
+  # source://pry//lib/pry/commands/ls/config.rb#33
   def exception_constant_color; end
 
-  # Sets the attribute exception_constant_color
-  #
-  # @param value the value to set the attribute exception_constant_color to.
-  #
-  # source://pry//lib/pry/commands/ls/config.rb#7
-  def exception_constant_color=(_arg0); end
+  # source://pry//lib/pry/commands/ls/config.rb#37
+  def exception_constant_color=(value); end
 
-  # Returns the value of attribute global_var_color.
-  #
-  # source://pry//lib/pry/commands/ls/config.rb#7
+  # source://pry//lib/pry/commands/ls/config.rb#33
   def global_var_color; end
 
-  # Sets the attribute global_var_color
-  #
-  # @param value the value to set the attribute global_var_color to.
-  #
-  # source://pry//lib/pry/commands/ls/config.rb#7
-  def global_var_color=(_arg0); end
+  # source://pry//lib/pry/commands/ls/config.rb#37
+  def global_var_color=(value); end
 
-  # Returns the value of attribute heading_color.
-  #
-  # source://pry//lib/pry/commands/ls/config.rb#7
+  # source://pry//lib/pry/commands/ls/config.rb#33
   def heading_color; end
 
-  # Sets the attribute heading_color
-  #
-  # @param value the value to set the attribute heading_color to.
-  #
-  # source://pry//lib/pry/commands/ls/config.rb#7
-  def heading_color=(_arg0); end
+  # source://pry//lib/pry/commands/ls/config.rb#37
+  def heading_color=(value); end
 
-  # Returns the value of attribute instance_var_color.
-  #
-  # source://pry//lib/pry/commands/ls/config.rb#7
+  # source://pry//lib/pry/commands/ls/config.rb#33
   def instance_var_color; end
 
-  # Sets the attribute instance_var_color
-  #
-  # @param value the value to set the attribute instance_var_color to.
-  #
-  # source://pry//lib/pry/commands/ls/config.rb#7
-  def instance_var_color=(_arg0); end
+  # source://pry//lib/pry/commands/ls/config.rb#37
+  def instance_var_color=(value); end
 
-  # Returns the value of attribute local_var_color.
-  #
-  # source://pry//lib/pry/commands/ls/config.rb#7
+  # source://forwardable/1.3.3/forwardable.rb#231
+  def keys(*args, **_arg1, &block); end
+
+  # source://pry//lib/pry/commands/ls/config.rb#33
   def local_var_color; end
 
-  # Sets the attribute local_var_color
-  #
-  # @param value the value to set the attribute local_var_color to.
-  #
-  # source://pry//lib/pry/commands/ls/config.rb#7
-  def local_var_color=(_arg0); end
+  # source://pry//lib/pry/commands/ls/config.rb#37
+  def local_var_color=(value); end
 
-  # Returns the value of attribute method_missing_color.
-  #
-  # source://pry//lib/pry/commands/ls/config.rb#7
+  # source://pry//lib/pry/commands/ls/config.rb#33
   def method_missing_color; end
 
-  # Sets the attribute method_missing_color
-  #
-  # @param value the value to set the attribute method_missing_color to.
-  #
-  # source://pry//lib/pry/commands/ls/config.rb#7
-  def method_missing_color=(_arg0); end
+  # source://pry//lib/pry/commands/ls/config.rb#37
+  def method_missing_color=(value); end
 
-  # Returns the value of attribute private_method_color.
-  #
-  # source://pry//lib/pry/commands/ls/config.rb#7
+  # source://pry//lib/pry/commands/ls/config.rb#33
   def private_method_color; end
 
-  # Sets the attribute private_method_color
-  #
-  # @param value the value to set the attribute private_method_color to.
-  #
-  # source://pry//lib/pry/commands/ls/config.rb#7
-  def private_method_color=(_arg0); end
+  # source://pry//lib/pry/commands/ls/config.rb#37
+  def private_method_color=(value); end
 
-  # Returns the value of attribute protected_method_color.
-  #
-  # source://pry//lib/pry/commands/ls/config.rb#7
+  # source://pry//lib/pry/commands/ls/config.rb#33
   def protected_method_color; end
 
-  # Sets the attribute protected_method_color
-  #
-  # @param value the value to set the attribute protected_method_color to.
-  #
-  # source://pry//lib/pry/commands/ls/config.rb#7
-  def protected_method_color=(_arg0); end
+  # source://pry//lib/pry/commands/ls/config.rb#37
+  def protected_method_color=(value); end
 
-  # Returns the value of attribute pry_var_color.
-  #
-  # source://pry//lib/pry/commands/ls/config.rb#7
+  # source://pry//lib/pry/commands/ls/config.rb#33
   def pry_var_color; end
 
-  # Sets the attribute pry_var_color
-  #
-  # @param value the value to set the attribute pry_var_color to.
-  #
-  # source://pry//lib/pry/commands/ls/config.rb#7
-  def pry_var_color=(_arg0); end
+  # source://pry//lib/pry/commands/ls/config.rb#37
+  def pry_var_color=(value); end
 
-  # Returns the value of attribute pseudo_global_color.
-  #
-  # source://pry//lib/pry/commands/ls/config.rb#7
+  # source://pry//lib/pry/commands/ls/config.rb#33
   def pseudo_global_color; end
 
-  # Sets the attribute pseudo_global_color
-  #
-  # @param value the value to set the attribute pseudo_global_color to.
-  #
-  # source://pry//lib/pry/commands/ls/config.rb#7
-  def pseudo_global_color=(_arg0); end
+  # source://pry//lib/pry/commands/ls/config.rb#37
+  def pseudo_global_color=(value); end
 
-  # Returns the value of attribute public_method_color.
-  #
-  # source://pry//lib/pry/commands/ls/config.rb#7
+  # source://pry//lib/pry/commands/ls/config.rb#33
   def public_method_color; end
 
-  # Sets the attribute public_method_color
-  #
-  # @param value the value to set the attribute public_method_color to.
-  #
-  # source://pry//lib/pry/commands/ls/config.rb#7
-  def public_method_color=(_arg0); end
+  # source://pry//lib/pry/commands/ls/config.rb#37
+  def public_method_color=(value); end
 
-  # Returns the value of attribute separator.
-  #
-  # source://pry//lib/pry/commands/ls/config.rb#7
+  # source://pry//lib/pry/commands/ls/config.rb#33
   def separator; end
 
-  # Sets the attribute separator
-  #
-  # @param value the value to set the attribute separator to.
-  #
-  # source://pry//lib/pry/commands/ls/config.rb#7
-  def separator=(_arg0); end
+  # source://pry//lib/pry/commands/ls/config.rb#37
+  def separator=(value); end
 
-  # Returns the value of attribute unloaded_constant_color.
-  #
-  # source://pry//lib/pry/commands/ls/config.rb#7
+  # source://forwardable/1.3.3/forwardable.rb#231
+  def to_a(*args, **_arg1, &block); end
+
+  # source://pry//lib/pry/commands/ls/config.rb#33
   def unloaded_constant_color; end
 
-  # Sets the attribute unloaded_constant_color
-  #
-  # @param value the value to set the attribute unloaded_constant_color to.
-  #
-  # source://pry//lib/pry/commands/ls/config.rb#7
-  def unloaded_constant_color=(_arg0); end
+  # source://pry//lib/pry/commands/ls/config.rb#37
+  def unloaded_constant_color=(value); end
+
+  # source://forwardable/1.3.3/forwardable.rb#231
+  def values(*args, **_arg1, &block); end
 
   class << self
-    # source://pry//lib/pry/commands/ls/config.rb#26
+    # source://pry//lib/pry/commands/ls/config.rb#48
     def default; end
   end
 end
+
+# source://pry//lib/pry/commands/ls/config.rb#11
+Pry::Command::Ls::Config::DEFAULT_OPTIONS = T.let(T.unsafe(nil), Hash)
 
 # source://pry//lib/pry/commands/ls/constants.rb#6
 class Pry::Command::Ls::Constants < ::Pry::Command::Ls::Formatter
@@ -8649,12 +8573,12 @@ class Pry::REPL
   #   indicators in 99% of cases.
   # @return [Integer]
   #
-  # source://pry//lib/pry/repl.rb#300
+  # source://pry//lib/pry/repl.rb#307
   def calculate_overhang(current_prompt, original_val, indented_val); end
 
   # @return [Boolean]
   #
-  # source://pry//lib/pry/repl.rb#280
+  # source://pry//lib/pry/repl.rb#287
   def complete_expression?(multiline_input); end
 
   # @return [Boolean]
@@ -8699,7 +8623,7 @@ class Pry::REPL
   #   % pry | tee log
   # @return [Boolean]
   #
-  # source://pry//lib/pry/repl.rb#265
+  # source://pry//lib/pry/repl.rb#272
   def piping?; end
 
   # @return [Boolean]
@@ -8758,7 +8682,7 @@ class Pry::REPL
 
   # @return [void]
   #
-  # source://pry//lib/pry/repl.rb#272
+  # source://pry//lib/pry/repl.rb#279
   def set_readline_output; end
 
   class << self
@@ -8773,7 +8697,7 @@ class Pry::REPL
   end
 end
 
-# source://pry//lib/pry/repl.rb#278
+# source://pry//lib/pry/repl.rb#285
 Pry::REPL::UNEXPECTED_TOKENS = T.let(T.unsafe(nil), Array)
 
 # A class to manage the loading of files through the REPL loop.
