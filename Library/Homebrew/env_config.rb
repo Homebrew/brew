@@ -303,6 +303,10 @@ module Homebrew
                       "or `$HOME/.homebrew/livecheck_watchlist.txt` otherwise.",
         default:      "#{ENV.fetch("HOMEBREW_USER_CONFIG_HOME")}/livecheck_watchlist.txt",
       },
+      HOMEBREW_LIVECHECK_AUTOBUMP:               {
+        description: "If set, `brew livecheck` will include data for packages that are autobumped by BrewTestBot.",
+        boolean:     true,
+      },
       HOMEBREW_LOCK_CONTEXT:                     {
         description: "If set, Homebrew will add this output as additional context for locking errors. " \
                      "This is useful when running `brew` in the background.",

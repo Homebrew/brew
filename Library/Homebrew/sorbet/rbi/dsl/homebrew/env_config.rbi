@@ -196,6 +196,9 @@ module Homebrew::EnvConfig
     sig { returns(String) }
     def livecheck_watchlist; end
 
+    sig { returns(T::Boolean) }
+    def livecheck_autobump?; end
+
     sig { returns(T.nilable(::String)) }
     def lock_context; end
 

@@ -38,6 +38,8 @@ module Homebrew
                description: "Only check casks."
         switch "--extract-plist",
                description: "Enable checking multiple casks with ExtractPlist strategy."
+        switch "--autobump",
+               description: "Include packages that are autobumped by BrewTestBot. By default these are skipped."
 
         conflicts "--debug", "--json"
         conflicts "--tap=", "--eval-all", "--installed"
@@ -90,6 +92,31 @@ module Homebrew
           end
         end
 
+        if skip_autobump?
+          autobump_files = {}
+
+          formulae_and_casks_to_check.each do |formula_or_cask|
+            tap = formula_or_cask.tap
+            next if tap.nil?
+
+            autobump_files[tap] ||= begin
+              autobump_path = tap.path/".github/autobump.txt"
+              autobump_path.exist? ? File.read(autobump_path).lines.map(&:strip) : []
+            end
+          end
+
+          formulae_and_casks_to_check = formulae_and_casks_to_check.reject do |formula_or_cask|
+            tap = formula_or_cask.tap
+            next false if tap.nil?
+
+            name = formula_or_cask.respond_to?(:token) ? formula_or_cask.token : formula_or_cask.name
+            if autobump_files[tap].include?(name)
+              odebug "Skipping #{name} as it is autobumped in #{tap}."
+              true
+            end
+          end
+        end
+
         formulae_and_casks_to_check = formulae_and_casks_to_check.sort_by do |formula_or_cask|
           formula_or_cask.respond_to?(:token) ? formula_or_cask.token : formula_or_cask.name
         end
@@ -116,6 +143,11 @@ module Homebrew
       sig { returns(String) }
       def watchlist_path
         @watchlist_path ||= T.let(File.expand_path(Homebrew::EnvConfig.livecheck_watchlist), T.nilable(String))
+      end
+
+      sig { returns(T::Boolean) }
+      def skip_autobump?
+        !(args.autobump? || Homebrew::EnvConfig.livecheck_autobump?)
       end
     end
   end
