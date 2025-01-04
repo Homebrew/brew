@@ -3554,8 +3554,12 @@ User-specific environment files take precedence over prefix-specific files and
 prefix-specific files take precedence over system-wide files (unless
 `HOMEBREW_SYSTEM_ENV_TAKES_PRIORITY` is set, see below).
 
-Note that these files do not support shell variable expansion e.g. `$HOME` or
-command execution e.g. `$(cat file)`.
+>[!IMPORTANT]
+>
+>Note that Homebrew's environment files are <ins>not</ins> shell scripts.
+>
+>- They do **not** support shell variable expansion, e.g. `$HOME` or command execution, e.g. `$(cat file)`.
+>- They **cannot** parse the "`export`" command syntax, and should <ins><em>only</em></ins> contain key-value pairs, e.g. `HOMEBREW_ENV_VAR=VALUE`
 
 `HOMEBREW_ALLOWED_TAPS`
 
