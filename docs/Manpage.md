@@ -4102,7 +4102,7 @@ command execution e.g. `$(cat file)`.
   the target does not yet exist. This issue typically occurs when using
   FileVault or custom SSD configurations.
   
-  *Default:* macOS: `/private/tmp`, Linux: `/tmp`.
+  *Default:* macOS: `/private/tmp`, Linux: `/var/tmp`.
 
 `HOMEBREW_UPDATE_TO_TAG`
 
