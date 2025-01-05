@@ -65,7 +65,7 @@ else
   CACHE_HOME="${HOMEBREW_XDG_CACHE_HOME:-${HOME}/.cache}"
   HOMEBREW_DEFAULT_CACHE="${CACHE_HOME}/Homebrew"
   HOMEBREW_DEFAULT_LOGS="${CACHE_HOME}/Homebrew/Logs"
-  HOMEBREW_DEFAULT_TEMP="/tmp"
+  HOMEBREW_DEFAULT_TEMP="/var/tmp"
 fi
 
 realpath() {
