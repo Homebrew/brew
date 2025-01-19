@@ -1,4 +1,4 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
 
 require "utils/inreplace"
@@ -14,20 +14,20 @@ module PyPI
   class Package
     sig { params(package_string: String, is_url: T::Boolean, python_name: String).void }
     def initialize(package_string, is_url: false, python_name: "python")
-      @pypi_info = nil
+      @pypi_info = T.let(nil, T.nilable(T::Array[String]))
       @package_string = package_string
       @is_url = is_url
-      @is_pypi_url = package_string.start_with? PYTHONHOSTED_URL_PREFIX
+      @is_pypi_url = T.let(package_string.start_with?(PYTHONHOSTED_URL_PREFIX), T::Boolean)
       @python_name = python_name
     end
 
-    sig { returns(String) }
+    sig { returns(T.nilable(String)) }
     def name
       basic_metadata if @name.blank?
       @name
     end
 
-    sig { returns(T::Array[T.nilable(String)]) }
+    sig { returns(T.nilable(T::Array[String])) }
     def extras
       basic_metadata if @extras.blank?
       @extras
@@ -43,7 +43,7 @@ module PyPI
     def version=(new_version)
       raise ArgumentError, "can't update version for non-PyPI packages" unless valid_pypi_package?
 
-      @version = new_version
+      @version = T.let(new_version, T.nilable(String))
     end
 
     sig { returns(T::Boolean) }
@@ -97,8 +97,10 @@ module PyPI
     sig { returns(String) }
     def to_s
       if valid_pypi_package?
-        out = name
-        out += "[#{extras.join(",")}]" if extras.present?
+        out = T.must(name)
+        if (pypi_extras = extras.presence)
+          out += "[#{pypi_extras.join(",")}]"
+        end
         out += "==#{version}" if version.present?
         out
       else
@@ -132,14 +134,15 @@ module PyPI
     private
 
     # Returns [name, [extras], version] for this package.
+    sig { returns(T.nilable(T.any(String, T::Array[String]))) }
     def basic_metadata
       if @is_pypi_url
         match = File.basename(@package_string).match(/^(.+)-([a-z\d.]+?)(?:.tar.gz|.zip)$/)
         raise ArgumentError, "Package should be a valid PyPI URL" if match.blank?
 
-        @name ||= PyPI.normalize_python_package match[1]
-        @extras ||= []
-        @version ||= match[2]
+        @name ||= T.let(PyPI.normalize_python_package(T.must(match[1])), T.nilable(String))
+        @extras ||= T.let([], T.nilable(T::Array[String]))
+        @version ||= T.let(match[2], T.nilable(String))
       elsif @is_url
         ensure_formula_installed!(@python_name)
 
@@ -162,9 +165,9 @@ module PyPI
 
         metadata = JSON.parse(pip_output)["install"].first["metadata"]
 
-        @name ||= PyPI.normalize_python_package metadata["name"]
-        @extras ||= []
-        @version ||= metadata["version"]
+        @name ||= T.let(PyPI.normalize_python_package(metadata["name"]), T.nilable(String))
+        @extras ||= T.let([], T.nilable(T::Array[String]))
+        @version ||= T.let(metadata["version"], T.nilable(String))
       else
         if @package_string.include? "=="
           name, version = @package_string.split("==")
@@ -180,7 +183,7 @@ module PyPI
           extras = []
         end
 
-        @name ||= PyPI.normalize_python_package name
+        @name ||= T.let(PyPI.normalize_python_package(T.must(name)), T.nilable(String))
         @extras ||= extras
         @version ||= version
       end
@@ -248,7 +251,7 @@ module PyPI
       missing_msg = "formulae required to update \"#{formula.name}\" resources: #{missing_dependencies.join(", ")}"
       odie "Missing #{missing_msg}" unless install_dependencies
       ohai "Installing #{missing_msg}"
-      missing_dependencies.each(&method(:ensure_formula_installed!))
+      missing_dependencies.each(&:ensure_formula_installed!)
     end
 
     python_deps = formula.deps
@@ -327,12 +330,16 @@ module PyPI
     # Resolve the dependency tree of all input packages
     show_info = !print_only && !silent
     ohai "Retrieving PyPI dependencies for \"#{input_packages.join(" ")}\"..." if show_info
-    found_packages = pip_report(input_packages, python_name:, print_stderr: verbose && show_info)
+    print_stderr = !(verbose && show_info).nil?
+    found_packages = pip_report(input_packages, python_name:, print_stderr:)
     # Resolve the dependency tree of excluded packages to prune the above
     exclude_packages.delete_if { |package| found_packages.exclude? package }
     ohai "Retrieving PyPI dependencies for excluded \"#{exclude_packages.join(" ")}\"..." if show_info
-    exclude_packages = pip_report(exclude_packages, python_name:, print_stderr: verbose && show_info)
-    exclude_packages += [Package.new(main_package.name)] unless main_package.nil?
+    print_stderr = !(verbose && show_info).nil?
+    exclude_packages = pip_report(exclude_packages, python_name:, print_stderr:)
+    if (main_package_name = main_package&.name)
+      exclude_packages += [Package.new(main_package_name)]
+    end
 
     new_resource_blocks = ""
     found_packages.sort.each do |package|
@@ -404,12 +411,18 @@ module PyPI
     true
   end
 
+  sig { params(name: String).returns(String) }
   def self.normalize_python_package(name)
     # This normalization is defined in the PyPA packaging specifications;
     # https://packaging.python.org/en/latest/specifications/name-normalization/#name-normalization
     name.gsub(/[-_.]+/, "-").downcase
   end
 
+  sig {
+    params(
+      packages: T::Array[Package], python_name: String, print_stderr: T::Boolean,
+    ).returns(T::Array[Package])
+  }
   def self.pip_report(packages, python_name: "python", print_stderr: false)
     return [] if packages.blank?
 
@@ -430,6 +443,7 @@ module PyPI
     pip_report_to_packages(JSON.parse(pip_output)).uniq
   end
 
+  sig { params(report: T::Hash[String, T.untyped]).returns(T::Array[Package]) }
   def self.pip_report_to_packages(report)
     return [] if report.blank?
 

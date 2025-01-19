@@ -1,4 +1,4 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
 
 require "utils/curl"
@@ -8,7 +8,7 @@ require "utils/github"
 module SPDX
   module_function
 
-  DATA_PATH = (HOMEBREW_DATA_PATH/"spdx").freeze
+  DATA_PATH = T.let((HOMEBREW_DATA_PATH/"spdx").freeze, Pathname)
   API_URL = "https://api.github.com/repos/spdx/license-list-data/releases/latest"
   LICENSEREF_PREFIX = "LicenseRef-Homebrew-"
   ALLOWED_LICENSE_SYMBOLS = [
@@ -16,24 +16,43 @@ module SPDX
     :cannot_represent,
   ].freeze
 
+  sig { returns(T::Hash[String, T.untyped]) }
   def license_data
-    @license_data ||= JSON.parse (DATA_PATH/"spdx_licenses.json").read
+    @license_data ||= T.let(JSON.parse((DATA_PATH/"spdx_licenses.json").read), T.nilable(T::Hash[String, T.untyped]))
   end
 
+  sig { returns(T::Hash[String, T.untyped]) }
   def exception_data
-    @exception_data ||= JSON.parse (DATA_PATH/"spdx_exceptions.json").read
+    @exception_data ||= T.let(JSON.parse((DATA_PATH/"spdx_exceptions.json").read),
+                              T.nilable(T::Hash[String, T.untyped]))
   end
 
+  sig { returns(String) }
   def latest_tag
-    @latest_tag ||= GitHub::API.open_rest(API_URL)["tag_name"]
+    @latest_tag ||= T.let(GitHub::API.open_rest(API_URL)["tag_name"], T.nilable(String))
   end
 
+  sig { params(to: Pathname).void }
   def download_latest_license_data!(to: DATA_PATH)
     data_url = "https://raw.githubusercontent.com/spdx/license-list-data/#{latest_tag}/json/"
     Utils::Curl.curl_download("#{data_url}licenses.json", to: to/"spdx_licenses.json")
     Utils::Curl.curl_download("#{data_url}exceptions.json", to: to/"spdx_exceptions.json")
   end
 
+  sig {
+    params(
+      license_expression: T.any(
+        String,
+        Symbol,
+        T::Hash[T.any(Symbol, String), T.untyped],
+        T::Array[String],
+      ),
+    ).returns(
+      [
+        T::Array[T.any(String, Symbol)], T::Array[String]
+      ],
+    )
+  }
   def parse_license_expression(license_expression)
     licenses = T.let([], T::Array[T.any(String, Symbol)])
     exceptions = T.let([], T::Array[String])
@@ -63,6 +82,7 @@ module SPDX
     [licenses, exceptions]
   end
 
+  sig { params(license: T.any(String, Symbol)).returns(T::Boolean) }
   def valid_license?(license)
     return ALLOWED_LICENSE_SYMBOLS.include? license if license.is_a? Symbol
 
@@ -70,22 +90,31 @@ module SPDX
     license_data["licenses"].any? { |spdx_license| spdx_license["licenseId"] == license }
   end
 
+  sig { params(license: T.any(String, Symbol)).returns(T::Boolean) }
   def deprecated_license?(license)
     return false if ALLOWED_LICENSE_SYMBOLS.include? license
     return false unless valid_license?(license)
 
-    license = license.delete_suffix "+"
+    license = license.to_s.delete_suffix "+"
     license_data["licenses"].none? do |spdx_license|
       spdx_license["licenseId"] == license && !spdx_license["isDeprecatedLicenseId"]
     end
   end
 
+  sig { params(exception: String).returns(T::Boolean) }
   def valid_license_exception?(exception)
     exception_data["exceptions"].any? do |spdx_exception|
       spdx_exception["licenseExceptionId"] == exception && !spdx_exception["isDeprecatedLicenseId"]
     end
   end
 
+  sig {
+    params(
+      license_expression: T.any(String, Symbol, T::Hash[T.nilable(T.any(Symbol, String)), T.untyped]),
+      bracket:            T::Boolean,
+      hash_type:          T.nilable(T.any(String, Symbol)),
+    ).returns(T.nilable(String))
+  }
   def license_expression_to_string(license_expression, bracket: false, hash_type: nil)
     case license_expression
     when String
@@ -125,6 +154,19 @@ module SPDX
     end
   end
 
+  sig {
+    params(
+      string: T.nilable(String),
+    ).returns(
+      T.nilable(
+        T.any(
+          String,
+          Symbol,
+          T::Hash[T.any(String, Symbol), T.untyped],
+        ),
+      ),
+    )
+  }
   def string_to_license_expression(string)
     return if string.blank?
 
@@ -162,13 +204,23 @@ module SPDX
     end
   end
 
+  sig {
+    params(
+      license: T.any(String, Symbol),
+    ).returns(
+      T.any(
+        [T.any(String, Symbol)],
+        [String, T.nilable(String), T::Boolean],
+      ),
+    )
+  }
   def license_version_info(license)
     return [license] if ALLOWED_LICENSE_SYMBOLS.include? license
 
     match = license.match(/-(?<version>[0-9.]+)(?:-.*?)??(?<or_later>\+|-only|-or-later)?$/)
     return [license] if match.blank?
 
-    license_name = license.split(match[0]).first
+    license_name = license.to_s.split(match[0].to_s).first
     or_later = match["or_later"].present? && %w[+ -or-later].include?(match["or_later"])
 
     # [name, version, later versions allowed?]
@@ -176,12 +228,18 @@ module SPDX
     [license_name, match["version"], or_later]
   end
 
+  sig {
+    params(license_expression: T.any(String, Symbol, T::Hash[Symbol, T.untyped]),
+           forbidden_licenses: T::Hash[Symbol, T.untyped]).returns(T::Boolean)
+  }
   def licenses_forbid_installation?(license_expression, forbidden_licenses)
     case license_expression
     when String, Symbol
       forbidden_licenses_include? license_expression.to_s, forbidden_licenses
     when Hash
       key = license_expression.keys.first
+      return false if key.nil?
+
       case key
       when :any_of
         license_expression[key].all? { |license| licenses_forbid_installation? license, forbidden_licenses }
@@ -193,6 +251,12 @@ module SPDX
     end
   end
 
+  sig {
+    params(
+      license:            T.any(Symbol, String),
+      forbidden_licenses: T::Hash[T.any(Symbol, String), T.untyped],
+    ).returns(T::Boolean)
+  }
   def forbidden_licenses_include?(license, forbidden_licenses)
     return true if forbidden_licenses.key? license
 

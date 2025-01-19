@@ -1,49 +1,58 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
 
 # Various helper functions for interacting with TTYs.
 module Tty
-  @stream = $stdout
+  @stream = T.let($stdout, T.nilable(T.any(IO, StringIO)))
 
-  COLOR_CODES = {
-    red:     31,
-    green:   32,
-    yellow:  33,
-    blue:    34,
-    magenta: 35,
-    cyan:    36,
-    default: 39,
-  }.freeze
+  COLOR_CODES = T.let(
+    {
+      red:     31,
+      green:   32,
+      yellow:  33,
+      blue:    34,
+      magenta: 35,
+      cyan:    36,
+      default: 39,
+    }.freeze,
+    T::Hash[Symbol, Integer],
+  )
 
-  STYLE_CODES = {
-    reset:         0,
-    bold:          1,
-    italic:        3,
-    underline:     4,
-    strikethrough: 9,
-    no_underline:  24,
-  }.freeze
+  STYLE_CODES = T.let(
+    {
+      reset:         0,
+      bold:          1,
+      italic:        3,
+      underline:     4,
+      strikethrough: 9,
+      no_underline:  24,
+    }.freeze,
+    T::Hash[Symbol, Integer],
+  )
 
-  SPECIAL_CODES = {
-    up:         "1A",
-    down:       "1B",
-    right:      "1C",
-    left:       "1D",
-    erase_line: "K",
-    erase_char: "P",
-  }.freeze
+  SPECIAL_CODES = T.let(
+    {
+      up:         "1A",
+      down:       "1B",
+      right:      "1C",
+      left:       "1D",
+      erase_line: "K",
+      erase_char: "P",
+    }.freeze,
+    T::Hash[Symbol, String],
+  )
 
-  CODES = COLOR_CODES.merge(STYLE_CODES).freeze
+  CODES = T.let(COLOR_CODES.merge(STYLE_CODES).freeze, T::Hash[Symbol, Integer])
 
   class << self
     sig { params(stream: T.any(IO, StringIO), _block: T.proc.params(arg0: T.any(IO, StringIO)).void).void }
     def with(stream, &_block)
       previous_stream = @stream
-      @stream = stream
+      @stream = T.let(stream, T.nilable(T.any(IO, StringIO)))
 
       yield stream
     ensure
-      @stream = previous_stream
+      @stream = T.let(previous_stream, T.nilable(T.any(IO, StringIO)))
     end
 
     sig { params(string: String).returns(String) }
@@ -88,17 +97,17 @@ module Tty
       height, width = `/bin/stty size 2>/dev/null`.presence&.split&.map(&:to_i)
       return if height.nil? || width.nil?
 
-      @size = [height, width]
+      @size = T.let([height, width], T.nilable([Integer, Integer]))
     end
 
     sig { returns(Integer) }
     def height
-      @height ||= size&.first || `/usr/bin/tput lines 2>/dev/null`.presence&.to_i || 40
+      @height ||= T.let(size&.first || `/usr/bin/tput lines 2>/dev/null`.presence&.to_i || 40, T.nilable(Integer))
     end
 
     sig { returns(Integer) }
     def width
-      @width ||= size&.second || `/usr/bin/tput cols 2>/dev/null`.presence&.to_i || 80
+      @width ||= T.let(size&.second || `/usr/bin/tput cols 2>/dev/null`.presence&.to_i || 80, T.nilable(Integer))
     end
 
     sig { params(string: String).returns(String) }
@@ -115,12 +124,12 @@ module Tty
 
     sig { void }
     def reset_escape_sequence!
-      @escape_sequence = nil
+      @escape_sequence = T.let(nil, T.nilable(T::Array[Integer]))
     end
 
     CODES.each do |name, code|
       define_method(name) do
-        @escape_sequence ||= []
+        @escape_sequence ||= T.let([], T.nilable(T::Array[Integer]))
         @escape_sequence << code
         self
       end
@@ -128,7 +137,8 @@ module Tty
 
     SPECIAL_CODES.each do |name, code|
       define_method(name) do
-        if @stream.tty?
+        @stream = T.let($stdout, T.nilable(T.any(IO, StringIO)))
+        if @stream&.tty?
           "\033[#{code}"
         else
           ""
@@ -151,6 +161,7 @@ module Tty
 
       return false if Homebrew::EnvConfig.no_color?
       return true if Homebrew::EnvConfig.color?
+      return false unless @stream.present?
 
       @stream.tty?
     end

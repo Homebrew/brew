@@ -1,10 +1,11 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
 
 require "fcntl"
 require "utils/socket"
 
 module Utils
+  sig { params(child_error: T::Hash[String, T.untyped]).returns(Exception) }
   def self.rewrite_child_error(child_error)
     inner_class = Object.const_get(child_error["json_class"])
     error = if child_error["cmd"] && inner_class == ErrorDuringExecution
@@ -33,7 +34,11 @@ module Utils
   # When using this function, remember to call `exec` as soon as reasonably possible.
   # This function does not protect against the pitfalls of what you can do pre-exec in a fork.
   # See `man fork` for more information.
-  def self.safe_fork(directory: nil, yield_parent: false)
+  sig {
+    params(directory: T.nilable(String), yield_parent: T::Boolean,
+           _blk: T.proc.params(arg0: T.nilable(String)).void).void
+  }
+  def self.safe_fork(directory: nil, yield_parent: false, &_blk)
     require "json/add/exception"
 
     block = proc do |tmpdir|
@@ -79,8 +84,6 @@ module Utils
         else
           exit!(true)
         end
-
-        pid = T.must(pid)
 
         begin
           yield(nil) if yield_parent
