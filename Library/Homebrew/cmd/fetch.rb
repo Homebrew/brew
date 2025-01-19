@@ -160,7 +160,7 @@ module Homebrew
                     bottle_tag = if (bottle_tag = args.bottle_tag&.to_sym)
                       Utils::Bottles::Tag.from_symbol(bottle_tag)
                     else
-                      Utils::Bottles::Tag.new(system: os, arch:)
+                      Utils::Bottles.tag
                     end
 
                     bottle = formula.bottle_for_tag(bottle_tag)
