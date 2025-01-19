@@ -20,4 +20,4 @@ module OS
   end
 end
 
-Cask::Artifact::Moved.prepend(OS::Linux::Cask::Config)
+Cask::Artifact::Moved.prepend(OS::Linux::Cask::Artifact::Moved)

@@ -106,7 +106,7 @@ module Cask
     ]).freeze
 
     extend Attrable
-    include OnSystem::MacOSOnly
+    include OnSystem::MacOSAndLinux
 
     attr_reader :cask, :token, :deprecation_date, :deprecation_reason, :deprecation_replacement, :disable_date,
                 :disable_reason, :disable_replacement, :on_system_block_min_os
