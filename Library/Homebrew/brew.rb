@@ -94,12 +94,12 @@ begin
       command_instance.run
     else
       begin
-        Homebrew.public_send Commands.method_name(cmd)
-      rescue NoMethodError => e
-        case_error = "undefined method `#{cmd.downcase}' for module Homebrew"
-        odie "Unknown command: brew #{cmd}" if e.message == case_error
-
-        raise
+        method_name = Commands.method_name(cmd)
+        if Homebrew.respond_to? method_name
+          Homebrew.public_send method_name
+        else
+          odie "Unknown command: brew #{cmd}"
+        end
       end
     end
   elsif (path = Commands.external_ruby_cmd_path(cmd))
