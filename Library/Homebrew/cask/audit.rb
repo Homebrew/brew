@@ -930,8 +930,7 @@ module Cask
 
       validate_url_for_https_availability(
         url, "livecheck URL",
-        check_content: true,
-        user_agents:   [:default, :browser]
+        check_content: true
       )
     end
 
