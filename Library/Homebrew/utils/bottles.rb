@@ -186,7 +186,7 @@ module Utils
       sig { returns(Symbol) }
       def standardized_arch
         return :x86_64 if [:x86_64, :intel].include? arch
-        return :arm64 if [:arm64, :arm].include? arch
+        return linux? ? :aarch64 : :arm64 if [:arm64, :arm, :aarch64].include? arch
 
         arch
       end
