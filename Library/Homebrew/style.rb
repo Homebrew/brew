@@ -302,6 +302,8 @@ module Homebrew
       JSON.parse(result.stdout)
     end
 
+    NON_SHELL_SHIMS = %w[cc pod2man].freeze
+
     def self.shell_scripts
       [
         HOMEBREW_ORIGINAL_BREW_FILE,
@@ -312,7 +314,7 @@ module Homebrew
         *HOMEBREW_LIBRARY.glob("Homebrew/**/*.sh").reject { |path| path.to_s.include?("/vendor/") },
         *HOMEBREW_LIBRARY.glob("Homebrew/shims/**/*").map(&:realpath).uniq
                          .reject(&:directory?)
-                         .reject { |path| path.basename.to_s == "cc" }
+                         .reject { |path| NON_SHELL_SHIMS.include? path.basename.to_s }
                          .select do |path|
                            %r{^#! ?/bin/(?:ba)?sh( |$)}.match?(path.read(13))
                          end,
