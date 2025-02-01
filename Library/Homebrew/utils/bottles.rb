@@ -186,25 +186,27 @@ module Utils
       sig { returns(Symbol) }
       def standardized_arch
         return :x86_64 if [:x86_64, :intel].include? arch
-        return :arm64 if [:arm64, :arm].include? arch
+        return :arm64 if [:arm64, :arm, :aarch64].include? arch
 
         arch
       end
 
       sig { returns(Symbol) }
       def to_sym
-        if system == :all && arch == :all
-          :all
-        elsif macos? && [:x86_64, :intel].include?(arch)
-          system
-        else
-          :"#{standardized_arch}_#{system}"
-        end
+        arch_to_symbol(standardized_arch)
       end
 
       sig { returns(String) }
       def to_s
         to_sym.to_s
+      end
+
+      def to_unstandardized_sym
+        # Never allow these generic names
+        return to_sym if [:intel, :arm].include? arch
+
+        # Backwards compatibility with older bottle names
+        arch_to_symbol(arch)
       end
 
       sig { returns(MacOSVersion) }
@@ -224,8 +226,8 @@ module Utils
 
       sig { returns(T::Boolean) }
       def valid_combination?
-        return true unless [:arm64, :arm].include? arch
-        return false if linux?
+        return true unless [:arm64, :arm, :aarch64].include? arch
+        return true unless macos?
 
         # Big Sur is the first version of macOS that runs on ARM
         to_macos_version >= :big_sur
@@ -235,7 +237,7 @@ module Utils
       def default_prefix
         if linux?
           HOMEBREW_LINUX_DEFAULT_PREFIX
-        elsif arch == :arm64
+        elsif standardized_arch == :arm64
           HOMEBREW_MACOS_ARM_DEFAULT_PREFIX
         else
           HOMEBREW_DEFAULT_PREFIX
@@ -246,10 +248,23 @@ module Utils
       def default_cellar
         if linux?
           Homebrew::DEFAULT_LINUX_CELLAR
-        elsif arch == :arm64
+        elsif standardized_arch == :arm64
           Homebrew::DEFAULT_MACOS_ARM_CELLAR
         else
           Homebrew::DEFAULT_MACOS_CELLAR
+        end
+      end
+
+      private
+
+      sig { params(arch: Symbol).returns(Symbol) }
+      def arch_to_symbol(arch)
+        if system == :all && arch == :all
+          :all
+        elsif macos? && standardized_arch == :x86_64
+          system
+        else
+          :"#{arch}_#{system}"
         end
       end
     end

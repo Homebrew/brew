@@ -4,7 +4,7 @@
 #####
 
 case "${MACHTYPE}" in
-  arm64-*)
+  arm64-* | aarch64-*)
     HOMEBREW_PROCESSOR="arm64"
     ;;
   x86_64-*)

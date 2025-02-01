@@ -1024,6 +1024,11 @@ RSpec.describe Formula do
               "intel-formula",
               "linux-formula"
             ]
+          },
+          "arm64_linux": {
+            "dependencies": [
+              "linux-formula"
+            ]
           }
         }
       JSON

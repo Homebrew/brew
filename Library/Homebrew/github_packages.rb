@@ -350,7 +350,7 @@ class GitHubPackages
       tar_gz_sha256 = write_tar_gz(local_file, blobs)
 
       tab = tag_hash["tab"]
-      architecture = TAB_ARCH_TO_PLATFORM_ARCHITECTURE[tab["arch"].presence || bottle_tag.arch.to_s]
+      architecture = TAB_ARCH_TO_PLATFORM_ARCHITECTURE[tab["arch"].presence || bottle_tag.standardized_arch.to_s]
       raise TypeError, "unknown tab['arch']: #{tab["arch"]}" if architecture.blank?
 
       os = if tab["built_on"].present? && tab["built_on"]["os"].present?

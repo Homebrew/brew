@@ -79,11 +79,11 @@ RSpec.describe Utils::Bottles::Tag do
       expect(tag.valid_combination?).to be true
     end
 
-    it "returns false for ARM on Linux" do
+    it "returns true for ARM on Linux" do
       tag = described_class.new(system: :linux, arch: :arm64)
-      expect(tag.valid_combination?).to be false
+      expect(tag.valid_combination?).to be true
       tag = described_class.new(system: :linux, arch: :arm)
-      expect(tag.valid_combination?).to be false
+      expect(tag.valid_combination?).to be true
     end
   end
 end

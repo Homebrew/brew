@@ -315,7 +315,7 @@ class Bottle
       raise ArgumentError, "Invalid bottle version" unless Utils.safe_filename?(version.to_s)
 
       @version = version
-      @tag = tag.to_s
+      @tag = tag.to_unstandardized_sym.to_s
       @rebuild = rebuild
     end
 
