@@ -62,6 +62,8 @@ module Homebrew
           stale_cask?(pathname, scrub)
         when :gh_actions_artifact
           stale_gh_actions_artifact?(pathname, scrub)
+        when :attestation
+          stale_attestation?(pathname, scrub)
         else
           stale_formula?(pathname, scrub)
         end
@@ -74,6 +76,13 @@ module Homebrew
       sig { params(pathname: Pathname, scrub: T::Boolean).returns(T::Boolean) }
       def stale_gh_actions_artifact?(pathname, scrub)
         scrub || prune?(pathname, GH_ACTIONS_ARTIFACT_CLEANUP_DAYS)
+      end
+
+      ATTESTATION_CLEANUP_DAYS = 3
+
+      sig { params(pathname: Pathname, scrub: T::Boolean).returns(T::Boolean) }
+      def stale_attestation?(pathname, scrub)
+        scrub || prune?(pathname, ATTESTATION_CLEANUP_DAYS)
       end
 
       sig { params(pathname: Pathname, scrub: T::Boolean).returns(T::Boolean) }
@@ -398,11 +407,13 @@ module Homebrew
       cask_files = (cache/"Cask").directory? ? (cache/"Cask").children : []
       api_source_files = (cache/"api-source").glob("*/*/*/*/*") # `<org>/<repo>/<git_head>/<type>/<token>.rb`
       gh_actions_artifacts = (cache/"gh-actions-artifact").directory? ? (cache/"gh-actions-artifact").children : []
+      attestations = (cache/"attestation").directory? ? (cache/"attestation").children : []
 
       files.map { |path| { path:, type: nil } } +
         cask_files.map { |path| { path:, type: :cask } } +
         api_source_files.map { |path| { path:, type: :api_source } } +
-        gh_actions_artifacts.map { |path| { path:, type: :gh_actions_artifact } }
+        gh_actions_artifacts.map { |path| { path:, type: :gh_actions_artifact } } +
+        attestations.map { |path| { path:, type: :attestation } }
     end
 
     def cleanup_empty_api_source_directories(directory = cache/"api-source")
