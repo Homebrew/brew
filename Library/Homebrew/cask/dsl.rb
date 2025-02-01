@@ -106,7 +106,7 @@ module Cask
     ]).freeze
 
     extend Attrable
-    include OnSystem::MacOSOnly
+    include OnSystem::MacOSAndLinux
 
     attr_reader :cask, :token, :deprecation_date, :deprecation_reason, :deprecation_replacement, :disable_date,
                 :disable_reason, :disable_replacement, :on_system_block_min_os
@@ -311,17 +311,18 @@ module Cask
     #
     # ```ruby
     # sha256 arm:   "7bdb497080ffafdfd8cc94d8c62b004af1be9599e865e5555e456e2681e150ca",
-    #         intel: "b3c1c2442480a0219b9e05cf91d03385858c20f04b764ec08a3fa83d1b27e7b2"
+    #        intel: "b3c1c2442480a0219b9e05cf91d03385858c20f04b764ec08a3fa83d1b27e7b2"
+    #        linux: "1a2aee7f1ddc999993d4d7d42a150c5e602bc17281678050b8ed79a0500cc90f"
     # ```
     #
     # @api public
-    def sha256(arg = nil, arm: nil, intel: nil)
-      should_return = arg.nil? && arm.nil? && intel.nil?
+    def sha256(arg = nil, arm: nil, intel: nil, linux: nil)
+      should_return = arg.nil? && arm.nil? && intel.nil? && linux.nil?
 
       set_unique_stanza(:sha256, should_return) do
-        @on_system_blocks_exist = true if arm.present? || intel.present?
+        @on_system_blocks_exist = true if arm.present? || intel.present? || linux.present?
 
-        val = arg || on_arch_conditional(arm:, intel:)
+        val = arg || on_system_conditional(macos: on_arch_conditional(arm:, intel:), linux:)
         case val
         when :no_check
           val
@@ -349,6 +350,25 @@ module Cask
         @on_system_blocks_exist = true
 
         on_arch_conditional(arm:, intel:)
+      end
+    end
+
+    # Sets the cask's os strings.
+    #
+    # ### Example
+    #
+    # ```ruby
+    # os macos: "darwin", linux: "tux"
+    # ```
+    #
+    # @api public
+    def os(macos: nil, linux: nil)
+      should_return = macos.nil? && linux.nil?
+
+      set_unique_stanza(:os, should_return) do
+        @on_system_blocks_exist = true
+
+        on_system_conditional(macos:, linux:)
       end
     end
 

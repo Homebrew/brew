@@ -411,7 +411,7 @@ module Cask
             next
           end
 
-          if MacOS.undeletable?(resolved_path)
+          if undeletable?(resolved_path)
             opoo "Skipping #{Formatter.identifier(action)} for undeletable path '#{path}'."
             next
           end
@@ -538,6 +538,10 @@ module Cask
           recursive_rmdir(*resolved_paths, **kwargs)
         end
       end
+
+      def undeletable?(target); end
     end
   end
 end
+
+require "extend/os/cask/artifact/abstract_uninstall"

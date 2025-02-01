@@ -1,18 +1,20 @@
 # typed: strict
 # frozen_string_literal: true
 
+require "cask/macos"
+
 module OS
-  module Linux
+  module Mac
     module Cask
       module Artifact
-        module Moved
+        module AbstractUninstall
           extend T::Helpers
 
-          requires_ancestor { ::Cask::Artifact::Moved }
+          requires_ancestor { ::Cask::Artifact::AbstractUninstall }
 
           sig { params(target: Pathname).returns(T::Boolean) }
           def undeletable?(target)
-            !target.parent.writable?
+            MacOS.undeletable?(target)
           end
         end
       end
@@ -20,4 +22,4 @@ module OS
   end
 end
 
-Cask::Artifact::Moved.prepend(OS::Linux::Cask::Artifact::Moved)
+Cask::Artifact::AbstractUninstall.prepend(OS::Mac::Cask::Artifact::AbstractUninstall)

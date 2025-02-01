@@ -5,10 +5,10 @@ module OS
   module Linux
     module Cask
       module Artifact
-        module Moved
+        module AbstractUninstall
           extend T::Helpers
 
-          requires_ancestor { ::Cask::Artifact::Moved }
+          requires_ancestor { ::Cask::Artifact::AbstractUninstall }
 
           sig { params(target: Pathname).returns(T::Boolean) }
           def undeletable?(target)
@@ -20,4 +20,4 @@ module OS
   end
 end
 
-Cask::Artifact::Moved.prepend(OS::Linux::Cask::Artifact::Moved)
+Cask::Artifact::AbstractUninstall.prepend(OS::Linux::Cask::Artifact::AbstractUninstall)
