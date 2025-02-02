@@ -565,9 +565,7 @@ EOS
   trap '{ /usr/bin/pkill -P $$; wait; exit 130; }' SIGINT
 
   local update_failed_file="${HOMEBREW_REPOSITORY}/.git/UPDATE_FAILED"
-  local missing_remote_ref_dirs_file="${HOMEBREW_REPOSITORY}/.git/FAILED_FETCH_DIRS"
   rm -f "${update_failed_file}"
-  rm -f "${missing_remote_ref_dirs_file}"
 
   for DIR in "${HOMEBREW_REPOSITORY}" "${HOMEBREW_LIBRARY}"/Taps/*/*
   do
@@ -773,13 +771,6 @@ EOS
   wait
   trap - SIGINT
 
-  if [[ -f "${missing_remote_ref_dirs_file}" ]]
-  then
-    HOMEBREW_MISSING_REMOTE_REF_DIRS="$(cat "${missing_remote_ref_dirs_file}")"
-    rm -f "${missing_remote_ref_dirs_file}"
-    export HOMEBREW_MISSING_REMOTE_REF_DIRS
-  fi
-
   for DIR in "${HOMEBREW_REPOSITORY}" "${HOMEBREW_LIBRARY}"/Taps/*/*
   do
     if [[ -z "${HOMEBREW_NO_INSTALL_FROM_API}" ]] &&
@@ -924,7 +915,6 @@ EOS
   # shellcheck disable=SC2031
   if [[ -n "${HOMEBREW_UPDATED}" ]] ||
      [[ -n "${HOMEBREW_UPDATE_FAILED}" ]] ||
-     [[ -n "${HOMEBREW_MISSING_REMOTE_REF_DIRS}" ]] ||
      [[ -n "${HOMEBREW_UPDATE_FORCE}" ]] ||
      [[ -n "${HOMEBREW_MIGRATE_LINUXBREW_FORMULAE}" ]] ||
      [[ -d "${HOMEBREW_LIBRARY}/LinkedKegs" ]] ||
