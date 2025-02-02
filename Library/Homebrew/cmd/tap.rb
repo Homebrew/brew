@@ -52,7 +52,11 @@ module Homebrew
       sig { override.void }
       def run
         if args.repair?
-          Tap.installed.each do |tap|
+          taps = Tap.installed
+          taps &= args.named.to_taps if args.named.present?
+
+          taps.each do |tap|
+            puts "Checking if we need to repair #{tap.full_name}..." if args.verbose?
             tap.link_completions_and_manpages
             tap.fix_remote_configuration
           end
