@@ -734,20 +734,33 @@ EOS
         if ! git fetch --tags --force "${QUIET_ARGS[@]}" origin \
            "refs/heads/${UPSTREAM_BRANCH_DIR}:refs/remotes/origin/${UPSTREAM_BRANCH_DIR}" 2>>"${tmp_failure_file}"
         then
-          # Reprint fetch errors to stderr
-          [[ -f "${tmp_failure_file}" ]] && cat "${tmp_failure_file}" 1>&2
-
           if [[ "${UPSTREAM_SHA_HTTP_CODE}" == "404" ]]
           then
+            # Reprint fetch errors to stderr
+            [[ -f "${tmp_failure_file}" ]] && cat "${tmp_failure_file}" 1>&2
+
             TAP="${DIR#"${HOMEBREW_LIBRARY}"/Taps/}"
             echo "${TAP} does not exist! Run \`brew untap ${TAP}\` to remove it." >>"${update_failed_file}"
           else
-            echo "Fetching ${DIR} failed!" >>"${update_failed_file}"
-
             if [[ -f "${tmp_failure_file}" ]] &&
                [[ "$(cat "${tmp_failure_file}")" == "fatal: couldn't find remote ref refs/heads/${UPSTREAM_BRANCH_DIR}" ]]
             then
-              echo "${DIR}" >>"${missing_remote_ref_dirs_file}"
+              # Looks like upstream HEAD branch has been renamed. Try to fix our clone before reporting an error.
+              brew tap --repair ${HOMEBREW_VERBOSE+--verbose} "${DIR#"${HOMEBREW_LIBRARY}"/Taps/}"
+              UPSTREAM_BRANCH_DIR="$(upstream_branch)"
+
+              rm -f "${tmp_failure_file}"
+              if ! git fetch --tags --force "${QUIET_ARGS[@]}" origin \
+                 "refs/heads/${UPSTREAM_BRANCH_DIR}:refs/remotes/origin/${UPSTREAM_BRANCH_DIR}" 2>>"${tmp_failure_file}"
+              then
+                # Retry failed. Print the error.
+                [[ -f "${tmp_failure_file}" ]] && cat "${tmp_failure_file}" 1>&2
+                echo "Fetching ${DIR} failed!" >>"${update_failed_file}"
+              fi
+            else
+              # We don't know why we failed. Just print the error.
+              [[ -f "${tmp_failure_file}" ]] && cat "${tmp_failure_file}" 1>&2
+              echo "Fetching ${DIR} failed!" >>"${update_failed_file}"
             fi
           fi
         fi
@@ -787,8 +800,7 @@ EOS
     fi
 
     TAP_VAR="$(repository_var_suffix "${DIR}")"
-    UPSTREAM_BRANCH_VAR="UPSTREAM_BRANCH${TAP_VAR}"
-    UPSTREAM_BRANCH="${!UPSTREAM_BRANCH_VAR}"
+    UPSTREAM_BRANCH="$(upstream_branch)"
     CURRENT_REVISION="$(read_current_revision)"
 
     PREFETCH_REVISION_VAR="PREFETCH_REVISION${TAP_VAR}"
