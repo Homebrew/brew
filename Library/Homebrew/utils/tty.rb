@@ -70,6 +70,11 @@ module Tty
       "\033[#{line_count}F"
     end
 
+    sig { returns(String) }
+    def move_cursor_beginning
+      "\033[0G"
+    end
+
     sig { params(line_count: Integer).returns(String) }
     def move_cursor_down(line_count)
       "\033[#{line_count}B"

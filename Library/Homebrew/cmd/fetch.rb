@@ -240,7 +240,7 @@ module Homebrew
             $stdout.print Tty.hide_cursor
             $stdout.flush
 
-            output_message = lambda do |downloadable, future|
+            output_message = lambda do |downloadable, future, last|
               status = case future.state
               when :fulfilled
                 "#{Tty.green}✔︎#{Tty.reset}"
@@ -253,7 +253,7 @@ module Homebrew
               end
 
               message = "#{downloadable.download_type.capitalize} #{downloadable.name}"
-              $stdout.puts "#{status} #{message}"
+              $stdout.print "#{status} #{message}#{"\n" unless last}"
               $stdout.flush
 
               if future.rejected? && (e = future.reason).is_a?(ChecksumMismatchError)
@@ -277,21 +277,26 @@ module Homebrew
                   previous_pending_line_count -= 1
                   $stdout.print Tty.clear_to_end
                   $stdout.flush
-                  output_message.call(downloadable, future)
+                  output_message.call(downloadable, future, false)
                 end
 
                 previous_pending_line_count = 0
-                remaining_downloads.each do |downloadable, future|
-                  # FIXME: Allow printing full terminal height.
-                  break if previous_pending_line_count >= [concurrency, (Tty.height - 1)].min
+                max_lines = [concurrency, Tty.height].min
+                remaining_downloads.each_with_index do |(downloadable, future), i|
+                  break if previous_pending_line_count >= max_lines
 
                   $stdout.print Tty.clear_to_end
                   $stdout.flush
-                  previous_pending_line_count += output_message.call(downloadable, future)
+                  last = i == max_lines - 1 || i == remaining_downloads.count - 1
+                  previous_pending_line_count += output_message.call(downloadable, future, last)
                 end
 
                 if previous_pending_line_count.positive?
-                  $stdout.print Tty.move_cursor_up_beginning(previous_pending_line_count)
+                  if (previous_pending_line_count - 1).zero?
+                    $stdout.print Tty.move_cursor_beginning
+                  else
+                    $stdout.print Tty.move_cursor_up_beginning(previous_pending_line_count - 1)
+                  end
                   $stdout.flush
                 end
 
