@@ -498,7 +498,7 @@ module Homebrew
           return
         end
 
-        return if duplicate_pull_requests.present?
+        # return if duplicate_pull_requests.present?
 
         version_args = if version_info.multiple_versions
           %W[--version-arm=#{new_version.arm} --version-intel=#{new_version.intel}]
@@ -514,6 +514,10 @@ module Homebrew
           "--message=Created by `brew bump`",
         ]
 
+        if outdated_synced_formulae.present?
+          sync_with = outdated_synced_formulae.reject { |f| f == formula_or_cask.name }
+          bump_cask_pr_args << "--synced-with=#{sync_with.join(",")}"
+        end
         bump_cask_pr_args << "--no-fork" if args.no_fork?
 
         system HOMEBREW_BREW_FILE, *bump_cask_pr_args
