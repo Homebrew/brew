@@ -3,6 +3,7 @@
 
 require "utils/curl"
 require "utils/gzip"
+require "base64"
 require "json"
 require "zlib"
 require "extend/hash/keys"
@@ -41,18 +42,20 @@ class GitHubPackages
 
   sig {
     params(
-      bottles_hash:  T::Hash[String, T.untyped],
-      keep_old:      T::Boolean,
-      dry_run:       T::Boolean,
-      warn_on_error: T::Boolean,
+      bottles_hash:     T::Hash[String, T.untyped],
+      attestation_path: T.nilable(String),
+      keep_old:         T::Boolean,
+      dry_run:          T::Boolean,
+      warn_on_error:    T::Boolean,
     ).void
   }
-  def upload_bottles(bottles_hash, keep_old:, dry_run:, warn_on_error:)
+  def upload_bottles(bottles_hash, attestation_path:, keep_old:, dry_run:, warn_on_error:)
     user = Homebrew::EnvConfig.github_packages_user
     token = Homebrew::EnvConfig.github_packages_token
 
     raise UsageError, "HOMEBREW_GITHUB_PACKAGES_USER is unset." if user.blank?
     raise UsageError, "HOMEBREW_GITHUB_PACKAGES_TOKEN is unset." if token.blank?
+    raise UsageError, "Attestation path does not exist." if attestation_path && !File.exist?(attestation_path)
 
     skopeo = ensure_executable!("skopeo", reason: "upload")
 
@@ -71,7 +74,7 @@ class GitHubPackages
     # rubocop:disable Style/CombinableLoops
     bottles_hash.each do |formula_full_name, bottle_hash|
       # Next, upload the bottles after checking them all.
-      upload_bottle(user, token, skopeo, formula_full_name, bottle_hash,
+      upload_bottle(user, token, skopeo, formula_full_name, bottle_hash, attestation_path,
                     keep_old:, dry_run:, warn_on_error:)
     end
     # rubocop:enable Style/CombinableLoops
@@ -165,10 +168,7 @@ class GitHubPackages
   end
 
   def schema_uri(basename, uris)
-    # The current `main` version has an invalid JSON schema.
-    # Going forward, this should probably be pinned to tags.
-    # We currently use features newer than the last one (v1.0.2).
-    url = "https://raw.githubusercontent.com/opencontainers/image-spec/170393e57ed656f7f81c3070bfa8c3346eaa0a5a/schema/#{basename}.json"
+    url = "https://raw.githubusercontent.com/opencontainers/image-spec/v1.1.0/schema/#{basename}.json"
     out = Utils::Curl.curl_output(url).stdout
     json = JSON.parse(out)
 
@@ -256,7 +256,7 @@ class GitHubPackages
     [formula_name, org, repo, version, rebuild, version_rebuild, image_name, image_uri, keep_old]
   end
 
-  def upload_bottle(user, token, skopeo, formula_full_name, bottle_hash, keep_old:, dry_run:, warn_on_error:)
+  def upload_bottle(user, token, skopeo, formula_full_name, bottle_hash, attestation_path, keep_old:, dry_run:, warn_on_error:)
     # We run the preupload check twice to prevent TOCTOU bugs.
     result = preupload_check(user, token, skopeo, formula_full_name, bottle_hash,
                              keep_old:, dry_run:, warn_on_error:)
@@ -327,6 +327,23 @@ class GitHubPackages
       manifests = []
     end
 
+    if attestation_path
+      attestation_bundle = JSON.load_file(attestation_path)
+      raise "Only DSSE attestations are supported!" unless attestation_bundle.key?("dsseEnvelope")
+      if attestation_bundle["dsseEnvelope"]["payloadType"] != "application/vnd.in-toto+json"
+        raise "Only in-toto DSSE envelopes are supported!"
+      end
+
+      attestation_bundle_sha256 = write_local_file(attestation_path, blobs)
+      attestation_media_type = attestation_bundle["mediaType"]
+
+      attestation_envelope_payload = JSON.parse(
+        Base64.strict_decode64(attestation_bundle["dsseEnvelope"]["payload"])
+      )
+
+      empty_config_sha256, empty_config_size = write_hash(blobs, {})
+    end
+
     processed_image_refs = Set.new
     manifests.each do |manifest|
       processed_image_refs << manifest["annotations"]["org.opencontainers.image.ref.name"]
@@ -347,7 +364,7 @@ class GitHubPackages
       local_file = tag_hash["local_filename"]
       odebug "Uploading #{local_file}"
 
-      tar_gz_sha256 = write_tar_gz(local_file, blobs)
+      tar_gz_sha256 = write_local_file(local_file, blobs)
 
       tab = tag_hash["tab"]
       architecture = TAB_ARCH_TO_PLATFORM_ARCHITECTURE[tab["arch"].presence || bottle_tag.arch.to_s]
@@ -407,6 +424,7 @@ class GitHubPackages
         "sh.brew.license"                   => license,
         "sh.brew.tab"                       => tab.to_json,
         "sh.brew.path_exec_files"           => path_exec_files_string,
+        "sh.brew.attestation_bundle"        => attestation_bundle_sha256,
       }.compact_blank
 
       # TODO: upload/add tag_hash["all_files"] somewhere.
@@ -438,6 +456,38 @@ class GitHubPackages
       }
       validate_schema!(IMAGE_MANIFEST_SCHEMA_URI, image_manifest)
       manifest_json_sha256, manifest_json_size = write_hash(blobs, image_manifest)
+
+      if attestation_path
+        attestation_annotations = {
+          "dev.sigstore.bundle.content"       => "dsse-envelope",
+          "dev.sigstore.bundle.predicateType" => attestation_envelope_payload["predicateType"],
+        }
+        attestation_manifest = {
+          schemaVersion: 2,
+          mediaType:     "application/vnd.oci.image.manifest.v1+json",
+          artifactType:  attestation_media_type,
+          config:        {
+            mediaType: "application/vnd.oci.empty.v1+json",
+            digest:    "sha256:#{empty_config_sha256}",
+            size:      empty_config_size,
+          },
+          layers:        [{
+            mediaType: attestation_media_type,
+            digest:    "sha256:#{attestation_bundle_sha256}",
+            size:      File.size(attestation_path),
+          }],
+          subject:       {
+            mediaType: "application/vnd.oci.image.manifest.v1+json",
+            digest:    "sha256:#{manifest_json_sha256}",
+            size:      manifest_json_size,
+          },
+          annotations:   attestation_annotations,
+        }
+        validate_schema!(IMAGE_MANIFEST_SCHEMA_URI, attestation_manifest)
+        attestation_manifest_sha256, attestation_manifest_size = write_hash(blobs, attestation_manifest)
+
+        # TODO: what do we do with the manifest?
+      end
 
       {
         mediaType:   "application/vnd.oci.image.manifest.v1+json",
@@ -481,11 +531,11 @@ class GitHubPackages
     write_hash(root, image_layout, "oci-layout")
   end
 
-  def write_tar_gz(local_file, blobs)
-    tar_gz_sha256 = Digest::SHA256.file(local_file)
-                                  .hexdigest
-    FileUtils.ln local_file, blobs/tar_gz_sha256, force: true
-    tar_gz_sha256
+  def write_local_file(local_file, blobs)
+    file_sha256 = Digest::SHA256.file(local_file)
+                                .hexdigest
+    FileUtils.ln local_file, blobs/file_sha256, force: true
+    file_sha256
   end
 
   def write_image_config(platform_hash, tar_sha256, blobs)

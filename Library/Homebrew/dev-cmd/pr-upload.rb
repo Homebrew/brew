@@ -33,6 +33,9 @@ module Homebrew
         flag   "--root-url-using=",
                description: "Use the specified download strategy class for downloading the bottle's URL instead of " \
                             "Homebrew's default."
+        flag   "--attestation-bundle=",
+               description: "Path of an attestation bundle to upload with the bottle. "\
+                            "Currently only supported with GitHub Packages."
 
         conflicts "--upload-only", "--keep-old"
         conflicts "--upload-only", "--no-commit"
@@ -48,6 +51,10 @@ module Homebrew
         Homebrew.install_bundler_gems!(groups: ["pr_upload"])
 
         bottles_hash = bottles_hash_from_json_files(json_files, args)
+
+        if args.attestation_bundle && !github_packages?(bottles_hash)
+          raise UsageError, "--attestation-bundle is only supported with GitHub Packages"
+        end
 
         unless args.upload_only?
           bottle_args = ["bottle", "--merge", "--write"]
@@ -110,9 +117,10 @@ module Homebrew
         elsif github_packages?(bottles_hash)
           github_packages = GitHubPackages.new
           github_packages.upload_bottles(bottles_hash,
-                                         keep_old:      args.keep_old?,
-                                         dry_run:       args.dry_run?,
-                                         warn_on_error: args.warn_on_upload_failure?)
+                                         attestation_path: args.attestation_bundle,
+                                         keep_old:         args.keep_old?,
+                                         dry_run:          args.dry_run?,
+                                         warn_on_error:    args.warn_on_upload_failure?)
         else
           odie "Service specified by root_url is not recognized"
         end
