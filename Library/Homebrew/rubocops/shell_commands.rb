@@ -1,4 +1,4 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
 
 require "extend/array"
@@ -64,8 +64,12 @@ module RuboCop
         ].freeze
         private_constant :TARGET_METHODS
 
-        RESTRICT_ON_SEND = TARGET_METHODS.map(&:second).uniq.freeze
+        RESTRICT_ON_SEND = T.let(
+          TARGET_METHODS.map(&:second).uniq.freeze,
+          T::Array[T.nilable(Symbol)],
+        )
 
+        sig { params(node: RuboCop::AST::SendNode).void }
         def on_send(node)
           TARGET_METHODS.each do |target_class, target_method|
             next if node.method_name != target_method
@@ -119,6 +123,7 @@ module RuboCop
 
         RESTRICT_ON_SEND = [:exec].freeze
 
+        sig { params(node: RuboCop::AST::SendNode).void }
         def on_send(node)
           return if node.receiver.present? && node.receiver != s(:const, nil, :Kernel)
           return if node.arguments.count != 1

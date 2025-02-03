@@ -1,4 +1,4 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
 
 require "rubocops/shared/helper_functions"
@@ -9,8 +9,15 @@ module RuboCop
     module HomepageHelper
       include HelperFunctions
 
+      sig {
+        params(
+          type: Symbol, content: String,
+          homepage_node: RuboCop::AST::Node,
+          homepage_parameter_node: RuboCop::AST::Node
+        ).void
+      }
       def audit_homepage(type, content, homepage_node, homepage_parameter_node)
-        @offensive_node = homepage_node
+        @offensive_node = T.let(homepage_node, T.nilable(RuboCop::AST::Node))
 
         problem "#{type.to_s.capitalize} should have a homepage." if content.empty?
 

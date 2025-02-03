@@ -1,4 +1,4 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
 
 module RuboCop
@@ -37,6 +37,7 @@ module RuboCop
           )
         PATTERN
 
+        sig { params(node: RuboCop::AST::AndNode).void }
         def on_and(node)
           exists_and_not_empty?(node) do |var1, var2|
             return if var1 != var2
@@ -49,6 +50,7 @@ module RuboCop
           end
         end
 
+        sig { params(node: RuboCop::AST::OrNode).void }
         def on_or(node)
           exists_and_not_empty?(node) do |var1, var2|
             return if var1 != var2
@@ -59,6 +61,7 @@ module RuboCop
           end
         end
 
+        sig { params(corrector: RuboCop::Cop::Corrector, node: RuboCop::AST::Node).void }
         def autocorrect(corrector, node)
           variable1, _variable2 = exists_and_not_empty?(node)
           range = node.source_range
@@ -67,8 +70,9 @@ module RuboCop
 
         private
 
+        sig { params(node: T.nilable(RuboCop::AST::Node)).returns(String) }
         def replacement(node)
-          node.respond_to?(:source) ? "#{node.source}.present?" : "present?"
+          node.respond_to?(:source) ? "#{node&.source}.present?" : "present?"
         end
       end
     end

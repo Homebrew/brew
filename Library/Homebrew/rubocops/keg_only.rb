@@ -47,6 +47,7 @@ module RuboCop
           end
         end
 
+        sig { params(node: RuboCop::AST::Node).void }
         def autocorrect(node)
           lambda do |corrector|
             reason = string_content(node)

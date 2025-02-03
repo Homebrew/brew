@@ -1,4 +1,4 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
 
 require "macos_version"
@@ -13,16 +13,23 @@ module RuboCop
 
       ARCH_OPTIONS = [:arm, :intel].freeze
       BASE_OS_OPTIONS = [:macos, :linux].freeze
-      MACOS_VERSION_OPTIONS = MacOSVersion::SYMBOLS.keys.freeze
-      ON_SYSTEM_OPTIONS = [*ARCH_OPTIONS, *BASE_OS_OPTIONS, *MACOS_VERSION_OPTIONS, :system].freeze
+      MACOS_VERSION_OPTIONS = T.let(MacOSVersion::SYMBOLS.keys.freeze, T::Array[Symbol])
+      ON_SYSTEM_OPTIONS = T.let(
+        [*ARCH_OPTIONS, *BASE_OS_OPTIONS, *MACOS_VERSION_OPTIONS, :system].freeze,
+        T::Array[Symbol],
+      )
       MACOS_MODULE_NAMES = ["MacOS", "OS::Mac"].freeze
 
-      MACOS_VERSION_CONDITIONALS = {
-        "==" => nil,
-        "<=" => :or_older,
-        ">=" => :or_newer,
-      }.freeze
+      MACOS_VERSION_CONDITIONALS = T.let(
+        {
+          "==" => nil,
+          "<=" => :or_older,
+          ">=" => :or_newer,
+        }.freeze,
+        T::Hash[String, T.nilable(Symbol)],
+      )
 
+      sig { params(body_node: RuboCop::AST::Node, parent_name: Symbol).void }
       def audit_on_system_blocks(body_node, parent_name)
         parent_string = if body_node.def_type?
           "def #{parent_name}"
@@ -77,6 +84,12 @@ module RuboCop
         end
       end
 
+      sig {
+        params(
+          body_node: RuboCop::AST::Node, allowed_methods: T::Array[Symbol],
+          allowed_blocks: T::Array[Symbol]
+        ).void
+      }
       def audit_arch_conditionals(body_node, allowed_methods: [], allowed_blocks: [])
         ARCH_OPTIONS.each do |arch_option|
           else_method = (arch_option == :arm) ? :on_intel : :on_arm
@@ -100,6 +113,12 @@ module RuboCop
         end
       end
 
+      sig {
+        params(
+          body_node: RuboCop::AST::Node, allowed_methods: T::Array[Symbol],
+          allowed_blocks: T::Array[Symbol]
+        ).void
+      }
       def audit_base_os_conditionals(body_node, allowed_methods: [], allowed_blocks: [])
         BASE_OS_OPTIONS.each do |base_os_option|
           os_method, else_method = if base_os_option == :macos
@@ -116,12 +135,21 @@ module RuboCop
         end
       end
 
+      sig {
+        params(
+          body_node:           RuboCop::AST::Node,
+          allowed_methods:     T::Array[Symbol],
+          allowed_blocks:      T::Array[Symbol],
+          recommend_on_system: T::Boolean,
+        ).void
+      }
       def audit_macos_version_conditionals(body_node, allowed_methods: [], allowed_blocks: [],
                                            recommend_on_system: true)
         MACOS_VERSION_OPTIONS.each do |macos_version_option|
           if_macos_version_node_search(body_node, os_version: macos_version_option) do |if_node, operator, else_node|
             next if node_is_allowed?(if_node, allowed_methods:, allowed_blocks:)
 
+            else_node = T.let(else_node, T.nilable(RuboCop::AST::Node))
             autocorrect = else_node.blank? && MACOS_VERSION_CONDITIONALS.key?(operator.to_s)
             on_system_method_string = if recommend_on_system && operator == :<
               "on_system"
@@ -148,6 +176,13 @@ module RuboCop
         end
       end
 
+      sig {
+        params(
+          body_node:       RuboCop::AST::Node,
+          allowed_methods: T::Array[Symbol],
+          allowed_blocks:  T::Array[Symbol],
+        ).void
+      }
       def audit_macos_references(body_node, allowed_methods: [], allowed_blocks: [])
         MACOS_MODULE_NAMES.each do |macos_module_name|
           find_const(body_node, macos_module_name) do |node|
@@ -161,6 +196,16 @@ module RuboCop
 
       private
 
+      sig {
+        params(
+          if_node:                 RuboCop::AST::IfNode,
+          if_statement_string:     String,
+          on_system_method_string: String,
+          else_method:             T.nilable(Symbol),
+          else_node:               T.nilable(RuboCop::AST::Node),
+          autocorrect:             T::Boolean,
+        ).void
+      }
       def if_statement_problem(if_node, if_statement_string, on_system_method_string,
                                else_method: nil, else_node: nil, autocorrect: true)
         offending_node(if_node)
@@ -180,6 +225,12 @@ module RuboCop
         end
       end
 
+      sig {
+        params(
+          node: RuboCop::AST::Node, allowed_methods: T::Array[Symbol],
+          allowed_blocks: T::Array[Symbol]
+        ).returns(T::Boolean)
+      }
       def node_is_allowed?(node, allowed_methods: [], allowed_blocks: [])
         # TODO: check to see if it's legal
         valid = T.let(false, T::Boolean)

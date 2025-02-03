@@ -1,4 +1,4 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
 
 module RuboCop
@@ -36,6 +36,7 @@ module RuboCop
           (if $(csend ... :blank?) ...)
         PATTERN
 
+        sig { params(node: RuboCop::AST::IfNode).void }
         def on_if(node)
           return unless safe_navigation_blank_in_conditional?(node)
 

@@ -1,4 +1,4 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
 
 require "rubocops/extend/formula_cop"
@@ -14,7 +14,7 @@ module RuboCop
         sig { override.params(formula_nodes: FormulaNodes).void }
         def audit_formula(formula_nodes)
           node = formula_nodes.node
-          @full_source_content = source_buffer(node).source
+          @full_source_content = T.let(source_buffer(node).source, T.nilable(String))
 
           return if (body_node = formula_nodes.body_node).nil?
 
@@ -43,6 +43,7 @@ module RuboCop
 
         private
 
+        sig { params(patch_url_node: RuboCop::AST::Node).void }
         def patch_problems(patch_url_node)
           patch_url = string_content(patch_url_node)
 
@@ -103,6 +104,7 @@ module RuboCop
           end
         end
 
+        sig { params(patch: RuboCop::AST::Node).void }
         def inline_patch_problems(patch)
           return if !patch_data?(patch) || patch_end?
 
@@ -119,13 +121,17 @@ module RuboCop
           /^__END__$/.match?(@full_source_content)
         end
 
+        sig { params(node: RuboCop::AST::Node).void }
         def offending_patch_end_node(node)
-          @offensive_node = node
-          @source_buf = source_buffer(node)
-          @line_no = node.loc.last_line + 1
-          @column = 0
-          @length = 7 # "__END__".size
-          @offense_source_range = source_range(@source_buf, @line_no, @column, @length)
+          @offensive_node = T.let(node, T.nilable(RuboCop::AST::Node))
+          @source_buf = T.let(source_buffer(node), T.nilable(Parser::Source::Buffer))
+          @line_no = T.let(node.loc.last_line + 1, T.nilable(Integer))
+          @column = T.let(0, T.nilable(Integer))
+          @length = T.let(7, T.nilable(Integer)) # "__END__".size
+          @offense_source_range = T.let(
+            source_range(@source_buf, @line_no, @column, @length),
+            T.nilable(Parser::Source::Range),
+          )
         end
       end
     end

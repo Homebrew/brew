@@ -181,6 +181,7 @@ module RuboCop
           end
         end
 
+        sig { params(node: RuboCop::AST::IfNode).returns(T::Boolean) }
         def unless_modifier?(node)
           return false unless node.if_type?
 
@@ -478,7 +479,10 @@ module RuboCop
       class MacOSOnLinux < FormulaCop
         include OnSystemConditionalsHelper
 
-        ON_MACOS_BLOCKS = [:macos, *MACOS_VERSION_OPTIONS].map { |os| :"on_#{os}" }.freeze
+        ON_MACOS_BLOCKS = T.let(
+          [:macos, *MACOS_VERSION_OPTIONS].map { |os| :"on_#{os}" }.freeze,
+          T::Array[Symbol],
+        )
 
         sig { override.params(formula_nodes: FormulaNodes).void }
         def audit_formula(formula_nodes)
@@ -854,10 +858,11 @@ module RuboCop
           end
         end
 
+        sig { params(node: RuboCop::AST::Node).returns(T::Boolean) }
         def modifier?(node)
           return false unless node.if_type?
 
-          node.modifier_form?
+          T.cast(node, RuboCop::AST::IfNode).modifier_form?
         end
 
         def_node_search :conditional_dependencies, <<~EOS

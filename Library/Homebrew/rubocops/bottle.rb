@@ -1,4 +1,4 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
 
 require "rubocops/extend/formula_cop"
@@ -174,12 +174,14 @@ module RuboCop
           end
         end
 
+        sig { params(nodes: T::Array[RuboCop::AST::SendNode]).returns(T::Array[T.any(String, Symbol)]) }
         def sha256_order(nodes)
           nodes.map do |node|
             sha256_bottle_tag node
           end
         end
 
+        sig { params(node: AST::SendNode).returns(T.any(String, Symbol)) }
         def sha256_bottle_tag(node)
           hash_pair = node.last_argument.pairs.last
           if hash_pair.key.sym_type?

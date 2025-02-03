@@ -1,4 +1,4 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
 
 module RuboCop
@@ -12,6 +12,7 @@ module RuboCop
           (send (const nil? :OS) {:mac? | :linux?})
         PATTERN
 
+        sig { params(node: RuboCop::AST::Node).void }
         def on_send(node)
           return unless os_check?(node)
 

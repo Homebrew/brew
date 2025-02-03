@@ -62,6 +62,7 @@ module RuboCop
               (sym :blank?)))
         PATTERN
 
+        sig { params(node: RuboCop::AST::SendNode).void }
         def on_send(node)
           return unless bad_method?(node)
 
@@ -74,6 +75,7 @@ module RuboCop
 
         private
 
+        sig { params(node: RuboCop::AST::SendNode).returns(T::Boolean) }
         def bad_method?(node)
           return true if reject_with_block_pass?(node)
 
@@ -93,6 +95,7 @@ module RuboCop
           arguments.length == 2 && arguments[1].source == receiver_in_block.source
         end
 
+        sig { params(node: RuboCop::AST::SendNode).returns(Parser::Source::Range) }
         def offense_range(node)
           end_pos = if node.parent&.block_type? && node.parent&.send_node == node
             node.parent.source_range.end_pos
@@ -103,6 +106,7 @@ module RuboCop
           range_between(node.loc.selector.begin_pos, end_pos)
         end
 
+        sig { params(node: RuboCop::AST::SendNode).returns(String) }
         def preferred_method(node)
           node.method?(:reject) ? "compact_blank" : "compact_blank!"
         end

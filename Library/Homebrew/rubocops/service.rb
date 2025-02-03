@@ -1,4 +1,4 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
 
 require "rubocops/extend/formula_cop"
@@ -10,14 +10,17 @@ module RuboCop
       class Service < FormulaCop
         extend AutoCorrector
 
-        CELLAR_PATH_AUDIT_CORRECTIONS = {
-          bin:      :opt_bin,
-          libexec:  :opt_libexec,
-          pkgshare: :opt_pkgshare,
-          prefix:   :opt_prefix,
-          sbin:     :opt_sbin,
-          share:    :opt_share,
-        }.freeze
+        CELLAR_PATH_AUDIT_CORRECTIONS = T.let(
+          {
+            bin:      :opt_bin,
+            libexec:  :opt_libexec,
+            pkgshare: :opt_pkgshare,
+            prefix:   :opt_prefix,
+            sbin:     :opt_sbin,
+            share:    :opt_share,
+          }.freeze,
+          T::Hash[Symbol, Symbol],
+        )
 
         # At least one of these methods must be defined in a service block.
         REQUIRED_METHOD_CALLS = [:run, :name].freeze

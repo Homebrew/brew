@@ -53,6 +53,7 @@ module RuboCop
       end
 
       # Source buffer is required as an argument to report style violations.
+      sig { params(node: RuboCop::AST::Node).returns(Parser::Source::Buffer) }
       def source_buffer(node)
         node.source_range.source_buffer
       end

@@ -1,4 +1,4 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
 
 module RuboCop
@@ -44,6 +44,7 @@ module RuboCop
           )
         PATTERN
 
+        sig { params(node: RuboCop::AST::Node).void }
         def on_or(node)
           nil_or_empty?(node) do |var1, var2|
             return if var1 != var2
@@ -57,14 +58,16 @@ module RuboCop
 
         private
 
+        sig { params(corrector: RuboCop::Cop::Corrector, node: RuboCop::AST::Node).void }
         def autocorrect(corrector, node)
           variable1, _variable2 = nil_or_empty?(node)
           range = node.source_range
           corrector.replace(range, replacement(variable1))
         end
 
+        sig { params(node: T.nilable(RuboCop::AST::Node)).returns(String) }
         def replacement(node)
-          node.respond_to?(:source) ? "#{node.source}.blank?" : "blank?"
+          node.respond_to?(:source) ? "#{node&.source}.blank?" : "blank?"
         end
       end
     end
