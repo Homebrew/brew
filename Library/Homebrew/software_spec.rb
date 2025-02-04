@@ -332,6 +332,11 @@ class Bottle
       "#{name}--#{version}.#{tag}.bottle.json"
     end
 
+    sig { params(checksum: String).returns(String) }
+    def attestation_json(checksum)
+      "#{checksum}-#{name}--#{version}.#{tag}.attestation.json"
+    end
+
     def url_encode
       ERB::Util.url_encode("#{name}-#{version}#{extname}")
     end
