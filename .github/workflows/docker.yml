@@ -66,7 +66,7 @@ jobs:
               "homebrew/ubuntu${{matrix.version}}:${brew_version}"
               "homebrew/ubuntu${{matrix.version}}:latest"
             )
-            if [[ "${{ matrix.version }}" == "22.04" ]]; then
+            if [[ "${{ matrix.version }}" == "24.04" ]]; then
               tags+=(
                 "ghcr.io/homebrew/brew:${brew_version}"
                 "ghcr.io/homebrew/brew:latest"
@@ -76,7 +76,7 @@ jobs:
             fi
           elif [[ "${GITHUB_EVENT_NAME}" == "merge_group" &&
                   "${GITHUB_REF}" == "refs/heads/master" &&
-                  "${{ matrix.version }}" == "22.04" ]]; then
+                  "${{ matrix.version }}" == "24.04" ]]; then
             tags+=(
               "ghcr.io/homebrew/brew:master"
               "ghcr.io/homebrew/ubuntu${{ matrix.version }}:master"
@@ -86,7 +86,7 @@ jobs:
           fi
           if [[ "${{ matrix.version }}" == "18.04" ]]; then
             # odeprecated: remove this in Homebrew >=4.5
-            echo "The homebrew/ubuntu18.04 image is deprecated and will soon be retired. Use homebrew/ubuntu22.04 or homebrew/ubuntu24.04 or homebrew/ubuntu20.04 or homebrew/brew." > .docker-deprecate
+            echo "The homebrew/ubuntu18.04 image is deprecated and will soon be retired. Use homebrew/ubuntu24.04 or homebrew/ubuntu22.04 or homebrew/ubuntu20.04 or homebrew/brew." > .docker-deprecate
           fi
 
           {

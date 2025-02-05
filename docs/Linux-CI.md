@@ -4,7 +4,9 @@ last_review_date: "1970-01-01"
 
 # Linux CI in `homebrew/core`
 
-We currently use Ubuntu 22.04 for bottling in `homebrew/core`.
+We currently use Ubuntu 24.04 for bottling in `homebrew/core`.
+
+We try to use the latest Ubuntu LTS version for our CI no earlier than 3 months after its release and, ideally, no more than 12 months after its release.
 
 ## Ubuntu vs. other Linux distributions
 
@@ -15,14 +17,6 @@ The Ubuntu LTS versions are supported for 5 years. A new LTS version is released
 Our bottles are compatible with other distributions like Debian/CentOS, even when compiled on Ubuntu.
 
 ## Past and next versions
-
-We have moved our CI to Ubuntu 22.04
-
-Moving from Ubuntu 16.04 to Ubuntu 22.04 (and thus skipping version 18.04 and 20.04) took longer than expected.
-
-We plan to proceed with regular updates from 2022 onwards. We aim to use the latest Ubuntu LTS version for our CI.
-
-We will start using the latest Ubuntu LTS version for our CI no earlier than 3 months after its release and, ideally, no more than 12 months after its release.
 
 | Distribution | Glibc | GCC | LTS standard security maintenance |
 |---|---|---|---|

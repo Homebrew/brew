@@ -371,9 +371,12 @@ jobs:
     strategy:
       matrix:
         include:
+          - name: test default formula (Ubuntu 24.04)
+            runs-on: ubuntu-latest
+            container: ghcr.io/homebrew/ubuntu24.04:master
           - name: test default formula (Ubuntu 22.04)
             runs-on: ubuntu-latest
-            container: ghcr.io/homebrew/ubuntu22.04:master
+            container: ghcr.io/homebrew/ubuntu22.04
           - name: test default formula (Ubuntu 20.04)
             runs-on: ubuntu-latest
             container: ghcr.io/homebrew/ubuntu20.04

@@ -86,7 +86,7 @@ class GitHubRunnerMatrix
       name:      "Linux",
       runner:    linux_runner,
       container: {
-        image:   "ghcr.io/homebrew/ubuntu22.04:master",
+        image:   "ghcr.io/homebrew/ubuntu24.04:master",
         options: "--user=linuxbrew -e GITHUB_ACTIONS_HOMEBREW_SELF_HOSTED",
       },
       workdir:   "/github/home",
