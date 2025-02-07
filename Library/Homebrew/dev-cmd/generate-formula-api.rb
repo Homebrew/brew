@@ -32,7 +32,7 @@ module Homebrew
         raise TapUnavailableError, tap.name unless tap.installed?
 
         unless args.dry_run?
-          directories = ["_data/formula", "api/formula", "formula", "api/internal/v3"]
+          directories = ["_data/formula", "api/formula", "formula", "api/internal"]
           FileUtils.rm_rf directories + ["_data/formula_canonical.json"]
           FileUtils.mkdir_p directories
         end
@@ -60,8 +60,10 @@ module Homebrew
             raise
           end
 
-          homebrew_core_tap_json = JSON.generate(tap.to_internal_api_hash)
-          File.write("api/internal/v3/homebrew-core.json", homebrew_core_tap_json) unless args.dry_run?
+          tap.to_internal_api_hashes.each do |os_arch, hash|
+            File.write("api/internal/homebrew-core.#{os_arch}.json", JSON.generate(hash)) unless args.dry_run?
+          end
+
           canonical_json = JSON.pretty_generate(tap.formula_renames.merge(tap.alias_table))
           File.write("_data/formula_canonical.json", "#{canonical_json}\n") unless args.dry_run?
         end

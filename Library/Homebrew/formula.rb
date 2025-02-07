@@ -2572,6 +2572,21 @@ class Formula
     hsh
   end
 
+  def to_bottle_manifest_hashes
+    OnSystem::ALL_OS_ARCH_COMBINATIONS.filter_map do |os, arch|
+      bottle_tag = Utils::Bottles::Tag.new(system: os, arch:)
+      next unless bottle_tag.valid_combination?
+
+      hash = {
+        "name"        => name,
+        "pkg_version" => pkg_version.to_s,
+        "sha256"      => bottle_hash["files"][bottle_tag.to_sym]&.fetch("sha256"),
+      }
+
+      [bottle_tag.to_s, hash]
+    end.to_h
+  end
+
   def to_internal_api_hash
     api_hash = {
       "desc"                 => desc,

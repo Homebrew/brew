@@ -1402,20 +1402,31 @@ class CoreTap < AbstractCoreTap
   end
 
   sig { returns(T::Hash[String, T.untyped]) }
-  def to_internal_api_hash
-    formulae_api_hash = formula_names.to_h do |name|
+  def to_internal_api_hashes
+    formula_hashes = formula_names.to_h do |name|
       formula = Formulary.factory(name)
-      formula_hash = formula.to_hash_with_variations(hash_method: :to_internal_api_hash)
+      formula_hash = formula.to_bottle_manifest_hashes
       [name, formula_hash]
     end
 
-    {
-      "tap_git_head"   => git_head,
-      "aliases"        => alias_table,
-      "renames"        => formula_renames,
-      "tap_migrations" => tap_migrations,
-      "formulae"       => formulae_api_hash,
-    }
+    OnSystem::ALL_OS_ARCH_COMBINATIONS.filter_map do |os, arch|
+      bottle_tag = Utils::Bottles::Tag.new(system: os, arch:)
+      next unless bottle_tag.valid_combination?
+
+      formulae_hash = formula_hashes.transform_values do |formula_hash|
+        formula_hash[bottle_tag.to_s]
+      end
+
+      api_hash = {
+        "tap_git_head"   => git_head,
+        "aliases"        => alias_table,
+        "renames"        => formula_renames,
+        "tap_migrations" => tap_migrations,
+        "formulae"       => formulae_hash,
+      }
+
+      [bottle_tag.to_s, api_hash]
+    end.to_h
   end
 end
 
