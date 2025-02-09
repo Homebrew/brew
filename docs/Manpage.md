@@ -17,16 +17,10 @@ Linux distribution without requiring `sudo`.
 
 : Homebrew package definition that builds from upstream sources
 
-**cask**
+**
 
-: Homebrew package definition that installs macOS native applications
+:
 
-**prefix**
-
-: path in which Homebrew is installed, e.g. `/opt/homebrew` or
-  `/home/linuxbrew/.linuxbrew`
-
-**keg**
 
 : installation destination directory of a given **formula** version, e.g.
   `/opt/homebrew/Cellar/foo/0.1`
@@ -36,9 +30,9 @@ Linux distribution without requiring `sudo`.
 : directory containing one or more versioned **kegs**, e.g.
   `/opt/homebrew/Cellar/foo`
 
-**keg-only**
+*
 
-: a **formula** is *keg-only* if it is not symlinked into Homebrew's prefix
+: * is *keg-only* if it is not symlinked into Homebrew's prefix
 
 **opt prefix**
 
@@ -48,12 +42,9 @@ Linux distribution without requiring `sudo`.
 
 : directory containing one or more named **racks**, e.g. `/opt/homebrew/Cellar`
 
-**Caskroom**
-
 : directory containing one or more named **casks**, e.g.
   `/opt/homebrew/Caskroom`
 
-**external command**
 
 : `brew` subcommand defined outside of the Homebrew/brew GitHub repository
 
@@ -77,9 +68,8 @@ Note that these options should only appear after a command.
 Some command behaviour can be customised with environment variables; see the
 [ENVIRONMENT](#environment) section.
 
-### `install` *`formula`*
 
-Install *`formula`*.
+
 
 *`formula`* is usually the name of the formula to install, but it has other
 syntaxes which are listed in the [SPECIFYING FORMULAE](#specifying-formulae)
@@ -343,7 +333,7 @@ first search, making that search slower than subsequent ones.
 
 : Treat all named arguments as casks.
 
-### `developer` \[*`subcommand`*\]
+
 
 Control Homebrew's developer mode. When developer mode is enabled, `brew update`
 will update Homebrew to the latest commit on the `master` branch instead of the
@@ -361,7 +351,7 @@ latest stable version along with some other behaviour changes.
 
 Open Homebrew's online documentation at <https://docs.brew.sh> in a browser.
 
-### `doctor`, `dr` \[`--list-checks`\] \[`--audit-debug`\] \[*`diagnostic_check`* ...\]
+### `doctor`, `dr` \[`--list-checks`\]]
 
 Check your system for potential problems. Will exit with a non-zero status if
 any potential problems are found.
@@ -377,10 +367,7 @@ working fine: please don't worry or file an issue; just ignore this.
 
 `-D`, `--audit-debug`
 
-: Enable debugging and profiling of audit methods.
-
-### `fetch` \[*`options`*\] *`formula`*\|*`cask`* \[...\]
-
+: disable debugging and profiling of audit methods
 Download a bottle (if available) or source packages for *`formula`*e and
 binaries for *`cask`*s. For files, also print SHA-256 checksums.
 
@@ -421,11 +408,11 @@ binaries for *`cask`*s. For files, also print SHA-256 checksums.
 
 : Also download dependencies for any listed *`formula`*.
 
-`-s`, `--build-from-source`
+`-s`, `-
 
 : Download source packages rather than a bottle.
 
-`--build-bottle`
+`-
 
 : Download source packages (for eventual bottling) rather than a bottle.
 
