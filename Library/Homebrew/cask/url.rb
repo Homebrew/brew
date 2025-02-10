@@ -267,6 +267,7 @@ module Cask
 
       return false unless interpolated_url
 
+      interpolated_url = interpolated_url.gsub(/\#{\s*arch\s*}/, "")
       interpolated_url = interpolated_url.gsub(/\#{\s*version\s*\.major\s*}/, "") if ignore_major_version
 
       interpolated_url.exclude?('#{')
