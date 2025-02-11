@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 require "utils/curl"
+require "livecheck/options"
 
 module Homebrew
   module Livecheck
@@ -193,23 +194,16 @@ module Homebrew
       # collected into an array of hashes.
       #
       # @param url [String] the URL to fetch
-      # @param url_options [Hash] options to modify curl behavior
-      # @param homebrew_curl [Boolean] whether to use brewed curl with the URL
+      # @param options [Options] options to modify behavior
       # @return [Array]
-      sig {
-        params(
-          url:           String,
-          url_options:   T::Hash[Symbol, T.untyped],
-          homebrew_curl: T::Boolean,
-        ).returns(T::Array[T::Hash[String, String]])
-      }
-      def self.page_headers(url, url_options: {}, homebrew_curl: false)
+      sig { params(url: String, options: Options).returns(T::Array[T::Hash[String, String]]) }
+      def self.page_headers(url, options: Options.new)
         headers = []
 
-        if url_options[:post_form].present? || url_options[:post_json].present?
+        if options.post_form || options.post_json
           curl_post_args = ["--request", "POST", *post_args(
-            post_form: url_options[:post_form],
-            post_json: url_options[:post_json],
+            post_form: options.post_form,
+            post_json: options.post_json,
           )]
         end
 
@@ -221,7 +215,7 @@ module Homebrew
               MAX_REDIRECTIONS.to_s,
               url,
               wanted_headers:    ["location", "content-disposition"],
-              use_homebrew_curl: homebrew_curl,
+              use_homebrew_curl: options.homebrew_curl || false,
               user_agent:,
               **DEFAULT_CURL_OPTIONS,
             )
@@ -242,21 +236,14 @@ module Homebrew
       # array with the error message instead.
       #
       # @param url [String] the URL of the content to check
-      # @param url_options [Hash] options to modify curl behavior
-      # @param homebrew_curl [Boolean] whether to use brewed curl with the URL
+      # @param options [Options] options to modify behavior
       # @return [Hash]
-      sig {
-        params(
-          url:           String,
-          url_options:   T::Hash[Symbol, T.untyped],
-          homebrew_curl: T::Boolean,
-        ).returns(T::Hash[Symbol, T.untyped])
-      }
-      def self.page_content(url, url_options: {}, homebrew_curl: false)
-        if url_options[:post_form].present? || url_options[:post_json].present?
+      sig { params(url: String, options: Options).returns(T::Hash[Symbol, T.untyped]) }
+      def self.page_content(url, options: Options.new)
+        if options.post_form || options.post_json
           curl_post_args = ["--request", "POST", *post_args(
-            post_form: url_options[:post_form],
-            post_json: url_options[:post_json],
+            post_form: options.post_form,
+            post_json: options.post_json,
           )]
         end
 
@@ -266,7 +253,9 @@ module Homebrew
             *curl_post_args,
             *PAGE_CONTENT_CURL_ARGS, url,
             **DEFAULT_CURL_OPTIONS,
-            use_homebrew_curl: homebrew_curl || !curl_supports_fail_with_body?,
+            use_homebrew_curl: options.homebrew_curl ||
+                               !curl_supports_fail_with_body? ||
+                               false,
             user_agent:
           )
           next unless status.success?
