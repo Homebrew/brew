@@ -120,6 +120,11 @@ module Homebrew
           [:switch, "--overwrite", {
             description: "Delete files that already exist in the prefix while linking.",
           }],
+          [:switch, "--ask", {
+            description: "Ask for confirmation before downloading and installing formulae. " \
+                         "Print bottles and dependencies download size and install size.",
+            env:         :ask,
+          }],
         ].each do |args|
           options = args.pop
           send(*args, **options)
@@ -174,6 +179,23 @@ module Homebrew
           # This odisabled should stick around indefinitely.
           odisabled "brew install --env", "`env :std` in specific formula files"
         end
+
+        ask_input = lambda {
+          ohai "Do you want to proceed with the installation? [Y/y/yes/N/n]"
+          accepted_inputs = %w[y yes]
+          declined_inputs = %w[n no]
+          loop do
+            result = $stdin.gets.chomp.strip.downcase
+            if accepted_inputs.include?(result)
+              puts "Proceeding with installation..."
+              break
+            elsif declined_inputs.include?(result)
+              return
+            else
+              puts "Invalid input. Please enter 'Y', 'y', or 'yes' to proceed, or 'N' to abort."
+            end
+          end
+        }
 
         args.named.each do |name|
           if (tap_with_name = Tap.with_formula_name(name))
@@ -301,6 +323,35 @@ module Homebrew
 
         Install.perform_preinstall_checks_once
         Install.check_cc_argv(args.cc)
+
+        # Showing dependencies and required size to install
+        if args.ask?
+          ohai "Looking for bottle sizes..."
+          sized_formulae = []
+          total_download_size = 0
+          total_installed_size = 0
+          installed_formulae.each do |f|
+            next unless (bottle = f.bottle)
+
+            # keep it quiet as there could be a lot of json fetch, it’s not intuitive to show them all.
+            bottle.fetch_tab(quiet: !args.debug?)
+            total_download_size += T.must(bottle.bottle_size) if bottle.bottle_size
+            total_installed_size += T.must(bottle.installed_size) if bottle.installed_size
+            sized_formulae.push(f, f.recursive_dependencies)
+            next if f.deps.empty?
+
+            f.recursive_dependencies.each do |dep|
+              bottle_dep = dep.to_formula.bottle
+              bottle_dep.fetch_tab(quiet: !args.debug?)
+              total_download_size += bottle_dep.bottle_size if bottle_dep.bottle_size
+              total_installed_size += bottle_dep.installed_size if bottle_dep.installed_size
+            end
+          end
+          puts "Formulae: #{sized_formulae.join(", ")}\n\n"
+          puts "Download Size: #{disk_usage_readable(total_download_size)}" if total_download_size
+          puts "Install Size: #{disk_usage_readable(total_installed_size)}\n" if total_installed_size
+          ask_input.call
+        end
 
         Install.install_formulae(
           installed_formulae,
