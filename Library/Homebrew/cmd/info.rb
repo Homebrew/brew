@@ -298,7 +298,7 @@ module Homebrew
         kegs = [
           *heads.sort_by { |keg| -keg.tab.time.to_i },
           *versioned.sort_by(&:scheme_and_version),
-        ]
+        ].select { |keg| (tap = keg.tab.tap).nil? || tap == formula.tap }
         if kegs.empty?
           puts "Not installed"
           if (bottle = formula.bottle)
