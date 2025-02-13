@@ -34,17 +34,18 @@ module Homebrew
         # @param regex [Regexp, nil] a regex used for matching versions
         # @param provided_content [String, nil] content to use in place of
         #   fetching via `Strategy#page_content`
+        # @param options [Options] options to modify behavior
         # @return [Hash]
         sig {
           params(
             url:              String,
             regex:            T.nilable(Regexp),
             provided_content: T.nilable(String),
-            unused:           T.untyped,
+            options:          Options,
             block:            T.nilable(Proc),
           ).returns(T::Hash[Symbol, T.untyped])
         }
-        def self.find_versions(url:, regex: nil, provided_content: nil, **unused, &block)
+        def self.find_versions(url:, regex: nil, provided_content: nil, options: Options.new, &block)
           if regex.present? && block.blank?
             raise ArgumentError,
                   "#{Utils.demodulize(T.must(name))} only supports a regex when using a `strategy` block"
@@ -54,7 +55,7 @@ module Homebrew
             url:,
             regex:,
             provided_content:,
-            **unused,
+            options:,
             &block || proc { |yaml| yaml["version"] }
           )
         end

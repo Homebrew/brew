@@ -70,16 +70,17 @@ module Homebrew
         #
         # @param url [String] the URL of the content to check
         # @param regex [Regexp] a regex used for matching versions in content
+        # @param options [Options] options to modify behavior
         # @return [Hash]
         sig {
           params(
             url:     String,
             regex:   Regexp,
-            _unused: T.untyped,
+            options: Options,
             block:   T.nilable(Proc),
           ).returns(T::Hash[Symbol, T.untyped])
         }
-        def self.find_versions(url:, regex: GithubReleases::DEFAULT_REGEX, **_unused, &block)
+        def self.find_versions(url:, regex: GithubReleases::DEFAULT_REGEX, options: Options.new, &block)
           match_data = { matches: {}, regex:, url: }
 
           generated = generate_input_values(url)

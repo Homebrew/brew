@@ -73,19 +73,18 @@ module Homebrew
         # @param regex [Regexp, nil] a regex for matching versions in content
         # @param provided_content [String, nil] content to check instead of
         #   fetching
-        # @param homebrew_curl [Boolean] whether to use brewed curl with the URL
+        # @param options [Options] options to modify behavior
         # @return [Hash]
         sig {
           params(
             url:              String,
             regex:            T.nilable(Regexp),
             provided_content: T.nilable(String),
-            homebrew_curl:    T::Boolean,
-            unused:           T.untyped,
+            options:          Options,
             block:            T.nilable(Proc),
           ).returns(T::Hash[Symbol, T.untyped])
         }
-        def self.find_versions(url:, regex: nil, provided_content: nil, homebrew_curl: false, **unused, &block)
+        def self.find_versions(url:, regex: nil, provided_content: nil, options: Options.new, &block)
           match_data = { matches: {}, regex:, url: }
           match_data[:cached] = true if provided_content.is_a?(String)
 
@@ -97,13 +96,7 @@ module Homebrew
           content = if provided_content
             provided_content
           else
-            match_data.merge!(
-              Strategy.page_content(
-                match_data[:url],
-                url_options:   unused.fetch(:url_options, {}),
-                homebrew_curl:,
-              ),
-            )
+            match_data.merge!(Strategy.page_content(match_data[:url], options:))
             match_data[:content]
           end
           return match_data unless content

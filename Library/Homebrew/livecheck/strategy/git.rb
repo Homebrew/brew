@@ -186,16 +186,17 @@ module Homebrew
         #
         # @param url [String] the URL of the Git repository to check
         # @param regex [Regexp, nil] a regex used for matching versions
+        # @param options [Options] options to modify behavior
         # @return [Hash]
         sig {
           params(
             url:     String,
             regex:   T.nilable(Regexp),
-            _unused: T.untyped,
+            options: Options,
             block:   T.nilable(Proc),
           ).returns(T::Hash[Symbol, T.untyped])
         }
-        def self.find_versions(url:, regex: nil, **_unused, &block)
+        def self.find_versions(url:, regex: nil, options: Options.new, &block)
           match_data = { matches: {}, regex:, url: }
 
           tags_data = tag_info(url, regex)

@@ -214,18 +214,17 @@ module Homebrew
         #
         # @param url [String] the URL of the content to check
         # @param regex [Regexp, nil] a regex for use in a strategy block
-        # @param homebrew_curl [Boolean] whether to use brewed curl with the URL
+        # @param options [Options] options to modify behavior
         # @return [Hash]
         sig {
           params(
-            url:           String,
-            regex:         T.nilable(Regexp),
-            homebrew_curl: T::Boolean,
-            unused:        T.untyped,
-            block:         T.nilable(Proc),
+            url:     String,
+            regex:   T.nilable(Regexp),
+            options: Options,
+            block:   T.nilable(Proc),
           ).returns(T::Hash[Symbol, T.untyped])
         }
-        def self.find_versions(url:, regex: nil, homebrew_curl: false, **unused, &block)
+        def self.find_versions(url:, regex: nil, options: Options.new, &block)
           if regex.present? && block.blank?
             raise ArgumentError,
                   "#{Utils.demodulize(T.must(name))} only supports a regex when using a `strategy` block"
@@ -233,13 +232,7 @@ module Homebrew
 
           match_data = { matches: {}, regex:, url: }
 
-          match_data.merge!(
-            Strategy.page_content(
-              url,
-              url_options:   unused.fetch(:url_options, {}),
-              homebrew_curl:,
-            ),
-          )
+          match_data.merge!(Strategy.page_content(url, options:))
           content = match_data.delete(:content)
           return match_data if content.blank?
 
