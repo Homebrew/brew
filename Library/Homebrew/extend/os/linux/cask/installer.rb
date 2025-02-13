@@ -15,6 +15,9 @@ module OS
         def check_stanza_os_requirements
           return if artifacts.all?(::Cask::Artifact::Font)
 
+          install_artifacts = artifacts.reject { |artifact| artifact.instance_of?(::Cask::Artifact::Zap) }
+          return if install_artifacts.all?(::Cask::Artifact::Binary)
+
           raise ::Cask::CaskError, "macOS is required for this software."
         end
       end

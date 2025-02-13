@@ -62,7 +62,7 @@ module Cask
         end
 
         ohai "Linking #{self.class.english_name} '#{source.basename}' to '#{target}'"
-        create_filesystem_link(command:)
+        create_filesystem_link(command)
       end
 
       def unlink(command: nil, **)
@@ -72,14 +72,10 @@ module Cask
         Utils.gain_permissions_remove(target, command:)
       end
 
-      def create_filesystem_link(command: nil)
-        Utils.gain_permissions_mkpath(target.dirname, command:)
-
-        command.run! "/bin/ln", args: ["-h", "-f", "-s", "--", source, target],
-                                sudo: !target.dirname.writable?
-
-        add_altname_metadata(source, target.basename, command:)
-      end
+      sig { params(command: T.class_of(SystemCommand)).void }
+      def create_filesystem_link(command); end
     end
   end
 end
+
+require "extend/os/cask/artifact/symlinked"

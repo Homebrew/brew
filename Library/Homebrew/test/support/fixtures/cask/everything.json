@@ -76,7 +76,12 @@
   "depends_on": {
     "cask": [
       "something"
-    ]
+    ],
+    "macos": {
+      ">=": [
+        "10.11"
+      ]
+    }
   },
   "conflicts_with": {
     "formula": [

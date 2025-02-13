@@ -114,6 +114,7 @@ module Cask
       return unless @block
 
       @dsl.instance_eval(&@block)
+      @dsl.add_implicit_macos_dependency
       @dsl.language_eval
     end
 
