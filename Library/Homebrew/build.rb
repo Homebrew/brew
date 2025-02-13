@@ -185,6 +185,8 @@ class Build
             # Find and link metafiles
             formula.prefix.install_metafiles formula.buildpath
             formula.prefix.install_metafiles formula.libexec if formula.libexec.exist?
+
+            normalize_pod2man_outputs!(formula)
           end
         end
       end
@@ -213,6 +215,11 @@ class Build
     Keg.new(path).optlink(verbose: args.verbose?)
   rescue
     raise "#{formula.opt_prefix} not present or broken\nPlease reinstall #{formula.full_name}. Sorry :("
+  end
+
+  def normalize_pod2man_outputs!(formula)
+    keg = Keg.new(formula.prefix)
+    keg.normalize_pod2man_outputs!
   end
 end
 
