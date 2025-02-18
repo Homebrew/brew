@@ -115,7 +115,7 @@ module Homebrew
             end
           end
 
-          formulae_and_casks = formulae_and_casks&.sort_by do |formula_or_cask|
+          formulae_and_casks = formulae_and_casks.sort_by do |formula_or_cask|
             formula_or_cask.respond_to?(:token) ? formula_or_cask.token : formula_or_cask.name
           end
 

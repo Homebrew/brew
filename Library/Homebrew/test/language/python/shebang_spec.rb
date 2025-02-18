@@ -46,7 +46,6 @@ RSpec.describe Language::Python::Shebang do
 
   describe "#detected_python_shebang" do
     it "can be used to replace Python shebangs" do
-      allow(Formulary).to receive(:factory)
       allow(Formulary).to receive(:factory).with(f[:python311].name).and_return(f[:python311])
       Utils::Shebang.rewrite_shebang(
         described_class.detected_python_shebang(f[:versioned_python_dep], use_python_from_path: false), file.path

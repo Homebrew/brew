@@ -46,7 +46,6 @@ RSpec.describe Language::Node::Shebang do
 
   describe "#detected_node_shebang" do
     it "can be used to replace Node shebangs" do
-      allow(Formulary).to receive(:factory)
       allow(Formulary).to receive(:factory).with(f[:node18].name).and_return(f[:node18])
       Utils::Shebang.rewrite_shebang described_class.detected_node_shebang(f[:versioned_node_dep]), file.path
 

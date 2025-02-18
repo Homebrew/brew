@@ -161,7 +161,7 @@ module Homebrew
               end
               next unless formula.any_version_installed?
 
-              keg = formula.installed_kegs.last
+              keg = formula.installed_kegs.fetch(-1)
               tab = keg.tab
               # force a `brew upgrade` from the linuxbrew-core version to the homebrew-core version (even if lower)
               tab.source["versions"]["version_scheme"] = -1

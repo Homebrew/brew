@@ -123,7 +123,7 @@ module Homebrew
           raise UsageError, "Cannot use #{flags.join(", ")} with formula arguments." unless args.no_named?
 
           formulae = if args.t?
-            Formula.installed.sort_by { |formula| test("M", formula.rack) }.reverse!
+            Formula.installed.sort_by { |formula| T.unsafe(test("M", formula.rack.to_s)) }.reverse!
           elsif args.full_name?
             Formula.installed.sort { |a, b| tap_and_name_comparison.call(a.full_name, b.full_name) }
           else

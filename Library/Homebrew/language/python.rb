@@ -340,7 +340,10 @@ module Language
             version = rp.match %r{^#{HOMEBREW_CELLAR}/python@(.*?)/}o
             version = "@#{version.captures.first}" unless version.nil?
 
-            new_target = rp.sub %r{#{HOMEBREW_CELLAR}/python#{version}/[^/]+}, Formula["python#{version}"].opt_prefix
+            new_target = rp.sub(
+              %r{#{HOMEBREW_CELLAR}/python#{version}/[^/]+},
+              Formula["python#{version}"].opt_prefix.to_s,
+            )
             f.unlink
             f.make_symlink new_target
           end
@@ -351,7 +354,10 @@ module Language
             version = prefix_path.match %r{^#{HOMEBREW_CELLAR}/python@(.*?)/}o
             version = "@#{version.captures.first}" unless version.nil?
 
-            prefix_path.sub! %r{^#{HOMEBREW_CELLAR}/python#{version}/[^/]+}, Formula["python#{version}"].opt_prefix
+            prefix_path.sub!(
+              %r{^#{HOMEBREW_CELLAR}/python#{version}/[^/]+},
+              Formula["python#{version}"].opt_prefix.to_s,
+            )
             prefix_file.atomic_write prefix_path
           end
 
@@ -362,7 +368,7 @@ module Language
             cfg = cfg_file.read
             framework = "Frameworks/Python.framework/Versions"
             cfg.match(%r{= *(#{HOMEBREW_CELLAR}/(python@[\d.]+)/[^/]+(?:/#{framework}/[\d.]+)?/bin)}) do |match|
-              cfg.sub! match[1].to_s, Formula[match[2]].opt_bin
+              cfg.sub! match[1].to_s, Formula[T.must(match[2])].opt_bin.to_s
               cfg_file.atomic_write cfg
             end
           end

@@ -1230,7 +1230,7 @@ on_request: installed_on_request?, options:)
     return keg_formula_path if formula.loaded_from_api?
     return keg_formula_path if formula.local_bottle_path.present?
 
-    tap_formula_path = formula.specified_path
+    tap_formula_path = T.must(formula.specified_path)
     return keg_formula_path unless tap_formula_path.exist?
 
     begin

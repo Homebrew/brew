@@ -63,7 +63,7 @@ module Homebrew
         end
       end
 
-      sig { params(list: T::Array[String], string: String).returns(String) }
+      sig { params(list: T::Array[T.any(Formula, Pathname, String)], string: String).returns(String) }
       def inject_file_list(list, string)
         list.reduce(string.dup) { |acc, elem| acc << "  #{elem}\n" }
             .freeze

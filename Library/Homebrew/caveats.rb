@@ -25,7 +25,7 @@ class Caveats
       string = formula.caveats.to_s
       caveats << "#{string.chomp}\n" unless string.empty?
     ensure
-      formula.build = build
+      formula.build = T.must(build)
     end
     caveats << keg_only_text
 

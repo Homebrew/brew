@@ -45,7 +45,6 @@ RSpec.describe Language::Perl::Shebang do
 
   describe "#detected_perl_shebang" do
     it "can be used to replace Perl shebangs when depends_on \"perl\" is used" do
-      allow(Formulary).to receive(:factory)
       allow(Formulary).to receive(:factory).with(f[:perl].name).and_return(f[:perl])
       Utils::Shebang.rewrite_shebang described_class.detected_perl_shebang(f[:depends_on]), file.path
 
@@ -58,7 +57,6 @@ RSpec.describe Language::Perl::Shebang do
     end
 
     it "can be used to replace Perl shebangs when uses_from_macos \"perl\" is used" do
-      allow(Formulary).to receive(:factory)
       allow(Formulary).to receive(:factory).with(f[:perl].name).and_return(f[:perl])
       Utils::Shebang.rewrite_shebang described_class.detected_perl_shebang(f[:uses_from_macos]), file.path
 

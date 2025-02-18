@@ -209,16 +209,18 @@ module Homebrew
             formulae.map(&:to_hash)
           end
         when :v2
-          formulae, casks = if all
-            [
-              Formula.all(eval_all: args.eval_all?).sort,
-              Cask::Cask.all(eval_all: args.eval_all?).sort_by(&:full_name),
-            ]
-          elsif args.installed?
-            [Formula.installed.sort, Cask::Caskroom.casks.sort_by(&:full_name)]
-          else
-            args.named.to_formulae_to_casks
-          end
+          formulae, casks = T.let(
+            if all
+              [
+                Formula.all(eval_all: args.eval_all?).sort,
+                Cask::Cask.all(eval_all: args.eval_all?).sort_by(&:full_name),
+              ]
+            elsif args.installed?
+              [Formula.installed.sort, Cask::Caskroom.casks.sort_by(&:full_name)]
+            else
+              T.cast(args.named.to_formulae_to_casks, [T::Array[Formula], T::Array[Cask::Cask]])
+            end, [T::Array[Formula], T::Array[Cask::Cask]]
+          )
 
           if args.variations?
             {

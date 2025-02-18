@@ -307,7 +307,7 @@ module FormulaCellarChecks
     return unless formula.service?
     return unless formula.service.command?
 
-    "Service command does not exist" unless File.exist?(formula.service.command.first)
+    "Service command does not exist" unless File.exist?(T.must(formula.service.command).first)
   end
 
   sig { params(formula: Formula).returns(T.nilable(String)) }

@@ -48,9 +48,9 @@ module OS
         built_global_dep_tree!
       end
 
-      sig { params(name: String).returns(T.nilable(Formula)) }
+      sig { params(name: String).returns(T.nilable(::Formula)) }
       def formula_for(name)
-        @formula_for ||= T.let({}, T.nilable(T::Hash[String, Formula]))
+        @formula_for ||= T.let({}, T.nilable(T::Hash[String, ::Formula]))
         @formula_for[name] ||= ::Formula[name]
       rescue FormulaUnavailableError
         nil

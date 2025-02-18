@@ -33,7 +33,7 @@ module Homebrew
         end
 
         ff.each do |f|
-          missing = f.missing_dependencies(hide: args.hide)
+          missing = f.missing_dependencies(hide: args.hide || [])
           next if missing.empty?
 
           Homebrew.failed = true

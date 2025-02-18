@@ -249,7 +249,7 @@ module Homebrew
         # comparison.
         current = if formula
           if formula.head_only?
-            Version.new(formula.any_installed_version.version.commit)
+            Version.new(T.must(T.must(formula.any_installed_version).version.commit))
           else
             T.must(formula.stable).version
           end
