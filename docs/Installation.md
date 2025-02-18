@@ -93,6 +93,26 @@ Make sure you avoid installing into:
 
 Create a Homebrew installation wherever you extract the tarball. Whichever `brew` command is called is where the packages will be installed. You can use this as you see fit, e.g. to have a system set of libs in the default prefix and tweaked formulae for development in `~/homebrew`.
 
+## Post-installation steps
+
+When you install Homebrew, it prints some directions for updating your shell's config.
+If you don't follow those directions, Homebrew will not work.
+
+You need to update your shell's config file (which file exactly depends on your shell, for example `~/.bashrc` or `~/.zshrc`) to include this:
+
+```sh
+eval "<Homebrew prefix path>/bin/brew shellenv)"
+```
+
+Replace `<Homebrew prefix path>` with the directory where Homebrew is installed on your system.
+You can find Homebrew's default install location [in this FAQ entry](https://docs.brew.sh/FAQ#why-should-i-install-homebrew-in-the-default-location).
+
+For more insight, re-run the installer or inspect [the installer's source](https://github.com/Homebrew/install/blob/deacfa6a6e62e5f4002baf9e1fac7a96e9aa5d41/install.sh#L1072-L1088)
+to see how the installer constructs the path it recommends.
+
+See [Tips N' Tricks > Loading Homebrew from the same dotfiles on different operating systems](Tips-N'-Tricks.md#loading-homebrew-from-the-same-dotfiles-on-different-operating-systems)
+for another way to handle this across multiple operating systems.
+
 ## Uninstallation
 
 Uninstallation is documented in the [FAQ](FAQ.md#how-do-i-uninstall-homebrew).
