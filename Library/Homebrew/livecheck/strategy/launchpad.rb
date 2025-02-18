@@ -67,19 +67,25 @@ module Homebrew
         #
         # @param url [String] the URL of the content to check
         # @param regex [Regexp] a regex used for matching versions in content
+        # @param options [Options] options to modify behavior
         # @return [Hash]
         sig {
           params(
-            url:    String,
-            regex:  Regexp,
-            unused: T.untyped,
-            block:  T.nilable(Proc),
+            url:     String,
+            regex:   Regexp,
+            options: Options,
+            block:   T.nilable(Proc),
           ).returns(T::Hash[Symbol, T.untyped])
         }
-        def self.find_versions(url:, regex: DEFAULT_REGEX, **unused, &block)
+        def self.find_versions(url:, regex: DEFAULT_REGEX, options: Options.new, &block)
           generated = generate_input_values(url)
 
-          PageMatch.find_versions(url: generated[:url], regex:, **unused, &block)
+          PageMatch.find_versions(
+            url:     generated[:url],
+            regex:,
+            options:,
+            &block
+          )
         end
       end
     end

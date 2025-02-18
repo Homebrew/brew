@@ -191,8 +191,12 @@ RSpec.describe Homebrew::Livecheck::Strategy do
     it "handles `post_form` `url` options" do
       allow(strategy).to receive(:curl_headers).and_return({ responses:, body: })
 
-      expect(strategy.page_headers(url, url_options: { post_form: post_hash }))
-        .to eq([responses.first[:headers]])
+      expect(
+        strategy.page_headers(
+          url,
+          options: Homebrew::Livecheck::Options.new(post_form: post_hash),
+        ),
+      ).to eq([responses.first[:headers]])
     end
 
     it "returns an empty array if `curl_headers` only raises an `ErrorDuringExecution` error" do
@@ -217,14 +221,24 @@ RSpec.describe Homebrew::Livecheck::Strategy do
       allow_any_instance_of(Utils::Curl).to receive(:curl_version).and_return(curl_version)
       allow(strategy).to receive(:curl_output).and_return([response_text[:ok], nil, success_status])
 
-      expect(strategy.page_content(url, url_options: { post_form: post_hash })).to eq({ content: body })
+      expect(
+        strategy.page_content(
+          url,
+          options: Homebrew::Livecheck::Options.new(post_form: post_hash),
+        ),
+      ).to eq({ content: body })
     end
 
     it "handles `post_json` `url` option" do
       allow_any_instance_of(Utils::Curl).to receive(:curl_version).and_return(curl_version)
       allow(strategy).to receive(:curl_output).and_return([response_text[:ok], nil, success_status])
 
-      expect(strategy.page_content(url, url_options: { post_json: post_hash })).to eq({ content: body })
+      expect(
+        strategy.page_content(
+          url,
+          options: Homebrew::Livecheck::Options.new(post_json: post_hash),
+        ),
+      ).to eq({ content: body })
     end
 
     it "returns error `messages` from `stderr` in the return hash on failure when `stderr` is not `nil`" do

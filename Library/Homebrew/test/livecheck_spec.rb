@@ -156,10 +156,17 @@ RSpec.describe Livecheck do
       expect(livecheck_c.url).to eq(:url)
     end
 
-    it "sets `url_options` when provided" do
-      post_args = { post_form: post_hash }
-      livecheck_f.url(url_string, **post_args)
-      expect(livecheck_f.url_options).to eq(post_args)
+    it "sets `url` options when provided" do
+      # This test makes sure that we can set multiple options at once and
+      # options from subsequent `url` calls are merged with existing values
+      # (i.e. existing values aren't reset to `nil`). [We only call `url` once
+      # in a `livecheck` block but this should technically work due to how it's
+      # implemented.]
+      livecheck_f.url(url_string, homebrew_curl: true, post_form: post_hash)
+      livecheck_f.url(url_string, post_json: post_hash)
+      expect(livecheck_f.options.homebrew_curl).to be(true)
+      expect(livecheck_f.options.post_form).to eq(post_hash)
+      expect(livecheck_f.options.post_json).to eq(post_hash)
     end
 
     it "raises an ArgumentError if the argument isn't a valid Symbol" do
@@ -179,15 +186,15 @@ RSpec.describe Livecheck do
     it "returns a Hash of all instance variables" do
       expect(livecheck_f.to_hash).to eq(
         {
-          "cask"        => nil,
-          "formula"     => nil,
-          "regex"       => nil,
-          "skip"        => false,
-          "skip_msg"    => nil,
-          "strategy"    => nil,
-          "throttle"    => nil,
-          "url"         => nil,
-          "url_options" => nil,
+          "options"  => Homebrew::Livecheck::Options.new.to_hash,
+          "cask"     => nil,
+          "formula"  => nil,
+          "regex"    => nil,
+          "skip"     => false,
+          "skip_msg" => nil,
+          "strategy" => nil,
+          "throttle" => nil,
+          "url"      => nil,
         },
       )
     end
