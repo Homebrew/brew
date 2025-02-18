@@ -327,6 +327,48 @@ EOS
   trap - SIGINT
 }
 
+fetch_tags() {
+  local retry=$1
+  local fail_silently="${HOMEBREW_UPDATE_AUTO}"
+
+  if [[ -n "${HOMEBREW_VERBOSE}" ]]
+  then
+    echo "Fetching ${DIR}..."
+  fi
+
+  local tmp_failure_file="${DIR}/.git/TMP_FETCH_FAILURES"
+  rm -f "${tmp_failure_file}"
+
+  # Capture stderr to tmp_failure_file
+  if ! git fetch --tags --force "${QUIET_ARGS[@]}" origin \
+     "refs/heads/${UPSTREAM_BRANCH_DIR}:refs/remotes/origin/${UPSTREAM_BRANCH_DIR}" 2>>"${tmp_failure_file}"
+  then
+    if [[ -f "${tmp_failure_file}" ]] &&
+       [[ "$(cat "${tmp_failure_file}")" == "fatal: couldn't find remote ref refs/heads/${UPSTREAM_BRANCH_DIR}" ]]
+    then
+      # Looks like upstream HEAD branch has been renamed.
+      echo "${DIR}" >>"${missing_remote_ref_dirs_file}"
+      [[ -z "${retry}" ]] && fail_silently=1
+    fi
+
+    if [[ -z "${fail_silently}" ]]
+    then
+      # Reprint fetch errors to stderr
+      [[ -f "${tmp_failure_file}" ]] && cat "${tmp_failure_file}" 1>&2
+
+      if [[ "${UPSTREAM_SHA_HTTP_CODE}" == "404" ]]
+      then
+        TAP="${DIR#"${HOMEBREW_LIBRARY}"/Taps/}"
+        echo "${TAP} does not exist! Run \`brew untap ${TAP}\` to remove it." >>"${update_failed_file}"
+      else
+        echo "Fetching ${DIR} failed!" >>"${update_failed_file}"
+      fi
+    fi
+  fi
+
+  rm -f "${tmp_failure_file}"
+}
+
 homebrew-update() {
   local option
   local DIR
@@ -715,45 +757,7 @@ EOS
         [[ -z "${HOMEBREW_UPDATE_FORCE}" ]] && [[ "${UPSTREAM_SHA_HTTP_CODE}" == "304" ]] && exit
       fi
 
-      # HOMEBREW_VERBOSE isn't modified here so ignore subshell warning.
-      # shellcheck disable=SC2030
-      if [[ -n "${HOMEBREW_VERBOSE}" ]]
-      then
-        echo "Fetching ${DIR}..."
-      fi
-
-      local tmp_failure_file="${DIR}/.git/TMP_FETCH_FAILURES"
-      rm -f "${tmp_failure_file}"
-
-      if [[ -n "${HOMEBREW_UPDATE_AUTO}" ]]
-      then
-        git fetch --tags --force "${QUIET_ARGS[@]}" origin \
-          "refs/heads/${UPSTREAM_BRANCH_DIR}:refs/remotes/origin/${UPSTREAM_BRANCH_DIR}" 2>/dev/null
-      else
-        # Capture stderr to tmp_failure_file
-        if ! git fetch --tags --force "${QUIET_ARGS[@]}" origin \
-           "refs/heads/${UPSTREAM_BRANCH_DIR}:refs/remotes/origin/${UPSTREAM_BRANCH_DIR}" 2>>"${tmp_failure_file}"
-        then
-          # Reprint fetch errors to stderr
-          [[ -f "${tmp_failure_file}" ]] && cat "${tmp_failure_file}" 1>&2
-
-          if [[ "${UPSTREAM_SHA_HTTP_CODE}" == "404" ]]
-          then
-            TAP="${DIR#"${HOMEBREW_LIBRARY}"/Taps/}"
-            echo "${TAP} does not exist! Run \`brew untap ${TAP}\` to remove it." >>"${update_failed_file}"
-          else
-            echo "Fetching ${DIR} failed!" >>"${update_failed_file}"
-
-            if [[ -f "${tmp_failure_file}" ]] &&
-               [[ "$(cat "${tmp_failure_file}")" == "fatal: couldn't find remote ref refs/heads/${UPSTREAM_BRANCH_DIR}" ]]
-            then
-              echo "${DIR}" >>"${missing_remote_ref_dirs_file}"
-            fi
-          fi
-        fi
-      fi
-
-      rm -f "${tmp_failure_file}"
+      fetch_tags
     ) &
   done
 
@@ -762,9 +766,19 @@ EOS
 
   if [[ -f "${missing_remote_ref_dirs_file}" ]]
   then
-    HOMEBREW_MISSING_REMOTE_REF_DIRS="$(cat "${missing_remote_ref_dirs_file}")"
+    while IFS='' read -r DIR
+    do
+      brew tap --repair ${HOMEBREW_VERBOSE+--verbose} "${DIR#"${HOMEBREW_LIBRARY}"/Taps/}"
+
+      cd "${DIR}"
+      TAP_VAR="$(repository_var_suffix "${DIR}")"
+      UPSTREAM_BRANCH_DIR="$(upstream_branch)"
+      declare UPSTREAM_BRANCH"${TAP_VAR}"="${UPSTREAM_BRANCH_DIR}"
+
+      fetch_tags retry
+    done <"${missing_remote_ref_dirs_file}"
+
     rm -f "${missing_remote_ref_dirs_file}"
-    export HOMEBREW_MISSING_REMOTE_REF_DIRS
   fi
 
   for DIR in "${HOMEBREW_REPOSITORY}" "${HOMEBREW_LIBRARY}"/Taps/*/*
@@ -912,7 +926,6 @@ EOS
   # shellcheck disable=SC2031
   if [[ -n "${HOMEBREW_UPDATED}" ]] ||
      [[ -n "${HOMEBREW_UPDATE_FAILED}" ]] ||
-     [[ -n "${HOMEBREW_MISSING_REMOTE_REF_DIRS}" ]] ||
      [[ -n "${HOMEBREW_UPDATE_FORCE}" ]] ||
      [[ -n "${HOMEBREW_MIGRATE_LINUXBREW_FORMULAE}" ]] ||
      [[ -d "${HOMEBREW_LIBRARY}/LinkedKegs" ]] ||
