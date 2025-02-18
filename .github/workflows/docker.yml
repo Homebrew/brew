@@ -18,14 +18,18 @@ defaults:
     shell: bash -xeuo pipefail {0}
 
 jobs:
-  ubuntu:
+  build:
     if: github.repository_owner == 'Homebrew'
-    name: docker (Ubuntu ${{ matrix.version }})
-    runs-on: ubuntu-latest
+    name: docker (${{ matrix.arch }} Ubuntu ${{ matrix.version }})
+    runs-on: ${{ matrix.arch == 'arm64' && 'ubuntu-24.04-arm' || 'ubuntu-latest' }}
     strategy:
       fail-fast: false
       matrix:
         version: ["18.04", "20.04", "22.04", "24.04"]
+        arch: ["x86_64", "arm64"]
+    outputs:
+      tags: ${{ steps.attributes.outputs.tags }}
+      push: ${{ steps.attributes.outputs.push }}
     steps:
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
@@ -122,6 +126,8 @@ jobs:
           labels: ${{ steps.attributes.outputs.labels }}
 
       - name: Run brew test-bot --only-setup
+        # TODO: Remove this conditional when `brew doctor` no longer throws an error on ARM64 Linux.
+        if: matrix.arch == 'x86_64'
         run: docker run --rm brew brew test-bot --only-setup
 
       - name: Log in to GitHub Packages (BrewTestBot)
@@ -132,21 +138,81 @@ jobs:
           username: BrewTestBot
           password: ${{ secrets.HOMEBREW_BREW_GITHUB_PACKAGES_TOKEN }}
 
-      - name: Log in to Docker Hub
+      - name: Deploy the Docker image by digest
+        id: digest
         if: steps.attributes.outputs.push == 'true'
+        uses: docker/build-push-action@ca877d9245402d1537745e0e356eab47c3520991 # v6.13.0
+        with:
+          context: .
+          cache-from: type=registry,ref=ghcr.io/homebrew/ubuntu${{ matrix.version }}:cache
+          cache-to: type=registry,ref=ghcr.io/homebrew/ubuntu${{ matrix.version }}:cache,mode=max
+          build-args: version=${{ matrix.version }}
+          labels: ${{ steps.attributes.outputs.labels }}
+          outputs: type=image,name=ghcr.io/homebrew/ubuntu${{ matrix.version }},name-canonical=true,push=true,push-by-digest=true
+
+      - name: Export the Docker image digest
+        if: steps.attributes.outputs.push == 'true'
+        run: |
+          mkdir -p "${RUNNER_TEMP}"/digests
+          echo "${DIGEST#sha256:}" >"${RUNNER_TEMP}/digests/${VERSION}-${ARCH}"
+        env:
+          DIGEST: ${{ steps.digest.outputs.digest }}
+          VERSION: ${{ matrix.version }}
+          ARCH: ${{ matrix.arch }}
+
+      - name: Upload the Docker image digest
+        if: steps.attributes.outputs.push == 'true'
+        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4.6.0
+        with:
+          name: digest-${{ matrix.version }}-${{ matrix.arch }}
+          path: ${{ runner.temp }}/digests/*
+
+  merge:
+    needs: build
+    if: github.repository_owner == 'Homebrew' && needs.build.outputs.push == 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        version: ["18.04", "20.04", "22.04", "24.04"]
+    steps:
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@6524bf65af31da8d45b59e8c27de4bd072b392f5 # v3.8.0
+        with:
+          cache-binary: false
+
+      - name: Download Docker image digests
+        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
+        with:
+          path: ${{ runner.temp }}/digests
+          pattern: digest-${{ matrix.version }}-*
+          merge-multiple: true
+
+      - name: Log in to Docker Hub
         uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # v3.3.0
         with:
           username: brewtestbot
           password: ${{ secrets.HOMEBREW_BREW_DOCKER_TOKEN }}
 
-      - name: Deploy the tagged Docker image
-        if: steps.attributes.outputs.push == 'true'
-        uses: docker/build-push-action@ca877d9245402d1537745e0e356eab47c3520991 # v6.13.0
+      - name: Log in to GitHub Packages (BrewTestBot)
+        uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # v3.3.0
         with:
-          context: .
-          push: true
-          tags: ${{ steps.attributes.outputs.tags }}
-          cache-from: type=registry,ref=ghcr.io/homebrew/ubuntu${{ matrix.version }}:cache
-          cache-to: type=registry,ref=ghcr.io/homebrew/ubuntu${{ matrix.version }}:cache,mode=max
-          build-args: version=${{ matrix.version }}
-          labels: ${{ steps.attributes.outputs.labels }}
+          registry: ghcr.io
+          username: BrewTestBot
+          password: ${{ secrets.HOMEBREW_BREW_GITHUB_PACKAGES_TOKEN }}
+
+      - name: Merge and push Docker image
+        run: |
+          tag_args=()
+          while IFS=$'\n' read -r tag; do
+            [[ -n "${tag}" ]] || continue
+            tag_args+=("--tag=${tag}")
+          done <<<"${TAGS}"
+
+          docker buildx imagetools create \
+            "${tag_args[@]}" \
+            "ghcr.io/homebrew/ubuntu${VERSION}@sha256:$(cat "${RUNNER_TEMP}/digests/${VERSION}-x86_64")" \
+            "ghcr.io/homebrew/ubuntu${VERSION}@sha256:$(cat "${RUNNER_TEMP}/digests/${VERSION}-arm64")"
+        env:
+          TAGS: ${{ needs.build.outputs.tags }}
+          VERSION: ${{ matrix.version }}
