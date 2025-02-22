@@ -28,7 +28,7 @@ else
 fi
 for subdir in $subdirs; do
   if [[ -d "$brew_dir/$subdir" ]]; then
-	  echo "Deleting $brew_dir/$subdir for clean upgrade..."
-	  /bin/rm -rf $brew_dir/$subdir
+    echo "Deleting $brew_dir/$subdir for clean upgrade..."
+    /bin/rm -rf $brew_dir/$subdir
   fi
 done
