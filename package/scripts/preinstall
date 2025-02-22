@@ -21,14 +21,21 @@ subdirs=(
   ".git"
   "Library/Homebrew"
 )
-if [[ $(uname -m) == "x86_64" ]]; then
+
+arch=$(/usr/bin/uname -m)
+
+if [[ ${arch} == "x86_64" ]]
+then
   brew_dir="/usr/local/Homebrew"
 else
   brew_dir="/opt/homebrew"
 fi
-for subdir in $subdirs; do
-  if [[ -d "$brew_dir/$subdir" ]]; then
-    echo "Deleting $brew_dir/$subdir for clean upgrade..."
-    /bin/rm -rf $brew_dir/$subdir
+
+for subdir in "${subdirs[@]}"
+do
+  if [[ -d "${brew_dir}/${subdir}" ]]
+  then
+    echo "Deleting ${brew_dir}/${subdir} for clean upgrade..."
+    /bin/rm -rf "${brew_dir:?}"/"${subdir}"
   fi
 done
