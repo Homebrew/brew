@@ -656,11 +656,11 @@ module Homebrew
           keg_prefix = "#{keg}/"
           path_exec_files = [keg/"bin", keg/"sbin"].select(&:exist?)
                                                    .flat_map(&:children)
-                                                   .select(&:executable?)
-                                                   .map { |path| path.to_s.delete_prefix(keg_prefix) }
+                                                   .filter_map do |path|
+                                                     path.to_s.delete_prefix(keg_prefix) if path.executable?
+                                                   end
           all_files = keg.find
-                         .select(&:file?)
-                         .map { |path| path.to_s.delete_prefix(keg_prefix) }
+                         .filter_map { |path| path.to_s.delete_prefix(keg_prefix) if path.file? }
           installed_size = keg.disk_usage
         end
 

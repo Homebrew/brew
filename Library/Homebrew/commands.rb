@@ -150,8 +150,7 @@ module Commands
 
   def self.external_commands
     tap_cmd_directories.flat_map do |path|
-      find_commands(path).select(&:executable?)
-                         .map { basename_without_extension(_1) }
+      find_commands(path).filter_map { basename_without_extension(_1) if _1.executable? }
                          .map { |p| p.to_s.delete_prefix("brew-").strip }
     end.map(&:to_s)
        .sort

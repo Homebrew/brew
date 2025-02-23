@@ -95,8 +95,7 @@ module Homebrew
 
     private_class_method def self.outdated_kegs(formula)
       [formula, *formula.old_installed_formulae].map(&:linked_keg)
-                                                .select(&:directory?)
-                                                .map { |k| Keg.new(k.resolved_path) }
+                                                .filter_map { |k| Keg.new(k.resolved_path) if k.directory? }
     end
 
     private_class_method def self.print_upgrade_message(formula, fi_options)

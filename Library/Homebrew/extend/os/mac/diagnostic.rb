@@ -413,8 +413,7 @@ module OS
         end
 
         def check_deprecated_caskroom_taps
-          tapped_caskroom_taps = Tap.select { |t| t.user == "caskroom" || t.name == "phinze/cask" }
-                                    .map(&:name)
+          tapped_caskroom_taps = Tap.filter_map { |t| t.name if t.user == "caskroom" || t.name == "phinze/cask" }
           return if tapped_caskroom_taps.empty?
 
           <<~EOS

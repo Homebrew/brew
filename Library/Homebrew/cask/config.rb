@@ -151,8 +151,7 @@ module Cask
     def env
       @env ||= self.class.canonicalize(
         Homebrew::EnvConfig.cask_opts
-          .select { |arg| arg.include?("=") }
-          .map { |arg| T.cast(arg.split("=", 2), [String, String]) }
+          .filter_map { |arg| T.cast(arg.split("=", 2), [String, String]) if arg.include?("=") }
           .map do |(flag, value)|
             key = flag.sub(/^--/, "")
             # converts --language flag to :languages config key

@@ -187,10 +187,11 @@ module Homebrew
 
         files = Dir.chdir(dir) do
           (Dir.glob(pattern) - Dir.glob(allow_list))
-            .select { |f| File.file?(f) && !File.symlink?(f) }
-            .map do |f|
-              f.sub!(%r{/.*}, "/*") unless @verbose
-              File.join(dir, f)
+            .filter_map do |f|
+              if File.file?(f) && !File.symlink?(f)
+                f.sub!(%r{/.*}, "/*") unless @verbose
+                File.join(dir, f)
+              end
             end
             .sort.uniq
         end
@@ -564,7 +565,7 @@ module Homebrew
 
       def check_deprecated_official_taps
         tapped_deprecated_taps =
-          Tap.select(&:official?).map(&:repository) & DEPRECATED_OFFICIAL_TAPS
+          Tap.filter_map { _1.repository if _1.official? } & DEPRECATED_OFFICIAL_TAPS
         return if tapped_deprecated_taps.empty?
 
         <<~EOS

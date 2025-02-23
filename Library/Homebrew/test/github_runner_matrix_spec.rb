@@ -296,8 +296,7 @@ RSpec.describe GitHubRunnerMatrix do
 
   def get_runner_names(runner_matrix, predicate = :active)
     runner_matrix.runners
-                 .select(&predicate)
-                 .map { |runner| runner.spec.name }
+                 .filter_map { |runner| runner.spec.name if runner.public_send(predicate) }
   end
 
   def setup_test_runner_formula(name, dependencies = [], **kwargs)

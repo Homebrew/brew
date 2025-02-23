@@ -12,7 +12,7 @@ module RuboCop
           return if node.method_name != :zap
 
           node.each_descendant(:pair).each do |pair|
-            symbols = pair.children.select(&:sym_type?).map(&:value)
+            symbols = pair.children.filter_map { _1.value if _1.sym_type? }
             next unless symbols.include?(:trash)
 
             pair.each_descendant(:array).each do |array|

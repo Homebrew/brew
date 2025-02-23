@@ -21,7 +21,7 @@ module InstalledDependents
   #
   # For efficiency, we don't bother trying to get complete data.
   def find_some_installed_dependents(kegs, casks: [])
-    keg_names = kegs.select(&:optlinked?).map(&:name)
+    keg_names = kegs.filter_map { _1.name if _1.optlinked? }
     keg_formulae = []
     kegs_by_source = kegs.group_by do |keg|
       # First, attempt to resolve the keg to a formula

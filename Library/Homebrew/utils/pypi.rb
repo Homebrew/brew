@@ -264,8 +264,7 @@ module PyPI
     end
 
     python_deps = formula.deps
-                         .select { |d| d.name.match?(/^python(@.+)?$/) }
-                         .map(&:to_formula)
+                         .filter_map { |d| d.to_formula if d.name.match?(/^python(@.+)?$/) }
                          .sort_by(&:version)
                          .reverse
     python_name = if python_deps.empty?

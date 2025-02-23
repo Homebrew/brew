@@ -69,8 +69,7 @@ class GitHubRunnerMatrix
 
   sig { returns(T::Array[RunnerSpecHash]) }
   def active_runner_specs_hash
-    runners.select(&:active)
-           .map(&:spec)
+    runners.filter_map { _1.spec if _1.active }
            .map(&:to_h)
   end
 

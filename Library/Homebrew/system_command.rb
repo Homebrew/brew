@@ -398,15 +398,13 @@ class SystemCommand
 
     sig { returns(String) }
     def stdout
-      @stdout ||= @output.select { |type,| type == :stdout }
-                         .map { |_, line| line }
+      @stdout ||= @output.filter_map { |type, line| line if type == :stdout }
                          .join
     end
 
     sig { returns(String) }
     def stderr
-      @stderr ||= @output.select { |type,| type == :stderr }
-                         .map { |_, line| line }
+      @stderr ||= @output.filter_map { |type, line| line if type == :stderr }
                          .join
     end
 

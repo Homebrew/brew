@@ -769,8 +769,8 @@ class ReporterHub
     dump_deleted_formula_report
     dump_deleted_cask_report
 
-    outdated_formulae = Formula.installed.select(&:outdated?).map(&:name)
-    outdated_casks = Cask::Caskroom.casks.select(&:outdated?).map(&:token)
+    outdated_formulae = Formula.installed.filter_map { _1.name if _1.outdated? }
+    outdated_casks = Cask::Caskroom.casks.filter_map { _1.token if _1.outdated? }
     unless auto_update
       output_dump_formula_or_cask_report "Outdated Formulae", outdated_formulae
       output_dump_formula_or_cask_report "Outdated Casks", outdated_casks

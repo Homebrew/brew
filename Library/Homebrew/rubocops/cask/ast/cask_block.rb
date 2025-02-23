@@ -35,9 +35,7 @@ module RuboCop
 
           @stanzas ||= T.let(
             block_body.each_node
-                      .select(&:stanza?)
-                      .select(&is_stanza)
-                      .map { |node| Stanza.new(node, comments) },
+                      .filter_map { |node| Stanza.new(node, comments) if node.stanza? && is_stanza.call(node) },
             T.nilable(T::Array[Stanza]),
           )
         end
@@ -67,8 +65,7 @@ module RuboCop
           return [] unless cask_body
 
           @stanzas ||= cask_body.each_node
-                                .select(&:stanza?)
-                                .map { |node| Stanza.new(node, comments) }
+                                .filter_map { |node| Stanza.new(node, comments) if node.stanza? }
         end
 
         sig { returns(T::Array[Stanza]) }

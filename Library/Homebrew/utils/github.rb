@@ -368,8 +368,7 @@ module GitHub
     matching_artifacts =
       artifacts
       .group_by { |art| art["name"] }
-      .select { |name| File.fnmatch?(artifact_pattern, name, File::FNM_EXTGLOB) }
-      .map { |_, arts| arts.last }
+      .filter_map { |name, arts| arts.last if File.fnmatch?(artifact_pattern, name, File::FNM_EXTGLOB) }
 
     if matching_artifacts.empty?
       raise API::Error, <<~EOS
@@ -620,8 +619,9 @@ module GitHub
     end
 
     regex = pull_request_title_regex(name, version)
-    @open_pull_requests[cache_key].select { |pr| regex.match?(pr["title"]) }
-                                  .map { |pr| pr.merge("html_url" => pr.delete("url")) }
+    @open_pull_requests[cache_key].filter_map do |pr|
+      pr.merge("html_url" => pr.delete("url")) if regex.match?(pr["title"])
+    end
   rescue API::RateLimitExceededError => e
     opoo e.message
     pull_requests || []

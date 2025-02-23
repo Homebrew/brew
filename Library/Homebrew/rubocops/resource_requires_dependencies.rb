@@ -27,7 +27,7 @@ module RuboCop
               if (dep = node.arguments.first).hash_type?
                 dep_types = dep.values.first
                 dep_types = dep_types.array_type? ? dep_types.values : [dep_types]
-                dep.keys.first.str_content if dep_types.select(&:sym_type?).map(&:value).include?(:build)
+                dep.keys.first.str_content if dep_types.filter_map { _1.value if _1.sym_type? }.include?(:build)
               else
                 dep.str_content
               end

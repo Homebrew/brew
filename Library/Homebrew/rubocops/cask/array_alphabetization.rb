@@ -12,7 +12,7 @@ module RuboCop
           return unless [:zap, :uninstall].include?(node.method_name)
 
           node.each_descendant(:pair).each do |pair|
-            symbols = pair.children.select(&:sym_type?).map(&:value)
+            symbols = pair.children.filter_map { _1.value if _1.sym_type? }
             next if symbols.intersect?([:signal, :script, :early_script, :args, :input])
 
             pair.each_descendant(:array).each do |array|

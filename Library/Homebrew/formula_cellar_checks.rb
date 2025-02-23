@@ -196,8 +196,7 @@ module FormulaCellarChecks
     return unless lib.directory?
 
     lib_subdirs = lib.children
-                     .select(&:directory?)
-                     .map(&:basename)
+                     .filter_map { _1.basename if _1.directory? }
 
     pythons = lib_subdirs.filter_map do |p|
       match = p.to_s.match(/^python(\d+\.\d+)$/)
