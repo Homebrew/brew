@@ -211,6 +211,20 @@ Naming/MethodParameterName:
 Naming/VariableNumber:
   Enabled: false
 
+# This isn't supposed to be enabled. Upstream actually states: "This cop was
+#   created due to a mistake in microbenchmark and hence is disabled by
+#   default." See:
+# https://docs.rubocop.org/rubocop-performance/cops_performance.html#performancearraysemiinfiniterangeslice
+Performance/ArraySemiInfiniteRangeSlice:
+  Enabled: false
+
+# This isn't supposed to be enabled. Upstream actually states: "This cop
+#   produces code with significantly worse performance when a block is being
+#   passed to the method and as such should not be enabled." See:
+# https://docs.rubocop.org/rubocop-performance/cops_performance.html#performanceblockgivenwithexplicitblock
+Performance/BlockGivenWithExplicitBlock:
+  Enabled: false
+
 # Makes code less readable for minor performance increases.
 Performance/Caller:
   Enabled: false
