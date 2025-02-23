@@ -220,8 +220,17 @@ Performance/CaseWhenSplat:
   Enabled: true
 
 # Makes code less readable for minor performance increases.
+# It can also cause type errors (e.g. `map!`).
+Performance/ChainArrayAllocation:
+  Enabled: false
+
+# Makes code less readable for minor performance increases.
 Performance/MethodObjectAsBlock:
   Enabled: false
+
+Performance/SelectMap:
+  Exclude:
+    - "Taps/**/*"
 
 RSpec:
   Include:
@@ -272,7 +281,7 @@ Sorbet/RedundantExtendTSig:
   Enabled: true
 
 # We make limited and intentional use of refinements.
-# It's posssible this may change in the future, though we probably still do not want to ban it in taps
+# It's possible this may change in the future, though we probably still do not want to ban it in taps
 # and Sorbet typecheck will tell us what is and isn't a problem anyway.
 # Right now, our use of refinements isn't problematic (or at least not yet).
 Sorbet/Refinement:
