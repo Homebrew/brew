@@ -1,5 +1,6 @@
 inherit_from:
   - ../.rubocop.yml
+  - .rubocop_todo.yml
 
 Bundler/GemFilename:
   Enabled: false
