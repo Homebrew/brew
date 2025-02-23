@@ -327,8 +327,9 @@ livecheck do
   url "https://www.example.com/example.json"
   regex(/^v?(\d+(?:\.\d+)+)$/i)
   strategy :json do |json, regex|
-    json["versions"].select { |item| item["version"]&.match?(regex) }
-                    .map { |item| item["version"][regex, 1] }
+    json["versions"].filter_map do |item|
+      item["version"][regex, 1] if item["version"]&.match?(regex)
+    end
   end
 end
 ```
@@ -386,8 +387,9 @@ livecheck do
   url "https://www.example.com/example.yaml"
   regex(/^v?(\d+(?:\.\d+)+)$/i)
   strategy :yaml do |yaml, regex|
-    yaml["versions"].select { |item| item["version"]&.match?(regex) }
-                    .map { |item| item["version"][regex, 1] }
+    yaml["versions"].filter_map do |item|
+      item["version"][regex, 1] if item["version"]&.match?(regex)
+    end
   end
 end
 ```
