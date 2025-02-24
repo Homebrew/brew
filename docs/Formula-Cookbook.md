@@ -74,11 +74,11 @@ Homebrew will try to guess the formula’s name from its URL. If it fails to do 
 
 ### Fill in the `homepage`
 
-**We don’t accept formulae without a [`homepage`](https://rubydoc.brew.sh/Formula#homepage%3D-class_method)!**
+**We don’t accept formulae without a [`homepage`](https://rubydoc.brew.sh/Formula#homepage-class_method)!**
 
-An SSL/TLS (https) [`homepage`](https://rubydoc.brew.sh/Formula#homepage%3D-class_method) is preferred, if one is available.
+An SSL/TLS (https) [`homepage`](https://rubydoc.brew.sh/Formula#homepage-class_method) is preferred, if one is available.
 
-Try to summarise from the [`homepage`](https://rubydoc.brew.sh/Formula#homepage%3D-class_method) what the formula does in the [`desc`](https://rubydoc.brew.sh/Formula#desc%3D-class_method)ription. Note that the [`desc`](https://rubydoc.brew.sh/Formula#desc%3D-class_method)ription is automatically prepended with the formula name when printed.
+Try to summarise from the [`homepage`](https://rubydoc.brew.sh/Formula#homepage-class_method) what the formula does in the [`desc`](https://rubydoc.brew.sh/Formula#desc-class_method)ription. Note that the [`desc`](https://rubydoc.brew.sh/Formula#desc-class_method)ription is automatically prepended with the formula name when printed.
 
 ### Fill in the `license`
 
@@ -179,17 +179,17 @@ conflicts_with "blueduck", because: "yellowduck also ships a duck binary"
 
 In Homebrew we sometimes accept formulae updates that don’t include a version bump. These include resource updates, new patches or fixing a security issue with a formula.
 
-Occasionally, these updates require a forced-recompile of the formula itself or its dependents to either ensure formulae continue to function as expected or to close a security issue. This forced-recompile is known as a [`revision`](https://rubydoc.brew.sh/Formula#revision%3D-class_method) and is inserted underneath the [`homepage`](https://rubydoc.brew.sh/Formula#homepage%3D-class_method)/[`url`](https://rubydoc.brew.sh/Formula#url-class_method)/[`sha256`](https://rubydoc.brew.sh/Formula#sha256%3D-class_method)/[`license`](https://rubydoc.brew.sh/Formula#license-class_method) block.
+Occasionally, these updates require a forced-recompile of the formula itself or its dependents to either ensure formulae continue to function as expected or to close a security issue. This forced-recompile is known as a [`revision`](https://rubydoc.brew.sh/Formula#revision-class_method) and is inserted underneath the [`homepage`](https://rubydoc.brew.sh/Formula#homepage-class_method)/[`url`](https://rubydoc.brew.sh/Formula#url-class_method)/[`sha256`](https://rubydoc.brew.sh/Formula#sha256%3D-class_method)/[`license`](https://rubydoc.brew.sh/Formula#license-class_method) block.
 
-When a dependent of a formula fails to build against a new version of that dependency it must receive a [`revision`](https://rubydoc.brew.sh/Formula#revision%3D-class_method). An example of such failure is in [this issue report](https://github.com/Homebrew/legacy-homebrew/issues/31195) and [its fix](https://github.com/Homebrew/legacy-homebrew/pull/31207).
+When a dependent of a formula fails to build against a new version of that dependency it must receive a [`revision`](https://rubydoc.brew.sh/Formula#revision-class_method). An example of such failure is in [this issue report](https://github.com/Homebrew/legacy-homebrew/issues/31195) and [its fix](https://github.com/Homebrew/legacy-homebrew/pull/31207).
 
-[`revision`](https://rubydoc.brew.sh/Formula#revision%3D-class_method)s are also used for formulae that move from the system OpenSSL to the Homebrew-shipped OpenSSL without any other changes to that formula. This ensures users aren’t left exposed to the potential security issues of the outdated OpenSSL. An example of this can be seen in [this commit](https://github.com/Homebrew/homebrew-core/commit/0d4453a91923e6118983961e18d0609e9828a1a4).
+[`revision`](https://rubydoc.brew.sh/Formula#revision-class_method)s are also used for formulae that move from the system OpenSSL to the Homebrew-shipped OpenSSL without any other changes to that formula. This ensures users aren’t left exposed to the potential security issues of the outdated OpenSSL. An example of this can be seen in [this commit](https://github.com/Homebrew/homebrew-core/commit/0d4453a91923e6118983961e18d0609e9828a1a4).
 
 ### Version scheme changes
 
 Sometimes formulae have version schemes that change such that a direct comparison between two versions no longer produces the correct result. For example, a project might be version `13` and then decide to become `1.0.0`. As `13` is translated to `13.0.0` by our versioning system by default this requires intervention.
 
-When a version scheme of a formula fails to recognise a new version as newer it must receive a [`version_scheme`](https://rubydoc.brew.sh/Formula#version_scheme%3D-class_method). An example of this can be seen in [this pull request](https://github.com/Homebrew/homebrew-core/pull/4006).
+When a version scheme of a formula fails to recognise a new version as newer it must receive a [`version_scheme`](https://rubydoc.brew.sh/Formula#version_scheme-class_method). An example of this can be seen in [this pull request](https://github.com/Homebrew/homebrew-core/pull/4006).
 
 ### Double-check for dependencies
 
@@ -1233,7 +1233,7 @@ See our [Deprecating, Disabling and Removing Formulae](Deprecating-Disabling-and
 
 ## Updating formulae
 
-When a new version of the software is released, use `brew bump-formula-pr` to automatically update the [`url`](https://rubydoc.brew.sh/Formula#url-class_method) and [`sha256`](https://rubydoc.brew.sh/Formula#sha256%3D-class_method), remove any [`revision`](https://rubydoc.brew.sh/Formula#revision%3D-class_method) lines, and submit a pull request. See our [How to Open a Homebrew Pull Request](How-To-Open-a-Homebrew-Pull-Request.md) documentation for more information.
+When a new version of the software is released, use `brew bump-formula-pr` to automatically update the [`url`](https://rubydoc.brew.sh/Formula#url-class_method) and [`sha256`](https://rubydoc.brew.sh/Formula#sha256%3D-class_method), remove any [`revision`](https://rubydoc.brew.sh/Formula#revision-class_method) lines, and submit a pull request. See our [How to Open a Homebrew Pull Request](How-To-Open-a-Homebrew-Pull-Request.md) documentation for more information.
 
 ## Troubleshooting for new formulae
 

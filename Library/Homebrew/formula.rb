@@ -440,22 +440,22 @@ class Formula
 
   # The description of the software.
   # @!method desc
-  # @see .desc=
+  # @see .desc
   delegate desc: :"self.class"
 
   # The SPDX ID of the software license.
   # @!method license
-  # @see .license=
+  # @see .license
   delegate license: :"self.class"
 
   # The homepage for the software.
   # @!method homepage
-  # @see .homepage=
+  # @see .homepage
   delegate homepage: :"self.class"
 
   # The livecheck specification for the software.
   # @!method livecheck
-  # @see .livecheck=
+  # @see .livecheck
   delegate livecheck: :"self.class"
 
   # Is a livecheck specification defined for the software?
