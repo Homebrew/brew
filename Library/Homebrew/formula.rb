@@ -3703,7 +3703,7 @@ class Formula
     sig { params(block: T.proc.bind(BottleSpecification).void).void }
     def bottle(&block) = stable.bottle(&block)
 
-    sig { returns(String) }
+    sig { returns(BuildOptions) }
     def build = stable.build
 
     # Get the `BUILD_FLAGS` from the formula's namespace set in `Formulary::load_formula`.
