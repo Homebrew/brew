@@ -1,14 +1,14 @@
-# typed: true
+# typed: strict
 # frozen_string_literal: true
 
 module Service
   module Commands
-    module Run
-      TRIGGERS = ["run"].freeze
+    module Kill
+      TRIGGERS = %w[kill k].freeze
 
       def self.run(targets, verbose:)
         ServicesCli.check(targets) &&
-          ServicesCli.run(targets, verbose:)
+          ServicesCli.kill(targets, verbose:)
       end
     end
   end

@@ -1,4 +1,4 @@
-# typed: true
+# typed: strict
 # frozen_string_literal: true
 
 # Wrapper for a formula to handle service-related stuff like parsing and

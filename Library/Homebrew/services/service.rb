@@ -1,7 +1,5 @@
-# typed: true
+# typed: strict
 # frozen_string_literal: true
-
-$LOAD_PATH.unshift(File.dirname(__FILE__))
 
 require "service/formula_wrapper"
 require "service/services_cli"

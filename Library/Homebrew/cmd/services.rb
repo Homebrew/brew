@@ -2,7 +2,7 @@
 # frozen_string_literal: true
 
 require "abstract_command"
-require "service/service"
+require "services/service"
 
 module Homebrew
   module Cmd
