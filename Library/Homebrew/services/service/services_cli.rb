@@ -14,6 +14,7 @@ module Service
     end
 
     # Binary name.
+    sig { returns(String) }
     def self.bin
       "brew services"
     end
@@ -34,6 +35,7 @@ module Service
     end
 
     # Check if formula has been found.
+    sig { params(targets: T.untyped).returns(TrueClass) }
     def self.check(targets)
       raise UsageError, "Formula(e) missing, please provide a formula name or use --all" if targets.empty?
 
@@ -41,6 +43,7 @@ module Service
     end
 
     # Kill services that don't have a service file
+    sig { returns(T::Array[T.untyped]) }
     def self.kill_orphaned_services
       cleaned_labels = []
       cleaned_services = []
@@ -58,6 +61,7 @@ module Service
       cleaned_labels
     end
 
+    sig { returns(T::Array[T.untyped]) }
     def self.remove_unused_service_files
       cleaned = []
       Dir["#{System.path}homebrew.*.{plist,service}"].each do |file|
@@ -204,6 +208,7 @@ module Service
     end
 
     # protections to avoid users editing root services
+    sig { params(service: T.untyped).returns(T.nilable(Integer)) }
     def self.take_root_ownership(service)
       return unless System.root?
       return if sudo_service_user

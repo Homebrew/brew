@@ -31,6 +31,7 @@ module Service
         end
       end
 
+      sig { params(hash: T.untyped, verbose: T.untyped).returns(String) }
       def self.output(hash, verbose:)
         out = "#{Tty.bold}#{hash[:name]}#{Tty.reset} (#{hash[:service_name]})\n"
         out += "Running: #{pretty_bool(hash[:running])}\n"

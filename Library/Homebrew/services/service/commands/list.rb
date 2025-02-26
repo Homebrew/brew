@@ -26,6 +26,7 @@ module Service
 
       # Print the JSON representation in the CLI
       # @private
+      sig { params(formulae: T.untyped).returns(NilClass) }
       def self.print_json(formulae)
         services = formulae.map do |formula|
           formula.slice(*JSON_FIELDS)
@@ -66,6 +67,7 @@ module Service
 
       # Get formula status output
       # @private
+      sig { params(status: T.anything).returns(T.nilable(String)) }
       def self.get_status_string(status)
         case status
         when :started, :scheduled then "#{Tty.green}#{status}#{Tty.reset}"

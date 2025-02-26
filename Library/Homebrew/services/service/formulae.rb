@@ -5,6 +5,7 @@ module Service
   module Formulae
     # All available services, with optional filters applied
     # @private
+    sig { params(loaded: T.nilable(T::Boolean), skip_root: T::Boolean).returns(T::Array[Service::FormulaWrapper]) }
     def self.available_services(loaded: nil, skip_root: false)
       require "formula"
 
@@ -20,6 +21,7 @@ module Service
     end
 
     # List all available services with status, user, and path to the file.
+    sig { returns(T::Array[T::Hash[T.untyped, T.untyped]]) }
     def self.services_list
       available_services.map(&:to_hash)
     end

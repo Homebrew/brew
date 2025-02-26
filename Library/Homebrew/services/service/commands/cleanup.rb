@@ -6,6 +6,7 @@ module Service
     module Cleanup
       TRIGGERS = %w[cleanup clean cl rm].freeze
 
+      sig { returns(NilClass) }
       def self.run
         cleaned = []
 

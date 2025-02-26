@@ -8,26 +8,31 @@ module Service
     extend FileUtils
 
     # Path to launchctl binary.
+    sig { void }
     def self.launchctl
       @launchctl ||= which("launchctl")
     end
 
     # Is this a launchctl system
+    sig { returns(T::Boolean) }
     def self.launchctl?
       launchctl.present?
     end
 
     # Is this a systemd system
+    sig { returns(T::Boolean) }
     def self.systemctl?
       Systemctl.executable.present?
     end
 
     # Woohoo, we are root dude!
+    sig { returns(T::Boolean) }
     def self.root?
       Process.euid.zero?
     end
 
     # Current user running `[sudo] brew services`.
+    sig { void }
     def self.user
       @user ||= ENV["USER"].presence || Utils.safe_popen_read("/usr/bin/whoami").chomp
     end
@@ -41,6 +46,7 @@ module Service
     end
 
     # Run at boot.
+    sig { returns(T.nilable(Pathname)) }
     def self.boot_path
       if launchctl?
         Pathname.new("/Library/LaunchDaemons")
@@ -50,6 +56,7 @@ module Service
     end
 
     # Run at login.
+    sig { returns(T.nilable(Pathname)) }
     def self.user_path
       if launchctl?
         Pathname.new("#{Dir.home}/Library/LaunchAgents")
@@ -59,10 +66,12 @@ module Service
     end
 
     # If root, return `boot_path`, else return `user_path`.
+    sig { returns(T.nilable(Pathname)) }
     def self.path
       root? ? boot_path : user_path
     end
 
+    sig { returns(String) }
     def self.domain_target
       if root?
         "system"
@@ -81,7 +90,7 @@ module Service
             puts "Hide this warning by setting HOMEBREW_SERVICES_NO_DOMAIN_WARNING."
             puts "Hide these hints with HOMEBREW_NO_ENV_HINTS (see `man brew`)."
           end
-          @output_warning = true
+          @output_warning = T.let(true, T.nilable(TrueClass))
         end
         "user/#{Process.euid}"
       else

@@ -8,6 +8,7 @@ module Service
         @executable ||= which("systemctl")
       end
 
+      sig { returns(String) }
       def self.scope
         System.root? ? "--system" : "--user"
       end
