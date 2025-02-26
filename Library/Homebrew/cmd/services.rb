@@ -45,7 +45,7 @@ module Homebrew
         flag "--file=", description: "Use the service file from this location to `start` the service."
         flag "--sudo-service-user=", description: "When run as root on macOS, run the service(s) as this user."
         flag "--max-wait=", description: "Wait at most this many seconds for `stop` to finish stopping a service. " \
-          "Omit this flag or set this to zero (0) seconds to wait indefinitely."
+                                         "Omit this flag or set this to zero (0) seconds to wait indefinitely."
         switch "--all", description: "Run <subcommand> on all services."
         switch "--json", description: "Output as JSON."
         switch "--no-wait", description: "Don't wait for `stop` to finish stopping the service."
@@ -58,7 +58,7 @@ module Homebrew
         # pbpaste's exit status is a proxy for detecting the use of reattach-to-user-namespace
         if ENV["HOMEBREW_TMUX"] && (File.exist?("/usr/bin/pbpaste") && !quiet_system("/usr/bin/pbpaste"))
           raise UsageError,
-            "`brew services` cannot run under tmux!"
+                "`brew services` cannot run under tmux!"
         end
 
         # Keep this after the .parse to keep --help fast.
@@ -66,19 +66,19 @@ module Homebrew
 
         if !::Service::System.launchctl? && !::Service::System.systemctl?
           raise UsageError,
-            "`brew services` is supported only on macOS or Linux (with systemd)!"
+                "`brew services` is supported only on macOS or Linux (with systemd)!"
         end
 
         if (sudo_service_user = args.sudo_service_user)
           unless ::Service::System.root?
             raise UsageError,
-              "`brew services` is supported only when running as root!"
+                  "`brew services` is supported only when running as root!"
           end
 
           unless ::Service::System.launchctl?
             raise UsageError,
-              "`brew services --sudo-service-user` is currently supported only on macOS " \
-              "(but we'd love a PR to add Linux support)!"
+                  "`brew services --sudo-service-user` is currently supported only on macOS " \
+                  "(but we'd love a PR to add Linux support)!"
           end
 
           ::Service::ServicesCli.sudo_service_user = sudo_service_user
