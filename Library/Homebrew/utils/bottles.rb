@@ -131,10 +131,12 @@ module Utils
       # Determines if bottle relocation should be skipped for Apple Silicon with default prefix
       sig { returns(T::Boolean) }
       def skip_relocation_for_apple_silicon?
-        Hardware::CPU.arm? && 
-        OS.mac? && 
-        HOMEBREW_PREFIX.to_s == HOMEBREW_MACOS_ARM_DEFAULT_PREFIX && 
-        !Homebrew.args.include?("--force-bottle-relocation")
+        return false unless Hardware::CPU.arm? 
+        return false unless OS.mac?
+        return false unless HOMEBREW_PREFIX.to_s == HOMEBREW_MACOS_ARM_DEFAULT_PREFIX 
+        
+        # Allow gradual rollout via environment variable
+        ENV.fetch("HOMEBREW_BOTTLE_SKIP_RELOCATION_ARM64", "false") == "true"
       end
 
       private
