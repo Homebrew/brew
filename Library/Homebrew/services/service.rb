@@ -1,6 +1,9 @@
 # typed: strict
 # frozen_string_literal: true
 
+# fix loadppath
+$LOAD_PATH.unshift(File.expand_path(__dir__))
+
 require "service/formula_wrapper"
 require "service/services_cli"
 require "service/system"
