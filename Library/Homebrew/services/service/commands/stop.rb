@@ -6,9 +6,13 @@ module Service
     module Stop
       TRIGGERS = %w[stop unload terminate term t u].freeze
 
+      sig {
+        params(targets: T::Array[Service::FormulaWrapper], verbose: T::Boolean, no_wait: T::Boolean,
+               max_wait: Float).void
+      }
       def self.run(targets, verbose:, no_wait:, max_wait:)
-        ServicesCli.check(targets) &&
-          ServicesCli.stop(targets, verbose:, no_wait:, max_wait:)
+        Homebrew::Cmd::Services.check(targets) &&
+          Homebrew::Cmd::Services.stop(targets, verbose:, no_wait:, max_wait:)
       end
     end
   end

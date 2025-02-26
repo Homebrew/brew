@@ -8,10 +8,11 @@ module Service
     module List
       TRIGGERS = [nil, "list", "ls"].freeze
 
+      sig { params(json: T::Boolean).void }
       def self.run(json: false)
         formulae = Formulae.services_list
         if formulae.blank?
-          opoo "No services available to control with `#{Service::ServicesCli.bin}`" if $stderr.tty?
+          opoo "No services available to control with `#{Homebrew::Cmd::Services.bin}`" if $stderr.tty?
           return
         end
 
@@ -37,6 +38,7 @@ module Service
 
       # Print the table in the CLI
       # @private
+      sig { params(formulae: T::Array[T::Hash[T.untyped, T.untyped]]).void }
       def self.print_table(formulae)
         services = formulae.map do |formula|
           status = get_status_string(formula[:status])

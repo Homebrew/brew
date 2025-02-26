@@ -10,8 +10,8 @@ module Service
       def self.run
         cleaned = []
 
-        cleaned += ServicesCli.kill_orphaned_services
-        cleaned += ServicesCli.remove_unused_service_files
+        cleaned += Homebrew::Cmd::Services.kill_orphaned_services
+        cleaned += Homebrew::Cmd::Services.remove_unused_service_files
 
         puts "All #{System.root? ? "root" : "user-space"} services OK, nothing cleaned..." if cleaned.empty?
       end

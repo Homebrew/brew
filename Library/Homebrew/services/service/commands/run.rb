@@ -6,9 +6,10 @@ module Service
     module Run
       TRIGGERS = ["run"].freeze
 
+      sig { params(targets: T::Array[Service::FormulaWrapper], verbose: T::Boolean).void }
       def self.run(targets, verbose:)
-        ServicesCli.check(targets) &&
-          ServicesCli.run(targets, verbose:)
+        Homebrew::Cmd::Services.check(targets) &&
+          Homebrew::Cmd::Services.run()
       end
     end
   end

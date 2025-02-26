@@ -76,6 +76,7 @@ module Service
     end
 
     # Run a service as defined in the formula. This does not clean the service file like `start` does.
+    sig { params(targets: T::Array[Service::FormulaWrapper], verbose: T::Boolean).void }
     def self.run(targets, verbose: false)
       targets.each do |service|
         if service.pid?
@@ -91,6 +92,9 @@ module Service
     end
 
     # Start a service.
+    sig {
+      params(targets: T::Array[Service::FormulaWrapper], service_file: T.nilable(String), verbose: T::Boolean).void
+    }
     def self.start(targets, service_file = nil, verbose: false)
       file = T.let(nil, T.nilable(Pathname))
 
@@ -129,10 +133,14 @@ module Service
     end
 
     # Stop a service and unload it.
+    sig {
+      params(targets: T::Array[Service::FormulaWrapper], verbose: T::Boolean, no_wait: T::Boolean,
+             max_wait: Float).void
+    }
     def self.stop(targets, verbose: false, no_wait: false, max_wait: 0)
       targets.each do |service|
         unless service.loaded?
-          rm service.dest if service.dest.exist? # get rid of installed service file anyway, dude
+          rm T.must(service.dest) if service.dest.exist? # get rid of installed service file anyway, dude
           if service.service_file_present?
             odie <<~EOS
               Service `#{service.name}` is started as `#{service.owner}`. Try:
@@ -171,7 +179,7 @@ module Service
           quiet_system System.launchctl, "stop", "#{System.domain_target}/#{service.service_name}" if service.pid?
         end
 
-        rm service.dest if service.dest.exist?
+        rm T.must(service.dest) if service.dest.exist?
         # Run daemon-reload on systemctl to finish unloading stopped and deleted service.
         System::Systemctl.run(*systemctl_args, "daemon-reload") if System.systemctl?
 
@@ -184,6 +192,7 @@ module Service
     end
 
     # Stop a service but keep it registered.
+    sig { params(targets: T::Array[Service::FormulaWrapper], verbose: T::Boolean).void }
     def self.kill(targets, verbose: false)
       targets.each do |service|
         if !service.pid?
@@ -273,16 +282,19 @@ module Service
       chmod "+t", root_paths
     end
 
+    sig { params(service: Service::FormulaWrapper, file: T.nilable(String), enable: T.nilable(T::Boolean)).void }
     def self.launchctl_load(service, file:, enable:)
       safe_system System.launchctl, "enable", "#{System.domain_target}/#{service.service_name}" if enable
       safe_system System.launchctl, "bootstrap", System.domain_target, file
     end
 
+    sig { params(service: Service::FormulaWrapper, enable: T.nilable(T::Boolean)).void }
     def self.systemd_load(service, enable:)
       System::Systemctl.run("start", service.service_name)
       System::Systemctl.run("enable", service.service_name) if enable
     end
 
+    sig { params(service: Service::FormulaWrapper, enable: T.nilable(T::Boolean)).void }
     def self.service_load(service, enable:)
       if System.root? && !service.service_startup?
         opoo "#{service.name} must be run as non-root to start at user login!"
@@ -304,6 +316,7 @@ module Service
       ohai("Successfully #{function} `#{service.name}` (label: #{service.service_name})")
     end
 
+    sig { params(service: Service::FormulaWrapper, file: String).void }
     def self.install_service_file(service, file)
       odie "Formula `#{service.name}` is not installed" unless service.installed?
 
@@ -315,9 +328,9 @@ module Service
       temp << if file.blank?
         contents = service.service_file.read
 
-        if sudo_service_user && System.launchctl?
+        if sudo_service_user && Service::System.launchctl?
           # set the username in the new plist file
-          ohai "Setting username in #{service.service_name} to #{System.user}"
+          ohai "Setting username in #{service.service_name} to #{Service::System.user}"
           plist_data = Plist.parse_xml(contents, marshal: false)
           plist_data["UserName"] = sudo_service_user
           plist_data.to_plist
@@ -329,16 +342,16 @@ module Service
       end
       temp.flush
 
-      rm service.dest if service.dest.exist?
+      rm T.must(service.dest) if service.dest.exist?
       service.dest_dir.mkpath unless service.dest_dir.directory?
-      cp T.must(temp.path), service.dest
+      cp T.must(temp.path), T.must(service.dest)
 
       # Clear tempfile.
       temp.close
 
-      chmod 0644, service.dest
+      chmod 0644, T.must(service.dest)
 
-      System::Systemctl.run("daemon-reload") if System.systemctl?
+      Service::System::Systemctl.run("daemon-reload") if System.systemctl?
     end
   end
 end

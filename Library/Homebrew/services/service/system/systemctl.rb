@@ -4,6 +4,7 @@
 module Service
   module System
     module Systemctl
+      sig { void }
       def self.executable
         @executable ||= which("systemctl")
       end
