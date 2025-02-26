@@ -54,6 +54,8 @@ module Homebrew
         EOS
         switch "--skip-relocation",
                description: "Do not check if the bottle can be marked as relocatable."
+        switch "--force-bottle-relocation",
+               description: "Force bottle relocation even on Apple Silicon with default prefix."
         switch "--force-core-tap",
                description: "Build a bottle even if <formula> is not in `homebrew/core` or any installed taps."
         switch "--no-rebuild",

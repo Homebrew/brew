@@ -53,4 +53,39 @@ RSpec.describe Utils::Bottles do
       end
     end
   end
+ 
+  describe "#skip_relocation_for_apple_silicon?" do
+    it "returns true for Apple Silicon with default prefix" do
+      allow(Hardware::CPU).to receive(:arm?).and_return(true)
+      allow(OS).to receive(:mac?).and_return(true)
+      allow(HOMEBREW_PREFIX).to receive(:to_s).and_return(HOMEBREW_MACOS_ARM_DEFAULT_PREFIX)
+      allow(Homebrew.args).to receive(:include?).with("--force-bottle-relocation").and_return(false)
+    
+      expect(described_class.skip_relocation_for_apple_silicon?).to be true
+    end
+  
+    it "returns false for Intel Mac" do
+      allow(Hardware::CPU).to receive(:arm?).and_return(false)
+      allow(OS).to receive(:mac?).and_return(true)
+    
+      expect(described_class.skip_relocation_for_apple_silicon?).to be false
+    end
+  
+    it "returns false for custom prefix on Apple Silicon" do
+      allow(Hardware::CPU).to receive(:arm?).and_return(true)
+      allow(OS).to receive(:mac?).and_return(true)
+      allow(HOMEBREW_PREFIX).to receive(:to_s).and_return("/custom/path")
+    
+      expect(described_class.skip_relocation_for_apple_silicon?).to be false
+    end
+  
+    it "returns false when --force-bottle-relocation is specified" do
+      allow(Hardware::CPU).to receive(:arm?).and_return(true)
+      allow(OS).to receive(:mac?).and_return(true)
+      allow(HOMEBREW_PREFIX).to receive(:to_s).and_return(HOMEBREW_MACOS_ARM_DEFAULT_PREFIX)
+      allow(Homebrew.args).to receive(:include?).with("--force-bottle-relocation").and_return(true)
+    
+      expect(described_class.skip_relocation_for_apple_silicon?).to be false
+    end
+  end
 end
