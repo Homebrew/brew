@@ -81,7 +81,7 @@ module Homebrew
                   "(but we'd love a PR to add Linux support)!"
           end
 
-          Services.sudo_service_user = sudo_service_user
+          ::Service::ServicesCli.sudo_service_user = sudo_service_user
         end
 
         # Parse arguments.

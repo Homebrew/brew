@@ -41,7 +41,7 @@ module Service
       sig { params(formulae: T::Array[T::Hash[T.untyped, T.untyped]]).void }
       def self.print_table(formulae)
         services = formulae.map do |formula|
-          status = get_status_string(formula[:status])
+          status = T.must(get_status_string(formula[:status]))
           status += formula[:exit_code].to_s if formula[:status] == :error
           file    = formula[:file].to_s.gsub(Dir.home, "~").presence if formula[:loaded]
 

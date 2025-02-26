@@ -146,7 +146,7 @@ module Service
     def self.stop(targets, verbose: false, no_wait: false, max_wait: 0)
       targets.each do |service|
         unless service.loaded?
-          rm T.must(service.dest) if service.dest.exist? # get rid of installed service file anyway, dude
+          rm service.dest if service.dest.exist? # get rid of installed service file anyway, dude
           if service.service_file_present?
             odie <<~EOS
               Service `#{service.name}` is started as `#{service.owner}`. Try:
@@ -176,7 +176,8 @@ module Service
           unless no_wait
             time_slept = 0
             sleep_time = 1
-            while ($CHILD_STATUS.to_i == 9216 || service.loaded?) && (max_wait.zero? || time_slept < T.must(max_wait))
+            max_wait = T.must(max_wait)
+            while ($CHILD_STATUS.to_i == 9216 || service.loaded?) && (max_wait.zero? || time_slept < max_wait)
               sleep(sleep_time)
               time_slept += sleep_time
               quiet_system System.launchctl, "bootout", "#{System.domain_target}/#{service.service_name}"
@@ -185,7 +186,7 @@ module Service
           quiet_system System.launchctl, "stop", "#{System.domain_target}/#{service.service_name}" if service.pid?
         end
 
-        rm T.must(service.dest) if service.dest.exist?
+        rm service.dest if service.dest.exist?
         # Run daemon-reload on systemctl to finish unloading stopped and deleted service.
         System::Systemctl.run(*systemctl_args, "daemon-reload") if System.systemctl?
 
@@ -325,7 +326,7 @@ module Service
       ohai("Successfully #{function} `#{service.name}` (label: #{service.service_name})")
     end
 
-    sig { params(service: Service::FormulaWrapper, file: T.nilable(T.any(String, Pathname))).void }
+    sig { params(service: Service::FormulaWrapper, file: T.nilable(Pathname)).void }
     def self.install_service_file(service, file)
       odie "Formula `#{service.name}` is not installed" unless service.installed?
 
@@ -334,7 +335,7 @@ module Service
       end
 
       temp = Tempfile.new(service.service_name)
-      temp << if file.blank?
+      temp << if T.must(file).blank?
         contents = service.service_file.read
 
         if sudo_service_user && Service::System.launchctl?
@@ -347,18 +348,18 @@ module Service
           contents
         end
       else
-        file.read
+        T.must(file).read
       end
       temp.flush
 
-      rm T.must(service.dest) if service.dest.exist?
+      rm service.dest if service.dest.exist?
       service.dest_dir.mkpath unless service.dest_dir.directory?
-      cp T.must(temp.path), T.must(service.dest)
+      cp T.must(temp.path), service.dest
 
       # Clear tempfile.
       temp.close
 
-      chmod 0644, T.must(service.dest)
+      chmod 0644, service.dest
 
       Service::System::Systemctl.run("daemon-reload") if System.systemctl?
     end

@@ -83,13 +83,13 @@ module Service
     end
 
     # Path to destination service directory. If run as root, it's `boot_path`, else `user_path`.
-    sig { returns(T.nilable(Pathname)) }
+    sig { returns(Pathname) }
     def dest_dir
-      System.root? ? System.boot_path : System.user_path
+      System.root? ? T.must(System.boot_path) : T.must(System.user_path)
     end
 
     # Path to destination service. If run as root, it's in `boot_path`, else `user_path`.
-    sig { returns(T.nilable(Pathname)) }
+    sig { returns(Pathname) }
     def dest
       dest_dir + service_file.basename
     end
@@ -159,14 +159,14 @@ module Service
 
     sig { returns(T::Boolean) }
     def pid?
-      pid.present? && !pid.zero?
+      !T.must(pid).zero?
     end
 
-    sig { returns(T::Boolean) }
+    sig { returns(T.nilable(T.any(T::Boolean, Integer))) }
     def error?
       return false if pid?
 
-      exit_code.present? && exit_code.nonzero?
+      T.must(exit_code).nonzero?
     end
 
     sig { returns(T.nilable(T::Boolean)) }
@@ -272,7 +272,7 @@ module Service
         :started
       elsif !loaded?(cached: true)
         :none
-      elsif exit_code.present? && exit_code.zero?
+      elsif T.must(exit_code).zero?
         if timed?
           :scheduled
         else
@@ -309,12 +309,12 @@ module Service
 
     sig { returns(T::Boolean) }
     def boot_path_service_file_present?
-      (System.boot_path + service_file.basename).exist?
+      (T.must(System.boot_path) + service_file.basename).exist?
     end
 
     sig { returns(T::Boolean) }
     def user_path_service_file_present?
-      (System.user_path + service_file.basename).exist?
+      (T.must(System.user_path) + service_file.basename).exist?
     end
 
     sig { returns(Regexp) }
