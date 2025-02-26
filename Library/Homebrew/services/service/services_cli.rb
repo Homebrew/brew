@@ -5,12 +5,14 @@ module Service
   module ServicesCli
     extend FileUtils
 
+    sig { returns(T.nilable(String)) }
     def self.sudo_service_user
       @sudo_service_user
     end
 
+    sig { params(sudo_service_user: String).void }
     def self.sudo_service_user=(sudo_service_user)
-      @sudo_service_user = sudo_service_user
+      @sudo_service_user = T.let(sudo_service_user, T.nilable(String))
     end
 
     # Binary name.
@@ -93,7 +95,8 @@ module Service
 
     # Start a service.
     sig {
-      params(targets: T::Array[Service::FormulaWrapper], service_file: T.nilable(String), verbose: T::Boolean).void
+      params(targets: T::Array[Service::FormulaWrapper], service_file: T.nilable(T.any(String, Pathname)),
+             verbose: T::Boolean).void
     }
     def self.start(targets, service_file = nil, verbose: false)
       file = T.let(nil, T.nilable(Pathname))
@@ -135,12 +138,12 @@ module Service
     # Stop a service and unload it.
     sig {
       params(targets: T::Array[Service::FormulaWrapper], verbose: T::Boolean, no_wait: T::Boolean,
-             max_wait: Float).void
+             max_wait: T.any(Integer, Float)).void
     }
     def self.stop(targets, verbose: false, no_wait: false, max_wait: 0)
       targets.each do |service|
         unless service.loaded?
-          rm T.must(service.dest) if service.dest.exist? # get rid of installed service file anyway, dude
+          rm service.dest if service.dest.exist? # get rid of installed service file anyway, dude
           if service.service_file_present?
             odie <<~EOS
               Service `#{service.name}` is started as `#{service.owner}`. Try:
@@ -179,7 +182,7 @@ module Service
           quiet_system System.launchctl, "stop", "#{System.domain_target}/#{service.service_name}" if service.pid?
         end
 
-        rm T.must(service.dest) if service.dest.exist?
+        rm service.dest if service.dest.exist?
         # Run daemon-reload on systemctl to finish unloading stopped and deleted service.
         System::Systemctl.run(*systemctl_args, "daemon-reload") if System.systemctl?
 
@@ -282,7 +285,10 @@ module Service
       chmod "+t", root_paths
     end
 
-    sig { params(service: Service::FormulaWrapper, file: T.nilable(String), enable: T.nilable(T::Boolean)).void }
+    sig {
+      params(service: Service::FormulaWrapper, file: T.nilable(T.any(String, Pathname)),
+             enable: T.nilable(T::Boolean)).void
+    }
     def self.launchctl_load(service, file:, enable:)
       safe_system System.launchctl, "enable", "#{System.domain_target}/#{service.service_name}" if enable
       safe_system System.launchctl, "bootstrap", System.domain_target, file
@@ -316,7 +322,7 @@ module Service
       ohai("Successfully #{function} `#{service.name}` (label: #{service.service_name})")
     end
 
-    sig { params(service: Service::FormulaWrapper, file: String).void }
+    sig { params(service: Service::FormulaWrapper, file: T.nilable(T.any(String, Pathname))).void }
     def self.install_service_file(service, file)
       odie "Formula `#{service.name}` is not installed" unless service.installed?
 
@@ -342,14 +348,14 @@ module Service
       end
       temp.flush
 
-      rm T.must(service.dest) if service.dest.exist?
+      rm service.dest if service.dest.exist?
       service.dest_dir.mkpath unless service.dest_dir.directory?
-      cp T.must(temp.path), T.must(service.dest)
+      cp T.must(temp.path), service.dest
 
       # Clear tempfile.
       temp.close
 
-      chmod 0644, T.must(service.dest)
+      chmod 0644, service.dest
 
       Service::System::Systemctl.run("daemon-reload") if System.systemctl?
     end

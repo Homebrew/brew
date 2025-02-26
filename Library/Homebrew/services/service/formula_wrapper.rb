@@ -26,57 +26,57 @@ module Service
     end
 
     # Delegate access to `formula.name`.
-    sig { void }
+    sig { returns(String) }
     def name
-      @name ||= formula.name
+      @name ||= T.let(formula.name, T.nilable(String))
     end
 
     # Delegate access to `formula.service?`.
-    sig { void }
+    sig { returns(T::Boolean) }
     def service?
-      @service ||= @formula.service?
+      @service ||= T.let(@formula.service?, T.nilable(T::Boolean))
     end
 
     # Delegate access to `formula.service.timed?`.
-    sig { void }
+    sig { returns(T::Boolean) }
     def timed?
-      @timed ||= (load_service.timed? if service?)
+      @timed ||= T.let((load_service.timed? if service?), T.nilable(T::Boolean))
     end
 
     # Delegate access to `formula.service.keep_alive?`.`
-    sig { void }
+    sig { returns(T::Boolean) }
     def keep_alive?
-      @keep_alive ||= (load_service.keep_alive? if service?)
+      @keep_alive ||= T.let((load_service.keep_alive? if service?), T.nilable(T::Boolean))
     end
 
     # service_name delegates with formula.plist_name or formula.service_name for systemd (e.g., `homebrew.<formula>`).
-    sig { void }
+    sig { returns(String) }
     def service_name
-      @service_name ||= if System.launchctl?
-        formula.plist_name
-      elsif System.systemctl?
-        formula.service_name
-      end
+      @service_name ||= T.let(if System.launchctl?
+                                formula.plist_name
+                              elsif System.systemctl?
+                                formula.service_name
+      end, T.nilable(String))
     end
 
     # service_file delegates with formula.launchd_service_path or formula.systemd_service_path for systemd.
-    sig { void }
+    sig { returns(Pathname) }
     def service_file
-      @service_file ||= if System.launchctl?
-        formula.launchd_service_path
-      elsif System.systemctl?
-        formula.systemd_service_path
-      end
+      @service_file ||= T.let(if System.launchctl?
+                                formula.launchd_service_path
+                              elsif System.systemctl?
+                                formula.systemd_service_path
+      end, T.nilable(Pathname))
     end
 
     # Whether the service should be launched at startup
-    sig { void }
+    sig { returns(T::Boolean) }
     def service_startup?
-      @service_startup ||= if service?
-        load_service.requires_root?
-      else
-        false
-      end
+      @service_startup ||= T.let(if service?
+                                   load_service.requires_root?
+                                 else
+                                   false
+      end, T.nilable(T::Boolean))
     end
 
     # Path to destination service directory. If run as root, it's `boot_path`, else `user_path`.
@@ -114,7 +114,7 @@ module Service
     sig { params(cached: T::Boolean).returns(T::Boolean) }
     def loaded?(cached: false)
       if System.launchctl?
-        @status_output_success_type = T.let(nil, NilClass) unless cached
+        @status_output_success_type = nil unless cached
         _, status_success, = status_output_success_type
         status_success
       elsif System.systemctl?
@@ -166,7 +166,7 @@ module Service
       exit_code.present? && exit_code.nonzero?
     end
 
-    sig { returns(T::Boolean) }
+    sig { returns(T.nilable(T::Boolean)) }
     def unknown_status?
       status_output.blank? && !pid?
     end
@@ -230,29 +230,33 @@ module Service
 
     sig { returns(T.nilable(T::Array[T.untyped])) }
     def status_output_success_type
-      @status_output_success_type ||= T.let(if System.launchctl?
-                                              cmd = [System.launchctl.to_s, "list", service_name]
-                                              output = Utils.popen_read(*cmd).chomp
-                                              if $CHILD_STATUS.present? && $CHILD_STATUS.success? && output.present?
-                                                success = true
-                                                odebug cmd.join(" "), output
-                                                [output, success, :launchctl_list]
-                                              else
-                                                cmd = [System.launchctl.to_s, "print", "#{System.domain_target}/#{service_name}"]
-                                                output = Utils.popen_read(*cmd).chomp
-                                                success = $CHILD_STATUS.present? && $CHILD_STATUS.success? && output.present?
-                                                odebug cmd.join(" "), output
-                                                [output, success, :launchctl_print]
-                                              end
-                                            elsif System.systemctl?
-                                              cmd = ["status", service_name]
-                                              output = System::Systemctl.popen_read(*cmd).chomp
-                                              success = $CHILD_STATUS.present? && $CHILD_STATUS.success? && output.present?
-                                              odebug [System::Systemctl.executable, System::Systemctl.scope, *cmd].join(" "), output
-                                              [output, success, :systemctl]
-      end, T.nilable(T::Array[T.untyped]))
+      @status_output_success_type ||= T.let(nil, T.nilable(T::Array[T.untyped]))
+      @status_output_success_type ||= if System.launchctl?
+        cmd = [System.launchctl.to_s, "list", service_name]
+        output = Utils.popen_read(*cmd).chomp
+        if $CHILD_STATUS.present? && $CHILD_STATUS.success? && output.present?
+          success = true
+          odebug cmd.join(" "), output
+          [output, success, :launchctl_list]
+        else
+          cmd = [System.launchctl.to_s, "print",
+                 "#{System.domain_target}/#{service_name}"]
+          output = Utils.popen_read(*cmd).chomp
+          success = $CHILD_STATUS.present? && $CHILD_STATUS.success? && output.present?
+          odebug cmd.join(" "), output
+          [output, success, :launchctl_print]
+        end
+      elsif System.systemctl?
+        cmd = ["status", service_name]
+        output = System::Systemctl.popen_read(*cmd).chomp
+        success = $CHILD_STATUS.present? && $CHILD_STATUS.success? && output.present?
+        odebug [System::Systemctl.executable, System::Systemctl.scope, *cmd].join(" "),
+               output
+        [output, success, :systemctl]
+      end
     end
 
+    sig { returns(T.nilable(String))
     def status_output
       status_output, = status_output_success_type
       status_output
@@ -279,21 +283,23 @@ module Service
       end
     end
 
+    sig { params(status_type: Symbol).returns(Regexp) }
     def exit_code_regex(status_type)
       @exit_code_regex ||= T.let({
         launchctl_list:  /"LastExitStatus"\ =\ ([0-9]*);/,
         launchctl_print: /last exit code = ([0-9]+)/,
         systemctl:       /\(code=exited, status=([0-9]*)\)|\(dead\)/,
-      }, T.nilable(T::Hash[T.untyped, T.untyped]))
+      }, T.nilable(T::Hash[T.untyped, Regexp]))
       @exit_code_regex.fetch(status_type)
     end
 
+    sig { params(status_type: Symbol).returns(Regexp) }
     def pid_regex(status_type)
       @pid_regex ||= T.let({
         launchctl_list:  /"PID"\ =\ ([0-9]*);/,
         launchctl_print: /pid = ([0-9]+)/,
         systemctl:       /Main PID: ([0-9]*) \((?!code=)/,
-      }, T.nilable(T::Hash[T.untyped, T.untyped]))
+      }, T.nilable(T::Hash[T.untyped, Regexp]))
       @pid_regex.fetch(status_type)
     end
 
