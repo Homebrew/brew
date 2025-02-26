@@ -6,9 +6,12 @@ module Service
     module Info
       TRIGGERS = %w[info i].freeze
 
-      sig { params(targets: T::Array[Service::FormulaWrapper], verbose: T::Boolean, json: T::Boolean).void }
+      sig {
+        params(targets: T::Array[Service::FormulaWrapper], verbose: T.nilable(T::Boolean),
+               json: T.nilable(T::Boolean)).void
+      }
       def self.run(targets, verbose:, json:)
-        return unless Homebrew::Cmd::Services.check(targets)
+        Service::ServicesCli.check(targets)
 
         output = targets.map(&:to_hash)
 
@@ -22,9 +25,9 @@ module Service
         end
       end
 
-      sig { params(bool: T.any(T::Boolean, String)).returns(String) }
+      sig { params(bool: T.nilable(String)).returns(String) }
       def self.pretty_bool(bool)
-        return bool if !$stdout.tty? || Homebrew::EnvConfig.no_emoji?
+        return T.must(bool) if !$stdout.tty? || Homebrew::EnvConfig.no_emoji?
 
         if bool
           "#{Tty.bold}#{Formatter.success("✔")}#{Tty.reset}"

@@ -4,9 +4,9 @@
 module Service
   module System
     module Systemctl
-      sig { void }
+      sig { returns(T.nilable(Pathname)) }
       def self.executable
-        @executable ||= which("systemctl")
+        @executable ||= T.let(which("systemctl"), T.nilable(Pathname))
       end
 
       sig { returns(String) }
@@ -14,18 +14,22 @@ module Service
         System.root? ? "--system" : "--user"
       end
 
+      sig { params(args: T.any(String, Pathname)).void }
       def self.run(*args)
         _run(*args, mode: :default)
       end
 
+      sig { params(args: T.any(String, Pathname)).returns(T::Boolean) }
       def self.quiet_run(*args)
         _run(*args, mode: :quiet)
       end
 
+      sig { params(args: T.any(String, Pathname)).returns(String) }
       def self.popen_read(*args)
         _run(*args, mode: :read)
       end
 
+      sig { params(args: T.any(String, Pathname), mode: T.nilable(Symbol)).returns(T.untyped) }
       private_class_method def self._run(*args, mode:)
         require "system_command"
         result = SystemCommand.run(executable,

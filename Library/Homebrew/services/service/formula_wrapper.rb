@@ -6,10 +6,11 @@
 module Service
   class FormulaWrapper
     # Access the `Formula` instance.
+    sig { returns(Formula) }
     attr_reader :formula
 
     # Create a new `Service` instance from either a path or label.
-    sig { params(path_or_label: T.untyped).returns(T.nilable(T.attached_class)) }
+    sig { params(path_or_label: String).returns(T.nilable(FormulaWrapper)) }
     def self.from(path_or_label)
       return unless path_or_label =~ path_or_label_regex
 
@@ -21,62 +22,64 @@ module Service
     end
 
     # Initialize a new `Service` instance with supplied formula.
+    sig { params(formula: Formula).void }
     def initialize(formula)
-      @formula = formula
+      @formula = T.let(formula, Formula)
+      @service_name = T.let(T.must(if System.launchctl?
+                              formula.plist_name
+                            elsif System.systemctl?
+                              formula.service_name
+      end), String)
+      @service_file = T.let(T.must(if System.launchctl?
+                              formula.launchd_service_path
+                            elsif System.systemctl?
+                              formula.systemd_service_path
+      end), Pathname)
+      @service_startup = T.let(if service?
+                                 load_service.requires_root?
+                               else
+                                 false
+      end, T::Boolean)
+      @name = T.let(formula.name, String)
+      @service = T.let(@formula.service?, T::Boolean)
+      @timed = T.let(load_service.timed?, T::Boolean)
+      @keep_alive = T.let(load_service.keep_alive?, T::Boolean)
     end
 
     # Delegate access to `formula.name`.
     sig { returns(String) }
-    def name
-      @name ||= T.let(formula.name, T.nilable(String))
-    end
+    attr_reader :name
 
     # Delegate access to `formula.service?`.
     sig { returns(T::Boolean) }
     def service?
-      @service ||= T.let(@formula.service?, T.nilable(T::Boolean))
+      @service
     end
 
     # Delegate access to `formula.service.timed?`.
     sig { returns(T::Boolean) }
     def timed?
-      @timed ||= T.let((load_service.timed? if service?), T.nilable(T::Boolean))
+      @timed
     end
 
     # Delegate access to `formula.service.keep_alive?`.`
     sig { returns(T::Boolean) }
     def keep_alive?
-      @keep_alive ||= T.let((load_service.keep_alive? if service?), T.nilable(T::Boolean))
+      @keep_alive
     end
 
     # service_name delegates with formula.plist_name or formula.service_name for systemd (e.g., `homebrew.<formula>`).
     sig { returns(String) }
-    def service_name
-      @service_name ||= T.let(if System.launchctl?
-                                formula.plist_name
-                              elsif System.systemctl?
-                                formula.service_name
-      end, T.nilable(String))
-    end
+    attr_reader :service_name
 
     # service_file delegates with formula.launchd_service_path or formula.systemd_service_path for systemd.
     sig { returns(Pathname) }
-    def service_file
-      @service_file ||= T.let(if System.launchctl?
-                                formula.launchd_service_path
-                              elsif System.systemctl?
-                                formula.systemd_service_path
-      end, T.nilable(Pathname))
-    end
+    attr_reader :service_file
 
     # Whether the service should be launched at startup
     sig { returns(T::Boolean) }
     def service_startup?
-      @service_startup ||= T.let(if service?
-                                   load_service.requires_root?
-                                 else
-                                   false
-      end, T.nilable(T::Boolean))
+      @service_startup
     end
 
     # Path to destination service directory. If run as root, it's `boot_path`, else `user_path`.
@@ -102,7 +105,7 @@ module Service
     def plist?
       return false unless installed?
       return true if service_file.file?
-      return false unless formula.opt_prefix&.exist?
+      return false unless formula.opt_prefix.exist?
       return true if Keg.for(formula.opt_prefix).plist_installed?
 
       false
@@ -222,8 +225,9 @@ module Service
     # The purpose of this function is to lazy load the Homebrew::Service class
     # and avoid nameclashes with the current Service module.
     # It should be used instead of calling formula.service directly.
+    sig { returns(Homebrew::Service) }
     def load_service
-      require_relative "../../../../../Homebrew/service"
+      require_relative "../../Homebrew/service"
 
       formula.service
     end
@@ -256,7 +260,7 @@ module Service
       end
     end
 
-    sig { returns(T.nilable(String))
+    sig { returns(T.nilable(String)) }
     def status_output
       status_output, = status_output_success_type
       status_output

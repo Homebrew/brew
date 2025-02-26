@@ -6,12 +6,12 @@ module Service
     module Cleanup
       TRIGGERS = %w[cleanup clean cl rm].freeze
 
-      sig { returns(NilClass) }
+      sig { void }
       def self.run
         cleaned = []
 
-        cleaned += Homebrew::Cmd::Services.kill_orphaned_services
-        cleaned += Homebrew::Cmd::Services.remove_unused_service_files
+        cleaned += Service::ServicesCli.kill_orphaned_services
+        cleaned += Service::ServicesCli.remove_unused_service_files
 
         puts "All #{System.root? ? "root" : "user-space"} services OK, nothing cleaned..." if cleaned.empty?
       end

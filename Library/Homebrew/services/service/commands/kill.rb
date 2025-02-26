@@ -6,10 +6,10 @@ module Service
     module Kill
       TRIGGERS = %w[kill k].freeze
 
-      sig { params(targets: T::Array[Service::FormulaWrapper], verbose: T::Boolean).void }
+      sig { params(targets: T::Array[Service::FormulaWrapper], verbose: T.nilable(T::Boolean)).void }
       def self.run(targets, verbose:)
-        Homebrew::Cmd::Services.check(targets) &&
-          Homebrew::Cmd::Services.kill(targets, verbose:)
+        Service::ServicesCli.check(targets)
+        Service::ServicesCli.kill(targets, verbose:)
       end
     end
   end

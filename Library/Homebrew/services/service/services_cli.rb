@@ -22,6 +22,7 @@ module Service
     end
 
     # Find all currently running services via launchctl list or systemctl list-units.
+    sig { returns(T::Array[String]) }
     def self.running
       if System.launchctl?
         Utils.popen_read(System.launchctl, "list")
@@ -78,7 +79,7 @@ module Service
     end
 
     # Run a service as defined in the formula. This does not clean the service file like `start` does.
-    sig { params(targets: T::Array[Service::FormulaWrapper], verbose: T::Boolean).void }
+    sig { params(targets: T::Array[Service::FormulaWrapper], verbose: T.nilable(T::Boolean)).void }
     def self.run(targets, verbose: false)
       targets.each do |service|
         if service.pid?
@@ -96,7 +97,7 @@ module Service
     # Start a service.
     sig {
       params(targets: T::Array[Service::FormulaWrapper], service_file: T.nilable(T.any(String, Pathname)),
-             verbose: T::Boolean).void
+             verbose: T.nilable(T::Boolean)).void
     }
     def self.start(targets, service_file = nil, verbose: false)
       file = T.let(nil, T.nilable(Pathname))
@@ -137,13 +138,15 @@ module Service
 
     # Stop a service and unload it.
     sig {
-      params(targets: T::Array[Service::FormulaWrapper], verbose: T::Boolean, no_wait: T::Boolean,
-             max_wait: T.any(Integer, Float)).void
+      params(targets:  T::Array[Service::FormulaWrapper],
+             verbose:  T.nilable(T::Boolean),
+             no_wait:  T.nilable(T::Boolean),
+             max_wait: T.nilable(T.any(Integer, Float))).void
     }
     def self.stop(targets, verbose: false, no_wait: false, max_wait: 0)
       targets.each do |service|
         unless service.loaded?
-          rm service.dest if service.dest.exist? # get rid of installed service file anyway, dude
+          rm T.must(service.dest) if service.dest.exist? # get rid of installed service file anyway, dude
           if service.service_file_present?
             odie <<~EOS
               Service `#{service.name}` is started as `#{service.owner}`. Try:
@@ -173,7 +176,7 @@ module Service
           unless no_wait
             time_slept = 0
             sleep_time = 1
-            while ($CHILD_STATUS.to_i == 9216 || service.loaded?) && (max_wait.zero? || time_slept < max_wait)
+            while ($CHILD_STATUS.to_i == 9216 || service.loaded?) && (max_wait.zero? || time_slept < T.must(max_wait))
               sleep(sleep_time)
               time_slept += sleep_time
               quiet_system System.launchctl, "bootout", "#{System.domain_target}/#{service.service_name}"
@@ -182,7 +185,7 @@ module Service
           quiet_system System.launchctl, "stop", "#{System.domain_target}/#{service.service_name}" if service.pid?
         end
 
-        rm service.dest if service.dest.exist?
+        rm T.must(service.dest) if service.dest.exist?
         # Run daemon-reload on systemctl to finish unloading stopped and deleted service.
         System::Systemctl.run(*systemctl_args, "daemon-reload") if System.systemctl?
 
@@ -195,7 +198,7 @@ module Service
     end
 
     # Stop a service but keep it registered.
-    sig { params(targets: T::Array[Service::FormulaWrapper], verbose: T::Boolean).void }
+    sig { params(targets: T::Array[Service::FormulaWrapper], verbose: T.nilable(T::Boolean)).void }
     def self.kill(targets, verbose: false)
       targets.each do |service|
         if !service.pid?
@@ -348,14 +351,14 @@ module Service
       end
       temp.flush
 
-      rm service.dest if service.dest.exist?
+      rm T.must(service.dest) if service.dest.exist?
       service.dest_dir.mkpath unless service.dest_dir.directory?
-      cp T.must(temp.path), service.dest
+      cp T.must(temp.path), T.must(service.dest)
 
       # Clear tempfile.
       temp.close
 
-      chmod 0644, service.dest
+      chmod 0644, T.must(service.dest)
 
       Service::System::Systemctl.run("daemon-reload") if System.systemctl?
     end

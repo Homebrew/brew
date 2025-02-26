@@ -11,9 +11,9 @@ module Service
 
       TRIGGERS = %w[restart relaunch reload r].freeze
 
-      sig { params(targets: T::Array[Service::FormulaWrapper], verbose: T::Boolean).void }
+      sig { params(targets: T::Array[Service::FormulaWrapper], verbose: T.nilable(T::Boolean)).void }
       def self.run(targets, verbose:)
-        return unless Homebrew::Cmd::Services.check(targets)
+        Service::ServicesCli.check(targets)
 
         ran = []
         started = []
@@ -24,11 +24,11 @@ module Service
             # group not-started services with started ones for restart
             started << service
           end
-          Homebrew::Cmd::Services.stop([service], verbose:) if service.loaded?
+          Service::ServicesCli.stop([service], verbose:) if service.loaded?
         end
 
-        Homebrew::Cmd::Services.run if ran.present?
-        Homebrew::Cmd::Services.start(started, verbose:) if started.present?
+        Service::ServicesCli.run(targets, verbose:) if ran.present?
+        Service::ServicesCli.start(started, verbose:) if started.present?
       end
     end
   end

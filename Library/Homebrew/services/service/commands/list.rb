@@ -12,7 +12,7 @@ module Service
       def self.run(json: false)
         formulae = Formulae.services_list
         if formulae.blank?
-          opoo "No services available to control with `#{Homebrew::Cmd::Services.bin}`" if $stderr.tty?
+          opoo "No services available to control with `#{Service::ServicesCli.bin}`" if $stderr.tty?
           return
         end
 

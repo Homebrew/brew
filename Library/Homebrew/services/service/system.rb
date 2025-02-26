@@ -8,9 +8,9 @@ module Service
     extend FileUtils
 
     # Path to launchctl binary.
-    sig { void }
+    sig { returns(T.nilable(Pathname)) }
     def self.launchctl
-      @launchctl ||= which("launchctl")
+      @launchctl ||= T.let(which("launchctl"), T.nilable(Pathname))
     end
 
     # Is this a launchctl system
@@ -32,18 +32,19 @@ module Service
     end
 
     # Current user running `[sudo] brew services`.
-    sig { void }
+    sig { returns(T.nilable(String)) }
     def self.user
-      @user ||= ENV["USER"].presence || Utils.safe_popen_read("/usr/bin/whoami").chomp
+      @user ||= T.let(ENV["USER"].presence || Utils.safe_popen_read("/usr/bin/whoami").chomp, T.nilable(String))
     end
 
-    def self.user_of_process(pid)
-      if pid.nil? || pid.zero?
-        user
-      else
-        Utils.safe_popen_read("ps", "-o", "user", "-p", pid.to_s).lines.second&.chomp
-      end
-    end
+    # sig { returns(T.nilable(String)) }
+    # def self.user_of_process(pid)
+    #   if pid.nil? || pid.zero?
+    #     user
+    #   else
+    #     Utils.safe_popen_read("ps", "-o", "user", "-p", pid.to_s).lines.second&.chomp
+    #   end
+    # end
 
     # Run at boot.
     sig { returns(T.nilable(Pathname)) }
