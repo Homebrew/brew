@@ -170,7 +170,7 @@ module Service
         end
 
         if System.systemctl?
-          System::Systemctl.quiet_run(*systemctl_args, "disable", "--now", service.service_name)
+          T.must()System::Systemctl.quiet_run(*systemctl_args, "disable", "--now", service.service_name)
         elsif System.launchctl?
           quiet_system System.launchctl, "bootout", "#{System.domain_target}/#{service.service_name}"
           unless no_wait
@@ -209,7 +209,7 @@ module Service
         else
           puts "Killing `#{service.name}`... (might take a while)"
           if System.systemctl?
-            System::Systemctl.quiet_run("stop", service.service_name)
+            System::Systemctl.quiet_run("stop", T.must(service.service_name))
           elsif System.launchctl?
             quiet_system System.launchctl, "stop", "#{System.domain_target}/#{service.service_name}"
           end
@@ -300,8 +300,8 @@ module Service
 
     sig { params(service: Service::FormulaWrapper, enable: T.nilable(T::Boolean)).void }
     def self.systemd_load(service, enable:)
-      System::Systemctl.run("start", service.service_name)
-      System::Systemctl.run("enable", service.service_name) if enable
+      System::Systemctl.run("start", T.must(service.service_name))
+      System::Systemctl.run("enable", T.must(service.service_name)) if enable
     end
 
     sig { params(service: Service::FormulaWrapper, enable: T.nilable(T::Boolean)).void }
@@ -334,7 +334,7 @@ module Service
         odie "Formula `#{service.name}` has not implemented #plist, #service or installed a locatable service file"
       end
 
-      temp = Tempfile.new(service.service_name)
+      temp = Tempfile.new(T.must(service.service_name))
       temp << if T.must(file).blank?
         contents = service.service_file.read
 
