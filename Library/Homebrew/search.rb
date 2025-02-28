@@ -69,7 +69,11 @@ module Homebrew
 
       aliases = Formula.alias_full_names
       results = search(Formula.full_names + aliases, string_or_regex).sort
-      results |= Formula.fuzzy_search(string_or_regex).map { |n| Formulary.factory(n).full_name }
+      if string_or_regex.is_a?(String)
+        results |= Formula.fuzzy_search(string_or_regex).map do |n|
+          Formulary.factory(n).full_name
+        end
+      end
 
       results.filter_map do |name|
         formula, canonical_full_name = begin

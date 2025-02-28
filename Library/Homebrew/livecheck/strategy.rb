@@ -300,6 +300,7 @@ module Homebrew
   end
 end
 
+require_relative "strategic"
 require_relative "strategy/apache"
 require_relative "strategy/bitbucket"
 require_relative "strategy/cpan"

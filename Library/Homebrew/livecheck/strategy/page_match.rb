@@ -16,6 +16,8 @@ module Homebrew
       #
       # @api public
       class PageMatch
+        extend Strategic
+
         NICE_NAME = "Page match"
 
         # A priority of zero causes livecheck to skip the strategy. We do this
@@ -32,7 +34,7 @@ module Homebrew
         #
         # @param url [String] the URL to match against
         # @return [Boolean]
-        sig { params(url: String).returns(T::Boolean) }
+        sig { override.params(url: String).returns(T::Boolean) }
         def self.match?(url)
           URL_MATCH_REGEX.match?(url)
         end
@@ -80,7 +82,7 @@ module Homebrew
         # @param options [Options] options to modify behavior
         # @return [Hash]
         sig {
-          params(
+          override.params(
             url:              String,
             regex:            T.nilable(Regexp),
             provided_content: T.nilable(String),
@@ -89,12 +91,12 @@ module Homebrew
           ).returns(T::Hash[Symbol, T.untyped])
         }
         def self.find_versions(url:, regex: nil, provided_content: nil, options: Options.new, &block)
-          if regex.blank? && block.blank?
+          if regex.blank? && !block_given?
             raise ArgumentError, "#{Utils.demodulize(name)} requires a regex or `strategy` block"
           end
 
           match_data = { matches: {}, regex:, url: }
-          return match_data if url.blank? || (regex.blank? && block.blank?)
+          return match_data if url.blank?
 
           content = if provided_content.is_a?(String)
             match_data[:cached] = true

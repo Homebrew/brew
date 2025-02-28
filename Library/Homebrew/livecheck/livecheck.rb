@@ -28,15 +28,15 @@ module Homebrew
     ].freeze, T::Array[String])
     private_constant :UNSTABLE_VERSION_KEYWORDS
 
-    sig { params(strategy_class: T::Class[T.anything]).returns(String) }
+    sig { params(strategy_class: T::Class[Strategic]).returns(String) }
     private_class_method def self.livecheck_strategy_names(strategy_class)
-      @livecheck_strategy_names ||= T.let({}, T.nilable(T::Hash[T::Class[T.anything], String]))
+      @livecheck_strategy_names ||= T.let({}, T.nilable(T::Hash[T::Class[Strategic], String]))
       @livecheck_strategy_names[strategy_class] ||= Utils.demodulize(strategy_class.name)
     end
 
-    sig { params(strategy_class: T::Class[T.anything]).returns(T::Array[Symbol]) }
+    sig { params(strategy_class: T::Class[Strategic]).returns(T::Array[Symbol]) }
     private_class_method def self.livecheck_find_versions_parameters(strategy_class)
-      @livecheck_find_versions_parameters ||= T.let({}, T.nilable(T::Hash[T::Class[T.anything], T::Array[Symbol]]))
+      @livecheck_find_versions_parameters ||= T.let({}, T.nilable(T::Hash[T::Class[Strategic], T::Array[Symbol]]))
       @livecheck_find_versions_parameters[strategy_class] ||=
         T::Utils.signature_for_method(strategy_class.method(:find_versions)).parameters.map(&:second)
     end

@@ -25,6 +25,7 @@ module Homebrew
       #
       # @api public
       class Git
+        extend Strategic
         extend SystemCommand::Mixin
 
         # Used to cache processed URLs, to avoid duplicating effort.
@@ -104,7 +105,7 @@ module Homebrew
         #
         # @param url [String] the URL to match against
         # @return [Boolean]
-        sig { params(url: String).returns(T::Boolean) }
+        sig { override.params(url: String).returns(T::Boolean) }
         def self.match?(url)
           url = preprocess_url(url)
           (DownloadStrategyDetector.detect(url) <= GitDownloadStrategy) == true
@@ -189,12 +190,12 @@ module Homebrew
         # @param options [Options] options to modify behavior
         # @return [Hash]
         sig {
-          params(
+          override(allow_incompatible: true).params(
             url:     String,
             regex:   T.nilable(Regexp),
             options: Options,
             block:   T.nilable(Proc),
-          ).returns(T::Hash[Symbol, T.untyped])
+          ).returns(T::Hash[Symbol, T.anything])
         }
         def self.find_versions(url:, regex: nil, options: Options.new, &block)
           match_data = { matches: {}, regex:, url: }

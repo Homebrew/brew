@@ -17,6 +17,8 @@ module Homebrew
       #
       # @api public
       class Hackage
+        extend Strategic
+
         # A `Regexp` used in determining if the strategy applies to the URL and
         # also as part of extracting the package name from the URL basename.
         PACKAGE_NAME_REGEX = /(?<package_name>.+?)-\d+/i
@@ -35,7 +37,7 @@ module Homebrew
         #
         # @param url [String] the URL to match against
         # @return [Boolean]
-        sig { params(url: String).returns(T::Boolean) }
+        sig { override.params(url: String).returns(T::Boolean) }
         def self.match?(url)
           URL_MATCH_REGEX.match?(url)
         end
@@ -73,12 +75,12 @@ module Homebrew
         # @param options [Options] options to modify behavior
         # @return [Hash]
         sig {
-          params(
+          override(allow_incompatible: true).params(
             url:     String,
             regex:   T.nilable(Regexp),
             options: Options,
             block:   T.nilable(Proc),
-          ).returns(T::Hash[Symbol, T.untyped])
+          ).returns(T::Hash[Symbol, T.anything])
         }
         def self.find_versions(url:, regex: nil, options: Options.new, &block)
           generated = generate_input_values(url)

@@ -81,11 +81,9 @@ class Locale
     end
 
     [:language, :script, :region].all? do |var|
-      if other.public_send(var).nil?
-        true
-      else
-        public_send(var) == other.public_send(var)
-      end
+      next true if other.public_send(var).nil?
+
+      public_send(var) == other.public_send(var)
     end
   end
 

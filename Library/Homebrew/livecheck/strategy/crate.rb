@@ -17,6 +17,8 @@ module Homebrew
       #
       # @api public
       class Crate
+        extend Strategic
+
         # The default regex used to identify versions when a regex isn't
         # provided.
         DEFAULT_REGEX = /^v?(\d+(?:\.\d+)+)$/i
@@ -31,7 +33,7 @@ module Homebrew
             match[1]
           end
         end.freeze, T.proc.params(
-          arg0: T::Hash[String, T.untyped],
+          arg0: T::Hash[String, T.anything],
           arg1: Regexp,
         ).returns(T.any(String, T::Array[String])))
 
@@ -45,8 +47,7 @@ module Homebrew
         # Whether the strategy can be applied to the provided URL.
         #
         # @param url [String] the URL to match against
-        # @return [Boolean]
-        sig { params(url: String).returns(T::Boolean) }
+        sig { override.params(url: String).returns(T::Boolean) }
         def self.match?(url)
           URL_MATCH_REGEX.match?(url)
         end
@@ -55,7 +56,6 @@ module Homebrew
         # various input values used by the strategy to check for new versions.
         #
         # @param url [String] the URL used to generate values
-        # @return [Hash]
         sig { params(url: String).returns(T::Hash[Symbol, T.untyped]) }
         def self.generate_input_values(url)
           values = {}
@@ -67,7 +67,7 @@ module Homebrew
         end
 
         # Generates a URL and checks the content at the URL for new versions
-        # using {Json#versions_from_content}.
+        # using {Json.versions_from_content}.
         #
         # @param url [String] the URL of the content to check
         # @param regex [Regexp, nil] a regex for matching versions in content
@@ -76,13 +76,13 @@ module Homebrew
         # @param options [Options] options to modify behavior
         # @return [Hash]
         sig {
-          params(
+          override.params(
             url:              String,
             regex:            T.nilable(Regexp),
             provided_content: T.nilable(String),
             options:          Options,
             block:            T.nilable(Proc),
-          ).returns(T::Hash[Symbol, T.untyped])
+          ).returns(T::Hash[Symbol, T.anything])
         }
         def self.find_versions(url:, regex: nil, provided_content: nil, options: Options.new, &block)
           match_data = { matches: {}, regex:, url: }

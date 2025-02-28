@@ -12,6 +12,8 @@ module Homebrew
       # This strategy is not applied automatically and it's necessary to use
       # `strategy :sparkle` in a `livecheck` block to apply it.
       class Sparkle
+        extend Strategic
+
         # A priority of zero causes livecheck to skip the strategy. We do this
         # for {Sparkle} so we can selectively apply it when appropriate.
         PRIORITY = 0
@@ -26,7 +28,7 @@ module Homebrew
         #
         # @param url [String] the URL to match against
         # @return [Boolean]
-        sig { params(url: String).returns(T::Boolean) }
+        sig { override.params(url: String).returns(T::Boolean) }
         def self.match?(url)
           URL_MATCH_REGEX.match?(url)
         end
@@ -217,15 +219,15 @@ module Homebrew
         # @param options [Options] options to modify behavior
         # @return [Hash]
         sig {
-          params(
+          override(allow_incompatible: true).params(
             url:     String,
             regex:   T.nilable(Regexp),
             options: Options,
             block:   T.nilable(Proc),
-          ).returns(T::Hash[Symbol, T.untyped])
+          ).returns(T::Hash[Symbol, T.anything])
         }
         def self.find_versions(url:, regex: nil, options: Options.new, &block)
-          if regex.present? && block.blank?
+          if regex.present? && !block_given?
             raise ArgumentError,
                   "#{Utils.demodulize(name)} only supports a regex when using a `strategy` block"
           end

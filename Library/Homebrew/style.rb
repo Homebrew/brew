@@ -85,21 +85,15 @@ module Homebrew
         run_shellcheck(shell_files, output_type, fix:)
       end
 
-      shfmt_result = if files.present? && shell_files.empty?
-        true
-      else
-        run_shfmt(shell_files, fix:)
-      end
+      shfmt_result = files.present? && shell_files.empty?
+      shfmt_result ||= run_shfmt(shell_files, fix:)
 
       has_actionlint_workflow = actionlint_files.any? do |path|
         path.to_s.end_with?("/.github/workflows/actionlint.yml")
       end
       odebug "actionlint workflow detected. Skipping actionlint checks." if has_actionlint_workflow
-      actionlint_result = if files.present? && (has_actionlint_workflow || actionlint_files.empty?)
-        true
-      else
-        run_actionlint(actionlint_files)
-      end
+      actionlint_result = files.present? && (has_actionlint_workflow || actionlint_files.empty?)
+      actionlint_result ||= run_actionlint(actionlint_files)
 
       if output_type == :json
         Offenses.new(rubocop_result + shellcheck_result)

@@ -23,6 +23,8 @@ module Homebrew
       #
       # @api public
       class Launchpad
+        extend Strategic
+
         # The `Regexp` used to determine if the strategy applies to the URL.
         URL_MATCH_REGEX = %r{
           ^https?://(?:[^/]+?\.)*launchpad\.net
@@ -37,7 +39,7 @@ module Homebrew
         #
         # @param url [String] the URL to match against
         # @return [Boolean]
-        sig { params(url: String).returns(T::Boolean) }
+        sig { override.params(url: String).returns(T::Boolean) }
         def self.match?(url)
           URL_MATCH_REGEX.match?(url)
         end
@@ -70,12 +72,12 @@ module Homebrew
         # @param options [Options] options to modify behavior
         # @return [Hash]
         sig {
-          params(
+          override(allow_incompatible: true).params(
             url:     String,
             regex:   Regexp,
             options: Options,
             block:   T.nilable(Proc),
-          ).returns(T::Hash[Symbol, T.untyped])
+          ).returns(T::Hash[Symbol, T.anything])
         }
         def self.find_versions(url:, regex: DEFAULT_REGEX, options: Options.new, &block)
           generated = generate_input_values(url)

@@ -340,11 +340,8 @@ module PyPI
     show_info = !print_only && !silent
     ohai "Retrieving PyPI dependencies for \"#{input_packages.join(" ")}\"..." if show_info
 
-    print_stderr = if verbose && show_info
-      true
-    else
-      false
-    end
+    print_stderr = verbose && show_info
+    print_stderr ||= false
 
     found_packages = pip_report(input_packages, python_name:, print_stderr:)
     # Resolve the dependency tree of excluded packages to prune the above

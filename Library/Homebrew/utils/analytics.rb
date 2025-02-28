@@ -71,9 +71,6 @@ module Utils
       def report_package_event(measurement, package_name:, tap_name:, on_request: false, options: "")
         return if not_this_run? || disabled?
 
-        # ensure on_request is a boolean
-        on_request = on_request ? true : false
-
         # ensure options are removed (by `.compact` below) if empty
         options = nil if options.blank?
 
@@ -136,9 +133,6 @@ module Utils
       def report_test_bot_test(step_command_short, passed)
         return if not_this_run? || disabled?
         return if ENV["HOMEBREW_TEST_BOT_ANALYTICS"].blank?
-
-        # ensure passed is a boolean
-        passed = passed ? true : false
 
         # Tags must have low cardinality.
         tags = {

@@ -809,11 +809,8 @@ on_request: installed_on_request?, options:)
     options |= inherited_options
     options &= df.options
 
-    installed_on_request = if df.any_version_installed? && tab.present? && tab.installed_on_request
-      true
-    else
-      false
-    end
+    installed_on_request = df.any_version_installed? && tab.present? && tab.installed_on_request
+    installed_on_request ||= false
 
     fi = FormulaInstaller.new(
       df,
