@@ -371,10 +371,10 @@ class RuboCop::Cop::RSpec::BeNil < ::RuboCop::Cop::RSpec::Base
 
   private
 
-  # source://rubocop-rspec//lib/rubocop/cop/rspec/be_nil.rb#64
+  # source://rubocop-rspec//lib/rubocop/cop/rspec/be_nil.rb#68
   def check_be_nil_style(node); end
 
-  # source://rubocop-rspec//lib/rubocop/cop/rspec/be_nil.rb#56
+  # source://rubocop-rspec//lib/rubocop/cop/rspec/be_nil.rb#60
   def check_be_style(node); end
 end
 
@@ -489,39 +489,39 @@ class RuboCop::Cop::RSpec::ChangeByZero < ::RuboCop::Cop::RSpec::Base
 
   private
 
-  # source://rubocop-rspec//lib/rubocop/cop/rspec/change_by_zero.rb#134
+  # source://rubocop-rspec//lib/rubocop/cop/rspec/change_by_zero.rb#132
   def autocorrect(corrector, node, change_node); end
 
-  # source://rubocop-rspec//lib/rubocop/cop/rspec/change_by_zero.rb#141
+  # source://rubocop-rspec//lib/rubocop/cop/rspec/change_by_zero.rb#139
   def autocorrect_compound(corrector, node); end
 
   # @return [Boolean]
   #
-  # source://rubocop-rspec//lib/rubocop/cop/rspec/change_by_zero.rb#120
+  # source://rubocop-rspec//lib/rubocop/cop/rspec/change_by_zero.rb#118
   def compound_expectations?(node); end
 
-  # source://rubocop-rspec//lib/rubocop/cop/rspec/change_by_zero.rb#151
+  # source://rubocop-rspec//lib/rubocop/cop/rspec/change_by_zero.rb#149
   def insert_operator(corrector, node, change_node); end
 
-  # source://rubocop-rspec//lib/rubocop/cop/rspec/change_by_zero.rb#125
+  # source://rubocop-rspec//lib/rubocop/cop/rspec/change_by_zero.rb#123
   def message(change_node); end
 
-  # source://rubocop-rspec//lib/rubocop/cop/rspec/change_by_zero.rb#129
+  # source://rubocop-rspec//lib/rubocop/cop/rspec/change_by_zero.rb#127
   def message_compound(change_node); end
 
-  # source://rubocop-rspec//lib/rubocop/cop/rspec/change_by_zero.rb#175
+  # source://rubocop-rspec//lib/rubocop/cop/rspec/change_by_zero.rb#173
   def negated_matcher; end
 
-  # source://rubocop-rspec//lib/rubocop/cop/rspec/change_by_zero.rb#179
+  # source://rubocop-rspec//lib/rubocop/cop/rspec/change_by_zero.rb#177
   def preferred_method; end
 
-  # source://rubocop-rspec//lib/rubocop/cop/rspec/change_by_zero.rb#105
+  # source://rubocop-rspec//lib/rubocop/cop/rspec/change_by_zero.rb#104
   def register_offense(node, change_node); end
 
-  # source://rubocop-rspec//lib/rubocop/cop/rspec/change_by_zero.rb#164
+  # source://rubocop-rspec//lib/rubocop/cop/rspec/change_by_zero.rb#162
   def remove_by_zero(corrector, node, change_node); end
 
-  # source://rubocop-rspec//lib/rubocop/cop/rspec/change_by_zero.rb#160
+  # source://rubocop-rspec//lib/rubocop/cop/rspec/change_by_zero.rb#158
   def replace_node(node, change_node); end
 end
 
@@ -1924,41 +1924,41 @@ class RuboCop::Cop::RSpec::ExampleWording < ::RuboCop::Cop::RSpec::Base
   # source://rubocop-rspec//lib/rubocop/cop/rspec/example_wording.rb#63
   def it_description(param0 = T.unsafe(nil)); end
 
-  # source://rubocop-rspec//lib/rubocop/cop/rspec/example_wording.rb#71
+  # source://rubocop-rspec//lib/rubocop/cop/rspec/example_wording.rb#70
   def on_block(node); end
 
   private
 
-  # source://rubocop-rspec//lib/rubocop/cop/rspec/example_wording.rb#89
+  # source://rubocop-rspec//lib/rubocop/cop/rspec/example_wording.rb#87
   def add_wording_offense(node, message); end
 
-  # source://rubocop-rspec//lib/rubocop/cop/rspec/example_wording.rb#136
+  # source://rubocop-rspec//lib/rubocop/cop/rspec/example_wording.rb#134
   def custom_transform; end
 
-  # source://rubocop-rspec//lib/rubocop/cop/rspec/example_wording.rb#99
+  # source://rubocop-rspec//lib/rubocop/cop/rspec/example_wording.rb#97
   def docstring(node); end
 
-  # source://rubocop-rspec//lib/rubocop/cop/rspec/example_wording.rb#140
+  # source://rubocop-rspec//lib/rubocop/cop/rspec/example_wording.rb#138
   def ignored_words; end
 
   # @return [Boolean]
   #
-  # source://rubocop-rspec//lib/rubocop/cop/rspec/example_wording.rb#144
+  # source://rubocop-rspec//lib/rubocop/cop/rspec/example_wording.rb#142
   def insufficient_docstring?(description_node); end
 
-  # source://rubocop-rspec//lib/rubocop/cop/rspec/example_wording.rb#148
+  # source://rubocop-rspec//lib/rubocop/cop/rspec/example_wording.rb#146
   def insufficient_examples; end
 
-  # source://rubocop-rspec//lib/rubocop/cop/rspec/example_wording.rb#153
+  # source://rubocop-rspec//lib/rubocop/cop/rspec/example_wording.rb#151
   def preprocess(message); end
 
-  # source://rubocop-rspec//lib/rubocop/cop/rspec/example_wording.rb#109
+  # source://rubocop-rspec//lib/rubocop/cop/rspec/example_wording.rb#107
   def replacement_text(node); end
 
   # Recursive processing is required to process nested dstr nodes
   # that is the case for \-separated multiline strings with interpolation.
   #
-  # source://rubocop-rspec//lib/rubocop/cop/rspec/example_wording.rb#125
+  # source://rubocop-rspec//lib/rubocop/cop/rspec/example_wording.rb#123
   def text(node); end
 end
 
@@ -2269,65 +2269,65 @@ RuboCop::Cop::RSpec::ExpectOutput::MSG = T.let(T.unsafe(nil), String)
 
 # A helper for `explicit` style
 #
-# source://rubocop-rspec//lib/rubocop/cop/rspec/predicate_matcher.rb#121
+# source://rubocop-rspec//lib/rubocop/cop/rspec/predicate_matcher.rb#129
 module RuboCop::Cop::RSpec::ExplicitHelper
   include ::RuboCop::RSpec::Language
   extend ::RuboCop::AST::NodePattern::Macros
 
-  # source://rubocop-rspec//lib/rubocop/cop/rspec/predicate_matcher.rb#182
+  # source://rubocop-rspec//lib/rubocop/cop/rspec/predicate_matcher.rb#190
   def predicate_matcher?(param0 = T.unsafe(nil)); end
 
-  # source://rubocop-rspec//lib/rubocop/cop/rspec/predicate_matcher.rb#195
+  # source://rubocop-rspec//lib/rubocop/cop/rspec/predicate_matcher.rb#203
   def predicate_matcher_block?(param0 = T.unsafe(nil)); end
 
   private
 
-  # source://rubocop-rspec//lib/rubocop/cop/rspec/predicate_matcher.rb#135
+  # source://rubocop-rspec//lib/rubocop/cop/rspec/predicate_matcher.rb#143
   def allowed_explicit_matchers; end
 
-  # source://rubocop-rspec//lib/rubocop/cop/rspec/predicate_matcher.rb#139
+  # source://rubocop-rspec//lib/rubocop/cop/rspec/predicate_matcher.rb#147
   def check_explicit(node); end
 
-  # source://rubocop-rspec//lib/rubocop/cop/rspec/predicate_matcher.rb#219
+  # source://rubocop-rspec//lib/rubocop/cop/rspec/predicate_matcher.rb#227
   def corrector_explicit(corrector, to_node, actual, matcher, block_child); end
 
   # @return [Boolean]
   #
-  # source://rubocop-rspec//lib/rubocop/cop/rspec/predicate_matcher.rb#175
+  # source://rubocop-rspec//lib/rubocop/cop/rspec/predicate_matcher.rb#183
   def heredoc_argument?(matcher); end
 
-  # source://rubocop-rspec//lib/rubocop/cop/rspec/predicate_matcher.rb#213
+  # source://rubocop-rspec//lib/rubocop/cop/rspec/predicate_matcher.rb#221
   def message_explicit(matcher); end
 
-  # source://rubocop-rspec//lib/rubocop/cop/rspec/predicate_matcher.rb#226
+  # source://rubocop-rspec//lib/rubocop/cop/rspec/predicate_matcher.rb#234
   def move_predicate(corrector, actual, matcher, block_child); end
 
   # @return [Boolean]
   #
-  # source://rubocop-rspec//lib/rubocop/cop/rspec/predicate_matcher.rb#204
+  # source://rubocop-rspec//lib/rubocop/cop/rspec/predicate_matcher.rb#212
   def predicate_matcher_name?(name); end
 
   # @return [Boolean]
   #
-  # source://rubocop-rspec//lib/rubocop/cop/rspec/predicate_matcher.rb#162
+  # source://rubocop-rspec//lib/rubocop/cop/rspec/predicate_matcher.rb#170
   def replaceable_matcher?(matcher); end
 
-  # source://rubocop-rspec//lib/rubocop/cop/rspec/predicate_matcher.rb#255
+  # source://rubocop-rspec//lib/rubocop/cop/rspec/predicate_matcher.rb#261
   def replacement_matcher(node); end
 
-  # source://rubocop-rspec//lib/rubocop/cop/rspec/predicate_matcher.rb#237
+  # source://rubocop-rspec//lib/rubocop/cop/rspec/predicate_matcher.rb#244
   def to_predicate_method(matcher); end
 
   # @return [Boolean]
   #
-  # source://rubocop-rspec//lib/rubocop/cop/rspec/predicate_matcher.rb#171
+  # source://rubocop-rspec//lib/rubocop/cop/rspec/predicate_matcher.rb#179
   def uncorrectable_matcher?(node, matcher); end
 end
 
-# source://rubocop-rspec//lib/rubocop/cop/rspec/predicate_matcher.rb#127
+# source://rubocop-rspec//lib/rubocop/cop/rspec/predicate_matcher.rb#135
 RuboCop::Cop::RSpec::ExplicitHelper::BUILT_IN_MATCHERS = T.let(T.unsafe(nil), Array)
 
-# source://rubocop-rspec//lib/rubocop/cop/rspec/predicate_matcher.rb#125
+# source://rubocop-rspec//lib/rubocop/cop/rspec/predicate_matcher.rb#133
 RuboCop::Cop::RSpec::ExplicitHelper::MSG_EXPLICIT = T.let(T.unsafe(nil), String)
 
 # Help methods for file.
@@ -2405,15 +2405,16 @@ class RuboCop::Cop::RSpec::Focus < ::RuboCop::Cop::RSpec::Base
 
   private
 
-  # source://rubocop-rspec//lib/rubocop/cop/rspec/focus.rb#104
+  # source://rubocop-rspec//lib/rubocop/cop/rspec/focus.rb#108
   def correct_send(corrector, focus); end
 
-  # @yield [node]
-  #
-  # source://rubocop-rspec//lib/rubocop/cop/rspec/focus.rb#91
-  def focus_metadata(node, &block); end
+  # source://rubocop-rspec//lib/rubocop/cop/rspec/focus.rb#89
+  def on_focused_block(node); end
 
-  # source://rubocop-rspec//lib/rubocop/cop/rspec/focus.rb#97
+  # source://rubocop-rspec//lib/rubocop/cop/rspec/focus.rb#95
+  def on_metadata(node); end
+
+  # source://rubocop-rspec//lib/rubocop/cop/rspec/focus.rb#101
   def with_surrounding(focus); end
 end
 
@@ -2673,14 +2674,14 @@ class RuboCop::Cop::RSpec::ImplicitExpect < ::RuboCop::Cop::RSpec::Base
 
   private
 
-  # source://rubocop-rspec//lib/rubocop/cop/rspec/implicit_expect.rb#78
-  def is_expected_range(source_map); end
-
   # source://rubocop-rspec//lib/rubocop/cop/rspec/implicit_expect.rb#69
   def offending_expect(node); end
 
   # source://rubocop-rspec//lib/rubocop/cop/rspec/implicit_expect.rb#86
   def offense_message(offending_source); end
+
+  # source://rubocop-rspec//lib/rubocop/cop/rspec/implicit_expect.rb#78
+  def range_for_is_expected(source_map); end
 
   # source://rubocop-rspec//lib/rubocop/cop/rspec/implicit_expect.rb#94
   def replacement_source(offending_source); end
@@ -2770,45 +2771,45 @@ class RuboCop::Cop::RSpec::ImplicitSubject < ::RuboCop::Cop::RSpec::Base
   # source://rubocop-rspec//lib/rubocop/cop/rspec/implicit_subject.rb#100
   def autocorrect(corrector, node); end
 
-  # source://rubocop-rspec//lib/rubocop/cop/rspec/implicit_subject.rb#159
+  # source://rubocop-rspec//lib/rubocop/cop/rspec/implicit_subject.rb#167
   def example_of(node); end
 
   # @return [Boolean]
   #
-  # source://rubocop-rspec//lib/rubocop/cop/rspec/implicit_subject.rb#135
+  # source://rubocop-rspec//lib/rubocop/cop/rspec/implicit_subject.rb#143
   def implicit_subject_in_non_its?(node); end
 
   # @return [Boolean]
   #
-  # source://rubocop-rspec//lib/rubocop/cop/rspec/implicit_subject.rb#139
+  # source://rubocop-rspec//lib/rubocop/cop/rspec/implicit_subject.rb#147
   def implicit_subject_in_non_its_and_non_single_line?(node); end
 
   # @return [Boolean]
   #
-  # source://rubocop-rspec//lib/rubocop/cop/rspec/implicit_subject.rb#143
+  # source://rubocop-rspec//lib/rubocop/cop/rspec/implicit_subject.rb#151
   def implicit_subject_in_non_its_and_non_single_statement?(node); end
 
   # @return [Boolean]
   #
-  # source://rubocop-rspec//lib/rubocop/cop/rspec/implicit_subject.rb#122
+  # source://rubocop-rspec//lib/rubocop/cop/rspec/implicit_subject.rb#126
   def invalid?(node); end
 
   # @return [Boolean]
   #
-  # source://rubocop-rspec//lib/rubocop/cop/rspec/implicit_subject.rb#147
+  # source://rubocop-rspec//lib/rubocop/cop/rspec/implicit_subject.rb#155
   def its?(node); end
 
-  # source://rubocop-rspec//lib/rubocop/cop/rspec/implicit_subject.rb#113
+  # source://rubocop-rspec//lib/rubocop/cop/rspec/implicit_subject.rb#117
   def message(_node); end
 
   # @return [Boolean]
   #
-  # source://rubocop-rspec//lib/rubocop/cop/rspec/implicit_subject.rb#151
+  # source://rubocop-rspec//lib/rubocop/cop/rspec/implicit_subject.rb#159
   def single_line?(node); end
 
   # @return [Boolean]
   #
-  # source://rubocop-rspec//lib/rubocop/cop/rspec/implicit_subject.rb#155
+  # source://rubocop-rspec//lib/rubocop/cop/rspec/implicit_subject.rb#163
   def single_statement?(node); end
 end
 
@@ -2872,25 +2873,25 @@ class RuboCop::Cop::RSpec::IndexedLet < ::RuboCop::Cop::RSpec::Base
 
   private
 
-  # source://rubocop-rspec//lib/rubocop/cop/rspec/indexed_let.rb#105
+  # source://rubocop-rspec//lib/rubocop/cop/rspec/indexed_let.rb#107
   def allowed_identifiers; end
 
-  # source://rubocop-rspec//lib/rubocop/cop/rspec/indexed_let.rb#99
+  # source://rubocop-rspec//lib/rubocop/cop/rspec/indexed_let.rb#101
   def cop_config_patterns_values; end
 
-  # source://rubocop-rspec//lib/rubocop/cop/rspec/indexed_let.rb#79
+  # source://rubocop-rspec//lib/rubocop/cop/rspec/indexed_let.rb#81
   def filter_indexed_lets(candidates); end
 
   # @return [Boolean]
   #
-  # source://rubocop-rspec//lib/rubocop/cop/rspec/indexed_let.rb#88
+  # source://rubocop-rspec//lib/rubocop/cop/rspec/indexed_let.rb#90
   def indexed_let?(node); end
 
-  # source://rubocop-rspec//lib/rubocop/cop/rspec/indexed_let.rb#95
+  # source://rubocop-rspec//lib/rubocop/cop/rspec/indexed_let.rb#97
   def let_name_stripped_index(node); end
 end
 
-# source://rubocop-rspec//lib/rubocop/cop/rspec/indexed_let.rb#77
+# source://rubocop-rspec//lib/rubocop/cop/rspec/indexed_let.rb#78
 RuboCop::Cop::RSpec::IndexedLet::INDEX_REGEX = T.let(T.unsafe(nil), Regexp)
 
 # source://rubocop-rspec//lib/rubocop/cop/rspec/indexed_let.rb#51
@@ -2906,45 +2907,50 @@ module RuboCop::Cop::RSpec::InflectedHelper
   include ::RuboCop::RSpec::Language
   extend ::RuboCop::AST::NodePattern::Macros
 
-  # source://rubocop-rspec//lib/rubocop/cop/rspec/predicate_matcher.rb#39
+  # source://rubocop-rspec//lib/rubocop/cop/rspec/predicate_matcher.rb#45
   def be_bool?(param0 = T.unsafe(nil)); end
 
-  # source://rubocop-rspec//lib/rubocop/cop/rspec/predicate_matcher.rb#44
+  # source://rubocop-rspec//lib/rubocop/cop/rspec/predicate_matcher.rb#50
   def be_boolthy?(param0 = T.unsafe(nil)); end
 
-  # source://rubocop-rspec//lib/rubocop/cop/rspec/predicate_matcher.rb#29
+  # source://rubocop-rspec//lib/rubocop/cop/rspec/predicate_matcher.rb#31
   def predicate_in_actual?(param0 = T.unsafe(nil)); end
 
   private
 
   # @return [Boolean]
   #
-  # source://rubocop-rspec//lib/rubocop/cop/rspec/predicate_matcher.rb#48
+  # source://rubocop-rspec//lib/rubocop/cop/rspec/predicate_matcher.rb#54
   def boolean_matcher?(node); end
+
+  # @return [Boolean]
+  #
+  # source://rubocop-rspec//lib/rubocop/cop/rspec/predicate_matcher.rb#40
+  def cannot_replace_predicate?(send_node); end
 
   # source://rubocop-rspec//lib/rubocop/cop/rspec/predicate_matcher.rb#16
   def check_inflected(node); end
 
-  # source://rubocop-rspec//lib/rubocop/cop/rspec/predicate_matcher.rb#60
+  # source://rubocop-rspec//lib/rubocop/cop/rspec/predicate_matcher.rb#66
   def message_inflected(predicate); end
 
   # @return [Boolean]
   #
-  # source://rubocop-rspec//lib/rubocop/cop/rspec/predicate_matcher.rb#56
+  # source://rubocop-rspec//lib/rubocop/cop/rspec/predicate_matcher.rb#62
   def predicate?(sym); end
 
-  # source://rubocop-rspec//lib/rubocop/cop/rspec/predicate_matcher.rb#85
+  # source://rubocop-rspec//lib/rubocop/cop/rspec/predicate_matcher.rb#89
   def remove_predicate(corrector, predicate); end
 
-  # source://rubocop-rspec//lib/rubocop/cop/rspec/predicate_matcher.rb#96
+  # source://rubocop-rspec//lib/rubocop/cop/rspec/predicate_matcher.rb#100
   def rewrite_matcher(corrector, predicate, matcher); end
 
-  # source://rubocop-rspec//lib/rubocop/cop/rspec/predicate_matcher.rb#67
+  # source://rubocop-rspec//lib/rubocop/cop/rspec/predicate_matcher.rb#72
   def to_predicate_matcher(name); end
 
   # @return [Boolean]
   #
-  # source://rubocop-rspec//lib/rubocop/cop/rspec/predicate_matcher.rb#107
+  # source://rubocop-rspec//lib/rubocop/cop/rspec/predicate_matcher.rb#111
   def true?(to_symbol, matcher); end
 end
 
@@ -4010,7 +4016,7 @@ class RuboCop::Cop::RSpec::MultipleExpectations < ::RuboCop::Cop::RSpec::Base
   # source://rubocop-rspec//lib/rubocop/cop/rspec/multiple_expectations.rb#86
   def expect?(param0 = T.unsafe(nil)); end
 
-  # source://rubocop/1.70.0/lib/rubocop/cop/exclude_limit.rb#11
+  # source://rubocop/1.73.1/lib/rubocop/cop/exclude_limit.rb#11
   def max=(value); end
 
   # source://rubocop-rspec//lib/rubocop/cop/rspec/multiple_expectations.rb#93
@@ -4125,7 +4131,7 @@ RuboCop::Cop::RSpec::MultipleExpectations::TRUE_NODE = T.let(T.unsafe(nil), Proc
 class RuboCop::Cop::RSpec::MultipleMemoizedHelpers < ::RuboCop::Cop::RSpec::Base
   include ::RuboCop::Cop::RSpec::Variable
 
-  # source://rubocop/1.70.0/lib/rubocop/cop/exclude_limit.rb#11
+  # source://rubocop/1.73.1/lib/rubocop/cop/exclude_limit.rb#11
   def max=(value); end
 
   # source://rubocop-rspec//lib/rubocop/cop/rspec/multiple_memoized_helpers.rb#91
@@ -4467,7 +4473,7 @@ end
 class RuboCop::Cop::RSpec::NestedGroups < ::RuboCop::Cop::RSpec::Base
   include ::RuboCop::Cop::RSpec::TopLevelGroup
 
-  # source://rubocop/1.70.0/lib/rubocop/cop/exclude_limit.rb#11
+  # source://rubocop/1.73.1/lib/rubocop/cop/exclude_limit.rb#11
   def max=(value); end
 
   # source://rubocop-rspec//lib/rubocop/cop/rspec/nested_groups.rb#107
@@ -4891,21 +4897,21 @@ RuboCop::Cop::RSpec::PendingWithoutReason::MSG = T.let(T.unsafe(nil), String)
 #   # good - the above code is rewritten to it by this cop
 #   expect(foo.something?).to be_truthy
 #
-# source://rubocop-rspec//lib/rubocop/cop/rspec/predicate_matcher.rb#318
+# source://rubocop-rspec//lib/rubocop/cop/rspec/predicate_matcher.rb#324
 class RuboCop::Cop::RSpec::PredicateMatcher < ::RuboCop::Cop::RSpec::Base
   include ::RuboCop::Cop::ConfigurableEnforcedStyle
   include ::RuboCop::Cop::RSpec::InflectedHelper
   include ::RuboCop::Cop::RSpec::ExplicitHelper
   extend ::RuboCop::Cop::AutoCorrector
 
-  # source://rubocop-rspec//lib/rubocop/cop/rspec/predicate_matcher.rb#335
+  # source://rubocop-rspec//lib/rubocop/cop/rspec/predicate_matcher.rb#345
   def on_block(node); end
 
-  # source://rubocop-rspec//lib/rubocop/cop/rspec/predicate_matcher.rb#326
+  # source://rubocop-rspec//lib/rubocop/cop/rspec/predicate_matcher.rb#332
   def on_send(node); end
 end
 
-# source://rubocop-rspec//lib/rubocop/cop/rspec/predicate_matcher.rb#324
+# source://rubocop-rspec//lib/rubocop/cop/rspec/predicate_matcher.rb#330
 RuboCop::Cop::RSpec::PredicateMatcher::RESTRICT_ON_SEND = T.let(T.unsafe(nil), Array)
 
 # Check for `once` and `twice` receive counts matchers usage.
@@ -7051,9 +7057,6 @@ class RuboCop::RSpec::AlignLetBrace
   def token; end
 end
 
-# source://rubocop-rspec//lib/rubocop/rspec.rb#7
-RuboCop::RSpec::CONFIG_DEFAULT = T.let(T.unsafe(nil), Pathname)
-
 # Wrapper for RSpec DSL methods
 #
 # source://rubocop-rspec//lib/rubocop/rspec/concept.rb#6
@@ -7249,17 +7252,6 @@ class RuboCop::RSpec::Hook < ::RuboCop::RSpec::Concept
   #
   # source://rubocop-rspec//lib/rubocop/rspec/hook.rb#47
   def valid_scope?(node); end
-end
-
-# Because RuboCop doesn't yet support plugins, we have to monkey patch in a
-# bit of our configuration.
-#
-# source://rubocop-rspec//lib/rubocop/rspec/inject.rb#7
-module RuboCop::RSpec::Inject
-  class << self
-    # source://rubocop-rspec//lib/rubocop/rspec/inject.rb#8
-    def defaults!; end
-  end
 end
 
 # Contains node matchers for common RSpec DSL.
@@ -7466,8 +7458,25 @@ module RuboCop::RSpec::Node
   def recursive_literal_or_const?; end
 end
 
-# source://rubocop-rspec//lib/rubocop/rspec.rb#6
-RuboCop::RSpec::PROJECT_ROOT = T.let(T.unsafe(nil), Pathname)
+# A plugin that integrates RuboCop RSpec with RuboCop's plugin system.
+#
+# source://rubocop-rspec//lib/rubocop/rspec/plugin.rb#8
+class RuboCop::RSpec::Plugin < ::LintRoller::Plugin
+  # :nocov:
+  #
+  # source://rubocop-rspec//lib/rubocop/rspec/plugin.rb#10
+  def about; end
+
+  # source://rubocop-rspec//lib/rubocop/rspec/plugin.rb#24
+  def rules(_context); end
+
+  # :nocov:
+  #
+  # @return [Boolean]
+  #
+  # source://rubocop-rspec//lib/rubocop/rspec/plugin.rb#20
+  def supported?(context); end
+end
 
 # Version information for the RSpec RuboCop plugin.
 #
@@ -7486,46 +7495,46 @@ class RuboCop::RSpec::Wording
   # source://rubocop-rspec//lib/rubocop/rspec/wording.rb#14
   def initialize(text, ignore:, replace:); end
 
-  # source://rubocop-rspec//lib/rubocop/rspec/wording.rb#21
+  # source://rubocop-rspec//lib/rubocop/rspec/wording.rb#20
   def rewrite; end
 
   private
 
-  # source://rubocop-rspec//lib/rubocop/rspec/wording.rb#80
+  # source://rubocop-rspec//lib/rubocop/rspec/wording.rb#78
   def append_suffix(word, suffix); end
 
   # @return [Boolean]
   #
-  # source://rubocop-rspec//lib/rubocop/rspec/wording.rb#65
+  # source://rubocop-rspec//lib/rubocop/rspec/wording.rb#63
   def ignored_word?(word); end
 
   # Returns the value of attribute ignores.
   #
-  # source://rubocop-rspec//lib/rubocop/rspec/wording.rb#39
+  # source://rubocop-rspec//lib/rubocop/rspec/wording.rb#37
   def ignores; end
 
-  # source://rubocop-rspec//lib/rubocop/rspec/wording.rb#51
+  # source://rubocop-rspec//lib/rubocop/rspec/wording.rb#49
   def remove_should_and_pluralize; end
 
-  # source://rubocop-rspec//lib/rubocop/rspec/wording.rb#41
+  # source://rubocop-rspec//lib/rubocop/rspec/wording.rb#39
   def replace_prefix(pattern, replacement); end
 
   # Returns the value of attribute replacements.
   #
-  # source://rubocop-rspec//lib/rubocop/rspec/wording.rb#39
+  # source://rubocop-rspec//lib/rubocop/rspec/wording.rb#37
   def replacements; end
 
-  # source://rubocop-rspec//lib/rubocop/rspec/wording.rb#69
+  # source://rubocop-rspec//lib/rubocop/rspec/wording.rb#67
   def substitute(word); end
 
   # Returns the value of attribute text.
   #
-  # source://rubocop-rspec//lib/rubocop/rspec/wording.rb#39
+  # source://rubocop-rspec//lib/rubocop/rspec/wording.rb#37
   def text; end
 
   # @return [Boolean]
   #
-  # source://rubocop-rspec//lib/rubocop/rspec/wording.rb#47
+  # source://rubocop-rspec//lib/rubocop/rspec/wording.rb#45
   def uppercase?(word); end
 end
 
