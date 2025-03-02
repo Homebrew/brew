@@ -14,47 +14,52 @@ module ParallelTests
     #
     # @return [Boolean]
     #
-    # source://parallel_tests//lib/parallel_tests.rb#52
+    # source://parallel_tests//lib/parallel_tests.rb#66
     def bundler_enabled?; end
 
-    # source://parallel_tests//lib/parallel_tests.rb#97
+    # source://parallel_tests//lib/parallel_tests.rb#111
     def delta; end
 
-    # source://parallel_tests//lib/parallel_tests.rb#16
+    # source://parallel_tests//lib/parallel_tests.rb#28
+    def determine_multiple(multiple); end
+
+    # used by external libraries, do not rename or change api
+    #
+    # source://parallel_tests//lib/parallel_tests.rb#18
     def determine_number_of_processes(count); end
 
     # @return [Boolean]
     #
-    # source://parallel_tests//lib/parallel_tests.rb#68
+    # source://parallel_tests//lib/parallel_tests.rb#82
     def first_process?; end
 
     # @return [Boolean]
     #
-    # source://parallel_tests//lib/parallel_tests.rb#72
+    # source://parallel_tests//lib/parallel_tests.rb#86
     def last_process?; end
 
-    # source://parallel_tests//lib/parallel_tests.rb#93
+    # source://parallel_tests//lib/parallel_tests.rb#107
     def now; end
 
-    # source://parallel_tests//lib/parallel_tests.rb#89
+    # source://parallel_tests//lib/parallel_tests.rb#103
     def number_of_running_processes; end
 
-    # source://parallel_tests//lib/parallel_tests.rb#41
+    # source://parallel_tests//lib/parallel_tests.rb#55
     def pid_file_path; end
 
-    # source://parallel_tests//lib/parallel_tests.rb#37
+    # source://parallel_tests//lib/parallel_tests.rb#51
     def pids; end
 
-    # source://parallel_tests//lib/parallel_tests.rb#45
+    # source://parallel_tests//lib/parallel_tests.rb#59
     def stop_all_processes; end
 
-    # source://parallel_tests//lib/parallel_tests.rb#84
+    # source://parallel_tests//lib/parallel_tests.rb#98
     def wait_for_other_processes_to_finish; end
 
-    # source://parallel_tests//lib/parallel_tests.rb#24
+    # source://parallel_tests//lib/parallel_tests.rb#38
     def with_pid_file; end
 
-    # source://parallel_tests//lib/parallel_tests.rb#80
+    # source://parallel_tests//lib/parallel_tests.rb#94
     def with_ruby_binary(command); end
   end
 end
@@ -145,6 +150,9 @@ class ParallelTests::CLI
   # source://parallel_tests//lib/parallel_tests/cli.rb#428
   def use_colors?; end
 end
+
+# source://parallel_tests//lib/parallel_tests.rb#9
+ParallelTests::DEFAULT_MULTIPLY_PROCESSES = T.let(T.unsafe(nil), Float)
 
 # source://parallel_tests//lib/parallel_tests/grouper.rb#3
 class ParallelTests::Grouper
