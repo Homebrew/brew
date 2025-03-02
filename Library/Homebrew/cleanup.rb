@@ -3,7 +3,6 @@
 
 require "utils/bottles"
 
-require "attrable"
 require "formula"
 require "cask/cask_loader"
 
@@ -209,11 +208,8 @@ module Homebrew
       end
     end
 
-    extend Attrable
-
     PERIODIC_CLEAN_FILE = (HOMEBREW_CACHE/".cleaned").freeze
 
-    attr_predicate :dry_run?, :scrub?, :prune?
     attr_reader :args, :days, :cache, :disk_cleanup_size
 
     def initialize(*args, dry_run: false, scrub: false, days: nil, cache: HOMEBREW_CACHE)
@@ -226,6 +222,15 @@ module Homebrew
       @cache = cache
       @cleaned_up_paths = Set.new
     end
+
+    sig { returns(T::Boolean) }
+    def dry_run? = @dry_run
+
+    sig { returns(T::Boolean) }
+    def prune? = @prune
+
+    sig { returns(T::Boolean) }
+    def scrub? = @scrub
 
     def self.install_formula_clean!(formula, dry_run: false)
       return if Homebrew::EnvConfig.no_install_cleanup?

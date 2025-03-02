@@ -1,4 +1,4 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
 
 require "cask/audit"
@@ -6,22 +6,43 @@ require "cask/audit"
 module Cask
   # Helper class for auditing all available languages of a cask.
   class Auditor
+    sig { params(cask: ::Cask::Cask, options: T.untyped).returns(T::Set[String]) }
     def self.audit(cask, **options)
       new(cask, **options).audit
     end
 
-    attr_reader :cask, :language
+    sig { returns(::Cask::Cask) }
+    attr_reader :cask
 
+    sig { returns(T.nilable(String)) }
+    attr_reader :language
+
+    sig {
+      params(
+        cask:                  ::Cask::Cask,
+        audit_download:        T::Boolean,
+        audit_online:          T.nilable(T::Boolean),
+        audit_strict:          T.nilable(T::Boolean),
+        audit_signing:         T.nilable(T::Boolean),
+        audit_token_conflicts: T.nilable(T::Boolean),
+        audit_new_cask:        T.nilable(T::Boolean),
+        quarantine:            T::Boolean,
+        any_named_args:        T::Boolean,
+        language:              T.nilable(String),
+        only:                  T::Array[Symbol],
+        except:                T::Array[Symbol],
+      ).void
+    }
     def initialize(
       cask,
-      audit_download: nil,
+      audit_download: false,
       audit_online: nil,
       audit_strict: nil,
       audit_signing: nil,
       audit_token_conflicts: nil,
       audit_new_cask: nil,
-      quarantine: nil,
-      any_named_args: nil,
+      quarantine: false,
+      any_named_args: false,
       language: nil,
       only: [],
       except: []
@@ -42,17 +63,18 @@ module Cask
 
     LANGUAGE_BLOCK_LIMIT = 10
 
+    sig { returns(T::Set[String]) }
     def audit
       errors = Set.new
 
-      if !language && language_blocks
-        sample_languages = if language_blocks.length > LANGUAGE_BLOCK_LIMIT && !@audit_new_cask
-          sample_keys = language_blocks.keys.sample(LANGUAGE_BLOCK_LIMIT)
+      if !language && (blocks = language_blocks)
+        sample_languages = if blocks.length > LANGUAGE_BLOCK_LIMIT && !@audit_new_cask
+          sample_keys = T.must(blocks.keys.sample(LANGUAGE_BLOCK_LIMIT))
           ohai "Auditing a sample of available languages for #{cask}: " \
                "#{sample_keys.map { |lang| lang[0].to_s }.to_sentence}"
-          language_blocks.select { |k| sample_keys.include?(k) }
+          blocks.select { |k| sample_keys.include?(k) }
         else
-          language_blocks
+          blocks
         end
 
         sample_languages.each_key do |l|
@@ -74,14 +96,16 @@ module Cask
 
     private
 
+    sig { params(audit: T.nilable(Audit)).returns(T::Boolean) }
     def output_summary?(audit = nil)
-      return true if @any_named_args.present?
-      return true if @audit_strict.present?
-      return false if audit.blank?
+      return true if @any_named_args
+      return true if @audit_strict
+      return false if audit.nil?
 
       audit.errors?
     end
 
+    sig { params(languages: T::Array[String]).returns(::Cask::Audit) }
     def audit_languages(languages)
       original_config = cask.config
       localized_config = original_config.merge(Config.new(explicit: { languages: }))
@@ -92,6 +116,7 @@ module Cask
       cask.config = original_config
     end
 
+    sig { params(cask: ::Cask::Cask).returns(::Cask::Audit) }
     def audit_cask_instance(cask)
       audit = Audit.new(
         cask,
@@ -108,6 +133,7 @@ module Cask
       audit.run!
     end
 
+    sig { returns(T.nilable(T::Hash[T::Array[String], T.proc.returns(T.untyped)])) }
     def language_blocks
       cask.instance_variable_get(:@dsl).instance_variable_get(:@language_blocks)
     end

@@ -5,7 +5,4 @@
 # Please instead update this file by running `bin/tapioca dsl Cask::DSL::Caveats`.
 
 
-class Cask::DSL::Caveats
-  sig { returns(T::Boolean) }
-  def discontinued?; end
-end
+class Cask::DSL::Caveats; end

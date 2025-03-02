@@ -140,12 +140,4 @@ class Formula
 
   sig { params(args: T.untyped, block: T.untyped).returns(T.untyped) }
   def version(*args, &block); end
-
-  class << self
-    sig { returns(T::Boolean) }
-    def loaded_from_api?; end
-
-    sig { returns(T::Boolean) }
-    def on_system_blocks_exist?; end
-  end
 end

@@ -8,7 +8,7 @@ module Cask
   module Staged
     extend T::Helpers
 
-    requires_ancestor { Kernel }
+    requires_ancestor { ::Cask::DSL::Base }
 
     Paths = T.type_alias { T.any(String, Pathname, T::Array[T.any(String, Pathname)]) }
     sig { params(paths: Paths, permissions_str: String).void }

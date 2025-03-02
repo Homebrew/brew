@@ -120,9 +120,6 @@ class Cask::Cask
   sig { params(args: T.untyped, block: T.untyped).returns(T::Boolean) }
   def livecheckable?(*args, &block); end
 
-  sig { returns(T::Boolean) }
-  def loaded_from_api?; end
-
   sig { params(args: T.untyped, block: T.untyped).returns(T.untyped) }
   def manpage(*args, &block); end
 

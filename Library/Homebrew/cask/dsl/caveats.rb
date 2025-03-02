@@ -1,8 +1,6 @@
 # typed: true # rubocop:todo Sorbet/StrictSigil
 # frozen_string_literal: true
 
-require "attrable"
-
 module Cask
   class DSL
     # Class corresponding to the `caveats` stanza.
@@ -15,10 +13,6 @@ module Cask
     # to the output by the caller, but that feature is only for the
     # convenience of cask authors.
     class Caveats < Base
-      extend Attrable
-
-      attr_predicate :discontinued?
-
       def initialize(*args)
         super
         @built_in_caveats = {}
@@ -36,6 +30,9 @@ module Cask
       end
 
       private_class_method :caveat
+
+      sig { returns(T::Boolean) }
+      def discontinued? = @discontinued
 
       sig { returns(String) }
       def to_s
