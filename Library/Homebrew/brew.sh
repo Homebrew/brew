@@ -969,13 +969,6 @@ then
   export HOMEBREW_DEVELOPER_COMMAND="1"
 fi
 
-# Provide a (temporary, undocumented) way to disable Sorbet globally if needed
-# to avoid reverting the above.
-if [[ -n "${HOMEBREW_NO_SORBET_RUNTIME}" ]]
-then
-  unset HOMEBREW_SORBET_RUNTIME
-fi
-
 if [[ -n "${HOMEBREW_DEVELOPER_COMMAND}" && -z "${HOMEBREW_DEVELOPER}" ]]
 then
   if [[ -z "${HOMEBREW_DEV_CMD_RUN}" ]]
@@ -997,6 +990,13 @@ if [[ -n "${HOMEBREW_DEVELOPER}" || -n "${HOMEBREW_DEV_CMD_RUN}" ]]
 then
   # Always run with Sorbet for Homebrew developers or when a Homebrew developer command has been run.
   export HOMEBREW_SORBET_RUNTIME="1"
+fi
+
+# Provide a (temporary, undocumented) way to disable Sorbet globally if needed
+# to avoid reverting the above.
+if [[ -n "${HOMEBREW_NO_SORBET_RUNTIME}" ]]
+then
+  unset HOMEBREW_SORBET_RUNTIME
 fi
 
 if [[ -f "${HOMEBREW_LIBRARY}/Homebrew/cmd/${HOMEBREW_COMMAND}.sh" ]]
