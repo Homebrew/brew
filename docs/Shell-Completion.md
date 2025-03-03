@@ -74,3 +74,15 @@ if test -d (brew --prefix)"/share/fish/vendor_completions.d"
     set -p fish_complete_path (brew --prefix)/share/fish/vendor_completions.d
 end
 ```
+
+## Configuring Completions in `pwsh`
+
+To make Homebrew's completions available in `pwsh` (PowerShell), you must source the definitions as part of your shell's startup. Add the following to your `$PROFILE`, for example: `~/.config/powershell/Microsoft.PowerShell_profile.ps1`:
+
+```pwsh
+if ((Get-Command brew) -and (Test-Path ($completions = "$(brew --prefix)/share/pwsh/completions"))) {
+  foreach ($f in Get-ChildItem -Path $completions -File) {
+    . $f
+  }
+}
+```

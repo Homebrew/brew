@@ -533,7 +533,7 @@ module RuboCop
 
           correctable_shell_completion_node(install) do |node, shell, base_name, executable, subcmd, shell_parameter|
             # generate_completions_from_executable only applicable if shell is passed
-            next unless shell_parameter.match?(/(bash|zsh|fish)/)
+            next unless shell_parameter.match?(/(bash|zsh|fish|pwsh)/)
 
             base_name = base_name.delete_prefix("_").delete_suffix(".fish")
             shell = shell.to_s.delete_suffix("_completion").to_sym
@@ -541,6 +541,7 @@ module RuboCop
                                        .delete_suffix("bash")
                                        .delete_suffix("zsh")
                                        .delete_suffix("fish")
+                                       .delete_suffix("pwsh")
             shell_parameter_format = if shell_parameter_stripped.empty?
               nil
             elsif shell_parameter_stripped == "--"

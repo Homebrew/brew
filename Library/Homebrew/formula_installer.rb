@@ -29,7 +29,6 @@ require "utils/fork"
 # Installer for a formula.
 class FormulaInstaller
   include FormulaCellarChecks
-  extend Attrable
 
   ETC_VAR_DIRS = T.let([HOMEBREW_PREFIX/"etc", HOMEBREW_PREFIX/"var"].freeze, T::Array[Pathname])
 
@@ -44,12 +43,6 @@ class FormulaInstaller
 
   sig { returns(T::Boolean) }
   attr_accessor :link_keg
-
-  attr_predicate :installed_as_dependency?, :installed_on_request?
-  attr_predicate :show_summary_heading?, :show_header?
-  attr_predicate :force_bottle?, :ignore_deps?, :only_deps?, :interactive?, :git?, :force?, :overwrite?, :keep_tmp?
-  attr_predicate :debug_symbols?
-  attr_predicate :verbose?, :debug?, :quiet?
 
   sig {
     params(
@@ -147,6 +140,54 @@ class FormulaInstaller
     # Take the original formula instance, which might have been swapped from an API instance to a source instance
     @formula = T.let(T.must(previously_fetched_formula), Formula) if previously_fetched_formula
   end
+
+  sig { returns(T::Boolean) }
+  def debug? = @debug
+
+  sig { returns(T::Boolean) }
+  def debug_symbols? = @debug_symbols
+
+  sig { returns(T::Boolean) }
+  def force? = @force
+
+  sig { returns(T::Boolean) }
+  def force_bottle? = @force_bottle
+
+  sig { returns(T::Boolean) }
+  def git? = @git
+
+  sig { returns(T::Boolean) }
+  def ignore_deps? = @ignore_deps
+
+  sig { returns(T::Boolean) }
+  def installed_as_dependency? = @installed_as_dependency
+
+  sig { returns(T::Boolean) }
+  def installed_on_request? = @installed_on_request
+
+  sig { returns(T::Boolean) }
+  def interactive? = @interactive
+
+  sig { returns(T::Boolean) }
+  def keep_tmp? = @keep_tmp
+
+  sig { returns(T::Boolean) }
+  def only_deps? = @only_deps
+
+  sig { returns(T::Boolean) }
+  def overwrite? = @overwrite
+
+  sig { returns(T::Boolean) }
+  def quiet? = @quiet
+
+  sig { returns(T::Boolean) }
+  def show_header? = @show_header
+
+  sig { returns(T::Boolean) }
+  def show_summary_heading? = @show_summary_heading
+
+  sig { returns(T::Boolean) }
+  def verbose? = @verbose
 
   sig { returns(T::Set[Formula]) }
   def self.attempted

@@ -1,9 +1,10 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
 
 module Cask
   class Uninstall
-    def self.uninstall_casks(*casks, binaries: nil, force: false, verbose: false)
+    sig { params(casks: ::Cask::Cask, binaries: T::Boolean, force: T::Boolean, verbose: T::Boolean).void }
+    def self.uninstall_casks(*casks, binaries: false, force: false, verbose: false)
       require "cask/installer"
 
       casks.each do |cask|

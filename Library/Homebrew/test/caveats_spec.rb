@@ -248,6 +248,7 @@ RSpec.describe Caveats do
       let(:bash_completion_dir) { path/"etc/bash_completion.d" }
       let(:fish_vendor_completions) { path/"share/fish/vendor_completions.d" }
       let(:zsh_site_functions) { path/"share/zsh/site-functions" }
+      let(:pwsh_completion_dir) { path/"share/pwsh/completions" }
 
       before do
         # don't try to load/fetch gcc/glibc
@@ -273,6 +274,12 @@ RSpec.describe Caveats do
         zsh_site_functions.mkpath
         FileUtils.touch zsh_site_functions/f.name
         expect(caveats).to include(HOMEBREW_PREFIX/"share/zsh/site-functions")
+      end
+
+      it "includes where pwsh completions have been installed to" do
+        pwsh_completion_dir.mkpath
+        FileUtils.touch pwsh_completion_dir/f.name
+        expect(caveats).to include(HOMEBREW_PREFIX/"share/pwsh/completions")
       end
     end
   end
