@@ -39,13 +39,17 @@ git() {
   "${GIT_EXECUTABLE}" "$@"
 }
 
+# "master" is used here so we get a deterministic branch name, no matter
+# what git version we're using.
 git_init_if_necessary() {
+  local branch_name
+
   safe_cd "${HOMEBREW_REPOSITORY}"
   if [[ ! -d ".git" ]]
   then
     set -e
     trap '{ rm -rf .git; exit 1; }' EXIT
-    git init
+    git -c init.defaultBranch=master init --quiet
     git config --bool core.autocrlf false
     git config --bool core.symlinks true
     if [[ "${HOMEBREW_BREW_DEFAULT_GIT_REMOTE}" != "${HOMEBREW_BREW_GIT_REMOTE}" ]]
@@ -56,7 +60,13 @@ git_init_if_necessary() {
     git config remote.origin.fetch "+refs/heads/*:refs/remotes/origin/*"
     git fetch --force --tags origin
     git remote set-head origin --auto >/dev/null
-    git reset --hard origin/master
+    branch_name="$(upstream_branch)"
+    git reset --hard "origin/${branch_name}"
+    if [[ "${branch_name}" != "master" ]]
+    then
+      git branch -m master "${branch_name}"
+    fi
+    git branch -u "origin/${branch_name}" "${branch_name}"
     SKIP_FETCH_BREW_REPOSITORY=1
     set +e
     trap - EXIT
@@ -68,7 +78,7 @@ git_init_if_necessary() {
   then
     set -e
     trap '{ rm -rf .git; exit 1; }' EXIT
-    git init
+    git -c init.defaultBranch=master init --quiet
     git config --bool core.autocrlf false
     git config --bool core.symlinks true
     if [[ "${HOMEBREW_CORE_DEFAULT_GIT_REMOTE}" != "${HOMEBREW_CORE_GIT_REMOTE}" ]]
@@ -77,9 +87,15 @@ git_init_if_necessary() {
     fi
     git config remote.origin.url "${HOMEBREW_CORE_GIT_REMOTE}"
     git config remote.origin.fetch "+refs/heads/*:refs/remotes/origin/*"
-    git fetch --force origin refs/heads/master:refs/remotes/origin/master
+    git fetch --force origin
     git remote set-head origin --auto >/dev/null
-    git reset --hard origin/master
+    branch_name="$(upstream_branch)"
+    git reset --hard "origin/${branch_name}"
+    if [[ "${branch_name}" != "master" ]]
+    then
+      git branch -m master "${branch_name}"
+    fi
+    git branch -u "origin/${branch_name}" "${branch_name}"
     SKIP_FETCH_CORE_REPOSITORY=1
     set +e
     trap - EXIT
@@ -197,11 +213,13 @@ merge_or_rebase() {
   local DIR
   local TAP_VAR
   local UPSTREAM_BRANCH
+  local UPSTREAM_DEFAULT_BRANCH
 
   DIR="$1"
   cd "${DIR}" || return
   TAP_VAR="$2"
   UPSTREAM_BRANCH="$3"
+  UPSTREAM_DEFAULT_BRANCH="${UPSTREAM_BRANCH}"
   unset STASHED
 
   trap reset_on_interrupt SIGINT
@@ -242,7 +260,7 @@ merge_or_rebase() {
 Could not 'git stash' in ${DIR}!
 Please stash/commit manually if you need to keep your changes or, if not, run:
   cd ${DIR}
-  git reset --hard origin/master
+  git reset --hard origin/${UPSTREAM_DEFAULT_BRANCH}
 EOS
     fi
     git reset --hard "${QUIET_ARGS[@]}"
@@ -260,10 +278,10 @@ EOS
     then
       git checkout --force "${UPSTREAM_BRANCH}" "${QUIET_ARGS[@]}"
     else
-      if [[ -n "${UPSTREAM_TAG}" && "${UPSTREAM_BRANCH}" != "master" ]] &&
-         [[ "${INITIAL_BRANCH}" != "master" ]]
+      if [[ -n "${UPSTREAM_TAG}" && "${UPSTREAM_BRANCH}" != "${UPSTREAM_DEFAULT_BRANCH}" ]] &&
+         [[ "${INITIAL_BRANCH}" != "${UPSTREAM_DEFAULT_BRANCH}" ]]
       then
-        git branch --force "master" "origin/master" "${QUIET_ARGS[@]}"
+        git branch --force "${UPSTREAM_DEFAULT_BRANCH}" "origin/${UPSTREAM_DEFAULT_BRANCH}" "${QUIET_ARGS[@]}"
       fi
 
       git checkout --force -B "${UPSTREAM_BRANCH}" "${REMOTE_REF}" "${QUIET_ARGS[@]}"
@@ -522,8 +540,6 @@ EOS
     echo "HOMEBREW_BREW_GIT_REMOTE set: using ${HOMEBREW_BREW_GIT_REMOTE} as the Homebrew/brew Git remote."
     git remote set-url origin "${HOMEBREW_BREW_GIT_REMOTE}"
     git config remote.origin.fetch "+refs/heads/*:refs/remotes/origin/*"
-    git fetch --force --tags origin
-    SKIP_FETCH_BREW_REPOSITORY=1
   fi
 
   if [[ -d "${HOMEBREW_CORE_REPOSITORY}" ]] &&
@@ -541,8 +557,6 @@ EOS
     echo "HOMEBREW_CORE_GIT_REMOTE set: using ${HOMEBREW_CORE_GIT_REMOTE} as the Homebrew/homebrew-core Git remote."
     git remote set-url origin "${HOMEBREW_CORE_GIT_REMOTE}"
     git config remote.origin.fetch "+refs/heads/*:refs/remotes/origin/*"
-    git fetch --force origin refs/heads/master:refs/remotes/origin/master
-    SKIP_FETCH_CORE_REPOSITORY=1
   fi
 
   safe_cd "${HOMEBREW_REPOSITORY}"
@@ -725,14 +739,15 @@ EOS
       local tmp_failure_file="${DIR}/.git/TMP_FETCH_FAILURES"
       rm -f "${tmp_failure_file}"
 
-      if [[ -n "${HOMEBREW_UPDATE_AUTO}" ]]
+      # Capture stderr to tmp_failure_file
+      if ! git fetch --tags --force "${QUIET_ARGS[@]}" origin \
+         "refs/heads/${UPSTREAM_BRANCH_DIR}:refs/remotes/origin/${UPSTREAM_BRANCH_DIR}" 2>>"${tmp_failure_file}"
       then
-        git fetch --tags --force "${QUIET_ARGS[@]}" origin \
-          "refs/heads/${UPSTREAM_BRANCH_DIR}:refs/remotes/origin/${UPSTREAM_BRANCH_DIR}" 2>/dev/null
-      else
-        # Capture stderr to tmp_failure_file
-        if ! git fetch --tags --force "${QUIET_ARGS[@]}" origin \
-           "refs/heads/${UPSTREAM_BRANCH_DIR}:refs/remotes/origin/${UPSTREAM_BRANCH_DIR}" 2>>"${tmp_failure_file}"
+        if [[ -f "${tmp_failure_file}" ]] &&
+           [[ "$(cat "${tmp_failure_file}")" == "fatal: couldn't find remote ref refs/heads/${UPSTREAM_BRANCH_DIR}" ]]
+        then
+          echo "${DIR}" >>"${missing_remote_ref_dirs_file}"
+        elif [[ -z "${HOMEBREW_UPDATE_AUTO}" ]]
         then
           # Reprint fetch errors to stderr
           [[ -f "${tmp_failure_file}" ]] && cat "${tmp_failure_file}" 1>&2
@@ -743,12 +758,6 @@ EOS
             echo "${TAP} does not exist! Run \`brew untap ${TAP}\` to remove it." >>"${update_failed_file}"
           else
             echo "Fetching ${DIR} failed!" >>"${update_failed_file}"
-
-            if [[ -f "${tmp_failure_file}" ]] &&
-               [[ "$(cat "${tmp_failure_file}")" == "fatal: couldn't find remote ref refs/heads/${UPSTREAM_BRANCH_DIR}" ]]
-            then
-              echo "${DIR}" >>"${missing_remote_ref_dirs_file}"
-            fi
           fi
         fi
       fi
@@ -762,9 +771,29 @@ EOS
 
   if [[ -f "${missing_remote_ref_dirs_file}" ]]
   then
-    HOMEBREW_MISSING_REMOTE_REF_DIRS="$(cat "${missing_remote_ref_dirs_file}")"
+    while IFS='' read -r DIR
+    do
+      cd "${DIR}"
+      TAP_VAR="$(repository_var_suffix "${DIR}")"
+      UPSTREAM_BRANCH_VAR="UPSTREAM_BRANCH${TAP_VAR}"
+      OLD_BRANCH="${!UPSTREAM_BRANCH_VAR}"
+
+      git fetch "${QUIET_ARGS[@]}" origin "+refs/heads/*:refs/remotes/origin/*"
+      git remote set-head origin --auto >/dev/null
+      NEW_BRANCH="$(upstream_branch)"
+
+      git config remote.origin.fetch "+refs/heads/*:refs/remotes/origin/*"
+      git branch "${QUIET_ARGS[@]}" -m "${OLD_BRANCH}" "${NEW_BRANCH}"
+      git branch "${QUIET_ARGS[@]}" -u "origin/${NEW_BRANCH}" "${NEW_BRANCH}"
+      ohai "${DIR#"${HOMEBREW_LIBRARY}/Taps/"}: changed default branch name from \"${OLD_BRANCH}\" to \"${NEW_BRANCH}\"!" >&2
+      declare UPSTREAM_BRANCH"${TAP_VAR}"="${NEW_BRANCH}"
+
+      # retry fetch
+      git fetch --tags --force "${QUIET_ARGS[@]}" origin \
+        "refs/heads/${NEW_BRANCH}:refs/remotes/origin/${NEW_BRANCH}"
+    done <"${missing_remote_ref_dirs_file}"
+
     rm -f "${missing_remote_ref_dirs_file}"
-    export HOMEBREW_MISSING_REMOTE_REF_DIRS
   fi
 
   for DIR in "${HOMEBREW_REPOSITORY}" "${HOMEBREW_LIBRARY}"/Taps/*/*
@@ -912,7 +941,6 @@ EOS
   # shellcheck disable=SC2031
   if [[ -n "${HOMEBREW_UPDATED}" ]] ||
      [[ -n "${HOMEBREW_UPDATE_FAILED}" ]] ||
-     [[ -n "${HOMEBREW_MISSING_REMOTE_REF_DIRS}" ]] ||
      [[ -n "${HOMEBREW_UPDATE_FORCE}" ]] ||
      [[ -n "${HOMEBREW_MIGRATE_LINUXBREW_FORMULAE}" ]] ||
      [[ -d "${HOMEBREW_LIBRARY}/LinkedKegs" ]] ||
