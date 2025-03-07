@@ -68,6 +68,9 @@ class Homebrew::DevCmd::BumpFormulaPr::Args < Homebrew::CLI::Args
   sig { returns(T::Boolean) }
   def strict?; end
 
+  sig { returns(T.nilable(T::Array[String])) }
+  def synced_with; end
+
   sig { returns(T.nilable(String)) }
   def tag; end
 
