@@ -2067,7 +2067,7 @@ You can skip the installation of dependencies by adding space\-separated values 
 Shorthand for \fBbrew bundle install \-\-upgrade\fP\&\.
 .TP
 \fBbrew bundle dump\fP
-Write all installed casks/formulae/images/taps into a \fBBrewfile\fP in the current directory\.
+Write all installed casks/formulae/images/taps into a \fBBrewfile\fP in the current directory or to a custom file specified with the \fB\-\-file\fP option\.
 .TP
 \fBbrew bundle cleanup\fP
 Uninstall all dependencies not present in the \fBBrewfile\fP\&\.
@@ -2101,10 +2101,10 @@ Run your shell in a \fBbrew bundle exec\fP environment\.
 Print the environment variables that would be set in a \fBbrew bundle exec\fP environment\.
 .TP
 \fB\-\-file\fP
-Read the \fBBrewfile\fP from this location\. Use \fB\-\-file=\-\fP to pipe to stdin/stdout\.
+Read from or write to the \fBBrewfile\fP from this location\. Use \fB\-\-file=\-\fP to pipe to stdin/stdout\.
 .TP
 \fB\-\-global\fP
-Read the \fBBrewfile\fP from \fB$HOMEBREW_BUNDLE_FILE_GLOBAL\fP (if set), \fB${XDG_CONFIG_HOME}/homebrew/Brewfile\fP (if \fB$XDG_CONFIG_HOME\fP is set), \fB~/\.homebrew/Brewfile\fP or \fB~/\.Brewfile\fP otherwise\.
+Read from or write to the \fBBrewfile\fP from \fB$HOMEBREW_BUNDLE_FILE_GLOBAL\fP (if set), \fB${XDG_CONFIG_HOME}/homebrew/Brewfile\fP (if \fB$XDG_CONFIG_HOME\fP is set), \fB~/\.homebrew/Brewfile\fP or \fB~/\.Brewfile\fP otherwise\.
 .TP
 \fB\-v\fP, \fB\-\-verbose\fP
 \fBinstall\fP prints output from commands as they are run\. \fBcheck\fP lists all missing dependencies\.

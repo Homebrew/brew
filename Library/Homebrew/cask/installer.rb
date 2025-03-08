@@ -424,10 +424,13 @@ on_request: true)
             cask_or_formula,
             adopt:                   adopt?,
             binaries:                binaries?,
-            verbose:                 verbose?,
+            force:                   false,
             installed_as_dependency: true,
             installed_on_request:    false,
-            force:                   false,
+            quarantine:              quarantine?,
+            quiet:                   quiet?,
+            require_sha:             require_sha?,
+            verbose:                 verbose?,
           ).install
         else
           Homebrew::Install.perform_preinstall_checks_once
