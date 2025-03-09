@@ -59,7 +59,9 @@ RUN apt-get update \
   && localedef -i en_US -f UTF-8 en_US.UTF-8 \
   && useradd -u "${USER_ID}" --create-home --shell /bin/bash --user-group linuxbrew \
   && echo 'linuxbrew ALL=(ALL) NOPASSWD:ALL' >>/etc/sudoers \
-  && su - linuxbrew -c 'mkdir ~/.linuxbrew'
+  && su - linuxbrew -c 'mkdir ~/.linuxbrew' \
+  && apt-get remove --purge -y sudo \
+  && apt-get autoremove --purge -y
 
 USER linuxbrew
 COPY --chown=linuxbrew:linuxbrew . /home/linuxbrew/.linuxbrew/Homebrew
