@@ -55,27 +55,92 @@ RSpec.describe Utils::Bottles do
   end
  
   describe "#skip_relocation_for_apple_silicon?" do
-    it "returns true for Apple Silicon with default prefix by default" do
-      allow(Hardware::CPU).to receive(:arm?).and_return(true)
-      allow(OS).to receive(:mac?).and_return(true)
-      allow(HOMEBREW_PREFIX).to receive(:to_s).and_return(HOMEBREW_MACOS_ARM_DEFAULT_PREFIX)
-      allow(ENV).to receive(:fetch).with("HOMEBREW_BOTTLE_SKIP_RELOCATION_ARM64", "false").and_return("true")
-    
-      expect(described_class.skip_relocation_for_apple_silicon?).to be true
+    let(:keg) { double("keg") }
+
+    before do
+      allow(keg).to receive(:mach_o_files).and_return([])
     end
+
+   it "returns true for Apple Silicon with default prefix when enabled by env var" do
+     allow(Hardware::CPU).to receive(:arm?).and_return(true)
+     allow(OS).to receive(:mac?).and_return(true)
+     allow(HOMEBREW_PREFIX).to receive(:to_s).and_return(HOMEBREW_MACOS_ARM_DEFAULT_PREFIX)
+     allow(ENV).to receive(:fetch).with("HOMEBREW_BOTTLE_SKIP_RELOCATION_ARM64", "false").and_return("true")
+
+     expect(described_class.skip_relocation_for_apple_silicon?).to be true
+   end
+
+   it "returns true for Apple Silicon with default prefix when no binaries need relocation" do
+    allow(Hardware::CPU).to receive(:arm?).and_return(true)
+    allow(OS).to receive(:mac?).and_return(true)
+    allow(HOMEBREW_PREFIX).to receive(:to_s).and_return(HOMEBREW_MACOS_ARM_DEFAULT_PREFIX)
+    allow(ENV).to receive(:fetch).with("HOMEBREW_BOTTLE_SKIP_RELOCATION_ARM64", "false").and_return("false")
+    
+    expect(described_class.skip_relocation_for_apple_silicon?(keg)).to be true
+  end
+
+  it "returns false for Apple Silicon with default prefix when binaries need relocation" do
+    mach_o_file = double("mach_o_file")
+    allow(keg).to receive(:mach_o_files).and_return([mach_o_file])
+    allow(mach_o_file).to receive(:dylib?).and_return(true)
+    allow(mach_o_file).to receive(:dylib_id).and_return("/usr/local/lib/example.dylib")
+    
+    allow(Hardware::CPU).to receive(:arm?).and_return(true)
+    allow(OS).to receive(:mac?).and_return(true)
+    allow(HOMEBREW_PREFIX).to receive(:to_s).and_return(HOMEBREW_MACOS_ARM_DEFAULT_PREFIX)
+    allow(ENV).to receive(:fetch).with("HOMEBREW_BOTTLE_SKIP_RELOCATION_ARM64", "false").and_return("false")
+    
+    expect(described_class.skip_relocation_for_apple_silicon?(keg)).to be false
+  end
   
-    it "returns false for Intel Mac" do
-      allow(Hardware::CPU).to receive(:arm?).and_return(false)
-      allow(OS).to receive(:mac?).and_return(true)
+  it "returns false for Intel Mac" do
+    allow(Hardware::CPU).to receive(:arm?).and_return(false)
+    allow(OS).to receive(:mac?).and_return(true)
     
-      expect(described_class.skip_relocation_for_apple_silicon?).to be false
-    end
+    expect(described_class.skip_relocation_for_apple_silicon?).to be false
+    expect(described_class.skip_relocation_for_apple_silicon?(keg)).to be false
+  end
   
-    it "returns false for custom prefix on Apple Silicon" do
-      allow(Hardware::CPU).to receive(:arm?).and_return(true)
-      allow(OS).to receive(:mac?).and_return(true)
-      allow(HOMEBREW_PREFIX).to receive(:to_s).and_return("/custom/path")
+  it "returns false for custom prefix on Apple Silicon" do
+    allow(Hardware::CPU).to receive(:arm?).and_return(true)
+    allow(OS).to receive(:mac?).and_return(true)
+    allow(HOMEBREW_PREFIX).to receive(:to_s).and_return("/custom/path")
     
-      expect(described_class.skip_relocation_for_apple_silicon?).to be false
-    end
-  end  
+    expect(described_class.skip_relocation_for_apple_silicon?).to be false
+    expect(described_class.skip_relocation_for_apple_silicon?(keg)).to be false
+  end
+end
+
+describe "#binaries_need_relocation?" do
+  let(:keg) { double("keg") }
+  let(:mach_o_file) { double("mach_o_file") }
+
+  it "returns true when dylib has /usr/local path" do
+    allow(OS).to receive(:mac?).and_return(true)
+    allow(keg).to receive(:mach_o_files).and_return([mach_o_file])
+    allow(mach_o_file).to receive(:dylib?).and_return(true)
+    allow(mach_o_file).to receive(:dylib_id).and_return("/usr/local/lib/libexample.dylib")
+    allow(mach_o_file).to receive(:dynamically_linked_libraries).and_return([])
+    
+    expect(described_class.binaries_need_relocation?(keg)).to be true
+  end
+
+  it "returns true when linked libraries have /usr/local path" do
+    allow(OS).to receive(:mac?).and_return(true)
+    allow(keg).to receive(:mach_o_files).and_return([mach_o_file])
+    allow(mach_o_file).to receive(:dylib?).and_return(false)
+    allow(mach_o_file).to receive(:dynamically_linked_libraries).and_return(["/usr/local/lib/libexample.dylib"])
+    
+    expect(described_class.binaries_need_relocation?(keg)).to be true
+  end
+
+  it "returns false when no paths need relocation" do
+    allow(OS).to receive(:mac?).and_return(true)
+    allow(keg).to receive(:mach_o_files).and_return([mach_o_file])
+    allow(mach_o_file).to receive(:dylib?).and_return(true)
+    allow(mach_o_file).to receive(:dylib_id).and_return("/opt/homebrew/lib/libexample.dylib")
+    allow(mach_o_file).to receive(:dynamically_linked_libraries).and_return(["/opt/homebrew/lib/libother.dylib"])
+    
+    expect(described_class.binaries_need_relocation?(keg)).to be false
+  end
+end

@@ -90,6 +90,7 @@ class AbstractTab
         "tap_git_head" => nil,
       },
       "built_on"                => DevelopmentTools.build_system_info,
+      "skip_relocation_for_apple_silicon" => false,
     }
 
     new(attributes)
@@ -139,7 +140,7 @@ class Tab < AbstractTab
   # @api internal
   attr_accessor :poured_from_bottle
 
-  attr_accessor :built_as_bottle, :changed_files, :stdlib, :aliases
+  attr_accessor :built_as_bottle, :changed_files, :stdlib, :aliases, :skip_relocation_for_apple_silicon
   attr_writer :used_options, :unused_options, :compiler, :source_modified_time
   attr_reader :tapped_from
 
@@ -403,6 +404,7 @@ class Tab < AbstractTab
       "unused_options"          => unused_options.as_flags,
       "built_as_bottle"         => built_as_bottle,
       "poured_from_bottle"      => poured_from_bottle,
+      "skip_relocation_for_apple_silicon" => skip_relocation_for_apple_silicon,
       "loaded_from_api"         => loaded_from_api,
       "installed_as_dependency" => installed_as_dependency,
       "installed_on_request"    => installed_on_request,
