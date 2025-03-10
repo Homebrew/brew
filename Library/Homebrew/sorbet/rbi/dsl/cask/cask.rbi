@@ -31,6 +31,9 @@ class Cask::Cask
   def auto_updates(*args, &block); end
 
   sig { params(args: T.untyped, block: T.untyped).returns(T.untyped) }
+  def bash_completion(*args, &block); end
+
+  sig { params(args: T.untyped, block: T.untyped).returns(T.untyped) }
   def binary(*args, &block); end
 
   sig { params(args: T.untyped, block: T.untyped).returns(T.untyped) }
@@ -91,6 +94,9 @@ class Cask::Cask
   def discontinued?(*args, &block); end
 
   sig { params(args: T.untyped, block: T.untyped).returns(T.untyped) }
+  def fish_completion(*args, &block); end
+
+  sig { params(args: T.untyped, block: T.untyped).returns(T.untyped) }
   def font(*args, &block); end
 
   sig { params(args: T.untyped, block: T.untyped).returns(T.untyped) }
@@ -119,9 +125,6 @@ class Cask::Cask
 
   sig { params(args: T.untyped, block: T.untyped).returns(T::Boolean) }
   def livecheckable?(*args, &block); end
-
-  sig { returns(T::Boolean) }
-  def loaded_from_api?; end
 
   sig { params(args: T.untyped, block: T.untyped).returns(T.untyped) }
   def manpage(*args, &block); end
@@ -194,4 +197,7 @@ class Cask::Cask
 
   sig { params(args: T.untyped, block: T.untyped).returns(T.untyped) }
   def zap(*args, &block); end
+
+  sig { params(args: T.untyped, block: T.untyped).returns(T.untyped) }
+  def zsh_completion(*args, &block); end
 end

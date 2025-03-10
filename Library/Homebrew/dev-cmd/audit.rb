@@ -261,8 +261,8 @@ module Homebrew
                 audit_token_conflicts: args.token_conflicts? || nil,
                 quarantine:            true,
                 any_named_args:        !no_named_args,
-                only:                  args.only,
-                except:                args.except,
+                only:                  args.only || [],
+                except:                args.except || [],
               ).to_a
             end
           end.uniq

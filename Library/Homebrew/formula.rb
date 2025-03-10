@@ -1,7 +1,6 @@
 # typed: strict
 # frozen_string_literal: true
 
-require "attrable"
 require "cache_store"
 require "did_you_mean"
 require "formula_support"
@@ -79,7 +78,6 @@ class Formula
   include Homebrew::Livecheck::Constants
   extend Forwardable
   extend Cachable
-  extend Attrable
   extend APIHashable
   extend T::Helpers
 
@@ -1137,6 +1135,13 @@ class Formula
   sig { returns(Pathname) }
   def fish_completion = share/"fish/vendor_completions.d"
 
+  # The directory where formula's powershell completion files should be
+  # installed.
+  # This is symlinked into `HOMEBREW_PREFIX` after installation or with
+  # `brew link` for formulae that are not keg-only.
+  sig { returns(Pathname) }
+  def pwsh_completion = share/"pwsh/completions"
+
   # The directory used for as the prefix for {#etc} and {#var} files on
   # installation so, despite not being in `HOMEBREW_CELLAR`, they are installed
   # there after pouring a bottle.
@@ -1860,6 +1865,9 @@ class Formula
 
   # Standard parameters for zig builds.
   #
+  # `release_mode` can be set to either `:safe`, `:fast`, or `:small`
+  # with `:fast` being the default value
+  #
   # @api public
   sig {
     params(prefix:       T.any(String, Pathname),
@@ -1989,7 +1997,8 @@ class Formula
   end
   private :extract_macho_slice_from
 
-  # Generate shell completions for a formula for `bash`, `zsh` and `fish`, using the formula's executable.
+  # Generate shell completions for a formula for `bash`, `zsh`, `fish`, and
+  # optionally `pwsh` using the formula's executable.
   #
   # ### Examples
   #
@@ -2003,6 +2012,19 @@ class Formula
   # (zsh_completion/"_foo").write Utils.safe_popen_read({ "SHELL" => "zsh" }, bin/"foo", "completions", "zsh")
   # (fish_completion/"foo.fish").write Utils.safe_popen_read({ "SHELL" => "fish" }, bin/"foo",
   #                                                          "completions", "fish")
+  # ```
+  #
+  # If your executable can generate completions for PowerShell,
+  # you must pass ":pwsh" explicitly along with any other supported shells.
+  # This will pass "powershell" as the completion argument.
+  #
+  # ```ruby
+  # generate_completions_from_executable(bin/"foo", "completions", shells: [:bash, :pwsh])
+  #
+  # # translates to
+  # (bash_completion/"foo").write Utils.safe_popen_read({ "SHELL" => "bash" }, bin/"foo", "completions", "bash")
+  # (pwsh_completion/"foo").write Utils.safe_popen_read({ "SHELL" => "pwsh" }, bin/"foo",
+  #                                                           "completions", "powershell")
   # ```
   #
   # Selecting shells and using a different `base_name`.
@@ -2104,28 +2126,31 @@ class Formula
       bash: bash_completion/base_name,
       zsh:  zsh_completion/"_#{base_name}",
       fish: fish_completion/"#{base_name}.fish",
+      pwsh: pwsh_completion/"#{base_name}.ps1",
     }
 
     shells.each do |shell|
       popen_read_env = { "SHELL" => shell.to_s }
       script_path = completion_script_path_map[shell]
+      # Go's cobra and Rust's clap accept "powershell".
+      shell_argument = (shell == :pwsh) ? "powershell" : shell.to_s
       shell_parameter = if shell_parameter_format.nil?
-        shell.to_s
+        shell_argument.to_s
       elsif shell_parameter_format == :flag
-        "--#{shell}"
+        "--#{shell_argument}"
       elsif shell_parameter_format == :arg
-        "--shell=#{shell}"
+        "--shell=#{shell_argument}"
       elsif shell_parameter_format == :none
         nil
       elsif shell_parameter_format == :click
         prog_name = File.basename(executable).upcase.tr("-", "_")
-        popen_read_env["_#{prog_name}_COMPLETE"] = "#{shell}_source"
+        popen_read_env["_#{prog_name}_COMPLETE"] = "#{shell_argument}_source"
         nil
       elsif shell_parameter_format == :clap
-        popen_read_env["COMPLETE"] = shell.to_s
+        popen_read_env["COMPLETE"] = shell_argument.to_s
         nil
       else
-        "#{shell_parameter_format}#{shell}"
+        "#{shell_parameter_format}#{shell_argument}"
       end
 
       popen_read_args = %w[]
@@ -3288,8 +3313,6 @@ class Formula
 
   # The methods below define the formula DSL.
   class << self
-    extend Attrable
-
     include BuildEnvironment::DSL
     include OnSystem::MacOSAndLinux
 
@@ -3307,6 +3330,7 @@ class Formula
         @skip_clean_paths = T.let(Set.new, T.nilable(T::Set[T.any(String, Symbol)]))
         @link_overwrite_paths = T.let(Set.new, T.nilable(T::Set[String]))
         @loaded_from_api = T.let(false, T.nilable(T::Boolean))
+        @on_system_blocks_exist = T.let(false, T.nilable(T::Boolean))
         @network_access_allowed = T.let(SUPPORTED_NETWORK_ACCESS_PHASES.to_h do |phase|
           [phase, DEFAULT_NETWORK_ACCESS_ALLOWED]
         end, T.nilable(T::Hash[Symbol, T::Boolean]))
@@ -3327,11 +3351,13 @@ class Formula
     def network_access_allowed = T.must(@network_access_allowed)
 
     # Whether this formula was loaded using the formulae.brew.sh API
-    attr_predicate :loaded_from_api?
+    sig { returns(T::Boolean) }
+    def loaded_from_api? = !!@loaded_from_api
 
     # Whether this formula contains OS/arch-specific blocks
     # (e.g. `on_macos`, `on_arm`, `on_monterey :or_older`, `on_system :linux, macos: :big_sur_or_newer`).
-    attr_predicate :on_system_blocks_exist?
+    sig { returns(T::Boolean) }
+    def on_system_blocks_exist? = !!@on_system_blocks_exist
 
     # The reason for why this software is not linked (by default) to {::HOMEBREW_PREFIX}.
     sig { returns(T.nilable(KegOnlyReason)) }

@@ -29,9 +29,9 @@ export HOME="${homebrew_directory}"
 # reset Git repository
 cd "${homebrew_directory}"
 git config --global --add safe.directory "${homebrew_directory}"
-git reset --hard
-git checkout --force master
-git branch | grep -v '\*' | xargs -n 1 git branch --delete --force || true
+git checkout --force -B stable
+git reset --hard "$(git tag --list --sort="-version:refname" | head -n1)"
+git clean -f -d
 rm "${homebrew_directory}/.gitconfig"
 
 # move to /usr/local if on x86_64
@@ -44,8 +44,9 @@ then
 
     export HOME="/usr/local/Homebrew"
     git config --global --add safe.directory /usr/local/Homebrew
+    git -C /usr/local/Homebrew checkout --force -B stable
     git -C /usr/local/Homebrew reset --hard
-    git -C /usr/local/Homebrew checkout --force master
+    git -C /usr/local/Homebrew clean -f -d
     rm /usr/local/Homebrew/.gitconfig
   else
     mkdir -vp /usr/local/bin

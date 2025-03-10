@@ -1,7 +1,6 @@
 # typed: true # rubocop:todo Sorbet/StrictSigil
 # frozen_string_literal: true
 
-require "attrable"
 require "mutex_m"
 require "ignorable"
 
@@ -73,9 +72,10 @@ module Debrew
   @debugged_exceptions = Set.new
 
   class << self
-    extend Attrable
-    attr_predicate :active?
     attr_reader :debugged_exceptions
+
+    sig { returns(T::Boolean) }
+    def active? = @active
   end
 
   def self.debrew

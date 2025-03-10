@@ -59,14 +59,14 @@ module Homebrew
         elsif args.no_named?
           puts Tap.installed.sort_by(&:name)
         else
-          tap = Tap.fetch(args.named.fetch(0))
           begin
+            tap = Tap.fetch(args.named.fetch(0))
             tap.install clone_target:  args.named.second,
                         custom_remote: args.custom_remote?,
                         quiet:         args.quiet?,
                         verify:        args.eval_all? || Homebrew::EnvConfig.eval_all?,
                         force:         args.force?
-          rescue TapRemoteMismatchError, TapNoCustomRemoteError => e
+          rescue Tap::InvalidNameError, TapRemoteMismatchError, TapNoCustomRemoteError => e
             odie e
           rescue TapAlreadyTappedError
             nil

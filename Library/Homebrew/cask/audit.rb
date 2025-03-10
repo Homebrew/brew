@@ -1,7 +1,6 @@
 # typed: true # rubocop:todo Sorbet/StrictSigil
 # frozen_string_literal: true
 
-require "attrable"
 require "cask/denylist"
 require "cask/download"
 require "digest"
@@ -19,7 +18,6 @@ module Cask
   class Audit
     include SystemCommand::Mixin
     include ::Utils::Curl
-    extend Attrable
 
     sig { returns(Cask) }
     attr_reader :cask
@@ -27,11 +25,16 @@ module Cask
     sig { returns(T.nilable(Download)) }
     attr_reader :download
 
-    attr_predicate :new_cask?, :strict?, :signing?, :online?, :token_conflicts?
-
+    sig {
+      params(
+        cask: ::Cask::Cask, download: T::Boolean, quarantine: T::Boolean, token_conflicts: T.nilable(T::Boolean),
+        online: T.nilable(T::Boolean), strict: T.nilable(T::Boolean), signing: T.nilable(T::Boolean),
+        new_cask: T.nilable(T::Boolean), only: T::Array[String], except: T::Array[String]
+      ).void
+    }
     def initialize(
       cask,
-      download: nil, quarantine: nil,
+      download: false, quarantine: false,
       token_conflicts: nil, online: nil, strict: nil, signing: nil,
       new_cask: nil, only: [], except: []
     )
@@ -42,7 +45,7 @@ module Cask
       token_conflicts = new_cask if token_conflicts.nil?
 
       # `online` and `signing` imply `download`
-      download = online || signing if download.nil?
+      download ||= online || signing
 
       @cask = cask
       @download = Download.new(cask, quarantine:) if download
@@ -51,18 +54,34 @@ module Cask
       @signing = signing
       @new_cask = new_cask
       @token_conflicts = token_conflicts
-      @only = only || []
-      @except = except || []
+      @only = only
+      @except = except
     end
 
+    sig { returns(T::Boolean) }
+    def new_cask? = !!@new_cask
+
+    sig { returns(T::Boolean) }
+    def online? =!!@online
+
+    sig { returns(T::Boolean) }
+    def signing? = !!@signing
+
+    sig { returns(T::Boolean) }
+    def strict? = !!@strict
+
+    sig { returns(T::Boolean) }
+    def token_conflicts? = !!@token_conflicts
+
+    sig { returns(::Cask::Audit) }
     def run!
       only_audits = @only
       except_audits = @except
 
       private_methods.map(&:to_s).grep(/^audit_/).each do |audit_method_name|
         name = audit_method_name.delete_prefix("audit_")
-        next if !only_audits.empty? && only_audits&.exclude?(name)
-        next if except_audits&.include?(name)
+        next if !only_audits.empty? && only_audits.exclude?(name)
+        next if except_audits.include?(name)
 
         send(audit_method_name)
       end
@@ -930,6 +949,9 @@ module Cask
       return unless cask.livecheck_defined?
       return unless (url = cask.livecheck.url)
       return if url.is_a?(Symbol)
+
+      options = cask.livecheck.options
+      return if options.post_form || options.post_json
 
       validate_url_for_https_availability(
         url, "livecheck URL",

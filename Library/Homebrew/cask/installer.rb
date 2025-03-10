@@ -1,7 +1,6 @@
 # typed: true # rubocop:todo Sorbet/StrictSigil
 # frozen_string_literal: true
 
-require "attrable"
 require "formula_installer"
 require "unpack_strategy"
 require "utils/topological_hash"
@@ -17,8 +16,15 @@ require "cgi"
 module Cask
   # Installer for a {Cask}.
   class Installer
-    extend Attrable
-
+    sig {
+      params(
+        cask: ::Cask::Cask, command: T::Class[SystemCommand], force: T::Boolean, adopt: T::Boolean,
+        skip_cask_deps: T::Boolean, binaries: T::Boolean, verbose: T::Boolean, zap: T::Boolean,
+        require_sha: T::Boolean, upgrade: T::Boolean, reinstall: T::Boolean, installed_as_dependency: T::Boolean,
+        installed_on_request: T::Boolean, quarantine: T::Boolean, verify_download_integrity: T::Boolean,
+        quiet: T::Boolean
+      ).void
+    }
     def initialize(cask, command: SystemCommand, force: false, adopt: false,
                    skip_cask_deps: false, binaries: true, verbose: false,
                    zap: false, require_sha: false, upgrade: false, reinstall: false,
@@ -42,9 +48,44 @@ module Cask
       @quiet = quiet
     end
 
-    attr_predicate :binaries?, :force?, :adopt?, :skip_cask_deps?, :require_sha?,
-                   :reinstall?, :upgrade?, :verbose?, :zap?, :installed_as_dependency?, :installed_on_request?,
-                   :quarantine?, :quiet?
+    sig { returns(T::Boolean) }
+    def adopt? = @adopt
+
+    sig { returns(T::Boolean) }
+    def binaries? = @binaries
+
+    sig { returns(T::Boolean) }
+    def force? = @force
+
+    sig { returns(T::Boolean) }
+    def installed_as_dependency? = @installed_as_dependency
+
+    sig { returns(T::Boolean) }
+    def installed_on_request? = @installed_on_request
+
+    sig { returns(T::Boolean) }
+    def quarantine? = @quarantine
+
+    sig { returns(T::Boolean) }
+    def quiet? = @quiet
+
+    sig { returns(T::Boolean) }
+    def reinstall? = @reinstall
+
+    sig { returns(T::Boolean) }
+    def require_sha? = @require_sha
+
+    sig { returns(T::Boolean) }
+    def skip_cask_deps? = @skip_cask_deps
+
+    sig { returns(T::Boolean) }
+    def upgrade? = @upgrade
+
+    sig { returns(T::Boolean) }
+    def verbose? = @verbose
+
+    sig { returns(T::Boolean) }
+    def zap? = @zap
 
     def self.caveats(cask)
       odebug "Printing caveats"
@@ -383,10 +424,13 @@ on_request: true)
             cask_or_formula,
             adopt:                   adopt?,
             binaries:                binaries?,
-            verbose:                 verbose?,
+            force:                   false,
             installed_as_dependency: true,
             installed_on_request:    false,
-            force:                   false,
+            quarantine:              quarantine?,
+            quiet:                   quiet?,
+            require_sha:             require_sha?,
+            verbose:                 verbose?,
           ).install
         else
           Homebrew::Install.perform_preinstall_checks_once

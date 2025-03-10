@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 require "bundle_version"
+require "livecheck/strategic"
 
 module Homebrew
   module Livecheck

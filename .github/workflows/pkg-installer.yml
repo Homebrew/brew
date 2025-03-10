@@ -133,7 +133,7 @@ jobs:
           fi
 
       - name: Generate build provenance
-        uses: actions/attest-build-provenance@520d128f165991a6c774bcb264f323e3d70747f4 # v2.2.0
+        uses: actions/attest-build-provenance@bd77c077858b8d561b7a36cbe48ef4cc642ca39d # v2.2.2
         with:
           subject-path: Homebrew-${{ steps.homebrew-version.outputs.version }}.pkg
 
@@ -160,7 +160,7 @@ jobs:
             name: macos-15-arm64
     steps:
       - name: Download installer from GitHub Actions
-        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
+        uses: actions/download-artifact@cc203385981b70ca67e1cc392babf9cc229d5806 # v4.1.9
         with:
           name: "${{ needs.build.outputs.installer_path }}"
 
@@ -213,7 +213,7 @@ jobs:
       contents: write
     steps:
       - name: Download installer from GitHub Actions
-        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
+        uses: actions/download-artifact@cc203385981b70ca67e1cc392babf9cc229d5806 # v4.1.9
         with:
           name: "${{ needs.build.outputs.installer_path }}"
 

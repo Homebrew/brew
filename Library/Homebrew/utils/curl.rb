@@ -277,15 +277,20 @@ module Utils
       ).returns(T::Hash[Symbol, T.untyped])
     }
     def curl_headers(*args, wanted_headers: [], **options)
-      get_retry_args = ["--request", "GET"]
+      base_args = ["--fail", "--location", "--silent"]
+      get_retry_args = []
+      if (is_post_request = args.include?("POST"))
+        base_args << "--dump-header" << "-"
+      else
+        base_args << "--head"
+        get_retry_args << "--request" << "GET"
+      end
+
       # This is a workaround for https://github.com/Homebrew/brew/issues/18213
       get_retry_args << "--http1.1" if curl_version >= Version.new("8.7") && curl_version < Version.new("8.10")
 
       [[], get_retry_args].each do |request_args|
-        result = curl_output(
-          "--fail", "--location", "--silent", "--head", *request_args, *args,
-          **options
-        )
+        result = curl_output(*base_args, *request_args, *args, **options)
 
         # We still receive usable headers with certain non-successful exit
         # statuses, so we special case them below.
@@ -295,6 +300,7 @@ module Utils
           CURL_RECV_ERROR_EXIT_CODE,
         ].include?(result.exit_status)
           parsed_output = parse_curl_output(result.stdout)
+          return parsed_output if is_post_request
 
           if request_args.empty?
             # If we didn't get any wanted header yet, retry using `GET`.

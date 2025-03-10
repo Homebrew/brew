@@ -35,6 +35,11 @@ RSpec.describe Utils::Shell do
       ENV["SHELL"] = "/bin/ksh"
       expect(described_class.profile).to eq("~/.kshrc")
     end
+
+    it "returns ~/.config/powershell/Microsoft.PowerShell_profile.ps1 for PowerShell" do
+      ENV["SHELL"] = "/usr/bin/pwsh"
+      expect(described_class.profile).to eq("~/.config/powershell/Microsoft.PowerShell_profile.ps1")
+    end
   end
 
   describe "::from_path" do

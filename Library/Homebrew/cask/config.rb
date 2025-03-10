@@ -176,6 +176,21 @@ module Cask
       @manpagedir ||= T.let(HOMEBREW_PREFIX/"share/man", T.nilable(Pathname))
     end
 
+    sig { returns(Pathname) }
+    def bash_completion
+      @bash_completion ||= T.let(HOMEBREW_PREFIX/"etc/bash_completion.d", T.nilable(Pathname))
+    end
+
+    sig { returns(Pathname) }
+    def zsh_completion
+      @zsh_completion ||= T.let(HOMEBREW_PREFIX/"share/zsh/site-functions", T.nilable(Pathname))
+    end
+
+    sig { returns(Pathname) }
+    def fish_completion
+      @fish_completion ||= T.let(HOMEBREW_PREFIX/"share/fish/vendor_completions.d", T.nilable(Pathname))
+    end
+
     sig { returns(T::Array[String]) }
     def languages
       [

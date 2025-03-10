@@ -29,7 +29,7 @@ class Caveats
     end
     caveats << keg_only_text
 
-    valid_shells = [:bash, :zsh, :fish].freeze
+    valid_shells = [:bash, :zsh, :fish, :pwsh].freeze
     current_shell = Utils::Shell.preferred || Utils::Shell.parent
     shells = if current_shell.present? &&
                 (shell_sym = current_shell.to_sym) &&
@@ -142,6 +142,11 @@ class Caveats
       <<~EOS
         zsh #{installed.join(" and ")} have been installed to:
           #{root_dir}/share/zsh/site-functions
+      EOS
+    when :pwsh
+      <<~EOS
+        PowerShell completion has been installed to:
+          #{root_dir}/share/pwsh/completions
       EOS
     end
   end

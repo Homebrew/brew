@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 require "bundle_version"
+require "livecheck/strategic"
 require "unversioned_cask_checker"
 
 module Homebrew

@@ -178,7 +178,7 @@ module Homebrew
         ).returns(T::Array[String])
       }
       def self.post_args(post_form: nil, post_json: nil)
-        if post_form.present?
+        args = if post_form.present?
           require "uri"
           ["--data", URI.encode_www_form(post_form)]
         elsif post_json.present?
@@ -187,6 +187,12 @@ module Homebrew
         else
           []
         end
+
+        if (content_length = args[1]&.length)
+          args << "--header" << "Content-Length: #{content_length}"
+        end
+
+        args
       end
 
       # Collects HTTP response headers, starting with the provided URL.
@@ -300,7 +306,6 @@ module Homebrew
   end
 end
 
-require_relative "strategic"
 require_relative "strategy/apache"
 require_relative "strategy/bitbucket"
 require_relative "strategy/cpan"

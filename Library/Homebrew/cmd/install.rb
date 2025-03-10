@@ -237,14 +237,14 @@ module Homebrew
           new_casks.each do |cask|
             Cask::Installer.new(
               cask,
-              binaries:       args.binaries?,
-              verbose:        args.verbose?,
-              force:          args.force?,
               adopt:          args.adopt?,
-              require_sha:    args.require_sha?,
-              skip_cask_deps: args.skip_cask_deps?,
+              binaries:       args.binaries?,
+              force:          args.force?,
               quarantine:     args.quarantine?,
               quiet:          args.quiet?,
+              require_sha:    args.require_sha?,
+              skip_cask_deps: args.skip_cask_deps?,
+              verbose:        args.verbose?,
             ).install
           end
 

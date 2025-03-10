@@ -16,7 +16,6 @@ gem:
     - docile
     - hana
     - language_server-protocol
-    - lint_roller
     - netrc
     - parallel
     - public_suffix

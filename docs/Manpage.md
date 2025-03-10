@@ -3220,7 +3220,7 @@ to one or more of the following environment variables:
 `brew bundle dump`
 
 : Write all installed casks/formulae/images/taps into a `Brewfile` in the
-  current directory.
+  current directory or to a custom file specified with the `--file` option.
 
 `brew bundle cleanup`
 
@@ -3271,13 +3271,13 @@ flags which will help with finding keg-only dependencies like `openssl`,
 
 `--file`
 
-: Read the `Brewfile` from this location. Use `--file=-` to pipe to
-  stdin/stdout.
+: Read from or write to the `Brewfile` from this location. Use `--file=-` to
+  pipe to stdin/stdout.
 
 `--global`
 
-: Read the `Brewfile` from `$HOMEBREW_BUNDLE_FILE_GLOBAL` (if set),
-  `${XDG_CONFIG_HOME}/homebrew/Brewfile` (if `$XDG_CONFIG_HOME` is set),
+: Read from or write to the `Brewfile` from `$HOMEBREW_BUNDLE_FILE_GLOBAL` (if
+  set), `${XDG_CONFIG_HOME}/homebrew/Brewfile` (if `$XDG_CONFIG_HOME` is set),
   `~/.homebrew/Brewfile` or `~/.Brewfile` otherwise.
 
 `-v`, `--verbose`
@@ -3296,6 +3296,10 @@ flags which will help with finding keg-only dependencies like `openssl`,
 
 : `install` runs `brew upgrade` on outdated dependencies, even if
   `$HOMEBREW_BUNDLE_NO_UPGRADE` is set.
+
+`--install`
+
+: Run `install` before continuing to other operations e.g. `exec`.
 
 `-f`, `--force`
 

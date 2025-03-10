@@ -144,16 +144,22 @@ RSpec.describe Homebrew::Livecheck::Strategy do
   end
 
   describe "::post_args" do
+    let(:form_string_content_length) { "Content-Length: #{form_string.length}" }
+    let(:json_string_content_length) { "Content-Length: #{json_string.length}" }
+
     it "returns an array including `--data` and an encoded form data string" do
-      expect(strategy.post_args(post_form: post_hash)).to eq(["--data", form_string])
+      expect(strategy.post_args(post_form: post_hash))
+        .to eq(["--data", form_string, "--header", form_string_content_length])
 
       # If both `post_form` and `post_json` are present, only `post_form` will
       # be used.
-      expect(strategy.post_args(post_form: post_hash, post_json: post_hash)).to eq(["--data", form_string])
+      expect(strategy.post_args(post_form: post_hash, post_json: post_hash))
+        .to eq(["--data", form_string, "--header", form_string_content_length])
     end
 
     it "returns an array including `--json` and a JSON string" do
-      expect(strategy.post_args(post_json: post_hash)).to eq(["--json", json_string])
+      expect(strategy.post_args(post_json: post_hash))
+        .to eq(["--json", json_string, "--header", json_string_content_length])
     end
 
     it "returns an empty array if `post_form` value is blank" do

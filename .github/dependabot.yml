@@ -14,6 +14,7 @@ updates:
       artifacts:
         patterns:
           - actions/*-artifact
+    open-pull-requests-limit: 10
 
   - package-ecosystem: bundler
     directory: /Library/Homebrew
@@ -25,6 +26,7 @@ updates:
       sorbet:
         patterns:
           - "sorbet*"
+    open-pull-requests-limit: 10
 
   - package-ecosystem: npm
     directory: /
@@ -32,6 +34,7 @@ updates:
       interval: daily
     allow:
       - dependency-type: all
+    open-pull-requests-limit: 10
 
   - package-ecosystem: docker
     directory: /
@@ -39,6 +42,7 @@ updates:
       interval: daily
     allow:
       - dependency-type: all
+    open-pull-requests-limit: 10
 
   - package-ecosystem: devcontainers
     directory: /
@@ -46,6 +50,7 @@ updates:
       interval: daily
     allow:
       - dependency-type: all
+    open-pull-requests-limit: 10
 
   - package-ecosystem: pip
     directory: /
@@ -53,6 +58,7 @@ updates:
       interval: daily
     allow:
       - dependency-type: all
+    open-pull-requests-limit: 10
 
   - package-ecosystem: pip
     directory: /Library/Homebrew/formula-analytics/
@@ -60,3 +66,4 @@ updates:
       interval: daily
     allow:
       - dependency-type: all
+    open-pull-requests-limit: 10

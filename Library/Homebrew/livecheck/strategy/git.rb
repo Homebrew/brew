@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 require "addressable"
+require "livecheck/strategic"
 require "system_command"
 
 module Homebrew

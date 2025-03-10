@@ -1,9 +1,14 @@
 ---
+plugins:
+  - rubocop-md:
+      plugin_class_name: RuboCop::Markdown::Plugin
+  - rubocop-performance:
+      plugin_class_name: RuboCop::Performance::Plugin
+  - rubocop-rspec:
+      plugin_class_name: RuboCop::RSpec::Plugin
+
 require:
   - ./Homebrew/rubocops.rb
-  - rubocop-md
-  - rubocop-performance
-  - rubocop-rspec
   - rubocop-sorbet
 
 inherit_mode:
