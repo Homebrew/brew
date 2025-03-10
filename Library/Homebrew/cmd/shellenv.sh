@@ -81,6 +81,14 @@ homebrew-shellenv() {
       fi
       echo "[ -z \"\${MANPATH-}\" ] || export MANPATH=\":\${MANPATH#:}\";"
       echo "export INFOPATH=\"${HOMEBREW_PREFIX}/share/info:\${INFOPATH:-}\";"
+      case "${HOMEBREW_SHELL_NAME}" in
+        bash | -bash | zsh | -zsh)
+          # Intentionally use single quotes to prevent variable expansion
+          # shellcheck disable=SC2016,SC2028
+          echo 'brew() { \command brew "$@"; \local rc="$?"; \builtin hash -r &>/dev/null; \return "${rc}"; };'
+          ;;
+        *) ;; # only rehash executables in PATH for bash and zsh
+      esac
       ;;
   esac
 }
