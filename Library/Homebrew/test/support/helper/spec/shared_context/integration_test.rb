@@ -134,13 +134,21 @@ RSpec.shared_context "integration test" do # rubocop:disable RSpec/ContextWordin
                          bottle_block: nil, tab_attributes: nil)
     case name
     when /^testball/
-      # Use a different tarball for testball2 to avoid lock errors when writing concurrency tests
-      prefix = (name == "testball2") ? "testball2" : "testball"
-      tarball = if OS.linux?
-        TEST_FIXTURE_DIR/"tarballs/#{prefix}-0.1-linux.tbz"
+      case name
+      when "testball4", "testball5"
+        prefix = name
+        program_name = name
+      when "testball2"
+        prefix = name
+        program_name = "test"
       else
-        TEST_FIXTURE_DIR/"tarballs/#{prefix}-0.1.tbz"
+        prefix = "testball"
+        program_name = "test"
       end
+
+      tarball_name = "#{prefix}-0.1#{"-linux" if OS.linux?}.tbz"
+      tarball = TEST_FIXTURE_DIR / "tarballs/#{tarball_name}"
+
       content = <<~RUBY
         desc "Some test"
         homepage "https://brew.sh/#{name}"
@@ -150,12 +158,12 @@ RSpec.shared_context "integration test" do # rubocop:disable RSpec/ContextWordin
         option "with-foo", "Build with foo"
         #{bottle_block}
         def install
-          (prefix/"foo"/"test").write("test") if build.with? "foo"
+          (prefix/"foo"/"#{program_name}").write("#{program_name}") if build.with? "foo"
           prefix.install Dir["*"]
-          (buildpath/"test.c").write \
-            "#include <stdio.h>\\nint main(){printf(\\"test\\");return 0;}"
+          (buildpath/"#{program_name}.c").write \
+            "#include <stdio.h>\\nint main(){printf(\\"#{program_name}\\");return 0;}"
           bin.mkpath
-          system ENV.cc, "test.c", "-o", bin/"test"
+          system ENV.cc, "#{program_name}.c", "-o", bin/"#{program_name}"
         end
 
         #{content}

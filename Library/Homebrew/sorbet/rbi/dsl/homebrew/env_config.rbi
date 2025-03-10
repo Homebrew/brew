@@ -28,6 +28,9 @@ module Homebrew::EnvConfig
     sig { returns(T::Boolean) }
     def artifact_domain_no_fallback?; end
 
+    sig { returns(T::Boolean) }
+    def ask?; end
+
     sig { returns(T.nilable(::String)) }
     def auto_update_secs; end
 
