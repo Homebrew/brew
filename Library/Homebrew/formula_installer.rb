@@ -1503,6 +1503,8 @@ on_request: installed_on_request?, options:)
     tab.built_as_bottle = true
     tab.poured_from_bottle = true
     if Hardware::CPU.arm? && Utils::Bottles.on_macos?
+      tab.skip_relocation_for_apple_silicon = Utils::Bottles.skip_relocation_for_apple_silicon?(keg)
+    end
     tab.loaded_from_api = formula.loaded_from_api?
     tab.installed_as_dependency = installed_as_dependency?
     tab.installed_on_request = installed_on_request?
@@ -1731,4 +1733,3 @@ on_request: installed_on_request?, options:)
 end
 
 require "extend/os/formula_installer"
-end
