@@ -132,8 +132,8 @@ module Utils
       sig { params(keg: T.nilable(Keg)).returns(T::Boolean) }
       def skip_relocation_for_apple_silicon?(keg = nil)
         return false unless Hardware::CPU.arm?
-        # Don't use OS.mac? directly here 
-        return false unless OS.mac?
+        # Don't use OS.mac? directly - use the on_macos? method instead
+        return false unless on_macos?
         return false unless HOMEBREW_PREFIX.to_s == HOMEBREW_MACOS_ARM_DEFAULT_PREFIX 
         
         # First check if enabled by env var for gradual rollout
@@ -154,7 +154,7 @@ module Utils
       # Determines if binary files in a keg need relocation
       sig {params(keg: Keg).returns(T::Boolean) }
       def binaries_need_relocation?(keg)
-        # Don't use OS.mac? directly here
+        # Don't use OS.mac? directly - use the on_macos? method instead
         return false unless OS.mac?
 
         keg.mach_o_files.any? do |file|
