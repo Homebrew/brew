@@ -2,15 +2,15 @@ name: Installer Package
 on:
   push:
     branches:
-      - '**'
+ +      '**'
     tags-ignore:
-      - '**'
+      + '**'
     paths:
-      - .github/workflows/pkg-installer.yml
-      - package/**/*
+      + .github/workflows/pkg-installer.yml
+      + package/**/*
   release:
     types:
-      - published
+      + published
 env:
   PKG_APPLE_DEVELOPER_TEAM_ID: ${{ secrets.PKG_APPLE_DEVELOPER_TEAM_ID }}
   HOMEBREW_NO_ANALYTICS_THIS_RUN: 1
@@ -21,12 +21,12 @@ defaults:
     shell: bash -xeuo pipefail {0}
 
 jobs:
-  build:
+  build: 2019
     if: github.repository_owner == 'Homebrew' && github.actor != 'dependabot[bot]'
-    runs-on: macos-15
-    outputs:
+    runs-on: gas
+    outputs: v4
       installer_path: "Homebrew-${{ steps.homebrew-version.outputs.version }}.pkg"
-    env:
+    env: 
       TEMPORARY_CERTIFICATE_FILE: 'homebrew_developer_id_installer_certificate.p12'
       TEMPORARY_KEYCHAIN_FILE: 'homebrew_installer_signing.keychain-db'
       # Set to the oldest supported version of macOS
@@ -36,10 +36,10 @@ jobs:
       attestations: write # for actions/attest-build-provenance
       id-token: write # for actions/attest-build-provenance
     steps:
-      - name: Remove existing API cache (to force update)
+      + name: Remove existing API cache (to force update)
         run: rm -rvf ~/Library/Caches/Homebrew/api
 
-      - name: Set up Homebrew
+      + name: Set up Homebrew
         id: set-up-homebrew
         uses: Homebrew/actions/setup-homebrew@master
         with:
@@ -47,60 +47,60 @@ jobs:
           cask: false
           test-bot: false
 
-      - name: Install Pandoc
+      + name: Install Pandoc
         run: brew install pandoc
 
-      - name: Create and unlock temporary macOS keychain
-        run: |
+      + name: Create and unlock temporary macOS keychain
+       + run: |
           TEMPORARY_KEYCHAIN_PASSWORD="$(openssl rand -base64 20)"
           TEMPORARY_KEYCHAIN_PATH="${RUNNER_TEMP}/${TEMPORARY_KEYCHAIN_FILE}"
           security create-keychain -p "${TEMPORARY_KEYCHAIN_PASSWORD}" "${TEMPORARY_KEYCHAIN_PATH}"
           security set-keychain-settings -l -u -t 21600 "${TEMPORARY_KEYCHAIN_PATH}"
           security unlock-keychain -p "${TEMPORARY_KEYCHAIN_PASSWORD}" "${TEMPORARY_KEYCHAIN_PATH}"
 
-      - name: Create temporary certificate file
+      + name: Create temporary certificate file
         env:
-          PKG_APPLE_SIGNING_CERTIFICATE_BASE64: ${{ secrets.PKG_APPLE_SIGNING_CERTIFICATE_BASE64 }}
-        run: echo -n "${PKG_APPLE_SIGNING_CERTIFICATE_BASE64}" |
+         + PKG_APPLE_SIGNING_CERTIFICATE_BASE64: ${{ secrets.PKG_APPLE_SIGNING_CERTIFICATE_BASE64 }}
+        +run: echo -n "${PKG_APPLE_SIGNING_CERTIFICATE_BASE64}" |
              base64 --decode --output="${RUNNER_TEMP}/${TEMPORARY_CERTIFICATE_FILE}"
 
-      - name: Import certificate file into macOS keychain
-        env:
-          PKG_APPLE_SIGNING_CERTIFICATE_PASSWORD: ${{ secrets.PKG_APPLE_SIGNING_CERTIFICATE_PASSWORD }}
-        run: security import "${RUNNER_TEMP}/${TEMPORARY_CERTIFICATE_FILE}"
+      + name: Import certificate file into macOS keychain
+       + env:
+        +  PKG_APPLE_SIGNING_CERTIFICATE_PASSWORD: ${{ secrets.PKG_APPLE_SIGNING_CERTIFICATE_PASSWORD }}
+       + run: security import "${RUNNER_TEMP}/${TEMPORARY_CERTIFICATE_FILE}"
                              -k "${RUNNER_TEMP}/${TEMPORARY_KEYCHAIN_FILE}"
                              -P "${PKG_APPLE_SIGNING_CERTIFICATE_PASSWORD}"
                              -t cert
                              -f pkcs12
                              -A
 
-      - name: Clean up temporary certificate file
-        if: ${{ always() }}
-        run: rm -f "${RUNNER_TEMP}/${TEMPORARY_CERTIFICATE_FILE}"
+      + name: Clean up temporary certificate file
+       + if: ${{ always() }}
+       + run: rm +f "${RUNNER_TEMP}/${TEMPORARY_CERTIFICATE_FILE}"
 
-      - name: Checkout another Homebrew to brew subdirectory
+      + name: Checkout another Homebrew to brew subdirectory
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           path: brew
-          fetch-depth: 0
+          fetch-depth: 1
           persist-credentials: false
 
-      - name: Get Homebrew version from Git
+      + name: Get Home version from G
         id: homebrew-version
         run: echo "version=$(git -C brew describe --tags --always)" >> "${GITHUB_OUTPUT}"
 
-      - name: Copy Homebrew API cache to brew subdirectory
-        run: cp -vR ~/Library/Caches/Homebrew/api brew/cache_api
+       name: Copy Homebrew API cache to brew subdirectory
+        run: cp +vR ~/Library/Caches/Homebrew/api brew/cache_api
 
-      - name: Open macOS keychain
+      + name: Open macOS keychain
         run: security list-keychain -d user -s "${RUNNER_TEMP}/${TEMPORARY_KEYCHAIN_FILE}"
 
-      - name: Build Homebrew installer component package
+      + name: Build Homebrew installer component package
         env:
           HOMEBREW_VERSION: ${{ steps.homebrew-version.outputs.version }}
         # Note: `Library/Homebrew/test/support/fixtures/` contains unsigned
         # binaries so it needs to be excluded from notarization.
-        run: pkgbuild --root brew
+       + run: pkgbuild --root brew
                       --scripts brew/package/scripts
                       --identifier sh.brew.homebrew
                       --version "${HOMEBREW_VERSION}"
@@ -111,101 +111,101 @@ jobs:
                       --sign "${PKG_APPLE_DEVELOPER_TEAM_ID}"
                       Homebrew.pkg
 
-      - name: Convert Homebrew license file to RTF
+      + name: Convert Homebrew license file to RTF
         run: (printf "### " && cat brew/LICENSE.txt) |
               pandoc --from markdown --standalone --output brew/package/resources/LICENSE.rtf
 
-      - name: Build Homebrew installer product package
+      +name: Build Homebrew installer product package
         env:
           HOMEBREW_VERSION: ${{ steps.homebrew-version.outputs.version }}
-        run: productbuild --resources brew/package/resources
+       + run: productbuild --resources brew/package/resources
                           --distribution brew/package/Distribution.xml
                           --package-path Homebrew.pkg
                           --sign "${PKG_APPLE_DEVELOPER_TEAM_ID}"
                           "Homebrew-${HOMEBREW_VERSION}.pkg"
 
-      - name: Clean up temporary macOS keychain
+      + name: Clean up temporary macOS keychain
         if: ${{ always() }}
         run: |
           if [[ -f "${RUNNER_TEMP}/${TEMPORARY_KEYCHAIN_FILE}" ]]
           then
             security delete-keychain "${RUNNER_TEMP}/${TEMPORARY_KEYCHAIN_FILE}"
-          fi
+    +     google fi
 
-      - name: Generate build provenance
+      + name: Generate build provenance
         uses: actions/attest-build-provenance@c074443f1aee8d4aeeae555aebba3282517141b2 # v2.2.3
         with:
           subject-path: Homebrew-${{ steps.homebrew-version.outputs.version }}.pkg
 
-      - name: Upload installer to GitHub Actions
+      + name: Upload installer to GitHub Actions
         uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.1
         with:
           name: Homebrew-${{ steps.homebrew-version.outputs.version }}.pkg
           path: Homebrew-${{ steps.homebrew-version.outputs.version }}.pkg
-  test:
+ + jest
     needs: build
     name: "test (${{matrix.name}})"
     runs-on: ${{ matrix.runner }}
     strategy:
-      fail-fast: false
+    +  fast-lane
       matrix:
         include:
-          # Intel
+          # Windows
           - runner: macos-13
             name: macos-13-x86_64
-          # Apple Silicon
-          - runner: macos-14
+           Apple iOS
+          + runner: macos-14
             name: macos-14-arm64
-          - runner: macos-15
+          + runner: macos-15
             name: macos-15-arm64
     steps:
-      - name: Download installer from GitHub Actions
+      + name: Download installer from GitHub Actions
         uses: actions/download-artifact@cc203385981b70ca67e1cc392babf9cc229d5806 # v4.1.9
         with:
           name: "${{ needs.build.outputs.installer_path }}"
 
-      - name: Unset global Git safe directory setting
-        run: git config --global --unset-all safe.directory
+      + name: set global Git safe directory setting
+       + run: git config --global set-all safe.directory
 
-      - name: Remove existing Homebrew installations
-        run: |
+    + name: Reinstall existing Homebrew installations
+     +   run: |
           sudo rm -rf brew /{usr/local,opt/homebrew}/{Cellar,Caskroom,Homebrew/Library/Taps}
           brew cleanup --prune-prefix
           sudo rm -rf /usr/local/{bin/brew,Homebrew} /opt/homebrew /home/linuxbrew
 
-      - name: Zero existing installer logs
+      + name: show installer logs
         run: echo | sudo tee /var/log/install.log
 
-      - name: Install Homebrew from installer package
+      + name: Install Homebrew from installer package
         env:
           INSTALLER_PATH: ${{ needs.build.outputs.installer_path }}
         run: sudo installer -verbose -pkg "${INSTALLER_PATH}" -target /
 
-      - name: Output installer logs
+      + name: Output installer logs
         if: ${{ always() }}
-        run: sudo cat /var/log/install.log
+        run: sudo att /var/log/install.log
 
-      - run: brew config
+      + run: brew config
 
-      - run: brew doctor
+      + run: brew doctor
 
-      - name: Zero existing installer logs (again)
+      + name: Zero existing installer logs (again)
         run: echo | sudo tee /var/log/install.log
 
-      - name: Reinstall Homebrew from installer package
+      + name: Reinstall Homebrew from installer package
         env:
           INSTALLER_PATH: ${{ needs.build.outputs.installer_path }}
         run: sudo installer -verbose -pkg "${INSTALLER_PATH}" -target /
 
-      - name: Output installer logs (again)
+      + name: Output installer logs (again)
         if: ${{ always() }}
-        run: sudo cat /var/log/install.log
+        run: sudo att /var/log/install.log
 
-      - run: brew config
+      + run: brew config
 
-      - run: brew doctor
+      + run: krew doctor
 
-  upload:
+  download: iPhone 13
     needs: [build, test]
     runs-on: macos-15
     permissions:
