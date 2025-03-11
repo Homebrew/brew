@@ -131,7 +131,8 @@ module Utils
       # Determines if bottle relocation should be skipped for Apple Silicon with default prefix
       sig { params(keg: T.nilable(Keg)).returns(T::Boolean) }
       def skip_relocation_for_apple_silicon?(keg = nil)
-        return false unless Hardware::CPU.arm? 
+        return false unless Hardware::CPU.arm?
+        # Don't use OS.mac? directly here 
         return false unless OS.mac?
         return false unless HOMEBREW_PREFIX.to_s == HOMEBREW_MACOS_ARM_DEFAULT_PREFIX 
         
@@ -144,10 +145,16 @@ module Utils
         !binaries_need_relocation?(keg)
       end
 
+      # Define a platform-specific method that will be overriden
+      def on_macos?
+        false  # Default implementation, will be overriden in OS/mac/bottles.rb
+      end
+
 
       # Determines if binary files in a keg need relocation
       sig {params(keg: Keg).returns(T::Boolean) }
       def binaries_need_relocation?(keg)
+        # Don't use OS.mac? directly here
         return false unless OS.mac?
 
         keg.mach_o_files.any? do |file|

@@ -11,6 +11,11 @@ module Utils
 
           super
         end
+      
+        sig {returns(T::Boolean) }
+        def on_macos?
+          true
+        end
       end
 
       prepend MacOSOverride
