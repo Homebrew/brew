@@ -1731,3 +1731,4 @@ on_request: installed_on_request?, options:)
 end
 
 require "extend/os/formula_installer"
+end
