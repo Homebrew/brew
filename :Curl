@@ -1,0 +1,23 @@
+# Obtain your API token and Account ID
+# https://support.dnsimple.com/articles/api-access-token/
+
+# Check for domain availability
+curl -H "Authorization: Bearer [TOKEN]" \ 
+-H "Accepts: application/json" \ 
+https://api.sandbox.dnsimple.com/v2/[ACCOUNT_ID]/registrar/domains/[DOMAIN_NAME]/check
+
+# Before we register a domain we need to create a contact
+curl -H "Authorization: Bearer [TOKEN]" \ 
+-H "Content-type: application/json" \ 
+-H "Accepts: application/json" \ 
+-X POST \ 
+-d "{'email':'jane.smith@example.com','first_name':'Jane','last_name':'Smith','address1':'111 SW 1st Street','city':'Miami','state_province':'FL','postal_code':'11111','country':'US','phone':'+1 321 555 4444'}" \ 
+https://api.sandbox.dnsimple.com/v2/[ACCOUNT_ID]/contacts
+
+# Register a domain
+curl -H "Authorization: Bearer [TOKEN]" \ 
+-H "Accepts: application/json" \ 
+-H "Content-Type: application/json" \ 
+-X POST \ 
+-d "{'registrant_id': [CONTACT_ID]}' \ 
+https://api.sandbox.dnsimple.com/v2/[ACCOUNT_ID]/registrar/domains/[DOMAIN_NAME]/registrations
