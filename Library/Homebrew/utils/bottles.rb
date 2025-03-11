@@ -131,40 +131,16 @@ module Utils
       # Determines if bottle relocation should be skipped for Apple Silicon with default prefix
       sig { params(keg: T.nilable(Keg)).returns(T::Boolean) }
       def skip_relocation_for_apple_silicon?(keg = nil)
-        return false unless Hardware::CPU.arm?
-        # Don't use OS.mac? directly - use the on_macos? method instead
-        return false unless on_macos?
-        return false unless HOMEBREW_PREFIX.to_s == HOMEBREW_MACOS_ARM_DEFAULT_PREFIX 
-        
-        # First check if enabled by env var for gradual rollout
-        return true if ENV.fetch("HOMEBREW_BOTTLE_SKIP_RELOCATION_ARM64", "false") == "true"
-
-        # If not explicitly enabled by env var, check if binaries need relocation
-        return false unless keg
-
-        !binaries_need_relocation?(keg)
+        #This is a stub that will be overriden in platform-specific files
+        false
       end
-
-      # Define a platform-specific method that will be overriden
-      def on_macos?
-        false  # Default implementation, will be overriden in OS/mac/bottles.rb
-      end
-
 
       # Determines if binary files in a keg need relocation
-      sig {params(keg: Keg).returns(T::Boolean) }
+      sig { params(keg: Keg).returns(T::Boolean) }
       def binaries_need_relocation?(keg)
-        # Don't use OS.mac? directly - use the on_macos? method instead
-        return false unless OS.mac?
-
-        keg.mach_o_files.any? do |file|
-          # Check if dylib ID contains paths that need relocation
-          (file.dylib? && file.dylib_id&.include?("/usr/local")) ||
-          # Check if linked libraries contain paths that need relocation
-          file.dynamically_linked_libraries.any? { |lib| lib.include?("/usr/local") }
-        end
+        # This is a stub that will be overriden in platform-specific files
+        false
       end
-
 
       private
 
