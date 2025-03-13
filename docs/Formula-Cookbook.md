@@ -26,7 +26,7 @@ A *formula* is a package definition written in Ruby. It can be created with `bre
 | **tap**              | directory (and usually Git repository) of **formulae**, **casks** and/or **external commands**       | `/opt/homebrew/Library/Taps/homebrew/homebrew-core` |
 | **bottle**           | pre-built **keg** poured into a **rack** of the **Cellar** instead of building from upstream sources | `qt--6.5.1.ventura.bottle.tar.gz` |
 | **tab**              | information about a **keg**, e.g. whether it was poured from a **bottle** or built from source       | `/opt/homebrew/Cellar/foo/0.1/INSTALL_RECEIPT.json` |
-| **Brew Bundle**      | an [extension of Homebrew](https://github.com/Homebrew/homebrew-bundle) to describe dependencies     | `brew 'myservice', restart_service: true` |
+| **Brew Bundle**      | a declarative interface to Homebrew                                                                  | `brew 'myservice', restart_service: true` |
 | **Brew Services**    | the Homebrew command to manage background services                                                   | `brew services start myservice` |
 
 ## An introduction
@@ -152,10 +152,10 @@ A `Hash` (e.g. `=>`) adds information to a dependency. Given a string or symbol,
 * `:optional` (not allowed in `Homebrew/homebrew-core`) generates an implicit `with-foo` option for the formula. This means that, given `depends_on "foo" => :optional`, the user must pass `--with-foo` to use the dependency.
 * `:recommended` (not allowed in `Homebrew/homebrew-core`) generates an implicit `without-foo` option, meaning that the dependency is enabled by default and the user must pass `--without-foo` to disable this dependency. The default description can be overridden using the [`option`](https://rubydoc.brew.sh/Formula#option-class_method) syntax (in this case, the [`option` declaration](#adding-optional-steps) must precede the dependency):
 
-  ```ruby
+```ruby
 option "with-foo", "Compile with foo bindings" # This overrides the generated description if you want to
 depends_on "foo" => :optional # Generated description would otherwise be "Build with foo support"
-  ```
+```
 
 * `"<option-name>"` (not allowed in `Homebrew/homebrew-core`) requires a dependency to have been built with the specified option.
 
@@ -950,27 +950,27 @@ Several other utilities for Ruby's [`Pathname`](https://rubydoc.brew.sh/Pathname
 
 * To perform several operations within a directory, enclose them within a  [`cd <path> do`](https://rubydoc.brew.sh/Pathname#cd-instance_method) block:
 
-  ```ruby
+```ruby
 cd "src" do
   system "./configure", "--disable-debug", "--prefix=#{prefix}"
   system "make", "install"
 end
-  ```
+```
 
 * To surface one or more binaries buried in `libexec` or a macOS `.app` package, use [`write_exec_script`](https://rubydoc.brew.sh/Pathname#write_exec_script-instance_method) or [`write_jar_script`](https://rubydoc.brew.sh/Pathname#write_jar_script-instance_method):
 
-  ```ruby
+```ruby
 bin.write_exec_script (libexec/"bin").children
 bin.write_exec_script prefix/"Package.app/Contents/MacOS/package"
 bin.write_jar_script libexec/jar_file, "jarfile", java_version: "11"
-  ```
+```
 
 * For binaries that require setting one or more environment variables to function properly, use [`write_env_script`](https://rubydoc.brew.sh/Pathname#write_env_script-instance_method) or [`env_script_all_files`](https://rubydoc.brew.sh/Pathname#env_script_all_files-instance_method):
 
-  ```ruby
+```ruby
 (bin/"package").write_env_script libexec/"package", PACKAGE_ROOT: libexec
 bin.env_script_all_files(libexec/"bin", PERL5LIB: ENV.fetch("PERL5LIB", nil))
-  ```
+```
 
 ### Rewriting a script shebang
 
@@ -1046,34 +1046,34 @@ There are two ways to add `launchd` plists and `systemd` services to a formula, 
 
 1. If the package already provides a service file the formula can reference it by name:
 
-   ```ruby
+```ruby
 service do
   name macos: "custom.launchd.name",
        linux: "custom.systemd.name"
 end
-   ```
+```
 
    To find the file we append `.plist` to the `launchd` service name and `.service` to the `systemd` service name internally.
 
 2. If the formula does not provide a service file you can generate one using the following stanza:
 
-   ```ruby
-   # 1. An individual command
+```ruby
+# 1. An individual command
 service do
   run opt_bin/"script"
 end
 
-   # 2. A command with arguments
+# 2. A command with arguments
 service do
   run [opt_bin/"script", "--config", etc/"dir/config.yml"]
 end
 
-   # 3. OS specific commands (If you omit one, the service file won't get generated for that OS.)
+# 3. OS specific commands (If you omit one, the service file won't get generated for that OS.)
 service do
   run macos: [opt_bin/"macos_script", "standalone"],
       linux: var/"special_linux_script"
 end
-   ```
+```
 
 #### Service block methods
 

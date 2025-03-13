@@ -2,9 +2,7 @@
 
 require "cmd/shared_examples/args_parse"
 
-RSpec.describe "Homebrew::Cmd::BundleCmd", :integration_test, :needs_network do
-  before { setup_remote_tap "homebrew/bundle" }
-
+RSpec.describe "Homebrew::Cmd::BundleCmd", :integration_test do
   it_behaves_like "parseable arguments", command_name: "bundle"
 
   it "checks if a Brewfile's dependencies are satisfied" do
