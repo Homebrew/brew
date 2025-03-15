@@ -380,21 +380,21 @@ class Spoom::Cli::Srb::Sigs < ::Thor
   include ::Spoom::Colorize
   include ::Spoom::Cli::Helper
 
-  # source://spoom//lib/spoom/cli/srb/sigs.rb#192
+  # source://spoom//lib/spoom/cli/srb/sigs.rb#197
   def exec(context, command); end
 
-  # source://spoom//lib/spoom/cli/srb/sigs.rb#63
+  # source://spoom//lib/spoom/cli/srb/sigs.rb#68
   def export(output_path = T.unsafe(nil)); end
 
   def help(command = T.unsafe(nil), subcommand = T.unsafe(nil)); end
 
-  # source://spoom//lib/spoom/cli/srb/sigs.rb#44
+  # source://spoom//lib/spoom/cli/srb/sigs.rb#49
   def strip(*paths); end
 
-  # source://spoom//lib/spoom/cli/srb/sigs.rb#169
+  # source://spoom//lib/spoom/cli/srb/sigs.rb#174
   def transform_files(files, &block); end
 
-  # source://spoom//lib/spoom/cli/srb/sigs.rb#15
+  # source://spoom//lib/spoom/cli/srb/sigs.rb#20
   def translate(*paths); end
 end
 
@@ -1332,7 +1332,7 @@ class Spoom::Coverage::D3::ColorPalette < ::T::Struct
   prop :strong, ::String
 
   class << self
-    # source://sorbet-runtime/0.5.11915/lib/types/struct.rb#13
+    # source://sorbet-runtime/0.5.11933/lib/types/struct.rb#13
     def inherited(s); end
   end
 end
@@ -1810,7 +1810,7 @@ class Spoom::Coverage::Snapshot < ::T::Struct
     sig { params(obj: T::Hash[::String, T.untyped]).returns(::Spoom::Coverage::Snapshot) }
     def from_obj(obj); end
 
-    # source://sorbet-runtime/0.5.11915/lib/types/struct.rb#13
+    # source://sorbet-runtime/0.5.11933/lib/types/struct.rb#13
     def inherited(s); end
   end
 end
@@ -2005,7 +2005,7 @@ class Spoom::Deadcode::Definition < ::T::Struct
   def to_json(*args); end
 
   class << self
-    # source://sorbet-runtime/0.5.11915/lib/types/struct.rb#13
+    # source://sorbet-runtime/0.5.11933/lib/types/struct.rb#13
     def inherited(s); end
   end
 end
@@ -3283,7 +3283,7 @@ class Spoom::Deadcode::Send < ::T::Struct
   def each_arg_assoc(&block); end
 
   class << self
-    # source://sorbet-runtime/0.5.11915/lib/types/struct.rb#13
+    # source://sorbet-runtime/0.5.11933/lib/types/struct.rb#13
     def inherited(s); end
   end
 end
@@ -3305,7 +3305,7 @@ class Spoom::ExecResult < ::T::Struct
   def to_s; end
 
   class << self
-    # source://sorbet-runtime/0.5.11915/lib/types/struct.rb#13
+    # source://sorbet-runtime/0.5.11933/lib/types/struct.rb#13
     def inherited(s); end
   end
 end
@@ -3585,7 +3585,7 @@ class Spoom::FileTree::Node < ::T::Struct
   def path; end
 
   class << self
-    # source://sorbet-runtime/0.5.11915/lib/types/struct.rb#13
+    # source://sorbet-runtime/0.5.11933/lib/types/struct.rb#13
     def inherited(s); end
   end
 end
@@ -3668,7 +3668,7 @@ class Spoom::Git::Commit < ::T::Struct
   def timestamp; end
 
   class << self
-    # source://sorbet-runtime/0.5.11915/lib/types/struct.rb#13
+    # source://sorbet-runtime/0.5.11933/lib/types/struct.rb#13
     def inherited(s); end
 
     # Parse a line formatted as `%h %at` into a `Commit`
@@ -3819,7 +3819,7 @@ class Spoom::LSP::Diagnostic < ::T::Struct
     sig { params(json: T::Hash[T.untyped, T.untyped]).returns(::Spoom::LSP::Diagnostic) }
     def from_json(json); end
 
-    # source://sorbet-runtime/0.5.11915/lib/types/struct.rb#13
+    # source://sorbet-runtime/0.5.11933/lib/types/struct.rb#13
     def inherited(s); end
   end
 end
@@ -3860,7 +3860,7 @@ class Spoom::LSP::DocumentSymbol < ::T::Struct
     sig { params(json: T::Hash[T.untyped, T.untyped]).returns(::Spoom::LSP::DocumentSymbol) }
     def from_json(json); end
 
-    # source://sorbet-runtime/0.5.11915/lib/types/struct.rb#13
+    # source://sorbet-runtime/0.5.11933/lib/types/struct.rb#13
     def inherited(s); end
   end
 end
@@ -3934,7 +3934,7 @@ class Spoom::LSP::Hover < ::T::Struct
     sig { params(json: T::Hash[T.untyped, T.untyped]).returns(::Spoom::LSP::Hover) }
     def from_json(json); end
 
-    # source://sorbet-runtime/0.5.11915/lib/types/struct.rb#13
+    # source://sorbet-runtime/0.5.11933/lib/types/struct.rb#13
     def inherited(s); end
   end
 end
@@ -3965,7 +3965,7 @@ class Spoom::LSP::Location < ::T::Struct
     sig { params(json: T::Hash[T.untyped, T.untyped]).returns(::Spoom::LSP::Location) }
     def from_json(json); end
 
-    # source://sorbet-runtime/0.5.11915/lib/types/struct.rb#13
+    # source://sorbet-runtime/0.5.11933/lib/types/struct.rb#13
     def inherited(s); end
   end
 end
@@ -4052,7 +4052,7 @@ class Spoom::LSP::Position < ::T::Struct
     sig { params(json: T::Hash[T.untyped, T.untyped]).returns(::Spoom::LSP::Position) }
     def from_json(json); end
 
-    # source://sorbet-runtime/0.5.11915/lib/types/struct.rb#13
+    # source://sorbet-runtime/0.5.11933/lib/types/struct.rb#13
     def inherited(s); end
   end
 end
@@ -4096,7 +4096,7 @@ class Spoom::LSP::Range < ::T::Struct
     sig { params(json: T::Hash[T.untyped, T.untyped]).returns(::Spoom::LSP::Range) }
     def from_json(json); end
 
-    # source://sorbet-runtime/0.5.11915/lib/types/struct.rb#13
+    # source://sorbet-runtime/0.5.11933/lib/types/struct.rb#13
     def inherited(s); end
   end
 end
@@ -4187,7 +4187,7 @@ class Spoom::LSP::SignatureHelp < ::T::Struct
     sig { params(json: T::Hash[T.untyped, T.untyped]).returns(::Spoom::LSP::SignatureHelp) }
     def from_json(json); end
 
-    # source://sorbet-runtime/0.5.11915/lib/types/struct.rb#13
+    # source://sorbet-runtime/0.5.11933/lib/types/struct.rb#13
     def inherited(s); end
   end
 end
@@ -4778,7 +4778,7 @@ class Spoom::Model::Reference < ::T::Struct
     sig { params(name: ::String, location: ::Spoom::Location).returns(::Spoom::Model::Reference) }
     def constant(name, location); end
 
-    # source://sorbet-runtime/0.5.11915/lib/types/struct.rb#13
+    # source://sorbet-runtime/0.5.11933/lib/types/struct.rb#13
     def inherited(s); end
 
     # : (String name, Spoom::Location location) -> Reference
@@ -6192,15 +6192,15 @@ Spoom::Sorbet::Sigils::VALID_STRICTNESS = T.let(T.unsafe(nil), Array)
 # source://spoom//lib/spoom/sorbet/sigs.rb#8
 class Spoom::Sorbet::Sigs
   class << self
-    # : (String ruby_contents) -> String
+    # : (String ruby_contents, positional_names: bool) -> String
     #
     # source://spoom//lib/spoom/sorbet/sigs.rb#24
-    sig { params(ruby_contents: ::String).returns(::String) }
-    def rbi_to_rbs(ruby_contents); end
+    sig { params(ruby_contents: ::String, positional_names: T::Boolean).returns(::String) }
+    def rbi_to_rbs(ruby_contents, positional_names: T.unsafe(nil)); end
 
     # : (String ruby_contents) -> String
     #
-    # source://spoom//lib/spoom/sorbet/sigs.rb#45
+    # source://spoom//lib/spoom/sorbet/sigs.rb#46
     sig { params(ruby_contents: ::String).returns(::String) }
     def rbs_to_rbi(ruby_contents); end
 
@@ -6214,13 +6214,13 @@ class Spoom::Sorbet::Sigs
 
     # : (String ruby_contents) -> Array[[RBI::RBSComment, (RBI::Method | RBI::Attr)]]
     #
-    # source://spoom//lib/spoom/sorbet/sigs.rb#76
+    # source://spoom//lib/spoom/sorbet/sigs.rb#80
     sig { params(ruby_contents: ::String).returns(T::Array[[::RBI::RBSComment, T.any(::RBI::Attr, ::RBI::Method)]]) }
     def collect_rbs_comments(ruby_contents); end
 
     # : (String ruby_contents) -> Array[[RBI::Sig, (RBI::Method | RBI::Attr)]]
     #
-    # source://spoom//lib/spoom/sorbet/sigs.rb#68
+    # source://spoom//lib/spoom/sorbet/sigs.rb#72
     sig { params(ruby_contents: ::String).returns(T::Array[[::RBI::Sig, T.any(::RBI::Attr, ::RBI::Method)]]) }
     def collect_sorbet_sigs(ruby_contents); end
   end
@@ -6229,51 +6229,57 @@ end
 # source://spoom//lib/spoom/sorbet/sigs.rb#9
 class Spoom::Sorbet::Sigs::Error < ::Spoom::Error; end
 
-# source://spoom//lib/spoom/sorbet/sigs.rb#119
+# source://spoom//lib/spoom/sorbet/sigs.rb#123
 class Spoom::Sorbet::Sigs::RBIToRBSTranslator
   class << self
-    # : (RBI::Sig sig, (RBI::Method | RBI::Attr) node) -> String
+    # : (RBI::Sig sig, (RBI::Method | RBI::Attr) node, positional_names: bool) -> String
     #
-    # source://spoom//lib/spoom/sorbet/sigs.rb#122
-    sig { params(sig: ::RBI::Sig, node: T.any(::RBI::Attr, ::RBI::Method)).returns(::String) }
-    def translate(sig, node); end
+    # source://spoom//lib/spoom/sorbet/sigs.rb#126
+    sig do
+      params(
+        sig: ::RBI::Sig,
+        node: T.any(::RBI::Attr, ::RBI::Method),
+        positional_names: T::Boolean
+      ).returns(::String)
+    end
+    def translate(sig, node, positional_names: T.unsafe(nil)); end
 
     private
 
-    # : (RBI::Sig sig, RBI::Attr node) -> String
+    # : (RBI::Sig sig, RBI::Attr node, positional_names: bool) -> String
     #
-    # source://spoom//lib/spoom/sorbet/sigs.rb#169
-    sig { params(sig: ::RBI::Sig, node: ::RBI::Attr).returns(::String) }
-    def translate_attr_sig(sig, node); end
+    # source://spoom//lib/spoom/sorbet/sigs.rb#173
+    sig { params(sig: ::RBI::Sig, node: ::RBI::Attr, positional_names: T::Boolean).returns(::String) }
+    def translate_attr_sig(sig, node, positional_names: T.unsafe(nil)); end
 
-    # : (RBI::Sig sig, RBI::Method node) -> String
+    # : (RBI::Sig sig, RBI::Method node, positional_names: bool) -> String
     #
-    # source://spoom//lib/spoom/sorbet/sigs.rb#134
-    sig { params(sig: ::RBI::Sig, node: ::RBI::Method).returns(::String) }
-    def translate_method_sig(sig, node); end
+    # source://spoom//lib/spoom/sorbet/sigs.rb#138
+    sig { params(sig: ::RBI::Sig, node: ::RBI::Method, positional_names: T::Boolean).returns(::String) }
+    def translate_method_sig(sig, node, positional_names: T.unsafe(nil)); end
   end
 end
 
-# source://spoom//lib/spoom/sorbet/sigs.rb#178
+# source://spoom//lib/spoom/sorbet/sigs.rb#182
 class Spoom::Sorbet::Sigs::RBSToRBITranslator
   class << self
-    # : (RBI::RBSComment comment, (RBI::Method | RBI::Attr) node) -> String
+    # : (RBI::RBSComment comment, (RBI::Method | RBI::Attr) node) -> String?
     #
-    # source://spoom//lib/spoom/sorbet/sigs.rb#183
-    sig { params(comment: ::RBI::RBSComment, node: T.any(::RBI::Attr, ::RBI::Method)).returns(::String) }
+    # source://spoom//lib/spoom/sorbet/sigs.rb#187
+    sig { params(comment: ::RBI::RBSComment, node: T.any(::RBI::Attr, ::RBI::Method)).returns(T.nilable(::String)) }
     def translate(comment, node); end
 
     private
 
     # : (RBI::RBSComment comment, RBI::Attr node) -> String
     #
-    # source://spoom//lib/spoom/sorbet/sigs.rb#222
+    # source://spoom//lib/spoom/sorbet/sigs.rb#228
     sig { params(comment: ::RBI::RBSComment, node: ::RBI::Attr).returns(::String) }
     def translate_attr_sig(comment, node); end
 
     # : (RBI::RBSComment rbs_comment, RBI::Method node) -> String
     #
-    # source://spoom//lib/spoom/sorbet/sigs.rb#195
+    # source://spoom//lib/spoom/sorbet/sigs.rb#201
     sig { params(rbs_comment: ::RBI::RBSComment, node: ::RBI::Method).returns(::String) }
     def translate_method_sig(rbs_comment, node); end
   end
@@ -6281,53 +6287,53 @@ end
 
 # From https://github.com/Shopify/ruby-lsp/blob/9154bfc6ef/lib/ruby_lsp/document.rb#L127
 #
-# source://spoom//lib/spoom/sorbet/sigs.rb#242
+# source://spoom//lib/spoom/sorbet/sigs.rb#248
 class Spoom::Sorbet::Sigs::Scanner
   # : (String source) -> void
   #
   # @return [Scanner] a new instance of Scanner
   #
-  # source://spoom//lib/spoom/sorbet/sigs.rb#246
+  # source://spoom//lib/spoom/sorbet/sigs.rb#252
   sig { params(source: ::String).void }
   def initialize(source); end
 
   # Finds the character index inside the source string for a given line and column
   # : (Integer line, Integer character) -> Integer
   #
-  # source://spoom//lib/spoom/sorbet/sigs.rb#254
+  # source://spoom//lib/spoom/sorbet/sigs.rb#260
   # Finds the character index inside the source string for a given line and column
   sig { params(line: ::Integer, character: ::Integer).returns(::Integer) }
   def find_char_position(line, character); end
 end
 
-# source://spoom//lib/spoom/sorbet/sigs.rb#243
+# source://spoom//lib/spoom/sorbet/sigs.rb#249
 Spoom::Sorbet::Sigs::Scanner::LINE_BREAK = T.let(T.unsafe(nil), Integer)
 
-# source://spoom//lib/spoom/sorbet/sigs.rb#84
+# source://spoom//lib/spoom/sorbet/sigs.rb#88
 class Spoom::Sorbet::Sigs::SigsLocator < ::RBI::Visitor
   # : -> void
   #
   # @return [SigsLocator] a new instance of SigsLocator
   #
-  # source://spoom//lib/spoom/sorbet/sigs.rb#92
+  # source://spoom//lib/spoom/sorbet/sigs.rb#96
   sig { void }
   def initialize; end
 
   # : Array[[RBI::RBSComment, (RBI::Method | RBI::Attr)]]
   #
-  # source://spoom//lib/spoom/sorbet/sigs.rb#89
+  # source://spoom//lib/spoom/sorbet/sigs.rb#93
   sig { returns(T::Array[[::RBI::RBSComment, T.any(::RBI::Attr, ::RBI::Method)]]) }
   def rbs_comments; end
 
   # : Array[[RBI::Sig, (RBI::Method | RBI::Attr)]]
   #
-  # source://spoom//lib/spoom/sorbet/sigs.rb#86
+  # source://spoom//lib/spoom/sorbet/sigs.rb#90
   sig { returns(T::Array[[::RBI::Sig, T.any(::RBI::Attr, ::RBI::Method)]]) }
   def sigs; end
 
   # : (RBI::Node? node) -> void
   #
-  # source://spoom//lib/spoom/sorbet/sigs.rb#100
+  # source://spoom//lib/spoom/sorbet/sigs.rb#104
   sig { override.params(node: T.nilable(::RBI::Node)).void }
   def visit(node); end
 end
