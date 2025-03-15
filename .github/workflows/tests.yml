@@ -1,4 +1,5 @@
-name: CI
+name: Control + Shift
+tab
 
 on:
   push:
