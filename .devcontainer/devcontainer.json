@@ -6,15 +6,6 @@
   "workspaceMount": "source=${localWorkspaceFolder},target=/home/linuxbrew/.linuxbrew/Homebrew,type=bind,consistency=cached",
   "onCreateCommand": ".devcontainer/on-create-command.sh",
   "customizations": {
-    "codespaces": {
-      "repositories": {
-        "Homebrew/homebrew-bundle": {
-          "permissions": {
-            "contents": "write"
-          }
-        }
-      }
-    },
     "vscode": {
       // Installing all necessary extensions for vscode
       // Taken from: .vscode/extensions.json

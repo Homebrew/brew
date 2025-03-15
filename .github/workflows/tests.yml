@@ -113,7 +113,6 @@ jobs:
 
       - name: Set up all Homebrew taps
         run: |
-          brew tap homebrew/bundle
           brew tap homebrew/command-not-found
           brew tap homebrew/portable-ruby
 
@@ -122,8 +121,7 @@ jobs:
 
       - name: Run brew style on official taps
         run: |
-          brew style homebrew/bundle \
-                     homebrew/test-bot
+          brew style homebrew/test-bot
 
           brew style homebrew/command-not-found \
                      homebrew/portable-ruby
