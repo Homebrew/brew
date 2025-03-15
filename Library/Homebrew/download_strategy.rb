@@ -1219,7 +1219,7 @@ end
 #
 # @api public
 class GitHubGitDownloadStrategy < GitDownloadStrategy
-  sig { params(url: String, name: String, version: T.nilable(Version), meta: T::Hash[Symbol, T.untyped]).void }
+  sig { params(url: String, name: String, version: T.nilable(Version), meta: T.untyped).void }
   def initialize(url, name, version, **meta)
     super
     @version = T.let(version, T.nilable(Version))
