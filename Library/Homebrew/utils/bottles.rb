@@ -128,6 +128,20 @@ module Utils
         end
       end
 
+      # Determines if bottle relocation should be skipped for Apple Silicon with default prefix
+      sig { params(keg: T.nilable(Keg)).returns(T::Boolean) }
+      def skip_relocation_for_apple_silicon?(keg = nil)
+        #This is a stub that will be overriden in platform-specific files
+        false
+      end
+
+      # Determines if binary files in a keg need relocation
+      sig { params(keg: Keg).returns(T::Boolean) }
+      def binaries_need_relocation?(keg)
+        # This is a stub that will be overriden in platform-specific files
+        false
+      end
+
       private
 
       def bottle_file_list(bottle_file)
@@ -350,3 +364,4 @@ module Utils
 end
 
 require "extend/os/bottles"
+# Trigger CI run
