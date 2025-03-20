@@ -13,7 +13,7 @@ module Utils
         end
 
         # Determines if bottle relocation should be skipped for Apple Silicon with default prefix
-        sig { params(keg: T.nilable(Keg)).returns(T::Boolean) }
+        sig { params(_keg: T.nilable(Keg)).returns(T::Boolean) }
         def skip_relocation_for_apple_silicon?(_keg = nil)
           return false unless Hardware::CPU.arm?
           return false if HOMEBREW_PREFIX.to_s != HOMEBREW_MACOS_ARM_DEFAULT_PREFIX
