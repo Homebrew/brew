@@ -16,15 +16,15 @@ module Utils
         sig { params(keg: T.nilable(Keg)).returns(T::Boolean) }
         def skip_relocation_for_apple_silicon?(_keg = nil)
           return false unless Hardware::CPU.arm?
-          return false unless HOMEBREW_PREFIX.to_s == HOMEBREW_MACOS_ARM_DEFAULT_PREFIX
+          return false if HOMEBREW_PREFIX.to_s != HOMEBREW_MACOS_ARM_DEFAULT_PREFIX
 
           # First check if enabled by env var for gradual rollout
           return true if ENV.fetch("HOMEBREW_BOTTLE_SKIP_RELOCATION_ARM64", "false") == "true"
 
           # If not explicitly enabled by env var, check if binaries need relocation
-          return false unless keg
+          return false unless _keg
 
-          !binaries_need_relocation?(keg)
+          !binaries_need_relocation?(_keg)
         end
 
         # Determines if binary files in a keg need relocation
@@ -33,8 +33,8 @@ module Utils
           keg.mach_o_files.any? do |file|
             # Check if dylib ID contains paths that need relocation
             (file.dylib? && file.dylib_id&.include?(HOMEBREW_MACOS_ARM_DEFAULT_PREFIX)) ||
-            # Check if linked libraries contain paths that need relocation
-            file.dynamically_linked_libraries.any? { |lib| lib.include?(HOMEBREW_MACOS_ARM_DEFAULT_PREFIX) }
+              # Check if linked libraries contain paths that need relocation
+              file.dynamically_linked_libraries.any? { |lib| lib.include?(HOMEBREW_MACOS_ARM_DEFAULT_PREFIX) }
           end
         end
       end
