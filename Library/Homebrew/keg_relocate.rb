@@ -108,7 +108,6 @@ class Keg
     # Skip relocation for Apple Silicon with default prefix
     return [] if Utils::Bottles.skip_relocation_for_apple_silicon?(self)
 
-
     relocation = prepare_relocation_to_placeholders.freeze
     relocate_dynamic_linkage(relocation)
     replace_text_in_files(relocation)
@@ -129,10 +128,9 @@ class Keg
   end
   alias generic_prepare_relocation_to_locations prepare_relocation_to_locations
 
-  def replace_placeholders_with_locations(files = nil,  skip_linkage: false)
+  def replace_placeholders_with_locations(files = nil, skip_linkage: false)
     # Skip relocation for Apple Silicon with default prefix
     return if Utils::Bottles.skip_relocation_for_apple_silicon?(self)
-
 
     relocation = prepare_relocation_to_locations.freeze
     relocate_dynamic_linkage(relocation) unless skip_linkage

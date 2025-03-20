@@ -77,19 +77,19 @@ class AbstractTab
 
   def self.empty
     attributes = {
-      "homebrew_version"        => HOMEBREW_VERSION,
-      "installed_as_dependency" => false,
-      "installed_on_request"    => false,
-      "loaded_from_api"         => false,
-      "time"                    => nil,
-      "runtime_dependencies"    => nil,
-      "arch"                    => nil,
-      "source"                  => {
-        "path"         => nil,
-        "tap"          => nil,
-        "tap_git_head" => nil,
+      "homebrew_version"                  => HOMEBREW_VERSION,
+      "installed_as_dependency"           => false,
+      "installed_on_request"              => false,
+      "loaded_from_api"                   => false,
+      "time"                              => nil,
+      "runtime_dependencies"              => nil,
+      "arch"                              => nil,
+      "source"                            => {
+        "path"                            => nil,
+        "tap"                             => nil,
+        "tap_git_head"                    => nil,
       },
-      "built_on"                => DevelopmentTools.build_system_info,
+      "built_on"                          => DevelopmentTools.build_system_info,
       "skip_relocation_for_apple_silicon" => false,
     }
 
@@ -399,25 +399,25 @@ class Tab < AbstractTab
 
   def to_json(options = nil)
     attributes = {
-      "homebrew_version"        => homebrew_version,
-      "used_options"            => used_options.as_flags,
-      "unused_options"          => unused_options.as_flags,
-      "built_as_bottle"         => built_as_bottle,
-      "poured_from_bottle"      => poured_from_bottle,
+      "homebrew_version"                  => homebrew_version,
+      "used_options"                      => used_options.as_flags,
+      "unused_options"                    => unused_options.as_flags,
+      "built_as_bottle"                   => built_as_bottle,
+      "poured_from_bottle"                => poured_from_bottle,
       "skip_relocation_for_apple_silicon" => skip_relocation_for_apple_silicon,
-      "loaded_from_api"         => loaded_from_api,
-      "installed_as_dependency" => installed_as_dependency,
-      "installed_on_request"    => installed_on_request,
-      "changed_files"           => changed_files&.map(&:to_s),
-      "time"                    => time,
-      "source_modified_time"    => source_modified_time.to_i,
-      "stdlib"                  => stdlib&.to_s,
-      "compiler"                => compiler&.to_s,
-      "aliases"                 => aliases,
-      "runtime_dependencies"    => runtime_dependencies,
-      "source"                  => source,
-      "arch"                    => arch,
-      "built_on"                => built_on,
+      "loaded_from_api"                   => loaded_from_api,
+      "installed_as_dependency"           => installed_as_dependency,
+      "installed_on_request"              => installed_on_request,
+      "changed_files"                     => changed_files&.map(&:to_s),
+      "time"                              => time,
+      "source_modified_time"              => source_modified_time.to_i,
+      "stdlib"                            => stdlib&.to_s,
+      "compiler"                          => compiler&.to_s,
+      "aliases"                           => aliases,
+      "runtime_dependencies"              => runtime_dependencies,
+      "source"                            => source,
+      "arch"                              => arch,
+      "built_on"                          => built_on,
     }
     attributes.delete("stdlib") if attributes["stdlib"].blank?
 
