@@ -310,6 +310,7 @@ class Cmd
     args << "-#{ENV["HOMEBREW_OPTIMIZATION_LEVEL"]}"
     optflags.each do |optflag|
       flag = optflag.split("=").first
+      # For runtime CPU detection builds, pass our optimisation flag whenever the build hasn't provided its own.
       args << optflag if !runtime_cpu_detection? || @args.none? { |arg| arg.start_with?(flag) }
     end
     args.concat(archflags)
