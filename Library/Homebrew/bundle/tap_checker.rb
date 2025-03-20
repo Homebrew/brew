@@ -12,6 +12,7 @@ module Homebrew
           requested_taps = format_checkable(entries)
           return [] if requested_taps.empty?
 
+          require "bundle/tap_dumper"
           current_taps = Homebrew::Bundle::TapDumper.tap_names
           (requested_taps - current_taps).map { |entry| "Tap #{entry} needs to be tapped." }
         end

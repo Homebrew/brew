@@ -7,6 +7,9 @@ module Homebrew
       module_function
 
       def remove(*args, type:, global:, file:)
+        require "bundle/brewfile"
+        require "bundle/dumper"
+
         brewfile = Brewfile.read(global:, file:)
         content = brewfile.input
         entry_type = type.to_s if type != :none

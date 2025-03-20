@@ -8,6 +8,8 @@ module Homebrew
     module Skipper
       class << self
         def skip?(entry, silent: false)
+          require "bundle/brew_dumper"
+
           # TODO: use extend/OS here
           # rubocop:todo Homebrew/MoveToExtendOS
           if (Hardware::CPU.arm? || OS.linux?) &&

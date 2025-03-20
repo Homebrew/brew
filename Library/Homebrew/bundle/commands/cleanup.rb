@@ -11,6 +11,12 @@ module Homebrew
         module_function
 
         def reset!
+          require "bundle/cask_dumper"
+          require "bundle/brew_dumper"
+          require "bundle/tap_dumper"
+          require "bundle/vscode_extension_dumper"
+          require "bundle/brew_services"
+
           @dsl = nil
           @kept_casks = nil
           @kept_formulae = nil
@@ -89,12 +95,15 @@ module Homebrew
         end
 
         def casks_to_uninstall(global: false, file: nil)
+          require "bundle/cask_dumper"
           Homebrew::Bundle::CaskDumper.cask_names - kept_casks(global:, file:)
         end
 
         def formulae_to_uninstall(global: false, file: nil)
           kept_formulae = self.kept_formulae(global:, file:)
 
+          require "bundle/brew_dumper"
+          require "bundle/brew_installer"
           current_formulae = Homebrew::Bundle::BrewDumper.formulae
           current_formulae.reject! do |f|
             Homebrew::Bundle::BrewInstaller.formula_in_array?(f[:full_name], kept_formulae)
@@ -103,6 +112,10 @@ module Homebrew
         end
 
         def kept_formulae(global: false, file: nil)
+          require "bundle/brewfile"
+          require "bundle/brew_dumper"
+          require "bundle/cask_dumper"
+
           @kept_formulae ||= begin
             @dsl ||= Brewfile.read(global:, file:)
 
@@ -119,6 +132,7 @@ module Homebrew
         end
 
         def kept_casks(global: false, file: nil)
+          require "bundle/brewfile"
           return @kept_casks if @kept_casks
 
           @dsl ||= Brewfile.read(global:, file:)
@@ -154,6 +168,9 @@ module Homebrew
         IGNORED_TAPS = %w[homebrew/core].freeze
 
         def taps_to_untap(global: false, file: nil)
+          require "bundle/brewfile"
+          require "bundle/tap_dumper"
+
           @dsl ||= Brewfile.read(global:, file:)
           kept_formulae = self.kept_formulae(global:, file:).filter_map(&method(:lookup_formula))
           kept_taps = @dsl.entries.select { |e| e.type == :tap }.map(&:name)
@@ -170,6 +187,7 @@ module Homebrew
         end
 
         def vscode_extensions_to_uninstall(global: false, file: nil)
+          require "bundle/brewfile"
           @dsl ||= Brewfile.read(global:, file:)
           kept_extensions = @dsl.entries.select { |e| e.type == :vscode }.map { |x| x.name.downcase }
 
@@ -178,6 +196,7 @@ module Homebrew
           # find any in the `Brewfile`.
           return [].freeze if kept_extensions.empty?
 
+          require "bundle/vscode_extension_dumper"
           current_extensions = Homebrew::Bundle::VscodeExtensionDumper.extensions
           current_extensions - kept_extensions
         end

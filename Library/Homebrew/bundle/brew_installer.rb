@@ -77,6 +77,7 @@ module Homebrew
       end
 
       def start_service_needed?
+        require "bundle/brew_services"
         start_service? && !BrewServices.started?(@full_name)
       end
 
@@ -96,6 +97,7 @@ module Homebrew
       end
 
       def service_change_state!(verbose:)
+        require "bundle/brew_services"
         if restart_service_needed?
           puts "Restarting #{@name} service." if verbose
           BrewServices.restart(@full_name, verbose:)
@@ -156,6 +158,7 @@ module Homebrew
         return true if array.include?(formula)
         return true if array.include?(formula.split("/").last)
 
+        require "bundle/brew_dumper"
         old_names = Homebrew::Bundle::BrewDumper.formula_oldnames
         old_name = old_names[formula]
         old_name ||= old_names[formula.split("/").last]
@@ -195,6 +198,7 @@ module Homebrew
       end
 
       def self.formulae
+        require "bundle/brew_dumper"
         Homebrew::Bundle::BrewDumper.formulae
       end
 
@@ -225,6 +229,7 @@ module Homebrew
           conflicts_with = Set.new
           conflicts_with += @conflicts_with_arg
 
+          require "bundle/brew_dumper"
           if (formula = Homebrew::Bundle::BrewDumper.formulae_by_full_name(@full_name)) &&
              (formula_conflicts_with = formula[:conflicts_with])
             conflicts_with += formula_conflicts_with
@@ -246,10 +251,11 @@ module Homebrew
           end
           return false unless Bundle.brew("unlink", conflict, verbose:)
 
-          if restart_service?
-            puts "Stopping #{conflict} service (if it is running)." if verbose
-            BrewServices.stop(conflict, verbose:)
-          end
+          next unless restart_service?
+
+          require "bundle/brew_services"
+          puts "Stopping #{conflict} service (if it is running)." if verbose
+          BrewServices.stop(conflict, verbose:)
         end
 
         true

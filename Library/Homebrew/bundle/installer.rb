@@ -1,6 +1,14 @@
 # typed: true # rubocop:todo Sorbet/StrictSigil
 # frozen_string_literal: true
 
+require "bundle/dsl"
+require "bundle/brew_installer"
+require "bundle/cask_installer"
+require "bundle/mac_app_store_installer"
+require "bundle/whalebrew_installer"
+require "bundle/vscode_extension_installer"
+require "bundle/tap_installer"
+
 module Homebrew
   module Bundle
     module Installer

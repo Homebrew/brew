@@ -16,6 +16,7 @@ module Homebrew
         return true if outdated_casks.include?(name)
         return false unless options[:greedy]
 
+        require "bundle/cask_dumper"
         Homebrew::Bundle::CaskDumper.cask_is_outdated_using_greedy?(name)
       end
 
@@ -97,10 +98,12 @@ module Homebrew
       end
 
       def installed_casks
+        require "bundle/cask_dumper"
         @installed_casks ||= Homebrew::Bundle::CaskDumper.cask_names
       end
 
       def outdated_casks
+        require "bundle/cask_dumper"
         @outdated_casks ||= Homebrew::Bundle::CaskDumper.outdated_cask_names
       end
     end
