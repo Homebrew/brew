@@ -130,14 +130,14 @@ module Utils
 
       # Determines if bottle relocation should be skipped for Apple Silicon with default prefix
       sig { params(keg: T.nilable(Keg)).returns(T::Boolean) }
-      def skip_relocation_for_apple_silicon?(keg = nil)
-        #This is a stub that will be overriden in platform-specific files
+      def skip_relocation_for_apple_silicon?(_keg = nil)
+        # This is a stub that will be overriden in platform-specific files
         false
       end
 
       # Determines if binary files in a keg need relocation
       sig { params(keg: Keg).returns(T::Boolean) }
-      def binaries_need_relocation?(keg)
+      def binaries_need_relocation?(_keg)
         # This is a stub that will be overriden in platform-specific files
         false
       end
