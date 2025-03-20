@@ -124,7 +124,7 @@ class GitHubRunnerMatrix
 
   sig { params(macos_version: MacOSVersion).returns(T::Boolean) }
   def runner_enabled?(macos_version)
-    macos_version <= NEWEST_HOMEBREW_CORE_MACOS_RUNNER && macos_version >= OLDEST_HOMEBREW_CORE_MACOS_RUNNER
+    macos_version.between?(OLDEST_HOMEBREW_CORE_MACOS_RUNNER, NEWEST_HOMEBREW_CORE_MACOS_RUNNER)
   end
 
   NEWEST_GITHUB_ACTIONS_INTEL_MACOS_RUNNER = :ventura
@@ -163,8 +163,8 @@ class GitHubRunnerMatrix
       macos_version = MacOSVersion.new(version)
       next unless runner_enabled?(macos_version)
 
-      github_runner_available = macos_version <= NEWEST_GITHUB_ACTIONS_ARM_MACOS_RUNNER &&
-                                macos_version >= OLDEST_GITHUB_ACTIONS_ARM_MACOS_RUNNER
+      github_runner_available = macos_version.between?(OLDEST_GITHUB_ACTIONS_ARM_MACOS_RUNNER,
+                                                       NEWEST_GITHUB_ACTIONS_ARM_MACOS_RUNNER)
 
       runner, timeout = if use_github_runner && github_runner_available
         ["macos-#{version}", GITHUB_ACTIONS_RUNNER_TIMEOUT]
@@ -186,8 +186,8 @@ class GitHubRunnerMatrix
 
       next if !@all_supported && macos_version > NEWEST_HOMEBREW_CORE_INTEL_MACOS_RUNNER
 
-      github_runner_available = macos_version <= NEWEST_GITHUB_ACTIONS_INTEL_MACOS_RUNNER &&
-                                macos_version >= OLDEST_GITHUB_ACTIONS_INTEL_MACOS_RUNNER
+      github_runner_available = macos_version.between?(OLDEST_GITHUB_ACTIONS_INTEL_MACOS_RUNNER,
+                                                       NEWEST_GITHUB_ACTIONS_INTEL_MACOS_RUNNER)
 
       runner, timeout = if use_github_runner && github_runner_available
         ["macos-#{version}", GITHUB_ACTIONS_RUNNER_TIMEOUT]

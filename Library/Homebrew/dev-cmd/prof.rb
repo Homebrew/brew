@@ -50,7 +50,7 @@ module Homebrew
         elsif args.vernier?
           output_filename = "prof/vernier.json"
           Process::UID.change_privilege(Process.euid) if Process.euid != Process.uid
-          safe_system "vernier", "run", "--output=#{output_filename}", "--allocation_sample_rate=500", "--",
+          safe_system "vernier", "run", "--output=#{output_filename}", "--allocation_interval=500", "--",
                       RUBY_PATH, brew_rb, *args.named
           ohai "Profiling complete!"
           puts "Upload the results from #{output_filename} to:"

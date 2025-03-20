@@ -78,7 +78,7 @@ urllib3==2.3.0 \
     # via influxdb3-python
 
 # The following packages are considered to be unsafe in a requirements file:
-setuptools==75.8.2 \
-    --hash=sha256:4880473a969e5f23f2a2be3646b2dfd84af9028716d398e46192f84bc36900d2 \
-    --hash=sha256:558e47c15f1811c1fa7adbd0096669bf76c1d3f433f58324df69f3f5ecac4e8f
+setuptools==76.1.0 \
+    --hash=sha256:34750dcb17d046929f545dec9b8349fe42bf4ba13ddffee78428aec422dbfb73 \
+    --hash=sha256:4959b9ad482ada2ba2320c8f1a8d8481d4d8d668908a7a1b84d987375cd7f5bd
     # via influxdb3-python

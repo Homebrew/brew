@@ -98,7 +98,7 @@ module Hardware
         when 0x11
           :amd_k8_k10_hybrid
         when 0x12
-          :amd_k12
+          :amd_k10_llano
         when 0x14
           :bobcat
         when 0x15

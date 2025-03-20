@@ -374,7 +374,7 @@ on_request: true)
 
       graph = ::Utils::TopologicalHash.graph_package_dependencies(@cask)
 
-      raise CaskSelfReferencingDependencyError, @cask.token if graph[@cask].include?(@cask)
+      raise CaskSelfReferencingDependencyError, @cask.token if graph.fetch(@cask).include?(@cask)
 
       ::Utils::TopologicalHash.graph_package_dependencies(primary_container.dependencies, graph)
 

@@ -3,7 +3,7 @@
 require "download_strategy"
 
 RSpec.describe AbstractDownloadStrategy do
-  subject(:strategy) { described_class.new(url, name, version, **specs) }
+  subject(:strategy) { Class.new(described_class).new(url, name, version, **specs) }
 
   let(:specs) { {} }
   let(:name) { "foo" }

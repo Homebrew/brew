@@ -149,6 +149,7 @@ __brew_internal_commands() {
     'bump-formula-pr:Create a pull request to update formula with a new URL or a new tag'
     'bump-revision:Create a commit to increment the revision of formula'
     'bump-unversioned-casks:Check all casks with unversioned URLs in a given tap for updates'
+    'bundle:Bundler for non-Ruby dependencies from Homebrew, Homebrew Cask, Mac App Store, Whalebrew and Visual Studio Code (and forks/variants)'
     'casks:List all locally installable casks including short names'
     'cat:Display the source of a formula or cask'
     'cleanup:Remove stale lock files and outdated downloads for all formulae and casks, and remove old versions of installed formulae'
@@ -211,6 +212,7 @@ __brew_internal_commands() {
     'ruby:Run a Ruby instance with Homebrew'\''s libraries loaded'
     'rubydoc:Generate Homebrew'\''s RubyDoc documentation'
     'search:Perform a substring search of cask tokens and formula names for text'
+    'services:Manage background services with macOS'\'' `launchctl`(1) daemon manager or Linux'\''s `systemctl`(1) service manager'
     'setup-ruby:Installs and configures Homebrew'\''s Ruby'
     'sh:Enter an interactive shell for Homebrew'\''s build environment'
     'shellenv:Valid shells: bash|csh|fish|pwsh|sh|tcsh|zsh  Print export statements'
@@ -640,6 +642,35 @@ _brew_bump_unversioned_casks() {
     '*::tap:__brew_any_tap'
 }
 
+# brew bundle
+_brew_bundle() {
+  _arguments \
+    '(--no-vscode)--all[`list` all dependencies]' \
+    '--cask[`list` or `dump` Homebrew cask dependencies]' \
+    '--cleanup[`install` performs cleanup operation, same as running `cleanup --force`. This is enabled by default if `$HOMEBREW_BUNDLE_INSTALL_CLEANUP` is set and `--global` is passed]' \
+    '--debug[Display any debugging information]' \
+    '--describe[`dump` adds a description comment above each line, unless the dependency does not have a description. This is enabled by default if `$HOMEBREW_BUNDLE_DUMP_DESCRIBE` is set]' \
+    '--file[Read from or write to the `Brewfile` from this location. Use `--file=-` to pipe to stdin/stdout]' \
+    '--force[`install` runs with `--force`/`--overwrite`. `dump` overwrites an existing `Brewfile`. `cleanup` actually performs its cleanup operations]' \
+    '--formula[`list` or `dump` Homebrew formula dependencies]' \
+    '--global[Read from or write to the `Brewfile` from `$HOMEBREW_BUNDLE_FILE_GLOBAL` (if set), `${XDG_CONFIG_HOME}/homebrew/Brewfile` (if `$XDG_CONFIG_HOME` is set), `~/.homebrew/Brewfile` or `~/.Brewfile` otherwise]' \
+    '--help[Show this message]' \
+    '(--upgrade)--install[Run `install` before continuing to other operations e.g. `exec`]' \
+    '--mas[`list` or `dump` Mac App Store dependencies]' \
+    '--no-restart[`dump` does not add `restart_service` to formula lines]' \
+    '--no-upgrade[`install` does not run `brew upgrade` on outdated dependencies. `check` does not check for outdated dependencies. Note they may still be upgraded by `brew install` if needed. This is enabled by default if `$HOMEBREW_BUNDLE_NO_UPGRADE` is set]' \
+    '(--all --vscode)--no-vscode[`dump` without VSCode (and forks/variants) extensions. This is enabled by default if `$HOMEBREW_BUNDLE_DUMP_NO_VSCODE` is set]' \
+    '--quiet[Make some output more quiet]' \
+    '--tap[`list` or `dump` Homebrew tap dependencies]' \
+    '(--install)--upgrade[`install` runs `brew upgrade` on outdated dependencies, even if `$HOMEBREW_BUNDLE_NO_UPGRADE` is set. ]' \
+    '--verbose[`install` prints output from commands as they are run. `check` lists all missing dependencies]' \
+    '(--no-vscode)--vscode[`list` or `dump` VSCode (and forks/variants) extensions]' \
+    '--whalebrew[`list` or `dump` Whalebrew dependencies]' \
+    '--zap[`cleanup` casks using the `zap` command instead of `uninstall`]' \
+    - subcommand \
+    '*::subcommand:(install dump cleanup check exec list sh env edit)'
+}
+
 # brew casks
 _brew_casks() {
   _arguments \
@@ -730,7 +761,7 @@ _brew_contributions() {
     '--from[Date (ISO-8601 format) to start searching contributions. Omitting this flag searches the last year]' \
     '--help[Show this message]' \
     '--quiet[Make some output more quiet]' \
-    '--repositories[Specify a comma-separated list of repositories to search. Supported repositories: `brew`, `core`, `cask`, `bundle`, `command-not-found`, `test-bot` and `services`. Omitting this flag, or specifying `--repositories=primary`, searches only the main repositories: brew,core,cask. Specifying `--repositories=all`, searches all repositories. ]' \
+    '--repositories[Specify a comma-separated list of repositories to search. Supported repositories: `brew`, `core`, `cask`, `command-not-found` and `test-bot`. Omitting this flag, or specifying `--repositories=primary`, searches only the main repositories: brew,core,cask. Specifying `--repositories=all`, searches all repositories. ]' \
     '--to[Date (ISO-8601 format) to stop searching contributions]' \
     '--user[Specify a comma-separated list of GitHub usernames or email addresses to find contributions from. Omitting this flag searches maintainers]' \
     '--verbose[Make some output more verbose]'
@@ -1156,6 +1187,7 @@ _brew_instal() {
     '(--cask)--HEAD[If formula defines it, install the HEAD version, aka. main, trunk, unstable, master]' \
     '(--formula --force)--adopt[Adopt existing artifacts in the destination that are identical to those being installed. Cannot be combined with `--force`]' \
     '(--formula)--appdir[Target location for Applications (default: `/Applications`)]' \
+    '(--cask)--ask[Ask for confirmation before downloading and installing formulae. Print bottles and dependencies download size and install size]' \
     '(--formula)--audio-unit-plugindir[Target location for Audio Unit Plugins (default: `~/Library/Audio/Plug-Ins/Components`)]' \
     '(--formula)--binaries[Disable/enable linking of helper executables (default: enabled)]' \
     '(--cask)--bottle-arch[Optimise bottles for the specified architecture rather than the oldest architecture supported by the version of macOS the bottles are built on]' \
@@ -1205,7 +1237,7 @@ _brew_instal() {
     '(--casks --binaries --require-sha --quarantine --adopt --skip-cask-deps --zap --appdir --keyboard-layoutdir --colorpickerdir --prefpanedir --qlplugindir --mdimporterdir --dictionarydir --fontdir --servicedir --input-methoddir --internet-plugindir --audio-unit-plugindir --vst-plugindir --vst3-plugindir --screen-saverdir --language)--formula[Treat all named arguments as formulae]' \
     '*::formula:__brew_formulae' \
     - cask \
-    '(--formulae --env --ignore-dependencies --only-dependencies --cc --build-from-source --force-bottle --include-test --HEAD --fetch-HEAD --keep-tmp --debug-symbols --build-bottle --skip-post-install --skip-link --bottle-arch --interactive --git --overwrite)--cask[Treat all named arguments as casks]' \
+    '(--formulae --env --ignore-dependencies --only-dependencies --cc --build-from-source --force-bottle --include-test --HEAD --fetch-HEAD --keep-tmp --debug-symbols --build-bottle --skip-post-install --skip-link --bottle-arch --interactive --git --overwrite --ask)--cask[Treat all named arguments as casks]' \
     '*::cask:__brew_casks'
 }
 
@@ -1215,6 +1247,7 @@ _brew_install() {
     '(--cask)--HEAD[If formula defines it, install the HEAD version, aka. main, trunk, unstable, master]' \
     '(--formula --force)--adopt[Adopt existing artifacts in the destination that are identical to those being installed. Cannot be combined with `--force`]' \
     '(--formula)--appdir[Target location for Applications (default: `/Applications`)]' \
+    '(--cask)--ask[Ask for confirmation before downloading and installing formulae. Print bottles and dependencies download size and install size]' \
     '(--formula)--audio-unit-plugindir[Target location for Audio Unit Plugins (default: `~/Library/Audio/Plug-Ins/Components`)]' \
     '(--formula)--binaries[Disable/enable linking of helper executables (default: enabled)]' \
     '(--cask)--bottle-arch[Optimise bottles for the specified architecture rather than the oldest architecture supported by the version of macOS the bottles are built on]' \
@@ -1264,7 +1297,7 @@ _brew_install() {
     '(--casks --binaries --require-sha --quarantine --adopt --skip-cask-deps --zap --appdir --keyboard-layoutdir --colorpickerdir --prefpanedir --qlplugindir --mdimporterdir --dictionarydir --fontdir --servicedir --input-methoddir --internet-plugindir --audio-unit-plugindir --vst-plugindir --vst3-plugindir --screen-saverdir --language)--formula[Treat all named arguments as formulae]' \
     '*::formula:__brew_formulae' \
     - cask \
-    '(--formulae --env --ignore-dependencies --only-dependencies --cc --build-from-source --force-bottle --include-test --HEAD --fetch-HEAD --keep-tmp --debug-symbols --build-bottle --skip-post-install --skip-link --bottle-arch --interactive --git --overwrite)--cask[Treat all named arguments as casks]' \
+    '(--formulae --env --ignore-dependencies --only-dependencies --cc --build-from-source --force-bottle --include-test --HEAD --fetch-HEAD --keep-tmp --debug-symbols --build-bottle --skip-post-install --skip-link --bottle-arch --interactive --git --overwrite --ask)--cask[Treat all named arguments as casks]' \
     '*::cask:__brew_casks'
 }
 
@@ -1704,6 +1737,7 @@ _brew_reinstall() {
   _arguments \
     '(--formula)--adopt[Adopt existing artifacts in the destination that are identical to those being installed. Cannot be combined with `--force`]' \
     '(--formula)--appdir[Target location for Applications (default: `/Applications`)]' \
+    '(--cask)--ask[Ask for confirmation before downloading and upgrading formulae. Print bottles and dependencies download size, install and net install size]' \
     '(--formula)--audio-unit-plugindir[Target location for Audio Unit Plugins (default: `~/Library/Audio/Plug-Ins/Components`)]' \
     '(--formula)--binaries[Disable/enable linking of helper executables (default: enabled)]' \
     '(--cask --force-bottle)--build-from-source[Compile formula from source even if a bottle is available]' \
@@ -1742,7 +1776,7 @@ _brew_reinstall() {
     '(--casks --binaries --require-sha --quarantine --adopt --skip-cask-deps --zap --appdir --keyboard-layoutdir --colorpickerdir --prefpanedir --qlplugindir --mdimporterdir --dictionarydir --fontdir --servicedir --input-methoddir --internet-plugindir --audio-unit-plugindir --vst-plugindir --vst3-plugindir --screen-saverdir --language)--formula[Treat all named arguments as formulae]' \
     '*::formula:__brew_formulae' \
     - cask \
-    '(--formulae --build-from-source --interactive --force-bottle --keep-tmp --debug-symbols --git)--cask[Treat all named arguments as casks]' \
+    '(--formulae --build-from-source --interactive --force-bottle --keep-tmp --debug-symbols --git --ask)--cask[Treat all named arguments as casks]' \
     '*::cask:__brew_casks'
 }
 
@@ -1847,6 +1881,21 @@ _brew_search() {
     '--quiet[Make some output more quiet]' \
     '(--macports --fink --opensuse --fedora --archlinux --debian --ubuntu)--repology[Search for text in the given database]' \
     '(--repology --macports --fink --opensuse --fedora --archlinux --debian)--ubuntu[Search for text in the given database]' \
+    '--verbose[Make some output more verbose]'
+}
+
+# brew services
+_brew_services() {
+  _arguments \
+    '--all[Run subcommand on all services]' \
+    '--debug[Display any debugging information]' \
+    '--file[Use the service file from this location to `start` the service]' \
+    '--help[Show this message]' \
+    '--json[Output as JSON]' \
+    '(--no-wait)--max-wait[Wait at most this many seconds for `stop` to finish stopping a service. Omit this flag or set this to zero (0) seconds to wait indefinitely]' \
+    '(--max-wait)--no-wait[Don'\''t wait for `stop` to finish stopping the service]' \
+    '--quiet[Make some output more quiet]' \
+    '--sudo-service-user[When run as root on macOS, run the service(s) as this user]' \
     '--verbose[Make some output more verbose]'
 }
 
@@ -2255,6 +2304,7 @@ _brew_update_test() {
 _brew_upgrade() {
   _arguments \
     '(--formula)--appdir[Target location for Applications (default: `/Applications`)]' \
+    '(--cask)--ask[Ask for confirmation before downloading and upgrading formulae. Print bottles and dependencies download size, install and net install size]' \
     '(--formula)--audio-unit-plugindir[Target location for Audio Unit Plugins (default: `~/Library/Audio/Plug-Ins/Components`)]' \
     '(--formula)--binaries[Disable/enable linking of helper executables (default: enabled)]' \
     '(--cask --force-bottle)--build-from-source[Compile formula from source even if a bottle is available]' \
@@ -2297,7 +2347,7 @@ _brew_upgrade() {
     '(--casks --skip-cask-deps --greedy --greedy-latest --greedy-auto-updates --binaries --require-sha --quarantine --appdir --keyboard-layoutdir --colorpickerdir --prefpanedir --qlplugindir --mdimporterdir --dictionarydir --fontdir --servicedir --input-methoddir --internet-plugindir --audio-unit-plugindir --vst-plugindir --vst3-plugindir --screen-saverdir --language)--formula[Treat all named arguments as formulae. If no named arguments are specified, upgrade only outdated formulae]' \
     '*::installed_formula:__brew_installed_formulae' \
     - installed_cask \
-    '(--formulae --build-from-source --interactive --force-bottle --fetch-HEAD --keep-tmp --debug-symbols --overwrite)--cask[Treat all named arguments as casks. If no named arguments are specified, upgrade only outdated casks]' \
+    '(--formulae --build-from-source --interactive --force-bottle --fetch-HEAD --keep-tmp --debug-symbols --overwrite --ask)--cask[Treat all named arguments as casks. If no named arguments are specified, upgrade only outdated casks]' \
     '*::installed_cask:__brew_installed_casks'
 }
 

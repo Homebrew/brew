@@ -211,7 +211,7 @@ module Utils
     end
 
     sig {
-      params(
+      overridable.params(
         args:         String,
         print_stdout: T.any(T::Boolean, Symbol),
         options:      T.untyped,
@@ -264,7 +264,7 @@ module Utils
       curl(*args, **options)
     end
 
-    sig { params(args: String, options: T.untyped).returns(SystemCommand::Result) }
+    sig { overridable.params(args: String, options: T.untyped).returns(SystemCommand::Result) }
     def curl_output(*args, **options)
       curl_with_workarounds(*args, print_stderr: false, show_output: true, **options)
     end

@@ -31,14 +31,14 @@ class GitHubArtifactDownloadStrategy < AbstractFileDownloadStrategy
     @token = T.let(token, String)
   end
 
-  sig { params(timeout: T.nilable(Integer)).void }
+  sig { override.params(timeout: T.any(Float, Integer, NilClass)).void }
   def fetch(timeout: nil)
     ohai "Downloading #{url}"
     if cached_location.exist?
       puts "Already downloaded: #{cached_location}"
     else
       begin
-        Utils::Curl.curl("--location", "--create-dirs", "--output", temporary_path, url,
+        Utils::Curl.curl("--location", "--create-dirs", "--output", temporary_path.to_s, url,
                          "--header", "Authorization: token #{@token}",
                          secrets: [@token],
                          timeout:)
@@ -46,7 +46,7 @@ class GitHubArtifactDownloadStrategy < AbstractFileDownloadStrategy
         raise CurlDownloadStrategyError, url
       end
       cached_location.dirname.mkpath
-      temporary_path.rename(cached_location)
+      temporary_path.rename(cached_location.to_s)
     end
 
     symlink_location.dirname.mkpath

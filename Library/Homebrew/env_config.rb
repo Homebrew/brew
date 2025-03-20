@@ -48,6 +48,11 @@ module Homebrew
                      "trying any other/default URLs.",
         boolean:     true,
       },
+      HOMEBREW_ASK:                              {
+        description: "If set, pass `--ask`to all formulae `brew install`, `brew upgrade` and `brew reinstall` " \
+                     "commands.",
+        boolean:     true,
+      },
       HOMEBREW_AUTO_UPDATE_SECS:                 {
         description:  "Run `brew update` once every `$HOMEBREW_AUTO_UPDATE_SECS` seconds before some commands, " \
                       "e.g. `brew install`, `brew upgrade` and `brew tap`. Alternatively, " \

@@ -113,19 +113,15 @@ jobs:
 
       - name: Set up all Homebrew taps
         run: |
-          brew tap homebrew/bundle
           brew tap homebrew/command-not-found
           brew tap homebrew/portable-ruby
-          brew tap homebrew/services
 
           # brew style doesn't like world writable directories
           sudo chmod -R g-w,o-w "$(brew --repo)/Library/Taps"
 
       - name: Run brew style on official taps
         run: |
-          brew style homebrew/bundle \
-                     homebrew/services \
-                     homebrew/test-bot
+          brew style homebrew/test-bot
 
           brew style homebrew/command-not-found \
                      homebrew/portable-ruby
@@ -343,7 +339,7 @@ jobs:
           filenames=$(find Library/Homebrew/test/junit -name 'rspec*.xml' -print | tr '\n' ',')
           echo "filenames=${filenames%,}" >> "$GITHUB_OUTPUT"
 
-      - uses: codecov/test-results-action@5c441a7bcc06f8706cde90192857d337c5dab8a6 # v1.0.4
+      - uses: codecov/test-results-action@f2dba722c67b86c6caa034178c6e4d35335f6706 # v1.1.0
         with:
           working-directory: ${{ steps.set-up-homebrew.outputs.repository-path }}
           files: ${{ steps.junit_xml.outputs.filenames }}

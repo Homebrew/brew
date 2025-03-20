@@ -308,7 +308,10 @@ class Cmd
 
     args << "-w" unless configure?
     args << "-#{ENV["HOMEBREW_OPTIMIZATION_LEVEL"]}"
-    args.concat(optflags) unless runtime_cpu_detection?
+    optflags.each do |optflag|
+      flag = optflag.split("=").first
+      args << optflag if !runtime_cpu_detection? || @args.none? { |arg| arg.start_with?(flag) }
+    end
     args.concat(archflags)
     args << "-std=#{@arg0}" if /c[89]9/.match?(@arg0)
     args << "-g" if debug_symbols?
@@ -331,6 +334,7 @@ class Cmd
     # Ideally this would be -ffile-prefix-map, but that requires a minimum of GCC 8, LLVM Clang 10 or Apple Clang 12
     # and detecting the version dynamically based on what `HOMEBREW_CC` may have been rewritten to point to is awkward
     args << "-fdebug-prefix-map=#{formula_buildpath}=." if formula_buildpath && !debug_symbols?
+    args << "-mbranch-protection=standard" if branch_protection?
     args
   end
 
@@ -442,6 +446,10 @@ class Cmd
 
   def debug_symbols?
     config.include?("D")
+  end
+
+  def branch_protection?
+    config.include?("b")
   end
 
   def linker_flags

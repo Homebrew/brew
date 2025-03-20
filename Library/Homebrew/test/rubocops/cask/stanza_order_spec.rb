@@ -44,6 +44,8 @@ RSpec.describe RuboCop::Cop::Cask::StanzaOrder, :config do
   it "reports an offense when an `arch` stanza is out of order" do
     expect_offense <<~CASK
       cask 'foo' do
+        os macos: ">= :big_sur"
+        ^^^^^^^^^^^^^^^^^^^^^^^ `os` stanza out of order
         version :latest
         ^^^^^^^^^^^^^^^ `version` stanza out of order
         sha256 :no_check
@@ -56,6 +58,7 @@ RSpec.describe RuboCop::Cop::Cask::StanzaOrder, :config do
     expect_correction <<~CASK
       cask 'foo' do
         arch arm: "arm", intel: "x86_64"
+        os macos: ">= :big_sur"
         version :latest
         sha256 :no_check
       end

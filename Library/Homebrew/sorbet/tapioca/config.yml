@@ -19,7 +19,6 @@ gem:
     - netrc
     - parallel
     - public_suffix
-    - rbs
     - redcarpet
     - rspec-github
     - rspec-mocks

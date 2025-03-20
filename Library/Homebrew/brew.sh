@@ -246,7 +246,7 @@ check-run-command-as-root() {
   [[ -f /run/.containerenv ]] && return
   [[ -f /proc/1/cgroup ]] && grep -E "azpl_job|actions_job|docker|garden|kubepods" -q /proc/1/cgroup && return
 
-  # Homebrew Services may need `sudo` for system-wide daemons.
+  # `brew services` may need `sudo` for system-wide daemons.
   [[ "${HOMEBREW_COMMAND}" == "services" ]] && return
 
   # It's fine to run this as root as it's not changing anything.

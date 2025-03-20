@@ -10,7 +10,8 @@ module Homebrew
   # Helper class for cleaning up the Homebrew cache.
   class Cleanup
     CLEANUP_DEFAULT_DAYS = Homebrew::EnvConfig.cleanup_periodic_full_days.to_i.freeze
-    private_constant :CLEANUP_DEFAULT_DAYS
+    GH_ACTIONS_ARTIFACT_CLEANUP_DAYS = 3
+    private_constant :CLEANUP_DEFAULT_DAYS, :GH_ACTIONS_ARTIFACT_CLEANUP_DAYS
 
     class << self
       sig { params(pathname: Pathname).returns(T::Boolean) }
@@ -67,8 +68,6 @@ module Homebrew
       end
 
       private
-
-      GH_ACTIONS_ARTIFACT_CLEANUP_DAYS = 3
 
       sig { params(pathname: Pathname, scrub: T::Boolean).returns(T::Boolean) }
       def stale_gh_actions_artifact?(pathname, scrub)

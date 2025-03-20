@@ -332,8 +332,8 @@ module Kernel
     editor = Homebrew::EnvConfig.editor
     return editor if editor
 
-    # Find VS Code, Sublime Text, Textmate, BBEdit, or vim
-    editor = %w[code subl mate bbedit vim].find do |candidate|
+    # Find VS Code variants, Sublime Text, Textmate, BBEdit, or vim
+    editor = %w[code codium cursor code-insiders subl mate bbedit vim].find do |candidate|
       candidate if which(candidate, ORIGINAL_PATHS)
     end
     editor ||= "vim"
@@ -459,13 +459,13 @@ module Kernel
   end
 
   def disk_usage_readable(size_in_bytes)
-    if size_in_bytes >= 1_073_741_824
+    if size_in_bytes.abs >= 1_073_741_824
       size = size_in_bytes.to_f / 1_073_741_824
       unit = "GB"
-    elsif size_in_bytes >= 1_048_576
+    elsif size_in_bytes.abs >= 1_048_576
       size = size_in_bytes.to_f / 1_048_576
       unit = "MB"
-    elsif size_in_bytes >= 1_024
+    elsif size_in_bytes.abs >= 1_024
       size = size_in_bytes.to_f / 1_024
       unit = "KB"
     else

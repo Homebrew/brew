@@ -895,9 +895,9 @@ module Homebrew
           block_provided:     livecheck_strategy_block.present?,
         )
         strategy = Strategy.from_symbol(livecheck_strategy) || strategies.first
-        next unless strategy
+        next if strategy.blank? && livecheck_reference != :parent
 
-        strategy_name = livecheck_strategy_names(strategy)
+        strategy_name = livecheck_strategy_names(strategy) if strategy.present?
 
         if strategy.respond_to?(:preprocess_url)
           url = strategy.preprocess_url(url)

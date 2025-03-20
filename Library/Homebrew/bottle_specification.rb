@@ -118,11 +118,12 @@ class BottleSpecification
     tags = collector.tags.sort_by do |tag|
       version = tag.to_macos_version
       # Give `arm64` bottles a higher priority so they are first.
-      priority = (tag.arch == :arm64) ? 2 : 1
+      priority = (tag.arch == :arm64) ? 3 : 2
       "#{priority}.#{version}_#{tag}"
     rescue MacOSVersion::Error
-      # Sort non-macOS tags below macOS tags.
-      "0.#{tag}"
+      # Sort non-macOS tags below macOS tags, and arm64 tags before other tags.
+      priority = (tag.arch == :arm64) ? 1 : 0
+      "#{priority}.#{tag}"
     end
     tags.reverse.map do |tag|
       spec = collector.specification_for(tag)

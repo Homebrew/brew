@@ -117,6 +117,8 @@ module Downloadable
       filename.verify_checksum(checksum)
     end
   rescue ChecksumMissingError
+    return if silence_checksum_missing_error?
+
     opoo <<~EOS
       Cannot verify integrity of '#{filename.basename}'.
       No checksum was provided.
@@ -131,6 +133,11 @@ module Downloadable
   end
 
   private
+
+  sig { overridable.returns(T::Boolean) }
+  def silence_checksum_missing_error?
+    false
+  end
 
   sig { overridable.returns(T.nilable(URL)) }
   def determine_url

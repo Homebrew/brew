@@ -566,6 +566,15 @@ class Keg
       next unless manpage.file?
 
       content = manpage.read
+      unless content.valid_encoding?
+        # Occasionally, a manpage might not be encoded as UTF-8. ISO-8859-1 is a
+        # common alternative that's worth trying in this case.
+        content = File.read(manpage, encoding: "ISO-8859-1")
+
+        # If the encoding is still invalid, we can't do anything about it.
+        next unless content.valid_encoding?
+      end
+
       content = content.gsub(generated_regex, "")
       content = content.lines.map do |line|
         next line unless line.start_with?(".TH")

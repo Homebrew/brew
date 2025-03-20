@@ -25,6 +25,7 @@ RSpec.describe RuboCop::Cop::Cask::StanzaGrouping, :config do
       cask 'foo' do
         arch arm: "arm64", intel: "x86_64"
         folder = on_arch_conditional arm: "darwin-arm64", intel: "darwin"
+        os macos: ">= :big_sur"
 
         version :latest
         sha256 :no_check

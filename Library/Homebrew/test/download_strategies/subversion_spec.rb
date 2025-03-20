@@ -17,6 +17,8 @@ RSpec.describe SubversionDownloadStrategy do
       it "adds the appropriate svn args" do
         expect(strategy).to receive(:system_command!)
           .with("svn", hash_including(args: array_including("--trust-server-cert", "--non-interactive")))
+          .and_return(instance_double(SystemCommand::Result))
+
         strategy.fetch
       end
     end
@@ -27,6 +29,7 @@ RSpec.describe SubversionDownloadStrategy do
       it "adds svn arguments for :revision" do
         expect(strategy).to receive(:system_command!)
           .with("svn", hash_including(args: array_including_cons("-r", "10")))
+          .and_return(instance_double(SystemCommand::Result))
 
         strategy.fetch
       end

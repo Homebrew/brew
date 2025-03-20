@@ -91,7 +91,7 @@ $ brew install --cask --adopt textmate
 
 ### Visual Studio Code
 
-- [Brewfile](https://marketplace.visualstudio.com/items?itemName=sharat.vscode-brewfile) adds Ruby syntax highlighting for [Homebrew Bundle](https://github.com/Homebrew/homebrew-bundle) `Brewfile`s.
+- [Brewfile](https://marketplace.visualstudio.com/items?itemName=sharat.vscode-brewfile) adds Ruby syntax highlighting for `brew bundle`'s `Brewfile`s.
 
 - [Brew Services](https://marketplace.visualstudio.com/items?itemName=beauallison.brew-services) is an extension for starting and stopping Homebrew services.
 

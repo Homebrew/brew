@@ -124,8 +124,10 @@ RSpec.describe Cask::Tab, :cask do
     specify "with all types of dependencies" do
       cask = Cask::CaskLoader.load("with-depends-on-everything")
 
-      unar = instance_double(Formula, full_name: "unar", version: "1.2", revision: 0, pkg_version: "1.2",
-                             deps: [], requirements: [])
+      unar = Class.new(Formula) do
+        url "my_url"
+        version "1.2"
+      end.new("unar", Pathname.new(__FILE__).expand_path, :stable)
       expect(Formulary).to receive(:factory).with("unar").and_return(unar)
 
       expected_hash = {

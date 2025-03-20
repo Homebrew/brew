@@ -14,6 +14,7 @@ last_review_date: "2025-02-08"
 - [Common Issues](Common-Issues.md)
 - [`brew` Shell Completion](Shell-Completion.md)
 - [Homebrew on Linux](Homebrew-on-Linux.md)
+- [`brew bundle` and `Brewfile`](Brew-Bundle-and-Brewfile.md)
 
 - [Bottles (binary packages)](Bottles.md)
 - [Taps (third-party repositories)](Taps.md)

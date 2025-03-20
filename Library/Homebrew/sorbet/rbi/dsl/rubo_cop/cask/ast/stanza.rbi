@@ -126,6 +126,9 @@ class RuboCop::Cask::AST::Stanza
   sig { returns(T::Boolean) }
   def on_ventura?; end
 
+  sig { returns(T::Boolean) }
+  def os?; end
+
   sig { params(args: T.untyped, block: T.untyped).returns(T.untyped) }
   def parent_node(*args, &block); end
 

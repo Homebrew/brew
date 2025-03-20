@@ -111,9 +111,8 @@ module Cask
     def self.token_from(name)
       name.downcase
           .gsub("+", "-plus-")
-          .gsub("@", "-at-")
           .gsub(/[ _·•]/, "-")
-          .gsub(/[^\w-]/, "")
+          .gsub(/[^\w@-]/, "")
           .gsub(/--+/, "-")
           .delete_prefix("-")
           .delete_suffix("-")
