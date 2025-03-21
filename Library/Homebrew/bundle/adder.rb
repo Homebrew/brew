@@ -1,6 +1,9 @@
 # typed: true # rubocop:todo Sorbet/StrictSigil
 # frozen_string_literal: true
 
+require "bundle/brewfile"
+require "bundle/dumper"
+
 module Homebrew
   module Bundle
     module Adder

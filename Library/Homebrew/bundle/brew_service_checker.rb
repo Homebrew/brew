@@ -24,6 +24,7 @@ module Homebrew
         end
 
         def entry_to_formula(entry)
+          require "bundle/brew_installer"
           Homebrew::Bundle::BrewInstaller.new(entry.name, entry.options)
         end
 
@@ -32,10 +33,12 @@ module Homebrew
         end
 
         def service_is_started?(service_name)
+          require "bundle/brew_services"
           Homebrew::Bundle::BrewServices.started?(service_name)
         end
 
         def lookup_old_name(service_name)
+          require "bundle/brew_dumper"
           @old_names ||= Homebrew::Bundle::BrewDumper.formula_oldnames
           old_name = @old_names[service_name]
           old_name ||= @old_names[service_name.split("/").last]

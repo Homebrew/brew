@@ -30,6 +30,7 @@ module Homebrew
         end
 
         unless success
+          require "bundle/skipper"
           Homebrew::Bundle::Skipper.tap_failed!(name)
           return false
         end
@@ -39,6 +40,7 @@ module Homebrew
       end
 
       def installed_taps
+        require "bundle/tap_dumper"
         @installed_taps ||= Homebrew::Bundle::TapDumper.tap_names
       end
     end

@@ -63,6 +63,7 @@ module Homebrew
       end
 
       def installed_app_ids
+        require "bundle/mac_app_store_dumper"
         @installed_app_ids ||= Homebrew::Bundle::MacAppStoreDumper.app_ids
       end
 

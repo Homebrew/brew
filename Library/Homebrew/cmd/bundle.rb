@@ -156,6 +156,7 @@ module Homebrew
             raise UsageError, "`--install` cannot be used with `install`, `upgrade` or no subcommand."
           end
 
+          require "bundle/commands/install"
           redirect_stdout($stderr) do
             Homebrew::Bundle::Commands::Install.run(global:, file:, no_upgrade:, verbose:, force:, quiet: true)
           end
@@ -163,6 +164,7 @@ module Homebrew
 
         case subcommand
         when nil, "install", "upgrade"
+          require "bundle/commands/install"
           Homebrew::Bundle::Commands::Install.run(global:, file:, no_upgrade:, verbose:, force:, quiet: args.quiet?)
 
           cleanup = if ENV.fetch("HOMEBREW_BUNDLE_INSTALL_CLEANUP", nil)
@@ -172,6 +174,7 @@ module Homebrew
           end
 
           if cleanup
+            require "bundle/commands/cleanup"
             Homebrew::Bundle::Commands::Cleanup.run(
               global:, file:, zap:,
               force:  true,
@@ -187,6 +190,7 @@ module Homebrew
             no_type_args
           end
 
+          require "bundle/commands/dump"
           Homebrew::Bundle::Commands::Dump.run(
             global:, file:, force:,
             describe:   args.describe?,
@@ -199,10 +203,13 @@ module Homebrew
             vscode:
           )
         when "edit"
+          require "bundle/brewfile"
           exec_editor(Homebrew::Bundle::Brewfile.path(global:, file:))
         when "cleanup"
+          require "bundle/commands/cleanup"
           Homebrew::Bundle::Commands::Cleanup.run(global:, file:, force:, zap:)
         when "check"
+          require "bundle/commands/check"
           Homebrew::Bundle::Commands::Check.run(global:, file:, no_upgrade:, verbose:)
         when "exec", "sh", "env"
           named_args = case subcommand
@@ -225,8 +232,10 @@ module Homebrew
           when "env"
             ["env"]
           end
+          require "bundle/commands/exec"
           Homebrew::Bundle::Commands::Exec.run(*named_args, global:, file:, subcommand:)
         when "list"
+          require "bundle/commands/list"
           Homebrew::Bundle::Commands::List.run(
             global:,
             file:,
@@ -259,8 +268,10 @@ module Homebrew
             else t
             end
 
+            require "bundle/commands/add"
             Homebrew::Bundle::Commands::Add.run(*named_args, type:, global:, file:)
           else
+            require "bundle/commands/remove"
             Homebrew::Bundle::Commands::Remove.run(*named_args, type: selected_types.first, global:, file:)
           end
         else
