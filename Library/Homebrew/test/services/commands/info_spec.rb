@@ -89,7 +89,7 @@ RSpec.describe Homebrew::Services::Commands::Info do
     it "returns verbose output" do
       out = "service ()\nRunning: true\n"
       out += "Loaded: true\nSchedulable: false\n"
-      out += "User: user\nPID: 42\nFile: /dev/null true\nCommand: /bin/command\n"
+      out += "User: user\nPID: 42\nFile: /dev/null true\nRegistered at login: true\nCommand: /bin/command\n"
       out += "Working directory: /working/dir\nRoot directory: /root/dir\nLog: /log/dir\nError log: /log/dir/error\n"
       out += "Interval: 3600s\nCron: 5 * * * *\n"
       formula = {
@@ -97,6 +97,7 @@ RSpec.describe Homebrew::Services::Commands::Info do
         user:           "user",
         status:         :started,
         file:           "/dev/null",
+        registered:     true,
         running:        true,
         loaded:         true,
         schedulable:    false,

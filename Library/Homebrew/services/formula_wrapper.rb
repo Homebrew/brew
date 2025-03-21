@@ -201,6 +201,7 @@ module Homebrew
           user:         owner,
           status:       status_symbol,
           file:         service_file_present? ? dest : service_file,
+          registered:   service_file_present?,
         }
 
         return hash unless service?
