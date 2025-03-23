@@ -30,6 +30,7 @@ cask "everything" do
     sudo:         true,
     print_stderr: false,
   }
+  login_items "Everything"
 
   uninstall launchctl: "com.every.thing.agent",
             signal:    [
