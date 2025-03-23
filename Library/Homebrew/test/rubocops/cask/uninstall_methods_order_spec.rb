@@ -267,7 +267,6 @@ RSpec.describe RuboCop::Cop::Cask::UninstallMethodsOrder, :config do
                       launchctl:    "com.example.foo",
                       quit:         "com.example.foo",
                       signal:       ["TERM", "com.example.foo"],
-                      login_item:   "FooApp",
                       kext:         "com.example.foo",
                       script:       {
                         executable: "foo.sh",
@@ -285,7 +284,6 @@ RSpec.describe RuboCop::Cop::Cask::UninstallMethodsOrder, :config do
                 launchctl:    "com.example.foo",
                 quit:         "com.example.foo",
                 signal:       ["TERM", "com.example.foo"],
-                login_item:   "FooApp",
                 kext:         "com.example.foo",
                 script:       {
                   executable: "foo.sh",
