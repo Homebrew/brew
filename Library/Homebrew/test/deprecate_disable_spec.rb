@@ -7,27 +7,33 @@ RSpec.describe DeprecateDisable do
   let(:disable_date) { deprecate_date >> DeprecateDisable::REMOVE_DISABLED_TIME_WINDOW }
   let(:deprecated_formula) do
     instance_double(Formula, deprecated?: true, disabled?: false, deprecation_reason: :does_not_build,
-                    deprecation_replacement: nil, deprecation_date: nil, disable_date: nil)
+                    deprecation_replacement: nil, deprecation_replacement_type: nil,
+                    deprecation_date: nil, disable_date: nil)
   end
   let(:deprecated_formula_with_date) do
     instance_double(Formula, deprecated?: true, disabled?: false, deprecation_reason: :does_not_build,
-                    deprecation_replacement: nil, deprecation_date: deprecate_date, disable_date: nil)
+                    deprecation_replacement: nil, deprecation_replacement_type: nil,
+                    deprecation_date: deprecate_date, disable_date: nil)
   end
   let(:disabled_formula) do
     instance_double(Formula, deprecated?: false, disabled?: true, disable_reason: "is broken",
-                    disable_replacement: nil, deprecation_date: nil, disable_date: nil)
+                    disable_replacement: nil, disable_replacement_type: nil,
+                    deprecation_date: nil, disable_date: nil)
   end
   let(:disabled_formula_with_date) do
     instance_double(Formula, deprecated?: false, disabled?: true, disable_reason: :does_not_build,
-                    disable_replacement: nil, deprecation_date: nil, disable_date: disable_date)
+                    disable_replacement: nil, disable_replacement_type: nil,
+                    deprecation_date: nil, disable_date: disable_date)
   end
   let(:deprecated_cask) do
     instance_double(Cask::Cask, deprecated?: true, disabled?: false, deprecation_reason: :discontinued,
-                   deprecation_replacement: nil, deprecation_date: nil, disable_date: nil)
+                   deprecation_replacement: nil, deprecation_replacement_type: nil,
+                   deprecation_date: nil, disable_date: nil)
   end
   let(:disabled_cask) do
     instance_double(Cask::Cask, deprecated?: false, disabled?: true, disable_reason: nil,
-                    disable_replacement: nil, deprecation_date: nil, disable_date: nil)
+                    disable_replacement: nil, disable_replacement_type: nil,
+                    deprecation_date: nil, disable_date: nil)
   end
   let(:deprecated_formula_with_replacement) do
     instance_double(Formula, deprecated?: true, disabled?: false, deprecation_reason: :does_not_build,
@@ -125,23 +131,54 @@ RSpec.describe DeprecateDisable do
     end
 
     it "returns a replacement message for a deprecated formula" do
+      # allow(deprecated_formula_with_replacement).to receive(:deprecation_replacement_type).and_return(:formula)
+      expect(deprecated_formula_with_replacement).to receive(:deprecation_replacement_type).and_return(:formula)
       expect(described_class.message(deprecated_formula_with_replacement))
-        .to eq "deprecated because it does not build!\nReplacement:\n  brew install foo\n"
+        .to eq "deprecated because it does not build!\nReplacement:\n  brew install --formula foo\n"
+    end
+
+    it "returns a replacement cask message for a deprecated formula" do
+      allow(deprecated_formula_with_replacement).to receive(:deprecation_replacement_type).and_return(:cask)
+      expect(described_class.message(deprecated_formula_with_replacement))
+        .to eq "deprecated because it does not build!\nReplacement:\n  brew install --cask foo\n"
     end
 
     it "returns a replacement message for a disabled formula" do
+      # allow(disabled_formula_with_replacement).to receive(:disable_replacement_type).and_return(:formula)
+      expect(disabled_formula_with_replacement).to receive(:disable_replacement_type).and_return(:formula)
       expect(described_class.message(disabled_formula_with_replacement))
-        .to eq "disabled because it is broken!\nReplacement:\n  brew install bar\n"
+        .to eq "disabled because it is broken!\nReplacement:\n  brew install --formula bar\n"
+    end
+
+    it "returns a replacement cask message for a disabled formula" do
+      allow(disabled_formula_with_replacement).to receive(:disable_replacement_type).and_return(:cask)
+      expect(described_class.message(disabled_formula_with_replacement))
+        .to eq "disabled because it is broken!\nReplacement:\n  brew install --cask bar\n"
     end
 
     it "returns a replacement message for a deprecated cask" do
+      # allow(deprecated_cask_with_replacement).to receive(:deprecation_replacement_type).and_return(:cask)
+      expect(deprecated_cask_with_replacement).to receive(:deprecation_replacement_type).and_return(:cask)
       expect(described_class.message(deprecated_cask_with_replacement))
-        .to eq "deprecated because it is discontinued upstream!\nReplacement:\n  brew install baz\n"
+        .to eq "deprecated because it is discontinued upstream!\nReplacement:\n  brew install --cask baz\n"
+    end
+
+    it "returns a replacement formula message for a deprecated cask" do
+      allow(deprecated_cask_with_replacement).to receive(:deprecation_replacement_type).and_return(:formula)
+      expect(described_class.message(deprecated_cask_with_replacement))
+        .to eq "deprecated because it is discontinued upstream!\nReplacement:\n  brew install --formula baz\n"
     end
 
     it "returns a replacement message for a disabled cask" do
+      expect(disabled_cask_with_replacement).to receive(:disable_replacement_type).and_return(:cask)
       expect(described_class.message(disabled_cask_with_replacement))
-        .to eq "disabled!\nReplacement:\n  brew install qux\n"
+        .to eq "disabled!\nReplacement:\n  brew install --cask qux\n"
+    end
+
+    it "returns a replacement formula message for a disabled cask" do
+      allow(disabled_cask_with_replacement).to receive(:disable_replacement_type).and_return(:formula)
+      expect(described_class.message(disabled_cask_with_replacement))
+        .to eq "disabled!\nReplacement:\n  brew install --formula qux\n"
     end
   end
 

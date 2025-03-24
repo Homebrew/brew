@@ -1483,6 +1483,17 @@ class Formula
   # @see .deprecate!
   delegate deprecation_replacement: :"self.class"
 
+  # Type of the replacement for this deprecated {Formula}.
+  # Returns `nil` if the formula is not deprecated.
+  # @!method deprecation_replacement_type
+  # @return [Symbol]
+  # @see .deprecate!
+  # delegate deprecation_replacement_type: :@deprecation_replacement_type
+  sig { returns(T.nilable(Symbol)) }
+  def deprecation_replacement_type
+    @deprecation_replacement_type ||= T.let(nil, T.nilable(Symbol))
+  end
+
   # Whether this {Formula} is disabled (i.e. cannot be installed).
   # Defaults to false.
   # @!method disabled?
@@ -1510,6 +1521,17 @@ class Formula
   # @return [String]
   # @see .disable!
   delegate disable_replacement: :"self.class"
+
+  # Type of the replacement for this disabled {Formula}.
+  # Returns `nil` if no replacement is specified or the formula is not deprecated.
+  # @!method disable_replacement_type
+  # @return [Symbol]
+  # @see .disable!
+  # delegate disable_replacement_type: :@disable_replacement_type
+  sig { returns(T.nilable(Symbol)) }
+  def disable_replacement_type
+    @disable_replacement_type ||= T.let(nil, T.nilable(Symbol))
+  end
 
   sig { returns(T::Boolean) }
   def skip_cxxstdlib_check? = false
@@ -2490,57 +2512,59 @@ class Formula
   sig { returns(T::Hash[String, T.untyped]) }
   def to_hash
     hsh = {
-      "name"                     => name,
-      "full_name"                => full_name,
-      "tap"                      => tap&.name,
-      "oldnames"                 => oldnames,
-      "aliases"                  => aliases.sort,
-      "versioned_formulae"       => versioned_formulae.map(&:name),
-      "desc"                     => desc,
-      "license"                  => SPDX.license_expression_to_string(license),
-      "homepage"                 => homepage,
-      "versions"                 => {
+      "name"                         => name,
+      "full_name"                    => full_name,
+      "tap"                          => tap&.name,
+      "oldnames"                     => oldnames,
+      "aliases"                      => aliases.sort,
+      "versioned_formulae"           => versioned_formulae.map(&:name),
+      "desc"                         => desc,
+      "license"                      => SPDX.license_expression_to_string(license),
+      "homepage"                     => homepage,
+      "versions"                     => {
         "stable" => stable&.version&.to_s,
         "head"   => head&.version&.to_s,
         "bottle" => bottle_defined?,
       },
-      "urls"                     => urls_hash,
-      "revision"                 => revision,
-      "version_scheme"           => version_scheme,
-      "bottle"                   => {},
-      "pour_bottle_only_if"      => self.class.pour_bottle_only_if&.to_s,
-      "keg_only"                 => keg_only?,
-      "keg_only_reason"          => keg_only_reason&.to_hash,
-      "options"                  => [],
-      "build_dependencies"       => [],
-      "dependencies"             => [],
-      "test_dependencies"        => [],
-      "recommended_dependencies" => [],
-      "optional_dependencies"    => [],
-      "uses_from_macos"          => [],
-      "uses_from_macos_bounds"   => [],
-      "requirements"             => serialized_requirements,
-      "conflicts_with"           => conflicts.map(&:name),
-      "conflicts_with_reasons"   => conflicts.map(&:reason),
-      "link_overwrite"           => self.class.link_overwrite_paths.to_a,
-      "caveats"                  => caveats_with_placeholders,
-      "installed"                => T.let([], T::Array[T::Hash[String, T.untyped]]),
-      "linked_keg"               => linked_version&.to_s,
-      "pinned"                   => pinned?,
-      "outdated"                 => outdated?,
-      "deprecated"               => deprecated?,
-      "deprecation_date"         => deprecation_date,
-      "deprecation_reason"       => deprecation_reason,
-      "deprecation_replacement"  => deprecation_replacement,
-      "disabled"                 => disabled?,
-      "disable_date"             => disable_date,
-      "disable_reason"           => disable_reason,
-      "disable_replacement"      => disable_replacement,
-      "post_install_defined"     => post_install_defined?,
-      "service"                  => (service.to_hash if service?),
-      "tap_git_head"             => tap_git_head,
-      "ruby_source_path"         => ruby_source_path,
-      "ruby_source_checksum"     => {},
+      "urls"                         => urls_hash,
+      "revision"                     => revision,
+      "version_scheme"               => version_scheme,
+      "bottle"                       => {},
+      "pour_bottle_only_if"          => self.class.pour_bottle_only_if&.to_s,
+      "keg_only"                     => keg_only?,
+      "keg_only_reason"              => keg_only_reason&.to_hash,
+      "options"                      => [],
+      "build_dependencies"           => [],
+      "dependencies"                 => [],
+      "test_dependencies"            => [],
+      "recommended_dependencies"     => [],
+      "optional_dependencies"        => [],
+      "uses_from_macos"              => [],
+      "uses_from_macos_bounds"       => [],
+      "requirements"                 => serialized_requirements,
+      "conflicts_with"               => conflicts.map(&:name),
+      "conflicts_with_reasons"       => conflicts.map(&:reason),
+      "link_overwrite"               => self.class.link_overwrite_paths.to_a,
+      "caveats"                      => caveats_with_placeholders,
+      "installed"                    => T.let([], T::Array[T::Hash[String, T.untyped]]),
+      "linked_keg"                   => linked_version&.to_s,
+      "pinned"                       => pinned?,
+      "outdated"                     => outdated?,
+      "deprecated"                   => deprecated?,
+      "deprecation_date"             => deprecation_date,
+      "deprecation_reason"           => deprecation_reason,
+      "deprecation_replacement"      => deprecation_replacement,
+      "deprecation_replacement_type" => @deprecation_replacement_type,
+      "disabled"                     => disabled?,
+      "disable_date"                 => disable_date,
+      "disable_reason"               => disable_reason,
+      "disable_replacement"          => disable_replacement,
+      "disable_replacement_type"     => @disable_replacement_type,
+      "post_install_defined"         => post_install_defined?,
+      "service"                      => (service.to_hash if service?),
+      "tap_git_head"                 => tap_git_head,
+      "ruby_source_path"             => ruby_source_path,
+      "ruby_source_checksum"         => {},
     }
 
     hsh["bottle"]["stable"] = bottle_hash if stable && bottle_defined?
@@ -4320,17 +4344,29 @@ class Formula
     # ```ruby
     # deprecate! date: "2020-08-27", because: "has been replaced by foo", replacement: "foo"
     # ```
+    # ```ruby
+    # deprecate! date: "2020-08-27", because: "has been replaced by foo", replacement: "foo",
+    #            replacement_type: :cask
+    # ```
     #
     # @see https://docs.brew.sh/Deprecating-Disabling-and-Removing-Formulae
     # @see DeprecateDisable::FORMULA_DEPRECATE_DISABLE_REASONS
     # @api public
-    sig { params(date: String, because: T.any(NilClass, String, Symbol), replacement: T.nilable(String)).void }
-    def deprecate!(date:, because:, replacement: nil)
+    sig {
+      params(date: String, because: T.any(NilClass, String, Symbol), replacement: T.nilable(String),
+             replacement_type: Symbol).void
+    }
+    def deprecate!(date:, because:, replacement: nil, replacement_type: :formula)
+      if [:formula, :cask].exclude?(replacement_type)
+        raise ArgumentError, "Invalid replacement type: #{replacement_type}"
+      end
+
       @deprecation_date = T.let(Date.parse(date), T.nilable(Date))
       return if T.must(@deprecation_date) > Date.today
 
       @deprecation_reason = T.let(because, T.any(NilClass, String, Symbol))
       @deprecation_replacement = T.let(replacement, T.nilable(String))
+      @deprecation_replacement_type = T.let(replacement_type, T.nilable(Symbol))
       T.must(@deprecated = T.let(true, T.nilable(T::Boolean)))
     end
 
@@ -4363,6 +4399,13 @@ class Formula
     sig { returns(T.nilable(String)) }
     attr_reader :deprecation_replacement
 
+    # Type of the replacement for a deprecated {Formula}.
+    #
+    # @return [nil] if no replacement was provided or the formula is not deprecated.
+    # @see .deprecate!
+    sig { returns(T.nilable(Symbol)) }
+    attr_reader :deprecation_replacement_type
+
     # Disables a {Formula} (on the given date) so it cannot be
     # installed. If the date has not yet passed the formula
     # will be deprecated instead of disabled.
@@ -4380,23 +4423,35 @@ class Formula
     # ```ruby
     # disable! date: "2020-08-27", because: "has been replaced by foo", replacement: "foo"
     # ```
+    # ```ruby
+    # disable! date: "2020-08-27", because: "has been replaced by foo", replacement: "foo", replacement_type: :cask
+    # ```
     #
     # @see https://docs.brew.sh/Deprecating-Disabling-and-Removing-Formulae
     # @see DeprecateDisable::FORMULA_DEPRECATE_DISABLE_REASONS
     # @api public
-    sig { params(date: String, because: T.any(NilClass, String, Symbol), replacement: T.nilable(String)).void }
-    def disable!(date:, because:, replacement: nil)
+    sig {
+      params(date: String, because: T.any(NilClass, String, Symbol), replacement: T.nilable(String),
+             replacement_type: Symbol).void
+    }
+    def disable!(date:, because:, replacement: nil, replacement_type: :formula)
+      if [:formula, :cask].exclude?(replacement_type)
+        raise ArgumentError, "Invalid replacement type: #{replacement_type}"
+      end
+
       @disable_date = T.let(Date.parse(date), T.nilable(Date))
 
       if T.must(@disable_date) > Date.today
         @deprecation_reason = T.let(because, T.any(NilClass, String, Symbol))
         @deprecation_replacement = T.let(replacement, T.nilable(String))
+        @deprecation_replacement_type = T.let(replacement_type, T.nilable(Symbol))
         @deprecated = T.let(true, T.nilable(T::Boolean))
         return
       end
 
       @disable_reason = T.let(because, T.nilable(T.any(String, Symbol)))
       @disable_replacement = T.let(replacement, T.nilable(String))
+      @disable_replacement_type = T.let(replacement_type, T.nilable(Symbol))
       @disabled = T.let(true, T.nilable(T::Boolean))
     end
 
@@ -4429,6 +4484,13 @@ class Formula
     # @see .disable!
     sig { returns(T.nilable(String)) }
     attr_reader :disable_replacement
+
+    # Type of the replacement for a disabled {Formula}.
+    # Returns `nil` if the formula is not disabled.
+    #
+    # @see .disable!
+    sig { returns(T.nilable(Symbol)) }
+    attr_reader :disable_replacement_type
 
     # Permit overwriting certain files while linking.
     #
