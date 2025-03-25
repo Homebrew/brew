@@ -58,6 +58,17 @@ module Homebrew
           command = args.first
 
           require "bundle/brewfile"
+          brewfile_path = Brewfile.path(global:, file:)
+          env_cache_file = brewfile_path.dirname/"Brewfile.env" if brewfile_path.file?
+
+          if env_cache_file.present? &&
+             env_cache_file.exist? &&
+             (env_cache = JSON.parse(env_cache_file.read)).present? &&
+             env_cache[:cache_key] == brewfile_path.sha256
+            puts env_cache[:env_script]
+            return
+          end
+
           @dsl = Brewfile.read(global:, file:)
 
           require "formula"
@@ -152,9 +163,15 @@ module Homebrew
           raise "command was not found in your PATH: #{command}" if command.exclude?("/") && which(command).nil?
 
           if subcommand == "env"
-            ENV.each do |key, value|
-              puts "export #{key}=\"#{value}\""
+            env_script = ENV.map { |k, v| "export #{k}=\"#{v}\"" }
+                            .join("\n") << "\n"
+            puts env_script
+
+            if env_cache_file.present?
+              env_cache = { cache_key: brewfile_path.sha256, env_script: }
+              env_cache_file.atomic_write(env_cache.to_json)
             end
+
             return
           end
 
