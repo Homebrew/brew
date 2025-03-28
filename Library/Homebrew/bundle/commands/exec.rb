@@ -48,6 +48,9 @@ module Homebrew
         PATH_LIKE_ENV_REGEX = /.+#{File::PATH_SEPARATOR}/
 
         def self.run(*args, global: false, file: nil, subcommand: "")
+          require "bundle/commands/check"
+          Homebrew::Bundle::Commands::Check.run(global:, file:, quiet: true)
+
           # Cleanup Homebrew's global environment
           HOMEBREW_ENV_CLEANUP.each { |key| ENV.delete(key) }
 
