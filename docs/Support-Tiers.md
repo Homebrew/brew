@@ -33,7 +33,7 @@ For Tier 1 support Homebrew on macOS must be all of:
 For Tier 1 support Homebrew on Linux must be all of:
 
 - running on Ubuntu or a Homebrew-provided Docker image
-- have a system `glibc` >= 2.13
+- have a system `glibc` >= 2.35
 - if running Ubuntu, running an Ubuntu version in "standard support": <https://ubuntu.com/about/release-cycle>
 - installed Homebrew in the default prefix (i.e. `/home/linuxbrew/.linuxbrew`)
 - running on a supported architecture (i.e. Intel x86_64)
@@ -52,7 +52,7 @@ A Tier 2 supported configuration is one in which any of:
 Tier 2 configurations include:
 
 - macOS prereleases before we state they are Tier 1 (e.g. in March 2025, macOS 16, whatever it ends up being called)
-- Linux versions where a system `glibc` < 2.13, so the Homebrew `glibc@*` formula is automatically installed
+- Linux versions where a system `glibc` < 2.35 (but still >= 2.13), so the Homebrew `glibc` formula is automatically installed
 - using official packages that need to be built from source due to installing Homebrew outside the default prefix (i.e. `/opt/homebrew` on Apple Silicon, `/usr/local` on Apple Intel x86_64, `/home/linuxbrew/.linuxbrew` for Linux)
 - running on a not-yet-supported architecture (i.e. Linux ARM64/AARCH64)
 
@@ -62,7 +62,8 @@ A Tier 3 supported configuration is one in which:
 
 - you get a poor but not completely broken experience using Homebrew
 - we strongly recommend migrating to a Tier 1 or 2 configuration or a non-Homebrew tool
-- we will not review PRs or aim to fix bugs only affecting this platform
+- we will only review PRs with a very bar: any changes made must be proven by the author to fix (not workaround) an issue and do not come with high maintainability costs (no patches)
+- we will generally not aim to fix bugs ourselves affecting this platform
 - we may intentionally regress functionality on this platform if it e.g. improves things for other platforms
 - we will output noisy warnings running on this platform
 - we are lacking any CI coverage for testing or building bottles for this platform
