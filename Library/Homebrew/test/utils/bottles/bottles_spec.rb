@@ -83,7 +83,7 @@ RSpec.describe Utils::Bottles do
       mach_o_file = instance_double(MachO::MachOFile)
       allow(keg).to receive(:mach_o_files).and_return([mach_o_file])
       allow(mach_o_file).to receive_messages(
-        dylib?: true,
+        dylib?:   true,
         dylib_id: "/usr/local/lib/example.dylib",
       )
 
@@ -121,8 +121,8 @@ RSpec.describe Utils::Bottles do
       allow(OS).to receive(:mac?).and_return(true)
       allow(keg).to receive(:mach_o_files).and_return([mach_o_file])
       allow(mach_o_file).to receive_messages(
-        dylib?: true,
-        dylib_id: "/usr/local/lib/example.dylib"
+        dylib?:   true,
+        dylib_id: "/usr/local/lib/example.dylib",
       )
       allow(mach_o_file).to receive(:dynamically_linked_libraries).and_return([])
 
@@ -133,7 +133,7 @@ RSpec.describe Utils::Bottles do
       allow(OS).to receive(:mac?).and_return(true)
       allow(keg).to receive(:mach_o_files).and_return([mach_o_file])
       allow(mach_o_file).to receive_messages(
-        dylib?: true,
+        dylib?:   true,
         dylib_id: "/usr/local/lib/example.dylib",
       )
 
@@ -144,7 +144,7 @@ RSpec.describe Utils::Bottles do
       allow(OS).to receive(:mac?).and_return(true)
       allow(keg).to receive(:mach_o_files).and_return([mach_o_file])
       allow(mach_o_file).to receive_messages(
-        dylib?: true,
+        dylib?:   true,
         dylib_id: "/usr/local/lib/example.dylib",
       )
 
