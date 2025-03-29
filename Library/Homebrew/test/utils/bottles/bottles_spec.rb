@@ -55,7 +55,7 @@ RSpec.describe Utils::Bottles do
   end
 
   describe "#skip_relocation_for_apple_silicon?" do
-    let(:keg) { double("keg") }
+    let(:keg) { instance_double(Keg) }
 
     before do
       allow(keg).to receive(:mach_o_files).and_return([])
@@ -80,10 +80,12 @@ RSpec.describe Utils::Bottles do
     end
 
     it "returns false for Apple Silicon with default prefix when binaries need relocation" do
-      mach_o_file = double("mach_o_file")
+      mach_o_file = instance_double(MachO::MachOFile)
       allow(keg).to receive(:mach_o_files).and_return([mach_o_file])
-      allow(mach_o_file).to receive(:dylib?).and_return(true)
-      allow(mach_o_file).to receive(:dylib_id).and_return("/usr/local/lib/example.dylib")
+      allow(mach_o_file).to receive_messages(
+        dylib?: true,
+        dylib_id: "/usr/local/lib/example.dylib",
+      )
 
       allow(Hardware::CPU).to receive(:arm?).and_return(true)
       allow(OS).to receive(:mac?).and_return(true)
@@ -112,8 +114,8 @@ RSpec.describe Utils::Bottles do
   end
 
   describe "#binaries_need_relocation?" do
-    let(:keg) { instance_double("Keg") }
-    let(:mach_o_file) { instance_double("MachO::MachOFile") }
+    let(:keg) { instance_double(Keg) }
+    let(:mach_o_file) { instance_double(MachO::MachOFile) }
 
     it "returns true when dylib has /usr/local path" do
       allow(OS).to receive(:mac?).and_return(true)
@@ -130,8 +132,10 @@ RSpec.describe Utils::Bottles do
     it "returns true when linked libraries have /usr/local path" do
       allow(OS).to receive(:mac?).and_return(true)
       allow(keg).to receive(:mach_o_files).and_return([mach_o_file])
-      allow(mach_o_file).to receive(:dylib?).and_return(false)
-      allow(mach_o_file).to receive(:dynamically_linked_libraries).and_return(["/usr/local/lib/libexample.dylib"])
+      allow(mach_o_file).to receive_messages(
+        dylib?: true,
+        dylib_id: "/usr/local/lib/example.dylib",
+      )
 
       expect(described_class.binaries_need_relocation?(keg)).to be true
     end
@@ -139,9 +143,10 @@ RSpec.describe Utils::Bottles do
     it "returns false when no paths need relocation" do
       allow(OS).to receive(:mac?).and_return(true)
       allow(keg).to receive(:mach_o_files).and_return([mach_o_file])
-      allow(mach_o_file).to receive(:dylib?).and_return(true)
-      allow(mach_o_file).to receive(:dylib_id).and_return("/opt/homebrew/lib/libexample.dylib")
-      allow(mach_o_file).to receive(:dynamically_linked_libraries).and_return(["/opt/homebrew/lib/libother.dylib"])
+      allow(mach_o_file).to receive_messages(
+        dylib?: true,
+        dylib_id: "/usr/local/lib/example.dylib",
+      )
 
       expect(described_class.binaries_need_relocation?(keg)).to be false
     end
