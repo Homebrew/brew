@@ -35,17 +35,17 @@ class AbstractTab
   # Instantiates a {Tab} for a new installation of a formula or cask.
   def self.create(formula_or_cask)
     attributes = {
-      "homebrew_version" => HOMEBREW_VERSION,
+      "homebrew_version"        => HOMEBREW_VERSION,
       "installed_as_dependency" => false,
-      "installed_on_request" => false,
-      "loaded_from_api" => formula_or_cask.loaded_from_api?,
-      "time" => Time.now.to_i,
-      "arch" => Hardware::CPU.arch,
-      "source" => {
-        "tap" => formula_or_cask.tap&.name,
+      "installed_on_request"    => false,
+      "loaded_from_api"         => formula_or_cask.loaded_from_api?,
+      "time"                    => Time.now.to_i,
+      "arch"                    => Hardware::CPU.arch,
+      "source"                  => {
+        "tap"          => formula_or_cask.tap&.name,
         "tap_git_head" => formula_or_cask.tap_git_head,
       },
-      "built_on" => DevelopmentTools.build_system_info,
+      "built_on"                => DevelopmentTools.build_system_info,
     }
 
     new(attributes)
@@ -77,19 +77,19 @@ class AbstractTab
 
   def self.empty
     attributes = {
-      "homebrew_version" => HOMEBREW_VERSION,
-      "installed_as_dependency" => false,
-      "installed_on_request" => false,
-      "loaded_from_api" => false,
-      "time" => nil,
-      "runtime_dependencies" => nil,
-      "arch" => nil,
-      "source" => {
-            "path" => nil,
-            "tap" => nil,
-            "tap_git_head" => nil,
+      "homebrew_version"                  => HOMEBREW_VERSION,
+      "installed_as_dependency"           => false,
+      "installed_on_request"              => false,
+      "loaded_from_api"                   => false,
+      "time"                              => nil,
+      "runtime_dependencies"              => nil,
+      "arch"                              => nil,
+      "source"                            => {
+        "path"         => nil,
+        "tap"          => nil,
+        "tap_git_head" => nil,
       },
-      "built_on" => DevelopmentTools.build_system_info,
+      "built_on"                          => DevelopmentTools.build_system_info,
       "skip_relocation_for_apple_silicon" => false,
     }
 
@@ -98,11 +98,11 @@ class AbstractTab
 
   def self.formula_to_dep_hash(formula, declared_deps)
     {
-      "full_name" => formula.full_name,
-      "version" => formula.version.to_s,
-      "revision" => formula.revision,
-      "bottle_rebuild" => formula.bottle&.rebuild,
-      "pkg_version" => formula.pkg_version.to_s,
+      "full_name"         => formula.full_name,
+      "version"           => formula.version.to_s,
+      "revision"          => formula.revision,
+      "bottle_rebuild"    => formula.bottle&.rebuild,
+      "pkg_version"       => formula.pkg_version.to_s,
       "declared_directly" => declared_deps.include?(formula.full_name),
     }.compact
   end
@@ -164,8 +164,8 @@ class Tab < AbstractTab
     tab.source["spec"] = formula.active_spec_sym.to_s
     tab.source["path"] = formula.specified_path.to_s
     tab.source["versions"] = {
-      "stable" => formula.stable&.version&.to_s,
-      "head" => formula.head&.version&.to_s,
+      "stable"         => formula.stable&.version&.to_s,
+      "head"           => formula.head&.version&.to_s,
       "version_scheme" => formula.version_scheme,
     }
 
@@ -262,13 +262,13 @@ class Tab < AbstractTab
       tab = empty
       tab.unused_options = formula.options.as_flags
       tab.source = {
-        "path" => formula.specified_path.to_s,
-        "tap" => formula.tap&.name,
+        "path"         => formula.specified_path.to_s,
+        "tap"          => formula.tap&.name,
         "tap_git_head" => formula.tap_git_head,
-        "spec" => formula.active_spec_sym.to_s,
-        "versions" => {
-          "stable" => formula.stable&.version&.to_s,
-          "head" => formula.head&.version&.to_s,
+        "spec"         => formula.active_spec_sym.to_s,
+        "versions"     => {
+          "stable"         => formula.stable&.version&.to_s,
+          "head"           => formula.head&.version&.to_s,
           "version_scheme" => formula.version_scheme,
         },
       }
@@ -296,8 +296,8 @@ class Tab < AbstractTab
 
   def self.empty_source_versions
     {
-      "stable" => nil,
-      "head" => nil,
+      "stable"         => nil,
+      "head"           => nil,
       "version_scheme" => 0,
     }
   end
@@ -400,25 +400,25 @@ class Tab < AbstractTab
 
   def to_json(options = nil)
     attributes = {
-      "homebrew_version" => homebrew_version,
-      "used_options" => used_options.as_flags,
-      "unused_options" => unused_options.as_flags,
-      "built_as_bottle" => built_as_bottle,
-      "poured_from_bottle" => poured_from_bottle,
+      "homebrew_version"                  => homebrew_version,
+      "used_options"                      => used_options.as_flags,
+      "unused_options"                    => unused_options.as_flags,
+      "built_as_bottle"                   => built_as_bottle,
+      "poured_from_bottle"                => poured_from_bottle,
       "skip_relocation_for_apple_silicon" => skip_relocation_for_apple_silicon,
-      "loaded_from_api" => loaded_from_api,
-      "installed_as_dependency" => installed_as_dependency,
-      "installed_on_request" => installed_on_request,
-      "changed_files" => changed_files&.map(&:to_s),
-      "time" => time,
-      "source_modified_time" => source_modified_time.to_i,
-      "stdlib" => stdlib&.to_s,
-      "compiler" => compiler&.to_s,
-      "aliases" => aliases,
-      "runtime_dependencies" => runtime_dependencies,
-      "source" => source,
-      "arch" => arch,
-      "built_on" => built_on,
+      "loaded_from_api"                   => loaded_from_api,
+      "installed_as_dependency"           => installed_as_dependency,
+      "installed_on_request"              => installed_on_request,
+      "changed_files"                     => changed_files&.map(&:to_s),
+      "time"                              => time,
+      "source_modified_time"              => source_modified_time.to_i,
+      "stdlib"                            => stdlib&.to_s,
+      "compiler"                          => compiler&.to_s,
+      "aliases"                           => aliases,
+      "runtime_dependencies"              => runtime_dependencies,
+      "source"                            => source,
+      "arch"                              => arch,
+      "built_on"                          => built_on,
     }
     attributes.delete("stdlib") if attributes["stdlib"].blank?
 
@@ -428,14 +428,14 @@ class Tab < AbstractTab
   # A subset of to_json that we care about for bottles.
   def to_bottle_hash
     attributes = {
-      "homebrew_version" => homebrew_version,
-      "changed_files" => changed_files&.map(&:to_s),
+      "homebrew_version"     => homebrew_version,
+      "changed_files"        => changed_files&.map(&:to_s),
       "source_modified_time" => source_modified_time.to_i,
-      "stdlib" => stdlib&.to_s,
-      "compiler" => compiler&.to_s,
+      "stdlib"               => stdlib&.to_s,
+      "compiler"             => compiler&.to_s,
       "runtime_dependencies" => runtime_dependencies,
-      "arch" => arch,
-      "built_on" => built_on,
+      "arch"                 => arch,
+      "built_on"             => built_on,
     }
     attributes.delete("stdlib") if attributes["stdlib"].blank?
     attributes
