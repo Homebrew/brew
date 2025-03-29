@@ -51,15 +51,15 @@ module Homebrew
           `brew bundle remove` <name> [...]:
           Remove entries that match `name` from your `Brewfile`. Use `--formula`, `--cask`, `--tap`, `--mas`, `--whalebrew` or `--vscode` to remove only entries of the corresponding type. Passing `--formula` also removes matches against formula aliases and old formula names.
 
-          `brew bundle exec` <command>:
+          `brew bundle exec` [--check] <command>:
           Run an external command in an isolated build environment based on the `Brewfile` dependencies.
 
           This sanitized build environment ignores unrequested dependencies, which makes sure that things you didn't specify in your `Brewfile` won't get picked up by commands like `bundle install`, `npm install`, etc. It will also add compiler flags which will help with finding keg-only dependencies like `openssl`, `icu4c`, etc.
 
-          `brew bundle sh`:
+          `brew bundle sh` [--check]:
           Run your shell in a `brew bundle exec` environment.
 
-          `brew bundle env`:
+          `brew bundle env` [--check]:
           Print the environment variables that would be set in a `brew bundle exec` environment.
         EOS
         flag "--file=",
@@ -121,6 +121,9 @@ module Homebrew
                description: "`dump` does not add `restart_service` to formula lines."
         switch "--zap",
                description: "`cleanup` casks using the `zap` command instead of `uninstall`."
+        switch "--check",
+               description: "Check that all dependencies in the Brewfile are installed before " \
+                            "running `exec`, `sh`, or `env`."
 
         conflicts "--all", "--no-vscode"
         conflicts "--vscode", "--no-vscode"
@@ -128,6 +131,8 @@ module Homebrew
 
         named_args %w[install dump cleanup check exec list sh env edit]
       end
+
+      BUNDLE_EXEC_COMMANDS = %w[exec sh env].freeze
 
       sig { override.void }
       def run
@@ -137,6 +142,10 @@ module Homebrew
         subcommand = args.named.first.presence
         if %w[exec add remove].exclude?(subcommand) && args.named.size > 1
           raise UsageError, "This command does not take more than 1 subcommand argument."
+        end
+
+        if args.check? && BUNDLE_EXEC_COMMANDS.exclude?(subcommand)
+          raise UsageError, "`--check` can be used only with #{BUNDLE_EXEC_COMMANDS.join(", ")}."
         end
 
         global = args.global?
@@ -213,28 +222,6 @@ module Homebrew
         when "check"
           require "bundle/commands/check"
           Homebrew::Bundle::Commands::Check.run(global:, file:, no_upgrade:, verbose:)
-        when "exec", "sh", "env"
-          named_args = case subcommand
-          when "exec"
-            _subcommand, *named_args = args.named
-            named_args
-          when "sh"
-            preferred_path = Utils::Shell.preferred_path(default: "/bin/bash")
-            notice = unless Homebrew::EnvConfig.no_env_hints?
-              <<~EOS
-                Your shell has been configured to use a build environment from your `Brewfile`.
-                This should help you build stuff.
-                Hide these hints with HOMEBREW_NO_ENV_HINTS (see `man brew`).
-                When done, type `exit`.
-              EOS
-            end
-            ENV["HOMEBREW_FORCE_API_AUTO_UPDATE"] = nil
-            [Utils::Shell.shell_with_prompt("brew bundle", preferred_path:, notice:)]
-          when "env"
-            ["env"]
-          end
-          require "bundle/commands/exec"
-          Homebrew::Bundle::Commands::Exec.run(*named_args, global:, file:, subcommand:, services: args.services?)
         when "list"
           require "bundle/commands/list"
           Homebrew::Bundle::Commands::List.run(
@@ -275,6 +262,28 @@ module Homebrew
             require "bundle/commands/remove"
             Homebrew::Bundle::Commands::Remove.run(*named_args, type: selected_types.first, global:, file:)
           end
+        when *BUNDLE_EXEC_COMMANDS
+          named_args = case subcommand
+          when "exec"
+            _subcommand, *named_args = args.named
+            named_args
+          when "sh"
+            preferred_path = Utils::Shell.preferred_path(default: "/bin/bash")
+            notice = unless Homebrew::EnvConfig.no_env_hints?
+              <<~EOS
+                Your shell has been configured to use a build environment from your `Brewfile`.
+                This should help you build stuff.
+                Hide these hints with HOMEBREW_NO_ENV_HINTS (see `man brew`).
+                When done, type `exit`.
+              EOS
+            end
+            ENV["HOMEBREW_FORCE_API_AUTO_UPDATE"] = nil
+            [Utils::Shell.shell_with_prompt("brew bundle", preferred_path:, notice:)]
+          when "env"
+            ["env"]
+          end
+          require "bundle/commands/exec"
+          Homebrew::Bundle::Commands::Exec.run(*named_args, global:, file:, subcommand:, services: args.services?)
         else
           raise UsageError, "unknown subcommand: #{subcommand}"
         end
