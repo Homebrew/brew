@@ -240,6 +240,7 @@ class Formula
     @version_scheme = T.let(self.class.version_scheme || 0, Integer)
     @head = T.let(nil, T.nilable(SoftwareSpec))
     @stable = T.let(nil, T.nilable(SoftwareSpec))
+    @keg_only_reason = T.let(nil, T.nilable(KegOnlyReason))
 
     @force_bottle = T.let(force_bottle, T::Boolean)
 
@@ -1403,7 +1404,7 @@ class Formula
   # @api internal
   sig { returns(T::Boolean) }
   def keg_only?
-    return false unless keg_only_reason
+    return false unless @keg_only_reason
 
     keg_only_reason.applicable?
   end
