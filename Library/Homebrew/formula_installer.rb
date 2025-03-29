@@ -31,7 +31,7 @@ class FormulaInstaller
   include FormulaCellarChecks
 
   def on_macos?
-    OS.mac?
+    false
   end
 
   ETC_VAR_DIRS = T.let([HOMEBREW_PREFIX/"etc", HOMEBREW_PREFIX/"var"].freeze, T::Array[Pathname])
