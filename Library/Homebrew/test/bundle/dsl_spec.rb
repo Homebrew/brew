@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "bundle"
+require "bundle/dsl"
 
 RSpec.describe Homebrew::Bundle::Dsl do
   def dsl_from_string(string)

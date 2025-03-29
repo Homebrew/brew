@@ -3237,9 +3237,16 @@ module Parser::Meta; end
 
 # All node types that parser can produce. Not all parser versions
 # will be able to produce every possible node.
+# Includes node types that are only emitted by the prism parser translator.
+#
+# source://parser//lib/parser/meta.rb#17
+Parser::Meta::NODE_TYPES = T.let(T.unsafe(nil), Set)
+
+# These are node types required by `Prism::Translation::Parser`,
+# which has advanced syntax support ahead of the Parser gem.
 #
 # source://parser//lib/parser/meta.rb#9
-Parser::Meta::NODE_TYPES = T.let(T.unsafe(nil), Set)
+Parser::Meta::PRISM_TRANSLATION_PARSER_NODE_TYPES = T.let(T.unsafe(nil), Array)
 
 # {Parser::Rewriter} is deprecated. Use {Parser::TreeRewriter} instead.
 # It has a backwards compatible API and uses {Parser::Source::TreeRewriter}

@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "bundle"
+require "bundle/whalebrew_dumper"
 
 RSpec.describe Homebrew::Bundle::WhalebrewDumper do
   subject(:dumper) { described_class }

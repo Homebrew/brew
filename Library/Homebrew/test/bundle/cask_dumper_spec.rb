@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "bundle"
+require "bundle/cask_dumper"
 require "cask"
 
 RSpec.describe Homebrew::Bundle::CaskDumper do

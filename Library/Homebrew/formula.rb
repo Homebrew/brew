@@ -3650,8 +3650,8 @@ class Formula
     # ```
     #
     # @api public
-    sig { params(val: String, specs: T::Hash[Symbol, T.any(String, Symbol)]).void }
-    def url(val, specs = {}) = stable.url(val, specs)
+    sig { params(val: String, specs: T::Hash[Symbol, T.anything]).returns(String) }
+    def url(val = T.unsafe(nil), specs = {}) = stable.url(val, specs)
 
     # The version string for the {.stable} version of the formula.
     # The version is autodetected from the URL and/or tag so only needs to be

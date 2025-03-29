@@ -535,6 +535,14 @@ RSpec.describe Formula do
     end
   end
 
+  specify ".url" do
+    f = formula do
+      url "foo-1.0"
+    end
+
+    expect(f.class.url).to eq("foo-1.0")
+  end
+
   specify "spec integration" do
     f = formula do
       homepage "https://brew.sh"

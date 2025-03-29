@@ -384,6 +384,22 @@ auto-update() {
   unset HOMEBREW_AUTO_UPDATE_CASK_TAP
 }
 
+# Only `brew update-if-needed` should be handled here.
+# We want it as fast as possible but it needs auto-update() defined above.
+# HOMEBREW_LIBRARY set by bin/brew
+# shellcheck disable=SC2154
+# doesn't need a default case as other arguments handled elsewhere.
+# shellcheck disable=SC2249
+# Don't need to pass through any arguments.
+# shellcheck disable=SC2119
+case "$@" in
+  update-if-needed)
+    source "${HOMEBREW_LIBRARY}/Homebrew/cmd/update-if-needed.sh"
+    homebrew-update-if-needed
+    exit 0
+    ;;
+esac
+
 #####
 ##### Setup output so e.g. odie looks as nice as possible.
 #####

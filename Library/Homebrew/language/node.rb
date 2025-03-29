@@ -96,7 +96,7 @@ module Language
       module_function
 
       # A regex to match potential shebang permutations.
-      NODE_SHEBANG_REGEX = %r{^#! ?/usr/bin/(?:env )?node( |$)}
+      NODE_SHEBANG_REGEX = %r{^#! ?(?:/usr/bin/(?:env )?)?node( |$)}
 
       # The length of the longest shebang matching `SHEBANG_REGEX`.
       NODE_SHEBANG_MAX_LENGTH = T.let("#! /usr/bin/env node ".length, Integer)

@@ -565,7 +565,8 @@ module Homebrew
 
       # Skip gnu.org and nongnu.org audit on GitHub runners
       # See issue: https://github.com/Homebrew/homebrew-core/issues/206757
-      return if homepage.match?(%r{^https?://www\.(?:non)?gnu\.org/.+}) && ENV["HOMEBREW_GITHUB_HOSTED_RUNNER"]
+      github_runner = ENV.fetch("GITHUB_ACTIONS", nil) && !ENV["GITHUB_ACTIONS_HOMEBREW_SELF_HOSTED"]
+      return if homepage.match?(%r{^https?://www\.(?:non)?gnu\.org/.+}) && github_runner
 
       use_homebrew_curl = [:stable, :head].any? do |spec_name|
         next false unless (spec = formula.send(spec_name))

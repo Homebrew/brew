@@ -1,6 +1,14 @@
 # frozen_string_literal: true
 
 require "bundle"
+require "bundle/dumper"
+require "bundle/brew_dumper"
+require "bundle/tap_dumper"
+require "bundle/cask_dumper"
+require "bundle/mac_app_store_dumper"
+require "bundle/whalebrew_dumper"
+require "bundle/vscode_extension_dumper"
+require "bundle/brew_services"
 require "cask"
 
 RSpec.describe Homebrew::Bundle::Dumper do

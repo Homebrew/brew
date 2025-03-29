@@ -4,13 +4,11 @@
 module Homebrew
   module Bundle
     module VscodeExtensionDumper
-      module_function
-
-      def reset!
+      def self.reset!
         @extensions = nil
       end
 
-      def extensions
+      def self.extensions
         @extensions ||= if Bundle.vscode_installed?
           Bundle.exchange_uid_if_needed! do
             `"#{Bundle.which_vscode}" --list-extensions 2>/dev/null`
@@ -20,7 +18,7 @@ module Homebrew
         end
       end
 
-      def dump
+      def self.dump
         extensions.map { |name| "vscode \"#{name}\"" }.join("\n")
       end
     end

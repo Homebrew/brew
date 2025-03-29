@@ -4,13 +4,11 @@
 module Homebrew
   module Bundle
     module VscodeExtensionInstaller
-      module_function
-
-      def reset!
+      def self.reset!
         @installed_extensions = nil
       end
 
-      def preinstall(name, no_upgrade: false, verbose: false)
+      def self.preinstall(name, no_upgrade: false, verbose: false)
         if !Bundle.vscode_installed? && Bundle.cask_installed?
           puts "Installing visual-studio-code. It is not currently installed." if verbose
           Bundle.brew("install", "--cask", "visual-studio-code", verbose:)
@@ -26,7 +24,7 @@ module Homebrew
         true
       end
 
-      def install(name, preinstall: true, no_upgrade: false, verbose: false, force: false)
+      def self.install(name, preinstall: true, no_upgrade: false, verbose: false, force: false)
         return true unless preinstall
         return true if extension_installed?(name)
 
@@ -41,11 +39,12 @@ module Homebrew
         true
       end
 
-      def extension_installed?(name)
+      def self.extension_installed?(name)
         installed_extensions.include? name.downcase
       end
 
-      def installed_extensions
+      def self.installed_extensions
+        require "bundle/vscode_extension_dumper"
         @installed_extensions ||= Homebrew::Bundle::VscodeExtensionDumper.extensions
       end
     end

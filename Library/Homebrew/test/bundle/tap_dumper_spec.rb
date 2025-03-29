@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 require "bundle"
+require "bundle/skipper"
+require "bundle/tap_dumper"
 
 RSpec.describe Homebrew::Bundle::TapDumper do
   subject(:dumper) { described_class }

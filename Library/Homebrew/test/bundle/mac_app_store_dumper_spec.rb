@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "bundle"
+require "bundle/mac_app_store_dumper"
 
 RSpec.describe Homebrew::Bundle::MacAppStoreDumper do
   subject(:dumper) { described_class }

@@ -15,11 +15,12 @@ module Homebrew
             verbose:  T::Boolean,
             no_wait:  T::Boolean,
             max_wait: T.nilable(Float),
+            keep:     T::Boolean,
           ).void
         }
-        def self.run(targets, verbose:, no_wait:, max_wait:)
+        def self.run(targets, verbose:, no_wait:, max_wait:, keep:)
           Services::Cli.check(targets)
-          Services::Cli.stop(targets, verbose:, no_wait:, max_wait:)
+          Services::Cli.stop(targets, verbose:, no_wait:, max_wait:, keep:)
         end
       end
     end

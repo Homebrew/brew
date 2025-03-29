@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "bundle"
+require "bundle/mac_app_store_installer"
 
 RSpec.describe Homebrew::Bundle::MacAppStoreInstaller do
   before do

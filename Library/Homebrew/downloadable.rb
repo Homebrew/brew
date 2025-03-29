@@ -12,7 +12,7 @@ module Downloadable
   abstract!
   requires_ancestor { Kernel }
 
-  sig { overridable.returns(T.nilable(URL)) }
+  sig { overridable.returns(T.any(NilClass, String, URL)) }
   attr_reader :url
 
   sig { overridable.returns(T.nilable(Checksum)) }

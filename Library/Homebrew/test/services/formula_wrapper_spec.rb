@@ -371,6 +371,7 @@ RSpec.describe Homebrew::Services::FormulaWrapper do
         loaded:       false,
         name:         "mysql",
         pid:          nil,
+        registered:   false,
         running:      false,
         schedulable:  nil,
         service_name: "plist-mysql-test",
@@ -384,13 +385,14 @@ RSpec.describe Homebrew::Services::FormulaWrapper do
       ENV["HOME"] = "/tmp_home"
       allow(Homebrew::Services::System).to receive_messages(launchctl?: true, systemctl?: false)
       expect(service).to receive(:service?).twice.and_return(false)
-      expect(service).to receive(:service_file_present?).and_return(true)
+      expect(service).to receive(:service_file_present?).twice.and_return(true)
       expected = {
         exit_code:    nil,
         file:         Pathname.new("/tmp_home/Library/LaunchAgents/homebrew.mysql.plist"),
         loaded:       false,
         name:         "mysql",
         pid:          nil,
+        registered:   true,
         running:      false,
         schedulable:  nil,
         service_name: "plist-mysql-test",
@@ -404,7 +406,7 @@ RSpec.describe Homebrew::Services::FormulaWrapper do
       ENV["HOME"] = "/tmp_home"
       allow(Homebrew::Services::System).to receive_messages(launchctl?: true, systemctl?: false)
       expect(service).to receive(:service?).twice.and_return(true)
-      expect(service).to receive(:service_file_present?).and_return(true)
+      expect(service).to receive(:service_file_present?).twice.and_return(true)
       expect(service).to receive(:load_service).twice.and_return(service_object)
       expected = {
         command:        "/bin/cmd",
@@ -417,6 +419,7 @@ RSpec.describe Homebrew::Services::FormulaWrapper do
         log_path:       nil,
         name:           "mysql",
         pid:            nil,
+        registered:     true,
         root_dir:       nil,
         running:        false,
         schedulable:    false,

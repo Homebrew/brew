@@ -1,6 +1,12 @@
 # frozen_string_literal: true
 
 require "bundle"
+require "bundle/commands/dump"
+require "bundle/cask_dumper"
+require "bundle/brew_dumper"
+require "bundle/tap_dumper"
+require "bundle/whalebrew_dumper"
+require "bundle/vscode_extension_dumper"
 
 RSpec.describe Homebrew::Bundle::Commands::Dump do
   subject(:dump) do

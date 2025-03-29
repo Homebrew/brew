@@ -67,7 +67,7 @@ class DependencyCollector
   def cache_key(spec)
     if spec.is_a?(Resource)
       if spec.download_strategy <= CurlDownloadStrategy
-        return "#{spec.download_strategy}#{File.extname(spec.url).split("?").first}"
+        return "#{spec.download_strategy}#{File.extname(T.must(spec.url)).split("?").first}"
       end
 
       return spec.download_strategy

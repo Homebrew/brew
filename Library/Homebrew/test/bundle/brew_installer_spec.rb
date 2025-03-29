@@ -2,6 +2,9 @@
 
 require "bundle"
 require "formula"
+require "bundle/brew_installer"
+require "bundle/brew_dumper"
+require "bundle/brew_services"
 
 RSpec.describe Homebrew::Bundle::BrewInstaller do
   let(:formula_name) { "mysql" }
@@ -55,7 +58,7 @@ RSpec.describe Homebrew::Bundle::BrewInstaller do
         context "with a successful installation" do
           it "start service" do
             expect(Homebrew::Bundle::BrewServices).to \
-              receive(:start).with(formula_name, verbose: false).and_return(true)
+              receive(:start).with(formula_name, file: nil, verbose: false).and_return(true)
             described_class.preinstall(formula_name, start_service: true)
             described_class.install(formula_name, start_service: true)
           end
@@ -64,7 +67,7 @@ RSpec.describe Homebrew::Bundle::BrewInstaller do
         context "with a skipped installation" do
           it "start service" do
             expect(Homebrew::Bundle::BrewServices).to \
-              receive(:start).with(formula_name, verbose: false).and_return(true)
+              receive(:start).with(formula_name, file: nil, verbose: false).and_return(true)
             described_class.install(formula_name, preinstall: false, start_service: true)
           end
         end
@@ -80,7 +83,7 @@ RSpec.describe Homebrew::Bundle::BrewInstaller do
       context "with a successful installation" do
         it "restart service" do
           expect(Homebrew::Bundle::BrewServices).to \
-            receive(:restart).with(formula_name, verbose: false).and_return(true)
+            receive(:restart).with(formula_name, file: nil, verbose: false).and_return(true)
           described_class.preinstall(formula_name, restart_service: :always)
           described_class.install(formula_name, restart_service: :always)
         end
@@ -89,7 +92,7 @@ RSpec.describe Homebrew::Bundle::BrewInstaller do
       context "with a skipped installation" do
         it "restart service" do
           expect(Homebrew::Bundle::BrewServices).to \
-            receive(:restart).with(formula_name, verbose: false).and_return(true)
+            receive(:restart).with(formula_name, file: nil, verbose: false).and_return(true)
           described_class.install(formula_name, preinstall: false, restart_service: :always)
         end
       end
@@ -198,7 +201,8 @@ RSpec.describe Homebrew::Bundle::BrewInstaller do
                                                           verbose:).and_return(true)
         expect(Homebrew::Bundle::BrewServices).to receive(:stop).with("mysql55", verbose:).and_return(true)
         expect(Homebrew::Bundle::BrewServices).to receive(:stop).with("mysql56", verbose:).and_return(true)
-        expect(Homebrew::Bundle::BrewServices).to receive(:restart).with(formula_name, verbose:).and_return(true)
+        expect(Homebrew::Bundle::BrewServices).to receive(:restart).with(formula_name, file:    nil,
+                                                                                       verbose:).and_return(true)
         described_class.preinstall(formula_name, restart_service: :always, conflicts_with: ["mysql56"])
         described_class.install(formula_name, restart_service: :always, conflicts_with: ["mysql56"])
       end
@@ -213,7 +217,8 @@ RSpec.describe Homebrew::Bundle::BrewInstaller do
                                                           verbose:).and_return(true)
         expect(Homebrew::Bundle::BrewServices).to receive(:stop).with("mysql55", verbose:).and_return(true)
         expect(Homebrew::Bundle::BrewServices).to receive(:stop).with("mysql56", verbose:).and_return(true)
-        expect(Homebrew::Bundle::BrewServices).to receive(:restart).with(formula_name, verbose:).and_return(true)
+        expect(Homebrew::Bundle::BrewServices).to receive(:restart).with(formula_name, file:    nil,
+                                                                                       verbose:).and_return(true)
         described_class.preinstall(formula_name, restart_service: :always, conflicts_with: ["mysql56"], verbose: true)
         described_class.install(formula_name, restart_service: :always, conflicts_with: ["mysql56"], verbose: true)
       end

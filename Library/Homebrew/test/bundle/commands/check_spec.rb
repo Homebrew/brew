@@ -1,6 +1,15 @@
 # frozen_string_literal: true
 
 require "bundle"
+require "bundle/commands/check"
+require "bundle/brew_checker"
+require "bundle/mac_app_store_checker"
+require "bundle/vscode_extension_checker"
+require "bundle/brew_installer"
+require "bundle/cask_installer"
+require "bundle/mac_app_store_installer"
+require "bundle/dsl"
+require "bundle/skipper"
 
 RSpec.describe Homebrew::Bundle::Commands::Check do
   let(:do_check) do
@@ -74,7 +83,7 @@ RSpec.describe Homebrew::Bundle::Commands::Check do
 
   context "when apps are not installed", :needs_macos do
     it "raises an error" do
-      allow_any_instance_of(Homebrew::Bundle::MacAppStoreDumper).to receive(:app_ids).and_return([])
+      allow(Homebrew::Bundle::MacAppStoreDumper).to receive(:app_ids).and_return([])
       allow(Homebrew::Bundle::BrewInstaller).to receive(:upgradable_formulae).and_return([])
       allow_any_instance_of(Pathname).to receive(:read).and_return("mas 'foo', id: 123")
       expect { do_check }.to raise_error(SystemExit)

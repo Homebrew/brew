@@ -4,15 +4,13 @@
 module Homebrew
   module Bundle
     module Lister
-      module_function
-
-      def list(entries, brews:, casks:, taps:, mas:, whalebrew:, vscode:)
+      def self.list(entries, brews:, casks:, taps:, mas:, whalebrew:, vscode:)
         entries.each do |entry|
           puts entry.name if show?(entry.type, brews:, casks:, taps:, mas:, whalebrew:, vscode:)
         end
       end
 
-      def show?(type, brews:, casks:, taps:, mas:, whalebrew:, vscode:)
+      private_class_method def self.show?(type, brews:, casks:, taps:, mas:, whalebrew:, vscode:)
         return true if brews && type == :brew
         return true if casks && type == :cask
         return true if taps && type == :tap

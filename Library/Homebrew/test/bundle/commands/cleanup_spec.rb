@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "bundle"
+require "bundle/commands/cleanup"
 
 RSpec.describe Homebrew::Bundle::Commands::Cleanup do
   describe "read Brewfile and current installation" do

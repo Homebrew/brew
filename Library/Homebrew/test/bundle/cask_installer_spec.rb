@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 require "bundle"
+require "bundle/cask_dumper"
+require "bundle/cask_installer"
 
 RSpec.describe Homebrew::Bundle::CaskInstaller do
   describe ".installed_casks" do

@@ -6,14 +6,12 @@ require "os"
 module Homebrew
   module Bundle
     module MacAppStoreInstaller
-      module_function
-
-      def reset!
+      def self.reset!
         @installed_app_ids = nil
         @outdated_app_ids = nil
       end
 
-      def preinstall(name, id, no_upgrade: false, verbose: false)
+      def self.preinstall(name, id, no_upgrade: false, verbose: false)
         unless Bundle.mas_installed?
           puts "Installing mas. It is not currently installed." if verbose
           Bundle.brew("install", "mas", verbose:)
@@ -29,7 +27,7 @@ module Homebrew
         true
       end
 
-      def install(name, id, preinstall: true, no_upgrade: false, verbose: false, force: false)
+      def self.install(name, id, preinstall: true, no_upgrade: false, verbose: false, force: false)
         return true unless preinstall
 
         if app_id_installed?(id)
@@ -54,19 +52,20 @@ module Homebrew
         !app_id_upgradable?(id)
       end
 
-      def app_id_installed?(id)
+      def self.app_id_installed?(id)
         installed_app_ids.include? id
       end
 
-      def app_id_upgradable?(id)
+      def self.app_id_upgradable?(id)
         outdated_app_ids.include? id
       end
 
-      def installed_app_ids
+      def self.installed_app_ids
+        require "bundle/mac_app_store_dumper"
         @installed_app_ids ||= Homebrew::Bundle::MacAppStoreDumper.app_ids
       end
 
-      def outdated_app_ids
+      def self.outdated_app_ids
         @outdated_app_ids ||= if Bundle.mas_installed?
           `mas outdated 2>/dev/null`.split("\n").map do |app|
             app.split(" ", 2).first.to_i

@@ -38,13 +38,14 @@ module Homebrew
           [`sudo`] `brew services start` (<formula>|`--all`|`--file=`):
           Start the service <formula> immediately and register it to launch at login (or boot).
 
-          [`sudo`] `brew services stop` (<formula>|`--all`):
-          Stop the service <formula> immediately and unregister it from launching at login (or boot).
+          [`sudo`] `brew services stop` (`--keep`) (`--no-wait`|`--max-wait=`) (<formula>|`--all`):
+          Stop the service <formula> immediately and unregister it from launching at login (or boot),
+          unless `--keep` is specified.
 
           [`sudo`] `brew services kill` (<formula>|`--all`):
           Stop the service <formula> immediately but keep it registered to launch at login (or boot).
 
-          [`sudo`] `brew services restart` (<formula>|`--all`):
+          [`sudo`] `brew services restart` (<formula>|`--all`|`--file=`):
           Stop (if necessary) and start the service <formula> immediately and register it to launch at login (or boot).
 
           [`sudo`] `brew services cleanup`:
@@ -57,14 +58,15 @@ module Homebrew
         switch "--all", description: "Run <subcommand> on all services."
         switch "--json", description: "Output as JSON."
         switch "--no-wait", description: "Don't wait for `stop` to finish stopping the service."
+        switch "--keep", description: "When stopped, don't unregister the service from launching at login (or boot)."
         conflicts "--max-wait=", "--no-wait"
-        named_args max: 2
+        named_args %w[list info run start stop kill restart cleanup]
       end
 
       sig { override.void }
       def run
         # pbpaste's exit status is a proxy for detecting the use of reattach-to-user-namespace
-        if ENV["HOMEBREW_TMUX"] && (File.exist?("/usr/bin/pbpaste") && !quiet_system("/usr/bin/pbpaste"))
+        if ENV.fetch("HOMEBREW_TMUX", nil) && File.exist?("/usr/bin/pbpaste") && !quiet_system("/usr/bin/pbpaste")
           raise UsageError,
                 "`brew services` cannot run under tmux!"
         end
@@ -93,14 +95,14 @@ module Homebrew
         end
 
         # Parse arguments.
-        subcommand, formula, = args.named
+        subcommand, *formulae = args.named
 
         no_named_formula_commands = [
           *Homebrew::Services::Commands::List::TRIGGERS,
           *Homebrew::Services::Commands::Cleanup::TRIGGERS,
         ]
         if no_named_formula_commands.include?(subcommand)
-          raise UsageError, "The `#{subcommand}` subcommand does not accept a formula argument!" if formula
+          raise UsageError, "The `#{subcommand}` subcommand does not accept a formula argument!" if formulae.present?
           raise UsageError, "The `#{subcommand}` subcommand does not accept the --all argument!" if args.all?
         end
 
@@ -108,6 +110,7 @@ module Homebrew
           file_commands = [
             *Homebrew::Services::Commands::Start::TRIGGERS,
             *Homebrew::Services::Commands::Run::TRIGGERS,
+            *Homebrew::Services::Commands::Restart::TRIGGERS,
           ]
           if file_commands.exclude?(subcommand)
             raise UsageError, "The `#{subcommand}` subcommand does not accept the --file= argument!"
@@ -117,7 +120,15 @@ module Homebrew
           end
         end
 
-        opoo "The --all argument overrides provided formula argument!" if formula.present? && args.all?
+        unless Homebrew::Services::Commands::Stop::TRIGGERS.include?(subcommand)
+          raise UsageError, "The `#{subcommand}` subcommand does not accept the --keep argument!" if args.keep?
+          raise UsageError, "The `#{subcommand}` subcommand does not accept the --no-wait argument!" if args.no_wait?
+          if args.max_wait
+            raise UsageError, "The `#{subcommand}` subcommand does not accept the --max-wait= argument!"
+          end
+        end
+
+        opoo "The --all argument overrides provided formula argument!" if formulae.present? && args.all?
 
         targets = if args.all?
           if subcommand == "start"
@@ -133,8 +144,8 @@ module Homebrew
           else
             Homebrew::Services::Formulae.available_services
           end
-        elsif formula
-          [Homebrew::Services::FormulaWrapper.new(Formulary.factory(formula))]
+        elsif formulae.present?
+          formulae.map { |formula| Homebrew::Services::FormulaWrapper.new(Formulary.factory(formula)) }
         else
           []
         end
@@ -156,14 +167,19 @@ module Homebrew
         when *Homebrew::Services::Commands::Info::TRIGGERS
           Homebrew::Services::Commands::Info.run(targets, verbose: args.verbose?, json: args.json?)
         when *Homebrew::Services::Commands::Restart::TRIGGERS
-          Homebrew::Services::Commands::Restart.run(targets, verbose: args.verbose?)
+          Homebrew::Services::Commands::Restart.run(targets, args.file, verbose: args.verbose?)
         when *Homebrew::Services::Commands::Run::TRIGGERS
           Homebrew::Services::Commands::Run.run(targets, args.file, verbose: args.verbose?)
         when *Homebrew::Services::Commands::Start::TRIGGERS
           Homebrew::Services::Commands::Start.run(targets, args.file, verbose: args.verbose?)
         when *Homebrew::Services::Commands::Stop::TRIGGERS
-          max_wait = args.max_wait.to_f
-          Homebrew::Services::Commands::Stop.run(targets, verbose: args.verbose?, no_wait: args.no_wait?, max_wait:)
+          Homebrew::Services::Commands::Stop.run(
+            targets,
+            verbose:  args.verbose?,
+            no_wait:  args.no_wait?,
+            max_wait: args.max_wait.to_f,
+            keep:     args.keep?,
+          )
         when *Homebrew::Services::Commands::Kill::TRIGGERS
           Homebrew::Services::Commands::Kill.run(targets, verbose: args.verbose?)
         else

@@ -4,26 +4,24 @@
 module Homebrew
   module Bundle
     module CaskDumper
-      module_function
-
-      def reset!
+      def self.reset!
         @casks = nil
         @cask_names = nil
         @cask_hash = nil
       end
 
-      def cask_names
+      def self.cask_names
         @cask_names ||= casks.map(&:to_s)
       end
 
-      def outdated_cask_names
+      def self.outdated_cask_names
         return [] unless Bundle.cask_installed?
 
         casks.select { |c| c.outdated?(greedy: false) }
              .map(&:to_s)
       end
 
-      def cask_is_outdated_using_greedy?(cask_name)
+      def self.cask_is_outdated_using_greedy?(cask_name)
         return false unless Bundle.cask_installed?
 
         cask = casks.find { |c| c.to_s == cask_name }
@@ -32,7 +30,7 @@ module Homebrew
         cask.outdated?(greedy: true)
       end
 
-      def dump(describe: false)
+      def self.dump(describe: false)
         casks.map do |cask|
           description = "# #{cask.desc}\n" if describe && cask.desc.present?
           config = ", args: { #{explicit_s(cask.config)} }" if cask.config.present? && cask.config.explicit.present?
@@ -40,7 +38,7 @@ module Homebrew
         end.join("\n")
       end
 
-      def formula_dependencies(cask_list)
+      def self.formula_dependencies(cask_list)
         return [] unless Bundle.cask_installed?
         return [] if cask_list.blank?
 
@@ -51,15 +49,14 @@ module Homebrew
         end.compact
       end
 
-      def casks
+      private_class_method def self.casks
         return [] unless Bundle.cask_installed?
 
         require "cask/caskroom"
         @casks ||= Cask::Caskroom.casks
       end
-      private_class_method :casks
 
-      def explicit_s(cask_config)
+      private_class_method def self.explicit_s(cask_config)
         cask_config.explicit.map do |key, value|
           # inverse of #env - converts :languages config key back to --language flag
           if key == :languages

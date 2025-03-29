@@ -488,7 +488,7 @@ class CurlDownloadStrategy < AbstractFileDownloadStrategy
         # - Content-Length value is different than the file's size
         cached_location_valid = if cached_location_valid
           newer_last_modified = last_modified && last_modified > cached_location.mtime
-          different_file_size = file_size && file_size != cached_location.size
+          different_file_size = file_size&.nonzero? && file_size != cached_location.size
           !(newer_last_modified || different_file_size)
         end
 

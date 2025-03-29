@@ -232,6 +232,7 @@ __brew_internal_commands() {
     'unpin:Unpin formula, allowing them to be upgraded by `brew upgrade` formula'
     'untap:Remove a tapped formula repository'
     'update:Fetch the newest version of Homebrew and all formulae from GitHub using `git`(1) and perform any necessary migrations'
+    'update-if-needed:Runs `brew update --auto-update` only if needed'
     'update-license-data:Update SPDX license data in the Homebrew repository'
     'update-maintainers:Update the list of maintainers in the `Homebrew/brew` README'
     'update-python-resources:Update versions for PyPI resource blocks in formula'
@@ -661,6 +662,7 @@ _brew_bundle() {
     '--no-upgrade[`install` does not run `brew upgrade` on outdated dependencies. `check` does not check for outdated dependencies. Note they may still be upgraded by `brew install` if needed. This is enabled by default if `$HOMEBREW_BUNDLE_NO_UPGRADE` is set]' \
     '(--all --vscode)--no-vscode[`dump` without VSCode (and forks/variants) extensions. This is enabled by default if `$HOMEBREW_BUNDLE_DUMP_NO_VSCODE` is set]' \
     '--quiet[Make some output more quiet]' \
+    '--services[Temporarily start services while running the `exec` or `sh` command]' \
     '--tap[`list` or `dump` Homebrew tap dependencies]' \
     '(--install)--upgrade[`install` runs `brew upgrade` on outdated dependencies, even if `$HOMEBREW_BUNDLE_NO_UPGRADE` is set. ]' \
     '--verbose[`install` prints output from commands as they are run. `check` lists all missing dependencies]' \
@@ -891,8 +893,9 @@ _brew_dispatch_build_bottle() {
     '--debug[Display any debugging information]' \
     '--help[Show this message]' \
     '--issue[If specified, post a comment to this issue number if the job fails]' \
-    '(--linux-self-hosted)--linux[Dispatch bottle for Linux (using GitHub runners)]' \
-    '(--linux)--linux-self-hosted[Dispatch bottle for Linux (using self-hosted runner)]' \
+    '(--linux-self-hosted)--linux[Dispatch bottle for Linux x86_64 (using GitHub runners)]' \
+    '--linux-arm64[Dispatch bottle for Linux arm64 (using GitHub runners)]' \
+    '(--linux)--linux-self-hosted[Dispatch bottle for Linux x86_64 (using self-hosted runner)]' \
     '--linux-wheezy[Use Debian Wheezy container for building the bottle on Linux]' \
     '--macos[macOS version (or comma-separated list of versions) the bottle should be built for]' \
     '--quiet[Make some output more quiet]' \
@@ -1187,6 +1190,7 @@ _brew_instal() {
     '(--cask)--HEAD[If formula defines it, install the HEAD version, aka. main, trunk, unstable, master]' \
     '(--formula --force)--adopt[Adopt existing artifacts in the destination that are identical to those being installed. Cannot be combined with `--force`]' \
     '(--formula)--appdir[Target location for Applications (default: `/Applications`)]' \
+    '(--cask)--as-dependency[Install but mark as installed as a dependency and not installed on request]' \
     '(--cask)--ask[Ask for confirmation before downloading and installing formulae. Print bottles and dependencies download size and install size]' \
     '(--formula)--audio-unit-plugindir[Target location for Audio Unit Plugins (default: `~/Library/Audio/Plug-Ins/Components`)]' \
     '(--formula)--binaries[Disable/enable linking of helper executables (default: enabled)]' \
@@ -1237,7 +1241,7 @@ _brew_instal() {
     '(--casks --binaries --require-sha --quarantine --adopt --skip-cask-deps --zap --appdir --keyboard-layoutdir --colorpickerdir --prefpanedir --qlplugindir --mdimporterdir --dictionarydir --fontdir --servicedir --input-methoddir --internet-plugindir --audio-unit-plugindir --vst-plugindir --vst3-plugindir --screen-saverdir --language)--formula[Treat all named arguments as formulae]' \
     '*::formula:__brew_formulae' \
     - cask \
-    '(--formulae --env --ignore-dependencies --only-dependencies --cc --build-from-source --force-bottle --include-test --HEAD --fetch-HEAD --keep-tmp --debug-symbols --build-bottle --skip-post-install --skip-link --bottle-arch --interactive --git --overwrite --ask)--cask[Treat all named arguments as casks]' \
+    '(--formulae --env --ignore-dependencies --only-dependencies --cc --build-from-source --force-bottle --include-test --HEAD --fetch-HEAD --keep-tmp --debug-symbols --build-bottle --skip-post-install --skip-link --as-dependency --bottle-arch --interactive --git --overwrite --ask)--cask[Treat all named arguments as casks]' \
     '*::cask:__brew_casks'
 }
 
@@ -1247,6 +1251,7 @@ _brew_install() {
     '(--cask)--HEAD[If formula defines it, install the HEAD version, aka. main, trunk, unstable, master]' \
     '(--formula --force)--adopt[Adopt existing artifacts in the destination that are identical to those being installed. Cannot be combined with `--force`]' \
     '(--formula)--appdir[Target location for Applications (default: `/Applications`)]' \
+    '(--cask)--as-dependency[Install but mark as installed as a dependency and not installed on request]' \
     '(--cask)--ask[Ask for confirmation before downloading and installing formulae. Print bottles and dependencies download size and install size]' \
     '(--formula)--audio-unit-plugindir[Target location for Audio Unit Plugins (default: `~/Library/Audio/Plug-Ins/Components`)]' \
     '(--formula)--binaries[Disable/enable linking of helper executables (default: enabled)]' \
@@ -1297,7 +1302,7 @@ _brew_install() {
     '(--casks --binaries --require-sha --quarantine --adopt --skip-cask-deps --zap --appdir --keyboard-layoutdir --colorpickerdir --prefpanedir --qlplugindir --mdimporterdir --dictionarydir --fontdir --servicedir --input-methoddir --internet-plugindir --audio-unit-plugindir --vst-plugindir --vst3-plugindir --screen-saverdir --language)--formula[Treat all named arguments as formulae]' \
     '*::formula:__brew_formulae' \
     - cask \
-    '(--formulae --env --ignore-dependencies --only-dependencies --cc --build-from-source --force-bottle --include-test --HEAD --fetch-HEAD --keep-tmp --debug-symbols --build-bottle --skip-post-install --skip-link --bottle-arch --interactive --git --overwrite --ask)--cask[Treat all named arguments as casks]' \
+    '(--formulae --env --ignore-dependencies --only-dependencies --cc --build-from-source --force-bottle --include-test --HEAD --fetch-HEAD --keep-tmp --debug-symbols --build-bottle --skip-post-install --skip-link --as-dependency --bottle-arch --interactive --git --overwrite --ask)--cask[Treat all named arguments as casks]' \
     '*::cask:__brew_casks'
 }
 
@@ -1892,11 +1897,14 @@ _brew_services() {
     '--file[Use the service file from this location to `start` the service]' \
     '--help[Show this message]' \
     '--json[Output as JSON]' \
+    '--keep[When stopped, don'\''t unregister the service from launching at login (or boot)]' \
     '(--no-wait)--max-wait[Wait at most this many seconds for `stop` to finish stopping a service. Omit this flag or set this to zero (0) seconds to wait indefinitely]' \
     '(--max-wait)--no-wait[Don'\''t wait for `stop` to finish stopping the service]' \
     '--quiet[Make some output more quiet]' \
     '--sudo-service-user[When run as root on macOS, run the service(s) as this user]' \
-    '--verbose[Make some output more verbose]'
+    '--verbose[Make some output more verbose]' \
+    - subcommand \
+    '*::subcommand:(list info run start stop kill restart cleanup)'
 }
 
 # brew setup-ruby
@@ -2218,6 +2226,15 @@ _brew_update() {
     '--merge[Use `git merge` to apply updates (rather than `git rebase`)]' \
     '--quiet[Make some output more quiet]' \
     '--verbose[Print the directories checked and `git` operations performed]'
+}
+
+# brew update-if-needed
+_brew_update_if_needed() {
+  _arguments \
+    '--debug[Display any debugging information]' \
+    '--help[Show this message]' \
+    '--quiet[Make some output more quiet]' \
+    '--verbose[Make some output more verbose]'
 }
 
 # brew update-license-data

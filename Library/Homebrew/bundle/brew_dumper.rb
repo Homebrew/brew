@@ -11,6 +11,8 @@ module Homebrew
       module_function
 
       def reset!
+        require "bundle/brew_services"
+
         Homebrew::Bundle::BrewServices.reset!
         @formulae = nil
         @formulae_by_full_name = nil
@@ -54,6 +56,8 @@ module Homebrew
       end
 
       def dump(describe: false, no_restart: false)
+        require "bundle/brew_services"
+
         requested_formula = formulae.select do |f|
           f[:installed_on_request?] || !f[:installed_as_dependency?]
         end

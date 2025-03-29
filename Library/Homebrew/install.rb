@@ -233,6 +233,8 @@ module Homebrew
 
       def install_formulae(
         formulae_to_install,
+        installed_on_request: true,
+        installed_as_dependency: false,
         build_bottle: false,
         force_bottle: false,
         bottle_arch: nil,
@@ -261,8 +263,8 @@ module Homebrew
           formula_installer = FormulaInstaller.new(
             formula,
             options:                    build_options.used_options,
-            installed_on_request:       true,
-            installed_as_dependency:    false,
+            installed_on_request:,
+            installed_as_dependency:,
             build_bottle:,
             force_bottle:,
             bottle_arch:,

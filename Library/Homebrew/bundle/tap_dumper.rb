@@ -6,13 +6,11 @@ require "json"
 module Homebrew
   module Bundle
     module TapDumper
-      module_function
-
-      def reset!
+      def self.reset!
         @taps = nil
       end
 
-      def dump
+      def self.dump
         taps.map do |tap|
           remote = if tap.custom_remote? && (tap_remote = tap.remote)
             if (api_token = ENV.fetch("HOMEBREW_GITHUB_API_TOKEN", false).presence)
@@ -29,17 +27,16 @@ module Homebrew
         end.sort.uniq.join("\n")
       end
 
-      def tap_names
+      def self.tap_names
         taps.map(&:name)
       end
 
-      def taps
+      private_class_method def self.taps
         @taps ||= begin
           require "tap"
           Tap.select(&:installed?).to_a
         end
       end
-      private_class_method :taps
     end
   end
 end

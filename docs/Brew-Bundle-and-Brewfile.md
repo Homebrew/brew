@@ -40,6 +40,8 @@ brew "mysql@5.6", restart_service: :changed, link: true, conflicts_with: ["mysql
 # 'brew install' and run a command if installer or upgraded.
 brew "postgresql@16",
      postinstall: "${HOMEBREW_PREFIX}/opt/postgresql@16/bin/postgres -D ${HOMEBREW_PREFIX}/var/postgresql@16"
+# 'brew install' and write the installed version to the '.ruby-version' file.
+brew "ruby", version_file: ".ruby-version"
 # install only on specified OS
 brew "gnupg" if OS.mac?
 brew "glibc" if OS.linux?

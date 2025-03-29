@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "bundle"
+require "bundle/remover"
 
 RSpec.describe Homebrew::Bundle::Remover do
   subject(:remover) { described_class }

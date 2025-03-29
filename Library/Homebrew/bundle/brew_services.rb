@@ -1,43 +1,58 @@
 # typed: true # rubocop:todo Sorbet/StrictSigil
 # frozen_string_literal: true
 
+require "services/system"
+
 module Homebrew
   module Bundle
     module BrewServices
-      module_function
-
-      def reset!
+      def self.reset!
         @started_services = nil
       end
 
-      def stop(name, verbose: false)
+      def self.stop(name, keep: false, verbose: false)
         return true unless started?(name)
 
-        return unless Bundle.brew("services", "stop", name, verbose:)
+        args = ["services", "stop", name]
+        args << "--keep" if keep
+        return unless Bundle.brew(*args, verbose:)
 
         started_services.delete(name)
         true
       end
 
-      def start(name, verbose: false)
-        return unless Bundle.brew("services", "start", name, verbose:)
+      def self.start(name, file: nil, verbose: false)
+        args = ["services", "start", name]
+        args << "--file=#{file}" if file
+        return unless Bundle.brew(*args, verbose:)
 
         started_services << name
         true
       end
 
-      def restart(name, verbose: false)
-        return unless Bundle.brew("services", "restart", name, verbose:)
+      def self.run(name, file: nil, verbose: false)
+        args = ["services", "run", name]
+        args << "--file=#{file}" if file
+        return unless Bundle.brew(*args, verbose:)
 
         started_services << name
         true
       end
 
-      def started?(name)
+      def self.restart(name, file: nil, verbose: false)
+        args = ["services", "restart", name]
+        args << "--file=#{file}" if file
+        return unless Bundle.brew(*args, verbose:)
+
+        started_services << name
+        true
+      end
+
+      def self.started?(name)
         started_services.include? name
       end
 
-      def started_services
+      def self.started_services
         @started_services ||= begin
           states_to_skip = %w[stopped none]
           Utils.safe_popen_read(HOMEBREW_BREW_FILE, "services", "list").lines.filter_map do |line|
@@ -47,6 +62,23 @@ module Homebrew
             name
           end
         end
+      end
+
+      def self.versioned_service_file(name)
+        env_version = Bundle.formula_versions_from_env[name]
+        return if env_version.nil?
+
+        formula = Formula[name]
+        prefix = formula.rack/env_version
+        return unless prefix.directory?
+
+        service_file = if Homebrew::Services::System.launchctl?
+          prefix/"#{formula.plist_name}.plist"
+        else
+          prefix/"#{formula.service_name}.service"
+        end
+
+        service_file if service_file.file?
       end
     end
   end

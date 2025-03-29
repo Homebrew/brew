@@ -2,6 +2,7 @@
 
 require "ostruct"
 require "bundle"
+require "bundle/brew_dumper"
 require "tsort"
 require "formula"
 require "tab"

@@ -256,11 +256,14 @@ module Cask
         end
       end
 
-      opoo <<~EOF
-        Your terminal does not have App Management permissions, so Homebrew will delete and reinstall the app.
-        This may result in some configurations (like notification settings or location in the Dock/Launchpad) being lost.
-        To fix this, go to System Settings > Privacy & Security > App Management and add or enable your terminal.
-      EOF
+      # Allow undocumented way to skip the prompt.
+      if ENV["HOMEBREW_NO_APP_MANAGEMENT_PERMISSIONS_PROMPT"]
+        opoo <<~EOF
+          Your terminal does not have App Management permissions, so Homebrew will delete and reinstall the app.
+          This may result in some configurations (like notification settings or location in the Dock/Launchpad) being lost.
+          To fix this, go to System Settings → Privacy & Security → App Management and add or enable your terminal.
+        EOF
+      end
 
       false
     end

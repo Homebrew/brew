@@ -39,32 +39,25 @@ module Homebrew
 
         ENV["VERBOSE"] = "1" if args.verbose?
 
-        preferred_shell = Utils::Shell.preferred_path(default: "/bin/bash")
+        preferred_path = Utils::Shell.preferred_path(default: "/bin/bash")
 
         if args.cmd.present?
-          safe_system(preferred_shell, "-c", args.cmd)
+          safe_system(preferred_path, "-c", args.cmd)
         elsif args.named.present?
-          safe_system(preferred_shell, args.named.first)
+          safe_system(preferred_path, args.named.first)
         else
-          shell_type = Utils::Shell.preferred
-          subshell = case shell_type
-          when :zsh
-            "PS1='brew %B%F{green}%~%f%b$ ' #{preferred_shell} -d -f"
-          when :bash
-            "PS1=\"brew \\[\\033[1;32m\\]\\w\\[\\033[0m\\]$ \" #{preferred_shell} --noprofile --norc"
-          else
-            "PS1=\"brew \\[\\033[1;32m\\]\\w\\[\\033[0m\\]$ \" #{preferred_shell}"
+          notice = unless Homebrew::EnvConfig.no_env_hints?
+            <<~EOS
+              Your shell has been configured to use Homebrew's build environment;
+              this should help you build stuff. Notably though, the system versions of
+              gem and pip will ignore our configuration and insist on using the
+              environment they were built under (mostly). Sadly, scons will also
+              ignore our configuration.
+              Hide these hints with HOMEBREW_NO_ENV_HINTS (see `man brew`).
+              When done, type `exit`.
+            EOS
           end
-          puts <<~EOS
-            Your shell has been configured to use Homebrew's build environment;
-            this should help you build stuff. Notably though, the system versions of
-            gem and pip will ignore our configuration and insist on using the
-            environment they were built under (mostly). Sadly, scons will also
-            ignore our configuration.
-            When done, type `exit`.
-          EOS
-          $stdout.flush
-          safe_system subshell
+          system Utils::Shell.shell_with_prompt("brew", preferred_path:, notice:)
         end
       end
     end

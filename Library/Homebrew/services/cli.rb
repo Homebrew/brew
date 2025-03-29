@@ -159,12 +159,13 @@ module Homebrew
           verbose:  T::Boolean,
           no_wait:  T::Boolean,
           max_wait: T.nilable(T.any(Integer, Float)),
+          keep:     T::Boolean,
         ).void
       }
-      def self.stop(targets, verbose: false, no_wait: false, max_wait: 0)
+      def self.stop(targets, verbose: false, no_wait: false, max_wait: 0, keep: false)
         targets.each do |service|
           unless service.loaded?
-            rm service.dest if service.dest.exist? # get rid of installed service file anyway, dude
+            rm service.dest if !keep && service.dest.exist? # get rid of installed service file anyway, dude
             if service.service_file_present?
               odie <<~EOS
                 Service `#{service.name}` is started as `#{service.owner}`. Try:
@@ -188,7 +189,11 @@ module Homebrew
           end
 
           if System.systemctl?
-            System::Systemctl.quiet_run(*systemctl_args, "disable", "--now", service.service_name)
+            if keep
+              System::Systemctl.quiet_run(*systemctl_args, "stop", service.service_name)
+            else
+              System::Systemctl.quiet_run(*systemctl_args, "disable", "--now", service.service_name)
+            end
           elsif System.launchctl?
             quiet_system System.launchctl, "bootout", "#{System.domain_target}/#{service.service_name}"
             unless no_wait
@@ -204,9 +209,11 @@ module Homebrew
             quiet_system System.launchctl, "stop", "#{System.domain_target}/#{service.service_name}" if service.pid?
           end
 
-          rm service.dest if service.dest.exist?
-          # Run daemon-reload on systemctl to finish unloading stopped and deleted service.
-          System::Systemctl.run(*systemctl_args, "daemon-reload") if System.systemctl?
+          unless keep
+            rm service.dest if service.dest.exist?
+            # Run daemon-reload on systemctl to finish unloading stopped and deleted service.
+            System::Systemctl.run(*systemctl_args, "daemon-reload") if System.systemctl?
+          end
 
           if service.pid? || service.loaded?
             opoo "Unable to stop `#{service.name}` (label: #{service.service_name})"

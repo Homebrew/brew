@@ -153,6 +153,9 @@ Read from or write to the \fBBrewfile\fP from \fB$HOMEBREW_BUNDLE_FILE_GLOBAL\fP
 \fB\-\-install\fP
 Run \fBinstall\fP before continuing to other operations e\.g\. \fBexec\fP\&\.
 .TP
+\fB\-\-services\fP
+Temporarily start services while running the \fBexec\fP or \fBsh\fP command\.
+.TP
 \fB\-f\fP, \fB\-\-force\fP
 \fBinstall\fP runs with \fB\-\-force\fP/\fB\-\-overwrite\fP\&\. \fBdump\fP overwrites an existing \fBBrewfile\fP\&\. \fBcleanup\fP actually performs its cleanup operations\.
 .TP
@@ -520,6 +523,9 @@ Install but skip any post\-install steps\.
 \fB\-\-skip\-link\fP
 Install but skip linking the keg into the prefix\.
 .TP
+\fB\-\-as\-dependency\fP
+Install but mark as installed as a dependency and not installed on request\.
+.TP
 \fB\-\-bottle\-arch\fP
 Optimise bottles for the specified architecture rather than the oldest architecture supported by the version of macOS the bottles are built on\.
 .TP
@@ -871,13 +877,13 @@ Run the service \fIformula\fP without registering to launch at login (or boot)\.
 [\fBsudo\fP] \fBbrew services start\fP (\fIformula\fP|\fB\-\-all\fP|\fB\-\-file=\fP)
 Start the service \fIformula\fP immediately and register it to launch at login (or boot)\.
 .TP
-[\fBsudo\fP] \fBbrew services stop\fP (\fIformula\fP|\fB\-\-all\fP)
-Stop the service \fIformula\fP immediately and unregister it from launching at login (or boot)\.
+[\fBsudo\fP] \fBbrew services stop\fP (\fB\-\-keep\fP) (\fB\-\-no\-wait\fP|\fB\-\-max\-wait=\fP) (\fIformula\fP|\fB\-\-all\fP)
+Stop the service \fIformula\fP immediately and unregister it from launching at login (or boot), unless \fB\-\-keep\fP is specified\.
 .TP
 [\fBsudo\fP] \fBbrew services kill\fP (\fIformula\fP|\fB\-\-all\fP)
 Stop the service \fIformula\fP immediately but keep it registered to launch at login (or boot)\.
 .TP
-[\fBsudo\fP] \fBbrew services restart\fP (\fIformula\fP|\fB\-\-all\fP)
+[\fBsudo\fP] \fBbrew services restart\fP (\fIformula\fP|\fB\-\-all\fP|\fB\-\-file=\fP)
 Stop (if necessary) and start the service \fIformula\fP immediately and register it to launch at login (or boot)\.
 .TP
 [\fBsudo\fP] \fBbrew services cleanup\fP
@@ -900,6 +906,9 @@ Output as JSON\.
 .TP
 \fB\-\-no\-wait\fP
 Don\[u2019]t wait for \fBstop\fP to finish stopping the service\.
+.TP
+\fB\-\-keep\fP
+When stopped, don\[u2019]t unregister the service from launching at login (or boot)\.
 .SS "\fBsetup\-ruby\fP \fR[\fIcommand\fP \.\.\.]"
 Installs and configures Homebrew\[u2019]s Ruby\. If \fBcommand\fP is passed, it will only run Bundler if necessary for that command\.
 .SS "\fBshellenv\fP \fR[\fIshell\fP \.\.\.]"
@@ -1002,6 +1011,8 @@ Print the directories checked and \fBgit\fP operations performed\.
 .TP
 \fB\-d\fP, \fB\-\-debug\fP
 Display a trace of all shell commands as they are executed\.
+.SS "\fBupdate\-if\-needed\fP"
+Runs \fBbrew update \-\-auto\-update\fP only if needed\. This is a good replacement for \fBbrew update\fP in scripts where you want the no\-op case to be both possible and really fast\.
 .SS "\fBupdate\-reset\fP \fR[\fIrepository\fP \.\.\.]"
 Fetch and reset Homebrew and all tap repositories (or any specified \fIrepository\fP) using \fBgit\fP(1) to their latest \fBorigin/HEAD\fP\&\.
 .P
@@ -1584,10 +1595,13 @@ Dispatch specified workflow (default: \fBdispatch\-build\-bottle\.yml\fP)\.
 Upload built bottles\.
 .TP
 \fB\-\-linux\fP
-Dispatch bottle for Linux (using GitHub runners)\.
+Dispatch bottle for Linux x86_64 (using GitHub runners)\.
+.TP
+\fB\-\-linux\-arm64\fP
+Dispatch bottle for Linux arm64 (using GitHub runners)\.
 .TP
 \fB\-\-linux\-self\-hosted\fP
-Dispatch bottle for Linux (using self\-hosted runner)\.
+Dispatch bottle for Linux x86_64 (using self\-hosted runner)\.
 .TP
 \fB\-\-linux\-wheezy\fP
 Use Debian Wheezy container for building the bottle on Linux\.
@@ -2583,6 +2597,9 @@ Use this editor when editing a single formula, or several formulae in the same d
 .P
 \fIDefault:\fP \fB$EDITOR\fP or \fB$VISUAL\fP\&\.
 .RE
+.TP
+\fBHOMEBREW_ENV_SYNC_STRICT\fP
+If set, \fBbrew *env\-sync\fP will only sync the exact installed versions of formulae\.
 .TP
 \fBHOMEBREW_EVAL_ALL\fP
 If set, \fBbrew\fP commands evaluate all formulae and casks, executing their arbitrary code, by default without requiring \fB\-\-eval\-all\fP\&\. Required to cache formula and cask descriptions\.

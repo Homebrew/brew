@@ -55,14 +55,24 @@ module Homebrew
         minor_version = version.minor.to_i || 0
         patch_version = version.patch.to_i || 0
 
-        (0..minor_version).each do |minor|
-          (0..patch_version).each do |patch|
+        minor_version_range, patch_version_range = if Homebrew::EnvConfig.env_sync_strict?
+          # Only create symlinks for the exact installed patch version.
+          # e.g. 23.9.0 => 23.9.0
+          [[minor_version], [patch_version]]
+        else
+          # Create folder symlinks for all patch versions to the latest patch version
+          # e.g. 23.9.0 => 23.10.1
+          [0..minor_version, 0..patch_version]
+        end
+
+        minor_version_range.each do |minor|
+          patch_version_range.each do |patch|
             link_path = nodenv_versions/"#{major_version}.#{minor}.#{patch}"
             # Don't clobber existing user installations.
             next if link_path.exist? && !link_path.symlink?
 
             FileUtils.rm_f link_path
-            FileUtils.ln_sf path, link_path
+            FileUtils.ln_s path, link_path
           end
         end
       end

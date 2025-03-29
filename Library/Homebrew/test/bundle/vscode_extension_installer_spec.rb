@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "bundle"
+require "bundle/vscode_extension_installer"
 require "extend/kernel"
 
 RSpec.describe Homebrew::Bundle::VscodeExtensionInstaller do

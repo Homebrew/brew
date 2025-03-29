@@ -4,13 +4,11 @@
 module Homebrew
   module Bundle
     module WhalebrewInstaller
-      module_function
-
-      def reset!
+      def self.reset!
         @installed_images = nil
       end
 
-      def preinstall(name, verbose: false, **_options)
+      def self.preinstall(name, verbose: false, **_options)
         unless Bundle.whalebrew_installed?
           puts "Installing whalebrew. It is not currently installed." if verbose
           Bundle.brew("install", "--formula", "whalebrew", verbose:)
@@ -25,7 +23,7 @@ module Homebrew
         true
       end
 
-      def install(name, preinstall: true, verbose: false, force: false, **_options)
+      def self.install(name, preinstall: true, verbose: false, force: false, **_options)
         # odeprecated "`brew bundle` `whalebrew` support", "using `whalebrew` directly"
         return true unless preinstall
 
@@ -37,11 +35,12 @@ module Homebrew
         true
       end
 
-      def image_installed?(image)
+      def self.image_installed?(image)
         installed_images.include? image
       end
 
-      def installed_images
+      def self.installed_images
+        require "bundle/whalebrew_dumper"
         @installed_images ||= Homebrew::Bundle::WhalebrewDumper.images
       end
     end

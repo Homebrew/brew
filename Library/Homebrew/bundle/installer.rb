@@ -1,13 +1,20 @@
 # typed: true # rubocop:todo Sorbet/StrictSigil
 # frozen_string_literal: true
 
+require "bundle/dsl"
+require "bundle/brew_installer"
+require "bundle/cask_installer"
+require "bundle/mac_app_store_installer"
+require "bundle/whalebrew_installer"
+require "bundle/vscode_extension_installer"
+require "bundle/tap_installer"
+require "bundle/skipper"
+
 module Homebrew
   module Bundle
     module Installer
-      module_function
-
-      def install(entries, global: false, file: nil, no_lock: false, no_upgrade: false, verbose: false, force: false,
-                  quiet: false)
+      def self.install(entries, global: false, file: nil, no_lock: false, no_upgrade: false, verbose: false,
+                       force: false, quiet: false)
         success = 0
         failure = 0
 

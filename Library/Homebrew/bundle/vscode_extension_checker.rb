@@ -13,6 +13,7 @@ module Homebrew
         end
 
         def installed_and_up_to_date?(extension, no_upgrade: false)
+          require "bundle/vscode_extension_installer"
           Homebrew::Bundle::VscodeExtensionInstaller.extension_installed?(extension)
         end
       end

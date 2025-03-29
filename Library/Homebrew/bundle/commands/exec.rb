@@ -10,8 +10,6 @@ module Homebrew
   module Bundle
     module Commands
       module Exec
-        module_function
-
         # Homebrew's global environment variables that we don't want to leak into
         # the `brew bundle exec` environment.
         HOMEBREW_ENV_CLEANUP = %w[
@@ -49,9 +47,13 @@ module Homebrew
 
         PATH_LIKE_ENV_REGEX = /.+#{File::PATH_SEPARATOR}/
 
-        def run(*args, global: false, file: nil, subcommand: "")
+        def self.run(*args, global: false, file: nil, subcommand: "", services: false)
           # Cleanup Homebrew's global environment
           HOMEBREW_ENV_CLEANUP.each { |key| ENV.delete(key) }
+
+          # Store the old environment so we can check if things were already set
+          # before we start mutating it.
+          old_env = ENV.to_h
 
           # Setup Homebrew's ENV extensions
           ENV.activate_extensions!
@@ -59,6 +61,7 @@ module Homebrew
 
           command = args.first
 
+          require "bundle/brewfile"
           @dsl = Brewfile.read(global:, file:)
 
           require "formula"
@@ -109,18 +112,7 @@ module Homebrew
           end
 
           # Replace the formula versions from the environment variables
-          formula_versions = {}
-          ENV.each do |key, value|
-            match = key.match(/^HOMEBREW_BUNDLE_EXEC_FORMULA_VERSION_(.+)$/)
-            next if match.blank?
-
-            formula_name = match[1]
-            next if formula_name.blank?
-
-            ENV.delete(key)
-            formula_versions[formula_name.downcase] = value
-          end
-          formula_versions.each do |formula_name, formula_version|
+          Bundle.formula_versions_from_env.each do |formula_name, formula_version|
             ENV.each do |key, value|
               opt = %r{/opt/#{formula_name}([/:$])}
               next unless value.match(opt)
@@ -131,11 +123,11 @@ module Homebrew
               ENV[key] = if key.include?("PATH") && value.match?(PATH_LIKE_ENV_REGEX)
                 rejected_opts = []
                 path = PATH.new(ENV.fetch("PATH"))
-                           .reject do |value|
-                  rejected_opts << value if value.match?(opt)
+                           .reject do |path_value|
+                  rejected_opts << path_value if path_value.match?(opt)
                 end
-                rejected_opts.each do |value|
-                  path.prepend(value.gsub(opt, cellar))
+                rejected_opts.each do |path_value|
+                  path.prepend(path_value.gsub(opt, cellar))
                 end
                 path.to_s
               else
@@ -153,13 +145,147 @@ module Homebrew
           raise "command was not found in your PATH: #{command}" if command.exclude?("/") && which(command).nil?
 
           if subcommand == "env"
-            ENV.each do |key, value|
-              puts "export #{key}=\"#{value}\""
+            ENV.sort.each do |key, value|
+              # No need to export empty values.
+              next if value.blank?
+
+              # Skip exporting non-Homebrew things that were already set in the old environment.
+              next if !key.start_with?("HOMEBREW_") && old_env.key?(key) && old_env[key] == value
+
+              puts "export #{key}=\"#{Utils::Shell.sh_quote(value)}\""
             end
             return
           end
 
-          exec(*args)
+          if services
+            require "bundle/brew_services"
+
+            exit_code = 0
+            run_services(@dsl.entries) do
+              Kernel.system(*args)
+              exit_code = $CHILD_STATUS.exitstatus
+            end
+            exit!(exit_code)
+          else
+            exec(*args)
+          end
+        end
+
+        sig {
+          params(
+            entries: T::Array[Homebrew::Bundle::Dsl::Entry],
+            _block:  T.proc.params(
+              info:                 T::Hash[String, T.anything],
+              service_file:         Pathname,
+              conflicting_services: T::Array[T::Hash[String, T.anything]],
+            ).void,
+          ).void
+        }
+        private_class_method def self.map_service_info(entries, &_block)
+          entries_formulae = entries.filter_map do |entry|
+            next if entry.type != :brew
+
+            formula = Formula[entry.name]
+            next unless formula.any_version_installed?
+
+            [entry, formula]
+          end.to_h
+
+          # The formula + everything that could possible conflict with the service
+          names_to_query = entries_formulae.flat_map do |entry, formula|
+            [
+              formula.name,
+              *formula.versioned_formulae_names,
+              *formula.conflicts.map(&:name),
+              *entry.options[:conflicts_with],
+            ]
+          end
+
+          # We parse from a command invocation so that brew wrappers can invoke special actions
+          # for the elevated nature of `brew services`
+          services_info = JSON.parse(
+            Utils.safe_popen_read(HOMEBREW_BREW_FILE, "services", "info", "--json", *names_to_query),
+          )
+
+          entries_formulae.filter_map do |entry, formula|
+            service_file = Bundle::BrewServices.versioned_service_file(entry.name)
+
+            unless service_file&.file?
+              prefix = formula.any_installed_prefix
+              next if prefix.nil?
+
+              service_file = if Homebrew::Services::System.launchctl?
+                prefix/"#{formula.plist_name}.plist"
+              else
+                prefix/"#{formula.service_name}.service"
+              end
+            end
+
+            next unless service_file.file?
+
+            info = services_info.find { |candidate| candidate["name"] == formula.name }
+            conflicting_services = services_info.select do |candidate|
+              next unless candidate["running"]
+
+              formula.versioned_formulae_names.include?(candidate["name"])
+            end
+
+            raise "Failed to get service info for #{entry.name}" if info.nil?
+
+            yield info, service_file, conflicting_services
+          end
+        end
+
+        sig { params(entries: T::Array[Homebrew::Bundle::Dsl::Entry], _block: T.nilable(T.proc.void)).void }
+        private_class_method def self.run_services(entries, &_block)
+          services_to_restart = []
+
+          map_service_info(entries) do |info, service_file, conflicting_services|
+            if info["running"] && !Bundle::BrewServices.stop(info["name"], keep: true)
+              opoo "Failed to stop #{info["name"]} service"
+            end
+
+            conflicting_services.each do |conflict|
+              if Bundle::BrewServices.stop(conflict["name"], keep: true)
+                services_to_restart << conflict["name"] if conflict["registered"]
+              else
+                opoo "Failed to stop #{conflict["name"]} service"
+              end
+            end
+
+            unless Bundle::BrewServices.run(info["name"], file: service_file)
+              opoo "Failed to start #{info["name"]} service"
+            end
+          end
+
+          return unless block_given?
+
+          begin
+            yield
+          ensure
+            # Do a full re-evaluation of services instead state has changed
+            stop_services(entries)
+
+            services_to_restart.each do |service|
+              next if Bundle::BrewServices.run(service)
+
+              opoo "Failed to restart #{service} service"
+            end
+          end
+        end
+
+        sig { params(entries: T::Array[Homebrew::Bundle::Dsl::Entry]).void }
+        private_class_method def self.stop_services(entries)
+          map_service_info(entries) do |info, _, _|
+            next unless info["loaded"]
+
+            # Try avoid services not started by `brew bundle services`
+            next if Homebrew::Services::System.launchctl? && info["registered"]
+
+            if info["running"] && !Bundle::BrewServices.stop(info["name"], keep: true)
+              opoo "Failed to stop #{info["name"]} service"
+            end
+          end
         end
       end
     end

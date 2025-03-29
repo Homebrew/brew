@@ -442,7 +442,7 @@ module Utils
       end
 
       if url.start_with?("https://") && Homebrew::EnvConfig.no_insecure_redirect? &&
-         (details[:final_url].present? && !details[:final_url].start_with?("https://"))
+         details[:final_url].present? && !details[:final_url].start_with?("https://")
         return "The #{url_type} #{url} redirects back to HTTP"
       end
 
@@ -459,7 +459,7 @@ module Utils
 
       http_with_https_available =
         url.start_with?("http://") &&
-        (secure_details[:final_url].present? && secure_details[:final_url].start_with?("https://"))
+        secure_details[:final_url].present? && secure_details[:final_url].start_with?("https://")
 
       if (etag_match || content_length_match || file_match) && http_with_https_available
         return "The #{url_type} #{url} should use HTTPS rather than HTTP"
@@ -472,7 +472,7 @@ module Utils
       https_content = secure_details[:file]&.scrub&.gsub(no_protocol_file_contents, "/")
 
       # Check for the same content after removing all protocols
-      if (http_content && https_content) && (http_content == https_content) && http_with_https_available
+      if http_content && https_content && (http_content == https_content) && http_with_https_available
         return "The #{url_type} #{url} should use HTTPS rather than HTTP"
       end
 

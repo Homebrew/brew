@@ -4,13 +4,11 @@
 module Homebrew
   module Bundle
     module WhalebrewDumper
-      module_function
-
-      def reset!
+      def self.reset!
         @images = nil
       end
 
-      def images
+      def self.images
         return [] unless Bundle.whalebrew_installed?
 
         # odeprecated "`brew bundle` `whalebrew` support", "using `whalebrew` directly"
@@ -20,7 +18,7 @@ module Homebrew
                                                 .uniq
       end
 
-      def dump
+      def self.dump
         images.map { |image| "whalebrew \"#{image}\"" }.join("\n")
       end
     end

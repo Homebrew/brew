@@ -29,8 +29,6 @@ module OS
           ::Cask::Artifact::Vst3Plugin,
         ].freeze
 
-        private
-
         sig { void }
         def check_stanza_os_requirements
           return unless artifacts.any? do |artifact|

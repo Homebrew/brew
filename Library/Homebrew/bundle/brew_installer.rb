@@ -27,6 +27,7 @@ module Homebrew
         @start_service = options.fetch(:start_service, @restart_service)
         @link = options.fetch(:link, nil)
         @postinstall = options.fetch(:postinstall, nil)
+        @version_file = options.fetch(:version_file, nil)
         @changed = nil
       end
 
@@ -57,6 +58,20 @@ module Homebrew
 
           postinstall_result = postinstall_change_state!(verbose:)
           result &&= postinstall_result
+
+          if result && @version_file.present?
+            # Use the version from the environment if it hasn't changed.
+            # Strip the revision number because it's not part of the non-Homebrew version.
+            version = if !changed? && (env_version = Bundle.formula_versions_from_env[@name])
+              PkgVersion.parse(env_version).version
+            else
+              Formula[@full_name].version
+            end.to_s
+            version_path = Pathname.new(@version_file)
+            version_path.write("#{version}\n")
+
+            puts "Wrote #{@name} version #{version} to #{@version_file}" if verbose
+          end
         end
 
         result
@@ -77,6 +92,7 @@ module Homebrew
       end
 
       def start_service_needed?
+        require "bundle/brew_services"
         start_service? && !BrewServices.started?(@full_name)
       end
 
@@ -96,12 +112,16 @@ module Homebrew
       end
 
       def service_change_state!(verbose:)
+        require "bundle/brew_services"
+
+        file = Bundle::BrewServices.versioned_service_file(@name)
+
         if restart_service_needed?
           puts "Restarting #{@name} service." if verbose
-          BrewServices.restart(@full_name, verbose:)
+          BrewServices.restart(@full_name, file:, verbose:)
         elsif start_service_needed?
           puts "Starting #{@name} service." if verbose
-          BrewServices.start(@full_name, verbose:)
+          BrewServices.start(@full_name, file:, verbose:)
         else
           true
         end
@@ -156,6 +176,7 @@ module Homebrew
         return true if array.include?(formula)
         return true if array.include?(formula.split("/").last)
 
+        require "bundle/brew_dumper"
         old_names = Homebrew::Bundle::BrewDumper.formula_oldnames
         old_name = old_names[formula]
         old_name ||= old_names[formula.split("/").last]
@@ -195,6 +216,7 @@ module Homebrew
       end
 
       def self.formulae
+        require "bundle/brew_dumper"
         Homebrew::Bundle::BrewDumper.formulae
       end
 
@@ -225,6 +247,7 @@ module Homebrew
           conflicts_with = Set.new
           conflicts_with += @conflicts_with_arg
 
+          require "bundle/brew_dumper"
           if (formula = Homebrew::Bundle::BrewDumper.formulae_by_full_name(@full_name)) &&
              (formula_conflicts_with = formula[:conflicts_with])
             conflicts_with += formula_conflicts_with
@@ -246,10 +269,11 @@ module Homebrew
           end
           return false unless Bundle.brew("unlink", conflict, verbose:)
 
-          if restart_service?
-            puts "Stopping #{conflict} service (if it is running)." if verbose
-            BrewServices.stop(conflict, verbose:)
-          end
+          next unless restart_service?
+
+          require "bundle/brew_services"
+          puts "Stopping #{conflict} service (if it is running)." if verbose
+          BrewServices.stop(conflict, verbose:)
         end
 
         true

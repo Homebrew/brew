@@ -251,6 +251,10 @@ flags which will help with finding keg-only dependencies like `openssl`,
 
 : Run `install` before continuing to other operations e.g. `exec`.
 
+`--services`
+
+: Temporarily start services while running the `exec` or `sh` command.
+
 `-f`, `--force`
 
 : `install` runs with `--force`/`--overwrite`. `dump` overwrites an existing
@@ -835,6 +839,10 @@ upgrade *`formula`* if it is already installed but outdated.
 
 : Install but skip linking the keg into the prefix.
 
+`--as-dependency`
+
+: Install but mark as installed as a dependency and not installed on request.
+
 `--bottle-arch`
 
 : Optimise bottles for the specified architecture rather than the oldest
@@ -1387,17 +1395,17 @@ If `sudo` is passed, operate on `/Library/LaunchDaemons` or
 : Start the service *`formula`* immediately and register it to launch at login
   (or boot).
 
-\[`sudo`\] `brew services stop` (*`formula`*\|`--all`)
+\[`sudo`\] `brew services stop` (`--keep`) (`--no-wait`\|`--max-wait=`) (*`formula`*\|`--all`)
 
 : Stop the service *`formula`* immediately and unregister it from launching at
-  login (or boot).
+  login (or boot), unless `--keep` is specified.
 
 \[`sudo`\] `brew services kill` (*`formula`*\|`--all`)
 
 : Stop the service *`formula`* immediately but keep it registered to launch at
   login (or boot).
 
-\[`sudo`\] `brew services restart` (*`formula`*\|`--all`)
+\[`sudo`\] `brew services restart` (*`formula`*\|`--all`\|`--file=`)
 
 : Stop (if necessary) and start the service *`formula`* immediately and register
   it to launch at login (or boot).
@@ -1430,6 +1438,10 @@ If `sudo` is passed, operate on `/Library/LaunchDaemons` or
 `--no-wait`
 
 : Don't wait for `stop` to finish stopping the service.
+
+`--keep`
+
+: When stopped, don't unregister the service from launching at login (or boot).
 
 ### `setup-ruby` \[*`command`* ...\]
 
@@ -1605,6 +1617,12 @@ and perform any necessary migrations.
 `-d`, `--debug`
 
 : Display a trace of all shell commands as they are executed.
+
+### `update-if-needed`
+
+Runs `brew update --auto-update` only if needed. This is a good replacement for
+`brew update` in scripts where you want the no-op case to be both possible and
+really fast.
 
 ### `update-reset` \[*`repository`* ...\]
 
@@ -2494,11 +2512,15 @@ Build bottles for these formulae with GitHub Actions.
 
 `--linux`
 
-: Dispatch bottle for Linux (using GitHub runners).
+: Dispatch bottle for Linux x86\_64 (using GitHub runners).
+
+`--linux-arm64`
+
+: Dispatch bottle for Linux arm64 (using GitHub runners).
 
 `--linux-self-hosted`
 
-: Dispatch bottle for Linux (using self-hosted runner).
+: Dispatch bottle for Linux x86\_64 (using self-hosted runner).
 
 `--linux-wheezy`
 
@@ -3971,6 +3993,11 @@ command execution e.g. `$(cat file)`.
   many editors will do strange things in this case.
   
   *Default:* `$EDITOR` or `$VISUAL`.
+
+`HOMEBREW_ENV_SYNC_STRICT`
+
+: If set, `brew *env-sync` will only sync the exact installed versions of
+  formulae.
 
 `HOMEBREW_EVAL_ALL`
 

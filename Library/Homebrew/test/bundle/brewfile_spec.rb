@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "bundle"
+require "bundle/brewfile"
 
 RSpec.describe Homebrew::Bundle::Brewfile do
   describe "path" do

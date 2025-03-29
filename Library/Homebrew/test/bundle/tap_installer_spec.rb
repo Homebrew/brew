@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 require "bundle"
+require "bundle/tap_installer"
+require "bundle/tap_dumper"
 
 RSpec.describe Homebrew::Bundle::TapInstaller do
   describe ".installed_taps" do

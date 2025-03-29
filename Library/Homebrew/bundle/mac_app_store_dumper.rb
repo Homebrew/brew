@@ -6,13 +6,11 @@ require "json"
 module Homebrew
   module Bundle
     module MacAppStoreDumper
-      module_function
-
-      def reset!
+      def self.reset!
         @apps = nil
       end
 
-      def apps
+      def self.apps
         @apps ||= if Bundle.mas_installed?
           `mas list 2>/dev/null`.split("\n").map do |app|
             app_details = app.match(/\A(?<id>\d+)\s+(?<name>.*?)\s+\((?<version>[\d.]*)\)\Z/)
@@ -29,11 +27,11 @@ module Homebrew
         end.compact
       end
 
-      def app_ids
+      def self.app_ids
         apps.map { |id, _| id.to_i }
       end
 
-      def dump
+      def self.dump
         apps.sort_by { |_, name| name.downcase }.map { |id, name| "mas \"#{name}\", id: #{id}" }.join("\n")
       end
     end

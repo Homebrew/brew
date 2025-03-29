@@ -201,6 +201,7 @@ module Homebrew
           user:         owner,
           status:       status_symbol,
           file:         service_file_present? ? dest : service_file,
+          registered:   service_file_present?,
         }
 
         return hash unless service?
@@ -234,7 +235,7 @@ module Homebrew
 
       def status_output_success_type
         @status_output_success_type ||= if System.launchctl?
-          cmd = [System.launchctl.to_s, "list", service_name]
+          cmd = [System.launchctl.to_s, "list", "#{System.domain_target}/#{service_name}"]
           output = Utils.popen_read(*cmd).chomp
           if $CHILD_STATUS.present? && $CHILD_STATUS.success? && output.present?
             success = true

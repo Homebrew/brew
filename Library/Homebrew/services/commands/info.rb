@@ -53,6 +53,7 @@ module Homebrew
           return out unless verbose
 
           out += "File: #{hash[:file]} #{pretty_bool(hash[:file].present?)}\n"
+          out += "Registered at login: #{pretty_bool(hash[:registered])}\n"
           out += "Command: #{hash[:command]}\n" unless hash[:command].nil?
           out += "Working directory: #{hash[:working_dir]}\n" unless hash[:working_dir].nil?
           out += "Root directory: #{hash[:root_dir]}\n" unless hash[:root_dir].nil?

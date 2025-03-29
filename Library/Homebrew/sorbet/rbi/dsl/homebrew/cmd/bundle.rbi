@@ -60,6 +60,9 @@ class Homebrew::Cmd::Bundle::Args < Homebrew::CLI::Args
   def no_vscode?; end
 
   sig { returns(T::Boolean) }
+  def services?; end
+
+  sig { returns(T::Boolean) }
   def tap?; end
 
   sig { returns(T::Boolean) }

@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 require "bundle"
+require "bundle/commands/install"
+require "bundle/skipper"
 
 RSpec.describe Homebrew::Bundle::Commands::Install do
   before do

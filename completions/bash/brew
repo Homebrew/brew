@@ -664,6 +664,7 @@ _brew_bundle() {
       --no-upgrade
       --no-vscode
       --quiet
+      --services
       --tap
       --upgrade
       --verbose
@@ -987,6 +988,7 @@ _brew_dispatch_build_bottle() {
       --help
       --issue
       --linux
+      --linux-arm64
       --linux-self-hosted
       --linux-wheezy
       --macos
@@ -1402,6 +1404,7 @@ _brew_instal() {
       --HEAD
       --adopt
       --appdir
+      --as-dependency
       --ask
       --audio-unit-plugindir
       --binaries
@@ -1467,6 +1470,7 @@ _brew_install() {
       --HEAD
       --adopt
       --appdir
+      --as-dependency
       --ask
       --audio-unit-plugindir
       --binaries
@@ -2331,6 +2335,7 @@ _brew_services() {
       --file
       --help
       --json
+      --keep
       --max-wait
       --no-wait
       --quiet
@@ -2341,6 +2346,7 @@ _brew_services() {
       ;;
     *) ;;
   esac
+  __brewcomp "list info run start stop kill restart cleanup"
 }
 
 _brew_setup_ruby() {
@@ -2795,6 +2801,22 @@ _brew_update() {
   esac
 }
 
+_brew_update_if_needed() {
+  local cur="${COMP_WORDS[COMP_CWORD]}"
+  case "${cur}" in
+    -*)
+      __brewcomp "
+      --debug
+      --help
+      --quiet
+      --verbose
+      "
+      return
+      ;;
+    *) ;;
+  esac
+}
+
 _brew_update_license_data() {
   local cur="${COMP_WORDS[COMP_CWORD]}"
   case "${cur}" in
@@ -3211,6 +3233,7 @@ _brew() {
     untap) _brew_untap ;;
     up) _brew_up ;;
     update) _brew_update ;;
+    update-if-needed) _brew_update_if_needed ;;
     update-license-data) _brew_update_license_data ;;
     update-maintainers) _brew_update_maintainers ;;
     update-python-resources) _brew_update_python_resources ;;

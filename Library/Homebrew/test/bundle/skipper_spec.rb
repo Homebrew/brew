@@ -2,6 +2,8 @@
 
 require "ostruct"
 require "bundle"
+require "bundle/skipper"
+require "bundle/dsl"
 
 RSpec.describe Homebrew::Bundle::Skipper do
   subject(:skipper) { described_class }

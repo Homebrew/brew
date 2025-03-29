@@ -116,6 +116,9 @@ module Homebrew::EnvConfig
     def editor; end
 
     sig { returns(T::Boolean) }
+    def env_sync_strict?; end
+
+    sig { returns(T::Boolean) }
     def eval_all?; end
 
     sig { returns(Integer) }

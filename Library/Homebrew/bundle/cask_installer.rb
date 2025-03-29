@@ -4,22 +4,21 @@
 module Homebrew
   module Bundle
     module CaskInstaller
-      module_function
-
-      def reset!
+      def self.reset!
         @installed_casks = nil
         @outdated_casks = nil
       end
 
-      def upgrading?(no_upgrade, name, options)
+      private_class_method def self.upgrading?(no_upgrade, name, options)
         return false if no_upgrade
         return true if outdated_casks.include?(name)
         return false unless options[:greedy]
 
+        require "bundle/cask_dumper"
         Homebrew::Bundle::CaskDumper.cask_is_outdated_using_greedy?(name)
       end
 
-      def preinstall(name, no_upgrade: false, verbose: false, **options)
+      def self.preinstall(name, no_upgrade: false, verbose: false, **options)
         if installed_casks.include?(name) && !upgrading?(no_upgrade, name, options)
           puts "Skipping install of #{name} cask. It is already installed." if verbose
           return false
@@ -28,7 +27,7 @@ module Homebrew
         true
       end
 
-      def install(name, preinstall: true, no_upgrade: false, verbose: false, force: false, **options)
+      def self.install(name, preinstall: true, no_upgrade: false, verbose: false, force: false, **options)
         return true unless preinstall
 
         full_name = options.fetch(:full_name, name)
@@ -73,7 +72,7 @@ module Homebrew
         result
       end
 
-      def postinstall_change_state!(name:, options:, verbose:)
+      private_class_method def self.postinstall_change_state!(name:, options:, verbose:)
         postinstall = options.fetch(:postinstall, nil)
         return true if postinstall.blank?
 
@@ -88,19 +87,21 @@ module Homebrew
         !cask_upgradable?(cask)
       end
 
-      def cask_installed?(cask)
+      def self.cask_installed?(cask)
         installed_casks.include? cask
       end
 
-      def cask_upgradable?(cask)
+      def self.cask_upgradable?(cask)
         outdated_casks.include? cask
       end
 
-      def installed_casks
+      def self.installed_casks
+        require "bundle/cask_dumper"
         @installed_casks ||= Homebrew::Bundle::CaskDumper.cask_names
       end
 
-      def outdated_casks
+      def self.outdated_casks
+        require "bundle/cask_dumper"
         @outdated_casks ||= Homebrew::Bundle::CaskDumper.outdated_cask_names
       end
     end

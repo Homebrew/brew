@@ -378,7 +378,7 @@ module Cask
         "outdated"                => outdated?,
         "sha256"                  => sha256,
         "artifacts"               => artifacts_list,
-        "caveats"                 => (caveats unless caveats.empty?),
+        "caveats"                 => (Tty.strip_ansi(caveats) unless caveats.empty?),
         "depends_on"              => depends_on,
         "conflicts_with"          => conflicts_with,
         "container"               => container&.pairs,

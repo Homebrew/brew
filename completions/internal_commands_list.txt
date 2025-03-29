@@ -114,6 +114,7 @@ unpin
 untap
 up
 update
+update-if-needed
 update-license-data
 update-maintainers
 update-python-resources

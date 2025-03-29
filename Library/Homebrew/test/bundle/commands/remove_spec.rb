@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "bundle"
+require "bundle/commands/remove"
 require "cask/cask_loader"
 
 RSpec.describe Homebrew::Bundle::Commands::Remove do

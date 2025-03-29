@@ -180,52 +180,64 @@ end
 # source://vernier//lib/vernier/output/filename_filter.rb#4
 module Vernier::Output; end
 
-# source://vernier//lib/vernier/output/file_listing.rb#7
+# source://vernier//lib/vernier/output/file_listing.rb#8
 class Vernier::Output::FileListing
   # @return [FileListing] a new instance of FileListing
   #
-  # source://vernier//lib/vernier/output/file_listing.rb#22
+  # source://vernier//lib/vernier/output/file_listing.rb#23
   def initialize(profile); end
 
-  # source://vernier//lib/vernier/output/file_listing.rb#95
+  # source://vernier//lib/vernier/output/file_listing.rb#105
   def format_file(output, filename, all_samples, total:); end
 
-  # source://vernier//lib/vernier/output/file_listing.rb#26
-  def output; end
+  # source://vernier//lib/vernier/output/file_listing.rb#134
+  def format_file_html(output, filename, relevant_files); end
+
+  # source://vernier//lib/vernier/output/file_listing.rb#122
+  def html_output(output, relevant_files); end
+
+  # source://vernier//lib/vernier/output/file_listing.rb#77
+  def output(template: T.unsafe(nil)); end
+
+  # source://vernier//lib/vernier/output/file_listing.rb#27
+  def samples_by_file; end
+
+  # source://vernier//lib/vernier/output/file_listing.rb#100
+  def total; end
 end
 
-# source://vernier//lib/vernier/output/file_listing.rb#8
+# source://vernier//lib/vernier/output/file_listing.rb#9
 class Vernier::Output::FileListing::SamplesByLocation
   # @return [SamplesByLocation] a new instance of SamplesByLocation
   #
-  # source://vernier//lib/vernier/output/file_listing.rb#10
+  # source://vernier//lib/vernier/output/file_listing.rb#11
   def initialize; end
 
-  # source://vernier//lib/vernier/output/file_listing.rb#14
+  # source://vernier//lib/vernier/output/file_listing.rb#15
   def +(other); end
 
   # Returns the value of attribute self.
   #
-  # source://vernier//lib/vernier/output/file_listing.rb#9
+  # source://vernier//lib/vernier/output/file_listing.rb#10
   def self; end
 
   # Sets the attribute self
   #
   # @param value the value to set the attribute self to.
   #
-  # source://vernier//lib/vernier/output/file_listing.rb#9
+  # source://vernier//lib/vernier/output/file_listing.rb#10
   def self=(_arg0); end
 
   # Returns the value of attribute total.
   #
-  # source://vernier//lib/vernier/output/file_listing.rb#9
+  # source://vernier//lib/vernier/output/file_listing.rb#10
   def total; end
 
   # Sets the attribute total
   #
   # @param value the value to set the attribute total to.
   #
-  # source://vernier//lib/vernier/output/file_listing.rb#9
+  # source://vernier//lib/vernier/output/file_listing.rb#10
   def total=(_arg0); end
 end
 
@@ -380,7 +392,7 @@ class Vernier::Output::Firefox::Thread
   # source://vernier//lib/vernier/output/firefox.rb#487
   def frame_table; end
 
-  # source://vernier//lib/vernier/output/firefox.rb#511
+  # source://vernier//lib/vernier/output/firefox.rb#515
   def func_table; end
 
   # Returns the value of attribute is_start.
@@ -402,15 +414,15 @@ class Vernier::Output::Firefox::Thread
   # source://vernier//lib/vernier/output/firefox.rb#462
   def stack_table; end
 
-  # source://vernier//lib/vernier/output/firefox.rb#536
+  # source://vernier//lib/vernier/output/firefox.rb#540
   def string_table; end
 
   private
 
-  # source://vernier//lib/vernier/output/firefox.rb#558
+  # source://vernier//lib/vernier/output/firefox.rb#562
   def gc_category; end
 
-  # source://vernier//lib/vernier/output/firefox.rb#562
+  # source://vernier//lib/vernier/output/firefox.rb#566
   def thread_category; end
 end
 
@@ -727,7 +739,7 @@ module Vernier::StackTableHelpers
   # source://vernier//lib/vernier/stack_table_helpers.rb#3
   def inspect; end
 
-  # source://vernier//lib/vernier/stack_table_helpers.rb#125
+  # source://vernier//lib/vernier/stack_table_helpers.rb#136
   def stack(idx); end
 
   # source://vernier//lib/vernier/stack_table_helpers.rb#7
@@ -793,19 +805,27 @@ end
 
 # source://vernier//lib/vernier/stack_table_helpers.rb#92
 class Vernier::StackTableHelpers::Stack < ::Vernier::StackTableHelpers::BaseType
+  # @raise [RangeError]
+  #
+  # source://vernier//lib/vernier/stack_table_helpers.rb#105
+  def [](n); end
+
+  # source://vernier//lib/vernier/stack_table_helpers.rb#93
+  def each; end
+
   # source://vernier//lib/vernier/stack_table_helpers.rb#93
   def each_frame; end
 
-  # source://vernier//lib/vernier/stack_table_helpers.rb#112
+  # source://vernier//lib/vernier/stack_table_helpers.rb#123
   def frames; end
 
-  # source://vernier//lib/vernier/stack_table_helpers.rb#108
+  # source://vernier//lib/vernier/stack_table_helpers.rb#119
   def leaf_frame; end
 
-  # source://vernier//lib/vernier/stack_table_helpers.rb#104
+  # source://vernier//lib/vernier/stack_table_helpers.rb#115
   def leaf_frame_idx; end
 
-  # source://vernier//lib/vernier/stack_table_helpers.rb#116
+  # source://vernier//lib/vernier/stack_table_helpers.rb#127
   def to_s; end
 end
 

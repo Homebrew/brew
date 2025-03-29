@@ -8,9 +8,9 @@ certifi==2025.1.31 \
     --hash=sha256:3d5da6925056f6f18f119200434a4780a94263f10d1c21d032a6f6b2baa20651 \
     --hash=sha256:ca78db4565a652026a4db2bcdf68f2fb589ea80d0be70e03929ed730746b84fe
     # via influxdb3-python
-influxdb3-python==0.11.0 \
-    --hash=sha256:07bea8e1150be9707f818cda9634600a42487ee14802208f3f0357af2847f6e3 \
-    --hash=sha256:dd5a1197f776f9836935d797be2dbc9e09f75465188492409e0b5931e6a033c4
+influxdb3-python==0.12.0 \
+    --hash=sha256:991f756528280b376db162e26ad80096168917f294d62f449a70257e65014c03 \
+    --hash=sha256:d82ec4193257e49ba7fee1dee940c951c949a8557d0cf2f7b9f817f940ebcf34
     # via -r requirements.in
 pyarrow==19.0.1 \
     --hash=sha256:008a4009efdb4ea3d2e18f05cd31f9d43c388aad29c636112c2966605ba33466 \
@@ -78,7 +78,7 @@ urllib3==2.3.0 \
     # via influxdb3-python
 
 # The following packages are considered to be unsafe in a requirements file:
-setuptools==76.1.0 \
-    --hash=sha256:34750dcb17d046929f545dec9b8349fe42bf4ba13ddffee78428aec422dbfb73 \
-    --hash=sha256:4959b9ad482ada2ba2320c8f1a8d8481d4d8d668908a7a1b84d987375cd7f5bd
+setuptools==78.1.0 \
+    --hash=sha256:18fd474d4a82a5f83dac888df697af65afa82dec7323d09c3e37d1f14288da54 \
+    --hash=sha256:3e386e96793c8702ae83d17b853fb93d3e09ef82ec62722e61da5cd22376dcd8
     # via influxdb3-python

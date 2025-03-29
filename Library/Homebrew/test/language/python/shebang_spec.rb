@@ -5,6 +5,7 @@ require "utils/shebang"
 
 RSpec.describe Language::Python::Shebang do
   let(:file) { Tempfile.new("python-shebang") }
+  let(:broken_file) { Tempfile.new("python-shebang") }
   let(:f) do
     f = {}
 
@@ -40,9 +41,16 @@ RSpec.describe Language::Python::Shebang do
       c
     EOS
     file.flush
+    broken_file.write <<~EOS
+      #!python
+      a
+      b
+      c
+    EOS
+    broken_file.flush
   end
 
-  after { file.unlink }
+  after { [file, broken_file].each(&:unlink) }
 
   describe "#detected_python_shebang" do
     it "can be used to replace Python shebangs" do
@@ -65,6 +73,20 @@ RSpec.describe Language::Python::Shebang do
       )
 
       expect(File.read(file)).to eq <<~EOS
+        #!/usr/bin/env python3
+        a
+        b
+        c
+      EOS
+    end
+
+    it "can fix broken shebang line `#!python`" do
+      Utils::Shebang.rewrite_shebang(
+        described_class.detected_python_shebang(f[:versioned_python_dep],
+                                                use_python_from_path: true), broken_file.path
+      )
+
+      expect(File.read(broken_file)).to eq <<~EOS
         #!/usr/bin/env python3
         a
         b
