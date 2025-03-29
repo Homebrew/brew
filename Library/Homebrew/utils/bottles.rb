@@ -136,7 +136,7 @@ module Utils
       end
 
       # Determines if binary files in a keg need relocation
-      sig { params(keg: _Keg).returns(T::Boolean) }
+      sig { params(_keg: Keg).returns(T::Boolean) }
       def binaries_need_relocation?(_keg)
         # This is a stub that will be overriden in platform-specific files
         false
