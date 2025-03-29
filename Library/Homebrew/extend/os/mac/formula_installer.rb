@@ -14,7 +14,7 @@ module OS
           (!installed_as_dependency? || !formula.any_version_installed?)
       end
 
-      sig { returns(TrueClass) }
+      sig { returns(T::Boolean) }
       def on_macos?
         true
       end
