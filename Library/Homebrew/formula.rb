@@ -240,6 +240,7 @@ class Formula
     @version_scheme = T.let(self.class.version_scheme || 0, Integer)
     @head = T.let(nil, T.nilable(SoftwareSpec))
     @stable = T.let(nil, T.nilable(SoftwareSpec))
+    @keg_only_reason = T.let(nil, T.nilable(KegOnlyReason))
 
     @force_bottle = T.let(force_bottle, T::Boolean)
 

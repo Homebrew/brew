@@ -1502,8 +1502,8 @@ on_request: installed_on_request?, options:)
     tab.unused_options = []
     tab.built_as_bottle = true
     tab.poured_from_bottle = true
-    if Hardware::CPU.arm? && on_macos?
-      tab.skip_relocation_for_apple_silicon = Utils::Bottles.skip_relocation_for_apple_silicon?(keg)
+    if Hardware::CPU.arm? && OS.mac?
+      tab.skip_relocation_for_apple_silicon = Utils::Bottles.skip_relocation_for_apple_silicon?(formula.prefix)
     end
     tab.loaded_from_api = formula.loaded_from_api?
     tab.installed_as_dependency = installed_as_dependency?

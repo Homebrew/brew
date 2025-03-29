@@ -13,8 +13,8 @@ module Utils
         end
 
         # Determines if bottle relocation should be skipped for Apple Silicon with default prefix
-        sig { params(_keg: T.nilable(Keg)).returns(T::Boolean) }
-        def skip_relocation_for_apple_silicon?(_ = nil)
+        sig { params(keg: T.nilable(Keg)).returns(T::Boolean) }
+        def skip_relocation_for_apple_silicon?(keg = nil)
           return false unless Hardware::CPU.arm?
           return false if HOMEBREW_PREFIX.to_s != HOMEBREW_MACOS_ARM_DEFAULT_PREFIX
 
@@ -22,9 +22,9 @@ module Utils
           return true if ENV.fetch("HOMEBREW_BOTTLE_SKIP_RELOCATION_ARM64", "false") == "true"
 
           # If not explicitly enabled by env var, check if binaries need relocation
-          return false unless _keg
+          return false unless keg
 
-          !binaries_need_relocation?(_keg)
+          !binaries_need_relocation?(keg)
         end
 
         # Determines if binary files in a keg need relocation
