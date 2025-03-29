@@ -29,7 +29,7 @@ require "utils/fork"
 # Installer for a formula.
 class FormulaInstaller
   include FormulaCellarChecks
-
+  sig { returns(FalseClass) }
   def on_macos?
     false
   end
