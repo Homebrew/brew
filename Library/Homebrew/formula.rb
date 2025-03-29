@@ -1403,7 +1403,7 @@ class Formula
   # @api internal
   sig { returns(T::Boolean) }
   def keg_only?
-    return false unless _keg_only_reason
+    return false unless @keg_only_reason
 
     keg_only_reason.applicable?
   end
