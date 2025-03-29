@@ -90,11 +90,13 @@ module Cask
       :deprecation_date,
       :deprecation_reason,
       :deprecation_replacement,
+      :deprecation_replacement_type,
       :disable!,
       :disabled?,
       :disable_date,
       :disable_reason,
       :disable_replacement,
+      :disable_replacement_type,
       :discontinued?, # TODO: remove once discontinued? is removed (4.5.0)
       :livecheck,
       :livecheck_defined?,
@@ -109,8 +111,9 @@ module Cask
 
     include OnSystem::MacOSAndLinux
 
-    attr_reader :cask, :token, :deprecation_date, :deprecation_reason, :deprecation_replacement, :disable_date,
-                :disable_reason, :disable_replacement, :on_system_block_min_os
+    attr_reader :cask, :token, :deprecation_date, :deprecation_reason, :deprecation_replacement,
+                :deprecation_replacement_type, :disable_date, :disable_reason,
+                :disable_replacement, :disable_replacement_type, :on_system_block_min_os
 
     def initialize(cask)
       @cask = cask
@@ -525,12 +528,16 @@ module Cask
     # NOTE: A warning will be shown when trying to install this cask.
     #
     # @api public
-    def deprecate!(date:, because:, replacement: nil)
+    def deprecate!(date:, because:, replacement: nil, replacement_type: :cask)
+      raise ArgumentError, "Invalid replacement type: #{replacement_type}" if [:formula,
+                                                                               :cask].exclude?(replacement_type)
+
       @deprecation_date = Date.parse(date)
       return if @deprecation_date > Date.today
 
       @deprecation_reason = because
       @deprecation_replacement = replacement
+      @deprecation_replacement_type = replacement_type
       @deprecated = true
     end
 
@@ -539,18 +546,23 @@ module Cask
     # NOTE: An error will be thrown when trying to install this cask.
     #
     # @api public
-    def disable!(date:, because:, replacement: nil)
+    def disable!(date:, because:, replacement: nil, replacement_type: :cask)
+      raise ArgumentError, "Invalid replacement type: #{replacement_type}" if [:formula,
+                                                                               :cask].exclude?(replacement_type)
+
       @disable_date = Date.parse(date)
 
       if @disable_date > Date.today
         @deprecation_reason = because
         @deprecation_replacement = replacement
+        @deprecation_replacement_type = replacement_type
         @deprecated = true
         return
       end
 
       @disable_reason = because
       @disable_replacement = replacement
+      @disable_replacement_type = replacement_type
       @disabled = true
     end
 
