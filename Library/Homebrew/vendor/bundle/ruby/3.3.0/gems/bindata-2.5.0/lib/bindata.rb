@@ -25,9 +25,9 @@ require 'bindata/alignment'
 require 'bindata/warnings'
 
 # = BinData
-# 
+#
 # A declarative way to read and write structured binary data.
-# 
+#
 # A full reference manual is available online at
 # https://github.com/dmendel/bindata/wiki
 #

@@ -2,7 +2,7 @@ module Concurrent
   module Collection
 
     # @!macro priority_queue
-    # 
+    #
     # @!visibility private
     # @!macro internal_implementation_note
     class RubyNonConcurrentPriorityQueue
@@ -95,10 +95,10 @@ module Concurrent
       private
 
       # Exchange the values at the given indexes within the internal array.
-      # 
+      #
       # @param [Integer] x the first index to swap
       # @param [Integer] y the second index to swap
-      # 
+      #
       # @!visibility private
       def swap(x, y)
         temp = @queue[x]
@@ -114,16 +114,16 @@ module Concurrent
       #
       # @return [Boolean] true if the two elements are in the correct priority order
       #   else false
-      # 
+      #
       # @!visibility private
       def ordered?(x, y)
         (@queue[x] <=> @queue[y]) == @comparator
       end
 
       # Percolate down to maintain heap invariant.
-      # 
+      #
       # @param [Integer] k the index at which to start the percolation
-      # 
+      #
       # @!visibility private
       def sink(k)
         success = false
@@ -140,9 +140,9 @@ module Concurrent
       end
 
       # Percolate up to maintain heap invariant.
-      # 
+      #
       # @param [Integer] k the index at which to start the percolation
-      # 
+      #
       # @!visibility private
       def swim(k)
         success = false

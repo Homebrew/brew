@@ -5,7 +5,7 @@ module Concurrent
 
   # @!visibility private
   module ThreadSafe
-    
+
     # @!visibility private
     module Util
 
@@ -28,7 +28,7 @@ module Concurrent
       # characteristics. But under high contention, expected throughput of
       # this class is significantly higher, at the expense of higher space
       # consumption.
-      # 
+      #
       # @!visibility private
       class Adder < Striped64
         # Adds the given value.

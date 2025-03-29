@@ -2,7 +2,7 @@
 
 ## SYNOPSIS
 
-`brew` `--version`  
+`brew` `--version`
 `brew` *`command`* \[`--verbose`\|`-v`\] \[*`options`*\] \[*`formula`*\] ...
 
 ## DESCRIPTION
@@ -3778,7 +3778,7 @@ command execution e.g. `$(cat file)`.
 : Check Homebrew's API for new formulae or cask data every
   `$HOMEBREW_API_AUTO_UPDATE_SECS` seconds. Alternatively, disable API
   auto-update checks entirely with `$HOMEBREW_NO_AUTO_UPDATE`.
-  
+
   *Default:* `450`.
 
 `HOMEBREW_API_DOMAIN`
@@ -3786,14 +3786,14 @@ command execution e.g. `$(cat file)`.
 : Use this URL as the download mirror for Homebrew JSON API. If metadata files
   at that URL are temporarily unavailable, the default API domain will be used
   as a fallback mirror.
-  
+
   *Default:* `https://formulae.brew.sh/api`.
 
 `HOMEBREW_ARCH`
 
 : Linux only: Pass this value to a type name representing the compiler's
   `-march` option.
-  
+
   *Default:* `native`.
 
 `HOMEBREW_ARTIFACT_DOMAIN`
@@ -3823,7 +3823,7 @@ command execution e.g. `$(cat file)`.
 : Run `brew update` once every `$HOMEBREW_AUTO_UPDATE_SECS` seconds before some
   commands, e.g. `brew install`, `brew upgrade` and `brew tap`. Alternatively,
   disable auto-update entirely with `$HOMEBREW_NO_AUTO_UPDATE`.
-  
+
   *Default:* `86400` (24 hours), `3600` (1 hour) if a developer command has been
   run or `300` (5 minutes) if `$HOMEBREW_NO_INSTALL_FROM_API` is set.
 
@@ -3834,13 +3834,13 @@ command execution e.g. `$(cat file)`.
 `HOMEBREW_BAT_CONFIG_PATH`
 
 : Use this as the `bat` configuration file.
-  
+
   *Default:* `$BAT_CONFIG_PATH`.
 
 `HOMEBREW_BAT_THEME`
 
 : Use this as the `bat` theme for syntax highlighting.
-  
+
   *Default:* `$BAT_THEME`.
 
 `HOMEBREW_BOOTSNAP`
@@ -3856,13 +3856,13 @@ command execution e.g. `$(cat file)`.
   will cause all bottles to download from the prefix `http://localhost:8080/`.
   If bottles are not available at `$HOMEBREW_BOTTLE_DOMAIN` they will be
   downloaded from the default bottle domain.
-  
+
   *Default:* `https://ghcr.io/v2/homebrew/core`.
 
 `HOMEBREW_BREW_GIT_REMOTE`
 
 : Use this URL as the Homebrew/brew `git`(1) remote.
-  
+
   *Default:* `https://github.com/Homebrew/brew`.
 
 `HOMEBREW_BREW_WRAPPER`
@@ -3872,7 +3872,7 @@ command execution e.g. `$(cat file)`.
 `HOMEBREW_BROWSER`
 
 : Use this as the browser when opening project homepages.
-  
+
   *Default:* `$BROWSER` or the OS's default browser.
 
 `HOMEBREW_BUNDLE_USER_CACHE`
@@ -3882,7 +3882,7 @@ command execution e.g. `$(cat file)`.
 `HOMEBREW_CACHE`
 
 : Use this directory as the download cache.
-  
+
   *Default:* macOS: `~/Library/Caches/Homebrew`, Linux:
   `$XDG_CACHE_HOME/Homebrew` or `~/.cache/Homebrew`.
 
@@ -3892,21 +3892,21 @@ command execution e.g. `$(cat file)`.
   `--language`, `--require-sha`, `--no-quarantine` and `--no-binaries` are
   supported. For example, you might add something like the following to your
   `~/.profile`, `~/.bash_profile`, or `~/.zshenv`:
-  
+
   `export HOMEBREW_CASK_OPTS="--appdir=${HOME}/Applications
   --fontdir=/Library/Fonts"`
 
 `HOMEBREW_CLEANUP_MAX_AGE_DAYS`
 
 : Cleanup all cached files older than this many days.
-  
+
   *Default:* `120`.
 
 `HOMEBREW_CLEANUP_PERIODIC_FULL_DAYS`
 
 : If set, `brew install`, `brew upgrade` and `brew reinstall` will cleanup all
   formulae when this number of days has passed.
-  
+
   *Default:* `30`.
 
 `HOMEBREW_COLOR`
@@ -3916,7 +3916,7 @@ command execution e.g. `$(cat file)`.
 `HOMEBREW_CORE_GIT_REMOTE`
 
 : Use this URL as the Homebrew/homebrew-core `git`(1) remote.
-  
+
   *Default:* `https://github.com/Homebrew/homebrew-core`.
 
 `HOMEBREW_CURLRC`
@@ -3929,13 +3929,13 @@ command execution e.g. `$(cat file)`.
 
 : Linux only: Set this value to a new enough `curl` executable for Homebrew to
   use.
-  
+
   *Default:* `curl`.
 
 `HOMEBREW_CURL_RETRIES`
 
 : Pass the given retry count to `--retry` when invoking `curl`(1).
-  
+
   *Default:* `3`.
 
 `HOMEBREW_CURL_VERBOSE`
@@ -3965,7 +3965,7 @@ command execution e.g. `$(cat file)`.
 
 : Use this X11 display when opening a page in a browser, for example with `brew
   home`. Primarily useful on Linux.
-  
+
   *Default:* `$DISPLAY`.
 
 `HOMEBREW_DISPLAY_INSTALL_TIMES`
@@ -3987,11 +3987,11 @@ command execution e.g. `$(cat file)`.
 
 : Use this editor when editing a single formula, or several formulae in the same
   directory.
-  
+
   *Note:* `brew edit` will open all of Homebrew as discontinuous files and
   directories. Visual Studio Code can handle this correctly in project mode, but
   many editors will do strange things in this case.
-  
+
   *Default:* `$EDITOR` or `$VISUAL`.
 
 `HOMEBREW_ENV_SYNC_STRICT`
@@ -4008,7 +4008,7 @@ command execution e.g. `$(cat file)`.
 `HOMEBREW_FAIL_LOG_LINES`
 
 : Output this many lines of output on formula `system` failures.
-  
+
   *Default:* `15`.
 
 `HOMEBREW_FORBIDDEN_CASKS`
@@ -4029,7 +4029,7 @@ command execution e.g. `$(cat file)`.
 `HOMEBREW_FORBIDDEN_OWNER`
 
 : The person who has set any `$HOMEBREW_FORBIDDEN_*` variables.
-  
+
   *Default:* `you`.
 
 `HOMEBREW_FORBIDDEN_OWNER_CONTACT`
@@ -4103,7 +4103,7 @@ command execution e.g. `$(cat file)`.
   search`. You can create one at <https://github.com/settings/tokens>. If set,
   GitHub will allow you a greater number of API requests. For more information,
   see: <https://docs.github.com/en/rest/overview/rate-limits-for-the-rest-api>
-  
+
   *Note:* Homebrew doesn't require permissions for any of the scopes, but some
   developer commands may require additional permissions.
 
@@ -4139,13 +4139,13 @@ command execution e.g. `$(cat file)`.
 
 : Linux only: Set this value to a new enough `git` executable for Homebrew to
   use.
-  
+
   *Default:* `git`.
 
 `HOMEBREW_INSTALL_BADGE`
 
 : Print this text before the installation summary of each successful build.
-  
+
   *Default:* The "Beer Mug" emoji.
 
 `HOMEBREW_LIVECHECK_AUTOBUMP`
@@ -4157,7 +4157,7 @@ command execution e.g. `$(cat file)`.
 
 : Consult this file for the list of formulae to check by default when no formula
   argument is passed to `brew livecheck`.
-  
+
   *Default:* `${XDG_CONFIG_HOME}/homebrew/livecheck_watchlist.txt` if
   `$XDG_CONFIG_HOME` is set or `~/.homebrew/livecheck_watchlist.txt` otherwise.
 
@@ -4169,7 +4169,7 @@ command execution e.g. `$(cat file)`.
 `HOMEBREW_LOGS`
 
 : Use this directory to store log files.
-  
+
   *Default:* macOS: `~/Library/Logs/Homebrew`, Linux:
   `${XDG_CACHE_HOME}/Homebrew/Logs` or `~/.cache/Homebrew/Logs`.
 
@@ -4177,7 +4177,7 @@ command execution e.g. `$(cat file)`.
 
 : Use this value as the number of parallel jobs to run when building with
   `make`(1).
-  
+
   *Default:* The number of available CPU cores.
 
 `HOMEBREW_NO_ANALYTICS`
@@ -4211,7 +4211,7 @@ command execution e.g. `$(cat file)`.
 `HOMEBREW_NO_COLOR`
 
 : If set, do not print text with colour added.
-  
+
   *Default:* `$NO_COLOR`.
 
 `HOMEBREW_NO_EMOJI`
@@ -4235,7 +4235,7 @@ command execution e.g. `$(cat file)`.
 `HOMEBREW_NO_INSECURE_REDIRECT`
 
 : If set, forbid redirects from secure HTTPS to insecure HTTP.
-  
+
   *Note:* while ensuring your downloads are fully secure, this is likely to
   cause from-source SourceForge, some GNU & GNOME-hosted formulae to fail to
   download.
@@ -4280,7 +4280,7 @@ command execution e.g. `$(cat file)`.
 
 : If set, `brew install` *`formula`* will use this URL to download PyPI package
   resources.
-  
+
   *Default:* `https://pypi.org/simple`.
 
 `HOMEBREW_PRY`
@@ -4306,7 +4306,7 @@ command execution e.g. `$(cat file)`.
 
 : If set, Homebrew will use the given config file instead of `~/.ssh/config`
   when fetching Git repositories over SSH.
-  
+
   *Default:* `~/.ssh/config`
 
 `HOMEBREW_SUDO_THROUGH_SUDO_USER`
@@ -4317,7 +4317,7 @@ command execution e.g. `$(cat file)`.
 `HOMEBREW_SVN`
 
 : Use this as the `svn`(1) binary.
-  
+
   *Default:* A Homebrew-built Subversion (if installed), or the system-provided
   binary.
 
@@ -4334,7 +4334,7 @@ command execution e.g. `$(cat file)`.
   different volumes, as macOS has trouble moving symlinks across volumes when
   the target does not yet exist. This issue typically occurs when using
   FileVault or custom SSD configurations.
-  
+
   *Default:* macOS: `/private/tmp`, Linux: `/tmp`.
 
 `HOMEBREW_UPDATE_TO_TAG`
@@ -4403,7 +4403,7 @@ environment variables documented above.
 For example, to use an unauthenticated HTTP or SOCKS5 proxy:
 
     export http_proxy=http://$HOST:$PORT
-    
+
     export all_proxy=socks5://$HOST:$PORT
 
 And for an authenticated HTTP proxy:

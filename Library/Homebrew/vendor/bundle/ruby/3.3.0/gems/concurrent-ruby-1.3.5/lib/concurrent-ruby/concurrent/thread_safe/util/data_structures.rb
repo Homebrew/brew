@@ -41,7 +41,7 @@ module Concurrent
       def self.make_synchronized_on_truffleruby(klass)
         klass.superclass.instance_methods(false).each do |method|
           klass.class_eval <<-RUBY, __FILE__, __LINE__ + 1
-            def #{method}(*args, &block)    
+            def #{method}(*args, &block)
               TruffleRuby.synchronized(self) { super(*args, &block) }
             end
           RUBY

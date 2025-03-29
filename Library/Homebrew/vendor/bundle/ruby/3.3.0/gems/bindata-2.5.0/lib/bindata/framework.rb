@@ -2,7 +2,7 @@ module BinData
   # Error raised when unexpected results occur when reading data from IO.
   class ValidityError < StandardError; end
 
-  # All methods provided by the framework are to be implemented or overridden 
+  # All methods provided by the framework are to be implemented or overridden
   # by subclasses of BinData::Base.
   module Framework
     # Initializes the state of the object.  All instance variables that
