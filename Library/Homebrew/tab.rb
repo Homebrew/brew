@@ -85,9 +85,9 @@ class AbstractTab
       "runtime_dependencies"              => nil,
       "arch"                              => nil,
       "source"                            => {
-        "path"                            => nil,
-        "tap"                             => nil,
-        "tap_git_head"                    => nil,
+          "path"         => nil,
+          "tap"          => nil,
+          "tap_git_head" => nil,
       },
       "built_on"                          => DevelopmentTools.build_system_info,
       "skip_relocation_for_apple_silicon" => false,
