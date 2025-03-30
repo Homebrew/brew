@@ -374,6 +374,7 @@ class Formula
     return alias_path if alias_path&.exist?
     return @unresolved_path if @unresolved_path.exist?
     return local_bottle_path if local_bottle_path.presence&.exist?
+
     alias_path || @unresolved_path
   end
 
