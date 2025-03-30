@@ -372,11 +372,8 @@ class Formula
   def specified_path
     return Homebrew::API::Formula.cached_json_file_path if loaded_from_api?
     return alias_path if alias_path&.exist?
-
     return @unresolved_path if @unresolved_path.exist?
-
     return local_bottle_path if local_bottle_path.presence&.exist?
-
     alias_path || @unresolved_path
   end
 
