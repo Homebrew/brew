@@ -102,11 +102,13 @@ class SoftwareSpec
     patches.each { |p| p.owner = self }
   end
 
+  sig { override.params(val: T.nilable(String), specs: T::Hash[Symbol, T.anything]).returns(T.nilable(String)) }
   def url(val = nil, specs = {})
-    return @resource.url if val.nil?
-
-    @resource.url(val, **specs)
-    dependency_collector.add(@resource)
+    if val
+      @resource.url(val, **specs)
+      dependency_collector.add(@resource)
+    end
+    @resource.url
   end
 
   def bottle_defined?

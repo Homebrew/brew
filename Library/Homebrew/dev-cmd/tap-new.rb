@@ -58,7 +58,7 @@ module Homebrew
 
           Or `brew tap #{tap}` and then `brew install <formula>`.
 
-          Or, in a [`brew bundle`](https://github.com/Homebrew/homebrew-bundle) `Brewfile`:
+          Or, in a `brew bundle` `Brewfile`:
 
           ```ruby
           tap "#{tap}"

@@ -370,9 +370,9 @@ module Homebrew
           progress&.increment
           info.delete(:meta) unless verbose
           if check_for_resources && !verbose
-            resource_version_info.map! do |info|
-              info.delete(:meta)
-              info
+            resource_version_info.map! do |resource_info|
+              resource_info.delete(:meta)
+              resource_info
             end
           end
           next info

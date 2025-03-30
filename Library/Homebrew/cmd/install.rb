@@ -104,6 +104,9 @@ module Homebrew
           [:switch, "--skip-link", {
             description: "Install but skip linking the keg into the prefix.",
           }],
+          [:switch, "--as-dependency", {
+            description: "Install but mark as installed as a dependency and not installed on request.",
+          }],
           [:flag, "--bottle-arch=", {
             depends_on:  "--build-bottle",
             description: "Optimise bottles for the specified architecture rather than the oldest " \
@@ -119,6 +122,11 @@ module Homebrew
           }],
           [:switch, "--overwrite", {
             description: "Delete files that already exist in the prefix while linking.",
+          }],
+          [:switch, "--ask", {
+            description: "Ask for confirmation before downloading and installing formulae. " \
+                         "Print bottles and dependencies download size and install size.",
+            env:         :ask,
           }],
         ].each do |args|
           options = args.pop
@@ -302,8 +310,12 @@ module Homebrew
         Install.perform_preinstall_checks_once
         Install.check_cc_argv(args.cc)
 
+        Install.ask(formulae, args: args) if args.ask?
+
         Install.install_formulae(
           installed_formulae,
+          installed_on_request:       !args.as_dependency?,
+          installed_as_dependency:    args.as_dependency?,
           build_bottle:               args.build_bottle?,
           force_bottle:               args.force_bottle?,
           bottle_arch:                args.bottle_arch,
@@ -329,7 +341,7 @@ module Homebrew
         Upgrade.check_installed_dependents(
           installed_formulae,
           flags:                      args.flags_only,
-          installed_on_request:       args.named.present?,
+          installed_on_request:       !args.as_dependency?,
           force_bottle:               args.force_bottle?,
           build_from_source_formulae: args.build_from_source_formulae,
           interactive:                args.interactive?,

@@ -1220,15 +1220,15 @@ class Formula
 
   # The generated launchd {.service} file path.
   sig { returns(Pathname) }
-  def launchd_service_path = opt_prefix/"#{plist_name}.plist"
+  def launchd_service_path = (any_installed_prefix || opt_prefix)/"#{plist_name}.plist"
 
   # The generated systemd {.service} file path.
   sig { returns(Pathname) }
-  def systemd_service_path = opt_prefix/"#{service_name}.service"
+  def systemd_service_path = (any_installed_prefix || opt_prefix)/"#{service_name}.service"
 
   # The generated systemd {.timer} file path.
   sig { returns(Pathname) }
-  def systemd_timer_path = opt_prefix/"#{service_name}.timer"
+  def systemd_timer_path = (any_installed_prefix || opt_prefix)/"#{service_name}.timer"
 
   # The service specification of the software.
   sig { returns(Homebrew::Service) }
@@ -1820,10 +1820,12 @@ class Formula
       output:  T.any(String, Pathname),
       ldflags: T.nilable(T.any(String, T::Array[String])),
       gcflags: T.nilable(T.any(String, T::Array[String])),
+      tags:    T.nilable(T.any(String, T::Array[String])),
     ).returns(T::Array[String])
   }
-  def std_go_args(output: bin/name, ldflags: nil, gcflags: nil)
+  def std_go_args(output: bin/name, ldflags: nil, gcflags: nil, tags: nil)
     args = ["-trimpath", "-o=#{output}"]
+    args += ["-tags=#{Array(tags).join(" ")}"] if tags
     args += ["-ldflags=#{Array(ldflags).join(" ")}"] if ldflags
     args += ["-gcflags=#{Array(gcflags).join(" ")}"] if gcflags
     args
@@ -3648,8 +3650,8 @@ class Formula
     # ```
     #
     # @api public
-    sig { params(val: String, specs: T::Hash[Symbol, T.any(String, Symbol)]).void }
-    def url(val, specs = {}) = stable.url(val, specs)
+    sig { params(val: String, specs: T::Hash[Symbol, T.anything]).returns(String) }
+    def url(val = T.unsafe(nil), specs = {}) = stable.url(val, specs)
 
     # The version string for the {.stable} version of the formula.
     # The version is autodetected from the URL and/or tag so only needs to be

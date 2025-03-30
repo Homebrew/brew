@@ -173,7 +173,7 @@ class Livecheck
       url:           T.any(String, Symbol),
       homebrew_curl: T.nilable(T::Boolean),
       post_form:     T.nilable(T::Hash[Symbol, String]),
-      post_json:     T.nilable(T::Hash[Symbol, String]),
+      post_json:     T.nilable(T::Hash[Symbol, T.anything]),
     ).returns(T.nilable(T.any(String, Symbol)))
   }
   def url(url = T.unsafe(nil), homebrew_curl: nil, post_form: nil, post_json: nil)

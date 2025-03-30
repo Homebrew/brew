@@ -82,6 +82,118 @@ Uninstall formulae that were only installed as a dependency of another formula a
 .TP
 \fB\-n\fP, \fB\-\-dry\-run\fP
 List what would be uninstalled, but do not actually uninstall anything\.
+.SS "\fBbundle\fP \fR[\fIsubcommand\fP]"
+Bundler for non\-Ruby dependencies from Homebrew, Homebrew Cask, Mac App Store, Whalebrew and Visual Studio Code (and forks/variants)\.
+.TP
+\fBbrew bundle\fP [\fBinstall\fP]
+Install and upgrade (by default) all dependencies from the \fBBrewfile\fP\&\.
+.P
+You can specify the \fBBrewfile\fP location using \fB\-\-file\fP or by setting the \fB$HOMEBREW_BUNDLE_FILE\fP environment variable\.
+.P
+You can skip the installation of dependencies by adding space\-separated values to one or more of the following environment variables: \fB$HOMEBREW_BUNDLE_BREW_SKIP\fP, \fB$HOMEBREW_BUNDLE_CASK_SKIP\fP, \fB$HOMEBREW_BUNDLE_MAS_SKIP\fP, \fB$HOMEBREW_BUNDLE_WHALEBREW_SKIP\fP, \fB$HOMEBREW_BUNDLE_TAP_SKIP\fP\&\.
+.TP
+\fBbrew bundle upgrade\fP
+Shorthand for \fBbrew bundle install \-\-upgrade\fP\&\.
+.TP
+\fBbrew bundle dump\fP
+Write all installed casks/formulae/images/taps into a \fBBrewfile\fP in the current directory or to a custom file specified with the \fB\-\-file\fP option\.
+.TP
+\fBbrew bundle cleanup\fP
+Uninstall all dependencies not present in the \fBBrewfile\fP\&\.
+.P
+This workflow is useful for maintainers or testers who regularly install lots of formulae\.
+.P
+Unless \fB\-\-force\fP is passed, this returns a 1 exit code if anything would be removed\.
+.TP
+\fBbrew bundle check\fP
+Check if all dependencies present in the \fBBrewfile\fP are installed\.
+.P
+This provides a successful exit code if everything is up\-to\-date, making it useful for scripting\.
+.TP
+\fBbrew bundle list\fP
+List all dependencies present in the \fBBrewfile\fP\&\.
+.P
+By default, only Homebrew formula dependencies are listed\.
+.TP
+\fBbrew bundle edit\fP
+Edit the \fBBrewfile\fP in your editor\.
+.TP
+\fBbrew bundle add\fP \fIname\fP [\.\.\.]
+Add entries to your \fBBrewfile\fP\&\. Adds formulae by default\. Use \fB\-\-cask\fP, \fB\-\-tap\fP, \fB\-\-whalebrew\fP or \fB\-\-vscode\fP to add the corresponding entry instead\.
+.TP
+\fBbrew bundle remove\fP \fIname\fP [\.\.\.]
+Remove entries that match \fBname\fP from your \fBBrewfile\fP\&\. Use \fB\-\-formula\fP, \fB\-\-cask\fP, \fB\-\-tap\fP, \fB\-\-mas\fP, \fB\-\-whalebrew\fP or \fB\-\-vscode\fP to remove only entries of the corresponding type\. Passing \fB\-\-formula\fP also removes matches against formula aliases and old formula names\.
+.TP
+\fBbrew bundle exec\fP \fIcommand\fP
+Run an external command in an isolated build environment based on the \fBBrewfile\fP dependencies\.
+.P
+This sanitized build environment ignores unrequested dependencies, which makes sure that things you didn\[u2019]t specify in your \fBBrewfile\fP won\[u2019]t get picked up by commands like \fBbundle install\fP, \fBnpm install\fP, etc\. It will also add compiler flags which will help with finding keg\-only dependencies like \fBopenssl\fP, \fBicu4c\fP, etc\.
+.TP
+\fBbrew bundle sh\fP
+Run your shell in a \fBbrew bundle exec\fP environment\.
+.TP
+\fBbrew bundle env\fP
+Print the environment variables that would be set in a \fBbrew bundle exec\fP environment\.
+.TP
+\fB\-\-file\fP
+Read from or write to the \fBBrewfile\fP from this location\. Use \fB\-\-file=\-\fP to pipe to stdin/stdout\.
+.TP
+\fB\-\-global\fP
+Read from or write to the \fBBrewfile\fP from \fB$HOMEBREW_BUNDLE_FILE_GLOBAL\fP (if set), \fB${XDG_CONFIG_HOME}/homebrew/Brewfile\fP (if \fB$XDG_CONFIG_HOME\fP is set), \fB~/\.homebrew/Brewfile\fP or \fB~/\.Brewfile\fP otherwise\.
+.TP
+\fB\-v\fP, \fB\-\-verbose\fP
+\fBinstall\fP prints output from commands as they are run\. \fBcheck\fP lists all missing dependencies\.
+.TP
+\fB\-\-no\-upgrade\fP
+\fBinstall\fP does not run \fBbrew upgrade\fP on outdated dependencies\. \fBcheck\fP does not check for outdated dependencies\. Note they may still be upgraded by \fBbrew install\fP if needed\. This is enabled by default if \fB$HOMEBREW_BUNDLE_NO_UPGRADE\fP is set\.
+.TP
+\fB\-\-upgrade\fP
+\fBinstall\fP runs \fBbrew upgrade\fP on outdated dependencies, even if \fB$HOMEBREW_BUNDLE_NO_UPGRADE\fP is set\.
+.TP
+\fB\-\-install\fP
+Run \fBinstall\fP before continuing to other operations e\.g\. \fBexec\fP\&\.
+.TP
+\fB\-\-services\fP
+Temporarily start services while running the \fBexec\fP or \fBsh\fP command\.
+.TP
+\fB\-f\fP, \fB\-\-force\fP
+\fBinstall\fP runs with \fB\-\-force\fP/\fB\-\-overwrite\fP\&\. \fBdump\fP overwrites an existing \fBBrewfile\fP\&\. \fBcleanup\fP actually performs its cleanup operations\.
+.TP
+\fB\-\-cleanup\fP
+\fBinstall\fP performs cleanup operation, same as running \fBcleanup \-\-force\fP\&\. This is enabled by default if \fB$HOMEBREW_BUNDLE_INSTALL_CLEANUP\fP is set and \fB\-\-global\fP is passed\.
+.TP
+\fB\-\-all\fP
+\fBlist\fP all dependencies\.
+.TP
+\fB\-\-formula\fP
+\fBlist\fP or \fBdump\fP Homebrew formula dependencies\.
+.TP
+\fB\-\-cask\fP
+\fBlist\fP or \fBdump\fP Homebrew cask dependencies\.
+.TP
+\fB\-\-tap\fP
+\fBlist\fP or \fBdump\fP Homebrew tap dependencies\.
+.TP
+\fB\-\-mas\fP
+\fBlist\fP or \fBdump\fP Mac App Store dependencies\.
+.TP
+\fB\-\-whalebrew\fP
+\fBlist\fP or \fBdump\fP Whalebrew dependencies\.
+.TP
+\fB\-\-vscode\fP
+\fBlist\fP or \fBdump\fP VSCode (and forks/variants) extensions\.
+.TP
+\fB\-\-no\-vscode\fP
+\fBdump\fP without VSCode (and forks/variants) extensions\. This is enabled by default if \fB$HOMEBREW_BUNDLE_DUMP_NO_VSCODE\fP is set\.
+.TP
+\fB\-\-describe\fP
+\fBdump\fP adds a description comment above each line, unless the dependency does not have a description\. This is enabled by default if \fB$HOMEBREW_BUNDLE_DUMP_DESCRIBE\fP is set\.
+.TP
+\fB\-\-no\-restart\fP
+\fBdump\fP does not add \fBrestart_service\fP to formula lines\.
+.TP
+\fB\-\-zap\fP
+\fBcleanup\fP casks using the \fBzap\fP command instead of \fBuninstall\fP\&\.
 .SS "\fBcasks\fP"
 List all locally installable casks including short names\.
 .SS "\fBcleanup\fP \fR[\fIoptions\fP] \fR[\fIformula\fP|\fIcask\fP \.\.\.]"
@@ -411,6 +523,9 @@ Install but skip any post\-install steps\.
 \fB\-\-skip\-link\fP
 Install but skip linking the keg into the prefix\.
 .TP
+\fB\-\-as\-dependency\fP
+Install but mark as installed as a dependency and not installed on request\.
+.TP
 \fB\-\-bottle\-arch\fP
 Optimise bottles for the specified architecture rather than the oldest architecture supported by the version of macOS the bottles are built on\.
 .TP
@@ -422,6 +537,9 @@ Create a Git repository, useful for creating patches to the software\.
 .TP
 \fB\-\-overwrite\fP
 Delete files that already exist in the prefix while linking\.
+.TP
+\fB\-\-ask\fP
+Ask for confirmation before downloading and installing formulae\. Print bottles and dependencies download size and install size\.
 .TP
 \fB\-\-cask\fP
 Treat all named arguments as casks\.
@@ -672,6 +790,9 @@ Generate debug symbols on build\. Source will be retained in a cache directory\.
 \fB\-g\fP, \fB\-\-git\fP
 Create a Git repository, useful for creating patches to the software\.
 .TP
+\fB\-\-ask\fP
+Ask for confirmation before downloading and upgrading formulae\. Print bottles and dependencies download size, install and net install size\.
+.TP
 \fB\-\-cask\fP
 Treat all named arguments as casks\.
 .TP
@@ -739,6 +860,55 @@ Search for \fItext\fP in the given database\.
 .TP
 \fB\-\-ubuntu\fP
 Search for \fItext\fP in the given database\.
+.SS "\fBservices\fP \fR[\fIsubcommand\fP]"
+Manage background services with macOS\[u2019] \fBlaunchctl\fP(1) daemon manager or Linux\[u2019]s \fBsystemctl\fP(1) service manager\.
+.P
+If \fBsudo\fP is passed, operate on \fB/Library/LaunchDaemons\fP or \fB/usr/lib/systemd/system\fP (started at boot)\. Otherwise, operate on \fB~/Library/LaunchAgents\fP or \fB~/\.config/systemd/user\fP (started at login)\.
+.TP
+[\fBsudo\fP] \fBbrew services\fP [\fBlist\fP] (\fB\-\-json\fP) (\fB\-\-debug\fP)
+List information about all managed services for the current user (or root)\. Provides more output from Homebrew and \fBlaunchctl\fP(1) or \fBsystemctl\fP(1) if run with \fB\-\-debug\fP\&\.
+.TP
+[\fBsudo\fP] \fBbrew services info\fP (\fIformula\fP|\fB\-\-all\fP|\fB\-\-json\fP)
+List all managed services for the current user (or root)\.
+.TP
+[\fBsudo\fP] \fBbrew services run\fP (\fIformula\fP|\fB\-\-all\fP|\fB\-\-file=\fP)
+Run the service \fIformula\fP without registering to launch at login (or boot)\.
+.TP
+[\fBsudo\fP] \fBbrew services start\fP (\fIformula\fP|\fB\-\-all\fP|\fB\-\-file=\fP)
+Start the service \fIformula\fP immediately and register it to launch at login (or boot)\.
+.TP
+[\fBsudo\fP] \fBbrew services stop\fP (\fB\-\-keep\fP) (\fB\-\-no\-wait\fP|\fB\-\-max\-wait=\fP) (\fIformula\fP|\fB\-\-all\fP)
+Stop the service \fIformula\fP immediately and unregister it from launching at login (or boot), unless \fB\-\-keep\fP is specified\.
+.TP
+[\fBsudo\fP] \fBbrew services kill\fP (\fIformula\fP|\fB\-\-all\fP)
+Stop the service \fIformula\fP immediately but keep it registered to launch at login (or boot)\.
+.TP
+[\fBsudo\fP] \fBbrew services restart\fP (\fIformula\fP|\fB\-\-all\fP|\fB\-\-file=\fP)
+Stop (if necessary) and start the service \fIformula\fP immediately and register it to launch at login (or boot)\.
+.TP
+[\fBsudo\fP] \fBbrew services cleanup\fP
+Remove all unused services\.
+.TP
+\fB\-\-file\fP
+Use the service file from this location to \fBstart\fP the service\.
+.TP
+\fB\-\-sudo\-service\-user\fP
+When run as root on macOS, run the service(s) as this user\.
+.TP
+\fB\-\-max\-wait\fP
+Wait at most this many seconds for \fBstop\fP to finish stopping a service\. Omit this flag or set this to zero (0) seconds to wait indefinitely\.
+.TP
+\fB\-\-all\fP
+Run \fIsubcommand\fP on all services\.
+.TP
+\fB\-\-json\fP
+Output as JSON\.
+.TP
+\fB\-\-no\-wait\fP
+Don\[u2019]t wait for \fBstop\fP to finish stopping the service\.
+.TP
+\fB\-\-keep\fP
+When stopped, don\[u2019]t unregister the service from launching at login (or boot)\.
 .SS "\fBsetup\-ruby\fP \fR[\fIcommand\fP \.\.\.]"
 Installs and configures Homebrew\[u2019]s Ruby\. If \fBcommand\fP is passed, it will only run Bundler if necessary for that command\.
 .SS "\fBshellenv\fP \fR[\fIshell\fP \.\.\.]"
@@ -841,6 +1011,8 @@ Print the directories checked and \fBgit\fP operations performed\.
 .TP
 \fB\-d\fP, \fB\-\-debug\fP
 Display a trace of all shell commands as they are executed\.
+.SS "\fBupdate\-if\-needed\fP"
+Runs \fBbrew update \-\-auto\-update\fP only if needed\. This is a good replacement for \fBbrew update\fP in scripts where you want the no\-op case to be both possible and really fast\.
 .SS "\fBupdate\-reset\fP \fR[\fIrepository\fP \.\.\.]"
 Fetch and reset Homebrew and all tap repositories (or any specified \fIrepository\fP) using \fBgit\fP(1) to their latest \fBorigin/HEAD\fP\&\.
 .P
@@ -890,6 +1062,9 @@ Generate debug symbols on build\. Source will be retained in a cache directory\.
 .TP
 \fB\-\-overwrite\fP
 Delete files that already exist in the prefix while linking\.
+.TP
+\fB\-\-ask\fP
+Ask for confirmation before downloading and upgrading formulae\. Print bottles and dependencies download size, install and net install size\.
 .TP
 \fB\-\-cask\fP
 Treat all named arguments as casks\. If no named arguments are specified, upgrade only outdated casks\.
@@ -1317,7 +1492,7 @@ Treat all named arguments as casks\.
 Summarise contributions to Homebrew repositories\.
 .TP
 \fB\-\-repositories\fP
-Specify a comma\-separated list of repositories to search\. Supported repositories: \fBbrew\fP, \fBcore\fP, \fBcask\fP, \fBbundle\fP, \fBcommand\-not\-found\fP, \fBtest\-bot\fP and \fBservices\fP\&\. Omitting this flag, or specifying \fB\-\-repositories=primary\fP, searches only the main repositories: brew,core,cask\. Specifying \fB\-\-repositories=all\fP, searches all repositories\.
+Specify a comma\-separated list of repositories to search\. Supported repositories: \fBbrew\fP, \fBcore\fP, \fBcask\fP, \fBcommand\-not\-found\fP and \fBtest\-bot\fP\&\. Omitting this flag, or specifying \fB\-\-repositories=primary\fP, searches only the main repositories: brew,core,cask\. Specifying \fB\-\-repositories=all\fP, searches all repositories\.
 .TP
 \fB\-\-from\fP
 Date (ISO\-8601 format) to start searching contributions\. Omitting this flag searches the last year\.
@@ -1420,10 +1595,13 @@ Dispatch specified workflow (default: \fBdispatch\-build\-bottle\.yml\fP)\.
 Upload built bottles\.
 .TP
 \fB\-\-linux\fP
-Dispatch bottle for Linux (using GitHub runners)\.
+Dispatch bottle for Linux x86_64 (using GitHub runners)\.
+.TP
+\fB\-\-linux\-arm64\fP
+Dispatch bottle for Linux arm64 (using GitHub runners)\.
 .TP
 \fB\-\-linux\-self\-hosted\fP
-Dispatch bottle for Linux (using self\-hosted runner)\.
+Dispatch bottle for Linux x86_64 (using self\-hosted runner)\.
 .TP
 \fB\-\-linux\-wheezy\fP
 Use Debian Wheezy container for building the bottle on Linux\.
@@ -2053,157 +2231,8 @@ Make some output more verbose\.
 \fB\-h\fP, \fB\-\-help\fP
 Show this message\.
 .SH "OFFICIAL EXTERNAL COMMANDS"
-.SS "\fBbundle\fP \fR[\fIsubcommand\fP]"
-Bundler for non\-Ruby dependencies from Homebrew, Homebrew Cask, Mac App Store, Whalebrew and Visual Studio Code\.
-.TP
-\fBbrew bundle\fP [\fBinstall\fP]
-Install and upgrade (by default) all dependencies from the \fBBrewfile\fP\&\.
-.P
-You can specify the \fBBrewfile\fP location using \fB\-\-file\fP or by setting the \fB$HOMEBREW_BUNDLE_FILE\fP environment variable\.
-.P
-You can skip the installation of dependencies by adding space\-separated values to one or more of the following environment variables: \fB$HOMEBREW_BUNDLE_BREW_SKIP\fP, \fB$HOMEBREW_BUNDLE_CASK_SKIP\fP, \fB$HOMEBREW_BUNDLE_MAS_SKIP\fP, \fB$HOMEBREW_BUNDLE_WHALEBREW_SKIP\fP, \fB$HOMEBREW_BUNDLE_TAP_SKIP\fP\&\.
-.TP
-\fBbrew bundle upgrade\fP
-Shorthand for \fBbrew bundle install \-\-upgrade\fP\&\.
-.TP
-\fBbrew bundle dump\fP
-Write all installed casks/formulae/images/taps into a \fBBrewfile\fP in the current directory or to a custom file specified with the \fB\-\-file\fP option\.
-.TP
-\fBbrew bundle cleanup\fP
-Uninstall all dependencies not present in the \fBBrewfile\fP\&\.
-.P
-This workflow is useful for maintainers or testers who regularly install lots of formulae\.
-.P
-Unless \fB\-\-force\fP is passed, this returns a 1 exit code if anything would be removed\.
-.TP
-\fBbrew bundle check\fP
-Check if all dependencies present in the \fBBrewfile\fP are installed\.
-.P
-This provides a successful exit code if everything is up\-to\-date, making it useful for scripting\.
-.TP
-\fBbrew bundle list\fP
-List all dependencies present in the \fBBrewfile\fP\&\.
-.P
-By default, only Homebrew formula dependencies are listed\.
-.TP
-\fBbrew bundle edit\fP
-Edit the \fBBrewfile\fP in your editor\.
-.TP
-\fBbrew bundle exec\fP \fIcommand\fP
-Run an external command in an isolated build environment based on the \fBBrewfile\fP dependencies\.
-.P
-This sanitized build environment ignores unrequested dependencies, which makes sure that things you didn\[u2019]t specify in your \fBBrewfile\fP won\[u2019]t get picked up by commands like \fBbundle install\fP, \fBnpm install\fP, etc\. It will also add compiler flags which will help with finding keg\-only dependencies like \fBopenssl\fP, \fBicu4c\fP, etc\.
-.TP
-\fBbrew bundle sh\fP
-Run your shell in a \fBbrew bundle exec\fP environment\.
-.TP
-\fBbrew bundle env\fP
-Print the environment variables that would be set in a \fBbrew bundle exec\fP environment\.
-.TP
-\fB\-\-file\fP
-Read from or write to the \fBBrewfile\fP from this location\. Use \fB\-\-file=\-\fP to pipe to stdin/stdout\.
-.TP
-\fB\-\-global\fP
-Read from or write to the \fBBrewfile\fP from \fB$HOMEBREW_BUNDLE_FILE_GLOBAL\fP (if set), \fB${XDG_CONFIG_HOME}/homebrew/Brewfile\fP (if \fB$XDG_CONFIG_HOME\fP is set), \fB~/\.homebrew/Brewfile\fP or \fB~/\.Brewfile\fP otherwise\.
-.TP
-\fB\-v\fP, \fB\-\-verbose\fP
-\fBinstall\fP prints output from commands as they are run\. \fBcheck\fP lists all missing dependencies\.
-.TP
-\fB\-\-no\-upgrade\fP
-\fBinstall\fP does not run \fBbrew upgrade\fP on outdated dependencies\. \fBcheck\fP does not check for outdated dependencies\. Note they may still be upgraded by \fBbrew install\fP if needed\. This is enabled by default if \fB$HOMEBREW_BUNDLE_NO_UPGRADE\fP is set\.
-.TP
-\fB\-\-upgrade\fP
-\fBinstall\fP runs \fBbrew upgrade\fP on outdated dependencies, even if \fB$HOMEBREW_BUNDLE_NO_UPGRADE\fP is set\.
-.TP
-\fB\-\-install\fP
-Run \fBinstall\fP before continuing to other operations e\.g\. \fBexec\fP\&\.
-.TP
-\fB\-f\fP, \fB\-\-force\fP
-\fBinstall\fP runs with \fB\-\-force\fP/\fB\-\-overwrite\fP\&\. \fBdump\fP overwrites an existing \fBBrewfile\fP\&\. \fBcleanup\fP actually performs its cleanup operations\.
-.TP
-\fB\-\-cleanup\fP
-\fBinstall\fP performs cleanup operation, same as running \fBcleanup \-\-force\fP\&\. This is enabled by default if \fB$HOMEBREW_BUNDLE_INSTALL_CLEANUP\fP is set and \fB\-\-global\fP is passed\.
-.TP
-\fB\-\-all\fP
-\fBlist\fP all dependencies\.
-.TP
-\fB\-\-formula\fP
-\fBlist\fP or \fBdump\fP Homebrew formula dependencies\.
-.TP
-\fB\-\-cask\fP
-\fBlist\fP or \fBdump\fP Homebrew cask dependencies\.
-.TP
-\fB\-\-tap\fP
-\fBlist\fP or \fBdump\fP Homebrew tap dependencies\.
-.TP
-\fB\-\-mas\fP
-\fBlist\fP or \fBdump\fP Mac App Store dependencies\.
-.TP
-\fB\-\-whalebrew\fP
-\fBlist\fP or \fBdump\fP Whalebrew dependencies\.
-.TP
-\fB\-\-vscode\fP
-\fBlist\fP or \fBdump\fP VSCode extensions\.
-.TP
-\fB\-\-no\-vscode\fP
-\fBdump\fP without VSCode extensions\. This is enabled by default if \fB$HOMEBREW_BUNDLE_DUMP_NO_VSCODE\fP is set\.
-.TP
-\fB\-\-describe\fP
-\fBdump\fP adds a description comment above each line, unless the dependency does not have a description\. This is enabled by default if \fB$HOMEBREW_BUNDLE_DUMP_DESCRIBE\fP is set\.
-.TP
-\fB\-\-no\-restart\fP
-\fBdump\fP does not add \fBrestart_service\fP to formula lines\.
-.TP
-\fB\-\-zap\fP
-\fBcleanup\fP casks using the \fBzap\fP command instead of \fBuninstall\fP\&\.
 .SS "\fBcommand\-not\-found\-init\fP"
 Print instructions for setting up the command\-not\-found hook for your shell\. If the output is not to a tty, print the appropriate handler script for your shell\.
-.SS "\fBservices\fP \fR[\fIsubcommand\fP]"
-Manage background services with macOS\[u2019] \fBlaunchctl\fP(1) daemon manager or Linux\[u2019]s \fBsystemctl\fP(1) service manager\.
-.P
-If \fBsudo\fP is passed, operate on \fB/Library/LaunchDaemons\fP or \fB/usr/lib/systemd/system\fP (started at boot)\. Otherwise, operate on \fB~/Library/LaunchAgents\fP or \fB~/\.config/systemd/user\fP (started at login)\.
-.TP
-[\fBsudo\fP] \fBbrew services\fP [\fBlist\fP] (\fB\-\-json\fP) (\fB\-\-debug\fP)
-List information about all managed services for the current user (or root)\. Provides more output from Homebrew and \fBlaunchctl\fP(1) or \fBsystemctl\fP(1) if run with \fB\-\-debug\fP\&\.
-.TP
-[\fBsudo\fP] \fBbrew services info\fP (\fIformula\fP|\fB\-\-all\fP|\fB\-\-json\fP)
-List all managed services for the current user (or root)\.
-.TP
-[\fBsudo\fP] \fBbrew services run\fP (\fIformula\fP|\fB\-\-all\fP)
-Run the service \fIformula\fP without registering to launch at login (or boot)\.
-.TP
-[\fBsudo\fP] \fBbrew services start\fP (\fIformula\fP|\fB\-\-all\fP|\fB\-\-file=\fP)
-Start the service \fIformula\fP immediately and register it to launch at login (or boot)\.
-.TP
-[\fBsudo\fP] \fBbrew services stop\fP (\fIformula\fP|\fB\-\-all\fP)
-Stop the service \fIformula\fP immediately and unregister it from launching at login (or boot)\.
-.TP
-[\fBsudo\fP] \fBbrew services kill\fP (\fIformula\fP|\fB\-\-all\fP)
-Stop the service \fIformula\fP immediately but keep it registered to launch at login (or boot)\.
-.TP
-[\fBsudo\fP] \fBbrew services restart\fP (\fIformula\fP|\fB\-\-all\fP)
-Stop (if necessary) and start the service \fIformula\fP immediately and register it to launch at login (or boot)\.
-.TP
-[\fBsudo\fP] \fBbrew services cleanup\fP
-Remove all unused services\.
-.TP
-\fB\-\-file\fP
-Use the service file from this location to \fBstart\fP the service\.
-.TP
-\fB\-\-sudo\-service\-user\fP
-When run as root on macOS, run the service(s) as this user\.
-.TP
-\fB\-\-max\-wait\fP
-Wait at most this many seconds for \fBstop\fP to finish stopping a service\. Omit this flag or set this to zero (0) seconds to wait indefinitely\.
-.TP
-\fB\-\-all\fP
-Run \fIsubcommand\fP on all services\.
-.TP
-\fB\-\-json\fP
-Output as JSON\.
-.TP
-\fB\-\-no\-wait\fP
-Don\[u2019]t wait for \fBstop\fP to finish stopping the service\.
 .SS "\fBtest\-bot\fP \fR[\fIoptions\fP] \fR[\fIformula\fP]"
 Tests the full lifecycle of a Homebrew change to a tap (Git repository)\. For example, for a GitHub Actions pull request that changes a formula \fBbrew test\-bot\fP will ensure the system is cleaned and set up to test the formula, install the formula, run various tests and checks on it, bottle (package) the binaries and test formulae that depend on it to ensure they aren\[u2019]t broken by these changes\.
 .P
@@ -2417,6 +2446,9 @@ Prefix all download URLs, including those for bottles, with this value\. For exa
 \fBHOMEBREW_ARTIFACT_DOMAIN_NO_FALLBACK\fP
 When \fB$HOMEBREW_ARTIFACT_DOMAIN\fP and \fB$HOMEBREW_ARTIFACT_DOMAIN_NO_FALLBACK\fP are both set, if the request to \fB$HOMEBREW_ARTIFACT_DOMAIN\fP fails then Homebrew will error rather than trying any other/default URLs\.
 .TP
+\fBHOMEBREW_ASK\fP
+If set, pass \fB\-\-ask\fPto all formulae \fBbrew install\fP, \fBbrew upgrade\fP and \fBbrew reinstall\fP commands\.
+.TP
 \fBHOMEBREW_AUTO_UPDATE_SECS\fP
 Run \fBbrew update\fP once every \fB$HOMEBREW_AUTO_UPDATE_SECS\fP seconds before some commands, e\.g\. \fBbrew install\fP, \fBbrew upgrade\fP and \fBbrew tap\fP\&\. Alternatively, disable auto\-update entirely with \fB$HOMEBREW_NO_AUTO_UPDATE\fP\&\.
 .RS
@@ -2565,6 +2597,9 @@ Use this editor when editing a single formula, or several formulae in the same d
 .P
 \fIDefault:\fP \fB$EDITOR\fP or \fB$VISUAL\fP\&\.
 .RE
+.TP
+\fBHOMEBREW_ENV_SYNC_STRICT\fP
+If set, \fBbrew *env\-sync\fP will only sync the exact installed versions of formulae\.
 .TP
 \fBHOMEBREW_EVAL_ALL\fP
 If set, \fBbrew\fP commands evaluate all formulae and casks, executing their arbitrary code, by default without requiring \fB\-\-eval\-all\fP\&\. Required to cache formula and cask descriptions\.

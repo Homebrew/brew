@@ -214,11 +214,11 @@ RSpec.describe Tap do
       expect(homebrew_foo_tap.remote).to eq("https://github.com/Homebrew/homebrew-foo")
       expect(homebrew_foo_tap).not_to have_custom_remote
 
-      services_tap = described_class.fetch("Homebrew", "services")
+      services_tap = described_class.fetch("Homebrew", "test-bot")
       services_tap.path.mkpath
       services_tap.path.cd do
         system "git", "init"
-        system "git", "remote", "add", "origin", "https://github.com/Homebrew/homebrew-services"
+        system "git", "remote", "add", "origin", "https://github.com/Homebrew/homebrew-test-bot"
       end
       expect(services_tap).not_to be_private
     end
@@ -240,7 +240,7 @@ RSpec.describe Tap do
 
       expect(homebrew_foo_tap.remote_repository).to eq("Homebrew/homebrew-foo")
 
-      services_tap = described_class.fetch("Homebrew", "services")
+      services_tap = described_class.fetch("Homebrew", "test-bot")
       services_tap.path.mkpath
       services_tap.path.cd do
         system "git", "init"
@@ -254,7 +254,7 @@ RSpec.describe Tap do
 
       expect(homebrew_foo_tap.remote_repository).to eq("Homebrew/homebrew-foo")
 
-      services_tap = described_class.fetch("Homebrew", "services")
+      services_tap = described_class.fetch("Homebrew", "test-bot")
       services_tap.path.mkpath
       services_tap.path.cd do
         system "git", "init"
@@ -275,7 +275,7 @@ RSpec.describe Tap do
   end
 
   describe "#custom_remote?" do
-    subject(:tap) { described_class.fetch("Homebrew", "services") }
+    subject(:tap) { described_class.fetch("Homebrew", "test-bot") }
 
     let(:remote) { nil }
 
@@ -293,13 +293,13 @@ RSpec.describe Tap do
     end
 
     context "when using the default remote" do
-      let(:remote) { "https://github.com/Homebrew/homebrew-services" }
+      let(:remote) { "https://github.com/Homebrew/homebrew-test-bot" }
 
       it(:custom_remote?) { expect(tap.custom_remote?).to be false }
     end
 
     context "when using a non-default remote" do
-      let(:remote) { "git@github.com:Homebrew/homebrew-services" }
+      let(:remote) { "git@github.com:Homebrew/homebrew-test-bot" }
 
       it(:custom_remote?) { expect(tap.custom_remote?).to be true }
     end

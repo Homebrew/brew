@@ -1,8 +1,25 @@
 # typed: strict
 
 module Homebrew
-  sig { returns(String) }
-  def self.bootsnap_key; end
+  module Bootsnap
+    sig { returns(String) }
+    def self.key; end
+
+    sig { returns(String) }
+    private_class_method def self.cache_dir; end
+
+    sig { returns(T::Array[String]) }
+    private_class_method def self.ignore_directories; end
+
+    sig { returns(T::Boolean) }
+    private_class_method def self.enabled?; end
+
+    sig { params(compile_cache: T::Boolean).void }
+    def self.load!(compile_cache: true); end
+
+    sig { void }
+    def self.reset!; end
+  end
 end
 
 module Bootsnap
@@ -29,5 +46,9 @@ module Bootsnap
     compile_cache_iseq: true,
     compile_cache_yaml: true,
     compile_cache_json: true
-  ); end
+  )
+  end
+
+  sig { void }
+  def self.unload_cache!; end
 end

@@ -265,6 +265,16 @@ then
   export HOMEBREW_GITHUB_HOSTED_RUNNER=1
 fi
 
+# don't filter the environment for `brew bundle (exec|env|sh)`
+if [[ "${1:-}" == "bundle" ]]
+then
+  if [[ "${2:-}" == "exec" || "${2:-}" == "env" || "${2:-}" == "sh" ]]
+  then
+    exec /bin/bash -p "${HOMEBREW_LIBRARY}/Homebrew/brew.sh" "$@"
+    exit $?
+  fi
+fi
+
 # filter the user environment
 PATH="/usr/bin:/bin:/usr/sbin:/sbin"
 

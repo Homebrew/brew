@@ -83,12 +83,16 @@ class GitHubRunnerMatrix
   GITHUB_ACTIONS_SHORT_TIMEOUT = 60
   private_constant :SELF_HOSTED_LINUX_RUNNER, :GITHUB_ACTIONS_LONG_TIMEOUT, :GITHUB_ACTIONS_SHORT_TIMEOUT
 
-  sig { returns(LinuxRunnerSpec) }
-  def linux_runner_spec
-    linux_runner = ENV.fetch("HOMEBREW_LINUX_RUNNER")
+  sig { params(arch: Symbol).returns(LinuxRunnerSpec) }
+  def linux_runner_spec(arch)
+    linux_runner = case arch
+    when :arm64 then "ubuntu-22.04-arm"
+    when :x86_64 then ENV.fetch("HOMEBREW_LINUX_RUNNER")
+    else raise "Unknown Linux architecture: #{arch}"
+    end
 
     LinuxRunnerSpec.new(
-      name:      "Linux",
+      name:      "Linux #{arch}",
       runner:    linux_runner,
       container: {
         image:   "ghcr.io/homebrew/ubuntu22.04:master",
@@ -108,14 +112,16 @@ class GitHubRunnerMatrix
     params(
       platform:      Symbol,
       arch:          Symbol,
-      spec:          RunnerSpec,
+      spec:          T.nilable(RunnerSpec),
       macos_version: T.nilable(MacOSVersion),
     ).returns(GitHubRunner)
   }
-  def create_runner(platform, arch, spec, macos_version = nil)
+  def create_runner(platform, arch, spec = nil, macos_version = nil)
     raise "Unexpected platform: #{platform}" if VALID_PLATFORMS.exclude?(platform)
     raise "Unexpected arch: #{arch}" if VALID_ARCHES.exclude?(arch)
+    raise "Missing `spec` argument" if spec.nil? && platform != :linux
 
+    spec ||= linux_runner_spec(arch)
     runner = GitHubRunner.new(platform:, arch:, spec:, macos_version:)
     runner.spec.testing_formulae += testable_formulae(runner)
     runner.active = active_runner?(runner)
@@ -124,7 +130,7 @@ class GitHubRunnerMatrix
 
   sig { params(macos_version: MacOSVersion).returns(T::Boolean) }
   def runner_enabled?(macos_version)
-    macos_version <= NEWEST_HOMEBREW_CORE_MACOS_RUNNER && macos_version >= OLDEST_HOMEBREW_CORE_MACOS_RUNNER
+    macos_version.between?(OLDEST_HOMEBREW_CORE_MACOS_RUNNER, NEWEST_HOMEBREW_CORE_MACOS_RUNNER)
   end
 
   NEWEST_GITHUB_ACTIONS_INTEL_MACOS_RUNNER = :ventura
@@ -141,7 +147,12 @@ class GitHubRunnerMatrix
     return if @runners.present?
 
     if !@all_supported || ENV.key?("HOMEBREW_LINUX_RUNNER")
-      @runners << create_runner(:linux, :x86_64, linux_runner_spec)
+      @runners << create_runner(:linux, :x86_64)
+
+      if !@dependent_matrix &&
+         @testing_formulae.any? { |tf| tf.formula.bottle_specification.tag?(Utils::Bottles.tag(:arm64_linux)) }
+        @runners << create_runner(:linux, :arm64)
+      end
     end
 
     github_run_id      = ENV.fetch("GITHUB_RUN_ID")
@@ -163,8 +174,8 @@ class GitHubRunnerMatrix
       macos_version = MacOSVersion.new(version)
       next unless runner_enabled?(macos_version)
 
-      github_runner_available = macos_version <= NEWEST_GITHUB_ACTIONS_ARM_MACOS_RUNNER &&
-                                macos_version >= OLDEST_GITHUB_ACTIONS_ARM_MACOS_RUNNER
+      github_runner_available = macos_version.between?(OLDEST_GITHUB_ACTIONS_ARM_MACOS_RUNNER,
+                                                       NEWEST_GITHUB_ACTIONS_ARM_MACOS_RUNNER)
 
       runner, timeout = if use_github_runner && github_runner_available
         ["macos-#{version}", GITHUB_ACTIONS_RUNNER_TIMEOUT]
@@ -184,10 +195,14 @@ class GitHubRunnerMatrix
       )
       @runners << create_runner(:macos, :arm64, spec, macos_version)
 
-      next if !@all_supported && macos_version > NEWEST_HOMEBREW_CORE_INTEL_MACOS_RUNNER
+      skip_intel_runner = !@all_supported && macos_version > NEWEST_HOMEBREW_CORE_INTEL_MACOS_RUNNER
+      skip_intel_runner &&= @dependent_matrix || @testing_formulae.none? do |testing_formula|
+        testing_formula.formula.bottle_specification.tag?(Utils::Bottles.tag(macos_version.to_sym))
+      end
+      next if skip_intel_runner
 
-      github_runner_available = macos_version <= NEWEST_GITHUB_ACTIONS_INTEL_MACOS_RUNNER &&
-                                macos_version >= OLDEST_GITHUB_ACTIONS_INTEL_MACOS_RUNNER
+      github_runner_available = macos_version.between?(OLDEST_GITHUB_ACTIONS_INTEL_MACOS_RUNNER,
+                                                       NEWEST_GITHUB_ACTIONS_INTEL_MACOS_RUNNER)
 
       runner, timeout = if use_github_runner && github_runner_available
         ["macos-#{version}", GITHUB_ACTIONS_RUNNER_TIMEOUT]

@@ -51,13 +51,18 @@ module Utils
         yield pipe
       else
         options[:err] ||= File::NULL unless ENV["HOMEBREW_STDERR"]
+        cmd = if args[0].is_a? Hash
+          args[1]
+        else
+          args[0]
+        end
         begin
           exec(*args, options)
         rescue Errno::ENOENT
-          $stderr.puts "brew: command not found: #{args[0]}" if options[:err] != :close
+          $stderr.puts "brew: command not found: #{cmd}" if options[:err] != :close
           exit! 127
         rescue SystemCallError
-          $stderr.puts "brew: exec failed: #{args[0]}" if options[:err] != :close
+          $stderr.puts "brew: exec failed: #{cmd}" if options[:err] != :close
           exit! 1
         end
       end

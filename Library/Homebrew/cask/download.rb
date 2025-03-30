@@ -82,8 +82,7 @@ module Cask
 
     sig { override.params(filename: Pathname).void }
     def verify_download_integrity(filename)
-      official_cask_tap = @cask.tap&.official?
-      if @cask.sha256 == :no_check && !official_cask_tap
+      if no_checksum_defined? && !official_cask_tap?
         opoo "No checksum defined for cask '#{@cask}', skipping verification."
         return
       end
@@ -112,6 +111,24 @@ module Cask
       else
         Quarantine.release!(download_path: path)
       end
+    end
+
+    sig { returns(T::Boolean) }
+    def official_cask_tap?
+      tap = @cask.tap
+      return false if tap.blank?
+
+      tap.official?
+    end
+
+    sig { returns(T::Boolean) }
+    def no_checksum_defined?
+      @cask.sha256 == :no_check
+    end
+
+    sig { override.returns(T::Boolean) }
+    def silence_checksum_missing_error?
+      no_checksum_defined? && official_cask_tap?
     end
 
     sig { override.returns(T.nilable(::URL)) }

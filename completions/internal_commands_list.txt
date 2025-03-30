@@ -20,6 +20,7 @@ bump-cask-pr
 bump-formula-pr
 bump-revision
 bump-unversioned-casks
+bundle
 casks
 cat
 cleanup
@@ -91,6 +92,7 @@ rubocop
 ruby
 rubydoc
 search
+services
 setup-ruby
 sh
 shellenv
@@ -112,6 +114,7 @@ unpin
 untap
 up
 update
+update-if-needed
 update-license-data
 update-maintainers
 update-python-resources

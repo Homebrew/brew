@@ -14,18 +14,20 @@ module UnpackStrategy
     module Bom
       extend SystemCommand::Mixin
 
-      DMG_METADATA = T.let(Set.new(%w[
-        .background
-        .com.apple.timemachine.donotpresent
-        .com.apple.timemachine.supported
-        .DocumentRevisions-V100
-        .DS_Store
-        .fseventsd
-        .MobileBackups
-        .Spotlight-V100
-        .TemporaryItems
-        .Trashes
-        .VolumeIcon.icns
+      DMG_METADATA = T.let(Set.new([
+        ".background",
+        ".com.apple.timemachine.donotpresent",
+        ".com.apple.timemachine.supported",
+        ".DocumentRevisions-V100",
+        ".DS_Store",
+        ".fseventsd",
+        ".MobileBackups",
+        ".Spotlight-V100",
+        ".TemporaryItems",
+        ".Trashes",
+        ".VolumeIcon.icns",
+        ".HFS+ Private Directory Data\r", # do not remove `\r`, it is a part of directory name
+        ".HFS+ Private Data\r",
       ]).freeze, T::Set[String])
       private_constant :DMG_METADATA
 

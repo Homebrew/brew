@@ -643,6 +643,42 @@ _brew_bump_unversioned_casks() {
   __brew_complete_tapped
 }
 
+_brew_bundle() {
+  local cur="${COMP_WORDS[COMP_CWORD]}"
+  case "${cur}" in
+    -*)
+      __brewcomp "
+      --all
+      --cask
+      --cleanup
+      --debug
+      --describe
+      --file
+      --force
+      --formula
+      --global
+      --help
+      --install
+      --mas
+      --no-restart
+      --no-upgrade
+      --no-vscode
+      --quiet
+      --services
+      --tap
+      --upgrade
+      --verbose
+      --vscode
+      --whalebrew
+      --zap
+      "
+      return
+      ;;
+    *) ;;
+  esac
+  __brewcomp "install dump cleanup check exec list sh env edit"
+}
+
 _brew_casks() {
   local cur="${COMP_WORDS[COMP_CWORD]}"
   case "${cur}" in
@@ -952,6 +988,7 @@ _brew_dispatch_build_bottle() {
       --help
       --issue
       --linux
+      --linux-arm64
       --linux-self-hosted
       --linux-wheezy
       --macos
@@ -1367,6 +1404,8 @@ _brew_instal() {
       --HEAD
       --adopt
       --appdir
+      --as-dependency
+      --ask
       --audio-unit-plugindir
       --binaries
       --bottle-arch
@@ -1431,6 +1470,8 @@ _brew_install() {
       --HEAD
       --adopt
       --appdir
+      --as-dependency
+      --ask
       --audio-unit-plugindir
       --binaries
       --bottle-arch
@@ -2090,6 +2131,7 @@ _brew_reinstall() {
       __brewcomp "
       --adopt
       --appdir
+      --ask
       --audio-unit-plugindir
       --binaries
       --build-from-source
@@ -2281,6 +2323,30 @@ _brew_search() {
       ;;
     *) ;;
   esac
+}
+
+_brew_services() {
+  local cur="${COMP_WORDS[COMP_CWORD]}"
+  case "${cur}" in
+    -*)
+      __brewcomp "
+      --all
+      --debug
+      --file
+      --help
+      --json
+      --keep
+      --max-wait
+      --no-wait
+      --quiet
+      --sudo-service-user
+      --verbose
+      "
+      return
+      ;;
+    *) ;;
+  esac
+  __brewcomp "list info run start stop kill restart cleanup"
 }
 
 _brew_setup_ruby() {
@@ -2735,6 +2801,22 @@ _brew_update() {
   esac
 }
 
+_brew_update_if_needed() {
+  local cur="${COMP_WORDS[COMP_CWORD]}"
+  case "${cur}" in
+    -*)
+      __brewcomp "
+      --debug
+      --help
+      --quiet
+      --verbose
+      "
+      return
+      ;;
+    *) ;;
+  esac
+}
+
 _brew_update_license_data() {
   local cur="${COMP_WORDS[COMP_CWORD]}"
   case "${cur}" in
@@ -2869,6 +2951,7 @@ _brew_upgrade() {
     -*)
       __brewcomp "
       --appdir
+      --ask
       --audio-unit-plugindir
       --binaries
       --build-from-source
@@ -3055,6 +3138,7 @@ _brew() {
     bump-formula-pr) _brew_bump_formula_pr ;;
     bump-revision) _brew_bump_revision ;;
     bump-unversioned-casks) _brew_bump_unversioned_casks ;;
+    bundle) _brew_bundle ;;
     casks) _brew_casks ;;
     cat) _brew_cat ;;
     cleanup) _brew_cleanup ;;
@@ -3126,6 +3210,7 @@ _brew() {
     ruby) _brew_ruby ;;
     rubydoc) _brew_rubydoc ;;
     search) _brew_search ;;
+    services) _brew_services ;;
     setup-ruby) _brew_setup_ruby ;;
     sh) _brew_sh ;;
     shellenv) _brew_shellenv ;;
@@ -3148,6 +3233,7 @@ _brew() {
     untap) _brew_untap ;;
     up) _brew_up ;;
     update) _brew_update ;;
+    update-if-needed) _brew_update_if_needed ;;
     update-license-data) _brew_update_license_data ;;
     update-maintainers) _brew_update_maintainers ;;
     update-python-resources) _brew_update_python_resources ;;

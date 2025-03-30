@@ -65,6 +65,7 @@ Style/Documentation:
     - livecheck/strategy/yaml.rb
     - os.rb
     - resource.rb
+    - startup/config.rb
     - utils/inreplace.rb
     - utils/shebang.rb
     - utils/string_inreplace_extension.rb

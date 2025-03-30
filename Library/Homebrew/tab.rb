@@ -100,9 +100,10 @@ class AbstractTab
       "full_name"         => formula.full_name,
       "version"           => formula.version.to_s,
       "revision"          => formula.revision,
+      "bottle_rebuild"    => formula.bottle&.rebuild,
       "pkg_version"       => formula.pkg_version.to_s,
       "declared_directly" => declared_deps.include?(formula.full_name),
-    }
+    }.compact
   end
   private_class_method :formula_to_dep_hash
 

@@ -324,6 +324,15 @@ RSpec.describe Cask::Cask, :cask do
     let(:expected_versions_variations) do
       <<~JSON
         {
+          "sequoia": {
+            "url": "file://#{TEST_FIXTURE_DIR}/cask/caffeine/darwin/1.2.3/intel.zip"
+          },
+          "sonoma": {
+            "url": "file://#{TEST_FIXTURE_DIR}/cask/caffeine/darwin/1.2.3/intel.zip"
+          },
+          "ventura": {
+            "url": "file://#{TEST_FIXTURE_DIR}/cask/caffeine/darwin/1.2.3/intel.zip"
+          },
           "monterey": {
             "url": "file://#{TEST_FIXTURE_DIR}/cask/caffeine/darwin/1.2.3/intel.zip"
           },
@@ -346,6 +355,21 @@ RSpec.describe Cask::Cask, :cask do
             "url": "file://#{TEST_FIXTURE_DIR}/cask/caffeine/darwin/1.0.0/intel.zip",
             "version": "1.0.0",
             "sha256": "1866dfa833b123bb8fe7fa7185ebf24d28d300d0643d75798bc23730af734216"
+          },
+          "high_sierra": {
+            "url": "file://#{TEST_FIXTURE_DIR}/cask/caffeine/darwin/1.0.0/intel.zip",
+            "version": "1.0.0",
+            "sha256": "1866dfa833b123bb8fe7fa7185ebf24d28d300d0643d75798bc23730af734216"
+          },
+          "sierra": {
+            "url": "file://#{TEST_FIXTURE_DIR}/cask/caffeine/darwin/1.0.0/intel.zip",
+            "version": "1.0.0",
+            "sha256": "1866dfa833b123bb8fe7fa7185ebf24d28d300d0643d75798bc23730af734216"
+          },
+          "el_capitan": {
+            "url": "file://#{TEST_FIXTURE_DIR}/cask/caffeine/darwin/1.0.0/intel.zip",
+            "version": "1.0.0",
+            "sha256": "1866dfa833b123bb8fe7fa7185ebf24d28d300d0643d75798bc23730af734216"
           }
         }
       JSON
@@ -353,6 +377,18 @@ RSpec.describe Cask::Cask, :cask do
     let(:expected_sha256_variations) do
       <<~JSON
         {
+          "sequoia": {
+            "url": "file://#{TEST_FIXTURE_DIR}/cask/caffeine-intel.zip",
+            "sha256": "8c62a2b791cf5f0da6066a0a4b6e85f62949cd60975da062df44adf887f4370b"
+          },
+          "sonoma": {
+            "url": "file://#{TEST_FIXTURE_DIR}/cask/caffeine-intel.zip",
+            "sha256": "8c62a2b791cf5f0da6066a0a4b6e85f62949cd60975da062df44adf887f4370b"
+          },
+          "ventura": {
+            "url": "file://#{TEST_FIXTURE_DIR}/cask/caffeine-intel.zip",
+            "sha256": "8c62a2b791cf5f0da6066a0a4b6e85f62949cd60975da062df44adf887f4370b"
+          },
           "monterey": {
             "url": "file://#{TEST_FIXTURE_DIR}/cask/caffeine-intel.zip",
             "sha256": "8c62a2b791cf5f0da6066a0a4b6e85f62949cd60975da062df44adf887f4370b"
@@ -368,21 +404,77 @@ RSpec.describe Cask::Cask, :cask do
           "mojave": {
             "url": "file://#{TEST_FIXTURE_DIR}/cask/caffeine-intel.zip",
             "sha256": "8c62a2b791cf5f0da6066a0a4b6e85f62949cd60975da062df44adf887f4370b"
+          },
+          "high_sierra": {
+            "url": "file://#{TEST_FIXTURE_DIR}/cask/caffeine-intel.zip",
+            "sha256": "8c62a2b791cf5f0da6066a0a4b6e85f62949cd60975da062df44adf887f4370b"
+          },
+          "sierra": {
+            "url": "file://#{TEST_FIXTURE_DIR}/cask/caffeine-intel.zip",
+            "sha256": "8c62a2b791cf5f0da6066a0a4b6e85f62949cd60975da062df44adf887f4370b"
+          },
+          "el_capitan": {
+            "url": "file://#{TEST_FIXTURE_DIR}/cask/caffeine-intel.zip",
+            "sha256": "8c62a2b791cf5f0da6066a0a4b6e85f62949cd60975da062df44adf887f4370b"
+          }
+        }
+      JSON
+    end
+    let(:expected_sha256_variations_os) do
+      <<~JSON
+        {
+          "sequoia": {
+            "url": "file://#{TEST_FIXTURE_DIR}/cask/caffeine-intel-darwin.zip",
+            "sha256": "8c62a2b791cf5f0da6066a0a4b6e85f62949cd60975da062df44adf887f4370b"
+          },
+          "sonoma": {
+            "url": "file://#{TEST_FIXTURE_DIR}/cask/caffeine-intel-darwin.zip",
+            "sha256": "8c62a2b791cf5f0da6066a0a4b6e85f62949cd60975da062df44adf887f4370b"
+          },
+          "ventura": {
+            "url": "file://#{TEST_FIXTURE_DIR}/cask/caffeine-intel-darwin.zip",
+            "sha256": "8c62a2b791cf5f0da6066a0a4b6e85f62949cd60975da062df44adf887f4370b"
+          },
+          "monterey": {
+            "url": "file://#{TEST_FIXTURE_DIR}/cask/caffeine-intel-darwin.zip",
+            "sha256": "8c62a2b791cf5f0da6066a0a4b6e85f62949cd60975da062df44adf887f4370b"
+          },
+          "big_sur": {
+            "url": "file://#{TEST_FIXTURE_DIR}/cask/caffeine-intel-darwin.zip",
+            "sha256": "8c62a2b791cf5f0da6066a0a4b6e85f62949cd60975da062df44adf887f4370b"
+          },
+          "catalina": {
+            "url": "file://#{TEST_FIXTURE_DIR}/cask/caffeine-intel-darwin.zip",
+            "sha256": "8c62a2b791cf5f0da6066a0a4b6e85f62949cd60975da062df44adf887f4370b"
+          },
+          "mojave": {
+            "url": "file://#{TEST_FIXTURE_DIR}/cask/caffeine-intel-darwin.zip",
+            "sha256": "8c62a2b791cf5f0da6066a0a4b6e85f62949cd60975da062df44adf887f4370b"
+          },
+          "high_sierra": {
+            "url": "file://#{TEST_FIXTURE_DIR}/cask/caffeine-intel-darwin.zip",
+            "sha256": "8c62a2b791cf5f0da6066a0a4b6e85f62949cd60975da062df44adf887f4370b"
+          },
+          "sierra": {
+            "url": "file://#{TEST_FIXTURE_DIR}/cask/caffeine-intel-darwin.zip",
+            "sha256": "8c62a2b791cf5f0da6066a0a4b6e85f62949cd60975da062df44adf887f4370b"
+          },
+          "el_capitan": {
+            "url": "file://#{TEST_FIXTURE_DIR}/cask/caffeine-intel-darwin.zip",
+            "sha256": "8c62a2b791cf5f0da6066a0a4b6e85f62949cd60975da062df44adf887f4370b"
+          },
+          "x86_64_linux": {
+            "url": "file://#{TEST_FIXTURE_DIR}/cask/caffeine-intel-linux.zip",
+            "sha256": "8c62a2b791cf5f0da6066a0a4b6e85f62949cd60975da062df44adf887f4370b"
+          },
+          "arm64_linux": {
+            "url": "file://#{TEST_FIXTURE_DIR}/cask/caffeine-arm-linux.zip"
           }
         }
       JSON
     end
 
     before do
-      # Use a more limited symbols list to shorten the variations hash
-      symbols = {
-        monterey: "12",
-        big_sur:  "11",
-        catalina: "10.15",
-        mojave:   "10.14",
-      }
-      stub_const("MacOSVersion::SYMBOLS", symbols)
-
       # For consistency, always run on Monterey and ARM
       MacOS.full_version = "12"
       allow(Hardware::CPU).to receive(:type).and_return(:arm)
@@ -406,6 +498,14 @@ RSpec.describe Cask::Cask, :cask do
 
       expect(h).to be_a(Hash)
       expect(JSON.pretty_generate(h["variations"])).to eq expected_sha256_variations.strip
+    end
+
+    it "returns the correct variations hash for a cask different sha256s on each arch and os" do
+      c = Cask::CaskLoader.load("sha256-os")
+      h = c.to_hash_with_variations
+
+      expect(h).to be_a(Hash)
+      expect(JSON.pretty_generate(h["variations"])).to eq expected_sha256_variations_os.strip
     end
 
     # NOTE: The calls to `Cask.generating_hash!` and `Cask.generated_hash!`

@@ -90,7 +90,7 @@ RSpec.describe GitHubRunnerMatrix do
 
           expect(runner_matrix.runners.all?(&:active)).to be(false)
           expect(runner_matrix.runners.any?(&:active)).to be(true)
-          expect(get_runner_names(runner_matrix)).to eq(["Linux"])
+          expect(get_runner_names(runner_matrix)).to eq(["Linux x86_64"])
         end
       end
 
@@ -139,7 +139,7 @@ RSpec.describe GitHubRunnerMatrix do
 
           expect(runner_matrix.runners.all?(&:active)).to be(false)
           expect(runner_matrix.runners.any?(&:active)).to be(true)
-          expect(get_runner_names(runner_matrix).sort).to eq(["Linux", "macOS #{v}-arm64"])
+          expect(get_runner_names(runner_matrix).sort).to eq(["Linux x86_64", "macOS #{v}-arm64"])
         end
       end
     end
@@ -276,7 +276,7 @@ RSpec.describe GitHubRunnerMatrix do
               allow(Formula).to receive(:all).and_return([testball, testball_depender_linux].map(&:formula))
 
               matrix = described_class.new([testball], ["deleted"], all_supported: false, dependent_matrix: true)
-              expect(get_runner_names(matrix)).to eq(["Linux"])
+              expect(get_runner_names(matrix)).to eq(["Linux x86_64"])
             end
           end
 

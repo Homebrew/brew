@@ -6,7 +6,7 @@ RSpec.describe DownloadStrategyDetector do
   describe "::detect" do
     subject(:strategy_detector) { described_class.detect(url, strategy) }
 
-    let(:url) { Object.new }
+    let(:url) { "invalidurl" }
     let(:strategy) { nil }
 
     context "when given Git URL" do

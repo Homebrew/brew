@@ -1,4 +1,4 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
 
 require "tsort"
@@ -6,11 +6,18 @@ require "tsort"
 module Utils
   # Topologically sortable hash map.
   class TopologicalHash < Hash
+    extend T::Generic
     include TSort
+
+    CaskOrFormula = T.type_alias { T.any(Cask::Cask, Formula) }
+
+    K = type_member { { fixed: CaskOrFormula } }
+    V = type_member { { fixed: T::Array[CaskOrFormula] } }
+    Elem = type_member(:out) { { fixed: [CaskOrFormula, T::Array[CaskOrFormula]] } }
 
     sig {
       params(
-        packages:    T.any(Cask::Cask, Formula, T::Array[T.any(Cask::Cask, Formula)]),
+        packages:    T.any(CaskOrFormula, T::Array[CaskOrFormula]),
         accumulator: TopologicalHash,
       ).returns(TopologicalHash)
     }
@@ -20,14 +27,15 @@ module Utils
       packages.each do |cask_or_formula|
         next if accumulator.key?(cask_or_formula)
 
-        if cask_or_formula.is_a?(Cask::Cask)
+        case cask_or_formula
+        when Cask::Cask
           formula_deps = cask_or_formula.depends_on
                                         .formula
                                         .map { |f| Formula[f] }
           cask_deps = cask_or_formula.depends_on
                                      .cask
                                      .map { |c| Cask::CaskLoader.load(c, config: nil) }
-        else
+        when Formula
           formula_deps = cask_or_formula.deps
                                         .reject(&:build?)
                                         .reject(&:test?)
@@ -35,6 +43,8 @@ module Utils
           cask_deps = cask_or_formula.requirements
                                      .filter_map(&:cask)
                                      .map { |c| Cask::CaskLoader.load(c, config: nil) }
+        else
+          T.absurd(cask_or_formula)
         end
 
         accumulator[cask_or_formula] = formula_deps + cask_deps
@@ -48,10 +58,12 @@ module Utils
 
     private
 
+    sig { params(block: T.proc.params(arg0: K).void).void }
     def tsort_each_node(&block)
       each_key(&block)
     end
 
+    sig { params(node: K, block: T.proc.params(arg0: CaskOrFormula).void).returns(V) }
     def tsort_each_child(node, &block)
       fetch(node).each(&block)
     end

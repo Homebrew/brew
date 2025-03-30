@@ -101,7 +101,7 @@ If you don't follow those directions, Homebrew will not work.
 You need to update your shell's config file (which file exactly depends on your shell, for example `~/.bashrc` or `~/.zshrc`) to include this:
 
 ```sh
-eval "<Homebrew prefix path>/bin/brew shellenv)"
+eval "$(<Homebrew prefix path>/bin/brew shellenv)"
 ```
 
 Replace `<Homebrew prefix path>` with the directory where Homebrew is installed on your system.

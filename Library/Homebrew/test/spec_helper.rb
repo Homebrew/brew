@@ -171,6 +171,14 @@ RSpec.configure do |config|
     skip "Requires homebrew/core to be tapped." unless Dir.exist?(core_tap_path)
   end
 
+  config.before(:each, :needs_systemd) do
+    skip "No SystemD found." unless which("systemctl")
+  end
+
+  config.before(:each, :needs_daemon_manager) do
+    skip "No LaunchCTL or SystemD found." if !which("systemctl") && !which("launchctl")
+  end
+
   config.before do |example|
     next if example.metadata.key?(:needs_network)
     next if example.metadata.key?(:needs_utils_curl)
@@ -284,9 +292,8 @@ RSpec.configure do |config|
         HOMEBREW_PREFIX/"Frameworks",
         HOMEBREW_LIBRARY/"Taps/homebrew/homebrew-cask",
         HOMEBREW_LIBRARY/"Taps/homebrew/homebrew-bar",
-        HOMEBREW_LIBRARY/"Taps/homebrew/homebrew-bundle",
         HOMEBREW_LIBRARY/"Taps/homebrew/homebrew-foo",
-        HOMEBREW_LIBRARY/"Taps/homebrew/homebrew-services",
+        HOMEBREW_LIBRARY/"Taps/homebrew/homebrew-test-bot",
         HOMEBREW_LIBRARY/"Taps/homebrew/homebrew-shallow",
         HOMEBREW_LIBRARY/"PinnedTaps",
         HOMEBREW_REPOSITORY/".git",

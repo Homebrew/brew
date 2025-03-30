@@ -204,8 +204,6 @@ module Homebrew
             ref = cask.loaded_from_api? ? cask.full_name : cask.sourcefile_path
 
             os_arch_combinations.each do |os, arch|
-              next if os == :linux
-
               SimulateSystem.with(os:, arch:) do
                 cask = Cask::CaskLoader.load(ref)
 

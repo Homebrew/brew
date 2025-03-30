@@ -17,7 +17,12 @@ RSpec.describe Homebrew::DevCmd::Create do
   end
 
   it "generates valid cask tokens" do
-    t = Cask::Utils.token_from("A Foo@Bar_Baz++!")
-    expect(t).to eq("a-foo-at-bar-baz-plus-plus")
+    t = Cask::Utils.token_from("A FooBar_Baz++!")
+    expect(t).to eq("a-foobar-baz-plus-plus")
+  end
+
+  it "retains @ in cask tokens" do
+    t = Cask::Utils.token_from("test@preview")
+    expect(t).to eq("test@preview")
   end
 end

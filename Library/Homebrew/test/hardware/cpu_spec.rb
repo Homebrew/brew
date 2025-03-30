@@ -26,7 +26,7 @@ RSpec.describe Hardware::CPU do
         :amd_k8,
         :amd_k8_k10_hybrid,
         :amd_k10,
-        :amd_k12,
+        :amd_k10_llano,
         :arm,
         :arm_blizzard_avalanche,
         :arm_brava,

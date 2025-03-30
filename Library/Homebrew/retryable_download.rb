@@ -9,7 +9,7 @@ module Homebrew
     attr_reader :downloadable
     private :downloadable
 
-    sig { override.returns(T.nilable(URL)) }
+    sig { override.returns(T.any(NilClass, String, URL)) }
     def url = downloadable.url
 
     sig { override.returns(T.nilable(Checksum)) }

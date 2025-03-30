@@ -285,7 +285,7 @@ module PyPI
       url = if stable.specs[:tag].present?
         "git+#{stable.url}@#{stable.specs[:tag]}"
       else
-        stable.url
+        T.must(stable.url)
       end
       Package.new(url, is_url: true, python_name:)
     end

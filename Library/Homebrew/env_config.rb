@@ -48,6 +48,11 @@ module Homebrew
                      "trying any other/default URLs.",
         boolean:     true,
       },
+      HOMEBREW_ASK:                              {
+        description: "If set, pass `--ask`to all formulae `brew install`, `brew upgrade` and `brew reinstall` " \
+                     "commands.",
+        boolean:     true,
+      },
       HOMEBREW_AUTO_UPDATE_SECS:                 {
         description:  "Run `brew update` once every `$HOMEBREW_AUTO_UPDATE_SECS` seconds before some commands, " \
                       "e.g. `brew install`, `brew upgrade` and `brew tap`. Alternatively, " \
@@ -189,6 +194,10 @@ module Homebrew
                       "and directories. Visual Studio Code can handle this correctly in project mode, but many " \
                       "editors will do strange things in this case.",
         default_text: "`$EDITOR` or `$VISUAL`.",
+      },
+      HOMEBREW_ENV_SYNC_STRICT:                  {
+        description: "If set, `brew *env-sync` will only sync the exact installed versions of formulae.",
+        boolean:     true,
       },
       HOMEBREW_EVAL_ALL:                         {
         description: "If set, `brew` commands evaluate all formulae and casks, executing their arbitrary code, by " \

@@ -5,6 +5,7 @@ require "utils/shebang"
 
 RSpec.describe Language::Node::Shebang do
   let(:file) { Tempfile.new("node-shebang") }
+  let(:broken_file) { Tempfile.new("node-shebang") }
   let(:f) do
     f = {}
 
@@ -40,9 +41,16 @@ RSpec.describe Language::Node::Shebang do
       c
     EOS
     file.flush
+    broken_file.write <<~EOS
+      #!node
+      a
+      b
+      c
+    EOS
+    broken_file.flush
   end
 
-  after { file.unlink }
+  after { [file, broken_file].each(&:unlink) }
 
   describe "#detected_node_shebang" do
     it "can be used to replace Node shebangs" do
@@ -50,6 +58,18 @@ RSpec.describe Language::Node::Shebang do
       Utils::Shebang.rewrite_shebang described_class.detected_node_shebang(f[:versioned_node_dep]), file.path
 
       expect(File.read(file)).to eq <<~EOS
+        #!#{HOMEBREW_PREFIX/"opt/node@18/bin/node"}
+        a
+        b
+        c
+      EOS
+    end
+
+    it "can fix broken shebang like `#!node`" do
+      allow(Formulary).to receive(:factory).with(f[:node18].name).and_return(f[:node18])
+      Utils::Shebang.rewrite_shebang described_class.detected_node_shebang(f[:versioned_node_dep]), broken_file.path
+
+      expect(File.read(broken_file)).to eq <<~EOS
         #!#{HOMEBREW_PREFIX/"opt/node@18/bin/node"}
         a
         b

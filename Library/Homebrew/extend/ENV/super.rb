@@ -120,6 +120,7 @@ module Superenv
     # o - Pass `-oso_prefix` to `ld` whenever it is invoked
     # c - Pass `-ld_classic` to `ld` whenever it is invoked
     #     with `-dead_strip_dylibs`
+    # b - Pass `-mbranch-protection=standard` to the compiler
     #
     # These flags will also be present:
     # a - apply fix for apr-1-config path

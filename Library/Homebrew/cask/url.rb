@@ -1,4 +1,4 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
 
 require "source_location"
@@ -7,9 +7,25 @@ require "utils/curl"
 module Cask
   # Class corresponding to the `url` stanza.
   class URL < SimpleDelegator
+    BlockReturn = T.type_alias do
+      T.any(URI::Generic, String, [T.any(URI::Generic, String), T::Hash[Symbol, T.untyped]])
+    end
+
     class DSL
-      attr_reader :uri, :tag, :branch, :revisions, :revision,
-                  :trust_cert, :cookies, :header, :data, :only_path
+      sig { returns(T.any(URI::Generic, String)) }
+      attr_reader :uri
+
+      sig { returns(T.nilable(T::Array[String])) }
+      attr_reader :revisions
+
+      sig { returns(T.nilable(T::Boolean)) }
+      attr_reader :trust_cert
+
+      sig { returns(T.nilable(T::Hash[String, String])) }
+      attr_reader :cookies, :data
+
+      sig { returns(T.nilable(T.any(String, T::Array[String]))) }
+      attr_reader :header
 
       sig { returns(T.nilable(T.any(URI::Generic, String))) }
       attr_reader :referer
@@ -20,11 +36,11 @@ module Cask
       sig { returns(T.nilable(T.any(Symbol, String))) }
       attr_reader :user_agent
 
-      sig { returns(T.any(T::Class[T.anything], Symbol, NilClass)) }
+      sig { returns(T.any(T::Class[AbstractDownloadStrategy], Symbol, NilClass)) }
       attr_reader :using
 
       sig { returns(T.nilable(String)) }
-      attr_reader :verified
+      attr_reader :tag, :branch, :revision, :only_path, :verified
 
       extend Forwardable
       def_delegators :uri, :path, :scheme, :to_s
@@ -35,7 +51,7 @@ module Cask
           # @api public
           verified:   T.nilable(String),
           # @api public
-          using:      T.any(Class, Symbol, NilClass),
+          using:      T.any(T::Class[AbstractDownloadStrategy], Symbol, NilClass),
           # @api public
           tag:        T.nilable(String),
           # @api public
@@ -59,41 +75,29 @@ module Cask
         ).void
       }
       def initialize(
-        uri,
-        verified: nil,
-        using: nil,
-        tag: nil,
-        branch: nil,
-        revisions: nil,
-        revision: nil,
-        trust_cert: nil,
-        cookies: nil,
-        referer: nil,
-        header: nil,
-        user_agent: nil,
-        data: nil,
-        only_path: nil
+        uri, verified: nil, using: nil, tag: nil, branch: nil, revisions: nil, revision: nil, trust_cert: nil,
+        cookies: nil, referer: nil, header: nil, user_agent: nil, data: nil, only_path: nil
       )
-        @uri = URI(uri)
+        @uri = T.let(URI(uri), T.any(URI::Generic, String))
 
         header = Array(header) unless header.nil?
 
         specs = {}
-        specs[:verified]   = @verified   = verified
-        specs[:using]      = @using      = using
-        specs[:tag]        = @tag        = tag
-        specs[:branch]     = @branch     = branch
-        specs[:revisions]  = @revisions  = revisions
-        specs[:revision]   = @revision   = revision
-        specs[:trust_cert] = @trust_cert = trust_cert
-        specs[:cookies]    = @cookies    = cookies
-        specs[:referer]    = @referer    = referer
-        specs[:headers]    = @header     = header
-        specs[:user_agent] = @user_agent = user_agent || :default
-        specs[:data]       = @data       = data
-        specs[:only_path]  = @only_path  = only_path
+        specs[:verified]   = @verified   = T.let(verified, T.nilable(String))
+        specs[:using]      = @using      = T.let(using, T.any(T::Class[AbstractDownloadStrategy], Symbol, NilClass))
+        specs[:tag]        = @tag        = T.let(tag, T.nilable(String))
+        specs[:branch]     = @branch     = T.let(branch, T.nilable(String))
+        specs[:revisions]  = @revisions  = T.let(revisions, T.nilable(T::Array[String]))
+        specs[:revision]   = @revision   = T.let(revision, T.nilable(String))
+        specs[:trust_cert] = @trust_cert = T.let(trust_cert, T.nilable(T::Boolean))
+        specs[:cookies]    = @cookies    = T.let(cookies, T.nilable(T::Hash[String, String]))
+        specs[:referer]    = @referer    = T.let(referer, T.nilable(T.any(URI::Generic, String)))
+        specs[:headers]    = @header     = T.let(header, T.nilable(T.any(String, T::Array[String])))
+        specs[:user_agent] = @user_agent = T.let(user_agent || :default, T.nilable(T.any(Symbol, String)))
+        specs[:data]       = @data       = T.let(data, T.nilable(T::Hash[String, String]))
+        specs[:only_path]  = @only_path  = T.let(only_path, T.nilable(String))
 
-        @specs = specs.compact
+        @specs = T.let(specs.compact, T::Hash[Symbol, T.untyped])
       end
     end
 
@@ -115,9 +119,10 @@ module Cask
         sig { returns(URI::Generic) }
         attr_accessor :url
 
+        sig { params(str: String, url: URI::Generic).void }
         def initialize(str, url)
           super(str)
-          @url = url
+          @url = T.let(url, URI::Generic)
         end
       end
 
@@ -125,19 +130,18 @@ module Cask
         params(
           uri:   T.nilable(T.any(URI::Generic, String)),
           dsl:   ::Cask::DSL,
-          block: T.proc.params(arg0: T.all(String, PageWithURL))
-                       .returns(T.any(T.any(URI::Generic, String), [T.any(URI::Generic, String), Hash])),
+          block: T.proc.params(arg0: T.all(String, PageWithURL)).returns(BlockReturn),
         ).void
       }
       def initialize(uri, dsl:, &block)
-        @uri = uri
-        @dsl = dsl
-        @block = block
+        @uri = T.let(uri, T.nilable(T.any(URI::Generic, String)))
+        @dsl = T.let(dsl, ::Cask::DSL)
+        @block = T.let(block, T.proc.params(arg0: T.all(String, PageWithURL)).returns(BlockReturn))
 
         odeprecated "cask `url do` blocks" if @block
       end
 
-      sig { returns(T.any(T.any(URI::Generic, String), [T.any(URI::Generic, String), Hash])) }
+      sig { returns(BlockReturn) }
       def call
         if @uri
           result = ::Utils::Curl.curl_output("--fail", "--silent", "--location", @uri.to_s)
@@ -158,9 +162,8 @@ module Cask
       sig {
         params(
           uri:   T.any(URI::Generic, String),
-          block: T.proc.params(arg0: T.all(String, PageWithURL))
-                       .returns(T.any(T.any(URI::Generic, String), [T.any(URI::Generic, String), Hash])),
-        ).returns(T.any(T.any(URI::Generic, String), [T.any(URI::Generic, String), Hash]))
+          block: T.proc.params(arg0: T.all(String, PageWithURL)).returns(BlockReturn),
+        ).returns(BlockReturn)
       }
       def url(uri, &block)
         self.class.new(uri, dsl: @dsl, &block).call
@@ -169,6 +172,10 @@ module Cask
       # This allows calling DSL methods from inside a `url` block.
       #
       # @api public
+      sig {
+        override.params(method: Symbol, args: T.untyped, block: T.nilable(T.proc.returns(T.untyped)))
+                .returns(T.anything)
+      }
       def method_missing(method, *args, &block)
         if @dsl.respond_to?(method)
           @dsl.public_send(method, *args, &block)
@@ -177,8 +184,9 @@ module Cask
         end
       end
 
-      def respond_to_missing?(method, include_all)
-        @dsl.respond_to?(method, include_all) || super
+      sig { override.params(method_name: T.any(Symbol, String), include_private: T::Boolean).returns(T::Boolean) }
+      def respond_to_missing?(method_name, include_private = false)
+        @dsl.respond_to?(method_name, include_private) || super
       end
     end
 
@@ -186,7 +194,7 @@ module Cask
       params(
         uri:             T.nilable(T.any(URI::Generic, String)),
         verified:        T.nilable(String),
-        using:           T.any(Class, Symbol, NilClass),
+        using:           T.any(T::Class[AbstractDownloadStrategy], Symbol, NilClass),
         tag:             T.nilable(String),
         branch:          T.nilable(String),
         revisions:       T.nilable(T::Array[String]),
@@ -200,30 +208,13 @@ module Cask
         only_path:       T.nilable(String),
         caller_location: Thread::Backtrace::Location,
         dsl:             T.nilable(::Cask::DSL),
-        block:           T.nilable(
-          T.proc.params(arg0: T.all(String, BlockDSL::PageWithURL))
-                .returns(T.any(T.any(URI::Generic, String), [T.any(URI::Generic, String), Hash])),
-        ),
+        block:           T.nilable(T.proc.params(arg0: T.all(String, BlockDSL::PageWithURL)).returns(BlockReturn)),
       ).void
     }
     def initialize(
-      uri = nil,
-      verified: nil,
-      using: nil,
-      tag: nil,
-      branch: nil,
-      revisions: nil,
-      revision: nil,
-      trust_cert: nil,
-      cookies: nil,
-      referer: nil,
-      header: nil,
-      user_agent: nil,
-      data: nil,
-      only_path: nil,
-      caller_location: T.must(caller_locations).fetch(0),
-      dsl: nil,
-      &block
+      uri = nil, verified: nil, using: nil, tag: nil, branch: nil, revisions: nil, revision: nil, trust_cert: nil,
+      cookies: nil, referer: nil, header: nil, user_agent: nil, data: nil, only_path: nil,
+      caller_location: caller_locations.fetch(0), dsl: nil, &block
     )
       super(
         if block
@@ -233,27 +224,13 @@ module Cask
             DSL.new(uri2, **options)
           end
         else
-          DSL.new(
-            T.must(uri),
-            verified:,
-            using:,
-            tag:,
-            branch:,
-            revisions:,
-            revision:,
-            trust_cert:,
-            cookies:,
-            referer:,
-            header:,
-            user_agent:,
-            data:,
-            only_path:,
-          )
+          DSL.new(T.must(uri), verified:, using:, tag:, branch:, revisions:, revision:, trust_cert:, cookies:,
+          referer:, header:, user_agent:, data:, only_path:)
         end
       )
 
-      @from_block = !block.nil?
-      @caller_location = caller_location
+      @from_block = T.let(!block.nil?, T::Boolean)
+      @caller_location = T.let(caller_location, Thread::Backtrace::Location)
     end
 
     sig { returns(Homebrew::SourceLocation) }
@@ -284,10 +261,10 @@ module Cask
     def raw_url_line
       return @raw_url_line if defined?(@raw_url_line)
 
-      @raw_url_line = Pathname(T.must(@caller_location.path))
+      @raw_url_line = T.let(Pathname(T.must(@caller_location.path))
                       .each_line
                       .drop(@caller_location.lineno - 1)
-                      .first
+                      .first, T.nilable(String))
     end
   end
 end

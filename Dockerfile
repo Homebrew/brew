@@ -20,7 +20,7 @@ RUN touch /var/mail/ubuntu && chown ubuntu /var/mail/ubuntu && userdel -r ubuntu
 # shellcheck disable=SC1091,SC2154,SC2292
 RUN apt-get update \
   && apt-get install -y --no-install-recommends software-properties-common gnupg-agent \
-  && add-apt-repository -y ppa:git-core/ppa \
+  && if [ "$(uname -m)" != aarch64 ]; then add-apt-repository -y ppa:git-core/ppa; fi \
   && apt-get update \
   && apt-get install -y --no-install-recommends \
   acl \

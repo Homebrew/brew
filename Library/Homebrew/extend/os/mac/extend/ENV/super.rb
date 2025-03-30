@@ -156,9 +156,9 @@ module Superenv
 
     # Pass `-ld_classic` whenever the linker is invoked with `-dead_strip_dylibs`
     # on `ld` versions that don't properly handle that option.
-    if OS::Mac::DevelopmentTools.ld64_version >= "1015.7" && OS::Mac::DevelopmentTools.ld64_version <= "1022.1"
-      append_to_cccfg "c"
-    end
+    return unless OS::Mac::DevelopmentTools.ld64_version.between?("1015.7", "1022.1")
+
+    append_to_cccfg "c"
   end
 
   def no_weak_imports

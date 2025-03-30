@@ -246,7 +246,7 @@ check-run-command-as-root() {
   [[ -f /run/.containerenv ]] && return
   [[ -f /proc/1/cgroup ]] && grep -E "azpl_job|actions_job|docker|garden|kubepods" -q /proc/1/cgroup && return
 
-  # Homebrew Services may need `sudo` for system-wide daemons.
+  # `brew services` may need `sudo` for system-wide daemons.
   [[ "${HOMEBREW_COMMAND}" == "services" ]] && return
 
   # It's fine to run this as root as it's not changing anything.
@@ -383,6 +383,22 @@ auto-update() {
   unset HOMEBREW_AUTO_UPDATE_CORE_TAP
   unset HOMEBREW_AUTO_UPDATE_CASK_TAP
 }
+
+# Only `brew update-if-needed` should be handled here.
+# We want it as fast as possible but it needs auto-update() defined above.
+# HOMEBREW_LIBRARY set by bin/brew
+# shellcheck disable=SC2154
+# doesn't need a default case as other arguments handled elsewhere.
+# shellcheck disable=SC2249
+# Don't need to pass through any arguments.
+# shellcheck disable=SC2119
+case "$@" in
+  update-if-needed)
+    source "${HOMEBREW_LIBRARY}/Homebrew/cmd/update-if-needed.sh"
+    homebrew-update-if-needed
+    exit 0
+    ;;
+esac
 
 #####
 ##### Setup output so e.g. odie looks as nice as possible.

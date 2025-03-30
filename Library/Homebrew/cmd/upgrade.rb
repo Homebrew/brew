@@ -71,6 +71,11 @@ module Homebrew
           [:switch, "--overwrite", {
             description: "Delete files that already exist in the prefix while linking.",
           }],
+          [:switch, "--ask", {
+            description: "Ask for confirmation before downloading and upgrading formulae. " \
+                         "Print bottles and dependencies download size, install and net install size.",
+            env:         :ask,
+          }],
         ].each do |args|
           options = args.pop
           send(*args, **options)
@@ -211,10 +216,13 @@ module Homebrew
               "#{f.full_specified_name} #{f.pkg_version}"
             end
           end
-          puts formulae_upgrades.join("\n")
+          puts formulae_upgrades.join("\n") unless args.ask?
         end
 
         Install.perform_preinstall_checks_once
+
+        # Main block: if asking the user is enabled, show dependency and size information.
+        Install.ask(formulae_to_install, args: args) if args.ask?
 
         Upgrade.upgrade_formulae(
           formulae_to_install,

@@ -5,22 +5,34 @@ module OS
   module Linux
     module Cask
       module Installer
-        private
-
         extend T::Helpers
 
         requires_ancestor { ::Cask::Installer }
 
+        LINUX_INVALID_ARTIFACTS = [
+          ::Cask::Artifact::App,
+          ::Cask::Artifact::AudioUnitPlugin,
+          ::Cask::Artifact::Colorpicker,
+          ::Cask::Artifact::Dictionary,
+          ::Cask::Artifact::InputMethod,
+          ::Cask::Artifact::Installer,
+          ::Cask::Artifact::InternetPlugin,
+          ::Cask::Artifact::KeyboardLayout,
+          ::Cask::Artifact::Mdimporter,
+          ::Cask::Artifact::Pkg,
+          ::Cask::Artifact::Prefpane,
+          ::Cask::Artifact::Qlplugin,
+          ::Cask::Artifact::ScreenSaver,
+          ::Cask::Artifact::Service,
+          ::Cask::Artifact::Suite,
+          ::Cask::Artifact::VstPlugin,
+          ::Cask::Artifact::Vst3Plugin,
+        ].freeze
+
         sig { void }
         def check_stanza_os_requirements
-          return if artifacts.all?(::Cask::Artifact::Font)
-
-          install_artifacts = artifacts.reject { |artifact| artifact.instance_of?(::Cask::Artifact::Zap) }
-          return if install_artifacts.all? do |artifact|
-            artifact.is_a?(::Cask::Artifact::Binary) ||
-            artifact.is_a?(::Cask::Artifact::ShellCompletion) ||
-            artifact.is_a?(::Cask::Artifact::Artifact) ||
-            artifact.is_a?(::Cask::Artifact::Manpage)
+          return unless artifacts.any? do |artifact|
+            LINUX_INVALID_ARTIFACTS.include?(artifact.class)
           end
 
           raise ::Cask::CaskError, "macOS is required for this software."

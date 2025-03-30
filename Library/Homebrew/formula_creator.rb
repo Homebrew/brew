@@ -82,12 +82,22 @@ module Homebrew
           r = Resource.new
           r.url(@url)
           r.owner = self
-          @sha256 = r.fetch.sha256 if r.download_strategy == CurlDownloadStrategy
+          filepath = r.fetch
+          html_doctype_prefix = "<!doctype html"
+          if File.read(filepath, html_doctype_prefix.length).downcase.start_with?(html_doctype_prefix)
+            raise "Downloaded URL is not archive"
+          end
+
+          @sha256 = filepath.sha256
         end
 
         if @github
           @desc = @github["description"]
-          @homepage = @github["homepage"]
+          @homepage = if @github["homepage"].empty?
+            "https://github.com/#{@github["full_name"]}"
+          else
+            @github["homepage"]
+          end
           @license = @github["license"]["spdx_id"] if @github["license"]
         end
       end

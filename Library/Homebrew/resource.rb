@@ -186,6 +186,7 @@ class Resource
     @checksum = Checksum.new(val)
   end
 
+  sig { override.params(val: T.nilable(String), specs: T.anything).returns(T.nilable(String)) }
   def url(val = nil, **specs)
     return @url&.to_s if val.nil?
 
@@ -198,6 +199,7 @@ class Resource
     @url = URL.new(val, specs)
     @downloader = nil
     @download_strategy = @url.download_strategy
+    @url.to_s
   end
 
   sig { override.params(val: T.nilable(T.any(String, Version))).returns(T.nilable(Version)) }
@@ -239,6 +241,7 @@ class Resource
 
   def determine_url_mirrors
     extra_urls = []
+    url = T.must(self.url)
 
     # glibc-bootstrap
     if url.start_with?("https://github.com/Homebrew/glibc-bootstrap/releases/download")

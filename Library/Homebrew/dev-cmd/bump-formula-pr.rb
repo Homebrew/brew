@@ -156,7 +156,7 @@ module Homebrew
         new_hash = args.sha256
         new_tag = args.tag
         new_revision = args.revision
-        old_url = formula_spec.url
+        old_url = T.must(formula_spec.url)
         old_tag = formula_spec.specs[:tag]
         old_formula_version = formula_version(formula)
         old_version = old_formula_version.to_s
@@ -234,7 +234,7 @@ module Homebrew
         replacement_pairs += if new_url_hash.present?
           [
             [
-              /#{Regexp.escape(formula_spec.url)}/,
+              /#{Regexp.escape(T.must(formula_spec.url))}/,
               new_url,
             ],
             [
@@ -256,7 +256,7 @@ module Homebrew
         elsif new_url.present?
           [
             [
-              /#{Regexp.escape(formula_spec.url)}/,
+              /#{Regexp.escape(T.must(formula_spec.url))}/,
               new_url,
             ],
             [

@@ -26,9 +26,11 @@ module Homebrew
         switch "--upload",
                description: "Upload built bottles."
         switch "--linux",
-               description: "Dispatch bottle for Linux (using GitHub runners)."
+               description: "Dispatch bottle for Linux x86_64 (using GitHub runners)."
+        switch "--linux-arm64",
+               description: "Dispatch bottle for Linux arm64 (using GitHub runners)."
         switch "--linux-self-hosted",
-               description: "Dispatch bottle for Linux (using self-hosted runner)."
+               description: "Dispatch bottle for Linux x86_64 (using self-hosted runner)."
         switch "--linux-wheezy",
                description: "Use Debian Wheezy container for building the bottle on Linux."
 
@@ -70,7 +72,11 @@ module Homebrew
           runners << "linux-self-hosted-1"
         end
 
-        raise UsageError, "Must specify `--macos`, `--linux` or `--linux-self-hosted` option." if runners.empty?
+        runners << "ubuntu-22.04-arm" if args.linux_arm64?
+
+        if runners.empty?
+          raise UsageError, "Must specify `--macos`, `--linux`, `--linux-arm64`, or `--linux-self-hosted` option."
+        end
 
         args.named.to_resolved_formulae.each do |formula|
           # Required inputs

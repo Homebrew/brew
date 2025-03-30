@@ -174,7 +174,7 @@ module Homebrew
       sig {
         params(
           post_form: T.nilable(T::Hash[Symbol, String]),
-          post_json: T.nilable(T::Hash[Symbol, String]),
+          post_json: T.nilable(T::Hash[Symbol, T.anything]),
         ).returns(T::Array[String])
       }
       def self.post_args(post_form: nil, post_json: nil)

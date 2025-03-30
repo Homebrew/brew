@@ -378,7 +378,7 @@ module Cask
         "outdated"                => outdated?,
         "sha256"                  => sha256,
         "artifacts"               => artifacts_list,
-        "caveats"                 => (caveats unless caveats.empty?),
+        "caveats"                 => (Tty.strip_ansi(caveats) unless caveats.empty?),
         "depends_on"              => depends_on,
         "conflicts_with"          => conflicts_with,
         "container"               => container&.pairs,
@@ -411,10 +411,12 @@ module Cask
 
       if @dsl.on_system_blocks_exist?
         begin
-          MacOSVersion::SYMBOLS.keys.product(OnSystem::ARCH_OPTIONS).each do |os, arch|
+          OnSystem::ALL_OS_ARCH_COMBINATIONS.each do |os, arch|
             bottle_tag = ::Utils::Bottles::Tag.new(system: os, arch:)
             next unless bottle_tag.valid_combination?
-            next if depends_on.macos &&
+            next if bottle_tag.linux? && @dsl.os.nil?
+            next if bottle_tag.macos? &&
+                    depends_on.macos &&
                     !@dsl.depends_on_set_in_block? &&
                     !depends_on.macos.allows?(bottle_tag.to_macos_version)
 

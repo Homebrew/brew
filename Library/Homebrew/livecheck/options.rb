@@ -16,7 +16,7 @@ module Homebrew
       prop :post_form, T.nilable(T::Hash[Symbol, String])
 
       # JSON data to use when making a `POST` request.
-      prop :post_json, T.nilable(T::Hash[Symbol, String])
+      prop :post_json, T.nilable(T::Hash[Symbol, T.anything])
 
       # Returns a `Hash` of options that are provided as arguments to `url`.
       sig { returns(T::Hash[Symbol, T.untyped]) }

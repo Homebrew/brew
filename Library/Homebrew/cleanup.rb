@@ -10,7 +10,8 @@ module Homebrew
   # Helper class for cleaning up the Homebrew cache.
   class Cleanup
     CLEANUP_DEFAULT_DAYS = Homebrew::EnvConfig.cleanup_periodic_full_days.to_i.freeze
-    private_constant :CLEANUP_DEFAULT_DAYS
+    GH_ACTIONS_ARTIFACT_CLEANUP_DAYS = 3
+    private_constant :CLEANUP_DEFAULT_DAYS, :GH_ACTIONS_ARTIFACT_CLEANUP_DAYS
 
     class << self
       sig { params(pathname: Pathname).returns(T::Boolean) }
@@ -67,8 +68,6 @@ module Homebrew
       end
 
       private
-
-      GH_ACTIONS_ARTIFACT_CLEANUP_DAYS = 3
 
       sig { params(pathname: Pathname, scrub: T::Boolean).returns(T::Boolean) }
       def stale_gh_actions_artifact?(pathname, scrub)
@@ -151,6 +150,12 @@ module Homebrew
 
           formula_excluded_versions_from_cleanup = excluded_versions_from_cleanup(formula)
           return false if formula_excluded_versions_from_cleanup.include?(version.to_s)
+
+          if pathname.to_s.include?("_bottle_manifest")
+            excluded_version = version.to_s
+            excluded_version.sub!(/-\d+$/, "")
+            return false if formula_excluded_versions_from_cleanup.include?(excluded_version)
+          end
 
           # We can't determine an installed rebuild and parsing manifest version cannot be reliably done.
           return false unless formula.latest_version_installed?
@@ -553,7 +558,7 @@ module Homebrew
       return unless bootsnap.directory?
 
       bootsnap.each_child do |subdir|
-        cleanup_path(subdir) { FileUtils.rm_r(subdir) } if subdir.basename.to_s != Homebrew.bootsnap_key
+        cleanup_path(subdir) { FileUtils.rm_r(subdir) } if subdir.basename.to_s != Homebrew::Bootsnap.key
       end
     end
 

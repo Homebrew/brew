@@ -152,5 +152,21 @@ module Utils
       str.gsub!("\n", "'\n'")
       str
     end
+
+    sig { params(type: String, preferred_path: String, notice: T.nilable(String)).returns(String) }
+    def shell_with_prompt(type, preferred_path:, notice:)
+      preferred = from_path(preferred_path)
+      subshell = case preferred
+      when :zsh
+        "PROMPT='%B%F{green}#{type}%f %F{blue}$%f%b ' RPROMPT='[%B%F{red}%~%f%b]' #{preferred_path} -f"
+      else
+        "PS1=\"\\[\\033[1;32m\\]brew \\[\\033[1;31m\\]\\w \\[\\033[1;34m\\]$\\[\\033[0m\\] \" #{preferred_path}"
+      end
+
+      puts notice if notice.present?
+      $stdout.flush
+
+      subshell
+    end
   end
 end
