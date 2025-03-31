@@ -10,6 +10,11 @@ RSpec.describe Homebrew::Bundle::WhalebrewInstaller do
   end
 
   describe ".installed_images" do
+    before do
+      described_class.reset!
+      Homebrew::Bundle::WhalebrewDumper.reset!
+    end
+
     it "shells out" do
       expect { described_class.installed_images }.not_to raise_error
     end
@@ -55,6 +60,7 @@ RSpec.describe Homebrew::Bundle::WhalebrewInstaller do
   context "when whalebrew is installed" do
     before do
       described_class.reset!
+      Homebrew::Bundle::WhalebrewDumper.reset!
       allow(Homebrew::Bundle).to receive(:whalebrew_installed?).and_return(true)
       allow(Homebrew::Bundle).to receive(:system).with("whalebrew", "install", "whalebrew/wget", verbose: false)
                                                  .and_return(true)

@@ -191,9 +191,16 @@ module Homebrew
       }
       def replace_version_and_checksum(cask, new_hash, new_version, replacement_pairs)
         # When blocks are absent, arch is not relevant. For consistency, we simulate the arm architecture.
-        arch_options = cask.on_system_blocks_exist? ? OnSystem::ARCH_OPTIONS : [:arm]
-        arch_options.each do |arch|
-          SimulateSystem.with(arch:) do
+        system_options = if !cask.on_system_blocks_exist?
+          [[:macos, :arm]]
+        elsif cask.on_system_blocks_exist? && cask.depends_on.macos
+          [:macos].product(OnSystem::ARCH_OPTIONS)
+        else
+          OnSystem::BASE_OS_OPTIONS.product(OnSystem::ARCH_OPTIONS)
+        end
+
+        system_options.each do |os, arch|
+          SimulateSystem.with(os:, arch:) do
             old_cask     = Cask::CaskLoader.load(cask.sourcefile_path)
             old_version  = old_cask.version
             bump_version = new_version.send(arch) || new_version.general

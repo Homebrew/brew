@@ -204,6 +204,7 @@ module Homebrew
         # with a short description of the software they come with.
         allow_list = [
           "libfuse.2.dylib", # MacFuse
+          "libfuse3.*.dylib", # MacFuse
           "libfuse_ino64.2.dylib", # MacFuse
           "libmacfuse_i32.2.dylib", # OSXFuse MacFuse compatibility layer
           "libmacfuse_i64.2.dylib", # OSXFuse MacFuse compatibility layer
@@ -261,6 +262,7 @@ module Homebrew
         # with a short description of the software they come with.
         allow_list = [
           "fuse.pc", # OSXFuse/MacFuse
+          "fuse3.pc", # OSXFuse/MacFuse
           "macfuse.pc", # OSXFuse MacFuse compatibility layer
           "osxfuse.pc", # OSXFuse
           "libntfs-3g.pc", # NTFS-3G
@@ -301,6 +303,7 @@ module Homebrew
         allow_list = [
           "fuse.h", # MacFuse
           "fuse/**/*.h", # MacFuse
+          "fuse3/**/*.h", # MacFuse
           "macfuse/**/*.h", # OSXFuse MacFuse compatibility layer
           "osxfuse/**/*.h", # OSXFuse
           "ntfs/**/*.h", # NTFS-3G
