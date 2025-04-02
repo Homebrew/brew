@@ -77,23 +77,29 @@ module DeprecateDisable
       end
     end
 
-    replacement = if formula_or_cask.deprecated?
-      formula_or_cask.deprecation_replacement
-    elsif formula_or_cask.disabled?
-      formula_or_cask.disable_replacement
-    end
-
-    replacement_type = if formula_or_cask.deprecated?
-      formula_or_cask.deprecation_replacement_type
-    elsif formula_or_cask.disabled?
-      formula_or_cask.disable_replacement_type
+    replacement = if formula_or_cask.disabled?
+      if formula_or_cask.disable_replacement_formula
+        "--formula #{formula_or_cask.disable_replacement_formula}"
+      elsif formula_or_cask.disable_replacement_cask
+        "--cask #{formula_or_cask.disable_replacement_formula}"
+      else
+        formula_or_cask.disable_replacement
+      end
+    elsif formula_or_cask.deprecated?
+      if formula_or_cask.deprecation_replacement_formula
+        "--formula #{formula_or_cask.deprecation_replacement_formula}"
+      elsif formula_or_cask.deprecation_replacement_cask
+        "--cask #{formula_or_cask.deprecation_replacement_formula}"
+      else
+        formula_or_cask.deprecation_replacement
+      end
     end
 
     if replacement.present?
       message << "\n"
       message << <<~EOS
         Replacement:
-          brew install --#{replacement_type} #{replacement}
+          brew install #{replacement}
       EOS
     end
 
