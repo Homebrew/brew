@@ -63,9 +63,9 @@ module Homebrew
 
         exec_editor(*paths)
 
-        is_formula = false
-        is_cask = false
-        is_tap = false
+        is_formula = T.let(false, T::Boolean)
+        is_cask = T.let(false, T::Boolean)
+        is_tap = T.let(false, T::Boolean)
         if paths.any? do |path|
              next if path == "--project"
 
