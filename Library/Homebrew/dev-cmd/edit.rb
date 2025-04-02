@@ -63,16 +63,24 @@ module Homebrew
 
         exec_editor(*paths)
 
+        is_formula = false
+        is_cask = false
+        is_tap = false
         if paths.any? do |path|
              next if path == "--project"
 
+             is_formula = core_formula_path?(path)
+             is_cask = core_cask_path?(path)
+             is_tap = core_formula_tap?(path) || core_cask_tap?(path)
+
              !Homebrew::EnvConfig.no_install_from_api? &&
              !Homebrew::EnvConfig.no_env_hints? &&
-             (core_formula_path?(path) || core_cask_path?(path) || core_formula_tap?(path) || core_cask_tap?(path))
+             (is_formula || is_cask || is_tap)
            end
+          from_source = "--build-from-source" if is_formula
           puts <<~EOS
             To test your local edits, run:
-              HOMEBREW_NO_INSTALL_FROM_API=1 brew install --build-from-source --verbose --debug #{args.named.join(" ")}
+              HOMEBREW_NO_INSTALL_FROM_API=1 brew install #{from_source} --verbose --debug #{args.named.join(" ")}
           EOS
         end
       end
