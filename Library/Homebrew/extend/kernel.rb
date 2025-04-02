@@ -341,8 +341,8 @@ module Kernel
     unless silent
       opoo <<~EOS
         Using #{editor} because no editor was set in the environment.
-        This may change in the future, so we recommend setting EDITOR
-        or HOMEBREW_EDITOR to your preferred text editor.
+                 This may change in the future, so we recommend setting
+                 EDITOR or HOMEBREW_EDITOR to your preferred text editor.
       EOS
     end
 
