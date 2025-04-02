@@ -71,7 +71,7 @@ module Homebrew
              break if Homebrew::EnvConfig.no_env_hints?
 
              is_formula = core_formula_path?(path)
-             (is_formula || core_cask_path?(path) || core_formula_tap?(path) || core_cask_tap?(path))
+             is_formula || core_cask_path?(path) || core_formula_tap?(path) || core_cask_tap?(path)
            end
           from_source = " --build-from-source" if is_formula
           puts <<~EOS
