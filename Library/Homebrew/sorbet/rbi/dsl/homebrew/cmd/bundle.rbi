@@ -24,6 +24,9 @@ class Homebrew::Cmd::Bundle::Args < Homebrew::CLI::Args
   def casks?; end
 
   sig { returns(T::Boolean) }
+  def check?; end
+
+  sig { returns(T::Boolean) }
   def cleanup?; end
 
   sig { returns(T::Boolean) }
