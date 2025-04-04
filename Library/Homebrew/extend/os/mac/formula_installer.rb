@@ -13,6 +13,11 @@ module OS
         !::Homebrew::EnvConfig.developer? && !OS::Mac.version.outdated_release? &&
           (!installed_as_dependency? || !formula.any_version_installed?)
       end
+
+      sig { returns(T::Boolean) }
+      def on_macos?
+        true
+      end
     end
   end
 end

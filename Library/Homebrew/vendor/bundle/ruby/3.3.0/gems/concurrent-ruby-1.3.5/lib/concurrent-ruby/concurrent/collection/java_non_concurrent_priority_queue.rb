@@ -5,7 +5,7 @@ if Concurrent.on_jruby?
 
 
       # @!macro priority_queue
-      # 
+      #
       # @!visibility private
       # @!macro internal_implementation_note
       class JavaNonConcurrentPriorityQueue

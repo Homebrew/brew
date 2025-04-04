@@ -83,7 +83,7 @@ module Plist
               tag('dict', nil, level)
             else
               tag('dict', '', level) do
-                element.sort_by{|k,v| k.to_s }.collect do |k,v| 
+                element.sort_by{|k,v| k.to_s }.collect do |k,v|
                   tag('key', CGI.escapeHTML(k.to_s), level + 1) +
                   build(v, level + 1)
                 end.join
@@ -98,7 +98,7 @@ module Plist
           when String, Symbol, Integer, Float
             tag(element_type(element), CGI.escapeHTML(element.to_s), level)
           when IO, StringIO
-            data = element.tap(&:rewind).read 
+            data = element.tap(&:rewind).read
             data_tag(data, level)
           else
             data = Marshal.dump(element)

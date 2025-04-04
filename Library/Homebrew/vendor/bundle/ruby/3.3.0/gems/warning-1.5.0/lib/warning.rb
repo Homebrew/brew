@@ -87,7 +87,7 @@ module Warning
       @process.freeze
       super
     end
-    
+
     # Ignore any warning messages matching the given regexp, if they
     # start with the given path.
     # The regexp can also be one of the following symbols (or an array including them), which will
@@ -134,7 +134,7 @@ module Warning
         raise TypeError, "first argument to Warning.ignore should be Regexp, Symbol, or Array of Symbols, got #{regexp.inspect}"
       end
 
-      synchronize do 
+      synchronize do
         @ignore << [path, regexp]
       end
       nil
