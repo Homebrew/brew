@@ -52,16 +52,17 @@ module Cask
         raise "Only a single 'depends_on macos' is allowed." if defined?(@macos)
 
         # workaround for https://github.com/sorbet/sorbet/issues/6860
-        first_arg = args.first&.to_s
+        first_arg = args.first
+        first_arg_s = first_arg&.to_s
 
         begin
           @macos = if args.count > 1
             MacOSRequirement.new([args], comparator: "==")
-          elsif MacOSVersion::SYMBOLS.key?(args.first)
+          elsif first_arg.is_a?(Symbol) && MacOSVersion::SYMBOLS.key?(first_arg)
             MacOSRequirement.new([args.first], comparator: "==")
-          elsif (md = /^\s*(?<comparator><|>|[=<>]=)\s*:(?<version>\S+)\s*$/.match(first_arg))
+          elsif (md = /^\s*(?<comparator><|>|[=<>]=)\s*:(?<version>\S+)\s*$/.match(first_arg_s))
             MacOSRequirement.new([T.must(md[:version]).to_sym], comparator: md[:comparator])
-          elsif (md = /^\s*(?<comparator><|>|[=<>]=)\s*(?<version>\S+)\s*$/.match(first_arg))
+          elsif (md = /^\s*(?<comparator><|>|[=<>]=)\s*(?<version>\S+)\s*$/.match(first_arg_s))
             MacOSRequirement.new([md[:version]], comparator: md[:comparator])
           # This is not duplicate of the first case: see `args.first` and a different comparator.
           else # rubocop:disable Lint/DuplicateBranch
