@@ -251,10 +251,65 @@ module Commands
     cmd_parser = Homebrew::CLI::Parser.from_cmd_path(path)
     return if cmd_parser.blank?
 
-    Array(cmd_parser.named_args_type)
+    named_args = Array(cmd_parser.named_args_type)
+    if path.file? && path.extname == ".rb"
+      begin
+        content = path.read
+        if content.include?("include AbstractSubcommandMod")
+          named_args_match = content.match(/named_args\s+%w\[(.*?)\]/m)
+          if named_args_match && named_args_match[1].present?
+            subcommands = named_args_match[1].split(/\s+/).uniq
+            named_args.concat(subcommands)
+            named_args.uniq!
+          end
+        end
+      rescue => e
+        raise "Error processing command file #{path}: #{e}"
+      end
+    end
+
+    named_args
   end
 
-  # Returns the conflicts of a given `option` for `command`.
+  def self.subcommand_options(command, subcommand)
+    path = self.path(command)
+    return {} if path.blank?
+
+    return {} unless path.file?
+    return {} if path.extname != ".rb"
+
+    begin
+      content = path.read
+      return {} unless content.include?("include AbstractSubcommandMod")
+
+      pattern = /(?:^|[-_])([a-z])/
+      subcommand_class = subcommand.gsub(pattern) { T.must(::Regexp.last_match(1)).upcase }.gsub(/[-_]/, "")
+      subcommand_class_match = content.match(
+        /class\s+#{subcommand_class}Subcommand\s+<\s+AbstractSubcommand(.*?)end\s+end/m,
+      )
+      return {} unless subcommand_class_match
+
+      subcommand_def = subcommand_class_match[0]
+      cmd_args_match = subcommand_def.match(/cmd_args\s+do(.*?)end/m)
+      return {} unless cmd_args_match
+
+      cmd_args_block = cmd_args_match[1]
+      options = {}
+      flag_matches = cmd_args_block.scan(/flag\s+["']([^"']+)["'],?\s*(?:description:|desc:)\s*["']([^"']+)["']/m)
+      flag_matches.each do |flag, desc|
+        options[flag] = desc
+      end
+      switch_matches = cmd_args_block.scan(/switch\s+["']([^"']+)["'],?\s*(?:description:|desc:)\s*["']([^"']+)["']/m)
+      switch_matches.each do |switch, desc|
+        options[switch] = desc
+      end
+
+      options
+    rescue
+      {}
+    end
+  end
+
   def self.option_conflicts(command, option)
     path = self.path(command)
     return if path.blank?

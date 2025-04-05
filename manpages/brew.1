@@ -197,6 +197,114 @@ Temporarily start services while running the \fBexec\fP or \fBsh\fP command\.
 .TP
 \fB\-\-zap\fP
 \fBcleanup\fP casks using the \fBzap\fP command instead of \fBuninstall\fP\&\.
+.SS "Subcommands"
+\fB\fBinstall\fP\fP \fISubcommand options:\fP
+.TP
+\fB\-\-file=\fP
+Read from the \fBBrewfile\fP from this location\.
+.TP
+\fB\-\-global\fP
+Read from the global Brewfile\.
+.TP
+\fB\-\-verbose\fP
+Print output from commands as they are run\.
+.TP
+\fB\-\-no\-upgrade\fP
+Don
+.P
+\fB\fBdump\fP\fP \fISubcommand options:\fP
+.TP
+\fB\-\-file=\fP
+Write to the \fBBrewfile\fP at this location\.
+.TP
+\fB\-\-global\fP
+Write to the global Brewfile\.
+.TP
+\fB\-\-force\fP
+Overwrite an existing \fBBrewfile\fP\&\.
+.TP
+\fB\-\-describe\fP
+Add a description comment above each line\.
+.TP
+\fB\-\-no\-restart\fP
+Don
+.P
+\fB\fBcleanup\fP\fP \fISubcommand options:\fP
+.TP
+\fB\-\-file=\fP
+Read from the \fBBrewfile\fP from this location\.
+.TP
+\fB\-\-global\fP
+Read from the global Brewfile\.
+.TP
+\fB\-\-force\fP
+Actually perform the cleanup operations\.
+.TP
+\fB\-\-zap\fP
+Use \fBzap\fP command instead of \fBuninstall\fP for casks\.
+.P
+\fB\fBcheck\fP\fP \fISubcommand options:\fP
+.TP
+\fB\-\-file=\fP
+Read from the \fBBrewfile\fP from this location\.
+.TP
+\fB\-\-global\fP
+Read from the global Brewfile\.
+.P
+\fB\fBexec\fP\fP \fISubcommand options:\fP
+.TP
+\fB\-\-file=\fP
+Read from the \fBBrewfile\fP from this location\.
+.TP
+\fB\-\-global\fP
+Read from the global Brewfile\.
+.TP
+\fB\-\-install\fP
+Run \fBinstall\fP before continuing\.
+.TP
+\fB\-\-services\fP
+Temporarily start services\.
+.P
+\fB\fBlist\fP\fP \fISubcommand options:\fP
+.TP
+\fB\-\-file=\fP
+Read from the \fBBrewfile\fP from this location\.
+.TP
+\fB\-\-global\fP
+Read from the global Brewfile\.
+.P
+\fB\fBsh\fP\fP \fISubcommand options:\fP
+.TP
+\fB\-\-file=\fP
+Read from the \fBBrewfile\fP from this location\.
+.TP
+\fB\-\-global\fP
+Read from the global Brewfile\.
+.TP
+\fB\-\-install\fP
+Run \fBinstall\fP before continuing\.
+.TP
+\fB\-\-services\fP
+Temporarily start services\.
+.P
+\fB\fBenv\fP\fP \fISubcommand options:\fP
+.TP
+\fB\-\-file=\fP
+Read from the \fBBrewfile\fP from this location\.
+.TP
+\fB\-\-global\fP
+Read from the global Brewfile\.
+.TP
+\fB\-\-install\fP
+Run \fBinstall\fP before continuing\.
+.P
+\fB\fBedit\fP\fP \fISubcommand options:\fP
+.TP
+\fB\-\-file=\fP
+Edit the \fBBrewfile\fP at this location\.
+.TP
+\fB\-\-global\fP
+Edit the global Brewfile\.
 .SS "\fBcasks\fP"
 List all locally installable casks including short names\.
 .SS "\fBcleanup\fP \fR[\fIoptions\fP] \fR[\fIformula\fP|\fIcask\fP \.\.\.]"
@@ -912,6 +1020,72 @@ Don\[u2019]t wait for \fBstop\fP to finish stopping the service\.
 .TP
 \fB\-\-keep\fP
 When stopped, don\[u2019]t unregister the service from launching at login (or boot)\.
+.SS "Subcommands"
+\fB\fBlist\fP\fP \fISubcommand options:\fP
+.TP
+\fB\-\-json\fP
+Output as JSON\.
+.P
+\fB\fBinfo\fP\fP \fISubcommand options:\fP
+.TP
+\fB\-\-json\fP
+Output as JSON\.
+.TP
+\fB\-\-verbose\fP
+Output more detailed information\.
+.TP
+\fB\-\-all\fP
+Run on all services\.
+.P
+\fB\fBrun\fP\fP \fISubcommand options:\fP
+.TP
+\fB\-\-file=\fP
+Use the service file from this location to \fBstart\fP the service\.
+.TP
+\fB\-\-verbose\fP
+Output more detailed information\.
+.TP
+\fB\-\-all\fP
+Run on all services\.
+.P
+\fB\fBstart\fP\fP \fISubcommand options:\fP
+.TP
+\fB\-\-file=\fP
+Use the service file from this location to \fBstart\fP the service\.
+.TP
+\fB\-\-verbose\fP
+Output more detailed information\.
+.TP
+\fB\-\-all\fP
+Run on all services\.
+.P
+\fB\fBstop\fP\fP \fISubcommand options:\fP
+.TP
+\fB\-\-max\-wait=\fP
+Wait at most this many seconds for \fBstop\fP to finish stopping a service\.
+.TP
+\fB\-\-verbose\fP
+Output more detailed information\.
+.TP
+\fB\-\-all\fP
+Run on all services\.
+.TP
+\fB\-\-keep\fP
+When stopped, don
+.TP
+\fB\-\-no\-wait\fP
+Don
+.P
+\fB\fBrestart\fP\fP \fISubcommand options:\fP
+.TP
+\fB\-\-file=\fP
+Use the service file from this location to \fBstart\fP the service\.
+.TP
+\fB\-\-verbose\fP
+Output more detailed information\.
+.TP
+\fB\-\-all\fP
+Run on all services\.
 .SS "\fBsetup\-ruby\fP \fR[\fIcommand\fP \.\.\.]"
 Installs and configures Homebrew\[u2019]s Ruby\. If \fBcommand\fP is passed, it will only run Bundler if necessary for that command\.
 .SS "\fBshellenv\fP \fR[\fIshell\fP \.\.\.]"

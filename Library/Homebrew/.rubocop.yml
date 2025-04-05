@@ -25,6 +25,7 @@ Style/Documentation:
     - Homebrew
   Include:
     - abstract_command.rb
+    - abstract_subcommand.rb
     - cask/cask.rb
     - cask/dsl.rb
     - cask/dsl/version.rb

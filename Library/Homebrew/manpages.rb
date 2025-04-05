@@ -112,6 +112,64 @@ module Homebrew
 
         generate_option_doc(short, long, desc)
       end
+
+      command_name = cmd_parser.instance_variable_get(:@command_name)
+      return lines unless command_name
+
+      cmd_path = Commands.path(command_name)
+      if cmd_path&.file? && cmd_path.extname == ".rb"
+        begin
+          content = cmd_path.read
+          if content.include?("include AbstractSubcommandMod") && content.include?("< AbstractSubcommand")
+            named_args_match = content.match(/named_args\s+%w\[(.*?)\]/m)
+            if named_args_match && named_args_match[1].present?
+              subcommands = named_args_match[1].split(/\s+/).uniq
+              lines << "\n#### Subcommands\n\n"
+              subcommands.each do |subcommand|
+                subcommand_class = subcommand.gsub(/(?:^|[-_])([a-z])/) do
+                  T.must(::Regexp.last_match(1)).upcase
+                end.gsub(/[-_]/, "")
+
+                subcommand_class_match = content.match(
+                  /class\s+#{subcommand_class}Subcommand\s+<\s+AbstractSubcommand(.*?)end\s+class/m,
+                )
+                next unless subcommand_class_match
+
+                subcommand_def = subcommand_class_match[0]
+                cmd_args_match = subcommand_def.match(/cmd_args\s+do(.*?)end/m)
+                next unless cmd_args_match
+
+                cmd_args_block = cmd_args_match[1]
+                subcommand_lines = ["**`#{subcommand}`**"]
+                flag_matches = cmd_args_block.scan(
+                  /flag\s+["']([^"']+)["'],?\s*(?:description:|desc:)\s*["']([^"']+)["']/m,
+                )
+                switch_matches = cmd_args_block.scan(
+                  /switch\s+["']([^"']+)["'],?\s*(?:description:|desc:)\s*["']([^"']+)["']/m,
+                )
+
+                option_docs = flag_matches.map do |flag, desc|
+                  generate_option_doc(nil, flag, desc)
+                end
+
+                switch_matches.each do |switch, desc|
+                  option_docs << generate_option_doc(nil, switch, desc)
+                end
+
+                if option_docs.any?
+                  subcommand_lines << "\n*Subcommand options:*\n\n"
+                  subcommand_lines.concat(option_docs)
+                end
+
+                lines << subcommand_lines.join
+              end
+            end
+          end
+        rescue => e
+          raise "Error processing command file #{cmd_path}: #{e}"
+        end
+      end
+
       lines
     end
 

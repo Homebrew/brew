@@ -318,6 +318,146 @@ flags which will help with finding keg-only dependencies like `openssl`,
 
 : `cleanup` casks using the `zap` command instead of `uninstall`.
 
+#### Subcommands
+
+**`install`** *Subcommand options:*
+
+`--file=`
+
+: Read from the `Brewfile` from this location.
+
+`--global`
+
+: Read from the global Brewfile.
+
+`--verbose`
+
+: Print output from commands as they are run.
+
+`--no-upgrade`
+
+: Don
+
+**`dump`** *Subcommand options:*
+
+`--file=`
+
+: Write to the `Brewfile` at this location.
+
+`--global`
+
+: Write to the global Brewfile.
+
+`--force`
+
+: Overwrite an existing `Brewfile`.
+
+`--describe`
+
+: Add a description comment above each line.
+
+`--no-restart`
+
+: Don
+
+**`cleanup`** *Subcommand options:*
+
+`--file=`
+
+: Read from the `Brewfile` from this location.
+
+`--global`
+
+: Read from the global Brewfile.
+
+`--force`
+
+: Actually perform the cleanup operations.
+
+`--zap`
+
+: Use `zap` command instead of `uninstall` for casks.
+
+**`check`** *Subcommand options:*
+
+`--file=`
+
+: Read from the `Brewfile` from this location.
+
+`--global`
+
+: Read from the global Brewfile.
+
+**`exec`** *Subcommand options:*
+
+`--file=`
+
+: Read from the `Brewfile` from this location.
+
+`--global`
+
+: Read from the global Brewfile.
+
+`--install`
+
+: Run `install` before continuing.
+
+`--services`
+
+: Temporarily start services.
+
+**`list`** *Subcommand options:*
+
+`--file=`
+
+: Read from the `Brewfile` from this location.
+
+`--global`
+
+: Read from the global Brewfile.
+
+**`sh`** *Subcommand options:*
+
+`--file=`
+
+: Read from the `Brewfile` from this location.
+
+`--global`
+
+: Read from the global Brewfile.
+
+`--install`
+
+: Run `install` before continuing.
+
+`--services`
+
+: Temporarily start services.
+
+**`env`** *Subcommand options:*
+
+`--file=`
+
+: Read from the `Brewfile` from this location.
+
+`--global`
+
+: Read from the global Brewfile.
+
+`--install`
+
+: Run `install` before continuing.
+
+**`edit`** *Subcommand options:*
+
+`--file=`
+
+: Edit the `Brewfile` at this location.
+
+`--global`
+
+: Edit the global Brewfile.
+
 ### `casks`
 
 List all locally installable casks including short names.
@@ -1447,6 +1587,92 @@ If `sudo` is passed, operate on `/Library/LaunchDaemons` or
 `--keep`
 
 : When stopped, don't unregister the service from launching at login (or boot).
+
+#### Subcommands
+
+**`list`** *Subcommand options:*
+
+`--json`
+
+: Output as JSON.
+
+**`info`** *Subcommand options:*
+
+`--json`
+
+: Output as JSON.
+
+`--verbose`
+
+: Output more detailed information.
+
+`--all`
+
+: Run on all services.
+
+**`run`** *Subcommand options:*
+
+`--file=`
+
+: Use the service file from this location to `start` the service.
+
+`--verbose`
+
+: Output more detailed information.
+
+`--all`
+
+: Run on all services.
+
+**`start`** *Subcommand options:*
+
+`--file=`
+
+: Use the service file from this location to `start` the service.
+
+`--verbose`
+
+: Output more detailed information.
+
+`--all`
+
+: Run on all services.
+
+**`stop`** *Subcommand options:*
+
+`--max-wait=`
+
+: Wait at most this many seconds for `stop` to finish stopping a service.
+
+`--verbose`
+
+: Output more detailed information.
+
+`--all`
+
+: Run on all services.
+
+`--keep`
+
+: When stopped, don
+
+`--no-wait`
+
+: Don
+
+**`restart`** *Subcommand options:*
+
+`--file=`
+
+: Use the service file from this location to `start` the service.
+
+`--verbose`
+
+: Output more detailed information.
+
+`--all`
+
+: Run on all services.
 
 ### `setup-ruby` \[*`command`* ...\]
 

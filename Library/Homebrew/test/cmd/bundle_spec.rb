@@ -16,7 +16,7 @@ RSpec.describe Homebrew::Cmd::Bundle do
       FileUtils.touch "#{path}/Brewfile"
       path.cd do
         expect { brew "bundle", "check" }
-          .to output("The Brewfile's dependencies are satisfied.\n").to_stdout
+          .to output("`brew bundle` complete! 0 Brewfile dependencies now installed.\n").to_stdout
           .and not_to_output.to_stderr
           .and be_a_success
       end

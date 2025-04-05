@@ -2,10 +2,14 @@
 # frozen_string_literal: true
 
 require "abstract_command"
+require "abstract_subcommand"
 
 module Homebrew
   module Cmd
     class Bundle < AbstractCommand
+      include AbstractSubcommandMod
+      include SubcommandDispatcher
+
       cmd_args do
         usage_banner <<~EOS
           `bundle` [<subcommand>]
@@ -132,155 +136,598 @@ module Homebrew
         named_args %w[install dump cleanup check exec list sh env edit]
       end
 
+      # Define shared arguments that subcommands can inherit
+      sig { returns(T.nilable(T.proc.void)) }
+      def self.shared_args_block
+        nil
+      end
+
       sig { override.void }
       def run
         # Keep this inside `run` to keep --help fast.
         require "bundle"
 
-        subcommand = args.named.first.presence
-        if %w[exec add remove].exclude?(subcommand) && args.named.size > 1
-          raise UsageError, "This command does not take more than 1 subcommand argument."
+        dispatch_subcommand(args.named.first.presence) || default_subcommand
+      end
+
+      sig { void }
+      def default_subcommand
+        InstallSubcommand.new([]).run
+      end
+
+      class InstallSubcommand < AbstractSubcommand
+        cmd_args do
+          flag "--file=",
+               description: "Read from the `Brewfile` from this location."
+          switch "--global",
+                 description: "Read from the global Brewfile."
+          switch "--verbose",
+                 description: "Print output from commands as they are run."
+          switch "--no-upgrade",
+                 description: "Don't run `brew upgrade` on outdated dependencies."
+          switch "--upgrade",
+                 description: "Run `brew upgrade` on outdated dependencies."
+          switch "--force",
+                 description: "Run with `--force`/`--overwrite`."
+          switch "--cleanup",
+                 description: "Perform cleanup operation after installing."
+          flag "--upgrade-formulae=", "--upgrade-formula=",
+               description: "Run `brew upgrade` on these comma-separated formulae."
+          conflicts "--no-upgrade", "--upgrade"
         end
 
-        global = args.global?
-        file = args.file
-        args.zap?
-        no_upgrade = if args.upgrade? || subcommand == "upgrade"
-          false
-        else
-          args.no_upgrade?
-        end
-        verbose = args.verbose?
-        force = args.force?
-        zap = args.zap?
-        Homebrew::Bundle.upgrade_formulae = args.upgrade_formulae
-
-        no_type_args = !args.brews? && !args.casks? && !args.taps? && !args.mas? && !args.whalebrew? && !args.vscode?
-
-        if args.install?
-          if [nil, "install", "upgrade"].include?(subcommand)
-            raise UsageError, "`--install` cannot be used with `install`, `upgrade` or no subcommand."
-          end
-
+        sig { override.void }
+        def run
           require "bundle/commands/install"
-          redirect_stdout($stderr) do
-            Homebrew::Bundle::Commands::Install.run(global:, file:, no_upgrade:, verbose:, force:, quiet: true)
-          end
-        end
 
-        case subcommand
-        when nil, "install", "upgrade"
-          require "bundle/commands/install"
-          Homebrew::Bundle::Commands::Install.run(global:, file:, no_upgrade:, verbose:, force:, quiet: args.quiet?)
+          args_obj = T.unsafe(args)
+          global_opt = args_obj.respond_to?(:global?) ? args_obj.global? : false
+          file_opt = args_obj.respond_to?(:file) ? args_obj.file : nil
+          no_upgrade_opt = args_obj.respond_to?(:no_upgrade?) && args_obj.no_upgrade? &&
+                           !(args_obj.respond_to?(:upgrade?) && args_obj.upgrade?)
+          verbose_opt = args_obj.respond_to?(:verbose?) ? args_obj.verbose? : false
+          force_opt = args_obj.respond_to?(:force?) ? args_obj.force? : false
+          quiet_opt = args_obj.respond_to?(:quiet?) ? args_obj.quiet? : false
+
+          Homebrew::Bundle::Commands::Install.run(
+            global:     global_opt,
+            file:       file_opt,
+            no_upgrade: no_upgrade_opt,
+            verbose:    verbose_opt,
+            force:      force_opt,
+            quiet:      quiet_opt,
+          )
 
           cleanup = if ENV.fetch("HOMEBREW_BUNDLE_INSTALL_CLEANUP", nil)
-            args.global?
+            global_opt
           else
-            args.cleanup?
+            args_obj.respond_to?(:cleanup?) ? args_obj.cleanup? : false
           end
 
-          if cleanup
-            require "bundle/commands/cleanup"
-            Homebrew::Bundle::Commands::Cleanup.run(
-              global:, file:, zap:,
-              force:  true,
-              dsl:    Homebrew::Bundle::Commands::Install.dsl
-            )
-          end
-        when "dump"
-          vscode = if args.no_vscode?
+          return unless cleanup
+
+          require "bundle/commands/cleanup"
+          Homebrew::Bundle::Commands::Cleanup.run(
+            global: global_opt,
+            file:   file_opt,
+            zap:    false,
+            force:  true,
+            dsl:    Homebrew::Bundle::Commands::Install.dsl,
+          )
+        end
+      end
+
+      class UpgradeSubcommand < AbstractSubcommand
+        cmd_args do
+          flag "--file=",
+               description: "Read from the `Brewfile` from this location."
+          switch "--global",
+                 description: "Read from the global Brewfile."
+          switch "--verbose",
+                 description: "Print output from commands as they are run."
+          switch "--force",
+                 description: "Run with `--force`/`--overwrite`."
+        end
+
+        sig { override.void }
+        def run
+          require "bundle/commands/install"
+
+          args_obj = T.unsafe(args)
+          global_opt = args_obj.respond_to?(:global?) ? args_obj.global? : false
+          file_opt = args_obj.respond_to?(:file) ? args_obj.file : nil
+          verbose_opt = args_obj.respond_to?(:verbose?) ? args_obj.verbose? : false
+          force_opt = args_obj.respond_to?(:force?) ? args_obj.force? : false
+          quiet_opt = args_obj.respond_to?(:quiet?) ? args_obj.quiet? : false
+
+          Homebrew::Bundle::Commands::Install.run(
+            global:     global_opt,
+            file:       file_opt,
+            no_upgrade: false,
+            verbose:    verbose_opt,
+            force:      force_opt,
+            quiet:      quiet_opt,
+          )
+        end
+      end
+
+      class DumpSubcommand < AbstractSubcommand
+        cmd_args do
+          flag "--file=",
+               description: "Write to the `Brewfile` at this location."
+          switch "--global",
+                 description: "Write to the global Brewfile."
+          switch "--force",
+                 description: "Overwrite an existing `Brewfile`."
+          switch "--describe",
+                 description: "Add a description comment above each line."
+          switch "--no-restart",
+                 description: "Don't add `restart_service` to formula lines."
+          switch "--formula", "--brews",
+                 description: "Dump Homebrew formula dependencies."
+          switch "--cask", "--casks",
+                 description: "Dump Homebrew cask dependencies."
+          switch "--tap", "--taps",
+                 description: "Dump Homebrew tap dependencies."
+          switch "--mas",
+                 description: "Dump Mac App Store dependencies."
+          switch "--whalebrew",
+                 description: "Dump Whalebrew dependencies."
+          switch "--vscode",
+                 description: "Dump VSCode extensions."
+          switch "--no-vscode",
+                 description: "Don't dump VSCode extensions."
+          conflicts "--vscode", "--no-vscode"
+        end
+
+        sig { override.void }
+        def run
+          require "bundle/commands/dump"
+
+          args_obj = T.unsafe(args)
+          no_vscode_opt = args_obj.respond_to?(:no_vscode?) ? args_obj.no_vscode? : false
+          vscode_opt = args_obj.respond_to?(:vscode?) ? args_obj.vscode? : false
+          brews_opt = args_obj.respond_to?(:brews?) ? args_obj.brews? : false
+          casks_opt = args_obj.respond_to?(:casks?) ? args_obj.casks? : false
+          taps_opt = args_obj.respond_to?(:taps?) ? args_obj.taps? : false
+          mas_opt = args_obj.respond_to?(:mas?) ? args_obj.mas? : false
+          whalebrew_opt = args_obj.respond_to?(:whalebrew?) ? args_obj.whalebrew? : false
+          global_opt = args_obj.respond_to?(:global?) ? args_obj.global? : false
+          file_opt = args_obj.respond_to?(:file) ? args_obj.file : nil
+          force_opt = args_obj.respond_to?(:force?) ? args_obj.force? : false
+          describe_opt = args_obj.respond_to?(:describe?) ? args_obj.describe? : false
+          no_restart_opt = args_obj.respond_to?(:no_restart?) ? args_obj.no_restart? : false
+
+          vscode = if no_vscode_opt
             false
-          elsif args.vscode?
+          elsif vscode_opt
             true
           else
-            no_type_args
+            !brews_opt && !casks_opt && !taps_opt && !mas_opt && !whalebrew_opt
           end
 
-          require "bundle/commands/dump"
+          default_all = !brews_opt && !casks_opt && !taps_opt && !mas_opt && !whalebrew_opt && !vscode_opt
+
           Homebrew::Bundle::Commands::Dump.run(
-            global:, file:, force:,
-            describe:   args.describe?,
-            no_restart: args.no_restart?,
-            taps:       args.taps? || no_type_args,
-            brews:      args.brews? || no_type_args,
-            casks:      args.casks? || no_type_args,
-            mas:        args.mas? || no_type_args,
-            whalebrew:  args.whalebrew? || no_type_args,
-            vscode:
+            global:     global_opt,
+            file:       file_opt,
+            force:      force_opt,
+            describe:   describe_opt,
+            no_restart: no_restart_opt,
+            taps:       taps_opt || default_all,
+            brews:      brews_opt || default_all,
+            casks:      casks_opt || default_all,
+            mas:        mas_opt || default_all,
+            whalebrew:  whalebrew_opt || default_all,
+            vscode:,
           )
-        when "edit"
-          require "bundle/brewfile"
-          exec_editor(Homebrew::Bundle::Brewfile.path(global:, file:))
-        when "cleanup"
+        end
+      end
+
+      class CleanupSubcommand < AbstractSubcommand
+        cmd_args do
+          flag "--file=",
+               description: "Read from the `Brewfile` from this location."
+          switch "--global",
+                 description: "Read from the global Brewfile."
+          switch "--force",
+                 description: "Actually perform the cleanup operations."
+          switch "--zap",
+                 description: "Use `zap` command instead of `uninstall` for casks."
+        end
+
+        sig { override.void }
+        def run
           require "bundle/commands/cleanup"
-          Homebrew::Bundle::Commands::Cleanup.run(global:, file:, force:, zap:)
-        when "check"
-          require "bundle/commands/check"
-          Homebrew::Bundle::Commands::Check.run(global:, file:, no_upgrade:, verbose:)
-        when "exec", "sh", "env"
-          named_args = case subcommand
-          when "exec"
-            _subcommand, *named_args = args.named
-            named_args
-          when "sh"
-            preferred_path = Utils::Shell.preferred_path(default: "/bin/bash")
-            notice = unless Homebrew::EnvConfig.no_env_hints?
-              <<~EOS
-                Your shell has been configured to use a build environment from your `Brewfile`.
-                This should help you build stuff.
-                Hide these hints with HOMEBREW_NO_ENV_HINTS (see `man brew`).
-                When done, type `exit`.
-              EOS
-            end
-            ENV["HOMEBREW_FORCE_API_AUTO_UPDATE"] = nil
-            [Utils::Shell.shell_with_prompt("brew bundle", preferred_path:, notice:)]
-          when "env"
-            ["env"]
-          end
-          require "bundle/commands/exec"
-          Homebrew::Bundle::Commands::Exec.run(*named_args, global:, file:, subcommand:, services: args.services?)
-        when "list"
-          require "bundle/commands/list"
-          Homebrew::Bundle::Commands::List.run(
-            global:,
-            file:,
-            brews:     args.brews? || args.all? || no_type_args,
-            casks:     args.casks? || args.all?,
-            taps:      args.taps? || args.all?,
-            mas:       args.mas? || args.all?,
-            whalebrew: args.whalebrew? || args.all?,
-            vscode:    args.vscode? || args.all?,
+
+          args_obj = T.unsafe(args)
+          global_opt = args_obj.respond_to?(:global?) ? args_obj.global? : false
+          file_opt = args_obj.respond_to?(:file) ? args_obj.file : nil
+          force_opt = args_obj.respond_to?(:force?) ? args_obj.force? : false
+          zap_opt = args_obj.respond_to?(:zap?) ? args_obj.zap? : false
+
+          Homebrew::Bundle::Commands::Cleanup.run(
+            global: global_opt,
+            file:   file_opt,
+            force:  force_opt,
+            zap:    zap_opt,
           )
-        when "add", "remove"
-          # We intentionally omit the `s` from `brews`, `casks`, and `taps` for ease of handling later.
+        end
+      end
+
+      class CheckSubcommand < AbstractSubcommand
+        cmd_args do
+          flag "--file=",
+               description: "Read from the `Brewfile` from this location."
+          switch "--global",
+                 description: "Read from the global Brewfile."
+          switch "--verbose",
+                 description: "List all missing dependencies."
+          switch "--no-upgrade",
+                 description: "Don't check for outdated dependencies."
+        end
+
+        sig { override.void }
+        def run
+          require "bundle/commands/check"
+
+          args_obj = T.unsafe(args)
+          global_opt = args_obj.respond_to?(:global?) ? args_obj.global? : false
+          file_opt = args_obj.respond_to?(:file) ? args_obj.file : nil
+          no_upgrade_opt = args_obj.respond_to?(:no_upgrade?) ? args_obj.no_upgrade? : false
+          verbose_opt = args_obj.respond_to?(:verbose?) ? args_obj.verbose? : false
+          Homebrew::Bundle::Commands::Check.run(
+            global:     global_opt,
+            file:       file_opt,
+            no_upgrade: no_upgrade_opt,
+            verbose:    verbose_opt,
+          )
+        end
+      end
+
+      class ListSubcommand < AbstractSubcommand
+        cmd_args do
+          flag "--file=",
+               description: "Read from the `Brewfile` from this location."
+          switch "--global",
+                 description: "Read from the global Brewfile."
+          switch "--all",
+                 description: "List all dependencies."
+          switch "--formula", "--brews",
+                 description: "List Homebrew formula dependencies."
+          switch "--cask", "--casks",
+                 description: "List Homebrew cask dependencies."
+          switch "--tap", "--taps",
+                 description: "List Homebrew tap dependencies."
+          switch "--mas",
+                 description: "List Mac App Store dependencies."
+          switch "--whalebrew",
+                 description: "List Whalebrew dependencies."
+          switch "--vscode",
+                 description: "List VSCode extensions."
+        end
+
+        sig { override.void }
+        def run
+          require "bundle/commands/list"
+
+          args_obj = T.unsafe(args)
+          global_opt = args_obj.respond_to?(:global?) ? args_obj.global? : false
+          file_opt = args_obj.respond_to?(:file) ? args_obj.file : nil
+          brews_opt = args_obj.respond_to?(:brews?) ? args_obj.brews? : false
+          casks_opt = args_obj.respond_to?(:casks?) ? args_obj.casks? : false
+          taps_opt = args_obj.respond_to?(:taps?) ? args_obj.taps? : false
+          mas_opt = args_obj.respond_to?(:mas?) ? args_obj.mas? : false
+          whalebrew_opt = args_obj.respond_to?(:whalebrew?) ? args_obj.whalebrew? : false
+          vscode_opt = args_obj.respond_to?(:vscode?) ? args_obj.vscode? : false
+          all_opt = args_obj.respond_to?(:all?) ? args_obj.all? : false
+
+          default_formula = !brews_opt && !casks_opt && !taps_opt && !mas_opt && !whalebrew_opt && !vscode_opt
+
+          Homebrew::Bundle::Commands::List.run(
+            global:    global_opt,
+            file:      file_opt,
+            brews:     brews_opt || all_opt || default_formula,
+            casks:     casks_opt || all_opt,
+            taps:      taps_opt || all_opt,
+            mas:       mas_opt || all_opt,
+            whalebrew: whalebrew_opt || all_opt,
+            vscode:    vscode_opt || all_opt,
+          )
+        end
+      end
+
+      class EditSubcommand < AbstractSubcommand
+        cmd_args do
+          flag "--file=",
+               description: "Edit the `Brewfile` at this location."
+          switch "--global",
+                 description: "Edit the global Brewfile."
+        end
+
+        sig { override.void }
+        def run
+          require "bundle/brewfile"
+
+          args_obj = T.unsafe(args)
+          global_opt = args_obj.respond_to?(:global?) ? args_obj.global? : false
+          file_opt = args_obj.respond_to?(:file) ? args_obj.file : nil
+
+          exec_editor(Homebrew::Bundle::Brewfile.path(global: global_opt, file: file_opt))
+        end
+      end
+
+      class ExecSubcommand < AbstractSubcommand
+        cmd_args do
+          flag "--file=",
+               description: "Read from the `Brewfile` from this location."
+          switch "--global",
+                 description: "Read from the global Brewfile."
+          switch "--install",
+                 description: "Run `install` before continuing."
+          switch "--services",
+                 description: "Temporarily start services."
+        end
+
+        sig { override.void }
+        def run
+          require "bundle/commands/exec"
+
+          subcommand = "exec"
+
+          args_obj = T.unsafe(args)
+          global_opt = args_obj.respond_to?(:global?) ? args_obj.global? : false
+          file_opt = args_obj.respond_to?(:file) ? args_obj.file : nil
+          install_opt = args_obj.respond_to?(:install?) ? args_obj.install? : false
+          verbose_opt = args_obj.respond_to?(:verbose?) ? args_obj.verbose? : false
+          force_opt = args_obj.respond_to?(:force?) ? args_obj.force? : false
+          services_opt = args_obj.respond_to?(:services?) ? args_obj.services? : false
+          named_args_array = args_obj.respond_to?(:named_args) ? args_obj.named_args : []
+
+          if install_opt
+            require "bundle/commands/install"
+            redirect_stdout($stderr) do
+              Homebrew::Bundle::Commands::Install.run(
+                global:     global_opt,
+                file:       file_opt,
+                no_upgrade: true,
+                verbose:    verbose_opt,
+                force:      force_opt,
+                quiet:      true,
+              )
+            end
+          end
+
+          Homebrew::Bundle::Commands::Exec.run(
+            *named_args_array,
+            global:     global_opt,
+            file:       file_opt,
+            subcommand: subcommand,
+            services:   services_opt,
+          )
+        end
+      end
+
+      class ShSubcommand < AbstractSubcommand
+        cmd_args do
+          flag "--file=",
+               description: "Read from the `Brewfile` from this location."
+          switch "--global",
+                 description: "Read from the global Brewfile."
+          switch "--install",
+                 description: "Run `install` before continuing."
+          switch "--services",
+                 description: "Temporarily start services."
+        end
+
+        sig { override.void }
+        def run
+          require "bundle/commands/exec"
+          require "utils/shell"
+
+          subcommand = "sh"
+          preferred_path = Utils::Shell.preferred_path(default: "/bin/bash")
+          notice = unless Homebrew::EnvConfig.no_env_hints?
+            <<~EOS
+              Your shell has been configured to use a build environment from your `Brewfile`.
+              This should help you build stuff.
+              Hide these hints with HOMEBREW_NO_ENV_HINTS (see `man brew`).
+              When done, type `exit`.
+            EOS
+          end
+          ENV["HOMEBREW_FORCE_API_AUTO_UPDATE"] = nil
+          shell_cmd = Utils::Shell.shell_with_prompt("brew bundle", preferred_path: preferred_path, notice: notice)
+
+          args_obj = T.unsafe(args)
+          global_opt = args_obj.respond_to?(:global?) ? args_obj.global? : false
+          file_opt = args_obj.respond_to?(:file) ? args_obj.file : nil
+          install_opt = args_obj.respond_to?(:install?) ? args_obj.install? : false
+          verbose_opt = args_obj.respond_to?(:verbose?) ? args_obj.verbose? : false
+          force_opt = args_obj.respond_to?(:force?) ? args_obj.force? : false
+          services_opt = args_obj.respond_to?(:services?) ? args_obj.services? : false
+
+          if install_opt
+            require "bundle/commands/install"
+            redirect_stdout($stderr) do
+              Homebrew::Bundle::Commands::Install.run(
+                global:     global_opt,
+                file:       file_opt,
+                no_upgrade: true,
+                verbose:    verbose_opt,
+                force:      force_opt,
+                quiet:      true,
+              )
+            end
+          end
+
+          Homebrew::Bundle::Commands::Exec.run(
+            shell_cmd,
+            global:     global_opt,
+            file:       file_opt,
+            subcommand: subcommand,
+            services:   services_opt,
+          )
+        end
+      end
+
+      class EnvSubcommand < AbstractSubcommand
+        cmd_args do
+          flag "--file=",
+               description: "Read from the `Brewfile` from this location."
+          switch "--global",
+                 description: "Read from the global Brewfile."
+          switch "--install",
+                 description: "Run `install` before continuing."
+        end
+
+        sig { override.void }
+        def run
+          require "bundle/commands/exec"
+
+          args_obj = T.unsafe(args)
+          global_opt = args_obj.respond_to?(:global?) ? args_obj.global? : false
+          file_opt = args_obj.respond_to?(:file) ? args_obj.file : nil
+          install_opt = args_obj.respond_to?(:install?) ? args_obj.install? : false
+          verbose_opt = args_obj.respond_to?(:verbose?) ? args_obj.verbose? : false
+          force_opt = args_obj.respond_to?(:force?) ? args_obj.force? : false
+
+          if install_opt
+            require "bundle/commands/install"
+            redirect_stdout($stderr) do
+              Homebrew::Bundle::Commands::Install.run(
+                global:     global_opt,
+                file:       file_opt,
+                no_upgrade: true,
+                verbose:    verbose_opt,
+                force:      force_opt,
+                quiet:      true,
+              )
+            end
+          end
+
+          Homebrew::Bundle::Commands::Exec.run(
+            "env",
+            global:     global_opt,
+            file:       file_opt,
+            subcommand: "env",
+          )
+        end
+      end
+
+      class AddSubcommand < AbstractSubcommand
+        cmd_args do
+          flag "--file=",
+               description: "Add to the `Brewfile` at this location."
+          switch "--global",
+                 description: "Add to the global Brewfile."
+          switch "--formula", "--brew",
+                 description: "Add a Homebrew formula."
+          switch "--cask",
+                 description: "Add a Homebrew cask."
+          switch "--tap",
+                 description: "Add a Homebrew tap."
+          switch "--whalebrew",
+                 description: "Add a Whalebrew image."
+          switch "--vscode",
+                 description: "Add a VSCode extension."
+        end
+
+        sig { override.void }
+        def run
+          require "bundle/commands/add"
+
+          args_obj = T.unsafe(args)
+          formula_opt = args_obj.respond_to?(:formula?) ? args_obj.formula? : false
+          brew_opt = args_obj.respond_to?(:brew?) ? args_obj.brew? : false
+          cask_opt = args_obj.respond_to?(:cask?) ? args_obj.cask? : false
+          tap_opt = args_obj.respond_to?(:tap?) ? args_obj.tap? : false
+          whalebrew_opt = args_obj.respond_to?(:whalebrew?) ? args_obj.whalebrew? : false
+          vscode_opt = args_obj.respond_to?(:vscode?) ? args_obj.vscode? : false
+          global_opt = args_obj.respond_to?(:global?) ? args_obj.global? : false
+          file_opt = args_obj.respond_to?(:file) ? args_obj.file : nil
+          named_args_array = args_obj.respond_to?(:named_args) ? args_obj.named_args : []
+
           type_hash = {
-            brew:      args.brews?,
-            cask:      args.casks?,
-            tap:       args.taps?,
-            mas:       args.mas?,
-            whalebrew: args.whalebrew?,
-            vscode:    args.vscode?,
-            none:      no_type_args,
+            brew:      formula_opt || brew_opt,
+            cask:      cask_opt,
+            tap:       tap_opt,
+            whalebrew: whalebrew_opt,
+            vscode:    vscode_opt,
+            none:      !formula_opt && !brew_opt && !cask_opt && !tap_opt && !whalebrew_opt && !vscode_opt,
           }
           selected_types = type_hash.select { |_, v| v }.keys
-          raise UsageError, "`#{subcommand}` supports only one type of entry at a time." if selected_types.count != 1
+          raise UsageError, "`add` supports only one type of entry at a time." if selected_types.count != 1
 
-          _, *named_args = args.named
-          if subcommand == "add"
-            type = case (t = selected_types.first)
-            when :none then :brew
-            when :mas then raise UsageError, "`add` does not support `--mas`."
-            else t
-            end
-
-            require "bundle/commands/add"
-            Homebrew::Bundle::Commands::Add.run(*named_args, type:, global:, file:)
-          else
-            require "bundle/commands/remove"
-            Homebrew::Bundle::Commands::Remove.run(*named_args, type: selected_types.first, global:, file:)
+          type = case (t = selected_types.first)
+          when :none then :brew
+          when :mas then raise UsageError, "`add` does not support `--mas`."
+          else t
           end
-        else
-          raise UsageError, "unknown subcommand: #{subcommand}"
+
+          Homebrew::Bundle::Commands::Add.run(
+            *named_args_array,
+            type:   type,
+            global: global_opt,
+            file:   file_opt,
+          )
+        end
+      end
+
+      class RemoveSubcommand < AbstractSubcommand
+        cmd_args do
+          flag "--file=",
+               description: "Remove from the `Brewfile` at this location."
+          switch "--global",
+                 description: "Remove from the global Brewfile."
+          switch "--formula", "--brew",
+                 description: "Remove a Homebrew formula."
+          switch "--cask",
+                 description: "Remove a Homebrew cask."
+          switch "--tap",
+                 description: "Remove a Homebrew tap."
+          switch "--mas",
+                 description: "Remove a Mac App Store dependency."
+          switch "--whalebrew",
+                 description: "Remove a Whalebrew image."
+          switch "--vscode",
+                 description: "Remove a VSCode extension."
+        end
+
+        sig { override.void }
+        def run
+          require "bundle/commands/remove"
+
+          args_obj = T.unsafe(args)
+          formula_opt = args_obj.respond_to?(:formula?) ? args_obj.formula? : false
+          brew_opt = args_obj.respond_to?(:brew?) ? args_obj.brew? : false
+          cask_opt = args_obj.respond_to?(:cask?) ? args_obj.cask? : false
+          tap_opt = args_obj.respond_to?(:tap?) ? args_obj.tap? : false
+          mas_opt = args_obj.respond_to?(:mas?) ? args_obj.mas? : false
+          whalebrew_opt = args_obj.respond_to?(:whalebrew?) ? args_obj.whalebrew? : false
+          vscode_opt = args_obj.respond_to?(:vscode?) ? args_obj.vscode? : false
+          global_opt = args_obj.respond_to?(:global?) ? args_obj.global? : false
+          file_opt = args_obj.respond_to?(:file) ? args_obj.file : nil
+          named_args_array = args_obj.respond_to?(:named_args) ? args_obj.named_args : []
+
+          type_hash = {
+            brew:      formula_opt || brew_opt,
+            cask:      cask_opt,
+            tap:       tap_opt,
+            mas:       mas_opt,
+            whalebrew: whalebrew_opt,
+            vscode:    vscode_opt,
+            none:      !formula_opt && !brew_opt && !cask_opt && !tap_opt &&
+                       !mas_opt && !whalebrew_opt && !vscode_opt,
+          }
+          selected_types = type_hash.select { |_, v| v }.keys
+          raise UsageError, "`remove` supports only one type of entry at a time." if selected_types.count != 1
+
+          Homebrew::Bundle::Commands::Remove.run(
+            *named_args_array,
+            type:   selected_types.first,
+            global: global_opt,
+            file:   file_opt,
+          )
         end
       end
     end

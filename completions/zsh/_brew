@@ -449,15 +449,73 @@ _brew_alias() {
     '--verbose[Make some output more verbose]'
 }
 
-# brew analytics
-_brew_analytics() {
+
+# brew analytics state
+_brew_analytics_state() {
   _arguments \
     '--debug[Display any debugging information]' \
+    '--help[Show this message]' \
+    '--quiet[Make some output more quiet]' \
+    '--verbose[Make some output more verbose]'
+}
+
+
+# brew analytics on
+_brew_analytics_on() {
+  _arguments \
+    '--debug[Display any debugging information]' \
+    '--help[Show this message]' \
+    '--quiet[Make some output more quiet]' \
+    '--verbose[Make some output more verbose]'
+}
+
+
+# brew analytics off
+_brew_analytics_off() {
+  _arguments \
+    '--debug[Display any debugging information]' \
+    '--help[Show this message]' \
+    '--quiet[Make some output more quiet]' \
+    '--verbose[Make some output more verbose]'
+}
+
+
+# brew analytics regenerate-uuid
+_brew_analytics_regenerate_uuid() {
+  _arguments \
+    '--debug[Display any debugging information]' \
+    '--help[Show this message]' \
+    '--quiet[Make some output more quiet]' \
+    '--verbose[Make some output more verbose]'
+}
+
+
+# brew analytics
+_brew_analytics() {
+  if (( CURRENT > 2 )); then
+    local subcmd=${words[2]}
+    case "$subcmd" in
+      state) _brew_analytics_state ;;
+          on) _brew_analytics_on ;;
+          off) _brew_analytics_off ;;
+          regenerate-uuid) _brew_analytics_regenerate_uuid ;;
+      *) _arguments \
+         '--debug[Display any debugging information]' \
+    '--help[Show this message]' \
+    '--quiet[Make some output more quiet]' \
+    '--verbose[Make some output more verbose]' \
+    - subcommand \
+    '*::subcommand:(state on off regenerate-uuid)' ;;
+    esac
+  else
+    _arguments \
+      '--debug[Display any debugging information]' \
     '--help[Show this message]' \
     '--quiet[Make some output more quiet]' \
     '--verbose[Make some output more verbose]' \
     - subcommand \
     '*::subcommand:(state on off regenerate-uuid)'
+  fi
 }
 
 # brew audit
@@ -644,10 +702,331 @@ _brew_bump_unversioned_casks() {
     '*::tap:__brew_any_tap'
 }
 
-# brew bundle
-_brew_bundle() {
+
+# brew bundle install
+_brew_bundle_install() {
   _arguments \
     '(--no-vscode)--all[`list` all dependencies]' \
+    '--cask[`list` or `dump` Homebrew cask dependencies]' \
+    '--cleanup[`install` performs cleanup operation, same as running `cleanup --force`. This is enabled by default if `$HOMEBREW_BUNDLE_INSTALL_CLEANUP` is set and `--global` is passed]' \
+    '--debug[Display any debugging information]' \
+    '--describe[`dump` adds a description comment above each line, unless the dependency does not have a description. This is enabled by default if `$HOMEBREW_BUNDLE_DUMP_DESCRIBE` is set]' \
+    '--file[Read from or write to the `Brewfile` from this location. Use `--file=-` to pipe to stdin/stdout]' \
+    '--file=[Read from the `Brewfile` from this location]' \
+    '--force[`install` runs with `--force`/`--overwrite`. `dump` overwrites an existing `Brewfile`. `cleanup` actually performs its cleanup operations]' \
+    '--formula[`list` or `dump` Homebrew formula dependencies]' \
+    '--global[Read from the global Brewfile]' \
+    '--help[Show this message]' \
+    '(--upgrade)--install[Run `install` before continuing to other operations e.g. `exec`]' \
+    '--mas[`list` or `dump` Mac App Store dependencies]' \
+    '--no-restart[`dump` does not add `restart_service` to formula lines]' \
+    '--no-upgrade[Don]' \
+    '(--all --vscode)--no-vscode[`dump` without VSCode (and forks/variants) extensions. This is enabled by default if `$HOMEBREW_BUNDLE_DUMP_NO_VSCODE` is set]' \
+    '--quiet[Make some output more quiet]' \
+    '--services[Temporarily start services while running the `exec` or `sh` command]' \
+    '--tap[`list` or `dump` Homebrew tap dependencies]' \
+    '(--install)--upgrade[`install` runs `brew upgrade` on outdated dependencies, even if `$HOMEBREW_BUNDLE_NO_UPGRADE` is set]' \
+    '--upgrade-formulae[`install` runs `brew upgrade` on any of these comma-separated formulae, even if `$HOMEBREW_BUNDLE_NO_UPGRADE` is set]' \
+    '--verbose[Print output from commands as they are run]' \
+    '(--no-vscode)--vscode[`list` or `dump` VSCode (and forks/variants) extensions]' \
+    '--whalebrew[`list` or `dump` Whalebrew dependencies]' \
+    '--zap[`cleanup` casks using the `zap` command instead of `uninstall`]'
+}
+
+
+# brew bundle dump
+_brew_bundle_dump() {
+  _arguments \
+    '(--no-vscode)--all[`list` all dependencies]' \
+    '--cask[`list` or `dump` Homebrew cask dependencies]' \
+    '--cleanup[`install` performs cleanup operation, same as running `cleanup --force`. This is enabled by default if `$HOMEBREW_BUNDLE_INSTALL_CLEANUP` is set and `--global` is passed]' \
+    '--debug[Display any debugging information]' \
+    '--describe[Add a description comment above each line]' \
+    '--file[Read from or write to the `Brewfile` from this location. Use `--file=-` to pipe to stdin/stdout]' \
+    '--file=[Write to the `Brewfile` at this location]' \
+    '--force[Overwrite an existing `Brewfile`]' \
+    '--formula[`list` or `dump` Homebrew formula dependencies]' \
+    '--global[Write to the global Brewfile]' \
+    '--help[Show this message]' \
+    '(--upgrade)--install[Run `install` before continuing to other operations e.g. `exec`]' \
+    '--mas[`list` or `dump` Mac App Store dependencies]' \
+    '--no-restart[Don]' \
+    '--no-upgrade[`install` does not run `brew upgrade` on outdated dependencies. `check` does not check for outdated dependencies. Note they may still be upgraded by `brew install` if needed. This is enabled by default if `$HOMEBREW_BUNDLE_NO_UPGRADE` is set]' \
+    '(--all --vscode)--no-vscode[`dump` without VSCode (and forks/variants) extensions. This is enabled by default if `$HOMEBREW_BUNDLE_DUMP_NO_VSCODE` is set]' \
+    '--quiet[Make some output more quiet]' \
+    '--services[Temporarily start services while running the `exec` or `sh` command]' \
+    '--tap[`list` or `dump` Homebrew tap dependencies]' \
+    '(--install)--upgrade[`install` runs `brew upgrade` on outdated dependencies, even if `$HOMEBREW_BUNDLE_NO_UPGRADE` is set]' \
+    '--upgrade-formulae[`install` runs `brew upgrade` on any of these comma-separated formulae, even if `$HOMEBREW_BUNDLE_NO_UPGRADE` is set]' \
+    '--verbose[`install` prints output from commands as they are run. `check` lists all missing dependencies]' \
+    '(--no-vscode)--vscode[`list` or `dump` VSCode (and forks/variants) extensions]' \
+    '--whalebrew[`list` or `dump` Whalebrew dependencies]' \
+    '--zap[`cleanup` casks using the `zap` command instead of `uninstall`]'
+}
+
+
+# brew bundle cleanup
+_brew_bundle_cleanup() {
+  _arguments \
+    '(--no-vscode)--all[`list` all dependencies]' \
+    '--cask[`list` or `dump` Homebrew cask dependencies]' \
+    '--cleanup[`install` performs cleanup operation, same as running `cleanup --force`. This is enabled by default if `$HOMEBREW_BUNDLE_INSTALL_CLEANUP` is set and `--global` is passed]' \
+    '--debug[Display any debugging information]' \
+    '--describe[`dump` adds a description comment above each line, unless the dependency does not have a description. This is enabled by default if `$HOMEBREW_BUNDLE_DUMP_DESCRIBE` is set]' \
+    '--file[Read from or write to the `Brewfile` from this location. Use `--file=-` to pipe to stdin/stdout]' \
+    '--file=[Read from the `Brewfile` from this location]' \
+    '--force[Actually perform the cleanup operations]' \
+    '--formula[`list` or `dump` Homebrew formula dependencies]' \
+    '--global[Read from the global Brewfile]' \
+    '--help[Show this message]' \
+    '(--upgrade)--install[Run `install` before continuing to other operations e.g. `exec`]' \
+    '--mas[`list` or `dump` Mac App Store dependencies]' \
+    '--no-restart[`dump` does not add `restart_service` to formula lines]' \
+    '--no-upgrade[`install` does not run `brew upgrade` on outdated dependencies. `check` does not check for outdated dependencies. Note they may still be upgraded by `brew install` if needed. This is enabled by default if `$HOMEBREW_BUNDLE_NO_UPGRADE` is set]' \
+    '(--all --vscode)--no-vscode[`dump` without VSCode (and forks/variants) extensions. This is enabled by default if `$HOMEBREW_BUNDLE_DUMP_NO_VSCODE` is set]' \
+    '--quiet[Make some output more quiet]' \
+    '--services[Temporarily start services while running the `exec` or `sh` command]' \
+    '--tap[`list` or `dump` Homebrew tap dependencies]' \
+    '(--install)--upgrade[`install` runs `brew upgrade` on outdated dependencies, even if `$HOMEBREW_BUNDLE_NO_UPGRADE` is set]' \
+    '--upgrade-formulae[`install` runs `brew upgrade` on any of these comma-separated formulae, even if `$HOMEBREW_BUNDLE_NO_UPGRADE` is set]' \
+    '--verbose[`install` prints output from commands as they are run. `check` lists all missing dependencies]' \
+    '(--no-vscode)--vscode[`list` or `dump` VSCode (and forks/variants) extensions]' \
+    '--whalebrew[`list` or `dump` Whalebrew dependencies]' \
+    '--zap[Use `zap` command instead of `uninstall` for casks]'
+}
+
+
+# brew bundle check
+_brew_bundle_check() {
+  _arguments \
+    '(--no-vscode)--all[`list` all dependencies]' \
+    '--cask[`list` or `dump` Homebrew cask dependencies]' \
+    '--cleanup[`install` performs cleanup operation, same as running `cleanup --force`. This is enabled by default if `$HOMEBREW_BUNDLE_INSTALL_CLEANUP` is set and `--global` is passed]' \
+    '--debug[Display any debugging information]' \
+    '--describe[`dump` adds a description comment above each line, unless the dependency does not have a description. This is enabled by default if `$HOMEBREW_BUNDLE_DUMP_DESCRIBE` is set]' \
+    '--file[Read from or write to the `Brewfile` from this location. Use `--file=-` to pipe to stdin/stdout]' \
+    '--file=[Read from the `Brewfile` from this location]' \
+    '--force[`install` runs with `--force`/`--overwrite`. `dump` overwrites an existing `Brewfile`. `cleanup` actually performs its cleanup operations]' \
+    '--formula[`list` or `dump` Homebrew formula dependencies]' \
+    '--global[Read from the global Brewfile]' \
+    '--help[Show this message]' \
+    '(--upgrade)--install[Run `install` before continuing to other operations e.g. `exec`]' \
+    '--mas[`list` or `dump` Mac App Store dependencies]' \
+    '--no-restart[`dump` does not add `restart_service` to formula lines]' \
+    '--no-upgrade[`install` does not run `brew upgrade` on outdated dependencies. `check` does not check for outdated dependencies. Note they may still be upgraded by `brew install` if needed. This is enabled by default if `$HOMEBREW_BUNDLE_NO_UPGRADE` is set]' \
+    '(--all --vscode)--no-vscode[`dump` without VSCode (and forks/variants) extensions. This is enabled by default if `$HOMEBREW_BUNDLE_DUMP_NO_VSCODE` is set]' \
+    '--quiet[Make some output more quiet]' \
+    '--services[Temporarily start services while running the `exec` or `sh` command]' \
+    '--tap[`list` or `dump` Homebrew tap dependencies]' \
+    '(--install)--upgrade[`install` runs `brew upgrade` on outdated dependencies, even if `$HOMEBREW_BUNDLE_NO_UPGRADE` is set]' \
+    '--upgrade-formulae[`install` runs `brew upgrade` on any of these comma-separated formulae, even if `$HOMEBREW_BUNDLE_NO_UPGRADE` is set]' \
+    '--verbose[`install` prints output from commands as they are run. `check` lists all missing dependencies]' \
+    '(--no-vscode)--vscode[`list` or `dump` VSCode (and forks/variants) extensions]' \
+    '--whalebrew[`list` or `dump` Whalebrew dependencies]' \
+    '--zap[`cleanup` casks using the `zap` command instead of `uninstall`]'
+}
+
+
+# brew bundle exec
+_brew_bundle_exec() {
+  _arguments \
+    '(--no-vscode)--all[`list` all dependencies]' \
+    '--cask[`list` or `dump` Homebrew cask dependencies]' \
+    '--cleanup[`install` performs cleanup operation, same as running `cleanup --force`. This is enabled by default if `$HOMEBREW_BUNDLE_INSTALL_CLEANUP` is set and `--global` is passed]' \
+    '--debug[Display any debugging information]' \
+    '--describe[`dump` adds a description comment above each line, unless the dependency does not have a description. This is enabled by default if `$HOMEBREW_BUNDLE_DUMP_DESCRIBE` is set]' \
+    '--file[Read from or write to the `Brewfile` from this location. Use `--file=-` to pipe to stdin/stdout]' \
+    '--file=[Read from the `Brewfile` from this location]' \
+    '--force[`install` runs with `--force`/`--overwrite`. `dump` overwrites an existing `Brewfile`. `cleanup` actually performs its cleanup operations]' \
+    '--formula[`list` or `dump` Homebrew formula dependencies]' \
+    '--global[Read from the global Brewfile]' \
+    '--help[Show this message]' \
+    '(--upgrade)--install[Run `install` before continuing]' \
+    '--mas[`list` or `dump` Mac App Store dependencies]' \
+    '--no-restart[`dump` does not add `restart_service` to formula lines]' \
+    '--no-upgrade[`install` does not run `brew upgrade` on outdated dependencies. `check` does not check for outdated dependencies. Note they may still be upgraded by `brew install` if needed. This is enabled by default if `$HOMEBREW_BUNDLE_NO_UPGRADE` is set]' \
+    '(--all --vscode)--no-vscode[`dump` without VSCode (and forks/variants) extensions. This is enabled by default if `$HOMEBREW_BUNDLE_DUMP_NO_VSCODE` is set]' \
+    '--quiet[Make some output more quiet]' \
+    '--services[Temporarily start services]' \
+    '--tap[`list` or `dump` Homebrew tap dependencies]' \
+    '(--install)--upgrade[`install` runs `brew upgrade` on outdated dependencies, even if `$HOMEBREW_BUNDLE_NO_UPGRADE` is set]' \
+    '--upgrade-formulae[`install` runs `brew upgrade` on any of these comma-separated formulae, even if `$HOMEBREW_BUNDLE_NO_UPGRADE` is set]' \
+    '--verbose[`install` prints output from commands as they are run. `check` lists all missing dependencies]' \
+    '(--no-vscode)--vscode[`list` or `dump` VSCode (and forks/variants) extensions]' \
+    '--whalebrew[`list` or `dump` Whalebrew dependencies]' \
+    '--zap[`cleanup` casks using the `zap` command instead of `uninstall`]'
+}
+
+
+# brew bundle list
+_brew_bundle_list() {
+  _arguments \
+    '(--no-vscode)--all[`list` all dependencies]' \
+    '--cask[`list` or `dump` Homebrew cask dependencies]' \
+    '--cleanup[`install` performs cleanup operation, same as running `cleanup --force`. This is enabled by default if `$HOMEBREW_BUNDLE_INSTALL_CLEANUP` is set and `--global` is passed]' \
+    '--debug[Display any debugging information]' \
+    '--describe[`dump` adds a description comment above each line, unless the dependency does not have a description. This is enabled by default if `$HOMEBREW_BUNDLE_DUMP_DESCRIBE` is set]' \
+    '--file[Read from or write to the `Brewfile` from this location. Use `--file=-` to pipe to stdin/stdout]' \
+    '--file=[Read from the `Brewfile` from this location]' \
+    '--force[`install` runs with `--force`/`--overwrite`. `dump` overwrites an existing `Brewfile`. `cleanup` actually performs its cleanup operations]' \
+    '--formula[`list` or `dump` Homebrew formula dependencies]' \
+    '--global[Read from the global Brewfile]' \
+    '--help[Show this message]' \
+    '(--upgrade)--install[Run `install` before continuing to other operations e.g. `exec`]' \
+    '--mas[`list` or `dump` Mac App Store dependencies]' \
+    '--no-restart[`dump` does not add `restart_service` to formula lines]' \
+    '--no-upgrade[`install` does not run `brew upgrade` on outdated dependencies. `check` does not check for outdated dependencies. Note they may still be upgraded by `brew install` if needed. This is enabled by default if `$HOMEBREW_BUNDLE_NO_UPGRADE` is set]' \
+    '(--all --vscode)--no-vscode[`dump` without VSCode (and forks/variants) extensions. This is enabled by default if `$HOMEBREW_BUNDLE_DUMP_NO_VSCODE` is set]' \
+    '--quiet[Make some output more quiet]' \
+    '--services[Temporarily start services while running the `exec` or `sh` command]' \
+    '--tap[`list` or `dump` Homebrew tap dependencies]' \
+    '(--install)--upgrade[`install` runs `brew upgrade` on outdated dependencies, even if `$HOMEBREW_BUNDLE_NO_UPGRADE` is set]' \
+    '--upgrade-formulae[`install` runs `brew upgrade` on any of these comma-separated formulae, even if `$HOMEBREW_BUNDLE_NO_UPGRADE` is set]' \
+    '--verbose[`install` prints output from commands as they are run. `check` lists all missing dependencies]' \
+    '(--no-vscode)--vscode[`list` or `dump` VSCode (and forks/variants) extensions]' \
+    '--whalebrew[`list` or `dump` Whalebrew dependencies]' \
+    '--zap[`cleanup` casks using the `zap` command instead of `uninstall`]'
+}
+
+
+# brew bundle sh
+_brew_bundle_sh() {
+  _arguments \
+    '(--no-vscode)--all[`list` all dependencies]' \
+    '--cask[`list` or `dump` Homebrew cask dependencies]' \
+    '--cleanup[`install` performs cleanup operation, same as running `cleanup --force`. This is enabled by default if `$HOMEBREW_BUNDLE_INSTALL_CLEANUP` is set and `--global` is passed]' \
+    '--debug[Display any debugging information]' \
+    '--describe[`dump` adds a description comment above each line, unless the dependency does not have a description. This is enabled by default if `$HOMEBREW_BUNDLE_DUMP_DESCRIBE` is set]' \
+    '--file[Read from or write to the `Brewfile` from this location. Use `--file=-` to pipe to stdin/stdout]' \
+    '--file=[Read from the `Brewfile` from this location]' \
+    '--force[`install` runs with `--force`/`--overwrite`. `dump` overwrites an existing `Brewfile`. `cleanup` actually performs its cleanup operations]' \
+    '--formula[`list` or `dump` Homebrew formula dependencies]' \
+    '--global[Read from the global Brewfile]' \
+    '--help[Show this message]' \
+    '(--upgrade)--install[Run `install` before continuing]' \
+    '--mas[`list` or `dump` Mac App Store dependencies]' \
+    '--no-restart[`dump` does not add `restart_service` to formula lines]' \
+    '--no-upgrade[`install` does not run `brew upgrade` on outdated dependencies. `check` does not check for outdated dependencies. Note they may still be upgraded by `brew install` if needed. This is enabled by default if `$HOMEBREW_BUNDLE_NO_UPGRADE` is set]' \
+    '(--all --vscode)--no-vscode[`dump` without VSCode (and forks/variants) extensions. This is enabled by default if `$HOMEBREW_BUNDLE_DUMP_NO_VSCODE` is set]' \
+    '--quiet[Make some output more quiet]' \
+    '--services[Temporarily start services]' \
+    '--tap[`list` or `dump` Homebrew tap dependencies]' \
+    '(--install)--upgrade[`install` runs `brew upgrade` on outdated dependencies, even if `$HOMEBREW_BUNDLE_NO_UPGRADE` is set]' \
+    '--upgrade-formulae[`install` runs `brew upgrade` on any of these comma-separated formulae, even if `$HOMEBREW_BUNDLE_NO_UPGRADE` is set]' \
+    '--verbose[`install` prints output from commands as they are run. `check` lists all missing dependencies]' \
+    '(--no-vscode)--vscode[`list` or `dump` VSCode (and forks/variants) extensions]' \
+    '--whalebrew[`list` or `dump` Whalebrew dependencies]' \
+    '--zap[`cleanup` casks using the `zap` command instead of `uninstall`]'
+}
+
+
+# brew bundle env
+_brew_bundle_env() {
+  _arguments \
+    '(--no-vscode)--all[`list` all dependencies]' \
+    '--cask[`list` or `dump` Homebrew cask dependencies]' \
+    '--cleanup[`install` performs cleanup operation, same as running `cleanup --force`. This is enabled by default if `$HOMEBREW_BUNDLE_INSTALL_CLEANUP` is set and `--global` is passed]' \
+    '--debug[Display any debugging information]' \
+    '--describe[`dump` adds a description comment above each line, unless the dependency does not have a description. This is enabled by default if `$HOMEBREW_BUNDLE_DUMP_DESCRIBE` is set]' \
+    '--file[Read from or write to the `Brewfile` from this location. Use `--file=-` to pipe to stdin/stdout]' \
+    '--file=[Read from the `Brewfile` from this location]' \
+    '--force[`install` runs with `--force`/`--overwrite`. `dump` overwrites an existing `Brewfile`. `cleanup` actually performs its cleanup operations]' \
+    '--formula[`list` or `dump` Homebrew formula dependencies]' \
+    '--global[Read from the global Brewfile]' \
+    '--help[Show this message]' \
+    '(--upgrade)--install[Run `install` before continuing]' \
+    '--mas[`list` or `dump` Mac App Store dependencies]' \
+    '--no-restart[`dump` does not add `restart_service` to formula lines]' \
+    '--no-upgrade[`install` does not run `brew upgrade` on outdated dependencies. `check` does not check for outdated dependencies. Note they may still be upgraded by `brew install` if needed. This is enabled by default if `$HOMEBREW_BUNDLE_NO_UPGRADE` is set]' \
+    '(--all --vscode)--no-vscode[`dump` without VSCode (and forks/variants) extensions. This is enabled by default if `$HOMEBREW_BUNDLE_DUMP_NO_VSCODE` is set]' \
+    '--quiet[Make some output more quiet]' \
+    '--services[Temporarily start services while running the `exec` or `sh` command]' \
+    '--tap[`list` or `dump` Homebrew tap dependencies]' \
+    '(--install)--upgrade[`install` runs `brew upgrade` on outdated dependencies, even if `$HOMEBREW_BUNDLE_NO_UPGRADE` is set]' \
+    '--upgrade-formulae[`install` runs `brew upgrade` on any of these comma-separated formulae, even if `$HOMEBREW_BUNDLE_NO_UPGRADE` is set]' \
+    '--verbose[`install` prints output from commands as they are run. `check` lists all missing dependencies]' \
+    '(--no-vscode)--vscode[`list` or `dump` VSCode (and forks/variants) extensions]' \
+    '--whalebrew[`list` or `dump` Whalebrew dependencies]' \
+    '--zap[`cleanup` casks using the `zap` command instead of `uninstall`]'
+}
+
+
+# brew bundle edit
+_brew_bundle_edit() {
+  _arguments \
+    '(--no-vscode)--all[`list` all dependencies]' \
+    '--cask[`list` or `dump` Homebrew cask dependencies]' \
+    '--cleanup[`install` performs cleanup operation, same as running `cleanup --force`. This is enabled by default if `$HOMEBREW_BUNDLE_INSTALL_CLEANUP` is set and `--global` is passed]' \
+    '--debug[Display any debugging information]' \
+    '--describe[`dump` adds a description comment above each line, unless the dependency does not have a description. This is enabled by default if `$HOMEBREW_BUNDLE_DUMP_DESCRIBE` is set]' \
+    '--file[Read from or write to the `Brewfile` from this location. Use `--file=-` to pipe to stdin/stdout]' \
+    '--file=[Edit the `Brewfile` at this location]' \
+    '--force[`install` runs with `--force`/`--overwrite`. `dump` overwrites an existing `Brewfile`. `cleanup` actually performs its cleanup operations]' \
+    '--formula[`list` or `dump` Homebrew formula dependencies]' \
+    '--global[Edit the global Brewfile]' \
+    '--help[Show this message]' \
+    '(--upgrade)--install[Run `install` before continuing to other operations e.g. `exec`]' \
+    '--mas[`list` or `dump` Mac App Store dependencies]' \
+    '--no-restart[`dump` does not add `restart_service` to formula lines]' \
+    '--no-upgrade[`install` does not run `brew upgrade` on outdated dependencies. `check` does not check for outdated dependencies. Note they may still be upgraded by `brew install` if needed. This is enabled by default if `$HOMEBREW_BUNDLE_NO_UPGRADE` is set]' \
+    '(--all --vscode)--no-vscode[`dump` without VSCode (and forks/variants) extensions. This is enabled by default if `$HOMEBREW_BUNDLE_DUMP_NO_VSCODE` is set]' \
+    '--quiet[Make some output more quiet]' \
+    '--services[Temporarily start services while running the `exec` or `sh` command]' \
+    '--tap[`list` or `dump` Homebrew tap dependencies]' \
+    '(--install)--upgrade[`install` runs `brew upgrade` on outdated dependencies, even if `$HOMEBREW_BUNDLE_NO_UPGRADE` is set]' \
+    '--upgrade-formulae[`install` runs `brew upgrade` on any of these comma-separated formulae, even if `$HOMEBREW_BUNDLE_NO_UPGRADE` is set]' \
+    '--verbose[`install` prints output from commands as they are run. `check` lists all missing dependencies]' \
+    '(--no-vscode)--vscode[`list` or `dump` VSCode (and forks/variants) extensions]' \
+    '--whalebrew[`list` or `dump` Whalebrew dependencies]' \
+    '--zap[`cleanup` casks using the `zap` command instead of `uninstall`]'
+}
+
+
+# brew bundle
+_brew_bundle() {
+  if (( CURRENT > 2 )); then
+    local subcmd=${words[2]}
+    case "$subcmd" in
+      install) _brew_bundle_install ;;
+          dump) _brew_bundle_dump ;;
+          cleanup) _brew_bundle_cleanup ;;
+          check) _brew_bundle_check ;;
+          exec) _brew_bundle_exec ;;
+          list) _brew_bundle_list ;;
+          sh) _brew_bundle_sh ;;
+          env) _brew_bundle_env ;;
+          edit) _brew_bundle_edit ;;
+      *) _arguments \
+         '(--no-vscode)--all[`list` all dependencies]' \
+    '--cask[`list` or `dump` Homebrew cask dependencies]' \
+    '--cleanup[`install` performs cleanup operation, same as running `cleanup --force`. This is enabled by default if `$HOMEBREW_BUNDLE_INSTALL_CLEANUP` is set and `--global` is passed]' \
+    '--debug[Display any debugging information]' \
+    '--describe[`dump` adds a description comment above each line, unless the dependency does not have a description. This is enabled by default if `$HOMEBREW_BUNDLE_DUMP_DESCRIBE` is set]' \
+    '--file[Read from or write to the `Brewfile` from this location. Use `--file=-` to pipe to stdin/stdout]' \
+    '--force[`install` runs with `--force`/`--overwrite`. `dump` overwrites an existing `Brewfile`. `cleanup` actually performs its cleanup operations]' \
+    '--formula[`list` or `dump` Homebrew formula dependencies]' \
+    '--global[Read from or write to the `Brewfile` from `$HOMEBREW_BUNDLE_FILE_GLOBAL` (if set), `${XDG_CONFIG_HOME}/homebrew/Brewfile` (if `$XDG_CONFIG_HOME` is set), `~/.homebrew/Brewfile` or `~/.Brewfile` otherwise]' \
+    '--help[Show this message]' \
+    '(--upgrade)--install[Run `install` before continuing to other operations e.g. `exec`]' \
+    '--mas[`list` or `dump` Mac App Store dependencies]' \
+    '--no-restart[`dump` does not add `restart_service` to formula lines]' \
+    '--no-upgrade[`install` does not run `brew upgrade` on outdated dependencies. `check` does not check for outdated dependencies. Note they may still be upgraded by `brew install` if needed. This is enabled by default if `$HOMEBREW_BUNDLE_NO_UPGRADE` is set]' \
+    '(--all --vscode)--no-vscode[`dump` without VSCode (and forks/variants) extensions. This is enabled by default if `$HOMEBREW_BUNDLE_DUMP_NO_VSCODE` is set]' \
+    '--quiet[Make some output more quiet]' \
+    '--services[Temporarily start services while running the `exec` or `sh` command]' \
+    '--tap[`list` or `dump` Homebrew tap dependencies]' \
+    '(--install)--upgrade[`install` runs `brew upgrade` on outdated dependencies, even if `$HOMEBREW_BUNDLE_NO_UPGRADE` is set]' \
+    '--upgrade-formulae[`install` runs `brew upgrade` on any of these comma-separated formulae, even if `$HOMEBREW_BUNDLE_NO_UPGRADE` is set]' \
+    '--verbose[`install` prints output from commands as they are run. `check` lists all missing dependencies]' \
+    '(--no-vscode)--vscode[`list` or `dump` VSCode (and forks/variants) extensions]' \
+    '--whalebrew[`list` or `dump` Whalebrew dependencies]' \
+    '--zap[`cleanup` casks using the `zap` command instead of `uninstall`]' \
+    - subcommand \
+    '*::subcommand:(install dump cleanup check exec list sh env edit)' ;;
+    esac
+  else
+    _arguments \
+      '(--no-vscode)--all[`list` all dependencies]' \
     '--cask[`list` or `dump` Homebrew cask dependencies]' \
     '--cleanup[`install` performs cleanup operation, same as running `cleanup --force`. This is enabled by default if `$HOMEBREW_BUNDLE_INSTALL_CLEANUP` is set and `--global` is passed]' \
     '--debug[Display any debugging information]' \
@@ -673,6 +1052,7 @@ _brew_bundle() {
     '--zap[`cleanup` casks using the `zap` command instead of `uninstall`]' \
     - subcommand \
     '*::subcommand:(install dump cleanup check exec list sh env edit)'
+  fi
 }
 
 # brew casks
@@ -737,15 +1117,62 @@ _brew_commands() {
     '--verbose[Make some output more verbose]'
 }
 
-# brew completions
-_brew_completions() {
+
+# brew completions state
+_brew_completions_state() {
   _arguments \
     '--debug[Display any debugging information]' \
+    '--help[Show this message]' \
+    '--quiet[Make some output more quiet]' \
+    '--verbose[Make some output more verbose]'
+}
+
+
+# brew completions link
+_brew_completions_link() {
+  _arguments \
+    '--debug[Display any debugging information]' \
+    '--help[Show this message]' \
+    '--quiet[Make some output more quiet]' \
+    '--verbose[Make some output more verbose]'
+}
+
+
+# brew completions unlink
+_brew_completions_unlink() {
+  _arguments \
+    '--debug[Display any debugging information]' \
+    '--help[Show this message]' \
+    '--quiet[Make some output more quiet]' \
+    '--verbose[Make some output more verbose]'
+}
+
+
+# brew completions
+_brew_completions() {
+  if (( CURRENT > 2 )); then
+    local subcmd=${words[2]}
+    case "$subcmd" in
+      state) _brew_completions_state ;;
+          link) _brew_completions_link ;;
+          unlink) _brew_completions_unlink ;;
+      *) _arguments \
+         '--debug[Display any debugging information]' \
+    '--help[Show this message]' \
+    '--quiet[Make some output more quiet]' \
+    '--verbose[Make some output more verbose]' \
+    - subcommand \
+    '*::subcommand:(state link unlink)' ;;
+    esac
+  else
+    _arguments \
+      '--debug[Display any debugging information]' \
     '--help[Show this message]' \
     '--quiet[Make some output more quiet]' \
     '--verbose[Make some output more verbose]' \
     - subcommand \
     '*::subcommand:(state link unlink)'
+  fi
 }
 
 # brew config
@@ -878,15 +1305,62 @@ _brew_determine_test_runners() {
     '--verbose[Make some output more verbose]'
 }
 
-# brew developer
-_brew_developer() {
+
+# brew developer state
+_brew_developer_state() {
   _arguments \
     '--debug[Display any debugging information]' \
+    '--help[Show this message]' \
+    '--quiet[Make some output more quiet]' \
+    '--verbose[Make some output more verbose]'
+}
+
+
+# brew developer on
+_brew_developer_on() {
+  _arguments \
+    '--debug[Display any debugging information]' \
+    '--help[Show this message]' \
+    '--quiet[Make some output more quiet]' \
+    '--verbose[Make some output more verbose]'
+}
+
+
+# brew developer off
+_brew_developer_off() {
+  _arguments \
+    '--debug[Display any debugging information]' \
+    '--help[Show this message]' \
+    '--quiet[Make some output more quiet]' \
+    '--verbose[Make some output more verbose]'
+}
+
+
+# brew developer
+_brew_developer() {
+  if (( CURRENT > 2 )); then
+    local subcmd=${words[2]}
+    case "$subcmd" in
+      state) _brew_developer_state ;;
+          on) _brew_developer_on ;;
+          off) _brew_developer_off ;;
+      *) _arguments \
+         '--debug[Display any debugging information]' \
+    '--help[Show this message]' \
+    '--quiet[Make some output more quiet]' \
+    '--verbose[Make some output more verbose]' \
+    - subcommand \
+    '*::subcommand:(state on off)' ;;
+    esac
+  else
+    _arguments \
+      '--debug[Display any debugging information]' \
     '--help[Show this message]' \
     '--quiet[Make some output more quiet]' \
     '--verbose[Make some output more verbose]' \
     - subcommand \
     '*::subcommand:(state on off)'
+  fi
 }
 
 # brew dispatch-build-bottle
@@ -1891,10 +2365,178 @@ _brew_search() {
     '--verbose[Make some output more verbose]'
 }
 
-# brew services
-_brew_services() {
+
+# brew services list
+_brew_services_list() {
   _arguments \
     '--all[Run subcommand on all services]' \
+    '--debug[Display any debugging information]' \
+    '--file[Use the service file from this location to `start` the service]' \
+    '--help[Show this message]' \
+    '--json[Output as JSON]' \
+    '--keep[When stopped, don'\''t unregister the service from launching at login (or boot)]' \
+    '(--no-wait)--max-wait[Wait at most this many seconds for `stop` to finish stopping a service. Omit this flag or set this to zero (0) seconds to wait indefinitely]' \
+    '(--max-wait)--no-wait[Don'\''t wait for `stop` to finish stopping the service]' \
+    '--quiet[Make some output more quiet]' \
+    '--sudo-service-user[When run as root on macOS, run the service(s) as this user]' \
+    '--verbose[Make some output more verbose]'
+}
+
+
+# brew services info
+_brew_services_info() {
+  _arguments \
+    '--all[Run on all services]' \
+    '--debug[Display any debugging information]' \
+    '--file[Use the service file from this location to `start` the service]' \
+    '--help[Show this message]' \
+    '--json[Output as JSON]' \
+    '--keep[When stopped, don'\''t unregister the service from launching at login (or boot)]' \
+    '(--no-wait)--max-wait[Wait at most this many seconds for `stop` to finish stopping a service. Omit this flag or set this to zero (0) seconds to wait indefinitely]' \
+    '(--max-wait)--no-wait[Don'\''t wait for `stop` to finish stopping the service]' \
+    '--quiet[Make some output more quiet]' \
+    '--sudo-service-user[When run as root on macOS, run the service(s) as this user]' \
+    '--verbose[Output more detailed information]'
+}
+
+
+# brew services run
+_brew_services_run() {
+  _arguments \
+    '--all[Run on all services]' \
+    '--debug[Display any debugging information]' \
+    '--file[Use the service file from this location to `start` the service]' \
+    '--file=[Use the service file from this location to `start` the service]' \
+    '--help[Show this message]' \
+    '--json[Output as JSON]' \
+    '--keep[When stopped, don'\''t unregister the service from launching at login (or boot)]' \
+    '(--no-wait)--max-wait[Wait at most this many seconds for `stop` to finish stopping a service. Omit this flag or set this to zero (0) seconds to wait indefinitely]' \
+    '(--max-wait)--no-wait[Don'\''t wait for `stop` to finish stopping the service]' \
+    '--quiet[Make some output more quiet]' \
+    '--sudo-service-user[When run as root on macOS, run the service(s) as this user]' \
+    '--verbose[Output more detailed information]'
+}
+
+
+# brew services start
+_brew_services_start() {
+  _arguments \
+    '--all[Run on all services]' \
+    '--debug[Display any debugging information]' \
+    '--file[Use the service file from this location to `start` the service]' \
+    '--file=[Use the service file from this location to `start` the service]' \
+    '--help[Show this message]' \
+    '--json[Output as JSON]' \
+    '--keep[When stopped, don'\''t unregister the service from launching at login (or boot)]' \
+    '(--no-wait)--max-wait[Wait at most this many seconds for `stop` to finish stopping a service. Omit this flag or set this to zero (0) seconds to wait indefinitely]' \
+    '(--max-wait)--no-wait[Don'\''t wait for `stop` to finish stopping the service]' \
+    '--quiet[Make some output more quiet]' \
+    '--sudo-service-user[When run as root on macOS, run the service(s) as this user]' \
+    '--verbose[Output more detailed information]'
+}
+
+
+# brew services stop
+_brew_services_stop() {
+  _arguments \
+    '--all[Run on all services]' \
+    '--debug[Display any debugging information]' \
+    '--file[Use the service file from this location to `start` the service]' \
+    '--help[Show this message]' \
+    '--json[Output as JSON]' \
+    '--keep[When stopped, don]' \
+    '(--no-wait)--max-wait[Wait at most this many seconds for `stop` to finish stopping a service. Omit this flag or set this to zero (0) seconds to wait indefinitely]' \
+    '--max-wait=[Wait at most this many seconds for `stop` to finish stopping a service. ]' \
+    '(--max-wait)--no-wait[Don]' \
+    '--quiet[Make some output more quiet]' \
+    '--sudo-service-user[When run as root on macOS, run the service(s) as this user]' \
+    '--verbose[Output more detailed information]'
+}
+
+
+# brew services kill
+_brew_services_kill() {
+  _arguments \
+    '--all[Run on all services]' \
+    '--debug[Display any debugging information]' \
+    '--file[Use the service file from this location to `start` the service]' \
+    '--help[Show this message]' \
+    '--json[Output as JSON]' \
+    '--keep[When stopped, don'\''t unregister the service from launching at login (or boot)]' \
+    '(--no-wait)--max-wait[Wait at most this many seconds for `stop` to finish stopping a service. Omit this flag or set this to zero (0) seconds to wait indefinitely]' \
+    '(--max-wait)--no-wait[Don'\''t wait for `stop` to finish stopping the service]' \
+    '--quiet[Make some output more quiet]' \
+    '--sudo-service-user[When run as root on macOS, run the service(s) as this user]' \
+    '--verbose[Output more detailed information]'
+}
+
+
+# brew services restart
+_brew_services_restart() {
+  _arguments \
+    '--all[Run on all services]' \
+    '--debug[Display any debugging information]' \
+    '--file[Use the service file from this location to `start` the service]' \
+    '--file=[Use the service file from this location to `start` the service]' \
+    '--help[Show this message]' \
+    '--json[Output as JSON]' \
+    '--keep[When stopped, don'\''t unregister the service from launching at login (or boot)]' \
+    '(--no-wait)--max-wait[Wait at most this many seconds for `stop` to finish stopping a service. Omit this flag or set this to zero (0) seconds to wait indefinitely]' \
+    '(--max-wait)--no-wait[Don'\''t wait for `stop` to finish stopping the service]' \
+    '--quiet[Make some output more quiet]' \
+    '--sudo-service-user[When run as root on macOS, run the service(s) as this user]' \
+    '--verbose[Output more detailed information]'
+}
+
+
+# brew services cleanup
+_brew_services_cleanup() {
+  _arguments \
+    '--all[Run subcommand on all services]' \
+    '--debug[Display any debugging information]' \
+    '--file[Use the service file from this location to `start` the service]' \
+    '--help[Show this message]' \
+    '--json[Output as JSON]' \
+    '--keep[When stopped, don'\''t unregister the service from launching at login (or boot)]' \
+    '(--no-wait)--max-wait[Wait at most this many seconds for `stop` to finish stopping a service. Omit this flag or set this to zero (0) seconds to wait indefinitely]' \
+    '(--max-wait)--no-wait[Don'\''t wait for `stop` to finish stopping the service]' \
+    '--quiet[Make some output more quiet]' \
+    '--sudo-service-user[When run as root on macOS, run the service(s) as this user]' \
+    '--verbose[Make some output more verbose]'
+}
+
+
+# brew services
+_brew_services() {
+  if (( CURRENT > 2 )); then
+    local subcmd=${words[2]}
+    case "$subcmd" in
+      list) _brew_services_list ;;
+          info) _brew_services_info ;;
+          run) _brew_services_run ;;
+          start) _brew_services_start ;;
+          stop) _brew_services_stop ;;
+          kill) _brew_services_kill ;;
+          restart) _brew_services_restart ;;
+          cleanup) _brew_services_cleanup ;;
+      *) _arguments \
+         '--all[Run subcommand on all services]' \
+    '--debug[Display any debugging information]' \
+    '--file[Use the service file from this location to `start` the service]' \
+    '--help[Show this message]' \
+    '--json[Output as JSON]' \
+    '--keep[When stopped, don'\''t unregister the service from launching at login (or boot)]' \
+    '(--no-wait)--max-wait[Wait at most this many seconds for `stop` to finish stopping a service. Omit this flag or set this to zero (0) seconds to wait indefinitely]' \
+    '(--max-wait)--no-wait[Don'\''t wait for `stop` to finish stopping the service]' \
+    '--quiet[Make some output more quiet]' \
+    '--sudo-service-user[When run as root on macOS, run the service(s) as this user]' \
+    '--verbose[Make some output more verbose]' \
+    - subcommand \
+    '*::subcommand:(list info run start stop kill restart cleanup)' ;;
+    esac
+  else
+    _arguments \
+      '--all[Run subcommand on all services]' \
     '--debug[Display any debugging information]' \
     '--file[Use the service file from this location to `start` the service]' \
     '--help[Show this message]' \
@@ -1907,6 +2549,7 @@ _brew_services() {
     '--verbose[Make some output more verbose]' \
     - subcommand \
     '*::subcommand:(list info run start stop kill restart cleanup)'
+  fi
 }
 
 # brew setup-ruby

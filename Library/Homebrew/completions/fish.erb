@@ -191,7 +191,8 @@ end
 function __fish_brew_complete_sub_arg -a cmd sub -d "A shortcut for defining brew subcommand arguments completions"
     set -e argv[1..2]
     # NOTE: $sub can be just a name of a subcommand (or several) or additionally any other condition
-    complete -f -c brew -n "__fish_brew_subcommand $cmd $sub" $argv
+    # This supports both traditional subcommands and AbstractSubcommand framework
+    complete -f -c brew -n "begin; __fish_brew_subcommand $cmd $sub; or begin; __fish_brew_command $cmd; and string match -q -- '$sub' (__fish_brew_args)[2]; end; end" $argv
 end
 
 

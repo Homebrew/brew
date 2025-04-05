@@ -144,9 +144,10 @@ module Homebrew
       description.gsub(/[<>]/, "").tr("\n", " ").chomp(".")
     end
 
-    sig { params(command: String).returns(T::Hash[String, String]) }
-    def self.command_options(command)
+    sig { params(command: String, subcommand: T.nilable(String)).returns(T::Hash[String, String]) }
+    def self.command_options(command, subcommand = nil)
       options = {}
+
       Commands.command_options(command)&.each do |option|
         next if option.blank?
 
@@ -159,6 +160,19 @@ module Homebrew
           options[name] = desc
         end
       end
+
+      if subcommand.present?
+        subcommand_options = Commands.subcommand_options(command, subcommand)
+        subcommand_options.each do |name, desc|
+          if name.start_with? "--[no-]"
+            options[name.gsub("[no-]", "")] = desc
+            options[name.sub("[no-]", "no-")] = desc
+          else
+            options[name] = desc
+          end
+        end
+      end
+
       options
     end
 
@@ -176,7 +190,68 @@ module Homebrew
           named_completion_string += "\n  #{BASH_NAMED_ARGS_COMPLETION_FUNCTION_MAPPING[type]}"
         end
 
-        named_completion_string += "\n  __brewcomp \"#{named_args_strings.join(" ")}\"" if named_args_strings.any?
+        if named_args_strings.any?
+          named_completion_string += "\n  __brewcomp \"#{named_args_strings.join(" ")}\""
+          subcommand_functions = []
+          named_args_strings.each do |subcommand|
+            subcommand_options = command_options(command, subcommand)
+            next if subcommand_options.empty?
+
+            subcommand_functions << <<~SUBCOMPLETION
+              _brew_#{Commands.method_name command}_#{subcommand.tr("-", "_")}() {
+                local cur="${COMP_WORDS[COMP_CWORD]}"
+                case "${cur}" in
+                  -*)
+                    __brewcomp "
+                    #{subcommand_options.keys.sort.join("\n        ")}
+                    "
+                    return
+                    ;;
+                  *) ;;
+                esac
+              }
+            SUBCOMPLETION
+          end
+
+          if subcommand_functions.any?
+            named_completion_string += "\n\n  # Handle subcommands"
+            named_completion_string += "\n  local subcmd_idx=1"
+            named_completion_string += "\n  for ((; subcmd_idx < COMP_CWORD; subcmd_idx++))"
+            named_completion_string += "\n  do"
+            named_completion_string += "\n    local subcmd=\"${COMP_WORDS[subcmd_idx]}\""
+            named_completion_string += "\n    case \"${subcmd}\" in"
+
+            named_args_strings.each do |subcommand|
+              next if command_options(command, subcommand).empty?
+
+              named_completion_string += "\n      #{subcommand})"
+              named_completion_string += "\n        _brew_#{Commands.method_name command}_#{subcommand.tr("-", "_")}"
+              named_completion_string += "\n        return"
+              named_completion_string += "\n        ;;"
+            end
+
+            named_completion_string += "\n      *) ;; # Default case"
+            named_completion_string += "\n    esac"
+            named_completion_string += "\n  done"
+
+            return <<~COMPLETION
+              #{subcommand_functions.join("\n")}
+
+              _brew_#{Commands.method_name command}() {
+                local cur="${COMP_WORDS[COMP_CWORD]}"
+                case "${cur}" in
+                  -*)
+                    __brewcomp "
+                    #{command_options(command).keys.sort.join("\n      ")}
+                    "
+                    return
+                    ;;
+                  *) ;;
+                esac#{named_completion_string}
+              }
+            COMPLETION
+          end
+        end
       end
 
       <<~COMPLETION
@@ -218,6 +293,8 @@ module Homebrew
       options = command_options(command)
 
       args_options = []
+      subcommand_completions = []
+
       if (types = Commands.named_args_type(command))
         named_args_strings, named_args_types = types.partition { |type| type.is_a? String }
 
@@ -244,6 +321,25 @@ module Homebrew
         if named_args_strings.any?
           args_options << "- subcommand"
           args_options << "*::subcommand:(#{named_args_strings.join(" ")})"
+          named_args_strings.each do |subcommand|
+            subcommand_opts = command_options(command, subcommand)
+            next if subcommand_opts.empty?
+
+            formatted_opts = subcommand_opts.sort.map do |opt, desc|
+              next opt if desc.blank?
+
+              conflicts = generate_zsh_option_exclusions(command, opt)
+              "#{conflicts}#{opt}[#{format_description desc}]"
+            end
+
+            subcommand_completions << <<~SUBCOMPLETION
+              # brew #{command} #{subcommand}
+              _brew_#{Commands.method_name command}_#{subcommand.tr("-", "_")}() {
+                _arguments \\
+                  #{formatted_opts.map { |opt| "'#{opt}'" }.join(" \\\n    ")}
+              }
+            SUBCOMPLETION
+          end
         end
       end
 
@@ -255,11 +351,33 @@ module Homebrew
       end
       options += args_options
 
+      return <<~COMPLETION if subcommand_completions.any?
+
+        #{subcommand_completions.join("\n\n")}
+
+        # brew #{command}
+        _brew_#{Commands.method_name command}() {
+          if (( CURRENT > 2 )); then
+            local subcmd=${words[2]}
+            case "$subcmd" in
+              #{named_args_strings.reject { |s| command_options(command, s).empty? }
+                                .map { |s| "#{s}) _brew_#{Commands.method_name command}_#{s.tr("-", "_")} ;;" }
+                                .join("\n          ")}
+              *) _arguments \\
+                 #{options.map { |opt| opt.start_with?("- ") ? opt : "'#{opt}'" }.join(" \\\n    ")} ;;
+            esac
+          else
+            _arguments \\
+              #{options.map { |opt| opt.start_with?("- ") ? opt : "'#{opt}'" }.join(" \\\n    ")}
+          fi
+        }
+      COMPLETION
+
       <<~COMPLETION
         # brew #{command}
         _brew_#{Commands.method_name command}() {
           _arguments \\
-            #{options.map! { |opt| opt.start_with?("- ") ? opt : "'#{opt}'" }.join(" \\\n    ")}
+            #{options.map { |opt| opt.start_with?("- ") ? opt : "'#{opt}'" }.join(" \\\n    ")}
         }
       COMPLETION
     end
@@ -318,6 +436,8 @@ module Homebrew
 
       subcommands = []
       named_args = []
+      subcommand_options = []
+
       if (types = Commands.named_args_type(command))
         named_args_strings, named_args_types = types.partition { |type| type.is_a? String }
 
@@ -341,10 +461,22 @@ module Homebrew
 
         named_args_strings.each do |subcommand|
           subcommands << "__fish_brew_complete_sub_cmd '#{command}' '#{subcommand}'"
+
+          subcmd_options = command_options(command, subcommand)
+          next if subcmd_options.empty?
+
+          subcmd_options.sort.each do |opt, desc|
+            arg_line = "# #{subcommand} subcommand options"
+            subcommand_options << arg_line unless subcommand_options.include?(arg_line)
+
+            arg_line = "__fish_brew_complete_sub_arg '#{command}' '#{subcommand}' -l #{opt.sub(/^-+/, "")}"
+            arg_line += " -d '#{format_description desc, fish: true}'" if desc.present?
+            subcommand_options << arg_line
+          end
         end
       end
 
-      lines += subcommands + options + named_args
+      lines += subcommands + options + named_args + subcommand_options
       <<~COMPLETION
         #{lines.join("\n").chomp}
       COMPLETION

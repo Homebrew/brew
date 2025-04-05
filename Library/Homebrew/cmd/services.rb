@@ -1,20 +1,18 @@
 # typed: strict
 # frozen_string_literal: true
 
-require "abstract_command"
+require "abstract_subcommand"
+require "services/cli"
 require "services/system"
 require "services/commands/list"
-require "services/commands/cleanup"
-require "services/commands/info"
-require "services/commands/restart"
-require "services/commands/run"
-require "services/commands/start"
-require "services/commands/stop"
-require "services/commands/kill"
 
 module Homebrew
   module Cmd
     class Services < AbstractCommand
+      include TargetableCommand
+      include AbstractSubcommandMod
+      include SubcommandDispatcher
+
       cmd_args do
         usage_banner <<~EOS
           `services` [<subcommand>]
@@ -63,6 +61,16 @@ module Homebrew
         named_args %w[list info run start stop kill restart cleanup]
       end
 
+      sig { returns(T.proc.params(parser: CLI::Parser).void) }
+      def self.shared_args_block
+        proc do |parser|
+          parser.flag "--file=", description: "Use the service file from this location to `start` the service."
+          parser.switch "--all", description: "Run on all services."
+          parser.switch "--json", description: "Output as JSON."
+          parser.switch "--verbose", description: "Output more detailed information."
+        end
+      end
+
       sig { override.void }
       def run
         # pbpaste's exit status is a proxy for detecting the use of reattach-to-user-namespace
@@ -94,96 +102,168 @@ module Homebrew
           Homebrew::Services::Cli.sudo_service_user = sudo_service_user
         end
 
-        # Parse arguments.
-        subcommand, *formulae = args.named
-
-        no_named_formula_commands = [
-          *Homebrew::Services::Commands::List::TRIGGERS,
-          *Homebrew::Services::Commands::Cleanup::TRIGGERS,
-        ]
-        if no_named_formula_commands.include?(subcommand)
-          raise UsageError, "The `#{subcommand}` subcommand does not accept a formula argument!" if formulae.present?
-          raise UsageError, "The `#{subcommand}` subcommand does not accept the --all argument!" if args.all?
-        end
-
-        if args.file
-          file_commands = [
-            *Homebrew::Services::Commands::Start::TRIGGERS,
-            *Homebrew::Services::Commands::Run::TRIGGERS,
-            *Homebrew::Services::Commands::Restart::TRIGGERS,
-          ]
-          if file_commands.exclude?(subcommand)
-            raise UsageError, "The `#{subcommand}` subcommand does not accept the --file= argument!"
-          elsif args.all?
-            raise UsageError,
-                  "The `#{subcommand}` subcommand does not accept the --all and --file= arguments at the same time!"
-          end
-        end
-
-        unless Homebrew::Services::Commands::Stop::TRIGGERS.include?(subcommand)
-          raise UsageError, "The `#{subcommand}` subcommand does not accept the --keep argument!" if args.keep?
-          raise UsageError, "The `#{subcommand}` subcommand does not accept the --no-wait argument!" if args.no_wait?
-          if args.max_wait
-            raise UsageError, "The `#{subcommand}` subcommand does not accept the --max-wait= argument!"
-          end
-        end
-
-        opoo "The --all argument overrides provided formula argument!" if formulae.present? && args.all?
-
-        targets = if args.all?
-          if subcommand == "start"
-            Homebrew::Services::Formulae.available_services(
-              loaded:    false,
-              skip_root: !Homebrew::Services::System.root?,
-            )
-          elsif subcommand == "stop"
-            Homebrew::Services::Formulae.available_services(
-              loaded:    true,
-              skip_root: !Homebrew::Services::System.root?,
-            )
-          else
-            Homebrew::Services::Formulae.available_services
-          end
-        elsif formulae.present?
-          formulae.map { |formula| Homebrew::Services::FormulaWrapper.new(Formulary.factory(formula)) }
-        else
-          []
-        end
-
-        # Exit successfully if --all was used but there is nothing to do
-        return if args.all? && targets.empty?
-
         if Homebrew::Services::System.systemctl?
           ENV["DBUS_SESSION_BUS_ADDRESS"] = ENV.fetch("HOMEBREW_DBUS_SESSION_BUS_ADDRESS", nil)
           ENV["XDG_RUNTIME_DIR"] = ENV.fetch("HOMEBREW_XDG_RUNTIME_DIR", nil)
         end
 
-        # Dispatch commands and aliases.
-        case subcommand.presence
-        when *Homebrew::Services::Commands::List::TRIGGERS
-          Homebrew::Services::Commands::List.run(json: args.json?)
-        when *Homebrew::Services::Commands::Cleanup::TRIGGERS
+        dispatch_subcommand(args.named.first.presence) || default_subcommand
+      end
+
+      sig { void }
+      def default_subcommand
+        args_obj = T.unsafe(args)
+        Homebrew::Services::Commands::List.run(json: args_obj.respond_to?(:json?) ? args_obj.json? : false)
+      end
+
+      class ListSubcommand < AbstractSubcommand
+        cmd_args do
+          switch "--json", description: "Output as JSON."
+        end
+
+        sig { override.void }
+        def run
+          args_obj = T.unsafe(args)
+          Homebrew::Services::Commands::List.run(json: args_obj.respond_to?(:json?) ? args_obj.json? : false)
+        end
+      end
+
+      class InfoSubcommand < AbstractSubcommand
+        include TargetableCommand
+
+        cmd_args do
+          switch "--json", description: "Output as JSON."
+          switch "--verbose", description: "Output more detailed information."
+          switch "--all", description: "Run on all services."
+        end
+
+        sig { override.void }
+        def run
+          targets = get_targets
+          args_obj = T.unsafe(args)
+          Homebrew::Services::Commands::Info.run(
+            targets,
+            verbose: args_obj.respond_to?(:verbose?) ? args_obj.verbose? : false,
+            json:    args_obj.respond_to?(:json?) ? args_obj.json? : false,
+          )
+        end
+      end
+
+      class CleanupSubcommand < AbstractSubcommand
+        sig { override.void }
+        def run
           Homebrew::Services::Commands::Cleanup.run
-        when *Homebrew::Services::Commands::Info::TRIGGERS
-          Homebrew::Services::Commands::Info.run(targets, verbose: args.verbose?, json: args.json?)
-        when *Homebrew::Services::Commands::Restart::TRIGGERS
-          Homebrew::Services::Commands::Restart.run(targets, args.file, verbose: args.verbose?)
-        when *Homebrew::Services::Commands::Run::TRIGGERS
-          Homebrew::Services::Commands::Run.run(targets, args.file, verbose: args.verbose?)
-        when *Homebrew::Services::Commands::Start::TRIGGERS
-          Homebrew::Services::Commands::Start.run(targets, args.file, verbose: args.verbose?)
-        when *Homebrew::Services::Commands::Stop::TRIGGERS
+        end
+      end
+
+      class RestartSubcommand < AbstractSubcommand
+        include TargetableCommand
+
+        cmd_args do
+          flag "--file=", description: "Use the service file from this location to `start` the service."
+          switch "--verbose", description: "Output more detailed information."
+          switch "--all", description: "Run on all services."
+        end
+
+        sig { override.void }
+        def run
+          targets = get_targets
+          args_obj = T.unsafe(args)
+          Homebrew::Services::Commands::Restart.run(
+            targets,
+            args_obj.respond_to?(:file) ? args_obj.file : nil,
+            verbose: args_obj.respond_to?(:verbose?) ? args_obj.verbose? : false,
+          )
+        end
+      end
+
+      class RunSubcommand < AbstractSubcommand
+        include TargetableCommand
+
+        cmd_args do
+          flag "--file=", description: "Use the service file from this location to `start` the service."
+          switch "--verbose", description: "Output more detailed information."
+          switch "--all", description: "Run on all services."
+        end
+
+        sig { override.void }
+        def run
+          targets = get_targets
+          args_obj = T.unsafe(args)
+          Homebrew::Services::Commands::Run.run(
+            targets,
+            args_obj.respond_to?(:file) ? args_obj.file : nil,
+            verbose: args_obj.respond_to?(:verbose?) ? args_obj.verbose? : false,
+          )
+        end
+      end
+
+      class StartSubcommand < AbstractSubcommand
+        include TargetableCommand
+
+        cmd_args do
+          flag "--file=", description: "Use the service file from this location to `start` the service."
+          switch "--verbose", description: "Output more detailed information."
+          switch "--all", description: "Run on all services."
+        end
+
+        sig { override.void }
+        def run
+          targets = get_targets(loaded: false)
+          args_obj = T.unsafe(args)
+          Homebrew::Services::Commands::Start.run(
+            targets,
+            args_obj.respond_to?(:file) ? args_obj.file : nil,
+            verbose: args_obj.respond_to?(:verbose?) ? args_obj.verbose? : false,
+          )
+        end
+      end
+
+      class StopSubcommand < AbstractSubcommand
+        include TargetableCommand
+
+        cmd_args do
+          switch "--verbose", description: "Output more detailed information."
+          switch "--all", description: "Run on all services."
+          switch "--keep",
+                 description: "When stopped, don't unregister the service from launching at login (or boot)."
+          switch "--no-wait", description: "Don't wait for `stop` to finish stopping the service."
+          flag "--max-wait=",
+               description: "Wait at most this many seconds for `stop` to finish stopping a service. " \
+                            "Omit this flag or set this to zero (0) seconds to wait indefinitely."
+          conflicts "--max-wait=", "--no-wait"
+        end
+
+        sig { override.void }
+        def run
+          targets = get_targets(loaded: true)
+          args_obj = T.unsafe(args)
           Homebrew::Services::Commands::Stop.run(
             targets,
-            verbose:  args.verbose?,
-            no_wait:  args.no_wait?,
-            max_wait: args.max_wait.to_f,
-            keep:     args.keep?,
+            verbose:  args_obj.respond_to?(:verbose?) ? args_obj.verbose? : false,
+            no_wait:  args_obj.respond_to?(:no_wait?) ? args_obj.no_wait? : false,
+            max_wait: (args_obj.respond_to?(:max_wait) && args_obj.max_wait) ? args_obj.max_wait.to_f : 0.0,
+            keep:     args_obj.respond_to?(:keep?) ? args_obj.keep? : false,
           )
-        when *Homebrew::Services::Commands::Kill::TRIGGERS
-          Homebrew::Services::Commands::Kill.run(targets, verbose: args.verbose?)
-        else
-          raise UsageError, "unknown subcommand: `#{subcommand}`"
+        end
+      end
+
+      class KillSubcommand < AbstractSubcommand
+        include TargetableCommand
+
+        cmd_args do
+          switch "--verbose", description: "Output more detailed information."
+          switch "--all", description: "Run on all services."
+        end
+
+        sig { override.void }
+        def run
+          targets = get_targets
+          args_obj = T.unsafe(args)
+          Homebrew::Services::Commands::Kill.run(
+            targets,
+            verbose: args_obj.respond_to?(:verbose?) ? args_obj.verbose? : false,
+          )
         end
       end
     end
