@@ -62,6 +62,48 @@ RSpec.describe Homebrew::DevCmd::BumpCaskPr do
 
   it_behaves_like "parseable arguments"
 
+  describe "::shortened_version" do
+    context "when `cask.version` is `nil`" do
+      let(:c_no_version) do
+        Cask::Cask.new("test-no-version") do
+          url "https://brew.sh/test-0.0.2.dmg"
+          name "Test"
+          desc "Test cask"
+          homepage "https://brew.sh"
+        end
+      end
+
+      it "raises an error" do
+        expect { bump_cask_pr.send(:shortened_version, c.version, cask: c_no_version) }
+          .to raise_error(Cask::CaskInvalidError, /invalid 'version' value: nil/i)
+      end
+    end
+
+    context "when `version` and `cask.version` have the same `before_comma` value" do
+      it "returns the full version" do
+        expect(bump_cask_pr.send(:shortened_version, c.version, cask: c)).to eq(c.version)
+      end
+    end
+
+    context "when `version` and `cask.version` do not have the same `before_comma` value" do
+      let(:c_newer_version) do
+        Cask::Cask.new("test-different-version") do
+          version "0.0.2,3"
+
+          url "https://brew.sh/test-0.0.2.dmg"
+          name "Test"
+          desc "Test cask"
+          homepage "https://brew.sh"
+        end
+      end
+
+      it "returns the `before_comma` version" do
+        expect(bump_cask_pr.send(:shortened_version, c_newer_version.version, cask: c))
+          .to eq(c_newer_version.version.before_comma)
+      end
+    end
+  end
+
   describe "::generate_system_options" do
     # We simulate a macOS version older than the newest, as the method will use
     # the host macOS version instead of the default (the newest macOS version).

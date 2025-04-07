@@ -174,7 +174,11 @@ module Homebrew
 
       sig { params(version: Cask::DSL::Version, cask: Cask::Cask).returns(Cask::DSL::Version) }
       def shortened_version(version, cask:)
-        if version.before_comma == cask.version.before_comma
+        unless (cask_version = cask.version)
+          raise Cask::CaskInvalidError.new(cask, "invalid 'version' value: #{cask_version.inspect}")
+        end
+
+        if version.before_comma == cask_version.before_comma
           version
         else
           version.before_comma
