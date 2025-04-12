@@ -317,13 +317,14 @@ on_request: true)
         already_installed_artifacts.unshift(artifact)
       end
 
-      # TODO: should we register the login_items here?
-      # if login_items?
-      #   login_items.each do |lgi|
-      #     # TODO: register the login_items here using osascript
-      #     puts "***** WILL REGISTER login_item: #{lgi}"
-      #   end
-      # end
+      if login_items?
+        @cask.login_items.each do |lgi|
+          # TODO: register the login_items here using osascript
+          ohai "***** Will REGISTER login_item: #{lgi}"
+        end
+      else
+        ohai "Skipping processing of login_items"
+      end
 
       save_config_file
       save_download_sha if @cask.version.latest?
@@ -560,6 +561,15 @@ on_request: true)
     def uninstall_artifacts(clear: false, successor: nil)
       odebug "Uninstalling artifacts"
       odebug "#{::Utils.pluralize("artifact", artifacts.length, include_count: true)} defined", artifacts
+
+      if login_items?
+        @cask.login_items.each do |lgi|
+          # TODO: unregister the login_items here using osascript
+          ohai "***** Will UNREGISTER login_item: #{lgi}"
+        end
+      else
+        ohai "Skipping processing of login_items"
+      end
 
       artifacts.each do |artifact|
         if artifact.respond_to?(:uninstall_phase)
