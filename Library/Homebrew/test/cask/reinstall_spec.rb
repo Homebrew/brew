@@ -13,6 +13,7 @@ RSpec.describe Cask::Reinstall, :cask do
       ==> Downloading file:.*caffeine.zip
       Already downloaded: .*--caffeine.zip
       ==> Uninstalling Cask local-caffeine
+      ==> Skipping processing of login_items
       ==> Backing App 'Caffeine.app' up to '.*Caffeine.app'
       ==> Removing App '.*Caffeine.app'
       ==> Purging files for version 1.2.3 of Cask local-caffeine
@@ -35,6 +36,7 @@ RSpec.describe Cask::Reinstall, :cask do
       ==> Downloading file:.*caffeine.zip
       Already downloaded: .*--caffeine.zip
       ==> Implied `brew uninstall --cask local-caffeine`
+      ==> Skipping processing of login_items
       ==> Backing App 'Caffeine.app' up to '.*Caffeine.app'
       ==> Removing App '.*Caffeine.app'
       ==> Dispatching zap stanza

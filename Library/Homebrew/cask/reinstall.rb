@@ -18,7 +18,7 @@ module Cask
       require_sha: false,
       quarantine: false,
       zap: false,
-      login_items: false
+      login_items: true
     )
       require "cask/installer"
 
