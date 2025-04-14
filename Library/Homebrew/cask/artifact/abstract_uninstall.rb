@@ -20,7 +20,8 @@ module Cask
         :launchctl,
         :quit,
         :signal,
-        :login_item, # DEPRECATED: Need to remove once the casks have been fixed
+        # odeprecated: deprecate when all casks have been migrated to login_items
+        :login_item,
         :kext,
         :script,
         :pkgutil,
