@@ -367,7 +367,7 @@ module Cask
           end
           desc json_cask[:desc]
           homepage json_cask[:homepage]
-          login_items json_cask[:login_items] unless json_cask[:login_items].nil?
+          login_items json_cask[:login_items] if json_cask[:login_items].present?
 
           if (deprecation_date = json_cask[:deprecation_date].presence)
             reason = DeprecateDisable.to_reason_string_or_symbol json_cask[:deprecation_reason], type: :cask
