@@ -379,7 +379,7 @@ module Cask
             disable! date: disable_date, because: reason
           end
 
-          auto_updates json_cask[:auto_updates] unless json_cask[:auto_updates].nil?
+          auto_updates json_cask[:auto_updates] if json_cask[:auto_updates].present?
           conflicts_with(**json_cask[:conflicts_with]) if json_cask[:conflicts_with].present?
 
           if json_cask[:depends_on].present?
