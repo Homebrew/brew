@@ -5,4 +5,4 @@ link: "https://github.com/Homebrew/brew/blob/HEAD/docs/Prose-Style-Guidelines.md
 scope: sentence
 level: error
 tokens:
-  - '(?:[^,]+,){1,}\s\w+,\sand'
+  - '(?:[^,]+,){1,}\s\w+,\s(and|n?or)'
