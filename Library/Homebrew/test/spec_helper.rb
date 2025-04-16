@@ -305,6 +305,9 @@ RSpec.configure do |config|
         CoreTap.instance.path/"style_exceptions",
         CoreTap.instance.path/"pypi_formula_mappings.json",
         *Pathname.glob("#{HOMEBREW_CELLAR}/*/"),
+        HOMEBREW_LIBRARY_PATH/"test/.vscode",
+        HOMEBREW_LIBRARY_PATH/"test/.cursor",
+        HOMEBREW_LIBRARY_PATH/"test/Library",
       ]
 
       files_after_test = Test::Helper::Files.find_files

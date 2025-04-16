@@ -111,6 +111,14 @@ module Homebrew
           # For commands which aren't either absolute or relative
           raise "command was not found in your PATH: #{command}" if command.exclude?("/") && which(command).nil?
 
+          %w[HOMEBREW_TEMP TMPDIR HOMEBREW_TMPDIR].each do |var|
+            value = ENV.fetch(var, nil)
+            next if value.blank?
+            next if File.writable?(value)
+
+            ENV.delete(var)
+          end
+
           if subcommand == "env"
             ENV.sort.each do |key, value|
               # No need to export empty values.

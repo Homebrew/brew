@@ -1,13 +1,10 @@
 # typed: true # rubocop:todo Sorbet/StrictSigil
 # frozen_string_literal: true
 
-require "mutex_m"
 require "ignorable"
 
 # Helper module for debugging formulae.
 module Debrew
-  extend Mutex_m
-
   # Module for allowing to debug formulae.
   module Formula
     def install
@@ -68,18 +65,18 @@ module Debrew
     end
   end
 
-  @active = false
+  @mutex = nil
   @debugged_exceptions = Set.new
 
   class << self
     attr_reader :debugged_exceptions
 
     sig { returns(T::Boolean) }
-    def active? = @active
+    def active? = !@mutex.nil?
   end
 
   def self.debrew
-    @active = true
+    @mutex = Mutex.new
     Ignorable.hook_raise
 
     begin
@@ -90,12 +87,12 @@ module Debrew
       e.ignore if debug(e) == :ignore # execution jumps back to where the exception was thrown
     ensure
       Ignorable.unhook_raise
-      @active = false
+      @mutex = nil
     end
   end
 
   def self.debug(exception)
-    raise(exception) if !active? || !debugged_exceptions.add?(exception) || !mu_try_lock
+    raise(exception) if !active? || !debugged_exceptions.add?(exception) || !@mutex.try_lock
 
     begin
       puts exception.backtrace.first
@@ -115,7 +112,7 @@ module Debrew
               set_trace_func proc { |event, _, _, id, binding, klass|
                 if klass == Object && id == :raise && event == "return"
                   set_trace_func(nil)
-                  mu_synchronize do
+                  @mutex.synchronize do
                     require "debrew/irb"
                     IRB.start_within(binding)
                   end
@@ -133,7 +130,7 @@ module Debrew
         end
       end
     ensure
-      mu_unlock
+      @mutex.unlock
     end
   end
 end
