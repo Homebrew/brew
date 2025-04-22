@@ -88,7 +88,7 @@ module Homebrew
         conflicts "--no-audit", "--online"
         conflicts "--url", "--tag"
 
-        named_args :named_formula, max: 1, without_api: true
+        named_args :formula, max: 1, without_api: true
       end
 
       sig { override.void }
@@ -104,17 +104,17 @@ module Homebrew
         # Use the user's browser, too.
         ENV["BROWSER"] = Homebrew::EnvConfig.browser
 
-        named_formula = args.named.to_formulae.first
-        raise FormulaUnspecifiedError if named_formula.blank?
+        formula = args.named.to_formulae.first
+        raise FormulaUnspecifiedError if formula.blank?
 
-        odie "This formula is disabled!" if named_formula.disabled?
-        odie "This formula is deprecated and does not build!" if named_formula.deprecation_reason == :does_not_build
-        tap = named_formula.tap
+        odie "This formula is disabled!" if formula.disabled?
+        odie "This formula is deprecated and does not build!" if formula.deprecation_reason == :does_not_build
+        tap = formula.tap
         odie "This formula is not in a tap!" if tap.blank?
         odie "This formula's tap is not a Git repository!" unless tap.git?
 
-        odie <<~EOS unless tap.allow_bump?(named_formula.name)
-          Whoops, the #{named_formula.name} formula has its version update
+        odie <<~EOS unless tap.allow_bump?(formula.name)
+          Whoops, the #{formula.name} formula has its version update
           pull requests automatically opened by BrewTestBot every ~3 hours!
           We'd still love your contributions, though, so try another one
           that's not in the autobump list:
@@ -123,8 +123,8 @@ module Homebrew
 
         odie "You have too many PRs open: close or merge some first!" if GitHub.too_many_open_prs?(tap)
 
-        named_formula_spec = named_formula.stable
-        odie "#{named_formula}: no stable specification found!" if named_formula_spec.blank?
+        formula_spec = formula.stable
+        odie "#{formula}: no stable specification found!" if formula_spec.blank?
 
         # This will be run by `brew audit` later so run it first to not start
         # spamming during normal output.
@@ -135,7 +135,7 @@ module Homebrew
         remote_branch = tap.git_repository.origin_branch_name
         previous_branch = "-"
 
-        check_pull_requests(named_formula, tap_remote_repo, state: "open")
+        check_pull_requests(formula, tap_remote_repo, state: "open")
 
         all_formulae = []
         if args.bump_synced.present?
@@ -149,44 +149,44 @@ module Homebrew
         return if all_formulae.empty?
 
         commits = all_formulae.filter_map do |formula_name|
-          formula = Formula[formula_name]
-          raise FormulaUnspecifiedError if formula.blank?
+          commit_formula = Formula[formula_name]
+          raise FormulaUnspecifiedError if commit_formula.blank?
 
-          formula_spec = formula.stable
-          odie "#{formula}: no stable specification found!" if formula_spec.blank?
+          commit_formula_spec = commit_formula.stable
+          odie "#{commit_formula}: no stable specification found!" if commit_formula_spec.blank?
 
           formula_pr_message = ""
 
           new_url = args.url
           new_version = args.version
-          check_new_version(formula, tap_remote_repo, version: new_version) if new_version.present?
+          check_new_version(commit_formula, tap_remote_repo, version: new_version) if new_version.present?
 
-          opoo "This formula has patches that may be resolved upstream." if formula.patchlist.present?
-          if formula.resources.any? { |resource| !resource.name.start_with?("homebrew-") }
+          opoo "This formula has patches that may be resolved upstream." if commit_formula.patchlist.present?
+          if commit_formula.resources.any? { |resource| !resource.name.start_with?("homebrew-") }
             opoo "This formula has resources that may need to be updated."
           end
 
-          old_mirrors = formula_spec.mirrors
+          old_mirrors = commit_formula_spec.mirrors
           new_mirrors ||= args.mirror
           if new_url.present? && (new_mirror = determine_mirror(new_url))
             new_mirrors ||= [new_mirror]
-            check_for_mirrors(formula.name, old_mirrors, new_mirrors)
+            check_for_mirrors(commit_formula.name, old_mirrors, new_mirrors)
           end
 
-          old_hash = formula_spec.checksum&.hexdigest
+          old_hash = commit_formula_spec.checksum&.hexdigest
           new_hash = args.sha256
           new_tag = args.tag
           new_revision = args.revision
-          old_url = T.must(formula_spec.url)
-          old_tag = formula_spec.specs[:tag]
-          old_formula_version = formula_version(formula)
+          old_url = T.must(commit_formula_spec.url)
+          old_tag = commit_formula_spec.specs[:tag]
+          old_formula_version = formula_version(commit_formula)
           old_version = old_formula_version.to_s
           forced_version = new_version.present?
           new_url_hash = if new_url.present? && new_hash.present?
-            check_new_version(formula, tap_remote_repo, url: new_url) if new_version.blank?
+            check_new_version(commit_formula, tap_remote_repo, url: new_url) if new_version.blank?
             true
           elsif new_tag.present? && new_revision.present?
-            check_new_version(formula, tap_remote_repo, url: old_url, tag: new_tag) if new_version.blank?
+            check_new_version(commit_formula, tap_remote_repo, url: old_url, tag: new_tag) if new_version.blank?
             false
           elsif old_hash.blank?
             if new_tag.blank? && new_version.blank? && new_revision.blank?
@@ -201,17 +201,17 @@ module Homebrew
                   and old tag are both #{new_tag}.
                 EOS
               end
-              check_new_version(formula, tap_remote_repo, url: old_url, tag: new_tag) if new_version.blank?
-              resource_path, forced_version = fetch_resource_and_forced_version(formula, new_version, old_url,
+              check_new_version(commit_formula, tap_remote_repo, url: old_url, tag: new_tag) if new_version.blank?
+              resource_path, forced_version = fetch_resource_and_forced_version(commit_formula, new_version, old_url,
                                                                                 tag: new_tag)
               new_revision = Utils.popen_read("git", "-C", resource_path.to_s, "rev-parse", "-q", "--verify", "HEAD")
               new_revision = new_revision.strip
             elsif new_revision.blank?
-              odie "#{formula}: the current URL requires specifying a `--revision=` argument."
+              odie "#{commit_formula}: the current URL requires specifying a `--revision=` argument."
             end
             false
           elsif new_url.blank? && new_version.blank?
-            raise UsageError, "#{formula}: no `--url` or `--version` argument specified!"
+            raise UsageError, "#{commit_formula}: no `--url` or `--version` argument specified!"
           else
             next unless new_version.present?
 
@@ -231,21 +231,21 @@ module Homebrew
                   #{new_url}
               EOS
             end
-            check_new_version(formula, tap_remote_repo, url: new_url) if new_version.blank?
-            resource_path, forced_version = fetch_resource_and_forced_version(formula, new_version, new_url)
+            check_new_version(commit_formula, tap_remote_repo, url: new_url) if new_version.blank?
+            resource_path, forced_version = fetch_resource_and_forced_version(commit_formula, new_version, new_url)
             Utils::Tar.validate_file(resource_path)
             new_hash = resource_path.sha256
           end
 
           replacement_pairs = []
-          if formula.revision.nonzero?
+          if commit_formula.revision.nonzero?
             replacement_pairs << [
               /^  revision \d+\n(\n(  head "))?/m,
               "\\2",
             ]
           end
 
-          replacement_pairs += formula_spec.mirrors.map do |mirror|
+          replacement_pairs += commit_formula_spec.mirrors.map do |mirror|
             [
               / +mirror "#{Regexp.escape(mirror)}"\n/m,
               "",
@@ -255,7 +255,7 @@ module Homebrew
           replacement_pairs += if new_url_hash.present?
             [
               [
-                /#{Regexp.escape(T.must(formula_spec.url))}/,
+                /#{Regexp.escape(T.must(commit_formula_spec.url))}/,
                 new_url,
               ],
               [
@@ -266,35 +266,35 @@ module Homebrew
           elsif new_tag.present?
             [
               [
-                /tag:(\s+")#{formula_spec.specs[:tag]}(?=")/,
+                /tag:(\s+")#{commit_formula_spec.specs[:tag]}(?=")/,
                 "tag:\\1#{new_tag}\\2",
               ],
               [
-                formula_spec.specs[:revision],
+                commit_formula_spec.specs[:revision],
                 new_revision,
               ],
             ]
           elsif new_url.present?
             [
               [
-                /#{Regexp.escape(T.must(formula_spec.url))}/,
+                /#{Regexp.escape(T.must(commit_formula_spec.url))}/,
                 new_url,
               ],
               [
-                formula_spec.specs[:revision],
+                commit_formula_spec.specs[:revision],
                 new_revision,
               ],
             ]
           else
             [
               [
-                formula_spec.specs[:revision],
+                commit_formula_spec.specs[:revision],
                 new_revision,
               ],
             ]
           end
 
-          old_contents = formula.path.read
+          old_contents = commit_formula.path.read
 
           if new_mirrors.present? && new_url.present?
             replacement_pairs << [
@@ -331,28 +331,28 @@ module Homebrew
               "",
             ]
           end
-          new_contents = Utils::Inreplace.inreplace_pairs(formula.path,
+          new_contents = Utils::Inreplace.inreplace_pairs(commit_formula.path,
                                                           replacement_pairs.uniq.compact,
                                                           read_only_run: args.dry_run?,
                                                           silent:        args.quiet?)
 
-          new_formula_version = formula_version(formula, new_contents)
+          new_formula_version = formula_version(commit_formula, new_contents)
 
           if new_formula_version < old_formula_version
-            formula.path.atomic_write(old_contents) unless args.dry_run?
+            commit_formula.path.atomic_write(old_contents) unless args.dry_run?
             odie <<~EOS
               You need to bump this formula manually since changing the version
               from #{old_formula_version} to #{new_formula_version} would be a downgrade.
             EOS
           elsif new_formula_version == old_formula_version
-            formula.path.atomic_write(old_contents) unless args.dry_run?
+            commit_formula.path.atomic_write(old_contents) unless args.dry_run?
             odie <<~EOS
               You need to bump this formula manually since the new version
               and old version are both #{new_formula_version}.
             EOS
           end
 
-          alias_rename = alias_update_pair(formula, new_formula_version)
+          alias_rename = alias_update_pair(commit_formula, new_formula_version)
           if alias_rename.present?
             ohai "Renaming alias #{alias_rename.first} to #{alias_rename.last}"
             alias_rename.map! { |a| tap.alias_dir/a }
@@ -368,11 +368,11 @@ module Homebrew
                                                               silent:                   args.quiet?,
                                                               ignore_non_pypi_packages: true
 
-            update_matching_version_resources! formula,
+            update_matching_version_resources! commit_formula,
                                                version: new_formula_version.to_s
           end
 
-          if resources_checked.nil? && formula.resources.any? do |resource|
+          if resources_checked.nil? && commit_formula.resources.any? do |resource|
             resource.livecheck.formula != :parent && !resource.name.start_with?("homebrew-")
           end
             formula_pr_message += <<~EOS
@@ -405,12 +405,12 @@ module Homebrew
           end
 
           {
-            sourcefile_path:    formula.path,
+            sourcefile_path:    commit_formula.path,
             old_contents:,
-            commit_message:     "#{formula.name} #{args.version}",
+            commit_message:     "#{commit_formula.name} #{args.version}",
             additional_files:   alias_rename,
             formula_pr_message:,
-            formula_name:       formula.name,
+            formula_name:       commit_formula.name,
             new_version:        new_formula_version,
           }
         end
@@ -438,7 +438,7 @@ module Homebrew
 
         new_formula_version = T.must(commits.first)[:new_version]
         pr_title = if args.bump_synced.nil?
-          "#{named_formula.name} #{new_formula_version}"
+          "#{formula.name} #{new_formula_version}"
         else
           "#{Array(args.bump_synced).join(" ")} #{new_formula_version}"
         end
@@ -455,7 +455,7 @@ module Homebrew
           commits:,
           remote:,
           remote_branch:,
-          branch_name:     "bump-#{named_formula.name}-#{new_formula_version}",
+          branch_name:     "bump-#{formula.name}-#{new_formula_version}",
           pr_title:,
           previous_branch:,
           tap:             tap,
