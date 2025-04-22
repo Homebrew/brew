@@ -303,7 +303,7 @@ module Homebrew
         ).returns(VersionBumpInfo)
       }
       def retrieve_versions_by_arch(formula_or_cask:, repositories:, name:)
-        is_cask_with_blocks = formula_or_cask.is_a?(Cask::Cask) && formula_or_cask.on_system_blocks_exist?
+        is_cask_with_blocks = formula_or_cask.is_a?(Cask::Cask) && formula_or_cask.uses_on_system.present?
         type, version_name = if formula_or_cask.is_a?(Formula)
           [:formula, "formula version:"]
         else

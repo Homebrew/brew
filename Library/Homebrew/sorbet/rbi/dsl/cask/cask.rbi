@@ -138,9 +138,6 @@ class Cask::Cask
   sig { params(args: T.untyped, block: T.untyped).returns(T.nilable(MacOSVersion)) }
   def on_system_block_min_os(*args, &block); end
 
-  sig { params(args: T.untyped, block: T.untyped).returns(T::Boolean) }
-  def on_system_blocks_exist?(*args, &block); end
-
   sig { params(args: T.untyped, block: T.untyped).returns(T.untyped) }
   def os(*args, &block); end
 
@@ -188,6 +185,9 @@ class Cask::Cask
 
   sig { params(args: T.untyped, block: T.untyped).returns(T.nilable(::Cask::URL)) }
   def url(*args, &block); end
+
+  sig { params(args: T.untyped, block: T.untyped).returns(T.untyped) }
+  def uses_on_system(*args, &block); end
 
   sig { params(args: T.untyped, block: T.untyped).returns(T.untyped) }
   def version(*args, &block); end

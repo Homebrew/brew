@@ -409,7 +409,7 @@ module Cask
       hash = to_h
       variations = {}
 
-      if @dsl.on_system_blocks_exist?
+      if @dsl.uses_on_system.present?
         begin
           OnSystem::ALL_OS_ARCH_COMBINATIONS.each do |os, arch|
             bottle_tag = ::Utils::Bottles::Tag.new(system: os, arch:)

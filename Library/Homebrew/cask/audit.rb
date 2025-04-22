@@ -715,7 +715,7 @@ module Cask
       cask_min_os = [on_system_block_min_os, cask.depends_on.macos&.minimum_version].compact.max
       odebug "Declared minimum OS version: #{cask_min_os&.to_sym}"
       return if cask_min_os&.to_sym == min_os.to_sym
-      return if cask.on_system_blocks_exist? &&
+      return if cask.uses_on_system.present? &&
                 OnSystem.arch_condition_met?(:arm) &&
                 cask_min_os.present? &&
                 cask_min_os < MacOSVersion.new("11")

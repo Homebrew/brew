@@ -194,7 +194,7 @@ module Homebrew
         # to on_system blocks referencing macOS versions.
         os_values = []
         arch_values = depends_on_archs.presence || []
-        if cask.on_system_blocks_exist?
+        if cask.uses_on_system.present?
           OnSystem::BASE_OS_OPTIONS.each do |os|
             os_values << if os == :macos
               (current_os_is_macos ? current_os : newest_macos)
@@ -230,7 +230,7 @@ module Homebrew
             old_cask = begin
               Cask::CaskLoader.load(cask.sourcefile_path)
             rescue Cask::CaskInvalidError, Cask::CaskUnreadableError
-              raise unless cask.on_system_blocks_exist?
+              raise unless cask.uses_on_system.present?
             end
             next if old_cask.nil?
 
@@ -257,7 +257,7 @@ module Homebrew
               replacement_pairs << [/"#{old_hash}"/, ":no_check"] if old_hash != :no_check
             elsif old_hash == :no_check && new_hash != :no_check
               replacement_pairs << [":no_check", "\"#{new_hash}\""] if new_hash.is_a?(String)
-            elsif new_hash && !cask.on_system_blocks_exist? && cask.languages.empty?
+            elsif new_hash && cask.uses_on_system.blank? && cask.languages.empty?
               replacement_pairs << [old_hash.to_s, new_hash.to_s]
             elsif old_hash != :no_check
               opoo "Multiple checksum replacements required; ignoring specified `--sha256` argument." if new_hash

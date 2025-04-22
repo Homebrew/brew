@@ -66,7 +66,7 @@ module Readall
       readall_formula = readall_formula_class.new(formula_name, file, :stable, tap:)
       readall_formula.to_hash
       # TODO: Remove check for MACOS_MODULE_REGEX once the `MacOS` module is undefined on Linux
-      cache[:valid_formulae][file] = if readall_formula.on_system_blocks_exist? ||
+      cache[:valid_formulae][file] = if readall_formula.uses_on_system.present? ||
                                         formula_contents.match?(MACOS_MODULE_REGEX)
         [bottle_tag, *cache[:valid_formulae][file]]
       else
