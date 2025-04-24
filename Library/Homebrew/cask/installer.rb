@@ -317,13 +317,15 @@ on_request: true)
         already_installed_artifacts.unshift(artifact)
       end
 
-      if login_items?
-        @cask.login_items.each do |lgi|
-          # TODO: register the login_items here using osascript
-          ohai "***** Will REGISTER login_item: #{lgi}"
+      unless @cask.login_items.empty?
+        if login_items?
+          @cask.login_items.each do |lgi|
+            # TODO: register the login_items here using osascript
+            ohai "***** Will REGISTER login_item: #{lgi}"
+          end
+        else
+          ohai "Skipping processing of login_items"
         end
-      else
-        ohai "Skipping processing of login_items"
       end
 
       save_config_file
