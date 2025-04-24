@@ -17,7 +17,7 @@ GEM
       bindata (~> 2)
     erubi (1.13.1)
     hana (1.3.7)
-    json (2.10.2)
+    json (2.11.2)
     json_schemer (2.4.0)
       bigdecimal
       hana (~> 1.3)
@@ -161,7 +161,6 @@ GEM
 
 PLATFORMS
   aarch64-linux
-  arm-linux
   arm64-darwin
   x86_64-darwin
   x86_64-linux
