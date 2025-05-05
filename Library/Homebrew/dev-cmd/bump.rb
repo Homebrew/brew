@@ -55,6 +55,8 @@ module Homebrew
                description: "Letter or word that the list of package results should alphabetically follow."
         switch "--bump-synced",
                description: "Bump additional formulae marked as synced with the given formulae."
+        switch "--online-audit",
+               description: "Do online audit before opening pull request."
 
         conflicts "--cask", "--formula"
         conflicts "--tap=", "--installed"
@@ -62,6 +64,7 @@ module Homebrew
         conflicts "--eval-all", "--installed"
         conflicts "--installed", "--auto"
         conflicts "--no-pull-requests", "--open-pr"
+        conflicts "--no-pull-requests", "--online-audit"
 
         named_args [:formula, :cask], without_api: true
       end
@@ -532,6 +535,9 @@ module Homebrew
         ]
 
         bump_pr_args << "--no-fork" if args.no_fork?
+        bump_pr_args << "--online" if version_info.type == :formula &&
+                                      args.online_audit? &&
+                                      ENV["HOMEBREW_TEST_BOT_AUTOBUMP"].blank?
 
         if args.bump_synced? && outdated_synced_formulae.present?
           bump_pr_args << "--bump-synced=#{outdated_synced_formulae.join(",")}"

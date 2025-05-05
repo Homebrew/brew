@@ -48,6 +48,9 @@ class Homebrew::DevCmd::Bump::Args < Homebrew::CLI::Args
   def no_pull_requests?; end
 
   sig { returns(T::Boolean) }
+  def online_audit?; end
+
+  sig { returns(T::Boolean) }
   def open_pr?; end
 
   sig { returns(T::Boolean) }
