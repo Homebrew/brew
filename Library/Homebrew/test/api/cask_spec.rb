@@ -63,7 +63,7 @@ RSpec.describe Homebrew::API::Cask do
     it "specifies the correct URL and sha256" do
       expect(Homebrew::API::Download).to receive(:new).with(
         "https://raw.githubusercontent.com/Homebrew/homebrew-cask/abcdef1234567890abcdef1234567890abcdef12/Casks/everything.rb",
-        Checksum.new("d8d0d6b2e5ff65388eccb82236fd3aa157b4a29bb043a1f72b97f0e9b70e8320"),
+        Checksum.new("d7a759cd17d00bb89a2bb58322d880d2f7df8cf318661599aca786bbf53aad61"),
         any_args,
       ).and_call_original
       described_class.source_download(cask)
