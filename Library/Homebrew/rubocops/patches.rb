@@ -59,6 +59,15 @@ module RuboCop
             problem "GitHub patches should end with .patch, not .diff: #{patch_url}"
           end
 
+          bitbucket_regex = %r{bitbucket\.org/([^/]+)/([^/]+)/commits/([a-f0-9]+)/raw}i
+          if regex_match_group(patch_url_node, bitbucket_regex)
+            owner, repo, commit = patch_url_node.source.match(bitbucket_regex).captures
+            correct_url = "https://api.bitbucket.org/2.0/repositories/#{owner}/#{repo}/diff/#{commit}"
+            problem "Bitbucket patches should use the api url: #{correct_url}" do |corrector|
+              corrector.replace(patch_url_node.source_range, %Q("#{correct_url}"))
+            end
+          end
+
           # Only .diff passes `--full-index` to `git diff` and there is no documented way
           # to get .patch to behave the same for GitLab.
           if regex_match_group(patch_url_node, %r{.*gitlab.*/commit/[a-fA-F0-9]*\.patch})
