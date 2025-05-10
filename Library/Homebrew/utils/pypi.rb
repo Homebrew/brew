@@ -205,6 +205,8 @@ module PyPI
     return unless package.valid_pypi_package?
 
     _, url = package.pypi_info(new_version: version)
+    return if url&.end_with?("-none-any.whl")
+
     url
   rescue ArgumentError
     nil
