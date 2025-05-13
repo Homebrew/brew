@@ -4,6 +4,7 @@
 require "timeout"
 
 require "utils/user"
+require "utils/uid"
 require "cask/artifact/abstract_artifact"
 require "cask/pkg"
 require "extend/hash/keys"
@@ -74,7 +75,12 @@ module Cask
 
         args = directives[directive_sym]
 
-        send(:"uninstall_#{directive_sym}", *(args.is_a?(Hash) ? [args] : args), **options)
+        ::Utils::UID.drop_euid do
+          env = { HOME: ::Utils::UID.uid_home }.compact
+          with_env(env) do
+            send(:"uninstall_#{directive_sym}", *(args.is_a?(Hash) ? [args] : args), **options)
+          end
+        end
       end
 
       def stanza
@@ -460,12 +466,23 @@ module Cask
       def trash_paths(*paths, command: nil, **_)
         return if paths.empty?
 
+        # /usr/bin/trash is available only on macOS 15 or newer.
+        trashed_natively = if File.executable?("/usr/bin/trash")
+          system_command "/usr/bin/trash", args: paths
+          paths.reject(&:exist?)
+        else
+          []
+        end
+
+        paths_to_trash = paths - trashed_natively
+        return trashed_natively, [] if paths_to_trash.empty?
+
         stdout, = system_command HOMEBREW_LIBRARY_PATH/"cask/utils/trash.swift",
-                                 args:         paths,
+                                 args:         paths_to_trash,
                                  print_stderr: Homebrew::EnvConfig.developer?
 
         trashed, = stdout.partition("\n")
-        trashed = trashed.split(":") & paths
+        trashed = (trashed.split(":") + trashed_natively) & paths
         untrashable = paths - trashed
 
         trashed_with_permissions, untrashable = untrashable.partition do |path|
