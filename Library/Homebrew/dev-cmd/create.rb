@@ -20,6 +20,8 @@ module Homebrew
         EOS
         switch "--autotools",
                description: "Create a basic template for an Autotools-style build."
+        switch "--cabal",
+               description: "Create a basic template for a Cabal build."
         switch "--cask",
                description: "Create a basic template for a cask."
         switch "--cmake",
@@ -59,7 +61,7 @@ module Homebrew
         switch "-f", "--force",
                description: "Ignore errors for disallowed formula names and names that shadow aliases."
 
-        conflicts "--autotools", "--cmake", "--crystal", "--go", "--meson", "--node",
+        conflicts "--autotools", "--cabal", "--cmake", "--crystal", "--go", "--meson", "--node",
                   "--perl", "--python", "--ruby", "--rust", "--zig", "--cask"
         conflicts "--cask", "--HEAD"
         conflicts "--cask", "--set-license"
@@ -163,6 +165,8 @@ module Homebrew
           :crystal
         elsif args.go?
           :go
+        elsif args.cabal?
+          :cabal
         elsif args.meson?
           :meson
         elsif args.node?
