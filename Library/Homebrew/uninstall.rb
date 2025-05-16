@@ -68,6 +68,10 @@ module Homebrew
 
               unversioned_name = f.name.gsub(/@.+$/, "")
               maybe_paths = Dir.glob("#{f.etc}/*#{unversioned_name}*")
+              excluded_names = Dir.children(HOMEBREW_CELLAR)
+              maybe_paths = maybe_paths.reject do |path|
+                excluded_names.include?(File.basename(path, ".*"))
+              end
               maybe_paths -= paths if paths.present?
               if maybe_paths.present?
                 puts
