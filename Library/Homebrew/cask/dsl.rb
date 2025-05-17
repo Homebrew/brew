@@ -161,6 +161,8 @@ module Cask
       @token = T.let(cask.token, String)
       @url = T.let(nil, T.nilable(URL))
       @version = T.let(nil, T.nilable(DSL::Version))
+
+      set_no_autobump!
     end
 
     sig { returns(T::Boolean) }
@@ -174,6 +176,13 @@ module Cask
 
     sig { returns(T::Boolean) }
     def livecheck_defined? = @livecheck_defined
+
+    sig { void }
+    def set_no_autobump!
+      return if @livecheck.strategy != :extract_plist
+
+      no_autobump! because: :extract_plist
+    end
 
     sig { returns(T::Boolean) }
     def on_system_blocks_exist? = @on_system_blocks_exist
@@ -350,6 +359,8 @@ module Cask
         if !arg.is_a?(String) && arg != :latest
           raise CaskInvalidError.new(cask, "invalid 'version' value: #{arg.inspect}")
         end
+
+        no_autobump! because: :latest_version if arg == :latest
 
         DSL::Version.new(arg)
       end
