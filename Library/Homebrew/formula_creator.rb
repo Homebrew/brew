@@ -138,7 +138,10 @@ module Homebrew
           head "#{@url}"
         <% end %>
 
-        <% if @mode == :cmake %>
+        <% if @mode == :cabal %>
+          depends_on "cabal-install" => :build
+          depends_on "ghc" => :build
+        <% elsif @mode == :cmake %>
           depends_on "cmake" => :build
         <% elsif @mode == :crystal %>
           depends_on "crystal" => :build
@@ -172,7 +175,10 @@ module Homebrew
 
         <% end %>
           def install
-        <% if @mode == :cmake %>
+        <% if @mode == :cabal %>
+            system "cabal", "v2-update"
+            system "cabal", "v2-install", *std_cabal_v2_args
+        <% elsif @mode == :cmake %>
             system "cmake", "-S", ".", "-B", "build", *std_cmake_args
             system "cmake", "--build", "build"
             system "cmake", "--install", "build"
