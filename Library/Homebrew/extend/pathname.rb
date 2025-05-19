@@ -423,7 +423,7 @@ class Pathname
       script_name:  T.any(String, Pathname),
       java_opts:    String,
       java_version: T.nilable(String),
-      java_version: Hash[Symbol, String],
+      env: Hash[Symbol, String],
     ).returns(Integer)
   }
   def write_jar_script(target_jar, script_name, java_opts = "", java_version: nil, env: {})
