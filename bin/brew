@@ -139,8 +139,10 @@ export_homebrew_env_file() {
 
   env_file="${1}"
   [[ -r "${env_file}" ]] || return 0
-  while read -r line
+  local eof
+  while [[ -z "${eof}" ]]
   do
+    read -r line || eof=1
     # only load HOMEBREW_* lines
     [[ "${line}" = "HOMEBREW_"* ]] || continue
 
