@@ -18,6 +18,9 @@ class Homebrew::DevCmd::Create::Args < Homebrew::CLI::Args
   def autotools?; end
 
   sig { returns(T::Boolean) }
+  def cabal?; end
+
+  sig { returns(T::Boolean) }
   def cask?; end
 
   sig { returns(T::Boolean) }
