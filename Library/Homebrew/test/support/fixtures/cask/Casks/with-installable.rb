@@ -6,16 +6,16 @@ cask "with-installable" do
   homepage "https://brew.sh/fancy-pkg"
 
   pkg "MyFancyPkg/Fancy.pkg"
+  login_items "Fancy"
 
-  uninstall quit:       "my.fancy.package.app",
-            login_item: "Fancy",
-            script:     { executable: "MyFancyPkg/FancyUninstaller.tool", args: ["--please"] },
-            delete:     [
+  uninstall quit:   "my.fancy.package.app",
+            script: { executable: "MyFancyPkg/FancyUninstaller.tool", args: ["--please"] },
+            delete: [
               "#{TEST_TMPDIR}/absolute_path",
               "#{TEST_TMPDIR}/glob_path*",
               "/another/impermissible/../relative/path",
               "impermissible/relative/path",
               "~/path_with_tilde",
             ],
-            rmdir:      "#{TEST_TMPDIR}/empty_directory_path"
+            rmdir:  "#{TEST_TMPDIR}/empty_directory_path"
 end
