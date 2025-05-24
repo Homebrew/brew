@@ -22,7 +22,7 @@ A Tier 1 supported configuration is one in which:
 For Tier 1 support, Homebrew on macOS must be all of:
 
 - running on official Apple hardware (e.g. not a "Hackintosh" or VM)
-- running a version of macOS supported by Apple on that hardware
+- running the latest patch of a version of macOS supported by Apple on that hardware
 - running a version of macOS with Homebrew CI coverage (i.e. the latest stable or prerelease version, two preceding versions)
 - installed in the default prefix (i.e. `/opt/homebrew` on Apple Silicon, `/usr/local` on Intel x86_64)
 - running on a supported architecture (i.e. Apple Silicon or Intel x86_64)
