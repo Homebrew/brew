@@ -49,7 +49,6 @@ module Homebrew
                description: "Use the specified GitHub organization for forking."
 
         conflicts "--dry-run", "--write"
-        conflicts "--no-audit", "--online"
         conflicts "--version=", "--version-arm="
         conflicts "--version=", "--version-intel="
 
@@ -85,7 +84,9 @@ module Homebrew
           method or 'livecheck' block with 'skip'.)
         EOS
 
-        odie "You have too many PRs open: close or merge some first!" if GitHub.too_many_open_prs?(cask.tap)
+        if !args.write_only? && GitHub.too_many_open_prs?(cask.tap)
+          odie "You have too many PRs open: close or merge some first!"
+        end
 
         new_version = BumpVersionParser.new(
           general: args.version,
@@ -113,7 +114,7 @@ module Homebrew
           raise UsageError, "No `--version`, `--url` or `--sha256` argument specified!"
         end
 
-        check_pull_requests(cask, new_version:)
+        check_pull_requests(cask, new_version:) unless args.write_only?
 
         replacement_pairs ||= []
         branch_name = "bump-#{cask.token}"
@@ -136,7 +137,7 @@ module Homebrew
         end
 
         if new_version.present?
-          # For simplicity, our naming defers to the arm version if we multiple architectures are specified
+          # For simplicity, our naming defers to the arm version if multiple architectures are specified
           branch_version = new_version.arm || new_version.general
           if branch_version.is_a?(Cask::DSL::Version)
             commit_version = shortened_version(branch_version, cask:)
@@ -171,7 +172,7 @@ module Homebrew
           pr_title:    commit_message,
         }
 
-        GitHub.create_bump_pr(pr_info, args:)
+        GitHub.create_bump_pr(pr_info, args:) unless args.write_only?
       end
 
       private
