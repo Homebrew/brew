@@ -2126,7 +2126,7 @@ class Formula
       bash: bash_completion/base_name,
       zsh:  zsh_completion/"_#{base_name}",
       fish: fish_completion/"#{base_name}.fish",
-      pwsh: pwsh_completion/"#{base_name}.ps1",
+      pwsh: pwsh_completion/"_#{base_name}.ps1",
     }
 
     shells.each do |shell|
