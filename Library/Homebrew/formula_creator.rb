@@ -52,11 +52,23 @@ module Homebrew
       @name = FormulaCreator.name_from_url(@url) if @name.blank?
       odebug "name_from_url: #{@name}"
       @version = Version.detect(@url) if @version.nil?
+      odebug "Version.detect: #{@version}"
 
       m = @url.match %r{github\.com/(?<user>\S+)/(?<repo>\S+)(?<tail>.*)}
       if m
         @head = true if m[:tail] == ".git"
         @github = GitHub.repository(m[:user], m[:repo]) if @fetch
+
+        if @version.null?
+          begin
+            latest_release = GitHub.get_latest_release m[:user], m[:repo]
+          rescue GitHub::API::HTTPNotFoundError
+            odebug "latest release lookup failed: #{@url}"
+          else
+            @version = Version.new(latest_release["tag_name"])
+            odebug "version from latest_release: #{@version}"
+          end
+        end
       end
 
       return unless @version.null?
