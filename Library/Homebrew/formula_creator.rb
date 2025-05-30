@@ -3,6 +3,7 @@
 
 require "digest"
 require "erb"
+require "utils/github"
 
 module Homebrew
   # Class for generating a formula from a template.
@@ -52,17 +53,11 @@ module Homebrew
       odebug "name_from_url: #{@name}"
       @version = Version.detect(@url) if @version.nil?
 
-      case @url
-      when %r{github\.com/(\S+)/(\S+)\.git}
-        @head = true
-        user = Regexp.last_match(1)
-        repo = Regexp.last_match(2)
-        @github = GitHub.repository(user, repo) if @fetch
-      when %r{github\.com/(\S+)/(\S+)/(archive|releases)/}
-        user = Regexp.last_match(1)
-        repo = Regexp.last_match(2)
-        @github = GitHub.repository(user, repo) if @fetch
-      end
+      m = @url.match %r{github\.com/(?<user>\S+)/(?<repo>\S+)(?<tail>.*)}
+      return unless m
+
+      @head = true if m[:tail] == ".git"
+      @github = GitHub.repository(m[:user], m[:repo]) if @fetch
     end
 
     sig { returns(Pathname) }
