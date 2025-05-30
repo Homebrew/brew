@@ -54,10 +54,14 @@ module Homebrew
       @version = Version.detect(@url) if @version.nil?
 
       m = @url.match %r{github\.com/(?<user>\S+)/(?<repo>\S+)(?<tail>.*)}
-      return unless m
+      if m
+        @head = true if m[:tail] == ".git"
+        @github = GitHub.repository(m[:user], m[:repo]) if @fetch
+      end
 
-      @head = true if m[:tail] == ".git"
-      @github = GitHub.repository(m[:user], m[:repo]) if @fetch
+      return unless @version.null?
+
+      odie "Version cannot be determined from URL. Explicitly set the version with `--set-version` instead."
     end
 
     sig { returns(Pathname) }
@@ -67,10 +71,6 @@ module Homebrew
 
       path = @tap.new_formula_path(@name)
       raise "#{path} already exists" if path.exist?
-
-      if @version.nil? || @version.null?
-        odie "Version cannot be determined from URL. Explicitly set the version with `--set-version` instead."
-      end
 
       if @fetch
         unless @head
