@@ -67,6 +67,8 @@ module Homebrew
           else
             @version = Version.new(latest_release["tag_name"])
             odebug "version from latest_release: #{@version}"
+            @url = latest_release["tarball_url"]
+            odebug "url from latest_release: #{@url}"
           end
         end
       end
