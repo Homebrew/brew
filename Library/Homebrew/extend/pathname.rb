@@ -423,15 +423,19 @@ class Pathname
       script_name:  T.any(String, Pathname),
       java_opts:    String,
       java_version: T.nilable(String),
+      env:          T::Hash[String, String],
     ).returns(Integer)
   }
-  def write_jar_script(target_jar, script_name, java_opts = "", java_version: nil)
+  def write_jar_script(target_jar, script_name, java_opts = "", java_version: nil, env: {})
+    env_export = +""
+    env.each { |key, value| env_export << "#{key}=\"#{value}\" " }
+
     mkpath
-    (self/script_name).write <<~EOS
+    (self/script_name).write <<~SH
       #!/bin/bash
       export JAVA_HOME="#{Language::Java.overridable_java_home_env(java_version)[:JAVA_HOME]}"
-      exec "${JAVA_HOME}/bin/java" #{java_opts} -jar "#{target_jar}" "$@"
-    EOS
+      #{env_export}exec "${JAVA_HOME}/bin/java" #{java_opts} -jar "#{target_jar}" "$@"
+    SH
   end
 
   def install_metafiles(from = Pathname.pwd)
