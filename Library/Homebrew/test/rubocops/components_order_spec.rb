@@ -511,7 +511,7 @@ RSpec.describe RuboCop::Cop::FormulaAudit::ComponentsOrder do
           end
 
           on_macos do
-          ^^^^^^^^^^^ FormulaAudit/ComponentsOrder: there can only be one `on_macos` block in a formula.
+          ^^^^^^^^^^^ FormulaAudit/ComponentsOrder: There can only be one `on_macos` block in a formula.
             depends_on "foo"
           end
         end
@@ -527,7 +527,7 @@ RSpec.describe RuboCop::Cop::FormulaAudit::ComponentsOrder do
           end
 
           on_linux do
-          ^^^^^^^^^^^ FormulaAudit/ComponentsOrder: there can only be one `on_linux` block in a formula.
+          ^^^^^^^^^^^ FormulaAudit/ComponentsOrder: There can only be one `on_linux` block in a formula.
             depends_on "foo"
           end
         end
@@ -543,7 +543,7 @@ RSpec.describe RuboCop::Cop::FormulaAudit::ComponentsOrder do
           end
 
           on_intel do
-          ^^^^^^^^^^^ FormulaAudit/ComponentsOrder: there can only be one `on_intel` block in a formula.
+          ^^^^^^^^^^^ FormulaAudit/ComponentsOrder: There can only be one `on_intel` block in a formula.
             depends_on "foo"
           end
         end
@@ -559,7 +559,7 @@ RSpec.describe RuboCop::Cop::FormulaAudit::ComponentsOrder do
           end
 
           on_arm do
-          ^^^^^^^^^ FormulaAudit/ComponentsOrder: there can only be one `on_arm` block in a formula.
+          ^^^^^^^^^ FormulaAudit/ComponentsOrder: There can only be one `on_arm` block in a formula.
             depends_on "foo"
           end
         end
@@ -575,7 +575,7 @@ RSpec.describe RuboCop::Cop::FormulaAudit::ComponentsOrder do
           end
 
           on_monterey do
-          ^^^^^^^^^^^^^^ FormulaAudit/ComponentsOrder: there can only be one `on_monterey` block in a formula.
+          ^^^^^^^^^^^^^^ FormulaAudit/ComponentsOrder: There can only be one `on_monterey` block in a formula.
             depends_on "foo"
           end
         end
@@ -591,7 +591,7 @@ RSpec.describe RuboCop::Cop::FormulaAudit::ComponentsOrder do
           end
 
           on_monterey :or_older do
-          ^^^^^^^^^^^^^^^^^^^^^^^^ FormulaAudit/ComponentsOrder: there can only be one `on_monterey` block in a formula.
+          ^^^^^^^^^^^^^^^^^^^^^^^^ FormulaAudit/ComponentsOrder: There can only be one `on_monterey` block in a formula.
             depends_on "foo"
           end
         end
@@ -881,7 +881,7 @@ RSpec.describe RuboCop::Cop::FormulaAudit::ComponentsOrder do
             url "https://brew.sh/foo-1.0.tgz"
 
             resource do
-            ^^^^^^^^^^^ FormulaAudit/ComponentsOrder: there can only be one `on_macos` block in a resource block.
+            ^^^^^^^^^^^ FormulaAudit/ComponentsOrder: There can only be one `on_macos` block in a resource block.
               on_macos do
                 url "https://brew.sh/resource1.tar.gz"
                 sha256 "586372eb92059873e29eba4f9dec8381541b4d3834660707faf8ba59146dfc35"
@@ -902,7 +902,7 @@ RSpec.describe RuboCop::Cop::FormulaAudit::ComponentsOrder do
             url "https://brew.sh/foo-1.0.tgz"
 
             resource do
-            ^^^^^^^^^^^ FormulaAudit/ComponentsOrder: there can only be one `on_linux` block in a resource block.
+            ^^^^^^^^^^^ FormulaAudit/ComponentsOrder: There can only be one `on_linux` block in a resource block.
               on_linux do
                 url "https://brew.sh/resource1.tar.gz"
                 sha256 "586372eb92059873e29eba4f9dec8381541b4d3834660707faf8ba59146dfc35"
@@ -923,7 +923,7 @@ RSpec.describe RuboCop::Cop::FormulaAudit::ComponentsOrder do
             url "https://brew.sh/foo-1.0.tgz"
 
             resource do
-            ^^^^^^^^^^^ FormulaAudit/ComponentsOrder: there can only be one `on_intel` block in a resource block.
+            ^^^^^^^^^^^ FormulaAudit/ComponentsOrder: There can only be one `on_intel` block in a resource block.
               on_intel do
                 url "https://brew.sh/resource1.tar.gz"
                 sha256 "586372eb92059873e29eba4f9dec8381541b4d3834660707faf8ba59146dfc35"
@@ -944,7 +944,7 @@ RSpec.describe RuboCop::Cop::FormulaAudit::ComponentsOrder do
             url "https://brew.sh/foo-1.0.tgz"
 
             resource do
-            ^^^^^^^^^^^ FormulaAudit/ComponentsOrder: there can only be one `on_arm` block in a resource block.
+            ^^^^^^^^^^^ FormulaAudit/ComponentsOrder: There can only be one `on_arm` block in a resource block.
               on_arm do
                 url "https://brew.sh/resource1.tar.gz"
                 sha256 "586372eb92059873e29eba4f9dec8381541b4d3834660707faf8ba59146dfc35"
@@ -965,7 +965,7 @@ RSpec.describe RuboCop::Cop::FormulaAudit::ComponentsOrder do
             url "https://brew.sh/foo-1.0.tgz"
 
             resource do
-            ^^^^^^^^^^^ FormulaAudit/ComponentsOrder: there can only be one `on_monterey` block in a resource block.
+            ^^^^^^^^^^^ FormulaAudit/ComponentsOrder: There can only be one `on_monterey` block in a resource block.
               on_monterey do
                 url "https://brew.sh/resource1.tar.gz"
                 sha256 "586372eb92059873e29eba4f9dec8381541b4d3834660707faf8ba59146dfc35"

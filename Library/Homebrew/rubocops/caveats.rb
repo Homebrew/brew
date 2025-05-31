@@ -30,7 +30,7 @@ module RuboCop
         def audit_formula(_formula_nodes)
           caveats_strings.each do |n|
             if regex_match_group(n, /\bsetuid\b/i)
-              problem "Don't recommend `setuid` in the caveats, suggest `sudo` instead."
+              problem "Instead of recommending `setuid` in the caveats, suggest `sudo`."
             end
 
             problem "Don't use ANSI escape codes in the caveats." if regex_match_group(n, /\e/)

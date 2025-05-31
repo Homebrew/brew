@@ -114,7 +114,7 @@ module Homebrew
                 ln -s #{formula.path.to_s.gsub(formula.tap.path, "..")} #{alias_name}
             EOS
           else
-            problem "Formula has other versions so create an alias named #{alias_name}."
+            problem "Formula has other versions so create an alias named '#{alias_name}'."
           end
         end
 
@@ -153,7 +153,7 @@ module Homebrew
           next if synced_formula == name
 
           if (synced_version = Formulary.factory(synced_formula).version) != version
-            problem "Version of `#{synced_formula}` (#{synced_version}) should match version of `#{name}` (#{version})"
+            problem "Version of #{synced_formula} (#{synced_version}) should match version of #{name} (#{version})"
           end
         end
 
@@ -188,7 +188,7 @@ module Homebrew
       return if formula.core_formula?
       return unless Formula.core_names.include?(name)
 
-      problem "Formula name conflicts with existing core formula."
+      problem "Formula name conflicts with an existing formula in homebrew/core."
     end
 
     PERMITTED_LICENSE_MISMATCHES = {
@@ -226,7 +226,7 @@ module Homebrew
           problem <<~EOS
             Formula #{formula.name} contains incompatible licenses: #{incompatible_licenses}.
             Formulae in homebrew/core must either use a Debian Free Software Guidelines license
-            or be released into the public domain. See #{Formatter.url("https://docs.brew.sh/License-Guidelines")}
+            or be released into the public domain: #{Formatter.url("https://docs.brew.sh/License-Guidelines")}
           EOS
         end
 
@@ -327,7 +327,7 @@ module Homebrew
               end
             end
 
-            problem "Dependency '#{dep}' does not define option #{opt.name.inspect}"
+            problem "Dependency '#{dep}' does not define option: #{opt.name.inspect}"
           end
 
           problem "Don't use 'git' as a dependency (it's always available)" if @new_formula && dep.name == "git"
@@ -448,7 +448,7 @@ module Homebrew
 
         if T.must(tap).formula_renames.key?(conflict.name) || T.must(tap).aliases.include?(conflict.name)
           problem "Formula conflict should be declared using " \
-                  "canonical name (#{conflicting_formula.name}) instead of #{conflict.name}"
+                  "canonical name (#{conflicting_formula.name}) instead of '#{conflict.name}'"
         end
 
         reverse_conflict_found = T.let(false, T::Boolean)
@@ -457,7 +457,7 @@ module Homebrew
           if T.must(tap).formula_renames.key?(reverse_conflict.name) ||
              T.must(tap).aliases.include?(reverse_conflict.name)
             problem "Formula #{conflicting_formula.name} conflict should be declared using " \
-                    "canonical name (#{reverse_conflict_formula.name}) instead of #{reverse_conflict.name}"
+                    "canonical name (#{reverse_conflict_formula.name}) instead of '#{reverse_conflict.name}'"
           end
 
           reverse_conflict_found ||= reverse_conflict_formula == formula
@@ -651,7 +651,7 @@ module Homebrew
       metadata = SharedAudits.github_repo_data(user, repo)
       return if metadata.nil?
 
-      problem "GitHub repo is archived" if metadata["archived"]
+      problem "GitHub repository is archived" if metadata["archived"]
     end
 
     def audit_gitlab_repository_archived
@@ -663,7 +663,7 @@ module Homebrew
       metadata = SharedAudits.gitlab_repo_data(user, repo)
       return if metadata.nil?
 
-      problem "GitLab repo is archived" if metadata["archived"]
+      problem "GitLab repository is archived" if metadata["archived"]
     end
 
     def audit_github_repository
@@ -712,7 +712,7 @@ module Homebrew
     end
 
     def audit_specs
-      problem "Head-only (no stable download)" if head_only?(formula)
+      problem "HEAD-only (no stable download)" if head_only?(formula)
 
       %w[Stable HEAD].each do |name|
         spec_name = name.downcase.to_sym
@@ -759,7 +759,7 @@ module Homebrew
 
       if formula.head && @versioned_formula &&
          !formula.tap&.audit_exception(:versioned_head_spec_allowlist, formula.name)
-        problem "Versioned formulae should not have a `HEAD` spec"
+        problem "Versioned formulae should not have a `head` spec"
       end
 
       stable = formula.stable
@@ -771,7 +771,7 @@ module Homebrew
 
       stable_version_string = version.to_s
       if stable_version_string.start_with?("HEAD")
-        problem "Stable: non-HEAD version name (#{stable_version_string}) should not begin with HEAD"
+        problem "Stable: non-HEAD version (#{stable_version_string}) should not begin with `HEAD`"
       end
 
       stable_url_version = Version.parse(stable.url)
@@ -790,7 +790,7 @@ module Homebrew
         return if formula.tap&.audit_exception :unstable_allowlist, formula.name, version_prefix
         return if formula.tap&.audit_exception :unstable_devel_allowlist, formula.name, version_prefix
 
-        problem "Stable version URLs should not contain #{matched}"
+        problem "Stable: version URLs should not contain `#{matched}`"
       when %r{download\.gnome\.org/sources}, %r{ftp\.gnome\.org/pub/GNOME/sources}i
         version_prefix = stable.version.major_minor
         return if formula.tap&.audit_exception :gnome_devel_allowlist, formula.name, version_prefix
@@ -800,11 +800,11 @@ module Homebrew
         return if stable_url_version >= Version.new("40.0")
         return if stable_url_minor_version.even?
 
-        problem "#{stable.version} is a development release"
+        problem "Stable: version (#{stable.version}) is a development release"
       when %r{isc.org/isc/bind\d*/}i
         return if stable_url_minor_version.even?
 
-        problem "#{stable.version} is a development release"
+        problem "Stable: version (#{stable.version}) is a development release"
 
       when %r{https?://gitlab\.com/([\w-]+)/([\w-]+)}
         owner = T.must(Regexp.last_match(1))
@@ -845,7 +845,7 @@ module Homebrew
       if !newest_committed[:version].nil? &&
          current_version < newest_committed[:version] &&
          current_version_scheme == previous_committed[:version_scheme]
-        problem "stable version should not decrease (from #{newest_committed[:version]} to #{current_version})"
+        problem "Stable: version should not decrease (from #{newest_committed[:version]} to #{current_version})"
       end
     end
 
@@ -867,14 +867,14 @@ module Homebrew
          !current_revision.zero? &&
          current_revision == newest_committed[:revision] &&
          current_revision == previous_committed[:revision]
-        problem "'revision #{current_revision}' should be removed"
+        problem "`revision #{current_revision}` should be removed"
       elsif current_version == previous_committed[:version] &&
             !previous_committed[:revision].nil? &&
             current_revision < previous_committed[:revision]
-        problem "revision should not decrease (from #{previous_committed[:revision]} to #{current_revision})"
+        problem "`revision` should not decrease (from #{previous_committed[:revision]} to #{current_revision})"
       elsif newest_committed[:revision] &&
             current_revision > (newest_committed[:revision] + 1)
-        problem "revisions should only increment by 1"
+        problem "`revision` should only increment by 1"
       end
     end
 
@@ -891,10 +891,10 @@ module Homebrew
       return if previous_committed[:version_scheme].nil?
 
       if current_version_scheme < previous_committed[:version_scheme]
-        problem "version_scheme should not decrease (from #{previous_committed[:version_scheme]} " \
+        problem "`version_scheme` should not decrease (from #{previous_committed[:version_scheme]} " \
                 "to #{current_version_scheme})"
       elsif current_version_scheme > (previous_committed[:version_scheme] + 1)
-        problem "version_schemes should only increment by 1"
+        problem "`version_scheme` should only increment by 1"
       end
     end
 
@@ -935,7 +935,7 @@ module Homebrew
       bin_names.each do |name|
         shell_commands.each do |cmd|
           if text.to_s.match?(/test do.*#{cmd}[(\s]+['"]#{Regexp.escape(name)}[\s'"]/m)
-            problem %Q(fully scope test #{cmd} calls, e.g. #{cmd} "\#{bin}/#{name}")
+            problem %Q(Fully scope test `#{cmd}` calls, e.g.: #{cmd} "\#{bin}/#{name}")
           end
         end
       end

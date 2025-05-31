@@ -32,7 +32,7 @@ RSpec.describe RuboCop::Cop::FormulaAudit::Options do
           url 'https://brew.sh/foo-1.0.tgz'
           option :cxx11
           option "examples", "with-examples"
-          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ FormulaAudit/Options: Options should begin with with/without. Migrate '--examples' with `deprecated_option`.
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ FormulaAudit/Options: Options should begin with `with` or `without`. Migrate '--examples' with `deprecated_option`.
         end
       RUBY
     end

@@ -19,7 +19,7 @@ RSpec.describe RuboCop::Cop::Cask::OnSystemConditionals, :config do
         cask 'foo' do
           postflight do
             on_intel do
-            ^^^^^^^^ Don't use `on_intel` in `postflight do`, use `if Hardware::CPU.intel?` instead.
+            ^^^^^^^^ Instead of using `on_intel` in `postflight do`, use `if Hardware::CPU.intel?`.
               foobar
             end
           end
@@ -43,7 +43,7 @@ RSpec.describe RuboCop::Cop::Cask::OnSystemConditionals, :config do
         cask 'foo' do
           postflight do
             on_monterey do
-            ^^^^^^^^^^^ Don't use `on_monterey` in `postflight do`, use `if MacOS.version == :monterey` instead.
+            ^^^^^^^^^^^ Instead of using `on_monterey` in `postflight do`, use `if MacOS.version == :monterey`.
               foobar
             end
           end
@@ -67,7 +67,7 @@ RSpec.describe RuboCop::Cop::Cask::OnSystemConditionals, :config do
         cask 'foo' do
           postflight do
             on_monterey :or_older do
-            ^^^^^^^^^^^^^^^^^^^^^ Don't use `on_monterey :or_older` in `postflight do`, use `if MacOS.version <= :monterey` instead.
+            ^^^^^^^^^^^^^^^^^^^^^ Instead of using `on_monterey :or_older` in `postflight do`, use `if MacOS.version <= :monterey`.
               foobar
             end
           end
@@ -171,7 +171,7 @@ RSpec.describe RuboCop::Cop::Cask::OnSystemConditionals, :config do
       expect_offense <<~CASK
         cask 'foo' do
           if Hardware::CPU.arm? && other_condition
-             ^^^^^^^^^^^^^^^^^^ Don't use `Hardware::CPU.arm?`, use `on_arm` and `on_intel` blocks instead.
+             ^^^^^^^^^^^^^^^^^^ Instead of `Hardware::CPU.arm?`, use `on_arm` and `on_intel` blocks.
             sha256 "67cdb8a02803ef37fdbf7e0be205863172e41a561ca446cd84f0d7ab35a99d94"
           else
             sha256 "8c62a2b791cf5f0da6066a0a4b6e85f62949cd60975da062df44adf887f4370b"
@@ -184,7 +184,7 @@ RSpec.describe RuboCop::Cop::Cask::OnSystemConditionals, :config do
       expect_offense <<~CASK
         cask 'foo' do
           if Hardware::CPU.intel? && other_condition
-             ^^^^^^^^^^^^^^^^^^^^ Don't use `Hardware::CPU.intel?`, use `on_arm` and `on_intel` blocks instead.
+             ^^^^^^^^^^^^^^^^^^^^ Instead of `Hardware::CPU.intel?`, use `on_arm` and `on_intel` blocks.
             sha256 "67cdb8a02803ef37fdbf7e0be205863172e41a561ca446cd84f0d7ab35a99d94"
           else
             sha256 "8c62a2b791cf5f0da6066a0a4b6e85f62949cd60975da062df44adf887f4370b"
@@ -200,7 +200,7 @@ RSpec.describe RuboCop::Cop::Cask::OnSystemConditionals, :config do
           sha256 "67cdb8a02803ef37fdbf7e0be205863172e41a561ca446cd84f0d7ab35a99d94"
 
           url "https://example.com/foo-#{version}-#{Hardware::CPU.arch}.zip"
-                                                    ^^^^^^^^^^^^^^^^^^ Don't use `Hardware::CPU.arch`, use `on_arm` and `on_intel` blocks instead.
+                                                    ^^^^^^^^^^^^^^^^^^ Instead of `Hardware::CPU.arch`, use `on_arm` and `on_intel` blocks.
         end
       CASK
     end
@@ -211,7 +211,7 @@ RSpec.describe RuboCop::Cop::Cask::OnSystemConditionals, :config do
       expect_offense <<~CASK
         cask 'foo' do
           if MacOS.version == :catalina
-          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Don't use `if MacOS.version == :catalina`, use `on_catalina do` instead.
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Instead of `if MacOS.version == :catalina`, use `on_catalina do`.
             version "1.0.0"
           else
             version "2.0.0"
@@ -224,7 +224,7 @@ RSpec.describe RuboCop::Cop::Cask::OnSystemConditionals, :config do
       expect_offense <<~CASK
         cask 'foo' do
           if MacOS.version <= :catalina
-          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Don't use `if MacOS.version <= :catalina`, use `on_catalina :or_older do` instead.
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Instead of `if MacOS.version <= :catalina`, use `on_catalina :or_older do`.
             version "1.0.0"
           else
             version "2.0.0"
@@ -237,7 +237,7 @@ RSpec.describe RuboCop::Cop::Cask::OnSystemConditionals, :config do
       expect_offense <<~CASK
         cask 'foo' do
           if MacOS.version >= :catalina
-          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Don't use `if MacOS.version >= :catalina`, use `on_catalina :or_newer do` instead.
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Instead of `if MacOS.version >= :catalina`, use `on_catalina :or_newer do`.
             version "1.0.0"
           else
             version "2.0.0"

@@ -28,17 +28,17 @@ module RuboCop
           return if checksum.nil?
 
           if regex_match_group(checksum, /^$/)
-            problem "sha256 is empty"
+            problem "`sha256` is empty"
             return
           end
 
           if string_content(checksum).size != 64 && regex_match_group(checksum, /^\w*$/)
-            problem "sha256 should be 64 characters"
+            problem "`sha256` should be 64 characters"
           end
 
           return unless regex_match_group(checksum, /[^a-f0-9]+/i)
 
-          add_offense(T.must(@offensive_source_range), message: "sha256 contains invalid characters")
+          add_offense(T.must(@offensive_source_range), message: "`sha256` contains invalid characters")
         end
       end
 
@@ -54,7 +54,7 @@ module RuboCop
             next if checksum.nil?
             next unless regex_match_group(checksum, /[A-F]+/)
 
-            add_offense(@offensive_source_range, message: "sha256 should be lowercase") do |corrector|
+            add_offense(@offensive_source_range, message: "`sha256` should be lowercase") do |corrector|
               correction = T.must(@offensive_node).source.downcase
               corrector.insert_before(T.must(@offensive_node).source_range, correction)
               corrector.remove(T.must(@offensive_node).source_range)

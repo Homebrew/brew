@@ -63,7 +63,7 @@ module Homebrew
       url_strategy = DownloadStrategyDetector.detect(url)
 
       if (using == :git || url_strategy == GitDownloadStrategy) && specs[:tag] && !specs[:revision]
-        problem "Git should specify :revision when a :tag is specified."
+        problem "Git should specify `revision:` when a `tag:` is specified."
       end
 
       return unless using
@@ -71,7 +71,7 @@ module Homebrew
       if using == :cvs
         mod = specs[:module]
 
-        problem "Redundant :module value in URL" if mod == name
+        problem "Redundant `module:` value in URL" if mod == name
 
         if url.match?(%r{:[^/]+$})
           mod = url.split(":").last
@@ -79,14 +79,14 @@ module Homebrew
           if mod == name
             problem "Redundant CVS module appended to URL"
           else
-            problem "Specify CVS module as `:module => \"#{mod}\"` instead of appending it to the URL"
+            problem "Specify CVS module as `module: \"#{mod}\"` instead of appending it to the URL"
           end
         end
       end
 
       return if url_strategy != DownloadStrategyDetector.detect("", using)
 
-      problem "Redundant :using value in URL"
+      problem "Redundant `using:` value in URL"
     end
 
     def audit_checksum
@@ -125,7 +125,7 @@ module Homebrew
 
       return if name.casecmp(pypi_package_name).zero?
 
-      problem "resource name should be `#{pypi_package_name}` to match the PyPI package name"
+      problem "`resource` name should be '#{pypi_package_name}' to match the PyPI package name"
     end
 
     def audit_urls
@@ -166,12 +166,12 @@ module Homebrew
             remote_exists = Utils::Git.remote_exists?(url)
             attempts += 1
           end
-          problem "The URL #{url} is not a valid git URL" unless remote_exists
+          problem "The URL #{url} is not a valid Git URL" unless remote_exists
         elsif strategy <= SubversionDownloadStrategy
           next unless DevelopmentTools.subversion_handles_most_https_certificates?
           next unless Utils::Svn.available?
 
-          problem "The URL #{url} is not a valid svn URL" unless Utils::Svn.remote_exists? url
+          problem "The URL #{url} is not a valid SVN URL" unless Utils::Svn.remote_exists? url
         end
       end
     end
@@ -188,7 +188,7 @@ module Homebrew
                     .match(%r{ref: refs/heads/(.*?)\s+HEAD})&.to_a&.second
       return if branch.blank? || branch == specs[:branch]
 
-      problem "Use `branch: \"#{branch}\"` to specify the default branch"
+      problem "Specify the default branch as `branch: \"#{branch}\"`"
     end
 
     def problem(text)

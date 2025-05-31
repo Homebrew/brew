@@ -29,29 +29,29 @@ RSpec.describe RuboCop::Cop::FormulaAuditStrict::Text do
     end
 
     it %Q(reports an offense if "\#{share}/<formula name>" is present) do
-      expect_offense(<<~RUBY, "/homebrew-core/Formula/foo.rb")
+      expect_offense(<<~'RUBY', "/homebrew-core/Formula/foo.rb")
         class Foo < Formula
           def install
-            ohai "\#{share}/foo"
-                 ^^^^^^^^^^^^^^ FormulaAuditStrict/Text: Use `\#{pkgshare}` instead of `\#{share}/foo`
+            ohai "#{share}/foo"
+                 ^^^^^^^^^^^^^^ FormulaAuditStrict/Text: Use `#{pkgshare}` instead of `#{share}/foo`
           end
         end
       RUBY
 
-      expect_offense(<<~RUBY, "/homebrew-core/Formula/foo.rb")
+      expect_offense(<<~'RUBY', "/homebrew-core/Formula/foo.rb")
         class Foo < Formula
           def install
-            ohai "\#{share}/foo/bar"
-                 ^^^^^^^^^^^^^^^^^^ FormulaAuditStrict/Text: Use `\#{pkgshare}` instead of `\#{share}/foo`
+            ohai "#{share}/foo/bar"
+                 ^^^^^^^^^^^^^^^^^^ FormulaAuditStrict/Text: Use `#{pkgshare}` instead of `#{share}/foo`
           end
         end
       RUBY
 
-      expect_offense(<<~RUBY, "/homebrew-core/Formula/foolibc++.rb")
+      expect_offense(<<~'RUBY', "/homebrew-core/Formula/foolibc++.rb")
         class Foolibcxx < Formula
           def install
-            ohai "\#{share}/foolibc++"
-                 ^^^^^^^^^^^^^^^^^^^^ FormulaAuditStrict/Text: Use `\#{pkgshare}` instead of `\#{share}/foolibc++`
+            ohai "#{share}/foolibc++"
+                 ^^^^^^^^^^^^^^^^^^^^ FormulaAuditStrict/Text: Use `#{pkgshare}` instead of `#{share}/foolibc++`
           end
         end
       RUBY
@@ -87,10 +87,10 @@ RSpec.describe RuboCop::Cop::FormulaAuditStrict::Text do
     end
 
     it %Q(reports no offenses if "\#{share}/<directory name>" doesn't match formula name) do
-      expect_no_offenses(<<~RUBY, "/homebrew-core/Formula/foo.rb")
+      expect_no_offenses(<<~'RUBY', "/homebrew-core/Formula/foo.rb")
         class Foo < Formula
           def install
-            ohai "\#{share}/foo-bar"
+            ohai "#{share}/foo-bar"
           end
         end
       RUBY
@@ -123,10 +123,10 @@ RSpec.describe RuboCop::Cop::FormulaAuditStrict::Text do
     end
 
     it %Q(reports no offenses if formula name appears after "\#{share}/<directory name>") do
-      expect_no_offenses(<<~RUBY, "/homebrew-core/Formula/foo.rb")
+      expect_no_offenses(<<~'RUBY', "/homebrew-core/Formula/foo.rb")
         class Foo < Formula
           def install
-            ohai "\#{share}/bar/foo"
+            ohai "#{share}/bar/foo"
           end
         end
       RUBY
@@ -134,13 +134,13 @@ RSpec.describe RuboCop::Cop::FormulaAuditStrict::Text do
 
     context "for interpolated bin paths" do
       it 'reports an offense & autocorrects if "\#{bin}/<formula_name>" or other dashed binaries too are present' do
-        expect_offense(<<~RUBY, "/homebrew-core/Formula/foo.rb")
+        expect_offense(<<~'RUBY', "/homebrew-core/Formula/foo.rb")
           class Foo < Formula
             test do
-              system "\#{bin}/foo", "-v"
-                     ^^^^^^^^^^^^ FormulaAuditStrict/Text: Use `bin/"foo"` instead of `"\#{bin}/foo"`
-              system "\#{bin}/foo-bar", "-v"
-                     ^^^^^^^^^^^^^^^^ FormulaAuditStrict/Text: Use `bin/"foo-bar"` instead of `"\#{bin}/foo-bar"`
+              system "#{bin}/foo", "-v"
+                     ^^^^^^^^^^^^ FormulaAuditStrict/Text: Use `bin/"foo"` instead of `"#{bin}/foo"`
+              system "#{bin}/foo-bar", "-v"
+                     ^^^^^^^^^^^^^^^^ FormulaAuditStrict/Text: Use `bin/"foo-bar"` instead of `"#{bin}/foo-bar"`
             end
           end
         RUBY
@@ -156,12 +156,12 @@ RSpec.describe RuboCop::Cop::FormulaAuditStrict::Text do
       end
 
       it 'does not report an offense if \#{bin}/foo and then a space and more text' do
-        expect_no_offenses(<<~RUBY, "/homebrew-core/Formula/foo.rb")
+        expect_no_offenses(<<~'RUBY', "/homebrew-core/Formula/foo.rb")
           class Foo < Formula
             test do
-              shell_output("\#{bin}/foo --version")
-              assert_match "help", shell_output("\#{bin}/foo-something --help 2>&1")
-              assert_match "OK", shell_output("\#{bin}/foo-something_else --check 2>&1")
+              shell_output("#{bin}/foo --version")
+              assert_match "help", shell_output("#{bin}/foo-something --help 2>&1")
+              assert_match "OK", shell_output("#{bin}/foo-something_else --check 2>&1")
             end
           end
         RUBY
@@ -169,11 +169,11 @@ RSpec.describe RuboCop::Cop::FormulaAuditStrict::Text do
     end
 
     it 'does not report an offense if "\#{bin}/foo" is in a word array' do
-      expect_no_offenses(<<~RUBY, "/homebrew-core/Formula/foo.rb")
+      expect_no_offenses(<<~'RUBY', "/homebrew-core/Formula/foo.rb")
         class Foo < Formula
           test do
             cmd = %W[
-              \#{bin}/foo
+              #{bin}/foo
               version
             ]
             assert_match version.to_s, shell_output(cmd)

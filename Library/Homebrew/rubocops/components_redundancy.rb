@@ -32,7 +32,7 @@ module RuboCop
 
               url_args = arg.keys.each.map(&:value)
               if method_called?(body_node, :sha256) && url_args.include?(:tag) && url_args.include?(:revision)
-                problem "Do not use both sha256 and tag/revision."
+                problem "Do not use both `sha256` and `tag:`/`revision:`."
               end
             end
           end

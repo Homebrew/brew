@@ -13,12 +13,12 @@ RSpec.describe RuboCop::Cop::FormulaAudit::ChecksumCase do
           stable do
             url "https://github.com/foo-lang/foo-compiler/archive/0.18.0.tar.gz"
             sha256 "5cf6e1ae0A645b426c0a7cc7cd3f7d1605ffa1ac5756a39a8b2268ddc7ea0e9a"
-                             ^ FormulaAudit/ChecksumCase: sha256 should be lowercase
+                             ^ FormulaAudit/ChecksumCase: `sha256` should be lowercase
 
             resource "foo-package" do
               url "https://github.com/foo-lang/foo-package/archive/0.18.0.tar.gz"
               sha256 "5cf6e1Ae0a645b426b047aa4cc7cd3f7d1605ffa1ac5756a39a8b2268ddc7ea9"
-                            ^ FormulaAudit/ChecksumCase: sha256 should be lowercase
+                            ^ FormulaAudit/ChecksumCase: `sha256` should be lowercase
             end
           end
         end
@@ -32,7 +32,7 @@ RSpec.describe RuboCop::Cop::FormulaAudit::ChecksumCase do
           resource "foo-outside" do
             url "https://github.com/foo-lang/foo-outside/archive/0.18.0.tar.gz"
             sha256 "A4cc7cd3f7d1605ffa1ac5755cf6e1ae0a645b426b047a6a39a8b2268ddc7ea9"
-                    ^ FormulaAudit/ChecksumCase: sha256 should be lowercase
+                    ^ FormulaAudit/ChecksumCase: `sha256` should be lowercase
           end
           stable do
             url "https://github.com/foo-lang/foo-compiler/archive/0.18.0.tar.gz"

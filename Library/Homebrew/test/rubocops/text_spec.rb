@@ -30,7 +30,7 @@ RSpec.describe RuboCop::Cop::FormulaAudit::Text do
           url "https://brew.sh/foo-1.0.tgz"
           homepage "https://brew.sh"
           revision 0
-          ^^^^^^^^^^ FormulaAudit/Text: "revision 0" is unnecessary
+          ^^^^^^^^^^ FormulaAudit/Text: `revision 0` is unnecessary
         end
       RUBY
     end
@@ -103,7 +103,7 @@ RSpec.describe RuboCop::Cop::FormulaAudit::Text do
 
           def install
             system "xcodebuild", "foo", "bar"
-            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ FormulaAudit/Text: use "xcodebuild *args" instead of "system 'xcodebuild', *args"
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ FormulaAudit/Text: Use `xcodebuild *args` instead of `system 'xcodebuild', *args`
           end
         end
       RUBY
@@ -117,7 +117,7 @@ RSpec.describe RuboCop::Cop::FormulaAudit::Text do
 
           def install
             system "xcodebuild", "foo", "bar"
-            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ FormulaAudit/Text: use "xcodebuild *args" instead of "system 'xcodebuild', *args"
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ FormulaAudit/Text: Use `xcodebuild *args` instead of `system 'xcodebuild', *args`
           end
 
           def plist
@@ -140,7 +140,7 @@ RSpec.describe RuboCop::Cop::FormulaAudit::Text do
     it 'reports an offense if `require "language/go"` is present' do
       expect_offense(<<~RUBY)
         require "language/go"
-        ^^^^^^^^^^^^^^^^^^^^^ FormulaAudit/Text: require "language/go" is no longer necessary or correct
+        ^^^^^^^^^^^^^^^^^^^^^ FormulaAudit/Text: `require "language/go"` is no longer necessary or correct
 
         class Foo < Formula
           url "https://brew.sh/foo-1.0.tgz"
@@ -162,7 +162,7 @@ RSpec.describe RuboCop::Cop::FormulaAudit::Text do
 
           def install
             Formula.factory(name)
-            ^^^^^^^^^^^^^^^^^^^^^ FormulaAudit/Text: "Formula.factory(name)" is deprecated in favor of "Formula[name]"
+            ^^^^^^^^^^^^^^^^^^^^^ FormulaAudit/Text: `Formula.factory(name)` is deprecated in favour of `Formula[name]`
           end
         end
       RUBY
@@ -176,7 +176,7 @@ RSpec.describe RuboCop::Cop::FormulaAudit::Text do
 
           def install
             system "dep", "ensure"
-            ^^^^^^^^^^^^^^^^^^^^^^ FormulaAudit/Text: use "dep", "ensure", "-vendor-only"
+            ^^^^^^^^^^^^^^^^^^^^^^ FormulaAudit/Text: Use `"dep", "ensure", "-vendor-only"`
           end
         end
       RUBY
@@ -190,7 +190,7 @@ RSpec.describe RuboCop::Cop::FormulaAudit::Text do
 
           def install
             system "cargo", "build"
-            ^^^^^^^^^^^^^^^^^^^^^^^ FormulaAudit/Text: use "cargo", "install", *std_cargo_args
+            ^^^^^^^^^^^^^^^^^^^^^^^ FormulaAudit/Text: Use `"cargo", "install", *std_cargo_args`
           end
         end
       RUBY
@@ -221,10 +221,10 @@ RSpec.describe RuboCop::Cop::FormulaAudit::Text do
     end
 
     it "reports an offense if paths are concatenated in string interpolation" do
-      expect_offense(<<~RUBY)
+      expect_offense(<<~'RUBY')
         class Foo < Formula
           def install
-            ohai "foo \#{bar + "baz"}"
+            ohai "foo #{bar + "baz"}"
                       ^^^^^^^^^^^^^^ FormulaAudit/Text: Do not concatenate paths in string interpolation
           end
         end

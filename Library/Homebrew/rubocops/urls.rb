@@ -54,13 +54,13 @@ module RuboCop
           # Check pypi URLs
           pypi_pattern = %r{^https?://pypi\.python\.org/}
           audit_urls(urls, pypi_pattern) do |_, url|
-            problem "use the `Source` url found on PyPI downloads page (`#{get_pypi_url(url)}`)"
+            problem "Use the \"Source\" URL found on the PyPI downloads page (#{get_pypi_url(url)})"
           end
 
           # Require long files.pythonhosted.org URLs
           pythonhosted_pattern = %r{^https?://files\.pythonhosted\.org/packages/source/}
           audit_urls(urls, pythonhosted_pattern) do |_, url|
-            problem "use the `Source` url found on PyPI downloads page (`#{get_pypi_url(url)}`)"
+            problem "Use the \"Source\" URL found on the PyPI downloads page (#{get_pypi_url(url)})"
           end
         end
 
@@ -84,7 +84,7 @@ module RuboCop
             next if url_has_revision?(parameters(url).last)
 
             offending_node(url)
-            problem "Formulae in homebrew/core should specify a revision for git URLs"
+            problem "Formulae in homebrew/core should specify a revision for Git URLs"
           end
         end
 
@@ -107,7 +107,7 @@ module RuboCop
             next if url_has_tag?(parameters(url).last)
 
             offending_node(url)
-            problem "Formulae in homebrew/core should specify a tag for git URLs"
+            problem "Formulae in homebrew/core should specify a tag for Git URLs"
           end
         end
 

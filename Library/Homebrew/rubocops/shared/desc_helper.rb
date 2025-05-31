@@ -21,7 +21,7 @@ module RuboCop
       def audit_desc(type, name, desc_call)
         # Check if a desc is present.
         if desc_call.nil?
-          problem "#{type.to_s.capitalize} should have a desc (Description)."
+          problem "#{type.to_s.capitalize} should have a `desc` (description)."
           return
         end
 
@@ -32,7 +32,7 @@ module RuboCop
         # Check if the desc is empty.
         desc_length = string_content(desc).length
         if desc_length.zero?
-          problem "The desc (description) should not be an empty string."
+          problem "The `desc` (description) should not be an empty string."
           return
         end
 

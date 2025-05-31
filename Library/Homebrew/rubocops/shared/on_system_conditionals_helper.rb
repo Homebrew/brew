@@ -69,8 +69,8 @@ module RuboCop
             end
 
             offending_node(on_system_node)
-            problem "Don't use `#{on_system_node.source}` in `#{parent_string}`, " \
-                    "use `#{if_statement_string}#{if_conditional}` instead." do |corrector|
+            problem "Instead of using `#{on_system_node.source}` in `#{parent_string}`, " \
+                    "use `#{if_statement_string}#{if_conditional}`." do |corrector|
               block_node = offending_node.parent
               next if block_node.type != :block
 
@@ -108,7 +108,7 @@ module RuboCop
             next if node_is_allowed?(method_node, allowed_methods:, allowed_blocks:)
 
             offending_node(method_node)
-            problem "Don't use `#{method_node.source}`, use `on_arm` and `on_intel` blocks instead."
+            problem "Instead of `#{method_node.source}`, use `on_arm` and `on_intel` blocks."
           end
         end
       end
@@ -171,7 +171,7 @@ module RuboCop
             next if node_is_allowed?(method_node, allowed_methods:, allowed_blocks:)
 
             offending_node(method_node)
-            problem "Don't use `#{method_node.source}`, use `on_{macos_version}` blocks instead."
+            problem "Instead of `#{method_node.source}`, use `on_{macos_version}` blocks."
           end
         end
       end
@@ -209,8 +209,7 @@ module RuboCop
       def if_statement_problem(if_node, if_statement_string, on_system_method_string,
                                else_method: nil, else_node: nil, autocorrect: true)
         offending_node(if_node)
-        problem "Don't use `#{if_statement_string}`, " \
-                "use `#{on_system_method_string} do` instead." do |corrector|
+        problem "Instead of `#{if_statement_string}`, use `#{on_system_method_string} do`." do |corrector|
           next unless autocorrect
           # TODO: could fix corrector to handle this but punting for now.
           next if if_node.unless?

@@ -30,14 +30,14 @@ module RuboCop
 
           if inline_patches.empty? && patch_end?
             offending_patch_end_node(node)
-            add_offense(@offense_source_range, message: "patch is missing 'DATA'")
+            add_offense(@offense_source_range, message: "Patch is missing `patch :DATA`")
           end
 
           patches_node = find_method_def(body_node, :patches)
           return if patches_node.nil?
 
           legacy_patches = find_strings(patches_node)
-          problem "Use the patch DSL instead of defining a 'patches' method"
+          problem "Use the `patch` DSL instead of defining a `patches` method"
           legacy_patches.each { |p| patch_problems(p) }
         end
 
@@ -63,7 +63,7 @@ module RuboCop
           if regex_match_group(patch_url_node, bitbucket_regex)
             owner, repo, commit = patch_url_node.source.match(bitbucket_regex).captures
             correct_url = "https://api.bitbucket.org/2.0/repositories/#{owner}/#{repo}/diff/#{commit}"
-            problem "Bitbucket patches should use the api url: #{correct_url}" do |corrector|
+            problem "Bitbucket patches should use the API URL: #{correct_url}" do |corrector|
               corrector.replace(patch_url_node.source_range, %Q("#{correct_url}"))
             end
           end
@@ -118,7 +118,7 @@ module RuboCop
           return if !patch_data?(patch) || patch_end?
 
           offending_node(patch)
-          problem "patch is missing '__END__'"
+          problem "Patch is missing `__END__`"
         end
 
         def_node_search :patch_data?, <<~AST

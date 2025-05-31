@@ -39,7 +39,7 @@ module RuboCop
 
             if on_method_blocks.length > 1
               @offensive_node = on_method_blocks.second
-              problem "there can only be one `#{on_method}` block in a formula."
+              problem "There can only be one `#{on_method}` block in a formula."
             end
 
             check_on_system_block_content(component_precedence_list, on_method_blocks.first)
@@ -112,7 +112,7 @@ module RuboCop
 
             on_system_blocks.each do |on_method, blocks|
               if blocks.length > 1
-                problem "there can only be one `#{on_method}` block in a resource block."
+                problem "There can only be one `#{on_method}` block in a resource block."
                 next
               end
             end

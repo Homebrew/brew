@@ -23,7 +23,7 @@ module RuboCop
           parent_class = class_name(parent_class_node)
           return unless DEPRECATED_CLASSES.include?(parent_class)
 
-          problem "#{parent_class} is deprecated, use Formula instead" do |corrector|
+          problem "`#{parent_class}` is deprecated, use `Formula` instead" do |corrector|
             corrector.replace(parent_class_node.source_range, "Formula")
           end
         end
@@ -49,14 +49,14 @@ module RuboCop
             p1, p2 = params
             if (match = string_content(p1).match(%r{(/usr/local/(s?bin))}))
               offending_node(p1)
-              problem "use \#{#{match[2]}} instead of #{match[1]} in #{node}" do |corrector|
+              problem "Use `\#{#{match[2]}}` instead of `#{match[1]}` in `#{node}`" do |corrector|
                 corrector.replace(p1.source_range, p1.source.sub(match[1], "\#{#{match[2]}}"))
               end
             end
 
             if node == :shell_output && node_equals?(p2, 0)
               offending_node(p2)
-              problem "Passing 0 to shell_output() is redundant" do |corrector|
+              problem "Passing 0 to `shell_output` is redundant" do |corrector|
                 corrector.remove(range_with_surrounding_comma(range_with_surrounding_space(range: p2.source_range,
                                                                                            side:  :left)))
               end
