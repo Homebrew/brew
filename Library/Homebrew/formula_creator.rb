@@ -3,6 +3,7 @@
 
 require "digest"
 require "erb"
+require "utils/github"
 
 module Homebrew
   # Class for generating a formula from a template.
@@ -51,18 +52,32 @@ module Homebrew
       @name = FormulaCreator.name_from_url(@url) if @name.blank?
       odebug "name_from_url: #{@name}"
       @version = Version.detect(@url) if @version.nil?
+      odebug "Version.detect: #{@version}"
 
-      case @url
-      when %r{github\.com/(\S+)/(\S+)\.git}
-        @head = true
-        user = Regexp.last_match(1)
-        repo = Regexp.last_match(2)
-        @github = GitHub.repository(user, repo) if @fetch
-      when %r{github\.com/(\S+)/(\S+)/(archive|releases)/}
-        user = Regexp.last_match(1)
-        repo = Regexp.last_match(2)
-        @github = GitHub.repository(user, repo) if @fetch
+      m = @url.match %r{github\.com/(?<user>\S+)/(?<repo>\S+)(?<tail>.*)}
+      if m
+        @head = true if m[:tail] == ".git"
+        if @fetch
+          @github = GitHub.repository(m[:user], m[:repo])
+
+          if @version.null?
+            begin
+              latest_release = GitHub.get_latest_release m[:user], m[:repo]
+            rescue GitHub::API::HTTPNotFoundError
+              odebug "latest release lookup failed: #{@url}"
+            else
+              @version = Version.new(latest_release["tag_name"])
+              odebug "version from latest_release: #{@version}"
+              @url = latest_release["tarball_url"]
+              odebug "url from latest_release: #{@url}"
+            end
+          end
+        end
       end
+
+      return unless @version.null?
+
+      odie "Version cannot be determined from URL. Explicitly set the version with `--set-version` instead."
     end
 
     sig { returns(Pathname) }
@@ -72,10 +87,6 @@ module Homebrew
 
       path = @tap.new_formula_path(@name)
       raise "#{path} already exists" if path.exist?
-
-      if @version.nil? || @version.null?
-        odie "Version cannot be determined from URL. Explicitly set the version with `--set-version` instead."
-      end
 
       if @fetch
         unless @head
