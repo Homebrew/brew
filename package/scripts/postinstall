@@ -1,13 +1,13 @@
 #!/bin/bash
 # $1 Full path to the installer (unused)
-# $2 Location of the Homebrew installation we may need to move into place
+# $2 Location of the DinrusBrew installation we may need to move into place
 # $3 Target install location (unused)
 # $4 System root directory (unused)
 set -euo pipefail
 
 # disable analytics while installing
-export HOMEBREW_NO_ANALYTICS_THIS_RUN=1
-export HOMEBREW_NO_ANALYTICS_MESSAGE_OUTPUT=1
+export DINRUSBREW_NO_ANALYTICS_THIS_RUN=1
+export DINRUSBREW_NO_ANALYTICS_MESSAGE_OUTPUT=1
 
 # verify the installation exists
 # default to /opt/homebrew to make development/testing easier
@@ -29,35 +29,34 @@ export HOME="${homebrew_directory}"
 # reset Git repository
 cd "${homebrew_directory}"
 git config --global --add safe.directory "${homebrew_directory}"
-git checkout --force -B stable
-git reset --hard "$(git tag --list --sort="-version:refname" | head -n1)"
-git clean -f -d
+git reset --hard
+git checkout --force master
+git branch | grep -v '\*' | xargs -n 1 git branch --delete --force || true
 rm "${homebrew_directory}/.gitconfig"
 
 # move to /usr/local if on x86_64
 if [[ $(uname -m) == "x86_64" ]]
 then
-  if [[ -f "/usr/local/bin/brew" && -d "/usr/local/Homebrew" ]]
+  if [[ -f "/usr/local/bin/brew" && -d "/usr/local/DinrusBrew" ]]
   then
-    cp -pRL "${homebrew_directory}/.git" "/usr/local/Homebrew/"
-    mv "${homebrew_directory}/cache_api" "/usr/local/Homebrew/"
+    cp -pRL "${homebrew_directory}/.git" "/usr/local/DinrusBrew/"
+    mv "${homebrew_directory}/cache_api" "/usr/local/DinrusBrew/"
 
-    export HOME="/usr/local/Homebrew"
-    git config --global --add safe.directory /usr/local/Homebrew
-    git -C /usr/local/Homebrew checkout --force -B stable
-    git -C /usr/local/Homebrew reset --hard
-    git -C /usr/local/Homebrew clean -f -d
-    rm /usr/local/Homebrew/.gitconfig
+    export HOME="/usr/local/DinrusBrew"
+    git config --global --add safe.directory /usr/local/DinrusBrew
+    git -C /usr/local/DinrusBrew reset --hard
+    git -C /usr/local/DinrusBrew checkout --force master
+    rm /usr/local/DinrusBrew/.gitconfig
   else
     mkdir -vp /usr/local/bin
-    mv "${homebrew_directory}" "/usr/local/Homebrew/"
+    mv "${homebrew_directory}" "/usr/local/DinrusBrew/"
 
     # create symlink to /usr/local/bin/brew
-    ln -svf "../Homebrew/bin/brew" "/usr/local/bin/brew"
+    ln -svf "../DinrusBrew/bin/brew" "/usr/local/bin/brew"
   fi
 
   rm -rf "${homebrew_directory}"
-  homebrew_directory="/usr/local/Homebrew"
+  homebrew_directory="/usr/local/DinrusBrew"
   cd /usr/local
 fi
 
@@ -66,9 +65,9 @@ mkdir -vp Caskroom Cellar Frameworks etc include lib opt sbin share var/homebrew
 
 # optionally define an install user at /var/tmp/.homebrew_pkg_user.plist
 homebrew_pkg_user_plist="/var/tmp/.homebrew_pkg_user.plist"
-if [[ -f "${homebrew_pkg_user_plist}" ]] && [[ -n $(defaults read "${homebrew_pkg_user_plist}" HOMEBREW_PKG_USER) ]]
+if [[ -f "${homebrew_pkg_user_plist}" ]] && [[ -n $(defaults read "${homebrew_pkg_user_plist}" DINRUSBREW_PKG_USER) ]]
 then
-  homebrew_pkg_user=$(defaults read /var/tmp/.homebrew_pkg_user HOMEBREW_PKG_USER)
+  homebrew_pkg_user=$(defaults read /var/tmp/.homebrew_pkg_user DINRUSBREW_PKG_USER)
 # otherwise, get valid logged in user
 else
   homebrew_pkg_user=$(echo "show State:/Users/ConsoleUser" | scutil | awk '/Name :/ { print $3 }')
@@ -76,18 +75,18 @@ fi
 
 # set permissions
 chmod ug=rwx Caskroom Cellar Frameworks bin etc include lib opt sbin share var var/homebrew var/homebrew/linked
-if [[ "${homebrew_directory}" == "/usr/local/Homebrew" ]]
+if [[ "${homebrew_directory}" == "/usr/local/DinrusBrew" ]]
 then
   chown -h "${homebrew_pkg_user}:admin" bin bin/brew etc include lib opt sbin share var
-  chown -h -R "${homebrew_pkg_user}:admin" Caskroom Cellar Frameworks Homebrew var/homebrew
+  chown -h -R "${homebrew_pkg_user}:admin" Caskroom Cellar Frameworks DinrusBrew var/homebrew
   chown -h -R "${homebrew_pkg_user}" etc include share var
 else
   chown -R "${homebrew_pkg_user}:admin" .
 fi
 
-# move API cache to ~/Library/Caches/Homebrew
+# move API cache to ~/Library/Caches/DinrusBrew
 user_home_dir=$(dscl . read /Users/"${homebrew_pkg_user}" NFSHomeDirectory | awk '{ print $2 }')
-user_cache_dir="${user_home_dir}/Library/Caches/Homebrew"
+user_cache_dir="${user_home_dir}/Library/Caches/DinrusBrew"
 user_api_cache_dir="${user_cache_dir}/api"
 mkdir -vp "${user_api_cache_dir}"
 mv -v "${homebrew_directory}/cache_api/"* "${user_api_cache_dir}"

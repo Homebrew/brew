@@ -74,7 +74,7 @@ using this quick command:_
   * This is primarily to enable members to begin planning travel by
       asking for time off, requesting employer reimbursement,
       arranging childcare or pet sitters,
-      [applying for a visa](https://5195.f2w.bosa.be/en/themes/entry/border-control/visa/visa-type-c-visa-short-stay)
+      [applying for a visa](https://5195.f2w.bosa.be/en/themes/entry/border-control/visa/visa-type-c)
       which may [take 2–7 weeks](https://dofi.ibz.be/en/themes/third-country-nationals/short-stay/processing-time-visa-application),
       etc.
 

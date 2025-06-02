@@ -32,11 +32,3 @@ If a pull request needs its commit messages changed in a way that autosquash doe
 1. Ensure that bottles have built successfully.
 2. Run `brew pr-pull 12345` where `12345` is the pull request number (or URL).
 3. Amend any relevant commits if needed, then run `git push` to push the commits to the pull request.
-
-## Rebottling
-
-If a formula in homebrew-core needs rebottling for any reason:
-
-1. Navigate to [homebrew-core's rebottling workflow page](https://github.com/Homebrew/homebrew-core/actions/workflows/dispatch-rebottle.yml)
-2. Click on the "Run workflow" button on the right of the page.
-3. Fill out any necessary fields.

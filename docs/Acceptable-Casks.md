@@ -36,7 +36,7 @@ These versions also live in the main repository at [Homebrew/homebrew-cask](http
 
 ### Regional and Localized
 
-When an app exists in more than one language or has different regional editions, [the `language` stanza should be used to switch between languages or regions](Cask-Cookbook.md#stanza-language).
+When an app exists in more than one language or has different regional editions, [the `language` stanza should be used to switch between languages or regions](https://docs.brew.sh/Cask-Cookbook#stanza-language).
 
 ### Trial and Freemium versions
 
@@ -111,7 +111,7 @@ Common reasons to reject a cask entirely:
   * An app from a code repository that is not notable enough (under 30 forks, 30 watchers, 75 stars).
   * [Electronic Identification (eID) software](https://github.com/Homebrew/homebrew-cask/issues/59021).
 * App requires [SIP to be disabled](https://github.com/Homebrew/homebrew-cask/pull/41890) to be installed and/or used.
-* App installer is a `pkg` that requires [`allow_untrusted: true`](Cask-Cookbook.md#pkg-allow_untrusted).
+* App installer is a `pkg` that requires [`allow_untrusted: true`](https://docs.brew.sh/Cask-Cookbook#pkg-allow_untrusted).
 * App is a trial version, and the only way to acquire the full version is through the Mac App Store.
   * Similarly (and trickier to spot), the app has moved to the Mac App Store but still provides old versions via direct download. We reject these in all official repositories so users don’t get stuck using an old version, wrongly thinking they’re using the most up-to-date one (which, amongst other things, might be a security risk).
 * App is unmaintained, i.e. no releases in the last year, or [explicitly discontinued](https://github.com/Homebrew/homebrew-cask/pull/22699).
@@ -120,7 +120,7 @@ Common reasons to reject a cask entirely:
   * Or if the Cask has a download URL that is both behind a login/registration form and from a host that differs from the homepage.
 * Cask is unreasonably difficult to maintain. Examples have included [Audacity](https://github.com/Homebrew/homebrew-cask/pull/27517) and [older Java development casks](https://github.com/Homebrew/homebrew-cask/issues/57387).
 * Cask has been rejected before due to an issue we cannot fix, and the new submission doesn’t fix that. An example would be the [first submission of `soapui`](https://github.com/Homebrew/homebrew-cask/pull/4939), whose installation problems were not fixed in the two [subsequent](https://github.com/Homebrew/homebrew-cask/pull/9969) [submissions](https://github.com/Homebrew/homebrew-cask/pull/10606).
-* Cask is a duplicate. These submissions mostly occur when the [token reference](Cask-Cookbook.md#token-reference) was not followed.
+* Cask is a duplicate. These submissions mostly occur when the [token reference](https://docs.brew.sh/Cask-Cookbook#token-reference) was not followed.
 * The author has [specifically asked us not to include it](https://github.com/Homebrew/homebrew-cask/pull/5342).
 * App is both open-source and CLI-only (i.e. it only uses the `binary` artifact). In that case, and [in the spirit of deduplication](https://github.com/Homebrew/homebrew-cask/issues/15603), submit it first to [homebrew/core](https://github.com/Homebrew/homebrew-core) as a formula that builds from source. If it is rejected, you may then try again as a cask (link to the issue from your pull request so we can see the discussion and reasoning for rejection).
 * App is open-source and has a GUI but no compiled versions (or only old ones) are provided. It’s better to have them in [homebrew/core](https://github.com/Homebrew/homebrew-core) so users don’t get perpetually outdated versions. See [`gedit`](https://github.com/Homebrew/homebrew-cask/pull/23360) for example.

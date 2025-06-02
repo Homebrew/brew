@@ -5,7 +5,7 @@ redirect_from:
   - /linux
   - /Linux
   - /Linuxbrew
-last_review_date: "2025-04-02"
+last_review_date: "1970-01-01"
 ---
 
 # Homebrew on Linux
@@ -51,7 +51,9 @@ If you're using an older distribution of Linux, installing your first package wi
 
 ## Requirements
 
-See [Support Tiers](Support-Tiers.md)
+- **Linux** 3.2 or newer
+- **Glibc** 2.13 or newer
+- **64-bit x86_64** CPU
 
 To install build tools, paste at a terminal prompt:
 
@@ -61,11 +63,11 @@ To install build tools, paste at a terminal prompt:
   sudo apt-get install build-essential procps curl file git
   ```
 
-- **Fedora, CentOS Stream, or RHEL**
+- **Fedora, CentOS, or Red Hat**
 
   ```sh
-  sudo dnf group install 'Development Tools'
-  sudo dnf install procps-ng curl file
+  sudo yum groupinstall 'Development Tools'
+  sudo yum install procps-ng curl file git
   ```
 
 - **Arch Linux**
@@ -74,17 +76,17 @@ To install build tools, paste at a terminal prompt:
   sudo pacman -S base-devel procps-ng curl file git
   ```
 
-### ARM32 (Tier 3 Support)
+### ARM (unsupported)
 
-Homebrew can run on 32-bit ARM systems (e.g. Raspberry Pi and others), but as they lack bottles (binary packages) they are a [Tier 3 supported platform](Support-Tiers.md#tier-3).
+Homebrew can run on 32-bit ARM (e.g. Raspberry Pi and others) and 64-bit ARM (ARM64, also known as AArch64), but as they lack bottles (binary packages) they are unsupported. Pull requests are welcome to improve the experience on ARM platforms.
 
-You may need to install your own Ruby using your system package manager, a PPA, or `rbenv/ruby-build` as we don't distribute a Homebrew Portable Ruby for ARM32.
+You may need to install your own Ruby using your system package manager, a PPA, or `rbenv/ruby-build` as we no longer distribute a Homebrew Portable Ruby for ARM.
 
-### 32-bit x86 (Unsupported)
+### 32-bit x86 (incompatible)
 
 Homebrew does not run at all on 32-bit x86 platforms.
 
-### Windows Subsystem for Linux 1 (Tier 3 Support)
+### Windows Subsystem for Linux (WSL) 1
 
 Due to [known issues](https://github.com/microsoft/WSL/issues/8219) with WSL 1, you may experience issues running various executables installed by Homebrew. We recommend you switch to WSL 2 instead.
 

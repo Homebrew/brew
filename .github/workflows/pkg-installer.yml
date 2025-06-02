@@ -16,8 +16,6 @@ env:
   HOMEBREW_NO_ANALYTICS_THIS_RUN: 1
   HOMEBREW_NO_ANALYTICS_MESSAGE_OUTPUT: 1
 
-permissions: {}
-
 defaults:
   run:
     shell: bash -xeuo pipefail {0}
@@ -135,12 +133,12 @@ jobs:
           fi
 
       - name: Generate build provenance
-        uses: actions/attest-build-provenance@db473fddc028af60658334401dc6fa3ffd8669fd # v2.3.0
+        uses: actions/attest-build-provenance@520d128f165991a6c774bcb264f323e3d70747f4 # v2.2.0
         with:
           subject-path: Homebrew-${{ steps.homebrew-version.outputs.version }}.pkg
 
       - name: Upload installer to GitHub Actions
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4.6.0
         with:
           name: Homebrew-${{ steps.homebrew-version.outputs.version }}.pkg
           path: Homebrew-${{ steps.homebrew-version.outputs.version }}.pkg
@@ -162,7 +160,7 @@ jobs:
             name: macos-15-arm64
     steps:
       - name: Download installer from GitHub Actions
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
         with:
           name: "${{ needs.build.outputs.installer_path }}"
 
@@ -215,7 +213,7 @@ jobs:
       contents: write
     steps:
       - name: Download installer from GitHub Actions
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
         with:
           name: "${{ needs.build.outputs.installer_path }}"
 
@@ -230,15 +228,17 @@ jobs:
                                     --password "${PKG_APPLE_ID_APP_SPECIFIC_PASSWORD}"
                                     --wait
 
+      - name: Install gh
+        run: brew install gh
+
       - name: Upload installer to GitHub release
         if: github.event_name == 'release'
         env:
           GH_TOKEN: ${{ github.token }}
           INSTALLER_PATH: ${{ needs.build.outputs.installer_path }}
-        run: |
-          VERSION="${INSTALLER_PATH#Homebrew-}"
-          VERSION="${VERSION%.pkg}"
-          gh release upload --repo Homebrew/brew "${VERSION}" "${INSTALLER_PATH}"
+        run: gh release upload --repo Homebrew/brew
+                                "${GITHUB_REF//refs\/tags\//}"
+                                "${INSTALLER_PATH}"
 
   issue:
     needs: [build, test, upload]

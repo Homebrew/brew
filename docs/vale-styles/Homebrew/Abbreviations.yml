@@ -2,7 +2,7 @@
 extends: substitution
 message: Use '%s' instead of '%s'.
 ignorecase: false
-link: "https://github.com/Homebrew/brew/blob/HEAD/docs/Prose-Style-Guidelines.md#style-and-usage"
+link: "https://github.com/DinrusBrew/brew/blob/HEAD/docs/Prose-Style-Guidelines.md#style-and-usage"
 level: error
 nonword: true
 swap:

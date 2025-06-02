@@ -6,7 +6,7 @@ set -u
 # shellcheck disable=SC2292
 if [ -z "${BASH_VERSION:-}" ]
 then
-  echo "Error: Bash is required to run brew." >&2
+  echo "Ошибка: Bash требуется для запуска brew." >&2
   exit 1
 fi
 
@@ -15,24 +15,24 @@ set +o posix # as we are using bash now
 # Fail fast with concise messages when PWD has issues
 if [[ -z "${PWD-}" ]]
 then
-  echo "Error: \$PWD must be set to run brew." >&2
+  echo "Ошибка: \$PWD должен быть установлен для запуска brew." >&2
   exit 1
 fi
 if ! [[ -d "${PWD}" ]]
 then
-  echo "Error: The current working directory must exist to run brew." >&2
+  echo "Ошибка: Должна существовать текущая рабочая директория для запуска brew." >&2
   exit 1
 fi
 if ! [[ -r "${PWD}" ]]
 then
-  echo "Error: The current working directory must be readable to ${USER} to run brew." >&2
+  echo "Ошибка: Текущая рабочая директория должна быть читабильной для ${USER} для запуска brew." >&2
   exit 1
 fi
 
 # Fail fast with concise message when HOME is unset
 if [[ -z "${HOME:-}" ]]
 then
-  echo "Error: \$HOME must be set to run brew." >&2
+  echo "Ошибка: \$HOME должен быть установлен для запуска brew." >&2
   exit 1
 fi
 
@@ -73,67 +73,67 @@ then
 fi
 unset SUDO
 
-# Take the HOMEBREW_PATH if we are running brew within brew, otherwise we would lose the original path.
-if [[ -n "${HOMEBREW_BREW_FILE:-}" && -n "${HOMEBREW_PATH:-}" ]]
+# Take the DINRUSBREW_PATH if we are running brew within brew, otherwise we would lose the original path.
+if [[ -n "${DINRUSBREW_BREW_FILE:-}" && -n "${DINRUSBREW_PATH:-}" ]]
 then
-  PATH="${HOMEBREW_PATH}"
+  PATH="${DINRUSBREW_PATH}"
 fi
 
 BREW_FILE_DIRECTORY="$(quiet_cd "${0%/*}/" && pwd -P)"
-HOMEBREW_BREW_FILE="${BREW_FILE_DIRECTORY%/}/${0##*/}"
-HOMEBREW_PREFIX="${HOMEBREW_BREW_FILE%/*/*}"
+DINRUSBREW_BREW_FILE="${BREW_FILE_DIRECTORY%/}/${0##*/}"
+DINRUSBREW_PREFIX="${DINRUSBREW_BREW_FILE%/*/*}"
 
 # Default to / prefix if unset or the bin/brew file.
-if [[ -z "${HOMEBREW_PREFIX}" || "${HOMEBREW_PREFIX}" = "${HOMEBREW_BREW_FILE}" ]]
+if [[ -z "${DINRUSBREW_PREFIX}" || "${DINRUSBREW_PREFIX}" = "${DINRUSBREW_BREW_FILE}" ]]
 then
-  HOMEBREW_PREFIX="/"
+  DINRUSBREW_PREFIX="/"
 fi
 
-HOMEBREW_REPOSITORY="${HOMEBREW_PREFIX}"
+DINRUSBREW_REPOSITORY="${DINRUSBREW_PREFIX}"
 
-# Resolve the bin/brew symlink to find Homebrew's repository
-if [[ -L "${HOMEBREW_BREW_FILE}" ]]
+# Resolve the bin/brew symlink to find DinrusBrew's repository
+if [[ -L "${DINRUSBREW_BREW_FILE}" ]]
 then
-  BREW_FILE_DIRECTORY="$(symlink_target_directory "${HOMEBREW_BREW_FILE}" "${BREW_FILE_DIRECTORY}")"
-  HOMEBREW_REPOSITORY="${BREW_FILE_DIRECTORY%/*}"
+  BREW_FILE_DIRECTORY="$(symlink_target_directory "${DINRUSBREW_BREW_FILE}" "${BREW_FILE_DIRECTORY}")"
+  DINRUSBREW_REPOSITORY="${BREW_FILE_DIRECTORY%/*}"
 fi
 
-# Try to find a /usr/local HOMEBREW_PREFIX where possible (for macOS x86_64 bottles)
-if [[ -L "/usr/local/bin/brew" && ! -L "${HOMEBREW_PREFIX}/Cellar" ]]
+# Try to find a /usr/local DINRUSBREW_PREFIX where possible (for macOS x86_64 bottles)
+if [[ -L "/usr/local/bin/brew" && ! -L "${DINRUSBREW_PREFIX}/Cellar" ]]
 then
   USR_LOCAL_BREW_FILE_DIRECTORY="$(symlink_target_directory "/usr/local/bin/brew" "/usr/local/bin")"
-  USR_LOCAL_HOMEBREW_REPOSITORY="${USR_LOCAL_BREW_FILE_DIRECTORY%/*}"
-  if [[ "${HOMEBREW_REPOSITORY}" = "${USR_LOCAL_HOMEBREW_REPOSITORY}" ]]
+  USR_LOCAL_DINRUSBREW_REPOSITORY="${USR_LOCAL_BREW_FILE_DIRECTORY%/*}"
+  if [[ "${DINRUSBREW_REPOSITORY}" = "${USR_LOCAL_DINRUSBREW_REPOSITORY}" ]]
   then
-    HOMEBREW_PREFIX="/usr/local"
+    DINRUSBREW_PREFIX="/usr/local"
   fi
-  unset USR_LOCAL_BREW_FILE_DIRECTORY USR_LOCAL_HOMEBREW_REPOSITORY
+  unset USR_LOCAL_BREW_FILE_DIRECTORY USR_LOCAL_DINRUSBREW_REPOSITORY
 fi
 
 unset BREW_FILE_DIRECTORY
 
-# If the location of HOMEBREW_LIBRARY changes
+# If the location of DINRUSBREW_LIBRARY changes
 # keg_relocate.rb, formula_cellar_checks.rb, and test/global_spec.rb need to change.
-HOMEBREW_LIBRARY="${HOMEBREW_REPOSITORY}/Library"
+DINRUSBREW_LIBRARY="${DINRUSBREW_REPOSITORY}/Library"
 
-# Use HOMEBREW_BREW_WRAPPER if set.
-export HOMEBREW_ORIGINAL_BREW_FILE="${HOMEBREW_BREW_FILE}"
-if [[ -n "${HOMEBREW_BREW_WRAPPER:-}" ]]
+# Use DINRUSBREW_BREW_WRAPPER if set.
+export DINRUSBREW_ORIGINAL_BREW_FILE="${DINRUSBREW_BREW_FILE}"
+if [[ -n "${DINRUSBREW_BREW_WRAPPER:-}" ]]
 then
-  HOMEBREW_BREW_FILE="${HOMEBREW_BREW_WRAPPER}"
+  DINRUSBREW_BREW_FILE="${DINRUSBREW_BREW_WRAPPER}"
 fi
 
 # These variables are exported in this file and are not allowed to be overridden by the user.
 BIN_BREW_EXPORTED_VARS=(
-  HOMEBREW_BREW_FILE
-  HOMEBREW_PREFIX
-  HOMEBREW_REPOSITORY
-  HOMEBREW_LIBRARY
-  HOMEBREW_USER_CONFIG_HOME
-  HOMEBREW_ORIGINAL_BREW_FILE
+  DINRUSBREW_BREW_FILE
+  DINRUSBREW_PREFIX
+  DINRUSBREW_REPOSITORY
+  DINRUSBREW_LIBRARY
+  DINRUSBREW_USER_CONFIG_HOME
+  DINRUSBREW_ORIGINAL_BREW_FILE
 )
 
-# Load Homebrew's variable configuration files from disk.
+# Load DinrusBrew's variable configuration files from disk.
 export_homebrew_env_file() {
   local env_file
 
@@ -141,8 +141,8 @@ export_homebrew_env_file() {
   [[ -r "${env_file}" ]] || return 0
   while read -r line
   do
-    # only load HOMEBREW_* lines
-    [[ "${line}" = "HOMEBREW_"* ]] || continue
+    # only load DINRUSBREW_* lines
+    [[ "${line}" = "DINRUSBREW_"* ]] || continue
 
     # forbid overriding variables that are set in this file
     local invalid_variable
@@ -160,23 +160,23 @@ export_homebrew_env_file() {
 export_homebrew_env_file "/etc/homebrew/brew.env"
 
 unset SYSTEM_ENV_TAKES_PRIORITY
-if [[ -n "${HOMEBREW_SYSTEM_ENV_TAKES_PRIORITY-}" ]]
+if [[ -n "${DINRUSBREW_SYSTEM_ENV_TAKES_PRIORITY-}" ]]
 then
   SYSTEM_ENV_TAKES_PRIORITY="1"
 fi
 
 # Next, load the prefix configuration
-export_homebrew_env_file "${HOMEBREW_PREFIX}/etc/homebrew/brew.env"
+export_homebrew_env_file "${DINRUSBREW_PREFIX}/etc/homebrew/brew.env"
 
 # Finally, load the user configuration
 if [[ -n "${XDG_CONFIG_HOME-}" ]]
 then
-  HOMEBREW_USER_CONFIG_HOME="${XDG_CONFIG_HOME}/homebrew"
+  DINRUSBREW_USER_CONFIG_HOME="${XDG_CONFIG_HOME}/homebrew"
 else
-  HOMEBREW_USER_CONFIG_HOME="${HOME}/.homebrew"
+  DINRUSBREW_USER_CONFIG_HOME="${HOME}/.homebrew"
 fi
 
-export_homebrew_env_file "${HOMEBREW_USER_CONFIG_HOME}/brew.env"
+export_homebrew_env_file "${DINRUSBREW_USER_CONFIG_HOME}/brew.env"
 
 # If the system configuration takes priority, load it again to override any previous settings.
 if [[ -n "${SYSTEM_ENV_TAKES_PRIORITY-}" ]]
@@ -184,10 +184,10 @@ then
   export_homebrew_env_file "/etc/homebrew/brew.env"
 fi
 
-# Copy and export all HOMEBREW_* variables previously mentioned in
-# manpage or used elsewhere by Homebrew.
+# Copy and export all DINRUSBREW_* variables previously mentioned in
+# manpage or used elsewhere by DinrusBrew.
 
-# These variables are allowed to be set by the user as, e.g., `HOMEBREW_BROWSER`.
+# These variables are allowed to be set by the user as, e.g., `DINRUSBREW_BROWSER`.
 MANPAGE_VARS=(
   BAT_CONFIG_PATH
   BAT_THEME
@@ -202,14 +202,14 @@ do
   # Skip if variable value is empty.
   [[ -z "${!VAR:-}" ]] && continue
 
-  VAR_NEW="HOMEBREW_${VAR}"
-  # Skip if existing HOMEBREW_* variable is set.
+  VAR_NEW="DINRUSBREW_${VAR}"
+  # Skip if existing DINRUSBREW_* variable is set.
   [[ -n "${!VAR_NEW:-}" ]] && continue
   export "${VAR_NEW}"="${!VAR}"
 done
 
-# We don't want to take the user's value for, e.g., `HOMEBREW_PATH` here!
-USED_BY_HOMEBREW_VARS=(
+# We don't want to take the user's value for, e.g., `DINRUSBREW_PATH` here!
+USED_BY_DINRUSBREW_VARS=(
   CODESPACES
   COLORTERM
   DBUS_SESSION_BUS_ADDRESS
@@ -226,17 +226,17 @@ USED_BY_HOMEBREW_VARS=(
   XDG_RUNTIME_DIR
   ZDOTDIR
 )
-for VAR in "${USED_BY_HOMEBREW_VARS[@]}"
+for VAR in "${USED_BY_DINRUSBREW_VARS[@]}"
 do
   # Skip if variable value is empty.
   [[ -z "${!VAR:-}" ]] && continue
 
-  # We unconditionally override `HOMEBREW_*` here.
-  VAR_NEW="HOMEBREW_${VAR}"
+  # We unconditionally override `DINRUSBREW_*` here.
+  VAR_NEW="DINRUSBREW_${VAR}"
   export "${VAR_NEW}"="${!VAR}"
 done
 
-unset VAR VAR_NEW MANPAGE_VARS USED_BY_HOMEBREW_VARS
+unset VAR VAR_NEW MANPAGE_VARS USED_BY_DINRUSBREW_VARS
 
 for VAR in "${BIN_BREW_EXPORTED_VARS[@]}"
 do
@@ -245,10 +245,10 @@ done
 
 # set from user environment
 # shellcheck disable=SC2154
-# Use VISUAL if HOMEBREW_EDITOR and EDITOR are unset.
-if [[ -z "${HOMEBREW_EDITOR:-}" && -n "${VISUAL:-}" ]]
+# Use VISUAL if DINRUSBREW_EDITOR and EDITOR are unset.
+if [[ -z "${DINRUSBREW_EDITOR:-}" && -n "${VISUAL:-}" ]]
 then
-  export HOMEBREW_EDITOR="${VISUAL}"
+  export DINRUSBREW_EDITOR="${VISUAL}"
 fi
 
 # set from user environment
@@ -262,17 +262,7 @@ fi
 
 if [[ -n "${GITHUB_ACTIONS:-}" && -n "${ImageOS:-}" && -n "${ImageVersion:-}" ]]
 then
-  export HOMEBREW_GITHUB_HOSTED_RUNNER=1
-fi
-
-# don't filter the environment for `brew bundle (exec|env|sh)`
-if [[ "${1:-}" == "bundle" ]]
-then
-  if [[ "${2:-}" == "exec" || "${2:-}" == "env" || "${2:-}" == "sh" ]]
-  then
-    exec /bin/bash -p "${HOMEBREW_LIBRARY}/Homebrew/brew.sh" "$@"
-    exit $?
-  fi
+  export DINRUSBREW_GITHUB_HOSTED_RUNNER=1
 fi
 
 # filter the user environment
@@ -284,7 +274,7 @@ ENV_VAR_NAMES=(
   http_proxy https_proxy ftp_proxy no_proxy all_proxy HTTPS_PROXY FTP_PROXY ALL_PROXY
 )
 # Filter all but the specific variables.
-for VAR in "${ENV_VAR_NAMES[@]}" "${!HOMEBREW_@}"
+for VAR in "${ENV_VAR_NAMES[@]}" "${!DINRUSBREW_@}"
 do
   # Skip if variable value is empty.
   [[ -z "${!VAR:-}" ]] && continue
@@ -305,7 +295,7 @@ then
   done
 fi
 
-if [[ -n "${HOMEBREW_RDBG:-}" ]]
+if [[ -n "${DINRUSBREW_RDBG:-}" ]]
 then
   for VAR in "${!RUBY_DEBUG_@}"
   do
@@ -318,4 +308,4 @@ fi
 
 unset VAR ENV_VAR_NAMES
 
-exec /usr/bin/env -i "${FILTERED_ENV[@]}" /bin/bash -p "${HOMEBREW_LIBRARY}/Homebrew/brew.sh" "$@"
+exec /usr/bin/env -i "${FILTERED_ENV[@]}" /bin/bash -p "${DINRUSBREW_LIBRARY}/DinrusBrew/brew.sh" "$@"

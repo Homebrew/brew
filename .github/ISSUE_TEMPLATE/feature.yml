@@ -1,6 +1,6 @@
 name: New issue for Feature Suggestion
 description: Request our thoughts on your suggestion for a new feature for Homebrew.
-type: "Feature"
+labels: features
 body:
   - type: markdown
     attributes:

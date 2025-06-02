@@ -1,7 +1,7 @@
 ---
 extends: existence
 message: "No Oxford commas!"
-link: "https://github.com/Homebrew/brew/blob/HEAD/docs/Prose-Style-Guidelines.md#typographical-conventions"
+link: "https://github.com/DinrusBrew/brew/blob/HEAD/docs/Prose-Style-Guidelines.md#typographical-conventions"
 scope: sentence
 level: error
 tokens:

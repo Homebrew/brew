@@ -26,8 +26,8 @@ A *formula* is a package definition written in Ruby. It can be created with `bre
 | **tap**              | directory (and usually Git repository) of **formulae**, **casks** and/or **external commands**       | `/opt/homebrew/Library/Taps/homebrew/homebrew-core` |
 | **bottle**           | pre-built **keg** poured into a **rack** of the **Cellar** instead of building from upstream sources | `qt--6.5.1.ventura.bottle.tar.gz` |
 | **tab**              | information about a **keg**, e.g. whether it was poured from a **bottle** or built from source       | `/opt/homebrew/Cellar/foo/0.1/INSTALL_RECEIPT.json` |
-| **Brew Bundle**      | a declarative interface to Homebrew                                                                  | `brew 'myservice', restart_service: true` |
-| **Brew Services**    | the Homebrew command to manage background services                                                   | `brew services start myservice` |
+| **Brew Bundle**      | an [extension of Homebrew](https://github.com/Homebrew/homebrew-bundle) to describe dependencies     | `brew 'myservice', restart_service: true` |
+| **Brew Services**    | an [extension of Homebrew](https://github.com/Homebrew/homebrew-services) to manage services         | `brew services start myservice` |
 
 ## An introduction
 
@@ -43,7 +43,7 @@ Packages are installed according to their formulae. Read over a simple one, e.g.
 
 Make sure you run `brew update` before you start. This ensures your Homebrew installation is a Git repository.
 
-To create or edit formulae locally, you'll need to first [tap `homebrew/core`](FAQ.md#can-i-edit-formulae-myself) if you haven't previously. This clones the Homebrew/homebrew-core Git repository to `$(brew --repository homebrew/core)`. As you're developing, you'll also need to set `HOMEBREW_NO_INSTALL_FROM_API=1` in your shell environment or before any `install`, `reinstall` or `upgrade` commands to force `brew` to use the local repository instead of the API.
+To create or edit formulae locally, you'll need to first [tap `homebrew/core`](https://docs.brew.sh/FAQ#can-i-edit-formulae-myself) if you haven't previously. This clones the Homebrew/homebrew-core Git repository to `$(brew --repository homebrew/core)`. As you're developing, you'll also need to set `HOMEBREW_NO_INSTALL_FROM_API=1` in your shell environment or before any `install`, `reinstall` or `upgrade` commands to force `brew` to use the local repository instead of the API.
 
 Before submitting a new formula make sure your package:
 
@@ -74,11 +74,11 @@ Homebrew will try to guess the formula’s name from its URL. If it fails to do 
 
 ### Fill in the `homepage`
 
-**We don’t accept formulae without a [`homepage`](https://rubydoc.brew.sh/Formula#homepage-class_method)!**
+**We don’t accept formulae without a [`homepage`](https://rubydoc.brew.sh/Formula#homepage%3D-class_method)!**
 
-An SSL/TLS (https) [`homepage`](https://rubydoc.brew.sh/Formula#homepage-class_method) is preferred, if one is available.
+An SSL/TLS (https) [`homepage`](https://rubydoc.brew.sh/Formula#homepage%3D-class_method) is preferred, if one is available.
 
-Try to summarise from the [`homepage`](https://rubydoc.brew.sh/Formula#homepage-class_method) what the formula does in the [`desc`](https://rubydoc.brew.sh/Formula#desc-class_method)ription. Note that the [`desc`](https://rubydoc.brew.sh/Formula#desc-class_method)ription is automatically prepended with the formula name when printed.
+Try to summarise from the [`homepage`](https://rubydoc.brew.sh/Formula#homepage%3D-class_method) what the formula does in the [`desc`](https://rubydoc.brew.sh/Formula#desc%3D-class_method)ription. Note that the [`desc`](https://rubydoc.brew.sh/Formula#desc%3D-class_method)ription is automatically prepended with the formula name when printed.
 
 ### Fill in the `license`
 
@@ -95,7 +95,7 @@ Check out the [License Guidelines](License-Guidelines.md) for examples of comple
 ### Check the build system
 
 ```sh
-HOMEBREW_NO_INSTALL_FROM_API=1 brew install --build-from-source --interactive foo
+HOMEBREW_NO_INSTALL_FROM_API=1 brew install --interactive foo
 ```
 
 You’re now at a new prompt with the tarball extracted to a temporary sandbox.
@@ -152,10 +152,10 @@ A `Hash` (e.g. `=>`) adds information to a dependency. Given a string or symbol,
 * `:optional` (not allowed in `Homebrew/homebrew-core`) generates an implicit `with-foo` option for the formula. This means that, given `depends_on "foo" => :optional`, the user must pass `--with-foo` to use the dependency.
 * `:recommended` (not allowed in `Homebrew/homebrew-core`) generates an implicit `without-foo` option, meaning that the dependency is enabled by default and the user must pass `--without-foo` to disable this dependency. The default description can be overridden using the [`option`](https://rubydoc.brew.sh/Formula#option-class_method) syntax (in this case, the [`option` declaration](#adding-optional-steps) must precede the dependency):
 
-```ruby
+  ```ruby
 option "with-foo", "Compile with foo bindings" # This overrides the generated description if you want to
 depends_on "foo" => :optional # Generated description would otherwise be "Build with foo support"
-```
+  ```
 
 * `"<option-name>"` (not allowed in `Homebrew/homebrew-core`) requires a dependency to have been built with the specified option.
 
@@ -179,17 +179,17 @@ conflicts_with "blueduck", because: "yellowduck also ships a duck binary"
 
 In Homebrew we sometimes accept formulae updates that don’t include a version bump. These include resource updates, new patches or fixing a security issue with a formula.
 
-Occasionally, these updates require a forced-recompile of the formula itself or its dependents to either ensure formulae continue to function as expected or to close a security issue. This forced-recompile is known as a [`revision`](https://rubydoc.brew.sh/Formula#revision-class_method) and is inserted underneath the [`homepage`](https://rubydoc.brew.sh/Formula#homepage-class_method)/[`url`](https://rubydoc.brew.sh/Formula#url-class_method)/[`sha256`](https://rubydoc.brew.sh/Formula#sha256-class_method)/[`license`](https://rubydoc.brew.sh/Formula#license-class_method) block.
+Occasionally, these updates require a forced-recompile of the formula itself or its dependents to either ensure formulae continue to function as expected or to close a security issue. This forced-recompile is known as a [`revision`](https://rubydoc.brew.sh/Formula#revision%3D-class_method) and is inserted underneath the [`homepage`](https://rubydoc.brew.sh/Formula#homepage%3D-class_method)/[`url`](https://rubydoc.brew.sh/Formula#url-class_method)/[`sha256`](https://rubydoc.brew.sh/Formula#sha256%3D-class_method)/[`license`](https://rubydoc.brew.sh/Formula#license-class_method) block.
 
-When a dependent of a formula fails to build against a new version of that dependency it must receive a [`revision`](https://rubydoc.brew.sh/Formula#revision-class_method). An example of such failure is in [this issue report](https://github.com/Homebrew/legacy-homebrew/issues/31195) and [its fix](https://github.com/Homebrew/legacy-homebrew/pull/31207).
+When a dependent of a formula fails to build against a new version of that dependency it must receive a [`revision`](https://rubydoc.brew.sh/Formula#revision%3D-class_method). An example of such failure is in [this issue report](https://github.com/Homebrew/legacy-homebrew/issues/31195) and [its fix](https://github.com/Homebrew/legacy-homebrew/pull/31207).
 
-[`revision`](https://rubydoc.brew.sh/Formula#revision-class_method)s are also used for formulae that move from the system OpenSSL to the Homebrew-shipped OpenSSL without any other changes to that formula. This ensures users aren’t left exposed to the potential security issues of the outdated OpenSSL. An example of this can be seen in [this commit](https://github.com/Homebrew/homebrew-core/commit/0d4453a91923e6118983961e18d0609e9828a1a4).
+[`revision`](https://rubydoc.brew.sh/Formula#revision%3D-class_method)s are also used for formulae that move from the system OpenSSL to the Homebrew-shipped OpenSSL without any other changes to that formula. This ensures users aren’t left exposed to the potential security issues of the outdated OpenSSL. An example of this can be seen in [this commit](https://github.com/Homebrew/homebrew-core/commit/0d4453a91923e6118983961e18d0609e9828a1a4).
 
 ### Version scheme changes
 
 Sometimes formulae have version schemes that change such that a direct comparison between two versions no longer produces the correct result. For example, a project might be version `13` and then decide to become `1.0.0`. As `13` is translated to `13.0.0` by our versioning system by default this requires intervention.
 
-When a version scheme of a formula fails to recognise a new version as newer it must receive a [`version_scheme`](https://rubydoc.brew.sh/Formula#version_scheme-class_method). An example of this can be seen in [this pull request](https://github.com/Homebrew/homebrew-core/pull/4006).
+When a version scheme of a formula fails to recognise a new version as newer it must receive a [`version_scheme`](https://rubydoc.brew.sh/Formula#version_scheme%3D-class_method). An example of this can be seen in [this pull request](https://github.com/Homebrew/homebrew-core/pull/4006).
 
 ### Double-check for dependencies
 
@@ -433,7 +433,7 @@ If you have already forked Homebrew on GitHub, then you can manually push (just 
 git push https://github.com/myname/homebrew-core/ <what-you-named-your-branch>
 ```
 
-Now, [open a pull request](How-To-Open-a-Homebrew-Pull-Request.md) for your changes.
+Now, [open a pull request](https://docs.brew.sh/How-To-Open-a-Homebrew-Pull-Request) for your changes.
 
 * One formula per commit; one commit per formula.
 * Keep merge commits out of the pull request.
@@ -460,7 +460,7 @@ end
 
 ### Standard arguments
 
-For any formula using certain well-known build systems, there will be arguments that should be passed during compilation so that the build conforms to Homebrew standards. These have been collected into a set of `std_*_args` methods. Detailed information about each of those methods can be found in [Rubydoc](https://rubydoc.brew.sh/Formula).
+For any formula using certain well-known build systems, there will be arguments that should be passed during compilation so that the build conforms to Homebrew standards. These have been collected into a set of `std_*_args` methods.
 
 Most of these methods accept parameters to customize their output. For example, to set the install prefix to [**`libexec`**](#variables-for-directory-locations) for `configure` or `cmake`:
 
@@ -517,8 +517,6 @@ The `std_*_args` methods, as well as the arguments they pass, are:
 "-o=#{output}"
 ```
 
-It also provides a convenient way to set `-ldflags`, `-gcflags`, and `-tags`, see examples: [`babelfish`](https://github.com/Homebrew/homebrew-core/blob/master/Formula/b/babelfish.rb) and [`wazero`](https://github.com/Homebrew/homebrew-core/blob/master/Formula/w/wazero.rb) formulae.
-
 #### `std_meson_args`
 
 ```ruby
@@ -547,19 +545,6 @@ It also provides a convenient way to set `-ldflags`, `-gcflags`, and `-tags`, se
 "--ignore-installed"
 "--no-compile"
 ```
-
-#### `std_zig_args`
-
-```ruby
-"--prefix"
-prefix
-"--release=#{release_mode}"
-"-Doptimize=Release#{release_mode}"
-"--summary"
-"all"
-```
-
-`release_mode` is a symbol that accepts only `:fast`, `:safe`, and `:small` values (with `:fast` being default).
 
 ### `bin.install "foo"`
 
@@ -904,7 +889,6 @@ Generally we'd rather you were specific about which files or directories need to
 | **`bash_completion`** | `#{prefix}/etc/bash_completion.d`              | `/opt/homebrew/Cellar/foo/0.1/etc/bash_completion.d` |
 | **`zsh_completion`**  | `#{prefix}/share/zsh/site-functions`           | `/opt/homebrew/Cellar/foo/0.1/share/zsh/site-functions` |
 | **`fish_completion`** | `#{prefix}/share/fish/vendor_completions.d`    | `/opt/homebrew/Cellar/foo/0.1/share/fish/vendor_completions.d` |
-| **`pwsh_completion`** | `#{prefix}/share/pwsh/completions`             | `/opt/homebrew/Cellar/foo/0.1/share/pwsh/completions` |
 | **`etc`**             | `#{HOMEBREW_PREFIX}/etc`                       | `/opt/homebrew/etc` |
 | **`pkgetc`**          | `#{HOMEBREW_PREFIX}/etc/#{name}`               | `/opt/homebrew/etc/foo` |
 | **`var`**             | `#{HOMEBREW_PREFIX}/var`                       | `/opt/homebrew/var` |
@@ -950,27 +934,27 @@ Several other utilities for Ruby's [`Pathname`](https://rubydoc.brew.sh/Pathname
 
 * To perform several operations within a directory, enclose them within a  [`cd <path> do`](https://rubydoc.brew.sh/Pathname#cd-instance_method) block:
 
-```ruby
+  ```ruby
 cd "src" do
   system "./configure", "--disable-debug", "--prefix=#{prefix}"
   system "make", "install"
 end
-```
+  ```
 
 * To surface one or more binaries buried in `libexec` or a macOS `.app` package, use [`write_exec_script`](https://rubydoc.brew.sh/Pathname#write_exec_script-instance_method) or [`write_jar_script`](https://rubydoc.brew.sh/Pathname#write_jar_script-instance_method):
 
-```ruby
+  ```ruby
 bin.write_exec_script (libexec/"bin").children
 bin.write_exec_script prefix/"Package.app/Contents/MacOS/package"
 bin.write_jar_script libexec/jar_file, "jarfile", java_version: "11"
-```
+  ```
 
 * For binaries that require setting one or more environment variables to function properly, use [`write_env_script`](https://rubydoc.brew.sh/Pathname#write_env_script-instance_method) or [`env_script_all_files`](https://rubydoc.brew.sh/Pathname#env_script_all_files-instance_method):
 
-```ruby
+  ```ruby
 (bin/"package").write_env_script libexec/"package", PACKAGE_ROOT: libexec
 bin.env_script_all_files(libexec/"bin", PERL5LIB: ENV.fetch("PERL5LIB", nil))
-```
+  ```
 
 ### Rewriting a script shebang
 
@@ -1042,38 +1026,38 @@ Another example would be configuration files that should not be overwritten on p
 
 ### Service files
 
-There are two ways to add `launchd` plists and `systemd` services to a formula, so that `brew services` can pick them up:
+There are two ways to add `launchd` plists and `systemd` services to a formula, so that [`brew services`](https://github.com/Homebrew/homebrew-services) can pick them up:
 
 1. If the package already provides a service file the formula can reference it by name:
 
-```ruby
+   ```ruby
 service do
   name macos: "custom.launchd.name",
        linux: "custom.systemd.name"
 end
-```
+   ```
 
    To find the file we append `.plist` to the `launchd` service name and `.service` to the `systemd` service name internally.
 
 2. If the formula does not provide a service file you can generate one using the following stanza:
 
-```ruby
-# 1. An individual command
+   ```ruby
+   # 1. An individual command
 service do
   run opt_bin/"script"
 end
 
-# 2. A command with arguments
+   # 2. A command with arguments
 service do
   run [opt_bin/"script", "--config", etc/"dir/config.yml"]
 end
 
-# 3. OS specific commands (If you omit one, the service file won't get generated for that OS.)
+   # 3. OS specific commands (If you omit one, the service file won't get generated for that OS.)
 service do
   run macos: [opt_bin/"macos_script", "standalone"],
       linux: var/"special_linux_script"
 end
-```
+   ```
 
 #### Service block methods
 
@@ -1249,7 +1233,7 @@ See our [Deprecating, Disabling and Removing Formulae](Deprecating-Disabling-and
 
 ## Updating formulae
 
-When a new version of the software is released, use `brew bump-formula-pr` to automatically update the [`url`](https://rubydoc.brew.sh/Formula#url-class_method) and [`sha256`](https://rubydoc.brew.sh/Formula#sha256-class_method), remove any [`revision`](https://rubydoc.brew.sh/Formula#revision-class_method) lines, and submit a pull request. See our [How to Open a Homebrew Pull Request](How-To-Open-a-Homebrew-Pull-Request.md) documentation for more information.
+When a new version of the software is released, use `brew bump-formula-pr` to automatically update the [`url`](https://rubydoc.brew.sh/Formula#url-class_method) and [`sha256`](https://rubydoc.brew.sh/Formula#sha256%3D-class_method), remove any [`revision`](https://rubydoc.brew.sh/Formula#revision%3D-class_method) lines, and submit a pull request. See our [How to Open a Homebrew Pull Request](How-To-Open-a-Homebrew-Pull-Request.md) documentation for more information.
 
 ## Troubleshooting for new formulae
 

@@ -3,7 +3,6 @@ set -e
 
 # fix permissions so Homebrew and Bundler don't complain
 sudo chmod -R g-w,o-w /home/linuxbrew
-sudo chmod +t -R /home/linuxbrew/
 
 # everything below is too slow to do unless prebuilding so skip it
 CODESPACES_ACTION_NAME="$(jq --raw-output '.ACTION_NAME' /workspaces/.codespaces/shared/environment-variables.json)"
@@ -24,6 +23,9 @@ brew cleanup
 
 # actually tap homebrew/core, no longer done by default
 brew tap --force homebrew/core
+# tap some other repos so codespaces can be used for developing multiple taps
+brew tap homebrew/bundle
+brew tap homebrew/services
 
 # install some useful development things
 sudo apt-get update

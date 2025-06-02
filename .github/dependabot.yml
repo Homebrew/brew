@@ -5,86 +5,51 @@ updates:
     directory: /
     schedule:
       interval: weekly
-      day: "friday"
-      time: "08:00"
-      timezone: "Etc/UTC"
     allow:
       - dependency-type: all
+    # The actions in triage-issues.yml are updated in the Homebrew/.github repo
+    ignore:
+      - dependency-name: actions/stale
     groups:
-      github-actions:
+      artifacts:
         patterns:
-          - "*"
+          - actions/*-artifact
 
   - package-ecosystem: bundler
-    directories:
-      - /
-      - /Library/Homebrew
+    directory: /Library/Homebrew
     schedule:
-      interval: weekly
-      day: "friday"
-      time: "08:00"
-      timezone: "Etc/UTC"
+      interval: daily
     allow:
       - dependency-type: all
     groups:
-      bundler:
+      sorbet:
         patterns:
-          - "*"
+          - "sorbet*"
 
   - package-ecosystem: npm
     directory: /
     schedule:
-      interval: weekly
-      day: "friday"
-      time: "08:00"
-      timezone: "Etc/UTC"
+      interval: daily
     allow:
       - dependency-type: all
-    groups:
-      npm:
-        patterns:
-          - "*"
 
   - package-ecosystem: docker
     directory: /
     schedule:
-      interval: weekly
-      day: "friday"
-      time: "08:00"
-      timezone: "Etc/UTC"
+      interval: daily
     allow:
       - dependency-type: all
-    groups:
-      docker:
-        patterns:
-          - "*"
 
   - package-ecosystem: devcontainers
     directory: /
     schedule:
-      interval: weekly
-      day: "friday"
-      time: "08:00"
-      timezone: "Etc/UTC"
+      interval: daily
     allow:
       - dependency-type: all
-    groups:
-      devcontainers:
-        patterns:
-          - "*"
 
   - package-ecosystem: pip
-    directories:
-      - /
-      - /Library/Homebrew/formula-analytics/
+    directory: /
     schedule:
-      interval: weekly
-      day: "friday"
-      time: "08:00"
-      timezone: "Etc/UTC"
+      interval: daily
     allow:
       - dependency-type: all
-    groups:
-      pip:
-        patterns:
-          - "*"

@@ -7,7 +7,7 @@ style: AP
 exceptions:
   - brew(1)
   - macOS
-  - Homebrew/brew
-  - Homebrew/homebrew-core
-  - Homebrew/homebrew-cask
+  - DinrusBrew/brew
+  - DinrusBrew/homebrew-core
+  - DinrusBrew/homebrew-cask
   - (or Linux)

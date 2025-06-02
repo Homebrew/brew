@@ -9,7 +9,7 @@ indent_style = space
 indent_size = 2
 insert_final_newline = true
 
-[{Library/Homebrew/**.rb,.simplecov}]
+[{Library/DinrusBrew/**.rb,.simplecov}]
 trim_trailing_whitespace = true
 
 [Library/Taps/**.rb]

@@ -1,7 +1,7 @@
-title: Homebrew Documentation
+title: DinrusBrew Documentation
 description: Documentation for the missing package manager for macOS (or Linux).
 
-remote_theme: Homebrew/brew.sh
+remote_theme: DinrusBrew/brew.sh
 
 exclude:
   - bin

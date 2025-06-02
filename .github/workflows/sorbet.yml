@@ -45,7 +45,7 @@ jobs:
         if: github.event_name != 'pull_request'
         uses: Homebrew/actions/setup-commit-signing@master
         with:
-          signing_key: ${{ secrets.BREWTESTBOT_SSH_SIGNING_KEY }}
+          signing_key: ${{ secrets.BREWTESTBOT_GPG_SIGNING_SUBKEY }}
 
       - name: Update RBI files
         id: update
@@ -74,6 +74,7 @@ jobs:
         if: github.event_name != 'pull_request'
         env:
           GITHUB_TOKEN: ${{ secrets.HOMEBREW_GITHUB_PUBLIC_REPO_TOKEN }}
+          HOMEBREW_GPG_PASSPHRASE: ${{ secrets.BREWTESTBOT_GPG_SIGNING_SUBKEY_PASSPHRASE }}
         working-directory: ${{ steps.set-up-homebrew.outputs.repository-path }}
         run: |
           if ! git diff --stat --exit-code "Library/Homebrew/sorbet"

@@ -20,7 +20,7 @@ RUN touch /var/mail/ubuntu && chown ubuntu /var/mail/ubuntu && userdel -r ubuntu
 # shellcheck disable=SC1091,SC2154,SC2292
 RUN apt-get update \
   && apt-get install -y --no-install-recommends software-properties-common gnupg-agent \
-  && if [ "$(uname -m)" != aarch64 ]; then add-apt-repository -y ppa:git-core/ppa; fi \
+  && add-apt-repository -y ppa:git-core/ppa \
   && apt-get update \
   && apt-get install -y --no-install-recommends \
   acl \
@@ -62,22 +62,22 @@ RUN apt-get update \
   && su - linuxbrew -c 'mkdir ~/.linuxbrew'
 
 USER linuxbrew
-COPY --chown=linuxbrew:linuxbrew . /home/linuxbrew/.linuxbrew/Homebrew
+COPY --chown=linuxbrew:linuxbrew . /home/linuxbrew/.linuxbrew/DinrusBrew
 ENV PATH="/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin:${PATH}" \
   XDG_CACHE_HOME=/home/linuxbrew/.cache
 WORKDIR /home/linuxbrew
 
 
 RUN --mount=type=cache,target=/tmp/homebrew-core,uid="${USER_ID}",sharing=locked \
-  # Clone the homebrew-core repo into /tmp/homebrew-core or pull latest changes if it exists
-  git clone https://github.com/homebrew/homebrew-core /tmp/homebrew-core || { cd /tmp/homebrew-core && git pull; } \
-  && mkdir -p /home/linuxbrew/.linuxbrew/Homebrew/Library/Taps/homebrew/homebrew-core \
-  && cp -r /tmp/homebrew-core /home/linuxbrew/.linuxbrew/Homebrew/Library/Taps/homebrew/
+    # Clone the homebre-core repo into /tmp/homebrew-core or pull latest changes if it exists
+    git clone https://github.com/homebrew/homebrew-core /tmp/homebrew-core || { cd /tmp/homebrew-core && git pull; } \
+    && mkdir -p /home/linuxbrew/.linuxbrew/DinrusBrew/Library/Taps/homebrew/homebrew-core \
+    && cp -r /tmp/homebrew-core /home/linuxbrew/.linuxbrew/DinrusBrew/Library/Taps/homebrew/
 
 
 RUN --mount=type=cache,target=/home/linuxbrew/.cache,uid="${USER_ID}" \
-  --mount=type=cache,target=/home/linuxbrew/.bundle,uid="${USER_ID}" \
-  mkdir -p \
+   --mount=type=cache,target=/home/linuxbrew/.bundle,uid="${USER_ID}" \
+   mkdir -p \
   .linuxbrew/bin \
   .linuxbrew/etc \
   .linuxbrew/include \
@@ -87,12 +87,12 @@ RUN --mount=type=cache,target=/home/linuxbrew/.cache,uid="${USER_ID}" \
   .linuxbrew/share \
   .linuxbrew/var/homebrew/linked \
   .linuxbrew/Cellar \
-  && ln -s ../Homebrew/bin/brew .linuxbrew/bin/brew \
-  && git -C .linuxbrew/Homebrew remote set-url origin https://github.com/Homebrew/brew \
-  && git -C .linuxbrew/Homebrew fetch origin \
-  && HOMEBREW_NO_ANALYTICS=1 HOMEBREW_NO_AUTO_UPDATE=1 brew tap --force homebrew/core \
+  && ln -s ../DinrusBrew/bin/brew .linuxbrew/bin/brew \
+  && git -C .linuxbrew/DinrusBrew remote set-url origin https://github.com/DinrusBrew/brew \
+  && git -C .linuxbrew/DinrusBrew fetch origin \
+  && DINRUSBREW_NO_ANALYTICS=1 DINRUSBREW_NO_AUTO_UPDATE=1 brew tap --force homebrew/core \
   && brew install-bundler-gems --groups=all \
   && brew cleanup \
-  && { git -C .linuxbrew/Homebrew config --unset gc.auto; true; } \
-  && { git -C .linuxbrew/Homebrew config --unset homebrew.devcmdrun; true; } \
+  && { git -C .linuxbrew/DinrusBrew config --unset gc.auto; true; } \
+  && { git -C .linuxbrew/DinrusBrew config --unset homebrew.devcmdrun; true; } \
   && touch .linuxbrew/.homebrewdocker

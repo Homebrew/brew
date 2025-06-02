@@ -60,6 +60,6 @@ Voting by proxy is permitted, and proxy votes count towards the quorum for the e
 
 #### Project Leadership Committee (PLC)
 
-The Homebrew Project Leadership Committee will be chosen by holding a [Meek Single Transferable Vote (STV)](https://en.wikipedia.org/wiki/Counting_single_transferable_votes#Meek's_method) election. The quota (threshold) of votes for a candidate to be elected will be calculated using the [Droop quota](https://en.wikipedia.org/wiki/Droop_quota).
+The Homebrew Project Leadership Committee will be chosen by holding a [Meek Single Transferable Vote (STV)](https://en.wikipedia.org/wiki/Counting_single_transferable_votes#Meek) election. The quota (threshold) of votes for a candidate to be elected will be calculated using the [Droop quota](https://en.wikipedia.org/wiki/Droop_quota).
 
 Voting by proxy is permitted, and proxy votes count towards the quorum for the election.

@@ -10,11 +10,11 @@ The type of change you want to make influences which of Homebrew's main reposito
 
 ## Submit a new version of an existing formula
 
-1. Use [`brew bump-formula-pr`](Manpage.md#bump-formula-pr-options-formula) to do everything (i.e. forking, committing, pushing) with a single command. Run `brew bump-formula-pr --help` to learn more.
+1. Use [`brew bump-formula-pr`](Manpage#bump-formula-pr-options-formula) to do everything (i.e. forking, committing, pushing) with a single command. Run `brew bump-formula-pr --help` to learn more.
 
 ## Submit a new version of an existing cask
 
-1. Use [`brew bump-cask-pr`](Manpage.md#bump-cask-pr-options-cask) to do everything (i.e. forking, committing, pushing) with a single command. Run `brew bump-cask-pr --help` to learn more.
+1. Use [`brew bump-cask-pr`](Manpage#bump-cask-pr-options-cask) to do everything (i.e. forking, committing, pushing) with a single command. Run `brew bump-cask-pr --help` to learn more.
 
 ## Set up your own fork of the Homebrew repository
 
@@ -38,7 +38,7 @@ The type of change you want to make influences which of Homebrew's main reposito
 
 ### Formulae-related pull request
 
-Before creating a new formula, please read [Acceptable Formulae](Acceptable-Formulae.md).
+Before creating a new formula, please read [Acceptable Formulae](https://docs.brew.sh/Acceptable-Formulae).
 
 1. [Fork the Homebrew/homebrew-core repository on GitHub](https://github.com/Homebrew/homebrew-core/fork).
    * This creates a personal remote repository that you can push to. This is needed because only Homebrew maintainers have push access to the main repositories.
@@ -64,7 +64,7 @@ Before creating a new formula, please read [Acceptable Formulae](Acceptable-Form
 
 ### Cask-related pull request
 
-Before creating a new cask, please read [Acceptable Casks](Acceptable-Casks.md).
+Before creating a new cask, please read [Acceptable Casks](https://docs.brew.sh/Acceptable-Casks).
 
 1. [Fork the Homebrew/homebrew-cask repository on GitHub](https://github.com/Homebrew/homebrew-cask/fork).
    * This creates a personal remote repository that you can push to. This is needed because only Homebrew maintainers have push access to the main repositories.
@@ -110,7 +110,7 @@ To make changes on a new branch and submit it for review, create a GitHub pull r
    git checkout -b <YOUR_BRANCH_NAME> origin/master
    ```
 
-4. Make your changes. For formulae or casks, use `brew edit` or your favourite text editor, using the guidelines in the [Formula Cookbook](Formula-Cookbook.md) or [Cask Cookbook](Cask-Cookbook.md) for reference.
+4. Make your changes. For formulae or casks, use `brew edit` or your favourite text editor, following all the guidelines in the [Formula Cookbook](Formula-Cookbook.md) or [Cask Cookbook](Cask-Cookbook.md).
    * If there's a `bottle do` block in the formula, don't remove or change it; we'll update it when we merge your PR.
 5. Test your changes by running the following, and ensure they all pass without issue. For changed formulae and casks, make sure you do the `brew audit` step after your changed formula/cask has been installed.
 

@@ -31,7 +31,8 @@ but the command isn't limited to any one location.
 * `brew tap <user>/<repo> <URL>` makes a clone of the repository at _URL_.
   Unlike the one-argument version, _URL_ is not assumed to be GitHub, and it
   doesn't have to be HTTP. Any location and any protocol that Git can handle is
-  fine.
+  fine, although non-GitHub taps require running `brew tap --force-auto-update <user>/<repo>`
+  to enable automatic updating.
 
 * `brew tap --repair` migrates tapped formulae from a symlink-based to
   directory-based structure. (This should only need to be run once.)

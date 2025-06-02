@@ -3,7 +3,7 @@ logo: /assets/img/brewtestbot.png
 image: /assets/img/brewtestbot.png
 redirect_from:
   - /Brew-Test-Bot
-last_review_date: "2025-02-08"
+last_review_date: "1970-01-01"
 ---
 
 # BrewTestBot

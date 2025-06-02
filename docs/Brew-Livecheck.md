@@ -1,26 +1,23 @@
 ---
-last_review_date: 2025-05-28
+last_review_date: "1970-01-01"
 ---
 
 # `brew livecheck`
 
 The `brew livecheck` command finds the newest version of a formula or cask's software by checking upstream. Livecheck has [strategies](https://rubydoc.brew.sh/Homebrew/Livecheck/Strategy) to identify versions from various sources, such as Git repositories, websites, etc.
 
-## Behaviour
+## Behavior
 
 When livecheck isn't given instructions for how to check for upstream versions, it does the following by default:
 
-1. Collect a list of URLs to check.
-  * For formulae: use their `stable`, `head`, and `homepage` URLs, in that order.
-  * For formula resources: use their `url`.
-  * For casks: use their `url` and `homepage` URLs, in that order.
+1. For formulae: Collect the `stable`, `head`, and `homepage` URLs, in that order (resources simply use their `url`). For casks: Collect the `url` and `homepage` URLs, in that order.
 1. Determine if any strategies apply to the first URL. If not, try the next URL.
 1. If a strategy can be applied, use it to check for new versions.
 1. Return the newest version (or an error if versions could not be found at any available URLs).
 
-It's sometimes necessary to override this default behaviour to create a working check. If a source doesn't provide the newest version, we need to check a different one. If livecheck doesn't correctly match version text, we need to provide an appropriate regex or `strategy` block.
+It's sometimes necessary to override this default behavior to create a working check. If a source doesn't provide the newest version, we need to check a different one. If livecheck doesn't correctly match version text, we need to provide an appropriate regex or `strategy` block.
 
-This can be accomplished by adding a `livecheck` block to the formula/cask/resource. For more information on the available methods, please refer to the [`Livecheck` class](https://rubydoc.brew.sh/Livecheck) documentation.
+This can be accomplished by adding a `livecheck` block to the formula/cask/resource. For more information on the available methods, please refer to the [`Livecheck` class documentation](https://rubydoc.brew.sh/Livecheck).
 
 ## Creating a check
 
@@ -50,9 +47,9 @@ The `livecheck` block regex restricts matches to a subset of the fetched content
 
 * **Regexes should be made case insensitive, whenever possible**, by adding `i` at the end (e.g. `/.../i` or `%r{...}i`). This improves reliability, as the regex will handle changes in letter case without needing modifications.
 
-* **Regexes should only use a capturing group around the version text**. For example, in `/href=.*?example-v?(\d+(?:\.\d+)+)(?:-src)?\.t/i`, we're only using a capturing group around the version text (matching a version like `1.2`, `1.2.3`, etc.) and we're using non-capturing groups elsewhere (e.g. `(?:-src)?`).
+* **Regexes should only use a capturing group around the version text**. For example, in `/href=.*?example-v?(\d+(?:\.\d+)+)(?:-src)?\.t/i`, we're only using a capturing group around the version test (matching a version like `1.2`, `1.2.3`, etc.) and we're using non-capturing groups elsewhere (e.g. `(?:-src)?`).
 
-* **Anchor the start/end of the regex to restrict its scope**. For example, on HTML pages we often match file names or version directories in `href` attribute URLs (e.g. `/href=.*?example[._-]v?(\d+(?:\.\d+)+)\.zip/i`). The general idea is that limiting scope will help exclude unwanted matches.
+* **Anchor the start/end of the regex, to restrict the scope**. For example, on HTML pages we often match file names or version directories in `href` attribute URLs (e.g. `/href=.*?example[._-]v?(\d+(?:\.\d+)+)\.zip/i`). The general idea is that limiting scope will help exclude unwanted matches.
 
 * **Avoid generic catchalls like `.*` or `.+`** in favor of something non-greedy and/or contextually appropriate. For example, to match characters within the bounds of an HTML attribute, use `[^"' >]+?`.
 
@@ -114,32 +111,6 @@ end
 ```
 
 The referenced formula/cask should be in the same tap, as a reference to a formula/cask from another tap will generate an error if the user doesn't already have it tapped.
-
-A formula resource whose version stays in sync with its parent formula versioning can use the same check with `formula :parent`.
-
-```ruby
-livecheck do
-  formula :parent
-end
-```
-
-### `POST` requests
-
-Some checks require making a `POST` request, which can be accomplished by adding a `post_form` or `post_json` option to a `livecheck` block `url`.
-
-```ruby
-livecheck do
-  url "https://example.com/download.php", post_form: {
-    Name:     "",
-    "E-mail": "",
-  }
-  regex(/href=.*?example[._-]v?(\d+(?:\.\d+)+)\.t/i)
-end
-```
-
-`post_form` is used for form data and `post_json` is used for JSON data. Livecheck will encode the provided hash value to the appropriate format before making the request.
-
-`POST` support only applies to strategies that use `Strategy::page_headers` or `::page_content` (directly or indirectly), so it does not apply to `ExtractPlist`, `Git`, `GithubLatest`, `GithubReleases`, etc.
 
 ### `strategy` blocks
 
@@ -230,7 +201,7 @@ end
 
 A `strategy` block for `GithubLatest` receives the parsed JSON data from the GitHub API for a repository's "latest" release, along with a regex. When a regex is not provided in a `livecheck` block, the strategy's default regex is passed into the `strategy` block instead.
 
-By default, the strategy matches version text in the release's tag or title but a `strategy` block can be used to check any of the fields in the release JSON. The logic in the following `strategy` block is similar to the default behaviour but only checks the release tag instead, for the sake of demonstration:
+By default, the strategy matches version text in the release's tag or title but a `strategy` block can be used to check any of the fields in the release JSON. The logic in the following `strategy` block is similar to the default behavior but only checks the release tag instead, for the sake of demonstration:
 
 ```ruby
 livecheck do
@@ -251,7 +222,7 @@ You can find more information on the response JSON from this API endpoint in the
 
 A `strategy` block for `GithubReleases` receives the parsed JSON data from the GitHub API for a repository's most recent releases, along with a regex. When a regex is not provided in a `livecheck` block, the strategy's default regex is passed into the `strategy` block instead.
 
-By default, the strategy matches version text in each release's tag or title but a `strategy` block can be used to check any of the fields in the release JSON. The logic in the following `strategy` block is similar to the default behaviour but only checks the release tag instead, for the sake of demonstration:
+By default, the strategy matches version text in each release's tag or title but a `strategy` block can be used to check any of the fields in the release JSON. The logic in the following `strategy` block is similar to the default behavior but only checks the release tag instead, for the sake of demonstration:
 
 ```ruby
 livecheck do
@@ -269,8 +240,6 @@ livecheck do
   end
 end
 ```
-
-The strategy's default logic skips releases marked as draft or pre-release but this can be modified by using a `strategy` block. Removing the `release["prerelease"]` condition from the previous example would allow us to work with pre-release releases, though the regex may also need to be adapted to handle unstable version formats.
 
 You can find more information on the response JSON from this API endpoint in the related [GitHub REST API documentation](https://docs.github.com/en/rest/releases/releases?apiVersion=latest#list-releases).
 
@@ -354,7 +323,7 @@ A `strategy` block for `Sparkle` receives an `item` which has methods for the `v
 brew find-appcast '/path/to/application.app'
 ```
 
-The default pattern for the `Sparkle` strategy is to generate `"#{item.short_version},#{item.version}"` from `sparkle:shortVersionString` and `sparkle:version` if both are set. In the example below, the returned value also includes a needed download ID from the `url`:
+The default pattern for the `Sparkle` strategy is to generate `"#{item.short_version},#{item.version}"` from `sparkle:shortVersionString` and `sparkle:version` if both are set. In the example below, the `url` also includes a download ID which is needed:
 
 ```ruby
 livecheck do
@@ -371,17 +340,6 @@ To use only one, specify `&:version`, `&:short_version` or `&:nice_version`:
 livecheck do
   url "https://www.example.com/example.xml"
   strategy :sparkle, &:short_version
-end
-```
-
-If the value returned by `item` is not the most recent or not what's desired, passing `items` instead will allow iterating over all the items in the feed:
-
-```ruby
-livecheck do
-  url "https://www.example.com/example.xml"
-  strategy :sparkle do |items|
-    items.find { |item| item.channel.nil? }&.short_version
-  end
 end
 ```
 
@@ -435,18 +393,6 @@ livecheck do
   strategy :extract_plist do |items|
     items["com.example.MyApp"].short_version
   end
-end
-```
-
-### `throttle`
-
-For software with extremely frequent releases that don't all need to be published as formula/cask updates, livecheck can be set to reduce how many versions it surfaces by using `throttle`. In this example, only versions whose last component is divisible by 10 will be returned.
-
-```ruby
-livecheck do
-  url :stable
-  regex(/^v?(\d+(?:\.\d+)+)$/i)
-  throttle 10
 end
 ```
 

@@ -1,7 +1,7 @@
 ---
 extends: existence
 message: "'%s' should have one space."
-link: "https://github.com/Homebrew/brew/blob/HEAD/docs/Prose-Style-Guidelines.md#typographical-conventions"
+link: "https://github.com/DinrusBrew/brew/blob/HEAD/docs/Prose-Style-Guidelines.md#typographical-conventions"
 level: error
 nonword: true
 tokens:

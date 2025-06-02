@@ -1,5 +1,0 @@
-rules:
-  unpinned-uses:
-    config:
-      policies:
-        Homebrew/actions/*: ref-pin

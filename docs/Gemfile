@@ -6,10 +6,6 @@ ruby file: ".ruby-version"
 
 gem "github-pages", group: :jekyll_plugins
 
-gem "csv"
-gem "faraday-retry"
-gem "logger"
-
 group :test do
   gem "html-proofer"
   gem "mdl"

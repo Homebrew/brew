@@ -50,7 +50,7 @@ Unlike formulae, casks must have globally unique names to avoid clashes. This ca
 
 You can provide your tap users with custom `brew` commands by adding them in a `cmd` subdirectory. [Read more on external commands](External-Commands.md).
 
-See [Homebrew/test-bot](https://github.com/Homebrew/homebrew-test-bot) for an example of a tap with external commands.
+See [homebrew/aliases](https://github.com/Homebrew/homebrew-aliases) for an example of a tap with external commands.
 
 ## Upstream taps
 

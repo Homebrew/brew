@@ -1,5 +1,5 @@
 ---
-last_review_date: "2025-02-08"
+last_review_date: "1970-01-01"
 ---
 
 # Documentation
@@ -9,18 +9,16 @@ last_review_date: "2025-02-08"
 - [`brew` manual page (command documentation)](Manpage.md)
 - [Homebrew Blog (news on major updates)](https://brew.sh/blog/)
 - [Installation](Installation.md)
-- [Support Tiers](Support-Tiers.md)
 - [Troubleshooting](Troubleshooting.md)
 - [FAQ (Frequently Asked Questions)](FAQ.md)
 - [Common Issues](Common-Issues.md)
 - [`brew` Shell Completion](Shell-Completion.md)
 - [Homebrew on Linux](Homebrew-on-Linux.md)
-- [Homebrew Bundle, `brew bundle` and `Brewfile`](Brew-Bundle-and-Brewfile.md)
 
 - [Bottles (binary packages)](Bottles.md)
 - [Taps (third-party repositories)](Taps.md)
 - [Interesting Taps and Forks](Interesting-Taps-and-Forks.md)
-- [Tips and Tricks](Tips-and-Tricks.md)
+- [Tips and Tricks](Tips-N'-Tricks.md)
 - [Anonymous Analytics](Analytics.md)
 
 - [Querying `brew`](Querying-Brew.md)
