@@ -1,0 +1,18 @@
+<body id="top" role="document" class="file">
+<nav role="navigation">
+  <div id="project-navigation">
+    <%= render '_sidebar_navigation.rhtml' %>
+    <%= render '_sidebar_search.rhtml' %>
+  </div>
+
+  <%= render '_sidebar_table_of_contents.rhtml' %>
+
+  <div id="project-metadata">
+    <%= render '_sidebar_pages.rhtml' %>
+  </div>
+</nav>
+
+<main role="main" aria-label="Page <%=h file.full_name%>">
+<%= file.description %>
+</main>
+

@@ -1,0 +1,83 @@
+module RBS
+  class CLI
+    class LibraryOptions
+      attr_accessor core_root: Pathname?
+      attr_accessor config_path: Pathname?
+
+      attr_reader libs: Array[String]
+      attr_reader dirs: Array[String]
+      attr_reader repos: Array[String]
+
+      def initialize: () -> void
+
+      def loader: () -> EnvironmentLoader
+
+      def setup_library_options: (OptionParser) -> OptionParser
+    end
+
+    interface _IO
+      def puts: (*untyped) -> void
+
+      def print: (*untyped) -> void
+
+      def flush: () -> void
+    end
+
+    attr_reader stdout: _IO
+    attr_reader stderr: _IO
+
+    # The copy of `args` passed to `run`.
+    #
+    # `OptionParser#order!` mutates given `arg`, the `run_***` actions should read `original_args` to get the original commandline arguments.
+    #
+    # Returns `nil` if called before `#run` call.
+    #
+    attr_reader original_args: Array[String]
+
+    def initialize: (stdout: IO, stderr: IO) -> void
+
+    COMMANDS: Array[Symbol]
+
+    def library_parse: (OptionParser, options: LibraryOptions) -> void
+
+    def parse_logging_options: (OptionParser) -> void
+
+    def has_parser?: () -> bool
+
+    def run: (Array[String] args) -> void
+
+    def run_ast: (Array[String], LibraryOptions) -> void
+
+    def run_list: (Array[String], LibraryOptions) -> void
+
+    def run_ancestors: (Array[String], LibraryOptions) -> void
+
+    def run_methods: (Array[String], LibraryOptions) -> void
+
+    def run_method: (Array[String], LibraryOptions) -> void
+
+    def run_validate: (Array[String], LibraryOptions) -> void
+
+    def run_constant: (Array[String], LibraryOptions) -> void
+
+    def run_paths: (Array[String], LibraryOptions) -> void
+
+    def run_prototype: (Array[String], LibraryOptions) -> void
+
+    def run_prototype_file: (String format, Array[String]) -> void
+
+    def run_vendor: (Array[String], LibraryOptions) -> void
+
+    def run_parse: (Array[String], LibraryOptions) -> void
+
+    def run_test: (Array[String], LibraryOptions) -> void
+
+    def run_collection: (Array[String], LibraryOptions) -> void
+
+    def run_annotate: (Array[String], top) -> void
+
+    def test_opt: (LibraryOptions) -> String?
+
+    def collection_options: (Array[String]) -> OptionParser
+  end
+end

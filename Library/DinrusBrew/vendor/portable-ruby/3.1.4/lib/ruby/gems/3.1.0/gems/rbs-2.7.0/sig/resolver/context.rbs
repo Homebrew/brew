@@ -1,0 +1,34 @@
+module RBS
+  module Resolver
+    # `context` represents the module nesting structure.
+    #
+    # - `nil` means toplevel
+    # - A 2-tuple represents parent and the most inner module
+    #   - `TypeName` is for a module
+    #   - `false` is for unknown module
+    #
+    # Note that the `TypeName` must be an absolute type name.
+    #
+    # The following Ruby code has context of `[[nil, TypeName("::Foo")], false]` where
+    #
+    # * `Foo` is a class defined in RBS file
+    # * `Bar` is not defined in RBS files
+    #
+    # ```ruby
+    # class Foo
+    #   module Bar
+    #     # Context here
+    #   end
+    # end
+    # ```
+    #
+    # The unknown module (`false`) appears only in Ruby code.
+    # RBS modules/classes are always exists (or defines new module).
+    # Nesting a unknown module cannot happen in RBS.
+    #
+    # In Ruby this happens when the module/class is not declared in RBS files.
+    #
+    type context = [context, TypeName | false]
+                 | nil
+  end
+end

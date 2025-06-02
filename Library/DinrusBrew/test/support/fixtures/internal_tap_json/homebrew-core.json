@@ -1,0 +1,218 @@
+{
+  "tap_git_head": "9977471165641744a829d3e494fa563407503297",
+  "aliases": {
+    "fennel-lang": "fennel",
+    "ponyc-lang": "ponyc"
+  },
+  "renames": {
+    "advancemenu": "advancemame",
+    "amtk": "libgedit-amtk",
+    "annie": "lux",
+    "antlr2": "antlr@2",
+    "romanesco": "fennel"
+  },
+  "tap_migrations": {
+    "adobe-air-sdk": "homebrew/cask",
+    "android-ndk": "homebrew/cask",
+    "android-platform-tools": "homebrew/cask",
+    "android-sdk": "homebrew/cask",
+    "app-engine-go-32": "homebrew/cask/google-cloud-sdk"
+  },
+  "formulae": {
+    "fennel": {
+      "desc": "Lua Lisp Language",
+      "license": "MIT",
+      "homepage": "https://fennel-lang.org",
+      "urls": {
+        "stable": {
+          "url": "https://github.com/bakpakin/Fennel/archive/refs/tags/1.4.0.tar.gz",
+          "checksum": "161eb7f17f86e95de09070214d042fb25372f71ad266f451431f3109e87965c7"
+        }
+      },
+      "post_install_defined": false,
+      "ruby_source_path": "Formula/f/fennel.rb",
+      "ruby_source_sha256": "5856e655fd1cea11496d67bc27fb14fee5cfbdea63c697c3773c7f247581197d",
+      "version": "1.4.0",
+      "bottle": {
+        "files": {
+          "all": {
+            "cellar": ":any_skip_relocation",
+            "sha256": "f46028597883cbc38864c61bd3fa402da9cb90ce97415d51a7b5279bc17f7bd0"
+          }
+        }
+      },
+      "dependencies": {
+        "lua": null
+      }
+    },
+    "inko": {
+      "desc": "Safe and concurrent object-oriented programming language",
+      "license": "MPL-2.0",
+      "homepage": "https://inko-lang.org/",
+      "urls": {
+        "stable": {
+          "url": "https://releases.inko-lang.org/0.14.0.tar.gz",
+          "checksum": "4e2c82911d6026f76c42ccc164dc45b1b5e331db2e9557460d9319d682668e65"
+        },
+        "head": {
+          "url": "https://github.com/inko-lang/inko.git",
+          "branch": "main"
+        }
+      },
+      "post_install_defined": false,
+      "ruby_source_path": "Formula/i/inko.rb",
+      "ruby_source_sha256": "843f6b5652483b971c83876201d68c95d5f32e67e55a75ac7c95d68c4350aa1c",
+      "version": "0.14.0",
+      "bottle": {
+        "files": {
+          "arm64_sonoma": {
+            "cellar": ":any",
+            "sha256": "f6ff66fdfb3aac69263c32a8a29d13e9d28a80ae33807f34460e55d8c1b228c6"
+          },
+          "arm64_ventura": {
+            "cellar": ":any",
+            "sha256": "be59d916d29d85bb8bc4474eb1c7d42a56236835c3c21b0e36fb9e9df0a25e6e"
+          },
+          "arm64_monterey": {
+            "cellar": ":any",
+            "sha256": "9522c1f89b997dedaa3167ce4dbfa4a2d8c660acddecd32a99a515922e851b52"
+          },
+          "sonoma": {
+            "cellar": ":any",
+            "sha256": "8e32d823ce9712ae2d5a2b9cbe0c9b727223098b3e66b003da087032be9f6818"
+          },
+          "ventura": {
+            "cellar": ":any",
+            "sha256": "178865db1e2b60b4085a2465e8a3879794030a6d22c99b58c95e4bdf5418ef1b"
+          },
+          "monterey": {
+            "cellar": ":any",
+            "sha256": "6ef924939c42d7bb2ec4e0d65cf293147a593f829619928d2580b419ec19b26c"
+          },
+          "x86_64_linux": {
+            "cellar": ":any_skip_relocation",
+            "sha256": "14a02c119990d6a17062290439ac74e6667b41dcb90b18cd90b36d2a09715e10"
+          }
+        }
+      },
+      "dependencies": {
+        "coreutils": {
+          "tags": [
+            "build"
+          ]
+        },
+        "rust": {
+          "tags": [
+            "build"
+          ]
+        },
+        "llvm@15": null,
+        "zstd": null,
+        "libffi": {
+          "uses_from_macos": {
+            "since": "catalina"
+          }
+        },
+        "ruby": {
+          "uses_from_macos": {
+            "since": "sierra"
+          }
+        }
+      },
+      "head_dependencies": {
+        "coreutils": {
+          "tags": [
+            "build"
+          ]
+        },
+        "rust": {
+          "tags": [
+            "build"
+          ]
+        },
+        "llvm@15": null,
+        "zstd": null,
+        "libffi": {
+          "uses_from_macos": {
+            "since": "catalina"
+          }
+        },
+        "ruby": {
+          "uses_from_macos": {
+            "since": "sierra"
+          }
+        }
+      }
+    },
+    "ponyc": {
+      "desc": "Object-oriented, actor-model, capabilities-secure programming language",
+      "license": "BSD-2-Clause",
+      "homepage": "https://www.ponylang.io/",
+      "urls": {
+        "stable": {
+          "url": "https://github.com/ponylang/ponyc.git",
+          "tag": "0.58.1",
+          "revision": "fe3895eb4af494bf36d7690641bdfb5755db8350"
+        }
+      },
+      "post_install_defined": false,
+      "ruby_source_path": "Formula/p/ponyc.rb",
+      "ruby_source_sha256": "81d51c25d18710191beb62f9f380bae3d878aad815a65ec1ee2a3b132c1fadb3",
+      "version": "0.58.1",
+      "bottle": {
+        "files": {
+          "arm64_sonoma": {
+            "cellar": ":any_skip_relocation",
+            "sha256": "e3aecfcf02aea56d53d82691e2ad7a780f771023d7070271bfce96b17439a34d"
+          },
+          "arm64_ventura": {
+            "cellar": ":any_skip_relocation",
+            "sha256": "6ff83717191e16e4f852fb3be8f838afba312cc39e601bb5cebd2a618a328658"
+          },
+          "arm64_monterey": {
+            "cellar": ":any_skip_relocation",
+            "sha256": "25c91bce200583a96f4cea34f31393c8f10eadcab363cc7d4d864d15f5f97e25"
+          },
+          "sonoma": {
+            "cellar": ":any_skip_relocation",
+            "sha256": "5f4c550ce33e2970e0ada18a409755fa62936181289a21c15582ff80343866b6"
+          },
+          "ventura": {
+            "cellar": ":any_skip_relocation",
+            "sha256": "f26c799f45013685da779bf2008ebe1907f9b3a93d5f260ce271a3f3b628da50"
+          },
+          "monterey": {
+            "cellar": ":any_skip_relocation",
+            "sha256": "1cff10d068b36b18b253d235424c4f5aef71ff9ee44f2522c4b041dd4383ec30"
+          },
+          "x86_64_linux": {
+            "cellar": ":any_skip_relocation",
+            "sha256": "ab49318d75eed3ee932c8e5add22f252ec0c852aad94945022877f926e93899f"
+          }
+        }
+      },
+      "dependencies": {
+        "cmake": {
+          "tags": [
+            "build"
+          ]
+        },
+        "python@3.12": {
+          "tags": [
+            "build"
+          ]
+        },
+        "llvm": {
+          "tags": [
+            "build",
+            "test"
+          ],
+          "uses_from_macos": null
+        },
+        "zlib": {
+          "uses_from_macos": null
+        }
+      }
+    }
+  }
+}

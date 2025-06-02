@@ -1,0 +1,2677 @@
+module Net
+  class Protocol
+    VERSION: String
+  end
+
+  class ProtocolError < StandardError
+  end
+
+  class ProtoSyntaxError < ProtocolError
+  end
+
+  class ProtoFatalError < ProtocolError
+  end
+
+  class ProtoUnknownError < ProtocolError
+  end
+
+  class ProtoServerError < ProtocolError
+  end
+
+  class ProtoAuthError < ProtocolError
+  end
+
+  class ProtoCommandError < ProtocolError
+  end
+
+  class ProtoRetriableError < ProtocolError
+  end
+
+  class HTTPBadResponse < StandardError
+  end
+
+  class HTTPHeaderSyntaxError < StandardError
+  end
+
+  # <!-- rdoc-file=lib/net/protocol.rb -->
+  # OpenTimeout, a subclass of Timeout::Error, is raised if a connection cannot be
+  # created within the open_timeout.
+  #
+  class OpenTimeout < Timeout::Error
+  end
+
+  # <!-- rdoc-file=lib/net/protocol.rb -->
+  # ReadTimeout, a subclass of Timeout::Error, is raised if a chunk of the
+  # response cannot be read within the read_timeout.
+  #
+  class ReadTimeout < Timeout::Error
+  end
+
+  # <!-- rdoc-file=lib/net/protocol.rb -->
+  # WriteTimeout, a subclass of Timeout::Error, is raised if a chunk of the
+  # response cannot be written within the write_timeout.  Not raised on Windows.
+  #
+  class WriteTimeout < Timeout::Error
+  end
+
+  # <!-- rdoc-file=lib/net/http.rb -->
+  # ## An HTTP client API for Ruby.
+  #
+  # Net::HTTP provides a rich library which can be used to build HTTP user-agents.
+  #  For more details about HTTP see
+  # [RFC2616](http://www.ietf.org/rfc/rfc2616.txt).
+  #
+  # Net::HTTP is designed to work closely with URI.  URI::HTTP#host,
+  # URI::HTTP#port and URI::HTTP#request_uri are designed to work with Net::HTTP.
+  #
+  # If you are only performing a few GET requests you should try OpenURI.
+  #
+  # ## Simple Examples
+  #
+  # All examples assume you have loaded Net::HTTP with:
+  #
+  #     require 'net/http'
+  #
+  # This will also require 'uri' so you don't need to require it separately.
+  #
+  # The Net::HTTP methods in the following section do not persist connections.
+  # They are not recommended if you are performing many HTTP requests.
+  #
+  # ### GET
+  #
+  #     Net::HTTP.get('example.com', '/index.html') # => String
+  #
+  # ### GET by URI
+  #
+  #     uri = URI('http://example.com/index.html?count=10')
+  #     Net::HTTP.get(uri) # => String
+  #
+  # ### GET with Dynamic Parameters
+  #
+  #     uri = URI('http://example.com/index.html')
+  #     params = { :limit => 10, :page => 3 }
+  #     uri.query = URI.encode_www_form(params)
+  #
+  #     res = Net::HTTP.get_response(uri)
+  #     puts res.body if res.is_a?(Net::HTTPSuccess)
+  #
+  # ### POST
+  #
+  #     uri = URI('http://www.example.com/search.cgi')
+  #     res = Net::HTTP.post_form(uri, 'q' => 'ruby', 'max' => '50')
+  #     puts res.body
+  #
+  # ### POST with Multiple Values
+  #
+  #     uri = URI('http://www.example.com/search.cgi')
+  #     res = Net::HTTP.post_form(uri, 'q' => ['ruby', 'perl'], 'max' => '50')
+  #     puts res.body
+  #
+  # ## How to use Net::HTTP
+  #
+  # The following example code can be used as the basis of an HTTP user-agent
+  # which can perform a variety of request types using persistent connections.
+  #
+  #     uri = URI('http://example.com/some_path?query=string')
+  #
+  #     Net::HTTP.start(uri.host, uri.port) do |http|
+  #       request = Net::HTTP::Get.new uri
+  #
+  #       response = http.request request # Net::HTTPResponse object
+  #     end
+  #
+  # Net::HTTP::start immediately creates a connection to an HTTP server which is
+  # kept open for the duration of the block.  The connection will remain open for
+  # multiple requests in the block if the server indicates it supports persistent
+  # connections.
+  #
+  # If you wish to re-use a connection across multiple HTTP requests without
+  # automatically closing it you can use ::new and then call #start and #finish
+  # manually.
+  #
+  # The request types Net::HTTP supports are listed below in the section "HTTP
+  # Request Classes".
+  #
+  # For all the Net::HTTP request objects and shortcut request methods you may
+  # supply either a String for the request path or a URI from which Net::HTTP will
+  # extract the request path.
+  #
+  # ### Response Data
+  #
+  #     uri = URI('http://example.com/index.html')
+  #     res = Net::HTTP.get_response(uri)
+  #
+  #     # Headers
+  #     res['Set-Cookie']            # => String
+  #     res.get_fields('set-cookie') # => Array
+  #     res.to_hash['set-cookie']    # => Array
+  #     puts "Headers: #{res.to_hash.inspect}"
+  #
+  #     # Status
+  #     puts res.code       # => '200'
+  #     puts res.message    # => 'OK'
+  #     puts res.class.name # => 'HTTPOK'
+  #
+  #     # Body
+  #     puts res.body if res.response_body_permitted?
+  #
+  # ### Following Redirection
+  #
+  # Each Net::HTTPResponse object belongs to a class for its response code.
+  #
+  # For example, all 2XX responses are instances of a Net::HTTPSuccess subclass, a
+  # 3XX response is an instance of a Net::HTTPRedirection subclass and a 200
+  # response is an instance of the Net::HTTPOK class.  For details of response
+  # classes, see the section "HTTP Response Classes" below.
+  #
+  # Using a case statement you can handle various types of responses properly:
+  #
+  #     def fetch(uri_str, limit = 10)
+  #       # You should choose a better exception.
+  #       raise ArgumentError, 'too many HTTP redirects' if limit == 0
+  #
+  #       response = Net::HTTP.get_response(URI(uri_str))
+  #
+  #       case response
+  #       when Net::HTTPSuccess then
+  #         response
+  #       when Net::HTTPRedirection then
+  #         location = response['location']
+  #         warn "redirected to #{location}"
+  #         fetch(location, limit - 1)
+  #       else
+  #         response.value
+  #       end
+  #     end
+  #
+  #     print fetch('http://www.ruby-lang.org')
+  #
+  # ### POST
+  #
+  # A POST can be made using the Net::HTTP::Post request class.  This example
+  # creates a URL encoded POST body:
+  #
+  #     uri = URI('http://www.example.com/todo.cgi')
+  #     req = Net::HTTP::Post.new(uri)
+  #     req.set_form_data('from' => '2005-01-01', 'to' => '2005-03-31')
+  #
+  #     res = Net::HTTP.start(uri.hostname, uri.port) do |http|
+  #       http.request(req)
+  #     end
+  #
+  #     case res
+  #     when Net::HTTPSuccess, Net::HTTPRedirection
+  #       # OK
+  #     else
+  #       res.value
+  #     end
+  #
+  # To send multipart/form-data use Net::HTTPHeader#set_form:
+  #
+  #     req = Net::HTTP::Post.new(uri)
+  #     req.set_form([['upload', File.open('foo.bar')]], 'multipart/form-data')
+  #
+  # Other requests that can contain a body such as PUT can be created in the same
+  # way using the corresponding request class (Net::HTTP::Put).
+  #
+  # ### Setting Headers
+  #
+  # The following example performs a conditional GET using the If-Modified-Since
+  # header.  If the files has not been modified since the time in the header a Not
+  # Modified response will be returned.  See RFC 2616 section 9.3 for further
+  # details.
+  #
+  #     uri = URI('http://example.com/cached_response')
+  #     file = File.stat 'cached_response'
+  #
+  #     req = Net::HTTP::Get.new(uri)
+  #     req['If-Modified-Since'] = file.mtime.rfc2822
+  #
+  #     res = Net::HTTP.start(uri.hostname, uri.port) {|http|
+  #       http.request(req)
+  #     }
+  #
+  #     open 'cached_response', 'w' do |io|
+  #       io.write res.body
+  #     end if res.is_a?(Net::HTTPSuccess)
+  #
+  # ### Basic Authentication
+  #
+  # Basic authentication is performed according to
+  # [RFC2617](http://www.ietf.org/rfc/rfc2617.txt).
+  #
+  #     uri = URI('http://example.com/index.html?key=value')
+  #
+  #     req = Net::HTTP::Get.new(uri)
+  #     req.basic_auth 'user', 'pass'
+  #
+  #     res = Net::HTTP.start(uri.hostname, uri.port) {|http|
+  #       http.request(req)
+  #     }
+  #     puts res.body
+  #
+  # ### Streaming Response Bodies
+  #
+  # By default Net::HTTP reads an entire response into memory.  If you are
+  # handling large files or wish to implement a progress bar you can instead
+  # stream the body directly to an IO.
+  #
+  #     uri = URI('http://example.com/large_file')
+  #
+  #     Net::HTTP.start(uri.host, uri.port) do |http|
+  #       request = Net::HTTP::Get.new uri
+  #
+  #       http.request request do |response|
+  #         open 'large_file', 'w' do |io|
+  #           response.read_body do |chunk|
+  #             io.write chunk
+  #           end
+  #         end
+  #       end
+  #     end
+  #
+  # ### HTTPS
+  #
+  # HTTPS is enabled for an HTTP connection by Net::HTTP#use_ssl=.
+  #
+  #     uri = URI('https://secure.example.com/some_path?query=string')
+  #
+  #     Net::HTTP.start(uri.host, uri.port, :use_ssl => true) do |http|
+  #       request = Net::HTTP::Get.new uri
+  #       response = http.request request # Net::HTTPResponse object
+  #     end
+  #
+  # Or if you simply want to make a GET request, you may pass in an URI object
+  # that has an HTTPS URL. Net::HTTP automatically turns on TLS verification if
+  # the URI object has a 'https' URI scheme.
+  #
+  #     uri = URI('https://example.com/')
+  #     Net::HTTP.get(uri) # => String
+  #
+  # In previous versions of Ruby you would need to require 'net/https' to use
+  # HTTPS. This is no longer true.
+  #
+  # ### Proxies
+  #
+  # Net::HTTP will automatically create a proxy from the `http_proxy` environment
+  # variable if it is present.  To disable use of `http_proxy`, pass `nil` for the
+  # proxy address.
+  #
+  # You may also create a custom proxy:
+  #
+  #     proxy_addr = 'your.proxy.host'
+  #     proxy_port = 8080
+  #
+  #     Net::HTTP.new('example.com', nil, proxy_addr, proxy_port).start { |http|
+  #       # always proxy via your.proxy.addr:8080
+  #     }
+  #
+  # See Net::HTTP.new for further details and examples such as proxies that
+  # require a username and password.
+  #
+  # ### Compression
+  #
+  # Net::HTTP automatically adds Accept-Encoding for compression of response
+  # bodies and automatically decompresses gzip and deflate responses unless a
+  # Range header was sent.
+  #
+  # Compression can be disabled through the Accept-Encoding: identity header.
+  #
+  # ## HTTP Request Classes
+  #
+  # Here is the HTTP request class hierarchy.
+  #
+  # *   Net::HTTPRequest
+  #     *   Net::HTTP::Get
+  #     *   Net::HTTP::Head
+  #     *   Net::HTTP::Post
+  #     *   Net::HTTP::Patch
+  #     *   Net::HTTP::Put
+  #     *   Net::HTTP::Proppatch
+  #     *   Net::HTTP::Lock
+  #     *   Net::HTTP::Unlock
+  #     *   Net::HTTP::Options
+  #     *   Net::HTTP::Propfind
+  #     *   Net::HTTP::Delete
+  #     *   Net::HTTP::Move
+  #     *   Net::HTTP::Copy
+  #     *   Net::HTTP::Mkcol
+  #     *   Net::HTTP::Trace
+  #
+  #
+  #
+  # ## HTTP Response Classes
+  #
+  # Here is HTTP response class hierarchy.  All classes are defined in Net module
+  # and are subclasses of Net::HTTPResponse.
+  #
+  # HTTPUnknownResponse
+  # :   For unhandled HTTP extensions
+  # HTTPInformation
+  # :   1xx
+  # HTTPContinue
+  # :   100
+  # HTTPSwitchProtocol
+  # :   101
+  # HTTPProcessing
+  # :   102
+  # HTTPEarlyHints
+  # :   103
+  # HTTPSuccess
+  # :   2xx
+  # HTTPOK
+  # :   200
+  # HTTPCreated
+  # :   201
+  # HTTPAccepted
+  # :   202
+  # HTTPNonAuthoritativeInformation
+  # :   203
+  # HTTPNoContent
+  # :   204
+  # HTTPResetContent
+  # :   205
+  # HTTPPartialContent
+  # :   206
+  # HTTPMultiStatus
+  # :   207
+  # HTTPAlreadyReported
+  # :   208
+  # HTTPIMUsed
+  # :   226
+  # HTTPRedirection
+  # :   3xx
+  # HTTPMultipleChoices
+  # :   300
+  # HTTPMovedPermanently
+  # :   301
+  # HTTPFound
+  # :   302
+  # HTTPSeeOther
+  # :   303
+  # HTTPNotModified
+  # :   304
+  # HTTPUseProxy
+  # :   305
+  # HTTPTemporaryRedirect
+  # :   307
+  # HTTPPermanentRedirect
+  # :   308
+  # HTTPClientError
+  # :   4xx
+  # HTTPBadRequest
+  # :   400
+  # HTTPUnauthorized
+  # :   401
+  # HTTPPaymentRequired
+  # :   402
+  # HTTPForbidden
+  # :   403
+  # HTTPNotFound
+  # :   404
+  # HTTPMethodNotAllowed
+  # :   405
+  # HTTPNotAcceptable
+  # :   406
+  # HTTPProxyAuthenticationRequired
+  # :   407
+  # HTTPRequestTimeOut
+  # :   408
+  # HTTPConflict
+  # :   409
+  # HTTPGone
+  # :   410
+  # HTTPLengthRequired
+  # :   411
+  # HTTPPreconditionFailed
+  # :   412
+  # HTTPRequestEntityTooLarge
+  # :   413
+  # HTTPRequestURITooLong
+  # :   414
+  # HTTPUnsupportedMediaType
+  # :   415
+  # HTTPRequestedRangeNotSatisfiable
+  # :   416
+  # HTTPExpectationFailed
+  # :   417
+  # HTTPMisdirectedRequest
+  # :   421
+  # HTTPUnprocessableEntity
+  # :   422
+  # HTTPLocked
+  # :   423
+  # HTTPFailedDependency
+  # :   424
+  # HTTPUpgradeRequired
+  # :   426
+  # HTTPPreconditionRequired
+  # :   428
+  # HTTPTooManyRequests
+  # :   429
+  # HTTPRequestHeaderFieldsTooLarge
+  # :   431
+  # HTTPUnavailableForLegalReasons
+  # :   451
+  # HTTPServerError
+  # :   5xx
+  # HTTPInternalServerError
+  # :   500
+  # HTTPNotImplemented
+  # :   501
+  # HTTPBadGateway
+  # :   502
+  # HTTPServiceUnavailable
+  # :   503
+  # HTTPGatewayTimeOut
+  # :   504
+  # HTTPVersionNotSupported
+  # :   505
+  # HTTPVariantAlsoNegotiates
+  # :   506
+  # HTTPInsufficientStorage
+  # :   507
+  # HTTPLoopDetected
+  # :   508
+  # HTTPNotExtended
+  # :   510
+  # HTTPNetworkAuthenticationRequired
+  # :   511
+  #
+  #
+  # There is also the Net::HTTPBadResponse exception which is raised when there is
+  # a protocol error.
+  #
+  class HTTP < Protocol
+    # :stopdoc:
+    VERSION: String
+
+    Revision: untyped
+
+    HTTPVersion: String
+
+    HAVE_ZLIB: bool
+
+    # <!--
+    #   rdoc-file=lib/net/http.rb
+    #   - version_1_2()
+    # -->
+    # Turns on net/http 1.2 (Ruby 1.8) features. Defaults to ON in Ruby 1.8 or
+    # later.
+    #
+    def self.version_1_2: () -> ::TrueClass
+
+    # <!--
+    #   rdoc-file=lib/net/http.rb
+    #   - version_1_2?()
+    # -->
+    # Returns true if net/http is in version 1.2 mode. Defaults to true.
+    #
+    def self.version_1_2?: () -> ::TrueClass
+
+    def self.version_1_1?: () -> ::FalseClass
+
+    alias self.is_version_1_1? self.version_1_1?
+
+    # <!--
+    #   rdoc-file=lib/net/http.rb
+    #   - is_version_1_2?()
+    # -->
+    #
+    alias self.is_version_1_2? self.version_1_2?
+
+    # <!--
+    #   rdoc-file=lib/net/http.rb
+    #   - get_print(uri_or_host, path_or_headers = nil, port = nil)
+    # -->
+    # Gets the body text from the target and outputs it to $stdout.  The target can
+    # either be specified as (`uri`, `headers`), or as (`host`, `path`, `port` =
+    # 80); so:
+    #
+    #     Net::HTTP.get_print URI('http://www.example.com/index.html')
+    #
+    # or:
+    #
+    #     Net::HTTP.get_print 'www.example.com', '/index.html'
+    #
+    # you can also specify request headers:
+    #
+    #     Net::HTTP.get_print URI('http://www.example.com/index.html'), { 'Accept' => 'text/html' }
+    #
+    def self.get_print: (URI::Generic uri, ?Hash[String, untyped] header) -> void
+                      | (String host, String path, ?Integer port) -> void
+
+    # <!--
+    #   rdoc-file=lib/net/http.rb
+    #   - get(uri_or_host, path_or_headers = nil, port = nil)
+    # -->
+    # Sends a GET request to the target and returns the HTTP response as a string.
+    # The target can either be specified as (`uri`, `headers`), or as (`host`,
+    # `path`, `port` = 80); so:
+    #
+    #     print Net::HTTP.get(URI('http://www.example.com/index.html'))
+    #
+    # or:
+    #
+    #     print Net::HTTP.get('www.example.com', '/index.html')
+    #
+    # you can also specify request headers:
+    #
+    #     Net::HTTP.get(URI('http://www.example.com/index.html'), { 'Accept' => 'text/html' })
+    #
+    def self.get: (URI::Generic uri, ?Hash[String, untyped] header) -> String
+                | (String host, String path, ?Integer port) -> String
+
+    # <!--
+    #   rdoc-file=lib/net/http.rb
+    #   - get_response(uri_or_host, path_or_headers = nil, port = nil, &block)
+    # -->
+    # Sends a GET request to the target and returns the HTTP response as a
+    # Net::HTTPResponse object.  The target can either be specified as (`uri`,
+    # `headers`), or as (`host`, `path`, `port` = 80); so:
+    #
+    #     res = Net::HTTP.get_response(URI('http://www.example.com/index.html'))
+    #     print res.body
+    #
+    # or:
+    #
+    #     res = Net::HTTP.get_response('www.example.com', '/index.html')
+    #     print res.body
+    #
+    # you can also specify request headers:
+    #
+    #     Net::HTTP.get_response(URI('http://www.example.com/index.html'), { 'Accept' => 'text/html' })
+    #
+    def self.get_response: (URI::Generic uri, ?Hash[String, untyped] header) ?{ (Net::HTTPResponse) -> void } -> Net::HTTPResponse
+                         | (String host, String path, ?Integer port) -> Net::HTTPResponse
+
+    # <!--
+    #   rdoc-file=lib/net/http.rb
+    #   - post(url, data, header = nil)
+    # -->
+    # Posts data to the specified URI object.
+    #
+    # Example:
+    #
+    #     require 'net/http'
+    #     require 'uri'
+    #
+    #     Net::HTTP.post URI('http://www.example.com/api/search'),
+    #                    { "q" => "ruby", "max" => "50" }.to_json,
+    #                    "Content-Type" => "application/json"
+    #
+    def self.post: (URI::Generic url, String data, ?Hash[String, untyped] header) -> Net::HTTPResponse
+
+    # <!--
+    #   rdoc-file=lib/net/http.rb
+    #   - post_form(url, params)
+    # -->
+    # Posts HTML form data to the specified URI object. The form data must be
+    # provided as a Hash mapping from String to String. Example:
+    #
+    #     { "cmd" => "search", "q" => "ruby", "max" => "50" }
+    #
+    # This method also does Basic Authentication if and only if `url`.user exists.
+    # But userinfo for authentication is deprecated (RFC3986). So this feature will
+    # be removed.
+    #
+    # Example:
+    #
+    #     require 'net/http'
+    #
+    #     Net::HTTP.post_form URI('http://www.example.com/search.cgi'),
+    #                         { "q" => "ruby", "max" => "50" }
+    #
+    def self.post_form: (URI::Generic url, Hash[String, untyped] params) -> Net::HTTPResponse
+
+    # <!--
+    #   rdoc-file=lib/net/http.rb
+    #   - default_port()
+    # -->
+    # The default port to use for HTTP requests; defaults to 80.
+    #
+    def self.default_port: () -> Integer
+
+    # <!--
+    #   rdoc-file=lib/net/http.rb
+    #   - http_default_port()
+    # -->
+    # The default port to use for HTTP requests; defaults to 80.
+    #
+    def self.http_default_port: () -> Integer
+
+    # <!--
+    #   rdoc-file=lib/net/http.rb
+    #   - https_default_port()
+    # -->
+    # The default port to use for HTTPS requests; defaults to 443.
+    #
+    def self.https_default_port: () -> Integer
+
+    # <!--
+    #   rdoc-file=lib/net/http.rb
+    #   - HTTP.start(address, port, p_addr, p_port, p_user, p_pass, &block)
+    #   - HTTP.start(address, port=nil, p_addr=:ENV, p_port=nil, p_user=nil, p_pass=nil, opt, &block)
+    # -->
+    # Creates a new Net::HTTP object, then additionally opens the TCP connection and
+    # HTTP session.
+    #
+    # Arguments are the following:
+    # *address*
+    # :   hostname or IP address of the server
+    # *port*
+    # :   port of the server
+    # *p_addr*
+    # :   address of proxy
+    # *p_port*
+    # :   port of proxy
+    # *p_user*
+    # :   user of proxy
+    # *p_pass*
+    # :   pass of proxy
+    # *opt*
+    # :   optional hash
+    #
+    #
+    # *opt* sets following values by its accessor. The keys are ipaddr, ca_file,
+    # ca_path, cert, cert_store, ciphers, keep_alive_timeout,
+    # close_on_empty_response, key, open_timeout, read_timeout, write_timeout,
+    # ssl_timeout, ssl_version, use_ssl, verify_callback, verify_depth and
+    # verify_mode. If you set :use_ssl as true, you can use https and default value
+    # of verify_mode is set as OpenSSL::SSL::VERIFY_PEER.
+    #
+    # If the optional block is given, the newly created Net::HTTP object is passed
+    # to it and closed when the block finishes.  In this case, the return value of
+    # this method is the return value of the block.  If no block is given, the
+    # return value of this method is the newly created Net::HTTP object itself, and
+    # the caller is responsible for closing it upon completion using the finish()
+    # method.
+    #
+    def self.start: (String address, ?Integer? port, ?String | :ENV | nil p_addr, ?Integer? p_port, ?String? p_user, ?String? p_pass, ?Hash[Symbol, untyped]? opt) -> Net::HTTP
+                  | [T] (String address, ?Integer? port, ?String | :ENV | nil p_addr, ?Integer? p_port, ?String? p_user, ?String? p_pass, ?Hash[Symbol, untyped]? opt) { (Net::HTTP) -> T } -> T
+
+    # <!--
+    #   rdoc-file=lib/net/http.rb
+    #   - newobj(address, port = nil, p_addr = :ENV, p_port = nil, p_user = nil, p_pass = nil, p_no_proxy = nil)
+    # -->
+    #
+    alias self.newobj self.new
+
+    # <!--
+    #   rdoc-file=lib/net/http.rb
+    #   - new(address, port = nil)
+    # -->
+    # Creates a new Net::HTTP object for the specified server address, without
+    # opening the TCP connection or initializing the HTTP session. The `address`
+    # should be a DNS hostname or IP address.
+    #
+    def self.new: (String address, ?Integer? port, ?String | :ENV | nil p_addr, ?Integer? p_port, ?String? p_user, ?String? p_pass, ?untyped? p_no_proxy) -> Net::HTTP
+
+    # <!--
+    #   rdoc-file=lib/net/http.rb
+    #   - inspect()
+    # -->
+    #
+    def inspect: () -> String
+
+    # <!--
+    #   rdoc-file=lib/net/http.rb
+    #   - set_debug_output(output)
+    # -->
+    # **WARNING** This method opens a serious security hole. Never use this method
+    # in production code.
+    #
+    # Sets an output stream for debugging.
+    #
+    #     http = Net::HTTP.new(hostname)
+    #     http.set_debug_output $stderr
+    #     http.start { .... }
+    #
+    def set_debug_output: (IO output) -> void
+
+    # <!-- rdoc-file=lib/net/http.rb -->
+    # The DNS host name or IP address to connect to.
+    #
+    attr_reader address: String
+
+    # <!-- rdoc-file=lib/net/http.rb -->
+    # The port number to connect to.
+    #
+    attr_reader port: Integer
+
+    # <!-- rdoc-file=lib/net/http.rb -->
+    # The local host used to establish the connection.
+    #
+    attr_accessor local_host: String
+
+    # <!-- rdoc-file=lib/net/http.rb -->
+    # The local port used to establish the connection.
+    #
+    attr_accessor local_port: Integer
+
+    attr_writer proxy_from_env: untyped
+
+    # <!-- rdoc-file=lib/net/http.rb -->
+    #
+    attr_accessor proxy_address: String?
+
+    # <!-- rdoc-file=lib/net/http.rb -->
+    #
+    attr_accessor proxy_port: Integer?
+
+    # <!-- rdoc-file=lib/net/http.rb -->
+    #
+    attr_accessor proxy_user: String?
+
+    # <!-- rdoc-file=lib/net/http.rb -->
+    #
+    attr_accessor proxy_pass: String?
+
+    # <!--
+    #   rdoc-file=lib/net/http.rb
+    #   - ipaddr()
+    # -->
+    # The IP address to connect to/used to connect to
+    # ----
+    # <!--
+    #   rdoc-file=lib/net/http.rb
+    #   - ipaddr=(addr)
+    # -->
+    # Set the IP address to connect to
+    #
+    attr_accessor ipaddr: String?
+
+    # <!-- rdoc-file=lib/net/http.rb -->
+    # Number of seconds to wait for the connection to open. Any number may be used,
+    # including Floats for fractional seconds. If the HTTP object cannot open a
+    # connection in this many seconds, it raises a Net::OpenTimeout exception. The
+    # default value is 60 seconds.
+    #
+    attr_accessor open_timeout: Float | Integer
+
+    # <!-- rdoc-file=lib/net/http.rb -->
+    # Number of seconds to wait for one block to be read (via one read(2) call). Any
+    # number may be used, including Floats for fractional seconds. If the HTTP
+    # object cannot read data in this many seconds, it raises a Net::ReadTimeout
+    # exception. The default value is 60 seconds.
+    # ----
+    # <!--
+    #   rdoc-file=lib/net/http.rb
+    #   - read_timeout=(sec)
+    # -->
+    # Setter for the read_timeout attribute.
+    #
+    attr_accessor read_timeout: Float | Integer
+
+    # <!-- rdoc-file=lib/net/http.rb -->
+    # Number of seconds to wait for one block to be written (via one write(2) call).
+    # Any number may be used, including Floats for fractional seconds. If the HTTP
+    # object cannot write data in this many seconds, it raises a Net::WriteTimeout
+    # exception. The default value is 60 seconds. Net::WriteTimeout is not raised on
+    # Windows.
+    # ----
+    # <!--
+    #   rdoc-file=lib/net/http.rb
+    #   - write_timeout=(sec)
+    # -->
+    # Setter for the write_timeout attribute.
+    #
+    attr_accessor write_timeout: Float | Integer
+
+    # <!--
+    #   rdoc-file=lib/net/http.rb
+    #   - max_retries=(retries)
+    # -->
+    # Maximum number of times to retry an idempotent request in case of
+    # Net::ReadTimeout, IOError, EOFError, Errno::ECONNRESET, Errno::ECONNABORTED,
+    # Errno::EPIPE, OpenSSL::SSL::SSLError, Timeout::Error. Should be a non-negative
+    # integer number. Zero means no retries. The default value is 1.
+    #
+    attr_accessor max_retries: Integer
+
+    # <!-- rdoc-file=lib/net/http.rb -->
+    # Seconds to wait for 100 Continue response. If the HTTP object does not receive
+    # a response in this many seconds it sends the request body. The default value
+    # is `nil`.
+    # ----
+    # <!--
+    #   rdoc-file=lib/net/http.rb
+    #   - continue_timeout=(sec)
+    # -->
+    # Setter for the continue_timeout attribute.
+    #
+    attr_accessor continue_timeout: Float | Integer | nil
+
+    # <!-- rdoc-file=lib/net/http.rb -->
+    # Seconds to reuse the connection of the previous request. If the idle time is
+    # less than this Keep-Alive Timeout, Net::HTTP reuses the TCP/IP socket used by
+    # the previous communication. The default value is 2 seconds.
+    #
+    attr_accessor keep_alive_timeout: Float | Integer
+
+    # <!--
+    #   rdoc-file=lib/net/http.rb
+    #   - started?()
+    # -->
+    # Returns true if the HTTP session has been started.
+    #
+    def started?: () -> bool
+
+    # <!--
+    #   rdoc-file=lib/net/http.rb
+    #   - active?()
+    # -->
+    #
+    alias active? started?
+
+    attr_accessor close_on_empty_response: untyped
+
+    # <!--
+    #   rdoc-file=lib/net/http.rb
+    #   - use_ssl?()
+    # -->
+    # Returns true if SSL/TLS is being used with HTTP.
+    #
+    def use_ssl?: () -> bool
+
+    # <!--
+    #   rdoc-file=lib/net/http.rb
+    #   - use_ssl=(flag)
+    # -->
+    # Turn on/off SSL. This flag must be set before starting session. If you change
+    # use_ssl value after session started, a Net::HTTP object raises IOError.
+    #
+    def use_ssl=: (boolish flag) -> void
+
+    SSL_IVNAMES: Array[untyped]
+
+    SSL_ATTRIBUTES: Array[Symbol]
+
+    # <!-- rdoc-file=lib/net/http.rb -->
+    # Sets path of a CA certification file in PEM format.
+    #
+    # The file can contain several CA certificates.
+    #
+    attr_accessor ca_file: untyped
+
+    # <!-- rdoc-file=lib/net/http.rb -->
+    # Sets path of a CA certification directory containing certifications in PEM
+    # format.
+    #
+    attr_accessor ca_path: untyped
+
+    # <!-- rdoc-file=lib/net/http.rb -->
+    # Sets an OpenSSL::X509::Certificate object as client certificate. (This method
+    # is appeared in Michal Rokos's OpenSSL extension).
+    #
+    attr_accessor cert: untyped
+
+    # <!-- rdoc-file=lib/net/http.rb -->
+    # Sets the X509::Store to verify peer certificate.
+    #
+    attr_accessor cert_store: untyped
+
+    # <!-- rdoc-file=lib/net/http.rb -->
+    # Sets the available ciphers.  See OpenSSL::SSL::SSLContext#ciphers=
+    #
+    attr_accessor ciphers: untyped
+
+    # <!-- rdoc-file=lib/net/http.rb -->
+    # Sets the extra X509 certificates to be added to the certificate chain. See
+    # OpenSSL::SSL::SSLContext#extra_chain_cert=
+    #
+    attr_accessor extra_chain_cert: untyped
+
+    # <!-- rdoc-file=lib/net/http.rb -->
+    # Sets an OpenSSL::PKey::RSA or OpenSSL::PKey::DSA object. (This method is
+    # appeared in Michal Rokos's OpenSSL extension.)
+    #
+    attr_accessor key: untyped
+
+    # <!-- rdoc-file=lib/net/http.rb -->
+    # Sets the SSL timeout seconds.
+    #
+    attr_accessor ssl_timeout: untyped
+
+    # <!-- rdoc-file=lib/net/http.rb -->
+    # Sets the SSL version.  See OpenSSL::SSL::SSLContext#ssl_version=
+    #
+    attr_accessor ssl_version: untyped
+
+    # <!-- rdoc-file=lib/net/http.rb -->
+    # Sets the minimum SSL version.  See OpenSSL::SSL::SSLContext#min_version=
+    #
+    attr_accessor min_version: untyped
+
+    # <!-- rdoc-file=lib/net/http.rb -->
+    # Sets the maximum SSL version.  See OpenSSL::SSL::SSLContext#max_version=
+    #
+    attr_accessor max_version: untyped
+
+    # <!-- rdoc-file=lib/net/http.rb -->
+    # Sets the verify callback for the server certification verification.
+    #
+    attr_accessor verify_callback: untyped
+
+    # <!-- rdoc-file=lib/net/http.rb -->
+    # Sets the maximum depth for the certificate chain verification.
+    #
+    attr_accessor verify_depth: untyped
+
+    # <!-- rdoc-file=lib/net/http.rb -->
+    # Sets the flags for server the certification verification at beginning of
+    # SSL/TLS session.
+    #
+    # OpenSSL::SSL::VERIFY_NONE or OpenSSL::SSL::VERIFY_PEER are acceptable.
+    #
+    attr_accessor verify_mode: untyped
+
+    # <!-- rdoc-file=lib/net/http.rb -->
+    # Sets to check the server certificate is valid for the hostname. See
+    # OpenSSL::SSL::SSLContext#verify_hostname=
+    #
+    attr_accessor verify_hostname: untyped
+
+    # <!--
+    #   rdoc-file=lib/net/http.rb
+    #   - peer_cert()
+    # -->
+    # Returns the X.509 certificates the server presented.
+    #
+    def peer_cert: () -> (nil | untyped)
+
+    # <!--
+    #   rdoc-file=lib/net/http.rb
+    #   - start() { |http| ... }
+    # -->
+    # Opens a TCP connection and HTTP session.
+    #
+    # When this method is called with a block, it passes the Net::HTTP object to the
+    # block, and closes the TCP connection and HTTP session after the block has been
+    # executed.
+    #
+    # When called with a block, it returns the return value of the block; otherwise,
+    # it returns self.
+    #
+    def start: [T] () { (Net::HTTP) -> T } -> T
+             | () -> Net::HTTP
+
+    public
+
+    # <!--
+    #   rdoc-file=lib/net/http.rb
+    #   - finish()
+    # -->
+    # Finishes the HTTP session and closes the TCP connection. Raises IOError if the
+    # session has not been started.
+    #
+    def finish: () -> void
+
+    public
+
+    # <!--
+    #   rdoc-file=lib/net/http.rb
+    #   - Proxy(p_addr = :ENV, p_port = nil, p_user = nil, p_pass = nil)
+    # -->
+    # Creates an HTTP proxy class which behaves like Net::HTTP, but performs all
+    # access via the specified proxy.
+    #
+    # This class is obsolete.  You may pass these same parameters directly to
+    # Net::HTTP.new.  See Net::HTTP.new for details of the arguments.
+    #
+    def self.Proxy: (?Symbol | String p_addr, ?Integer? p_port, ?String? p_user, ?String? p_pass) -> untyped
+
+    # <!--
+    #   rdoc-file=lib/net/http.rb
+    #   - proxy_class?()
+    # -->
+    # returns true if self is a class which was created by HTTP::Proxy.
+    #
+    def self.proxy_class?: () -> bool
+
+    # <!-- rdoc-file=lib/net/http.rb -->
+    # Address of proxy host. If Net::HTTP does not use a proxy, nil.
+    #
+    attr_reader self.proxy_address: String?
+
+    # <!-- rdoc-file=lib/net/http.rb -->
+    # Port number of proxy host. If Net::HTTP does not use a proxy, nil.
+    #
+    attr_reader self.proxy_port: Integer?
+
+    # <!-- rdoc-file=lib/net/http.rb -->
+    # User name for accessing proxy. If Net::HTTP does not use a proxy, nil.
+    #
+    attr_reader self.proxy_user: String?
+
+    # <!-- rdoc-file=lib/net/http.rb -->
+    # User password for accessing proxy. If Net::HTTP does not use a proxy, nil.
+    #
+    attr_reader self.proxy_pass: String?
+
+    # <!--
+    #   rdoc-file=lib/net/http.rb
+    #   - proxy?()
+    # -->
+    # True if requests for this connection will be proxied
+    #
+    def proxy?: () -> bool
+
+    # <!--
+    #   rdoc-file=lib/net/http.rb
+    #   - proxy_from_env?()
+    # -->
+    # True if the proxy for this connection is determined from the environment
+    #
+    def proxy_from_env?: () -> bool
+
+    def proxy_uri: () -> (nil | URI::Generic)
+
+    # <!--
+    #   rdoc-file=lib/net/http.rb
+    #   - proxyaddr()
+    # -->
+    #
+    alias proxyaddr proxy_address
+
+    # <!--
+    #   rdoc-file=lib/net/http.rb
+    #   - proxyport()
+    # -->
+    #
+    alias proxyport proxy_port
+
+    public
+
+    # <!--
+    #   rdoc-file=lib/net/http.rb
+    #   - get(path, initheader = nil, dest = nil) { |body_segment| ... }
+    # -->
+    # Retrieves data from `path` on the connected-to host which may be an absolute
+    # path String or a URI to extract the path from.
+    #
+    # `initheader` must be a Hash like { 'Accept' => '**/**', ... }, and it defaults
+    # to an empty hash. If `initheader` doesn't have the key 'accept-encoding', then
+    # a value of "gzip;q=1.0,deflate;q=0.6,identity;q=0.3" is used, so that gzip
+    # compression is used in preference to deflate compression, which is used in
+    # preference to no compression. Ruby doesn't have libraries to support the
+    # compress (Lempel-Ziv) compression, so that is not supported.  The intent of
+    # this is to reduce bandwidth by default.   If this routine sets up compression,
+    # then it does the decompression also, removing the header as well to prevent
+    # confusion.  Otherwise it leaves the body as it found it.
+    #
+    # This method returns a Net::HTTPResponse object.
+    #
+    # If called with a block, yields each fragment of the entity body in turn as a
+    # string as it is read from the socket.  Note that in this case, the returned
+    # response object will **not** contain a (meaningful) body.
+    #
+    # `dest` argument is obsolete. It still works but you must not use it.
+    #
+    # This method never raises an exception.
+    #
+    #     response = http.get('/index.html')
+    #
+    #     # using block
+    #     File.open('result.txt', 'w') {|f|
+    #       http.get('/~foo/') do |str|
+    #         f.write str
+    #       end
+    #     }
+    #
+    def get: (String path, ?Hash[String, untyped] initheader, ?bot dest) ?{ (String body_segment) -> void } -> Net::HTTPResponse
+
+    # <!--
+    #   rdoc-file=lib/net/http.rb
+    #   - head(path, initheader = nil)
+    # -->
+    # Gets only the header from `path` on the connected-to host. `header` is a Hash
+    # like { 'Accept' => '**/**', ... }.
+    #
+    # This method returns a Net::HTTPResponse object.
+    #
+    # This method never raises an exception.
+    #
+    #     response = nil
+    #     Net::HTTP.start('some.www.server', 80) {|http|
+    #       response = http.head('/index.html')
+    #     }
+    #     p response['content-type']
+    #
+    def head: (String path, ?Hash[String, untyped] initheader) -> Net::HTTPResponse
+
+    # <!--
+    #   rdoc-file=lib/net/http.rb
+    #   - post(path, data, initheader = nil, dest = nil) { |body_segment| ... }
+    # -->
+    # Posts `data` (must be a String) to `path`. `header` must be a Hash like {
+    # 'Accept' => '**/**', ... }.
+    #
+    # This method returns a Net::HTTPResponse object.
+    #
+    # If called with a block, yields each fragment of the entity body in turn as a
+    # string as it is read from the socket.  Note that in this case, the returned
+    # response object will **not** contain a (meaningful) body.
+    #
+    # `dest` argument is obsolete. It still works but you must not use it.
+    #
+    # This method never raises exception.
+    #
+    #     response = http.post('/cgi-bin/search.rb', 'query=foo')
+    #
+    #     # using block
+    #     File.open('result.txt', 'w') {|f|
+    #       http.post('/cgi-bin/search.rb', 'query=foo') do |str|
+    #         f.write str
+    #       end
+    #     }
+    #
+    # You should set Content-Type: header field for POST. If no Content-Type: field
+    # given, this method uses "application/x-www-form-urlencoded" by default.
+    #
+    def post: (String path, String data, ?Hash[String, untyped] initheader, ?bot dest) ?{ (String body_segment) -> void } -> Net::HTTPResponse
+
+    # <!--
+    #   rdoc-file=lib/net/http.rb
+    #   - patch(path, data, initheader = nil, dest = nil) { |body_segment| ... }
+    # -->
+    # Sends a PATCH request to the `path` and gets a response, as an HTTPResponse
+    # object.
+    #
+    def patch: (String path, String data, ?Hash[String, untyped] initheader, ?bot dest) ?{ (String body_segment) -> void } -> Net::HTTPResponse
+
+    def put: (String path, String data, ?Hash[String, untyped] initheader) -> Net::HTTPResponse
+
+    # <!--
+    #   rdoc-file=lib/net/http.rb
+    #   - proppatch(path, body, initheader = nil)
+    # -->
+    # Sends a PROPPATCH request to the `path` and gets a response, as an
+    # HTTPResponse object.
+    #
+    def proppatch: (String path, String body, ?Hash[String, untyped] initheader) -> Net::HTTPResponse
+
+    # <!--
+    #   rdoc-file=lib/net/http.rb
+    #   - lock(path, body, initheader = nil)
+    # -->
+    # Sends a LOCK request to the `path` and gets a response, as an HTTPResponse
+    # object.
+    #
+    def lock: (String path, String body, ?Hash[String, untyped] initheader) -> Net::HTTPResponse
+
+    # <!--
+    #   rdoc-file=lib/net/http.rb
+    #   - unlock(path, body, initheader = nil)
+    # -->
+    # Sends a UNLOCK request to the `path` and gets a response, as an HTTPResponse
+    # object.
+    #
+    def unlock: (String path, String body, ?Hash[String, untyped] initheader) -> Net::HTTPResponse
+
+    # <!--
+    #   rdoc-file=lib/net/http.rb
+    #   - options(path, initheader = nil)
+    # -->
+    # Sends a OPTIONS request to the `path` and gets a response, as an HTTPResponse
+    # object.
+    #
+    def options: (String path, ?Hash[String, untyped] initheader) -> Net::HTTPResponse
+
+    # <!--
+    #   rdoc-file=lib/net/http.rb
+    #   - propfind(path, body = nil, initheader = {'Depth' => '0'})
+    # -->
+    # Sends a PROPFIND request to the `path` and gets a response, as an HTTPResponse
+    # object.
+    #
+    def propfind: (String path, ?untyped? body, ?Hash[String, untyped] initheader) -> Net::HTTPResponse
+
+    # <!--
+    #   rdoc-file=lib/net/http.rb
+    #   - delete(path, initheader = {'Depth' => 'Infinity'})
+    # -->
+    # Sends a DELETE request to the `path` and gets a response, as an HTTPResponse
+    # object.
+    #
+    def delete: (String path, ?Hash[String, untyped] initheader) -> Net::HTTPResponse
+
+    # <!--
+    #   rdoc-file=lib/net/http.rb
+    #   - move(path, initheader = nil)
+    # -->
+    # Sends a MOVE request to the `path` and gets a response, as an HTTPResponse
+    # object.
+    #
+    def move: (String path, ?Hash[String, untyped] initheader) -> Net::HTTPResponse
+
+    # <!--
+    #   rdoc-file=lib/net/http.rb
+    #   - copy(path, initheader = nil)
+    # -->
+    # Sends a COPY request to the `path` and gets a response, as an HTTPResponse
+    # object.
+    #
+    def copy: (String path, ?Hash[String, untyped] initheader) -> Net::HTTPResponse
+
+    # <!--
+    #   rdoc-file=lib/net/http.rb
+    #   - mkcol(path, body = nil, initheader = nil)
+    # -->
+    # Sends a MKCOL request to the `path` and gets a response, as an HTTPResponse
+    # object.
+    #
+    def mkcol: (String path, ?untyped? body, ?Hash[String, untyped] initheader) -> Net::HTTPResponse
+
+    # <!--
+    #   rdoc-file=lib/net/http.rb
+    #   - trace(path, initheader = nil)
+    # -->
+    # Sends a TRACE request to the `path` and gets a response, as an HTTPResponse
+    # object.
+    #
+    def trace: (String path, ?Hash[String, untyped] initheader) -> Net::HTTPResponse
+
+    # <!--
+    #   rdoc-file=lib/net/http.rb
+    #   - request_get(path, initheader = nil) { |response| ... }
+    # -->
+    # Sends a GET request to the `path`. Returns the response as a Net::HTTPResponse
+    # object.
+    #
+    # When called with a block, passes an HTTPResponse object to the block. The body
+    # of the response will not have been read yet; the block can process it using
+    # HTTPResponse#read_body, if desired.
+    #
+    # Returns the response.
+    #
+    # This method never raises Net::* exceptions.
+    #
+    #     response = http.request_get('/index.html')
+    #     # The entity body is already read in this case.
+    #     p response['content-type']
+    #     puts response.body
+    #
+    #     # Using a block
+    #     http.request_get('/index.html') {|response|
+    #       p response['content-type']
+    #       response.read_body do |str|   # read body now
+    #         print str
+    #       end
+    #     }
+    #
+    def request_get: (String path, ?Hash[String, untyped] initheader) ?{ (Net::HTTPResponse response) -> void } -> Net::HTTPResponse
+
+    # <!--
+    #   rdoc-file=lib/net/http.rb
+    #   - request_head(path, initheader = nil, &block)
+    # -->
+    # Sends a HEAD request to the `path` and returns the response as a
+    # Net::HTTPResponse object.
+    #
+    # Returns the response.
+    #
+    # This method never raises Net::* exceptions.
+    #
+    #     response = http.request_head('/index.html')
+    #     p response['content-type']
+    #
+    def request_head: (String path, ?Hash[String, untyped] initheader) ?{ (Net::HTTPResponse response) -> void } -> Net::HTTPResponse
+
+    # <!--
+    #   rdoc-file=lib/net/http.rb
+    #   - request_post(path, data, initheader = nil) { |response| ... }
+    # -->
+    # Sends a POST request to the `path`.
+    #
+    # Returns the response as a Net::HTTPResponse object.
+    #
+    # When called with a block, the block is passed an HTTPResponse object.  The
+    # body of that response will not have been read yet; the block can process it
+    # using HTTPResponse#read_body, if desired.
+    #
+    # Returns the response.
+    #
+    # This method never raises Net::* exceptions.
+    #
+    #     # example
+    #     response = http.request_post('/cgi-bin/nice.rb', 'datadatadata...')
+    #     p response.status
+    #     puts response.body          # body is already read in this case
+    #
+    #     # using block
+    #     http.request_post('/cgi-bin/nice.rb', 'datadatadata...') {|response|
+    #       p response.status
+    #       p response['content-type']
+    #       response.read_body do |str|   # read body now
+    #         print str
+    #       end
+    #     }
+    #
+    def request_post: (String path, String data, ?Hash[String, untyped] initheader) ?{ (Net::HTTPResponse response) -> void } -> Net::HTTPResponse
+
+    def request_put: (String path, String data, ?Hash[String, untyped] initheader) ?{ (Net::HTTPResponse response) -> void } -> Net::HTTPResponse
+
+    # <!--
+    #   rdoc-file=lib/net/http.rb
+    #   - get2(path, initheader = nil)
+    # -->
+    #
+    alias get2 request_get
+
+    # <!--
+    #   rdoc-file=lib/net/http.rb
+    #   - head2(path, initheader = nil, &block)
+    # -->
+    #
+    alias head2 request_head
+
+    # <!--
+    #   rdoc-file=lib/net/http.rb
+    #   - post2(path, data, initheader = nil)
+    # -->
+    #
+    alias post2 request_post
+
+    alias put2 request_put
+
+    # <!--
+    #   rdoc-file=lib/net/http.rb
+    #   - send_request(name, path, data = nil, header = nil)
+    # -->
+    # Sends an HTTP request to the HTTP server. Also sends a DATA string if `data`
+    # is given.
+    #
+    # Returns a Net::HTTPResponse object.
+    #
+    # This method never raises Net::* exceptions.
+    #
+    #     response = http.send_request('GET', '/index.html')
+    #     puts response.body
+    #
+    def send_request: (String name, String path, ?String? data, ?Hash[String, untyped]? header) -> Net::HTTPResponse
+
+    # <!--
+    #   rdoc-file=lib/net/http.rb
+    #   - request(req, body = nil) { |response| ... }
+    # -->
+    # Sends an HTTPRequest object `req` to the HTTP server.
+    #
+    # If `req` is a Net::HTTP::Post or Net::HTTP::Put request containing data, the
+    # data is also sent. Providing data for a Net::HTTP::Head or Net::HTTP::Get
+    # request results in an ArgumentError.
+    #
+    # Returns an HTTPResponse object.
+    #
+    # When called with a block, passes an HTTPResponse object to the block. The body
+    # of the response will not have been read yet; the block can process it using
+    # HTTPResponse#read_body, if desired.
+    #
+    # This method never raises Net::* exceptions.
+    #
+    def request: (Net::HTTPRequest req, ?String? body) ?{ (Net::HTTPResponse response) -> void } -> Net::HTTPResponse
+  end
+
+  # <!-- rdoc-file=lib/net/http/generic_request.rb -->
+  # HTTPGenericRequest is the parent of the Net::HTTPRequest class. Do not use
+  # this directly; use a subclass of Net::HTTPRequest.
+  #
+  # Mixes in the Net::HTTPHeader module to provide easier access to HTTP headers.
+  #
+  class HTTPGenericRequest
+    include Net::HTTPHeader
+
+    # <!--
+    #   rdoc-file=lib/net/http/generic_request.rb
+    #   - new(m, reqbody, resbody, uri_or_path, initheader = nil)
+    # -->
+    #
+    def initialize: (String m, boolish reqbody, boolish resbody, URI::Generic | String uri_or_path, ?Hash[String, untyped] initheader) -> Net::HTTP
+
+    attr_reader method: String
+
+    attr_reader path: String
+
+    attr_reader uri: URI::Generic
+
+    # <!-- rdoc-file=lib/net/http/generic_request.rb -->
+    # Automatically set to false if the user sets the Accept-Encoding header. This
+    # indicates they wish to handle Content-encoding in responses themselves.
+    #
+    attr_reader decode_content: bool
+
+    # <!--
+    #   rdoc-file=lib/net/http/generic_request.rb
+    #   - inspect()
+    # -->
+    #
+    def inspect: () -> String
+
+    def []=: (untyped key, untyped val) -> void
+
+    # <!--
+    #   rdoc-file=lib/net/http/generic_request.rb
+    #   - request_body_permitted?()
+    # -->
+    #
+    def request_body_permitted?: () -> bool
+
+    # <!--
+    #   rdoc-file=lib/net/http/generic_request.rb
+    #   - response_body_permitted?()
+    # -->
+    #
+    def response_body_permitted?: () -> bool
+
+    # <!--
+    #   rdoc-file=lib/net/http/generic_request.rb
+    #   - body_exist?()
+    # -->
+    #
+    def body_exist?: () -> bool
+
+    # <!--
+    #   rdoc-file=lib/net/http/generic_request.rb
+    #   - body=(str)
+    # -->
+    #
+    attr_accessor body: String?
+
+    # <!--
+    #   rdoc-file=lib/net/http/generic_request.rb
+    #   - body_stream=(input)
+    # -->
+    #
+    attr_accessor body_stream: untyped
+  end
+
+  # <!-- rdoc-file=lib/net/http/header.rb -->
+  # The HTTPHeader module defines methods for reading and writing HTTP headers.
+  #
+  # It is used as a mixin by other classes, to provide hash-like access to HTTP
+  # header values. Unlike raw hash access, HTTPHeader provides access via
+  # case-insensitive keys. It also provides methods for accessing commonly-used
+  # HTTP header values in more convenient formats.
+  #
+  module HTTPHeader
+    # <!--
+    #   rdoc-file=lib/net/http/header.rb
+    #   - initialize_http_header(initheader)
+    # -->
+    #
+    def initialize_http_header: (Hash[untyped, untyped] initheader) -> void
+
+    def size: () -> Integer
+
+    alias length size
+
+    type key = String | Symbol
+
+    # <!--
+    #   rdoc-file=lib/net/http/header.rb
+    #   - [](key)
+    # -->
+    # Returns the header field corresponding to the case-insensitive key. For
+    # example, a key of "Content-Type" might return "text/html"
+    #
+    def []: (key key) -> (nil | String)
+
+    # <!--
+    #   rdoc-file=lib/net/http/header.rb
+    #   - []=(key, val)
+    # -->
+    # Sets the header field corresponding to the case-insensitive key.
+    #
+    def []=: (key key, untyped val) -> void
+
+    # <!--
+    #   rdoc-file=lib/net/http/header.rb
+    #   - add_field(key, val)
+    # -->
+    # Ruby 1.8.3
+    # :   Adds a value to a named header field, instead of replacing its value.
+    #     Second argument `val` must be a String. See also #[]=, #[] and
+    #     #get_fields.
+    #
+    #         request.add_field 'X-My-Header', 'a'
+    #         p request['X-My-Header']              #=> "a"
+    #         p request.get_fields('X-My-Header')   #=> ["a"]
+    #         request.add_field 'X-My-Header', 'b'
+    #         p request['X-My-Header']              #=> "a, b"
+    #         p request.get_fields('X-My-Header')   #=> ["a", "b"]
+    #         request.add_field 'X-My-Header', 'c'
+    #         p request['X-My-Header']              #=> "a, b, c"
+    #         p request.get_fields('X-My-Header')   #=> ["a", "b", "c"]
+    #
+    def add_field: (key key, untyped val) -> void
+
+    private
+
+    # <!--
+    #   rdoc-file=lib/net/http/header.rb
+    #   - set_field(key, val)
+    # -->
+    #
+    def set_field: (key key, untyped val) -> void
+
+    # <!--
+    #   rdoc-file=lib/net/http/header.rb
+    #   - append_field_value(ary, val)
+    # -->
+    #
+    def append_field_value: (untyped ary, untyped val) -> void
+
+    public
+
+    # <!--
+    #   rdoc-file=lib/net/http/header.rb
+    #   - get_fields(key)
+    # -->
+    # Ruby 1.8.3
+    # :   Returns an array of header field strings corresponding to the
+    #     case-insensitive `key`.  This method allows you to get duplicated header
+    #     fields without any processing.  See also #[].
+    #
+    #         p response.get_fields('Set-Cookie')
+    #           #=> ["session=al98axx; expires=Fri, 31-Dec-1999 23:58:23",
+    #                "query=rubyscript; expires=Fri, 31-Dec-1999 23:58:23"]
+    #         p response['Set-Cookie']
+    #           #=> "session=al98axx; expires=Fri, 31-Dec-1999 23:58:23, query=rubyscript; expires=Fri, 31-Dec-1999 23:58:23"
+    #
+    def get_fields: (key key) -> (nil | Array[String])
+
+    # <!--
+    #   rdoc-file=lib/net/http/header.rb
+    #   - fetch(key, *args) { |key| ... }
+    # -->
+    # Returns the header field corresponding to the case-insensitive key. Returns
+    # the default value `args`, or the result of the block, or raises an IndexError
+    # if there's no header field named `key` See Hash#fetch
+    #
+    def fetch: (key key) -> String
+             | (key key, untyped) -> untyped
+             | (key key) { (String) -> untyped } -> untyped
+
+    # <!--
+    #   rdoc-file=lib/net/http/header.rb
+    #   - each_header() { |key| ... }
+    # -->
+    # Iterates through the header names and values, passing in the name and value to
+    # the code block supplied.
+    #
+    # Returns an enumerator if no block is given.
+    #
+    # Example:
+    #
+    #     response.header.each_header {|key,value| puts "#{key} = #{value}" }
+    #
+    def each_header: () { (String, String) -> untyped } -> Hash[String, Array[String]]
+                   | () -> Enumerator[[ String, String ], Hash[String, Array[String]]]
+
+    # <!--
+    #   rdoc-file=lib/net/http/header.rb
+    #   - each()
+    # -->
+    #
+    alias each each_header
+
+    # <!--
+    #   rdoc-file=lib/net/http/header.rb
+    #   - each_name() { |key| ... }
+    # -->
+    # Iterates through the header names in the header, passing each header name to
+    # the code block.
+    #
+    # Returns an enumerator if no block is given.
+    #
+    def each_name: () { (String) -> untyped } -> Hash[String, Array[String]]
+                 | () -> Enumerator[String, Hash[String, Array[String]]]
+
+    # <!--
+    #   rdoc-file=lib/net/http/header.rb
+    #   - each_key()
+    # -->
+    #
+    alias each_key each_name
+
+    # <!--
+    #   rdoc-file=lib/net/http/header.rb
+    #   - each_capitalized_name() { |key| ... }
+    # -->
+    # Iterates through the header names in the header, passing capitalized header
+    # names to the code block.
+    #
+    # Note that header names are capitalized systematically; capitalization may not
+    # match that used by the remote HTTP server in its response.
+    #
+    # Returns an enumerator if no block is given.
+    #
+    def each_capitalized_name: () { (String) -> untyped } -> Hash[String, Array[String]]
+                             | () -> Enumerator[String, Hash[String, Array[String]]]
+
+    # <!--
+    #   rdoc-file=lib/net/http/header.rb
+    #   - each_value() { |value| ... }
+    # -->
+    # Iterates through header values, passing each value to the code block.
+    #
+    # Returns an enumerator if no block is given.
+    #
+    def each_value: () { (String) -> untyped } -> Hash[String, Array[String]]
+                  | () -> Enumerator[String, Hash[String, Array[String]]]
+
+    # <!--
+    #   rdoc-file=lib/net/http/header.rb
+    #   - delete(key)
+    # -->
+    # Removes a header field, specified by case-insensitive key.
+    #
+    def delete: (key key) -> (Array[String] | nil)
+
+    # <!--
+    #   rdoc-file=lib/net/http/header.rb
+    #   - key?(key)
+    # -->
+    # true if `key` header exists.
+    #
+    def key?: (key key) -> bool
+
+    # <!--
+    #   rdoc-file=lib/net/http/header.rb
+    #   - to_hash()
+    # -->
+    # Returns a Hash consisting of header names and array of values. e.g.
+    # {"cache-control" => ["private"],
+    #     "content-type" => ["text/html"],
+    #     "date" => ["Wed, 22 Jun 2005 22:11:50 GMT"]}
+    #
+    def to_hash: () -> Hash[String, Array[String]]
+
+    # <!--
+    #   rdoc-file=lib/net/http/header.rb
+    #   - each_capitalized() { |capitalize(k), join(', ')| ... }
+    # -->
+    # As for #each_header, except the keys are provided in capitalized form.
+    #
+    # Note that header names are capitalized systematically; capitalization may not
+    # match that used by the remote HTTP server in its response.
+    #
+    # Returns an enumerator if no block is given.
+    #
+    def each_capitalized: () { (String, String) -> untyped } -> Hash[String, Array[String]]
+                        | () -> Enumerator[[ String, String ], Hash[String, Array[String]]]
+
+    # <!--
+    #   rdoc-file=lib/net/http/header.rb
+    #   - canonical_each()
+    # -->
+    #
+    alias canonical_each each_capitalized
+
+    private
+
+    # <!--
+    #   rdoc-file=lib/net/http/header.rb
+    #   - capitalize(name)
+    # -->
+    #
+    def capitalize: (key name) -> String
+
+    public
+
+    # <!--
+    #   rdoc-file=lib/net/http/header.rb
+    #   - range()
+    # -->
+    # Returns an Array of Range objects which represent the Range: HTTP header
+    # field, or `nil` if there is no such header.
+    #
+    def range: () -> (nil | Array[Range[Integer]])
+
+    # <!--
+    #   rdoc-file=lib/net/http/header.rb
+    #   - set_range(r, e = nil)
+    # -->
+    # Sets the HTTP Range: header. Accepts either a Range object as a single
+    # argument, or a beginning index and a length from that index. Example:
+    #
+    #     req.range = (0..1023)
+    #     req.set_range 0, 1023
+    #
+    def set_range: (Range[Integer] | Numeric r, ?Integer? e) -> Range[Integer]
+
+    # <!--
+    #   rdoc-file=lib/net/http/header.rb
+    #   - range=(r, e = nil)
+    # -->
+    #
+    alias range= set_range
+
+    # <!--
+    #   rdoc-file=lib/net/http/header.rb
+    #   - content_length()
+    # -->
+    # Returns an Integer object which represents the HTTP Content-Length: header
+    # field, or `nil` if that field was not provided.
+    #
+    def content_length: () -> (nil | Integer)
+
+    # <!--
+    #   rdoc-file=lib/net/http/header.rb
+    #   - content_length=(len)
+    # -->
+    #
+    def content_length=: (Integer len) -> void
+
+    # <!--
+    #   rdoc-file=lib/net/http/header.rb
+    #   - chunked?()
+    # -->
+    # Returns "true" if the "transfer-encoding" header is present and set to
+    # "chunked".  This is an HTTP/1.1 feature, allowing the content to be sent in
+    # "chunks" without at the outset stating the entire content length.
+    #
+    def chunked?: () -> bool
+
+    # <!--
+    #   rdoc-file=lib/net/http/header.rb
+    #   - content_range()
+    # -->
+    # Returns a Range object which represents the value of the Content-Range: header
+    # field. For a partial entity body, this indicates where this fragment fits
+    # inside the full entity body, as range of byte offsets.
+    #
+    def content_range: () -> (Range[Integer] | nil)
+
+    # <!--
+    #   rdoc-file=lib/net/http/header.rb
+    #   - range_length()
+    # -->
+    # The length of the range represented in Content-Range: header.
+    #
+    def range_length: () -> (nil | Integer)
+
+    # <!--
+    #   rdoc-file=lib/net/http/header.rb
+    #   - content_type()
+    # -->
+    # Returns a content type string such as "text/html". This method returns nil if
+    # Content-Type: header field does not exist.
+    #
+    def content_type: () -> (nil | String)
+
+    # <!--
+    #   rdoc-file=lib/net/http/header.rb
+    #   - main_type()
+    # -->
+    # Returns a content type string such as "text". This method returns nil if
+    # Content-Type: header field does not exist.
+    #
+    def main_type: () -> (nil | String)
+
+    # <!--
+    #   rdoc-file=lib/net/http/header.rb
+    #   - sub_type()
+    # -->
+    # Returns a content type string such as "html". This method returns nil if
+    # Content-Type: header field does not exist or sub-type is not given (e.g.
+    # "Content-Type: text").
+    #
+    def sub_type: () -> (nil | String)
+
+    # <!--
+    #   rdoc-file=lib/net/http/header.rb
+    #   - type_params()
+    # -->
+    # Any parameters specified for the content type, returned as a Hash. For
+    # example, a header of Content-Type: text/html; charset=EUC-JP would result in
+    # type_params returning {'charset' => 'EUC-JP'}
+    #
+    def type_params: () -> Hash[untyped, untyped]
+
+    # <!--
+    #   rdoc-file=lib/net/http/header.rb
+    #   - set_content_type(type, params = {})
+    # -->
+    # Sets the content type in an HTTP header. The `type` should be a full HTTP
+    # content type, e.g. "text/html". The `params` are an optional Hash of
+    # parameters to add after the content type, e.g. {'charset' => 'iso-8859-1'}
+    #
+    def set_content_type: (key `type`, ?Hash[untyped, untyped] params) -> void
+
+    # <!--
+    #   rdoc-file=lib/net/http/header.rb
+    #   - content_type=(type, params = {})
+    # -->
+    #
+    alias content_type= set_content_type
+
+    # <!--
+    #   rdoc-file=lib/net/http/header.rb
+    #   - set_form_data(params, sep = '&')
+    # -->
+    # Set header fields and a body from HTML form data. `params` should be an Array
+    # of Arrays or a Hash containing HTML form data. Optional argument `sep` means
+    # data record separator.
+    #
+    # Values are URL encoded as necessary and the content-type is set to
+    # application/x-www-form-urlencoded
+    #
+    # Example:
+    #     http.form_data = {"q" => "ruby", "lang" => "en"}
+    #     http.form_data = {"q" => ["ruby", "perl"], "lang" => "en"}
+    #     http.set_form_data({"q" => "ruby", "lang" => "en"}, ';')
+    #
+    def set_form_data: (Hash[untyped, untyped] params, ?String sep) -> void
+
+    # <!--
+    #   rdoc-file=lib/net/http/header.rb
+    #   - form_data=(params, sep = '&')
+    # -->
+    #
+    alias form_data= set_form_data
+
+    # <!--
+    #   rdoc-file=lib/net/http/header.rb
+    #   - set_form(params, enctype='application/x-www-form-urlencoded', formopt={})
+    # -->
+    # Set an HTML form data set.
+    # `params`
+    # :   The form data to set, which should be an enumerable. See below for more
+    #     details.
+    # `enctype`
+    # :   The content type to use to encode the form submission, which should be
+    #     application/x-www-form-urlencoded or multipart/form-data.
+    # `formopt`
+    # :   An options hash, supporting the following options:
+    #     :boundary
+    # :       The boundary of the multipart message. If not given, a random boundary
+    #         will be used.
+    #     :charset
+    # :       The charset of the form submission. All field names and values of
+    #         non-file fields should be encoded with this charset.
+    #
+    #
+    #
+    # Each item of params should respond to `each` and yield 2-3 arguments, or an
+    # array of 2-3 elements. The arguments yielded should be:
+    #     * The name of the field.
+    #     * The value of the field, it should be a String or a File or IO-like.
+    #     * An options hash, supporting the following options, only
+    #       used for file uploads:
+    #       :filename :: The name of the file to use.
+    #       :content_type :: The content type of the uploaded file.
+    #
+    # Each item is a file field or a normal field. If `value` is a File object or
+    # the `opt` hash has a :filename key, the item is treated as a file field.
+    #
+    # If Transfer-Encoding is set as chunked, this sends the request using chunked
+    # encoding. Because chunked encoding is HTTP/1.1 feature, you should confirm
+    # that the server supports HTTP/1.1 before using chunked encoding.
+    #
+    # Example:
+    #     req.set_form([["q", "ruby"], ["lang", "en"]])
+    #
+    #     req.set_form({"f"=>File.open('/path/to/filename')},
+    #                  "multipart/form-data",
+    #                  charset: "UTF-8",
+    #     )
+    #
+    #     req.set_form([["f",
+    #                    File.open('/path/to/filename.bar'),
+    #                    {filename: "other-filename.foo"}
+    #                  ]],
+    #                  "multipart/form-data",
+    #     )
+    #
+    # See also RFC 2388, RFC 2616, HTML 4.01, and HTML5
+    #
+    def set_form: (Hash[untyped, untyped] params, ?String enctype, ?Hash[untyped, untyped] formopt) -> void
+
+    # <!--
+    #   rdoc-file=lib/net/http/header.rb
+    #   - basic_auth(account, password)
+    # -->
+    # Set the Authorization: header for "Basic" authorization.
+    #
+    def basic_auth: (String account, String password) -> void
+
+    # <!--
+    #   rdoc-file=lib/net/http/header.rb
+    #   - proxy_basic_auth(account, password)
+    # -->
+    # Set Proxy-Authorization: header for "Basic" authorization.
+    #
+    def proxy_basic_auth: (String account, String password) -> void
+
+    private
+
+    # <!--
+    #   rdoc-file=lib/net/http/header.rb
+    #   - basic_encode(account, password)
+    # -->
+    #
+    def basic_encode: (String account, String password) -> String
+
+    public
+
+    # <!--
+    #   rdoc-file=lib/net/http/header.rb
+    #   - connection_close?()
+    # -->
+    #
+    def connection_close?: () -> bool
+
+    # <!--
+    #   rdoc-file=lib/net/http/header.rb
+    #   - connection_keep_alive?()
+    # -->
+    #
+    def connection_keep_alive?: () -> bool
+  end
+
+  # <!-- rdoc-file=lib/net/http/request.rb -->
+  # HTTP request class. This class wraps together the request header and the
+  # request path. You cannot use this class directly. Instead, you should use one
+  # of its subclasses: Net::HTTP::Get, Net::HTTP::Post, Net::HTTP::Head.
+  #
+  class HTTPRequest < HTTPGenericRequest
+    # <!--
+    #   rdoc-file=lib/net/http/request.rb
+    #   - new(path, initheader = nil)
+    # -->
+    # Creates an HTTP request object for `path`.
+    #
+    # `initheader` are the default headers to use.  Net::HTTP adds Accept-Encoding
+    # to enable compression of the response body unless Accept-Encoding or Range are
+    # supplied in `initheader`.
+    #
+    def initialize: (String path, ?Hash[String, untyped] initheader) -> void
+                  | (URI::Generic uri, ?Hash[String, untyped] initheader) -> void
+  end
+
+  # <!-- rdoc-file=lib/net/http/requests.rb -->
+  # See Net::HTTPGenericRequest for attributes and methods. See Net::HTTP for
+  # usage examples.
+  #
+  class HTTP::Get < HTTPRequest
+    METHOD: String
+
+    REQUEST_HAS_BODY: bool
+
+    RESPONSE_HAS_BODY: bool
+  end
+
+  # <!-- rdoc-file=lib/net/http/requests.rb -->
+  # See Net::HTTPGenericRequest for attributes and methods. See Net::HTTP for
+  # usage examples.
+  #
+  class HTTP::Head < HTTPRequest
+    METHOD: String
+
+    REQUEST_HAS_BODY: bool
+
+    RESPONSE_HAS_BODY: bool
+  end
+
+  # <!-- rdoc-file=lib/net/http/requests.rb -->
+  # See Net::HTTPGenericRequest for attributes and methods. See Net::HTTP for
+  # usage examples.
+  #
+  class HTTP::Post < HTTPRequest
+    METHOD: String
+
+    REQUEST_HAS_BODY: bool
+
+    RESPONSE_HAS_BODY: bool
+  end
+
+  # <!-- rdoc-file=lib/net/http/requests.rb -->
+  # See Net::HTTPGenericRequest for attributes and methods. See Net::HTTP for
+  # usage examples.
+  #
+  class HTTP::Put < HTTPRequest
+    METHOD: String
+
+    REQUEST_HAS_BODY: bool
+
+    RESPONSE_HAS_BODY: bool
+  end
+
+  # <!-- rdoc-file=lib/net/http/requests.rb -->
+  # See Net::HTTPGenericRequest for attributes and methods. See Net::HTTP for
+  # usage examples.
+  #
+  class HTTP::Delete < HTTPRequest
+    METHOD: String
+
+    REQUEST_HAS_BODY: bool
+
+    RESPONSE_HAS_BODY: bool
+  end
+
+  # <!-- rdoc-file=lib/net/http/requests.rb -->
+  # See Net::HTTPGenericRequest for attributes and methods.
+  #
+  class HTTP::Options < HTTPRequest
+    METHOD: String
+
+    REQUEST_HAS_BODY: bool
+
+    RESPONSE_HAS_BODY: bool
+  end
+
+  # <!-- rdoc-file=lib/net/http/requests.rb -->
+  # See Net::HTTPGenericRequest for attributes and methods.
+  #
+  class HTTP::Trace < HTTPRequest
+    METHOD: String
+
+    REQUEST_HAS_BODY: bool
+
+    RESPONSE_HAS_BODY: bool
+  end
+
+  # <!-- rdoc-file=lib/net/http/requests.rb -->
+  # See Net::HTTPGenericRequest for attributes and methods.
+  #
+  class HTTP::Patch < HTTPRequest
+    METHOD: String
+
+    REQUEST_HAS_BODY: bool
+
+    RESPONSE_HAS_BODY: bool
+  end
+
+  # <!-- rdoc-file=lib/net/http/requests.rb -->
+  # See Net::HTTPGenericRequest for attributes and methods.
+  #
+  class HTTP::Propfind < HTTPRequest
+    METHOD: String
+
+    REQUEST_HAS_BODY: bool
+
+    RESPONSE_HAS_BODY: bool
+  end
+
+  # <!-- rdoc-file=lib/net/http/requests.rb -->
+  # See Net::HTTPGenericRequest for attributes and methods.
+  #
+  class HTTP::Proppatch < HTTPRequest
+    METHOD: String
+
+    REQUEST_HAS_BODY: bool
+
+    RESPONSE_HAS_BODY: bool
+  end
+
+  # <!-- rdoc-file=lib/net/http/requests.rb -->
+  # See Net::HTTPGenericRequest for attributes and methods.
+  #
+  class HTTP::Mkcol < HTTPRequest
+    METHOD: String
+
+    REQUEST_HAS_BODY: bool
+
+    RESPONSE_HAS_BODY: bool
+  end
+
+  # <!-- rdoc-file=lib/net/http/requests.rb -->
+  # See Net::HTTPGenericRequest for attributes and methods.
+  #
+  class HTTP::Copy < HTTPRequest
+    METHOD: String
+
+    REQUEST_HAS_BODY: bool
+
+    RESPONSE_HAS_BODY: bool
+  end
+
+  # <!-- rdoc-file=lib/net/http/requests.rb -->
+  # See Net::HTTPGenericRequest for attributes and methods.
+  #
+  class HTTP::Move < HTTPRequest
+    METHOD: String
+
+    REQUEST_HAS_BODY: bool
+
+    RESPONSE_HAS_BODY: bool
+  end
+
+  # <!-- rdoc-file=lib/net/http/requests.rb -->
+  # See Net::HTTPGenericRequest for attributes and methods.
+  #
+  class HTTP::Lock < HTTPRequest
+    METHOD: String
+
+    REQUEST_HAS_BODY: bool
+
+    RESPONSE_HAS_BODY: bool
+  end
+
+  # <!-- rdoc-file=lib/net/http/requests.rb -->
+  # See Net::HTTPGenericRequest for attributes and methods.
+  #
+  class HTTP::Unlock < HTTPRequest
+    METHOD: String
+
+    REQUEST_HAS_BODY: bool
+
+    RESPONSE_HAS_BODY: bool
+  end
+
+  # <!-- rdoc-file=lib/net/http/response.rb -->
+  # HTTP response class.
+  #
+  # This class wraps together the response header and the response body (the
+  # entity requested).
+  #
+  # It mixes in the HTTPHeader module, which provides access to response header
+  # values both via hash-like methods and via individual readers.
+  #
+  # Note that each possible HTTP response code defines its own HTTPResponse
+  # subclass. All classes are defined under the Net module. Indentation indicates
+  # inheritance.  For a list of the classes see Net::HTTP.
+  #
+  # Correspondence `HTTP code => class` is stored in CODE_TO_OBJ constant:
+  #
+  #     Net::HTTPResponse::CODE_TO_OBJ['404'] #=> Net::HTTPNotFound
+  #
+  class HTTPResponse
+    # <!--
+    #   rdoc-file=lib/net/http/response.rb
+    #   - body_permitted?()
+    # -->
+    # true if the response has a body.
+    #
+    def self.body_permitted?: () -> bool
+
+    public
+
+    include Net::HTTPHeader
+
+    # <!-- rdoc-file=lib/net/http/response.rb -->
+    # The HTTP version supported by the server.
+    #
+    attr_reader http_version: String
+
+    # <!-- rdoc-file=lib/net/http/response.rb -->
+    # The HTTP result code string. For example, '302'.  You can also determine the
+    # response type by examining which response subclass the response object is an
+    # instance of.
+    #
+    attr_reader code: String
+
+    # <!-- rdoc-file=lib/net/http/response.rb -->
+    # The HTTP result message sent by the server. For example, 'Not Found'.
+    #
+    attr_reader message: String
+
+    # <!-- rdoc-file=lib/net/http/response.rb -->
+    # The HTTP result message sent by the server. For example, 'Not Found'.
+    #
+    alias msg message
+
+    # <!-- rdoc-file=lib/net/http/response.rb -->
+    # The URI used to fetch this response.  The response URI is only available if a
+    # URI was used to create the request.
+    #
+    attr_reader uri: URI::Generic | nil
+
+    # <!-- rdoc-file=lib/net/http/response.rb -->
+    # Set to true automatically when the request did not contain an Accept-Encoding
+    # header from the user.
+    #
+    attr_accessor decode_content: bool
+
+    # <!--
+    #   rdoc-file=lib/net/http/response.rb
+    #   - inspect()
+    # -->
+    #
+    def inspect: () -> String
+
+    def code_type: () -> untyped
+
+    def error!: () -> untyped
+
+    def error_type: () -> (Net::HTTPError | Net::HTTPServerException | Net::HTTPRetriableError | Net::HTTPFatalError)
+
+    # <!--
+    #   rdoc-file=lib/net/http/response.rb
+    #   - value()
+    # -->
+    # Raises an HTTP error if the response is not 2xx (success).
+    #
+    def value: () -> (nil | untyped)
+
+    def uri=: (URI::Generic uri) -> void
+
+    interface _Dest
+      def <<: (String) -> void
+    end
+
+    # <!--
+    #   rdoc-file=lib/net/http/response.rb
+    #   - read_body(dest = nil, &block)
+    # -->
+    # Gets the entity body returned by the remote HTTP server.
+    #
+    # If a block is given, the body is passed to the block, and the body is provided
+    # in fragments, as it is read in from the socket.
+    #
+    # If `dest` argument is given, response is read into that variable, with
+    # `dest#<<` method (it could be String or IO, or any other object responding to
+    # `<<`).
+    #
+    # Calling this method a second or subsequent time for the same HTTPResponse
+    # object will return the value already read.
+    #
+    #     http.request_get('/index.html') {|res|
+    #       puts res.read_body
+    #     }
+    #
+    #     http.request_get('/index.html') {|res|
+    #       p res.read_body.object_id   # 538149362
+    #       p res.read_body.object_id   # 538149362
+    #     }
+    #
+    #     # using iterator
+    #     http.request_get('/index.html') {|res|
+    #       res.read_body do |segment|
+    #         print segment
+    #       end
+    #     }
+    #
+    def read_body: () -> String
+                 | (_Dest dest) -> String
+                 | () { (String) -> void } -> String
+
+    # <!--
+    #   rdoc-file=lib/net/http/response.rb
+    #   - body()
+    # -->
+    # Returns the full entity body.
+    #
+    # Calling this method a second or subsequent time will return the string already
+    # read.
+    #
+    #     http.request_get('/index.html') {|res|
+    #       puts res.body
+    #     }
+    #
+    #     http.request_get('/index.html') {|res|
+    #       p res.body.object_id   # 538149362
+    #       p res.body.object_id   # 538149362
+    #     }
+    #
+    def body: () -> String
+
+    # <!--
+    #   rdoc-file=lib/net/http/response.rb
+    #   - body=(value)
+    # -->
+    # Because it may be necessary to modify the body, Eg, decompression this method
+    # facilitates that.
+    #
+    def body=: (untyped value) -> void
+
+    # <!--
+    #   rdoc-file=lib/net/http/response.rb
+    #   - entity()
+    # -->
+    #
+    alias entity body
+  end
+
+  # <!-- rdoc-file=lib/net/http/responses.rb -->
+  # https://www.iana.org/assignments/http-status-codes/http-status-codes.xhtml
+  #
+  class HTTPUnknownResponse < HTTPResponse
+    HAS_BODY: bool
+
+    EXCEPTION_TYPE: Net::HTTPError
+  end
+
+  class HTTPInformation < HTTPResponse
+    HAS_BODY: bool
+
+    EXCEPTION_TYPE: Net::HTTPError
+  end
+
+  class HTTPSuccess < HTTPResponse
+    HAS_BODY: bool
+
+    EXCEPTION_TYPE: Net::HTTPError
+  end
+
+  class HTTPRedirection < HTTPResponse
+    HAS_BODY: bool
+
+    EXCEPTION_TYPE: Net::HTTPRetriableError
+  end
+
+  class HTTPClientError < HTTPResponse
+    HAS_BODY: bool
+
+    EXCEPTION_TYPE: untyped
+  end
+
+  class HTTPServerError < HTTPResponse
+    HAS_BODY: bool
+
+    EXCEPTION_TYPE: Net::HTTPFatalError
+  end
+
+  class HTTPContinue < HTTPInformation
+    HAS_BODY: bool
+  end
+
+  class HTTPSwitchProtocol < HTTPInformation
+    HAS_BODY: bool
+  end
+
+  class HTTPProcessing < HTTPInformation
+    HAS_BODY: bool
+  end
+
+  class HTTPEarlyHints < HTTPInformation
+    HAS_BODY: bool
+  end
+
+  class HTTPOK < HTTPSuccess
+    HAS_BODY: bool
+  end
+
+  class HTTPCreated < HTTPSuccess
+    HAS_BODY: bool
+  end
+
+  class HTTPAccepted < HTTPSuccess
+    HAS_BODY: bool
+  end
+
+  class HTTPNonAuthoritativeInformation < HTTPSuccess
+    HAS_BODY: bool
+  end
+
+  class HTTPNoContent < HTTPSuccess
+    HAS_BODY: bool
+  end
+
+  class HTTPResetContent < HTTPSuccess
+    HAS_BODY: bool
+  end
+
+  class HTTPPartialContent < HTTPSuccess
+    HAS_BODY: bool
+  end
+
+  class HTTPMultiStatus < HTTPSuccess
+    HAS_BODY: bool
+  end
+
+  class HTTPAlreadyReported < HTTPSuccess
+    HAS_BODY: bool
+  end
+
+  class HTTPIMUsed < HTTPSuccess
+    HAS_BODY: bool
+  end
+
+  class HTTPMultipleChoices < HTTPRedirection
+    HAS_BODY: bool
+  end
+
+  HTTPMultipleChoice: HTTPMultipleChoices
+
+  class HTTPMovedPermanently < HTTPRedirection
+    HAS_BODY: bool
+  end
+
+  class HTTPFound < HTTPRedirection
+    HAS_BODY: bool
+  end
+
+  class HTTPSeeOther < HTTPRedirection
+    HAS_BODY: bool
+  end
+
+  class HTTPNotModified < HTTPRedirection
+    HAS_BODY: bool
+  end
+
+  class HTTPUseProxy < HTTPRedirection
+    HAS_BODY: bool
+  end
+
+  # <!-- rdoc-file=lib/net/http/responses.rb -->
+  # 306 Switch Proxy - no longer unused
+  #
+  class HTTPTemporaryRedirect < HTTPRedirection
+    HAS_BODY: bool
+  end
+
+  class HTTPPermanentRedirect < HTTPRedirection
+    HAS_BODY: bool
+  end
+
+  class HTTPBadRequest < HTTPClientError
+    HAS_BODY: bool
+  end
+
+  class HTTPUnauthorized < HTTPClientError
+    HAS_BODY: bool
+  end
+
+  class HTTPPaymentRequired < HTTPClientError
+    HAS_BODY: bool
+  end
+
+  class HTTPForbidden < HTTPClientError
+    HAS_BODY: bool
+  end
+
+  class HTTPNotFound < HTTPClientError
+    HAS_BODY: bool
+  end
+
+  class HTTPMethodNotAllowed < HTTPClientError
+    HAS_BODY: bool
+  end
+
+  class HTTPNotAcceptable < HTTPClientError
+    HAS_BODY: bool
+  end
+
+  class HTTPProxyAuthenticationRequired < HTTPClientError
+    HAS_BODY: bool
+  end
+
+  class HTTPRequestTimeout < HTTPClientError
+    HAS_BODY: bool
+  end
+
+  class HTTPConflict < HTTPClientError
+    HAS_BODY: bool
+  end
+
+  class HTTPGone < HTTPClientError
+    HAS_BODY: bool
+  end
+
+  class HTTPLengthRequired < HTTPClientError
+    HAS_BODY: bool
+  end
+
+  class HTTPPreconditionFailed < HTTPClientError
+    HAS_BODY: bool
+  end
+
+  class HTTPPayloadTooLarge < HTTPClientError
+    HAS_BODY: bool
+  end
+
+  class HTTPURITooLong < HTTPClientError
+    HAS_BODY: bool
+  end
+
+  class HTTPUnsupportedMediaType < HTTPClientError
+    HAS_BODY: bool
+  end
+
+  class HTTPRangeNotSatisfiable < HTTPClientError
+    HAS_BODY: bool
+  end
+
+  class HTTPExpectationFailed < HTTPClientError
+    HAS_BODY: bool
+  end
+
+  # <!-- rdoc-file=lib/net/http/responses.rb -->
+  # 418 I'm a teapot - RFC 2324; a joke RFC 420 Enhance Your Calm - Twitter
+  #
+  class HTTPMisdirectedRequest < HTTPClientError
+    HAS_BODY: bool
+  end
+
+  class HTTPUnprocessableEntity < HTTPClientError
+    HAS_BODY: bool
+  end
+
+  class HTTPLocked < HTTPClientError
+    HAS_BODY: bool
+  end
+
+  class HTTPFailedDependency < HTTPClientError
+    HAS_BODY: bool
+  end
+
+  # <!-- rdoc-file=lib/net/http/responses.rb -->
+  # 425 Unordered Collection - existed only in draft
+  #
+  class HTTPUpgradeRequired < HTTPClientError
+    HAS_BODY: bool
+  end
+
+  class HTTPPreconditionRequired < HTTPClientError
+    HAS_BODY: bool
+  end
+
+  class HTTPTooManyRequests < HTTPClientError
+    HAS_BODY: bool
+  end
+
+  class HTTPRequestHeaderFieldsTooLarge < HTTPClientError
+    HAS_BODY: bool
+  end
+
+  class HTTPUnavailableForLegalReasons < HTTPClientError
+    HAS_BODY: bool
+  end
+
+  # <!-- rdoc-file=lib/net/http/responses.rb -->
+  # 444 No Response - Nginx 449 Retry With - Microsoft 450 Blocked by Windows
+  # Parental Controls - Microsoft 499 Client Closed Request - Nginx
+  #
+  class HTTPInternalServerError < HTTPServerError
+    HAS_BODY: bool
+  end
+
+  class HTTPNotImplemented < HTTPServerError
+    HAS_BODY: bool
+  end
+
+  class HTTPBadGateway < HTTPServerError
+    HAS_BODY: bool
+  end
+
+  class HTTPServiceUnavailable < HTTPServerError
+    HAS_BODY: bool
+  end
+
+  class HTTPGatewayTimeout < HTTPServerError
+    HAS_BODY: bool
+  end
+
+  class HTTPVersionNotSupported < HTTPServerError
+    HAS_BODY: bool
+  end
+
+  class HTTPVariantAlsoNegotiates < HTTPServerError
+    HAS_BODY: bool
+  end
+
+  class HTTPInsufficientStorage < HTTPServerError
+    HAS_BODY: bool
+  end
+
+  class HTTPLoopDetected < HTTPServerError
+    HAS_BODY: bool
+  end
+
+  # <!-- rdoc-file=lib/net/http/responses.rb -->
+  # 509 Bandwidth Limit Exceeded - Apache bw/limited extension
+  #
+  class HTTPNotExtended < HTTPServerError
+    HAS_BODY: bool
+  end
+
+  class HTTPNetworkAuthenticationRequired < HTTPServerError
+    HAS_BODY: bool
+  end
+
+  # <!-- rdoc-file=lib/net/http/response.rb -->
+  # HTTP response class.
+  #
+  # This class wraps together the response header and the response body (the
+  # entity requested).
+  #
+  # It mixes in the HTTPHeader module, which provides access to response header
+  # values both via hash-like methods and via individual readers.
+  #
+  # Note that each possible HTTP response code defines its own HTTPResponse
+  # subclass. All classes are defined under the Net module. Indentation indicates
+  # inheritance.  For a list of the classes see Net::HTTP.
+  #
+  # Correspondence `HTTP code => class` is stored in CODE_TO_OBJ constant:
+  #
+  #     Net::HTTPResponse::CODE_TO_OBJ['404'] #=> Net::HTTPNotFound
+  #
+  class HTTPResponse
+    CODE_CLASS_TO_OBJ: Hash[untyped, untyped]
+
+    CODE_TO_OBJ: Hash[untyped, untyped]
+  end
+
+  HTTP::STATUS_CODES: Hash[Integer, String]
+
+  # <!-- rdoc-file=lib/net/http/exceptions.rb -->
+  # Net::HTTP exception class. You cannot use Net::HTTPExceptions directly;
+  # instead, you must use its subclasses.
+  #
+  module HTTPExceptions
+    def initialize: (untyped msg, untyped res) -> untyped
+
+    attr_reader response: untyped
+
+    alias data response
+  end
+
+  class HTTPError < ProtocolError
+    include Net::HTTPExceptions
+  end
+
+  class HTTPRetriableError < ProtoRetriableError
+    include Net::HTTPExceptions
+  end
+
+  class HTTPServerException < ProtoServerError
+    # We cannot use the name "HTTPServerError", it is the name of the response.
+    include Net::HTTPExceptions
+  end
+
+  class HTTPFatalError < ProtoFatalError
+    include Net::HTTPExceptions
+  end
+end

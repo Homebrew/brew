@@ -1,0 +1,33 @@
+<div id="classindex-section" class="nav-section">
+  <h3>Class and Module Index</h3>
+
+  <%-
+  all_classes = @classes.group_by do |klass|
+    klass.full_name[/\A[^:]++(?:::[^:]++(?=::))*+(?=::[^:]*+\z)/]
+  end.delete_if do |_, klasses|
+    !klasses.any?(&:display?)
+  end
+  link = proc do |index_klass, display = index_klass.display?|
+    if display
+      -%><code><a href="<%= rel_prefix %>/<%= index_klass.path %>"><%= index_klass.name %></a></code><%-
+    else
+      -%><code><%= index_klass.name %></code><%-
+    end
+  end
+  if top = all_classes[nil]
+    solo = top.one? {|klass| klass.display?}
+    traverse = proc do |klasses| -%>
+  <ul class="link-list">
+      <%- klasses.each do |index_klass| -%>
+        <%- if children = all_classes[index_klass.full_name] -%>
+  <li><details<% if solo; solo = false %> open<% end %>><summary><% link.call(index_klass) %></summary>
+          <%- traverse.call(children) -%>
+  </ul></details>
+        <%- elsif index_klass.display? -%>
+  <li><% link.call(index_klass, true) %>
+        <%- end -%>
+      <%- end -%>
+    <%- end -%>
+    <%- traverse.call(top) -%>
+  <%- end -%>
+</div>

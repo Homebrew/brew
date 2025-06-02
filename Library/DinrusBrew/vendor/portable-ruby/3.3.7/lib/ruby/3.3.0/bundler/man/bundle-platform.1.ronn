@@ -1,0 +1,49 @@
+bundle-platform(1) -- Displays platform compatibility information
+=================================================================
+
+## SYNOPSIS
+
+`bundle platform` [--ruby]
+
+## DESCRIPTION
+
+`platform` displays information from your Gemfile, Gemfile.lock, and Ruby
+VM about your platform.
+
+For instance, using this Gemfile(5):
+
+    source "https://rubygems.org"
+
+    ruby "3.1.2"
+
+    gem "rack"
+
+If you run `bundle platform` on Ruby 3.1.2, it displays the following output:
+
+    Your platform is: x86_64-linux
+
+    Your app has gems that work on these platforms:
+    * arm64-darwin-21
+    * ruby
+    * x64-mingw-ucrt
+    * x86_64-linux
+
+    Your Gemfile specifies a Ruby version requirement:
+    * ruby 3.1.2
+
+    Your current platform satisfies the Ruby version requirement.
+
+`platform` lists all the platforms in your `Gemfile.lock` as well as the
+`ruby` directive if applicable from your Gemfile(5). It also lets you know
+if the `ruby` directive requirement has been met. If `ruby` directive doesn't
+match the running Ruby VM, it tells you what part does not.
+
+## OPTIONS
+
+* `--ruby`:
+  It will display the ruby directive information, so you don't have to
+  parse it from the Gemfile(5).
+
+## SEE ALSO
+
+* [bundle-lock(1)](bundle-lock.1.html)

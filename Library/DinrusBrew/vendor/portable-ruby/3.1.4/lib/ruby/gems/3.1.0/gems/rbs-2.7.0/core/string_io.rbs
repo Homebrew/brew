@@ -1,0 +1,486 @@
+# <!-- rdoc-file=ext/stringio/stringio.c -->
+# Pseudo I/O on String object, with interface corresponding to IO.
+#
+# Commonly used to simulate `$stdio` or `$stderr`
+#
+# ### Examples
+#
+#     require 'stringio'
+#
+#     # Writing stream emulation
+#     io = StringIO.new
+#     io.puts "Hello World"
+#     io.string #=> "Hello World\n"
+#
+#     # Reading stream emulation
+#     io = StringIO.new "first\nsecond\nlast\n"
+#     io.getc #=> "f"
+#     io.gets #=> "irst\n"
+#     io.read #=> "second\nlast\n"
+#
+class StringIO
+  # <!--
+  #   rdoc-file=ext/stringio/stringio.c
+  #   - StringIO.new(string=""[, mode])
+  # -->
+  # Creates new StringIO instance from with *string* and *mode*.
+  #
+  def initialize: (?String string, ?String? mode) -> void
+
+  # <!--
+  #   rdoc-file=ext/stringio/stringio.c
+  #   - StringIO.open(string=""[, mode]) {|strio| ...}
+  # -->
+  # Equivalent to StringIO.new except that when it is called with a block, it
+  # yields with the new instance and closes it, and returns the result which
+  # returned from the block.
+  #
+  def self.open: [U] (?String string, ?String? mode) { (StringIO arg) -> U } -> U
+
+  def <<: (untyped arg0) -> self
+
+  # <!--
+  #   rdoc-file=ext/stringio/stringio.c
+  #   - strio.binmode    -> stringio
+  # -->
+  # Puts stream into binary mode. See IO#binmode.
+  #
+  def binmode: () -> self
+
+  # <!--
+  #   rdoc-file=ext/stringio/stringio.c
+  #   - strio.close  -> nil
+  # -->
+  # Closes a StringIO. The stream is unavailable for any further data operations;
+  # an `IOError` is raised if such an attempt is made.
+  #
+  def close: () -> nil
+
+  # <!--
+  #   rdoc-file=ext/stringio/stringio.c
+  #   - strio.close_read    -> nil
+  # -->
+  # Closes the read end of a StringIO.  Will raise an `IOError` if the receiver is
+  # not readable.
+  #
+  def close_read: () -> nil
+
+  # <!--
+  #   rdoc-file=ext/stringio/stringio.c
+  #   - strio.close_write    -> nil
+  # -->
+  # Closes the write end of a StringIO.  Will raise an  `IOError` if the receiver
+  # is not writeable.
+  #
+  def close_write: () -> nil
+
+  # <!--
+  #   rdoc-file=ext/stringio/stringio.c
+  #   - strio.closed?    -> true or false
+  # -->
+  # Returns `true` if the stream is completely closed, `false` otherwise.
+  #
+  def closed?: () -> bool
+
+  # <!--
+  #   rdoc-file=ext/stringio/stringio.c
+  #   - strio.closed_read?    -> true or false
+  # -->
+  # Returns `true` if the stream is not readable, `false` otherwise.
+  #
+  def closed_read?: () -> bool
+
+  # <!--
+  #   rdoc-file=ext/stringio/stringio.c
+  #   - strio.closed_write?    -> true or false
+  # -->
+  # Returns `true` if the stream is not writable, `false` otherwise.
+  #
+  def closed_write?: () -> bool
+
+  # <!--
+  #   rdoc-file=ext/stringio/stringio.c
+  #   - strio.each(sep=$/, chomp: false) {|line| block }         -> strio
+  #   - strio.each(limit, chomp: false) {|line| block }          -> strio
+  #   - strio.each(sep, limit, chomp: false) {|line| block }     -> strio
+  #   - strio.each(...)                                          -> anEnumerator
+  #   - strio.each_line(sep=$/, chomp: false) {|line| block }     -> strio
+  #   - strio.each_line(limit, chomp: false) {|line| block }      -> strio
+  #   - strio.each_line(sep, limit, chomp: false) {|line| block } -> strio
+  #   - strio.each_line(...)                                      -> anEnumerator
+  # -->
+  # See IO#each.
+  #
+  def each: (?String sep, ?Integer limit, ?chomp: boolish) { (String) -> untyped } -> self
+          | (?String sep, ?Integer limit, ?chomp: boolish) -> ::Enumerator[String, self]
+
+  # <!--
+  #   rdoc-file=ext/stringio/stringio.c
+  #   - strio.each_byte {|byte| block }  -> strio
+  #   - strio.each_byte                  -> anEnumerator
+  # -->
+  # See IO#each_byte.
+  #
+  def each_byte: () { (Integer arg0) -> untyped } -> self
+               | () -> ::Enumerator[Integer, self]
+
+  # <!--
+  #   rdoc-file=ext/stringio/stringio.c
+  #   - strio.each_char {|char| block }  -> strio
+  #   - strio.each_char                  -> anEnumerator
+  # -->
+  # See IO#each_char.
+  #
+  def each_char: () { (String arg0) -> untyped } -> self
+               | () -> ::Enumerator[String, self]
+
+  # <!--
+  #   rdoc-file=ext/stringio/stringio.c
+  #   - strio.each_codepoint {|c| block }  -> strio
+  #   - strio.each_codepoint               -> anEnumerator
+  # -->
+  # See IO#each_codepoint.
+  #
+  def each_codepoint: () { (Integer arg0) -> untyped } -> self
+                    | () -> ::Enumerator[Integer, self]
+
+  # <!--
+  #   rdoc-file=ext/stringio/stringio.c
+  #   - strio.eof     -> true or false
+  #   - strio.eof?    -> true or false
+  # -->
+  # Returns true if the stream is at the end of the data (underlying string). The
+  # stream must be opened for reading or an `IOError` will be raised.
+  #
+  def eof: () -> bool
+
+  # <!--
+  #   rdoc-file=ext/stringio/stringio.c
+  #   - fcntl(*args)
+  # -->
+  # Raises NotImplementedError.
+  #
+  def fcntl: (Integer integer_cmd, String | Integer arg) -> Integer
+
+  # <!--
+  #   rdoc-file=ext/stringio/stringio.c
+  #   - fileno()
+  # -->
+  # Returns `nil`.  Just for compatibility to IO.
+  #
+  def fileno: () -> nil
+
+  # <!--
+  #   rdoc-file=ext/stringio/stringio.c
+  #   - flush()
+  # -->
+  # Returns an object itself.  Just for compatibility to IO.
+  #
+  def flush: () -> self
+
+  # <!--
+  #   rdoc-file=ext/stringio/stringio.c
+  #   - fsync()
+  # -->
+  # Returns 0.  Just for compatibility to IO.
+  #
+  def fsync: () -> Integer?
+
+  # <!--
+  #   rdoc-file=ext/stringio/stringio.c
+  #   - strio.getbyte   -> fixnum or nil
+  # -->
+  # See IO#getbyte.
+  #
+  def getbyte: () -> Integer?
+
+  # <!--
+  #   rdoc-file=ext/stringio/stringio.c
+  #   - strio.getc   -> string or nil
+  # -->
+  # See IO#getc.
+  #
+  def getc: () -> String?
+
+  # <!--
+  #   rdoc-file=ext/stringio/stringio.c
+  #   - strio.gets(sep=$/, chomp: false)     -> string or nil
+  #   - strio.gets(limit, chomp: false)      -> string or nil
+  #   - strio.gets(sep, limit, chomp: false) -> string or nil
+  # -->
+  # See IO#gets.
+  #
+  def gets: (?String sep, ?Integer limit, ?chomp: boolish) -> String?
+
+  # <!--
+  #   rdoc-file=ext/stringio/stringio.c
+  #   - strio.internal_encoding   => encoding
+  # -->
+  # Returns the Encoding of the internal string if conversion is specified.
+  # Otherwise returns `nil`.
+  #
+  def internal_encoding: () -> Encoding
+
+  # <!--
+  #   rdoc-file=ext/stringio/stringio.c
+  #   - strio.external_encoding   => encoding
+  # -->
+  # Returns the Encoding object that represents the encoding of the file. If the
+  # stream is write mode and no encoding is specified, returns `nil`.
+  #
+  def external_encoding: () -> Encoding
+
+  # <!--
+  #   rdoc-file=ext/stringio/stringio.c
+  #   - isatty()
+  # -->
+  # Returns `false`.  Just for compatibility to IO.
+  #
+  def isatty: () -> bool
+
+  # <!--
+  #   rdoc-file=ext/stringio/stringio.c
+  #   - strio.lineno    -> integer
+  # -->
+  # Returns the current line number. The stream must be opened for reading.
+  # `lineno` counts the number of times  `gets` is called, rather than the number
+  # of newlines  encountered. The two values will differ if `gets` is  called with
+  # a separator other than newline.  See also the  `$.` variable.
+  #
+  def lineno: () -> Integer
+
+  # <!--
+  #   rdoc-file=ext/stringio/stringio.c
+  #   - strio.lineno = integer    -> integer
+  # -->
+  # Manually sets the current line number to the given value. `$.` is updated only
+  # on the next read.
+  #
+  def lineno=: (Integer arg0) -> Integer
+
+  # <!--
+  #   rdoc-file=ext/stringio/stringio.c
+  #   - pid()
+  # -->
+  # Returns `nil`.  Just for compatibility to IO.
+  #
+  def pid: () -> nil
+
+  # <!--
+  #   rdoc-file=ext/stringio/stringio.c
+  #   - strio.pos     -> integer
+  #   - strio.tell    -> integer
+  # -->
+  # Returns the current offset (in bytes).
+  #
+  def pos: () -> Integer
+
+  # <!--
+  #   rdoc-file=ext/stringio/stringio.c
+  #   - strio.pos = integer    -> integer
+  # -->
+  # Seeks to the given position (in bytes).
+  #
+  def pos=: (Integer arg0) -> Integer
+
+  def print: (*untyped arg0) -> nil
+
+  def printf: (String format_string, *untyped arg0) -> nil
+
+  # <!--
+  #   rdoc-file=ext/stringio/stringio.c
+  #   - strio.putc(obj)    -> obj
+  # -->
+  # See IO#putc.
+  #
+  def putc: (Numeric | String arg0) -> untyped
+
+  def puts: (*untyped arg0) -> nil
+
+  # <!--
+  #   rdoc-file=ext/stringio/stringio.c
+  #   - strio.read([length [, outbuf]])    -> string, outbuf, or nil
+  # -->
+  # See IO#read.
+  #
+  def read: (?int? length, ?string outbuf) -> String?
+
+  def read_nonblock: (int len, ?string buf) -> String
+
+  def readbyte: () -> Integer
+
+  def readchar: () -> String
+
+  def readline: (?String sep, ?Integer limit) -> String
+
+  # <!--
+  #   rdoc-file=ext/stringio/stringio.c
+  #   - strio.readlines(sep=$/, chomp: false)     ->   array
+  #   - strio.readlines(limit, chomp: false)      ->   array
+  #   - strio.readlines(sep, limit, chomp: false) ->   array
+  # -->
+  # See IO#readlines.
+  #
+  def readlines: (?String sep, ?Integer limit, ?chomp: boolish) -> ::Array[String]
+
+  def readpartial: (int maxlen, ?string outbuf) -> String
+
+  # <!--
+  #   rdoc-file=ext/stringio/stringio.c
+  #   - strio.reopen(other_StrIO)     -> strio
+  #   - strio.reopen(string, mode)    -> strio
+  # -->
+  # Reinitializes the stream with the given *other_StrIO* or *string* and *mode*
+  # (see StringIO#new).
+  #
+  def reopen: (StringIO other) -> self
+            | (String other, ?String mode_str) -> self
+
+  # <!--
+  #   rdoc-file=ext/stringio/stringio.c
+  #   - strio.rewind    -> 0
+  # -->
+  # Positions the stream to the beginning of input, resetting `lineno` to zero.
+  #
+  def rewind: () -> Integer
+
+  # <!--
+  #   rdoc-file=ext/stringio/stringio.c
+  #   - strio.seek(amount, whence=SEEK_SET) -> 0
+  # -->
+  # Seeks to a given offset *amount* in the stream according to the value of
+  # *whence* (see IO#seek).
+  #
+  def seek: (Integer amount, ?Integer whence) -> Integer
+
+  # <!--
+  #   rdoc-file=ext/stringio/stringio.c
+  #   - strio.set_encoding(ext_enc, [int_enc[, opt]])  => strio
+  # -->
+  # Specify the encoding of the StringIO as *ext_enc*. Use the default external
+  # encoding if *ext_enc* is nil. 2nd argument *int_enc* and optional hash *opt*
+  # argument are ignored; they are for API compatibility to IO.
+  #
+  def set_encoding: (?String | Encoding ext_or_ext_int_enc) -> self
+                  | (?String | Encoding ext_or_ext_int_enc, ?String | Encoding int_enc) -> self
+
+  # <!--
+  #   rdoc-file=ext/stringio/stringio.c
+  #   - strio.string     -> string
+  # -->
+  # Returns underlying String object, the subject of IO.
+  #
+  def string: () -> String
+
+  # <!--
+  #   rdoc-file=ext/stringio/stringio.c
+  #   - strio.string = string  -> string
+  # -->
+  # Changes underlying String object, the subject of IO.
+  #
+  def string=: (String str) -> String
+
+  # <!--
+  #   rdoc-file=ext/stringio/stringio.c
+  #   - strio.length -> integer
+  #   - strio.size   -> integer
+  # -->
+  # Returns the size of the buffer string.
+  #
+  def size: () -> Integer
+
+  # <!--
+  #   rdoc-file=ext/stringio/stringio.c
+  #   - strio.sync    -> true
+  # -->
+  # Returns `true` always.
+  #
+  def sync: () -> bool
+
+  # <!--
+  #   rdoc-file=ext/stringio/stringio.c
+  #   - sync=(p1)
+  # -->
+  # Returns the argument unchanged.  Just for compatibility to IO.
+  #
+  def sync=: (boolish) -> bool
+
+  def sysread: (Integer maxlen, String outbuf) -> String
+
+  def syswrite: (String arg0) -> Integer
+
+  # <!--
+  #   rdoc-file=ext/stringio/stringio.c
+  #   - strio.pos     -> integer
+  #   - strio.tell    -> integer
+  # -->
+  # Returns the current offset (in bytes).
+  #
+  def tell: () -> Integer
+
+  # <!-- rdoc-file=ext/stringio/stringio.c -->
+  # Returns `false`.  Just for compatibility to IO.
+  #
+  def tty?: () -> bool
+
+  # <!--
+  #   rdoc-file=ext/stringio/stringio.c
+  #   - strio.ungetbyte(fixnum)   -> nil
+  # -->
+  # See IO#ungetbyte
+  #
+  def ungetbyte: (String | Integer arg0) -> nil
+
+  # <!--
+  #   rdoc-file=ext/stringio/stringio.c
+  #   - strio.ungetc(string)   -> nil
+  # -->
+  # Pushes back one character (passed as a parameter) such that a subsequent
+  # buffered read will return it.  There is no limitation for multiple pushbacks
+  # including pushing back behind the beginning of the buffer string.
+  #
+  def ungetc: (String arg0) -> nil
+
+  # <!--
+  #   rdoc-file=ext/stringio/stringio.c
+  #   - strio.write(string, ...) -> integer
+  #   - strio.syswrite(string)   -> integer
+  # -->
+  # Appends the given string to the underlying buffer string. The stream must be
+  # opened for writing.  If the argument is not a string, it will be converted to
+  # a string using `to_s`. Returns the number of bytes written.  See IO#write.
+  #
+  def write: (*_ToS) -> Integer
+
+  # This is a deprecated alias for #each_byte.
+  #
+  def bytes: () { (Integer arg0) -> untyped } -> self
+           | () -> ::Enumerator[Integer, self]
+
+  # This is a deprecated alias for #each_char.
+  #
+  def chars: () { (String arg0) -> untyped } -> self
+           | () -> ::Enumerator[String, self]
+
+  # This is a deprecated alias for #each_codepoint.
+  #
+  def codepoints: () { (Integer arg0) -> untyped } -> self
+                | () -> ::Enumerator[Integer, self]
+
+  # <!-- rdoc-file=ext/stringio/stringio.c -->
+  # See IO#each.
+  #
+  def each_line: (?String sep, ?Integer limit, ?chomp: boolish) { (String) -> untyped } -> self
+               | (?String sep, ?Integer limit, ?chomp: boolish) -> ::Enumerator[String, self]
+
+  # <!-- rdoc-file=ext/stringio/stringio.c -->
+  # Returns true if the stream is at the end of the data (underlying string). The
+  # stream must be opened for reading or an `IOError` will be raised.
+  #
+  def eof?: () -> bool
+
+  # This is a deprecated alias for #each_line.
+  #
+  def lines: (?String sep, ?Integer limit) { (String arg0) -> untyped } -> self
+           | (?String sep, ?Integer limit) -> ::Enumerator[String, self]
+end

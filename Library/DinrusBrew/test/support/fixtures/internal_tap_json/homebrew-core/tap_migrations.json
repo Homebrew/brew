@@ -1,0 +1,7 @@
+{
+  "adobe-air-sdk": "homebrew/cask",
+  "android-ndk": "homebrew/cask",
+  "android-platform-tools": "homebrew/cask",
+  "android-sdk": "homebrew/cask",
+  "app-engine-go-32": "homebrew/cask/google-cloud-sdk"
+}

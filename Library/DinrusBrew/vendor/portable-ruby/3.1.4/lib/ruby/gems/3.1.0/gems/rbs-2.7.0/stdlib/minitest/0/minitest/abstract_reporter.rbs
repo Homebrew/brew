@@ -1,0 +1,49 @@
+# <!-- rdoc-file=lib/minitest.rb -->
+# Defines the API for Reporters. Subclass this and override whatever you want.
+# Go nuts.
+#
+class Minitest::AbstractReporter
+  # <!--
+  #   rdoc-file=lib/minitest.rb
+  #   - start()
+  # -->
+  # Starts reporting on the run.
+  #
+  def start: () -> nil
+
+  # <!--
+  #   rdoc-file=lib/minitest.rb
+  #   - prerecord(klass, name)
+  # -->
+  # About to start running a test. This allows a reporter to show that it is
+  # starting or that we are in the middle of a test run.
+  #
+  def prerecord: (untyped klass, untyped name) -> nil
+
+  # <!--
+  #   rdoc-file=lib/minitest.rb
+  #   - record(result)
+  # -->
+  # Output and record the result of the test. Call
+  # [result#result_code](rdoc-ref:Runnable#result_code) to get the result
+  # character string. Stores the result of the run if the run did not pass.
+  #
+  def record: (untyped result) -> nil
+
+  # <!--
+  #   rdoc-file=lib/minitest.rb
+  #   - report()
+  # -->
+  # Outputs the summary of the run.
+  #
+  def report: () -> nil
+
+  # <!--
+  #   rdoc-file=lib/minitest.rb
+  #   - passed?()
+  # -->
+  # Did this run pass?
+  #
+  def passed?: () -> true
+  include Mutex_m
+end

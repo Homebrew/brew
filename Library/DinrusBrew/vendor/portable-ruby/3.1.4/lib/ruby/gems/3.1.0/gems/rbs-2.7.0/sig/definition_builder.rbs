@@ -1,0 +1,143 @@
+module RBS
+  # DefinitionBuilder translates TypeName to Definition of the type
+  #
+  # The translation goes three steps:
+  #
+  # 1. Calculate _ancestors_ of the type with AncestorBuilder
+  # 2. Calculate _partial_ definitions of each ancestor
+  # 3. Merge _partial_ definitions
+  #
+  # A _partial_ definition is a definition of one type name, in terms of it doesn't have methods of super classes nor included modules.
+  #
+  #
+  class DefinitionBuilder
+    attr_reader env: Environment
+    attr_reader type_name_resolver: TypeNameResolver
+    attr_reader ancestor_builder: AncestorBuilder
+    attr_reader method_builder: MethodBuilder
+
+    attr_reader instance_cache: Hash[[TypeName, bool], Definition | false | nil]
+    attr_reader singleton_cache: Hash[TypeName, Definition | false | nil]
+    attr_reader singleton0_cache: Hash[TypeName, Definition | false | nil]
+    attr_reader interface_cache: Hash[TypeName, Definition | false | nil]
+
+    def initialize: (env: Environment, ?ancestor_builder: AncestorBuilder?, ?method_builder: MethodBuilder?) -> void
+
+    def build_interface: (TypeName) -> Definition
+
+    # Returns a Definition of a instance of given type name.
+    #
+    # If TypeName is a module and `no_self_types` is `true`, it won't have methods of _self type constraints_.
+    # This typically happens when definition is being calculated for mixin.
+    #
+    def build_instance: (TypeName, ?no_self_types: bool) -> Definition
+
+    def build_singleton: (TypeName) -> Definition
+
+    def validate_super_class!: (TypeName, Environment::ClassEntry) -> void
+
+    def ensure_namespace!: (Namespace, location: Location[untyped, untyped]?) -> void
+
+    def build_singleton0: (TypeName) -> Definition
+
+    def merge_definition: (src: Definition, dest: Definition, subst: Substitution, ?implemented_in: :keep | TypeName | nil, ?keep_super: bool) -> void
+
+    def merge_method: (TypeName, Hash[Symbol, Definition::Method], Symbol, Definition::Method, Substitution, ?implemented_in: :keep | TypeName | nil, ?keep_super: bool) -> void
+
+    def merge_variable: (Hash[Symbol, Definition::Variable], Symbol, Definition::Variable, Substitution, ?keep_super: bool) -> void
+
+    def try_cache: (TypeName, cache: Hash[TypeName, Definition | false | nil]) { () -> Definition } -> Definition
+                 | [A] (TypeName, cache: Hash[A, Definition | false | nil], key: A) { () -> Definition } -> Definition
+
+    def validate_params_with: (Array[AST::TypeParam], result: VarianceCalculator::Result) { (AST::TypeParam) -> void } -> void
+
+    def validate_type_params: (Definition, ancestors: AncestorBuilder::OneAncestors, methods: MethodBuilder::Methods) -> void
+
+    def source_location: (Definition::Ancestor::Instance::source, AST::Declarations::t) -> Location[untyped, untyped]?
+
+    def insert_variable: (TypeName, Hash[Symbol, Definition::Variable], name: Symbol, type: Types::t) -> void
+
+    # Add methods from `methods` to Definition
+    #
+    # * `methods`:
+    # * `interface_methods`: Methods of interfaces mixed into the type
+    # * `self_constraints_methods`: Methods of the self constraints methods
+    # * `super_interface_method`: `true` to have super method of existing method (`true` is the Definition is the target module)
+    #
+    def define_methods: (
+      Definition,
+      methods: MethodBuilder::Methods,
+      interface_methods: Hash[Symbol, Definition::Method],
+      methods_with_self: Hash[Symbol, Definition::Method]?,
+      super_interface_method: bool
+    ) -> void
+
+    # Define methods on singleton type
+    #
+    def define_methods_singleton: (
+      Definition,
+      methods: MethodBuilder::Methods,
+      interface_methods: Hash[Symbol, Definition::Method]
+    ) -> void
+
+    # Define methods on instance type
+    #
+    def define_methods_instance: (
+      Definition,
+      methods: MethodBuilder::Methods,
+      interface_methods: Hash[Symbol, Definition::Method]
+    ) -> void
+
+    # Define methods on module instance type
+    #
+    # * Pass `nil` to `module_self_methods:` to build a module instance type that will be mixed in to other modules/classes
+    # * Pass methods from self-type-constraints to build a module instance type alone (to type check itself)
+    #
+    def define_methods_module_instance: (
+      Definition,
+      methods: MethodBuilder::Methods,
+      interface_methods: Hash[Symbol, Definition::Method],
+      module_self_methods: Hash[Symbol, Definition::Method]?
+    ) -> void
+
+    # Validates presence of type names recursively.
+    # Assumes the type names are already resolved.
+    #
+    def validate_type_presence: (Types::t) -> void
+
+    def validate_type_name: (TypeName, Location[untyped, untyped]?) -> void
+
+    # Expand a type alias of given name without type arguments.
+    # Raises an error if the type alias requires arguments.
+    #
+    # Assume `type foo[T] = [T, T]`:
+    #
+    # ```
+    # expand_alias("::foo")   # => error
+    # ```
+    #
+    def expand_alias: (TypeName) -> Types::t
+
+    # Expand a type alias of given name with arguments of `untyped`.
+    #
+    # Assume `type foo[T] = [T, T]`:
+    #
+    # ```
+    # expand_alias1("::foo")   # => [untyped, untyped]
+    # ```
+    #
+    def expand_alias1: (TypeName) -> Types::t
+
+    # Expand a type alias of given name with `args`.
+    #
+    # Assume `type foo[T] = [T, T]`:
+    #
+    # ```
+    # expand_alias2("::foo", ["::Integer"])   # => [::Integer, ::Integer]
+    # ```
+    #
+    def expand_alias2: (TypeName, Array[Types::t] args) -> Types::t
+
+    def update: (env: Environment, ancestor_builder: AncestorBuilder, except: _Each[TypeName]) -> DefinitionBuilder
+  end
+end

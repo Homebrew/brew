@@ -1,0 +1,27 @@
+module RBS
+  class Parser
+    def self.parse_method_type: (Buffer | String, ?line: Integer, ?column: Integer, ?variables: Array[Symbol]) -> MethodType
+
+    def self.parse_type: (Buffer | String, ?line: Integer, ?column: Integer, ?variables: Array[Symbol]) -> Types::t
+
+    def self.parse_signature: (Buffer | String, ?line: Integer, ?column: Integer) -> Array[AST::Declarations::t]
+
+    KEYWORDS: Hash[String, bot]
+
+    private
+
+    def self.buffer: (String | Buffer source) -> Buffer
+
+    %a{no-defn}
+    def self._parse_type: (Buffer, Integer line, Integer column, Array[Symbol] variables) -> Types::t
+
+    %a{no-defn}
+    def self._parse_method_type: (Buffer, Integer line, Integer column, Array[Symbol] variables) -> MethodType
+
+    %a{no-defn}
+    def self._parse_signature: (Buffer, Integer line, Integer column) -> Array[AST::Declarations::t]
+
+    class LocatedValue
+    end
+  end
+end

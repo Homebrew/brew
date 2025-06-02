@@ -1,0 +1,1223 @@
+# <!-- rdoc-file=lib/cgi.rb -->
+# ## Overview
+#
+# The Common Gateway Interface (CGI) is a simple protocol for passing an HTTP
+# request from a web server to a standalone program, and returning the output to
+# the web browser.  Basically, a CGI program is called with the parameters of
+# the request passed in either in the environment (GET) or via $stdin (POST),
+# and everything it prints to $stdout is returned to the client.
+#
+# This file holds the CGI class.  This class provides functionality for
+# retrieving HTTP request parameters, managing cookies, and generating HTML
+# output.
+#
+# The file CGI::Session provides session management functionality; see that
+# class for more details.
+#
+# See http://www.w3.org/CGI/ for more information on the CGI protocol.
+#
+# ## Introduction
+#
+# CGI is a large class, providing several categories of methods, many of which
+# are mixed in from other modules.  Some of the documentation is in this class,
+# some in the modules CGI::QueryExtension and CGI::HtmlExtension.  See
+# CGI::Cookie for specific information on handling cookies, and cgi/session.rb
+# (CGI::Session) for information on sessions.
+#
+# For queries, CGI provides methods to get at environmental variables,
+# parameters, cookies, and multipart request data.  For responses, CGI provides
+# methods for writing output and generating HTML.
+#
+# Read on for more details.  Examples are provided at the bottom.
+#
+# ## Queries
+#
+# The CGI class dynamically mixes in parameter and cookie-parsing functionality,
+#  environmental variable access, and support for parsing multipart requests
+# (including uploaded files) from the CGI::QueryExtension module.
+#
+# ### Environmental Variables
+#
+# The standard CGI environmental variables are available as read-only attributes
+# of a CGI object.  The following is a list of these variables:
+#
+#     AUTH_TYPE               HTTP_HOST          REMOTE_IDENT
+#     CONTENT_LENGTH          HTTP_NEGOTIATE     REMOTE_USER
+#     CONTENT_TYPE            HTTP_PRAGMA        REQUEST_METHOD
+#     GATEWAY_INTERFACE       HTTP_REFERER       SCRIPT_NAME
+#     HTTP_ACCEPT             HTTP_USER_AGENT    SERVER_NAME
+#     HTTP_ACCEPT_CHARSET     PATH_INFO          SERVER_PORT
+#     HTTP_ACCEPT_ENCODING    PATH_TRANSLATED    SERVER_PROTOCOL
+#     HTTP_ACCEPT_LANGUAGE    QUERY_STRING       SERVER_SOFTWARE
+#     HTTP_CACHE_CONTROL      REMOTE_ADDR
+#     HTTP_FROM               REMOTE_HOST
+#
+# For each of these variables, there is a corresponding attribute with the same
+# name, except all lower case and without a preceding HTTP_. `content_length`
+# and `server_port` are integers; the rest are strings.
+#
+# ### Parameters
+#
+# The method #params() returns a hash of all parameters in the request as
+# name/value-list pairs, where the value-list is an Array of one or more values.
+#  The CGI object itself also behaves as a hash of parameter names to values,
+# but only returns a single value (as a String) for each parameter name.
+#
+# For instance, suppose the request contains the parameter "favourite_colours"
+# with the multiple values "blue" and "green".  The following behavior would
+# occur:
+#
+#     cgi.params["favourite_colours"]  # => ["blue", "green"]
+#     cgi["favourite_colours"]         # => "blue"
+#
+# If a parameter does not exist, the former method will return an empty array,
+# the latter an empty string.  The simplest way to test for existence of a
+# parameter is by the #has_key? method.
+#
+# ### Cookies
+#
+# HTTP Cookies are automatically parsed from the request.  They are available
+# from the #cookies() accessor, which returns a hash from cookie name to
+# CGI::Cookie object.
+#
+# ### Multipart requests
+#
+# If a request's method is POST and its content type is multipart/form-data,
+# then it may contain uploaded files.  These are stored by the QueryExtension
+# module in the parameters of the request.  The parameter name is the name
+# attribute of the file input field, as usual.  However, the value is not a
+# string, but an IO object, either an IOString for small files, or a Tempfile
+# for larger ones.  This object also has the additional singleton methods:
+#
+# #local_path()
+# :   the path of the uploaded file on the local filesystem
+# #original_filename()
+# :   the name of the file on the client computer
+# #content_type()
+# :   the content type of the file
+#
+#
+# ## Responses
+#
+# The CGI class provides methods for sending header and content output to the
+# HTTP client, and mixes in methods for programmatic HTML generation from
+# CGI::HtmlExtension and CGI::TagMaker modules.  The precise version of HTML to
+# use for HTML generation is specified at object creation time.
+#
+# ### Writing output
+#
+# The simplest way to send output to the HTTP client is using the #out() method.
+# This takes the HTTP headers as a hash parameter, and the body content via a
+# block.  The headers can be generated as a string using the #http_header()
+# method.  The output stream can be written directly to using the #print()
+# method.
+#
+# ### Generating HTML
+#
+# Each HTML element has a corresponding method for generating that element as a
+# String.  The name of this method is the same as that of the element, all
+# lowercase.  The attributes of the element are passed in as a hash, and the
+# body as a no-argument block that evaluates to a String.  The HTML generation
+# module knows which elements are always empty, and silently drops any passed-in
+# body.  It also knows which elements require matching closing tags and which
+# don't.  However, it does not know what attributes are legal for which
+# elements.
+#
+# There are also some additional HTML generation methods mixed in from the
+# CGI::HtmlExtension module.  These include individual methods for the different
+# types of form inputs, and methods for elements that commonly take particular
+# attributes where the attributes can be directly specified as arguments, rather
+# than via a hash.
+#
+# ### Utility HTML escape and other methods like a function.
+#
+# There are some utility tool defined in cgi/util.rb . And when include, you can
+# use utility methods like a function.
+#
+# ## Examples of use
+#
+# ### Get form values
+#
+#     require "cgi"
+#     cgi = CGI.new
+#     value = cgi['field_name']   # <== value string for 'field_name'
+#       # if not 'field_name' included, then return "".
+#     fields = cgi.keys            # <== array of field names
+#
+#     # returns true if form has 'field_name'
+#     cgi.has_key?('field_name')
+#     cgi.has_key?('field_name')
+#     cgi.include?('field_name')
+#
+# CAUTION! [cgi]('field_name') returned an Array with the old cgi.rb(included in
+# Ruby 1.6)
+#
+# ### Get form values as hash
+#
+#     require "cgi"
+#     cgi = CGI.new
+#     params = cgi.params
+#
+# cgi.params is a hash.
+#
+#     cgi.params['new_field_name'] = ["value"]  # add new param
+#     cgi.params['field_name'] = ["new_value"]  # change value
+#     cgi.params.delete('field_name')           # delete param
+#     cgi.params.clear                          # delete all params
+#
+# ### Save form values to file
+#
+#     require "pstore"
+#     db = PStore.new("query.db")
+#     db.transaction do
+#       db["params"] = cgi.params
+#     end
+#
+# ### Restore form values from file
+#
+#     require "pstore"
+#     db = PStore.new("query.db")
+#     db.transaction do
+#       cgi.params = db["params"]
+#     end
+#
+# ### Get multipart form values
+#
+#     require "cgi"
+#     cgi = CGI.new
+#     value = cgi['field_name']   # <== value string for 'field_name'
+#     value.read                  # <== body of value
+#     value.local_path            # <== path to local file of value
+#     value.original_filename     # <== original filename of value
+#     value.content_type          # <== content_type of value
+#
+# and value has StringIO or Tempfile class methods.
+#
+# ### Get cookie values
+#
+#     require "cgi"
+#     cgi = CGI.new
+#     values = cgi.cookies['name']  # <== array of 'name'
+#       # if not 'name' included, then return [].
+#     names = cgi.cookies.keys      # <== array of cookie names
+#
+# and cgi.cookies is a hash.
+#
+# ### Get cookie objects
+#
+#     require "cgi"
+#     cgi = CGI.new
+#     for name, cookie in cgi.cookies
+#       cookie.expires = Time.now + 30
+#     end
+#     cgi.out("cookie" => cgi.cookies) {"string"}
+#
+#     cgi.cookies # { "name1" => cookie1, "name2" => cookie2, ... }
+#
+#     require "cgi"
+#     cgi = CGI.new
+#     cgi.cookies['name'].expires = Time.now + 30
+#     cgi.out("cookie" => cgi.cookies['name']) {"string"}
+#
+# ### Print http header and html string to $DEFAULT_OUTPUT ($>)
+#
+#     require "cgi"
+#     cgi = CGI.new("html4")  # add HTML generation methods
+#     cgi.out do
+#       cgi.html do
+#         cgi.head do
+#           cgi.title { "TITLE" }
+#         end +
+#         cgi.body do
+#           cgi.form("ACTION" => "uri") do
+#             cgi.p do
+#               cgi.textarea("get_text") +
+#               cgi.br +
+#               cgi.submit
+#             end
+#           end +
+#           cgi.pre do
+#             CGI.escapeHTML(
+#               "params: #{cgi.params.inspect}\n" +
+#               "cookies: #{cgi.cookies.inspect}\n" +
+#               ENV.collect do |key, value|
+#                 "#{key} --> #{value}\n"
+#               end.join("")
+#             )
+#           end
+#         end
+#       end
+#     end
+#
+#     # add HTML generation methods
+#     CGI.new("html3")    # html3.2
+#     CGI.new("html4")    # html4.01 (Strict)
+#     CGI.new("html4Tr")  # html4.01 Transitional
+#     CGI.new("html4Fr")  # html4.01 Frameset
+#     CGI.new("html5")    # html5
+#
+# ### Some utility methods
+#
+#     require 'cgi/util'
+#     CGI.escapeHTML('Usage: foo "bar" <baz>')
+#
+# ### Some utility methods like a function
+#
+#     require 'cgi/util'
+#     include CGI::Util
+#     escapeHTML('Usage: foo "bar" <baz>')
+#     h('Usage: foo "bar" <baz>') # alias
+#
+class CGI
+  include CGI::Util
+
+  extend CGI::Util
+
+  # <!--
+  #   rdoc-file=lib/cgi/core.rb
+  #   - CGI.new(tag_maker) { block }
+  #   - CGI.new(options_hash = {}) { block }
+  # -->
+  # Create a new CGI instance.
+  #
+  # `tag_maker`
+  # :   This is the same as using the `options_hash` form with the value `{
+  #     :tag_maker => tag_maker }` Note that it is recommended to use the
+  #     `options_hash` form, since it also allows you specify the charset you will
+  #     accept.
+  # `options_hash`
+  # :   A Hash that recognizes three options:
+  #
+  #     `:accept_charset`
+  # :       specifies encoding of received query string.  If omitted,
+  #         `@@accept_charset` is used.  If the encoding is not valid, a
+  #         CGI::InvalidEncoding will be raised.
+  #
+  #         Example. Suppose `@@accept_charset` is "UTF-8"
+  #
+  #         when not specified:
+  #
+  #             cgi=CGI.new      # @accept_charset # => "UTF-8"
+  #
+  #         when specified as "EUC-JP":
+  #
+  #             cgi=CGI.new(:accept_charset => "EUC-JP") # => "EUC-JP"
+  #
+  #     `:tag_maker`
+  # :       String that specifies which version of the HTML generation methods to
+  #         use.  If not specified, no HTML generation methods will be loaded.
+  #
+  #         The following values are supported:
+  #
+  #         "html3"
+  # :           HTML 3.x
+  #         "html4"
+  # :           HTML 4.0
+  #         "html4Tr"
+  # :           HTML 4.0 Transitional
+  #         "html4Fr"
+  # :           HTML 4.0 with Framesets
+  #         "html5"
+  # :           HTML 5
+  #
+  #
+  #     `:max_multipart_length`
+  # :       Specifies maximum length of multipart data. Can be an Integer scalar
+  #         or a lambda, that will be evaluated when the request is parsed. This
+  #         allows more complex logic to be set when determining whether to accept
+  #         multipart data (e.g. consult a registered users upload allowance)
+  #
+  #         Default is 128 * 1024 * 1024 bytes
+  #
+  #             cgi=CGI.new(:max_multipart_length => 268435456) # simple scalar
+  #
+  #             cgi=CGI.new(:max_multipart_length => -> {check_filesystem}) # lambda
+  #
+  #
+  # `block`
+  # :   If provided, the block is called when an invalid encoding is encountered.
+  #     For example:
+  #
+  #         encoding_errors={}
+  #         cgi=CGI.new(:accept_charset=>"EUC-JP") do |name,value|
+  #           encoding_errors[name] = value
+  #         end
+  #
+  #
+  # Finally, if the CGI object is not created in a standard CGI call environment
+  # (that is, it can't locate REQUEST_METHOD in its environment), then it will run
+  # in "offline" mode.  In this mode, it reads its parameters from the command
+  # line or (failing that) from standard input.  Otherwise, cookies and other
+  # parameters are parsed automatically from the standard CGI locations, which
+  # varies according to the REQUEST_METHOD.
+  #
+  def initialize: (?String tag_maker) ?{ (String name, String value) -> void } -> void
+                | (Hash[Symbol, untyped] options_hash) ?{ (String name, String value) -> void } -> void
+
+  # <!--
+  #   rdoc-file=lib/cgi/core.rb
+  #   - accept_charset()
+  # -->
+  # Return the accept character set for all new CGI instances.
+  #
+  def self.accept_charset: () -> String
+
+  # <!--
+  #   rdoc-file=lib/cgi/core.rb
+  #   - accept_charset=(accept_charset)
+  # -->
+  # Set the accept character set for all new CGI instances.
+  #
+  def self.accept_charset=: (String accept_charset) -> String
+
+  # <!--
+  #   rdoc-file=lib/cgi/core.rb
+  #   - parse(query)
+  # -->
+  # Parse an HTTP query string into a hash of key=>value pairs.
+  #
+  #     params = CGI.parse("query_string")
+  #       # {"name1" => ["value1", "value2", ...],
+  #       #  "name2" => ["value1", "value2", ...], ... }
+  #
+  def self.parse: (String query) -> Hash[String, Array[String]]
+
+  public
+
+  # <!-- rdoc-file=lib/cgi/core.rb -->
+  # Return the accept character set for this CGI instance.
+  #
+  attr_reader accept_charset: String
+
+  # <!-- rdoc-file=lib/cgi/core.rb -->
+  # This method is an alias for #http_header, when HTML5 tag maker is inactive.
+  #
+  # NOTE: use #http_header to create HTTP header blocks, this alias is only
+  # provided for backwards compatibility.
+  #
+  # Using #header with the HTML5 tag maker will create a <header> element.
+  #
+  alias header http_header
+
+  # <!--
+  #   rdoc-file=lib/cgi/core.rb
+  #   - http_header(content_type_string="text/html")
+  #   - http_header(headers_hash)
+  # -->
+  # Create an HTTP header block as a string.
+  #
+  # Includes the empty line that ends the header block.
+  #
+  # `content_type_string`
+  # :   If this form is used, this string is the `Content-Type`
+  # `headers_hash`
+  # :   A Hash of header values. The following header keys are recognized:
+  #
+  #     type
+  # :       The Content-Type header.  Defaults to "text/html"
+  #     charset
+  # :       The charset of the body, appended to the Content-Type header.
+  #     nph
+  # :       A boolean value.  If true, prepend protocol string and status code,
+  #         and date; and sets default values for "server" and "connection" if not
+  #         explicitly set.
+  #     status
+  # :       The HTTP status code as a String, returned as the Status header.  The
+  #         values are:
+  #
+  #         OK
+  # :           200 OK
+  #         PARTIAL_CONTENT
+  # :           206 Partial Content
+  #         MULTIPLE_CHOICES
+  # :           300 Multiple Choices
+  #         MOVED
+  # :           301 Moved Permanently
+  #         REDIRECT
+  # :           302 Found
+  #         NOT_MODIFIED
+  # :           304 Not Modified
+  #         BAD_REQUEST
+  # :           400 Bad Request
+  #         AUTH_REQUIRED
+  # :           401 Authorization Required
+  #         FORBIDDEN
+  # :           403 Forbidden
+  #         NOT_FOUND
+  # :           404 Not Found
+  #         METHOD_NOT_ALLOWED
+  # :           405 Method Not Allowed
+  #         NOT_ACCEPTABLE
+  # :           406 Not Acceptable
+  #         LENGTH_REQUIRED
+  # :           411 Length Required
+  #         PRECONDITION_FAILED
+  # :           412 Precondition Failed
+  #         SERVER_ERROR
+  # :           500 Internal Server Error
+  #         NOT_IMPLEMENTED
+  # :           501 Method Not Implemented
+  #         BAD_GATEWAY
+  # :           502 Bad Gateway
+  #         VARIANT_ALSO_VARIES
+  # :           506 Variant Also Negotiates
+  #
+  #
+  #     server
+  # :       The server software, returned as the Server header.
+  #     connection
+  # :       The connection type, returned as the Connection header (for instance,
+  #         "close".
+  #     length
+  # :       The length of the content that will be sent, returned as the
+  #         Content-Length header.
+  #     language
+  # :       The language of the content, returned as the Content-Language header.
+  #     expires
+  # :       The time on which the current content expires, as a `Time` object,
+  #         returned as the Expires header.
+  #     cookie
+  # :       A cookie or cookies, returned as one or more Set-Cookie headers.  The
+  #         value can be the literal string of the cookie; a CGI::Cookie object;
+  #         an Array of literal cookie strings or Cookie objects; or a hash all of
+  #         whose values are literal cookie strings or Cookie objects.
+  #
+  #         These cookies are in addition to the cookies held in the
+  #         @output_cookies field.
+  #
+  #
+  #     Other headers can also be set; they are appended as key: value.
+  #
+  #
+  # Examples:
+  #
+  #     http_header
+  #       # Content-Type: text/html
+  #
+  #     http_header("text/plain")
+  #       # Content-Type: text/plain
+  #
+  #     http_header("nph"        => true,
+  #                 "status"     => "OK",  # == "200 OK"
+  #                   # "status"     => "200 GOOD",
+  #                 "server"     => ENV['SERVER_SOFTWARE'],
+  #                 "connection" => "close",
+  #                 "type"       => "text/html",
+  #                 "charset"    => "iso-2022-jp",
+  #                   # Content-Type: text/html; charset=iso-2022-jp
+  #                 "length"     => 103,
+  #                 "language"   => "ja",
+  #                 "expires"    => Time.now + 30,
+  #                 "cookie"     => [cookie1, cookie2],
+  #                 "my_header1" => "my_value",
+  #                 "my_header2" => "my_value")
+  #
+  # This method does not perform charset conversion.
+  #
+  def http_header: (?String options) -> String
+                 | (?Hash[String | Symbol, untyped] header_hash) -> String
+
+  def nph?: () -> untyped
+
+  # <!--
+  #   rdoc-file=lib/cgi/core.rb
+  #   - cgi.out(content_type_string='text/html')
+  #   - cgi.out(headers_hash)
+  # -->
+  # Print an HTTP header and body to $DEFAULT_OUTPUT ($>)
+  #
+  # `content_type_string`
+  # :   If a string is passed, it is assumed to be the content type.
+  # `headers_hash`
+  # :   This is a Hash of headers, similar to that used by #http_header.
+  # `block`
+  # :   A block is required and should evaluate to the body of the response.
+  #
+  #
+  # `Content-Length` is automatically calculated from the size of the String
+  # returned by the content block.
+  #
+  # If `ENV['REQUEST_METHOD'] == "HEAD"`, then only the header is output (the
+  # content block is still required, but it is ignored).
+  #
+  # If the charset is "iso-2022-jp" or "euc-jp" or "shift_jis" then the content is
+  # converted to this charset, and the language is set to "ja".
+  #
+  # Example:
+  #
+  #     cgi = CGI.new
+  #     cgi.out{ "string" }
+  #       # Content-Type: text/html
+  #       # Content-Length: 6
+  #       #
+  #       # string
+  #
+  #     cgi.out("text/plain") { "string" }
+  #       # Content-Type: text/plain
+  #       # Content-Length: 6
+  #       #
+  #       # string
+  #
+  #     cgi.out("nph"        => true,
+  #             "status"     => "OK",  # == "200 OK"
+  #             "server"     => ENV['SERVER_SOFTWARE'],
+  #             "connection" => "close",
+  #             "type"       => "text/html",
+  #             "charset"    => "iso-2022-jp",
+  #               # Content-Type: text/html; charset=iso-2022-jp
+  #             "language"   => "ja",
+  #             "expires"    => Time.now + (3600 * 24 * 30),
+  #             "cookie"     => [cookie1, cookie2],
+  #             "my_header1" => "my_value",
+  #             "my_header2" => "my_value") { "string" }
+  #        # HTTP/1.1 200 OK
+  #        # Date: Sun, 15 May 2011 17:35:54 GMT
+  #        # Server: Apache 2.2.0
+  #        # Connection: close
+  #        # Content-Type: text/html; charset=iso-2022-jp
+  #        # Content-Length: 6
+  #        # Content-Language: ja
+  #        # Expires: Tue, 14 Jun 2011 17:35:54 GMT
+  #        # Set-Cookie: foo
+  #        # Set-Cookie: bar
+  #        # my_header1: my_value
+  #        # my_header2: my_value
+  #        #
+  #        # string
+  #
+  def out: (?String content_type_string) { () -> String } -> void
+         | (Hash[String | Symbol, untyped] headers_hash) { () -> String } -> void
+
+  # <!--
+  #   rdoc-file=lib/cgi/core.rb
+  #   - print(*options)
+  # -->
+  # Print an argument or list of arguments to the default output stream
+  #
+  #     cgi = CGI.new
+  #     cgi.print    # default:  cgi.print == $DEFAULT_OUTPUT.print
+  #
+  def print: (*String options) -> void
+
+  private
+
+  # <!--
+  #   rdoc-file=lib/cgi/core.rb
+  #   - stdinput()
+  # -->
+  # Synonym for $stdin.
+  #
+  def stdinput: () -> ::IO
+
+  # <!--
+  #   rdoc-file=lib/cgi/core.rb
+  #   - stdoutput()
+  # -->
+  # Synonym for $stdout.
+  #
+  def stdoutput: () -> ::IO
+
+  # <!-- rdoc-file=lib/cgi/core.rb -->
+  # String for carriage return
+  #
+  CR: String
+
+  # <!-- rdoc-file=lib/cgi/core.rb -->
+  # Standard internet newline sequence
+  #
+  EOL: String
+
+  # <!-- rdoc-file=lib/cgi/core.rb -->
+  # HTTP status codes.
+  #
+  HTTP_STATUS: Hash[String, String]
+
+  # <!-- rdoc-file=lib/cgi/core.rb -->
+  # String for linefeed
+  #
+  LF: String
+
+  # <!-- rdoc-file=lib/cgi/core.rb -->
+  # Maximum number of request parameters when multipart
+  #
+  MAX_MULTIPART_COUNT: Integer
+
+  # <!-- rdoc-file=lib/cgi/core.rb -->
+  # Whether processing will be required in binary vs text
+  #
+  NEEDS_BINMODE: bool
+
+  # <!-- rdoc-file=lib/cgi/core.rb -->
+  # Path separators in different environments.
+  #
+  PATH_SEPARATOR: Hash[String, String]
+
+  REVISION: String
+
+  VERSION: String
+
+  # <!-- rdoc-file=lib/cgi/cookie.rb -->
+  # Class representing an HTTP cookie.
+  #
+  # In addition to its specific fields and methods, a Cookie instance is a
+  # delegator to the array of its values.
+  #
+  # See RFC 2965.
+  #
+  # ## Examples of use
+  #     cookie1 = CGI::Cookie.new("name", "value1", "value2", ...)
+  #     cookie1 = CGI::Cookie.new("name" => "name", "value" => "value")
+  #     cookie1 = CGI::Cookie.new('name'     => 'name',
+  #                               'value'    => ['value1', 'value2', ...],
+  #                               'path'     => 'path',   # optional
+  #                               'domain'   => 'domain', # optional
+  #                               'expires'  => Time.now, # optional
+  #                               'secure'   => true,     # optional
+  #                               'httponly' => true      # optional
+  #                               )
+  #
+  #     cgi.out("cookie" => [cookie1, cookie2]) { "string" }
+  #
+  #     name     = cookie1.name
+  #     values   = cookie1.value
+  #     path     = cookie1.path
+  #     domain   = cookie1.domain
+  #     expires  = cookie1.expires
+  #     secure   = cookie1.secure
+  #     httponly = cookie1.httponly
+  #
+  #     cookie1.name     = 'name'
+  #     cookie1.value    = ['value1', 'value2', ...]
+  #     cookie1.path     = 'path'
+  #     cookie1.domain   = 'domain'
+  #     cookie1.expires  = Time.now + 30
+  #     cookie1.secure   = true
+  #     cookie1.httponly = true
+  #
+  class Cookie < Array[String]
+    # <!--
+    #   rdoc-file=lib/cgi/cookie.rb
+    #   - parse(raw_cookie)
+    # -->
+    # Parse a raw cookie string into a hash of cookie-name=>Cookie pairs.
+    #
+    #     cookies = CGI::Cookie.parse("raw_cookie_string")
+    #       # { "name1" => cookie1, "name2" => cookie2, ... }
+    #
+    def self.parse: (String raw_cookie) -> Hash[String, instance]
+
+    public
+
+    # <!-- rdoc-file=lib/cgi/cookie.rb -->
+    # Domain for which this cookie applies, as a `String`
+    #
+    def domain: () -> String?
+
+    # <!-- rdoc-file=lib/cgi/cookie.rb -->
+    # Domain for which this cookie applies, as a `String`
+    #
+    def domain=: (String domain) -> String
+
+    # <!-- rdoc-file=lib/cgi/cookie.rb -->
+    # Time at which this cookie expires, as a `Time`
+    #
+    def expires: () -> Time?
+
+    # <!-- rdoc-file=lib/cgi/cookie.rb -->
+    # Time at which this cookie expires, as a `Time`
+    #
+    def expires=: (Time time) -> Time
+
+    # <!-- rdoc-file=lib/cgi/cookie.rb -->
+    # True if this cookie is httponly; false otherwise
+    #
+    def httponly: () -> bool
+
+    # <!--
+    #   rdoc-file=lib/cgi/cookie.rb
+    #   - httponly=(val)
+    # -->
+    # Set whether the Cookie is a httponly cookie or not.
+    #
+    # `val` must be a boolean.
+    #
+    def httponly=: (boolish val) -> bool
+
+    # <!--
+    #   rdoc-file=lib/cgi/cookie.rb
+    #   - inspect()
+    # -->
+    # A summary of cookie string.
+    #
+    def inspect: () -> String
+
+    # <!-- rdoc-file=lib/cgi/cookie.rb -->
+    # Name of this cookie, as a `String`
+    #
+    def name: () -> String
+
+    # <!-- rdoc-file=lib/cgi/cookie.rb -->
+    # Name of this cookie, as a `String`
+    #
+    def name=: (String name) -> String
+
+    # <!-- rdoc-file=lib/cgi/cookie.rb -->
+    # Path for which this cookie applies, as a `String`
+    #
+    def path: () -> String?
+
+    # <!-- rdoc-file=lib/cgi/cookie.rb -->
+    # Path for which this cookie applies, as a `String`
+    #
+    def path=: (String path) -> String
+
+    # <!-- rdoc-file=lib/cgi/cookie.rb -->
+    # True if this cookie is secure; false otherwise
+    #
+    def secure: () -> bool
+
+    # <!--
+    #   rdoc-file=lib/cgi/cookie.rb
+    #   - secure=(val)
+    # -->
+    # Set whether the Cookie is a secure cookie or not.
+    #
+    # `val` must be a boolean.
+    #
+    def secure=: [A] (boolish val) -> A
+
+    # <!--
+    #   rdoc-file=lib/cgi/cookie.rb
+    #   - to_s()
+    # -->
+    # Convert the Cookie to its string representation.
+    #
+    def to_s: () -> String
+
+    # <!--
+    #   rdoc-file=lib/cgi/cookie.rb
+    #   - value()
+    # -->
+    # Returns the value or list of values for this cookie.
+    #
+    def value: () -> Array[String]
+
+    # <!--
+    #   rdoc-file=lib/cgi/cookie.rb
+    #   - value=(val)
+    # -->
+    # Replaces the value of this cookie with a new value or list of values.
+    #
+    def value=: (String val) -> String
+              | (Array[String] val) -> Array[String]
+
+    private
+
+    # <!--
+    #   rdoc-file=lib/cgi/cookie.rb
+    #   - Cookie.new(name_string,*value)
+    #   - Cookie.new(options_hash)
+    # -->
+    # Create a new CGI::Cookie object.
+    #
+    # `name_string`
+    # :   The name of the cookie; in this form, there is no #domain or #expiration.
+    #     The #path is gleaned from the `SCRIPT_NAME` environment variable, and
+    #     #secure is false.
+    # `*value`
+    # :   value or list of values of the cookie
+    # `options_hash`
+    # :   A Hash of options to initialize this Cookie.  Possible options are:
+    #
+    #     name
+    # :       the name of the cookie.  Required.
+    #     value
+    # :       the cookie's value or list of values.
+    #     path
+    # :       the path for which this cookie applies.  Defaults to the value of the
+    #         `SCRIPT_NAME` environment variable.
+    #     domain
+    # :       the domain for which this cookie applies.
+    #     expires
+    # :       the time at which this cookie expires, as a `Time` object.
+    #     secure
+    # :       whether this cookie is a secure cookie or not (default to false).
+    #         Secure cookies are only transmitted to HTTPS servers.
+    #     httponly
+    # :       whether this cookie is a HttpOnly cookie or not (default to
+    #
+    #         false).  HttpOnly cookies are not available to javascript.
+    #
+    #     These keywords correspond to attributes of the cookie object.
+    #
+    def initialize: (String name_string, *String value) -> void
+                  | (Hash[String, untyped] options_hash) -> void
+  end
+
+  module Escape
+    public
+
+    # <!--
+    #   rdoc-file=ext/cgi/escape/escape.c
+    #   - CGI.escape(string) -> string
+    # -->
+    # Returns URL-escaped string.
+    #
+    def escape: (string str) -> String
+
+    # <!--
+    #   rdoc-file=ext/cgi/escape/escape.c
+    #   - CGI.escapeHTML(string) -> string
+    # -->
+    # Returns HTML-escaped string.
+    #
+    def escapeHTML: (string str) -> String
+
+    # <!--
+    #   rdoc-file=ext/cgi/escape/escape.c
+    #   - CGI.unescape(string, encoding=@@accept_charset) -> string
+    # -->
+    # Returns URL-unescaped string.
+    #
+    def unescape: (string str, ?encoding encoding) -> String
+
+    # <!--
+    #   rdoc-file=ext/cgi/escape/escape.c
+    #   - CGI.unescapeHTML(string) -> string
+    # -->
+    # Returns HTML-unescaped string.
+    #
+    def unescapeHTML: (string str) -> String
+  end
+
+  # <!-- rdoc-file=lib/cgi/core.rb -->
+  # Exception raised when there is an invalid encoding detected
+  #
+  class InvalidEncoding < Exception
+  end
+
+  # <!-- rdoc-file=lib/cgi/core.rb -->
+  # Mixin module that provides the following:
+  #
+  # 1.  Access to the CGI environment variables as methods.  See documentation to
+  #     the CGI class for a list of these variables.  The methods are exposed by
+  #     removing the leading `HTTP_` (if it exists) and downcasing the name.  For
+  #     example, `auth_type` will return the environment variable `AUTH_TYPE`, and
+  #     `accept` will return the value for `HTTP_ACCEPT`.
+  #
+  # 2.  Access to cookies, including the cookies attribute.
+  #
+  # 3.  Access to parameters, including the params attribute, and overloading #[]
+  #     to perform parameter value lookup by key.
+  #
+  # 4.  The initialize_query method, for initializing the above mechanisms,
+  #     handling multipart forms, and allowing the class to be used in "offline"
+  #     mode.
+  #
+  module QueryExtension
+    public
+
+    # <!--
+    #   rdoc-file=lib/cgi/core.rb
+    #   - [](key)
+    # -->
+    # Get the value for the parameter with a given key.
+    #
+    # If the parameter has multiple values, only the first will be retrieved; use
+    # #params to get the array of values.
+    #
+    def []: (String key) -> String?
+
+    def accept: () -> String?
+
+    def accept_charset: () -> String?
+
+    def accept_encoding: () -> String?
+
+    def accept_language: () -> String?
+
+    def auth_type: () -> String?
+
+    def cache_control: () -> String?
+
+    def content_length: () -> String?
+
+    def content_type: () -> String?
+
+    # <!-- rdoc-file=lib/cgi/core.rb -->
+    # Get the cookies as a hash of cookie-name=>Cookie pairs.
+    #
+    def cookies: () -> Hash[String, Cookie]
+
+    # <!-- rdoc-file=lib/cgi/core.rb -->
+    # Get the cookies as a hash of cookie-name=>Cookie pairs.
+    #
+    def cookies=: (Hash[String, Cookie] cookies) -> Hash[String, Cookie]
+
+    def create_body: (boolish is_large) -> (Tempfile | StringIO)
+
+    # <!-- rdoc-file=lib/cgi/core.rb -->
+    # Get the uploaded files as a hash of name=>values pairs
+    #
+    def files: () -> Hash[String, Tempfile | StringIO]
+
+    def from: () -> String?
+
+    def gateway_interface: () -> String?
+
+    # <!--
+    #   rdoc-file=lib/cgi/core.rb
+    #   - has_key?(*args)
+    # -->
+    # Returns true if a given query string parameter exists.
+    #
+    def has_key?: (String key) -> bool
+
+    def host: () -> String?
+
+    # <!--
+    #   rdoc-file=lib/cgi/core.rb
+    #   - include?(*args)
+    # -->
+    #
+    alias include? has_key?
+
+    # <!--
+    #   rdoc-file=lib/cgi/core.rb
+    #   - key?(*args)
+    # -->
+    #
+    alias key? has_key?
+
+    # <!--
+    #   rdoc-file=lib/cgi/core.rb
+    #   - keys(*args)
+    # -->
+    # Return all query parameter names as an array of String.
+    #
+    def keys: () -> Array[String]
+
+    # <!--
+    #   rdoc-file=lib/cgi/core.rb
+    #   - multipart?()
+    # -->
+    # Returns whether the form contained multipart/form-data
+    #
+    def multipart?: () -> bool
+
+    def negotiate: () -> String?
+
+    # <!-- rdoc-file=lib/cgi/core.rb -->
+    # Get the parameters as a hash of name=>values pairs, where values is an Array.
+    #
+    def params: () -> Hash[String, Array[String] | Tempfile | StringIO]
+
+    # <!--
+    #   rdoc-file=lib/cgi/core.rb
+    #   - params=(hash)
+    # -->
+    # Set all the parameters.
+    #
+    def params=: (Hash[String, Array[String] | Tempfile | StringIO] hash) -> Hash[String, Array[String] | Tempfile | StringIO]
+
+    def path_info: () -> String?
+
+    def path_translated: () -> String?
+
+    def pragma: () -> String?
+
+    def query_string: () -> String?
+
+    # <!--
+    #   rdoc-file=lib/cgi/core.rb
+    #   - raw_cookie()
+    # -->
+    # Get the raw cookies as a string.
+    #
+    def raw_cookie: () -> String?
+
+    # <!--
+    #   rdoc-file=lib/cgi/core.rb
+    #   - raw_cookie2()
+    # -->
+    # Get the raw RFC2965 cookies as a string.
+    #
+    def raw_cookie2: () -> String?
+
+    def referer: () -> String?
+
+    def remote_addr: () -> String?
+
+    def remote_host: () -> String?
+
+    def remote_ident: () -> String?
+
+    def remote_user: () -> String?
+
+    def request_method: () -> String?
+
+    def script_name: () -> String?
+
+    def server_name: () -> String?
+
+    def server_port: () -> String?
+
+    def server_protocol: () -> String?
+
+    def server_software: () -> String?
+
+    def unescape_filename?: () -> bool
+
+    def user_agent: () -> String?
+
+    private
+
+    # <!--
+    #   rdoc-file=lib/cgi/core.rb
+    #   - initialize_query()
+    # -->
+    # A wrapper class to use a StringIO object as the body and switch to a TempFile
+    # when the passed threshold is passed. Initialize the data from the query.
+    #
+    # Handles multipart forms (in particular, forms that involve file uploads).
+    # Reads query parameters in the @params field, and cookies into @cookies.
+    #
+    def initialize_query: () -> void
+
+    # <!--
+    #   rdoc-file=lib/cgi/core.rb
+    #   - read_from_cmdline()
+    # -->
+    # offline mode. read name=value pairs on standard input.
+    #
+    def read_from_cmdline: () -> String
+
+    # <!--
+    #   rdoc-file=lib/cgi/core.rb
+    #   - read_multipart(boundary, content_length)
+    # -->
+    # Parses multipart form elements according to
+    #     http://www.w3.org/TR/html401/interact/forms.html#h-17.13.4.2
+    #
+    # Returns a hash of multipart form parameters with bodies of type StringIO or
+    # Tempfile depending on whether the multipart form element exceeds 10 KB
+    #
+    #     params[name => body]
+    #
+    def read_multipart: (String boundary, Integer content_length) -> (Tempfile | StringIO)
+  end
+
+  module Util
+    include CGI::Escape
+
+    public
+
+    # <!--
+    #   rdoc-file=lib/cgi/util.rb
+    #   - escapeElement(string, *elements)
+    # -->
+    # Escape only the tags of certain HTML elements in `string`.
+    #
+    # Takes an element or elements or array of elements.  Each element is specified
+    # by the name of the element, without angle brackets. This matches both the
+    # start and the end tag of that element. The attribute list of the open tag will
+    # also be escaped (for instance, the double-quotes surrounding attribute
+    # values).
+    #
+    #     print CGI.escapeElement('<BR><A HREF="url"></A>', "A", "IMG")
+    #       # "<BR>&lt;A HREF=&quot;url&quot;&gt;&lt;/A&gt"
+    #
+    #     print CGI.escapeElement('<BR><A HREF="url"></A>', ["A", "IMG"])
+    #       # "<BR>&lt;A HREF=&quot;url&quot;&gt;&lt;/A&gt"
+    #
+    def escapeElement: (string string, *String | Array[String] elements) -> String
+
+    # <!-- rdoc-file=lib/cgi/util.rb -->
+    # Synonym for CGI.escapeElement(str)
+    #
+    alias escape_element escapeElement
+
+    # <!-- rdoc-file=lib/cgi/util.rb -->
+    # Synonym for CGI.escapeHTML(str)
+    #
+    alias escape_html escapeHTML
+
+    # <!--
+    #   rdoc-file=lib/cgi/util.rb
+    #   - h(string)
+    # -->
+    #
+    alias h escapeHTML
+
+    # <!--
+    #   rdoc-file=lib/cgi/util.rb
+    #   - pretty(string, shift = " ")
+    # -->
+    # Prettify (indent) an HTML string.
+    #
+    # `string` is the HTML string to indent.  `shift` is the indentation unit to
+    # use; it defaults to two spaces.
+    #
+    #     print CGI.pretty("<HTML><BODY></BODY></HTML>")
+    #       # <HTML>
+    #       #   <BODY>
+    #       #   </BODY>
+    #       # </HTML>
+    #
+    #     print CGI.pretty("<HTML><BODY></BODY></HTML>", "\t")
+    #       # <HTML>
+    #       #         <BODY>
+    #       #         </BODY>
+    #       # </HTML>
+    #
+    def pretty: (string string, ?String shift) -> String
+
+    # <!--
+    #   rdoc-file=lib/cgi/util.rb
+    #   - rfc1123_date(time)
+    # -->
+    # Format a `Time` object as a String using the format specified by RFC 1123.
+    #
+    #     CGI.rfc1123_date(Time.now)
+    #       # Sat, 01 Jan 2000 00:00:00 GMT
+    #
+    def rfc1123_date: (Time time) -> String
+
+    # <!--
+    #   rdoc-file=lib/cgi/util.rb
+    #   - unescapeElement(string, *elements)
+    # -->
+    # Undo escaping such as that done by CGI.escapeElement()
+    #
+    #     print CGI.unescapeElement(
+    #             CGI.escapeHTML('<BR><A HREF="url"></A>'), "A", "IMG")
+    #       # "&lt;BR&gt;<A HREF="url"></A>"
+    #
+    #     print CGI.unescapeElement(
+    #             CGI.escapeHTML('<BR><A HREF="url"></A>'), ["A", "IMG"])
+    #       # "&lt;BR&gt;<A HREF="url"></A>"
+    #
+    def unescapeElement: (string string, *String | Array[String] elements) -> String
+
+    # <!-- rdoc-file=lib/cgi/util.rb -->
+    # Synonym for CGI.unescapeElement(str)
+    #
+    alias unescape_element unescapeElement
+
+    # <!-- rdoc-file=lib/cgi/util.rb -->
+    # Synonym for CGI.unescapeHTML(str)
+    #
+    alias unescape_html unescapeHTML
+
+    # Abbreviated day-of-week names specified by RFC 822
+    RFC822_DAYS: Array[String]
+
+    # Abbreviated month names specified by RFC 822
+    RFC822_MONTHS: Array[String]
+
+    # <!-- rdoc-file=lib/cgi/util.rb -->
+    # The set of special characters and their escaped values
+    #
+    TABLE_FOR_ESCAPE_HTML__: Hash[String, String]
+  end
+end

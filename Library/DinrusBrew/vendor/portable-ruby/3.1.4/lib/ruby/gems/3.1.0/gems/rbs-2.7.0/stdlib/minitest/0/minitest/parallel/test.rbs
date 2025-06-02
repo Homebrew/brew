@@ -1,0 +1,3 @@
+module Minitest::Parallel::Test
+  def _synchronize: () { () -> untyped } -> untyped
+end

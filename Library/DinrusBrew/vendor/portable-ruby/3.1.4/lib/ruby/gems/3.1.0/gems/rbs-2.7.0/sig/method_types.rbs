@@ -1,0 +1,52 @@
+module RBS
+  class MethodType
+    # () -> void
+    # ^^^^^^^^^^     type
+    #
+    # [A] () { () -> A } -> A
+    # ^^^                      type_params
+    #     ^^^^^^^^^^^^^^^^^^^  type
+    #
+    type def_loc = Location[:type, :type_params]
+
+    type attr_loc = AST::Members::Attribute::loc
+
+    type loc = def_loc | attr_loc
+
+    attr_reader type_params: Array[AST::TypeParam]
+    attr_reader type: Types::Function
+    attr_reader block: Types::Block?
+    attr_reader location: loc?
+
+    def initialize: (type_params: Array[AST::TypeParam], type: Types::Function, block: Types::Block?, location: loc?) -> void
+
+    def ==: (untyped other) -> bool
+
+    include _ToJson
+
+    # Substitute type variables to some types.
+    # Takes care of type parameter bounds.
+    #
+    def sub: (Substitution) -> MethodType
+
+    def update: (?type_params: Array[AST::TypeParam], ?type: Types::Function, ?block: Types::Block?, ?location: loc?) -> MethodType
+
+    def free_variables: (?Set[Symbol] set) -> Set[Symbol]
+
+    # Apply the mapping included in the MethodType.
+    #
+    # Note that type bound in generics parameter is not handled by this method.
+    # You may want to use `#map_type_bound` explicitly, or `#sub` for simple substitution.
+    #
+    def map_type: () { (Types::t) -> Types::t } -> MethodType
+
+    def map_type_bound: () { (AST::TypeParam::bound) -> AST::TypeParam::bound } -> MethodType
+
+    def each_type: () { (Types::t) -> void } -> void
+                 | () -> Enumerator[Types::t, void]
+
+    def to_s: () -> String
+
+    def type_param_names: () -> Array[Symbol]
+  end
+end

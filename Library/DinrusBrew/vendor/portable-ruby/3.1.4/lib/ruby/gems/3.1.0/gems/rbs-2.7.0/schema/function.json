@@ -1,0 +1,87 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "definitions": {
+    "param": {
+      "title": "Function parameter with type and optional name: `Integer size`, `::String name`, `untyped`, ...",
+      "type": "object",
+      "properties": {
+        "type": {
+          "$ref": "types.json"
+        },
+        "name": {
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": ["type", "name"]
+    }
+  },
+  "properties": {
+    "required_positionals": {
+      "title": "Required positional parameters",
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/param"
+      }
+    },
+    "optional_positionals": {
+      "title": "Optional positional parameters",
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/param"
+      }
+    },
+    "rest_positionals": {
+      "title": "Rest parameter",
+      "oneOf": [
+        {
+          "$ref": "#/definitions/param"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "trailing_positionals": {
+      "title": "Trailing potisional parameters",
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/param"
+      }
+    },
+    "required_keywords": {
+      "title": "Required keyword parameters",
+      "additionalProperties": {
+        "$ref": "#/definitions/param"
+      }
+    },
+    "optional_keywords": {
+      "title": "Optional keyword parameters",
+      "additionalProperties": {
+        "$ref": "#/definitions/param"
+      }
+    },
+    "rest_keywords": {
+      "title": "Rest keyword parameters",
+      "oneOf": [
+        {
+          "$ref": "#/definitions/param"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "return_type": {
+      "title": "Return type of a function",
+      "$ref": "types.json"
+    }
+  },
+  "required": ["required_positionals", "optional_positionals", "rest_positionals", "trailing_positionals", "required_keywords", "optional_keywords", "rest_keywords", "return_type"]
+}

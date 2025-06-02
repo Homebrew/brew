@@ -1,0 +1,7 @@
+#ifndef EXTCONF_H
+#define EXTCONF_H
+#define HAVE_RB_ISEQ 1
+#define HAVE_RB_ISEQ_PARAMETERS 1
+#define HAVE_RB_ISEQ_CODE_LOCATION 1
+#define HAVE_RB_ISEQ_TYPE 1
+#endif

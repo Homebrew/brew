@@ -1,0 +1,52 @@
+module RBS
+  class Validator
+    attr_reader env: Environment
+
+    attr_reader resolver: TypeNameResolver
+
+    attr_reader definition_builder: DefinitionBuilder
+
+    attr_reader type_alias_dependency: TypeAliasDependency
+
+    attr_reader type_alias_regularity: TypeAliasRegularity
+
+    def initialize: (env: Environment, resolver: TypeNameResolver) -> void
+
+    # Validates the presence of type names and type application arity match.
+    #
+    def validate_type: (Types::t, context: TypeNameResolver::context) -> void
+
+    # Validates type alias definition:
+    #
+    # - There is no circular definition between aliases
+    # - The type alias is _regular_
+    # - The generics type parameter variance annotation is consistent with respect to their usage
+    # - There is no circular dependencies between the generics type parameter bounds
+    #
+    # It yields the rhs type if block is given, so that you can validate the rhs type.
+    #
+    def validate_type_alias: (entry: Environment::SingleEntry[TypeName, AST::Declarations::Alias]) ?{ (Types::t rhs_type) -> void } -> void
+
+    # Validates the type parameters in generic methods.
+    #
+    def validate_method_definition: (AST::Members::MethodDefinition, type_name: TypeName) -> void
+
+    # Validates the type parameters if there is no circular dependencies between the bounds.
+    #
+    # ```rbs
+    # [X, Y]                      # OK
+    # [X, Y < _Foo[X]]            # OK
+    # [X < _Foo[Y], Y]            # OK
+    # [X < _Foo[Y], Y < _Foo[X]]  # Error
+    # ```
+    #
+    def validate_type_params: (Array[AST::TypeParam] params, type_name: TypeName, ?method_name: Symbol?, location: Location[untyped, untyped]?) -> void
+
+    private
+
+    # Resolves relative type names to absolute type names in given context.
+    # Yields the type when the type name resolution using `#resolver` fails.
+    #
+    def absolute_type: (Types::t, context: TypeNameResolver::context) { (Types::t) -> TypeName } -> Types::t
+  end
+end

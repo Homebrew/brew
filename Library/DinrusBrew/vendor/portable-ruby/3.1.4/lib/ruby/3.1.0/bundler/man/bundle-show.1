@@ -1,0 +1,23 @@
+.\" generated with Ronn/v0.7.3
+.\" http://github.com/rtomayko/ronn/tree/0.7.3
+.
+.TH "BUNDLE\-SHOW" "1" "October 2022" "" ""
+.
+.SH "NAME"
+\fBbundle\-show\fR \- Shows all the gems in your bundle, or the path to a gem
+.
+.SH "SYNOPSIS"
+\fBbundle show\fR [GEM] [\-\-paths]
+.
+.SH "DESCRIPTION"
+Without the [GEM] option, \fBshow\fR will print a list of the names and versions of all gems that are required by your [\fBGemfile(5)\fR][Gemfile(5)], sorted by name\.
+.
+.P
+Calling show with [GEM] will list the exact location of that gem on your machine\.
+.
+.SH "OPTIONS"
+.
+.TP
+\fB\-\-paths\fR
+List the paths of all gems that are required by your [\fBGemfile(5)\fR][Gemfile(5)], sorted by gem name\.
+

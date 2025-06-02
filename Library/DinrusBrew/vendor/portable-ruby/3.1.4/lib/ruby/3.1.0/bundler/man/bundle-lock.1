@@ -1,0 +1,84 @@
+.\" generated with Ronn/v0.7.3
+.\" http://github.com/rtomayko/ronn/tree/0.7.3
+.
+.TH "BUNDLE\-LOCK" "1" "October 2022" "" ""
+.
+.SH "NAME"
+\fBbundle\-lock\fR \- Creates / Updates a lockfile without installing
+.
+.SH "SYNOPSIS"
+\fBbundle lock\fR [\-\-update] [\-\-local] [\-\-print] [\-\-lockfile=PATH] [\-\-full\-index] [\-\-add\-platform] [\-\-remove\-platform] [\-\-patch] [\-\-minor] [\-\-major] [\-\-strict] [\-\-conservative]
+.
+.SH "DESCRIPTION"
+Lock the gems specified in Gemfile\.
+.
+.SH "OPTIONS"
+.
+.TP
+\fB\-\-update=<*gems>\fR
+Ignores the existing lockfile\. Resolve then updates lockfile\. Taking a list of gems or updating all gems if no list is given\.
+.
+.TP
+\fB\-\-local\fR
+Do not attempt to connect to \fBrubygems\.org\fR\. Instead, Bundler will use the gems already present in Rubygems\' cache or in \fBvendor/cache\fR\. Note that if a appropriate platform\-specific gem exists on \fBrubygems\.org\fR it will not be found\.
+.
+.TP
+\fB\-\-print\fR
+Prints the lockfile to STDOUT instead of writing to the file system\.
+.
+.TP
+\fB\-\-lockfile=<path>\fR
+The path where the lockfile should be written to\.
+.
+.TP
+\fB\-\-full\-index\fR
+Fall back to using the single\-file index of all gems\.
+.
+.TP
+\fB\-\-add\-platform\fR
+Add a new platform to the lockfile, re\-resolving for the addition of that platform\.
+.
+.TP
+\fB\-\-remove\-platform\fR
+Remove a platform from the lockfile\.
+.
+.TP
+\fB\-\-patch\fR
+If updating, prefer updating only to next patch version\.
+.
+.TP
+\fB\-\-minor\fR
+If updating, prefer updating only to next minor version\.
+.
+.TP
+\fB\-\-major\fR
+If updating, prefer updating to next major version (default)\.
+.
+.TP
+\fB\-\-strict\fR
+If updating, do not allow any gem to be updated past latest \-\-patch | \-\-minor | \-\-major\.
+.
+.TP
+\fB\-\-conservative\fR
+If updating, use bundle install conservative update behavior and do not allow shared dependencies to be updated\.
+.
+.SH "UPDATING ALL GEMS"
+If you run \fBbundle lock\fR with \fB\-\-update\fR option without list of gems, bundler will ignore any previously installed gems and resolve all dependencies again based on the latest versions of all gems available in the sources\.
+.
+.SH "UPDATING A LIST OF GEMS"
+Sometimes, you want to update a single gem in the Gemfile(5), and leave the rest of the gems that you specified locked to the versions in the \fBGemfile\.lock\fR\.
+.
+.P
+For instance, you only want to update \fBnokogiri\fR, run \fBbundle lock \-\-update nokogiri\fR\.
+.
+.P
+Bundler will update \fBnokogiri\fR and any of its dependencies, but leave the rest of the gems that you specified locked to the versions in the \fBGemfile\.lock\fR\.
+.
+.SH "SUPPORTING OTHER PLATFORMS"
+If you want your bundle to support platforms other than the one you\'re running locally, you can run \fBbundle lock \-\-add\-platform PLATFORM\fR to add PLATFORM to the lockfile, force bundler to re\-resolve and consider the new platform when picking gems, all without needing to have a machine that matches PLATFORM handy to install those platform\-specific gems on\.
+.
+.P
+For a full explanation of gem platforms, see \fBgem help platform\fR\.
+.
+.SH "PATCH LEVEL OPTIONS"
+See bundle update(1) \fIbundle\-update\.1\.html\fR for details\.

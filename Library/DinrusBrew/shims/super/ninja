@@ -1,0 +1,25 @@
+#!/bin/bash
+
+# DINRUSBREW_LIBRARY is set by bin/brew
+# DINRUSBREW_CCCFG and DINRUSBREW_OPT are set by extend/ENV/super.rb
+# shellcheck disable=SC2154
+if [[ -z "${DINRUSBREW_LIBRARY}" ]]
+then
+  echo "${0##*/}: This shim is internal and must be run via brew." >&2
+  exit 1
+fi
+
+source "${DINRUSBREW_LIBRARY}/DinrusBrew/shims/utils.sh"
+
+parallel_args=()
+if [[ -n "${DINRUSBREW_MAKE_JOBS}" ]]
+then
+  parallel_args+=(-j "${DINRUSBREW_MAKE_JOBS}")
+fi
+
+# shellcheck disable=SC2154
+export DINRUSBREW_CCCFG="O${DINRUSBREW_CCCFG}"
+try_exec_non_system "ninja" "${parallel_args[@]}" "$@"
+
+echo "ninja: Shim failed to find ninja in PATH."
+exit 1

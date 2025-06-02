@@ -1,0 +1,81 @@
+bundle-add(1) -- Add gem to the Gemfile and run bundle install
+==============================================================
+
+## SYNOPSIS
+
+`bundle add` <GEM_NAME> [--group=GROUP] [--version=VERSION] [--source=SOURCE]
+           [--path=PATH] [--git=GIT|--github=GITHUB] [--branch=BRANCH] [--ref=REF]
+           [--skip-install] [--strict|--optimistic]
+
+## DESCRIPTION
+
+Adds the named gem to the [`Gemfile(5)`][Gemfile(5)] and run `bundle install`.
+`bundle install` can be avoided by using the flag `--skip-install`.
+
+## OPTIONS
+
+* `--version`, `-v`:
+  Specify version requirements(s) for the added gem.
+
+* `--group`, `-g`:
+  Specify the group(s) for the added gem. Multiple groups should be separated by commas.
+
+* `--source`, `-s`:
+  Specify the source for the added gem.
+
+* `--require`, `-r`:
+  Adds require path to gem. Provide false, or a path as a string.
+
+* `--path`:
+  Specify the file system path for the added gem.
+
+* `--git`:
+  Specify the git source for the added gem.
+
+* `--github`:
+  Specify the github source for the added gem.
+
+* `--branch`:
+  Specify the git branch for the added gem.
+
+* `--ref`:
+  Specify the git ref for the added gem.
+
+* `--skip-install`:
+  Adds the gem to the Gemfile but does not install it.
+
+* `--optimistic`:
+  Adds optimistic declaration of version.
+
+* `--strict`:
+  Adds strict declaration of version.
+
+## EXAMPLES
+
+1. You can add the `rails` gem to the Gemfile without any version restriction.
+   The source of the gem will be the global source.
+
+   `bundle add rails`
+
+2. You can add the `rails` gem with version greater than 1.1 (not including 1.1) and less than 3.0.
+
+   `bundle add rails --version "> 1.1, < 3.0"`
+
+3. You can use the `https://gems.example.com` custom source and assign the gem
+   to a group.
+
+   `bundle add rails --version "~> 5.0.0" --source "https://gems.example.com" --group "development"`
+
+4. The following adds the `gem` entry to the Gemfile without installing the
+   gem. You can install gems later via `bundle install`.
+
+   `bundle add rails --skip-install`
+
+5. You can assign the gem to more than one group.
+
+   `bundle add rails --group "development, test"`
+
+## SEE ALSO
+
+[Gemfile(5)](https://bundler.io/man/gemfile.5.html),
+[bundle-remove(1)](bundle-remove.1.html)

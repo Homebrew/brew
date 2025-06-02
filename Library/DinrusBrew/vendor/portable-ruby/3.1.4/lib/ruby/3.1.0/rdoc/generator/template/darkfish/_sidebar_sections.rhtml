@@ -1,0 +1,11 @@
+<%- unless klass.sections.length == 1 then %>
+<div id="sections-section" class="nav-section">
+  <h3>Sections</h3>
+
+  <ul class="link-list" role="directory">
+    <%- klass.sort_sections.each do |section| -%>
+      <li><a href="#<%= section.aref %>"><%= h section.title %></a></li>
+    <%- end -%>
+  </ul>
+</div>
+<%- end -%>

@@ -1,0 +1,29 @@
+bundle-init(1) -- Generates a Gemfile into the current working directory
+========================================================================
+
+## SYNOPSIS
+
+`bundle init` [--gemspec=FILE]
+
+## DESCRIPTION
+
+Init generates a default [`Gemfile(5)`][Gemfile(5)] in the current working directory. When
+adding a [`Gemfile(5)`][Gemfile(5)] to a gem with a gemspec, the `--gemspec` option will
+automatically add each dependency listed in the gemspec file to the newly
+created [`Gemfile(5)`][Gemfile(5)].
+
+## OPTIONS
+
+* `--gemspec`:
+  Use the specified .gemspec to create the [`Gemfile(5)`][Gemfile(5)]
+
+## FILES
+
+Included in the default [`Gemfile(5)`][Gemfile(5)]
+generated is the line `# frozen_string_literal: true`. This is a magic comment
+supported for the first time in Ruby 2.3. The presence of this line
+results in all string literals in the file being implicitly frozen.
+
+## SEE ALSO
+
+[Gemfile(5)](https://bundler.io/man/gemfile.5.html)

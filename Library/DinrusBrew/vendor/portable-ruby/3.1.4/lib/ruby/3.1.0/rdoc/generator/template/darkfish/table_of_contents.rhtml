@@ -1,0 +1,58 @@
+<body id="top" class="table-of-contents">
+<main role="main">
+<h1 class="class"><%= h @title %></h1>
+
+<%- simple_files = @files.select { |f| f.text? } -%>
+<%- unless simple_files.empty? then -%>
+<h2 id="pages">Pages</h2>
+<ul>
+<%- simple_files.sort.each do |file| -%>
+  <li class="file">
+    <a href="<%= file.path %>"><%= h file.page_name %></a>
+<%
+   # HACK table_of_contents should not exist on Document
+   table = file.parse(file.comment).table_of_contents
+   unless table.empty? then %>
+    <ul>
+<%- table.each do |heading| -%>
+      <li><a href="<%= file.path %>#<%= heading.aref %>"><%= heading.plain_html %></a>
+<%-   end -%>
+    </ul>
+<%- end -%>
+  </li>
+  <%- end -%>
+</ul>
+<%- end -%>
+
+<h2 id="classes">Classes and Modules</h2>
+<ul>
+<%- @modsort.each do |klass| -%>
+  <li class="<%= klass.type %>">
+    <a href="<%= klass.path %>"><%= klass.full_name %></a>
+<%- table = []
+   table.concat klass.parse(klass.comment_location).table_of_contents
+   table.concat klass.section_contents
+
+   unless table.empty? then %>
+    <ul>
+<%- table.each do |item| -%>
+      <li><a href="<%= klass.path %>#<%= item.aref %>"><%= item.plain_html %></a>
+<%-   end -%>
+    </ul>
+<%- end -%>
+  </li>
+<%- end -%>
+</ul>
+
+<h2 id="methods">Methods</h2>
+<ul>
+<%- @store.all_classes_and_modules.map do |mod|
+     mod.method_list
+   end.flatten.sort.each do |method| %>
+  <li class="method">
+    <a href="<%= method.path %>"><%= h method.pretty_name %></a>
+    &mdash;
+    <span class="container"><%= method.parent.full_name %></span>
+<%- end -%>
+</ul>
+</main>

@@ -1,0 +1,469 @@
+module RBS
+  module Types
+    # _TypeBase interface represents the operations common to all of the types.
+    #
+    interface _TypeBase
+      # Returns names of free variables of a type.
+      # You can pass a Set instance to add the free variables to the set to avoid Set object allocation.
+      #
+      def free_variables: (?Set[Symbol]) -> Set[Symbol]
+
+      # Receives a substitution and returns a new type applied the substitution.
+      #
+      def sub: (Substitution) -> t
+
+      # Maps type names included in the type and returns new instance of type.
+      def map_type_name: () { (TypeName, Location[untyped, untyped]?, t) -> TypeName } -> t
+
+      # Yields all direct sub types included in the type.
+      # It doesn't yield the type itself.
+      #
+      #   parse("Hash[String, Array[Symbol]]").each_type do |ty|
+      #     ...       # Yields String and Array[Symbol]
+      #   end
+      #
+      def each_type: () { (t) -> void } -> void
+                   | () -> Enumerator[t, void]
+
+      # Returns a JSON representation.
+      #
+      include _ToJson
+
+      # Returns a String representation.
+      # `level` is used internally.
+      #
+      #   parse("String").to_s               # => "String"
+      #   parse("String | Integer").to_s()   # => "String | Integer"
+      #   parse("String | Integer").to_s(1)  # => "(String | Integer)"
+      #
+      def to_s: (?Integer level) -> String
+    end
+
+    # t represents union of all possible types.
+    #
+    type t = Bases::Bool | Bases::Void | Bases::Any | Bases::Nil | Bases::Top | Bases::Bottom | Bases::Self | Bases::Instance | Bases::Class
+           | Variable | ClassSingleton | Interface | ClassInstance | Alias | Tuple | Record | Optional | Union | Intersection | Proc | Literal
+
+    module NoFreeVariables
+      def free_variables: (?Set[Symbol]) -> Set[Symbol]
+    end
+
+    module NoSubst
+      def sub: (Substitution) -> self
+    end
+
+    module EmptyEachType
+      def each_type: () { (t) -> void } -> void
+                   | () -> Enumerator[t, void]
+
+      # `map_type` returns itself, because there is no sub type.
+      #
+      def map_type: () { (t) -> t } -> self
+                  | () -> Enumerator[t, self]
+    end
+
+    module NoTypeName
+      def map_type_name: () { (TypeName, Location[untyped, untyped]?, t) -> TypeName } -> self
+    end
+
+    module Bases
+      class Base
+        include _TypeBase
+
+        attr_reader location: Location[bot, bot]?
+
+        def initialize: (location: Location[bot, bot]?) -> void
+
+        def ==: (untyped other) -> bool
+
+        def hash: () -> Integer
+
+        alias eql? ==
+
+        include NoFreeVariables
+        include NoSubst
+        include EmptyEachType
+        include NoTypeName
+      end
+
+      class Bool < Base
+      end
+
+      class Void < Base
+      end
+
+      class Any < Base
+      end
+
+      class Nil < Base
+      end
+
+      class Top < Base
+      end
+
+      class Bottom < Base
+      end
+
+      class Self < Base
+      end
+
+      class Instance < Base
+        def sub: (Substitution sub) -> t
+      end
+
+      class Class < Base
+      end
+    end
+
+    class Variable
+      type loc = Location[bot, bot]
+
+      attr_reader name: Symbol
+
+      @@count: Integer
+
+      include _TypeBase
+      include NoTypeName
+      include EmptyEachType
+
+      def initialize: (name: Symbol, location: loc?) -> void
+
+      attr_reader location: loc?
+
+      def ==: (untyped other) -> bool
+
+      alias eql? ==
+
+      def hash: () -> Integer
+
+      def self.build: (Symbol) -> Variable
+                    | (Array[Symbol]) -> Array[Variable]
+
+      # Returns fresh type variable with prefix (if given.)
+      #
+      #     Variable.fresh(:S)       # => S@1
+      #     Variable.fresh(:S)       # => S@2
+      #     Variable.fresh()         # => T@3
+      #
+      def self.fresh: (?Symbol prefix) -> Variable
+    end
+
+    class ClassSingleton
+      # singleton(::Foo)
+      #           ^^^^^  => name
+      type loc = Location[:name, bot]
+
+      def initialize: (name: TypeName, location: loc?) -> void
+
+      attr_reader name: TypeName
+
+      attr_reader location: loc?
+
+      include _TypeBase
+      include NoFreeVariables
+      include NoSubst
+      include EmptyEachType
+
+      def ==: (untyped other) -> bool
+
+      alias eql? ==
+
+      def hash: () -> Integer
+    end
+
+    module Application
+      attr_reader name: TypeName
+      attr_reader args: Array[t]
+
+      def ==: (untyped) -> bool
+
+      alias eql? ==
+
+      def hash: () -> Integer
+
+      def free_variables: (?Set[Symbol]) -> Set[Symbol]
+
+      def to_s: (?Integer level) -> String
+
+      def each_type: () { (t) -> void } -> void
+                   | () -> Enumerator[t, void]
+    end
+
+    class Interface
+      # _Foo
+      # ^^^^ => name
+      #
+      # _Foo[Bar, Baz]
+      # ^^^^           => name
+      #     ^^^^^^^^^^ => args
+      type loc = Location[:name, :args]
+
+      def initialize: (name: TypeName, args: Array[t], location: loc?) -> void
+
+      include Application
+      include _TypeBase
+
+      attr_reader location: loc?
+
+      def map_type: () { (t) -> t } -> Interface
+                  | () -> Enumerator[t, Interface]
+    end
+
+    # ClassInstance represents a type of an instance of a class.
+    #
+    #    String           # Type of an instance of String class.
+    #    Array[String]    # Type of an instance of Array class with instances of String.
+    #    Kernel           # Type of an instance of a class which includes Kernel.
+    #
+    class ClassInstance
+      include Application
+
+      # Foo
+      # ^^^ => name
+      #
+      # Foo[Bar, Baz]
+      # ^^^           => name
+      #    ^^^^^^^^^^ => args
+      #
+      type loc = Location[:name, :args]
+
+      def initialize: (name: TypeName, args: Array[t], location: loc?) -> void
+
+      attr_reader location: loc?
+
+      include _TypeBase
+
+      def map_type: () { (t) -> t } -> ClassInstance
+                  | () -> Enumerator[t, ClassInstance]
+    end
+
+    class Alias
+      # foo
+      # ^^^ => name
+      #
+      # foo[bar, baz]
+      # ^^^           => name
+      #    ^^^^^^^^^^ => args
+      #
+      type loc = Location[:name, :args]
+
+      attr_reader location: loc?
+
+      def initialize: (name: TypeName, args: Array[t], location: loc?) -> void
+
+      include _TypeBase
+      include Application
+
+      def map_type: () { (t) -> t } -> Alias
+                  | () -> Enumerator[t, Alias]
+    end
+
+    class Tuple
+      attr_reader types: Array[t]
+
+      type loc = Location[bot, bot]
+
+      def initialize: (types: Array[t], location: loc?) -> void
+
+      include _TypeBase
+
+      attr_reader location: loc?
+
+      def map_type: () { (t) -> t } -> Tuple
+                  | () -> Enumerator[t, Tuple]
+    end
+
+    class Record
+      attr_reader fields: Hash[Symbol, t]
+
+      type loc = Location[bot, bot]
+
+      def initialize: (fields: Hash[Symbol, t], location: loc?) -> void
+
+      include _TypeBase
+
+      attr_reader location: loc?
+
+      def map_type: () { (t) -> t } -> Record
+                  | () -> Enumerator[t, Record]
+    end
+
+    class Optional
+      attr_reader type: t
+
+      type loc = Location[bot, bot]
+
+      def initialize: (type: t, location: loc?) -> void
+
+      include _TypeBase
+
+      attr_reader location: loc?
+
+      def map_type: () { (t) -> t } -> Optional
+                  | () -> Enumerator[t, Optional]
+    end
+
+    class Union
+      attr_reader types: Array[t]
+
+      type loc = Location[bot, bot]
+
+      def initialize: (types: Array[t], location: loc?) -> void
+
+      include _TypeBase
+
+      attr_reader location: loc?
+
+      def map_type: () { (t) -> t } -> Union
+                  | () -> Enumerator[t, Union]
+    end
+
+    class Intersection
+      attr_reader types: Array[t]
+
+      type loc = Location[bot, bot]
+
+      def initialize: (types: Array[t], location: loc?) -> void
+
+      include _TypeBase
+
+      attr_reader location: loc?
+
+      def map_type: () { (t) -> t } -> Intersection
+                  | () -> Enumerator[t, Intersection]
+    end
+
+    class Function
+      class Param
+        type loc = Location[bot, :name]
+
+        attr_reader type: t
+        attr_reader name: Symbol?
+        attr_reader location: loc?
+
+        def initialize: (type: t, name: Symbol?, ?location: loc?) -> void
+
+        def map_type: { (t) -> t } -> Param
+                    | -> Enumerator[t, Param]
+      end
+
+      attr_reader required_positionals: Array[Param]
+      attr_reader optional_positionals: Array[Param]
+      attr_reader rest_positionals: Param?
+      attr_reader trailing_positionals: Array[Param]
+      attr_reader required_keywords: Hash[Symbol, Param]
+      attr_reader optional_keywords: Hash[Symbol, Param]
+      attr_reader rest_keywords: Param?
+      attr_reader return_type: t
+
+      def initialize: (required_positionals: Array[Param],
+                       optional_positionals: Array[Param],
+                       rest_positionals: Param?,
+                       trailing_positionals: Array[Param],
+                       required_keywords: Hash[Symbol, Param],
+                       optional_keywords: Hash[Symbol, Param],
+                       rest_keywords: Param?,
+                       return_type: t) -> void
+
+      def free_variables: (?Set[Symbol]) -> Set[Symbol]
+
+      def map_type: { (t) -> t } -> Function
+                  | -> Enumerator[t, Function]
+
+      def map_type_name: () { (TypeName, Location[untyped, untyped]?, t) -> TypeName } -> Function
+
+      def each_type: () { (t) -> void } -> void
+                   | -> Enumerator[t, void]
+
+      def each_param: () { (Param) -> void } -> void
+                    | -> Enumerator[Param, void]
+
+      include _ToJson
+
+      def sub: (Substitution) -> Function
+
+      def self.empty: (t) -> instance
+
+      def with_return_type: (t) -> Function
+
+      def update: (?required_positionals: Array[Param],
+                   ?optional_positionals: Array[Param],
+                   ?rest_positionals: Param?,
+                   ?trailing_positionals: Array[Param],
+                   ?required_keywords: Hash[Symbol, Param],
+                   ?optional_keywords: Hash[Symbol, Param],
+                   ?rest_keywords: Param?,
+                   ?return_type: t) -> Function
+
+      def empty?: () -> bool
+
+      def param_to_s: () -> String
+      def return_to_s: () -> String
+
+      def drop_head: () -> [Param, Function]
+      def drop_tail: () -> [Param, Function]
+
+      def has_keyword?: () -> bool
+
+      def amap: [A, B] (Array[A]) { (A) -> B } -> Array[B]
+
+      def hmapv: [X, Y, Z] (Hash[X, Y]) { (Y) -> Z } -> Hash[X, Z]
+    end
+
+    class Block
+      attr_reader type: Types::Function
+      attr_reader required: bool
+
+      attr_reader self_type: t?
+
+      def initialize: (type: Types::Function, ?self_type: t?, required: boolish) -> void
+
+      def ==: (untyped other) -> bool
+
+      include _ToJson
+
+      def sub: (Substitution) -> Block
+
+      def map_type: () { (t) -> t } -> Block
+    end
+
+    module SelfTypeBindingHelper
+      def self?.self_type_binding_to_s: (t?) -> String
+    end
+
+    class Proc
+      attr_reader type: Function
+      attr_reader block: Block?
+
+      attr_reader self_type: t?
+
+      type loc = Location[bot, bot]
+
+      def initialize: (location: loc?, type: Function, ?self_type: t?, block: Block?) -> void
+
+      include _TypeBase
+
+      attr_reader location: loc?
+
+      def map_type: () { (t) -> t } -> Proc
+                  | () -> Enumerator[t, Proc]
+    end
+
+    class Literal
+      type literal = String | Integer | Symbol | TrueClass | FalseClass
+      type loc = Location[bot, bot]
+
+      attr_reader literal: literal
+
+      def initialize: (literal: literal, location: loc?) -> void
+
+      include _TypeBase
+      include NoFreeVariables
+      include NoSubst
+      include EmptyEachType
+      include NoTypeName
+
+      attr_reader location: loc?
+    end
+  end
+end

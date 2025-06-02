@@ -1,0 +1,22 @@
+module RBS
+  class TypeAliasDependency
+    attr_reader env: Environment
+
+    attr_reader direct_dependencies: Hash[TypeName, Set[TypeName]]
+    attr_reader dependencies: Hash[TypeName, Hash[TypeName, bool]]
+
+    def initialize: (env: Environment) -> void
+
+    def circular_definition?: (TypeName alias_name) -> bool
+
+    def build_dependencies: () -> void
+
+    def transitive_closure: () -> void
+
+    private
+
+    def direct_dependency: (Types::t `type`, ?Set[TypeName] result) -> Set[TypeName]
+
+    def dependency: (TypeName start, TypeName vertex, ?boolish nested) -> void
+  end
+end

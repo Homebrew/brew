@@ -1,0 +1,5 @@
+# <!-- rdoc-file=lib/rubygems/user_interaction.rb -->
+# Gem::StreamUI implements a simple stream based user interface.
+#
+class Gem::StreamUI
+end

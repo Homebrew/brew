@@ -1,0 +1,7 @@
+#!/usr/bin/env ruby
+
+$LOAD_PATH << File.join(__dir__, "../lib")
+require "rbs"
+require "rbs/cli"
+
+RBS::CLI.new(stdout: STDOUT, stderr: STDERR).run(ARGV.dup)

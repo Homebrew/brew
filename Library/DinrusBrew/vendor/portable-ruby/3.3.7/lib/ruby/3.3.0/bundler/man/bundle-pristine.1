@@ -1,0 +1,23 @@
+.\" generated with nRonn/v0.11.1
+.\" https://github.com/n-ronn/nronn/tree/0.11.1
+.TH "BUNDLE\-PRISTINE" "1" "September 2024" ""
+.SH "NAME"
+\fBbundle\-pristine\fR \- Restores installed gems to their pristine condition
+.SH "SYNOPSIS"
+\fBbundle pristine\fR
+.SH "DESCRIPTION"
+\fBpristine\fR restores the installed gems in the bundle to their pristine condition using the local gem cache from RubyGems\. For git gems, a forced checkout will be performed\.
+.P
+For further explanation, \fBbundle pristine\fR ignores unpacked files on disk\. In other words, this command utilizes the local \fB\.gem\fR cache or the gem's git repository as if one were installing from scratch\.
+.P
+Note: the Bundler gem cannot be restored to its original state with \fBpristine\fR\. One also cannot use \fBbundle pristine\fR on gems with a 'path' option in the Gemfile, because bundler has no original copy it can restore from\.
+.P
+When is it practical to use \fBbundle pristine\fR?
+.P
+It comes in handy when a developer is debugging a gem\. \fBbundle pristine\fR is a great way to get rid of experimental changes to a gem that one may not want\.
+.P
+Why use \fBbundle pristine\fR over \fBgem pristine \-\-all\fR?
+.P
+Both commands are very similar\. For context: \fBbundle pristine\fR, without arguments, cleans all gems from the lockfile\. Meanwhile, \fBgem pristine \-\-all\fR cleans all installed gems for that Ruby version\.
+.P
+If a developer forgets which gems in their project they might have been debugging, the Rubygems \fBgem pristine [GEMNAME]\fR command may be inconvenient\. One can avoid waiting for \fBgem pristine \-\-all\fR, and instead run \fBbundle pristine\fR\.

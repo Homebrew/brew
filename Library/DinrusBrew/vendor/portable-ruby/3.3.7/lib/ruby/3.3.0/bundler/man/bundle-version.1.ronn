@@ -1,0 +1,24 @@
+bundle-version(1) -- Prints Bundler version information
+=======================================================
+
+## SYNOPSIS
+
+`bundle version`
+
+## DESCRIPTION
+
+Prints Bundler version information.
+
+## OPTIONS
+
+No options.
+
+## EXAMPLE
+
+Print the version of Bundler with build date and commit hash of the in the Git source.
+
+    bundle version
+
+shows `Bundler version 2.3.21 (2022-08-24 commit d54be5fdd8)` for example.
+
+cf. `bundle --version` shows `Bundler version 2.3.21`.

@@ -1,0 +1,31 @@
+.\" generated with Ronn/v0.7.3
+.\" http://github.com/rtomayko/ronn/tree/0.7.3
+.
+.TH "BUNDLE\-CHECK" "1" "October 2022" "" ""
+.
+.SH "NAME"
+\fBbundle\-check\fR \- Verifies if dependencies are satisfied by installed gems
+.
+.SH "SYNOPSIS"
+\fBbundle check\fR [\-\-dry\-run] [\-\-gemfile=FILE] [\-\-path=PATH]
+.
+.SH "DESCRIPTION"
+\fBcheck\fR searches the local machine for each of the gems requested in the Gemfile\. If all gems are found, Bundler prints a success message and exits with a status of 0\.
+.
+.P
+If not, the first missing gem is listed and Bundler exits status 1\.
+.
+.SH "OPTIONS"
+.
+.TP
+\fB\-\-dry\-run\fR
+Locks the [\fBGemfile(5)\fR][Gemfile(5)] before running the command\.
+.
+.TP
+\fB\-\-gemfile\fR
+Use the specified gemfile instead of the [\fBGemfile(5)\fR][Gemfile(5)]\.
+.
+.TP
+\fB\-\-path\fR
+Specify a different path than the system default (\fB$BUNDLE_PATH\fR or \fB$GEM_HOME\fR)\. Bundler will remember this value for future installs on this machine\.
+

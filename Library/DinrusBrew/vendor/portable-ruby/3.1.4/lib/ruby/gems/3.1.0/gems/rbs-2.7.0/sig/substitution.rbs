@@ -1,0 +1,42 @@
+module RBS
+  # Substitution from type variables to types.
+  #
+  # The substitution construction is in _destructive_ manner.
+  #
+  #    sub = Substitution.new
+  #    sub.add(from: :A, to: type1)
+  #    sub.add(from: :B, to: type2)
+  #    sub.instance_type = type3
+  #
+  class Substitution
+    # A hash containing mapping from type variable name to type.
+    attr_reader mapping: Hash[Symbol, Types::t]
+
+    # The result of applying this substitution to `instance` type.
+    # `nil` maps to `instance` type itself.
+    attr_accessor instance_type: Types::t?
+
+    def initialize: () -> void
+
+    # Add mapping to this substitution.
+    # Overwrites the previous mapping if same `from` is given.
+    def add: (from: Symbol, to: Types::t) -> void
+
+    # Utility method to construct a substitution.
+    # Raises an error when `variables.size != types.size`.
+    # `instance_type` defaults to `nil`.
+    #
+    # Yields types in `types` and the block value is used if block is given.
+    #
+    def self.build: (Array[Symbol] variables, Array[Types::t] types, ?instance_type: Types::t?) ?{ (Types::t) -> Types::t } -> instance
+
+    # Applies the substitution to given type.
+    def apply: (Types::t) -> Types::t
+
+    # Returns a substitution without variables given in `vars`.
+    def without: (*Symbol vars) -> Substitution
+
+    # Returns true if given substitution is identity.
+    def empty?: () -> bool
+  end
+end

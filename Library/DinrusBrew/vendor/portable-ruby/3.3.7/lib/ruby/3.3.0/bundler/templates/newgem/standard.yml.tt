@@ -1,0 +1,3 @@
+# For available configuration options, see:
+#   https://github.com/standardrb/standard
+ruby_version: <%= ::Gem::Version.new(config[:required_ruby_version]).segments[0..1].join(".") %>

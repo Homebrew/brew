@@ -1,0 +1,885 @@
+# <!-- rdoc-file=lib/fileutils.rb -->
+# # fileutils.rb
+#
+# Copyright (c) 2000-2007 Minero Aoki
+#
+# This program is free software. You can distribute/modify this program under
+# the same terms of ruby.
+#
+# ## module FileUtils
+#
+# Namespace for several file utility methods for copying, moving, removing, etc.
+#
+# ### Module Functions
+#
+#     require 'fileutils'
+#
+#     FileUtils.cd(dir, **options)
+#     FileUtils.cd(dir, **options) {|dir| block }
+#     FileUtils.pwd()
+#     FileUtils.mkdir(dir, **options)
+#     FileUtils.mkdir(list, **options)
+#     FileUtils.mkdir_p(dir, **options)
+#     FileUtils.mkdir_p(list, **options)
+#     FileUtils.rmdir(dir, **options)
+#     FileUtils.rmdir(list, **options)
+#     FileUtils.ln(target, link, **options)
+#     FileUtils.ln(targets, dir, **options)
+#     FileUtils.ln_s(target, link, **options)
+#     FileUtils.ln_s(targets, dir, **options)
+#     FileUtils.ln_sf(target, link, **options)
+#     FileUtils.cp(src, dest, **options)
+#     FileUtils.cp(list, dir, **options)
+#     FileUtils.cp_r(src, dest, **options)
+#     FileUtils.cp_r(list, dir, **options)
+#     FileUtils.mv(src, dest, **options)
+#     FileUtils.mv(list, dir, **options)
+#     FileUtils.rm(list, **options)
+#     FileUtils.rm_r(list, **options)
+#     FileUtils.rm_rf(list, **options)
+#     FileUtils.install(src, dest, **options)
+#     FileUtils.chmod(mode, list, **options)
+#     FileUtils.chmod_R(mode, list, **options)
+#     FileUtils.chown(user, group, list, **options)
+#     FileUtils.chown_R(user, group, list, **options)
+#     FileUtils.touch(list, **options)
+#
+# Possible `options` are:
+#
+# `:force`
+# :   forced operation (rewrite files if exist, remove directories if not empty,
+#     etc.);
+# `:verbose`
+# :   print command to be run, in bash syntax, before performing it;
+# `:preserve`
+# :   preserve object's group, user and modification time on copying;
+# `:noop`
+# :   no changes are made (usable in combination with `:verbose` which will
+#     print the command to run)
+#
+#
+# Each method documents the options that it honours. See also ::commands,
+# ::options and ::options_of methods to introspect which command have which
+# options.
+#
+# All methods that have the concept of a "source" file or directory can take
+# either one file or a list of files in that argument.  See the method
+# documentation for examples.
+#
+# There are some `low level' methods, which do not accept keyword arguments:
+#
+#     FileUtils.copy_entry(src, dest, preserve = false, dereference_root = false, remove_destination = false)
+#     FileUtils.copy_file(src, dest, preserve = false, dereference = true)
+#     FileUtils.copy_stream(srcstream, deststream)
+#     FileUtils.remove_entry(path, force = false)
+#     FileUtils.remove_entry_secure(path, force = false)
+#     FileUtils.remove_file(path, force = false)
+#     FileUtils.compare_file(path_a, path_b)
+#     FileUtils.compare_stream(stream_a, stream_b)
+#     FileUtils.uptodate?(file, cmp_list)
+#
+# ## module FileUtils::Verbose
+#
+# This module has all methods of FileUtils module, but it outputs messages
+# before acting.  This equates to passing the `:verbose` flag to methods in
+# FileUtils.
+#
+# ## module FileUtils::NoWrite
+#
+# This module has all methods of FileUtils module, but never changes
+# files/directories.  This equates to passing the `:noop` flag to methods in
+# FileUtils.
+#
+# ## module FileUtils::DryRun
+#
+# This module has all methods of FileUtils module, but never changes
+# files/directories.  This equates to passing the `:noop` and `:verbose` flags
+# to methods in FileUtils.
+#
+module FileUtils
+  VERSION: String
+
+  type mode = Integer | String
+
+  type path = string | _ToPath
+
+  type pathlist = path | Array[path]
+
+  # <!--
+  #   rdoc-file=lib/fileutils.rb
+  #   - cd(dir, verbose: nil) { |dir| ... }
+  # -->
+  # Changes the current directory to the directory `dir`.
+  #
+  # If this method is called with block, resumes to the previous working directory
+  # after the block execution has finished.
+  #
+  #     FileUtils.cd('/')  # change directory
+  #
+  #     FileUtils.cd('/', verbose: true)   # change directory and report it
+  #
+  #     FileUtils.cd('/') do  # change directory
+  #       # ...               # do something
+  #     end                   # return to original directory
+  #
+  def self?.cd: (path dir, ?verbose: boolish) -> void
+              | [X] (path dir, ?verbose: boolish) { (String) -> X } -> X
+
+  # <!--
+  #   rdoc-file=lib/fileutils.rb
+  #   - chdir(dir, verbose: nil)
+  # -->
+  #
+  alias self.chdir self.cd
+
+  # <!--
+  #   rdoc-file=lib/fileutils.rb
+  #   - chdir(dir, verbose: nil)
+  # -->
+  #
+  alias chdir cd
+
+  # <!--
+  #   rdoc-file=lib/fileutils.rb
+  #   - chmod(mode, list, noop: nil, verbose: nil)
+  # -->
+  # Changes permission bits on the named files (in `list`) to the bit pattern
+  # represented by `mode`.
+  #
+  # `mode` is the symbolic and absolute mode can be used.
+  #
+  # Absolute mode is
+  #     FileUtils.chmod 0755, 'somecommand'
+  #     FileUtils.chmod 0644, %w(my.rb your.rb his.rb her.rb)
+  #     FileUtils.chmod 0755, '/usr/bin/ruby', verbose: true
+  #
+  # Symbolic mode is
+  #     FileUtils.chmod "u=wrx,go=rx", 'somecommand'
+  #     FileUtils.chmod "u=wr,go=rr", %w(my.rb your.rb his.rb her.rb)
+  #     FileUtils.chmod "u=wrx,go=rx", '/usr/bin/ruby', verbose: true
+  #
+  # "a"
+  # :   is user, group, other mask.
+  # "u"
+  # :   is user's mask.
+  # "g"
+  # :   is group's mask.
+  # "o"
+  # :   is other's mask.
+  # "w"
+  # :   is write permission.
+  # "r"
+  # :   is read permission.
+  # "x"
+  # :   is execute permission.
+  # "X"
+  # :   is execute permission for directories only, must be used in conjunction
+  #     with "+"
+  # "s"
+  # :   is uid, gid.
+  # "t"
+  # :   is sticky bit.
+  # "+"
+  # :   is added to a class given the specified mode.
+  # "-"
+  # :   Is removed from a given class given mode.
+  # "="
+  # :   Is the exact nature of the class will be given a specified mode.
+  #
+  def self?.chmod: (mode mode, pathlist list, ?noop: boolish, ?verbose: boolish) -> void
+
+  # <!--
+  #   rdoc-file=lib/fileutils.rb
+  #   - chmod_R(mode, list, noop: nil, verbose: nil, force: nil)
+  # -->
+  # Changes permission bits on the named files (in `list`) to the bit pattern
+  # represented by `mode`.
+  #
+  #     FileUtils.chmod_R 0700, "/tmp/app.#{$$}"
+  #     FileUtils.chmod_R "u=wrx", "/tmp/app.#{$$}"
+  #
+  def self?.chmod_R: (mode mode, pathlist list, ?noop: boolish, ?verbose: boolish, ?force: boolish) -> void
+
+  # <!--
+  #   rdoc-file=lib/fileutils.rb
+  #   - chown(user, group, list, noop: nil, verbose: nil)
+  # -->
+  # Changes owner and group on the named files (in `list`) to the user `user` and
+  # the group `group`.  `user` and `group` may be an ID (Integer/String) or a name
+  # (String). If `user` or `group` is nil, this method does not change the
+  # attribute.
+  #
+  #     FileUtils.chown 'root', 'staff', '/usr/local/bin/ruby'
+  #     FileUtils.chown nil, 'bin', Dir.glob('/usr/bin/*'), verbose: true
+  #
+  def self?.chown: (String? user, String? group, pathlist list, ?noop: boolish, ?verbose: boolish) -> void
+
+  # <!--
+  #   rdoc-file=lib/fileutils.rb
+  #   - chown_R(user, group, list, noop: nil, verbose: nil, force: nil)
+  # -->
+  # Changes owner and group on the named files (in `list`) to the user `user` and
+  # the group `group` recursively. `user` and `group` may be an ID
+  # (Integer/String) or a name (String).  If `user` or `group` is nil, this method
+  # does not change the attribute.
+  #
+  #     FileUtils.chown_R 'www', 'www', '/var/www/htdocs'
+  #     FileUtils.chown_R 'cvs', 'cvs', '/var/cvs', verbose: true
+  #
+  def self?.chown_R: (String? user, String? group, pathlist list, ?noop: boolish, ?verbose: boolish, ?force: boolish) -> void
+
+  # <!--
+  #   rdoc-file=lib/fileutils.rb
+  #   - collect_method(opt)
+  # -->
+  # Returns an Array of methods names which have the option `opt`.
+  #
+  #     p FileUtils.collect_method(:preserve) #=> ["cp", "cp_r", "copy", "install"]
+  #
+  def self.collect_method: (Symbol opt) -> Array[String]
+
+  # <!--
+  #   rdoc-file=lib/fileutils.rb
+  #   - commands()
+  # -->
+  # Returns an Array of names of high-level methods that accept any keyword
+  # arguments.
+  #
+  #     p FileUtils.commands  #=> ["chmod", "cp", "cp_r", "install", ...]
+  #
+  def self.commands: () -> Array[String]
+
+  # <!--
+  #   rdoc-file=lib/fileutils.rb
+  #   - compare_file(a, b)
+  # -->
+  # Returns true if the contents of a file `a` and a file `b` are identical.
+  #
+  #     FileUtils.compare_file('somefile', 'somefile')       #=> true
+  #     FileUtils.compare_file('/dev/null', '/dev/urandom')  #=> false
+  #
+  def self?.compare_file: (path a, path b) -> bool
+
+  # <!--
+  #   rdoc-file=lib/fileutils.rb
+  #   - cmp(a, b)
+  # -->
+  #
+  alias self.cmp self.compare_file
+
+  # <!--
+  #   rdoc-file=lib/fileutils.rb
+  #   - cmp(a, b)
+  # -->
+  #
+  alias cmp compare_file
+
+  # <!--
+  #   rdoc-file=lib/fileutils.rb
+  #   - identical?(a, b)
+  # -->
+  #
+  alias self.identical? self.compare_file
+
+  # <!--
+  #   rdoc-file=lib/fileutils.rb
+  #   - identical?(a, b)
+  # -->
+  #
+  alias identical? compare_file
+
+  # <!--
+  #   rdoc-file=lib/fileutils.rb
+  #   - compare_stream(a, b)
+  # -->
+  # Returns true if the contents of a stream `a` and `b` are identical.
+  #
+  def self?.compare_stream: (IO a, IO b) -> bool
+
+  # <!--
+  #   rdoc-file=lib/fileutils.rb
+  #   - copy_entry(src, dest, preserve = false, dereference_root = false, remove_destination = false)
+  # -->
+  # Copies a file system entry `src` to `dest`. If `src` is a directory, this
+  # method copies its contents recursively. This method preserves file types, c.f.
+  # symlink, directory... (FIFO, device files and etc. are not supported yet)
+  #
+  # Both of `src` and `dest` must be a path name. `src` must exist, `dest` must
+  # not exist.
+  #
+  # If `preserve` is true, this method preserves owner, group, and modified time.
+  # Permissions are copied regardless `preserve`.
+  #
+  # If `dereference_root` is true, this method dereference tree root.
+  #
+  # If `remove_destination` is true, this method removes each destination file
+  # before copy.
+  #
+  def self?.copy_entry: (path src, path dest, ?boolish preserve, ?boolish dereference_root, ?boolish remove_destination) -> void
+
+  # <!--
+  #   rdoc-file=lib/fileutils.rb
+  #   - copy_file(src, dest, preserve = false, dereference = true)
+  # -->
+  # Copies file contents of `src` to `dest`. Both of `src` and `dest` must be a
+  # path name.
+  #
+  def self?.copy_file: (path src, path dest, ?boolish preserve, ?boolish dereference) -> void
+
+  # <!--
+  #   rdoc-file=lib/fileutils.rb
+  #   - copy_stream(src, dest)
+  # -->
+  # Copies stream `src` to `dest`. `src` must respond to #read(n) and `dest` must
+  # respond to #write(str).
+  #
+  def self?.copy_stream: (_Reader src, _Writer dest) -> void
+
+  # <!--
+  #   rdoc-file=lib/fileutils.rb
+  #   - cp(src, dest, preserve: nil, noop: nil, verbose: nil)
+  # -->
+  # Copies a file content `src` to `dest`.  If `dest` is a directory, copies `src`
+  # to `dest/src`.
+  #
+  # If `src` is a list of files, then `dest` must be a directory.
+  #
+  #     FileUtils.cp 'eval.c', 'eval.c.org'
+  #     FileUtils.cp %w(cgi.rb complex.rb date.rb), '/usr/lib/ruby/1.6'
+  #     FileUtils.cp %w(cgi.rb complex.rb date.rb), '/usr/lib/ruby/1.6', verbose: true
+  #     FileUtils.cp 'symlink', 'dest'   # copy content, "dest" is not a symlink
+  #
+  def self?.cp: (pathlist src, path dest, ?preserve: boolish, ?noop: boolish, ?verbose: boolish) -> void
+
+  # <!--
+  #   rdoc-file=lib/fileutils.rb
+  #   - copy(src, dest, preserve: nil, noop: nil, verbose: nil)
+  # -->
+  #
+  alias self.copy self.cp
+
+  # <!--
+  #   rdoc-file=lib/fileutils.rb
+  #   - copy(src, dest, preserve: nil, noop: nil, verbose: nil)
+  # -->
+  #
+  alias copy cp
+
+  # <!--
+  #   rdoc-file=lib/fileutils.rb
+  #   - cp_lr(src, dest, noop: nil, verbose: nil, dereference_root: true, remove_destination: false)
+  # -->
+  # Hard link `src` to `dest`. If `src` is a directory, this method links all its
+  # contents recursively. If `dest` is a directory, links `src` to `dest/src`.
+  #
+  # `src` can be a list of files.
+  #
+  # If `dereference_root` is true, this method dereference tree root.
+  #
+  # If `remove_destination` is true, this method removes each destination file
+  # before copy.
+  #
+  #     FileUtils.rm_r site_ruby + '/mylib', force: true
+  #     FileUtils.cp_lr 'lib/', site_ruby + '/mylib'
+  #
+  #     # Examples of linking several files to target directory.
+  #     FileUtils.cp_lr %w(mail.rb field.rb debug/), site_ruby + '/tmail'
+  #     FileUtils.cp_lr Dir.glob('*.rb'), '/home/aamine/lib/ruby', noop: true, verbose: true
+  #
+  #     # If you want to link all contents of a directory instead of the
+  #     # directory itself, c.f. src/x -> dest/x, src/y -> dest/y,
+  #     # use the following code.
+  #     FileUtils.cp_lr 'src/.', 'dest'  # cp_lr('src', 'dest') makes dest/src, but this doesn't.
+  #
+  def self?.cp_lr: (pathlist src, path dest, ?noop: boolish, ?verbose: boolish, ?dereference_root: boolish, ?remove_destination: boolish) -> void
+
+  # <!--
+  #   rdoc-file=lib/fileutils.rb
+  #   - cp_r(src, dest, preserve: nil, noop: nil, verbose: nil, dereference_root: true, remove_destination: nil)
+  # -->
+  # Copies `src` to `dest`. If `src` is a directory, this method copies all its
+  # contents recursively. If `dest` is a directory, copies `src` to `dest/src`.
+  #
+  # `src` can be a list of files.
+  #
+  # If `dereference_root` is true, this method dereference tree root.
+  #
+  # If `remove_destination` is true, this method removes each destination file
+  # before copy.
+  #
+  #     # Installing Ruby library "mylib" under the site_ruby
+  #     FileUtils.rm_r site_ruby + '/mylib', force: true
+  #     FileUtils.cp_r 'lib/', site_ruby + '/mylib'
+  #
+  #     # Examples of copying several files to target directory.
+  #     FileUtils.cp_r %w(mail.rb field.rb debug/), site_ruby + '/tmail'
+  #     FileUtils.cp_r Dir.glob('*.rb'), '/home/foo/lib/ruby', noop: true, verbose: true
+  #
+  #     # If you want to copy all contents of a directory instead of the
+  #     # directory itself, c.f. src/x -> dest/x, src/y -> dest/y,
+  #     # use following code.
+  #     FileUtils.cp_r 'src/.', 'dest'     # cp_r('src', 'dest') makes dest/src,
+  #                                        # but this doesn't.
+  #
+  def self?.cp_r: (pathlist src, path dest, ?preserve: boolish, ?noop: boolish, ?verbose: boolish, ?dereference_root: boolish, ?remove_destination: boolish) -> void
+
+  # <!--
+  #   rdoc-file=lib/fileutils.rb
+  #   - have_option?(mid, opt)
+  # -->
+  # Returns true if the method `mid` have an option `opt`.
+  #
+  #     p FileUtils.have_option?(:cp, :noop)     #=> true
+  #     p FileUtils.have_option?(:rm, :force)    #=> true
+  #     p FileUtils.have_option?(:rm, :preserve) #=> false
+  #
+  def self.have_option?: (Symbol mid, Symbol opt) -> bool
+
+  # <!--
+  #   rdoc-file=lib/fileutils.rb
+  #   - install(src, dest, mode: nil, owner: nil, group: nil, preserve: nil, noop: nil, verbose: nil)
+  # -->
+  # If `src` is not same as `dest`, copies it and changes the permission mode to
+  # `mode`.  If `dest` is a directory, destination is `dest`/`src`. This method
+  # removes destination before copy.
+  #
+  #     FileUtils.install 'ruby', '/usr/local/bin/ruby', mode: 0755, verbose: true
+  #     FileUtils.install 'lib.rb', '/usr/local/lib/ruby/site_ruby', verbose: true
+  #
+  def self?.install: (path src, path dest, ?mode: mode?, ?owner: String?, ?group: String?, ?preserve: boolish, ?noop: boolish, ?verbose: boolish) -> void
+
+  # <!--
+  #   rdoc-file=lib/fileutils.rb
+  #   - link_entry(src, dest, dereference_root = false, remove_destination = false)
+  # -->
+  # Hard links a file system entry `src` to `dest`. If `src` is a directory, this
+  # method links its contents recursively.
+  #
+  # Both of `src` and `dest` must be a path name. `src` must exist, `dest` must
+  # not exist.
+  #
+  # If `dereference_root` is true, this method dereferences the tree root.
+  #
+  # If `remove_destination` is true, this method removes each destination file
+  # before copy.
+  #
+  def self?.link_entry: (path src, path dest, ?boolish dereference_root, ?boolish remove_destination) -> void
+
+  # <!--
+  #   rdoc-file=lib/fileutils.rb
+  #   - FileUtils.ln(target, link, force: nil, noop: nil, verbose: nil)
+  #   - FileUtils.ln(target,  dir, force: nil, noop: nil, verbose: nil)
+  #   - FileUtils.ln(targets, dir, force: nil, noop: nil, verbose: nil)
+  # -->
+  # In the first form, creates a hard link `link` which points to `target`. If
+  # `link` already exists, raises Errno::EEXIST. But if the `force` option is set,
+  # overwrites `link`.
+  #
+  #     FileUtils.ln 'gcc', 'cc', verbose: true
+  #     FileUtils.ln '/usr/bin/emacs21', '/usr/bin/emacs'
+  #
+  # In the second form, creates a link `dir/target` pointing to `target`. In the
+  # third form, creates several hard links in the directory `dir`, pointing to
+  # each item in `targets`. If `dir` is not a directory, raises Errno::ENOTDIR.
+  #
+  #     FileUtils.cd '/sbin'
+  #     FileUtils.ln %w(cp mv mkdir), '/bin'   # Now /sbin/cp and /bin/cp are linked.
+  #
+  def self?.ln: (pathlist src, path dest, ?force: boolish, ?noop: boolish, ?verbose: boolish) -> void
+
+  # <!--
+  #   rdoc-file=lib/fileutils.rb
+  #   - link(src, dest, force: nil, noop: nil, verbose: nil)
+  # -->
+  #
+  alias self.link self.ln
+
+  # <!--
+  #   rdoc-file=lib/fileutils.rb
+  #   - link(src, dest, force: nil, noop: nil, verbose: nil)
+  # -->
+  #
+  alias link ln
+
+  # <!--
+  #   rdoc-file=lib/fileutils.rb
+  #   - FileUtils.ln_s(target, link, force: nil, noop: nil, verbose: nil)
+  #   - FileUtils.ln_s(target,  dir, force: nil, noop: nil, verbose: nil)
+  #   - FileUtils.ln_s(targets, dir, force: nil, noop: nil, verbose: nil)
+  # -->
+  # In the first form, creates a symbolic link `link` which points to `target`. If
+  # `link` already exists, raises Errno::EEXIST. But if the `force` option is set,
+  # overwrites `link`.
+  #
+  #     FileUtils.ln_s '/usr/bin/ruby', '/usr/local/bin/ruby'
+  #     FileUtils.ln_s 'verylongsourcefilename.c', 'c', force: true
+  #
+  # In the second form, creates a link `dir/target` pointing to `target`. In the
+  # third form, creates several symbolic links in the directory `dir`, pointing to
+  # each item in `targets`. If `dir` is not a directory, raises Errno::ENOTDIR.
+  #
+  #     FileUtils.ln_s Dir.glob('/bin/*.rb'), '/home/foo/bin'
+  #
+  def self?.ln_s: (pathlist src, path dest, ?force: boolish, ?noop: boolish, ?verbose: boolish) -> void
+
+  # <!--
+  #   rdoc-file=lib/fileutils.rb
+  #   - symlink(src, dest, force: nil, noop: nil, verbose: nil)
+  # -->
+  #
+  alias self.symlink self.ln_s
+
+  # <!--
+  #   rdoc-file=lib/fileutils.rb
+  #   - symlink(src, dest, force: nil, noop: nil, verbose: nil)
+  # -->
+  #
+  alias symlink ln_s
+
+  # <!--
+  #   rdoc-file=lib/fileutils.rb
+  #   - FileUtils.ln_sf(*args)
+  # -->
+  # Same as
+  #
+  #     FileUtils.ln_s(*args, force: true)
+  #
+  def self?.ln_sf: (pathlist src, path dest, ?noop: boolish, ?verbose: boolish) -> void
+
+  # <!--
+  #   rdoc-file=lib/fileutils.rb
+  #   - mkdir(list, mode: nil, noop: nil, verbose: nil)
+  # -->
+  # Creates one or more directories.
+  #
+  #     FileUtils.mkdir 'test'
+  #     FileUtils.mkdir %w(tmp data)
+  #     FileUtils.mkdir 'notexist', noop: true  # Does not really create.
+  #     FileUtils.mkdir 'tmp', mode: 0700
+  #
+  def self?.mkdir: (pathlist list, ?mode: Integer?, ?noop: boolish, ?verbose: boolish) -> void
+
+  # <!--
+  #   rdoc-file=lib/fileutils.rb
+  #   - mkdir_p(list, mode: nil, noop: nil, verbose: nil)
+  # -->
+  # Creates a directory and all its parent directories. For example,
+  #
+  #     FileUtils.mkdir_p '/usr/local/lib/ruby'
+  #
+  # causes to make following directories, if they do not exist.
+  #
+  # *   /usr
+  # *   /usr/local
+  # *   /usr/local/lib
+  # *   /usr/local/lib/ruby
+  #
+  #
+  # You can pass several directories at a time in a list.
+  #
+  def self?.mkdir_p: (pathlist list, ?mode: mode?, ?noop: boolish, ?verbose: boolish) -> void
+
+  # <!--
+  #   rdoc-file=lib/fileutils.rb
+  #   - makedirs(list, mode: nil, noop: nil, verbose: nil)
+  # -->
+  #
+  alias self.makedirs self.mkdir_p
+
+  # <!--
+  #   rdoc-file=lib/fileutils.rb
+  #   - makedirs(list, mode: nil, noop: nil, verbose: nil)
+  # -->
+  #
+  alias makedirs mkdir_p
+
+  # <!--
+  #   rdoc-file=lib/fileutils.rb
+  #   - mkpath(list, mode: nil, noop: nil, verbose: nil)
+  # -->
+  #
+  alias self.mkpath self.mkdir_p
+
+  # <!--
+  #   rdoc-file=lib/fileutils.rb
+  #   - mkpath(list, mode: nil, noop: nil, verbose: nil)
+  # -->
+  #
+  alias mkpath mkdir_p
+
+  # <!--
+  #   rdoc-file=lib/fileutils.rb
+  #   - mv(src, dest, force: nil, noop: nil, verbose: nil, secure: nil)
+  # -->
+  # Moves file(s) `src` to `dest`.  If `file` and `dest` exist on the different
+  # disk partition, the file is copied then the original file is removed.
+  #
+  #     FileUtils.mv 'badname.rb', 'goodname.rb'
+  #     FileUtils.mv 'stuff.rb', '/notexist/lib/ruby', force: true  # no error
+  #
+  #     FileUtils.mv %w(junk.txt dust.txt), '/home/foo/.trash/'
+  #     FileUtils.mv Dir.glob('test*.rb'), 'test', noop: true, verbose: true
+  #
+  def self?.mv: (pathlist src, path dest, ?force: boolish, ?noop: boolish, ?verbose: boolish, ?secure: boolish) -> void
+
+  # <!--
+  #   rdoc-file=lib/fileutils.rb
+  #   - move(src, dest, force: nil, noop: nil, verbose: nil, secure: nil)
+  # -->
+  #
+  alias self.move self.mv
+
+  # <!--
+  #   rdoc-file=lib/fileutils.rb
+  #   - move(src, dest, force: nil, noop: nil, verbose: nil, secure: nil)
+  # -->
+  #
+  alias move mv
+
+  # <!--
+  #   rdoc-file=lib/fileutils.rb
+  #   - options()
+  # -->
+  # Returns an Array of option names.
+  #
+  #     p FileUtils.options  #=> ["noop", "force", "verbose", "preserve", "mode"]
+  #
+  def self.options: () -> Array[String]
+
+  # <!--
+  #   rdoc-file=lib/fileutils.rb
+  #   - options_of(mid)
+  # -->
+  # Returns an Array of option names of the method `mid`.
+  #
+  #     p FileUtils.options_of(:rm)  #=> ["noop", "verbose", "force"]
+  #
+  def self.options_of: (Symbol mid) -> Array[String]
+
+  # <!--
+  #   rdoc-file=lib/fileutils.rb
+  #   - pwd()
+  # -->
+  # Returns the name of the current directory.
+  #
+  def self?.pwd: () -> String
+
+  # <!--
+  #   rdoc-file=lib/fileutils.rb
+  #   - getwd()
+  # -->
+  #
+  alias self.getwd self.pwd
+
+  # <!--
+  #   rdoc-file=lib/fileutils.rb
+  #   - getwd()
+  # -->
+  #
+  alias getwd pwd
+
+  # <!--
+  #   rdoc-file=lib/fileutils.rb
+  #   - remove_dir(path, force = false)
+  # -->
+  # Removes a directory `dir` and its contents recursively. This method ignores
+  # StandardError if `force` is true.
+  #
+  def self?.remove_dir: (path path, ?boolish force) -> void
+
+  # <!--
+  #   rdoc-file=lib/fileutils.rb
+  #   - remove_entry(path, force = false)
+  # -->
+  # This method removes a file system entry `path`. `path` might be a regular
+  # file, a directory, or something. If `path` is a directory, remove it
+  # recursively.
+  #
+  # See also remove_entry_secure.
+  #
+  def self?.remove_entry: (path path, ?boolish force) -> void
+
+  # <!--
+  #   rdoc-file=lib/fileutils.rb
+  #   - remove_entry_secure(path, force = false)
+  # -->
+  # This method removes a file system entry `path`.  `path` shall be a regular
+  # file, a directory, or something.  If `path` is a directory, remove it
+  # recursively.  This method is required to avoid TOCTTOU
+  # (time-of-check-to-time-of-use) local security vulnerability of rm_r. #rm_r
+  # causes security hole when:
+  #
+  # *   Parent directory is world writable (including /tmp).
+  # *   Removing directory tree includes world writable directory.
+  # *   The system has symbolic link.
+  #
+  #
+  # To avoid this security hole, this method applies special preprocess. If `path`
+  # is a directory, this method chown(2) and chmod(2) all removing directories.
+  # This requires the current process is the owner of the removing whole directory
+  # tree, or is the super user (root).
+  #
+  # WARNING: You must ensure that **ALL** parent directories cannot be moved by
+  # other untrusted users.  For example, parent directories should not be owned by
+  # untrusted users, and should not be world writable except when the sticky bit
+  # set.
+  #
+  # WARNING: Only the owner of the removing directory tree, or Unix super user
+  # (root) should invoke this method.  Otherwise this method does not work.
+  #
+  # For details of this security vulnerability, see Perl's case:
+  #
+  # *   https://cve.mitre.org/cgi-bin/cvename.cgi?name=CAN-2005-0448
+  # *   https://cve.mitre.org/cgi-bin/cvename.cgi?name=CAN-2004-0452
+  #
+  #
+  # For fileutils.rb, this vulnerability is reported in [ruby-dev:26100].
+  #
+  def self?.remove_entry_secure: (path path, ?boolish force) -> void
+
+  # <!--
+  #   rdoc-file=lib/fileutils.rb
+  #   - remove_file(path, force = false)
+  # -->
+  # Removes a file `path`. This method ignores StandardError if `force` is true.
+  #
+  def self?.remove_file: (path path, ?void force) -> void
+
+  # <!--
+  #   rdoc-file=lib/fileutils.rb
+  #   - rm(list, force: nil, noop: nil, verbose: nil)
+  # -->
+  # Remove file(s) specified in `list`.  This method cannot remove directories.
+  # All StandardErrors are ignored when the :force option is set.
+  #
+  #     FileUtils.rm %w( junk.txt dust.txt )
+  #     FileUtils.rm Dir.glob('*.so')
+  #     FileUtils.rm 'NotExistFile', force: true   # never raises exception
+  #
+  def self?.rm: (pathlist list, ?force: boolish, ?noop: boolish, ?verbose: boolish) -> void
+
+  # <!--
+  #   rdoc-file=lib/fileutils.rb
+  #   - remove(list, force: nil, noop: nil, verbose: nil)
+  # -->
+  #
+  alias self.remove self.rm
+
+  # <!--
+  #   rdoc-file=lib/fileutils.rb
+  #   - remove(list, force: nil, noop: nil, verbose: nil)
+  # -->
+  #
+  alias remove rm
+
+  # <!--
+  #   rdoc-file=lib/fileutils.rb
+  #   - rm_f(list, noop: nil, verbose: nil)
+  # -->
+  # Equivalent to
+  #
+  #     FileUtils.rm(list, force: true)
+  #
+  def self?.rm_f: (pathlist list, ?noop: boolish, ?verbose: boolish) -> void
+
+  # <!--
+  #   rdoc-file=lib/fileutils.rb
+  #   - safe_unlink(list, noop: nil, verbose: nil)
+  # -->
+  #
+  alias self.safe_unlink self.rm_f
+
+  # <!--
+  #   rdoc-file=lib/fileutils.rb
+  #   - safe_unlink(list, noop: nil, verbose: nil)
+  # -->
+  #
+  alias safe_unlink rm_f
+
+  # <!--
+  #   rdoc-file=lib/fileutils.rb
+  #   - rm_r(list, force: nil, noop: nil, verbose: nil, secure: nil)
+  # -->
+  # remove files `list`[0] `list`[1]... If `list`[n] is a directory, removes its
+  # all contents recursively. This method ignores StandardError when :force option
+  # is set.
+  #
+  #     FileUtils.rm_r Dir.glob('/tmp/*')
+  #     FileUtils.rm_r 'some_dir', force: true
+  #
+  # WARNING: This method causes local vulnerability if one of parent directories
+  # or removing directory tree are world writable (including /tmp, whose
+  # permission is 1777), and the current process has strong privilege such as Unix
+  # super user (root), and the system has symbolic link.  For secure removing,
+  # read the documentation of remove_entry_secure carefully, and set :secure
+  # option to true. Default is `secure: false`.
+  #
+  # NOTE: This method calls remove_entry_secure if :secure option is set. See also
+  # remove_entry_secure.
+  #
+  def self?.rm_r: (pathlist list, ?force: boolish, ?noop: boolish, ?verbose: boolish, ?secure: boolish) -> void
+
+  # <!--
+  #   rdoc-file=lib/fileutils.rb
+  #   - rm_rf(list, noop: nil, verbose: nil, secure: nil)
+  # -->
+  # Equivalent to
+  #
+  #     FileUtils.rm_r(list, force: true)
+  #
+  # WARNING: This method causes local vulnerability. Read the documentation of
+  # rm_r first.
+  #
+  def self?.rm_rf: (pathlist list, ?noop: boolish, ?verbose: boolish, ?secure: boolish) -> void
+
+  # <!--
+  #   rdoc-file=lib/fileutils.rb
+  #   - rmtree(list, noop: nil, verbose: nil, secure: nil)
+  # -->
+  #
+  alias self.rmtree self.rm_rf
+
+  # <!--
+  #   rdoc-file=lib/fileutils.rb
+  #   - rmtree(list, noop: nil, verbose: nil, secure: nil)
+  # -->
+  #
+  alias rmtree rm_rf
+
+  # <!--
+  #   rdoc-file=lib/fileutils.rb
+  #   - rmdir(list, parents: nil, noop: nil, verbose: nil)
+  # -->
+  # Removes one or more directories.
+  #
+  #     FileUtils.rmdir 'somedir'
+  #     FileUtils.rmdir %w(somedir anydir otherdir)
+  #     # Does not really remove directory; outputs message.
+  #     FileUtils.rmdir 'somedir', verbose: true, noop: true
+  #
+  def self?.rmdir: (pathlist list, ?parents: boolish, ?noop: boolish, ?verbose: boolish) -> void
+
+  # <!--
+  #   rdoc-file=lib/fileutils.rb
+  #   - touch(list, noop: nil, verbose: nil, mtime: nil, nocreate: nil)
+  # -->
+  # Updates modification time (mtime) and access time (atime) of file(s) in
+  # `list`.  Files are created if they don't exist.
+  #
+  #     FileUtils.touch 'timestamp'
+  #     FileUtils.touch Dir.glob('*.c');  system 'make'
+  #
+  def self?.touch: (pathlist list, ?noop: boolish, ?verbose: boolish, ?mtime: (Time | Numeric)?, ?nocreate: boolish) -> void
+
+  # <!--
+  #   rdoc-file=lib/fileutils.rb
+  #   - uptodate?(new, old_list)
+  # -->
+  # Returns true if `new` is newer than all `old_list`. Non-existent files are
+  # older than any file.
+  #
+  #     FileUtils.uptodate?('hello.o', %w(hello.c hello.h)) or \
+  #         system 'make hello.o'
+  #
+  def self?.uptodate?: (path new, pathlist old_list) -> bool
+end

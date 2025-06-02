@@ -1,0 +1,35 @@
+{
+  "homebrew_version": "4.4.16-52-g29d9b0a",
+  "used_options": [],
+  "unused_options": [],
+  "built_as_bottle": true,
+  "poured_from_bottle": false,
+  "loaded_from_api": false,
+  "installed_as_dependency": false,
+  "installed_on_request": true,
+  "changed_files": null,
+  "time": null,
+  "source_modified_time": 1736925757,
+  "compiler": "gcc-11",
+  "aliases": [],
+  "runtime_dependencies": [],
+  "source": {
+    "tap": "homebrew/portable-ruby",
+    "tap_git_head": "402650936d4d142654eea7207abeaf6acfd0d5a6",
+    "spec": "stable",
+    "path": "/home/linuxbrew/.linuxbrew/Homebrew/Library/Taps/homebrew/homebrew-portable-ruby/Formula/portable-ruby.rb",
+    "versions": {
+      "stable": "3.3.7",
+      "head": null,
+      "version_scheme": 0
+    }
+  },
+  "arch": "x86_64",
+  "built_on": {
+    "os": "Linux",
+    "os_version": "Ubuntu 22.04.5 LTS",
+    "cpu_family": "zen3",
+    "glibc_version": "2.35",
+    "oldest_cpu_family": "core2"
+  }
+}

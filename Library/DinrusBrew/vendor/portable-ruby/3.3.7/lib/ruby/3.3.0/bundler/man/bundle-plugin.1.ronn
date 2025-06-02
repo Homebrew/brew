@@ -1,0 +1,63 @@
+bundle-plugin(1) -- Manage Bundler plugins
+==========================================
+
+## SYNOPSIS
+
+`bundle plugin` install PLUGINS [--source=<SOURCE>] [--version=<version>]
+                              [--git=<git-url>] [--branch=<branch>|--ref=<rev>]
+                              [--path=<path>]<br>
+`bundle plugin` uninstall PLUGINS<br>
+`bundle plugin` list<br>
+`bundle plugin` help [COMMAND]
+
+## DESCRIPTION
+
+You can install, uninstall, and list plugin(s) with this command to extend functionalities of Bundler.
+
+## SUB-COMMANDS
+
+### install
+
+Install the given plugin(s).
+
+* `bundle plugin install bundler-graph`:
+  Install bundler-graph gem from globally configured sources (defaults to RubyGems.org). The global source, specified in source in Gemfile is ignored.
+
+* `bundle plugin install bundler-graph --source https://example.com`:
+  Install bundler-graph gem from example.com. The global source, specified in source in Gemfile is not considered.
+
+* `bundle plugin install bundler-graph --version 0.2.1`:
+  You can specify the version of the gem via `--version`.
+
+* `bundle plugin install bundler-graph --git https://github.com/rubygems/bundler-graph`:
+  Install bundler-graph gem from Git repository. You can use standard Git URLs like:
+
+  `ssh://[user@]host.xz[:port]/path/to/repo.git`<br>
+  `http[s]://host.xz[:port]/path/to/repo.git`<br>
+  `/path/to/repo`<br>
+  `file:///path/to/repo`
+
+  When you specify `--git`, you can use `--branch` or `--ref` to specify any branch, tag, or commit hash (revision) to use.
+
+* `bundle plugin install bundler-graph --path ../bundler-graph`:
+  Install bundler-graph gem from a local path.
+
+### uninstall
+
+Uninstall the plugin(s) specified in PLUGINS.
+
+### list
+
+List the installed plugins and available commands.
+
+No options.
+
+### help
+
+Describe subcommands or one specific subcommand.
+
+No options.
+
+## SEE ALSO
+
+* [How to write a Bundler plugin](https://bundler.io/guides/bundler_plugins.html)

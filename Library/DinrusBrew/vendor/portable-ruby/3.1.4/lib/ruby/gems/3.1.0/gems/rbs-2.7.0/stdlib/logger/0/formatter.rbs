@@ -1,0 +1,47 @@
+%a{annotate:rdoc:skip}
+class Logger
+  # <!-- rdoc-file=lib/logger/formatter.rb -->
+  # Default formatter for log messages.
+  #
+  class Formatter
+    public
+
+    attr_accessor datetime_format: String?
+
+    # <!--
+    #   rdoc-file=lib/logger/formatter.rb
+    #   - call(severity, time, progname, msg)
+    # -->
+    #
+    def call: (String severity, Time time, untyped progname, untyped msg) -> String
+
+    private
+
+    # <!--
+    #   rdoc-file=lib/logger/formatter.rb
+    #   - format_datetime(time)
+    # -->
+    #
+    def format_datetime: (Time time) -> untyped
+
+    # <!--
+    #   rdoc-file=lib/logger/formatter.rb
+    #   - new()
+    # -->
+    #
+    def initialize: () -> void
+
+    # <!--
+    #   rdoc-file=lib/logger/formatter.rb
+    #   - msg2str(msg)
+    # -->
+    #
+    def msg2str: (String | Exception | untyped msg) -> String
+  end
+
+  interface _Formatter
+    def call: (String severity, Time time, untyped progname, untyped msg) -> _ToS
+  end
+end
+
+Logger::Formatter::Format: String

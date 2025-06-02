@@ -1,0 +1,10 @@
+diff --git libexec/NOOP libexec/NOOP
+index bfdda4c..e08d8f4 100755
+--- libexec/NOOP
++++ libexec/NOOP
+@@ -1,2 +1,2 @@
+ #!/bin/bash
+-echo NOOP
+\ No newline at end of file
++echo ABCD
+\ No newline at end of file

@@ -1,0 +1,84 @@
+module RBS
+  class DefinitionBuilder
+    # MethodBuilder calculates the sequence of methods available on given type
+    #
+    # The sequence are sorted topologically.
+    #
+    class MethodBuilder
+      # Set of methods defined in a type.
+      #
+      class Methods
+        type instance_type = Types::ClassInstance | Types::ClassSingleton | Types::Interface
+
+        # Definition of a method in the type
+        #
+        # The Definition object allows invalid method definition so that more than one _original_ definitions may exist.
+        #
+        class Definition
+          type original = AST::Members::MethodDefinition | AST::Members::Alias | AST::Members::AttrAccessor | AST::Members::AttrWriter | AST::Members::AttrReader
+
+          type accessibility = RBS::Definition::accessibility
+
+          attr_reader name: Symbol
+          attr_reader type: instance_type
+          attr_reader originals: Array[original]
+          attr_reader overloads: Array[AST::Members::MethodDefinition]
+          attr_reader accessibilities: Array[accessibility]
+
+          def initialize: (name: Symbol, type: instance_type, originals: Array[original], overloads: Array[AST::Members::MethodDefinition], accessibilities: Array[accessibility]) -> void
+
+          def original: () -> original?
+
+          def accessibility: () -> accessibility
+
+          def self.empty: (name: Symbol, type: instance_type) -> Definition
+        end
+
+        attr_reader type: instance_type
+        attr_reader methods: Hash[Symbol, Definition]
+
+        def initialize: (type: instance_type) -> void
+
+        def validate!: () -> self
+
+        def each: () { (Definition) -> void } -> void
+                | () -> Enumerator[Definition, void]
+
+        class Sorter
+          include TSort[Definition]
+
+          attr_reader methods: Hash[Symbol, Definition]
+
+          def initialize: (Hash[Symbol, Definition]) -> void
+
+          def tsort_each_node: { (Definition) -> void } -> void
+
+          def tsort_each_child: (Definition) { (Definition) -> void } -> void
+        end
+      end
+
+      attr_reader env: Environment
+      attr_reader instance_methods: Hash[TypeName, Methods]
+      attr_reader singleton_methods: Hash[TypeName, Methods]
+      attr_reader interface_methods: Hash[TypeName, Methods]
+
+      def initialize: (env: Environment) -> void
+
+      def build_instance: (TypeName) -> Methods
+
+      def build_singleton: (TypeName) -> Methods
+
+      def build_interface: (TypeName) -> Methods
+
+      def build_alias: (Methods, Methods::instance_type, member: AST::Members::Alias) -> void
+
+      def build_attribute: (Methods, Methods::instance_type, member: AST::Members::AttrAccessor | AST::Members::AttrReader | AST::Members::AttrWriter, accessibility: Definition::accessibility) -> void
+
+      def build_method: (Methods, Methods::instance_type, member: AST::Members::MethodDefinition, accessibility: Definition::accessibility) -> void
+
+      def each_member_with_accessibility: (Array[AST::Members::t | AST::Declarations::t], ?accessibility: Definition::accessibility) { (AST::Members::t | AST::Declarations::t, Definition::accessibility) -> void } -> void
+
+      def update: (env: Environment, except: _Each[TypeName]) -> MethodBuilder
+    end
+  end
+end

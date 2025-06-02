@@ -1,0 +1,81 @@
+module RBS
+  module Collection
+    # This class represent the configration file.
+    class Config
+      class CollectionNotAvailable < StandardError
+        def initialize: () -> void
+      end
+
+      class LockfileGenerator
+        attr_reader config: Config
+        attr_reader lock: Config?
+        attr_reader lock_path: Pathname
+        attr_reader gemfile_lock: Bundler::LockfileParser
+
+        type gem_queue_entry = { name: String, version: String? }
+
+        @gem_queue: Array[gem_queue_entry]
+
+        def self.generate: (config_path: Pathname, gemfile_lock_path: Pathname, ?with_lockfile: boolish) -> Config
+
+        def initialize: (config_path: Pathname, gemfile_lock_path: Pathname, with_lockfile: boolish) -> void
+
+        def generate: () -> Config
+
+        private
+
+        def assign_gem: (name: String, version: String?) -> void
+
+        def upsert_gem: (gem_entry? old, gem_entry new) -> void
+
+        def gemfile_lock_gems: () { (untyped) -> void } -> void
+
+        def remove_ignored_gems!: () -> void
+
+        def find_source: (name: String) -> Sources::_Source?
+
+        def find_best_version: (version: String?, versions: Array[String]) -> Gem::Version
+      end
+
+      PATH: Pathname
+
+      type gem_entry = {
+        'name' => String,
+        'version' => String?,
+        'ignore' => boolish,
+        'source' => Sources::source_entry?
+      }
+
+      @config_path: Pathname
+
+      @data: untyped
+
+      @sources: Array[Sources::_Source]
+
+      def self.generate_lockfile: (config_path: Pathname, gemfile_lock_path: Pathname, ?with_lockfile: boolish) -> Config
+
+      def self.from_path: (Pathname path) -> Config
+
+      def self.lockfile_of: (Pathname config_path) -> Config?
+
+      def self.to_lockfile_path: (Pathname config_path) -> Pathname
+
+      # config_path is necessary to resolve relative repo_path
+      def initialize: (untyped data, config_path: Pathname) -> void
+
+      def add_gem: (gem_entry gem) -> void
+
+      def gem: (String gem_name) -> gem_entry?
+
+      def repo_path: () -> Pathname
+
+      def sources: () -> Array[Sources::_Source]
+
+      def dump_to: (Pathname) -> void
+
+      def gems: () -> Array[gem_entry]
+
+      def check_rbs_availability!: () -> void
+    end
+  end
+end

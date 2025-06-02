@@ -1,0 +1,88 @@
+# <!-- rdoc-file=io.c -->
+# ARGF is a stream designed for use in scripts that process files given as
+# command-line arguments or passed in via STDIN.
+#
+# See ARGF (the class) for more details.
+#
+::ARGF: RBS::Unnamed::ARGFClass
+
+# <!-- rdoc-file=ruby.c -->
+# ARGV contains the command line arguments used to run ruby.
+#
+# A library like OptionParser can be used to process command-line arguments.
+#
+::ARGV: Array[String]
+
+::CROSS_COMPILING: NilClass
+
+::FALSE: FalseClass
+
+::NIL: NilClass
+
+# <!-- rdoc-file=version.c -->
+# The copyright string for ruby
+#
+::RUBY_COPYRIGHT: String
+
+# <!-- rdoc-file=version.c -->
+# The full ruby version string, like `ruby -v` prints
+#
+::RUBY_DESCRIPTION: String
+
+# <!-- rdoc-file=version.c -->
+# The engine or interpreter this ruby uses.
+#
+::RUBY_ENGINE: String
+
+# <!-- rdoc-file=version.c -->
+# The version of the engine or interpreter this ruby uses.
+#
+::RUBY_ENGINE_VERSION: String
+
+# <!-- rdoc-file=version.c -->
+# The patchlevel for this ruby.  If this is a development build of ruby the
+# patchlevel will be -1
+#
+::RUBY_PATCHLEVEL: Integer
+
+# <!-- rdoc-file=version.c -->
+# The platform for this ruby
+#
+::RUBY_PLATFORM: String
+
+# <!-- rdoc-file=version.c -->
+# The date this ruby was released
+#
+::RUBY_RELEASE_DATE: String
+
+# <!-- rdoc-file=version.c -->
+# The GIT commit hash for this ruby.
+#
+::RUBY_REVISION: Integer
+
+# <!-- rdoc-file=version.c -->
+# The running version of ruby
+#
+::RUBY_VERSION: String
+
+# <!-- rdoc-file=io.c -->
+# Holds the original stderr
+#
+::STDERR: IO
+
+# <!-- rdoc-file=io.c -->
+# Holds the original stdin
+#
+::STDIN: IO
+
+# <!-- rdoc-file=io.c -->
+# Holds the original stdout
+#
+::STDOUT: IO
+
+# <!-- rdoc-file=vm.c -->
+# The Binding of the top level scope
+#
+::TOPLEVEL_BINDING: Binding
+
+::TRUE: TrueClass

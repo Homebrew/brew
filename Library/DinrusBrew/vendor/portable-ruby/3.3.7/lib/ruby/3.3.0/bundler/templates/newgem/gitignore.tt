@@ -1,0 +1,23 @@
+/.bundle/
+/.yardoc
+/_yardoc/
+/coverage/
+/doc/
+/pkg/
+/spec/reports/
+/tmp/
+<%- if config[:ext] -%>
+*.bundle
+*.so
+*.o
+*.a
+mkmf.log
+<%- if config[:ext] == 'rust' -%>
+target/
+<%- end -%>
+<%- end -%>
+<%- if config[:test] == "rspec" -%>
+
+# rspec failure tracking
+.rspec_status
+<%- end -%>

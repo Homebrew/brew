@@ -1,0 +1,37 @@
+name: Ruby
+
+on:
+  push:
+    branches:
+      - <%= config[:git_default_branch] %>
+
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    name: Ruby ${{ matrix.ruby }}
+    strategy:
+      matrix:
+        ruby:
+          - '<%= RUBY_VERSION %>'
+
+    steps:
+    - uses: actions/checkout@v4
+<%- if config[:ext] == 'rust' -%>
+    - name: Set up Ruby & Rust
+      uses: oxidize-rb/actions/setup-ruby-and-rust@v1
+      with:
+        ruby-version: ${{ matrix.ruby }}
+        bundler-cache: true
+        cargo-cache: true
+        rubygems: '<%= ::Gem.rubygems_version %>'
+<%- else -%>
+    - name: Set up Ruby
+      uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: ${{ matrix.ruby }}
+        bundler-cache: true
+<%- end -%>
+    - name: Run the default task
+      run: bundle exec rake

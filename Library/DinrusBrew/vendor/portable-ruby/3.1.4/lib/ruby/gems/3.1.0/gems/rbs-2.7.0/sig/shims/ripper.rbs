@@ -1,0 +1,8 @@
+class Ripper
+  def self.lex: (String src, ?String filename, ?Integer lineno, ?raise_errors: bool) -> Array[[[Integer, Integer], Symbol, String, Lexer::State]]
+
+  class Lexer
+    class State
+    end
+  end
+end

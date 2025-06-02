@@ -1,0 +1,14 @@
+%a{annotate:rdoc:skip}
+module URI
+  # <!-- rdoc-file=lib/uri/https.rb -->
+  # The default port for HTTPS URIs is 443, and the scheme is 'https:' rather than
+  # 'http:'. Other than that, HTTPS URIs are identical to HTTP URIs; see
+  # URI::HTTP.
+  #
+  class HTTPS < HTTP
+    # <!-- rdoc-file=lib/uri/https.rb -->
+    # A Default port of 443 for URI::HTTPS
+    #
+    DEFAULT_PORT: Integer
+  end
+end

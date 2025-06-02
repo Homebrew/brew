@@ -1,0 +1,772 @@
+# <!-- rdoc-file=error.c -->
+# Ruby exception objects are subclasses of Exception.  However, operating
+# systems typically report errors using plain integers. Module Errno is created
+# dynamically to map these operating system errors to Ruby classes, with each
+# error number generating its own subclass of SystemCallError.  As the subclass
+# is created in module Errno, its name will start `Errno::`.
+#
+# The names of the `Errno::` classes depend on the environment in which Ruby
+# runs. On a typical Unix or Windows platform, there are Errno classes such as
+# Errno::EACCES, Errno::EAGAIN, Errno::EINTR, and so on.
+#
+# The integer operating system error number corresponding to a particular error
+# is available as the class constant `Errno::`*error*`::Errno`.
+#
+#     Errno::EACCES::Errno   #=> 13
+#     Errno::EAGAIN::Errno   #=> 11
+#     Errno::EINTR::Errno    #=> 4
+#
+# The full list of operating system errors on your particular platform are
+# available as the constants of Errno.
+#
+#     Errno.constants   #=> :E2BIG, :EACCES, :EADDRINUSE, :EADDRNOTAVAIL, ...
+#
+module Errno
+end
+
+class Errno::E2BIG < SystemCallError
+end
+
+Errno::E2BIG::Errno: Integer
+
+class Errno::EACCES < SystemCallError
+end
+
+Errno::EACCES::Errno: Integer
+
+class Errno::EADDRINUSE < SystemCallError
+end
+
+Errno::EADDRINUSE::Errno: Integer
+
+class Errno::EADDRNOTAVAIL < SystemCallError
+end
+
+Errno::EADDRNOTAVAIL::Errno: Integer
+
+class Errno::EADV < SystemCallError
+end
+
+Errno::EADV::Errno: Integer
+
+class Errno::EAFNOSUPPORT < SystemCallError
+end
+
+Errno::EAFNOSUPPORT::Errno: Integer
+
+class Errno::EAGAIN < SystemCallError
+end
+
+Errno::EAGAIN::Errno: Integer
+
+class Errno::EALREADY < SystemCallError
+end
+
+Errno::EALREADY::Errno: Integer
+
+class Errno::EAUTH < SystemCallError
+end
+
+Errno::EAUTH::Errno: Integer
+
+class Errno::EBADE < SystemCallError
+end
+
+Errno::EBADE::Errno: Integer
+
+class Errno::EBADF < SystemCallError
+end
+
+Errno::EBADF::Errno: Integer
+
+class Errno::EBADFD < SystemCallError
+end
+
+Errno::EBADFD::Errno: Integer
+
+class Errno::EBADMSG < SystemCallError
+end
+
+Errno::EBADMSG::Errno: Integer
+
+class Errno::EBADR < SystemCallError
+end
+
+Errno::EBADR::Errno: Integer
+
+class Errno::EBADRPC < SystemCallError
+end
+
+Errno::EBADRPC::Errno: Integer
+
+class Errno::EBADRQC < SystemCallError
+end
+
+Errno::EBADRQC::Errno: Integer
+
+class Errno::EBADSLT < SystemCallError
+end
+
+Errno::EBADSLT::Errno: Integer
+
+class Errno::EBFONT < SystemCallError
+end
+
+Errno::EBFONT::Errno: Integer
+
+class Errno::EBUSY < SystemCallError
+end
+
+Errno::EBUSY::Errno: Integer
+
+class Errno::ECANCELED < SystemCallError
+end
+
+Errno::ECANCELED::Errno: Integer
+
+class Errno::ECAPMODE < SystemCallError
+end
+
+Errno::ECAPMODE::Errno: Integer
+
+class Errno::ECHILD < SystemCallError
+end
+
+Errno::ECHILD::Errno: Integer
+
+class Errno::ECHRNG < SystemCallError
+end
+
+Errno::ECHRNG::Errno: Integer
+
+class Errno::ECOMM < SystemCallError
+end
+
+Errno::ECOMM::Errno: Integer
+
+# Client sent TCP reset (RST) before server has accepted the connection
+# requested by client.
+#
+class Errno::ECONNABORTED < SystemCallError
+end
+
+Errno::ECONNABORTED::Errno: Integer
+
+class Errno::ECONNREFUSED < SystemCallError
+end
+
+Errno::ECONNREFUSED::Errno: Integer
+
+# Remote host reset the connection request.
+#
+class Errno::ECONNRESET < SystemCallError
+end
+
+Errno::ECONNRESET::Errno: Integer
+
+class Errno::EDEADLK < SystemCallError
+end
+
+Errno::EDEADLK::Errno: Integer
+
+class Errno::EDEADLOCK < SystemCallError
+end
+
+Errno::EDEADLOCK::Errno: Integer
+
+class Errno::EDESTADDRREQ < SystemCallError
+end
+
+Errno::EDESTADDRREQ::Errno: Integer
+
+class Errno::EDOM < SystemCallError
+end
+
+Errno::EDOM::Errno: Integer
+
+class Errno::EDOOFUS < SystemCallError
+end
+
+Errno::EDOOFUS::Errno: Integer
+
+class Errno::EDOTDOT < SystemCallError
+end
+
+Errno::EDOTDOT::Errno: Integer
+
+class Errno::EDQUOT < SystemCallError
+end
+
+Errno::EDQUOT::Errno: Integer
+
+class Errno::EEXIST < SystemCallError
+end
+
+Errno::EEXIST::Errno: Integer
+
+class Errno::EFAULT < SystemCallError
+end
+
+Errno::EFAULT::Errno: Integer
+
+class Errno::EFBIG < SystemCallError
+end
+
+Errno::EFBIG::Errno: Integer
+
+class Errno::EFTYPE < SystemCallError
+end
+
+Errno::EFTYPE::Errno: Integer
+
+class Errno::EHOSTDOWN < SystemCallError
+end
+
+Errno::EHOSTDOWN::Errno: Integer
+
+class Errno::EHOSTUNREACH < SystemCallError
+end
+
+Errno::EHOSTUNREACH::Errno: Integer
+
+class Errno::EHWPOISON < SystemCallError
+end
+
+Errno::EHWPOISON::Errno: Integer
+
+class Errno::EIDRM < SystemCallError
+end
+
+Errno::EIDRM::Errno: Integer
+
+class Errno::EILSEQ < SystemCallError
+end
+
+Errno::EILSEQ::Errno: Integer
+
+class Errno::EINPROGRESS < SystemCallError
+end
+
+Errno::EINPROGRESS::Errno: Integer
+
+class Errno::EINTR < SystemCallError
+end
+
+Errno::EINTR::Errno: Integer
+
+class Errno::EINVAL < SystemCallError
+end
+
+Errno::EINVAL::Errno: Integer
+
+class Errno::EIO < SystemCallError
+end
+
+Errno::EIO::Errno: Integer
+
+class Errno::EIPSEC < SystemCallError
+end
+
+Errno::EIPSEC::Errno: Integer
+
+class Errno::EISCONN < SystemCallError
+end
+
+Errno::EISCONN::Errno: Integer
+
+class Errno::EISDIR < SystemCallError
+end
+
+Errno::EISDIR::Errno: Integer
+
+class Errno::EISNAM < SystemCallError
+end
+
+Errno::EISNAM::Errno: Integer
+
+class Errno::EKEYEXPIRED < SystemCallError
+end
+
+Errno::EKEYEXPIRED::Errno: Integer
+
+class Errno::EKEYREJECTED < SystemCallError
+end
+
+Errno::EKEYREJECTED::Errno: Integer
+
+class Errno::EKEYREVOKED < SystemCallError
+end
+
+Errno::EKEYREVOKED::Errno: Integer
+
+class Errno::EL2HLT < SystemCallError
+end
+
+Errno::EL2HLT::Errno: Integer
+
+class Errno::EL2NSYNC < SystemCallError
+end
+
+Errno::EL2NSYNC::Errno: Integer
+
+class Errno::EL3HLT < SystemCallError
+end
+
+Errno::EL3HLT::Errno: Integer
+
+class Errno::EL3RST < SystemCallError
+end
+
+Errno::EL3RST::Errno: Integer
+
+class Errno::ELIBACC < SystemCallError
+end
+
+Errno::ELIBACC::Errno: Integer
+
+class Errno::ELIBBAD < SystemCallError
+end
+
+Errno::ELIBBAD::Errno: Integer
+
+class Errno::ELIBEXEC < SystemCallError
+end
+
+Errno::ELIBEXEC::Errno: Integer
+
+class Errno::ELIBMAX < SystemCallError
+end
+
+Errno::ELIBMAX::Errno: Integer
+
+class Errno::ELIBSCN < SystemCallError
+end
+
+Errno::ELIBSCN::Errno: Integer
+
+class Errno::ELNRNG < SystemCallError
+end
+
+Errno::ELNRNG::Errno: Integer
+
+class Errno::ELOOP < SystemCallError
+end
+
+Errno::ELOOP::Errno: Integer
+
+class Errno::EMEDIUMTYPE < SystemCallError
+end
+
+Errno::EMEDIUMTYPE::Errno: Integer
+
+class Errno::EMFILE < SystemCallError
+end
+
+Errno::EMFILE::Errno: Integer
+
+class Errno::EMLINK < SystemCallError
+end
+
+Errno::EMLINK::Errno: Integer
+
+class Errno::EMSGSIZE < SystemCallError
+end
+
+Errno::EMSGSIZE::Errno: Integer
+
+class Errno::EMULTIHOP < SystemCallError
+end
+
+Errno::EMULTIHOP::Errno: Integer
+
+class Errno::ENAMETOOLONG < SystemCallError
+end
+
+Errno::ENAMETOOLONG::Errno: Integer
+
+class Errno::ENAVAIL < SystemCallError
+end
+
+Errno::ENAVAIL::Errno: Integer
+
+class Errno::ENEEDAUTH < SystemCallError
+end
+
+Errno::ENEEDAUTH::Errno: Integer
+
+class Errno::ENETDOWN < SystemCallError
+end
+
+Errno::ENETDOWN::Errno: Integer
+
+class Errno::ENETRESET < SystemCallError
+end
+
+Errno::ENETRESET::Errno: Integer
+
+class Errno::ENETUNREACH < SystemCallError
+end
+
+Errno::ENETUNREACH::Errno: Integer
+
+class Errno::ENFILE < SystemCallError
+end
+
+Errno::ENFILE::Errno: Integer
+
+class Errno::ENOANO < SystemCallError
+end
+
+Errno::ENOANO::Errno: Integer
+
+class Errno::ENOATTR < SystemCallError
+end
+
+Errno::ENOATTR::Errno: Integer
+
+class Errno::ENOBUFS < SystemCallError
+end
+
+Errno::ENOBUFS::Errno: Integer
+
+class Errno::ENOCSI < SystemCallError
+end
+
+Errno::ENOCSI::Errno: Integer
+
+class Errno::ENODATA < SystemCallError
+end
+
+Errno::ENODATA::Errno: Integer
+
+class Errno::ENODEV < SystemCallError
+end
+
+Errno::ENODEV::Errno: Integer
+
+class Errno::ENOENT < SystemCallError
+end
+
+Errno::ENOENT::Errno: Integer
+
+class Errno::ENOEXEC < SystemCallError
+end
+
+Errno::ENOEXEC::Errno: Integer
+
+class Errno::ENOKEY < SystemCallError
+end
+
+Errno::ENOKEY::Errno: Integer
+
+class Errno::ENOLCK < SystemCallError
+end
+
+Errno::ENOLCK::Errno: Integer
+
+class Errno::ENOLINK < SystemCallError
+end
+
+Errno::ENOLINK::Errno: Integer
+
+class Errno::ENOMEDIUM < SystemCallError
+end
+
+Errno::ENOMEDIUM::Errno: Integer
+
+class Errno::ENOMEM < SystemCallError
+end
+
+Errno::ENOMEM::Errno: Integer
+
+class Errno::ENOMSG < SystemCallError
+end
+
+Errno::ENOMSG::Errno: Integer
+
+class Errno::ENONET < SystemCallError
+end
+
+Errno::ENONET::Errno: Integer
+
+class Errno::ENOPKG < SystemCallError
+end
+
+Errno::ENOPKG::Errno: Integer
+
+class Errno::ENOPROTOOPT < SystemCallError
+end
+
+Errno::ENOPROTOOPT::Errno: Integer
+
+class Errno::ENOSPC < SystemCallError
+end
+
+Errno::ENOSPC::Errno: Integer
+
+class Errno::ENOSR < SystemCallError
+end
+
+Errno::ENOSR::Errno: Integer
+
+class Errno::ENOSTR < SystemCallError
+end
+
+Errno::ENOSTR::Errno: Integer
+
+class Errno::ENOSYS < SystemCallError
+end
+
+Errno::ENOSYS::Errno: Integer
+
+class Errno::ENOTBLK < SystemCallError
+end
+
+Errno::ENOTBLK::Errno: Integer
+
+class Errno::ENOTCAPABLE < SystemCallError
+end
+
+Errno::ENOTCAPABLE::Errno: Integer
+
+class Errno::ENOTCONN < SystemCallError
+end
+
+Errno::ENOTCONN::Errno: Integer
+
+class Errno::ENOTDIR < SystemCallError
+end
+
+Errno::ENOTDIR::Errno: Integer
+
+class Errno::ENOTEMPTY < SystemCallError
+end
+
+Errno::ENOTEMPTY::Errno: Integer
+
+class Errno::ENOTNAM < SystemCallError
+end
+
+Errno::ENOTNAM::Errno: Integer
+
+class Errno::ENOTRECOVERABLE < SystemCallError
+end
+
+Errno::ENOTRECOVERABLE::Errno: Integer
+
+class Errno::ENOTSOCK < SystemCallError
+end
+
+Errno::ENOTSOCK::Errno: Integer
+
+class Errno::ENOTSUP < SystemCallError
+end
+
+Errno::ENOTSUP::Errno: Integer
+
+class Errno::ENOTTY < SystemCallError
+end
+
+Errno::ENOTTY::Errno: Integer
+
+class Errno::ENOTUNIQ < SystemCallError
+end
+
+Errno::ENOTUNIQ::Errno: Integer
+
+class Errno::ENXIO < SystemCallError
+end
+
+Errno::ENXIO::Errno: Integer
+
+class Errno::EOPNOTSUPP < SystemCallError
+end
+
+Errno::EOPNOTSUPP::Errno: Integer
+
+class Errno::EOVERFLOW < SystemCallError
+end
+
+Errno::EOVERFLOW::Errno: Integer
+
+class Errno::EOWNERDEAD < SystemCallError
+end
+
+Errno::EOWNERDEAD::Errno: Integer
+
+class Errno::EPERM < SystemCallError
+end
+
+Errno::EPERM::Errno: Integer
+
+class Errno::EPFNOSUPPORT < SystemCallError
+end
+
+Errno::EPFNOSUPPORT::Errno: Integer
+
+class Errno::EPIPE < SystemCallError
+end
+
+Errno::EPIPE::Errno: Integer
+
+class Errno::EPROCLIM < SystemCallError
+end
+
+Errno::EPROCLIM::Errno: Integer
+
+class Errno::EPROCUNAVAIL < SystemCallError
+end
+
+Errno::EPROCUNAVAIL::Errno: Integer
+
+class Errno::EPROGMISMATCH < SystemCallError
+end
+
+Errno::EPROGMISMATCH::Errno: Integer
+
+class Errno::EPROGUNAVAIL < SystemCallError
+end
+
+Errno::EPROGUNAVAIL::Errno: Integer
+
+# Protocol error.
+#
+class Errno::EPROTO < SystemCallError
+end
+
+Errno::EPROTO::Errno: Integer
+
+class Errno::EPROTONOSUPPORT < SystemCallError
+end
+
+Errno::EPROTONOSUPPORT::Errno: Integer
+
+class Errno::EPROTOTYPE < SystemCallError
+end
+
+Errno::EPROTOTYPE::Errno: Integer
+
+class Errno::ERANGE < SystemCallError
+end
+
+Errno::ERANGE::Errno: Integer
+
+class Errno::EREMCHG < SystemCallError
+end
+
+Errno::EREMCHG::Errno: Integer
+
+class Errno::EREMOTE < SystemCallError
+end
+
+Errno::EREMOTE::Errno: Integer
+
+class Errno::EREMOTEIO < SystemCallError
+end
+
+Errno::EREMOTEIO::Errno: Integer
+
+class Errno::ERESTART < SystemCallError
+end
+
+Errno::ERESTART::Errno: Integer
+
+class Errno::ERFKILL < SystemCallError
+end
+
+Errno::ERFKILL::Errno: Integer
+
+class Errno::EROFS < SystemCallError
+end
+
+Errno::EROFS::Errno: Integer
+
+class Errno::ERPCMISMATCH < SystemCallError
+end
+
+Errno::ERPCMISMATCH::Errno: Integer
+
+class Errno::ESHUTDOWN < SystemCallError
+end
+
+Errno::ESHUTDOWN::Errno: Integer
+
+class Errno::ESOCKTNOSUPPORT < SystemCallError
+end
+
+Errno::ESOCKTNOSUPPORT::Errno: Integer
+
+class Errno::ESPIPE < SystemCallError
+end
+
+Errno::ESPIPE::Errno: Integer
+
+class Errno::ESRCH < SystemCallError
+end
+
+Errno::ESRCH::Errno: Integer
+
+class Errno::ESRMNT < SystemCallError
+end
+
+Errno::ESRMNT::Errno: Integer
+
+class Errno::ESTALE < SystemCallError
+end
+
+Errno::ESTALE::Errno: Integer
+
+class Errno::ESTRPIPE < SystemCallError
+end
+
+Errno::ESTRPIPE::Errno: Integer
+
+class Errno::ETIME < SystemCallError
+end
+
+Errno::ETIME::Errno: Integer
+
+class Errno::ETIMEDOUT < SystemCallError
+end
+
+Errno::ETIMEDOUT::Errno: Integer
+
+class Errno::ETOOMANYREFS < SystemCallError
+end
+
+Errno::ETOOMANYREFS::Errno: Integer
+
+class Errno::ETXTBSY < SystemCallError
+end
+
+Errno::ETXTBSY::Errno: Integer
+
+class Errno::EUCLEAN < SystemCallError
+end
+
+Errno::EUCLEAN::Errno: Integer
+
+class Errno::EUNATCH < SystemCallError
+end
+
+Errno::EUNATCH::Errno: Integer
+
+class Errno::EUSERS < SystemCallError
+end
+
+Errno::EUSERS::Errno: Integer
+
+class Errno::EWOULDBLOCK < SystemCallError
+end
+
+Errno::EWOULDBLOCK::Errno: Integer
+
+class Errno::EXDEV < SystemCallError
+end
+
+Errno::EXDEV::Errno: Integer
+
+class Errno::EXFULL < SystemCallError
+end
+
+Errno::EXFULL::Errno: Integer

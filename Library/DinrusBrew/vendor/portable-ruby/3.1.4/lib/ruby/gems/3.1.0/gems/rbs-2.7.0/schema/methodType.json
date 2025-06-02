@@ -1,0 +1,50 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "definitions": {
+    "block": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "$ref": "function.json"
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "self_type": {
+          "oneOf": [
+            { "$ref": "#" },
+            { "type": "null" }
+          ]
+        }
+      },
+      "required": ["type", "required", "self_type"]
+    }
+  },
+  "title": "Method type: `() -> void`, `[X] (::Integer) { (::String) -> X } -> Array[X]`, ...",
+  "type": "object",
+  "properties": {
+    "type_params": {
+      "type": "array",
+      "items": {
+        "$ref": "typeParam.json"
+      }
+    },
+    "type": {
+      "$ref": "function.json"
+    },
+    "block": {
+      "oneOf": [
+        {
+          "$ref": "#/definitions/block"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "location": {
+      "$ref": "location.json"
+    }
+  },
+  "required": ["type_params", "type", "block", "location"]
+}

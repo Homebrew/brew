@@ -1,0 +1,180 @@
+<body id="top" role="document" class="<%= klass.type %>">
+<nav role="navigation">
+  <div id="project-navigation">
+    <%= render '_sidebar_navigation.rhtml' %>
+    <%= render '_sidebar_search.rhtml' %>
+  </div>
+
+  <%= render '_sidebar_table_of_contents.rhtml' %>
+
+  <div id="class-metadata">
+    <%= render '_sidebar_sections.rhtml' %>
+    <%= render '_sidebar_parent.rhtml' %>
+    <%= render '_sidebar_includes.rhtml' %>
+    <%= render '_sidebar_extends.rhtml' %>
+    <%= render '_sidebar_methods.rhtml' %>
+  </div>
+</nav>
+
+<main role="main" aria-labelledby="<%=h klass.aref %>">
+  <h1 id="<%=h klass.aref %>" class="<%= klass.type %>">
+    <%= klass.type %> <%= klass.full_name %>
+  </h1>
+
+  <section class="description">
+    <%= klass.description %>
+  </section>
+
+  <%- klass.each_section do |section, constants, attributes| -%>
+  <section id="<%= section.aref %>" class="documentation-section">
+    <%- if section.title then -%>
+    <header class="documentation-section-title">
+      <h2>
+        <%= section.title %>
+      </h2>
+      <span class="section-click-top">
+        <a href="#top">&uarr; top</a>
+      </span>
+    </header>
+    <%- end -%>
+
+    <%- if section.comment then -%>
+    <div>
+      <%= section.description %>
+    </div>
+    <%- end -%>
+
+    <%- unless constants.empty? then -%>
+    <section class="constants-list">
+      <header>
+        <h3>Constants</h3>
+      </header>
+      <dl>
+      <%- constants.each do |const| -%>
+        <dt id="<%= const.name %>"><%= const.name %>
+        <%- if const.comment then -%>
+        <dd><%= const.description.strip %>
+        <%- else -%>
+        <dd class="missing-docs">(Not documented)
+        <%- end -%>
+      <%- end -%>
+      </dl>
+    </section>
+    <%- end -%>
+
+    <%- unless attributes.empty? then -%>
+    <section class="attribute-method-details" class="method-section">
+      <header>
+        <h3>Attributes</h3>
+      </header>
+
+      <%- attributes.each do |attrib| -%>
+      <div id="<%= attrib.aref %>" class="method-detail">
+        <div class="method-heading attribute-method-heading">
+          <span class="method-name"><%= h attrib.name %></span><span
+            class="attribute-access-type">[<%= attrib.rw %>]</span>
+        </div>
+
+        <div class="method-description">
+        <%- if attrib.comment then -%>
+        <%= attrib.description.strip %>
+        <%- else -%>
+        <p class="missing-docs">(Not documented)
+        <%- end -%>
+        </div>
+      </div>
+      <%- end -%>
+    </section>
+    <%- end -%>
+
+    <%- klass.methods_by_type(section).each do |type, visibilities|
+       next if visibilities.empty?
+       visibilities.each do |visibility, methods|
+         next if methods.empty? %>
+     <section id="<%= visibility %>-<%= type %>-<%= section.aref %>-method-details" class="method-section">
+       <header>
+         <h3><%= visibility.to_s.capitalize %> <%= type.capitalize %> Methods</h3>
+       </header>
+
+    <%- methods.each do |method| -%>
+      <div id="<%= method.aref %>" class="method-detail <%= method.is_alias_for ? "method-alias" : '' %>">
+        <div class="method-header">
+          <%- if (call_seq = method.call_seq) then -%>
+          <%-   call_seq.strip.split("\n").each_with_index do |call_seq, i| -%>
+          <div class="method-heading">
+            <span class="method-callseq">
+              <%= h(call_seq.strip.
+                    gsub( /^\w+\./m, '')).
+                    gsub(/(.*)[-=]&gt;/, '\1&rarr;') %>
+            </span>
+            <%- if i == 0 and method.token_stream then -%>
+            <span class="method-click-advice">click to toggle source</span>
+            <%- end -%>
+          </div>
+          <%-   end -%>
+          <%- elsif method.has_call_seq? then -%>
+          <div class="method-heading">
+            <span class="method-name"><%= h method.name %></span>
+          </div>
+          <%- else -%>
+          <div class="method-heading">
+            <span class="method-name"><%= h method.name %></span><span
+              class="method-args"><%= h method.param_seq %></span>
+            <%- if method.token_stream then -%>
+            <span class="method-click-advice">click to toggle source</span>
+            <%- end -%>
+          </div>
+          <%- end -%>
+        </div>
+
+        <%- unless method.skip_description? then -%>
+        <div class="method-description">
+          <%- if method.comment then -%>
+          <%= method.description.strip %>
+          <%- else -%>
+          <p class="missing-docs">(Not documented)
+          <%- end -%>
+          <%- if method.calls_super then -%>
+            <div class="method-calls-super">
+              Calls superclass method
+              <%=
+                  method.superclass_method ?
+                  method.formatter.link(method.superclass_method.full_name, method.superclass_method.full_name) : nil
+              %>
+            </div>
+          <%- end -%>
+
+          <%- if method.token_stream then -%>
+          <div class="method-source-code" id="<%= method.html_name %>-source">
+            <pre><%= method.markup_code %></pre>
+          </div>
+          <%- end -%>
+        </div>
+        <%- end -%>
+
+        <%- unless method.aliases.empty? then -%>
+        <div class="aliases">
+          Also aliased as: <%= method.aliases.map do |aka|
+            if aka.parent then # HACK lib/rexml/encodings
+              %{<a href="#{klass.aref_to aka.path}">#{h aka.name}</a>}
+            else
+              h aka.name
+            end
+          end.join ", " %>
+        </div>
+        <%- end -%>
+
+        <%- if method.is_alias_for then -%>
+        <div class="aliases">
+          Alias for: <a href="<%= klass.aref_to method.is_alias_for.path %>"><%= h method.is_alias_for.name %></a>
+        </div>
+        <%- end -%>
+      </div>
+
+    <%- end -%>
+    </section>
+  <%- end
+     end %>
+  </section>
+<%- end -%>
+</main>

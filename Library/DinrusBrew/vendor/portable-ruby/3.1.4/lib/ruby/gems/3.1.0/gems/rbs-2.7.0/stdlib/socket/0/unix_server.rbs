@@ -1,0 +1,174 @@
+# <!-- rdoc-file=ext/socket/unixserver.c -->
+# UNIXServer represents a UNIX domain stream server socket.
+#
+class UNIXServer < UNIXSocket
+  public
+
+  # <!--
+  #   rdoc-file=ext/socket/unixserver.c
+  #   - unixserver.accept => unixsocket
+  # -->
+  # Accepts an incoming connection. It returns a new UNIXSocket object.
+  #
+  #     UNIXServer.open("/tmp/sock") {|serv|
+  #       UNIXSocket.open("/tmp/sock") {|c|
+  #         s = serv.accept
+  #         s.puts "hi"
+  #         s.close
+  #         p c.read #=> "hi\n"
+  #       }
+  #     }
+  #
+  def accept: () -> UNIXSocket
+
+  # <!--
+  #   rdoc-file=ext/socket/lib/socket.rb
+  #   - unixserver.accept_nonblock([options]) => unixsocket
+  # -->
+  # Accepts an incoming connection using accept(2) after O_NONBLOCK is set for the
+  # underlying file descriptor. It returns an accepted UNIXSocket for the incoming
+  # connection.
+  #
+  # ### Example
+  #     require 'socket'
+  #     serv = UNIXServer.new("/tmp/sock")
+  #     begin # emulate blocking accept
+  #       sock = serv.accept_nonblock
+  #     rescue IO::WaitReadable, Errno::EINTR
+  #       IO.select([serv])
+  #       retry
+  #     end
+  #     # sock is an accepted socket.
+  #
+  # Refer to Socket#accept for the exceptions that may be thrown if the call to
+  # UNIXServer#accept_nonblock fails.
+  #
+  # UNIXServer#accept_nonblock may raise any error corresponding to accept(2)
+  # failure, including Errno::EWOULDBLOCK.
+  #
+  # If the exception is Errno::EWOULDBLOCK, Errno::EAGAIN, Errno::ECONNABORTED or
+  # Errno::EPROTO, it is extended by IO::WaitReadable. So IO::WaitReadable can be
+  # used to rescue the exceptions for retrying accept_nonblock.
+  #
+  # By specifying a keyword argument *exception* to `false`, you can indicate that
+  # accept_nonblock should not raise an IO::WaitReadable exception, but return the
+  # symbol `:wait_readable` instead.
+  #
+  # ### See
+  # *   UNIXServer#accept
+  # *   Socket#accept
+  #
+  def accept_nonblock: (?exception: boolish) -> (UNIXSocket | :wait_readable)
+
+  # <!--
+  #   rdoc-file=ext/socket/unixserver.c
+  #   - socket.listen( int ) => 0
+  # -->
+  # Listens for connections, using the specified `int` as the backlog. A call to
+  # *listen* only applies if the `socket` is of type SOCK_STREAM or
+  # SOCK_SEQPACKET.
+  #
+  # ### Parameter
+  # *   `backlog` - the maximum length of the queue for pending connections.
+  #
+  #
+  # ### Example 1
+  #     require 'socket'
+  #     include Socket::Constants
+  #     socket = Socket.new( AF_INET, SOCK_STREAM, 0 )
+  #     sockaddr = Socket.pack_sockaddr_in( 2200, 'localhost' )
+  #     socket.bind( sockaddr )
+  #     socket.listen( 5 )
+  #
+  # ### Example 2 (listening on an arbitrary port, unix-based systems only):
+  #     require 'socket'
+  #     include Socket::Constants
+  #     socket = Socket.new( AF_INET, SOCK_STREAM, 0 )
+  #     socket.listen( 1 )
+  #
+  # ### Unix-based Exceptions
+  # On unix based systems the above will work because a new `sockaddr` struct is
+  # created on the address ADDR_ANY, for an arbitrary port number as handed off by
+  # the kernel. It will not work on Windows, because Windows requires that the
+  # `socket` is bound by calling *bind* before it can *listen*.
+  #
+  # If the *backlog* amount exceeds the implementation-dependent maximum queue
+  # length, the implementation's maximum queue length will be used.
+  #
+  # On unix-based based systems the following system exceptions may be raised if
+  # the call to *listen* fails:
+  # *   Errno::EBADF - the *socket* argument is not a valid file descriptor
+  # *   Errno::EDESTADDRREQ - the *socket* is not bound to a local address, and
+  #     the protocol does not support listening on an unbound socket
+  # *   Errno::EINVAL - the *socket* is already connected
+  # *   Errno::ENOTSOCK - the *socket* argument does not refer to a socket
+  # *   Errno::EOPNOTSUPP - the *socket* protocol does not support listen
+  # *   Errno::EACCES - the calling process does not have appropriate privileges
+  # *   Errno::EINVAL - the *socket* has been shut down
+  # *   Errno::ENOBUFS - insufficient resources are available in the system to
+  #     complete the call
+  #
+  #
+  # ### Windows Exceptions
+  # On Windows systems the following system exceptions may be raised if the call
+  # to *listen* fails:
+  # *   Errno::ENETDOWN - the network is down
+  # *   Errno::EADDRINUSE - the socket's local address is already in use. This
+  #     usually occurs during the execution of *bind* but could be delayed if the
+  #     call to *bind* was to a partially wildcard address (involving ADDR_ANY)
+  #     and if a specific address needs to be committed at the time of the call to
+  #     *listen*
+  # *   Errno::EINPROGRESS - a Windows Sockets 1.1 call is in progress or the
+  #     service provider is still processing a callback function
+  # *   Errno::EINVAL - the `socket` has not been bound with a call to *bind*.
+  # *   Errno::EISCONN - the `socket` is already connected
+  # *   Errno::EMFILE - no more socket descriptors are available
+  # *   Errno::ENOBUFS - no buffer space is available
+  # *   Errno::ENOTSOC - `socket` is not a socket
+  # *   Errno::EOPNOTSUPP - the referenced `socket` is not a type that supports
+  #     the *listen* method
+  #
+  #
+  # ### See
+  # *   listen manual pages on unix-based systems
+  # *   listen function in Microsoft's Winsock functions reference
+  #
+  def listen: (Integer backlog) -> void
+
+  # <!--
+  #   rdoc-file=ext/socket/unixserver.c
+  #   - unixserver.sysaccept => file_descriptor
+  # -->
+  # Accepts a new connection. It returns the new file descriptor which is an
+  # integer.
+  #
+  #     UNIXServer.open("/tmp/sock") {|serv|
+  #       UNIXSocket.open("/tmp/sock") {|c|
+  #         fd = serv.sysaccept
+  #         s = IO.new(fd)
+  #         s.puts "hi"
+  #         s.close
+  #         p c.read #=> "hi\n"
+  #       }
+  #     }
+  #
+  def sysaccept: () -> Integer
+
+  private
+
+  def __accept_nonblock: (untyped) -> untyped
+
+  # <!--
+  #   rdoc-file=ext/socket/unixserver.c
+  #   - UNIXServer.new(path) => unixserver
+  # -->
+  # Creates a new UNIX server socket bound to *path*.
+  #
+  #     require 'socket'
+  #
+  #     serv = UNIXServer.new("/tmp/sock")
+  #     s = serv.accept
+  #     p s.read
+  #
+  def initialize: (untyped) -> untyped
+end

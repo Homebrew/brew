@@ -1,0 +1,9 @@
+module RBS
+  interface _HashEqual
+    def ==: (untyped other) -> bool
+
+    alias eql? ==
+
+    def hash: () -> Integer
+  end
+end

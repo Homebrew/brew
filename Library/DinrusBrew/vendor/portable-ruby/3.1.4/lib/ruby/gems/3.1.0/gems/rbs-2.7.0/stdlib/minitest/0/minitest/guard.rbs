@@ -1,0 +1,64 @@
+# <!-- rdoc-file=lib/minitest.rb -->
+# Provides a simple set of guards that you can use in your tests to skip
+# execution if it is not applicable. These methods are mixed into Test as both
+# instance and class methods so you can use them inside or outside of the test
+# methods.
+#
+#     def test_something_for_mri
+#       skip "bug 1234"  if jruby?
+#       # ...
+#     end
+#
+#     if windows? then
+#       # ... lots of test methods ...
+#     end
+#
+module Minitest::Guard
+  # <!--
+  #   rdoc-file=lib/minitest.rb
+  #   - jruby?(platform = RUBY_PLATFORM)
+  # -->
+  # Is this running on jruby?
+  #
+  def jruby?: (?untyped platform) -> untyped
+
+  # <!--
+  #   rdoc-file=lib/minitest.rb
+  #   - maglev?(platform = defined?(RUBY_ENGINE) && RUBY_ENGINE)
+  # -->
+  # Is this running on maglev?
+  #
+  def maglev?: (?untyped platform) -> untyped
+
+  # <!--
+  #   rdoc-file=lib/minitest.rb
+  #   - mri?(platform = RUBY_DESCRIPTION)
+  # -->
+  # Is this running on mri?
+  #
+  def mri?: (?untyped platform) -> untyped
+
+  # <!--
+  #   rdoc-file=lib/minitest.rb
+  #   - osx?(platform = RUBY_PLATFORM)
+  # -->
+  # Is this running on macOS?
+  #
+  def osx?: (?untyped platform) -> untyped
+
+  # <!--
+  #   rdoc-file=lib/minitest.rb
+  #   - rubinius?(platform = defined?(RUBY_ENGINE) && RUBY_ENGINE)
+  # -->
+  # Is this running on rubinius?
+  #
+  def rubinius?: (?untyped platform) -> untyped
+
+  # <!--
+  #   rdoc-file=lib/minitest.rb
+  #   - windows?(platform = RUBY_PLATFORM)
+  # -->
+  # Is this running on windows?
+  #
+  def windows?: (?untyped platform) -> untyped
+end

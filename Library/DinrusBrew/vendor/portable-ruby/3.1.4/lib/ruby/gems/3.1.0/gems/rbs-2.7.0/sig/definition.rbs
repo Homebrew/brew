@@ -1,0 +1,157 @@
+module RBS
+  class Definition
+    type accessibility = :public | :private
+
+    class Variable
+      attr_reader parent_variable: Variable?
+      attr_reader type: Types::t
+      attr_reader declared_in: TypeName
+
+      def initialize: (parent_variable: Variable?, type: Types::t, declared_in: TypeName) -> void
+
+      def sub: (Substitution) -> Variable
+    end
+
+    class Method
+      type method_member = AST::Members::MethodDefinition | AST::Members::AttrReader | AST::Members::AttrAccessor | AST::Members::AttrWriter
+
+      class TypeDef
+        attr_reader type: MethodType
+        attr_reader member: method_member
+        attr_reader defined_in: TypeName
+        attr_reader implemented_in: TypeName?
+
+        def initialize: (type: MethodType, member: method_member, defined_in: TypeName, implemented_in: TypeName?) -> void
+
+        def comment: () -> AST::Comment?
+
+        def annotations: () -> Array[AST::Annotation]
+
+        def update: (?type: MethodType, ?member: method_member, ?defined_in: TypeName, ?implemented_in: TypeName?) -> TypeDef
+
+        def overload?: () -> bool
+      end
+
+      attr_reader super_method: Method?
+      attr_reader defs: Array[TypeDef]
+      attr_reader accessibility: accessibility
+      attr_reader extra_annotations: Array[AST::Annotation]
+      attr_reader defined_in: TypeName?
+      attr_reader implemented_in: TypeName?
+      attr_reader method_types: Array[MethodType]
+      attr_reader comments: Array[AST::Comment]
+      attr_reader annotations: Array[AST::Annotation]
+      attr_reader members: Array[method_member]
+      attr_reader alias_of: Method?
+
+      def initialize: (super_method: Method?,
+                       defs: Array[TypeDef],
+                       accessibility: accessibility,
+                       alias_of: Method?,
+                       ?annotations: Array[AST::Annotation]) -> void
+
+      def public?: () -> bool
+
+      def private?: () -> bool
+
+      # Substitutes type variables to some types.
+      # Takes care of type parameter bounds.
+      #
+      def sub: (Substitution) -> Method
+
+      # Applies the mapping from `Types::t` to `Types::t`.
+      #
+      # Note this method doesn't handle upper bound in type params.
+      # You may want to use `#map_type_bound` explicitly, or `#sub` for simple substitution.
+      #
+      def map_type: () { (Types::t) -> Types::t } -> Method
+
+      def map_type_bound: () { (AST::TypeParam::bound) -> AST::TypeParam::bound } -> Method
+
+      def map_method_type: () { (MethodType) -> MethodType } -> Method
+
+      def update: (
+        ?super_method: Method?,
+        ?defs: Array[TypeDef],
+        ?accessibility: accessibility,
+        ?alias_of: Method?,
+        ?annotations: Array[AST::Annotation]
+      ) -> Method
+    end
+
+    module Ancestor
+      type t = Instance | Singleton
+
+      class Instance
+        type source = :super | nil
+                    | AST::Members::Include | AST::Members::Extend | AST::Members::Prepend
+                    | AST::Declarations::Module::Self
+
+        attr_reader name: TypeName
+        attr_reader args: Array[Types::t]
+        attr_reader source: source
+
+        def initialize: (name: TypeName, args: Array[Types::t], source: source) -> void
+      end
+
+      class Singleton
+        attr_reader name: TypeName
+
+        def initialize: (name: TypeName) -> void
+      end
+    end
+
+    class InstanceAncestors
+      attr_reader type_name: TypeName
+      attr_reader params: Array[Symbol]
+      attr_reader ancestors: Array[Ancestor::t]
+
+      def initialize: (type_name: TypeName, params: Array[Symbol], ancestors: Array[Ancestor::t]) -> void
+
+      def apply: (Array[Types::t], location: Location[untyped, untyped]?) -> Array[Ancestor::t]
+    end
+
+    class SingletonAncestors
+      attr_reader type_name: TypeName
+      attr_reader ancestors: Array[Ancestor::t]
+
+      def initialize: (type_name: TypeName, ancestors: Array[Ancestor::t]) -> void
+    end
+
+    type self_type = Types::ClassSingleton | Types::ClassInstance | Types::Interface
+    type definition_entry = Environment::ModuleEntry | Environment::ClassEntry | Environment::SingleEntry[TypeName, AST::Declarations::Interface]
+
+    attr_reader type_name: TypeName
+    attr_reader entry: definition_entry
+    attr_reader ancestors: InstanceAncestors | SingletonAncestors | nil
+    attr_reader self_type: self_type
+    attr_reader methods: Hash[Symbol, Method]
+    attr_reader instance_variables: Hash[Symbol, Variable]
+    attr_reader class_variables: Hash[Symbol, Variable]
+
+    def initialize: (type_name: TypeName, entry: definition_entry, self_type: self_type, ancestors: InstanceAncestors | SingletonAncestors | nil) -> void
+
+    def class?: () -> bool
+
+    def module?: () -> bool
+
+    def interface?: () -> bool
+
+    def class_type?: () -> bool
+
+    def instance_type?: () -> bool
+
+    def interface_type?: () -> bool
+
+    def type_params: () -> Array[Symbol]
+
+    def type_params_decl: () -> Array[AST::TypeParam]
+
+    def sub: (Substitution) -> Definition
+
+    def map_method_type: () { (MethodType) -> MethodType } -> Definition
+
+    def each_type: () { (Types::t) -> void } -> void
+                 | () -> Enumerator[Types::t, void]
+  end
+end

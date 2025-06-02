@@ -1,0 +1,1104 @@
+# <!-- rdoc-file=lib/uri.rb -->
+# URI is a module providing classes to handle Uniform Resource Identifiers
+# ([RFC2396](http://tools.ietf.org/html/rfc2396)).
+#
+# ## Features
+#
+# *   Uniform way of handling URIs.
+# *   Flexibility to introduce custom URI schemes.
+# *   Flexibility to have an alternate URI::Parser (or just different patterns
+#     and regexp's).
+#
+#
+# ## Basic example
+#
+#     require 'uri'
+#
+#     uri = URI("http://foo.com/posts?id=30&limit=5#time=1305298413")
+#     #=> #<URI::HTTP http://foo.com/posts?id=30&limit=5#time=1305298413>
+#
+#     uri.scheme    #=> "http"
+#     uri.host      #=> "foo.com"
+#     uri.path      #=> "/posts"
+#     uri.query     #=> "id=30&limit=5"
+#     uri.fragment  #=> "time=1305298413"
+#
+#     uri.to_s      #=> "http://foo.com/posts?id=30&limit=5#time=1305298413"
+#
+# ## Adding custom URIs
+#
+#     module URI
+#       class RSYNC < Generic
+#         DEFAULT_PORT = 873
+#       end
+#       register_scheme 'RSYNC', RSYNC
+#     end
+#     #=> URI::RSYNC
+#
+#     URI.scheme_list
+#     #=> {"FILE"=>URI::File, "FTP"=>URI::FTP, "HTTP"=>URI::HTTP,
+#     #    "HTTPS"=>URI::HTTPS, "LDAP"=>URI::LDAP, "LDAPS"=>URI::LDAPS,
+#     #    "MAILTO"=>URI::MailTo, "RSYNC"=>URI::RSYNC}
+#
+#     uri = URI("rsync://rsync.foo.com")
+#     #=> #<URI::RSYNC rsync://rsync.foo.com>
+#
+# ## RFC References
+#
+# A good place to view an RFC spec is http://www.ietf.org/rfc.html.
+#
+# Here is a list of all related RFC's:
+# *   [RFC822](http://tools.ietf.org/html/rfc822)
+# *   [RFC1738](http://tools.ietf.org/html/rfc1738)
+# *   [RFC2255](http://tools.ietf.org/html/rfc2255)
+# *   [RFC2368](http://tools.ietf.org/html/rfc2368)
+# *   [RFC2373](http://tools.ietf.org/html/rfc2373)
+# *   [RFC2396](http://tools.ietf.org/html/rfc2396)
+# *   [RFC2732](http://tools.ietf.org/html/rfc2732)
+# *   [RFC3986](http://tools.ietf.org/html/rfc3986)
+#
+#
+# ## Class tree
+#
+# *   URI::Generic (in uri/generic.rb)
+#     *   URI::File - (in uri/file.rb)
+#     *   URI::FTP - (in uri/ftp.rb)
+#     *   URI::HTTP - (in uri/http.rb)
+#         *   URI::HTTPS - (in uri/https.rb)
+#
+#     *   URI::LDAP - (in uri/ldap.rb)
+#         *   URI::LDAPS - (in uri/ldaps.rb)
+#
+#     *   URI::MailTo - (in uri/mailto.rb)
+#
+# *   URI::Parser - (in uri/common.rb)
+# *   URI::REGEXP - (in uri/common.rb)
+#     *   URI::REGEXP::PATTERN - (in uri/common.rb)
+#
+# *   URI::Util - (in uri/common.rb)
+# *   URI::Error - (in uri/common.rb)
+#     *   URI::InvalidURIError - (in uri/common.rb)
+#     *   URI::InvalidComponentError - (in uri/common.rb)
+#     *   URI::BadURIError - (in uri/common.rb)
+#
+#
+#
+# ## Copyright Info
+#
+# Author
+# :   Akira Yamada <akira@ruby-lang.org>
+# Documentation
+# :   Akira Yamada <akira@ruby-lang.org> Dmitry V. Sabanin <sdmitry@lrn.ru>
+#     Vincent Batts <vbatts@hashbangbash.com>
+# License
+# :   Copyright (c) 2001 akira yamada <akira@ruby-lang.org> You can redistribute
+#     it and/or modify it under the same term as Ruby.
+#
+module URI
+  # <!-- rdoc-file=lib/uri/generic.rb -->
+  # Base class for all URI classes. Implements generic URI syntax as per RFC 2396.
+  #
+  class Generic
+    include URI
+
+    # <!-- rdoc-file=lib/uri/generic.rb -->
+    # A Default port of nil for URI::Generic.
+    #
+    DEFAULT_PORT: nil | Integer
+
+    # <!--
+    #   rdoc-file=lib/uri/generic.rb
+    #   - default_port()
+    # -->
+    # Returns default port.
+    #
+    def self.default_port: () -> (nil | Integer)
+
+    # <!--
+    #   rdoc-file=lib/uri/generic.rb
+    #   - default_port()
+    # -->
+    # Returns default port.
+    #
+    def default_port: () -> (nil | Integer)
+
+    # <!-- rdoc-file=lib/uri/generic.rb -->
+    # An Array of the available components for URI::Generic.
+    #
+    COMPONENT: Array[Symbol]
+
+    # <!--
+    #   rdoc-file=lib/uri/generic.rb
+    #   - component()
+    # -->
+    # Components of the URI in the order.
+    #
+    def self.component: () -> Array[Symbol]
+
+    USE_REGISTRY: bool
+
+    def self.use_registry: () -> bool
+
+    # <!--
+    #   rdoc-file=lib/uri/generic.rb
+    #   - build2(args)
+    # -->
+    # ## Synopsis
+    #
+    # See ::new.
+    #
+    # ## Description
+    #
+    # At first, tries to create a new URI::Generic instance using
+    # URI::Generic::build. But, if exception URI::InvalidComponentError is raised,
+    # then it does URI::Escape.escape all URI components and tries again.
+    #
+    def self.build2: (Array[nil | String | Integer]) -> URI::Generic
+                   | ({ scheme: String?, userinfo: String?, host: String?, port: Integer?, registry: String?, path: String?, opaque: String?, query: String?, fragment: String? }) -> URI::Generic
+
+    # <!--
+    #   rdoc-file=lib/uri/generic.rb
+    #   - build(args)
+    # -->
+    # ## Synopsis
+    #
+    # See ::new.
+    #
+    # ## Description
+    #
+    # Creates a new URI::Generic instance from components of URI::Generic with
+    # check.  Components are: scheme, userinfo, host, port, registry, path, opaque,
+    # query, and fragment. You can provide arguments either by an Array or a Hash.
+    # See ::new for hash keys to use or for order of array items.
+    #
+    def self.build: (Array[nil | String | Integer]) -> URI::Generic
+                  | ({ scheme: String?, userinfo: String?, host: String?, port: Integer?, registry: String?, path: String?, opaque: String?, query: String?, fragment: String? }) -> URI::Generic
+
+    # <!--
+    #   rdoc-file=lib/uri/generic.rb
+    #   - new(scheme, userinfo, host, port, registry, path, opaque, query, fragment, parser = DEFAULT_PARSER, arg_check = false)
+    # -->
+    # ## Args
+    #
+    # `scheme`
+    # :   Protocol scheme, i.e. 'http','ftp','mailto' and so on.
+    # `userinfo`
+    # :   User name and password, i.e. 'sdmitry:bla'.
+    # `host`
+    # :   Server host name.
+    # `port`
+    # :   Server port.
+    # `registry`
+    # :   Registry of naming authorities.
+    # `path`
+    # :   Path on server.
+    # `opaque`
+    # :   Opaque part.
+    # `query`
+    # :   Query data.
+    # `fragment`
+    # :   Part of the URI after '#' character.
+    # `parser`
+    # :   Parser for internal use [URI::DEFAULT_PARSER by default].
+    # `arg_check`
+    # :   Check arguments [false by default].
+    #
+    #
+    # ## Description
+    #
+    # Creates a new URI::Generic instance from ``generic'' components without check.
+    #
+    def initialize: (String? scheme, String? userinfo, String? host, (String | Integer)? port, nil registry, String? path, String? opaque, String? query, String? fragment, ?untyped parser, ?boolish arg_check) -> void
+
+    # <!-- rdoc-file=lib/uri/generic.rb -->
+    # Returns the scheme component of the URI.
+    #
+    #     URI("http://foo/bar/baz").scheme #=> "http"
+    #
+    attr_reader scheme: String?
+
+    # <!-- rdoc-file=lib/uri/generic.rb -->
+    # Returns the host component of the URI.
+    #
+    #     URI("http://foo/bar/baz").host #=> "foo"
+    #
+    # It returns nil if no host component exists.
+    #
+    #     URI("mailto:foo@example.org").host #=> nil
+    #
+    # The component does not contain the port number.
+    #
+    #     URI("http://foo:8080/bar/baz").host #=> "foo"
+    #
+    # Since IPv6 addresses are wrapped with brackets in URIs, this method returns
+    # IPv6 addresses wrapped with brackets. This form is not appropriate to pass to
+    # socket methods such as TCPSocket.open. If unwrapped host names are required,
+    # use the #hostname method.
+    #
+    #     URI("http://[::1]/bar/baz").host     #=> "[::1]"
+    #     URI("http://[::1]/bar/baz").hostname #=> "::1"
+    #
+    attr_reader host: String?
+
+    # <!-- rdoc-file=lib/uri/generic.rb -->
+    # Returns the port component of the URI.
+    #
+    #     URI("http://foo/bar/baz").port      #=> 80
+    #     URI("http://foo:8080/bar/baz").port #=> 8080
+    #
+    attr_reader port: Integer?
+
+    def registry: () -> nil
+
+    # <!-- rdoc-file=lib/uri/generic.rb -->
+    # Returns the path component of the URI.
+    #
+    #     URI("http://foo/bar/baz").path #=> "/bar/baz"
+    #
+    attr_reader path: String?
+
+    # <!-- rdoc-file=lib/uri/generic.rb -->
+    # Returns the query component of the URI.
+    #
+    #     URI("http://foo/bar/baz?search=FooBar").query #=> "search=FooBar"
+    #
+    attr_reader query: String?
+
+    # <!-- rdoc-file=lib/uri/generic.rb -->
+    # Returns the opaque part of the URI.
+    #
+    #     URI("mailto:foo@example.org").opaque #=> "foo@example.org"
+    #     URI("http://foo/bar/baz").opaque     #=> nil
+    #
+    # The portion of the path that does not make use of the slash '/'. The path
+    # typically refers to an absolute path or an opaque part. (See RFC2396 Section 3
+    # and 5.2.)
+    #
+    attr_reader opaque: String?
+
+    # <!-- rdoc-file=lib/uri/generic.rb -->
+    # Returns the fragment component of the URI.
+    #
+    #     URI("http://foo/bar/baz?search=FooBar#ponies").fragment #=> "ponies"
+    #
+    attr_reader fragment: String?
+
+    # <!--
+    #   rdoc-file=lib/uri/generic.rb
+    #   - parser()
+    # -->
+    # Returns the parser to be used.
+    #
+    # Unless a URI::Parser is defined, DEFAULT_PARSER is used.
+    #
+    def parser: () -> untyped
+
+    # <!--
+    #   rdoc-file=lib/uri/generic.rb
+    #   - replace!(oth)
+    # -->
+    # Replaces self by other URI object.
+    #
+    def replace!: (URI::Generic oth) -> URI::Generic
+
+    # <!--
+    #   rdoc-file=lib/uri/generic.rb
+    #   - component()
+    # -->
+    # Components of the URI in the order.
+    #
+    def component: () -> Array[Symbol]
+
+    # <!--
+    #   rdoc-file=lib/uri/generic.rb
+    #   - check_scheme(v)
+    # -->
+    # Checks the scheme `v` component against the URI::Parser Regexp for :SCHEME.
+    #
+    def check_scheme: (String? v) -> true
+
+    # <!--
+    #   rdoc-file=lib/uri/generic.rb
+    #   - set_scheme(v)
+    # -->
+    # Protected setter for the scheme component `v`.
+    #
+    # See also URI::Generic.scheme=.
+    #
+    def set_scheme: (String? v) -> String?
+
+    # <!--
+    #   rdoc-file=lib/uri/generic.rb
+    #   - scheme=(v)
+    # -->
+    # ## Args
+    #
+    # `v`
+    # :   String
+    #
+    #
+    # ## Description
+    #
+    # Public setter for the scheme component `v` (with validation).
+    #
+    # See also URI::Generic.check_scheme.
+    #
+    # ## Usage
+    #
+    #     require 'uri'
+    #
+    #     uri = URI.parse("http://my.example.com")
+    #     uri.scheme = "https"
+    #     uri.to_s  #=> "https://my.example.com"
+    #
+    def scheme=: (String? v) -> String?
+
+    # <!--
+    #   rdoc-file=lib/uri/generic.rb
+    #   - check_userinfo(user, password = nil)
+    # -->
+    # Checks the `user` and `password`.
+    #
+    # If `password` is not provided, then `user` is split, using
+    # URI::Generic.split_userinfo, to pull `user` and +password.
+    #
+    # See also URI::Generic.check_user, URI::Generic.check_password.
+    #
+    def check_userinfo: (String user, ?String? password) -> true
+
+    # <!--
+    #   rdoc-file=lib/uri/generic.rb
+    #   - check_user(v)
+    # -->
+    # Checks the user `v` component for RFC2396 compliance and against the
+    # URI::Parser Regexp for :USERINFO.
+    #
+    # Can not have a registry or opaque component defined, with a user component
+    # defined.
+    #
+    def check_user: (String v) -> (String | true)
+
+    # <!--
+    #   rdoc-file=lib/uri/generic.rb
+    #   - check_password(v, user = @user)
+    # -->
+    # Checks the password `v` component for RFC2396 compliance and against the
+    # URI::Parser Regexp for :USERINFO.
+    #
+    # Can not have a registry or opaque component defined, with a user component
+    # defined.
+    #
+    def check_password: (String? v, ?String user) -> (String? | true)
+
+    # <!--
+    #   rdoc-file=lib/uri/generic.rb
+    #   - userinfo=(userinfo)
+    # -->
+    # Sets userinfo, argument is string like 'name:pass'.
+    #
+    def userinfo=: (String? userinfo) -> String?
+
+    # <!--
+    #   rdoc-file=lib/uri/generic.rb
+    #   - user=(user)
+    # -->
+    # ## Args
+    #
+    # `v`
+    # :   String
+    #
+    #
+    # ## Description
+    #
+    # Public setter for the `user` component (with validation).
+    #
+    # See also URI::Generic.check_user.
+    #
+    # ## Usage
+    #
+    #     require 'uri'
+    #
+    #     uri = URI.parse("http://john:S3nsit1ve@my.example.com")
+    #     uri.user = "sam"
+    #     uri.to_s  #=> "http://sam:V3ry_S3nsit1ve@my.example.com"
+    #
+    def user=: (String? user) -> String?
+
+    # <!--
+    #   rdoc-file=lib/uri/generic.rb
+    #   - password=(password)
+    # -->
+    # ## Args
+    #
+    # `v`
+    # :   String
+    #
+    #
+    # ## Description
+    #
+    # Public setter for the `password` component (with validation).
+    #
+    # See also URI::Generic.check_password.
+    #
+    # ## Usage
+    #
+    #     require 'uri'
+    #
+    #     uri = URI.parse("http://john:S3nsit1ve@my.example.com")
+    #     uri.password = "V3ry_S3nsit1ve"
+    #     uri.to_s  #=> "http://john:V3ry_S3nsit1ve@my.example.com"
+    #
+    def password=: (String? password) -> String?
+
+    # <!--
+    #   rdoc-file=lib/uri/generic.rb
+    #   - set_userinfo(user, password = nil)
+    # -->
+    # Protected setter for the `user` component, and `password` if available (with
+    # validation).
+    #
+    # See also URI::Generic.userinfo=.
+    #
+    def set_userinfo: (String? user, ?String? password) -> [ String?, String? ]
+
+    # <!--
+    #   rdoc-file=lib/uri/generic.rb
+    #   - set_user(v)
+    # -->
+    # Protected setter for the user component `v`.
+    #
+    # See also URI::Generic.user=.
+    #
+    def set_user: (String? v) -> String?
+
+    # <!--
+    #   rdoc-file=lib/uri/generic.rb
+    #   - set_password(v)
+    # -->
+    # Protected setter for the password component `v`.
+    #
+    # See also URI::Generic.password=.
+    #
+    def set_password: (String? v) -> String?
+
+    # <!--
+    #   rdoc-file=lib/uri/generic.rb
+    #   - split_userinfo(ui)
+    # -->
+    # Returns the userinfo `ui` as `[user, password]` if properly formatted as
+    # 'user:password'.
+    #
+    def split_userinfo: (String ui) -> Array[String | nil]
+
+    # <!--
+    #   rdoc-file=lib/uri/generic.rb
+    #   - escape_userpass(v)
+    # -->
+    # Escapes 'user:password' `v` based on RFC 1738 section 3.1.
+    #
+    def escape_userpass: (String v) -> String
+
+    # <!--
+    #   rdoc-file=lib/uri/generic.rb
+    #   - userinfo()
+    # -->
+    # Returns the userinfo, either as 'user' or 'user:password'.
+    #
+    def userinfo: () -> String?
+
+    # <!--
+    #   rdoc-file=lib/uri/generic.rb
+    #   - user()
+    # -->
+    # Returns the user component.
+    #
+    def user: () -> String?
+
+    # <!--
+    #   rdoc-file=lib/uri/generic.rb
+    #   - password()
+    # -->
+    # Returns the password component.
+    #
+    def password: () -> String?
+
+    # <!--
+    #   rdoc-file=lib/uri/generic.rb
+    #   - check_host(v)
+    # -->
+    # Checks the host `v` component for RFC2396 compliance and against the
+    # URI::Parser Regexp for :HOST.
+    #
+    # Can not have a registry or opaque component defined, with a host component
+    # defined.
+    #
+    def check_host: (String? v) -> true?
+
+    # <!--
+    #   rdoc-file=lib/uri/generic.rb
+    #   - set_host(v)
+    # -->
+    # Protected setter for the host component `v`.
+    #
+    # See also URI::Generic.host=.
+    #
+    def set_host: (String? v) -> String?
+
+    # <!--
+    #   rdoc-file=lib/uri/generic.rb
+    #   - host=(v)
+    # -->
+    # ## Args
+    #
+    # `v`
+    # :   String
+    #
+    #
+    # ## Description
+    #
+    # Public setter for the host component `v` (with validation).
+    #
+    # See also URI::Generic.check_host.
+    #
+    # ## Usage
+    #
+    #     require 'uri'
+    #
+    #     uri = URI.parse("http://my.example.com")
+    #     uri.host = "foo.com"
+    #     uri.to_s  #=> "http://foo.com"
+    #
+    def host=: (String? v) -> String?
+
+    # <!--
+    #   rdoc-file=lib/uri/generic.rb
+    #   - hostname()
+    # -->
+    # Extract the host part of the URI and unwrap brackets for IPv6 addresses.
+    #
+    # This method is the same as URI::Generic#host except brackets for IPv6 (and
+    # future IP) addresses are removed.
+    #
+    #     uri = URI("http://[::1]/bar")
+    #     uri.hostname      #=> "::1"
+    #     uri.host          #=> "[::1]"
+    #
+    def hostname: () -> String?
+
+    # <!--
+    #   rdoc-file=lib/uri/generic.rb
+    #   - hostname=(v)
+    # -->
+    # Sets the host part of the URI as the argument with brackets for IPv6
+    # addresses.
+    #
+    # This method is the same as URI::Generic#host= except the argument can be a
+    # bare IPv6 address.
+    #
+    #     uri = URI("http://foo/bar")
+    #     uri.hostname = "::1"
+    #     uri.to_s  #=> "http://[::1]/bar"
+    #
+    # If the argument seems to be an IPv6 address, it is wrapped with brackets.
+    #
+    def hostname=: (String? v) -> String?
+
+    # <!--
+    #   rdoc-file=lib/uri/generic.rb
+    #   - check_port(v)
+    # -->
+    # Checks the port `v` component for RFC2396 compliance and against the
+    # URI::Parser Regexp for :PORT.
+    #
+    # Can not have a registry or opaque component defined, with a port component
+    # defined.
+    #
+    def check_port: ((String | Integer)? v) -> true?
+
+    # <!--
+    #   rdoc-file=lib/uri/generic.rb
+    #   - set_port(v)
+    # -->
+    # Protected setter for the port component `v`.
+    #
+    # See also URI::Generic.port=.
+    #
+    def set_port: ((String | Integer)? v) -> (String | Integer)?
+
+    # <!--
+    #   rdoc-file=lib/uri/generic.rb
+    #   - port=(v)
+    # -->
+    # ## Args
+    #
+    # `v`
+    # :   String
+    #
+    #
+    # ## Description
+    #
+    # Public setter for the port component `v` (with validation).
+    #
+    # See also URI::Generic.check_port.
+    #
+    # ## Usage
+    #
+    #     require 'uri'
+    #
+    #     uri = URI.parse("http://my.example.com")
+    #     uri.port = 8080
+    #     uri.to_s  #=> "http://my.example.com:8080"
+    #
+    def port=: ((String | Integer)? v) -> (String | Integer)?
+
+    def check_registry: (String v) -> nil
+
+    def set_registry: (String v) -> nil
+
+    # <!--
+    #   rdoc-file=lib/uri/generic.rb
+    #   - registry=(v)
+    # -->
+    #
+    def registry=: (String v) -> nil
+
+    # <!--
+    #   rdoc-file=lib/uri/generic.rb
+    #   - check_path(v)
+    # -->
+    # Checks the path `v` component for RFC2396 compliance and against the
+    # URI::Parser Regexp for :ABS_PATH and :REL_PATH.
+    #
+    # Can not have a opaque component defined, with a path component defined.
+    #
+    def check_path: (String? v) -> true
+
+    # <!--
+    #   rdoc-file=lib/uri/generic.rb
+    #   - set_path(v)
+    # -->
+    # Protected setter for the path component `v`.
+    #
+    # See also URI::Generic.path=.
+    #
+    def set_path: (String? v) -> String?
+
+    # <!--
+    #   rdoc-file=lib/uri/generic.rb
+    #   - path=(v)
+    # -->
+    # ## Args
+    #
+    # `v`
+    # :   String
+    #
+    #
+    # ## Description
+    #
+    # Public setter for the path component `v` (with validation).
+    #
+    # See also URI::Generic.check_path.
+    #
+    # ## Usage
+    #
+    #     require 'uri'
+    #
+    #     uri = URI.parse("http://my.example.com/pub/files")
+    #     uri.path = "/faq/"
+    #     uri.to_s  #=> "http://my.example.com/faq/"
+    #
+    def path=: (String? v) -> String?
+
+    # <!--
+    #   rdoc-file=lib/uri/generic.rb
+    #   - query=(v)
+    # -->
+    # ## Args
+    #
+    # `v`
+    # :   String
+    #
+    #
+    # ## Description
+    #
+    # Public setter for the query component `v`.
+    #
+    # ## Usage
+    #
+    #     require 'uri'
+    #
+    #     uri = URI.parse("http://my.example.com/?id=25")
+    #     uri.query = "id=1"
+    #     uri.to_s  #=> "http://my.example.com/?id=1"
+    #
+    def query=: (String? v) -> String?
+
+    # <!--
+    #   rdoc-file=lib/uri/generic.rb
+    #   - check_opaque(v)
+    # -->
+    # Checks the opaque `v` component for RFC2396 compliance and against the
+    # URI::Parser Regexp for :OPAQUE.
+    #
+    # Can not have a host, port, user, or path component defined, with an opaque
+    # component defined.
+    #
+    def check_opaque: (String? v) -> true?
+
+    # <!--
+    #   rdoc-file=lib/uri/generic.rb
+    #   - set_opaque(v)
+    # -->
+    # Protected setter for the opaque component `v`.
+    #
+    # See also URI::Generic.opaque=.
+    #
+    def set_opaque: (String? v) -> String?
+
+    # <!--
+    #   rdoc-file=lib/uri/generic.rb
+    #   - opaque=(v)
+    # -->
+    # ## Args
+    #
+    # `v`
+    # :   String
+    #
+    #
+    # ## Description
+    #
+    # Public setter for the opaque component `v` (with validation).
+    #
+    # See also URI::Generic.check_opaque.
+    #
+    def opaque=: (String? v) -> String?
+
+    # <!--
+    #   rdoc-file=lib/uri/generic.rb
+    #   - fragment=(v)
+    # -->
+    # Checks the fragment `v` component against the URI::Parser Regexp for
+    # :FRAGMENT.
+    #
+    # ## Args
+    #
+    # `v`
+    # :   String
+    #
+    #
+    # ## Description
+    #
+    # Public setter for the fragment component `v` (with validation).
+    #
+    # ## Usage
+    #
+    #     require 'uri'
+    #
+    #     uri = URI.parse("http://my.example.com/?id=25#time=1305212049")
+    #     uri.fragment = "time=1305212086"
+    #     uri.to_s  #=> "http://my.example.com/?id=25#time=1305212086"
+    #
+    def fragment=: (String? v) -> String?
+
+    # <!--
+    #   rdoc-file=lib/uri/generic.rb
+    #   - hierarchical?()
+    # -->
+    # Returns true if URI is hierarchical.
+    #
+    # ## Description
+    #
+    # URI has components listed in order of decreasing significance from left to
+    # right, see RFC3986 https://tools.ietf.org/html/rfc3986 1.2.3.
+    #
+    # ## Usage
+    #
+    #     require 'uri'
+    #
+    #     uri = URI.parse("http://my.example.com/")
+    #     uri.hierarchical?
+    #     #=> true
+    #     uri = URI.parse("mailto:joe@example.com")
+    #     uri.hierarchical?
+    #     #=> false
+    #
+    def hierarchical?: () -> bool
+
+    # <!--
+    #   rdoc-file=lib/uri/generic.rb
+    #   - absolute?()
+    # -->
+    # Returns true if URI has a scheme (e.g. http:// or https://) specified.
+    #
+    def absolute?: () -> bool
+
+    # <!--
+    #   rdoc-file=lib/uri/generic.rb
+    #   - relative?()
+    # -->
+    # Returns true if URI does not have a scheme (e.g. http:// or https://)
+    # specified.
+    #
+    def relative?: () -> bool
+
+    # <!--
+    #   rdoc-file=lib/uri/generic.rb
+    #   - split_path(path)
+    # -->
+    # Returns an Array of the path split on '/'.
+    #
+    def split_path: (String path) -> Array[String]
+
+    # <!--
+    #   rdoc-file=lib/uri/generic.rb
+    #   - merge_path(base, rel)
+    # -->
+    # Merges a base path `base`, with relative path `rel`, returns a modified base
+    # path.
+    #
+    def merge_path: (String base, String rel) -> String
+
+    # <!--
+    #   rdoc-file=lib/uri/generic.rb
+    #   - merge!(oth)
+    # -->
+    # ## Args
+    #
+    # `oth`
+    # :   URI or String
+    #
+    #
+    # ## Description
+    #
+    # Destructive form of #merge.
+    #
+    # ## Usage
+    #
+    #     require 'uri'
+    #
+    #     uri = URI.parse("http://my.example.com")
+    #     uri.merge!("/main.rbx?page=1")
+    #     uri.to_s  # => "http://my.example.com/main.rbx?page=1"
+    #
+    def merge!: (URI::Generic | string oth) -> String
+
+    # <!--
+    #   rdoc-file=lib/uri/generic.rb
+    #   - merge(oth)
+    # -->
+    # ## Args
+    #
+    # `oth`
+    # :   URI or String
+    #
+    #
+    # ## Description
+    #
+    # Merges two URIs.
+    #
+    # ## Usage
+    #
+    #     require 'uri'
+    #
+    #     uri = URI.parse("http://my.example.com")
+    #     uri.merge("/main.rbx?page=1")
+    #     # => "http://my.example.com/main.rbx?page=1"
+    #
+    def merge: (URI::Generic | string oth) -> URI::Generic
+
+    # :stopdoc:
+    def route_from_path: (String src, String dst) -> String
+
+    # :stopdoc:
+    def route_from0: (String oth) -> Array[URI::Generic]
+
+    # <!--
+    #   rdoc-file=lib/uri/generic.rb
+    #   - route_from(oth)
+    # -->
+    # ## Args
+    #
+    # `oth`
+    # :   URI or String
+    #
+    #
+    # ## Description
+    #
+    # Calculates relative path from oth to self.
+    #
+    # ## Usage
+    #
+    #     require 'uri'
+    #
+    #     uri = URI.parse('http://my.example.com/main.rbx?page=1')
+    #     uri.route_from('http://my.example.com')
+    #     #=> #<URI::Generic /main.rbx?page=1>
+    #
+    def route_from: (String oth) -> URI::Generic
+
+    # <!--
+    #   rdoc-file=lib/uri/generic.rb
+    #   - route_to(oth)
+    # -->
+    # ## Args
+    #
+    # `oth`
+    # :   URI or String
+    #
+    #
+    # ## Description
+    #
+    # Calculates relative path to oth from self.
+    #
+    # ## Usage
+    #
+    #     require 'uri'
+    #
+    #     uri = URI.parse('http://my.example.com')
+    #     uri.route_to('http://my.example.com/main.rbx?page=1')
+    #     #=> #<URI::Generic /main.rbx?page=1>
+    #
+    def route_to: (String oth) -> URI::Generic
+
+    # <!--
+    #   rdoc-file=lib/uri/generic.rb
+    #   - normalize()
+    # -->
+    # Returns normalized URI.
+    #
+    #     require 'uri'
+    #
+    #     URI("HTTP://my.EXAMPLE.com").normalize
+    #     #=> #<URI::HTTP http://my.example.com/>
+    #
+    # Normalization here means:
+    #
+    # *   scheme and host are converted to lowercase,
+    # *   an empty path component is set to "/".
+    #
+    def normalize: () -> untyped
+
+    # <!--
+    #   rdoc-file=lib/uri/generic.rb
+    #   - normalize!()
+    # -->
+    # Destructive version of #normalize.
+    #
+    def normalize!: () -> untyped
+
+    # <!--
+    #   rdoc-file=lib/uri/generic.rb
+    #   - to_s()
+    # -->
+    # Constructs String from URI.
+    #
+    def to_s: () -> String
+
+    # <!--
+    #   rdoc-file=lib/uri/generic.rb
+    #   - ==(oth)
+    # -->
+    # Compares two URIs.
+    #
+    def ==: (URI::Generic oth) -> bool
+
+    # <!--
+    #   rdoc-file=lib/uri/generic.rb
+    #   - hash()
+    # -->
+    #
+    def hash: () -> Integer
+
+    # <!--
+    #   rdoc-file=lib/uri/generic.rb
+    #   - eql?(oth)
+    # -->
+    #
+    def eql?: (URI::Generic oth) -> bool
+
+    # <!--
+    #   rdoc-file=lib/uri/generic.rb
+    #   - component_ary()
+    # -->
+    # Returns an Array of the components defined from the COMPONENT Array.
+    #
+    def component_ary: () -> Array[nil | String | Integer]
+
+    # <!--
+    #   rdoc-file=lib/uri/generic.rb
+    #   - select(*components)
+    # -->
+    # ## Args
+    #
+    # `components`
+    # :   Multiple Symbol arguments defined in URI::HTTP.
+    #
+    #
+    # ## Description
+    #
+    # Selects specified components from URI.
+    #
+    # ## Usage
+    #
+    #     require 'uri'
+    #
+    #     uri = URI.parse('http://myuser:mypass@my.example.com/test.rbx')
+    #     uri.select(:userinfo, :host, :path)
+    #     # => ["myuser:mypass", "my.example.com", "/test.rbx"]
+    #
+    def select: (*Symbol components) -> Array[nil | String | Integer]
+
+    # <!--
+    #   rdoc-file=lib/uri/generic.rb
+    #   - inspect()
+    # -->
+    #
+    def inspect: () -> String
+
+    # <!--
+    #   rdoc-file=lib/uri/generic.rb
+    #   - coerce(oth)
+    # -->
+    # ## Args
+    #
+    # `v`
+    # :   URI or String
+    #
+    #
+    # ## Description
+    #
+    # Attempts to parse other URI `oth`, returns [parsed_oth, self].
+    #
+    # ## Usage
+    #
+    #     require 'uri'
+    #
+    #     uri = URI.parse("http://my.example.com")
+    #     uri.coerce("http://foo.com")
+    #     #=> [#<URI::HTTP http://foo.com>, #<URI::HTTP http://my.example.com>]
+    #
+    def coerce: (URI::Generic | String oth) -> Array[URI::Generic]
+
+    # <!--
+    #   rdoc-file=lib/uri/generic.rb
+    #   - find_proxy(env=ENV)
+    # -->
+    # Returns a proxy URI. The proxy URI is obtained from environment variables such
+    # as http_proxy, ftp_proxy, no_proxy, etc. If there is no proper proxy, nil is
+    # returned.
+    #
+    # If the optional parameter `env` is specified, it is used instead of ENV.
+    #
+    # Note that capitalized variables (HTTP_PROXY, FTP_PROXY, NO_PROXY, etc.) are
+    # examined, too.
+    #
+    # But http_proxy and HTTP_PROXY is treated specially under CGI environment. It's
+    # because HTTP_PROXY may be set by Proxy: header. So HTTP_PROXY is not used.
+    # http_proxy is not used too if the variable is case insensitive. CGI_HTTP_PROXY
+    # can be used instead.
+    #
+    def find_proxy: (?String env) -> (nil | URI::Generic)
+
+    def self.use_proxy?: (String hostname, String addr, Integer port, String no_proxy) -> bool
+  end
+end

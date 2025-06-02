@@ -1,0 +1,965 @@
+module RBS
+  module Unnamed
+    # <!-- rdoc-file=io.c -->
+    # `ARGF` is a stream designed for use in scripts that process files given as
+    # command-line arguments or passed in via STDIN.
+    #
+    # The arguments passed to your script are stored in the `ARGV` Array, one
+    # argument per element. `ARGF` assumes that any arguments that aren't filenames
+    # have been removed from `ARGV`. For example:
+    #
+    #     $ ruby argf.rb --verbose file1 file2
+    #
+    #     ARGV  #=> ["--verbose", "file1", "file2"]
+    #     option = ARGV.shift #=> "--verbose"
+    #     ARGV  #=> ["file1", "file2"]
+    #
+    # You can now use `ARGF` to work with a concatenation of each of these named
+    # files. For instance, `ARGF.read` will return the contents of *file1* followed
+    # by the contents of *file2*.
+    #
+    # After a file in `ARGV` has been read `ARGF` removes it from the Array. Thus,
+    # after all files have been read `ARGV` will be empty.
+    #
+    # You can manipulate `ARGV` yourself to control what `ARGF` operates on. If you
+    # remove a file from `ARGV`, it is ignored by `ARGF`; if you add files to
+    # `ARGV`, they are treated as if they were named on the command line. For
+    # example:
+    #
+    #     ARGV.replace ["file1"]
+    #     ARGF.readlines # Returns the contents of file1 as an Array
+    #     ARGV           #=> []
+    #     ARGV.replace ["file2", "file3"]
+    #     ARGF.read      # Returns the contents of file2 and file3
+    #
+    # If `ARGV` is empty, `ARGF` acts as if it contained STDIN, i.e. the data piped
+    # to your script. For example:
+    #
+    #     $ echo "glark" | ruby -e 'p ARGF.read'
+    #     "glark\n"
+    #
+    %a{annotate:rdoc:copy:ARGF}
+    class ARGFClass
+      include Enumerable[String]
+
+      public
+
+      # <!--
+      #   rdoc-file=io.c
+      #   - ARGF.argv  -> ARGV
+      # -->
+      # Returns the `ARGV` array, which contains the arguments passed to your script,
+      # one per element.
+      #
+      # For example:
+      #
+      #     $ ruby argf.rb -v glark.txt
+      #
+      #     ARGF.argv   #=> ["-v", "glark.txt"]
+      #
+      %a{annotate:rdoc:copy:ARGF#argv}
+      def argv: () -> ::Array[String]
+
+      # <!--
+      #   rdoc-file=io.c
+      #   - ARGF.binmode  -> ARGF
+      # -->
+      # Puts `ARGF` into binary mode. Once a stream is in binary mode, it cannot be
+      # reset to non-binary mode. This option has the following effects:
+      #
+      # *   Newline conversion is disabled.
+      # *   Encoding conversion is disabled.
+      # *   Content is treated as ASCII-8BIT.
+      #
+      %a{annotate:rdoc:copy:ARGF#binmode}
+      def binmode: () -> self
+
+      # <!--
+      #   rdoc-file=io.c
+      #   - ARGF.binmode?  -> true or false
+      # -->
+      # Returns true if `ARGF` is being read in binary mode; false otherwise. To
+      # enable binary mode use `ARGF.binmode`.
+      #
+      # For example:
+      #
+      #     ARGF.binmode?  #=> false
+      #     ARGF.binmode
+      #     ARGF.binmode?  #=> true
+      #
+      %a{annotate:rdoc:copy:ARGF#binmode?}
+      def binmode?: () -> bool
+
+      # <!--
+      #   rdoc-file=io.c
+      #   - ARGF.close  -> ARGF
+      # -->
+      # Closes the current file and skips to the next file in ARGV. If there are no
+      # more files to open, just closes the current file. `STDIN` will not be closed.
+      #
+      # For example:
+      #
+      #     $ ruby argf.rb foo bar
+      #
+      #     ARGF.filename  #=> "foo"
+      #     ARGF.close
+      #     ARGF.filename  #=> "bar"
+      #     ARGF.close
+      #
+      %a{annotate:rdoc:copy:ARGF#close}
+      def close: () -> self
+
+      # <!--
+      #   rdoc-file=io.c
+      #   - ARGF.closed?  -> true or false
+      # -->
+      # Returns *true* if the current file has been closed; *false* otherwise. Use
+      # `ARGF.close` to actually close the current file.
+      #
+      %a{annotate:rdoc:copy:ARGF#closed?}
+      def closed?: () -> bool
+
+      # <!--
+      #   rdoc-file=io.c
+      #   - ARGF.each(sep=$/)             {|line| block }  -> ARGF
+      #   - ARGF.each(sep=$/, limit)      {|line| block }  -> ARGF
+      #   - ARGF.each(...)                                 -> an_enumerator
+      #   - ARGF.each_line(sep=$/)        {|line| block }  -> ARGF
+      #   - ARGF.each_line(sep=$/, limit) {|line| block }  -> ARGF
+      #   - ARGF.each_line(...)                            -> an_enumerator
+      # -->
+      # Returns an enumerator which iterates over each line (separated by *sep*, which
+      # defaults to your platform's newline character) of each file in `ARGV`. If a
+      # block is supplied, each line in turn will be yielded to the block, otherwise
+      # an enumerator is returned. The optional *limit* argument is an `Integer`
+      # specifying the maximum length of each line; longer lines will be split
+      # according to this limit.
+      #
+      # This method allows you to treat the files supplied on the command line as a
+      # single file consisting of the concatenation of each named file. After the last
+      # line of the first file has been returned, the first line of the second file is
+      # returned. The `ARGF.filename` and `ARGF.lineno` methods can be used to
+      # determine the filename of the current line and line number of the whole input,
+      # respectively.
+      #
+      # For example, the following code prints out each line of each named file
+      # prefixed with its line number, displaying the filename once per file:
+      #
+      #     ARGF.each_line do |line|
+      #       puts ARGF.filename if ARGF.file.lineno == 1
+      #       puts "#{ARGF.file.lineno}: #{line}"
+      #     end
+      #
+      # While the following code prints only the first file's name at first, and the
+      # contents with line number counted through all named files.
+      #
+      #     ARGF.each_line do |line|
+      #       puts ARGF.filename if ARGF.lineno == 1
+      #       puts "#{ARGF.lineno}: #{line}"
+      #     end
+      #
+      %a{annotate:rdoc:copy:ARGF#each}
+      def each: (?String sep, ?Integer limit) { (String line) -> untyped } -> self
+              | (?String sep, ?Integer limit) -> ::Enumerator[String, self]
+
+      # <!--
+      #   rdoc-file=io.c
+      #   - ARGF.each_byte {|byte| block }  -> ARGF
+      #   - ARGF.each_byte                  -> an_enumerator
+      # -->
+      # Iterates over each byte of each file in `ARGV`. A byte is returned as an
+      # `Integer` in the range 0..255.
+      #
+      # This method allows you to treat the files supplied on the command line as a
+      # single file consisting of the concatenation of each named file. After the last
+      # byte of the first file has been returned, the first byte of the second file is
+      # returned. The `ARGF.filename` method can be used to determine the filename of
+      # the current byte.
+      #
+      # If no block is given, an enumerator is returned instead.
+      #
+      # For example:
+      #
+      #     ARGF.bytes.to_a  #=> [35, 32, ... 95, 10]
+      #
+      %a{annotate:rdoc:copy:ARGF#each_byte}
+      def each_byte: () { (Integer byte) -> untyped } -> self
+                   | () -> ::Enumerator[Integer, self]
+
+      # <!--
+      #   rdoc-file=io.c
+      #   - ARGF.each_char {|char| block }  -> ARGF
+      #   - ARGF.each_char                  -> an_enumerator
+      # -->
+      # Iterates over each character of each file in `ARGF`.
+      #
+      # This method allows you to treat the files supplied on the command line as a
+      # single file consisting of the concatenation of each named file. After the last
+      # character of the first file has been returned, the first character of the
+      # second file is returned. The `ARGF.filename` method can be used to determine
+      # the name of the file in which the current character appears.
+      #
+      # If no block is given, an enumerator is returned instead.
+      #
+      %a{annotate:rdoc:copy:ARGF#each_char}
+      def each_char: () { (String char) -> untyped } -> self
+                   | () -> ::Enumerator[String, self]
+
+      # <!--
+      #   rdoc-file=io.c
+      #   - ARGF.each_codepoint {|codepoint| block }  -> ARGF
+      #   - ARGF.each_codepoint                       -> an_enumerator
+      # -->
+      # Iterates over each codepoint of each file in `ARGF`.
+      #
+      # This method allows you to treat the files supplied on the command line as a
+      # single file consisting of the concatenation of each named file. After the last
+      # codepoint of the first file has been returned, the first codepoint of the
+      # second file is returned. The `ARGF.filename` method can be used to determine
+      # the name of the file in which the current codepoint appears.
+      #
+      # If no block is given, an enumerator is returned instead.
+      #
+      %a{annotate:rdoc:copy:ARGF#each_codepoint}
+      def each_codepoint: () { (Integer codepoint) -> untyped } -> self
+                        | () -> ::Enumerator[Integer, self]
+
+      # <!-- rdoc-file=io.c -->
+      # Returns an enumerator which iterates over each line (separated by *sep*, which
+      # defaults to your platform's newline character) of each file in `ARGV`. If a
+      # block is supplied, each line in turn will be yielded to the block, otherwise
+      # an enumerator is returned. The optional *limit* argument is an `Integer`
+      # specifying the maximum length of each line; longer lines will be split
+      # according to this limit.
+      #
+      # This method allows you to treat the files supplied on the command line as a
+      # single file consisting of the concatenation of each named file. After the last
+      # line of the first file has been returned, the first line of the second file is
+      # returned. The `ARGF.filename` and `ARGF.lineno` methods can be used to
+      # determine the filename of the current line and line number of the whole input,
+      # respectively.
+      #
+      # For example, the following code prints out each line of each named file
+      # prefixed with its line number, displaying the filename once per file:
+      #
+      #     ARGF.each_line do |line|
+      #       puts ARGF.filename if ARGF.file.lineno == 1
+      #       puts "#{ARGF.file.lineno}: #{line}"
+      #     end
+      #
+      # While the following code prints only the first file's name at first, and the
+      # contents with line number counted through all named files.
+      #
+      #     ARGF.each_line do |line|
+      #       puts ARGF.filename if ARGF.lineno == 1
+      #       puts "#{ARGF.lineno}: #{line}"
+      #     end
+      #
+      %a{annotate:rdoc:copy:ARGF#each_line}
+      def each_line: (?String sep, ?Integer limit) { (String line) -> untyped } -> self
+                   | (?String sep, ?Integer limit) -> ::Enumerator[String, self]
+
+      # <!--
+      #   rdoc-file=io.c
+      #   - ARGF.eof?  -> true or false
+      #   - ARGF.eof   -> true or false
+      # -->
+      # Returns true if the current file in `ARGF` is at end of file, i.e. it has no
+      # data to read. The stream must be opened for reading or an `IOError` will be
+      # raised.
+      #
+      #     $ echo "eof" | ruby argf.rb
+      #
+      #     ARGF.eof?                 #=> false
+      #     3.times { ARGF.readchar }
+      #     ARGF.eof?                 #=> false
+      #     ARGF.readchar             #=> "\n"
+      #     ARGF.eof?                 #=> true
+      #
+      %a{annotate:rdoc:copy:ARGF#eof}
+      def eof: () -> bool
+
+      # <!-- rdoc-file=io.c -->
+      # Returns true if the current file in `ARGF` is at end of file, i.e. it has no
+      # data to read. The stream must be opened for reading or an `IOError` will be
+      # raised.
+      #
+      #     $ echo "eof" | ruby argf.rb
+      #
+      #     ARGF.eof?                 #=> false
+      #     3.times { ARGF.readchar }
+      #     ARGF.eof?                 #=> false
+      #     ARGF.readchar             #=> "\n"
+      #     ARGF.eof?                 #=> true
+      #
+      %a{annotate:rdoc:copy:ARGF#eof?}
+      def eof?: () -> bool
+
+      # <!--
+      #   rdoc-file=io.c
+      #   - ARGF.external_encoding   -> encoding
+      # -->
+      # Returns the external encoding for files read from `ARGF` as an `Encoding`
+      # object. The external encoding is the encoding of the text as stored in a file.
+      # Contrast with `ARGF.internal_encoding`, which is the encoding used to
+      # represent this text within Ruby.
+      #
+      # To set the external encoding use `ARGF.set_encoding`.
+      #
+      # For example:
+      #
+      #     ARGF.external_encoding  #=>  #<Encoding:UTF-8>
+      #
+      %a{annotate:rdoc:copy:ARGF#external_encoding}
+      def external_encoding: () -> Encoding
+
+      # <!--
+      #   rdoc-file=io.c
+      #   - ARGF.file  -> IO or File object
+      # -->
+      # Returns the current file as an `IO` or `File` object. `$stdin` is returned
+      # when the current file is STDIN.
+      #
+      # For example:
+      #
+      #     $ echo "foo" > foo
+      #     $ echo "bar" > bar
+      #
+      #     $ ruby argf.rb foo bar
+      #
+      #     ARGF.file      #=> #<File:foo>
+      #     ARGF.read(5)   #=> "foo\nb"
+      #     ARGF.file      #=> #<File:bar>
+      #
+      %a{annotate:rdoc:copy:ARGF#file}
+      def file: () -> (IO | File)
+
+      # <!--
+      #   rdoc-file=io.c
+      #   - ARGF.filename  -> String
+      #   - ARGF.path      -> String
+      # -->
+      # Returns the current filename. "-" is returned when the current file is STDIN.
+      #
+      # For example:
+      #
+      #     $ echo "foo" > foo
+      #     $ echo "bar" > bar
+      #     $ echo "glark" > glark
+      #
+      #     $ ruby argf.rb foo bar glark
+      #
+      #     ARGF.filename  #=> "foo"
+      #     ARGF.read(5)   #=> "foo\nb"
+      #     ARGF.filename  #=> "bar"
+      #     ARGF.skip
+      #     ARGF.filename  #=> "glark"
+      #
+      %a{annotate:rdoc:copy:ARGF#filename}
+      def filename: () -> String
+
+      # <!--
+      #   rdoc-file=io.c
+      #   - ARGF.fileno    -> integer
+      #   - ARGF.to_i      -> integer
+      # -->
+      # Returns an integer representing the numeric file descriptor for the current
+      # file. Raises an `ArgumentError` if there isn't a current file.
+      #
+      #     ARGF.fileno    #=> 3
+      #
+      %a{annotate:rdoc:copy:ARGF#fileno}
+      def fileno: () -> Integer
+
+      # <!--
+      #   rdoc-file=io.c
+      #   - ARGF.getbyte  -> Integer or nil
+      # -->
+      # Gets the next 8-bit byte (0..255) from `ARGF`. Returns `nil` if called at the
+      # end of the stream.
+      #
+      # For example:
+      #
+      #     $ echo "foo" > file
+      #     $ ruby argf.rb file
+      #
+      #     ARGF.getbyte #=> 102
+      #     ARGF.getbyte #=> 111
+      #     ARGF.getbyte #=> 111
+      #     ARGF.getbyte #=> 10
+      #     ARGF.getbyte #=> nil
+      #
+      %a{annotate:rdoc:copy:ARGF#getbyte}
+      def getbyte: () -> Integer?
+
+      # <!--
+      #   rdoc-file=io.c
+      #   - ARGF.getc  -> String or nil
+      # -->
+      # Reads the next character from `ARGF` and returns it as a `String`. Returns
+      # `nil` at the end of the stream.
+      #
+      # `ARGF` treats the files named on the command line as a single file created by
+      # concatenating their contents. After returning the last character of the first
+      # file, it returns the first character of the second file, and so on.
+      #
+      # For example:
+      #
+      #     $ echo "foo" > file
+      #     $ ruby argf.rb file
+      #
+      #     ARGF.getc  #=> "f"
+      #     ARGF.getc  #=> "o"
+      #     ARGF.getc  #=> "o"
+      #     ARGF.getc  #=> "\n"
+      #     ARGF.getc  #=> nil
+      #     ARGF.getc  #=> nil
+      #
+      %a{annotate:rdoc:copy:ARGF#getc}
+      def getc: () -> String?
+
+      # <!--
+      #   rdoc-file=io.c
+      #   - ARGF.gets(sep=$/ [, getline_args])     -> string or nil
+      #   - ARGF.gets(limit [, getline_args])      -> string or nil
+      #   - ARGF.gets(sep, limit [, getline_args]) -> string or nil
+      # -->
+      # Returns the next line from the current file in `ARGF`.
+      #
+      # By default lines are assumed to be separated by `$/`; to use a different
+      # character as a separator, supply it as a `String` for the *sep* argument.
+      #
+      # The optional *limit* argument specifies how many characters of each line to
+      # return. By default all characters are returned.
+      #
+      # See IO.readlines for details about getline_args.
+      #
+      %a{annotate:rdoc:copy:ARGF#gets}
+      def gets: (?String sep, ?Integer limit) -> String?
+
+      # <!--
+      #   rdoc-file=io.c
+      #   - ARGF.inplace_mode  -> String
+      # -->
+      # Returns the file extension appended to the names of modified files under
+      # in-place edit mode. This value can be set using `ARGF.inplace_mode=` or
+      # passing the `-i` switch to the Ruby binary.
+      #
+      %a{annotate:rdoc:copy:ARGF#inplace_mode}
+      def inplace_mode: () -> String?
+
+      # <!--
+      #   rdoc-file=io.c
+      #   - ARGF.inplace_mode = ext  -> ARGF
+      # -->
+      # Sets the filename extension for in-place editing mode to the given String.
+      # Each file being edited has this value appended to its filename. The modified
+      # file is saved under this new name.
+      #
+      # For example:
+      #
+      #     $ ruby argf.rb file.txt
+      #
+      #     ARGF.inplace_mode = '.bak'
+      #     ARGF.each_line do |line|
+      #       print line.sub("foo","bar")
+      #     end
+      #
+      # Each line of *file.txt* has the first occurrence of "foo" replaced with "bar",
+      # then the new line is written out to *file.txt.bak*.
+      #
+      %a{annotate:rdoc:copy:ARGF#inplace_mode=}
+      def inplace_mode=: (String) -> self
+
+      alias inspect to_s
+
+      # <!--
+      #   rdoc-file=io.c
+      #   - ARGF.internal_encoding   -> encoding
+      # -->
+      # Returns the internal encoding for strings read from `ARGF` as an `Encoding`
+      # object.
+      #
+      # If `ARGF.set_encoding` has been called with two encoding names, the second is
+      # returned. Otherwise, if `Encoding.default_external` has been set, that value
+      # is returned. Failing that, if a default external encoding was specified on the
+      # command-line, that value is used. If the encoding is unknown, `nil` is
+      # returned.
+      #
+      %a{annotate:rdoc:copy:ARGF#internal_encoding}
+      def internal_encoding: () -> Encoding
+
+      # <!--
+      #   rdoc-file=io.c
+      #   - ARGF.lineno  -> integer
+      # -->
+      # Returns the current line number of ARGF as a whole. This value can be set
+      # manually with `ARGF.lineno=`.
+      #
+      # For example:
+      #
+      #     ARGF.lineno   #=> 0
+      #     ARGF.readline #=> "This is line 1\n"
+      #     ARGF.lineno   #=> 1
+      #
+      %a{annotate:rdoc:copy:ARGF#lineno}
+      def lineno: () -> Integer
+
+      # <!--
+      #   rdoc-file=io.c
+      #   - ARGF.lineno = integer  -> integer
+      # -->
+      # Sets the line number of `ARGF` as a whole to the given `Integer`.
+      #
+      # `ARGF` sets the line number automatically as you read data, so normally you
+      # will not need to set it explicitly. To access the current line number use
+      # `ARGF.lineno`.
+      #
+      # For example:
+      #
+      #     ARGF.lineno      #=> 0
+      #     ARGF.readline    #=> "This is line 1\n"
+      #     ARGF.lineno      #=> 1
+      #     ARGF.lineno = 0  #=> 0
+      #     ARGF.lineno      #=> 0
+      #
+      %a{annotate:rdoc:copy:ARGF#lineno=}
+      def lineno=: (Integer) -> untyped
+
+      # <!-- rdoc-file=io.c -->
+      # Returns the current filename. "-" is returned when the current file is STDIN.
+      #
+      # For example:
+      #
+      #     $ echo "foo" > foo
+      #     $ echo "bar" > bar
+      #     $ echo "glark" > glark
+      #
+      #     $ ruby argf.rb foo bar glark
+      #
+      #     ARGF.filename  #=> "foo"
+      #     ARGF.read(5)   #=> "foo\nb"
+      #     ARGF.filename  #=> "bar"
+      #     ARGF.skip
+      #     ARGF.filename  #=> "glark"
+      #
+      %a{annotate:rdoc:copy:ARGF#path}
+      def path: () -> String
+
+      # <!-- rdoc-file=io.c -->
+      # Returns the current offset (in bytes) of the current file in `ARGF`.
+      #
+      #     ARGF.pos    #=> 0
+      #     ARGF.gets   #=> "This is line one\n"
+      #     ARGF.pos    #=> 17
+      #
+      %a{annotate:rdoc:copy:ARGF#pos}
+      def pos: () -> Integer
+
+      # <!--
+      #   rdoc-file=io.c
+      #   - ARGF.pos = position  -> Integer
+      # -->
+      # Seeks to the position given by *position* (in bytes) in `ARGF`.
+      #
+      # For example:
+      #
+      #     ARGF.pos = 17
+      #     ARGF.gets   #=> "This is line two\n"
+      #
+      %a{annotate:rdoc:copy:ARGF#pos=}
+      def pos=: (Integer) -> Integer
+
+      # <!--
+      #   rdoc-file=io.c
+      #   - ios.print               -> nil
+      #   - ios.print(obj, ...)     -> nil
+      # -->
+      # Writes the given object(s) to *ios*. Returns `nil`.
+      #
+      # The stream must be opened for writing. Each given object that isn't a string
+      # will be converted by calling its `to_s` method. When called without arguments,
+      # prints the contents of `$_`.
+      #
+      # If the output field separator (`$,`) is not `nil`, it is inserted between
+      # objects. If the output record separator (`$\`) is not `nil`, it is appended to
+      # the output.
+      #
+      #     $stdout.print("This is ", 100, " percent.\n")
+      #
+      # *produces:*
+      #
+      #     This is 100 percent.
+      #
+      %a{annotate:rdoc:copy:ARGF#print}
+      def print: (*untyped args) -> nil
+
+      # <!--
+      #   rdoc-file=io.c
+      #   - ios.printf(format_string [, obj, ...])   -> nil
+      # -->
+      # Formats and writes to *ios*, converting parameters under control of the format
+      # string. See Kernel#sprintf for details.
+      #
+      %a{annotate:rdoc:copy:ARGF#printf}
+      def printf: (String format_string, *untyped args) -> nil
+
+      # <!--
+      #   rdoc-file=io.c
+      #   - ios.putc(obj)    -> obj
+      # -->
+      # If *obj* is Numeric, write the character whose code is the least-significant
+      # byte of *obj*.  If *obj* is String, write the first character of *obj* to
+      # *ios*.  Otherwise, raise TypeError.
+      #
+      #     $stdout.putc "A"
+      #     $stdout.putc 65
+      #
+      # *produces:*
+      #
+      #     AA
+      #
+      %a{annotate:rdoc:copy:ARGF#putc}
+      def putc: (Numeric | String obj) -> untyped
+
+      # <!--
+      #   rdoc-file=io.c
+      #   - ios.puts(obj, ...)    -> nil
+      # -->
+      # Writes the given object(s) to *ios*. Writes a newline after any that do not
+      # already end with a newline sequence. Returns `nil`.
+      #
+      # The stream must be opened for writing. If called with an array argument,
+      # writes each element on a new line. Each given object that isn't a string or
+      # array will be converted by calling its `to_s` method. If called without
+      # arguments, outputs a single newline.
+      #
+      #     $stdout.puts("this", "is", ["a", "test"])
+      #
+      # *produces:*
+      #
+      #     this
+      #     is
+      #     a
+      #     test
+      #
+      # Note that `puts` always uses newlines and is not affected by the output record
+      # separator (`$\`).
+      #
+      %a{annotate:rdoc:copy:ARGF#puts}
+      def puts: (*untyped obj) -> nil
+
+      # <!--
+      #   rdoc-file=io.c
+      #   - ARGF.read([length [, outbuf]])    -> string, outbuf, or nil
+      # -->
+      # Reads *length* bytes from ARGF. The files named on the command line are
+      # concatenated and treated as a single file by this method, so when called
+      # without arguments the contents of this pseudo file are returned in their
+      # entirety.
+      #
+      # *length* must be a non-negative integer or `nil`.
+      #
+      # If *length* is a positive integer, `read` tries to read *length* bytes without
+      # any conversion (binary mode). It returns `nil` if an EOF is encountered before
+      # anything can be read. Fewer than *length* bytes are returned if an EOF is
+      # encountered during the read. In the case of an integer *length*, the resulting
+      # string is always in ASCII-8BIT encoding.
+      #
+      # If *length* is omitted or is `nil`, it reads until EOF and the encoding
+      # conversion is applied, if applicable. A string is returned even if EOF is
+      # encountered before any data is read.
+      #
+      # If *length* is zero, it returns an empty string (`""`).
+      #
+      # If the optional *outbuf* argument is present, it must reference a String,
+      # which will receive the data. The *outbuf* will contain only the received data
+      # after the method call even if it is not empty at the beginning.
+      #
+      # For example:
+      #
+      #     $ echo "small" > small.txt
+      #     $ echo "large" > large.txt
+      #     $ ./glark.rb small.txt large.txt
+      #
+      #     ARGF.read      #=> "small\nlarge"
+      #     ARGF.read(200) #=> "small\nlarge"
+      #     ARGF.read(2)   #=> "sm"
+      #     ARGF.read(0)   #=> ""
+      #
+      # Note that this method behaves like the fread() function in C. This means it
+      # retries to invoke read(2) system calls to read data with the specified length.
+      # If you need the behavior like a single read(2) system call, consider
+      # ARGF#readpartial or ARGF#read_nonblock.
+      #
+      %a{annotate:rdoc:copy:ARGF#read}
+      def read: (?int? length, ?string outbuf) -> String?
+
+      # <!--
+      #   rdoc-file=io.c
+      #   - ARGF.read_nonblock(maxlen[, options])              -> string
+      #   - ARGF.read_nonblock(maxlen, outbuf[, options])      -> outbuf
+      # -->
+      # Reads at most *maxlen* bytes from the ARGF stream in non-blocking mode.
+      #
+      %a{annotate:rdoc:copy:ARGF#read_nonblock}
+      def read_nonblock: (int maxlen, ?string buf, **untyped options) -> String
+
+      # <!--
+      #   rdoc-file=io.c
+      #   - ARGF.readbyte  -> Integer
+      # -->
+      # Reads the next 8-bit byte from ARGF and returns it as an `Integer`. Raises an
+      # `EOFError` after the last byte of the last file has been read.
+      #
+      # For example:
+      #
+      #     $ echo "foo" > file
+      #     $ ruby argf.rb file
+      #
+      #     ARGF.readbyte  #=> 102
+      #     ARGF.readbyte  #=> 111
+      #     ARGF.readbyte  #=> 111
+      #     ARGF.readbyte  #=> 10
+      #     ARGF.readbyte  #=> end of file reached (EOFError)
+      #
+      %a{annotate:rdoc:copy:ARGF#readbyte}
+      def readbyte: () -> Integer
+
+      # <!--
+      #   rdoc-file=io.c
+      #   - ARGF.readchar  -> String or nil
+      # -->
+      # Reads the next character from `ARGF` and returns it as a `String`. Raises an
+      # `EOFError` after the last character of the last file has been read.
+      #
+      # For example:
+      #
+      #     $ echo "foo" > file
+      #     $ ruby argf.rb file
+      #
+      #     ARGF.readchar  #=> "f"
+      #     ARGF.readchar  #=> "o"
+      #     ARGF.readchar  #=> "o"
+      #     ARGF.readchar  #=> "\n"
+      #     ARGF.readchar  #=> end of file reached (EOFError)
+      #
+      %a{annotate:rdoc:copy:ARGF#readchar}
+      def readchar: () -> String
+
+      # <!--
+      #   rdoc-file=io.c
+      #   - ARGF.readline(sep=$/)     -> string
+      #   - ARGF.readline(limit)      -> string
+      #   - ARGF.readline(sep, limit) -> string
+      # -->
+      # Returns the next line from the current file in `ARGF`.
+      #
+      # By default lines are assumed to be separated by `$/`; to use a different
+      # character as a separator, supply it as a `String` for the *sep* argument.
+      #
+      # The optional *limit* argument specifies how many characters of each line to
+      # return. By default all characters are returned.
+      #
+      # An `EOFError` is raised at the end of the file.
+      #
+      %a{annotate:rdoc:copy:ARGF#readline}
+      def readline: (?String sep, ?Integer limit) -> String
+
+      # <!--
+      #   rdoc-file=io.c
+      #   - ARGF.readlines(sep=$/)     -> array
+      #   - ARGF.readlines(limit)      -> array
+      #   - ARGF.readlines(sep, limit) -> array
+      #   - ARGF.to_a(sep=$/)     -> array
+      #   - ARGF.to_a(limit)      -> array
+      #   - ARGF.to_a(sep, limit) -> array
+      # -->
+      # Reads `ARGF`'s current file in its entirety, returning an `Array` of its
+      # lines, one line per element. Lines are assumed to be separated by *sep*.
+      #
+      #     lines = ARGF.readlines
+      #     lines[0]                #=> "This is line one\n"
+      #
+      %a{annotate:rdoc:copy:ARGF#readlines}
+      def readlines: (?String sep, ?Integer limit) -> ::Array[String]
+
+      # <!--
+      #   rdoc-file=io.c
+      #   - ARGF.readpartial(maxlen)              -> string
+      #   - ARGF.readpartial(maxlen, outbuf)      -> outbuf
+      # -->
+      # Reads at most *maxlen* bytes from the ARGF stream.
+      #
+      # If the optional *outbuf* argument is present, it must reference a String,
+      # which will receive the data. The *outbuf* will contain only the received data
+      # after the method call even if it is not empty at the beginning.
+      #
+      # It raises EOFError on end of ARGF stream. Since ARGF stream is a concatenation
+      # of multiple files, internally EOF is occur for each file. ARGF.readpartial
+      # returns empty strings for EOFs except the last one and raises EOFError for the
+      # last one.
+      #
+      %a{annotate:rdoc:copy:ARGF#readpartial}
+      def readpartial: (int maxlen, ?string outbuf) -> String
+
+      # <!--
+      #   rdoc-file=io.c
+      #   - ARGF.rewind   -> 0
+      # -->
+      # Positions the current file to the beginning of input, resetting `ARGF.lineno`
+      # to zero.
+      #
+      #     ARGF.readline   #=> "This is line one\n"
+      #     ARGF.rewind     #=> 0
+      #     ARGF.lineno     #=> 0
+      #     ARGF.readline   #=> "This is line one\n"
+      #
+      %a{annotate:rdoc:copy:ARGF#rewind}
+      def rewind: () -> Integer
+
+      # <!--
+      #   rdoc-file=io.c
+      #   - ARGF.seek(amount, whence=IO::SEEK_SET)  -> 0
+      # -->
+      # Seeks to offset *amount* (an `Integer`) in the `ARGF` stream according to the
+      # value of *whence*. See IO#seek for further details.
+      #
+      %a{annotate:rdoc:copy:ARGF#seek}
+      def seek: (Integer amount, ?Integer whence) -> Integer
+
+      # <!--
+      #   rdoc-file=io.c
+      #   - ARGF.set_encoding(ext_enc)                -> ARGF
+      #   - ARGF.set_encoding("ext_enc:int_enc")      -> ARGF
+      #   - ARGF.set_encoding(ext_enc, int_enc)       -> ARGF
+      #   - ARGF.set_encoding("ext_enc:int_enc", opt) -> ARGF
+      #   - ARGF.set_encoding(ext_enc, int_enc, opt)  -> ARGF
+      # -->
+      # If single argument is specified, strings read from ARGF are tagged with the
+      # encoding specified.
+      #
+      # If two encoding names separated by a colon are given, e.g. "ascii:utf-8", the
+      # read string is converted from the first encoding (external encoding) to the
+      # second encoding (internal encoding), then tagged with the second encoding.
+      #
+      # If two arguments are specified, they must be encoding objects or encoding
+      # names. Again, the first specifies the external encoding; the second specifies
+      # the internal encoding.
+      #
+      # If the external encoding and the internal encoding are specified, the optional
+      # `Hash` argument can be used to adjust the conversion process. The structure of
+      # this hash is explained in the String#encode documentation.
+      #
+      # For example:
+      #
+      #     ARGF.set_encoding('ascii')         # Tag the input as US-ASCII text
+      #     ARGF.set_encoding(Encoding::UTF_8) # Tag the input as UTF-8 text
+      #     ARGF.set_encoding('utf-8','ascii') # Transcode the input from US-ASCII
+      #                                        # to UTF-8.
+      #
+      %a{annotate:rdoc:copy:ARGF#set_encoding}
+      def set_encoding: (String | Encoding ext_or_ext_int_enc, ?String | Encoding int_enc) -> self
+
+      # <!--
+      #   rdoc-file=io.c
+      #   - ARGF.skip  -> ARGF
+      # -->
+      # Sets the current file to the next file in ARGV. If there aren't any more files
+      # it has no effect.
+      #
+      # For example:
+      #
+      #     $ ruby argf.rb foo bar
+      #     ARGF.filename  #=> "foo"
+      #     ARGF.skip
+      #     ARGF.filename  #=> "bar"
+      #
+      %a{annotate:rdoc:copy:ARGF#skip}
+      def skip: () -> self
+
+      # <!--
+      #   rdoc-file=io.c
+      #   - ARGF.tell  -> Integer
+      #   - ARGF.pos   -> Integer
+      # -->
+      # Returns the current offset (in bytes) of the current file in `ARGF`.
+      #
+      #     ARGF.pos    #=> 0
+      #     ARGF.gets   #=> "This is line one\n"
+      #     ARGF.pos    #=> 17
+      #
+      %a{annotate:rdoc:copy:ARGF#tell}
+      def tell: () -> Integer
+
+      # <!-- rdoc-file=io.c -->
+      # Reads `ARGF`'s current file in its entirety, returning an `Array` of its
+      # lines, one line per element. Lines are assumed to be separated by *sep*.
+      #
+      #     lines = ARGF.readlines
+      #     lines[0]                #=> "This is line one\n"
+      #
+      %a{annotate:rdoc:copy:ARGF#to_a}
+      def to_a: (?String sep, ?Integer limit) -> ::Array[String]
+
+      # <!-- rdoc-file=io.c -->
+      # Returns an integer representing the numeric file descriptor for the current
+      # file. Raises an `ArgumentError` if there isn't a current file.
+      #
+      #     ARGF.fileno    #=> 3
+      #
+      %a{annotate:rdoc:copy:ARGF#to_i}
+      def to_i: () -> Integer
+
+      # <!--
+      #   rdoc-file=io.c
+      #   - ARGF.to_io     -> IO
+      # -->
+      # Returns an `IO` object representing the current file. This will be a `File`
+      # object unless the current file is a stream such as STDIN.
+      #
+      # For example:
+      #
+      #     ARGF.to_io    #=> #<File:glark.txt>
+      #     ARGF.to_io    #=> #<IO:<STDIN>>
+      #
+      %a{annotate:rdoc:copy:ARGF#to_io}
+      def to_io: () -> IO
+
+      # <!--
+      #   rdoc-file=io.c
+      #   - ARGF.to_s  -> String
+      # -->
+      # Returns "ARGF".
+      #
+      %a{annotate:rdoc:copy:ARGF#to_s}
+      def to_s: () -> String
+
+      # <!--
+      #   rdoc-file=io.c
+      #   - ARGF.to_write_io  -> io
+      # -->
+      # Returns IO instance tied to *ARGF* for writing if inplace mode is enabled.
+      #
+      %a{annotate:rdoc:copy:ARGF#to_write_io}
+      def to_write_io: () -> IO
+
+      # <!--
+      #   rdoc-file=io.c
+      #   - ARGF.write(string)   -> integer
+      # -->
+      # Writes *string* if inplace mode.
+      #
+      %a{annotate:rdoc:copy:ARGF#write}
+      def write: (_ToS string) -> Integer
+
+      private
+
+      %a{annotate:rdoc:copy:ARGF#initialize}
+      def initialize: (*String argv) -> void
+
+      %a{annotate:rdoc:copy:ARGF#initialize_copy}
+      def initialize_copy: (self orig) -> self
+    end
+  end
+end

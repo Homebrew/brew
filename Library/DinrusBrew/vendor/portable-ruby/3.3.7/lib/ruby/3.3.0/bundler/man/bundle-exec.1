@@ -1,0 +1,104 @@
+.\" generated with nRonn/v0.11.1
+.\" https://github.com/n-ronn/nronn/tree/0.11.1
+.TH "BUNDLE\-EXEC" "1" "September 2024" ""
+.SH "NAME"
+\fBbundle\-exec\fR \- Execute a command in the context of the bundle
+.SH "SYNOPSIS"
+\fBbundle exec\fR [\-\-keep\-file\-descriptors] \fIcommand\fR
+.SH "DESCRIPTION"
+This command executes the command, making all gems specified in the [\fBGemfile(5)\fR][Gemfile(5)] available to \fBrequire\fR in Ruby programs\.
+.P
+Essentially, if you would normally have run something like \fBrspec spec/my_spec\.rb\fR, and you want to use the gems specified in the [\fBGemfile(5)\fR][Gemfile(5)] and installed via bundle install(1) \fIbundle\-install\.1\.html\fR, you should run \fBbundle exec rspec spec/my_spec\.rb\fR\.
+.P
+Note that \fBbundle exec\fR does not require that an executable is available on your shell's \fB$PATH\fR\.
+.SH "OPTIONS"
+.TP
+\fB\-\-keep\-file\-descriptors\fR
+Passes all file descriptors to the new processes\. Default is true from bundler version 2\.2\.26\. Setting it to false is now deprecated\.
+.SH "BUNDLE INSTALL \-\-BINSTUBS"
+If you use the \fB\-\-binstubs\fR flag in bundle install(1) \fIbundle\-install\.1\.html\fR, Bundler will automatically create a directory (which defaults to \fBapp_root/bin\fR) containing all of the executables available from gems in the bundle\.
+.P
+After using \fB\-\-binstubs\fR, \fBbin/rspec spec/my_spec\.rb\fR is identical to \fBbundle exec rspec spec/my_spec\.rb\fR\.
+.SH "ENVIRONMENT MODIFICATIONS"
+\fBbundle exec\fR makes a number of changes to the shell environment, then executes the command you specify in full\.
+.IP "\(bu" 4
+make sure that it's still possible to shell out to \fBbundle\fR from inside a command invoked by \fBbundle exec\fR (using \fB$BUNDLE_BIN_PATH\fR)
+.IP "\(bu" 4
+put the directory containing executables (like \fBrails\fR, \fBrspec\fR, \fBrackup\fR) for your bundle on \fB$PATH\fR
+.IP "\(bu" 4
+make sure that if bundler is invoked in the subshell, it uses the same \fBGemfile\fR (by setting \fBBUNDLE_GEMFILE\fR)
+.IP "\(bu" 4
+add \fB\-rbundler/setup\fR to \fB$RUBYOPT\fR, which makes sure that Ruby programs invoked in the subshell can see the gems in the bundle
+.IP "" 0
+.P
+It also modifies Rubygems:
+.IP "\(bu" 4
+disallow loading additional gems not in the bundle
+.IP "\(bu" 4
+modify the \fBgem\fR method to be a no\-op if a gem matching the requirements is in the bundle, and to raise a \fBGem::LoadError\fR if it's not
+.IP "\(bu" 4
+Define \fBGem\.refresh\fR to be a no\-op, since the source index is always frozen when using bundler, and to prevent gems from the system leaking into the environment
+.IP "\(bu" 4
+Override \fBGem\.bin_path\fR to use the gems in the bundle, making system executables work
+.IP "\(bu" 4
+Add all gems in the bundle into Gem\.loaded_specs
+.IP "" 0
+.P
+Finally, \fBbundle exec\fR also implicitly modifies \fBGemfile\.lock\fR if the lockfile and the Gemfile do not match\. Bundler needs the Gemfile to determine things such as a gem's groups, \fBautorequire\fR, and platforms, etc\., and that information isn't stored in the lockfile\. The Gemfile and lockfile must be synced in order to \fBbundle exec\fR successfully, so \fBbundle exec\fR updates the lockfile beforehand\.
+.SS "Loading"
+By default, when attempting to \fBbundle exec\fR to a file with a ruby shebang, Bundler will \fBKernel\.load\fR that file instead of using \fBKernel\.exec\fR\. For the vast majority of cases, this is a performance improvement\. In a rare few cases, this could cause some subtle side\-effects (such as dependence on the exact contents of \fB$0\fR or \fB__FILE__\fR) and the optimization can be disabled by enabling the \fBdisable_exec_load\fR setting\.
+.SS "Shelling out"
+Any Ruby code that opens a subshell (like \fBsystem\fR, backticks, or \fB%x{}\fR) will automatically use the current Bundler environment\. If you need to shell out to a Ruby command that is not part of your current bundle, use the \fBwith_unbundled_env\fR method with a block\. Any subshells created inside the block will be given the environment present before Bundler was activated\. For example, Homebrew commands run Ruby, but don't work inside a bundle:
+.IP "" 4
+.nf
+Bundler\.with_unbundled_env do
+  `brew install wget`
+end
+.fi
+.IP "" 0
+.P
+Using \fBwith_unbundled_env\fR is also necessary if you are shelling out to a different bundle\. Any Bundler commands run in a subshell will inherit the current Gemfile, so commands that need to run in the context of a different bundle also need to use \fBwith_unbundled_env\fR\.
+.IP "" 4
+.nf
+Bundler\.with_unbundled_env do
+  Dir\.chdir "/other/bundler/project" do
+    `bundle exec \./script`
+  end
+end
+.fi
+.IP "" 0
+.P
+Bundler provides convenience helpers that wrap \fBsystem\fR and \fBexec\fR, and they can be used like this:
+.IP "" 4
+.nf
+Bundler\.clean_system('brew install wget')
+Bundler\.clean_exec('brew install wget')
+.fi
+.IP "" 0
+.SH "RUBYGEMS PLUGINS"
+At present, the Rubygems plugin system requires all files named \fBrubygems_plugin\.rb\fR on the load path of \fIany\fR installed gem when any Ruby code requires \fBrubygems\.rb\fR\. This includes executables installed into the system, like \fBrails\fR, \fBrackup\fR, and \fBrspec\fR\.
+.P
+Since Rubygems plugins can contain arbitrary Ruby code, they commonly end up activating themselves or their dependencies\.
+.P
+For instance, the \fBgemcutter 0\.5\fR gem depended on \fBjson_pure\fR\. If you had that version of gemcutter installed (even if you \fIalso\fR had a newer version without this problem), Rubygems would activate \fBgemcutter 0\.5\fR and \fBjson_pure <latest>\fR\.
+.P
+If your Gemfile(5) also contained \fBjson_pure\fR (or a gem with a dependency on \fBjson_pure\fR), the latest version on your system might conflict with the version in your Gemfile(5), or the snapshot version in your \fBGemfile\.lock\fR\.
+.P
+If this happens, bundler will say:
+.IP "" 4
+.nf
+You have already activated json_pure 1\.4\.6 but your Gemfile
+requires json_pure 1\.4\.3\. Consider using bundle exec\.
+.fi
+.IP "" 0
+.P
+In this situation, you almost certainly want to remove the underlying gem with the problematic gem plugin\. In general, the authors of these plugins (in this case, the \fBgemcutter\fR gem) have released newer versions that are more careful in their plugins\.
+.P
+You can find a list of all the gems containing gem plugins by running
+.IP "" 4
+.nf
+ruby \-e "puts Gem\.find_files('rubygems_plugin\.rb')"
+.fi
+.IP "" 0
+.P
+At the very least, you should remove all but the newest version of each gem plugin, and also remove all gem plugins that you aren't using (\fBgem uninstall gem_name\fR)\.

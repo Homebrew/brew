@@ -1,0 +1,40 @@
+.\" generated with nRonn/v0.11.1
+.\" https://github.com/n-ronn/nronn/tree/0.11.1
+.TH "BUNDLE\-CACHE" "1" "September 2024" ""
+.SH "NAME"
+\fBbundle\-cache\fR \- Package your needed \fB\.gem\fR files into your application
+.SH "SYNOPSIS"
+\fBbundle cache\fR
+.P
+alias: \fBpackage\fR, \fBpack\fR
+.SH "DESCRIPTION"
+Copy all of the \fB\.gem\fR files needed to run the application into the \fBvendor/cache\fR directory\. In the future, when running \fBbundle install(1)\fR \fIbundle\-install\.1\.html\fR, use the gems in the cache in preference to the ones on \fBrubygems\.org\fR\.
+.SH "GIT AND PATH GEMS"
+The \fBbundle cache\fR command can also package \fB:git\fR and \fB:path\fR dependencies besides \.gem files\. This needs to be explicitly enabled via the \fB\-\-all\fR option\. Once used, the \fB\-\-all\fR option will be remembered\.
+.SH "SUPPORT FOR MULTIPLE PLATFORMS"
+When using gems that have different packages for different platforms, Bundler supports caching of gems for other platforms where the Gemfile has been resolved (i\.e\. present in the lockfile) in \fBvendor/cache\fR\. This needs to be enabled via the \fB\-\-all\-platforms\fR option\. This setting will be remembered in your local bundler configuration\.
+.SH "REMOTE FETCHING"
+By default, if you run \fBbundle install(1)\fR \fIbundle\-install\.1\.html\fR after running bundle cache(1) \fIbundle\-cache\.1\.html\fR, bundler will still connect to \fBrubygems\.org\fR to check whether a platform\-specific gem exists for any of the gems in \fBvendor/cache\fR\.
+.P
+For instance, consider this Gemfile(5):
+.IP "" 4
+.nf
+source "https://rubygems\.org"
+
+gem "nokogiri"
+.fi
+.IP "" 0
+.P
+If you run \fBbundle cache\fR under C Ruby, bundler will retrieve the version of \fBnokogiri\fR for the \fB"ruby"\fR platform\. If you deploy to JRuby and run \fBbundle install\fR, bundler is forced to check to see whether a \fB"java"\fR platformed \fBnokogiri\fR exists\.
+.P
+Even though the \fBnokogiri\fR gem for the Ruby platform is \fItechnically\fR acceptable on JRuby, it has a C extension that does not run on JRuby\. As a result, bundler will, by default, still connect to \fBrubygems\.org\fR to check whether it has a version of one of your gems more specific to your platform\.
+.P
+This problem is also not limited to the \fB"java"\fR platform\. A similar (common) problem can happen when developing on Windows and deploying to Linux, or even when developing on OSX and deploying to Linux\.
+.P
+If you know for sure that the gems packaged in \fBvendor/cache\fR are appropriate for the platform you are on, you can run \fBbundle install \-\-local\fR to skip checking for more appropriate gems, and use the ones in \fBvendor/cache\fR\.
+.P
+One way to be sure that you have the right platformed versions of all your gems is to run \fBbundle cache\fR on an identical machine and check in the gems\. For instance, you can run \fBbundle cache\fR on an identical staging box during your staging process, and check in the \fBvendor/cache\fR before deploying to production\.
+.P
+By default, bundle cache(1) \fIbundle\-cache\.1\.html\fR fetches and also installs the gems to the default location\. To package the dependencies to \fBvendor/cache\fR without installing them to the local install location, you can run \fBbundle cache \-\-no\-install\fR\.
+.SH "HISTORY"
+In Bundler 2\.1, \fBcache\fR took in the functionalities of \fBpackage\fR and now \fBpackage\fR and \fBpack\fR are aliases of \fBcache\fR\.

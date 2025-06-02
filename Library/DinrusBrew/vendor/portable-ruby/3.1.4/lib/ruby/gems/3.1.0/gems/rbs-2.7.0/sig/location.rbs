@@ -1,0 +1,113 @@
+module RBS
+  # Location is the range on buffer, `start_pos..end_pos`.
+  # The index is based on characters.
+  #
+  # A location can have _child_ locations.
+  #
+  class Location[in RequiredChildKeys, in OptionalChildKeys]
+    # The buffer this location points on.
+    attr_reader buffer (): Buffer
+
+    # The index of character the range starts from.
+    attr_reader start_pos (): Integer
+
+    # The index of character the range ends at.
+    attr_reader end_pos (): Integer
+
+    def initialize: (Buffer, Integer start_pos, Integer end_pos) -> void
+
+    def self.new: (Buffer, Integer start_pos, Integer end_pos) -> instance
+                | (buffer: Buffer, start_pos: Integer, end_pos: Integer) -> instance
+
+    def inspect: () -> String
+
+    # Returns the name of the buffer.
+    def name: () -> untyped
+
+    # Line of the `start_pos` (1 origin)
+    attr_reader start_line (): Integer
+
+    # Column of the `start_pos` (0 origin)
+    attr_reader start_column (): Integer
+
+    # Line of the `end_pos` (1 origin)
+    attr_reader end_line (): Integer
+
+    # Column of the `end_pos` (0 origin)
+    attr_reader end_column (): Integer
+
+    attr_reader start_loc (): Buffer::loc
+
+    @start_loc: Buffer::loc?
+
+    attr_reader end_loc (): Buffer::loc
+
+    @end_loc: Buffer::loc?
+
+    attr_reader range (): Range[Integer]
+
+    @range: Range[Integer]?
+
+    # A substring of buffer associated to the location.
+    def source: () -> String
+
+    @source: String?
+
+    def to_s: () -> String
+
+    # Returns a string representation suitable for terminal output.
+    #
+    #     Location.to_string(loc)  # => a.rb:1:0...3:4
+    #     Location.to_string(nil)  # => *:*:*..*:*
+    #
+    def self.to_string: (Location[untyped, untyped]? location, ?default: ::String default) -> String
+
+    def ==: (untyped other) -> bool
+
+    include _ToJson
+
+    def add_optional_child: (OptionalChildKeys name, Range[Integer]? range) -> void
+
+    def add_required_child: (RequiredChildKeys name, Range[Integer] range) -> void
+
+    # Returns `Location` instance for given _child_ name.
+    #
+    #     # @type var loc: Location::WithChildren[:name, :args]
+    #     loc[:name]      # => Location
+    #     loc[:args]      # => may be nil
+    #
+    # Note that passing unknown symbol raises an error even if the child is _optional_.
+    # You need explicitly set `nil` for absent optional children.
+    #
+    def []: (RequiredChildKeys) -> Location[bot, bot]
+          | (OptionalChildKeys) -> Location[bot, bot]?
+          | (Symbol) -> Location[bot, bot]?
+
+    alias aref []
+
+    def each_optional_key: () { (Symbol) -> void } -> void
+                         | () -> Enumerator[Symbol, void]
+
+    def each_required_key: () { (Symbol) -> void } -> void
+                         | () -> Enumerator[Symbol, void]
+
+    def optional_key?: (Symbol) -> bool
+
+    def required_key?: (Symbol) -> bool
+
+    def key?: (Symbol) -> bool
+
+    private
+
+    def _start_loc: () -> Buffer::loc?
+    def _end_loc: () -> Buffer::loc?
+
+    def _add_required_child: (RequiredChildKeys name, Integer start_pos, Integer end_pos) -> void
+    def _add_optional_child: (OptionalChildKeys name, Integer start_pos, Integer end_pos) -> void
+    def _add_optional_no_child: (OptionalChildKeys name) -> void
+    def _optional_keys: () -> Array[Symbol]
+    def _required_keys: () -> Array[Symbol]
+
+    WithChildren: singleton(Location)
+  end
+end

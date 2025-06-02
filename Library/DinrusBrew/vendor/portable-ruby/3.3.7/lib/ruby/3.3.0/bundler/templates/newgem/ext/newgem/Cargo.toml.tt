@@ -1,0 +1,15 @@
+[package]
+name = <%= config[:name].inspect %>
+version = "0.1.0"
+edition = "2021"
+authors = ["<%= config[:author] %> <<%= config[:email] %>>"]
+<%- if config[:mit] -%>
+license = "MIT"
+<%- end -%>
+publish = false
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+magnus = { version = "0.6.2" }

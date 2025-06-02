@@ -1,0 +1,235 @@
+module RBS
+  module AST
+    module Members
+      type t = MethodDefinition
+             | InstanceVariable | ClassInstanceVariable | ClassVariable
+             | Include | Extend | Prepend
+             | AttrReader | AttrWriter | AttrAccessor
+             | Public | Private
+             | Alias
+
+      # Base class for members.
+      class Base
+      end
+
+      type visibility = :public | :private
+
+      class MethodDefinition < Base
+        type kind = :instance | :singleton | :singleton_instance
+
+        # def foo: () -> void
+        # ^^^                    keyword
+        #     ^^^                name
+        #
+        # private def self.bar: () -> void | ...
+        # ^^^^^^^                                  visibility
+        #         ^^^                              keyword
+        #             ^^^^^                        kind
+        #                  ^^^                     name
+        #                                    ^^^   overload
+        #
+        type loc = Location[:keyword | :name, :kind | :overload | :visibility]
+
+        attr_reader name: Symbol
+        attr_reader kind: kind
+        attr_reader types: Array[MethodType]
+        attr_reader annotations: Array[Annotation]
+        attr_reader location: loc?
+        attr_reader comment: Comment?
+        attr_reader overload: bool
+        attr_reader visibility: visibility?
+
+        def initialize: (name: Symbol, kind: kind, types: Array[MethodType], annotations: Array[Annotation], location: loc?, comment: Comment?, overload: boolish, ?visibility: visibility?) -> void
+
+        include _HashEqual
+        include _ToJson
+
+        def instance?: () -> bool
+
+        def singleton?: () -> bool
+
+        def overload?: () -> bool
+
+        def update: (?name: Symbol, ?kind: kind, ?types: Array[MethodType], ?annotations: Array[Annotation], ?location: loc?, ?comment: Comment?, ?overload: boolish, ?visibility: visibility?) -> MethodDefinition
+      end
+
+      module Var
+        # @foo: String
+        # ^^^^            name
+        #     ^           colon
+        #
+        # self.@all: Array[String]
+        # ^^^^^                        kind
+        #      ^^^^                    name
+        #          ^                   colon
+        #
+        type loc = Location[:name | :colon, :kind]
+
+        attr_reader name: Symbol
+        attr_reader type: Types::t
+        attr_reader location: loc?
+        attr_reader comment: Comment?
+
+        def initialize: (name: Symbol, type: Types::t, location: loc?, comment: Comment?) -> void
+
+        include _HashEqual
+      end
+
+      class InstanceVariable < Base
+        include Var
+        include _ToJson
+      end
+
+      class ClassInstanceVariable < Base
+        include Var
+        include _ToJson
+      end
+
+      class ClassVariable < Base
+        include Var
+        include _ToJson
+      end
+
+      module Mixin
+        # include Foo
+        # ^^^^^^^       keyword
+        #         ^^^   name
+        #
+        # include Array[String]
+        # ^^^^^^^                keyword
+        #         ^^^^^          name
+        #              ^         arg_open
+        #                     ^  arg_close
+        #
+        type loc = Location[:name | :keyword, :args]
+
+        attr_reader name: TypeName
+        attr_reader args: Array[Types::t]
+        attr_reader annotations: Array[Annotation]
+        attr_reader location: loc?
+        attr_reader comment: Comment?
+
+        def initialize: (name: TypeName, args: Array[Types::t], annotations: Array[Annotation], location: loc?, comment: Comment?) -> void
+
+        include _HashEqual
+      end
+
+      class Include < Base
+        include Mixin
+        include _ToJson
+      end
+
+      class Extend < Base
+        include Mixin
+        include _ToJson
+      end
+
+      class Prepend < Base
+        include Mixin
+        include _ToJson
+      end
+
+      module Attribute
+        type kind = :instance | :singleton
+
+        # attr_reader name: String
+        # ^^^^^^^^^^^                  keyword
+        #             ^^^^             name
+        #                 ^            colon
+        #
+        # public attr_accessor self.name (@foo) : String
+        # ^^^^^^                                           visibility
+        #        ^^^^^^^^^^^^^                             keyword
+        #                      ^^^^^                       kind
+        #                           ^^^^                   name
+        #                                ^^^^^^            ivar
+        #                                 ^^^^             ivar_name
+        #                                       ^          colon
+        #
+        type loc = Location[:keyword | :name | :colon, :kind | :ivar | :ivar_name | :visibility]
+
+        attr_reader name: Symbol
+        attr_reader type: Types::t
+        attr_reader kind: kind
+        attr_reader ivar_name: Symbol | false | nil
+        attr_reader annotations: Array[Annotation]
+        attr_reader location: loc?
+        attr_reader comment: Comment?
+        attr_reader visibility: visibility?
+
+        def initialize: (name: Symbol, type: Types::t, ivar_name: Symbol | false | nil, kind: kind, annotations: Array[Annotation], location: loc?, comment: Comment?, ?visibility: visibility?) -> void
+
+        include _HashEqual
+
+        def update: (?name: Symbol, ?type: Types::t, ?ivar_name: Symbol | false | nil, ?kind: kind, ?annotations: Array[Annotation], ?location: loc?, ?comment: Comment?, ?visibility: visibility?) -> instance
+      end
+
+      class AttrReader < Base
+        include Attribute
+        include _ToJson
+      end
+
+      class AttrAccessor < Base
+        include Attribute
+        include _ToJson
+      end
+
+      class AttrWriter < Base
+        include Attribute
+        include _ToJson
+      end
+
+      module LocationOnly
+        attr_reader location: Location[bot, bot]?
+
+        def initialize: (location: Location[bot, bot]?) -> void
+
+        include _HashEqual
+      end
+
+      class Public < Base
+        include LocationOnly
+        include _ToJson
+      end
+
+      class Private < Base
+        include LocationOnly
+        include _ToJson
+      end
+
+      class Alias < Base
+        type kind = :instance | :singleton
+
+        # alias foo bar
+        # ^^^^^           keyword
+        #       ^^^       new_name
+        #           ^^^   old_name
+        #
+        # alias self.foo self.bar
+        # ^^^^^                      keyword
+        #       ^^^^^                new_kind
+        #            ^^^             new_name
+        #                ^^^^^       old_kind
+        #                     ^^^    old_name
+        #
+        type loc = Location[:keyword | :new_name | :old_name, :new_kind | :old_kind]
+
+        attr_reader new_name: Symbol
+        attr_reader old_name: Symbol
+        attr_reader kind: kind
+        attr_reader annotations: Array[Annotation]
+        attr_reader location: loc?
+        attr_reader comment: Comment?
+
+        def initialize: (new_name: Symbol, old_name: Symbol, kind: kind, annotations: Array[Annotation], location: loc?, comment: Comment?) -> void
+
+        include _HashEqual
+        include _ToJson
+
+        def instance?: () -> bool
+
+        def singleton?: () -> bool
+      end
+    end
+  end
+end

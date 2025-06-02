@@ -1,0 +1,28 @@
+# <!-- rdoc-file=lib/minitest.rb -->
+# This represents a test result in a clean way that can be marshalled over a
+# wire. Tests can do anything they want to the test instance and can create
+# conditions that cause Marshal.dump to blow up. By using Result.from(a_test)
+# you can be reasonably sure that the test result can be marshalled.
+#
+class Minitest::Result < ::Minitest::Runnable
+  # <!--
+  #   rdoc-file=lib/minitest.rb
+  #   - from(runnable)
+  # -->
+  # Create a new test result from a Runnable instance.
+  #
+  def self.from: (untyped runnable) -> untyped
+  def class_name: () -> untyped
+  def to_s: () -> untyped
+
+  # <!-- rdoc-file=lib/minitest.rb -->
+  # The class name of the test result.
+  #
+  attr_accessor klass: untyped
+
+  # <!-- rdoc-file=lib/minitest.rb -->
+  # The location of the test method.
+  #
+  attr_accessor source_location: untyped
+  include Minitest::Reportable
+end

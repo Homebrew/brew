@@ -1,0 +1,639 @@
+/*
+ * "Darkfish" Rdoc CSS
+ * $Id: rdoc.css 54 2009-01-27 01:09:48Z deveiant $
+ *
+ * Author: Michael Granger <ged@FaerieMUD.org>
+ *
+ */
+
+/* vim: ft=css et sw=2 ts=2 sts=2 */
+/* Base Green is: #6C8C22 */
+
+.hide { display: none !important; }
+
+* { padding: 0; margin: 0; }
+
+body {
+  background: #fafafa;
+  font-family: Lato, sans-serif;
+  font-weight: 300;
+}
+
+h1 span,
+h2 span,
+h3 span,
+h4 span,
+h5 span,
+h6 span {
+  position: relative;
+
+  display: none;
+  padding-left: 1em;
+  line-height: 0;
+  vertical-align: baseline;
+  font-size: 10px;
+}
+
+h1 span { top: -1.3em; }
+h2 span { top: -1.2em; }
+h3 span { top: -1.0em; }
+h4 span { top: -0.8em; }
+h5 span { top: -0.5em; }
+h6 span { top: -0.5em; }
+
+h1:hover span,
+h2:hover span,
+h3:hover span,
+h4:hover span,
+h5:hover span,
+h6:hover span {
+  display: inline;
+}
+
+h1:target,
+h2:target,
+h3:target,
+h4:target,
+h5:target,
+h6:target {
+  margin-left: -10px;
+  border-left: 10px solid #f1edba;
+}
+
+:link,
+:visited {
+  color: #6C8C22;
+  text-decoration: none;
+}
+
+:link:hover,
+:visited:hover {
+  border-bottom: 1px dotted #6C8C22;
+}
+
+code,
+pre {
+  font-family: "Source Code Pro", Monaco, monospace;
+  background-color: rgba(27,31,35,0.05);
+  padding: 0em 0.2em;
+  border-radius: 0.2em;
+}
+
+table {
+  margin: 0;
+  border-spacing: 0;
+  border-collapse: collapse;
+}
+
+table tr th, table tr td {
+  padding: 0.2em 0.4em;
+  border: 1px solid #ccc;
+}
+
+table tr th {
+  background-color: #eceaed;
+}
+
+table tr:nth-child(even) td {
+  background-color: #f5f4f6;
+}
+
+/* @group Generic Classes */
+
+.initially-hidden {
+  display: none;
+}
+
+#search-field {
+  width: 98%;
+  background: white;
+  border: none;
+  height: 1.5em;
+  -webkit-border-radius: 4px;
+  -moz-border-radius: 4px;
+  border-radius: 4px;
+  text-align: left;
+}
+#search-field:focus {
+  background: #f1edba;
+}
+#search-field:-moz-placeholder,
+#search-field::-webkit-input-placeholder {
+  font-weight: bold;
+  color: #666;
+}
+
+.missing-docs {
+  font-size: 120%;
+  background: white url(../images/wrench_orange.png) no-repeat 4px center;
+  color: #ccc;
+  line-height: 2em;
+  border: 1px solid #d00;
+  opacity: 1;
+  padding-left: 20px;
+  text-indent: 24px;
+  letter-spacing: 3px;
+  font-weight: bold;
+  -webkit-border-radius: 5px;
+  -moz-border-radius: 5px;
+}
+
+.target-section {
+  border: 2px solid #dcce90;
+  border-left-width: 8px;
+  padding: 0 1em;
+  background: #fff3c2;
+}
+
+/* @end */
+
+/* @group Index Page, Standalone file pages */
+.table-of-contents ul {
+  margin: 1em;
+  list-style: none;
+}
+
+.table-of-contents ul ul {
+  margin-top: 0.25em;
+}
+
+.table-of-contents ul :link,
+.table-of-contents ul :visited {
+  font-size: 16px;
+}
+
+.table-of-contents li {
+  margin-bottom: 0.25em;
+}
+
+.table-of-contents li .toc-toggle {
+  width: 16px;
+  height: 16px;
+  background: url(../images/add.png) no-repeat;
+}
+
+.table-of-contents li .toc-toggle.open {
+  background: url(../images/delete.png) no-repeat;
+}
+
+/* @end */
+
+/* @group Top-Level Structure */
+
+nav {
+  float: left;
+  width: 260px;
+  font-family: Helvetica, sans-serif;
+  font-size: 14px;
+  border-right: 1px solid #ccc;
+}
+
+main {
+  display: block;
+  margin: 0 2em 5em 260px;
+  padding-left: 20px;
+  min-width: 340px;
+  font-size: 16px;
+}
+
+main h1,
+main h2,
+main h3,
+main h4,
+main h5,
+main h6 {
+  font-family: Helvetica, sans-serif;
+}
+
+.table-of-contents main {
+  margin-left: 2em;
+}
+
+#validator-badges {
+  clear: both;
+  margin: 1em 1em 2em;
+  font-size: smaller;
+}
+
+/* @end */
+
+/* @group navigation */
+nav {
+  margin-bottom: 1em;
+}
+
+nav .nav-section {
+  margin-top: 2em;
+  border-top: 2px solid #aaa;
+  font-size: 90%;
+  overflow: hidden;
+}
+
+nav h2 {
+  margin: 0;
+  padding: 2px 8px 2px 8px;
+  background-color: #e8e8e8;
+  color: #555;
+  font-size: 125%;
+  text-align: center;
+}
+
+nav h3,
+#table-of-contents-navigation {
+  margin: 0;
+  padding: 2px 8px 2px 8px;
+  text-align: right;
+  background-color: #e8e8e8;
+  color: #555;
+}
+
+nav ul,
+nav dl,
+nav p {
+  padding: 4px 8px 0;
+  list-style: none;
+}
+
+#project-navigation .nav-section {
+  margin: 0;
+  border-top: 0;
+}
+
+#home-section h2 {
+  text-align: center;
+}
+
+#table-of-contents-navigation {
+  font-size: 1.2em;
+  font-weight: bold;
+  text-align: center;
+}
+
+#search-section {
+  margin-top: 0;
+  border-top: 0;
+}
+
+#search-field-wrapper {
+  border-top: 1px solid #aaa;
+  border-bottom: 1px solid #aaa;
+  padding: 3px 8px;
+  background-color: #e8e8e8;
+  color: #555;
+}
+
+ul.link-list li {
+  white-space: nowrap;
+  line-height: 1.4em;
+}
+
+ul.link-list .type {
+  font-size: 8px;
+  text-transform: uppercase;
+  color: white;
+  background: #969696;
+  padding: 2px 4px;
+  -webkit-border-radius: 5px;
+}
+
+dl.note-list dt {
+  float: left;
+  margin-right: 1em;
+}
+
+.calls-super {
+  background: url(../images/arrow_up.png) no-repeat right center;
+}
+
+/* @end */
+
+/* @group Documentation Section */
+main {
+  color: #333;
+}
+
+main > h1:first-child,
+main > h2:first-child,
+main > h3:first-child,
+main > h4:first-child,
+main > h5:first-child,
+main > h6:first-child {
+  margin-top: 0px;
+}
+
+main sup {
+  vertical-align: super;
+  font-size: 0.8em;
+}
+
+/* The heading with the class name */
+main h1[class] {
+  margin-top: 0;
+  margin-bottom: 1em;
+  font-size: 2em;
+  color: #6C8C22;
+}
+
+main h1 {
+  margin: 2em 0 0.5em;
+  font-size: 1.7em;
+}
+
+main h2 {
+  margin: 2em 0 0.5em;
+  font-size: 1.5em;
+}
+
+main h3 {
+  margin: 2em 0 0.5em;
+  font-size: 1.2em;
+}
+
+main h4 {
+  margin: 2em 0 0.5em;
+  font-size: 1.1em;
+}
+
+main h5 {
+  margin: 2em 0 0.5em;
+  font-size: 1em;
+}
+
+main h6 {
+  margin: 2em 0 0.5em;
+  font-size: 1em;
+}
+
+main p {
+  margin: 0 0 0.5em;
+  line-height: 1.4em;
+}
+
+main pre {
+  margin: 1.2em 0.5em;
+  padding: 1em;
+  font-size: 0.8em;
+}
+
+main hr {
+  margin: 1.5em 1em;
+  border: 2px solid #ddd;
+}
+
+main blockquote {
+  margin: 0 2em 1.2em 1.2em;
+  padding-left: 0.5em;
+  border-left: 2px solid #ddd;
+}
+
+main ol,
+main ul {
+  margin: 1em 2em;
+}
+
+main li > p {
+  margin-bottom: 0.5em;
+}
+
+main dl {
+  margin: 1em 0.5em;
+}
+
+main dt {
+  margin-bottom: 0.5em;
+  font-weight: bold;
+}
+
+main dd {
+  margin: 0 1em 1em 0.5em;
+}
+
+main header h2 {
+  margin-top: 2em;
+  border-width: 0;
+  border-top: 4px solid #bbb;
+  font-size: 130%;
+}
+
+main header h3 {
+  margin: 2em 0 1.5em;
+  border-width: 0;
+  border-top: 3px solid #bbb;
+  font-size: 120%;
+}
+
+.documentation-section-title {
+  position: relative;
+}
+.documentation-section-title .section-click-top {
+  position: absolute;
+  top: 6px;
+  left: 12px;
+  font-size: 10px;
+  color: #9b9877;
+  visibility: hidden;
+  padding-left: 0.5px;
+}
+
+.documentation-section-title:hover .section-click-top {
+  visibility: visible;
+}
+
+.constants-list > dl {
+  margin: 1em 0 2em;
+  border: 0;
+}
+
+.constants-list > dl dt {
+  margin-bottom: 0.75em;
+  padding-left: 0;
+  font-family: "Source Code Pro", Monaco, monospace;
+  font-size: 110%;
+}
+
+.constants-list > dl dt a {
+  color: inherit;
+}
+
+.constants-list > dl dd {
+  margin: 0 0 2em 0;
+  padding: 0;
+  color: #666;
+}
+
+.documentation-section h2 {
+  position: relative;
+}
+
+.documentation-section h2 a {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  font-size: 12px;
+  color: #9b9877;
+  visibility: hidden;
+}
+
+.documentation-section h2:hover a {
+  visibility: visible;
+}
+
+/* @group Method Details */
+
+main .method-source-code {
+  max-height: 0;
+  overflow: hidden;
+  transition-duration: 200ms;
+  transition-delay: 0ms;
+  transition-property: all;
+  transition-timing-function: ease-in-out;
+}
+
+main .method-source-code.active-menu {
+  max-height: 100vh;
+}
+
+main .method-description .method-calls-super {
+  color: #333;
+  font-weight: bold;
+}
+
+main .method-detail {
+  margin-bottom: 2.5em;
+  cursor: pointer;
+}
+
+main .method-detail:target {
+  margin-left: -10px;
+  border-left: 10px solid #f1edba;
+}
+
+main .method-heading {
+  position: relative;
+  font-family: "Source Code Pro", Monaco, monospace;
+  font-size: 110%;
+  font-weight: bold;
+  color: #333;
+}
+main .method-heading :link,
+main .method-heading :visited {
+  color: inherit;
+}
+main .method-click-advice {
+  position: absolute;
+  top: 2px;
+  right: 5px;
+  font-size: 12px;
+  color: #9b9877;
+  visibility: hidden;
+  padding-right: 20px;
+  line-height: 20px;
+  background: url(../images/zoom.png) no-repeat right top;
+}
+main .method-heading:hover .method-click-advice {
+  visibility: visible;
+}
+
+main .method-alias .method-heading {
+  color: #666;
+}
+
+main .method-description,
+main .aliases {
+  margin-top: 0.75em;
+  color: #333;
+}
+
+main .aliases {
+  padding-top: 4px;
+  font-style: italic;
+  cursor: default;
+}
+main .method-description ul {
+  margin-left: 1.5em;
+}
+
+main #attribute-method-details .method-detail:hover {
+  background-color: transparent;
+  cursor: default;
+}
+main .attribute-access-type {
+  text-transform: uppercase;
+  padding: 0 1em;
+}
+/* @end */
+
+/* @end */
+
+/* @group Source Code */
+
+pre {
+  margin: 0.5em 0;
+  border: 1px dashed #999;
+  padding: 0.5em;
+  background: #262626;
+  color: white;
+  overflow: auto;
+}
+
+.ruby-constant   { color: #7fffd4; background: transparent; }
+.ruby-keyword    { color: #00ffff; background: transparent; }
+.ruby-ivar       { color: #eedd82; background: transparent; }
+.ruby-operator   { color: #00ffee; background: transparent; }
+.ruby-identifier { color: #ffdead; background: transparent; }
+.ruby-node       { color: #ffa07a; background: transparent; }
+.ruby-comment    { color: #dc0000; background: transparent; }
+.ruby-regexp     { color: #ffa07a; background: transparent; }
+.ruby-value      { color: #7fffd4; background: transparent; }
+
+/* @end */
+
+
+/* @group search results */
+#search-results {
+  font-family: Lato, sans-serif;
+  font-weight: 300;
+}
+
+#search-results .search-match {
+  font-family: Helvetica, sans-serif;
+  font-weight: normal;
+}
+
+#search-results .search-selected {
+  background: #e8e8e8;
+  border-bottom: 1px solid transparent;
+}
+
+#search-results li {
+  list-style: none;
+  border-bottom: 1px solid #aaa;
+  margin-bottom: 0.5em;
+}
+
+#search-results li:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+}
+
+#search-results li p {
+  padding: 0;
+  margin: 0.5em;
+}
+
+#search-results .search-namespace {
+  font-weight: bold;
+}
+
+#search-results li em {
+  background: yellow;
+  font-style: normal;
+}
+
+#search-results pre {
+  margin: 0.5em;
+  font-family: "Source Code Pro", Monaco, monospace;
+}
+
+/* @end */
+

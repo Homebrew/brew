@@ -1,0 +1,65 @@
+module RBS
+  # EnvironmentWalker provides topological sort of class/module definitions.
+  #
+  # If a method, attribute, or ancestor in a class definition have a reference to another class, it is dependency.
+  #
+  # ```rb
+  # walker = EnvironmentWalker.new(env: env)
+  #
+  # walker.each_strongly_connected_component do |scc|
+  #   # Yields an array of strongly connected components.
+  # end
+  # ```
+  #
+  # The `#only_ancestors!` method limits the dependency only to ancestors.
+  # Only super classes and included modules are dependencies with the option.
+  # This is useful to calculate the dependencies of class hierarchy.
+  #
+  # ```rb
+  # walker = EnvironmentWalker.new(env: env).only_ancestors!
+  #
+  # walker.each_strongly_connected_component do |scc|
+  #   # Yields an array of strongly connected components.
+  # end
+  # ```
+  #
+  class EnvironmentWalker
+    class InstanceNode
+      attr_reader type_name: TypeName
+      def initialize: (type_name: TypeName) -> void
+    end
+
+    class SingletonNode
+      attr_reader type_name: TypeName
+      def initialize: (type_name: TypeName) -> void
+    end
+
+    class TypeNameNode
+      attr_reader type_name: TypeName
+      def initialize: (type_name: TypeName) -> void
+    end
+
+    attr_reader env: Environment
+    attr_reader only_ancestors: bool
+    attr_reader builder: DefinitionBuilder
+
+    def initialize: (env: Environment) -> void
+
+    def only_ancestors!: (?bool only) -> self
+
+    def only_ancestors?: () -> bool
+
+    type node = InstanceNode | SingletonNode | TypeNameNode
+    include TSort[node]
+
+    def tsort_each_node: () { (node) -> void } -> void
+
+    def tsort_each_child: (node) { (node) -> void } -> void
+
+    private
+
+    def each_type_name: (Types::t) { (TypeName) -> void } -> void
+
+    def each_type_node: (Types::t) { (node) -> void } -> void
+  end
+end

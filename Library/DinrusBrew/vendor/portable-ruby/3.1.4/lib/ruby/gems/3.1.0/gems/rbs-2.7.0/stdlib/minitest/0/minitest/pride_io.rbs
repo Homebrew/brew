@@ -1,0 +1,54 @@
+# <!-- rdoc-file=lib/minitest/pride_plugin.rb -->
+# Show your testing pride!
+#
+class Minitest::PrideIO
+  # <!--
+  #   rdoc-file=lib/minitest/pride_plugin.rb
+  #   - pride!()
+  # -->
+  # Activate the pride plugin. Called from both -p option and minitest/pride
+  #
+  def self.pride!: () -> untyped
+
+  # <!--
+  #   rdoc-file=lib/minitest/pride_plugin.rb
+  #   - pride?()
+  # -->
+  # Are we showing our testing pride?
+  #
+  def self.pride?: () -> untyped
+  def initialize: (untyped io) -> void
+
+  # <!--
+  #   rdoc-file=lib/minitest/pride_plugin.rb
+  #   - print(o)
+  # -->
+  # Wrap print to colorize the output.
+  #
+  def print: (untyped o) -> untyped
+  def puts: (*untyped o) -> untyped
+
+  # <!--
+  #   rdoc-file=lib/minitest/pride_plugin.rb
+  #   - pride(string)
+  # -->
+  # Color a string.
+  #
+  def pride: (untyped string) -> ::String
+  def method_missing: (untyped msg, *untyped args) -> untyped
+
+  # <!-- rdoc-file=lib/minitest/pride_plugin.rb -->
+  # The IO we're going to pipe through.
+  #
+  attr_reader io: untyped
+
+  # <!-- rdoc-file=lib/minitest/pride_plugin.rb -->
+  # Start an escape sequence
+  #
+  ESC: String
+
+  # <!-- rdoc-file=lib/minitest/pride_plugin.rb -->
+  # End the escape sequence
+  #
+  NND: String
+end

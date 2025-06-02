@@ -1,0 +1,71 @@
+.\" generated with Ronn/v0.7.3
+.\" http://github.com/rtomayko/ronn/tree/0.7.3
+.
+.TH "BUNDLE\-PLATFORM" "1" "October 2022" "" ""
+.
+.SH "NAME"
+\fBbundle\-platform\fR \- Displays platform compatibility information
+.
+.SH "SYNOPSIS"
+\fBbundle platform\fR [\-\-ruby]
+.
+.SH "DESCRIPTION"
+\fBplatform\fR displays information from your Gemfile, Gemfile\.lock, and Ruby VM about your platform\.
+.
+.P
+For instance, using this Gemfile(5):
+.
+.IP "" 4
+.
+.nf
+
+source "https://rubygems\.org"
+
+ruby "3\.1\.2"
+
+gem "rack"
+.
+.fi
+.
+.IP "" 0
+.
+.P
+If you run \fBbundle platform\fR on Ruby 3\.1\.2, it displays the following output:
+.
+.IP "" 4
+.
+.nf
+
+Your platform is: x86_64\-linux
+
+Your app has gems that work on these platforms:
+* arm64\-darwin\-21
+* ruby
+* x64\-mingw\-ucrt
+* x86_64\-linux
+
+Your Gemfile specifies a Ruby version requirement:
+* ruby 3\.1\.2
+
+Your current platform satisfies the Ruby version requirement\.
+.
+.fi
+.
+.IP "" 0
+.
+.P
+\fBplatform\fR lists all the platforms in your \fBGemfile\.lock\fR as well as the \fBruby\fR directive if applicable from your Gemfile(5)\. It also lets you know if the \fBruby\fR directive requirement has been met\. If \fBruby\fR directive doesn\'t match the running Ruby VM, it tells you what part does not\.
+.
+.SH "OPTIONS"
+.
+.TP
+\fB\-\-ruby\fR
+It will display the ruby directive information, so you don\'t have to parse it from the Gemfile(5)\.
+.
+.SH "SEE ALSO"
+.
+.IP "\(bu" 4
+bundle\-lock(1) \fIbundle\-lock\.1\.ronn\fR
+.
+.IP "" 0
+

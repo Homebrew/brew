@@ -1,0 +1,20 @@
+%a{annotate:rdoc:skip}
+module TSort[Node]
+  interface _Sortable[Node]
+    # #tsort_each_node is used to iterate for all nodes over a graph.
+    #
+    def tsort_each_node: () { (Node) -> void } -> void
+
+    # #tsort_each_child is used to iterate for child nodes of node.
+    #
+    def tsort_each_child: (Node) { (Node) -> void } -> void
+  end
+
+  interface _EachNode[Node]
+    def call: () { (Node) -> void } -> void
+  end
+
+  interface _EachChild[Node]
+    def call: (Node) { (Node) -> void } -> void
+  end
+end

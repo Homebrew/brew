@@ -1,0 +1,44 @@
+module RBS
+  module BuiltinNames
+    class Name
+      attr_reader name: TypeName
+
+      @singleton_type: Types::t?
+
+      def initialize: (name: TypeName) -> void
+
+      def to_s: () -> String
+
+      def instance_type: (*Types::t) -> Types::ClassInstance
+
+      def instance_type?: (Types::t) -> bool
+
+      def singleton_type: () -> Types::ClassSingleton
+
+      def singleton_type?: (Types::t) -> bool
+
+      def self.define: (Symbol, ?namespace: Namespace) -> instance
+    end
+
+    BasicObject: Name
+    Object: Name
+    Kernel: Name
+    String: Name
+    Comparable: Name
+    Enumerable: Name
+    Class: Name
+    Module: Name
+    Array: Name
+    Hash: Name
+    Range: Name
+    Enumerator: Name
+    Set: Name
+    Symbol: Name
+    Integer: Name
+    Float: Name
+    Regexp: Name
+    TrueClass: Name
+    FalseClass: Name
+    Numeric: Name
+  end
+end

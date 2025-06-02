@@ -1,0 +1,76 @@
+# <!-- rdoc-file=lib/minitest.rb -->
+# A reporter that gathers statistics about a test run. Does not do any IO
+# because meant to be used as a parent class for a reporter that does.
+#
+# If you want to create an entirely different type of output (eg, CI, HTML,
+# etc), this is the place to start.
+#
+# Example:
+#
+#     class JenkinsCIReporter < StatisticsReporter
+#       def report
+#         super  # Needed to calculate some statistics
+#
+#         print "<testsuite "
+#         print "tests='#{count}' "
+#         print "failures='#{failures}' "
+#         # Remaining XML...
+#       end
+#     end
+#
+class Minitest::StatisticsReporter < ::Minitest::Reporter
+  def initialize: (?untyped io, ?::Hash[untyped, untyped] options) -> void
+  def passed?: () -> untyped
+  def start: () -> untyped
+  def record: (untyped result) -> untyped
+
+  # <!--
+  #   rdoc-file=lib/minitest.rb
+  #   - report()
+  # -->
+  # Report on the tracked statistics.
+  #
+  def report: () -> untyped
+
+  # <!-- rdoc-file=lib/minitest.rb -->
+  # Total number of assertions.
+  #
+  attr_accessor assertions: untyped
+
+  # <!-- rdoc-file=lib/minitest.rb -->
+  # Total number of test cases.
+  #
+  attr_accessor count: untyped
+
+  # <!-- rdoc-file=lib/minitest.rb -->
+  # An `Array` of test cases that failed or were skipped.
+  #
+  attr_accessor results: untyped
+
+  # <!-- rdoc-file=lib/minitest.rb -->
+  # Time the test run started. If available, the monotonic clock is used and this
+  # is a `Float`, otherwise it's an instance of `Time`.
+  #
+  attr_accessor start_time: untyped
+
+  # <!-- rdoc-file=lib/minitest.rb -->
+  # Test run time. If available, the monotonic clock is used and this is a
+  # `Float`, otherwise it's an instance of `Time`.
+  #
+  attr_accessor total_time: untyped
+
+  # <!-- rdoc-file=lib/minitest.rb -->
+  # Total number of tests that failed.
+  #
+  attr_accessor failures: untyped
+
+  # <!-- rdoc-file=lib/minitest.rb -->
+  # Total number of tests that erred.
+  #
+  attr_accessor errors: untyped
+
+  # <!-- rdoc-file=lib/minitest.rb -->
+  # Total number of tests that where skipped.
+  #
+  attr_accessor skips: untyped
+end

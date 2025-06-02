@@ -1,0 +1,51 @@
+module RBS
+  # Copies RBS files loaded through `loader` under `vendor_dir`.
+  #
+  # Core libraries and library RBS files will be copied.
+  #
+  # ```rb
+  # loader = RBS::EnvironmentLoader.new()
+  #
+  # loader.add(library: set)               # Libraries will be copied.
+  # loader.add(library: "minitest", version: "1.2.3")
+  #
+  # loader.add(path: Pathname("sig"))      # Dirs will be ignored.
+  #
+  # vendorer = RBS::Vendorer.new(vendor_dir: Pathname("vendor/rbs"), loader: loader)
+  # vendorer.clearn!
+  # vendorer.copy!
+  # ```
+  #
+  # The result will be:
+  #
+  # ```
+  # vendor/rbs/core            => Will include core RBSs
+  # vendor/rbs/set-0           => Will include `set` library RBSs.
+  # vendor/rbs/minitest-1.2.3  => Will include `minitest` library RBSs.
+  # ```
+  #
+  # The vendorerd RBSs will be loaded through :dir source.
+  #
+  # ```rb
+  # loader = RBS::EnvironmentLoader.new(core_root: nil, repository: RBS::Repository.new(no_stdlib: true))
+  # loader.add(path: Pathname("vendor/rbs"))
+  # loader.add(path: Pathname("sig"))
+  # ```
+  #
+  class Vendorer
+    attr_reader vendor_dir: Pathname
+    attr_reader loader: EnvironmentLoader
+
+    def initialize: (vendor_dir: Pathname, loader: EnvironmentLoader) -> void
+
+    # Copy RBS files into `vendor_dir`.
+    # Ensures the `vendor_dir` exists.
+    def copy!: () -> void
+
+    # Deletes `vendor_dir` and its content if exists.
+    #
+    def clean!: () -> void
+
+    def ensure_dir: [A] () { () -> A } -> A
+  end
+end

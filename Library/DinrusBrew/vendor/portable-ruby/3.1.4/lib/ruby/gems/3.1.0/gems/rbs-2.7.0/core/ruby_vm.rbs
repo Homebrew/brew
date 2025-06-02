@@ -1,0 +1,53 @@
+# <!-- rdoc-file=vm.c -->
+# The RubyVM module only exists on MRI. `RubyVM` is not defined in other Ruby
+# implementations such as JRuby and TruffleRuby.
+#
+# The RubyVM module provides some access to MRI internals. This module is for
+# very limited purposes, such as debugging, prototyping, and research.  Normal
+# users must not use it. This module is not portable between Ruby
+# implementations.
+#
+class RubyVM < Object
+end
+
+# <!-- rdoc-file=vm.c -->
+# DEFAULT_PARAMS This constant exposes the VM's default parameters. Note that
+# changing these values does not affect VM execution. Specification is not
+# stable and you should not depend on this value. Of course, this constant is
+# MRI specific.
+#
+RubyVM::DEFAULT_PARAMS: Hash[Symbol, Integer]
+
+# <!-- rdoc-file=vm.c -->
+# INSTRUCTION_NAMES A list of bytecode instruction names in MRI. This constant
+# is MRI specific.
+#
+RubyVM::INSTRUCTION_NAMES: Array[String]
+
+# <!-- rdoc-file=vm.c -->
+# OPTS An Array of VM build options. This constant is MRI specific.
+#
+RubyVM::OPTS: Array[String]
+
+# <!-- rdoc-file=iseq.c -->
+# The InstructionSequence class represents a compiled sequence of instructions
+# for the Virtual Machine used in MRI. Not all implementations of Ruby may
+# implement this class, and for the implementations that implement it, the
+# methods defined and behavior of the methods can change in any version.
+#
+# With it, you can get a handle to the instructions that make up a method or a
+# proc, compile strings of Ruby code down to VM instructions, and disassemble
+# instruction sequences to strings for easy inspection. It is mostly useful if
+# you want to learn how YARV works, but it also lets you control various
+# settings for the Ruby iseq compiler.
+#
+# You can find the source for the VM instructions in `insns.def` in the Ruby
+# source.
+#
+# The instruction sequence results will almost certainly change as Ruby changes,
+# so example output in this documentation may be different from what you see.
+#
+# Of course, this class is MRI specific.
+#
+class RubyVM::InstructionSequence < Object
+end

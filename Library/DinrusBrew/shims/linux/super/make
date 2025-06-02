@@ -1,0 +1,30 @@
+#!/bin/bash
+
+# DINRUSBREW_CCCFG is set by extend/ENV/super.rb
+# DINRUSBREW_LIBRARY is set by bin/brew
+# shellcheck disable=SC2154,SC2250
+pathremove() {
+  local IFS=':'
+  local NEWPATH=""
+  local DIR=""
+  local PATHVARIABLE="${2:-PATH}"
+
+  for DIR in ${!PATHVARIABLE}
+  do
+    if [[ "${DIR}" != "$1" ]]
+    then
+      NEWPATH="${NEWPATH:+$NEWPATH:}${DIR}"
+    fi
+  done
+  export "${PATHVARIABLE}"="${NEWPATH}"
+}
+
+SAVED_PATH="${PATH}"
+pathremove "${DINRUSBREW_LIBRARY}/DinrusBrew/shims/linux/super"
+MAKE="$(command -v make)"
+export MAKE
+export PATH="${SAVED_PATH}"
+
+export DINRUSBREW_CCCFG="O${DINRUSBREW_CCCFG}"
+
+exec "${MAKE}" "$@"

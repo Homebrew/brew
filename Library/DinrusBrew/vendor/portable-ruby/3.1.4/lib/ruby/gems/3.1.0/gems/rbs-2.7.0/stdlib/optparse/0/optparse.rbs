@@ -1,0 +1,1690 @@
+# <!-- rdoc-file=lib/optparse.rb -->
+# ## OptionParser
+#
+# ### New to OptionParser?
+#
+# See the [Tutorial](optparse/tutorial.rdoc).
+#
+# ### Introduction
+#
+# OptionParser is a class for command-line option analysis.  It is much more
+# advanced, yet also easier to use, than GetoptLong, and is a more Ruby-oriented
+# solution.
+#
+# ### Features
+#
+# 1.  The argument specification and the code to handle it are written in the
+#     same place.
+# 2.  It can output an option summary; you don't need to maintain this string
+#     separately.
+# 3.  Optional and mandatory arguments are specified very gracefully.
+# 4.  Arguments can be automatically converted to a specified class.
+# 5.  Arguments can be restricted to a certain set.
+#
+#
+# All of these features are demonstrated in the examples below.  See
+# #make_switch for full documentation.
+#
+# ### Minimal example
+#
+#     require 'optparse'
+#
+#     options = {}
+#     OptionParser.new do |parser|
+#       parser.banner = "Usage: example.rb [options]"
+#
+#       parser.on("-v", "--[no-]verbose", "Run verbosely") do |v|
+#         options[:verbose] = v
+#       end
+#     end.parse!
+#
+#     p options
+#     p ARGV
+#
+# ### Generating Help
+#
+# OptionParser can be used to automatically generate help for the commands you
+# write:
+#
+#     require 'optparse'
+#
+#     Options = Struct.new(:name)
+#
+#     class Parser
+#       def self.parse(options)
+#         args = Options.new("world")
+#
+#         opt_parser = OptionParser.new do |parser|
+#           parser.banner = "Usage: example.rb [options]"
+#
+#           parser.on("-nNAME", "--name=NAME", "Name to say hello to") do |n|
+#             args.name = n
+#           end
+#
+#           parser.on("-h", "--help", "Prints this help") do
+#             puts parser
+#             exit
+#           end
+#         end
+#
+#         opt_parser.parse!(options)
+#         return args
+#       end
+#     end
+#     options = Parser.parse %w[--help]
+#
+#     #=>
+#        # Usage: example.rb [options]
+#        #     -n, --name=NAME                  Name to say hello to
+#        #     -h, --help                       Prints this help
+#
+# ### Required Arguments
+#
+# For options that require an argument, option specification strings may include
+# an option name in all caps. If an option is used without the required
+# argument, an exception will be raised.
+#
+#     require 'optparse'
+#
+#     options = {}
+#     OptionParser.new do |parser|
+#       parser.on("-r", "--require LIBRARY",
+#                 "Require the LIBRARY before executing your script") do |lib|
+#         puts "You required #{lib}!"
+#       end
+#     end.parse!
+#
+# Used:
+#
+#     $ ruby optparse-test.rb -r
+#     optparse-test.rb:9:in `<main>': missing argument: -r (OptionParser::MissingArgument)
+#     $ ruby optparse-test.rb -r my-library
+#     You required my-library!
+#
+# ### Type Coercion
+#
+# OptionParser supports the ability to coerce command line arguments into
+# objects for us.
+#
+# OptionParser comes with a few ready-to-use kinds of  type coercion. They are:
+#
+# *   Date  -- Anything accepted by `Date.parse`
+# *   DateTime -- Anything accepted by `DateTime.parse`
+# *   Time -- Anything accepted by `Time.httpdate` or `Time.parse`
+# *   URI  -- Anything accepted by `URI.parse`
+# *   Shellwords -- Anything accepted by `Shellwords.shellwords`
+# *   String -- Any non-empty string
+# *   Integer -- Any integer. Will convert octal. (e.g. 124, -3, 040)
+# *   Float -- Any float. (e.g. 10, 3.14, -100E+13)
+# *   Numeric -- Any integer, float, or rational (1, 3.4, 1/3)
+# *   DecimalInteger -- Like `Integer`, but no octal format.
+# *   OctalInteger -- Like `Integer`, but no decimal format.
+# *   DecimalNumeric -- Decimal integer or float.
+# *   TrueClass --  Accepts '+, yes, true, -, no, false' and defaults as `true`
+# *   FalseClass -- Same as `TrueClass`, but defaults to `false`
+# *   Array -- Strings separated by ',' (e.g. 1,2,3)
+# *   Regexp -- Regular expressions. Also includes options.
+#
+#
+# We can also add our own coercions, which we will cover below.
+#
+# #### Using Built-in Conversions
+#
+# As an example, the built-in `Time` conversion is used. The other built-in
+# conversions behave in the same way. OptionParser will attempt to parse the
+# argument as a `Time`. If it succeeds, that time will be passed to the handler
+# block. Otherwise, an exception will be raised.
+#
+#     require 'optparse'
+#     require 'optparse/time'
+#     OptionParser.new do |parser|
+#       parser.on("-t", "--time [TIME]", Time, "Begin execution at given time") do |time|
+#         p time
+#       end
+#     end.parse!
+#
+# Used:
+#
+#     $ ruby optparse-test.rb  -t nonsense
+#     ... invalid argument: -t nonsense (OptionParser::InvalidArgument)
+#     $ ruby optparse-test.rb  -t 10-11-12
+#     2010-11-12 00:00:00 -0500
+#     $ ruby optparse-test.rb  -t 9:30
+#     2014-08-13 09:30:00 -0400
+#
+# #### Creating Custom Conversions
+#
+# The `accept` method on OptionParser may be used to create converters. It
+# specifies which conversion block to call whenever a class is specified. The
+# example below uses it to fetch a `User` object before the `on` handler
+# receives it.
+#
+#     require 'optparse'
+#
+#     User = Struct.new(:id, :name)
+#
+#     def find_user id
+#       not_found = ->{ raise "No User Found for id #{id}" }
+#       [ User.new(1, "Sam"),
+#         User.new(2, "Gandalf") ].find(not_found) do |u|
+#         u.id == id
+#       end
+#     end
+#
+#     op = OptionParser.new
+#     op.accept(User) do |user_id|
+#       find_user user_id.to_i
+#     end
+#
+#     op.on("--user ID", User) do |user|
+#       puts user
+#     end
+#
+#     op.parse!
+#
+# Used:
+#
+#     $ ruby optparse-test.rb --user 1
+#     #<struct User id=1, name="Sam">
+#     $ ruby optparse-test.rb --user 2
+#     #<struct User id=2, name="Gandalf">
+#     $ ruby optparse-test.rb --user 3
+#     optparse-test.rb:15:in `block in find_user': No User Found for id 3 (RuntimeError)
+#
+# ### Store options to a Hash
+#
+# The `into` option of `order`, `parse` and so on methods stores command line
+# options into a Hash.
+#
+#     require 'optparse'
+#
+#     options = {}
+#     OptionParser.new do |parser|
+#       parser.on('-a')
+#       parser.on('-b NUM', Integer)
+#       parser.on('-v', '--verbose')
+#     end.parse!(into: options)
+#
+#     p options
+#
+# Used:
+#
+#     $ ruby optparse-test.rb -a
+#     {:a=>true}
+#     $ ruby optparse-test.rb -a -v
+#     {:a=>true, :verbose=>true}
+#     $ ruby optparse-test.rb -a -b 100
+#     {:a=>true, :b=>100}
+#
+# ### Complete example
+#
+# The following example is a complete Ruby program.  You can run it and see the
+# effect of specifying various options.  This is probably the best way to learn
+# the features of `optparse`.
+#
+#     require 'optparse'
+#     require 'optparse/time'
+#     require 'ostruct'
+#     require 'pp'
+#
+#     class OptparseExample
+#       Version = '1.0.0'
+#
+#       CODES = %w[iso-2022-jp shift_jis euc-jp utf8 binary]
+#       CODE_ALIASES = { "jis" => "iso-2022-jp", "sjis" => "shift_jis" }
+#
+#       class ScriptOptions
+#         attr_accessor :library, :inplace, :encoding, :transfer_type,
+#                       :verbose, :extension, :delay, :time, :record_separator,
+#                       :list
+#
+#         def initialize
+#           self.library = []
+#           self.inplace = false
+#           self.encoding = "utf8"
+#           self.transfer_type = :auto
+#           self.verbose = false
+#         end
+#
+#         def define_options(parser)
+#           parser.banner = "Usage: example.rb [options]"
+#           parser.separator ""
+#           parser.separator "Specific options:"
+#
+#           # add additional options
+#           perform_inplace_option(parser)
+#           delay_execution_option(parser)
+#           execute_at_time_option(parser)
+#           specify_record_separator_option(parser)
+#           list_example_option(parser)
+#           specify_encoding_option(parser)
+#           optional_option_argument_with_keyword_completion_option(parser)
+#           boolean_verbose_option(parser)
+#
+#           parser.separator ""
+#           parser.separator "Common options:"
+#           # No argument, shows at tail.  This will print an options summary.
+#           # Try it and see!
+#           parser.on_tail("-h", "--help", "Show this message") do
+#             puts parser
+#             exit
+#           end
+#           # Another typical switch to print the version.
+#           parser.on_tail("--version", "Show version") do
+#             puts Version
+#             exit
+#           end
+#         end
+#
+#         def perform_inplace_option(parser)
+#           # Specifies an optional option argument
+#           parser.on("-i", "--inplace [EXTENSION]",
+#                     "Edit ARGV files in place",
+#                     "(make backup if EXTENSION supplied)") do |ext|
+#             self.inplace = true
+#             self.extension = ext || ''
+#             self.extension.sub!(/\A\.?(?=.)/, ".")  # Ensure extension begins with dot.
+#           end
+#         end
+#
+#         def delay_execution_option(parser)
+#           # Cast 'delay' argument to a Float.
+#           parser.on("--delay N", Float, "Delay N seconds before executing") do |n|
+#             self.delay = n
+#           end
+#         end
+#
+#         def execute_at_time_option(parser)
+#           # Cast 'time' argument to a Time object.
+#           parser.on("-t", "--time [TIME]", Time, "Begin execution at given time") do |time|
+#             self.time = time
+#           end
+#         end
+#
+#         def specify_record_separator_option(parser)
+#           # Cast to octal integer.
+#           parser.on("-F", "--irs [OCTAL]", OptionParser::OctalInteger,
+#                     "Specify record separator (default \\0)") do |rs|
+#             self.record_separator = rs
+#           end
+#         end
+#
+#         def list_example_option(parser)
+#           # List of arguments.
+#           parser.on("--list x,y,z", Array, "Example 'list' of arguments") do |list|
+#             self.list = list
+#           end
+#         end
+#
+#         def specify_encoding_option(parser)
+#           # Keyword completion.  We are specifying a specific set of arguments (CODES
+#           # and CODE_ALIASES - notice the latter is a Hash), and the user may provide
+#           # the shortest unambiguous text.
+#           code_list = (CODE_ALIASES.keys + CODES).join(', ')
+#           parser.on("--code CODE", CODES, CODE_ALIASES, "Select encoding",
+#                     "(#{code_list})") do |encoding|
+#             self.encoding = encoding
+#           end
+#         end
+#
+#         def optional_option_argument_with_keyword_completion_option(parser)
+#           # Optional '--type' option argument with keyword completion.
+#           parser.on("--type [TYPE]", [:text, :binary, :auto],
+#                     "Select transfer type (text, binary, auto)") do |t|
+#             self.transfer_type = t
+#           end
+#         end
+#
+#         def boolean_verbose_option(parser)
+#           # Boolean switch.
+#           parser.on("-v", "--[no-]verbose", "Run verbosely") do |v|
+#             self.verbose = v
+#           end
+#         end
+#       end
+#
+#       #
+#       # Return a structure describing the options.
+#       #
+#       def parse(args)
+#         # The options specified on the command line will be collected in
+#         # *options*.
+#
+#         @options = ScriptOptions.new
+#         @args = OptionParser.new do |parser|
+#           @options.define_options(parser)
+#           parser.parse!(args)
+#         end
+#         @options
+#       end
+#
+#       attr_reader :parser, :options
+#     end  # class OptparseExample
+#
+#     example = OptparseExample.new
+#     options = example.parse(ARGV)
+#     pp options # example.options
+#     pp ARGV
+#
+# ### Shell Completion
+#
+# For modern shells (e.g. bash, zsh, etc.), you can use shell completion for
+# command line options.
+#
+# ### Further documentation
+#
+# The above examples, along with the accompanying
+# [Tutorial](optparse/tutorial.rdoc), should be enough to learn how to use this
+# class. If you have any questions, file a ticket at http://bugs.ruby-lang.org.
+#
+class OptionParser
+  interface _Pattern
+    def match: (untyped other) -> boolish
+  end
+
+  interface _Intoable
+    def []=: (Symbol, untyped) -> untyped
+  end
+
+  interface _LtLtString
+    def <<: (String) -> untyped
+  end
+
+  # <!--
+  #   rdoc-file=lib/optparse.rb
+  #   - accept(*args, &blk)
+  # -->
+  # See #accept.
+  #
+  def self.accept: (Class t, ?_Pattern pat) ?{ (*untyped) -> untyped } -> void
+
+  # <!--
+  #   rdoc-file=lib/optparse.rb
+  #   - getopts(*args)
+  # -->
+  # See #getopts.
+  #
+  def self.getopts: (*String options) -> Hash[String, untyped]
+                  | (Array[String] args, *String options) -> Hash[String, untyped]
+
+  # <!--
+  #   rdoc-file=lib/optparse.rb
+  #   - inc(arg, default = nil)
+  # -->
+  # Returns an incremented value of `default` according to `arg`.
+  #
+  def self.inc: (untyped arg, ?_ToI default) -> Integer?
+
+  # <!--
+  #   rdoc-file=lib/optparse.rb
+  #   - reject(*args, &blk)
+  # -->
+  # See #reject.
+  #
+  def self.reject: (Class t) -> void
+
+  # <!--
+  #   rdoc-file=lib/optparse.rb
+  #   - terminate(arg = nil)
+  # -->
+  #
+  def self.terminate: (?String arg) -> bot
+
+  # <!--
+  #   rdoc-file=lib/optparse.rb
+  #   - top()
+  # -->
+  #
+  def self.top: () -> OptionParser::List
+
+  # <!--
+  #   rdoc-file=lib/optparse.rb
+  #   - with(*args, &block)
+  # -->
+  # Initializes a new instance and evaluates the optional block in context of the
+  # instance. Arguments `args` are passed to #new, see there for description of
+  # parameters.
+  #
+  # This method is **deprecated**, its behavior corresponds to the older #new
+  # method.
+  #
+  def self.with: (?String banner, ?Integer width, ?String indent) ?{ (instance opts) -> void } -> instance
+
+  public
+
+  # <!--
+  #   rdoc-file=lib/optparse.rb
+  #   - abort(mesg = $!)
+  # -->
+  #
+  def abort: (?_ToS mesg) -> bot
+
+  # <!--
+  #   rdoc-file=lib/optparse.rb
+  #   - accept(*args, &blk)
+  # -->
+  # Directs to accept specified class `t`. The argument string is passed to the
+  # block in which it should be converted to the desired class.
+  #
+  # `t`
+  # :   Argument class specifier, any object including Class.
+  # `pat`
+  # :   Pattern for argument, defaults to `t` if it responds to match.
+  #
+  #
+  #     accept(t, pat, &block)
+  #
+  def accept: (Class t, ?_Pattern pat) ?{ (*untyped) -> untyped } -> void
+
+  def add_officious: () -> void
+
+  # <!--
+  #   rdoc-file=lib/optparse.rb
+  #   - additional_message(typ, opt)
+  # -->
+  # Returns additional info.
+  #
+  def additional_message: (untyped typ, untyped opt) -> String?
+
+  # <!-- rdoc-file=lib/optparse.rb -->
+  # Heading banner preceding summary.
+  #
+  attr_accessor banner: String
+
+  # <!--
+  #   rdoc-file=lib/optparse.rb
+  #   - base()
+  # -->
+  # Subject of #on_tail.
+  #
+  def base: () -> List
+
+  # <!--
+  #   rdoc-file=lib/optparse.rb
+  #   - candidate(word)
+  # -->
+  #
+  def candidate: (String word) -> Array[untyped]
+
+  def compsys: (untyped to, ?untyped name) -> untyped
+
+  # <!--
+  #   rdoc-file=lib/optparse.rb
+  #   - def_head_option(*opts, &block)
+  # -->
+  #
+  alias def_head_option define_head
+
+  # <!--
+  #   rdoc-file=lib/optparse.rb
+  #   - def_option(*opts, &block)
+  # -->
+  #
+  alias def_option define
+
+  # <!--
+  #   rdoc-file=lib/optparse.rb
+  #   - def_tail_option(*opts, &block)
+  # -->
+  #
+  alias def_tail_option define_tail
+
+  # <!-- rdoc-file=lib/optparse.rb -->
+  # Strings to be parsed in default.
+  #
+  attr_accessor default_argv: Array[String]
+
+  # <!--
+  #   rdoc-file=lib/optparse.rb
+  #   - define(*params, &block)
+  # -->
+  # Creates an option from the given parameters `params`. See [Parameters for New
+  # Options](./option_params.rdoc).
+  #
+  # The block, if given, is the handler for the created option. When the option is
+  # encountered during command-line parsing, the block is called with the argument
+  # given for the option, if any. See [Option
+  # Handlers](./option_params.rdoc#label-Option+Handlers).
+  #
+  def define: (*String params) ?{ (*untyped) -> untyped } -> untyped
+            | (String params, Class | Array[String] | Hash[Symbol, untyped] | Regexp obj, ?String desc) ?{ (*untyped) -> untyped } -> untyped
+            | (*String params, Proc | Method handler) -> untyped
+            | (String params, Class | Array[String] | Hash[Symbol, untyped] | Regexp obj, ?String desc, Proc | Method handler) -> untyped
+
+  # <!--
+  #   rdoc-file=lib/optparse.rb
+  #   - define_head(*params, &block)
+  # -->
+  # Creates an option from the given parameters `params`. See [Parameters for New
+  # Options](./option_params.rdoc).
+  #
+  # The block, if given, is the handler for the created option. When the option is
+  # encountered during command-line parsing, the block is called with the argument
+  # given for the option, if any. See [Option
+  # Handlers](./option_params.rdoc#label-Option+Handlers).
+  #
+  def define_head: (*String params) ?{ (*untyped) -> untyped } -> untyped
+                 | (String params, Class | Array[String] | Hash[Symbol, untyped] | Regexp obj, ?String desc) ?{ (*untyped) -> untyped } -> untyped
+                 | (*String params, Proc | Method handler) -> untyped
+                 | (String params, Class | Array[String] | Hash[Symbol, untyped] | Regexp obj, ?String desc, Proc | Method handler) -> untyped
+
+  # <!--
+  #   rdoc-file=lib/optparse.rb
+  #   - define_tail(*params, &block)
+  # -->
+  # Creates an option from the given parameters `params`. See [Parameters for New
+  # Options](./option_params.rdoc).
+  #
+  # The block, if given, is the handler for the created option. When the option is
+  # encountered during command-line parsing, the block is called with the argument
+  # given for the option, if any. See [Option
+  # Handlers](./option_params.rdoc#label-Option+Handlers).
+  #
+  def define_tail: (*String params) ?{ (*untyped) -> untyped } -> untyped
+                 | (String params, Class | Array[String] | Hash[Symbol, untyped] | Regexp obj, ?String desc) ?{ (*untyped) -> untyped } -> untyped
+                 | (*String params, Proc | Method handler) -> untyped
+                 | (String params, Class | Array[String] | Hash[Symbol, untyped] | Regexp obj, ?String desc, Proc | Method handler) -> untyped
+
+  # <!--
+  #   rdoc-file=lib/optparse.rb
+  #   - environment(env = File.basename($0, '.*'))
+  # -->
+  # Parses environment variable `env` or its uppercase with splitting like a
+  # shell.
+  #
+  # `env` defaults to the basename of the program.
+  #
+  def environment: (?String env) -> Array[String]?
+
+  # <!--
+  #   rdoc-file=lib/optparse.rb
+  #   - getopts(*args)
+  # -->
+  # Wrapper method for getopts.rb.
+  #
+  #     params = ARGV.getopts("ab:", "foo", "bar:", "zot:Z;zot option")
+  #     # params["a"] = true   # -a
+  #     # params["b"] = "1"    # -b1
+  #     # params["foo"] = "1"  # --foo
+  #     # params["bar"] = "x"  # --bar x
+  #     # params["zot"] = "z"  # --zot Z
+  #
+  def getopts: (*String options) -> Hash[String, untyped]
+             | (Array[String] args, *String options) -> Hash[String, untyped]
+
+  # <!--
+  #   rdoc-file=lib/optparse.rb
+  #   - help()
+  # -->
+  # Returns option summary string.
+  #
+  def help: () -> String
+
+  # <!--
+  #   rdoc-file=lib/optparse.rb
+  #   - inc(*args)
+  # -->
+  #
+  def inc: (*untyped args) -> untyped
+
+  # <!--
+  #   rdoc-file=lib/optparse.rb
+  #   - load(filename = nil)
+  # -->
+  # Loads options from file names as `filename`. Does nothing when the file is not
+  # present. Returns whether successfully loaded.
+  #
+  # `filename` defaults to basename of the program without suffix in a directory
+  # ~/.options, then the basename with '.options' suffix under XDG and Haiku
+  # standard places.
+  #
+  def load: (?String filename) -> bool
+
+  # <!--
+  #   rdoc-file=lib/optparse.rb
+  #   - make_switch(params, block = nil)
+  # -->
+  # Creates an option from the given parameters `params`. See [Parameters for New
+  # Options](./option_params.rdoc).
+  #
+  # The block, if given, is the handler for the created option. When the option is
+  # encountered during command-line parsing, the block is called with the argument
+  # given for the option, if any. See [Option
+  # Handlers](./option_params.rdoc#label-Option+Handlers).
+  #
+  def make_switch: (Array[untyped] opts, ?Proc block) -> [ untyped, untyped, untyped, untyped, untyped ]
+
+  # <!--
+  #   rdoc-file=lib/optparse.rb
+  #   - new() { |self| ... }
+  # -->
+  # Pushes a new List.
+  #
+  def new: () -> self
+         | [T] () { (self) -> T } -> T
+
+  # <!--
+  #   rdoc-file=lib/optparse.rb
+  #   - on(*params, &block)
+  # -->
+  # Creates an option from the given parameters `params`. See [Parameters for New
+  # Options](./option_params.rdoc).
+  #
+  # The block, if given, is the handler for the created option. When the option is
+  # encountered during command-line parsing, the block is called with the argument
+  # given for the option, if any. See [Option
+  # Handlers](./option_params.rdoc#label-Option+Handlers).
+  #
+  def on: (*String params) ?{ (*untyped) -> untyped } -> self
+        | (String params, Class | Array[String] | Hash[Symbol, untyped] | Regexp obj, ?String desc) ?{ (*untyped) -> untyped } -> self
+        | (String short_params, String long_params, Class | Array[String] | Hash[Symbol, untyped] | Regexp obj, ?String desc) ?{ (*untyped) -> untyped } -> self
+        | (*String params, Proc | Method handler) -> self
+        | (String params, Class | Array[String] | Hash[Symbol, untyped] | Regexp obj, ?String desc, Proc | Method handler) -> self
+        | (String short_params, String long_params, Class | Array[String] | Hash[Symbol, untyped] | Regexp obj, ?String desc, Proc | Method handler) -> self
+
+  # <!--
+  #   rdoc-file=lib/optparse.rb
+  #   - on_head(*params, &block)
+  # -->
+  # Creates an option from the given parameters `params`. See [Parameters for New
+  # Options](./option_params.rdoc).
+  #
+  # The block, if given, is the handler for the created option. When the option is
+  # encountered during command-line parsing, the block is called with the argument
+  # given for the option, if any. See [Option
+  # Handlers](./option_params.rdoc#label-Option+Handlers).
+  #
+  # The new option is added at the head of the summary.
+  #
+  def on_head: (*String params) ?{ (*untyped) -> untyped } -> self
+             | (String params, Class | Array[String] | Hash[Symbol, untyped] | Regexp obj, ?String desc) ?{ (*untyped) -> untyped } -> self
+             | (String short_params, String long_params, Class | Array[String] | Hash[Symbol, untyped] | Regexp obj, ?String desc) ?{ (*untyped) -> untyped } -> self
+             | (*String params, Proc | Method handler) -> self
+             | (String params, Class | Array[String] | Hash[Symbol, untyped] | Regexp obj, ?String desc, Proc | Method handler) -> self
+             | (String short_params, String long_params, Class | Array[String] | Hash[Symbol, untyped] | Regexp obj, ?String desc, Proc | Method handler) -> self
+
+  # <!--
+  #   rdoc-file=lib/optparse.rb
+  #   - on_tail(*params, &block)
+  # -->
+  # Creates an option from the given parameters `params`. See [Parameters for New
+  # Options](./option_params.rdoc).
+  #
+  # The block, if given, is the handler for the created option. When the option is
+  # encountered during command-line parsing, the block is called with the argument
+  # given for the option, if any. See [Option
+  # Handlers](./option_params.rdoc#label-Option+Handlers).
+  #
+  # The new option is added at the tail of the summary.
+  #
+  def on_tail: (*String params) ?{ (*untyped) -> untyped } -> self
+             | (String params, Class | Array[String] | Hash[Symbol, untyped] | Regexp obj, ?String desc) ?{ (*untyped) -> untyped } -> self
+             | (String short_params, String long_params, Class | Array[String] | Hash[Symbol, untyped] | Regexp obj, ?String desc) ?{ (*untyped) -> untyped } -> self
+             | (*String params, Proc | Method handler) -> self
+             | (String params, Class | Array[String] | Hash[Symbol, untyped] | Regexp obj, ?String desc, Proc | Method handler) -> self
+             | (String short_params, String long_params, Class | Array[String] | Hash[Symbol, untyped] | Regexp obj, ?String desc, Proc | Method handler) -> self
+
+  # <!--
+  #   rdoc-file=lib/optparse.rb
+  #   - order(*argv, into: nil, &nonopt)
+  # -->
+  # Parses command line arguments `argv` in order. When a block is given, each
+  # non-option argument is yielded. When optional `into` keyword argument is
+  # provided, the parsed option values are stored there via `[]=` method (so it
+  # can be Hash, or OpenStruct, or other similar object).
+  #
+  # Returns the rest of `argv` left unparsed.
+  #
+  def order: (*String argv, ?into: _Intoable) ?{ (String) -> void } -> Array[String]
+           | (Array[String] argv, ?into: _Intoable) ?{ (String) -> void } -> Array[String]
+
+  # <!--
+  #   rdoc-file=lib/optparse.rb
+  #   - order!(argv = default_argv, into: nil, &nonopt)
+  # -->
+  # Same as #order, but removes switches destructively. Non-option arguments
+  # remain in `argv`.
+  #
+  def order!: (?Array[String] argv, ?into: _Intoable) ?{ (String) -> void } -> Array[String]
+
+  # <!--
+  #   rdoc-file=lib/optparse.rb
+  #   - parse(*argv, into: nil)
+  # -->
+  # Parses command line arguments `argv` in order when environment variable
+  # POSIXLY_CORRECT is set, and in permutation mode otherwise. When optional
+  # `into` keyword argument is provided, the parsed option values are stored there
+  # via `[]=` method (so it can be Hash, or OpenStruct, or other similar object).
+  #
+  def parse: (*String argv, ?into: _Intoable) -> Array[String]
+           | (Array[String] argv, ?into: _Intoable) -> Array[String]
+
+  # <!--
+  #   rdoc-file=lib/optparse.rb
+  #   - parse!(argv = default_argv, into: nil)
+  # -->
+  # Same as #parse, but removes switches destructively. Non-option arguments
+  # remain in `argv`.
+  #
+  def parse!: (?Array[String] argv, ?into: _Intoable) -> Array[String]
+
+  # <!--
+  #   rdoc-file=lib/optparse.rb
+  #   - permute(*argv, into: nil)
+  # -->
+  # Parses command line arguments `argv` in permutation mode and returns list of
+  # non-option arguments. When optional `into` keyword argument is provided, the
+  # parsed option values are stored there via `[]=` method (so it can be Hash, or
+  # OpenStruct, or other similar object).
+  #
+  def permute: (*String argv, ?into: _Intoable) -> Array[String]
+             | (Array[String] argv, ?into: _Intoable) -> Array[String]
+
+  # <!--
+  #   rdoc-file=lib/optparse.rb
+  #   - permute!(argv = default_argv, into: nil)
+  # -->
+  # Same as #permute, but removes switches destructively. Non-option arguments
+  # remain in `argv`.
+  #
+  def permute!: (?Array[String] argv, ?into: _Intoable) -> Array[String]
+
+  # <!-- rdoc-file=lib/optparse.rb -->
+  # Program name to be emitted in error message and default banner, defaults to
+  # $0.
+  #
+  attr_accessor program_name: String
+
+  # <!--
+  #   rdoc-file=lib/optparse.rb
+  #   - reject(*args, &blk)
+  # -->
+  # Directs to reject specified class argument.
+  #
+  # `t`
+  # :   Argument class specifier, any object including Class.
+  #
+  #
+  #     reject(t)
+  #
+  def reject: (Class t) -> void
+
+  # <!-- rdoc-file=lib/optparse.rb -->
+  # Release code
+  #
+  def release: () -> untyped
+
+  # <!-- rdoc-file=lib/optparse.rb -->
+  # Release code
+  #
+  def release=: (untyped) -> untyped
+
+  # <!--
+  #   rdoc-file=lib/optparse.rb
+  #   - remove()
+  # -->
+  # Removes the last List.
+  #
+  def remove: () -> List?
+
+  # <!-- rdoc-file=lib/optparse.rb -->
+  # Whether to require that options match exactly (disallows providing abbreviated
+  # long option as short option).
+  #
+  attr_accessor require_exact: boolish
+
+  # <!--
+  #   rdoc-file=lib/optparse.rb
+  #   - separator(string)
+  # -->
+  # Add separator in summary.
+  #
+  def separator: (String string) -> void
+
+  # Heading banner preceding summary.
+  #
+  alias set_banner banner=
+
+  # Program name to be emitted in error message and default banner, defaults to
+  # $0.
+  #
+  alias set_program_name program_name=
+
+  # <!-- rdoc-file=lib/optparse.rb -->
+  # Indentation for summary. Must be String (or have + String method).
+  #
+  alias set_summary_indent summary_indent=
+
+  # <!-- rdoc-file=lib/optparse.rb -->
+  # Width for option list portion of summary. Must be Numeric.
+  #
+  alias set_summary_width summary_width=
+
+  # <!--
+  #   rdoc-file=lib/optparse.rb
+  #   - summarize(to = [], width = @summary_width, max = width - 1, indent = @summary_indent, &blk)
+  # -->
+  # Puts option summary into `to` and returns `to`. Yields each line if a block is
+  # given.
+  #
+  # `to`
+  # :   Output destination, which must have method <<. Defaults to [].
+  # `width`
+  # :   Width of left side, defaults to @summary_width.
+  # `max`
+  # :   Maximum length allowed for left side, defaults to `width` - 1.
+  # `indent`
+  # :   Indentation, defaults to @summary_indent.
+  #
+  def summarize: (?_LtLtString to, ?Integer width, ?Integer max, ?String indent) ?{ (String line) -> void } -> _LtLtString
+
+  # <!-- rdoc-file=lib/optparse.rb -->
+  # Indentation for summary. Must be String (or have + String method).
+  #
+  attr_accessor summary_indent: String
+
+  # <!-- rdoc-file=lib/optparse.rb -->
+  # Width for option list portion of summary. Must be Numeric.
+  #
+  attr_accessor summary_width: Integer
+
+  # <!--
+  #   rdoc-file=lib/optparse.rb
+  #   - terminate(arg = nil)
+  # -->
+  # Terminates option parsing. Optional parameter `arg` is a string pushed back to
+  # be the first non-option argument.
+  #
+  def terminate: (?String arg) -> bot
+
+  # <!--
+  #   rdoc-file=lib/optparse.rb
+  #   - to_a()
+  # -->
+  # Returns option summary list.
+  #
+  def to_a: () -> Array[String]
+
+  # <!--
+  #   rdoc-file=lib/optparse.rb
+  #   - to_s()
+  # -->
+  #
+  alias to_s help
+
+  # <!--
+  #   rdoc-file=lib/optparse.rb
+  #   - top()
+  # -->
+  # Subject of #on / #on_head, #accept / #reject
+  #
+  def top: () -> List
+
+  # <!--
+  #   rdoc-file=lib/optparse.rb
+  #   - ver()
+  # -->
+  # Returns version string from program_name, version and release.
+  #
+  def ver: () -> String?
+
+  # <!-- rdoc-file=lib/optparse.rb -->
+  # Version
+  #
+  attr_accessor version: String?
+
+  # <!--
+  #   rdoc-file=lib/optparse.rb
+  #   - warn(mesg = $!)
+  # -->
+  #
+  def warn: (?_ToS mesg) -> void
+
+  private
+
+  # <!--
+  #   rdoc-file=lib/optparse.rb
+  #   - complete(typ, opt, icase = false, *pat)
+  # -->
+  # Completes shortened long style option switch and returns pair of canonical
+  # switch and switch descriptor OptionParser::Switch.
+  #
+  # `typ`
+  # :   Searching table.
+  # `opt`
+  # :   Searching key.
+  # `icase`
+  # :   Search case insensitive if true.
+  # `pat`
+  # :   Optional pattern for completion.
+  #
+  def complete: (untyped typ, untyped opt, ?untyped icase, *untyped pat) -> untyped
+
+  # <!--
+  #   rdoc-file=lib/optparse.rb
+  #   - new(banner = nil, width = 32, indent = ' ' * 4) { |self| ... }
+  # -->
+  # Initializes the instance and yields itself if called with a block.
+  #
+  # `banner`
+  # :   Banner message.
+  # `width`
+  # :   Summary width.
+  # `indent`
+  # :   Summary indent.
+  #
+  def initialize: (?String banner, ?Integer width, ?String indent) ?{ (OptionParser) -> void } -> void
+
+  # <!--
+  #   rdoc-file=lib/optparse.rb
+  #   - notwice(obj, prv, msg)
+  # -->
+  # Checks if an argument is given twice, in which case an ArgumentError is
+  # raised. Called from OptionParser#switch only.
+  #
+  # `obj`
+  # :   New argument.
+  # `prv`
+  # :   Previously specified argument.
+  # `msg`
+  # :   Exception message.
+  #
+  def notwice: (untyped obj, untyped prv, untyped msg) -> untyped
+
+  def parse_in_order: (?untyped argv, ?untyped setter) { (*untyped) -> untyped } -> untyped
+
+  # <!--
+  #   rdoc-file=lib/optparse.rb
+  #   - search(id, key) { |k| ... }
+  # -->
+  # Searches `key` in @stack for `id` hash and returns or yields the result.
+  #
+  def search: (untyped id, untyped key) -> untyped
+
+  # <!--
+  #   rdoc-file=lib/optparse.rb
+  #   - visit(id, *args, &block)
+  # -->
+  # Traverses @stack, sending each element method `id` with `args` and `block`.
+  #
+  def visit: (untyped id, *untyped args) { (*untyped) -> untyped } -> untyped
+end
+
+OptionParser::ArgumentStyle: Hash[untyped, untyped]
+
+OptionParser::COMPSYS_HEADER: String
+
+# <!-- rdoc-file=lib/optparse.rb -->
+# Decimal integer format, to be converted to Integer.
+#
+OptionParser::DecimalInteger: Regexp
+
+# <!-- rdoc-file=lib/optparse.rb -->
+# Decimal integer/float number format, to be converted to Integer for integer
+# format, Float for float format.
+#
+OptionParser::DecimalNumeric: Regexp
+
+OptionParser::DefaultList: OptionParser::List
+
+OptionParser::NO_ARGUMENT: Symbol
+
+OptionParser::NoArgument: [ :NONE, nil ]
+
+OptionParser::OPTIONAL_ARGUMENT: Symbol
+
+# <!-- rdoc-file=lib/optparse.rb -->
+# Ruby/C like octal/hexadecimal/binary integer format, to be converted to
+# Integer.
+#
+OptionParser::OctalInteger: Regexp
+
+OptionParser::Officious: Hash[untyped, untyped]
+
+OptionParser::OptionalArgument: Array[untyped]
+
+OptionParser::REQUIRED_ARGUMENT: Symbol
+
+OptionParser::RequiredArgument: Array[untyped]
+
+OptionParser::SPLAT_PROC: Proc
+
+OptionParser::Version: String
+
+# <!-- rdoc-file=lib/optparse.rb -->
+# Acceptable argument classes. Now contains DecimalInteger, OctalInteger and
+# DecimalNumeric. See Acceptable argument classes (in source code).
+#
+module OptionParser::Acceptables
+end
+
+OptionParser::Acceptables::DecimalInteger: Regexp
+
+OptionParser::Acceptables::DecimalNumeric: Regexp
+
+OptionParser::Acceptables::OctalInteger: Regexp
+
+# <!-- rdoc-file=lib/optparse.rb -->
+# Raises when the given argument word can't be completed uniquely.
+#
+class OptionParser::AmbiguousArgument < OptionParser::InvalidArgument
+end
+
+OptionParser::AmbiguousArgument::Reason: String
+
+# <!-- rdoc-file=lib/optparse.rb -->
+# Raises when ambiguously completable string is encountered.
+#
+class OptionParser::AmbiguousOption < OptionParser::ParseError
+end
+
+OptionParser::AmbiguousOption::Reason: String
+
+# <!-- rdoc-file=lib/optparse.rb -->
+# Extends command line arguments array (ARGV) to parse itself.
+#
+module OptionParser::Arguable
+  # <!--
+  #   rdoc-file=lib/optparse.rb
+  #   - extend_object(obj)
+  # -->
+  # Initializes instance variable.
+  #
+  def self.extend_object: (untyped obj) -> untyped
+
+  public
+
+  # <!--
+  #   rdoc-file=lib/optparse.rb
+  #   - getopts(*args)
+  # -->
+  # Substitution of getopts is possible as follows. Also see OptionParser#getopts.
+  #
+  #     def getopts(*args)
+  #       ($OPT = ARGV.getopts(*args)).each do |opt, val|
+  #         eval "$OPT_#{opt.gsub(/[^A-Za-z0-9_]/, '_')} = val"
+  #       end
+  #     rescue OptionParser::ParseError
+  #     end
+  #
+  def getopts: (*String args) -> Hash[String, untyped]
+
+  # <!--
+  #   rdoc-file=lib/optparse.rb
+  #   - options() { |optparse| ... }
+  # -->
+  # Actual OptionParser object, automatically created if nonexistent.
+  #
+  # If called with a block, yields the OptionParser object and returns the result
+  # of the block. If an OptionParser::ParseError exception occurs in the block, it
+  # is rescued, a error message printed to STDERR and `nil` returned.
+  #
+  def options: () -> OptionParser
+             | [T] () { (OptionParser) -> T } -> T?
+
+  # <!--
+  #   rdoc-file=lib/optparse.rb
+  #   - options=(opt)
+  # -->
+  # Sets OptionParser object, when `opt` is `false` or `nil`, methods
+  # OptionParser::Arguable#options and OptionParser::Arguable#options= are
+  # undefined. Thus, there is no ways to access the OptionParser object via the
+  # receiver object.
+  #
+  def options=: (OptionParser? opt) -> untyped
+
+  # <!--
+  #   rdoc-file=lib/optparse.rb
+  #   - order!(&blk)
+  # -->
+  # Parses `self` destructively in order and returns `self` containing the rest
+  # arguments left unparsed.
+  #
+  def order!: () ?{ (String) -> void } -> Array[String]
+
+  # <!--
+  #   rdoc-file=lib/optparse.rb
+  #   - parse!()
+  # -->
+  # Parses `self` destructively and returns `self` containing the rest arguments
+  # left unparsed.
+  #
+  def parse!: () -> Array[String]
+
+  # <!--
+  #   rdoc-file=lib/optparse.rb
+  #   - permute!()
+  # -->
+  # Parses `self` destructively in permutation mode and returns `self` containing
+  # the rest arguments left unparsed.
+  #
+  def permute!: () -> Array[String]
+end
+
+# <!-- rdoc-file=lib/optparse.rb -->
+# Hash with completion search feature. See OptionParser::Completion.
+#
+class OptionParser::CompletingHash < Hash[untyped, untyped]
+  include OptionParser::Completion
+
+  public
+
+  # <!--
+  #   rdoc-file=lib/optparse.rb
+  #   - match(key)
+  # -->
+  # Completion for hash key.
+  #
+  def match: (untyped key) -> untyped
+end
+
+# <!-- rdoc-file=lib/optparse.rb -->
+# Keyword completion module.  This allows partial arguments to be specified and
+# resolved against a list of acceptable values.
+#
+module OptionParser::Completion
+  # <!--
+  #   rdoc-file=lib/optparse.rb
+  #   - candidate(key, icase = false, pat = nil, &block)
+  # -->
+  #
+  def self.candidate: (untyped key, ?untyped icase, ?untyped pat) { (*untyped) -> untyped } -> untyped
+
+  # <!--
+  #   rdoc-file=lib/optparse.rb
+  #   - regexp(key, icase)
+  # -->
+  #
+  def self.regexp: (untyped key, untyped icase) -> untyped
+
+  public
+
+  # <!--
+  #   rdoc-file=lib/optparse.rb
+  #   - candidate(key, icase = false, pat = nil)
+  # -->
+  #
+  def candidate: (untyped key, ?untyped icase, ?untyped pat) -> untyped
+
+  # <!--
+  #   rdoc-file=lib/optparse.rb
+  #   - complete(key, icase = false, pat = nil) { |key, *sw| ... }
+  # -->
+  #
+  def complete: (untyped key, ?untyped icase, ?untyped pat) -> untyped
+
+  # <!--
+  #   rdoc-file=lib/optparse.rb
+  #   - convert(opt = nil, val = nil, *)
+  # -->
+  #
+  def convert: (?untyped opt, ?untyped val, *untyped) -> untyped
+end
+
+# <!-- rdoc-file=lib/optparse.rb -->
+# Raises when the given argument does not match required format.
+#
+class OptionParser::InvalidArgument < OptionParser::ParseError
+end
+
+OptionParser::InvalidArgument::Reason: String
+
+# <!-- rdoc-file=lib/optparse.rb -->
+# Raises when switch is undefined.
+#
+class OptionParser::InvalidOption < OptionParser::ParseError
+end
+
+OptionParser::InvalidOption::Reason: String
+
+# <!-- rdoc-file=lib/optparse.rb -->
+# Simple option list providing mapping from short and/or long option string to
+# OptionParser::Switch and mapping from acceptable argument to matching pattern
+# and converter pair. Also provides summary feature.
+#
+class OptionParser::List
+  public
+
+  # <!--
+  #   rdoc-file=lib/optparse.rb
+  #   - accept(t, pat = /.*/m, &block)
+  # -->
+  # See OptionParser.accept.
+  #
+  def accept: (untyped t, ?untyped pat) { (*untyped) -> untyped } -> untyped
+
+  def add_banner: (untyped to) -> untyped
+
+  # <!--
+  #   rdoc-file=lib/optparse.rb
+  #   - append(*args)
+  # -->
+  # Appends `switch` at the tail of the list, and associates short, long and
+  # negated long options. Arguments are:
+  #
+  # `switch`
+  # :   OptionParser::Switch instance to be inserted.
+  # `short_opts`
+  # :   List of short style options.
+  # `long_opts`
+  # :   List of long style options.
+  # `nolong_opts`
+  # :   List of long style options with "no-" prefix.
+  #
+  #
+  #     append(switch, short_opts, long_opts, nolong_opts)
+  #
+  def append: (*untyped args) -> untyped
+
+  # <!-- rdoc-file=lib/optparse.rb -->
+  # Map from acceptable argument types to pattern and converter pairs.
+  #
+  def atype: () -> untyped
+
+  # <!--
+  #   rdoc-file=lib/optparse.rb
+  #   - complete(id, opt, icase = false, *pat, &block)
+  # -->
+  # Searches list `id` for `opt` and the optional patterns for completion `pat`.
+  # If `icase` is true, the search is case insensitive. The result is returned or
+  # yielded if a block is given. If it isn't found, nil is returned.
+  #
+  def complete: (untyped id, untyped opt, ?untyped icase, *untyped pat) { (*untyped) -> untyped } -> untyped
+
+  def compsys: (*untyped args) { (*untyped) -> untyped } -> untyped
+
+  # <!--
+  #   rdoc-file=lib/optparse.rb
+  #   - each_option(&block)
+  # -->
+  # Iterates over each option, passing the option to the `block`.
+  #
+  def each_option: () { (*untyped) -> untyped } -> untyped
+
+  # <!--
+  #   rdoc-file=lib/optparse.rb
+  #   - get_candidates(id) { |__send__(id).keys| ... }
+  # -->
+  #
+  def get_candidates: (untyped id) -> untyped
+
+  # <!-- rdoc-file=lib/optparse.rb -->
+  # List of all switches and summary string.
+  #
+  def list: () -> untyped
+
+  # <!-- rdoc-file=lib/optparse.rb -->
+  # Map from long style option switches to actual switch objects.
+  #
+  def long: () -> untyped
+
+  # <!--
+  #   rdoc-file=lib/optparse.rb
+  #   - prepend(*args)
+  # -->
+  # Inserts `switch` at the head of the list, and associates short, long and
+  # negated long options. Arguments are:
+  #
+  # `switch`
+  # :   OptionParser::Switch instance to be inserted.
+  # `short_opts`
+  # :   List of short style options.
+  # `long_opts`
+  # :   List of long style options.
+  # `nolong_opts`
+  # :   List of long style options with "no-" prefix.
+  #
+  #
+  #     prepend(switch, short_opts, long_opts, nolong_opts)
+  #
+  def prepend: (*untyped args) -> untyped
+
+  # <!--
+  #   rdoc-file=lib/optparse.rb
+  #   - reject(t)
+  # -->
+  # See OptionParser.reject.
+  #
+  def reject: (untyped t) -> untyped
+
+  # <!--
+  #   rdoc-file=lib/optparse.rb
+  #   - search(id, key) { |val| ... }
+  # -->
+  # Searches `key` in `id` list. The result is returned or yielded if a block is
+  # given. If it isn't found, nil is returned.
+  #
+  def search: (untyped id, untyped key) -> untyped
+
+  # <!-- rdoc-file=lib/optparse.rb -->
+  # Map from short style option switches to actual switch objects.
+  #
+  def short: () -> untyped
+
+  # <!--
+  #   rdoc-file=lib/optparse.rb
+  #   - summarize(*args, &block)
+  # -->
+  # Creates the summary table, passing each line to the `block` (without newline).
+  # The arguments `args` are passed along to the summarize method which is called
+  # on every option.
+  #
+  def summarize: (*untyped args) { (*untyped) -> untyped } -> untyped
+
+  private
+
+  # <!--
+  #   rdoc-file=lib/optparse.rb
+  #   - new()
+  # -->
+  # Just initializes all instance variables.
+  #
+  def initialize: () -> void
+
+  # <!--
+  #   rdoc-file=lib/optparse.rb
+  #   - update(sw, sopts, lopts, nsw = nil, nlopts = nil)
+  # -->
+  # Adds `sw` according to `sopts`, `lopts` and `nlopts`.
+  #
+  # `sw`
+  # :   OptionParser::Switch instance to be added.
+  # `sopts`
+  # :   Short style option list.
+  # `lopts`
+  # :   Long style option list.
+  # `nlopts`
+  # :   Negated long style options list.
+  #
+  def update: (untyped sw, untyped sopts, untyped lopts, ?untyped nsw, ?untyped nlopts) -> untyped
+end
+
+# <!-- rdoc-file=lib/optparse.rb -->
+# Raises when a switch with mandatory argument has no argument.
+#
+class OptionParser::MissingArgument < OptionParser::ParseError
+end
+
+OptionParser::MissingArgument::Reason: String
+
+# <!-- rdoc-file=lib/optparse.rb -->
+# Raises when there is an argument for a switch which takes no argument.
+#
+class OptionParser::NeedlessArgument < OptionParser::ParseError
+end
+
+OptionParser::NeedlessArgument::Reason: String
+
+# <!-- rdoc-file=lib/optparse.rb -->
+# Map from option/keyword string to object with completion.
+#
+class OptionParser::OptionMap < Hash[untyped, untyped]
+  include OptionParser::Completion
+end
+
+# <!-- rdoc-file=lib/optparse.rb -->
+# Base class of exceptions from OptionParser.
+#
+class OptionParser::ParseError < RuntimeError
+  # <!--
+  #   rdoc-file=lib/optparse.rb
+  #   - filter_backtrace(array)
+  # -->
+  #
+  def self.filter_backtrace: (untyped array) -> untyped
+
+  public
+
+  def additional: () -> untyped
+
+  def additional=: (untyped) -> untyped
+
+  def args: () -> untyped
+
+  # <!--
+  #   rdoc-file=lib/optparse.rb
+  #   - inspect()
+  # -->
+  #
+  def inspect: () -> untyped
+
+  # <!--
+  #   rdoc-file=lib/optparse.rb
+  #   - message()
+  # -->
+  # Default stringizing method to emit standard error message.
+  #
+  def message: () -> String
+
+  # <!-- rdoc-file=lib/optparse.rb -->
+  #
+  def reason: () -> untyped
+
+  def reason=: (untyped) -> untyped
+
+  # <!--
+  #   rdoc-file=lib/optparse.rb
+  #   - recover(argv)
+  # -->
+  # Pushes back erred argument(s) to `argv`.
+  #
+  def recover: (untyped argv) -> untyped
+
+  # <!--
+  #   rdoc-file=lib/optparse.rb
+  #   - set_backtrace(array)
+  # -->
+  #
+  def set_backtrace: (untyped array) -> untyped
+
+  # <!--
+  #   rdoc-file=lib/optparse.rb
+  #   - set_option(opt, eq)
+  # -->
+  #
+  def set_option: (untyped opt, untyped eq) -> untyped
+
+  # <!--
+  #   rdoc-file=lib/optparse.rb
+  #   - to_s()
+  # -->
+  #
+  alias to_s message
+
+  private
+
+  # <!--
+  #   rdoc-file=lib/optparse.rb
+  #   - new(*args, additional: nil)
+  # -->
+  #
+  def initialize: (*untyped args, ?additional: untyped) -> void
+end
+
+# <!-- rdoc-file=lib/optparse.rb -->
+# Reason which caused the error.
+#
+OptionParser::ParseError::Reason: String
+
+# <!-- rdoc-file=lib/optparse.rb -->
+# Individual switch class.  Not important to the user.
+#
+# Defined within Switch are several Switch-derived classes: NoArgument,
+# RequiredArgument, etc.
+#
+class OptionParser::Switch
+  # <!--
+  #   rdoc-file=lib/optparse.rb
+  #   - guess(arg)
+  # -->
+  # Guesses argument style from `arg`.  Returns corresponding OptionParser::Switch
+  # class (OptionalArgument, etc.).
+  #
+  def self.guess: (untyped arg) -> untyped
+
+  # <!--
+  #   rdoc-file=lib/optparse.rb
+  #   - incompatible_argument_styles(arg, t)
+  # -->
+  #
+  def self.incompatible_argument_styles: (untyped arg, untyped t) -> untyped
+
+  # <!--
+  #   rdoc-file=lib/optparse.rb
+  #   - pattern()
+  # -->
+  #
+  def self.pattern: () -> untyped
+
+  public
+
+  def add_banner: (untyped to) -> untyped
+
+  def arg: () -> untyped
+
+  def block: () -> untyped
+
+  def compsys: (untyped sdone, untyped ldone) -> untyped
+
+  def conv: () -> untyped
+
+  def desc: () -> untyped
+
+  def long: () -> untyped
+
+  def match_nonswitch?: (untyped str) -> untyped
+
+  def pattern: () -> untyped
+
+  def short: () -> untyped
+
+  # <!--
+  #   rdoc-file=lib/optparse.rb
+  #   - summarize(sdone = {}, ldone = {}, width = 1, max = width - 1, indent = "") { |indent| ... }
+  # -->
+  # Produces the summary text. Each line of the summary is yielded to the block
+  # (without newline).
+  #
+  # `sdone`
+  # :   Already summarized short style options keyed hash.
+  # `ldone`
+  # :   Already summarized long style options keyed hash.
+  # `width`
+  # :   Width of left side (option part). In other words, the right side
+  #     (description part) starts after `width` columns.
+  # `max`
+  # :   Maximum width of left side -> the options are filled within `max` columns.
+  # `indent`
+  # :   Prefix string indents all summarized lines.
+  #
+  def summarize: (?untyped sdone, ?untyped ldone, ?untyped width, ?untyped max, ?untyped indent) -> untyped
+
+  # <!--
+  #   rdoc-file=lib/optparse.rb
+  #   - switch_name()
+  # -->
+  # Main name of the switch.
+  #
+  def switch_name: () -> untyped
+
+  private
+
+  # <!--
+  #   rdoc-file=lib/optparse.rb
+  #   - conv_arg(arg, val = [])
+  # -->
+  # Parses argument, converts and returns `arg`, `block` and result of conversion.
+  # Yields at semi-error condition instead of raising an exception.
+  #
+  def conv_arg: (untyped arg, ?untyped val) -> untyped
+
+  # <!--
+  #   rdoc-file=lib/optparse.rb
+  #   - new(pattern = nil, conv = nil, short = nil, long = nil, arg = nil, desc = ([] if short or long), block = nil, &_block)
+  # -->
+  #
+  def initialize: (?untyped pattern, ?untyped conv, ?untyped short, ?untyped long, ?untyped arg, ?untyped desc, ?untyped block) { (*untyped) -> untyped } -> void
+
+  # <!--
+  #   rdoc-file=lib/optparse.rb
+  #   - parse_arg(arg) { |InvalidArgument, arg| ... }
+  # -->
+  # Parses `arg` and returns rest of `arg` and matched portion to the argument
+  # pattern. Yields when the pattern doesn't match substring.
+  #
+  def parse_arg: (untyped arg) -> untyped
+end
+
+# <!-- rdoc-file=lib/optparse.rb -->
+# Switch that takes no arguments.
+#
+class OptionParser::Switch::NoArgument < OptionParser::Switch
+  # <!--
+  #   rdoc-file=lib/optparse.rb
+  #   - incompatible_argument_styles(*)
+  # -->
+  #
+  def self.incompatible_argument_styles: (*untyped) -> untyped
+
+  # <!--
+  #   rdoc-file=lib/optparse.rb
+  #   - pattern()
+  # -->
+  #
+  def self.pattern: () -> untyped
+
+  public
+
+  # <!--
+  #   rdoc-file=lib/optparse.rb
+  #   - parse(arg, argv) { |NeedlessArgument, arg| ... }
+  # -->
+  # Raises an exception if any arguments given.
+  #
+  def parse: (untyped arg, untyped argv) -> untyped
+end
+
+# <!-- rdoc-file=lib/optparse.rb -->
+# Switch that can omit argument.
+#
+class OptionParser::Switch::OptionalArgument < OptionParser::Switch
+  public
+
+  # <!--
+  #   rdoc-file=lib/optparse.rb
+  #   - parse(arg, argv, &error)
+  # -->
+  # Parses argument if given, or uses default value.
+  #
+  def parse: (untyped arg, untyped argv) { (*untyped) -> untyped } -> untyped
+end
+
+# <!-- rdoc-file=lib/optparse.rb -->
+# Switch that takes an argument, which does not begin with '-'.
+#
+class OptionParser::Switch::PlacedArgument < OptionParser::Switch
+  public
+
+  # <!--
+  #   rdoc-file=lib/optparse.rb
+  #   - parse(arg, argv, &error)
+  # -->
+  # Returns nil if argument is not present or begins with '-'.
+  #
+  def parse: (untyped arg, untyped argv) { (*untyped) -> untyped } -> untyped
+end
+
+# <!-- rdoc-file=lib/optparse.rb -->
+# Switch that takes an argument.
+#
+class OptionParser::Switch::RequiredArgument < OptionParser::Switch
+  public
+
+  # <!--
+  #   rdoc-file=lib/optparse.rb
+  #   - parse(arg, argv)
+  # -->
+  # Raises an exception if argument is not present.
+  #
+  def parse: (untyped arg, untyped argv) -> untyped
+end

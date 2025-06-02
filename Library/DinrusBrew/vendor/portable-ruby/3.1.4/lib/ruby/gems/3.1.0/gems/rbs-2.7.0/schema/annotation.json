@@ -1,0 +1,14 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "Annotation associated to a declaration or a member: `%a{rbs:test}`, `%a{steep:deprecated}`, ...",
+  "type": "object",
+  "properties": {
+    "string": {
+      "type": "string"
+    },
+    "location": {
+      "$ref": "location.json"
+    }
+  },
+  "required": ["string", "location"]
+}

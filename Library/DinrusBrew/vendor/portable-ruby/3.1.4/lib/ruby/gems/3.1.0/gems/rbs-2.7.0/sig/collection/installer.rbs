@@ -1,0 +1,17 @@
+module RBS
+  module Collection
+    class Installer
+      attr_reader lockfile: Config
+      attr_reader stdout: CLI::_IO
+
+      def initialize: (lockfile_path: Pathname, ?stdout: CLI::_IO) -> void
+      def install_from_lockfile: () -> void
+
+      private
+
+      @source_for: Hash[Sources::source_entry, Sources::_Source]
+
+      def source_for: (Config::gem_entry) -> Sources::_Source
+    end
+  end
+end

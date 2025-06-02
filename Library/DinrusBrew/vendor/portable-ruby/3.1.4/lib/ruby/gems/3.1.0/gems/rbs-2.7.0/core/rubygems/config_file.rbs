@@ -1,0 +1,35 @@
+# <!-- rdoc-file=lib/rubygems/config_file.rb -->
+# Gem::ConfigFile RubyGems options and gem command options from gemrc.
+#
+# gemrc is a YAML file that uses strings to match gem command arguments and
+# symbols to match RubyGems options.
+#
+# Gem command arguments use a String key that matches the command name and allow
+# you to specify default arguments:
+#
+#     install: --no-rdoc --no-ri
+#     update: --no-rdoc --no-ri
+#
+# You can use `gem:` to set default arguments for all commands.
+#
+# RubyGems options use symbol keys.  Valid options are:
+#
+# `:backtrace`
+# :   See #backtrace
+# `:sources`
+# :   Sets Gem::sources
+# `:verbose`
+# :   See #verbose
+# `:concurrent_downloads`
+# :   See #concurrent_downloads
+#
+#
+# gemrc files may exist in various locations and are read and merged in the
+# following order:
+#
+# *   system wide (/etc/gemrc)
+# *   per user (~/.gemrc)
+# *   per environment (gemrc files listed in the GEMRC environment variable)
+#
+class Gem::ConfigFile
+end

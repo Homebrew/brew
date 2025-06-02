@@ -1,0 +1,5 @@
+class Minitest::Reporter < ::Minitest::AbstractReporter
+  def initialize: (?untyped io, ?::Hash[untyped, untyped] options) -> void
+  attr_accessor io: untyped
+  attr_accessor options: untyped
+end

@@ -1,0 +1,38 @@
+---
+# see https://github.com/Shopify/tapioca?tab=readme-ov-file#configuration
+gem:
+  exclude:
+    # These conflict with the rbi files provided by sorbet:
+    - base64
+    - benchmark
+    - bigdecimal
+    - json
+    - logger
+    - racc
+    - rexml
+    # These aren't needed:
+    - coderay
+    - diff-lcs
+    - docile
+    - hana
+    - language_server-protocol
+    - netrc
+    - parallel
+    - public_suffix
+    - rbs
+    - redcarpet
+    - rspec-github
+    - rspec-mocks
+    - rspec-retry
+    - rspec
+    - rspec_junit_formatter
+    - rubocop-md
+    - rubocop-performance
+    - rubocop-sorbet
+    - ruby-prof
+    - simplecov_json_formatter
+    - simpleidn
+    - unicode-display_width
+    - unicode-emoji
+    - yard-sorbet
+  prerequire: sorbet/tapioca/prerequire.rb

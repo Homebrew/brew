@@ -1,0 +1,7 @@
+#!/usr/bin/env ruby
+
+require "syntax_suggest/api"
+
+SyntaxSuggest::Cli.new(
+  argv: ARGV
+).call

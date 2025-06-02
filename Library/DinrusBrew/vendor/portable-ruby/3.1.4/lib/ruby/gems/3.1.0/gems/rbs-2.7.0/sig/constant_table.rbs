@@ -1,0 +1,30 @@
+module RBS
+  class ConstantTable
+    attr_reader definition_builder: DefinitionBuilder
+    attr_reader constant_scopes_cache: Hash[TypeName, Array[Namespace]]
+    attr_reader resolver: TypeNameResolver
+    attr_reader env(): Environment
+
+    def initialize: (builder: DefinitionBuilder) -> void
+
+    def absolute_type: (Types::t, context: Array[Namespace]) -> Types::t
+
+    def absolute_type_name: (TypeName, context: Array[Namespace], location: Location[untyped, untyped]?) -> TypeName
+
+    def name_to_constant: (TypeName) -> Constant?
+
+    def split_name: (TypeName) -> Array[Symbol]
+
+    def resolve_constant_reference: (TypeName name, context: Array[Namespace]) -> Constant?
+
+    def resolve_constant_reference_context: (Symbol, context: Array[Namespace]) -> Constant?
+
+    def resolve_constant_reference_inherit: (Symbol, scopes: Array[Namespace], ?no_object: boolish) -> Constant?
+
+    def constant_scopes: (TypeName) -> Array[Namespace]
+
+    def constant_scopes_module: (TypeName, scopes: Array[Namespace]) -> Array[Namespace]
+
+    def constant_scopes0: (TypeName, ?scopes: Array[Namespace]) -> Array[Namespace]
+  end
+end

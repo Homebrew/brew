@@ -1,0 +1,317 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "definitions": {
+    "base": {
+      "title": "Base types",
+      "type": "object",
+      "properties": {
+        "class": {
+          "type": "string",
+          "enum": [
+            "bool",
+            "void",
+            "untyped",
+            "nil",
+            "top",
+            "bot",
+            "self",
+            "instance",
+            "class"
+          ]
+        },
+        "location": {
+          "$ref": "location.json"
+        }
+      },
+      "required": ["class", "location"]
+    },
+    "variable": {
+      "title": "Type variables: `X`, `Y`, `Elem`, `Key`, ...",
+      "type": "object",
+      "properties": {
+        "class": {
+          "type": "string",
+          "enum": ["variable"]
+        },
+        "name": {
+          "type": "string"
+        },
+        "location": {
+          "$ref": "location.json"
+        }
+      },
+      "required": ["class", "name", "location"]
+    },
+    "classSingleton": {
+      "title": "Class singleton type: `singleton(Object)`, `singleton(::Kernel)`, ...",
+      "type": "object",
+      "properties": {
+        "class": {
+          "type": "string",
+          "enum": ["class_singleton"]
+        },
+        "name": {
+          "type": "string"
+        },
+        "location": {
+          "$ref": "location.json"
+        }
+      },
+      "required": ["class", "name", "location"]
+    },
+    "classInstance": {
+      "title": "Class instance type: `String`, `::Enumerable`, `Array[::Symbol]`, ...",
+      "type": "object",
+      "properties": {
+        "class": {
+          "type": "string",
+          "enum": ["class_instance"]
+        },
+        "name": {
+          "type": "string"
+        },
+        "args": {
+          "type": "array",
+          "items": {
+            "$ref": "#"
+          }
+        },
+        "location": {
+          "$ref": "location.json"
+        }
+      },
+      "required": ["class", "name", "args", "location"]
+    },
+    "interface": {
+      "title": "Interface type: `_Each[String, void]`, `_ToStr`, ...",
+      "type": "object",
+      "properties": {
+        "class": {
+          "type": "string",
+          "enum": ["interface"]
+        },
+        "name": {
+          "type": "string"
+        },
+        "args": {
+          "type": "array",
+          "items": {
+            "$ref": "#"
+          }
+        },
+        "location": {
+          "$ref": "location.json"
+        }
+      },
+      "required": ["class", "name", "args", "location"]
+    },
+    "alias": {
+      "title": "Type alias: `u`, `ty`, `json`, `list[Integer]`, ...",
+      "type": "object",
+      "properties": {
+        "class": {
+          "type": "string",
+          "enum": ["alias"]
+        },
+        "name": {
+          "type": "string"
+        },
+        "args": {
+          "type": "array",
+          "items": {
+            "$ref": "#"
+          }
+        },
+        "location": {
+          "$ref": "location.json"
+        }
+      },
+      "required": ["class", "name", "args", "location"]
+    },
+    "tuple": {
+      "title": "Tuple type: `[Foo, bar]`, ...",
+      "type": "object",
+      "properties": {
+        "class": {
+          "type": "string",
+          "enum": ["tuple"]
+        },
+        "types": {
+          "type": "array",
+          "items": {
+            "$ref": "#"
+          }
+        },
+        "location": {
+          "$ref": "location.json"
+        }
+      },
+      "required": ["class", "types", "location"]
+    },
+    "record": {
+      "title": "Record type: `{ id: Integer, email: String }`, ...",
+      "type": "object",
+      "properties": {
+        "class": {
+          "type": "string",
+          "enum": ["record"]
+        },
+        "fields": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#"
+          }
+        },
+        "location": {
+          "$ref": "location.json"
+        }
+      },
+      "required": ["class", "fields", "location"]
+    },
+    "optional": {
+      "title": "Optional types: `Integer?`, ...",
+      "type": "object",
+      "properties": {
+        "class": {
+          "type": "string",
+          "enum": ["optional"]
+        },
+        "type": {
+          "$ref": "#"
+        },
+        "location": {
+          "$ref": "location.json"
+        }
+      },
+      "required": ["class", "type", "location"]
+    },
+    "union": {
+      "title": "Union types: `Integer | String`, ...",
+      "type": "object",
+      "properties": {
+        "class": {
+          "type": "string",
+          "enum": ["union"]
+        },
+        "types": {
+          "type": "array",
+          "items": {
+            "$ref": "#"
+          }
+        },
+        "location": {
+          "$ref": "location.json"
+        }
+      },
+      "required": ["class", "types", "location"]
+    },
+    "intersection": {
+      "title": "Intersection types: `Integer & String`, ...",
+      "type": "object",
+      "properties": {
+        "class": {
+          "type": "string",
+          "enum": ["intersection"]
+        },
+        "types": {
+          "type": "array",
+          "items": {
+            "$ref": "#"
+          }
+        },
+        "location": {
+          "$ref": "location.json"
+        }
+      },
+      "required": ["class", "types", "location"]
+    },
+    "proc": {
+      "title": "Proc types: `^() -> void`, ...",
+      "type": "object",
+      "properties": {
+        "class": {
+          "type": "string",
+          "enum": ["proc"]
+        },
+        "type": {
+          "$ref": "function.json"
+        },
+        "location": {
+          "$ref": "location.json"
+        },
+        "block": {
+          "oneOf": [
+            { "$ref": "methodType.json#/definitions/block" },
+            { "type": "null" }
+          ]
+        },
+        "self_type": {
+          "oneOf": [
+            { "$ref": "#" },
+            { "type": "null" }
+          ]
+        }
+      },
+      "required": ["class", "type", "location", "block", "self_type"]
+    },
+    "literal": {
+      "title": "Literal types: `1`, `:foo`, `\"foo\"`, ...",
+      "type": "object",
+      "properties": {
+        "class": {
+          "type": "string",
+          "enum": ["literal"]
+        },
+        "literal": {
+          "type": "string"
+        },
+        "location": {
+          "$ref": "location.json"
+        }
+      },
+      "required": ["class", "literal", "location"]
+    }
+  },
+  "title": "Type",
+  "oneOf": [
+    {
+      "$ref": "#/definitions/base"
+    },
+    {
+      "$ref": "#/definitions/variable"
+    },
+    {
+      "$ref": "#/definitions/classInstance"
+    },
+    {
+      "$ref": "#/definitions/classSingleton"
+    },
+    {
+      "$ref": "#/definitions/interface"
+    },
+    {
+      "$ref": "#/definitions/alias"
+    },
+    {
+      "$ref": "#/definitions/tuple"
+    },
+    {
+      "$ref": "#/definitions/record"
+    },
+    {
+      "$ref": "#/definitions/union"
+    },
+    {
+      "$ref": "#/definitions/intersection"
+    },
+    {
+      "$ref": "#/definitions/optional"
+    },
+    {
+      "$ref": "#/definitions/proc"
+    },
+    {
+      "$ref": "#/definitions/literal"
+    }
+  ]
+}

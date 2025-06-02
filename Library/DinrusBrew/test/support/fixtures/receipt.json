@@ -1,0 +1,41 @@
+{
+  "homebrew_version": "1.1.6",
+  "used_options": [
+    "--with-foo",
+    "--without-bar"
+  ],
+  "unused_options": [
+    "--with-baz",
+    "--without-qux"
+  ],
+  "built_as_bottle": false,
+  "poured_from_bottle": true,
+  "loaded_from_api": false,
+  "installed_as_dependency": false,
+  "installed_on_request": true,
+  "changed_files": [
+    "INSTALL_RECEIPT.json",
+    "bin/foo"
+  ],
+  "time": 1403827774,
+  "source_modified_time": 1628303333,
+  "HEAD": "deadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
+  "alias_path": "/usr/local/Library/Taps/homebrew/homebrew-core/Aliases/test-formula",
+  "stdlib": "libcxx",
+  "compiler": "clang",
+  "runtime_dependencies": [
+    {
+      "full_name": "foo",
+      "version": "1.0"
+    }
+  ],
+  "source": {
+    "path": "/usr/local/Library/Taps/homebrew/homebrew-core/Formula/foo.rb",
+    "tap": "homebrew/core",
+    "spec": "stable",
+    "versions": {
+      "stable": "2.14",
+      "head": "HEAD-0000000"
+    }
+  }
+}

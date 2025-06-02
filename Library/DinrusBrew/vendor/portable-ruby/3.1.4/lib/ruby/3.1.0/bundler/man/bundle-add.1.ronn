@@ -1,0 +1,58 @@
+bundle-add(1) -- Add gem to the Gemfile and run bundle install
+================================================================
+
+## SYNOPSIS
+
+`bundle add` <GEM_NAME> [--group=GROUP] [--version=VERSION] [--source=SOURCE] [--path=PATH] [--git=GIT] [--github=GITHUB] [--branch=BRANCH] [--ref=REF] [--skip-install] [--strict] [--optimistic]
+
+## DESCRIPTION
+Adds the named gem to the Gemfile and run `bundle install`. `bundle install` can be avoided by using the flag `--skip-install`.
+
+Example:
+
+bundle add rails
+
+bundle add rails --version "< 3.0, > 1.1"
+
+bundle add rails --version "~> 5.0.0" --source "https://gems.example.com" --group "development"
+
+bundle add rails --skip-install
+
+bundle add rails --group "development, test"
+
+## OPTIONS
+* `--version`, `-v`:
+  Specify version requirements(s) for the added gem.
+
+* `--group`, `-g`:
+  Specify the group(s) for the added gem. Multiple groups should be separated by commas.
+
+* `--source`, `-s`:
+  Specify the source for the added gem.
+
+* `--require`, `-r`:
+  Adds require path to gem. Provide false, or a path as a string.
+
+* `--path`:
+  Specify the file system path for the added gem.
+
+* `--git`:
+  Specify the git source for the added gem.
+
+* `--github`:
+  Specify the github source for the added gem.
+
+* `--branch`:
+  Specify the git branch for the added gem.
+
+* `--ref`:
+  Specify the git ref for the added gem.
+
+* `--skip-install`:
+  Adds the gem to the Gemfile but does not install it.
+
+* `--optimistic`:
+  Adds optimistic declaration of version.
+
+* `--strict`:
+  Adds strict declaration of version.

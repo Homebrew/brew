@@ -1,0 +1,56 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "definitions": {
+    "point": {
+      "type": "object",
+      "properties": {
+        "line": {
+          "type": "integer"
+        },
+        "column": {
+          "type": "integer"
+        }
+      },
+      "required": ["line", "column"]
+    },
+    "buffer": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": ["name"]
+    },
+    "location": {
+      "type": "object",
+      "properties": {
+        "start": {
+          "$ref": "#/definitions/point"
+        },
+        "end": {
+          "$ref": "#/definitions/point"
+        },
+        "buffer": {
+          "$ref": "#/definitions/buffer"
+        }
+      },
+      "required": ["start", "end", "buffer"]
+    }
+  },
+  "oneOf": [
+    {
+      "$ref": "#/definitions/location"
+    },
+    {
+      "type": "null"
+    }
+  ]
+}

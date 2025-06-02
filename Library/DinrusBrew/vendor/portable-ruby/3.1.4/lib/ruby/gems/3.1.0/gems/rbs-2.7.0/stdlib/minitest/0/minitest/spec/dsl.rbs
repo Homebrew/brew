@@ -1,0 +1,125 @@
+# <!-- rdoc-file=lib/minitest/spec.rb -->
+# Oh look! A Minitest::Spec::DSL module! Eat your heart out DHH.
+#
+module Minitest::Spec::DSL
+  # <!--
+  #   rdoc-file=lib/minitest/spec.rb
+  #   - register_spec_type(*args, &block)
+  # -->
+  # Register a new type of spec that matches the spec's description. This method
+  # can take either a Regexp and a spec class or a spec class and a block that
+  # takes the description and returns true if it matches.
+  #
+  # Eg:
+  #
+  #     register_spec_type(/Controller$/, Minitest::Spec::Rails)
+  #
+  # or:
+  #
+  #     register_spec_type(Minitest::Spec::RailsModel) do |desc|
+  #       desc.superclass == ActiveRecord::Base
+  #     end
+  #
+  def register_spec_type: (*untyped args) ?{ () -> untyped } -> untyped
+
+  # <!--
+  #   rdoc-file=lib/minitest/spec.rb
+  #   - spec_type(desc, *additional)
+  # -->
+  # Figure out the spec class to use based on a spec's description. Eg:
+  #
+  #     spec_type("BlahController") # => Minitest::Spec::Rails
+  #
+  def spec_type: (untyped desc, *untyped additional) -> untyped
+
+  def describe_stack: () -> untyped
+
+  def children: () -> untyped
+
+  def nuke_test_methods!: () -> untyped
+
+  # <!--
+  #   rdoc-file=lib/minitest/spec.rb
+  #   - before(_type = nil, &block)
+  # -->
+  # Define a 'before' action. Inherits the way normal methods should.
+  #
+  # NOTE: `type` is ignored and is only there to make porting easier.
+  #
+  # Equivalent to Minitest::Test#setup.
+  #
+  def before: (?untyped? _type) ?{ () -> untyped } -> untyped
+
+  # <!--
+  #   rdoc-file=lib/minitest/spec.rb
+  #   - after(_type = nil, &block)
+  # -->
+  # Define an 'after' action. Inherits the way normal methods should.
+  #
+  # NOTE: `type` is ignored and is only there to make porting easier.
+  #
+  # Equivalent to Minitest::Test#teardown.
+  #
+  def after: (?untyped? _type) ?{ () -> untyped } -> untyped
+
+  # <!--
+  #   rdoc-file=lib/minitest/spec.rb
+  #   - it(desc = "anonymous", &block)
+  # -->
+  # Define an expectation with name `desc`. Name gets morphed to a proper test
+  # method name. For some freakish reason, people who write specs don't like class
+  # inheritance, so this goes way out of its way to make sure that expectations
+  # aren't inherited.
+  #
+  # This is also aliased to #specify and doesn't require a `desc` arg.
+  #
+  # Hint: If you *do* want inheritance, use minitest/test. You can mix and match
+  # between assertions and expectations as much as you want.
+  #
+  def it: (?::String desc) ?{ () -> untyped } -> untyped
+
+  # <!--
+  #   rdoc-file=lib/minitest/spec.rb
+  #   - let(name, &block)
+  # -->
+  # Essentially, define an accessor for `name` with `block`.
+  #
+  # Why use let instead of def? I honestly don't know.
+  #
+  def let: (untyped name) ?{ () -> untyped } -> untyped
+
+  # <!--
+  #   rdoc-file=lib/minitest/spec.rb
+  #   - subject(&block)
+  # -->
+  # Another lazy man's accessor generator. Made even more lazy by setting the name
+  # for you to `subject`.
+  #
+  def subject: () ?{ () -> untyped } -> untyped
+
+  def create: (untyped name, untyped desc) -> untyped
+
+  def name: () -> untyped
+
+  def to_s: () -> untyped
+
+  # <!--
+  #   rdoc-file=lib/minitest/spec.rb
+  #   - specify(desc = "anonymous", &block)
+  # -->
+  #
+  alias specify it
+
+  def self.extended: (untyped obj) -> untyped
+
+  attr_reader desc: untyped
+
+  # <!-- rdoc-file=lib/minitest/spec.rb -->
+  # Contains pairs of matchers and Spec classes to be used to calculate the
+  # superclass of a top-level describe. This allows for automatically customizable
+  # spec types.
+  #
+  # See: register_spec_type and spec_type
+  #
+  TYPES: Array[Array[Regexp | singleton(Minitest::BenchSpec)] | Array[Regexp | singleton(Minitest::Spec)]]
+end

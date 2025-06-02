@@ -1,0 +1,270 @@
+module RBS
+  module Unnamed
+    %a{annotate:rdoc:copy:Random::Base}
+    class Random_Base
+      include Random_Formatter
+      extend Random_Formatter
+
+      # <!--
+      #   rdoc-file=random.c
+      #   - Random.new(seed = Random.new_seed) -> prng
+      # -->
+      # Creates a new PRNG using `seed` to set the initial state. If `seed` is
+      # omitted, the generator is initialized with Random.new_seed.
+      #
+      # See Random.srand for more information on the use of seed values.
+      #
+      %a{annotate:rdoc:copy:Random.new}
+      def initialize: (?Integer seed) -> void
+
+      # <!--
+      #   rdoc-file=random.c
+      #   - prng.rand -> float
+      #   - prng.rand(max) -> number
+      #   - prng.rand(range) -> number
+      # -->
+      # When `max` is an Integer, `rand` returns a random integer greater than or
+      # equal to zero and less than `max`. Unlike Kernel.rand, when `max` is a
+      # negative integer or zero, `rand` raises an ArgumentError.
+      #
+      #     prng = Random.new
+      #     prng.rand(100)       # => 42
+      #
+      # When `max` is a Float, `rand` returns a random floating point number between
+      # 0.0 and `max`, including 0.0 and excluding `max`.
+      #
+      #     prng.rand(1.5)       # => 1.4600282860034115
+      #
+      # When `range` is a Range, `rand` returns a random number where
+      # `range.member?(number) == true`.
+      #
+      #     prng.rand(5..9)      # => one of [5, 6, 7, 8, 9]
+      #     prng.rand(5...9)     # => one of [5, 6, 7, 8]
+      #     prng.rand(5.0..9.0)  # => between 5.0 and 9.0, including 9.0
+      #     prng.rand(5.0...9.0) # => between 5.0 and 9.0, excluding 9.0
+      #
+      # Both the beginning and ending values of the range must respond to subtract
+      # (`-`) and add (`+`)methods, or rand will raise an ArgumentError.
+      #
+      %a{annotate:rdoc:copy:Random#rand}
+      def rand: () -> Float
+              | (Integer | ::Range[Integer] max) -> Integer
+              | (Float | ::Range[Float] max) -> Float
+
+      # <!--
+      #   rdoc-file=random.c
+      #   - prng.bytes(size) -> string
+      # -->
+      # Returns a random binary string containing `size` bytes.
+      #
+      #     random_string = Random.new.bytes(10) # => "\xD7:R\xAB?\x83\xCE\xFAkO"
+      #     random_string.size                   # => 10
+      #
+      %a{annotate:rdoc:copy:Random#bytes}
+      def bytes: (Integer size) -> String
+
+      # <!--
+      #   rdoc-file=random.c
+      #   - prng.seed -> integer
+      # -->
+      # Returns the seed value used to initialize the generator. This may be used to
+      # initialize another generator with the same state at a later time, causing it
+      # to produce the same sequence of numbers.
+      #
+      #     prng1 = Random.new(1234)
+      #     prng1.seed       #=> 1234
+      #     prng1.rand(100)  #=> 47
+      #
+      #     prng2 = Random.new(prng1.seed)
+      #     prng2.rand(100)  #=> 47
+      #
+      %a{annotate:rdoc:copy:Random#seed}
+      def seed: () -> Integer
+    end
+
+    # <!-- rdoc-file=lib/random/formatter.rb -->
+    # ## Random number formatter.
+    #
+    # Formats generated random numbers in many manners.
+    #
+    # ### Examples
+    #
+    # Generate random hexadecimal strings:
+    #
+    #     require 'random/formatter'
+    #
+    #     prng.hex(10) #=> "52750b30ffbc7de3b362"
+    #     prng.hex(10) #=> "92b15d6c8dc4beb5f559"
+    #     prng.hex(13) #=> "39b290146bea6ce975c37cfc23"
+    #
+    # Generate random base64 strings:
+    #
+    #     prng.base64(10) #=> "EcmTPZwWRAozdA=="
+    #     prng.base64(10) #=> "KO1nIU+p9DKxGg=="
+    #     prng.base64(12) #=> "7kJSM/MzBJI+75j8"
+    #
+    # Generate random binary strings:
+    #
+    #     prng.random_bytes(10) #=> "\016\t{\370g\310pbr\301"
+    #     prng.random_bytes(10) #=> "\323U\030TO\234\357\020\a\337"
+    #
+    # Generate alphanumeric strings:
+    #
+    #     prng.alphanumeric(10) #=> "S8baxMJnPl"
+    #     prng.alphanumeric(10) #=> "aOxAg8BAJe"
+    #
+    # Generate UUIDs:
+    #
+    #     prng.uuid #=> "2d931510-d99f-494a-8c67-87feb05e1594"
+    #     prng.uuid #=> "bad85eb9-0713-4da7-8d36-07a8e4b00eab"
+    #
+    # <!-- rdoc-file=random.c -->
+    # Generate a random number in the given range as Random does
+    #
+    #     prng.random_number       #=> 0.5816771641321361
+    #     prng.random_number(1000) #=> 485
+    #     prng.random_number(1..6) #=> 3
+    #     prng.rand                #=> 0.5816771641321361
+    #     prng.rand(1000)          #=> 485
+    #     prng.rand(1..6)          #=> 3
+    #
+    %a{annotate:rdoc:copy:Random::Formatter}
+    module Random_Formatter
+      # <!--
+      #   rdoc-file=lib/random/formatter.rb
+      #   - base64(n=nil)
+      # -->
+      # Random::Formatter#base64 generates a random base64 string.
+      #
+      # The argument *n* specifies the length, in bytes, of the random number to be
+      # generated. The length of the result string is about 4/3 of *n*.
+      #
+      # If *n* is not specified or is nil, 16 is assumed. It may be larger in the
+      # future.
+      #
+      # The result may contain A-Z, a-z, 0-9, "+", "/" and "=".
+      #
+      #     require 'random/formatter'
+      #
+      #     prng.base64 #=> "/2BuBuLf3+WfSKyQbRcc/A=="
+      #     prng.base64 #=> "6BbW0pxO0YENxn38HMUbcQ=="
+      #
+      # See RFC 3548 for the definition of base64.
+      #
+      %a{annotate:rdoc:copy:Random::Formatter#base64}
+      def base64: (?Integer? n) -> String
+
+      # <!--
+      #   rdoc-file=lib/random/formatter.rb
+      #   - hex(n=nil)
+      # -->
+      # Random::Formatter#hex generates a random hexadecimal string.
+      #
+      # The argument *n* specifies the length, in bytes, of the random number to be
+      # generated. The length of the resulting hexadecimal string is twice of *n*.
+      #
+      # If *n* is not specified or is nil, 16 is assumed. It may be larger in the
+      # future.
+      #
+      # The result may contain 0-9 and a-f.
+      #
+      #     require 'random/formatter'
+      #
+      #     prng.hex #=> "eb693ec8252cd630102fd0d0fb7c3485"
+      #     prng.hex #=> "91dc3bfb4de5b11d029d376634589b61"
+      #
+      %a{annotate:rdoc:copy:Random::Formatter#hex}
+      def hex: (?Integer? n) -> String
+
+      # <!-- rdoc-file=random.c -->
+      # Generates formatted random number from raw random bytes. See Random#rand.
+      #
+      %a{annotate:rdoc:copy:Random::Formatter#rand}
+      def rand: () -> Float
+              | (?Float? n) -> Float
+              | (?Integer? n) -> Integer
+              | (?Numeric? n) -> Numeric
+              | (?::Range[Float]? n) -> Float
+              | (?::Range[Integer]? n) -> Integer
+              | (?::Range[Numeric]? n) -> Numeric
+
+      %a{annotate:rdoc:copy:Random::Formatter#random_byte}
+      def random_bytes: (?Integer? n) -> String
+
+      # <!--
+      #   rdoc-file=random.c
+      #   - prng.random_number        -> float
+      #   - prng.random_number(max)   -> number
+      #   - prng.random_number(range) -> number
+      #   - prng.rand                 -> float
+      #   - prng.rand(max)            -> number
+      #   - prng.rand(range)          -> number
+      # -->
+      # Generates formatted random number from raw random bytes. See Random#rand.
+      #
+      %a{annotate:rdoc:copy:Random::Formatter#random_number}
+      def random_number: () -> Float
+                      | (?Float? n) -> Float
+                      | (?Integer? n) -> Integer
+                      | (?Numeric? n) -> Numeric
+                      | (?::Range[Float]? n) -> Float
+                      | (?::Range[Integer]? n) -> Integer
+                      | (?::Range[Numeric]? n) -> Numeric
+
+      # <!--
+      #   rdoc-file=lib/random/formatter.rb
+      #   - urlsafe_base64(n=nil, padding=false)
+      # -->
+      # Random::Formatter#urlsafe_base64 generates a random URL-safe base64 string.
+      #
+      # The argument *n* specifies the length, in bytes, of the random number to be
+      # generated. The length of the result string is about 4/3 of *n*.
+      #
+      # If *n* is not specified or is nil, 16 is assumed. It may be larger in the
+      # future.
+      #
+      # The boolean argument *padding* specifies the padding. If it is false or nil,
+      # padding is not generated. Otherwise padding is generated. By default, padding
+      # is not generated because "=" may be used as a URL delimiter.
+      #
+      # The result may contain A-Z, a-z, 0-9, "-" and "_". "=" is also used if
+      # *padding* is true.
+      #
+      #     require 'random/formatter'
+      #
+      #     prng.urlsafe_base64 #=> "b4GOKm4pOYU_-BOXcrUGDg"
+      #     prng.urlsafe_base64 #=> "UZLdOkzop70Ddx-IJR0ABg"
+      #
+      #     prng.urlsafe_base64(nil, true) #=> "i0XQ-7gglIsHGV2_BNPrdQ=="
+      #     prng.urlsafe_base64(nil, true) #=> "-M8rLhr7JEpJlqFGUMmOxg=="
+      #
+      # See RFC 3548 for the definition of URL-safe base64.
+      #
+      %a{annotate:rdoc:copy:Random::Formatter#urlsafe_base64}
+      def urlsafe_base64: (?Integer? n, ?boolish padding) -> String
+
+      # <!--
+      #   rdoc-file=lib/random/formatter.rb
+      #   - uuid()
+      # -->
+      # Random::Formatter#uuid generates a random v4 UUID (Universally Unique
+      # IDentifier).
+      #
+      #     require 'random/formatter'
+      #
+      #     prng.uuid #=> "2d931510-d99f-494a-8c67-87feb05e1594"
+      #     prng.uuid #=> "bad85eb9-0713-4da7-8d36-07a8e4b00eab"
+      #     prng.uuid #=> "62936e70-1815-439b-bf89-8492855a7e6b"
+      #
+      # The version 4 UUID is purely random (except the version). It doesn't contain
+      # meaningful information such as MAC addresses, timestamps, etc.
+      #
+      # The result contains 122 random bits (15.25 random bytes).
+      #
+      # See RFC 4122 for details of UUID.
+      #
+      %a{annotate:rdoc:copy:Random::Formatter#uuid}
+      def uuid: () -> String
+    end
+  end
+end

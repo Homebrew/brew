@@ -1,0 +1,21 @@
+module RBS
+  class Constant
+    type constant_entry = Environment::ClassEntry
+                        | Environment::ModuleEntry
+                        | Environment::SingleEntry[TypeName, AST::Declarations::Constant]
+
+    attr_reader name: TypeName
+
+    attr_reader type: Types::t
+
+    attr_reader entry: constant_entry
+
+    def initialize: (name: TypeName, type: Types::t, entry: constant_entry) -> void
+
+    def ==: (untyped other) -> bool
+
+    alias eql? ==
+
+    def hash: () -> Integer
+  end
+end

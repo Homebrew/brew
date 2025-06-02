@@ -1,0 +1,1117 @@
+# <!-- rdoc-file=lib/rubygems.rb -->
+# RubyGems is the Ruby standard for publishing and managing third party
+# libraries.
+#
+# For user documentation, see:
+#
+# *   `gem help` and `gem help [command]`
+# *   [RubyGems User Guide](https://guides.rubygems.org/)
+# *   [Frequently Asked Questions](https://guides.rubygems.org/faqs)
+#
+#
+# For gem developer documentation see:
+#
+# *   [Creating Gems](https://guides.rubygems.org/make-your-own-gem)
+# *   Gem::Specification
+# *   Gem::Version for version dependency notes
+#
+#
+# Further RubyGems documentation can be found at:
+#
+# *   [RubyGems Guides](https://guides.rubygems.org)
+# *   [RubyGems API](https://www.rubydoc.info/github/rubygems/rubygems) (also
+#     available from `gem server`)
+#
+#
+# ## RubyGems Plugins
+#
+# RubyGems will load plugins in the latest version of each installed gem or
+# $LOAD_PATH.  Plugins must be named 'rubygems_plugin' (.rb, .so, etc) and
+# placed at the root of your gem's #require_path.  Plugins are installed at a
+# special location and loaded on boot.
+#
+# For an example plugin, see the [Graph gem](https://github.com/seattlerb/graph)
+# which adds a `gem graph` command.
+#
+# ## RubyGems Defaults, Packaging
+#
+# RubyGems defaults are stored in lib/rubygems/defaults.rb.  If you're packaging
+# RubyGems or implementing Ruby you can change RubyGems' defaults.
+#
+# For RubyGems packagers, provide lib/rubygems/defaults/operating_system.rb and
+# override any defaults from lib/rubygems/defaults.rb.
+#
+# For Ruby implementers, provide lib/rubygems/defaults/#{RUBY_ENGINE}.rb and
+# override any defaults from lib/rubygems/defaults.rb.
+#
+# If you need RubyGems to perform extra work on install or uninstall, your
+# defaults override file can set pre/post install and uninstall hooks. See
+# Gem::pre_install, Gem::pre_uninstall, Gem::post_install, Gem::post_uninstall.
+#
+# ## Bugs
+#
+# You can submit bugs to the [RubyGems bug
+# tracker](https://github.com/rubygems/rubygems/issues) on GitHub
+#
+# ## Credits
+#
+# RubyGems is currently maintained by Eric Hodel.
+#
+# RubyGems was originally developed at RubyConf 2003 by:
+#
+# *   Rich Kilmer  -- rich(at)infoether.com
+# *   Chad Fowler  -- chad(at)chadfowler.com
+# *   David Black  -- dblack(at)wobblini.net
+# *   Paul Brannan -- paul(at)atdesk.com
+# *   Jim Weirich   -- jim(at)weirichhouse.org
+#
+#
+# Contributors:
+#
+# *   Gavin Sinclair     -- gsinclair(at)soyabean.com.au
+# *   George Marrows     -- george.marrows(at)ntlworld.com
+# *   Dick Davies        -- rasputnik(at)hellooperator.net
+# *   Mauricio Fernandez -- batsman.geo(at)yahoo.com
+# *   Simon Strandgaard  -- neoneye(at)adslhome.dk
+# *   Dave Glasser       -- glasser(at)mit.edu
+# *   Paul Duncan        -- pabs(at)pablotron.org
+# *   Ville Aine         -- vaine(at)cs.helsinki.fi
+# *   Eric Hodel         -- drbrain(at)segment7.net
+# *   Daniel Berger      -- djberg96(at)gmail.com
+# *   Phil Hagelberg     -- technomancy(at)gmail.com
+# *   Ryan Davis         -- ryand-ruby(at)zenspider.com
+# *   Evan Phoenix       -- evan(at)fallingsnow.net
+# *   Steve Klabnik      -- steve(at)steveklabnik.com
+#
+#
+# (If your name is missing, PLEASE let us know!)
+#
+# ## License
+#
+# See [LICENSE.txt](rdoc-ref:lib/rubygems/LICENSE.txt) for permissions.
+#
+# Thanks!
+#
+# -The RubyGems Team
+#
+module Gem
+  interface _HashLike[K, V]
+    def each_pair: () { ([ K, V ]) -> untyped } -> self
+  end
+
+  DEFAULT_HOST: String
+
+  GEM_DEP_FILES: Array[String]
+
+  # <!-- rdoc-file=lib/rubygems.rb -->
+  # When https://bugs.ruby-lang.org/issues/17259 is available, there is no need to
+  # override Kernel#warn
+  #
+  KERNEL_WARN_IGNORES_INTERNAL_ENTRIES: bool
+
+  LOADED_SPECS_MUTEX: Thread::Mutex
+
+  # <!-- rdoc-file=lib/rubygems.rb -->
+  # Location of Marshal quick gemspecs on remote repositories
+  #
+  MARSHAL_SPEC_DIR: String
+
+  # <!-- rdoc-file=lib/rubygems.rb -->
+  # Exception classes used in a Gem.read_binary `rescue` statement
+  #
+  READ_BINARY_ERRORS: Array[Class]
+
+  # <!-- rdoc-file=lib/rubygems.rb -->
+  # Subdirectories in a gem repository for default gems
+  #
+  REPOSITORY_DEFAULT_GEM_SUBDIRECTORIES: Array[String]
+
+  # <!-- rdoc-file=lib/rubygems.rb -->
+  # Subdirectories in a gem repository
+  #
+  REPOSITORY_SUBDIRECTORIES: Array[String]
+
+  RUBYGEMS_DIR: String
+
+  # <!-- rdoc-file=lib/rubygems.rb -->
+  # Taint support is deprecated in Ruby 2.7. This allows switching ".untaint" to
+  # ".tap(&Gem::UNTAINT)", to avoid deprecation warnings in Ruby 2.7.
+  #
+  UNTAINT: Proc
+
+  VERSION: String
+
+  # <!-- rdoc-file=lib/rubygems.rb -->
+  # An Array of Regexps that match windows Ruby platforms.
+  #
+  WIN_PATTERNS: Array[Regexp]
+
+  # <!-- rdoc-file=lib/rubygems.rb -->
+  # Exception classes used in Gem.write_binary `rescue` statement
+  #
+  WRITE_BINARY_ERRORS: Array[Class]
+
+  # <!--
+  #   rdoc-file=lib/rubygems.rb
+  #   - activated_gem_paths()
+  # -->
+  # The number of paths in the `$LOAD_PATH` from activated gems. Used to
+  # prioritize `-I` and `[ENV]('RUBYLIB`)` entries during `require`.
+  #
+  def self.activated_gem_paths: () -> Integer
+
+  # <!--
+  #   rdoc-file=lib/rubygems.rb
+  #   - add_to_load_path(*paths)
+  # -->
+  # Add a list of paths to the $LOAD_PATH at the proper place.
+  #
+  def self.add_to_load_path: (*String paths) -> Array[String]
+
+  # <!--
+  #   rdoc-file=lib/rubygems.rb
+  #   - bin_path(name, exec_name = nil, *requirements)
+  # -->
+  # Find the full path to the executable for gem `name`.  If the `exec_name` is
+  # not given, an exception will be raised, otherwise the specified executable's
+  # path is returned.  `requirements` allows you to specify specific gem versions.
+  #
+  def self.bin_path: (String name, String exec_name, ?Array[Requirement] requirements) -> String
+
+  # <!--
+  #   rdoc-file=lib/rubygems.rb
+  #   - binary_mode()
+  # -->
+  # The mode needed to read a file as straight binary.
+  #
+  def self.binary_mode: () -> String
+
+  # <!--
+  #   rdoc-file=lib/rubygems.rb
+  #   - bindir(install_dir=Gem.dir)
+  # -->
+  # The path where gem executables are to be installed.
+  #
+  def self.bindir: (?String install_dir) -> String
+
+  # <!--
+  #   rdoc-file=lib/rubygems/defaults.rb
+  #   - cache_home()
+  # -->
+  # The path to standard location of the user's cache directory.
+  #
+  def self.cache_home: () -> String
+
+  # <!--
+  #   rdoc-file=lib/rubygems.rb
+  #   - clear_default_specs()
+  # -->
+  # Clear default gem related variables. It is for test
+  #
+  def self.clear_default_specs: () -> void
+
+  # <!--
+  #   rdoc-file=lib/rubygems.rb
+  #   - clear_paths()
+  # -->
+  # Reset the `dir` and `path` values.  The next time `dir` or `path` is
+  # requested, the values will be calculated from scratch.  This is mainly used by
+  # the unit tests to provide test isolation.
+  #
+  def self.clear_paths: () -> void
+
+  # <!--
+  #   rdoc-file=lib/rubygems/defaults.rb
+  #   - config_file()
+  # -->
+  # The path to standard location of the user's .gemrc file.
+  #
+  def self.config_file: () -> String
+
+  # <!--
+  #   rdoc-file=lib/rubygems/defaults.rb
+  #   - config_home()
+  # -->
+  # The path to standard location of the user's configuration directory.
+  #
+  def self.config_home: () -> String
+
+  # <!--
+  #   rdoc-file=lib/rubygems.rb
+  #   - configuration()
+  # -->
+  # The standard configuration object for gems.
+  #
+  def self.configuration: () -> ConfigFile
+
+  # <!--
+  #   rdoc-file=lib/rubygems.rb
+  #   - configuration=(config)
+  # -->
+  # Use the given configuration object (which implements the ConfigFile protocol)
+  # as the standard configuration object.
+  #
+  def self.configuration=: (ConfigFile config) -> ConfigFile
+
+  # <!--
+  #   rdoc-file=lib/rubygems/defaults.rb
+  #   - data_home()
+  # -->
+  # The path to standard location of the user's data directory.
+  #
+  def self.data_home: () -> String
+
+  # <!--
+  #   rdoc-file=lib/rubygems.rb
+  #   - datadir(gem_name)
+  # -->
+  # The path to the data directory specified by the gem name.  If the package is
+  # not available as a gem, return nil.
+  #
+  def self.datadir: (String gem_name) -> String?
+
+  # <!--
+  #   rdoc-file=lib/rubygems/defaults.rb
+  #   - default_bindir()
+  # -->
+  # The default directory for binaries
+  #
+  def self.default_bindir: () -> String
+
+  # <!--
+  #   rdoc-file=lib/rubygems/defaults.rb
+  #   - default_cert_path()
+  # -->
+  # The default signing certificate chain path
+  #
+  def self.default_cert_path: () -> String
+
+  # <!--
+  #   rdoc-file=lib/rubygems/defaults.rb
+  #   - default_dir()
+  # -->
+  # Default home directory path to be used if an alternate value is not specified
+  # in the environment
+  #
+  def self.default_dir: () -> String
+
+  # <!--
+  #   rdoc-file=lib/rubygems/defaults.rb
+  #   - default_exec_format()
+  # -->
+  # Deduce Ruby's --program-prefix and --program-suffix from its install name
+  #
+  def self.default_exec_format: () -> String
+
+  # <!--
+  #   rdoc-file=lib/rubygems/defaults.rb
+  #   - default_ext_dir_for(base_dir)
+  # -->
+  # Returns binary extensions dir for specified RubyGems base dir or nil if such
+  # directory cannot be determined.
+  #
+  # By default, the binary extensions are located side by side with their Ruby
+  # counterparts, therefore nil is returned
+  #
+  def self.default_ext_dir_for: (String base_dir) -> String?
+
+  # <!--
+  #   rdoc-file=lib/rubygems/defaults.rb
+  #   - default_key_path()
+  # -->
+  # The default signing key path
+  #
+  def self.default_key_path: () -> String
+
+  # <!--
+  #   rdoc-file=lib/rubygems/defaults.rb
+  #   - default_path()
+  # -->
+  # Default gem load path
+  #
+  def self.default_path: () -> Array[String]
+
+  # <!--
+  #   rdoc-file=lib/rubygems/defaults.rb
+  #   - default_rubygems_dirs()
+  # -->
+  # Paths where RubyGems' .rb files and bin files are installed
+  #
+  def self.default_rubygems_dirs: () -> Array[String]?
+
+  # <!--
+  #   rdoc-file=lib/rubygems/defaults.rb
+  #   - default_sources()
+  # -->
+  # An Array of the default sources that come with RubyGems
+  #
+  def self.default_sources: () -> Array[String]
+
+  # <!--
+  #   rdoc-file=lib/rubygems/defaults.rb
+  #   - default_spec_cache_dir()
+  # -->
+  # Default spec directory path to be used if an alternate value is not specified
+  # in the environment
+  #
+  def self.default_spec_cache_dir: () -> String
+
+  # <!--
+  #   rdoc-file=lib/rubygems/defaults.rb
+  #   - default_specifications_dir()
+  # -->
+  # Path to specification files of default gems.
+  #
+  def self.default_specifications_dir: () -> String
+
+  # <!--
+  #   rdoc-file=lib/rubygems.rb
+  #   - deflate(data)
+  # -->
+  # A Zlib::Deflate.deflate wrapper
+  #
+  def self.deflate: (String data) -> String
+
+  # <!--
+  #   rdoc-file=lib/rubygems.rb
+  #   - dir()
+  # -->
+  # The path where gems are to be installed.
+  #
+  def self.dir: () -> String
+
+  # <!-- rdoc-file=lib/rubygems.rb -->
+  # RubyGems distributors (like operating system package managers) can disable
+  # RubyGems update by setting this to error message printed to end-users on gem
+  # update --system instead of actual update.
+  #
+  def self.disable_system_update_message: () -> String?
+
+  # <!-- rdoc-file=lib/rubygems.rb -->
+  # RubyGems distributors (like operating system package managers) can disable
+  # RubyGems update by setting this to error message printed to end-users on gem
+  # update --system instead of actual update.
+  #
+  def self.disable_system_update_message=: (String?) -> String?
+
+  # <!--
+  #   rdoc-file=lib/rubygems.rb
+  #   - done_installing(&hook)
+  # -->
+  # Adds a post-installs hook that will be passed a Gem::DependencyInstaller and a
+  # list of installed specifications when Gem::DependencyInstaller#install is
+  # complete
+  #
+  def self.done_installing: () { (DependencyInstaller, Array[Specification]) -> untyped } -> Array[Proc]
+
+  # <!-- rdoc-file=lib/rubygems.rb -->
+  # The list of hooks to be run after Gem::DependencyInstaller installs a set of
+  # gems
+  #
+  def self.done_installing_hooks: () -> Array[Proc?]
+
+  # <!--
+  #   rdoc-file=lib/rubygems.rb
+  #   - ensure_default_gem_subdirectories(dir = Gem.dir, mode = nil)
+  # -->
+  # Quietly ensure the Gem directory `dir` contains all the proper subdirectories
+  # for handling default gems.  If we can't create a directory due to a permission
+  # problem, then we will silently continue.
+  #
+  # If `mode` is given, missing directories are created with this mode.
+  #
+  # World-writable directories will never be created.
+  #
+  def self.ensure_default_gem_subdirectories: (?String dir, ?Integer | String mode) -> Array[String]
+
+  # <!--
+  #   rdoc-file=lib/rubygems.rb
+  #   - ensure_gem_subdirectories(dir = Gem.dir, mode = nil)
+  # -->
+  # Quietly ensure the Gem directory `dir` contains all the proper subdirectories.
+  #  If we can't create a directory due to a permission problem, then we will
+  # silently continue.
+  #
+  # If `mode` is given, missing directories are created with this mode.
+  #
+  # World-writable directories will never be created.
+  #
+  def self.ensure_gem_subdirectories: (?String dir, ?Integer | String mode) -> Array[String]
+
+  # <!--
+  #   rdoc-file=lib/rubygems.rb
+  #   - env_requirement(gem_name)
+  # -->
+  #
+  def self.env_requirement: (String gem_name) -> Requirement
+
+  # <!--
+  #   rdoc-file=lib/rubygems/defaults.rb
+  #   - find_config_file()
+  # -->
+  # Finds the user's config file
+  #
+  def self.find_config_file: () -> String
+
+  # <!--
+  #   rdoc-file=lib/rubygems.rb
+  #   - find_files(glob, check_load_path=true)
+  # -->
+  # Returns a list of paths matching `glob` that can be used by a gem to pick up
+  # features from other gems.  For example:
+  #
+  #     Gem.find_files('rdoc/discover').each do |path| load path end
+  #
+  # if `check_load_path` is true (the default), then find_files also searches
+  # $LOAD_PATH for files as well as gems.
+  #
+  # Note that find_files will return all files even if they are from different
+  # versions of the same gem.  See also find_latest_files
+  #
+  def self.find_files: (String glob, ?boolish check_load_path) -> Array[String]
+
+  # <!--
+  #   rdoc-file=lib/rubygems.rb
+  #   - find_latest_files(glob, check_load_path=true)
+  # -->
+  # Returns a list of paths matching `glob` from the latest gems that can be used
+  # by a gem to pick up features from other gems.  For example:
+  #
+  #     Gem.find_latest_files('rdoc/discover').each do |path| load path end
+  #
+  # if `check_load_path` is true (the default), then find_latest_files also
+  # searches $LOAD_PATH for files as well as gems.
+  #
+  # Unlike find_files, find_latest_files will return only files from the latest
+  # version of a gem.
+  #
+  def self.find_latest_files: (String glob, ?boolish check_load_path) -> Array[String]
+
+  # <!--
+  #   rdoc-file=lib/rubygems.rb
+  #   - find_unresolved_default_spec(path)
+  # -->
+  # Find a Gem::Specification of default gem from `path`
+  #
+  def self.find_unresolved_default_spec: (String path) -> Specification?
+
+  # <!--
+  #   rdoc-file=lib/rubygems.rb
+  #   - finish_resolve(request_set=Gem::RequestSet.new)
+  # -->
+  #
+  def self.finish_resolve: (?RequestSet request_set) -> void
+
+  # <!-- rdoc-file=lib/rubygems.rb -->
+  # GemDependencyAPI object, which is set when .use_gemdeps is called. This
+  # contains all the information from the Gemfile.
+  #
+  def self.gemdeps: () -> RequestSet::GemDependencyAPI?
+
+  # <!--
+  #   rdoc-file=lib/rubygems.rb
+  #   - host()
+  # -->
+  # Get the default RubyGems API host. This is normally `https://rubygems.org`.
+  #
+  def self.host: () -> String
+
+  # <!--
+  #   rdoc-file=lib/rubygems.rb
+  #   - host=(host)
+  # -->
+  # Set the default RubyGems API host.
+  #
+  def self.host=: (String host) -> String
+
+  # <!--
+  #   rdoc-file=lib/rubygems.rb
+  #   - install(name, version = Gem::Requirement.default, *options)
+  # -->
+  # Top level install helper method. Allows you to install gems interactively:
+  #
+  #     % irb
+  #     >> Gem.install "minitest"
+  #     Fetching: minitest-5.14.0.gem (100%)
+  #     => [#<Gem::Specification:0x1013b4528 @name="minitest", ...>]
+  #
+  def self.install: (String name, ?Gem::Requirement version, *DependencyInstaller::options options) -> Array[Specification]
+
+  # <!--
+  #   rdoc-file=lib/rubygems.rb
+  #   - java_platform?()
+  # -->
+  # Is this a java platform?
+  #
+  def self.java_platform?: () -> bool
+
+  # <!--
+  #   rdoc-file=lib/rubygems.rb
+  #   - latest_rubygems_version()
+  # -->
+  # Returns the latest release version of RubyGems.
+  #
+  def self.latest_rubygems_version: () -> Version
+
+  # <!--
+  #   rdoc-file=lib/rubygems.rb
+  #   - latest_spec_for(name)
+  # -->
+  # Returns the latest release-version specification for the gem `name`.
+  #
+  def self.latest_spec_for: (String name) -> Specification?
+
+  # <!--
+  #   rdoc-file=lib/rubygems.rb
+  #   - latest_version_for(name)
+  # -->
+  # Returns the version of the latest release-version of gem `name`
+  #
+  def self.latest_version_for: (String name) -> Version?
+
+  # <!--
+  #   rdoc-file=lib/rubygems.rb
+  #   - load_env_plugins()
+  # -->
+  # Find all 'rubygems_plugin' files in $LOAD_PATH and load them
+  #
+  def self.load_env_plugins: () -> Array[String]
+
+  # <!--
+  #   rdoc-file=lib/rubygems.rb
+  #   - load_path_insert_index()
+  # -->
+  # The index to insert activated gem paths into the $LOAD_PATH. The activated
+  # gem's paths are inserted before site lib directory by default.
+  #
+  def self.load_path_insert_index: () -> Integer
+
+  # <!--
+  #   rdoc-file=lib/rubygems.rb
+  #   - load_plugins()
+  # -->
+  # Find rubygems plugin files in the standard location and load them
+  #
+  def self.load_plugins: () -> Array[String]
+
+  # <!--
+  #   rdoc-file=lib/rubygems.rb
+  #   - load_yaml()
+  # -->
+  # Loads YAML, preferring Psych
+  #
+  def self.load_yaml: () -> bool?
+
+  # <!-- rdoc-file=lib/rubygems.rb -->
+  # Hash of loaded Gem::Specification keyed by name
+  #
+  def self.loaded_specs: () -> Hash[String, BasicSpecification]
+
+  # <!--
+  #   rdoc-file=lib/rubygems.rb
+  #   - location_of_caller(depth = 1)
+  # -->
+  # The file name and line number of the caller of the caller of this method.
+  #
+  # `depth` is how many layers up the call stack it should go.
+  #
+  # e.g.,
+  #
+  # def a; Gem.location_of_caller; end a #=> ["x.rb", 2]  # (it'll vary depending
+  # on file name and line number)
+  #
+  # def b; c; end def c; Gem.location_of_caller(2); end b #=> ["x.rb", 6]  #
+  # (it'll vary depending on file name and line number)
+  #
+  def self.location_of_caller: (?Integer depth) -> [ String, Integer ]
+
+  # <!--
+  #   rdoc-file=lib/rubygems.rb
+  #   - marshal_version()
+  # -->
+  # The version of the Marshal format for your Ruby.
+  #
+  def self.marshal_version: () -> String
+
+  # <!--
+  #   rdoc-file=lib/rubygems.rb
+  #   - needs() { |rs| ... }
+  # -->
+  #
+  def self.needs: () { (RequestSet) -> void } -> void
+
+  # <!--
+  #   rdoc-file=lib/rubygems/defaults.rb
+  #   - operating_system_defaults()
+  # -->
+  # Default options for gem commands for Ruby packagers.
+  #
+  # The options here should be structured as an array of string "gem" command
+  # names as keys and a string of the default options as values.
+  #
+  # Example:
+  #
+  # def self.operating_system_defaults
+  #     {
+  #         'install' => '--no-rdoc --no-ri --env-shebang',
+  #         'update' => '--no-rdoc --no-ri --env-shebang'
+  #     }
+  #
+  # end
+  #
+  def self.operating_system_defaults: () -> Hash[String, String]
+
+  # <!--
+  #   rdoc-file=lib/rubygems.rb
+  #   - path()
+  # -->
+  #
+  def self.path: () -> Array[String]
+
+  # <!--
+  #   rdoc-file=lib/rubygems/defaults.rb
+  #   - path_separator()
+  # -->
+  # How String Gem paths should be split.  Overridable for esoteric platforms.
+  #
+  def self.path_separator: () -> String
+
+  # <!--
+  #   rdoc-file=lib/rubygems.rb
+  #   - paths()
+  # -->
+  # Retrieve the PathSupport object that RubyGems uses to lookup files.
+  #
+  def self.paths: () -> PathSupport
+
+  # <!--
+  #   rdoc-file=lib/rubygems.rb
+  #   - paths=(env)
+  # -->
+  # Initialize the filesystem paths to use from `env`. `env` is a hash-like object
+  # (typically ENV) that is queried for 'GEM_HOME', 'GEM_PATH', and
+  # 'GEM_SPEC_CACHE' Keys for the `env` hash should be Strings, and values of the
+  # hash should be Strings or `nil`.
+  #
+  def self.paths=: (_HashLike[String, String?] env) -> Array[String]
+
+  # <!--
+  #   rdoc-file=lib/rubygems/defaults.rb
+  #   - platform_defaults()
+  # -->
+  # Default options for gem commands for Ruby implementers.
+  #
+  # The options here should be structured as an array of string "gem" command
+  # names as keys and a string of the default options as values.
+  #
+  # Example:
+  #
+  # def self.platform_defaults
+  #     {
+  #         'install' => '--no-rdoc --no-ri --env-shebang',
+  #         'update' => '--no-rdoc --no-ri --env-shebang'
+  #     }
+  #
+  # end
+  #
+  def self.platform_defaults: () -> Hash[String, String]
+
+  # <!--
+  #   rdoc-file=lib/rubygems.rb
+  #   - platforms()
+  # -->
+  # Array of platforms this RubyGems supports.
+  #
+  def self.platforms: () -> Array[String | Platform]
+
+  # <!--
+  #   rdoc-file=lib/rubygems.rb
+  #   - platforms=(platforms)
+  # -->
+  # Set array of platforms this RubyGems supports (primarily for testing).
+  #
+  def self.platforms=: (Array[String | Platform] platforms) -> Array[String | Platform]
+
+  # <!--
+  #   rdoc-file=lib/rubygems.rb
+  #   - plugin_suffix_pattern()
+  # -->
+  # Glob pattern for require-able plugin suffixes.
+  #
+  def self.plugin_suffix_pattern: () -> String
+
+  # <!--
+  #   rdoc-file=lib/rubygems.rb
+  #   - plugin_suffix_regexp()
+  # -->
+  # Regexp for require-able plugin suffixes.
+  #
+  def self.plugin_suffix_regexp: () -> Regexp
+
+  # <!--
+  #   rdoc-file=lib/rubygems.rb
+  #   - plugindir(install_dir=Gem.dir)
+  # -->
+  # The path were rubygems plugins are to be installed.
+  #
+  def self.plugindir: (?String install_dir) -> String
+
+  # <!--
+  #   rdoc-file=lib/rubygems.rb
+  #   - post_build(&hook)
+  # -->
+  # Adds a post-build hook that will be passed an Gem::Installer instance when
+  # Gem::Installer#install is called.  The hook is called after the gem has been
+  # extracted and extensions have been built but before the executables or gemspec
+  # has been written.  If the hook returns `false` then the gem's files will be
+  # removed and the install will be aborted.
+  #
+  def self.post_build: () { (Installer) -> untyped } -> Array[Proc]
+
+  # <!-- rdoc-file=lib/rubygems.rb -->
+  # The list of hooks to be run after Gem::Installer#install extracts files and
+  # builds extensions
+  #
+  def self.post_build_hooks: () -> Array[Proc]
+
+  # <!--
+  #   rdoc-file=lib/rubygems.rb
+  #   - post_install(&hook)
+  # -->
+  # Adds a post-install hook that will be passed an Gem::Installer instance when
+  # Gem::Installer#install is called
+  #
+  def self.post_install: () { (Installer) -> untyped } -> Array[Proc]
+
+  # <!-- rdoc-file=lib/rubygems.rb -->
+  # The list of hooks to be run after Gem::Installer#install completes
+  # installation
+  #
+  def self.post_install_hooks: () -> Array[Proc]
+
+  # <!--
+  #   rdoc-file=lib/rubygems.rb
+  #   - post_reset(&hook)
+  # -->
+  # Adds a hook that will get run after Gem::Specification.reset is run.
+  #
+  def self.post_reset: () { () -> untyped } -> Array[Proc]
+
+  # <!-- rdoc-file=lib/rubygems.rb -->
+  # The list of hooks to be run after Gem::Specification.reset is run.
+  #
+  def self.post_reset_hooks: () -> Array[Proc?]
+
+  # <!--
+  #   rdoc-file=lib/rubygems.rb
+  #   - post_uninstall(&hook)
+  # -->
+  # Adds a post-uninstall hook that will be passed a Gem::Uninstaller instance and
+  # the spec that was uninstalled when Gem::Uninstaller#uninstall is called
+  #
+  def self.post_uninstall: () { (Uninstaller) -> untyped } -> Array[Proc]
+
+  # <!-- rdoc-file=lib/rubygems.rb -->
+  # The list of hooks to be run after Gem::Uninstaller#uninstall completes
+  # installation
+  #
+  def self.post_uninstall_hooks: () -> Array[Proc?]
+
+  # <!--
+  #   rdoc-file=lib/rubygems.rb
+  #   - pre_install(&hook)
+  # -->
+  # Adds a pre-install hook that will be passed an Gem::Installer instance when
+  # Gem::Installer#install is called.  If the hook returns `false` then the
+  # install will be aborted.
+  #
+  def self.pre_install: () { (Installer) -> untyped } -> Array[Proc]
+
+  # <!-- rdoc-file=lib/rubygems.rb -->
+  # The list of hooks to be run before Gem::Installer#install does any work
+  #
+  def self.pre_install_hooks: () -> Array[Proc?]
+
+  # <!--
+  #   rdoc-file=lib/rubygems.rb
+  #   - pre_reset(&hook)
+  # -->
+  # Adds a hook that will get run before Gem::Specification.reset is run.
+  #
+  def self.pre_reset: () { () -> untyped } -> Array[Proc]
+
+  # <!-- rdoc-file=lib/rubygems.rb -->
+  # The list of hooks to be run before Gem::Specification.reset is run.
+  #
+  def self.pre_reset_hooks: () -> Array[Proc?]
+
+  # <!--
+  #   rdoc-file=lib/rubygems.rb
+  #   - pre_uninstall(&hook)
+  # -->
+  # Adds a pre-uninstall hook that will be passed an Gem::Uninstaller instance and
+  # the spec that will be uninstalled when Gem::Uninstaller#uninstall is called
+  #
+  def self.pre_uninstall: () { (Uninstaller) -> untyped } -> Array[Proc]
+
+  # <!-- rdoc-file=lib/rubygems.rb -->
+  # The list of hooks to be run before Gem::Uninstaller#uninstall does any work
+  #
+  def self.pre_uninstall_hooks: () -> Array[Proc?]
+
+  # <!--
+  #   rdoc-file=lib/rubygems.rb
+  #   - prefix()
+  # -->
+  # The directory prefix this RubyGems was installed at. If your prefix is in a
+  # standard location (ie, rubygems is installed where you'd expect it to be),
+  # then prefix returns nil.
+  #
+  def self.prefix: () -> String?
+
+  # <!--
+  #   rdoc-file=lib/rubygems.rb
+  #   - read_binary(path)
+  # -->
+  # Safely read a file in binary mode on all platforms.
+  #
+  def self.read_binary: (String path) -> String
+
+  # <!--
+  #   rdoc-file=lib/rubygems.rb
+  #   - refresh()
+  # -->
+  # Refresh available gems from disk.
+  #
+  def self.refresh: () -> Array[Proc]
+
+  # <!--
+  #   rdoc-file=lib/rubygems.rb
+  #   - register_default_spec(spec)
+  # -->
+  # Register a Gem::Specification for default gem.
+  #
+  # Two formats for the specification are supported:
+  #
+  # *   MRI 2.0 style, where spec.files contains unprefixed require names. The
+  #     spec's filenames will be registered as-is.
+  # *   New style, where spec.files contains files prefixed with paths from
+  #     spec.require_paths. The prefixes are stripped before registering the
+  #     spec's filenames. Unprefixed files are omitted.
+  #
+  def self.register_default_spec: (Specification spec) -> Array[String]
+
+  # <!--
+  #   rdoc-file=lib/rubygems.rb
+  #   - ruby()
+  # -->
+  # The path to the running Ruby interpreter.
+  #
+  def self.ruby: () -> String
+
+  # <!--
+  #   rdoc-file=lib/rubygems.rb
+  #   - ruby_api_version()
+  # -->
+  # Returns a String containing the API compatibility version of Ruby
+  #
+  def self.ruby_api_version: () -> String
+
+  # <!--
+  #   rdoc-file=lib/rubygems/defaults.rb
+  #   - ruby_engine()
+  # -->
+  #
+  def self.ruby_engine: () -> String
+
+  # <!--
+  #   rdoc-file=lib/rubygems.rb
+  #   - ruby_version()
+  # -->
+  # A Gem::Version for the currently running Ruby.
+  #
+  def self.ruby_version: () -> Version
+
+  # <!--
+  #   rdoc-file=lib/rubygems.rb
+  #   - rubygems_version()
+  # -->
+  # A Gem::Version for the currently running RubyGems
+  #
+  def self.rubygems_version: () -> Version
+
+  # <!--
+  #   rdoc-file=lib/rubygems.rb
+  #   - source_date_epoch()
+  # -->
+  # Returns the value of Gem.source_date_epoch_string, as a Time object.
+  #
+  # This is used throughout RubyGems for enabling reproducible builds.
+  #
+  def self.source_date_epoch: () -> Time
+
+  # <!--
+  #   rdoc-file=lib/rubygems.rb
+  #   - source_date_epoch_string()
+  # -->
+  # If the SOURCE_DATE_EPOCH environment variable is set, returns it's value.
+  # Otherwise, returns the time that `Gem.source_date_epoch_string` was first
+  # called in the same format as SOURCE_DATE_EPOCH.
+  #
+  # NOTE(@duckinator): The implementation is a tad weird because we want to:
+  #     1. Make builds reproducible by default, by having this function always
+  #        return the same result during a given run.
+  #     2. Allow changing ENV['SOURCE_DATE_EPOCH'] at runtime, since multiple
+  #        tests that set this variable will be run in a single process.
+  #
+  # If you simplify this function and a lot of tests fail, that is likely due to
+  # #2 above.
+  #
+  # Details on SOURCE_DATE_EPOCH:
+  # https://reproducible-builds.org/specs/source-date-epoch/
+  #
+  def self.source_date_epoch_string: () -> String
+
+  # <!--
+  #   rdoc-file=lib/rubygems.rb
+  #   - sources()
+  # -->
+  # Returns an Array of sources to fetch remote gems from. Uses default_sources if
+  # the sources list is empty.
+  #
+  def self.sources: () -> SourceList
+
+  # <!--
+  #   rdoc-file=lib/rubygems.rb
+  #   - sources=(new_sources)
+  # -->
+  # Need to be able to set the sources without calling Gem.sources.replace since
+  # that would cause an infinite loop.
+  #
+  # DOC: This comment is not documentation about the method itself, it's more of a
+  # code comment about the implementation.
+  #
+  def self.sources=: (SourceList? new_sources) -> SourceList?
+
+  # <!--
+  #   rdoc-file=lib/rubygems.rb
+  #   - spec_cache_dir()
+  # -->
+  #
+  def self.spec_cache_dir: () -> String
+
+  # <!--
+  #   rdoc-file=lib/rubygems.rb
+  #   - suffix_pattern()
+  # -->
+  # Glob pattern for require-able path suffixes.
+  #
+  def self.suffix_pattern: () -> String
+
+  # <!--
+  #   rdoc-file=lib/rubygems.rb
+  #   - suffix_regexp()
+  # -->
+  # Regexp for require-able path suffixes.
+  #
+  def self.suffix_regexp: () -> Regexp
+
+  # <!--
+  #   rdoc-file=lib/rubygems.rb
+  #   - suffixes()
+  # -->
+  # Suffixes for require-able paths.
+  #
+  def self.suffixes: () -> Array[String]
+
+  # <!--
+  #   rdoc-file=lib/rubygems.rb
+  #   - time(msg, width = 0, display = Gem.configuration.verbose) { || ... }
+  # -->
+  # Prints the amount of time the supplied block takes to run using the debug UI
+  # output.
+  #
+  def self.time: [T] (String msg, ?Integer width, ?boolish display) { () -> T } -> T
+
+  # <!--
+  #   rdoc-file=lib/rubygems.rb
+  #   - try_activate(path)
+  # -->
+  # Try to activate a gem containing `path`. Returns true if activation succeeded
+  # or wasn't needed because it was already activated. Returns false if it can't
+  # find the path in a gem.
+  #
+  def self.try_activate: (String path) -> bool
+
+  # <!--
+  #   rdoc-file=lib/rubygems.rb
+  #   - ui()
+  # -->
+  # Lazily loads DefaultUserInteraction and returns the default UI.
+  #
+  def self.ui: () -> StreamUI
+
+  # <!--
+  #   rdoc-file=lib/rubygems.rb
+  #   - use_gemdeps(path = nil)
+  # -->
+  # Looks for a gem dependency file at `path` and activates the gems in the file
+  # if found.  If the file is not found an ArgumentError is raised.
+  #
+  # If `path` is not given the RUBYGEMS_GEMDEPS environment variable is used, but
+  # if no file is found no exception is raised.
+  #
+  # If '-' is given for `path` RubyGems searches up from the current working
+  # directory for gem dependency files (gem.deps.rb, Gemfile, Isolate) and
+  # activates the gems in the first one found.
+  #
+  # You can run this automatically when rubygems starts.  To enable, set the
+  # `RUBYGEMS_GEMDEPS` environment variable to either the path of your gem
+  # dependencies file or "-" to auto-discover in parent directories.
+  #
+  # NOTE: Enabling automatic discovery on multiuser systems can lead to execution
+  # of arbitrary code when used from directories outside your control.
+  #
+  def self.use_gemdeps: (?String path) -> void
+
+  # <!--
+  #   rdoc-file=lib/rubygems.rb
+  #   - use_paths(home, *paths)
+  # -->
+  # Use the `home` and `paths` values for Gem.dir and Gem.path.  Used mainly by
+  # the unit tests to provide environment isolation.
+  #
+  def self.use_paths: (String home, *String paths) -> Hash[String, String]
+
+  # <!--
+  #   rdoc-file=lib/rubygems/defaults.rb
+  #   - user_dir()
+  # -->
+  # Path for gems in the user's home directory
+  #
+  def self.user_dir: () -> String
+
+  # <!--
+  #   rdoc-file=lib/rubygems/defaults.rb
+  #   - user_home()
+  # -->
+  # The home directory for the user.
+  #
+  def self.user_home: () -> String
+
+  # <!--
+  #   rdoc-file=lib/rubygems.rb
+  #   - win_platform?()
+  # -->
+  # Is this a windows platform?
+  #
+  def self.win_platform?: () -> bool
+
+  # <!--
+  #   rdoc-file=lib/rubygems.rb
+  #   - write_binary(path, data)
+  # -->
+  # Safely write a file in binary mode on all platforms.
+  #
+  def self.write_binary: (String path, String data) -> Integer
+end

@@ -1,0 +1,759 @@
+.TH RUBY \&1 "Ruby Programmer's Reference Guide" "April 14, 2018" "UNIX"
+.SH NAME
+\fBruby\fP
+\- Interpreted object-oriented scripting language
+.SH SYNOPSIS
+.br
+\fBruby\fP
+[\fB\--copyright\fP]
+[\fB\--version\fP]
+[\fB\-SUacdlnpswvy\fP]
+[\fB\-0\fP[\fIoctal\fP]]
+[\fB\-C\fP \fIdirectory\fP]
+[\fB\-E\fP \fIexternal\fP[:\fIinternal\fP]]
+[\fB\-F\fP[\fIpattern\fP]]
+[\fB\-I\fP \fIdirectory\fP]
+[\fB\-K\fP[\fIc\fP]]
+[\fB\-T\fP[\fIlevel\fP]]
+[\fB\-W\fP[\fIlevel\fP]]
+[\fB\-e\fP \fIcommand\fP]
+[\fB\-i\fP[\fIextension\fP]]
+[\fB\-r\fP \fIlibrary\fP]
+[\fB\-x\fP[\fIdirectory\fP]]
+[\fB\--\fP{\fBenable\fP|\fBdisable\fP}-\fIFEATURE\fP]
+[\fB\--dump\fP=\fItarget\fP]
+[\fB\--verbose\fP]
+[\fB\--\fP]
+[\fIprogram_file\fP]
+[\fIargument\fP ...]
+.SH DESCRIPTION
+Ruby is an interpreted scripting language for quick and easy
+object-oriented programming.  It has many features to process text
+files and to do system management tasks (like in Perl).  It is simple,
+straight-forward, and extensible.
+
+If you want a language for easy object-oriented programming, or you
+don't like the Perl ugliness, or you do like the concept of LISP, but
+don't like too many parentheses, Ruby might be your language of
+choice.
+.SH FEATURES
+Ruby's features are as follows:
+.TP
+.B "Interpretive"
+Ruby is an interpreted language, so you don't have to recompile
+programs written in Ruby to execute them.
+
+.TP
+.B "Variables have no type (dynamic typing)"
+Variables in Ruby can contain data of any type.  You don't have to
+worry about variable typing.  Consequently, it has a weaker compile
+time check.
+
+.TP
+.B "No declaration needed"
+You can use variables in your Ruby programs without any declarations.
+Variable names denote their scope - global, class, instance, or local.
+
+.TP
+.B "Simple syntax"
+Ruby has a simple syntax influenced slightly from Eiffel.
+
+.TP
+.B "No user-level memory management"
+Ruby has automatic memory management.  Objects no longer referenced
+from anywhere are automatically collected by the garbage collector
+built into the interpreter.
+
+.TP
+.B "Everything is an object"
+Ruby is a purely object-oriented language, and was so since its
+creation.  Even such basic data as integers are seen as objects.
+
+.TP
+.B "Class, inheritance, and methods"
+Being an object-oriented language, Ruby naturally has basic
+features like classes, inheritance, and methods.
+
+.TP
+.B "Singleton methods"
+Ruby has the ability to define methods for certain objects.  For
+example, you can define a press-button action for certain widget by
+defining a singleton method for the button.  Or, you can make up your
+own prototype based object system using singleton methods, if you want
+to.
+
+.TP
+.B "Mix-in by modules"
+Ruby intentionally does not have the multiple inheritance as it is a
+source of confusion.  Instead, Ruby has the ability to share
+implementations across the inheritance tree.  This is often called a
+`Mix-in'.
+
+.TP
+.B "Iterators"
+Ruby has iterators for loop abstraction.
+
+.TP
+.B "Closures"
+In Ruby, you can objectify the procedure.
+
+.TP
+.B "Text processing and regular expressions"
+Ruby has a bunch of text processing features like in Perl.
+
+.TP
+.B "M17N, character set independent"
+Ruby supports multilingualized programming. Easy to process texts
+written in many different natural languages and encoded in many
+different character encodings, without dependence on Unicode.
+
+.TP
+.B "Bignums"
+With built-in bignums, you can for example calculate factorial(400).
+
+.TP
+.B "Reflection and domain specific languages"
+Class is also an instance of the Class class. Definition of classes and methods
+is an expression just as 1+1 is. So your programs can even write and modify programs.
+Thus you can write your application in your own programming language on top of Ruby.
+
+.TP
+.B "Exception handling"
+As in Java(tm).
+
+.TP
+.B "Direct access to the OS"
+Ruby can use most
+UNIX
+system calls, often used in system programming.
+
+.TP
+.B "Dynamic loading"
+On most
+UNIX
+systems, you can load object files into the Ruby interpreter
+on-the-fly.
+.TP
+.B "Rich libraries"
+In addition to the
+``builtin libraries''
+and
+``standard libraries''
+that are bundled with Ruby, a vast amount of third-party libraries
+(``gems'')
+are available via the package management system called
+`RubyGems',
+namely the
+\fBgem\fP(1)
+command.  Visit RubyGems.org
+(\fBhttps://rubygems.org/\fP)
+to find the gems you need, and explore GitHub
+(\fBhttps://github.com/\fP)
+to see how they are being developed and used.
+
+.SH OPTIONS
+The Ruby interpreter accepts the following command-line options (switches).
+They are quite similar to those of
+\fBperl\fP(1).
+
+.TP
+\fB\--copyright\fP
+Prints the copyright notice, and quits immediately without running any
+script.
+
+.TP
+\fB\--version\fP
+Prints the version of the Ruby interpreter, and quits immediately without
+running any script.
+
+.TP
+\fB\-0\fP[\fIoctal\fP]
+(The digit
+``zero''.)
+Specifies the input record separator
+("$/")
+as an octal number. If no digit is given, the null character is taken
+as the separator.  Other switches may follow the digits.
+\fB\-00\fP
+turns Ruby into paragraph mode.
+\fB\-0777\fP
+makes Ruby read whole file at once as a single string since there is
+no legal character with that value.
+
+.TP
+\fB\-C\fP \fIdirectory\fP
+.TP
+\fB\-X\fP \fIdirectory\fP
+Causes Ruby to switch to the directory.
+
+.TP
+\fB\-E\fP \fIexternal\fP[:\fIinternal\fP]
+.TP
+\fB\--encoding\fP \fIexternal\fP[:\fIinternal\fP]
+Specifies the default value(s) for external encodings and internal encoding. Values should be separated with colon (:).
+
+You can omit the one for internal encodings, then the value
+("Encoding.default_internal") will be nil.
+
+.TP
+\fB\--external-encoding\fP=\fIencoding\fP
+.TP
+\fB\--internal-encoding\fP=\fIencoding\fP
+Specify the default external or internal character encoding
+
+.TP
+\fB\-F\fP \fIpattern\fP
+Specifies input field separator
+("$;").
+
+.TP
+\fB\-I\fP \fIdirectory\fP
+Used to tell Ruby where to load the library scripts.  Directory path
+will be added to the load-path variable
+("$:").
+
+.TP
+\fB\-K\fP \fIkcode\fP
+Specifies KANJI (Japanese) encoding. The default value for script encodings
+("__ENCODING__") and external encodings ("Encoding.default_external") will be the specified one.
+\fIkcode\fP
+can be one of
+.TP
+.B e
+EUC-JP
+
+.TP
+.B s
+Windows-31J (CP932)
+
+.TP
+.B u
+UTF-8
+
+.TP
+.B n
+ASCII-8BIT (BINARY)
+
+.TP
+\fB\-S\fP
+Makes Ruby use the
+.IR PATH
+environment variable to search for script, unless its name begins
+with a slash.  This is used to emulate
+#!
+on machines that don't support it, in the following manner:
+
+#! /usr/local/bin/ruby
+.br
+# This line makes the next one a comment in Ruby \e
+.br
+  exec /usr/local/bin/ruby -S $0 $*
+.br
+
+On some systems
+"$0"
+does not always contain the full pathname, so you need the
+\fB\-S\fP
+switch to tell Ruby to search for the script if necessary (to handle embedded
+spaces and such).  A better construct than
+"$*"
+would be
+${1+"$@"},
+but it does not work if the script is being interpreted by
+\fBcsh\fP(1).
+
+.TP
+\fB\-T\fP[\fIlevel=1\fP]
+Turns on taint checks at the specified level (default 1).
+
+.TP
+\fB\-U\fP
+Sets the default value for internal encodings
+("Encoding.default_internal") to UTF-8.
+
+.TP
+\fB\-W\fP[\fIlevel=2\fP]
+Turns on verbose mode at the specified level without printing the version
+message at the beginning. The level can be;
+.TP
+.B 0
+Verbose mode is "silence". It sets the
+"$VERBOSE"
+to nil.
+
+.TP
+.B 1
+Verbose mode is "medium". It sets the
+"$VERBOSE"
+to false.
+
+.TP
+.B 2 (default)
+Verbose mode is "verbose". It sets the
+"$VERBOSE"
+to true.
+\fB\-W\fP
+2 is the same as
+\fB\-w\fP
+
+.TP
+\fB\-a\fP
+Turns on auto-split mode when used with
+\fB\-n\fP
+or
+\fB\-p\fP.
+In auto-split mode, Ruby executes
+.nf
+\&  $F = $_.split
+.fi
+at beginning of each loop.
+
+.TP
+\fB\-c\fP
+Causes Ruby to check the syntax of the script and exit without
+executing. If there are no syntax errors, Ruby will print
+``Syntax OK''
+to the standard output.
+
+.TP
+\fB\-d\fP
+.TP
+\fB\--debug\fP
+Turns on debug mode.
+"$DEBUG"
+will be set to true.
+
+.TP
+\fB\-e\fP \fIcommand\fP
+Specifies script from command-line while telling Ruby not to search
+the rest of the arguments for a script file name.
+
+.TP
+\fB\-h\fP
+.TP
+\fB\--help\fP
+Prints a summary of the options.
+
+.TP
+\fB\-i\fP \fIextension\fP
+Specifies in-place-edit mode.  The extension, if specified, is added
+to old file name to make a backup copy.  For example:
+
+% echo matz > /tmp/junk
+.br
+% cat /tmp/junk
+.br
+matz
+.br
+% ruby -p -i.bak -e '$_.upcase!' /tmp/junk
+.br
+% cat /tmp/junk
+.br
+MATZ
+.br
+% cat /tmp/junk.bak
+.br
+matz
+.br
+
+.TP
+\fB\-l\fP
+(The lowercase letter
+``ell''.)
+Enables automatic line-ending processing, which means to firstly set
+"$\e"
+to the value of
+"$/",
+and secondly chops every line read using
+chomp!.
+
+.TP
+\fB\-n\fP
+Causes Ruby to assume the following loop around your script, which
+makes it iterate over file name arguments somewhat like
+\fBsed\fP
+\fB\-n\fP
+or
+\fBawk\fP.
+
+while gets
+.br
+  ...
+.br
+end
+.br
+
+.TP
+\fB\-p\fP
+Acts mostly same as -n switch, but print the value of variable
+"$_"
+at the each end of the loop.  For example:
+
+% echo matz | ruby -p -e '$_.tr! "a-z", "A-Z"'
+.br
+MATZ
+.br
+
+.TP
+\fB\-r\fP \fIlibrary\fP
+Causes Ruby to load the library using require.  It is useful when using
+\fB\-n\fP
+or
+\fB\-p\fP.
+
+.TP
+\fB\-s\fP
+Enables some switch parsing for switches after script name but before
+any file name arguments (or before a
+\fB\--\fP).
+Any switches found there are removed from
+ARGV
+and set the corresponding variable in the script.  For example:
+
+#! /usr/local/bin/ruby -s
+.br
+# prints "true" if invoked with `-xyz' switch.
+.br
+print "true\en" if $xyz
+.br
+
+.TP
+\fB\-v\fP
+Enables verbose mode.  Ruby will print its version at the beginning
+and set the variable
+"$VERBOSE"
+to true.  Some methods print extra messages if this variable is true.
+If this switch is given, and no other switches are present, Ruby quits
+after printing its version.
+
+.TP
+\fB\-w\fP
+Enables verbose mode without printing version message at the
+beginning.  It sets the
+"$VERBOSE"
+variable to true.
+
+.TP
+\fB\-x\fP[\fIdirectory\fP]
+Tells Ruby that the script is embedded in a message.  Leading garbage
+will be discarded until the first line that starts with
+``#!''
+and contains the string,
+``ruby''.
+Any meaningful switches on that line will be applied.  The end of the script
+must be specified with either
+EOF,
+"^D" ("control-D"),
+"^Z" ("control-Z"),
+or the reserved word
+__END__.
+If the directory name is specified, Ruby will switch to that directory
+before executing script.
+
+.TP
+\fB\-y\fP
+.TP
+\fB\--yydebug\fP
+DO NOT USE.
+
+Turns on compiler debug mode.  Ruby will print a bunch of internal
+state messages during compilation.  Only specify this switch you are going to
+debug the Ruby interpreter.
+
+.TP
+\fB\--disable-\fP\fIFEATURE\fP
+.TP
+\fB\--enable-\fP\fIFEATURE\fP
+Disables (or enables) the specified
+\fIFEATURE\fP.
+.TP
+\fB\--disable-gems\fP
+.TP
+\fB\--enable-gems\fP
+Disables (or enables) RubyGems libraries.  By default, Ruby will load the latest
+version of each installed gem. The
+Gem
+constant is true if RubyGems is enabled, false if otherwise.
+
+.TP
+\fB\--disable-rubyopt\fP
+.TP
+\fB\--enable-rubyopt\fP
+Ignores (or considers) the
+.IR RUBYOPT
+environment variable. By default, Ruby considers the variable.
+
+.TP
+\fB\--disable-all\fP
+.TP
+\fB\--enable-all\fP
+Disables (or enables) all features.
+
+
+.TP
+\fB\--dump\fP=\fItarget\fP
+Dump some information.
+
+Prints the specified target.
+\fItarget\fP
+can be one of;
+.TP
+.B version
+version description same as
+\fB\--version\fP
+.TP
+.B usage
+brief usage message same as
+\fB\-h\fP
+.TP
+.B help
+Show long help message same as
+\fB\--help\fP
+.TP
+.B syntax
+check of syntax same as
+\fB\-c\fP
+\fB\--yydebug\fP
+.TP
+.B yydebug
+compiler debug mode, same as
+\fB\--yydebug\fP
+
+Only specify this switch if you are going to debug the Ruby interpreter.
+.TP
+.B parsetree
+.TP
+.B parsetree_with_comment
+AST nodes tree
+
+Only specify this switch if you are going to debug the Ruby interpreter.
+.TP
+.B insns
+disassembled instructions
+
+Only specify this switch if you are going to debug the Ruby interpreter.
+
+.TP
+\fB\--verbose\fP
+Enables verbose mode without printing version message at the
+beginning.  It sets the
+"$VERBOSE"
+variable to true.
+If this switch is given, and no script arguments (script file or
+\fB\-e\fP
+options) are present, Ruby quits immediately.
+
+.SH ENVIRONMENT
+.TP
+.B RUBYLIB
+A colon-separated list of directories that are added to Ruby's
+library load path
+("$:"). Directories from this environment variable are searched
+before the standard load path is searched.
+
+e.g.:
+.nf
+\&  RUBYLIB="$HOME/lib/ruby:$HOME/lib/rubyext"
+.fi
+
+.TP
+.B RUBYOPT
+Additional Ruby options.
+
+e.g.
+.nf
+\&  RUBYOPT="-w -Ke"
+.fi
+
+Note that RUBYOPT can contain only
+\fB\-d\fP,\fB\-E\fP,\fB\-I\fP,\fB\-K\fP,\fB\-r\fP,\fB\-T\fP,\fB\-U\fP,\fB\-v\fP,\fB\-w\fP,\fB\-W,\fP \fB\--debug\fP,
+\fB\--disable-\fP\fIFEATURE\fP
+and
+\fB\--enable-\fP\fIFEATURE\fP.
+
+.TP
+.B RUBYPATH
+A colon-separated list of directories that Ruby searches for
+Ruby programs when the
+\fB\-S\fP
+flag is specified.  This variable precedes the
+.IR PATH
+environment variable.
+
+.TP
+.B RUBYSHELL
+The path to the system shell command.  This environment variable is
+enabled for only mswin32, mingw32, and OS/2 platforms.  If this
+variable is not defined, Ruby refers to
+.IR COMSPEC.
+
+.TP
+.B PATH
+Ruby refers to the
+.IR PATH
+environment variable on calling Kernel#system.
+
+And Ruby depends on some RubyGems related environment variables unless RubyGems is disabled.
+See the help of
+\fBgem\fP(1)
+as below.
+
+% gem help
+.br
+
+.SH GC ENVIRONMENT
+The Ruby garbage collector (GC) tracks objects in fixed-sized slots,
+but each object may have auxiliary memory allocations handled by the
+malloc family of C standard library calls (
+\fBmalloc\fP(3),
+\fBcalloc\fP(3),
+and
+\fBrealloc\fP(3))
+In this documentatation, the "heap" refers to the Ruby object heap
+of fixed-sized slots, while "malloc" refers to auxiliary
+allocations commonly referred to as the "process heap".
+Thus there are at least two possible ways to trigger GC:
+.TP
+.B 1
+Reaching the object limit.
+.TP
+.B 2
+Reaching the malloc limit.
+
+In Ruby 2.1, the generational GC was introduced and the limits are divided
+into young and old generations, providing two additional ways to trigger
+a GC:
+.TP
+.B 3
+Reaching the old object limit.
+.TP
+.B 4
+Reaching the old malloc limit.
+
+There are currently 4 possible areas where the GC may be tuned by
+the following 11 environment variables:
+.TP
+.B RUBY_GC_HEAP_INIT_SLOTS
+Initial allocation slots.  Introduced in Ruby 2.1, default: 10000.
+
+.TP
+.B RUBY_GC_HEAP_FREE_SLOTS
+Prepare at least this amount of slots after GC.
+Allocate this number slots if there are not enough slots.
+Introduced in Ruby 2.1, default: 4096
+
+.TP
+.B RUBY_GC_HEAP_GROWTH_FACTOR
+Increase allocation rate of heap slots by this factor.
+Introduced in Ruby 2.1, default: 1.8, minimum: 1.0 (no growth)
+
+.TP
+.B RUBY_GC_HEAP_GROWTH_MAX_SLOTS
+Allocation rate is limited to this number of slots,
+preventing excessive allocation due to RUBY_GC_HEAP_GROWTH_FACTOR.
+Introduced in Ruby 2.1, default: 0 (no limit)
+
+.TP
+.B RUBY_GC_HEAP_OLDOBJECT_LIMIT_FACTOR
+Perform a full GC when the number of old objects is more than R * N,
+where R is this factor and N is the number of old objects after the
+last full GC.
+Introduced in Ruby 2.1.1, default: 2.0
+
+.TP
+.B RUBY_GC_MALLOC_LIMIT
+The initial limit of young generation allocation from the malloc-family.
+GC will start when this limit is reached.
+Default: 16MB
+
+.TP
+.B RUBY_GC_MALLOC_LIMIT_MAX
+The maximum limit of young generation allocation from malloc before GC starts.
+Prevents excessive malloc growth due to RUBY_GC_MALLOC_LIMIT_GROWTH_FACTOR.
+Introduced in Ruby 2.1, default: 32MB.
+
+.TP
+.B RUBY_GC_MALLOC_LIMIT_GROWTH_FACTOR
+Increases the limit of young generation malloc calls, reducing
+GC frequency but increasing malloc growth until RUBY_GC_MALLOC_LIMIT_MAX
+is reached.
+Introduced in Ruby 2.1, default: 1.4, minimum: 1.0 (no growth)
+
+.TP
+.B RUBY_GC_OLDMALLOC_LIMIT
+The initial limit of old generation allocation from malloc,
+a full GC will start when this limit is reached.
+Introduced in Ruby 2.1, default: 16MB
+
+.TP
+.B RUBY_GC_OLDMALLOC_LIMIT_MAX
+The maximum limit of old generation allocation from malloc before a
+full GC starts.
+Prevents excessive malloc growth due to RUBY_GC_OLDMALLOC_LIMIT_GROWTH_FACTOR.
+Introduced in Ruby 2.1, default: 128MB
+
+.TP
+.B RUBY_GC_OLDMALLOC_LIMIT_GROWTH_FACTOR
+Increases the limit of old generation malloc allocation, reducing full
+GC frequency but increasing malloc growth until RUBY_GC_OLDMALLOC_LIMIT_MAX
+is reached.
+Introduced in Ruby 2.1, default: 1.2, minimum: 1.0 (no growth)
+
+.SH STACK SIZE ENVIRONMENT
+Stack size environment variables are implementation-dependent and
+subject to change with different versions of Ruby.  The VM stack is used
+for pure-Ruby code and managed by the virtual machine.  Machine stack is
+used by the operating system and its usage is dependent on C extensions
+as well as C compiler options.  Using lower values for these may allow
+applications to keep more Fibers or Threads running; but increases the
+chance of SystemStackError exceptions and segmentation faults (SIGSEGV).
+These environment variables are available since Ruby 2.0.0.
+All values are specified in bytes.
+
+.TP
+.B RUBY_THREAD_VM_STACK_SIZE
+VM stack size used at thread creation.
+default: 524288 (32-bit CPU) or 1048575 (64-bit)
+
+.TP
+.B RUBY_THREAD_MACHINE_STACK_SIZE
+Machine stack size used at thread creation.
+default: 524288 or 1048575
+
+.TP
+.B RUBY_FIBER_VM_STACK_SIZE
+VM stack size used at fiber creation.
+default: 65536 or 131072
+
+.TP
+.B RUBY_FIBER_MACHINE_STACK_SIZE
+Machine stack size used at fiber creation.
+default: 262144 or 524288
+
+.SH SEE ALSO
+.TP
+.B https://www.ruby-lang.org/
+The official web site.
+.TP
+.B https://www.ruby-toolbox.com/
+Comprehensive catalog of Ruby libraries.
+
+.SH REPORTING BUGS
+.IP \(bu
+Security vulnerabilities should be reported via an email to
+Mt security@ruby-lang.org.
+Reported problems will be published after being fixed.
+
+.IP \(bu
+Other bugs and feature requests can be reported via the
+Ruby Issue Tracking System
+(\fBhttps://bugs.ruby-lang.org/\fP).
+Do not report security vulnerabilities
+via this system because it publishes the vulnerabilities immediately.
+.SH AUTHORS
+Ruby is designed and implemented by
+Yukihiro Matsumoto <matz@netlab.jp>.
+
+See
+<\fBhttps://bugs.ruby-lang.org/projects/ruby/wiki/Contributors\fP>
+for contributors to Ruby.

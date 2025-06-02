@@ -1,0 +1,11 @@
+extconf.h is:
+/* begin */
+1: #ifndef EXTCONF_H
+2: #define EXTCONF_H
+3: #define HAVE_RB_ISEQ 1
+4: #define HAVE_RB_ISEQ_PARAMETERS 1
+5: #define HAVE_RB_ISEQ_CODE_LOCATION 1
+6: #define HAVE_RB_ISEQ_TYPE 1
+7: #endif
+/* end */
+

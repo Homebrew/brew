@@ -1,0 +1,30 @@
+.\" generated with nRonn/v0.11.1
+.\" https://github.com/n-ronn/nronn/tree/0.11.1
+.TH "BUNDLE\-VIZ" "1" "September 2024" ""
+.SH "NAME"
+\fBbundle\-viz\fR \- Generates a visual dependency graph for your Gemfile
+.SH "SYNOPSIS"
+\fBbundle viz\fR [\-\-file=FILE] [\-\-format=FORMAT] [\-\-requirements] [\-\-version] [\-\-without=GROUP GROUP]
+.SH "DESCRIPTION"
+\fBviz\fR generates a PNG file of the current \fBGemfile(5)\fR as a dependency graph\. \fBviz\fR requires the ruby\-graphviz gem (and its dependencies)\.
+.P
+The associated gems must also be installed via \fBbundle install(1)\fR \fIbundle\-install\.1\.html\fR\.
+.P
+\fBviz\fR command was deprecated in Bundler 2\.2\. Use bundler\-graph plugin \fIhttps://github\.com/rubygems/bundler\-graph\fR instead\.
+.SH "OPTIONS"
+.TP
+\fB\-\-file\fR, \fB\-f\fR
+The name to use for the generated file\. See \fB\-\-format\fR option
+.TP
+\fB\-\-format\fR, \fB\-F\fR
+This is output format option\. Supported format is png, jpg, svg, dot \|\.\|\.\|\.
+.TP
+\fB\-\-requirements\fR, \fB\-R\fR
+Set to show the version of each required dependency\.
+.TP
+\fB\-\-version\fR, \fB\-v\fR
+Set to show each gem version\.
+.TP
+\fB\-\-without\fR, \fB\-W\fR
+Exclude gems that are part of the specified named group\.
+

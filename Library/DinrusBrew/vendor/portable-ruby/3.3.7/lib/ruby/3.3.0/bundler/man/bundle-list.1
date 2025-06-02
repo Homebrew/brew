@@ -1,0 +1,35 @@
+.\" generated with nRonn/v0.11.1
+.\" https://github.com/n-ronn/nronn/tree/0.11.1
+.TH "BUNDLE\-LIST" "1" "September 2024" ""
+.SH "NAME"
+\fBbundle\-list\fR \- List all the gems in the bundle
+.SH "SYNOPSIS"
+\fBbundle list\fR [\-\-name\-only] [\-\-paths] [\-\-without\-group=GROUP[ GROUP\|\.\|\.\|\.]] [\-\-only\-group=GROUP[ GROUP\|\.\|\.\|\.]]
+.SH "DESCRIPTION"
+Prints a list of all the gems in the bundle including their version\.
+.P
+Example:
+.P
+bundle list \-\-name\-only
+.P
+bundle list \-\-paths
+.P
+bundle list \-\-without\-group test
+.P
+bundle list \-\-only\-group dev
+.P
+bundle list \-\-only\-group dev test \-\-paths
+.SH "OPTIONS"
+.TP
+\fB\-\-name\-only\fR
+Print only the name of each gem\.
+.TP
+\fB\-\-paths\fR
+Print the path to each gem in the bundle\.
+.TP
+\fB\-\-without\-group=<list>\fR
+A space\-separated list of groups of gems to skip during printing\.
+.TP
+\fB\-\-only\-group=<list>\fR
+A space\-separated list of groups of gems to print\.
+

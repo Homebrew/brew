@@ -1,0 +1,25 @@
+# <!-- rdoc-file=lib/minitest.rb -->
+# A reporter that prints the header, summary, and failure details at the end of
+# the run.
+#
+# This is added to the top-level CompositeReporter at the start of the run. If
+# you want to change the output of minitest via a plugin, pull this out of the
+# composite and replace it with your own.
+#
+class Minitest::SummaryReporter < ::Minitest::StatisticsReporter
+  def start: () -> untyped
+  def report: () -> untyped
+  def statistics: () -> untyped
+  def aggregated_results: (untyped io) -> untyped
+  def to_s: () -> untyped
+  def summary: () -> untyped
+
+  # <!--
+  #   rdoc-file=lib/minitest.rb
+  #   - binary_string()
+  # -->
+  #
+  private def binary_string: () -> untyped
+  attr_accessor sync: untyped
+  attr_accessor old_sync: untyped
+end

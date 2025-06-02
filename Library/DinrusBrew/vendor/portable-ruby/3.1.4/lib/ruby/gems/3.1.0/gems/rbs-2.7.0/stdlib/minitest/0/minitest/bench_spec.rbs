@@ -1,0 +1,102 @@
+# <!-- rdoc-file=lib/minitest/benchmark.rb -->
+# The spec version of Minitest::Benchmark.
+#
+class Minitest::BenchSpec < ::Minitest::Benchmark
+  # <!--
+  #   rdoc-file=lib/minitest/benchmark.rb
+  #   - bench(name, &block)
+  # -->
+  # This is used to define a new benchmark method. You usually don't use this
+  # directly and is intended for those needing to write new performance curve fits
+  # (eg: you need a specific polynomial fit).
+  #
+  # See ::bench_performance_linear for an example of how to use this.
+  #
+  def self.bench: (untyped name) ?{ () -> untyped } -> untyped
+
+  # <!--
+  #   rdoc-file=lib/minitest/benchmark.rb
+  #   - bench_range(&block)
+  # -->
+  # Specifies the ranges used for benchmarking for that class.
+  #
+  #     bench_range do
+  #       bench_exp(2, 16, 2)
+  #     end
+  #
+  # See Minitest::Benchmark#bench_range for more details.
+  #
+  def self.bench_range: () ?{ () -> untyped } -> untyped
+
+  # <!--
+  #   rdoc-file=lib/minitest/benchmark.rb
+  #   - bench_performance_linear(name, threshold = 0.99, &work)
+  # -->
+  # Create a benchmark that verifies that the performance is linear.
+  #
+  #     describe "my class Bench" do
+  #       bench_performance_linear "fast_algorithm", 0.9999 do |n|
+  #         @obj.fast_algorithm(n)
+  #       end
+  #     end
+  #
+  def self.bench_performance_linear: (untyped name, ?::Float threshold) ?{ () -> untyped } -> untyped
+
+  # <!--
+  #   rdoc-file=lib/minitest/benchmark.rb
+  #   - bench_performance_constant(name, threshold = 0.99, &work)
+  # -->
+  # Create a benchmark that verifies that the performance is constant.
+  #
+  #     describe "my class Bench" do
+  #       bench_performance_constant "zoom_algorithm!" do |n|
+  #         @obj.zoom_algorithm!(n)
+  #       end
+  #     end
+  #
+  def self.bench_performance_constant: (untyped name, ?::Float threshold) ?{ () -> untyped } -> untyped
+
+  # <!--
+  #   rdoc-file=lib/minitest/benchmark.rb
+  #   - bench_performance_exponential(name, threshold = 0.99, &work)
+  # -->
+  # Create a benchmark that verifies that the performance is exponential.
+  #
+  #     describe "my class Bench" do
+  #       bench_performance_exponential "algorithm" do |n|
+  #         @obj.algorithm(n)
+  #       end
+  #     end
+  #
+  def self.bench_performance_exponential: (untyped name, ?::Float threshold) ?{ () -> untyped } -> untyped
+
+  # <!--
+  #   rdoc-file=lib/minitest/benchmark.rb
+  #   - bench_performance_logarithmic(name, threshold = 0.99, &work)
+  # -->
+  # Create a benchmark that verifies that the performance is logarithmic.
+  #
+  #     describe "my class Bench" do
+  #       bench_performance_logarithmic "algorithm" do |n|
+  #         @obj.algorithm(n)
+  #       end
+  #     end
+  #
+  def self.bench_performance_logarithmic: (untyped name, ?::Float threshold) ?{ () -> untyped } -> untyped
+
+  # <!--
+  #   rdoc-file=lib/minitest/benchmark.rb
+  #   - bench_performance_power(name, threshold = 0.99, &work)
+  # -->
+  # Create a benchmark that verifies that the performance is power.
+  #
+  #     describe "my class Bench" do
+  #       bench_performance_power "algorithm" do |n|
+  #         @obj.algorithm(n)
+  #       end
+  #     end
+  #
+  def self.bench_performance_power: (untyped name, ?::Float threshold) ?{ () -> untyped } -> untyped
+  include Minitest::Spec::DSL::InstanceMethods
+  extend Minitest::Spec::DSL
+end

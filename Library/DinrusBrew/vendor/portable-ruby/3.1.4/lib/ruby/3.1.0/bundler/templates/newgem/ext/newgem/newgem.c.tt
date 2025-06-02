@@ -1,0 +1,9 @@
+#include "<%= config[:underscored_name] %>.h"
+
+VALUE rb_m<%= config[:constant_array].join %>;
+
+void
+Init_<%= config[:underscored_name] %>(void)
+{
+  rb_m<%= config[:constant_array].join %> = rb_define_module(<%= config[:constant_name].inspect %>);
+}

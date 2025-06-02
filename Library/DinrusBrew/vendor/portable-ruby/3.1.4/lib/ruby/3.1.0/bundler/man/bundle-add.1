@@ -1,0 +1,82 @@
+.\" generated with Ronn/v0.7.3
+.\" http://github.com/rtomayko/ronn/tree/0.7.3
+.
+.TH "BUNDLE\-ADD" "1" "October 2022" "" ""
+.
+.SH "NAME"
+\fBbundle\-add\fR \- Add gem to the Gemfile and run bundle install
+.
+.SH "SYNOPSIS"
+\fBbundle add\fR \fIGEM_NAME\fR [\-\-group=GROUP] [\-\-version=VERSION] [\-\-source=SOURCE] [\-\-path=PATH] [\-\-git=GIT] [\-\-github=GITHUB] [\-\-branch=BRANCH] [\-\-ref=REF] [\-\-skip\-install] [\-\-strict] [\-\-optimistic]
+.
+.SH "DESCRIPTION"
+Adds the named gem to the Gemfile and run \fBbundle install\fR\. \fBbundle install\fR can be avoided by using the flag \fB\-\-skip\-install\fR\.
+.
+.P
+Example:
+.
+.P
+bundle add rails
+.
+.P
+bundle add rails \-\-version "< 3\.0, > 1\.1"
+.
+.P
+bundle add rails \-\-version "~> 5\.0\.0" \-\-source "https://gems\.example\.com" \-\-group "development"
+.
+.P
+bundle add rails \-\-skip\-install
+.
+.P
+bundle add rails \-\-group "development, test"
+.
+.SH "OPTIONS"
+.
+.TP
+\fB\-\-version\fR, \fB\-v\fR
+Specify version requirements(s) for the added gem\.
+.
+.TP
+\fB\-\-group\fR, \fB\-g\fR
+Specify the group(s) for the added gem\. Multiple groups should be separated by commas\.
+.
+.TP
+\fB\-\-source\fR, \fB\-s\fR
+Specify the source for the added gem\.
+.
+.TP
+\fB\-\-require\fR, \fB\-r\fR
+Adds require path to gem\. Provide false, or a path as a string\.
+.
+.TP
+\fB\-\-path\fR
+Specify the file system path for the added gem\.
+.
+.TP
+\fB\-\-git\fR
+Specify the git source for the added gem\.
+.
+.TP
+\fB\-\-github\fR
+Specify the github source for the added gem\.
+.
+.TP
+\fB\-\-branch\fR
+Specify the git branch for the added gem\.
+.
+.TP
+\fB\-\-ref\fR
+Specify the git ref for the added gem\.
+.
+.TP
+\fB\-\-skip\-install\fR
+Adds the gem to the Gemfile but does not install it\.
+.
+.TP
+\fB\-\-optimistic\fR
+Adds optimistic declaration of version\.
+.
+.TP
+\fB\-\-strict\fR
+Adds strict declaration of version\.
+

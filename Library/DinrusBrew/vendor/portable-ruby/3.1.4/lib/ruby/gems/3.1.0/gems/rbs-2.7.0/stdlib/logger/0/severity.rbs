@@ -1,0 +1,34 @@
+# <!-- rdoc-file=lib/logger/severity.rb -->
+# Logging severity.
+#
+module Logger::Severity
+  # <!-- rdoc-file=lib/logger/severity.rb -->
+  # Low-level information, mostly for developers.
+  #
+  DEBUG: 0
+
+  # <!-- rdoc-file=lib/logger/severity.rb -->
+  # Generic (useful) information about system operation.
+  #
+  INFO: 1
+
+  # <!-- rdoc-file=lib/logger/severity.rb -->
+  # A warning.
+  #
+  WARN: 2
+
+  # <!-- rdoc-file=lib/logger/severity.rb -->
+  # A handleable error condition.
+  #
+  ERROR: 3
+
+  # <!-- rdoc-file=lib/logger/severity.rb -->
+  # An unhandleable error that results in a program crash.
+  #
+  FATAL: 4
+
+  # <!-- rdoc-file=lib/logger/severity.rb -->
+  # An unknown message that should always be logged.
+  #
+  UNKNOWN: 5
+end

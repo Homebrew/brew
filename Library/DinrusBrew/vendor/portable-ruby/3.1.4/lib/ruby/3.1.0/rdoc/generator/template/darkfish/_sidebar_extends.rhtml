@@ -1,0 +1,15 @@
+<%- unless klass.extends.empty? then %>
+<div id="extends-section" class="nav-section">
+  <h3>Extended With Modules</h3>
+
+  <ul class="link-list">
+    <%- klass.each_extend do |ext| -%>
+  <%- unless String === ext.module then -%>
+    <li><a class="extend" href="<%= klass.aref_to ext.module.path %>"><%= ext.module.full_name %></a>
+  <%- else -%>
+    <li><span class="extend"><%= ext.name %></span>
+  <%- end -%>
+  <%- end -%>
+  </ul>
+</div>
+<%- end -%>

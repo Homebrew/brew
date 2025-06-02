@@ -1,0 +1,248 @@
+have_func: checking for rb_enc_interned_str() in ruby.h... -------------------- yes
+
+LD_LIBRARY_PATH=.:../../../../.. "gcc-11 -o conftest -I../../../../../.ext/include/x86_64-linux -I../../../../.././include -I../../../../.././.bundle/gems/msgpack-1.7.5/ext/msgpack    -fPIC -O3 -fno-fast-math -ggdb3 -Wall -Wextra -Wdeprecated-declarations -Wdiv-by-zero -Wduplicated-cond -Wimplicit-function-declaration -Wimplicit-int -Wpointer-arith -Wwrite-strings -Wold-style-definition -Wimplicit-fallthrough=0 -Wmissing-noreturn -Wno-cast-function-type -Wno-constant-logical-operand -Wno-long-long -Wno-missing-field-initializers -Wno-overlength-strings -Wno-packed-bitfield-compat -Wno-parentheses-equality -Wno-self-assign -Wno-tautological-compare -Wno-unused-parameter -Wno-unused-value -Wsuggest-attribute=format -Wsuggest-attribute=noreturn -Wunused-variable -Wmisleading-indentation -Wundef conftest.c  -L. -L../../../../.. -L. -fstack-protector-strong -rdynamic -Wl,-export-dynamic     -Wl,-rpath,/home/linuxbrew/.linuxbrew/Cellar/portable-ruby/3.3.7/lib -lruby-static -lrt -lrt -lrt -ldl -lcrypt -lm -lpthread   -lm -lpthread  -lc"
+checked program was:
+/* begin */
+1: #include "ruby.h"
+2: 
+3: int main(int argc, char **argv)
+4: {
+5:   return !!argv[argc];
+6: }
+/* end */
+
+LD_LIBRARY_PATH=.:../../../../.. "gcc-11 -o conftest -I../../../../../.ext/include/x86_64-linux -I../../../../.././include -I../../../../.././.bundle/gems/msgpack-1.7.5/ext/msgpack    -fPIC -O3 -fno-fast-math -ggdb3 -Wall -Wextra -Wdeprecated-declarations -Wdiv-by-zero -Wduplicated-cond -Wimplicit-function-declaration -Wimplicit-int -Wpointer-arith -Wwrite-strings -Wold-style-definition -Wimplicit-fallthrough=0 -Wmissing-noreturn -Wno-cast-function-type -Wno-constant-logical-operand -Wno-long-long -Wno-missing-field-initializers -Wno-overlength-strings -Wno-packed-bitfield-compat -Wno-parentheses-equality -Wno-self-assign -Wno-tautological-compare -Wno-unused-parameter -Wno-unused-value -Wsuggest-attribute=format -Wsuggest-attribute=noreturn -Wunused-variable -Wmisleading-indentation -Wundef conftest.c  -L. -L../../../../.. -L. -fstack-protector-strong -rdynamic -Wl,-export-dynamic     -Wl,-rpath,/home/linuxbrew/.linuxbrew/Cellar/portable-ruby/3.3.7/lib -lruby-static -lrt -lrt -lrt -ldl -lcrypt -lm -lpthread   -lm -lpthread  -lc"
+conftest.c: In function ‘t’:
+conftest.c:16:57: error: ‘rb_enc_interned_str’ undeclared (first use in this function); did you mean ‘rb_interned_str’?
+   16 | int t(void) { void ((*volatile p)()); p = (void ((*)()))rb_enc_interned_str; return !p; }
+      |                                                         ^~~~~~~~~~~~~~~~~~~
+      |                                                         rb_interned_str
+conftest.c:16:57: note: each undeclared identifier is reported only once for each function it appears in
+conftest.c: At top level:
+cc1: note: unrecognized command-line option ‘-Wno-self-assign’ may have been intended to silence earlier diagnostics
+cc1: note: unrecognized command-line option ‘-Wno-parentheses-equality’ may have been intended to silence earlier diagnostics
+cc1: note: unrecognized command-line option ‘-Wno-constant-logical-operand’ may have been intended to silence earlier diagnostics
+checked program was:
+/* begin */
+ 1: #include "ruby.h"
+ 2: 
+ 3: #include <ruby.h>
+ 4: 
+ 5: /*top*/
+ 6: extern int t(void);
+ 7: int main(int argc, char **argv)
+ 8: {
+ 9:   if (argc > 1000000) {
+10:     int (* volatile tp)(void)=(int (*)(void))&t;
+11:     printf("%d", (*tp)());
+12:   }
+13: 
+14:   return !!argv[argc];
+15: }
+16: int t(void) { void ((*volatile p)()); p = (void ((*)()))rb_enc_interned_str; return !p; }
+/* end */
+
+LD_LIBRARY_PATH=.:../../../../.. "gcc-11 -o conftest -I../../../../../.ext/include/x86_64-linux -I../../../../.././include -I../../../../.././.bundle/gems/msgpack-1.7.5/ext/msgpack    -fPIC -O3 -fno-fast-math -ggdb3 -Wall -Wextra -Wdeprecated-declarations -Wdiv-by-zero -Wduplicated-cond -Wimplicit-function-declaration -Wimplicit-int -Wpointer-arith -Wwrite-strings -Wold-style-definition -Wimplicit-fallthrough=0 -Wmissing-noreturn -Wno-cast-function-type -Wno-constant-logical-operand -Wno-long-long -Wno-missing-field-initializers -Wno-overlength-strings -Wno-packed-bitfield-compat -Wno-parentheses-equality -Wno-self-assign -Wno-tautological-compare -Wno-unused-parameter -Wno-unused-value -Wsuggest-attribute=format -Wsuggest-attribute=noreturn -Wunused-variable -Wmisleading-indentation -Wundef conftest.c  -L. -L../../../../.. -L. -fstack-protector-strong -rdynamic -Wl,-export-dynamic     -Wl,-rpath,/home/linuxbrew/.linuxbrew/Cellar/portable-ruby/3.3.7/lib -lruby-static -lrt -lrt -lrt -ldl -lcrypt -lm -lpthread   -lm -lpthread  -lc"
+checked program was:
+/* begin */
+ 1: #include "ruby.h"
+ 2: 
+ 3: #include <ruby.h>
+ 4: 
+ 5: /*top*/
+ 6: extern int t(void);
+ 7: int main(int argc, char **argv)
+ 8: {
+ 9:   if (argc > 1000000) {
+10:     int (* volatile tp)(void)=(int (*)(void))&t;
+11:     printf("%d", (*tp)());
+12:   }
+13: 
+14:   return !!argv[argc];
+15: }
+16: extern void rb_enc_interned_str();
+17: int t(void) { rb_enc_interned_str(); return 0; }
+/* end */
+
+--------------------
+
+have_func: checking for rb_hash_new_capa() in ruby.h... -------------------- yes
+
+LD_LIBRARY_PATH=.:../../../../.. "gcc-11 -o conftest -I../../../../../.ext/include/x86_64-linux -I../../../../.././include -I../../../../.././.bundle/gems/msgpack-1.7.5/ext/msgpack    -fPIC -O3 -fno-fast-math -ggdb3 -Wall -Wextra -Wdeprecated-declarations -Wdiv-by-zero -Wduplicated-cond -Wimplicit-function-declaration -Wimplicit-int -Wpointer-arith -Wwrite-strings -Wold-style-definition -Wimplicit-fallthrough=0 -Wmissing-noreturn -Wno-cast-function-type -Wno-constant-logical-operand -Wno-long-long -Wno-missing-field-initializers -Wno-overlength-strings -Wno-packed-bitfield-compat -Wno-parentheses-equality -Wno-self-assign -Wno-tautological-compare -Wno-unused-parameter -Wno-unused-value -Wsuggest-attribute=format -Wsuggest-attribute=noreturn -Wunused-variable -Wmisleading-indentation -Wundef conftest.c  -L. -L../../../../.. -L. -fstack-protector-strong -rdynamic -Wl,-export-dynamic     -Wl,-rpath,/home/linuxbrew/.linuxbrew/Cellar/portable-ruby/3.3.7/lib -lruby-static -lrt -lrt -lrt -ldl -lcrypt -lm -lpthread   -lm -lpthread  -lc"
+checked program was:
+/* begin */
+ 1: #include "ruby.h"
+ 2: 
+ 3: #include <ruby.h>
+ 4: 
+ 5: /*top*/
+ 6: extern int t(void);
+ 7: int main(int argc, char **argv)
+ 8: {
+ 9:   if (argc > 1000000) {
+10:     int (* volatile tp)(void)=(int (*)(void))&t;
+11:     printf("%d", (*tp)());
+12:   }
+13: 
+14:   return !!argv[argc];
+15: }
+16: int t(void) { void ((*volatile p)()); p = (void ((*)()))rb_hash_new_capa; return !p; }
+/* end */
+
+--------------------
+
+have_func: checking for rb_proc_call_with_block() in ruby.h... -------------------- yes
+
+LD_LIBRARY_PATH=.:../../../../.. "gcc-11 -o conftest -I../../../../../.ext/include/x86_64-linux -I../../../../.././include -I../../../../.././.bundle/gems/msgpack-1.7.5/ext/msgpack    -fPIC -O3 -fno-fast-math -ggdb3 -Wall -Wextra -Wdeprecated-declarations -Wdiv-by-zero -Wduplicated-cond -Wimplicit-function-declaration -Wimplicit-int -Wpointer-arith -Wwrite-strings -Wold-style-definition -Wimplicit-fallthrough=0 -Wmissing-noreturn -Wno-cast-function-type -Wno-constant-logical-operand -Wno-long-long -Wno-missing-field-initializers -Wno-overlength-strings -Wno-packed-bitfield-compat -Wno-parentheses-equality -Wno-self-assign -Wno-tautological-compare -Wno-unused-parameter -Wno-unused-value -Wsuggest-attribute=format -Wsuggest-attribute=noreturn -Wunused-variable -Wmisleading-indentation -Wundef conftest.c  -L. -L../../../../.. -L. -fstack-protector-strong -rdynamic -Wl,-export-dynamic     -Wl,-rpath,/home/linuxbrew/.linuxbrew/Cellar/portable-ruby/3.3.7/lib -lruby-static -lrt -lrt -lrt -ldl -lcrypt -lm -lpthread   -lm -lpthread  -lc"
+checked program was:
+/* begin */
+ 1: #include "ruby.h"
+ 2: 
+ 3: #include <ruby.h>
+ 4: 
+ 5: /*top*/
+ 6: extern int t(void);
+ 7: int main(int argc, char **argv)
+ 8: {
+ 9:   if (argc > 1000000) {
+10:     int (* volatile tp)(void)=(int (*)(void))&t;
+11:     printf("%d", (*tp)());
+12:   }
+13: 
+14:   return !!argv[argc];
+15: }
+16: int t(void) { void ((*volatile p)()); p = (void ((*)()))rb_proc_call_with_block; return !p; }
+/* end */
+
+--------------------
+
+append_cflags: checking for whether -fvisibility=hidden is accepted as CFLAGS... -------------------- yes
+
+LD_LIBRARY_PATH=.:../../../../.. "gcc-11 -I../../../../../.ext/include/x86_64-linux -I../../../../.././include -I../../../../.././.bundle/gems/msgpack-1.7.5/ext/msgpack    -fPIC -O3 -fno-fast-math -ggdb3 -Wall -Wextra -Wdeprecated-declarations -Wdiv-by-zero -Wduplicated-cond -Wimplicit-function-declaration -Wimplicit-int -Wpointer-arith -Wwrite-strings -Wold-style-definition -Wimplicit-fallthrough=0 -Wmissing-noreturn -Wno-cast-function-type -Wno-constant-logical-operand -Wno-long-long -Wno-missing-field-initializers -Wno-overlength-strings -Wno-packed-bitfield-compat -Wno-parentheses-equality -Wno-self-assign -Wno-tautological-compare -Wno-unused-parameter -Wno-unused-value -Wsuggest-attribute=format -Wsuggest-attribute=noreturn -Wunused-variable -Wmisleading-indentation -Wundef  -fvisibility=hidden -Werror -c conftest.c"
+checked program was:
+/* begin */
+1: #include "ruby.h"
+2: 
+3: int main(int argc, char **argv)
+4: {
+5:   return !!argv[argc];
+6: }
+/* end */
+
+--------------------
+
+append_cflags: checking for whether -I.. is accepted as CFLAGS... -------------------- yes
+
+LD_LIBRARY_PATH=.:../../../../.. "gcc-11 -I../../../../../.ext/include/x86_64-linux -I../../../../.././include -I../../../../.././.bundle/gems/msgpack-1.7.5/ext/msgpack    -fPIC -O3 -fno-fast-math -ggdb3 -Wall -Wextra -Wdeprecated-declarations -Wdiv-by-zero -Wduplicated-cond -Wimplicit-function-declaration -Wimplicit-int -Wpointer-arith -Wwrite-strings -Wold-style-definition -Wimplicit-fallthrough=0 -Wmissing-noreturn -Wno-cast-function-type -Wno-constant-logical-operand -Wno-long-long -Wno-missing-field-initializers -Wno-overlength-strings -Wno-packed-bitfield-compat -Wno-parentheses-equality -Wno-self-assign -Wno-tautological-compare -Wno-unused-parameter -Wno-unused-value -Wsuggest-attribute=format -Wsuggest-attribute=noreturn -Wunused-variable -Wmisleading-indentation -Wundef -fvisibility=hidden  -I.. -Werror -c conftest.c"
+checked program was:
+/* begin */
+1: #include "ruby.h"
+2: 
+3: int main(int argc, char **argv)
+4: {
+5:   return !!argv[argc];
+6: }
+/* end */
+
+--------------------
+
+append_cflags: checking for whether -Wall is accepted as CFLAGS... -------------------- yes
+
+LD_LIBRARY_PATH=.:../../../../.. "gcc-11 -I../../../../../.ext/include/x86_64-linux -I../../../../.././include -I../../../../.././.bundle/gems/msgpack-1.7.5/ext/msgpack    -fPIC -O3 -fno-fast-math -ggdb3 -Wall -Wextra -Wdeprecated-declarations -Wdiv-by-zero -Wduplicated-cond -Wimplicit-function-declaration -Wimplicit-int -Wpointer-arith -Wwrite-strings -Wold-style-definition -Wimplicit-fallthrough=0 -Wmissing-noreturn -Wno-cast-function-type -Wno-constant-logical-operand -Wno-long-long -Wno-missing-field-initializers -Wno-overlength-strings -Wno-packed-bitfield-compat -Wno-parentheses-equality -Wno-self-assign -Wno-tautological-compare -Wno-unused-parameter -Wno-unused-value -Wsuggest-attribute=format -Wsuggest-attribute=noreturn -Wunused-variable -Wmisleading-indentation -Wundef -fvisibility=hidden -I..  -Wall -Werror -c conftest.c"
+checked program was:
+/* begin */
+1: #include "ruby.h"
+2: 
+3: int main(int argc, char **argv)
+4: {
+5:   return !!argv[argc];
+6: }
+/* end */
+
+--------------------
+
+append_cflags: checking for whether -O3 is accepted as CFLAGS... -------------------- yes
+
+LD_LIBRARY_PATH=.:../../../../.. "gcc-11 -I../../../../../.ext/include/x86_64-linux -I../../../../.././include -I../../../../.././.bundle/gems/msgpack-1.7.5/ext/msgpack    -fPIC -O3 -fno-fast-math -ggdb3 -Wall -Wextra -Wdeprecated-declarations -Wdiv-by-zero -Wduplicated-cond -Wimplicit-function-declaration -Wimplicit-int -Wpointer-arith -Wwrite-strings -Wold-style-definition -Wimplicit-fallthrough=0 -Wmissing-noreturn -Wno-cast-function-type -Wno-constant-logical-operand -Wno-long-long -Wno-missing-field-initializers -Wno-overlength-strings -Wno-packed-bitfield-compat -Wno-parentheses-equality -Wno-self-assign -Wno-tautological-compare -Wno-unused-parameter -Wno-unused-value -Wsuggest-attribute=format -Wsuggest-attribute=noreturn -Wunused-variable -Wmisleading-indentation -Wundef -fvisibility=hidden -I.. -Wall  -O3 -Werror -c conftest.c"
+checked program was:
+/* begin */
+1: #include "ruby.h"
+2: 
+3: int main(int argc, char **argv)
+4: {
+5:   return !!argv[argc];
+6: }
+/* end */
+
+--------------------
+
+append_cflags: checking for whether -std=gnu99 is accepted as CFLAGS... -------------------- yes
+
+LD_LIBRARY_PATH=.:../../../../.. "gcc-11 -I../../../../../.ext/include/x86_64-linux -I../../../../.././include -I../../../../.././.bundle/gems/msgpack-1.7.5/ext/msgpack    -fPIC -O3 -fno-fast-math -ggdb3 -Wall -Wextra -Wdeprecated-declarations -Wdiv-by-zero -Wduplicated-cond -Wimplicit-function-declaration -Wimplicit-int -Wpointer-arith -Wwrite-strings -Wold-style-definition -Wimplicit-fallthrough=0 -Wmissing-noreturn -Wno-cast-function-type -Wno-constant-logical-operand -Wno-long-long -Wno-missing-field-initializers -Wno-overlength-strings -Wno-packed-bitfield-compat -Wno-parentheses-equality -Wno-self-assign -Wno-tautological-compare -Wno-unused-parameter -Wno-unused-value -Wsuggest-attribute=format -Wsuggest-attribute=noreturn -Wunused-variable -Wmisleading-indentation -Wundef -fvisibility=hidden -I.. -Wall -O3  -std=gnu99 -Werror -c conftest.c"
+checked program was:
+/* begin */
+1: #include "ruby.h"
+2: 
+3: int main(int argc, char **argv)
+4: {
+5:   return !!argv[argc];
+6: }
+/* end */
+
+--------------------
+
+append_cflags: checking for whether -ggdb3 is accepted as CFLAGS... -------------------- yes
+
+LD_LIBRARY_PATH=.:../../../../.. "gcc-11 -I../../../../../.ext/include/x86_64-linux -I../../../../.././include -I../../../../.././.bundle/gems/msgpack-1.7.5/ext/msgpack    -fPIC -O3 -fno-fast-math -ggdb3 -Wall -Wextra -Wdeprecated-declarations -Wdiv-by-zero -Wduplicated-cond -Wimplicit-function-declaration -Wimplicit-int -Wpointer-arith -Wwrite-strings -Wold-style-definition -Wimplicit-fallthrough=0 -Wmissing-noreturn -Wno-cast-function-type -Wno-constant-logical-operand -Wno-long-long -Wno-missing-field-initializers -Wno-overlength-strings -Wno-packed-bitfield-compat -Wno-parentheses-equality -Wno-self-assign -Wno-tautological-compare -Wno-unused-parameter -Wno-unused-value -Wsuggest-attribute=format -Wsuggest-attribute=noreturn -Wunused-variable -Wmisleading-indentation -Wundef -fvisibility=hidden -I.. -Wall -O3 -std=gnu99  -ggdb3 -Werror -c conftest.c"
+checked program was:
+/* begin */
+1: #include "ruby.h"
+2: 
+3: int main(int argc, char **argv)
+4: {
+5:   return !!argv[argc];
+6: }
+/* end */
+
+--------------------
+
+append_cflags: checking for whether -DHASH_ASET_DEDUPE=1 is accepted as CFLAGS... -------------------- yes
+
+LD_LIBRARY_PATH=.:../../../../.. "gcc-11 -I../../../../../.ext/include/x86_64-linux -I../../../../.././include -I../../../../.././.bundle/gems/msgpack-1.7.5/ext/msgpack    -fPIC -O3 -fno-fast-math -ggdb3 -Wall -Wextra -Wdeprecated-declarations -Wdiv-by-zero -Wduplicated-cond -Wimplicit-function-declaration -Wimplicit-int -Wpointer-arith -Wwrite-strings -Wold-style-definition -Wimplicit-fallthrough=0 -Wmissing-noreturn -Wno-cast-function-type -Wno-constant-logical-operand -Wno-long-long -Wno-missing-field-initializers -Wno-overlength-strings -Wno-packed-bitfield-compat -Wno-parentheses-equality -Wno-self-assign -Wno-tautological-compare -Wno-unused-parameter -Wno-unused-value -Wsuggest-attribute=format -Wsuggest-attribute=noreturn -Wunused-variable -Wmisleading-indentation -Wundef -fvisibility=hidden -I.. -Wall -O3 -std=gnu99 -ggdb3  -DHASH_ASET_DEDUPE=1 -Werror -c conftest.c"
+checked program was:
+/* begin */
+1: #include "ruby.h"
+2: 
+3: int main(int argc, char **argv)
+4: {
+5:   return !!argv[argc];
+6: }
+/* end */
+
+--------------------
+
+append_cflags: checking for whether -DSTR_UMINUS_DEDUPE_FROZEN=1 is accepted as CFLAGS... -------------------- yes
+
+LD_LIBRARY_PATH=.:../../../../.. "gcc-11 -I../../../../../.ext/include/x86_64-linux -I../../../../.././include -I../../../../.././.bundle/gems/msgpack-1.7.5/ext/msgpack    -fPIC -O3 -fno-fast-math -ggdb3 -Wall -Wextra -Wdeprecated-declarations -Wdiv-by-zero -Wduplicated-cond -Wimplicit-function-declaration -Wimplicit-int -Wpointer-arith -Wwrite-strings -Wold-style-definition -Wimplicit-fallthrough=0 -Wmissing-noreturn -Wno-cast-function-type -Wno-constant-logical-operand -Wno-long-long -Wno-missing-field-initializers -Wno-overlength-strings -Wno-packed-bitfield-compat -Wno-parentheses-equality -Wno-self-assign -Wno-tautological-compare -Wno-unused-parameter -Wno-unused-value -Wsuggest-attribute=format -Wsuggest-attribute=noreturn -Wunused-variable -Wmisleading-indentation -Wundef -fvisibility=hidden -I.. -Wall -O3 -std=gnu99 -ggdb3 -DHASH_ASET_DEDUPE=1  -DSTR_UMINUS_DEDUPE_FROZEN=1 -Werror -c conftest.c"
+checked program was:
+/* begin */
+1: #include "ruby.h"
+2: 
+3: int main(int argc, char **argv)
+4: {
+5:   return !!argv[argc];
+6: }
+/* end */
+
+--------------------
+
+extconf.h is:
+/* begin */
+1: #ifndef EXTCONF_H
+2: #define EXTCONF_H
+3: #define HAVE_RB_ENC_INTERNED_STR 1
+4: #define HAVE_RB_HASH_NEW_CAPA 1
+5: #define HAVE_RB_PROC_CALL_WITH_BLOCK 1
+6: #endif
+/* end */
+

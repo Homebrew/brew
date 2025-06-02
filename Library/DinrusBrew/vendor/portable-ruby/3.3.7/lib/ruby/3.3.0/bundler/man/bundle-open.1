@@ -1,0 +1,32 @@
+.\" generated with nRonn/v0.11.1
+.\" https://github.com/n-ronn/nronn/tree/0.11.1
+.TH "BUNDLE\-OPEN" "1" "September 2024" ""
+.SH "NAME"
+\fBbundle\-open\fR \- Opens the source directory for a gem in your bundle
+.SH "SYNOPSIS"
+\fBbundle open\fR [GEM] [\-\-path=PATH]
+.SH "DESCRIPTION"
+Opens the source directory of the provided GEM in your editor\.
+.P
+For this to work the \fBEDITOR\fR or \fBBUNDLER_EDITOR\fR environment variable has to be set\.
+.P
+Example:
+.IP "" 4
+.nf
+bundle open 'rack'
+.fi
+.IP "" 0
+.P
+Will open the source directory for the 'rack' gem in your bundle\.
+.IP "" 4
+.nf
+bundle open 'rack' \-\-path 'README\.md'
+.fi
+.IP "" 0
+.P
+Will open the README\.md file of the 'rack' gem source in your bundle\.
+.SH "OPTIONS"
+.TP
+\fB\-\-path\fR
+Specify GEM source relative path to open\.
+

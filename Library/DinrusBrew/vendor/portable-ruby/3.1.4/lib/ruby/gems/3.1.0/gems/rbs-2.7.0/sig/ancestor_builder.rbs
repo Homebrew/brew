@@ -1,0 +1,159 @@
+module RBS
+  class DefinitionBuilder
+    # AncestorBuilder calculates the ancestors of a class or module.
+    #
+    class AncestorBuilder
+      # OneAncestors represents a list of _direct_ ancestors of a type name
+      #
+      # _Direct_ ancestors is defined as follows:
+      #
+      # * Super class is a direct ancestor
+      # * Self type constraints are direct ancestors
+      # * Mixin modules are direct ancestors
+      # * Mixin interfaces are direct ancestors
+      #
+      # The optional attributes are defined by the type of the ancestors object, one of the following five groups:
+      #
+      # 1. Instance of a class -- with super_class, included_modules, included_interfaces, and prepended_modules
+      # 2. Instance of a module -- with self_types, included_modules, included_interfaces, and prepended_modules
+      # 3. Singleton of a class or module -- with super_class, extended_modules, and extended_interfaces
+      # 4. Interface -- with included_interfaces
+      #
+      class OneAncestors
+        attr_reader type_name: TypeName
+        attr_reader params: Array[Symbol]?
+
+        # Returns super_class ancestor if specified
+        #
+        # * Always `nil` if this is not a class.
+        #
+        attr_reader super_class: Definition::Ancestor::t?
+
+        # Returns list of _self type constraints_ of a module
+        #
+        # * Returns `nil` if it is not a module instance.
+        #
+        attr_reader self_types: Array[Definition::Ancestor::Instance]?
+
+        # Returns the list of included modules
+        #
+        # * Returns `nil` if it is an interface or it is a singleton.
+        #
+        attr_reader included_modules: Array[Definition::Ancestor::Instance]?
+
+        # Returns the list of included interfaces
+        #
+        # * Returns `nil` it it is a singleton.
+        #
+        attr_reader included_interfaces: Array[Definition::Ancestor::Instance]?
+
+        # Returns the list of prepended modules
+        #
+        # * Returns `nil` if it is an interface or it is a singleton.
+        #
+        attr_reader prepended_modules: Array[Definition::Ancestor::Instance]?
+
+        # Returns the list of extended modules
+        #
+        # * Returns `nil` if it is an interface or it is an instance.
+        #
+        attr_reader extended_modules: Array[Definition::Ancestor::Instance]?
+
+        # Returns the list of extended interfaces
+        #
+        # * Returns `nil` if it is an interface or it is an instance.
+        #
+        attr_reader extended_interfaces: Array[Definition::Ancestor::Instance]?
+
+        def initialize: (type_name: TypeName,
+                            params: Array[Symbol]?,
+                       super_class: Definition::Ancestor::t?,
+                        self_types: Array[Definition::Ancestor::Instance]?,
+                  included_modules: Array[Definition::Ancestor::Instance]?,
+               included_interfaces: Array[Definition::Ancestor::Instance]?,
+                 prepended_modules: Array[Definition::Ancestor::Instance]?,
+                  extended_modules: Array[Definition::Ancestor::Instance]?,
+               extended_interfaces: Array[Definition::Ancestor::Instance]?) -> void
+
+        def each_ancestor: { (Definition::Ancestor::t) -> void } -> void
+                         | -> Enumerator[Definition::Ancestor::t, void]
+
+        # Returns a OneAncestors object for class instance
+        def self.class_instance: (type_name: TypeName, params: Array[Symbol], super_class: Definition::Ancestor::t?) -> instance
+
+        # Returns a OneAncestors object for module instance
+        def self.module_instance: (type_name: TypeName, params: Array[Symbol]) -> instance
+
+        # Returns a OneAncestors object for class/module singleton
+        def self.singleton: (type_name: TypeName, super_class: Definition::Ancestor::t) -> instance
+
+        # Returns a OneAncestors object for interface
+        def self.interface: (type_name: TypeName, params: Array[Symbol]) -> instance
+
+        def each_included_module: () { (Definition::Ancestor::Instance) -> void } -> void
+                                | () -> Enumerator[Definition::Ancestor::Instance, void]
+
+        def each_included_interface: () { (Definition::Ancestor::Instance) -> void } -> void
+                                   | () -> Enumerator[Definition::Ancestor::Instance, void]
+
+        def each_prepended_module: () { (Definition::Ancestor::Instance) -> void } -> void
+                                 | () -> Enumerator[Definition::Ancestor::Instance, void]
+
+        def each_extended_module: () { (Definition::Ancestor::Instance) -> void } -> void
+                                | () -> Enumerator[Definition::Ancestor::Instance, void]
+
+        def each_extended_interface: () { (Definition::Ancestor::Instance) -> void } -> void
+                                   | () -> Enumerator[Definition::Ancestor::Instance, void]
+
+        def each_self_type: () { (Definition::Ancestor::Instance) -> void } -> void
+                          | () -> Enumerator[Definition::Ancestor::Instance, void]
+      end
+
+      attr_reader env: Environment
+
+      attr_reader one_instance_ancestors_cache: Hash[TypeName, OneAncestors]
+      attr_reader instance_ancestors_cache: Hash[TypeName, Definition::InstanceAncestors]
+
+      attr_reader one_singleton_ancestors_cache: Hash[TypeName, OneAncestors]
+      attr_reader singleton_ancestors_cache: Hash[TypeName, Definition::SingletonAncestors]
+
+      attr_reader one_interface_ancestors_cache: Hash[TypeName, OneAncestors]
+      attr_reader interface_ancestors_cache: Hash[TypeName, Definition::InstanceAncestors]
+
+      def initialize: (env: Environment) -> void
+
+      def instance_ancestors: (TypeName, ?building_ancestors: Array[Definition::Ancestor::t]) -> Definition::InstanceAncestors
+
+      def singleton_ancestors: (TypeName, ?building_ancestors: Array[Definition::Ancestor::t]) -> Definition::SingletonAncestors
+
+      def interface_ancestors: (TypeName, ?building_ancestors: Array[Definition::Ancestor::t]) -> Definition::InstanceAncestors
+
+      def one_instance_ancestors: (TypeName) -> OneAncestors
+
+      def one_singleton_ancestors: (TypeName) -> OneAncestors
+
+      def one_interface_ancestors: (TypeName) -> OneAncestors
+
+      private
+
+      def validate_super_class!: (TypeName, Environment::ClassEntry) -> void
+
+      def mixin_ancestors: (Environment::ClassEntry | Environment::ModuleEntry,
+                            TypeName,
+                            included_modules: Array[Definition::Ancestor::Instance]?,
+                         included_interfaces: Array[Definition::Ancestor::Instance]?,
+                           prepended_modules: Array[Definition::Ancestor::Instance]?,
+                            extended_modules: Array[Definition::Ancestor::Instance]?,
+                         extended_interfaces: Array[Definition::Ancestor::Instance]?) -> void
+
+      def mixin_ancestors0: (AST::Declarations::Class | AST::Declarations::Module | AST::Declarations::Interface,
+                             TypeName,
+                             align_params: Substitution?,
+                         included_modules: Array[Definition::Ancestor::Instance]?,
+                      included_interfaces: Array[Definition::Ancestor::Instance]?,
+                        prepended_modules: Array[Definition::Ancestor::Instance]?,
+                         extended_modules: Array[Definition::Ancestor::Instance]?,
+                      extended_interfaces: Array[Definition::Ancestor::Instance]?) -> void
+    end
+  end
+end

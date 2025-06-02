@@ -1,0 +1,17 @@
+.\" generated with nRonn/v0.11.1
+.\" https://github.com/n-ronn/nronn/tree/0.11.1
+.TH "BUNDLE\-CLEAN" "1" "September 2024" ""
+.SH "NAME"
+\fBbundle\-clean\fR \- Cleans up unused gems in your bundler directory
+.SH "SYNOPSIS"
+\fBbundle clean\fR [\-\-dry\-run] [\-\-force]
+.SH "DESCRIPTION"
+This command will remove all unused gems in your bundler directory\. This is useful when you have made many changes to your gem dependencies\.
+.SH "OPTIONS"
+.TP
+\fB\-\-dry\-run\fR
+Print the changes, but do not clean the unused gems\.
+.TP
+\fB\-\-force\fR
+Forces cleaning up unused gems even if Bundler is configured to use globally installed gems\. As a consequence, removes all system gems except for the ones in the current application\.
+

@@ -1,0 +1,60 @@
+# <!-- rdoc-file=lib/minitest/mock.rb -->
+# A simple and clean mock object framework.
+#
+# All mock objects are an instance of Mock
+#
+class Minitest::Mock
+  alias __respond_to? respond_to?
+  def initialize: (?untyped? delegator) -> void
+
+  # <!--
+  #   rdoc-file=lib/minitest/mock.rb
+  #   - expect(name, retval, args = [], &blk)
+  # -->
+  # Expect that method `name` is called, optionally with `args` or a `blk`, and
+  # returns `retval`.
+  #
+  #     @mock.expect(:meaning_of_life, 42)
+  #     @mock.meaning_of_life # => 42
+  #
+  #     @mock.expect(:do_something_with, true, [some_obj, true])
+  #     @mock.do_something_with(some_obj, true) # => true
+  #
+  #     @mock.expect(:do_something_else, true) do |a1, a2|
+  #       a1 == "buggs" && a2 == :bunny
+  #     end
+  #
+  # `args` is compared to the expected args using case equality (ie, the '==='
+  # operator), allowing for less specific expectations.
+  #
+  #     @mock.expect(:uses_any_string, true, [String])
+  #     @mock.uses_any_string("foo") # => true
+  #     @mock.verify  # => true
+  #
+  #     @mock.expect(:uses_one_string, true, ["foo"])
+  #     @mock.uses_one_string("bar") # => raises MockExpectationError
+  #
+  # If a method will be called multiple times, specify a new expect for each one.
+  # They will be used in the order you define them.
+  #
+  #     @mock.expect(:ordinal_increment, 'first')
+  #     @mock.expect(:ordinal_increment, 'second')
+  #
+  #     @mock.ordinal_increment # => 'first'
+  #     @mock.ordinal_increment # => 'second'
+  #     @mock.ordinal_increment # => raises MockExpectationError "No more expects available for :ordinal_increment"
+  #
+  def expect: (untyped name, untyped retval, ?untyped args) ?{ () -> untyped } -> self
+  def __call: (untyped name, untyped data) -> untyped
+
+  # <!--
+  #   rdoc-file=lib/minitest/mock.rb
+  #   - verify()
+  # -->
+  # Verify that all methods were called as expected. Raises `MockExpectationError`
+  # if the mock object was not called as expected.
+  #
+  def verify: () -> true
+  def method_missing: (untyped sym, *untyped args) ?{ () -> untyped } -> untyped
+  def respond_to?: (untyped sym, ?bool include_private) -> (true | untyped)
+end

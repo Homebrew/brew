@@ -1,0 +1,31 @@
+# typed: true # rubocop:todo Sorbet/StrictSigil
+# frozen_string_literal: true
+
+require "version"
+
+class URL
+  attr_reader :specs, :using
+
+  sig { params(url: String, specs: T::Hash[Symbol, T.untyped]).void }
+  def initialize(url, specs = {})
+    @url = url.freeze
+    @specs = specs.dup
+    @using = @specs.delete(:using)
+    @specs.freeze
+  end
+
+  sig { returns(String) }
+  def to_s
+    @url
+  end
+
+  sig { returns(T.class_of(AbstractDownloadStrategy)) }
+  def download_strategy
+    @download_strategy ||= DownloadStrategyDetector.detect(@url, @using)
+  end
+
+  sig { returns(Version) }
+  def version
+    @version ||= Version.detect(@url, **@specs)
+  end
+end

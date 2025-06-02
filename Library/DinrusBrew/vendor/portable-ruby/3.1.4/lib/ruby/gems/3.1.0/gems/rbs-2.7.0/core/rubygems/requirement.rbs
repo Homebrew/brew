@@ -1,0 +1,148 @@
+%a{annotate:rdoc:skip}
+module Gem
+  # <!-- rdoc-file=lib/rubygems/requirement.rb -->
+  # A Requirement is a set of one or more version restrictions. It supports a few
+  # (`=, !=, >, <, >=, <=, ~>`) different restriction operators.
+  #
+  # See Gem::Version for a description on how versions and requirements work
+  # together in RubyGems.
+  #
+  class Requirement
+    type operator = "=" | "!=" | ">" | "<" | ">=" | "<=" | "~>"
+
+    # <!-- rdoc-file=lib/rubygems/requirement.rb -->
+    # Raised when a bad requirement is encountered
+    #
+    class BadRequirementError < ArgumentError
+    end
+
+    # <!-- rdoc-file=lib/rubygems/requirement.rb -->
+    # The default requirement matches any version
+    #
+    DefaultPrereleaseRequirement: [ operator, Gem::Version ]
+
+    # <!-- rdoc-file=lib/rubygems/requirement.rb -->
+    # The default requirement matches any non-prerelease version
+    #
+    DefaultRequirement: [ operator, Gem::Version ]
+
+    # <!-- rdoc-file=lib/rubygems/requirement.rb -->
+    # A regular expression that matches a requirement
+    #
+    PATTERN: Regexp
+
+    # <!--
+    #   rdoc-file=lib/rubygems/requirement.rb
+    #   - create(*inputs)
+    # -->
+    # Factory method to create a Gem::Requirement object.  Input may be a Version, a
+    # String, or nil.  Intended to simplify client code.
+    #
+    # If the input is "weird", the default version requirement is returned.
+    #
+    def self.create: (*String | Gem::Version | Gem::Requirement | nil inputs) -> instance
+
+    # <!--
+    #   rdoc-file=lib/rubygems/requirement.rb
+    #   - default()
+    # -->
+    #
+    def self.default: () -> instance
+
+    # <!--
+    #   rdoc-file=lib/rubygems/requirement.rb
+    #   - default_prerelease()
+    # -->
+    #
+    def self.default_prerelease: () -> instance
+
+    # <!--
+    #   rdoc-file=lib/rubygems/requirement.rb
+    #   - parse(obj)
+    # -->
+    # Parse `obj`, returning an `[op, version]` pair. `obj` can be a String or a
+    # Gem::Version.
+    #
+    # If `obj` is a String, it can be either a full requirement specification, like
+    # `">= 1.2"`, or a simple version number, like `"1.2"`.
+    #
+    #     parse("> 1.0")                 # => [">", Gem::Version.new("1.0")]
+    #     parse("1.0")                   # => ["=", Gem::Version.new("1.0")]
+    #     parse(Gem::Version.new("1.0")) # => ["=,  Gem::Version.new("1.0")]
+    #
+    def self.parse: (String | Gem::Version obj) -> [ operator, Gem::Version ]
+
+    # <!--
+    #   rdoc-file=lib/rubygems/requirement.rb
+    #   - new(*requirements)
+    # -->
+    # Constructs a requirement from `requirements`. Requirements can be Strings,
+    # Gem::Versions, or Arrays of those. `nil` and duplicate requirements are
+    # ignored. An empty set of `requirements` is the same as `">= 0"`.
+    #
+    def initialize: (*String | Gem::Version requirements) -> void
+
+    # <!--
+    #   rdoc-file=lib/rubygems/requirement.rb
+    #   - concat(new)
+    # -->
+    # Concatenates the `new` requirements onto this requirement.
+    #
+    def concat: (Array[String | Gem::Version] new) -> void
+
+    # <!--
+    #   rdoc-file=lib/rubygems/requirement.rb
+    #   - exact?()
+    # -->
+    # true if the requirement is for only an exact version
+    #
+    def exact?: () -> bool
+
+    # <!--
+    #   rdoc-file=lib/rubygems/requirement.rb
+    #   - none?()
+    # -->
+    # true if this gem has no requirements.
+    #
+    def none?: () -> bool
+
+    # <!--
+    #   rdoc-file=lib/rubygems/requirement.rb
+    #   - prerelease?()
+    # -->
+    # A requirement is a prerelease if any of the versions inside of it are
+    # prereleases
+    #
+    def prerelease?: () -> bool
+
+    # <!--
+    #   rdoc-file=lib/rubygems/requirement.rb
+    #   - satisfied_by?(version)
+    # -->
+    # True if `version` satisfies this Requirement.
+    #
+    def satisfied_by?: (Gem::Version version) -> bool
+
+    # <!--
+    #   rdoc-file=lib/rubygems/requirement.rb
+    #   - ===(version)
+    # -->
+    #
+    alias === satisfied_by?
+
+    # <!--
+    #   rdoc-file=lib/rubygems/requirement.rb
+    #   - =~(version)
+    # -->
+    #
+    alias =~ satisfied_by?
+
+    # <!--
+    #   rdoc-file=lib/rubygems/requirement.rb
+    #   - specific?()
+    # -->
+    # True if the requirement will not always match the latest version.
+    #
+    def specific?: () -> bool
+  end
+end

@@ -1,0 +1,6 @@
+require 'racc/compat'
+require 'racc/debugflags'
+require 'racc/grammar'
+require 'racc/state'
+require 'racc/exception'
+require 'racc/info'

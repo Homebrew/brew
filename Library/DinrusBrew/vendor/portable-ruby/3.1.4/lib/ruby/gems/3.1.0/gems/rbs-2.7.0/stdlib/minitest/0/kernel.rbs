@@ -1,0 +1,42 @@
+%a{annotate:rdoc:skip}
+module Kernel : ::BasicObject
+  # <!--
+  #   rdoc-file=lib/minitest/spec.rb
+  #   - describe(desc, *additional_desc, &block)
+  # -->
+  # Describe a series of expectations for a given target `desc`.
+  #
+  # Defines a test class subclassing from either Minitest::Spec or from the
+  # surrounding describe's class. The surrounding class may subclass
+  # Minitest::Spec manually in order to easily share code:
+  #
+  #     class MySpec < Minitest::Spec
+  #       # ... shared code ...
+  #     end
+  #
+  #     class TestStuff < MySpec
+  #       it "does stuff" do
+  #         # shared code available here
+  #       end
+  #       describe "inner stuff" do
+  #         it "still does stuff" do
+  #           # ...and here
+  #         end
+  #       end
+  #     end
+  #
+  # For more information on getting started with writing specs, see:
+  #
+  # http://www.rubyinside.com/a-minitestspec-tutorial-elegant-spec-style-testing-t
+  # hat-comes-with-ruby-5354.html
+  #
+  # For some suggestions on how to improve your specs, try:
+  #
+  # http://betterspecs.org
+  #
+  # but do note that several items there are debatable or specific to rspec.
+  #
+  # For more information about expectations, see Minitest::Expectations.
+  #
+  private def describe: (untyped desc, *untyped additional_desc) ?{ () -> untyped } -> untyped
+end

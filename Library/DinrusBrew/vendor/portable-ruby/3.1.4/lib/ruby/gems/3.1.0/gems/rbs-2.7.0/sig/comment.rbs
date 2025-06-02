@@ -1,0 +1,26 @@
+module RBS
+  module AST
+    # RBS allows writing documentation of declarations and members.
+    #
+    # ```
+    # # This is a doc for class.
+    # class Hello
+    # end
+    # ```
+    #
+    class Comment
+      attr_reader string: String
+      attr_reader location: Location[bot, bot]?
+
+      def initialize: (string: String, location: Location[bot, bot]?) -> void
+
+      def ==: (untyped other) -> bool
+
+      alias eql? ==
+
+      def hash: () -> Integer
+
+      include _ToJson
+    end
+  end
+end

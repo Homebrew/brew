@@ -1,0 +1,6 @@
+# <!-- rdoc-file=lib/rubygems/path_support.rb -->
+# Gem::PathSupport facilitates the GEM_HOME and GEM_PATH environment settings to
+# the rest of RubyGems.
+#
+class Gem::PathSupport
+end

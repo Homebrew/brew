@@ -1,0 +1,59 @@
+# <!-- rdoc-file=lib/yaml/store.rb -->
+# YAML::Store provides the same functionality as PStore, except it uses YAML to
+# dump objects instead of Marshal.
+#
+# ## Example
+#
+#     require 'yaml/store'
+#
+#     Person = Struct.new :first_name, :last_name
+#
+#     people = [Person.new("Bob", "Smith"), Person.new("Mary", "Johnson")]
+#
+#     store = YAML::Store.new "test.store"
+#
+#     store.transaction do
+#       store["people"] = people
+#       store["greeting"] = { "hello" => "world" }
+#     end
+#
+# After running the above code, the contents of "test.store" will be:
+#
+#     ---
+#     people:
+#     - !ruby/struct:Person
+#       first_name: Bob
+#       last_name: Smith
+#     - !ruby/struct:Person
+#       first_name: Mary
+#       last_name: Johnson
+#     greeting:
+#       hello: world
+#
+class YAML::Store < ::PStore
+  # <!--
+  #   rdoc-file=lib/yaml/store.rb
+  #   - initialize( file_name, yaml_opts = {} )
+  #   - initialize( file_name, thread_safe = false, yaml_opts = {} )
+  # -->
+  # Creates a new YAML::Store object, which will store data in `file_name`. If the
+  # file does not already exist, it will be created.
+  #
+  # YAML::Store objects are always reentrant. But if *thread_safe* is set to true,
+  # then it will become thread-safe at the cost of a minor performance hit.
+  #
+  # Options passed in through `yaml_opts` will be used when converting the store
+  # to YAML via Hash#to_yaml().
+  #
+  def initialize: (*untyped o) -> YAML::Store
+
+  def dump: (untyped table) -> String
+
+  def empty_marshal_checksum: () -> String
+
+  def empty_marshal_data: () -> String
+
+  def load: (String) -> untyped
+
+  def marshal_dump_supports_canonical_option?: () -> ::FalseClass
+end

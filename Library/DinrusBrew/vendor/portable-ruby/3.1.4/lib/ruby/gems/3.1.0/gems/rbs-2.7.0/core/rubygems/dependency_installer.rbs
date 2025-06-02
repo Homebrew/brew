@@ -1,0 +1,6 @@
+# <!-- rdoc-file=lib/rubygems/dependency_installer.rb -->
+# Installs a gem along with all its dependencies from local and remote gems.
+#
+class Gem::DependencyInstaller
+  type options = Hash[Symbol, untyped]
+end

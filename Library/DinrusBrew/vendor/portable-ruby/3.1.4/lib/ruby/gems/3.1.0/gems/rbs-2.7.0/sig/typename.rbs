@@ -1,0 +1,76 @@
+module RBS
+  # TypeName represents name of types in RBS.
+  #
+  # TypeNames are one of the three kind, class, alias, and interface.
+  # *class* type names corresponds to Ruby classes and modules.
+  # There are no corresponding Ruby value to *alias* and *interface* type names.
+  #
+  class TypeName
+    # Type of type names.
+    #
+    type kind = :class | :alias | :interface
+
+    # The namespace the type name is defined in.
+    attr_reader namespace: Namespace
+
+    # Name of type name.
+    attr_reader name: Symbol
+
+    # Kind of the type.
+    attr_reader kind: kind
+
+    # Initializer accepts two keyword args, `namespace` and `name`.
+    # Note that `kind` is automatically determined from its `name`.
+    #
+    # If the name starts with capital alphabet, it is _class_.
+    # If the name starts with lower case alphabet, it is _alias_.
+    # If the name starts with an underscore, it is _interface_.
+    #
+    def initialize: (namespace: Namespace, name: Symbol) -> void
+
+    def ==: (untyped other) -> bool
+
+    def hash: () -> Integer
+
+    def to_s: () -> ::String
+
+    include _ToJson
+
+    # Returns a namespace with same components of self.
+    def to_namespace: () -> Namespace
+
+    # Returns true when self is a _class_ type name.
+    def class?: () -> bool
+
+    # Returns true when self is an _alias_ type name.
+    def alias?: () -> bool
+
+    def absolute!: () -> TypeName
+
+    def absolute?: () -> bool
+
+    def relative!: () -> TypeName
+
+    # Returns true when self is an _interface_ type name.
+    def interface?: () -> bool
+
+    # Returns a new type name with a namespace appended to given namespace.
+    #
+    # ```rb
+    # TypeName("Hello").with_prefix(Namespace("World"))           # => World::Hello
+    # TypeName("Foo::Bar").with_prefix(Namespace("::Hello"))      # => ::Hello::Foo::Bar
+    # TypeName("::A::B").with_prefix(Namespace("C"))              # => ::A::B
+    # ```
+    #
+    def with_prefix: (Namespace namespace) -> TypeName
+
+    def +: (TypeName) -> TypeName
+
+    def split: () -> Array[Symbol]
+  end
+end
+
+module Kernel
+  # Returns type name with given string representation.
+  def TypeName: (String name) -> RBS::TypeName
+end

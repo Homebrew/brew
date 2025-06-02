@@ -1,0 +1,13 @@
+module RBS
+  module Collection
+    class Cleaner
+      attr_reader lock: Config
+
+      def initialize: (lockfile_path: Pathname) -> void
+
+      def clean: () -> void
+
+      def needed?: (String gem_name, String version) -> bool
+    end
+  end
+end

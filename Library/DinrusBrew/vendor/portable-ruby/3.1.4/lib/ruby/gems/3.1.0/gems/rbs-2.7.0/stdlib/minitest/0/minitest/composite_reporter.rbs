@@ -1,0 +1,25 @@
+# <!-- rdoc-file=lib/minitest.rb -->
+# Dispatch to multiple reporters as one.
+#
+class Minitest::CompositeReporter < ::Minitest::AbstractReporter
+  def initialize: (*untyped reporters) -> void
+  def io: () -> untyped
+
+  # <!--
+  #   rdoc-file=lib/minitest.rb
+  #   - <<(reporter)
+  # -->
+  # Add another reporter to the mix.
+  #
+  def <<: (untyped reporter) -> untyped
+  def passed?: () -> untyped
+  def start: () -> untyped
+  def prerecord: (untyped klass, untyped name) -> untyped
+  def record: (untyped result) -> untyped
+  def report: () -> untyped
+
+  # <!-- rdoc-file=lib/minitest.rb -->
+  # The list of reporters to dispatch to.
+  #
+  attr_accessor reporters: untyped
+end

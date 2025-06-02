@@ -1,0 +1,82 @@
+module RBS
+  module Annotate
+    class RDocAnnotator
+      attr_reader source: RDocSource
+
+      attr_accessor include_arg_lists: bool
+      attr_accessor include_filename: bool
+
+      def initialize: (source: RDocSource) -> void
+
+      def annotate_file: (Pathname, preserve: bool) -> void
+
+      def annotate_decls: (Array[AST::Declarations::t], ?outer: Array[Namespace]) -> void
+
+      interface _PathTester
+        def test_path: (String) -> bool
+      end
+
+      interface _WithRDocComment
+        def comment: () -> RDoc::Markup::Document
+      end
+
+      def each_part: (Array[Object & _WithRDocComment], tester: _PathTester) { ([RDoc::Markup::Document, Object & _WithRDocComment]) -> void } -> void
+                   | (Array[Object & _WithRDocComment], tester: _PathTester) -> Enumerator[[RDoc::Markup::Document, Object & _WithRDocComment], void]
+
+      def join_docs: (Array[String?], ?separator: String) -> String?
+
+      def doc_for_class: (TypeName, tester: _PathTester) -> String?
+
+      # Returns the formatted document of given method.
+      #
+      # Expands attribute documents, or alias documents if needed.
+      #
+      def doc_for_method: (TypeName, instance_method: Symbol, tester: _PathTester) -> String?
+                        | (TypeName, singleton_method: Symbol, tester: _PathTester) -> String?
+
+
+      def doc_for_method0: (TypeName, instance_method: Symbol, tester: _PathTester) -> String?
+                         | (TypeName, singleton_method: Symbol, tester: _PathTester) -> String?
+
+      # Having `require: nil` means any attribute is okay.
+      # Having `require: "R"` means _read attr_ is required.
+      # Having `require: "W"` means write attr_ is required.
+      #
+      def doc_for_attribute: (TypeName, Symbol, singleton: bool, ?require: nil | "R" | "W", tester: _PathTester) -> String?
+
+      def doc_for_alias: (TypeName, name: Symbol, singleton: bool, tester: _PathTester) -> String?
+
+      def doc_for_constant: (TypeName, tester: _PathTester) -> String?
+
+      def resolve_doc_source: (Annotations::Copy?, tester: _PathTester) { () -> String? } -> String?
+
+      def annotate_class: (AST::Declarations::Class | AST::Declarations::Module, outer: Array[Namespace]) -> void
+
+      def annotate_constant: (AST::Declarations::Constant, outer: Array[Namespace]) -> void
+
+      def annotate_method: (TypeName, AST::Members::MethodDefinition) -> void
+
+      def annotate_alias: (TypeName, AST::Members::Alias) -> void
+
+      def annotate_attribute: (TypeName, AST::Members::AttrReader | AST::Members::AttrWriter | AST::Members::AttrAccessor) -> void
+
+      def annotations: (_Annotated) -> Annotations
+
+      interface _Annotated
+        def annotations: -> Array[AST::Annotation]
+      end
+
+      # - If a string is given as `comment`, the content is attached to the object as a comment.
+      # - If empty string is given as `comment`, it deletes the original comment.
+      # - If `nil` is given as `comment`, it keeps the original comment.
+      #
+      def replace_comment: (Object & _Commented, String? comment) -> void
+
+      interface _Commented
+        def comment: () -> AST::Comment?
+      end
+
+      def resolve_name: (TypeName, outer: Array[Namespace]) -> TypeName
+    end
+  end
+end

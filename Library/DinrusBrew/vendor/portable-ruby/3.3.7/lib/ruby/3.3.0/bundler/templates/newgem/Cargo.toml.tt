@@ -1,0 +1,7 @@
+# This Cargo.toml is here to let externals tools (IDEs, etc.) know that this is
+# a Rust project. Your extensions dependencies should be added to the Cargo.toml
+# in the ext/ directory.
+
+[workspace]
+members = ["./ext/<%= config[:name] %>"]
+resolver = "2"

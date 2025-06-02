@@ -1,0 +1,92 @@
+# <!-- rdoc-file=lib/minitest/test.rb -->
+# Provides before/after hooks for setup and teardown. These are meant for
+# library writers, NOT for regular test authors. See #before_setup for an
+# example.
+#
+module Minitest::Test::LifecycleHooks
+  # <!--
+  #   rdoc-file=lib/minitest/test.rb
+  #   - before_setup()
+  # -->
+  # Runs before every test, before setup. This hook is meant for libraries to
+  # extend minitest. It is not meant to be used by test developers.
+  #
+  # As a simplistic example:
+  #
+  #     module MyMinitestPlugin
+  #       def before_setup
+  #         super
+  #         # ... stuff to do before setup is run
+  #       end
+  #
+  #       def after_setup
+  #         # ... stuff to do after setup is run
+  #         super
+  #       end
+  #
+  #       def before_teardown
+  #         super
+  #         # ... stuff to do before teardown is run
+  #       end
+  #
+  #       def after_teardown
+  #         # ... stuff to do after teardown is run
+  #         super
+  #       end
+  #     end
+  #
+  #     class MiniTest::Test
+  #       include MyMinitestPlugin
+  #     end
+  #
+  def before_setup: () -> nil
+
+  # <!--
+  #   rdoc-file=lib/minitest/test.rb
+  #   - setup()
+  # -->
+  # Runs before every test. Use this to set up before each test run.
+  #
+  def setup: () -> nil
+
+  # <!--
+  #   rdoc-file=lib/minitest/test.rb
+  #   - after_setup()
+  # -->
+  # Runs before every test, after setup. This hook is meant for libraries to
+  # extend minitest. It is not meant to be used by test developers.
+  #
+  # See #before_setup for an example.
+  #
+  def after_setup: () -> nil
+
+  # <!--
+  #   rdoc-file=lib/minitest/test.rb
+  #   - before_teardown()
+  # -->
+  # Runs after every test, before teardown. This hook is meant for libraries to
+  # extend minitest. It is not meant to be used by test developers.
+  #
+  # See #before_setup for an example.
+  #
+  def before_teardown: () -> nil
+
+  # <!--
+  #   rdoc-file=lib/minitest/test.rb
+  #   - teardown()
+  # -->
+  # Runs after every test. Use this to clean up after each test run.
+  #
+  def teardown: () -> nil
+
+  # <!--
+  #   rdoc-file=lib/minitest/test.rb
+  #   - after_teardown()
+  # -->
+  # Runs after every test, after teardown. This hook is meant for libraries to
+  # extend minitest. It is not meant to be used by test developers.
+  #
+  # See #before_setup for an example.
+  #
+  def after_teardown: () -> nil
+end

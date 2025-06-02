@@ -1,0 +1,102 @@
+module RBS
+  module Annotate
+    class Annotations
+      type t = Skip | Source | Copy
+
+      def self.parse: (AST::Annotation) -> t?
+
+      attr_reader items: Array[t]
+
+      def initialize: (Array[t]) -> void
+
+      def skip?: () -> bool
+
+      def skip_all?: () -> bool
+
+      def test_path: (String path) -> bool
+
+      def test_path_string: (String pattern, String path) -> bool
+
+      def copy_annotation: -> Copy?
+
+      # Skip annotation allows skipping generating annotation of a subject.
+      #
+      #     %a{annotate:rdoc:skip}
+      #     %a{annotate:rdoc:skip:all}
+      #
+      class Skip
+        attr_reader annotation: AST::Annotation
+
+        attr_reader skip_children: bool
+
+        def initialize: (annotation: AST::Annotation, skip_children: bool) -> void
+
+        def hash: () -> Integer
+
+        def ==: (untyped) -> bool
+
+        alias eql? ==
+      end
+
+      # Source annotation allows where the documents are copied from.
+      #
+      # It allows specifying two directions: the source to read from, and the source to skip.
+      #
+      #     %a{annotate:rdoc:source:from=ext/pathname}
+      #     %a{annotate:rdoc:source:skip=ext/pathname/doc}
+      #
+      # When you want to specify several paths, repeat writing the Source annotation.
+      #
+      class Source
+        attr_reader annotation: AST::Annotation
+
+        attr_reader include_source: String?
+        attr_reader skip_source: String?
+
+        def initialize: (annotation: AST::Annotation, include: String) -> void
+                      | (annotation: AST::Annotation, skip: String) -> void
+
+        def hash: () -> Integer
+
+        def ==: (untyped) -> bool
+
+        alias eql? ==
+      end
+
+      # Copy annotation allows copying the doc from another subject.
+      # This helps working with incorrect RDoc annotations.
+      #
+      #     %a{annotate:rdoc:copy:Bar#baz}
+      #     %a{annotate:rdoc:copy:Bar.baz}
+      #     %a{annotate:rdoc:copy:Bar::Baz}
+      #
+      class Copy
+        attr_reader annotation: AST::Annotation
+
+        attr_reader source: String
+
+        def initialize: (annotation: AST::Annotation, source: String) -> void
+
+        # Returns a tuple of:
+        #
+        # - Type name
+        # - A pair of:
+        #   - Boolean which holds if it is singleton
+        #   - Name of method
+        def partition: () -> [TypeName, [bool, Symbol]?]
+
+        def type_name: () -> TypeName
+
+        def method_name: () -> Symbol?
+
+        def singleton?: () -> bool
+
+        def hash: () -> Integer
+
+        def ==: (untyped) -> bool
+
+        alias eql? ==
+      end
+    end
+  end
+end

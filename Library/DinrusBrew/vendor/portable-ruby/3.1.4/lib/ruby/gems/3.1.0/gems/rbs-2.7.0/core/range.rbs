@@ -1,0 +1,951 @@
+# <!-- rdoc-file=range.c -->
+# A Range object represents a collection of values that are between given begin
+# and end values.
+#
+# You can create an Range object explicitly with:
+#
+# *   A [range literal](doc/syntax/literals_rdoc.html#label-Range+Literals):
+#
+#         # Ranges that use '..' to include the given end value.
+#         (1..4).to_a      # => [1, 2, 3, 4]
+#         ('a'..'d').to_a  # => ["a", "b", "c", "d"]
+#         # Ranges that use '...' to exclude the given end value.
+#         (1...4).to_a     # => [1, 2, 3]
+#         ('a'...'d').to_a # => ["a", "b", "c"]
+#
+#
+# A range may be created using method Range.new:
+#
+#     # Ranges that by default include the given end value.
+#     Range.new(1, 4).to_a     # => [1, 2, 3, 4]
+#     Range.new('a', 'd').to_a # => ["a", "b", "c", "d"]
+#     # Ranges that use third argument +exclude_end+ to exclude the given end value.
+#     Range.new(1, 4, true).to_a     # => [1, 2, 3]
+#     Range.new('a', 'd', true).to_a # => ["a", "b", "c"]
+#
+# ## Beginless Ranges
+#
+# A *beginless* *range* has a definite end value, but a `nil` begin value. Such
+# a range includes all values up to the end value.
+#
+#     r = (..4)               # => nil..4
+#     r.begin                 # => nil
+#     r.include?(-50)         # => true
+#     r.include?(4)           # => true
+#
+#     r = (...4)              # => nil...4
+#     r.include?(4)           # => false
+#
+#     Range.new(nil, 4)       # => nil..4
+#     Range.new(nil, 4, true) # => nil...4
+#
+# A beginless range may be used to slice an array:
+#
+#     a = [1, 2, 3, 4]
+#     r = (..2) # => nil...2
+#     a[r]      # => [1, 2]
+#
+# Method `each` for a beginless range raises an exception.
+#
+# ## Endless Ranges
+#
+# An *endless* *range* has a definite begin value, but a `nil` end value. Such a
+# range includes all values from the begin value.
+#
+#     r = (1..)         # => 1..
+#     r.end             # => nil
+#     r.include?(50)    # => true
+#
+#     Range.new(1, nil) # => 1..
+#
+# The literal for  an endless range may be written with either two dots or
+# three. The range has the same elements, either way. But note that the two are
+# not equal:
+#
+#     r0 = (1..)           # => 1..
+#     r1 = (1...)          # => 1...
+#     r0.begin == r1.begin # => true
+#     r0.end == r1.end     # => true
+#     r0 == r1             # => false
+#
+# An endless range may be used to slice an array:
+#
+#     a = [1, 2, 3, 4]
+#     r = (2..) # => 2..
+#     a[r]      # => [3, 4]
+#
+# Method `each` for an endless range calls the given block indefinitely:
+#
+#     a = []
+#     r = (1..)
+#     r.each do |i|
+#       a.push(i) if i.even?
+#       break if i > 10
+#     end
+#     a # => [2, 4, 6, 8, 10]
+#
+# ## Ranges and Other Classes
+#
+# An object may be put into a range if its class implements instance method
+# `<=>`. Ruby core classes that do so include Array, Complex, File::Stat, Float,
+# Integer, Kernel, Module, Numeric, Rational, String, Symbol, and Time.
+#
+# Example:
+#
+#     t0 = Time.now         # => 2021-09-19 09:22:48.4854986 -0500
+#     t1 = Time.now         # => 2021-09-19 09:22:56.0365079 -0500
+#     t2 = Time.now         # => 2021-09-19 09:23:08.5263283 -0500
+#     (t0..t2).include?(t1) # => true
+#     (t0..t1).include?(t2) # => false
+#
+# A range can be iterated over only if its elements implement instance method
+# `succ`. Ruby core classes that do so include Integer, String, and Symbol (but
+# not the other classes mentioned above).
+#
+# Iterator methods include:
+#
+# *   In Range itself: #each, #step, and #%
+# *   Included from module Enumerable: #each_entry, #each_with_index,
+#     #each_with_object, #each_slice, #each_cons, and #reverse_each.
+#
+#
+# Example:
+#
+#     a = []
+#     (1..4).each {|i| a.push(i) }
+#     a # => [1, 2, 3, 4]
+#
+# ## Ranges and User-Defined Classes
+#
+# A user-defined class that is to be used in a range must implement instance
+# `<=>`; see [Integer#<=>](Integer.html#label-method-i-3C-3D-3E). To make
+# iteration available, it must also implement instance method `succ`; see
+# Integer#succ.
+#
+# The class below implements both `<=>` and `succ`, and so can be used both to
+# construct ranges and to iterate over them. Note that the Comparable module is
+# included so the `==` method is defined in terms of `<=>`.
+#
+#     # Represent a string of 'X' characters.
+#     class Xs
+#       include Comparable
+#       attr_accessor :length
+#       def initialize(n)
+#         @length = n
+#       end
+#       def succ
+#         Xs.new(@length + 1)
+#       end
+#       def <=>(other)
+#         @length <=> other.length
+#       end
+#       def to_s
+#         sprintf "%2d #{inspect}", @length
+#       end
+#       def inspect
+#         'X' * @length
+#       end
+#     end
+#
+#     r = Xs.new(3)..Xs.new(6) #=> XXX..XXXXXX
+#     r.to_a                   #=> [XXX, XXXX, XXXXX, XXXXXX]
+#     r.include?(Xs.new(5))    #=> true
+#     r.include?(Xs.new(7))    #=> false
+#
+# ## What's Here
+#
+# First, what's elsewhere. Class Range:
+#
+# *   Inherits from [class
+#     Object](Object.html#class-Object-label-What-27s+Here).
+# *   Includes [module
+#     Enumerable](Enumerable.html#module-Enumerable-label-What-27s+Here), which
+#     provides dozens of additional methods.
+#
+#
+# Here, class Range provides methods that are useful for:
+#
+# *   [Creating a Range](#class-Range-label-Methods+for+Creating+a+Range)
+# *   [Querying](#class-Range-label-Methods+for+Querying)
+# *   [Comparing](#class-Range-label-Methods+for+Comparing)
+# *   [Iterating](#class-Range-label-Methods+for+Iterating)
+# *   [Converting](#class-Range-label-Methods+for+Converting)
+#
+#
+# ### Methods for Creating a Range
+#
+#     ::new
+# :       Returns a new range.
+#
+#
+#
+# ### Methods for Querying
+#
+#     #begin
+# :       Returns the begin value given for `self`.
+#
+#     #bsearch
+# :       Returns an element from `self` selected by a binary search.
+#
+#     #count
+# :       Returns a count of elements in `self`.
+#
+#     #end
+# :       Returns the end value given for `self`.
+#
+#     #exclude_end?
+# :       Returns whether the end object is excluded.
+#
+#     #first
+# :       Returns the first elements of `self`.
+#
+#     #hash
+# :       Returns the integer hash code.
+#
+#     #last
+# :       Returns the last elements of `self`.
+#
+#     #max
+# :       Returns the maximum values in `self`.
+#
+#     #min
+# :       Returns the minimum values in `self`.
+#
+#     #minmax
+# :       Returns the minimum and maximum values in `self`.
+#
+#     #size
+# :       Returns the count of elements in `self`.
+#
+#
+#
+# ### Methods for Comparing
+#
+#     [#==](#method-i-3D-3D)
+# :       Returns whether a given object is equal to `self` (uses #==).
+#
+#     #===
+# :       Returns whether the given object is between the begin and end values.
+#
+#     #cover?
+# :       Returns whether a given object is within `self`.
+#
+#     #eql?
+# :       Returns whether a given object is equal to `self` (uses #eql?).
+#
+#     #include? (aliased as #member?)
+# :       Returns whether a given object is an element of `self`.
+#
+#
+#
+# ### Methods for Iterating
+#
+#     #%
+# :       Requires argument `n`; calls the block with each `n`-th element of
+#         `self`.
+#
+#     #each
+# :       Calls the block with each element of `self`.
+#
+#     #step
+# :       Takes optional argument `n` (defaults to 1); calls the block with each
+#         `n`-th element of `self`.
+#
+#
+#
+# ### Methods for Converting
+#
+#     #inspect
+# :       Returns a string representation of `self` (uses #inspect).
+#
+#     #to_a (aliased as #entries)
+# :       Returns elements of `self` in an array.
+#
+#     #to_s
+# :       Returns a string representation of `self` (uses #to_s).
+#
+class Range[out Elem] < Object
+  include Enumerable[Elem]
+
+  # <!--
+  #   rdoc-file=range.c
+  #   - self == other -> true or false
+  # -->
+  # Returns `true` if and only if:
+  #
+  # *   `other` is a range.
+  # *   `other.begin == self.begin`.
+  # *   `other.end == self.end`.
+  # *   `other.exclude_end? == self.exclude_end?`.
+  #
+  #
+  # Otherwise returns `false`.
+  #
+  #     r = (1..5)
+  #     r == (1..5)                # => true
+  #     r = Range.new(1, 5)
+  #     r == 'foo'                 # => false
+  #     r == (2..5)                # => false
+  #     r == (1..4)                # => false
+  #     r == (1...5)               # => false
+  #     r == Range.new(1, 5, true) # => false
+  #
+  # Note that even with the same argument, the return values of #== and #eql? can
+  # differ:
+  #
+  #     (1..2) == (1..2.0)   # => true
+  #     (1..2).eql? (1..2.0) # => false
+  #
+  # Related: Range#eql?.
+  #
+  def ==: (untyped obj) -> bool
+
+  # <!--
+  #   rdoc-file=range.c
+  #   - self === object ->  true or false
+  # -->
+  # Returns `true` if `object` is between `self.begin` and `self.end`. `false`
+  # otherwise:
+  #
+  #     (1..4) === 2       # => true
+  #     (1..4) === 5       # => false
+  #     (1..4) === 'a'     # => false
+  #     (1..4) === 4       # => true
+  #     (1...4) === 4      # => false
+  #     ('a'..'d') === 'c' # => true
+  #     ('a'..'d') === 'e' # => false
+  #
+  # A case statement uses method `===`, and so:
+  #
+  #     case 79
+  #     when (1..50)
+  #       "low"
+  #     when (51..75)
+  #       "medium"
+  #     when (76..100)
+  #       "high"
+  #     end # => "high"
+  #
+  #     case "2.6.5"
+  #     when ..."2.4"
+  #       "EOL"
+  #     when "2.4"..."2.5"
+  #       "maintenance"
+  #     when "2.5"..."3.0"
+  #       "stable"
+  #     when "3.1"..
+  #       "upcoming"
+  #     end # => "stable"
+  #
+  def ===: (untyped obj) -> bool
+
+  # <!--
+  #   rdoc-file=range.c
+  #   - self.begin -> object
+  # -->
+  # Returns the object that defines the beginning of `self`.
+  #
+  #     (1..4).begin # => 1
+  #     (..2).begin  # => nil
+  #
+  # Related: Range#first, Range#end.
+  #
+  def begin: () -> Elem
+
+  # <!--
+  #   rdoc-file=range.c
+  #   - bsearch {|obj| block }  -> value
+  # -->
+  # Returns an element from `self` selected by a binary search.
+  #
+  # See [Binary Searching](rdoc-ref:bsearch.rdoc).
+  #
+  def bsearch: () -> ::Enumerator[Elem, Elem?]
+             | () { (Elem) -> (true | false) } -> Elem?
+             | () { (Elem) -> ::Integer } -> Elem?
+
+  # <!--
+  #   rdoc-file=range.c
+  #   - cover?(object) -> true or false
+  #   - cover?(range) -> true or false
+  # -->
+  # Returns `true` if the given argument is within `self`, `false` otherwise.
+  #
+  # With non-range argument `object`, evaluates with `<=` and `<`.
+  #
+  # For range `self` with included end value (`#exclude_end? == false`), evaluates
+  # thus:
+  #
+  #     self.begin <= object <= self.end
+  #
+  # Examples:
+  #
+  #     r = (1..4)
+  #     r.cover?(1)     # => true
+  #     r.cover?(4)     # => true
+  #     r.cover?(0)     # => false
+  #     r.cover?(5)     # => false
+  #     r.cover?('foo') # => false
+  #
+  #     r = ('a'..'d')
+  #     r.cover?('a')     # => true
+  #     r.cover?('d')     # => true
+  #     r.cover?(' ')     # => false
+  #     r.cover?('e')     # => false
+  #     r.cover?(0)       # => false
+  #
+  # For range `r` with excluded end value (`#exclude_end? == true`), evaluates
+  # thus:
+  #
+  #     r.begin <= object < r.end
+  #
+  # Examples:
+  #
+  #     r = (1...4)
+  #     r.cover?(1)     # => true
+  #     r.cover?(3)     # => true
+  #     r.cover?(0)     # => false
+  #     r.cover?(4)     # => false
+  #     r.cover?('foo') # => false
+  #
+  #     r = ('a'...'d')
+  #     r.cover?('a')     # => true
+  #     r.cover?('c')     # => true
+  #     r.cover?(' ')     # => false
+  #     r.cover?('d')     # => false
+  #     r.cover?(0)       # => false
+  #
+  # With range argument `range`, compares the first and last elements of `self`
+  # and `range`:
+  #
+  #     r = (1..4)
+  #     r.cover?(1..4)     # => true
+  #     r.cover?(0..4)     # => false
+  #     r.cover?(1..5)     # => false
+  #     r.cover?('a'..'d') # => false
+  #
+  #     r = (1...4)
+  #     r.cover?(1..3)     # => true
+  #     r.cover?(1..4)     # => false
+  #
+  # If begin and end are numeric, #cover? behaves like #include?
+  #
+  #     (1..3).cover?(1.5) # => true
+  #     (1..3).include?(1.5) # => true
+  #
+  # But when not numeric, the two methods may differ:
+  #
+  #     ('a'..'d').cover?('cc')   # => true
+  #     ('a'..'d').include?('cc') # => false
+  #
+  # Returns `false` if either:
+  #
+  # *   The begin value of `self` is larger than its end value.
+  # *   An internal call to `<=>` returns `nil`; that is, the operands are not
+  #     comparable.
+  #
+  #
+  # Related: Range#include?.
+  #
+  def cover?: (untyped obj) -> bool
+
+  # <!--
+  #   rdoc-file=range.c
+  #   - each {|element| ... } -> self
+  #   - each                  -> an_enumerator
+  # -->
+  # With a block given, passes each element of `self` to the block:
+  #
+  #     a = []
+  #     (1..4).each {|element| a.push(element) } # => 1..4
+  #     a # => [1, 2, 3, 4]
+  #
+  # Raises an exception unless `self.first.respond_to?(:succ)`.
+  #
+  # With no block given, returns an enumerator.
+  #
+  def each: () { (Elem arg0) -> untyped } -> self
+          | () -> ::Enumerator[Elem, self]
+
+  # <!--
+  #   rdoc-file=range.c
+  #   - self.end -> object
+  # -->
+  # Returns the object that defines the end of `self`.
+  #
+  #     (1..4).end  # => 4
+  #     (1...4).end # => 4
+  #     (1..).end   # => nil
+  #
+  # Related: Range#begin, Range#last.
+  #
+  def end: () -> Elem
+
+  # <!--
+  #   rdoc-file=range.c
+  #   - exclude_end? -> true or false
+  # -->
+  # Returns `true` if `self` excludes its end value; `false` otherwise:
+  #
+  #     Range.new(2, 5).exclude_end?       # => false
+  #     Range.new(2, 5, true).exclude_end? # => true
+  #     (2..5).exclude_end?                # => false
+  #     (2...5).exclude_end?               # => true
+  #
+  def exclude_end?: () -> bool
+
+  # <!--
+  #   rdoc-file=range.c
+  #   - first -> object
+  #   - first(n) -> array
+  # -->
+  # With no argument, returns the first element of `self`, if it exists:
+  #
+  #     (1..4).first     # => 1
+  #     ('a'..'d').first # => "a"
+  #
+  # With non-negative integer argument `n` given, returns the first `n` elements
+  # in an array:
+  #
+  #     (1..10).first(3) # => [1, 2, 3]
+  #     (1..10).first(0) # => []
+  #     (1..4).first(50) # => [1, 2, 3, 4]
+  #
+  # Raises an exception if there is no first element:
+  #
+  #     (..4).first # Raises RangeError
+  #
+  def first: () -> Elem
+           | (Integer n) -> ::Array[Elem]
+
+  # <!--
+  #   rdoc-file=range.c
+  #   - hash -> integer
+  # -->
+  # Returns the integer hash value for `self`. Two range objects `r0` and `r1`
+  # have the same hash value if and only if `r0.eql?(r1)`.
+  #
+  # Related: Range#eql?, Object#hash.
+  #
+  def hash: () -> Integer
+
+  # <!-- rdoc-file=range.c -->
+  # Returns `true` if `object` is an element of `self`, `false` otherwise:
+  #
+  #     (1..4).include?(2)        # => true
+  #     (1..4).include?(5)        # => false
+  #     (1..4).include?(4)        # => true
+  #     (1...4).include?(4)       # => false
+  #     ('a'..'d').include?('b')  # => true
+  #     ('a'..'d').include?('e')  # => false
+  #     ('a'..'d').include?('B')  # => false
+  #     ('a'..'d').include?('d')  # => true
+  #     ('a'...'d').include?('d') # => false
+  #
+  # If begin and end are numeric, #include? behaves like #cover?
+  #
+  #     (1..3).include?(1.5) # => true
+  #     (1..3).cover?(1.5) # => true
+  #
+  # But when not numeric, the two methods may differ:
+  #
+  #     ('a'..'d').include?('cc') # => false
+  #     ('a'..'d').cover?('cc')   # => true
+  #
+  # Related: Range#cover?.
+  #
+  # Range#member? is an alias for Range#include?.
+  #
+  def include?: (untyped obj) -> bool
+
+  # <!--
+  #   rdoc-file=range.c
+  #   - Range.new(begin, end, exclude_end = false) -> new_range
+  # -->
+  # Returns a new range based on the given objects `begin` and `end`. Optional
+  # argument `exclude_end` determines whether object `end` is included as the last
+  # object in the range:
+  #
+  #     Range.new(2, 5).to_a            # => [2, 3, 4, 5]
+  #     Range.new(2, 5, true).to_a      # => [2, 3, 4]
+  #     Range.new('a', 'd').to_a        # => ["a", "b", "c", "d"]
+  #     Range.new('a', 'd', true).to_a  # => ["a", "b", "c"]
+  #
+  def initialize: (Elem from, Elem to, ?boolish exclude_end) -> void
+
+  # <!--
+  #   rdoc-file=range.c
+  #   - inspect -> string
+  # -->
+  # Returns a string representation of `self`, including `begin.inspect` and
+  # `end.inspect`:
+  #
+  #     (1..4).inspect  # => "1..4"
+  #     (1...4).inspect # => "1...4"
+  #     (1..).inspect   # => "1.."
+  #     (..4).inspect   # => "..4"
+  #
+  # Note that returns from #to_s and #inspect may differ:
+  #
+  #     ('a'..'d').to_s    # => "a..d"
+  #     ('a'..'d').inspect # => "\"a\"..\"d\""
+  #
+  # Related: Range#to_s.
+  #
+  def inspect: () -> String
+
+  # <!--
+  #   rdoc-file=range.c
+  #   - last -> object
+  #   - last(n) -> array
+  # -->
+  # With no argument, returns the last element of `self`, if it exists:
+  #
+  #     (1..4).last     # => 4
+  #     ('a'..'d').last # => "d"
+  #
+  # Note that `last` with no argument returns the end element of `self` even if
+  # #exclude_end? is `true`:
+  #
+  #     (1...4).last     # => 4
+  #     ('a'...'d').last # => "d"
+  #
+  # With non-negative integer argument `n` given, returns the last `n` elements in
+  # an array:
+  #
+  #     (1..10).last(3) # => [8, 9, 10]
+  #     (1..10).last(0) # => []
+  #     (1..4).last(50) # => [1, 2, 3, 4]
+  #
+  # Note that `last` with argument does not return the end element of `self` if
+  # #exclude_end? it `true`:
+  #
+  #     (1...4).last(3)     # => [1, 2, 3]
+  #     ('a'...'d').last(3) # => ["a", "b", "c"]
+  #
+  # Raises an exception if there is no last element:
+  #
+  #     (1..).last # Raises RangeError
+  #
+  def last: () -> Elem
+          | (Integer n) -> ::Array[Elem]
+
+  # <!--
+  #   rdoc-file=range.c
+  #   - max -> object
+  #   - max(n) -> array
+  #   - max {|a, b| ... } -> object
+  #   - max(n) {|a, b| ... } -> array
+  # -->
+  # Returns the maximum value in `self`, using method `<=>` or a given block for
+  # comparison.
+  #
+  # With no argument and no block given, returns the maximum-valued element of
+  # `self`.
+  #
+  #     (1..4).max     # => 4
+  #     ('a'..'d').max # => "d"
+  #     (-4..-1).max   # => -1
+  #
+  # With non-negative integer argument `n` given, and no block given, returns the
+  # `n` maximum-valued elements of `self` in an array:
+  #
+  #     (1..4).max(2)     # => [4, 3]
+  #     ('a'..'d').max(2) # => ["d", "c"]
+  #     (-4..-1).max(2)   # => [-1, -2]
+  #     (1..4).max(50)    # => [4, 3, 2, 1]
+  #
+  # If a block is given, it is called:
+  #
+  # *   First, with the first two element of `self`.
+  # *   Then, sequentially, with the so-far maximum value and the next element of
+  #     `self`.
+  #
+  #
+  # To illustrate:
+  #
+  #     (1..4).max {|a, b| p [a, b]; a <=> b } # => 4
+  #
+  # Output:
+  #
+  #     [2, 1]
+  #     [3, 2]
+  #     [4, 3]
+  #
+  # With no argument and a block given, returns the return value of the last call
+  # to the block:
+  #
+  #     (1..4).max {|a, b| -(a <=> b) } # => 1
+  #
+  # With non-negative integer argument `n` given, and a block given, returns the
+  # return values of the last `n` calls to the block in an array:
+  #
+  #     (1..4).max(2) {|a, b| -(a <=> b) }  # => [1, 2]
+  #     (1..4).max(50) {|a, b| -(a <=> b) } # => [1, 2, 3, 4]
+  #
+  # Returns an empty array if `n` is zero:
+  #
+  #     (1..4).max(0)                      # => []
+  #     (1..4).max(0) {|a, b| -(a <=> b) } # => []
+  #
+  # Returns `nil` or an empty array if:
+  #
+  # *   The begin value of the range is larger than the end value:
+  #
+  #         (4..1).max                         # => nil
+  #         (4..1).max(2)                      # => []
+  #         (4..1).max {|a, b| -(a <=> b) }    # => nil
+  #         (4..1).max(2) {|a, b| -(a <=> b) } # => []
+  #
+  # *   The begin value of an exclusive range is equal to the end value:
+  #
+  #         (1...1).max                          # => nil
+  #         (1...1).max(2)                       # => []
+  #         (1...1).max  {|a, b| -(a <=> b) }    # => nil
+  #         (1...1).max(2)  {|a, b| -(a <=> b) } # => []
+  #
+  #
+  # Raises an exception if either:
+  #
+  # *   `self` is a endless range: `(1..)`.
+  # *   A block is given and `self` is a beginless range.
+  #
+  #
+  # Related: Range#min, Range#minmax.
+  #
+  def max: () -> Elem
+         | () { (Elem a, Elem b) -> Integer } -> Elem
+         | (Integer n) -> ::Array[Elem]
+         | (Integer n) { (Elem a, Elem b) -> Integer } -> ::Array[Elem]
+
+  # <!--
+  #   rdoc-file=range.c
+  #   - min -> object
+  #   - min(n) -> array
+  #   - min {|a, b| ... } -> object
+  #   - min(n) {|a, b| ... } -> array
+  # -->
+  # Returns the minimum value in `self`, using method `<=>` or a given block for
+  # comparison.
+  #
+  # With no argument and no block given, returns the minimum-valued element of
+  # `self`.
+  #
+  #     (1..4).min     # => 1
+  #     ('a'..'d').min # => "a"
+  #     (-4..-1).min   # => -4
+  #
+  # With non-negative integer argument `n` given, and no block given, returns the
+  # `n` minimum-valued elements of `self` in an array:
+  #
+  #     (1..4).min(2)     # => [1, 2]
+  #     ('a'..'d').min(2) # => ["a", "b"]
+  #     (-4..-1).min(2)   # => [-4, -3]
+  #     (1..4).min(50)    # => [1, 2, 3, 4]
+  #
+  # If a block is given, it is called:
+  #
+  # *   First, with the first two element of `self`.
+  # *   Then, sequentially, with the so-far minimum value and the next element of
+  #     `self`.
+  #
+  #
+  # To illustrate:
+  #
+  #     (1..4).min {|a, b| p [a, b]; a <=> b } # => 1
+  #
+  # Output:
+  #
+  #     [2, 1]
+  #     [3, 1]
+  #     [4, 1]
+  #
+  # With no argument and a block given, returns the return value of the last call
+  # to the block:
+  #
+  #     (1..4).min {|a, b| -(a <=> b) } # => 4
+  #
+  # With non-negative integer argument `n` given, and a block given, returns the
+  # return values of the last `n` calls to the block in an array:
+  #
+  #     (1..4).min(2) {|a, b| -(a <=> b) }  # => [4, 3]
+  #     (1..4).min(50) {|a, b| -(a <=> b) } # => [4, 3, 2, 1]
+  #
+  # Returns an empty array if `n` is zero:
+  #
+  #     (1..4).min(0)                      # => []
+  #     (1..4).min(0) {|a, b| -(a <=> b) } # => []
+  #
+  # Returns `nil` or an empty array if:
+  #
+  # *   The begin value of the range is larger than the end value:
+  #
+  #         (4..1).min                         # => nil
+  #         (4..1).min(2)                      # => []
+  #         (4..1).min {|a, b| -(a <=> b) }    # => nil
+  #         (4..1).min(2) {|a, b| -(a <=> b) } # => []
+  #
+  # *   The begin value of an exclusive range is equal to the end value:
+  #
+  #         (1...1).min                          # => nil
+  #         (1...1).min(2)                       # => []
+  #         (1...1).min  {|a, b| -(a <=> b) }    # => nil
+  #         (1...1).min(2)  {|a, b| -(a <=> b) } # => []
+  #
+  #
+  # Raises an exception if either:
+  #
+  # *   `self` is a beginless range: `(..4)`.
+  # *   A block is given and `self` is an endless range.
+  #
+  #
+  # Related: Range#max, Range#minmax.
+  #
+  def min: () -> Elem
+         | () { (Elem a, Elem b) -> Integer } -> Elem
+         | (Integer n) -> ::Array[Elem]
+         | (Integer n) { (Elem a, Elem b) -> Integer } -> ::Array[Elem]
+
+  # <!--
+  #   rdoc-file=range.c
+  #   - size -> non_negative_integer or Infinity or nil
+  # -->
+  # Returns the count of elements in `self` if both begin and end values are
+  # numeric; otherwise, returns `nil`:
+  #
+  #     (1..4).size      # => 4
+  #     (1...4).size     # => 3
+  #     (1..).size       # => Infinity
+  #     ('a'..'z').size  #=> nil
+  #
+  # Related: Range#count.
+  #
+  def size: () -> Integer?
+          | () -> Float?
+
+  # <!--
+  #   rdoc-file=range.c
+  #   - step(n = 1) {|element| ... } -> self
+  #   - step(n = 1)                  -> enumerator
+  # -->
+  # Iterates over the elements of `self`.
+  #
+  # With a block given and no argument, calls the block each element of the range;
+  # returns `self`:
+  #
+  #     a = []
+  #     (1..5).step {|element| a.push(element) } # => 1..5
+  #     a # => [1, 2, 3, 4, 5]
+  #     a = []
+  #     ('a'..'e').step {|element| a.push(element) } # => "a".."e"
+  #     a # => ["a", "b", "c", "d", "e"]
+  #
+  # With a block given and a positive integer argument `n` given, calls the block
+  # with element `0`, element `n`, element `2n`, and so on:
+  #
+  #     a = []
+  #     (1..5).step(2) {|element| a.push(element) } # => 1..5
+  #     a # => [1, 3, 5]
+  #     a = []
+  #     ('a'..'e').step(2) {|element| a.push(element) } # => "a".."e"
+  #     a # => ["a", "c", "e"]
+  #
+  # With no block given, returns an enumerator, which will be of class
+  # Enumerator::ArithmeticSequence if `self` is numeric; otherwise of class
+  # Enumerator:
+  #
+  #     e = (1..5).step(2) # => ((1..5).step(2))
+  #     e.class            # => Enumerator::ArithmeticSequence
+  #     ('a'..'e').step # => #<Enumerator: ...>
+  #
+  # Related: Range#%.
+  #
+  def step: (?Integer n) { (Elem arg0) -> untyped } -> self
+          | (?Integer n) -> ::Enumerator[Elem, void]
+
+  # <!--
+  #   rdoc-file=range.c
+  #   - to_s -> string
+  # -->
+  # Returns a string representation of `self`, including `begin.to_s` and
+  # `end.to_s`:
+  #
+  #     (1..4).to_s  # => "1..4"
+  #     (1...4).to_s # => "1...4"
+  #     (1..).to_s   # => "1.."
+  #     (..4).to_s   # => "..4"
+  #
+  # Note that returns from #to_s and #inspect may differ:
+  #
+  #     ('a'..'d').to_s    # => "a..d"
+  #     ('a'..'d').inspect # => "\"a\"..\"d\""
+  #
+  # Related: Range#inspect.
+  #
+  def to_s: () -> String
+
+  # <!--
+  #   rdoc-file=range.c
+  #   - eql?(other) -> true or false
+  # -->
+  # Returns `true` if and only if:
+  #
+  # *   `other` is a range.
+  # *   `other.begin eql? self.begin`.
+  # *   `other.end eql? self.end`.
+  # *   `other.exclude_end? == self.exclude_end?`.
+  #
+  #
+  # Otherwise returns `false`.
+  #
+  #     r = (1..5)
+  #     r.eql?(1..5)                  # => true
+  #     r = Range.new(1, 5)
+  #     r.eql?('foo')                 # => false
+  #     r.eql?(2..5)                  # => false
+  #     r.eql?(1..4)                  # => false
+  #     r.eql?(1...5)                 # => false
+  #     r.eql?(Range.new(1, 5, true)) # => false
+  #
+  # Note that even with the same argument, the return values of #== and #eql? can
+  # differ:
+  #
+  #     (1..2) == (1..2.0)   # => true
+  #     (1..2).eql? (1..2.0) # => false
+  #
+  # Related: Range#==.
+  #
+  def eql?: (untyped obj) -> bool
+
+  # <!--
+  #   rdoc-file=range.c
+  #   - include?(object) -> true or false
+  # -->
+  # Returns `true` if `object` is an element of `self`, `false` otherwise:
+  #
+  #     (1..4).include?(2)        # => true
+  #     (1..4).include?(5)        # => false
+  #     (1..4).include?(4)        # => true
+  #     (1...4).include?(4)       # => false
+  #     ('a'..'d').include?('b')  # => true
+  #     ('a'..'d').include?('e')  # => false
+  #     ('a'..'d').include?('B')  # => false
+  #     ('a'..'d').include?('d')  # => true
+  #     ('a'...'d').include?('d') # => false
+  #
+  # If begin and end are numeric, #include? behaves like #cover?
+  #
+  #     (1..3).include?(1.5) # => true
+  #     (1..3).cover?(1.5) # => true
+  #
+  # But when not numeric, the two methods may differ:
+  #
+  #     ('a'..'d').include?('cc') # => false
+  #     ('a'..'d').cover?('cc')   # => true
+  #
+  # Related: Range#cover?.
+  #
+  # Range#member? is an alias for Range#include?.
+  #
+  def member?: (untyped obj) -> bool
+end

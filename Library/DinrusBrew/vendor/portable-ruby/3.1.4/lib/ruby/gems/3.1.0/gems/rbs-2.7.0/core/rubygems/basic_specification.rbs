@@ -1,0 +1,6 @@
+# <!-- rdoc-file=lib/rubygems/basic_specification.rb -->
+# BasicSpecification is an abstract class which implements some common code used
+# by both Specification and StubSpecification.
+#
+class Gem::BasicSpecification
+end

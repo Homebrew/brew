@@ -1,0 +1,19 @@
+<component name="libraryTable">
+  <library name="cask">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/test/support/fixtures/cask/caffeine-suite.zip!/" />
+      <root url="jar://$PROJECT_DIR$/test/support/fixtures/cask/AppWithBinary.zip!/" />
+      <root url="jar://$PROJECT_DIR$/test/support/fixtures/cask/NestedApp.dmg.zip!/" />
+      <root url="jar://$PROJECT_DIR$/test/support/fixtures/cask/MyFancyApp.zip!/" />
+      <root url="jar://$PROJECT_DIR$/test/support/fixtures/cask/caffeines.zip!/" />
+      <root url="jar://$PROJECT_DIR$/test/support/fixtures/cask/AppWithManpage.zip!/" />
+      <root url="jar://$PROJECT_DIR$/test/support/fixtures/cask/caffeines-subdir.zip!/" />
+      <root url="jar://$PROJECT_DIR$/test/support/fixtures/cask/AppWithEmbeddedBinary.zip!/" />
+      <root url="jar://$PROJECT_DIR$/test/support/fixtures/cask/caffeine.zip!/" />
+      <root url="jar://$PROJECT_DIR$/test/support/fixtures/cask/caffeine-with-plist.zip!/" />
+      <root url="jar://$PROJECT_DIR$/test/support/fixtures/cask/MyFancyPkg.zip!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

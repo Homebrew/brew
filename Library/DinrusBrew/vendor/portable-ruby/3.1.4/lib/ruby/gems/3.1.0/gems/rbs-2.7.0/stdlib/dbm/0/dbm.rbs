@@ -1,0 +1,423 @@
+# <!-- rdoc-file=ext/dbm/dbm.c -->
+# ## Introduction
+#
+# The DBM class provides a wrapper to a Unix-style
+# [dbm](https://en.wikipedia.org/wiki/Dbm) or Database Manager library.
+#
+# Dbm databases do not have tables or columns; they are simple key-value data
+# stores, like a Ruby Hash except not resident in RAM. Keys and values must be
+# strings.
+#
+# The exact library used depends on how Ruby was compiled. It could be any of
+# the following:
+#
+# *   The original ndbm library is released in 4.3BSD. It is based on dbm
+#     library in Unix Version 7 but has different API to support multiple
+#     databases in a process.
+# *   [Berkeley DB](https://en.wikipedia.org/wiki/Berkeley_DB) versions 1 thru
+#     6, also known as BDB and Sleepycat DB, now owned by Oracle Corporation.
+# *   Berkeley DB 1.x, still found in 4.4BSD derivatives (FreeBSD, OpenBSD,
+#     etc).
+# *   [gdbm](http://www.gnu.org/software/gdbm/), the GNU implementation of dbm.
+# *   [qdbm](http://fallabs.com/qdbm/index.html), another open source
+#     reimplementation of dbm.
+#
+#
+# All of these dbm implementations have their own Ruby interfaces available,
+# which provide richer (but varying) APIs.
+#
+# ## Cautions
+#
+# Before you decide to use DBM, there are some issues you should consider:
+#
+# *   Each implementation of dbm has its own file format. Generally, dbm
+#     libraries will not read each other's files. This makes dbm files a bad
+#     choice for data exchange.
+#
+# *   Even running the same OS and the same dbm implementation, the database
+#     file format may depend on the CPU architecture. For example, files may not
+#     be portable between PowerPC and 386, or between 32 and 64 bit Linux.
+#
+# *   Different versions of Berkeley DB use different file formats. A change to
+#     the OS may therefore break DBM access to existing files.
+#
+# *   Data size limits vary between implementations. Original Berkeley DB was
+#     limited to 2GB of data. Dbm libraries also sometimes limit the total size
+#     of a key/value pair, and the total size of all the keys that hash to the
+#     same value. These limits can be as little as 512 bytes. That said, gdbm
+#     and recent versions of Berkeley DB do away with these limits.
+#
+#
+# Given the above cautions, DBM is not a good choice for long term storage of
+# important data. It is probably best used as a fast and easy alternative to a
+# Hash for processing large amounts of data.
+#
+# ## Example
+#
+#     require 'dbm'
+#     db = DBM.open('rfcs', 0666, DBM::WRCREAT)
+#     db['822'] = 'Standard for the Format of ARPA Internet Text Messages'
+#     db['1123'] = 'Requirements for Internet Hosts - Application and Support'
+#     db['3068'] = 'An Anycast Prefix for 6to4 Relay Routers'
+#     puts db['822']
+#
+class DBM
+  include Enumerable[[ String, String ]]
+
+  # <!--
+  #   rdoc-file=ext/dbm/dbm.c
+  #   - DBM.open(filename[, mode[, flags]]) -> dbm
+  #   - DBM.open(filename[, mode[, flags]]) {|dbm| block}
+  # -->
+  # Open a dbm database and yields it if a block is given. See also `DBM.new`.
+  #
+  def self.open: (String filename, ?Integer mode, ?Integer flags) -> DBM
+               | [T] (String filename, ?Integer mode, ?Integer flags) { (DBM) -> T } -> T
+
+  public
+
+  # <!--
+  #   rdoc-file=ext/dbm/dbm.c
+  #   - dbm[key] -> string value or nil
+  # -->
+  # Return a value from the database by locating the key string provided.  If the
+  # key is not found, returns nil.
+  #
+  def []: (String) -> String?
+
+  # <!--
+  #   rdoc-file=ext/dbm/dbm.c
+  #   - dbm.store(key, value) -> value
+  #   - dbm[key] = value
+  # -->
+  # Stores the specified string value in the database, indexed via the string key
+  # provided.
+  #
+  def []=: (String, String) -> String
+
+  # <!--
+  #   rdoc-file=ext/dbm/dbm.c
+  #   - dbm.clear
+  # -->
+  # Deletes all data from the database.
+  #
+  def clear: () -> self
+
+  # <!--
+  #   rdoc-file=ext/dbm/dbm.c
+  #   - dbm.close
+  # -->
+  # Closes the database.
+  #
+  def close: () -> void
+
+  # <!--
+  #   rdoc-file=ext/dbm/dbm.c
+  #   - dbm.closed? -> true or false
+  # -->
+  # Returns true if the database is closed, false otherwise.
+  #
+  def closed?: () -> bool
+
+  # <!--
+  #   rdoc-file=ext/dbm/dbm.c
+  #   - dbm.delete(key)
+  # -->
+  # Deletes an entry from the database.
+  #
+  def delete: (String) -> void
+
+  # <!--
+  #   rdoc-file=ext/dbm/dbm.c
+  #   - dbm.reject! {|key, value| block} -> self
+  #   - dbm.delete_if {|key, value| block} -> self
+  # -->
+  # Deletes all entries for which the code block returns true. Returns self.
+  #
+  def delete_if: () { (String) -> boolish } -> self
+
+  # <!--
+  #   rdoc-file=ext/dbm/dbm.c
+  #   - dbm.each_pair {|key,value| block} -> self
+  # -->
+  # Calls the block once for each [key, value] pair in the database. Returns self.
+  #
+  def each: () { ([ String, String ]) -> void } -> self
+          | () -> Enumerator[[ String, String ], self]
+
+  # <!--
+  #   rdoc-file=ext/dbm/dbm.c
+  #   - dbm.each_key {|key| block} -> self
+  # -->
+  # Calls the block once for each key string in the database. Returns self.
+  #
+  def each_key: () { (String) -> void } -> self
+              | () -> Enumerator[String, self]
+
+  # <!-- rdoc-file=ext/dbm/dbm.c -->
+  # Calls the block once for each [key, value] pair in the database. Returns self.
+  #
+  def each_pair: () { ([ String, String ]) -> void } -> self
+               | () -> Enumerator[[ String, String ], self]
+
+  # <!--
+  #   rdoc-file=ext/dbm/dbm.c
+  #   - dbm.each_value {|value| block} -> self
+  # -->
+  # Calls the block once for each value string in the database. Returns self.
+  #
+  def each_value: () { (String) -> void } -> self
+                | () -> Enumerator[String, self]
+
+  # <!--
+  #   rdoc-file=ext/dbm/dbm.c
+  #   - dbm.empty?
+  # -->
+  # Returns true if the database is empty, false otherwise.
+  #
+  def empty?: () -> bool
+
+  # <!--
+  #   rdoc-file=ext/dbm/dbm.c
+  #   - dbm.fetch(key[, ifnone]) -> value
+  # -->
+  # Return a value from the database by locating the key string provided.  If the
+  # key is not found, returns `ifnone`. If `ifnone` is not given, raises
+  # IndexError.
+  #
+  def fetch: (String key, ?String ifnone) -> String
+
+  # <!-- rdoc-file=ext/dbm/dbm.c -->
+  # Returns true if the database contains the specified key, false otherwise.
+  #
+  def has_key?: (String) -> bool
+
+  # <!--
+  #   rdoc-file=ext/dbm/dbm.c
+  #   - dbm.has_value?(value) -> boolean
+  #   - dbm.value?(value) -> boolean
+  # -->
+  # Returns true if the database contains the specified string value, false
+  # otherwise.
+  #
+  def has_value?: () -> bool
+
+  # <!--
+  #   rdoc-file=ext/dbm/dbm.c
+  #   - dbm.include?(key) -> boolean
+  #   - dbm.has_key?(key) -> boolean
+  #   - dbm.member?(key) -> boolean
+  #   - dbm.key?(key) -> boolean
+  # -->
+  # Returns true if the database contains the specified key, false otherwise.
+  #
+  def include?: (String) -> bool
+
+  # <!--
+  #   rdoc-file=ext/dbm/dbm.c
+  #   - dbm.invert -> hash
+  # -->
+  # Returns a Hash (not a DBM database) created by using each value in the
+  # database as a key, with the corresponding key as its value.
+  #
+  def invert: () -> Hash[String, String]
+
+  # <!--
+  #   rdoc-file=ext/dbm/dbm.c
+  #   - dbm.key(value) -> string
+  # -->
+  # Returns the key for the specified value.
+  #
+  def key: (String) -> String?
+
+  # <!-- rdoc-file=ext/dbm/dbm.c -->
+  # Returns true if the database contains the specified key, false otherwise.
+  #
+  def key?: (String) -> bool
+
+  # <!--
+  #   rdoc-file=ext/dbm/dbm.c
+  #   - dbm.keys -> array
+  # -->
+  # Returns an array of all the string keys in the database.
+  #
+  def keys: () -> Array[String]
+
+  # <!--
+  #   rdoc-file=ext/dbm/dbm.c
+  #   - dbm.length -> integer
+  #   - dbm.size -> integer
+  # -->
+  # Returns the number of entries in the database.
+  #
+  def length: () -> Integer
+
+  # <!-- rdoc-file=ext/dbm/dbm.c -->
+  # Returns true if the database contains the specified key, false otherwise.
+  #
+  def member?: (String) -> bool
+
+  # <!--
+  #   rdoc-file=ext/dbm/dbm.c
+  #   - dbm.reject {|key,value| block} -> Hash
+  # -->
+  # Converts the contents of the database to an in-memory Hash, then calls
+  # Hash#reject with the specified code block, returning a new Hash.
+  #
+  def reject: () { (String, String) -> boolish } -> Hash[String, String]
+
+  # <!-- rdoc-file=ext/dbm/dbm.c -->
+  # Deletes all entries for which the code block returns true. Returns self.
+  #
+  def reject!: () { (String, String) -> boolish } -> self
+
+  # <!--
+  #   rdoc-file=ext/dbm/dbm.c
+  #   - dbm.replace(obj)
+  # -->
+  # Replaces the contents of the database with the contents of the specified
+  # object. Takes any object which implements the each_pair method, including Hash
+  # and DBM objects.
+  #
+  def replace: (_ReplaceSource) -> ::DBM
+
+  interface _ReplaceSource
+    def each_pair: () { ([ String, String ]) -> void } -> void
+  end
+
+  # <!--
+  #   rdoc-file=ext/dbm/dbm.c
+  #   - dbm.select {|key, value| block} -> array
+  # -->
+  # Returns a new array consisting of the [key, value] pairs for which the code
+  # block returns true.
+  #
+  def select: () { ([ String, String ]) -> boolish } -> Array[[ String, String ]]
+
+  # <!--
+  #   rdoc-file=ext/dbm/dbm.c
+  #   - dbm.shift() -> [key, value]
+  # -->
+  # Removes a [key, value] pair from the database, and returns it. If the database
+  # is empty, returns nil. The order in which values are removed/returned is not
+  # guaranteed.
+  #
+  def shift: () -> [ String, String ]?
+
+  # <!-- rdoc-file=ext/dbm/dbm.c -->
+  # Returns the number of entries in the database.
+  #
+  def size: () -> Integer
+
+  # <!-- rdoc-file=ext/dbm/dbm.c -->
+  # Stores the specified string value in the database, indexed via the string key
+  # provided.
+  #
+  def store: (String, String) -> String
+
+  # <!--
+  #   rdoc-file=ext/dbm/dbm.c
+  #   - dbm.to_a -> array
+  # -->
+  # Converts the contents of the database to an array of [key, value] arrays, and
+  # returns it.
+  #
+  def to_a: () -> Array[[ String, String ]]
+
+  # <!--
+  #   rdoc-file=ext/dbm/dbm.c
+  #   - dbm.to_hash -> hash
+  # -->
+  # Converts the contents of the database to an in-memory Hash object, and returns
+  # it.
+  #
+  def to_hash: () -> Hash[String, String]
+
+  # <!--
+  #   rdoc-file=ext/dbm/dbm.c
+  #   - dbm.update(obj)
+  # -->
+  # Updates the database with multiple values from the specified object. Takes any
+  # object which implements the each_pair method, including Hash and DBM objects.
+  #
+  def update: (_UpdateSource) -> ::DBM
+
+  interface _UpdateSource
+    def each_pair: () { ([ String, String ]) -> void } -> void
+  end
+
+  # <!-- rdoc-file=ext/dbm/dbm.c -->
+  # Returns true if the database contains the specified string value, false
+  # otherwise.
+  #
+  def value?: (String) -> bool
+
+  # <!--
+  #   rdoc-file=ext/dbm/dbm.c
+  #   - dbm.values -> array
+  # -->
+  # Returns an array of all the string values in the database.
+  #
+  def values: () -> Array[String]
+
+  # <!--
+  #   rdoc-file=ext/dbm/dbm.c
+  #   - dbm.values_at(key, ...) -> Array
+  # -->
+  # Returns an array containing the values associated with the given keys.
+  #
+  def values_at: (*String) -> Array[String]
+
+  private
+
+  # <!--
+  #   rdoc-file=ext/dbm/dbm.c
+  #   - DBM.new(filename[, mode[, flags]]) -> dbm
+  # -->
+  # Open a dbm database with the specified name, which can include a directory
+  # path. Any file extensions needed will be supplied automatically by the dbm
+  # library. For example, Berkeley DB appends '.db', and GNU gdbm uses two
+  # physical files with extensions '.dir' and '.pag'.
+  #
+  # The mode should be an integer, as for Unix chmod.
+  #
+  # Flags should be one of READER, WRITER, WRCREAT or NEWDB.
+  #
+  def initialize: (String filename, ?Integer mode, ?Integer flags) -> void
+end
+
+# <!-- rdoc-file=ext/dbm/dbm.c -->
+# Indicates that dbm_open() should open the database in read/write mode, create
+# it if it does not already exist, and delete all contents if it does already
+# exist.
+#
+DBM::NEWDB: Integer
+
+# <!-- rdoc-file=ext/dbm/dbm.c -->
+# Indicates that dbm_open() should open the database in read-only mode
+#
+DBM::READER: Integer
+
+# <!-- rdoc-file=ext/dbm/dbm.c -->
+# Identifies ndbm library version.
+#
+# Examples:
+#
+# *   "ndbm (4.3BSD)"
+# *   "Berkeley DB 4.8.30: (April  9, 2010)"
+# *   "Berkeley DB (unknown)" (4.4BSD, maybe)
+# *   "GDBM version 1.8.3. 10/15/2002 (built Jul  1 2011 12:32:45)"
+# *   "QDBM 1.8.78"
+#
+DBM::VERSION: String
+
+# <!-- rdoc-file=ext/dbm/dbm.c -->
+# Indicates that dbm_open() should open the database in read/write mode, and
+# create it if it does not already exist
+#
+DBM::WRCREAT: Integer
+
+# <!-- rdoc-file=ext/dbm/dbm.c -->
+# Indicates that dbm_open() should open the database in read/write mode
+#
+DBM::WRITER: Integer

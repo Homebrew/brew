@@ -1,0 +1,188 @@
+# <!-- rdoc-file=gc.c -->
+# The ObjectSpace module contains a number of routines that interact with the
+# garbage collection facility and allow you to traverse all living objects with
+# an iterator.
+#
+# ObjectSpace also provides support for object finalizers, procs that will be
+# called when a specific object is about to be destroyed by garbage collection.
+# See the documentation for `ObjectSpace.define_finalizer` for important
+# information on how to use this method correctly.
+#
+#     a = "A"
+#     b = "B"
+#
+#     ObjectSpace.define_finalizer(a, proc {|id| puts "Finalizer one on #{id}" })
+#     ObjectSpace.define_finalizer(b, proc {|id| puts "Finalizer two on #{id}" })
+#
+#     a = nil
+#     b = nil
+#
+# *produces:*
+#
+#     Finalizer two on 537763470
+#     Finalizer one on 537763480
+#
+%a{annotate:rdoc:source:from=gc.c}
+module ObjectSpace
+  # <!--
+  #   rdoc-file=gc.c
+  #   - _id2ref(p1)
+  # -->
+  #
+  def self._id2ref: (Integer id) -> untyped
+
+  # <!--
+  #   rdoc-file=gc.c
+  #   - ObjectSpace.count_objects([result_hash]) -> hash
+  # -->
+  # Counts all objects grouped by type.
+  #
+  # It returns a hash, such as:
+  #     {
+  #       :TOTAL=>10000,
+  #       :FREE=>3011,
+  #       :T_OBJECT=>6,
+  #       :T_CLASS=>404,
+  #       # ...
+  #     }
+  #
+  # The contents of the returned hash are implementation specific. It may be
+  # changed in future.
+  #
+  # The keys starting with `:T_` means live objects. For example, `:T_ARRAY` is
+  # the number of arrays. `:FREE` means object slots which is not used now.
+  # `:TOTAL` means sum of above.
+  #
+  # If the optional argument `result_hash` is given, it is overwritten and
+  # returned. This is intended to avoid probe effect.
+  #
+  #     h = {}
+  #     ObjectSpace.count_objects(h)
+  #     puts h
+  #     # => { :TOTAL=>10000, :T_CLASS=>158280, :T_MODULE=>20672, :T_STRING=>527249 }
+  #
+  # This method is only expected to work on C Ruby.
+  #
+  def self.count_objects: (?Hash[Symbol, Integer] result_hash) -> Hash[Symbol, Integer]
+
+  # <!--
+  #   rdoc-file=gc.c
+  #   - ObjectSpace.define_finalizer(obj, aProc=proc())
+  # -->
+  # Adds *aProc* as a finalizer, to be called after *obj* was destroyed. The
+  # object ID of the *obj* will be passed as an argument to *aProc*. If *aProc* is
+  # a lambda or method, make sure it can be called with a single argument.
+  #
+  # The return value is an array `[0, aProc]`.
+  #
+  # The two recommended patterns are to either create the finaliser proc in a
+  # non-instance method where it can safely capture the needed state, or to use a
+  # custom callable object that stores the needed state explicitly as instance
+  # variables.
+  #
+  #     class Foo
+  #       def initialize(data_needed_for_finalization)
+  #         ObjectSpace.define_finalizer(self, self.class.create_finalizer(data_needed_for_finalization))
+  #       end
+  #
+  #       def self.create_finalizer(data_needed_for_finalization)
+  #         proc {
+  #           puts "finalizing #{data_needed_for_finalization}"
+  #         }
+  #       end
+  #     end
+  #
+  #     class Bar
+  #      class Remover
+  #         def initialize(data_needed_for_finalization)
+  #           @data_needed_for_finalization = data_needed_for_finalization
+  #         end
+  #
+  #         def call(id)
+  #           puts "finalizing #{@data_needed_for_finalization}"
+  #         end
+  #       end
+  #
+  #       def initialize(data_needed_for_finalization)
+  #         ObjectSpace.define_finalizer(self, Remover.new(data_needed_for_finalization))
+  #       end
+  #     end
+  #
+  # Note that if your finalizer references the object to be finalized it will
+  # never be run on GC, although it will still be run at exit. You will get a
+  # warning if you capture the object to be finalized as the receiver of the
+  # finalizer.
+  #
+  #     class CapturesSelf
+  #       def initialize(name)
+  #         ObjectSpace.define_finalizer(self, proc {
+  #           # this finalizer will only be run on exit
+  #           puts "finalizing #{name}"
+  #         })
+  #       end
+  #     end
+  #
+  # Also note that finalization can be unpredictable and is never guaranteed to be
+  # run except on exit.
+  #
+  def self.define_finalizer: (untyped obj, ^(Integer id) -> void aProc) -> [ Integer, Proc ]
+                           | (untyped obj) { (Integer id) -> void } -> [ Integer, Proc ]
+
+  # <!--
+  #   rdoc-file=gc.c
+  #   - ObjectSpace.each_object([module]) {|obj| ... } -> integer
+  #   - ObjectSpace.each_object([module])              -> an_enumerator
+  # -->
+  # Calls the block once for each living, nonimmediate object in this Ruby
+  # process. If *module* is specified, calls the block for only those classes or
+  # modules that match (or are a subclass of) *module*. Returns the number of
+  # objects found. Immediate objects (`Fixnum`s, `Symbol`s `true`, `false`, and
+  # `nil`) are never returned. In the example below, #each_object returns both the
+  # numbers we defined and several constants defined in the Math module.
+  #
+  # If no block is given, an enumerator is returned instead.
+  #
+  #     a = 102.7
+  #     b = 95       # Won't be returned
+  #     c = 12345678987654321
+  #     count = ObjectSpace.each_object(Numeric) {|x| p x }
+  #     puts "Total count: #{count}"
+  #
+  # *produces:*
+  #
+  #     12345678987654321
+  #     102.7
+  #     2.71828182845905
+  #     3.14159265358979
+  #     2.22044604925031e-16
+  #     1.7976931348623157e+308
+  #     2.2250738585072e-308
+  #     Total count: 7
+  #
+  def self.each_object: (?Module `module`) -> Enumerator[untyped, Integer]
+                      | (?Module `module`) { (untyped obj) -> void } -> Integer
+
+  # <!--
+  #   rdoc-file=gc.rb
+  #   - garbage_collect(full_mark: true, immediate_mark: true, immediate_sweep: true)
+  # -->
+  #
+  def self.garbage_collect: (?full_mark: bool, ?immediate_mark: bool, ?immediate_sweep: bool) -> void
+
+  # <!--
+  #   rdoc-file=gc.c
+  #   - ObjectSpace.undefine_finalizer(obj)
+  # -->
+  # Removes all finalizers for *obj*.
+  #
+  def self.undefine_finalizer: [X] (X obj) -> X
+
+  private
+
+  # <!--
+  #   rdoc-file=gc.rb
+  #   - garbage_collect(full_mark: true, immediate_mark: true, immediate_sweep: true)
+  # -->
+  #
+  def garbage_collect: (?full_mark: bool, ?immediate_mark: bool, ?immediate_sweep: bool) -> void
+end

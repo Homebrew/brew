@@ -1,0 +1,85 @@
+module RBS
+  # Calculate the use variances of type variables in declaration.
+  #
+  # ```rb
+  # calculator = VarianceCalculator.new(builder: builder)
+  #
+  # # Calculates variances in a method type
+  # result = calculator.in_method_type(method_type: method_type, variables: variables)
+  #
+  # # Calculates variances in a inheritance/mixin/...
+  # result = calculator.in_inherit(name: name, args: args, variables: variables)
+  #
+  # # Calculates variances in a type alias
+  # result = calculator.in_type_alias(name: name, args: args, variables: variables)
+  # ```
+  #
+  # See `RBS::VarianceCaluculator::Result` for information recorded in the `Result` object.
+  #
+  class VarianceCalculator
+    type variance = :unused | :covariant | :contravariant | :invariant
+
+    # Result contains the set of type variables and it's variance in a occurrence.
+    #
+    # ```rb
+    # # Enumerates recorded type variables
+    # result.each do |name, variance|
+    #   # name is the name of a type variable
+    #   # variance is one of :unused | :covariant | :contravariant | :invariant
+    # end
+    # ```
+    #
+    # You can test with `compatible?` method if the type variable occurrences are compatible with specified (annotated) variance.
+    #
+    # ```rb
+    # # When T is declared as `out T`
+    # result.compatible?(:T, with_annotation: :covariant)
+    #
+    # # When T is declared as `in T`
+    # result.compatible?(:T, with_annotation: :contravariant)
+    #
+    # # When T is declared as `T`
+    # result.compatible?(:T, with_annotation: :invariant)
+    # ```
+    #
+    class Result
+      attr_reader result: Hash[Symbol, variance]
+
+      def initialize: (variables: Array[Symbol]) -> void
+
+      def covariant: (Symbol) -> void
+
+      def contravariant: (Symbol) -> void
+
+      def invariant: (Symbol) -> void
+
+      def each: () { ([Symbol, variance]) -> void } -> void
+
+      def include?: (Symbol) -> bool
+
+      def compatible?: (Symbol, with_annotation: variance) -> bool
+
+      def incompatible?: (Array[AST::TypeParam]) -> Set[Symbol]?
+    end
+
+    attr_reader builder: DefinitionBuilder
+
+    def initialize: (builder: DefinitionBuilder) -> void
+
+    def env: () -> Environment
+
+    def in_method_type: (method_type: MethodType, variables: Array[Symbol]) -> Result
+
+    def in_inherit: (name: TypeName, args: Array[Types::t], variables: Array[Symbol]) -> Result
+
+    def in_type_alias: (name: TypeName) -> Result
+
+    private
+
+    def type: (Types::t, result: Result, context: variance) -> void
+
+    def function: (Types::Function, result: Result, context: variance) -> void
+
+    def negate: (variance) -> variance
+  end
+end

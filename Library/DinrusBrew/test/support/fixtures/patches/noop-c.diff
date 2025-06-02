@@ -1,0 +1,9 @@
+diff --git a/libexec/NOOP b/libexec/NOOP
+index e08d8f4..3ebfb9d 100755
+--- a/libexec/NOOP
++++ b/libexec/NOOP
+@@ -1,2 +1,2 @@
+ #!/bin/bash
+-echo ABCD
+\ No newline at end of file
++echo 1234

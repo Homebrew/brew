@@ -1,0 +1,23 @@
+bundle-remove(1) -- Removes gems from the Gemfile
+===========================================================================
+
+## SYNOPSIS
+
+`bundle remove [GEM [GEM ...]] [--install]`
+
+## DESCRIPTION
+
+Removes the given gems from the Gemfile while ensuring that the resulting Gemfile is still valid. If a gem cannot be removed, a warning is printed. If a gem is already absent from the Gemfile, and error is raised.
+
+## OPTIONS
+
+* `--install`:
+  Runs `bundle install` after the given gems have been removed from the Gemfile, which ensures that both the lockfile and the installed gems on disk are also updated to remove the given gem(s).
+
+Example:
+
+bundle remove rails
+
+bundle remove rails rack
+
+bundle remove rails rack --install

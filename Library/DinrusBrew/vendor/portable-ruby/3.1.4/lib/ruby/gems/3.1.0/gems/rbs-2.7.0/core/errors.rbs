@@ -1,0 +1,762 @@
+# <!-- rdoc-file=error.c -->
+# Raised when the arguments are wrong and there isn't a more specific Exception
+# class.
+#
+# Ex: passing the wrong number of arguments
+#
+#     [1, 2, 3].first(4, 5)
+#
+# *raises the exception:*
+#
+#     ArgumentError: wrong number of arguments (given 2, expected 1)
+#
+# Ex: passing an argument that is not acceptable:
+#
+#     [1, 2, 3].first(-4)
+#
+# *raises the exception:*
+#
+#     ArgumentError: negative array size
+#
+class ArgumentError < StandardError
+end
+
+# <!-- rdoc-file=thread_sync.c -->
+# The exception class which will be raised when pushing into a closed Queue.
+# See Thread::Queue#close and Thread::SizedQueue#close.
+#
+class ClosedQueueError < StopIteration
+end
+
+# <!-- rdoc-file=error.c -->
+# EncodingError is the base class for encoding errors.
+#
+class EncodingError < StandardError
+end
+
+# <!-- rdoc-file=io.c -->
+# Raised by some IO operations when reaching the end of file. Many IO methods
+# exist in two forms,
+#
+# one that returns `nil` when the end of file is reached, the other raises
+# `EOFError`.
+#
+# `EOFError` is a subclass of `IOError`.
+#
+#     file = File.open("/etc/hosts")
+#     file.read
+#     file.gets     #=> nil
+#     file.readline #=> EOFError: end of file reached
+#
+class EOFError < IOError
+end
+
+# <!-- rdoc-file=numeric.c -->
+# Raised when attempting to convert special float values (in particular
+# `Infinity` or `NaN`) to numerical classes which don't support them.
+#
+#     Float::INFINITY.to_r   #=> FloatDomainError: Infinity
+#
+class FloatDomainError < RangeError
+end
+
+# <!-- rdoc-file=error.c -->
+# Raised when there is an attempt to modify a frozen object.
+#
+#     [1, 2, 3].freeze << 4
+#
+# *raises the exception:*
+#
+#     FrozenError: can't modify frozen Array
+#
+class FrozenError[T] < RuntimeError
+  # <!--
+  #   rdoc-file=error.c
+  #   - FrozenError.new(msg=nil, receiver: nil)  -> frozen_error
+  # -->
+  # Construct a new FrozenError exception. If given the *receiver* parameter may
+  # subsequently be examined using the FrozenError#receiver method.
+  #
+  #     a = [].freeze
+  #     raise FrozenError.new("can't modify frozen array", receiver: a)
+  #
+  def initialize: (?string? msg, ?receiver: T?) -> void
+
+  # <!--
+  #   rdoc-file=error.c
+  #   - frozen_error.receiver  -> object
+  # -->
+  # Return the receiver associated with this FrozenError exception.
+  #
+  def receiver: () -> T?
+end
+
+# <!-- rdoc-file=error.c -->
+# Raised when the given index is invalid.
+#
+#     a = [:foo, :bar]
+#     a.fetch(0)   #=> :foo
+#     a[4]         #=> nil
+#     a.fetch(4)   #=> IndexError: index 4 outside of array bounds: -2...2
+#
+class IndexError < StandardError
+end
+
+# <!-- rdoc-file=error.c -->
+# Raised when the interrupt signal is received, typically because the user has
+# pressed Control-C (on most posix platforms). As such, it is a subclass of
+# `SignalException`.
+#
+#     begin
+#       puts "Press ctrl-C when you get bored"
+#       loop {}
+#     rescue Interrupt => e
+#       puts "Note: You will typically use Signal.trap instead."
+#     end
+#
+# *produces:*
+#
+#     Press ctrl-C when you get bored
+#
+# *then waits until it is interrupted with Control-C and then prints:*
+#
+#     Note: You will typically use Signal.trap instead.
+#
+class Interrupt < SignalException
+  def initialize: (?string) -> void
+end
+
+# <!-- rdoc-file=io.c -->
+# Raised when an IO operation fails.
+#
+#     File.open("/etc/hosts") {|f| f << "example"}
+#       #=> IOError: not opened for writing
+#
+#     File.open("/etc/hosts") {|f| f.close; f.read }
+#       #=> IOError: closed stream
+#
+# Note that some IO failures raise `SystemCallError`s and these are not
+# subclasses of IOError:
+#
+#     File.open("does/not/exist")
+#       #=> Errno::ENOENT: No such file or directory - does/not/exist
+#
+class IOError < StandardError
+end
+
+# <!-- rdoc-file=error.c -->
+# Raised when the specified key is not found. It is a subclass of IndexError.
+#
+#     h = {"foo" => :bar}
+#     h.fetch("foo") #=> :bar
+#     h.fetch("baz") #=> KeyError: key not found: "baz"
+#
+class KeyError[K, R] < IndexError
+  # <!--
+  #   rdoc-file=error.c
+  #   - KeyError.new(message=nil, receiver: nil, key: nil) -> key_error
+  # -->
+  # Construct a new `KeyError` exception with the given message, receiver and key.
+  #
+  def initialize: (?string msg, ?receiver: R?, ?key: K?) -> void
+
+  # <!--
+  #   rdoc-file=error.c
+  #   - key_error.key  -> object
+  # -->
+  # Return the key caused this KeyError exception.
+  #
+  def key: () -> K?
+
+  # <!--
+  #   rdoc-file=error.c
+  #   - key_error.receiver  -> object
+  # -->
+  # Return the receiver associated with this KeyError exception.
+  #
+  def receiver: () -> R?
+end
+
+# <!-- rdoc-file=error.c -->
+# Raised when a file required (a Ruby script, extension library, ...) fails to
+# load.
+#
+#     require 'this/file/does/not/exist'
+#
+# *raises the exception:*
+#
+#     LoadError: no such file to load -- this/file/does/not/exist
+#
+class LoadError < ScriptError
+  # <!-- rdoc-file=error.c -->
+  # the path failed to load
+  #
+  def path: () -> String?
+end
+
+# <!-- rdoc-file=proc.c -->
+# Raised when Ruby can't yield as requested.
+#
+# A typical scenario is attempting to yield when no block is given:
+#
+#     def call_block
+#       yield 42
+#     end
+#     call_block
+#
+# *raises the exception:*
+#
+#     LocalJumpError: no block given (yield)
+#
+# A more subtle example:
+#
+#     def get_me_a_return
+#       Proc.new { return 42 }
+#     end
+#     get_me_a_return.call
+#
+# *raises the exception:*
+#
+#     LocalJumpError: unexpected return
+#
+class LocalJumpError < StandardError
+  # <!--
+  #   rdoc-file=proc.c
+  #   - local_jump_error.exit_value  -> obj
+  # -->
+  # Returns the exit value associated with this `LocalJumpError`.
+  #
+  def exit_value: () -> untyped
+
+  # <!--
+  #   rdoc-file=proc.c
+  #   - local_jump_error.reason   -> symbol
+  # -->
+  # The reason this block was terminated: :break, :redo, :retry, :next, :return,
+  # or :noreason.
+  #
+  def reason: () -> Symbol
+end
+
+# <!-- rdoc-file=error.c -->
+# Raised when a given name is invalid or undefined.
+#
+#     puts foo
+#
+# *raises the exception:*
+#
+#     NameError: undefined local variable or method `foo' for main:Object
+#
+# Since constant names must start with a capital:
+#
+#     Integer.const_set :answer, 42
+#
+# *raises the exception:*
+#
+#     NameError: wrong constant name answer
+#
+class NameError[T] < StandardError
+  # <!--
+  #   rdoc-file=error.c
+  #   - NameError.new(msg=nil, name=nil, receiver: nil)  -> name_error
+  # -->
+  # Construct a new NameError exception. If given the *name* parameter may
+  # subsequently be examined using the NameError#name method. *receiver* parameter
+  # allows to pass object in context of which the error happened. Example:
+  #
+  #     [1, 2, 3].method(:rject) # NameError with name "rject" and receiver: Array
+  #     [1, 2, 3].singleton_method(:rject) # NameError with name "rject" and receiver: [1, 2, 3]
+  #
+  def initialize: (?string msg, ?String? name, ?receiver: T?) -> void
+
+  public
+
+  # <!--
+  #   rdoc-file=error.c
+  #   - name_error.local_variables  ->  array
+  # -->
+  # Return a list of the local variable names defined where this NameError
+  # exception was raised.
+  #
+  # Internal use only.
+  #
+  def local_variables: () -> ::Array[Symbol]
+
+  # <!--
+  #   rdoc-file=error.c
+  #   - name_error.name    ->  string or nil
+  # -->
+  # Return the name associated with this NameError exception.
+  #
+  def name: () -> String?
+
+  # <!--
+  #   rdoc-file=error.c
+  #   - name_error.receiver  -> object
+  # -->
+  # Return the receiver associated with this NameError exception.
+  #
+  def receiver: () -> T?
+end
+
+class NoMatchingPatternError < StandardError
+end
+
+class NoMatchingPatternKeyError[M, K] < NoMatchingPatternError
+  # <!--
+  #   rdoc-file=error.c
+  #   - NoMatchingPatternKeyError.new(message=nil, matchee: nil, key: nil) -> no_matching_pattern_key_error
+  # -->
+  # Construct a new `NoMatchingPatternKeyError` exception with the given message,
+  # matchee and key.
+  #
+  def initialize: (?string message, matchee: M, key: K) -> void
+
+  # <!--
+  #   rdoc-file=error.c
+  #   - no_matching_pattern_key_error.matchee  -> object
+  # -->
+  # Return the matchee associated with this NoMatchingPatternKeyError exception.
+  #
+  def matchee: () -> M
+
+  # <!--
+  #   rdoc-file=error.c
+  #   - no_matching_pattern_key_error.key  -> object
+  # -->
+  # Return the key caused this NoMatchingPatternKeyError exception.
+  #
+  def key: () -> K
+end
+
+# <!-- rdoc-file=error.c -->
+# Raised when memory allocation fails.
+#
+class NoMemoryError < Exception
+end
+
+# <!-- rdoc-file=error.c -->
+# Raised when a method is called on a receiver which doesn't have it defined and
+# also fails to respond with `method_missing`.
+#
+#     "hello".to_ary
+#
+# *raises the exception:*
+#
+#     NoMethodError: undefined method `to_ary' for "hello":String
+#
+class NoMethodError[T] < NameError[T]
+  # <!--
+  #   rdoc-file=error.c
+  #   - NoMethodError.new(msg=nil, name=nil, args=nil, private=false, receiver: nil)  -> no_method_error
+  # -->
+  # Construct a NoMethodError exception for a method of the given name called with
+  # the given arguments. The name may be accessed using the `#name` method on the
+  # resulting object, and the arguments using the `#args` method.
+  #
+  # If *private* argument were passed, it designates method was attempted to call
+  # in private context, and can be accessed with `#private_call?` method.
+  #
+  # *receiver* argument stores an object whose method was called.
+  #
+  def initialize: (?string? msg, ?String? name, ?Array[untyped] args, ?boolish `private`, ?receiver: T?) -> void
+
+  public
+
+  # <!--
+  #   rdoc-file=error.c
+  #   - no_method_error.args  -> obj
+  # -->
+  # Return the arguments passed in as the third parameter to the constructor.
+  #
+  def args: () -> Array[untyped]
+
+  # <!--
+  #   rdoc-file=error.c
+  #   - no_method_error.private_call?  -> true or false
+  # -->
+  # Return true if the caused method was called as private.
+  #
+  def private_call?: () -> bool
+end
+
+# <!-- rdoc-file=error.c -->
+# Raised when a feature is not implemented on the current platform. For example,
+# methods depending on the `fsync` or `fork` system calls may raise this
+# exception if the underlying operating system or Ruby runtime does not support
+# them.
+#
+# Note that if `fork` raises a `NotImplementedError`, then `respond_to?(:fork)`
+# returns `false`.
+#
+class NotImplementedError < ScriptError
+end
+
+# <!-- rdoc-file=error.c -->
+# Raised when a given numerical value is out of range.
+#
+#     [1, 2, 3].drop(1 << 100)
+#
+# *raises the exception:*
+#
+#     RangeError: bignum too big to convert into `long'
+#
+class RangeError < StandardError
+end
+
+# <!-- rdoc-file=re.c -->
+# Raised when given an invalid regexp expression.
+#
+#     Regexp.new("?")
+#
+# *raises the exception:*
+#
+#     RegexpError: target of repeat operator is not specified: /?/
+#
+class RegexpError < StandardError
+end
+
+# <!-- rdoc-file=error.c -->
+# A generic error class raised when an invalid operation is attempted.
+# Kernel#raise will raise a RuntimeError if no Exception class is specified.
+#
+#     raise "ouch"
+#
+# *raises the exception:*
+#
+#     RuntimeError: ouch
+#
+class RuntimeError < StandardError
+end
+
+# <!-- rdoc-file=error.c -->
+# ScriptError is the superclass for errors raised when a script can not be
+# executed because of a `LoadError`, `NotImplementedError` or a `SyntaxError`.
+# Note these type of `ScriptErrors` are not `StandardError` and will not be
+# rescued unless it is specified explicitly (or its ancestor `Exception`).
+#
+class ScriptError < Exception
+end
+
+# <!-- rdoc-file=error.c -->
+# No longer used by internal code.
+#
+class SecurityError < Exception
+end
+
+# <!-- rdoc-file=error.c -->
+# Raised when a signal is received.
+#
+#     begin
+#       Process.kill('HUP',Process.pid)
+#       sleep # wait for receiver to handle signal sent by Process.kill
+#     rescue SignalException => e
+#       puts "received Exception #{e}"
+#     end
+#
+# *produces:*
+#
+#     received Exception SIGHUP
+#
+class SignalException < Exception
+  # <!--
+  #   rdoc-file=signal.c
+  #   - SignalException.new(sig_name)              ->  signal_exception
+  #   - SignalException.new(sig_number [, name])   ->  signal_exception
+  # -->
+  # Construct a new SignalException object.  `sig_name` should be a known signal
+  # name.
+  #
+  def initialize: (?string sig_name) -> void
+                | (int sig_number, ?string sig_name) -> void
+
+  public
+
+  def signm: () -> String
+
+  # <!--
+  #   rdoc-file=signal.c
+  #   - signal_exception.signo   ->  num
+  # -->
+  # Returns a signal number.
+  #
+  def signo: () -> Integer
+end
+
+# <!-- rdoc-file=error.c -->
+# The most standard error types are subclasses of StandardError. A rescue clause
+# without an explicit Exception class will rescue all StandardErrors (and only
+# those).
+#
+#     def foo
+#       raise "Oups"
+#     end
+#     foo rescue "Hello"   #=> "Hello"
+#
+# On the other hand:
+#
+#     require 'does/not/exist' rescue "Hi"
+#
+# *raises the exception:*
+#
+#     LoadError: no such file to load -- does/not/exist
+#
+class StandardError < Exception
+end
+
+# <!-- rdoc-file=enumerator.c -->
+# Raised to stop the iteration, in particular by Enumerator#next. It is rescued
+# by Kernel#loop.
+#
+#     loop do
+#       puts "Hello"
+#       raise StopIteration
+#       puts "World"
+#     end
+#     puts "Done!"
+#
+# *produces:*
+#
+#     Hello
+#     Done!
+#
+class StopIteration < IndexError
+  # <!--
+  #   rdoc-file=enumerator.c
+  #   - result       -> value
+  # -->
+  # Returns the return value of the iterator.
+  #
+  #     o = Object.new
+  #     def o.each
+  #       yield 1
+  #       yield 2
+  #       yield 3
+  #       100
+  #     end
+  #
+  #     e = o.to_enum
+  #
+  #     puts e.next                   #=> 1
+  #     puts e.next                   #=> 2
+  #     puts e.next                   #=> 3
+  #
+  #     begin
+  #       e.next
+  #     rescue StopIteration => ex
+  #       puts ex.result              #=> 100
+  #     end
+  #
+  def result: () -> untyped
+end
+
+# <!-- rdoc-file=error.c -->
+# Raised when encountering Ruby code with an invalid syntax.
+#
+#     eval("1+1=2")
+#
+# *raises the exception:*
+#
+#     SyntaxError: (eval):1: syntax error, unexpected '=', expecting $end
+#
+class SyntaxError < ScriptError
+  # <!--
+  #   rdoc-file=error.c
+  #   - SyntaxError.new([msg])  -> syntax_error
+  # -->
+  # Construct a SyntaxError exception.
+  #
+  def initialize: (?string msg) -> void
+end
+
+# <!-- rdoc-file=error.c -->
+# SystemCallError is the base class for all low-level platform-dependent errors.
+#
+# The errors available on the current platform are subclasses of SystemCallError
+# and are defined in the Errno module.
+#
+#     File.open("does/not/exist")
+#
+# *raises the exception:*
+#
+#     Errno::ENOENT: No such file or directory - does/not/exist
+#
+class SystemCallError < StandardError
+  # <!--
+  #   rdoc-file=error.c
+  #   - SystemCallError.new(msg, errno)  -> system_call_error_subclass
+  # -->
+  # If *errno* corresponds to a known system error code, constructs the
+  # appropriate Errno class for that error, otherwise constructs a generic
+  # SystemCallError object. The error number is subsequently available via the
+  # #errno method.
+  #
+  def initialize: (string msg, Integer errno) -> SystemCallError
+
+  # <!--
+  #   rdoc-file=error.c
+  #   - system_call_error === other  -> true or false
+  # -->
+  # Return `true` if the receiver is a generic `SystemCallError`, or if the error
+  # numbers `self` and *other* are the same.
+  #
+  def self.===: (untyped other) -> bool
+
+  public
+
+  # <!--
+  #   rdoc-file=error.c
+  #   - system_call_error.errno   -> integer
+  # -->
+  # Return this SystemCallError's error number.
+  #
+  def errno: () -> Integer
+end
+
+# <!-- rdoc-file=error.c -->
+# Raised by `exit` to initiate the termination of the script.
+#
+class SystemExit < Exception
+  # <!--
+  #   rdoc-file=error.c
+  #   - SystemExit.new              -> system_exit
+  #   - SystemExit.new(status)      -> system_exit
+  #   - SystemExit.new(status, msg) -> system_exit
+  #   - SystemExit.new(msg)         -> system_exit
+  # -->
+  # Create a new `SystemExit` exception with the given status and message. Status
+  # is true, false, or an integer. If status is not given, true is used.
+  #
+  def initialize: () -> void
+                | (string msg) -> void
+                | (true | false | int status, ?string msg) -> void
+
+  public
+
+  # <!--
+  #   rdoc-file=error.c
+  #   - system_exit.status   -> integer
+  # -->
+  # Return the status value associated with this system exit.
+  #
+  def status: () -> Integer
+
+  # <!--
+  #   rdoc-file=error.c
+  #   - system_exit.success?  -> true or false
+  # -->
+  # Returns `true` if exiting successful, `false` if not.
+  #
+  def success?: () -> bool
+end
+
+# <!-- rdoc-file=proc.c -->
+# Raised in case of a stack overflow.
+#
+#     def me_myself_and_i
+#       me_myself_and_i
+#     end
+#     me_myself_and_i
+#
+# *raises the exception:*
+#
+#     SystemStackError: stack level too deep
+#
+class SystemStackError < Exception
+end
+
+# <!-- rdoc-file=thread.c -->
+# Raised when an invalid operation is attempted on a thread.
+#
+# For example, when no other thread has been started:
+#
+#     Thread.stop
+#
+# This will raises the following exception:
+#
+#     ThreadError: stopping only thread
+#     note: use sleep to stop forever
+#
+class ThreadError < StandardError
+end
+
+# <!-- rdoc-file=error.c -->
+# Raised when encountering an object that is not of the expected type.
+#
+#     [1, 2, 3].first("two")
+#
+# *raises the exception:*
+#
+#     TypeError: no implicit conversion of String into Integer
+#
+class TypeError < StandardError
+end
+
+# <!-- rdoc-file=vm_eval.c -->
+# Raised when `throw` is called with a *tag* which does not have corresponding
+# `catch` block.
+#
+#     throw "foo", "bar"
+#
+# *raises the exception:*
+#
+#     UncaughtThrowError: uncaught throw "foo"
+#
+class UncaughtThrowError < ArgumentError
+  # <!--
+  #   rdoc-file=vm_eval.c
+  #   - new(*args)
+  # -->
+  # Document-class: UncaughtThrowError
+  #
+  # Raised when `throw` is called with a *tag* which does not have corresponding
+  # `catch` block.
+  #
+  #     throw "foo", "bar"
+  #
+  # *raises the exception:*
+  #
+  #     UncaughtThrowError: uncaught throw "foo"
+  #
+  def initialize: (untyped tag, untyped value) -> void
+
+  public
+
+  # <!--
+  #   rdoc-file=vm_eval.c
+  #   - uncaught_throw.tag   -> obj
+  # -->
+  # Return the tag object which was called for.
+  #
+  def tag: () -> untyped
+
+  # <!--
+  #   rdoc-file=vm_eval.c
+  #   - uncaught_throw.to_s   ->  string
+  # -->
+  # Returns formatted message with the inspected tag.
+  #
+  def to_s: () -> String
+
+  # <!--
+  #   rdoc-file=vm_eval.c
+  #   - uncaught_throw.value   -> obj
+  # -->
+  # Return the return value which was called for.
+  #
+  def value: () -> untyped
+end
+
+# <!-- rdoc-file=numeric.c -->
+# Raised when attempting to divide an integer by 0.
+#
+#     42 / 0   #=> ZeroDivisionError: divided by 0
+#
+# Note that only division by an exact 0 will raise the exception:
+#
+#     42 /  0.0   #=> Float::INFINITY
+#     42 / -0.0   #=> -Float::INFINITY
+#     0  /  0.0   #=> NaN
+#
+class ZeroDivisionError < StandardError
+end

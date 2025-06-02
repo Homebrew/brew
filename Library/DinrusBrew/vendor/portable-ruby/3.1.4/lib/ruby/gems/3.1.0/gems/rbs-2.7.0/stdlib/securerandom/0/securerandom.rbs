@@ -1,0 +1,57 @@
+# <!-- rdoc-file=lib/securerandom.rb -->
+# ## Secure random number generator interface.
+#
+# This library is an interface to secure random number generators which are
+# suitable for generating session keys in HTTP cookies, etc.
+#
+# You can use this library in your application by requiring it:
+#
+#     require 'securerandom'
+#
+# It supports the following secure random number generators:
+#
+# *   openssl
+# *   /dev/urandom
+# *   Win32
+#
+#
+# SecureRandom is extended by the Random::Formatter module which defines the
+# following methods:
+#
+# *   alphanumeric
+# *   base64
+# *   choose
+# *   gen_random
+# *   hex
+# *   rand
+# *   random_bytes
+# *   random_number
+# *   urlsafe_base64
+# *   uuid
+#
+#
+# These methods are usable as class methods of SecureRandom such as
+# `SecureRandom.hex`.
+#
+# If a secure random number generator is not available, `NotImplementedError` is
+# raised.
+#
+module SecureRandom
+  extend Random::Formatter
+
+  def self.alphanumeric: (?Integer?) -> String
+
+  def self.base64: (?Integer?) -> String
+
+  def self.hex: (?Integer?) -> String
+
+  def self.random_bytes: (?Integer?) -> String
+
+  def self.random_number: () -> Float
+                        | (Integer) -> Integer
+                        | (Numeric) -> Numeric
+
+  def self.urlsafe_base64: (?Integer?, ?bool?) -> String
+
+  def self.uuid: () -> String
+end

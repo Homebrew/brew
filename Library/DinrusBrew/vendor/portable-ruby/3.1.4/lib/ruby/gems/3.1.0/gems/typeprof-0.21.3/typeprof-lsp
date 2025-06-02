@@ -1,0 +1,3 @@
+#!/bin/sh
+
+/home/mame/work/ruby/local/bin/bundle exec exe/typeprof --repo ../gem_rbs_collection/gems -Ilib --lsp

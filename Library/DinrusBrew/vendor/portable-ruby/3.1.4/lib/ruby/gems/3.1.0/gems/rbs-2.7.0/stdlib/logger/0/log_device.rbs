@@ -1,0 +1,102 @@
+%a{annotate:rdoc:skip}
+class Logger
+  # <!-- rdoc-file=lib/logger/log_device.rb -->
+  # Device used for logging messages.
+  #
+  class LogDevice
+    include MonitorMixin
+
+    include Period
+
+    attr_reader dev: _WriteCloser
+    attr_reader filename: String?
+
+    public
+
+    # <!--
+    #   rdoc-file=lib/logger/log_device.rb
+    #   - close()
+    # -->
+    #
+    def close: () -> nil
+
+    # <!--
+    #   rdoc-file=lib/logger/log_device.rb
+    #   - reopen(log = nil)
+    # -->
+    #
+    def reopen: (?logdev log) -> self
+
+    # <!--
+    #   rdoc-file=lib/logger/log_device.rb
+    #   - write(message)
+    # -->
+    #
+    def write: (untyped message) -> untyped
+
+    private
+
+    # <!--
+    #   rdoc-file=lib/logger/log_device.rb
+    #   - add_log_header(file)
+    # -->
+    #
+    def add_log_header: (IO file) -> untyped
+
+    # <!--
+    #   rdoc-file=lib/logger/log_device.rb
+    #   - check_shift_log()
+    # -->
+    #
+    def check_shift_log: () -> untyped
+
+    # <!--
+    #   rdoc-file=lib/logger/log_device.rb
+    #   - create_logfile(filename)
+    # -->
+    #
+    def create_logfile: (String filename) -> File
+
+    # <!--
+    #   rdoc-file=lib/logger/log_device.rb
+    #   - new(log = nil, shift_age: nil, shift_size: nil, shift_period_suffix: nil, binmode: false)
+    # -->
+    #
+    def initialize: (?untyped logdev, ?binmode: boolish, ?shift_period_suffix: String, ?shift_size: Integer, ?shift_age: Numeric | String) -> void
+
+    # <!--
+    #   rdoc-file=lib/logger/log_device.rb
+    #   - lock_shift_log() { || ... }
+    # -->
+    #
+    def lock_shift_log: () { () -> untyped } -> untyped
+
+    # <!--
+    #   rdoc-file=lib/logger/log_device.rb
+    #   - open_logfile(filename)
+    # -->
+    #
+    def open_logfile: (String filename) -> File
+
+    # <!--
+    #   rdoc-file=lib/logger/log_device.rb
+    #   - set_dev(log)
+    # -->
+    #
+    def set_dev: (logdev log) -> untyped
+
+    # <!--
+    #   rdoc-file=lib/logger/log_device.rb
+    #   - shift_log_age()
+    # -->
+    #
+    def shift_log_age: () -> true
+
+    # <!--
+    #   rdoc-file=lib/logger/log_device.rb
+    #   - shift_log_period(period_end)
+    # -->
+    #
+    def shift_log_period: (Time period_end) -> true
+  end
+end

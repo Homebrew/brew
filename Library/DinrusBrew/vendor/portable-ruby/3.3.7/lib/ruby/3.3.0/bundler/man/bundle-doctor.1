@@ -1,0 +1,30 @@
+.\" generated with nRonn/v0.11.1
+.\" https://github.com/n-ronn/nronn/tree/0.11.1
+.TH "BUNDLE\-DOCTOR" "1" "September 2024" ""
+.SH "NAME"
+\fBbundle\-doctor\fR \- Checks the bundle for common problems
+.SH "SYNOPSIS"
+\fBbundle doctor\fR [\-\-quiet] [\-\-gemfile=GEMFILE]
+.SH "DESCRIPTION"
+Checks your Gemfile and gem environment for common problems\. If issues are detected, Bundler prints them and exits status 1\. Otherwise, Bundler prints a success message and exits status 0\.
+.P
+Examples of common problems caught by bundle\-doctor include:
+.IP "\(bu" 4
+Invalid Bundler settings
+.IP "\(bu" 4
+Mismatched Ruby versions
+.IP "\(bu" 4
+Mismatched platforms
+.IP "\(bu" 4
+Uninstalled gems
+.IP "\(bu" 4
+Missing dependencies
+.IP "" 0
+.SH "OPTIONS"
+.TP
+\fB\-\-quiet\fR
+Only output warnings and errors\.
+.TP
+\fB\-\-gemfile=<gemfile>\fR
+The location of the Gemfile(5) which Bundler should use\. This defaults to a Gemfile(5) in the current working directory\. In general, Bundler will assume that the location of the Gemfile(5) is also the project's root and will try to find \fBGemfile\.lock\fR and \fBvendor/cache\fR relative to this location\.
+

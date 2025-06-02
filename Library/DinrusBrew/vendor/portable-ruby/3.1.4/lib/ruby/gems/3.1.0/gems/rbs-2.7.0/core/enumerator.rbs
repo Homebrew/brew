@@ -1,0 +1,533 @@
+# <!-- rdoc-file=enumerator.c -->
+# A class which allows both internal and external iteration.
+#
+# An Enumerator can be created by the following methods.
+# *   Object#to_enum
+# *   Object#enum_for
+# *   Enumerator.new
+#
+#
+# Most methods have two forms: a block form where the contents are evaluated for
+# each item in the enumeration, and a non-block form which returns a new
+# Enumerator wrapping the iteration.
+#
+#     enumerator = %w(one two three).each
+#     puts enumerator.class # => Enumerator
+#
+#     enumerator.each_with_object("foo") do |item, obj|
+#       puts "#{obj}: #{item}"
+#     end
+#
+#     # foo: one
+#     # foo: two
+#     # foo: three
+#
+#     enum_with_obj = enumerator.each_with_object("foo")
+#     puts enum_with_obj.class # => Enumerator
+#
+#     enum_with_obj.each do |item, obj|
+#       puts "#{obj}: #{item}"
+#     end
+#
+#     # foo: one
+#     # foo: two
+#     # foo: three
+#
+# This allows you to chain Enumerators together.  For example, you can map a
+# list's elements to strings containing the index and the element as a string
+# via:
+#
+#     puts %w[foo bar baz].map.with_index { |w, i| "#{i}:#{w}" }
+#     # => ["0:foo", "1:bar", "2:baz"]
+#
+# An Enumerator can also be used as an external iterator. For example,
+# Enumerator#next returns the next value of the iterator or raises StopIteration
+# if the Enumerator is at the end.
+#
+#     e = [1,2,3].each   # returns an enumerator object.
+#     puts e.next   # => 1
+#     puts e.next   # => 2
+#     puts e.next   # => 3
+#     puts e.next   # raises StopIteration
+#
+# Note that enumeration sequence by `next`, `next_values`, `peek` and
+# `peek_values` do not affect other non-external enumeration methods, unless the
+# underlying iteration method itself has side-effect, e.g. IO#each_line.
+#
+# Moreover, implementation typically uses fibers so performance could be slower
+# and exception stacktraces different than expected.
+#
+# You can use this to implement an internal iterator as follows:
+#
+#     def ext_each(e)
+#       while true
+#         begin
+#           vs = e.next_values
+#         rescue StopIteration
+#           return $!.result
+#         end
+#         y = yield(*vs)
+#         e.feed y
+#       end
+#     end
+#
+#     o = Object.new
+#
+#     def o.each
+#       puts yield
+#       puts yield(1)
+#       puts yield(1, 2)
+#       3
+#     end
+#
+#     # use o.each as an internal iterator directly.
+#     puts o.each {|*x| puts x; [:b, *x] }
+#     # => [], [:b], [1], [:b, 1], [1, 2], [:b, 1, 2], 3
+#
+#     # convert o.each to an external iterator for
+#     # implementing an internal iterator.
+#     puts ext_each(o.to_enum) {|*x| puts x; [:b, *x] }
+#     # => [], [:b], [1], [:b, 1], [1, 2], [:b, 1, 2], 3
+#
+class Enumerator[unchecked out Elem, out Return] < Object
+  include Enumerable[Elem]
+
+  # <!--
+  #   rdoc-file=enumerator.c
+  #   - enum.each { |elm| block }                    -> obj
+  #   - enum.each                                    -> enum
+  #   - enum.each(*appending_args) { |elm| block }   -> obj
+  #   - enum.each(*appending_args)                   -> an_enumerator
+  # -->
+  # Iterates over the block according to how this Enumerator was constructed. If
+  # no block and no arguments are given, returns self.
+  #
+  # ### Examples
+  #
+  #     "Hello, world!".scan(/\w+/)                     #=> ["Hello", "world"]
+  #     "Hello, world!".to_enum(:scan, /\w+/).to_a      #=> ["Hello", "world"]
+  #     "Hello, world!".to_enum(:scan).each(/\w+/).to_a #=> ["Hello", "world"]
+  #
+  #     obj = Object.new
+  #
+  #     def obj.each_arg(a, b=:b, *rest)
+  #       yield a
+  #       yield b
+  #       yield rest
+  #       :method_returned
+  #     end
+  #
+  #     enum = obj.to_enum :each_arg, :a, :x
+  #
+  #     enum.each.to_a                  #=> [:a, :x, []]
+  #     enum.each.equal?(enum)          #=> true
+  #     enum.each { |elm| elm }         #=> :method_returned
+  #
+  #     enum.each(:y, :z).to_a          #=> [:a, :x, [:y, :z]]
+  #     enum.each(:y, :z).equal?(enum)  #=> false
+  #     enum.each(:y, :z) { |elm| elm } #=> :method_returned
+  #
+  def each: () { (Elem arg0) -> untyped } -> Return
+          | () -> self
+
+  # <!--
+  #   rdoc-file=enumerator.c
+  #   - e.feed obj   -> nil
+  # -->
+  # Sets the value to be returned by the next yield inside `e`.
+  #
+  # If the value is not set, the yield returns nil.
+  #
+  # This value is cleared after being yielded.
+  #
+  #     # Array#map passes the array's elements to "yield" and collects the
+  #     # results of "yield" as an array.
+  #     # Following example shows that "next" returns the passed elements and
+  #     # values passed to "feed" are collected as an array which can be
+  #     # obtained by StopIteration#result.
+  #     e = [1,2,3].map
+  #     p e.next           #=> 1
+  #     e.feed "a"
+  #     p e.next           #=> 2
+  #     e.feed "b"
+  #     p e.next           #=> 3
+  #     e.feed "c"
+  #     begin
+  #       e.next
+  #     rescue StopIteration
+  #       p $!.result      #=> ["a", "b", "c"]
+  #     end
+  #
+  #     o = Object.new
+  #     def o.each
+  #       x = yield         # (2) blocks
+  #       p x               # (5) => "foo"
+  #       x = yield         # (6) blocks
+  #       p x               # (8) => nil
+  #       x = yield         # (9) blocks
+  #       p x               # not reached w/o another e.next
+  #     end
+  #
+  #     e = o.to_enum
+  #     e.next              # (1)
+  #     e.feed "foo"        # (3)
+  #     e.next              # (4)
+  #     e.next              # (7)
+  #                         # (10)
+  #
+  def feed: (Elem arg0) -> NilClass
+
+  # <!--
+  #   rdoc-file=enumerator.c
+  #   - Enumerator.new(size = nil) { |yielder| ... }
+  # -->
+  # Creates a new Enumerator object, which can be used as an Enumerable.
+  #
+  # Iteration is defined by the given block, in which a "yielder" object, given as
+  # block parameter, can be used to yield a value by calling the `yield` method
+  # (aliased as `<<`):
+  #
+  #     fib = Enumerator.new do |y|
+  #       a = b = 1
+  #       loop do
+  #         y << a
+  #         a, b = b, a + b
+  #       end
+  #     end
+  #
+  #     fib.take(10) # => [1, 1, 2, 3, 5, 8, 13, 21, 34, 55]
+  #
+  # The optional parameter can be used to specify how to calculate the size in a
+  # lazy fashion (see Enumerator#size). It can either be a value or a callable
+  # object.
+  #
+  def initialize: (?Integer arg0) { (Enumerator::Yielder arg0) -> void } -> void
+
+  # <!--
+  #   rdoc-file=enumerator.c
+  #   - e.inspect  -> string
+  # -->
+  # Creates a printable version of *e*.
+  #
+  def inspect: () -> String
+
+  # <!--
+  #   rdoc-file=enumerator.c
+  #   - e.next   -> object
+  # -->
+  # Returns the next object in the enumerator, and move the internal position
+  # forward.  When the position reached at the end, StopIteration is raised.
+  #
+  # ### Example
+  #
+  #     a = [1,2,3]
+  #     e = a.to_enum
+  #     p e.next   #=> 1
+  #     p e.next   #=> 2
+  #     p e.next   #=> 3
+  #     p e.next   #raises StopIteration
+  #
+  # See class-level notes about external iterators.
+  #
+  def next: () -> Elem
+
+  # <!--
+  #   rdoc-file=enumerator.c
+  #   - e.next_values   -> array
+  # -->
+  # Returns the next object as an array in the enumerator, and move the internal
+  # position forward.  When the position reached at the end, StopIteration is
+  # raised.
+  #
+  # See class-level notes about external iterators.
+  #
+  # This method can be used to distinguish `yield` and `yield nil`.
+  #
+  # ### Example
+  #
+  #     o = Object.new
+  #     def o.each
+  #       yield
+  #       yield 1
+  #       yield 1, 2
+  #       yield nil
+  #       yield [1, 2]
+  #     end
+  #     e = o.to_enum
+  #     p e.next_values
+  #     p e.next_values
+  #     p e.next_values
+  #     p e.next_values
+  #     p e.next_values
+  #     e = o.to_enum
+  #     p e.next
+  #     p e.next
+  #     p e.next
+  #     p e.next
+  #     p e.next
+  #
+  #     ## yield args       next_values      next
+  #     #  yield            []               nil
+  #     #  yield 1          [1]              1
+  #     #  yield 1, 2       [1, 2]           [1, 2]
+  #     #  yield nil        [nil]            nil
+  #     #  yield [1, 2]     [[1, 2]]         [1, 2]
+  #
+  def next_values: () -> ::Array[Elem]
+
+  # <!--
+  #   rdoc-file=enumerator.c
+  #   - e.peek   -> object
+  # -->
+  # Returns the next object in the enumerator, but doesn't move the internal
+  # position forward.  If the position is already at the end, StopIteration is
+  # raised.
+  #
+  # See class-level notes about external iterators.
+  #
+  # ### Example
+  #
+  #     a = [1,2,3]
+  #     e = a.to_enum
+  #     p e.next   #=> 1
+  #     p e.peek   #=> 2
+  #     p e.peek   #=> 2
+  #     p e.peek   #=> 2
+  #     p e.next   #=> 2
+  #     p e.next   #=> 3
+  #     p e.peek   #raises StopIteration
+  #
+  def peek: () -> Elem
+
+  # <!--
+  #   rdoc-file=enumerator.c
+  #   - e.peek_values   -> array
+  # -->
+  # Returns the next object as an array, similar to Enumerator#next_values, but
+  # doesn't move the internal position forward.  If the position is already at the
+  # end, StopIteration is raised.
+  #
+  # See class-level notes about external iterators.
+  #
+  # ### Example
+  #
+  #     o = Object.new
+  #     def o.each
+  #       yield
+  #       yield 1
+  #       yield 1, 2
+  #     end
+  #     e = o.to_enum
+  #     p e.peek_values    #=> []
+  #     e.next
+  #     p e.peek_values    #=> [1]
+  #     p e.peek_values    #=> [1]
+  #     e.next
+  #     p e.peek_values    #=> [1, 2]
+  #     e.next
+  #     p e.peek_values    # raises StopIteration
+  #
+  def peek_values: () -> ::Array[Elem]
+
+  # <!--
+  #   rdoc-file=enumerator.c
+  #   - e.rewind   -> e
+  # -->
+  # Rewinds the enumeration sequence to the beginning.
+  #
+  # If the enclosed object responds to a "rewind" method, it is called.
+  #
+  def rewind: () -> self
+
+  # <!--
+  #   rdoc-file=enumerator.c
+  #   - e.size          -> int, Float::INFINITY or nil
+  # -->
+  # Returns the size of the enumerator, or `nil` if it can't be calculated lazily.
+  #
+  #     (1..100).to_a.permutation(4).size # => 94109400
+  #     loop.size # => Float::INFINITY
+  #     (1..100).drop_while.size # => nil
+  #
+  def size: () -> (Integer | Float)?
+
+  # <!--
+  #   rdoc-file=enumerator.c
+  #   - e.with_index(offset = 0) {|(*args), idx| ... }
+  #   - e.with_index(offset = 0)
+  # -->
+  # Iterates the given block for each element with an index, which starts from
+  # `offset`.  If no block is given, returns a new Enumerator that includes the
+  # index, starting from `offset`
+  #
+  # `offset`
+  # :   the starting index to use
+  #
+  def with_index: (?Integer offset) { (Elem arg0, Integer arg1) -> untyped } -> Return
+                | (?Integer offset) -> ::Enumerator[[ Elem, Integer ], Return]
+
+  # <!-- rdoc-file=enumerator.c -->
+  # Iterates the given block for each element with an arbitrary object, `obj`, and
+  # returns `obj`
+  #
+  # If no block is given, returns a new Enumerator.
+  #
+  # ### Example
+  #
+  #     to_three = Enumerator.new do |y|
+  #       3.times do |x|
+  #         y << x
+  #       end
+  #     end
+  #
+  #     to_three_with_string = to_three.with_object("foo")
+  #     to_three_with_string.each do |x,string|
+  #       puts "#{string}: #{x}"
+  #     end
+  #
+  #     # => foo: 0
+  #     # => foo: 1
+  #     # => foo: 2
+  #
+  def with_object: [U] (U obj) { (Elem, U obj) -> untyped } -> U
+                 | [U] (U obj) -> ::Enumerator[[ Elem, U ], U]
+end
+
+# <!-- rdoc-file=enumerator.c -->
+# Generator
+#
+class Enumerator::Generator[out Elem] < Object
+  include Enumerable[Elem]
+
+  def each: () { (Elem) -> void } -> void
+end
+
+# <!-- rdoc-file=enumerator.c -->
+# Enumerator::Lazy is a special type of Enumerator, that allows constructing
+# chains of operations without evaluating them immediately, and evaluating
+# values on as-needed basis. In order to do so it redefines most of Enumerable
+# methods so that they just construct another lazy enumerator.
+#
+# Enumerator::Lazy can be constructed from any Enumerable with the
+# Enumerable#lazy method.
+#
+#     lazy = (1..Float::INFINITY).lazy.select(&:odd?).drop(10).take_while { |i| i < 30 }
+#     # => #<Enumerator::Lazy: #<Enumerator::Lazy: #<Enumerator::Lazy: #<Enumerator::Lazy: 1..Infinity>:select>:drop(10)>:take_while>
+#
+# The real enumeration is performed when any non-redefined Enumerable method is
+# called, like Enumerable#first or Enumerable#to_a (the latter is aliased as
+# #force for more semantic code):
+#
+#     lazy.first(2)
+#     #=> [21, 23]
+#
+#     lazy.force
+#     #=> [21, 23, 25, 27, 29]
+#
+# Note that most Enumerable methods that could be called with or without a
+# block, on Enumerator::Lazy will always require a block:
+#
+#     [1, 2, 3].map       #=> #<Enumerator: [1, 2, 3]:map>
+#     [1, 2, 3].lazy.map  # ArgumentError: tried to call lazy map without a block
+#
+# This class allows idiomatic calculations on long or infinite sequences, as
+# well as chaining of calculations without constructing intermediate arrays.
+#
+# Example for working with a slowly calculated sequence:
+#
+#     require 'open-uri'
+#
+#     # This will fetch all URLs before selecting
+#     # necessary data
+#     URLS.map { |u| JSON.parse(URI.open(u).read) }
+#       .select { |data| data.key?('stats') }
+#       .first(5)
+#
+#     # This will fetch URLs one-by-one, only till
+#     # there is enough data to satisfy the condition
+#     URLS.lazy.map { |u| JSON.parse(URI.open(u).read) }
+#       .select { |data| data.key?('stats') }
+#       .first(5)
+#
+# Ending a chain with ".eager" generates a non-lazy enumerator, which is
+# suitable for returning or passing to another method that expects a normal
+# enumerator.
+#
+#     def active_items
+#       groups
+#         .lazy
+#         .flat_map(&:items)
+#         .reject(&:disabled)
+#         .eager
+#     end
+#
+#     # This works lazily; if a checked item is found, it stops
+#     # iteration and does not look into remaining groups.
+#     first_checked = active_items.find(&:checked)
+#
+#     # This returns an array of items like a normal enumerator does.
+#     all_checked = active_items.select(&:checked)
+#
+class Enumerator::Lazy[out Elem, out Return] < Enumerator[Elem, Return]
+  # <!-- rdoc-file=enumerator.c -->
+  # Expands `lazy` enumerator to an array. See Enumerable#to_a.
+  #
+  alias force to_a
+
+  # <!--
+  #   rdoc-file=enumerator.c
+  #   - lazy.compact                  -> lazy_enumerator
+  # -->
+  # Like Enumerable#compact, but chains operation to be lazy-evaluated.
+  #
+  def compact: () -> Enumerator::Lazy[Elem, Return]
+end
+
+# <!-- rdoc-file=enumerator.c -->
+# Yielder
+#
+class Enumerator::Yielder < Object
+  def <<: (untyped arg0) -> void
+
+  def yield: (*untyped arg0) -> void
+
+  # <!--
+  #   rdoc-file=enumerator.c
+  #   - to_proc()
+  # -->
+  # Returns a Proc object that takes arguments and yields them.
+  #
+  # This method is implemented so that a Yielder object can be directly passed to
+  # another method as a block argument.
+  #
+  #     enum = Enumerator.new { |y|
+  #       Dir.glob("*.rb") { |file|
+  #         File.open(file) { |f| f.each_line(&y) }
+  #       }
+  #     }
+  #
+  def to_proc: () -> Proc
+end
+
+# <!-- rdoc-file=enumerator.c -->
+# Enumerator::Chain is a subclass of Enumerator, which represents a chain of
+# enumerables that works as a single enumerator.
+#
+# This type of objects can be created by Enumerable#chain and Enumerator#+.
+#
+class Enumerator::Chain[out Elem] < Enumerator[Elem, void]
+  include Enumerable[Elem]
+
+  # <!--
+  #   rdoc-file=enumerator.c
+  #   - obj.each(*args) { |...| ... } -> obj
+  #   - obj.each(*args) -> enumerator
+  # -->
+  # Iterates over the elements of the first enumerable by calling the "each"
+  # method on it with the given arguments, then proceeds to the following
+  # enumerables in sequence until all of the enumerables are exhausted.
+  #
+  # If no block is given, returns an enumerator.
+  #
+  def each: () { (Elem) -> void } -> void
+end

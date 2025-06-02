@@ -1,0 +1,46 @@
+module RBS
+  # Locator helps finding RBS elements based on locations in the RBS source text.
+  #
+  class Locator
+    type component = Symbol
+                   | Types::t
+                   | MethodType
+                   | AST::Declarations::t
+                   | AST::Members::t
+                   | AST::TypeParam
+                   | AST::Declarations::Class::Super
+                   | AST::Declarations::Module::Self
+
+    # Array of _top-level_ declarations.
+    #
+    attr_reader decls: Array[AST::Declarations::t]
+
+    def initialize: (decls: Array[AST::Declarations::t]) -> void
+
+    def buffer: () -> Buffer
+
+    # Returns list of components.
+    # Inner component comes first.
+    #
+    def find: (line: Integer, column: Integer) -> Array[component]
+
+    # Returns pair of the inner most symbol and outer components.
+    # It ensures the array starts with a AST/type component.
+    #
+    def find2: (line: Integer, column: Integer) -> [Symbol?, Array[component]]?
+
+    def find_in_decl: (Integer pos, decl: AST::Declarations::t, array: Array[component]) -> bool
+
+    def find_in_member: (Integer pos, member: AST::Members::t, array: Array[component]) -> bool
+
+    def find_in_method_type: (Integer pos, method_type: MethodType, array: Array[component]) -> bool
+
+    def find_in_type: (Integer pos, type: Types::t, array: Array[component]) -> bool
+
+    def find_in_type_param: (Integer pos, type_param: AST::TypeParam, array: Array[component]) -> bool
+
+    def find_in_loc: (Integer pos, location: Location[untyped, untyped]?, array: Array[component]) -> bool
+
+    def test_loc: (Integer pos, location: Location[untyped, untyped]?) -> bool
+  end
+end

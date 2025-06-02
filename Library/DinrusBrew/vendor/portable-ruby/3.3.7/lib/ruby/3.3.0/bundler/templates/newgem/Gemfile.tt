@@ -1,0 +1,26 @@
+# frozen_string_literal: true
+
+source "https://rubygems.org"
+
+# Specify your gem's dependencies in <%= config[:name] %>.gemspec
+gemspec
+
+gem "rake", "~> 13.0"
+<%- if config[:ext] -%>
+
+gem "rake-compiler"
+<%- if config[:ext] == 'rust' -%>
+gem "rb_sys", "~> 0.9.63"
+<%- end -%>
+<%- end -%>
+<%- if config[:test] -%>
+
+gem "<%= config[:test] %>", "~> <%= config[:test_framework_version] %>"
+<%- end -%>
+<%- if config[:linter] == "rubocop" -%>
+
+gem "rubocop", "~> <%= config[:linter_version] %>"
+<%- elsif config[:linter] == "standard" -%>
+
+gem "standard", "~> <%= config[:linter_version] %>"
+<%- end -%>

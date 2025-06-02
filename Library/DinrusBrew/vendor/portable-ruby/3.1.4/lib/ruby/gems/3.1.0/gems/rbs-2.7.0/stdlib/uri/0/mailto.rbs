@@ -1,0 +1,8 @@
+%a{annotate:rdoc:skip}
+module URI
+  # <!-- rdoc-file=lib/uri/mailto.rb -->
+  # RFC6068, the mailto URL scheme.
+  #
+  class MailTo < Generic
+  end
+end

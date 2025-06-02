@@ -1,0 +1,285 @@
+# <!-- rdoc-file=lib/yaml.rb -->
+# YAML Ain't Markup Language
+#
+# This module provides a Ruby interface for data serialization in YAML format.
+#
+# The YAML module is an alias of Psych, the YAML engine for Ruby.
+#
+# ## Usage
+#
+# Working with YAML can be very simple, for example:
+#
+#     require 'yaml'
+#     # Parse a YAML string
+#     YAML.load("--- foo") #=> "foo"
+#
+#     # Emit some YAML
+#     YAML.dump("foo")     # => "--- foo\n...\n"
+#     { :a => 'b'}.to_yaml  # => "---\n:a: b\n"
+#
+# As the implementation is provided by the Psych library, detailed documentation
+# can be found in that library's docs (also part of standard library).
+#
+# ## Security
+#
+# Do not use YAML to load untrusted data. Doing so is unsafe and could allow
+# malicious input to execute arbitrary code inside your application. Please see
+# doc/security.rdoc for more information.
+#
+# ## History
+#
+# Syck was the original YAML implementation in Ruby's standard library developed
+# by why the lucky stiff.
+#
+# You can still use Syck, if you prefer, for parsing and emitting YAML, but you
+# must install the 'syck' gem now in order to use it.
+#
+# In older Ruby versions, ie. <= 1.9, Syck is still provided, however it was
+# completely removed with the release of Ruby 2.0.0.
+#
+# ## More info
+#
+# For more advanced details on the implementation see Psych, and also check out
+# http://yaml.org for spec details and other helpful information.
+#
+# Psych is maintained by Aaron Patterson on github:
+# https://github.com/ruby/psych
+#
+# Syck can also be found on github: https://github.com/ruby/syck
+#
+module YAML
+  # <!-- rdoc-file=lib/yaml/dbm.rb -->
+  # YAML + DBM = YDBM
+  #
+  # YAML::DBM provides the same interface as ::DBM.
+  #
+  # However, while DBM only allows strings for both keys and values, this library
+  # allows one to use most Ruby objects for values by first converting them to
+  # YAML. Keys must be strings.
+  #
+  # Conversion to and from YAML is performed automatically.
+  #
+  # See the documentation for ::DBM and ::YAML for more information.
+  #
+  class DBM < ::DBM
+    VERSION: ::String
+
+    # <!--
+    #   rdoc-file=lib/yaml/dbm.rb
+    #   - ydbm[key] -> value
+    # -->
+    # Return value associated with `key` from database.
+    #
+    # Returns `nil` if there is no such `key`.
+    #
+    # See #fetch for more information.
+    #
+    def []: (String key) -> untyped
+
+    # <!--
+    #   rdoc-file=lib/yaml/dbm.rb
+    #   - ydbm[key] = value
+    # -->
+    # Set `key` to `value` in database.
+    #
+    # `value` will be converted to YAML before storage.
+    #
+    # See #store for more information.
+    #
+    def []=: (String key, untyped val) -> untyped
+
+    # <!--
+    #   rdoc-file=lib/yaml/dbm.rb
+    #   - ydbm.fetch( key, ifnone = nil )
+    #   - ydbm.fetch( key ) { |key| ... }
+    # -->
+    # Return value associated with `key`.
+    #
+    # If there is no value for `key` and no block is given, returns `ifnone`.
+    #
+    # Otherwise, calls block passing in the given `key`.
+    #
+    # See ::DBM#fetch for more information.
+    #
+    def fetch: (String keystr, ?untyped? ifnone) { (untyped) -> untyped } -> untyped
+
+    # <!--
+    #   rdoc-file=lib/yaml/dbm.rb
+    #   - index( keystr )
+    # -->
+    # Deprecated, used YAML::DBM#key instead.
+    # ---
+    # Note: YAML::DBM#index makes warning from internal of ::DBM#index. It says
+    # 'DBM#index is deprecated; use DBM#key', but DBM#key behaves not same as
+    # DBM#index.
+    #
+    def index: (String keystr) -> untyped
+
+    # <!--
+    #   rdoc-file=lib/yaml/dbm.rb
+    #   - ydbm.key(value) -> string
+    # -->
+    # Returns the key for the specified value.
+    #
+    def key: (String keystr) -> String
+
+    # <!--
+    #   rdoc-file=lib/yaml/dbm.rb
+    #   - ydbm.values_at(*keys)
+    # -->
+    # Returns an array containing the values associated with the given keys.
+    #
+    def values_at: (*untyped keys) -> Array[untyped]
+
+    # <!--
+    #   rdoc-file=lib/yaml/dbm.rb
+    #   - ydbm.delete(key)
+    # -->
+    # Deletes value from database associated with `key`.
+    #
+    # Returns value or `nil`.
+    #
+    def delete: (String key) -> untyped
+
+    # <!--
+    #   rdoc-file=lib/yaml/dbm.rb
+    #   - ydbm.delete_if { |key, value| ... }
+    # -->
+    # Calls the given block once for each `key`, `value` pair in the database.
+    # Deletes all entries for which the block returns true.
+    #
+    # Returns `self`.
+    #
+    def delete_if: () { (untyped, untyped) -> untyped } -> untyped
+
+    # <!--
+    #   rdoc-file=lib/yaml/dbm.rb
+    #   - ydbm.reject { |key, value| ... }
+    # -->
+    # Converts the contents of the database to an in-memory Hash, then calls
+    # Hash#reject with the specified code block, returning a new Hash.
+    #
+    def reject: () { (untyped, untyped) -> untyped } -> Hash[untyped, untyped]
+
+    # <!--
+    #   rdoc-file=lib/yaml/dbm.rb
+    #   - ydbm.each_pair { |key, value| ... }
+    # -->
+    # Calls the given block once for each `key`, `value` pair in the database.
+    #
+    # Returns `self`.
+    #
+    def each_pair: () { (untyped, untyped) -> untyped } -> untyped
+
+    # <!--
+    #   rdoc-file=lib/yaml/dbm.rb
+    #   - ydbm.each_value { |value| ... }
+    # -->
+    # Calls the given block for each value in database.
+    #
+    # Returns `self`.
+    #
+    def each_value: () { (untyped) -> untyped } -> untyped
+
+    # <!--
+    #   rdoc-file=lib/yaml/dbm.rb
+    #   - ydbm.values
+    # -->
+    # Returns an array of values from the database.
+    #
+    def values: () -> untyped
+
+    # <!--
+    #   rdoc-file=lib/yaml/dbm.rb
+    #   - ydbm.has_value?(value)
+    # -->
+    # Returns true if specified `value` is found in the database.
+    #
+    def has_value?: (untyped val) -> (::TrueClass | ::FalseClass)
+
+    # <!--
+    #   rdoc-file=lib/yaml/dbm.rb
+    #   - ydbm.invert -> hash
+    # -->
+    # Returns a Hash (not a DBM database) created by using each value in the
+    # database as a key, with the corresponding key as its value.
+    #
+    # Note that all values in the hash will be Strings, but the keys will be actual
+    # objects.
+    #
+    def invert: () -> Hash[untyped, untyped]
+
+    # <!--
+    #   rdoc-file=lib/yaml/dbm.rb
+    #   - ydbm.replace(hash) -> ydbm
+    # -->
+    # Replaces the contents of the database with the contents of the specified
+    # object. Takes any object which implements the each_pair method, including Hash
+    # and DBM objects.
+    #
+    def replace: (Hash[untyped, untyped] | DBM hsh) -> YAML::DBM
+
+    # <!--
+    #   rdoc-file=lib/yaml/dbm.rb
+    #   - ydbm.shift -> [key, value]
+    # -->
+    # Removes a [key, value] pair from the database, and returns it. If the database
+    # is empty, returns `nil`.
+    #
+    # The order in which values are removed/returned is not guaranteed.
+    #
+    def shift: () -> (Array[untyped] | untyped)
+
+    # <!--
+    #   rdoc-file=lib/yaml/dbm.rb
+    #   - ydbm.select { |key, value| ... }
+    #   - ydbm.select(*keys)
+    # -->
+    # If a block is provided, returns a new array containing [key, value] pairs for
+    # which the block returns true.
+    #
+    # Otherwise, same as #values_at
+    #
+    def select: (*untyped keys) { (untyped, untyped) -> untyped } -> Array[untyped]
+
+    # <!--
+    #   rdoc-file=lib/yaml/dbm.rb
+    #   - ydbm.store(key, value) -> value
+    # -->
+    # Stores `value` in database with `key` as the index. `value` is converted to
+    # YAML before being stored.
+    #
+    # Returns `value`
+    #
+    def store: (String key, untyped val) -> untyped
+
+    # <!--
+    #   rdoc-file=lib/yaml/dbm.rb
+    #   - ydbm.update(hash) -> ydbm
+    # -->
+    # Updates the database with multiple values from the specified object. Takes any
+    # object which implements the each_pair method, including Hash and DBM objects.
+    #
+    # Returns `self`.
+    #
+    def update: (Hash[untyped, untyped]) -> YAML::DBM
+
+    # <!--
+    #   rdoc-file=lib/yaml/dbm.rb
+    #   - ydbm.to_a -> array
+    # -->
+    # Converts the contents of the database to an array of [key, value] arrays, and
+    # returns it.
+    #
+    def to_a: () -> Array[untyped]
+
+    # <!--
+    #   rdoc-file=lib/yaml/dbm.rb
+    #   - ydbm.to_hash -> hash
+    # -->
+    # Converts the contents of the database to an in-memory Hash object, and returns
+    # it.
+    #
+    def to_hash: () -> Hash[untyped, untyped]
+  end
+end

@@ -1,0 +1,9 @@
+<div id="file-list-section" class="nav-section">
+  <h3>Defined In</h3>
+
+  <ul>
+<%- klass.in_files.each do |tl| -%>
+    <li><%= h tl.relative_name %>
+<%- end -%>
+  </ul>
+</div>

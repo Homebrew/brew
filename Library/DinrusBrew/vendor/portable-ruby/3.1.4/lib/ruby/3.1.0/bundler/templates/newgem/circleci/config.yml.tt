@@ -1,0 +1,13 @@
+version: 2.1
+jobs:
+  build:
+    docker:
+      - image: ruby:<%= RUBY_VERSION %>
+    steps:
+      - checkout
+      - run:
+          name: Run the default task
+          command: |
+            gem install bundler -v <%= Bundler::VERSION %>
+            bundle install
+            bundle exec rake

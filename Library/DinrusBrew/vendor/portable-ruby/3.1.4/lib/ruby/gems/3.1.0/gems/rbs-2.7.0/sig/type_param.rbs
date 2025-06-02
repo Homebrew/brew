@@ -1,0 +1,74 @@
+module RBS
+  module AST
+    class TypeParam
+      # Key
+      # ^^^ name
+      #
+      # unchecked out Elem < _ToJson
+      # ^^^^^^^^^                    unchecked
+      #           ^^^                variance
+      #               ^^^^           name
+      #                    ^^^^^^^^^ upper_bound
+      type loc = Location[:name, :variance | :unchecked | :upper_bound]
+
+      type variance = :invariant | :covariant | :contravariant
+
+      type bound = Types::ClassInstance | Types::ClassSingleton | Types::Interface
+
+      attr_reader name: Symbol
+      attr_reader variance: variance
+      attr_reader location: loc?
+
+      attr_reader upper_bound: bound?
+
+      def initialize: (name: Symbol, variance: variance, upper_bound: bound?, location: loc?) -> void
+
+      include _ToJson
+
+      def ==: (untyped) -> bool
+
+      def eql?: (untyped) -> bool
+
+      def hash: () -> Integer
+
+      @unchecked: bool
+
+      def unchecked!: (?boolish) -> self
+
+      def unchecked?: () -> bool
+
+      def map_type: () { (bound) -> bound } -> TypeParam
+
+      # Helper function to resolve _class instance types_ to _type variables_.
+      #
+      # We need this step because RBS language has an identical syntax for both unqualified class instance types and type variables.
+      # `String` may be an instance of `::String` class or type variable depending on the list of bound type variables.
+      #
+      # So, we need second pass to parse the following generics parameter declaration.
+      #
+      # ```rbs
+      # class Foo[X < _Each[Y], Y]
+      #                   # ^ We want this `Y` to be a type variable.
+      # end
+      # ```
+      #
+      def self.resolve_variables: (Array[TypeParam]) -> void
+
+      def self.subst_var: (Set[Symbol], Types::t) -> Types::t
+
+      # Rename type parameter name.
+      #
+      # The renaming cannot be done separately because a set of `TypeParam` decls may be mutual recursive.
+      #
+      # Example:
+      #
+      # * Renaming `A -> X, B -> Y`
+      # * Input `[A, B < _Pushable[A]]`
+      # * Result `[X, Y < _Pushable[X]]`
+      #
+      def self.rename: (Array[TypeParam], new_names: Array[Symbol]) -> Array[TypeParam]
+
+      def to_s: () -> String
+    end
+  end
+end

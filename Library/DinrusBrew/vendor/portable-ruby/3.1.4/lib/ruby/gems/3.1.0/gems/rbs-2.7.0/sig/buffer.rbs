@@ -1,0 +1,32 @@
+module RBS
+  class Buffer
+    # Location in a buffer.
+    # A pair of line number (1 origin) and column number (0 origin).
+    #
+    type loc = [Integer, Integer]
+
+    # Name to identify Buffer.
+    attr_reader name: untyped
+
+    # The content of the buffer.
+    attr_reader content: String
+
+    @lines: Array[String]
+
+    @ranges: Array[Range[Integer]]
+
+    def initialize: (name: untyped name, content: String content) -> void
+
+    def lines: () -> Array[String]
+
+    def ranges: () -> Array[Range[Integer]]
+
+    # Translate position to location.
+    def pos_to_loc: (Integer pos) -> loc
+
+    # Translate location to position.
+    def loc_to_pos: (loc loc) -> Integer
+
+    def last_position: () -> Integer
+  end
+end

@@ -1,0 +1,61 @@
+# -*- coding: utf-8 -*-
+#
+#   irb/lc/help-message.rb -
+#   	$Release Version: 0.9.6$
+#   	$Revision$
+#   	by Keiju ISHITSUKA(keiju@ruby-lang.org)
+#
+# --
+#
+#
+#
+Usage:  irb.rb [options] [programfile] [arguments]
+  -f                Suppress read of ~/.irbrc
+  -d                Set $DEBUG to true (same as `ruby -d')
+  -r load-module    Same as `ruby -r'
+  -I path           Specify $LOAD_PATH directory
+  -U                Same as `ruby -U`
+  -E enc            Same as `ruby -E`
+  -w                Same as `ruby -w`
+  -W[level=2]       Same as `ruby -W`
+  --context-mode n  Set n[0-4] to method to create Binding Object,
+                    when new workspace was created
+  --extra-doc-dir   Add an extra doc dir for the doc dialog
+  --echo            Show result (default)
+  --noecho          Don't show result
+  --echo-on-assignment
+                    Show result on assignment
+  --noecho-on-assignment
+                    Don't show result on assignment
+  --truncate-echo-on-assignment
+                    Show truncated result on assignment (default)
+  --inspect         Use `inspect' for output
+  --noinspect       Don't use inspect for output
+  --multiline       Use multiline editor module
+  --nomultiline     Don't use multiline editor module
+  --singleline      Use singleline editor module
+  --nosingleline    Don't use singleline editor module
+  --colorize        Use colorization
+  --nocolorize      Don't use colorization
+  --autocomplete    Use autocompletion
+  --noautocomplete  Don't use autocompletion
+  --prompt prompt-mode/--prompt-mode prompt-mode
+                    Switch prompt mode. Pre-defined prompt modes are
+                    `default', `simple', `xmp' and `inf-ruby'
+  --inf-ruby-mode   Use prompt appropriate for inf-ruby-mode on emacs.
+                    Suppresses --multiline and --singleline.
+  --sample-book-mode/--simple-prompt
+                    Simple prompt mode
+  --noprompt        No prompt mode
+  --single-irb      Share self with sub-irb.
+  --tracer          Display trace for each execution of commands.
+  --back-trace-limit n
+                    Display backtrace top n and tail n. The default
+                    value is 16.
+  --verbose         Show details
+  --noverbose       Don't show details
+  -v, --version	    Print the version of irb
+  -h, --help        Print help
+  --                Separate options of irb from the list of command-line args
+
+# vim:fileencoding=utf-8

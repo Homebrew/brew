@@ -1,0 +1,13 @@
+%a{annotate:rdoc:skip}
+module URI
+  # <!-- rdoc-file=lib/uri/ws.rb -->
+  # The syntax of WS URIs is defined in RFC6455 section 3.
+  #
+  # Note that the Ruby URI library allows WS URLs containing usernames and
+  # passwords. This is not legal as per the RFC, but used to be supported in
+  # Internet Explorer 5 and 6, before the MS04-004 security update. See
+  # <URL:http://support.microsoft.com/kb/834489>.
+  #
+  class WS < Generic
+  end
+end

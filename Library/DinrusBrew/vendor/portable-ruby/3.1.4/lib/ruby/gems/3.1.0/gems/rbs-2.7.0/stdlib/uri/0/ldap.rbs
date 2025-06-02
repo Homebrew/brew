@@ -1,0 +1,230 @@
+%a{annotate:rdoc:skip}
+module URI
+  # <!-- rdoc-file=lib/uri/ldap.rb -->
+  # LDAP URI SCHEMA (described in RFC2255).
+  #
+  class LDAP < Generic
+    # <!-- rdoc-file=lib/uri/ldap.rb -->
+    # A Default port of 389 for URI::LDAP.
+    #
+    DEFAULT_PORT: Integer
+
+    # <!-- rdoc-file=lib/uri/ldap.rb -->
+    # An Array of the available components for URI::LDAP.
+    #
+    COMPONENT: Array[Symbol]
+
+    # <!-- rdoc-file=lib/uri/ldap.rb -->
+    # Scopes available for the starting point.
+    #
+    # *   SCOPE_BASE - the Base DN
+    # *   SCOPE_ONE  - one level under the Base DN, not including the base DN and
+    #     not including any entries under this
+    # *   SCOPE_SUB  - subtrees, all entries at all levels
+    #
+    SCOPE: Array[String]
+
+    # <!--
+    #   rdoc-file=lib/uri/ldap.rb
+    #   - build(args)
+    # -->
+    # ## Description
+    #
+    # Creates a new URI::LDAP object from components, with syntax checking.
+    #
+    # The components accepted are host, port, dn, attributes, scope, filter, and
+    # extensions.
+    #
+    # The components should be provided either as an Array, or as a Hash with keys
+    # formed by preceding the component names with a colon.
+    #
+    # If an Array is used, the components must be passed in the order `[host, port,
+    # dn, attributes, scope, filter, extensions]`.
+    #
+    # Example:
+    #
+    #     uri = URI::LDAP.build({:host => 'ldap.example.com',
+    #       :dn => '/dc=example'})
+    #
+    #     uri = URI::LDAP.build(["ldap.example.com", nil,
+    #       "/dc=example;dc=com", "query", nil, nil, nil])
+    #
+    def self.build: (Array[nil | String | Integer] args) -> URI::LDAP
+                  | ({ host: String?, port: Integer?, dn: String?, attributes: String?, scope: String?, filter: String?, extensions: String? }) -> URI::LDAP
+
+    # <!--
+    #   rdoc-file=lib/uri/ldap.rb
+    #   - new(*arg)
+    # -->
+    # ## Description
+    #
+    # Creates a new URI::LDAP object from generic URI components as per RFC 2396. No
+    # LDAP-specific syntax checking is performed.
+    #
+    # Arguments are `scheme`, `userinfo`, `host`, `port`, `registry`, `path`,
+    # `opaque`, `query`, and `fragment`, in that order.
+    #
+    # Example:
+    #
+    #     uri = URI::LDAP.new("ldap", nil, "ldap.example.com", nil, nil,
+    #       "/dc=example;dc=com", nil, "query", nil)
+    #
+    # See also URI::Generic.new.
+    #
+    def initialize: (String schema, String? userinfo, String host, Integer? port, String? registry, String? path, String? opaque, String query, String? fragment) -> URI::LDAP
+
+    # <!--
+    #   rdoc-file=lib/uri/ldap.rb
+    #   - parse_dn()
+    # -->
+    # Private method to cleanup `dn` from using the `path` component attribute.
+    #
+    def parse_dn: () -> nil
+
+    # <!--
+    #   rdoc-file=lib/uri/ldap.rb
+    #   - parse_query()
+    # -->
+    # Private method to cleanup `attributes`, `scope`, `filter`, and `extensions`
+    # from using the `query` component attribute.
+    #
+    def parse_query: () -> nil
+
+    # <!--
+    #   rdoc-file=lib/uri/ldap.rb
+    #   - build_path_query()
+    # -->
+    # Private method to assemble `query` from `attributes`, `scope`, `filter`, and
+    # `extensions`.
+    #
+    def build_path_query: () -> String
+
+    # <!--
+    #   rdoc-file=lib/uri/ldap.rb
+    #   - dn()
+    # -->
+    # Returns dn.
+    #
+    def dn: () -> String
+
+    # <!--
+    #   rdoc-file=lib/uri/ldap.rb
+    #   - set_dn(val)
+    # -->
+    # Private setter for dn `val`.
+    #
+    def set_dn: (String val) -> String
+
+    # <!--
+    #   rdoc-file=lib/uri/ldap.rb
+    #   - dn=(val)
+    # -->
+    # Setter for dn `val`.
+    #
+    def dn=: (String val) -> String
+
+    # <!--
+    #   rdoc-file=lib/uri/ldap.rb
+    #   - attributes()
+    # -->
+    # Returns attributes.
+    #
+    def attributes: () -> String
+
+    # <!--
+    #   rdoc-file=lib/uri/ldap.rb
+    #   - set_attributes(val)
+    # -->
+    # Private setter for attributes `val`.
+    #
+    def set_attributes: (String val) -> String
+
+    # <!--
+    #   rdoc-file=lib/uri/ldap.rb
+    #   - attributes=(val)
+    # -->
+    # Setter for attributes `val`.
+    #
+    def attributes=: (String val) -> String
+
+    # <!--
+    #   rdoc-file=lib/uri/ldap.rb
+    #   - scope()
+    # -->
+    # Returns scope.
+    #
+    def scope: () -> String
+
+    # <!--
+    #   rdoc-file=lib/uri/ldap.rb
+    #   - set_scope(val)
+    # -->
+    # Private setter for scope `val`.
+    #
+    def set_scope: (String val) -> String
+
+    # <!--
+    #   rdoc-file=lib/uri/ldap.rb
+    #   - scope=(val)
+    # -->
+    # Setter for scope `val`.
+    #
+    def scope=: (String val) -> String
+
+    # <!--
+    #   rdoc-file=lib/uri/ldap.rb
+    #   - filter()
+    # -->
+    # Returns filter.
+    #
+    def filter: () -> String
+
+    # <!--
+    #   rdoc-file=lib/uri/ldap.rb
+    #   - set_filter(val)
+    # -->
+    # Private setter for filter `val`.
+    #
+    def set_filter: (String val) -> String
+
+    # <!--
+    #   rdoc-file=lib/uri/ldap.rb
+    #   - filter=(val)
+    # -->
+    # Setter for filter `val`.
+    #
+    def filter=: (String val) -> String
+
+    # <!--
+    #   rdoc-file=lib/uri/ldap.rb
+    #   - extensions()
+    # -->
+    # Returns extensions.
+    #
+    def extensions: () -> untyped
+
+    # <!--
+    #   rdoc-file=lib/uri/ldap.rb
+    #   - set_extensions(val)
+    # -->
+    # Private setter for extensions `val`.
+    #
+    def set_extensions: (String val) -> String
+
+    # <!--
+    #   rdoc-file=lib/uri/ldap.rb
+    #   - extensions=(val)
+    # -->
+    # Setter for extensions `val`.
+    #
+    def extensions=: (String val) -> String
+
+    # <!--
+    #   rdoc-file=lib/uri/ldap.rb
+    #   - hierarchical?()
+    # -->
+    # Checks if URI has a path. For URI::LDAP this will return `false`.
+    #
+    def hierarchical?: () -> ::FalseClass
+  end
+end

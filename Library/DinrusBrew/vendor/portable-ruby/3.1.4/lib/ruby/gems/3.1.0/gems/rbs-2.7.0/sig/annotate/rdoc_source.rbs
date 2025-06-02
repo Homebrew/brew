@@ -1,0 +1,30 @@
+module RBS
+  module Annotate
+    class RDocSource
+      attr_accessor with_system_dir: bool
+      attr_accessor with_gems_dir: bool
+      attr_accessor with_site_dir: bool
+      attr_accessor with_home_dir: bool
+
+      attr_reader extra_dirs: Array[Pathname]
+
+      attr_reader stores: Array[RDoc::Store]
+
+      def initialize: () -> void
+
+      def load: () -> void
+
+      # Extract documents from `CodeObject`s
+      def docs: () { () -> Array[RDoc::CodeObject]? } -> Array[RDoc::Markup::Document]?
+
+      def find_class: (TypeName) -> Array[RDoc::ClassModule]?
+
+      def find_const: (TypeName) -> Array[RDoc::Constant]?
+
+      def find_method: (TypeName, instance_method: Symbol) -> Array[RDoc::AnyMethod]?
+                     | (TypeName, singleton_method: Symbol) -> Array[RDoc::AnyMethod]?
+
+      def find_attribute: (TypeName, Symbol, singleton: bool) -> Array[RDoc::Attr]?
+    end
+  end
+end

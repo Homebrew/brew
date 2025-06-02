@@ -1,0 +1,26 @@
+%a{annotate:rdoc:skip}
+class Time
+  # <!--
+  #   rdoc-file=ext/date/date_core.c
+  #   - t.to_time  ->  time
+  # -->
+  # Returns self.
+  #
+  def to_time: () -> Time
+
+  # <!--
+  #   rdoc-file=ext/date/date_core.c
+  #   - t.to_date  ->  date
+  # -->
+  # Returns a Date object which denotes self.
+  #
+  def to_date: () -> Date
+
+  # <!--
+  #   rdoc-file=ext/date/date_core.c
+  #   - t.to_datetime  ->  datetime
+  # -->
+  # Returns a DateTime object which denotes self.
+  #
+  def to_datetime: () -> DateTime
+end

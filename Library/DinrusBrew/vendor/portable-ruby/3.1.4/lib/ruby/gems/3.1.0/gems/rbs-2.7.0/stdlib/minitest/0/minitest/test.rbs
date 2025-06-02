@@ -1,0 +1,76 @@
+# <!-- rdoc-file=lib/minitest/test.rb -->
+# Subclass Test to create your own tests. Typically you'll want a Test subclass
+# per implementation class.
+#
+# See Minitest::Assertions
+#
+class Minitest::Test < ::Minitest::Runnable
+  def class_name: () -> untyped
+
+  # <!--
+  #   rdoc-file=lib/minitest/test.rb
+  #   - i_suck_and_my_tests_are_order_dependent!()
+  # -->
+  # Call this at the top of your tests when you absolutely positively need to have
+  # ordered tests. In doing so, you're admitting that you suck and your tests are
+  # weak.
+  #
+  def self.i_suck_and_my_tests_are_order_dependent!: () -> untyped
+
+  # <!--
+  #   rdoc-file=lib/minitest/test.rb
+  #   - make_my_diffs_pretty!()
+  # -->
+  # Make diffs for this Test use #pretty_inspect so that diff in assert_equal can
+  # have more details. NOTE: this is much slower than the regular inspect but much
+  # more usable for complex objects.
+  #
+  def self.make_my_diffs_pretty!: () -> untyped
+
+  # <!--
+  #   rdoc-file=lib/minitest/test.rb
+  #   - parallelize_me!()
+  # -->
+  # Call this at the top of your tests when you want to run your tests in
+  # parallel. In doing so, you're admitting that you rule and your tests are
+  # awesome.
+  #
+  def self.parallelize_me!: () -> untyped
+
+  # <!--
+  #   rdoc-file=lib/minitest/test.rb
+  #   - runnable_methods()
+  # -->
+  # Returns all instance methods starting with "test_". Based on #test_order, the
+  # methods are either sorted, randomized (default), or run in parallel.
+  #
+  def self.runnable_methods: () -> untyped
+
+  # <!--
+  #   rdoc-file=lib/minitest/test.rb
+  #   - test_order()
+  # -->
+  # Defines the order to run tests (:random by default). Override this or use a
+  # convenience method to change it for your tests.
+  #
+  def self.test_order: () -> :random
+
+  # <!--
+  #   rdoc-file=lib/minitest/test.rb
+  #   - run()
+  # -->
+  # Runs a single test with setup/teardown hooks.
+  #
+  def run: () -> untyped
+  def capture_exceptions: () { () -> untyped } -> untyped
+  def sanitize_exception: (untyped e) -> untyped
+  def with_info_handler: () ?{ () -> untyped } -> untyped
+  attr_accessor self.io_lock: untyped
+  include Minitest::Assertions
+  include Minitest::Reportable
+  include Minitest::Test::LifecycleHooks
+  include Minitest::Guard
+  extend Minitest::Guard
+  TEARDOWN_METHODS: Array[String]
+  PASSTHROUGH_EXCEPTIONS: Array[singleton(NoMemoryError) | singleton(SignalException) | singleton(SystemExit)]
+end

@@ -1,0 +1,275 @@
+.\" generated with nRonn/v0.11.1
+.\" https://github.com/n-ronn/nronn/tree/0.11.1
+.TH "BUNDLE\-UPDATE" "1" "September 2024" ""
+.SH "NAME"
+\fBbundle\-update\fR \- Update your gems to the latest available versions
+.SH "SYNOPSIS"
+\fBbundle update\fR \fI*gems\fR [\-\-all] [\-\-group=NAME] [\-\-source=NAME] [\-\-local] [\-\-ruby] [\-\-bundler[=VERSION]] [\-\-full\-index] [\-\-jobs=JOBS] [\-\-quiet] [\-\-patch|\-\-minor|\-\-major] [\-\-redownload] [\-\-strict] [\-\-conservative]
+.SH "DESCRIPTION"
+Update the gems specified (all gems, if \fB\-\-all\fR flag is used), ignoring the previously installed gems specified in the \fBGemfile\.lock\fR\. In general, you should use bundle install(1) \fIbundle\-install\.1\.html\fR to install the same exact gems and versions across machines\.
+.P
+You would use \fBbundle update\fR to explicitly update the version of a gem\.
+.SH "OPTIONS"
+.TP
+\fB\-\-all\fR
+Update all gems specified in Gemfile\.
+.TP
+\fB\-\-group=<name>\fR, \fB\-g=[<name>]\fR
+Only update the gems in the specified group\. For instance, you can update all gems in the development group with \fBbundle update \-\-group development\fR\. You can also call \fBbundle update rails \-\-group test\fR to update the rails gem and all gems in the test group, for example\.
+.TP
+\fB\-\-source=<name>\fR
+The name of a \fB:git\fR or \fB:path\fR source used in the Gemfile(5)\. For instance, with a \fB:git\fR source of \fBhttp://github\.com/rails/rails\.git\fR, you would call \fBbundle update \-\-source rails\fR
+.TP
+\fB\-\-local\fR
+Do not attempt to fetch gems remotely and use the gem cache instead\.
+.TP
+\fB\-\-ruby\fR
+Update the locked version of Ruby to the current version of Ruby\.
+.TP
+\fB\-\-bundler\fR
+Update the locked version of bundler to the invoked bundler version\.
+.TP
+\fB\-\-full\-index\fR
+Fall back to using the single\-file index of all gems\.
+.TP
+\fB\-\-jobs=[<number>]\fR, \fB\-j[<number>]\fR
+Specify the number of jobs to run in parallel\. The default is the number of available processors\.
+.TP
+\fB\-\-retry=[<number>]\fR
+Retry failed network or git requests for \fInumber\fR times\.
+.TP
+\fB\-\-quiet\fR
+Only output warnings and errors\.
+.TP
+\fB\-\-redownload\fR
+Force downloading every gem\.
+.TP
+\fB\-\-patch\fR
+Prefer updating only to next patch version\.
+.TP
+\fB\-\-minor\fR
+Prefer updating only to next minor version\.
+.TP
+\fB\-\-major\fR
+Prefer updating to next major version (default)\.
+.TP
+\fB\-\-strict\fR
+Do not allow any gem to be updated past latest \fB\-\-patch\fR | \fB\-\-minor\fR | \fB\-\-major\fR\.
+.TP
+\fB\-\-conservative\fR
+Use bundle install conservative update behavior and do not allow indirect dependencies to be updated\.
+.SH "UPDATING ALL GEMS"
+If you run \fBbundle update \-\-all\fR, bundler will ignore any previously installed gems and resolve all dependencies again based on the latest versions of all gems available in the sources\.
+.P
+Consider the following Gemfile(5):
+.IP "" 4
+.nf
+source "https://rubygems\.org"
+
+gem "rails", "3\.0\.0\.rc"
+gem "nokogiri"
+.fi
+.IP "" 0
+.P
+When you run bundle install(1) \fIbundle\-install\.1\.html\fR the first time, bundler will resolve all of the dependencies, all the way down, and install what you need:
+.IP "" 4
+.nf
+Fetching gem metadata from https://rubygems\.org/\|\.\|\.\|\.\|\.\|\.\|\.\|\.\|\.\|\.
+Resolving dependencies\|\.\|\.\|\.
+Installing builder 2\.1\.2
+Installing abstract 1\.0\.0
+Installing rack 1\.2\.8
+Using bundler 1\.7\.6
+Installing rake 10\.4\.0
+Installing polyglot 0\.3\.5
+Installing mime\-types 1\.25\.1
+Installing i18n 0\.4\.2
+Installing mini_portile 0\.6\.1
+Installing tzinfo 0\.3\.42
+Installing rack\-mount 0\.6\.14
+Installing rack\-test 0\.5\.7
+Installing treetop 1\.4\.15
+Installing thor 0\.14\.6
+Installing activesupport 3\.0\.0\.rc
+Installing erubis 2\.6\.6
+Installing activemodel 3\.0\.0\.rc
+Installing arel 0\.4\.0
+Installing mail 2\.2\.20
+Installing activeresource 3\.0\.0\.rc
+Installing actionpack 3\.0\.0\.rc
+Installing activerecord 3\.0\.0\.rc
+Installing actionmailer 3\.0\.0\.rc
+Installing railties 3\.0\.0\.rc
+Installing rails 3\.0\.0\.rc
+Installing nokogiri 1\.6\.5
+
+Bundle complete! 2 Gemfile dependencies, 26 gems total\.
+Use `bundle show [gemname]` to see where a bundled gem is installed\.
+.fi
+.IP "" 0
+.P
+As you can see, even though you have two gems in the Gemfile(5), your application needs 26 different gems in order to run\. Bundler remembers the exact versions it installed in \fBGemfile\.lock\fR\. The next time you run bundle install(1) \fIbundle\-install\.1\.html\fR, bundler skips the dependency resolution and installs the same gems as it installed last time\.
+.P
+After checking in the \fBGemfile\.lock\fR into version control and cloning it on another machine, running bundle install(1) \fIbundle\-install\.1\.html\fR will \fIstill\fR install the gems that you installed last time\. You don't need to worry that a new release of \fBerubis\fR or \fBmail\fR changes the gems you use\.
+.P
+However, from time to time, you might want to update the gems you are using to the newest versions that still match the gems in your Gemfile(5)\.
+.P
+To do this, run \fBbundle update \-\-all\fR, which will ignore the \fBGemfile\.lock\fR, and resolve all the dependencies again\. Keep in mind that this process can result in a significantly different set of the 25 gems, based on the requirements of new gems that the gem authors released since the last time you ran \fBbundle update \-\-all\fR\.
+.SH "UPDATING A LIST OF GEMS"
+Sometimes, you want to update a single gem in the Gemfile(5), and leave the rest of the gems that you specified locked to the versions in the \fBGemfile\.lock\fR\.
+.P
+For instance, in the scenario above, imagine that \fBnokogiri\fR releases version \fB1\.4\.4\fR, and you want to update it \fIwithout\fR updating Rails and all of its dependencies\. To do this, run \fBbundle update nokogiri\fR\.
+.P
+Bundler will update \fBnokogiri\fR and any of its dependencies, but leave alone Rails and its dependencies\.
+.SH "OVERLAPPING DEPENDENCIES"
+Sometimes, multiple gems declared in your Gemfile(5) are satisfied by the same second\-level dependency\. For instance, consider the case of \fBthin\fR and \fBrack\-perftools\-profiler\fR\.
+.IP "" 4
+.nf
+source "https://rubygems\.org"
+
+gem "thin"
+gem "rack\-perftools\-profiler"
+.fi
+.IP "" 0
+.P
+The \fBthin\fR gem depends on \fBrack >= 1\.0\fR, while \fBrack\-perftools\-profiler\fR depends on \fBrack ~> 1\.0\fR\. If you run bundle install, you get:
+.IP "" 4
+.nf
+Fetching source index for https://rubygems\.org/
+Installing daemons (1\.1\.0)
+Installing eventmachine (0\.12\.10) with native extensions
+Installing open4 (1\.0\.1)
+Installing perftools\.rb (0\.4\.7) with native extensions
+Installing rack (1\.2\.1)
+Installing rack\-perftools_profiler (0\.0\.2)
+Installing thin (1\.2\.7) with native extensions
+Using bundler (1\.0\.0\.rc\.3)
+.fi
+.IP "" 0
+.P
+In this case, the two gems have their own set of dependencies, but they share \fBrack\fR in common\. If you run \fBbundle update thin\fR, bundler will update \fBdaemons\fR, \fBeventmachine\fR and \fBrack\fR, which are dependencies of \fBthin\fR, but not \fBopen4\fR or \fBperftools\.rb\fR, which are dependencies of \fBrack\-perftools_profiler\fR\. Note that \fBbundle update thin\fR will update \fBrack\fR even though it's \fIalso\fR a dependency of \fBrack\-perftools_profiler\fR\.
+.P
+In short, by default, when you update a gem using \fBbundle update\fR, bundler will update all dependencies of that gem, including those that are also dependencies of another gem\.
+.P
+To prevent updating indirect dependencies, prior to version 1\.14 the only option was the \fBCONSERVATIVE UPDATING\fR behavior in bundle install(1) \fIbundle\-install\.1\.html\fR:
+.P
+In this scenario, updating the \fBthin\fR version manually in the Gemfile(5), and then running bundle install(1) \fIbundle\-install\.1\.html\fR will only update \fBdaemons\fR and \fBeventmachine\fR, but not \fBrack\fR\. For more information, see the \fBCONSERVATIVE UPDATING\fR section of bundle install(1) \fIbundle\-install\.1\.html\fR\.
+.P
+Starting with 1\.14, specifying the \fB\-\-conservative\fR option will also prevent indirect dependencies from being updated\.
+.SH "PATCH LEVEL OPTIONS"
+Version 1\.14 introduced 4 patch\-level options that will influence how gem versions are resolved\. One of the following options can be used: \fB\-\-patch\fR, \fB\-\-minor\fR or \fB\-\-major\fR\. \fB\-\-strict\fR can be added to further influence resolution\.
+.TP
+\fB\-\-patch\fR
+Prefer updating only to next patch version\.
+.TP
+\fB\-\-minor\fR
+Prefer updating only to next minor version\.
+.TP
+\fB\-\-major\fR
+Prefer updating to next major version (default)\.
+.TP
+\fB\-\-strict\fR
+Do not allow any gem to be updated past latest \fB\-\-patch\fR | \fB\-\-minor\fR | \fB\-\-major\fR\.
+.P
+When Bundler is resolving what versions to use to satisfy declared requirements in the Gemfile or in parent gems, it looks up all available versions, filters out any versions that don't satisfy the requirement, and then, by default, sorts them from newest to oldest, considering them in that order\.
+.P
+Providing one of the patch level options (e\.g\. \fB\-\-patch\fR) changes the sort order of the satisfying versions, causing Bundler to consider the latest \fB\-\-patch\fR or \fB\-\-minor\fR version available before other versions\. Note that versions outside the stated patch level could still be resolved to if necessary to find a suitable dependency graph\.
+.P
+For example, if gem 'foo' is locked at 1\.0\.2, with no gem requirement defined in the Gemfile, and versions 1\.0\.3, 1\.0\.4, 1\.1\.0, 1\.1\.1, 2\.0\.0 all exist, the default order of preference by default (\fB\-\-major\fR) will be "2\.0\.0, 1\.1\.1, 1\.1\.0, 1\.0\.4, 1\.0\.3, 1\.0\.2"\.
+.P
+If the \fB\-\-patch\fR option is used, the order of preference will change to "1\.0\.4, 1\.0\.3, 1\.0\.2, 1\.1\.1, 1\.1\.0, 2\.0\.0"\.
+.P
+If the \fB\-\-minor\fR option is used, the order of preference will change to "1\.1\.1, 1\.1\.0, 1\.0\.4, 1\.0\.3, 1\.0\.2, 2\.0\.0"\.
+.P
+Combining the \fB\-\-strict\fR option with any of the patch level options will remove any versions beyond the scope of the patch level option, to ensure that no gem is updated that far\.
+.P
+To continue the previous example, if both \fB\-\-patch\fR and \fB\-\-strict\fR options are used, the available versions for resolution would be "1\.0\.4, 1\.0\.3, 1\.0\.2"\. If \fB\-\-minor\fR and \fB\-\-strict\fR are used, it would be "1\.1\.1, 1\.1\.0, 1\.0\.4, 1\.0\.3, 1\.0\.2"\.
+.P
+Gem requirements as defined in the Gemfile will still be the first determining factor for what versions are available\. If the gem requirement for \fBfoo\fR in the Gemfile is '~> 1\.0', that will accomplish the same thing as providing the \fB\-\-minor\fR and \fB\-\-strict\fR options\.
+.SH "PATCH LEVEL EXAMPLES"
+Given the following gem specifications:
+.IP "" 4
+.nf
+foo 1\.4\.3, requires: ~> bar 2\.0
+foo 1\.4\.4, requires: ~> bar 2\.0
+foo 1\.4\.5, requires: ~> bar 2\.1
+foo 1\.5\.0, requires: ~> bar 2\.1
+foo 1\.5\.1, requires: ~> bar 3\.0
+bar with versions 2\.0\.3, 2\.0\.4, 2\.1\.0, 2\.1\.1, 3\.0\.0
+.fi
+.IP "" 0
+.P
+Gemfile:
+.IP "" 4
+.nf
+gem 'foo'
+.fi
+.IP "" 0
+.P
+Gemfile\.lock:
+.IP "" 4
+.nf
+foo (1\.4\.3)
+  bar (~> 2\.0)
+bar (2\.0\.3)
+.fi
+.IP "" 0
+.P
+Cases:
+.IP "" 4
+.nf
+#  Command Line                     Result
+\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-
+1  bundle update \-\-patch            'foo 1\.4\.5', 'bar 2\.1\.1'
+2  bundle update \-\-patch foo        'foo 1\.4\.5', 'bar 2\.1\.1'
+3  bundle update \-\-minor            'foo 1\.5\.1', 'bar 3\.0\.0'
+4  bundle update \-\-minor \-\-strict   'foo 1\.5\.0', 'bar 2\.1\.1'
+5  bundle update \-\-patch \-\-strict   'foo 1\.4\.4', 'bar 2\.0\.4'
+.fi
+.IP "" 0
+.P
+In case 1, bar is upgraded to 2\.1\.1, a minor version increase, because the dependency from foo 1\.4\.5 required it\.
+.P
+In case 2, only foo is requested to be unlocked, but bar is also allowed to move because it's not a declared dependency in the Gemfile\.
+.P
+In case 3, bar goes up a whole major release, because a minor increase is preferred now for foo, and when it goes to 1\.5\.1, it requires 3\.0\.0 of bar\.
+.P
+In case 4, foo is preferred up to a minor version, but 1\.5\.1 won't work because the \-\-strict flag removes bar 3\.0\.0 from consideration since it's a major increment\.
+.P
+In case 5, both foo and bar have any minor or major increments removed from consideration because of the \-\-strict flag, so the most they can move is up to 1\.4\.4 and 2\.0\.4\.
+.SH "RECOMMENDED WORKFLOW"
+In general, when working with an application managed with bundler, you should use the following workflow:
+.IP "\(bu" 4
+After you create your Gemfile(5) for the first time, run
+.IP
+$ bundle install
+.IP "\(bu" 4
+Check the resulting \fBGemfile\.lock\fR into version control
+.IP
+$ git add Gemfile\.lock
+.IP "\(bu" 4
+When checking out this repository on another development machine, run
+.IP
+$ bundle install
+.IP "\(bu" 4
+When checking out this repository on a deployment machine, run
+.IP
+$ bundle install \-\-deployment
+.IP "\(bu" 4
+After changing the Gemfile(5) to reflect a new or update dependency, run
+.IP
+$ bundle install
+.IP "\(bu" 4
+Make sure to check the updated \fBGemfile\.lock\fR into version control
+.IP
+$ git add Gemfile\.lock
+.IP "\(bu" 4
+If bundle install(1) \fIbundle\-install\.1\.html\fR reports a conflict, manually update the specific gems that you changed in the Gemfile(5)
+.IP
+$ bundle update rails thin
+.IP "\(bu" 4
+If you want to update all the gems to the latest possible versions that still match the gems listed in the Gemfile(5), run
+.IP
+$ bundle update \-\-all
+.IP "" 0
+

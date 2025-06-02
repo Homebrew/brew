@@ -1,0 +1,10 @@
+#!/usr/bin/env ruby
+
+require_relative "../lib/typeprof"
+
+config = TypeProf::CLI.parse(ARGV)
+if config.options[:lsp]
+  TypeProf.start_lsp_server(config)
+else
+  TypeProf.analyze(config)
+end

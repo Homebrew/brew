@@ -1,0 +1,134 @@
+# <!-- rdoc-file=ext/socket/udpsocket.c -->
+# UDPSocket represents a UDP/IP socket.
+#
+class UDPSocket < IPSocket
+  public
+
+  # <!--
+  #   rdoc-file=ext/socket/udpsocket.c
+  #   - udpsocket.bind(host, port) #=> 0
+  # -->
+  # Binds *udpsocket* to *host*:*port*.
+  #
+  #     u1 = UDPSocket.new
+  #     u1.bind("127.0.0.1", 4913)
+  #     u1.send "message-to-self", 0, "127.0.0.1", 4913
+  #     p u1.recvfrom(10) #=> ["message-to", ["AF_INET", 4913, "localhost", "127.0.0.1"]]
+  #
+  def bind: (String host, Integer port) -> void
+
+  # <!--
+  #   rdoc-file=ext/socket/udpsocket.c
+  #   - udpsocket.connect(host, port) => 0
+  # -->
+  # Connects *udpsocket* to *host*:*port*.
+  #
+  # This makes possible to send without destination address.
+  #
+  #     u1 = UDPSocket.new
+  #     u1.bind("127.0.0.1", 4913)
+  #     u2 = UDPSocket.new
+  #     u2.connect("127.0.0.1", 4913)
+  #     u2.send "uuuu", 0
+  #     p u1.recvfrom(10) #=> ["uuuu", ["AF_INET", 33230, "localhost", "127.0.0.1"]]
+  #
+  def connect: (String host, Integer port) -> void
+
+  # <!--
+  #   rdoc-file=ext/socket/lib/socket.rb
+  #   - udpsocket.recvfrom_nonblock(maxlen [, flags[, outbuf [, options]]]) => [mesg, sender_inet_addr]
+  # -->
+  # Receives up to *maxlen* bytes from `udpsocket` using recvfrom(2) after
+  # O_NONBLOCK is set for the underlying file descriptor. *flags* is zero or more
+  # of the `MSG_` options. The first element of the results, *mesg*, is the data
+  # received. The second element, *sender_inet_addr*, is an array to represent the
+  # sender address.
+  #
+  # When recvfrom(2) returns 0, Socket#recvfrom_nonblock returns an empty string
+  # as data. It means an empty packet.
+  #
+  # ### Parameters
+  # *   `maxlen` - the number of bytes to receive from the socket
+  # *   `flags` - zero or more of the `MSG_` options
+  # *   `outbuf` - destination String buffer
+  # *   `options` - keyword hash, supporting `exception: false`
+  #
+  #
+  # ### Example
+  #     require 'socket'
+  #     s1 = UDPSocket.new
+  #     s1.bind("127.0.0.1", 0)
+  #     s2 = UDPSocket.new
+  #     s2.bind("127.0.0.1", 0)
+  #     s2.connect(*s1.addr.values_at(3,1))
+  #     s1.connect(*s2.addr.values_at(3,1))
+  #     s1.send "aaa", 0
+  #     begin # emulate blocking recvfrom
+  #       p s2.recvfrom_nonblock(10)  #=> ["aaa", ["AF_INET", 33302, "localhost.localdomain", "127.0.0.1"]]
+  #     rescue IO::WaitReadable
+  #       IO.select([s2])
+  #       retry
+  #     end
+  #
+  # Refer to Socket#recvfrom for the exceptions that may be thrown if the call to
+  # *recvfrom_nonblock* fails.
+  #
+  # UDPSocket#recvfrom_nonblock may raise any error corresponding to recvfrom(2)
+  # failure, including Errno::EWOULDBLOCK.
+  #
+  # If the exception is Errno::EWOULDBLOCK or Errno::EAGAIN, it is extended by
+  # IO::WaitReadable. So IO::WaitReadable can be used to rescue the exceptions for
+  # retrying recvfrom_nonblock.
+  #
+  # By specifying a keyword argument *exception* to `false`, you can indicate that
+  # recvfrom_nonblock should not raise an IO::WaitReadable exception, but return
+  # the symbol `:wait_readable` instead.
+  #
+  # ### See
+  # *   Socket#recvfrom
+  #
+  def recvfrom_nonblock: (Integer len, ?Integer flag, ?String outbuf, ?exception: boolish) -> [ String, [ String, Integer, String, String ] ]
+
+  # <!--
+  #   rdoc-file=ext/socket/udpsocket.c
+  #   - udpsocket.send(mesg, flags, host, port)  => numbytes_sent
+  #   - udpsocket.send(mesg, flags, sockaddr_to) => numbytes_sent
+  #   - udpsocket.send(mesg, flags)              => numbytes_sent
+  # -->
+  # Sends *mesg* via *udpsocket*.
+  #
+  # *flags* should be a bitwise OR of Socket::MSG_* constants.
+  #
+  #     u1 = UDPSocket.new
+  #     u1.bind("127.0.0.1", 4913)
+  #
+  #     u2 = UDPSocket.new
+  #     u2.send "hi", 0, "127.0.0.1", 4913
+  #
+  #     mesg, addr = u1.recvfrom(10)
+  #     u1.send mesg, 0, addr[3], addr[1]
+  #
+  #     p u2.recv(100) #=> "hi"
+  #
+  def send: (String msg, ?Integer flags, ?String host, ?Integer port) -> Integer
+
+  private
+
+  def __recvfrom_nonblock: (untyped, untyped, untyped, untyped) -> untyped
+
+  # <!--
+  #   rdoc-file=ext/socket/udpsocket.c
+  #   - UDPSocket.new([address_family]) => socket
+  # -->
+  # Creates a new UDPSocket object.
+  #
+  # *address_family* should be an integer, a string or a symbol: Socket::AF_INET,
+  # "AF_INET", :INET, etc.
+  #
+  #     require 'socket'
+  #
+  #     UDPSocket.new                   #=> #<UDPSocket:fd 3>
+  #     UDPSocket.new(Socket::AF_INET6) #=> #<UDPSocket:fd 4>
+  #
+  def initialize: (?Integer family) -> untyped
+end

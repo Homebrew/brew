@@ -1,0 +1,21 @@
+module RBS
+  def self.logger: () -> Logger
+
+  def self.logger_level: () -> Integer?
+
+  def self.logger_level=: (Integer?) -> Integer?
+
+  def self.logger_output: () -> IO
+
+  def self.logger_output=: (IO) -> IO
+
+  def self.print_warning: () { () -> String } -> void
+
+  self.@logger: Logger?
+
+  self.@logger_output: IO?
+
+  self.@logger_level: Integer?
+
+  self.@warnings: Set[String]
+end

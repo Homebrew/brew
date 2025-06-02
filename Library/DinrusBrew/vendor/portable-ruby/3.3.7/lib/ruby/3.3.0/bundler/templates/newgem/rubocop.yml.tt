@@ -1,0 +1,8 @@
+AllCops:
+  TargetRubyVersion: <%= ::Gem::Version.new(config[:required_ruby_version]).segments[0..1].join(".") %>
+
+Style/StringLiterals:
+  EnforcedStyle: double_quotes
+
+Style/StringLiteralsInInterpolation:
+  EnforcedStyle: double_quotes

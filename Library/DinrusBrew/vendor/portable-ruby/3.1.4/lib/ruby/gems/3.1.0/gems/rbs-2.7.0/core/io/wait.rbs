@@ -1,0 +1,58 @@
+%a{annotate:rdoc:skip}
+class IO
+  # <!--
+  #   rdoc-file=ext/io/wait/wait.c
+  #   - io.nread -> int
+  # -->
+  # Returns number of bytes that can be read without blocking. Returns zero if no
+  # information available.
+  #
+  def nread: () -> Integer
+
+  # <!--
+  #   rdoc-file=ext/io/wait/wait.c
+  #   - io.ready? -> true or false
+  # -->
+  # Returns `true` if input available without blocking, or `false`.
+  #
+  def ready?: () -> boolish
+
+  # <!--
+  #   rdoc-file=ext/io/wait/wait.c
+  #   - io.wait(events, timeout) -> event mask or false.
+  #   - io.wait(timeout = nil, mode = :read) -> event mask or false.
+  # -->
+  # Waits until the IO becomes ready for the specified events and returns the
+  # subset of events that become ready, or `false` when times out.
+  #
+  # The events can be a bit mask of `IO::READABLE`, `IO::WRITABLE` or
+  # `IO::PRIORITY`.
+  #
+  # Returns `true` immediately when buffered data is available.
+  #
+  # Optional parameter `mode` is one of `:read`, `:write`, or `:read_write`.
+  #
+  def wait: (Integer events, ?Numeric timeout) -> (self | bool | nil)
+          | (?Numeric? timeout, *wait_mode mode) -> (self | bool | nil)
+
+  type wait_mode = :read | :r | :readable | :write | :w | :writable | :read_write | :rw | :readable_writable
+
+  # <!--
+  #   rdoc-file=ext/io/wait/wait.c
+  #   - io.wait_readable          -> true or false
+  #   - io.wait_readable(timeout) -> true or false
+  # -->
+  # Waits until IO is readable and returns `true`, or `false` when times out.
+  # Returns `true` immediately when buffered data is available.
+  #
+  def wait_readable: (?Numeric? timeout) -> (self | bool | nil)?
+
+  # <!--
+  #   rdoc-file=ext/io/wait/wait.c
+  #   - io.wait_writable          -> true or false
+  #   - io.wait_writable(timeout) -> true or false
+  # -->
+  # Waits until IO is writable and returns `true` or `false` when times out.
+  #
+  def wait_writable: (?Numeric? timeout) -> boolish
+end

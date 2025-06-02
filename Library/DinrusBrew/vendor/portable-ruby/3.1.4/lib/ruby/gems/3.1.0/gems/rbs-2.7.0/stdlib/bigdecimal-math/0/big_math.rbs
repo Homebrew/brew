@@ -1,0 +1,119 @@
+# <!-- rdoc-file=ext/bigdecimal/lib/bigdecimal/math.rb -->
+# Provides mathematical functions.
+#
+# Example:
+#
+#     require "bigdecimal/math"
+#
+#     include BigMath
+#
+#     a = BigDecimal((PI(100)/2).to_s)
+#     puts sin(a,100) # => 0.99999999999999999999......e0
+#
+module BigMath
+  # <!--
+  #   rdoc-file=ext/bigdecimal/lib/bigdecimal/math.rb
+  #   - E(numeric) -> BigDecimal
+  # -->
+  # Computes e (the base of natural logarithms) to the specified number of digits
+  # of precision, `numeric`.
+  #
+  #     BigMath.E(10).to_s
+  #     #=> "0.271828182845904523536028752390026306410273e1"
+  #
+  def self?.E: (Numeric prec) -> BigDecimal
+
+  # <!--
+  #   rdoc-file=ext/bigdecimal/lib/bigdecimal/math.rb
+  #   - PI(numeric) -> BigDecimal
+  # -->
+  # Computes the value of pi to the specified number of digits of precision,
+  # `numeric`.
+  #
+  #     BigMath.PI(10).to_s
+  #     #=> "0.3141592653589793238462643388813853786957412e1"
+  #
+  def self?.PI: (Numeric prec) -> BigDecimal
+
+  # <!--
+  #   rdoc-file=ext/bigdecimal/lib/bigdecimal/math.rb
+  #   - atan(decimal, numeric) -> BigDecimal
+  # -->
+  # Computes the arctangent of `decimal` to the specified number of digits of
+  # precision, `numeric`.
+  #
+  # If `decimal` is NaN, returns NaN.
+  #
+  #     BigMath.atan(BigDecimal('-1'), 16).to_s
+  #     #=> "-0.785398163397448309615660845819878471907514682065e0"
+  #
+  def self?.atan: (BigDecimal x, Numeric prec) -> BigDecimal
+
+  # <!--
+  #   rdoc-file=ext/bigdecimal/lib/bigdecimal/math.rb
+  #   - cos(decimal, numeric) -> BigDecimal
+  # -->
+  # Computes the cosine of `decimal` to the specified number of digits of
+  # precision, `numeric`.
+  #
+  # If `decimal` is Infinity or NaN, returns NaN.
+  #
+  #     BigMath.cos(BigMath.PI(4), 16).to_s
+  #     #=> "-0.999999999999999999999999999999856613163740061349e0"
+  #
+  def self?.cos: (BigDecimal x, Numeric prec) -> BigDecimal
+
+  # <!--
+  #   rdoc-file=ext/bigdecimal/bigdecimal.c
+  #   - BigMath.exp(decimal, numeric)    -> BigDecimal
+  # -->
+  # Computes the value of e (the base of natural logarithms) raised to the power
+  # of `decimal`, to the specified number of digits of precision.
+  #
+  # If `decimal` is infinity, returns Infinity.
+  #
+  # If `decimal` is NaN, returns NaN.
+  #
+  def self?.exp: (BigDecimal, Numeric prec) -> BigDecimal
+
+  # <!--
+  #   rdoc-file=ext/bigdecimal/bigdecimal.c
+  #   - BigMath.log(decimal, numeric)    -> BigDecimal
+  # -->
+  # Computes the natural logarithm of `decimal` to the specified number of digits
+  # of precision, `numeric`.
+  #
+  # If `decimal` is zero or negative, raises Math::DomainError.
+  #
+  # If `decimal` is positive infinity, returns Infinity.
+  #
+  # If `decimal` is NaN, returns NaN.
+  #
+  def self?.log: (BigDecimal, Numeric prec) -> BigDecimal
+
+  # <!--
+  #   rdoc-file=ext/bigdecimal/lib/bigdecimal/math.rb
+  #   - sin(decimal, numeric) -> BigDecimal
+  # -->
+  # Computes the sine of `decimal` to the specified number of digits of precision,
+  # `numeric`.
+  #
+  # If `decimal` is Infinity or NaN, returns NaN.
+  #
+  #     BigMath.sin(BigMath.PI(5)/4, 5).to_s
+  #     #=> "0.70710678118654752440082036563292800375e0"
+  #
+  def self?.sin: (BigDecimal x, Numeric prec) -> BigDecimal
+
+  # <!--
+  #   rdoc-file=ext/bigdecimal/lib/bigdecimal/math.rb
+  #   - sqrt(decimal, numeric) -> BigDecimal
+  # -->
+  # Computes the square root of `decimal` to the specified number of digits of
+  # precision, `numeric`.
+  #
+  #     BigMath.sqrt(BigDecimal('2'), 16).to_s
+  #     #=> "0.1414213562373095048801688724e1"
+  #
+  def self?.sqrt: (BigDecimal x, Numeric prec) -> BigDecimal
+end

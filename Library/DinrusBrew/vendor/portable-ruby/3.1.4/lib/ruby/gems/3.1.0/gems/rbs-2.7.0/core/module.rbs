@@ -1,0 +1,1540 @@
+# <!-- rdoc-file=object.c -->
+# A Module is a collection of methods and constants. The methods in a module may
+# be instance methods or module methods. Instance methods appear as methods in a
+# class when the module is included, module methods do not. Conversely, module
+# methods may be called without creating an encapsulating object, while instance
+# methods may not. (See Module#module_function.)
+#
+# In the descriptions that follow, the parameter *sym* refers to a symbol, which
+# is either a quoted string or a Symbol (such as `:name`).
+#
+#     module Mod
+#       include Math
+#       CONST = 1
+#       def meth
+#         #  ...
+#       end
+#     end
+#     Mod.class              #=> Module
+#     Mod.constants          #=> [:CONST, :PI, :E]
+#     Mod.instance_methods   #=> [:meth]
+#
+class Module < Object
+  # <!--
+  #   rdoc-file=eval.c
+  #   - Module.constants   -> array
+  #   - Module.constants(inherited)   -> array
+  # -->
+  # In the first form, returns an array of the names of all constants accessible
+  # from the point of call. This list includes the names of all modules and
+  # classes defined in the global scope.
+  #
+  #     Module.constants.first(4)
+  #        # => [:ARGF, :ARGV, :ArgumentError, :Array]
+  #
+  #     Module.constants.include?(:SEEK_SET)   # => false
+  #
+  #     class IO
+  #       Module.constants.include?(:SEEK_SET) # => true
+  #     end
+  #
+  # The second form calls the instance method `constants`.
+  #
+  def self.constants: () -> ::Array[Integer]
+
+  # <!--
+  #   rdoc-file=eval.c
+  #   - Module.nesting    -> array
+  # -->
+  # Returns the list of `Modules` nested at the point of call.
+  #
+  #     module M1
+  #       module M2
+  #         $a = Module.nesting
+  #       end
+  #     end
+  #     $a           #=> [M1::M2, M1]
+  #     $a[0].name   #=> "M1::M2"
+  #
+  def self.nesting: () -> ::Array[Module]
+
+  # <!--
+  #   rdoc-file=eval.c
+  #   - used_modules -> array
+  # -->
+  # Returns an array of all modules used in the current scope. The ordering of
+  # modules in the resulting array is not defined.
+  #
+  #     module A
+  #       refine Object do
+  #       end
+  #     end
+  #
+  #     module B
+  #       refine Object do
+  #       end
+  #     end
+  #
+  #     using A
+  #     using B
+  #     p Module.used_modules
+  #
+  # *produces:*
+  #
+  #     [B, A]
+  #
+  def self.used_modules: () -> ::Array[Module]
+
+  # <!--
+  #   rdoc-file=object.c
+  #   - mod < other   ->  true, false, or nil
+  # -->
+  # Returns true if *mod* is a subclass of *other*. Returns `nil` if there's no
+  # relationship between the two. (Think of the relationship in terms of the class
+  # definition: "class A < B" implies "A < B".)
+  #
+  def <: (Module other) -> bool?
+
+  # <!--
+  #   rdoc-file=object.c
+  #   - mod <= other   ->  true, false, or nil
+  # -->
+  # Returns true if *mod* is a subclass of *other* or is the same as *other*.
+  # Returns `nil` if there's no relationship between the two. (Think of the
+  # relationship in terms of the class definition: "class A < B" implies "A < B".)
+  #
+  def <=: (Module other) -> bool?
+
+  # <!--
+  #   rdoc-file=object.c
+  #   - module <=> other_module   -> -1, 0, +1, or nil
+  # -->
+  # Comparison---Returns -1, 0, +1 or nil depending on whether `module` includes
+  # `other_module`, they are the same, or if `module` is included by
+  # `other_module`.
+  #
+  # Returns `nil` if `module` has no relationship with `other_module`, if
+  # `other_module` is not a module, or if the two values are incomparable.
+  #
+  def <=>: (untyped other) -> Integer?
+
+  # <!--
+  #   rdoc-file=object.c
+  #   - obj == other        -> true or false
+  #   - obj.equal?(other)   -> true or false
+  #   - obj.eql?(other)     -> true or false
+  # -->
+  # Equality --- At the Object level, #== returns `true` only if `obj` and `other`
+  # are the same object.  Typically, this method is overridden in descendant
+  # classes to provide class-specific meaning.
+  #
+  # Unlike #==, the #equal? method should never be overridden by subclasses as it
+  # is used to determine object identity (that is, `a.equal?(b)` if and only if
+  # `a` is the same object as `b`):
+  #
+  #     obj = "a"
+  #     other = obj.dup
+  #
+  #     obj == other      #=> true
+  #     obj.equal? other  #=> false
+  #     obj.equal? obj    #=> true
+  #
+  # The #eql? method returns `true` if `obj` and `other` refer to the same hash
+  # key.  This is used by Hash to test members for equality.  For any pair of
+  # objects where #eql? returns `true`, the #hash value of both objects must be
+  # equal. So any subclass that overrides #eql? should also override #hash
+  # appropriately.
+  #
+  # For objects of class Object, #eql?  is synonymous with #==.  Subclasses
+  # normally continue this tradition by aliasing #eql? to their overridden #==
+  # method, but there are exceptions. Numeric types, for example, perform type
+  # conversion across #==, but not across #eql?, so:
+  #
+  #     1 == 1.0     #=> true
+  #     1.eql? 1.0   #=> false
+  #
+  def ==: (untyped other) -> bool
+
+  # <!--
+  #   rdoc-file=object.c
+  #   - mod === obj    -> true or false
+  # -->
+  # Case Equality---Returns `true` if *obj* is an instance of *mod* or an instance
+  # of one of *mod*'s descendants. Of limited use for modules, but can be used in
+  # `case` statements to classify objects by class.
+  #
+  def ===: (untyped other) -> bool
+
+  # <!--
+  #   rdoc-file=object.c
+  #   - mod > other   ->  true, false, or nil
+  # -->
+  # Returns true if *mod* is an ancestor of *other*. Returns `nil` if there's no
+  # relationship between the two. (Think of the relationship in terms of the class
+  # definition: "class A < B" implies "B > A".)
+  #
+  def >: (Module other) -> bool?
+
+  # <!--
+  #   rdoc-file=object.c
+  #   - mod >= other   ->  true, false, or nil
+  # -->
+  # Returns true if *mod* is an ancestor of *other*, or the two modules are the
+  # same. Returns `nil` if there's no relationship between the two. (Think of the
+  # relationship in terms of the class definition: "class A < B" implies "B > A".)
+  #
+  def >=: (Module other) -> bool?
+
+  # <!--
+  #   rdoc-file=vm_method.c
+  #   - alias_method(new_name, old_name)   -> symbol
+  # -->
+  # Makes *new_name* a new copy of the method *old_name*. This can be used to
+  # retain access to methods that are overridden.
+  #
+  #     module Mod
+  #       alias_method :orig_exit, :exit #=> :orig_exit
+  #       def exit(code=0)
+  #         puts "Exiting with code #{code}"
+  #         orig_exit(code)
+  #       end
+  #     end
+  #     include Mod
+  #     exit(99)
+  #
+  # *produces:*
+  #
+  #     Exiting with code 99
+  #
+  def alias_method: (::Symbol | ::String new_name, ::Symbol | ::String old_name) -> ::Symbol
+
+  # <!--
+  #   rdoc-file=object.c
+  #   - mod.ancestors -> array
+  # -->
+  # Returns a list of modules included/prepended in *mod* (including *mod*
+  # itself).
+  #
+  #     module Mod
+  #       include Math
+  #       include Comparable
+  #       prepend Enumerable
+  #     end
+  #
+  #     Mod.ancestors        #=> [Enumerable, Mod, Comparable, Math]
+  #     Math.ancestors       #=> [Math]
+  #     Enumerable.ancestors #=> [Enumerable]
+  #
+  def ancestors: () -> ::Array[Module]
+
+  # <!--
+  #   rdoc-file=eval.c
+  #   - append_features(mod)   -> mod
+  # -->
+  # When this module is included in another, Ruby calls #append_features in this
+  # module, passing it the receiving module in *mod*. Ruby's default
+  # implementation is to add the constants, methods, and module variables of this
+  # module to *mod* if this module has not already been added to *mod* or one of
+  # its ancestors. See also Module#include.
+  #
+  def append_features: (Module arg0) -> self
+
+  # <!--
+  #   rdoc-file=object.c
+  #   - attr_accessor(symbol, ...)    -> array
+  #   - attr_accessor(string, ...)    -> array
+  # -->
+  # Defines a named attribute for this module, where the name is
+  # *symbol.*`id2name`, creating an instance variable (`@name`) and a
+  # corresponding access method to read it. Also creates a method called `name=`
+  # to set the attribute. String arguments are converted to symbols. Returns an
+  # array of defined method names as symbols.
+  #
+  #     module Mod
+  #       attr_accessor(:one, :two) #=> [:one, :one=, :two, :two=]
+  #     end
+  #     Mod.instance_methods.sort   #=> [:one, :one=, :two, :two=]
+  #
+  def attr_accessor: (*Symbol | String arg0) -> NilClass
+
+  # <!--
+  #   rdoc-file=object.c
+  #   - attr_reader(symbol, ...)  -> array
+  #   - attr(symbol, ...)         -> array
+  #   - attr_reader(string, ...)  -> array
+  #   - attr(string, ...)         -> array
+  # -->
+  # Creates instance variables and corresponding methods that return the value of
+  # each instance variable. Equivalent to calling ```attr`*:name*'' on each name
+  # in turn. String arguments are converted to symbols. Returns an array of
+  # defined method names as symbols.
+  #
+  def attr_reader: (*Symbol | String arg0) -> NilClass
+
+  # <!--
+  #   rdoc-file=object.c
+  #   - attr_writer(symbol, ...)    -> array
+  #   - attr_writer(string, ...)    -> array
+  # -->
+  # Creates an accessor method to allow assignment to the attribute
+  # *symbol*`.id2name`. String arguments are converted to symbols. Returns an
+  # array of defined method names as symbols.
+  #
+  def attr_writer: (*Symbol | String arg0) -> NilClass
+
+  # <!--
+  #   rdoc-file=load.c
+  #   - mod.autoload(module, filename)   -> nil
+  # -->
+  # Registers *filename* to be loaded (using Kernel::require) the first time that
+  # *module* (which may be a String or a symbol) is accessed in the namespace of
+  # *mod*.
+  #
+  #     module A
+  #     end
+  #     A.autoload(:B, "b")
+  #     A::B.doit            # autoloads "b"
+  #
+  def autoload: (Symbol _module, String filename) -> NilClass
+
+  # <!--
+  #   rdoc-file=load.c
+  #   - mod.autoload?(name, inherit=true)   -> String or nil
+  # -->
+  # Returns *filename* to be loaded if *name* is registered as `autoload` in the
+  # namespace of *mod* or one of its ancestors.
+  #
+  #     module A
+  #     end
+  #     A.autoload(:B, "b")
+  #     A.autoload?(:B)            #=> "b"
+  #
+  # If `inherit` is false, the lookup only checks the autoloads in the receiver:
+  #
+  #     class A
+  #       autoload :CONST, "const.rb"
+  #     end
+  #
+  #     class B < A
+  #     end
+  #
+  #     B.autoload?(:CONST)          #=> "const.rb", found in A (ancestor)
+  #     B.autoload?(:CONST, false)   #=> nil, not found in B itself
+  #
+  def autoload?: (Symbol name, ?boolish inherit) -> String?
+
+  # <!-- rdoc-file=vm_eval.c -->
+  # Evaluates the string or block in the context of *mod*, except that when a
+  # block is given, constant/class variable lookup is not affected. This can be
+  # used to add methods to a class. `module_eval` returns the result of evaluating
+  # its argument. The optional *filename* and *lineno* parameters set the text for
+  # error messages.
+  #
+  #     class Thing
+  #     end
+  #     a = %q{def hello() "Hello there!" end}
+  #     Thing.module_eval(a)
+  #     puts Thing.new.hello()
+  #     Thing.module_eval("invalid code", "dummy", 123)
+  #
+  # *produces:*
+  #
+  #     Hello there!
+  #     dummy:123:in `module_eval': undefined local variable
+  #         or method `code' for Thing:Class
+  #
+  def class_eval: (String arg0, ?String filename, ?Integer lineno) -> untyped
+                | [U] () { (self m) -> U } -> U
+
+  # <!-- rdoc-file=vm_eval.c -->
+  # Evaluates the given block in the context of the class/module. The method
+  # defined in the block will belong to the receiver. Any arguments passed to the
+  # method will be passed to the block. This can be used if the block needs to
+  # access instance variables.
+  #
+  #     class Thing
+  #     end
+  #     Thing.class_exec{
+  #       def hello() "Hello there!" end
+  #     }
+  #     puts Thing.new.hello()
+  #
+  # *produces:*
+  #
+  #     Hello there!
+  #
+  def class_exec: [U] (*untyped args) { () -> U } -> U
+
+  # <!--
+  #   rdoc-file=object.c
+  #   - obj.class_variable_defined?(symbol)    -> true or false
+  #   - obj.class_variable_defined?(string)    -> true or false
+  # -->
+  # Returns `true` if the given class variable is defined in *obj*. String
+  # arguments are converted to symbols.
+  #
+  #     class Fred
+  #       @@foo = 99
+  #     end
+  #     Fred.class_variable_defined?(:@@foo)    #=> true
+  #     Fred.class_variable_defined?(:@@bar)    #=> false
+  #
+  def class_variable_defined?: (Symbol | String arg0) -> bool
+
+  # <!--
+  #   rdoc-file=object.c
+  #   - mod.class_variable_get(symbol)    -> obj
+  #   - mod.class_variable_get(string)    -> obj
+  # -->
+  # Returns the value of the given class variable (or throws a NameError
+  # exception). The `@@` part of the variable name should be included for regular
+  # class variables. String arguments are converted to symbols.
+  #
+  #     class Fred
+  #       @@foo = 99
+  #     end
+  #     Fred.class_variable_get(:@@foo)     #=> 99
+  #
+  def class_variable_get: (Symbol | String arg0) -> untyped
+
+  # <!--
+  #   rdoc-file=object.c
+  #   - obj.class_variable_set(symbol, obj)    -> obj
+  #   - obj.class_variable_set(string, obj)    -> obj
+  # -->
+  # Sets the class variable named by *symbol* to the given object. If the class
+  # variable name is passed as a string, that string is converted to a symbol.
+  #
+  #     class Fred
+  #       @@foo = 99
+  #       def foo
+  #         @@foo
+  #       end
+  #     end
+  #     Fred.class_variable_set(:@@foo, 101)     #=> 101
+  #     Fred.new.foo                             #=> 101
+  #
+  def class_variable_set: (Symbol | String arg0, untyped arg1) -> untyped
+
+  # <!--
+  #   rdoc-file=object.c
+  #   - mod.class_variables(inherit=true)    -> array
+  # -->
+  # Returns an array of the names of class variables in *mod*. This includes the
+  # names of class variables in any included modules, unless the *inherit*
+  # parameter is set to `false`.
+  #
+  #     class One
+  #       @@var1 = 1
+  #     end
+  #     class Two < One
+  #       @@var2 = 2
+  #     end
+  #     One.class_variables          #=> [:@@var1]
+  #     Two.class_variables          #=> [:@@var2, :@@var1]
+  #     Two.class_variables(false)   #=> [:@@var2]
+  #
+  def class_variables: (?boolish inherit) -> ::Array[Symbol]
+
+  # <!--
+  #   rdoc-file=object.c
+  #   - mod.const_defined?(sym, inherit=true)   -> true or false
+  #   - mod.const_defined?(str, inherit=true)   -> true or false
+  # -->
+  # Says whether *mod* or its ancestors have a constant with the given name:
+  #
+  #     Float.const_defined?(:EPSILON)      #=> true, found in Float itself
+  #     Float.const_defined?("String")      #=> true, found in Object (ancestor)
+  #     BasicObject.const_defined?(:Hash)   #=> false
+  #
+  # If *mod* is a `Module`, additionally `Object` and its ancestors are checked:
+  #
+  #     Math.const_defined?(:String)   #=> true, found in Object
+  #
+  # In each of the checked classes or modules, if the constant is not present but
+  # there is an autoload for it, `true` is returned directly without autoloading:
+  #
+  #     module Admin
+  #       autoload :User, 'admin/user'
+  #     end
+  #     Admin.const_defined?(:User)   #=> true
+  #
+  # If the constant is not found the callback `const_missing` is **not** called
+  # and the method returns `false`.
+  #
+  # If `inherit` is false, the lookup only checks the constants in the receiver:
+  #
+  #     IO.const_defined?(:SYNC)          #=> true, found in File::Constants (ancestor)
+  #     IO.const_defined?(:SYNC, false)   #=> false, not found in IO itself
+  #
+  # In this case, the same logic for autoloading applies.
+  #
+  # If the argument is not a valid constant name a `NameError` is raised with the
+  # message "wrong constant name *name*":
+  #
+  #     Hash.const_defined? 'foobar'   #=> NameError: wrong constant name foobar
+  #
+  def const_defined?: (Symbol | String name, ?boolish inherit) -> bool
+
+  # <!--
+  #   rdoc-file=object.c
+  #   - mod.const_get(sym, inherit=true)    -> obj
+  #   - mod.const_get(str, inherit=true)    -> obj
+  # -->
+  # Checks for a constant with the given name in *mod*. If `inherit` is set, the
+  # lookup will also search the ancestors (and `Object` if *mod* is a `Module`).
+  #
+  # The value of the constant is returned if a definition is found, otherwise a
+  # `NameError` is raised.
+  #
+  #     Math.const_get(:PI)   #=> 3.14159265358979
+  #
+  # This method will recursively look up constant names if a namespaced class name
+  # is provided.  For example:
+  #
+  #     module Foo; class Bar; end end
+  #     Object.const_get 'Foo::Bar'
+  #
+  # The `inherit` flag is respected on each lookup.  For example:
+  #
+  #     module Foo
+  #       class Bar
+  #         VAL = 10
+  #       end
+  #
+  #       class Baz < Bar; end
+  #     end
+  #
+  #     Object.const_get 'Foo::Baz::VAL'         # => 10
+  #     Object.const_get 'Foo::Baz::VAL', false  # => NameError
+  #
+  # If the argument is not a valid constant name a `NameError` will be raised with
+  # a warning "wrong constant name".
+  #
+  #     Object.const_get 'foobar' #=> NameError: wrong constant name foobar
+  #
+  def const_get: (Symbol | String name, ?boolish inherit) -> untyped
+
+  # <!--
+  #   rdoc-file=object.c
+  #   - mod.const_missing(sym)    -> obj
+  # -->
+  # Invoked when a reference is made to an undefined constant in *mod*. It is
+  # passed a symbol for the undefined constant, and returns a value to be used for
+  # that constant. The following code is an example of the same:
+  #
+  #     def Foo.const_missing(name)
+  #       name # return the constant name as Symbol
+  #     end
+  #
+  #     Foo::UNDEFINED_CONST    #=> :UNDEFINED_CONST: symbol returned
+  #
+  # In the next example when a reference is made to an undefined constant, it
+  # attempts to load a file whose name is the lowercase version of the constant
+  # (thus class `Fred` is assumed to be in file `fred.rb`).  If found, it returns
+  # the loaded class. It therefore implements an autoload feature similar to
+  # Kernel#autoload and Module#autoload.
+  #
+  #     def Object.const_missing(name)
+  #       @looked_for ||= {}
+  #       str_name = name.to_s
+  #       raise "Class not found: #{name}" if @looked_for[str_name]
+  #       @looked_for[str_name] = 1
+  #       file = str_name.downcase
+  #       require file
+  #       klass = const_get(name)
+  #       return klass if klass
+  #       raise "Class not found: #{name}"
+  #     end
+  #
+  def const_missing: (Symbol arg0) -> untyped
+
+  # <!--
+  #   rdoc-file=object.c
+  #   - mod.const_set(sym, obj)    -> obj
+  #   - mod.const_set(str, obj)    -> obj
+  # -->
+  # Sets the named constant to the given object, returning that object. Creates a
+  # new constant if no constant with the given name previously existed.
+  #
+  #     Math.const_set("HIGH_SCHOOL_PI", 22.0/7.0)   #=> 3.14285714285714
+  #     Math::HIGH_SCHOOL_PI - Math::PI              #=> 0.00126448926734968
+  #
+  # If `sym` or `str` is not a valid constant name a `NameError` will be raised
+  # with a warning "wrong constant name".
+  #
+  #     Object.const_set('foobar', 42) #=> NameError: wrong constant name foobar
+  #
+  def const_set: (Symbol | String arg0, untyped arg1) -> untyped
+
+  # <!--
+  #   rdoc-file=object.c
+  #   - mod.const_source_location(sym, inherit=true)   -> [String, Integer]
+  #   - mod.const_source_location(str, inherit=true)   -> [String, Integer]
+  # -->
+  # Returns the Ruby source filename and line number containing the definition of
+  # the constant specified. If the named constant is not found, `nil` is returned.
+  # If the constant is found, but its source location can not be extracted
+  # (constant is defined in C code), empty array is returned.
+  #
+  # *inherit* specifies whether to lookup in `mod.ancestors` (`true` by default).
+  #
+  #     # test.rb:
+  #     class A         # line 1
+  #       C1 = 1
+  #       C2 = 2
+  #     end
+  #
+  #     module M        # line 6
+  #       C3 = 3
+  #     end
+  #
+  #     class B < A     # line 10
+  #       include M
+  #       C4 = 4
+  #     end
+  #
+  #     class A # continuation of A definition
+  #       C2 = 8 # constant redefinition; warned yet allowed
+  #     end
+  #
+  #     p B.const_source_location('C4')           # => ["test.rb", 12]
+  #     p B.const_source_location('C3')           # => ["test.rb", 7]
+  #     p B.const_source_location('C1')           # => ["test.rb", 2]
+  #
+  #     p B.const_source_location('C3', false)    # => nil  -- don't lookup in ancestors
+  #
+  #     p A.const_source_location('C2')           # => ["test.rb", 16] -- actual (last) definition place
+  #
+  #     p Object.const_source_location('B')       # => ["test.rb", 10] -- top-level constant could be looked through Object
+  #     p Object.const_source_location('A')       # => ["test.rb", 1] -- class reopening is NOT considered new definition
+  #
+  #     p B.const_source_location('A')            # => ["test.rb", 1]  -- because Object is in ancestors
+  #     p M.const_source_location('A')            # => ["test.rb", 1]  -- Object is not ancestor, but additionally checked for modules
+  #
+  #     p Object.const_source_location('A::C1')   # => ["test.rb", 2]  -- nesting is supported
+  #     p Object.const_source_location('String')  # => []  -- constant is defined in C code
+  #
+  def const_source_location: (Symbol | String name, ?boolish inherit) -> ([ String, Integer ] | [ ] | nil)
+
+  # <!--
+  #   rdoc-file=object.c
+  #   - mod.constants(inherit=true)    -> array
+  # -->
+  # Returns an array of the names of the constants accessible in *mod*. This
+  # includes the names of constants in any included modules (example at start of
+  # section), unless the *inherit* parameter is set to `false`.
+  #
+  # The implementation makes no guarantees about the order in which the constants
+  # are yielded.
+  #
+  #     IO.constants.include?(:SYNC)        #=> true
+  #     IO.constants(false).include?(:SYNC) #=> false
+  #
+  # Also see Module#const_defined?.
+  #
+  def constants: (?boolish inherit) -> ::Array[Symbol]
+
+  # <!--
+  #   rdoc-file=proc.c
+  #   - define_method(symbol, method)     -> symbol
+  #   - define_method(symbol) { block }   -> symbol
+  # -->
+  # Defines an instance method in the receiver. The *method* parameter can be a
+  # `Proc`, a `Method` or an `UnboundMethod` object. If a block is specified, it
+  # is used as the method body. If a block or the *method* parameter has
+  # parameters, they're used as method parameters. This block is evaluated using
+  # #instance_eval.
+  #
+  #     class A
+  #       def fred
+  #         puts "In Fred"
+  #       end
+  #       def create_method(name, &block)
+  #         self.class.define_method(name, &block)
+  #       end
+  #       define_method(:wilma) { puts "Charge it!" }
+  #       define_method(:flint) {|name| puts "I'm #{name}!"}
+  #     end
+  #     class B < A
+  #       define_method(:barney, instance_method(:fred))
+  #     end
+  #     a = B.new
+  #     a.barney
+  #     a.wilma
+  #     a.flint('Dino')
+  #     a.create_method(:betty) { p self }
+  #     a.betty
+  #
+  # *produces:*
+  #
+  #     In Fred
+  #     Charge it!
+  #     I'm Dino!
+  #     #<B:0x401b39e8>
+  #
+  def define_method: (Symbol | String arg0, ?Proc | Method | UnboundMethod arg1) -> Symbol
+                   | (Symbol | String arg0) { () -> untyped } -> Symbol
+
+  # <!--
+  #   rdoc-file=object.c
+  #   - mod.deprecate_constant(symbol, ...)    => mod
+  # -->
+  # Makes a list of existing constants deprecated. Attempt to refer to them will
+  # produce a warning.
+  #
+  #     module HTTP
+  #       NotFound = Exception.new
+  #       NOT_FOUND = NotFound # previous version of the library used this name
+  #
+  #       deprecate_constant :NOT_FOUND
+  #     end
+  #
+  #     HTTP::NOT_FOUND
+  #     # warning: constant HTTP::NOT_FOUND is deprecated
+  #
+  def deprecate_constant: (*Symbol) -> self
+
+  def eql?: (untyped other) -> bool
+
+  def equal?: (untyped other) -> bool
+
+  # <!--
+  #   rdoc-file=eval.c
+  #   - extend_object(obj)    -> obj
+  # -->
+  # Extends the specified object by adding this module's constants and methods
+  # (which are added as singleton methods). This is the callback method used by
+  # Object#extend.
+  #
+  #     module Picky
+  #       def Picky.extend_object(o)
+  #         if String === o
+  #           puts "Can't add Picky to a String"
+  #         else
+  #           puts "Picky added to #{o.class}"
+  #           super
+  #         end
+  #       end
+  #     end
+  #     (s = Array.new).extend Picky  # Call Object.extend
+  #     (s = "quick brown fox").extend Picky
+  #
+  # *produces:*
+  #
+  #     Picky added to Array
+  #     Can't add Picky to a String
+  #
+  def extend_object: (untyped arg0) -> untyped
+
+  # <!--
+  #   rdoc-file=object.c
+  #   - extended(othermod)
+  # -->
+  # The equivalent of `included`, but for extended modules.
+  #
+  #     module A
+  #       def self.extended(mod)
+  #         puts "#{self} extended in #{mod}"
+  #       end
+  #     end
+  #     module Enumerable
+  #       extend A
+  #     end
+  #      # => prints "A extended in Enumerable"
+  #
+  def extended: (Module othermod) -> untyped
+
+  # <!--
+  #   rdoc-file=object.c
+  #   - mod.freeze       -> mod
+  # -->
+  # Prevents further modifications to *mod*.
+  #
+  # This method returns self.
+  #
+  def freeze: () -> self
+
+  # <!--
+  #   rdoc-file=eval.c
+  #   - include(module, ...)    -> self
+  # -->
+  # Invokes Module.append_features on each parameter in reverse order.
+  #
+  def include: (*Module arg0) -> self
+
+  # <!--
+  #   rdoc-file=object.c
+  #   - mod.include?(module)    -> true or false
+  # -->
+  # Returns `true` if *module* is included or prepended in *mod* or one of *mod*'s
+  # ancestors.
+  #
+  #     module A
+  #     end
+  #     class B
+  #       include A
+  #     end
+  #     class C < B
+  #     end
+  #     B.include?(A)   #=> true
+  #     C.include?(A)   #=> true
+  #     A.include?(A)   #=> false
+  #
+  def include?: (Module arg0) -> bool
+
+  # <!--
+  #   rdoc-file=object.c
+  #   - included(othermod)
+  # -->
+  # Callback invoked whenever the receiver is included in another module or class.
+  # This should be used in preference to `Module.append_features` if your code
+  # wants to perform some action when a module is included in another.
+  #
+  #     module A
+  #       def A.included(mod)
+  #         puts "#{self} included in #{mod}"
+  #       end
+  #     end
+  #     module Enumerable
+  #       include A
+  #     end
+  #      # => prints "A included in Enumerable"
+  #
+  def included: (Module othermod) -> untyped
+
+  # <!--
+  #   rdoc-file=object.c
+  #   - mod.included_modules -> array
+  # -->
+  # Returns the list of modules included or prepended in *mod* or one of *mod*'s
+  # ancestors.
+  #
+  #     module Sub
+  #     end
+  #
+  #     module Mixin
+  #       prepend Sub
+  #     end
+  #
+  #     module Outer
+  #       include Mixin
+  #     end
+  #
+  #     Mixin.included_modules   #=> [Sub]
+  #     Outer.included_modules   #=> [Sub, Mixin]
+  #
+  def included_modules: () -> ::Array[Module]
+
+  # <!--
+  #   rdoc-file=object.c
+  #   - Module.new                  -> mod
+  #   - Module.new {|mod| block }   -> mod
+  # -->
+  # Creates a new anonymous module. If a block is given, it is passed the module
+  # object, and the block is evaluated in the context of this module like
+  # #module_eval.
+  #
+  #     fred = Module.new do
+  #       def meth1
+  #         "hello"
+  #       end
+  #       def meth2
+  #         "bye"
+  #       end
+  #     end
+  #     a = "my string"
+  #     a.extend(fred)   #=> "my string"
+  #     a.meth1          #=> "hello"
+  #     a.meth2          #=> "bye"
+  #
+  # Assign the module to a constant (name starting uppercase) if you want to treat
+  # it like a regular module.
+  #
+  def initialize: () -> Object
+                | () { (Module arg0) -> untyped } -> void
+
+  # <!--
+  #   rdoc-file=proc.c
+  #   - mod.instance_method(symbol)   -> unbound_method
+  # -->
+  # Returns an `UnboundMethod` representing the given instance method in *mod*.
+  #
+  #     class Interpreter
+  #       def do_a() print "there, "; end
+  #       def do_d() print "Hello ";  end
+  #       def do_e() print "!\n";     end
+  #       def do_v() print "Dave";    end
+  #       Dispatcher = {
+  #         "a" => instance_method(:do_a),
+  #         "d" => instance_method(:do_d),
+  #         "e" => instance_method(:do_e),
+  #         "v" => instance_method(:do_v)
+  #       }
+  #       def interpret(string)
+  #         string.each_char {|b| Dispatcher[b].bind(self).call }
+  #       end
+  #     end
+  #
+  #     interpreter = Interpreter.new
+  #     interpreter.interpret('dave')
+  #
+  # *produces:*
+  #
+  #     Hello there, Dave!
+  #
+  def instance_method: (Symbol arg0) -> UnboundMethod
+
+  # <!--
+  #   rdoc-file=object.c
+  #   - mod.instance_methods(include_super=true)   -> array
+  # -->
+  # Returns an array containing the names of the public and protected instance
+  # methods in the receiver. For a module, these are the public and protected
+  # methods; for a class, they are the instance (not singleton) methods. If the
+  # optional parameter is `false`, the methods of any ancestors are not included.
+  #
+  #     module A
+  #       def method1()  end
+  #     end
+  #     class B
+  #       include A
+  #       def method2()  end
+  #     end
+  #     class C < B
+  #       def method3()  end
+  #     end
+  #
+  #     A.instance_methods(false)                   #=> [:method1]
+  #     B.instance_methods(false)                   #=> [:method2]
+  #     B.instance_methods(true).include?(:method1) #=> true
+  #     C.instance_methods(false)                   #=> [:method3]
+  #     C.instance_methods.include?(:method2)       #=> true
+  #
+  def instance_methods: (?boolish include_super) -> ::Array[Symbol]
+
+  # <!--
+  #   rdoc-file=object.c
+  #   - method_added(method_name)
+  # -->
+  # Invoked as a callback whenever an instance method is added to the receiver.
+  #
+  #     module Chatty
+  #       def self.method_added(method_name)
+  #         puts "Adding #{method_name.inspect}"
+  #       end
+  #       def self.some_class_method() end
+  #       def some_instance_method() end
+  #     end
+  #
+  # *produces:*
+  #
+  #     Adding :some_instance_method
+  #
+  def method_added: (Symbol meth) -> untyped
+
+  # <!--
+  #   rdoc-file=vm_method.c
+  #   - mod.method_defined?(symbol, inherit=true)    -> true or false
+  #   - mod.method_defined?(string, inherit=true)    -> true or false
+  # -->
+  # Returns `true` if the named method is defined by *mod*.  If *inherit* is set,
+  # the lookup will also search *mod*'s ancestors. Public and protected methods
+  # are matched. String arguments are converted to symbols.
+  #
+  #     module A
+  #       def method1()  end
+  #       def protected_method1()  end
+  #       protected :protected_method1
+  #     end
+  #     class B
+  #       def method2()  end
+  #       def private_method2()  end
+  #       private :private_method2
+  #     end
+  #     class C < B
+  #       include A
+  #       def method3()  end
+  #     end
+  #
+  #     A.method_defined? :method1              #=> true
+  #     C.method_defined? "method1"             #=> true
+  #     C.method_defined? "method2"             #=> true
+  #     C.method_defined? "method2", true       #=> true
+  #     C.method_defined? "method2", false      #=> false
+  #     C.method_defined? "method3"             #=> true
+  #     C.method_defined? "protected_method1"   #=> true
+  #     C.method_defined? "method4"             #=> false
+  #     C.method_defined? "private_method2"     #=> false
+  #
+  def method_defined?: (Symbol | String name, ?boolish inherit) -> bool
+
+  # <!--
+  #   rdoc-file=object.c
+  #   - method_removed(method_name)
+  # -->
+  # Invoked as a callback whenever an instance method is removed from the
+  # receiver.
+  #
+  #     module Chatty
+  #       def self.method_removed(method_name)
+  #         puts "Removing #{method_name.inspect}"
+  #       end
+  #       def self.some_class_method() end
+  #       def some_instance_method() end
+  #       class << self
+  #         remove_method :some_class_method
+  #       end
+  #       remove_method :some_instance_method
+  #     end
+  #
+  # *produces:*
+  #
+  #     Removing :some_instance_method
+  #
+  def method_removed: (Symbol method_name) -> untyped
+
+  # <!--
+  #   rdoc-file=vm_eval.c
+  #   - mod.class_eval(string [, filename [, lineno]])  -> obj
+  #   - mod.class_eval {|mod| block }                   -> obj
+  #   - mod.module_eval(string [, filename [, lineno]]) -> obj
+  #   - mod.module_eval {|mod| block }                  -> obj
+  # -->
+  # Evaluates the string or block in the context of *mod*, except that when a
+  # block is given, constant/class variable lookup is not affected. This can be
+  # used to add methods to a class. `module_eval` returns the result of evaluating
+  # its argument. The optional *filename* and *lineno* parameters set the text for
+  # error messages.
+  #
+  #     class Thing
+  #     end
+  #     a = %q{def hello() "Hello there!" end}
+  #     Thing.module_eval(a)
+  #     puts Thing.new.hello()
+  #     Thing.module_eval("invalid code", "dummy", 123)
+  #
+  # *produces:*
+  #
+  #     Hello there!
+  #     dummy:123:in `module_eval': undefined local variable
+  #         or method `code' for Thing:Class
+  #
+  def module_eval: (String arg0, ?String filename, ?Integer lineno) -> untyped
+                 | [U] () { (self m) -> U } -> U
+
+  # <!--
+  #   rdoc-file=vm_eval.c
+  #   - mod.module_exec(arg...) {|var...| block }       -> obj
+  #   - mod.class_exec(arg...) {|var...| block }        -> obj
+  # -->
+  # Evaluates the given block in the context of the class/module. The method
+  # defined in the block will belong to the receiver. Any arguments passed to the
+  # method will be passed to the block. This can be used if the block needs to
+  # access instance variables.
+  #
+  #     class Thing
+  #     end
+  #     Thing.class_exec{
+  #       def hello() "Hello there!" end
+  #     }
+  #     puts Thing.new.hello()
+  #
+  # *produces:*
+  #
+  #     Hello there!
+  #
+  def module_exec: [U] (*untyped args) { (*untyped args) -> U } -> U
+
+  # <!--
+  #   rdoc-file=vm_method.c
+  #   - module_function                                -> nil
+  #   - module_function(method_name)                   -> method_name
+  #   - module_function(method_name, method_name, ...) -> array
+  # -->
+  # Creates module functions for the named methods. These functions may be called
+  # with the module as a receiver, and also become available as instance methods
+  # to classes that mix in the module. Module functions are copies of the
+  # original, and so may be changed independently. The instance-method versions
+  # are made private. If used with no arguments, subsequently defined methods
+  # become module functions. String arguments are converted to symbols. If a
+  # single argument is passed, it is returned. If no argument is passed, nil is
+  # returned. If multiple arguments are passed, the arguments are returned as an
+  # array.
+  #
+  #     module Mod
+  #       def one
+  #         "This is one"
+  #       end
+  #       module_function :one
+  #     end
+  #     class Cls
+  #       include Mod
+  #       def call_one
+  #         one
+  #       end
+  #     end
+  #     Mod.one     #=> "This is one"
+  #     c = Cls.new
+  #     c.call_one  #=> "This is one"
+  #     module Mod
+  #       def one
+  #         "This is the new one"
+  #       end
+  #     end
+  #     Mod.one     #=> "This is one"
+  #     c.call_one  #=> "This is the new one"
+  #
+  def module_function: (*Symbol | String arg0) -> self
+
+  # <!--
+  #   rdoc-file=object.c
+  #   - mod.name    -> string
+  # -->
+  # Returns the name of the module *mod*.  Returns nil for anonymous modules.
+  #
+  def name: () -> String?
+
+  # <!--
+  #   rdoc-file=eval.c
+  #   - prepend(module, ...)    -> self
+  # -->
+  # Invokes Module.prepend_features on each parameter in reverse order.
+  #
+  def prepend: (*Module arg0) -> self
+
+  # <!--
+  #   rdoc-file=eval.c
+  #   - prepend_features(mod)   -> mod
+  # -->
+  # When this module is prepended in another, Ruby calls #prepend_features in this
+  # module, passing it the receiving module in *mod*. Ruby's default
+  # implementation is to overlay the constants, methods, and module variables of
+  # this module to *mod* if this module has not already been added to *mod* or one
+  # of its ancestors. See also Module#prepend.
+  #
+  def prepend_features: (Module arg0) -> self
+
+  # <!--
+  #   rdoc-file=object.c
+  #   - prepended(othermod)
+  # -->
+  # The equivalent of `included`, but for prepended modules.
+  #
+  #     module A
+  #       def self.prepended(mod)
+  #         puts "#{self} prepended to #{mod}"
+  #       end
+  #     end
+  #     module Enumerable
+  #       prepend A
+  #     end
+  #      # => prints "A prepended to Enumerable"
+  #
+  def prepended: (Module othermod) -> untyped
+
+  # <!--
+  #   rdoc-file=vm_method.c
+  #   - private                                -> nil
+  #   - private(method_name)                   -> method_name
+  #   - private(method_name, method_name, ...) -> array
+  #   - private(array)                         -> array
+  # -->
+  # With no arguments, sets the default visibility for subsequently defined
+  # methods to private. With arguments, sets the named methods to have private
+  # visibility. String arguments are converted to symbols. An Array of Symbols
+  # and/or Strings is also accepted. If a single argument is passed, it is
+  # returned. If no argument is passed, nil is returned. If multiple arguments are
+  # passed, the arguments are returned as an array.
+  #
+  #     module Mod
+  #       def a()  end
+  #       def b()  end
+  #       private
+  #       def c()  end
+  #       private :a
+  #     end
+  #     Mod.private_instance_methods   #=> [:a, :c]
+  #
+  # Note that to show a private method on RDoc, use `:doc:`.
+  #
+  def private: () -> nil
+             | (Symbol method_name) -> Symbol
+             | (Symbol, Symbol, *Symbol method_name) -> Array[Symbol]
+             | (string method_name) -> string
+             | (string | Symbol, string | Symbol, *string | Symbol method_name) -> Array[string | Symbol]
+
+  # <!--
+  #   rdoc-file=vm_method.c
+  #   - mod.private_class_method(symbol, ...)   -> mod
+  #   - mod.private_class_method(string, ...)   -> mod
+  #   - mod.private_class_method(array)         -> mod
+  # -->
+  # Makes existing class methods private. Often used to hide the default
+  # constructor `new`.
+  #
+  # String arguments are converted to symbols. An Array of Symbols and/or Strings
+  # is also accepted.
+  #
+  #     class SimpleSingleton  # Not thread safe
+  #       private_class_method :new
+  #       def SimpleSingleton.create(*args, &block)
+  #         @me = new(*args, &block) if ! @me
+  #         @me
+  #       end
+  #     end
+  #
+  def private_class_method: (*Symbol | String arg0) -> self
+
+  # <!--
+  #   rdoc-file=object.c
+  #   - mod.private_constant(symbol, ...)    => mod
+  # -->
+  # Makes a list of existing constants private.
+  #
+  def private_constant: (*Symbol arg0) -> self
+
+  # <!--
+  #   rdoc-file=object.c
+  #   - mod.private_instance_methods(include_super=true)    -> array
+  # -->
+  # Returns a list of the private instance methods defined in *mod*. If the
+  # optional parameter is `false`, the methods of any ancestors are not included.
+  #
+  #     module Mod
+  #       def method1()  end
+  #       private :method1
+  #       def method2()  end
+  #     end
+  #     Mod.instance_methods           #=> [:method2]
+  #     Mod.private_instance_methods   #=> [:method1]
+  #
+  def private_instance_methods: (?boolish include_super) -> ::Array[Symbol]
+
+  # <!--
+  #   rdoc-file=vm_method.c
+  #   - mod.private_method_defined?(symbol, inherit=true)    -> true or false
+  #   - mod.private_method_defined?(string, inherit=true)    -> true or false
+  # -->
+  # Returns `true` if the named private method is defined by *mod*.  If *inherit*
+  # is set, the lookup will also search *mod*'s ancestors. String arguments are
+  # converted to symbols.
+  #
+  #     module A
+  #       def method1()  end
+  #     end
+  #     class B
+  #       private
+  #       def method2()  end
+  #     end
+  #     class C < B
+  #       include A
+  #       def method3()  end
+  #     end
+  #
+  #     A.method_defined? :method1                   #=> true
+  #     C.private_method_defined? "method1"          #=> false
+  #     C.private_method_defined? "method2"          #=> true
+  #     C.private_method_defined? "method2", true    #=> true
+  #     C.private_method_defined? "method2", false   #=> false
+  #     C.method_defined? "method2"                  #=> false
+  #
+  def private_method_defined?: (Symbol | String name, ?boolish inherit) -> bool
+
+  # <!--
+  #   rdoc-file=vm_method.c
+  #   - protected                                -> nil
+  #   - protected(method_name)                   -> method_name
+  #   - protected(method_name, method_name, ...) -> array
+  #   - protected(array)                         -> array
+  # -->
+  # With no arguments, sets the default visibility for subsequently defined
+  # methods to protected. With arguments, sets the named methods to have protected
+  # visibility. String arguments are converted to symbols. An Array of Symbols
+  # and/or Strings is also accepted. If a single argument is passed, it is
+  # returned. If no argument is passed, nil is returned. If multiple arguments are
+  # passed, the arguments are returned as an array.
+  #
+  # If a method has protected visibility, it is callable only where `self` of the
+  # context is the same as the method. (method definition or instance_eval). This
+  # behavior is different from Java's protected method. Usually `private` should
+  # be used.
+  #
+  # Note that a protected method is slow because it can't use inline cache.
+  #
+  # To show a private method on RDoc, use `:doc:` instead of this.
+  #
+  def protected: (*Symbol | String arg0) -> self
+
+  # <!--
+  #   rdoc-file=object.c
+  #   - mod.protected_instance_methods(include_super=true)   -> array
+  # -->
+  # Returns a list of the protected instance methods defined in *mod*. If the
+  # optional parameter is `false`, the methods of any ancestors are not included.
+  #
+  def protected_instance_methods: (?boolish include_super) -> ::Array[Symbol]
+
+  # <!--
+  #   rdoc-file=vm_method.c
+  #   - mod.protected_method_defined?(symbol, inherit=true)   -> true or false
+  #   - mod.protected_method_defined?(string, inherit=true)   -> true or false
+  # -->
+  # Returns `true` if the named protected method is defined *mod*.  If *inherit*
+  # is set, the lookup will also search *mod*'s ancestors. String arguments are
+  # converted to symbols.
+  #
+  #     module A
+  #       def method1()  end
+  #     end
+  #     class B
+  #       protected
+  #       def method2()  end
+  #     end
+  #     class C < B
+  #       include A
+  #       def method3()  end
+  #     end
+  #
+  #     A.method_defined? :method1                    #=> true
+  #     C.protected_method_defined? "method1"         #=> false
+  #     C.protected_method_defined? "method2"         #=> true
+  #     C.protected_method_defined? "method2", true   #=> true
+  #     C.protected_method_defined? "method2", false  #=> false
+  #     C.method_defined? "method2"                   #=> true
+  #
+  def protected_method_defined?: (Symbol | String name, ?boolish inherit) -> bool
+
+  # <!--
+  #   rdoc-file=vm_method.c
+  #   - public                                -> nil
+  #   - public(method_name)                   -> method_name
+  #   - public(method_name, method_name, ...) -> array
+  #   - public(array)                         -> array
+  # -->
+  # With no arguments, sets the default visibility for subsequently defined
+  # methods to public. With arguments, sets the named methods to have public
+  # visibility. String arguments are converted to symbols. An Array of Symbols
+  # and/or Strings is also accepted. If a single argument is passed, it is
+  # returned. If no argument is passed, nil is returned. If multiple arguments are
+  # passed, the arguments are returned as an array.
+  #
+  def public: () -> nil
+            | (Symbol method_name) -> Symbol
+            | (Symbol, Symbol, *Symbol method_name) -> Array[Symbol]
+            | (string method_name) -> string
+            | (string | Symbol, string | Symbol, *string | Symbol method_name) -> Array[string | Symbol]
+
+  # <!--
+  #   rdoc-file=vm_method.c
+  #   - mod.public_class_method(symbol, ...)    -> mod
+  #   - mod.public_class_method(string, ...)    -> mod
+  #   - mod.public_class_method(array)          -> mod
+  # -->
+  # Makes a list of existing class methods public.
+  #
+  # String arguments are converted to symbols. An Array of Symbols and/or Strings
+  # is also accepted.
+  #
+  def public_class_method: (*Symbol | String arg0) -> self
+
+  # <!--
+  #   rdoc-file=object.c
+  #   - mod.public_constant(symbol, ...)    => mod
+  # -->
+  # Makes a list of existing constants public.
+  #
+  def public_constant: (*Symbol arg0) -> self
+
+  # <!--
+  #   rdoc-file=proc.c
+  #   - mod.public_instance_method(symbol)   -> unbound_method
+  # -->
+  # Similar to *instance_method*, searches public method only.
+  #
+  def public_instance_method: (Symbol arg0) -> UnboundMethod
+
+  # <!--
+  #   rdoc-file=object.c
+  #   - mod.public_instance_methods(include_super=true)   -> array
+  # -->
+  # Returns a list of the public instance methods defined in *mod*. If the
+  # optional parameter is `false`, the methods of any ancestors are not included.
+  #
+  def public_instance_methods: (?boolish include_super) -> ::Array[Symbol]
+
+  # <!--
+  #   rdoc-file=vm_method.c
+  #   - mod.public_method_defined?(symbol, inherit=true)   -> true or false
+  #   - mod.public_method_defined?(string, inherit=true)   -> true or false
+  # -->
+  # Returns `true` if the named public method is defined by *mod*.  If *inherit*
+  # is set, the lookup will also search *mod*'s ancestors. String arguments are
+  # converted to symbols.
+  #
+  #     module A
+  #       def method1()  end
+  #     end
+  #     class B
+  #       protected
+  #       def method2()  end
+  #     end
+  #     class C < B
+  #       include A
+  #       def method3()  end
+  #     end
+  #
+  #     A.method_defined? :method1                 #=> true
+  #     C.public_method_defined? "method1"         #=> true
+  #     C.public_method_defined? "method1", true   #=> true
+  #     C.public_method_defined? "method1", false  #=> true
+  #     C.public_method_defined? "method2"         #=> false
+  #     C.method_defined? "method2"                #=> true
+  #
+  def public_method_defined?: (Symbol | String name, ?boolish inherit) -> bool
+
+  # <!--
+  #   rdoc-file=eval.c
+  #   - refine(mod) { block }   -> module
+  # -->
+  # Refine *mod* in the receiver.
+  #
+  # Returns a module, where refined methods are defined.
+  #
+  def refine: (Module mod) { () -> void } -> Refinement
+
+  # <!--
+  #   rdoc-file=object.c
+  #   - remove_class_variable(sym)    -> obj
+  # -->
+  # Removes the named class variable from the receiver, returning that variable's
+  # value.
+  #
+  #     class Example
+  #       @@var = 99
+  #       puts remove_class_variable(:@@var)
+  #       p(defined? @@var)
+  #     end
+  #
+  # *produces:*
+  #
+  #     99
+  #     nil
+  #
+  def remove_class_variable: (Symbol arg0) -> untyped
+
+  # <!--
+  #   rdoc-file=object.c
+  #   - remove_const(sym)   -> obj
+  # -->
+  # Removes the definition of the given constant, returning that constant's
+  # previous value.  If that constant referred to a module, this will not change
+  # that module's name and can lead to confusion.
+  #
+  def remove_const: (Symbol arg0) -> untyped
+
+  # <!--
+  #   rdoc-file=vm_method.c
+  #   - remove_method(symbol)   -> self
+  #   - remove_method(string)   -> self
+  # -->
+  # Removes the method identified by *symbol* from the current class. For an
+  # example, see Module#undef_method. String arguments are converted to symbols.
+  #
+  def remove_method: (*Symbol | String arg0) -> self
+
+  # <!--
+  #   rdoc-file=object.c
+  #   - mod.singleton_class?    -> true or false
+  # -->
+  # Returns `true` if *mod* is a singleton class or `false` if it is an ordinary
+  # class or module.
+  #
+  #     class C
+  #     end
+  #     C.singleton_class?                  #=> false
+  #     C.singleton_class.singleton_class?  #=> true
+  #
+  def singleton_class?: () -> bool
+
+  # <!--
+  #   rdoc-file=object.c
+  #   - mod.to_s   -> string
+  # -->
+  # Returns a string representing this module or class. For basic classes and
+  # modules, this is the name. For singletons, we show information on the thing
+  # we're attached to as well.
+  #
+  def to_s: () -> String
+
+  # <!--
+  #   rdoc-file=vm_method.c
+  #   - undef_method(symbol)    -> self
+  #   - undef_method(string)    -> self
+  # -->
+  # Prevents the current class from responding to calls to the named method.
+  # Contrast this with `remove_method`, which deletes the method from the
+  # particular class; Ruby will still search superclasses and mixed-in modules for
+  # a possible receiver. String arguments are converted to symbols.
+  #
+  #     class Parent
+  #       def hello
+  #         puts "In parent"
+  #       end
+  #     end
+  #     class Child < Parent
+  #       def hello
+  #         puts "In child"
+  #       end
+  #     end
+  #
+  #     c = Child.new
+  #     c.hello
+  #
+  #     class Child
+  #       remove_method :hello  # remove from child, still in parent
+  #     end
+  #     c.hello
+  #
+  #     class Child
+  #       undef_method :hello   # prevent any calls to 'hello'
+  #     end
+  #     c.hello
+  #
+  # *produces:*
+  #
+  #     In child
+  #     In parent
+  #     prog.rb:23: undefined method `hello' for #<Child:0x401b3bb4> (NoMethodError)
+  #
+  def undef_method: (*Symbol | String arg0) -> self
+
+  # <!--
+  #   rdoc-file=eval.c
+  #   - using(module)    -> self
+  # -->
+  # Import class refinements from *module* into the current class or module
+  # definition.
+  #
+  def using: (Module arg0) -> self
+
+  # <!-- rdoc-file=object.c -->
+  # Returns a string representing this module or class. For basic classes and
+  # modules, this is the name. For singletons, we show information on the thing
+  # we're attached to as well.
+  #
+  def inspect: () -> String
+
+  # <!--
+  #   rdoc-file=object.c
+  #   - attr(name, ...) -> array
+  #   - attr(name, true) -> array
+  #   - attr(name, false) -> array
+  # -->
+  # The first form is equivalent to #attr_reader. The second form is equivalent to
+  # `attr_accessor(name)` but deprecated. The last form is equivalent to
+  # `attr_reader(name)` but deprecated. Returns an array of defined method names
+  # as symbols.
+  #
+  def attr: (*Symbol | String arg0) -> NilClass
+end

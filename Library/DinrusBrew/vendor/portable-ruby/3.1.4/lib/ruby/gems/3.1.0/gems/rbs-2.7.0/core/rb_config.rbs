@@ -1,0 +1,67 @@
+# <!-- rdoc-file=rbconfig.rb -->
+# The module storing Ruby interpreter configurations on building.
+#
+# This file was created by mkconfig.rb when ruby was built.  It contains build
+# information for ruby which is used e.g. by mkmf to build compatible native
+# extensions.  Any changes made to this file will be lost the next time ruby is
+# built.
+#
+module RbConfig
+  # <!--
+  #   rdoc-file=rbconfig.rb
+  #   - RbConfig.expand(val)         -> string
+  #   - RbConfig.expand(val, config) -> string
+  # -->
+  # expands variable with given `val` value.
+  #
+  #     RbConfig.expand("$(bindir)") # => /home/foobar/all-ruby/ruby19x/bin
+  #
+  def self.expand: (String val, ?Hash[String, String] config) -> String
+
+  def self.fire_update!: (String key, String val, ?Hash[String, String] mkconf, ?Hash[String, String] conf) -> Array[String]?
+
+  def self.ruby: () -> String
+end
+
+# <!-- rdoc-file=rbconfig.rb -->
+# The hash configurations stored.
+#
+RbConfig::CONFIG: Hash[String, String]
+
+# <!-- rdoc-file=rbconfig.rb -->
+# DESTDIR on make install.
+#
+RbConfig::DESTDIR: String
+
+# <!-- rdoc-file=rbconfig.rb -->
+# Almost same with CONFIG. MAKEFILE_CONFIG has other variable reference like
+# below.
+#
+#     MAKEFILE_CONFIG["bindir"] = "$(exec_prefix)/bin"
+#
+# The values of this constant is used for creating Makefile.
+#
+#     require 'rbconfig'
+#
+#     print <<-END_OF_MAKEFILE
+#     prefix = #{RbConfig::MAKEFILE_CONFIG['prefix']}
+#     exec_prefix = #{RbConfig::MAKEFILE_CONFIG['exec_prefix']}
+#     bindir = #{RbConfig::MAKEFILE_CONFIG['bindir']}
+#     END_OF_MAKEFILE
+#
+#     => prefix = /usr/local
+#        exec_prefix = $(prefix)
+#        bindir = $(exec_prefix)/bin  MAKEFILE_CONFIG = {}
+#
+# RbConfig.expand is used for resolving references like above in rbconfig.
+#
+#     require 'rbconfig'
+#     p RbConfig.expand(RbConfig::MAKEFILE_CONFIG["bindir"])
+#     # => "/usr/local/bin"
+#
+RbConfig::MAKEFILE_CONFIG: Hash[String, String]
+
+# <!-- rdoc-file=rbconfig.rb -->
+# Ruby installed directory.
+#
+RbConfig::TOPDIR: String

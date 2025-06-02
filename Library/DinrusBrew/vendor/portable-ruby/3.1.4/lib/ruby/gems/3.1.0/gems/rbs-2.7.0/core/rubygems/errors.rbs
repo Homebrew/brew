@@ -1,0 +1,113 @@
+# <!-- rdoc-file=lib/rubygems.rb -->
+# RubyGems is the Ruby standard for publishing and managing third party
+# libraries.
+#
+# For user documentation, see:
+#
+# *   `gem help` and `gem help [command]`
+# *   [RubyGems User Guide](https://guides.rubygems.org/)
+# *   [Frequently Asked Questions](https://guides.rubygems.org/faqs)
+#
+#
+# For gem developer documentation see:
+#
+# *   [Creating Gems](https://guides.rubygems.org/make-your-own-gem)
+# *   Gem::Specification
+# *   Gem::Version for version dependency notes
+#
+#
+# Further RubyGems documentation can be found at:
+#
+# *   [RubyGems Guides](https://guides.rubygems.org)
+# *   [RubyGems API](https://www.rubydoc.info/github/rubygems/rubygems) (also
+#     available from `gem server`)
+#
+#
+# ## RubyGems Plugins
+#
+# RubyGems will load plugins in the latest version of each installed gem or
+# $LOAD_PATH.  Plugins must be named 'rubygems_plugin' (.rb, .so, etc) and
+# placed at the root of your gem's #require_path.  Plugins are installed at a
+# special location and loaded on boot.
+#
+# For an example plugin, see the [Graph gem](https://github.com/seattlerb/graph)
+# which adds a `gem graph` command.
+#
+# ## RubyGems Defaults, Packaging
+#
+# RubyGems defaults are stored in lib/rubygems/defaults.rb.  If you're packaging
+# RubyGems or implementing Ruby you can change RubyGems' defaults.
+#
+# For RubyGems packagers, provide lib/rubygems/defaults/operating_system.rb and
+# override any defaults from lib/rubygems/defaults.rb.
+#
+# For Ruby implementers, provide lib/rubygems/defaults/#{RUBY_ENGINE}.rb and
+# override any defaults from lib/rubygems/defaults.rb.
+#
+# If you need RubyGems to perform extra work on install or uninstall, your
+# defaults override file can set pre/post install and uninstall hooks. See
+# Gem::pre_install, Gem::pre_uninstall, Gem::post_install, Gem::post_uninstall.
+#
+# ## Bugs
+#
+# You can submit bugs to the [RubyGems bug
+# tracker](https://github.com/rubygems/rubygems/issues) on GitHub
+#
+# ## Credits
+#
+# RubyGems is currently maintained by Eric Hodel.
+#
+# RubyGems was originally developed at RubyConf 2003 by:
+#
+# *   Rich Kilmer  -- rich(at)infoether.com
+# *   Chad Fowler  -- chad(at)chadfowler.com
+# *   David Black  -- dblack(at)wobblini.net
+# *   Paul Brannan -- paul(at)atdesk.com
+# *   Jim Weirich   -- jim(at)weirichhouse.org
+#
+#
+# Contributors:
+#
+# *   Gavin Sinclair     -- gsinclair(at)soyabean.com.au
+# *   George Marrows     -- george.marrows(at)ntlworld.com
+# *   Dick Davies        -- rasputnik(at)hellooperator.net
+# *   Mauricio Fernandez -- batsman.geo(at)yahoo.com
+# *   Simon Strandgaard  -- neoneye(at)adslhome.dk
+# *   Dave Glasser       -- glasser(at)mit.edu
+# *   Paul Duncan        -- pabs(at)pablotron.org
+# *   Ville Aine         -- vaine(at)cs.helsinki.fi
+# *   Eric Hodel         -- drbrain(at)segment7.net
+# *   Daniel Berger      -- djberg96(at)gmail.com
+# *   Phil Hagelberg     -- technomancy(at)gmail.com
+# *   Ryan Davis         -- ryand-ruby(at)zenspider.com
+# *   Evan Phoenix       -- evan(at)fallingsnow.net
+# *   Steve Klabnik      -- steve(at)steveklabnik.com
+#
+#
+# (If your name is missing, PLEASE let us know!)
+#
+# ## License
+#
+# See [LICENSE.txt](rdoc-ref:lib/rubygems/LICENSE.txt) for permissions.
+#
+# Thanks!
+#
+# -The RubyGems Team
+#
+module Gem
+  # <!-- rdoc-file=lib/rubygems/errors.rb -->
+  # Raised when RubyGems is unable to load or activate a gem.  Contains the name
+  # and version requirements of the gem that either conflicts with already
+  # activated gems or that RubyGems is otherwise unable to activate.
+  #
+  class LoadError < ::LoadError
+  end
+
+  # <!-- rdoc-file=lib/rubygems/errors.rb -->
+  # Raised when trying to activate a gem, and that gem does not exist on the
+  # system.  Instead of rescuing from this class, make sure to rescue from the
+  # superclass Gem::LoadError to catch all types of load errors.
+  #
+  class MissingSpecError
+  end
+end

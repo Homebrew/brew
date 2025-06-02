@@ -1,0 +1,16 @@
+# <!-- rdoc-file=lib/minitest.rb -->
+# Represents run failures.
+#
+class Minitest::Assertion < ::Exception
+  def error: () -> self
+
+  # <!--
+  #   rdoc-file=lib/minitest.rb
+  #   - location()
+  # -->
+  # Where was this run before an assertion was raised?
+  #
+  def location: () -> untyped
+  def result_code: () -> untyped
+  def result_label: () -> "Failure"
+end

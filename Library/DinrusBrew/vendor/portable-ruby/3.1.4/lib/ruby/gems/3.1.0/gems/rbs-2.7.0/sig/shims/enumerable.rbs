@@ -1,0 +1,5 @@
+module Enumerable[unchecked out Elem] : _Each[Elem]
+  def each_slice: (2) { ([Elem, Elem]) -> void } -> void
+                | (2) -> Enumerator[[Elem, Elem], void]
+                | ...
+end

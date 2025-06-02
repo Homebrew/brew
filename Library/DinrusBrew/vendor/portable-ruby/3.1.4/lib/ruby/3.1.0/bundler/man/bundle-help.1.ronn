@@ -1,0 +1,12 @@
+bundle-help(1) -- Displays detailed help for each subcommand
+============================================================
+
+## SYNOPSIS
+
+`bundle help` [COMMAND]
+
+## DESCRIPTION
+
+Displays detailed help for the given subcommand.
+You can specify a single `COMMAND` at the same time.
+When `COMMAND` is omitted, help for `help` command will be displayed.

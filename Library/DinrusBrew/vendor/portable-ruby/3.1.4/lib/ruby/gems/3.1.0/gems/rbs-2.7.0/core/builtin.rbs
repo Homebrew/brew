@@ -1,0 +1,78 @@
+interface _ToI
+  def to_i: () -> Integer
+end
+
+interface _ToInt
+  def to_int: () -> Integer
+end
+
+interface _ToR
+  def to_r: () -> Rational
+end
+
+interface _ToS
+  def to_s: () -> String
+end
+
+interface _ToStr
+  def to_str: () -> String
+end
+
+interface _ToHash[K, V]
+  def to_hash: () -> Hash[K, V]
+end
+
+interface _ToProc
+  def to_proc: () -> untyped
+end
+
+interface _ToPath
+  def to_path: () -> String
+end
+
+interface _Each[out A]
+  def each: () { (A) -> void } -> void
+end
+
+interface _Reader
+  def read: (?int? length, ?string outbuf) -> String?
+end
+
+interface _ReaderPartial
+  def readpartial: (int maxlen, ?string outbuf) -> String
+end
+
+interface _Writer
+  # Writes the +data+ string. Returns the number of bytes written
+  def write: (*_ToS data) -> Integer
+end
+
+interface _Rewindable
+  # Positions the stream to the beginning of input, resetting `lineno` to zero.
+  #
+  def rewind: () -> Integer
+end
+
+interface _ToIO
+  def to_io: () -> IO
+end
+
+interface _Exception
+  def exception: () -> Exception
+               | (String arg0) -> Exception
+end
+
+type int = Integer | _ToInt
+type real = Integer | Float | Rational
+
+type string = String | _ToStr
+type encoding = Encoding | string
+
+type io = IO | _ToIO
+
+# `boolish` is a type for documentation.
+# It means the value of this type is only for testing a condition.
+# Unlike `bool` type, it doesn't require the value is one of `true` or `false`.
+# Any Ruby object can have `boolish` type.
+#
+type boolish = top

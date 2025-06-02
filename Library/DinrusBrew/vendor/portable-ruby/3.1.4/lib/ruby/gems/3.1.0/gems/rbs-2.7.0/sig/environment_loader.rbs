@@ -1,0 +1,109 @@
+module RBS
+  # EnvironmentLoader is an object to load RBS files from filesystem.
+  #
+  # Set up your configuration through repository and `#add` method.
+  #
+  #   # Set up the repository to load library RBSs from.
+  #   repo = RBS::Repository.default
+  #   repo.add(Pathname("vendor/rbs/gem-rbs"))
+  #   repo.add(Pathname("vendor/rbs/internal-rbs"))
+  #
+  #   loader = RBS::EnvironmentLoader.new(repository: repo)
+  #
+  #   # Add libraries to load RBS files.
+  #   loader.add(library: "minitest")
+  #   loader.add(library: "rbs", version: "1.0.0")
+  #
+  #   # Add dirs to load RBS files from.
+  #   loader.add(path: Pathname("sig"))
+  #
+  #   # Load RBSs into an environment.
+  #   environment = RBS::Environment.new()
+  #   loader.load(env: environment)
+  #
+  class EnvironmentLoader
+    class UnknownLibraryError < StandardError
+      attr_reader library: Library
+
+      def initialize: (lib: Library) -> void
+    end
+
+    class Library < Struct[String | String?]
+      attr_reader name: String
+      attr_reader version: String?
+
+      def initialize: (name: String, version: String?) -> void
+    end
+
+    DEFAULT_CORE_ROOT: Pathname
+
+    attr_reader core_root: Pathname?
+    attr_reader repository: Repository
+
+    attr_reader libs: Set[Library]
+    attr_reader dirs: Array[Pathname]
+
+    # The source where the RBS comes from.
+    #
+    # `:core` means it is part of core library.
+    # `Library` means it is from library.
+    # `Pathname` means it is loaded from a directory.
+    #
+    type source = :core
+                | Library
+                | Pathname
+
+    # Accepts two optional keyword arguments.
+    #
+    # `core_root` is the path to the directory with RBSs for core classes.
+    # The default value is the core library included in RBS gem. (EnvironmentLoader::DEFAULT_CORE_ROOT)
+    # Passing `nil` means it skips loading core class definitions.
+    #
+    # `repository` is the repository for library classes.
+    # The default value is repository only with stdlib classes. (Repository.new)
+    #
+    def initialize: (?core_root: Pathname?, ?repository: Repository) -> void
+
+    # Add a path or library to load RBSs from.
+    #
+    # `path` can be a file or a directory.
+    # All `.rbs` files from the given directory will be loaded.
+    # Specifying a file will load the file regardless the extension of the file is.
+    #
+    # `library` can be a name of a gem.
+    # Specifying `nil` to `version` will load any version available.
+    # It first tries to load RBS files from gem with specified version.
+    # If RBS files cannot be found in the gem, it tries to load RBSs from repository.
+    #
+    def add: (path: Pathname) -> void
+           | (library: String, version: String?, ?resolve_dependencies: boolish) -> void
+
+    def resolve_dependencies: (library: String, version: String?) -> void
+
+    # Add repository path and libraries via rbs_collection.lock.yaml.
+    def add_collection: (Collection::Config collection_config) -> void
+
+    # This is helper function to test if RBS for a library is available or not.
+    #
+    def has_library?: (library: String, version: String?) -> bool
+
+    # Add all declarations to environment.
+    #
+    # Raises `UnknownLibraryError` if RBS cannot be loaded from a library.
+    #
+    # Returns an array of tuples of the declaration, path to the file, and the source.
+    #
+    def load: (env: Environment) -> Array[[AST::Declarations::t, Pathname, source]]
+
+    # Returns a pair of spec and path for a gem with RBS.
+    # Returns nil if the gem is not installed, or the gem doesn't provide RBS.
+    #
+    def self.gem_sig_path: (String name, String? version) -> [Gem::Specification, Pathname]?
+
+    def each_decl: () { (AST::Declarations::t, Buffer, source, Pathname) -> void } -> void
+
+    def each_dir: { (source, Pathname) -> void } -> void
+
+    def each_file: (Pathname path, immediate: boolish, skip_hidden: boolish) { (Pathname) -> void } -> void
+  end
+end

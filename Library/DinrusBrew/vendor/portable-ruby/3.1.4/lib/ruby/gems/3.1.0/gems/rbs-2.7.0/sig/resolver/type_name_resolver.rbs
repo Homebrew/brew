@@ -1,0 +1,31 @@
+module RBS
+  module Resolver
+    # TypeNameResolver resolves given relative type name to absolute type name under a module nesting context.
+    #
+    # The type name resolution doesn't take account of ancestors of modules.
+    # It just ignores included modules and super classes.
+    #
+    class TypeNameResolver
+      type query = [TypeName, context]
+
+      def initialize: (Environment) -> void
+
+      # Translates given type name to absolute type name.
+      # Returns `nil` if cannot find associated type name.
+      #
+      def resolve: (TypeName, context: context) -> TypeName?
+
+      private
+
+      attr_reader all_names: Set[TypeName]
+
+      attr_reader cache: Hash[query, TypeName?]
+
+      def has_name?: (TypeName) -> TypeName?
+
+      def try_cache: (query) { () -> TypeName? } -> TypeName?
+
+      def resolve_in: (TypeName, context) -> TypeName?
+    end
+  end
+end

@@ -1,0 +1,23 @@
+.\" generated with nRonn/v0.11.1
+.\" https://github.com/n-ronn/nronn/tree/0.11.1
+.TH "BUNDLE\-INJECT" "1" "September 2024" ""
+.SH "NAME"
+\fBbundle\-inject\fR \- Add named gem(s) with version requirements to Gemfile
+.SH "SYNOPSIS"
+\fBbundle inject\fR [GEM] [VERSION]
+.SH "DESCRIPTION"
+Adds the named gem(s) with their version requirements to the resolved [\fBGemfile(5)\fR][Gemfile(5)]\.
+.P
+This command will add the gem to both your [\fBGemfile(5)\fR][Gemfile(5)] and Gemfile\.lock if it isn't listed yet\.
+.P
+Example:
+.IP "" 4
+.nf
+bundle install
+bundle inject 'rack' '> 0'
+.fi
+.IP "" 0
+.P
+This will inject the 'rack' gem with a version greater than 0 in your [\fBGemfile(5)\fR][Gemfile(5)] and Gemfile\.lock\.
+.P
+The \fBbundle inject\fR command was deprecated in Bundler 2\.1 and will be removed in Bundler 3\.0\.

@@ -1,0 +1,3 @@
+#!/bin/bash
+DINRUSBREW_PREFIX_BIN="$(cd "$(dirname "$0")"/../../../../ && pwd)/bin/"
+exec "${DINRUSBREW_PREFIX_BIN}"brew rubocop "$@"

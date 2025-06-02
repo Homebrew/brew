@@ -1,0 +1,282 @@
+# <!-- rdoc-file=ext/monitor/lib/monitor.rb -->
+# Use the Monitor class when you want to have a lock object for blocks with
+# mutual exclusion.
+#
+#     require 'monitor'
+#
+#     lock = Monitor.new
+#     lock.synchronize do
+#       # exclusive access
+#     end
+#
+class Monitor
+  public
+
+  # <!--
+  #   rdoc-file=ext/monitor/monitor.c
+  #   - enter()
+  # -->
+  #
+  def enter: () -> nil
+
+  # <!--
+  #   rdoc-file=ext/monitor/monitor.c
+  #   - exit()
+  # -->
+  #
+  def exit: () -> nil
+
+  # <!--
+  #   rdoc-file=ext/monitor/monitor.c
+  #   - mon_check_owner()
+  # -->
+  #
+  def mon_check_owner: () -> nil
+
+  # <!--
+  #   rdoc-file=ext/monitor/lib/monitor.rb
+  #   - mon_enter()
+  # -->
+  #
+  alias mon_enter enter
+
+  # <!--
+  #   rdoc-file=ext/monitor/lib/monitor.rb
+  #   - mon_exit()
+  # -->
+  #
+  alias mon_exit exit
+
+  # <!--
+  #   rdoc-file=ext/monitor/monitor.c
+  #   - mon_locked?()
+  # -->
+  #
+  def mon_locked?: () -> bool
+
+  # <!--
+  #   rdoc-file=ext/monitor/monitor.c
+  #   - mon_owned?()
+  # -->
+  #
+  def mon_owned?: () -> bool
+
+  # <!--
+  #   rdoc-file=ext/monitor/lib/monitor.rb
+  #   - mon_synchronize()
+  # -->
+  #
+  alias mon_synchronize synchronize
+
+  # <!--
+  #   rdoc-file=ext/monitor/lib/monitor.rb
+  #   - mon_try_enter()
+  # -->
+  #
+  alias mon_try_enter try_enter
+
+  # <!--
+  #   rdoc-file=ext/monitor/lib/monitor.rb
+  #   - new_cond()
+  # -->
+  #
+  def new_cond: () -> ::MonitorMixin::ConditionVariable
+
+  # <!--
+  #   rdoc-file=ext/monitor/monitor.c
+  #   - synchronize()
+  # -->
+  #
+  def synchronize: [T] () { () -> T } -> T
+
+  # <!--
+  #   rdoc-file=ext/monitor/monitor.c
+  #   - try_enter()
+  # -->
+  #
+  def try_enter: () -> bool
+
+  # <!-- rdoc-file=ext/monitor/lib/monitor.rb -->
+  # for compatibility
+  #
+  alias try_mon_enter try_enter
+
+  # <!--
+  #   rdoc-file=ext/monitor/monitor.c
+  #   - wait_for_cond(p1, p2)
+  # -->
+  #
+  def wait_for_cond: (::MonitorMixin::ConditionVariable, Numeric? timeout) -> untyped
+end
+
+module MonitorMixin
+  # <!--
+  #   rdoc-file=ext/monitor/lib/monitor.rb
+  #   - extend_object(obj)
+  # -->
+  #
+  def self.extend_object: (untyped obj) -> untyped
+
+  public
+
+  # <!--
+  #   rdoc-file=ext/monitor/lib/monitor.rb
+  #   - mon_enter()
+  # -->
+  # Enters exclusive section.
+  #
+  def mon_enter: () -> nil
+
+  # <!--
+  #   rdoc-file=ext/monitor/lib/monitor.rb
+  #   - mon_exit()
+  # -->
+  # Leaves exclusive section.
+  #
+  def mon_exit: () -> nil
+
+  # <!--
+  #   rdoc-file=ext/monitor/lib/monitor.rb
+  #   - mon_locked?()
+  # -->
+  # Returns true if this monitor is locked by any thread
+  #
+  def mon_locked?: () -> bool
+
+  # <!--
+  #   rdoc-file=ext/monitor/lib/monitor.rb
+  #   - mon_owned?()
+  # -->
+  # Returns true if this monitor is locked by current thread.
+  #
+  def mon_owned?: () -> bool
+
+  # <!--
+  #   rdoc-file=ext/monitor/lib/monitor.rb
+  #   - mon_synchronize(&b)
+  # -->
+  # Enters exclusive section and executes the block.  Leaves the exclusive section
+  # automatically when the block exits.  See example under `MonitorMixin`.
+  #
+  def mon_synchronize: [T] () { () -> T } -> T
+
+  # <!--
+  #   rdoc-file=ext/monitor/lib/monitor.rb
+  #   - mon_try_enter()
+  # -->
+  # Attempts to enter exclusive section.  Returns `false` if lock fails.
+  #
+  def mon_try_enter: () -> bool
+
+  # <!--
+  #   rdoc-file=ext/monitor/lib/monitor.rb
+  #   - new_cond()
+  # -->
+  # Creates a new MonitorMixin::ConditionVariable associated with the Monitor
+  # object.
+  #
+  def new_cond: () -> ::MonitorMixin::ConditionVariable
+
+  # <!--
+  #   rdoc-file=ext/monitor/lib/monitor.rb
+  #   - synchronize(&b)
+  # -->
+  #
+  alias synchronize mon_synchronize
+
+  # <!-- rdoc-file=ext/monitor/lib/monitor.rb -->
+  # For backward compatibility
+  #
+  alias try_mon_enter mon_try_enter
+
+  private
+
+  # <!--
+  #   rdoc-file=ext/monitor/lib/monitor.rb
+  #   - new(...)
+  # -->
+  # Use `extend MonitorMixin` or `include MonitorMixin` instead of this
+  # constructor.  Have look at the examples above to understand how to use this
+  # module.
+  #
+  def initialize: (*untyped) { (*untyped) -> untyped } -> void
+
+  # <!--
+  #   rdoc-file=ext/monitor/lib/monitor.rb
+  #   - mon_check_owner()
+  # -->
+  #
+  def mon_check_owner: () -> nil
+
+  # <!--
+  #   rdoc-file=ext/monitor/lib/monitor.rb
+  #   - mon_initialize()
+  # -->
+  # Initializes the MonitorMixin after being included in a class or when an object
+  # has been extended with the MonitorMixin
+  #
+  def mon_initialize: () -> untyped
+end
+
+# <!-- rdoc-file=ext/monitor/lib/monitor.rb -->
+# FIXME: This isn't documented in Nutshell.
+#
+# Since MonitorMixin.new_cond returns a ConditionVariable, and the example above
+# calls while_wait and signal, this class should be documented.
+#
+class MonitorMixin::ConditionVariable
+  public
+
+  # <!--
+  #   rdoc-file=ext/monitor/lib/monitor.rb
+  #   - broadcast()
+  # -->
+  # Wakes up all threads waiting for this lock.
+  #
+  def broadcast: () -> Thread::ConditionVariable
+
+  # <!--
+  #   rdoc-file=ext/monitor/lib/monitor.rb
+  #   - signal()
+  # -->
+  # Wakes up the first thread in line waiting for this lock.
+  #
+  def signal: () -> Thread::ConditionVariable
+
+  # <!--
+  #   rdoc-file=ext/monitor/lib/monitor.rb
+  #   - wait(timeout = nil)
+  # -->
+  # Releases the lock held in the associated monitor and waits; reacquires the
+  # lock on wakeup.
+  #
+  # If `timeout` is given, this method returns after `timeout` seconds passed,
+  # even if no other thread doesn't signal.
+  #
+  def wait: (?Numeric? timeout) -> untyped
+
+  # <!--
+  #   rdoc-file=ext/monitor/lib/monitor.rb
+  #   - wait_until()
+  # -->
+  # Calls wait repeatedly until the given block yields a truthy value.
+  #
+  def wait_until: () { () -> boolish } -> untyped
+
+  # <!--
+  #   rdoc-file=ext/monitor/lib/monitor.rb
+  #   - wait_while()
+  # -->
+  # Calls wait repeatedly while the given block yields a truthy value.
+  #
+  def wait_while: () { () -> boolish } -> untyped
+
+  private
+
+  # <!--
+  #   rdoc-file=ext/monitor/lib/monitor.rb
+  #   - new(monitor)
+  # -->
+  #
+  def initialize: (Monitor monitor) -> void
+end

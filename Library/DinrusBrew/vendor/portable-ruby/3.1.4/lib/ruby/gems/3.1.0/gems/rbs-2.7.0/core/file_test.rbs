@@ -1,0 +1,314 @@
+# <!-- rdoc-file=file.c -->
+# FileTest implements file test operations similar to those used in File::Stat.
+# It exists as a standalone module, and its methods are also insinuated into the
+# File class. (Note that this is not done by inclusion: the interpreter cheats).
+#
+module FileTest
+  # <!--
+  #   rdoc-file=file.c
+  #   - File.blockdev?(file_name)   ->  true or false
+  # -->
+  # Returns `true` if the named file is a block device.
+  #
+  # *file_name* can be an IO object.
+  #
+  def self?.blockdev?: (String | IO file_name) -> bool
+
+  # <!--
+  #   rdoc-file=file.c
+  #   - File.chardev?(file_name)   ->  true or false
+  # -->
+  # Returns `true` if the named file is a character device.
+  #
+  # *file_name* can be an IO object.
+  #
+  def self?.chardev?: (String | IO file_name) -> bool
+
+  # <!--
+  #   rdoc-file=file.c
+  #   - File.directory?(file_name)   ->  true or false
+  # -->
+  # Returns `true` if the named file is a directory, or a symlink that points at a
+  # directory, and `false` otherwise.
+  #
+  # *file_name* can be an IO object.
+  #
+  #     File.directory?(".")
+  #
+  def self?.directory?: (String | IO file_name) -> bool
+
+  # <!-- rdoc-file=file.c -->
+  # Returns `true` if the named file exists and has a zero size.
+  #
+  # *file_name* can be an IO object.
+  #
+  def self?.empty?: (String | IO file_name) -> bool
+
+  # <!--
+  #   rdoc-file=file.c
+  #   - File.executable?(file_name)   -> true or false
+  # -->
+  # Returns `true` if the named file is executable by the effective user and group
+  # id of this process. See eaccess(3).
+  #
+  # Windows does not support execute permissions separately from read permissions.
+  # On Windows, a file is only considered executable if it ends in .bat, .cmd,
+  # .com, or .exe.
+  #
+  # Note that some OS-level security features may cause this to return true even
+  # though the file is not executable by the effective user/group.
+  #
+  def self?.executable?: (String file_name) -> bool
+
+  # <!--
+  #   rdoc-file=file.c
+  #   - File.executable_real?(file_name)   -> true or false
+  # -->
+  # Returns `true` if the named file is executable by the real user and group id
+  # of this process. See access(3).
+  #
+  # Windows does not support execute permissions separately from read permissions.
+  # On Windows, a file is only considered executable if it ends in .bat, .cmd,
+  # .com, or .exe.
+  #
+  # Note that some OS-level security features may cause this to return true even
+  # though the file is not executable by the real user/group.
+  #
+  def self?.executable_real?: (String file_name) -> bool
+
+  # <!--
+  #   rdoc-file=file.c
+  #   - File.exist?(file_name)    ->  true or false
+  # -->
+  # Return `true` if the named file exists.
+  #
+  # *file_name* can be an IO object.
+  #
+  # "file exists" means that stat() or fstat() system call is successful.
+  #
+  def self?.exist?: (String | IO file_name) -> bool
+
+  # <!--
+  #   rdoc-file=file.c
+  #   - File.file?(file) -> true or false
+  # -->
+  # Returns `true` if the named `file` exists and is a regular file.
+  #
+  # `file` can be an IO object.
+  #
+  # If the `file` argument is a symbolic link, it will resolve the symbolic link
+  # and use the file referenced by the link.
+  #
+  def self?.file?: (String | IO file) -> bool
+
+  # <!--
+  #   rdoc-file=file.c
+  #   - File.grpowned?(file_name)   -> true or false
+  # -->
+  # Returns `true` if the named file exists and the effective group id of the
+  # calling process is the owner of the file. Returns `false` on Windows.
+  #
+  # *file_name* can be an IO object.
+  #
+  def self?.grpowned?: (String | IO file_name) -> bool
+
+  # <!--
+  #   rdoc-file=file.c
+  #   - File.identical?(file_1, file_2)   ->  true or false
+  # -->
+  # Returns `true` if the named files are identical.
+  #
+  # *file_1* and *file_2* can be an IO object.
+  #
+  #     open("a", "w") {}
+  #     p File.identical?("a", "a")      #=> true
+  #     p File.identical?("a", "./a")    #=> true
+  #     File.link("a", "b")
+  #     p File.identical?("a", "b")      #=> true
+  #     File.symlink("a", "c")
+  #     p File.identical?("a", "c")      #=> true
+  #     open("d", "w") {}
+  #     p File.identical?("a", "d")      #=> false
+  #
+  def self?.identical?: (String | IO file_1, String | IO file_2) -> bool
+
+  # <!--
+  #   rdoc-file=file.c
+  #   - File.owned?(file_name)   -> true or false
+  # -->
+  # Returns `true` if the named file exists and the effective used id of the
+  # calling process is the owner of the file.
+  #
+  # *file_name* can be an IO object.
+  #
+  def self?.owned?: (String | IO file_name) -> bool
+
+  # <!--
+  #   rdoc-file=file.c
+  #   - File.pipe?(file_name)   ->  true or false
+  # -->
+  # Returns `true` if the named file is a pipe.
+  #
+  # *file_name* can be an IO object.
+  #
+  def self?.pipe?: (String | IO file_name) -> bool
+
+  # <!--
+  #   rdoc-file=file.c
+  #   - File.readable?(file_name)   -> true or false
+  # -->
+  # Returns `true` if the named file is readable by the effective user and group
+  # id of this process. See eaccess(3).
+  #
+  # Note that some OS-level security features may cause this to return true even
+  # though the file is not readable by the effective user/group.
+  #
+  def self?.readable?: (String file_name) -> bool
+
+  # <!--
+  #   rdoc-file=file.c
+  #   - File.readable_real?(file_name)   -> true or false
+  # -->
+  # Returns `true` if the named file is readable by the real user and group id of
+  # this process. See access(3).
+  #
+  # Note that some OS-level security features may cause this to return true even
+  # though the file is not readable by the real user/group.
+  #
+  def self?.readable_real?: (String file_name) -> bool
+
+  # <!--
+  #   rdoc-file=file.c
+  #   - File.setgid?(file_name)   ->  true or false
+  # -->
+  # Returns `true` if the named file has the setgid bit set.
+  #
+  # *file_name* can be an IO object.
+  #
+  def self?.setgid?: (String | IO file_name) -> bool
+
+  # <!--
+  #   rdoc-file=file.c
+  #   - File.setuid?(file_name)   ->  true or false
+  # -->
+  # Returns `true` if the named file has the setuid bit set.
+  #
+  # *file_name* can be an IO object.
+  #
+  def self?.setuid?: (String | IO file_name) -> bool
+
+  # <!--
+  #   rdoc-file=file.c
+  #   - File.size(file_name)   -> integer
+  # -->
+  # Returns the size of `file_name`.
+  #
+  # *file_name* can be an IO object.
+  #
+  def self?.size: (String | IO file_name) -> Integer
+
+  # <!--
+  #   rdoc-file=file.c
+  #   - File.size?(file_name)   -> Integer or nil
+  # -->
+  # Returns `nil` if `file_name` doesn't exist or has zero size, the size of the
+  # file otherwise.
+  #
+  # *file_name* can be an IO object.
+  #
+  def self?.size?: (String | IO file_name) -> Integer?
+
+  # <!--
+  #   rdoc-file=file.c
+  #   - File.socket?(file_name)   ->  true or false
+  # -->
+  # Returns `true` if the named file is a socket.
+  #
+  # *file_name* can be an IO object.
+  #
+  def self?.socket?: (String | IO file_name) -> bool
+
+  # <!--
+  #   rdoc-file=file.c
+  #   - File.sticky?(file_name)   ->  true or false
+  # -->
+  # Returns `true` if the named file has the sticky bit set.
+  #
+  # *file_name* can be an IO object.
+  #
+  def self?.sticky?: (String | IO file_name) -> bool
+
+  # <!--
+  #   rdoc-file=file.c
+  #   - File.symlink?(file_name)   ->  true or false
+  # -->
+  # Returns `true` if the named file is a symbolic link.
+  #
+  def self?.symlink?: (String file_name) -> bool
+
+  # <!--
+  #   rdoc-file=file.c
+  #   - File.world_readable?(file_name)   -> integer or nil
+  # -->
+  # If *file_name* is readable by others, returns an integer representing the file
+  # permission bits of *file_name*. Returns `nil` otherwise. The meaning of the
+  # bits is platform dependent; on Unix systems, see `stat(2)`.
+  #
+  # *file_name* can be an IO object.
+  #
+  #     File.world_readable?("/etc/passwd")           #=> 420
+  #     m = File.world_readable?("/etc/passwd")
+  #     sprintf("%o", m)                              #=> "644"
+  #
+  def self?.world_readable?: (String | IO file_name) -> Integer?
+
+  # <!--
+  #   rdoc-file=file.c
+  #   - File.world_writable?(file_name)   -> integer or nil
+  # -->
+  # If *file_name* is writable by others, returns an integer representing the file
+  # permission bits of *file_name*. Returns `nil` otherwise. The meaning of the
+  # bits is platform dependent; on Unix systems, see `stat(2)`.
+  #
+  # *file_name* can be an IO object.
+  #
+  #     File.world_writable?("/tmp")                  #=> 511
+  #     m = File.world_writable?("/tmp")
+  #     sprintf("%o", m)                              #=> "777"
+  #
+  def self?.world_writable?: (String | IO file_name) -> Integer?
+
+  # <!--
+  #   rdoc-file=file.c
+  #   - File.writable?(file_name)   -> true or false
+  # -->
+  # Returns `true` if the named file is writable by the effective user and group
+  # id of this process. See eaccess(3).
+  #
+  # Note that some OS-level security features may cause this to return true even
+  # though the file is not writable by the effective user/group.
+  #
+  def self?.writable?: (String file_name) -> bool
+
+  # <!--
+  #   rdoc-file=file.c
+  #   - File.writable_real?(file_name)   -> true or false
+  # -->
+  # Returns `true` if the named file is writable by the real user and group id of
+  # this process. See access(3).
+  #
+  # Note that some OS-level security features may cause this to return true even
+  # though the file is not writable by the real user/group.
+  #
+  def self?.writable_real?: (String file_name) -> bool
+
+  # <!--
+  #   rdoc-file=file.c
+  #   - File.zero?(file_name)   -> true or false
+  # -->
+  # Returns `true` if the named file exists and has a zero size.
+  #
+  # *file_name* can be an IO object.
+  #
+  def self?.zero?: (String | IO file_name) -> bool
+end

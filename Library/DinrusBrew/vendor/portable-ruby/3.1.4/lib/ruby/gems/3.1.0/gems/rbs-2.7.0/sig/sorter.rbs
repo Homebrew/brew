@@ -1,0 +1,23 @@
+module RBS
+  class Sorter
+    include RBS::AST
+
+    type member = AST::Declarations::Class::member
+                | AST::Declarations::Module::member
+                | AST::Declarations::Interface::member
+
+    attr_reader path: Pathname
+
+    attr_reader stdout: IO
+
+    def initialize: (Pathname path, ?stdout: IO) -> void
+
+    def run: () -> void
+
+    def group: (member member) -> Numeric
+
+    def key: (member member) -> String
+
+    def sort_decl!: (AST::Declarations::t decl) -> void
+  end
+end

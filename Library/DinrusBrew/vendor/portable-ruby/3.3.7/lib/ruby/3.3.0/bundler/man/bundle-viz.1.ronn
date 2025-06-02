@@ -1,0 +1,32 @@
+bundle-viz(1) -- Generates a visual dependency graph for your Gemfile
+=====================================================================
+
+## SYNOPSIS
+
+`bundle viz` [--file=FILE]
+             [--format=FORMAT]
+             [--requirements]
+             [--version]
+             [--without=GROUP GROUP]
+
+## DESCRIPTION
+
+`viz` generates a PNG file of the current `Gemfile(5)` as a dependency graph.
+`viz` requires the ruby-graphviz gem (and its dependencies).
+
+The associated gems must also be installed via [`bundle install(1)`](bundle-install.1.html).
+
+`viz` command was deprecated in Bundler 2.2. Use [bundler-graph plugin](https://github.com/rubygems/bundler-graph) instead.
+
+## OPTIONS
+
+* `--file`, `-f`:
+  The name to use for the generated file. See `--format` option
+* `--format`, `-F`:
+  This is output format option. Supported format is png, jpg, svg, dot ...
+* `--requirements`, `-R`:
+  Set to show the version of each required dependency.
+* `--version`, `-v`:
+  Set to show each gem version.
+* `--without`, `-W`:
+  Exclude gems that are part of the specified named group.

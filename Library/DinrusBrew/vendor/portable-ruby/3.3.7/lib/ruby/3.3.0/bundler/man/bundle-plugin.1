@@ -1,0 +1,58 @@
+.\" generated with nRonn/v0.11.1
+.\" https://github.com/n-ronn/nronn/tree/0.11.1
+.TH "BUNDLE\-PLUGIN" "1" "September 2024" ""
+.SH "NAME"
+\fBbundle\-plugin\fR \- Manage Bundler plugins
+.SH "SYNOPSIS"
+\fBbundle plugin\fR install PLUGINS [\-\-source=\fISOURCE\fR] [\-\-version=\fIversion\fR] [\-\-git=\fIgit\-url\fR] [\-\-branch=\fIbranch\fR|\-\-ref=\fIrev\fR] [\-\-path=\fIpath\fR]
+.br
+\fBbundle plugin\fR uninstall PLUGINS
+.br
+\fBbundle plugin\fR list
+.br
+\fBbundle plugin\fR help [COMMAND]
+.SH "DESCRIPTION"
+You can install, uninstall, and list plugin(s) with this command to extend functionalities of Bundler\.
+.SH "SUB\-COMMANDS"
+.SS "install"
+Install the given plugin(s)\.
+.TP
+\fBbundle plugin install bundler\-graph\fR
+Install bundler\-graph gem from globally configured sources (defaults to RubyGems\.org)\. The global source, specified in source in Gemfile is ignored\.
+.TP
+\fBbundle plugin install bundler\-graph \-\-source https://example\.com\fR
+Install bundler\-graph gem from example\.com\. The global source, specified in source in Gemfile is not considered\.
+.TP
+\fBbundle plugin install bundler\-graph \-\-version 0\.2\.1\fR
+You can specify the version of the gem via \fB\-\-version\fR\.
+.TP
+\fBbundle plugin install bundler\-graph \-\-git https://github\.com/rubygems/bundler\-graph\fR
+Install bundler\-graph gem from Git repository\. You can use standard Git URLs like:
+.IP
+\fBssh://[user@]host\.xz[:port]/path/to/repo\.git\fR
+.br
+\fBhttp[s]://host\.xz[:port]/path/to/repo\.git\fR
+.br
+\fB/path/to/repo\fR
+.br
+\fBfile:///path/to/repo\fR
+.IP
+When you specify \fB\-\-git\fR, you can use \fB\-\-branch\fR or \fB\-\-ref\fR to specify any branch, tag, or commit hash (revision) to use\.
+.TP
+\fBbundle plugin install bundler\-graph \-\-path \.\./bundler\-graph\fR
+Install bundler\-graph gem from a local path\.
+.SS "uninstall"
+Uninstall the plugin(s) specified in PLUGINS\.
+.SS "list"
+List the installed plugins and available commands\.
+.P
+No options\.
+.SS "help"
+Describe subcommands or one specific subcommand\.
+.P
+No options\.
+.SH "SEE ALSO"
+.IP "\(bu" 4
+How to write a Bundler plugin \fIhttps://bundler\.io/guides/bundler_plugins\.html\fR
+.IP "" 0
+

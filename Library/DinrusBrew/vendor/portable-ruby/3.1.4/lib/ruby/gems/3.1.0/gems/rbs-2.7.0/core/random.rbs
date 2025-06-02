@@ -1,0 +1,153 @@
+# <!-- rdoc-file=random.c -->
+# Random provides an interface to Ruby's pseudo-random number generator, or
+# PRNG.  The PRNG produces a deterministic sequence of bits which approximate
+# true randomness. The sequence may be represented by integers, floats, or
+# binary strings.
+#
+# The generator may be initialized with either a system-generated or
+# user-supplied seed value by using Random.srand.
+#
+# The class method Random.rand provides the base functionality of Kernel.rand
+# along with better handling of floating point values. These are both interfaces
+# to the Ruby system PRNG.
+#
+# Random.new will create a new PRNG with a state independent of the Ruby system
+# PRNG, allowing multiple generators with different seed values or sequence
+# positions to exist simultaneously. Random objects can be marshaled, allowing
+# sequences to be saved and resumed.
+#
+# PRNGs are currently implemented as a modified Mersenne Twister with a period
+# of 2**19937-1.  As this algorithm is *not* for cryptographical use, you must
+# use SecureRandom for security purpose, instead of this PRNG.
+#
+class Random < RBS::Unnamed::Random_Base
+  # <!--
+  #   rdoc-file=random.c
+  #   - prng1 == prng2 -> true or false
+  # -->
+  # Returns true if the two generators have the same internal state, otherwise
+  # false.  Equivalent generators will return the same sequence of pseudo-random
+  # numbers.  Two generators will generally have the same state only if they were
+  # initialized with the same seed
+  #
+  #     Random.new == Random.new             # => false
+  #     Random.new(1234) == Random.new(1234) # => true
+  #
+  # and have the same invocation history.
+  #
+  #     prng1 = Random.new(1234)
+  #     prng2 = Random.new(1234)
+  #     prng1 == prng2 # => true
+  #
+  #     prng1.rand     # => 0.1915194503788923
+  #     prng1 == prng2 # => false
+  #
+  #     prng2.rand     # => 0.1915194503788923
+  #     prng1 == prng2 # => true
+  #
+  def ==: (untyped arg0) -> bool
+
+  # <!--
+  #   rdoc-file=random.c
+  #   - Random.new_seed -> integer
+  # -->
+  # Returns an arbitrary seed value. This is used by Random.new when no seed value
+  # is specified as an argument.
+  #
+  #     Random.new_seed  #=> 115032730400174366788466674494640623225
+  #
+  def self.new_seed: () -> Integer
+
+  # <!--
+  #   rdoc-file=random.c
+  #   - Random.rand -> float
+  #   - Random.rand(max) -> number
+  #   - Random.rand(range) -> number
+  # -->
+  # Returns a random number using the Ruby system PRNG.
+  #
+  # See also Random#rand.
+  #
+  def self.rand: () -> Float
+               | (Integer | ::Range[Integer] max) -> Integer
+               | (Float | ::Range[Float] max) -> Float
+
+  # <!--
+  #   rdoc-file=random.c
+  #   - srand(number = Random.new_seed) -> old_seed
+  # -->
+  # Seeds the system pseudo-random number generator, with `number`. The previous
+  # seed value is returned.
+  #
+  # If `number` is omitted, seeds the generator using a source of entropy provided
+  # by the operating system, if available (/dev/urandom on Unix systems or the RSA
+  # cryptographic provider on Windows), which is then combined with the time, the
+  # process id, and a sequence number.
+  #
+  # srand may be used to ensure repeatable sequences of pseudo-random numbers
+  # between different runs of the program. By setting the seed to a known value,
+  # programs can be made deterministic during testing.
+  #
+  #     srand 1234               # => 268519324636777531569100071560086917274
+  #     [ rand, rand ]           # => [0.1915194503788923, 0.6221087710398319]
+  #     [ rand(10), rand(1000) ] # => [4, 664]
+  #     srand 1234               # => 1234
+  #     [ rand, rand ]           # => [0.1915194503788923, 0.6221087710398319]
+  #
+  def self.srand: (?Integer number) -> Integer
+end
+
+Random::DEFAULT: Random
+
+class Random::Base < RBS::Unnamed::Random_Base
+end
+
+# <!-- rdoc-file=lib/random/formatter.rb -->
+# ## Random number formatter.
+#
+# Formats generated random numbers in many manners.
+#
+# ### Examples
+#
+# Generate random hexadecimal strings:
+#
+#     require 'random/formatter'
+#
+#     prng.hex(10) #=> "52750b30ffbc7de3b362"
+#     prng.hex(10) #=> "92b15d6c8dc4beb5f559"
+#     prng.hex(13) #=> "39b290146bea6ce975c37cfc23"
+#
+# Generate random base64 strings:
+#
+#     prng.base64(10) #=> "EcmTPZwWRAozdA=="
+#     prng.base64(10) #=> "KO1nIU+p9DKxGg=="
+#     prng.base64(12) #=> "7kJSM/MzBJI+75j8"
+#
+# Generate random binary strings:
+#
+#     prng.random_bytes(10) #=> "\016\t{\370g\310pbr\301"
+#     prng.random_bytes(10) #=> "\323U\030TO\234\357\020\a\337"
+#
+# Generate alphanumeric strings:
+#
+#     prng.alphanumeric(10) #=> "S8baxMJnPl"
+#     prng.alphanumeric(10) #=> "aOxAg8BAJe"
+#
+# Generate UUIDs:
+#
+#     prng.uuid #=> "2d931510-d99f-494a-8c67-87feb05e1594"
+#     prng.uuid #=> "bad85eb9-0713-4da7-8d36-07a8e4b00eab"
+#
+# <!-- rdoc-file=random.c -->
+# Generate a random number in the given range as Random does
+#
+#     prng.random_number       #=> 0.5816771641321361
+#     prng.random_number(1000) #=> 485
+#     prng.random_number(1..6) #=> 3
+#     prng.rand                #=> 0.5816771641321361
+#     prng.rand(1000)          #=> 485
+#     prng.rand(1..6)          #=> 3
+#
+module Random::Formatter
+  include RBS::Unnamed::Random_Formatter
+end

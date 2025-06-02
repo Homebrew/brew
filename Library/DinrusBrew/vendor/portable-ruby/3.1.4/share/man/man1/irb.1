@@ -1,0 +1,290 @@
+.TH IRB \&1 "Ruby Programmer's Reference Guide" "August 11, 2019" "UNIX"
+.SH NAME
+\fBirb\fP
+\- Interactive Ruby Shell
+.SH SYNOPSIS
+.br
+\fBirb\fP
+[\fB\--version\fP]
+[\fB\-dfUw\fP]
+[\fB\-I\fP \fIdirectory\fP]
+[\fB\-r\fP \fIlibrary\fP]
+[\fB\-E\fP \fIexternal\fP[:\fIinternal\fP]]
+[\fB\-W\fP[\fIlevel\fP]]
+[\fB\--\fP[no]inspect]
+[\fB\--\fP[no]multiline]
+[\fB\--\fP[no]singleline]
+[\fB\--\fP[no]echo]
+[\fB\--\fP[no]colorize]
+[\fB\--\fP[no]autocomplete]
+[\fB\--\fP[no]verbose]
+[\fB\--prompt\fP \fImode\fP]
+[\fB\--prompt-mode\fP \fImode\fP]
+[\fB\--inf-ruby-mode\fP]
+[\fB\--simple-prompt\fP]
+[\fB\--noprompt\fP]
+[\fB\--tracer\fP]
+[\fB\--back-trace-limit\fP \fIn\fP]
+[\fB\--\fP]
+[program_file]
+[argument ...]
+
+.SH DESCRIPTION
+\fBirb\fP
+is the REPL(read-eval-print loop) environment for Ruby programs.
+
+.SH OPTIONS
+
+.TP
+\fB\--version\fP
+Prints the version of
+\fB.\fP
+
+.TP
+\fB\-E\fP \fIexternal\fP[:\fIinternal\fP]
+.TP
+\fB\--encoding\fP \fIexternal\fP[:\fIinternal\fP]
+Same as `ruby -E' .
+Specifies the default value(s) for external encodings and internal encoding. Values should be separated with colon (:).
+
+You can omit the one for internal encodings, then the value
+("Encoding.default_internal") will be nil.
+
+.TP
+\fB\-I\fP \fIpath\fP
+Same as `ruby -I' .
+Specifies
+$LOAD_PATH
+directory
+
+.TP
+\fB\-U\fP
+Same as `ruby -U' .
+Sets the default value for internal encodings
+("Encoding.default_internal") to UTF-8.
+
+.TP
+\fB\-d\fP
+Same as `ruby -d' .
+Sets
+$DEBUG
+to true.
+
+.TP
+\fB\-f\fP
+Suppresses read of
+\fI~/.irbrc\fP.
+
+.TP
+\fB\-w\fP
+Same as `ruby -w' .
+
+
+.TP
+\fB\-W\fP
+Same as `ruby -W' .
+
+.TP
+\fB\-h\fP
+.TP
+\fB\--help\fP
+Prints a summary of the options.
+
+.TP
+\fB\-r\fP \fIlibrary\fP
+Same as `ruby -r'.
+Causes irb to load the library using require.
+
+.TP
+\fB\--inspect\fP
+Uses `inspect' for output (default except for bc mode)
+
+.TP
+\fB\--noinspect\fP
+Doesn't use inspect for output
+
+.TP
+\fB\--multiline\fP
+Uses multiline editor module.
+
+.TP
+\fB\--nomultiline\fP
+Doesn't use multiline editor module.
+
+.TP
+\fB\--singleline\fP
+Uses singleline editor module.
+
+.TP
+\fB\--nosingleline\fP
+Doesn't use singleline editor module.
+
+
+.TP
+\fB\--extra-doc-dir\fP
+Add an extra doc dir for the doc dialog.
+
+
+.TP
+\fB\--echo\fP
+Show result (default).
+
+.TP
+\fB\--noecho\fP
+Don't show result.
+
+
+.TP
+\fB\--echo-on-assignment\fP
+Show result on assignment.
+
+.TP
+\fB\--noecho-on-assignment\fP
+Don't show result on assignment.
+
+.TP
+\fB\--truncate-echo-on-assignment\fP
+Show truncated result on assignment (default).
+
+
+.TP
+\fB\--colorize\fP
+Use colorization.
+
+.TP
+\fB\--nocolorize\fP
+Don't use colorization.
+
+
+.TP
+\fB\--autocomplete\fP
+Use autocompletion.
+
+.TP
+\fB\--noautocomplete\fP
+Don't use autocompletion.
+
+
+.TP
+\fB\--verbose\fP
+Show details.
+
+.TP
+\fB\--noverbose\fP
+Don't show details.
+
+.TP
+\fB\--prompt\fP \fImode\fP
+.TP
+\fB\--prompt-mode\fP \fImode\fP
+Switch prompt mode. Pre-defined prompt modes are
+`default', `simple', `xmp' and `inf-ruby'.
+
+.TP
+\fB\--inf-ruby-mode\fP
+Uses prompt appropriate for inf-ruby-mode on emacs.
+Suppresses --multiline and --singleline.
+
+.TP
+\fB\--simple-prompt\fP
+Makes prompts simple.
+
+.TP
+\fB\--noprompt\fP
+No prompt mode.
+
+.TP
+\fB\--tracer\fP
+Displays trace for each execution of commands.
+
+.TP
+\fB\--back-trace-limit\fP \fIn\fP
+Displays backtrace top
+\fIn\fP
+and tail
+\fIn\fP.
+The default value is 16.
+
+.SH ENVIRONMENT
+.TP
+.B IRBRC
+
+
+Also
+\fBirb\fP
+depends on same variables as
+\fBruby\fP(1).
+
+.SH FILES
+.TP
+.B ~/.irbrc
+Personal irb initialization.
+
+
+.SH EXAMPLES
+.nf
+\&  % irb
+.fi
+.nf
+\&  irb(main):001:0> \fB1 + 1\fP
+.fi
+.nf
+\&  2
+.fi
+.nf
+\&  irb(main):002:0> \fBdef t(x)\fP
+.fi
+.nf
+\&  irb(main):003:1> \fBx + 1\fP
+.fi
+.nf
+\&  irb(main):004:1> \fBend\fP
+.fi
+.nf
+\&  => :t
+.fi
+.nf
+\&  irb(main):005:0> \fBt(3)\fP
+.fi
+.nf
+\&  => 4
+.fi
+.nf
+\&  irb(main):006:0> \fBif t(3) == 4\fP
+.fi
+.nf
+\&  irb(main):007:1> \fBp :ok\fP
+.fi
+.nf
+\&  irb(main):008:1> \fBend\fP
+.fi
+.nf
+\&  :ok
+.fi
+.nf
+\&  => :ok
+.fi
+.nf
+\&  irb(main):009:0> \fBquit\fP
+.fi
+.nf
+\&  %
+.fi
+
+.SH SEE ALSO
+\fBruby\fP(1).
+
+.SH REPORTING BUGS
+.IP \(bu
+Security vulnerabilities should be reported via an email to
+Mt security@ruby-lang.org.
+Reported problems will be published after being fixed.
+
+.IP \(bu
+Other bugs and feature requests can be reported via the
+Ruby Issue Tracking System
+(\fBhttps://bugs.ruby-lang.org/\fP).
+Do not report security vulnerabilities
+via this system because it publishes the vulnerabilities immediately.
+.SH AUTHORS
+Written by Keiju ISHITSUKA.

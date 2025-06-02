@@ -1,0 +1,1721 @@
+# <!-- rdoc-file=vm.c -->
+# Threads are the Ruby implementation for a concurrent programming model.
+#
+# Programs that require multiple threads of execution are a perfect candidate
+# for Ruby's Thread class.
+#
+# For example, we can create a new thread separate from the main thread's
+# execution using ::new.
+#
+#     thr = Thread.new { puts "What's the big deal" }
+#
+# Then we are able to pause the execution of the main thread and allow our new
+# thread to finish, using #join:
+#
+#     thr.join #=> "What's the big deal"
+#
+# If we don't call `thr.join` before the main thread terminates, then all other
+# threads including `thr` will be killed.
+#
+# Alternatively, you can use an array for handling multiple threads at once,
+# like in the following example:
+#
+#     threads = []
+#     threads << Thread.new { puts "What's the big deal" }
+#     threads << Thread.new { 3.times { puts "Threads are fun!" } }
+#
+# After creating a few threads we wait for them all to finish consecutively.
+#
+#     threads.each { |thr| thr.join }
+#
+# To retrieve the last value of a thread, use #value
+#
+#     thr = Thread.new { sleep 1; "Useful value" }
+#     thr.value #=> "Useful value"
+#
+# ### Thread initialization
+#
+# In order to create new threads, Ruby provides ::new, ::start, and ::fork. A
+# block must be provided with each of these methods, otherwise a ThreadError
+# will be raised.
+#
+# When subclassing the Thread class, the `initialize` method of your subclass
+# will be ignored by ::start and ::fork. Otherwise, be sure to call super in
+# your `initialize` method.
+#
+# ### Thread termination
+#
+# For terminating threads, Ruby provides a variety of ways to do this.
+#
+# The class method ::kill, is meant to exit a given thread:
+#
+#     thr = Thread.new { sleep }
+#     Thread.kill(thr) # sends exit() to thr
+#
+# Alternatively, you can use the instance method #exit, or any of its aliases
+# #kill or #terminate.
+#
+#     thr.exit
+#
+# ### Thread status
+#
+# Ruby provides a few instance methods for querying the state of a given thread.
+# To get a string with the current thread's state use #status
+#
+#     thr = Thread.new { sleep }
+#     thr.status # => "sleep"
+#     thr.exit
+#     thr.status # => false
+#
+# You can also use #alive? to tell if the thread is running or sleeping, and
+# #stop? if the thread is dead or sleeping.
+#
+# ### Thread variables and scope
+#
+# Since threads are created with blocks, the same rules apply to other Ruby
+# blocks for variable scope. Any local variables created within this block are
+# accessible to only this thread.
+#
+# #### Fiber-local vs. Thread-local
+#
+# Each fiber has its own bucket for Thread#[] storage. When you set a new
+# fiber-local it is only accessible within this Fiber. To illustrate:
+#
+#     Thread.new {
+#       Thread.current[:foo] = "bar"
+#       Fiber.new {
+#         p Thread.current[:foo] # => nil
+#       }.resume
+#     }.join
+#
+# This example uses #[] for getting and #[]= for setting fiber-locals, you can
+# also use #keys to list the fiber-locals for a given thread and #key? to check
+# if a fiber-local exists.
+#
+# When it comes to thread-locals, they are accessible within the entire scope of
+# the thread. Given the following example:
+#
+#     Thread.new{
+#       Thread.current.thread_variable_set(:foo, 1)
+#       p Thread.current.thread_variable_get(:foo) # => 1
+#       Fiber.new{
+#         Thread.current.thread_variable_set(:foo, 2)
+#         p Thread.current.thread_variable_get(:foo) # => 2
+#       }.resume
+#       p Thread.current.thread_variable_get(:foo)   # => 2
+#     }.join
+#
+# You can see that the thread-local `:foo` carried over into the fiber and was
+# changed to `2` by the end of the thread.
+#
+# This example makes use of #thread_variable_set to create new thread-locals,
+# and #thread_variable_get to reference them.
+#
+# There is also #thread_variables to list all thread-locals, and
+# #thread_variable? to check if a given thread-local exists.
+#
+# ### Exception handling
+#
+# When an unhandled exception is raised inside a thread, it will terminate. By
+# default, this exception will not propagate to other threads. The exception is
+# stored and when another thread calls #value or #join, the exception will be
+# re-raised in that thread.
+#
+#     t = Thread.new{ raise 'something went wrong' }
+#     t.value #=> RuntimeError: something went wrong
+#
+# An exception can be raised from outside the thread using the Thread#raise
+# instance method, which takes the same parameters as Kernel#raise.
+#
+# Setting Thread.abort_on_exception = true, Thread#abort_on_exception = true, or
+# $DEBUG = true will cause a subsequent unhandled exception raised in a thread
+# to be automatically re-raised in the main thread.
+#
+# With the addition of the class method ::handle_interrupt, you can now handle
+# exceptions asynchronously with threads.
+#
+# ### Scheduling
+#
+# Ruby provides a few ways to support scheduling threads in your program.
+#
+# The first way is by using the class method ::stop, to put the current running
+# thread to sleep and schedule the execution of another thread.
+#
+# Once a thread is asleep, you can use the instance method #wakeup to mark your
+# thread as eligible for scheduling.
+#
+# You can also try ::pass, which attempts to pass execution to another thread
+# but is dependent on the OS whether a running thread will switch or not. The
+# same goes for #priority, which lets you hint to the thread scheduler which
+# threads you want to take precedence when passing execution. This method is
+# also dependent on the OS and may be ignored on some platforms.
+#
+class Thread < Object
+  # <!--
+  #   rdoc-file=thread.c
+  #   - Thread.current   -> thread
+  # -->
+  # Returns the currently executing thread.
+  #
+  #     Thread.current   #=> #<Thread:0x401bdf4c run>
+  #
+  def self.current: () -> Thread
+
+  # <!--
+  #   rdoc-file=thread.c
+  #   - Thread.main   -> thread
+  # -->
+  # Returns the main thread.
+  #
+  def self.main: () -> Thread
+
+  # <!--
+  #   rdoc-file=thread.c
+  #   - thr[sym]   -> obj or nil
+  # -->
+  # Attribute Reference---Returns the value of a fiber-local variable (current
+  # thread's root fiber if not explicitly inside a Fiber), using either a symbol
+  # or a string name. If the specified variable does not exist, returns `nil`.
+  #
+  #     [
+  #       Thread.new { Thread.current["name"] = "A" },
+  #       Thread.new { Thread.current[:name]  = "B" },
+  #       Thread.new { Thread.current["name"] = "C" }
+  #     ].each do |th|
+  #       th.join
+  #       puts "#{th.inspect}: #{th[:name]}"
+  #     end
+  #
+  # This will produce:
+  #
+  #     #<Thread:0x00000002a54220 dead>: A
+  #     #<Thread:0x00000002a541a8 dead>: B
+  #     #<Thread:0x00000002a54130 dead>: C
+  #
+  # Thread#[] and Thread#[]= are not thread-local but fiber-local. This confusion
+  # did not exist in Ruby 1.8 because fibers are only available since Ruby 1.9.
+  # Ruby 1.9 chooses that the methods behaves fiber-local to save following idiom
+  # for dynamic scope.
+  #
+  #     def meth(newvalue)
+  #       begin
+  #         oldvalue = Thread.current[:name]
+  #         Thread.current[:name] = newvalue
+  #         yield
+  #       ensure
+  #         Thread.current[:name] = oldvalue
+  #       end
+  #     end
+  #
+  # The idiom may not work as dynamic scope if the methods are thread-local and a
+  # given block switches fiber.
+  #
+  #     f = Fiber.new {
+  #       meth(1) {
+  #         Fiber.yield
+  #       }
+  #     }
+  #     meth(2) {
+  #       f.resume
+  #     }
+  #     f.resume
+  #     p Thread.current[:name]
+  #     #=> nil if fiber-local
+  #     #=> 2 if thread-local (The value 2 is leaked to outside of meth method.)
+  #
+  # For thread-local variables, please see #thread_variable_get and
+  # #thread_variable_set.
+  #
+  def []: (String | Symbol key) -> untyped
+
+  # <!--
+  #   rdoc-file=thread.c
+  #   - thr[sym] = obj   -> obj
+  # -->
+  # Attribute Assignment---Sets or creates the value of a fiber-local variable,
+  # using either a symbol or a string.
+  #
+  # See also Thread#[].
+  #
+  # For thread-local variables, please see #thread_variable_set and
+  # #thread_variable_get.
+  #
+  def []=: (String | Symbol key, untyped value) -> untyped
+
+  # <!--
+  #   rdoc-file=thread.c
+  #   - thr.alive?   -> true or false
+  # -->
+  # Returns `true` if `thr` is running or sleeping.
+  #
+  #     thr = Thread.new { }
+  #     thr.join                #=> #<Thread:0x401b3fb0 dead>
+  #     Thread.current.alive?   #=> true
+  #     thr.alive?              #=> false
+  #
+  # See also #stop? and #status.
+  #
+  def alive?: () -> bool
+
+  # <!--
+  #   rdoc-file=thread.c
+  #   - thr.exit        -> thr
+  #   - thr.kill        -> thr
+  #   - thr.terminate   -> thr
+  # -->
+  # Terminates `thr` and schedules another thread to be run, returning the
+  # terminated Thread.  If this is the main thread, or the last thread, exits the
+  # process.
+  #
+  def kill: () -> Thread?
+
+  # <!--
+  #   rdoc-file=thread.c
+  #   - thr.abort_on_exception   -> true or false
+  # -->
+  # Returns the status of the thread-local ``abort on exception'' condition for
+  # this `thr`.
+  #
+  # The default is `false`.
+  #
+  # See also #abort_on_exception=.
+  #
+  # There is also a class level method to set this for all threads, see
+  # ::abort_on_exception.
+  #
+  def abort_on_exception: () -> bool
+
+  # <!--
+  #   rdoc-file=thread.c
+  #   - thr.abort_on_exception= boolean   -> true or false
+  # -->
+  # When set to `true`, if this `thr` is aborted by an exception, the raised
+  # exception will be re-raised in the main thread.
+  #
+  # See also #abort_on_exception.
+  #
+  # There is also a class level method to set this for all threads, see
+  # ::abort_on_exception=.
+  #
+  def abort_on_exception=: (boolish abort_on_exception) -> untyped
+
+  # <!--
+  #   rdoc-file=vm_trace.c
+  #   - thr.add_trace_func(proc)    -> proc
+  # -->
+  # Adds *proc* as a handler for tracing.
+  #
+  # See Thread#set_trace_func and Kernel#set_trace_func.
+  #
+  def add_trace_func: (untyped proc) -> untyped
+
+  # <!--
+  #   rdoc-file=thread.c
+  #   - thread.backtrace    -> array or nil
+  # -->
+  # Returns the current backtrace of the target thread.
+  #
+  def backtrace: (*untyped args) -> ::Array[untyped]
+
+  # <!--
+  #   rdoc-file=thread.c
+  #   - thread.backtrace_locations(*args)   -> array or nil
+  # -->
+  # Returns the execution stack for the target thread---an array containing
+  # backtrace location objects.
+  #
+  # See Thread::Backtrace::Location for more information.
+  #
+  # This method behaves similarly to Kernel#caller_locations except it applies to
+  # a specific thread.
+  #
+  def backtrace_locations: (*untyped args) -> ::Array[untyped]?
+
+  # <!-- rdoc-file=thread.c -->
+  # Terminates `thr` and schedules another thread to be run, returning the
+  # terminated Thread.  If this is the main thread, or the last thread, exits the
+  # process.
+  #
+  def exit: () -> Thread?
+
+  # <!--
+  #   rdoc-file=thread.c
+  #   - thr.fetch(sym)           -> obj
+  #   - thr.fetch(sym) { }       -> obj
+  #   - thr.fetch(sym, default)  -> obj
+  # -->
+  # Returns a fiber-local for the given key. If the key can't be found, there are
+  # several options: With no other arguments, it will raise a KeyError exception;
+  # if *default* is given, then that will be returned; if the optional code block
+  # is specified, then that will be run and its result returned.  See Thread#[]
+  # and Hash#fetch.
+  #
+  def fetch: (*untyped sym) -> untyped
+
+  # <!--
+  #   rdoc-file=thread.c
+  #   - thr.group   -> thgrp or nil
+  # -->
+  # Returns the ThreadGroup which contains the given thread.
+  #
+  #     Thread.main.group   #=> #<ThreadGroup:0x4029d914>
+  #
+  def group: () -> ThreadGroup?
+
+  # <!--
+  #   rdoc-file=thread.c
+  #   - Thread.new { ... }                  -> thread
+  #   - Thread.new(*args, &proc)            -> thread
+  #   - Thread.new(*args) { |args| ... }    -> thread
+  # -->
+  # Creates a new thread executing the given block.
+  #
+  # Any `args` given to ::new will be passed to the block:
+  #
+  #     arr = []
+  #     a, b, c = 1, 2, 3
+  #     Thread.new(a,b,c) { |d,e,f| arr << d << e << f }.join
+  #     arr #=> [1, 2, 3]
+  #
+  # A ThreadError exception is raised if ::new is called without a block.
+  #
+  # If you're going to subclass Thread, be sure to call super in your `initialize`
+  # method, otherwise a ThreadError will be raised.
+  #
+  def initialize: (*untyped) { (*untyped) -> void } -> void
+
+  # <!--
+  #   rdoc-file=thread.c
+  #   - thr.join          -> thr
+  #   - thr.join(limit)   -> thr
+  # -->
+  # The calling thread will suspend execution and run this `thr`.
+  #
+  # Does not return until `thr` exits or until the given `limit` seconds have
+  # passed.
+  #
+  # If the time limit expires, `nil` will be returned, otherwise `thr` is
+  # returned.
+  #
+  # Any threads not joined will be killed when the main program exits.
+  #
+  # If `thr` had previously raised an exception and the ::abort_on_exception or
+  # $DEBUG flags are not set, (so the exception has not yet been processed), it
+  # will be processed at this time.
+  #
+  #     a = Thread.new { print "a"; sleep(10); print "b"; print "c" }
+  #     x = Thread.new { print "x"; Thread.pass; print "y"; print "z" }
+  #     x.join # Let thread x finish, thread a will be killed on exit.
+  #     #=> "axyz"
+  #
+  # The following example illustrates the `limit` parameter.
+  #
+  #     y = Thread.new { 4.times { sleep 0.1; puts 'tick... ' }}
+  #     puts "Waiting" until y.join(0.15)
+  #
+  # This will produce:
+  #
+  #     tick...
+  #     Waiting
+  #     tick...
+  #     Waiting
+  #     tick...
+  #     tick...
+  #
+  def join: (*untyped limit) -> Thread
+
+  # <!--
+  #   rdoc-file=thread.c
+  #   - thr.key?(sym)   -> true or false
+  # -->
+  # Returns `true` if the given string (or symbol) exists as a fiber-local
+  # variable.
+  #
+  #     me = Thread.current
+  #     me[:oliver] = "a"
+  #     me.key?(:oliver)    #=> true
+  #     me.key?(:stanley)   #=> false
+  #
+  def key?: (Symbol sym) -> bool
+
+  # <!--
+  #   rdoc-file=thread.c
+  #   - thr.keys   -> array
+  # -->
+  # Returns an array of the names of the fiber-local variables (as Symbols).
+  #
+  #     thr = Thread.new do
+  #       Thread.current[:cat] = 'meow'
+  #       Thread.current["dog"] = 'woof'
+  #     end
+  #     thr.join   #=> #<Thread:0x401b3f10 dead>
+  #     thr.keys   #=> [:dog, :cat]
+  #
+  def keys: () -> ::Array[Symbol]
+
+  # <!--
+  #   rdoc-file=thread.c
+  #   - thr.name   -> string
+  # -->
+  # show the name of the thread.
+  #
+  def name: () -> String
+
+  # <!--
+  #   rdoc-file=thread.c
+  #   - thr.name=(name)   -> string
+  # -->
+  # set given name to the ruby thread. On some platform, it may set the name to
+  # pthread and/or kernel.
+  #
+  def name=: (untyped name) -> untyped
+
+  # <!--
+  #   rdoc-file=thread.c
+  #   - thr.native_thread_id   -> integer
+  # -->
+  # Return the native thread ID which is used by the Ruby thread.
+  #
+  # The ID depends on the OS. (not POSIX thread ID returned by pthread_self(3))
+  # *   On Linux it is TID returned by gettid(2).
+  # *   On macOS it is the system-wide unique integral ID of thread returned by
+  #     pthread_threadid_np(3).
+  # *   On FreeBSD it is the unique integral ID of the thread returned by
+  #     pthread_getthreadid_np(3).
+  # *   On Windows it is the thread identifier returned by GetThreadId().
+  # *   On other platforms, it raises NotImplementedError.
+  #
+  #
+  # NOTE: If the thread is not associated yet or already deassociated with a
+  # native thread, it returns *nil*. If the Ruby implementation uses M:N thread
+  # model, the ID may change depending on the timing.
+  #
+  def native_thread_id: () -> Integer
+
+  # <!--
+  #   rdoc-file=thread.c
+  #   - target_thread.pending_interrupt?(error = nil) -> true/false
+  # -->
+  # Returns whether or not the asynchronous queue is empty for the target thread.
+  #
+  # If `error` is given, then check only for `error` type deferred events.
+  #
+  # See ::pending_interrupt? for more information.
+  #
+  def pending_interrupt?: (*untyped args) -> bool
+
+  # <!--
+  #   rdoc-file=thread.c
+  #   - thr.priority   -> integer
+  # -->
+  # Returns the priority of *thr*. Default is inherited from the current thread
+  # which creating the new thread, or zero for the initial main thread;
+  # higher-priority thread will run more frequently than lower-priority threads
+  # (but lower-priority threads can also run).
+  #
+  # This is just hint for Ruby thread scheduler.  It may be ignored on some
+  # platform.
+  #
+  #     Thread.current.priority   #=> 0
+  #
+  def priority: () -> Integer
+
+  # <!--
+  #   rdoc-file=thread.c
+  #   - thr.priority= integer   -> thr
+  # -->
+  # Sets the priority of *thr* to *integer*. Higher-priority threads will run more
+  # frequently than lower-priority threads (but lower-priority threads can also
+  # run).
+  #
+  # This is just hint for Ruby thread scheduler.  It may be ignored on some
+  # platform.
+  #
+  #     count1 = count2 = 0
+  #     a = Thread.new do
+  #           loop { count1 += 1 }
+  #         end
+  #     a.priority = -1
+  #
+  #     b = Thread.new do
+  #           loop { count2 += 1 }
+  #         end
+  #     b.priority = -2
+  #     sleep 1   #=> 1
+  #     count1    #=> 622504
+  #     count2    #=> 5832
+  #
+  def priority=: (Integer priority) -> untyped
+
+  # <!--
+  #   rdoc-file=thread.c
+  #   - thr.report_on_exception   -> true or false
+  # -->
+  # Returns the status of the thread-local ``report on exception'' condition for
+  # this `thr`.
+  #
+  # The default value when creating a Thread is the value of the global flag
+  # Thread.report_on_exception.
+  #
+  # See also #report_on_exception=.
+  #
+  # There is also a class level method to set this for all new threads, see
+  # ::report_on_exception=.
+  #
+  def report_on_exception: () -> bool
+
+  # <!--
+  #   rdoc-file=thread.c
+  #   - thr.report_on_exception= boolean   -> true or false
+  # -->
+  # When set to `true`, a message is printed on $stderr if an exception kills this
+  # `thr`.  See ::report_on_exception for details.
+  #
+  # See also #report_on_exception.
+  #
+  # There is also a class level method to set this for all new threads, see
+  # ::report_on_exception=.
+  #
+  def report_on_exception=: (boolish report_on_exception) -> untyped
+
+  # <!--
+  #   rdoc-file=thread.c
+  #   - thr.run   -> thr
+  # -->
+  # Wakes up `thr`, making it eligible for scheduling.
+  #
+  #     a = Thread.new { puts "a"; Thread.stop; puts "c" }
+  #     sleep 0.1 while a.status!='sleep'
+  #     puts "Got here"
+  #     a.run
+  #     a.join
+  #
+  # This will produce:
+  #
+  #     a
+  #     Got here
+  #     c
+  #
+  # See also the instance method #wakeup.
+  #
+  def run: () -> Thread
+
+  # Returns the safe level.
+  #
+  # This method is obsolete because $SAFE is a process global state. Simply
+  # check $SAFE.
+  def safe_level: () -> Integer
+
+  # <!--
+  #   rdoc-file=thread.c
+  #   - thr.status   -> string, false or nil
+  # -->
+  # Returns the status of `thr`.
+  #
+  # `"sleep"`
+  # :   Returned if this thread is sleeping or waiting on I/O
+  # `"run"`
+  # :   When this thread is executing
+  # `"aborting"`
+  # :   If this thread is aborting
+  # `false`
+  # :   When this thread is terminated normally
+  # `nil`
+  # :   If terminated with an exception.
+  #
+  #
+  #     a = Thread.new { raise("die now") }
+  #     b = Thread.new { Thread.stop }
+  #     c = Thread.new { Thread.exit }
+  #     d = Thread.new { sleep }
+  #     d.kill                  #=> #<Thread:0x401b3678 aborting>
+  #     a.status                #=> nil
+  #     b.status                #=> "sleep"
+  #     c.status                #=> false
+  #     d.status                #=> "aborting"
+  #     Thread.current.status   #=> "run"
+  #
+  # See also the instance methods #alive? and #stop?
+  #
+  def status: () -> (String | bool)?
+
+  # <!--
+  #   rdoc-file=thread.c
+  #   - thr.stop?   -> true or false
+  # -->
+  # Returns `true` if `thr` is dead or sleeping.
+  #
+  #     a = Thread.new { Thread.stop }
+  #     b = Thread.current
+  #     a.stop?   #=> true
+  #     b.stop?   #=> false
+  #
+  # See also #alive? and #status.
+  #
+  def stop?: () -> bool
+
+  # <!-- rdoc-file=thread.c -->
+  # Terminates `thr` and schedules another thread to be run, returning the
+  # terminated Thread.  If this is the main thread, or the last thread, exits the
+  # process.
+  #
+  def terminate: () -> Thread?
+
+  # <!--
+  #   rdoc-file=thread.c
+  #   - thr.thread_variable?(key)   -> true or false
+  # -->
+  # Returns `true` if the given string (or symbol) exists as a thread-local
+  # variable.
+  #
+  #     me = Thread.current
+  #     me.thread_variable_set(:oliver, "a")
+  #     me.thread_variable?(:oliver)    #=> true
+  #     me.thread_variable?(:stanley)   #=> false
+  #
+  # Note that these are not fiber local variables.  Please see Thread#[] and
+  # Thread#thread_variable_get for more details.
+  #
+  def thread_variable?: (String | Symbol key) -> bool
+
+  # <!--
+  #   rdoc-file=thread.c
+  #   - thr.thread_variable_get(key)  -> obj or nil
+  # -->
+  # Returns the value of a thread local variable that has been set.  Note that
+  # these are different than fiber local values.  For fiber local values, please
+  # see Thread#[] and Thread#[]=.
+  #
+  # Thread local values are carried along with threads, and do not respect fibers.
+  #  For example:
+  #
+  #     Thread.new {
+  #       Thread.current.thread_variable_set("foo", "bar") # set a thread local
+  #       Thread.current["foo"] = "bar"                    # set a fiber local
+  #
+  #       Fiber.new {
+  #         Fiber.yield [
+  #           Thread.current.thread_variable_get("foo"), # get the thread local
+  #           Thread.current["foo"],                     # get the fiber local
+  #         ]
+  #       }.resume
+  #     }.join.value # => ['bar', nil]
+  #
+  # The value "bar" is returned for the thread local, where nil is returned for
+  # the fiber local.  The fiber is executed in the same thread, so the thread
+  # local values are available.
+  #
+  def thread_variable_get: (untyped key) -> untyped
+
+  # <!--
+  #   rdoc-file=thread.c
+  #   - thr.thread_variable_set(key, value)
+  # -->
+  # Sets a thread local with `key` to `value`.  Note that these are local to
+  # threads, and not to fibers.  Please see Thread#thread_variable_get and
+  # Thread#[] for more information.
+  #
+  def thread_variable_set: (untyped key, untyped value) -> untyped
+
+  # <!--
+  #   rdoc-file=thread.c
+  #   - thr.thread_variables   -> array
+  # -->
+  # Returns an array of the names of the thread-local variables (as Symbols).
+  #
+  #     thr = Thread.new do
+  #       Thread.current.thread_variable_set(:cat, 'meow')
+  #       Thread.current.thread_variable_set("dog", 'woof')
+  #     end
+  #     thr.join               #=> #<Thread:0x401b3f10 dead>
+  #     thr.thread_variables   #=> [:dog, :cat]
+  #
+  # Note that these are not fiber local variables.  Please see Thread#[] and
+  # Thread#thread_variable_get for more details.
+  #
+  def thread_variables: () -> ::Array[Symbol]
+
+  # <!--
+  #   rdoc-file=thread.c
+  #   - thr.value   -> obj
+  # -->
+  # Waits for `thr` to complete, using #join, and returns its value or raises the
+  # exception which terminated the thread.
+  #
+  #     a = Thread.new { 2 + 2 }
+  #     a.value   #=> 4
+  #
+  #     b = Thread.new { raise 'something went wrong' }
+  #     b.value   #=> RuntimeError: something went wrong
+  #
+  def value: () -> untyped
+
+  # <!--
+  #   rdoc-file=thread.c
+  #   - thr.wakeup   -> thr
+  # -->
+  # Marks a given thread as eligible for scheduling, however it may still remain
+  # blocked on I/O.
+  #
+  # **Note:** This does not invoke the scheduler, see #run for more information.
+  #
+  #     c = Thread.new { Thread.stop; puts "hey!" }
+  #     sleep 0.1 while c.status!='sleep'
+  #     c.wakeup
+  #     c.join
+  #     #=> "hey!"
+  #
+  def wakeup: () -> Thread
+
+  # <!--
+  #   rdoc-file=thread.c
+  #   - Thread.abort_on_exception   -> true or false
+  # -->
+  # Returns the status of the global ``abort on exception'' condition.
+  #
+  # The default is `false`.
+  #
+  # When set to `true`, if any thread is aborted by an exception, the raised
+  # exception will be re-raised in the main thread.
+  #
+  # Can also be specified by the global $DEBUG flag or command line option `-d`.
+  #
+  # See also ::abort_on_exception=.
+  #
+  # There is also an instance level method to set this for a specific thread, see
+  # #abort_on_exception.
+  #
+  def self.abort_on_exception: () -> untyped
+
+  # <!--
+  #   rdoc-file=thread.c
+  #   - Thread.abort_on_exception= boolean   -> true or false
+  # -->
+  # When set to `true`, if any thread is aborted by an exception, the raised
+  # exception will be re-raised in the main thread. Returns the new state.
+  #
+  #     Thread.abort_on_exception = true
+  #     t1 = Thread.new do
+  #       puts  "In new thread"
+  #       raise "Exception from thread"
+  #     end
+  #     sleep(1)
+  #     puts "not reached"
+  #
+  # This will produce:
+  #
+  #     In new thread
+  #     prog.rb:4: Exception from thread (RuntimeError)
+  #      from prog.rb:2:in `initialize'
+  #      from prog.rb:2:in `new'
+  #      from prog.rb:2
+  #
+  # See also ::abort_on_exception.
+  #
+  # There is also an instance level method to set this for a specific thread, see
+  # #abort_on_exception=.
+  #
+  def self.abort_on_exception=: (untyped abort_on_exception) -> untyped
+
+  # Wraps the block in a single, VM-global
+  # [Mutex\#synchronize](https://ruby-doc.org/core-2.6.3/Mutex.html#method-i-synchronize)
+  # , returning the value of the block. A thread executing inside the
+  # exclusive section will only block other threads which also use the
+  # [::exclusive](Thread.downloaded.ruby_doc#method-c-exclusive) mechanism.
+  def self.exclusive: () { () -> untyped } -> untyped
+
+  # <!--
+  #   rdoc-file=thread.c
+  #   - Thread.exit   -> thread
+  # -->
+  # Terminates the currently running thread and schedules another thread to be
+  # run.
+  #
+  # If this thread is already marked to be killed, ::exit returns the Thread.
+  #
+  # If this is the main thread, or the last  thread, exit the process.
+  #
+  def self.exit: () -> untyped
+
+  # <!--
+  #   rdoc-file=thread.c
+  #   - Thread.start([args]*) {|args| block }   -> thread
+  #   - Thread.fork([args]*) {|args| block }    -> thread
+  # -->
+  # Basically the same as ::new. However, if class Thread is subclassed, then
+  # calling `start` in that subclass will not invoke the subclass's `initialize`
+  # method.
+  #
+  def self.fork: (*untyped args) -> untyped
+
+  # <!--
+  #   rdoc-file=thread.c
+  #   - Thread.handle_interrupt(hash) { ... } -> result of the block
+  # -->
+  # Changes asynchronous interrupt timing.
+  #
+  # *interrupt* means asynchronous event and corresponding procedure by
+  # Thread#raise, Thread#kill, signal trap (not supported yet) and main thread
+  # termination (if main thread terminates, then all other thread will be killed).
+  #
+  # The given `hash` has pairs like `ExceptionClass => :TimingSymbol`. Where the
+  # ExceptionClass is the interrupt handled by the given block. The TimingSymbol
+  # can be one of the following symbols:
+  #
+  # `:immediate`
+  # :   Invoke interrupts immediately.
+  # `:on_blocking`
+  # :   Invoke interrupts while *BlockingOperation*.
+  # `:never`
+  # :   Never invoke all interrupts.
+  #
+  #
+  # *BlockingOperation* means that the operation will block the calling thread,
+  # such as read and write.  On CRuby implementation, *BlockingOperation* is any
+  # operation executed without GVL.
+  #
+  # Masked asynchronous interrupts are delayed until they are enabled. This method
+  # is similar to sigprocmask(3).
+  #
+  # ### NOTE
+  #
+  # Asynchronous interrupts are difficult to use.
+  #
+  # If you need to communicate between threads, please consider to use another way
+  # such as Queue.
+  #
+  # Or use them with deep understanding about this method.
+  #
+  # ### Usage
+  #
+  # In this example, we can guard from Thread#raise exceptions.
+  #
+  # Using the `:never` TimingSymbol the RuntimeError exception will always be
+  # ignored in the first block of the main thread. In the second
+  # ::handle_interrupt block we can purposefully handle RuntimeError exceptions.
+  #
+  #     th = Thread.new do
+  #       Thread.handle_interrupt(RuntimeError => :never) {
+  #         begin
+  #           # You can write resource allocation code safely.
+  #           Thread.handle_interrupt(RuntimeError => :immediate) {
+  #             # ...
+  #           }
+  #         ensure
+  #           # You can write resource deallocation code safely.
+  #         end
+  #       }
+  #     end
+  #     Thread.pass
+  #     # ...
+  #     th.raise "stop"
+  #
+  # While we are ignoring the RuntimeError exception, it's safe to write our
+  # resource allocation code. Then, the ensure block is where we can safely
+  # deallocate your resources.
+  #
+  # #### Guarding from Timeout::Error
+  #
+  # In the next example, we will guard from the Timeout::Error exception. This
+  # will help prevent from leaking resources when Timeout::Error exceptions occur
+  # during normal ensure clause. For this example we use the help of the standard
+  # library Timeout, from lib/timeout.rb
+  #
+  #     require 'timeout'
+  #     Thread.handle_interrupt(Timeout::Error => :never) {
+  #       timeout(10){
+  #         # Timeout::Error doesn't occur here
+  #         Thread.handle_interrupt(Timeout::Error => :on_blocking) {
+  #           # possible to be killed by Timeout::Error
+  #           # while blocking operation
+  #         }
+  #         # Timeout::Error doesn't occur here
+  #       }
+  #     }
+  #
+  # In the first part of the `timeout` block, we can rely on Timeout::Error being
+  # ignored. Then in the `Timeout::Error => :on_blocking` block, any operation
+  # that will block the calling thread is susceptible to a Timeout::Error
+  # exception being raised.
+  #
+  # #### Stack control settings
+  #
+  # It's possible to stack multiple levels of ::handle_interrupt blocks in order
+  # to control more than one ExceptionClass and TimingSymbol at a time.
+  #
+  #     Thread.handle_interrupt(FooError => :never) {
+  #       Thread.handle_interrupt(BarError => :never) {
+  #          # FooError and BarError are prohibited.
+  #       }
+  #     }
+  #
+  # #### Inheritance with ExceptionClass
+  #
+  # All exceptions inherited from the ExceptionClass parameter will be considered.
+  #
+  #     Thread.handle_interrupt(Exception => :never) {
+  #       # all exceptions inherited from Exception are prohibited.
+  #     }
+  #
+  # For handling all interrupts, use `Object` and not `Exception` as the
+  # ExceptionClass, as kill/terminate interrupts are not handled by `Exception`.
+  #
+  def self.handle_interrupt: (untyped hash) -> untyped
+
+  # <!--
+  #   rdoc-file=thread.c
+  #   - Thread.kill(thread)   -> thread
+  # -->
+  # Causes the given `thread` to exit, see also Thread::exit.
+  #
+  #     count = 0
+  #     a = Thread.new { loop { count += 1 } }
+  #     sleep(0.1)       #=> 0
+  #     Thread.kill(a)   #=> #<Thread:0x401b3d30 dead>
+  #     count            #=> 93947
+  #     a.alive?         #=> false
+  #
+  def self.kill: (Thread thread) -> untyped
+
+  # <!--
+  #   rdoc-file=thread.c
+  #   - Thread.list   -> array
+  # -->
+  # Returns an array of Thread objects for all threads that are either runnable or
+  # stopped.
+  #
+  #     Thread.new { sleep(200) }
+  #     Thread.new { 1000000.times {|i| i*i } }
+  #     Thread.new { Thread.stop }
+  #     Thread.list.each {|t| p t}
+  #
+  # This will produce:
+  #
+  #     #<Thread:0x401b3e84 sleep>
+  #     #<Thread:0x401b3f38 run>
+  #     #<Thread:0x401b3fb0 sleep>
+  #     #<Thread:0x401bdf4c run>
+  #
+  def self.list: () -> untyped
+
+  # <!--
+  #   rdoc-file=thread.c
+  #   - Thread.pass   -> nil
+  # -->
+  # Give the thread scheduler a hint to pass execution to another thread. A
+  # running thread may or may not switch, it depends on OS and processor.
+  #
+  def self.pass: () -> untyped
+
+  # <!--
+  #   rdoc-file=thread.c
+  #   - Thread.pending_interrupt?(error = nil) -> true/false
+  # -->
+  # Returns whether or not the asynchronous queue is empty.
+  #
+  # Since Thread::handle_interrupt can be used to defer asynchronous events, this
+  # method can be used to determine if there are any deferred events.
+  #
+  # If you find this method returns true, then you may finish `:never` blocks.
+  #
+  # For example, the following method processes deferred asynchronous events
+  # immediately.
+  #
+  #     def Thread.kick_interrupt_immediately
+  #       Thread.handle_interrupt(Object => :immediate) {
+  #         Thread.pass
+  #       }
+  #     end
+  #
+  # If `error` is given, then check only for `error` type deferred events.
+  #
+  # ### Usage
+  #
+  #     th = Thread.new{
+  #       Thread.handle_interrupt(RuntimeError => :on_blocking){
+  #         while true
+  #           ...
+  #           # reach safe point to invoke interrupt
+  #           if Thread.pending_interrupt?
+  #             Thread.handle_interrupt(Object => :immediate){}
+  #           end
+  #           ...
+  #         end
+  #       }
+  #     }
+  #     ...
+  #     th.raise # stop thread
+  #
+  # This example can also be written as the following, which you should use to
+  # avoid asynchronous interrupts.
+  #
+  #     flag = true
+  #     th = Thread.new{
+  #       Thread.handle_interrupt(RuntimeError => :on_blocking){
+  #         while true
+  #           ...
+  #           # reach safe point to invoke interrupt
+  #           break if flag == false
+  #           ...
+  #         end
+  #       }
+  #     }
+  #     ...
+  #     flag = false # stop thread
+  #
+  def self.pending_interrupt?: (*untyped args) -> bool
+
+  # <!--
+  #   rdoc-file=thread.c
+  #   - Thread.report_on_exception   -> true or false
+  # -->
+  # Returns the status of the global ``report on exception'' condition.
+  #
+  # The default is `true` since Ruby 2.5.
+  #
+  # All threads created when this flag is true will report a message on $stderr if
+  # an exception kills the thread.
+  #
+  #     Thread.new { 1.times { raise } }
+  #
+  # will produce this output on $stderr:
+  #
+  #     #<Thread:...> terminated with exception (report_on_exception is true):
+  #     Traceback (most recent call last):
+  #             2: from -e:1:in `block in <main>'
+  #             1: from -e:1:in `times'
+  #
+  # This is done to catch errors in threads early. In some cases, you might not
+  # want this output. There are multiple ways to avoid the extra output:
+  #
+  # *   If the exception is not intended, the best is to fix the cause of the
+  #     exception so it does not happen anymore.
+  # *   If the exception is intended, it might be better to rescue it closer to
+  #     where it is raised rather then let it kill the Thread.
+  # *   If it is guaranteed the Thread will be joined with Thread#join or
+  #     Thread#value, then it is safe to disable this report with
+  #     `Thread.current.report_on_exception = false` when starting the Thread.
+  #     However, this might handle the exception much later, or not at all if the
+  #     Thread is never joined due to the parent thread being blocked, etc.
+  #
+  #
+  # See also ::report_on_exception=.
+  #
+  # There is also an instance level method to set this for a specific thread, see
+  # #report_on_exception=.
+  #
+  def self.report_on_exception: () -> untyped
+
+  # <!--
+  #   rdoc-file=thread.c
+  #   - Thread.report_on_exception= boolean   -> true or false
+  # -->
+  # Returns the new state. When set to `true`, all threads created afterwards will
+  # inherit the condition and report a message on $stderr if an exception kills a
+  # thread:
+  #
+  #     Thread.report_on_exception = true
+  #     t1 = Thread.new do
+  #       puts  "In new thread"
+  #       raise "Exception from thread"
+  #     end
+  #     sleep(1)
+  #     puts "In the main thread"
+  #
+  # This will produce:
+  #
+  #     In new thread
+  #     #<Thread:...prog.rb:2> terminated with exception (report_on_exception is true):
+  #     Traceback (most recent call last):
+  #     prog.rb:4:in `block in <main>': Exception from thread (RuntimeError)
+  #     In the main thread
+  #
+  # See also ::report_on_exception.
+  #
+  # There is also an instance level method to set this for a specific thread, see
+  # #report_on_exception=.
+  #
+  def self.report_on_exception=: (untyped report_on_exception) -> untyped
+
+  # <!--
+  #   rdoc-file=thread.c
+  #   - Thread.start([args]*) {|args| block }   -> thread
+  #   - Thread.fork([args]*) {|args| block }    -> thread
+  # -->
+  # Basically the same as ::new. However, if class Thread is subclassed, then
+  # calling `start` in that subclass will not invoke the subclass's `initialize`
+  # method.
+  #
+  def self.start: (*untyped args) { (*untyped) -> void } -> instance
+
+  # <!--
+  #   rdoc-file=thread.c
+  #   - Thread.stop   -> nil
+  # -->
+  # Stops execution of the current thread, putting it into a ``sleep'' state, and
+  # schedules execution of another thread.
+  #
+  #     a = Thread.new { print "a"; Thread.stop; print "c" }
+  #     sleep 0.1 while a.status!='sleep'
+  #     print "b"
+  #     a.run
+  #     a.join
+  #     #=> "abc"
+  #
+  def self.stop: () -> untyped
+end
+
+# <!-- rdoc-file=vm_backtrace.c -->
+# An internal representation of the backtrace. The user will never interact with
+# objects of this class directly, but class methods can be used to get backtrace
+# settings of the current session.
+#
+class Thread::Backtrace < Object
+  # <!--
+  #   rdoc-file=vm_backtrace.c
+  #   - Threade::Backtrace::limit -> integer
+  # -->
+  # Returns maximum backtrace length set by `--backtrace-limit` command-line
+  # option. The defalt is `-1` which means unlimited backtraces. If the value is
+  # zero or positive, the error backtraces, produced by Exception#full_message,
+  # are abbreviated and the extra lines are replaced by `... 3 levels... `
+  #
+  #     $ ruby -r net/http -e "p Thread::Backtrace.limit; Net::HTTP.get(URI('http://wrong.address'))"
+  #     - 1
+  #     .../lib/ruby/3.1.0/socket.rb:227:in `getaddrinfo': Failed to open TCP connection to wrong.address:80 (getaddrinfo: Name or service not known) (SocketError)
+  #         from .../lib/ruby/3.1.0/socket.rb:227:in `foreach'
+  #         from .../lib/ruby/3.1.0/socket.rb:632:in `tcp'
+  #         from .../lib/ruby/3.1.0/net/http.rb:998:in `connect'
+  #         from .../lib/ruby/3.1.0/net/http.rb:976:in `do_start'
+  #         from .../lib/ruby/3.1.0/net/http.rb:965:in `start'
+  #         from .../lib/ruby/3.1.0/net/http.rb:627:in `start'
+  #         from .../lib/ruby/3.1.0/net/http.rb:503:in `get_response'
+  #         from .../lib/ruby/3.1.0/net/http.rb:474:in `get'
+  #     .../lib/ruby/3.1.0/socket.rb:227:in `getaddrinfo': getaddrinfo: Name or service not known (SocketError)
+  #         from .../lib/ruby/3.1.0/socket.rb:227:in `foreach'
+  #         from .../lib/ruby/3.1.0/socket.rb:632:in `tcp'
+  #         from .../lib/ruby/3.1.0/net/http.rb:998:in `connect'
+  #         from .../lib/ruby/3.1.0/net/http.rb:976:in `do_start'
+  #         from .../lib/ruby/3.1.0/net/http.rb:965:in `start'
+  #         from .../lib/ruby/3.1.0/net/http.rb:627:in `start'
+  #         from .../lib/ruby/3.1.0/net/http.rb:503:in `get_response'
+  #         from .../lib/ruby/3.1.0/net/http.rb:474:in `get'
+  #         from -e:1:in `<main>'
+  #
+  #     $ ruby --backtrace-limit 2 -r net/http -e "p Thread::Backtrace.limit; Net::HTTP.get(URI('http://wrong.address'))"
+  #     2
+  #     .../lib/ruby/3.1.0/socket.rb:227:in `getaddrinfo': Failed to open TCP connection to wrong.address:80 (getaddrinfo: Name or service not known) (SocketError)
+  #         from .../lib/ruby/3.1.0/socket.rb:227:in `foreach'
+  #         from .../lib/ruby/3.1.0/socket.rb:632:in `tcp'
+  #          ... 7 levels...
+  #     .../lib/ruby/3.1.0/socket.rb:227:in `getaddrinfo': getaddrinfo: Name or service not known (SocketError)
+  #         from .../lib/ruby/3.1.0/socket.rb:227:in `foreach'
+  #         from .../lib/ruby/3.1.0/socket.rb:632:in `tcp'
+  #          ... 7 levels...
+  #
+  #     $ ruby --backtrace-limit 0 -r net/http -e "p Thread::Backtrace.limit; Net::HTTP.get(URI('http://wrong.address'))"
+  #     0
+  #     .../lib/ruby/3.1.0/socket.rb:227:in `getaddrinfo': Failed to open TCP connection to wrong.address:80 (getaddrinfo: Name or service not known) (SocketError)
+  #          ... 9 levels...
+  #     .../lib/ruby/3.1.0/socket.rb:227:in `getaddrinfo': getaddrinfo: Name or service not known (SocketError)
+  #          ... 9 levels...
+  #
+  def self.limit: () -> Integer
+end
+
+# <!-- rdoc-file=vm_backtrace.c -->
+# An object representation of a stack frame, initialized by
+# Kernel#caller_locations.
+#
+# For example:
+#
+#     # caller_locations.rb
+#     def a(skip)
+#       caller_locations(skip)
+#     end
+#     def b(skip)
+#       a(skip)
+#     end
+#     def c(skip)
+#       b(skip)
+#     end
+#
+#     c(0..2).map do |call|
+#       puts call.to_s
+#     end
+#
+# Running `ruby caller_locations.rb` will produce:
+#
+#     caller_locations.rb:2:in `a'
+#     caller_locations.rb:5:in `b'
+#     caller_locations.rb:8:in `c'
+#
+# Here's another example with a slightly different result:
+#
+#     # foo.rb
+#     class Foo
+#       attr_accessor :locations
+#       def initialize(skip)
+#         @locations = caller_locations(skip)
+#       end
+#     end
+#
+#     Foo.new(0..2).locations.map do |call|
+#       puts call.to_s
+#     end
+#
+# Now run `ruby foo.rb` and you should see:
+#
+#     init.rb:4:in `initialize'
+#     init.rb:8:in `new'
+#     init.rb:8:in `<main>'
+#
+class Thread::Backtrace::Location
+  # <!--
+  #   rdoc-file=vm_backtrace.c
+  #   - absolute_path()
+  # -->
+  # Returns the full file path of this frame.
+  #
+  # Same as #path, except that it will return absolute path even if the frame is
+  # in the main script.
+  #
+  def absolute_path: () -> String?
+
+  # <!--
+  #   rdoc-file=vm_backtrace.c
+  #   - base_label()
+  # -->
+  # Returns the base label of this frame.
+  #
+  # Usually same as #label, without decoration.
+  #
+  def base_label: () -> String?
+
+  # <!--
+  #   rdoc-file=vm_backtrace.c
+  #   - label()
+  # -->
+  # Returns the label of this frame.
+  #
+  # Usually consists of method, class, module, etc names with decoration.
+  #
+  # Consider the following example:
+  #
+  #     def foo
+  #       puts caller_locations(0).first.label
+  #
+  #       1.times do
+  #         puts caller_locations(0).first.label
+  #
+  #         1.times do
+  #           puts caller_locations(0).first.label
+  #         end
+  #
+  #       end
+  #     end
+  #
+  # The result of calling `foo` is this:
+  #
+  #     label: foo
+  #     label: block in foo
+  #     label: block (2 levels) in foo
+  #
+  def label: () -> String?
+
+  # <!--
+  #   rdoc-file=vm_backtrace.c
+  #   - lineno()
+  # -->
+  # Returns the line number of this frame.
+  #
+  # For example, using `caller_locations.rb` from Thread::Backtrace::Location
+  #
+  #     loc = c(0..1).first
+  #     loc.lineno #=> 2
+  #
+  def lineno: () -> Integer
+
+  # <!--
+  #   rdoc-file=vm_backtrace.c
+  #   - path()
+  # -->
+  # Returns the file name of this frame. This will generally be an absolute path,
+  # unless the frame is in the main script, in which case it will be the script
+  # location passed on the command line.
+  #
+  # For example, using `caller_locations.rb` from Thread::Backtrace::Location
+  #
+  #     loc = c(0..1).first
+  #     loc.path #=> caller_locations.rb
+  #
+  def path: () -> String?
+end
+
+# <!-- rdoc-file=thread_sync.c -->
+# ConditionVariable objects augment class Mutex. Using condition variables, it
+# is possible to suspend while in the middle of a critical section until a
+# resource becomes available.
+#
+# Example:
+#
+#     mutex = Thread::Mutex.new
+#     resource = Thread::ConditionVariable.new
+#
+#     a = Thread.new {
+#        mutex.synchronize {
+#          # Thread 'a' now needs the resource
+#          resource.wait(mutex)
+#          # 'a' can now have the resource
+#        }
+#     }
+#
+#     b = Thread.new {
+#        mutex.synchronize {
+#          # Thread 'b' has finished using the resource
+#          resource.signal
+#        }
+#     }
+#
+class Thread::ConditionVariable < Object
+  # <!--
+  #   rdoc-file=thread_sync.c
+  #   - broadcast()
+  # -->
+  # Wakes up all threads waiting for this lock.
+  #
+  def broadcast: () -> self
+
+  # <!--
+  #   rdoc-file=thread_sync.c
+  #   - signal()
+  # -->
+  # Wakes up the first thread in line waiting for this lock.
+  #
+  def signal: () -> self
+
+  # <!--
+  #   rdoc-file=thread_sync.c
+  #   - wait(mutex, timeout=nil)
+  # -->
+  # Releases the lock held in `mutex` and waits; reacquires the lock on wakeup.
+  #
+  # If `timeout` is given, this method returns after `timeout` seconds passed,
+  # even if no other thread doesn't signal.
+  #
+  # Returns the slept result on `mutex`.
+  #
+  def wait: (Thread::Mutex mutex, ?Integer timeout) -> self
+end
+
+# <!-- rdoc-file=thread_sync.c -->
+# Thread::Mutex implements a simple semaphore that can be used to coordinate
+# access to shared data from multiple concurrent threads.
+#
+# Example:
+#
+#     semaphore = Thread::Mutex.new
+#
+#     a = Thread.new {
+#       semaphore.synchronize {
+#         # access shared resource
+#       }
+#     }
+#
+#     b = Thread.new {
+#       semaphore.synchronize {
+#         # access shared resource
+#       }
+#     }
+#
+class Thread::Mutex < Object
+  # <!--
+  #   rdoc-file=thread_sync.c
+  #   - mutex.lock  -> self
+  # -->
+  # Attempts to grab the lock and waits if it isn't available. Raises
+  # `ThreadError` if `mutex` was locked by the current thread.
+  #
+  def lock: () -> self
+
+  # <!--
+  #   rdoc-file=thread_sync.c
+  #   - mutex.locked?  -> true or false
+  # -->
+  # Returns `true` if this lock is currently held by some thread.
+  #
+  def locked?: () -> bool
+
+  # <!--
+  #   rdoc-file=thread_sync.c
+  #   - mutex.owned?  -> true or false
+  # -->
+  # Returns `true` if this lock is currently held by current thread.
+  #
+  def owned?: () -> bool
+
+  # <!--
+  #   rdoc-file=thread_sync.c
+  #   - mutex.synchronize { ... }    -> result of the block
+  # -->
+  # Obtains a lock, runs the block, and releases the lock when the block
+  # completes.  See the example under Thread::Mutex.
+  #
+  def synchronize: [X] () { () -> X } -> X
+
+  # <!--
+  #   rdoc-file=thread_sync.c
+  #   - mutex.try_lock  -> true or false
+  # -->
+  # Attempts to obtain the lock and returns immediately. Returns `true` if the
+  # lock was granted.
+  #
+  def try_lock: () -> bool
+
+  # <!--
+  #   rdoc-file=thread_sync.c
+  #   - mutex.unlock    -> self
+  # -->
+  # Releases the lock. Raises `ThreadError` if `mutex` wasn't locked by the
+  # current thread.
+  #
+  def unlock: () -> self
+end
+
+# <!-- rdoc-file=thread_sync.c -->
+# The Thread::Queue class implements multi-producer, multi-consumer queues.  It
+# is especially useful in threaded programming when information must be
+# exchanged safely between multiple threads. The Thread::Queue class implements
+# all the required locking semantics.
+#
+# The class implements FIFO type of queue. In a FIFO queue, the first tasks
+# added are the first retrieved.
+#
+# Example:
+#
+#     queue = Thread::Queue.new
+#
+#     producer = Thread.new do
+#       5.times do |i|
+#          sleep rand(i) # simulate expense
+#          queue << i
+#          puts "#{i} produced"
+#       end
+#     end
+#
+#     consumer = Thread.new do
+#       5.times do |i|
+#          value = queue.pop
+#          sleep rand(i/2) # simulate expense
+#          puts "consumed #{value}"
+#       end
+#     end
+#
+#     consumer.join
+#
+class Thread::Queue < Object
+  # <!-- rdoc-file=thread_sync.c -->
+  # Pushes the given `object` to the queue.
+  #
+  alias << push
+
+  # <!--
+  #   rdoc-file=thread_sync.c
+  #   - clear()
+  # -->
+  # Removes all objects from the queue.
+  #
+  def clear: () -> void
+
+  # <!--
+  #   rdoc-file=thread_sync.c
+  #   - close
+  # -->
+  # Closes the queue. A closed queue cannot be re-opened.
+  #
+  # After the call to close completes, the following are true:
+  #
+  # *   `closed?` will return true
+  #
+  # *   `close` will be ignored.
+  #
+  # *   calling enq/push/<< will raise a `ClosedQueueError`.
+  #
+  # *   when `empty?` is false, calling deq/pop/shift will return an object from
+  #     the queue as usual.
+  # *   when `empty?` is true, deq(false) will not suspend the thread and will
+  #     return nil. deq(true) will raise a `ThreadError`.
+  #
+  #
+  # ClosedQueueError is inherited from StopIteration, so that you can break loop
+  # block.
+  #
+  # Example:
+  #
+  #     q = Thread::Queue.new
+  #     Thread.new{
+  #       while e = q.deq # wait for nil to break loop
+  #         # ...
+  #       end
+  #     }
+  #     q.close
+  #
+  def close: () -> self
+
+  # <!--
+  #   rdoc-file=thread_sync.c
+  #   - closed?
+  # -->
+  # Returns `true` if the queue is closed.
+  #
+  def closed?: () -> bool
+
+  # <!-- rdoc-file=thread_sync.c -->
+  # Retrieves data from the queue.
+  #
+  # If the queue is empty, the calling thread is suspended until data is pushed
+  # onto the queue. If `non_block` is true, the thread isn't suspended, and
+  # `ThreadError` is raised.
+  #
+  alias deq pop
+
+  # <!--
+  #   rdoc-file=thread_sync.c
+  #   - empty?
+  # -->
+  # Returns `true` if the queue is empty.
+  #
+  def empty?: () -> bool
+
+  # <!-- rdoc-file=thread_sync.c -->
+  # Pushes the given `object` to the queue.
+  #
+  alias enq push
+
+  # <!--
+  #   rdoc-file=thread_sync.c
+  #   - length
+  #   - size
+  # -->
+  # Returns the length of the queue.
+  #
+  def length: () -> Integer
+
+  # <!--
+  #   rdoc-file=thread_sync.c
+  #   - num_waiting()
+  # -->
+  # Returns the number of threads waiting on the queue.
+  #
+  def num_waiting: () -> Integer
+
+  # <!--
+  #   rdoc-file=thread_sync.c
+  #   - pop(non_block=false)
+  #   - deq(non_block=false)
+  #   - shift(non_block=false)
+  # -->
+  # Retrieves data from the queue.
+  #
+  # If the queue is empty, the calling thread is suspended until data is pushed
+  # onto the queue. If `non_block` is true, the thread isn't suspended, and
+  # `ThreadError` is raised.
+  #
+  def pop: (?boolish non_block) -> untyped
+
+  # <!--
+  #   rdoc-file=thread_sync.c
+  #   - push(object)
+  #   - enq(object)
+  #   - <<(object)
+  # -->
+  # Pushes the given `object` to the queue.
+  #
+  def push: (untyped obj) -> void
+
+  # <!-- rdoc-file=thread_sync.c -->
+  # Retrieves data from the queue.
+  #
+  # If the queue is empty, the calling thread is suspended until data is pushed
+  # onto the queue. If `non_block` is true, the thread isn't suspended, and
+  # `ThreadError` is raised.
+  #
+  alias shift pop
+
+  # <!-- rdoc-file=thread_sync.c -->
+  # Returns the length of the queue.
+  #
+  alias size length
+end
+
+# <!-- rdoc-file=thread_sync.c -->
+# This class represents queues of specified size capacity.  The push operation
+# may be blocked if the capacity is full.
+#
+# See Thread::Queue for an example of how a Thread::SizedQueue works.
+#
+class Thread::SizedQueue < Thread::Queue
+  # <!-- rdoc-file=thread_sync.c -->
+  # Pushes `object` to the queue.
+  #
+  # If there is no space left in the queue, waits until space becomes available,
+  # unless `non_block` is true.  If `non_block` is true, the thread isn't
+  # suspended, and `ThreadError` is raised.
+  #
+  alias << push
+
+  # <!-- rdoc-file=thread_sync.c -->
+  # Pushes `object` to the queue.
+  #
+  # If there is no space left in the queue, waits until space becomes available,
+  # unless `non_block` is true.  If `non_block` is true, the thread isn't
+  # suspended, and `ThreadError` is raised.
+  #
+  alias enq push
+
+  # <!--
+  #   rdoc-file=thread_sync.c
+  #   - new(max)
+  # -->
+  # Creates a fixed-length queue with a maximum size of `max`.
+  #
+  def initialize: (Integer max) -> void
+
+  # <!--
+  #   rdoc-file=thread_sync.c
+  #   - max()
+  # -->
+  # Returns the maximum size of the queue.
+  #
+  def max: () -> Integer
+
+  # <!--
+  #   rdoc-file=thread_sync.c
+  #   - max=(number)
+  # -->
+  # Sets the maximum size of the queue to the given `number`.
+  #
+  def max=: (Integer max) -> void
+
+  # <!--
+  #   rdoc-file=thread_sync.c
+  #   - push(object, non_block=false)
+  #   - enq(object, non_block=false)
+  #   - <<(object)
+  # -->
+  # Pushes `object` to the queue.
+  #
+  # If there is no space left in the queue, waits until space becomes available,
+  # unless `non_block` is true.  If `non_block` is true, the thread isn't
+  # suspended, and `ThreadError` is raised.
+  #
+  def push: (untyped obj, ?boolish non_block) -> void
+end
+
+ConditionVariable: singleton(Thread::ConditionVariable)
+
+Mutex: singleton(Thread::Mutex)
+
+Queue: singleton(Thread::Queue)
+
+SizedQueue: singleton(Thread::SizedQueue)

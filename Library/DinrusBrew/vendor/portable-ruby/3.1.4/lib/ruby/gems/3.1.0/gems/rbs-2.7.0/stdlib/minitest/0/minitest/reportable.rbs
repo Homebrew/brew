@@ -1,0 +1,51 @@
+# <!-- rdoc-file=lib/minitest.rb -->
+# Shared code for anything that can get passed to a Reporter. See Minitest::Test
+# & Minitest::Result.
+#
+module Minitest::Reportable
+  # <!--
+  #   rdoc-file=lib/minitest.rb
+  #   - passed?()
+  # -->
+  # Did this run pass?
+  #
+  # Note: skipped runs are not considered passing, but they don't cause the
+  # process to exit non-zero.
+  #
+  def passed?: () -> untyped
+
+  # <!--
+  #   rdoc-file=lib/minitest.rb
+  #   - location()
+  # -->
+  # The location identifier of this test. Depends on a method existing called
+  # class_name.
+  #
+  def location: () -> ::String
+
+  def class_name: () -> untyped
+
+  # <!--
+  #   rdoc-file=lib/minitest.rb
+  #   - result_code()
+  # -->
+  # Returns ".", "F", or "E" based on the result of the run.
+  #
+  def result_code: () -> untyped
+
+  # <!--
+  #   rdoc-file=lib/minitest.rb
+  #   - skipped?()
+  # -->
+  # Was this run skipped?
+  #
+  def skipped?: () -> untyped
+
+  # <!--
+  #   rdoc-file=lib/minitest.rb
+  #   - error?()
+  # -->
+  # Did this run error?
+  #
+  def error?: () -> untyped
+end

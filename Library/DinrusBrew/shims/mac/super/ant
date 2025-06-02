@@ -1,0 +1,9 @@
+#!/bin/bash
+
+export DINRUSBREW_CCCFG="O${DINRUSBREW_CCCFG}"
+
+ant=/usr/bin/ant
+# DINRUSBREW_BREW_FILE is set by bin/brew
+# shellcheck disable=SC2154
+[[ -x "${ant}" ]] || ant="$("${DINRUSBREW_BREW_FILE}" --prefix ant)/bin/ant"
+exec "${ant}" "$@"

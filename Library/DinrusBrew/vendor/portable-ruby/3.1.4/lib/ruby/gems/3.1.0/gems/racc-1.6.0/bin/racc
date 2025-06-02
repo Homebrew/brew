@@ -1,0 +1,320 @@
+#!/usr/bin/env ruby
+#
+#
+#
+# Copyright (c) 1999-2006 Minero Aoki
+#
+# This program is free software.
+# You can distribute/modify this program under the same terms of ruby.
+# see the file "COPYING".
+
+require 'racc/static'
+require 'optparse'
+
+def main
+  output = nil
+  debug_parser = false
+  make_logfile = false
+  logfilename = nil
+  make_executable = false
+  rubypath = nil
+  embed_runtime = false
+  debug_flags = Racc::DebugFlags.new
+  line_convert = true
+  line_convert_all = false
+  omit_action_call = true
+  superclass = nil
+  check_only = false
+  verbose = false
+  profiler = RaccProfiler.new(false)
+
+  parser = OptionParser.new
+  parser.banner = "Usage: #{File.basename($0)} [options] <input>"
+  parser.on('-o', '--output-file=PATH',
+            'output file name [<input>.tab.rb]') {|name|
+    output = name
+  }
+  parser.on('-t', '--debug', 'Outputs debugging parser.') {|fl|
+    debug_parser = fl
+  }
+  parser.on('-g', 'Equivalent to -t (obsolete).') {|fl|
+    $stderr.puts "racc -g is obsolete.  Use racc -t instead." if $VERBOSE
+    debug_parser = fl
+  }
+  parser.on('-v', '--verbose',
+            'Creates <filename>.output log file.') {|fl|
+    make_logfile = fl
+  }
+  parser.on('-O', '--log-file=PATH',
+            'Log file name [<input>.output]') {|path|
+    make_logfile = true
+    logfilename = path
+  }
+  parser.on('-e', '--executable [RUBYPATH]', 'Makes executable parser.') {|path|
+    make_executable = true
+    rubypath = (path == 'ruby' ? nil : path)
+  }
+  parser.on('-E', '--embedded', "Embeds Racc runtime in output.") {
+    embed_runtime = true
+  }
+  parser.on('--line-convert-all', 'Converts line numbers of user codes.') {
+    line_convert_all = true
+  }
+  parser.on('-l', '--no-line-convert', 'Never convert line numbers.') {
+    line_convert = false
+    line_convert_all = false
+  }
+  parser.on('-a', '--no-omit-actions', 'Never omit actions.') {
+    omit_action_call = false
+  }
+  parser.on('--superclass=CLASSNAME',
+            'Uses CLASSNAME instead of Racc::Parser.') {|name|
+    superclass = name
+  }
+  parser.on('-C', '--check-only', 'Checks syntax and quit immediately.') {|fl|
+    check_only = fl
+  }
+  parser.on('-S', '--output-status', 'Outputs internal status time to time.') {
+    verbose = true
+  }
+  parser.on('-P', 'Enables generator profile') {
+    profiler = RaccProfiler.new(true)
+  }
+  parser.on('-D flags', "Flags for Racc debugging (do not use).") {|flags|
+    debug_flags = Racc::DebugFlags.parse_option_string(flags)
+  }
+  #parser.on('--no-extensions', 'Run Racc without any Ruby extension.') {
+  #  Racc.const_set :Racc_No_Extensions, true
+  #}
+  parser.on('--version', 'Prints version and quit.') {
+    puts "racc version #{Racc::Version}"
+    exit 0
+  }
+  parser.on('--runtime-version', 'Prints runtime version and quit.') {
+    printf "racc runtime version %s; %s\n",
+           Racc::Parser::Racc_Runtime_Version,
+           if Racc::Parser.racc_runtime_type == 'ruby'
+             sprintf('ruby core version %s',
+                     Racc::Parser::Racc_Runtime_Core_Version_R)
+           else
+             sprintf('c core version %s',
+                     Racc::Parser::Racc_Runtime_Core_Version_C)
+           end
+    exit 0
+  }
+  parser.on('--copyright', 'Prints copyright and quit.') {
+    puts Racc::Copyright
+    exit 0
+  }
+  parser.on('--help', 'Prints this message and quit.') {
+    puts parser.help
+    exit 1
+  }
+  begin
+    parser.parse!
+  rescue OptionParser::ParseError => err
+    $stderr.puts err.message
+    $stderr.puts parser.help
+    exit 1
+  end
+  if ARGV.empty?
+    $stderr.puts 'no input'
+    exit 1
+  end
+  if ARGV.size > 1
+    $stderr.puts 'too many input'
+    exit 1
+  end
+  input = ARGV[0]
+
+  begin
+    $stderr.puts 'Parsing grammar file...' if verbose
+    result = profiler.section('parse') {
+      parser = Racc::GrammarFileParser.new(debug_flags)
+      parser.parse(File.read(input), File.basename(input))
+    }
+    if check_only
+      $stderr.puts 'syntax ok'
+      exit 0
+    end
+
+    $stderr.puts 'Generating LALR states...' if verbose
+    states = profiler.section('nfa') {
+      Racc::States.new(result.grammar).nfa
+    }
+
+    $stderr.puts "Resolving #{states.size} states..." if verbose
+    profiler.section('dfa') {
+      states.dfa
+    }
+
+    $stderr.puts 'Creating parser file...' if verbose
+    params = result.params.dup
+    # Overwrites parameters given by a grammar file with command line options.
+    params.superclass = superclass if superclass
+    params.omit_action_call = true if omit_action_call
+    # From command line option
+    if make_executable
+      params.make_executable = true
+      params.interpreter = rubypath
+    end
+    params.debug_parser = debug_parser
+    params.convert_line = line_convert
+    params.convert_line_all = line_convert_all
+    params.embed_runtime = embed_runtime
+    profiler.section('generation') {
+      generator = Racc::ParserFileGenerator.new(states, params)
+      generator.generate_parser_file(output || make_filename(input, '.tab.rb'))
+    }
+
+    if make_logfile
+      profiler.section('logging') {
+        $stderr.puts 'Creating log file...' if verbose
+        logfilename ||= make_filename(output || File.basename(input), '.output')
+        File.open(logfilename, 'w') {|f|
+          Racc::LogFileGenerator.new(states, debug_flags).output f
+        }
+      }
+    end
+    if debug_flags.status_logging
+      log_useless states.grammar
+      log_conflict states
+    else
+      has_useless = report_useless states.grammar
+      has_conflicts = report_conflict states
+      if has_useless || has_conflicts
+        preamble = make_logfile ? 'C' : 'Turn on logging with "-v" and c'
+        $stderr.puts %Q{#{preamble}heck ".output" file for details}
+      end
+    end
+
+    profiler.report
+  rescue Racc::Error, Errno::ENOENT, Errno::EPERM => err
+    raise if $DEBUG or debug_flags.any?
+    lineno = err.message.slice(/\A\d+:/).to_s
+    $stderr.puts "#{File.basename $0}: #{input}:#{lineno} #{err.message.strip}"
+    exit 1
+  end
+end
+
+def make_filename(path, suffix)
+  path.sub(/(?:\..*?)?\z/, suffix)
+end
+
+LIST_LIMIT = 10
+def report_list(enum, label)
+  c = enum.count
+  if c > 0
+    $stderr.puts "#{c} #{label}:"
+    enum.first(LIST_LIMIT).each do |item|
+      $stderr.puts "  #{yield item}"
+    end
+    $stderr.puts "  ..." if c > LIST_LIMIT
+  end
+end
+
+# @return [Boolean] if anything was reported
+def report_conflict(states)
+  if states.should_report_srconflict?
+    reported = true
+    $stderr.puts "#{states.n_srconflicts} shift/reduce conflicts"
+  end
+  if states.rrconflict_exist?
+    reported = true
+    $stderr.puts "#{states.n_rrconflicts} reduce/reduce conflicts"
+  end
+  reported
+end
+
+def log_conflict(states)
+  logging('w') {|f|
+    f.puts "ex#{states.grammar.n_expected_srconflicts}"
+    if states.should_report_srconflict?
+      f.puts "sr#{states.n_srconflicts}"
+    end
+    if states.rrconflict_exist?
+      f.puts "rr#{states.n_rrconflicts}"
+    end
+  }
+end
+
+# @return [Boolean] if anything was reported
+def report_useless(grammar)
+  reported = report_list(grammar.each_useless_nonterminal, 'useless nonterminals', &:to_s)
+
+  reported ||= report_list(grammar.each_useless_rule, 'useless rules') { |r| "##{r.ident} (#{r.target})" }
+
+  if grammar.start.useless?
+    $stderr.puts 'fatal: start symbol does not derive any sentence'
+    reported = true
+  end
+  reported
+end
+
+def log_useless(grammar)
+  logging('a') {|f|
+    if grammar.useless_nonterminal_exist?
+      f.puts "un#{grammar.n_useless_nonterminals}"
+    end
+    if grammar.useless_rule_exist?
+      f.puts "ur#{grammar.n_useless_rules}"
+    end
+  }
+end
+
+def logging(mode, &block)
+  File.open("log/#{File.basename(ARGV[0])}", mode, &block)
+end
+
+class RaccProfiler
+  def initialize(really)
+    @really = really
+    @log = []
+    unless ::Process.respond_to?(:times)
+      # Ruby 1.6
+      @class = ::Time
+    else
+      @class = ::Process
+    end
+  end
+
+  def section(name)
+    if @really
+      t1 = @class.times.utime
+      result = yield
+      t2 = @class.times.utime
+      @log.push [name, t2 - t1]
+      result
+    else
+      yield
+    end
+  end
+
+  def report
+    return unless @really
+    f = $stderr
+    total = cumulative_time()
+    f.puts '--task-----------+--sec------+---%-'
+    @log.each do |name, time|
+      f.printf "%-19s %s %3d%%\n", name, pjust(time,4,4), (time/total*100).to_i
+    end
+    f.puts '-----------------+-----------+-----'
+    f.printf "%-20s%s\n", 'total', pjust(total,4,4)
+  end
+
+  private
+
+  def cumulative_time
+    t = @log.inject(0) {|sum, (name, time)| sum + time }
+    t == 0 ? 0.01 : t
+  end
+
+  def pjust(num, i, j)
+    m = /(\d+)(\.\d+)?/.match(num.to_s)
+    str = m[1].rjust(i)
+    str.concat m[2].ljust(j+1)[0,j+1] if m[2]
+    str
+  end
+end
+
+main

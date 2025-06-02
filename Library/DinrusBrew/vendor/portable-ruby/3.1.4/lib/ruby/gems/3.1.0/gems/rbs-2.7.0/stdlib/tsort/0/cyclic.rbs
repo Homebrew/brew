@@ -1,0 +1,5 @@
+%a{annotate:rdoc:skip}
+module TSort[Node]
+  class Cyclic < StandardError
+  end
+end

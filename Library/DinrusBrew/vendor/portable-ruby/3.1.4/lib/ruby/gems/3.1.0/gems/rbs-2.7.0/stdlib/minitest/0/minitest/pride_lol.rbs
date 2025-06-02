@@ -1,0 +1,17 @@
+# <!-- rdoc-file=lib/minitest/pride_plugin.rb -->
+# If you thought the PrideIO was colorful...
+#
+# (Inspired by lolcat, but with clean math)
+#
+class Minitest::PrideLOL < ::Minitest::PrideIO
+  def initialize: (untyped io) -> void
+
+  # <!--
+  #   rdoc-file=lib/minitest/pride_plugin.rb
+  #   - pride(string)
+  # -->
+  # Make the string even more colorful. Damnit.
+  #
+  def pride: (untyped string) -> ::String
+  PI_3: Float
+end

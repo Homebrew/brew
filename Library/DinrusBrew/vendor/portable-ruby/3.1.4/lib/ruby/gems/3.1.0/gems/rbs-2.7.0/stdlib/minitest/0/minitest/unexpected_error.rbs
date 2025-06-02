@@ -1,0 +1,10 @@
+# <!-- rdoc-file=lib/minitest.rb -->
+# Assertion wrapping an unexpected error that was raised during a run.
+#
+class Minitest::UnexpectedError < ::Minitest::Assertion
+  def initialize: (untyped error) -> void
+  def backtrace: () -> untyped
+  def message: () -> ::String
+  def result_label: () -> "Error"
+  attr_accessor error: untyped
+end

@@ -1,0 +1,8 @@
+<%- config[:constant_array].each_with_index do |c, i| -%>
+<%= "  " * i %>module <%= c %>
+<%- end -%>
+<%= "  " * config[:constant_array].size %>VERSION: String
+<%= "  " * config[:constant_array].size %># See the writing guide of rbs: https://github.com/ruby/rbs#guides
+<%- (config[:constant_array].size-1).downto(0) do |i| -%>
+<%= "  " * i %>end
+<%- end -%>

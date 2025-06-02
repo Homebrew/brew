@@ -1,0 +1,472 @@
+.\" generated with nRonn/v0.11.1
+.\" https://github.com/n-ronn/nronn/tree/0.11.1
+.TH "GEMFILE" "5" "September 2024" ""
+.SH "NAME"
+\fBGemfile\fR \- A format for describing gem dependencies for Ruby programs
+.SH "SYNOPSIS"
+A \fBGemfile\fR describes the gem dependencies required to execute associated Ruby code\.
+.P
+Place the \fBGemfile\fR in the root of the directory containing the associated code\. For instance, in a Rails application, place the \fBGemfile\fR in the same directory as the \fBRakefile\fR\.
+.SH "SYNTAX"
+A \fBGemfile\fR is evaluated as Ruby code, in a context which makes available a number of methods used to describe the gem requirements\.
+.SH "GLOBAL SOURCE"
+At the top of the \fBGemfile\fR, add a single line for the \fBRubyGems\fR source that contains the gems listed in the \fBGemfile\fR\.
+.IP "" 4
+.nf
+source "https://rubygems\.org"
+.fi
+.IP "" 0
+.P
+You can add only one global source\. In Bundler 1\.13, adding multiple global sources was deprecated\. The \fBsource\fR \fBMUST\fR be a valid RubyGems repository\.
+.P
+To use more than one source of RubyGems, you should use \fI\fBsource\fR block\fR\.
+.P
+A source is checked for gems following the heuristics described in \fISOURCE PRIORITY\fR\.
+.P
+\fBNote about a behavior of the feature deprecated in Bundler 1\.13\fR: If a gem is found in more than one global source, Bundler will print a warning after installing the gem indicating which source was used, and listing the other sources where the gem is available\. A specific source can be selected for gems that need to use a non\-standard repository, suppressing this warning, by using the \fI\fB:source\fR option\fR or \fBsource\fR block\.
+.SS "CREDENTIALS"
+Some gem sources require a username and password\. Use bundle config(1) \fIbundle\-config\.1\.html\fR to set the username and password for any of the sources that need it\. The command must be run once on each computer that will install the Gemfile, but this keeps the credentials from being stored in plain text in version control\.
+.IP "" 4
+.nf
+bundle config gems\.example\.com user:password
+.fi
+.IP "" 0
+.P
+For some sources, like a company Gemfury account, it may be easier to include the credentials in the Gemfile as part of the source URL\.
+.IP "" 4
+.nf
+source "https://user:password@gems\.example\.com"
+.fi
+.IP "" 0
+.P
+Credentials in the source URL will take precedence over credentials set using \fBconfig\fR\.
+.SH "RUBY"
+If your application requires a specific Ruby version or engine, specify your requirements using the \fBruby\fR method, with the following arguments\. All parameters are \fBOPTIONAL\fR unless otherwise specified\.
+.SS "VERSION (required)"
+The version of Ruby that your application requires\. If your application requires an alternate Ruby engine, such as JRuby, TruffleRuby, etc\., this should be the Ruby version that the engine is compatible with\.
+.IP "" 4
+.nf
+ruby "3\.1\.2"
+.fi
+.IP "" 0
+.P
+If you wish to derive your Ruby version from a version file (ie \.ruby\-version), you can use the \fBfile\fR option instead\.
+.IP "" 4
+.nf
+ruby file: "\.ruby\-version"
+.fi
+.IP "" 0
+.P
+The version file should conform to any of the following formats:
+.IP "\(bu" 4
+\fB3\.1\.2\fR (\.ruby\-version)
+.IP "\(bu" 4
+\fBruby 3\.1\.2\fR (\.tool\-versions, read: https://asdf\-vm\.com/manage/configuration\.html#tool\-versions)
+.IP "" 0
+.SS "ENGINE"
+Each application \fImay\fR specify a Ruby engine\. If an engine is specified, an engine version \fImust\fR also be specified\.
+.P
+What exactly is an Engine?
+.IP "\(bu" 4
+A Ruby engine is an implementation of the Ruby language\.
+.IP "\(bu" 4
+For background: the reference or original implementation of the Ruby programming language is called Matz's Ruby Interpreter \fIhttps://en\.wikipedia\.org/wiki/Ruby_MRI\fR, or MRI for short\. This is named after Ruby creator Yukihiro Matsumoto, also known as Matz\. MRI is also known as CRuby, because it is written in C\. MRI is the most widely used Ruby engine\.
+.IP "\(bu" 4
+Other implementations \fIhttps://www\.ruby\-lang\.org/en/about/\fR of Ruby exist\. Some of the more well\-known implementations include JRuby \fIhttps://www\.jruby\.org/\fR and TruffleRuby \fIhttps://www\.graalvm\.org/ruby/\fR\. Rubinius is an alternative implementation of Ruby written in Ruby\. JRuby is an implementation of Ruby on the JVM, short for Java Virtual Machine\. TruffleRuby is a Ruby implementation on the GraalVM, a language toolkit built on the JVM\.
+.IP "" 0
+.SS "ENGINE VERSION"
+Each application \fImay\fR specify a Ruby engine version\. If an engine version is specified, an engine \fImust\fR also be specified\. If the engine is "ruby" the engine version specified \fImust\fR match the Ruby version\.
+.IP "" 4
+.nf
+ruby "2\.6\.8", engine: "jruby", engine_version: "9\.3\.8\.0"
+.fi
+.IP "" 0
+.SS "PATCHLEVEL"
+Each application \fImay\fR specify a Ruby patchlevel\. Specifying the patchlevel has been meaningless since Ruby 2\.1\.0 was released as the patchlevel is now uniquely determined by a combination of major, minor, and teeny version numbers\.
+.P
+This option was implemented in Bundler 1\.4\.0 for Ruby 2\.0 or earlier\.
+.IP "" 4
+.nf
+ruby "3\.1\.2", patchlevel: "20"
+.fi
+.IP "" 0
+.SH "GEMS"
+Specify gem requirements using the \fBgem\fR method, with the following arguments\. All parameters are \fBOPTIONAL\fR unless otherwise specified\.
+.SS "NAME (required)"
+For each gem requirement, list a single \fIgem\fR line\.
+.IP "" 4
+.nf
+gem "nokogiri"
+.fi
+.IP "" 0
+.SS "VERSION"
+Each \fIgem\fR \fBMAY\fR have one or more version specifiers\.
+.IP "" 4
+.nf
+gem "nokogiri", ">= 1\.4\.2"
+gem "RedCloth", ">= 4\.1\.0", "< 4\.2\.0"
+.fi
+.IP "" 0
+.SS "REQUIRE AS"
+Each \fIgem\fR \fBMAY\fR specify files that should be used when autorequiring via \fBBundler\.require\fR\. You may pass an array with multiple files or \fBtrue\fR if the file you want \fBrequired\fR has the same name as \fIgem\fR or \fBfalse\fR to prevent any file from being autorequired\.
+.IP "" 4
+.nf
+gem "redis", require: ["redis/connection/hiredis", "redis"]
+gem "webmock", require: false
+gem "byebug", require: true
+.fi
+.IP "" 0
+.P
+The argument defaults to the name of the gem\. For example, these are identical:
+.IP "" 4
+.nf
+gem "nokogiri"
+gem "nokogiri", require: "nokogiri"
+gem "nokogiri", require: true
+.fi
+.IP "" 0
+.SS "GROUPS"
+Each \fIgem\fR \fBMAY\fR specify membership in one or more groups\. Any \fIgem\fR that does not specify membership in any group is placed in the \fBdefault\fR group\.
+.IP "" 4
+.nf
+gem "rspec", group: :test
+gem "wirble", groups: [:development, :test]
+.fi
+.IP "" 0
+.P
+The Bundler runtime allows its two main methods, \fBBundler\.setup\fR and \fBBundler\.require\fR, to limit their impact to particular groups\.
+.IP "" 4
+.nf
+# setup adds gems to Ruby's load path
+Bundler\.setup                    # defaults to all groups
+require "bundler/setup"          # same as Bundler\.setup
+Bundler\.setup(:default)          # only set up the _default_ group
+Bundler\.setup(:test)             # only set up the _test_ group (but `not` _default_)
+Bundler\.setup(:default, :test)   # set up the _default_ and _test_ groups, but no others
+
+# require requires all of the gems in the specified groups
+Bundler\.require                  # defaults to the _default_ group
+Bundler\.require(:default)        # identical
+Bundler\.require(:default, :test) # requires the _default_ and _test_ groups
+Bundler\.require(:test)           # requires the _test_ group
+.fi
+.IP "" 0
+.P
+The Bundler CLI allows you to specify a list of groups whose gems \fBbundle install\fR should not install with the \fBwithout\fR configuration\.
+.P
+To specify multiple groups to ignore, specify a list of groups separated by spaces\.
+.IP "" 4
+.nf
+bundle config set \-\-local without test
+bundle config set \-\-local without development test
+.fi
+.IP "" 0
+.P
+Also, calling \fBBundler\.setup\fR with no parameters, or calling \fBrequire "bundler/setup"\fR will setup all groups except for the ones you excluded via \fB\-\-without\fR (since they are not available)\.
+.P
+Note that on \fBbundle install\fR, bundler downloads and evaluates all gems, in order to create a single canonical list of all of the required gems and their dependencies\. This means that you cannot list different versions of the same gems in different groups\. For more details, see Understanding Bundler \fIhttps://bundler\.io/rationale\.html\fR\.
+.SS "PLATFORMS"
+If a gem should only be used in a particular platform or set of platforms, you can specify them\. Platforms are essentially identical to groups, except that you do not need to use the \fB\-\-without\fR install\-time flag to exclude groups of gems for other platforms\.
+.P
+There are a number of \fBGemfile\fR platforms:
+.TP
+\fBruby\fR
+C Ruby (MRI), Rubinius, or TruffleRuby, but not Windows
+.TP
+\fBmri\fR
+C Ruby (MRI) only, but not Windows
+.TP
+\fBwindows\fR
+Windows C Ruby (MRI), including RubyInstaller 32\-bit and 64\-bit versions
+.TP
+\fBmswin\fR
+Windows C Ruby (MRI), including RubyInstaller 32\-bit versions
+.TP
+\fBmswin64\fR
+Windows C Ruby (MRI), including RubyInstaller 64\-bit versions
+.TP
+\fBrbx\fR
+Rubinius
+.TP
+\fBjruby\fR
+JRuby
+.TP
+\fBtruffleruby\fR
+TruffleRuby
+.P
+On platforms \fBruby\fR, \fBmri\fR, \fBmswin\fR, \fBmswin64\fR, and \fBwindows\fR, you may additionally specify a version by appending the major and minor version numbers without a delimiter\. For example, to specify that a gem should only be used on platform \fBruby\fR version 3\.1, use:
+.IP "" 4
+.nf
+ruby_31
+.fi
+.IP "" 0
+.P
+As with groups (above), you may specify one or more platforms:
+.IP "" 4
+.nf
+gem "weakling",   platforms: :jruby
+gem "ruby\-debug", platforms: :mri_31
+gem "nokogiri",   platforms: [:windows_31, :jruby]
+.fi
+.IP "" 0
+.P
+All operations involving groups (\fBbundle install\fR \fIbundle\-install\.1\.html\fR, \fBBundler\.setup\fR, \fBBundler\.require\fR) behave exactly the same as if any groups not matching the current platform were explicitly excluded\.
+.P
+The following platform values are deprecated and should be replaced with \fBwindows\fR:
+.IP "\(bu" 4
+\fBmswin\fR, \fBmswin64\fR, \fBmingw32\fR, \fBx64_mingw\fR
+.IP "" 0
+.P
+Note that, while unfortunately using the same terminology, the values of this option are different from the values that \fBbundle lock \-\-add\-platform\fR can take\. The values of this option are more closer to "Ruby Implementation" while the values that \fBbundle lock \-\-add\-platform\fR understands are more related to OS and architecture of the different systems where your lockfile will be used\.
+.SS "FORCE_RUBY_PLATFORM"
+If you always want the pure ruby variant of a gem to be chosen over platform specific variants, you can use the \fBforce_ruby_platform\fR option:
+.IP "" 4
+.nf
+gem "ffi", force_ruby_platform: true
+.fi
+.IP "" 0
+.P
+This can be handy (assuming the pure ruby variant works fine) when:
+.IP "\(bu" 4
+You're having issues with the platform specific variant\.
+.IP "\(bu" 4
+The platform specific variant does not yet support a newer ruby (and thus has a \fBrequired_ruby_version\fR upper bound), but you still want your Gemfile{\.lock} files to resolve under that ruby\.
+.IP "" 0
+.SS "SOURCE"
+You can select an alternate RubyGems repository for a gem using the ':source' option\.
+.IP "" 4
+.nf
+gem "some_internal_gem", source: "https://gems\.example\.com"
+.fi
+.IP "" 0
+.P
+This forces the gem to be loaded from this source and ignores the global source declared at the top level of the file\. If the gem does not exist in this source, it will not be installed\.
+.P
+Bundler will search for child dependencies of this gem by first looking in the source selected for the parent, but if they are not found there, it will fall back on the global source\.
+.P
+\fBNote about a behavior of the feature deprecated in Bundler 1\.13\fR: Selecting a specific source repository this way also suppresses the ambiguous gem warning described above in \fIGLOBAL SOURCE\fR\.
+.P
+Using the \fB:source\fR option for an individual gem will also make that source available as a possible global source for any other gems which do not specify explicit sources\. Thus, when adding gems with explicit sources, it is recommended that you also ensure all other gems in the Gemfile are using explicit sources\.
+.SS "GIT"
+If necessary, you can specify that a gem is located at a particular git repository using the \fB:git\fR parameter\. The repository can be accessed via several protocols:
+.TP
+\fBHTTP(S)\fR
+gem "rails", git: "https://github\.com/rails/rails\.git"
+.TP
+\fBSSH\fR
+gem "rails", git: "git@github\.com:rails/rails\.git"
+.TP
+\fBgit\fR
+gem "rails", git: "git://github\.com/rails/rails\.git"
+.P
+If using SSH, the user that you use to run \fBbundle install\fR \fBMUST\fR have the appropriate keys available in their \fB$HOME/\.ssh\fR\.
+.P
+\fBNOTE\fR: \fBhttp://\fR and \fBgit://\fR URLs should be avoided if at all possible\. These protocols are unauthenticated, so a man\-in\-the\-middle attacker can deliver malicious code and compromise your system\. HTTPS and SSH are strongly preferred\.
+.P
+The \fBgroup\fR, \fBplatforms\fR, and \fBrequire\fR options are available and behave exactly the same as they would for a normal gem\.
+.P
+A git repository \fBSHOULD\fR have at least one file, at the root of the directory containing the gem, with the extension \fB\.gemspec\fR\. This file \fBMUST\fR contain a valid gem specification, as expected by the \fBgem build\fR command\.
+.P
+If a git repository does not have a \fB\.gemspec\fR, bundler will attempt to create one, but it will not contain any dependencies, executables, or C extension compilation instructions\. As a result, it may fail to properly integrate into your application\.
+.P
+If a git repository does have a \fB\.gemspec\fR for the gem you attached it to, a version specifier, if provided, means that the git repository is only valid if the \fB\.gemspec\fR specifies a version matching the version specifier\. If not, bundler will print a warning\.
+.IP "" 4
+.nf
+gem "rails", "2\.3\.8", git: "https://github\.com/rails/rails\.git"
+# bundle install will fail, because the \.gemspec in the rails
+# repository's master branch specifies version 3\.0\.0
+.fi
+.IP "" 0
+.P
+If a git repository does \fBnot\fR have a \fB\.gemspec\fR for the gem you attached it to, a version specifier \fBMUST\fR be provided\. Bundler will use this version in the simple \fB\.gemspec\fR it creates\.
+.P
+Git repositories support a number of additional options\.
+.TP
+\fBbranch\fR, \fBtag\fR, and \fBref\fR
+You \fBMUST\fR only specify at most one of these options\. The default is \fBbranch: "master"\fR\. For example:
+.IP
+gem "rails", git: "https://github\.com/rails/rails\.git", branch: "5\-0\-stable"
+.IP
+gem "rails", git: "https://github\.com/rails/rails\.git", tag: "v5\.0\.0"
+.IP
+gem "rails", git: "https://github\.com/rails/rails\.git", ref: "4aded"
+.TP
+\fBsubmodules\fR
+For reference, a git submodule \fIhttps://git\-scm\.com/book/en/v2/Git\-Tools\-Submodules\fR lets you have another git repository within a subfolder of your repository\. Specify \fBsubmodules: true\fR to cause bundler to expand any submodules included in the git repository
+.P
+If a git repository contains multiple \fB\.gemspecs\fR, each \fB\.gemspec\fR represents a gem located at the same place in the file system as the \fB\.gemspec\fR\.
+.IP "" 4
+.nf
+|~rails                   [git root]
+| |\-rails\.gemspec         [rails gem located here]
+|~actionpack
+| |\-actionpack\.gemspec    [actionpack gem located here]
+|~activesupport
+| |\-activesupport\.gemspec [activesupport gem located here]
+|\|\.\|\.\|\.
+.fi
+.IP "" 0
+.P
+To install a gem located in a git repository, bundler changes to the directory containing the gemspec, runs \fBgem build name\.gemspec\fR and then installs the resulting gem\. The \fBgem build\fR command, which comes standard with Rubygems, evaluates the \fB\.gemspec\fR in the context of the directory in which it is located\.
+.SS "GIT SOURCE"
+A custom git source can be defined via the \fBgit_source\fR method\. Provide the source's name as an argument, and a block which receives a single argument and interpolates it into a string to return the full repo address:
+.IP "" 4
+.nf
+git_source(:stash){ |repo_name| "https://stash\.corp\.acme\.pl/#{repo_name}\.git" }
+gem 'rails', stash: 'forks/rails'
+.fi
+.IP "" 0
+.P
+In addition, if you wish to choose a specific branch:
+.IP "" 4
+.nf
+gem "rails", stash: "forks/rails", branch: "branch_name"
+.fi
+.IP "" 0
+.SS "GITHUB"
+\fBNOTE\fR: This shorthand should be avoided until Bundler 2\.0, since it currently expands to an insecure \fBgit://\fR URL\. This allows a man\-in\-the\-middle attacker to compromise your system\.
+.P
+If the git repository you want to use is hosted on GitHub and is public, you can use the :github shorthand to specify the github username and repository name (without the trailing "\.git"), separated by a slash\. If both the username and repository name are the same, you can omit one\.
+.IP "" 4
+.nf
+gem "rails", github: "rails/rails"
+gem "rails", github: "rails"
+.fi
+.IP "" 0
+.P
+Are both equivalent to
+.IP "" 4
+.nf
+gem "rails", git: "https://github\.com/rails/rails\.git"
+.fi
+.IP "" 0
+.P
+Since the \fBgithub\fR method is a specialization of \fBgit_source\fR, it accepts a \fB:branch\fR named argument\.
+.P
+You can also directly pass a pull request URL:
+.IP "" 4
+.nf
+gem "rails", github: "https://github\.com/rails/rails/pull/43753"
+.fi
+.IP "" 0
+.P
+Which is equivalent to:
+.IP "" 4
+.nf
+gem "rails", github: "rails/rails", branch: "refs/pull/43753/head"
+.fi
+.IP "" 0
+.SS "GIST"
+If the git repository you want to use is hosted as a GitHub Gist and is public, you can use the :gist shorthand to specify the gist identifier (without the trailing "\.git")\.
+.IP "" 4
+.nf
+gem "the_hatch", gist: "4815162342"
+.fi
+.IP "" 0
+.P
+Is equivalent to:
+.IP "" 4
+.nf
+gem "the_hatch", git: "https://gist\.github\.com/4815162342\.git"
+.fi
+.IP "" 0
+.P
+Since the \fBgist\fR method is a specialization of \fBgit_source\fR, it accepts a \fB:branch\fR named argument\.
+.SS "BITBUCKET"
+If the git repository you want to use is hosted on Bitbucket and is public, you can use the :bitbucket shorthand to specify the bitbucket username and repository name (without the trailing "\.git"), separated by a slash\. If both the username and repository name are the same, you can omit one\.
+.IP "" 4
+.nf
+gem "rails", bitbucket: "rails/rails"
+gem "rails", bitbucket: "rails"
+.fi
+.IP "" 0
+.P
+Are both equivalent to
+.IP "" 4
+.nf
+gem "rails", git: "https://rails@bitbucket\.org/rails/rails\.git"
+.fi
+.IP "" 0
+.P
+Since the \fBbitbucket\fR method is a specialization of \fBgit_source\fR, it accepts a \fB:branch\fR named argument\.
+.SS "PATH"
+You can specify that a gem is located in a particular location on the file system\. Relative paths are resolved relative to the directory containing the \fBGemfile\fR\.
+.P
+Similar to the semantics of the \fB:git\fR option, the \fB:path\fR option requires that the directory in question either contains a \fB\.gemspec\fR for the gem, or that you specify an explicit version that bundler should use\.
+.P
+Unlike \fB:git\fR, bundler does not compile C extensions for gems specified as paths\.
+.IP "" 4
+.nf
+gem "rails", path: "vendor/rails"
+.fi
+.IP "" 0
+.P
+If you would like to use multiple local gems directly from the filesystem, you can set a global \fBpath\fR option to the path containing the gem's files\. This will automatically load gemspec files from subdirectories\.
+.IP "" 4
+.nf
+path 'components' do
+  gem 'admin_ui'
+  gem 'public_ui'
+end
+.fi
+.IP "" 0
+.SH "BLOCK FORM OF SOURCE, GIT, PATH, GROUP and PLATFORMS"
+The \fB:source\fR, \fB:git\fR, \fB:path\fR, \fB:group\fR, and \fB:platforms\fR options may be applied to a group of gems by using block form\.
+.IP "" 4
+.nf
+source "https://gems\.example\.com" do
+  gem "some_internal_gem"
+  gem "another_internal_gem"
+end
+
+git "https://github\.com/rails/rails\.git" do
+  gem "activesupport"
+  gem "actionpack"
+end
+
+platforms :ruby do
+  gem "ruby\-debug"
+  gem "sqlite3"
+end
+
+group :development, optional: true do
+  gem "wirble"
+  gem "faker"
+end
+.fi
+.IP "" 0
+.P
+In the case of the group block form the :optional option can be given to prevent a group from being installed unless listed in the \fB\-\-with\fR option given to the \fBbundle install\fR command\.
+.P
+In the case of the \fBgit\fR block form, the \fB:ref\fR, \fB:branch\fR, \fB:tag\fR, and \fB:submodules\fR options may be passed to the \fBgit\fR method, and all gems in the block will inherit those options\.
+.P
+The presence of a \fBsource\fR block in a Gemfile also makes that source available as a possible global source for any other gems which do not specify explicit sources\. Thus, when defining source blocks, it is recommended that you also ensure all other gems in the Gemfile are using explicit sources, either via source blocks or \fB:source\fR directives on individual gems\.
+.SH "INSTALL_IF"
+The \fBinstall_if\fR method allows gems to be installed based on a proc or lambda\. This is especially useful for optional gems that can only be used if certain software is installed or some other conditions are met\.
+.IP "" 4
+.nf
+install_if \-> { RUBY_PLATFORM =~ /darwin/ } do
+  gem "pasteboard"
+end
+.fi
+.IP "" 0
+.SH "GEMSPEC"
+The \fB\.gemspec\fR \fIhttps://guides\.rubygems\.org/specification\-reference/\fR file is where you provide metadata about your gem to Rubygems\. Some required Gemspec attributes include the name, description, and homepage of your gem\. This is also where you specify the dependencies your gem needs to run\.
+.P
+If you wish to use Bundler to help install dependencies for a gem while it is being developed, use the \fBgemspec\fR method to pull in the dependencies listed in the \fB\.gemspec\fR file\.
+.P
+The \fBgemspec\fR method adds any runtime dependencies as gem requirements in the default group\. It also adds development dependencies as gem requirements in the \fBdevelopment\fR group\. Finally, it adds a gem requirement on your project (\fBpath: '\.'\fR)\. In conjunction with \fBBundler\.setup\fR, this allows you to require project files in your test code as you would if the project were installed as a gem; you need not manipulate the load path manually or require project files via relative paths\.
+.P
+The \fBgemspec\fR method supports optional \fB:path\fR, \fB:glob\fR, \fB:name\fR, and \fB:development_group\fR options, which control where bundler looks for the \fB\.gemspec\fR, the glob it uses to look for the gemspec (defaults to: \fB{,*,*/*}\.gemspec\fR), what named \fB\.gemspec\fR it uses (if more than one is present), and which group development dependencies are included in\.
+.P
+When a \fBgemspec\fR dependency encounters version conflicts during resolution, the local version under development will always be selected \-\- even if there are remote versions that better match other requirements for the \fBgemspec\fR gem\.
+.SH "SOURCE PRIORITY"
+When attempting to locate a gem to satisfy a gem requirement, bundler uses the following priority order:
+.IP "1." 4
+The source explicitly attached to the gem (using \fB:source\fR, \fB:path\fR, or \fB:git\fR)
+.IP "2." 4
+For implicit gems (dependencies of explicit gems), any source, git, or path repository declared on the parent\. This results in bundler prioritizing the ActiveSupport gem from the Rails git repository over ones from \fBrubygems\.org\fR
+.IP "3." 4
+If neither of the above conditions are met, the global source will be used\. If multiple global sources are specified, they will be prioritized from last to first, but this is deprecated since Bundler 1\.13, so Bundler prints a warning and will abort with an error in the future\.
+.IP "" 0
+

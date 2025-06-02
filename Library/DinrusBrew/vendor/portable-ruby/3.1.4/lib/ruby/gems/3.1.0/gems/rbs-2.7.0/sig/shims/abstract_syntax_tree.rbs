@@ -1,0 +1,25 @@
+class RubyVM
+  module AbstractSyntaxTree
+    def self.parse: (String src) -> Node
+
+    def self.parse_file: (String pathname) -> Node
+
+    def self.of: (untyped proc) -> Node
+
+    class Node
+      attr_reader children (): Array[untyped]
+
+      attr_reader first_column (): Integer
+
+      attr_reader first_lineno (): Integer
+
+      attr_reader last_column (): Integer
+
+      attr_reader last_lineno (): Integer
+
+      attr_reader type (): Symbol
+
+      def inspect: () -> String
+    end
+  end
+end

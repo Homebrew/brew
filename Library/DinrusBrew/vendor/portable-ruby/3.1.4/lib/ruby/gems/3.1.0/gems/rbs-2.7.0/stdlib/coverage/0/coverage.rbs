@@ -1,0 +1,224 @@
+# <!-- rdoc-file=ext/coverage/coverage.c -->
+# Coverage provides coverage measurement feature for Ruby. This feature is
+# experimental, so these APIs may be changed in future.
+#
+# Caveat: Currently, only process-global coverage measurement is supported. You
+# cannot measure per-thread covearge.
+#
+# # Usage
+#
+# 1.  require "coverage"
+# 2.  do Coverage.start
+# 3.  require or load Ruby source file
+# 4.  Coverage.result will return a hash that contains filename as key and
+#     coverage array as value. A coverage array gives, for each line, the number
+#     of line execution by the interpreter. A `nil` value means coverage is
+#     disabled for this line (lines like `else` and `end`).
+#
+#
+# # Examples
+#
+#     [foo.rb]
+#     s = 0
+#     10.times do |x|
+#       s += x
+#     end
+#
+#     if s == 45
+#       p :ok
+#     else
+#       p :ng
+#     end
+#     [EOF]
+#
+#     require "coverage"
+#     Coverage.start
+#     require "foo.rb"
+#     p Coverage.result  #=> {"foo.rb"=>[1, 1, 10, nil, nil, 1, 1, nil, 0, nil]}
+#
+# ## Lines Coverage
+#
+# If a coverage mode is not explicitly specified when starting coverage, lines
+# coverage is what will run. It reports the number of line executions for each
+# line.
+#
+#     require "coverage"
+#     Coverage.start(lines: true)
+#     require "foo.rb"
+#     p Coverage.result #=> {"foo.rb"=>{:lines=>[1, 1, 10, nil, nil, 1, 1, nil, 0, nil]}}
+#
+# The value of the lines coverage result is an array containing how many times
+# each line was executed. Order in this array is important. For example, the
+# first item in this array, at index 0, reports how many times line 1 of this
+# file was executed while coverage was run (which, in this example, is one
+# time).
+#
+# A `nil` value means coverage is disabled for this line (lines like `else` and
+# `end`).
+#
+# ## Oneshot Lines Coverage
+#
+# Oneshot lines coverage tracks and reports on the executed lines while coverage
+# is running. It will not report how many times a line was executed, only that
+# it was executed.
+#
+#     require "coverage"
+#     Coverage.start(oneshot_lines: true)
+#     require "foo.rb"
+#     p Coverage.result #=> {"foo.rb"=>{:oneshot_lines=>[1, 2, 3, 6, 7]}}
+#
+# The value of the oneshot lines coverage result is an array containing the line
+# numbers that were executed.
+#
+# ## Branches Coverage
+#
+# Branches coverage reports how many times each branch within each conditional
+# was executed.
+#
+#     require "coverage"
+#     Coverage.start(branches: true)
+#     require "foo.rb"
+#     p Coverage.result #=> {"foo.rb"=>{:branches=>{[:if, 0, 6, 0, 10, 3]=>{[:then, 1, 7, 2, 7, 7]=>1, [:else, 2, 9, 2, 9, 7]=>0}}}}
+#
+# Each entry within the branches hash is a conditional, the value of which is
+# another hash where each entry is a branch in that conditional. The values are
+# the number of times the method was executed, and the keys are identifying
+# information about the branch.
+#
+# The information that makes up each key identifying branches or conditionals is
+# the following, from left to right:
+#
+# 1.  A label for the type of branch or conditional.
+# 2.  A unique identifier.
+# 3.  The starting line number it appears on in the file.
+# 4.  The starting column number it appears on in the file.
+# 5.  The ending line number it appears on in the file.
+# 6.  The ending column number it appears on in the file.
+#
+#
+# ## Methods Coverage
+#
+# Methods coverage reports how many times each method was executed.
+#
+#     [foo_method.rb]
+#     class Greeter
+#       def greet
+#         "welcome!"
+#       end
+#     end
+#
+#     def hello
+#       "Hi"
+#     end
+#
+#     hello()
+#     Greeter.new.greet()
+#     [EOF]
+#
+#     require "coverage"
+#     Coverage.start(methods: true)
+#     require "foo_method.rb"
+#     p Coverage.result #=> {"foo_method.rb"=>{:methods=>{[Object, :hello, 7, 0, 9, 3]=>1, [Greeter, :greet, 2, 2, 4, 5]=>1}}}
+#
+# Each entry within the methods hash represents a method. The values in this
+# hash are the number of times the method was executed, and the keys are
+# identifying information about the method.
+#
+# The information that makes up each key identifying a method is the following,
+# from left to right:
+#
+# 1.  The class.
+# 2.  The method name.
+# 3.  The starting line number the method appears on in the file.
+# 4.  The starting column number the method appears on in the file.
+# 5.  The ending line number the method appears on in the file.
+# 6.  The ending column number the method appears on in the file.
+#
+#
+# ## All Coverage Modes
+#
+# You can also run all modes of coverage simultaneously with this shortcut. Note
+# that running all coverage modes does not run both lines and oneshot lines.
+# Those modes cannot be run simultaneously. Lines coverage is run in this case,
+# because you can still use it to determine whether or not a line was executed.
+#
+#     require "coverage"
+#     Coverage.start(:all)
+#     require "foo.rb"
+#     p Coverage.result #=> {"foo.rb"=>{:lines=>[1, 1, 10, nil, nil, 1, 1, nil, 0, nil], :branches=>{[:if, 0, 6, 0, 10, 3]=>{[:then, 1, 7, 2, 7, 7]=>1, [:else, 2, 9, 2, 9, 7]=>0}}, :methods=>{}}}
+#
+module Coverage
+  # <!--
+  #   rdoc-file=ext/coverage/lib/coverage.rb
+  #   - line_stub(file)
+  # -->
+  #
+  def self.line_stub: () -> Array[Integer?]
+
+  # <!--
+  #   rdoc-file=ext/coverage/coverage.c
+  #   - Coverage.peek_result  => hash
+  # -->
+  # Returns a hash that contains filename as key and coverage array as value. This
+  # is the same as `Coverage.result(stop: false, clear: false)`.
+  #
+  #     {
+  #       "file.rb" => [1, 2, nil],
+  #       ...
+  #     }
+  #
+  def self.peek_result: () -> Hash[String, untyped]
+
+  # <!--
+  #   rdoc-file=ext/coverage/coverage.c
+  #   - Coverage.result(stop: true, clear: true)  => hash
+  # -->
+  # Returns a hash that contains filename as key and coverage array as value. If
+  # `clear` is true, it clears the counters to zero. If `stop` is true, it
+  # disables coverage measurement.
+  #
+  def self.result: (?stop: boolish, ?clear: boolish) -> Hash[String, untyped]
+
+  # <!--
+  #   rdoc-file=ext/coverage/coverage.c
+  #   - Coverage.running?  => bool
+  # -->
+  # Returns true if coverage stats are currently being collected (after
+  # Coverage.start call, but before Coverage.result call)
+  #
+  def self.running?: () -> bool
+
+  # <!--
+  #   rdoc-file=ext/coverage/coverage.c
+  #   - Coverage.start                                              => nil
+  #   - Coverage.start(:all)                                        => nil
+  #   - Coverage.start(lines: bool, branches: bool, methods: bool)  => nil
+  #   - Coverage.start(oneshot_lines: true)                         => nil
+  # -->
+  # Enables the coverage measurement. See the documentation of Coverage class in
+  # detail. This is equivalent to Coverage.setup and Coverage.resume.
+  #
+  def self.start: (?lines: boolish, ?branches: boolish, ?methods: boolish, ?oneshot_lines: boolish) -> nil
+
+  # <!--
+  #   rdoc-file=ext/coverage/coverage.c
+  #   - Coverage.resume  => nil
+  # -->
+  # Start/resume the coverage measurement.
+  #
+  # Caveat: Currently, only process-global coverage measurement is supported. You
+  # cannot measure per-thread covearge. If your process has multiple thread, using
+  # Coverage.resume/suspend to capture code coverage executed from only a limited
+  # code block, may yield misleading results.
+  #
+  def self.resume: () -> nil
+
+  # <!--
+  #   rdoc-file=ext/coverage/coverage.c
+  #   - Coverage.suspend  => nil
+  # -->
+  # Suspend the coverage measurement. You can use Coverage.resume to restart the
+  # measurement.
+  #
+  def self.suspend: () -> nil
+end

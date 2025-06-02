@@ -1,0 +1,745 @@
+# <!-- rdoc-file=ext/etc/etc.c -->
+# The Etc module provides access to information typically stored in files in the
+# /etc directory on Unix systems.
+#
+# The information accessible consists of the information found in the
+# /etc/passwd and /etc/group files, plus information about the system's
+# temporary directory (/tmp) and configuration directory (/etc).
+#
+# The Etc module provides a more reliable way to access information about the
+# logged in user than environment variables such as +$USER+.
+#
+# ## Example:
+#
+#     require 'etc'
+#
+#     login = Etc.getlogin
+#     info = Etc.getpwnam(login)
+#     username = info.gecos.split(/,/).first
+#     puts "Hello #{username}, I see your login name is #{login}"
+#
+# Note that the methods provided by this module are not always secure. It should
+# be used for informational purposes, and not for security.
+#
+# All operations defined in this module are class methods, so that you can
+# include the Etc module into your class.
+#
+module Etc
+  # <!--
+  #   rdoc-file=ext/etc/etc.c
+  #   - confstr(p1)
+  # -->
+  # Returns system configuration variable using confstr().
+  #
+  # *name* should be a constant under `Etc` which begins with `CS_`.
+  #
+  # The return value is a string or nil. nil means no configuration-defined value.
+  #  (confstr() returns 0 but errno is not set.)
+  #
+  #     Etc.confstr(Etc::CS_PATH) #=> "/bin:/usr/bin"
+  #
+  #     # GNU/Linux
+  #     Etc.confstr(Etc::CS_GNU_LIBC_VERSION) #=> "glibc 2.18"
+  #     Etc.confstr(Etc::CS_GNU_LIBPTHREAD_VERSION) #=> "NPTL 2.18"
+  #
+  def self?.confstr: (::Integer p1) -> ::String?
+
+  # <!--
+  #   rdoc-file=ext/etc/etc.c
+  #   - endgrent()
+  # -->
+  # Ends the process of scanning through the /etc/group file begun by ::getgrent,
+  # and closes the file.
+  #
+  def self?.endgrent: () -> void
+
+  # <!--
+  #   rdoc-file=ext/etc/etc.c
+  #   - endpwent()
+  # -->
+  # Ends the process of scanning through the /etc/passwd file begun with
+  # ::getpwent, and closes the file.
+  #
+  def self?.endpwent: () -> void
+
+  # <!--
+  #   rdoc-file=ext/etc/etc.c
+  #   - getgrent()
+  # -->
+  # Returns an entry from the /etc/group file.
+  #
+  # The first time it is called it opens the file and returns the first entry;
+  # each successive call returns the next entry, or `nil` if the end of the file
+  # has been reached.
+  #
+  # To close the file when processing is complete, call ::endgrent.
+  #
+  # Each entry is returned as a Group struct
+  #
+  def self?.getgrent: () -> ::Etc::Group?
+
+  # <!--
+  #   rdoc-file=ext/etc/etc.c
+  #   - getgrgid(group_id)  ->       Group
+  # -->
+  # Returns information about the group with specified integer `group_id`, as
+  # found in /etc/group.
+  #
+  # The information is returned as a Group struct.
+  #
+  # See the unix manpage for `getgrgid(3)` for more detail.
+  #
+  # ### Example:
+  #
+  #     Etc.getgrgid(100)
+  #     #=> #<struct Etc::Group name="users", passwd="x", gid=100, mem=["meta", "root"]>
+  #
+  def self?.getgrgid: (?::Integer group_id) -> ::Etc::Group
+
+  # <!--
+  #   rdoc-file=ext/etc/etc.c
+  #   - getgrnam(name)       ->  Group
+  # -->
+  # Returns information about the group with specified `name`, as found in
+  # /etc/group.
+  #
+  # The information is returned as a Group struct.
+  #
+  # See the unix manpage for `getgrnam(3)` for more detail.
+  #
+  # ### Example:
+  #
+  #     Etc.getgrnam('users')
+  #     #=> #<struct Etc::Group name="users", passwd="x", gid=100, mem=["meta", "root"]>
+  #
+  def self?.getgrnam: (::String name) -> ::Etc::Group
+
+  # <!--
+  #   rdoc-file=ext/etc/etc.c
+  #   - getlogin     ->  String
+  # -->
+  # Returns the short user name of the currently logged in user. Unfortunately, it
+  # is often rather easy to fool ::getlogin.
+  #
+  # Avoid ::getlogin for security-related purposes.
+  #
+  # If ::getlogin fails, try ::getpwuid.
+  #
+  # See the unix manpage for `getpwuid(3)` for more detail.
+  #
+  # e.g.
+  #     Etc.getlogin -> 'guest'
+  #
+  def self?.getlogin: () -> ::String?
+
+  # <!--
+  #   rdoc-file=ext/etc/etc.c
+  #   - getpwent()
+  # -->
+  # Returns an entry from the /etc/passwd file.
+  #
+  # The first time it is called it opens the file and returns the first entry;
+  # each successive call returns the next entry, or `nil` if the end of the file
+  # has been reached.
+  #
+  # To close the file when processing is complete, call ::endpwent.
+  #
+  # Each entry is returned as a Passwd struct.
+  #
+  def self?.getpwent: () -> ::Etc::Passwd?
+
+  # <!--
+  #   rdoc-file=ext/etc/etc.c
+  #   - getpwnam(name)       ->  Passwd
+  # -->
+  # Returns the /etc/passwd information for the user with specified login `name`.
+  #
+  # The information is returned as a Passwd struct.
+  #
+  # See the unix manpage for `getpwnam(3)` for more detail.
+  #
+  # ### Example:
+  #
+  #     Etc.getpwnam('root')
+  #     #=> #<struct Etc::Passwd name="root", passwd="x", uid=0, gid=0, gecos="root",dir="/root", shell="/bin/bash">
+  #
+  def self?.getpwnam: (::String name) -> ::Etc::Passwd
+
+  # <!--
+  #   rdoc-file=ext/etc/etc.c
+  #   - getpwuid(uid)        ->  Passwd
+  # -->
+  # Returns the /etc/passwd information for the user with the given integer `uid`.
+  #
+  # The information is returned as a Passwd struct.
+  #
+  # If `uid` is omitted, the value from `Passwd[:uid]` is returned instead.
+  #
+  # See the unix manpage for `getpwuid(3)` for more detail.
+  #
+  # ### Example:
+  #
+  #     Etc.getpwuid(0)
+  #     #=> #<struct Etc::Passwd name="root", passwd="x", uid=0, gid=0, gecos="root",dir="/root", shell="/bin/bash">
+  #
+  def self?.getpwuid: (?::Integer uid) -> ::Etc::Passwd
+
+  # <!--
+  #   rdoc-file=ext/etc/etc.c
+  #   - group()
+  # -->
+  # Provides a convenient Ruby iterator which executes a block for each entry in
+  # the /etc/group file.
+  #
+  # The code block is passed an Group struct.
+  #
+  # See ::getgrent above for details.
+  #
+  # Example:
+  #
+  #     require 'etc'
+  #
+  #     Etc.group {|g|
+  #       puts g.name + ": " + g.mem.join(', ')
+  #     }
+  #
+  def self?.group: () { (::Etc::Group group) -> void } -> void
+                 | () -> ::Etc::Group?
+
+  # <!--
+  #   rdoc-file=ext/etc/etc.c
+  #   - nprocessors()
+  # -->
+  # Returns the number of online processors.
+  #
+  # The result is intended as the number of processes to use all available
+  # processors.
+  #
+  # This method is implemented using:
+  # *   sched_getaffinity(): Linux
+  # *   sysconf(_SC_NPROCESSORS_ONLN): GNU/Linux, NetBSD, FreeBSD, OpenBSD,
+  #     DragonFly BSD, OpenIndiana, Mac OS X, AIX
+  #
+  #
+  # Example:
+  #
+  #     require 'etc'
+  #     p Etc.nprocessors #=> 4
+  #
+  # The result might be smaller number than physical cpus especially when ruby
+  # process is bound to specific cpus. This is intended for getting better
+  # parallel processing.
+  #
+  # Example: (Linux)
+  #
+  #     linux$ taskset 0x3 ./ruby -retc -e "p Etc.nprocessors"  #=> 2
+  #
+  def self?.nprocessors: () -> ::Integer
+
+  # <!--
+  #   rdoc-file=ext/etc/etc.c
+  #   - Etc.passwd { |struct| block }        ->  Passwd
+  #   - Etc.passwd                   ->  Passwd
+  # -->
+  # Provides a convenient Ruby iterator which executes a block for each entry in
+  # the /etc/passwd file.
+  #
+  # The code block is passed an Passwd struct.
+  #
+  # See ::getpwent above for details.
+  #
+  # Example:
+  #
+  #     require 'etc'
+  #
+  #     Etc.passwd {|u|
+  #       puts u.name + " = " + u.gecos
+  #     }
+  #
+  def self?.passwd: () { (::Etc::Passwd passwd) -> void } -> void
+                  | () -> ::Etc::Passwd?
+
+  # <!--
+  #   rdoc-file=ext/etc/etc.c
+  #   - setgrent()
+  # -->
+  # Resets the process of reading the /etc/group file, so that the next call to
+  # ::getgrent will return the first entry again.
+  #
+  def self?.setgrent: () -> void
+
+  # <!--
+  #   rdoc-file=ext/etc/etc.c
+  #   - setpwent()
+  # -->
+  # Resets the process of reading the /etc/passwd file, so that the next call to
+  # ::getpwent will return the first entry again.
+  #
+  def self?.setpwent: () -> void
+
+  # <!--
+  #   rdoc-file=ext/etc/etc.c
+  #   - sysconf(p1)
+  # -->
+  # Returns system configuration variable using sysconf().
+  #
+  # *name* should be a constant under `Etc` which begins with `SC_`.
+  #
+  # The return value is an integer or nil. nil means indefinite limit.  (sysconf()
+  # returns -1 but errno is not set.)
+  #
+  #     Etc.sysconf(Etc::SC_ARG_MAX) #=> 2097152
+  #     Etc.sysconf(Etc::SC_LOGIN_NAME_MAX) #=> 256
+  #
+  def self?.sysconf: (::Integer p1) -> ::Integer
+
+  # <!--
+  #   rdoc-file=ext/etc/etc.c
+  #   - sysconfdir()
+  # -->
+  # Returns system configuration directory.
+  #
+  # This is typically "/etc", but is modified by the prefix used when Ruby was
+  # compiled. For example, if Ruby is built and installed in /usr/local, returns
+  # "/usr/local/etc" on other platforms than Windows. On Windows, this always
+  # returns the directory provided by the system.
+  #
+  def self?.sysconfdir: () -> ::String
+
+  # <!--
+  #   rdoc-file=ext/etc/etc.c
+  #   - systmpdir()
+  # -->
+  # Returns system temporary directory; typically "/tmp".
+  #
+  def self?.systmpdir: () -> ::String
+
+  # <!--
+  #   rdoc-file=ext/etc/etc.c
+  #   - uname()
+  # -->
+  # Returns the system information obtained by uname system call.
+  #
+  # The return value is a hash which has 5 keys at least:
+  #     :sysname, :nodename, :release, :version, :machine
+  #
+  # Example:
+  #
+  #     require 'etc'
+  #     require 'pp'
+  #
+  #     pp Etc.uname
+  #     #=> {:sysname=>"Linux",
+  #     #    :nodename=>"boron",
+  #     #    :release=>"2.6.18-6-xen-686",
+  #     #    :version=>"#1 SMP Thu Nov 5 19:54:42 UTC 2009",
+  #     #    :machine=>"i686"}
+  #
+  def self?.uname: () -> { sysname: ::String, nodename: ::String, release: ::String, version: ::String, machine: ::String }
+
+  private
+
+  CS_PATH: Integer
+
+  CS_POSIX_V6_ILP32_OFF32_CFLAGS: Integer
+
+  CS_POSIX_V6_ILP32_OFF32_LDFLAGS: Integer
+
+  CS_POSIX_V6_ILP32_OFF32_LIBS: Integer
+
+  CS_POSIX_V6_ILP32_OFFBIG_CFLAGS: Integer
+
+  CS_POSIX_V6_ILP32_OFFBIG_LDFLAGS: Integer
+
+  CS_POSIX_V6_ILP32_OFFBIG_LIBS: Integer
+
+  CS_POSIX_V6_LP64_OFF64_CFLAGS: Integer
+
+  CS_POSIX_V6_LP64_OFF64_LDFLAGS: Integer
+
+  CS_POSIX_V6_LP64_OFF64_LIBS: Integer
+
+  CS_POSIX_V6_LPBIG_OFFBIG_CFLAGS: Integer
+
+  CS_POSIX_V6_LPBIG_OFFBIG_LDFLAGS: Integer
+
+  CS_POSIX_V6_LPBIG_OFFBIG_LIBS: Integer
+
+  CS_POSIX_V6_WIDTH_RESTRICTED_ENVS: Integer
+
+  PC_2_SYMLINKS: Integer
+
+  PC_ALLOC_SIZE_MIN: Integer
+
+  PC_ASYNC_IO: Integer
+
+  PC_CHOWN_RESTRICTED: Integer
+
+  PC_FILESIZEBITS: Integer
+
+  PC_LINK_MAX: Integer
+
+  PC_MAX_CANON: Integer
+
+  PC_MAX_INPUT: Integer
+
+  PC_NAME_MAX: Integer
+
+  PC_NO_TRUNC: Integer
+
+  PC_PATH_MAX: Integer
+
+  PC_PIPE_BUF: Integer
+
+  PC_PRIO_IO: Integer
+
+  PC_REC_INCR_XFER_SIZE: Integer
+
+  PC_REC_MAX_XFER_SIZE: Integer
+
+  PC_REC_MIN_XFER_SIZE: Integer
+
+  PC_REC_XFER_ALIGN: Integer
+
+  PC_SYMLINK_MAX: Integer
+
+  PC_SYNC_IO: Integer
+
+  PC_VDISABLE: Integer
+
+  SC_2_CHAR_TERM: Integer
+
+  SC_2_C_BIND: Integer
+
+  SC_2_C_DEV: Integer
+
+  SC_2_FORT_DEV: Integer
+
+  SC_2_FORT_RUN: Integer
+
+  SC_2_LOCALEDEF: Integer
+
+  SC_2_PBS: Integer
+
+  SC_2_PBS_ACCOUNTING: Integer
+
+  SC_2_PBS_CHECKPOINT: Integer
+
+  SC_2_PBS_LOCATE: Integer
+
+  SC_2_PBS_MESSAGE: Integer
+
+  SC_2_PBS_TRACK: Integer
+
+  SC_2_SW_DEV: Integer
+
+  SC_2_UPE: Integer
+
+  SC_2_VERSION: Integer
+
+  SC_ADVISORY_INFO: Integer
+
+  SC_AIO_LISTIO_MAX: Integer
+
+  SC_AIO_MAX: Integer
+
+  SC_AIO_PRIO_DELTA_MAX: Integer
+
+  SC_ARG_MAX: Integer
+
+  SC_ASYNCHRONOUS_IO: Integer
+
+  SC_ATEXIT_MAX: Integer
+
+  SC_BARRIERS: Integer
+
+  SC_BC_BASE_MAX: Integer
+
+  SC_BC_DIM_MAX: Integer
+
+  SC_BC_SCALE_MAX: Integer
+
+  SC_BC_STRING_MAX: Integer
+
+  SC_CHILD_MAX: Integer
+
+  SC_CLK_TCK: Integer
+
+  SC_CLOCK_SELECTION: Integer
+
+  SC_COLL_WEIGHTS_MAX: Integer
+
+  SC_CPUTIME: Integer
+
+  SC_DELAYTIMER_MAX: Integer
+
+  SC_EXPR_NEST_MAX: Integer
+
+  SC_FSYNC: Integer
+
+  SC_GETGR_R_SIZE_MAX: Integer
+
+  SC_GETPW_R_SIZE_MAX: Integer
+
+  SC_HOST_NAME_MAX: Integer
+
+  SC_IOV_MAX: Integer
+
+  SC_IPV6: Integer
+
+  SC_JOB_CONTROL: Integer
+
+  SC_LINE_MAX: Integer
+
+  SC_LOGIN_NAME_MAX: Integer
+
+  SC_MAPPED_FILES: Integer
+
+  SC_MEMLOCK: Integer
+
+  SC_MEMLOCK_RANGE: Integer
+
+  SC_MEMORY_PROTECTION: Integer
+
+  SC_MESSAGE_PASSING: Integer
+
+  SC_MONOTONIC_CLOCK: Integer
+
+  SC_MQ_OPEN_MAX: Integer
+
+  SC_MQ_PRIO_MAX: Integer
+
+  SC_NGROUPS_MAX: Integer
+
+  SC_NPROCESSORS_CONF: Integer
+
+  SC_NPROCESSORS_ONLN: Integer
+
+  SC_OPEN_MAX: Integer
+
+  SC_PAGESIZE: Integer
+
+  SC_PAGE_SIZE: Integer
+
+  SC_PHYS_PAGES: Integer
+
+  SC_PRIORITIZED_IO: Integer
+
+  SC_PRIORITY_SCHEDULING: Integer
+
+  SC_RAW_SOCKETS: Integer
+
+  SC_READER_WRITER_LOCKS: Integer
+
+  SC_REALTIME_SIGNALS: Integer
+
+  SC_REGEXP: Integer
+
+  SC_RE_DUP_MAX: Integer
+
+  SC_RTSIG_MAX: Integer
+
+  SC_SAVED_IDS: Integer
+
+  SC_SEMAPHORES: Integer
+
+  SC_SEM_NSEMS_MAX: Integer
+
+  SC_SEM_VALUE_MAX: Integer
+
+  SC_SHARED_MEMORY_OBJECTS: Integer
+
+  SC_SHELL: Integer
+
+  SC_SIGQUEUE_MAX: Integer
+
+  SC_SPAWN: Integer
+
+  SC_SPIN_LOCKS: Integer
+
+  SC_SPORADIC_SERVER: Integer
+
+  SC_SS_REPL_MAX: Integer
+
+  SC_STREAM_MAX: Integer
+
+  SC_SYMLOOP_MAX: Integer
+
+  SC_SYNCHRONIZED_IO: Integer
+
+  SC_THREADS: Integer
+
+  SC_THREAD_ATTR_STACKADDR: Integer
+
+  SC_THREAD_ATTR_STACKSIZE: Integer
+
+  SC_THREAD_CPUTIME: Integer
+
+  SC_THREAD_DESTRUCTOR_ITERATIONS: Integer
+
+  SC_THREAD_KEYS_MAX: Integer
+
+  SC_THREAD_PRIORITY_SCHEDULING: Integer
+
+  SC_THREAD_PRIO_INHERIT: Integer
+
+  SC_THREAD_PRIO_PROTECT: Integer
+
+  SC_THREAD_PROCESS_SHARED: Integer
+
+  SC_THREAD_SAFE_FUNCTIONS: Integer
+
+  SC_THREAD_SPORADIC_SERVER: Integer
+
+  SC_THREAD_STACK_MIN: Integer
+
+  SC_THREAD_THREADS_MAX: Integer
+
+  SC_TIMEOUTS: Integer
+
+  SC_TIMERS: Integer
+
+  SC_TIMER_MAX: Integer
+
+  SC_TRACE: Integer
+
+  SC_TRACE_EVENT_FILTER: Integer
+
+  SC_TRACE_EVENT_NAME_MAX: Integer
+
+  SC_TRACE_INHERIT: Integer
+
+  SC_TRACE_LOG: Integer
+
+  SC_TRACE_NAME_MAX: Integer
+
+  SC_TRACE_SYS_MAX: Integer
+
+  SC_TRACE_USER_EVENT_MAX: Integer
+
+  SC_TTY_NAME_MAX: Integer
+
+  SC_TYPED_MEMORY_OBJECTS: Integer
+
+  SC_TZNAME_MAX: Integer
+
+  SC_V6_ILP32_OFF32: Integer
+
+  SC_V6_ILP32_OFFBIG: Integer
+
+  SC_V6_LP64_OFF64: Integer
+
+  SC_V6_LPBIG_OFFBIG: Integer
+
+  SC_VERSION: Integer
+
+  SC_XOPEN_CRYPT: Integer
+
+  SC_XOPEN_ENH_I18N: Integer
+
+  SC_XOPEN_REALTIME: Integer
+
+  SC_XOPEN_REALTIME_THREADS: Integer
+
+  SC_XOPEN_SHM: Integer
+
+  SC_XOPEN_STREAMS: Integer
+
+  SC_XOPEN_UNIX: Integer
+
+  SC_XOPEN_VERSION: Integer
+
+  VERSION: String
+
+  class Group < Struct[untyped]
+    extend Enumerable[untyped]
+
+    def self.[]: (*untyped) -> untyped
+
+    def self.each: () -> untyped
+
+    def self.inspect: () -> untyped
+
+    def self.keyword_init?: () -> untyped
+
+    def self.members: () -> untyped
+
+    def self.new: (*untyped) -> untyped
+
+    public
+
+    def gid: () -> Integer
+
+    def gid=: (Integer new_gid) -> void
+
+    def mem: () -> Array[String]
+
+    def mem=: (Array[String] new_mem) -> void
+
+    def name: () -> String
+
+    def name=: (String new_name) -> void
+
+    def passwd: () -> String
+
+    def passwd=: (String new_passwd) -> void
+  end
+
+  class Passwd < Struct[untyped]
+    extend Enumerable[untyped]
+
+    def self.[]: (*untyped) -> untyped
+
+    def self.each: () -> untyped
+
+    def self.inspect: () -> untyped
+
+    def self.keyword_init?: () -> untyped
+
+    def self.members: () -> untyped
+
+    def self.new: (*untyped) -> untyped
+
+    public
+
+    def change: () -> Integer
+
+    def change=: (Integer new_change) -> void
+
+    def dir: () -> String
+
+    def dir=: (String new_dir) -> void
+
+    def expire: () -> Integer
+
+    def expire=: (Integer new_expire) -> void
+
+    def gecos: () -> String
+
+    def gecos=: (String new_gecos) -> void
+
+    def gid: () -> Integer
+
+    def gid=: (Integer new_gid) -> void
+
+    def name: () -> String
+
+    def name=: (String new_name) -> void
+
+    def passwd: () -> String
+
+    def passwd=: (String new_passwd) -> void
+
+    def shell: () -> String
+
+    def shell=: (String new_shell) -> void
+
+    def uclass: () -> String
+
+    def uclass=: (String new_uclass) -> void
+
+    def uid: () -> Integer
+
+    def uid=: (Integer new_uid) -> void
+  end
+end

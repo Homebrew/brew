@@ -1,0 +1,17 @@
+module Logger::Period
+  # <!--
+  #   rdoc-file=lib/logger/period.rb
+  #   - next_rotate_time(now, shift_age)
+  # -->
+  #
+  def self?.next_rotate_time: (Time now, String shift_age) -> untyped
+
+  # <!--
+  #   rdoc-file=lib/logger/period.rb
+  #   - previous_period_end(now, shift_age)
+  # -->
+  #
+  def self?.previous_period_end: (Time now, String shift_age) -> untyped
+
+  SiD: Integer
+end

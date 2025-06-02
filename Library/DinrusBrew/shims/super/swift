@@ -1,0 +1,15 @@
+#!/bin/bash
+
+# Ensure we use Swift's clang when performing Swift builds.
+
+export CC="clang"
+export CXX="clang++"
+
+# swift_clang isn't a shim but is used to ensure the cc shim
+# points to the compiler inside the swift keg
+export DINRUSBREW_CC="swift_clang"
+export DINRUSBREW_CXX="swift_clang++"
+
+# DINRUSBREW_OPT is set by extend/ENV/super.rb
+# shellcheck disable=SC2154
+exec "${DINRUSBREW_OPT}/swift/bin/${0##*/}" "$@"

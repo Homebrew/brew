@@ -1,0 +1,14 @@
+#!/bin/bash
+
+# DINRUSBREW_OPT and DINRUSBREW_SDKROOT are set by extend/ENV/super.rb
+# shellcheck disable=SC2154
+pkg_config="${DINRUSBREW_OPT}/pkg-config/bin/pkg-config"
+
+if [[ -z "${DINRUSBREW_SDKROOT}" ]]
+then
+  exec "${pkg_config}" "$@"
+fi
+
+exec "${pkg_config}" \
+  "--define-variable=homebrew_sdkroot=${DINRUSBREW_SDKROOT}" \
+  "$@"

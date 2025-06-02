@@ -1,0 +1,417 @@
+# <!-- rdoc-file=trace_point.rb -->
+# Document-class: TracePoint
+#
+# A class that provides the functionality of Kernel#set_trace_func in a nice
+# Object-Oriented API.
+#
+# ## Example
+#
+# We can use TracePoint to gather information specifically for exceptions:
+#
+#     trace = TracePoint.new(:raise) do |tp|
+#         p [tp.lineno, tp.event, tp.raised_exception]
+#     end
+#     #=> #<TracePoint:disabled>
+#
+#     trace.enable
+#     #=> false
+#
+#     0 / 0
+#     #=> [5, :raise, #<ZeroDivisionError: divided by 0>]
+#
+# ## Events
+#
+# If you don't specify the type of events you want to listen for, TracePoint
+# will include all available events.
+#
+# **Note** do not depend on current event set, as this list is subject to
+# change. Instead, it is recommended you specify the type of events you want to
+# use.
+#
+# To filter what is traced, you can pass any of the following as `events`:
+#
+# `:line`
+# :   execute an expression or statement on a new line
+# `:class`
+# :   start a class or module definition
+# `:end`
+# :   finish a class or module definition
+# `:call`
+# :   call a Ruby method
+# `:return`
+# :   return from a Ruby method
+# `:c_call`
+# :   call a C-language routine
+# `:c_return`
+# :   return from a C-language routine
+# `:raise`
+# :   raise an exception
+# `:b_call`
+# :   event hook at block entry
+# `:b_return`
+# :   event hook at block ending
+# `:a_call`
+# :   event hook at all calls (`call`, `b_call`, and `c_call`)
+# `:a_return`
+# :   event hook at all returns (`return`, `b_return`, and `c_return`)
+# `:thread_begin`
+# :   event hook at thread beginning
+# `:thread_end`
+# :   event hook at thread ending
+# `:fiber_switch`
+# :   event hook at fiber switch
+# `:script_compiled`
+# :   new Ruby code compiled (with `eval`, `load` or `require`)
+#
+class TracePoint < Object
+  # <!--
+  #   rdoc-file=trace_point.rb
+  #   - TracePoint.new(*events) { |obj| block }         -> obj
+  # -->
+  # Returns a new TracePoint object, not enabled by default.
+  #
+  # Next, in order to activate the trace, you must use TracePoint#enable
+  #
+  #     trace = TracePoint.new(:call) do |tp|
+  #         p [tp.lineno, tp.defined_class, tp.method_id, tp.event]
+  #     end
+  #     #=> #<TracePoint:disabled>
+  #
+  #     trace.enable
+  #     #=> false
+  #
+  #     puts "Hello, TracePoint!"
+  #     # ...
+  #     # [48, IRB::Notifier::AbstractNotifier, :printf, :call]
+  #     # ...
+  #
+  # When you want to deactivate the trace, you must use TracePoint#disable
+  #
+  #     trace.disable
+  #
+  # See TracePoint@Events for possible events and more information.
+  #
+  # A block must be given, otherwise an ArgumentError is raised.
+  #
+  # If the trace method isn't included in the given events filter, a RuntimeError
+  # is raised.
+  #
+  #     TracePoint.trace(:line) do |tp|
+  #         p tp.raised_exception
+  #     end
+  #     #=> RuntimeError: 'raised_exception' not supported by this event
+  #
+  # If the trace method is called outside block, a RuntimeError is raised.
+  #
+  #     TracePoint.trace(:line) do |tp|
+  #       $tp = tp
+  #     end
+  #     $tp.lineno #=> access from outside (RuntimeError)
+  #
+  # Access from other threads is also forbidden.
+  #
+  def initialize: (*Symbol events) { (TracePoint tp) -> void } -> void
+
+  # <!--
+  #   rdoc-file=trace_point.rb
+  #   - TracePoint.allow_reentry
+  # -->
+  # In general, while a TracePoint callback is running, other registered callbacks
+  # are not called to avoid confusion by reentrance. This method allows the
+  # reentrance in a given block. This method should be used carefully, otherwise
+  # the callback can be easily called infinitely.
+  #
+  # If this method is called when the reentrance is already allowed, it raises a
+  # RuntimeError.
+  #
+  def self.allow_reentry: () { () -> void } -> void
+
+  # <!--
+  #   rdoc-file=trace_point.rb
+  #   - TracePoint.stat -> obj
+  # -->
+  # Returns internal information of TracePoint.
+  #
+  # The contents of the returned value are implementation specific. It may be
+  # changed in future.
+  #
+  # This method is only for debugging TracePoint itself.
+  #
+  def self.stat: () -> untyped
+
+  # <!--
+  #   rdoc-file=trace_point.rb
+  #   - TracePoint.trace(*events) { |obj| block }        -> obj
+  # -->
+  # A convenience method for TracePoint.new, that activates the trace
+  # automatically.
+  #
+  #     trace = TracePoint.trace(:call) { |tp| [tp.lineno, tp.event] }
+  #     #=> #<TracePoint:enabled>
+  #
+  #     trace.enabled? #=> true
+  #
+  def self.trace: (*Symbol events) { (TracePoint tp) -> void } -> TracePoint
+
+  # <!--
+  #   rdoc-file=trace_point.rb
+  #   - binding()
+  # -->
+  # Return the generated binding object from event.
+  #
+  # Note that for `c_call` and `c_return` events, the binding returned is the
+  # binding of the nearest Ruby method calling the C method, since C methods
+  # themselves do not have bindings.
+  #
+  def binding: () -> Binding
+
+  # <!--
+  #   rdoc-file=trace_point.rb
+  #   - callee_id()
+  # -->
+  # Return the called name of the method being called
+  #
+  def callee_id: () -> Symbol
+
+  # <!--
+  #   rdoc-file=trace_point.rb
+  #   - defined_class()
+  # -->
+  # Return class or module of the method being called.
+  #
+  #     class C; def foo; end; end
+  #     trace = TracePoint.new(:call) do |tp|
+  #       p tp.defined_class #=> C
+  #     end.enable do
+  #       C.new.foo
+  #     end
+  #
+  # If method is defined by a module, then that module is returned.
+  #
+  #     module M; def foo; end; end
+  #     class C; include M; end;
+  #     trace = TracePoint.new(:call) do |tp|
+  #       p tp.defined_class #=> M
+  #     end.enable do
+  #       C.new.foo
+  #     end
+  #
+  # **Note:** #defined_class returns singleton class.
+  #
+  # 6th block parameter of Kernel#set_trace_func passes original class of attached
+  # by singleton class.
+  #
+  # **This is a difference between Kernel#set_trace_func and TracePoint.**
+  #
+  #     class C; def self.foo; end; end
+  #     trace = TracePoint.new(:call) do |tp|
+  #       p tp.defined_class #=> #<Class:C>
+  #     end.enable do
+  #       C.foo
+  #     end
+  #
+  def defined_class: () -> Module
+
+  # <!--
+  #   rdoc-file=trace_point.rb
+  #   - trace.disable               -> true or false
+  #   - trace.disable { block } -> obj
+  # -->
+  # Deactivates the trace
+  #
+  # Return true if trace was enabled. Return false if trace was disabled.
+  #
+  #     trace.enabled?      #=> true
+  #     trace.disable       #=> true (previous status)
+  #     trace.enabled?      #=> false
+  #     trace.disable       #=> false
+  #
+  # If a block is given, the trace will only be disable within the scope of the
+  # block.
+  #
+  #     trace.enabled?
+  #     #=> true
+  #
+  #     trace.disable do
+  #         trace.enabled?
+  #         # only disabled for this block
+  #     end
+  #
+  #     trace.enabled?
+  #     #=> true
+  #
+  # Note: You cannot access event hooks within the block.
+  #
+  #     trace.disable { p tp.lineno }
+  #     #=> RuntimeError: access from outside
+  #
+  def disable: () -> bool
+             | () { () -> void } -> void
+
+  # <!--
+  #   rdoc-file=trace_point.rb
+  #   - trace.enable(target: nil, target_line: nil, target_thread: nil)    -> true or false
+  #   - trace.enable(target: nil, target_line: nil, target_thread: nil) { block }  -> obj
+  # -->
+  # Activates the trace.
+  #
+  # Returns `true` if trace was enabled. Returns `false` if trace was disabled.
+  #
+  #     trace.enabled?  #=> false
+  #     trace.enable    #=> false (previous state)
+  #                     #   trace is enabled
+  #     trace.enabled?  #=> true
+  #     trace.enable    #=> true (previous state)
+  #                     #   trace is still enabled
+  #
+  # If a block is given, the trace will only be enabled within the scope of the
+  # block.
+  #
+  #     trace.enabled?
+  #     #=> false
+  #
+  #     trace.enable do
+  #       trace.enabled?
+  #       # only enabled for this block
+  #     end
+  #
+  #     trace.enabled?
+  #     #=> false
+  #
+  # `target`, `target_line` and `target_thread` parameters are used to limit
+  # tracing only to specified code objects. `target` should be a code object for
+  # which RubyVM::InstructionSequence.of will return an instruction sequence.
+  #
+  #     t = TracePoint.new(:line) { |tp| p tp }
+  #
+  #     def m1
+  #       p 1
+  #     end
+  #
+  #     def m2
+  #       p 2
+  #     end
+  #
+  #     t.enable(target: method(:m1))
+  #
+  #     m1
+  #     # prints #<TracePoint:line test.rb:4 in `m1'>
+  #     m2
+  #     # prints nothing
+  #
+  # Note: You cannot access event hooks within the `enable` block.
+  #
+  #     trace.enable { p tp.lineno }
+  #     #=> RuntimeError: access from outside
+  #
+  def enable:     (?target: (Method | UnboundMethod | Proc)?, ?target_line: Integer?, ?target_thread: Thread?) -> bool
+            | [R] (?target: (Method | UnboundMethod | Proc)?, ?target_line: Integer?, ?target_thread: Thread?) { () -> R } -> R
+
+  # <!--
+  #   rdoc-file=trace_point.rb
+  #   - trace.enabled?          -> true or false
+  # -->
+  # The current status of the trace
+  #
+  def enabled?: () -> bool
+
+  # <!--
+  #   rdoc-file=trace_point.rb
+  #   - event()
+  # -->
+  # Type of event
+  #
+  # See TracePoint@Events for more information.
+  #
+  def event: () -> ::Symbol
+
+  # <!--
+  #   rdoc-file=trace_point.rb
+  #   - trace.inspect  -> string
+  # -->
+  # Return a string containing a human-readable TracePoint status.
+  #
+  def inspect: () -> String
+
+  # <!--
+  #   rdoc-file=trace_point.rb
+  #   - lineno()
+  # -->
+  # Line number of the event
+  #
+  def lineno: () -> Integer
+
+  # <!--
+  #   rdoc-file=trace_point.rb
+  #   - method_id()
+  # -->
+  # Return the name at the definition of the method being called
+  #
+  def method_id: () -> Symbol
+
+  # <!--
+  #   rdoc-file=trace_point.rb
+  #   - path()
+  # -->
+  # Path of the file being run
+  #
+  def path: () -> String
+
+  # <!--
+  #   rdoc-file=trace_point.rb
+  #   - parameters()
+  # -->
+  # Return the parameters definition of the method or block that the current hook
+  # belongs to. Format is the same as for Method#parameters
+  #
+  def parameters: () -> ::Array[[ :req | :opt | :rest | :keyreq | :key | :keyrest | :block, Symbol ] | [ :rest | :keyrest ]]
+
+  # <!--
+  #   rdoc-file=trace_point.rb
+  #   - raised_exception()
+  # -->
+  # Value from exception raised on the `:raise` event
+  #
+  def raised_exception: () -> untyped
+
+  # <!--
+  #   rdoc-file=trace_point.rb
+  #   - return_value()
+  # -->
+  # Return value from `:return`, `c_return`, and `b_return` event
+  #
+  def return_value: () -> untyped
+
+  # <!--
+  #   rdoc-file=trace_point.rb
+  #   - self()
+  # -->
+  # Return the trace object during event
+  #
+  # Same as the following, except it returns the correct object (the method
+  # receiver) for `c_call` and `c_return` events:
+  #
+  #     trace.binding.eval('self')
+  #
+  def self: () -> untyped
+
+  # <!--
+  #   rdoc-file=trace_point.rb
+  #   - eval_script()
+  # -->
+  # Compiled source code (String) on *eval methods on the `:script_compiled`
+  # event. If loaded from a file, it will return nil.
+  #
+  def eval_script: () -> String?
+
+  # <!--
+  #   rdoc-file=trace_point.rb
+  #   - instruction_sequence()
+  # -->
+  # Compiled instruction sequence represented by a RubyVM::InstructionSequence
+  # instance on the `:script_compiled` event.
+  #
+  # Note that this method is MRI specific.
+  #
+  def instruction_sequence: () -> RubyVM::InstructionSequence
+end

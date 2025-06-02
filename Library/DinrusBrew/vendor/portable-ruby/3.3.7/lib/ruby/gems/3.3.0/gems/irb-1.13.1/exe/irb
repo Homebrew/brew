@@ -1,0 +1,9 @@
+#!/usr/bin/env ruby
+#
+#   irb.rb - interactive ruby
+#   	by Keiju ISHITSUKA(keiju@ruby-lang.org)
+#
+
+require "irb"
+
+IRB.start(__FILE__)

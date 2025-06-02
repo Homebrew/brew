@@ -1,0 +1,33 @@
+bundle-doctor(1) -- Checks the bundle for common problems
+=========================================================
+
+## SYNOPSIS
+
+`bundle doctor` [--quiet]
+                [--gemfile=GEMFILE]
+
+## DESCRIPTION
+
+Checks your Gemfile and gem environment for common problems. If issues
+are detected, Bundler prints them and exits status 1. Otherwise,
+Bundler prints a success message and exits status 0.
+
+Examples of common problems caught by bundle-doctor include:
+
+* Invalid Bundler settings
+* Mismatched Ruby versions
+* Mismatched platforms
+* Uninstalled gems
+* Missing dependencies
+
+## OPTIONS
+
+* `--quiet`:
+  Only output warnings and errors.
+
+* `--gemfile=<gemfile>`:
+  The location of the Gemfile(5) which Bundler should use. This defaults
+  to a Gemfile(5) in the current working directory. In general, Bundler
+  will assume that the location of the Gemfile(5) is also the project's
+  root and will try to find `Gemfile.lock` and `vendor/cache` relative
+  to this location.

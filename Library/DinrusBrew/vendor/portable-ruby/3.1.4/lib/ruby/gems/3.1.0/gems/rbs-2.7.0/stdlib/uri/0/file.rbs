@@ -1,0 +1,113 @@
+%a{annotate:rdoc:skip}
+module URI
+  # <!-- rdoc-file=lib/uri/file.rb -->
+  # The "file" URI is defined by RFC8089.
+  #
+  class File < Generic
+    # <!-- rdoc-file=lib/uri/file.rb -->
+    # A Default port of nil for URI::File.
+    #
+    DEFAULT_PORT: Integer?
+
+    # <!-- rdoc-file=lib/uri/file.rb -->
+    # An Array of the available components for URI::File.
+    #
+    COMPONENT: Array[Symbol]
+
+    # <!--
+    #   rdoc-file=lib/uri/file.rb
+    #   - build(args)
+    # -->
+    # ## Description
+    #
+    # Creates a new URI::File object from components, with syntax checking.
+    #
+    # The components accepted are `host` and `path`.
+    #
+    # The components should be provided either as an Array, or as a Hash with keys
+    # formed by preceding the component names with a colon.
+    #
+    # If an Array is used, the components must be passed in the order `[host,
+    # path]`.
+    #
+    # Examples:
+    #
+    #     require 'uri'
+    #
+    #     uri1 = URI::File.build(['host.example.com', '/path/file.zip'])
+    #     uri1.to_s  # => "file://host.example.com/path/file.zip"
+    #
+    #     uri2 = URI::File.build({:host => 'host.example.com',
+    #       :path => '/ruby/src'})
+    #     uri2.to_s  # => "file://host.example.com/ruby/src"
+    #
+    def self.build: (Array[String] args) -> URI::File
+                  | ({ host: String?, path: String? }) -> URI::File
+
+    # <!--
+    #   rdoc-file=lib/uri/file.rb
+    #   - set_host(v)
+    # -->
+    # Protected setter for the host component `v`.
+    #
+    # See also URI::Generic.host=.
+    #
+    def set_host: (String? v) -> String
+
+    # <!--
+    #   rdoc-file=lib/uri/file.rb
+    #   - set_port(v)
+    # -->
+    # do nothing
+    #
+    def set_port: (Integer v) -> nil
+
+    # <!--
+    #   rdoc-file=lib/uri/file.rb
+    #   - check_userinfo(user)
+    # -->
+    # raise InvalidURIError
+    #
+    def check_userinfo: (String user) -> nil
+
+    # <!--
+    #   rdoc-file=lib/uri/file.rb
+    #   - check_user(user)
+    # -->
+    # raise InvalidURIError
+    #
+    def check_user: (String user) -> nil
+
+    # <!--
+    #   rdoc-file=lib/uri/file.rb
+    #   - check_password(user)
+    # -->
+    # raise InvalidURIError
+    #
+    def check_password: (String user) -> nil
+
+    # <!--
+    #   rdoc-file=lib/uri/file.rb
+    #   - set_userinfo(v)
+    # -->
+    # do nothing
+    #
+    def set_userinfo: (String v) -> nil
+
+    # <!--
+    #   rdoc-file=lib/uri/file.rb
+    #   - set_user(v)
+    # -->
+    # do nothing
+    #
+    def set_user: (String v) -> nil
+
+    # <!--
+    #   rdoc-file=lib/uri/file.rb
+    #   - set_password(v)
+    # -->
+    # do nothing
+    #
+    def set_password: (String v) -> nil
+  end
+end

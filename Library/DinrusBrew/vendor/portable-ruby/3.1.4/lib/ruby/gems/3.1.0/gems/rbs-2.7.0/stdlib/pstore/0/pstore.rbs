@@ -1,0 +1,389 @@
+# <!-- rdoc-file=lib/pstore.rb -->
+# PStore implements a file based persistence mechanism based on a Hash.  User
+# code can store hierarchies of Ruby objects (values) into the data store file
+# by name (keys).  An object hierarchy may be just a single object.  User code
+# may later read values back from the data store or even update data, as needed.
+#
+# The transactional behavior ensures that any changes succeed or fail together.
+# This can be used to ensure that the data store is not left in a transitory
+# state, where some values were updated but others were not.
+#
+# Behind the scenes, Ruby objects are stored to the data store file with
+# Marshal.  That carries the usual limitations.  Proc objects cannot be
+# marshalled, for example.
+#
+# ## Usage example:
+#
+#     require "pstore"
+#
+#     # a mock wiki object...
+#     class WikiPage
+#       def initialize( page_name, author, contents )
+#         @page_name = page_name
+#         @revisions = Array.new
+#
+#         add_revision(author, contents)
+#       end
+#
+#       attr_reader :page_name
+#
+#       def add_revision( author, contents )
+#         @revisions << { :created  => Time.now,
+#                         :author   => author,
+#                         :contents => contents }
+#       end
+#
+#       def wiki_page_references
+#         [@page_name] + @revisions.last[:contents].scan(/\b(?:[A-Z]+[a-z]+){2,}/)
+#       end
+#
+#       # ...
+#     end
+#
+#     # create a new page...
+#     home_page = WikiPage.new( "HomePage", "James Edward Gray II",
+#                               "A page about the JoysOfDocumentation..." )
+#
+#     # then we want to update page data and the index together, or not at all...
+#     wiki = PStore.new("wiki_pages.pstore")
+#     wiki.transaction do  # begin transaction; do all of this or none of it
+#       # store page...
+#       wiki[home_page.page_name] = home_page
+#       # ensure that an index has been created...
+#       wiki[:wiki_index] ||= Array.new
+#       # update wiki index...
+#       wiki[:wiki_index].push(*home_page.wiki_page_references)
+#     end                   # commit changes to wiki data store file
+#
+#     ### Some time later... ###
+#
+#     # read wiki data...
+#     wiki.transaction(true) do  # begin read-only transaction, no changes allowed
+#       wiki.roots.each do |data_root_name|
+#         p data_root_name
+#         p wiki[data_root_name]
+#       end
+#     end
+#
+# ## Transaction modes
+#
+# By default, file integrity is only ensured as long as the operating system
+# (and the underlying hardware) doesn't raise any unexpected I/O errors. If an
+# I/O error occurs while PStore is writing to its file, then the file will
+# become corrupted.
+#
+# You can prevent this by setting *pstore.ultra_safe = true*. However, this
+# results in a minor performance loss, and only works on platforms that support
+# atomic file renames. Please consult the documentation for `ultra_safe` for
+# details.
+#
+# Needless to say, if you're storing valuable data with PStore, then you should
+# backup the PStore files from time to time.
+#
+class PStore
+  public
+
+  # <!--
+  #   rdoc-file=lib/pstore.rb
+  #   - [](name)
+  # -->
+  # Retrieves a value from the PStore file data, by *name*.  The hierarchy of Ruby
+  # objects stored under that root *name* will be returned.
+  #
+  # **WARNING**:  This method is only valid in a PStore#transaction.  It will
+  # raise PStore::Error if called at any other time.
+  #
+  def []: (untyped name) -> untyped
+
+  # <!--
+  #   rdoc-file=lib/pstore.rb
+  #   - []=(name, value)
+  # -->
+  # Stores an individual Ruby object or a hierarchy of Ruby objects in the data
+  # store file under the root *name*.  Assigning to a *name* already in the data
+  # store clobbers the old data.
+  #
+  # ## Example:
+  #
+  #     require "pstore"
+  #
+  #     store = PStore.new("data_file.pstore")
+  #     store.transaction do  # begin transaction
+  #       # load some data into the store...
+  #       store[:single_object] = "My data..."
+  #       store[:obj_hierarchy] = { "Kev Jackson" => ["rational.rb", "pstore.rb"],
+  #                                 "James Gray"  => ["erb.rb", "pstore.rb"] }
+  #     end                   # commit changes to data store file
+  #
+  # **WARNING**:  This method is only valid in a PStore#transaction and it cannot
+  # be read-only.  It will raise PStore::Error if called at any other time.
+  #
+  def []=: (untyped name, untyped value) -> untyped
+
+  # <!--
+  #   rdoc-file=lib/pstore.rb
+  #   - abort()
+  # -->
+  # Ends the current PStore#transaction, discarding any changes to the data store.
+  #
+  # ## Example:
+  #
+  #     require "pstore"
+  #
+  #     store = PStore.new("data_file.pstore")
+  #     store.transaction do  # begin transaction
+  #       store[:one] = 1     # this change is not applied, see below...
+  #       store[:two] = 2     # this change is not applied, see below...
+  #
+  #       store.abort         # end transaction here, discard all changes
+  #
+  #       store[:three] = 3   # this change is never reached
+  #     end
+  #
+  # **WARNING**:  This method is only valid in a PStore#transaction.  It will
+  # raise PStore::Error if called at any other time.
+  #
+  def abort: () -> untyped
+
+  # <!--
+  #   rdoc-file=lib/pstore.rb
+  #   - commit()
+  # -->
+  # Ends the current PStore#transaction, committing any changes to the data store
+  # immediately.
+  #
+  # ## Example:
+  #
+  #     require "pstore"
+  #
+  #     store = PStore.new("data_file.pstore")
+  #     store.transaction do  # begin transaction
+  #       # load some data into the store...
+  #       store[:one] = 1
+  #       store[:two] = 2
+  #
+  #       store.commit        # end transaction here, committing changes
+  #
+  #       store[:three] = 3   # this change is never reached
+  #     end
+  #
+  # **WARNING**:  This method is only valid in a PStore#transaction.  It will
+  # raise PStore::Error if called at any other time.
+  #
+  def commit: () -> nil
+
+  # <!--
+  #   rdoc-file=lib/pstore.rb
+  #   - delete(name)
+  # -->
+  # Removes an object hierarchy from the data store, by *name*.
+  #
+  # **WARNING**:  This method is only valid in a PStore#transaction and it cannot
+  # be read-only.  It will raise PStore::Error if called at any other time.
+  #
+  def delete: (untyped name) -> untyped
+
+  # <!--
+  #   rdoc-file=lib/pstore.rb
+  #   - fetch(name, default=PStore::Error)
+  # -->
+  # This method is just like PStore#[], save that you may also provide a *default*
+  # value for the object.  In the event the specified *name* is not found in the
+  # data store, your *default* will be returned instead.  If you do not specify a
+  # default, PStore::Error will be raised if the object is not found.
+  #
+  # **WARNING**:  This method is only valid in a PStore#transaction.  It will
+  # raise PStore::Error if called at any other time.
+  #
+  def fetch: (untyped name, ?untyped default) -> untyped
+
+  # <!--
+  #   rdoc-file=lib/pstore.rb
+  #   - path()
+  # -->
+  # Returns the path to the data store file.
+  #
+  def path: () -> untyped
+
+  # <!--
+  #   rdoc-file=lib/pstore.rb
+  #   - root?(name)
+  # -->
+  # Returns true if the supplied *name* is currently in the data store.
+  #
+  # **WARNING**:  This method is only valid in a PStore#transaction.  It will
+  # raise PStore::Error if called at any other time.
+  #
+  def root?: (untyped name) -> bool
+
+  # <!--
+  #   rdoc-file=lib/pstore.rb
+  #   - roots()
+  # -->
+  # Returns the names of all object hierarchies currently in the store.
+  #
+  # **WARNING**:  This method is only valid in a PStore#transaction.  It will
+  # raise PStore::Error if called at any other time.
+  #
+  def roots: () -> Array[untyped]
+
+  # <!--
+  #   rdoc-file=lib/pstore.rb
+  #   - transaction(read_only = false) { |pstore| ... }
+  # -->
+  # Opens a new transaction for the data store.  Code executed inside a block
+  # passed to this method may read and write data to and from the data store file.
+  #
+  # At the end of the block, changes are committed to the data store
+  # automatically.  You may exit the transaction early with a call to either
+  # PStore#commit or PStore#abort.  See those methods for details about how
+  # changes are handled.  Raising an uncaught Exception in the block is equivalent
+  # to calling PStore#abort.
+  #
+  # If *read_only* is set to `true`, you will only be allowed to read from the
+  # data store during the transaction and any attempts to change the data will
+  # raise a PStore::Error.
+  #
+  # Note that PStore does not support nested transactions.
+  #
+  def transaction: (?untyped read_only) -> untyped
+
+  # <!-- rdoc-file=lib/pstore.rb -->
+  # Whether PStore should do its best to prevent file corruptions, even when under
+  # unlikely-to-occur error conditions such as out-of-space conditions and other
+  # unusual OS filesystem errors. Setting this flag comes at the price in the form
+  # of a performance loss.
+  #
+  # This flag only has effect on platforms on which file renames are atomic (e.g.
+  # all POSIX platforms: Linux, MacOS X, FreeBSD, etc). The default value is
+  # false.
+  #
+  def ultra_safe: () -> untyped
+
+  # <!-- rdoc-file=lib/pstore.rb -->
+  # Whether PStore should do its best to prevent file corruptions, even when under
+  # unlikely-to-occur error conditions such as out-of-space conditions and other
+  # unusual OS filesystem errors. Setting this flag comes at the price in the form
+  # of a performance loss.
+  #
+  # This flag only has effect on platforms on which file renames are atomic (e.g.
+  # all POSIX platforms: Linux, MacOS X, FreeBSD, etc). The default value is
+  # false.
+  #
+  def ultra_safe=: (untyped) -> untyped
+
+  private
+
+  def dump: (untyped table) -> untyped
+
+  # <!--
+  #   rdoc-file=lib/pstore.rb
+  #   - empty_marshal_checksum()
+  # -->
+  #
+  def empty_marshal_checksum: () -> untyped
+
+  # <!--
+  #   rdoc-file=lib/pstore.rb
+  #   - empty_marshal_data()
+  # -->
+  #
+  def empty_marshal_data: () -> untyped
+
+  # <!--
+  #   rdoc-file=lib/pstore.rb
+  #   - in_transaction()
+  # -->
+  # Raises PStore::Error if the calling code is not in a PStore#transaction.
+  #
+  def in_transaction: () -> untyped
+
+  # <!--
+  #   rdoc-file=lib/pstore.rb
+  #   - in_transaction_wr()
+  # -->
+  # Raises PStore::Error if the calling code is not in a PStore#transaction or if
+  # the code is in a read-only PStore#transaction.
+  #
+  def in_transaction_wr: () -> untyped
+
+  # <!--
+  #   rdoc-file=lib/pstore.rb
+  #   - new(file, thread_safe = false)
+  # -->
+  # To construct a PStore object, pass in the *file* path where you would like the
+  # data to be stored.
+  #
+  # PStore objects are always reentrant. But if *thread_safe* is set to true, then
+  # it will become thread-safe at the cost of a minor performance hit.
+  #
+  def initialize: (untyped file, ?boolish thread_safe) -> untyped
+
+  def load: (untyped content) -> untyped
+
+  # <!--
+  #   rdoc-file=lib/pstore.rb
+  #   - load_data(file, read_only)
+  # -->
+  # Load the given PStore file. If `read_only` is true, the unmarshalled Hash will
+  # be returned. If `read_only` is false, a 3-tuple will be returned: the
+  # unmarshalled Hash, a checksum of the data, and the size of the data.
+  #
+  def load_data: (untyped file, untyped read_only) -> untyped
+
+  # <!--
+  #   rdoc-file=lib/pstore.rb
+  #   - on_windows?()
+  # -->
+  #
+  def on_windows?: () -> bool
+
+  # <!--
+  #   rdoc-file=lib/pstore.rb
+  #   - open_and_lock_file(filename, read_only)
+  # -->
+  # Open the specified filename (either in read-only mode or in read-write mode)
+  # and lock it for reading or writing.
+  #
+  # The opened File object will be returned. If *read_only* is true, and the file
+  # does not exist, then nil will be returned.
+  #
+  # All exceptions are propagated.
+  #
+  def open_and_lock_file: (untyped filename, untyped read_only) -> untyped
+
+  # <!--
+  #   rdoc-file=lib/pstore.rb
+  #   - save_data(original_checksum, original_file_size, file)
+  # -->
+  #
+  def save_data: (untyped original_checksum, untyped original_file_size, untyped file) -> untyped
+
+  # <!--
+  #   rdoc-file=lib/pstore.rb
+  #   - save_data_with_atomic_file_rename_strategy(data, file)
+  # -->
+  #
+  def save_data_with_atomic_file_rename_strategy: (untyped data, untyped file) -> untyped
+
+  # <!--
+  #   rdoc-file=lib/pstore.rb
+  #   - save_data_with_fast_strategy(data, file)
+  # -->
+  #
+  def save_data_with_fast_strategy: (untyped data, untyped file) -> untyped
+end
+
+PStore::EMPTY_MARSHAL_CHECKSUM: String
+
+PStore::EMPTY_MARSHAL_DATA: String
+
+PStore::EMPTY_STRING: String
+
+PStore::RDWR_ACCESS: Hash[untyped, untyped]
+
+PStore::RD_ACCESS: Hash[untyped, untyped]
+
+PStore::VERSION: String
+
+PStore::WR_ACCESS: Hash[untyped, untyped]

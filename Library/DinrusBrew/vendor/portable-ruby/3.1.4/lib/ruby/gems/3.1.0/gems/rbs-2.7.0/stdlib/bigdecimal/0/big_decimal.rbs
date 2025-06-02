@@ -1,0 +1,1765 @@
+# <!-- rdoc-file=ext/bigdecimal/bigdecimal.c -->
+# BigDecimal provides arbitrary-precision floating point decimal arithmetic.
+#
+# ## Introduction
+#
+# Ruby provides built-in support for arbitrary precision integer arithmetic.
+#
+# For example:
+#
+#     42**13  #=>   1265437718438866624512
+#
+# BigDecimal provides similar support for very large or very accurate floating
+# point numbers.
+#
+# Decimal arithmetic is also useful for general calculation, because it provides
+# the correct answers people expect--whereas normal binary floating point
+# arithmetic often introduces subtle errors because of the conversion between
+# base 10 and base 2.
+#
+# For example, try:
+#
+#     sum = 0
+#     10_000.times do
+#       sum = sum + 0.0001
+#     end
+#     print sum #=> 0.9999999999999062
+#
+# and contrast with the output from:
+#
+#     require 'bigdecimal'
+#
+#     sum = BigDecimal("0")
+#     10_000.times do
+#       sum = sum + BigDecimal("0.0001")
+#     end
+#     print sum #=> 0.1E1
+#
+# Similarly:
+#
+#     (BigDecimal("1.2") - BigDecimal("1.0")) == BigDecimal("0.2") #=> true
+#
+#     (1.2 - 1.0) == 0.2 #=> false
+#
+# ## A Note About Precision
+#
+# For a calculation using a BigDecimal and another `value`, the precision of the
+# result depends on the type of `value`:
+#
+# *   If `value` is a Float, the precision is Float::DIG + 1.
+# *   If `value` is a Rational, the precision is larger than Float::DIG + 1.
+# *   If `value` is a BigDecimal, the precision is `value`'s precision in the
+#     internal representation, which is platform-dependent.
+# *   If `value` is other object, the precision is determined by the result of
+#     +BigDecimal(value)+.
+#
+#
+# ## Special features of accurate decimal arithmetic
+#
+# Because BigDecimal is more accurate than normal binary floating point
+# arithmetic, it requires some special values.
+#
+# ### Infinity
+#
+# BigDecimal sometimes needs to return infinity, for example if you divide a
+# value by zero.
+#
+#     BigDecimal("1.0") / BigDecimal("0.0")  #=> Infinity
+#     BigDecimal("-1.0") / BigDecimal("0.0")  #=> -Infinity
+#
+# You can represent infinite numbers to BigDecimal using the strings
+# `'Infinity'`, `'+Infinity'` and `'-Infinity'` (case-sensitive)
+#
+# ### Not a Number
+#
+# When a computation results in an undefined value, the special value `NaN` (for
+# 'not a number') is returned.
+#
+# Example:
+#
+#     BigDecimal("0.0") / BigDecimal("0.0") #=> NaN
+#
+# You can also create undefined values.
+#
+# NaN is never considered to be the same as any other value, even NaN itself:
+#
+#     n = BigDecimal('NaN')
+#     n == 0.0 #=> false
+#     n == n #=> false
+#
+# ### Positive and negative zero
+#
+# If a computation results in a value which is too small to be represented as a
+# BigDecimal within the currently specified limits of precision, zero must be
+# returned.
+#
+# If the value which is too small to be represented is negative, a BigDecimal
+# value of negative zero is returned.
+#
+#     BigDecimal("1.0") / BigDecimal("-Infinity") #=> -0.0
+#
+# If the value is positive, a value of positive zero is returned.
+#
+#     BigDecimal("1.0") / BigDecimal("Infinity") #=> 0.0
+#
+# (See BigDecimal.mode for how to specify limits of precision.)
+#
+# Note that `-0.0` and `0.0` are considered to be the same for the purposes of
+# comparison.
+#
+# Note also that in mathematics, there is no particular concept of negative or
+# positive zero; true mathematical zero has no sign.
+#
+# ## bigdecimal/util
+#
+# When you require `bigdecimal/util`, the #to_d method will be available on
+# BigDecimal and the native Integer, Float, Rational, and String classes:
+#
+#     require 'bigdecimal/util'
+#
+#     42.to_d         # => 0.42e2
+#     0.5.to_d        # => 0.5e0
+#     (2/3r).to_d(3)  # => 0.667e0
+#     "0.5".to_d      # => 0.5e0
+#
+# ## License
+#
+# Copyright (C) 2002 by Shigeo Kobayashi <shigeo@tinyforest.gr.jp>.
+#
+# BigDecimal is released under the Ruby and 2-clause BSD licenses. See
+# LICENSE.txt for details.
+#
+# Maintained by mrkn <mrkn@mrkn.jp> and ruby-core members.
+#
+# Documented by zzak <zachary@zacharyscott.net>, mathew <meta@pobox.com>, and
+# many other contributors.
+#
+class BigDecimal < Numeric
+  # <!--
+  #   rdoc-file=ext/bigdecimal/bigdecimal.c
+  #   - _load(p1)
+  # -->
+  # Internal method used to provide marshalling support. See the Marshal module.
+  #
+  def self._load: (String) -> BigDecimal
+
+  # <!--
+  #   rdoc-file=ext/bigdecimal/bigdecimal.c
+  #   - BigDecimal.double_fig -> integer
+  # -->
+  # Returns the number of digits a Float object is allowed to have; the result is
+  # system-dependent:
+  #
+  #     BigDecimal.double_fig # => 16
+  #
+  def self.double_fig: () -> Integer
+
+  # <!--
+  #   rdoc-file=ext/bigdecimal/bigdecimal.c
+  #   - interpret_loosely(p1)
+  # -->
+  #
+  def self.interpret_loosely: (string) -> BigDecimal
+
+  # <!--
+  #   rdoc-file=ext/bigdecimal/bigdecimal.c
+  #   - BigDecimal.limit(digits)
+  # -->
+  # Limit the number of significant digits in newly created BigDecimal numbers to
+  # the specified value. Rounding is performed as necessary, as specified by
+  # BigDecimal.mode.
+  #
+  # A limit of 0, the default, means no upper limit.
+  #
+  # The limit specified by this method takes less priority over any limit
+  # specified to instance methods such as ceil, floor, truncate, or round.
+  #
+  def self.limit: (?Integer? digits) -> Integer
+
+  # <!--
+  #   rdoc-file=ext/bigdecimal/bigdecimal.c
+  #   - BigDecimal.mode(mode, setting = nil) -> integer
+  # -->
+  # Returns an integer representing the mode settings for exception handling and
+  # rounding.
+  #
+  # These modes control exception handling:
+  #
+  # *   BigDecimal::EXCEPTION_NaN.
+  # *   BigDecimal::EXCEPTION_INFINITY.
+  # *   BigDecimal::EXCEPTION_UNDERFLOW.
+  # *   BigDecimal::EXCEPTION_OVERFLOW.
+  # *   BigDecimal::EXCEPTION_ZERODIVIDE.
+  # *   BigDecimal::EXCEPTION_ALL.
+  #
+  #
+  # Values for `setting` for exception handling:
+  #
+  # *   `true`: sets the given `mode` to `true`.
+  # *   `false`: sets the given `mode` to `false`.
+  # *   `nil`: does not modify the mode settings.
+  #
+  #
+  # You can use method BigDecimal.save_exception_mode to temporarily change, and
+  # then automatically restore, exception modes.
+  #
+  # For clarity, some examples below begin by setting all exception modes to
+  # `false`.
+  #
+  # This mode controls the way rounding is to be performed:
+  #
+  # *   BigDecimal::ROUND_MODE
+  #
+  #
+  # You can use method BigDecimal.save_rounding_mode to temporarily change, and
+  # then automatically restore, the rounding mode.
+  #
+  # **NaNs**
+  #
+  # Mode BigDecimal::EXCEPTION_NaN controls behavior when a BigDecimal NaN is
+  # created.
+  #
+  # Settings:
+  #
+  # *   `false` (default): Returns `BigDecimal('NaN')`.
+  # *   `true`: Raises FloatDomainError.
+  #
+  #
+  # Examples:
+  #
+  #     BigDecimal.mode(BigDecimal::EXCEPTION_ALL, false) # => 0
+  #     BigDecimal('NaN')                                 # => NaN
+  #     BigDecimal.mode(BigDecimal::EXCEPTION_NaN, true)  # => 2
+  #     BigDecimal('NaN') # Raises FloatDomainError
+  #
+  # **Infinities**
+  #
+  # Mode BigDecimal::EXCEPTION_INFINITY controls behavior when a BigDecimal
+  # Infinity or -Infinity is created. Settings:
+  #
+  # *   `false` (default): Returns `BigDecimal('Infinity')` or
+  #     `BigDecimal('-Infinity')`.
+  # *   `true`: Raises FloatDomainError.
+  #
+  #
+  # Examples:
+  #
+  #     BigDecimal.mode(BigDecimal::EXCEPTION_ALL, false)     # => 0
+  #     BigDecimal('Infinity')                                # => Infinity
+  #     BigDecimal('-Infinity')                               # => -Infinity
+  #     BigDecimal.mode(BigDecimal::EXCEPTION_INFINITY, true) # => 1
+  #     BigDecimal('Infinity')  # Raises FloatDomainError
+  #     BigDecimal('-Infinity') # Raises FloatDomainError
+  #
+  # **Underflow**
+  #
+  # Mode BigDecimal::EXCEPTION_UNDERFLOW controls behavior when a BigDecimal
+  # underflow occurs. Settings:
+  #
+  # *   `false` (default): Returns `BigDecimal('0')` or `BigDecimal('-Infinity')`.
+  # *   `true`: Raises FloatDomainError.
+  #
+  #
+  # Examples:
+  #
+  #     BigDecimal.mode(BigDecimal::EXCEPTION_ALL, false)      # => 0
+  #     def flow_under
+  #       x = BigDecimal('0.1')
+  #       100.times { x *= x }
+  #     end
+  #     flow_under                                             # => 100
+  #     BigDecimal.mode(BigDecimal::EXCEPTION_UNDERFLOW, true) # => 4
+  #     flow_under # Raises FloatDomainError
+  #
+  # **Overflow**
+  #
+  # Mode BigDecimal::EXCEPTION_OVERFLOW controls behavior when a BigDecimal
+  # overflow occurs. Settings:
+  #
+  # *   `false` (default): Returns `BigDecimal('Infinity')` or
+  #     `BigDecimal('-Infinity')`.
+  # *   `true`: Raises FloatDomainError.
+  #
+  #
+  # Examples:
+  #
+  #     BigDecimal.mode(BigDecimal::EXCEPTION_ALL, false)     # => 0
+  #     def flow_over
+  #       x = BigDecimal('10')
+  #       100.times { x *= x }
+  #     end
+  #     flow_over                                             # => 100
+  #     BigDecimal.mode(BigDecimal::EXCEPTION_OVERFLOW, true) # => 1
+  #     flow_over # Raises FloatDomainError
+  #
+  # **Zero Division**
+  #
+  # Mode BigDecimal::EXCEPTION_ZERODIVIDE controls behavior when a zero-division
+  # occurs. Settings:
+  #
+  # *   `false` (default): Returns `BigDecimal('Infinity')` or
+  #     `BigDecimal('-Infinity')`.
+  # *   `true`: Raises FloatDomainError.
+  #
+  #
+  # Examples:
+  #
+  #     BigDecimal.mode(BigDecimal::EXCEPTION_ALL, false)       # => 0
+  #     one = BigDecimal('1')
+  #     zero = BigDecimal('0')
+  #     one / zero                                              # => Infinity
+  #     BigDecimal.mode(BigDecimal::EXCEPTION_ZERODIVIDE, true) # => 16
+  #     one / zero # Raises FloatDomainError
+  #
+  # **All Exceptions**
+  #
+  # Mode BigDecimal::EXCEPTION_ALL controls all of the above:
+  #
+  #     BigDecimal.mode(BigDecimal::EXCEPTION_ALL, false) # => 0
+  #     BigDecimal.mode(BigDecimal::EXCEPTION_ALL, true)  # => 23
+  #
+  # **Rounding**
+  #
+  # Mode BigDecimal::ROUND_MODE controls the way rounding is to be performed; its
+  # `setting` values are:
+  #
+  # *   `ROUND_UP`: Round away from zero. Aliased as `:up`.
+  # *   `ROUND_DOWN`: Round toward zero. Aliased as `:down` and `:truncate`.
+  # *   `ROUND_HALF_UP`: Round toward the nearest neighbor; if the neighbors are
+  #     equidistant, round away from zero. Aliased as `:half_up` and `:default`.
+  # *   `ROUND_HALF_DOWN`: Round toward the nearest neighbor; if the neighbors are
+  #     equidistant, round toward zero. Aliased as `:half_down`.
+  # *   `ROUND_HALF_EVEN` (Banker's rounding): Round toward the nearest neighbor;
+  #     if the neighbors are equidistant, round toward the even neighbor. Aliased
+  #     as `:half_even` and `:banker`.
+  # *   `ROUND_CEILING`: Round toward positive infinity. Aliased as `:ceiling` and
+  #     `:ceil`.
+  # *   `ROUND_FLOOR`: Round toward negative infinity. Aliased as `:floor:`.
+  #
+  def self.mode: (Integer mode, ?Integer? value) -> Integer?
+
+  # <!--
+  #   rdoc-file=ext/bigdecimal/bigdecimal.c
+  #   - BigDecimal.save_exception_mode { ... }
+  # -->
+  # Execute the provided block, but preserve the exception mode
+  #
+  #     BigDecimal.save_exception_mode do
+  #       BigDecimal.mode(BigDecimal::EXCEPTION_OVERFLOW, false)
+  #       BigDecimal.mode(BigDecimal::EXCEPTION_NaN, false)
+  #
+  #       BigDecimal(BigDecimal('Infinity'))
+  #       BigDecimal(BigDecimal('-Infinity'))
+  #       BigDecimal(BigDecimal('NaN'))
+  #     end
+  #
+  # For use with the BigDecimal::EXCEPTION_*
+  #
+  # See BigDecimal.mode
+  #
+  def self.save_exception_mode: () { (?nil) -> void } -> void
+
+  # <!--
+  #   rdoc-file=ext/bigdecimal/bigdecimal.c
+  #   - BigDecimal.save_limit { ... }
+  # -->
+  # Execute the provided block, but preserve the precision limit
+  #
+  #     BigDecimal.limit(100)
+  #     puts BigDecimal.limit
+  #     BigDecimal.save_limit do
+  #         BigDecimal.limit(200)
+  #         puts BigDecimal.limit
+  #     end
+  #     puts BigDecimal.limit
+  #
+  def self.save_limit: () { (?nil) -> void } -> void
+
+  # <!--
+  #   rdoc-file=ext/bigdecimal/bigdecimal.c
+  #   - BigDecimal.save_rounding_mode { ... }
+  # -->
+  # Execute the provided block, but preserve the rounding mode
+  #
+  #     BigDecimal.save_rounding_mode do
+  #       BigDecimal.mode(BigDecimal::ROUND_MODE, :up)
+  #       puts BigDecimal.mode(BigDecimal::ROUND_MODE)
+  #     end
+  #
+  # For use with the BigDecimal::ROUND_*
+  #
+  # See BigDecimal.mode
+  #
+  def self.save_rounding_mode: () { (?nil) -> void } -> void
+
+  public
+
+  # <!--
+  #   rdoc-file=ext/bigdecimal/bigdecimal.c
+  #   - a % b
+  #   - a.modulo(b)
+  # -->
+  # Returns the modulus from dividing by b.
+  #
+  # See BigDecimal#divmod.
+  #
+  def %: (Numeric) -> BigDecimal
+
+  # <!--
+  #   rdoc-file=ext/bigdecimal/bigdecimal.c
+  #   - *(p1)
+  # -->
+  #
+  def *: (Numeric) -> BigDecimal
+
+  # <!--
+  #   rdoc-file=ext/bigdecimal/bigdecimal.c
+  #   - self ** other -> bigdecimal
+  # -->
+  # Returns the BigDecimal value of `self` raised to power `other`:
+  #
+  #     b = BigDecimal('3.14')
+  #     b ** 2              # => 0.98596e1
+  #     b ** 2.0            # => 0.98596e1
+  #     b ** Rational(2, 1) # => 0.98596e1
+  #
+  # Related: BigDecimal#power.
+  #
+  def **: (Numeric) -> BigDecimal
+
+  # <!--
+  #   rdoc-file=ext/bigdecimal/bigdecimal.c
+  #   - self + value -> bigdecimal
+  # -->
+  # Returns the BigDecimal sum of `self` and `value`:
+  #
+  #     b = BigDecimal('111111.111') # => 0.111111111e6
+  #     b + 2                        # => 0.111113111e6
+  #     b + 2.0                      # => 0.111113111e6
+  #     b + Rational(2, 1)           # => 0.111113111e6
+  #     b + Complex(2, 0)            # => (0.111113111e6+0i)
+  #
+  # See the [Note About
+  # Precision](BigDecimal.html#class-BigDecimal-label-A+Note+About+Precision).
+  #
+  def +: (Numeric) -> BigDecimal
+
+  # <!--
+  #   rdoc-file=ext/bigdecimal/bigdecimal.c
+  #   - +big_decimal -> self
+  # -->
+  # Returns `self`:
+  #
+  #     +BigDecimal(5)  # => 0.5e1
+  #     +BigDecimal(-5) # => -0.5e1
+  #
+  def +@: () -> BigDecimal
+
+  # <!--
+  #   rdoc-file=ext/bigdecimal/bigdecimal.c
+  #   - self - value -> bigdecimal
+  # -->
+  # Returns the BigDecimal difference of `self` and `value`:
+  #
+  #     b = BigDecimal('333333.333') # => 0.333333333e6
+  #     b - 2                        # => 0.333331333e6
+  #     b - 2.0                      # => 0.333331333e6
+  #     b - Rational(2, 1)           # => 0.333331333e6
+  #     b - Complex(2, 0)            # => (0.333331333e6+0i)
+  #
+  # See the [Note About
+  # Precision](BigDecimal.html#class-BigDecimal-label-A+Note+About+Precision).
+  #
+  def -: (Numeric) -> BigDecimal
+
+  # <!--
+  #   rdoc-file=ext/bigdecimal/bigdecimal.c
+  #   - -self -> bigdecimal
+  # -->
+  # Returns the BigDecimal negation of self:
+  #
+  #     b0 = BigDecimal('1.5')
+  #     b1 = -b0 # => -0.15e1
+  #     b2 = -b1 # => 0.15e1
+  #
+  def -@: () -> BigDecimal
+
+  # <!--
+  #   rdoc-file=ext/bigdecimal/bigdecimal.c
+  #   - a / b   -> bigdecimal
+  # -->
+  # Divide by the specified value.
+  #
+  # The result precision will be the precision of the larger operand, but its
+  # minimum is 2*Float::DIG.
+  #
+  # See BigDecimal#div. See BigDecimal#quo.
+  #
+  def /: (Numeric) -> BigDecimal
+
+  # <!--
+  #   rdoc-file=ext/bigdecimal/bigdecimal.c
+  #   - self < other -> true or false
+  # -->
+  # Returns `true` if `self` is less than `other`, `false` otherwise:
+  #
+  #     b = BigDecimal('1.5') # => 0.15e1
+  #     b < 2                 # => true
+  #     b < 2.0               # => true
+  #     b < Rational(2, 1)    # => true
+  #     b < 1.5               # => false
+  #
+  # Raises an exception if the comparison cannot be made.
+  #
+  def <: (Numeric) -> bool
+
+  # <!--
+  #   rdoc-file=ext/bigdecimal/bigdecimal.c
+  #   - self <= other -> true or false
+  # -->
+  # Returns `true` if `self` is less or equal to than `other`, `false` otherwise:
+  #
+  #     b = BigDecimal('1.5') # => 0.15e1
+  #     b <= 2                # => true
+  #     b <= 2.0              # => true
+  #     b <= Rational(2, 1)   # => true
+  #     b <= 1.5              # => true
+  #     b < 1                 # => false
+  #
+  # Raises an exception if the comparison cannot be made.
+  #
+  def <=: (Numeric) -> bool
+
+  # <!--
+  #   rdoc-file=ext/bigdecimal/bigdecimal.c
+  #   - <=>(p1)
+  # -->
+  # The comparison operator. a <=> b is 0 if a == b, 1 if a > b, -1 if a < b.
+  #
+  def <=>: (untyped) -> Integer?
+
+  # <!--
+  #   rdoc-file=ext/bigdecimal/bigdecimal.c
+  #   - ==(p1)
+  # -->
+  # Tests for value equality; returns true if the values are equal.
+  #
+  # The == and === operators and the eql? method have the same implementation for
+  # BigDecimal.
+  #
+  # Values may be coerced to perform the comparison:
+  #
+  #     BigDecimal('1.0') == 1.0  #=> true
+  #
+  def ==: (untyped) -> bool
+
+  # <!-- rdoc-file=ext/bigdecimal/bigdecimal.c -->
+  # Tests for value equality; returns true if the values are equal.
+  #
+  # The == and === operators and the eql? method have the same implementation for
+  # BigDecimal.
+  #
+  # Values may be coerced to perform the comparison:
+  #
+  #     BigDecimal('1.0') == 1.0  #=> true
+  #
+  def ===: (untyped) -> bool
+
+  # <!--
+  #   rdoc-file=ext/bigdecimal/bigdecimal.c
+  #   - self > other -> true or false
+  # -->
+  # Returns `true` if `self` is greater than `other`, `false` otherwise:
+  #
+  #     b = BigDecimal('1.5')
+  #     b > 1              # => true
+  #     b > 1.0            # => true
+  #     b > Rational(1, 1) # => true
+  #     b > 2              # => false
+  #
+  # Raises an exception if the comparison cannot be made.
+  #
+  def >: (Numeric) -> bool
+
+  # <!--
+  #   rdoc-file=ext/bigdecimal/bigdecimal.c
+  #   - self >= other -> true or false
+  # -->
+  # Returns `true` if `self` is greater than or equal to `other`, `false`
+  # otherwise:
+  #
+  #     b = BigDecimal('1.5')
+  #     b >= 1              # => true
+  #     b >= 1.0            # => true
+  #     b >= Rational(1, 1) # => true
+  #     b >= 1.5            # => true
+  #     b > 2               # => false
+  #
+  # Raises an exception if the comparison cannot be made.
+  #
+  def >=: (Numeric) -> bool
+
+  # <!--
+  #   rdoc-file=ext/bigdecimal/bigdecimal.c
+  #   - _dump -> string
+  # -->
+  # Returns a string representing the marshalling of `self`. See module Marshal.
+  #
+  #     inf = BigDecimal('Infinity') # => Infinity
+  #     dumped = inf._dump           # => "9:Infinity"
+  #     BigDecimal._load(dumped)     # => Infinity
+  #
+  def _dump: (?untyped) -> String
+
+  # <!--
+  #   rdoc-file=ext/bigdecimal/bigdecimal.c
+  #   - abs -> bigdecimal
+  # -->
+  # Returns the BigDecimal absolute value of `self`:
+  #
+  #     BigDecimal('5').abs  # => 0.5e1
+  #     BigDecimal('-3').abs # => 0.3e1
+  #
+  def abs: () -> BigDecimal
+
+  # <!--
+  #   rdoc-file=ext/bigdecimal/bigdecimal.c
+  #   - add(value, ndigits) -> new_bigdecimal
+  # -->
+  # Returns the BigDecimal sum of `self` and `value` with a precision of `ndigits`
+  # decimal digits.
+  #
+  # When `ndigits` is less than the number of significant digits in the sum, the
+  # sum is rounded to that number of digits, according to the current rounding
+  # mode; see BigDecimal.mode.
+  #
+  # Examples:
+  #
+  #     # Set the rounding mode.
+  #     BigDecimal.mode(BigDecimal::ROUND_MODE, :half_up)
+  #     b = BigDecimal('111111.111')
+  #     b.add(1, 0)               # => 0.111112111e6
+  #     b.add(1, 3)               # => 0.111e6
+  #     b.add(1, 6)               # => 0.111112e6
+  #     b.add(1, 15)              # => 0.111112111e6
+  #     b.add(1.0, 15)            # => 0.111112111e6
+  #     b.add(Rational(1, 1), 15) # => 0.111112111e6
+  #
+  def add: (Numeric value, Integer digits) -> BigDecimal
+
+  # <!--
+  #   rdoc-file=ext/bigdecimal/bigdecimal.c
+  #   - ceil(n)
+  # -->
+  # Return the smallest integer greater than or equal to the value, as a
+  # BigDecimal.
+  #
+  #     BigDecimal('3.14159').ceil #=> 4
+  #     BigDecimal('-9.1').ceil #=> -9
+  #
+  # If n is specified and positive, the fractional part of the result has no more
+  # than that many digits.
+  #
+  # If n is specified and negative, at least that many digits to the left of the
+  # decimal point will be 0 in the result.
+  #
+  #     BigDecimal('3.14159').ceil(3) #=> 3.142
+  #     BigDecimal('13345.234').ceil(-2) #=> 13400.0
+  #
+  def ceil: () -> Integer
+          | (int n) -> BigDecimal
+
+  # <!--
+  #   rdoc-file=ext/bigdecimal/bigdecimal.c
+  #   - clone()
+  # -->
+  #
+  def clone: () -> self
+
+  # <!--
+  #   rdoc-file=ext/bigdecimal/bigdecimal.c
+  #   - coerce(p1)
+  # -->
+  # The coerce method provides support for Ruby type coercion. It is not enabled
+  # by default.
+  #
+  # This means that binary operations like + * / or - can often be performed on a
+  # BigDecimal and an object of another type, if the other object can be coerced
+  # into a BigDecimal value.
+  #
+  # e.g.
+  #     a = BigDecimal("1.0")
+  #     b = a / 2.0 #=> 0.5
+  #
+  # Note that coercing a String to a BigDecimal is not supported by default; it
+  # requires a special compile-time option when building Ruby.
+  #
+  def coerce: (Numeric) -> [ BigDecimal, BigDecimal ]
+
+  # <!--
+  #   rdoc-file=ext/bigdecimal/bigdecimal.c
+  #   - div(value)  -> integer
+  #   - div(value, digits)  -> bigdecimal or integer
+  # -->
+  # Divide by the specified value.
+  #
+  # digits
+  # :   If specified and less than the number of significant digits of the result,
+  #     the result is rounded to that number of digits, according to
+  #     BigDecimal.mode.
+  #
+  #     If digits is 0, the result is the same as for the / operator or #quo.
+  #
+  #     If digits is not specified, the result is an integer, by analogy with
+  #     Float#div; see also BigDecimal#divmod.
+  #
+  #
+  # See BigDecimal#/. See BigDecimal#quo.
+  #
+  # Examples:
+  #
+  #     a = BigDecimal("4")
+  #     b = BigDecimal("3")
+  #
+  #     a.div(b, 3)  # => 0.133e1
+  #
+  #     a.div(b, 0)  # => 0.1333333333333333333e1
+  #     a / b        # => 0.1333333333333333333e1
+  #     a.quo(b)     # => 0.1333333333333333333e1
+  #
+  #     a.div(b)     # => 1
+  #
+  def div: (Numeric value) -> Integer
+         | (Numeric value, int digits) -> BigDecimal
+
+  # <!--
+  #   rdoc-file=ext/bigdecimal/bigdecimal.c
+  #   - divmod(value)
+  # -->
+  # Divides by the specified value, and returns the quotient and modulus as
+  # BigDecimal numbers. The quotient is rounded towards negative infinity.
+  #
+  # For example:
+  #
+  #     require 'bigdecimal'
+  #
+  #     a = BigDecimal("42")
+  #     b = BigDecimal("9")
+  #
+  #     q, m = a.divmod(b)
+  #
+  #     c = q * b + m
+  #
+  #     a == c  #=> true
+  #
+  # The quotient q is (a/b).floor, and the modulus is the amount that must be
+  # added to q * b to get a.
+  #
+  def divmod: (Numeric) -> [ BigDecimal, BigDecimal ]
+
+  # <!--
+  #   rdoc-file=ext/bigdecimal/bigdecimal.c
+  #   - dup()
+  # -->
+  #
+  def dup: () -> self
+
+  # <!-- rdoc-file=ext/bigdecimal/bigdecimal.c -->
+  # Tests for value equality; returns true if the values are equal.
+  #
+  # The == and === operators and the eql? method have the same implementation for
+  # BigDecimal.
+  #
+  # Values may be coerced to perform the comparison:
+  #
+  #     BigDecimal('1.0') == 1.0  #=> true
+  #
+  def eql?: (untyped) -> bool
+
+  # <!--
+  #   rdoc-file=ext/bigdecimal/bigdecimal.c
+  #   - exponent()
+  # -->
+  # Returns the exponent of the BigDecimal number, as an Integer.
+  #
+  # If the number can be represented as 0.xxxxxx*10**n where xxxxxx is a string of
+  # digits with no leading zeros, then n is the exponent.
+  #
+  def exponent: () -> Integer
+
+  # <!--
+  #   rdoc-file=ext/bigdecimal/bigdecimal.c
+  #   - finite?()
+  # -->
+  # Returns True if the value is finite (not NaN or infinite).
+  #
+  def finite?: () -> bool
+
+  # <!--
+  #   rdoc-file=ext/bigdecimal/bigdecimal.c
+  #   - fix()
+  # -->
+  # Return the integer part of the number, as a BigDecimal.
+  #
+  def fix: () -> BigDecimal
+
+  # <!--
+  #   rdoc-file=ext/bigdecimal/bigdecimal.c
+  #   - floor(n)
+  # -->
+  # Return the largest integer less than or equal to the value, as a BigDecimal.
+  #
+  #     BigDecimal('3.14159').floor #=> 3
+  #     BigDecimal('-9.1').floor #=> -10
+  #
+  # If n is specified and positive, the fractional part of the result has no more
+  # than that many digits.
+  #
+  # If n is specified and negative, at least that many digits to the left of the
+  # decimal point will be 0 in the result.
+  #
+  #     BigDecimal('3.14159').floor(3) #=> 3.141
+  #     BigDecimal('13345.234').floor(-2) #=> 13300.0
+  #
+  def floor: () -> Integer
+           | (int n) -> BigDecimal
+
+  # <!--
+  #   rdoc-file=ext/bigdecimal/bigdecimal.c
+  #   - frac()
+  # -->
+  # Return the fractional part of the number, as a BigDecimal.
+  #
+  def frac: () -> BigDecimal
+
+  # <!--
+  #   rdoc-file=ext/bigdecimal/bigdecimal.c
+  #   - hash -> integer
+  # -->
+  # Returns the integer hash value for `self`.
+  #
+  # Two instances of BigDecimal have the same hash value if and only if they have
+  # equal:
+  #
+  # *   Sign.
+  # *   Fractional part.
+  # *   Exponent.
+  #
+  def hash: () -> Integer
+
+  # <!--
+  #   rdoc-file=ext/bigdecimal/bigdecimal.c
+  #   - infinite?()
+  # -->
+  # Returns nil, -1, or +1 depending on whether the value is finite, -Infinity, or
+  # +Infinity.
+  #
+  def infinite?: () -> Integer?
+
+  # <!--
+  #   rdoc-file=ext/bigdecimal/bigdecimal.c
+  #   - inspect()
+  # -->
+  # Returns a string representation of self.
+  #
+  #     BigDecimal("1234.5678").inspect
+  #       #=> "0.12345678e4"
+  #
+  def inspect: () -> String
+
+  # <!-- rdoc-file=ext/bigdecimal/bigdecimal.c -->
+  # Returns the modulus from dividing by b.
+  #
+  # See BigDecimal#divmod.
+  #
+  def modulo: (Numeric b) -> BigDecimal
+
+  # <!--
+  #   rdoc-file=ext/bigdecimal/bigdecimal.c
+  #   - mult(other, ndigits) -> bigdecimal
+  # -->
+  # Returns the BigDecimal product of `self` and `value` with a precision of
+  # `ndigits` decimal digits.
+  #
+  # When `ndigits` is less than the number of significant digits in the sum, the
+  # sum is rounded to that number of digits, according to the current rounding
+  # mode; see BigDecimal.mode.
+  #
+  # Examples:
+  #
+  #     # Set the rounding mode.
+  #     BigDecimal.mode(BigDecimal::ROUND_MODE, :half_up)
+  #     b = BigDecimal('555555.555')
+  #     b.mult(3, 0)              # => 0.1666666665e7
+  #     b.mult(3, 3)              # => 0.167e7
+  #     b.mult(3, 6)              # => 0.166667e7
+  #     b.mult(3, 15)             # => 0.1666666665e7
+  #     b.mult(3.0, 0)            # => 0.1666666665e7
+  #     b.mult(Rational(3, 1), 0) # => 0.1666666665e7
+  #     b.mult(Complex(3, 0), 0)  # => (0.1666666665e7+0.0i)
+  #
+  def mult: (Numeric value, int digits) -> BigDecimal
+
+  # <!--
+  #   rdoc-file=ext/bigdecimal/bigdecimal.c
+  #   - nan?()
+  # -->
+  # Returns True if the value is Not a Number.
+  #
+  def nan?: () -> bool
+
+  # <!--
+  #   rdoc-file=ext/bigdecimal/bigdecimal.c
+  #   - nonzero?()
+  # -->
+  # Returns self if the value is non-zero, nil otherwise.
+  #
+  def nonzero?: () -> self?
+
+  # <!--
+  #   rdoc-file=ext/bigdecimal/bigdecimal.c
+  #   - power(n)
+  #   - power(n, prec)
+  # -->
+  # Returns the value raised to the power of n.
+  #
+  # Note that n must be an Integer.
+  #
+  # Also available as the operator **.
+  #
+  def power: (Numeric n, int prec) -> BigDecimal
+
+  # <!--
+  #   rdoc-file=ext/bigdecimal/bigdecimal.c
+  #   - precs -> array
+  # -->
+  # Returns an Array of two Integer values that represent platform-dependent
+  # internal storage properties.
+  #
+  # This method is deprecated and will be removed in the future. Instead, use
+  # BigDecimal#n_significant_digits for obtaining the number of significant digits
+  # in scientific notation, and BigDecimal#precision for obtaining the number of
+  # digits in decimal notation.
+  #
+  def precs: () -> [ Integer, Integer ]
+
+  # <!--
+  #   rdoc-file=ext/bigdecimal/bigdecimal.c
+  #   - quo(value)  -> bigdecimal
+  #   - quo(value, digits)  -> bigdecimal
+  # -->
+  # Divide by the specified value.
+  #
+  # digits
+  # :   If specified and less than the number of significant digits of the result,
+  #     the result is rounded to the given number of digits, according to the
+  #     rounding mode indicated by BigDecimal.mode.
+  #
+  #     If digits is 0 or omitted, the result is the same as for the / operator.
+  #
+  #
+  # See BigDecimal#/. See BigDecimal#div.
+  #
+  def quo: (Numeric) -> BigDecimal
+
+  # <!--
+  #   rdoc-file=ext/bigdecimal/bigdecimal.c
+  #   - remainder(value)
+  # -->
+  # Returns the remainder from dividing by the value.
+  #
+  # x.remainder(y) means x-y*(x/y).truncate
+  #
+  def remainder: (Numeric) -> BigDecimal
+
+  # <!--
+  #   rdoc-file=ext/bigdecimal/bigdecimal.c
+  #   - round(n, mode)
+  # -->
+  # Round to the nearest integer (by default), returning the result as a
+  # BigDecimal if n is specified, or as an Integer if it isn't.
+  #
+  #     BigDecimal('3.14159').round #=> 3
+  #     BigDecimal('8.7').round #=> 9
+  #     BigDecimal('-9.9').round #=> -10
+  #
+  #     BigDecimal('3.14159').round(2).class.name #=> "BigDecimal"
+  #     BigDecimal('3.14159').round.class.name #=> "Integer"
+  #
+  # If n is specified and positive, the fractional part of the result has no more
+  # than that many digits.
+  #
+  # If n is specified and negative, at least that many digits to the left of the
+  # decimal point will be 0 in the result, and return value will be an Integer.
+  #
+  #     BigDecimal('3.14159').round(3) #=> 3.142
+  #     BigDecimal('13345.234').round(-2) #=> 13300
+  #
+  # The value of the optional mode argument can be used to determine how rounding
+  # is performed; see BigDecimal.mode.
+  #
+  def round: () -> Integer
+           | (Numeric n, ?Integer mode) -> BigDecimal
+
+  # <!--
+  #   rdoc-file=ext/bigdecimal/bigdecimal.c
+  #   - sign()
+  # -->
+  # Returns the sign of the value.
+  #
+  # Returns a positive value if > 0, a negative value if < 0, and a zero if == 0.
+  #
+  # The specific value returned indicates the type and sign of the BigDecimal, as
+  # follows:
+  #
+  # BigDecimal::SIGN_NaN
+  # :   value is Not a Number
+  # BigDecimal::SIGN_POSITIVE_ZERO
+  # :   value is +0
+  # BigDecimal::SIGN_NEGATIVE_ZERO
+  # :   value is -0
+  # BigDecimal::SIGN_POSITIVE_INFINITE
+  # :   value is +Infinity
+  # BigDecimal::SIGN_NEGATIVE_INFINITE
+  # :   value is -Infinity
+  # BigDecimal::SIGN_POSITIVE_FINITE
+  # :   value is positive
+  # BigDecimal::SIGN_NEGATIVE_FINITE
+  # :   value is negative
+  #
+  def sign: () -> Integer
+
+  # <!--
+  #   rdoc-file=ext/bigdecimal/bigdecimal.c
+  #   - split()
+  # -->
+  # Splits a BigDecimal number into four parts, returned as an array of values.
+  #
+  # The first value represents the sign of the BigDecimal, and is -1 or 1, or 0 if
+  # the BigDecimal is Not a Number.
+  #
+  # The second value is a string representing the significant digits of the
+  # BigDecimal, with no leading zeros.
+  #
+  # The third value is the base used for arithmetic (currently always 10) as an
+  # Integer.
+  #
+  # The fourth value is an Integer exponent.
+  #
+  # If the BigDecimal can be represented as 0.xxxxxx*10**n, then xxxxxx is the
+  # string of significant digits with no leading zeros, and n is the exponent.
+  #
+  # From these values, you can translate a BigDecimal to a float as follows:
+  #
+  #     sign, significant_digits, base, exponent = a.split
+  #     f = sign * "0.#{significant_digits}".to_f * (base ** exponent)
+  #
+  # (Note that the to_f method is provided as a more convenient way to translate a
+  # BigDecimal to a Float.)
+  #
+  def split: () -> [ Integer, String, Integer, Integer ]
+
+  # <!--
+  #   rdoc-file=ext/bigdecimal/bigdecimal.c
+  #   - sqrt(n)
+  # -->
+  # Returns the square root of the value.
+  #
+  # Result has at least n significant digits.
+  #
+  def sqrt: (int n) -> BigDecimal
+
+  # <!--
+  #   rdoc-file=ext/bigdecimal/bigdecimal.c
+  #   - sub(value, digits)  -> bigdecimal
+  # -->
+  # Subtract the specified value.
+  #
+  # e.g.
+  #     c = a.sub(b,n)
+  #
+  # digits
+  # :   If specified and less than the number of significant digits of the result,
+  #     the result is rounded to that number of digits, according to
+  #     BigDecimal.mode.
+  #
+  def sub: (Numeric value, int digits) -> BigDecimal
+
+  # <!--
+  #   rdoc-file=ext/bigdecimal/bigdecimal.c
+  #   - to_f()
+  # -->
+  # Returns a new Float object having approximately the same value as the
+  # BigDecimal number. Normal accuracy limits and built-in errors of binary Float
+  # arithmetic apply.
+  #
+  def to_f: () -> Float
+
+  # <!--
+  #   rdoc-file=ext/bigdecimal/bigdecimal.c
+  #   - to_i()
+  # -->
+  # Returns the value as an Integer.
+  #
+  # If the BigDecimal is infinity or NaN, raises FloatDomainError.
+  #
+  def to_i: () -> Integer
+
+  # <!-- rdoc-file=ext/bigdecimal/bigdecimal.c -->
+  # Returns the value as an Integer.
+  #
+  # If the BigDecimal is infinity or NaN, raises FloatDomainError.
+  #
+  def to_int: () -> Integer
+
+  # <!--
+  #   rdoc-file=ext/bigdecimal/bigdecimal.c
+  #   - to_r()
+  # -->
+  # Converts a BigDecimal to a Rational.
+  #
+  def to_r: () -> Rational
+
+  # <!--
+  #   rdoc-file=ext/bigdecimal/bigdecimal.c
+  #   - to_s(s)
+  # -->
+  # Converts the value to a string.
+  #
+  # The default format looks like  0.xxxxEnn.
+  #
+  # The optional parameter s consists of either an integer; or an optional '+' or
+  # ' ', followed by an optional number, followed by an optional 'E' or 'F'.
+  #
+  # If there is a '+' at the start of s, positive values are returned with a
+  # leading '+'.
+  #
+  # A space at the start of s returns positive values with a leading space.
+  #
+  # If s contains a number, a space is inserted after each group of that many
+  # fractional digits.
+  #
+  # If s ends with an 'E', engineering notation (0.xxxxEnn) is used.
+  #
+  # If s ends with an 'F', conventional floating point notation is used.
+  #
+  # Examples:
+  #
+  #     BigDecimal('-123.45678901234567890').to_s('5F')
+  #       #=> '-123.45678 90123 45678 9'
+  #
+  #     BigDecimal('123.45678901234567890').to_s('+8F')
+  #       #=> '+123.45678901 23456789'
+  #
+  #     BigDecimal('123.45678901234567890').to_s(' F')
+  #       #=> ' 123.4567890123456789'
+  #
+  def to_s: (?String | int s) -> String
+
+  # <!--
+  #   rdoc-file=ext/bigdecimal/bigdecimal.c
+  #   - truncate(n)
+  # -->
+  # Truncate to the nearest integer (by default), returning the result as a
+  # BigDecimal.
+  #
+  #     BigDecimal('3.14159').truncate #=> 3
+  #     BigDecimal('8.7').truncate #=> 8
+  #     BigDecimal('-9.9').truncate #=> -9
+  #
+  # If n is specified and positive, the fractional part of the result has no more
+  # than that many digits.
+  #
+  # If n is specified and negative, at least that many digits to the left of the
+  # decimal point will be 0 in the result.
+  #
+  #     BigDecimal('3.14159').truncate(3) #=> 3.141
+  #     BigDecimal('13345.234').truncate(-2) #=> 13300.0
+  #
+  def truncate: () -> Integer
+              | (int n) -> BigDecimal
+
+  # <!--
+  #   rdoc-file=ext/bigdecimal/bigdecimal.c
+  #   - zero?()
+  # -->
+  # Returns True if the value is zero.
+  #
+  def zero?: () -> bool
+
+  # <!--
+  #   rdoc-file=ext/bigdecimal/lib/bigdecimal/util.rb
+  #   - a.to_d -> bigdecimal
+  # -->
+  # Returns self.
+  #
+  #     require 'bigdecimal/util'
+  #
+  #     d = BigDecimal("3.14")
+  #     d.to_d                       # => 0.314e1
+  #
+  def to_d: () -> BigDecimal
+
+  private
+
+  def initialize_copy: (self) -> self
+end
+
+# <!-- rdoc-file=ext/bigdecimal/bigdecimal.c -->
+# Base value used in internal calculations.  On a 32 bit system, BASE is 10000,
+# indicating that calculation is done in groups of 4 digits. (If it were larger,
+# BASE**2 wouldn't fit in 32 bits, so you couldn't guarantee that two groups
+# could always be multiplied together without overflow.)
+#
+BigDecimal::BASE: Integer
+
+# <!-- rdoc-file=ext/bigdecimal/bigdecimal.c -->
+# Determines whether overflow, underflow or zero divide result in an exception
+# being thrown. See BigDecimal.mode.
+#
+BigDecimal::EXCEPTION_ALL: Integer
+
+# <!-- rdoc-file=ext/bigdecimal/bigdecimal.c -->
+# Determines what happens when the result of a computation is infinity.  See
+# BigDecimal.mode.
+#
+BigDecimal::EXCEPTION_INFINITY: Integer
+
+# <!-- rdoc-file=ext/bigdecimal/bigdecimal.c -->
+# Determines what happens when the result of a computation is not a number
+# (NaN). See BigDecimal.mode.
+#
+BigDecimal::EXCEPTION_NaN: Integer
+
+# <!-- rdoc-file=ext/bigdecimal/bigdecimal.c -->
+# Determines what happens when the result of a computation is an overflow (a
+# result too large to be represented). See BigDecimal.mode.
+#
+BigDecimal::EXCEPTION_OVERFLOW: Integer
+
+# <!-- rdoc-file=ext/bigdecimal/bigdecimal.c -->
+# Determines what happens when the result of a computation is an underflow (a
+# result too small to be represented). See BigDecimal.mode.
+#
+BigDecimal::EXCEPTION_UNDERFLOW: Integer
+
+# <!-- rdoc-file=ext/bigdecimal/bigdecimal.c -->
+# Determines what happens when a division by zero is performed. See
+# BigDecimal.mode.
+#
+BigDecimal::EXCEPTION_ZERODIVIDE: Integer
+
+# <!-- rdoc-file=ext/bigdecimal/bigdecimal.c -->
+# Special value constants
+#
+BigDecimal::INFINITY: BigDecimal
+
+BigDecimal::NAN: BigDecimal
+
+# <!-- rdoc-file=ext/bigdecimal/bigdecimal.c -->
+# Round towards +Infinity. See BigDecimal.mode.
+#
+BigDecimal::ROUND_CEILING: Integer
+
+# <!-- rdoc-file=ext/bigdecimal/bigdecimal.c -->
+# Indicates that values should be rounded towards zero. See BigDecimal.mode.
+#
+BigDecimal::ROUND_DOWN: Integer
+
+# <!-- rdoc-file=ext/bigdecimal/bigdecimal.c -->
+# Round towards -Infinity. See BigDecimal.mode.
+#
+BigDecimal::ROUND_FLOOR: Integer
+
+# <!-- rdoc-file=ext/bigdecimal/bigdecimal.c -->
+# Indicates that digits >= 6 should be rounded up, others rounded down. See
+# BigDecimal.mode.
+#
+BigDecimal::ROUND_HALF_DOWN: Integer
+
+# <!-- rdoc-file=ext/bigdecimal/bigdecimal.c -->
+# Round towards the even neighbor. See BigDecimal.mode.
+#
+BigDecimal::ROUND_HALF_EVEN: Integer
+
+# <!-- rdoc-file=ext/bigdecimal/bigdecimal.c -->
+# Indicates that digits >= 5 should be rounded up, others rounded down. See
+# BigDecimal.mode.
+#
+BigDecimal::ROUND_HALF_UP: Integer
+
+# <!-- rdoc-file=ext/bigdecimal/bigdecimal.c -->
+# Determines what happens when a result must be rounded in order to fit in the
+# appropriate number of significant digits. See BigDecimal.mode.
+#
+BigDecimal::ROUND_MODE: Integer
+
+# <!-- rdoc-file=ext/bigdecimal/bigdecimal.c -->
+# Indicates that values should be rounded away from zero. See BigDecimal.mode.
+#
+BigDecimal::ROUND_UP: Integer
+
+# <!-- rdoc-file=ext/bigdecimal/bigdecimal.c -->
+# Indicates that a value is negative and finite. See BigDecimal.sign.
+#
+BigDecimal::SIGN_NEGATIVE_FINITE: Integer
+
+# <!-- rdoc-file=ext/bigdecimal/bigdecimal.c -->
+# Indicates that a value is negative and infinite. See BigDecimal.sign.
+#
+BigDecimal::SIGN_NEGATIVE_INFINITE: Integer
+
+# <!-- rdoc-file=ext/bigdecimal/bigdecimal.c -->
+# Indicates that a value is -0. See BigDecimal.sign.
+#
+BigDecimal::SIGN_NEGATIVE_ZERO: Integer
+
+# <!-- rdoc-file=ext/bigdecimal/bigdecimal.c -->
+# Indicates that a value is not a number. See BigDecimal.sign.
+#
+BigDecimal::SIGN_NaN: Integer
+
+# <!-- rdoc-file=ext/bigdecimal/bigdecimal.c -->
+# Indicates that a value is positive and finite. See BigDecimal.sign.
+#
+BigDecimal::SIGN_POSITIVE_FINITE: Integer
+
+# <!-- rdoc-file=ext/bigdecimal/bigdecimal.c -->
+# Indicates that a value is positive and infinite. See BigDecimal.sign.
+#
+BigDecimal::SIGN_POSITIVE_INFINITE: Integer
+
+# <!-- rdoc-file=ext/bigdecimal/bigdecimal.c -->
+# Indicates that a value is +0. See BigDecimal.sign.
+#
+BigDecimal::SIGN_POSITIVE_ZERO: Integer
+
+# <!-- rdoc-file=ext/bigdecimal/bigdecimal.c -->
+# The version of bigdecimal library
+#
+BigDecimal::VERSION: String
+
+%a{annotate:rdoc:skip}
+module Kernel
+  private
+
+  # <!--
+  #   rdoc-file=ext/bigdecimal/bigdecimal.c
+  #   - BigDecimal(value, exception: true) -> bigdecimal
+  #   - BigDecimal(value, ndigits, exception: true) -> bigdecimal
+  # -->
+  # Returns the \BigDecimal converted from +value+
+  #     with a precision of +ndigits+ decimal digits.
+  #
+  #     When +ndigits+ is less than the number of significant digits
+  #     in the value, the result is rounded to that number of digits,
+  #     according to the current rounding mode; see BigDecimal.mode.
+  #
+  # Returns `value` converted to a BigDecimal, depending on the type of `value`:
+  #
+  # *   Integer, Float, Rational, Complex, or BigDecimal: converted directly:
+  #
+  #         # Integer, Complex, or BigDecimal value does not require ndigits; ignored if given.
+  #         BigDecimal(2)                     # => 0.2e1
+  #         BigDecimal(Complex(2, 0))         # => 0.2e1
+  #         BigDecimal(BigDecimal(2))         # => 0.2e1
+  #         # Float or Rational value requires ndigits.
+  #         BigDecimal(2.0, 0)                # => 0.2e1
+  #         BigDecimal(Rational(2, 1), 0)     # => 0.2e1
+  #
+  # *   String: converted by parsing if it contains an integer or floating-point
+  #     literal; leading and trailing whitespace is ignored:
+  #
+  #         # String does not require ndigits; ignored if given.
+  #         BigDecimal('2')     # => 0.2e1
+  #         BigDecimal('2.0')   # => 0.2e1
+  #         BigDecimal('0.2e1') # => 0.2e1
+  #         BigDecimal(' 2.0 ') # => 0.2e1
+  #
+  # *   Other type that responds to method `:to_str`: first converted to a string,
+  #     then converted to a BigDecimal, as above.
+  #
+  # *   Other type:
+  #
+  #     *   Raises an exception if keyword argument `exception` is `true`.
+  #     *   Returns `nil` if keyword argument `exception` is `true`.
+  #
+  #
+  #
+  # Raises an exception if `value` evaluates to a Float and `digits` is larger
+  # than Float::DIG + 1.
+  #
+  def self?.BigDecimal: (real | string | BigDecimal initial, ?int digits, ?exception: bool) -> BigDecimal
+end
+
+%a{annotate:rdoc:skip}
+class Integer
+  # <!--
+  #   rdoc-file=ext/bigdecimal/lib/bigdecimal/util.rb
+  #   - int.to_d  -> bigdecimal
+  # -->
+  # Returns the value of `int` as a BigDecimal.
+  #
+  #     require 'bigdecimal'
+  #     require 'bigdecimal/util'
+  #
+  #     42.to_d   # => 0.42e2
+  #
+  # See also BigDecimal::new.
+  #
+  def to_d: () -> BigDecimal
+
+  # <!--
+  #   rdoc-file=numeric.c
+  #   - self / numeric -> numeric_result
+  # -->
+  # Performs division; for integer `numeric`, truncates the result to an integer:
+  #
+  #      4 / 3              # => 1
+  #      4 / -3             # => -2
+  #      -4 / 3             # => -2
+  #      -4 / -3            # => 1
+  #
+  #     For other +numeric+, returns non-integer result:
+  #
+  #      4 / 3.0            # => 1.3333333333333333
+  #      4 / Rational(3, 1) # => (4/3)
+  #      4 / Complex(3, 0)  # => ((4/3)+0i)
+  #
+  def /: (BigDecimal) -> BigDecimal
+    | ...
+
+  # <!--
+  #   rdoc-file=numeric.c
+  #   - self * numeric -> numeric_result
+  # -->
+  # Performs multiplication:
+  #
+  #     4 * 2              # => 8
+  #     4 * -2             # => -8
+  #     -4 * 2             # => -8
+  #     4 * 2.0            # => 8.0
+  #     4 * Rational(1, 3) # => (4/3)
+  #     4 * Complex(2, 0)  # => (8+0i)
+  #
+  def *: (BigDecimal) -> BigDecimal
+    | ...
+
+  # <!--
+  #   rdoc-file=numeric.c
+  #   - self + numeric -> numeric_result
+  # -->
+  # Performs addition:
+  #
+  #     2 + 2              # => 4
+  #     -2 + 2             # => 0
+  #     -2 + -2            # => -4
+  #     2 + 2.0            # => 4.0
+  #     2 + Rational(2, 1) # => (4/1)
+  #     2 + Complex(2, 0)  # => (4+0i)
+  #
+  def +: (BigDecimal) -> BigDecimal
+    | ...
+
+  # <!--
+  #   rdoc-file=numeric.c
+  #   - self - numeric -> numeric_result
+  # -->
+  # Performs subtraction:
+  #
+  #     4 - 2              # => 2
+  #     -4 - 2             # => -6
+  #     -4 - -2            # => -2
+  #     4 - 2.0            # => 2.0
+  #     4 - Rational(2, 1) # => (2/1)
+  #     4 - Complex(2, 0)  # => (2+0i)
+  #
+  def -: (BigDecimal) -> BigDecimal
+    | ...
+end
+
+%a{annotate:rdoc:skip}
+class Float
+  # <!--
+  #   rdoc-file=ext/bigdecimal/lib/bigdecimal/util.rb
+  #   - float.to_d             -> bigdecimal
+  #   - float.to_d(precision)  -> bigdecimal
+  # -->
+  # Returns the value of `float` as a BigDecimal. The `precision` parameter is
+  # used to determine the number of significant digits for the result (the default
+  # is Float::DIG).
+  #
+  #     require 'bigdecimal'
+  #     require 'bigdecimal/util'
+  #
+  #     0.5.to_d         # => 0.5e0
+  #     1.234.to_d(2)    # => 0.12e1
+  #
+  # See also BigDecimal::new.
+  #
+  def to_d: (?Integer precision) -> BigDecimal
+
+  # <!--
+  #   rdoc-file=numeric.c
+  #   - self / other -> numeric
+  # -->
+  # Returns a new Float which is the result of dividing `self` by `other`:
+  #
+  #     f = 3.14
+  #     f / 2              # => 1.57
+  #     f / 2.0            # => 1.57
+  #     f / Rational(2, 1) # => 1.57
+  #     f / Complex(2, 0)  # => (1.57+0.0i)
+  #
+  def /: (BigDecimal) -> BigDecimal
+    | ...
+
+  # <!--
+  #   rdoc-file=numeric.c
+  #   - self * other -> numeric
+  # -->
+  # Returns a new Float which is the product of `self` and `other`:
+  #
+  #     f = 3.14
+  #     f * 2              # => 6.28
+  #     f * 2.0            # => 6.28
+  #     f * Rational(1, 2) # => 1.57
+  #     f * Complex(2, 0)  # => (6.28+0.0i)
+  #
+  def *: (BigDecimal) -> BigDecimal
+    | ...
+
+  # <!--
+  #   rdoc-file=numeric.c
+  #   - self + other -> numeric
+  # -->
+  # Returns a new Float which is the sum of `self` and `other`:
+  #
+  #     f = 3.14
+  #     f + 1                 # => 4.140000000000001
+  #     f + 1.0               # => 4.140000000000001
+  #     f + Rational(1, 1)    # => 4.140000000000001
+  #     f + Complex(1, 0)     # => (4.140000000000001+0i)
+  #
+  def +: (BigDecimal) -> BigDecimal
+    | ...
+
+  # <!--
+  #   rdoc-file=numeric.c
+  #   - self - other -> numeric
+  # -->
+  # Returns a new Float which is the difference of `self` and `other`:
+  #
+  #     f = 3.14
+  #     f - 1                 # => 2.14
+  #     f - 1.0               # => 2.14
+  #     f - Rational(1, 1)    # => 2.14
+  #     f - Complex(1, 0)     # => (2.14+0i)
+  #
+  def -: (BigDecimal) -> BigDecimal
+    | ...
+end
+
+%a{annotate:rdoc:skip}
+class String
+  # <!--
+  #   rdoc-file=ext/bigdecimal/lib/bigdecimal/util.rb
+  #   - str.to_d  -> bigdecimal
+  # -->
+  # Returns the result of interpreting leading characters in `str` as a
+  # BigDecimal.
+  #
+  #     require 'bigdecimal'
+  #     require 'bigdecimal/util'
+  #
+  #     "0.5".to_d             # => 0.5e0
+  #     "123.45e1".to_d        # => 0.12345e4
+  #     "45.67 degrees".to_d   # => 0.4567e2
+  #
+  # See also BigDecimal::new.
+  #
+  def to_d: () -> BigDecimal
+end
+
+%a{annotate:rdoc:skip}
+class Rational
+  # <!--
+  #   rdoc-file=ext/bigdecimal/lib/bigdecimal/util.rb
+  #   - rat.to_d(precision)  -> bigdecimal
+  # -->
+  # Returns the value as a BigDecimal.
+  #
+  # The required `precision` parameter is used to determine the number of
+  # significant digits for the result.
+  #
+  #     require 'bigdecimal'
+  #     require 'bigdecimal/util'
+  #
+  #     Rational(22, 7).to_d(3)   # => 0.314e1
+  #
+  # See also BigDecimal::new.
+  #
+  def to_d: (Integer precision) -> BigDecimal
+
+  # <!--
+  #   rdoc-file=rational.c
+  #   - rat / numeric     ->  numeric
+  #   - rat.quo(numeric)  ->  numeric
+  # -->
+  # Performs division.
+  #
+  #     Rational(2, 3)  / Rational(2, 3)   #=> (1/1)
+  #     Rational(900)   / Rational(1)      #=> (900/1)
+  #     Rational(-2, 9) / Rational(-9, 2)  #=> (4/81)
+  #     Rational(9, 8)  / 4                #=> (9/32)
+  #     Rational(20, 9) / 9.8              #=> 0.22675736961451246
+  #
+  def /: (BigDecimal) -> BigDecimal
+    | ...
+
+  # <!--
+  #   rdoc-file=rational.c
+  #   - rat * numeric  ->  numeric
+  # -->
+  # Performs multiplication.
+  #
+  #     Rational(2, 3)  * Rational(2, 3)   #=> (4/9)
+  #     Rational(900)   * Rational(1)      #=> (900/1)
+  #     Rational(-2, 9) * Rational(-9, 2)  #=> (1/1)
+  #     Rational(9, 8)  * 4                #=> (9/2)
+  #     Rational(20, 9) * 9.8              #=> 21.77777777777778
+  #
+  def *: (BigDecimal) -> BigDecimal
+    | ...
+
+  # <!--
+  #   rdoc-file=rational.c
+  #   - rat + numeric  ->  numeric
+  # -->
+  # Performs addition.
+  #
+  #     Rational(2, 3)  + Rational(2, 3)   #=> (4/3)
+  #     Rational(900)   + Rational(1)      #=> (901/1)
+  #     Rational(-2, 9) + Rational(-9, 2)  #=> (-85/18)
+  #     Rational(9, 8)  + 4                #=> (41/8)
+  #     Rational(20, 9) + 9.8              #=> 12.022222222222222
+  #
+  def +: (BigDecimal) -> BigDecimal
+    | ...
+
+  # <!--
+  #   rdoc-file=rational.c
+  #   - rat - numeric  ->  numeric
+  # -->
+  # Performs subtraction.
+  #
+  #     Rational(2, 3)  - Rational(2, 3)   #=> (0/1)
+  #     Rational(900)   - Rational(1)      #=> (899/1)
+  #     Rational(-2, 9) - Rational(-9, 2)  #=> (77/18)
+  #     Rational(9, 8)  - 4                #=> (-23/8)
+  #     Rational(20, 9) - 9.8              #=> -7.577777777777778
+  #
+  def -: (BigDecimal) -> BigDecimal
+    | ...
+end
+
+%a{annotate:rdoc:skip}
+class Complex
+  # <!--
+  #   rdoc-file=ext/bigdecimal/lib/bigdecimal/util.rb
+  #   - cmp.to_d             -> bigdecimal
+  #   - cmp.to_d(precision)  -> bigdecimal
+  # -->
+  # Returns the value as a BigDecimal.
+  #
+  # The `precision` parameter is required for a rational complex number. This
+  # parameter is used to determine the number of significant digits for the
+  # result.
+  #
+  #     require 'bigdecimal'
+  #     require 'bigdecimal/util'
+  #
+  #     Complex(0.1234567, 0).to_d(4)   # => 0.1235e0
+  #     Complex(Rational(22, 7), 0).to_d(3)   # => 0.314e1
+  #
+  # See also BigDecimal::new.
+  #
+  def to_d: (*untyped args) -> BigDecimal
+
+  # <!--
+  #   rdoc-file=complex.c
+  #   - cmp / numeric     ->  complex
+  #   - cmp.quo(numeric)  ->  complex
+  # -->
+  # Performs division.
+  #
+  #     Complex(2, 3)  / Complex(2, 3)   #=> ((1/1)+(0/1)*i)
+  #     Complex(900)   / Complex(1)      #=> ((900/1)+(0/1)*i)
+  #     Complex(-2, 9) / Complex(-9, 2)  #=> ((36/85)-(77/85)*i)
+  #     Complex(9, 8)  / 4               #=> ((9/4)+(2/1)*i)
+  #     Complex(20, 9) / 9.8             #=> (2.0408163265306123+0.9183673469387754i)
+  #
+  def /: (BigDecimal) -> Complex
+    | ...
+
+  # <!--
+  #   rdoc-file=complex.c
+  #   - cmp * numeric  ->  complex
+  # -->
+  # Performs multiplication.
+  #
+  #     Complex(2, 3)  * Complex(2, 3)   #=> (-5+12i)
+  #     Complex(900)   * Complex(1)      #=> (900+0i)
+  #     Complex(-2, 9) * Complex(-9, 2)  #=> (0-85i)
+  #     Complex(9, 8)  * 4               #=> (36+32i)
+  #     Complex(20, 9) * 9.8             #=> (196.0+88.2i)
+  #
+  def *: (BigDecimal) -> Complex
+    | ...
+
+  # <!--
+  #   rdoc-file=complex.c
+  #   - cmp + numeric  ->  complex
+  # -->
+  # Performs addition.
+  #
+  #     Complex(2, 3)  + Complex(2, 3)   #=> (4+6i)
+  #     Complex(900)   + Complex(1)      #=> (901+0i)
+  #     Complex(-2, 9) + Complex(-9, 2)  #=> (-11+11i)
+  #     Complex(9, 8)  + 4               #=> (13+8i)
+  #     Complex(20, 9) + 9.8             #=> (29.8+9i)
+  #
+  def +: (BigDecimal) -> Complex
+    | ...
+
+  # <!--
+  #   rdoc-file=complex.c
+  #   - cmp - numeric  ->  complex
+  # -->
+  # Performs subtraction.
+  #
+  #     Complex(2, 3)  - Complex(2, 3)   #=> (0+0i)
+  #     Complex(900)   - Complex(1)      #=> (899+0i)
+  #     Complex(-2, 9) - Complex(-9, 2)  #=> (7+7i)
+  #     Complex(9, 8)  - 4               #=> (5+8i)
+  #     Complex(20, 9) - 9.8             #=> (10.2+9i)
+  #
+  def -: (BigDecimal) -> Complex
+    | ...
+end
+
+%a{annotate:rdoc:skip}
+class NilClass
+  # <!--
+  #   rdoc-file=ext/bigdecimal/lib/bigdecimal/util.rb
+  #   - nil.to_d -> bigdecimal
+  # -->
+  # Returns nil represented as a BigDecimal.
+  #
+  #     require 'bigdecimal'
+  #     require 'bigdecimal/util'
+  #
+  #     nil.to_d   # => 0.0
+  #
+  def to_d: () -> BigDecimal
+end

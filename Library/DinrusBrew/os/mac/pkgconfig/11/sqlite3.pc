@@ -1,0 +1,12 @@
+homebrew_sdkroot=/Library/Developer/CommandLineTools/SDKs/MacOSX11.sdk
+prefix=${homebrew_sdkroot}/usr
+exec_prefix=/usr
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+
+Name: SQLite
+Description: SQL database engine
+Version: 3.32.3
+Libs: -L${libdir} -lsqlite3
+Libs.private:
+Cflags:

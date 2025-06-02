@@ -1,0 +1,16 @@
+.\" generated with nRonn/v0.11.1
+.\" https://github.com/n-ronn/nronn/tree/0.11.1
+.TH "BUNDLE\-SHOW" "1" "September 2024" ""
+.SH "NAME"
+\fBbundle\-show\fR \- Shows all the gems in your bundle, or the path to a gem
+.SH "SYNOPSIS"
+\fBbundle show\fR [GEM] [\-\-paths]
+.SH "DESCRIPTION"
+Without the [GEM] option, \fBshow\fR will print a list of the names and versions of all gems that are required by your [\fBGemfile(5)\fR][Gemfile(5)], sorted by name\.
+.P
+Calling show with [GEM] will list the exact location of that gem on your machine\.
+.SH "OPTIONS"
+.TP
+\fB\-\-paths\fR
+List the paths of all gems that are required by your [\fBGemfile(5)\fR][Gemfile(5)], sorted by gem name\.
+

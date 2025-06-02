@@ -1,0 +1,6 @@
+# <!-- rdoc-file=lib/minitest.rb -->
+# Assertion raised when skipping a run.
+#
+class Minitest::Skip < ::Minitest::Assertion
+  def result_label: () -> "Skipped"
+end

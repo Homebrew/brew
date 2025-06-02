@@ -1,0 +1,123 @@
+module RBS
+  # Writer prints RBS AST to String.
+  #
+  class Writer
+    interface _IO
+      def puts: (*untyped) -> void
+
+      def flush: () -> void
+    end
+
+    # Channel to output the result.
+    #
+    attr_reader out: _IO
+
+    # Array of indentations.
+    #
+    attr_reader indentation: Array[String]
+
+    def initialize: (out: _IO) -> void
+
+    # Output the array of declarations.
+    # It automatically inserts empty lines between the declarations.
+    #
+    def write: (Array[AST::Declarations::t]) -> void
+
+    def preserve?: () -> bool
+
+    def preserve!: (?preserve: bool) -> self
+
+    private
+
+    @preserve: bool
+
+    # Increases the indentation and yields the block.
+    #
+    def indent: (?Integer size) { () -> void } -> void
+
+    # Returns the current indentation of lines.
+    #
+    def prefix: () -> String
+
+    # Prints a string.
+    # Automatically appends the `#prefix` and newline at the end.
+    #
+    def puts: (?String) -> void
+
+    # Prints a (possibly) multi-line string.
+    #
+    # Drops `leading_spaces` of spaces at the beginning of each line.
+    #
+    # ```ruby
+    # put_lines(<<TEXT, leading_spaces: 0)
+    # Hello
+    #   world!
+    # TEXT
+    #
+    # # Outputs
+    # # Hello
+    # #   world!
+    #
+    # put_lines(<<TEXT, leading_spaces: 2)
+    # Hello
+    #   world!
+    # TEXT
+    #
+    # # Outputs
+    # # Hello
+    # # world!
+    # ```
+    #
+    # This is for `Location#source`.
+    # The `#source` returns the text spans from the beginning to end of the element.
+    # It will look like the following.
+    #
+    # ```rbs
+    # module Foo
+    #   type t = Integer     # the definition of `t` starts from line=2, column=2
+    #          | String
+    #          | :false      # the definition of `t` ends from line=4, column=17
+    # end
+    # ```
+    #
+    # The expected output will be something like:
+    #
+    # ```rbs
+    # type t = Integer       # Extracted from `Foo` definition and keeps the line breaks
+    #        | String
+    #        | :false
+    # ```
+    #
+    # And it can be done with a `#put_lines(source, leading_spaces: 2)` call.
+    #
+    def put_lines: (String, leading_spaces: Integer) -> void
+
+    def write_loc_source: (_Located) { () -> void } -> void
+
+    def write_annotation: (Array[AST::Annotation]) -> void
+
+    def write_comment: (AST::Comment?) -> void
+
+    def write_decl: (AST::Declarations::t) -> void
+
+    def write_member: (AST::Declarations::Module::member) -> void
+
+    def name_and_params: (TypeName, Array[AST::TypeParam]) -> String?
+
+    def name_and_args: (TypeName, Array[Types::t]) -> String?
+
+    def write_alias: (AST::Declarations::Alias) -> void
+
+    def method_name: (Symbol) -> String
+
+    def write_def: (AST::Members::MethodDefinition) -> void
+
+    def attribute: (:reader | :writer | :accessor, AST::Members::Attribute) -> void
+
+    interface _Located
+      def location: () -> Location[untyped, untyped]?
+    end
+
+    def preserve_empty_line: (_Located?, _Located) -> void
+  end
+end

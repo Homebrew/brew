@@ -1,0 +1,2 @@
+class Minitest::Expectation < ::Struct[untyped]
+end

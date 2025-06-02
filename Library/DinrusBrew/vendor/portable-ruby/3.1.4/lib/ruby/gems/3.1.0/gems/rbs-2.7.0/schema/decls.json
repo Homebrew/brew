@@ -1,0 +1,326 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "definitions": {
+    "alias": {
+      "title": "Type alias declaration: `type foo = Integer`, ...",
+      "type": "object",
+      "properties": {
+        "declaration": {
+          "type": "string",
+          "enum": ["alias"]
+        },
+        "name": {
+          "type": "string"
+        },
+        "type_params": {
+          "type": "array",
+          "items": {
+            "$ref": "typeParam.json"
+          }
+        },
+        "type": {
+          "$ref": "types.json"
+        },
+        "annotations": {
+          "type": "array",
+          "items": {
+            "$ref": "annotation.json"
+          }
+        },
+        "location": {
+          "$ref": "location.json"
+        },
+        "comment": {
+          "$ref": "comment.json"
+        }
+      },
+      "required": ["declaration", "name", "type_params", "type", "annotations", "location", "comment"]
+    },
+    "constant": {
+      "title": "Constant declaration: `VERSION: String`, ...",
+      "type": "object",
+      "properties": {
+        "declaration": {
+          "type": "string",
+          "enum": ["constant"]
+        },
+        "name": {
+          "type": "string"
+        },
+        "type": {
+          "$ref": "types.json"
+        },
+        "location": {
+          "$ref": "location.json"
+        },
+        "comment": {
+          "$ref": "comment.json"
+        }
+      },
+      "required": ["declaration", "name", "type", "comment", "location"]
+    },
+    "global": {
+      "title": "Global declaration: `$DEBUG: bool`, ...",
+      "type": "object",
+      "properties": {
+        "declaration": {
+          "type": "string",
+          "enum": ["global"]
+        },
+        "name": {
+          "type": "string"
+        },
+        "type": {
+          "$ref": "types.json"
+        },
+        "location": {
+          "$ref": "location.json"
+        },
+        "comment": {
+          "$ref": "comment.json"
+        }
+      },
+      "required": ["declaration", "name", "type", "comment", "location"]
+    },
+    "classMember": {
+      "oneOf": [
+        {
+          "$ref": "members.json#/definitions/methodDefinition"
+        },
+        {
+          "$ref": "members.json#/definitions/variable"
+        },
+        {
+          "$ref": "members.json#/definitions/include"
+        },
+        {
+          "$ref": "members.json#/definitions/extend"
+        },
+        {
+          "$ref": "members.json#/definitions/prepend"
+        },
+        {
+          "$ref": "members.json#/definitions/attribute"
+        },
+        {
+          "$ref": "members.json#/definitions/visibility"
+        },
+        {
+          "$ref": "members.json#/definitions/alias"
+        },
+        {
+          "$ref": "#/definitions/alias"
+        },
+        {
+          "$ref": "#/definitions/constant"
+        },
+        {
+          "$ref": "#/definitions/class"
+        },
+        {
+          "$ref": "#/definitions/module"
+        },
+        {
+          "$ref": "#/definitions/interface"
+        }
+      ]
+    },
+    "class": {
+      "title": "Class declaration",
+      "type": "object",
+      "properties": {
+        "declaration": {
+          "enum": ["class"]
+        },
+        "name": {
+          "type": "string"
+        },
+        "type_params": {
+          "type": "array",
+          "items": {
+            "$ref": "typeParam.json"
+          }
+        },
+        "members": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/classMember"
+          }
+        },
+        "super_class": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "args": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "types.json"
+                  }
+                }
+              },
+              "required": ["name", "args"]
+            }
+          ]
+        },
+        "annotations": {
+          "type": "array",
+          "items": {
+            "$ref": "annotation.json"
+          }
+        },
+        "comment": {
+          "$ref": "comment.json"
+        },
+        "location": {
+          "$ref": "location.json"
+        }
+      },
+      "required": ["declaration", "name", "type_params", "members", "super_class", "annotations", "comment", "location"]
+    },
+    "module": {
+      "type": "object",
+      "properties": {
+        "declaration": {
+          "enum": ["module"]
+        },
+        "name": {
+          "type": "string"
+        },
+        "type_params": {
+          "type": "array",
+          "items": {
+            "$ref": "typeParam.json"
+          }
+        },
+        "members": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/classMember"
+          }
+        },
+        "self_types": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/moduleSelf"
+          }
+        },
+        "annotations": {
+          "type": "array",
+          "items": {
+            "$ref": "annotation.json"
+          }
+        },
+        "comment": {
+          "$ref": "comment.json"
+        },
+        "location": {
+          "$ref": "location.json"
+        }
+      },
+      "required": ["declaration", "name", "type_params", "members", "self_types", "annotations", "location", "comment"]
+    },
+    "moduleSelf": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "args": {
+          "type": "array",
+          "items": {
+            "$ref": "types.json"
+          }
+        }
+      },
+      "required": ["name", "args"]
+    },
+    "interfaceMember": {
+      "oneOf": [
+        {
+          "allOf": [
+            {
+              "$ref": "members.json#/definitions/methodDefinition"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "enum": ["instance"]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "$ref": "members.json#/definitions/include"
+        },
+        {
+          "$ref": "members.json#/definitions/alias"
+        }
+      ]
+    },
+    "interface": {
+      "type": "object",
+      "properties": {
+        "declaration": {
+          "enum": ["interface"]
+        },
+        "name": {
+          "type": "string"
+        },
+        "type_params": {
+          "type": "array",
+          "items": {
+            "$ref": "typeParam.json"
+          }
+        },
+        "members": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/interfaceMember"
+          }
+        },
+        "annotations": {
+          "type": "array",
+          "items": {
+            "$ref": "annotation.json"
+          }
+        },
+        "comment": {
+          "$ref": "comment.json"
+        },
+        "location": {
+          "$ref": "location.json"
+        }
+      },
+      "required": ["declaration", "name", "type_params", "members", "annotations", "comment", "location"]
+    }
+  },
+  "oneOf": [
+    {
+      "$ref": "#/definitions/alias"
+    },
+    {
+      "$ref": "#/definitions/constant"
+    },
+    {
+      "$ref": "#/definitions/global"
+    },
+    {
+      "$ref": "#/definitions/class"
+    },
+    {
+      "$ref": "#/definitions/module"
+    },
+    {
+      "$ref": "#/definitions/interface"
+    }
+  ]
+}

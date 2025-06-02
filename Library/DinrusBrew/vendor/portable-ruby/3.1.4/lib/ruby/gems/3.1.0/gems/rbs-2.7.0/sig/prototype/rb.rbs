@@ -1,0 +1,88 @@
+module RBS
+  module Prototype
+    class RB
+      include Helpers
+
+      class Context
+        type method_kind = :singleton | :singleton_instance | :instance
+
+        attr_accessor module_function: bool
+
+        attr_accessor singleton: bool
+
+        attr_accessor namespace: Namespace
+
+        def initialize: (module_function: bool, singleton: bool, namespace: Namespace) -> void
+
+        def method_kind: () -> method_kind
+
+        def attribute_kind: () -> (:singleton | :instance)
+
+        def self.initial: (?namespace: Namespace) -> Context
+      end
+
+      type decl = AST::Declarations::t | AST::Members::t
+
+      attr_reader source_decls: Array[decl]
+
+      def initialize: () -> void
+
+      def decls: () -> Array[AST::Declarations::t]
+
+      def parse: (String) -> void
+
+      def process: (untyped node, decls: Array[AST::Declarations::t | AST::Members::t], comments: Hash[Integer, AST::Comment], context: Context) -> void
+
+      def process_children: (RubyVM::AbstractSyntaxTree::Node node, decls: Array[decl], comments: Hash[Integer, AST::Comment], context: Context) -> void
+
+      # Returns a type name that represents the name of the constant.
+      # `node` must be _constant_ node, `CONST`, `COLON2`, or `COLON3` node.
+      #
+      def const_to_name!: (RubyVM::AbstractSyntaxTree::Node node) -> TypeName
+
+      # Returns a type name that represents the name of the constant.
+      # `node` can be `SELF` for `extend self` pattern.
+      #
+      def const_to_name: (RubyVM::AbstractSyntaxTree::Node? node, context: Context) -> TypeName?
+
+      def literal_to_symbol: (RubyVM::AbstractSyntaxTree::Node node) -> Symbol?
+
+      def function_type_from_body: (RubyVM::AbstractSyntaxTree::Node node, Symbol def_name) -> Types::Function
+
+      def function_return_type_from_body: (RubyVM::AbstractSyntaxTree::Node node) -> Types::t
+
+      def body_type: (RubyVM::AbstractSyntaxTree::Node node) -> Types::t
+
+      def if_unless_type: (RubyVM::AbstractSyntaxTree::Node node) -> Types::t
+
+      def block_type: (RubyVM::AbstractSyntaxTree::Node node) -> Types::t
+
+      def literal_to_type: (RubyVM::AbstractSyntaxTree::Node node) -> Types::t
+
+      def types_to_union_type: (Array[Types::t] types) -> Types::t
+
+      def range_element_type: (Array[Types::t] types) -> Types::t
+
+      def param_type: (RubyVM::AbstractSyntaxTree::Node node, ?default: Types::Bases::Any) -> Types::t
+
+      # backward compatible
+      alias node_type param_type
+
+      def private: () -> AST::Members::Private
+
+      @private: AST::Members::Private?
+
+      def public: () -> AST::Members::Public
+
+      @public: AST::Members::Public?
+
+      def current_accessibility: (Array[decl] decls, ?Integer index) -> (AST::Members::Private | AST::Members::Public)
+
+      def remove_unnecessary_accessibility_methods!: (Array[decl]) -> void
+
+      def is_accessibility?: (decl) -> bool
+
+      def find_def_index_by_name: (Array[decl] decls, Symbol name) -> [Integer, AST::Members::MethodDefinition | AST::Members::AttrReader | AST::Members::AttrWriter]?
+    end
+  end
+end

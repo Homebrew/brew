@@ -1,0 +1,39 @@
+PATH
+  remote: .
+  specs:
+    typeprof (0.21.3)
+      rbs (>= 1.8.1)
+
+GEM
+  remote: https://rubygems.org/
+  specs:
+    coverage-helpers (1.0.0)
+    docile (1.4.0)
+    power_assert (2.0.1)
+    rake (13.0.6)
+    rbs (2.6.0)
+    simplecov (0.21.2)
+      docile (~> 1.1)
+      simplecov-html (~> 0.11)
+      simplecov_json_formatter (~> 0.1)
+    simplecov-html (0.12.3)
+    simplecov_json_formatter (0.1.4)
+    stackprof (0.2.19)
+    test-unit (3.5.3)
+      power_assert
+
+PLATFORMS
+  ruby
+  x86_64-linux
+
+DEPENDENCIES
+  coverage-helpers
+  rake
+  simplecov
+  simplecov-html
+  stackprof
+  test-unit
+  typeprof!
+
+BUNDLED WITH
+   2.2.15

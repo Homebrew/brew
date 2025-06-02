@@ -1,0 +1,14 @@
+%a{annotate:rdoc:skip}
+module URI
+  # <!-- rdoc-file=lib/uri/ldaps.rb -->
+  # The default port for LDAPS URIs is 636, and the scheme is 'ldaps:' rather than
+  # 'ldap:'. Other than that, LDAPS URIs are identical to LDAP URIs; see
+  # URI::LDAP.
+  #
+  class LDAPS < LDAP
+    # <!-- rdoc-file=lib/uri/ldaps.rb -->
+    # A Default port of 636 for URI::LDAPS
+    #
+    DEFAULT_PORT: Integer
+  end
+end

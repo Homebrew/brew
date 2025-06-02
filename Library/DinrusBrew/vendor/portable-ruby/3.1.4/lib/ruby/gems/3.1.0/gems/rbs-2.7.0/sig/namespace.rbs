@@ -1,0 +1,147 @@
+module RBS
+  # Namespace instance represents a _prefix of module names_.
+  #
+  # ```
+  # vvvvvvvvvvvvvv  TypeName
+  # RBS::Namespace
+  # ^^^^^           Namespace
+  #
+  # vvvvvvvvvv    TypeName
+  # RBS::Types
+  # ^^^^^         Namespace
+  #
+  # vvvvvvvvvvvvvvvvv    TypeName
+  # RBS::Types::Union
+  # ^^^^^^^^^^^^         Namespace
+  # ```
+  #
+  # Note that `Namespace` is an RBS specific concept and there is no corresponding concept in Ruby.
+  #
+  # There are _absolute_ and _relative_ namespaces.
+  #
+  # ```
+  # Namespace(::RBS::)         # Absolute namespace
+  # Namespace(  RBS::)         # Relative namespace
+  # ```
+  #
+  # It also defines two special namespaces.
+  #
+  # ```
+  # ::              # _Root_ namespace
+  #                 # _Empty_ namespace
+  # ```
+  #
+  class Namespace
+    attr_reader path: Array[Symbol]
+
+    def initialize: (path: Array[Symbol], absolute: boolish) -> void
+
+    @absolute: bool
+
+    @parent: Namespace?
+
+    self.@root: Namespace?
+
+    self.@empty: Namespace?
+
+    # Returns new _empty_ namespace.
+    def self.empty: () -> Namespace
+
+    # Returns new _root_ namespace.
+    def self.root: () -> Namespace
+
+    # Concat two namespaces.
+    #
+    # ```rb
+    # Namespace("Foo::") + Namespace("Bar::")   # => Foo::Bar::
+    # Namespace("::Foo::") + Namespace("Bar::") # => ::Foo::Bar::
+    # ```
+    #
+    # If `other` is an absolute namespace, it returns `other`.
+    #
+    # ```rb
+    # Namespace("Foo::") + Namespace("::Bar::")  # =>  ::Bar::
+    # ```
+    def +: (Namespace other) -> Namespace
+
+    # Add one path component to self.
+    #
+    # ```rb
+    # Namespace("Foo::").append(:Bar) # => Namespace("Foo::Bar::")
+    # ```
+    def append: (Symbol component) -> Namespace
+
+    # Returns parent namespace.
+    # Raises error there is no parent namespace.
+    #
+    # ```rb
+    # Namespace("::A").parent    # => Namespace("::")
+    # Namespace("::").parent     # raises error
+    # Namespace("A::B").parent   # => Namespace("A")
+    # ```
+    def parent: () -> Namespace
+
+    # Returns true if self is absolute namespace.
+    def absolute?: () -> bool
+
+    # Returns true if self is relative namespace.
+    def relative?: () -> bool
+
+    # Returns absolute namespace.
+    #
+    # ```rb
+    # Namespace("A").absolute!      # => Namespace("::A")
+    # Namespace("::A").absolute!    # => Namespace("::A")
+    # ```
+    def absolute!: () -> Namespace
+
+    # Returns _relative_ namespace.
+    #
+    def relative!: () -> Namespace
+
+    def empty?: () -> bool
+
+    # Equality is defined by its structure.
+    #
+    def ==: (untyped other) -> bool
+
+    alias eql? ==
+
+    # Hash is defined based on its structure.
+    #
+    def hash: () -> Integer
+
+    # Returns a pair of parent namespace and a symbol of last component.
+    #
+    # ```rb
+    # Namespace("::A::B::C").split    # => [Namespace("::A::B::"), :C]
+    # ```
+    def split: () -> [Namespace, Symbol]?
+
+    def to_s: () -> String
+
+    # Construct a type name which points to the same name type.
+    #
+    def to_type_name: () -> TypeName
+
+    def self.parse: (String string) -> Namespace
+
+    # Iterate over Namespace for each element in ascending order.
+    #
+    # ```rb
+    # Namespace.parse("::A::B::C").ascend {|ns| p ns }
+    #   # => ::A::B::C
+    #   # => ::A::B
+    #   # => ::A
+    #   # => ::(root)
+    # ```
+    def ascend: () { (Namespace) -> void } -> void
+              | () -> Enumerator[Namespace, void]
+  end
+end
+
+module Kernel
+  # Parses given string and returns Namespace.
+  #
+  def Namespace: (String) -> RBS::Namespace
+end

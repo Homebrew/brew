@@ -1,0 +1,4 @@
+module RBS
+  module Collection
+  end
+end

@@ -1,0 +1,150 @@
+# <!-- rdoc-file=object.c -->
+# The class of the singleton object `nil`.
+#
+class NilClass
+  public
+
+  def !: () -> true
+
+  # <!--
+  #   rdoc-file=object.c
+  #   - false & obj   -> false
+  #   - nil & obj     -> false
+  # -->
+  # And---Returns `false`. *obj* is always evaluated as it is the argument to a
+  # method call---there is no short-circuit evaluation in this case.
+  #
+  def &: (untyped obj) -> false
+
+  # <!--
+  #   rdoc-file=object.c
+  #   - obj === other   -> true or false
+  # -->
+  # Case Equality -- For class Object, effectively the same as calling `#==`, but
+  # typically overridden by descendants to provide meaningful semantics in `case`
+  # statements.
+  #
+  def ===: (nil) -> true
+         | (untyped obj) -> false
+
+  # <!--
+  #   rdoc-file=object.c
+  #   - nil =~ other  -> nil
+  # -->
+  # Dummy pattern matching -- always returns nil.
+  #
+  def =~: (untyped obj) -> nil
+
+  # <!--
+  #   rdoc-file=object.c
+  #   - false ^ obj    -> true or false
+  #   - nil   ^ obj    -> true or false
+  # -->
+  # Exclusive Or---If *obj* is `nil` or `false`, returns `false`; otherwise,
+  # returns `true`.
+  #
+  def ^: (nil) -> false
+       | (false) -> false
+       | (untyped obj) -> true
+
+  # <!--
+  #   rdoc-file=object.c
+  #   - nil.inspect  -> "nil"
+  # -->
+  # Always returns the string "nil".
+  #
+  def inspect: () -> "nil"
+
+  # <!--
+  #   rdoc-file=object.c
+  #   - nil.nil?               -> true
+  # -->
+  # Only the object *nil* responds `true` to `nil?`.
+  #
+  def nil?: () -> true
+
+  # <!--
+  #   rdoc-file=rational.c
+  #   - nil.rationalize([eps])  ->  (0/1)
+  # -->
+  # Returns zero as a rational.  The optional argument `eps` is always ignored.
+  #
+  def rationalize: (?untyped eps) -> Rational
+
+  # <!--
+  #   rdoc-file=object.c
+  #   - nil.to_a    -> []
+  # -->
+  # Always returns an empty array.
+  #
+  #     nil.to_a   #=> []
+  #
+  def to_a: () -> [ ]
+
+  # <!--
+  #   rdoc-file=complex.c
+  #   - nil.to_c  ->  (0+0i)
+  # -->
+  # Returns zero as a complex.
+  #
+  def to_c: () -> Complex
+
+  # <!--
+  #   rdoc-file=nilclass.rb
+  #   - nil.to_f    -> 0.0
+  # -->
+  # Always returns zero.
+  #
+  #     nil.to_f   #=> 0.0
+  #
+  def to_f: () -> Float
+
+  # <!--
+  #   rdoc-file=object.c
+  #   - nil.to_h    -> {}
+  # -->
+  # Always returns an empty hash.
+  #
+  #     nil.to_h   #=> {}
+  #
+  def to_h: () -> ::Hash[untyped, untyped]
+
+  # <!--
+  #   rdoc-file=nilclass.rb
+  #   - nil.to_i -> 0
+  # -->
+  # Always returns zero.
+  #
+  #     nil.to_i   #=> 0
+  #
+  def to_i: () -> 0
+
+  # <!--
+  #   rdoc-file=rational.c
+  #   - nil.to_r  ->  (0/1)
+  # -->
+  # Returns zero as a rational.
+  #
+  def to_r: () -> Rational
+
+  # <!--
+  #   rdoc-file=object.c
+  #   - nil.to_s    -> ""
+  # -->
+  # Always returns the empty string.
+  #
+  def to_s: () -> ""
+
+  # <!--
+  #   rdoc-file=object.c
+  #   - false | obj   ->   true or false
+  #   - nil   | obj   ->   true or false
+  # -->
+  # Or---Returns `false` if *obj* is `nil` or `false`; `true` otherwise.
+  #
+  def |: (nil) -> false
+       | (false) -> false
+       | (untyped obj) -> true
+
+  def clone: (?freeze: true?) -> self
+end

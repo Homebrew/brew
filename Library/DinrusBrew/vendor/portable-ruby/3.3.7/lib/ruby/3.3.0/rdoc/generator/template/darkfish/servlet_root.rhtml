@@ -1,0 +1,62 @@
+<body role="document">
+<nav role="navigation">
+  <div id="project-navigation">
+    <div id="home-section" class="nav-section">
+      <h2>
+        <a href="<%= rel_prefix %>/" rel="home">Home</a>
+      </h2>
+    </div>
+
+    <%= render '_sidebar_search.rhtml' %>
+  </div>
+
+<%= render '_sidebar_installed.rhtml' %>
+</nav>
+
+<main role="main">
+  <h1>Local RDoc Documentation</h1>
+
+  <p>Here you can browse local documentation from the ruby standard library and
+  your installed gems.
+
+<%- extra_dirs = installed.select { |_, _, _, type,| type == :extra } -%>
+<%- unless extra_dirs.empty? -%>
+  <h2>Extra Documentation Directories</h2>
+
+  <p>The following additional documentation directories are available:</p>
+
+  <ol>
+  <%- extra_dirs.each do |name, href, exists, _, path| -%>
+    <li>
+    <%- if exists -%>
+      <a href="<%= href %>"><%= h name %></a> (<%= h path %>)
+    <%- else -%>
+      <%= h name %> (<%= h path %>; <i>not available</i>)
+    <%- end -%>
+    </li>
+  <%- end -%>
+  </ol>
+<%- end -%>
+
+<%- gems = installed.select { |_, _, _, type,| type == :gem } -%>
+<%- missing = gems.reject { |_, _, exists,| exists } -%>
+<%- unless missing.empty? then -%>
+  <h2>Missing Gem Documentation</h2>
+
+  <p>You are missing documentation for some of your installed gems.
+  You can install missing documentation for gems by running
+  <kbd>gem rdoc --all</kbd>.  After installing the missing documentation you
+  only need to reload this page.  The newly created documentation will
+  automatically appear.
+
+  <p>You can also install documentation for a specific gem by running one of
+  the following commands.
+
+  <ul>
+  <%- names = missing.map { |name,| name.sub(/-([^-]*)$/, '') }.uniq -%>
+  <%- names.each do |name| -%>
+    <li><kbd>gem rdoc <%=h name %></kbd>
+  <%- end -%>
+  </ul>
+<%- end -%>
+</main>

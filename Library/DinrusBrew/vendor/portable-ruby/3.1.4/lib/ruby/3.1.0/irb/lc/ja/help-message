@@ -1,0 +1,57 @@
+# -*- coding: utf-8 -*-
+#   irb/lc/ja/help-message.rb -
+#   	$Release Version: 0.9.6$
+#   	$Revision$
+#   	by Keiju ISHITSUKA(keiju@ruby-lang.org)
+#
+# --
+#
+#
+#
+Usage:  irb.rb [options] [programfile] [arguments]
+  -f		    ~/.irbrc を読み込まない.
+  -d                $DEBUG をtrueにする(ruby -d と同じ)
+  -r load-module    ruby -r と同じ.
+  -I path           $LOAD_PATH に path を追加する.
+  -U                ruby -U と同じ.
+  -E enc            ruby -E と同じ.
+  -w                ruby -w と同じ.
+  -W[level=2]       ruby -W と同じ.
+  --context-mode n  新しいワークスペースを作成した時に関連する Binding
+		    オブジェクトの作成方法を 0 から 3 のいずれかに設定する.
+  --echo	    実行結果を表示する(デフォルト).
+  --noecho	    実行結果を表示しない.
+  --inspect	    結果出力にinspectを用いる.
+  --noinspect	    結果出力にinspectを用いない.
+  --multiline       マルチラインエディタを利用する.
+  --nomultiline     マルチラインエディタを利用しない.
+  --singleline      シングルラインエディタを利用する.
+  --nosingleline    シングルラインエディタを利用しない.
+  --colorize	    色付けを利用する.
+  --nocolorize	    色付けを利用しない.
+  --autocomplete    オートコンプリートを利用する.
+  --noautocomplete  オートコンプリートを利用しない.
+  --prompt prompt-mode/--prompt-mode prompt-mode
+		    プロンプトモードを切替えます. 現在定義されているプ
+		    ロンプトモードは, default, simple, xmp, inf-rubyが
+		    用意されています.
+  --inf-ruby-mode   emacsのinf-ruby-mode用のプロンプト表示を行なう. 特
+                    に指定がない限り, シングルラインエディタとマルチラ
+                    インエディタは使わなくなる.
+  --sample-book-mode/--simple-prompt
+		    非常にシンプルなプロンプトを用いるモードです.
+  --noprompt	    プロンプト表示を行なわない.
+  --single-irb	    irb 中で self を実行して得られるオブジェクトをサ
+		    ブ irb と共有する.
+  --tracer	    コマンド実行時にトレースを行なう.
+  --back-trace-limit n
+		    バックトレース表示をバックトレースの頭から n, 後ろ
+		    からnだけ行なう. デフォルトは16
+
+  --verbose	    詳細なメッセージを出力する.
+  --noverbose	    詳細なメッセージを出力しない(デフォルト).
+  -v, --version	    irbのバージョンを表示する.
+  -h, --help	    irb のヘルプを表示する.
+  --		    以降のコマンドライン引数をオプションとして扱わない.
+
+# vim:fileencoding=utf-8

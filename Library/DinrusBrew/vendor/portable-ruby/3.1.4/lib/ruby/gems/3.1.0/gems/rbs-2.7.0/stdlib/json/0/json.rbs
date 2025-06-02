@@ -1,0 +1,1631 @@
+interface _ToJson
+  def to_json: (?JSON::State state) -> String
+end
+
+interface _JsonToWritableIO
+  def to_io: () -> _JsonWrite
+end
+
+interface _JsonWrite
+  def write: (String json) -> void
+end
+
+interface _JsonReadableIO
+  def to_io: () -> _JsonRead
+end
+
+interface _JsonRead
+  def read: () -> string
+end
+
+type json_options = Hash[Symbol, untyped]
+
+# <!-- rdoc-file=ext/json/lib/json/common.rb -->
+# The base exception for JSON errors.
+#
+class JSON::JSONError < StandardError
+end
+
+# <!-- rdoc-file=ext/json/lib/json/common.rb -->
+# This exception is raised if a generator or unparser error occurs.
+#
+class JSON::GeneratorError < JSON::JSONError
+end
+
+class JSON::UnparserError < JSON::GeneratorError
+end
+
+# <!-- rdoc-file=ext/json/lib/json/common.rb -->
+# This exception is raised if a parser error occurs.
+#
+class JSON::ParserError < JSON::JSONError
+end
+
+# <!-- rdoc-file=ext/json/lib/json/common.rb -->
+# This exception is raised if the nesting of parsed data structures is too deep.
+#
+class JSON::NestingError < JSON::ParserError
+end
+
+class JSON::State
+end
+
+# <!-- rdoc-file=ext/json/lib/json/ext.rb -->
+# This module holds all the modules/classes that implement JSON's functionality
+# as C extensions.
+#
+module JSON::Ext
+end
+
+# <!-- rdoc-file=ext/json/generator/generator.c -->
+# This is the JSON generator implemented as a C extension. It can be configured
+# to be used by setting
+#
+#     JSON.generator = JSON::Ext::Generator
+#
+# with the method generator= in JSON.
+#
+module JSON::Ext::Generator
+end
+
+class JSON::Ext::Generator::State
+end
+
+# <!-- rdoc-file=ext/json/parser/parser.c -->
+# This is the JSON parser implemented as a C extension. It can be configured to
+# be used by setting
+#
+#     JSON.parser = JSON::Ext::Parser
+#
+# with the method parser= in JSON.
+#
+class JSON::Ext::Parser
+end
+
+module JSON::Pure
+end
+
+module JSON::Pure::Generator
+end
+
+class JSON::Pure::Generator::State
+end
+
+class JSON::Pure::Parser
+end
+
+type json_generator = singleton(::JSON::Ext::Generator) | singleton(::JSON::Pure::Generator)
+type json_parser = singleton(::JSON::Ext::Parser) | singleton(::JSON::Pure::Parser)
+type json_state = singleton(JSON::Ext::Generator::State) | singleton(JSON::Pure::Generator::State)
+
+# <!-- rdoc-file=ext/json/lib/json.rb -->
+# # JavaScript Object Notation (JSON)
+#
+# JSON is a lightweight data-interchange format.
+#
+# A JSON value is one of the following:
+# *   Double-quoted text:  `"foo"`.
+# *   Number:  `1`, `1.0`, `2.0e2`.
+# *   Boolean:  `true`, `false`.
+# *   Null: `null`.
+# *   Array: an ordered list of values, enclosed by square brackets:
+#         ["foo", 1, 1.0, 2.0e2, true, false, null]
+#
+# *   Object: a collection of name/value pairs, enclosed by curly braces; each
+#     name is double-quoted text; the values may be any JSON values:
+#         {"a": "foo", "b": 1, "c": 1.0, "d": 2.0e2, "e": true, "f": false, "g": null}
+#
+#
+# A JSON array or object may contain nested arrays, objects, and scalars to any
+# depth:
+#     {"foo": {"bar": 1, "baz": 2}, "bat": [0, 1, 2]}
+#     [{"foo": 0, "bar": 1}, ["baz", 2]]
+#
+# ## Using Module JSON
+#
+# To make module JSON available in your code, begin with:
+#     require 'json'
+#
+# All examples here assume that this has been done.
+#
+# ### Parsing JSON
+#
+# You can parse a String containing JSON data using either of two methods:
+# *   `JSON.parse(source, opts)`
+# *   `JSON.parse!(source, opts)`
+#
+#
+# where
+# *   `source` is a Ruby object.
+# *   `opts` is a Hash object containing options that control both input allowed
+#     and output formatting.
+#
+#
+# The difference between the two methods is that JSON.parse! omits some checks
+# and may not be safe for some `source` data; use it only for data from trusted
+# sources. Use the safer method JSON.parse for less trusted sources.
+#
+# #### Parsing JSON Arrays
+#
+# When `source` is a JSON array, JSON.parse by default returns a Ruby Array:
+#     json = '["foo", 1, 1.0, 2.0e2, true, false, null]'
+#     ruby = JSON.parse(json)
+#     ruby # => ["foo", 1, 1.0, 200.0, true, false, nil]
+#     ruby.class # => Array
+#
+# The JSON array may contain nested arrays, objects, and scalars to any depth:
+#     json = '[{"foo": 0, "bar": 1}, ["baz", 2]]'
+#     JSON.parse(json) # => [{"foo"=>0, "bar"=>1}, ["baz", 2]]
+#
+# #### Parsing JSON Objects
+#
+# When the source is a JSON object, JSON.parse by default returns a Ruby Hash:
+#     json = '{"a": "foo", "b": 1, "c": 1.0, "d": 2.0e2, "e": true, "f": false, "g": null}'
+#     ruby = JSON.parse(json)
+#     ruby # => {"a"=>"foo", "b"=>1, "c"=>1.0, "d"=>200.0, "e"=>true, "f"=>false, "g"=>nil}
+#     ruby.class # => Hash
+#
+# The JSON object may contain nested arrays, objects, and scalars to any depth:
+#     json = '{"foo": {"bar": 1, "baz": 2}, "bat": [0, 1, 2]}'
+#     JSON.parse(json) # => {"foo"=>{"bar"=>1, "baz"=>2}, "bat"=>[0, 1, 2]}
+#
+# #### Parsing JSON Scalars
+#
+# When the source is a JSON scalar (not an array or object), JSON.parse returns
+# a Ruby scalar.
+#
+# String:
+#     ruby = JSON.parse('"foo"')
+#     ruby # => 'foo'
+#     ruby.class # => String
+#
+# Integer:
+#     ruby = JSON.parse('1')
+#     ruby # => 1
+#     ruby.class # => Integer
+#
+# Float:
+#     ruby = JSON.parse('1.0')
+#     ruby # => 1.0
+#     ruby.class # => Float
+#     ruby = JSON.parse('2.0e2')
+#     ruby # => 200
+#     ruby.class # => Float
+#
+# Boolean:
+#     ruby = JSON.parse('true')
+#     ruby # => true
+#     ruby.class # => TrueClass
+#     ruby = JSON.parse('false')
+#     ruby # => false
+#     ruby.class # => FalseClass
+#
+# Null:
+#     ruby = JSON.parse('null')
+#     ruby # => nil
+#     ruby.class # => NilClass
+#
+# #### Parsing Options
+#
+# ###### Input Options
+#
+# Option `max_nesting` (Integer) specifies the maximum nesting depth allowed;
+# defaults to `100`; specify `false` to disable depth checking.
+#
+# With the default, `false`:
+#     source = '[0, [1, [2, [3]]]]'
+#     ruby = JSON.parse(source)
+#     ruby # => [0, [1, [2, [3]]]]
+#
+# Too deep:
+#     # Raises JSON::NestingError (nesting of 2 is too deep):
+#     JSON.parse(source, {max_nesting: 1})
+#
+# Bad value:
+#     # Raises TypeError (wrong argument type Symbol (expected Fixnum)):
+#     JSON.parse(source, {max_nesting: :foo})
+#
+# ---
+#
+# Option `allow_nan` (boolean) specifies whether to allow NaN, Infinity, and
+# MinusInfinity in `source`; defaults to `false`.
+#
+# With the default, `false`:
+#     # Raises JSON::ParserError (225: unexpected token at '[NaN]'):
+#     JSON.parse('[NaN]')
+#     # Raises JSON::ParserError (232: unexpected token at '[Infinity]'):
+#     JSON.parse('[Infinity]')
+#     # Raises JSON::ParserError (248: unexpected token at '[-Infinity]'):
+#     JSON.parse('[-Infinity]')
+#
+# Allow:
+#     source = '[NaN, Infinity, -Infinity]'
+#     ruby = JSON.parse(source, {allow_nan: true})
+#     ruby # => [NaN, Infinity, -Infinity]
+#
+# ###### Output Options
+#
+# Option `symbolize_names` (boolean) specifies whether returned Hash keys should
+# be Symbols; defaults to `false` (use Strings).
+#
+# With the default, `false`:
+#     source = '{"a": "foo", "b": 1.0, "c": true, "d": false, "e": null}'
+#     ruby = JSON.parse(source)
+#     ruby # => {"a"=>"foo", "b"=>1.0, "c"=>true, "d"=>false, "e"=>nil}
+#
+# Use Symbols:
+#     ruby = JSON.parse(source, {symbolize_names: true})
+#     ruby # => {:a=>"foo", :b=>1.0, :c=>true, :d=>false, :e=>nil}
+#
+# ---
+#
+# Option `object_class` (Class) specifies the Ruby class to be used for each
+# JSON object; defaults to Hash.
+#
+# With the default, Hash:
+#     source = '{"a": "foo", "b": 1.0, "c": true, "d": false, "e": null}'
+#     ruby = JSON.parse(source)
+#     ruby.class # => Hash
+#
+# Use class OpenStruct:
+#     ruby = JSON.parse(source, {object_class: OpenStruct})
+#     ruby # => #<OpenStruct a="foo", b=1.0, c=true, d=false, e=nil>
+#
+# ---
+#
+# Option `array_class` (Class) specifies the Ruby class to be used for each JSON
+# array; defaults to Array.
+#
+# With the default, Array:
+#     source = '["foo", 1.0, true, false, null]'
+#     ruby = JSON.parse(source)
+#     ruby.class # => Array
+#
+# Use class Set:
+#     ruby = JSON.parse(source, {array_class: Set})
+#     ruby # => #<Set: {"foo", 1.0, true, false, nil}>
+#
+# ---
+#
+# Option `create_additions` (boolean) specifies whether to use JSON additions in
+# parsing. See [\JSON Additions](#module-JSON-label-JSON+Additions).
+#
+# ### Generating JSON
+#
+# To generate a Ruby String containing JSON data, use method
+# `JSON.generate(source, opts)`, where
+# *   `source` is a Ruby object.
+# *   `opts` is a Hash object containing options that control both input allowed
+#     and output formatting.
+#
+#
+# #### Generating JSON from Arrays
+#
+# When the source is a Ruby Array, JSON.generate returns a String containing a
+# JSON array:
+#     ruby = [0, 's', :foo]
+#     json = JSON.generate(ruby)
+#     json # => '[0,"s","foo"]'
+#
+# The Ruby Array array may contain nested arrays, hashes, and scalars to any
+# depth:
+#     ruby = [0, [1, 2], {foo: 3, bar: 4}]
+#     json = JSON.generate(ruby)
+#     json # => '[0,[1,2],{"foo":3,"bar":4}]'
+#
+# #### Generating JSON from Hashes
+#
+# When the source is a Ruby Hash, JSON.generate returns a String containing a
+# JSON object:
+#     ruby = {foo: 0, bar: 's', baz: :bat}
+#     json = JSON.generate(ruby)
+#     json # => '{"foo":0,"bar":"s","baz":"bat"}'
+#
+# The Ruby Hash array may contain nested arrays, hashes, and scalars to any
+# depth:
+#     ruby = {foo: [0, 1], bar: {baz: 2, bat: 3}, bam: :bad}
+#     json = JSON.generate(ruby)
+#     json # => '{"foo":[0,1],"bar":{"baz":2,"bat":3},"bam":"bad"}'
+#
+# #### Generating JSON from Other Objects
+#
+# When the source is neither an Array nor a Hash, the generated JSON data
+# depends on the class of the source.
+#
+# When the source is a Ruby Integer or Float, JSON.generate returns a String
+# containing a JSON number:
+#     JSON.generate(42) # => '42'
+#     JSON.generate(0.42) # => '0.42'
+#
+# When the source is a Ruby String, JSON.generate returns a String containing a
+# JSON string (with double-quotes):
+#     JSON.generate('A string') # => '"A string"'
+#
+# When the source is `true`, `false` or `nil`, JSON.generate returns a String
+# containing the corresponding JSON token:
+#     JSON.generate(true) # => 'true'
+#     JSON.generate(false) # => 'false'
+#     JSON.generate(nil) # => 'null'
+#
+# When the source is none of the above, JSON.generate returns a String
+# containing a JSON string representation of the source:
+#     JSON.generate(:foo) # => '"foo"'
+#     JSON.generate(Complex(0, 0)) # => '"0+0i"'
+#     JSON.generate(Dir.new('.')) # => '"#<Dir>"'
+#
+# #### Generating Options
+#
+# ###### Input Options
+#
+# Option `allow_nan` (boolean) specifies whether `NaN`, `Infinity`, and
+# `-Infinity` may be generated; defaults to `false`.
+#
+# With the default, `false`:
+#     # Raises JSON::GeneratorError (920: NaN not allowed in JSON):
+#     JSON.generate(JSON::NaN)
+#     # Raises JSON::GeneratorError (917: Infinity not allowed in JSON):
+#     JSON.generate(JSON::Infinity)
+#     # Raises JSON::GeneratorError (917: -Infinity not allowed in JSON):
+#     JSON.generate(JSON::MinusInfinity)
+#
+# Allow:
+#     ruby = [Float::NaN, Float::Infinity, Float::MinusInfinity]
+#     JSON.generate(ruby, allow_nan: true) # => '[NaN,Infinity,-Infinity]'
+#
+# ---
+#
+# Option `max_nesting` (Integer) specifies the maximum nesting depth in `obj`;
+# defaults to `100`.
+#
+# With the default, `100`:
+#     obj = [[[[[[0]]]]]]
+#     JSON.generate(obj) # => '[[[[[[0]]]]]]'
+#
+# Too deep:
+#     # Raises JSON::NestingError (nesting of 2 is too deep):
+#     JSON.generate(obj, max_nesting: 2)
+#
+# ###### Output Options
+#
+# The default formatting options generate the most compact JSON data, all on one
+# line and with no whitespace.
+#
+# You can use these formatting options to generate JSON data in a more open
+# format, using whitespace. See also JSON.pretty_generate.
+#
+# *   Option `array_nl` (String) specifies a string (usually a newline) to be
+#     inserted after each JSON array; defaults to the empty String, `''`.
+# *   Option `object_nl` (String) specifies a string (usually a newline) to be
+#     inserted after each JSON object; defaults to the empty String, `''`.
+# *   Option `indent` (String) specifies the string (usually spaces) to be used
+#     for indentation; defaults to the empty String, `''`; defaults to the empty
+#     String, `''`; has no effect unless options `array_nl` or `object_nl`
+#     specify newlines.
+# *   Option `space` (String) specifies a string (usually a space) to be
+#     inserted after the colon in each JSON object's pair; defaults to the empty
+#     String, `''`.
+# *   Option `space_before` (String) specifies a string (usually a space) to be
+#     inserted before the colon in each JSON object's pair; defaults to the
+#     empty String, `''`.
+#
+#
+# In this example, `obj` is used first to generate the shortest JSON data (no
+# whitespace), then again with all formatting options specified:
+#
+#     obj = {foo: [:bar, :baz], bat: {bam: 0, bad: 1}}
+#     json = JSON.generate(obj)
+#     puts 'Compact:', json
+#     opts = {
+#       array_nl: "\n",
+#       object_nl: "\n",
+#       indent: '  ',
+#       space_before: ' ',
+#       space: ' '
+#     }
+#     puts 'Open:', JSON.generate(obj, opts)
+#
+# Output:
+#     Compact:
+#     {"foo":["bar","baz"],"bat":{"bam":0,"bad":1}}
+#     Open:
+#     {
+#       "foo" : [
+#         "bar",
+#         "baz"
+#     ],
+#       "bat" : {
+#         "bam" : 0,
+#         "bad" : 1
+#       }
+#     }
+#
+# ## JSON Additions
+#
+# When you "round trip" a non-String object from Ruby to JSON and back, you have
+# a new String, instead of the object you began with:
+#     ruby0 = Range.new(0, 2)
+#     json = JSON.generate(ruby0)
+#     json # => '0..2"'
+#     ruby1 = JSON.parse(json)
+#     ruby1 # => '0..2'
+#     ruby1.class # => String
+#
+# You can use JSON *additions* to preserve the original object. The addition is
+# an extension of a ruby class, so that:
+# *   JSON.generate stores more information in the JSON string.
+# *   JSON.parse, called with option `create_additions`, uses that information
+#     to create a proper Ruby object.
+#
+#
+# This example shows a Range being generated into JSON and parsed back into
+# Ruby, both without and with the addition for Range:
+#     ruby = Range.new(0, 2)
+#     # This passage does not use the addition for Range.
+#     json0 = JSON.generate(ruby)
+#     ruby0 = JSON.parse(json0)
+#     # This passage uses the addition for Range.
+#     require 'json/add/range'
+#     json1 = JSON.generate(ruby)
+#     ruby1 = JSON.parse(json1, create_additions: true)
+#     # Make a nice display.
+#     display = <<EOT
+#     Generated JSON:
+#       Without addition:  #{json0} (#{json0.class})
+#       With addition:     #{json1} (#{json1.class})
+#     Parsed JSON:
+#       Without addition:  #{ruby0.inspect} (#{ruby0.class})
+#       With addition:     #{ruby1.inspect} (#{ruby1.class})
+#     EOT
+#     puts display
+#
+# This output shows the different results:
+#     Generated JSON:
+#       Without addition:  "0..2" (String)
+#       With addition:     {"json_class":"Range","a":[0,2,false]} (String)
+#     Parsed JSON:
+#       Without addition:  "0..2" (String)
+#       With addition:     0..2 (Range)
+#
+# The JSON module includes additions for certain classes. You can also craft
+# custom additions. See [Custom \JSON
+# Additions](#module-JSON-label-Custom+JSON+Additions).
+#
+# ### Built-in Additions
+#
+# The JSON module includes additions for certain classes. To use an addition,
+# `require` its source:
+# *   BigDecimal: `require 'json/add/bigdecimal'`
+# *   Complex: `require 'json/add/complex'`
+# *   Date: `require 'json/add/date'`
+# *   DateTime: `require 'json/add/date_time'`
+# *   Exception: `require 'json/add/exception'`
+# *   OpenStruct: `require 'json/add/ostruct'`
+# *   Range: `require 'json/add/range'`
+# *   Rational: `require 'json/add/rational'`
+# *   Regexp: `require 'json/add/regexp'`
+# *   Set: `require 'json/add/set'`
+# *   Struct: `require 'json/add/struct'`
+# *   Symbol: `require 'json/add/symbol'`
+# *   Time: `require 'json/add/time'`
+#
+#
+# To reduce punctuation clutter, the examples below show the generated JSON via
+# `puts`, rather than the usual `inspect`,
+#
+# BigDecimal:
+#     require 'json/add/bigdecimal'
+#     ruby0 = BigDecimal(0) # 0.0
+#     json = JSON.generate(ruby0) # {"json_class":"BigDecimal","b":"27:0.0"}
+#     ruby1 = JSON.parse(json, create_additions: true) # 0.0
+#     ruby1.class # => BigDecimal
+#
+# Complex:
+#     require 'json/add/complex'
+#     ruby0 = Complex(1+0i) # 1+0i
+#     json = JSON.generate(ruby0) # {"json_class":"Complex","r":1,"i":0}
+#     ruby1 = JSON.parse(json, create_additions: true) # 1+0i
+#     ruby1.class # Complex
+#
+# Date:
+#     require 'json/add/date'
+#     ruby0 = Date.today # 2020-05-02
+#     json = JSON.generate(ruby0) # {"json_class":"Date","y":2020,"m":5,"d":2,"sg":2299161.0}
+#     ruby1 = JSON.parse(json, create_additions: true) # 2020-05-02
+#     ruby1.class # Date
+#
+# DateTime:
+#     require 'json/add/date_time'
+#     ruby0 = DateTime.now # 2020-05-02T10:38:13-05:00
+#     json = JSON.generate(ruby0) # {"json_class":"DateTime","y":2020,"m":5,"d":2,"H":10,"M":38,"S":13,"of":"-5/24","sg":2299161.0}
+#     ruby1 = JSON.parse(json, create_additions: true) # 2020-05-02T10:38:13-05:00
+#     ruby1.class # DateTime
+#
+# Exception (and its subclasses including RuntimeError):
+#     require 'json/add/exception'
+#     ruby0 = Exception.new('A message') # A message
+#     json = JSON.generate(ruby0) # {"json_class":"Exception","m":"A message","b":null}
+#     ruby1 = JSON.parse(json, create_additions: true) # A message
+#     ruby1.class # Exception
+#     ruby0 = RuntimeError.new('Another message') # Another message
+#     json = JSON.generate(ruby0) # {"json_class":"RuntimeError","m":"Another message","b":null}
+#     ruby1 = JSON.parse(json, create_additions: true) # Another message
+#     ruby1.class # RuntimeError
+#
+# OpenStruct:
+#     require 'json/add/ostruct'
+#     ruby0 = OpenStruct.new(name: 'Matz', language: 'Ruby') # #<OpenStruct name="Matz", language="Ruby">
+#     json = JSON.generate(ruby0) # {"json_class":"OpenStruct","t":{"name":"Matz","language":"Ruby"}}
+#     ruby1 = JSON.parse(json, create_additions: true) # #<OpenStruct name="Matz", language="Ruby">
+#     ruby1.class # OpenStruct
+#
+# Range:
+#     require 'json/add/range'
+#     ruby0 = Range.new(0, 2) # 0..2
+#     json = JSON.generate(ruby0) # {"json_class":"Range","a":[0,2,false]}
+#     ruby1 = JSON.parse(json, create_additions: true) # 0..2
+#     ruby1.class # Range
+#
+# Rational:
+#     require 'json/add/rational'
+#     ruby0 = Rational(1, 3) # 1/3
+#     json = JSON.generate(ruby0) # {"json_class":"Rational","n":1,"d":3}
+#     ruby1 = JSON.parse(json, create_additions: true) # 1/3
+#     ruby1.class # Rational
+#
+# Regexp:
+#     require 'json/add/regexp'
+#     ruby0 = Regexp.new('foo') # (?-mix:foo)
+#     json = JSON.generate(ruby0) # {"json_class":"Regexp","o":0,"s":"foo"}
+#     ruby1 = JSON.parse(json, create_additions: true) # (?-mix:foo)
+#     ruby1.class # Regexp
+#
+# Set:
+#     require 'json/add/set'
+#     ruby0 = Set.new([0, 1, 2]) # #<Set: {0, 1, 2}>
+#     json = JSON.generate(ruby0) # {"json_class":"Set","a":[0,1,2]}
+#     ruby1 = JSON.parse(json, create_additions: true) # #<Set: {0, 1, 2}>
+#     ruby1.class # Set
+#
+# Struct:
+#     require 'json/add/struct'
+#     Customer = Struct.new(:name, :address) # Customer
+#     ruby0 = Customer.new("Dave", "123 Main") # #<struct Customer name="Dave", address="123 Main">
+#     json = JSON.generate(ruby0) # {"json_class":"Customer","v":["Dave","123 Main"]}
+#     ruby1 = JSON.parse(json, create_additions: true) # #<struct Customer name="Dave", address="123 Main">
+#     ruby1.class # Customer
+#
+# Symbol:
+#     require 'json/add/symbol'
+#     ruby0 = :foo # foo
+#     json = JSON.generate(ruby0) # {"json_class":"Symbol","s":"foo"}
+#     ruby1 = JSON.parse(json, create_additions: true) # foo
+#     ruby1.class # Symbol
+#
+# Time:
+#     require 'json/add/time'
+#     ruby0 = Time.now # 2020-05-02 11:28:26 -0500
+#     json = JSON.generate(ruby0) # {"json_class":"Time","s":1588436906,"n":840560000}
+#     ruby1 = JSON.parse(json, create_additions: true) # 2020-05-02 11:28:26 -0500
+#     ruby1.class # Time
+#
+# ### Custom JSON Additions
+#
+# In addition to the JSON additions provided, you can craft JSON additions of
+# your own, either for Ruby built-in classes or for user-defined classes.
+#
+# Here's a user-defined class `Foo`:
+#     class Foo
+#       attr_accessor :bar, :baz
+#       def initialize(bar, baz)
+#         self.bar = bar
+#         self.baz = baz
+#       end
+#     end
+#
+# Here's the JSON addition for it:
+#     # Extend class Foo with JSON addition.
+#     class Foo
+#       # Serialize Foo object with its class name and arguments
+#       def to_json(*args)
+#         {
+#           JSON.create_id  => self.class.name,
+#           'a'             => [ bar, baz ]
+#         }.to_json(*args)
+#       end
+#       # Deserialize JSON string by constructing new Foo object with arguments.
+#       def self.json_create(object)
+#         new(*object['a'])
+#       end
+#     end
+#
+# Demonstration:
+#     require 'json'
+#     # This Foo object has no custom addition.
+#     foo0 = Foo.new(0, 1)
+#     json0 = JSON.generate(foo0)
+#     obj0 = JSON.parse(json0)
+#     # Lood the custom addition.
+#     require_relative 'foo_addition'
+#     # This foo has the custom addition.
+#     foo1 = Foo.new(0, 1)
+#     json1 = JSON.generate(foo1)
+#     obj1 = JSON.parse(json1, create_additions: true)
+#     #   Make a nice display.
+#     display = <<EOT
+#     Generated JSON:
+#       Without custom addition:  #{json0} (#{json0.class})
+#       With custom addition:     #{json1} (#{json1.class})
+#     Parsed JSON:
+#       Without custom addition:  #{obj0.inspect} (#{obj0.class})
+#       With custom addition:     #{obj1.inspect} (#{obj1.class})
+#     EOT
+#     puts display
+#
+# Output:
+#
+#     Generated JSON:
+#       Without custom addition:  "#<Foo:0x0000000006534e80>" (String)
+#       With custom addition:     {"json_class":"Foo","a":[0,1]} (String)
+#     Parsed JSON:
+#       Without custom addition:  "#<Foo:0x0000000006534e80>" (String)
+#       With custom addition:     #<Foo:0x0000000006473bb8 @bar=0, @baz=1> (Foo)
+#
+module JSON
+  # <!--
+  #   rdoc-file=ext/json/lib/json/common.rb
+  #   - JSON[object] -> new_array or new_string
+  # -->
+  # If `object` is a String, calls JSON.parse with `object` and `opts` (see method
+  # #parse):
+  #     json = '[0, 1, null]'
+  #     JSON[json]# => [0, 1, nil]
+  #
+  # Otherwise, calls JSON.generate with `object` and `opts` (see method
+  # #generate):
+  #     ruby = [0, 1, nil]
+  #     JSON[ruby] # => '[0,1,null]'
+  #
+  def self.[]: (untyped object, ?json_options opts) -> untyped
+
+  # <!--
+  #   rdoc-file=ext/json/lib/json/common.rb
+  #   - create_id()
+  # -->
+  # Returns the current create identifier. See also JSON.create_id=.
+  #
+  def self.create_id: () -> _ToS
+
+  # <!--
+  #   rdoc-file=ext/json/lib/json/common.rb
+  #   - create_id=(new_value)
+  # -->
+  # Sets create identifier, which is used to decide if the *json_create* hook of a
+  # class should be called; initial value is `json_class`:
+  #     JSON.create_id # => 'json_class'
+  #
+  def self.create_id=: (_ToS create_id) -> _ToS
+
+  def self.deep_const_get: (_ToS path) -> untyped
+
+  # <!--
+  #   rdoc-file=ext/json/lib/json/common.rb
+  #   - JSON.dump(obj, io = nil, limit = nil)
+  # -->
+  # Dumps `obj` as a JSON string, i.e. calls generate on the object and returns
+  # the result.
+  #
+  # The default options can be changed via method JSON.dump_default_options.
+  #
+  # *   Argument `io`, if given, should respond to method `write`; the JSON String
+  #     is written to `io`, and `io` is returned. If `io` is not given, the JSON
+  #     String is returned.
+  # *   Argument `limit`, if given, is passed to JSON.generate as option
+  #     `max_nesting`.
+  #
+  #
+  # ---
+  #
+  # When argument `io` is not given, returns the JSON String generated from `obj`:
+  #     obj = {foo: [0, 1], bar: {baz: 2, bat: 3}, bam: :bad}
+  #     json = JSON.dump(obj)
+  #     json # => "{\"foo\":[0,1],\"bar\":{\"baz\":2,\"bat\":3},\"bam\":\"bad\"}"
+  #
+  # When argument `io` is given, writes the JSON String to `io` and returns `io`:
+  #     path = 't.json'
+  #     File.open(path, 'w') do |file|
+  #       JSON.dump(obj, file)
+  #     end # => #<File:t.json (closed)>
+  #     puts File.read(path)
+  #
+  # Output:
+  #     {"foo":[0,1],"bar":{"baz":2,"bat":3},"bam":"bad"}
+  #
+  def self?.dump: (_ToJson obj, ?Integer limit) -> String
+                | (_ToJson obj, _JsonToWritableIO anIO) -> _JsonWrite
+                | (_ToJson obj, _JsonWrite anIO, ?Integer limit) -> _JsonWrite
+
+  # <!-- rdoc-file=ext/json/lib/json/common.rb -->
+  # Sets or returns the default options for the JSON.dump method. Initially:
+  #     opts = JSON.dump_default_options
+  #     opts # => {:max_nesting=>false, :allow_nan=>true, :escape_slash=>false}
+  #
+  def self.dump_default_options: () -> json_options
+
+  # <!-- rdoc-file=ext/json/lib/json/common.rb -->
+  # Sets or returns the default options for the JSON.dump method. Initially:
+  #     opts = JSON.dump_default_options
+  #     opts # => {:max_nesting=>false, :allow_nan=>true, :escape_slash=>false}
+  #
+  def self.dump_default_options=: (json_options) -> json_options
+
+  # <!--
+  #   rdoc-file=ext/json/lib/json/common.rb
+  #   - JSON.fast_generate(obj, opts) -> new_string
+  # -->
+  # Arguments `obj` and `opts` here are the same as arguments `obj` and `opts` in
+  # JSON.generate.
+  #
+  # By default, generates JSON data without checking for circular references in
+  # `obj` (option `max_nesting` set to `false`, disabled).
+  #
+  # Raises an exception if `obj` contains circular references:
+  #     a = []; b = []; a.push(b); b.push(a)
+  #     # Raises SystemStackError (stack level too deep):
+  #     JSON.fast_generate(a)
+  #
+  def self?.fast_generate: (_ToJson obj, ?json_options opts) -> String
+
+  alias self.fast_unparse self.fast_generate
+
+  alias fast_unparse fast_generate
+
+  # <!--
+  #   rdoc-file=ext/json/lib/json/common.rb
+  #   - JSON.generate(obj, opts = nil) -> new_string
+  # -->
+  # Returns a String containing the generated JSON data.
+  #
+  # See also JSON.fast_generate, JSON.pretty_generate.
+  #
+  # Argument `obj` is the Ruby object to be converted to JSON.
+  #
+  # Argument `opts`, if given, contains a Hash of options for the generation. See
+  # [Generating Options](#module-JSON-label-Generating+Options).
+  #
+  # ---
+  #
+  # When `obj` is an Array, returns a String containing a JSON array:
+  #     obj = ["foo", 1.0, true, false, nil]
+  #     json = JSON.generate(obj)
+  #     json # => '["foo",1.0,true,false,null]'
+  #
+  # When `obj` is a Hash, returns a String containing a JSON object:
+  #     obj = {foo: 0, bar: 's', baz: :bat}
+  #     json = JSON.generate(obj)
+  #     json # => '{"foo":0,"bar":"s","baz":"bat"}'
+  #
+  # For examples of generating from other Ruby objects, see [Generating \JSON from
+  # Other Objects](#module-JSON-label-Generating+JSON+from+Other+Objects).
+  #
+  # ---
+  #
+  # Raises an exception if any formatting option is not a String.
+  #
+  # Raises an exception if `obj` contains circular references:
+  #     a = []; b = []; a.push(b); b.push(a)
+  #     # Raises JSON::NestingError (nesting of 100 is too deep):
+  #     JSON.generate(a)
+  #
+  def self?.generate: (_ToJson obj, ?json_options opts) -> String
+
+  # <!-- rdoc-file=ext/json/lib/json/common.rb -->
+  # Returns the JSON generator module that is used by JSON. This is either
+  # JSON::Ext::Generator or JSON::Pure::Generator:
+  #     JSON.generator # => JSON::Ext::Generator
+  #
+  def self.generator: () -> json_generator
+
+  def self.generator=: (json_generator generator) -> void
+
+  # <!--
+  #   rdoc-file=ext/json/lib/json/common.rb
+  #   - iconv(to, from, string)
+  # -->
+  # Encodes string using String.encode.
+  #
+  def self.iconv: (encoding to, encoding from, String string) -> String
+
+  # <!--
+  #   rdoc-file=ext/json/lib/json/common.rb
+  #   - JSON.load(source, proc = nil, options = {}) -> object
+  # -->
+  # Returns the Ruby objects created by parsing the given `source`.
+  #
+  # *   Argument `source` must be, or be convertible to, a String:
+  #     *   If `source` responds to instance method `to_str`, `source.to_str`
+  #         becomes the source.
+  #     *   If `source` responds to instance method `to_io`, `source.to_io.read`
+  #         becomes the source.
+  #     *   If `source` responds to instance method `read`, `source.read` becomes
+  #         the source.
+  #     *   If both of the following are true, source becomes the String `'null'`:
+  #         *   Option `allow_blank` specifies a truthy value.
+  #         *   The source, as defined above, is `nil` or the empty String `''`.
+  #
+  #     *   Otherwise, `source` remains the source.
+  #
+  # *   Argument `proc`, if given, must be a Proc that accepts one argument. It
+  #     will be called recursively with each result (depth-first order). See
+  #     details below. BEWARE: This method is meant to serialise data from trusted
+  #     user input, like from your own database server or clients under your
+  #     control, it could be dangerous to allow untrusted users to pass JSON
+  #     sources into it.
+  # *   Argument `opts`, if given, contains a Hash of options for the parsing. See
+  #     [Parsing Options](#module-JSON-label-Parsing+Options). The default options
+  #     can be changed via method JSON.load_default_options=.
+  #
+  #
+  # ---
+  #
+  # When no `proc` is given, modifies `source` as above and returns the result of
+  # `parse(source, opts)`;  see #parse.
+  #
+  # Source for following examples:
+  #     source = <<-EOT
+  #     {
+  #     "name": "Dave",
+  #       "age" :40,
+  #       "hats": [
+  #         "Cattleman's",
+  #         "Panama",
+  #         "Tophat"
+  #       ]
+  #     }
+  #     EOT
+  #
+  # Load a String:
+  #     ruby = JSON.load(source)
+  #     ruby # => {"name"=>"Dave", "age"=>40, "hats"=>["Cattleman's", "Panama", "Tophat"]}
+  #
+  # Load an IO object:
+  #     require 'stringio'
+  #     object = JSON.load(StringIO.new(source))
+  #     object # => {"name"=>"Dave", "age"=>40, "hats"=>["Cattleman's", "Panama", "Tophat"]}
+  #
+  # Load a File object:
+  #     path = 't.json'
+  #     File.write(path, source)
+  #     File.open(path) do |file|
+  #       JSON.load(file)
+  #     end # => {"name"=>"Dave", "age"=>40, "hats"=>["Cattleman's", "Panama", "Tophat"]}
+  #
+  # ---
+  #
+  # When `proc` is given:
+  # *   Modifies `source` as above.
+  # *   Gets the `result` from calling `parse(source, opts)`.
+  # *   Recursively calls `proc(result)`.
+  # *   Returns the final result.
+  #
+  #
+  # Example:
+  #     require 'json'
+  #
+  #     # Some classes for the example.
+  #     class Base
+  #       def initialize(attributes)
+  #         @attributes = attributes
+  #       end
+  #     end
+  #     class User    < Base; end
+  #     class Account < Base; end
+  #     class Admin   < Base; end
+  #     # The JSON source.
+  #     json = <<-EOF
+  #     {
+  #       "users": [
+  #           {"type": "User", "username": "jane", "email": "jane@example.com"},
+  #           {"type": "User", "username": "john", "email": "john@example.com"}
+  #       ],
+  #       "accounts": [
+  #           {"account": {"type": "Account", "paid": true, "account_id": "1234"}},
+  #           {"account": {"type": "Account", "paid": false, "account_id": "1235"}}
+  #       ],
+  #       "admins": {"type": "Admin", "password": "0wn3d"}
+  #     }
+  #     EOF
+  #     # Deserializer method.
+  #     def deserialize_obj(obj, safe_types = %w(User Account Admin))
+  #       type = obj.is_a?(Hash) && obj["type"]
+  #       safe_types.include?(type) ? Object.const_get(type).new(obj) : obj
+  #     end
+  #     # Call to JSON.load
+  #     ruby = JSON.load(json, proc {|obj|
+  #       case obj
+  #       when Hash
+  #         obj.each {|k, v| obj[k] = deserialize_obj v }
+  #       when Array
+  #         obj.map! {|v| deserialize_obj v }
+  #       end
+  #     })
+  #     pp ruby
+  #
+  # Output:
+  #     {"users"=>
+  #        [#<User:0x00000000064c4c98
+  #          @attributes=
+  #            {"type"=>"User", "username"=>"jane", "email"=>"jane@example.com"}>,
+  #          #<User:0x00000000064c4bd0
+  #          @attributes=
+  #            {"type"=>"User", "username"=>"john", "email"=>"john@example.com"}>],
+  #      "accounts"=>
+  #        [{"account"=>
+  #            #<Account:0x00000000064c4928
+  #            @attributes={"type"=>"Account", "paid"=>true, "account_id"=>"1234"}>},
+  #         {"account"=>
+  #            #<Account:0x00000000064c4680
+  #            @attributes={"type"=>"Account", "paid"=>false, "account_id"=>"1235"}>}],
+  #      "admins"=>
+  #        #<Admin:0x00000000064c41f8
+  #        @attributes={"type"=>"Admin", "password"=>"0wn3d"}>}
+  #
+  def self?.load: (string | _JsonReadableIO | _JsonRead source, ?Proc proc, ?json_options options) -> untyped
+
+  # <!-- rdoc-file=ext/json/lib/json/common.rb -->
+  # Sets or returns default options for the JSON.load method. Initially:
+  #     opts = JSON.load_default_options
+  #     opts # => {:max_nesting=>false, :allow_nan=>true, :allow_blank=>true, :create_additions=>true}
+  #
+  def self.load_default_options: () -> json_options
+
+  # <!-- rdoc-file=ext/json/lib/json/common.rb -->
+  # Sets or returns default options for the JSON.load method. Initially:
+  #     opts = JSON.load_default_options
+  #     opts # => {:max_nesting=>false, :allow_nan=>true, :allow_blank=>true, :create_additions=>true}
+  #
+  def self.load_default_options=: (json_options) -> json_options
+
+  # <!--
+  #   rdoc-file=ext/json/lib/json/common.rb
+  #   - JSON.parse(source, opts) -> object
+  # -->
+  # Returns the Ruby objects created by parsing the given `source`.
+  #
+  # Argument `source` contains the String to be parsed.
+  #
+  # Argument `opts`, if given, contains a Hash of options for the parsing. See
+  # [Parsing Options](#module-JSON-label-Parsing+Options).
+  #
+  # ---
+  #
+  # When `source` is a JSON array, returns a Ruby Array:
+  #     source = '["foo", 1.0, true, false, null]'
+  #     ruby = JSON.parse(source)
+  #     ruby # => ["foo", 1.0, true, false, nil]
+  #     ruby.class # => Array
+  #
+  # When `source` is a JSON object, returns a Ruby Hash:
+  #     source = '{"a": "foo", "b": 1.0, "c": true, "d": false, "e": null}'
+  #     ruby = JSON.parse(source)
+  #     ruby # => {"a"=>"foo", "b"=>1.0, "c"=>true, "d"=>false, "e"=>nil}
+  #     ruby.class # => Hash
+  #
+  # For examples of parsing for all JSON data types, see [Parsing
+  # \JSON](#module-JSON-label-Parsing+JSON).
+  #
+  # Parses nested JSON objects:
+  #     source = <<-EOT
+  #     {
+  #     "name": "Dave",
+  #       "age" :40,
+  #       "hats": [
+  #         "Cattleman's",
+  #         "Panama",
+  #         "Tophat"
+  #       ]
+  #     }
+  #     EOT
+  #     ruby = JSON.parse(source)
+  #     ruby # => {"name"=>"Dave", "age"=>40, "hats"=>["Cattleman's", "Panama", "Tophat"]}
+  #
+  # ---
+  #
+  # Raises an exception if `source` is not valid JSON:
+  #     # Raises JSON::ParserError (783: unexpected token at ''):
+  #     JSON.parse('')
+  #
+  def self?.parse: (string source, ?json_options opts) -> untyped
+
+  # <!--
+  #   rdoc-file=ext/json/lib/json/common.rb
+  #   - JSON.parse!(source, opts) -> object
+  # -->
+  # Calls
+  #     parse(source, opts)
+  #
+  # with `source` and possibly modified `opts`.
+  #
+  # Differences from JSON.parse:
+  # *   Option `max_nesting`, if not provided, defaults to `false`, which disables
+  #     checking for nesting depth.
+  # *   Option `allow_nan`, if not provided, defaults to `true`.
+  #
+  def self?.parse!: (string source, ?json_options opts) -> untyped
+
+  # <!-- rdoc-file=ext/json/lib/json/common.rb -->
+  # Returns the JSON parser class that is used by JSON. This is either
+  # JSON::Ext::Parser or JSON::Pure::Parser:
+  #     JSON.parser # => JSON::Ext::Parser
+  #
+  def self.parser: () -> json_parser
+
+  def self.parser=: (json_parser parser) -> void
+
+  # <!--
+  #   rdoc-file=ext/json/lib/json/common.rb
+  #   - JSON.pretty_generate(obj, opts = nil) -> new_string
+  # -->
+  # Arguments `obj` and `opts` here are the same as arguments `obj` and `opts` in
+  # JSON.generate.
+  #
+  # Default options are:
+  #     {
+  #       indent: '  ',   # Two spaces
+  #       space: ' ',     # One space
+  #       array_nl: "\n", # Newline
+  #       object_nl: "\n" # Newline
+  #     }
+  #
+  # Example:
+  #     obj = {foo: [:bar, :baz], bat: {bam: 0, bad: 1}}
+  #     json = JSON.pretty_generate(obj)
+  #     puts json
+  #
+  # Output:
+  #     {
+  #       "foo": [
+  #         "bar",
+  #         "baz"
+  #       ],
+  #       "bat": {
+  #         "bam": 0,
+  #         "bad": 1
+  #       }
+  #     }
+  #
+  def self?.pretty_generate: (_ToJson obj, ?json_options opts) -> untyped
+
+  alias self.pretty_unparse self.pretty_generate
+
+  alias pretty_unparse pretty_generate
+
+  # Recursively calls passed *Proc* if the parsed data structure is an *Array* or
+  # *Hash*
+  #
+  def self?.recurse_proc: (untyped result) { (*untyped) -> void } -> void
+
+  # <!--
+  #   rdoc-file=ext/json/lib/json/common.rb
+  #   - restore(source, proc = nil, options = {})
+  # -->
+  #
+  alias self.restore self.load
+
+  # <!--
+  #   rdoc-file=ext/json/lib/json/common.rb
+  #   - restore(source, proc = nil, options = {})
+  # -->
+  #
+  alias restore load
+
+  # <!-- rdoc-file=ext/json/lib/json/common.rb -->
+  # Sets or Returns the JSON generator state class that is used by JSON. This is
+  # either JSON::Ext::Generator::State or JSON::Pure::Generator::State:
+  #     JSON.state # => JSON::Ext::Generator::State
+  #
+  def self.state: () -> json_state
+
+  # <!-- rdoc-file=ext/json/lib/json/common.rb -->
+  # Sets or Returns the JSON generator state class that is used by JSON. This is
+  # either JSON::Ext::Generator::State or JSON::Pure::Generator::State:
+  #     JSON.state # => JSON::Ext::Generator::State
+  #
+  def self.state=: (json_state) -> json_state
+
+  alias self.unparse self.generate
+
+  alias unparse generate
+end
+
+JSON::FAST_STATE_PROTOTYPE: json_state
+
+JSON::Infinity: Float
+
+JSON::JSON_LOADED: bool
+
+JSON::MinusInfinity: Float
+
+JSON::NaN: Float
+
+JSON::PRETTY_STATE_PROTOTYPE: json_state
+
+JSON::SAFE_STATE_PROTOTYPE: json_state
+
+# <!-- rdoc-file=ext/json/lib/json/version.rb -->
+# JSON version
+#
+JSON::VERSION: String
+
+JSON::VERSION_ARRAY: Array[Integer]
+
+JSON::VERSION_BUILD: Integer
+
+JSON::VERSION_MAJOR: Integer
+
+JSON::VERSION_MINOR: Integer
+
+%a{annotate:rdoc:skip}
+class Object
+  # Converts this object to a string (calling #to_s), converts
+  # it to a JSON string, and returns the result. This is a fallback, if no
+  # special method #to_json was defined for some object.
+  #
+  def to_json: (?JSON::State state) -> String
+end
+
+%a{annotate:rdoc:skip}
+class NilClass
+  # Returns a JSON string for nil: 'null'.
+  #
+  def to_json: (?JSON::State state) -> String
+end
+
+%a{annotate:rdoc:skip}
+class TrueClass
+  # Returns a JSON string for true: 'true'.
+  #
+  def to_json: (?JSON::State state) -> String
+end
+
+%a{annotate:rdoc:skip}
+class FalseClass
+  # Returns a JSON string for false: 'false'.
+  #
+  def to_json: (?JSON::State state) -> String
+end
+
+%a{annotate:rdoc:skip}
+class String
+  # This string should be encoded with UTF-8 A call to this method
+  # returns a JSON string encoded with UTF16 big endian characters as
+  # \u????.
+  #
+  def to_json: (?JSON::State state) -> String
+end
+
+%a{annotate:rdoc:skip}
+class Integer
+  # Returns a JSON string representation for this Integer number.
+  #
+  def to_json: (?JSON::State state) -> String
+end
+
+%a{annotate:rdoc:skip}
+class Float
+  # Returns a JSON string representation for this Float number.
+  #
+  def to_json: (?JSON::State state) -> String
+end
+
+%a{annotate:rdoc:skip}
+class Hash[unchecked out K, unchecked out V]
+  # Returns a JSON string containing a JSON object, that is generated from
+  # this Hash instance.
+  # _state_ is a JSON::State object, that can also be used to configure the
+  # produced JSON string output further.
+  #
+  def to_json: (?JSON::State state) -> String
+end
+
+%a{annotate:rdoc:skip}
+class Array[unchecked out Elem]
+  # Returns a JSON string containing a JSON array, that is generated from
+  # this Array instance.
+  # _state_ is a JSON::State object, that can also be used to configure the
+  # produced JSON string output further.
+  #
+  def to_json: (?JSON::State state) -> String
+end
+
+%a{annotate:rdoc:skip}
+class BigDecimal
+  # <!--
+  #   rdoc-file=ext/json/lib/json/add/bigdecimal.rb
+  #   - json_create(object)
+  # -->
+  # Import a JSON Marshalled object.
+  #
+  # method used for JSON marshalling support.
+  #
+  def self.json_create: (Hash[String, String] object) -> instance
+
+  # <!--
+  #   rdoc-file=ext/json/lib/json/add/bigdecimal.rb
+  #   - as_json(*)
+  # -->
+  # Marshal the object to JSON.
+  #
+  # method used for JSON marshalling support.
+  #
+  def as_json: (*untyped) -> Hash[String, String]
+
+  # <!--
+  #   rdoc-file=ext/json/lib/json/add/bigdecimal.rb
+  #   - to_json(*args)
+  # -->
+  # return the JSON value
+  #
+  def to_json: (?JSON::State state) -> String
+end
+
+%a{annotate:rdoc:skip}
+class Complex
+  # <!--
+  #   rdoc-file=ext/json/lib/json/add/complex.rb
+  #   - json_create(object)
+  # -->
+  # Deserializes JSON string by converting Real value `r`, imaginary value `i`, to
+  # a Complex object.
+  #
+  def self.json_create: (Hash[String, String | Numeric] object) -> instance
+
+  # <!--
+  #   rdoc-file=ext/json/lib/json/add/complex.rb
+  #   - as_json(*)
+  # -->
+  # Returns a hash, that will be turned into a JSON object and represent this
+  # object.
+  #
+  def as_json: (*untyped) -> Hash[String, String | Numeric]
+
+  # <!--
+  #   rdoc-file=ext/json/lib/json/add/complex.rb
+  #   - to_json(*args)
+  # -->
+  # Stores class name (Complex) along with real value `r` and imaginary value `i`
+  # as JSON string
+  #
+  def to_json: (?JSON::State state) -> String
+end
+
+%a{annotate:rdoc:skip}
+class Date
+  # <!--
+  #   rdoc-file=ext/json/lib/json/add/date.rb
+  #   - json_create(object)
+  # -->
+  # Deserializes JSON string by converting Julian year `y`, month `m`, day `d` and
+  # Day of Calendar Reform `sg` to Date.
+  #
+  def self.json_create: (Hash[String, String | Integer | Float] object) -> instance
+
+  # <!--
+  #   rdoc-file=ext/json/lib/json/add/date.rb
+  #   - as_json(*)
+  # -->
+  # Returns a hash, that will be turned into a JSON object and represent this
+  # object.
+  #
+  def as_json: (*untyped) -> Hash[String, String | Integer | Float]
+
+  # <!--
+  #   rdoc-file=ext/json/lib/json/add/date.rb
+  #   - to_json(*args)
+  # -->
+  # Stores class name (Date) with Julian year `y`, month `m`, day `d` and Day of
+  # Calendar Reform `sg` as JSON string
+  #
+  def to_json: (?JSON::State state) -> String
+end
+
+%a{annotate:rdoc:skip}
+class DateTime
+  # <!--
+  #   rdoc-file=ext/json/lib/json/add/date_time.rb
+  #   - json_create(object)
+  # -->
+  # Deserializes JSON string by converting year `y`, month `m`, day `d`, hour `H`,
+  # minute `M`, second `S`, offset `of` and Day of Calendar Reform `sg` to
+  # DateTime.
+  #
+  def self.json_create: (Hash[String, String | Integer | Float] object) -> instance
+
+  # <!--
+  #   rdoc-file=ext/json/lib/json/add/date_time.rb
+  #   - as_json(*)
+  # -->
+  # Returns a hash, that will be turned into a JSON object and represent this
+  # object.
+  #
+  def as_json: (*untyped) -> Hash[String, String | Integer | Float]
+
+  # <!--
+  #   rdoc-file=ext/json/lib/json/add/date_time.rb
+  #   - to_json(*args)
+  # -->
+  # Stores class name (DateTime) with Julian year `y`, month `m`, day `d`, hour
+  # `H`, minute `M`, second `S`, offset `of` and Day of Calendar Reform `sg` as
+  # JSON string
+  #
+  def to_json: (?JSON::State state) -> String
+end
+
+%a{annotate:rdoc:skip}
+class Exception
+  # <!--
+  #   rdoc-file=ext/json/lib/json/add/exception.rb
+  #   - json_create(object)
+  # -->
+  # Deserializes JSON string by constructing new Exception object with message `m`
+  # and backtrace `b` serialized with `to_json`
+  #
+  def self.json_create: (Hash[String, String | Array[String] | nil] object) -> instance
+
+  # <!--
+  #   rdoc-file=ext/json/lib/json/add/exception.rb
+  #   - as_json(*)
+  # -->
+  # Returns a hash, that will be turned into a JSON object and represent this
+  # object.
+  #
+  def as_json: (*untyped) -> Hash[String, String | Array[String] | nil]
+
+  # <!--
+  #   rdoc-file=ext/json/lib/json/add/exception.rb
+  #   - to_json(*args)
+  # -->
+  # Stores class name (Exception) with message `m` and backtrace array `b` as JSON
+  # string
+  #
+  def to_json: (?JSON::State state) -> String
+end
+
+%a{annotate:rdoc:skip}
+class OpenStruct
+  # <!--
+  #   rdoc-file=ext/json/lib/json/add/ostruct.rb
+  #   - json_create(object)
+  # -->
+  # Deserializes JSON string by constructing new Struct object with values `t`
+  # serialized by `to_json`.
+  #
+  def self.json_create: (Hash[String, String | Hash[Symbol, untyped]] object) -> instance
+
+  # <!--
+  #   rdoc-file=ext/json/lib/json/add/ostruct.rb
+  #   - as_json(*)
+  # -->
+  # Returns a hash, that will be turned into a JSON object and represent this
+  # object.
+  #
+  def as_json: (*untyped) -> Hash[String, String | Hash[Symbol, untyped]]
+
+  # <!--
+  #   rdoc-file=ext/json/lib/json/add/ostruct.rb
+  #   - to_json(*args)
+  # -->
+  # Stores class name (OpenStruct) with this struct's values `t` as a JSON string.
+  #
+  def to_json: (?JSON::State state) -> String
+end
+
+%a{annotate:rdoc:skip}
+class Range[out Elem]
+  # <!--
+  #   rdoc-file=ext/json/lib/json/add/range.rb
+  #   - json_create(object)
+  # -->
+  # Deserializes JSON string by constructing new Range object with arguments `a`
+  # serialized by `to_json`.
+  #
+  def self.json_create: [A] (Hash[String, String | [ A, A, bool ]] object) -> Range[A]
+
+  # <!--
+  #   rdoc-file=ext/json/lib/json/add/range.rb
+  #   - as_json(*)
+  # -->
+  # Returns a hash, that will be turned into a JSON object and represent this
+  # object.
+  #
+  def as_json: (*untyped) -> Hash[String, String | [ Elem, Elem, bool ]]
+
+  # <!--
+  #   rdoc-file=ext/json/lib/json/add/range.rb
+  #   - to_json(*args)
+  # -->
+  # Stores class name (Range) with JSON array of arguments `a` which include
+  # `first` (integer), `last` (integer), and `exclude_end?` (boolean) as JSON
+  # string.
+  #
+  def to_json: (?JSON::State state) -> String
+end
+
+%a{annotate:rdoc:skip}
+class Rational
+  # <!--
+  #   rdoc-file=ext/json/lib/json/add/rational.rb
+  #   - json_create(object)
+  # -->
+  # Deserializes JSON string by converting numerator value `n`, denominator value
+  # `d`, to a Rational object.
+  #
+  def self.json_create: (Hash[String, String | Integer] object) -> instance
+
+  # <!--
+  #   rdoc-file=ext/json/lib/json/add/rational.rb
+  #   - as_json(*)
+  # -->
+  # Returns a hash, that will be turned into a JSON object and represent this
+  # object.
+  #
+  def as_json: (*untyped) -> Hash[String, String | Integer]
+
+  # <!--
+  #   rdoc-file=ext/json/lib/json/add/rational.rb
+  #   - to_json(*args)
+  # -->
+  # Stores class name (Rational) along with numerator value `n` and denominator
+  # value `d` as JSON string
+  #
+  def to_json: (?JSON::State state) -> String
+end
+
+%a{annotate:rdoc:skip}
+class Regexp
+  # <!--
+  #   rdoc-file=ext/json/lib/json/add/regexp.rb
+  #   - json_create(object)
+  # -->
+  # Deserializes JSON string by constructing new Regexp object with source `s`
+  # (Regexp or String) and options `o` serialized by `to_json`
+  #
+  def self.json_create: (Hash[String, String | Integer] object) -> instance
+
+  # <!--
+  #   rdoc-file=ext/json/lib/json/add/regexp.rb
+  #   - as_json(*)
+  # -->
+  # Returns a hash, that will be turned into a JSON object and represent this
+  # object.
+  #
+  def as_json: (*untyped) -> Hash[String, String | Integer]
+
+  # <!--
+  #   rdoc-file=ext/json/lib/json/add/regexp.rb
+  #   - to_json(*args)
+  # -->
+  # Stores class name (Regexp) with options `o` and source `s` (Regexp or String)
+  # as JSON string
+  #
+  def to_json: (?JSON::State state) -> String
+end
+
+%a{annotate:rdoc:skip}
+class Set[unchecked out A]
+  # <!--
+  #   rdoc-file=ext/json/lib/json/add/set.rb
+  #   - json_create(object)
+  # -->
+  # Import a JSON Marshalled object.
+  #
+  # method used for JSON marshalling support.
+  #
+  def self.json_create: [A] (Hash[String, String | Array[A]] object) -> Set[A]
+
+  # <!--
+  #   rdoc-file=ext/json/lib/json/add/set.rb
+  #   - as_json(*)
+  # -->
+  # Marshal the object to JSON.
+  #
+  # method used for JSON marshalling support.
+  #
+  def as_json: (*untyped) -> Hash[String, String | Array[A]]
+
+  # <!--
+  #   rdoc-file=ext/json/lib/json/add/set.rb
+  #   - to_json(*args)
+  # -->
+  # return the JSON value
+  #
+  def to_json: (?JSON::State state) -> String
+end
+
+%a{annotate:rdoc:skip}
+class Struct[Elem]
+  # <!--
+  #   rdoc-file=ext/json/lib/json/add/struct.rb
+  #   - json_create(object)
+  # -->
+  # Deserializes JSON string by constructing new Struct object with values `v`
+  # serialized by `to_json`.
+  #
+  def self.json_create: [Elem] (Hash[String, String | Array[Elem]] object) -> Struct[Elem]
+
+  # <!--
+  #   rdoc-file=ext/json/lib/json/add/struct.rb
+  #   - as_json(*)
+  # -->
+  # Returns a hash, that will be turned into a JSON object and represent this
+  # object.
+  #
+  def as_json: (*untyped) -> Hash[String, String | Array[Elem]]
+
+  # <!--
+  #   rdoc-file=ext/json/lib/json/add/struct.rb
+  #   - to_json(*args)
+  # -->
+  # Stores class name (Struct) with Struct values `v` as a JSON string. Only named
+  # structs are supported.
+  #
+  def to_json: (?JSON::State state) -> String
+end
+
+%a{annotate:rdoc:skip}
+class Symbol
+  # <!--
+  #   rdoc-file=ext/json/lib/json/add/symbol.rb
+  #   - json_create(o)
+  # -->
+  # Deserializes JSON string by converting the `string` value stored in the object
+  # to a Symbol
+  #
+  def self.json_create: (Hash[String, String] object) -> instance
+
+  # <!--
+  #   rdoc-file=ext/json/lib/json/add/symbol.rb
+  #   - as_json(*)
+  # -->
+  # Returns a hash, that will be turned into a JSON object and represent this
+  # object.
+  #
+  def as_json: (*untyped) -> Hash[String, String]
+
+  # <!--
+  #   rdoc-file=ext/json/lib/json/add/symbol.rb
+  #   - to_json(*a)
+  # -->
+  # Stores class name (Symbol) with String representation of Symbol as a JSON
+  # string.
+  #
+  def to_json: (?JSON::State state) -> String
+end
+
+%a{annotate:rdoc:skip}
+class Time
+  # <!--
+  #   rdoc-file=ext/json/lib/json/add/time.rb
+  #   - json_create(object)
+  # -->
+  # Deserializes JSON string by converting time since epoch to Time
+  #
+  def self.json_create: (Hash[String, String | Integer] object) -> instance
+
+  # <!--
+  #   rdoc-file=ext/json/lib/json/add/time.rb
+  #   - as_json(*)
+  # -->
+  # Returns a hash, that will be turned into a JSON object and represent this
+  # object.
+  #
+  def as_json: (*untyped) -> Hash[String, String | Integer]
+
+  # <!--
+  #   rdoc-file=ext/json/lib/json/add/time.rb
+  #   - to_json(*args)
+  # -->
+  # Stores class name (Time) with number of seconds since epoch and number of
+  # microseconds for Time as JSON string
+  #
+  def to_json: (?JSON::State state) -> String
+end

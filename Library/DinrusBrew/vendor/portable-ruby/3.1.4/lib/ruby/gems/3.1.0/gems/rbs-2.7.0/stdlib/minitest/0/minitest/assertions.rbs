@@ -1,0 +1,545 @@
+# <!-- rdoc-file=lib/minitest/assertions.rb -->
+# Minitest Assertions.  All assertion methods accept a `msg` which is printed if
+# the assertion fails.
+#
+# Protocol: Nearly everything here boils up to `assert`, which expects to be
+# able to increment an instance accessor named `assertions`. This is not
+# provided by Assertions and must be provided by the thing including Assertions.
+# See Minitest::Runnable for an example.
+#
+module Minitest::Assertions
+  def self.inspect: () -> "UNDEFINED"
+
+  # <!--
+  #   rdoc-file=lib/minitest/assertions.rb
+  #   - diff()
+  # -->
+  # Returns the diff command to use in #diff. Tries to intelligently figure out
+  # what diff to use.
+  #
+  def self.diff: () -> untyped
+
+  # <!--
+  #   rdoc-file=lib/minitest/assertions.rb
+  #   - diff=(o)
+  # -->
+  # Set the diff command to use in #diff.
+  #
+  def self.diff=: (untyped o) -> untyped
+
+  # <!--
+  #   rdoc-file=lib/minitest/assertions.rb
+  #   - diff(exp, act)
+  # -->
+  # Returns a diff between `exp` and `act`. If there is no known diff command or
+  # if it doesn't make sense to diff the output (single line, short output), then
+  # it simply returns a basic comparison between the two.
+  #
+  # See `things_to_diff` for more info.
+  #
+  def diff: (untyped exp, untyped act) -> (::String | untyped)
+
+  # <!--
+  #   rdoc-file=lib/minitest/assertions.rb
+  #   - things_to_diff(exp, act)
+  # -->
+  # Returns things to diff [expect, butwas], or [nil, nil] if nothing to diff.
+  #
+  # Criterion:
+  #
+  # 1.  Strings include newlines or escaped newlines, but not both.
+  # 2.  or:  String lengths are > 30 characters.
+  # 3.  or:  Strings are equal to each other (but maybe different encodings?).
+  # 4.  and: we found a diff executable.
+  #
+  def things_to_diff: (untyped exp, untyped act) -> untyped
+
+  # <!--
+  #   rdoc-file=lib/minitest/assertions.rb
+  #   - mu_pp(obj)
+  # -->
+  # This returns a human-readable version of `obj`. By default #inspect is called.
+  # You can override this to use #pretty_inspect if you want.
+  #
+  # See Minitest::Test.make_my_diffs_pretty!
+  #
+  def mu_pp: (untyped obj) -> untyped
+
+  # <!--
+  #   rdoc-file=lib/minitest/assertions.rb
+  #   - mu_pp_for_diff(obj)
+  # -->
+  # This returns a diff-able more human-readable version of `obj`. This differs
+  # from the regular mu_pp because it expands escaped newlines and makes
+  # hex-values (like object_ids) generic. This uses mu_pp to do the first pass and
+  # then cleans it up.
+  #
+  def mu_pp_for_diff: (untyped obj) -> untyped
+
+  # <!--
+  #   rdoc-file=lib/minitest/assertions.rb
+  #   - assert(test, msg = nil)
+  # -->
+  # Fails unless `test` is truthy.
+  #
+  def assert: (untyped test, ?untyped? msg) -> true
+
+  def _synchronize: () { () -> untyped } -> untyped
+
+  # <!--
+  #   rdoc-file=lib/minitest/assertions.rb
+  #   - assert_empty(obj, msg = nil)
+  # -->
+  # Fails unless `obj` is empty.
+  #
+  def assert_empty: (untyped obj, ?untyped? msg) -> untyped
+
+  # <!--
+  #   rdoc-file=lib/minitest/assertions.rb
+  #   - assert_equal(exp, act, msg = nil)
+  # -->
+  # Fails unless `exp == act` printing the difference between the two, if
+  # possible.
+  #
+  # If there is no visible difference but the assertion fails, you should suspect
+  # that your #== is buggy, or your inspect output is missing crucial details.
+  # For nicer structural diffing, set Minitest::Test.make_my_diffs_pretty!
+  #
+  # For floats use assert_in_delta.
+  #
+  # See also: Minitest::Assertions.diff
+  #
+  def assert_equal: (untyped exp, untyped act, ?untyped? msg) -> untyped
+
+  # <!--
+  #   rdoc-file=lib/minitest/assertions.rb
+  #   - assert_in_delta(exp, act, delta = 0.001, msg = nil)
+  # -->
+  # For comparing Floats.  Fails unless `exp` and `act` are within `delta` of each
+  # other.
+  #
+  #     assert_in_delta Math::PI, (22.0 / 7.0), 0.01
+  #
+  def assert_in_delta: (untyped exp, untyped act, ?::Float delta, ?untyped? msg) -> untyped
+
+  # <!--
+  #   rdoc-file=lib/minitest/assertions.rb
+  #   - assert_in_epsilon(exp, act, epsilon = 0.001, msg = nil)
+  # -->
+  # For comparing Floats.  Fails unless `exp` and `act` have a relative error less
+  # than `epsilon`.
+  #
+  def assert_in_epsilon: (untyped exp, untyped act, ?::Float epsilon, ?untyped? msg) -> untyped
+
+  # <!--
+  #   rdoc-file=lib/minitest/assertions.rb
+  #   - assert_includes(collection, obj, msg = nil)
+  # -->
+  # Fails unless `collection` includes `obj`.
+  #
+  def assert_includes: (untyped collection, untyped obj, ?untyped? msg) -> untyped
+
+  # <!--
+  #   rdoc-file=lib/minitest/assertions.rb
+  #   - assert_instance_of(cls, obj, msg = nil)
+  # -->
+  # Fails unless `obj` is an instance of `cls`.
+  #
+  def assert_instance_of: (untyped cls, untyped obj, ?untyped? msg) -> untyped
+
+  # <!--
+  #   rdoc-file=lib/minitest/assertions.rb
+  #   - assert_kind_of(cls, obj, msg = nil)
+  # -->
+  # Fails unless `obj` is a kind of `cls`.
+  #
+  def assert_kind_of: (untyped cls, untyped obj, ?untyped? msg) -> untyped
+
+  # <!--
+  #   rdoc-file=lib/minitest/assertions.rb
+  #   - assert_match(matcher, obj, msg = nil)
+  # -->
+  # Fails unless `matcher` `=~` `obj`.
+  #
+  def assert_match: (untyped matcher, untyped obj, ?untyped? msg) -> untyped
+
+  # <!--
+  #   rdoc-file=lib/minitest/assertions.rb
+  #   - assert_nil(obj, msg = nil)
+  # -->
+  # Fails unless `obj` is nil
+  #
+  def assert_nil: (untyped obj, ?untyped? msg) -> untyped
+
+  # <!--
+  #   rdoc-file=lib/minitest/assertions.rb
+  #   - assert_operator(o1, op, o2 = UNDEFINED, msg = nil)
+  # -->
+  # For testing with binary operators. Eg:
+  #
+  #     assert_operator 5, :<=, 4
+  #
+  def assert_operator: (untyped o1, untyped op, ?untyped o2, ?untyped? msg) -> untyped
+
+  # <!--
+  #   rdoc-file=lib/minitest/assertions.rb
+  #   - assert_output(stdout = nil, stderr = nil) { || ... }
+  # -->
+  # Fails if stdout or stderr do not output the expected results. Pass in nil if
+  # you don't care about that streams output. Pass in "" if you require it to be
+  # silent. Pass in a regexp if you want to pattern match.
+  #
+  #     assert_output(/hey/) { method_with_output }
+  #
+  # NOTE: this uses #capture_io, not #capture_subprocess_io.
+  #
+  # See also: #assert_silent
+  #
+  def assert_output: (?untyped? stdout, ?untyped? stderr) { () -> untyped } -> untyped
+
+  # <!--
+  #   rdoc-file=lib/minitest/assertions.rb
+  #   - assert_path_exists(path, msg = nil)
+  # -->
+  # Fails unless `path` exists.
+  #
+  def assert_path_exists: (untyped path, ?untyped? msg) -> untyped
+
+  # <!--
+  #   rdoc-file=lib/minitest/assertions.rb
+  #   - assert_predicate(o1, op, msg = nil)
+  # -->
+  # For testing with predicates. Eg:
+  #
+  #     assert_predicate str, :empty?
+  #
+  # This is really meant for specs and is front-ended by assert_operator:
+  #
+  #     str.must_be :empty?
+  #
+  def assert_predicate: (untyped o1, untyped op, ?untyped? msg) -> untyped
+
+  # <!--
+  #   rdoc-file=lib/minitest/assertions.rb
+  #   - assert_raises(*exp) { || ... }
+  # -->
+  # Fails unless the block raises one of `exp`. Returns the exception matched so
+  # you can check the message, attributes, etc.
+  #
+  # `exp` takes an optional message on the end to help explain failures and
+  # defaults to StandardError if no exception class is passed. Eg:
+  #
+  #     assert_raises(CustomError) { method_with_custom_error }
+  #
+  # With custom error message:
+  #
+  #     assert_raises(CustomError, 'This should have raised CustomError') { method_with_custom_error }
+  #
+  # Using the returned object:
+  #
+  #     error = assert_raises(CustomError) do
+  #       raise CustomError, 'This is really bad'
+  #     end
+  #
+  #     assert_equal 'This is really bad', error.message
+  #
+  def assert_raises: (*untyped exp) { () -> untyped } -> untyped
+
+  # <!--
+  #   rdoc-file=lib/minitest/assertions.rb
+  #   - assert_respond_to(obj, meth, msg = nil)
+  # -->
+  # Fails unless `obj` responds to `meth`.
+  #
+  def assert_respond_to: (untyped obj, untyped meth, ?untyped? msg) -> untyped
+
+  # <!--
+  #   rdoc-file=lib/minitest/assertions.rb
+  #   - assert_same(exp, act, msg = nil)
+  # -->
+  # Fails unless `exp` and `act` are #equal?
+  #
+  def assert_same: (untyped exp, untyped act, ?untyped? msg) -> untyped
+
+  # <!--
+  #   rdoc-file=lib/minitest/assertions.rb
+  #   - assert_send(send_ary, m = nil)
+  # -->
+  # `send_ary` is a receiver, message and arguments.
+  #
+  # Fails unless the call returns a true value
+  #
+  def assert_send: (untyped send_ary, ?untyped? m) -> untyped
+
+  # <!--
+  #   rdoc-file=lib/minitest/assertions.rb
+  #   - assert_silent() { || ... }
+  # -->
+  # Fails if the block outputs anything to stderr or stdout.
+  #
+  # See also: #assert_output
+  #
+  def assert_silent: () { () -> untyped } -> untyped
+
+  # <!--
+  #   rdoc-file=lib/minitest/assertions.rb
+  #   - assert_throws(sym, msg = nil) { || ... }
+  # -->
+  # Fails unless the block throws `sym`
+  #
+  def assert_throws: (untyped sym, ?untyped? msg) { () -> untyped } -> untyped
+
+  # <!--
+  #   rdoc-file=lib/minitest/assertions.rb
+  #   - capture_io() { || ... }
+  # -->
+  # Captures $stdout and $stderr into strings:
+  #
+  #     out, err = capture_io do
+  #       puts "Some info"
+  #       warn "You did a bad thing"
+  #     end
+  #
+  #     assert_match %r%info%, out
+  #     assert_match %r%bad%, err
+  #
+  # NOTE: For efficiency, this method uses StringIO and does not capture IO for
+  # subprocesses. Use #capture_subprocess_io for that.
+  #
+  def capture_io: () { () -> untyped } -> untyped
+
+  # <!--
+  #   rdoc-file=lib/minitest/assertions.rb
+  #   - capture_subprocess_io() { || ... }
+  # -->
+  # Captures $stdout and $stderr into strings, using Tempfile to ensure that
+  # subprocess IO is captured as well.
+  #
+  #     out, err = capture_subprocess_io do
+  #       system "echo Some info"
+  #       system "echo You did a bad thing 1>&2"
+  #     end
+  #
+  #     assert_match %r%info%, out
+  #     assert_match %r%bad%, err
+  #
+  # NOTE: This method is approximately 10x slower than #capture_io so only use it
+  # when you need to test the output of a subprocess.
+  #
+  def capture_subprocess_io: () { () -> untyped } -> untyped
+
+  # <!--
+  #   rdoc-file=lib/minitest/assertions.rb
+  #   - exception_details(e, msg)
+  # -->
+  # Returns details for exception `e`
+  #
+  def exception_details: (untyped e, untyped msg) -> untyped
+
+  # <!--
+  #   rdoc-file=lib/minitest/assertions.rb
+  #   - fail_after(y,m,d,msg)
+  # -->
+  # Fails after a given date (in the local time zone). This allows you to put
+  # time-bombs in your tests if you need to keep something around until a later
+  # date lest you forget about it.
+  #
+  def fail_after: (untyped y, untyped m, untyped d, untyped msg) -> (untyped | nil)
+
+  # <!--
+  #   rdoc-file=lib/minitest/assertions.rb
+  #   - flunk(msg = nil)
+  # -->
+  # Fails with `msg`.
+  #
+  def flunk: (?untyped? msg) -> untyped
+
+  # <!--
+  #   rdoc-file=lib/minitest/assertions.rb
+  #   - message(msg = nil, ending = nil, &default)
+  # -->
+  # Returns a proc that will output `msg` along with the default message.
+  #
+  def message: (?untyped? msg, ?untyped? ending) ?{ () -> untyped } -> untyped
+
+  # <!--
+  #   rdoc-file=lib/minitest/assertions.rb
+  #   - pass(_msg = nil)
+  # -->
+  # used for counting assertions
+  #
+  def pass: (?untyped? _msg) -> untyped
+
+  # <!--
+  #   rdoc-file=lib/minitest/assertions.rb
+  #   - refute(test, msg = nil)
+  # -->
+  # Fails if `test` is truthy.
+  #
+  def refute: (untyped test, ?untyped? msg) -> untyped
+
+  # <!--
+  #   rdoc-file=lib/minitest/assertions.rb
+  #   - refute_empty(obj, msg = nil)
+  # -->
+  # Fails if `obj` is empty.
+  #
+  def refute_empty: (untyped obj, ?untyped? msg) -> untyped
+
+  # <!--
+  #   rdoc-file=lib/minitest/assertions.rb
+  #   - refute_equal(exp, act, msg = nil)
+  # -->
+  # Fails if `exp == act`.
+  #
+  # For floats use refute_in_delta.
+  #
+  def refute_equal: (untyped exp, untyped act, ?untyped? msg) -> untyped
+
+  # <!--
+  #   rdoc-file=lib/minitest/assertions.rb
+  #   - refute_in_delta(exp, act, delta = 0.001, msg = nil)
+  # -->
+  # For comparing Floats.  Fails if `exp` is within `delta` of `act`.
+  #
+  #     refute_in_delta Math::PI, (22.0 / 7.0)
+  #
+  def refute_in_delta: (untyped exp, untyped act, ?::Float delta, ?untyped? msg) -> untyped
+
+  # <!--
+  #   rdoc-file=lib/minitest/assertions.rb
+  #   - refute_in_epsilon(a, b, epsilon = 0.001, msg = nil)
+  # -->
+  # For comparing Floats.  Fails if `exp` and `act` have a relative error less
+  # than `epsilon`.
+  #
+  def refute_in_epsilon: (untyped a, untyped b, ?::Float epsilon, ?untyped? msg) -> untyped
+
+  # <!--
+  #   rdoc-file=lib/minitest/assertions.rb
+  #   - refute_includes(collection, obj, msg = nil)
+  # -->
+  # Fails if `collection` includes `obj`.
+  #
+  def refute_includes: (untyped collection, untyped obj, ?untyped? msg) -> untyped
+
+  # <!--
+  #   rdoc-file=lib/minitest/assertions.rb
+  #   - refute_instance_of(cls, obj, msg = nil)
+  # -->
+  # Fails if `obj` is an instance of `cls`.
+  #
+  def refute_instance_of: (untyped cls, untyped obj, ?untyped? msg) -> untyped
+
+  # <!--
+  #   rdoc-file=lib/minitest/assertions.rb
+  #   - refute_kind_of(cls, obj, msg = nil)
+  # -->
+  # Fails if `obj` is a kind of `cls`.
+  #
+  def refute_kind_of: (untyped cls, untyped obj, ?untyped? msg) -> untyped
+
+  # <!--
+  #   rdoc-file=lib/minitest/assertions.rb
+  #   - refute_match(matcher, obj, msg = nil)
+  # -->
+  # Fails if `matcher` `=~` `obj`.
+  #
+  def refute_match: (untyped matcher, untyped obj, ?untyped? msg) -> untyped
+
+  # <!--
+  #   rdoc-file=lib/minitest/assertions.rb
+  #   - refute_nil(obj, msg = nil)
+  # -->
+  # Fails if `obj` is nil.
+  #
+  def refute_nil: (untyped obj, ?untyped? msg) -> untyped
+
+  # <!--
+  #   rdoc-file=lib/minitest/assertions.rb
+  #   - refute_operator(o1, op, o2 = UNDEFINED, msg = nil)
+  # -->
+  # Fails if `o1` is not `op` `o2`. Eg:
+  #
+  #     refute_operator 1, :>, 2 #=> pass
+  #     refute_operator 1, :<, 2 #=> fail
+  #
+  def refute_operator: (untyped o1, untyped op, ?untyped o2, ?untyped? msg) -> untyped
+
+  # <!--
+  #   rdoc-file=lib/minitest/assertions.rb
+  #   - refute_path_exists(path, msg = nil)
+  # -->
+  # Fails if `path` exists.
+  #
+  def refute_path_exists: (untyped path, ?untyped? msg) -> untyped
+
+  # <!--
+  #   rdoc-file=lib/minitest/assertions.rb
+  #   - refute_predicate(o1, op, msg = nil)
+  # -->
+  # For testing with predicates.
+  #
+  #     refute_predicate str, :empty?
+  #
+  # This is really meant for specs and is front-ended by refute_operator:
+  #
+  #     str.wont_be :empty?
+  #
+  def refute_predicate: (untyped o1, untyped op, ?untyped? msg) -> untyped
+
+  # <!--
+  #   rdoc-file=lib/minitest/assertions.rb
+  #   - refute_respond_to(obj, meth, msg = nil)
+  # -->
+  # Fails if `obj` responds to the message `meth`.
+  #
+  def refute_respond_to: (untyped obj, untyped meth, ?untyped? msg) -> untyped
+
+  # <!--
+  #   rdoc-file=lib/minitest/assertions.rb
+  #   - refute_same(exp, act, msg = nil)
+  # -->
+  # Fails if `exp` is the same (by object identity) as `act`.
+  #
+  def refute_same: (untyped exp, untyped act, ?untyped? msg) -> untyped
+
+  # <!--
+  #   rdoc-file=lib/minitest/assertions.rb
+  #   - skip(msg = nil, bt = caller)
+  # -->
+  # Skips the current run. If run in verbose-mode, the skipped run gets listed at
+  # the end of the run but doesn't cause a failure exit code.
+  #
+  def skip: (?untyped? msg, ?untyped bt) -> untyped
+
+  # <!--
+  #   rdoc-file=lib/minitest/assertions.rb
+  #   - skip_until(y,m,d,msg)
+  # -->
+  # Skips the current run until a given date (in the local time zone). This allows
+  # you to put some fixes on hold until a later date, but still holds you
+  # accountable and prevents you from forgetting it.
+  #
+  def skip_until: (untyped y, untyped m, untyped d, untyped msg) -> untyped
+
+  # <!--
+  #   rdoc-file=lib/minitest/assertions.rb
+  #   - skipped?()
+  # -->
+  # Was this testcase skipped? Meant for #teardown.
+  #
+  def skipped?: () -> untyped
+
+  # <!--
+  #   rdoc-file=lib/minitest/mock.rb
+  #   - assert_mock(mock)
+  # -->
+  # Assert that the mock verifies correctly.
+  #
+  def assert_mock: (untyped mock) -> untyped
+
+  E: String
+
+  UNDEFINED: Object
+end

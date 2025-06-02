@@ -1,0 +1,73 @@
+module RBS
+  module Prototype
+    class RBI
+      attr_reader decls: Array[AST::Declarations::t]
+
+      type module_decl = AST::Declarations::Class | AST::Declarations::Module
+
+      # A stack representing the module nesting structure in the Ruby code
+      attr_reader modules: Array[module_decl]
+
+      # Last subsequent `sig` calls
+      attr_reader last_sig: Array[RubyVM::AbstractSyntaxTree::Node]?
+
+      def initialize: () -> void
+
+      def parse: (String) -> void
+
+      def nested_name: (RubyVM::AbstractSyntaxTree::Node name) -> TypeName
+
+      def current_namespace: () -> Namespace
+
+      def push_class: (
+        RubyVM::AbstractSyntaxTree::Node name,
+        RubyVM::AbstractSyntaxTree::Node super_class,
+        comment: AST::Comment?
+      ) { () -> void } -> void
+
+      def push_module: (RubyVM::AbstractSyntaxTree::Node name, comment: AST::Comment?) { () -> void } -> void
+
+      # The inner most module/class definition, returns `nil` on toplevel
+      def current_module: () -> module_decl?
+
+      # The inner most module/class definition, raises on toplevel
+      def current_module!: () -> module_decl
+
+      # Put a `sig` call to current list.
+      def push_sig: (RubyVM::AbstractSyntaxTree::Node node) -> void
+
+      # Clear the `sig` call list
+      def pop_sig: () -> Array[RubyVM::AbstractSyntaxTree::Node]?
+
+      def join_comments: (Array[RubyVM::AbstractSyntaxTree::Node] nodes, Hash[Integer, AST::Comment] comments) -> AST::Comment
+
+      def process: (RubyVM::AbstractSyntaxTree::Node node, comments: Hash[Integer, AST::Comment], ?outer: Array[RubyVM::AbstractSyntaxTree::Node]) -> void
+
+      def method_type: (RubyVM::AbstractSyntaxTree::Node? args_node, RubyVM::AbstractSyntaxTree::Node? type_node, variables: Array[AST::TypeParam], overloads: Integer) -> MethodType?
+
+      def parse_params: (RubyVM::AbstractSyntaxTree::Node args_node, RubyVM::AbstractSyntaxTree::Node args, MethodType method_type, variables: Array[AST::TypeParam], overloads: Integer) -> MethodType
+
+      def type_of: (RubyVM::AbstractSyntaxTree::Node type_node, variables: Array[AST::TypeParam]) -> Types::t
+
+      def type_of0: (RubyVM::AbstractSyntaxTree::Node type_node, variables: Array[AST::TypeParam]) -> Types::t
+
+      def proc_type?: (RubyVM::AbstractSyntaxTree::Node type_node) -> bool
+
+      def call_node?: (RubyVM::AbstractSyntaxTree::Node node, name: Symbol, ?receiver: ^(RubyVM::AbstractSyntaxTree::Node) -> bool, ?args: ^(RubyVM::AbstractSyntaxTree::Node) -> bool) -> bool
+
+      # Receives a constant node and returns `TypeName` instance
+      def const_to_name: (RubyVM::AbstractSyntaxTree::Node node) -> TypeName
+
+      # Receives `:ARRAY` or `:LIST` node and yields the child nodes.
+      def each_arg: (RubyVM::AbstractSyntaxTree::Node array) { (RubyVM::AbstractSyntaxTree::Node) -> void } -> void
+                  | (RubyVM::AbstractSyntaxTree::Node array) -> Enumerator[RubyVM::AbstractSyntaxTree::Node, void]
+
+      # Receives node and yields the child nodes.
+      def each_child: (RubyVM::AbstractSyntaxTree::Node node) { (RubyVM::AbstractSyntaxTree::Node) -> void } -> void
+                    | (RubyVM::AbstractSyntaxTree::Node node) -> Enumerator[RubyVM::AbstractSyntaxTree::Node, void]
+
+      # Receives a keyword `:HASH` node and returns hash instance.
+      def node_to_hash: (RubyVM::AbstractSyntaxTree::Node node) -> Hash[Symbol, RubyVM::AbstractSyntaxTree::Node]?
+    end
+  end
+end

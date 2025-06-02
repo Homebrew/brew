@@ -1,0 +1,24 @@
+module RBS
+  module Annotate
+    class Formatter
+      attr_reader buffer: String
+
+      @pending_separator: String?
+
+      def initialize: () -> void
+
+      def <<: (String | RDoc::Markup::Document | nil) -> self
+
+      def margin: (?separator: String) -> self
+
+      def empty?: () -> bool
+
+      def format: (newline_at_end: bool) -> String
+
+      def self.translate: (RDoc::Markup::Document) -> String?
+
+      def self.each_part: (RDoc::Markup::Document) { (RDoc::Markup::Document) -> void } -> void
+                        | (RDoc::Markup::Document) -> Enumerator[RDoc::Markup::Document, void]
+    end
+  end
+end

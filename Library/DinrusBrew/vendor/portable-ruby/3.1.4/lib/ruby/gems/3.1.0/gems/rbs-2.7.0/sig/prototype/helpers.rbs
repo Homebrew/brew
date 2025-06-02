@@ -1,0 +1,23 @@
+module RBS
+  module Prototype
+    module Helpers
+      type node = RubyVM::AbstractSyntaxTree::Node
+
+      def block_from_body: (node) -> Types::Block?
+
+      def each_node: (Array[untyped] nodes) { (node) -> void } -> void
+
+      def each_child: (node) { (node child) -> void } -> void
+
+      def any_node?: (node, ?nodes: Array[node]) { (node) -> bool } -> Array[node]?
+
+      def keyword_hash?: (node) -> bool
+
+      def args_from_node: (node?) -> Array[untyped]
+
+      def untyped: () -> Types::Bases::Any
+
+      @untyped: Types::Bases::Any
+    end
+  end
+end

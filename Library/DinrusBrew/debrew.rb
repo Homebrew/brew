@@ -1,0 +1,139 @@
+# typed: true # rubocop:todo Sorbet/StrictSigil
+# frozen_string_literal: true
+
+require "attrable"
+require "mutex_m"
+require "ignorable"
+
+# Helper module for debugging formulae.
+module Debrew
+  extend Mutex_m
+
+  # Module for allowing to debug formulae.
+  module Formula
+    def install
+      Debrew.debrew { super }
+    end
+
+    def patch
+      Debrew.debrew { super }
+    end
+
+    def test
+      Debrew.debrew { super }
+    end
+  end
+
+  # Module for displaying a debugging menu.
+  class Menu
+    Entry = Struct.new(:name, :action)
+
+    attr_accessor :prompt, :entries
+
+    sig { void }
+    def initialize
+      @entries = []
+    end
+
+    def choice(name, &action)
+      entries << Entry.new(name.to_s, action)
+    end
+
+    def self.choose
+      menu = new
+      yield menu
+
+      choice = T.let(nil, T.nilable(Entry))
+      while choice.nil?
+        menu.entries.each_with_index { |e, i| puts "#{i + 1}. #{e.name}" }
+        print menu.prompt unless menu.prompt.nil?
+
+        input = $stdin.gets || exit
+        input.chomp!
+
+        i = input.to_i
+        if i.positive?
+          choice = menu.entries[i - 1]
+        else
+          possible = menu.entries.select { |e| e.name.start_with?(input) }
+
+          case possible.size
+          when 0 then puts "Такой опции нет"
+          when 1 then choice = possible.first
+          else puts "Соответствует несколько опций: #{possible.map(&:name).join(" ")}"
+          end
+        end
+      end
+
+      choice[:action].call
+    end
+  end
+
+  @active = false
+  @debugged_exceptions = Set.new
+
+  class << self
+    extend Attrable
+    attr_predicate :active?
+    attr_reader :debugged_exceptions
+  end
+
+  def self.debrew
+    @active = true
+    Ignorable.hook_raise
+
+    begin
+      yield
+    rescue SystemExit
+      raise
+    rescue Ignorable::ExceptionMixin => e
+      e.ignore if debug(e) == :ignore # execution jumps back to where the exception was thrown
+    ensure
+      Ignorable.unhook_raise
+      @active = false
+    end
+  end
+
+  def self.debug(exception)
+    raise(exception) if !active? || !debugged_exceptions.add?(exception) || !mu_try_lock
+
+    begin
+      puts exception.backtrace.first
+      puts Formatter.error(exception, label: exception.class.name)
+
+      loop do
+        Menu.choose do |menu|
+          menu.prompt = "Выберите действие: "
+
+          menu.choice(:raise) { raise(exception) }
+          menu.choice(:ignore) { return :ignore } if exception.is_a?(Ignorable::ExceptionMixin)
+          menu.choice(:backtrace) { puts exception.backtrace }
+
+          if exception.is_a?(Ignorable::ExceptionMixin)
+            menu.choice(:irb) do
+              puts "После вашего выхода из этой сессии IRB, выполнение будет продолжено."
+              set_trace_func proc { |event, _, _, id, binding, klass|
+                if klass == Object && id == :raise && event == "return"
+                  set_trace_func(nil)
+                  mu_synchronize do
+                    require "debrew/irb"
+                    IRB.start_within(binding)
+                  end
+                end
+              }
+
+              return :ignore
+            end
+          end
+
+          menu.choice(:shell) do
+            puts "После выхода из этой оболочки, вы вернётесь в меню."
+            interactive_shell
+          end
+        end
+      end
+    ensure
+      mu_unlock
+    end
+  end
+end

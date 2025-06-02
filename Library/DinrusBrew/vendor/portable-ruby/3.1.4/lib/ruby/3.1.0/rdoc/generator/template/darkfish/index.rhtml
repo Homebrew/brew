@@ -1,0 +1,22 @@
+<body id="top" role="document" class="file">
+<nav role="navigation">
+  <div id="project-navigation">
+    <%= render '_sidebar_navigation.rhtml' %>
+
+    <%= render '_sidebar_search.rhtml' %>
+  </div>
+
+  <div id="project-metadata">
+    <%= render '_sidebar_pages.rhtml' %>
+    <%= render '_sidebar_classes.rhtml' %>
+  </div>
+</nav>
+
+<main role="main">
+<%- if @options.main_page and
+      main_page = @files.find { |f| f.full_name == @options.main_page } then %>
+<%= main_page.description %>
+<%- else -%>
+<p>This is the API documentation for <%= @title %>.
+<%- end -%>
+</main>

@@ -1,0 +1,11 @@
+# <!-- rdoc-file=lib/minitest/spec.rb -->
+# Minitest::Spec -- The faster, better, less-magical spec framework!
+#
+# For a list of expectations, see Minitest::Expectations.
+#
+class Minitest::Spec < ::Minitest::Test
+  def self.current: () -> untyped
+  def initialize: (untyped name) -> void
+  include Minitest::Spec::DSL::InstanceMethods
+  extend Minitest::Spec::DSL
+end

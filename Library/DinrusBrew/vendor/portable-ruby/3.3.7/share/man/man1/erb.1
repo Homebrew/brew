@@ -1,0 +1,184 @@
+.TH ERB \&1 "Ruby Programmer's Reference Guide" "December 16, 2018" "UNIX"
+.SH NAME
+\fBerb\fP
+\- Ruby Templating
+.SH SYNOPSIS
+.br
+\fBerb\fP
+[\fB\--version\fP]
+[\fB\-UPdnvx\fP]
+[\fB\-E\fP \fIext\fP[:int]]
+[\fB\-S\fP \fIlevel\fP]
+[\fB\-T\fP \fImode\fP]
+[\fB\-r\fP \fIlibrary\fP]
+[\fB\--\fP]
+[file ...]
+
+.SH DESCRIPTION
+\fBerb\fP
+is a command line front-end for
+"ERB"
+library, which is an implementation of eRuby.
+
+ERB provides an easy to use but powerful templating system for Ruby.
+Using ERB, actual Ruby code can be added to any plain text document for the
+purposes of generating document information details and/or flow control.
+
+\fBerb\fP
+is a part of
+\fBRuby\fP.
+
+.SH OPTIONS
+
+.TP
+\fB\--version\fP
+Prints the version of
+\fB.\fP
+
+.TP
+\fB\-E\fP \fIexternal\fP[:\fIinternal\fP]
+.TP
+\fB\--encoding\fP \fIexternal\fP[:\fIinternal\fP]
+Specifies the default value(s) for external encodings and internal encoding. Values should be separated with colon (:).
+
+You can omit the one for internal encodings, then the value
+("Encoding.default_internal") will be nil.
+
+.TP
+\fB\-P\fP
+Disables ruby code evaluation for lines beginning with
+"%".
+
+.TP
+\fB\-S\fP \fIlevel\fP
+Specifies the safe level in which eRuby script will run.
+
+.TP
+\fB\-T\fP \fImode\fP
+Specifies trim mode (default 0).
+\fImode\fP
+can be one of
+.TP
+.B 0
+EOL remains after the embedded ruby script is evaluated.
+
+.TP
+.B 1
+EOL is removed if the line ends with
+"%>".
+
+.TP
+.B 2
+EOL is removed if the line starts with
+"<%"
+and ends with
+"%>".
+
+.TP
+.B -
+EOL is removed if the line ends with
+"-%>".
+And leading whitespaces are removed if the erb directive starts with
+"<%-".
+
+.TP
+\fB\-r\fP
+Load a library
+
+.TP
+\fB\-U\fP
+can be one of
+Sets the default value for internal encodings
+("Encoding.default_internal") to UTF-8.
+
+.TP
+\fB\-d\fP
+.TP
+\fB\--debug\fP
+Turns on debug mode.
+"$DEBUG"
+will be set to true.
+
+.TP
+\fB\-h\fP
+.TP
+\fB\--help\fP
+Prints a summary of the options.
+
+.TP
+\fB\-n\fP
+Used with
+\fB\-x\fP.
+Prepends the line number to each line in the output.
+
+.TP
+\fB\-v\fP
+Enables verbose mode.
+"$VERBOSE"
+will be set to true.
+
+.TP
+\fB\-x\fP
+Converts the eRuby script into Ruby script and prints it without line numbers.
+
+
+.SH EXAMPLES
+Here is an eRuby script
+
+<?xml version="1.0" ?>
+.br
+<% require 'prime' -%>
+.br
+<erb-example>
+.br
+  <calc><%= 1+1 %></calc>
+.br
+  <var><%= __FILE__ %></var>
+.br
+  <library><%= Prime.each(10).to_a.join(", ") %></library>
+.br
+</erb-example>
+.br
+
+Command
+.nf
+\&  "% erb -T - example.erb"
+.fi
+prints
+
+<?xml version="1.0" ?>
+.br
+<erb-example>
+.br
+  <calc>2</calc>
+.br
+  <var>example.erb</var>
+.br
+  <library>2, 3, 5, 7</library>
+.br
+</erb-example>
+.br
+
+.SH SEE ALSO
+\fBruby\fP(1).
+
+And see
+\fBri\fP(1)
+documentation for
+"ERB"
+class.
+
+.SH REPORTING BUGS
+.IP \(bu
+Security vulnerabilities should be reported via an email to
+Mt security@ruby-lang.org.
+Reported problems will be published after being fixed.
+
+.IP \(bu
+Other bugs and feature requests can be reported via the
+Ruby Issue Tracking System
+(\fBhttps://bugs.ruby-lang.org/\fP).
+Do not report security vulnerabilities
+via this system because it publishes the vulnerabilities immediately.
+.SH AUTHORS
+Written by Masatoshi SEKI.

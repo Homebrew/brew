@@ -1,0 +1,94 @@
+bundle-lock(1) -- Creates / Updates a lockfile without installing
+=================================================================
+
+## SYNOPSIS
+
+`bundle lock` [--update]
+              [--local]
+              [--print]
+              [--lockfile=PATH]
+              [--full-index]
+              [--add-platform]
+              [--remove-platform]
+              [--patch]
+              [--minor]
+              [--major]
+              [--strict]
+              [--conservative]
+
+## DESCRIPTION
+
+Lock the gems specified in Gemfile.
+
+## OPTIONS
+
+* `--update=<*gems>`:
+  Ignores the existing lockfile. Resolve then updates lockfile. Taking a list
+  of gems or updating all gems if no list is given.
+
+* `--local`:
+  Do not attempt to connect to `rubygems.org`. Instead, Bundler will use the
+  gems already present in Rubygems' cache or in `vendor/cache`. Note that if a
+  appropriate platform-specific gem exists on `rubygems.org` it will not be
+  found.
+
+* `--print`:
+  Prints the lockfile to STDOUT instead of writing to the file system.
+
+* `--lockfile=<path>`:
+  The path where the lockfile should be written to.
+
+* `--full-index`:
+  Fall back to using the single-file index of all gems.
+
+* `--add-platform`:
+  Add a new platform to the lockfile, re-resolving for the addition of that
+  platform.
+
+* `--remove-platform`:
+  Remove a platform from the lockfile.
+
+* `--patch`:
+  If updating, prefer updating only to next patch version.
+
+* `--minor`:
+  If updating, prefer updating only to next minor version.
+
+* `--major`:
+  If updating, prefer updating to next major version (default).
+
+* `--strict`:
+  If updating, do not allow any gem to be updated past latest --patch | --minor | --major.
+
+* `--conservative`:
+  If updating, use bundle install conservative update behavior and do not allow shared dependencies to be updated.
+
+## UPDATING ALL GEMS
+
+If you run `bundle lock` with `--update` option without list of gems, bundler will
+ignore any previously installed gems and resolve all dependencies again based
+on the latest versions of all gems available in the sources.
+
+## UPDATING A LIST OF GEMS
+
+Sometimes, you want to update a single gem in the Gemfile(5), and leave the rest of
+the gems that you specified locked to the versions in the `Gemfile.lock`.
+
+For instance, you only want to update `nokogiri`, run `bundle lock --update nokogiri`.
+
+Bundler will update `nokogiri` and any of its dependencies, but leave the rest of the
+gems that you specified locked to the versions in the `Gemfile.lock`.
+
+## SUPPORTING OTHER PLATFORMS
+
+If you want your bundle to support platforms other than the one you're running
+locally, you can run `bundle lock --add-platform PLATFORM` to add PLATFORM to
+the lockfile, force bundler to re-resolve and consider the new platform when
+picking gems, all without needing to have a machine that matches PLATFORM handy
+to install those platform-specific gems on.
+
+For a full explanation of gem platforms, see `gem help platform`.
+
+## PATCH LEVEL OPTIONS
+
+See [bundle update(1)](bundle-update.1.html) for details.

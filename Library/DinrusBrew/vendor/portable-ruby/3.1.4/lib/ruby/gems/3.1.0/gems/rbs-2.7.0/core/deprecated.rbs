@@ -1,0 +1,9 @@
+# <!-- rdoc-file=numeric.c -->
+# An obsolete class, use Integer
+#
+Fixnum: singleton(Integer)
+
+# <!-- rdoc-file=bignum.c -->
+# An obsolete class, use Integer
+#
+Bignum: singleton(Integer)

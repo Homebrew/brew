@@ -1,0 +1,100 @@
+.\" generated with nRonn/v0.11.1
+.\" https://github.com/n-ronn/nronn/tree/0.11.1
+.TH "BUNDLE\-OUTDATED" "1" "September 2024" ""
+.SH "NAME"
+\fBbundle\-outdated\fR \- List installed gems with newer versions available
+.SH "SYNOPSIS"
+\fBbundle outdated\fR [GEM] [\-\-local] [\-\-pre] [\-\-source] [\-\-strict] [\-\-parseable | \-\-porcelain] [\-\-group=GROUP] [\-\-groups] [\-\-patch|\-\-minor|\-\-major] [\-\-filter\-major] [\-\-filter\-minor] [\-\-filter\-patch] [\-\-only\-explicit]
+.SH "DESCRIPTION"
+Outdated lists the names and versions of gems that have a newer version available in the given source\. Calling outdated with [GEM [GEM]] will only check for newer versions of the given gems\. Prerelease gems are ignored by default\. If your gems are up to date, Bundler will exit with a status of 0\. Otherwise, it will exit 1\.
+.SH "OPTIONS"
+.TP
+\fB\-\-local\fR
+Do not attempt to fetch gems remotely and use the gem cache instead\.
+.TP
+\fB\-\-pre\fR
+Check for newer pre\-release gems\.
+.TP
+\fB\-\-source\fR
+Check against a specific source\.
+.TP
+\fB\-\-strict\fR
+Only list newer versions allowed by your Gemfile requirements, also respecting conservative update flags (\-\-patch, \-\-minor, \-\-major)\.
+.TP
+\fB\-\-parseable\fR, \fB\-\-porcelain\fR
+Use minimal formatting for more parseable output\.
+.TP
+\fB\-\-group\fR
+List gems from a specific group\.
+.TP
+\fB\-\-groups\fR
+List gems organized by groups\.
+.TP
+\fB\-\-minor\fR
+Prefer updating only to next minor version\.
+.TP
+\fB\-\-major\fR
+Prefer updating to next major version (default)\.
+.TP
+\fB\-\-patch\fR
+Prefer updating only to next patch version\.
+.TP
+\fB\-\-filter\-major\fR
+Only list major newer versions\.
+.TP
+\fB\-\-filter\-minor\fR
+Only list minor newer versions\.
+.TP
+\fB\-\-filter\-patch\fR
+Only list patch newer versions\.
+.TP
+\fB\-\-only\-explicit\fR
+Only list gems specified in your Gemfile, not their dependencies\.
+.SH "PATCH LEVEL OPTIONS"
+See bundle update(1) \fIbundle\-update\.1\.html\fR for details\.
+.SH "FILTERING OUTPUT"
+The 3 filtering options do not affect the resolution of versions, merely what versions are shown in the output\.
+.P
+If the regular output shows the following:
+.IP "" 4
+.nf
+* Gem       Current  Latest  Requested  Groups
+* faker     1\.6\.5    1\.6\.6   ~> 1\.4     development, test
+* hashie    1\.2\.0    3\.4\.6   = 1\.2\.0    default
+* headless  2\.2\.3    2\.3\.1   = 2\.2\.3    test
+.fi
+.IP "" 0
+.P
+\fB\-\-filter\-major\fR would only show:
+.IP "" 4
+.nf
+* Gem       Current  Latest  Requested  Groups
+* hashie    1\.2\.0    3\.4\.6   = 1\.2\.0    default
+.fi
+.IP "" 0
+.P
+\fB\-\-filter\-minor\fR would only show:
+.IP "" 4
+.nf
+* Gem       Current  Latest  Requested  Groups
+* headless  2\.2\.3    2\.3\.1   = 2\.2\.3    test
+.fi
+.IP "" 0
+.P
+\fB\-\-filter\-patch\fR would only show:
+.IP "" 4
+.nf
+* Gem       Current  Latest  Requested  Groups
+* faker     1\.6\.5    1\.6\.6   ~> 1\.4     development, test
+.fi
+.IP "" 0
+.P
+Filter options can be combined\. \fB\-\-filter\-minor\fR and \fB\-\-filter\-patch\fR would show:
+.IP "" 4
+.nf
+* Gem       Current  Latest  Requested  Groups
+* faker     1\.6\.5    1\.6\.6   ~> 1\.4     development, test
+.fi
+.IP "" 0
+.P
+Combining all three \fBfilter\fR options would be the same result as providing none of them\.

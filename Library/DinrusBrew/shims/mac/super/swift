@@ -1,0 +1,16 @@
+#!/bin/bash
+
+# Set SDKROOT to ensure it matches DinrusBrew's choice of SDK.
+
+# DINRUSBREW_LIBRARY is set by bin/brew
+# DINRUSBREW_SDKROOT is set by extend/ENV/super.rb
+# shellcheck disable=SC2154
+source "${DINRUSBREW_LIBRARY}/DinrusBrew/shims/utils.sh"
+
+if [[ -z "${SDKROOT}" && -n "${DINRUSBREW_SDKROOT}" ]]
+then
+  export SDKROOT="${DINRUSBREW_SDKROOT}"
+fi
+
+try_exec_non_system "${SHIM_FILE}" "$@"
+safe_exec "/usr/bin/${SHIM_FILE}" "$@"

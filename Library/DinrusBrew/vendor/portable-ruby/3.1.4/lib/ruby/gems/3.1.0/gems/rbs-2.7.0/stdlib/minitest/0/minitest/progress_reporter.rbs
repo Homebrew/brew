@@ -1,0 +1,11 @@
+# <!-- rdoc-file=lib/minitest.rb -->
+# A very simple reporter that prints the "dots" during the run.
+#
+# This is added to the top-level CompositeReporter at the start of the run. If
+# you want to change the output of minitest via a plugin, pull this out of the
+# composite and replace it with your own.
+#
+class Minitest::ProgressReporter < ::Minitest::Reporter
+  def prerecord: (untyped klass, untyped name) -> (untyped | nil)
+  def record: (untyped result) -> untyped
+end

@@ -1,0 +1,184 @@
+# The Exception object set by Kernel#raise.
+$!: Exception | nil
+
+# The array contains the module names loaded by require.
+$": Array[String]
+
+# The process number of the Ruby running this script. Same as Process.pid.
+$$: Integer
+
+# The string matched by the last successful match.
+$&: String | nil
+
+# The string to the right of the last successful match.
+$': String | nil
+
+# The same as ARGV.
+$*: Array[String]
+
+# The highest group matched by the last successful match.
+$+: String | nil
+
+# The output field separator for Kernel#print and Array#join. Non-nil $, will be deprecated.
+$,: String | nil
+
+# The input record separator, newline by default.
+$-0: String | nil
+
+# The default separator for String#split. Non-nil $; will be deprecated.
+$-F: Regexp | String | nil
+
+# Load path for searching Ruby scripts and extension libraries used
+# by Kernel#load and Kernel#require.
+# Has a singleton method <code>$LOAD_PATH.resolve_feature_path(feature)</code>
+# that returns [+:rb+ or +:so+, path], which resolves the feature to
+# the path the original Kernel#require method would load.
+$-I: Array[String]
+
+$-W: 0 | 1 | 2
+
+# True if option <tt>-a</tt> is set. Read-only variable.
+$-a: bool
+
+# The debug flag, which is set by the <tt>-d</tt> switch.  Enabling debug
+# output prints each exception raised to $stderr (but not its
+# backtrace).  Setting this to a true value enables debug output as
+# if <tt>-d</tt> were given on the command line.  Setting this to a false
+# value disables debug output.
+$-d: bool
+
+# In in-place-edit mode, this variable holds the extension, otherwise +nil+.
+$-i: String?
+
+# True if option <tt>-l</tt> is set. Read-only variable.
+$-l: bool
+
+# True if option <tt>-p</tt> is set. Read-only variable.
+$-p: bool
+
+# The verbose flag, which is set by the <tt>-w</tt> or <tt>-v</tt> switch.
+# Setting this to a true value enables warnings as if <tt>-w</tt> or <tt>-v</tt> were given
+# on the command line.  Setting this to +nil+ disables warnings,
+# including from Kernel#warn.
+$-v: bool | nil
+
+# The verbose flag, which is set by the <tt>-w</tt> or <tt>-v</tt> switch.
+# Setting this to a true value enables warnings as if <tt>-w</tt> or <tt>-v</tt> were given
+# on the command line.  Setting this to +nil+ disables warnings,
+# including from Kernel#warn.
+$-w: bool | nil
+
+# The current input line number of the last file that was read.
+$.: Integer
+
+# The input record separator, newline by default. Aliased to $-0.
+$/: String | nil
+
+# Contains the name of the script being executed. May be assignable.
+$0: String
+
+# The Nth group of the last successful match. May be > 1.
+$1: String | nil
+
+# The Nth group of the last successful match. May be > 1.
+$2: String | nil
+
+# The Nth group of the last successful match. May be > 1.
+$3: String | nil
+
+# The Nth group of the last successful match. May be > 1.
+$4: String | nil
+
+# The Nth group of the last successful match. May be > 1.
+$5: String | nil
+
+# The Nth group of the last successful match. May be > 1.
+$6: String | nil
+
+# The Nth group of the last successful match. May be > 1.
+$7: String | nil
+
+# The Nth group of the last successful match. May be > 1.
+$8: String | nil
+
+# The Nth group of the last successful match. May be > 1.
+$9: String | nil
+
+# Load path for searching Ruby scripts and extension libraries used
+# by Kernel#load and Kernel#require.
+# Has a singleton method <code>$LOAD_PATH.resolve_feature_path(feature)</code>
+# that returns [+:rb+ or +:so+, path], which resolves the feature to
+# the path the original Kernel#require method would load.
+$:: Array[String]
+
+# The default separator for String#split. Non-nil $; will be deprecated. Aliased to $-F.
+$;: Regexp | String | nil
+
+# The same as ARGF.
+$<: RBS::Unnamed::ARGFClass
+
+# This variable is no longer effective. Deprecated.
+$=: bool
+
+# The default output stream for Kernel#print and Kernel#printf. $stdout by default.
+$>: IO
+
+# The status of the last executed child process (thread-local).
+$?: Process::Status | nil
+
+# The same as <code>$!.backtrace</code>.
+$@: Array[String] | nil
+
+# The debug flag, which is set by the <tt>-d</tt> switch.  Enabling debug
+# output prints each exception raised to $stderr (but not its
+# backtrace).  Setting this to a true value enables debug output as
+# if <tt>-d</tt> were given on the command line.  Setting this to a false
+# value disables debug output. Aliased to $-d.
+$DEBUG: bool
+
+# Current input filename from ARGF. Same as ARGF.filename.
+$FILENAME: String
+
+# The array contains the module names loaded by require.
+$LOADED_FEATURES: Array[String]
+
+# Load path for searching Ruby scripts and extension libraries used
+# by Kernel#load and Kernel#require. Aliased to $: and $-I.
+# Has a singleton method <code>$LOAD_PATH.resolve_feature_path(feature)</code>
+# that returns [+:rb+ or +:so+, path], which resolves the feature to
+# the path the original Kernel#require method would load.
+$LOAD_PATH: Array[String] & _LoadPathAPI
+
+interface _LoadPathAPI
+  def resolve_feature_path: (String) -> [:rb | :so, String]?
+end
+
+# Contains the name of the script being executed. May be assignable.
+$PROGRAM_NAME: String
+
+# The verbose flag, which is set by the <tt>-w</tt> or <tt>-v</tt> switch.
+# Setting this to a true value enables warnings as if <tt>-w</tt> or <tt>-v</tt> were given
+# on the command line.  Setting this to +nil+ disables warnings,
+# including from Kernel#warn. Aliased to $-v and $-w.
+$VERBOSE: bool | nil
+
+# The output record separator for Kernel#print and IO#write. Default is +nil+.
+$\: String | nil
+
+# The last input line of string by gets or readline.
+$_: String | nil
+
+# The string to the left of the last successful match.
+$`: String | nil
+
+# The current standard error output.
+$stderr: IO
+
+# The current standard input.
+$stdin: IO
+
+# The current standard output.
+$stdout: IO
+
+# The information about the last match in the current scope (thread-local and frame-local).
+$~: MatchData | nil

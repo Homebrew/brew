@@ -1,0 +1,26 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "definitions": {
+    "comment": {
+      "type": "object",
+      "properties": {
+        "string": {
+          "type": "string"
+        },
+        "location": {
+          "$ref": "location.json"
+        }
+      },
+      "required": ["string", "location"]
+    }
+  },
+  "title": "Comment associated with a declaration or a member",
+  "oneOf": [
+    {
+      "$ref": "#/definitions/comment"
+    },
+    {
+      "type": "null"
+    }
+  ]
+}

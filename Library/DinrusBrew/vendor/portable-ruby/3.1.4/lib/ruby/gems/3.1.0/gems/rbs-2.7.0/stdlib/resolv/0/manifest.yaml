@@ -1,0 +1,3 @@
+dependencies:
+  - name: socket
+  - name: timeout

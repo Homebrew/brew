@@ -1,0 +1,142 @@
+module RBS
+  module Collection
+    module Sources
+      def self.from_config_entry: (source_entry) -> _Source
+
+      interface _Source
+        def has?: (Config::gem_entry) -> boolish
+        def versions: (Config::gem_entry) -> Array[String]
+        def install: (dest: Pathname, config_entry: Config::gem_entry, stdout: CLI::_IO) -> void
+        def to_lockfile: () -> source_entry
+        def manifest_of: (Config::gem_entry) -> manifest_entry?
+        def dependencies_of: (Config::gem_entry) -> Array[{"name" => String}]?
+      end
+
+      type source_entry = Git::source_entry
+                        | Stdlib::source_entry
+                        | Rubygems::source_entry
+
+      type manifest_entry = {
+        "dependencies" => Array[{"name" => String}]?,
+      }
+
+      module Base : _Source
+        def dependencies_of: (Config::gem_entry config_entry) -> Array[{"name" => String}]?
+      end
+
+      class Git
+        include Base
+
+        METADATA_FILENAME: String
+
+        type source_entry = {
+          'type' => 'git',
+          'name' => String,
+          'remote' => String,
+          'revision' => String,
+          'repo_dir' => String?,
+        }
+
+        class CommandError < StandardError
+        end
+
+        attr_reader name: String
+        attr_reader remote: String
+        attr_reader repo_dir: String
+
+        def initialize: (name: String, revision: String, remote: String, repo_dir: String?) -> untyped
+
+        def has?: (Config::gem_entry) -> bool
+
+        def versions: (Config::gem_entry) -> Array[String]
+
+        def install: (dest: Pathname, config_entry: Config::gem_entry, stdout: CLI::_IO) -> void
+
+        def to_lockfile: () -> source_entry
+
+        def manifest_of: (Config::gem_entry) -> manifest_entry?
+
+        private
+
+        @git_dir: Pathname?
+
+        @resolved_revision: String?
+
+        def _install: (dest: Pathname , config_entry: Config::gem_entry) -> void
+
+        def cp_r: (Pathname, Pathname) -> void
+
+        def setup!: (revision: String) -> void
+
+        def need_to_fetch?: (String revision ) -> bool
+
+        def git_dir: () -> Pathname
+
+        def gem_repo_dir: () -> Pathname
+
+        def with_revision: [T] () { () -> T } -> T
+
+        def resolved_revision: () -> String
+
+        def resolve_revision: () -> String
+
+        def git: (*String cmd, **untyped opt) -> String
+
+        def sh!: (*String cmd, **untyped opt) -> String
+
+        def format_config_entry: (Config::gem_entry) -> String
+      end
+
+      # signatures that are bundled in rbs gem under the stdlib/ directory
+      class Stdlib
+
+        REPO: Repository
+
+        include Base
+
+        type source_entry =  {
+          'type' => 'stdlib',
+        }
+
+        # polyfill of singleton module
+        def self.instance: () -> instance
+
+        def has?: (Config::gem_entry) -> boolish
+
+        def versions: (Config::gem_entry) -> Array[String]
+
+        def install: (dest: Pathname, config_entry: Config::gem_entry, stdout: CLI::_IO) -> void
+
+        def to_lockfile: () -> source_entry
+
+        def manifest_of: (Config::gem_entry) -> manifest_entry?
+
+        private
+
+        def lookup: (Config::gem_entry) -> Pathname?
+      end
+
+      # sig/ directory
+      class Rubygems
+        include Base
+
+        type source_entry = {
+          'type' => 'rubygems',
+        }
+
+        # polyfill of singleton module
+        def self.instance: () -> instance
+
+        def has?: (Config::gem_entry) -> boolish
+        def versions: (Config::gem_entry) -> Array[String]
+        def install: (dest: Pathname, config_entry: Config::gem_entry, stdout: CLI::_IO) -> void
+        def to_lockfile: () -> source_entry
+        def manifest_of: (Config::gem_entry) -> manifest_entry?
+
+        private
+
+        def gem_sig_path: (Config::gem_entry) -> [Gem::Specification, Pathname]?
+      end
+    end
+  end
+end

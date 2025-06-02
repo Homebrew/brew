@@ -1,0 +1,41 @@
+bundle-binstubs(1) -- Install the binstubs of the listed gems
+=============================================================
+
+## SYNOPSIS
+
+`bundle binstubs` <GEM_NAME> [--force] [--path PATH] [--standalone]
+
+## DESCRIPTION
+
+Binstubs are scripts that wrap around executables. Bundler creates a
+small Ruby file (a binstub) that loads Bundler, runs the command,
+and puts it into `bin/`. Binstubs are a shortcut-or alternative-
+to always using `bundle exec`. This gives you a file that can be run
+directly, and one that will always run the correct gem version
+used by the application.
+
+For example, if you run `bundle binstubs rspec-core`, Bundler will create
+the file `bin/rspec`. That file will contain enough code to load Bundler,
+tell it to load the bundled gems, and then run rspec.
+
+This command generates binstubs for executables in `GEM_NAME`.
+Binstubs are put into `bin`, or the `--path` directory if one has been set.
+Calling binstubs with [GEM [GEM]] will create binstubs for all given gems.
+
+## OPTIONS
+
+* `--force`:
+  Overwrite existing binstubs if they exist.
+
+* `--path`:
+  The location to install the specified binstubs to. This defaults to `bin`.
+
+* `--standalone`:
+  Makes binstubs that can work without depending on Rubygems or Bundler at
+  runtime.
+
+* `--shebang`:
+  Specify a different shebang executable name than the default (default 'ruby')
+
+* `--all`:
+  Create binstubs for all gems in the bundle.

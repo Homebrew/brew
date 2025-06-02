@@ -1,0 +1,19 @@
+#!/bin/bash
+
+# DINRUSBREW_CCCFG and DINRUSBREW_SDKROOT are set by extend/ENV/super.rb
+# shellcheck disable=SC2154
+if [[ "${DINRUSBREW_CCCFG}" = *a* ]]
+then
+  case "$1" in
+    --cc) echo "cc" ;;
+    --cpp) echo "cpp" ;;
+    --includedir) echo "${DINRUSBREW_SDKROOT}/usr/include/apr-1" ;;
+    --includes) echo "-isystem${DINRUSBREW_SDKROOT}/usr/include/apr-1" ;;
+    --apr-libtool) echo "glibtool" ;;
+    *)
+      exec xcrun apr-1-config "$@"
+      ;;
+  esac
+else
+  exec /usr/bin/apr-1-config "$@"
+fi

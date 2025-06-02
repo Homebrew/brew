@@ -1,0 +1,32 @@
+.\" generated with Ronn/v0.7.3
+.\" http://github.com/rtomayko/ronn/tree/0.7.3
+.
+.TH "BUNDLE\-OPEN" "1" "October 2022" "" ""
+.
+.SH "NAME"
+\fBbundle\-open\fR \- Opens the source directory for a gem in your bundle
+.
+.SH "SYNOPSIS"
+\fBbundle open\fR [GEM]
+.
+.SH "DESCRIPTION"
+Opens the source directory of the provided GEM in your editor\.
+.
+.P
+For this to work the \fBEDITOR\fR or \fBBUNDLER_EDITOR\fR environment variable has to be set\.
+.
+.P
+Example:
+.
+.IP "" 4
+.
+.nf
+
+bundle open \'rack\'
+.
+.fi
+.
+.IP "" 0
+.
+.P
+Will open the source directory for the \'rack\' gem in your bundle\.

@@ -1,0 +1,270 @@
+.TH RI \&1 "Ruby Programmer's Reference Guide" "April 20, 2017" "UNIX"
+.SH NAME
+\fBri\fP
+\- Ruby API reference front end
+.SH SYNOPSIS
+.br
+\fBri\fP
+[\fB\-ahilTv\fP]
+[\fB\-d\fP \fIDIRNAME\fP]
+[\fB\-f\fP \fIFORMAT\fP]
+[\fB\-w\fP \fIWIDTH\fP]
+[\fB\--\fP[\fBno-\fP]\fBpager\fP]
+[\fB\--server\fP[=\fIPORT\fP]]
+[\fB\--\fP[\fBno-\fP]\fBlist-doc-dirs\fP]
+[\fB\--no-standard-docs\fP]
+[\fB\--\fP[\fBno-\fP]{\fBsystem\fP|\fBsite\fP|\fBgems\fP|\fBhome\fP}]
+[\fB\--\fP[\fBno-\fP]\fBprofile\fP]
+[\fB\--dump\fP=\fICACHE\fP]
+[\fIname\fP ...]
+.SH DESCRIPTION
+\fBri\fP
+is a command-line front end for the Ruby API reference.
+You can search and read the API reference for classes and methods with
+\fB.\fP
+
+\fBri\fP
+is a part of Ruby.
+
+\fIname\fP
+can be:
+It Class | Module | Module::Class
+
+It Class::method | Class#method | Class.method | method
+
+It gem_name: | gem_name:README | gem_name:History
+
+All class names may be abbreviated to their minimum unambiguous form.
+If a name is ambiguous, all valid options will be listed.
+
+A
+`\&.'
+matches either class or instance methods, while #method
+matches only instance and ::method matches only class methods.
+
+README and other files may be displayed by prefixing them with the gem name
+they're contained in.  If the gem name is followed by a
+`\&:'
+all files in the gem will be shown.
+The file name extension may be omitted where it is unambiguous.
+
+For example:
+
+ri Fil
+.br
+ri File
+.br
+ri File.new
+.br
+ri zip
+.br
+ri rdoc:README
+.br
+
+Note that shell quoting or escaping may be required for method names
+containing punctuation:
+
+ri 'Array.[]'
+.br
+ri compact\e!
+.br
+
+To see the default directories
+\fBri\fP
+will search, run:
+
+ri --list-doc-dirs
+.br
+
+Specifying the
+\fB\--system\fP,\fB\--site\fP,\fB\--home\fP,\fB\--gems\fP,
+or
+\fB\--doc-dir\fP
+options will limit
+\fBri\fP
+to searching only the specified directories.
+
+\fBri\fP
+options may be set in the
+.IR RI
+environment variable.
+
+The
+\fBri\fP
+pager can be set with the
+.IR RI_PAGER
+environment variable or the
+.IR PAGER
+environment variable.
+
+.SH OPTIONS
+
+.TP
+\fB\-i\fP
+.TP
+\fB\--\fP[\fBno-\fP]\fBinteractive\fP
+In interactive mode you can repeatedly
+look up methods with autocomplete.
+
+.TP
+\fB\-a\fP
+.TP
+\fB\--\fP[\fBno-\fP]\fBall\fP
+Show all documentation for a class or module.
+
+.TP
+\fB\-l\fP
+.TP
+\fB\--\fP[\fBno-\fP]\fBlist\fP
+List classes
+\fBri\fP
+knows about.
+
+.TP
+\fB\--\fP[\fBno-\fP]\fBpager\fP
+Send output to a pager,
+rather than directly to stdout.
+
+.TP
+\fB\-T\fP
+Synonym for
+\fB\--no-pager\fP.
+
+.TP
+\fB\-w\fP \fIWIDTH\fP
+.TP
+\fB\--width\fP=\fIWIDTH\fP
+Set the width of the output.
+
+.TP
+\fB\--server\fP[=\fIPORT\fP]
+Run RDoc server on the given port.
+The default port is\~8214.
+
+.TP
+\fB\-f\fP \fIFORMAT\fP
+.TP
+\fB\--format\fP=\fIFORMAT\fP
+Use the selected formatter.
+The default formatter is
+bs
+for paged output and
+ansi
+otherwise.
+Valid formatters are:
+ansi,bs,markdown,rdoc.
+
+.TP
+\fB\-h\fP
+.TP
+\fB\--help\fP
+Show help and exit.
+
+.TP
+\fB\-v\fP
+.TP
+\fB\--version\fP
+Output version information and exit.
+
+Data source options:
+
+.TP
+\fB\--\fP[\fBno-\fP]\fBlist-doc-dirs\fP
+List the directories from which
+\fBri\fP
+will source documentation on stdout and exit.
+
+.TP
+\fB\-d\fP \fIDIRNAME\fP
+.TP
+\fB\--doc-dir\fP=\fIDIRNAME\fP
+List of directories from which to source
+documentation in addition to the standard
+directories.  May be repeated.
+
+.TP
+\fB\--no-standard-docs\fP
+Do not include documentation from the Ruby standard library,
+\fIsite_lib\fP,
+installed gems, or
+\fI~/.rdoc\fP.
+Use with
+\fB\--doc-dir\fP.
+
+.TP
+\fB\--\fP[\fBno-\fP]\fBsystem\fP
+Include documentation from Ruby's standard library.  Defaults to true.
+
+.TP
+\fB\--\fP[\fBno-\fP]\fBsite\fP
+Include documentation from libraries installed in
+\fIsite_lib\fP.
+Defaults to true.
+
+.TP
+\fB\--\fP[\fBno-\fP]\fBgems\fP
+Include documentation from RubyGems.  Defaults to true.
+
+.TP
+\fB\--\fP[\fBno-\fP]\fBhome\fP
+Include documentation stored in
+\fI~/.rdoc\fP.
+Defaults to true.
+
+Debug options:
+
+.TP
+\fB\--\fP[\fBno-\fP]\fBprofile\fP
+Run with the Ruby profiler.
+
+.TP
+\fB\--dump\fP=\fICACHE\fP
+Dump data from an ri cache or data file.
+
+.SH ENVIRONMENT
+
+.TP
+.B RI
+Options to prepend to those specified on the command-line.
+
+.TP
+.B RI_PAGER
+.TP
+.B PAGER
+Pager program to use for displaying.
+
+.TP
+.B HOME
+.TP
+.B USERPROFILE
+.TP
+.B HOMEPATH
+Path to the user's home directory.
+
+.SH FILES
+
+.TP
+.B ~/.rdoc
+Path for ri data in the user's home directory.
+
+
+.SH SEE ALSO
+\fBruby\fP(1),
+\fBrdoc\fP(1),
+\fBgem\fP(1)
+
+.SH REPORTING BUGS
+.IP \(bu
+Security vulnerabilities should be reported via an email to
+Mt security@ruby-lang.org.
+Reported problems will be published after being fixed.
+
+.IP \(bu
+Other bugs and feature requests can be reported via the
+Ruby Issue Tracking System
+(\fBhttps://bugs.ruby-lang.org/\fP).
+Do not report security vulnerabilities
+via this system because it publishes the vulnerabilities immediately.
+.SH AUTHORS
+Written by
+Dave Thomas <dave@pragmaticprogrammer.com>.

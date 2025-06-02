@@ -1,0 +1,83 @@
+module RBS
+  # Set of RBS repositories.
+  #
+  # A repository object can handle multiple repository roots.
+  #
+  #   repo = RBS::Repository.new()
+  #   repo.add(Pathname("vendor/rbs/gem-rbs"))
+  #   repo.add(Pathname("vendor/rbs/internal-rbs"))
+  #   repo.add(Pathname("vendor/rbs/definitely-rbs"))
+  #
+  #   repo.lookup("minitest", "2.1.3") => Pathname or nil
+  #
+  # If one gem version can resolve to several directories, the last added dir wins.
+  #
+  class Repository
+    class GemRBS
+      attr_reader name: String
+
+      # Array of gem dirs.
+      # Gem dir contains directories for each version.
+      attr_reader paths: Array[Pathname]
+
+      # Hash from a version to VersionPath object.
+      attr_reader versions(): Hash[Gem::Version, VersionPath]
+
+      @versions: Hash[Gem::Version, VersionPath]?
+
+      def initialize: (name: String) -> void
+
+      def load!: () -> void
+
+      def version_names: () -> Array[Gem::Version]
+
+      def oldest_version: () -> VersionPath
+
+      def latest_version: () -> VersionPath
+
+      def find_best_version: (Gem::Version?) -> VersionPath
+
+      # Returns true if versions is empty.
+      def empty?: () -> bool
+    end
+
+    class VersionPath
+      attr_reader gem: GemRBS
+      attr_reader version: Gem::Version
+      attr_reader path: Pathname
+
+      def initialize: (gem: GemRBS, version: Gem::Version, path: Pathname) -> void
+    end
+
+    DEFAULT_STDLIB_ROOT: Pathname
+
+    # Array of _root dir_s of repositories.
+    #
+    attr_reader dirs: Array[Pathname]
+
+    attr_reader gems: Hash[String, GemRBS]
+
+    def self.default: () -> instance
+
+    def self.find_best_version: (Gem::Version? version, Array[Gem::Version] candidates) -> Gem::Version
+
+    # An optional keyword argument `no_stdlib` is to skip adding directory for stdlib classes.
+    # Passing truthy value will skip loading stdlib. (You can add the stdlib root by yourself.)
+    #
+    def initialize: (?no_stdlib: bool) -> void
+
+    # Add new _root dir_ to the repository set.
+    # If two repository dirs have exactly same gem-version definitions, the latter overwrites the prior.
+    #
+    def add: (Pathname dir) -> void
+
+    # Returns a directory for given `gem` name and `version`.
+    # `version` can be `nil` for _any version_.
+    #
+    # If the given gem cannot be found, it returns `nil`.
+    #
+    def lookup: (String gem, String? version) -> Pathname?
+
+    def lookup_path: (String gem, String? version) -> [GemRBS, VersionPath]?
+  end
+end

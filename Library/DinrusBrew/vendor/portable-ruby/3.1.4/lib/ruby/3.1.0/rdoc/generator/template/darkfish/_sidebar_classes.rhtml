@@ -1,0 +1,9 @@
+<div id="classindex-section" class="nav-section">
+  <h3>Class and Module Index</h3>
+
+  <ul class="link-list">
+  <%- @modsort.each do |index_klass| -%>
+    <li><a href="<%= rel_prefix %>/<%= index_klass.path %>"><%= index_klass.full_name %></a>
+  <%- end -%>
+  </ul>
+</div>

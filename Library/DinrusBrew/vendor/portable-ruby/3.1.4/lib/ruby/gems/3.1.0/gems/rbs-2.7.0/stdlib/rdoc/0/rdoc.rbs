@@ -1,0 +1,758 @@
+# <!-- rdoc-file=lib/rdoc/rubygems_hook.rb -->
+# Gem::RDoc provides methods to generate RDoc and ri data for installed gems
+# upon gem installation.
+#
+# This file is automatically required by RubyGems 1.9 and newer.
+#
+# <!-- rdoc-file=lib/rdoc.rb -->
+# RDoc produces documentation for Ruby source files by parsing the source and
+# extracting the definition for classes, modules, methods, includes and
+# requires.  It associates these with optional documentation contained in an
+# immediately preceding comment block then renders the result using an output
+# formatter.
+#
+# For a simple introduction to writing or generating documentation using RDoc
+# see the README.
+#
+# ## Roadmap
+#
+# If you think you found a bug in RDoc see CONTRIBUTING@Bugs
+#
+# If you want to use RDoc to create documentation for your Ruby source files,
+# see RDoc::Markup and refer to `rdoc --help` for command line usage.
+#
+# If you want to set the default markup format see
+# RDoc::Markup@Supported+Formats
+#
+# If you want to store rdoc configuration in your gem (such as the default
+# markup format) see RDoc::Options@Saved+Options
+#
+# If you want to write documentation for Ruby files see RDoc::Parser::Ruby
+#
+# If you want to write documentation for extensions written in C see
+# RDoc::Parser::C
+#
+# If you want to generate documentation using `rake` see RDoc::Task.
+#
+# If you want to drive RDoc programmatically, see RDoc::RDoc.
+#
+# If you want to use the library to format text blocks into HTML or other
+# formats, look at RDoc::Markup.
+#
+# If you want to make an RDoc plugin such as a generator or directive handler
+# see RDoc::RDoc.
+#
+# If you want to write your own output generator see RDoc::Generator.
+#
+# If you want an overview of how RDoc works see CONTRIBUTING
+#
+# ## Credits
+#
+# RDoc is currently being maintained by Eric Hodel <drbrain@segment7.net>.
+#
+# Dave Thomas <dave@pragmaticprogrammer.com> is the original author of RDoc.
+#
+# *   The Ruby parser in rdoc/parse.rb is based heavily on the outstanding work
+#     of Keiju ISHITSUKA of Nippon Rational Inc, who produced the Ruby parser
+#     for irb and the rtags package.
+#
+module RDoc
+  # <!-- rdoc-file=lib/rdoc/parser.rb -->
+  # A parser is simple a class that subclasses RDoc::Parser and implements #scan
+  # to fill in an RDoc::TopLevel with parsed data.
+  #
+  # The initialize method takes an RDoc::TopLevel to fill with parsed content, the
+  # name of the file to be parsed, the content of the file, an RDoc::Options
+  # object and an RDoc::Stats object to inform the user of parsed items.  The scan
+  # method is then called to parse the file and must return the RDoc::TopLevel
+  # object.  By calling super these items will be set for you.
+  #
+  # In order to be used by RDoc the parser needs to register the file extensions
+  # it can parse.  Use ::parse_files_matching to register extensions.
+  #
+  #     require 'rdoc'
+  #
+  #     class RDoc::Parser::Xyz < RDoc::Parser
+  #       parse_files_matching /\.xyz$/
+  #
+  #       def initialize top_level, file_name, content, options, stats
+  #         super
+  #
+  #         # extra initialization if needed
+  #       end
+  #
+  #       def scan
+  #         # parse file and fill in @top_level
+  #       end
+  #     end
+  #
+  class Parser
+    # <!--
+    #   rdoc-file=lib/rdoc/parser.rb
+    #   - parse_files_matching(regexp)
+    # -->
+    # Record which file types this parser can understand.
+    #
+    # It is ok to call this multiple times.
+    #
+    def self?.parse_files_matching: (Regexp path) -> void
+
+    # <!--
+    #   rdoc-file=lib/rdoc/parser.rb
+    #   - new(top_level, file_name, content, options, stats)
+    # -->
+    # Creates a new Parser storing `top_level`, `file_name`, `content`, `options`
+    # and `stats` in instance variables.  In +@preprocess+ an
+    # RDoc::Markup::PreProcess object is created which allows processing of
+    # directives.
+    #
+    def initialize: (RDoc::TopLevel top_level, String filename, String content, Hash[untyped, untyped] options, RDoc::Stats stats) -> void
+
+    def scan: () -> RDoc::TopLevel
+  end
+
+  # <!-- rdoc-file=lib/rdoc/code_object.rb -->
+  # Base class for the RDoc code tree.
+  #
+  # We contain the common stuff for contexts (which are containers) and other
+  # elements (methods, attributes and so on)
+  #
+  # Here's the tree of the CodeObject subclasses:
+  #
+  # *   RDoc::Context
+  #     *   RDoc::TopLevel
+  #     *   RDoc::ClassModule
+  #         *   RDoc::AnonClass (never used so far)
+  #         *   RDoc::NormalClass
+  #         *   RDoc::NormalModule
+  #         *   RDoc::SingleClass
+  #
+  #
+  # *   RDoc::MethodAttr
+  #     *   RDoc::Attr
+  #     *   RDoc::AnyMethod
+  #         *   RDoc::GhostMethod
+  #         *   RDoc::MetaMethod
+  #
+  #
+  # *   RDoc::Alias
+  # *   RDoc::Constant
+  # *   RDoc::Mixin
+  #     *   RDoc::Require
+  #     *   RDoc::Include
+  #
+  class CodeObject
+    # <!-- rdoc-file=lib/rdoc/code_object.rb -->
+    # Our comment
+    #
+    attr_reader comment: RDoc::Comment
+
+    # <!--
+    #   rdoc-file=lib/rdoc/code_object.rb
+    #   - new()
+    # -->
+    # Creates a new CodeObject that will document itself and its children
+    #
+    def initialize: () -> void
+
+    # <!--
+    #   rdoc-file=lib/rdoc/code_object.rb
+    #   - comment=(comment)
+    # -->
+    # Replaces our comment with `comment`, unless it is empty.
+    #
+    def comment=: (RDoc::Comment | String) -> RDoc::Comment
+  end
+
+  # <!-- rdoc-file=lib/rdoc/context.rb -->
+  # A Context is something that can hold modules, classes, methods, attributes,
+  # aliases, requires, and includes. Classes, modules, and files are all Contexts.
+  #
+  class Context < CodeObject
+    include Comparable
+
+    # <!-- rdoc-file=lib/rdoc/context.rb -->
+    # Types of methods
+    #
+    TYPES: ::Array["class" | "instance"]
+
+    TOMDOC_TITLES: ::Array[nil | "Public" | "Internal" | "Deprecated"]
+
+    type class_types = singleton(RDoc::NormalClass) | singleton(RDoc::SingleClass)
+
+    # <!--
+    #   rdoc-file=lib/rdoc/context.rb
+    #   - new()
+    # -->
+    # Creates an unnamed empty context with public current visibility
+    #
+    def initialize: () -> void
+
+    # <!--
+    #   rdoc-file=lib/rdoc/context.rb
+    #   - add_alias(an_alias)
+    # -->
+    # Adds `an_alias` that is automatically resolved
+    #
+    def add_alias: (RDoc::Alias an_alias) -> RDoc::Alias
+
+    # <!--
+    #   rdoc-file=lib/rdoc/context.rb
+    #   - add_attribute(attribute)
+    # -->
+    # Adds `attribute` if not already there. If it is (as method(s) or attribute),
+    # updates the comment if it was empty.
+    #
+    # The attribute is registered only if it defines a new method. For instance,
+    # `attr_reader :foo` will not be registered if method `foo` exists, but
+    # `attr_accessor :foo` will be registered if method `foo` exists, but `foo=`
+    # does not.
+    #
+    def add_attribute: (RDoc::Attr attribute) -> RDoc::Attr
+
+    # <!--
+    #   rdoc-file=lib/rdoc/context.rb
+    #   - add_class(class_type, given_name, superclass = '::Object')
+    # -->
+    # Adds a class named `given_name` with `superclass`.
+    #
+    # Both `given_name` and `superclass` may contain '::', and are interpreted
+    # relative to the `self` context. This allows handling correctly examples like
+    # these:
+    #     class RDoc::Gauntlet < Gauntlet
+    #     module Mod
+    #       class Object   # implies < ::Object
+    #       class SubObject < Object  # this is _not_ ::Object
+    #
+    # Given `class Container::Item` RDoc assumes `Container` is a module unless it
+    # later sees `class Container`.  `add_class` automatically upgrades `given_name`
+    # to a class in this case.
+    #
+    def add_class: (class_types class_type, ::String given_name, ?::String superclass) -> (RDoc::NormalClass | RDoc::SingleClass)
+
+    # <!--
+    #   rdoc-file=lib/rdoc/context.rb
+    #   - add_constant(constant)
+    # -->
+    # Adds `constant` if not already there. If it is, updates the comment, value
+    # and/or is_alias_for of the known constant if they were empty/nil.
+    #
+    def add_constant: (RDoc::Constant constant) -> RDoc::Constant
+
+    # <!--
+    #   rdoc-file=lib/rdoc/context.rb
+    #   - add_include(include)
+    # -->
+    # Adds included module `include` which should be an RDoc::Include
+    #
+    def add_include: (RDoc::Include `include`) -> RDoc::Include
+
+    # <!--
+    #   rdoc-file=lib/rdoc/context.rb
+    #   - add_extend(ext)
+    # -->
+    # Adds extension module `ext` which should be an RDoc::Extend
+    #
+    def add_extend: (RDoc::Extend ext) -> RDoc::Extend
+
+    # <!--
+    #   rdoc-file=lib/rdoc/context.rb
+    #   - add_method(method)
+    # -->
+    # Adds `method` if not already there. If it is (as method or attribute), updates
+    # the comment if it was empty.
+    #
+    def add_method: (RDoc::AnyMethod method) -> RDoc::AnyMethod
+
+    # <!--
+    #   rdoc-file=lib/rdoc/context.rb
+    #   - add_module(class_type, name)
+    # -->
+    # Adds a module named `name`.  If RDoc already knows `name` is a class then that
+    # class is returned instead.  See also #add_class.
+    #
+    def add_module: (singleton(RDoc::NormalModule) class_type, String name) -> RDoc::NormalModule
+
+    # <!--
+    #   rdoc-file=lib/rdoc/context.rb
+    #   - find_module_named(name)
+    # -->
+    # Find a module with `name` using ruby's scoping rules
+    #
+    def find_module_named: (untyped name) -> (untyped | self)
+
+    # <!--
+    #   rdoc-file=lib/rdoc/context.rb
+    #   - full_name()
+    # -->
+    # The full name for this context.  This method is overridden by subclasses.
+    #
+    def full_name: () -> "(unknown)"
+
+    def to_s: () -> ::String
+
+    # <!--
+    #   rdoc-file=lib/rdoc/context.rb
+    #   - top_level()
+    # -->
+    # Return the TopLevel that owns us
+    #
+    def top_level: () -> RDoc::TopLevel
+  end
+
+  # <!-- rdoc-file=lib/rdoc/top_level.rb -->
+  # A TopLevel context is a representation of the contents of a single file
+  #
+  class TopLevel < Context
+    MARSHAL_VERSION: 0
+
+    # <!--
+    #   rdoc-file=lib/rdoc/top_level.rb
+    #   - new(absolute_name, relative_name = absolute_name)
+    # -->
+    # Creates a new TopLevel for the file at `absolute_name`.  If documentation is
+    # being generated outside the source dir `relative_name` is relative to the
+    # source directory.
+    #
+    def initialize: (String absolute_name, ?String relative_name) -> void
+
+    # <!--
+    #   rdoc-file=lib/rdoc/top_level.rb
+    #   - ==(other)
+    # -->
+    # An RDoc::TopLevel is equal to another with the same relative_name
+    #
+    def ==: (untyped other) -> bool
+
+    # <!--
+    #   rdoc-file=lib/rdoc/top_level.rb
+    #   - eql?(other)
+    # -->
+    #
+    alias eql? ==
+
+    # <!--
+    #   rdoc-file=lib/rdoc/top_level.rb
+    #   - add_alias(an_alias)
+    # -->
+    # Adds `an_alias` to `Object` instead of `self`.
+    #
+    def add_alias: (RDoc::Alias an_alias) -> RDoc::Alias
+
+    # <!--
+    #   rdoc-file=lib/rdoc/top_level.rb
+    #   - add_constant(constant)
+    # -->
+    # Adds `constant` to `Object` instead of `self`.
+    #
+    def add_constant: (RDoc::Constant constant) -> RDoc::Constant
+
+    # <!--
+    #   rdoc-file=lib/rdoc/top_level.rb
+    #   - add_include(include)
+    # -->
+    # Adds `include` to `Object` instead of `self`.
+    #
+    def add_include: (RDoc::Include `include`) -> RDoc::Include
+
+    # <!--
+    #   rdoc-file=lib/rdoc/top_level.rb
+    #   - add_method(method)
+    # -->
+    # Adds `method` to `Object` instead of `self`.
+    #
+    def add_method: (RDoc::AnyMethod method) -> RDoc::AnyMethod
+
+    # <!--
+    #   rdoc-file=lib/rdoc/top_level.rb
+    #   - find_class_or_module(name)
+    # -->
+    # See RDoc::TopLevel::find_class_or_module
+    #
+    def find_class_or_module: (::String name) -> RDoc::Context
+
+    # <!--
+    #   rdoc-file=lib/rdoc/top_level.rb
+    #   - find_module_named(name)
+    # -->
+    # Finds a module or class with `name`
+    #
+    def find_module_named: (String name) -> RDoc::Context
+
+    # <!--
+    #   rdoc-file=lib/rdoc/top_level.rb
+    #   - full_name()
+    # -->
+    # Returns the relative name of this file
+    #
+    def full_name: () -> String
+
+    def to_s: () -> ::String
+  end
+
+  # <!-- rdoc-file=lib/rdoc/token_stream.rb -->
+  # A TokenStream is a list of tokens, gathered during the parse of some entity
+  # (say a method). Entities populate these streams by being registered with the
+  # lexer. Any class can collect tokens by including TokenStream. From the
+  # outside, you use such an object by calling the start_collecting_tokens method,
+  # followed by calls to add_token and pop_token.
+  #
+  module TokenStream
+    # <!--
+    #   rdoc-file=lib/rdoc/token_stream.rb
+    #   - add_token(token)
+    # -->
+    # Adds one `token` to the collected tokens
+    #
+    def add_token: (Hash[untyped, untyped] token) -> void
+
+    # <!--
+    #   rdoc-file=lib/rdoc/token_stream.rb
+    #   - collect_tokens()
+    # -->
+    # Starts collecting tokens
+    #
+    def collect_tokens: () -> void
+
+    # <!--
+    #   rdoc-file=lib/rdoc/token_stream.rb
+    #   - start_collecting_tokens()
+    # -->
+    #
+    alias start_collecting_tokens collect_tokens
+  end
+
+  # <!-- rdoc-file=lib/rdoc/comment.rb -->
+  # A comment holds the text comment for a RDoc::CodeObject and provides a unified
+  # way of cleaning it up and parsing it into an RDoc::Markup::Document.
+  #
+  # Each comment may have a different markup format set by #format=.  By default
+  # 'rdoc' is used.  The :markup: directive tells RDoc which format to use.
+  #
+  # See RDoc::Markup@Other+directives for instructions on adding an alternate
+  # format.
+  #
+  class Comment
+    # <!-- rdoc-file=lib/rdoc/comment.rb -->
+    # The format of this comment.  Defaults to RDoc::Markup
+    #
+    attr_reader format: String
+
+    # <!-- rdoc-file=lib/rdoc/comment.rb -->
+    # The RDoc::TopLevel this comment was found in
+    #
+    attr_accessor location: String
+
+    # <!--
+    #   rdoc-file=lib/rdoc/comment.rb
+    #   - new(text = nil, location = nil, language = nil)
+    # -->
+    # Creates a new comment with `text` that is found in the RDoc::TopLevel
+    # `location`.
+    #
+    def initialize: (?String? text, ?RDoc::Context? location, ?String? language) -> void
+
+    # <!--
+    #   rdoc-file=lib/rdoc/comment.rb
+    #   - format=(format)
+    # -->
+    # Sets the format of this comment and resets any parsed document
+    #
+    def format=: (String format) -> void
+  end
+
+  # <!-- rdoc-file=lib/rdoc/class_module.rb -->
+  # ClassModule is the base class for objects representing either a class or a
+  # module.
+  #
+  class ClassModule < Context
+    # <!--
+    #   rdoc-file=lib/rdoc/class_module.rb
+    #   - new(name, superclass = nil)
+    # -->
+    # Creates a new ClassModule with `name` with optional `superclass`
+    #
+    # This is a constructor for subclasses, and must never be called directly.
+    #
+    def initialize: (String name, ?String superclass) -> void
+
+    # <!--
+    #   rdoc-file=lib/rdoc/class_module.rb
+    #   - add_comment(comment, location)
+    # -->
+    # Adds `comment` to this ClassModule's list of comments at `location`.  This
+    # method is preferred over #comment= since it allows ri data to be updated
+    # across multiple runs.
+    #
+    def add_comment: (RDoc::Comment comment, RDoc::Context location) -> void
+  end
+
+  # <!-- rdoc-file=lib/rdoc/normal_class.rb -->
+  # A normal class, neither singleton nor anonymous
+  #
+  class NormalClass < ClassModule
+    def initialize: (String name, ?String superclass) -> void
+  end
+
+  # <!-- rdoc-file=lib/rdoc/single_class.rb -->
+  # A singleton class
+  #
+  class SingleClass < ClassModule
+    def initialize: (String name, ?String superclass) -> void
+  end
+
+  # <!-- rdoc-file=lib/rdoc/normal_module.rb -->
+  # A normal module, like NormalClass
+  #
+  class NormalModule < ClassModule
+  end
+
+  # <!-- rdoc-file=lib/rdoc/method_attr.rb -->
+  # Abstract class representing either a method or an attribute.
+  #
+  class MethodAttr < CodeObject
+    include Comparable
+
+    # <!-- rdoc-file=lib/rdoc/method_attr.rb -->
+    # The method/attribute we're aliasing
+    #
+    attr_reader is_alias_for: MethodAttr?
+
+    # <!-- rdoc-file=lib/rdoc/method_attr.rb -->
+    # The call_seq or the param_seq with method name, if there is no call_seq.
+    #
+    attr_reader arglists: String
+
+    # <!-- rdoc-file=lib/rdoc/method_attr.rb -->
+    # Name of this method/attribute.
+    #
+    attr_accessor name: String
+
+    # <!-- rdoc-file=lib/rdoc/method_attr.rb -->
+    # public, protected, private
+    #
+    attr_accessor visibility: untyped
+
+    # <!-- rdoc-file=lib/rdoc/method_attr.rb -->
+    # Is this a singleton method/attribute?
+    #
+    attr_accessor singleton: bool
+
+    # <!-- rdoc-file=lib/rdoc/method_attr.rb -->
+    # Source file token stream
+    #
+    attr_reader text: String
+
+    # <!-- rdoc-file=lib/rdoc/method_attr.rb -->
+    # Different ways to call this method
+    #
+    attr_accessor call_seq: String
+
+    # <!--
+    #   rdoc-file=lib/rdoc/method_attr.rb
+    #   - new(text, name)
+    # -->
+    # Creates a new MethodAttr from token stream `text` and method or attribute name
+    # `name`.
+    #
+    # Usually this is called by super from a subclass.
+    #
+    def initialize: (String text, String name) -> void
+
+    # <!--
+    #   rdoc-file=lib/rdoc/method_attr.rb
+    #   - pretty_name()
+    # -->
+    # Method/attribute name with class/instance indicator
+    #
+    def pretty_name: () -> ::String
+
+    # <!--
+    #   rdoc-file=lib/rdoc/method_attr.rb
+    #   - type()
+    # -->
+    # Type of method/attribute (class or instance)
+    #
+    def type: () -> ("class" | "instance")
+
+    # <!--
+    #   rdoc-file=lib/rdoc/method_attr.rb
+    #   - path()
+    # -->
+    # Path to this method for use with HTML generator output.
+    #
+    def path: () -> ::String
+
+    def to_s: () -> ::String
+  end
+
+  # <!-- rdoc-file=lib/rdoc/any_method.rb -->
+  # AnyMethod is the base class for objects representing methods
+  #
+  class AnyMethod < MethodAttr
+    include TokenStream
+
+    # <!--
+    #   rdoc-file=lib/rdoc/any_method.rb
+    #   - call_seq()
+    # -->
+    # Different ways to call this method
+    # ----
+    # <!--
+    #   rdoc-file=lib/rdoc/any_method.rb
+    #   - call_seq=(call_seq)
+    # -->
+    # Sets the different ways you can call this method.  If an empty `call_seq` is
+    # given nil is assumed.
+    #
+    # See also #param_seq
+    #
+    attr_accessor call_seq: ::String
+
+    # <!-- rdoc-file=lib/rdoc/any_method.rb -->
+    # Parameters for this method
+    #
+    attr_accessor params: ::String
+
+    attr_accessor line: Integer
+
+    # <!--
+    #   rdoc-file=lib/rdoc/any_method.rb
+    #   - arglists()
+    # -->
+    # The call_seq or the param_seq with method name, if there is no call_seq.
+    #
+    # Use this for displaying a method's argument lists.
+    #
+    def arglists: () -> String?
+
+    def callseq: () -> String?
+
+    # <!--
+    #   rdoc-file=lib/rdoc/any_method.rb
+    #   - new(text, name)
+    # -->
+    # Creates a new AnyMethod with a token stream `text` and `name`
+    #
+    def initialize: (String? text, String name) -> void
+  end
+
+  # <!-- rdoc-file=lib/rdoc/attr.rb -->
+  # An attribute created by #attr, #attr_reader, #attr_writer or #attr_accessor
+  #
+  class Attr < MethodAttr
+    # <!-- rdoc-file=lib/rdoc/attr.rb -->
+    # Is the attribute readable ('R'), writable ('W') or both ('RW')?
+    #
+    attr_accessor rw: "RW" | "R" | "W"
+
+    # <!--
+    #   rdoc-file=lib/rdoc/attr.rb
+    #   - new(text, name, rw, comment, singleton = false)
+    # -->
+    # Creates a new Attr with body `text`, `name`, read/write status `rw` and
+    # `comment`.  `singleton` marks this as a class attribute.
+    #
+    def initialize: (String? text, String name, String rw, RDoc::Comment? comment, ?bool `singleton`) -> void
+  end
+
+  # <!-- rdoc-file=lib/rdoc/constant.rb -->
+  # A constant
+  #
+  class Constant < CodeObject
+    # <!-- rdoc-file=lib/rdoc/constant.rb -->
+    # Sets the module or class this is constant is an alias for.
+    #
+    attr_writer is_alias_for: String
+
+    # <!-- rdoc-file=lib/rdoc/constant.rb -->
+    # The constant's name
+    #
+    attr_accessor name: String
+
+    # <!-- rdoc-file=lib/rdoc/constant.rb -->
+    # The constant's value
+    #
+    attr_accessor value: String
+
+    # <!-- rdoc-file=lib/rdoc/constant.rb -->
+    # The constant's visibility
+    #
+    attr_accessor visibility: String
+
+    # <!--
+    #   rdoc-file=lib/rdoc/constant.rb
+    #   - new(name, value, comment)
+    # -->
+    # Creates a new constant with `name`, `value` and `comment`
+    #
+    def initialize: (String name, String value, RDoc::Comment? comment) -> void
+  end
+
+  # <!-- rdoc-file=lib/rdoc/mixin.rb -->
+  # A Mixin adds features from a module into another context.  RDoc::Include and
+  # RDoc::Extend are both mixins.
+  #
+  class Mixin < CodeObject
+    # <!-- rdoc-file=lib/rdoc/mixin.rb -->
+    # Name of included module
+    #
+    attr_accessor name: String
+
+    # <!--
+    #   rdoc-file=lib/rdoc/mixin.rb
+    #   - new(name, comment)
+    # -->
+    # Creates a new Mixin for `name` with `comment`
+    #
+    def initialize: (String name, RDoc::Comment? comment) -> void
+  end
+
+  # <!-- rdoc-file=lib/rdoc/include.rb -->
+  # A Module included in a class with #include
+  #
+  #     RDoc::Include.new 'Enumerable', 'comment ...'
+  #
+  class Include < Mixin
+  end
+
+  # <!-- rdoc-file=lib/rdoc/extend.rb -->
+  # A Module extension to a class with #extend
+  #
+  #     RDoc::Extend.new 'Enumerable', 'comment ...'
+  #
+  class Extend < Mixin
+  end
+
+  # <!-- rdoc-file=lib/rdoc/alias.rb -->
+  # Represent an alias, which is an old_name/new_name pair associated with a
+  # particular context
+  #
+  class Alias < CodeObject
+    # <!-- rdoc-file=lib/rdoc/alias.rb -->
+    # Aliased method's name
+    #
+    attr_accessor name: String
+
+    # <!-- rdoc-file=lib/rdoc/alias.rb -->
+    # Aliasee method's name
+    #
+    attr_accessor old_name: String
+
+    # <!--
+    #   rdoc-file=lib/rdoc/alias.rb
+    #   - new(text, old_name, new_name, comment, singleton = false)
+    # -->
+    # Creates a new Alias with a token stream of `text` that aliases `old_name` to
+    # `new_name`, has `comment` and is a `singleton` context.
+    #
+    def initialize: (String? text, String name, String old_name, RDoc::Comment? comment, ?bool `singleton`) -> void
+  end
+
+  # <!-- rdoc-file=lib/rdoc/stats.rb -->
+  # RDoc statistics collector which prints a summary and report of a project's
+  # documentation totals.
+  #
+  class Stats
+  end
+end

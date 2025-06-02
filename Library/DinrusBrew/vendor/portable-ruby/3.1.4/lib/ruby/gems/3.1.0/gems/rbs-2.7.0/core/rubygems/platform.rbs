@@ -1,0 +1,7 @@
+# <!-- rdoc-file=lib/rubygems/platform.rb -->
+# Available list of platforms for targeting Gem installations.
+#
+# See `gem help platform` for information on platform matching.
+#
+class Gem::Platform
+end

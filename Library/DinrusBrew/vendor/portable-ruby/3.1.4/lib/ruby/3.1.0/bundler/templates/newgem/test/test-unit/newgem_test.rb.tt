@@ -1,0 +1,15 @@
+# frozen_string_literal: true
+
+require "test_helper"
+
+class <%= config[:constant_name] %>Test < Test::Unit::TestCase
+  test "VERSION" do
+    assert do
+      ::<%= config[:constant_name] %>.const_defined?(:VERSION)
+    end
+  end
+
+  test "something useful" do
+    assert_equal("expected", "actual")
+  end
+end

@@ -1,0 +1,39 @@
+<%- comment = if current.respond_to? :comment_location then
+               current.comment_location
+             else
+               current.comment
+             end
+   table = current.parse(comment).table_of_contents.dup
+
+   if table.length > 1 then %>
+<div class="nav-section">
+  <h3>Table of Contents</h3>
+
+    <%- display_link = proc do |heading| -%>
+      <a href="#<%= heading.label current %>"><%= heading.plain_html %></a>
+    <%- end -%>
+
+    <%- list_siblings = proc do -%>
+      <%- level = table.first&.level -%>
+      <%- while table.first && table.first.level >= level -%>
+        <%- heading = table.shift -%>
+        <%- if table.first.nil? || table.first.level <= heading.level -%>
+          <li><% display_link.call heading -%>
+        <%- else -%>
+          <li>
+            <details open>
+              <summary><%- display_link.call heading -%></summary>
+              <ul class="link-list" role="directory">
+                <% list_siblings.call %>
+              </ul>
+            </details>
+          </li>
+        <%- end -%>
+      <%- end -%>
+    <%- end -%>
+
+  <ul class="link-list" role="directory">
+    <% list_siblings.call %>
+  </ul>
+</div>
+<%- end -%>

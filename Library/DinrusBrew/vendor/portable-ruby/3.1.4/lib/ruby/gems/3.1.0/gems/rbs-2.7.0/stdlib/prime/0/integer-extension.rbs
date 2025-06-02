@@ -1,0 +1,41 @@
+%a{annotate:rdoc:skip}
+class Integer
+  # <!--
+  #   rdoc-file=lib/prime.rb
+  #   - each_prime(ubound) { |prime| ... }
+  # -->
+  # Iterates the given block over all prime numbers.
+  #
+  # See `Prime`#each for more details.
+  #
+  def self.each_prime: (Integer) { (Integer) -> void } -> void
+
+  # <!--
+  #   rdoc-file=lib/prime.rb
+  #   - from_prime_division(pd)
+  # -->
+  # Re-composes a prime factorization and returns the product.
+  #
+  # See Prime#int_from_prime_division for more details.
+  #
+  def self.from_prime_division: (Array[[ String ]]) -> Integer
+
+  # <!--
+  #   rdoc-file=lib/prime.rb
+  #   - prime_division(generator = Prime::Generator23.new)
+  # -->
+  # Returns the factorization of `self`.
+  #
+  # See Prime#prime_division for more details.
+  #
+  def prime_division: (?Prime::PseudoPrimeGenerator) -> Array[[ Integer, Integer ]]
+
+  # <!--
+  #   rdoc-file=lib/prime.rb
+  #   - prime?()
+  # -->
+  # Returns true if `self` is a prime number, else returns false. Not recommended
+  # for very big integers (> 10**23).
+  #
+  def prime?: () -> bool
+end

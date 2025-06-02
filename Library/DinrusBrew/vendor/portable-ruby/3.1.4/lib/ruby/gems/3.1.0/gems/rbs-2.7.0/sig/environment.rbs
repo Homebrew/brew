@@ -1,0 +1,131 @@
+module RBS
+  class Environment
+    type module_decl = AST::Declarations::Class | AST::Declarations::Module
+
+    interface _ModuleOrClass
+      def name: () -> TypeName
+
+      def type_params: () -> Array[AST::TypeParam]
+    end
+
+    interface _NamedDecl
+      def name: () -> TypeName
+    end
+
+    module ContextUtil
+      def calculate_context: (Array[_NamedDecl]) -> Array[Namespace]
+    end
+
+    class MultiEntry[M < _ModuleOrClass]
+      class D[M < _ModuleOrClass]
+        attr_reader decl: M
+        attr_reader outer: Array[module_decl]
+
+        def initialize: (decl: M, outer: Array[module_decl]) -> void
+
+        include ContextUtil
+
+        @context: Array[Namespace]
+
+        def context: () -> Array[Namespace]
+      end
+
+      attr_reader name: TypeName
+      attr_reader decls: Array[D[M]]
+
+      @primary: D[M]?
+
+      def initialize: (name: TypeName) -> void
+
+      def insert: (decl: M, outer: Array[module_decl]) -> void
+
+      def validate_type_params: () -> void
+
+      def compatible_params?: (Array[AST::TypeParam], Array[AST::TypeParam]) -> boolish
+
+      def type_params: () -> Array[AST::TypeParam]
+
+      def primary: () -> D[M]
+    end
+
+    class ModuleEntry < MultiEntry[AST::Declarations::Module]
+      def self_types: () -> Array[AST::Declarations::Module::Self]
+    end
+
+    class ClassEntry < MultiEntry[AST::Declarations::Class]
+    end
+
+    class SingleEntry[N, D]
+      attr_reader name: N
+      attr_reader decl: D
+      attr_reader outer: Array[module_decl]
+
+      def initialize: (name: N, decl: D, outer: Array[module_decl]) -> void
+
+      include ContextUtil
+
+      @context: Array[Namespace]
+
+      def context: () -> Array[Namespace]
+    end
+
+    # Top level declarations.
+    attr_reader declarations: Array[AST::Declarations::t]
+
+    attr_reader class_decls: Hash[TypeName, ModuleEntry | ClassEntry]
+    attr_reader interface_decls: Hash[TypeName, SingleEntry[TypeName, AST::Declarations::Interface]]
+    attr_reader alias_decls: Hash[TypeName, SingleEntry[TypeName, AST::Declarations::Alias]]
+    attr_reader constant_decls: Hash[TypeName, SingleEntry[TypeName, AST::Declarations::Constant]]
+    attr_reader global_decls: Hash[Symbol, SingleEntry[Symbol, AST::Declarations::Global]]
+
+    def initialize: () -> void
+
+    def initialize_copy: (Environment) -> void
+
+    def self.from_loader: (EnvironmentLoader) -> Environment
+
+    def cache_name: [N, D] (Hash[N, SingleEntry[N, D]] cache, name: N, decl: D, outer: Array[module_decl]) -> SingleEntry[N, D]
+
+    def insert_decl: (AST::Declarations::t, outer: Array[module_decl], namespace: Namespace) -> void
+
+    # Insert a toplevel declaration into the env.
+    #
+    def <<: (AST::Declarations::t decl) -> self
+
+    # Runs generics type params validation over each class definitions.
+    def validate_type_params: () -> void
+
+    # Resolve all type names in the environment to absolute type names.
+    # Relative type name will be left if absolute type name cannot be found.
+    #
+    # When `only` is given, it skips other _top-level_ declarations not included in the collection.
+    # This helps running resolution faster in the case of _partial updates_.
+    #
+    def resolve_type_names: (?only: Set[AST::Declarations::t]?) -> Environment
+
+    def resolve_declaration: (TypeNameResolver resolver, AST::Declarations::t decl, outer: Array[module_decl], prefix: Namespace) -> AST::Declarations::t
+
+    def resolve_member: (TypeNameResolver, AST::Members::t, context: Array[Namespace]) -> AST::Members::t
+
+    def resolve_method_type: (TypeNameResolver, RBS::MethodType, context: Array[Namespace]) -> RBS::MethodType
+
+    def resolve_type_params: (TypeNameResolver resolver, Array[AST::TypeParam], context: Array[Namespace]) ->  Array[AST::TypeParam]
+
+    def absolute_type: (TypeNameResolver, Types::t, context: Array[Namespace]) -> Types::t
+
+    def absolute_type_name: (TypeNameResolver, TypeName, context: Array[Namespace]) -> TypeName
+
+    def inspect: () -> String
+
+    @buffers: Array[Buffer]
+
+    def buffers: () -> Array[Buffer]
+
+    def buffers_decls: () -> Hash[Buffer, Array[AST::Declarations::t]]
+
+    # Construct new environment without declarations tested `true` by block.
+    # Construction of new environment is done with `<<` so that nested declarations will work well.
+    #
+    def reject: () { (AST::Declarations::t) -> boolish } -> Environment
+  end
+end

@@ -1,0 +1,53 @@
+#!/usr/bin/env ruby
+
+require_relative '../lib/debug/config'
+config = DEBUGGER__::Config::parse_argv(ARGV)
+
+# mode is not an actual configuration option
+# it's only used to carry the result of parse_argv here
+case config.delete(:mode)
+when :start
+  require 'rbconfig'
+
+  libpath = File.join(File.expand_path(File.dirname(__dir__)), 'lib/debug')
+  start_mode = config[:open] ? "open" : 'start'
+  cmd = config[:command] ? ARGV.shift : (ENV['RUBY'] || RbConfig.ruby)
+
+  if defined?($:.resolve_feature_path)
+    begin
+      _, sopath = $:.resolve_feature_path('debug/debug.so')
+    rescue LoadError
+      # raises LoadError before 3.1 (2.7 and 3.0)
+    else
+      sopath = File.dirname(File.dirname(sopath)) if sopath
+    end
+  else
+    # `$:.resolve_feature_path` is not defined in 2.6 or earlier.
+    so = "debug/debug.#{RbConfig::CONFIG['DLEXT']}"
+    sopath = $:.find {|dir| File.exist?(File.join(dir, so))}
+  end
+  added = "-r #{libpath}/#{start_mode}"
+  added = "-I #{sopath} #{added}" if sopath
+  rubyopt = ENV['RUBYOPT']
+  env = ::DEBUGGER__::Config.config_to_env_hash(config)
+  env['RUBY_DEBUG_ADDED_RUBYOPT'] = added
+  env['RUBYOPT'] = "#{rubyopt} #{added}"
+
+  exec(env, cmd, *ARGV)
+
+when :attach
+  require_relative "../lib/debug/client"
+  ::DEBUGGER__::CONFIG.set_config(**config)
+
+  begin
+    if ARGV.empty? && config[:port]
+      DEBUGGER__::Client.new([config[:host], config[:port]].compact).connect
+    else
+      DEBUGGER__::Client.new(ARGV).connect
+    end
+  rescue DEBUGGER__::CommandLineOptionError
+    puts opt.help
+  end
+else
+  raise # assert
+end

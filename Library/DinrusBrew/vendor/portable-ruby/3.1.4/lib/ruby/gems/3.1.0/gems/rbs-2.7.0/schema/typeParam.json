@@ -1,0 +1,36 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "Type param: `A`, `unchecked out A`, ...",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "variance": {
+      "enum": ["covariant", "contravariant", "invariant"]
+    },
+    "unchecked": {
+      "type": "boolean"
+    },
+    "upper_bound": {
+      "oneOf": [
+        {
+          "$ref": "types.json#/definitions/classInstance"
+        },
+        {
+          "$ref": "types.json#/definitions/classSingleton"
+        },
+        {
+          "$ref": "types.json#/definitions/interface"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "location": {
+      "$ref": "location.json"
+    }
+  },
+  "required": ["name", "variance", "unchecked", "upper_bound", "location"]
+}

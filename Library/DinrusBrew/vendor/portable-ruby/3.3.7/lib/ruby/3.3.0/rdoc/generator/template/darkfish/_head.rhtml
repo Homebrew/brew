@@ -1,0 +1,20 @@
+<meta charset="<%= @options.charset %>">
+
+<title><%= h @title %></title>
+
+<script type="text/javascript">
+  var rdoc_rel_prefix = "<%= h asset_rel_prefix %>/";
+  var index_rel_prefix = "<%= h rel_prefix %>/";
+</script>
+
+<script src="<%= h asset_rel_prefix %>/js/navigation.js" defer></script>
+<script src="<%= h asset_rel_prefix %>/js/search.js" defer></script>
+<script src="<%= h asset_rel_prefix %>/js/search_index.js" defer></script>
+<script src="<%= h asset_rel_prefix %>/js/searcher.js" defer></script>
+<script src="<%= h asset_rel_prefix %>/js/darkfish.js" defer></script>
+
+<link href="<%= h asset_rel_prefix %>/css/fonts.css" rel="stylesheet">
+<link href="<%= h asset_rel_prefix %>/css/rdoc.css" rel="stylesheet">
+<%- @options.template_stylesheets.each do |stylesheet| -%>
+<link href="<%= h asset_rel_prefix %>/<%= File.basename stylesheet %>" rel="stylesheet">
+<%- end -%>

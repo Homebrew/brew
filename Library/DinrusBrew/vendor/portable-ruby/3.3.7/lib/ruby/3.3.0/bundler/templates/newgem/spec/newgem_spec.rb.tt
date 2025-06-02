@@ -1,0 +1,11 @@
+# frozen_string_literal: true
+
+RSpec.describe <%= config[:constant_name] %> do
+  it "has a version number" do
+    expect(<%= config[:constant_name] %>::VERSION).not_to be nil
+  end
+
+  it "does something useful" do
+    expect(false).to eq(true)
+  end
+end

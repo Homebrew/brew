@@ -1,0 +1,261 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "definitions": {
+    "methodDefinition": {
+      "type": "object",
+      "properties": {
+        "member": {
+          "type": "string",
+          "enum": ["method_definition"]
+        },
+        "name": {
+          "type": "string"
+        },
+        "kind": {
+          "enum": ["instance", "singleton", "singleton_instance"]
+        },
+        "types": {
+          "type": "array",
+          "items": {
+            "$ref": "methodType.json"
+          }
+        },
+        "comment": {
+          "$ref": "comment.json"
+        },
+        "annotations": {
+          "type": "array",
+          "items": {
+            "$ref": "annotation.json"
+          }
+        },
+        "attributes": {
+          "type": "array",
+          "items": {
+            "enum": ["incompatible"]
+          }
+        },
+        "location": {
+          "$ref": "location.json"
+        },
+        "overload": {
+          "type": "boolean"
+        },
+        "visibility": {
+          "enum": ["public", "private", null]
+        }
+      },
+      "required": ["member", "name", "kind", "types", "comment", "annotations", "location", "visibility"]
+    },
+    "variable": {
+      "title": "Declaration for instance variables and class variables",
+      "description": "`@x: Integer`, `self.@x: String`, `@@name: Symbol`, ...",
+      "type": "object",
+      "properties": {
+        "member": {
+          "enum": ["instance_variable", "class_instance_variable", "class_variable"]
+        },
+        "name": {
+          "type": "string"
+        },
+        "type": {
+          "$ref": "types.json"
+        },
+        "location": {
+          "$ref": "location.json"
+        },
+        "comment": {
+          "$ref": "comment.json"
+        }
+      },
+      "required": ["member", "name", "type", "location", "comment"]
+    },
+    "include": {
+      "title": "Include mixin",
+      "properties": {
+        "member": {
+          "enum": ["include"]
+        },
+        "name": {
+          "type": "string"
+        },
+        "args": {
+          "type": "array",
+          "items": {
+            "$ref": "types.json"
+          }
+        },
+        "annotations": {
+          "type": "array",
+          "items": {
+            "$ref": "annotation.json"
+          }
+        },
+        "comment": {
+          "$ref": "comment.json"
+        },
+        "location": {
+          "$ref": "location.json"
+        }
+      },
+      "required": ["member", "name", "args", "annotations", "comment", "location"]
+    },
+    "extend": {
+      "title": "Extend mixin",
+      "properties": {
+        "member": {
+          "enum": ["extend"]
+        },
+        "name": {
+          "type": "string"
+        },
+        "args": {
+          "type": "array",
+          "items": {
+            "$ref": "types.json"
+          }
+        },
+        "annotations": {
+          "type": "array",
+          "items": {
+            "$ref": "annotation.json"
+          }
+        },
+        "comment": {
+          "$ref": "comment.json"
+        },
+        "location": {
+          "$ref": "location.json"
+        }
+      },
+      "required": ["member", "name", "args", "annotations", "comment", "location"]
+    },
+    "prepend": {
+      "title": "Prepend mixin",
+      "properties": {
+        "member": {
+          "enum": ["prepend"]
+        },
+        "name": {
+          "type": "string"
+        },
+        "args": {
+          "type": "array",
+          "items": {
+            "$ref": "types.json"
+          }
+        },
+        "annotations": {
+          "type": "array",
+          "items": {
+            "$ref": "annotation.json"
+          }
+        },
+        "comment": {
+          "$ref": "comment.json"
+        },
+        "location": {
+          "$ref": "location.json"
+        }
+      },
+      "required": ["member", "name", "args", "annotations", "comment", "location"]
+    },
+    "attribute": {
+      "title": "Attribute definitions",
+      "description": "`attr_reader`, `attr_accessor`, `attr_writer`",
+      "properties": {
+        "member": {
+          "type": "string",
+          "enum": ["attr_reader", "attr_accessor", "attr_writer"]
+        },
+        "name": {
+          "type": "string"
+        },
+        "kind": {
+          "type": "string",
+          "enum": ["instance", "singleton"]
+        },
+        "type": {
+          "$ref": "types.json"
+        },
+        "ivar_name": {
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "enum": [false]
+            }
+          ]
+        },
+        "annotations": {
+          "type": "array",
+          "items": {
+            "$ref": "annotation.json"
+          }
+        },
+        "comment": {
+          "$ref": "comment.json"
+        },
+        "location": {
+          "$ref": "location.json"
+        },
+        "visibility": {
+          "enum": ["public", "private", null]
+        }
+      },
+      "required": ["member", "name", "ivar_name", "type", "annotations", "kind", "comment", "location", "visibility"]
+    },
+    "visibility": {
+      "title": "Visibility specifier",
+      "description": "`public` and `private`.",
+      "type": "object",
+      "properties": {
+        "member": {
+          "type": "string",
+          "enum": ["public", "private"]
+        },
+        "location": {
+          "$ref": "location.json"
+        }
+      },
+      "required": ["member", "location"]
+    },
+    "alias": {
+      "title": "Alias declaration",
+      "description": "`alias to_s inspect`, `alias self.new self.allocate`, ...",
+      "properties": {
+        "member": {
+          "type": "string",
+          "enum": ["alias"]
+        },
+        "new_name": {
+          "type": "string"
+        },
+        "old_name": {
+          "type": "string"
+        },
+        "kind": {
+          "type": "string",
+          "enum": ["instance", "singleton"]
+        },
+        "annotations": {
+          "type": "array",
+          "items": {
+            "$ref": "annotation.json"
+          }
+        },
+        "comment": {
+          "$ref": "comment.json"
+        },
+        "location": {
+          "$ref": "location.json"
+        }
+      },
+      "required": ["member", "new_name", "old_name", "kind", "annotations", "comment", "location"]
+    }
+  }
+}

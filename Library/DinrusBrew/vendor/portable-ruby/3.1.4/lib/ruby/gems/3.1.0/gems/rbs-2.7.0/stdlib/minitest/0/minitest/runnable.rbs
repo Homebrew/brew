@@ -1,0 +1,131 @@
+# <!-- rdoc-file=lib/minitest.rb -->
+# Represents anything "runnable", like Test, Spec, Benchmark, or whatever you
+# can dream up.
+#
+# Subclasses of this are automatically registered and available in
+# Runnable.runnables.
+#
+class Minitest::Runnable
+  def time_it: () { () -> untyped } -> untyped
+
+  # <!--
+  #   rdoc-file=lib/minitest.rb
+  #   - name()
+  # -->
+  # Name of the run.
+  #
+  def name: () -> untyped
+
+  # <!--
+  #   rdoc-file=lib/minitest.rb
+  #   - name=(o)
+  # -->
+  # Set the name of the run.
+  #
+  def name=: (untyped o) -> untyped
+
+  # <!--
+  #   rdoc-file=lib/minitest.rb
+  #   - methods_matching(re)
+  # -->
+  # Returns all instance methods matching the pattern `re`.
+  #
+  def self.methods_matching: (untyped re) -> untyped
+  def self.reset: () -> untyped
+
+  # <!--
+  #   rdoc-file=lib/minitest.rb
+  #   - run(reporter, options = {})
+  # -->
+  # Responsible for running all runnable methods in a given class, each in its own
+  # instance. Each instance is passed to the reporter to record.
+  #
+  def self.run: (untyped reporter, ?::Hash[untyped, untyped] options) -> (nil | untyped)
+
+  # <!--
+  #   rdoc-file=lib/minitest.rb
+  #   - run_one_method(klass, method_name, reporter)
+  # -->
+  # Runs a single method and has the reporter record the result. This was
+  # considered internal API but is factored out of run so that subclasses can
+  # specialize the running of an individual test. See
+  # Minitest::ParallelTest::ClassMethods for an example.
+  #
+  def self.run_one_method: (untyped klass, untyped method_name, untyped reporter) -> untyped
+  def self.with_info_handler: (untyped reporter) ?{ () -> untyped } -> untyped
+  def self.on_signal: (untyped name, untyped action) { () -> untyped } -> untyped
+
+  # <!--
+  #   rdoc-file=lib/minitest.rb
+  #   - runnable_methods()
+  # -->
+  # Each subclass of Runnable is responsible for overriding this method to return
+  # all runnable methods. See #methods_matching.
+  #
+  def self.runnable_methods: () -> untyped
+
+  # <!--
+  #   rdoc-file=lib/minitest.rb
+  #   - runnables()
+  # -->
+  # Returns all subclasses of Runnable.
+  #
+  def self.runnables: () -> untyped
+  def marshal_dump: () -> ::Array[untyped]
+  def marshal_load: (untyped ary) -> untyped
+  def failure: () -> untyped
+  def initialize: (untyped name) -> void
+
+  # <!--
+  #   rdoc-file=lib/minitest.rb
+  #   - run()
+  # -->
+  # Runs a single method. Needs to return self.
+  #
+  def run: () -> untyped
+
+  # <!--
+  #   rdoc-file=lib/minitest.rb
+  #   - passed?()
+  # -->
+  # Did this run pass?
+  #
+  # Note: skipped runs are not considered passing, but they don't cause the
+  # process to exit non-zero.
+  #
+  def passed?: () -> untyped
+
+  # <!--
+  #   rdoc-file=lib/minitest.rb
+  #   - result_code()
+  # -->
+  # Returns a single character string to print based on the result of the run. One
+  # of `"."`, `"F"`, `"E"` or `"S"`.
+  #
+  def result_code: () -> untyped
+
+  # <!--
+  #   rdoc-file=lib/minitest.rb
+  #   - skipped?()
+  # -->
+  # Was this run skipped? See #passed? for more information.
+  #
+  def skipped?: () -> untyped
+  def self.inherited: (untyped klass) -> untyped
+
+  # <!-- rdoc-file=lib/minitest.rb -->
+  # Number of assertions executed in this run.
+  #
+  attr_accessor assertions: untyped
+
+  # <!-- rdoc-file=lib/minitest.rb -->
+  # An assertion raised during the run, if any.
+  #
+  attr_accessor failures: untyped
+
+  # <!-- rdoc-file=lib/minitest.rb -->
+  # The time it took to run.
+  #
+  attr_accessor time: untyped
+  SIGNALS: Hash[String, Integer]
+end

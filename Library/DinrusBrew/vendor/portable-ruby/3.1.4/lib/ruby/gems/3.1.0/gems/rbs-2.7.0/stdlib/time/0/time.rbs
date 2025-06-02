@@ -1,0 +1,419 @@
+%a{annotate:rdoc:skip}
+class Time
+  interface _TimeLike
+    def year: () -> Integer
+
+    def mon: () -> Integer
+
+    def day: () -> Integer
+  end
+
+  # <!--
+  #   rdoc-file=lib/time.rb
+  #   - zone_offset(zone, year=self.now.year)
+  # -->
+  # Return the number of seconds the specified time zone differs from UTC.
+  #
+  # Numeric time zones that include minutes, such as `-10:00` or `+1330` will
+  # work, as will simpler hour-only time zones like `-10` or `+13`.
+  #
+  # Textual time zones listed in ZoneOffset are also supported.
+  #
+  # If the time zone does not match any of the above, `zone_offset` will check if
+  # the local time zone (both with and without potential Daylight Saving Time
+  # changes being in effect) matches `zone`. Specifying a value for `year` will
+  # change the year used to find the local time zone.
+  #
+  # If `zone_offset` is unable to determine the offset, nil will be returned.
+  #
+  #     require 'time'
+  #
+  #     Time.zone_offset("EST") #=> -18000
+  #
+  # You must require 'time' to use this method.
+  #
+  def self.zone_offset: (String zone, ?Integer year) -> Integer
+
+  # <!--
+  #   rdoc-file=lib/time.rb
+  #   - parse(date, now=self.now) { |year| ... }
+  # -->
+  # Takes a string representation of a Time and attempts to parse it using a
+  # heuristic.
+  #
+  # This method **does not** function as a validator.  If the input string does
+  # not match valid formats strictly, you may get a cryptic result.  Should
+  # consider to use `Time.strptime` instead of this method as possible.
+  #
+  #     require 'time'
+  #
+  #     Time.parse("2010-10-31") #=> 2010-10-31 00:00:00 -0500
+  #
+  # Any missing pieces of the date are inferred based on the current date.
+  #
+  #     require 'time'
+  #
+  #     # assuming the current date is "2011-10-31"
+  #     Time.parse("12:00") #=> 2011-10-31 12:00:00 -0500
+  #
+  # We can change the date used to infer our missing elements by passing a second
+  # object that responds to #mon, #day and #year, such as Date, Time or DateTime.
+  # We can also use our own object.
+  #
+  #     require 'time'
+  #
+  #     class MyDate
+  #       attr_reader :mon, :day, :year
+  #
+  #       def initialize(mon, day, year)
+  #         @mon, @day, @year = mon, day, year
+  #       end
+  #     end
+  #
+  #     d  = Date.parse("2010-10-28")
+  #     t  = Time.parse("2010-10-29")
+  #     dt = DateTime.parse("2010-10-30")
+  #     md = MyDate.new(10,31,2010)
+  #
+  #     Time.parse("12:00", d)  #=> 2010-10-28 12:00:00 -0500
+  #     Time.parse("12:00", t)  #=> 2010-10-29 12:00:00 -0500
+  #     Time.parse("12:00", dt) #=> 2010-10-30 12:00:00 -0500
+  #     Time.parse("12:00", md) #=> 2010-10-31 12:00:00 -0500
+  #
+  # If a block is given, the year described in `date` is converted by the block.
+  # This is specifically designed for handling two digit years. For example, if
+  # you wanted to treat all two digit years prior to 70 as the year 2000+ you
+  # could write this:
+  #
+  #     require 'time'
+  #
+  #     Time.parse("01-10-31") {|year| year + (year < 70 ? 2000 : 1900)}
+  #     #=> 2001-10-31 00:00:00 -0500
+  #     Time.parse("70-10-31") {|year| year + (year < 70 ? 2000 : 1900)}
+  #     #=> 1970-10-31 00:00:00 -0500
+  #
+  # If the upper components of the given time are broken or missing, they are
+  # supplied with those of `now`.  For the lower components, the minimum values (1
+  # or 0) are assumed if broken or missing.  For example:
+  #
+  #     require 'time'
+  #
+  #     # Suppose it is "Thu Nov 29 14:33:20 2001" now and
+  #     # your time zone is EST which is GMT-5.
+  #     now = Time.parse("Thu Nov 29 14:33:20 2001")
+  #     Time.parse("16:30", now)     #=> 2001-11-29 16:30:00 -0500
+  #     Time.parse("7/23", now)      #=> 2001-07-23 00:00:00 -0500
+  #     Time.parse("Aug 31", now)    #=> 2001-08-31 00:00:00 -0500
+  #     Time.parse("Aug 2000", now)  #=> 2000-08-01 00:00:00 -0500
+  #
+  # Since there are numerous conflicts among locally defined time zone
+  # abbreviations all over the world, this method is not intended to understand
+  # all of them.  For example, the abbreviation "CST" is used variously as:
+  #
+  #     -06:00 in America/Chicago,
+  #     -05:00 in America/Havana,
+  #     +08:00 in Asia/Harbin,
+  #     +09:30 in Australia/Darwin,
+  #     +10:30 in Australia/Adelaide,
+  #     etc.
+  #
+  # Based on this fact, this method only understands the time zone abbreviations
+  # described in RFC 822 and the system time zone, in the order named. (i.e. a
+  # definition in RFC 822 overrides the system time zone definition.)  The system
+  # time zone is taken from `Time.local(year, 1, 1).zone` and `Time.local(year, 7,
+  # 1).zone`. If the extracted time zone abbreviation does not match any of them,
+  # it is ignored and the given time is regarded as a local time.
+  #
+  # ArgumentError is raised if Date._parse cannot extract information from `date`
+  # or if the Time class cannot represent specified date.
+  #
+  # This method can be used as a fail-safe for other parsing methods as:
+  #
+  #     Time.rfc2822(date) rescue Time.parse(date)
+  #     Time.httpdate(date) rescue Time.parse(date)
+  #     Time.xmlschema(date) rescue Time.parse(date)
+  #
+  # A failure of Time.parse should be checked, though.
+  #
+  # You must require 'time' to use this method.
+  #
+  def self.parse: (String date, ?_TimeLike now) ?{ (Integer) -> Integer } -> Time
+
+  # <!--
+  #   rdoc-file=lib/time.rb
+  #   - strptime(date, format, now=self.now) { |year| ... }
+  # -->
+  # Works similar to `parse` except that instead of using a heuristic to detect
+  # the format of the input string, you provide a second argument that describes
+  # the format of the string.
+  #
+  # If a block is given, the year described in `date` is converted by the block.
+  # For example:
+  #
+  #     Time.strptime(...) {|y| y < 100 ? (y >= 69 ? y + 1900 : y + 2000) : y}
+  #
+  # Below is a list of the formatting options:
+  #
+  # %a
+  # :   The abbreviated weekday name ("Sun")
+  # %A
+  # :   The  full  weekday  name ("Sunday")
+  # %b
+  # :   The abbreviated month name ("Jan")
+  # %B
+  # :   The  full  month  name ("January")
+  # %c
+  # :   The preferred local date and time representation
+  # %C
+  # :   Century (20 in 2009)
+  # %d
+  # :   Day of the month (01..31)
+  # %D
+  # :   Date (%m/%d/%y)
+  # %e
+  # :   Day of the month, blank-padded ( 1..31)
+  # %F
+  # :   Equivalent to %Y-%m-%d (the ISO 8601 date format)
+  # %g
+  # :   The last two digits of the commercial year
+  # %G
+  # :   The week-based year according to ISO-8601 (week 1 starts on Monday and
+  #     includes January 4)
+  # %h
+  # :   Equivalent to %b
+  # %H
+  # :   Hour of the day, 24-hour clock (00..23)
+  # %I
+  # :   Hour of the day, 12-hour clock (01..12)
+  # %j
+  # :   Day of the year (001..366)
+  # %k
+  # :   hour, 24-hour clock, blank-padded ( 0..23)
+  # %l
+  # :   hour, 12-hour clock, blank-padded ( 0..12)
+  # %L
+  # :   Millisecond of the second (000..999)
+  # %m
+  # :   Month of the year (01..12)
+  # %M
+  # :   Minute of the hour (00..59)
+  # %n
+  # :   Newline (n)
+  # %N
+  # :   Fractional seconds digits
+  # %p
+  # :   Meridian indicator ("AM" or "PM")
+  # %P
+  # :   Meridian indicator ("am" or "pm")
+  # %r
+  # :   time, 12-hour (same as %I:%M:%S %p)
+  # %R
+  # :   time, 24-hour (%H:%M)
+  # %s
+  # :   Number of seconds since 1970-01-01 00:00:00 UTC.
+  # %S
+  # :   Second of the minute (00..60)
+  # %t
+  # :   Tab character (t)
+  # %T
+  # :   time, 24-hour (%H:%M:%S)
+  # %u
+  # :   Day of the week as a decimal, Monday being 1. (1..7)
+  # %U
+  # :   Week number of the current year, starting with the first Sunday as the
+  #     first day of the first week (00..53)
+  # %v
+  # :   VMS date (%e-%b-%Y)
+  # %V
+  # :   Week number of year according to ISO 8601 (01..53)
+  # %W
+  # :   Week  number  of the current year, starting with the first Monday as the
+  #     first day of the first week (00..53)
+  # %w
+  # :   Day of the week (Sunday is 0, 0..6)
+  # %x
+  # :   Preferred representation for the date alone, no time
+  # %X
+  # :   Preferred representation for the time alone, no date
+  # %y
+  # :   Year without a century (00..99)
+  # %Y
+  # :   Year which may include century, if provided
+  # %z
+  # :   Time zone as  hour offset from UTC (e.g. +0900)
+  # %Z
+  # :   Time zone name
+  # %%
+  # :   Literal "%" character
+  # %+
+  # :   date(1) (%a %b %e %H:%M:%S %Z %Y)
+  #
+  #
+  #     require 'time'
+  #
+  #     Time.strptime("2000-10-31", "%Y-%m-%d") #=> 2000-10-31 00:00:00 -0500
+  #
+  # You must require 'time' to use this method.
+  #
+  def self.strptime: (String date, String format, ?_TimeLike now) ?{ (Integer) -> Integer } -> Time
+
+  # <!--
+  #   rdoc-file=lib/time.rb
+  #   - rfc2822(date)
+  # -->
+  # Parses `date` as date-time defined by RFC 2822 and converts it to a Time
+  # object.  The format is identical to the date format defined by RFC 822 and
+  # updated by RFC 1123.
+  #
+  # ArgumentError is raised if `date` is not compliant with RFC 2822 or if the
+  # Time class cannot represent specified date.
+  #
+  # See #rfc2822 for more information on this format.
+  #
+  #     require 'time'
+  #
+  #     Time.rfc2822("Wed, 05 Oct 2011 22:26:12 -0400")
+  #     #=> 2010-10-05 22:26:12 -0400
+  #
+  # You must require 'time' to use this method.
+  #
+  def self.rfc2822: (String date) -> Time
+
+  # <!--
+  #   rdoc-file=lib/time.rb
+  #   - rfc822(date)
+  # -->
+  #
+  alias self.rfc822 self.rfc2822
+
+  # <!--
+  #   rdoc-file=lib/time.rb
+  #   - httpdate(date)
+  # -->
+  # Parses `date` as an HTTP-date defined by RFC 2616 and converts it to a Time
+  # object.
+  #
+  # ArgumentError is raised if `date` is not compliant with RFC 2616 or if the
+  # Time class cannot represent specified date.
+  #
+  # See #httpdate for more information on this format.
+  #
+  #     require 'time'
+  #
+  #     Time.httpdate("Thu, 06 Oct 2011 02:26:12 GMT")
+  #     #=> 2011-10-06 02:26:12 UTC
+  #
+  # You must require 'time' to use this method.
+  #
+  def self.httpdate: (String date) -> Time
+
+  # <!--
+  #   rdoc-file=lib/time.rb
+  #   - xmlschema(time)
+  # -->
+  # Parses `time` as a dateTime defined by the XML Schema and converts it to a
+  # Time object.  The format is a restricted version of the format defined by ISO
+  # 8601.
+  #
+  # ArgumentError is raised if `time` is not compliant with the format or if the
+  # Time class cannot represent the specified time.
+  #
+  # See #xmlschema for more information on this format.
+  #
+  #     require 'time'
+  #
+  #     Time.xmlschema("2011-10-05T22:26:12-04:00")
+  #     #=> 2011-10-05 22:26:12-04:00
+  #
+  # You must require 'time' to use this method.
+  #
+  def self.xmlschema: (String date) -> Time
+
+  # <!--
+  #   rdoc-file=lib/time.rb
+  #   - iso8601(time)
+  # -->
+  #
+  alias self.iso8601 self.xmlschema
+
+  # <!--
+  #   rdoc-file=lib/time.rb
+  #   - rfc2822()
+  # -->
+  # Returns a string which represents the time as date-time defined by RFC 2822:
+  #
+  #     day-of-week, DD month-name CCYY hh:mm:ss zone
+  #
+  # where zone is [+-]hhmm.
+  #
+  # If `self` is a UTC time, -0000 is used as zone.
+  #
+  #     require 'time'
+  #
+  #     t = Time.now
+  #     t.rfc2822  # => "Wed, 05 Oct 2011 22:26:12 -0400"
+  #
+  # You must require 'time' to use this method.
+  #
+  def rfc2822: () -> String
+
+  # <!--
+  #   rdoc-file=lib/time.rb
+  #   - rfc822()
+  # -->
+  #
+  alias rfc822 rfc2822
+
+  # <!--
+  #   rdoc-file=lib/time.rb
+  #   - httpdate()
+  # -->
+  # Returns a string which represents the time as RFC 1123 date of HTTP-date
+  # defined by RFC 2616:
+  #
+  #     day-of-week, DD month-name CCYY hh:mm:ss GMT
+  #
+  # Note that the result is always UTC (GMT).
+  #
+  #     require 'time'
+  #
+  #     t = Time.now
+  #     t.httpdate # => "Thu, 06 Oct 2011 02:26:12 GMT"
+  #
+  # You must require 'time' to use this method.
+  #
+  def httpdate: () -> String
+
+  # <!--
+  #   rdoc-file=lib/time.rb
+  #   - xmlschema(fraction_digits=0)
+  # -->
+  # Returns a string which represents the time as a dateTime defined by XML
+  # Schema:
+  #
+  #     CCYY-MM-DDThh:mm:ssTZD
+  #     CCYY-MM-DDThh:mm:ss.sssTZD
+  #
+  # where TZD is Z or [+-]hh:mm.
+  #
+  # If self is a UTC time, Z is used as TZD.  [+-]hh:mm is used otherwise.
+  #
+  # `fractional_digits` specifies a number of digits to use for fractional
+  # seconds.  Its default value is 0.
+  #
+  #     require 'time'
+  #
+  #     t = Time.now
+  #     t.iso8601  # => "2011-10-05T22:26:12-04:00"
+  #
+  # You must require 'time' to use this method.
+  #
+  def xmlschema: (?Integer fraction_digits) -> String
+
+  # <!--
+  #   rdoc-file=lib/time.rb
+  #   - iso8601(fraction_digits=0)
+  # -->
+  #
+  alias iso8601 xmlschema
+end

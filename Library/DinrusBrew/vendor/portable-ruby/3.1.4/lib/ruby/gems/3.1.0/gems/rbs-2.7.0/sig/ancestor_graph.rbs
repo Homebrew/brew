@@ -1,0 +1,40 @@
+module RBS
+  class AncestorGraph
+    class InstanceNode
+      attr_reader type_name: TypeName
+      def initialize: (type_name: TypeName) -> void
+    end
+
+    class SingletonNode
+      attr_reader type_name: TypeName
+      def initialize: (type_name: TypeName) -> void
+    end
+
+    type node = InstanceNode | SingletonNode
+
+    attr_reader env: Environment
+    attr_reader ancestor_builder: DefinitionBuilder::AncestorBuilder
+    attr_reader parents: Hash[node, Set[node]]
+    attr_reader children: Hash[node, Set[node]]
+
+    def initialize: (env: Environment, ?ancestor_builder: DefinitionBuilder::AncestorBuilder) -> void
+
+    def build: () -> void
+
+    def each_parent: (node) { (node) -> void } -> void
+                   | (node) -> Enumerator[node, void]
+
+    def each_ancestor: (node, ?yielded: Set[node]) { (node) -> void } -> void
+                     | (node) -> Enumerator[node, void]
+
+    def each_child: (node) { (node) -> void } -> void
+                  | (node) -> Enumerator[node, void]
+
+    def each_descendant: (node, ?yielded: Set[node]) { (node) -> void } -> void
+                       | (node) -> Enumerator[node, void]
+
+    def build_ancestors: (node, DefinitionBuilder::AncestorBuilder::OneAncestors) -> void
+
+    def register: (parent: node, child: node) -> void
+  end
+end

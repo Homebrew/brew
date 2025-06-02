@@ -1,0 +1,1205 @@
+# <!-- rdoc-file=object.c -->
+# Object is the default root of all Ruby objects.  Object inherits from
+# BasicObject which allows creating alternate object hierarchies.  Methods on
+# Object are available to all classes unless explicitly overridden.
+#
+# Object mixes in the Kernel module, making the built-in kernel functions
+# globally accessible.  Although the instance methods of Object are defined by
+# the Kernel module, we have chosen to document them here for clarity.
+#
+# When referencing constants in classes inheriting from Object you do not need
+# to use the full namespace.  For example, referencing `File` inside `YourClass`
+# will find the top-level File class.
+#
+# In the descriptions of Object's methods, the parameter *symbol* refers to a
+# symbol, which is either a quoted string or a Symbol (such as `:name`).
+#
+# ## What's Here
+#
+# First, what's elsewhere. Class Object:
+#
+# *   Inherits from [class
+#     BasicObject](BasicObject.html#class-BasicObject-label-What-27s+Here).
+# *   Includes [module Kernel](Kernel.html#module-Kernel-label-What-27s+Here).
+#
+#
+# Here, class Object provides methods for:
+#
+# *   [Querying](#class-Object-label-Querying)
+# *   [Instance Variables](#class-Object-label-Instance+Variables)
+# *   [Other](#class-Object-label-Other)
+#
+#
+# ### Querying
+#
+#     [!~](#method-i-21~)
+# :       Returns `true` if `self` does not match the given object, otherwise
+#         `false`.
+#
+#     [<=>](#method-i-3C-3D-3E)
+# :       Returns 0 if `self` and the given object `object` are the same object,
+#         or if `self == object`; otherwise returns `nil`.
+#
+#     #===
+# :       Implements case equality, effectively the same as calling #==.
+#
+#     #eql?
+# :       Implements hash equality, effectively the same as calling #==.
+#
+#     #kind_of? (aliased as #is_a?)
+# :       Returns whether given argument is an ancestor of the singleton class
+#         of `self`.
+#
+#     #instance_of?
+# :       Returns whether `self` is an instance of the given class.
+#
+#     #instance_variable_defined?
+# :       Returns whether the given instance variable is defined in `self`.
+#
+#     #method
+# :       Returns the Method object for the given method in `self`.
+#
+#     #methods
+# :       Returns an array of symbol names of public and protected methods in
+#         `self`.
+#
+#     #nil?
+# :       Returns `false`. (Only `nil` responds `true` to method `nil?`.)
+#
+#     #object_id
+# :       Returns an integer corresponding to `self` that is unique for the
+#         current process
+#
+#     #private_methods
+# :       Returns an array of the symbol names of the private methods in `self`.
+#
+#     #protected_methods
+# :       Returns an array of the symbol names of the protected methods in
+#         `self`.
+#
+#     #public_method
+# :       Returns the Method object for the given public method in `self`.
+#
+#     #public_methods
+# :       Returns an array of the symbol names of the public methods in `self`.
+#
+#     #respond_to?
+# :       Returns whether `self` responds to the given method.
+#
+#     #singleton_class
+# :       Returns the singleton class of `self`.
+#
+#     #singleton_method
+# :       Returns the Method object for the given singleton method in `self`.
+#
+#     #singleton_methods
+# :       Returns an array of the symbol names of the singleton methods in
+#         `self`.
+#
+#
+#     #define_singleton_method
+# :       Defines a singleton method in `self` for the given symbol method-name
+#         and block or proc.
+#
+#     #extend
+# :       Includes the given modules in the singleton class of `self`.
+#
+#     #public_send
+# :       Calls the given public method in `self` with the given argument.
+#
+#     #send
+# :       Calls the given method in `self` with the given argument.
+#
+#
+#
+# ### Instance Variables
+#
+#     #instance_variable_get
+# :       Returns the value of the given instance variable in `self`, or `nil`
+#         if the instance variable is not set.
+#
+#     #instance_variable_set
+# :       Sets the value of the given instance variable in `self` to the given
+#         object.
+#
+#     #instance_variables
+# :       Returns an array of the symbol names of the instance variables in
+#         `self`.
+#
+#     #remove_instance_variable
+# :       Removes the named instance variable from `self`.
+#
+#
+#
+# ### Other
+#
+#     #clone
+# :       Returns a shallow copy of `self`, including singleton class and frozen
+#         state.
+#
+#     #define_singleton_method
+# :       Defines a singleton method in `self` for the given symbol method-name
+#         and block or proc.
+#
+#     #display
+# :       Prints `self` to the given IO stream or `$stdout`.
+#
+#     #dup
+# :       Returns a shallow unfrozen copy of `self`.
+#
+#     #enum_for (aliased as #to_enum)
+# :       Returns an Enumerator for `self` using the using the given method,
+#         arguments, and block.
+#
+#     #extend
+# :       Includes the given modules in the singleton class of `self`.
+#
+#     #freeze
+# :       Prevents further modifications to `self`.
+#
+#     #hash
+# :       Returns the integer hash value for `self`.
+#
+#     #inspect
+# :       Returns a human-readable  string representation of `self`.
+#
+#     #itself
+# :       Returns `self`.
+#
+#     #public_send
+# :       Calls the given public method in `self` with the given argument.
+#
+#     #send
+# :       Calls the given method in `self` with the given argument.
+#
+#     #to_s
+# :       Returns a string representation of `self`.
+#
+class Object < BasicObject
+  include Kernel
+
+  # <!--
+  #   rdoc-file=object.c
+  #   - obj !~ other  -> true or false
+  # -->
+  # Returns true if two objects do not match (using the *=~* method), otherwise
+  # false.
+  #
+  def !~: (untyped) -> bool
+
+  # <!--
+  #   rdoc-file=object.c
+  #   - obj <=> other -> 0 or nil
+  # -->
+  # Returns 0 if `obj` and `other` are the same object or `obj == other`,
+  # otherwise nil.
+  #
+  # The #<=> is used by various methods to compare objects, for example
+  # Enumerable#sort, Enumerable#max etc.
+  #
+  # Your implementation of #<=> should return one of the following values: -1, 0,
+  # 1 or nil. -1 means self is smaller than other. 0 means self is equal to other.
+  # 1 means self is bigger than other. Nil means the two values could not be
+  # compared.
+  #
+  # When you define #<=>, you can include Comparable to gain the methods #<=, #<,
+  # #==, #>=, #> and #between?.
+  #
+  def <=>: (untyped) -> Integer?
+
+  # <!--
+  #   rdoc-file=object.c
+  #   - obj === other   -> true or false
+  # -->
+  # Case Equality -- For class Object, effectively the same as calling `#==`, but
+  # typically overridden by descendants to provide meaningful semantics in `case`
+  # statements.
+  #
+  def ===: (untyped) -> bool
+
+  # <!--
+  #   rdoc-file=object.c
+  #   - obj =~ other  -> nil
+  # -->
+  # This method is deprecated.
+  #
+  # This is not only useless but also troublesome because it may hide a type
+  # error.
+  #
+  def =~: (untyped) -> bool
+
+  # Returns the class of *obj*. This method must always be called with an explicit
+  # receiver, as `class` is also a reserved word in Ruby.
+  #
+  #     1.class      #=> Integer
+  #     self.class   #=> Object
+  #
+  def class: () -> untyped
+
+  # Produces a shallow copy of *obj*---the instance variables of *obj* are copied,
+  # but not the objects they reference. `clone` copies the frozen (unless :freeze
+  # keyword argument is given with a false value) and tainted state of *obj*. See
+  # also the discussion under `Object#dup`.
+  #
+  #     class Klass
+  #        attr_accessor :str
+  #     end
+  #     s1 = Klass.new      #=> #<Klass:0x401b3a38>
+  #     s1.str = "Hello"    #=> "Hello"
+  #     s2 = s1.clone       #=> #<Klass:0x401b3998 @str="Hello">
+  #     s2.str[1,4] = "i"   #=> "i"
+  #     s1.inspect          #=> "#<Klass:0x401b3a38 @str=\"Hi\">"
+  #     s2.inspect          #=> "#<Klass:0x401b3998 @str=\"Hi\">"
+  #
+  # This method may have class-specific behavior.  If so, that behavior will be
+  # documented under the #`initialize_copy` method of the class.
+  #
+  def clone: (?freeze: bool?) -> self
+
+  # <!--
+  #   rdoc-file=proc.c
+  #   - define_singleton_method(symbol, method) -> symbol
+  #   - define_singleton_method(symbol) { block } -> symbol
+  # -->
+  # Defines a singleton method in the receiver. The *method* parameter can be a
+  # `Proc`, a `Method` or an `UnboundMethod` object. If a block is specified, it
+  # is used as the method body. If a block or a method has parameters, they're
+  # used as method parameters.
+  #
+  #     class A
+  #       class << self
+  #         def class_name
+  #           to_s
+  #         end
+  #       end
+  #     end
+  #     A.define_singleton_method(:who_am_i) do
+  #       "I am: #{class_name}"
+  #     end
+  #     A.who_am_i   # ==> "I am: A"
+  #
+  #     guy = "Bob"
+  #     guy.define_singleton_method(:hello) { "#{self}: Hello there!" }
+  #     guy.hello    #=>  "Bob: Hello there!"
+  #
+  #     chris = "Chris"
+  #     chris.define_singleton_method(:greet) {|greeting| "#{greeting}, I'm Chris!" }
+  #     chris.greet("Hi") #=> "Hi, I'm Chris!"
+  #
+  def define_singleton_method: (Symbol, Method | UnboundMethod) -> Symbol
+                             | (Symbol) { (*untyped) -> untyped } -> Symbol
+
+  # <!--
+  #   rdoc-file=io.c
+  #   - obj.display(port=$>)    -> nil
+  # -->
+  # Prints *obj* on the given port (default `$>`). Equivalent to:
+  #
+  #     def display(port=$>)
+  #       port.write self
+  #       nil
+  #     end
+  #
+  # For example:
+  #
+  #     1.display
+  #     "cat".display
+  #     [ 4, 5, 6 ].display
+  #     puts
+  #
+  # *produces:*
+  #
+  #     1cat[4, 5, 6]
+  #
+  def display: (?_Writeable port) -> void
+
+  # <!--
+  #   rdoc-file=object.c
+  #   - obj.dup -> an_object
+  # -->
+  # Produces a shallow copy of *obj*---the instance variables of *obj* are copied,
+  # but not the objects they reference.
+  #
+  # This method may have class-specific behavior.  If so, that behavior will be
+  # documented under the #`initialize_copy` method of the class.
+  #
+  # ### on dup vs clone
+  #
+  # In general, #clone and #dup may have different semantics in descendant
+  # classes. While #clone is used to duplicate an object, including its internal
+  # state, #dup typically uses the class of the descendant object to create the
+  # new instance.
+  #
+  # When using #dup, any modules that the object has been extended with will not
+  # be copied.
+  #
+  #     class Klass
+  #       attr_accessor :str
+  #     end
+  #
+  #     module Foo
+  #       def foo; 'foo'; end
+  #     end
+  #
+  #     s1 = Klass.new #=> #<Klass:0x401b3a38>
+  #     s1.extend(Foo) #=> #<Klass:0x401b3a38>
+  #     s1.foo #=> "foo"
+  #
+  #     s2 = s1.clone #=> #<Klass:0x401be280>
+  #     s2.foo #=> "foo"
+  #
+  #     s3 = s1.dup #=> #<Klass:0x401c1084>
+  #     s3.foo #=> NoMethodError: undefined method `foo' for #<Klass:0x401c1084>
+  #
+  def dup: () -> self
+
+  # <!-- rdoc-file=enumerator.c -->
+  # Creates a new Enumerator which will enumerate by calling `method` on `obj`,
+  # passing `args` if any. What was *yielded* by method becomes values of
+  # enumerator.
+  #
+  # If a block is given, it will be used to calculate the size of the enumerator
+  # without the need to iterate it (see Enumerator#size).
+  #
+  # ### Examples
+  #
+  #     str = "xyz"
+  #
+  #     enum = str.enum_for(:each_byte)
+  #     enum.each { |b| puts b }
+  #     # => 120
+  #     # => 121
+  #     # => 122
+  #
+  #     # protect an array from being modified by some_method
+  #     a = [1, 2, 3]
+  #     some_method(a.to_enum)
+  #
+  #     # String#split in block form is more memory-effective:
+  #     very_large_string.split("|") { |chunk| return chunk if chunk.include?('DATE') }
+  #     # This could be rewritten more idiomatically with to_enum:
+  #     very_large_string.to_enum(:split, "|").lazy.grep(/DATE/).first
+  #
+  # It is typical to call to_enum when defining methods for a generic Enumerable,
+  # in case no block is passed.
+  #
+  # Here is such an example, with parameter passing and a sizing block:
+  #
+  #     module Enumerable
+  #       # a generic method to repeat the values of any enumerable
+  #       def repeat(n)
+  #         raise ArgumentError, "#{n} is negative!" if n < 0
+  #         unless block_given?
+  #           return to_enum(__method__, n) do # __method__ is :repeat here
+  #             sz = size     # Call size and multiply by n...
+  #             sz * n if sz  # but return nil if size itself is nil
+  #           end
+  #         end
+  #         each do |*val|
+  #           n.times { yield *val }
+  #         end
+  #       end
+  #     end
+  #
+  #     %i[hello world].repeat(2) { |w| puts w }
+  #       # => Prints 'hello', 'hello', 'world', 'world'
+  #     enum = (1..14).repeat(3)
+  #       # => returns an Enumerator when called without a block
+  #     enum.first(4) # => [1, 1, 1, 2]
+  #     enum.size # => 42
+  #
+  def enum_for: (Symbol method, *untyped args) ?{ (*untyped args) -> Integer } -> Enumerator[untyped, untyped]
+              | () ?{ () -> Integer } -> Enumerator[untyped, self]
+
+  # <!--
+  #   rdoc-file=enumerator.c
+  #   - obj.to_enum(method = :each, *args)                 -> enum
+  #   - obj.enum_for(method = :each, *args)                -> enum
+  #   - obj.to_enum(method = :each, *args) {|*args| block} -> enum
+  #   - obj.enum_for(method = :each, *args){|*args| block} -> enum
+  # -->
+  # Creates a new Enumerator which will enumerate by calling `method` on `obj`,
+  # passing `args` if any. What was *yielded* by method becomes values of
+  # enumerator.
+  #
+  # If a block is given, it will be used to calculate the size of the enumerator
+  # without the need to iterate it (see Enumerator#size).
+  #
+  # ### Examples
+  #
+  #     str = "xyz"
+  #
+  #     enum = str.enum_for(:each_byte)
+  #     enum.each { |b| puts b }
+  #     # => 120
+  #     # => 121
+  #     # => 122
+  #
+  #     # protect an array from being modified by some_method
+  #     a = [1, 2, 3]
+  #     some_method(a.to_enum)
+  #
+  #     # String#split in block form is more memory-effective:
+  #     very_large_string.split("|") { |chunk| return chunk if chunk.include?('DATE') }
+  #     # This could be rewritten more idiomatically with to_enum:
+  #     very_large_string.to_enum(:split, "|").lazy.grep(/DATE/).first
+  #
+  # It is typical to call to_enum when defining methods for a generic Enumerable,
+  # in case no block is passed.
+  #
+  # Here is such an example, with parameter passing and a sizing block:
+  #
+  #     module Enumerable
+  #       # a generic method to repeat the values of any enumerable
+  #       def repeat(n)
+  #         raise ArgumentError, "#{n} is negative!" if n < 0
+  #         unless block_given?
+  #           return to_enum(__method__, n) do # __method__ is :repeat here
+  #             sz = size     # Call size and multiply by n...
+  #             sz * n if sz  # but return nil if size itself is nil
+  #           end
+  #         end
+  #         each do |*val|
+  #           n.times { yield *val }
+  #         end
+  #       end
+  #     end
+  #
+  #     %i[hello world].repeat(2) { |w| puts w }
+  #       # => Prints 'hello', 'hello', 'world', 'world'
+  #     enum = (1..14).repeat(3)
+  #       # => returns an Enumerator when called without a block
+  #     enum.first(4) # => [1, 1, 1, 2]
+  #     enum.size # => 42
+  #
+  alias to_enum enum_for
+
+  # <!--
+  #   rdoc-file=object.c
+  #   - obj == other        -> true or false
+  #   - obj.equal?(other)   -> true or false
+  #   - obj.eql?(other)     -> true or false
+  # -->
+  # Equality --- At the Object level, #== returns `true` only if `obj` and `other`
+  # are the same object.  Typically, this method is overridden in descendant
+  # classes to provide class-specific meaning.
+  #
+  # Unlike #==, the #equal? method should never be overridden by subclasses as it
+  # is used to determine object identity (that is, `a.equal?(b)` if and only if
+  # `a` is the same object as `b`):
+  #
+  #     obj = "a"
+  #     other = obj.dup
+  #
+  #     obj == other      #=> true
+  #     obj.equal? other  #=> false
+  #     obj.equal? obj    #=> true
+  #
+  # The #eql? method returns `true` if `obj` and `other` refer to the same hash
+  # key.  This is used by Hash to test members for equality.  For any pair of
+  # objects where #eql? returns `true`, the #hash value of both objects must be
+  # equal. So any subclass that overrides #eql? should also override #hash
+  # appropriately.
+  #
+  # For objects of class Object, #eql?  is synonymous with #==.  Subclasses
+  # normally continue this tradition by aliasing #eql? to their overridden #==
+  # method, but there are exceptions. Numeric types, for example, perform type
+  # conversion across #==, but not across #eql?, so:
+  #
+  #     1 == 1.0     #=> true
+  #     1.eql? 1.0   #=> false
+  #
+  def eql?: (untyped) -> bool
+
+  # <!--
+  #   rdoc-file=eval.c
+  #   - obj.extend(module, ...)    -> obj
+  # -->
+  # Adds to *obj* the instance methods from each module given as a parameter.
+  #
+  #     module Mod
+  #       def hello
+  #         "Hello from Mod.\n"
+  #       end
+  #     end
+  #
+  #     class Klass
+  #       def hello
+  #         "Hello from Klass.\n"
+  #       end
+  #     end
+  #
+  #     k = Klass.new
+  #     k.hello         #=> "Hello from Klass.\n"
+  #     k.extend(Mod)   #=> #<Klass:0x401b3bc8>
+  #     k.hello         #=> "Hello from Mod.\n"
+  #
+  def extend: (*Module) -> self
+
+  # <!--
+  #   rdoc-file=object.c
+  #   - obj.freeze    -> obj
+  # -->
+  # Prevents further modifications to *obj*. A FrozenError will be raised if
+  # modification is attempted. There is no way to unfreeze a frozen object. See
+  # also Object#frozen?.
+  #
+  # This method returns self.
+  #
+  #     a = [ "a", "b", "c" ]
+  #     a.freeze
+  #     a << "z"
+  #
+  # *produces:*
+  #
+  #     prog.rb:3:in `<<': can't modify frozen Array (FrozenError)
+  #      from prog.rb:3
+  #
+  # Objects of the following classes are always frozen: Integer, Float, Symbol.
+  #
+  def freeze: () -> self
+
+  # Returns the freeze status of *obj*.
+  #
+  #     a = [ "a", "b", "c" ]
+  #     a.freeze    #=> ["a", "b", "c"]
+  #     a.frozen?   #=> true
+  #
+  def frozen?: () -> bool
+
+  # <!--
+  #   rdoc-file=object.c
+  #   - obj.hash    -> integer
+  # -->
+  # Generates an Integer hash value for this object.  This function must have the
+  # property that `a.eql?(b)` implies `a.hash == b.hash`.
+  #
+  # The hash value is used along with #eql? by the Hash class to determine if two
+  # objects reference the same hash key.  Any hash value that exceeds the capacity
+  # of an Integer will be truncated before being used.
+  #
+  # The hash value for an object may not be identical across invocations or
+  # implementations of Ruby.  If you need a stable identifier across Ruby
+  # invocations and implementations you will need to generate one with a custom
+  # method.
+  #
+  # Certain core classes such as Integer use built-in hash calculations and do not
+  # call the #hash method when used as a hash key.
+  #
+  def hash: () -> Integer
+
+  # <!--
+  #   rdoc-file=object.c
+  #   - obj.inspect   -> string
+  # -->
+  # Returns a string containing a human-readable representation of *obj*. The
+  # default #inspect shows the object's class name, an encoding of its memory
+  # address, and a list of the instance variables and their values (by calling
+  # #inspect on each of them).  User defined classes should override this method
+  # to provide a better representation of *obj*.  When overriding this method, it
+  # should return a string whose encoding is compatible with the default external
+  # encoding.
+  #
+  #     [ 1, 2, 3..4, 'five' ].inspect   #=> "[1, 2, 3..4, \"five\"]"
+  #     Time.new.inspect                 #=> "2008-03-08 19:43:39 +0900"
+  #
+  #     class Foo
+  #     end
+  #     Foo.new.inspect                  #=> "#<Foo:0x0300c868>"
+  #
+  #     class Bar
+  #       def initialize
+  #         @bar = 1
+  #       end
+  #     end
+  #     Bar.new.inspect                  #=> "#<Bar:0x0300c868 @bar=1>"
+  #
+  def inspect: () -> String
+
+  # <!--
+  #   rdoc-file=object.c
+  #   - obj.instance_of?(class)    -> true or false
+  # -->
+  # Returns `true` if *obj* is an instance of the given class. See also
+  # Object#kind_of?.
+  #
+  #     class A;     end
+  #     class B < A; end
+  #     class C < B; end
+  #
+  #     b = B.new
+  #     b.instance_of? A   #=> false
+  #     b.instance_of? B   #=> true
+  #     b.instance_of? C   #=> false
+  #
+  def instance_of?: (Module) -> bool
+
+  # <!--
+  #   rdoc-file=object.c
+  #   - obj.instance_variable_defined?(symbol)    -> true or false
+  #   - obj.instance_variable_defined?(string)    -> true or false
+  # -->
+  # Returns `true` if the given instance variable is defined in *obj*. String
+  # arguments are converted to symbols.
+  #
+  #     class Fred
+  #       def initialize(p1, p2)
+  #         @a, @b = p1, p2
+  #       end
+  #     end
+  #     fred = Fred.new('cat', 99)
+  #     fred.instance_variable_defined?(:@a)    #=> true
+  #     fred.instance_variable_defined?("@b")   #=> true
+  #     fred.instance_variable_defined?("@c")   #=> false
+  #
+  def instance_variable_defined?: (String | Symbol var) -> bool
+
+  # <!--
+  #   rdoc-file=object.c
+  #   - obj.instance_variable_get(symbol)    -> obj
+  #   - obj.instance_variable_get(string)    -> obj
+  # -->
+  # Returns the value of the given instance variable, or nil if the instance
+  # variable is not set. The `@` part of the variable name should be included for
+  # regular instance variables. Throws a NameError exception if the supplied
+  # symbol is not valid as an instance variable name. String arguments are
+  # converted to symbols.
+  #
+  #     class Fred
+  #       def initialize(p1, p2)
+  #         @a, @b = p1, p2
+  #       end
+  #     end
+  #     fred = Fred.new('cat', 99)
+  #     fred.instance_variable_get(:@a)    #=> "cat"
+  #     fred.instance_variable_get("@b")   #=> 99
+  #
+  def instance_variable_get: (String | Symbol var) -> untyped
+
+  # <!--
+  #   rdoc-file=object.c
+  #   - obj.instance_variable_set(symbol, obj)    -> obj
+  #   - obj.instance_variable_set(string, obj)    -> obj
+  # -->
+  # Sets the instance variable named by *symbol* to the given object. This may
+  # circumvent the encapsulation intended by the author of the class, so it should
+  # be used with care. The variable does not have to exist prior to this call. If
+  # the instance variable name is passed as a string, that string is converted to
+  # a symbol.
+  #
+  #     class Fred
+  #       def initialize(p1, p2)
+  #         @a, @b = p1, p2
+  #       end
+  #     end
+  #     fred = Fred.new('cat', 99)
+  #     fred.instance_variable_set(:@a, 'dog')   #=> "dog"
+  #     fred.instance_variable_set(:@c, 'cat')   #=> "cat"
+  #     fred.inspect                             #=> "#<Fred:0x401b3da8 @a=\"dog\", @b=99, @c=\"cat\">"
+  #
+  def instance_variable_set: [X] (String | Symbol var, X value) -> X
+
+  # <!--
+  #   rdoc-file=object.c
+  #   - obj.instance_variables    -> array
+  # -->
+  # Returns an array of instance variable names for the receiver. Note that simply
+  # defining an accessor does not create the corresponding instance variable.
+  #
+  #     class Fred
+  #       attr_accessor :a1
+  #       def initialize
+  #         @iv = 3
+  #       end
+  #     end
+  #     Fred.new.instance_variables   #=> [:@iv]
+  #
+  def instance_variables: () -> Array[Symbol]
+
+  # <!-- rdoc-file=object.c -->
+  # Returns `true` if *class* is the class of *obj*, or if *class* is one of the
+  # superclasses of *obj* or modules included in *obj*.
+  #
+  #     module M;    end
+  #     class A
+  #       include M
+  #     end
+  #     class B < A; end
+  #     class C < B; end
+  #
+  #     b = B.new
+  #     b.is_a? A          #=> true
+  #     b.is_a? B          #=> true
+  #     b.is_a? C          #=> false
+  #     b.is_a? M          #=> true
+  #
+  #     b.kind_of? A       #=> true
+  #     b.kind_of? B       #=> true
+  #     b.kind_of? C       #=> false
+  #     b.kind_of? M       #=> true
+  #
+  def is_a?: (Module) -> bool
+
+  # <!--
+  #   rdoc-file=object.c
+  #   - obj.is_a?(class)       -> true or false
+  #   - obj.kind_of?(class)    -> true or false
+  # -->
+  # Returns `true` if *class* is the class of *obj*, or if *class* is one of the
+  # superclasses of *obj* or modules included in *obj*.
+  #
+  #     module M;    end
+  #     class A
+  #       include M
+  #     end
+  #     class B < A; end
+  #     class C < B; end
+  #
+  #     b = B.new
+  #     b.is_a? A          #=> true
+  #     b.is_a? B          #=> true
+  #     b.is_a? C          #=> false
+  #     b.is_a? M          #=> true
+  #
+  #     b.kind_of? A       #=> true
+  #     b.kind_of? B       #=> true
+  #     b.kind_of? C       #=> false
+  #     b.kind_of? M       #=> true
+  #
+  alias kind_of? is_a?
+
+  # <!--
+  #   rdoc-file=object.c
+  #   - obj.itself    -> obj
+  # -->
+  # Returns the receiver.
+  #
+  #     string = "my string"
+  #     string.itself.object_id == string.object_id   #=> true
+  #
+  def itself: () -> self
+
+  # <!--
+  #   rdoc-file=proc.c
+  #   - obj.method(sym)    -> method
+  # -->
+  # Looks up the named method as a receiver in *obj*, returning a Method object
+  # (or raising NameError). The Method object acts as a closure in *obj*'s object
+  # instance, so instance variables and the value of `self` remain available.
+  #
+  #     class Demo
+  #       def initialize(n)
+  #         @iv = n
+  #       end
+  #       def hello()
+  #         "Hello, @iv = #{@iv}"
+  #       end
+  #     end
+  #
+  #     k = Demo.new(99)
+  #     m = k.method(:hello)
+  #     m.call   #=> "Hello, @iv = 99"
+  #
+  #     l = Demo.new('Fred')
+  #     m = l.method("hello")
+  #     m.call   #=> "Hello, @iv = Fred"
+  #
+  # Note that Method implements `to_proc` method, which means it can be used with
+  # iterators.
+  #
+  #     [ 1, 2, 3 ].each(&method(:puts)) # => prints 3 lines to stdout
+  #
+  #     out = File.open('test.txt', 'w')
+  #     [ 1, 2, 3 ].each(&out.method(:puts)) # => prints 3 lines to file
+  #
+  #     require 'date'
+  #     %w[2017-03-01 2017-03-02].collect(&Date.method(:parse))
+  #     #=> [#<Date: 2017-03-01 ((2457814j,0s,0n),+0s,2299161j)>, #<Date: 2017-03-02 ((2457815j,0s,0n),+0s,2299161j)>]
+  #
+  def method: (String | Symbol name) -> Method
+
+  # <!--
+  #   rdoc-file=object.c
+  #   - obj.methods(regular=true)    -> array
+  # -->
+  # Returns a list of the names of public and protected methods of *obj*. This
+  # will include all the methods accessible in *obj*'s ancestors. If the optional
+  # parameter is `false`, it returns an array of *obj*'s public and protected
+  # singleton methods, the array will not include methods in modules included in
+  # *obj*.
+  #
+  #     class Klass
+  #       def klass_method()
+  #       end
+  #     end
+  #     k = Klass.new
+  #     k.methods[0..9]    #=> [:klass_method, :nil?, :===,
+  #                        #    :==~, :!, :eql?
+  #                        #    :hash, :<=>, :class, :singleton_class]
+  #     k.methods.length   #=> 56
+  #
+  #     k.methods(false)   #=> []
+  #     def k.singleton_method; end
+  #     k.methods(false)   #=> [:singleton_method]
+  #
+  #     module M123; def m123; end end
+  #     k.extend M123
+  #     k.methods(false)   #=> [:singleton_method]
+  #
+  def methods: () -> Array[Symbol]
+
+  # <!--
+  #   rdoc-file=object.c
+  #   - obj.nil?               -> true or false
+  # -->
+  # Only the object *nil* responds `true` to `nil?`.
+  #
+  #     Object.new.nil?   #=> false
+  #     nil.nil?          #=> true
+  #
+  def nil?: () -> bool
+
+  # <!--
+  #   rdoc-file=gc.c
+  #   - obj.__id__       -> integer
+  #   - obj.object_id    -> integer
+  # -->
+  # Returns an integer identifier for `obj`.
+  #
+  # The same number will be returned on all calls to `object_id` for a given
+  # object, and no two active objects will share an id.
+  #
+  # Note: that some objects of builtin classes are reused for optimization. This
+  # is the case for immediate values and frozen string literals.
+  #
+  # BasicObject implements +__id__+, Kernel implements `object_id`.
+  #
+  # Immediate values are not passed by reference but are passed by value: `nil`,
+  # `true`, `false`, Fixnums, Symbols, and some Floats.
+  #
+  #     Object.new.object_id  == Object.new.object_id  # => false
+  #     (21 * 2).object_id    == (21 * 2).object_id    # => true
+  #     "hello".object_id     == "hello".object_id     # => false
+  #     "hi".freeze.object_id == "hi".freeze.object_id # => true
+  #
+  def object_id: () -> Integer
+
+  # <!--
+  #   rdoc-file=object.c
+  #   - obj.private_methods(all=true)   -> array
+  # -->
+  # Returns the list of private methods accessible to *obj*. If the *all*
+  # parameter is set to `false`, only those methods in the receiver will be
+  # listed.
+  #
+  def private_methods: () -> Array[Symbol]
+
+  # <!--
+  #   rdoc-file=object.c
+  #   - obj.protected_methods(all=true)   -> array
+  # -->
+  # Returns the list of protected methods accessible to *obj*. If the *all*
+  # parameter is set to `false`, only those methods in the receiver will be
+  # listed.
+  #
+  def protected_methods: () -> Array[Symbol]
+
+  # <!--
+  #   rdoc-file=proc.c
+  #   - obj.public_method(sym)    -> method
+  # -->
+  # Similar to *method*, searches public method only.
+  #
+  def public_method: (name name) -> Method
+
+  # <!--
+  #   rdoc-file=object.c
+  #   - obj.public_methods(all=true)   -> array
+  # -->
+  # Returns the list of public methods accessible to *obj*. If the *all* parameter
+  # is set to `false`, only those methods in the receiver will be listed.
+  #
+  def public_methods: (?boolish all) -> Array[Symbol]
+
+  # <!--
+  #   rdoc-file=vm_eval.c
+  #   - obj.public_send(symbol [, args...])  -> obj
+  #   - obj.public_send(string [, args...])  -> obj
+  # -->
+  # Invokes the method identified by *symbol*, passing it any arguments specified.
+  # Unlike send, public_send calls public methods only. When the method is
+  # identified by a string, the string is converted to a symbol.
+  #
+  #     1.public_send(:puts, "hello")  # causes NoMethodError
+  #
+  def public_send: (name name, *untyped args) ?{ (*untyped) -> untyped } -> untyped
+
+  # <!--
+  #   rdoc-file=object.c
+  #   - obj.remove_instance_variable(symbol)    -> obj
+  #   - obj.remove_instance_variable(string)    -> obj
+  # -->
+  # Removes the named instance variable from *obj*, returning that variable's
+  # value. String arguments are converted to symbols.
+  #
+  #     class Dummy
+  #       attr_reader :var
+  #       def initialize
+  #         @var = 99
+  #       end
+  #       def remove
+  #         remove_instance_variable(:@var)
+  #       end
+  #     end
+  #     d = Dummy.new
+  #     d.var      #=> 99
+  #     d.remove   #=> 99
+  #     d.var      #=> nil
+  #
+  def remove_instance_variable: (name name) -> untyped
+
+  # <!--
+  #   rdoc-file=vm_method.c
+  #   - obj.respond_to?(symbol, include_all=false) -> true or false
+  #   - obj.respond_to?(string, include_all=false) -> true or false
+  # -->
+  # Returns `true` if *obj* responds to the given method.  Private and protected
+  # methods are included in the search only if the optional second parameter
+  # evaluates to `true`.
+  #
+  # If the method is not implemented, as Process.fork on Windows, File.lchmod on
+  # GNU/Linux, etc., false is returned.
+  #
+  # If the method is not defined, `respond_to_missing?` method is called and the
+  # result is returned.
+  #
+  # When the method name parameter is given as a string, the string is converted
+  # to a symbol.
+  #
+  def respond_to?: (name name, ?boolish include_all) -> bool
+
+  # <!--
+  #   rdoc-file=vm_eval.c
+  #   - foo.send(symbol [, args...])       -> obj
+  #   - foo.__send__(symbol [, args...])   -> obj
+  #   - foo.send(string [, args...])       -> obj
+  #   - foo.__send__(string [, args...])   -> obj
+  # -->
+  # Invokes the method identified by *symbol*, passing it any arguments specified.
+  # When the method is identified by a string, the string is converted to a
+  # symbol.
+  #
+  # BasicObject implements +__send__+, Kernel implements `send`. `__send__` is
+  # safer than `send` when *obj* has the same method name like `Socket`. See also
+  # `public_send`.
+  #
+  #     class Klass
+  #       def hello(*args)
+  #         "Hello " + args.join(' ')
+  #       end
+  #     end
+  #     k = Klass.new
+  #     k.send :hello, "gentle", "readers"   #=> "Hello gentle readers"
+  #
+  def send: (name name, *untyped args) ?{ (*untyped) -> untyped } -> untyped
+
+  # <!--
+  #   rdoc-file=object.c
+  #   - obj.singleton_class    -> class
+  # -->
+  # Returns the singleton class of *obj*.  This method creates a new singleton
+  # class if *obj* does not have one.
+  #
+  # If *obj* is `nil`, `true`, or `false`, it returns NilClass, TrueClass, or
+  # FalseClass, respectively. If *obj* is an Integer, a Float or a Symbol, it
+  # raises a TypeError.
+  #
+  #     Object.new.singleton_class  #=> #<Class:#<Object:0xb7ce1e24>>
+  #     String.singleton_class      #=> #<Class:String>
+  #     nil.singleton_class         #=> NilClass
+  #
+  def singleton_class: () -> Class
+
+  # <!--
+  #   rdoc-file=proc.c
+  #   - obj.singleton_method(sym)    -> method
+  # -->
+  # Similar to *method*, searches singleton method only.
+  #
+  #     class Demo
+  #       def initialize(n)
+  #         @iv = n
+  #       end
+  #       def hello()
+  #         "Hello, @iv = #{@iv}"
+  #       end
+  #     end
+  #
+  #     k = Demo.new(99)
+  #     def k.hi
+  #       "Hi, @iv = #{@iv}"
+  #     end
+  #     m = k.singleton_method(:hi)
+  #     m.call   #=> "Hi, @iv = 99"
+  #     m = k.singleton_method(:hello) #=> NameError
+  #
+  def singleton_method: (name name) -> Method
+
+  # <!--
+  #   rdoc-file=object.c
+  #   - obj.singleton_methods(all=true)    -> array
+  # -->
+  # Returns an array of the names of singleton methods for *obj*. If the optional
+  # *all* parameter is true, the list will include methods in modules included in
+  # *obj*. Only public and protected singleton methods are returned.
+  #
+  #     module Other
+  #       def three() end
+  #     end
+  #
+  #     class Single
+  #       def Single.four() end
+  #     end
+  #
+  #     a = Single.new
+  #
+  #     def a.one()
+  #     end
+  #
+  #     class << a
+  #       include Other
+  #       def two()
+  #       end
+  #     end
+  #
+  #     Single.singleton_methods    #=> [:four]
+  #     a.singleton_methods(false)  #=> [:two, :one]
+  #     a.singleton_methods         #=> [:two, :one, :three]
+  #
+  def singleton_methods: () -> Array[Symbol]
+
+  # <!--
+  #   rdoc-file=object.c
+  #   - obj.taint -> obj
+  # -->
+  # Returns object. This method is deprecated and will be removed in Ruby 3.2.
+  #
+  def taint: () -> self
+
+  # <!--
+  #   rdoc-file=object.c
+  #   - obj.untrust -> obj
+  # -->
+  # Returns object. This method is deprecated and will be removed in Ruby 3.2.
+  #
+  alias untrust taint
+
+  # <!--
+  #   rdoc-file=object.c
+  #   - obj.tainted?    -> false
+  # -->
+  # Returns false.  This method is deprecated and will be removed in Ruby 3.2.
+  #
+  def tainted?: () -> bool
+
+  # <!--
+  #   rdoc-file=object.c
+  #   - obj.untrusted?    -> false
+  # -->
+  # Returns false.  This method is deprecated and will be removed in Ruby 3.2.
+  #
+  alias untrusted? tainted?
+
+  # Yields self to the block, and then returns self. The primary purpose of this
+  # method is to "tap into" a method chain, in order to perform operations on
+  # intermediate results within the chain.
+  #
+  #     (1..10)                  .tap {|x| puts "original: #{x}" }
+  #       .to_a                  .tap {|x| puts "array:    #{x}" }
+  #       .select {|x| x.even? } .tap {|x| puts "evens:    #{x}" }
+  #       .map {|x| x*x }        .tap {|x| puts "squares:  #{x}" }
+  #
+  def tap: () { (self) -> void } -> self
+
+  # Yields self to the block and returns the result of the block.
+  #
+  #     3.next.then {|x| x**x }.to_s             #=> "256"
+  #     "my string".yield_self {|s| s.upcase }   #=> "MY STRING"
+  #
+  # Good usage for `yield_self` is value piping in method chains:
+  #
+  #     require 'open-uri'
+  #     require 'json'
+  #
+  #     construct_url(arguments).
+  #       yield_self {|url| open(url).read }.
+  #       yield_self {|response| JSON.parse(response) }
+  #
+  # When called without block, the method returns `Enumerator`, which can be used,
+  # for example, for conditional circuit-breaking:
+  #
+  #     # meets condition, no-op
+  #     1.yield_self.detect(&:odd?)            # => 1
+  #     # does not meet condition, drop value
+  #     2.yield_self.detect(&:odd?)            # => nil
+  #
+  def yield_self: [X] () { (self) -> X } -> X
+                | () -> Enumerator[self, untyped]
+
+  # <!--
+  #   rdoc-file=object.c
+  #   - obj.to_s    -> string
+  # -->
+  # Returns a string representing *obj*. The default #to_s prints the object's
+  # class and an encoding of the object id. As a special case, the top-level
+  # object that is the initial execution context of Ruby programs returns
+  # ``main''.
+  #
+  def to_s: () -> String
+
+  # <!--
+  #   rdoc-file=object.c
+  #   - obj.untaint    -> obj
+  # -->
+  # Returns object. This method is deprecated and will be removed in Ruby 3.2.
+  #
+  def untaint: () -> self
+
+  # <!--
+  #   rdoc-file=object.c
+  #   - obj.trust    -> obj
+  # -->
+  # Returns object. This method is deprecated and will be removed in Ruby 3.2.
+  #
+  alias trust untaint
+
+  # Yields self to the block and returns the result of the block.
+  #
+  #     3.next.then {|x| x**x }.to_s             #=> "256"
+  #     "my string".yield_self {|s| s.upcase }   #=> "MY STRING"
+  #
+  # Good usage for `yield_self` is value piping in method chains:
+  #
+  #     require 'open-uri'
+  #     require 'json'
+  #
+  #     construct_url(arguments).
+  #       yield_self {|url| open(url).read }.
+  #       yield_self {|response| JSON.parse(response) }
+  #
+  # When called without block, the method returns `Enumerator`, which can be used,
+  # for example, for conditional circuit-breaking:
+  #
+  #     # meets condition, no-op
+  #     1.yield_self.detect(&:odd?)            # => 1
+  #     # does not meet condition, drop value
+  #     2.yield_self.detect(&:odd?)            # => nil
+  #
+  alias then yield_self
+end
+
+interface _Writeable
+  def write: (untyped) -> void
+end
+
+type Object::name = Symbol | String

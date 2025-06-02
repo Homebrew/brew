@@ -1,0 +1,27 @@
+bundle-open(1) -- Opens the source directory for a gem in your bundle
+=====================================================================
+
+## SYNOPSIS
+
+`bundle open` [GEM] [--path=PATH]
+
+## DESCRIPTION
+
+Opens the source directory of the provided GEM in your editor.
+
+For this to work the `EDITOR` or `BUNDLER_EDITOR` environment variable has to
+be set.
+
+Example:
+
+    bundle open 'rack'
+
+Will open the source directory for the 'rack' gem in your bundle.
+
+    bundle open 'rack' --path 'README.md'
+
+Will open the README.md file of the 'rack' gem source in your bundle.
+
+## OPTIONS
+* `--path`:
+  Specify GEM source relative path to open.

@@ -1,0 +1,69 @@
+module Gem
+  class Specification
+    attr_reader version (): Version
+
+    attr_reader gem_dir (): String
+
+    def self.find_by_name: (String name, *String requirements) -> instance
+  end
+end
+
+module Bundler
+  class LockfileParser
+    def initialize: (String) -> void
+    def specs: () -> Array[LazySpecification]
+  end
+
+  class LazySpecification
+    def name: () -> String
+    def version: () -> String
+  end
+end
+
+module RDoc
+  class Store
+    def initialize: (?String? path, ?Symbol? type) -> void
+
+    def find_class_or_module: (String) -> ClassModule?
+
+    def load_all: () -> void
+  end
+
+  module RI
+    module Paths
+      type path_type = :system | :site | :home | :gem | :extra
+
+      type gem_filter = :latest | :all
+
+      def self.each: (?bool system, ?bool site, ?bool home, ?gem_filter | false gems, *String extra_dirs) { (String, path_type) -> void } -> void
+    end
+  end
+
+  class Context < CodeObject
+
+  end
+
+  class ClassModule < Context
+    def constants: () -> Array[Constant]
+
+    def method_list: () -> Array[AnyMethod]
+
+    def attributes: () -> Array[Attr]
+  end
+
+  class Markup
+    class Document
+      include Enumerable[Document]
+
+      def each: () { (Document) -> void } -> void
+              | () -> Enumerator[Document, void]
+
+      def file: () -> String?
+
+      def accept: (untyped) -> String
+    end
+
+    class ToMarkdown
+    end
+  end
+end

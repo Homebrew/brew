@@ -1,0 +1,63 @@
+module RDoc
+  class Parser
+    class RBS < Parser
+    end
+  end
+end
+
+module RBS
+  module RDocPlugin
+    class Parser
+      type allowed_decls = RBS::AST::Declarations::Class
+                         | RBS::AST::Declarations::Module
+                         | RBS::AST::Declarations::Constant
+
+      def initialize: (RDoc::TopLevel top_level, String content) -> void
+
+      def scan: () -> RDoc::TopLevel
+
+      def parse_member: (decl: RBS::AST::Declarations::t | RBS::AST::Members::t, context: RDoc::Context, ?outer_name: RBS::TypeName?) -> void
+
+      def parse_class_decl: (decl: RBS::AST::Declarations::Class, context: RDoc::Context, ?outer_name: RBS::TypeName?) -> void
+
+      def parse_module_decl: (decl: RBS::AST::Declarations::Module | RBS::AST::Declarations::Interface, context: RDoc::Context, ?outer_name: RBS::TypeName?) -> void
+
+      def parse_constant_decl: (decl: RBS::AST::Declarations::Constant, context: RDoc::Context, ?outer_name: RBS::TypeName?) -> void
+
+      def parse_method_decl: (decl: RBS::AST::Members::MethodDefinition, context: RDoc::Context, ?outer_name: RBS::TypeName?) -> void
+
+      def parse_method_alias_decl: (decl: RBS::AST::Members::Alias, context: RDoc::Context, ?outer_name: RBS::TypeName?) -> void
+
+      def parse_attr_decl: (decl: RBS::AST::Members::AttrReader | RBS::AST::Members::AttrAccessor | RBS::AST::Members::AttrWriter, context: RDoc::Context, ?outer_name: RBS::TypeName?) -> void
+
+      def parse_include_decl: (decl: RBS::AST::Members::Include, context: RDoc::Context, ?outer_name: RBS::TypeName?) -> void
+
+      def parse_extend_decl: (decl: RBS::AST::Members::Extend, context: RDoc::Context, ?outer_name: RBS::TypeName?) -> void
+
+      private
+
+      def construct_comment: (context: RDoc::Context, comment: String) -> RDoc::Comment
+
+      # _DeclWithComment is a utility interface that has `#comment`
+      #
+      interface _DeclWithComment
+        def comment: () -> ::RBS::AST::Comment?
+      end
+
+      # Extract comment string from a declaration with comment
+      #
+      # * If `#comment" returns a Comment object, it returns its `#string` value
+      # * If `#comment` returns `nil`, it raises an error
+      #
+      # Note that you have to confirm if the `#comment` of given declartion exists.
+      #
+      # ```ruby
+      # comment = construct_comment(context: context, comment: comment_string(decl)) if decl.comment
+      # ```
+      #
+      def comment_string: (_DeclWithComment) -> String
+
+      def fully_qualified_name: (outer_name: RBS::TypeName?, decl: allowed_decls) -> RBS::TypeName
+    end
+  end
+end

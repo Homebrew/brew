@@ -1,0 +1,72 @@
+# <!-- rdoc-file=object.c -->
+# The global value `true` is the only instance of class TrueClass and represents
+# a logically true value in boolean expressions. The class provides operators
+# allowing `true` to be used in logical expressions.
+#
+class TrueClass
+  public
+
+  def !: () -> false
+
+  # <!--
+  #   rdoc-file=object.c
+  #   - true & obj    -> true or false
+  # -->
+  # And---Returns `false` if *obj* is `nil` or `false`, `true` otherwise.
+  #
+  def &: (nil) -> false
+       | (false) -> false
+       | (untyped obj) -> true
+
+  # <!--
+  #   rdoc-file=object.c
+  #   - obj === other   -> true or false
+  # -->
+  # Case Equality -- For class Object, effectively the same as calling `#==`, but
+  # typically overridden by descendants to provide meaningful semantics in `case`
+  # statements.
+  #
+  def ===: (true) -> true
+         | (untyped obj) -> false
+
+  # <!--
+  #   rdoc-file=object.c
+  #   - true ^ obj   -> !obj
+  # -->
+  # Exclusive Or---Returns `true` if *obj* is `nil` or `false`, `false` otherwise.
+  #
+  def ^: (nil) -> true
+       | (false) -> true
+       | (untyped obj) -> false
+
+  # <!-- rdoc-file=object.c -->
+  # The string representation of `true` is "true".
+  #
+  alias inspect to_s
+
+  # <!--
+  #   rdoc-file=object.c
+  #   - true.to_s   ->  "true"
+  # -->
+  # The string representation of `true` is "true".
+  #
+  def to_s: () -> "true"
+
+  # <!--
+  #   rdoc-file=object.c
+  #   - true | obj   -> true
+  # -->
+  # Or---Returns `true`. As *obj* is an argument to a method call, it is always
+  # evaluated; there is no short-circuit evaluation in this case.
+  #
+  #     true |  puts("or")
+  #     true || puts("logical or")
+  #
+  # *produces:*
+  #
+  #     or
+  #
+  def |: (untyped obj) -> true
+
+  def clone: (?freeze: true?) -> self
+end

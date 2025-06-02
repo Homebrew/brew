@@ -1,0 +1,23 @@
+# <!-- rdoc-file=lib/rubygems/specification.rb -->
+# The Specification class contains the information for a gem.  Typically defined
+# in a .gemspec file or a Rakefile, and looks like this:
+#
+#     Gem::Specification.new do |s|
+#       s.name        = 'example'
+#       s.version     = '0.1.0'
+#       s.licenses    = ['MIT']
+#       s.summary     = "This is an example!"
+#       s.description = "Much longer explanation of the example!"
+#       s.authors     = ["Ruby Coder"]
+#       s.email       = 'rubycoder@example.com'
+#       s.files       = ["lib/example.rb"]
+#       s.homepage    = 'https://rubygems.org/gems/example'
+#       s.metadata    = { "source_code_uri" => "https://github.com/example/example" }
+#     end
+#
+# Starting in RubyGems 2.0, a Specification can hold arbitrary metadata.  See
+# #metadata for restrictions on the format and size of metadata items you may
+# add to a specification.
+#
+class Gem::Specification < Gem::BasicSpecification
+end

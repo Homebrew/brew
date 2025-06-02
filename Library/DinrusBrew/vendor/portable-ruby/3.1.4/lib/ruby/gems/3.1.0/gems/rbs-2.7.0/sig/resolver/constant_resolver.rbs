@@ -1,0 +1,93 @@
+module RBS
+  module Resolver
+    class ConstantResolver
+      # Table stores the set of immediate child constants of a module.
+      #
+      # ```rb
+      # table = RBS::ConstantResolver::Table.new(env)
+      #
+      # table.children(TypeName("::Object"))                # -> { ... }  Returns a hash of name and constants.
+      # table.children(TypeName("::File::PATH_SEPARATOR"))  # -> nil      Returns nil because the constant is not a module.
+      #
+      # table.toplevel                                      # -> { ... }  Returns a hash of top level constants.
+      # ```
+      #
+      # The `#toplevel` is incompatible with Ruby.
+      # All constants in Ruby are defined under `Object`, and they are accessed with `::` (Colon3) operator.
+      # RBS is different.
+      # `::` constants are _toplevel_ constants, and they are not defined under `::Object`.
+      #
+      # The behavior is simulated in `ConstantResolver`.
+      #
+      class Table
+        attr_reader children_table: Hash[TypeName, Hash[Symbol, Constant]?]
+        attr_reader constants_table: Hash[TypeName, Constant]
+        attr_reader toplevel: Hash[Symbol, Constant]
+
+        def initialize: (Environment) -> void
+
+        def constant: (TypeName constant_name) -> Constant?
+
+        # Returns a set of constants defined under `module_name`.
+        # Returns `nil` if there is no module with given `module_name`.
+        #
+        def children: (TypeName module_name) -> Hash[Symbol, Constant]?
+
+        private
+
+        def constant_of_module: (TypeName name, Environment::ClassEntry | Environment::ModuleEntry) -> Constant
+
+        def constant_of_constant: (TypeName name, Environment::SingleEntry[TypeName, AST::Declarations::Constant]) -> Constant
+      end
+
+      attr_reader builder: DefinitionBuilder
+      attr_reader table: Table
+      attr_reader context_constants_cache: Hash[context, Hash[Symbol, Constant]?]
+      attr_reader child_constants_cache: Hash[TypeName, Hash[Symbol, Constant]]
+
+      def initialize: (builder: DefinitionBuilder) -> void
+
+      # Resolves to `Constant` with given constant name `name` and `context`.
+      # Returns `nil` if the constant cannot be resolved from the context.
+      #
+      def resolve: (Symbol name, context: context) -> Constant?
+
+      # Returns the available all constants from `context`.
+      #
+      # Returns `nil` when the `context` is invalid.
+      def constants: (context) -> Hash[Symbol, Constant]?
+
+      # Resolves the module_name and constant name to `Constant`
+      #
+      # ```ruby
+      # A::B
+      # ^     <- module_name
+      #    ^  <- constant_name
+      # ```
+      #
+      # Find the
+      def resolve_child: (TypeName module_name, Symbol constant_name) -> Constant?
+
+      # Returns the table of all constants accessible with `::` (colon2) operator.
+      #
+      # * The constants under the module are included.
+      # * The constants under the ancestor modules are included.
+      #   * The constants under the `::Object` class are not included.
+      #   * The top level constants are not included.
+      #
+      def children: (TypeName module_name) -> Hash[Symbol, Constant]
+
+      private
+
+      def load_context_constants: (context) -> void
+
+      def load_child_constants: (TypeName) -> void
+
+      def constants_from_context: (context, constants: Hash[Symbol, Constant]) -> bool
+
+      def constants_from_ancestors: (TypeName, constants: Hash[Symbol, Constant]) -> void
+
+      def constants_itself: (context, constants: Hash[Symbol, Constant]) -> void
+    end
+  end
+end

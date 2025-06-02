@@ -1,0 +1,69 @@
+# <!-- rdoc-file=object.c -->
+# The global value `false` is the only instance of class FalseClass and
+# represents a logically false value in boolean expressions. The class provides
+# operators allowing `false` to participate correctly in logical expressions.
+#
+class FalseClass
+  public
+
+  def !: () -> true
+
+  # <!--
+  #   rdoc-file=object.c
+  #   - false & obj   -> false
+  #   - nil & obj     -> false
+  # -->
+  # And---Returns `false`. *obj* is always evaluated as it is the argument to a
+  # method call---there is no short-circuit evaluation in this case.
+  #
+  def &: (untyped obj) -> false
+
+  # <!--
+  #   rdoc-file=object.c
+  #   - obj === other   -> true or false
+  # -->
+  # Case Equality -- For class Object, effectively the same as calling `#==`, but
+  # typically overridden by descendants to provide meaningful semantics in `case`
+  # statements.
+  #
+  def ===: (false) -> true
+         | (untyped obj) -> false
+
+  # <!--
+  #   rdoc-file=object.c
+  #   - false ^ obj    -> true or false
+  #   - nil   ^ obj    -> true or false
+  # -->
+  # Exclusive Or---If *obj* is `nil` or `false`, returns `false`; otherwise,
+  # returns `true`.
+  #
+  def ^: (nil) -> false
+       | (false) -> false
+       | (untyped obj) -> true
+
+  # <!-- rdoc-file=object.c -->
+  # The string representation of `false` is "false".
+  #
+  alias inspect to_s
+
+  # <!--
+  #   rdoc-file=object.c
+  #   - false.to_s   ->  "false"
+  # -->
+  # The string representation of `false` is "false".
+  #
+  def to_s: () -> "false"
+
+  # <!--
+  #   rdoc-file=object.c
+  #   - false | obj   ->   true or false
+  #   - nil   | obj   ->   true or false
+  # -->
+  # Or---Returns `false` if *obj* is `nil` or `false`; `true` otherwise.
+  #
+  def |: (nil) -> false
+       | (false) -> false
+       | (untyped obj) -> true
+
+  def clone: (?freeze: true?) -> self
+end

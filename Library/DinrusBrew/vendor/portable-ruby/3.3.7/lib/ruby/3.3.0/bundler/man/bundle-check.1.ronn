@@ -1,0 +1,29 @@
+bundle-check(1) -- Verifies if dependencies are satisfied by installed gems
+===========================================================================
+
+## SYNOPSIS
+
+`bundle check` [--dry-run]
+               [--gemfile=FILE]
+               [--path=PATH]
+
+## DESCRIPTION
+
+`check` searches the local machine for each of the gems requested in the
+Gemfile. If all gems are found, Bundler prints a success message and exits with
+a status of 0.
+
+If not, the first missing gem is listed and Bundler exits status 1.
+
+If the lockfile needs to be updated then it will be resolved using the gems
+installed on the local machine, if they satisfy the requirements.
+
+## OPTIONS
+
+* `--dry-run`:
+  Locks the [`Gemfile(5)`][Gemfile(5)] before running the command.
+* `--gemfile`:
+  Use the specified gemfile instead of the [`Gemfile(5)`][Gemfile(5)].
+* `--path`:
+  Specify a different path than the system default (`$BUNDLE_PATH` or `$GEM_HOME`).
+  Bundler will remember this value for future installs on this machine.

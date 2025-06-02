@@ -1,0 +1,92 @@
+module RBS
+  # `TypeAliasRegularity` validates if a type alias is regular or not.
+  #
+  # Generic and recursive type alias cannot be polymorphic in their definitions.
+  #
+  # ```rbs
+  # type foo[T] = Integer
+  #             | foo[T]?     # Allowed. The type argument of `foo` doesn't change.
+  #
+  # type bar[T] = Integer
+  #             | foo[T]
+  #             | foo[Array[T]]  # Allowed. There are two type arguments `T` and `Array[T]` of `foo`, but it's not definition of `foo`.
+  #
+  # type baz[T] = Integer
+  #             | baz[Array[T]]  # Error. Recursive definition of `baz` has different type argument from the definition.
+  # ```
+  #
+  # The `#nonregular?` method can be used to test if given type name is regular or not.
+  #
+  # ```rb
+  # validator = RBS::TypeAliasRegularity.validate(env: env)
+  #
+  # validator.nonregular?(TypeName("::foo"))    # => nil
+  # validator.nonregular?(TypeName("::bar"))    # => nil
+  # validator.nonregular?(TypeName("::baz"))    # => TypeAliasRegularity::Diagnostic
+  # ```
+  #
+  # A special case is when the type argument is `untyped`.
+  #
+  # ```rbs
+  # type foo[T] = Integer | foo[untyped]    # This is allowed.
+  # ```
+  #
+  class TypeAliasRegularity
+    attr_reader env: Environment
+
+    attr_reader builder: DefinitionBuilder
+
+    attr_reader diagnostics: Hash[TypeName, Diagnostic]
+
+    # `Diagnostic` represents an non-regular type alias declaration error.
+    # It consists of the name of the alias type and a type on which the nonregularity is detected.
+    #
+    # ```rbs
+    # type t[T] = Integer | t[T?]
+    # ```
+    #
+    # The type `t` is nonregular because it contains `t[T?]` on it's right hand side.
+    #
+    # ```
+    # diagnostic = validator.nonregular?(TypeName("::t"))
+    # diagnostic.type_name         # => TypeName("::t")
+    # diagnostic.nonregular_type   # => t[T?]
+    # ```
+    #
+    class Diagnostic
+      attr_reader type_name: TypeName
+
+      attr_reader nonregular_type: Types::Alias
+
+      def initialize: (type_name: TypeName, nonregular_type: Types::Alias) -> void
+    end
+
+    # Returns new instance which already run `#validate`.
+    #
+    def self.validate: (env: Environment) -> TypeAliasRegularity
+
+    def initialize: (env: Environment) -> void
+
+    # Returns `Diagnostic` instance if the alias type is nonregular.
+    # Regurns `nil` if the alias type is regular.
+    #
+    def nonregular?: (TypeName) -> Diagnostic?
+
+    def validate: () -> void
+
+    private
+
+    def validate_alias_type: (Types::Alias, Set[TypeName], Hash[TypeName, Types::Alias]) -> void
+
+    # Returns alias type for given type name, if the alias is generic.
+    # Returns nil if the type alias is not generic.
+    #
+    def build_alias_type: (TypeName) -> Types::Alias?
+
+    def compatible_args?: (Array[Types::t], Array[Types::t]) -> boolish
+
+    def each_alias_type: (Types::t) { (Types::Alias) -> void } -> void
+
+    def each_mutual_alias_defs: () { (Set[TypeName]) -> void } -> void
+  end
+end

@@ -1,0 +1,9 @@
+%a{annotate:rdoc:skip}
+module URI
+  # <!-- rdoc-file=lib/uri/wss.rb -->
+  # The default port for WSS URIs is 443, and the scheme is 'wss:' rather than
+  # 'ws:'. Other than that, WSS URIs are identical to WS URIs; see URI::WS.
+  #
+  class WSS < WS
+  end
+end

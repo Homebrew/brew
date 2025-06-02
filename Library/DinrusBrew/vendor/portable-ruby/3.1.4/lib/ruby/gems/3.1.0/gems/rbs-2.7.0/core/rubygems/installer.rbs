@@ -1,0 +1,15 @@
+# <!-- rdoc-file=lib/rubygems/installer.rb -->
+# The installer installs the files contained in the .gem into the Gem.home.
+#
+# Gem::Installer does the work of putting files in all the right places on the
+# filesystem including unpacking the gem into its gem dir, installing the
+# gemspec in the specifications dir, storing the cached gem in the cache dir,
+# and installing either wrappers or symlinks for executables.
+#
+# The installer invokes pre and post install hooks.  Hooks can be added either
+# through a rubygems_plugin.rb file in an installed gem or via a
+# rubygems/defaults/#{RUBY_ENGINE}.rb or rubygems/defaults/operating_system.rb
+# file.  See Gem.pre_install and Gem.post_install for details.
+#
+class Gem::Installer
+end

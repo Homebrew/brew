@@ -1,0 +1,12 @@
+<%- simple_files = @files.select { |f| f.text? } %>
+<%- unless simple_files.empty? then -%>
+<div id="fileindex-section" class="nav-section">
+  <h3>Pages</h3>
+
+  <ul class="link-list">
+  <%- simple_files.each do |f| -%>
+    <li><a href="<%= rel_prefix %>/<%= f.path %>"><%= h f.page_name %></a>
+  <%- end -%>
+  </ul>
+</div>
+<%- end -%>

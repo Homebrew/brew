@@ -1,0 +1,42 @@
+# <!-- rdoc-file=lib/minitest/parallel.rb -->
+# The engine used to run multiple tests in parallel.
+#
+class Minitest::Parallel::Executor
+  # <!--
+  #   rdoc-file=lib/minitest/parallel.rb
+  #   - new(size)
+  # -->
+  # Create a parallel test executor of with `size` workers.
+  #
+  def initialize: (untyped size) -> void
+
+  # <!--
+  #   rdoc-file=lib/minitest/parallel.rb
+  #   - start()
+  # -->
+  # Start the executor
+  #
+  def start: () -> untyped
+
+  # <!--
+  #   rdoc-file=lib/minitest/parallel.rb
+  #   - <<(work;)
+  # -->
+  # Add a job to the queue
+  #
+  def <<: (untyped work) -> untyped
+
+  # <!--
+  #   rdoc-file=lib/minitest/parallel.rb
+  #   - shutdown()
+  # -->
+  # Shuts down the pool of workers by signalling them to quit and waiting for them
+  # all to finish what they're currently working on.
+  #
+  def shutdown: () -> untyped
+
+  # <!-- rdoc-file=lib/minitest/parallel.rb -->
+  # The size of the pool of workers.
+  #
+  attr_reader size: untyped
+end

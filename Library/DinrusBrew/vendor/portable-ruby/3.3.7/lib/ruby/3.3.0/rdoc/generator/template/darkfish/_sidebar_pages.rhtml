@@ -1,0 +1,32 @@
+<%- simple_files = @files.select { |f| f.text? } %>
+<%- if defined?(current) -%>
+  <%- dir = current.full_name[%r{\A[^/]+(?=/)}] || current.page_name -%>
+<%- end -%>
+<%- unless simple_files.empty? then -%>
+<div id="fileindex-section" class="nav-section">
+  <h3>Pages</h3>
+
+  <ul class="link-list">
+  <%- simple_files.group_by do |f| -%>
+    <%- f.full_name[%r{\A[^/]+(?=/)}] || f.page_name -%>
+  <%- end.each do |n, files| -%>
+    <%- f = files.shift -%>
+    <%- if files.empty? -%>
+    <li><a href="<%= rel_prefix %>/<%= h f.path %>"><%= h f.page_name %></a>
+      <%- next -%>
+    <%- end -%>
+    <li><details<% if dir == n %> open<% end %>><summary><%
+    if n == f.page_name
+      %><a href="<%= rel_prefix %>/<%= h f.path %>"><%= h n %></a><%
+    else
+      %><%= h n %><% files.unshift(f)
+    end %></summary>
+    <ul class="link-list">
+    <%- files.each do |f| -%>
+      <li><a href="<%= rel_prefix %>/<%= h f.path %>"><%= h f.page_name %></a>
+    <%- end -%>
+    </ul></details>
+  <%- end -%>
+  </ul>
+</div>
+<%- end -%>
