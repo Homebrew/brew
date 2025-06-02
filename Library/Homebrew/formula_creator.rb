@@ -54,15 +54,17 @@ module Homebrew
       @version = Version.detect(@url) if @version.nil?
       odebug "Version.detect: #{@version}"
 
-      m = @url.match %r{github\.com/(?<user>\S+)/(?<repo>\S+)(?<tail>.*)}
-      if m
-        @head = true if m[:tail] == ".git"
+      match_github = @url.match %r{github\.com/(?<user>\S+)/(?<repo>\S+)(?<tail>.*)}
+      if match_github
+        @head = true if match_github[:tail] == ".git"
+        user = match_github[:user]
+        repo = match_github[:repo]
         if @fetch
-          @github = GitHub.repository(m[:user], m[:repo])
+          @github = GitHub.repository(user, repo)
 
           if @version.null?
             begin
-              latest_release = GitHub.get_latest_release m[:user], m[:repo]
+              latest_release = GitHub.get_latest_release(user, repo)
             rescue GitHub::API::HTTPNotFoundError
               odebug "latest release lookup failed: #{@url}"
             else
