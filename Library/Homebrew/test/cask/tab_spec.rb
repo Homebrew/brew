@@ -137,7 +137,8 @@ RSpec.describe Cask::Tab, :cask do
           { "full_name"=>"local-transmission", "version"=>"2.61", "declared_directly"=>false },
         ],
         formula: [
-          { "full_name"=>"unar", "version"=>"1.2", "revision"=>0, "pkg_version"=>"1.2", "declared_directly"=>true },
+          { "full_name"=>"unar", "version"=>"1.2", "revision"=>0, "pkg_version"=>"1.2", "uses_from_macos" => false,
+            "declared_directly"=>true },
         ],
       }
 

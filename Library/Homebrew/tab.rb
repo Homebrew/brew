@@ -95,7 +95,7 @@ class AbstractTab
     new(attributes)
   end
 
-  def self.formula_to_dep_hash(formula, declared_deps)
+  def self.formula_to_dep_hash(formula, declared_deps, uses_from_macos: false)
     {
       "full_name"         => formula.full_name,
       "version"           => formula.version.to_s,
@@ -103,6 +103,7 @@ class AbstractTab
       "bottle_rebuild"    => formula.bottle&.rebuild,
       "pkg_version"       => formula.pkg_version.to_s,
       "declared_directly" => declared_deps.include?(formula.full_name),
+      "uses_from_macos"   => uses_from_macos,
     }.compact
   end
   private_class_method :formula_to_dep_hash
@@ -304,7 +305,7 @@ class Tab < AbstractTab
 
   def self.runtime_deps_hash(formula, deps)
     deps.map do |dep|
-      formula_to_dep_hash(dep.to_formula, formula.deps.map(&:name))
+      formula_to_dep_hash(dep.to_formula, formula.deps.map(&:name), uses_from_macos: dep.uses_from_macos?)
     end
   end
 
