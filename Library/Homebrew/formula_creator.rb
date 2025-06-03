@@ -23,6 +23,8 @@ module Homebrew
       @license = license
       @fetch = fetch
       @head = head
+
+      parse_url
     end
 
     sig { void }

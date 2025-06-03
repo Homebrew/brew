@@ -193,7 +193,6 @@ module Homebrew
           fetch:   !args.no_fetch?,
           head:    args.HEAD?,
         )
-        fc.parse_url
         # ask for confirmation if name wasn't passed explicitly
         if args.set_name.blank?
           print "Formula name [#{fc.name}]: "
