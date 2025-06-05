@@ -67,5 +67,7 @@
     }
   },
   "simplecov-vscode.path": "Library/Homebrew/test/coverage/.resultset.json",
-  "simplecov-vscode.enabled": false
+  "simplecov-vscode.enabled": false,
+  "editor.formatOnSave": true,
+  "editor.wordWrap": "bounded"
 }
