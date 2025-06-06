@@ -130,19 +130,24 @@ RSpec.shared_context "integration test" do # rubocop:disable RSpec/ContextWordin
     end
   end
 
-  def setup_test_formula(name, content = nil, tap: CoreTap.instance,
+  def setup_test_formula(name, content = nil, testball_bottle: false, tap: CoreTap.instance,
                          bottle_block: nil, tab_attributes: nil)
     case name
     when /^testball/
-      case name
-      when "testball4", "testball5"
-        prefix = name
-        program_name = name
-      when "testball2"
-        prefix = name
-        program_name = "test"
+      name_to_prog = {
+        "testball4"              => "testball4",
+        "testball5"              => "testball5",
+        "testball-build"         => "testball-build",
+        "testball-parent"        => "testball-parent",
+        "testball-parent-parent" => "testball-parent-parent",
+        "testball2"              => "test",
+      }
+
+      if (prog = name_to_prog[name])
+        prefix       = name
+        program_name = prog
       else
-        prefix = "testball"
+        prefix       = "testball"
         program_name = "test"
       end
 
@@ -153,10 +158,22 @@ RSpec.shared_context "integration test" do # rubocop:disable RSpec/ContextWordin
         desc "Some test"
         homepage "https://brew.sh/#{name}"
         url "file://#{tarball}"
-        sha256 "#{tarball.sha256}"
-
+        #{ unless testball_bottle
+             <<~SHA_BLOCK
+               sha256 "#{tarball.sha256}"
+             SHA_BLOCK
+        end }
         option "with-foo", "Build with foo"
-        #{bottle_block}
+        #{ if testball_bottle
+             tarball_bottle_name = "#{prefix}-0.1.all.bottle.tar.gz"
+             tarball_bottle = TEST_FIXTURE_DIR / "tarballs/#{tarball_bottle_name}"
+             <<~BOTTLE_BLOCK
+               bottle do
+                 root_url "file://#{TEST_FIXTURE_DIR}/tarballs"
+                 sha256 cellar: :any, all: "#{tarball_bottle.sha256}"
+               end
+             BOTTLE_BLOCK
+        end }#{bottle_block}
         def install
           (prefix/"foo"/"#{program_name}").write("#{program_name}") if build.with? "foo"
           prefix.install Dir["*"]

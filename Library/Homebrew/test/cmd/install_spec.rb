@@ -97,10 +97,13 @@ RSpec.describe Homebrew::Cmd::InstallCmd do
   end
 
   it "installs with asking for user prompts with installed dependent checks", :integration_test do
+    setup_test_formula "testball-parent", <<~RUBY
+      depends_on "testball1"
+    RUBY
+
     setup_test_formula "testball1", <<~RUBY
       depends_on "testball5"
-      # should work as its not building but test doesnt pass if dependant
-      # depends_on "build" => :build
+      depends_on "testball-build" => :build
       depends_on "installed"
     RUBY
     setup_test_formula "installed"
@@ -109,7 +112,7 @@ RSpec.describe Homebrew::Cmd::InstallCmd do
     RUBY
     setup_test_formula "testball4", ""
     setup_test_formula "hiop"
-    setup_test_formula "build"
+    setup_test_formula "testball-build", ""
 
     # Mock `Formula#any_version_installed?` by creating the tab in a plausible keg directory
     keg_dir = HOMEBREW_CELLAR/"installed"/"1.0"
