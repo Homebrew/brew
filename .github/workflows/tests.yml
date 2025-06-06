@@ -253,14 +253,25 @@ jobs:
           - name: tests (Ubuntu 22.04)
             test-flags: --coverage
             runs-on: ubuntu-22.04
-          - name: tests (Ubuntu 20.04)
+          - name: tests (Debian Old Stable)
             test-flags: --coverage
             runs-on: ubuntu-latest
-            container: ghcr.io/homebrew/ubuntu20.04:latest
+            container: debian:oldstable
           - name: tests (macOS 15 arm64)
             test-flags: --coverage
             runs-on: macos-15
     steps:
+      - name: Install Homebrew and Git
+        if: matrix.container == 'debian:oldstable'
+        run: |
+          apt-get update
+          apt-get install git curl sudo -y
+          mkdir -p /home/linuxbrew/.linuxbrew/bin
+          git clone --depth=1 https://github.com/Homebrew/brew.git /home/linuxbrew/.linuxbrew/Homebrew
+          cd /home/linuxbrew/.linuxbrew/bin
+          ln -s ../Homebrew/bin/brew brew
+          echo "/home/linuxbrew/.linuxbrew/bin" >>"$GITHUB_PATH"
+
       - name: Set up Homebrew
         id: set-up-homebrew
         uses: Homebrew/actions/setup-homebrew@master
@@ -272,12 +283,15 @@ jobs:
           cask: false
           test-bot: false
 
+      - run: brew install gcc
+        if: matrix.container == 'debian:oldstable'
+
       - name: Cache Bundler RubyGems
         uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
         with:
           path: ${{ steps.set-up-homebrew.outputs.gems-path }}
-          key: ${{ matrix.runs-on }}-tests-rubygems-${{ steps.set-up-homebrew.outputs.gems-hash }}
-          restore-keys: ${{ matrix.runs-on }}-tests-rubygems-
+          key: ${{ matrix.runs-on }}${{ matrix.container }}-tests-rubygems-${{ steps.set-up-homebrew.outputs.gems-hash }}
+          restore-keys: ${{ matrix.runs-on }}${{ matrix.container }}-tests-rubygems-
 
       - run: brew config
 
@@ -364,9 +378,9 @@ jobs:
           - name: test default formula (Ubuntu 22.04)
             runs-on: ubuntu-latest
             container: ghcr.io/homebrew/ubuntu22.04:master
-          - name: test default formula (Ubuntu 20.04)
+          - name: test default formula (Debian Old Stable)
             runs-on: ubuntu-latest
-            container: ghcr.io/homebrew/ubuntu20.04:latest
+            container: debian:oldstable
           - name: test default formula (macOS 13 x86_64)
             runs-on: macos-13
           - name: test default formula (macOS 15 arm64)
@@ -375,6 +389,17 @@ jobs:
       HOMEBREW_TEST_BOT_ANALYTICS: 1
       HOMEBREW_ENFORCE_SBOM: 1
     steps:
+      - name: Install Homebrew and Git
+        if: matrix.container == 'debian:oldstable'
+        run: |
+          apt-get update
+          apt-get install git curl sudo -y
+          mkdir -p /home/linuxbrew/.linuxbrew/bin
+          git clone --depth=1 https://github.com/Homebrew/brew.git /home/linuxbrew/.linuxbrew/Homebrew
+          cd /home/linuxbrew/.linuxbrew/bin
+          ln -s ../Homebrew/bin/brew brew
+          echo "/home/linuxbrew/.linuxbrew/bin" >>"$GITHUB_PATH"
+
       - name: Set up Homebrew
         id: set-up-homebrew
         uses: Homebrew/actions/setup-homebrew@master
@@ -383,10 +408,13 @@ jobs:
           cask: false
           test-bot: true
 
+      - run: brew install gcc
+        if: matrix.container == 'debian:oldstable'
+
       - run: brew test-bot --only-cleanup-before
 
       - name: Setup environment variables
-        if: matrix.container == 'ghcr.io/homebrew/ubuntu20.04:latest'
+        if: matrix.container == 'debian:oldstable'
         run: echo "HOMEBREW_GLIBC_TESTING=1" >> "$GITHUB_ENV"
 
       - run: brew test-bot --only-setup

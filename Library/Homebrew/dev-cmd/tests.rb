@@ -125,11 +125,14 @@ module Homebrew
           # rubocop:disable Homebrew/MoveToExtendOS
           unless OS.mac?
             bundle_args << "--tag" << "~needs_macos" << "--tag" << "~cask"
+            bundle_args << "--tag" << "~needs_homebrew_core" if ENV["CI"]
+            bundle_args << "--tag" << "~needs_svn" unless args.online?
+
             files = files.grep_v(%r{^test/(os/mac|cask)(/.*|_spec\.rb)$})
           end
 
           unless OS.linux?
-            bundle_args << "--tag" << "~needs_linux"
+            bundle_args << "--tag" << "~needs_linux" << "--tag" << "~needs_systemd"
             files = files.grep_v(%r{^test/os/linux(/.*|_spec\.rb)$})
           end
           # rubocop:enable Homebrew/MoveToExtendOS
@@ -139,10 +142,8 @@ module Homebrew
           bundle_args << "--tag" << "~needs_intel" unless Hardware::CPU.intel?
 
           bundle_args << "--tag" << "~needs_network" unless args.online?
-          unless ENV["CI"]
-            bundle_args << "--tag" << "~needs_ci" \
-                        << "--tag" << "~needs_svn"
-          end
+
+          bundle_args << "--tag" << "~needs_ci" unless ENV["CI"]
 
           puts "Randomized with seed #{seed}"
 

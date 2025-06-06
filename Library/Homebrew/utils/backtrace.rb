@@ -31,7 +31,8 @@ module Utils
     def self.print_backtrace_message
       return if @print_backtrace_message
 
-      opoo "Removed Sorbet lines from backtrace!"
+      # This is just unactionable noise in GitHub Actions.
+      opoo_outside_github_actions "Removed Sorbet lines from backtrace!"
       puts "Rerun with `--verbose` to see the original backtrace" unless Homebrew::EnvConfig.no_env_hints?
 
       @print_backtrace_message = true

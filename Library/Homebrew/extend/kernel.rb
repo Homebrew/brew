@@ -82,6 +82,17 @@ module Kernel
     end
   end
 
+  # Print a warning message only if not running in GitHub Actions.
+  #
+  # @api public
+  sig { params(message: T.any(String, Exception)).void }
+  def opoo_outside_github_actions(message)
+    require "utils/github/actions"
+    return if GitHub::Actions.env_set?
+
+    opoo(message)
+  end
+
   # Print an error message.
   #
   # @api public
