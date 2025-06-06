@@ -165,7 +165,11 @@ module Formulary
     mod.const_set(:BUILD_FLAGS, flags)
 
     class_name = class_s(name)
-    json_formula = Homebrew::API::Formula.all_formulae[name]
+    json_formula = if ENV.fetch("HOMEBREW_USE_INTERNAL_API", false).present?
+      Homebrew::API::Internal.formula(name)
+    else
+      Homebrew::API::Formula.all_formulae[name]
+    end
     raise FormulaUnavailableError, name if json_formula.nil?
 
     json_formula = Homebrew::API.merge_variations(json_formula)

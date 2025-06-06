@@ -329,6 +329,17 @@ class Resource
       end
     end
 
+    def formula_json
+      formula_json = manifest_annotations["sh.brew.formula.json"]
+      raise Error, "Couldn't find formula JSON from manifest." if formula_json.blank?
+
+      begin
+        JSON.parse(formula_json)
+      rescue JSON::ParserError
+        raise Error, "Couldn't parse formula JSON."
+      end
+    end
+
     sig { returns(T.nilable(Integer)) }
     def bottle_size
       manifest_annotations["sh.brew.bottle.size"]&.to_i
