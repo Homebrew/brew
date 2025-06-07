@@ -201,7 +201,9 @@ module OS
       def prepare_relocation_to_locations
         relocation = generic_prepare_relocation_to_locations
 
-        brewed_perl = runtime_dependencies&.any? { |dep| dep["full_name"] == "perl" && dep["declared_directly"] }
+        brewed_perl = runtime_dependencies&.any? do |dep|
+          dep["full_name"] == "perl" && dep["declared_directly"] && !dep["uses_from_macos"]
+        end
         perl_path = if brewed_perl || name == "perl"
           "#{HOMEBREW_PREFIX}/opt/perl/bin/perl"
         elsif tab.built_on.present?

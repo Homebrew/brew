@@ -166,7 +166,7 @@ RSpec.describe Tab do
       tab.runtime_dependencies = runtime_deps_hash
       expect(tab.runtime_dependencies).to eql(
         [{ "full_name" => "foo", "version" => "1.0", "revision" => 0, "pkg_version" => "1.0",
-        "declared_directly" => false }],
+        "declared_directly" => false, "uses_from_macos" => false }],
       )
     end
 
@@ -184,6 +184,27 @@ RSpec.describe Tab do
           "revision"          => 0,
           "pkg_version"       => "1.0",
           "declared_directly" => true,
+          "uses_from_macos"   => false,
+        },
+      ]
+      expect(described_class.runtime_deps_hash(formula, runtime_deps)).to eq(expected_output)
+    end
+
+    it "include dependencies from macOS" do
+      foo = formula("foo") { url "foo-1.0" }
+      stub_formula_loader foo
+
+      runtime_deps = [UsesFromMacOSDependency.new("foo", bounds: {})]
+      formula = instance_double(Formula, deps: runtime_deps)
+
+      expected_output = [
+        {
+          "full_name"         => "foo",
+          "version"           => "1.0",
+          "revision"          => 0,
+          "pkg_version"       => "1.0",
+          "declared_directly" => true,
+          "uses_from_macos"   => true,
         },
       ]
       expect(described_class.runtime_deps_hash(formula, runtime_deps)).to eq(expected_output)
@@ -207,6 +228,7 @@ RSpec.describe Tab do
           "revision"          => 0,
           "pkg_version"       => "1.0",
           "declared_directly" => true,
+          "uses_from_macos"   => false,
         },
         {
           "full_name"         => "bar",
@@ -214,6 +236,7 @@ RSpec.describe Tab do
           "revision"          => 0,
           "pkg_version"       => "2.0",
           "declared_directly" => false,
+          "uses_from_macos"   => false,
         },
       ]
       expect(described_class.runtime_deps_hash(formula, formula_recursive_deps)).to eq(expected_output)
@@ -354,9 +377,9 @@ RSpec.describe Tab do
 
       runtime_dependencies = [
         { "full_name" => "bar", "version" => "2.0", "revision" => 0, "pkg_version" => "2.0",
-"declared_directly" => true },
+"declared_directly" => true, "uses_from_macos" => false },
         { "full_name" => "user/repo/from_tap", "version" => "1.0", "revision" => 1, "pkg_version" => "1.0_1",
-"declared_directly" => true },
+"declared_directly" => true, "uses_from_macos" => false },
       ]
       expect(tab.runtime_dependencies).to eq(runtime_dependencies)
 
