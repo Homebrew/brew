@@ -60,9 +60,9 @@ module Cask
           elsif MacOSVersion::SYMBOLS.key?(args.first)
             MacOSRequirement.new([args.first], comparator: "==")
           elsif (md = /^\s*(?<comparator><|>|[=<>]=)\s*:(?<version>\S+)\s*$/.match(first_arg))
-            MacOSRequirement.new([T.must(md[:version]).to_sym], comparator: md[:comparator])
+            MacOSRequirement.new([T.must(md[:version]).to_sym], comparator: T.must(md[:comparator]))
           elsif (md = /^\s*(?<comparator><|>|[=<>]=)\s*(?<version>\S+)\s*$/.match(first_arg))
-            MacOSRequirement.new([md[:version]], comparator: md[:comparator])
+            MacOSRequirement.new([md[:version]], comparator: T.must(md[:comparator]))
           # This is not duplicate of the first case: see `args.first` and a different comparator.
           else # rubocop:disable Lint/DuplicateBranch
             MacOSRequirement.new([args.first], comparator: "==")

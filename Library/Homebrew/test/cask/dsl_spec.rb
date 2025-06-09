@@ -141,6 +141,10 @@ RSpec.describe Cask::DSL, :cask do
         it "stores only the arm checksum" do
           expect(cask.sha256).to eq("imasha2arm")
         end
+
+        it "sets @uses_on_system.arm to true" do
+          expect(cask.uses_on_system.arm?).to be true
+        end
       end
 
       context "when running on intel" do
@@ -151,6 +155,86 @@ RSpec.describe Cask::DSL, :cask do
         it "stores only the intel checksum" do
           expect(cask.sha256).to eq("imasha2intel")
         end
+
+        it "sets @uses_on_system.intel to true" do
+          expect(cask.uses_on_system.intel?).to be true
+        end
+      end
+    end
+
+    context "with an arm64_linux checksum" do
+      let(:cask_arm_linux) do
+        Homebrew::SimulateSystem.with os: :linux, arch: :arm do
+          Cask::Cask.new("arm64_linux-checksum-cask") do
+            sha256 arm64_linux: "imasha2armlinux"
+          end
+        end
+      end
+
+      before do
+        allow(Hardware::CPU).to receive(:type).and_return(:arm)
+      end
+
+      it "stores only the intel checksum" do
+        expect(cask_arm_linux.sha256).to eq("imasha2armlinux")
+      end
+
+      it "sets @uses_on_system.arm to true" do
+        expect(cask_arm_linux.uses_on_system.arm?).to be true
+      end
+
+      it "sets @uses_on_system.linux to true" do
+        expect(cask_arm_linux.uses_on_system.linux?).to be true
+      end
+    end
+
+    context "with an x86_64_linux checksum" do
+      let(:cask_intel_linux) do
+        Homebrew::SimulateSystem.with os: :linux, arch: :intel do
+          Cask::Cask.new("x86_64_linux-checksum-cask") do
+            sha256 x86_64_linux: "imasha2intellinux"
+          end
+        end
+      end
+
+      before do
+        allow(Hardware::CPU).to receive(:type).and_return(:intel)
+      end
+
+      it "stores only the intel checksum" do
+        expect(cask_intel_linux.sha256).to eq("imasha2intellinux")
+      end
+
+      it "sets @uses_on_system.intel to true" do
+        expect(cask_intel_linux.uses_on_system.intel?).to be true
+      end
+
+      it "sets @uses_on_system.linux to true" do
+        expect(cask_intel_linux.uses_on_system.linux?).to be true
+      end
+    end
+
+    context "with a :no_check checksum" do
+      let(:cask_no_check) do
+        Cask::Cask.new("no_check-checksum-cask") do
+          sha256 :no_check
+        end
+      end
+
+      it "stores the :no_check symbol" do
+        expect(cask_no_check.sha256).to eq(:no_check)
+      end
+    end
+
+    context "with an invalid checksum value" do
+      let(:cask_invalid_checksum) do
+        Cask::Cask.new("invalid-checksum-cask") do
+          sha256 :invalid_symbol
+        end
+      end
+
+      it "refuses to load" do
+        expect { cask_invalid_checksum }.to raise_error(Cask::CaskInvalidError)
       end
     end
   end
@@ -369,6 +453,10 @@ RSpec.describe Cask::DSL, :cask do
         it "returns the value" do
           expect(cask.url.to_s).to eq "file://#{TEST_FIXTURE_DIR}/cask/caffeine-arm.zip"
         end
+
+        it "sets uses_on_system.arm to true" do
+          expect(cask.uses_on_system.arm?).to be true
+        end
       end
 
       context "when running on intel" do
@@ -378,6 +466,104 @@ RSpec.describe Cask::DSL, :cask do
 
         it "defaults to `nil` for the other when no arrays are passed" do
           expect(cask.url.to_s).to eq "file://#{TEST_FIXTURE_DIR}/cask/caffeine.zip"
+        end
+      end
+    end
+
+    context "when no arm value is specified" do
+      let(:token) { "arch-intel-only" }
+
+      context "when running on intel" do
+        before do
+          allow(Hardware::CPU).to receive(:type).and_return(:intel)
+        end
+
+        it "returns the value" do
+          expect(cask.url.to_s).to eq "file://#{TEST_FIXTURE_DIR}/cask/caffeine-intel.zip"
+        end
+
+        it "sets uses_on_system.intel to true" do
+          expect(cask.uses_on_system.intel?).to be true
+        end
+      end
+
+      context "when running on arm" do
+        before do
+          allow(Hardware::CPU).to receive(:type).and_return(:arm)
+        end
+
+        it "defaults to `nil` for the other when no arrays are passed" do
+          expect(cask.url.to_s).to eq "file://#{TEST_FIXTURE_DIR}/cask/caffeine.zip"
+        end
+      end
+    end
+  end
+
+  describe "os stanza" do
+    context "when os is called more than once" do
+      let(:cask_multiple_os_calls) { Cask::CaskLoader.load(cask_path("invalid/invalid-two-os")) }
+
+      it "prevents defining multiple oss" do
+        expect { cask_multiple_os_calls }.to raise_error(Cask::CaskInvalidError, /'os' stanza may only appear once/)
+      end
+    end
+
+    context "when only a macos value is specified" do
+      context "when running on macos" do
+        let(:cask_os_macos_only) do
+          Homebrew::SimulateSystem.with(os: :sequoia) do
+            Cask::CaskLoader.load(cask_path("os-macos-only"))
+          end
+        end
+
+        it "returns the value" do
+          expect(cask_os_macos_only.url.to_s).to eq "file://#{TEST_FIXTURE_DIR}/cask/caffeine-darwin.zip"
+        end
+
+        it "sets uses_on_system.macos to true" do
+          expect(cask_os_macos_only.uses_on_system.macos?).to be true
+        end
+      end
+
+      context "when running on linux" do
+        let(:cask_os_macos_only) do
+          Homebrew::SimulateSystem.with(os: :linux) do
+            Cask::CaskLoader.load(cask_path("os-macos-only"))
+          end
+        end
+
+        it "defaults to `nil`" do
+          expect(cask_os_macos_only.url.to_s).to eq "file://#{TEST_FIXTURE_DIR}/cask/caffeine.zip"
+        end
+      end
+    end
+
+    context "when only a linux value is specified" do
+      context "when running on linux" do
+        let(:cask_os_linux_only) do
+          Homebrew::SimulateSystem.with(os: :linux) do
+            Cask::CaskLoader.load(cask_path("os-linux-only"))
+          end
+        end
+
+        it "returns the value" do
+          expect(cask_os_linux_only.url.to_s).to eq "file://#{TEST_FIXTURE_DIR}/cask/caffeine-linux.zip"
+        end
+
+        it "sets uses_on_system.linux to true" do
+          expect(cask_os_linux_only.uses_on_system.linux?).to be true
+        end
+      end
+
+      context "when running on macos" do
+        let(:cask_os_linux_only) do
+          Homebrew::SimulateSystem.with(os: :sequoia) do
+            Cask::CaskLoader.load(cask_path("os-linux-only"))
+          end
+        end
+
+        it "defaults to `nil`" do
+          expect(cask_os_linux_only.url.to_s).to eq "file://#{TEST_FIXTURE_DIR}/cask/caffeine.zip"
         end
       end
     end
@@ -596,6 +782,128 @@ RSpec.describe Cask::DSL, :cask do
         :binary,
         :postflight,
       ]
+    end
+  end
+
+  describe "#uses_on_system" do
+    context "when cask uses on_arm" do
+      let(:token) { "with-on-arch-blocks" }
+
+      it "sets @uses_on_system.arm to true" do
+        expect(cask.uses_on_system.arm?).to be true
+      end
+    end
+
+    context "when cask uses on_intel" do
+      let(:token) { "with-on-arch-blocks" }
+
+      it "sets @uses_on_system.intel to true" do
+        expect(cask.uses_on_system.intel?).to be true
+      end
+    end
+
+    context "when cask uses on_arch_conditional" do
+      context "when arm argument is provided" do
+        let(:token) { "with-on-arch-conditional" }
+
+        it "sets @uses_on_system.arm to true" do
+          expect(cask.uses_on_system.arm?).to be true
+        end
+      end
+
+      context "when intel argument is provided" do
+        let(:token) { "with-on-arch-conditional" }
+
+        it "sets @uses_on_system.intel to true" do
+          expect(cask.uses_on_system.intel?).to be true
+        end
+      end
+
+      context "when no arguments are provided" do
+        let(:token) { "with-on-arch-conditional-no-args" }
+
+        it "doesn't set @uses_on_system.arm or .intel to true" do
+          expect(cask.uses_on_system.arm?).to be false
+          expect(cask.uses_on_system.intel?).to be false
+        end
+      end
+    end
+
+    context "when cask uses on_linux" do
+      let(:token) { "with-on-os-blocks" }
+
+      it "sets @uses_on_system.linux to true" do
+        expect(cask.uses_on_system.linux?).to be true
+      end
+    end
+
+    context "when cask uses on_macos" do
+      let(:token) { "with-on-os-blocks" }
+
+      it "sets @uses_on_system.macos to true" do
+        expect(cask.uses_on_system.macos?).to be true
+      end
+    end
+
+    context "when cask uses on_system" do
+      let(:token) { "with-on-system-blocks" }
+
+      it "sets @uses_on_system.linux to true" do
+        expect(cask.uses_on_system.linux?).to be true
+      end
+
+      it "sets @uses_on_system.macos to true" do
+        expect(cask.uses_on_system.macos?).to be true
+      end
+
+      it "sets @uses_on_system.macos_requirements using macos argument" do
+        expect(cask.uses_on_system.macos_requirements).to eq(Set[
+          MacOSRequirement.new([:sequoia], comparator: ">="),
+        ])
+      end
+    end
+
+    context "when cask uses on_system_conditional" do
+      context "when linux argument is provided" do
+        let(:token) { "with-on-system-conditional" }
+
+        it "sets @uses_on_system.linux to true" do
+          expect(cask.uses_on_system.linux?).to be true
+        end
+      end
+
+      context "when macos argument is provided" do
+        let(:token) { "with-on-system-conditional" }
+
+        it "sets @uses_on_system.macos to true" do
+          expect(cask.uses_on_system.macos?).to be true
+        end
+      end
+
+      context "when no arguments are provided" do
+        let(:token) { "with-on-system-conditional-no-args" }
+
+        it "doesn't set @uses_on_system.linux or .macos to true" do
+          expect(cask.uses_on_system.linux?).to be false
+          expect(cask.uses_on_system.macos?).to be false
+        end
+      end
+    end
+
+    context "when cask uses on_* macos version methods" do
+      let(:token) { "with-on-macos-version-blocks" }
+
+      it "sets @uses_on_system.macos to true" do
+        expect(cask.uses_on_system.macos?).to be true
+      end
+
+      it "sets @uses_on_system.macos_requirements using on_* macos version conditions" do
+        expect(cask.uses_on_system.macos_requirements).to eq(Set[
+          MacOSRequirement.new([:big_sur], comparator: "<="),
+          MacOSRequirement.new([:monterey], comparator: "=="),
+          MacOSRequirement.new([:ventura], comparator: ">="),
+        ])
+      end
     end
   end
 end

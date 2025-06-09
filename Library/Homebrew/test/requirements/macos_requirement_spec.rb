@@ -7,6 +7,7 @@ RSpec.describe MacOSRequirement do
 
   let(:macos_oldest_allowed) { MacOSVersion.new(HOMEBREW_MACOS_OLDEST_ALLOWED) }
   let(:macos_newest_allowed) { MacOSVersion.new(HOMEBREW_MACOS_NEWEST_UNSUPPORTED) }
+  let(:macos_newest_supported) { MacOSVersion.new(MacOSVersion::SYMBOLS.values.first) }
   let(:big_sur_major) { MacOSVersion.new("11.0") }
 
   describe "#satisfied?" do
@@ -62,5 +63,20 @@ RSpec.describe MacOSRequirement do
     expect(min_requirement.allows?(big_sur_major)).to be true
     expect(exact_requirement.allows?(big_sur_major)).to be true
     expect(range_requirement.allows?(big_sur_major)).to be true
+  end
+
+  specify "#highest_allowed" do
+    macos_version_sonoma = MacOSVersion.new("14")
+
+    no_requirement = described_class.new
+    max_requirement = described_class.new([:sonoma], comparator: "<=")
+    min_requirement = described_class.new([:sonoma], comparator: ">=")
+    exact_requirement = described_class.new([:sonoma], comparator: "==")
+    range_requirement = described_class.new([[:sonoma, :monterey]], comparator: "==")
+    expect(no_requirement.highest_allowed).to eq macos_newest_supported
+    expect(max_requirement.highest_allowed).to eq macos_version_sonoma
+    expect(min_requirement.highest_allowed).to eq macos_newest_supported
+    expect(exact_requirement.highest_allowed).to eq macos_version_sonoma
+    expect(range_requirement.highest_allowed).to eq macos_version_sonoma
   end
 end

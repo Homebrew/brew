@@ -270,7 +270,7 @@ class Formula
     @follow_installed_alias = T.let(true, T::Boolean)
     @prefix_returns_versioned_prefix = T.let(false, T.nilable(T::Boolean))
     @oldname_locks = T.let([], T::Array[FormulaLock])
-    @on_system_blocks_exist = T.let(false, T::Boolean)
+    @uses_on_system = T.let(OnSystem::UsesOnSystem.new, OnSystem::UsesOnSystem)
   end
 
   sig { params(spec_sym: Symbol).void }
@@ -2591,7 +2591,7 @@ class Formula
 
     variations = {}
 
-    if path.exist? && on_system_blocks_exist?
+    if path.exist? && uses_on_system.present?
       formula_contents = path.read
       OnSystem::VALID_OS_ARCH_TAGS.each do |bottle_tag|
         Homebrew::SimulateSystem.with_tag(bottle_tag) do
@@ -2789,9 +2789,11 @@ class Formula
     end
   end
 
-  sig { returns(T.nilable(T::Boolean)) }
-  def on_system_blocks_exist?
-    self.class.on_system_blocks_exist? || @on_system_blocks_exist
+  # A `UsesOnSystem` object that contains boolean instance variables indicating
+  # whether the formula uses specific on_system methods.
+  sig { returns(OnSystem::UsesOnSystem) }
+  def uses_on_system
+    self.class.uses_on_system || @uses_on_system
   end
 
   sig {
@@ -3331,7 +3333,7 @@ class Formula
         @skip_clean_paths = T.let(Set.new, T.nilable(T::Set[T.any(String, Symbol)]))
         @link_overwrite_paths = T.let(Set.new, T.nilable(T::Set[String]))
         @loaded_from_api = T.let(false, T.nilable(T::Boolean))
-        @on_system_blocks_exist = T.let(false, T.nilable(T::Boolean))
+        @uses_on_system = T.let(OnSystem::UsesOnSystem.new, T.nilable(OnSystem::UsesOnSystem))
         @network_access_allowed = T.let(SUPPORTED_NETWORK_ACCESS_PHASES.to_h do |phase|
           [phase, DEFAULT_NETWORK_ACCESS_ALLOWED]
         end, T.nilable(T::Hash[Symbol, T::Boolean]))
@@ -3345,6 +3347,7 @@ class Formula
       @conflicts.freeze
       @skip_clean_paths.freeze
       @link_overwrite_paths.freeze
+      @uses_on_system.freeze
       super
     end
 
@@ -3355,10 +3358,10 @@ class Formula
     sig { returns(T::Boolean) }
     def loaded_from_api? = !!@loaded_from_api
 
-    # Whether this formula contains OS/arch-specific blocks
-    # (e.g. `on_macos`, `on_arm`, `on_monterey :or_older`, `on_system :linux, macos: :big_sur_or_newer`).
-    sig { returns(T::Boolean) }
-    def on_system_blocks_exist? = !!@on_system_blocks_exist
+    # A `UsesOnSystem` object that contains boolean instance variables
+    # indicating whether the formula uses specific on_system methods.
+    sig { returns(T.nilable(OnSystem::UsesOnSystem)) }
+    attr_reader :uses_on_system
 
     # The reason for why this software is not linked (by default) to {::HOMEBREW_PREFIX}.
     sig { returns(T.nilable(KegOnlyReason)) }

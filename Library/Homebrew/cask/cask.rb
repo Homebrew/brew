@@ -414,7 +414,7 @@ module Cask
       hash = to_h
       variations = {}
 
-      if @dsl.on_system_blocks_exist?
+      if @dsl.uses_on_system.present?
         begin
           OnSystem::VALID_OS_ARCH_TAGS.each do |bottle_tag|
             next if bottle_tag.linux? && @dsl.os.nil?

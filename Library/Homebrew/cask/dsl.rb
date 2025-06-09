@@ -106,9 +106,9 @@ module Cask
       :no_autobump!,
       :autobump?,
       :no_autobump_message,
-      :on_system_blocks_exist?,
-      :on_system_block_min_os,
       :depends_on_set_in_block?,
+      :on_system_block_min_os,
+      :uses_on_system,
       *ORDINARY_ARTIFACT_CLASSES.map(&:dsl_key),
       *ACTIVATABLE_ARTIFACT_CLASSES.map(&:dsl_key),
       *ARTIFACT_BLOCK_CLASSES.flat_map { |klass| [klass.dsl_key, klass.uninstall_dsl_key] },
@@ -120,6 +120,11 @@ module Cask
                 :deprecation_replacement_cask, :deprecation_replacement_formula,
                 :disable_date, :disable_reason, :disable_replacement_cask,
                 :disable_replacement_formula, :on_system_block_min_os
+
+    # A `UsesOnSystem` object that contains boolean instance variables
+    # indicating whether the cask uses specific on_system methods.
+    sig { returns(OnSystem::UsesOnSystem) }
+    attr_reader :uses_on_system
 
     sig { params(cask: Cask).void }
     def initialize(cask)
@@ -153,13 +158,13 @@ module Cask
       @name = T.let([], T::Array[String])
       @autobump = T.let(true, T::Boolean)
       @no_autobump_defined = T.let(false, T::Boolean)
-      @on_system_blocks_exist = T.let(false, T::Boolean)
       @os = T.let(nil, T.nilable(String))
       @on_system_block_min_os = T.let(nil, T.nilable(MacOSVersion))
       @sha256 = T.let(nil, T.nilable(T.any(Checksum, Symbol)))
       @staged_path = T.let(nil, T.nilable(Pathname))
       @token = T.let(cask.token, String)
       @url = T.let(nil, T.nilable(URL))
+      @uses_on_system = T.let(OnSystem::UsesOnSystem.new, OnSystem::UsesOnSystem)
       @version = T.let(nil, T.nilable(DSL::Version))
     end
 
@@ -174,9 +179,6 @@ module Cask
 
     sig { returns(T::Boolean) }
     def livecheck_defined? = @livecheck_defined
-
-    sig { returns(T::Boolean) }
-    def on_system_blocks_exist? = @on_system_blocks_exist
 
     # Specifies the cask's name.
     #
@@ -392,8 +394,15 @@ module Cask
 
       x86_64 ||= intel if intel.present? && x86_64.nil?
       set_unique_stanza(:sha256, should_return) do
-        if arm.present? || x86_64.present? || x86_64_linux.present? || arm64_linux.present?
-          @on_system_blocks_exist = true
+        @uses_on_system.arm = true if arm.present?
+        @uses_on_system.intel = true if x86_64.present?
+        if x86_64_linux.present?
+          @uses_on_system.intel = true
+          @uses_on_system.linux = true
+        end
+        if arm64_linux.present?
+          @uses_on_system.arm = true
+          @uses_on_system.linux = true
         end
 
         val = arg || on_system_conditional(
@@ -424,7 +433,8 @@ module Cask
       should_return = arm.nil? && intel.nil?
 
       set_unique_stanza(:arch, should_return) do
-        @on_system_blocks_exist = true
+        @uses_on_system.arm = true if arm
+        @uses_on_system.intel = true if intel
 
         on_arch_conditional(arm:, intel:)
       end
@@ -449,7 +459,8 @@ module Cask
       should_return = macos.nil? && linux.nil?
 
       set_unique_stanza(:os, should_return) do
-        @on_system_blocks_exist = true
+        @uses_on_system.macos = true if macos
+        @uses_on_system.linux = true if linux
 
         on_system_conditional(macos:, linux:)
       end

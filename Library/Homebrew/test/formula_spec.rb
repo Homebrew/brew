@@ -1951,6 +1951,203 @@ RSpec.describe Formula do
     end
   end
 
+  describe "#uses_on_system" do
+    # These formula definitions use a different way of creating the formula,
+    # as the `Class.new` approach doesn't seem to work as expected for
+    # `uses_on_system`.
+    context "when formula uses on_arm" do
+      let(:f_on_arm) do
+        formula("on-arm") do
+          on_arm do
+            url "https://brew.sh/foo-1.0-arm.tar.gz"
+          end
+
+          url "https://brew.sh/foo-1.0.tar.gz"
+        end
+      end
+
+      it "sets @uses_on_system.arm to true" do
+        expect(f_on_arm.uses_on_system.arm?).to be true
+      end
+    end
+
+    context "when formula uses on_intel" do
+      let(:f_on_intel) do
+        formula("on-intel") do
+          on_intel do
+            url "https://brew.sh/foo-1.0-arm.tar.gz"
+          end
+
+          url "https://brew.sh/foo-1.0.tar.gz"
+        end
+      end
+
+      it "sets @uses_on_system.intel to true" do
+        expect(f_on_intel.uses_on_system.intel?).to be true
+      end
+    end
+
+    context "when formula uses on_arch_conditional" do
+      let(:f_on_arch_conditional) do
+        formula("on-arch-conditional") do
+          folder = on_arch_conditional arm: "arm/", intel: "intel/"
+
+          url "https://brew.sh/#{folder}foo-1.0.tar.gz"
+        end
+      end
+      let(:f_on_arch_conditional_no_args) do
+        formula("on-arch-conditional-no-args") do
+          folder = on_arch_conditional
+
+          url "https://brew.sh/#{folder}foo-1.0.tar.gz"
+        end
+      end
+
+      context "when arm argument is provided" do
+        it "sets @uses_on_system.arm to true" do
+          expect(f_on_arch_conditional.uses_on_system.arm?).to be true
+        end
+      end
+
+      context "when intel argument is provided" do
+        it "sets @uses_on_system.intel to true" do
+          expect(f_on_arch_conditional.uses_on_system.intel?).to be true
+        end
+      end
+
+      context "when no arguments are provided" do
+        it "doesn't set @uses_on_system.arm or .intel to true" do
+          expect(f_on_arch_conditional_no_args.uses_on_system.arm?).to be false
+          expect(f_on_arch_conditional_no_args.uses_on_system.intel?).to be false
+        end
+      end
+    end
+
+    context "when formula uses on_linux" do
+      let(:f_on_linux) do
+        formula("on-linux") do
+          on_linux do
+            url "https://brew.sh/foo-1.0-linux.tar.gz"
+          end
+
+          url "https://brew.sh/foo-1.0.tar.gz"
+        end
+      end
+
+      it "sets @uses_on_system.linux to true" do
+        expect(f_on_linux.uses_on_system.linux?).to be true
+      end
+    end
+
+    context "when formula uses on_macos" do
+      let(:f_on_macos) do
+        formula("on-macos") do
+          on_macos do
+            url "https://brew.sh/foo-1.0-macos.tar.gz"
+          end
+
+          url "https://brew.sh/foo-1.0.tar.gz"
+        end
+      end
+
+      it "sets @uses_on_system.macos to true" do
+        expect(f_on_macos.uses_on_system.macos?).to be true
+      end
+    end
+
+    context "when formula uses on_system" do
+      let(:f_on_system) do
+        formula("on-system") do
+          on_system :linux, macos: :sequoia_or_newer do
+            url "https://brew.sh/foo-1.0-new.tar.gz"
+          end
+
+          url "https://brew.sh/foo-1.0.tar.gz"
+        end
+      end
+
+      it "sets @uses_on_system.linux to true" do
+        expect(f_on_system.uses_on_system.linux?).to be true
+      end
+
+      it "sets @uses_on_system.macos to true" do
+        expect(f_on_system.uses_on_system.macos?).to be true
+      end
+
+      it "sets @uses_on_system.macos_requirements using macos argument" do
+        expect(f_on_system.uses_on_system.macos_requirements).to eq(Set[
+          MacOSRequirement.new([:sequoia], comparator: ">="),
+        ])
+      end
+    end
+
+    context "when formula uses on_system_conditional" do
+      let(:f_on_system_conditional) do
+        formula("on-system-conditional") do
+          folder = on_system_conditional linux: "linux/", macos: "macos/"
+
+          url "https://brew.sh/#{folder}foo-1.0.tar.gz"
+        end
+      end
+      let(:f_on_system_conditional_no_args) do
+        formula("on-system-conditional-no-args") do
+          folder = on_system_conditional
+
+          url "https://brew.sh/#{folder}foo-1.0.tar.gz"
+        end
+      end
+
+      context "when linux argument is provided" do
+        it "sets @uses_on_system.linux to true" do
+          expect(f_on_system_conditional.uses_on_system.linux?).to be true
+        end
+      end
+
+      context "when macos argument is provided" do
+        it "sets @uses_on_system.macos to true" do
+          expect(f_on_system_conditional.uses_on_system.macos?).to be true
+        end
+      end
+
+      context "when no arguments are provided" do
+        it "doesn't set @uses_on_system.linux or .macos to true" do
+          expect(f_on_system_conditional_no_args.uses_on_system.linux?).to be false
+          expect(f_on_system_conditional_no_args.uses_on_system.macos?).to be false
+        end
+      end
+    end
+
+    context "when formula uses on_* macos version methods" do
+      let(:f_on_macos_versions) do
+        formula("on-macos-versions") do
+          url "https://brew.sh/foo-1.0.tar.gz"
+
+          on_big_sur :or_older do
+            depends_on "abc"
+          end
+          on_monterey do
+            depends_on "def"
+          end
+          on_ventura :or_newer do
+            depends_on "ghi"
+          end
+        end
+      end
+
+      it "sets @uses_on_system.macos to true" do
+        expect(f_on_macos_versions.uses_on_system.macos?).to be true
+      end
+
+      it "sets @uses_on_system.macos_requirements using on_* macos version conditions" do
+        expect(f_on_macos_versions.uses_on_system.macos_requirements).to eq(Set[
+          MacOSRequirement.new([:big_sur], comparator: "<="),
+          MacOSRequirement.new([:monterey], comparator: "=="),
+          MacOSRequirement.new([:ventura], comparator: ">="),
+        ])
+      end
+    end
+  end
+
   describe "#network_access_allowed?" do
     it "throws an error when passed an invalid symbol" do
       f = Testball.new
