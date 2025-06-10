@@ -169,7 +169,7 @@ module Homebrew
         else
           kegs, casks = args.named.to_kegs_to_casks
 
-          if args.verbose? || !$stdout.tty?
+          if args.verbose?
             find_args = %w[-not -type d -not -name .DS_Store -print]
             system_command! "find", args: kegs.map(&:to_s) + find_args, print_stdout: true if kegs.present?
             system_command! "find", args: casks.map(&:caskroom_path) + find_args, print_stdout: true if casks.present?
