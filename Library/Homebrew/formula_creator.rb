@@ -56,10 +56,11 @@ module Homebrew
       @version = Version.detect(@url) if @version.nil?
       odebug "Version.detect: #{@version}"
 
-      if (match_github = @url.match %r{github\.com/(?<user>\S+)/(?<repo>\S+)(?<tail>.*)})
+      if (match_github = @url.match %r{github\.com/(?<user>\w+)/(?<repo>\w+)(?<tail>.*)})
         @head = true if match_github[:tail] == ".git"
         user = match_github[:user]
         repo = match_github[:repo]
+        odebug "github: #{user} #{repo} #{match_github[:tail]}"
         @github = GitHub.repository(user, repo) if @fetch
 
         latest_release = if @version.null? && @fetch
