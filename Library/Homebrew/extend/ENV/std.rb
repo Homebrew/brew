@@ -68,7 +68,6 @@ module Stdenv
     gcc_formula = gcc_version_formula(cc)
     append_path "PATH", gcc_formula.opt_bin.to_s
   end
-  alias generic_setup_build_environment setup_build_environment
 
   sig { returns(T.nilable(PATH)) }
   def determine_pkg_config_libdir

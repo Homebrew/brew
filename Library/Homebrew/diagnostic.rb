@@ -350,7 +350,6 @@ module Homebrew
             sudo chmod +t #{HOMEBREW_TEMP}
         EOS
       end
-      alias generic_check_tmpdir_sticky_bit check_tmpdir_sticky_bit
 
       def check_exist_directories
         return if HOMEBREW_PREFIX.writable?

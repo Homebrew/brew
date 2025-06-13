@@ -54,8 +54,6 @@ module SharedEnvExtension
     @debug_symbols = debug_symbols
     reset
   end
-  alias generic_shared_setup_build_environment setup_build_environment
-  private :generic_shared_setup_build_environment
 
   sig { void }
   def reset

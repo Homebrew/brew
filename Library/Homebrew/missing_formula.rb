@@ -93,7 +93,6 @@ module Homebrew
         EOS
         end
       end
-      alias generic_disallowed_reason disallowed_reason
 
       sig { params(name: String).returns(T.nilable(String)) }
       def tap_migration_reason(name)
@@ -195,8 +194,10 @@ module Homebrew
         end
       end
 
+      sig { params(name: String, silent: T::Boolean, show_info: T::Boolean).returns(T.nilable(String)) }
       def cask_reason(name, silent: false, show_info: false); end
 
+      sig { params(name: String, command: String).returns(T.nilable(String)) }
       def suggest_command(name, command); end
 
       require "extend/os/missing_formula"

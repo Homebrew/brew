@@ -10,7 +10,6 @@ module Homebrew
         def analytics_api_path
           "analytics"
         end
-        alias generic_analytics_api_path analytics_api_path
 
         sig { params(category: String, days: T.any(Integer, String)).returns(T::Hash[String, T.untyped]) }
         def fetch(category, days)

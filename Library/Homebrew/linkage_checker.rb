@@ -188,12 +188,10 @@ class LinkageChecker
 
     store&.update!(keg_files_dylibs:)
   end
-  alias generic_check_dylibs check_dylibs
 
   def system_libraries_exist_in_cache?
     false
   end
-  alias generic_system_libraries_exist_in_cache? system_libraries_exist_in_cache?
 
   def dylib_found_in_shared_cache?(dylib)
     @dyld_shared_cache_contains_path ||= begin

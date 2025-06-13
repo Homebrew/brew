@@ -37,7 +37,6 @@ module Homebrew
       end
 
       def global_post_install; end
-      alias generic_global_post_install global_post_install
 
       def check_prefix
         if (Hardware::CPU.intel? || Hardware::CPU.in_rosetta2?) &&
@@ -366,7 +365,6 @@ module Homebrew
         Diagnostic.checks(:supported_configuration_checks, fatal: all_fatal)
         Diagnostic.checks(:fatal_preinstall_checks)
       end
-      alias generic_perform_preinstall_checks perform_preinstall_checks
 
       def attempt_directory_creation
         Keg.must_exist_directories.each do |dir|
