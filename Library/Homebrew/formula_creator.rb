@@ -98,6 +98,7 @@ module Homebrew
           @desc = @github["description"]
           @homepage = @github["homepage"].presence || "https://github.com/#{@github["full_name"]}"
           @license = @github["license"]["spdx_id"] if @github["license"]
+          @mode = @github["language"].downcase.to_sym if @mode.nil?
         end
       end
 
