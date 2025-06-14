@@ -45,7 +45,7 @@ module Homebrew
           Cask::Cask.generating_hash!
 
           all_casks = {}
-          latest_macos = MacOSVersion.new((HOMEBREW_MACOS_NEWEST_UNSUPPORTED.to_i - 1).to_s).to_sym
+          latest_macos = MacOSVersion.new(HOMEBREW_MACOS_NEWEST_SUPPORTED).to_sym
           Homebrew::SimulateSystem.with(os: latest_macos, arch: :arm) do
             tap.cask_files.each do |path|
               cask = Cask::CaskLoader.load(path)

@@ -190,7 +190,7 @@ module Homebrew
       def generate_system_options(cask)
         current_os = Homebrew::SimulateSystem.current_os
         current_os_is_macos = MacOSVersion::SYMBOLS.include?(current_os)
-        newest_macos = MacOSVersion::SYMBOLS.keys.first
+        newest_macos = MacOSVersion.new(HOMEBREW_MACOS_NEWEST_SUPPORTED).to_sym
 
         depends_on_archs = cask.depends_on.arch&.filter_map { |arch| arch[:type] }&.uniq
 
