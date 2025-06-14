@@ -104,6 +104,7 @@ module Cask
       :no_autobump!,
       :autobump?,
       :no_autobump_message,
+      :login_items,
       :on_system_blocks_exist?,
       :on_system_block_min_os,
       :depends_on_set_in_block?,
@@ -236,6 +237,21 @@ module Cask
       raise
     rescue => e
       raise CaskInvalidError.new(cask, "'#{stanza}' stanza failed with: #{e}")
+    end
+
+    # Sets the cask's login items
+    #
+    # ### Example
+    #
+    # ```ruby
+    # login_items "Raycast"
+    # ```
+    #
+    # @api public
+    def login_items(login_items = nil)
+      return [] if login_items.nil?
+
+      set_unique_stanza(:login_items, login_items.nil?) { Array(login_items) }
     end
 
     # Sets the cask's homepage.
