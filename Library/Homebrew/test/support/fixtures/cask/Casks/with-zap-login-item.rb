@@ -1,3 +1,4 @@
+# TODO: Check if this fixture is still needed once the login_items are moved to the top-level
 cask "with-zap-login-item" do
   version "1.2.3"
   sha256 "8c62a2b791cf5f0da6066a0a4b6e85f62949cd60975da062df44adf887f4370b"
@@ -6,6 +7,5 @@ cask "with-zap-login-item" do
   homepage "https://brew.sh/fancy-pkg"
 
   pkg "MyFancyPkg/Fancy.pkg"
-
-  zap login_item: "Fancy"
+  login_items "Fancy"
 end
