@@ -130,16 +130,13 @@ module Homebrew
         unless formulae.empty?
           Install.perform_preinstall_checks_once
 
-          # If asking the user is enabled, show dependency and size information.
-          Install.ask_formulae(formulae, args: args) if args.ask?
-
-          formulae.each do |formula|
+          formulae_kegs = formulae.map do |formula|
             if formula.pinned?
               onoe "#{formula.full_name} is pinned. You must unpin it to reinstall."
               next
             end
             Migrator.migrate_if_needed(formula, force: args.force?)
-            Homebrew::Reinstall.reinstall_formula(
+            Homebrew::Reinstall.formula_installer(
               formula,
               flags:                      args.flags_only,
               force_bottle:               args.force_bottle?,
@@ -153,22 +150,81 @@ module Homebrew
               verbose:                    args.verbose?,
               git:                        args.git?,
             )
-            Cleanup.install_formula_clean!(formula)
           end
 
-          Upgrade.check_installed_dependents(
-            formulae,
-            flags:                      args.flags_only,
-            force_bottle:               args.force_bottle?,
-            build_from_source_formulae: args.build_from_source_formulae,
-            interactive:                args.interactive?,
-            keep_tmp:                   args.keep_tmp?,
-            debug_symbols:              args.debug_symbols?,
-            force:                      args.force?,
-            debug:                      args.debug?,
-            quiet:                      args.quiet?,
-            verbose:                    args.verbose?,
-          )
+          if args.ask?
+            dependants = Upgrade.dependants(
+              formulae,
+              flags:                      args.flags_only,
+              ask:                        args.ask?,
+              force_bottle:               args.force_bottle?,
+              build_from_source_formulae: args.build_from_source_formulae,
+              interactive:                args.interactive?,
+              keep_tmp:                   args.keep_tmp?,
+              debug_symbols:              args.debug_symbols?,
+              force:                      args.force?,
+              debug:                      args.debug?,
+              quiet:                      args.quiet?,
+              verbose:                    args.verbose?,
+            )
+
+            formulae_installer = formulae_kegs.map(&:formula_installer)
+
+            formulae_dependencies = Install.collect_dependencies(formulae_installer, dependants)
+            # Main block: if asking the user is enabled, show dependency and size information.
+            Install.ask_formulae(formulae_dependencies, args: args)
+
+          end
+
+          formulae_kegs.each do |f|
+            Homebrew::Reinstall.reinstall_formula(
+              f,
+              flags:                      args.flags_only,
+              force_bottle:               args.force_bottle?,
+              build_from_source_formulae: args.build_from_source_formulae,
+              interactive:                args.interactive?,
+              keep_tmp:                   args.keep_tmp?,
+              debug_symbols:              args.debug_symbols?,
+              force:                      args.force?,
+              debug:                      args.debug?,
+              quiet:                      args.quiet?,
+              verbose:                    args.verbose?,
+              git:                        args.git?,
+            )
+            Cleanup.install_formula_clean!(f.formula)
+          end
+
+          unless args.ask?
+            dependants = Upgrade.dependants(
+              formulae,
+              flags:                      args.flags_only,
+              force_bottle:               args.force_bottle?,
+              build_from_source_formulae: args.build_from_source_formulae,
+              interactive:                args.interactive?,
+              keep_tmp:                   args.keep_tmp?,
+              debug_symbols:              args.debug_symbols?,
+              force:                      args.force?,
+              debug:                      args.debug?,
+              quiet:                      args.quiet?,
+              verbose:                    args.verbose?,
+            )
+          end
+
+          if dependants.present?
+            Upgrade.upgrade_dependents(
+              dependants, formulae,
+              flags:                      args.flags_only,
+              force_bottle:               args.force_bottle?,
+              build_from_source_formulae: args.build_from_source_formulae,
+              interactive:                args.interactive?,
+              keep_tmp:                   args.keep_tmp?,
+              debug_symbols:              args.debug_symbols?,
+              force:                      args.force?,
+              debug:                      args.debug?,
+              quiet:                      args.quiet?,
+              verbose:                    args.verbose?
+            )
+          end
         end
 
         if casks.any?

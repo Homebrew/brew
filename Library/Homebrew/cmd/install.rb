@@ -310,9 +310,7 @@ module Homebrew
         Install.perform_preinstall_checks_once
         Install.check_cc_argv(args.cc)
 
-        Install.ask_formulae(installed_formulae, args: args) if args.ask?
-
-        Install.install_formulae(
+        formulae_installer = Install.formulae_installer(
           installed_formulae,
           installed_on_request:       !args.as_dependency?,
           installed_as_dependency:    args.as_dependency?,
@@ -338,21 +336,67 @@ module Homebrew
           skip_link:                  args.skip_link?,
         )
 
-        Upgrade.check_installed_dependents(
-          installed_formulae,
-          flags:                      args.flags_only,
-          installed_on_request:       !args.as_dependency?,
-          force_bottle:               args.force_bottle?,
-          build_from_source_formulae: args.build_from_source_formulae,
-          interactive:                args.interactive?,
-          keep_tmp:                   args.keep_tmp?,
-          debug_symbols:              args.debug_symbols?,
-          force:                      args.force?,
-          debug:                      args.debug?,
-          quiet:                      args.quiet?,
-          verbose:                    args.verbose?,
-          dry_run:                    args.dry_run?,
-        )
+        if args.ask?
+          dependants = Upgrade.dependants(
+            installed_formulae,
+            flags:                      args.flags_only,
+            ask:                        args.ask?,
+            installed_on_request:       !args.as_dependency?,
+            force_bottle:               args.force_bottle?,
+            build_from_source_formulae: args.build_from_source_formulae,
+            interactive:                args.interactive?,
+            keep_tmp:                   args.keep_tmp?,
+            debug_symbols:              args.debug_symbols?,
+            force:                      args.force?,
+            debug:                      args.debug?,
+            quiet:                      args.quiet?,
+            verbose:                    args.verbose?,
+            dry_run:                    args.dry_run?,
+          )
+
+          formulae_dependencies = Install.collect_dependencies(formulae_installer, dependants)
+          # Main block: if asking the user is enabled, show dependency and size information.
+          Install.ask_formulae(formulae_dependencies, args: args)
+        end
+
+        Install.install_formulae(formulae_installer,
+                                 dry_run: args.dry_run?,
+                                 verbose: args.verbose?)
+
+        unless args.ask?
+          dependants = Upgrade.dependants(
+            installed_formulae,
+            flags:                      args.flags_only,
+            dry_run:                    args.dry_run?,
+            installed_on_request:       !args.as_dependency?,
+            force_bottle:               args.force_bottle?,
+            build_from_source_formulae: args.build_from_source_formulae,
+            interactive:                args.interactive?,
+            keep_tmp:                   args.keep_tmp?,
+            debug_symbols:              args.debug_symbols?,
+            force:                      args.force?,
+            debug:                      args.debug?,
+            quiet:                      args.quiet?,
+            verbose:                    args.verbose?,
+          )
+        end
+
+        if dependants.present?
+          Upgrade.upgrade_dependents(
+            dependants, installed_formulae,
+            flags:                      args.flags_only,
+            dry_run:                    args.dry_run?,
+            force_bottle:               args.force_bottle?,
+            build_from_source_formulae: args.build_from_source_formulae,
+            interactive:                args.interactive?,
+            keep_tmp:                   args.keep_tmp?,
+            debug_symbols:              args.debug_symbols?,
+            force:                      args.force?,
+            debug:                      args.debug?,
+            quiet:                      args.quiet?,
+            verbose:                    args.verbose?
+          )
+        end
 
         Cleanup.periodic_clean!(dry_run: args.dry_run?)
 

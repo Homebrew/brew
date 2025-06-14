@@ -220,10 +220,7 @@ module Homebrew
 
         Install.perform_preinstall_checks_once
 
-        # Main block: if asking the user is enabled, show dependency and size information.
-        Install.ask_formulae(formulae_to_install, args: args) if args.ask?
-
-        Upgrade.upgrade_formulae(
+        formulae_installer = Upgrade.formulae_installer(
           formulae_to_install,
           flags:                      args.flags_only,
           dry_run:                    args.dry_run?,
@@ -239,20 +236,66 @@ module Homebrew
           verbose:                    args.verbose?,
         )
 
-        Upgrade.check_installed_dependents(
-          formulae_to_install,
-          flags:                      args.flags_only,
-          dry_run:                    args.dry_run?,
-          force_bottle:               args.force_bottle?,
-          build_from_source_formulae: args.build_from_source_formulae,
-          interactive:                args.interactive?,
-          keep_tmp:                   args.keep_tmp?,
-          debug_symbols:              args.debug_symbols?,
-          force:                      args.force?,
-          debug:                      args.debug?,
-          quiet:                      args.quiet?,
-          verbose:                    args.verbose?,
-        )
+        if args.ask?
+          dependants = Upgrade.dependants(
+            formulae_to_install,
+            flags:                      args.flags_only,
+            dry_run:                    args.dry_run?,
+            ask:                        args.ask?,
+            force_bottle:               args.force_bottle?,
+            build_from_source_formulae: args.build_from_source_formulae,
+            interactive:                args.interactive?,
+            keep_tmp:                   args.keep_tmp?,
+            debug_symbols:              args.debug_symbols?,
+            force:                      args.force?,
+            debug:                      args.debug?,
+            quiet:                      args.quiet?,
+            verbose:                    args.verbose?,
+          )
+
+          formulae_dependencies = Install.collect_dependencies(formulae_installer, dependants)
+          # Main block: if asking the user is enabled, show dependency and size information.
+          Install.ask_formulae(formulae_dependencies, args: args)
+
+        end
+
+        Upgrade.upgrade_formulae(formulae_installer,
+                                 dry_run: args.dry_run?,
+                                 verbose: args.verbose?)
+
+        unless args.ask?
+          dependants = Upgrade.dependants(
+            formulae_to_install,
+            flags:                      args.flags_only,
+            dry_run:                    args.dry_run?,
+            force_bottle:               args.force_bottle?,
+            build_from_source_formulae: args.build_from_source_formulae,
+            interactive:                args.interactive?,
+            keep_tmp:                   args.keep_tmp?,
+            debug_symbols:              args.debug_symbols?,
+            force:                      args.force?,
+            debug:                      args.debug?,
+            quiet:                      args.quiet?,
+            verbose:                    args.verbose?,
+          )
+        end
+
+        if dependants.present?
+          Upgrade.upgrade_dependents(
+            dependants, formulae_to_install,
+            flags:                      args.flags_only,
+            dry_run:                    args.dry_run?,
+            force_bottle:               args.force_bottle?,
+            build_from_source_formulae: args.build_from_source_formulae,
+            interactive:                args.interactive?,
+            keep_tmp:                   args.keep_tmp?,
+            debug_symbols:              args.debug_symbols?,
+            force:                      args.force?,
+            debug:                      args.debug?,
+            quiet:                      args.quiet?,
+            verbose:                    args.verbose?
+          )
+        end
 
         true
       end

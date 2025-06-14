@@ -11,7 +11,9 @@ require "utils/topological_hash"
 module Homebrew
   # Helper functions for upgrading formulae.
   module Upgrade
-    def self.upgrade_formulae(
+    Dependents = Struct.new(:upgradeable, :pinned, :skipped)
+
+    def self.formulae_installer(
       formulae_to_install,
       flags:,
       dry_run: false,
@@ -48,7 +50,7 @@ module Homebrew
         raise CyclicDependencyError, dependency_graph.strongly_connected_components if Homebrew::EnvConfig.developer?
       end
 
-      formula_installers = formulae_to_install.filter_map do |formula|
+      formulae_to_install.filter_map do |formula|
         Migrator.migrate_if_needed(formula, force:, dry_run:)
         begin
           fi = create_formula_installer(
@@ -65,18 +67,15 @@ module Homebrew
             quiet:,
             verbose:,
           )
-          unless dry_run
-            fi.prelude
-
+          if !dry_run && dependents && fi.bottle_tab_runtime_dependencies.presence&.all? do |dependency, hash|
+            minimum_version = Version.new(hash["version"]) if hash["version"].present?
+            Dependency.new(dependency).installed?(minimum_version:, minimum_revision: hash["revision"])
+          end
             # Don't need to install this bottle if all of the runtime
             # dependencies have the same or newer version already installed.
-            next if dependents && fi.bottle_tab_runtime_dependencies.presence&.all? do |dependency, hash|
-              minimum_version = Version.new(hash["version"]) if hash["version"].present?
-              Dependency.new(dependency).installed?(minimum_version:, minimum_revision: hash["revision"])
-            end
-
-            fi.fetch
+            next
           end
+
           fi
         rescue CannotInstallFormulaError => e
           ofail e
@@ -86,8 +85,19 @@ module Homebrew
           nil
         end
       end
+    end
 
+    def self.upgrade_formulae(formula_installers, dry_run: false, verbose: false)
       formula_installers.each do |fi|
+        begin
+          fi.prelude
+          fi.fetch
+        rescue CannotInstallFormulaError => e
+          ofail e
+        rescue UnsatisfiedRequirements, DownloadError => e
+          ofail "#{fi.formula.full_name}: #{e}"
+        end
+
         upgrade_formula(fi, dry_run:, verbose:)
         Cleanup.install_formula_clean!(fi.formula, dry_run:)
       end
@@ -250,10 +260,11 @@ module Homebrew
       @puts_no_installed_dependents_check_disable_message_if_not_already = true
     end
 
-    def self.check_installed_dependents(
+    def self.dependants(
       formulae,
       flags:,
       dry_run: false,
+      ask: false,
       installed_on_request: false,
       force_bottle: false,
       build_from_source_formulae: [],
@@ -274,8 +285,11 @@ module Homebrew
         end
         return
       end
-
-      installed_formulae = (dry_run ? formulae : FormulaInstaller.installed.to_a).dup
+      installed_formulae = if dry_run || ask
+        formulae.dup
+      else
+        FormulaInstaller.installed.to_a.dup
+      end
       installed_formulae.reject! { |f| f.core_formula? && f.versioned_formula? }
       return if installed_formulae.empty?
 
@@ -292,14 +306,6 @@ module Homebrew
         dependent.bottled? && dependent.deps.map(&:to_formula).all?(&:bottled?)
       end
 
-      if skipped_dependents.present?
-        opoo <<~EOS
-          The following dependents of upgraded formulae are outdated but will not
-          be upgraded because they are not bottled:
-            #{skipped_dependents * "\n  "}
-        EOS
-      end
-
       return if outdated_dependents.blank? && already_broken_dependents.blank?
 
       outdated_dependents -= installed_formulae if dry_run
@@ -311,24 +317,50 @@ module Homebrew
         outdated_dependents.select(&:pinned?)
                            .sort { |a, b| depends_on(a, b) }
 
-      if pinned_dependents.present?
-        plural = Utils.pluralize("dependent", pinned_dependents.count)
-        opoo "Not upgrading #{pinned_dependents.count} pinned #{plural}:"
-        puts(pinned_dependents.map do |f|
+      Dependents.new(upgradeable_dependents, pinned_dependents, skipped_dependents)
+    end
+
+    def self.upgrade_dependents(deps, formulae,
+                                flags:,
+                                dry_run: false,
+                                installed_on_request: false,
+                                force_bottle: false,
+                                build_from_source_formulae: [],
+                                interactive: false,
+                                keep_tmp: false,
+                                debug_symbols: false,
+                                force: false,
+                                debug: false,
+                                quiet: false,
+                                verbose: false)
+      upgradeable = deps.upgradeable
+      pinned      = deps.pinned
+      skipped     = deps.skipped
+      if pinned.present?
+        plural = Utils.pluralize("dependent", pinned.count)
+        opoo "Not upgrading #{pinned.count} pinned #{plural}:"
+        puts(pinned.map do |f|
           "#{f.full_specified_name} #{f.pkg_version}"
         end.join(", "))
       end
-
+      if skipped.present?
+        opoo <<~EOS
+          The following dependents of upgraded formulae are outdated but will not
+          be upgraded because they are not bottled:
+            #{skipped * "\n  "}
+        EOS
+      end
       # Print the upgradable dependents.
-      if upgradeable_dependents.blank?
+      if upgradeable.blank?
         ohai "No outdated dependents to upgrade!" unless dry_run
       else
+        installed_formulae = (dry_run ? formulae : FormulaInstaller.installed.to_a).dup
         formula_plural = Utils.pluralize("formula", installed_formulae.count, plural: "e")
         upgrade_verb = dry_run ? "Would upgrade" : "Upgrading"
-        ohai "#{upgrade_verb} #{Utils.pluralize("dependent", upgradeable_dependents.count,
+        ohai "#{upgrade_verb} #{Utils.pluralize("dependent", upgradeable.count,
                                                 include_count: true)} of upgraded #{formula_plural}:"
         Upgrade.puts_no_installed_dependents_check_disable_message_if_not_already!
-        formulae_upgrades = upgradeable_dependents.map do |f|
+        formulae_upgrades = upgradeable.map do |f|
           name = f.full_specified_name
           if f.optlinked?
             "#{name} #{Keg.new(f.opt_prefix).version} -> #{f.pkg_version}"
@@ -340,8 +372,8 @@ module Homebrew
       end
 
       unless dry_run
-        upgrade_formulae(
-          upgradeable_dependents,
+        formulae_dependencies = formulae_installer(
+          upgradeable,
           flags:,
           force_bottle:,
           build_from_source_formulae:,
@@ -354,6 +386,7 @@ module Homebrew
           quiet:,
           verbose:,
         )
+        upgrade_formulae formulae_dependencies
       end
 
       # Update installed formulae after upgrading
@@ -409,11 +442,24 @@ module Homebrew
       return if dry_run
 
       reinstallable_broken_dependents.each do |formula|
-        Reinstall.reinstall_formula(
+        formula_installer = Reinstall.formula_installer(
           formula,
           flags:,
           force_bottle:,
           build_from_source_formulae: build_from_source_formulae + [formula.full_name],
+          interactive:,
+          keep_tmp:,
+          debug_symbols:,
+          force:,
+          debug:,
+          quiet:,
+          verbose:,
+        )
+        Reinstall.reinstall_formula(
+          formula_installer,
+          flags:,
+          force_bottle:,
+          build_from_source_formulae:,
           interactive:,
           keep_tmp:,
           debug_symbols:,
