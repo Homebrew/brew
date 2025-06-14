@@ -147,6 +147,10 @@ module Homebrew
             description: "Disable/enable quarantining of downloads (default: enabled).",
             env:         :cask_opts_quarantine,
           }],
+          [:switch, "--[no-]login-items", {
+            description: "Disable/enable registering of login item(s) (default: disabled).",
+            env:         :cask_opts_login_items,
+          }],
           [:switch, "--adopt", {
             description: "Adopt existing artifacts in the destination that are identical to those being installed. " \
                          "Cannot be combined with `--force`.",
@@ -267,6 +271,7 @@ module Homebrew
               binaries:       args.binaries?,
               force:          args.force?,
               quarantine:     args.quarantine?,
+              login_items:    args.login_items?,
               quiet:          args.quiet?,
               require_sha:    args.require_sha?,
               skip_cask_deps: args.skip_cask_deps?,
@@ -283,6 +288,7 @@ module Homebrew
               dry_run:        args.dry_run?,
               binaries:       args.binaries?,
               quarantine:     args.quarantine?,
+              login_items:    args.login_items?,
               require_sha:    args.require_sha?,
               skip_cask_deps: args.skip_cask_deps?,
               verbose:        args.verbose?,
