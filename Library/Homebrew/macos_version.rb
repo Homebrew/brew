@@ -2,9 +2,12 @@
 # frozen_string_literal: true
 
 require "version"
+require "cachable"
 
 # A macOS version.
 class MacOSVersion < Version
+  extend Cachable
+
   # Raised when a macOS version is unsupported.
   class Error < RuntimeError
     sig { returns(T.nilable(T.any(String, Symbol))) }
@@ -47,8 +50,10 @@ class MacOSVersion < Version
 
   sig { params(version: Symbol).returns(T.attached_class) }
   def self.from_symbol(version)
-    str = SYMBOLS.fetch(version) { raise MacOSVersion::Error, version }
-    new(str)
+    cache.fetch(version) do |v|
+      str = SYMBOLS.fetch(v) { raise MacOSVersion::Error, v }
+      cache[v] = new(str)
+    end
   end
 
   sig { params(version: T.nilable(String)).void }
@@ -62,7 +67,7 @@ class MacOSVersion < Version
 
   sig { override.params(other: T.untyped).returns(T.nilable(Integer)) }
   def <=>(other)
-    return @comparison_cache[other] if @comparison_cache.key?(other)
+    return @comparison_cache[other.to_s] if @comparison_cache.key?(other.to_s)
 
     result = case other
     when Symbol
@@ -76,7 +81,7 @@ class MacOSVersion < Version
       super
     end
 
-    @comparison_cache[other] = result unless frozen?
+    @comparison_cache[other.to_s] = result unless frozen?
 
     result
   end
