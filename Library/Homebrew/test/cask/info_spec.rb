@@ -163,6 +163,42 @@ RSpec.describe Cask::Info, :cask do
     EOS
   end
 
+  it "prints login-items specified in the Cask" do
+    expect do
+      described_class.info(Cask::CaskLoader.load("with-login-items"), args:)
+    end.to output(<<~EOS).to_stdout
+      ==> with-login-items: 1.2.3
+      https://brew.sh/
+      Not installed
+      From: https://github.com/Homebrew/homebrew-cask/blob/HEAD/Casks/w/with-login-items.rb
+      ==> Name
+      None
+      ==> Description
+      None
+      ==> Artifacts
+      Caffeine.app (App)
+      ==> Login Items
+      Caffeine.app
+    EOS
+  end
+
+  it 'does not print "login-items" section divider if the login-items block has no output' do
+    expect do
+      described_class.info(Cask::CaskLoader.load("without-login-items"), args:)
+    end.to output(<<~EOS).to_stdout
+      ==> without-login-items: 1.2.3
+      https://brew.sh/
+      Not installed
+      From: https://github.com/Homebrew/homebrew-cask/blob/HEAD/Casks/w/without-login-items.rb
+      ==> Name
+      None
+      ==> Description
+      None
+      ==> Artifacts
+      Caffeine.app (App)
+    EOS
+  end
+
   it "prints install information for an installed Cask" do
     mktmpdir do |caskroom|
       FileUtils.mkdir caskroom/"2.61"

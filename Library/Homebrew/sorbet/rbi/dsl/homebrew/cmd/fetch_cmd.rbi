@@ -57,6 +57,9 @@ class Homebrew::Cmd::FetchCmd::Args < Homebrew::CLI::Args
   def quarantine?; end
 
   sig { returns(T::Boolean) }
+  def login_items?; end
+
+  sig { returns(T::Boolean) }
   def retry?; end
 
   sig { returns(T::Boolean) }

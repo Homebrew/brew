@@ -347,6 +347,10 @@ module Cask
       @languages ||= @dsl.languages
     end
 
+    def login_items
+      @login_items ||= @dsl.login_items
+    end
+
     def tap_git_head
       @tap_git_head ||= tap&.git_head
     rescue TapUnavailableError
@@ -357,6 +361,7 @@ module Cask
       raise ArgumentError, "Expected cask to be loaded from the API" unless loaded_from_api?
 
       @languages = json_cask.fetch(:languages, [])
+      @login_items = json_cask.fetch(:login_items, [])
       @tap_git_head = json_cask.fetch(:tap_git_head, "HEAD")
 
       @ruby_source_path = json_cask[:ruby_source_path]
@@ -427,6 +432,7 @@ module Cask
         "languages"                       => languages,
         "ruby_source_path"                => ruby_source_path,
         "ruby_source_checksum"            => ruby_source_checksum,
+        "login_items"                     => login_items,
       }
     end
 

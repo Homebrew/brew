@@ -20,6 +20,7 @@ module Cask
         :launchctl,
         :quit,
         :signal,
+        # odeprecated: deprecate when all casks have been migrated to top-level login_items
         :login_item,
         :kext,
         :script,
@@ -297,6 +298,7 @@ module Cask
         end
       end
 
+      # TODO: Need to refer to attribute from the cask instead of this uninstall stanza
       def uninstall_login_item(*login_items, command: nil, successor: nil, **_)
         return if successor
 

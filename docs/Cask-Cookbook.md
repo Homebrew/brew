@@ -92,6 +92,7 @@ Having a common order for stanzas makes casks easier to update and parse. Below 
     vst3_plugin
     artifact, target: # target: shown here as is required with `artifact`
     stage_only
+    login_items
 
     preflight
 
@@ -171,6 +172,7 @@ Each cask must declare one or more [artifacts](/rubydoc/Cask/Artifact.html) (i.e
 | [`postflight`](#stanza-flight)             | yes                           | Ruby block containing postflight install operations. |
 | `uninstall_preflight`                      | yes                           | Ruby block containing preflight uninstall operations (needed only in very rare cases). |
 | `uninstall_postflight`                     | yes                           | Ruby block containing postflight uninstall operations. |
+| `login_items`                              | no                            | (string or array) - names of login items. |
 | [`language`](#stanza-language)             | required                      | Ruby block, called with language code parameters, containing other stanzas and/or a return value. |
 | `container nested:`                        | no                            | Relative path to an inner container that must be extracted before moving on with the installation. This allows for support of `.dmg` inside `.tar`, `.zip` inside `.dmg`, etc. (Example: [blocs.rb](https://github.com/Homebrew/homebrew-cask/blob/aa461148bbb5119af26b82cccf5003e2b4e50d95/Casks/b/blocs.rb#L17-L19)) |
 | `container type:`                          | no                            | Symbol to override container-type autodetect. May be one of: `:air`, `:bz2`, `:cab`, `:dmg`, `:generic_unar`, `:gzip`, `:otf`, `:pkg`, `:rar`, `:seven_zip`, `:sit`, `:tar`, `:ttf`, `:xar`, `:zip`, `:naked`. (Example: [parse.rb](https://github.com/Homebrew/homebrew-cask/blob/aa461148bbb5119af26b82cccf5003e2b4e50d95/Casks/p/parse.rb#L10)) |
@@ -521,6 +523,14 @@ Refer to [Deprecating, Disabling and Removing Casks](Deprecating-Disabling-and-R
   + desc "Sound and music editor"
   ```
 
+### Stanza: `login_items`
+
+Login items associated with an application bundle on disk can be listed using [`list_login_items_for_app`](https://github.com/Homebrew/homebrew-cask/blob/HEAD/developer/bin/list_login_items_for_app):
+
+```bash
+"$(brew --repository homebrew/cask)/developer/bin/list_login_items_for_app" '/path/to/application.app'
+```
+
 ### Stanza: `*flight`
 
 The stanzas `preflight`, `postflight`, `uninstall_preflight`, and `uninstall_postflight` define operations to be run before or after installation or uninstallation.
@@ -795,7 +805,7 @@ The easiest and most useful `uninstall` directive is [`pkgutil:`](#uninstall-pkg
 * **`early_script:`** (string or hash) - like [`script:`](#uninstall-script), but runs early (for special cases, best avoided)
 * [`launchctl:`](#uninstall-launchctl) (string or array) - IDs of `launchd` jobs to remove
 * [`quit:`](#uninstall-quit) (string or array) - bundle IDs of running applications to quit (does not run when uninstall is initiated by `brew upgrade` or `brew reinstall`)
-* [`signal:`](#uninstall-signal) (array of arrays) - signal numbers and bundle IDs of running applications to send a Unix signal to, for when `quit:` does not work (does not run when uninstall is initiated by `brew upgrade` or `brew reinstall`)
+* [`signal:`](#uninstall-signal) (array of arrays) - signal numbers and bundle IDs of running applications to send a Unix signal to - for when `quit:` does not work (does not run when uninstall is initiated by `brew upgrade` or `brew reinstall`)
 * [`login_item:`](#uninstall-login_item) (string or array) - names of login items to remove
 * [`kext:`](#uninstall-kext) (string or array) - bundle IDs of kexts to unload from the system
 * [`script:`](#uninstall-script) (string or hash) - relative path to an uninstall script to be run via *sudo*; use hash if args are needed
@@ -891,16 +901,6 @@ uninstall signal: [
 Note that when multiple running processes match the given bundle ID, all matching processes will be signaled.
 
 Unlike `quit:` directives, Unix signals originate from the current user, not from the superuser. This is construed as a safety feature, since the superuser is capable of bringing down the system via signals. However, this inconsistency could also be considered a bug, and may be addressed in some fashion in a future version.
-
-#### `uninstall` *login_item*
-
-Login items associated with an application bundle on disk can be listed using [`list_login_items_for_app`](https://github.com/Homebrew/homebrew-cask/blob/HEAD/developer/bin/list_login_items_for_app):
-
-```bash
-"$(brew --repository homebrew/cask)/developer/bin/list_login_items_for_app" '/path/to/application.app'
-```
-
-Note that you will likely need to have opened the app at least once for any login items to be present.
 
 #### `uninstall` *kext*
 

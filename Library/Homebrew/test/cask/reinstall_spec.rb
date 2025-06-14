@@ -12,6 +12,7 @@ RSpec.describe Cask::Reinstall, :cask do
     output = Regexp.new <<~EOS
       ==> Fetching downloads for:.*caffeine
       ==> Uninstalling Cask local-caffeine
+      ==> Skipping processing of login_items
       ==> Backing App 'Caffeine.app' up to '.*Caffeine.app'
       ==> Removing App '.*Caffeine.app'
       ==> Purging files for version 1.2.3 of Cask local-caffeine
@@ -32,6 +33,8 @@ RSpec.describe Cask::Reinstall, :cask do
 
     output = Regexp.new <<~EOS
       ==> Fetching downloads for:.*caffeine
+      .* Cask .*caffeine .*
+      ==> Skipping processing of login_items
       ==> Backing App 'Caffeine.app' up to '.*Caffeine.app'
       ==> Removing App '.*Caffeine.app'
       ==> Dispatching zap stanza

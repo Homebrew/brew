@@ -6,14 +6,14 @@ cask "with-zap" do
   homepage "https://brew.sh/fancy-pkg"
 
   pkg "MyFancyPkg/Fancy.pkg"
+  login_items "Fancy"
 
   uninstall quit: "my.fancy.package.app.from.uninstall"
 
-  zap quit:       "my.fancy.package.app",
-      login_item: "Fancy",
-      script:     {
+  zap quit:   "my.fancy.package.app",
+      script: {
         executable: "MyFancyPkg/FancyUninstaller.tool",
         args:       ["--please"],
       },
-      delete:     "~/Library/Preferences/my.fancy.app.plist"
+      delete: "~/Library/Preferences/my.fancy.app.plist"
 end

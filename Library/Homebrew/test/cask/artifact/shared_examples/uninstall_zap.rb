@@ -391,7 +391,8 @@ RSpec.shared_examples "#uninstall_phase or #zap_phase" do
     end
   end
 
-  context "when using :login_item" do
+  # TODO: Need to test for array of login_items
+  context "when using :login_items" do
     let(:cask) { Cask::CaskLoader.load(cask_path("with-#{artifact_dsl_key}-login-item")) }
 
     it "is supported" do
