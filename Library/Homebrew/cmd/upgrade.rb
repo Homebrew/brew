@@ -110,6 +110,10 @@ module Homebrew
             description: "Disable/enable quarantining of downloads (default: enabled).",
             env:         :cask_opts_quarantine,
           }],
+          [:switch, "--[no-]login-items", {
+            description: "Disable/enable registering of login item(s) (default: disabled).",
+            env:         :cask_opts_login_items,
+          }],
         ].each do |args|
           options = args.pop
           send(*args, **options)
@@ -272,6 +276,7 @@ module Homebrew
           dry_run:             args.dry_run?,
           binaries:            args.binaries?,
           quarantine:          args.quarantine?,
+          login_items:         args.login_items?,
           require_sha:         args.require_sha?,
           skip_cask_deps:      args.skip_cask_deps?,
           verbose:             args.verbose?,
