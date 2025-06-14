@@ -3,6 +3,7 @@
 
 require "digest"
 require "erb"
+require "utils/github"
 
 module Homebrew
   # Class for generating a formula from a template.
@@ -22,6 +23,8 @@ module Homebrew
       @license = license
       @fetch = fetch
       @head = head
+
+      parse_url
     end
 
     sig { void }
@@ -51,18 +54,35 @@ module Homebrew
       @name = FormulaCreator.name_from_url(@url) if @name.blank?
       odebug "name_from_url: #{@name}"
       @version = Version.detect(@url) if @version.nil?
+      odebug "Version.detect: #{@version}"
 
-      case @url
-      when %r{github\.com/(\S+)/(\S+)\.git}
-        @head = true
-        user = Regexp.last_match(1)
-        repo = Regexp.last_match(2)
+      if (match_github = @url.match %r{github\.com/(?<user>\w+)/(?<repo>\w+)(?<tail>.*)})
+        @head = true if match_github[:tail] == ".git"
+        user = match_github[:user]
+        repo = match_github[:repo]
+        odebug "github: #{user} #{repo} #{match_github[:tail]}"
         @github = GitHub.repository(user, repo) if @fetch
-      when %r{github\.com/(\S+)/(\S+)/(archive|releases)/}
-        user = Regexp.last_match(1)
-        repo = Regexp.last_match(2)
-        @github = GitHub.repository(user, repo) if @fetch
+
+        latest_release = if @version.null? && @fetch
+          begin
+            GitHub.get_latest_release(user, repo)
+          rescue GitHub::API::HTTPNotFoundError
+            odebug "latest release lookup failed: #{@url}"
+            nil
+          end
+        end
+
+        if latest_release
+          @version = Version.new(latest_release["tag_name"])
+          odebug "version from latest_release: #{@version}"
+          @url = latest_release["tarball_url"]
+          odebug "url from latest_release: #{@url}"
+        end
       end
+
+      return unless @version.null?
+
+      odie "Version cannot be determined from URL. Explicitly set the version with `--set-version` instead."
     end
 
     sig { returns(Pathname) }
@@ -72,10 +92,6 @@ module Homebrew
 
       path = @tap.new_formula_path(@name)
       raise "#{path} already exists" if path.exist?
-
-      if @version.nil? || @version.null?
-        odie "Version cannot be determined from URL. Explicitly set the version with `--set-version` instead."
-      end
 
       if @fetch
         unless @head
