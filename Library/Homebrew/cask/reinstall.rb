@@ -10,7 +10,7 @@ module Cask
     sig {
       params(
         casks: ::Cask::Cask, verbose: T::Boolean, force: T::Boolean, skip_cask_deps: T::Boolean, binaries: T::Boolean,
-        require_sha: T::Boolean, quarantine: T::Boolean, zap: T::Boolean
+        require_sha: T::Boolean, quarantine: T::Boolean, zap: T::Boolean, login_items: T::Boolean
       ).void
     }
     def self.reinstall_casks(
@@ -21,7 +21,8 @@ module Cask
       binaries: false,
       require_sha: false,
       quarantine: false,
-      zap: false
+      zap: false,
+      login_items: true
     )
       require "cask/installer"
 
@@ -30,7 +31,7 @@ module Cask
       download_queue = Homebrew::DownloadQueue.new_if_concurrency_enabled(pour: true)
       cask_installers = casks.map do |cask|
         Installer.new(cask, binaries:, verbose:, force:, skip_cask_deps:, require_sha:, reinstall: true,
-                      quarantine:, zap:, download_queue:)
+                      quarantine:, zap:, download_queue:, login_items:)
       end
 
       if download_queue
