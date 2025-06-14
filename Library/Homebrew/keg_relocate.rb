@@ -77,7 +77,6 @@ class Keg
       FileUtils.ln_s(new_src, file)
     end
   end
-  alias generic_fix_dynamic_linkage fix_dynamic_linkage
 
   def relocate_dynamic_linkage(_relocation)
     []
@@ -102,7 +101,6 @@ class Keg
 
     relocation
   end
-  alias generic_prepare_relocation_to_placeholders prepare_relocation_to_placeholders
 
   def replace_locations_with_placeholders
     relocation = prepare_relocation_to_placeholders.freeze
@@ -123,7 +121,6 @@ class Keg
 
     relocation
   end
-  alias generic_prepare_relocation_to_locations prepare_relocation_to_locations
 
   def replace_placeholders_with_locations(files, skip_linkage: false)
     relocation = prepare_relocation_to_locations.freeze
@@ -221,7 +218,6 @@ class Keg
 
     [grep_bin, grep_args]
   end
-  alias generic_egrep_args egrep_args
 
   def each_unique_file_matching(string)
     Utils.popen_read("fgrep", recursive_fgrep_args, string, to_s) do |io|

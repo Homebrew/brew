@@ -1,19 +1,19 @@
 # typed: strict
 # frozen_string_literal: true
 
-module Homebrew
-  module DevCmd
-    class UpdateTest < AbstractCommand
-      alias generic_git_tags git_tags
+module OS
+  module Linux
+    module DevCmd
+      module UpdateTest
+        private
 
-      private
-
-      sig { returns(String) }
-      def git_tags
-        tags = generic_git_tags
-        tags = Utils.popen_read("git tag --list | sort -rV") if tags.blank?
-        tags
+        sig { returns(String) }
+        def git_tags
+          super.presence || Utils.popen_read("git tag --list | sort -rV")
+        end
       end
     end
   end
 end
+
+Homebrew::DevCmd::UpdateTest.prepend(OS::Linux::DevCmd::UpdateTest)

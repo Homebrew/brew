@@ -142,6 +142,7 @@ module Homebrew
 
       private
 
+      sig { returns(String) }
       def git_tags
         tags = Utils.popen_read("git", "tag", "--list", "--sort=-version:refname")
         if tags.blank?

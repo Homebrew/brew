@@ -42,7 +42,6 @@ module Hardware
           ppc64le:            "-mcpu=powerpc64le",
         }.freeze, T.nilable(T::Hash[Symbol, String]))
       end
-      alias generic_optimization_flags optimization_flags
 
       sig { returns(Symbol) }
       def arch_32_bit
@@ -219,6 +218,7 @@ module Hardware
       end
     end
 
+    sig { params(_version: T.nilable(MacOSVersion)).returns(Symbol) }
     def oldest_cpu(_version = nil)
       if Hardware::CPU.intel?
         if Hardware::CPU.is_64_bit?
@@ -242,7 +242,6 @@ module Hardware
         Hardware::CPU.family
       end
     end
-    alias generic_oldest_cpu oldest_cpu
 
     # Returns a Rust flag to set the target CPU if necessary.
     # Defaults to nil.

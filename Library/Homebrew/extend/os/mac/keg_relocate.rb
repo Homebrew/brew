@@ -95,7 +95,7 @@ module OS
           end
         end
 
-        generic_fix_dynamic_linkage
+        super
       end
 
       def loader_name_for(file, target)
@@ -199,7 +199,7 @@ module OS
       end
 
       def prepare_relocation_to_locations
-        relocation = generic_prepare_relocation_to_locations
+        relocation = super
 
         brewed_perl = runtime_dependencies&.any? { |dep| dep["full_name"] == "perl" && dep["declared_directly"] }
         perl_path = if brewed_perl || name == "perl"

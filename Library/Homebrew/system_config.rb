@@ -195,7 +195,6 @@ module SystemConfig
       out.puts hardware if hardware
       host_software_config(out)
     end
-    alias dump_generic_verbose_config dump_verbose_config
   end
 end
 

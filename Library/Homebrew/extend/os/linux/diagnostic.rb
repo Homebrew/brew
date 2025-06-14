@@ -32,7 +32,7 @@ module OS
         end
 
         def check_tmpdir_sticky_bit
-          message = generic_check_tmpdir_sticky_bit
+          message = super
           return if message.nil?
 
           message + <<~EOS
@@ -74,11 +74,11 @@ module OS
         end
 
         def check_supported_architecture
-          return if Hardware::CPU.intel?
-          return if Homebrew::EnvConfig.developer? && ENV["HOMEBREW_ARM64_TESTING"].present? && Hardware::CPU.arm?
+          return if ::Hardware::CPU.intel?
+          return if Homebrew::EnvConfig.developer? && ENV["HOMEBREW_ARM64_TESTING"].present? && ::Hardware::CPU.arm?
 
           <<~EOS
-            Your CPU architecture (#{Hardware::CPU.arch}) is not supported. We only support
+            Your CPU architecture (#{::Hardware::CPU.arch}) is not supported. We only support
             x86_64 CPU architectures. You will be unable to use binary packages (bottles).
 
             #{support_tier_message(tier: 2)}

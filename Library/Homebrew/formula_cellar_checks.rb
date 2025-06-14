@@ -84,7 +84,6 @@ module FormulaCellarChecks
   def valid_library_extension?(filename)
     VALID_LIBRARY_EXTENSIONS.include? filename.extname
   end
-  alias generic_valid_library_extension? valid_library_extension?
 
   sig { returns(T.nilable(String)) }
   def check_non_libraries
@@ -437,7 +436,6 @@ module FormulaCellarChecks
     problem_if_output(check_cpuid_instruction(formula))
     problem_if_output(check_binary_arches(formula))
   end
-  alias generic_audit_installed audit_installed
 
   private
 
