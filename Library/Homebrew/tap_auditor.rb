@@ -56,7 +56,8 @@ module Homebrew
       check_formula_list_directory "style_exceptions", @tap_style_exceptions
       check_formula_list "pypi_formula_mappings", @tap_pypi_formula_mappings
       check_formula_list "formula_renames", @formula_renames.values
-      check_formula_list ".github/autobump.txt", @tap_autobump unless @tap_official
+      # TODO: uncomment modifier once autobump no longer depends on autobump.txt
+      check_formula_list ".github/autobump.txt", @tap_autobump # unless @tap_official
     end
 
     sig { void }
@@ -92,12 +93,31 @@ module Homebrew
           cask_tokens.exclude?(formula_or_cask_name)
       end
 
-      return if invalid_formulae_casks.empty?
+      list_without_versions = if list_file == ".github/autobump.txt"
+        list
+      else
+        # Allow versioned packages not to follow the strict order
+        list.map { |s| s.split("@").first }
+      end
 
-      problem <<~EOS
+      sorted = list_without_versions.each_cons(2).all? do |a, b|
+        # ohai "#{a} #{b}" if a > b
+        a <= b
+      end
+
+      sorted = true if list_file == "formula_renames" # Skip sort check for renames
+
+      return if invalid_formulae_casks.empty? && sorted
+
+      problem <<~EOS if invalid_formulae_casks.present?
         #{list_file} references
         formulae or casks that are not found in the #{@name} tap.
         Invalid formulae or casks: #{invalid_formulae_casks.join(", ")}
+      EOS
+
+      problem <<~EOS unless sorted
+        Formulae or casks referenced in #{list_file}
+        are not sorted!
       EOS
     end
 
