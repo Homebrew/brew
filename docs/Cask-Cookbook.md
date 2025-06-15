@@ -1,5 +1,5 @@
 ---
-last_review_date: 2025-05-18
+last_review_date: "2025-06-16"
 ---
 
 # Cask Cookbook
@@ -55,6 +55,8 @@ Having a common order for stanzas makes casks easier to update and parse. Below 
     homepage
 
     livecheck
+
+    no_autobump!
 
     deprecate!
     disable!
@@ -173,6 +175,7 @@ Each cask must declare one or more [artifacts](https://rubydoc.brew.sh/Cask/Arti
 | `container nested:`                        | no                            | Relative path to an inner container that must be extracted before moving on with the installation. This allows for support of `.dmg` inside `.tar`, `.zip` inside `.dmg`, etc. (Example: [blocs.rb](https://github.com/Homebrew/homebrew-cask/blob/aa461148bbb5119af26b82cccf5003e2b4e50d95/Casks/b/blocs.rb#L17-L19)) |
 | `container type:`                          | no                            | Symbol to override container-type autodetect. May be one of: `:air`, `:bz2`, `:cab`, `:dmg`, `:generic_unar`, `:gzip`, `:otf`, `:pkg`, `:rar`, `:seven_zip`, `:sit`, `:tar`, `:ttf`, `:xar`, `:zip`, `:naked`. (Example: [parse.rb](https://github.com/Homebrew/homebrew-cask/blob/aa461148bbb5119af26b82cccf5003e2b4e50d95/Casks/p/parse.rb#L10)) |
 | `auto_updates`                             | no                            | `true`. Asserts that the cask artifacts auto-update. Use if `Check for Updates…` or similar is present in an app menu, but not if it only opens a webpage and does not do the download and installation for you. |
+| [`no_autobump!`](#stanza-no_autobump)      | no                            | Allowed symbol or a string. Excludes cask from autobump list if set. See the full list of allowed symbols on [Autobump List](Autobump-List.md) page. |
 
 ## Stanza descriptions
 
@@ -640,6 +643,28 @@ The `livecheck` stanza is used to automatically fetch the latest version of a ca
 Every `livecheck` block must contain a `url`, which can be either a string or a symbol pointing to other URLs in the cask (`:url` or `:homepage`).
 
 Refer to the [`brew livecheck`](Brew-Livecheck.md) documentation for how to write a `livecheck` block.
+
+### Stanza: `no_autobump!`
+
+The `no_autobump!` stanza excludes the cask for autobump list. That means the future updates will be handled by Homebrew contributors rather than by an automated process.
+
+To use this stanza, a reason must be provided. The preferred way is to use one of the available symbols:
+
+* `:incompatible_version_format`: This reason is used when the `brew bump` command cannot determine a version for the URL or update it.
+* `:bumped_by_upstream`: Some developers whose programs are available in Homebrew want to take care of the updates themselves or even set up a CI action that does this. This `no_autobump!` reason exists for such cases.
+* `:requires_manual_review`: This is a temporary reason and expected to be deprecated in the future. It indicates that this package was not in the `autobump.txt` file before the new autobump list was introduced.
+
+```ruby
+no_autobump! because: :incompatible_version_format
+```
+
+The full list of available symbols is stored in [`NO_AUTOBUMP_REASONS_LIST`](https://rubydoc.brew.sh/top-level-namespace.html#NO_AUTOBUMP_REASONS_LIST-constant) constant. A custom reason can be provided if none of the available symbols fits:
+
+```ruby
+no_autobump! because: "some unique reason"
+```
+
+Refer to [Autobump List](Autobump-List.md) page for more information about the autobump process in Homebrew.
 
 ### Stanza: `name`
 

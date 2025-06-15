@@ -1,5 +1,5 @@
 ---
-last_review_date: "2025-02-08"
+last_review_date: "2025-06-16"
 ---
 
 # Documentation
@@ -52,6 +52,7 @@ last_review_date: "2025-02-08"
 - [Node for Formula Authors](Node-for-Formula-Authors.md)
 - [Python for Formula Authors](Python-for-Formula-Authors.md)
 - [`brew livecheck`](Brew-Livecheck.md)
+- [Autobump List](Autobump-List.md)
 - [Migrating a Formula to a Tap](Migrating-A-Formula-To-A-Tap.md)
 - [Renaming a Formula](Rename-A-Formula.md)
 - [Building Against Non-Homebrew Dependencies](Building-Against-Non-Homebrew-Dependencies.md)
