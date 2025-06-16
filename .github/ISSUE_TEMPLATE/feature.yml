@@ -1,0 +1,37 @@
+name: New issue for Feature Suggestion
+description: Request our thoughts on your suggestion for a new feature for Homebrew.
+type: "Feature"
+body:
+  - type: markdown
+    attributes:
+      value: Please note we will close your issue without comment if you do not fill out the issue checklist below and provide ALL the requested information. If you repeatedly fail to use the issue template, we will block you from ever submitting issues to Homebrew again.
+  - type: checkboxes
+    attributes:
+      label: Verification
+      description: Please verify that you've followed these steps.
+      options:
+        - label: This issue's title and/or description do not reference a single formula e.g. `brew install wget`. If they do, open an issue at https://github.com/Homebrew/homebrew-core/issues/new/choose instead.
+          required: true
+  - type: textarea
+    attributes:
+      label: Provide a detailed description of the proposed feature
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: What is the motivation for the feature?
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: How will the feature be relevant to at least 90% of Homebrew users?
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: What alternatives to the feature have been considered?
+    validations:
+      required: true
+  - type: markdown
+    attributes:
+      value: We will close this issue or ask you to create a pull-request if it's something the maintainers are not actively planning to work on.

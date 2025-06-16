@@ -1,0 +1,42 @@
+inherit_from: ../Library/.rubocop.yml
+
+AllCops:
+  Exclude:
+    - "**/_site/**/*"
+    - "**/Manpage.md"
+    - "**/vendor/**/*"
+
+# These are included in docs deliberately to show what
+# `brew create` does and what the user should replace.
+FormulaAudit/Comments:
+  Enabled: false
+
+# This forces us to use dummy descriptions/homepages in example formulae which we don't need to clutter the docs with.
+FormulaAudit/Desc:
+  Enabled: false
+FormulaAudit/Homepage:
+  Enabled: false
+
+Layout/LineLength:
+  Exclude:
+    - "**/Bottles.md" # The bottle block line length is long in its full form.
+
+# Apparently Casks are allowed to have constant definitions in blocks and we document this.
+Lint/ConstantDefinitionInBlock:
+  Enabled: false
+
+# A fake regexp is deliberately documented for `inreplace` in the Formula Cookbook.
+Style/RedundantRegexpArgument:
+  Enabled: false
+
+# Want to be able to display partial formulae in the docs.
+Style/TopLevelMethodDefinition:
+  Enabled: false
+
+# Formulae and Casks no longer use `rm_f`/`rm_rf`, so the docs need to match.
+Lint/NonAtomicFileOperation:
+  Enabled: false
+
+# The markdown linter config files don't need to be typed strict.
+Sorbet/StrictSigil:
+  Enabled: false

@@ -1,0 +1,76 @@
+name: Documentation CI
+
+on:
+  pull_request:
+  merge_group:
+
+permissions:
+  contents: read
+  pages: read
+
+env:
+  HOMEBREW_DEVELOPER: 1
+  HOMEBREW_NO_AUTO_UPDATE: 1
+  HOMEBREW_NO_ENV_HINTS: 1
+  HOMEBREW_NO_INSTALL_CLEANUP: 1
+
+defaults:
+  run:
+    shell: bash -xeuo pipefail {0}
+
+jobs:
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Homebrew
+        id: set-up-homebrew
+        uses: Homebrew/actions/setup-homebrew@main
+        with:
+          core: false
+          cask: false
+          test-bot: false
+
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+
+      - name: Install vale
+        run: brew install vale
+
+      - name: Cleanup Homebrew/brew docs
+        if: github.repository == 'Homebrew/brew'
+        run: |
+          # Avoid failing on broken symlinks.
+          rm Library/Homebrew/os/mac/pkgconfig/fuse/fuse.pc
+          rm Library/Homebrew/os/mac/pkgconfig/fuse/osxfuse.pc
+
+          # No ignore support (https://github.com/errata-ai/vale/issues/131).
+          rm -r Library/Homebrew/vendor
+
+      - name: Run Vale
+        run: vale docs/
+
+      - name: Install Ruby
+        uses: ruby/setup-ruby@a4effe49ee8ee5b8b5091268c473a4628afb5651 # v1.245.0
+        with:
+          bundler-cache: true
+          working-directory: docs
+
+      - name: Check Markdown syntax
+        working-directory: docs
+        run: bundle exec rake lint
+
+      - name: Check code blocks conform to our Ruby style guide
+        run: brew style docs
+
+      - name: Generate formulae.brew.sh API samples
+        if: github.repository == 'Homebrew/formulae.brew.sh'
+        working-directory: docs
+        run: ../script/generate-api-samples.rb --template
+
+      - name: Build the site and check for broken links
+        working-directory: docs
+        run: bundle exec rake test
+        env:
+          JEKYLL_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

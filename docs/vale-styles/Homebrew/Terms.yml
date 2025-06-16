@@ -1,0 +1,12 @@
+---
+extends: substitution
+message: Use '%s' instead of '%s'.
+link: "https://github.com/Homebrew/brew/blob/HEAD/docs/Prose-Style-Guidelines.md#terminology-words-and-word-styling"
+level: error
+scope: paragraph
+
+swap:
+  '(?<!How to Open a Homebrew )Pull Request': pull request
+  Rubocop: RuboCop
+  '(?<!^\{.*)MacOS': macOS # FIXME: https://github.com/errata-ai/vale/issues/818
+  '(?<!^\{.*|^!/.*)ruby': Ruby # FIXME: https://github.com/errata-ai/vale/issues/818

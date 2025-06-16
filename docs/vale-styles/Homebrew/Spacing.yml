@@ -1,0 +1,9 @@
+---
+extends: existence
+message: "'%s' should have one space."
+link: "https://github.com/Homebrew/brew/blob/HEAD/docs/Prose-Style-Guidelines.md#typographical-conventions"
+level: error
+nonword: true
+tokens:
+  - '(?<!^\{.*)[a-z][.?!][A-Z]' # FIXME: https://github.com/errata-ai/vale/issues/818
+  - '[.?!] {2,}[A-Z]'

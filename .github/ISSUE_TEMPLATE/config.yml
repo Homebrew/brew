@@ -1,0 +1,18 @@
+blank_issues_enabled: false
+
+contact_links:
+  - name: Get help in GitHub Discussions
+    url: https://github.com/orgs/Homebrew/discussions
+    about: Have a question? Not sure if your issue affects everyone reproducibly? The quickest way to get help is on Homebrew's GitHub Discussions!
+  - name: New issue on Homebrew/homebrew-core
+    url: https://github.com/Homebrew/homebrew-core/issues/new/choose
+    about: Having a `brew` problem with a `brew install` or `brew upgrade` of a single formula/package? Report it to Homebrew/homebrew-core (the core tap/repository).
+  - name: New issue on Homebrew/homebrew-cask
+    url: https://github.com/Homebrew/homebrew-cask/issues/new/choose
+    about: Having a `brew --cask` problem? Report it to Homebrew/homebrew-cask (the cask tap/repository).
+  - name: New issue on Homebrew/install
+    url: https://github.com/Homebrew/install/issues/new/choose
+    about: Having a problem installing Homebrew? Report it to Homebrew/install (the installer repository).
+  - name: Get help from Homebrew mirror maintainers
+    url: https://github.com/orgs/Homebrew/discussions/1917
+    about: Slow download speed? Homebrew mirror not working as expected? Please take a look at the mirror list and contact respective mirror maintainers.

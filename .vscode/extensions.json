@@ -1,0 +1,17 @@
+{
+  "recommendations": [
+    "Shopify.ruby-lsp",
+    "sorbet.sorbet-vscode-extension",
+    "github.vscode-github-actions",
+    "anykeyh.simplecov-vscode",
+    "ms-azuretools.vscode-docker",
+    "github.vscode-pull-request-github",
+    "davidanson.vscode-markdownlint",
+    "foxundermoon.shell-format",
+    "timonwong.shellcheck",
+    "ban.spellright",
+    "redhat.vscode-yaml",
+    "koichisasada.vscode-rdbg",
+    "editorconfig.editorconfig"
+  ]
+}

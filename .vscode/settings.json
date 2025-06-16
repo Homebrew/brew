@@ -1,0 +1,70 @@
+{
+  "search.exclude": {
+    "Library/Homebrew/vendor/bundle/ruby/": true,
+    "Library/Homebrew/vendor/gems/": true,
+    "Library/Homebrew/vendor/portable-ruby/": true
+  },
+  "editor.insertSpaces": true,
+  "editor.tabSize": 2,
+  "editor.rulers": [
+    80,
+    118
+  ],
+  "files.encoding": "utf8",
+  "files.eol": "\n",
+  "files.trimTrailingWhitespace": true,
+  "files.insertFinalNewline": true,
+  "files.trimFinalNewlines": true,
+  "rubyLsp.rubyVersionManager": {
+    "identifier": "custom"
+  },
+  "spellright.language": [
+    "en_GB",
+    "en_US"
+  ],
+  "spellright.documentTypes": [
+    "markdown",
+  ],
+  "rubyLsp.customRubyCommand": "source ../../.vscode/ruby-lsp-activate.sh",
+  "rubyLsp.bundleGemfile": "Library/Homebrew/Gemfile",
+  "rubyLsp.formatter": "rubocop",
+  "[ruby]": {
+    "editor.defaultFormatter": "Shopify.ruby-lsp",
+    "editor.formatOnSave": true,
+    "editor.formatOnType": true,
+    "editor.semanticHighlighting.enabled": true,
+  },
+  "sorbet.enabled": true,
+  "sorbet.lspConfigs": [
+    {
+      "id": "default",
+      "name": "Brew Typecheck",
+      "description": "Default configuration",
+      "command": [
+        "./bin/brew",
+        "typecheck",
+        "--lsp",
+      ]
+    }
+  ],
+  "sorbet.selectedLspConfigId": "default",
+  "shellcheck.customArgs": [
+    "--shell=bash",
+    "--enable=all",
+    "--external-sources",
+    "--source-path=${workspaceFolder}/Library"
+  ],
+  "shellformat.effectLanguages": [
+    "shellscript"
+  ],
+  "shellformat.path": "${workspaceFolder}/Library/Homebrew/utils/shfmt.sh",
+  "shellformat.flag": "-i 2 -ci -ln bash",
+  "[shellscript]": {
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+      "source.fixAll.shellcheck": "explicit"
+    }
+  },
+  "simplecov-vscode.path": "Library/Homebrew/test/coverage/.resultset.json",
+  "simplecov-vscode.enabled": false
+}

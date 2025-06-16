@@ -1,0 +1,202 @@
+# First, ignore everything.
+/*
+
+# Explicitly ignore OS X Finder thumbnail files.
+.DS_Store
+
+# Unignore the contents of `Library` as that's where our code lives.
+!/Library
+
+# Ignore files within `Library` (again).
+/Library/Homebrew/.npmignore
+/Library/Homebrew/bin
+/Library/Homebrew/doc
+/Library/Homebrew/prof
+/Library/Homebrew/test/.gem
+/Library/Homebrew/test/.subversion
+/Library/Homebrew/test/coverage
+/Library/Homebrew/test/junit
+/Library/Homebrew/test/fs_leak_log
+/Library/Homebrew/vendor/portable-ruby
+/Library/Taps
+/Library/PinnedTaps
+/Library/Homebrew/.byebug_history
+/Library/Homebrew/test/.rdbg_history
+
+# Ignore Bundler files
+**/.bundle/bin
+**/.bundle/cache
+**/vendor/bundle/ruby/.homebrew_gem_groups
+**/vendor/bundle/ruby/*/.homebrew_vendor_version
+**/vendor/bundle/ruby/*/bundler.lock
+**/vendor/bundle/ruby/*/bin
+**/vendor/bundle/ruby/*/build_info/
+**/vendor/bundle/ruby/*/cache
+**/vendor/bundle/ruby/*/extensions
+**/vendor/bundle/ruby/*/gems/*/*
+**/vendor/bundle/ruby/*/plugins
+**/vendor/bundle/ruby/*/specifications
+
+# Ignore Ruby gems for versions other than we explicitly vendor.
+# Keep this in sync with the list in standalone/init.rb.
+**/vendor/bundle/ruby/*/
+!**/vendor/bundle/ruby/3.4.0/
+
+# Ignore Bundler binary files
+**/vendor/bundle/ruby/*/gems/**/*.bundle
+
+# Ignore YARD files
+**/.yardoc
+
+# Unignore vendored gems
+!**/vendor/bundle/ruby/*/gems/*/*LICENSE*
+!**/vendor/bundle/ruby/*/gems/*/lib
+!**/vendor/bundle/ruby/*/gems/addressable-*/data
+!**/vendor/bundle/ruby/*/gems/public_suffix-*/data
+
+# Ignore partially included gems where we don't need all files
+**/vendor/gems/mechanize-*/.*
+**/vendor/gems/mechanize-*/*.md
+**/vendor/gems/mechanize-*/*.rdoc
+**/vendor/gems/mechanize-*/*.gemspec
+**/vendor/gems/mechanize-*/Gemfile
+**/vendor/gems/mechanize-*/Rakefile
+**/vendor/gems/mechanize-*/examples/
+**/vendor/gems/mechanize-*/lib/**/*
+!**/vendor/gems/mechanize-*/lib/mechanize/
+!**/vendor/gems/mechanize-*/lib/mechanize/http/
+!**/vendor/gems/mechanize-*/lib/mechanize/http/content_disposition_parser.rb
+!**/vendor/gems/mechanize-*/lib/mechanize/version.rb
+**/vendor/gems/mechanize-*/test/
+
+# Ignore dependencies we don't wish to vendor
+**/vendor/bundle/ruby/*/gems/ast-*/
+**/vendor/bundle/ruby/*/gems/benchmark-*/
+**/vendor/bundle/ruby/*/gems/bigdecimal-*/
+**/vendor/bundle/ruby/*/gems/bootsnap-*/
+**/vendor/bundle/ruby/*/gems/bundler-*/
+**/vendor/bundle/ruby/*/gems/byebug-*/
+**/vendor/bundle/ruby/*/gems/coderay-*/
+**/vendor/bundle/ruby/*/gems/colorize-*/
+**/vendor/bundle/ruby/*/gems/commander-*/
+**/vendor/bundle/ruby/*/gems/csv-*/
+**/vendor/bundle/ruby/*/gems/diff-lcs-*/
+**/vendor/bundle/ruby/*/gems/docile-*/
+**/vendor/bundle/ruby/*/gems/ecma-re-validator-*/
+**/vendor/bundle/ruby/*/gems/erubi-*/
+**/vendor/bundle/ruby/*/gems/hana-*/
+**/vendor/bundle/ruby/*/gems/highline-*/
+**/vendor/bundle/ruby/*/gems/jaro_winkler-*/
+**/vendor/bundle/ruby/*/gems/json-*/
+**/vendor/bundle/ruby/*/gems/json_schemer-*/
+**/vendor/bundle/ruby/*/gems/kramdown-*/
+**/vendor/bundle/ruby/*/gems/language_server-protocol-*/
+**/vendor/bundle/ruby/*/gems/lint_roller-*/
+**/vendor/bundle/ruby/*/gems/logger-*/
+**/vendor/bundle/ruby/*/gems/method_source-*/
+**/vendor/bundle/ruby/*/gems/mini_portile2-*/
+**/vendor/bundle/ruby/*/gems/minitest-*/
+**/vendor/bundle/ruby/*/gems/msgpack-*/
+**/vendor/bundle/ruby/*/gems/netrc-*/
+**/vendor/bundle/ruby/*/gems/ntlm-http-*/
+**/vendor/bundle/ruby/*/gems/parallel-*/
+**/vendor/bundle/ruby/*/gems/parallel_tests-*/
+**/vendor/bundle/ruby/*/gems/parlour-*/
+**/vendor/bundle/ruby/*/gems/parser-*/
+**/vendor/bundle/ruby/*/gems/powerpack-*/
+**/vendor/bundle/ruby/*/gems/prettier_print-*/
+**/vendor/bundle/ruby/*/gems/prism-*/
+**/vendor/bundle/ruby/*/gems/psych-*/
+**/vendor/bundle/ruby/*/gems/pry-*/
+**/vendor/bundle/ruby/*/gems/pycall-*/
+**/vendor/bundle/ruby/*/gems/racc-*/
+**/vendor/bundle/ruby/*/gems/rainbow-*/
+**/vendor/bundle/ruby/*/gems/rbi-*/
+**/vendor/bundle/ruby/*/gems/rbs-*/
+**/vendor/bundle/ruby/*/gems/rdoc-*/
+**/vendor/bundle/ruby/*/gems/redcarpet-*/
+**/vendor/bundle/ruby/*/gems/regexp_parser-*/
+**/vendor/bundle/ruby/*/gems/rexml-*/
+**/vendor/bundle/ruby/*/gems/rspec-*/
+**/vendor/bundle/ruby/*/gems/rspec-core-*/
+**/vendor/bundle/ruby/*/gems/rspec-expectations-*/
+**/vendor/bundle/ruby/*/gems/rspec_junit_formatter-*/
+**/vendor/bundle/ruby/*/gems/rspec-mocks-*/
+**/vendor/bundle/ruby/*/gems/rspec-retry-*/
+**/vendor/bundle/ruby/*/gems/rspec-support-*/
+**/vendor/bundle/ruby/*/gems/rspec-sorbet-*/
+**/vendor/bundle/ruby/*/gems/rubocop-*/
+**/vendor/bundle/ruby/*/gems/ruby-lsp-*/
+**/vendor/bundle/ruby/*/gems/ruby-prof-*/
+**/vendor/bundle/ruby/*/gems/ruby-progressbar-*/
+**/vendor/bundle/ruby/*/gems/simplecov-*/
+**/vendor/bundle/ruby/*/gems/simplecov-html-*/
+**/vendor/bundle/ruby/*/gems/simplecov_json_formatter-*/
+**/vendor/bundle/ruby/*/gems/simpleidn-*/
+**/vendor/bundle/ruby/*/gems/sorbet-*/
+!**/vendor/bundle/ruby/*/gems/sorbet-runtime-*/
+**/vendor/bundle/ruby/*/gems/spoom-*/
+**/vendor/bundle/ruby/*/gems/stackprof-*/
+**/vendor/bundle/ruby/*/gems/strscan-*/
+**/vendor/bundle/ruby/*/gems/syntax_tree-*/
+**/vendor/bundle/ruby/*/gems/tapioca-*/
+**/vendor/bundle/ruby/*/gems/thor-*/
+**/vendor/bundle/ruby/*/gems/unicode-display_width-*/
+**/vendor/bundle/ruby/*/gems/unicode-emoji-*/
+**/vendor/bundle/ruby/*/gems/unparser-*/
+**/vendor/bundle/ruby/*/gems/uri_template-*/
+**/vendor/bundle/ruby/*/gems/vernier-*/
+**/vendor/bundle/ruby/*/gems/webrobots-*/
+**/vendor/bundle/ruby/*/gems/yard-*/
+**/vendor/bundle/ruby/*/gems/yard-sorbet-*/
+**/vendor/cache/
+**/vendor/specifications/
+
+# Ignore `bin` contents (again).
+/bin
+
+# Unignore our `brew` script.
+!/bin/brew
+
+# Unignore our configuration/completions/documentation.
+!/.devcontainer
+!/.github
+!/completions
+!/docs
+!/manpages
+!/CODEOWNERS
+
+# Unignore our packaging files
+!/package
+/package/resources/LICENSE.rtf
+
+# Ignore generated documentation site
+/docs/_site
+/docs/.jekyll-metadata
+/docs/tmp/.htmlproofer
+/docs/vendor
+/docs/Gemfile.lock
+
+# Unignore our root-level metadata files.
+!/.dockerignore
+!/.editorconfig
+!/.gitignore
+!/.irb_config
+!/.ruby-version
+!/.shellcheckrc
+!/.vale.ini
+!/.yardopts
+!/CHANGELOG.md
+!/CONTRIBUTING.md
+!/Dockerfile
+!/Dockerfile.test.yml
+!/LICENSE.txt
+!/README.md
+
+# Unignore tests' bundle config
+!/Library/Homebrew/test/.bundle/config
+
+# Unignore editor configuration
+!/.sublime
+/.sublime/homebrew.sublime-workspace
+!/.vscode

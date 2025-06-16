@@ -1,0 +1,12 @@
+---
+extends: existence
+message: 'No "TM", ™, SM, ©, ®, or other explicit indicators of rights ownership or trademarks'
+link: "https://github.com/Homebrew/brew/blob/HEAD/docs/Prose-Style-Guidelines.md#typographical-conventions"
+level: error
+nonword: true
+tokens:
+  - \bTM\b
+  - ™
+  - \bSM\b
+  - ©
+  - ®

@@ -1,0 +1,44 @@
+# This file is synced from the `.github` repository, do not modify it directly.
+---
+version: 2
+updates:
+- package-ecosystem: github-actions
+  directory: "/"
+  schedule:
+    interval: weekly
+    day: friday
+    time: '08:00'
+    timezone: Etc/UTC
+  allow:
+  - dependency-type: all
+  groups:
+    github-actions:
+      patterns:
+      - "*"
+- package-ecosystem: docker
+  directory: "/"
+  schedule:
+    interval: weekly
+    day: friday
+    time: '08:00'
+    timezone: Etc/UTC
+  allow:
+  - dependency-type: all
+  groups:
+    docker:
+      patterns:
+      - "*"
+- package-ecosystem: devcontainers
+  directory: "/"
+  schedule:
+    interval: weekly
+    day: friday
+    time: '08:00'
+    timezone: Etc/UTC
+  allow:
+  - dependency-type: all
+  groups:
+    devcontainers:
+      patterns:
+      - "*"
+

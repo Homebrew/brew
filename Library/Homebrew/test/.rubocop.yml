@@ -1,0 +1,17 @@
+inherit_from:
+  - ../.rubocop.yml
+
+RSpec:
+  Include:
+    - ./*
+
+RSpec/ContextWording:
+  Prefixes:
+    - when
+    - with
+    - without
+    - if
+    - unless
+    - for
+    - which
+    - to

@@ -1,0 +1,4 @@
+git_recurse true
+ignore_front_matter true
+style "#{File.dirname(__FILE__)}/.mdl_style.rb"
+rulesets ["#{File.dirname(__FILE__)}/.mdl_ruleset.rb"]

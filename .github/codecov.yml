@@ -1,0 +1,10 @@
+coverage:
+  round: nearest
+  status:
+    project:
+      default:
+        informational: true
+        threshold: 0.05%
+    patch:
+      default:
+        informational: true

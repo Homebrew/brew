@@ -1,0 +1,48 @@
+---
+last_review_date: "1970-01-01"
+---
+
+# 2019 Membership
+
+- @alebcay
+- @amyspark
+- @apjanke
+- @bfontaine
+- @chenrui333
+- @claui
+- @colindean
+- @dawidd6
+- @dpo
+- @EricFromCanada
+- @fxcoudert
+- @GauthamGoli
+- @igas
+- @iMichka
+- @issyl0
+- @jacobbednarz
+- @jasontedor
+- @javian
+- @jonchang
+- @ladislas
+- @lembacon
+- @maxim-belkin
+- @MikeMcQuaid
+- @mistydemeo
+- @Moisan
+- @mxcl
+- @reitermarkus
+- @scpeters
+- @Sharpie
+- @sjackman
+- @SMillerDev
+- @tschoonj
+- @tseemann
+- @victorpopkov
+- @vitorgalvao
+- @vszakats
+- @woodruffw
+- @xu-cheng
+- @youtux
+- @zachauten
+- @zbeekman
+- @zmwangx

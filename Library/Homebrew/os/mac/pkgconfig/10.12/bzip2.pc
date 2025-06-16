@@ -1,0 +1,11 @@
+prefix=/usr
+exec_prefix=${prefix}
+bindir=${exec_prefix}/bin
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+
+Name: bzip2
+Description: Lossless, block-sorting data compression
+Version: 1.0.6
+Libs: -L${libdir} -lbz2
+Cflags:

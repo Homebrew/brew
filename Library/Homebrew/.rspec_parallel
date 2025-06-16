@@ -1,0 +1,6 @@
+--format QuietProgressFormatter
+--format ParallelTests::RSpec::RuntimeLogger
+--out <%= ENV["PARALLEL_RSPEC_LOG_PATH"] %>
+--format RspecJunitFormatter
+--out test/junit/rspec<%= ENV["TEST_ENV_NUMBER"] %>.xml
+<%= "--format RSpec::Github::Formatter" if ENV["GITHUB_ACTIONS"] %>

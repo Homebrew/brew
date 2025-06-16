@@ -1,0 +1,64 @@
+update_git_diff_output_without_formulae_changes: |
+  M	Library/Homebrew/ARGV+yeast.rb
+  A	Library/Homebrew/beer_events.rb
+  A	Library/Homebrew/hardware.rb
+  D	Library/Homebrew/hw.model.c
+  M	README
+  M	bin/brew
+update_git_diff_output_with_formulae_changes: |
+  M	Library/Contributions/brew_bash_completion.sh
+  A	Formula/antiword.rb
+  A	Formula/bash-completion.rb
+  A	Formula/ddrescue.rb
+  A	Formula/dict.rb
+  A	Formula/lua.rb
+  M	Formula/xar.rb
+  M	Formula/yajl.rb
+  M	Library/Homebrew/ARGV+yeast.rb
+  M	Library/Homebrew/beer_events.rb
+  M	Library/Homebrew/hardware.rb
+  M	Library/Homebrew/hw.model.c
+  M	Library/Homebrew/hw.model.rb
+  M	Library/Homebrew/pathname+yeast.rb
+  M	Library/Homebrew/unittest.rb
+  M	Library/Homebrew/utils.rb
+  M	README
+  M	bin/brew
+update_git_diff_output_with_removed_formulae: |
+  A	Formula/flac123.rb
+  M	Formula/gdal.rb
+  M	Formula/grass.rb
+  M	Formula/json_spirit.rb
+  A	Formula/libbson.rb
+  D	Formula/libgsasl.rb
+update_git_diff_output_with_changed_filetype: |
+  A	Library/ENV/4.3/ant
+  T	Library/ENV/4.3/bsdmake
+  M	Library/ENV/4.3/make
+  M	Formula/elixir.rb
+  A	Formula/libbson.rb
+  D	Formula/libgsasl.rb
+  M	Library/Homebrew/cmd/update.rb
+  M	SUPPORTERS.md
+update_git_diff_output_with_formula_rename: |
+  R100	Formula/cv.rb	Formula/progress.rb
+update_git_diff_output_with_restructured_tap: |
+  R100	git.rb	Formula/git.rb
+  R100	lua.rb	Formula/lua.rb
+update_git_diff_output_with_formula_rename_and_restructuring: |
+  R100	xchat.rb	Formula/xchat2.rb
+update_git_diff_simulate_homebrew_php_restructuring: |
+  R100	Formula/git.rb	Abstract/git.rb
+  R100	Formula/lua.rb	Abstract/lua.rb
+update_git_diff_output_with_tap_formulae_changes: |
+  M	Rakefile
+  M	README.md
+  M	Requirements/some_requirement.rb
+  D	another_ruby_file.rb
+  A	a_ruby_file.rb
+  A	CONTRIBUTING.md
+  M	Formula/git.rb
+  A	Formula/lua.rb
+  M	lib/not_a_formula.rb
+  A	lib/not_a_formula2.rb
+  D	lib/not_a_formula3.rb

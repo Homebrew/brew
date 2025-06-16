@@ -1,0 +1,63 @@
+name: Sync default branches
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+    paths:
+      - .github/workflows/sync-default-branches.yml
+
+permissions: {}
+
+defaults:
+  run:
+    shell: bash -xeuo pipefail {0}
+
+concurrency:
+  group: "sync-default-branches-${{ github.ref }}"
+  cancel-in-progress: true
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Configure Git user
+        uses: Homebrew/actions/git-user-config@main
+        with:
+          username: github-actions[bot]
+
+      - name: Determine source and target branches
+        id: branches
+        run: |
+          if [[ "${GITHUB_REF_NAME}" == "main" ]]; then
+            target="master"
+            source="main"
+          else
+            target="main"
+            source="master"
+          fi
+          echo "target=${target}" >> "$GITHUB_OUTPUT"
+          echo "source=${source}" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Setup target branch
+        run: |
+          git checkout "${TARGET_BRANCH}" || git checkout -b "${TARGET_BRANCH}"
+          git reset --hard "origin/${SOURCE_BRANCH}"
+        env:
+          SOURCE_BRANCH: ${{ steps.branches.outputs.source }}
+          TARGET_BRANCH: ${{ steps.branches.outputs.target }}
+
+      - name: Push target branch
+        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+        run: git push origin "${TARGET_BRANCH}" --force-with-lease
+        env:
+          TARGET_BRANCH: ${{ steps.branches.outputs.target }}

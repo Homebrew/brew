@@ -1,0 +1,16 @@
+--title "Homebrew Ruby API"
+--main README.md
+--markup markdown
+--no-private
+--plugin sorbet
+--load ./yard/docstring_parser.rb
+--template-path yard/templates
+--exclude sorbet/rbi/gems/
+--exclude test/
+--exclude vendor/
+--exclude yard/
+extend/os/**/*.rb
+**/*.rb
+**/*.rbi
+-
+*.md

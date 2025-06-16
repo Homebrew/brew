@@ -1,0 +1,102 @@
+# This file is synced from the `.github` repository, do not modify it directly.
+name: Actionlint
+
+on:
+  push:
+    branches:
+      - main
+      - master
+    paths:
+      - '.github/workflows/*.ya?ml'
+      - 'Formula/a/actionlint.rb'
+      - 'Formula/s/shellcheck.rb'
+      - 'Formula/z/zizmor.rb'
+  pull_request:
+    paths:
+      - '.github/workflows/*.ya?ml'
+
+defaults:
+  run:
+    shell: bash -xeuo pipefail {0}
+
+concurrency:
+  group: "actionlint-${{ github.ref }}"
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  HOMEBREW_DEVELOPER: 1
+  HOMEBREW_NO_AUTO_UPDATE: 1
+  HOMEBREW_NO_ENV_HINTS: 1
+
+permissions: {}
+
+jobs:
+  workflow_syntax:
+    if: github.repository_owner == 'Homebrew'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Set up Homebrew
+        id: setup-homebrew
+        uses: Homebrew/actions/setup-homebrew@main
+        with:
+          core: false
+          cask: false
+          test-bot: false
+
+      - name: Install tools
+        run: brew install actionlint shellcheck zizmor
+
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+
+      - run: zizmor --format sarif . > results.sarif
+
+      - name: Upload SARIF file
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        # We can't use the SARIF file when triggered by `merge_group` so we don't upload it.
+        if: always() && github.event_name != 'merge_group'
+        with:
+          name: results.sarif
+          path: results.sarif
+
+      - name: Set up actionlint
+        run: |
+          # In homebrew-core, setting `shell: /bin/bash` prevents shellcheck from running on
+          # those steps, so let's change them to `shell: bash` temporarily for better linting.
+          sed -i 's|shell: /bin/bash -x|shell: bash -x|' .github/workflows/*.y*ml
+
+          # In homebrew-core, the JSON matcher needs to be accessible to the container host.
+          cp "$(brew --repository)/.github/actionlint-matcher.json" "$HOME"
+
+          echo "::add-matcher::$HOME/actionlint-matcher.json"
+
+      - run: actionlint
+
+  upload_sarif:
+    needs: workflow_syntax
+    # We want to always upload this even if `actionlint` failed.
+    # This is only available on public repositories.
+    if: >
+      always() &&
+      !contains(fromJSON('["cancelled", "skipped"]'), needs.workflow_syntax.result) &&
+      !github.event.repository.private &&
+      github.event_name != 'merge_group'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - name: Download SARIF file
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: results.sarif
+          path: results.sarif
+
+      - name: Upload SARIF file
+        uses: github/codeql-action/upload-sarif@ce28f5bb42b7a9f2c824e633a3f6ee835bab6858 # v3.29.0
+        with:
+          sarif_file: results.sarif
+          category: zizmor

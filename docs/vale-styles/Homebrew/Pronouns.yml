@@ -1,0 +1,15 @@
+---
+extends: existence
+message: Avoid gender-specific language when not necessary.
+link: "https://github.com/Homebrew/brew/blob/HEAD/docs/Prose-Style-Guidelines.md#personal-pronouns"
+level: error
+ignorecase: true
+tokens:
+  - him
+  - her
+  - she
+  - he
+  - his
+  - hers
+  - himself
+  - herself

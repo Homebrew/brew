@@ -1,0 +1,39 @@
+{
+  "token": "caffeine",
+  "full_token": "caffeine",
+  "tap": null,
+  "name": [
+
+  ],
+  "desc": null,
+  "homepage": "https://brew.sh/",
+  "url": "https://www.example.com/cask/caffeine.zip",
+  "version": "1.2.3",
+  "installed": null,
+  "outdated": false,
+  "sha256": "67cdb8a02803ef37fdbf7e0be205863172e41a561ca446cd84f0d7ab35a99d94",
+  "artifacts": [
+    {
+      "app": [
+        "Caffeine.app"
+      ]
+    },
+    {
+      "zap": [
+        {
+          "trash": "/$HOME/support/fixtures/cask/caffeine/org.example.caffeine.plist"
+        }
+      ]
+    }
+  ],
+  "caveats": null,
+  "depends_on": {
+  },
+  "conflicts_with": null,
+  "container": null,
+  "auto_updates": null,
+  "tap_git_head": null,
+  "languages": [
+
+  ]
+}

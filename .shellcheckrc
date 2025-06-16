@@ -1,0 +1,32 @@
+# Look for 'source'd files relative to the current working directory where the
+# shellcheck command is invoked.
+source-path=Library
+
+# Allow opening any 'source'd file, even if not specified as input
+external-sources=true
+
+# SC2310: This function is invoked in an 'if' / ! condition so set -e will be
+# disabled. Invoke separately if failures should cause the script to exit.
+# See: https://github.com/koalaman/shellcheck/wiki/SC2310
+#
+# We don't use the `set -e` feature in Bash scripts yet.
+# We do need the return status as condition for if switches.
+# Allow `if command` and `if ! command`.
+disable=SC2310
+
+# SC2311: Bash implicitly disabled set -e for this function invocation because
+# it's inside a command substitution. Add set -e; before it or enable inherit_errexit.
+# See: https://github.com/koalaman/shellcheck/wiki/SC2311
+#
+# We don't use the `set -e` feature in Bash scripts yet.
+# We don't need return codes for "$(command)", only stdout is needed.
+# Allow `var="$(command)"`, etc.
+disable=SC2311
+
+# SC2312: Consider invoking this command separately to avoid masking its return
+# value (or use '|| true' to ignore).
+# See: https://github.com/koalaman/shellcheck/wiki/SC2312
+#
+# We don't need return codes for "$(command)", only stdout is needed.
+# Allow `[[ -n "$(command)" ]]`, `func "$(command)"`, pipes, etc.
+disable=SC2312
