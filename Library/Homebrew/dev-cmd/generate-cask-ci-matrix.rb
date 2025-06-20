@@ -274,10 +274,7 @@ module Homebrew
                                    bitbucket_repository]
           end
 
-          if labels.include?("ci-skip-token")
-            audit_exceptions << %w[token_conflicts token_valid
-                                   token_bad_words]
-          end
+          audit_exceptions << %w[token_valid token_bad_words] if labels.include?("ci-skip-token")
 
           audit_args << "--except" << audit_exceptions.join(",") if audit_exceptions.any?
 

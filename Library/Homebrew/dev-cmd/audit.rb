@@ -58,8 +58,10 @@ module Homebrew
                hidden:      true
         switch "--[no-]signing",
                description: "Audit for app signatures, which are required by macOS on ARM."
+        # should be odeprecated in future
         switch "--token-conflicts",
-               description: "Audit for token conflicts."
+               description: "Audit for token conflicts.",
+               hidden:      true
         flag   "--tap=",
                description: "Check formulae and casks within the given tap, specified as <user>`/`<repo>."
         switch "--fix",
@@ -251,18 +253,17 @@ module Homebrew
                 # For switches, we add `|| nil` so that `nil` will be passed
                 # instead of `false` if they aren't set.
                 # This way, we can distinguish between "not set" and "set to false".
-                audit_online:          args.online? || nil,
-                audit_strict:          args.strict? || nil,
+                audit_online:   args.online? || nil,
+                audit_strict:   args.strict? || nil,
 
                 # No need for `|| nil` for `--[no-]signing`
                 # because boolean switches are already `nil` if not passed
-                audit_signing:         args.signing?,
-                audit_new_cask:        args.new? || nil,
-                audit_token_conflicts: args.token_conflicts? || nil,
-                quarantine:            true,
-                any_named_args:        !no_named_args,
-                only:                  args.only || [],
-                except:                args.except || [],
+                audit_signing:  args.signing?,
+                audit_new_cask: args.new? || nil,
+                quarantine:     true,
+                any_named_args: !no_named_args,
+                only:           args.only || [],
+                except:         args.except || [],
               ).to_a
             end
           end.uniq

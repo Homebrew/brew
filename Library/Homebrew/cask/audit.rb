@@ -27,7 +27,7 @@ module Cask
 
     sig {
       params(
-        cask: ::Cask::Cask, download: T::Boolean, quarantine: T::Boolean, token_conflicts: T.nilable(T::Boolean),
+        cask: ::Cask::Cask, download: T::Boolean, quarantine: T::Boolean,
         online: T.nilable(T::Boolean), strict: T.nilable(T::Boolean), signing: T.nilable(T::Boolean),
         new_cask: T.nilable(T::Boolean), only: T::Array[String], except: T::Array[String]
       ).void
@@ -35,14 +35,13 @@ module Cask
     def initialize(
       cask,
       download: false, quarantine: false,
-      token_conflicts: nil, online: nil, strict: nil, signing: nil,
+      online: nil, strict: nil, signing: nil,
       new_cask: nil, only: [], except: []
     )
-      # `new_cask` implies `online`, `token_conflicts`, `strict` and `signing`
+      # `new_cask` implies `online`, `strict` and `signing`
       online = new_cask if online.nil?
       strict = new_cask if strict.nil?
       signing = new_cask if signing.nil?
-      token_conflicts = new_cask if token_conflicts.nil?
 
       # `online` and `signing` imply `download`
       download ||= online || signing
@@ -53,7 +52,6 @@ module Cask
       @strict = strict
       @signing = signing
       @new_cask = new_cask
-      @token_conflicts = token_conflicts
       @only = only
       @except = except
     end
@@ -69,9 +67,6 @@ module Cask
 
     sig { returns(T::Boolean) }
     def strict? = !!@strict
-
-    sig { returns(T::Boolean) }
-    def token_conflicts? = !!@token_conflicts
 
     sig { returns(::Cask::Audit) }
     def run!
@@ -430,15 +425,10 @@ module Cask
 
     sig { void }
     def audit_token_conflicts
-      return unless token_conflicts?
-
       Homebrew.with_no_api_env do
         return unless core_formula_names.include?(cask.token)
 
-        add_error(
-          "possible duplicate, cask token conflicts with Homebrew core formula: #{Formatter.url(core_formula_url)}",
-          strict_only: true,
-        )
+        add_error("cask token conflicts with an existing homebrew/core formula: #{Formatter.url(core_formula_url)}")
       end
     end
 

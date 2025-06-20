@@ -1321,6 +1321,7 @@ Software vendors are often inconsistent with their naming. By enforcing strict n
 * Prevent duplicate submissions
 * Minimize renaming events
 * Unambiguously boil down the name of the software into a unique identifier
+* Avoid conflicts with Homebrew/homebrew-core formulae
 
 Details of software names and brands will inevitably be lost in the conversion to a minimal token. To capture the vendor’s full name for a distribution, use the [`name`](#stanza-name) within a cask, which accepts an unrestricted UTF-8 string.
 
@@ -1362,7 +1363,9 @@ Details of software names and brands will inevitably be lost in the conversion t
 
 * If the result of this process is a generic term, such as “Macintosh Installer”, try prepending the name of the vendor or developer, followed by a hyphen. If that doesn’t work, then just create the best name you can, based on the vendor’s web page.
 
-* If the result conflicts with the name of an existing cask, make yours unique by prepending the name of the vendor or developer, followed by a hyphen. Example: [unison.rb](https://github.com/Homebrew/homebrew-cask/blob/HEAD/Casks/u/unison.rb) and [panic-unison.rb](https://github.com/Homebrew/homebrew-cask/blob/HEAD/Casks/p/panic-unison.rb).
+* If the result conflicts with the name of an existing cask or Homebrew/homebrew-core formula, make yours unique by prepending the name of the vendor or developer, followed by a hyphen. Example: [unison.rb](https://github.com/Homebrew/homebrew-cask/blob/HEAD/Casks/u/unison.rb) and [panic-unison.rb](https://github.com/Homebrew/homebrew-cask/blob/HEAD/Casks/p/panic-unison.rb).
+
+* If the result still conflicts with the name of an existing Homebrew/homebrew-core formula, adjust the name to better describe the difference e.g. appending `.app`. Example: `appium` formula and `appium-desktop` cask, `angband` formula and `angband-app` cask.
 
 * Inevitably, there are a small number of exceptions not covered by the rules. Don’t hesitate to [use the forum](https://github.com/orgs/Homebrew/discussions) if you have a problem.
 
