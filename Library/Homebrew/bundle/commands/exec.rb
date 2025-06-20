@@ -1,4 +1,4 @@
-# typed: false # rubocop:todo Sorbet/TrueSigil
+# typed: true
 # frozen_string_literal: true
 
 require "English"
@@ -13,6 +13,10 @@ module Homebrew
       module Exec
         PATH_LIKE_ENV_REGEX = /.+#{File::PATH_SEPARATOR}/
 
+        sig {
+          params(args: String, global: T::Boolean, file: T.nilable(String), subcommand: String, services: T::Boolean,
+                 check: T::Boolean).void
+        }
         def self.run(*args, global: false, file: nil, subcommand: "", services: false, check: false)
           if check
             require "bundle/commands/check"
@@ -22,12 +26,13 @@ module Homebrew
           # Store the old environment so we can check if things were already set
           # before we start mutating it.
           old_env = ENV.to_h
+          new_env = T.cast(ENV, Superenv)
 
           # Setup Homebrew's ENV extensions
           ENV.activate_extensions!
-          raise UsageError, "No command to execute was specified!" if args.blank?
 
           command = args.first
+          raise UsageError, "No command to execute was specified!" if command.blank?
 
           require "bundle/brewfile"
           @dsl = Brewfile.read(global:, file:)
@@ -35,7 +40,7 @@ module Homebrew
           require "formula"
           require "formulary"
 
-          ENV.deps = @dsl.entries.filter_map do |entry|
+          new_env.deps = @dsl.entries.filter_map do |entry|
             next if entry.type != :brew
 
             Formulary.factory(entry.name)
@@ -43,20 +48,20 @@ module Homebrew
 
           # Allow setting all dependencies to be keg-only
           # (i.e. should be explicitly in HOMEBREW_*PATHs ahead of HOMEBREW_PREFIX)
-          ENV.keg_only_deps = if ENV["HOMEBREW_BUNDLE_EXEC_ALL_KEG_ONLY_DEPS"].present?
+          new_env.keg_only_deps = if ENV["HOMEBREW_BUNDLE_EXEC_ALL_KEG_ONLY_DEPS"].present?
             ENV.delete("HOMEBREW_BUNDLE_EXEC_ALL_KEG_ONLY_DEPS")
-            ENV.deps
+            new_env.deps
           else
-            ENV.deps.select(&:keg_only?)
+            new_env.deps.select(&:keg_only?)
           end
-          ENV.setup_build_environment
+          new_env.setup_build_environment
 
           # Enable compiler flag filtering
           ENV.refurbish_args
 
           # Set up `nodenv`, `pyenv` and `rbenv` if present.
           env_formulae = %w[nodenv pyenv rbenv]
-          ENV.deps.each do |dep|
+          new_env.deps.each do |dep|
             dep_name = dep.name
             next unless env_formulae.include?(dep_name)
 
@@ -74,7 +79,7 @@ module Homebrew
           end
 
           # Replace the formula versions from the environment variables
-          ENV.deps.each do |formula|
+          new_env.deps.each do |formula|
             formula_name = formula.name
             formula_version = Bundle.formula_versions_from_env(formula_name)
             next unless formula_version
@@ -90,7 +95,12 @@ module Homebrew
                 rejected_opts = []
                 path = PATH.new(ENV.fetch("PATH"))
                            .reject do |path_value|
-                  rejected_opts << path_value if path_value.match?(opt)
+                  if path_value.match?(opt)
+                    rejected_opts << path_value
+                    true
+                  else
+                    false
+                  end
                 end
                 rejected_opts.each do |path_value|
                   path.prepend(path_value.gsub(opt, cellar))
@@ -181,7 +191,7 @@ module Homebrew
           if services
             require "bundle/brew_services"
 
-            exit_code = 0
+            exit_code = T.let(0, Integer)
             run_services(@dsl.entries) do
               Kernel.system(*args)
               if (system_exit_code = $CHILD_STATUS&.exitstatus)
@@ -199,9 +209,9 @@ module Homebrew
             entries: T::Array[Homebrew::Bundle::Dsl::Entry],
             _block:  T.proc.params(
               entry:                Homebrew::Bundle::Dsl::Entry,
-              info:                 T::Hash[String, T.anything],
+              info:                 T::Hash[String, T.untyped],
               service_file:         Pathname,
-              conflicting_services: T::Array[T::Hash[String, T.anything]],
+              conflicting_services: T::Array[T::Hash[String, T.untyped]],
             ).void,
           ).void
         }
@@ -279,7 +289,7 @@ module Homebrew
           map_service_info(entries) do |entry, info, service_file, conflicting_services|
             # Don't restart if already running this version
             loaded_file = Pathname.new(info["loaded_file"].to_s)
-            next if info["running"] && loaded_file&.file? && loaded_file&.realpath == service_file.realpath
+            next if info["running"] && loaded_file.file? && loaded_file.realpath == service_file.realpath
 
             if info["running"] && !Bundle::BrewServices.stop(info["name"], keep: true)
               opoo "Failed to stop #{info["name"]} service"
