@@ -11,17 +11,17 @@ module Cask
       params(
         cask: ::Cask::Cask, audit_download: T::Boolean, audit_online: T.nilable(T::Boolean),
         audit_strict: T.nilable(T::Boolean), audit_signing: T.nilable(T::Boolean),
-        audit_token_conflicts: T.nilable(T::Boolean), audit_new_cask: T.nilable(T::Boolean), quarantine: T::Boolean,
+        audit_new_cask: T.nilable(T::Boolean), quarantine: T::Boolean,
         any_named_args: T::Boolean, language: T.nilable(String), only: T::Array[String], except: T::Array[String]
       ).returns(T::Set[String])
     }
     def self.audit(
       cask, audit_download: false, audit_online: nil, audit_strict: nil, audit_signing: nil,
-      audit_token_conflicts: nil, audit_new_cask: nil, quarantine: false, any_named_args: false, language: nil,
+      audit_new_cask: nil, quarantine: false, any_named_args: false, language: nil,
       only: [], except: []
     )
       new(
-        cask, audit_download:, audit_online:, audit_strict:, audit_signing:, audit_token_conflicts:,
+        cask, audit_download:, audit_online:, audit_strict:, audit_signing:,
         audit_new_cask:, quarantine:, any_named_args:, language:, only:, except:
       ).audit
     end
@@ -36,7 +36,7 @@ module Cask
       params(
         cask: ::Cask::Cask, audit_download: T::Boolean, audit_online: T.nilable(T::Boolean),
         audit_strict: T.nilable(T::Boolean), audit_signing: T.nilable(T::Boolean),
-        audit_token_conflicts: T.nilable(T::Boolean), audit_new_cask: T.nilable(T::Boolean), quarantine: T::Boolean,
+        audit_new_cask: T.nilable(T::Boolean), quarantine: T::Boolean,
         any_named_args: T::Boolean, language: T.nilable(String), only: T::Array[String], except: T::Array[String]
       ).void
     }
@@ -46,7 +46,6 @@ module Cask
       audit_online: nil,
       audit_strict: nil,
       audit_signing: nil,
-      audit_token_conflicts: nil,
       audit_new_cask: nil,
       quarantine: false,
       any_named_args: false,
@@ -61,7 +60,6 @@ module Cask
       @audit_strict = audit_strict
       @audit_signing = audit_signing
       @quarantine = quarantine
-      @audit_token_conflicts = audit_token_conflicts
       @any_named_args = any_named_args
       @language = language
       @only = only
@@ -127,15 +125,14 @@ module Cask
     def audit_cask_instance(cask)
       audit = Audit.new(
         cask,
-        online:          @audit_online,
-        strict:          @audit_strict,
-        signing:         @audit_signing,
-        new_cask:        @audit_new_cask,
-        token_conflicts: @audit_token_conflicts,
-        download:        @audit_download,
-        quarantine:      @quarantine,
-        only:            @only,
-        except:          @except,
+        online:     @audit_online,
+        strict:     @audit_strict,
+        signing:    @audit_signing,
+        new_cask:   @audit_new_cask,
+        download:   @audit_download,
+        quarantine: @quarantine,
+        only:       @only,
+        except:     @except,
       )
       audit.run!
     end

@@ -49,13 +49,11 @@ RSpec.describe Cask::Audit, :cask do
   let(:only) { [] }
   let(:except) { [] }
   let(:strict) { nil }
-  let(:token_conflicts) { nil }
   let(:signing) { nil }
   let(:audit) do
     described_class.new(cask, online:,
                               strict:,
                               new_cask:,
-                              token_conflicts:,
                               signing:,
                               only:,
                               except:)
@@ -71,10 +69,6 @@ RSpec.describe Cask::Audit, :cask do
 
       it "implies `strict`" do
         expect(audit).to be_strict
-      end
-
-      it "implies `token_conflicts`" do
-        expect(audit.token_conflicts?).to be true
       end
     end
 
@@ -949,34 +943,15 @@ RSpec.describe Cask::Audit, :cask do
     end
 
     describe "token conflicts" do
-      let(:only) { ["token_conflicts"] }
       let(:cask_token) { "with-binary" }
-      let(:token_conflicts) { true }
 
       context "when cask token conflicts with a core formula" do
         let(:formula_names) { %w[with-binary other-formula] }
 
-        context "when `--strict` is passed" do
-          let(:strict) { true }
-
-          it "warns about duplicates" do
-            expect(audit).to receive(:core_formula_names).and_return(formula_names)
-            expect(run).to error_with(/possible duplicate/)
-          end
+        it "warns about conflicts" do
+          expect(audit).to receive(:core_formula_names).and_return(formula_names)
+          expect(run).to error_with(/cask token conflicts/)
         end
-
-        context "when `--strict` is not passed" do
-          it "does not warn about duplicates" do
-            expect(audit).to receive(:core_formula_names).and_return(formula_names)
-            expect(run).not_to error_with(/possible duplicate/)
-          end
-        end
-      end
-
-      context "when cask token does not conflict with a core formula" do
-        let(:formula_names) { %w[other-formula] }
-
-        it { is_expected.to pass }
       end
     end
 

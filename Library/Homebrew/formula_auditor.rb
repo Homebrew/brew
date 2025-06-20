@@ -170,8 +170,14 @@ module Homebrew
                                                                               last_word_connector: " or ")}."
       end
 
-      return unless @strict
       return unless @core_tap
+
+      if CoreCaskTap.instance.cask_tokens.include?(name)
+        problem "Formula name conflicts with an existing Homebrew/cask cask's token."
+        return
+      end
+
+      return unless @strict
 
       problem "'#{name}' is not allowed in homebrew/core." if MissingFormula.disallowed_reason(name)
 
@@ -182,6 +188,11 @@ module Homebrew
 
       if (oldname = CoreTap.instance.formula_renames[name])
         problem "'#{name}' is reserved as the old name of #{oldname} in homebrew/core."
+        return
+      end
+
+      if CoreCaskTap.instance.cask_tokens.include?(name)
+        problem "Formula name conflicts with an existing Homebrew/cask cask's token."
         return
       end
 
