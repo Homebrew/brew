@@ -130,16 +130,13 @@ module Homebrew
         unless formulae.empty?
           Install.perform_preinstall_checks_once
 
-          # If asking the user is enabled, show dependency and size information.
-          Install.ask_formulae(formulae, args: args) if args.ask?
-
-          formulae.each do |formula|
+          install_context = formulae.map do |formula|
             if formula.pinned?
               onoe "#{formula.full_name} is pinned. You must unpin it to reinstall."
               next
             end
             Migrator.migrate_if_needed(formula, force: args.force?)
-            Homebrew::Reinstall.reinstall_formula(
+            Homebrew::Reinstall.build_install_context(
               formula,
               flags:                      args.flags_only,
               force_bottle:               args.force_bottle?,
@@ -153,12 +150,12 @@ module Homebrew
               verbose:                    args.verbose?,
               git:                        args.git?,
             )
-            Cleanup.install_formula_clean!(formula)
           end
 
-          Upgrade.check_installed_dependents(
+          dependants = Upgrade.dependants(
             formulae,
             flags:                      args.flags_only,
+            ask:                        args.ask?,
             force_bottle:               args.force_bottle?,
             build_from_source_formulae: args.build_from_source_formulae,
             interactive:                args.interactive?,
@@ -168,6 +165,43 @@ module Homebrew
             debug:                      args.debug?,
             quiet:                      args.quiet?,
             verbose:                    args.verbose?,
+          )
+
+          formulae_installer = install_context.map(&:formula_installer)
+
+          # Main block: if asking the user is enabled, show dependency and size information.
+          Install.ask_formulae(formulae_installer, dependants, args: args) if args.ask?
+
+          install_context.each do |f|
+            Homebrew::Reinstall.reinstall_formula(
+              f,
+              flags:                      args.flags_only,
+              force_bottle:               args.force_bottle?,
+              build_from_source_formulae: args.build_from_source_formulae,
+              interactive:                args.interactive?,
+              keep_tmp:                   args.keep_tmp?,
+              debug_symbols:              args.debug_symbols?,
+              force:                      args.force?,
+              debug:                      args.debug?,
+              quiet:                      args.quiet?,
+              verbose:                    args.verbose?,
+              git:                        args.git?,
+            )
+            Cleanup.install_formula_clean!(f.formula)
+          end
+
+          Upgrade.upgrade_dependents(
+            dependants, formulae,
+            flags:                      args.flags_only,
+            force_bottle:               args.force_bottle?,
+            build_from_source_formulae: args.build_from_source_formulae,
+            interactive:                args.interactive?,
+            keep_tmp:                   args.keep_tmp?,
+            debug_symbols:              args.debug_symbols?,
+            force:                      args.force?,
+            debug:                      args.debug?,
+            quiet:                      args.quiet?,
+            verbose:                    args.verbose?
           )
         end
 

@@ -231,7 +231,7 @@ module Homebrew
         false
       end
 
-      def install_formulae(
+      def formula_installers(
         formulae_to_install,
         installed_on_request: true,
         installed_as_dependency: false,
@@ -256,11 +256,11 @@ module Homebrew
         skip_post_install: false,
         skip_link: false
       )
-        formula_installers = formulae_to_install.filter_map do |formula|
+        formulae_to_install.filter_map do |formula|
           Migrator.migrate_if_needed(formula, force:, dry_run:)
           build_options = formula.build
 
-          formula_installer = FormulaInstaller.new(
+          FormulaInstaller.new(
             formula,
             options:                    build_options.used_options,
             installed_on_request:,
@@ -285,24 +285,36 @@ module Homebrew
             skip_post_install:,
             skip_link:,
           )
-
-          begin
-            unless dry_run
-              formula_installer.prelude
-              formula_installer.fetch
-            end
-            formula_installer
-          rescue CannotInstallFormulaError => e
-            ofail e.message
-            nil
-          rescue UnsatisfiedRequirements, DownloadError, ChecksumMismatchError => e
-            ofail "#{formula}: #{e}"
-            nil
-          end
         end
+      end
 
+      def install_formulae(
+        formula_installers,
+        installed_on_request: true,
+        installed_as_dependency: false,
+        build_bottle: false,
+        force_bottle: false,
+        bottle_arch: nil,
+        ignore_deps: false,
+        only_deps: false,
+        include_test_formulae: [],
+        build_from_source_formulae: [],
+        cc: nil,
+        git: false,
+        interactive: false,
+        keep_tmp: false,
+        debug_symbols: false,
+        force: false,
+        overwrite: false,
+        debug: false,
+        quiet: false,
+        verbose: false,
+        dry_run: false,
+        skip_post_install: false,
+        skip_link: false
+      )
         if dry_run
-          if (formulae_name_to_install = formulae_to_install.map(&:name))
+          if (formulae_name_to_install = formula_installers.map(&:name))
             ohai "Would install #{Utils.pluralize("formula", formulae_name_to_install.count,
                                                   plural: "e", include_count: true)}:"
             puts formulae_name_to_install.join(" ")
@@ -315,6 +327,18 @@ module Homebrew
         end
 
         formula_installers.each do |fi|
+          begin
+            unless dry_run
+              fi.prelude
+              fi.fetch
+            end
+          rescue CannotInstallFormulaError => e
+            ofail e.message
+            next
+          rescue UnsatisfiedRequirements, DownloadError, ChecksumMismatchError => e
+            ofail "#{formula}: #{e}"
+            next
+          end
           install_formula(fi)
           Cleanup.install_formula_clean!(fi.formula)
         end
@@ -330,16 +354,17 @@ module Homebrew
       end
 
       # If asking the user is enabled, show dependency and size information.
-      def ask_formulae(formulae, args:)
-        return if formulae.empty?
+      def ask_formulae(formulae_installer, dependants, args:)
+        return if formulae_installer.empty?
+
+        formulae = collect_dependencies(formulae_installer, dependants)
 
         ohai "Looking for bottles..."
 
-        sized_formulae = compute_sized_formulae(formulae, args: args)
-        sizes = compute_total_sizes(sized_formulae, debug: args.debug?)
+        sizes = compute_total_sizes(formulae, debug: args.debug?)
 
-        puts "#{::Utils.pluralize("Formula", sized_formulae.count, plural: "e")} \
-(#{sized_formulae.count}): #{sized_formulae.join(", ")}\n\n"
+        puts "#{::Utils.pluralize("Formula", formulae.count, plural: "e")} \
+(#{formulae.count}): #{formulae.join(", ")}\n\n"
         puts "Download Size: #{disk_usage_readable(sizes[:download])}"
         puts "Install Size:  #{disk_usage_readable(sizes[:installed])}"
         puts "Net Install Size: #{disk_usage_readable(sizes[:net])}" if sizes[:net] != 0
@@ -411,41 +436,6 @@ module Homebrew
         end
       end
 
-      # Build a unique list of formulae to size by including:
-      # 1. The original formulae to install.
-      # 2. Their outdated dependents (subject to pruning criteria).
-      # 3. Optionally, any installed formula that depends on one of these and is outdated.
-      def compute_sized_formulae(formulae, args:)
-        sized_formulae = formulae.flat_map do |formula|
-          # Always include the formula itself.
-          formula_list = [formula]
-
-          deps = args.build_from_source? ? formula.deps.build : formula.deps.required
-
-          outdated_dependents = deps.map(&:to_formula).reject(&:pinned?).select do |dep|
-            dep.installed_kegs.empty? || (dep.bottled? && dep.outdated?)
-          end
-          deps.map(&:to_formula).each do |f|
-            outdated_dependents.concat(f.recursive_dependencies.map(&:to_formula).reject(&:pinned?).select do |dep|
-              dep.installed_kegs.empty? || (dep.bottled? && dep.outdated?)
-            end)
-          end
-          formula_list.concat(outdated_dependents)
-
-          formula_list
-        end
-
-        # Add any installed formula that depends on one of the sized formulae and is outdated.
-        unless Homebrew::EnvConfig.no_installed_dependents_check?
-          sized_formulae.concat(Formula.installed.select do |installed_formula|
-            installed_formula.bottled? && installed_formula.outdated? &&
-              installed_formula.deps.required.map(&:to_formula).intersect?(sized_formulae)
-          end)
-        end
-
-        sized_formulae.uniq(&:to_s).compact
-      end
-
       # Compute the total sizes (download, installed, and net) for the given formulae.
       def compute_total_sizes(sized_formulae, debug: false)
         total_download_size  = 0
@@ -470,6 +460,16 @@ module Homebrew
         { download:  total_download_size,
           installed: total_installed_size,
           net:       total_net_size }
+      end
+
+      def collect_dependencies(formulae_installer, dependants)
+        formulae_dependencies = formulae_installer.flat_map do |f|
+          [f.formula, f.compute_dependencies.flatten.filter do |c|
+            c.is_a? Dependency
+          end.flat_map(&:to_formula)]
+        end.flatten.uniq
+        formulae_dependencies.concat(dependants.upgradeable) if dependants&.upgradeable
+        formulae_dependencies
       end
     end
   end

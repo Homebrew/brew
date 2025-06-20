@@ -220,10 +220,7 @@ module Homebrew
 
         Install.perform_preinstall_checks_once
 
-        # Main block: if asking the user is enabled, show dependency and size information.
-        Install.ask_formulae(formulae_to_install, args: args) if args.ask?
-
-        Upgrade.upgrade_formulae(
+        formulae_installer = Upgrade.formula_installers(
           formulae_to_install,
           flags:                      args.flags_only,
           dry_run:                    args.dry_run?,
@@ -239,8 +236,31 @@ module Homebrew
           verbose:                    args.verbose?,
         )
 
-        Upgrade.check_installed_dependents(
+        dependants = Upgrade.dependants(
           formulae_to_install,
+          flags:                      args.flags_only,
+          dry_run:                    args.dry_run?,
+          ask:                        args.ask?,
+          force_bottle:               args.force_bottle?,
+          build_from_source_formulae: args.build_from_source_formulae,
+          interactive:                args.interactive?,
+          keep_tmp:                   args.keep_tmp?,
+          debug_symbols:              args.debug_symbols?,
+          force:                      args.force?,
+          debug:                      args.debug?,
+          quiet:                      args.quiet?,
+          verbose:                    args.verbose?,
+        )
+
+        # Main block: if asking the user is enabled, show dependency and size information.
+        Install.ask_formulae(formulae_installer, dependants, args: args) if args.ask?
+
+        Upgrade.upgrade_formulae(formulae_installer,
+                                 dry_run: args.dry_run?,
+                                 verbose: args.verbose?)
+
+        Upgrade.upgrade_dependents(
+          dependants, formulae_to_install,
           flags:                      args.flags_only,
           dry_run:                    args.dry_run?,
           force_bottle:               args.force_bottle?,
@@ -251,7 +271,7 @@ module Homebrew
           force:                      args.force?,
           debug:                      args.debug?,
           quiet:                      args.quiet?,
-          verbose:                    args.verbose?,
+          verbose:                    args.verbose?
         )
 
         true
