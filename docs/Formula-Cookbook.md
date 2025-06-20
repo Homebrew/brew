@@ -1,5 +1,5 @@
 ---
-last_review_date: "1970-01-01"
+last_review_date: "2025-06-16"
 ---
 
 # Formula Cookbook
@@ -745,6 +745,44 @@ end
 ```
 
 For `url`/`regex` guidelines and additional `livecheck` block examples, refer to the [`brew livecheck` documentation](Brew-Livecheck.md). For more technical information on the methods used in a `livecheck` block, please refer to the [`Livecheck` class documentation](https://rubydoc.brew.sh/Livecheck).
+
+### Excluding formula from autobump list
+
+By default, all new formulae in the Homebrew/core repository are added to the autobump list. It means that future updates will be handled automatically by Homebrew CI jobs, and contributors do not have to do it manually.
+
+Sometimes, we want to exclude a formula from this list, for one reason or another. It can be done by adding the `no_autobump!` method in the formula definition, for example:
+
+```ruby
+class Foo < Formula
+  # ...
+  url "https://example.com/foo-1.0.tar.gz"
+
+  livecheck do
+    url "https://example.com/foo/download.html"
+    regex(/href=.*?foo[._-]v?(\d+(?:\.\d+)+)\.t/i)
+  end
+
+  no_autobump! because: :bumped_by_upstream
+end
+```
+
+To use this method, a reason must be provided. The preferred way is to use one of the available symbols:
+
+* `:incompatible_version_format`: This reason is used when the `brew bump` command cannot determine a version for the URL or update it.
+* `:bumped_by_upstream`: Some developers whose programs are available in Homebrew want to take care of the updates themselves or even set up a CI action that does this. This `no_autobump!` reason exists for such cases.
+* `:requires_manual_review`: This is a temporary reason and expected to be deprecated in the future. It indicates that this package was not in the `autobump.txt` file before the new autobump list was introduced.
+
+```ruby
+no_autobump! because: :incompatible_version_format
+```
+
+The full list of available symbols is stored in [`NO_AUTOBUMP_REASONS_LIST`](https://rubydoc.brew.sh/top-level-namespace.html#NO_AUTOBUMP_REASONS_LIST-constant) constant. A custom reason can be provided if none of the available symbols fits:
+
+```ruby
+no_autobump! because: "some unique reason"
+```
+
+More information about the autobump process can be found on the [Autobump List](Autobump-List.md) page.
 
 ### Unstable versions (`head`)
 
