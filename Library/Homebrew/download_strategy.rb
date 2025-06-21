@@ -1350,7 +1350,7 @@ class CVSDownloadStrategy < VCSDownloadStrategy
     end
 
     command! "cvs",
-             args:    [*quiet_flag, "-d", @url, "checkout", "-d", cached_location.basename, @module],
+             args:    [*quiet_flag, "-d", @url, "checkout", "-d", basename.to_s, @module],
              chdir:   cached_location.dirname,
              timeout: Utils::Timer.remaining(timeout)
   end
