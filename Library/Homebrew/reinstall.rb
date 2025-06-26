@@ -7,9 +7,7 @@ require "messages"
 
 module Homebrew
   module Reinstall
-    # struct to keep context of the current installer, keg, formula and option
-    InstallationContext = Struct.new(:formula_installer, :keg, :formula, :options)
-    def self.build_install_context(
+    def self.reinstall_formula(
       formula,
       flags:,
       force_bottle: false,
@@ -63,38 +61,16 @@ module Homebrew
           verbose:,
         }.compact,
       )
-      InstallationContext.new(fi, keg, formula, options)
-    end
-
-    def self.reinstall_formula(
-      install_context,
-      flags:,
-      force_bottle: false,
-      build_from_source_formulae: [],
-      interactive: false,
-      keep_tmp: false,
-      debug_symbols: false,
-      force: false,
-      debug: false,
-      quiet: false,
-      verbose: false,
-      git: false
-    )
-      formula_installer = install_context.formula_installer
-      keg = install_context.keg
-      formula = install_context.formula
-      options = install_context.options
-      link_keg = keg.linked?
-      formula_installer.prelude
-      formula_installer.fetch
+      fi.prelude
+      fi.fetch
 
       oh1 "Reinstalling #{Formatter.identifier(formula.full_name)} #{options.to_a.join " "}"
 
-      formula_installer.install
-      formula_installer.finish
+      fi.install
+      fi.finish
     rescue FormulaInstallationAlreadyAttemptedError
       nil
-      # Any other exceptions we want to restore the previous keg and report the error.
+    # Any other exceptions we want to restore the previous keg and report the error.
     rescue Exception # rubocop:disable Lint/RescueException
       ignore_interrupts { restore_backup(keg, link_keg, verbose:) }
       raise

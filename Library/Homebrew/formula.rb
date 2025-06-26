@@ -3207,11 +3207,11 @@ class Formula
     patchlist.select(&:external?).each(&:fetch)
   end
 
-  sig { params(quiet: T::Boolean).void }
-  def fetch_bottle_tab(quiet: false)
+  sig { void }
+  def fetch_bottle_tab
     return unless bottled?
 
-    T.must(bottle).fetch_tab(quiet: quiet)
+    T.must(bottle).fetch_tab
   end
 
   sig { returns(T::Hash[String, T.untyped]) }
