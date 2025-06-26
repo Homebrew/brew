@@ -111,7 +111,7 @@ sudo chown -R $(whoami) /Library/Ruby/* /Library/Perl/* /Library/Python/*
 The Perl module `local::lib` works similarly to rbenv/RVM (although for
 modules only, not Perl installations). A simple solution that only
 pollutes your `/Library/Perl` a little is to install
-[`local::lib`](https://metacpan.org/pod/local::lib) with sudo:
+`local::lib` with sudo:
 
 ```sh
 sudo cpan local::lib
@@ -120,7 +120,7 @@ sudo cpan local::lib
 Note that this will install some other dependencies like `Module::Install`.
 Then put the appropriate incantation in your shell’s startup, e.g. for
 `.profile` you'd insert the below; for others see the
-[`local::lib`](https://metacpan.org/pod/local::lib) docs.
+`local::lib` docs.
 
 ```sh
 eval "$(perl -I$HOME/perl5/lib/perl5 -Mlocal::lib)"
