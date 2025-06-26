@@ -96,6 +96,9 @@ module Homebrew
         download_and_cache_data! unless cache.key?("casks")
 
         Homebrew::API.write_names_file(all_casks.keys, "cask", regenerate:)
+
+        casks_completion = all_casks.keys + all_renames.keys
+        Homebrew::API.write_names_file(casks_completion.sort.uniq, "cask_completion", regenerate:)
       end
     end
   end
