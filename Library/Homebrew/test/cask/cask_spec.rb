@@ -484,6 +484,108 @@ RSpec.describe Cask::Cask, :cask do
         }
       JSON
     end
+    let(:expected_depends_on_macos_variations_os) do
+      <<~JSON
+        {
+          "tahoe": {
+            "depends_on": {
+              "macos": {
+                ">=": [
+                  "10.15"
+                ]
+              }
+            }
+          },
+          "sequoia": {
+            "depends_on": {
+              "macos": {
+                ">=": [
+                  "10.15"
+                ]
+              }
+            }
+          },
+          "sonoma": {
+            "depends_on": {
+              "macos": {
+                ">=": [
+                  "10.15"
+                ]
+              }
+            }
+          },
+          "ventura": {
+            "depends_on": {
+              "macos": {
+                ">=": [
+                  "10.15"
+                ]
+              }
+            }
+          },
+          "monterey": {
+            "depends_on": {
+              "macos": {
+                ">=": [
+                  "10.15"
+                ]
+              }
+            }
+          },
+          "big_sur": {
+            "sha256": "67cdb8a02803ef37fdbf7e0be205863172e41a561ca446cd84f0d7ab35a99d94",
+            "depends_on": {
+              "macos": {
+                ">=": [
+                  "10.15"
+                ]
+              }
+            }
+          },
+          "arm64_big_sur": {
+            "sha256": "67cdb8a02803ef37fdbf7e0be205863172e41a561ca446cd84f0d7ab35a99d94"
+          },
+          "catalina": {
+            "sha256": "67cdb8a02803ef37fdbf7e0be205863172e41a561ca446cd84f0d7ab35a99d94",
+            "depends_on": {
+              "macos": {
+                ">=": [
+                  "10.15"
+                ]
+              }
+            }
+          }
+        }
+      JSON
+    end
+    let(:expected_depends_on_arch_variations_os) do
+      <<~JSON
+        {
+          "ventura": {
+            "sha256": "a1b2c3d4e5f67890abcdef1234567890abcdef1234567890abcdef1234567890"
+          },
+          "arm64_ventura": {
+            "sha256": "a1b2c3d4e5f67890abcdef1234567890abcdef1234567890abcdef1234567890"
+          },
+          "big_sur": {
+            "sha256": "d5b2dfbef7ea28c25f7a77cd7fa14d013d82b626db1d82e00e25822464ba19e2",
+            "depends_on": {
+              "arch": [
+                {
+                  "type": "intel",
+                  "bits": 64
+                }
+              ],
+              "macos": {
+                ">=": [
+                  "10.11"
+                ]
+              }
+            }
+          }
+        }
+      JSON
+    end
 
     before do
       # For consistency, always run on Monterey and ARM
@@ -517,6 +619,22 @@ RSpec.describe Cask::Cask, :cask do
 
       expect(h).to be_a(Hash)
       expect(JSON.pretty_generate(h["variations"])).to eq expected_sha256_variations_os.strip
+    end
+
+    it "returns the correct variations hash for a cask with a different `depends_on macos:` for each arch and os" do
+      c = Cask::CaskLoader.load("with-depends-on-macos-inside-on-arch")
+      h = c.to_hash_with_variations
+
+      expect(h).to be_a(Hash)
+      expect(JSON.pretty_generate(h["variations"])).to eq expected_depends_on_macos_variations_os.strip
+    end
+
+    it "returns the correct variations hash for a cask with a different `depends_on arch:` for some os values" do
+      c = Cask::CaskLoader.load("with-depends-on-arch-inside-on-os")
+      h = c.to_hash_with_variations
+
+      expect(h).to be_a(Hash)
+      expect(JSON.pretty_generate(h["variations"])).to eq expected_depends_on_arch_variations_os.strip
     end
 
     # NOTE: The calls to `Cask.generating_hash!` and `Cask.generated_hash!`
