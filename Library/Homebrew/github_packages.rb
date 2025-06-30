@@ -312,6 +312,9 @@ class GitHubPackages
         SPDX.license_expression_to_string(:cannot_represent)
       end
 
+      formula_path = HOMEBREW_REPOSITORY/bottle_hash["formula"]["path"]
+      formula = Formulary.factory(formula_path)
+
       formula_annotations_hash = {
         "com.github.package.type"                => GITHUB_PACKAGE_TYPE,
         "org.opencontainers.image.created"       => created_date,
@@ -325,6 +328,7 @@ class GitHubPackages
         "org.opencontainers.image.url"           => bottle_hash["formula"]["homepage"],
         "org.opencontainers.image.vendor"        => org,
         "org.opencontainers.image.version"       => version,
+        "sh.brew.formula.json"                   => formula.to_hash_with_variations,
       }.compact_blank
       manifests = []
     end
