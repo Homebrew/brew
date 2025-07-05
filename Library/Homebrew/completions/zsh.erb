@@ -86,7 +86,8 @@ __brew_casks() {
   local comp_cachename=brew_casks
 
   if ! _retrieve_cache $comp_cachename; then
-    list=( $(brew casks) )
+    local cask_completion_names=$(brew --cache)/api/cask_completion_names.txt
+    list=( $( [[ -f $cask_completion_names ]] && cat "$cask_completion_names" || brew casks ) )
     _store_cache $comp_cachename list
   fi
 
