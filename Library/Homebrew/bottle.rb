@@ -7,7 +7,11 @@ class Bottle
   class Filename
     attr_reader :name, :version, :tag, :rebuild
 
-    sig { params(formula: Formula, tag: Utils::Bottles::Tag, rebuild: Integer).returns(T.attached_class) }
+    sig {
+      params(formula: T.any(Formula, Homebrew::FormulaStub),
+             tag:     Utils::Bottles::Tag,
+             rebuild: Integer).returns(T.attached_class)
+    }
     def self.create(formula, tag, rebuild)
       new(formula.name, formula.pkg_version, tag, rebuild)
     end
