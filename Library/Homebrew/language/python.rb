@@ -399,7 +399,7 @@ module Language
             if t.is_a?(Resource)
               t.stage do
                 target = Pathname.pwd
-                target /= t.downloader.basename if t.url&.end_with?("-none-any.whl")
+                target /= t.downloader.basename if t.url&.match?("[.-]py3[^-]*-none-any.whl$")
                 do_install(target, build_isolation:)
               end
             else
