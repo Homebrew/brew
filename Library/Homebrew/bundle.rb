@@ -41,7 +41,7 @@ module Homebrew
 
       sig { returns(T::Boolean) }
       def mas_installed?
-        @mas_installed ||= which_formula("mas")
+        @mas_installed ||= which_formula?("mas")
       end
 
       sig { returns(T::Boolean) }
@@ -59,7 +59,7 @@ module Homebrew
 
       sig { returns(T::Boolean) }
       def whalebrew_installed?
-        @whalebrew_installed ||= which_formula("whalebrew")
+        @whalebrew_installed ||= which_formula?("whalebrew")
       end
 
       sig { returns(T::Boolean) }
@@ -70,7 +70,7 @@ module Homebrew
       end
 
       sig { params(name: String).returns(T::Boolean) }
-      def which_formula(name)
+      def which_formula?(name)
         formula = Formulary.factory(name)
         ENV["PATH"] = "#{formula.opt_bin}:#{ENV.fetch("PATH", nil)}" if formula.any_version_installed?
         which(name).present?
