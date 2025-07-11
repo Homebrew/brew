@@ -16,7 +16,7 @@ RSpec.describe FormulaInstaller do
     match(&:poured_from_bottle)
   end
 
-  def temporarily_install_bottle(formula)
+  define_method(:temporarily_install_bottle) do |formula|
     expect(formula).not_to be_latest_version_installed
     expect(formula).to be_bottled
     expect(formula).to pour_bottle
@@ -25,7 +25,7 @@ RSpec.describe FormulaInstaller do
     stub_formula_loader formula("glibc") { url "glibc-1.0" }
     stub_formula_loader formula
 
-    fi = FormulaInstaller.new(formula)
+    fi = described_class.new(formula)
     fi.fetch
     fi.install
 
@@ -48,8 +48,7 @@ RSpec.describe FormulaInstaller do
     expect(formula).not_to be_latest_version_installed
   end
 
-  def test_basic_formula_setup(formula)
-    # Test that things made it into the Keg
+  define_method(:test_basic_formula_setup) do |formula|
     expect(formula.bin).to be_a_directory
 
     expect(formula.libexec).to be_a_directory

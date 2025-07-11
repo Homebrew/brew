@@ -10,8 +10,8 @@ module Homebrew
         @pinned_formulae = nil
       end
 
-      def self.preinstall(name, no_upgrade: false, verbose: false, **options)
-        new(name, options).preinstall(no_upgrade:, verbose:)
+      def self.preinstall?(name, no_upgrade: false, verbose: false, **options)
+        new(name, options).preinstall?(no_upgrade:, verbose:)
       end
 
       def self.install(name, preinstall: true, no_upgrade: false, verbose: false, force: false, **options)
@@ -31,7 +31,7 @@ module Homebrew
         @changed = nil
       end
 
-      def preinstall(no_upgrade: false, verbose: false)
+      def preinstall?(no_upgrade: false, verbose: false)
         if installed? && (self.class.no_upgrade_with_args?(no_upgrade, @name) || !upgradable?)
           puts "Skipping install of #{@name} formula. It is already installed." if verbose
           @changed = nil
@@ -260,6 +260,9 @@ module Homebrew
         end
       end
 
+
+      # Ending with a `!` is more appropriate here given that this affects the state of the user's system.
+      # rubocop:disable Naming/PredicateMethod
       def resolve_conflicts!(verbose:)
         conflicts_with.each do |conflict|
           next unless FormulaInstaller.formula_installed?(conflict)
@@ -281,7 +284,10 @@ module Homebrew
 
         true
       end
+      # rubocop:enable Naming/PredicateMethod
 
+      # Ending with a `!` is more appropriate here given that this affects the state of the user's system.
+      # rubocop:disable Naming/PredicateMethod
       def install!(verbose:, force:)
         install_args = @args.dup
         install_args << "--force" << "--overwrite" if force
@@ -297,7 +303,10 @@ module Homebrew
         @changed = true
         true
       end
+      # rubocop:enable Naming/PredicateMethod
 
+      # Ending with a `!` is more appropriate here given that this affects the state of the user's system.
+      # rubocop:disable Naming/PredicateMethod
       def upgrade!(verbose:, force:)
         upgrade_args = []
         upgrade_args << "--force" if force
@@ -311,6 +320,7 @@ module Homebrew
         @changed = true
         true
       end
+      # rubocop:enable Naming/PredicateMethod
     end
   end
 end

@@ -16,7 +16,7 @@ RSpec.describe FormulaInstaller do
     match(&:poured_from_bottle)
   end
 
-  def temporary_install(formula, **options)
+  define_method(:temporary_install) do |formula, **options|
     expect(formula).not_to be_latest_version_installed
 
     installer = described_class.new(formula, **options)

@@ -403,7 +403,7 @@ RSpec.describe TestRunnerFormula do
     end
   end
 
-  def setup_test_formula(name, dependencies = [], **kwargs)
+  define_method(:setup_test_formula) do |name, dependencies = [], **kwargs|
     formula name do
       url "https://brew.sh/#{name}-1.0.tar.gz"
       dependencies.each { |dependency| depends_on dependency }

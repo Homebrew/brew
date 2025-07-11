@@ -6,7 +6,7 @@ require "bundle_version"
 RSpec.describe Homebrew::Livecheck::Strategy::Sparkle do
   subject(:sparkle) { described_class }
 
-  def create_appcast_xml(items_str = "")
+  define_method(:create_appcast_xml) do |items_str = ""|
     <<~EOS
       <?xml version="1.0" encoding="utf-8"?>
       <rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle">

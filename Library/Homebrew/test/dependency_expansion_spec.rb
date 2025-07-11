@@ -3,7 +3,7 @@
 require "dependency"
 
 RSpec.describe Dependency do
-  def build_dep(name, tags = [], deps = [])
+  define_method(:build_dep) do |name, tags = [], deps = []|
     dep = described_class.new(name.to_s, tags)
     allow(dep).to receive(:to_formula).and_return \
       instance_double(Formula, deps:, name:, full_name: name)

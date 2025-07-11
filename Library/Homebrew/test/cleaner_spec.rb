@@ -204,7 +204,7 @@ RSpec.describe Cleaner do
   end
 
   describe "::skip_clean" do
-    def stub_formula_skip_clean(skip_paths)
+    define_method(:stub_formula_skip_clean) do |skip_paths|
       formula("cleaner_test") do
         url "foo-1.0"
 

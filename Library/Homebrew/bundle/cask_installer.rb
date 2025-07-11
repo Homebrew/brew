@@ -18,7 +18,7 @@ module Homebrew
         Homebrew::Bundle::CaskDumper.cask_is_outdated_using_greedy?(name)
       end
 
-      def self.preinstall(name, no_upgrade: false, verbose: false, **options)
+      def self.preinstall?(name, no_upgrade: false, verbose: false, **options)
         if installed_casks.include?(name) && !upgrading?(no_upgrade, name, options)
           puts "Skipping install of #{name} cask. It is already installed." if verbose
           return false

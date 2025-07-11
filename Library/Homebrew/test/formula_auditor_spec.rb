@@ -16,7 +16,7 @@ RSpec.describe Homebrew::FormulaAuditor do
   let(:tap_path) { HOMEBREW_TAP_DIRECTORY/"homebrew/homebrew-bar" }
   let(:formula_path) { tap_path/formula_subpath }
 
-  def formula_auditor(name, text, options = {})
+  define_method(:formula_auditor) do |name, text, options = {}|
     path = Pathname.new "#{dir}/#{name}.rb"
     path.open("w") do |f|
       f.write text
@@ -34,14 +34,14 @@ RSpec.describe Homebrew::FormulaAuditor do
     described_class.new(formula, options)
   end
 
-  def formula_gsub(before, after = "")
+  define_method(:formula_gsub) do |before, after = ""|
     text = formula_path.read
     text.gsub! before, after
     formula_path.unlink
     formula_path.write text
   end
 
-  def formula_gsub_origin_commit(before, after = "")
+  define_method(:formula_gsub_origin_commit) do |before, after = ""|
     text = origin_formula_path.read
     text.gsub!(before, after)
     origin_formula_path.unlink

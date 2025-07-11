@@ -10,7 +10,7 @@ Homebrew/MoveToExtendOS:
     - "{extend,test,requirements}/**/*"
     - "os.rb"
 
-Naming/PredicateName:
+Naming/PredicatePrefix:
   inherit_mode:
     merge:
       - AllowedMethods

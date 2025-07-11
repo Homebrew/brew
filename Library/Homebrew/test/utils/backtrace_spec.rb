@@ -50,7 +50,7 @@ RSpec.describe Utils::Backtrace do
     backtrace_with_sorbet_paths.drop(1)
   end
 
-  def exception_with(backtrace:)
+  define_method(:exception_with) do |backtrace:|
     exception = StandardError.new
     exception.set_backtrace(backtrace) if backtrace
     exception

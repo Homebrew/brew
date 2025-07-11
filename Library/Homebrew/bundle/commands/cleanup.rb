@@ -37,12 +37,12 @@ module Homebrew
             if casks.any?
               args = zap ? ["--zap"] : []
               Kernel.system HOMEBREW_BREW_FILE, "uninstall", "--cask", *args, "--force", *casks
-              puts "Uninstalled #{casks.size} cask#{(casks.size == 1) ? "" : "s"}"
+              puts "Uninstalled #{casks.size} cask#{"s" if casks.size != 1}"
             end
 
             if formulae.any?
               Kernel.system HOMEBREW_BREW_FILE, "uninstall", "--formula", "--force", *formulae
-              puts "Uninstalled #{formulae.size} formula#{(formulae.size == 1) ? "" : "e"}"
+              puts "Uninstalled #{formulae.size} formula#{"e" if formulae.size != 1}"
             end
 
             Kernel.system HOMEBREW_BREW_FILE, "untap", *taps if taps.any?

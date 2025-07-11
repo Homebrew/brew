@@ -8,12 +8,12 @@ RSpec.describe Homebrew::API do
   let(:json_hash) { JSON.parse(json) }
   let(:json_invalid) { '{"foo":"bar"' }
 
-  def mock_curl_output(stdout: "", success: true)
+  define_method(:mock_curl_output) do |stdout: "", success: true|
     curl_output = instance_double(SystemCommand::Result, stdout:, success?: success)
     allow(Utils::Curl).to receive(:curl_output).and_return curl_output
   end
 
-  def mock_curl_download(stdout:)
+  define_method(:mock_curl_download) do |stdout:|
     allow(Utils::Curl).to receive(:curl_download) do |*_args, **kwargs|
       kwargs[:to].write stdout
     end

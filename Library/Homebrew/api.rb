@@ -142,7 +142,7 @@ module Homebrew
     end
 
     sig { params(names: T::Array[String], type: String, regenerate: T::Boolean).returns(T::Boolean) }
-    def self.write_names_file(names, type, regenerate:)
+    def self.write_names_file?(names, type, regenerate:)
       names_path = HOMEBREW_CACHE_API/"#{type}_names.txt"
       if !names_path.exist? || regenerate
         names_path.write(names.join("\n"))

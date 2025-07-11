@@ -49,7 +49,7 @@ module Homebrew
           next if cls.nil?
           next if Homebrew::Bundle::Skipper.skip? entry
 
-          preinstall = if cls.preinstall(*args, **options, no_upgrade:, verbose:)
+          preinstall = if cls.preinstall?(*args, **options, no_upgrade:, verbose:)
             puts Formatter.success("#{verb} #{name}")
             true
           else

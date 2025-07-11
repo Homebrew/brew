@@ -3,12 +3,12 @@
 require "cli/named_args"
 
 RSpec.describe Homebrew::CLI::NamedArgs do
-  def setup_unredable_formula(name)
+  define_method(:setup_unredable_formula) do |name|
     error = FormulaUnreadableError.new(name, RuntimeError.new("testing"))
     allow(Formulary).to receive(:factory).with(name, any_args).and_raise(error)
   end
 
-  def setup_unredable_cask(name)
+  define_method(:setup_unredable_cask) do |name|
     error = Cask::CaskUnreadableError.new(name, "testing")
     allow(Cask::CaskLoader).to receive(:load).with(name, any_args).and_raise(error)
 

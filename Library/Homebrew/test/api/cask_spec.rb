@@ -9,7 +9,7 @@ RSpec.describe Homebrew::API::Cask do
     stub_const("Homebrew::API::HOMEBREW_CACHE_API", cache_dir)
   end
 
-  def mock_curl_download(stdout:)
+  define_method(:mock_curl_download) do |stdout:|
     allow(Utils::Curl).to receive(:curl_download) do |*_args, **kwargs|
       kwargs[:to].write stdout
     end

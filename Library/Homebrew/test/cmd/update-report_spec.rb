@@ -12,7 +12,7 @@ RSpec.describe Homebrew::Cmd::UpdateReport do
     let(:tap) { CoreTap.instance }
     let(:reporter_class) do
       Class.new(described_class) do
-        def initialize(tap)
+        define_method(:initialize) do |tap|
           @tap = tap
 
           ENV["HOMEBREW_UPDATE_BEFORE#{tap.repository_var_suffix}"] = "12345678"
@@ -25,7 +25,7 @@ RSpec.describe Homebrew::Cmd::UpdateReport do
     let(:reporter) { reporter_class.new(tap) }
     let(:hub) { ReporterHub.new }
 
-    def perform_update(fixture_name = "")
+    define_method(:perform_update) do |fixture_name = ""|
       allow(Formulary).to receive(:factory).and_return(instance_double(Formula, pkg_version: "1.0"))
       allow(FormulaVersions).to receive(:new).and_return(instance_double(FormulaVersions, formula_at_revision: "2.0"))
 

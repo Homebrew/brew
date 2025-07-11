@@ -13,7 +13,7 @@ RSpec.describe Keg do
     (HOMEBREW_CELLAR/"foo/1.0.0").mkpath
   end
 
-  def setup_file(placeholders: false)
+  define_method(:setup_file) do |placeholders: false|
     path = placeholders ? placeholder : dir
     file.atomic_write <<~EOS
       #{path}/file.txt
@@ -24,7 +24,7 @@ RSpec.describe Keg do
     EOS
   end
 
-  def setup_relocation(placeholders: false)
+  define_method(:setup_relocation) do |placeholders: false|
     relocation = described_class::Relocation.new
 
     if placeholders

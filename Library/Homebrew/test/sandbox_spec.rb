@@ -37,7 +37,7 @@ RSpec.describe Sandbox, :needs_macos do
         url "https://brew.sh/foo-1.0.tar.gz"
         version "1.0"
 
-        def initialize(*, **)
+        define_method(:initialize) do |*, **|
           super
           @name = "foo)bar"
         end
@@ -53,7 +53,7 @@ RSpec.describe Sandbox, :needs_macos do
         url "https://brew.sh/foo-1.0.tar.gz"
         version "1.0"
 
-        def initialize(*, **)
+        define_method(:initialize) do |*, **|
           super
           @name = "foo\"bar"
         end

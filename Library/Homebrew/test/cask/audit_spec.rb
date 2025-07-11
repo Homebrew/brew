@@ -3,7 +3,7 @@
 require "cask/audit"
 
 RSpec.describe Cask::Audit, :cask do
-  def include_msg?(problems, msg)
+  define_method(:include_msg?) do |problems, msg|
     if msg.is_a?(Regexp)
       Array(problems).any? { |problem| msg.match?(problem[:message]) }
     else
@@ -11,11 +11,11 @@ RSpec.describe Cask::Audit, :cask do
     end
   end
 
-  def passed?(audit)
+  define_method(:passed?) do |audit|
     !audit.errors?
   end
 
-  def outcome(audit)
+  define_method(:outcome) do |audit|
     if passed?(audit)
       "passed"
     else
@@ -150,7 +150,7 @@ RSpec.describe Cask::Audit, :cask do
   describe "#run!" do
     subject(:run) { audit.run! }
 
-    def tmp_cask(name, text)
+    define_method(:tmp_cask) do |name, text|
       path = Pathname.new "#{dir}/#{name}.rb"
       path.open("w") do |f|
         f.write text

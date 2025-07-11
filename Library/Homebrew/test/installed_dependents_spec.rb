@@ -5,7 +5,7 @@ require "installed_dependents"
 RSpec.describe InstalledDependents do
   include FileUtils
 
-  def stub_formula(name, version = "1.0", &block)
+  define_method(:stub_formula) do |name, version = "1.0", &block|
     f = formula(name) do
       url "#{name}-#{version}"
 
@@ -16,7 +16,7 @@ RSpec.describe InstalledDependents do
     f
   end
 
-  def setup_test_keg(name, version, &block)
+  define_method(:setup_test_keg) do |name, version, &block|
     stub_formula("gcc")
     stub_formula("glibc")
     stub_formula(name, version, &block)
@@ -39,7 +39,7 @@ RSpec.describe InstalledDependents do
   end
 
   describe "::find_some_installed_dependents" do
-    def setup_test_keg(name, version, &block)
+    define_method(:setup_test_keg) do |_name, _version|
       keg = super
       Tab.create(keg.to_formula, DevelopmentTools.default_compiler, :libcxx).write
       keg
@@ -50,7 +50,7 @@ RSpec.describe InstalledDependents do
       keg_only_keg.optlink
     end
 
-    def alter_tab(keg)
+    define_method(:alter_tab) do |keg|
       tab = keg.tab
       yield tab
       tab.write
@@ -58,7 +58,7 @@ RSpec.describe InstalledDependents do
 
     # 1.1.6 is the earliest version of Homebrew that generates correct runtime
     # dependency lists in {Tab}s.
-    def tab_dependencies(keg, deps, homebrew_version: "1.1.6")
+    define_method(:tab_dependencies) do |keg, deps, homebrew_version: "1.1.6"|
       alter_tab(keg) do |tab|
         tab.homebrew_version = homebrew_version
         tab.tabfile = keg/AbstractTab::FILENAME
@@ -66,7 +66,7 @@ RSpec.describe InstalledDependents do
       end
     end
 
-    def unreliable_tab_dependencies(keg, deps)
+    define_method(:unreliable_tab_dependencies) do |keg, deps|
       # 1.1.5 is (hopefully!) the last version of Homebrew that generates
       # incorrect runtime dependency lists in {Tab}s.
       tab_dependencies(keg, deps, homebrew_version: "1.1.5")
@@ -174,7 +174,7 @@ RSpec.describe InstalledDependents do
       expect(described_class.find_some_installed_dependents([keg_only_keg])).to eq([[keg_only_keg], ["bar"]])
     end
 
-    def stub_cask_name(name, version, dependency)
+    define_method(:stub_cask_name) do |name, version, dependency|
       c = Cask::CaskLoader.load(<<-RUBY)
         cask "#{name}" do
           version "#{version}"
@@ -188,7 +188,7 @@ RSpec.describe InstalledDependents do
       c
     end
 
-    def setup_test_cask(name, version, dependency)
+    define_method(:setup_test_cask) do |name, version, dependency|
       c = stub_cask_name(name, version, dependency)
       Cask::Caskroom.path.join(name, c.version).mkpath
       c

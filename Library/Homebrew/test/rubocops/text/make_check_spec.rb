@@ -12,7 +12,7 @@ RSpec.describe RuboCop::Cop::FormulaAuditStrict::MakeCheck do
     (path/"style_exceptions").mkpath
   end
 
-  def setup_style_exceptions
+  define_method(:setup_style_exceptions) do
     (path/"style_exceptions/make_check_allowlist.json").write <<~JSON
       [ "bar" ]
     JSON

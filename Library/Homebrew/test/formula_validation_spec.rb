@@ -14,7 +14,7 @@ RSpec.describe Formula do
         end.to raise_error(FormulaValidationError)
       end
 
-      def supports_block_expectations?
+      define_method(:supports_block_expectations?) do
         true
       end
     end
@@ -22,7 +22,9 @@ RSpec.describe Formula do
     it "can't override the `brew` method" do
       expect do
         formula do
-          def brew; end
+          define_method(:brew) do
+            nil
+          end
         end
       end.to raise_error(RuntimeError, /\AThe method `brew` on #{described_class} was declared as final/)
     end

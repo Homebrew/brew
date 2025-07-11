@@ -72,17 +72,17 @@ module Homebrew
 
     sig { returns(T::Boolean) }
     def single_app_cask?
-      apps.count == 1
+      apps.one?
     end
 
     sig { returns(T::Boolean) }
     def single_qlplugin_cask?
-      qlplugins.count == 1
+      qlplugins.one?
     end
 
     sig { returns(T::Boolean) }
     def single_pkg_cask?
-      pkgs.count == 1
+      pkgs.one?
     end
 
     # Filter paths to `Info.plist` files so that ones belonging
@@ -222,14 +222,14 @@ module Homebrew
             unique_info_plist_versions =
               top_level_info_plist_paths.filter_map { |i| BundleVersion.from_info_plist(i)&.nice_version }
                                         .uniq
-            return unique_info_plist_versions.first if unique_info_plist_versions.count == 1
+            return unique_info_plist_versions.first if unique_info_plist_versions.one?
 
             package_info_path = extract_dir/"PackageInfo"
             if package_info_path.exist?
               if (version = BundleVersion.from_package_info(package_info_path))
                 return version.nice_version
               end
-            elsif packages.count == 1
+            elsif packages.one?
               onoe "#{pkg_path.basename} does not contain a `PackageInfo` file."
             end
 

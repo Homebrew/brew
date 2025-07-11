@@ -22,7 +22,7 @@ module Ignorable
     Object.class_eval do
       alias_method :original_raise, :raise
 
-      def raise(*)
+      define_method(:raise) do |*|
         callcc do |continuation|
           super
         # Handle all possible exceptions.

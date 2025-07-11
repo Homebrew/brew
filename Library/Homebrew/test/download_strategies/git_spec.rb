@@ -15,7 +15,7 @@ RSpec.describe GitDownloadStrategy do
     FileUtils.mkpath cached_location
   end
 
-  def git_commit_all
+  define_method(:git_commit_all) do
     system "git", "add", "--all"
     # Allow instance variables here to have nice commit messages.
     # rubocop:disable RSpec/InstanceVariable
@@ -24,7 +24,7 @@ RSpec.describe GitDownloadStrategy do
     # rubocop:enable RSpec/InstanceVariable
   end
 
-  def setup_git_repo
+  define_method(:setup_git_repo) do
     system "git", "-c", "init.defaultBranch=master", "init"
     system "git", "remote", "add", "origin", "https://github.com/Homebrew/homebrew-foo"
     FileUtils.touch "README"

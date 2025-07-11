@@ -28,7 +28,7 @@ module Homebrew
 
       sig { params(cask: ::Cask::Cask).returns(::Cask::Cask) }
       def self.source_download(cask)
-        path = cask.ruby_source_path.to_s || "Casks/#{cask.token}.rb"
+        path = cask.ruby_source_path.to_s
         sha256 = cask.ruby_source_checksum[:sha256]
         checksum = Checksum.new(sha256) if sha256
         git_head = cask.tap_git_head || "HEAD"
@@ -92,11 +92,14 @@ module Homebrew
       end
 
       sig { params(regenerate: T::Boolean).void }
+      # This is not a predicate method (return type is `void`).
+      # rubocop:disable Naming/PredicateMethod
       def self.write_names(regenerate: false)
         download_and_cache_data! unless cache.key?("casks")
 
-        Homebrew::API.write_names_file(all_casks.keys, "cask", regenerate:)
+        Homebrew::API.write_names_file?(all_casks.keys, "cask", regenerate:)
       end
+      # rubocop:enable Naming/PredicateMethod
     end
   end
 end

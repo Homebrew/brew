@@ -341,7 +341,7 @@ class AbstractFileDownloadStrategy < AbstractDownloadStrategy
                         .reject { |path| path.extname.end_with?(".incomplete") }
 
     @cached_location = T.let(
-      if downloads.count == 1
+      if downloads.one?
         downloads.fetch(0)
       else
         HOMEBREW_CACHE/"downloads/#{url_sha256}--#{Utils.safe_filename(resolved_basename)}"

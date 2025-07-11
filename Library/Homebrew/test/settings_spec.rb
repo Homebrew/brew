@@ -9,7 +9,7 @@ RSpec.describe Homebrew::Settings do
     end
   end
 
-  def setup_setting
+  define_method(:setup_setting) do
     HOMEBREW_REPOSITORY.cd do
       system "git", "config", "--replace-all", "homebrew.foo", "true"
     end

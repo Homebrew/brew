@@ -28,8 +28,8 @@ RSpec.describe Homebrew::Bundle::Commands::Install do
     end
 
     it "does not raise an error" do
-      allow(Homebrew::Bundle::TapInstaller).to receive(:preinstall).and_return(false)
-      allow(Homebrew::Bundle::VscodeExtensionInstaller).to receive(:preinstall).and_return(false)
+      allow(Homebrew::Bundle::TapInstaller).to receive(:preinstall?).and_return(false)
+      allow(Homebrew::Bundle::VscodeExtensionInstaller).to receive(:preinstall?).and_return(false)
       allow(Homebrew::Bundle::FormulaInstaller).to receive_messages(preinstall: true, install: true)
       allow(Homebrew::Bundle::CaskInstaller).to receive_messages(preinstall: true, install: true)
       allow(Homebrew::Bundle::MacAppStoreInstaller).to receive_messages(preinstall: true, install: true)
@@ -38,7 +38,7 @@ RSpec.describe Homebrew::Bundle::Commands::Install do
     end
 
     it "#dsl returns a valid DSL" do
-      allow(Homebrew::Bundle::TapInstaller).to receive(:preinstall).and_return(false)
+      allow(Homebrew::Bundle::TapInstaller).to receive(:preinstall?).and_return(false)
       allow(Homebrew::Bundle::VscodeExtensionInstaller).to receive(:preinstall).and_return(false)
       allow(Homebrew::Bundle::FormulaInstaller).to receive_messages(preinstall: true, install: true)
       allow(Homebrew::Bundle::CaskInstaller).to receive_messages(preinstall: true, install: true)
@@ -69,7 +69,7 @@ RSpec.describe Homebrew::Bundle::Commands::Install do
     end
 
     it "skips installs from failed taps" do
-      allow(Homebrew::Bundle::CaskInstaller).to receive(:preinstall).and_return(false)
+      allow(Homebrew::Bundle::CaskInstaller).to receive(:preinstall?).and_return(false)
       allow(Homebrew::Bundle::TapInstaller).to receive_messages(preinstall: true, install: false)
       allow(Homebrew::Bundle::FormulaInstaller).to receive_messages(preinstall: true, install: true)
       allow(Homebrew::Bundle::MacAppStoreInstaller).to receive_messages(preinstall: true, install: true)

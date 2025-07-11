@@ -13,7 +13,7 @@ RSpec.describe Keg do
     dir.mkpath
   end
 
-  def setup_binary_file
+  define_method(:setup_binary_file) do
     binary_file.atomic_write <<~EOS
       \x00#{dir}\x00
     EOS

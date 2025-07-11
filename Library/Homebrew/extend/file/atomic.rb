@@ -20,11 +20,11 @@ class File
   #     file.write('hello')
   #   end
   sig {
-    type_parameters(:out).params(
+    type_parameters(:Out).params(
       file_name: T.any(Pathname, String),
       temp_dir:  String,
-      _block:    T.proc.params(arg0: Tempfile).returns(T.type_parameter(:out)),
-    ).returns(T.type_parameter(:out))
+      _block:    T.proc.params(arg0: Tempfile).returns(T.type_parameter(:Out)),
+    ).returns(T.type_parameter(:Out))
   }
   def self.atomic_write(file_name, temp_dir = dirname(file_name), &_block)
     require "tempfile" unless defined?(Tempfile)

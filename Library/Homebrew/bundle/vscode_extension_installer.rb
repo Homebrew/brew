@@ -8,7 +8,7 @@ module Homebrew
         @installed_extensions = nil
       end
 
-      def self.preinstall(name, no_upgrade: false, verbose: false)
+      def self.preinstall?(name, no_upgrade: false, verbose: false)
         if !Bundle.vscode_installed? && Bundle.cask_installed?
           puts "Installing visual-studio-code. It is not currently installed." if verbose
           Bundle.brew("install", "--cask", "visual-studio-code", verbose:)

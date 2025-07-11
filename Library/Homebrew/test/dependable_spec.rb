@@ -8,7 +8,7 @@ RSpec.describe Dependable do
   subject(:dependable) do
     Class.new do
       include Dependable
-      def initialize
+      define_method(:initialize) do
         @tags = ["foo", "bar", :build]
       end
     end.new

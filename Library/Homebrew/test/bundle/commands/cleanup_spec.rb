@@ -286,7 +286,7 @@ RSpec.describe Homebrew::Bundle::Commands::Cleanup do
                                                  vscode_extensions_to_uninstall: [])
     end
 
-    def sane?
+    define_method(:sane?) do
       expect(described_class).to receive(:system_output_no_stderr).and_return("cleaned")
     end
 
