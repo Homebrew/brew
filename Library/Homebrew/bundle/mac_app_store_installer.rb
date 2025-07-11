@@ -11,7 +11,7 @@ module Homebrew
         @outdated_app_ids = nil
       end
 
-      def self.preinstall(name, id, no_upgrade: false, verbose: false)
+      def self.preinstall?(name, id, no_upgrade: false, verbose: false)
         unless Bundle.mas_installed?
           puts "Installing mas. It is not currently installed." if verbose
           Bundle.brew("install", "mas", verbose:)

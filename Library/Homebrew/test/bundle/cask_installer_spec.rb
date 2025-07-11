@@ -55,7 +55,7 @@ RSpec.describe Homebrew::Bundle::CaskInstaller do
 
       it "skips" do
         expect(Homebrew::Bundle).not_to receive(:system)
-        expect(described_class.preinstall("google-chrome")).to be(false)
+        expect(described_class.preinstall?("google-chrome")).to be(false)
       end
     end
 
@@ -69,7 +69,7 @@ RSpec.describe Homebrew::Bundle::CaskInstaller do
         expect(Homebrew::Bundle).to \
           receive(:system).with(HOMEBREW_BREW_FILE, "upgrade", "--cask", "google-chrome", verbose: false)
                           .and_return(true)
-        expect(described_class.preinstall("google-chrome")).to be(true)
+        expect(described_class.preinstall?("google-chrome")).to be(true)
         expect(described_class.install("google-chrome")).to be(true)
       end
     end
@@ -85,7 +85,7 @@ RSpec.describe Homebrew::Bundle::CaskInstaller do
         expect(Homebrew::Bundle).to \
           receive(:system).with(HOMEBREW_BREW_FILE, "upgrade", "--cask", "opera", verbose: false)
                           .and_return(true)
-        expect(described_class.preinstall("opera", greedy: true)).to be(true)
+        expect(described_class.preinstall?("opera", greedy: true)).to be(true)
         expect(described_class.install("opera", greedy: true)).to be(true)
       end
     end
@@ -99,7 +99,7 @@ RSpec.describe Homebrew::Bundle::CaskInstaller do
         expect(Homebrew::Bundle).to receive(:brew).with("install", "--cask", "google-chrome", "--adopt",
                                                         verbose: false)
                                                   .and_return(true)
-        expect(described_class.preinstall("google-chrome")).to be(true)
+        expect(described_class.preinstall?("google-chrome")).to be(true)
         expect(described_class.install("google-chrome")).to be(true)
       end
 
@@ -109,7 +109,7 @@ RSpec.describe Homebrew::Bundle::CaskInstaller do
                               verbose: false)
                           .and_return(true),
         )
-        expect(described_class.preinstall("firefox", args: { appdir: "/Applications" })).to be(true)
+        expect(described_class.preinstall?("firefox", args: { appdir: "/Applications" })).to be(true)
         expect(described_class.install("firefox", args: { appdir: "/Applications" })).to be(true)
       end
 
@@ -117,7 +117,7 @@ RSpec.describe Homebrew::Bundle::CaskInstaller do
         expect(Homebrew::Bundle).to receive(:brew).with("install", "--cask", "google-chrome", "--adopt",
                                                         verbose: false)
                                                   .and_return(false)
-        expect(described_class.preinstall("google-chrome")).to be(true)
+        expect(described_class.preinstall?("google-chrome")).to be(true)
         expect(described_class.install("google-chrome")).to be(false)
       end
 
@@ -126,14 +126,14 @@ RSpec.describe Homebrew::Bundle::CaskInstaller do
           expect(Homebrew::Bundle).to receive(:brew).with("install", "--cask", "iterm", "--force",
                                                           verbose: false)
                                                     .and_return(true)
-          expect(described_class.preinstall("iterm", args: { force: true })).to be(true)
+          expect(described_class.preinstall?("iterm", args: { force: true })).to be(true)
           expect(described_class.install("iterm", args: { force: true })).to be(true)
         end
 
         it "does not include a flag if false" do
           expect(Homebrew::Bundle).to receive(:brew).with("install", "--cask", "iterm", "--adopt", verbose: false)
                                                     .and_return(true)
-          expect(described_class.preinstall("iterm", args: { force: false })).to be(true)
+          expect(described_class.preinstall?("iterm", args: { force: false })).to be(true)
           expect(described_class.install("iterm", args: { force: false })).to be(true)
         end
       end
@@ -150,13 +150,13 @@ RSpec.describe Homebrew::Bundle::CaskInstaller do
 
       it "runs the postinstall command" do
         expect(Kernel).to receive(:system).with("custom command").and_return(true)
-        expect(described_class.preinstall("google-chrome", postinstall: "custom command")).to be(true)
+        expect(described_class.preinstall?("google-chrome", postinstall: "custom command")).to be(true)
         expect(described_class.install("google-chrome", postinstall: "custom command")).to be(true)
       end
 
       it "reports a failure when postinstall fails" do
         expect(Kernel).to receive(:system).with("custom command").and_return(false)
-        expect(described_class.preinstall("google-chrome", postinstall: "custom command")).to be(true)
+        expect(described_class.preinstall?("google-chrome", postinstall: "custom command")).to be(true)
         expect(described_class.install("google-chrome", postinstall: "custom command")).to be(false)
       end
     end

@@ -42,7 +42,7 @@ RSpec.describe Homebrew::Bundle::WhalebrewInstaller do
       expect(Homebrew::Bundle).to receive(:system).with(HOMEBREW_BREW_FILE, "install", "--formula", "whalebrew",
                                                         verbose: false)
                                                   .and_return(true)
-      expect { described_class.preinstall("whalebrew/wget") }.to raise_error(RuntimeError)
+      expect { described_class.preinstall?("whalebrew/wget") }.to raise_error(RuntimeError)
     end
   end
 
@@ -61,7 +61,7 @@ RSpec.describe Homebrew::Bundle::WhalebrewInstaller do
       end
 
       it "skips" do
-        expect(described_class.preinstall("whalebrew/wget")).to be(false)
+        expect(described_class.preinstall?("whalebrew/wget")).to be(false)
       end
     end
   end

@@ -10,8 +10,8 @@ module Homebrew
         @pinned_formulae = nil
       end
 
-      def self.preinstall(name, no_upgrade: false, verbose: false, **options)
-        new(name, options).preinstall(no_upgrade:, verbose:)
+      def self.preinstall?(name, no_upgrade: false, verbose: false, **options)
+        new(name, options).preinstall?(no_upgrade:, verbose:)
       end
 
       def self.install(name, preinstall: true, no_upgrade: false, verbose: false, force: false, **options)
@@ -31,7 +31,7 @@ module Homebrew
         @changed = nil
       end
 
-      def preinstall(no_upgrade: false, verbose: false)
+      def preinstall?(no_upgrade: false, verbose: false)
         if installed? && (self.class.no_upgrade_with_args?(no_upgrade, @name) || !upgradable?)
           puts "Skipping install of #{@name} formula. It is already installed." if verbose
           @changed = nil
