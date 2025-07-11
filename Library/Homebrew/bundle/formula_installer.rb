@@ -260,6 +260,9 @@ module Homebrew
         end
       end
 
+
+      # Ending with a `!` is more appropriate here given that this affects the state of the user's system.
+      # rubocop:disable Naming/PredicateMethod
       def resolve_conflicts!(verbose:)
         conflicts_with.each do |conflict|
           next unless FormulaInstaller.formula_installed?(conflict)
@@ -281,6 +284,7 @@ module Homebrew
 
         true
       end
+      # rubocop:enable Naming/PredicateMethod
 
       def install!(verbose:, force:)
         install_args = @args.dup
