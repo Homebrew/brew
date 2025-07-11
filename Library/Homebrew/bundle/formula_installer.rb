@@ -286,6 +286,8 @@ module Homebrew
       end
       # rubocop:enable Naming/PredicateMethod
 
+      # Ending with a `!` is more appropriate here given that this affects the state of the user's system.
+      # rubocop:disable Naming/PredicateMethod
       def install!(verbose:, force:)
         install_args = @args.dup
         install_args << "--force" << "--overwrite" if force
@@ -301,6 +303,7 @@ module Homebrew
         @changed = true
         true
       end
+      # rubocop:enable Naming/PredicateMethod
 
       def upgrade!(verbose:, force:)
         upgrade_args = []
