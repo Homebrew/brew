@@ -29,7 +29,7 @@ RSpec.describe SharedAudits do
     JSON
   end
 
-  def mock_curl_output(stdout: "", success: true)
+  define_method(:mock_curl_output) do |stdout: "", success: true|
     status = instance_double(Process::Status, success?: success)
     curl_output = instance_double(SystemCommand::Result, stdout:, status:)
     allow(Utils::Curl).to receive(:curl_output).and_return curl_output

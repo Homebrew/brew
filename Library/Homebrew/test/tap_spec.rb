@@ -24,7 +24,7 @@ RSpec.describe Tap do
     (path/"style_exceptions").mkpath
   end
 
-  def setup_tap_files
+  define_method(:setup_tap_files) do
     formula_file.dirname.mkpath
     formula_file.write <<~RUBY
       class Foo < Formula
@@ -80,7 +80,7 @@ RSpec.describe Tap do
     chmod 0755, cmd_file
   end
 
-  def setup_git_repo
+  define_method(:setup_git_repo) do
     path.cd do
       system "git", "init"
       system "git", "remote", "add", "origin", "https://github.com/Homebrew/homebrew-foo"
@@ -89,7 +89,7 @@ RSpec.describe Tap do
     end
   end
 
-  def setup_completion(link:)
+  define_method(:setup_completion) do |link:|
     HOMEBREW_REPOSITORY.cd do
       system "git", "init"
       system "git", "config", "--replace-all", "homebrew.linkcompletions", link.to_s

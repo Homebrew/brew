@@ -21,7 +21,7 @@ RSpec.describe Caveats do
       f = formula do
         url "foo-1.0"
 
-        def caveats
+        define_method(:caveats) do
           "something"
         end
       end
@@ -214,7 +214,7 @@ RSpec.describe Caveats do
             url "foo-1.0"
             keg_only "some reason"
 
-            def caveats
+            define_method(:caveats) do
               "something else"
             end
 

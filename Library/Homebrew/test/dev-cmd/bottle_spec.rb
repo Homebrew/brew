@@ -4,7 +4,7 @@ require "cmd/shared_examples/args_parse"
 require "dev-cmd/bottle"
 
 RSpec.describe Homebrew::DevCmd::Bottle do
-  def stub_hash(parameters)
+  define_method(:stub_hash) do |parameters|
     <<~EOS
       {
         "#{parameters[:name]}":{

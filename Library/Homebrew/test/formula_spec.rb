@@ -676,7 +676,7 @@ RSpec.describe Formula do
     f1 = formula do
       url "foo-1.0"
 
-      def post_install
+      define_method(:post_install) do
         # do nothing
       end
     end
@@ -1146,7 +1146,7 @@ RSpec.describe Formula do
       f = formula "foo" do
         url "foo-1.0"
 
-        def pour_bottle?
+        define_method(:pour_bottle?) do
           false
         end
       end
@@ -1158,7 +1158,7 @@ RSpec.describe Formula do
       f = formula "foo" do
         url "foo-1.0"
 
-        def pour_bottle?
+        define_method(:pour_bottle?) do
           true
         end
       end
@@ -1362,7 +1362,7 @@ RSpec.describe Formula do
     let(:alias_name) { "bar" }
     let(:alias_path) { f.tap.alias_dir/alias_name }
 
-    def setup_tab_for_prefix(prefix, options = {})
+    define_method(:setup_tab_for_prefix) do |prefix, options = {}|
       prefix.mkpath
       tab = Tab.empty
       tab.tabfile = prefix/AbstractTab::FILENAME
@@ -1688,7 +1688,7 @@ RSpec.describe Formula do
       Class.new(Testball) do
         attr_reader :test
 
-        def install
+        define_method(:install) do
           @test = 0
           on_macos do
             @test = 1
@@ -1711,7 +1711,7 @@ RSpec.describe Formula do
       Class.new(Testball) do
         attr_reader :test
 
-        def install
+        define_method(:install) do
           @test = 0
           on_macos do
             @test = 1
@@ -1735,7 +1735,7 @@ RSpec.describe Formula do
         attr_reader :foo
         attr_reader :bar
 
-        def install
+        define_method(:install) do
           @foo = 0
           @bar = 0
           on_system :linux, macos: :monterey do
@@ -1794,7 +1794,7 @@ RSpec.describe Formula do
       Class.new(Testball) do
         attr_reader :test
 
-        def install
+        define_method(:install) do
           @test = 0
           on_monterey :or_newer do
             @test = 1
@@ -1854,7 +1854,7 @@ RSpec.describe Formula do
       Class.new(Testball) do
         attr_reader :test
 
-        def install
+        define_method(:install) do
           @test = 0
           on_arm do
             @test = 1
@@ -1881,7 +1881,7 @@ RSpec.describe Formula do
       Class.new(Testball) do
         attr_reader :test
 
-        def install
+        define_method(:install) do
           @test = 0
           on_arm do
             @test = 1
@@ -1902,7 +1902,7 @@ RSpec.describe Formula do
   describe "#generate_completions_from_executable" do
     let(:f) do
       Class.new(Testball) do
-        def install
+        define_method(:install) do
           bin.mkpath
           (bin/"foo").write <<-EOF
             echo completion

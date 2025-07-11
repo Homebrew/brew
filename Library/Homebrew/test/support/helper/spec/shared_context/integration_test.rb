@@ -17,7 +17,7 @@ RSpec.shared_context "integration test" do # rubocop:disable RSpec/ContextWordin
       status.success?
     end
 
-    def supports_block_expectations?
+    define_method(:supports_block_expectations?) do
       true
     end
 
@@ -37,7 +37,7 @@ RSpec.shared_context "integration test" do # rubocop:disable RSpec/ContextWordin
     #     }.to output(something).to_stdout
     #   }.to be_a_success
     #
-    def expects_call_stack_jump?
+    define_method(:expects_call_stack_jump?) do
       true
     end
   end
@@ -55,14 +55,14 @@ RSpec.shared_context "integration test" do # rubocop:disable RSpec/ContextWordin
 
   # Generate unique ID to be able to
   # properly merge coverage results.
-  def command_id
+  define_method(:command_id) do
     Thread.current[:brew_integration_test_number] ||= 0
     "#{ENV.fetch("TEST_ENV_NUMBER", "")}:#{Thread.current[:brew_integration_test_number] += 1}"
   end
 
   # Runs a `brew` command with the test configuration
   # and with coverage reporting enabled.
-  def brew(*args)
+  define_method(:brew) do |*args|
     env = args.last.is_a?(Hash) ? args.pop : {}
 
     # Avoid warnings when HOMEBREW_PREFIX/bin is not in PATH.
@@ -119,7 +119,7 @@ RSpec.shared_context "integration test" do # rubocop:disable RSpec/ContextWordin
     end
   end
 
-  def brew_sh(*args)
+  define_method(:brew_sh) do |*args|
     env = {
       "HOMEBREW_USE_RUBY_FROM_PATH" => ENV.fetch("HOMEBREW_USE_RUBY_FROM_PATH", nil),
     }
@@ -131,8 +131,7 @@ RSpec.shared_context "integration test" do # rubocop:disable RSpec/ContextWordin
     end
   end
 
-  def setup_test_formula(name, content = nil, tap: CoreTap.instance,
-                         bottle_block: nil, tab_attributes: nil)
+  define_method(:setup_test_formula) do |name, content = nil, tap: CoreTap.instance, bottle_block: nil, tab_attributes: nil|
     case name
     when /^testball/
       # Use a different tarball for testball2 to avoid lock errors when writing concurrency tests
@@ -205,7 +204,7 @@ RSpec.shared_context "integration test" do # rubocop:disable RSpec/ContextWordin
     formula_path
   end
 
-  def install_test_formula(name, content = nil, build_bottle: false)
+  define_method(:install_test_formula) do |name, content = nil, build_bottle: false|
     setup_test_formula(name, content)
     fi = FormulaInstaller.new(Formula[name], build_bottle:, installed_on_request: true)
     fi.prelude
@@ -214,7 +213,7 @@ RSpec.shared_context "integration test" do # rubocop:disable RSpec/ContextWordin
     fi.finish
   end
 
-  def setup_test_tap
+  define_method(:setup_test_tap) do
     path = HOMEBREW_TAP_DIRECTORY/"homebrew/homebrew-foo"
     path.mkpath
     path.cd do
@@ -227,7 +226,7 @@ RSpec.shared_context "integration test" do # rubocop:disable RSpec/ContextWordin
     path
   end
 
-  def setup_remote_tap(name)
+  define_method(:setup_remote_tap) do |name|
     Tap.fetch(name).tap do |tap|
       next if tap.installed?
 
@@ -243,7 +242,7 @@ RSpec.shared_context "integration test" do # rubocop:disable RSpec/ContextWordin
     end
   end
 
-  def install_and_rename_coretap_formula(old_name, new_name)
+  define_method(:install_and_rename_coretap_formula) do |old_name, new_name|
     CoreTap.instance.path.cd do |tap_path|
       system "git", "init"
       system "git", "add", "--all"
@@ -261,7 +260,7 @@ RSpec.shared_context "integration test" do # rubocop:disable RSpec/ContextWordin
     end
   end
 
-  def testball
+  define_method(:testball) do
     "#{TEST_FIXTURE_DIR}/testball.rb"
   end
 end

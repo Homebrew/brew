@@ -305,7 +305,7 @@ RSpec.describe Cask::DSL, :cask, :no_api do
       expect(cask.caveats).to be_empty
 
       cask = Cask::Cask.new("cask-with-caveats") do
-        def caveats
+        define_method(:caveats) do
           <<~EOS
             When you install this Cask, you probably want to know this.
           EOS

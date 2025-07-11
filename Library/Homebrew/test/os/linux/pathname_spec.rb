@@ -8,7 +8,7 @@ RSpec.describe Pathname do
   let(:sho_without_runpath_rpath) { elf_dir/"libhello.so.0" }
   let(:exec) { elf_dir/"hello_with_rpath" }
 
-  def patch_elfs
+  define_method(:patch_elfs) do
     mktmpdir do |tmp_dir|
       %w[c.elf].each do |elf|
         FileUtils.cp(elf_dir/elf, tmp_dir/elf)

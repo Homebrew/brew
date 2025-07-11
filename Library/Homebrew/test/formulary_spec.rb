@@ -289,7 +289,7 @@ RSpec.describe Formulary do
     end
 
     context "with the API" do
-      def formula_json_contents(extra_items = {})
+      define_method(:formula_json_contents) do |extra_items = {}|
         {
           formula_name => {
             "desc"                     => "testball",

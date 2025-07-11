@@ -5,14 +5,14 @@ require "extend/blank"
 RSpec.describe Object do
   let(:empty_true) do
     Class.new(described_class) do
-      def empty?
+      define_method(:empty?) do
         0
       end
     end
   end
   let(:empty_false) do
     Class.new(described_class) do
-      def empty?
+      define_method(:empty?) do
         false
       end
     end

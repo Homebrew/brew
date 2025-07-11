@@ -20,7 +20,6 @@ module Homebrew
     def enqueue(downloadable, force: false)
       quiet = pool.max_length > 1
       # Passing in arguments from outside into the future is a common `concurrent-ruby` pattern.
-      # rubocop:disable Lint/ShadowingOuterLocalVariable
       Concurrent::Promises.future_on(pool, downloadable, force, quiet) do |downloadable, force, quiet|
         downloadable.clear_cache if force
         downloadable.fetch(quiet:)

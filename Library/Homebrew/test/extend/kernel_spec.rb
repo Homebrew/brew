@@ -3,7 +3,7 @@
 RSpec.describe Kernel do
   let(:dir) { mktmpdir }
 
-  def esc(code)
+  define_method(:esc) do |code|
     /(\e\[\d+m)*\e\[#{code}m/
   end
 

@@ -5,8 +5,7 @@ require "cmd/shared_examples/args_parse"
 require "tab"
 
 RSpec.describe Homebrew::Cmd::TabCmd do
-  def installed_on_request?(formula)
-    # `brew` subprocesses can change the tab, invalidating the cached values.
+  define_method(:installed_on_request?) do |formula|
     Tab.clear_cache
     Tab.for_formula(formula).installed_on_request
   end

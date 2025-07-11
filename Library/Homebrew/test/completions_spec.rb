@@ -25,7 +25,7 @@ RSpec.describe Homebrew::Completions do
   end
 
   context "when linking or unlinking completions" do
-    def setup_completions(external:)
+    define_method(:setup_completions) do |external:|
       internal_bash_completion = internal_path/"completions/bash"
       external_bash_completion = external_path/"completions/bash"
 
@@ -39,19 +39,19 @@ RSpec.describe Homebrew::Completions do
       end
     end
 
-    def setup_completions_setting(state, setting: "linkcompletions")
+    define_method(:setup_completions_setting) do |state, setting: "linkcompletions"|
       HOMEBREW_REPOSITORY.cd do
         system "git", "config", "--replace-all", "homebrew.#{setting}", state.to_s
       end
     end
 
-    def read_completions_setting(setting: "linkcompletions")
+    define_method(:read_completions_setting) do |setting: "linkcompletions"|
       HOMEBREW_REPOSITORY.cd do
         Utils.popen_read("git", "config", "--get", "homebrew.#{setting}").chomp.presence
       end
     end
 
-    def delete_completions_setting(setting: "linkcompletions")
+    define_method(:delete_completions_setting) do |setting: "linkcompletions"|
       HOMEBREW_REPOSITORY.cd do
         system "git", "config", "--unset-all", "homebrew.#{setting}"
       end

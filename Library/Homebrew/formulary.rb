@@ -80,7 +80,7 @@ module Formulary
 
   module PathnameWriteMkpath
     refine Pathname do
-      def write(content, offset = nil, **open_args)
+      define_method(:write) do |_content, offset = nil, **open_args|
         T.bind(self, Pathname)
         raise "Will not overwrite #{self}" if exist? && !offset && !open_args[:mode]&.match?(/^a\+?$/)
 
@@ -133,7 +133,7 @@ module Formulary
     rescue NameError => e
       class_list = mod.constants
                       .map { |const_name| mod.const_get(const_name) }
-                      .select { |const| const.is_a?(Class) }
+                      .grep(Class)
       new_exception = FormulaClassUnavailableError.new(name, path, class_name, class_list)
       remove_const(namespace)
       raise new_exception, "", e.backtrace
@@ -354,13 +354,13 @@ module Formulary
         link_overwrite overwrite_path
       end
 
-      def install
+      define_method(:install) do
         raise "Cannot build from source from abstract formula."
       end
 
       @post_install_defined_boolean = json_formula["post_install_defined"]
       @post_install_defined_boolean = true if @post_install_defined_boolean.nil? # Backwards compatibility
-      def post_install_defined?
+      define_method(:post_install_defined?) do
         self.class.instance_variable_get(:@post_install_defined_boolean)
       end
 
@@ -389,7 +389,7 @@ module Formulary
       end
 
       @caveats_string = json_formula["caveats"]
-      def caveats
+      define_method(:caveats) do
         caveats_string = self.class.instance_variable_get(:@caveats_string)
         return unless caveats_string
 
@@ -400,33 +400,33 @@ module Formulary
 
       @tap_git_head_string = json_formula["tap_git_head"]
 
-      def tap_git_head
+      define_method(:tap_git_head) do
         self.class.instance_variable_get(:@tap_git_head_string)
       end
 
       @oldnames_array = json_formula["oldnames"] || [json_formula["oldname"]].compact
-      def oldnames
+      define_method(:oldnames) do
         self.class.instance_variable_get(:@oldnames_array)
       end
 
       @aliases_array = json_formula.fetch("aliases", [])
-      def aliases
+      define_method(:aliases) do
         self.class.instance_variable_get(:@aliases_array)
       end
 
       @versioned_formulae_array = json_formula.fetch("versioned_formulae", [])
-      def versioned_formulae_names
+      define_method(:versioned_formulae_names) do
         self.class.instance_variable_get(:@versioned_formulae_array)
       end
 
       @ruby_source_path_string = json_formula["ruby_source_path"]
-      def ruby_source_path
+      define_method(:ruby_source_path) do
         self.class.instance_variable_get(:@ruby_source_path_string)
       end
 
       @ruby_source_checksum_string = json_formula.dig("ruby_source_checksum", "sha256")
       @ruby_source_checksum_string ||= json_formula["ruby_source_sha256"]
-      def ruby_source_checksum
+      define_method(:ruby_source_checksum) do
         checksum = self.class.instance_variable_get(:@ruby_source_checksum_string)
         Checksum.new(checksum) if checksum
       end

@@ -3,7 +3,7 @@
 require "formula"
 
 RSpec.describe Formula do
-  def formula(&block)
+  define_method(:formula) do |&block|
     super do
       url "file://#{TEST_FIXTURE_DIR}/tarballs/testball-0.1.tbz"
       instance_eval(&block)

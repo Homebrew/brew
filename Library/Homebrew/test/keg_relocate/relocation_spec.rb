@@ -14,7 +14,7 @@ RSpec.describe Keg::Relocation do
   let(:escaped_prefix) { /(?:(?<=-F|-I|-L|-isystem)|(?<![a-zA-Z0-9]))#{Regexp.escape(HOMEBREW_PREFIX)}/o }
   let(:escaped_cellar) { /(?:(?<=-F|-I|-L|-isystem)|(?<![a-zA-Z0-9]))#{HOMEBREW_CELLAR}/o }
 
-  def setup_relocation
+  define_method(:setup_relocation) do
     relocation = described_class.new
     relocation.add_replacement_pair :prefix, prefix, prefix_placeholder, path: true
     relocation.add_replacement_pair :cellar, /#{cellar}/o, cellar_placeholder, path: true

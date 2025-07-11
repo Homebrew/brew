@@ -6,7 +6,7 @@ require "service"
 RSpec.describe Homebrew::Service do
   let(:name) { "formula_name" }
 
-  def stub_formula(&block)
+  define_method(:stub_formula) do |&block|
     formula(name) do
       url "https://brew.sh/test-1.0.tbz"
 
@@ -14,7 +14,7 @@ RSpec.describe Homebrew::Service do
     end
   end
 
-  def stub_formula_with_service_sockets(sockets_var)
+  define_method(:stub_formula_with_service_sockets) do |sockets_var|
     stub_formula do
       service do
         run opt_bin/"beanstalkd"

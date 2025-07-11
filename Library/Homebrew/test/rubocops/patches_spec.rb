@@ -5,7 +5,7 @@ require "rubocops/patches"
 RSpec.describe RuboCop::Cop::FormulaAudit::Patches do
   subject(:cop) { described_class.new }
 
-  def expect_offense_hash(message:, severity:, line:, column:, source:)
+  define_method(:expect_offense_hash) do |message:, severity:, line:, column:, source:|
     [{ message:, severity:, line:, column:, source: }]
   end
 

@@ -465,9 +465,7 @@ module Homebrew
 
       def collect_dependencies(formulae_installer, dependants)
         formulae_dependencies = formulae_installer.flat_map do |f|
-          [f.formula, f.compute_dependencies.flatten.filter do |c|
-            c.is_a? Dependency
-          end.flat_map(&:to_formula)]
+          [f.formula, f.compute_dependencies.flatten.grep(Dependency).flat_map(&:to_formula)]
         end.flatten.uniq
         formulae_dependencies.concat(dependants.upgradeable) if dependants&.upgradeable
         formulae_dependencies.uniq

@@ -589,7 +589,7 @@ module Homebrew
             #{leading_spaces}resource "#{resource.name}" do
             #{leading_spaces}  url "#{new_url}"#{new_mirrors.map { |m| "\n#{leading_spaces}  mirror \"#{m}\"" }.join}
             #{leading_spaces}  sha256 "#{new_hash}"
-            #{forced_version ? "#{leading_spaces}  version \"#{version}\"\n" : ""}
+            #{"#{leading_spaces}  version \"#{version}\"\n" if forced_version}
             #{leading_spaces}  livecheck do
             #{leading_spaces}    formula :parent
             #{leading_spaces}  end

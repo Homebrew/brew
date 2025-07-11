@@ -295,13 +295,13 @@ RSpec.describe GitHubRunnerMatrix, :no_api do
     end
   end
 
-  def get_runner_names(runner_matrix, predicate = :active)
+  define_method(:get_runner_names) do |runner_matrix, predicate = :active|
     runner_matrix.runners
                  .select(&predicate)
                  .map { |runner| runner.spec.name }
   end
 
-  def setup_test_runner_formula(name, dependencies = [], **kwargs)
+  define_method(:setup_test_runner_formula) do |name, dependencies = [], **kwargs|
     f = formula name do
       url "https://brew.sh/#{name}-1.0.tar.gz"
       dependencies.each { |dependency| depends_on dependency }

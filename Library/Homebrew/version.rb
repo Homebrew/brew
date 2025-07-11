@@ -776,6 +776,6 @@ class Version
 
   sig { params(first: Integer, second: Integer).returns(Integer) }
   def max(first, second)
-    (first > second) ? first : second
+    [first, second].max
   end
 end

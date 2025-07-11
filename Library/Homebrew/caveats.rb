@@ -194,7 +194,7 @@ class Caveats
     startup = formula.service.requires_root?
     if Utils::Service.running?(formula)
       s << "To restart #{formula.full_name} after an upgrade:"
-      s << "  #{startup ? "sudo " : ""}brew services restart #{formula.full_name}"
+      s << "  #{"sudo " if startup}brew services restart #{formula.full_name}"
     elsif startup
       s << "To start #{formula.full_name} now and restart at startup:"
       s << "  sudo brew services start #{formula.full_name}"
