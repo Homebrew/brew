@@ -19,7 +19,7 @@ module Homebrew
     def mirrors = downloadable.mirrors
 
     sig { params(downloadable: Downloadable, tries: Integer).void }
-    def initialize(downloadable, tries: 3)
+    def initialize(downloadable, tries:)
       super()
 
       @downloadable = downloadable
