@@ -52,8 +52,8 @@ module Homebrew
 
         version = Keg.new(path).version
         major_version = version.major.to_i
-        minor_version = version.minor.to_i || 0
-        patch_version = version.patch.to_i || 0
+        minor_version = version.minor.to_i
+        patch_version = version.patch.to_i
 
         minor_version_range, patch_version_range = if Homebrew::EnvConfig.env_sync_strict?
           # Only create symlinks for the exact installed patch version.

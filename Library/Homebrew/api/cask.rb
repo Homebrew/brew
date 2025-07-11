@@ -28,7 +28,7 @@ module Homebrew
 
       sig { params(cask: ::Cask::Cask).returns(::Cask::Cask) }
       def self.source_download(cask)
-        path = cask.ruby_source_path.to_s || "Casks/#{cask.token}.rb"
+        path = cask.ruby_source_path.to_s
         sha256 = cask.ruby_source_checksum[:sha256]
         checksum = Checksum.new(sha256) if sha256
         git_head = cask.tap_git_head || "HEAD"
