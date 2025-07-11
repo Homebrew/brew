@@ -11,8 +11,7 @@ RSpec.describe Homebrew::AbstractCommand do
           switch "--foo"
           flag "--bar="
         end
-        define_method(:run) do
-        end
+        define_method(:run) { nil }
       end
       stub_const("TestCat", test_cat)
     end
@@ -48,10 +47,10 @@ RSpec.describe Homebrew::AbstractCommand do
       describe "when command name is overridden" do
         before do
           tac = Class.new(described_class) do
-            self.define_singleton_method(:command_name) do
+            define_singleton_method(:command_name) do
               "t-a-c"
-            define_method(:run) do
             end
+            define_method(:run) { nil }
           end
           stub_const("Tac", tac)
         end
