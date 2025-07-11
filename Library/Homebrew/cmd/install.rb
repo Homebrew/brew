@@ -47,6 +47,7 @@ module Homebrew
                description: "Ask for confirmation before downloading and installing formulae. " \
                             "Print download and install sizes of bottles and dependencies.",
                env:         :ask
+        flag "--concurrency=", description: "Number of concurrent downloads.", hidden: true
         [
           [:switch, "--formula", "--formulae", {
             description: "Treat all named arguments as formulae.",

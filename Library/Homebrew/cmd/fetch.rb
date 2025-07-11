@@ -150,12 +150,7 @@ module Homebrew
                   download_queue.enqueue(resource)
                 end
 
-                formula.resources.each do |r|
-                  download_queue.enqueue(r)
-                  r.patches.each { |patch| download_queue.enqueue(patch.resource) if patch.external? }
-                end
-
-                formula.patchlist.each { |patch| download_queue.enqueue(patch.resource) if patch.external? }
+                formula.enqueue_resources_and_patches(download_queue:)
               end
             end
           else
@@ -190,7 +185,11 @@ module Homebrew
 
       sig { returns(Integer) }
       def concurrency
-        @concurrency ||= T.let(args.concurrency&.to_i || 1, T.nilable(Integer))
+        @concurrency ||= T.let(
+          # TODO: document this variable when ready to publicly announce it.
+          args.concurrency&.to_i || ENV.fetch("HOMEBREW_DOWNLOAD_CONCURRENCY", "1").to_i,
+          T.nilable(Integer),
+        )
       end
 
       sig { returns(Integer) }

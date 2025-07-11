@@ -91,6 +91,7 @@ class Resource
     patches.grep(DATAPatch) { |p| p.path = owner.owner.path }
   end
 
+  sig { params(skip_downloaded: T::Boolean).void }
   def fetch_patches(skip_downloaded: false)
     external_patches = patches.select(&:external?)
     external_patches.reject!(&:downloaded?) if skip_downloaded

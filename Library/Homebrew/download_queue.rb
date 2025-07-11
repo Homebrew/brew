@@ -17,7 +17,7 @@ module Homebrew
       @pool = T.let(Concurrent::FixedThreadPool.new(concurrency), Concurrent::FixedThreadPool)
     end
 
-    sig { params(downloadable: T.any(Resource, Bottle, Cask::Download)).void }
+    sig { params(downloadable: T.any(Resource, Bottle, Cask::Download, Downloadable)).void }
     def enqueue(downloadable)
       downloads[downloadable] ||= Concurrent::Promises.future_on(
         pool, RetryableDownload.new(downloadable, tries:), force, quiet
@@ -136,6 +136,13 @@ module Homebrew
     end
 
     sig { void }
+    def wait
+      downloads.each do |downloadable, promise|
+        promise.wait!
+      end
+    end
+
+    sig { void }
     def shutdown
       pool.shutdown
       pool.wait_for_termination
@@ -166,9 +173,9 @@ module Homebrew
     sig { returns(T::Boolean) }
     attr_reader :quiet
 
-    sig { returns(T::Hash[T.any(Resource, Bottle, Cask::Download), Concurrent::Promises::Future]) }
+    sig { returns(T::Hash[T.any(Resource, Bottle, Cask::Download, Downloadable), Concurrent::Promises::Future]) }
     def downloads
-      @downloads ||= T.let({}, T.nilable(T::Hash[T.any(Resource, Bottle, Cask::Download),
+      @downloads ||= T.let({}, T.nilable(T::Hash[T.any(Resource, Bottle, Cask::Download, Downloadable),
                                                  Concurrent::Promises::Future]))
     end
 

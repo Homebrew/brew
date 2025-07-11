@@ -6,6 +6,7 @@ require "fileutils"
 require "hardware"
 require "development_tools"
 require "upgrade"
+require "download_queue"
 
 module Homebrew
   # Helper module for performing (pre-)install checks.
@@ -314,15 +315,37 @@ module Homebrew
         skip_link: false
       )
         unless dry_run
-          formula_installers.each do |fi|
-            fi.prelude
-            fi.fetch
-          rescue CannotInstallFormulaError => e
-            ofail e.message
-            next
-          rescue UnsatisfiedRequirements, DownloadError, ChecksumMismatchError => e
-            ofail "#{fi.formula}: #{e}"
-            next
+          concurrency = ENV.fetch("HOMEBREW_DOWNLOAD_CONCURRENCY", 1).to_i
+          if concurrency > 1
+            retries = 0
+            # TODO: disable force when done testing locally!!!
+            force = true
+            raise if ENV["CI"] && force == true
+
+            download_queue = Homebrew::DownloadQueue.new(concurrency:, retries:, force:)
+          end
+          begin
+            formula_installers.each do |fi|
+              fi.prelude_fetch(download_queue:)
+              download_queue&.start
+              download_queue&.wait
+
+              fi.prelude(download_queue:)
+              download_queue&.start
+              download_queue&.wait
+
+              fi.fetch(download_queue:)
+              download_queue&.start
+              download_queue&.wait
+            rescue CannotInstallFormulaError => e
+              ofail e.message
+              next
+            rescue UnsatisfiedRequirements, DownloadError, ChecksumMismatchError => e
+              ofail "#{fi.formula}: #{e}"
+              next
+            end
+          ensure
+            download_queue&.shutdown
           end
         end
 
