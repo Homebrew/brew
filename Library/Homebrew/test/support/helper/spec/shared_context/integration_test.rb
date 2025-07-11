@@ -131,7 +131,11 @@ RSpec.shared_context "integration test" do # rubocop:disable RSpec/ContextWordin
     end
   end
 
-  define_method(:setup_test_formula) do |name, content = nil, tap: CoreTap.instance, bottle_block: nil, tab_attributes: nil|
+  define_method(:setup_test_formula) do |name,
+                                         content = nil,
+                                         tap: CoreTap.instance,
+                                         bottle_block: nil,
+                                         tab_attributes: nil|
     case name
     when /^testball/
       # Use a different tarball for testball2 to avoid lock errors when writing concurrency tests
