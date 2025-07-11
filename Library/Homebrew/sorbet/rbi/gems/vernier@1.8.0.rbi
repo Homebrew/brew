@@ -8,24 +8,25 @@
 # source://vernier//lib/vernier/version.rb#3
 module Vernier
   class << self
+    # source://vernier//lib/vernier/marker.rb#3
     def memory_rss; end
 
-    # source://vernier//lib/vernier.rb#20
+    # source://vernier//lib/vernier.rb#21
     def profile(mode: T.unsafe(nil), **collector_options); end
 
-    # source://vernier//lib/vernier.rb#20
+    # source://vernier//lib/vernier.rb#37
     def run(mode: T.unsafe(nil), **collector_options); end
 
-    # source://vernier//lib/vernier.rb#41
+    # source://vernier//lib/vernier.rb#42
     def start_profile(mode: T.unsafe(nil), **collector_options); end
 
-    # source://vernier//lib/vernier.rb#53
+    # source://vernier//lib/vernier.rb#54
     def stop_profile; end
 
-    # source://vernier//lib/vernier.rb#20
+    # source://vernier//lib/vernier.rb#36
     def trace(mode: T.unsafe(nil), **collector_options); end
 
-    # source://vernier//lib/vernier.rb#62
+    # source://vernier//lib/vernier.rb#63
     def trace_retained(**profile_options, &block); end
   end
 end
@@ -37,7 +38,7 @@ class Vernier::Collector
   # source://vernier//lib/vernier/collector.rb#8
   def initialize(mode, options = T.unsafe(nil)); end
 
-  # source://vernier//lib/vernier/collector.rb#53
+  # source://vernier//lib/vernier/collector.rb#54
   def add_marker(name:, start:, finish:, thread: T.unsafe(nil), phase: T.unsafe(nil), data: T.unsafe(nil)); end
 
   # Get the current time.
@@ -46,38 +47,45 @@ class Vernier::Collector
   # integer nanoseconds.  It's the same time used by Vernier internals and
   # can be used to generate timestamps for custom markers.
   #
-  # source://vernier//lib/vernier/collector.rb#49
+  # source://vernier//lib/vernier/collector.rb#50
   def current_time; end
 
   # Record an interval with a category and name.  Yields to a block and
   # records the amount of time spent in the block as an interval marker.
   #
-  # source://vernier//lib/vernier/collector.rb#65
+  # source://vernier//lib/vernier/collector.rb#66
   def record_interval(category, name = T.unsafe(nil)); end
 
+  # source://vernier//lib/vernier/marker.rb#3
   def sample; end
+
+  # source://vernier//lib/vernier/marker.rb#3
   def stack_table; end
+
+  # source://vernier//lib/vernier/marker.rb#3
   def start; end
 
-  # source://vernier//lib/vernier/collector.rb#78
+  # source://vernier//lib/vernier/collector.rb#79
   def stop; end
 
   private
 
-  # source://vernier//lib/vernier/collector.rb#32
+  # source://vernier//lib/vernier/collector.rb#33
   def add_hook(hook); end
 
+  # source://vernier//lib/vernier/marker.rb#3
   def finish; end
 
   class << self
+    # source://vernier//lib/vernier/marker.rb#3
     def _new(_arg0, _arg1); end
 
-    # source://vernier//lib/vernier.rb#67
+    # source://vernier//lib/vernier.rb#68
     def new(mode, options = T.unsafe(nil)); end
   end
 end
 
-# source://vernier//lib/vernier.rb#16
+# source://vernier//lib/vernier.rb#17
 class Vernier::Error < ::StandardError; end
 
 # source://vernier//lib/vernier/hooks.rb#4
@@ -160,9 +168,16 @@ Vernier::Marker::Type::THREAD_STALLED = T.let(T.unsafe(nil), Integer)
 Vernier::Marker::Type::THREAD_SUSPENDED = T.let(T.unsafe(nil), Integer)
 
 class Vernier::MemoryTracker
+  # source://vernier//lib/vernier/marker.rb#3
   def record; end
+
+  # source://vernier//lib/vernier/marker.rb#3
   def results; end
+
+  # source://vernier//lib/vernier/marker.rb#3
   def start; end
+
+  # source://vernier//lib/vernier/marker.rb#3
   def stop; end
 end
 
@@ -179,6 +194,48 @@ end
 
 # source://vernier//lib/vernier/output/filename_filter.rb#4
 module Vernier::Output; end
+
+# source://vernier//lib/vernier/output/cpuprofile.rb#5
+class Vernier::Output::Cpuprofile
+  # @return [Cpuprofile] a new instance of Cpuprofile
+  #
+  # source://vernier//lib/vernier/output/cpuprofile.rb#6
+  def initialize(profile); end
+
+  # source://vernier//lib/vernier/output/cpuprofile.rb#10
+  def output; end
+
+  private
+
+  # source://vernier//lib/vernier/output/cpuprofile.rb#53
+  def build_nodes; end
+
+  # source://vernier//lib/vernier/output/cpuprofile.rb#128
+  def calculate_time_deltas(timestamps); end
+
+  # source://vernier//lib/vernier/output/cpuprofile.rb#85
+  def create_node_for_stack(stack_idx, nodes, stack_table); end
+
+  # source://vernier//lib/vernier/output/cpuprofile.rb#22
+  def data; end
+
+  # source://vernier//lib/vernier/output/cpuprofile.rb#43
+  def empty_profile; end
+
+  # source://vernier//lib/vernier/output/cpuprofile.rb#18
+  def ns_to_us(timestamp); end
+
+  # Returns the value of attribute profile.
+  #
+  # source://vernier//lib/vernier/output/cpuprofile.rb#16
+  def profile; end
+
+  # source://vernier//lib/vernier/output/cpuprofile.rb#70
+  def root_node; end
+
+  # source://vernier//lib/vernier/output/cpuprofile.rb#124
+  def stack_to_node_id(stack_idx); end
+end
 
 # source://vernier//lib/vernier/output/file_listing.rb#8
 class Vernier::Output::FileListing
@@ -573,13 +630,13 @@ end
 class Vernier::Result
   # Returns the value of attribute stack_table.
   #
-  # source://vernier//lib/vernier/result.rb#3
+  # source://vernier//lib/vernier/result.rb#4
   def _stack_table; end
 
-  # source://vernier//lib/vernier/result.rb#49
+  # source://vernier//lib/vernier/result.rb#61
   def each_sample; end
 
-  # source://vernier//lib/vernier/result.rb#41
+  # source://vernier//lib/vernier/result.rb#53
   def elapsed_seconds; end
 
   # Returns the value of attribute end_time.
@@ -611,7 +668,7 @@ class Vernier::Result
   # source://vernier//lib/vernier/result.rb#8
   def hooks=(_arg0); end
 
-  # source://vernier//lib/vernier/result.rb#45
+  # source://vernier//lib/vernier/result.rb#57
   def inspect; end
 
   # source://vernier//lib/vernier/result.rb#15
@@ -659,7 +716,7 @@ class Vernier::Result
   # source://vernier//lib/vernier/result.rb#21
   def samples; end
 
-  # source://vernier//lib/vernier/result.rb#58
+  # source://vernier//lib/vernier/result.rb#70
   def stack(idx); end
 
   # Returns the value of attribute stack_table.
@@ -691,10 +748,16 @@ class Vernier::Result
   # source://vernier//lib/vernier/result.rb#11
   def threads=(_arg0); end
 
+  # source://vernier//lib/vernier/result.rb#37
+  def to_cpuprofile; end
+
   # source://vernier//lib/vernier/result.rb#32
+  def to_firefox(gzip: T.unsafe(nil)); end
+
+  # source://vernier//lib/vernier/result.rb#35
   def to_gecko(gzip: T.unsafe(nil)); end
 
-  # source://vernier//lib/vernier/result.rb#62
+  # source://vernier//lib/vernier/result.rb#74
   def total_bytes; end
 
   # TODO: remove these
@@ -702,28 +765,52 @@ class Vernier::Result
   # source://vernier//lib/vernier/result.rb#20
   def weights; end
 
-  # source://vernier//lib/vernier/result.rb#36
-  def write(out:); end
+  # source://vernier//lib/vernier/result.rb#41
+  def write(out:, format: T.unsafe(nil)); end
 end
 
 # source://vernier//lib/vernier/stack_table.rb#4
 class Vernier::StackTable
   include ::Vernier::StackTableHelpers
 
+  # source://vernier//lib/vernier/marker.rb#3
   def convert(_arg0, _arg1); end
+
+  # source://vernier//lib/vernier/marker.rb#3
   def current_stack(*_arg0); end
+
+  # source://vernier//lib/vernier/marker.rb#3
   def frame_count; end
+
+  # source://vernier//lib/vernier/marker.rb#3
   def frame_func_idx(_arg0); end
+
+  # source://vernier//lib/vernier/marker.rb#3
   def frame_line_no(_arg0); end
+
+  # source://vernier//lib/vernier/marker.rb#3
   def func_count; end
+
+  # source://vernier//lib/vernier/marker.rb#3
   def func_filename(_arg0); end
+
+  # source://vernier//lib/vernier/marker.rb#3
   def func_first_lineno(_arg0); end
+
+  # source://vernier//lib/vernier/marker.rb#3
   def func_name(_arg0); end
+
+  # source://vernier//lib/vernier/marker.rb#3
   def stack_count; end
+
+  # source://vernier//lib/vernier/marker.rb#3
   def stack_frame_idx(_arg0); end
+
+  # source://vernier//lib/vernier/marker.rb#3
   def stack_parent_idx(_arg0); end
 
   class << self
+    # source://vernier//lib/vernier/marker.rb#3
     def new; end
   end
 end
@@ -781,7 +868,7 @@ class Vernier::StackTableHelpers::Frame < ::Vernier::StackTableHelpers::BaseType
   # source://vernier//lib/vernier/stack_table_helpers.rb#83
   def line; end
 
-  # source://vernier//lib/vernier/stack_table_helpers.rb#74
+  # source://vernier//lib/vernier/stack_table_helpers.rb#76
   def name; end
 
   # source://vernier//lib/vernier/stack_table_helpers.rb#87
@@ -796,7 +883,7 @@ class Vernier::StackTableHelpers::Func < ::Vernier::StackTableHelpers::BaseType
   # source://vernier//lib/vernier/stack_table_helpers.rb#59
   def label; end
 
-  # source://vernier//lib/vernier/stack_table_helpers.rb#59
+  # source://vernier//lib/vernier/stack_table_helpers.rb#62
   def name; end
 
   # source://vernier//lib/vernier/stack_table_helpers.rb#68
@@ -813,7 +900,7 @@ class Vernier::StackTableHelpers::Stack < ::Vernier::StackTableHelpers::BaseType
   # source://vernier//lib/vernier/stack_table_helpers.rb#93
   def each; end
 
-  # source://vernier//lib/vernier/stack_table_helpers.rb#93
+  # source://vernier//lib/vernier/stack_table_helpers.rb#103
   def each_frame; end
 
   # source://vernier//lib/vernier/stack_table_helpers.rb#123

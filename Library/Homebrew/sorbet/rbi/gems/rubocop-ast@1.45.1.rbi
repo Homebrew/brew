@@ -192,7 +192,7 @@ class RuboCop::AST::ArrayNode < ::RuboCop::AST::Node
   #
   # @return [Array<Node>] an array of value nodes
   #
-  # source://ast/2.4.3/lib/ast/node.rb#56
+  # source://rubocop-ast//lib/rubocop/ast/node/array_node.rb#18
   def values; end
 end
 
@@ -216,7 +216,7 @@ class RuboCop::AST::AsgnNode < ::RuboCop::AST::Node
   #
   # @return [Symbol] the name of the variable being assigned
   #
-  # source://rubocop-ast//lib/rubocop/ast/node/asgn_node.rb#12
+  # source://rubocop-ast//lib/rubocop/ast/node/asgn_node.rb#15
   def lhs; end
 
   # The name of the variable being assigned as a symbol.
@@ -230,7 +230,7 @@ class RuboCop::AST::AsgnNode < ::RuboCop::AST::Node
   #
   # @return [Node] the expression being assigned.
   #
-  # source://rubocop-ast//lib/rubocop/ast/node/asgn_node.rb#20
+  # source://rubocop-ast//lib/rubocop/ast/node/asgn_node.rb#23
   def rhs; end
 end
 
@@ -628,17 +628,17 @@ class RuboCop::AST::CasgnNode < ::RuboCop::AST::Node
   # source://rubocop-ast//lib/rubocop/ast/node/casgn_node.rb#17
   def expression; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node/mixin/constant_node.rb#14
+  # source://rubocop-ast//lib/rubocop/ast/node/casgn_node.rb#12
   def lhs; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node/mixin/constant_node.rb#14
+  # source://rubocop-ast//lib/rubocop/ast/node/casgn_node.rb#11
   def name; end
 
   # The expression being assigned to the variable.
   #
   # @return [Node] the expression being assigned.
   #
-  # source://rubocop-ast//lib/rubocop/ast/node/casgn_node.rb#17
+  # source://rubocop-ast//lib/rubocop/ast/node/casgn_node.rb#20
   def rhs; end
 end
 
@@ -676,412 +676,412 @@ end
 module RuboCop::AST::CollectionNode
   extend ::RuboCop::SimpleForwardable
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def &(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def *(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def +(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def -(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def <<(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def [](*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def []=(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def all?(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def any?(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def append(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def assoc(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def at(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def bsearch(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def bsearch_index(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def chain(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def chunk(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def chunk_while(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def clear(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def collect(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def collect!(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def collect_concat(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def combination(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def compact(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def compact!(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def concat(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def count(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def cycle(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def deconstruct(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def delete(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def delete_at(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def delete_if(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def detect(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def difference(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def dig(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def drop(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def drop_while(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def each(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def each_cons(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def each_entry(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def each_index(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def each_slice(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def each_with_index(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def each_with_object(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def empty?(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def entries(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def fetch(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def fetch_values(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def fill(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def filter(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def filter!(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def filter_map(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def find(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def find_all(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def find_index(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def first(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def flat_map(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def flatten(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def flatten!(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def grep(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def grep_v(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def group_by(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def include?(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def index(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def inject(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def insert(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def intersect?(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def intersection(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def join(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def keep_if(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def last(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def lazy(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def length(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def map(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def map!(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def max(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def max_by(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def member?(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def min(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def min_by(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def minmax(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def minmax_by(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def none?(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def one?(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def pack(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def partition(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def permutation(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def place(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def pop(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def prepend(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def product(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def push(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def rassoc(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def reduce(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def reject(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def reject!(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def repeated_combination(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def repeated_permutation(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def replace(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def reverse(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def reverse!(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def reverse_each(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def rindex(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def rotate(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def rotate!(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def sample(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def select(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def select!(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def shelljoin(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def shift(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def shuffle(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def shuffle!(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def size(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def slice(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def slice!(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def slice_after(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def slice_before(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def slice_when(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def sort(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def sort!(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def sort_by(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def sort_by!(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def sum(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def take(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def take_while(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def tally(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def to_ary(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def to_h(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def to_set(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def transpose(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def union(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def uniq(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def uniq!(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def unshift(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def values_at(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def zip(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/collection_node.rb#13
   def |(*_arg0, **_arg1, &_arg2); end
 end
 
@@ -1150,7 +1150,7 @@ module RuboCop::AST::ConstantNode
   #   Note: some classes might have uppercase in which case this method
   #   returns false
   #
-  # source://rubocop-ast//lib/rubocop/ast/node/mixin/constant_node.rb#21
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/constant_node.rb#24
   def class_name?; end
 
   # Yield nodes for the namespace
@@ -1271,7 +1271,7 @@ class RuboCop::AST::DefinedNode < ::RuboCop::AST::Node
   include ::RuboCop::AST::MethodIdentifierPredicates
   include ::RuboCop::AST::MethodDispatchNode
 
-  # source://ast/2.4.3/lib/ast/node.rb#56
+  # source://rubocop-ast//lib/rubocop/ast/node/defined_node.rb#16
   def arguments; end
 
   # source://rubocop-ast//lib/rubocop/ast/node/defined_node.rb#12
@@ -2199,7 +2199,7 @@ class RuboCop::AST::MasgnNode < ::RuboCop::AST::Node
   #
   # @return [Node] the right hand side of a multiple assignment.
   #
-  # source://rubocop-ast//lib/rubocop/ast/node/masgn_node.rb#39
+  # source://rubocop-ast//lib/rubocop/ast/node/masgn_node.rb#42
   def rhs; end
 
   # In contrast to `expression`, `values` always returns a Ruby array
@@ -2253,7 +2253,7 @@ module RuboCop::AST::MethodDispatchNode
   #
   # @return [Boolean] whether the dispatched method is a setter
   #
-  # source://rubocop-ast//lib/rubocop/ast/node/mixin/method_dispatch_node.rb#107
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/method_dispatch_node.rb#110
   def assignment?; end
 
   # Checks whether the dispatched method is a bare access modifier that
@@ -2741,19 +2741,19 @@ class RuboCop::AST::Node < ::Parser::AST::Node
   # @return [Node] a new instance of Node
   # @see https://www.rubydoc.info/gems/ast/AST/Node:initialize
   #
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#145
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#148
   def initialize(type, children = T.unsafe(nil), properties = T.unsafe(nil)); end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def __ENCODING___type?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def __FILE___type?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def __LINE___type?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def alias_type?; end
 
   # Returns an array of ancestor nodes.
@@ -2761,183 +2761,188 @@ class RuboCop::AST::Node < ::Parser::AST::Node
   #
   # @return [Array<Node>] an array of ancestor nodes
   #
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#310
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#313
   def ancestors; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def and_asgn_type?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def and_type?; end
 
   # @return [Boolean]
   #
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#539
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#542
   def any_block_type?; end
 
   # @return [Boolean]
   #
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#519
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#522
   def any_def_type?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # @return [Boolean]
+  #
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#546
+  def any_match_pattern_type?; end
+
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def arg_expr_type?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def arg_type?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def args_type?; end
 
   # @return [Boolean]
   #
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#515
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#518
   def argument?; end
 
   # @return [Boolean]
   #
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#523
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#526
   def argument_type?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def array_pattern_type?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def array_pattern_with_tail_type?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def array_type?; end
 
   # @return [Boolean]
   #
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#467
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#470
   def assignment?; end
 
   # Some cops treat the shovel operator as a kind of assignment.
   #
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#417
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#420
   def assignment_or_similar?(param0 = T.unsafe(nil)); end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def back_ref_type?; end
 
   # @return [Boolean]
   #
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#471
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#474
   def basic_conditional?; end
 
   # @return [Boolean]
   #
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#425
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#428
   def basic_literal?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def begin_type?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def block_pass_type?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def block_type?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def blockarg_expr_type?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def blockarg_type?; end
 
   # @return [Boolean]
   #
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#527
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#530
   def boolean_type?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def break_type?; end
 
   # @return [Boolean]
   #
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#507
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#510
   def call_type?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def case_match_type?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def case_type?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def casgn_type?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def cbase_type?; end
 
   # @return [Boolean]
   #
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#511
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#514
   def chained?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#587
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#594
   def class_constructor?(param0 = T.unsafe(nil)); end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#605
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#612
   def class_definition?(param0 = T.unsafe(nil)); end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def class_type?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#207
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#210
   def complete!; end
 
   # @return [Boolean]
   #
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#212
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#215
   def complete?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def complex_type?; end
 
   # @return [Boolean]
   #
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#475
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#478
   def conditional?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#356
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#359
   def const_name; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def const_pattern_type?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def const_type?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def csend_type?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def cvar_type?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def cvasgn_type?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def def_type?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#376
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#379
   def defined_module; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#381
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#384
   def defined_module_name; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def defined_type?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def defs_type?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def dstr_type?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def dsym_type?; end
 
   # Calls the given block for each ancestor node from parent to root.
@@ -2950,169 +2955,169 @@ class RuboCop::AST::Node < ::Parser::AST::Node
   # @return [Enumerator] if no block is given
   # @yieldparam node [Node] each ancestor node
   #
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#298
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#301
   def each_ancestor(*types, &block); end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def eflipflop_type?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def empty_else_type?; end
 
   # @return [Boolean]
   #
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#411
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#414
   def empty_source?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def ensure_type?; end
 
   # @return [Boolean]
   #
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#459
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#462
   def equals_asgn?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def erange_type?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def false_type?; end
 
   # @return [Boolean]
   #
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#433
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#436
   def falsey_literal?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def find_pattern_type?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#324
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#327
   def first_line; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def float_type?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def for_type?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def forward_arg_type?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def forward_args_type?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def forwarded_args_type?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def forwarded_kwrestarg_type?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def forwarded_restarg_type?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#584
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#591
   def global_const?(param0 = T.unsafe(nil), param1); end
 
   # @return [Boolean]
   #
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#543
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#550
   def guard_clause?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def gvar_type?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def gvasgn_type?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def hash_pattern_type?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def hash_type?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def ident_type?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def if_guard_type?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def if_type?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def iflipflop_type?; end
 
   # @return [Boolean]
   #
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#441
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#444
   def immutable_literal?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def in_match_type?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def in_pattern_type?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def index_type?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def indexasgn_type?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def int_type?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def irange_type?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def itarg_type?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def itblock_type?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def ivar_type?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def ivasgn_type?; end
 
   # @return [Boolean]
   #
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#488
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#491
   def keyword?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def kwarg_type?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def kwargs_type?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def kwbegin_type?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def kwnilarg_type?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def kwoptarg_type?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def kwrestarg_type?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def kwsplat_type?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#578
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#585
   def lambda?(param0 = T.unsafe(nil)); end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#581
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#588
   def lambda_or_proc?(param0 = T.unsafe(nil)); end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def lambda_type?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#328
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#331
   def last_line; end
 
   # Use is discouraged, this is a potentially slow method and can lead
@@ -3120,7 +3125,7 @@ class RuboCop::AST::Node < ::Parser::AST::Node
   #
   # @return [Node, nil] the left (aka previous) sibling
   #
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#250
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#253
   def left_sibling; end
 
   # Use is discouraged, this is a potentially slow method and can lead
@@ -3128,22 +3133,22 @@ class RuboCop::AST::Node < ::Parser::AST::Node
   #
   # @return [Array<Node>] the left (aka previous) siblings
   #
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#260
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#263
   def left_siblings; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#332
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#335
   def line_count; end
 
   # @return [Boolean]
   #
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#421
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#424
   def literal?; end
 
   # Shortcut to safely check if a location is present
   #
   # @return [Boolean]
   #
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#551
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#558
   def loc?(which_loc); end
 
   # Shortcut to safely test a particular location, even if
@@ -3151,86 +3156,86 @@ class RuboCop::AST::Node < ::Parser::AST::Node
   #
   # @return [Boolean]
   #
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#559
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#566
   def loc_is?(which_loc, str); end
 
   # NOTE: `loop { }` is a normal method call and thus not a loop keyword.
   #
   # @return [Boolean]
   #
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#484
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#487
   def loop_keyword?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def lvar_type?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def lvasgn_type?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def masgn_type?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def match_alt_type?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def match_as_type?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def match_current_line_type?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#566
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#573
   def match_guard_clause?(param0 = T.unsafe(nil)); end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def match_nil_pattern_type?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def match_pattern_p_type?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def match_pattern_type?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def match_rest_type?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def match_var_type?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def match_with_lvasgn_type?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def match_with_trailing_comma_type?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def mlhs_type?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#612
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#619
   def module_definition?(param0 = T.unsafe(nil)); end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def module_type?; end
 
   # Predicates
   #
   # @return [Boolean]
   #
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#403
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#406
   def multiline?; end
 
   # @return [Boolean]
   #
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#437
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#440
   def mutable_literal?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#743
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#750
   def new_class_or_module_block?(param0 = T.unsafe(nil)); end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def next_type?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def nil_type?; end
 
   # Common destructuring method. This can be used to normalize
@@ -3240,98 +3245,98 @@ class RuboCop::AST::Node < ::Parser::AST::Node
   #
   # @return [Array<Node>] the different parts of the ndde
   #
-  # source://ast/2.4.3/lib/ast/node.rb#56
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#284
   def node_parts; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#338
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#341
   def nonempty_line_count; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def not_type?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def nth_ref_type?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def numargs_type?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def numblock_type?; end
 
   # @return [Boolean]
   #
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#531
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#534
   def numeric_type?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def objc_kwarg_type?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def objc_restarg_type?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def objc_varargs_type?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def op_asgn_type?; end
 
   # @return [Boolean]
   #
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#499
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#502
   def operator_keyword?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def optarg_type?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def or_asgn_type?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def or_type?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def pair_type?; end
 
   # Returns the parent node, or `nil` if the receiver is a root node.
   #
   # @return [Node, nil] the parent node or `nil`
   #
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#189
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#192
   def parent; end
 
   # @return [Boolean]
   #
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#198
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#201
   def parent?; end
 
   # Searching the AST
   #
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#387
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#390
   def parent_module_name; end
 
   # @return [Boolean]
   #
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#503
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#506
   def parenthesized_call?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def pin_type?; end
 
   # @return [Boolean]
   #
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#479
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#482
   def post_condition_loop?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def postexe_type?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def preexe_type?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#571
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#578
   def proc?(param0 = T.unsafe(nil)); end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def procarg0_type?; end
 
   # Some expressions are evaluated for their value, some for their side
@@ -3344,60 +3349,60 @@ class RuboCop::AST::Node < ::Parser::AST::Node
   #
   # @return [Boolean]
   #
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#655
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#662
   def pure?; end
 
   # @return [Boolean]
   #
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#535
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#538
   def range_type?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def rational_type?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#349
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#352
   def receiver(param0 = T.unsafe(nil)); end
 
   # @return [Boolean]
   #
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#129
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#131
   def recursive_basic_literal?; end
 
   # @return [Boolean]
   #
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#129
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#131
   def recursive_literal?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def redo_type?; end
 
   # @return [Boolean]
   #
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#455
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#458
   def reference?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def regexp_type?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def regopt_type?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def resbody_type?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def rescue_type?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def restarg_expr_type?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def restarg_type?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def retry_type?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def return_type?; end
 
   # Use is discouraged, this is a potentially slow method and can lead
@@ -3405,7 +3410,7 @@ class RuboCop::AST::Node < ::Parser::AST::Node
   #
   # @return [Node, nil] the right (aka next) sibling
   #
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#241
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#244
   def right_sibling; end
 
   # Use is discouraged, this is a potentially slow method and can lead
@@ -3413,18 +3418,18 @@ class RuboCop::AST::Node < ::Parser::AST::Node
   #
   # @return [Array<Node>] the right (aka next) siblings
   #
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#269
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#272
   def right_siblings; end
 
   # @return [Boolean]
   #
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#203
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#206
   def root?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def sclass_type?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def self_type?; end
 
   # Most nodes are of 'send' type, so this method is defined
@@ -3432,15 +3437,15 @@ class RuboCop::AST::Node < ::Parser::AST::Node
   #
   # @return [Boolean]
   #
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#182
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#185
   def send_type?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def shadowarg_type?; end
 
   # @return [Boolean]
   #
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#463
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#466
   def shorthand_asgn?; end
 
   # Returns the index of the receiver node in its siblings. (Sibling index
@@ -3449,58 +3454,58 @@ class RuboCop::AST::Node < ::Parser::AST::Node
   #
   # @return [Integer, nil] the index of the receiver node in its siblings
   #
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#234
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#237
   def sibling_index; end
 
   # @return [Boolean]
   #
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#407
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#410
   def single_line?; end
 
   # NOTE: Some rare nodes may have no source, like `s(:args)` in `foo {}`
   #
   # @return [String, nil]
   #
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#316
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#319
   def source; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#342
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#345
   def source_length; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#320
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#323
   def source_range; end
 
   # @return [Boolean]
   #
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#495
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#498
   def special_keyword?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def splat_type?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#354
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#357
   def str_content(param0 = T.unsafe(nil)); end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def str_type?; end
 
   # @deprecated Use `:class_constructor?`
   #
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#600
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#607
   def struct_constructor?(param0 = T.unsafe(nil)); end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def super_type?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def sym_type?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def true_type?; end
 
   # @return [Boolean]
   #
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#429
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#432
   def truthy_literal?; end
 
   # Determine if the node is one of several node types in a single query
@@ -3509,19 +3514,19 @@ class RuboCop::AST::Node < ::Parser::AST::Node
   #
   # @return [Boolean]
   #
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#164
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#167
   def type?(*types); end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def undef_type?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def unless_guard_type?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def until_post_type?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def until_type?; end
 
   # Override `AST::Node#updated` so that `AST::Processor` does not try to
@@ -3530,7 +3535,7 @@ class RuboCop::AST::Node < ::Parser::AST::Node
   # identical subtrees. Rather, the entire AST must be copied any time any
   # part of it is changed.
   #
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#223
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#226
   def updated(type = T.unsafe(nil), children = T.unsafe(nil), properties = T.unsafe(nil)); end
 
   # Some expressions are evaluated for their value, some for their side
@@ -3543,78 +3548,78 @@ class RuboCop::AST::Node < ::Parser::AST::Node
   #
   # @return [Boolean]
   #
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#625
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#632
   def value_used?; end
 
   # @return [Boolean]
   #
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#451
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#454
   def variable?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def when_type?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def while_post_type?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def while_type?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def xstr_type?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def yield_type?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#174
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#176
   def zsuper_type?; end
 
   protected
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#193
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#196
   def parent=(node); end
 
   private
 
   # @return [Boolean]
   #
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#682
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#689
   def begin_value_used?; end
 
   # @return [Boolean]
   #
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#693
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#700
   def case_if_value_used?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#367
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#370
   def defined_module0(param0 = T.unsafe(nil)); end
 
   # @return [Boolean]
   #
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#687
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#694
   def for_value_used?; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#729
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#736
   def parent_module_name_for_block(ancestor); end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#717
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#724
   def parent_module_name_for_sclass(sclass_node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#704
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#711
   def parent_module_name_part(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#673
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#680
   def visit_ancestors(types); end
 
   # @return [Boolean]
   #
-  # source://rubocop-ast//lib/rubocop/ast/node.rb#699
+  # source://rubocop-ast//lib/rubocop/ast/node.rb#706
   def while_until_value_used?; end
 
   class << self
     private
 
-    # source://rubocop-ast//lib/rubocop/ast/node.rb#124
+    # source://rubocop-ast//lib/rubocop/ast/node.rb#127
     def def_recursive_literal_predicate(kind); end
   end
 end
@@ -3778,13 +3783,13 @@ class RuboCop::AST::NodePattern
   # source://rubocop-ast//lib/rubocop/ast/node_pattern.rb#73
   def ast; end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node_pattern.rb#75
   def captures(*_arg0, **_arg1, &_arg2); end
 
   # source://rubocop-ast//lib/rubocop/ast/node_pattern.rb#111
   def encode_with(coder); end
 
-  # source://rubocop-ast//lib/rubocop/ast/node_pattern.rb#90
+  # source://rubocop-ast//lib/rubocop/ast/node_pattern.rb#93
   def eql?(other); end
 
   # source://rubocop-ast//lib/rubocop/ast/node_pattern.rb#119
@@ -3807,7 +3812,7 @@ class RuboCop::AST::NodePattern
   # source://rubocop-ast//lib/rubocop/ast/node_pattern.rb#73
   def match_code; end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node_pattern.rb#75
   def named_parameters(*_arg0, **_arg1, &_arg2); end
 
   # Returns the value of attribute pattern.
@@ -3815,7 +3820,7 @@ class RuboCop::AST::NodePattern
   # source://rubocop-ast//lib/rubocop/ast/node_pattern.rb#73
   def pattern; end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node_pattern.rb#75
   def positional_parameters(*_arg0, **_arg1, &_arg2); end
 
   # source://rubocop-ast//lib/rubocop/ast/node_pattern.rb#95
@@ -3899,7 +3904,7 @@ class RuboCop::AST::NodePattern::Comment
 
   # Returns the value of attribute location.
   #
-  # source://rubocop-ast//lib/rubocop/ast/node_pattern/comment.rb#8
+  # source://rubocop-ast//lib/rubocop/ast/node_pattern/comment.rb#9
   def loc; end
 
   # Returns the value of attribute location.
@@ -3928,7 +3933,7 @@ class RuboCop::AST::NodePattern::Compiler
   # source://rubocop-ast//lib/rubocop/ast/node_pattern/compiler.rb#15
   def initialize; end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node_pattern/compiler.rb#24
   def bind(*_arg0, **_arg1, &_arg2); end
 
   # Returns the value of attribute binding.
@@ -4011,7 +4016,7 @@ class RuboCop::AST::NodePattern::Compiler::AtomSubcompiler < ::RuboCop::AST::Nod
   # source://rubocop-ast//lib/rubocop/ast/node_pattern/compiler/atom_subcompiler.rb#32
   def visit_named_parameter; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node_pattern/compiler/atom_subcompiler.rb#21
+  # source://rubocop-ast//lib/rubocop/ast/node_pattern/compiler/atom_subcompiler.rb#24
   def visit_number; end
 
   # Assumes other types are node patterns.
@@ -4022,13 +4027,13 @@ class RuboCop::AST::NodePattern::Compiler::AtomSubcompiler < ::RuboCop::AST::Nod
   # source://rubocop-ast//lib/rubocop/ast/node_pattern/compiler/atom_subcompiler.rb#36
   def visit_positional_parameter; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node_pattern/compiler/atom_subcompiler.rb#21
+  # source://rubocop-ast//lib/rubocop/ast/node_pattern/compiler/atom_subcompiler.rb#26
   def visit_regexp; end
 
   # source://rubocop-ast//lib/rubocop/ast/node_pattern/compiler/atom_subcompiler.rb#40
   def visit_set; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node_pattern/compiler/atom_subcompiler.rb#21
+  # source://rubocop-ast//lib/rubocop/ast/node_pattern/compiler/atom_subcompiler.rb#25
   def visit_string; end
 
   # source://rubocop-ast//lib/rubocop/ast/node_pattern/compiler/atom_subcompiler.rb#21
@@ -4072,74 +4077,74 @@ end
 class RuboCop::AST::NodePattern::Compiler::Debug < ::RuboCop::AST::NodePattern::Compiler
   # @return [Debug] a new instance of Debug
   #
-  # source://rubocop-ast//lib/rubocop/ast/node_pattern/compiler/debug.rb#116
+  # source://rubocop-ast//lib/rubocop/ast/node_pattern/compiler/debug.rb#118
   def initialize; end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node_pattern/compiler/debug.rb#131
   def comments(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/node_pattern/compiler/debug.rb#121
+  # source://rubocop-ast//lib/rubocop/ast/node_pattern/compiler/debug.rb#123
   def named_parameters; end
 
   # Returns the value of attribute node_ids.
   #
-  # source://rubocop-ast//lib/rubocop/ast/node_pattern/compiler/debug.rb#33
+  # source://rubocop-ast//lib/rubocop/ast/node_pattern/compiler/debug.rb#35
   def node_ids; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node_pattern/compiler/debug.rb#125
+  # source://rubocop-ast//lib/rubocop/ast/node_pattern/compiler/debug.rb#127
   def parser; end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node_pattern/compiler/debug.rb#131
   def tokens(*_arg0, **_arg1, &_arg2); end
 end
 
 # @api private
 #
-# source://rubocop-ast//lib/rubocop/ast/node_pattern/compiler/debug.rb#36
+# source://rubocop-ast//lib/rubocop/ast/node_pattern/compiler/debug.rb#38
 class RuboCop::AST::NodePattern::Compiler::Debug::Colorizer
   # @api private
   # @return [Colorizer] a new instance of Colorizer
   #
-  # source://rubocop-ast//lib/rubocop/ast/node_pattern/compiler/debug.rb#96
+  # source://rubocop-ast//lib/rubocop/ast/node_pattern/compiler/debug.rb#98
   def initialize(pattern, compiler: T.unsafe(nil)); end
 
   # @api private
   #
-  # source://rubocop-ast//lib/rubocop/ast/node_pattern/compiler/debug.rb#94
+  # source://rubocop-ast//lib/rubocop/ast/node_pattern/compiler/debug.rb#96
   def compiler; end
 
   # @api private
   #
-  # source://rubocop-ast//lib/rubocop/ast/node_pattern/compiler/debug.rb#94
+  # source://rubocop-ast//lib/rubocop/ast/node_pattern/compiler/debug.rb#96
   def node_pattern; end
 
   # @api private
   #
-  # source://rubocop-ast//lib/rubocop/ast/node_pattern/compiler/debug.rb#94
+  # source://rubocop-ast//lib/rubocop/ast/node_pattern/compiler/debug.rb#96
   def pattern; end
 
   # @api private
   # @return [Node] the Ruby AST
   #
-  # source://rubocop-ast//lib/rubocop/ast/node_pattern/compiler/debug.rb#103
+  # source://rubocop-ast//lib/rubocop/ast/node_pattern/compiler/debug.rb#105
   def test(ruby, trace: T.unsafe(nil)); end
 
   private
 
   # @api private
   #
-  # source://rubocop-ast//lib/rubocop/ast/node_pattern/compiler/debug.rb#111
+  # source://rubocop-ast//lib/rubocop/ast/node_pattern/compiler/debug.rb#113
   def ruby_ast(ruby); end
 end
 
 # @api private
 #
-# source://rubocop-ast//lib/rubocop/ast/node_pattern/compiler/debug.rb#37
+# source://rubocop-ast//lib/rubocop/ast/node_pattern/compiler/debug.rb#39
 RuboCop::AST::NodePattern::Compiler::Debug::Colorizer::COLOR_SCHEME = T.let(T.unsafe(nil), Hash)
 
 # @api private
 #
-# source://rubocop-ast//lib/rubocop/ast/node_pattern/compiler/debug.rb#92
+# source://rubocop-ast//lib/rubocop/ast/node_pattern/compiler/debug.rb#94
 RuboCop::AST::NodePattern::Compiler::Debug::Colorizer::Compiler = RuboCop::AST::NodePattern::Compiler::Debug
 
 # Result of a NodePattern run against a particular AST
@@ -4147,129 +4152,154 @@ RuboCop::AST::NodePattern::Compiler::Debug::Colorizer::Compiler = RuboCop::AST::
 #
 # @api private
 #
-# source://rubocop-ast//lib/rubocop/ast/node_pattern/compiler/debug.rb#46
+# source://rubocop-ast//lib/rubocop/ast/node_pattern/compiler/debug.rb#48
 class RuboCop::AST::NodePattern::Compiler::Debug::Colorizer::Result < ::Struct
   # @api private
   # @return [Hash] a map for {character_position => color}
   #
-  # source://rubocop-ast//lib/rubocop/ast/node_pattern/compiler/debug.rb#56
+  # source://rubocop-ast//lib/rubocop/ast/node_pattern/compiler/debug.rb#58
   def color_map(color_scheme = T.unsafe(nil)); end
 
   # @api private
   # @return [String] a Rainbow colorized version of ruby
   #
-  # source://rubocop-ast//lib/rubocop/ast/node_pattern/compiler/debug.rb#48
+  # source://rubocop-ast//lib/rubocop/ast/node_pattern/compiler/debug.rb#50
   def colorize(color_scheme = T.unsafe(nil)); end
 
   # Returns the value of attribute colorizer
   #
   # @return [Object] the current value of colorizer
+  #
+  # source://rubocop-ast//lib/rubocop/ast/node_pattern/compiler/debug.rb#48
   def colorizer; end
 
   # Sets the attribute colorizer
   #
   # @param value [Object] the value to set the attribute colorizer to.
   # @return [Object] the newly set value
+  #
+  # source://rubocop-ast//lib/rubocop/ast/node_pattern/compiler/debug.rb#48
   def colorizer=(_); end
 
   # @api private
   # @return [Hash] a map for {node => matched?}, depth-first
   #
-  # source://rubocop-ast//lib/rubocop/ast/node_pattern/compiler/debug.rb#66
+  # source://rubocop-ast//lib/rubocop/ast/node_pattern/compiler/debug.rb#68
   def match_map; end
 
   # @api private
   # @return [Boolean] a value of `Trace#matched?` or `:not_visitable`
   #
-  # source://rubocop-ast//lib/rubocop/ast/node_pattern/compiler/debug.rb#74
+  # source://rubocop-ast//lib/rubocop/ast/node_pattern/compiler/debug.rb#76
   def matched?(node); end
 
   # Returns the value of attribute returned
   #
   # @return [Object] the current value of returned
+  #
+  # source://rubocop-ast//lib/rubocop/ast/node_pattern/compiler/debug.rb#48
   def returned; end
 
   # Sets the attribute returned
   #
   # @param value [Object] the value to set the attribute returned to.
   # @return [Object] the newly set value
+  #
+  # source://rubocop-ast//lib/rubocop/ast/node_pattern/compiler/debug.rb#48
   def returned=(_); end
 
   # Returns the value of attribute ruby_ast
   #
   # @return [Object] the current value of ruby_ast
+  #
+  # source://rubocop-ast//lib/rubocop/ast/node_pattern/compiler/debug.rb#48
   def ruby_ast; end
 
   # Sets the attribute ruby_ast
   #
   # @param value [Object] the value to set the attribute ruby_ast to.
   # @return [Object] the newly set value
+  #
+  # source://rubocop-ast//lib/rubocop/ast/node_pattern/compiler/debug.rb#48
   def ruby_ast=(_); end
 
   # Returns the value of attribute trace
   #
   # @return [Object] the current value of trace
+  #
+  # source://rubocop-ast//lib/rubocop/ast/node_pattern/compiler/debug.rb#48
   def trace; end
 
   # Sets the attribute trace
   #
   # @param value [Object] the value to set the attribute trace to.
   # @return [Object] the newly set value
+  #
+  # source://rubocop-ast//lib/rubocop/ast/node_pattern/compiler/debug.rb#48
   def trace=(_); end
 
   private
 
   # @api private
   #
-  # source://rubocop-ast//lib/rubocop/ast/node_pattern/compiler/debug.rb#87
+  # source://rubocop-ast//lib/rubocop/ast/node_pattern/compiler/debug.rb#89
   def ast; end
 
   # @api private
   #
-  # source://rubocop-ast//lib/rubocop/ast/node_pattern/compiler/debug.rb#81
+  # source://rubocop-ast//lib/rubocop/ast/node_pattern/compiler/debug.rb#83
   def color_map_for(node, color); end
 
   class << self
+    # source://rubocop-ast//lib/rubocop/ast/node_pattern/compiler/debug.rb#48
     def [](*_arg0); end
+
+    # source://rubocop-ast//lib/rubocop/ast/node_pattern/compiler/debug.rb#48
     def inspect; end
+
+    # source://rubocop-ast//lib/rubocop/ast/node_pattern/compiler/debug.rb#48
     def keyword_init?; end
+
+    # source://rubocop-ast//lib/rubocop/ast/node_pattern/compiler/debug.rb#48
     def members; end
+
+    # source://rubocop-ast//lib/rubocop/ast/node_pattern/compiler/debug.rb#48
     def new(*_arg0); end
   end
 end
 
 # @api private
 #
-# source://rubocop-ast//lib/rubocop/ast/node_pattern/compiler/debug.rb#132
+# source://rubocop-ast//lib/rubocop/ast/node_pattern/compiler/debug.rb#134
 module RuboCop::AST::NodePattern::Compiler::Debug::InstrumentationSubcompiler
   # @api private
   #
-  # source://rubocop-ast//lib/rubocop/ast/node_pattern/compiler/debug.rb#133
+  # source://rubocop-ast//lib/rubocop/ast/node_pattern/compiler/debug.rb#135
   def do_compile; end
 
   private
 
   # @api private
   #
-  # source://rubocop-ast//lib/rubocop/ast/node_pattern/compiler/debug.rb#143
+  # source://rubocop-ast//lib/rubocop/ast/node_pattern/compiler/debug.rb#145
   def node_id; end
 
   # @api private
   #
-  # source://rubocop-ast//lib/rubocop/ast/node_pattern/compiler/debug.rb#139
+  # source://rubocop-ast//lib/rubocop/ast/node_pattern/compiler/debug.rb#141
   def tracer(kind); end
 end
 
 # @api private
 #
-# source://rubocop-ast//lib/rubocop/ast/node_pattern/compiler/debug.rb#149
+# source://rubocop-ast//lib/rubocop/ast/node_pattern/compiler/debug.rb#151
 class RuboCop::AST::NodePattern::Compiler::Debug::NodePatternSubcompiler < ::RuboCop::AST::NodePattern::Compiler::NodePatternSubcompiler
   include ::RuboCop::AST::NodePattern::Compiler::Debug::InstrumentationSubcompiler
 end
 
 # @api private
 #
-# source://rubocop-ast//lib/rubocop/ast/node_pattern/compiler/debug.rb#154
+# source://rubocop-ast//lib/rubocop/ast/node_pattern/compiler/debug.rb#156
 class RuboCop::AST::NodePattern::Compiler::Debug::SequenceSubcompiler < ::RuboCop::AST::NodePattern::Compiler::SequenceSubcompiler
   include ::RuboCop::AST::NodePattern::Compiler::Debug::InstrumentationSubcompiler
 end
@@ -4284,17 +4314,17 @@ class RuboCop::AST::NodePattern::Compiler::Debug::Trace
   # source://rubocop-ast//lib/rubocop/ast/node_pattern/compiler/debug.rb#14
   def initialize; end
 
-  # source://rubocop-ast//lib/rubocop/ast/node_pattern/compiler/debug.rb#18
+  # source://rubocop-ast//lib/rubocop/ast/node_pattern/compiler/debug.rb#19
   def enter(node_id); end
 
   # return nil (not visited), false (not matched) or true (matched)
   #
   # @return [Boolean]
   #
-  # source://rubocop-ast//lib/rubocop/ast/node_pattern/compiler/debug.rb#28
+  # source://rubocop-ast//lib/rubocop/ast/node_pattern/compiler/debug.rb#30
   def matched?(node_id); end
 
-  # source://rubocop-ast//lib/rubocop/ast/node_pattern/compiler/debug.rb#23
+  # source://rubocop-ast//lib/rubocop/ast/node_pattern/compiler/debug.rb#25
   def success(node_id); end
 end
 
@@ -4400,7 +4430,7 @@ end
 # Doc on how this fits in the compiling process:
 #   /docs/modules/ROOT/pages/node_pattern.adoc
 #
-# source://rubocop-ast//lib/rubocop/ast/node_pattern/compiler/sequence_subcompiler.rb#16
+# source://rubocop-ast//lib/rubocop/ast/node_pattern/compiler/sequence_subcompiler.rb#17
 class RuboCop::AST::NodePattern::Compiler::SequenceSubcompiler < ::RuboCop::AST::NodePattern::Compiler::Subcompiler
   # Calls `compile_sequence`; the actual `compile` method
   # will be used for the different terms of the sequence.
@@ -4438,7 +4468,7 @@ class RuboCop::AST::NodePattern::Compiler::SequenceSubcompiler < ::RuboCop::AST:
 
   private
 
-  # source://rubocop-ast//lib/rubocop/ast/node_pattern/compiler/subcompiler.rb#20
+  # source://rubocop-ast//lib/rubocop/ast/node_pattern/compiler/sequence_subcompiler.rb#59
   def compile(node); end
 
   # Compilation helpers
@@ -4692,7 +4722,7 @@ class RuboCop::AST::NodePattern::LexerRex
 
   # The StringScanner for this lexer.
   #
-  # source://rubocop-ast//lib/rubocop/ast/node_pattern/lexer.rex.rb#48
+  # source://rubocop-ast//lib/rubocop/ast/node_pattern/lexer.rex.rb#55
   def match; end
 
   # The match groups for the current scan.
@@ -4954,7 +4984,7 @@ RuboCop::AST::NodePattern::Node::AnyOrder::ARITIES = T.let(T.unsafe(nil), Hash)
 #
 # source://rubocop-ast//lib/rubocop/ast/node_pattern/node.rb#96
 class RuboCop::AST::NodePattern::Node::Capture < ::RuboCop::AST::NodePattern::Node
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node_pattern/node.rb#98
   def arity(*_arg0, **_arg1, &_arg2); end
 
   # @return [Boolean]
@@ -4968,7 +4998,7 @@ class RuboCop::AST::NodePattern::Node::Capture < ::RuboCop::AST::NodePattern::No
   # source://rubocop-ast//lib/rubocop/ast/node_pattern/node.rb#104
   def nb_captures; end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node_pattern/node.rb#98
   def rest?(*_arg0, **_arg1, &_arg2); end
 end
 
@@ -5209,28 +5239,28 @@ class RuboCop::AST::NodePattern::Parser < ::Racc::Parser
   # source://rubocop-ast//lib/rubocop/ast/node_pattern/parser.racc.rb#465
   def _reduce_none(val, _values); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node_pattern/parser.rb#46
   def emit_atom(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node_pattern/parser.rb#46
   def emit_call(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node_pattern/parser.rb#46
   def emit_capture(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node_pattern/parser.rb#46
   def emit_list(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node_pattern/parser.rb#46
   def emit_unary_op(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node_pattern/parser.rb#46
   def emit_union(*_arg0, **_arg1, &_arg2); end
 
   # source://rubocop-ast//lib/rubocop/ast/node_pattern/parser.rb#40
   def inspect; end
 
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop-ast//lib/rubocop/ast/node_pattern/parser.rb#48
   def next_token(*_arg0, **_arg1, &_arg2); end
 
   # (Similar API to `parser` gem)
@@ -5544,6 +5574,9 @@ RuboCop::AST::NodePattern::Sets::SET_INTEGER_BIGDECIMAL_COMPLEX_RATIONAL = T.let
 RuboCop::AST::NodePattern::Sets::SET_IO_FILE = T.let(T.unsafe(nil), Set)
 
 # source://rubocop-ast//lib/rubocop/ast/node_pattern/sets.rb#10
+RuboCop::AST::NodePattern::Sets::SET_IS_A_KIND_OF = T.let(T.unsafe(nil), Set)
+
+# source://rubocop-ast//lib/rubocop/ast/node_pattern/sets.rb#10
 RuboCop::AST::NodePattern::Sets::SET_IS_EXPECTED_SHOULD_SHOULD_NOT = T.let(T.unsafe(nil), Set)
 
 # source://rubocop-ast//lib/rubocop/ast/node_pattern/sets.rb#10
@@ -5644,6 +5677,9 @@ RuboCop::AST::NodePattern::Sets::SET_REJECT_REJECT = T.let(T.unsafe(nil), Set)
 
 # source://rubocop-ast//lib/rubocop/ast/node_pattern/sets.rb#10
 RuboCop::AST::NodePattern::Sets::SET_REQUIRE_REQUIRE_RELATIVE = T.let(T.unsafe(nil), Set)
+
+# source://rubocop-ast//lib/rubocop/ast/node_pattern/sets.rb#10
+RuboCop::AST::NodePattern::Sets::SET_SELECT_FILTER = T.let(T.unsafe(nil), Set)
 
 # source://rubocop-ast//lib/rubocop/ast/node_pattern/sets.rb#10
 RuboCop::AST::NodePattern::Sets::SET_SELECT_FILTER_FIND_ALL = T.let(T.unsafe(nil), Set)
@@ -5830,7 +5866,7 @@ class RuboCop::AST::OpAsgnNode < ::RuboCop::AST::Node
 
   # @return [AsgnNode] the assignment node
   #
-  # source://rubocop-ast//lib/rubocop/ast/node/op_asgn_node.rb#10
+  # source://rubocop-ast//lib/rubocop/ast/node/op_asgn_node.rb#13
   def lhs; end
 
   # The name of the variable being assigned as a symbol.
@@ -5851,7 +5887,7 @@ class RuboCop::AST::OpAsgnNode < ::RuboCop::AST::Node
   #
   # @return [Node] the expression being assigned.
   #
-  # source://rubocop-ast//lib/rubocop/ast/node/op_asgn_node.rb#32
+  # source://rubocop-ast//lib/rubocop/ast/node/op_asgn_node.rb#35
   def rhs; end
 end
 
@@ -6015,7 +6051,7 @@ module RuboCop::AST::ParameterizedNode
   #
   # @return [Boolean] whether the node is a splat argument
   #
-  # source://rubocop-ast//lib/rubocop/ast/node/mixin/parameterized_node.rb#48
+  # source://rubocop-ast//lib/rubocop/ast/node/mixin/parameterized_node.rb#52
   def rest_argument?; end
 
   # Checks whether any argument of the node is a splat
@@ -6207,7 +6243,7 @@ class RuboCop::AST::ProcessedSource
   # @deprecated use contains_comment?
   # @return [Boolean] if any of the lines in the given `source_range` has a comment.
   #
-  # source://rubocop-ast//lib/rubocop/ast/processed_source.rb#157
+  # source://rubocop-ast//lib/rubocop/ast/processed_source.rb#161
   def commented?(source_range); end
 
   # Returns the value of attribute comments.
@@ -6288,7 +6324,7 @@ class RuboCop::AST::ProcessedSource
   # source://rubocop-ast//lib/rubocop/ast/processed_source.rb#77
   def lines; end
 
-  # source://rubocop-md/2.0.1/lib/rubocop/markdown/rubocop_ext.rb#85
+  # source://rubocop-ast//lib/rubocop/ast/processed_source.rb#224
   def parse(src, *args); end
 
   # Returns the value of attribute parser_engine.
@@ -6346,35 +6382,35 @@ class RuboCop::AST::ProcessedSource
 
   private
 
-  # source://rubocop-ast//lib/rubocop/ast/processed_source.rb#327
+  # source://rubocop-ast//lib/rubocop/ast/processed_source.rb#329
   def builder_class(parser_engine); end
 
   # source://rubocop-ast//lib/rubocop/ast/processed_source.rb#218
   def comment_index; end
 
-  # source://rubocop-ast//lib/rubocop/ast/processed_source.rb#337
+  # source://rubocop-ast//lib/rubocop/ast/processed_source.rb#339
   def create_parser(ruby_version, parser_engine, prism_result); end
 
   # The Parser gem does not support Ruby 3.5 or later.
   # It is also not fully compatible with Ruby 3.4 but for
   # now respects using parser for backwards compatibility.
   #
-  # source://rubocop-ast//lib/rubocop/ast/processed_source.rb#383
+  # source://rubocop-ast//lib/rubocop/ast/processed_source.rb#385
   def default_parser_engine(ruby_version); end
 
-  # source://rubocop-ast//lib/rubocop/ast/processed_source.rb#391
+  # source://rubocop-ast//lib/rubocop/ast/processed_source.rb#393
   def first_token_index(range_or_node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/processed_source.rb#396
+  # source://rubocop-ast//lib/rubocop/ast/processed_source.rb#398
   def last_token_index(range_or_node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/processed_source.rb#366
+  # source://rubocop-ast//lib/rubocop/ast/processed_source.rb#368
   def normalize_parser_engine(parser_engine, ruby_version); end
 
-  # source://rubocop-ast//lib/rubocop/ast/processed_source.rb#259
+  # source://rubocop-ast//lib/rubocop/ast/processed_source.rb#260
   def parser_class(ruby_version, parser_engine); end
 
-  # source://rubocop-ast//lib/rubocop/ast/processed_source.rb#401
+  # source://rubocop-ast//lib/rubocop/ast/processed_source.rb#403
   def source_range(range_or_node); end
 
   # source://rubocop-ast//lib/rubocop/ast/processed_source.rb#243
@@ -6732,7 +6768,7 @@ class RuboCop::AST::SuperNode < ::RuboCop::AST::Node
   include ::RuboCop::AST::MethodIdentifierPredicates
   include ::RuboCop::AST::MethodDispatchNode
 
-  # source://ast/2.4.3/lib/ast/node.rb#56
+  # source://rubocop-ast//lib/rubocop/ast/node/super_node.rb#20
   def arguments; end
 
   # Custom destructuring method. This can be used to normalize
@@ -6919,397 +6955,397 @@ RuboCop::AST::Token::LEFT_PAREN_TYPES = T.let(T.unsafe(nil), Array)
 module RuboCop::AST::Traversal
   extend ::RuboCop::AST::Traversal::CallbackCompiler
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#183
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#43
   def on_(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#132
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#50
   def on___ENCODING__(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#132
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#50
   def on___FILE__(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#132
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#50
   def on___LINE__(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#145
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#50
   def on_alias(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#145
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#50
   def on_and(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#145
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#50
   def on_and_asgn(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#136
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#50
   def on_arg(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#137
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#50
   def on_arg_expr(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#145
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#50
   def on_args(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#145
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#50
   def on_array(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#145
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#50
   def on_array_pattern(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#145
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#50
   def on_array_pattern_with_tail(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#136
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#50
   def on_back_ref(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#145
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#50
   def on_begin(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#160
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#43
   def on_block(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#138
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#43
   def on_block_pass(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#136
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#50
   def on_blockarg(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#145
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#50
   def on_break(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#148
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#43
   def on_case(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#148
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#50
   def on_case_match(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#155
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#43
   def on_casgn(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#132
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#50
   def on_cbase(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#156
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#43
   def on_class(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#136
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#50
   def on_complex(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#154
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#43
   def on_const(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#145
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#50
   def on_const_pattern(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#165
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#50
   def on_csend(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#136
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#50
   def on_cvar(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#140
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#50
   def on_cvasgn(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#157
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#43
   def on_def(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#137
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#50
   def on_defined?(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#163
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#43
   def on_defs(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#145
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#43
   def on_dstr(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#145
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#50
   def on_dsym(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#148
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#50
   def on_eflipflop(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#132
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#50
   def on_empty_else(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#148
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#50
   def on_ensure(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#148
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#50
   def on_erange(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#132
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#50
   def on_false(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#145
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#50
   def on_find_pattern(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#136
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#50
   def on_float(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#148
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#50
   def on_for(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#132
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#50
   def on_forward_arg(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#132
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#50
   def on_forward_args(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#132
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#50
   def on_forwarded_args(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#132
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#50
   def on_forwarded_kwrestarg(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#132
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#50
   def on_forwarded_restarg(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#136
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#50
   def on_gvar(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#140
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#50
   def on_gvasgn(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#145
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#50
   def on_hash(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#145
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#50
   def on_hash_pattern(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#159
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#43
   def on_if(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#137
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#50
   def on_if_guard(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#148
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#50
   def on_iflipflop(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#145
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#50
   def on_in_match(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#148
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#50
   def on_in_pattern(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#145
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#50
   def on_index(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#145
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#50
   def on_indexasgn(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#136
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#43
   def on_int(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#148
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#50
   def on_irange(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#162
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#43
   def on_itblock(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#136
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#50
   def on_ivar(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#140
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#50
   def on_ivasgn(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#136
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#50
   def on_kwarg(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#145
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#50
   def on_kwargs(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#145
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#50
   def on_kwbegin(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#132
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#50
   def on_kwnilarg(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#141
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#50
   def on_kwoptarg(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#133
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#50
   def on_kwrestarg(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#134
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#50
   def on_kwsplat(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#132
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#50
   def on_lambda(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#136
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#50
   def on_lvar(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#140
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#43
   def on_lvasgn(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#145
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#50
   def on_masgn(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#145
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#50
   def on_match_alt(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#145
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#50
   def on_match_as(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#137
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#50
   def on_match_current_line(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#132
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#50
   def on_match_nil_pattern(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#148
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#50
   def on_match_pattern(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#148
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#50
   def on_match_pattern_p(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#134
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#50
   def on_match_rest(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#136
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#50
   def on_match_var(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#145
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#50
   def on_match_with_lvasgn(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#137
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#50
   def on_match_with_trailing_comma(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#145
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#50
   def on_mlhs(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#142
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#50
   def on_module(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#145
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#50
   def on_mrasgn(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#145
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#50
   def on_next(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#132
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#50
   def on_nil(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#137
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#43
   def on_not(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#136
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#50
   def on_nth_ref(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#161
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#43
   def on_numblock(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#158
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#43
   def on_op_asgn(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#141
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#43
   def on_optarg(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#145
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#50
   def on_or(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#145
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#50
   def on_or_asgn(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#145
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#50
   def on_pair(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#137
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#50
   def on_pin(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#138
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#50
   def on_postexe(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#138
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#50
   def on_preexe(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#145
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#50
   def on_procarg0(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#145
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#50
   def on_rasgn(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#136
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#50
   def on_rational(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#132
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#50
   def on_redo(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#145
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#50
   def on_regexp(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#144
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#43
   def on_regopt(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#148
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#50
   def on_resbody(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#148
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#50
   def on_rescue(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#133
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#43
   def on_restarg(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#132
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#50
   def on_retry(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#145
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#50
   def on_return(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#142
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#50
   def on_sclass(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#132
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#50
   def on_self(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#165
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#43
   def on_send(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#136
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#50
   def on_shadowarg(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#134
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#43
   def on_splat(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#136
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#50
   def on_str(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#145
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#50
   def on_super(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#136
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#50
   def on_sym(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#132
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#43
   def on_true(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#145
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#50
   def on_undef(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#137
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#50
   def on_unless_guard(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#142
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#50
   def on_until(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#145
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#50
   def on_until_post(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#148
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#50
   def on_when(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#142
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#43
   def on_while(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#145
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#50
   def on_while_post(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#145
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#50
   def on_xstr(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#145
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#50
   def on_yield(node); end
 
-  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#132
+  # source://rubocop-ast//lib/rubocop/ast/traversal.rb#50
   def on_zsuper(node); end
 
   # source://rubocop-ast//lib/rubocop/ast/traversal.rb#17
@@ -7495,7 +7531,7 @@ class RuboCop::AST::YieldNode < ::RuboCop::AST::Node
   include ::RuboCop::AST::MethodIdentifierPredicates
   include ::RuboCop::AST::MethodDispatchNode
 
-  # source://ast/2.4.3/lib/ast/node.rb#56
+  # source://rubocop-ast//lib/rubocop/ast/node/yield_node.rb#20
   def arguments; end
 
   # Custom destructuring method. This can be used to normalize
@@ -7507,343 +7543,9 @@ class RuboCop::AST::YieldNode < ::RuboCop::AST::Node
   def node_parts; end
 end
 
-class RuboCop::CommentConfig
-  # source://rubocop/1.75.6/lib/rubocop/comment_config.rb#34
-  def initialize(processed_source); end
-
-  # source://rubocop/1.75.6/lib/rubocop/comment_config.rb#63
-  def comment_only_line?(line_number); end
-
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
-  def config(*_arg0, **_arg1, &_arg2); end
-
-  # source://rubocop/1.75.6/lib/rubocop/comment_config.rb#51
-  def cop_disabled_line_ranges; end
-
-  # source://rubocop/1.75.6/lib/rubocop/comment_config.rb#39
-  def cop_enabled_at_line?(cop, line_number); end
-
-  # source://rubocop/1.75.6/lib/rubocop/comment_config.rb#47
-  def cop_opted_in?(cop); end
-
-  # source://rubocop/1.75.6/lib/rubocop/comment_config.rb#55
-  def extra_enabled_comments; end
-
-  # source://rubocop/1.75.6/lib/rubocop/comment_config.rb#30
-  def processed_source; end
-
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
-  def registry(*_arg0, **_arg1, &_arg2); end
-
-  private
-
-  # source://rubocop/1.75.6/lib/rubocop/comment_config.rb#96
-  def analyze; end
-
-  # source://rubocop/1.75.6/lib/rubocop/comment_config.rb#124
-  def analyze_cop(analysis, directive); end
-
-  # source://rubocop/1.75.6/lib/rubocop/comment_config.rb#144
-  def analyze_disabled(analysis, directive); end
-
-  # source://rubocop/1.75.6/lib/rubocop/comment_config.rb#155
-  def analyze_rest(analysis, directive); end
-
-  # source://rubocop/1.75.6/lib/rubocop/comment_config.rb#135
-  def analyze_single_line(analysis, directive); end
-
-  # source://rubocop/1.75.6/lib/rubocop/comment_config.rb#164
-  def cop_line_ranges(analysis); end
-
-  # source://rubocop/1.75.6/lib/rubocop/comment_config.rb#170
-  def each_directive; end
-
-  # source://rubocop/1.75.6/lib/rubocop/comment_config.rb#69
-  def extra_enabled_comments_with_names(extras:, names:); end
-
-  # source://rubocop/1.75.6/lib/rubocop/comment_config.rb#190
-  def handle_enable_all(directive, names, extras); end
-
-  # source://rubocop/1.75.6/lib/rubocop/comment_config.rb#204
-  def handle_switch(directive, names, extras); end
-
-  # source://rubocop/1.75.6/lib/rubocop/comment_config.rb#115
-  def inject_disabled_cops_directives(analyses); end
-
-  # source://rubocop/1.75.6/lib/rubocop/comment_config.rb#183
-  def non_comment_token_line_numbers; end
-
-  # source://rubocop/1.75.6/lib/rubocop/comment_config.rb#83
-  def opt_in_cops; end
-
-  # source://rubocop/1.75.6/lib/rubocop/comment_config.rb#179
-  def qualified_cop_name(cop_name); end
-end
-
-class RuboCop::Config
-  # source://rubocop/1.75.6/lib/rubocop/config.rb#31
-  def initialize(hash = T.unsafe(nil), loaded_path = T.unsafe(nil)); end
-
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
-  def [](*_arg0, **_arg1, &_arg2); end
-
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
-  def []=(*_arg0, **_arg1, &_arg2); end
-
-  # source://rubocop/1.75.6/lib/rubocop/config.rb#212
-  def active_support_extensions_enabled?; end
-
-  # source://rubocop/1.75.6/lib/rubocop/config.rb#127
-  def add_excludes_from_higher_level(highest_config); end
-
-  # source://rubocop/1.75.6/lib/rubocop/config.rb#239
-  def allowed_camel_case_file?(file); end
-
-  # source://rubocop/1.75.6/lib/rubocop/config.rb#283
-  def base_dir_for_path_parameters; end
-
-  # source://rubocop/1.75.6/lib/rubocop/config.rb#313
-  def bundler_lock_file_path; end
-
-  # source://rubocop/1.75.6/lib/rubocop/config.rb#85
-  def check; end
-
-  # source://rubocop/1.75.6/lib/rubocop/config.rb#180
-  def clusivity_config_for_badge?(badge); end
-
-  # source://rubocop/1.75.6/lib/rubocop/config.rb#200
-  def cop_enabled?(name); end
-
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
-  def delete(*_arg0, **_arg1, &_arg2); end
-
-  # source://rubocop/1.75.6/lib/rubocop/config.rb#139
-  def deprecation_check; end
-
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
-  def dig(*_arg0, **_arg1, &_arg2); end
-
-  # source://rubocop/1.75.6/lib/rubocop/config.rb#204
-  def disabled_new_cops?; end
-
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
-  def each(*_arg0, **_arg1, &_arg2); end
-
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
-  def each_key(*_arg0, **_arg1, &_arg2); end
-
-  # source://rubocop/1.75.6/lib/rubocop/config.rb#208
-  def enabled_new_cops?; end
-
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
-  def fetch(*_arg0, **_arg1, &_arg2); end
-
-  # source://rubocop/1.75.6/lib/rubocop/config.rb#261
-  def file_to_exclude?(file); end
-
-  # source://rubocop/1.75.6/lib/rubocop/config.rb#220
-  def file_to_include?(file); end
-
-  # source://rubocop/1.75.6/lib/rubocop/config.rb#196
-  def for_all_cops; end
-
-  # source://rubocop/1.75.6/lib/rubocop/config.rb#166
-  def for_badge(badge); end
-
-  # source://rubocop/1.75.6/lib/rubocop/config.rb#153
-  def for_cop(cop); end
-
-  # source://rubocop/1.75.6/lib/rubocop/config.rb#191
-  def for_department(department_name); end
-
-  # source://rubocop/1.75.6/lib/rubocop/config.rb#160
-  def for_enabled_cop(cop); end
-
-  # source://rubocop/1.75.6/lib/rubocop/config.rb#338
-  def gem_versions_in_target; end
-
-  # source://rubocop/1.75.6/lib/rubocop/config.rb#342
-  def inspect; end
-
-  # source://rubocop/1.75.6/lib/rubocop/config.rb#110
-  def internal?; end
-
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
-  def key?(*_arg0, **_arg1, &_arg2); end
-
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
-  def keys(*_arg0, **_arg1, &_arg2); end
-
-  # source://rubocop/1.75.6/lib/rubocop/config.rb#81
-  def loaded_features; end
-
-  # source://rubocop/1.75.6/lib/rubocop/config.rb#21
-  def loaded_path; end
-
-  # source://rubocop/1.75.6/lib/rubocop/config.rb#77
-  def loaded_plugins; end
-
-  # source://rubocop/1.75.6/lib/rubocop/config.rb#115
-  def make_excludes_absolute; end
-
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
-  def map(*_arg0, **_arg1, &_arg2); end
-
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
-  def merge(*_arg0, **_arg1, &_arg2); end
-
-  # source://rubocop/1.75.6/lib/rubocop/config.rb#293
-  def parser_engine; end
-
-  # source://rubocop/1.75.6/lib/rubocop/config.rb#274
-  def path_relative_to_config(path); end
-
-  # source://rubocop/1.75.6/lib/rubocop/config.rb#270
-  def patterns_to_exclude; end
-
-  # source://rubocop/1.75.6/lib/rubocop/config.rb#266
-  def patterns_to_include; end
-
-  # source://rubocop/1.75.6/lib/rubocop/config.rb#324
-  def pending_cops; end
-
-  # source://rubocop/1.75.6/lib/rubocop/config.rb#253
-  def possibly_include_hidden?; end
-
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
-  def replace(*_arg0, **_arg1, &_arg2); end
-
-  # source://rubocop/1.75.6/lib/rubocop/config.rb#105
-  def signature; end
-
-  # source://rubocop/1.75.6/lib/rubocop/config.rb#308
-  def smart_loaded_path; end
-
-  # source://rubocop/1.75.6/lib/rubocop/config.rb#216
-  def string_literals_frozen_by_default?; end
-
-  # source://rubocop/1.75.6/lib/rubocop/config.rb#297
-  def target_rails_version; end
-
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
-  def target_ruby_version(*_arg0, **_arg1, &_arg2); end
-
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
-  def to_h(*_arg0, **_arg1, &_arg2); end
-
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
-  def to_hash(*_arg0, **_arg1, &_arg2); end
-
-  # source://rubocop/1.75.6/lib/rubocop/config.rb#101
-  def to_s; end
-
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
-  def transform_values(*_arg0, **_arg1, &_arg2); end
-
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
-  def validate(*_arg0, **_arg1, &_arg2); end
-
-  # source://rubocop/1.75.6/lib/rubocop/config.rb#92
-  def validate_after_resolution; end
-
-  private
-
-  # source://rubocop/1.75.6/lib/rubocop/config.rb#392
-  def department_of(qualified_cop_name); end
-
-  # source://rubocop/1.75.6/lib/rubocop/config.rb#380
-  def enable_cop?(qualified_cop_name, cop_options); end
-
-  # source://rubocop/1.75.6/lib/rubocop/config.rb#367
-  def gem_version_to_major_minor_float(gem_version); end
-
-  # source://rubocop/1.75.6/lib/rubocop/config.rb#373
-  def read_gem_versions_from_target_lockfile; end
-
-  # source://rubocop/1.75.6/lib/rubocop/config.rb#354
-  def read_rails_version_from_bundler_lock_file; end
-
-  # source://rubocop/1.75.6/lib/rubocop/config.rb#349
-  def target_rails_version_from_bundler_lock_file; end
-
-  class << self
-    # source://rubocop/1.75.6/lib/rubocop/config.rb#23
-    def create(hash, path, check: T.unsafe(nil)); end
-  end
-end
-
-class RuboCop::ConfigValidator
-  # source://rubocop/1.75.6/lib/rubocop/config_validator.rb#28
-  def initialize(config); end
-
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
-  def for_all_cops(*_arg0, **_arg1, &_arg2); end
-
-  # source://rubocop-ast//lib/rubocop/ast/utilities/simple_forwardable.rb#19
-  def smart_loaded_path(*_arg0, **_arg1, &_arg2); end
-
-  # source://rubocop/1.75.6/lib/rubocop/config_validator.rb#65
-  def target_ruby_version; end
-
-  # source://rubocop/1.75.6/lib/rubocop/config_validator.rb#34
-  def validate; end
-
-  # source://rubocop/1.75.6/lib/rubocop/config_validator.rb#61
-  def validate_after_resolution; end
-
-  private
-
-  # source://rubocop/1.75.6/lib/rubocop/config_validator.rb#100
-  def alert_about_unrecognized_cops(invalid_cop_names); end
-
-  # source://rubocop/1.75.6/lib/rubocop/config_validator.rb#263
-  def check_cop_config_value(hash, parent = T.unsafe(nil)); end
-
-  # source://rubocop/1.75.6/lib/rubocop/config_validator.rb#73
-  def check_obsoletions; end
-
-  # source://rubocop/1.75.6/lib/rubocop/config_validator.rb#80
-  def check_target_ruby; end
-
-  # source://rubocop/1.75.6/lib/rubocop/config_validator.rb#205
-  def each_invalid_parameter(cop_name); end
-
-  # source://rubocop/1.75.6/lib/rubocop/config_validator.rb#116
-  def list_unknown_cops(invalid_cop_names); end
-
-  # source://rubocop/1.75.6/lib/rubocop/config_validator.rb#284
-  def param_error_message(parent, key, value, supposed_values); end
-
-  # source://rubocop/1.75.6/lib/rubocop/config_validator.rb#252
-  def reject_conflicting_safe_settings; end
-
-  # source://rubocop/1.75.6/lib/rubocop/config_validator.rb#243
-  def reject_mutually_exclusive_defaults; end
-
-  # source://rubocop/1.75.6/lib/rubocop/config_validator.rb#139
-  def suggestion(name); end
-
-  # source://rubocop/1.75.6/lib/rubocop/config_validator.rb#71
-  def target_ruby; end
-
-  # source://rubocop/1.75.6/lib/rubocop/config_validator.rb#217
-  def validate_enforced_styles(valid_cop_names); end
-
-  # source://rubocop/1.75.6/lib/rubocop/config_validator.rb#166
-  def validate_new_cops_parameter; end
-
-  # source://rubocop/1.75.6/lib/rubocop/config_validator.rb#191
-  def validate_parameter_names(valid_cop_names); end
-
-  # source://rubocop/1.75.6/lib/rubocop/config_validator.rb#177
-  def validate_parameter_shape(valid_cop_names); end
-
-  # source://rubocop/1.75.6/lib/rubocop/config_validator.rb#237
-  def validate_support_and_has_list(name, formats, valid); end
-
-  # source://rubocop/1.75.6/lib/rubocop/config_validator.rb#155
-  def validate_syntax_cop; end
-end
+class RuboCop::CommentConfig; end
+class RuboCop::Config; end
+class RuboCop::ConfigValidator; end
 
 # Similar to `Forwardable#def_delegators`, but simpler & faster
 #

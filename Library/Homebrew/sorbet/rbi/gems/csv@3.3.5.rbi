@@ -915,13 +915,28 @@ class CSV
   #     end
   #   end
   #
-  # source://csv//lib/csv.rb#2507
+  # source://csv//lib/csv.rb#2511
   def add_row(row); end
+
+  # source://csv//lib/csv.rb#2389
+  def binmode(*args, **_arg1, &block); end
 
   # @return [Boolean]
   #
   # source://csv//lib/csv.rb#2396
   def binmode?; end
+
+  # source://csv//lib/csv.rb#2389
+  def close(*args, **_arg1, &block); end
+
+  # source://csv//lib/csv.rb#2389
+  def close_read(*args, **_arg1, &block); end
+
+  # source://csv//lib/csv.rb#2389
+  def close_write(*args, **_arg1, &block); end
+
+  # source://csv//lib/csv.rb#2389
+  def closed?(*args, **_arg1, &block); end
 
   # :call-seq:
   #   csv.col_sep -> string
@@ -1075,13 +1090,19 @@ class CSV
 
   # @return [Boolean]
   #
-  # source://csv//lib/csv.rb#2432
+  # source://csv//lib/csv.rb#2444
   def eof; end
 
   # @return [Boolean]
   #
   # source://csv//lib/csv.rb#2432
   def eof?; end
+
+  # source://csv//lib/csv.rb#2389
+  def external_encoding(*args, **_arg1, &block); end
+
+  # source://csv//lib/csv.rb#2389
+  def fcntl(*args, **_arg1, &block); end
 
   # :call-seq:
   #   csv.field_size_limit -> integer or nil
@@ -1095,10 +1116,16 @@ class CSV
   # source://csv//lib/csv.rb#2176
   def field_size_limit; end
 
+  # source://csv//lib/csv.rb#2389
+  def fileno(*args, **_arg1, &block); end
+
   # @raise [NotImplementedError]
   #
   # source://csv//lib/csv.rb#2404
   def flock(*args); end
+
+  # source://csv//lib/csv.rb#2389
+  def flush(*args, **_arg1, &block); end
 
   # :call-seq:
   #   csv.force_quotes? -> true or false
@@ -1112,6 +1139,9 @@ class CSV
   #
   # source://csv//lib/csv.rb#2307
   def force_quotes?; end
+
+  # source://csv//lib/csv.rb#2389
+  def fsync(*args, **_arg1, &block); end
 
   # :call-seq:
   #   csv.shift -> array, csv_row, or nil
@@ -1147,7 +1177,7 @@ class CSV
   #   # Raises IOError (not opened for reading)
   #   csv.shift
   #
-  # source://csv//lib/csv.rb#2803
+  # source://csv//lib/csv.rb#2814
   def gets; end
 
   # The block need not return a \String object:
@@ -1240,10 +1270,16 @@ class CSV
   # source://csv//lib/csv.rb#2825
   def inspect; end
 
+  # source://csv//lib/csv.rb#2389
+  def internal_encoding(*args, **_arg1, &block); end
+
   # @raise [NotImplementedError]
   #
   # source://csv//lib/csv.rb#2409
   def ioctl(*args); end
+
+  # source://csv//lib/csv.rb#2389
+  def isatty(*args, **_arg1, &block); end
 
   # :call-seq:
   #   csv.liberal_parsing? -> true or false
@@ -1325,6 +1361,15 @@ class CSV
   # source://csv//lib/csv.rb#2414
   def path; end
 
+  # source://csv//lib/csv.rb#2389
+  def pid(*args, **_arg1, &block); end
+
+  # source://csv//lib/csv.rb#2389
+  def pos(*args, **_arg1, &block); end
+
+  # source://csv//lib/csv.rb#2389
+  def pos=(*args, **_arg1, &block); end
+
   # :call-seq:
   #   csv << row -> self
   #
@@ -1376,7 +1421,7 @@ class CSV
   #     end
   #   end
   #
-  # source://csv//lib/csv.rb#2507
+  # source://csv//lib/csv.rb#2512
   def puts(row); end
 
   # :call-seq:
@@ -1458,7 +1503,7 @@ class CSV
   #   # Raises IOError (not opened for reading)
   #   csv.shift
   #
-  # source://csv//lib/csv.rb#2803
+  # source://csv//lib/csv.rb#2815
   def readline; end
 
   # :call-seq:
@@ -1493,8 +1538,11 @@ class CSV
   #   # Raises IOError (not opened for reading)
   #   csv.read
   #
-  # source://csv//lib/csv.rb#2730
+  # source://csv//lib/csv.rb#2738
   def readlines; end
+
+  # source://csv//lib/csv.rb#2389
+  def reopen(*args, **_arg1, &block); end
 
   # :call-seq:
   #   csv.return_headers? -> true or false
@@ -1522,6 +1570,9 @@ class CSV
   #
   # source://csv//lib/csv.rb#2154
   def row_sep; end
+
+  # source://csv//lib/csv.rb#2389
+  def seek(*args, **_arg1, &block); end
 
   # :call-seq:
   #   csv.shift -> array, csv_row, or nil
@@ -1587,6 +1638,18 @@ class CSV
   # source://csv//lib/csv.rb#2418
   def stat(*args); end
 
+  # source://csv//lib/csv.rb#2389
+  def string(*args, **_arg1, &block); end
+
+  # source://csv//lib/csv.rb#2389
+  def sync(*args, **_arg1, &block); end
+
+  # source://csv//lib/csv.rb#2389
+  def sync=(*args, **_arg1, &block); end
+
+  # source://csv//lib/csv.rb#2389
+  def tell(*args, **_arg1, &block); end
+
   # @raise [NotImplementedError]
   #
   # source://csv//lib/csv.rb#2423
@@ -1594,6 +1657,12 @@ class CSV
 
   # source://csv//lib/csv.rb#2428
   def to_io; end
+
+  # source://csv//lib/csv.rb#2389
+  def truncate(*args, **_arg1, &block); end
+
+  # source://csv//lib/csv.rb#2389
+  def tty?(*args, **_arg1, &block); end
 
   # :call-seq:
   #   csv.unconverted_fields? -> object
@@ -2500,16 +2569,6 @@ end
 # source://csv//lib/csv.rb#895
 CSV::ConverterEncoding = T.let(T.unsafe(nil), Encoding)
 
-# A \Hash containing the names and \Procs for the built-in field converters.
-# See {Built-In Field Converters}[#class-CSV-label-Built-In+Field+Converters].
-#
-# This \Hash is intentionally left unfrozen, and may be extended with
-# custom field converters.
-# See {Custom Field Converters}[#class-CSV-label-Custom+Field+Converters].
-#
-# source://csv//lib/csv.rb#903
-CSV::Converters = T.let(T.unsafe(nil), Hash)
-
 # A Regexp used to find and convert some common Date formats.
 #
 # source://csv//lib/csv.rb#884
@@ -2519,6 +2578,88 @@ CSV::DateMatcher = T.let(T.unsafe(nil), Regexp)
 #
 # source://csv//lib/csv.rb#887
 CSV::DateTimeMatcher = T.let(T.unsafe(nil), Regexp)
+
+# A FieldInfo Struct contains details about a field's position in the data
+# source it was read from.  CSV will pass this Struct to some blocks that make
+# decisions based on field structure.  See CSV.convert_fields() for an
+# example.
+#
+# <b><tt>index</tt></b>::  The zero-based index of the field in its row.
+# <b><tt>line</tt></b>::   The line of the data source this row is from.
+# <b><tt>header</tt></b>:: The header for the column, when available.
+# <b><tt>quoted?</tt></b>:: True or false, whether the original value is quoted or not.
+#
+# source://csv//lib/csv.rb#881
+class CSV::FieldInfo < ::Struct
+  # Returns the value of attribute header
+  #
+  # @return [Object] the current value of header
+  #
+  # source://csv//lib/csv.rb#881
+  def header; end
+
+  # Sets the attribute header
+  #
+  # @param value [Object] the value to set the attribute header to.
+  # @return [Object] the newly set value
+  #
+  # source://csv//lib/csv.rb#881
+  def header=(_); end
+
+  # Returns the value of attribute index
+  #
+  # @return [Object] the current value of index
+  #
+  # source://csv//lib/csv.rb#881
+  def index; end
+
+  # Sets the attribute index
+  #
+  # @param value [Object] the value to set the attribute index to.
+  # @return [Object] the newly set value
+  #
+  # source://csv//lib/csv.rb#881
+  def index=(_); end
+
+  # Returns the value of attribute line
+  #
+  # @return [Object] the current value of line
+  #
+  # source://csv//lib/csv.rb#881
+  def line; end
+
+  # Sets the attribute line
+  #
+  # @param value [Object] the value to set the attribute line to.
+  # @return [Object] the newly set value
+  #
+  # source://csv//lib/csv.rb#881
+  def line=(_); end
+
+  # Returns the value of attribute quoted?
+  #
+  # @return [Object] the current value of quoted?
+  #
+  # source://csv//lib/csv.rb#881
+  def quoted?; end
+
+  class << self
+    # source://csv//lib/csv.rb#881
+    def [](*_arg0); end
+
+    # source://csv//lib/csv.rb#881
+    def inspect; end
+
+    # source://csv//lib/csv.rb#881
+    def keyword_init?; end
+
+    # source://csv//lib/csv.rb#881
+    def members; end
+
+    # source://csv//lib/csv.rb#881
+    def new(*_arg0); end
+  end
+end
 
 # Note: Don't use this class directly. This is an internal class.
 #
@@ -2617,7 +2758,7 @@ class CSV::MalformedCSVError < ::RuntimeError
 
   # Returns the value of attribute line_number.
   #
-  # source://csv//lib/csv.rb#853
+  # source://csv//lib/csv.rb#854
   def lineno; end
 end
 
@@ -2912,7 +3053,7 @@ CSV::Parser::STRING_SCANNER_SCAN_ACCEPT_STRING = T.let(T.unsafe(nil), TrueClass)
 # Uses StringScanner (the official strscan gem). Strscan provides lexical
 # scanning operations on a String. We inherit its object and take advantage
 # on the methods. For more information, please visit:
-# https://ruby-doc.org/stdlib-2.6.1/libdoc/strscan/rdoc/StringScanner.html
+# https://docs.ruby-lang.org/en/master/StringScanner.html
 #
 # source://csv//lib/csv/parser.rb#52
 class CSV::Parser::Scanner < ::StringScanner
@@ -2936,6 +3077,7 @@ class CSV::Parser::Scanner < ::StringScanner
   # source://csv//lib/csv/parser.rb#69
   def keep_start; end
 
+  # source://csv//lib/csv/parser.rb#53
   def scan_all(_arg0); end
 end
 
@@ -3162,7 +3304,7 @@ class CSV::Row
   #
   # Returns +nil+ if the header does not exist.
   #
-  # source://csv//lib/csv/row.rb#203
+  # source://csv//lib/csv/row.rb#215
   def [](header_or_index, minimum_index = T.unsafe(nil)); end
 
   # :call-seq:
@@ -3350,8 +3492,11 @@ class CSV::Row
   # If no block is given, returns a new Enumerator:
   #   row.each # => #<Enumerator: #<CSV::Row "Name":"Foo" "Name":"Bar" "Name":"Baz">:each>
   #
-  # source://csv//lib/csv/row.rb#610
+  # source://csv//lib/csv/row.rb#618
   def each_pair(&block); end
+
+  # source://csv//lib/csv/row.rb#124
+  def empty?(*args, **_arg1, &block); end
 
   # :call-seq:
   #   fetch(header) -> value
@@ -3536,7 +3681,7 @@ class CSV::Row
   #
   # @return [Boolean]
   #
-  # source://csv//lib/csv/row.rb#279
+  # source://csv//lib/csv/row.rb#285
   def header?(header); end
 
   # :call-seq:
@@ -3569,7 +3714,7 @@ class CSV::Row
   #
   # @return [Boolean]
   #
-  # source://csv//lib/csv/row.rb#279
+  # source://csv//lib/csv/row.rb#282
   def include?(header); end
 
   # :call-seq:
@@ -3619,8 +3764,11 @@ class CSV::Row
   #
   # @return [Boolean]
   #
-  # source://csv//lib/csv/row.rb#279
+  # source://csv//lib/csv/row.rb#283
   def key?(header); end
+
+  # source://csv//lib/csv/row.rb#124
+  def length(*args, **_arg1, &block); end
 
   # :call-seq:
   #   row.has_key?(header) -> true or false
@@ -3630,7 +3778,7 @@ class CSV::Row
   #
   # @return [Boolean]
   #
-  # source://csv//lib/csv/row.rb#279
+  # source://csv//lib/csv/row.rb#284
   def member?(header); end
 
   # :call-seq:
@@ -3645,6 +3793,12 @@ class CSV::Row
   #
   # source://csv//lib/csv/row.rb#410
   def push(*args); end
+
+  # source://csv//lib/csv/row.rb#124
+  def size(*args, **_arg1, &block); end
+
+  # source://csv//lib/csv/row.rb#675
+  def to_ary(*_arg0); end
 
   # :call-seq:
   #   row.to_csv -> csv_string
@@ -3693,7 +3847,7 @@ class CSV::Row
   #   row = table[0]
   #   row.to_h # => {"Name"=>"Foo"}
   #
-  # source://csv//lib/csv/row.rb#653
+  # source://csv//lib/csv/row.rb#660
   def to_hash; end
 
   # :call-seq:
@@ -3705,7 +3859,7 @@ class CSV::Row
   #   row = table[0]
   #   row.to_csv # => "foo,0\n"
   #
-  # source://csv//lib/csv/row.rb#694
+  # source://csv//lib/csv/row.rb#697
   def to_s(**options); end
 
   # :call-seq:
@@ -3755,7 +3909,7 @@ class CSV::Row
   # Returns all fields if no argument given:
   #   row.fields # => ["Foo", "Bar", "Baz"]
   #
-  # source://csv//lib/csv/row.rb#530
+  # source://csv//lib/csv/row.rb#551
   def values_at(*headers_and_or_indices); end
 
   protected
@@ -4533,6 +4687,9 @@ class CSV::Table
   # source://csv//lib/csv/table.rb#930
   def each(&block); end
 
+  # source://csv//lib/csv/table.rb#223
+  def empty?(*args, **_arg1, &block); end
+
   # :call-seq:
   #   table.headers -> array_of_headers
   #
@@ -4574,6 +4731,9 @@ class CSV::Table
   # source://csv//lib/csv/table.rb#1048
   def inspect; end
 
+  # source://csv//lib/csv/table.rb#223
+  def length(*args, **_arg1, &block); end
+
   # The current access mode for indexing and iteration.
   #
   # source://csv//lib/csv/table.rb#214
@@ -4597,6 +4757,9 @@ class CSV::Table
   #
   # source://csv//lib/csv/table.rb#788
   def push(*rows); end
+
+  # source://csv//lib/csv/table.rb#223
+  def size(*args, **_arg1, &block); end
 
   # :call-seq:
   #   table.to_a -> array_of_arrays
@@ -4649,7 +4812,7 @@ class CSV::Table
   # Limit rows if option +limit+ is given like +2+:
   #   table.to_csv(limit: 2) # => "Name,Value\nfoo,0\nbar,1\n"
   #
-  # source://csv//lib/csv/table.rb#1004
+  # source://csv//lib/csv/table.rb#1015
   def to_s(write_headers: T.unsafe(nil), limit: T.unsafe(nil), **options); end
 
   # :call-seq:

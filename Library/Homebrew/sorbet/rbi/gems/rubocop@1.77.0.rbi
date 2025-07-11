@@ -381,19 +381,32 @@ class RuboCop::CLI::Command::ShowCops::ExactMatcher < ::Struct
   # Returns the value of attribute pattern
   #
   # @return [Object] the current value of pattern
+  #
+  # source://rubocop//lib/rubocop/cli/command/show_cops.rb#12
   def pattern; end
 
   # Sets the attribute pattern
   #
   # @param value [Object] the value to set the attribute pattern to.
   # @return [Object] the newly set value
+  #
+  # source://rubocop//lib/rubocop/cli/command/show_cops.rb#12
   def pattern=(_); end
 
   class << self
+    # source://rubocop//lib/rubocop/cli/command/show_cops.rb#12
     def [](*_arg0); end
+
+    # source://rubocop//lib/rubocop/cli/command/show_cops.rb#12
     def inspect; end
+
+    # source://rubocop//lib/rubocop/cli/command/show_cops.rb#12
     def keyword_init?; end
+
+    # source://rubocop//lib/rubocop/cli/command/show_cops.rb#12
     def members; end
+
+    # source://rubocop//lib/rubocop/cli/command/show_cops.rb#12
     def new(*_arg0); end
   end
 end
@@ -408,19 +421,32 @@ class RuboCop::CLI::Command::ShowCops::WildcardMatcher < ::Struct
   # Returns the value of attribute pattern
   #
   # @return [Object] the current value of pattern
+  #
+  # source://rubocop//lib/rubocop/cli/command/show_cops.rb#18
   def pattern; end
 
   # Sets the attribute pattern
   #
   # @param value [Object] the value to set the attribute pattern to.
   # @return [Object] the newly set value
+  #
+  # source://rubocop//lib/rubocop/cli/command/show_cops.rb#18
   def pattern=(_); end
 
   class << self
+    # source://rubocop//lib/rubocop/cli/command/show_cops.rb#18
     def [](*_arg0); end
+
+    # source://rubocop//lib/rubocop/cli/command/show_cops.rb#18
     def inspect; end
+
+    # source://rubocop//lib/rubocop/cli/command/show_cops.rb#18
     def keyword_init?; end
+
+    # source://rubocop//lib/rubocop/cli/command/show_cops.rb#18
     def members; end
+
+    # source://rubocop//lib/rubocop/cli/command/show_cops.rb#18
     def new(*_arg0); end
   end
 end
@@ -603,10 +629,10 @@ class RuboCop::Config
   # source://rubocop//lib/rubocop/config.rb#31
   def initialize(hash = T.unsafe(nil), loaded_path = T.unsafe(nil)); end
 
-  # source://rubocop-ast/1.44.1/lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop//lib/rubocop/config.rb#97
   def [](*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast/1.44.1/lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop//lib/rubocop/config.rb#97
   def []=(*_arg0, **_arg1, &_arg2); end
 
   # @return [Boolean]
@@ -650,13 +676,13 @@ class RuboCop::Config
   # source://rubocop//lib/rubocop/config.rb#200
   def cop_enabled?(name); end
 
-  # source://rubocop-ast/1.44.1/lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop//lib/rubocop/config.rb#97
   def delete(*_arg0, **_arg1, &_arg2); end
 
   # source://rubocop//lib/rubocop/config.rb#139
   def deprecation_check; end
 
-  # source://rubocop-ast/1.44.1/lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop//lib/rubocop/config.rb#97
   def dig(*_arg0, **_arg1, &_arg2); end
 
   # @return [Boolean]
@@ -664,10 +690,10 @@ class RuboCop::Config
   # source://rubocop//lib/rubocop/config.rb#204
   def disabled_new_cops?; end
 
-  # source://rubocop-ast/1.44.1/lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop//lib/rubocop/config.rb#97
   def each(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast/1.44.1/lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop//lib/rubocop/config.rb#97
   def each_key(*_arg0, **_arg1, &_arg2); end
 
   # @return [Boolean]
@@ -675,7 +701,7 @@ class RuboCop::Config
   # source://rubocop//lib/rubocop/config.rb#208
   def enabled_new_cops?; end
 
-  # source://rubocop-ast/1.44.1/lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop//lib/rubocop/config.rb#97
   def fetch(*_arg0, **_arg1, &_arg2); end
 
   # @return [Boolean]
@@ -737,10 +763,10 @@ class RuboCop::Config
   # source://rubocop//lib/rubocop/config.rb#110
   def internal?; end
 
-  # source://rubocop-ast/1.44.1/lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop//lib/rubocop/config.rb#97
   def key?(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast/1.44.1/lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop//lib/rubocop/config.rb#97
   def keys(*_arg0, **_arg1, &_arg2); end
 
   # source://rubocop//lib/rubocop/config.rb#81
@@ -757,10 +783,10 @@ class RuboCop::Config
   # source://rubocop//lib/rubocop/config.rb#115
   def make_excludes_absolute; end
 
-  # source://rubocop-ast/1.44.1/lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop//lib/rubocop/config.rb#97
   def map(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast/1.44.1/lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop//lib/rubocop/config.rb#97
   def merge(*_arg0, **_arg1, &_arg2); end
 
   # source://rubocop//lib/rubocop/config.rb#293
@@ -786,7 +812,7 @@ class RuboCop::Config
   # source://rubocop//lib/rubocop/config.rb#253
   def possibly_include_hidden?; end
 
-  # source://rubocop-ast/1.44.1/lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop//lib/rubocop/config.rb#97
   def replace(*_arg0, **_arg1, &_arg2); end
 
   # source://rubocop//lib/rubocop/config.rb#105
@@ -803,22 +829,22 @@ class RuboCop::Config
   # source://rubocop//lib/rubocop/config.rb#297
   def target_rails_version; end
 
-  # source://rubocop-ast/1.44.1/lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop//lib/rubocop/config.rb#99
   def target_ruby_version(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast/1.44.1/lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop//lib/rubocop/config.rb#97
   def to_h(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast/1.44.1/lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop//lib/rubocop/config.rb#97
   def to_hash(*_arg0, **_arg1, &_arg2); end
 
   # source://rubocop//lib/rubocop/config.rb#101
   def to_s; end
 
-  # source://rubocop-ast/1.44.1/lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop//lib/rubocop/config.rb#97
   def transform_values(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast/1.44.1/lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop//lib/rubocop/config.rb#99
   def validate(*_arg0, **_arg1, &_arg2); end
 
   # source://rubocop//lib/rubocop/config.rb#92
@@ -863,30 +889,47 @@ class RuboCop::Config::CopConfig < ::Struct
   # Returns the value of attribute metadata
   #
   # @return [Object] the current value of metadata
+  #
+  # source://rubocop//lib/rubocop/config.rb#17
   def metadata; end
 
   # Sets the attribute metadata
   #
   # @param value [Object] the value to set the attribute metadata to.
   # @return [Object] the newly set value
+  #
+  # source://rubocop//lib/rubocop/config.rb#17
   def metadata=(_); end
 
   # Returns the value of attribute name
   #
   # @return [Object] the current value of name
+  #
+  # source://rubocop//lib/rubocop/config.rb#17
   def name; end
 
   # Sets the attribute name
   #
   # @param value [Object] the value to set the attribute name to.
   # @return [Object] the newly set value
+  #
+  # source://rubocop//lib/rubocop/config.rb#17
   def name=(_); end
 
   class << self
+    # source://rubocop//lib/rubocop/config.rb#17
     def [](*_arg0); end
+
+    # source://rubocop//lib/rubocop/config.rb#17
     def inspect; end
+
+    # source://rubocop//lib/rubocop/config.rb#17
     def keyword_init?; end
+
+    # source://rubocop//lib/rubocop/config.rb#17
     def members; end
+
+    # source://rubocop//lib/rubocop/config.rb#17
     def new(*_arg0); end
   end
 end
@@ -1014,7 +1057,7 @@ class RuboCop::ConfigLoader
 
     # Returns the value of attribute debug.
     #
-    # source://rubocop//lib/rubocop/config_loader.rb#33
+    # source://rubocop//lib/rubocop/config_loader.rb#38
     def debug?; end
 
     # source://rubocop//lib/rubocop/config_loader.rb#162
@@ -1065,7 +1108,7 @@ class RuboCop::ConfigLoader
 
     # Returns the value of attribute ignore_parent_exclusion.
     #
-    # source://rubocop//lib/rubocop/config_loader.rb#33
+    # source://rubocop//lib/rubocop/config_loader.rb#39
     def ignore_parent_exclusion?; end
 
     # Returns the value of attribute ignore_unrecognized_cops.
@@ -1851,7 +1894,7 @@ class RuboCop::ConfigStore
 
   # Returns the value of attribute validated.
   #
-  # source://rubocop//lib/rubocop/config_store.rb#7
+  # source://rubocop//lib/rubocop/config_store.rb#8
   def validated?; end
 end
 
@@ -1863,10 +1906,10 @@ class RuboCop::ConfigValidator
   # source://rubocop//lib/rubocop/config_validator.rb#28
   def initialize(config); end
 
-  # source://rubocop-ast/1.44.1/lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop//lib/rubocop/config_validator.rb#26
   def for_all_cops(*_arg0, **_arg1, &_arg2); end
 
-  # source://rubocop-ast/1.44.1/lib/rubocop/ast/utilities/simple_forwardable.rb#19
+  # source://rubocop//lib/rubocop/config_validator.rb#26
   def smart_loaded_path(*_arg0, **_arg1, &_arg2); end
 
   # source://rubocop//lib/rubocop/config_validator.rb#65
@@ -2082,19 +2125,32 @@ module RuboCop::Cop::AutocorrectLogic
   # source://rubocop//lib/rubocop/cop/autocorrect_logic.rb#51
   def disable_offense(offense_range); end
 
-  # source://rubocop//lib/rubocop/cop/autocorrect_logic.rb#135
-  def disable_offense_at_end_of_line(range, eol_comment); end
-
   # source://rubocop//lib/rubocop/cop/autocorrect_logic.rb#139
+  def disable_offense_at_end_of_line(range); end
+
+  # source://rubocop//lib/rubocop/cop/autocorrect_logic.rb#147
   def disable_offense_before_and_after(range_by_lines); end
 
   # source://rubocop//lib/rubocop/cop/autocorrect_logic.rb#77
   def disable_offense_with_eol_or_surround_comment(range); end
 
-  # source://rubocop//lib/rubocop/cop/autocorrect_logic.rb#96
+  # source://rubocop//lib/rubocop/cop/autocorrect_logic.rb#143
+  def eol_comment; end
+
+  # @return [Boolean]
+  #
+  # source://rubocop//lib/rubocop/cop/autocorrect_logic.rb#85
+  def eol_comment_would_be_inside_literal?(offense_range, literal_range); end
+
+  # source://rubocop//lib/rubocop/cop/autocorrect_logic.rb#100
   def heredoc_range(node); end
 
-  # source://rubocop//lib/rubocop/cop/autocorrect_logic.rb#131
+  # @return [Boolean]
+  #
+  # source://rubocop//lib/rubocop/cop/autocorrect_logic.rb#92
+  def line_with_eol_comment_too_long?(range); end
+
+  # source://rubocop//lib/rubocop/cop/autocorrect_logic.rb#135
   def max_line_length; end
 
   # source://rubocop//lib/rubocop/cop/autocorrect_logic.rb#63
@@ -2102,36 +2158,31 @@ module RuboCop::Cop::AutocorrectLogic
 
   # @return [Boolean]
   #
-  # source://rubocop//lib/rubocop/cop/autocorrect_logic.rb#108
+  # source://rubocop//lib/rubocop/cop/autocorrect_logic.rb#112
   def multiline_string?(node); end
 
   # Expand the given range to include all of any lines it covers. Does not
   # include newline at end of the last line.
   #
-  # source://rubocop//lib/rubocop/cop/autocorrect_logic.rb#121
+  # source://rubocop//lib/rubocop/cop/autocorrect_logic.rb#125
   def range_by_lines(range); end
 
-  # source://rubocop//lib/rubocop/cop/autocorrect_logic.rb#112
+  # source://rubocop//lib/rubocop/cop/autocorrect_logic.rb#116
   def range_of_first_line(range); end
 
   # @return [Boolean]
   #
-  # source://rubocop//lib/rubocop/cop/autocorrect_logic.rb#88
-  def range_overlaps_offense?(offense_range, range); end
-
-  # @return [Boolean]
-  #
-  # source://rubocop//lib/rubocop/cop/autocorrect_logic.rb#104
+  # source://rubocop//lib/rubocop/cop/autocorrect_logic.rb#108
   def string_continuation?(node); end
 
   # @return [Boolean]
   #
-  # source://rubocop//lib/rubocop/cop/autocorrect_logic.rb#92
+  # source://rubocop//lib/rubocop/cop/autocorrect_logic.rb#96
   def surrounding_heredoc?(node); end
 
   # @return [Boolean]
   #
-  # source://rubocop//lib/rubocop/cop/autocorrect_logic.rb#100
+  # source://rubocop//lib/rubocop/cop/autocorrect_logic.rb#104
   def surrounding_percent_array?(node); end
 end
 
@@ -2246,7 +2297,7 @@ class RuboCop::Cop::Base
   # source://rubocop//lib/rubocop/cop/base.rb#183
   def message(_range = T.unsafe(nil)); end
 
-  # source://rubocop//lib/rubocop/cop/base.rb#238
+  # source://rubocop//lib/rubocop/cop/base.rb#242
   def name; end
 
   # @deprecated Make potential errors with previous API more obvious
@@ -2520,52 +2571,77 @@ class RuboCop::Cop::Base::InvestigationReport < ::Struct
   # Returns the value of attribute cop
   #
   # @return [Object] the current value of cop
+  #
+  # source://rubocop//lib/rubocop/cop/base.rb#48
   def cop; end
 
   # Sets the attribute cop
   #
   # @param value [Object] the value to set the attribute cop to.
   # @return [Object] the newly set value
+  #
+  # source://rubocop//lib/rubocop/cop/base.rb#48
   def cop=(_); end
 
   # Returns the value of attribute corrector
   #
   # @return [Object] the current value of corrector
+  #
+  # source://rubocop//lib/rubocop/cop/base.rb#48
   def corrector; end
 
   # Sets the attribute corrector
   #
   # @param value [Object] the value to set the attribute corrector to.
   # @return [Object] the newly set value
+  #
+  # source://rubocop//lib/rubocop/cop/base.rb#48
   def corrector=(_); end
 
   # Returns the value of attribute offenses
   #
   # @return [Object] the current value of offenses
+  #
+  # source://rubocop//lib/rubocop/cop/base.rb#48
   def offenses; end
 
   # Sets the attribute offenses
   #
   # @param value [Object] the value to set the attribute offenses to.
   # @return [Object] the newly set value
+  #
+  # source://rubocop//lib/rubocop/cop/base.rb#48
   def offenses=(_); end
 
   # Returns the value of attribute processed_source
   #
   # @return [Object] the current value of processed_source
+  #
+  # source://rubocop//lib/rubocop/cop/base.rb#48
   def processed_source; end
 
   # Sets the attribute processed_source
   #
   # @param value [Object] the value to set the attribute processed_source to.
   # @return [Object] the newly set value
+  #
+  # source://rubocop//lib/rubocop/cop/base.rb#48
   def processed_source=(_); end
 
   class << self
+    # source://rubocop//lib/rubocop/cop/base.rb#48
     def [](*_arg0); end
+
+    # source://rubocop//lib/rubocop/cop/base.rb#48
     def inspect; end
+
+    # source://rubocop//lib/rubocop/cop/base.rb#48
     def keyword_init?; end
+
+    # source://rubocop//lib/rubocop/cop/base.rb#48
     def members; end
+
+    # source://rubocop//lib/rubocop/cop/base.rb#48
     def new(*_arg0); end
   end
 end
@@ -2735,7 +2811,7 @@ class RuboCop::Cop::Corrector < ::Parser::Source::TreeRewriter
 
   # Legacy
   #
-  # source://parser/3.3.8.0/lib/parser/source/tree_rewriter.rb#252
+  # source://rubocop//lib/rubocop/cop/corrector.rb#45
   def rewrite; end
 
   # Swaps sources at the given ranges.
@@ -2784,6 +2860,8 @@ RuboCop::Cop::FrozenStringLiteral::FROZEN_STRING_LITERAL_TYPES_RUBY27 = T.let(T.
 RuboCop::Cop::Gemspec::AddRuntimeDependency::MSG = T.let(T.unsafe(nil), String)
 
 RuboCop::Cop::Gemspec::AddRuntimeDependency::RESTRICT_ON_SEND = T.let(T.unsafe(nil), Array)
+
+RuboCop::Cop::Gemspec::AttributeAssignment::MSG = T.let(T.unsafe(nil), String)
 
 RuboCop::Cop::Gemspec::DependencyVersion::ADD_DEPENDENCY_METHODS = T.let(T.unsafe(nil), Array)
 
@@ -3343,6 +3421,8 @@ RuboCop::Cop::Lint::FloatComparison::FLOAT_INSTANCE_METHODS = T.let(T.unsafe(nil
 
 RuboCop::Cop::Lint::FloatComparison::FLOAT_RETURNING_METHODS = T.let(T.unsafe(nil), Array)
 
+RuboCop::Cop::Lint::FloatComparison::MSG_CASE = T.let(T.unsafe(nil), String)
+
 RuboCop::Cop::Lint::FloatComparison::MSG_EQUALITY = T.let(T.unsafe(nil), String)
 
 RuboCop::Cop::Lint::FloatComparison::MSG_INEQUALITY = T.let(T.unsafe(nil), String)
@@ -3739,6 +3819,10 @@ RuboCop::Cop::Lint::UselessAssignment::MSG = T.let(T.unsafe(nil), String)
 
 RuboCop::Cop::Lint::UselessConstantScoping::MSG = T.let(T.unsafe(nil), String)
 
+RuboCop::Cop::Lint::UselessDefaultValueArgument::MSG = T.let(T.unsafe(nil), String)
+
+RuboCop::Cop::Lint::UselessDefaultValueArgument::RESTRICT_ON_SEND = T.let(T.unsafe(nil), Array)
+
 RuboCop::Cop::Lint::UselessDefined::MSG = T.let(T.unsafe(nil), String)
 
 RuboCop::Cop::Lint::UselessDefined::TYPES = T.let(T.unsafe(nil), Hash)
@@ -3750,6 +3834,10 @@ RuboCop::Cop::Lint::UselessMethodDefinition::MSG = T.let(T.unsafe(nil), String)
 RuboCop::Cop::Lint::UselessNumericOperation::MSG = T.let(T.unsafe(nil), String)
 
 RuboCop::Cop::Lint::UselessNumericOperation::RESTRICT_ON_SEND = T.let(T.unsafe(nil), Array)
+
+RuboCop::Cop::Lint::UselessOr::MSG = T.let(T.unsafe(nil), String)
+
+RuboCop::Cop::Lint::UselessOr::TRUTHY_RETURN_VALUE_METHODS = T.let(T.unsafe(nil), Set)
 
 RuboCop::Cop::Lint::UselessRescue::MSG = T.let(T.unsafe(nil), String)
 
@@ -3910,6 +3998,10 @@ RuboCop::Cop::Naming::MethodName::MSG = T.let(T.unsafe(nil), String)
 
 RuboCop::Cop::Naming::MethodName::MSG_FORBIDDEN = T.let(T.unsafe(nil), String)
 
+RuboCop::Cop::Naming::PredicateMethod::MSG_NON_PREDICATE = T.let(T.unsafe(nil), String)
+
+RuboCop::Cop::Naming::PredicateMethod::MSG_PREDICATE = T.let(T.unsafe(nil), String)
+
 RuboCop::Cop::Naming::RescuedExceptionsVariableName::MSG = T.let(T.unsafe(nil), String)
 
 RuboCop::Cop::Naming::VariableName::MSG = T.let(T.unsafe(nil), String)
@@ -4003,7 +4095,7 @@ class RuboCop::Cop::Offense
   # @api public
   # @return [Boolean] returns `true` if two offenses contain same attributes
   #
-  # source://rubocop//lib/rubocop/cop/offense.rb#210
+  # source://rubocop//lib/rubocop/cop/offense.rb#216
   def eql?(other); end
 
   # @api private
@@ -4091,23 +4183,31 @@ class RuboCop::Cop::Offense::PseudoSourceRange < ::Struct
   # Returns the value of attribute begin_pos
   #
   # @return [Object] the current value of begin_pos
+  #
+  # source://rubocop//lib/rubocop/cop/offense.rb#63
   def begin_pos; end
 
   # Sets the attribute begin_pos
   #
   # @param value [Object] the value to set the attribute begin_pos to.
   # @return [Object] the newly set value
+  #
+  # source://rubocop//lib/rubocop/cop/offense.rb#63
   def begin_pos=(_); end
 
   # Returns the value of attribute column
   #
   # @return [Object] the current value of column
+  #
+  # source://rubocop//lib/rubocop/cop/offense.rb#63
   def column; end
 
   # Sets the attribute column
   #
   # @param value [Object] the value to set the attribute column to.
   # @return [Object] the newly set value
+  #
+  # source://rubocop//lib/rubocop/cop/offense.rb#63
   def column=(_); end
 
   # source://rubocop//lib/rubocop/cop/offense.rb#69
@@ -4116,41 +4216,55 @@ class RuboCop::Cop::Offense::PseudoSourceRange < ::Struct
   # Returns the value of attribute end_pos
   #
   # @return [Object] the current value of end_pos
+  #
+  # source://rubocop//lib/rubocop/cop/offense.rb#63
   def end_pos; end
 
   # Sets the attribute end_pos
   #
   # @param value [Object] the value to set the attribute end_pos to.
   # @return [Object] the newly set value
+  #
+  # source://rubocop//lib/rubocop/cop/offense.rb#63
   def end_pos=(_); end
 
   # Returns the value of attribute line
   #
   # @return [Object] the current value of line
+  #
+  # source://rubocop//lib/rubocop/cop/offense.rb#65
   def first_line; end
 
   # Returns the value of attribute column
   #
   # @return [Object] the current value of column
+  #
+  # source://rubocop//lib/rubocop/cop/offense.rb#67
   def last_column; end
 
   # Returns the value of attribute line
   #
   # @return [Object] the current value of line
+  #
+  # source://rubocop//lib/rubocop/cop/offense.rb#66
   def last_line; end
 
-  # source://rubocop//lib/rubocop/cop/offense.rb#73
+  # source://rubocop//lib/rubocop/cop/offense.rb#76
   def length; end
 
   # Returns the value of attribute line
   #
   # @return [Object] the current value of line
+  #
+  # source://rubocop//lib/rubocop/cop/offense.rb#63
   def line; end
 
   # Sets the attribute line
   #
   # @param value [Object] the value to set the attribute line to.
   # @return [Object] the newly set value
+  #
+  # source://rubocop//lib/rubocop/cop/offense.rb#63
   def line=(_); end
 
   # source://rubocop//lib/rubocop/cop/offense.rb#73
@@ -4159,19 +4273,32 @@ class RuboCop::Cop::Offense::PseudoSourceRange < ::Struct
   # Returns the value of attribute source_line
   #
   # @return [Object] the current value of source_line
+  #
+  # source://rubocop//lib/rubocop/cop/offense.rb#63
   def source_line; end
 
   # Sets the attribute source_line
   #
   # @param value [Object] the value to set the attribute source_line to.
   # @return [Object] the newly set value
+  #
+  # source://rubocop//lib/rubocop/cop/offense.rb#63
   def source_line=(_); end
 
   class << self
+    # source://rubocop//lib/rubocop/cop/offense.rb#63
     def [](*_arg0); end
+
+    # source://rubocop//lib/rubocop/cop/offense.rb#63
     def inspect; end
+
+    # source://rubocop//lib/rubocop/cop/offense.rb#63
     def keyword_init?; end
+
+    # source://rubocop//lib/rubocop/cop/offense.rb#63
     def members; end
+
+    # source://rubocop//lib/rubocop/cop/offense.rb#63
     def new(*_arg0); end
   end
 end
@@ -4622,6 +4749,12 @@ RuboCop::Cop::Style::CollectionCompact::TO_ENUM_METHODS = T.let(T.unsafe(nil), A
 
 RuboCop::Cop::Style::CollectionMethods::MSG = T.let(T.unsafe(nil), String)
 
+RuboCop::Cop::Style::CollectionQuerying::MSG = T.let(T.unsafe(nil), String)
+
+RuboCop::Cop::Style::CollectionQuerying::REPLACEMENTS = T.let(T.unsafe(nil), Hash)
+
+RuboCop::Cop::Style::CollectionQuerying::RESTRICT_ON_SEND = T.let(T.unsafe(nil), Array)
+
 RuboCop::Cop::Style::ColonMethodCall::MSG = T.let(T.unsafe(nil), String)
 
 RuboCop::Cop::Style::ColonMethodDefinition::MSG = T.let(T.unsafe(nil), String)
@@ -4780,6 +4913,10 @@ RuboCop::Cop::Style::EmptyMethod::MSG_COMPACT = T.let(T.unsafe(nil), String)
 
 RuboCop::Cop::Style::EmptyMethod::MSG_EXPANDED = T.let(T.unsafe(nil), String)
 
+RuboCop::Cop::Style::EmptyStringInsideInterpolation::MSG_TERNARY = T.let(T.unsafe(nil), String)
+
+RuboCop::Cop::Style::EmptyStringInsideInterpolation::MSG_TRAILING_CONDITIONAL = T.let(T.unsafe(nil), String)
+
 RuboCop::Cop::Style::Encoding::ENCODING_PATTERN = T.let(T.unsafe(nil), Regexp)
 
 RuboCop::Cop::Style::Encoding::MSG = T.let(T.unsafe(nil), String)
@@ -4832,7 +4969,9 @@ RuboCop::Cop::Style::ExplicitBlockArgument::MSG = T.let(T.unsafe(nil), String)
 
 RuboCop::Cop::Style::ExponentialNotation::MESSAGES = T.let(T.unsafe(nil), Hash)
 
-RuboCop::Cop::Style::FetchEnvVar::MSG = T.let(T.unsafe(nil), String)
+RuboCop::Cop::Style::FetchEnvVar::MSG_WITHOUT_NIL = T.let(T.unsafe(nil), String)
+
+RuboCop::Cop::Style::FetchEnvVar::MSG_WITH_NIL = T.let(T.unsafe(nil), String)
 
 RuboCop::Cop::Style::FetchEnvVar::RESTRICT_ON_SEND = T.let(T.unsafe(nil), Array)
 
@@ -4982,9 +5121,11 @@ RuboCop::Cop::Style::IpAddresses::MSG = T.let(T.unsafe(nil), String)
 
 RuboCop::Cop::Style::ItAssignment::MSG = T.let(T.unsafe(nil), String)
 
-RuboCop::Cop::Style::ItBlockParameter::MSG_AVOID_IT_BLOCK_PARAMETER = T.let(T.unsafe(nil), String)
+RuboCop::Cop::Style::ItBlockParameter::MSG_AVOID_IT_PARAMETER = T.let(T.unsafe(nil), String)
 
-RuboCop::Cop::Style::ItBlockParameter::MSG_USE_IT_BLOCK_PARAMETER = T.let(T.unsafe(nil), String)
+RuboCop::Cop::Style::ItBlockParameter::MSG_AVOID_IT_PARAMETER_MULTILINE = T.let(T.unsafe(nil), String)
+
+RuboCop::Cop::Style::ItBlockParameter::MSG_USE_IT_PARAMETER = T.let(T.unsafe(nil), String)
 
 RuboCop::Cop::Style::KeywordArgumentsMerging::MSG = T.let(T.unsafe(nil), String)
 
@@ -5056,9 +5197,9 @@ RuboCop::Cop::Style::MethodDefParentheses::MSG_PRESENT = T.let(T.unsafe(nil), St
 
 RuboCop::Cop::Style::MinMax::MSG = T.let(T.unsafe(nil), String)
 
-RuboCop::Cop::Style::MinMaxComparison::COMPARISON_OPERATORS = T.let(T.unsafe(nil), Array)
+RuboCop::Cop::Style::MinMaxComparison::COMPARISON_OPERATORS = T.let(T.unsafe(nil), Set)
 
-RuboCop::Cop::Style::MinMaxComparison::GRATER_OPERATORS = T.let(T.unsafe(nil), Array)
+RuboCop::Cop::Style::MinMaxComparison::GREATER_OPERATORS = T.let(T.unsafe(nil), Array)
 
 RuboCop::Cop::Style::MinMaxComparison::LESS_OPERATORS = T.let(T.unsafe(nil), Array)
 
@@ -5253,6 +5394,10 @@ RuboCop::Cop::Style::RedundantArgument::NO_RECEIVER_METHODS = T.let(T.unsafe(nil
 RuboCop::Cop::Style::RedundantArrayConstructor::MSG = T.let(T.unsafe(nil), String)
 
 RuboCop::Cop::Style::RedundantArrayConstructor::RESTRICT_ON_SEND = T.let(T.unsafe(nil), Array)
+
+RuboCop::Cop::Style::RedundantArrayFlatten::MSG = T.let(T.unsafe(nil), String)
+
+RuboCop::Cop::Style::RedundantArrayFlatten::RESTRICT_ON_SEND = T.let(T.unsafe(nil), Array)
 
 RuboCop::Cop::Style::RedundantAssignment::MSG = T.let(T.unsafe(nil), String)
 
@@ -6407,9 +6552,9 @@ RuboCop::Formatter::PacmanFormatter::FALLBACK_TERMINAL_WIDTH = T.let(T.unsafe(ni
 
 RuboCop::Formatter::PacmanFormatter::GHOST = T.let(T.unsafe(nil), String)
 
-RuboCop::Formatter::PacmanFormatter::PACDOT = T.let(T.unsafe(nil), Rainbow::Presenter)
+RuboCop::Formatter::PacmanFormatter::PACDOT = T.let(T.unsafe(nil), Rainbow::NullPresenter)
 
-RuboCop::Formatter::PacmanFormatter::PACMAN = T.let(T.unsafe(nil), Rainbow::Presenter)
+RuboCop::Formatter::PacmanFormatter::PACMAN = T.let(T.unsafe(nil), Rainbow::NullPresenter)
 
 RuboCop::Formatter::ProgressFormatter::DOT = T.let(T.unsafe(nil), String)
 
@@ -6924,13 +7069,13 @@ class RuboCop::Runner
   # source://rubocop//lib/rubocop/runner.rb#56
   def errors; end
 
-  # source://rubocop-md/2.0.1/lib/rubocop/markdown/rubocop_ext.rb#50
+  # source://rubocop//lib/rubocop/runner.rb#248
   def file_finished(file, offenses); end
 
-  # source://rubocop-md/2.0.1/lib/rubocop/markdown/rubocop_ext.rb#44
+  # source://rubocop//lib/rubocop/runner.rb#177
   def file_offense_cache(file); end
 
-  # source://rubocop-md/2.0.1/lib/rubocop/markdown/rubocop_ext.rb#36
+  # source://rubocop//lib/rubocop/runner.rb#485
   def get_processed_source(*args); end
 
   # source://rubocop//lib/rubocop/runner.rb#67
@@ -7143,7 +7288,7 @@ class RuboCop::TargetFinder
   # @api private
   # @return [Boolean]
   #
-  # source://rubocop-md/2.0.1/lib/rubocop/markdown/rubocop_ext.rb#78
+  # source://rubocop//lib/rubocop/target_finder.rb#154
   def ruby_file?(file); end
 
   # Finds all Ruby source files under the current or other supplied directory. A Ruby source file

@@ -78,36 +78,39 @@ class ParallelTests::CLI
   # source://parallel_tests//lib/parallel_tests/cli.rb#189
   def any_test_failed?(test_results); end
 
-  # source://parallel_tests//lib/parallel_tests/cli.rb#375
+  # source://parallel_tests//lib/parallel_tests/cli.rb#401
   def append_test_options(options, argv); end
 
-  # source://parallel_tests//lib/parallel_tests/cli.rb#416
+  # source://parallel_tests//lib/parallel_tests/cli.rb#442
   def detailed_duration(seconds); end
 
-  # source://parallel_tests//lib/parallel_tests/cli.rb#390
+  # source://parallel_tests//lib/parallel_tests/cli.rb#416
   def execute_command_in_parallel(command, num_processes, options); end
 
   # source://parallel_tests//lib/parallel_tests/cli.rb#56
   def execute_in_parallel(items, num_processes, options); end
 
-  # source://parallel_tests//lib/parallel_tests/cli.rb#364
+  # source://parallel_tests//lib/parallel_tests/cli.rb#390
   def extract_file_paths(argv); end
 
-  # source://parallel_tests//lib/parallel_tests/cli.rb#370
+  # source://parallel_tests//lib/parallel_tests/cli.rb#396
   def extract_test_options(argv); end
 
-  # source://parallel_tests//lib/parallel_tests/cli.rb#423
+  # source://parallel_tests//lib/parallel_tests/cli.rb#449
   def final_fail_message; end
 
   # @return [Boolean]
   #
-  # source://parallel_tests//lib/parallel_tests/cli.rb#433
+  # source://parallel_tests//lib/parallel_tests/cli.rb#459
   def first_is_1?; end
 
   # source://parallel_tests//lib/parallel_tests/cli.rb#31
   def handle_interrupt; end
 
-  # source://parallel_tests//lib/parallel_tests/cli.rb#383
+  # source://parallel_tests//lib/parallel_tests/cli.rb#482
+  def heredoc(text, newline_padding); end
+
+  # source://parallel_tests//lib/parallel_tests/cli.rb#409
   def load_runner(type); end
 
   # source://parallel_tests//lib/parallel_tests/cli.rb#138
@@ -128,7 +131,7 @@ class ParallelTests::CLI
   # source://parallel_tests//lib/parallel_tests/cli.rb#148
   def report_results(test_results, options); end
 
-  # source://parallel_tests//lib/parallel_tests/cli.rb#411
+  # source://parallel_tests//lib/parallel_tests/cli.rb#437
   def report_time_taken(&block); end
 
   # source://parallel_tests//lib/parallel_tests/cli.rb#130
@@ -142,12 +145,12 @@ class ParallelTests::CLI
 
   # CI systems often fail when there is no output for a long time, so simulate some output
   #
-  # source://parallel_tests//lib/parallel_tests/cli.rb#439
+  # source://parallel_tests//lib/parallel_tests/cli.rb#465
   def simulate_output_for_ci(simulate); end
 
   # @return [Boolean]
   #
-  # source://parallel_tests//lib/parallel_tests/cli.rb#429
+  # source://parallel_tests//lib/parallel_tests/cli.rb#455
   def use_colors?; end
 end
 
