@@ -92,11 +92,14 @@ module Homebrew
       end
 
       sig { params(regenerate: T::Boolean).void }
+      # This is not a predicate method (return type is `void`).
+      # rubocop:disable Naming/PredicateMethod
       def self.write_names(regenerate: false)
         download_and_cache_data! unless cache.key?("casks")
 
         Homebrew::API.write_names_file?(all_casks.keys, "cask", regenerate:)
       end
+      # rubocop:enable Naming/PredicateMethod
     end
   end
 end
