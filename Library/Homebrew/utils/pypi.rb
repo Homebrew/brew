@@ -82,10 +82,10 @@ module PyPI
         url["packagetype"] == "sdist"
       end
 
-      # If there isn't an sdist, we use the first universal wheel.
+      # If there isn't an sdist, we use the first pure Python3 or universal wheel
       if dist.nil?
         dist = json["urls"].find do |url|
-          url["filename"].end_with?("-none-any.whl")
+          url["filename"].match?("[.-]py3[^-]*-none-any.whl$")
         end
       end
 
