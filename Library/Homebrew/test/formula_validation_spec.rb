@@ -23,6 +23,7 @@ RSpec.describe Formula do
       expect do
         formula do
           define_method(:brew) do
+            nil
           end
         end
       end.to raise_error(RuntimeError, /\AThe method `brew` on #{described_class} was declared as final/)
