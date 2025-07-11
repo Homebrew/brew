@@ -49,7 +49,7 @@ RSpec.describe Homebrew::AbstractCommand do
       describe "when command name is overridden" do
         before do
           tac = Class.new(described_class) do
-            self.define_singleton_method(:command_name) { "t-a-c" }
+            define_singleton_method(:command_name) { "t-a-c" }
             define_method(:run) do
               nil
             end
