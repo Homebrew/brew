@@ -426,6 +426,12 @@ module Cask
             Homebrew::SimulateSystem.with_tag(bottle_tag) do
               refresh
 
+              next if bottle_tag.macos? && depends_on.macos && !depends_on.macos.allows?(bottle_tag.to_macos_version)
+              next if depends_on.arch&.none? do |arch|
+                arch_tag = ::Utils::Bottles::Tag.new(system: bottle_tag.system, arch: arch[:type])
+                arch_tag.standardized_arch == bottle_tag.standardized_arch
+              end
+
               to_h.each do |key, value|
                 next if HASH_KEYS_TO_SKIP.include? key
                 next if value.to_s == hash[key].to_s
