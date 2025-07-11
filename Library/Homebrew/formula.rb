@@ -3202,6 +3202,15 @@ class Formula
     end
   end
 
+  sig { params(download_queue: Homebrew::DownloadQueue).void }
+  def enqueue_resources_and_patches(download_queue:)
+    resources.each do |resource|
+      download_queue.enqueue(resource)
+      resource.patches.select(&:external?).each { |patch| download_queue.enqueue(patch.resource) }
+    end
+    patchlist.select(&:external?).each { |patch| download_queue.enqueue(patch.resource) }
+  end
+
   sig { void }
   def fetch_patches
     patchlist.select(&:external?).each(&:fetch)

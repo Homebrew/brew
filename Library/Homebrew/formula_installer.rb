@@ -139,6 +139,8 @@ class FormulaInstaller
 
     # Take the original formula instance, which might have been swapped from an API instance to a source instance
     @formula = T.let(T.must(previously_fetched_formula), Formula) if previously_fetched_formula
+
+    @ran_prelude_fetch = T.let(false, T::Boolean)
   end
 
   sig { returns(T::Boolean) }
@@ -293,8 +295,8 @@ class FormulaInstaller
       dep.bottle&.compatible_locations?
   end
 
-  sig { void }
-  def prelude
+  sig { params(download_queue: T.nilable(Homebrew::DownloadQueue)).void }
+  def prelude_fetch(download_queue: nil)
     deprecate_disable_type = DeprecateDisable.type(formula)
     if deprecate_disable_type.present?
       message = "#{formula.full_name} has been #{DeprecateDisable.message(formula)}"
@@ -312,7 +314,23 @@ class FormulaInstaller
       end
     end
 
+    # Needs to be done before expand_dependencies for compute_dependencies
+    fetch_bottle_tab(download_queue:) if pour_bottle?
+
+    @ran_prelude_fetch = true
+  end
+
+  sig { params(download_queue: T.nilable(Homebrew::DownloadQueue)).void }
+  def prelude(download_queue: nil)
+    prelude_fetch(download_queue:) unless @ran_prelude_fetch
+
     Tab.clear_cache
+
+    # Setup bottle_tab_runtime_dependencies for compute_dependencies
+    @bottle_tab_runtime_dependencies = formula.bottle_tab_attributes
+                                              .fetch("runtime_dependencies", []).then { |deps| deps || [] }
+                                              .each_with_object({}) { |dep, h| h[dep["full_name"]] = dep }
+                                              .freeze
 
     verify_deps_exist unless ignore_deps?
 
@@ -321,7 +339,7 @@ class FormulaInstaller
     forbidden_formula_check
 
     check_install_sanity
-    install_fetch_deps unless ignore_deps?
+    install_fetch_deps(download_queue:) unless ignore_deps?
   end
 
   sig { void }
@@ -450,14 +468,14 @@ class FormulaInstaller
   sig { params(_formula: Formula).returns(T.nilable(T::Boolean)) }
   def fresh_install?(_formula) = false
 
-  sig { void }
-  def install_fetch_deps
+  sig { params(download_queue: T.nilable(Homebrew::DownloadQueue)).void }
+  def install_fetch_deps(download_queue: nil)
     return if @compute_dependencies.blank?
 
     compute_dependencies(use_cache: false) if @compute_dependencies.any? do |dep, options|
       next false unless dep.implicit?
 
-      fetch_dependencies
+      fetch_dependencies(download_queue:)
       install_dependency(dep, options)
       true
     end
@@ -787,8 +805,8 @@ on_request: installed_on_request?, options:)
     @show_header = true unless deps.empty?
   end
 
-  sig { params(dep: Dependency).void }
-  def fetch_dependency(dep)
+  sig { params(dep: Dependency, download_queue: T.nilable(Homebrew::DownloadQueue)).void }
+  def fetch_dependency(dep, download_queue: nil)
     df = dep.to_formula
     fi = FormulaInstaller.new(
       df,
@@ -808,8 +826,8 @@ on_request: installed_on_request?, options:)
       quiet:                      quiet?,
       verbose:                    verbose?,
     )
-    fi.prelude
-    fi.fetch
+    fi.prelude(download_queue:)
+    fi.fetch(download_queue:)
   end
 
   sig { params(dep: Dependency, inherited_options: Options).void }
@@ -1326,8 +1344,8 @@ on_request: installed_on_request?, options:)
     @show_summary_heading = true
   end
 
-  sig { void }
-  def fetch_dependencies
+  sig { params(download_queue: T.nilable(Homebrew::DownloadQueue)).void }
+  def fetch_dependencies(download_queue: nil)
     return if ignore_deps?
 
     # Don't output dependencies if we're explicitly installing them.
@@ -1337,11 +1355,16 @@ on_request: installed_on_request?, options:)
 
     return if deps.empty?
 
-    oh1 "Fetching dependencies for #{formula.full_name}: " \
-        "#{deps.map(&:first).map { Formatter.identifier(_1) }.to_sentence}",
-        truncate: false
+    dependencies_string = deps.map(&:first)
+                              .map { Formatter.identifier(_1) }
+                              .to_sentence
+    unless download_queue
+      oh1 "Fetching dependencies for #{formula.full_name}: " \
+          "#{dependencies_string}",
+          truncate: false
+    end
 
-    deps.each { |(dep, _options)| fetch_dependency(dep) }
+    deps.each { |(dep, _options)| fetch_dependency(dep, download_queue:) }
   end
 
   sig { returns(T.nilable(Formula)) }
@@ -1356,54 +1379,67 @@ on_request: installed_on_request?, options:)
     end
   end
 
-  sig { params(quiet: T::Boolean).void }
-  def fetch_bottle_tab(quiet: false)
+  sig { params(download_queue: T.nilable(Homebrew::DownloadQueue), quiet: T::Boolean).void }
+  def fetch_bottle_tab(download_queue: nil, quiet: false)
     return if @fetch_bottle_tab
 
-    begin
-      formula.fetch_bottle_tab(quiet: quiet)
-      @bottle_tab_runtime_dependencies = formula.bottle_tab_attributes
-                                                .fetch("runtime_dependencies", []).then { |deps| deps || [] }
-                                                .each_with_object({}) { |dep, h| h[dep["full_name"]] = dep }
-                                                .freeze
-    rescue DownloadError, Resource::BottleManifest::Error
-      # do nothing
+    if download_queue && (bottle = formula.bottle) && (manifest_resource = bottle.github_packages_manifest_resource)
+      download_queue.enqueue(manifest_resource)
+    else
+      begin
+        formula.fetch_bottle_tab(quiet: quiet)
+      rescue DownloadError, Resource::BottleManifest::Error
+        # do nothing
+      end
     end
+
     @fetch_bottle_tab = T.let(true, T.nilable(TrueClass))
   end
 
-  sig { void }
-  def fetch
+  sig { params(download_queue: T.nilable(Homebrew::DownloadQueue)).void }
+  def fetch(download_queue: nil)
     return if previously_fetched_formula
 
-    fetch_dependencies
+    fetch_dependencies(download_queue:)
 
     return if only_deps?
     return if formula.local_bottle_path.present?
 
-    oh1 "Fetching #{Formatter.identifier(formula.full_name)}".strip
+    oh1 "Fetching #{Formatter.identifier(formula.full_name)}".strip unless download_queue
 
     downloadable_object = downloadable
     check_attestation = if pour_bottle?(output_warning: true)
-      fetch_bottle_tab
+      fetch_bottle_tab(download_queue:)
 
       !downloadable_object.cached_download.exist?
     else
       @formula = Homebrew::API::Formula.source_download(formula) if formula.loaded_from_api?
 
-      formula.fetch_patches
-      formula.resources.each(&:fetch)
+      if download_queue
+        formula.enqueue_resources_and_patches(download_queue:)
+      else
+        formula.fetch_patches
+        formula.resources.each(&:fetch)
+      end
+
       downloadable_object = downloadable
 
       false
     end
-    downloadable_object.fetch
+
+    if download_queue
+      download_queue.enqueue(downloadable_object)
+    else
+      downloadable_object.fetch
+    end
 
     # We skip `gh` to avoid a bootstrapping cycle, in the off-chance a user attempts
     # to explicitly `brew install gh` without already having a version for bootstrapping.
     # We also skip bottle installs from local bottle paths, as these are done in CI
     # as part of the build lifecycle before attestations are produced.
     if check_attestation &&
+       # TODO: support this for download queues at some point
+       download_queue.nil? &&
        Homebrew::Attestation.enabled? &&
        formula.tap&.core_tap? &&
        formula.name != "gh"
