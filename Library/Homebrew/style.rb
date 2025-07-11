@@ -176,7 +176,7 @@ module Homebrew
 
         # Don't show the default formatter's progress dots
         # on CI or if only checking a single file.
-        args << "--format" << "clang" if ENV["CI"] || files.count { |f| !f.directory? } == 1
+        args << "--format" << "clang" if ENV["CI"] || files.one? { |f| !f.directory? }
 
         args << "--color" if Tty.color?
 

@@ -228,13 +228,13 @@ module RuboCop
             rescue JSON::ParserError
               nil
             end
-            next if list_contents.nil? || list_contents.count.zero?
+            next if list_contents.nil? || list_contents.none?
 
             @tap_style_exceptions[list_name] = list_contents
           end
         end
 
-        return false if @tap_style_exceptions.nil? || @tap_style_exceptions.count.zero?
+        return false if @tap_style_exceptions.nil? || @tap_style_exceptions.none?
         return false unless @tap_style_exceptions.key? list
 
         T.must(@tap_style_exceptions[list]).include?(formula || @formula_name)

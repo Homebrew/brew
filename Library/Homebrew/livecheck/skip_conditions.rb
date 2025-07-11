@@ -323,7 +323,7 @@ module Homebrew
         end
         return unless name
 
-        if skip_hash[:messages].is_a?(Array) && skip_hash[:messages].count.positive?
+        if skip_hash[:messages].is_a?(Array) && skip_hash[:messages].any?
           # TODO: Handle multiple messages, only if needed in the future
           if skip_hash[:status] == "skipped"
             puts "#{Tty.red}#{name}#{Tty.reset}: skipped - #{skip_hash[:messages][0]}"
