@@ -22,16 +22,19 @@ The type of change you want to make influences which of Homebrew's main reposito
 
 1. [Fork the Homebrew/brew repository on GitHub](https://github.com/Homebrew/brew/fork).
    * This creates a personal remote repository that you can push to. This is needed because only Homebrew maintainers have push access to the main repositories.
-2. Change to the directory containing your Homebrew installation:
+
+2. Register your pubkey with your [Github account](github.com/account/ssh)
+
+3. Change to the directory containing your Homebrew installation:
 
    ```sh
    cd "$(brew --repository)"
    ```
 
-3. Add your pushable forked repository as a new remote:
+4. Add your pushable forked repository as a new remote:
 
    ```sh
-   git remote add <YOUR_USERNAME> https://github.com/<YOUR_USERNAME>/brew.git
+   git remote add <YOUR_USERNAME> git@github.com:<YOUR_USERNAME>/brew.git
    ```
 
    * `<YOUR_USERNAME>` is your GitHub username, not your local machine username.
@@ -42,22 +45,25 @@ Before creating a new formula, please read [Acceptable Formulae](Acceptable-Form
 
 1. [Fork the Homebrew/homebrew-core repository on GitHub](https://github.com/Homebrew/homebrew-core/fork).
    * This creates a personal remote repository that you can push to. This is needed because only Homebrew maintainers have push access to the main repositories.
-2. Tap (download a local clone of) the repository of core Homebrew formulae:
+
+2. Register your pubkey with your [Github account](github.com/account/ssh)
+
+3. Tap (download a local clone of) the repository of core Homebrew formulae:
 
    ```sh
    brew tap --force homebrew/core
    ```
 
-3. Change to the directory containing Homebrew formulae:
+4. Change to the directory containing Homebrew formulae:
 
    ```sh
    cd "$(brew --repository homebrew/core)"
    ```
 
-4. Add your pushable forked repository as a new remote:
+5. Add your pushable forked repository as a new remote:
 
    ```sh
-   git remote add <YOUR_USERNAME> https://github.com/<YOUR_USERNAME>/homebrew-core.git
+   git remote add <YOUR_USERNAME> git@github.com:<YOUR_USERNAME>/homebrew-core.git
    ```
 
    * `<YOUR_USERNAME>` is your GitHub username, not your local machine username.
@@ -68,22 +74,25 @@ Before creating a new cask, please read [Acceptable Casks](Acceptable-Casks.md).
 
 1. [Fork the Homebrew/homebrew-cask repository on GitHub](https://github.com/Homebrew/homebrew-cask/fork).
    * This creates a personal remote repository that you can push to. This is needed because only Homebrew maintainers have push access to the main repositories.
-2. Tap (download a local clone of) the repository of core Homebrew casks:
+
+2. Register your pubkey with your [Github account](github.com/account/ssh)
+
+3. Tap (download a local clone of) the repository of core Homebrew casks:
 
    ```sh
    brew tap --force homebrew/cask
    ```
 
-3. Change to the directory containing Homebrew casks:
+4. Change to the directory containing Homebrew casks:
 
    ```sh
    cd "$(brew --repository homebrew/cask)"
    ```
 
-4. Add your pushable forked repository as a new remote:
+5. Add your pushable forked repository as a new remote:
 
    ```sh
-   git remote add <YOUR_USERNAME> https://github.com/<YOUR_USERNAME>/homebrew-cask.git
+   git remote add <YOUR_USERNAME> git@github.com:<YOUR_USERNAME>/homebrew-cask.git
    ```
 
    * `<YOUR_USERNAME>` is your GitHub username, not your local machine username.
