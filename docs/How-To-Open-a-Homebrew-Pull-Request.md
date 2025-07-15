@@ -23,7 +23,7 @@ The type of change you want to make influences which of Homebrew's main reposito
 1. [Fork the Homebrew/brew repository on GitHub](https://github.com/Homebrew/brew/fork).
    * This creates a personal remote repository that you can push to. This is needed because only Homebrew maintainers have push access to the main repositories.
 
-2. Register your pubkey with your [Github account](github.com/account/ssh)
+2. [Register your pubkey with your Github account](https://docs.github.com/en/authentication/connecting-to-github-with-ssh)
 
 3. Change to the directory containing your Homebrew installation:
 
@@ -46,7 +46,7 @@ Before creating a new formula, please read [Acceptable Formulae](Acceptable-Form
 1. [Fork the Homebrew/homebrew-core repository on GitHub](https://github.com/Homebrew/homebrew-core/fork).
    * This creates a personal remote repository that you can push to. This is needed because only Homebrew maintainers have push access to the main repositories.
 
-2. Register your pubkey with your [Github account](github.com/account/ssh)
+2. [Register your pubkey with your Github account](https://docs.github.com/en/authentication/connecting-to-github-with-ssh)
 
 3. Tap (download a local clone of) the repository of core Homebrew formulae:
 
@@ -75,7 +75,7 @@ Before creating a new cask, please read [Acceptable Casks](Acceptable-Casks.md).
 1. [Fork the Homebrew/homebrew-cask repository on GitHub](https://github.com/Homebrew/homebrew-cask/fork).
    * This creates a personal remote repository that you can push to. This is needed because only Homebrew maintainers have push access to the main repositories.
 
-2. Register your pubkey with your [Github account](github.com/account/ssh)
+2. [Register your pubkey with your Github account](https://docs.github.com/en/authentication/connecting-to-github-with-ssh)
 
 3. Tap (download a local clone of) the repository of core Homebrew casks:
 
