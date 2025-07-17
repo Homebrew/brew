@@ -13,6 +13,7 @@ module Homebrew
 
     HOMEBREW_CACHE_API = T.let((HOMEBREW_CACHE/"api").freeze, Pathname)
     HOMEBREW_CACHE_API_SOURCE = T.let((HOMEBREW_CACHE/"api-source").freeze, Pathname)
+    TAP_MIGRATIONS_STALE_SECONDS = T.let(86400, Integer) # 1 day
 
     sig { params(endpoint: String).returns(T::Hash[String, T.untyped]) }
     def self.fetch(endpoint)

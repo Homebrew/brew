@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 require "cachable"
+require "api"
 require "api/download"
 
 module Homebrew
@@ -52,9 +53,26 @@ module Homebrew
         HOMEBREW_CACHE_API/api_filename
       end
 
+      sig {
+        params(download_queue: T.nilable(Homebrew::DownloadQueue))
+          .returns([T.any(T::Array[T.untyped], T::Hash[String, T.untyped]), T::Boolean])
+      }
+      def self.fetch_api!(download_queue: nil)
+        Homebrew::API.fetch_json_api_file api_filename, download_queue:
+      end
+
+      sig {
+        params(download_queue: T.nilable(Homebrew::DownloadQueue))
+          .returns([T.any(T::Array[T.untyped], T::Hash[String, T.untyped]), T::Boolean])
+      }
+      def self.fetch_tap_migrations!(download_queue: nil)
+        stale_seconds = Homebrew::API::TAP_MIGRATIONS_STALE_SECONDS
+        Homebrew::API.fetch_json_api_file "formula_tap_migrations.jws.json", stale_seconds:, download_queue:
+      end
+
       sig { returns(T::Boolean) }
       def self.download_and_cache_data!
-        json_formulae, updated = Homebrew::API.fetch_json_api_file api_filename
+        json_formulae, updated = fetch_api!
 
         cache["aliases"] = {}
         cache["renames"] = {}
@@ -80,7 +98,7 @@ module Homebrew
           write_names_and_aliases(regenerate: json_updated)
         end
 
-        cache["formulae"]
+        cache.fetch("formulae")
       end
 
       sig { returns(T::Hash[String, String]) }
@@ -90,7 +108,7 @@ module Homebrew
           write_names_and_aliases(regenerate: json_updated)
         end
 
-        cache["aliases"]
+        cache.fetch("aliases")
       end
 
       sig { returns(T::Hash[String, String]) }
@@ -100,29 +118,17 @@ module Homebrew
           write_names_and_aliases(regenerate: json_updated)
         end
 
-        cache["renames"]
+        cache.fetch("renames")
       end
 
       sig { returns(T::Hash[String, T.untyped]) }
       def self.tap_migrations
-        # Not sure that we need to reload here.
         unless cache.key?("tap_migrations")
-          json_updated = download_and_cache_data!
-          write_names_and_aliases(regenerate: json_updated)
+          json_migrations, = fetch_tap_migrations!
+          cache["tap_migrations"] = json_migrations
         end
 
-        cache["tap_migrations"]
-      end
-
-      sig { returns(String) }
-      def self.tap_git_head
-        # Note sure we need to reload here.
-        unless cache.key?("tap_git_head")
-          json_updated = download_and_cache_data!
-          write_names_and_aliases(regenerate: json_updated)
-        end
-
-        cache["tap_git_head"]
+        cache.fetch("tap_migrations")
       end
 
       sig { params(regenerate: T::Boolean).void }

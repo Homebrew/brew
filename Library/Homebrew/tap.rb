@@ -31,9 +31,6 @@ class Tap
   HOMEBREW_TAP_STYLE_EXCEPTIONS_DIR = "style_exceptions"
   private_constant :HOMEBREW_TAP_STYLE_EXCEPTIONS_DIR
 
-  TAP_MIGRATIONS_STALE_SECONDS = 86400 # 1 day
-  private_constant :TAP_MIGRATIONS_STALE_SECONDS
-
   HOMEBREW_TAP_JSON_FILES = %W[
     #{HOMEBREW_TAP_FORMULA_RENAMES_FILE}
     #{HOMEBREW_TAP_CASK_RENAMES_FILE}
@@ -1312,9 +1309,7 @@ class CoreTap < AbstractCoreTap
       ensure_installed!
       super
     else
-      migrations, = Homebrew::API.fetch_json_api_file "formula_tap_migrations.jws.json",
-                                                      stale_seconds: TAP_MIGRATIONS_STALE_SECONDS
-      migrations
+      Homebrew::API::Formula.tap_migrations
     end
   end
 
@@ -1471,9 +1466,7 @@ class CoreCaskTap < AbstractCoreTap
     @tap_migrations ||= if Homebrew::EnvConfig.no_install_from_api?
       super
     else
-      migrations, = Homebrew::API.fetch_json_api_file "cask_tap_migrations.jws.json",
-                                                      stale_seconds: TAP_MIGRATIONS_STALE_SECONDS
-      migrations
+      Homebrew::API::Cask.tap_migrations
     end
   end
 end

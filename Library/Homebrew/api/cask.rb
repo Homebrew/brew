@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 require "cachable"
+require "api"
 require "api/download"
 
 module Homebrew
@@ -52,9 +53,26 @@ module Homebrew
         HOMEBREW_CACHE_API/api_filename
       end
 
+      sig {
+        params(download_queue: T.nilable(::Homebrew::DownloadQueue))
+          .returns([T.any(T::Array[T.untyped], T::Hash[String, T.untyped]), T::Boolean])
+      }
+      def self.fetch_api!(download_queue: nil)
+        Homebrew::API.fetch_json_api_file api_filename, download_queue:
+      end
+
+      sig {
+        params(download_queue: T.nilable(::Homebrew::DownloadQueue))
+          .returns([T.any(T::Array[T.untyped], T::Hash[String, T.untyped]), T::Boolean])
+      }
+      def self.fetch_tap_migrations!(download_queue: nil)
+        stale_seconds = Homebrew::API::TAP_MIGRATIONS_STALE_SECONDS
+        Homebrew::API.fetch_json_api_file "cask_tap_migrations.jws.json", stale_seconds:, download_queue:
+      end
+
       sig { returns(T::Boolean) }
       def self.download_and_cache_data!
-        json_casks, updated = Homebrew::API.fetch_json_api_file api_filename
+        json_casks, updated = fetch_api!
 
         cache["renames"] = {}
         cache["casks"] = json_casks.to_h do |json_cask|
@@ -89,6 +107,16 @@ module Homebrew
         end
 
         cache.fetch("renames")
+      end
+
+      sig { returns(T::Hash[String, T.untyped]) }
+      def self.tap_migrations
+        unless cache.key?("tap_migrations")
+          json_migrations, = fetch_tap_migrations!
+          cache["tap_migrations"] = json_migrations
+        end
+
+        cache.fetch("tap_migrations")
       end
 
       sig { params(regenerate: T::Boolean).void }
