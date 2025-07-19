@@ -428,7 +428,7 @@ RSpec.describe Homebrew::DevCmd::Bottle do
 
       it "checks for conflicting root URL" do
         old_spec = BottleSpecification.new
-        old_spec.root_url("https://failbrew.bintray.com/bottles")
+        old_spec.root_url("https://failbrew\.bintray\.com/bottles")
         new_hash = { "root_url" => "https://testbrew.bintray.com/bottles" }
         expect(homebrew.merge_bottle_spec([:root_url], old_spec, new_hash)).to eq [
           ['root_url: old: "https://failbrew.bintray.com/bottles", new: "https://testbrew.bintray.com/bottles"'],
