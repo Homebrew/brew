@@ -19,7 +19,7 @@ Linux distribution without requiring `sudo`.
 
 **cask**
 
-: Homebrew package definition that installs macOS native applications
+: Homebrew package definition that installs macOS native applications or pre-compiled binaries
 
 **prefix**
 
