@@ -368,6 +368,7 @@ jobs:
     env:
       HOMEBREW_TEST_BOT_ANALYTICS: 1
       HOMEBREW_ENFORCE_SBOM: 1
+      HOMEBREW_DOWNLOAD_CONCURRENCY: 4
     steps:
       - name: Install Homebrew and Homebrew's dependencies
         # All other images are built from our Homebrew Dockerfile.
