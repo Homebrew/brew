@@ -320,6 +320,8 @@ class FormulaInstaller
     # Needs to be done before expand_dependencies for compute_dependencies
     fetch_bottle_tab if pour_bottle?
 
+    fetch_fetch_deps unless ignore_deps?
+
     @ran_prelude_fetch = true
   end
 
@@ -346,7 +348,9 @@ class FormulaInstaller
     forbidden_formula_check
 
     check_install_sanity
-    install_fetch_deps unless ignore_deps?
+
+    # with the download queue: these should have already been installed
+    install_fetch_deps if !ignore_deps? && download_queue.nil?
   end
 
   sig { void }
@@ -474,6 +478,18 @@ class FormulaInstaller
 
   sig { params(_formula: Formula).returns(T.nilable(T::Boolean)) }
   def fresh_install?(_formula) = false
+
+  sig { void }
+  def fetch_fetch_deps
+    return if @compute_dependencies.blank?
+
+    compute_dependencies(use_cache: false) if @compute_dependencies.any? do |dep,|
+      next false unless dep.implicit?
+
+      fetch_dependencies
+      true
+    end
+  end
 
   sig { void }
   def install_fetch_deps
@@ -1455,8 +1471,6 @@ on_request: installed_on_request?, options:)
     # We also skip bottle installs from local bottle paths, as these are done in CI
     # as part of the build lifecycle before attestations are produced.
     if check_attestation &&
-       # TODO: support this for download queues at some point
-       download_queue.nil? &&
        Homebrew::Attestation.enabled? &&
        formula.tap&.core_tap? &&
        formula.name != "gh"
@@ -1545,7 +1559,7 @@ on_request: installed_on_request?, options:)
       # download queue has already done the actual staging but we'll lie about
       # pouring now for nicer output
       ohai "Pouring #{downloadable.downloader.basename}"
-      downloadable.downloader.stage unless download_queue
+      downloadable.downloader.stage if download_queue.nil? || !formula.prefix.exist?
     end
 
     Tab.clear_cache
