@@ -154,7 +154,11 @@ class GitHubRunnerMatrix
       @runners << create_runner(:linux, :x86_64)
 
       if !@dependent_matrix &&
-         @testing_formulae.any? { |tf| tf.formula.bottle_specification.tag?(Utils::Bottles.tag(:arm64_linux)) }
+         @testing_formulae.any? do |tf|
+           bottle_specification = tf.formula.bottle_specification
+
+           bottle_specification.collector.tags.none? || bottle_specification.tag?(Utils::Bottles.tag(:arm64_linux))
+         end
         @runners << create_runner(:linux, :arm64)
       end
     end
