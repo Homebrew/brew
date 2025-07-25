@@ -9,17 +9,6 @@ multi-ecosystem-groups:
       time: '08:00'
       timezone: Etc/UTC
 updates:
-- package-ecosystem: github-actions
-  directory: "/"
-  multi-ecosystem-group: all
-  patterns:
-  - "*"
-  allow:
-  - dependency-type: all
-  cooldown:
-    default-days: 1
-    include:
-    - "*"
 - package-ecosystem: bundler
   directories:
   - "/Library/Homebrew"
@@ -35,6 +24,17 @@ updates:
     semver-patch-days: 1
     include:
     - "*"
+- package-ecosystem: devcontainers
+  directory: "/"
+  multi-ecosystem-group: all
+  patterns:
+  - "*"
+  allow:
+  - dependency-type: all
+  cooldown:
+    default-days: 1
+    include:
+    - "*"
 - package-ecosystem: docker
   directory: "/"
   multi-ecosystem-group: all
@@ -42,7 +42,7 @@ updates:
   - "*"
   allow:
   - dependency-type: all
-- package-ecosystem: devcontainers
+- package-ecosystem: github-actions
   directory: "/"
   multi-ecosystem-group: all
   patterns:
@@ -68,4 +68,10 @@ updates:
     semver-patch-days: 1
     include:
     - "*"
-
+- package-ecosystem: terraform
+  directory: "/"
+  multi-ecosystem-group: all
+  patterns:
+  - "*"
+  allow:
+  - dependency-type: all
