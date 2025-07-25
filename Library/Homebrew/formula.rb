@@ -3220,6 +3220,10 @@ class Formula
   def fetch_bottle_tab(quiet: false)
     return unless bottled?
 
+    p [:formula_fetch_bottle_tab]
+    puts caller.reject { |line| line.include?("/vendor/") }
+    puts
+
     T.must(bottle).fetch_tab(quiet: quiet)
   end
 

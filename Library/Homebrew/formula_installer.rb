@@ -1414,6 +1414,10 @@ on_request: installed_on_request?, options:)
   def fetch_bottle_tab(quiet: false)
     return if @fetch_bottle_tab
 
+    p [:formula_installer_fetch_bottle_tab]
+    puts caller.reject { |line| line.include?("/vendor/") }
+    puts
+
     if (download_queue = self.download_queue) &&
        (bottle = formula.bottle) &&
        (manifest_resource = bottle.github_packages_manifest_resource)
