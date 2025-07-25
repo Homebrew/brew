@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Family Support Program - Admin Chat</title>
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        /* Custom scrollbar for a cleaner look */
+        ::-webkit-scrollbar {
+            width: 5px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #94a3b8;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            overflow: hidden; /* Prevent body scroll */
+        }
+        /* Transition for main content area */
+        main {
+            transition: width 0.3s ease-in-out;
+        }
+        #call-interface.hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 h-screen antialiased leading-none">
+    <div class="flex h-full relative">
+        <!-- Sidebar: Client List -->
+        <aside id="client-list-panel" class="w-full md:w-1/3 lg:w-1/4 bg-white border-r border-gray-200 flex flex-col transition-transform duration-300 ease-in-out -translate-x-full md:translate-x-0 fixed md:relative h-full z-20">
+            <!-- Sidebar Header -->
+            <div class="p-4 border-b border-gray-200 sticky top-0 bg-white z-10">
+                <h1 class="text-2xl font-bold text-gray-800">Family Support</h1>
+                <p class="text-sm text-gray-500">Conversations</p>
+                <input type="text" placeholder="Search clients..." class="w-full mt-3 p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+
+            <!-- Client List -->
+            <div class="flex-1 overflow-y-auto">
+                <!-- Active Client -->
+                <div class="p-4 border-b border-l-4 border-blue-500 bg-blue-50 cursor-pointer" onclick="selectClient(this, 'Jane Doe')">
+                    <div class="flex justify-between items-center">
+                        <h3 class="text-md font-semibold text-gray-900">Jane Doe</h3>
+                        <span class="text-xs text-gray-500">2 min ago</span>
+                    </div>
+                    <p class="text-sm text-gray-600 truncate mt-1">Okay, thank you so much for your help! I'll check the portal now.</p>
+                </div>
+                <!-- Other Clients -->
+                <div class="p-4 border-b border-l-4 border-transparent hover:bg-gray-50 cursor-pointer" onclick="selectClient(this, 'John Smith')">
+                    <div class="flex justify-between items-center">
+                        <h3 class="text-md font-semibold text-gray-900">John Smith</h3>
+                        <span class="text-xs text-gray-500">1 hr ago</span>
+                    </div>
+                    <p class="text-sm text-gray-600 truncate mt-1">I have a question about the upcoming workshop.</p>
+                </div>
+                <div class="p-4 border-b border-l-4 border-transparent hover:bg-gray-50 cursor-pointer" onclick="selectClient(this, 'Maria Garcia')">
+                    <div class="flex justify-between items-center">
+                        <h3 class="text-md font-semibold text-gray-900">Maria Garcia</h3>
+                        <span class="text-xs text-gray-500">Yesterday</span>
+                    </div>
+                    <p class="text-sm text-gray-600 truncate mt-1">Can I reschedule my appointment?</p>
+                </div>
+                 <div class="p-4 border-b border-l-4 border-transparent hover:bg-gray-50 cursor-pointer" onclick="selectClient(this, 'Chen Wei')">
+                    <div class="flex justify-between items-center">
+                        <h3 class="text-md font-semibold text-gray-900">Chen Wei</h3>
+                        <span class="text-xs text-gray-500">3 days ago</span>
+                    </div>
+                    <p class="text-sm text-gray-600 truncate mt-1">Thank you for the resources.</p>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Chat Area -->
+        <main class="flex-1 flex flex-col h-screen">
+            <!-- Chat Header -->
+            <header class="bg-white border-b border-gray-200 p-4 flex items-center justify-between sticky top-0 z-10">
+                <div class="flex items-center space-x-3">
+                     <!-- Mobile Menu Button -->
+                    <button id="menu-toggle" class="md:hidden p-2 rounded-md text-gray-500 hover:bg-gray-200">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-4 6h4"></path></svg>
+                    </button>
+                    <div>
+                        <h2 id="chat-client-name" class="text-lg font-semibold text-gray-800">Jane Doe</h2>
+                        <p class="text-sm text-green-500 flex items-center">
+                            <span class="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
+                            Online
+                        </p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <button class="p-2 rounded-full text-gray-500 hover:bg-gray-200" title="Search">
+                        <i class="fas fa-search"></i>
+                    </button>
+                     <button class="p-2 rounded-full text-gray-500 hover:bg-gray-200" title="Notifications">
+                        <i class="fas fa-bell"></i>
+                    </button>
+                    <button id="call-btn" class="p-2 rounded-full text-gray-500 hover:bg-gray-200" title="Start Voice Call">
+                        <i class="fas fa-phone"></i>
+                    </button>
+                    <button id="clipboard-toggle" class="p-2 rounded-full text-gray-500 hover:bg-gray-200" title="Open Clipboard">
+                        <i class="fas fa-clipboard"></i>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Message Display -->
+            <div id="message-container" class="flex-1 p-4 md:p-6 overflow-y-auto bg-gray-100">
+                <!-- Client Message -->
+                <div class="flex items-start gap-3 mb-4">
+                    <img src="https://placehold.co/40x40/E2E8F0/4A5568?text=JD" alt="Client Avatar" class="w-10 h-10 rounded-full">
+                    <div class="bg-white p-3 rounded-lg rounded-tl-none shadow-sm max-w-md">
+                        <p class="text-sm text-gray-800">Hello, I need some assistance with the resource portal. I can't seem to find the documents for the housing assistance program.</p>
+                        <span class="text-xs text-gray-500 mt-1 block text-right">10:30 AM</span>
+                    </div>
+                </div>
+
+                <!-- Agent/Admin Message -->
+                <div class="flex items-start gap-3 justify-end mb-4">
+                     <div class="bg-blue-500 text-white p-3 rounded-lg rounded-br-none shadow-sm max-w-md">
+                        <p class="text-sm">Hi Jane, of course. I can help with that. The documents are located in the "Resources" tab, under the "Housing & Utilities" section. I've also just sent a direct link to your registered email.</p>
+                        <span class="text-xs text-blue-200 mt-1 block text-right">10:31 AM</span>
+                    </div>
+                    <img src="https://placehold.co/40x40/4A5568/FFFFFF?text=A" alt="Admin Avatar" class="w-10 h-10 rounded-full">
+                </div>
+                
+                 <!-- Client Message -->
+                <div class="flex items-start gap-3 mb-4">
+                    <img src="https://placehold.co/40x40/E2E8F0/4A5568?text=JD" alt="Client Avatar" class="w-10 h-10 rounded-full">
+                    <div class="bg-white p-3 rounded-lg rounded-tl-none shadow-sm max-w-md">
+                        <p class="text-sm text-gray-800">Okay, thank you so much for your help! I'll check the portal now.</p>
+                        <span class="text-xs text-gray-500 mt-1 block text-right">10:32 AM</span>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Message Input -->
+            <footer class="bg-white border-t border-gray-200 p-4 sticky bottom-0">
+                <form id="message-form" class="flex items-center space-x-3">
+                    <button type="button" class="p-2 rounded-full text-gray-500 hover:bg-gray-200">
+                         <i class="fas fa-paperclip"></i>
+                    </button>
+                    <input type="text" id="message-input" placeholder="Type your message..." class="flex-1 p-3 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
+                    <button type="submit" class="bg-blue-500 text-white rounded-full p-3 hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </form>
+            </footer>
+        </main>
+        
+        <!-- Clipboard Panel -->
+        <aside id="clipboard-panel" class="w-full md:w-1/3 lg:w-1/4 bg-gray-50 border-l border-gray-200 flex flex-col transition-transform duration-300 ease-in-out translate-x-full fixed top-0 right-0 h-full z-30">
+             <!-- Clipboard Header -->
+            <div class="p-4 border-b border-gray-200 sticky top-0 bg-gray-50 z-10 flex justify-between items-center">
+                <h2 class="text-xl font-bold text-gray-800">Admin Clipboard</h2>
+                <button id="clipboard-close" class="p-2 rounded-md text-gray-500 hover:bg-gray-200">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <!-- Clipboard Items -->
+            <div class="flex-1 overflow-y-auto p-2">
+                <div class="clipboard-item bg-white p-3 rounded-lg mb-2 shadow-sm border border-gray-200">
+                    <p class="text-sm text-gray-700 mb-2">Hello! Thank you for contacting the Family Support Program. How can I help you today?</p>
+                    <button onclick="copyToClipboard(this)" class="copy-btn text-sm text-blue-500 hover:text-blue-700 flex items-center gap-1">
+                        <i class="far fa-copy"></i> Copy
+                    </button>
+                </div>
+                <div class="clipboard-item bg-white p-3 rounded-lg mb-2 shadow-sm border border-gray-200">
+                    <p class="text-sm text-gray-700 mb-2">All our resources can be found in the client portal under the "Resources" tab. Please let me know if you have trouble finding anything specific.</p>
+                    <button onclick="copyToClipboard(this)" class="copy-btn text-sm text-blue-500 hover:text-blue-700 flex items-center gap-1">
+                        <i class="far fa-copy"></i> Copy
+                    </button>
+                </div>
+                <div class="clipboard-item bg-white p-3 rounded-lg mb-2 shadow-sm border border-gray-200">
+                    <p class="text-sm text-gray-700 mb-2">Is there anything else I can assist you with today?</p>
+                    <button onclick="copyToClipboard(this)" class="copy-btn text-sm text-blue-500 hover:text-blue-700 flex items-center gap-1">
+                        <i class="far fa-copy"></i> Copy
+                    </button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Voice Call Interface -->
+        <div id="call-interface" class="hidden fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center z-50">
+            <div class="bg-white rounded-2xl p-8 shadow-2xl text-center w-full max-w-sm flex flex-col items-center">
+                <img src="https://placehold.co/80x80/E2E8F0/4A5568?text=JD" alt="Client Avatar" class="w-24 h-24 rounded-full mb-4 border-4 border-white shadow-lg">
+                <h3 id="call-client-name" class="text-2xl font-bold text-gray-800">Jane Doe</h3>
+                <p id="call-status" class="text-lg text-gray-500 mt-1">Calling...</p>
+                <div class="flex space-x-6 mt-8">
+                    <button id="mute-btn" class="bg-gray-200 text-gray-700 w-16 h-16 rounded-full flex items-center justify-center text-2xl hover:bg-gray-300 transition">
+                        <i class="fas fa-microphone"></i>
+                    </button>
+                    <button id="end-call-btn" class="bg-red-500 text-white w-16 h-16 rounded-full flex items-center justify-center text-2xl hover:bg-red-600 transition">
+                        <i class="fas fa-phone-slash"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Element selectors
+        const menuToggle = document.getElementById('menu-toggle');
+        const clientListPanel = document.getElementById('client-list-panel');
+        const messageForm = document.getElementById('message-form');
+        const messageInput = document.getElementById('message-input');
+        const messageContainer = document.getElementById('message-container');
+        const chatClientName = document.getElementById('chat-client-name');
+        const clipboardToggle = document.getElementById('clipboard-toggle');
+        const clipboardPanel = document.getElementById('clipboard-panel');
+        const clipboardClose = document.getElementById('clipboard-close');
+        
+        // Voice Call selectors
+        const callBtn = document.getElementById('call-btn');
+        const callInterface = document.getElementById('call-interface');
+        const callClientName = document.getElementById('call-client-name');
+        const callStatus = document.getElementById('call-status');
+        const endCallBtn = document.getElementById('end-call-btn');
+        const muteBtn = document.getElementById('mute-btn');
+
+        // Toggle client list on mobile
+        menuToggle.addEventListener('click', () => {
+            clientListPanel.classList.toggle('-translate-x-full');
+        });
+
+        // Toggle clipboard panel
+        clipboardToggle.addEventListener('click', () => {
+            clipboardPanel.classList.toggle('translate-x-full');
+        });
+        clipboardClose.addEventListener('click', () => {
+            clipboardPanel.classList.add('translate-x-full');
+        });
+
+
+        // Function to handle client selection
+        function selectClient(element, clientName) {
+            // Remove active state from all clients
+            const allClients = document.querySelectorAll('#client-list-panel > div > div');
+            allClients.forEach(client => {
+                client.classList.remove('bg-blue-50', 'border-blue-500');
+                client.classList.add('border-transparent');
+            });
+
+            // Add active state to the clicked client
+            element.classList.add('bg-blue-50', 'border-blue-500');
+            element.classList.remove('border-transparent');
+
+            // Update chat header with the client's name
+            chatClientName.textContent = clientName;
+            
+            // On mobile, hide the client list after selection
+            if (window.innerWidth < 768) {
+                 clientListPanel.classList.add('-translate-x-full');
+            }
+        }
+
+        // Handle sending a message
+        messageForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const messageText = messageInput.value.trim();
+
+            if (messageText) {
+                const messageElement = document.createElement('div');
+                messageElement.classList.add('flex', 'items-start', 'gap-3', 'justify-end', 'mb-4');
+                
+                const now = new Date();
+                const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+                messageElement.innerHTML = `
+                     <div class="bg-blue-500 text-white p-3 rounded-lg rounded-br-none shadow-sm max-w-md">
+                        <p class="text-sm">${messageText}</p>
+                        <span class="text-xs text-blue-200 mt-1 block text-right">${timeString}</span>
+                    </div>
+                    <img src="https://placehold.co/40x40/4A5568/FFFFFF?text=A" alt="Admin Avatar" class="w-10 h-10 rounded-full">
+                `;
+                
+                messageContainer.appendChild(messageElement);
+                messageInput.value = '';
+                messageContainer.scrollTop = messageContainer.scrollHeight; // Auto-scroll to the bottom
+            }
+        });
+        
+        // Function to copy text from clipboard items
+        function copyToClipboard(buttonElement) {
+            const textToCopy = buttonElement.previousElementSibling.textContent;
+            
+            navigator.clipboard.writeText(textToCopy).then(() => {
+                const originalIcon = buttonElement.innerHTML;
+                buttonElement.innerHTML = `<i class="fas fa-check text-green-500"></i> Copied!`;
+                setTimeout(() => { buttonElement.innerHTML = originalIcon; }, 2000);
+            }).catch(err => {
+                console.error('Failed to copy text: ', err);
+                // Fallback for older browsers
+                try {
+                    const textArea = document.createElement("textarea");
+                    textArea.value = textToCopy;
+                    document.body.appendChild(textArea);
+                    textArea.focus();
+                    textArea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(textArea);
+                    const originalIcon = buttonElement.innerHTML;
+                    buttonElement.innerHTML = `<i class="fas fa-check text-green-500"></i> Copied!`;
+                    setTimeout(() => { buttonElement.innerHTML = originalIcon; }, 2000);
+                } catch (e) { console.error('Fallback copy failed', e); }
+            });
+        }
+
+        // --- Voice Call Logic ---
+        callBtn.addEventListener('click', () => {
+            // Update call UI with current client's name
+            callClientName.textContent = chatClientName.textContent;
+            // Show the call interface
+            callInterface.classList.remove('hidden');
+            
+            // Simulate call connection
+            callStatus.textContent = 'Calling...';
+            setTimeout(() => {
+                callStatus.textContent = 'Connected';
+            }, 2500);
+        });
+
+        endCallBtn.addEventListener('click', () => {
+            callInterface.classList.add('hidden');
+        });
+
+        muteBtn.addEventListener('click', () => {
+            const icon = muteBtn.querySelector('i');
+            icon.classList.toggle('fa-microphone');
+            icon.classList.toggle('fa-microphone-slash');
+            muteBtn.classList.toggle('bg-blue-500');
+            muteBtn.classList.toggle('text-white');
+        });
+
+
+        // Ensure the message container starts scrolled to the bottom
+        window.onload = () => {
+             messageContainer.scrollTop = messageContainer.scrollHeight;
+        }
+
+    </script>
+</body>
+</html>
