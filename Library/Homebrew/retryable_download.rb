@@ -73,6 +73,7 @@ module Homebrew
       downloadable.verify_download_integrity(download) if verify_download_integrity && !json_download
 
       if pour && downloadable.is_a?(Bottle)
+        HOMEBREW_CELLAR.mkpath
         UnpackStrategy.detect(download, prioritize_extension: true)
                       .extract_nestedly(to: HOMEBREW_CELLAR)
       elsif json_download

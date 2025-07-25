@@ -38,6 +38,9 @@ module Homebrew
         rescue ChecksumMismatchError => e
           opoo "#{downloadable.download_type} reports different checksum: #{e.expected}"
           Homebrew.failed = true if downloadable.is_a?(Resource::Patch)
+        rescue => e
+          p [:one_download_error, downloadable, e, e.is_a?(DownloadError), e.is_a?(Resource::BottleManifest::Error)]
+          raise e
         end
       else
         spinner = Spinner.new
@@ -81,9 +84,11 @@ module Homebrew
                 Homebrew.failed = true if downloadable.is_a?(Resource::Patch)
                 next 2
               else
+                p [:future_rejected, downloadable, future.reason,
+                   future.reason.is_a?(DownloadError),
+                   future.reason.is_a?(Resource::BottleManifest::Error)]
                 message = future.reason.to_s
-                onoe message
-                Homebrew.failed = true
+                ofail message
                 next message.count("\n")
               end
             end
