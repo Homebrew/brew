@@ -23,9 +23,15 @@ class Keg
       super
     end
 
-    sig { params(key: Symbol, old_value: T.any(String, Regexp), new_value: String, path: T::Boolean).void }
-    def add_replacement_pair(key, old_value, new_value, path: false)
-      old_value = self.class.path_to_regex(old_value) if path
+    sig {
+      params(key: Symbol, old_value: T.any(String, Regexp), new_value: String, path: T::Boolean,
+             require_trailing_slash: T::Boolean, exclude_paths: T::Array[String]).void
+    }
+    def add_replacement_pair(key, old_value, new_value, path: false, require_trailing_slash: false, exclude_paths: [])
+      if path
+        old_value = self.class.path_to_regex(old_value, require_trailing_slash: require_trailing_slash,
+                                                        exclude_paths:          exclude_paths)
+      end
       @replacement_map[key] = [old_value, new_value]
     end
 
@@ -50,11 +56,19 @@ class Keg
       !any_changed.nil?
     end
 
-    sig { params(path: T.any(String, Regexp)).returns(Regexp) }
-    def self.path_to_regex(path)
+    sig { params(path: T.any(String, Regexp), require_trailing_slash: T::Boolean, exclude_paths: T::Array[String]).returns(Regexp) }
+    def self.path_to_regex(path, require_trailing_slash: false, exclude_paths: [])
       path = case path
       when String
-        Regexp.escape(path)
+        escaped_path = Regexp.escape(path)
+        if exclude_paths.any?
+          # Create negative lookahead for excluded paths (e.g., /usr/local(?!/bin\b))
+          exclusions = exclude_paths.map { |ex| "/#{Regexp.escape(ex)}\\b" }.join("|")
+          escaped_path += "(?!#{exclusions})"
+        end
+        # If require_trailing_slash is true, only match if followed by a slash
+        escaped_path += "/" if require_trailing_slash
+        escaped_path
       when Regexp
         path.source
       end
@@ -86,7 +100,8 @@ class Keg
 
   def prepare_relocation_to_placeholders
     relocation = Relocation.new
-    relocation.add_replacement_pair(:prefix, HOMEBREW_PREFIX.to_s, PREFIX_PLACEHOLDER, path: true)
+    relocation.add_replacement_pair(:prefix, HOMEBREW_PREFIX.to_s, PREFIX_PLACEHOLDER, path: true,
+                                     require_trailing_slash: true, exclude_paths: ["bin"])
     relocation.add_replacement_pair(:cellar, HOMEBREW_CELLAR.to_s, CELLAR_PLACEHOLDER, path: true)
     # when HOMEBREW_PREFIX == HOMEBREW_REPOSITORY we should use HOMEBREW_PREFIX for all relocations to avoid
     # being unable to differentiate between them.
