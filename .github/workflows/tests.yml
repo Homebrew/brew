@@ -142,7 +142,7 @@ jobs:
         id: set-up-homebrew
         uses: Homebrew/actions/setup-homebrew@main
         with:
-          core: false
+          core: true
           cask: false
           test-bot: false
 
