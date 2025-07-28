@@ -212,8 +212,8 @@ merge_or_rebase() {
   then
     UPSTREAM_TAG="$(
       git tag --list |
-        sort --field-separator=. --key=1,1nr -k 2,2nr -k 3,3nr |
-        grep --max-count=1 '^[0-9]*\.[0-9]*\.[0-9]*$'
+        sort -t . -k 1,1nr -k 2,2nr -k 3,3nr |
+        grep -m 1 '^[0-9]*\.[0-9]*\.[0-9]*$'
     )"
   else
     UPSTREAM_TAG=""
