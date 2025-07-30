@@ -1,3 +1,4 @@
+# typed: strict
 # frozen_string_literal: true
 
 require "dependency_collector"
@@ -7,11 +8,11 @@ RSpec.describe DependencyCollector do
 
   subject(:collector) { described_class.new }
 
-  def find_dependency(name)
+  define_method(:find_dependency) do |name|
     collector.deps.find { |dep| dep.name == name }
   end
 
-  def find_requirement(klass)
+  define_method(:find_requirement) do |klass|
     collector.requirements.find { |req| req.is_a? klass }
   end
 
@@ -21,6 +22,13 @@ RSpec.describe DependencyCollector do
       collector.add "bar" => ["--universal", :optional]
       expect(find_dependency("foo")).to be_an_instance_of(Dependency)
       expect(find_dependency("bar").tags.count).to eq(2)
+    end
+
+    specify "no_linkage dependency creation" do
+      collector.add "curl" => :no_linkage
+      dependency = find_dependency("curl")
+      expect(dependency).to be_an_instance_of(Dependency)
+      expect(dependency).to be_no_linkage
     end
 
     it "returns the created dependency" do
