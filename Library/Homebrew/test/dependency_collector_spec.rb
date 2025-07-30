@@ -8,11 +8,11 @@ RSpec.describe DependencyCollector do
 
   subject(:collector) { described_class.new }
 
-  define_method(:find_dependency) do |name|
+  def find_dependency(name)
     collector.deps.find { |dep| dep.name == name }
   end
 
-  define_method(:find_requirement) do |klass|
+  def find_requirement(klass)
     collector.requirements.find { |req| req.is_a? klass }
   end
 
