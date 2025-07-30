@@ -127,33 +127,63 @@ module Homebrew
 
       sig { params(cask: Cask::Cask).returns(T::Hash[T::Hash[Symbol, T.any(Symbol, String)], Float]) }
       def filter_runners(cask)
-        filtered_macos_runners = RUNNERS.select do |runner, _|
-          runner[:symbol] != :linux &&
+        filtered_runners = if cask.supports_macos?
+          filtered_macos_runners = MACOS_RUNNERS.select do |runner, _|
             cask.depends_on.macos.present? &&
-            cask.depends_on.macos.allows?(MacOSVersion.from_symbol(T.must(runner[:symbol]).to_sym))
-        end
+              cask.depends_on.macos.allows?(MacOSVersion.from_symbol(T.must(runner[:symbol]).to_sym))
+          end
 
-        filtered_runners = if filtered_macos_runners.any?
+          return MACOS_RUNNERS.dup if filtered_macos_runners.none?
+
           filtered_macos_runners
-        else
-          RUNNERS.dup
         end
 
-        filtered_runners = filtered_runners.merge(LINUX_RUNNERS) if cask.supports_linux?
+        filtered_runners = T.must(filtered_runners)
 
         archs = architectures(cask:)
+        odebug "Architectures macOS: #{archs}" if archs.any?
         filtered_runners.select! do |runner, _|
           archs.include?(runner.fetch(:arch))
         end
 
+        odebug "Filtered runners: #{filtered_runners.keys.map { |r| r[:name] }}" if filtered_runners.any?
+        if cask.supports_linux?
+          filtered_linux_runners = LINUX_RUNNERS.dup
+
+          archs = architectures(cask:, os: :linux, arch: :intel)
+          filtered_linux_runners.select! do |runner, _|
+            archs.include?(runner.fetch(:arch))
+          end
+
+          filtered_runners.merge!(filtered_linux_runners)
+        end
+
+        odebug "Architectures linux: #{archs}" if archs.any?
+        odebug "Filtered runners: #{filtered_runners.keys.map { |r| r[:name] }}" if filtered_runners.any?
+
         filtered_runners
       end
 
-      sig { params(cask: Cask::Cask).returns(T::Array[Symbol]) }
-      def architectures(cask:)
-        return RUNNERS.keys.map { |r| r.fetch(:arch).to_sym }.uniq.sort if cask.depends_on.arch.blank?
+      sig { params(cask: Cask::Cask, os: Symbol, arch: Symbol).returns(T::Array[Symbol]) }
+      def architectures(cask:, os: :macos, arch: :arm)
+        architectures = T.let([], T.untyped)
+        begin
+          tag = Utils::Bottles::Tag.new(system: os, arch: arch)
+          Homebrew::SimulateSystem.with_tag(tag) do
+            cask.refresh
 
-        cask.depends_on.arch.map { |arch| arch[:type] }.uniq.sort
+            if cask.depends_on.arch.blank?
+              architectures = RUNNERS.keys.map { |r| r.fetch(:arch).to_sym }.uniq.sort
+              next
+            end
+
+            architectures = cask.depends_on.arch.map { |arch| arch[:type] }
+          end
+        rescue ::Cask::CaskInvalidError
+          # Can't read cask for this system-arch combination.
+        end
+
+        architectures
       end
 
       sig {
@@ -255,7 +285,7 @@ module Homebrew
             native_runner_arch = arch == runner.fetch(:arch)
             # we don't need to run simulated archs on Linux
             next if runner.fetch(:symbol) == :linux && !native_runner_arch
-            # we don't need to run simulated archs on macOS
+            # we don't need to run simulated archs on macOS Sequoia
             next if runner.fetch(:symbol) == :sequoia && !native_runner_arch
 
             # If it's just a single OS test then we can just use the two real arch runners.
