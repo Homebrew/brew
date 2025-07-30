@@ -67,7 +67,8 @@ module Homebrew
         pr_url = args.named if args.url?
         syntax_only = args.syntax_only?
 
-        repository = ENV.fetch("GITHUB_REPOSITORY", nil)
+        # repository = ENV.fetch("GITHUB_REPOSITORY", nil)
+        repository = "Homebrew/homebrew-cask" # For testing
         raise UsageError, "The `$GITHUB_REPOSITORY` environment variable must be set." if repository.blank?
 
         tap = T.let(Tap.fetch(repository), Tap)
@@ -127,16 +128,20 @@ module Homebrew
 
       sig { params(cask: Cask::Cask).returns(T::Hash[T::Hash[Symbol, T.any(Symbol, String)], Float]) }
       def filter_runners(cask)
-        filtered_macos_runners = RUNNERS.select do |runner, _|
-          runner[:symbol] != :linux &&
-            cask.depends_on.macos.present? &&
-            cask.depends_on.macos.allows?(MacOSVersion.from_symbol(T.must(runner[:symbol]).to_sym))
-        end
+        if cask.supports_macos?
+          filtered_macos_runners = RUNNERS.select do |runner, _|
+            runner[:symbol] != :linux &&
+              cask.depends_on.macos.present? &&
+              cask.depends_on.macos.allows?(MacOSVersion.from_symbol(T.must(runner[:symbol]).to_sym))
+          end
 
-        filtered_runners = if filtered_macos_runners.any?
-          filtered_macos_runners
+          filtered_runners = if filtered_macos_runners.any?
+            filtered_macos_runners
+          else
+            RUNNERS.dup
+          end
         else
-          RUNNERS.dup
+          filtered_runners = {}
         end
 
         filtered_runners = filtered_runners.merge(LINUX_RUNNERS) if cask.supports_linux?
@@ -151,6 +156,7 @@ module Homebrew
 
       sig { params(cask: Cask::Cask).returns(T::Array[Symbol]) }
       def architectures(cask:)
+
         return RUNNERS.keys.map { |r| r.fetch(:arch).to_sym }.uniq.sort if cask.depends_on.arch.blank?
 
         cask.depends_on.arch.map { |arch| arch[:type] }.uniq.sort
