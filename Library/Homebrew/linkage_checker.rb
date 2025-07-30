@@ -42,7 +42,7 @@ class LinkageChecker
     display_items "Broken dependencies", @broken_deps
     display_items "Undeclared dependencies with linkage", @undeclared_deps
     display_items "Dependencies with no linkage", @unnecessary_deps
-    display_items "Homebrew dependencies not requiring linkage", @no_linkage_deps
+    display_items "Runtime dependencies not requiring linkage", @no_linkage_deps
     display_items "Unwanted system libraries", @unwanted_system_dylibs
     display_items "Files with missing rpath", @files_missing_rpaths
     display_items "@executable_path references in libraries", @executable_path_dylibs
