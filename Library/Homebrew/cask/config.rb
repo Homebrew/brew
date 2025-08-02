@@ -15,6 +15,7 @@ module Cask
     DEFAULT_DIRS = T.let(
       {
         appdir:               "/Applications",
+        appimagedir:          "~/Applications",
         keyboard_layoutdir:   "/Library/Keyboard Layouts",
         colorpickerdir:       "~/Library/ColorPickers",
         prefpanedir:          "~/Library/PreferencePanes",
@@ -47,6 +48,7 @@ module Cask
       args = T.unsafe(args)
       new(explicit: {
         appdir:               args.appdir,
+        appimagedir:          args.appimagedir,
         keyboard_layoutdir:   args.keyboard_layoutdir,
         colorpickerdir:       args.colorpickerdir,
         prefpanedir:          args.prefpanedir,
