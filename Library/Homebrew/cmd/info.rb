@@ -12,6 +12,7 @@ require "json"
 require "utils/spdx"
 require "deprecate_disable"
 require "api"
+require "cask_dependent"
 
 module Homebrew
   module Cmd
@@ -67,19 +68,36 @@ module Homebrew
                description: "Treat all named arguments as formulae."
         switch "--cask", "--casks",
                description: "Treat all named arguments as casks."
+        switch "--leaves",
+               description: "Only show formulae and casks that are not dependencies of other " \
+                            "installed formulae/casks."
+        switch "--sizes",
+               description: "Show the size of installed formulae and casks."
 
         conflicts "--installed", "--eval-all"
         conflicts "--installed", "--all"
         conflicts "--formula", "--cask"
         conflicts "--fetch-manifest", "--cask"
         conflicts "--fetch-manifest", "--json"
-
         named_args [:formula, :cask]
       end
 
       sig { override.void }
       def run
-        if args.analytics?
+        if args.leaves? && !args.sizes?
+          raise UsageError,
+                "`--leaves` is intended to be used with `--sizes`. Showing all installed formulae and casks."
+        end
+
+        if args.sizes?
+          if args.no_named?
+            print_sizes
+          else
+            formulae, casks = args.named.to_formulae_to_casks
+            formulae = formulae.grep(Formula)
+            print_sizes(formulae:, casks:)
+          end
+        elsif args.analytics?
           if args.days.present? && VALID_DAYS.exclude?(args.days)
             raise UsageError, "`--days` must be one of #{VALID_DAYS.join(", ")}."
           end
@@ -400,6 +418,69 @@ module Homebrew
         require "cask/info"
 
         Cask::Info.info(cask, args:)
+      end
+
+      sig { params(formulae: T::Array[Formula], casks: T::Array[Cask::Cask]).void }
+      def print_sizes(formulae: [], casks: [])
+        formulae_to_process = if formulae.present?
+          formulae
+        elsif args.formulae? || (!args.casks? && args.no_named?)
+          Formula.installed
+        else
+          []
+        end
+
+        casks_to_process = (if args.leaves?
+                              []
+                            elsif casks.present?
+                              casks
+                            elsif args.casks? || (!args.formulae? && args.no_named?)
+                              Cask::Caskroom.casks
+        end) || []
+
+        if args.leaves?
+          leaves_list = formulae_to_process - formulae_to_process.flat_map(&:runtime_formula_dependencies)
+          casks_runtime_dependencies = casks_to_process.flat_map do |cask|
+            CaskDependent.new(cask).runtime_dependencies.map(&:to_formula)
+          end
+          leaves_list -= casks_runtime_dependencies
+
+          formulae_to_process = leaves_list
+          casks_to_process = []
+        end
+
+        if formulae_to_process.present?
+          ohai "Formulae sizes:"
+          formula_sizes = formulae_to_process.map do |formula|
+            kegs = formula.installed_kegs
+            size = kegs.sum(&:disk_usage)
+            { name: formula.full_name, size: size }
+          end
+          formula_sizes.sort_by! { |f| -f[:size] }
+
+          formula_sizes.each do |f|
+            puts "  #{f[:name]}: #{disk_usage_readable(f[:size])}"
+          end
+        end
+
+        return unless casks_to_process.present?
+
+        ohai "Casks sizes:"
+        cask_sizes = casks_to_process.filter_map do |cask|
+          installed_version = cask.installed_version
+          next unless installed_version.present?
+
+          versioned_staged_path = cask.caskroom_path.join(installed_version)
+          next unless versioned_staged_path.exist?
+
+          size = versioned_staged_path.children.sum(&:disk_usage)
+          { name: cask.full_name, size: size }
+        end
+        cask_sizes.sort_by! { |c| -c[:size] }
+
+        cask_sizes.each do |c|
+          puts "  #{c[:name]}: #{disk_usage_readable(c[:size])}"
+        end
       end
     end
   end

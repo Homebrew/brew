@@ -51,5 +51,11 @@ class Homebrew::Cmd::Info::Args < Homebrew::CLI::Args
   def json; end
 
   sig { returns(T::Boolean) }
+  def leaves?; end
+
+  sig { returns(T::Boolean) }
+  def sizes?; end
+
+  sig { returns(T::Boolean) }
   def variations?; end
 end
