@@ -14,7 +14,7 @@ A *formula* is a package definition written in Ruby. It can be created with `bre
 | term                 | description                                                               | example |
 | -------------------- | ------------------------------------------------------------------------- | ------- |
 | **formula**          | Homebrew package definition that builds from upstream sources             | `/opt/homebrew/Library/Taps/homebrew/homebrew-core/Formula/f/foo.rb` |
-| **cask**             | Homebrew package definition that installs macOS native applications       | `/opt/homebrew/Library/Taps/homebrew/homebrew-cask/Casks/b/bar.rb` |
+| **cask**             | Homebrew package definition that installs macOS native applications or pre-compiled binaries | `/opt/homebrew/Library/Taps/homebrew/homebrew-cask/Casks/b/bar.rb` |
 | **prefix**           | path in which Homebrew is installed                                       | `/opt/homebrew` |
 | **keg**              | installation destination directory of a given **formula** version         | `/opt/homebrew/Cellar/foo/0.1` |
 | **rack**             | directory containing one or more versioned **kegs**                       | `/opt/homebrew/Cellar/foo` |
