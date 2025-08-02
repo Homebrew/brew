@@ -1025,7 +1025,7 @@ end
 * To surface one or more binaries buried in `libexec` or a macOS `.app` package, use [`write_exec_script`](https://rubydoc.brew.sh/Pathname#write_exec_script-instance_method) or [`write_jar_script`](https://rubydoc.brew.sh/Pathname#write_jar_script-instance_method):
 
 ```ruby
-bin.write_exec_script (libexec/"bin").children
+bin.write_exec_script Dir[libexec/"bin/*"]
 bin.write_exec_script prefix/"Package.app/Contents/MacOS/package"
 bin.write_jar_script libexec/jar_file, "jarfile", java_version: "11"
 ```
