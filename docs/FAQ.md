@@ -25,7 +25,11 @@ Upgrade everything with:
 
     brew upgrade
 
-Or upgrade a specific formula with:
+Upgrade everything __including__ casks with `auto_update: true` and `version :latest`
+
+    brew upgrade --greedy
+
+Or upgrade __only__ a specific formula including its dependencies and dependents with:
 
     brew upgrade <formula>
 
@@ -53,7 +57,7 @@ To __disable__ automatic `brew cleanup`:
 
     export HOMEBREW_NO_INSTALL_CLEANUP=1
 
-To disable automatic `brew cleanup` only for formulae `foo` and `bar`:
+To __disable__ automatic `brew cleanup` only for formulae `foo` and `bar`:
 
     export HOMEBREW_NO_CLEANUP_FORMULAE=foo,bar
 
@@ -65,7 +69,17 @@ In this case, to remove a formula entirely, you may run `brew uninstall --force 
 
 Homebrew doesn't support arbitrary mixing and matching of formula versions, so everything a formula depends on, and everything that depends on it in turn, needs to be upgraded to the latest version as that's the only combination of formulae we test. As a consequence any given `upgrade` or `install` command can upgrade many other (seemingly unrelated) formulae, especially if something important like `python` or `openssl` also needed an upgrade.
 
-## Where does stuff get downloaded?
+To __disable__ these automatic upgrades:
+
+    export HOMEBREW_NO_INSTALL_UPGRADE=1
+
+Additionally there is also the automatic update of all package definitions (formulae) and Homebrew itself (e.g. automatic `brew update`) when certain actions like `brew upgrade`, `brew install`, or `brew tap` are run. This may look like brew is updating other things but doesn't change the installed versions of packages.
+
+To __disable__ these automatic updates of the package definitions and Homebrew itself:
+
+    export HOMEBREW_NO_AUTO_UPDATE=1
+
+## Where does stuff get downloaded to?
 
     brew --cache
 
@@ -124,6 +138,8 @@ Did you `chown root /Applications/TextMate.app`? Probably not. So is it that imp
 
 If you need to run Homebrew in a multi-user environment, consider creating a separate user account specifically for use of Homebrew.
 
+Some formulae or casks however may require elevation using `sudo` and therefore the installation or upgrade of these may block and ask for your password, fingerprint, or smartcard pin to authorize. This happens for apps like e.g. Microsoft Teams that install things like an additional audio device or similar.
+
 ## Why isn’t a particular command documented?
 
 If it’s not in [`man brew`](Manpage.md), it’s probably an [external command](External-Commands.md) with documentation available using `--help`.
@@ -179,6 +195,31 @@ It means the formula is installed only into the Cellar and is not linked into th
 
 You can [modify a tool's build configuration](How-to-Build-Software-Outside-Homebrew-with-Homebrew-keg-only-Dependencies.md) to find keg-only dependencies. Or, you can link in the formula if you need to with `brew link <formula>`, though this can cause unexpected behaviour if you are shadowing macOS software.
 
+A kinda generic to use libraries from "keg-only" packages like e.g. zlib would be:
+
+    # set temporary variables:
+    _brew_package_name="zlib"
+    _brew_package_prefix="$(brew --prefix $_brew_package_name)"
+    # For the C and C++ linker (lld):
+    export LDFLAGS="-L$_brew_package_prefix/lib $LDFLAGS"
+    # For the C and C++ pre-processor:
+    export CPPFLAGS="-I$_brew_package_prefix/include $CPPFLAGS"
+    # For the Rust:
+    export RUSTFLAGS="-L$_brew_package_prefix/lib $RUSTFLAGS"
+    # For pkg-config:
+    export PKG_CONFIG_PATH="$_brew_package_prefix/lib/pkgconfig${PKG_CONFIG_PATH:+:${PKG_CONFIG_PATH}}"
+    export PKG_CONFIG_LIBDIR="$_brew_package_prefix/lib/pkgconfig${PKG_CONFIG_LIBDIR:+:${PKG_CONFIG_LIBDIR}}"
+    # If the package also contains binaries uncomment the following line:
+    #export PATH="$_brew_package_prefix/bin:/homebrew/sbin:/usr/local/sbin${PATH:+:${PATH}}"
+    # unset temporary variables again
+    unset _brew_package_name _brew_package_prefix
+
+**NOTE**: The above example is written in a way that allows you to put multiple copies of it into your .zshrc (or .bashrc) and only having to
+change the package name within the first line without them overwriting each other.
+Similarly it won't overwrite any existing ones you may already have.
+All of them will be merged together properly in the end.
+This way your file stays neath and tidy and you'll be able to easily find the lines for a specific package should you want to remove them later on again.
+
 ## How can I specify different configure arguments for a formula?
 
 `brew edit <formula>` and edit the formula directly. Currently there is no other way to do this.
@@ -202,6 +243,10 @@ In the resulting dialog, click the *Open* button to have macOS permanently allow
 <img src="assets/img/docs/gatekeeper-unidentified-open.png" width="532" alt="Gatekeeper unidentified developer open prompt">
 
 Alternatively, you may provide the [`--no-quarantine` switch](https://github.com/Homebrew/homebrew-cask/blob/HEAD/USAGE.md#options) at install time to not add this feature to a specific app.
+
+For consolle application, granting your terminal emulator (e.g. iTerm2.app) the "Developer Tools" permission can also help as this allows it to run untrusted applications. **Note**: It is not recommended to do this for the builtin macOS Terminal app, as this may also allow other application and scripts to bypass this protection.
+
+Finally, of course it is also possible to remove the `com.apple.quarantine`-flag from the affected files using tools like `xattr` manually.
 
 ## Why aren’t some apps included during `brew upgrade`?
 
@@ -227,6 +272,10 @@ Casks which use [`version :latest`](Cask-Cookbook.md#special-value-latest) are a
 If you still want to force software to be upgraded via Homebrew Cask, you can reference it specifically in the `upgrade` command:
 
     brew upgrade <cask>
+
+Use the `HOMEBREW_UPGRADE_GREEDY` environment variable:
+
+    export HOMEBREW_UPGRADE_GREEDY=1
 
 Or use the `--greedy` switch:
 
