@@ -4,6 +4,7 @@
 require "api/analytics"
 require "api/cask"
 require "api/formula"
+require "api/internal"
 require "base64"
 
 module Homebrew

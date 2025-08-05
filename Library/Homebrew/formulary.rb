@@ -50,12 +50,20 @@ module Formulary
     platform_cache.key?(:api) && platform_cache[:api].key?(name)
   end
 
+  def self.formula_class_defined_from_internal_api?(name)
+    platform_cache.key?(:internal_api) && platform_cache[:internal_api].key?(name)
+  end
+
   def self.formula_class_get_from_path(path)
     platform_cache[:path].fetch(path)
   end
 
   def self.formula_class_get_from_api(name)
     platform_cache[:api].fetch(name)
+  end
+
+  def self.formula_class_get_from_internal_api(name)
+    platform_cache[:internal_api].fetch(name)
   end
 
   def self.clear_cache
@@ -173,9 +181,9 @@ module Formulary
     platform_cache[:path][path] = klass
   end
 
-  sig { params(name: String, flags: T::Array[String]).returns(T.class_of(Formula)) }
-  def self.load_formula_from_api!(name, flags:)
-    namespace = :"FormulaNamespaceAPI#{namespace_key(name)}"
+  sig { params(name: String, json_formula: T::Hash[String, T.untyped], flags: T::Array[String]).returns(T.class_of(Formula)) }
+  def self.load_formula_from_json!(name, json_formula, flags:)
+    namespace = :"FormulaNamespaceAPI#{namespace_key(json_formula.to_json)}"
 
     mod = Module.new
     remove_const(namespace) if const_defined?(namespace)
@@ -184,8 +192,6 @@ module Formulary
     mod.const_set(:BUILD_FLAGS, flags)
 
     class_name = class_s(name)
-    json_formula = Homebrew::API::Formula.all_formulae[name]
-    raise FormulaUnavailableError, name if json_formula.nil?
 
     json_formula = Homebrew::API.merge_variations(json_formula)
 
@@ -445,6 +451,70 @@ module Formulary
 
     platform_cache[:api] ||= {}
     platform_cache[:api][name] = klass
+  end
+
+  sig { params(name: String, formula_stub: Homebrew::FormulaStub, flags: T::Array[String]).returns(T.class_of(Formula)) }
+  def self.load_formula_from_internal_api!(name, formula_stub, flags:)
+    # TODO: this should be based on the contents of formula_stub, not the name.
+    namespace = :"FormulaNamespaceInternalAPI#{namespace_key(name)}"
+
+    mod = Module.new
+    remove_const(namespace) if const_defined?(namespace)
+    const_set(namespace, mod)
+
+    mod.const_set(:BUILD_FLAGS, flags)
+
+    class_name = class_s(name)
+
+    # TODO: migrate away from this inline class here, they don't play nicely with
+    # Sorbet, when we migrate to `typed: strict`
+    # rubocop:todo Sorbet/BlockMethodDefinition
+    klass = Class.new(::Formula) do
+      @loaded_from_api = true
+      @loaded_from_stub = true
+
+      url "https://formula.stub/#{name}"
+      version formula_stub.version.to_s
+      revision formula_stub.revision
+      # TODO: do we actually need version_scheme here?
+      # version_scheme formula_stub.version_scheme
+
+      bottle do
+        if Homebrew::EnvConfig.bottle_domain == HOMEBREW_BOTTLE_DEFAULT_DOMAIN
+          root_url HOMEBREW_BOTTLE_DEFAULT_DOMAIN
+        else
+          root_url Homebrew::EnvConfig.bottle_domain
+        end
+        rebuild formula_stub.rebuild
+        # TODO: do we need the cellar value here?
+        sha256 Utils::Bottles.tag.to_sym => formula_stub.sha256
+      end
+
+      def install
+        raise "Cannot build from source from abstract formula."
+      end
+
+      # @oldnames_array = json_formula["oldnames"] || [json_formula["oldname"]].compact
+      # def oldnames
+      #   self.class.instance_variable_get(:@oldnames_array)
+      # end
+
+      # @aliases_array = json_formula.fetch("aliases", [])
+      # def aliases
+      #   self.class.instance_variable_get(:@aliases_array)
+      # end
+
+      # @versioned_formulae_array = json_formula.fetch("versioned_formulae", [])
+      # def versioned_formulae_names
+      #   self.class.instance_variable_get(:@versioned_formulae_array)
+      # end
+    end
+    # rubocop:enable Sorbet/BlockMethodDefinition
+
+    mod.const_set(class_name, klass)
+
+    platform_cache[:internal_api] ||= {}
+    platform_cache[:internal_api][name] = klass
   end
 
   sig {
@@ -867,6 +937,21 @@ module Formulary
     end
   end
 
+  # Load formulae directly from their JSON API contents.
+  class FormulaAPIContentsLoader < FormulaLoader
+    # The formula's contents.
+    attr_reader :contents
+
+    def initialize(name, path, contents)
+      @contents = contents
+      super name, path
+    end
+
+    def klass(flags:, ignore_errors:)
+      Formulary.load_formula_from_json!(name, contents, flags:)
+    end
+  end
+
   # Load a formula from the API.
   class FromAPILoader < FormulaLoader
     sig {
@@ -911,7 +996,61 @@ module Formulary
     private
 
     def load_from_api(flags:)
-      Formulary.load_formula_from_api!(name, flags:)
+      json_formula = Homebrew::API::Formula.all_formulae[name]
+      raise FormulaUnavailableError, name if json_formula.nil?
+
+      Formulary.load_formula_from_json!(name, json_formula, flags:)
+    end
+  end
+
+  # Load a formula from the internal API.
+  class FromInternalAPILoader < FormulaLoader
+    sig {
+      params(ref: T.any(String, Pathname, URI::Generic), from: T.nilable(Symbol), warn: T::Boolean)
+        .returns(T.nilable(T.attached_class))
+    }
+    def self.try_new(ref, from: nil, warn: false)
+      # TODO: improve alias handling here
+      return if Homebrew::EnvConfig.no_install_from_api?
+      return unless ENV.fetch("HOMEBREW_USE_INTERNAL_API", false).present?
+      return unless ref.is_a?(String)
+      return unless (name = ref[HOMEBREW_DEFAULT_TAP_FORMULA_REGEX, :name])
+      if !Homebrew::API::Internal.all_formula_arrays.key?(name) &&
+         !Homebrew::API::Formula.all_aliases.key?(name) &&
+         !Homebrew::API::Formula.all_renames.key?(name)
+        return
+      end
+
+      alias_name = name
+
+      ref = "#{CoreTap.instance}/#{name}"
+
+      return unless (name_tap_type = Formulary.tap_formula_name_type(ref, warn:))
+
+      name, tap, type = name_tap_type
+
+      alias_name = (type == :alias) ? alias_name.downcase : nil
+
+      new(name, tap:, alias_name:)
+    end
+
+    sig { params(name: String, tap: T.nilable(Tap), alias_name: T.nilable(String)).void }
+    def initialize(name, tap: nil, alias_name: nil)
+      alias_path = CoreTap.instance.alias_dir/alias_name if alias_name
+
+      super(name, Formulary.core_path(name), alias_path:, tap:)
+    end
+
+    def klass(flags:, ignore_errors:)
+      load_from_api(flags:) unless Formulary.formula_class_defined_from_internal_api?(name)
+      Formulary.formula_class_get_from_internal_api(name)
+    end
+
+    private
+
+    def load_from_api(flags:)
+      formula_stub = Homebrew::API::Internal.formula_stub(name)
+      Formulary.load_formula_from_internal_api!(name, formula_stub, flags:)
     end
   end
 
@@ -1077,6 +1216,33 @@ module Formulary
                          .get_formula(spec, alias_path:, force_bottle:, flags:, ignore_errors:)
   end
 
+  # Return a {Formula} instance directly from JSON API contents.
+  sig {
+    params(
+      name:          String,
+      path:          Pathname,
+      contents:      T::Hash[String, T.untyped],
+      spec:          Symbol,
+      alias_path:    T.nilable(Pathname),
+      force_bottle:  T::Boolean,
+      flags:         T::Array[String],
+      ignore_errors: T::Boolean,
+    ).returns(Formula)
+  }
+  def self.from_api_contents(
+    name,
+    path,
+    contents,
+    spec = :stable,
+    alias_path: nil,
+    force_bottle: false,
+    flags: [],
+    ignore_errors: false
+  )
+    FormulaAPIContentsLoader.new(name, path, contents)
+                            .get_formula(spec, alias_path:, force_bottle:, flags:, ignore_errors:)
+  end
+
   def self.to_rack(ref)
     # If using a fully-scoped reference, check if the formula can be resolved.
     factory(ref) if ref.include? "/"
@@ -1150,6 +1316,7 @@ module Formulary
     [
       FromBottleLoader,
       FromURILoader,
+      FromInternalAPILoader,
       FromAPILoader,
       FromTapLoader,
       FromPathLoader,
