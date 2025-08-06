@@ -209,14 +209,14 @@ module Homebrew
           skip = formula_or_cask.disabled? || formula_or_cask.head_only?
           name = formula_or_cask.name
           text = "Formula is #{formula_or_cask.disabled? ? "disabled" : "HEAD-only"} so not accepting updates.\n"
+          if (tap = formula_or_cask.tap) && !tap.allow_bump?(name)
+            skip = true
+            text = "#{text.split.first} is autobumped so will have bump PRs opened by BrewTestBot every ~3 hours.\n"
+          end
         else
           skip = formula_or_cask.disabled?
           name = formula_or_cask.token
           text = "Cask is disabled so not accepting updates.\n"
-        end
-        if (tap = formula_or_cask.tap) && !tap.allow_bump?(name)
-          skip = true
-          text = "#{text.split.first} is autobumped so will have bump PRs opened by BrewTestBot every ~3 hours.\n"
         end
         return false unless skip
 
