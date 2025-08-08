@@ -109,51 +109,46 @@ module Homebrew
 
     sig { params(path: T.nilable(T.any(String, Pathname))).returns(T.nilable(String)) }
     def working_dir(path = nil)
-      case path
-      when nil
-        @working_dir
-      when String, Pathname
+      if path
         @working_dir = path.to_s
+      else
+        @working_dir
       end
     end
 
     sig { params(path: T.nilable(T.any(String, Pathname))).returns(T.nilable(String)) }
     def root_dir(path = nil)
-      case path
-      when nil
-        @root_dir
-      when String, Pathname
+      if path
         @root_dir = path.to_s
+      else
+        @root_dir
       end
     end
 
     sig { params(path: T.nilable(T.any(String, Pathname))).returns(T.nilable(String)) }
     def input_path(path = nil)
-      case path
-      when nil
-        @input_path
-      when String, Pathname
+      if path
         @input_path = path.to_s
+      else
+        @input_path
       end
     end
 
     sig { params(path: T.nilable(T.any(String, Pathname))).returns(T.nilable(String)) }
     def log_path(path = nil)
-      case path
-      when nil
-        @log_path
-      when String, Pathname
+      if path
         @log_path = path.to_s
+      else
+        @log_path
       end
     end
 
     sig { params(path: T.nilable(T.any(String, Pathname))).returns(T.nilable(String)) }
     def error_log_path(path = nil)
-      case path
-      when nil
-        @error_log_path
-      when String, Pathname
+      if path
         @error_log_path = path.to_s
+      else
+        @error_log_path
       end
     end
 
@@ -178,10 +173,9 @@ module Homebrew
 
     sig { params(value: T.nilable(T::Boolean)).returns(T::Boolean) }
     def require_root(value = nil)
-      case value
-      when nil
+      if value.nil?
         @require_root
-      when TrueClass, FalseClass
+      else
         @require_root = value
       end
     end
@@ -194,10 +188,9 @@ module Homebrew
 
     sig { params(value: T.nilable(T::Boolean)).returns(T.nilable(T::Boolean)) }
     def run_at_load(value = nil)
-      case value
-      when nil
+      if value.nil?
         @run_at_load
-      when TrueClass, FalseClass
+      else
         @run_at_load = value
       end
     end
@@ -240,21 +233,19 @@ module Homebrew
 
     sig { params(value: T.nilable(T::Boolean)).returns(T::Boolean) }
     def launch_only_once(value = nil)
-      case value
-      when nil
+      if value.nil?
         @launch_only_once
-      when TrueClass, FalseClass
+      else
         @launch_only_once = value
       end
     end
 
     sig { params(value: T.nilable(Integer)).returns(T.nilable(Integer)) }
     def restart_delay(value = nil)
-      case value
-      when nil
-        @restart_delay
-      when Integer
+      if restart_delay
         @restart_delay = value
+      else
+        @restart_delay
       end
     end
 
@@ -286,21 +277,19 @@ module Homebrew
 
     sig { params(value: T.nilable(Integer)).returns(T.nilable(Integer)) }
     def interval(value = nil)
-      case value
-      when nil
-        @interval
-      when Integer
+      if value
         @interval = value
+      else
+        @interval
       end
     end
 
     sig { params(value: T.nilable(String)).returns(T::Hash[Symbol, T.any(Integer, String)]) }
     def cron(value = nil)
-      case value
-      when nil
-        @cron
-      when String
+      if value
         @cron = parse_cron(value)
+      else
+        @cron
       end
     end
 
@@ -352,18 +341,14 @@ module Homebrew
 
     sig { params(variables: T::Hash[Symbol, String]).returns(T.nilable(T::Hash[Symbol, String])) }
     def environment_variables(variables = {})
-      case variables
-      when Hash
-        @environment_variables = variables.transform_values(&:to_s)
-      end
+      @environment_variables = variables.transform_values(&:to_s)
     end
 
     sig { params(value: T.nilable(T::Boolean)).returns(T::Boolean) }
     def macos_legacy_timers(value = nil)
-      case value
-      when nil
+      if value.nil?
         @macos_legacy_timers
-      when TrueClass, FalseClass
+      else
         @macos_legacy_timers = value
       end
     end
