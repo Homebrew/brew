@@ -557,6 +557,19 @@ class Formula
   # @see .loaded_from_api?
   delegate loaded_from_api?: :"self.class"
 
+  # Whether this formula is a stub loaded using Homebrew's internal API
+  # @!method loaded_from_stub?
+  # @see .loaded_from_stub?
+  delegate loaded_from_stub?: :"self.class"
+
+  sig { returns(Formula) }
+  def to_fully_loaded_formula
+    return self unless loaded_from_stub?
+
+    json_contents = Homebrew::API::Formula.fetch(name)
+    Formulary.from_api_contents(name, path, json_contents)
+  end
+
   sig { void }
   def update_head_version
     return unless head?
@@ -2338,6 +2351,28 @@ class Formula
     Formulary.factory(name)
   end
 
+  sig { params(formulae: T::Array[Formula]).returns(T::Array[Formula]) }
+  def self.fully_load_formulae(formulae)
+    opoo "Fully loading formula #{name}"
+    download_queue = Homebrew::DownloadQueue.new(pour: true) if Homebrew::EnvConfig.download_concurrency > 1
+
+    if download_queue
+      formulae.each do |formula|
+        next unless formula.loaded_from_stub?
+
+        if manifest_resource = formula.bottle&.github_packages_manifest_resource
+          download_queue.enqueue(manifest_resource)
+        else
+          raise FormulaUnavailableError, "#{formula.name} does not have a bottle"
+        end
+      end
+
+      download_queue.fetch
+    end
+
+    formulae.map(&:to_fully_loaded_formula)
+  end
+
   # True if this formula is provided by Homebrew itself.
   sig { returns(T::Boolean) }
   def core_formula?
@@ -3358,6 +3393,7 @@ class Formula
         @skip_clean_paths = T.let(Set.new, T.nilable(T::Set[T.any(String, Symbol)]))
         @link_overwrite_paths = T.let(Set.new, T.nilable(T::Set[String]))
         @loaded_from_api = T.let(false, T.nilable(T::Boolean))
+        @loaded_from_stub = T.let(false, T.nilable(T::Boolean))
         @on_system_blocks_exist = T.let(false, T.nilable(T::Boolean))
         @network_access_allowed = T.let(SUPPORTED_NETWORK_ACCESS_PHASES.to_h do |phase|
           [phase, DEFAULT_NETWORK_ACCESS_ALLOWED]
@@ -3381,6 +3417,10 @@ class Formula
     # Whether this formula was loaded using the formulae.brew.sh API.
     sig { returns(T::Boolean) }
     def loaded_from_api? = !!@loaded_from_api
+
+    # Whether this formula was loaded using the formulae.brew.sh API
+    sig { returns(T::Boolean) }
+    def loaded_from_stub? = !!@loaded_from_stub
 
     # Whether this formula contains OS/arch-specific blocks
     # (e.g. `on_macos`, `on_arm`, `on_monterey :or_older`, `on_system :linux, macos: :big_sur_or_newer`).
