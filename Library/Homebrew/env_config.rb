@@ -87,9 +87,6 @@ module Homebrew
         description: "Use this URL as the Homebrew/brew `git`(1) remote.",
         default:     HOMEBREW_BREW_DEFAULT_GIT_REMOTE,
       },
-      HOMEBREW_BREW_WRAPPER:                     {
-        description: "If set, use wrapper to call `brew` rather than auto-detecting it.",
-      },
       HOMEBREW_BROWSER:                          {
         description:  "Use this as the browser when opening project homepages.",
         default_text: "`$BROWSER` or the OS's default browser.",
@@ -263,7 +260,7 @@ module Homebrew
         boolean:     true,
       },
       HOMEBREW_FORCE_BREW_WRAPPER:               {
-        description: "If set, require `$HOMEBREW_BREW_WRAPPER` to be set to the same value as " \
+        description: "If set, require `brew` to be invoked by the value of " \
                      "`$HOMEBREW_FORCE_BREW_WRAPPER` for non-trivial `brew` commands.",
       },
       HOMEBREW_FORCE_VENDOR_RUBY:                {
@@ -391,10 +388,6 @@ module Homebrew
       },
       HOMEBREW_NO_ENV_HINTS:                     {
         description: "If set, do not print any hints about changing Homebrew's behaviour with environment variables.",
-        boolean:     true,
-      },
-      HOMEBREW_NO_FORCE_BREW_WRAPPER:            {
-        description: "If set, disables `$HOMEBREW_FORCE_BREW_WRAPPER` behaviour, even if set.",
         boolean:     true,
       },
       HOMEBREW_NO_GITHUB_API:                    {
