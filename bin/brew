@@ -153,9 +153,18 @@ fi
 export_homebrew_env_file "${HOMEBREW_PREFIX}/etc/homebrew/brew.env"
 
 # Finally, load the user configuration
-if [[ -n "${XDG_CONFIG_HOME-}" ]]
+if [[ -d "${HOME}/.homebrew" ]]
+then
+  HOMEBREW_USER_CONFIG_HOME="${HOME}/.homebrew"
+elif [[ -n "${XDG_CONFIG_HOME-}" ]]
 then
   HOMEBREW_USER_CONFIG_HOME="${XDG_CONFIG_HOME}/homebrew"
+elif [[ -d "${HOME}/.config/homebrew" ]]
+then
+  HOMEBREW_USER_CONFIG_HOME="${HOME}/.config/homebrew"
+elif [[ -d "${HOME}/Library/Application Support/homebrew" ]]
+then
+  HOMEBREW_USER_CONFIG_HOME="${HOME}/Library/Application Support/homebrew"
 else
   HOMEBREW_USER_CONFIG_HOME="${HOME}/.homebrew"
 fi
