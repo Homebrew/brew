@@ -50,7 +50,7 @@ class SystemCommand
 
     @prompt_timeout_secs = nil
     begin
-      prompt_timeout_env = Homebrew::EnvConfig.prompt_timeout_secs
+      prompt_timeout_env = ENV["HOMEBREW_PROMPT_TIMEOUT_SECS"]
       if prompt_timeout_env && !prompt_timeout_env.strip.empty?
         begin
           @prompt_timeout_secs = Integer(prompt_timeout_env)
@@ -227,7 +227,7 @@ class SystemCommand
   sig { returns(T::Array[String]) }
   def sudo_prefix
     askpass_flags = ENV.key?("SUDO_ASKPASS") ? ["-A"] : []
-    non_interactive_flags = Homebrew::EnvConfig.non_interactive? ? ["-n"] : []
+    non_interactive_flags = ENV["HOMEBREW_NON_INTERACTIVE"].present? ? ["-n"] : []
     user_flags = []
     if Homebrew::EnvConfig.sudo_through_sudo_user?
       if homebrew_sudo_user.blank?
