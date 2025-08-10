@@ -50,7 +50,7 @@ class SystemCommand
 
     @prompt_timeout_secs = nil
     begin
-      prompt_timeout_env = ENV["HOMEBREW_PROMPT_TIMEOUT_SECS"]
+      prompt_timeout_env = ENV.fetch("HOMEBREW_PROMPT_TIMEOUT_SECS", nil)
       if prompt_timeout_env && !prompt_timeout_env.strip.empty?
         begin
           @prompt_timeout_secs = Integer(prompt_timeout_env)
