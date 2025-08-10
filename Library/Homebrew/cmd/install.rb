@@ -51,8 +51,7 @@ module Homebrew
                description: "Fail fast on any interactive prompt and use non-interactive sudo where applicable.",
                env:         :non_interactive
         flag "--timeout-wait-for-user=",
-             description: "Wait this many seconds when an interactive prompt is detected; then skip the item.",
-             env:         :prompt_timeout_secs
+             description: "Wait this many seconds when an interactive prompt is detected; then skip the item."
         [
           [:switch, "--formula", "--formulae", {
             description: "Treat all named arguments as formulae.",
