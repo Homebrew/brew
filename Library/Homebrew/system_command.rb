@@ -86,17 +86,19 @@ class SystemCommand
       end
 
       # Detect common interactive prompt patterns when timeout is configured
-      next unless @prompt_timeout_secs && (
-        line =~ /[Pp]assword:/ ||
-        line.include?("a password is required") ||
-        line =~ /installer: .*authorization/i
-      )
-
-      @prompt_detected_at ||= Time.now
+      if @prompt_timeout_secs
+        if line =~ /[Pp]assword:/ ||
+           line.include?("a password is required") ||
+           line =~ /installer: .*authorization/i
+          @prompt_detected_at ||= Time.now
+        end
+      end
     end
 
     result = Result.new(command, @output, @status, secrets: @secrets)
-    raise Timeout::Error, "Interactive prompt timeout" if @terminated_due_to_prompt_timeout
+    if @terminated_due_to_prompt_timeout
+      raise Timeout::Error, "Interactive prompt timeout"
+    end
     result.assert_success! if must_succeed?
     result
   end
@@ -284,14 +286,16 @@ class SystemCommand
     if @prompt_timeout_secs
       monitor_thread = Thread.new do
         loop do
-          break unless raw_wait_thr.alive?
+          unless raw_wait_thr.alive?
+            break
+          end
           if @prompt_detected_at && (Time.now - @prompt_detected_at) >= @prompt_timeout_secs
             begin
               # Try TERM first, then KILL if needed
               Process.kill("TERM", raw_wait_thr.pid)
               sleep 0.5
               Process.kill("KILL", raw_wait_thr.pid) if raw_wait_thr.alive?
-            rescue StandardError
+            rescue
               # ignore
             ensure
               @terminated_due_to_prompt_timeout = true
