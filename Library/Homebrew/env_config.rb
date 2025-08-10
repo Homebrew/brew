@@ -479,16 +479,6 @@ module Homebrew
                       "fetching Git repositories over SSH.",
         default_text: "`~/.ssh/config`",
       },
-      HOMEBREW_NON_INTERACTIVE:                  {
-        description: "If set, treat Homebrew commands as non-interactive: use `sudo -n` when elevating and fail " \
-                     "immediately on any interactive prompt.",
-        boolean:     true,
-      },
-      HOMEBREW_PROMPT_TIMEOUT_SECS:              {
-        description: "If set, when an interactive prompt (e.g., sudo/password) is detected during installation, " \
-                     "wait this many seconds and then skip/fail the current item while continuing others. " \
-                     "Unset to wait indefinitely.",
-      },
       HOMEBREW_SUDO_THROUGH_SUDO_USER:           {
         description: "If set, Homebrew will use the `$SUDO_USER` environment variable to define the user to " \
                      "`sudo`(8) through when running `sudo`(8).",
