@@ -43,6 +43,12 @@ module Homebrew
                description: "Ask for confirmation before downloading and upgrading formulae. " \
                             "Print download, install and net install sizes of bottles and dependencies.",
                env:         :ask
+        switch "--non-interactive",
+               description: "Fail fast on any interactive prompt and use non-interactive sudo where applicable.",
+               env:         :non_interactive
+        flag "--timeout-wait-for-user=",
+             description: "Wait this many seconds when an interactive prompt is detected; then skip the item.",
+             env:         :prompt_timeout_secs
         [
           [:switch, "--formula", "--formulae", {
             description: "Treat all named arguments as formulae. If no named arguments " \
@@ -125,6 +131,12 @@ module Homebrew
 
       sig { override.void }
       def run
+        if args.non_interactive?
+          ENV["HOMEBREW_NON_INTERACTIVE"] = "1"
+        end
+        if args.timeout_wait_for_user.present?
+          ENV["HOMEBREW_PROMPT_TIMEOUT_SECS"] = args.timeout_wait_for_user
+        end
         if args.build_from_source? && args.named.empty?
           raise ArgumentError, "--build-from-source requires at least one formula"
         end
@@ -286,7 +298,8 @@ module Homebrew
 
         Install.ask_casks casks if args.ask?
 
-        Cask::Upgrade.upgrade_casks!(
+        begin
+          Cask::Upgrade.upgrade_casks!(
           *casks,
           force:               args.force?,
           greedy:              args.greedy?,
@@ -300,7 +313,13 @@ module Homebrew
           verbose:             args.verbose?,
           quiet:               args.quiet?,
           args:,
-        )
+          )
+        rescue Timeout::Error => e
+          # When multiple casks are processed, `upgrade_casks!` handles each sequentially
+          # Skips are recorded inside the installer loop where errors are rescued
+          opoo "Timed out waiting for user input while upgrading casks. Some items may be skipped."
+          Homebrew.messages.record_skipped_prompt("cask-upgrade", e.message)
+        end
       end
     end
   end

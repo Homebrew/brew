@@ -47,6 +47,12 @@ module Homebrew
                description: "Ask for confirmation before downloading and installing formulae. " \
                             "Print download and install sizes of bottles and dependencies.",
                env:         :ask
+        switch "--non-interactive",
+               description: "Fail fast on any interactive prompt and use non-interactive sudo where applicable.",
+               env:         :non_interactive
+        flag "--timeout-wait-for-user=",
+             description: "Wait this many seconds when an interactive prompt is detected; then skip the item.",
+             env:         :prompt_timeout_secs
         [
           [:switch, "--formula", "--formulae", {
             description: "Treat all named arguments as formulae.",
@@ -176,6 +182,14 @@ module Homebrew
 
       sig { override.void }
       def run
+        # Apply context for non-interactive/verbosity here so lower layers can query Context
+        if args.non_interactive?
+          ENV["HOMEBREW_NON_INTERACTIVE"] = "1"
+        end
+        if args.timeout_wait_for_user.present?
+          ENV["HOMEBREW_PROMPT_TIMEOUT_SECS"] = args.timeout_wait_for_user
+        end
+
         if args.env.present?
           # Can't use `replacement: false` because `install_args` are used by
           # `build.rb`. Instead, `hide_from_man_page` and don't do anything with
@@ -267,7 +281,7 @@ module Homebrew
           end
 
           new_casks.each do |cask|
-            Cask::Installer.new(
+            installer = Cask::Installer.new(
               cask,
               adopt:          args.adopt?,
               binaries:       args.binaries?,
@@ -277,7 +291,14 @@ module Homebrew
               require_sha:    args.require_sha?,
               skip_cask_deps: args.skip_cask_deps?,
               verbose:        args.verbose?,
-            ).install
+            )
+            begin
+              installer.install
+            rescue Timeout::Error => e
+              opoo "Timed out waiting for user input in cask #{cask.full_name}. Skipping."
+              Homebrew.messages.record_skipped_prompt(cask.full_name, e.message)
+              next
+            end
           end
 
           if !Homebrew::EnvConfig.no_install_upgrade? && installed_casks.any?

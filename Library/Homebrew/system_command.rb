@@ -48,6 +48,19 @@ class SystemCommand
 
     @output = []
 
+    @prompt_timeout_secs = nil
+    begin
+      prompt_timeout_env = Homebrew::EnvConfig.prompt_timeout_secs
+      if prompt_timeout_env && !prompt_timeout_env.strip.empty?
+        @prompt_timeout_secs = Integer(prompt_timeout_env) rescue Float(prompt_timeout_env)
+      end
+    rescue ArgumentError, TypeError
+      @prompt_timeout_secs = nil
+    end
+
+    @prompt_detected_at = nil
+    @terminated_due_to_prompt_timeout = false
+
     each_output_line do |type, line|
       case type
       when :stdout
@@ -67,9 +80,17 @@ class SystemCommand
         end
         @output << [:stderr, line]
       end
+
+      if @prompt_timeout_secs
+        # Detect common interactive prompt patterns
+        if line =~ /[Pp]assword:/ || line.include?("a password is required") || line =~ /installer: .*authorization/i
+          @prompt_detected_at ||= Time.now
+        end
+      end
     end
 
     result = Result.new(command, @output, @status, secrets: @secrets)
+    raise Timeout::Error, "Interactive prompt timeout" if @terminated_due_to_prompt_timeout
     result.assert_success! if must_succeed?
     result
   end
@@ -199,6 +220,7 @@ class SystemCommand
   sig { returns(T::Array[String]) }
   def sudo_prefix
     askpass_flags = ENV.key?("SUDO_ASKPASS") ? ["-A"] : []
+    non_interactive_flags = Homebrew::EnvConfig.non_interactive? ? ["-n"] : []
     user_flags = []
     if Homebrew::EnvConfig.sudo_through_sudo_user?
       if homebrew_sudo_user.blank?
@@ -211,7 +233,7 @@ class SystemCommand
                      "--", "/usr/bin/sudo"]
     end
     user_flags += ["-u", "root"] if sudo_as_root?
-    ["/usr/bin/sudo", *user_flags, *askpass_flags, "-E", *env_args, "--"]
+    ["/usr/bin/sudo", *user_flags, *askpass_flags, *non_interactive_flags, "-E", *env_args, "--"]
   end
 
   sig { returns(T::Array[String]) }
@@ -252,6 +274,29 @@ class SystemCommand
 
     raw_stdin, raw_stdout, raw_stderr, raw_wait_thr = exec3(env, executable, *args, **options)
 
+    monitor_thread = nil
+    if @prompt_timeout_secs
+      monitor_thread = Thread.new do
+        loop do
+          break unless raw_wait_thr.alive?
+          if @prompt_detected_at && (Time.now - @prompt_detected_at) >= @prompt_timeout_secs
+            begin
+              # Try TERM first, then KILL if needed
+              Process.kill("TERM", raw_wait_thr.pid)
+              sleep 0.5
+              Process.kill("KILL", raw_wait_thr.pid) if raw_wait_thr.alive?
+            rescue StandardError
+              # ignore
+            ensure
+              @terminated_due_to_prompt_timeout = true
+            end
+            break
+          end
+          sleep 0.2
+        end
+      end
+    end
+
     write_input_to(raw_stdin)
     raw_stdin.close_write
 
@@ -285,6 +330,7 @@ class SystemCommand
       thread_done_queue << true
       line_thread.join
     end
+    monitor_thread&.kill
     raw_stdin&.close
     raw_stdout&.close
     raw_stderr&.close

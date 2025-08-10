@@ -13,12 +13,16 @@ class Messages
   sig { returns(T::Array[T::Hash[String, Float]]) }
   attr_reader :install_times
 
+  sig { returns(T::Array[T::Hash[Symbol, String]]) }
+  attr_reader :skipped_prompts
+
   sig { void }
   def initialize
     @caveats = T.let([], T::Array[T::Hash[Symbol, Symbol]])
     @completions_and_elisp = T.let(Set.new, T::Set[String])
     @package_count = T.let(0, Integer)
     @install_times = T.let([], T::Array[T::Hash[String, Float]])
+    @skipped_prompts = T.let([], T::Array[T::Hash[Symbol, String]])
   end
 
   sig { params(package: String, caveats: T.any(String, Caveats)).void }
@@ -40,7 +44,23 @@ class Messages
   sig { params(force_caveats: T::Boolean, display_times: T::Boolean).void }
   def display_messages(force_caveats: false, display_times: false)
     display_caveats(force: force_caveats)
+    display_skipped_prompts
     display_install_times if display_times
+  end
+
+  sig { params(package: String, reason: String).void }
+  def record_skipped_prompt(package, reason)
+    @skipped_prompts.push(package:, reason:)
+  end
+
+  sig { void }
+  def display_skipped_prompts
+    return if @skipped_prompts.empty?
+
+    oh1 "Skipped items due to interactive prompts"
+    @skipped_prompts.each do |entry|
+      puts "#{entry[:package]}: #{entry[:reason]}"
+    end
   end
 
   sig { params(force: T::Boolean).void }
