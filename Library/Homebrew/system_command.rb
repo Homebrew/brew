@@ -62,8 +62,7 @@ class SystemCommand
       @prompt_timeout_secs = nil
     end
 
-    @prompt_detected_at = nil
-    @terminated_due_to_prompt_timeout = false
+    # Defer initialization; nil/falsey is treated as not detected/not terminated
 
     each_output_line do |type, line|
       case type
