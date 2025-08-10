@@ -354,6 +354,11 @@ module Homebrew
           Hardware::CPU.cores
         },
       },
+      HOMEBREW_NON_INTERACTIVE:                  {
+        description: "If set, treat Homebrew commands as non-interactive: use `sudo -n` when elevating and fail " \
+                     "immediately on any interactive prompt.",
+        boolean:     true,
+      },
       HOMEBREW_NO_ANALYTICS:                     {
         description: "If set, do not send analytics. Google Analytics were destroyed. " \
                      "For more information, see: <https://docs.brew.sh/Analytics>",
@@ -444,6 +449,11 @@ module Homebrew
       HOMEBREW_PIP_INDEX_URL:                    {
         description:  "If set, `brew install` <formula> will use this URL to download PyPI package resources.",
         default_text: "`https://pypi.org/simple`.",
+      },
+      HOMEBREW_PROMPT_TIMEOUT_SECS:              {
+        description: "If set, when an interactive prompt (e.g., sudo/password) is detected during installation, " \
+                     "wait this many seconds and then skip/fail the current item while continuing others. " \
+                     "Unset to wait indefinitely.",
       },
       HOMEBREW_PRY:                              {
         description: "If set, use Pry for the `brew irb` command.",
