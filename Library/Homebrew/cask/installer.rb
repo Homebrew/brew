@@ -176,7 +176,6 @@ on_request: true)
     rescue Timeout::Error => e
       opoo "Timed out waiting for user input in cask #{@cask.full_name}. Skipping."
       Homebrew.messages.record_skipped_prompt(@cask.full_name, e.message)
-      return
     rescue
       restore_backup
       raise

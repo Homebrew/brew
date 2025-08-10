@@ -130,12 +130,8 @@ module Homebrew
 
       sig { override.void }
       def run
-        if args.non_interactive?
-          ENV["HOMEBREW_NON_INTERACTIVE"] = "1"
-        end
-        if args.timeout_wait_for_user.present?
-          ENV["HOMEBREW_PROMPT_TIMEOUT_SECS"] = args.timeout_wait_for_user
-        end
+        ENV["HOMEBREW_NON_INTERACTIVE"] = "1" if args.non_interactive?
+        ENV["HOMEBREW_PROMPT_TIMEOUT_SECS"] = args.timeout_wait_for_user if args.timeout_wait_for_user.present?
         if args.build_from_source? && args.named.empty?
           raise ArgumentError, "--build-from-source requires at least one formula"
         end
@@ -299,7 +295,7 @@ module Homebrew
 
         begin
           Cask::Upgrade.upgrade_casks!(
-          *casks,
+            *casks,
           force:               args.force?,
           greedy:              args.greedy?,
           greedy_latest:       args.greedy_latest?,

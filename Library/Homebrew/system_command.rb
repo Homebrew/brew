@@ -52,7 +52,11 @@ class SystemCommand
     begin
       prompt_timeout_env = Homebrew::EnvConfig.prompt_timeout_secs
       if prompt_timeout_env && !prompt_timeout_env.strip.empty?
-        @prompt_timeout_secs = Integer(prompt_timeout_env) rescue Float(prompt_timeout_env)
+        begin
+          @prompt_timeout_secs = Integer(prompt_timeout_env)
+        rescue ArgumentError, TypeError
+          @prompt_timeout_secs = Float(prompt_timeout_env)
+        end
       end
     rescue ArgumentError, TypeError
       @prompt_timeout_secs = nil
@@ -81,11 +85,13 @@ class SystemCommand
         @output << [:stderr, line]
       end
 
-      if @prompt_timeout_secs
-        # Detect common interactive prompt patterns
-        if line =~ /[Pp]assword:/ || line.include?("a password is required") || line =~ /installer: .*authorization/i
-          @prompt_detected_at ||= Time.now
-        end
+      # Detect common interactive prompt patterns when timeout is configured
+      if @prompt_timeout_secs && (
+           line =~ /[Pp]assword:/ ||
+           line.include?("a password is required") ||
+           line =~ /installer: .*authorization/i
+         )
+        @prompt_detected_at ||= Time.now
       end
     end
 

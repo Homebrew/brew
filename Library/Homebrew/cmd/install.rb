@@ -182,12 +182,8 @@ module Homebrew
       sig { override.void }
       def run
         # Apply context for non-interactive/verbosity here so lower layers can query Context
-        if args.non_interactive?
-          ENV["HOMEBREW_NON_INTERACTIVE"] = "1"
-        end
-        if args.timeout_wait_for_user.present?
-          ENV["HOMEBREW_PROMPT_TIMEOUT_SECS"] = args.timeout_wait_for_user
-        end
+        ENV["HOMEBREW_NON_INTERACTIVE"] = "1" if args.non_interactive?
+        ENV["HOMEBREW_PROMPT_TIMEOUT_SECS"] = args.timeout_wait_for_user if args.timeout_wait_for_user.present?
 
         if args.env.present?
           # Can't use `replacement: false` because `install_args` are used by
