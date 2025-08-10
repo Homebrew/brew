@@ -298,6 +298,17 @@ module Homebrew
               opoo "Timed out waiting for user input in cask #{cask.full_name}. Skipping."
               Homebrew.messages.record_skipped_prompt(cask.full_name, e.message)
               next
+            rescue ErrorDuringExecution => e
+              if ENV["HOMEBREW_NON_INTERACTIVE"].present? && (
+                   e.stderr.include?("a password is required") ||
+                   e.stderr.include?("no tty present") ||
+                   e.message.include?("sudo")
+                 )
+                opoo "Non-interactive mode: sudo/interactive prompt detected in cask #{cask.full_name}. Skipping."
+                Homebrew.messages.record_skipped_prompt(cask.full_name, "non-interactive: sudo/interactive prompt")
+                next
+              end
+              raise
             end
           end
 

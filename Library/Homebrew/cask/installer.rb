@@ -173,6 +173,10 @@ on_request: true)
       puts summary
       end_time = Time.now
       Homebrew.messages.package_installed(@cask.token, end_time - start_time)
+    rescue Timeout::Error => e
+      opoo "Timed out waiting for user input in cask #{@cask.full_name}. Skipping."
+      Homebrew.messages.record_skipped_prompt(@cask.full_name, e.message)
+      return
     rescue
       restore_backup
       raise
