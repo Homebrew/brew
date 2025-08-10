@@ -86,10 +86,12 @@ class SystemCommand
       end
 
       # Detect common interactive prompt patterns when timeout is configured
-      next if !@prompt_timeout_secs
+      next unless @prompt_timeout_secs
+
       pattern_match = (line =~ /[Pp]assword:/) || line.include?("a password is required") ||
                       (line =~ /installer: .*authorization/i)
       next unless pattern_match
+
       @prompt_detected_at ||= Time.now
     end
 
@@ -284,6 +286,7 @@ class SystemCommand
       monitor_thread = Thread.new do
         loop do
           break unless raw_wait_thr.alive?
+
           if @prompt_detected_at && (Time.now - @prompt_detected_at) >= @prompt_timeout_secs
             begin
               # Try TERM first, then KILL if needed
