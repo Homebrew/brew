@@ -86,13 +86,13 @@ class SystemCommand
       end
 
       # Detect common interactive prompt patterns when timeout is configured
-      if @prompt_timeout_secs && (
-           line =~ /[Pp]assword:/ ||
-           line.include?("a password is required") ||
-           line =~ /installer: .*authorization/i
-         )
-        @prompt_detected_at ||= Time.now
-      end
+      next unless @prompt_timeout_secs && (
+        line =~ /[Pp]assword:/ ||
+        line.include?("a password is required") ||
+        line =~ /installer: .*authorization/i
+      )
+
+      @prompt_detected_at ||= Time.now
     end
 
     result = Result.new(command, @output, @status, secrets: @secrets)
