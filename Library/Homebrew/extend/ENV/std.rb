@@ -3,7 +3,9 @@
 
 require "hardware"
 require "extend/ENV/shared"
+require "development_tools"
 
+# Extensions for the Standard build environment.
 module Stdenv
   include SharedEnvExtension
 
@@ -54,6 +56,9 @@ module Stdenv
 
     # Os is the default Apple uses for all its stuff so let's trust them
     define_cflags "-Os #{SAFE_CFLAGS_FLAGS}"
+
+    # Add reproducible build flags to remove references to temporary build directories
+    add_reproducible_build_flags(formula) if formula
 
     begin
       send(compiler)
@@ -186,6 +191,47 @@ module Stdenv
   sig { params(map: T::Hash[Symbol, String]).void }
   def set_cpu_cflags(map = Hardware::CPU.optimization_flags)
     set_cpu_flags(CC_FLAG_VARS, map)
+  end
+
+  # Add compiler flags to make builds reproducible by removing references to temporary directories.
+  # Uses `-ffile-prefix-map` when available (GCC >= 8, LLVM Clang >= 10, Apple Clang >= 12),
+  # falls back to `-fdebug-prefix-map` for older versions.
+  sig { params(formula: Formula).void }
+  def add_reproducible_build_flags(formula)
+    return unless formula.buildpath
+
+    buildpath = formula.buildpath.to_s
+
+    # Determine which flags are supported based on compiler version
+    reproducible_flag = if (clang_version = DevelopmentTools.clang_version) && !clang_version.null?
+      # Check for Apple Clang vs LLVM Clang
+      if `#{DevelopmentTools.locate("clang")} --version`.include?("Apple clang")
+        # Apple Clang >= 12 supports -ffile-prefix-map
+        if clang_version >= "12"
+          "-ffile-prefix-map=#{buildpath}=/tmp/homebrew-build/#{formula.name}"
+        else
+          "-fdebug-prefix-map=#{buildpath}=/tmp/homebrew-build/#{formula.name}"
+        end
+      elsif clang_version >= "10"
+        # LLVM Clang >= 10 supports -ffile-prefix-map
+        "-ffile-prefix-map=#{buildpath}=/tmp/homebrew-build/#{formula.name}"
+      else
+        "-fdebug-prefix-map=#{buildpath}=/tmp/homebrew-build/#{formula.name}"
+      end
+    elsif (gcc_match = ENV["CC"]&.match(/gcc(?:-(\d+))?/)) &&
+          (gcc_version = DevelopmentTools.gcc_version(gcc_match[0])) && !gcc_version.null?
+      # GCC >= 8 supports -ffile-prefix-map
+      if gcc_version >= "8"
+        "-ffile-prefix-map=#{buildpath}=/tmp/homebrew-build/#{formula.name}"
+      else
+        "-fdebug-prefix-map=#{buildpath}=/tmp/homebrew-build/#{formula.name}"
+      end
+    else
+      # Default fallback for unknown compilers
+      "-fdebug-prefix-map=#{buildpath}=/tmp/homebrew-build/#{formula.name}"
+    end
+
+    append_to_cflags(reproducible_flag) if reproducible_flag
   end
 end
 
