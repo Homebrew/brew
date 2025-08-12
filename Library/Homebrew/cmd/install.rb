@@ -334,6 +334,8 @@ module Homebrew
         Install.perform_preinstall_checks_once
         Install.check_cc_argv(args.cc)
 
+        installed_formulae = installed_formulae.map(&:to_fully_loaded_formula)
+
         formulae_installer = Install.formula_installers(
           installed_formulae,
           installed_on_request:       !args.as_dependency?,
