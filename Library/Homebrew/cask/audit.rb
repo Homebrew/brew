@@ -498,7 +498,7 @@ module Cask
       return if url.nil?
 
       return if !cask.tap.official? && !signing?
-      return if cask.deprecated? && cask.deprecation_reason != :unsigned
+      return if cask.deprecated? && cask.deprecation_reason != :fails_gatekeeper_check
 
       odebug "Auditing signing"
 
@@ -532,7 +532,7 @@ module Cask
           end
 
           next false if result.success?
-          next true if cask.deprecated? && cask.deprecation_reason == :unsigned
+          next true if cask.deprecated? && cask.deprecation_reason == :fails_gatekeeper_check
           next true if is_in_skiplist
 
           add_error <<~EOS, location: url.location
@@ -550,10 +550,10 @@ module Cask
         add_error "Cask is in the signing audit skiplist, but does not need to be skipped!" if is_in_skiplist
 
         return unless cask.deprecated?
-        return if cask.deprecation_reason != :unsigned
+        return if cask.deprecation_reason != :fails_gatekeeper_check
 
         add_error <<~EOS
-          Cask is deprecated as unsigned but all artifacts are signed!
+          Cask is deprecated because it failed Gatekeeper checks but all artifacts now pass!
           Remove the deprecate/disable stanza or update the deprecate/disable reason.
         EOS
       end

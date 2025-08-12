@@ -120,7 +120,7 @@ module Homebrew
       }
       private_class_method def self.cask_deprecated(cask, livecheck_defined, full_name: false, verbose: false)
         return {} if !cask.deprecated? || livecheck_defined
-        return {} if cask.disable_date && cask.deprecation_reason == :unsigned
+        return {} if cask.disable_date && cask.deprecation_reason == :fails_gatekeeper_check
 
         Livecheck.status_hash(cask, "deprecated", full_name:, verbose:)
       end

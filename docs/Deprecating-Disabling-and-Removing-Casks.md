@@ -20,11 +20,12 @@ If a user attempts to install a deprecated cask, they will be shown a warning me
 
 A cask should be deprecated to indicate to users that the cask should not be used and will be disabled in the future. Deprecated casks should continue to be maintained by the Homebrew maintainers if they continue to be installable. If this is not possible, they should be immediately disabled.
 
-The most common reasons for deprecation are when the upstream project is unsigned, deprecated, unmaintained or archived.
+The most common reasons for deprecation are when the upstream project is deprecated, unmaintained or archived,
+or the software does not pass macOS Gatekeeper checks.
 
 Casks should only be deprecated if at least one of the following are true:
 
-- the software installed by the cask is unsigned or does not meet signature requirements for supported OS versions
+- the software installed by the cask fails macOS Gatekeeper checks for supported OS versions
 - the software installed by the cask cannot be run on any supported OS versions
 - the software installed by the cask has outstanding CVEs
 - the software installed by the cask has been discontinued or abandoned upstream
@@ -96,7 +97,7 @@ There are two ways to indicate the reason. The preferred way is to use a pre-exi
 - `:no_longer_available`: the cask is no longer available upstream
 - `:no_longer_meets_criteria`: the cask no longer meets the criteria for acceptable casks
 - `:unmaintained`: the cask is not maintained upstream
-- `:unsigned`: the cask is unsigned or does not meet signature requirements
+- `:fails_gatekeeper_check`: the cask fails macOS Gatekeeper checks
 
 These reasons can be specified by their symbols (the comments show the message that will be displayed to users):
 
