@@ -296,7 +296,7 @@ module Homebrew
               Homebrew.messages.record_skipped_prompt(cask.full_name, e.message)
               next
             rescue ErrorDuringExecution => e
-              if ENV["HOMEBREW_NON_INTERACTIVE"].present? && (
+              if args.non_interactive.present? && (
                    e.stderr.include?("a password is required") ||
                    e.stderr.include?("no tty present") ||
                    e.message.include?("sudo")
