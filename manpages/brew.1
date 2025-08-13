@@ -493,6 +493,12 @@ Show what would be installed, but do not actually install anything\.
 \fB\-\-ask\fP
 Ask for confirmation before downloading and installing formulae\. Print download and install sizes of bottles and dependencies\. Enabled by default if \fB$HOMEBREW_ASK\fP is set\.
 .TP
+\fB\-\-non\-interactive\-sudo\fP
+Fail fast on any interactive sudo prompt and use non\-interactive sudo where possible\.
+.TP
+\fB\-\-timeout\-wait\-for\-user\fP
+Wait this many seconds when an interactive prompt is detected; then skip the item\.
+.TP
 \fB\-\-formula\fP
 Treat all named arguments as formulae\.
 .TP
@@ -1055,6 +1061,12 @@ Show what would be upgraded, but do not actually upgrade anything\.
 .TP
 \fB\-\-ask\fP
 Ask for confirmation before downloading and upgrading formulae\. Print download, install and net install sizes of bottles and dependencies\. Enabled by default if \fB$HOMEBREW_ASK\fP is set\.
+.TP
+\fB\-\-non\-interactive\fP
+Fail fast on any interactive prompt and use non\-interactive sudo where applicable\. Enabled by default if \fB$HOMEBREW_NON_INTERACTIVE\fP is set\.
+.TP
+\fB\-\-timeout\-wait\-for\-user\fP
+Wait this many seconds when an interactive prompt is detected; then skip the item\.
 .TP
 \fB\-\-formula\fP
 Treat all named arguments as formulae\. If no named arguments are specified, upgrade only outdated formulae\.
@@ -2781,6 +2793,9 @@ Use this value as the number of parallel jobs to run when building with \fBmake\
 \fIDefault:\fP The number of available CPU cores\.
 .RE
 .TP
+\fBHOMEBREW_NON_INTERACTIVE\fP
+If set, treat Homebrew commands as non\-interactive: use \fBsudo \-n\fP when elevating and fail immediately on any interactive prompt\.
+.TP
 \fBHOMEBREW_NO_ANALYTICS\fP
 If set, do not send analytics\. Google Analytics were destroyed\. For more information, see: 
 .UR https://docs\.brew\.sh/Analytics
@@ -2848,6 +2863,9 @@ If set, \fBbrew install\fP \fIformula\fP will use this URL to download PyPI pack
 .P
 \fIDefault:\fP \fBhttps://pypi\.org/simple\fP\&\.
 .RE
+.TP
+\fBHOMEBREW_PROMPT_TIMEOUT_SECS\fP
+If set, when an interactive prompt (e\.g\., sudo/password) is detected during installation, wait this many seconds and then skip/fail the current item while continuing others\. Unset to wait indefinitely\.
 .TP
 \fBHOMEBREW_PRY\fP
 If set, use Pry for the \fBbrew irb\fP command\.

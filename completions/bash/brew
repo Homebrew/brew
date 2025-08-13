@@ -1443,6 +1443,7 @@ _brew_instal() {
       --mdimporterdir
       --no-binaries
       --no-quarantine
+      --non-interactive-sudo
       --only-dependencies
       --overwrite
       --prefpanedir
@@ -1455,6 +1456,7 @@ _brew_instal() {
       --skip-cask-deps
       --skip-link
       --skip-post-install
+      --timeout-wait-for-user
       --verbose
       --vst-plugindir
       --vst3-plugindir
@@ -1509,6 +1511,7 @@ _brew_install() {
       --mdimporterdir
       --no-binaries
       --no-quarantine
+      --non-interactive-sudo
       --only-dependencies
       --overwrite
       --prefpanedir
@@ -1521,6 +1524,7 @@ _brew_install() {
       --skip-cask-deps
       --skip-link
       --skip-post-install
+      --timeout-wait-for-user
       --verbose
       --vst-plugindir
       --vst3-plugindir
@@ -3023,6 +3027,7 @@ _brew_upgrade() {
       --mdimporterdir
       --no-binaries
       --no-quarantine
+      --non-interactive
       --overwrite
       --prefpanedir
       --qlplugindir
@@ -3032,6 +3037,7 @@ _brew_upgrade() {
       --screen-saverdir
       --servicedir
       --skip-cask-deps
+      --timeout-wait-for-user
       --verbose
       --vst-plugindir
       --vst3-plugindir

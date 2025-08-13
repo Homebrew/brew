@@ -791,6 +791,16 @@ upgrade *`formula`* if it is already installed but outdated.
   download and install sizes of bottles and dependencies. Enabled by default if
   `$HOMEBREW_ASK` is set.
 
+`--non-interactive-sudo`
+
+: Fail fast on any interactive sudo prompt and use non-interactive sudo where
+  possible.
+
+`--timeout-wait-for-user`
+
+: Wait this many seconds when an interactive prompt is detected; then skip the
+  item.
+
 `--formula`
 
 : Treat all named arguments as formulae.
@@ -1709,6 +1719,16 @@ for the upgraded formulae or, every 30 days, for all formulae.
 : Ask for confirmation before downloading and upgrading formulae. Print
   download, install and net install sizes of bottles and dependencies. Enabled
   by default if `$HOMEBREW_ASK` is set.
+
+`--non-interactive`
+
+: Fail fast on any interactive prompt and use non-interactive sudo where
+  applicable. Enabled by default if `$HOMEBREW_NON_INTERACTIVE` is set.
+
+`--timeout-wait-for-user`
+
+: Wait this many seconds when an interactive prompt is detected; then skip the
+  item.
 
 `--formula`
 
@@ -4264,6 +4284,11 @@ command execution (e.g. `$(cat file)`).
   
   *Default:* The number of available CPU cores.
 
+`HOMEBREW_NON_INTERACTIVE`
+
+: If set, treat Homebrew commands as non-interactive: use `sudo -n` when
+  elevating and fail immediately on any interactive prompt.
+
 `HOMEBREW_NO_ANALYTICS`
 
 : If set, do not send analytics. Google Analytics were destroyed. For more
@@ -4366,6 +4391,12 @@ command execution (e.g. `$(cat file)`).
   resources.
   
   *Default:* `https://pypi.org/simple`.
+
+`HOMEBREW_PROMPT_TIMEOUT_SECS`
+
+: If set, when an interactive prompt (e.g., sudo/password) is detected during
+  installation, wait this many seconds and then skip/fail the current item while
+  continuing others. Unset to wait indefinitely.
 
 `HOMEBREW_PRY`
 

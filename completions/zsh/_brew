@@ -1229,6 +1229,7 @@ _brew_instal() {
     '(--formula)--mdimporterdir[Target location for Spotlight Plugins (default: `~/Library/Spotlight`)]' \
     '--no-binaries[Disable/enable linking of helper executables (default: enabled). Enabled by default if `$HOMEBREW_CASK_OPTS_BINARIES` is set]' \
     '--no-quarantine[Disable/enable quarantining of downloads (default: enabled). Enabled by default if `$HOMEBREW_CASK_OPTS_QUARANTINE` is set]' \
+    '--non-interactive-sudo[Fail fast on any interactive sudo prompt and use non-interactive sudo where possible]' \
     '(--cask --ignore-dependencies)--only-dependencies[Install the dependencies with specified options but do not install the formula itself]' \
     '(--cask)--overwrite[Delete files that already exist in the prefix while linking]' \
     '(--formula)--prefpanedir[Target location for Preference Panes (default: `~/Library/PreferencePanes`)]' \
@@ -1241,6 +1242,7 @@ _brew_instal() {
     '(--formula)--skip-cask-deps[Skip installing cask dependencies]' \
     '(--cask)--skip-link[Install but skip linking the keg into the prefix]' \
     '(--cask)--skip-post-install[Install but skip any post-install steps]' \
+    '--timeout-wait-for-user[Wait this many seconds when an interactive prompt is detected; then skip the item]' \
     '--verbose[Print the verification and post-install steps]' \
     '(--formula)--vst-plugindir[Target location for VST Plugins (default: `~/Library/Audio/Plug-Ins/VST`)]' \
     '(--formula)--vst3-plugindir[Target location for VST3 Plugins (default: `~/Library/Audio/Plug-Ins/VST3`)]' \
@@ -1290,6 +1292,7 @@ _brew_install() {
     '(--formula)--mdimporterdir[Target location for Spotlight Plugins (default: `~/Library/Spotlight`)]' \
     '--no-binaries[Disable/enable linking of helper executables (default: enabled). Enabled by default if `$HOMEBREW_CASK_OPTS_BINARIES` is set]' \
     '--no-quarantine[Disable/enable quarantining of downloads (default: enabled). Enabled by default if `$HOMEBREW_CASK_OPTS_QUARANTINE` is set]' \
+    '--non-interactive-sudo[Fail fast on any interactive sudo prompt and use non-interactive sudo where possible]' \
     '(--cask --ignore-dependencies)--only-dependencies[Install the dependencies with specified options but do not install the formula itself]' \
     '(--cask)--overwrite[Delete files that already exist in the prefix while linking]' \
     '(--formula)--prefpanedir[Target location for Preference Panes (default: `~/Library/PreferencePanes`)]' \
@@ -1302,6 +1305,7 @@ _brew_install() {
     '(--formula)--skip-cask-deps[Skip installing cask dependencies]' \
     '(--cask)--skip-link[Install but skip linking the keg into the prefix]' \
     '(--cask)--skip-post-install[Install but skip any post-install steps]' \
+    '--timeout-wait-for-user[Wait this many seconds when an interactive prompt is detected; then skip the item]' \
     '--verbose[Print the verification and post-install steps]' \
     '(--formula)--vst-plugindir[Target location for VST Plugins (default: `~/Library/Audio/Plug-Ins/VST`)]' \
     '(--formula)--vst3-plugindir[Target location for VST3 Plugins (default: `~/Library/Audio/Plug-Ins/VST3`)]' \
@@ -2380,6 +2384,7 @@ _brew_upgrade() {
     '(--formula)--mdimporterdir[Target location for Spotlight Plugins (default: `~/Library/Spotlight`)]' \
     '--no-binaries[Disable/enable linking of helper executables (default: enabled). Enabled by default if `$HOMEBREW_CASK_OPTS_BINARIES` is set]' \
     '--no-quarantine[Disable/enable quarantining of downloads (default: enabled). Enabled by default if `$HOMEBREW_CASK_OPTS_QUARANTINE` is set]' \
+    '--non-interactive[Fail fast on any interactive prompt and use non-interactive sudo where applicable. Enabled by default if `$HOMEBREW_NON_INTERACTIVE` is set]' \
     '(--cask)--overwrite[Delete files that already exist in the prefix while linking]' \
     '(--formula)--prefpanedir[Target location for Preference Panes (default: `~/Library/PreferencePanes`)]' \
     '(--formula)--qlplugindir[Target location for Quick Look Plugins (default: `~/Library/QuickLook`)]' \
@@ -2389,6 +2394,7 @@ _brew_upgrade() {
     '(--formula)--screen-saverdir[Target location for Screen Savers (default: `~/Library/Screen Savers`)]' \
     '(--formula)--servicedir[Target location for Services (default: `~/Library/Services`)]' \
     '(--formula)--skip-cask-deps[Skip installing cask dependencies]' \
+    '--timeout-wait-for-user[Wait this many seconds when an interactive prompt is detected; then skip the item]' \
     '--verbose[Print the verification and post-install steps]' \
     '(--formula)--vst-plugindir[Target location for VST Plugins (default: `~/Library/Audio/Plug-Ins/VST`)]' \
     '(--formula)--vst3-plugindir[Target location for VST3 Plugins (default: `~/Library/Audio/Plug-Ins/VST3`)]' \
