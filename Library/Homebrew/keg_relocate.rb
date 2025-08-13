@@ -78,7 +78,7 @@ class Keg
     end
   end
 
-  def relocate_dynamic_linkage(_relocation)
+  def relocate_dynamic_linkage(_relocation, skip_protodesc_cold: false)
     []
   end
 
@@ -104,7 +104,7 @@ class Keg
 
   def replace_locations_with_placeholders
     relocation = prepare_relocation_to_placeholders.freeze
-    relocate_dynamic_linkage(relocation)
+    relocate_dynamic_linkage(relocation, skip_protodesc_cold: true)
     replace_text_in_files(relocation)
   end
 

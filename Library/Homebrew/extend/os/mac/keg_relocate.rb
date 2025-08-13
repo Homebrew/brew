@@ -20,7 +20,7 @@ module OS
         end
       end
 
-      def relocate_dynamic_linkage(relocation)
+      def relocate_dynamic_linkage(relocation, skip_protodesc_cold: false)
         mach_o_files.each do |file|
           file.ensure_writable do
             modified = T.let(false, T::Boolean)

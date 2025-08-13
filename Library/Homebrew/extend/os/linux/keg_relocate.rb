@@ -4,7 +4,7 @@
 require "compilers"
 
 class Keg
-  def relocate_dynamic_linkage(relocation)
+  def relocate_dynamic_linkage(relocation, skip_protodesc_cold: false)
     # Patching the dynamic linker of glibc breaks it.
     return if name.match? Version.formula_optionally_versioned_regex(:glibc)
 
@@ -12,13 +12,18 @@ class Keg
 
     elf_files.each do |file|
       file.ensure_writable do
-        change_rpath!(file, old_prefix, new_prefix)
+        change_rpath!(file, old_prefix, new_prefix, skip_protodesc_cold:)
       end
     end
   end
 
-  def change_rpath!(file, old_prefix, new_prefix)
+  def change_rpath!(file, old_prefix, new_prefix, skip_protodesc_cold: false)
     return false if !file.elf? || !file.dynamic_elf?
+
+    # Skip relocation of files with `protodesc_cold` sections because patchelf.rb seems to break them,
+    # but only when bottling (as we don't want to break existing bottles that require relocation).
+    # https://github.com/Homebrew/homebrew-core/pull/232490#issuecomment-3161362452
+    return false if skip_protodesc_cold && file.section_names.include?("protodesc_cold")
 
     updated = {}
     old_rpath = file.rpath
