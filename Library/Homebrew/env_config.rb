@@ -452,7 +452,7 @@ module Homebrew
         default_text: "`https://pypi.org/simple`.",
       },
       HOMEBREW_PROMPT_TIMEOUT_SECS:              {
-        description: "If set, when an interactive prompt (e.g., sudo/password) is detected during installation, " \
+        description: "If set, when an interactive prompt (e.g. sudo/password) is detected during installation, " \
                      "wait this many seconds and then skip/fail the current item while continuing others. " \
                      "Unset to wait indefinitely.",
       },
