@@ -127,9 +127,6 @@ module Homebrew::EnvConfig
     sig { returns(T::Boolean) }
     def forbid_casks?; end
 
-    sig { returns(T::Boolean) }
-    def forbid_packages_from_paths?; end
-
     sig { returns(T.nilable(::String)) }
     def forbidden_casks; end
 
