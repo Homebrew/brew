@@ -4394,7 +4394,7 @@ command execution (e.g. `$(cat file)`).
 
 `HOMEBREW_PROMPT_TIMEOUT_SECS`
 
-: If set, when an interactive prompt (e.g. sudo/password) is detected during
+: If set, when an interactive prompt (e.g., sudo/password) is detected during
   installation, wait this many seconds and then skip/fail the current item while
   continuing others. Unset to wait indefinitely.
 
