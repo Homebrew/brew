@@ -48,19 +48,7 @@ class SystemCommand
 
     @output = []
 
-    @prompt_timeout_secs = nil
-    begin
-      prompt_timeout_env = ENV.fetch("HOMEBREW_PROMPT_TIMEOUT_SECS", nil)
-      if prompt_timeout_env && !prompt_timeout_env.strip.empty?
-        begin
-          @prompt_timeout_secs = Integer(prompt_timeout_env)
-        rescue ArgumentError, TypeError
-          @prompt_timeout_secs = Float(prompt_timeout_env)
-        end
-      end
-    rescue ArgumentError, TypeError
-      @prompt_timeout_secs = nil
-    end
+    @prompt_timeout_secs = parse_prompt_timeout_from_env
 
     # Defer initialization; nil/falsey is treated as not detected/not terminated
 
@@ -84,14 +72,7 @@ class SystemCommand
         @output << [:stderr, line]
       end
 
-      # Detect common interactive prompt patterns when timeout is configured
-      next unless @prompt_timeout_secs
-
-      pattern_match = (line =~ /[Pp]assword:/) || line.include?("a password is required") ||
-                      (line =~ /installer: .*authorization/i)
-      next unless pattern_match
-
-      @prompt_detected_at ||= Time.now
+      maybe_mark_prompt_detected(line)
     end
 
     result = Result.new(command, @output, @status, secrets: @secrets)
@@ -252,6 +233,30 @@ class SystemCommand
     sudo? ? sudo_prefix : env_prefix
   end
 
+  sig { returns(T.nilable(T.any(Integer, Float))) }
+  def parse_prompt_timeout_from_env
+    prompt_timeout_env = ENV.fetch("HOMEBREW_PROMPT_TIMEOUT_SECS", nil)
+    return if prompt_timeout_env.nil? || prompt_timeout_env.strip.empty?
+
+    Integer(prompt_timeout_env)
+  rescue ArgumentError, TypeError
+    Float(T.must(prompt_timeout_env))
+  end
+
+  sig { params(line: String).returns(T::Boolean) }
+  def interactive_prompt_line?(line)
+    !!((line =~ /[Pp]assword:/) || line.include?("a password is required") ||
+      (line =~ /installer: .*authorization/i))
+  end
+
+  sig { params(line: String).void }
+  def maybe_mark_prompt_detected(line)
+    return unless @prompt_timeout_secs
+    return unless interactive_prompt_line?(line)
+
+    @prompt_detected_at = Time.now if @prompt_detected_at.nil?
+  end
+
   sig { returns(T::Array[String]) }
   def expanded_args
     @expanded_args ||= args.map do |arg|
@@ -280,29 +285,7 @@ class SystemCommand
 
     raw_stdin, raw_stdout, raw_stderr, raw_wait_thr = exec3(env, executable, *args, **options)
 
-    monitor_thread = nil
-    if @prompt_timeout_secs
-      monitor_thread = Thread.new do
-        loop do
-          break unless raw_wait_thr.alive?
-
-          if @prompt_detected_at && (Time.now - @prompt_detected_at) >= @prompt_timeout_secs
-            begin
-              # Try TERM first, then KILL if needed
-              Process.kill("TERM", raw_wait_thr.pid)
-              sleep 0.5
-              Process.kill("KILL", raw_wait_thr.pid) if raw_wait_thr.alive?
-            rescue
-              # ignore
-            ensure
-              @terminated_due_to_prompt_timeout = true
-            end
-            break
-          end
-          sleep 0.2
-        end
-      end
-    end
+    monitor_thread = start_prompt_timeout_monitor(raw_wait_thr)
 
     write_input_to(raw_stdin)
     raw_stdin.close_write
@@ -376,6 +359,7 @@ class SystemCommand
       exit!(127)
     end
     wait_thr = Process.detach(pid)
+    wait_thr[:pid] = pid
 
     [in_w, out_r, err_r, wait_thr]
   rescue
@@ -387,6 +371,31 @@ class SystemCommand
     in_r&.close
     out_w&.close
     err_w&.close
+  end
+
+  sig { params(raw_wait_thr: Thread).returns(T.nilable(Thread)) }
+  def start_prompt_timeout_monitor(raw_wait_thr)
+    return unless @prompt_timeout_secs
+
+    Thread.new do
+      loop do
+        break unless raw_wait_thr.alive?
+
+        if @prompt_detected_at && (Time.now - @prompt_detected_at) >= @prompt_timeout_secs
+          begin
+            Process.kill("TERM", raw_wait_thr[:pid])
+            sleep 0.5
+            Process.kill("KILL", raw_wait_thr[:pid]) if raw_wait_thr.alive?
+          rescue
+            # ignore
+          ensure
+            @terminated_due_to_prompt_timeout = true
+          end
+          break
+        end
+        sleep 0.2
+      end
+    end
   end
 
   sig { params(raw_stdin: IO).void }

@@ -48,8 +48,7 @@ module Homebrew
                             "Print download and install sizes of bottles and dependencies.",
                env:         :ask
         switch "--non-interactive-sudo",
-               description: "Fail fast on any interactive sudo prompt and use non-interactive sudo where possible.",
-               env:         :non_interactive_sudo
+               description: "Fail fast on any interactive sudo prompt and use non-interactive sudo where possible."
         flag "--timeout-wait-for-user=",
              description: "Wait this many seconds when an interactive prompt is detected; then skip the item."
         [
@@ -181,9 +180,9 @@ module Homebrew
 
       sig { override.void }
       def run
-        # Apply context for non-interactive/verbosity here so lower layers can query Context
-        ENV["HOMEBREW_NON_INTERACTIVE"] = "1" if args.value("non-interactive")
-        if (timeout = args.timeout_wait_for_user).present?
+        # Apply non-interactive behaviour for sudo/interactive prompts when requested
+        ENV["HOMEBREW_NON_INTERACTIVE"] = "1" if args.value("non-interactive-sudo").present?
+        if (timeout = args.value("timeout-wait-for-user")).present?
           ENV["HOMEBREW_PROMPT_TIMEOUT_SECS"] = timeout
         end
 
@@ -291,12 +290,8 @@ module Homebrew
             )
             begin
               installer.install
-            rescue Timeout::Error => e
-              opoo "Timed out waiting for user input in cask #{cask.full_name}. Skipping."
-              Homebrew.messages.record_skipped_prompt(cask.full_name, e.message)
-              next
             rescue ErrorDuringExecution => e
-              if args.non_interactive.present? && (
+              if args.value("non-interactive-sudo").present? && (
                    e.stderr.include?("a password is required") ||
                    e.stderr.include?("no tty present") ||
                    e.message.include?("sudo")
