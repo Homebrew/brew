@@ -69,4 +69,34 @@ RSpec.describe Homebrew::EnvConfig do
       expect(env_config.make_jobs).to eql("16")
     end
   end
+
+  describe ".forbid_packages_from_paths?" do
+    before do
+      ENV["HOMEBREW_FORBID_PACKAGES_FROM_PATHS"] = nil
+      ENV["HOMEBREW_DEVELOPER"] = nil
+      ENV["HOMEBREW_TESTS"] = nil
+    end
+
+    it "returns true if HOMEBREW_FORBID_PACKAGES_FROM_PATHS is set" do
+      ENV["HOMEBREW_FORBID_PACKAGES_FROM_PATHS"] = "1"
+      expect(env_config.forbid_packages_from_paths?).to be(true)
+    end
+
+    it "returns true if HOMEBREW_DEVELOPER is not set" do
+      ENV["HOMEBREW_DEVELOPER"] = nil
+      expect(env_config.forbid_packages_from_paths?).to be(true)
+    end
+
+    it "returns false if HOMEBREW_DEVELOPER is set and HOMEBREW_FORBID_PACKAGES_FROM_PATHS is not set" do
+      ENV["HOMEBREW_DEVELOPER"] = "1"
+      ENV["HOMEBREW_FORBID_PACKAGES_FROM_PATHS"] = nil
+      expect(env_config.forbid_packages_from_paths?).to be(false)
+    end
+
+    it "returns true if both HOMEBREW_DEVELOPER and HOMEBREW_FORBID_PACKAGES_FROM_PATHS are set" do
+      ENV["HOMEBREW_DEVELOPER"] = "1"
+      ENV["HOMEBREW_FORBID_PACKAGES_FROM_PATHS"] = "1"
+      expect(env_config.forbid_packages_from_paths?).to be(true)
+    end
+  end
 end

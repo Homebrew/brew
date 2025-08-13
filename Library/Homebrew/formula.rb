@@ -557,6 +557,12 @@ class Formula
   # @see .loaded_from_api?
   delegate loaded_from_api?: :"self.class"
 
+  # The API source data used to load this formula.
+  # Returns `nil` if the formula was not loaded from the API.
+  # @!method api_source
+  # @see .api_source
+  delegate api_source: :"self.class"
+
   sig { void }
   def update_head_version
     return unless head?
@@ -2625,9 +2631,8 @@ class Formula
     hash = to_hash
 
     # Take from API, merging in local install status.
-    if loaded_from_api? && !Homebrew::EnvConfig.no_install_from_api?
-      json_formula = Homebrew::API::Formula.all_formulae.fetch(name).dup
-      return json_formula.merge(
+    if loaded_from_api? && (json_formula = api_source) && !Homebrew::EnvConfig.no_install_from_api?
+      return json_formula.dup.merge(
         hash.slice("name", "installed", "linked_keg", "pinned", "outdated"),
       )
     end
@@ -3062,7 +3067,7 @@ class Formula
 
     @exec_count ||= T.let(0, T.nilable(Integer))
     @exec_count += 1
-    logfn = format("#{logs}/#{active_log_prefix}%02<exec_count>d.%<cmd_base>s",
+    logfn = format("#{logs}/#{active_log_prefix}%02<exec_count>d.%<cmd_base>s.log",
                    exec_count: @exec_count,
                    cmd_base:   File.basename(cmd).split.first)
     logs.mkpath
@@ -3358,6 +3363,7 @@ class Formula
         @skip_clean_paths = T.let(Set.new, T.nilable(T::Set[T.any(String, Symbol)]))
         @link_overwrite_paths = T.let(Set.new, T.nilable(T::Set[String]))
         @loaded_from_api = T.let(false, T.nilable(T::Boolean))
+        @api_source = T.let(nil, T.nilable(T::Hash[String, T.untyped]))
         @on_system_blocks_exist = T.let(false, T.nilable(T::Boolean))
         @network_access_allowed = T.let(SUPPORTED_NETWORK_ACCESS_PHASES.to_h do |phase|
           [phase, DEFAULT_NETWORK_ACCESS_ALLOWED]
@@ -3381,6 +3387,10 @@ class Formula
     # Whether this formula was loaded using the formulae.brew.sh API.
     sig { returns(T::Boolean) }
     def loaded_from_api? = !!@loaded_from_api
+
+    # Whether this formula was loaded using the formulae.brew.sh API.
+    sig { returns(T.nilable(T::Hash[String, T.untyped])) }
+    attr_reader :api_source
 
     # Whether this formula contains OS/arch-specific blocks
     # (e.g. `on_macos`, `on_arm`, `on_monterey :or_older`, `on_system :linux, macos: :big_sur_or_newer`).

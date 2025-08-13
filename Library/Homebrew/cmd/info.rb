@@ -159,9 +159,9 @@ module Homebrew
 
           case obj
           when Formula
-            Utils::Analytics.formula_output(obj, args:)
+            Utils::Analytics.formula_output(obj, args:) if obj.core_formula?
           when Cask::Cask
-            Utils::Analytics.cask_output(obj, args:)
+            Utils::Analytics.cask_output(obj, args:) if obj.tap.core_cask_tap?
           when FormulaOrCaskUnavailableError
             Utils::Analytics.output(filter: obj.name, args:)
           else
@@ -379,6 +379,8 @@ module Homebrew
         if (caveats_string = caveats.to_s.presence)
           ohai "Caveats", caveats_string
         end
+
+        return unless formula.core_formula?
 
         Utils::Analytics.formula_output(formula, args:)
       end

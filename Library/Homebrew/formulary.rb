@@ -173,9 +173,9 @@ module Formulary
     platform_cache[:path][path] = klass
   end
 
-  sig { params(name: String, flags: T::Array[String]).returns(T.class_of(Formula)) }
-  def self.load_formula_from_api!(name, flags:)
-    namespace = :"FormulaNamespaceAPI#{namespace_key(name)}"
+  sig { params(name: String, json_formula_with_variations: T::Hash[String, T.untyped], flags: T::Array[String]).returns(T.class_of(Formula)) }
+  def self.load_formula_from_json!(name, json_formula_with_variations, flags:)
+    namespace = :"FormulaNamespaceAPI#{namespace_key(json_formula_with_variations.to_json)}"
 
     mod = Module.new
     remove_const(namespace) if const_defined?(namespace)
@@ -184,10 +184,7 @@ module Formulary
     mod.const_set(:BUILD_FLAGS, flags)
 
     class_name = class_s(name)
-    json_formula = Homebrew::API::Formula.all_formulae[name]
-    raise FormulaUnavailableError, name if json_formula.nil?
-
-    json_formula = Homebrew::API.merge_variations(json_formula)
+    json_formula = Homebrew::API.merge_variations(json_formula_with_variations)
 
     uses_from_macos_names = json_formula.fetch("uses_from_macos", []).map do |dep|
       next dep unless dep.is_a? Hash
@@ -273,6 +270,7 @@ module Formulary
     # rubocop:todo Sorbet/BlockMethodDefinition
     klass = Class.new(::Formula) do
       @loaded_from_api = true
+      @api_source = json_formula_with_variations
 
       desc json_formula["desc"]
       homepage json_formula["homepage"]
@@ -911,7 +909,10 @@ module Formulary
     private
 
     def load_from_api(flags:)
-      Formulary.load_formula_from_api!(name, flags:)
+      json_formula = Homebrew::API::Formula.all_formulae[name]
+      raise FormulaUnavailableError, name if json_formula.nil?
+
+      Formulary.load_formula_from_json!(name, json_formula, flags:)
     end
   end
 

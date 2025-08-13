@@ -188,8 +188,6 @@ RSpec.describe RuboCop::Cop::FormulaAudit::Patches do
       patch_urls = [
         "https://raw.github.com/mogaal/sendemail",
         "https://mirrors.ustc.edu.cn/macports/trunk/",
-        "http://trac.macports.org/export/102865/trunk/dports/mail/uudeview/files/inews.c.patch",
-        "http://bugs.debian.org/cgi-bin/bugreport.cgi?msg=5;filename=patch-libunac1.txt;att=1;bug=623340",
         "https://patch-diff.githubusercontent.com/raw/foo/foo-bar/pull/100.patch",
         "https://github.com/uber/h3/pull/362.patch?full_index=1",
         "https://gitlab.gnome.org/GNOME/gitg/-/merge_requests/142.diff",
@@ -215,14 +213,6 @@ RSpec.describe RuboCop::Cop::FormulaAudit::Patches do
         elsif patch_url.include?("macports/trunk")
           expect_offense_hash(message: <<~EOS.chomp, severity: :convention, line: 5, column: 8, source:)
             FormulaAudit/Patches: MacPorts patches should specify a revision instead of trunk: #{patch_url}
-          EOS
-        elsif patch_url.start_with?("http://trac.macports.org/")
-          expect_offense_hash(message: <<~EOS.chomp, severity: :convention, line: 5, column: 8, source:)
-            FormulaAudit/Patches: Patches from MacPorts Trac should be https://, not http: #{patch_url}
-          EOS
-        elsif patch_url.start_with?("http://bugs.debian.org/")
-          expect_offense_hash(message: <<~EOS.chomp, severity: :convention, line: 5, column: 8, source:)
-            FormulaAudit/Patches: Patches from Debian should be https://, not http: #{patch_url}
           EOS
         elsif patch_url.match?(%r{https://github.com/[^/]*/[^/]*/pull})
           expect_offense_hash(message: <<~EOS.chomp, severity: :convention, line: 5, column: 8, source:)
@@ -255,6 +245,77 @@ RSpec.describe RuboCop::Cop::FormulaAudit::Patches do
           expect(actual.column).to eq(expected[:column])
         end
       end
+    end
+  end
+
+  context "when auditing auditing external patches with corrector" do
+    it "corrects Bitbucket patch URLs to use API format" do
+      expect_offense(<<~RUBY)
+        class Foo < Formula
+          url "https://brew.sh/foo-1.0.tgz"
+          patch do
+            url "https://bitbucket.org/multicoreware/x265_git/commits/b354c009a60bcd6d7fc04014e200a1ee9c45c167/raw"
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ FormulaAudit/Patches: Bitbucket patches should use the API URL: https://api.bitbucket.org/2.0/repositories/multicoreware/x265_git/diff/b354c009a60bcd6d7fc04014e200a1ee9c45c167
+            sha256 "63376b8fdd6613a91976106d9376069274191860cd58f039b29ff16de1925621"
+          end
+        end
+      RUBY
+
+      expect_correction(<<~RUBY)
+        class Foo < Formula
+          url "https://brew.sh/foo-1.0.tgz"
+          patch do
+            url "https://api.bitbucket.org/2.0/repositories/multicoreware/x265_git/diff/b354c009a60bcd6d7fc04014e200a1ee9c45c167"
+            sha256 "63376b8fdd6613a91976106d9376069274191860cd58f039b29ff16de1925621"
+          end
+        end
+      RUBY
+    end
+
+    it "corrects HTTP MacPorts Trac URLs to HTTPS" do
+      expect_offense(<<~RUBY)
+        class Foo < Formula
+          url "https://brew.sh/foo-1.0.tgz"
+          patch do
+            url "http://trac.macports.org/export/102865/trunk/dports/mail/uudeview/files/inews.c.patch"
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ FormulaAudit/Patches: Patches from MacPorts Trac should be https://, not http: http://trac.macports.org/export/102865/trunk/dports/mail/uudeview/files/inews.c.patch
+            sha256 "63376b8fdd6613a91976106d9376069274191860cd58f039b29ff16de1925621"
+          end
+        end
+      RUBY
+
+      expect_correction(<<~RUBY)
+        class Foo < Formula
+          url "https://brew.sh/foo-1.0.tgz"
+          patch do
+            url "https://trac.macports.org/export/102865/trunk/dports/mail/uudeview/files/inews.c.patch"
+            sha256 "63376b8fdd6613a91976106d9376069274191860cd58f039b29ff16de1925621"
+          end
+        end
+      RUBY
+    end
+
+    it "corrects HTTP Debian bug URLs to HTTPS" do
+      expect_offense(<<~RUBY)
+        class Foo < Formula
+          url "https://brew.sh/foo-1.0.tgz"
+          patch do
+            url "http://bugs.debian.org/cgi-bin/bugreport.cgi?msg=5;filename=patch-libunac1.txt;att=1;bug=623340"
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ FormulaAudit/Patches: Patches from Debian should be https://, not http: http://bugs.debian.org/cgi-bin/bugreport.cgi?msg=5;filename=patch-libunac1.txt;att=1;bug=623340
+            sha256 "63376b8fdd6613a91976106d9376069274191860cd58f039b29ff16de1925621"
+          end
+        end
+      RUBY
+
+      expect_correction(<<~RUBY)
+        class Foo < Formula
+          url "https://brew.sh/foo-1.0.tgz"
+          patch do
+            url "https://bugs.debian.org/cgi-bin/bugreport.cgi?msg=5;filename=patch-libunac1.txt;att=1;bug=623340"
+            sha256 "63376b8fdd6613a91976106d9376069274191860cd58f039b29ff16de1925621"
+          end
+        end
+      RUBY
     end
   end
 end

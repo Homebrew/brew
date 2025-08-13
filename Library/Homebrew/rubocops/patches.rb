@@ -100,16 +100,16 @@ module RuboCop
 
           if regex_match_group(patch_url_node, %r{^http://trac\.macports\.org})
             problem "Patches from MacPorts Trac should be https://, not http: #{patch_url}" do |corrector|
-              correct = patch_url_node.source.gsub(%r{^http://}, "https://")
-              corrector.replace(patch_url_node.source_range, correct)
+              corrector.replace(patch_url_node.source_range,
+                                patch_url_node.source.sub(%r{\A"http://}, '"https://'))
             end
           end
 
           return unless regex_match_group(patch_url_node, %r{^http://bugs\.debian\.org})
 
           problem "Patches from Debian should be https://, not http: #{patch_url}" do |corrector|
-            correct = patch_url_node.source.gsub(%r{^http://}, "https://")
-            corrector.replace(patch_url_node.source_range, correct)
+            corrector.replace(patch_url_node.source_range,
+                              patch_url_node.source.sub(%r{\A"http://}, '"https://'))
           end
         end
 

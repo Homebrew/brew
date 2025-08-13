@@ -56,6 +56,9 @@ module Cask
              (target.realpath == source.realpath || target.realpath.to_s.start_with?("#{cask.caskroom_path}/"))
             opoo "#{message}; overwriting."
             Utils.gain_permissions_remove(target, command:)
+          elsif (formula = conflicting_formula)
+            opoo "#{message} from formula #{formula}; skipping link."
+            return
           else
             raise CaskError, "#{message}."
           end
@@ -69,11 +72,32 @@ module Cask
         return unless target.symlink?
 
         ohai "Unlinking #{self.class.english_name} '#{target}'"
+
+        if (formula = conflicting_formula)
+          odebug "#{target} is from formula #{formula}; skipping unlink."
+          return
+        end
+
         Utils.gain_permissions_remove(target, command:)
       end
 
       sig { params(command: T.class_of(SystemCommand)).void }
       def create_filesystem_link(command); end
+
+      # Check if the target file is a symlink that originates from a formula
+      # with the same name as this cask, indicating a potential conflict
+      sig { returns(T.nilable(String)) }
+      def conflicting_formula
+        if target.symlink? && target.exist? &&
+           (match = target.realpath.to_s.match(%r{^#{HOMEBREW_CELLAR}/(?<formula>[^/]+)/}o))
+          match[:formula]
+        end
+      rescue => e
+        # If we can't determine the realpath or any other error occurs,
+        # don't treat it as a conflicting formula file
+        odebug "Error checking for conflicting formula file: #{e}"
+        nil
+      end
     end
   end
 end

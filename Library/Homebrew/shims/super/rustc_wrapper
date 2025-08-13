@@ -9,7 +9,6 @@
 RUSTC="${1}"
 shift
 
-# Prepend HOMEBREW_RUSTFLAGS to the arguments if set.
-# HOMEBREW_RUSTFLAGS is set in extend/ENV/{std,super}.rb
-# shellcheck disable=SC2086,SC2154
-exec "${RUSTC}" ${HOMEBREW_RUSTFLAGS} "$@"
+# Append HOMEBREW_RUSTFLAGS to the arguments if set.
+read -ra RUSTFLAGS <<<"${HOMEBREW_RUSTFLAGS:-}"
+exec "${RUSTC}" "$@" "${RUSTFLAGS[@]}"

@@ -4127,6 +4127,8 @@ command execution (e.g. `$(cat file)`).
 
 : If set, Homebrew will refuse to read formulae or casks provided from file
   paths, e.g. `brew install ./package.rb`.
+  
+  *Default:* true unless `$HOMEBREW_DEVELOPER` is set.
 
 `HOMEBREW_FORCE_API_AUTO_UPDATE`
 

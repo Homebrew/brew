@@ -336,6 +336,7 @@ module Cask
 
         cask_options = {
           loaded_from_api: true,
+          api_source:      json_cask,
           sourcefile_path: @sourcefile_path,
           source:          JSON.pretty_generate(json_cask),
           config:,

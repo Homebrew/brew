@@ -10,6 +10,7 @@ require "os/linux/kernel"
 module OS
   module Linux
     module Diagnostic
+      # Linux-specific diagnostic checks for Homebrew.
       module Checks
         extend T::Helpers
 
@@ -28,6 +29,7 @@ module OS
             check_glibc_minimum_version
             check_kernel_minimum_version
             check_supported_architecture
+            check_for_symlinked_home
           ].freeze
         end
 
@@ -151,6 +153,27 @@ module OS
             Your `$HOMEBREW_BOTTLE_DOMAIN` still contains "linuxbrew".
             You must unset it (or adjust it to not contain linuxbrew
             e.g. by using homebrew instead).
+          EOS
+        end
+
+        def check_for_symlinked_home
+          return unless File.symlink?("/home")
+
+          <<~EOS
+            Your /home directory is a symlink.
+            This is known to cause issues with formula linking, particularly when installing
+            multiple formulae that create symlinks in shared directories.
+
+            While this may be a standard directory structure in some distributions
+            (e.g. Fedora Silverblue) there are known issues as-is.
+
+            If you encounter linking issues, you may need to manually create conflicting
+            directories or use `brew link --overwrite` as a workaround.
+
+            We'd welcome a PR to fix this functionality.
+            See https://github.com/Homebrew/brew/issues/18036 for more context.
+
+            #{support_tier_message(tier: 2)}
           EOS
         end
 

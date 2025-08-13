@@ -49,6 +49,8 @@ module OS
       def self.library_paths(conf_path = Pathname(sysconfdir)/"ld.so.conf")
         conf_file = Pathname(conf_path)
         return [] unless conf_file.exist?
+        return [] unless conf_file.file?
+        return [] unless conf_file.readable?
 
         @library_paths_cache ||= T.let({}, T.nilable(T::Hash[String, T::Array[String]]))
         cache_key = conf_file.to_s

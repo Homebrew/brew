@@ -25,4 +25,11 @@ RSpec.describe Homebrew::Diagnostic::Checks do
     expect(checks.check_kernel_minimum_version)
       .to match(/Your Linux kernel .+ is too old/)
   end
+
+  specify "#check_for_symlinked_home" do
+    allow(File).to receive(:symlink?).with("/home").and_return(true)
+
+    expect(checks.check_for_symlinked_home)
+      .to match(%r{Your /home directory is a symlink})
+  end
 end

@@ -292,8 +292,12 @@ RSpec.describe Formulary do
       def formula_json_contents(extra_items = {})
         {
           formula_name => {
+            "name"                     => formula_name,
             "desc"                     => "testball",
             "homepage"                 => "https://example.com",
+            "installed"                => [],
+            "outdated"                 => false,
+            "pinned"                   => false,
             "license"                  => "MIT",
             "revision"                 => 0,
             "version_scheme"           => 0,
@@ -340,6 +344,7 @@ RSpec.describe Formulary do
             "conflicts_with"           => ["conflicting_formula"],
             "conflicts_with_reasons"   => ["it does"],
             "link_overwrite"           => ["bin/abc"],
+            "linked_keg"               => nil,
             "caveats"                  => "example caveat string\n/$HOME\n$HOMEBREW_PREFIX",
             "service"                  => {
               "name"        => { macos: "custom.launchd.name", linux: "custom.systemd.name" },
@@ -445,6 +450,17 @@ RSpec.describe Formulary do
         expect do
           formula.install
         end.to raise_error("Cannot build from source from abstract formula.")
+      end
+
+      it "returns a Formula that can regenerate its JSON API" do
+        allow(Homebrew::API::Formula).to receive(:all_formulae).and_return formula_json_contents
+
+        formula = described_class.factory(formula_name)
+        expect(formula).to be_a(Formula)
+        expect(formula.loaded_from_api?).to be true
+
+        expected_hash = formula_json_contents[formula_name]
+        expect(formula.to_hash_with_variations).to eq(expected_hash)
       end
 
       it "returns a deprecated Formula when given a name" do

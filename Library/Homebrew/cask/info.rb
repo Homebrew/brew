@@ -36,6 +36,8 @@ module Cask
     def self.info(cask, args:)
       puts get_info(cask)
 
+      return unless cask.tap.core_cask_tap?
+
       require "utils/analytics"
       ::Utils::Analytics.cask_output(cask, args:)
     end

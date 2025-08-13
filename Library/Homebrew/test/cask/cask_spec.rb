@@ -533,5 +533,21 @@ RSpec.describe Cask::Cask, :cask do
       expect(h["artifacts"].first[:binary].first).to eq "$APPDIR/some/path"
       expect(h["caveats"]).to eq "$HOMEBREW_PREFIX and /$HOME\n"
     end
+
+    context "when loaded from json file" do
+      let(:expected_json) { (TEST_FIXTURE_DIR/"cask/everything-with-variations.json").read.strip }
+
+      it "returns expected hash with variations" do
+        expect(Homebrew::API::Cask).not_to receive(:source_download)
+        cask = Cask::CaskLoader::FromAPILoader.new("everything-with-variations", from_json: JSON.parse(expected_json))
+                                              .load(config: nil)
+
+        hash = cask.to_hash_with_variations
+
+        expect(cask.loaded_from_api?).to be true
+        expect(hash).to be_a(Hash)
+        expect(JSON.pretty_generate(hash)).to eq(expected_json)
+      end
+    end
   end
 end

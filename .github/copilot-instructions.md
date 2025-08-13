@@ -16,7 +16,7 @@ Please follow these guidelines when contributing:
 
 ### Development Flow
 
-- Write new code (using Sorbet `sig` type signatures and `typed: strict` files whenever possible)
+- Write new code (using Sorbet `sig` type signatures and `typed: strict` files whenever possible, but not for test files)
 - Write new tests (avoid more than one `:integration_test` per file for speed)
 
 ## Repository Structure

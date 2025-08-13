@@ -2679,6 +2679,10 @@ If set, Homebrew will refuse to install any casks\.
 .TP
 \fBHOMEBREW_FORBID_PACKAGES_FROM_PATHS\fP
 If set, Homebrew will refuse to read formulae or casks provided from file paths, e\.g\. \fBbrew install \./package\.rb\fP\&\.
+.RS
+.P
+\fIDefault:\fP true unless \fB$HOMEBREW_DEVELOPER\fP is set\.
+.RE
 .TP
 \fBHOMEBREW_FORCE_API_AUTO_UPDATE\fP
 If set, update the Homebrew API formula or cask data even if \fB$HOMEBREW_NO_AUTO_UPDATE\fP is set\.

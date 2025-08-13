@@ -69,8 +69,18 @@ module Homebrew
           File.write("_data/formula_canonical.json", "#{canonical_json}\n") unless args.dry_run?
 
           OnSystem::VALID_OS_ARCH_TAGS.each do |bottle_tag|
+            aliases = {}
+            renames = {}
             variation_formulae = all_formulae.to_h do |name, formula|
               formula = Homebrew::API.merge_variations(formula, bottle_tag:)
+
+              formula["aliases"]&.each do |alias_name|
+                aliases[alias_name] = name
+              end
+
+              formula["oldnames"]&.each do |oldname|
+                renames[oldname] = name
+              end
 
               version = Version.new(formula.dig("versions", "stable"))
               pkg_version = PkgVersion.new(version, formula["revision"])
@@ -87,9 +97,14 @@ module Homebrew
               [name, [pkg_version.to_s, rebuild, sha256]]
             end
 
-            unless args.dry_run?
-              File.write("api/internal/formula.#{bottle_tag}.json", JSON.generate(variation_formulae))
-            end
+            json_contents = {
+              formulae:       variation_formulae,
+              aliases:        aliases,
+              renames:        renames,
+              tap_migrations: CoreTap.instance.tap_migrations,
+            }
+
+            File.write("api/internal/formula.#{bottle_tag}.json", JSON.generate(json_contents)) unless args.dry_run?
           end
         end
       end

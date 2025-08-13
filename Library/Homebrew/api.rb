@@ -162,6 +162,20 @@ module Homebrew
       false
     end
 
+    sig { params(aliases: T::Hash[String, String], type: String, regenerate: T::Boolean).returns(T::Boolean) }
+    def self.write_aliases_file!(aliases, type, regenerate:)
+      aliases_path = HOMEBREW_CACHE_API/"#{type}_aliases.txt"
+      if !aliases_path.exist? || regenerate
+        aliases_text = aliases.map do |alias_name, real_name|
+          "#{alias_name}|#{real_name}"
+        end
+        aliases_path.write(aliases_text.join("\n"))
+        return true
+      end
+
+      false
+    end
+
     sig {
       params(json_data: T::Hash[String, T.untyped])
         .returns([T::Boolean, T.any(String, T::Array[T.untyped], T::Hash[String, T.untyped])])

@@ -9,6 +9,9 @@ class Formula
   sig { params(args: T.untyped, block: T.untyped).returns(T.untyped) }
   def allow_network_access!(*args, &block); end
 
+  sig { params(args: T.untyped, block: T.untyped).returns(T.untyped) }
+  def api_source(*args, &block); end
+
   sig { params(args: T.untyped, block: T.untyped).returns(T::Boolean) }
   def autobump?(*args, &block); end
 

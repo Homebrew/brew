@@ -23,7 +23,7 @@ module Homebrew
     PROCESS_TYPE_ADAPTIVE = :adaptive
 
     KEEP_ALIVE_KEYS = [:always, :successful_exit, :crashed, :path].freeze
-    SOCKET_STRING_REGEX = %r{^([a-z]+)://(.+):([0-9]+)$}i
+    SOCKET_STRING_REGEX = %r{^(?<type>[a-z]+)://(?<host>.+):(?<port>[0-9]+)$}i
 
     RunParam = T.type_alias { T.nilable(T.any(T::Array[T.any(String, Pathname)], String, Pathname)) }
     Sockets = T.type_alias { T::Hash[Symbol, { host: String, port: String, type: String }] }
@@ -107,61 +107,56 @@ module Homebrew
       end
     end
 
-    sig { params(path: T.nilable(T.any(String, Pathname))).returns(T.nilable(String)) }
-    def working_dir(path = nil)
-      case path
-      when nil
-        @working_dir
-      when String, Pathname
+    sig { params(path: T.any(String, Pathname)).returns(T.nilable(String)) }
+    def working_dir(path = T.unsafe(nil))
+      if path
         @working_dir = path.to_s
+      else
+        @working_dir
       end
     end
 
-    sig { params(path: T.nilable(T.any(String, Pathname))).returns(T.nilable(String)) }
-    def root_dir(path = nil)
-      case path
-      when nil
-        @root_dir
-      when String, Pathname
+    sig { params(path: T.any(String, Pathname)).returns(T.nilable(String)) }
+    def root_dir(path = T.unsafe(nil))
+      if path
         @root_dir = path.to_s
+      else
+        @root_dir
       end
     end
 
-    sig { params(path: T.nilable(T.any(String, Pathname))).returns(T.nilable(String)) }
-    def input_path(path = nil)
-      case path
-      when nil
-        @input_path
-      when String, Pathname
+    sig { params(path: T.any(String, Pathname)).returns(T.nilable(String)) }
+    def input_path(path = T.unsafe(nil))
+      if path
         @input_path = path.to_s
+      else
+        @input_path
       end
     end
 
-    sig { params(path: T.nilable(T.any(String, Pathname))).returns(T.nilable(String)) }
-    def log_path(path = nil)
-      case path
-      when nil
-        @log_path
-      when String, Pathname
+    sig { params(path: T.any(String, Pathname)).returns(T.nilable(String)) }
+    def log_path(path = T.unsafe(nil))
+      if path
         @log_path = path.to_s
+      else
+        @log_path
       end
     end
 
-    sig { params(path: T.nilable(T.any(String, Pathname))).returns(T.nilable(String)) }
-    def error_log_path(path = nil)
-      case path
-      when nil
-        @error_log_path
-      when String, Pathname
+    sig { params(path: T.any(String, Pathname)).returns(T.nilable(String)) }
+    def error_log_path(path = T.unsafe(nil))
+      if path
         @error_log_path = path.to_s
+      else
+        @error_log_path
       end
     end
 
     sig {
-      params(value: T.nilable(T.any(T::Boolean, T::Hash[Symbol, T.untyped])))
+      params(value: T.any(T::Boolean, T::Hash[Symbol, T.untyped]))
         .returns(T.nilable(T::Hash[Symbol, T.untyped]))
     }
-    def keep_alive(value = nil)
+    def keep_alive(value = T.unsafe(nil))
       case value
       when nil
         @keep_alive
@@ -176,12 +171,11 @@ module Homebrew
       end
     end
 
-    sig { params(value: T.nilable(T::Boolean)).returns(T::Boolean) }
-    def require_root(value = nil)
-      case value
-      when nil
+    sig { params(value: T::Boolean).returns(T::Boolean) }
+    def require_root(value = T.unsafe(nil))
+      if value.nil?
         @require_root
-      when TrueClass, FalseClass
+      else
         @require_root = value
       end
     end
@@ -192,43 +186,40 @@ module Homebrew
       @require_root.present? && @require_root == true
     end
 
-    sig { params(value: T.nilable(T::Boolean)).returns(T.nilable(T::Boolean)) }
-    def run_at_load(value = nil)
-      case value
-      when nil
+    sig { params(value: T::Boolean).returns(T.nilable(T::Boolean)) }
+    def run_at_load(value = T.unsafe(nil))
+      if value.nil?
         @run_at_load
-      when TrueClass, FalseClass
+      else
         @run_at_load = value
       end
     end
 
     sig {
-      params(value: T.nilable(T.any(String, T::Hash[Symbol, String])))
+      params(value: T.any(String, T::Hash[Symbol, String]))
         .returns(T::Hash[Symbol, T::Hash[Symbol, String]])
     }
-    def sockets(value = nil)
+    def sockets(value = T.unsafe(nil))
       return @sockets if value.nil?
 
-      @sockets = case value
+      value_hash = case value
       when String
         { listeners: value }
       when Hash
         value
-      end.transform_values do |socket_string|
+      end
+
+      @sockets = T.must(value_hash).transform_values do |socket_string|
         match = socket_string.match(SOCKET_STRING_REGEX)
         raise TypeError, "Service#sockets a formatted socket definition as <type>://<host>:<port>" unless match
 
-        type = T.must(match[1])
-        host = T.must(match[2])
-        port = T.must(match[3])
-
         begin
-          IPAddr.new(host)
+          IPAddr.new(match[:host])
         rescue IPAddr::InvalidAddressError
           raise TypeError, "Service#sockets expects a valid ipv4 or ipv6 host address"
         end
 
-        { host:, port:, type: }
+        { host: match[:host], port: match[:port], type: match[:type] }
       end
     end
 
@@ -238,28 +229,26 @@ module Homebrew
       !@keep_alive.empty? && @keep_alive[:always] != false
     end
 
-    sig { params(value: T.nilable(T::Boolean)).returns(T::Boolean) }
-    def launch_only_once(value = nil)
-      case value
-      when nil
+    sig { params(value: T::Boolean).returns(T::Boolean) }
+    def launch_only_once(value = T.unsafe(nil))
+      if value.nil?
         @launch_only_once
-      when TrueClass, FalseClass
+      else
         @launch_only_once = value
       end
     end
 
-    sig { params(value: T.nilable(Integer)).returns(T.nilable(Integer)) }
-    def restart_delay(value = nil)
-      case value
-      when nil
-        @restart_delay
-      when Integer
+    sig { params(value: Integer).returns(T.nilable(Integer)) }
+    def restart_delay(value = T.unsafe(nil))
+      if value
         @restart_delay = value
+      else
+        @restart_delay
       end
     end
 
-    sig { params(value: T.nilable(Symbol)).returns(T.nilable(Symbol)) }
-    def process_type(value = nil)
+    sig { params(value: Symbol).returns(T.nilable(Symbol)) }
+    def process_type(value = T.unsafe(nil))
       case value
       when nil
         @process_type
@@ -272,8 +261,8 @@ module Homebrew
       end
     end
 
-    sig { params(value: T.nilable(Symbol)).returns(T.nilable(Symbol)) }
-    def run_type(value = nil)
+    sig { params(value: Symbol).returns(T.nilable(Symbol)) }
+    def run_type(value = T.unsafe(nil))
       case value
       when nil
         @run_type
@@ -284,23 +273,21 @@ module Homebrew
       end
     end
 
-    sig { params(value: T.nilable(Integer)).returns(T.nilable(Integer)) }
-    def interval(value = nil)
-      case value
-      when nil
-        @interval
-      when Integer
+    sig { params(value: Integer).returns(T.nilable(Integer)) }
+    def interval(value = T.unsafe(nil))
+      if value
         @interval = value
+      else
+        @interval
       end
     end
 
-    sig { params(value: T.nilable(String)).returns(T::Hash[Symbol, T.any(Integer, String)]) }
-    def cron(value = nil)
-      case value
-      when nil
-        @cron
-      when String
+    sig { params(value: String).returns(T::Hash[Symbol, T.any(Integer, String)]) }
+    def cron(value = T.unsafe(nil))
+      if value
         @cron = parse_cron(value)
+      else
+        @cron
       end
     end
 
@@ -352,18 +339,14 @@ module Homebrew
 
     sig { params(variables: T::Hash[Symbol, String]).returns(T.nilable(T::Hash[Symbol, String])) }
     def environment_variables(variables = {})
-      case variables
-      when Hash
-        @environment_variables = variables.transform_values(&:to_s)
-      end
+      @environment_variables = variables.transform_values(&:to_s)
     end
 
-    sig { params(value: T.nilable(T::Boolean)).returns(T::Boolean) }
-    def macos_legacy_timers(value = nil)
-      case value
-      when nil
+    sig { params(value: T::Boolean).returns(T::Boolean) }
+    def macos_legacy_timers(value = T.unsafe(nil))
+      if value.nil?
         @macos_legacy_timers
-      when TrueClass, FalseClass
+      else
         @macos_legacy_timers = value
       end
     end
