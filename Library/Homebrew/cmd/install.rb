@@ -47,9 +47,9 @@ module Homebrew
                description: "Ask for confirmation before downloading and installing formulae. " \
                             "Print download and install sizes of bottles and dependencies.",
                env:         :ask
-        switch "--non-interactive",
-               description: "Fail fast on any interactive prompt and use non-interactive sudo where applicable.",
-               env:         :non_interactive
+        switch "--non-interactive-sudo",
+               description: "Fail fast on any interactive sudo prompt and use non-interactive sudo where possible.",
+               env:         :non_interactive_sudo
         flag "--timeout-wait-for-user=",
              description: "Wait this many seconds when an interactive prompt is detected; then skip the item."
         [
