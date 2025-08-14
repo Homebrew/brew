@@ -8,19 +8,21 @@ module Cask
   class Upgrade
     sig {
       params(
-        casks:               Cask,
+        casks:               T.untyped,
         args:                Homebrew::CLI::Args,
-        force:               T.nilable(T::Boolean),
-        greedy:              T.nilable(T::Boolean),
-        greedy_latest:       T.nilable(T::Boolean),
-        greedy_auto_updates: T.nilable(T::Boolean),
-        dry_run:             T.nilable(T::Boolean),
-        skip_cask_deps:      T.nilable(T::Boolean),
-        verbose:             T.nilable(T::Boolean),
-        quiet:               T.nilable(T::Boolean),
+        force:               T::Boolean,
+        greedy:              T::Boolean,
+        greedy_latest:       T::Boolean,
+        greedy_auto_updates: T::Boolean,
+        dry_run:             T::Boolean,
+        skip_cask_deps:      T::Boolean,
+        verbose:             T::Boolean,
+        quiet:               T::Boolean,
         binaries:            T.nilable(T::Boolean),
         quarantine:          T.nilable(T::Boolean),
         require_sha:         T.nilable(T::Boolean),
+        non_interactive:     T::Boolean,
+        prompt_timeout_secs: T.nilable(T.any(Integer, Float)),
       ).returns(T::Boolean)
     }
     def self.upgrade_casks!(
@@ -172,15 +174,17 @@ module Cask
 
     sig {
       params(
-        old_cask:       Cask,
-        new_cask:       Cask,
-        binaries:       T.nilable(T::Boolean),
-        force:          T.nilable(T::Boolean),
-        quarantine:     T.nilable(T::Boolean),
-        require_sha:    T.nilable(T::Boolean),
-        skip_cask_deps: T.nilable(T::Boolean),
-        verbose:        T.nilable(T::Boolean),
-        download_queue: T.nilable(Homebrew::DownloadQueue),
+        old_cask:            Cask,
+        new_cask:            Cask,
+        binaries:            T.nilable(T::Boolean),
+        force:               T.nilable(T::Boolean),
+        quarantine:          T.nilable(T::Boolean),
+        require_sha:         T.nilable(T::Boolean),
+        skip_cask_deps:      T.nilable(T::Boolean),
+        verbose:             T.nilable(T::Boolean),
+        download_queue:      T.nilable(Homebrew::DownloadQueue),
+        non_interactive:     T::Boolean,
+        prompt_timeout_secs: T.nilable(T.any(Integer, Float)),
       ).void
     }
     def self.upgrade_cask(
@@ -247,8 +251,26 @@ module Cask
         # Install the new cask
         new_cask_installer.stage
 
-        new_cask_installer.install_artifacts(predecessor: old_cask)
-        new_artifacts_installed = true
+        begin
+          SystemCommand.with(non_interactive_sudo: non_interactive,
+                             prompt_timeout_secs:  prompt_timeout_secs) do
+            new_cask_installer.install_artifacts(predecessor: old_cask)
+          end
+          new_artifacts_installed = true
+        rescue Timeout::Error => e
+          opoo "Timed out waiting for user input in cask #{new_cask.full_name}. Skipping."
+          Homebrew.messages.record_skipped_prompt(new_cask.full_name, e.message)
+          return
+        rescue ErrorDuringExecution => e
+          if non_interactive && (e.stderr.include?("a password is required") ||
+                                  e.stderr.include?("no tty present") ||
+                                  e.message.include?("sudo"))
+            opoo "Non-interactive mode: sudo/interactive prompt detected in cask #{new_cask.full_name}. Skipping."
+            Homebrew.messages.record_skipped_prompt(new_cask.full_name, "non-interactive: sudo/interactive prompt")
+            return
+          end
+          raise
+        end
 
         # If successful, wipe the old cask from staging.
         old_cask_installer.finalize_upgrade

@@ -292,7 +292,13 @@ module Homebrew
         true
       end
 
-      sig { params(casks: T::Array[Cask::Cask]).returns(T::Boolean) }
+      sig {
+        params(
+          casks:               T::Array[Cask::Cask],
+          non_interactive:     T::Boolean,
+          prompt_timeout_secs: T.nilable(T.any(Integer, Float)),
+        ).returns(T::Boolean)
+      }
       def upgrade_outdated_casks!(casks, non_interactive: false, prompt_timeout_secs: nil)
         return false if args.formula?
 
