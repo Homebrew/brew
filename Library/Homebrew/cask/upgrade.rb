@@ -36,7 +36,9 @@ module Cask
       quiet: false,
       binaries: nil,
       quarantine: nil,
-      require_sha: nil
+      require_sha: nil,
+      non_interactive: false,
+      prompt_timeout_secs: nil
     )
       quarantine = true if quarantine.nil?
 
@@ -120,7 +122,9 @@ module Cask
           # rubocop:disable Style/DoubleNegation
           Installer.new(cask, binaries: !!binaries, verbose: !!verbose, force: !!force,
                                                skip_cask_deps: !!skip_cask_deps, require_sha: !!require_sha,
-                                               upgrade: true, quarantine:, download_queue:)
+                                               upgrade: true, quarantine:, download_queue:,
+                                               non_interactive_sudo: non_interactive,
+                                               prompt_timeout_secs: prompt_timeout_secs)
           # rubocop:enable Style/DoubleNegation
         end
 
@@ -148,7 +152,9 @@ module Cask
         upgrade_cask(
           old_cask, new_cask,
           binaries:, force:, skip_cask_deps:, verbose:,
-          quarantine:, require_sha:, download_queue:
+          quarantine:, require_sha:, download_queue:,
+          non_interactive: non_interactive,
+          prompt_timeout_secs: prompt_timeout_secs
         )
       rescue => e
         new_exception = e.exception("#{new_cask.full_name}: #{e}")
@@ -179,7 +185,8 @@ module Cask
     }
     def self.upgrade_cask(
       old_cask, new_cask,
-      binaries:, force:, quarantine:, require_sha:, skip_cask_deps:, verbose:, download_queue:
+      binaries:, force:, quarantine:, require_sha:, skip_cask_deps:, verbose:, download_queue:,
+      non_interactive:, prompt_timeout_secs:
     )
       require "cask/installer"
 
@@ -195,7 +202,9 @@ module Cask
       }.compact
 
       old_cask_installer =
-        Installer.new(old_cask, **old_options)
+        Installer.new(old_cask, **old_options,
+                                     non_interactive_sudo: non_interactive,
+                                     prompt_timeout_secs:  prompt_timeout_secs)
 
       new_cask.config = new_cask.default_config.merge(old_config)
 
@@ -211,7 +220,9 @@ module Cask
       }.compact
 
       new_cask_installer =
-        Installer.new(new_cask, **new_options)
+        Installer.new(new_cask, **new_options,
+                                     non_interactive_sudo: non_interactive,
+                                     prompt_timeout_secs:  prompt_timeout_secs)
 
       started_upgrade = false
       new_artifacts_installed = false

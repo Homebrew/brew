@@ -13,6 +13,30 @@ require "utils/timer"
 #
 # @api internal
 class SystemCommand
+  class << self
+    # Global, opt-in configuration for non-interactive sudo and prompt timeout.
+    # These are intentionally class-level so callers can scope configuration
+    # around blocks using the `with` helper below without mutating ENV.
+    attr_accessor :non_interactive_sudo_enabled
+    attr_accessor :prompt_timeout_secs
+
+    # Configure class-wide behaviour. Any nil values are ignored.
+    def configure(non_interactive_sudo: nil, prompt_timeout_secs: nil)
+      self.non_interactive_sudo_enabled = non_interactive_sudo unless non_interactive_sudo.nil?
+      self.prompt_timeout_secs = prompt_timeout_secs unless prompt_timeout_secs.nil?
+    end
+
+    # Temporarily apply configuration within a block.
+    def with(non_interactive_sudo: nil, prompt_timeout_secs: nil)
+      prev_non_interactive = non_interactive_sudo_enabled
+      prev_timeout = self.prompt_timeout_secs
+      configure(non_interactive_sudo:, prompt_timeout_secs:)
+      yield
+    ensure
+      self.non_interactive_sudo_enabled = prev_non_interactive
+      self.prompt_timeout_secs = prev_timeout
+    end
+  end
   # Helper functions for calling {SystemCommand.run}.
   #
   # @api internal
@@ -48,7 +72,7 @@ class SystemCommand
 
     @output = []
 
-    @prompt_timeout_secs = parse_prompt_timeout_from_env
+    @prompt_timeout_secs = effective_prompt_timeout_secs
 
     # Defer initialization; nil/falsey is treated as not detected/not terminated
 
@@ -207,7 +231,7 @@ class SystemCommand
   sig { returns(T::Array[String]) }
   def sudo_prefix
     askpass_flags = ENV.key?("SUDO_ASKPASS") ? ["-A"] : []
-    non_interactive_flags = ENV["HOMEBREW_NON_INTERACTIVE"].present? ? ["-n"] : []
+    non_interactive_flags = effective_non_interactive? ? ["-n"] : []
     user_flags = []
     if Homebrew::EnvConfig.sudo_through_sudo_user?
       if homebrew_sudo_user.blank?
@@ -235,12 +259,29 @@ class SystemCommand
 
   sig { returns(T.nilable(T.any(Integer, Float))) }
   def parse_prompt_timeout_from_env
-    prompt_timeout_env = ENV.fetch("HOMEBREW_PROMPT_TIMEOUT_SECS", nil)
+    # Prefer Homebrew::EnvConfig so we do not read or mutate ENV directly here.
+    prompt_timeout_env = Homebrew::EnvConfig.prompt_timeout_secs
     return if prompt_timeout_env.nil? || prompt_timeout_env.strip.empty?
 
     Integer(prompt_timeout_env)
   rescue ArgumentError, TypeError
     Float(T.must(prompt_timeout_env))
+  end
+
+  sig { returns(T::Boolean) }
+  def effective_non_interactive?
+    # Prefer explicit class configuration; otherwise fall back to env config
+    return self.class.non_interactive_sudo_enabled unless self.class.non_interactive_sudo_enabled.nil?
+
+    Homebrew::EnvConfig.non_interactive?
+  end
+
+  sig { returns(T.nilable(T.any(Integer, Float))) }
+  def effective_prompt_timeout_secs
+    # Prefer explicit class configuration; otherwise fall back to env config
+    return self.class.prompt_timeout_secs unless self.class.prompt_timeout_secs.nil?
+
+    parse_prompt_timeout_from_env
   end
 
   sig { params(line: String).returns(T::Boolean) }

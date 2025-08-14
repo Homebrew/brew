@@ -48,7 +48,8 @@ module Homebrew
                             "Print download and install sizes of bottles and dependencies.",
                env:         :ask
         switch "--non-interactive-sudo",
-               description: "Fail fast on any interactive sudo prompt and use non-interactive sudo where possible."
+               description: "Fail fast on any interactive sudo prompt and use non-interactive sudo where possible.",
+               env:         :non_interactive
         flag "--timeout-wait-for-user=",
              description: "Wait this many seconds when an interactive prompt is detected; then skip the item."
         [
@@ -180,10 +181,13 @@ module Homebrew
 
       sig { override.void }
       def run
-        # Apply non-interactive behaviour for sudo/interactive prompts when requested
-        ENV["HOMEBREW_NON_INTERACTIVE"] = "1" if args.value("non-interactive-sudo").present?
-        if (timeout = args.value("timeout-wait-for-user")).present?
-          ENV["HOMEBREW_PROMPT_TIMEOUT_SECS"] = timeout
+        # Read desired behaviour from args/env without mutating ENV
+        non_interactive_sudo = args.non_interactive_sudo?
+        timeout_value = args.value("timeout-wait-for-user").presence || Homebrew::EnvConfig.prompt_timeout_secs
+        prompt_timeout_secs = begin
+          Integer(timeout_value) if timeout_value.present?
+        rescue ArgumentError
+          Float(T.must(timeout_value))
         end
 
         if args.env.present?
@@ -262,7 +266,9 @@ module Homebrew
               Cask::Installer.new(cask, binaries: args.binaries?, verbose: args.verbose?,
                                                    force: args.force?, skip_cask_deps: args.skip_cask_deps?,
                                                    require_sha: args.require_sha?, reinstall: true,
-                                                   quarantine: args.quarantine?, zap: args.zap?, download_queue:)
+                                                   quarantine: args.quarantine?, zap: args.zap?, download_queue:,
+                                                   non_interactive_sudo: non_interactive_sudo,
+                                                   prompt_timeout_secs: prompt_timeout_secs)
             end
 
             # Run prelude checks for all casks before enqueueing downloads
@@ -279,29 +285,18 @@ module Homebrew
           new_casks.each do |cask|
             installer = Cask::Installer.new(
               cask,
-              adopt:          args.adopt?,
-              binaries:       args.binaries?,
-              force:          args.force?,
-              quarantine:     args.quarantine?,
-              quiet:          args.quiet?,
-              require_sha:    args.require_sha?,
-              skip_cask_deps: args.skip_cask_deps?,
-              verbose:        args.verbose?,
+              adopt:                args.adopt?,
+              binaries:             args.binaries?,
+              force:                args.force?,
+              quarantine:           args.quarantine?,
+              quiet:                args.quiet?,
+              require_sha:          args.require_sha?,
+              skip_cask_deps:       args.skip_cask_deps?,
+              verbose:              args.verbose?,
+              non_interactive_sudo: non_interactive_sudo,
+              prompt_timeout_secs:  prompt_timeout_secs,
             )
-            begin
-              installer.install
-            rescue ErrorDuringExecution => e
-              if args.value("non-interactive-sudo").present? && (
-                   e.stderr.include?("a password is required") ||
-                   e.stderr.include?("no tty present") ||
-                   e.message.include?("sudo")
-                 )
-                opoo "Non-interactive mode: sudo/interactive prompt detected in cask #{cask.full_name}. Skipping."
-                Homebrew.messages.record_skipped_prompt(cask.full_name, "non-interactive: sudo/interactive prompt")
-                next
-              end
-              raise
-            end
+            installer.install
           end
 
           if !Homebrew::EnvConfig.no_install_upgrade? && installed_casks.any?
@@ -309,15 +304,17 @@ module Homebrew
 
             Cask::Upgrade.upgrade_casks!(
               *installed_casks,
-              force:          args.force?,
-              dry_run:        args.dry_run?,
-              binaries:       args.binaries?,
-              quarantine:     args.quarantine?,
-              require_sha:    args.require_sha?,
-              skip_cask_deps: args.skip_cask_deps?,
-              verbose:        args.verbose?,
-              quiet:          args.quiet?,
+              force:               args.force?,
+              dry_run:             args.dry_run?,
+              binaries:            args.binaries?,
+              quarantine:          args.quarantine?,
+              require_sha:         args.require_sha?,
+              skip_cask_deps:      args.skip_cask_deps?,
+              verbose:             args.verbose?,
+              quiet:               args.quiet?,
               args:,
+              non_interactive:     non_interactive_sudo,
+              prompt_timeout_secs: prompt_timeout_secs,
             )
           end
         end

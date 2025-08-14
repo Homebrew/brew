@@ -129,6 +129,9 @@ class Homebrew::Cmd::InstallCmd::Args < Homebrew::CLI::Args
   def n?; end
 
   sig { returns(T::Boolean) }
+  def non_interactive_sudo?; end
+
+  sig { returns(T::Boolean) }
   def only_dependencies?; end
 
   sig { returns(T::Boolean) }
@@ -163,6 +166,9 @@ class Homebrew::Cmd::InstallCmd::Args < Homebrew::CLI::Args
 
   sig { returns(T::Boolean) }
   def skip_post_install?; end
+
+  sig { returns(T.nilable(String)) }
+  def timeout_wait_for_user; end
 
   sig { returns(T.nilable(String)) }
   def vst3_plugindir; end

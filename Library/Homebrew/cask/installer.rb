@@ -21,14 +21,16 @@ module Cask
         skip_cask_deps: T::Boolean, binaries: T::Boolean, verbose: T::Boolean, zap: T::Boolean,
         require_sha: T::Boolean, upgrade: T::Boolean, reinstall: T::Boolean, installed_as_dependency: T::Boolean,
         installed_on_request: T::Boolean, quarantine: T::Boolean, verify_download_integrity: T::Boolean,
-        quiet: T::Boolean, download_queue: T.nilable(Homebrew::DownloadQueue)
+        quiet: T::Boolean, download_queue: T.nilable(Homebrew::DownloadQueue),
+        non_interactive_sudo: T.nilable(T::Boolean), prompt_timeout_secs: T.nilable(T.any(Integer, Float))
       ).void
     }
     def initialize(cask, command: SystemCommand, force: false, adopt: false,
                    skip_cask_deps: false, binaries: true, verbose: false,
                    zap: false, require_sha: false, upgrade: false, reinstall: false,
                    installed_as_dependency: false, installed_on_request: true,
-                   quarantine: true, verify_download_integrity: true, quiet: false, download_queue: nil)
+                   quarantine: true, verify_download_integrity: true, quiet: false, download_queue: nil,
+                   non_interactive_sudo: nil, prompt_timeout_secs: nil)
       @cask = cask
       @command = command
       @force = force
@@ -47,6 +49,8 @@ module Cask
       @quiet = quiet
       @download_queue = download_queue
       @ran_prelude = T.let(false, T::Boolean)
+      @non_interactive_sudo = non_interactive_sudo
+      @prompt_timeout_secs = prompt_timeout_secs
     end
 
     sig { returns(T::Boolean) }
@@ -156,7 +160,25 @@ module Cask
 
       @cask.config = @cask.default_config.merge(old_config)
 
-      install_artifacts(predecessor:)
+      begin
+        SystemCommand.with(non_interactive_sudo: @non_interactive_sudo,
+                           prompt_timeout_secs:  @prompt_timeout_secs) do
+          install_artifacts(predecessor:)
+        end
+      rescue Timeout::Error => e
+        opoo "Timed out waiting for user input in cask #{@cask.full_name}. Skipping."
+        Homebrew.messages.record_skipped_prompt(@cask.full_name, e.message)
+        return
+      rescue ErrorDuringExecution => e
+        if @non_interactive_sudo && (e.stderr.include?("a password is required") ||
+                                      e.stderr.include?("no tty present") ||
+                                      e.message.include?("sudo"))
+          opoo "Non-interactive mode: sudo/interactive prompt detected in cask #{@cask.full_name}. Skipping."
+          Homebrew.messages.record_skipped_prompt(@cask.full_name, "non-interactive: sudo/interactive prompt")
+          return
+        end
+        raise
+      end
 
       tab = Tab.create(@cask)
       tab.installed_as_dependency = installed_as_dependency?
@@ -173,9 +195,6 @@ on_request: true)
       puts summary
       end_time = Time.now
       Homebrew.messages.package_installed(@cask.token, end_time - start_time)
-    rescue Timeout::Error => e
-      opoo "Timed out waiting for user input in cask #{@cask.full_name}. Skipping."
-      Homebrew.messages.record_skipped_prompt(@cask.full_name, e.message)
     rescue
       restore_backup
       raise

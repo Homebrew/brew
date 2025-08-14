@@ -274,8 +274,14 @@ module Homebrew::EnvConfig
     sig { returns(T::Boolean) }
     def no_verify_attestations?; end
 
+    sig { returns(T::Boolean) }
+    def non_interactive?; end
+
     sig { returns(T.nilable(::String)) }
     def pip_index_url; end
+
+    sig { returns(T.nilable(::String)) }
+    def prompt_timeout_secs; end
 
     sig { returns(T::Boolean) }
     def pry?; end

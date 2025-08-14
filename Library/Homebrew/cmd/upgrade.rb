@@ -130,9 +130,12 @@ module Homebrew
 
       sig { override.void }
       def run
-        ENV["HOMEBREW_NON_INTERACTIVE"] = "1" if args.value("non-interactive")
-        if (t = args.value("timeout-wait-for-user")).present?
-          ENV["HOMEBREW_PROMPT_TIMEOUT_SECS"] = t
+        non_interactive = args.non_interactive?
+        timeout_value = args.value("timeout-wait-for-user").presence || Homebrew::EnvConfig.prompt_timeout_secs
+        prompt_timeout_secs = begin
+          Integer(timeout_value) if timeout_value.present?
+        rescue ArgumentError
+          Float(T.must(timeout_value))
         end
         if args.build_from_source? && args.named.empty?
           raise ArgumentError, "--build-from-source requires at least one formula"
@@ -148,7 +151,7 @@ module Homebrew
         formulae = Homebrew::Attestation.sort_formulae_for_install(formulae) if Homebrew::Attestation.enabled?
 
         upgrade_outdated_formulae!(formulae) unless only_upgrade_casks
-        upgrade_outdated_casks!(casks) unless only_upgrade_formulae
+        upgrade_outdated_casks!(casks, non_interactive:, prompt_timeout_secs:) unless only_upgrade_formulae
 
         Cleanup.periodic_clean!(dry_run: args.dry_run?)
 
@@ -290,33 +293,28 @@ module Homebrew
       end
 
       sig { params(casks: T::Array[Cask::Cask]).returns(T::Boolean) }
-      def upgrade_outdated_casks!(casks)
+      def upgrade_outdated_casks!(casks, non_interactive: false, prompt_timeout_secs: nil)
         return false if args.formula?
 
         Install.ask_casks casks if args.ask?
 
-        begin
-          Cask::Upgrade.upgrade_casks!(
-            *casks,
-            force:               args.force?,
-            greedy:              args.greedy?,
-            greedy_latest:       args.greedy_latest?,
-            greedy_auto_updates: args.greedy_auto_updates?,
-            dry_run:             args.dry_run?,
-            binaries:            args.binaries?,
-            quarantine:          args.quarantine?,
-            require_sha:         args.require_sha?,
-            skip_cask_deps:      args.skip_cask_deps?,
-            verbose:             args.verbose?,
-            quiet:               args.quiet?,
-            args:,
-          )
-        rescue Timeout::Error => e
-          # When multiple casks are processed, `upgrade_casks!` handles each sequentially
-          # Skips are recorded inside the installer loop where errors are rescued
-          opoo "Timed out waiting for user input while upgrading casks. Some items may be skipped."
-          Homebrew.messages.record_skipped_prompt("cask-upgrade", e.message)
-        end
+        Cask::Upgrade.upgrade_casks!(
+          *casks,
+          force:               args.force?,
+          greedy:              args.greedy?,
+          greedy_latest:       args.greedy_latest?,
+          greedy_auto_updates: args.greedy_auto_updates?,
+          dry_run:             args.dry_run?,
+          binaries:            args.binaries?,
+          quarantine:          args.quarantine?,
+          require_sha:         args.require_sha?,
+          skip_cask_deps:      args.skip_cask_deps?,
+          verbose:             args.verbose?,
+          quiet:               args.quiet?,
+          args:,
+          non_interactive:     non_interactive,
+          prompt_timeout_secs: prompt_timeout_secs,
+        )
       end
     end
   end
