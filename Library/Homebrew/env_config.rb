@@ -672,5 +672,10 @@ module Homebrew
 
       [concurrency, 1].max
     end
+
+    sig { returns(T::Boolean) }
+    def use_internal_api?
+      ENV["HOMEBREW_USE_INTERNAL_API"].present?
+    end
   end
 end

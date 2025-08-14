@@ -4,6 +4,7 @@
 require "api/analytics"
 require "api/cask"
 require "api/formula"
+require "api/internal"
 require "base64"
 
 module Homebrew
@@ -151,6 +152,30 @@ module Homebrew
       json.except("variations")
     end
 
+    sig { params(download_queue: T.nilable(DownloadQueue), stale_seconds: Integer).void }
+    def self.fetch_api_files!(download_queue: nil, stale_seconds: Homebrew::EnvConfig.api_auto_update_secs.to_i)
+      if Homebrew::EnvConfig.use_internal_api?
+        Homebrew::API::Internal.fetch_formula_api!(download_queue:, stale_seconds:)
+        Homebrew::API::Internal.fetch_cask_api!(download_queue:, stale_seconds:)
+      else
+        Homebrew::API::Formula.fetch_api!(download_queue:, stale_seconds:)
+        Homebrew::API::Formula.fetch_tap_migrations!(download_queue:, stale_seconds:)
+        Homebrew::API::Cask.fetch_api!(download_queue:, stale_seconds:)
+        Homebrew::API::Cask.fetch_tap_migrations!(download_queue:, stale_seconds:)
+      end
+    end
+
+    sig { void }
+    def self.write_names_and_aliases
+      if Homebrew::EnvConfig.use_internal_api?
+        Homebrew::API::Internal.write_formula_names_and_aliases
+        Homebrew::API::Internal.write_cask_names
+      else
+        Homebrew::API::Formula.write_names_and_aliases
+        Homebrew::API::Cask.write_names
+      end
+    end
+
     sig { params(names: T::Array[String], type: String, regenerate: T::Boolean).returns(T::Boolean) }
     def self.write_names_file!(names, type, regenerate:)
       names_path = HOMEBREW_CACHE_API/"#{type}_names.txt"
@@ -215,6 +240,69 @@ module Homebrew
       return if org.blank? || repo.blank?
 
       Tap.fetch(org, repo)
+    end
+
+    sig { returns(T::Array[String]) }
+    def self.formula_names
+      if Homebrew::EnvConfig.use_internal_api?
+        Homebrew::API::Internal.formula_arrays.keys
+      else
+        Homebrew::API::Formula.all_formulae.keys
+      end
+    end
+
+    sig { returns(T::Hash[String, String]) }
+    def self.formula_aliases
+      if Homebrew::EnvConfig.use_internal_api?
+        Homebrew::API::Internal.formula_aliases
+      else
+        Homebrew::API::Formula.all_aliases
+      end
+    end
+
+    sig { returns(T::Hash[String, String]) }
+    def self.formula_renames
+      if Homebrew::EnvConfig.use_internal_api?
+        Homebrew::API::Internal.formula_renames
+      else
+        Homebrew::API::Formula.all_renames
+      end
+    end
+
+    sig { returns(T::Hash[String, String]) }
+    def self.formula_tap_migrations
+      if Homebrew::EnvConfig.use_internal_api?
+        Homebrew::API::Internal.formula_tap_migrations
+      else
+        Homebrew::API::Formula.tap_migrations
+      end
+    end
+
+    sig { returns(T::Array[String]) }
+    def self.cask_tokens
+      if Homebrew::EnvConfig.use_internal_api?
+        Homebrew::API::Internal.cask_hashes.keys
+      else
+        Homebrew::API::Cask.all_casks.keys
+      end
+    end
+
+    sig { returns(T::Hash[String, String]) }
+    def self.cask_renames
+      if Homebrew::EnvConfig.use_internal_api?
+        Homebrew::API::Internal.cask_renames
+      else
+        Homebrew::API::Cask.all_renames
+      end
+    end
+
+    sig { returns(T::Hash[String, String]) }
+    def self.cask_tap_migrations
+      if Homebrew::EnvConfig.use_internal_api?
+        Homebrew::API::Internal.cask_tap_migrations
+      else
+        Homebrew::API::Cask.tap_migrations
+      end
     end
   end
 

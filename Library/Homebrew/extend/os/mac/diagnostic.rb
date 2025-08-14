@@ -506,6 +506,88 @@ module OS
 
           nil
         end
+
+        def check_pkgconf_macos_sdk_mismatch
+          # We don't provide suitable bottles for these versions.
+          return if OS::Mac.version.prerelease? || OS::Mac.version.outdated_release?
+
+          pkgconf = begin
+            ::Formula["pkgconf"]
+          rescue FormulaUnavailableError
+            nil
+          end
+          return unless pkgconf
+          return unless pkgconf.any_version_installed?
+
+          tab = Tab.for_formula(pkgconf)
+          return unless tab.built_on
+
+          built_on_version = tab.built_on["os_version"]
+                                &.delete_prefix("macOS ")
+                                &.sub(/\.\d+$/, "")
+          return unless built_on_version
+
+          current_version = MacOS.version.to_s
+          return if built_on_version == current_version
+
+          <<~EOS
+            You have pkgconf installed that was built on macOS #{built_on_version}
+                     but you are running macOS #{current_version}.
+
+            This can cause issues with packages that depend on system libraries, such as libffi.
+            To fix this issue, reinstall pkgconf:
+              brew reinstall pkgconf
+
+            For more information, see: https://github.com/Homebrew/brew/issues/16137
+            We'd welcome a PR to automatically mitigate this instead of just warning about it.
+          EOS
+        end
+
+        def check_cask_quarantine_support
+          status, check_output = ::Cask::Quarantine.check_quarantine_support
+
+          case status
+          when :quarantine_available
+            nil
+          when :xattr_broken
+            "No Cask quarantine support available: there's no working version of `xattr` on this system."
+          when :no_swift
+            "No Cask quarantine support available: there's no available version of `swift` on this system."
+          when :swift_broken_clt
+            <<~EOS
+              No Cask quarantine support available: Swift is not working due to missing Command Line Tools.
+              #{MacOS::CLT.installation_then_reinstall_instructions}
+            EOS
+          when :swift_compilation_failed
+            <<~EOS
+              No Cask quarantine support available: Swift compilation failed.
+              This is usually due to a broken or incompatible Command Line Tools installation.
+              #{MacOS::CLT.installation_then_reinstall_instructions}
+            EOS
+          when :swift_runtime_error
+            <<~EOS
+              No Cask quarantine support available: Swift runtime error.
+              Your Command Line Tools installation may be broken or incomplete.
+              #{MacOS::CLT.installation_then_reinstall_instructions}
+            EOS
+          when :swift_not_executable
+            <<~EOS
+              No Cask quarantine support available: Swift is not executable.
+              Your Command Line Tools installation may be incomplete.
+              #{MacOS::CLT.installation_then_reinstall_instructions}
+            EOS
+          when :swift_unexpected_error
+            <<~EOS
+              No Cask quarantine support available: Swift returned an unexpected error:
+              #{check_output}
+            EOS
+          else
+            <<~EOS
+              No Cask quarantine support available: unknown reason: #{status.inspect}:
+              #{check_output}
+            EOS
+          end
+        end
       end
     end
   end

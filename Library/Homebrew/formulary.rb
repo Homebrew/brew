@@ -616,8 +616,23 @@ module Formulary
 
       return unless path.expand_path.exist?
 
-      return if Homebrew::EnvConfig.forbid_packages_from_paths? &&
-                !path.realpath.to_s.start_with?("#{HOMEBREW_CELLAR}/", "#{HOMEBREW_LIBRARY}/Taps/")
+      if Homebrew::EnvConfig.forbid_packages_from_paths?
+        path_realpath = path.realpath.to_s
+        unless path_realpath.start_with?("#{HOMEBREW_CELLAR}/", "#{HOMEBREW_LIBRARY}/Taps/",
+                                         "#{HOMEBREW_CACHE}/")
+          raise <<~WARNING if path_realpath.include?("/") || path_realpath.end_with?(".rb")
+            Rejecting formula at #{path_realpath} because it's not in a tap.
+                   Homebrew requires formulae to be in a tap.
+
+            To create a tap, run e.g.
+              brew tap-new <user|org>/<repository>
+            To create a formula in a tap run e.g.
+              brew create <url> --tap=<user|org>/<repository>
+          WARNING
+
+          return
+        end
+      end
 
       if (tap = Tap.from_path(path))
         # Only treat symlinks in taps as aliases.
@@ -875,9 +890,9 @@ module Formulary
       return if Homebrew::EnvConfig.no_install_from_api?
       return unless ref.is_a?(String)
       return unless (name = ref[HOMEBREW_DEFAULT_TAP_FORMULA_REGEX, :name])
-      if !Homebrew::API::Formula.all_formulae.key?(name) &&
-         !Homebrew::API::Formula.all_aliases.key?(name) &&
-         !Homebrew::API::Formula.all_renames.key?(name)
+      if Homebrew::API.formula_names.exclude?(name) &&
+         !Homebrew::API.formula_aliases.key?(name) &&
+         !Homebrew::API.formula_renames.key?(name)
         return
       end
 

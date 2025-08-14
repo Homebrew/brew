@@ -17,7 +17,7 @@ RSpec.describe Homebrew::Livecheck do
       desc "Test formula"
       homepage "https://brew.sh"
       url "https://brew.sh/test-0.0.1.tgz"
-      head "https://github.com/Homebrew/brew.git"
+      head "https://github.com/Homebrew/brew.git", branch: "main"
 
       livecheck do
         url "https://formulae.brew.sh/api/formula/ruby.json"
@@ -252,7 +252,7 @@ RSpec.describe Homebrew::Livecheck do
         desc "Test formula with a duplicate URL"
         homepage "https://github.com/Homebrew/brew.git"
         url "https://brew.sh/test-0.0.1.tgz"
-        head "https://github.com/Homebrew/brew.git"
+        head "https://github.com/Homebrew/brew.git", branch: "main"
       end
     end
 

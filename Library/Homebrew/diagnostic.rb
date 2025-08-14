@@ -1040,21 +1040,6 @@ module Homebrew
         end
       end
 
-      def check_cask_quarantine_support
-        case Cask::Quarantine.check_quarantine_support
-        when :quarantine_available
-          nil
-        when :xattr_broken
-          "No Cask quarantine support available: there's no working version of `xattr` on this system."
-        when :no_swift
-          "No Cask quarantine support available: there's no available version of `swift` on this system."
-        when :linux
-          "No Cask quarantine support available: not available on Linux."
-        else
-          "No Cask quarantine support available: unknown reason."
-        end
-      end
-
       def non_core_taps
         @non_core_taps ||= Tap.installed.reject(&:core_tap?).reject(&:core_cask_tap?)
       end

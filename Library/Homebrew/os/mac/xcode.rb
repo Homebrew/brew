@@ -327,6 +327,19 @@ module OS
         end
       end
 
+      sig { params(reason: String).returns(String) }
+      def self.reinstall_instructions(reason: "resolve your issues")
+        <<~EOS
+          If that doesn't #{reason}, run:
+            sudo rm -rf /Library/Developer/CommandLineTools
+            sudo xcode-select --install
+
+          Alternatively, manually download them from:
+            #{Formatter.url(MacOS::Xcode::APPLE_DEVELOPER_DOWNLOAD_URL)}.
+          You should download the Command Line Tools for Xcode #{MacOS::Xcode.latest_version}.
+        EOS
+      end
+
       sig { returns(String) }
       def self.update_instructions
         return installation_instructions if OS::Mac.version.prerelease?
@@ -342,13 +355,15 @@ module OS
         <<~EOS
           Update them from Software Update in #{software_update_location}.
 
-          If that doesn't show you any updates, run:
-            sudo rm -rf /Library/Developer/CommandLineTools
-            sudo xcode-select --install
+          #{reinstall_instructions(reason: "show you any updates")}
+        EOS
+      end
 
-          Alternatively, manually download them from:
-            #{Formatter.url(MacOS::Xcode::APPLE_DEVELOPER_DOWNLOAD_URL)}.
-          You should download the Command Line Tools for Xcode #{MacOS::Xcode.latest_version}.
+      sig { returns(String) }
+      def self.installation_then_reinstall_instructions
+        <<~EOS
+          #{installation_instructions}
+          #{reinstall_instructions}
         EOS
       end
 

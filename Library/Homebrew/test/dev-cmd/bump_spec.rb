@@ -11,7 +11,7 @@ RSpec.describe Homebrew::DevCmd::Bump do
       content = <<~RUBY
         desc "HEAD-only test formula"
         homepage "https://brew.sh"
-        head "https://github.com/Homebrew/brew.git"
+        head "https://github.com/Homebrew/brew.git", branch: "main"
       RUBY
       setup_test_formula("headonly", content)
 

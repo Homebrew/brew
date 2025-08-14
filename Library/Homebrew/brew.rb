@@ -95,10 +95,7 @@ begin
         require "api/cask"
         download_queue = Homebrew::DownloadQueue.new
         stale_seconds = 86400 # 1 day
-        Homebrew::API::Formula.fetch_api!(download_queue:, stale_seconds:)
-        Homebrew::API::Formula.fetch_tap_migrations!(download_queue:, stale_seconds:)
-        Homebrew::API::Cask.fetch_api!(download_queue:, stale_seconds:)
-        Homebrew::API::Cask.fetch_tap_migrations!(download_queue:, stale_seconds:)
+        Homebrew::API.fetch_api_files!(download_queue:, stale_seconds:)
         begin
           download_queue.fetch
         ensure

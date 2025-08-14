@@ -12,7 +12,7 @@ RSpec.describe Homebrew::Livecheck::SkipConditions do
         desc "Test formula"
         homepage "https://brew.sh"
         url "https://brew.sh/test-0.0.1.tgz"
-        head "https://github.com/Homebrew/brew.git"
+        head "https://github.com/Homebrew/brew.git", branch: "main"
 
         livecheck do
           url "https://formulae.brew.sh/api/formula/ruby.json"
@@ -34,7 +34,7 @@ RSpec.describe Homebrew::Livecheck::SkipConditions do
       head_only:           formula("test_head_only") do
         desc "HEAD-only test formula"
         homepage "https://brew.sh"
-        head "https://github.com/Homebrew/brew.git"
+        head "https://github.com/Homebrew/brew.git", branch: "main"
       end,
       gist:                formula("test_gist") do
         desc "Gist test formula"

@@ -207,13 +207,13 @@ module Homebrew
               if formula_path.exist? ||
                  (!Homebrew::EnvConfig.no_install_from_api? &&
                  !CoreTap.instance.installed? &&
-                 Homebrew::API::Formula.all_formulae.key?(path.basename.to_s))
+                 Homebrew::API.formula_names.include?(path.basename.to_s))
                 paths << formula_path
               end
               if cask_path.exist? ||
                  (!Homebrew::EnvConfig.no_install_from_api? &&
                  !CoreCaskTap.instance.installed? &&
-                 Homebrew::API::Cask.all_casks.key?(path.basename.to_s))
+                 Homebrew::API.cask_tokens.include?(path.basename.to_s))
                 paths << cask_path
               end
 

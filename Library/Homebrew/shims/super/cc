@@ -524,7 +524,7 @@ end
 def log(basename, argv, tool, args)
   return unless ENV.key?("HOMEBREW_CC_LOG_PATH")
 
-  logfn = "#{ENV["HOMEBREW_CC_LOG_PATH"].delete_suffix(".log")}.cc.log"
+  log_filename = "#{ENV["HOMEBREW_CC_LOG_PATH"].delete_suffix(".log")}.cc.log"
   adds = args - argv
   dels = argv - args
 
@@ -533,7 +533,7 @@ def log(basename, argv, tool, args)
   s << "superenv removed:  #{dels.join(" ")}\n" unless dels.empty?
   s << "superenv added:    #{adds.join(" ")}\n" unless adds.empty?
   s << "superenv executed: #{tool} #{args.join(" ")}\n\n"
-  File.open(logfn, "a+") { |f| f.write(s) }
+  File.open(log_filename, "a+") { |f| f.write(s) }
 end
 
 def remove_superbin_from_path(paths)

@@ -285,7 +285,7 @@ RSpec.describe Homebrew::FormulaAuditor do
       formula_text = <<~RUBY
         class Cask < Formula
           url "https://github.com/cask/cask/archive/v0.8.4.tar.gz"
-          head "https://github.com/cask/cask.git"
+          head "https://github.com/cask/cask.git", branch: "main"
           license "GPL-3.0-or-later"
         end
       RUBY
@@ -301,7 +301,7 @@ RSpec.describe Homebrew::FormulaAuditor do
       formula_text = <<~RUBY
         class Cask < Formula
           url "https://github.com/cask/cask/archive/v0.8.4.tar.gz"
-          head "https://github.com/cask/cask.git"
+          head "https://github.com/cask/cask.git", branch: "main"
           license all_of: ["GPL-3.0-or-later", "MIT"]
         end
       RUBY
@@ -317,7 +317,7 @@ RSpec.describe Homebrew::FormulaAuditor do
       formula_text = <<~RUBY
         class Cask < Formula
           url "https://github.com/cask/cask/archive/v0.8.4.tar.gz"
-          head "https://github.com/cask/cask.git"
+          head "https://github.com/cask/cask.git", branch: "main"
           license "GPL-3.0-or-later" => { with: "LLVM-exception" }
         end
       RUBY
@@ -332,7 +332,7 @@ RSpec.describe Homebrew::FormulaAuditor do
       formula_text = <<~RUBY
         class Cask < Formula
           url "https://github.com/cask/cask/archive/v0.8.4.tar.gz"
-          head "https://github.com/cask/cask.git"
+          head "https://github.com/cask/cask.git", branch: "main"
           license "GPL-3.0-or-later" => { with: "zzz" }
         end
       RUBY
@@ -351,7 +351,7 @@ RSpec.describe Homebrew::FormulaAuditor do
       formula_text = <<~RUBY
         class Cask < Formula
           url "https://github.com/cask/cask/archive/v0.8.4.tar.gz"
-          head "https://github.com/cask/cask.git"
+          head "https://github.com/cask/cask.git", branch: "main"
           license "GPL-3.0-or-later" => { with: "#{deprecated_spdx_exception}" }
         end
       RUBY
@@ -371,7 +371,7 @@ RSpec.describe Homebrew::FormulaAuditor do
       fa = formula_auditor "cask", <<~RUBY, spdx_license_data:, online: true, new_formula: true
         class Cask < Formula
           url "https://github.com/cask/cask/archive/v0.8.4.tar.gz"
-          head "https://github.com/cask/cask.git"
+          head "https://github.com/cask/cask.git", branch: "main"
           license "GPL-3.0-or-later"
         end
       RUBY
@@ -385,7 +385,7 @@ RSpec.describe Homebrew::FormulaAuditor do
       fa = formula_auditor "cask", <<~RUBY, spdx_license_data:, online: true, new_formula: true
         class Cask < Formula
           url "https://github.com/cask/cask/archive/v0.8.4.tar.gz"
-          head "https://github.com/cask/cask.git"
+          head "https://github.com/cask/cask.git", branch: "main"
           license any_of: ["GPL-3.0-or-later", "MIT"]
         end
       RUBY
@@ -399,7 +399,7 @@ RSpec.describe Homebrew::FormulaAuditor do
       formula_text = <<~RUBY
         class Cask < Formula
           url "https://github.com/cask/cask/archive/v0.8.4.tar.gz"
-          head "https://github.com/cask/cask.git"
+          head "https://github.com/cask/cask.git", branch: "main"
           license "0BSD"
         end
       RUBY
@@ -416,7 +416,7 @@ RSpec.describe Homebrew::FormulaAuditor do
       formula_text = <<~RUBY
         class Cask < Formula
           url "https://github.com/cask/cask/archive/v0.8.4.tar.gz"
-          head "https://github.com/cask/cask.git"
+          head "https://github.com/cask/cask.git", branch: "main"
           license "0BSD"
         end
       RUBY
@@ -433,7 +433,7 @@ RSpec.describe Homebrew::FormulaAuditor do
       formula_text = <<~RUBY
         class Cask < Formula
           url "https://github.com/cask/cask/archive/v0.8.4.tar.gz"
-          head "https://github.com/cask/cask.git"
+          head "https://github.com/cask/cask.git", branch: "main"
           license #{license_any_mismatch}
         end
       RUBY
@@ -450,7 +450,7 @@ RSpec.describe Homebrew::FormulaAuditor do
       formula_text = <<~RUBY
         class Cask < Formula
           url "https://github.com/cask/cask/archive/v0.8.4.tar.gz"
-          head "https://github.com/cask/cask.git"
+          head "https://github.com/cask/cask.git", branch: "main"
           license #{license_any}
         end
       RUBY
@@ -714,6 +714,78 @@ RSpec.describe Homebrew::FormulaAuditor do
       expect(fa.problems).to be_empty
     end
 
+    it "requires `branch:` to be specified for Git head URLs" do
+      fa = formula_auditor "foo", <<~RUBY, online: true
+        class Foo < Formula
+          url "https://brew.sh/foo-1.0.tgz"
+          sha256 "31cccfc6630528db1c8e3a06f6decf2a370060b982841cfab2b8677400a5092e"
+          head "https://github.com/Homebrew/homebrew-test-bot.git"
+        end
+      RUBY
+
+      fa.audit_specs
+      # This is `.last` because the first problem is the unreachable stable URL.
+      expect(fa.problems.last[:message]).to match("Git `head` URL must specify a branch name")
+    end
+
+    it "suggests a detected default branch for Git head URLs" do
+      fa = formula_auditor "foo", <<~RUBY, online: true
+        class Foo < Formula
+          url "https://brew.sh/foo-1.0.tgz"
+          sha256 "31cccfc6630528db1c8e3a06f6decf2a370060b982841cfab2b8677400a5092e"
+          head "https://github.com/Homebrew/homebrew-test-bot.git", branch: "master"
+        end
+      RUBY
+
+      message = "Git `head` URL must specify a branch name - try `branch: \"main\"`"
+      fa.audit_specs
+      # This is `.last` because the first problem is the unreachable stable URL.
+      expect(fa.problems.last[:message]).to match(message)
+    end
+
+    it "ignores a pre-existing correct HEAD branch name" do
+      fa = formula_auditor "foo", <<~RUBY, online: true
+        class Foo < Formula
+          url "https://brew.sh/foo-1.0.tgz"
+          sha256 "31cccfc6630528db1c8e3a06f6decf2a370060b982841cfab2b8677400a5092e"
+          head "https://github.com/Homebrew/homebrew-test-bot.git", branch: "main"
+        end
+      RUBY
+
+      fa.audit_specs
+      expect(fa.problems).not_to match("Git `head` URL must specify a branch name")
+    end
+
+    it "ignores `branch:` for non-Git head URLs" do
+      fa = formula_auditor "foo", <<~RUBY, online: true
+        class Foo < Formula
+          url "https://brew.sh/foo-1.0.tgz"
+          sha256 "31cccfc6630528db1c8e3a06f6decf2a370060b982841cfab2b8677400a5092e"
+          head "https://brew.sh/foo.tgz", branch: "develop"
+        end
+      RUBY
+
+      fa.audit_specs
+      expect(fa.problems).not_to match("Git `head` URL must specify a branch name")
+    end
+
+    it "ignores `branch:` for `resource` URLs" do
+      fa = formula_auditor "foo", <<~RUBY, online: true
+        class Foo < Formula
+          url "https://brew.sh/foo-1.0.tgz"
+          sha256 "31cccfc6630528db1c8e3a06f6decf2a370060b982841cfab2b8677400a5092e"
+
+          resource "bar" do
+            url "https://raw.githubusercontent.com/Homebrew/homebrew-core/HEAD/Formula/bar.rb"
+            sha256 "31cccfc6630528db1c8e3a06f6decf2a370060b982841cfab2b8677400a5092e"
+          end
+        end
+      RUBY
+
+      fa.audit_specs
+      expect(fa.problems).not_to match("Git `head` URL must specify a branch name")
+    end
+
     it "allows versions with no throttle rate" do
       fa = formula_auditor "bar", <<~RUBY, core_tap: true
         class Bar < Formula
@@ -770,7 +842,7 @@ RSpec.describe Homebrew::FormulaAuditor do
         class Bar < Formula
           url "https://brew.sh/foo-1.0.tgz"
           sha256 "31cccfc6630528db1c8e3a06f6decf2a370060b982841cfab2b8677400a5092e"
-          head "https://brew.sh/foo.git"
+          head "https://brew.sh/foo.git", branch: "develop"
         end
       RUBY
 
@@ -783,7 +855,7 @@ RSpec.describe Homebrew::FormulaAuditor do
         class BarAT1 < Formula
           url "https://brew.sh/foo-1.0.tgz"
           sha256 "31cccfc6630528db1c8e3a06f6decf2a370060b982841cfab2b8677400a5092e"
-          head "https://brew.sh/foo.git"
+          head "https://brew.sh/foo.git", branch: "develop"
         end
       RUBY
 
@@ -796,7 +868,7 @@ RSpec.describe Homebrew::FormulaAuditor do
         class Foo < Formula
           url "https://brew.sh/foo-1.0.tgz"
           sha256 "31cccfc6630528db1c8e3a06f6decf2a370060b982841cfab2b8677400a5092e"
-          head "https://brew.sh/foo.git"
+          head "https://brew.sh/foo.git", branch: "develop"
         end
       RUBY
 

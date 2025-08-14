@@ -84,9 +84,37 @@ class Keg
 
   JAVA_REGEX = %r{#{HOMEBREW_PREFIX}/opt/openjdk(@\d+(\.\d+)*)?/libexec(/openjdk\.jdk/Contents/Home)?}
 
+  sig { returns(T::Hash[Symbol, T::Hash[Symbol, String]]) }
+  def new_usr_local_replacement_pairs
+    {
+      prefix:       {
+        old: "/usr/local/opt",
+        new: "#{PREFIX_PLACEHOLDER}/opt",
+      },
+      caskroom:     {
+        old: "/usr/local/Caskroom",
+        new: "#{PREFIX_PLACEHOLDER}/Caskroom",
+      },
+      var_homebrew: {
+        old: "/usr/local/var/homebrew",
+        new: "#{PREFIX_PLACEHOLDER}/var/homebrew",
+      },
+    }
+  end
+
   def prepare_relocation_to_placeholders
     relocation = Relocation.new
-    relocation.add_replacement_pair(:prefix, HOMEBREW_PREFIX.to_s, PREFIX_PLACEHOLDER, path: true)
+
+    # Use selective HOMEBREW_PREFIX replacement when HOMEBREW_PREFIX=/usr/local
+    # This avoids overzealous replacement of system paths when a script refers to e.g. /usr/local/bin
+    if new_usr_local_relocation?
+      new_usr_local_replacement_pairs.each do |key, value|
+        relocation.add_replacement_pair(key, value.fetch(:old), value.fetch(:new), path: true)
+      end
+    else
+      relocation.add_replacement_pair(:prefix, HOMEBREW_PREFIX.to_s, PREFIX_PLACEHOLDER, path: true)
+    end
+
     relocation.add_replacement_pair(:cellar, HOMEBREW_CELLAR.to_s, CELLAR_PLACEHOLDER, path: true)
     # when HOMEBREW_PREFIX == HOMEBREW_REPOSITORY we should use HOMEBREW_PREFIX for all relocations to avoid
     # being unable to differentiate between them.
@@ -360,6 +388,25 @@ class Keg
 
   def self.file_linked_libraries(_file, _string)
     []
+  end
+
+  private
+
+  sig { returns(T::Boolean) }
+  def new_usr_local_relocation?
+    return false if HOMEBREW_PREFIX.to_s != "/usr/local"
+
+    formula = begin
+      Formula[name]
+    rescue FormulaUnavailableError
+      nil
+    end
+    return true unless formula
+
+    tap = formula.tap
+    return true unless tap
+
+    tap.disabled_new_usr_local_relocation_formulae.exclude?(name)
   end
 end
 

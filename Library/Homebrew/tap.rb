@@ -26,6 +26,8 @@ class Tap
   private_constant :HOMEBREW_TAP_PYPI_FORMULA_MAPPINGS_FILE
   HOMEBREW_TAP_SYNCED_VERSIONS_FORMULAE_FILE = "synced_versions_formulae.json"
   private_constant :HOMEBREW_TAP_SYNCED_VERSIONS_FORMULAE_FILE
+  HOMEBREW_TAP_DISABLED_NEW_USR_LOCAL_RELOCATION_FORMULAE_FILE = "disabled_new_usr_local_relocation_formulae.json"
+  private_constant :HOMEBREW_TAP_DISABLED_NEW_USR_LOCAL_RELOCATION_FORMULAE_FILE
   HOMEBREW_TAP_AUDIT_EXCEPTIONS_DIR = "audit_exceptions"
   private_constant :HOMEBREW_TAP_AUDIT_EXCEPTIONS_DIR
   HOMEBREW_TAP_STYLE_EXCEPTIONS_DIR = "style_exceptions"
@@ -37,6 +39,7 @@ class Tap
     #{HOMEBREW_TAP_MIGRATIONS_FILE}
     #{HOMEBREW_TAP_PYPI_FORMULA_MAPPINGS_FILE}
     #{HOMEBREW_TAP_SYNCED_VERSIONS_FORMULAE_FILE}
+    #{HOMEBREW_TAP_DISABLED_NEW_USR_LOCAL_RELOCATION_FORMULAE_FILE}
     #{HOMEBREW_TAP_AUDIT_EXCEPTIONS_DIR}/*.json
     #{HOMEBREW_TAP_STYLE_EXCEPTIONS_DIR}/*.json
   ].freeze, T::Array[String])
@@ -1099,6 +1102,19 @@ class Tap
     )
   end
 
+  # Array with formulae that should not be relocated to new /usr/local
+  sig { overridable.returns(T::Array[String]) }
+  def disabled_new_usr_local_relocation_formulae
+    @disabled_new_usr_local_relocation_formulae ||= T.let(
+      if (synced_file = path/HOMEBREW_TAP_DISABLED_NEW_USR_LOCAL_RELOCATION_FORMULAE_FILE).file?
+        JSON.parse(synced_file.read)
+      else
+        []
+      end,
+      T.nilable(T::Array[String]),
+    )
+  end
+
   sig { returns(T::Boolean) }
   def should_report_analytics?
     installed? && !private?
@@ -1345,13 +1361,18 @@ class CoreTap < AbstractCoreTap
     end, T.nilable(Pathname))
   end
 
-  sig { override.params(name: String).returns(Pathname) }
-  def new_formula_path(name)
-    formula_subdir = if name.start_with?("lib")
+  sig { params(name: String).returns(String) }
+  def new_formula_subdirectory(name)
+    if name.start_with?("lib")
       "lib"
     else
       name[0].to_s
     end
+  end
+
+  sig { override.params(name: String).returns(Pathname) }
+  def new_formula_path(name)
+    formula_subdir = new_formula_subdirectory(name)
 
     return super unless (formula_dir/formula_subdir).directory?
 
@@ -1373,7 +1394,7 @@ class CoreTap < AbstractCoreTap
         ensure_installed!
         super
       else
-        Homebrew::API::Formula.all_renames
+        Homebrew::API.formula_renames
       end,
       T.nilable(T::Hash[String, String]),
     )
@@ -1386,7 +1407,7 @@ class CoreTap < AbstractCoreTap
         ensure_installed!
         super
       else
-        Homebrew::API::Formula.tap_migrations
+        Homebrew::API.formula_tap_migrations
       end,
       T.nilable(T::Hash[String, T.untyped]),
     )
@@ -1443,7 +1464,7 @@ class CoreTap < AbstractCoreTap
       if Homebrew::EnvConfig.no_install_from_api?
         super
       else
-        Homebrew::API::Formula.all_aliases
+        Homebrew::API.formula_aliases
       end,
       T.nilable(T::Hash[String, String]),
     )
@@ -1460,7 +1481,7 @@ class CoreTap < AbstractCoreTap
   def formula_names
     return super if Homebrew::EnvConfig.no_install_from_api?
 
-    Homebrew::API::Formula.all_formulae.keys
+    Homebrew::API.formula_names
   end
 
   sig { override.returns(T::Hash[String, Pathname]) }
@@ -1469,13 +1490,12 @@ class CoreTap < AbstractCoreTap
 
     @formula_files_by_name ||= T.let(
       begin
-        tap_path = path.to_s
-        Homebrew::API::Formula.all_formulae.each_with_object({}) do |item, hash|
-          name, formula_hash = item
+        formula_directory_path = formula_dir.to_s
+        Homebrew::API.formula_names.each_with_object({}) do |name, hash|
           # If there's more than one item with the same path: use the longer one to prioritise more specific results.
           existing_path = hash[name]
           # Pathname equivalent is slow in a tight loop
-          new_path = File.join(tap_path, formula_hash.fetch("ruby_source_path"))
+          new_path = File.join(formula_directory_path, new_formula_subdirectory(name), "#{name.downcase}.rb")
           hash[name] = Pathname(new_path) if existing_path.nil? || existing_path.to_s.length < new_path.length
         end
       end,
@@ -1500,14 +1520,18 @@ class CoreCaskTap < AbstractCoreTap
     true
   end
 
-  sig { override.params(token: String).returns(Pathname) }
-  def new_cask_path(token)
-    cask_subdir = if token.start_with?("font-")
+  sig { params(token: String).returns(String) }
+  def new_cask_subdirectory(token)
+    if token.start_with?("font-")
       "font/font-#{token.delete_prefix("font-")[0]}"
     else
       token[0].to_s
     end
-    cask_dir/cask_subdir/"#{token.downcase}.rb"
+  end
+
+  sig { override.params(token: String).returns(Pathname) }
+  def new_cask_path(token)
+    cask_dir/new_cask_subdirectory(token)/"#{token.downcase}.rb"
   end
 
   sig { override.returns(T::Array[Pathname]) }
@@ -1521,7 +1545,7 @@ class CoreCaskTap < AbstractCoreTap
   def cask_tokens
     return super if Homebrew::EnvConfig.no_install_from_api?
 
-    Homebrew::API::Cask.all_casks.keys
+    Homebrew::API.cask_tokens
   end
 
   sig { override.returns(T::Hash[String, Pathname]) }
@@ -1530,13 +1554,12 @@ class CoreCaskTap < AbstractCoreTap
 
     @cask_files_by_name ||= T.let(
       begin
-        tap_path = path.to_s
-        Homebrew::API::Cask.all_casks.each_with_object({}) do |item, hash|
-          name, cask_hash = item
+        cask_directory_path = cask_dir.to_s
+        Homebrew::API.cask_tokens.each_with_object({}) do |name, hash|
           # If there's more than one item with the same path: use the longer one to prioritise more specific results.
           existing_path = hash[name]
           # Pathname equivalent is slow in a tight loop
-          new_path = File.join(tap_path, cask_hash.fetch("ruby_source_path"))
+          new_path = File.join(cask_directory_path, new_cask_subdirectory(name), "#{name.downcase}.rb")
           hash[name] = Pathname(new_path) if existing_path.nil? || existing_path.to_s.length < new_path.length
         end
       end,
@@ -1550,7 +1573,7 @@ class CoreCaskTap < AbstractCoreTap
       if Homebrew::EnvConfig.no_install_from_api?
         super
       else
-        Homebrew::API::Cask.all_renames
+        Homebrew::API.cask_renames
       end,
       T.nilable(T::Hash[String, String]),
     )
@@ -1562,7 +1585,7 @@ class CoreCaskTap < AbstractCoreTap
       if Homebrew::EnvConfig.no_install_from_api?
         super
       else
-        Homebrew::API::Cask.tap_migrations
+        Homebrew::API.cask_tap_migrations
       end,
       T.nilable(T::Hash[String, T.untyped]),
     )

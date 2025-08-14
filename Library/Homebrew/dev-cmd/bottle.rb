@@ -539,8 +539,9 @@ module Homebrew
 
             ohai "Detecting if #{local_filename} is relocatable..." if bottle_path.size > 1 * 1024 * 1024
 
-            prefix_check = if prefix == HOMEBREW_DEFAULT_PREFIX
-              File.join(prefix, "opt")
+            is_usr_local_prefix = prefix == "/usr/local"
+            prefix_check = if is_usr_local_prefix
+              "#{prefix}/opt"
             else
               prefix
             end
@@ -568,11 +569,17 @@ module Homebrew
               relocatable = false if keg_contain?(prefix_check, keg, ignores, formula_and_runtime_deps_names)
               relocatable = false if keg_contain?(cellar, keg, ignores, formula_and_runtime_deps_names)
               relocatable = false if keg_contain?(HOMEBREW_LIBRARY.to_s, keg, ignores, formula_and_runtime_deps_names)
-              if prefix != prefix_check
+              if is_usr_local_prefix
                 relocatable = false if keg_contain_absolute_symlink_starting_with?(prefix, keg)
-                relocatable = false if keg_contain?("#{prefix}/etc", keg, ignores)
-                relocatable = false if keg_contain?("#{prefix}/var", keg, ignores)
-                relocatable = false if keg_contain?("#{prefix}/share/vim", keg, ignores)
+                if tap.disabled_new_usr_local_relocation_formulae.exclude?(formula.name)
+                  keg.new_usr_local_replacement_pairs.each_value do |value|
+                    relocatable = false if keg_contain?(value.fetch(:old), keg, ignores)
+                  end
+                else
+                  relocatable = false if keg_contain?("#{prefix}/etc", keg, ignores)
+                  relocatable = false if keg_contain?("#{prefix}/var", keg, ignores)
+                  relocatable = false if keg_contain?("#{prefix}/share/vim", keg, ignores)
+                end
               end
               skip_relocation = relocatable && !keg.require_relocation?
             end

@@ -95,4 +95,101 @@ RSpec.describe Homebrew::Diagnostic::Checks do
         .to include("The contents of the SDKs in your Xcode installation do not match the SDK folder names")
     end
   end
+
+  describe "#check_pkgconf_macos_sdk_mismatch" do
+    let(:pkg_config_formula) { instance_double(Formula, any_version_installed?: true) }
+    let(:tab) { instance_double(Tab, built_on: { "os_version" => "13" }) }
+
+    before do
+      allow(Formula).to receive(:[]).with("pkgconf").and_return(pkg_config_formula)
+      allow(Tab).to receive(:for_formula).with(pkg_config_formula).and_return(tab)
+    end
+
+    it "doesn't trigger when pkgconf is not installed" do
+      allow(Formula).to receive(:[]).with("pkgconf").and_raise(FormulaUnavailableError.new("pkgconf"))
+
+      expect(checks.check_pkgconf_macos_sdk_mismatch).to be_nil
+    end
+
+    it "doesn't trigger when no versions are installed" do
+      allow(pkg_config_formula).to receive(:any_version_installed?).and_return(false)
+
+      expect(checks.check_pkgconf_macos_sdk_mismatch).to be_nil
+    end
+
+    it "doesn't trigger when built_on information is missing" do
+      allow(tab).to receive(:built_on).and_return(nil)
+
+      expect(checks.check_pkgconf_macos_sdk_mismatch).to be_nil
+    end
+
+    it "doesn't trigger when os_version information is missing" do
+      allow(tab).to receive(:built_on).and_return({ "cpu_family" => "x86_64" })
+
+      expect(checks.check_pkgconf_macos_sdk_mismatch).to be_nil
+    end
+
+    it "doesn't trigger when versions match" do
+      current_version = MacOS.version.to_s
+      allow(tab).to receive(:built_on).and_return({ "os_version" => current_version })
+
+      expect(checks.check_pkgconf_macos_sdk_mismatch).to be_nil
+    end
+
+    it "triggers when built_on version differs from current macOS version" do
+      allow(MacOS).to receive(:version).and_return(MacOSVersion.new("14"))
+      allow(tab).to receive(:built_on).and_return({ "os_version" => "13" })
+
+      expect(checks.check_pkgconf_macos_sdk_mismatch).to include("brew reinstall pkgconf")
+    end
+  end
+
+  describe "#check_cask_quarantine_support" do
+    it "returns nil when quarantine is available" do
+      allow(Cask::Quarantine).to receive(:check_quarantine_support).and_return([:quarantine_available, nil])
+      expect(checks.check_cask_quarantine_support).to be_nil
+    end
+
+    it "returns error when xattr is broken" do
+      allow(Cask::Quarantine).to receive(:check_quarantine_support).and_return([:xattr_broken, nil])
+      expect(checks.check_cask_quarantine_support)
+        .to match("there's no working version of `xattr` on this system")
+    end
+
+    it "returns error when swift is not available" do
+      allow(Cask::Quarantine).to receive(:check_quarantine_support).and_return([:no_swift, nil])
+      expect(checks.check_cask_quarantine_support)
+        .to match("there's no available version of `swift` on this system")
+    end
+
+    it "returns error when swift is broken due to missing CLT" do
+      allow(Cask::Quarantine).to receive(:check_quarantine_support).and_return([:swift_broken_clt, nil])
+      expect(checks.check_cask_quarantine_support)
+        .to match("Swift is not working due to missing Command Line Tools")
+    end
+
+    it "returns error when swift compilation failed" do
+      allow(Cask::Quarantine).to receive(:check_quarantine_support).and_return([:swift_compilation_failed, nil])
+      expect(checks.check_cask_quarantine_support)
+        .to match("Swift compilation failed")
+    end
+
+    it "returns error when swift runtime error occurs" do
+      allow(Cask::Quarantine).to receive(:check_quarantine_support).and_return([:swift_runtime_error, nil])
+      expect(checks.check_cask_quarantine_support)
+        .to match("Swift runtime error")
+    end
+
+    it "returns error when swift is not executable" do
+      allow(Cask::Quarantine).to receive(:check_quarantine_support).and_return([:swift_not_executable, nil])
+      expect(checks.check_cask_quarantine_support)
+        .to match("Swift is not executable")
+    end
+
+    it "returns error when swift returns unexpected error" do
+      allow(Cask::Quarantine).to receive(:check_quarantine_support).and_return([:swift_unexpected_error, "whoopsie"])
+      expect(checks.check_cask_quarantine_support)
+        .to match("whoopsie")
+    end
+  end
 end

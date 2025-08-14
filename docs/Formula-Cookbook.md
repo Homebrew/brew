@@ -841,7 +841,7 @@ end
 
 Formulae can specify an alternate download for the upstream project's development/cutting-edge source (e.g. `master`/`main`/`trunk`) using [`head`](https://rubydoc.brew.sh/Formula#head-class_method), which can be activated by passing `--HEAD` when installing. Specifying it is done in the same manner as [`url`](https://rubydoc.brew.sh/Formula#url-class_method), with added conventions for fetching from version control repositories:
 
-* Git repositories need `branch:` specified to fetch a branch other than "master". If the repository is very large, specify `only_path` to [limit the checkout to one path](Cask-Cookbook.md#git-urls).
+* Git repositories **must always** specify `branch:`. If the repository is very large, specify `only_path` to [limit the checkout to one path](Cask-Cookbook.md#git-urls).
 
   ```sh
 head "https://github.com/some/package.git", branch: "main"

@@ -134,10 +134,7 @@ module Homebrew
         end
 
         # Check if we can parse the JSON and do any Ruby-side follow-up.
-        unless Homebrew::EnvConfig.no_install_from_api?
-          Homebrew::API::Formula.write_names_and_aliases
-          Homebrew::API::Cask.write_names
-        end
+        Homebrew::API.write_names_and_aliases unless Homebrew::EnvConfig.no_install_from_api?
 
         Homebrew.failed = true if ENV["HOMEBREW_UPDATE_FAILED"]
         return if Homebrew::EnvConfig.disable_load_formula?

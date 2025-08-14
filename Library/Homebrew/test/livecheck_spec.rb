@@ -8,7 +8,7 @@ RSpec.describe Livecheck do
     formula do
       homepage "https://brew.sh"
       url "https://brew.sh/test-0.0.1.tgz"
-      head "https://github.com/Homebrew/brew.git"
+      head "https://github.com/Homebrew/brew.git", branch: "main"
     end
   end
   let(:livecheck_f) { described_class.new(f.class) }
