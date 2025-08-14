@@ -794,7 +794,7 @@ upgrade *`formula`* if it is already installed but outdated.
 `--non-interactive-sudo`
 
 : Fail fast on any interactive sudo prompt and use non-interactive sudo where
-  possible.
+  possible. Enabled by default if `$HOMEBREW_NON_INTERACTIVE` is set.
 
 `--timeout-wait-for-user`
 

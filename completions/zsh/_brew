@@ -1229,7 +1229,7 @@ _brew_instal() {
     '(--formula)--mdimporterdir[Target location for Spotlight Plugins (default: `~/Library/Spotlight`)]' \
     '--no-binaries[Disable/enable linking of helper executables (default: enabled). Enabled by default if `$HOMEBREW_CASK_OPTS_BINARIES` is set]' \
     '--no-quarantine[Disable/enable quarantining of downloads (default: enabled). Enabled by default if `$HOMEBREW_CASK_OPTS_QUARANTINE` is set]' \
-    '--non-interactive-sudo[Fail fast on any interactive sudo prompt and use non-interactive sudo where possible]' \
+    '--non-interactive-sudo[Fail fast on any interactive sudo prompt and use non-interactive sudo where possible. Enabled by default if `$HOMEBREW_NON_INTERACTIVE` is set]' \
     '(--cask --ignore-dependencies)--only-dependencies[Install the dependencies with specified options but do not install the formula itself]' \
     '(--cask)--overwrite[Delete files that already exist in the prefix while linking]' \
     '(--formula)--prefpanedir[Target location for Preference Panes (default: `~/Library/PreferencePanes`)]' \
@@ -1292,7 +1292,7 @@ _brew_install() {
     '(--formula)--mdimporterdir[Target location for Spotlight Plugins (default: `~/Library/Spotlight`)]' \
     '--no-binaries[Disable/enable linking of helper executables (default: enabled). Enabled by default if `$HOMEBREW_CASK_OPTS_BINARIES` is set]' \
     '--no-quarantine[Disable/enable quarantining of downloads (default: enabled). Enabled by default if `$HOMEBREW_CASK_OPTS_QUARANTINE` is set]' \
-    '--non-interactive-sudo[Fail fast on any interactive sudo prompt and use non-interactive sudo where possible]' \
+    '--non-interactive-sudo[Fail fast on any interactive sudo prompt and use non-interactive sudo where possible. Enabled by default if `$HOMEBREW_NON_INTERACTIVE` is set]' \
     '(--cask --ignore-dependencies)--only-dependencies[Install the dependencies with specified options but do not install the formula itself]' \
     '(--cask)--overwrite[Delete files that already exist in the prefix while linking]' \
     '(--formula)--prefpanedir[Target location for Preference Panes (default: `~/Library/PreferencePanes`)]' \
