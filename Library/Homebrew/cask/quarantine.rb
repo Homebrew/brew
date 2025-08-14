@@ -88,9 +88,9 @@ module Cask
 
     sig { returns(T::Boolean) }
     def self.available?
-      @status ||= check_quarantine_support
+      @quarantine_support ||= check_quarantine_support
 
-      @status == :quarantine_available
+      @quarantine_support[0] == :quarantine_available
     end
 
     def self.detect(file)
