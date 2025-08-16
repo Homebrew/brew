@@ -35,6 +35,7 @@ module Cask
     ORDINARY_ARTIFACT_CLASSES = [
       Artifact::Installer,
       Artifact::App,
+      Artifact::AppImage,
       Artifact::Artifact,
       Artifact::AudioUnitPlugin,
       Artifact::Binary,
