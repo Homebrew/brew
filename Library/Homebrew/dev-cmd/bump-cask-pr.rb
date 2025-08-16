@@ -76,14 +76,6 @@ module Homebrew
         odie "This cask is not in a tap!" if cask.tap.blank?
         odie "This cask's tap is not a Git repository!" unless cask.tap.git?
 
-        odie <<~EOS unless cask.tap.allow_bump?(cask.token)
-          Whoops, the #{cask.token} cask has its version update
-          pull requests automatically opened by BrewTestBot every ~3 hours!
-          We'd still love your contributions, though, so try another one
-          that is excluded from autobump list (i.e. it has 'no_autobump!'
-          method or 'livecheck' block with 'skip'.)
-        EOS
-
         if !args.write_only? && GitHub.too_many_open_prs?(cask.tap)
           odie "You have too many PRs open: close or merge some first!"
         end
