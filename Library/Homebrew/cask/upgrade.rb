@@ -21,6 +21,7 @@ module Cask
         binaries:            T.nilable(T::Boolean),
         quarantine:          T.nilable(T::Boolean),
         require_sha:         T.nilable(T::Boolean),
+        login_items:         T.nilable(T::Boolean),
       ).returns(T::Boolean)
     }
     def self.upgrade_casks!(
@@ -36,7 +37,8 @@ module Cask
       quiet: false,
       binaries: nil,
       quarantine: nil,
-      require_sha: nil
+      require_sha: nil,
+      login_items: nil
     )
       quarantine = true if quarantine.nil?
 
@@ -148,7 +150,7 @@ module Cask
         upgrade_cask(
           old_cask, new_cask,
           binaries:, force:, skip_cask_deps:, verbose:,
-          quarantine:, require_sha:, download_queue:
+          quarantine:, require_sha:, download_queue:, login_items:
         )
       rescue => e
         new_exception = e.exception("#{new_cask.full_name}: #{e}")
@@ -172,6 +174,7 @@ module Cask
         force:          T.nilable(T::Boolean),
         quarantine:     T.nilable(T::Boolean),
         require_sha:    T.nilable(T::Boolean),
+        login_items:    T.nilable(T::Boolean),
         skip_cask_deps: T.nilable(T::Boolean),
         verbose:        T.nilable(T::Boolean),
         download_queue: T.nilable(Homebrew::DownloadQueue),
@@ -179,7 +182,7 @@ module Cask
     }
     def self.upgrade_cask(
       old_cask, new_cask,
-      binaries:, force:, quarantine:, require_sha:, skip_cask_deps:, verbose:, download_queue:
+      binaries:, force:, quarantine:, require_sha:, login_items:, skip_cask_deps:, verbose:, download_queue:
     )
       require "cask/installer"
 
@@ -208,6 +211,7 @@ module Cask
         upgrade:        true,
         quarantine:,
         download_queue:,
+        login_items:,
       }.compact
 
       new_cask_installer =
