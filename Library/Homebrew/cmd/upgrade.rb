@@ -219,6 +219,9 @@ module Homebrew
               "#{f.full_specified_name} #{f.pkg_version}"
             end
           end
+          # sorting packages to be upgraded alphabetically
+          formulae_upgrades.sort_by! { |s| s.downcase }
+
           puts formulae_upgrades.join("\n") unless args.ask?
         end
 
