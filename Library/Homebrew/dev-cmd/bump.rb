@@ -382,6 +382,7 @@ module Homebrew
 
         if !args.no_pull_requests? &&
            (new_version.general != "unable to get versions") &&
+           (new_version.general != "skipped") &&
            (new_version != current_version)
           # We use the ARM version for the pull request version. This is
           # consistent with the behavior of bump-cask-pr.
@@ -480,6 +481,7 @@ module Homebrew
         end
         if !args.no_pull_requests? &&
            (new_version.general != "unable to get versions") &&
+           (new_version.general != "skipped") &&
            !versions_equal
           if duplicate_pull_requests
             duplicate_pull_requests_text = duplicate_pull_requests
@@ -497,7 +499,11 @@ module Homebrew
           end
         end
 
-        return unless args.open_pr?
+        if !args.open_pr? ||
+           (new_version.general == "unable to get versions") ||
+           (new_version.general == "skipped")
+          return
+        end
 
         if GitHub.too_many_open_prs?(formula_or_cask.tap)
           odie "You have too many PRs open: close or merge some first!"
