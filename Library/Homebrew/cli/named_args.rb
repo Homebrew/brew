@@ -390,8 +390,7 @@ module Homebrew
 
             cask = begin
               config = Cask::Config.from_args(@parent) if @cask_options
-              options = { warn: }.compact
-              candidate_cask = Cask::CaskLoader.load(name, config:, **options)
+              candidate_cask = Cask::CaskLoader.load(name, config:, warn:)
 
               if unreadable_error
                 onoe <<~EOS
@@ -473,7 +472,8 @@ module Homebrew
 
       sig { params(name: String).returns(Formula) }
       def resolve_formula(name)
-        Formulary.resolve(name, spec: @override_spec, force_bottle: @force_bottle, flags: @flags, prefer_stub: true)
+        spec = @override_spec || T.unsafe(nil)
+        Formulary.resolve(name, spec:, force_bottle: @force_bottle, flags: @flags, prefer_stub: true)
       end
 
       sig { params(name: String).returns([Pathname, T::Array[Keg]]) }

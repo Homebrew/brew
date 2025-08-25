@@ -63,7 +63,7 @@ module Homebrew
         with_env(HOMEBREW_INTERNAL_ALLOW_PACKAGES_FROM_PATHS: "1") do
           Formulary.factory(download.symlink_location,
                             formula.active_spec_sym,
-                            alias_path: formula.alias_path,
+                            alias_path: formula.alias_path || T.unsafe(nil),
                             flags:      formula.class.build_flags)
         end
       end

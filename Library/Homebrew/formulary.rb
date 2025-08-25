@@ -513,11 +513,11 @@ module Formulary
   end
 
   sig {
-    params(name: String, spec: T.nilable(Symbol), force_bottle: T::Boolean, flags: T::Array[String], prefer_stub: T::Boolean).returns(Formula)
+    params(name: String, spec: Symbol, force_bottle: T::Boolean, flags: T::Array[String], prefer_stub: T::Boolean).returns(Formula)
   }
   def self.resolve(
     name,
-    spec: nil,
+    spec: T.unsafe(nil),
     force_bottle: false,
     flags: [],
     prefer_stub: false
@@ -1117,8 +1117,8 @@ module Formulary
     params(
       ref:           T.any(Pathname, String),
       spec:          Symbol,
-      alias_path:    T.any(NilClass, Pathname, String),
-      from:          T.nilable(Symbol),
+      alias_path:    T.any(Pathname, String),
+      from:          Symbol,
       warn:          T::Boolean,
       force_bottle:  T::Boolean,
       flags:         T::Array[String],
@@ -1129,8 +1129,8 @@ module Formulary
   def self.factory(
     ref,
     spec = :stable,
-    alias_path: nil,
-    from: nil,
+    alias_path: T.unsafe(nil),
+    from: T.unsafe(nil),
     warn: false,
     force_bottle: false,
     flags: [],
@@ -1159,13 +1159,13 @@ module Formulary
     params(
       rack:         Pathname,
       # Automatically resolves the formula's spec if not specified.
-      spec:         T.nilable(Symbol),
-      alias_path:   T.any(NilClass, Pathname, String),
+      spec:         Symbol,
+      alias_path:   T.any(Pathname, String),
       force_bottle: T::Boolean,
       flags:        T::Array[String],
     ).returns(Formula)
   }
-  def self.from_rack(rack, spec = nil, alias_path: nil, force_bottle: false, flags: [])
+  def self.from_rack(rack, spec = T.unsafe(nil), alias_path: T.unsafe(nil), force_bottle: false, flags: [])
     kegs = rack.directory? ? rack.subdirs.map { |d| Keg.new(d) } : []
     keg = kegs.find(&:linked?) || kegs.find(&:optlinked?) || kegs.max_by(&:scheme_and_version)
 
@@ -1195,16 +1195,16 @@ module Formulary
     params(
       keg:          Keg,
       # Automatically resolves the formula's spec if not specified.
-      spec:         T.nilable(Symbol),
-      alias_path:   T.any(NilClass, Pathname, String),
+      spec:         Symbol,
+      alias_path:   T.any(Pathname, String),
       force_bottle: T::Boolean,
       flags:        T::Array[String],
     ).returns(Formula)
   }
   def self.from_keg(
     keg,
-    spec = nil,
-    alias_path: nil,
+    spec = T.unsafe(nil),
+    alias_path: T.unsafe(nil),
     force_bottle: false,
     flags: []
   )
@@ -1245,7 +1245,7 @@ module Formulary
       path:          Pathname,
       contents:      String,
       spec:          Symbol,
-      alias_path:    T.nilable(Pathname),
+      alias_path:    Pathname,
       force_bottle:  T::Boolean,
       flags:         T::Array[String],
       ignore_errors: T::Boolean,
@@ -1256,7 +1256,7 @@ module Formulary
     path,
     contents,
     spec = :stable,
-    alias_path: nil,
+    alias_path: T.unsafe(nil),
     force_bottle: false,
     flags: [],
     ignore_errors: false
@@ -1271,7 +1271,7 @@ module Formulary
       name:          String,
       contents:      T::Hash[String, T.untyped],
       spec:          Symbol,
-      alias_path:    T.nilable(Pathname),
+      alias_path:    Pathname,
       force_bottle:  T::Boolean,
       flags:         T::Array[String],
       ignore_errors: T::Boolean,
@@ -1281,7 +1281,7 @@ module Formulary
     name,
     contents,
     spec = :stable,
-    alias_path: nil,
+    alias_path: T.unsafe(nil),
     force_bottle: false,
     flags: [],
     ignore_errors: false
