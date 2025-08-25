@@ -24,7 +24,6 @@ module WriteMkpathExtension
   def write(content, offset = T.unsafe(nil), external_encoding: T.unsafe(nil), internal_encoding: T.unsafe(nil),
             encoding: T.unsafe(nil), textmode: T.unsafe(nil), binmode: T.unsafe(nil), autoclose: T.unsafe(nil),
             mode: T.unsafe(nil), perm: T.unsafe(nil))
-    T.bind(self, Pathname)
     raise "Will not overwrite #{self}" if exist? && !offset && !mode&.match?(/^a\+?$/)
 
     dirname.mkpath
