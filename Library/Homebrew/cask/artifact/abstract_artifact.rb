@@ -89,6 +89,7 @@ module Cask
             Vst3Plugin,
             ScreenSaver,
           ],
+          ShimScript,
           Binary,
           Manpage,
           PostflightBlock,

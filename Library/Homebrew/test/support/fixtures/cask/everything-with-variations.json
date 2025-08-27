@@ -65,6 +65,17 @@
       ]
     },
     {
+      "shim_script": [
+        "Everything.app/Contents/MacOS/Everything",
+        {
+          "target": "everythingctl",
+          "args": [
+            "--cli"
+          ]
+        }
+      ]
+    },
+    {
       "zap": [
         {
           "trash": [

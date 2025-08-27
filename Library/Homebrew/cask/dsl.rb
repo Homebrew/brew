@@ -55,6 +55,7 @@ module Cask
       Artifact::ScreenSaver,
       Artifact::Service,
       Artifact::StageOnly,
+      Artifact::ShimScript,
       Artifact::Suite,
       Artifact::VstPlugin,
       Artifact::Vst3Plugin,
@@ -680,14 +681,14 @@ module Cask
     end
 
     ORDINARY_ARTIFACT_CLASSES.each do |klass|
-      define_method(klass.dsl_key) do |*args, **kwargs|
+      define_method(klass.dsl_key) do |*args, **kwargs, &block|
         T.bind(self, DSL)
         if [*artifacts.map(&:class), klass].include?(Artifact::StageOnly) &&
            artifacts.map(&:class).intersect?(ACTIVATABLE_ARTIFACT_CLASSES)
           raise CaskInvalidError.new(cask, "'stage_only' must be the only activatable artifact.")
         end
 
-        artifacts.add(klass.from_args(cask, *args, **kwargs))
+        artifacts.add(klass.from_args(cask, *args, **kwargs, &block))
       rescue CaskInvalidError
         raise
       rescue => e

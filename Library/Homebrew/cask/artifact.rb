@@ -30,6 +30,7 @@ require "cask/artifact/stage_only"
 require "cask/artifact/suite"
 require "cask/artifact/uninstall"
 require "cask/artifact/zap"
+require "cask/artifact/shim_script"
 
 module Cask
   # Module containing all cask artifact classes.

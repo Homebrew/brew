@@ -27,6 +27,9 @@ cask "everything" do
   rename "Foo.app", "Bar.app"
 
   app "Everything.app"
+  shim_script "Everything.app/Contents/MacOS/Everything", target: "everythingctl", args: ["--cli"] do |src|
+    "#!/bin/sh\nexec \"#{src}\" --cli \"$@\"\n"
+  end
   installer script: {
     executable:   "~/just/another/path/install.sh",
     args:         ["--mode=silent"],

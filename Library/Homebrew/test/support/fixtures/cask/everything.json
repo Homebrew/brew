@@ -65,6 +65,18 @@
       ]
     },
     {
+      "shim_script": [
+        "Everything.app/Contents/MacOS/Everything",
+        {
+          "target": "everythingctl",
+          "args": [
+            "--cli"
+          ],
+          "content": "#!/bin/sh\nexec \"Everything.app/Contents/MacOS/Everything\" --cli \"$@\"\n"
+        }
+      ]
+    },
+    {
       "zap": [
         {
           "trash": [
@@ -122,6 +134,6 @@
   ],
   "ruby_source_path": "Casks/everything.rb",
   "ruby_source_checksum": {
-    "sha256": "d3c19b564ee5a17f22191599ad795a6cc9c4758d0e1269f2d13207155b378dea"
+    "sha256": "ebb16f1ed408d607da80d871fa56e30d763d413f515ee6be4649806dfafb17f2"
   }
 }

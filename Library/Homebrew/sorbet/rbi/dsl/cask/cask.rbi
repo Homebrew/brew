@@ -181,6 +181,9 @@ class Cask::Cask
   def sha256(*args, &block); end
 
   sig { params(args: T.untyped, block: T.untyped).returns(T.untyped) }
+  def shim_script(*args, &block); end
+
+  sig { params(args: T.untyped, block: T.untyped).returns(T.untyped) }
   def stage_only(*args, &block); end
 
   sig { params(args: T.untyped, block: T.untyped).returns(T.untyped) }
