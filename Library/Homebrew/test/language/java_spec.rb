@@ -19,7 +19,7 @@ RSpec.describe Language::Java do
   end
 
   before do
-    allow(Formula).to receive(:[]).and_return(f)
+    allow(Formulary).to receive(:factory).and_return(f)
     allow(f).to receive_messages(any_version_installed?: true, any_installed_version: f.version)
   end
 

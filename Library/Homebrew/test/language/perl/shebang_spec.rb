@@ -53,7 +53,7 @@ RSpec.describe Language::Perl::Shebang do
 
   describe "#detected_perl_shebang" do
     it "can be used to replace Perl shebangs when depends_on \"perl\" is used" do
-      allow(Formulary).to receive(:factory).with(f[:perl].name).and_return(f[:perl])
+      allow(Formula).to receive(:stub).with(f[:perl].name).and_return(f[:perl])
       Utils::Shebang.rewrite_shebang described_class.detected_perl_shebang(f[:depends_on]), file.path
 
       expect(File.read(file)).to eq <<~EOS
@@ -65,7 +65,7 @@ RSpec.describe Language::Perl::Shebang do
     end
 
     it "can be used to replace Perl shebangs when uses_from_macos \"perl\" is used" do
-      allow(Formulary).to receive(:factory).with(f[:perl].name).and_return(f[:perl])
+      allow(Formula).to receive(:stub).with(f[:perl].name).and_return(f[:perl])
       Utils::Shebang.rewrite_shebang described_class.detected_perl_shebang(f[:uses_from_macos]), file.path
 
       expected_shebang = if OS.mac?
@@ -83,7 +83,7 @@ RSpec.describe Language::Perl::Shebang do
     end
 
     it "can fix broken shebang like `#!perl`" do
-      allow(Formulary).to receive(:factory).with(f[:perl].name).and_return(f[:perl])
+      allow(Formula).to receive(:stub).with(f[:perl].name).and_return(f[:perl])
       Utils::Shebang.rewrite_shebang described_class.detected_perl_shebang(f[:uses_from_macos]), broken_file.path
 
       expected_shebang = if OS.mac?

@@ -101,12 +101,12 @@ RSpec.describe Homebrew::Diagnostic::Checks do
     let(:tab) { instance_double(Tab, built_on: { "os_version" => "13" }) }
 
     before do
-      allow(Formula).to receive(:[]).with("pkgconf").and_return(pkg_config_formula)
+      allow(Formula).to receive(:stub).with("pkgconf").and_return(pkg_config_formula)
       allow(Tab).to receive(:for_formula).with(pkg_config_formula).and_return(tab)
     end
 
     it "doesn't trigger when pkgconf is not installed" do
-      allow(Formula).to receive(:[]).with("pkgconf").and_raise(FormulaUnavailableError.new("pkgconf"))
+      allow(Formula).to receive(:stub).with("pkgconf").and_raise(FormulaUnavailableError.new("pkgconf"))
 
       expect(checks.check_pkgconf_macos_sdk_mismatch).to be_nil
     end

@@ -161,7 +161,7 @@ RSpec.describe Formula do
       allow(DevelopmentTools).to receive_messages(needs_libc_formula?: false, needs_compiler_formula?: false)
 
       allow(Formulary).to receive(:load_formula_from_path).with(f2.name, f2.path).and_return(f2)
-      allow(Formulary).to receive(:factory).with(f2.name).and_return(f2)
+      allow(Formulary).to receive(:factory).with(f2.name, prefer_stub: false).and_return(f2)
       allow(f).to receive(:versioned_formulae_names).and_return([f2.name])
     end
 
