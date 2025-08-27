@@ -2399,7 +2399,6 @@ class Formula
       latest:           T::Boolean,
       output_to_stderr: T::Boolean,
       quiet:            T::Boolean,
-      # ).returns(Formula)
     ).void
   }
   def self.ensure_installed!(name, reason: "", latest: false, output_to_stderr: true, quiet: false)
