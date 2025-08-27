@@ -27,7 +27,7 @@ module UnpackStrategy
     def extract_to_dir(unpack_dir, basename:, verbose:)
       system_command! "7zr",
                       args:    ["x", "-y", "-bd", "-bso0", path, "-o#{unpack_dir}"],
-                      env:     { "PATH" => PATH.new(Formula["p7zip"].opt_bin, ENV.fetch("PATH")) },
+                      env:     { "PATH" => PATH.new(Formula.stub("p7zip").opt_bin, ENV.fetch("PATH")) },
                       verbose:
     end
   end

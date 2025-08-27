@@ -48,7 +48,7 @@ module OS
         paths = []
         if compiler == :llvm_clang
           paths << "#{self["HOMEBREW_SDKROOT"]}/usr/lib"
-          paths << ::Formula["llvm"].opt_lib.to_s
+          paths << ::Formula.stub("llvm").opt_lib.to_s
         end
         paths << "#{self["HOMEBREW_SDKROOT"]}/System/Library/Frameworks/OpenGL.framework/Versions/Current/Libraries"
         paths

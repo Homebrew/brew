@@ -347,7 +347,7 @@ module Language
 
             new_target = rp.sub(
               %r{#{HOMEBREW_CELLAR}/python#{version}/[^/]+},
-              Formula["python#{version}"].opt_prefix.to_s,
+              Formula.stub("python#{version}").opt_prefix.to_s,
             )
             f.unlink
             f.make_symlink new_target
@@ -361,7 +361,7 @@ module Language
 
             prefix_path.sub!(
               %r{^#{HOMEBREW_CELLAR}/python#{version}/[^/]+},
-              Formula["python#{version}"].opt_prefix.to_s,
+              Formula.stub("python#{version}").opt_prefix.to_s,
             )
             prefix_file.atomic_write prefix_path
           end

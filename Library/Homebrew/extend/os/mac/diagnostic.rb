@@ -107,7 +107,7 @@ module OS
 
         sig { returns(T.nilable(String)) }
         def check_for_non_prefixed_findutils
-          findutils = ::Formula["findutils"]
+          findutils = ::Formula.stub("findutils")
           return unless findutils.any_version_installed?
 
           gnubin = %W[#{findutils.opt_libexec}/gnubin #{findutils.libexec}/gnubin]
@@ -546,7 +546,7 @@ module OS
           return if OS::Mac.version.prerelease? || OS::Mac.version.outdated_release?
 
           pkgconf = begin
-            ::Formula["pkgconf"]
+            ::Formula.stub("pkgconf")
           rescue FormulaUnavailableError
             nil
           end

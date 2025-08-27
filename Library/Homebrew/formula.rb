@@ -639,10 +639,10 @@ class Formula
   end
 
   # Returns any `@`-versioned Formula objects for any Formula (including versioned formulae).
-  sig { returns(T::Array[Formula]) }
-  def versioned_formulae
+  sig { params(prefer_stubs: T::Boolean).returns(T::Array[Formula]) }
+  def versioned_formulae(prefer_stubs: false)
     versioned_formulae_names.filter_map do |name|
-      Formula[name]
+      Formulary.factory(name, prefer_stub: prefer_stubs)
     rescue FormulaUnavailableError
       nil
     end.sort_by(&:version).reverse
@@ -2378,6 +2378,32 @@ class Formula
   sig { params(name: T.any(Pathname, String)).returns(Formula) }
   def self.[](name)
     Formulary.factory(name)
+  end
+
+  sig { params(name: String).returns(Formula) }
+  def self.stub(name)
+    Formulary.factory(name, prefer_stub: true)
+  end
+
+  sig { params(name: String).returns(T::Boolean) }
+  def self.any_version_installed?(name)
+    stub(name).any_version_installed?
+  rescue FormulaUnavailableError
+    false
+  end
+
+  sig {
+    params(
+      name:             String,
+      reason:           String,
+      latest:           T::Boolean,
+      output_to_stderr: T::Boolean,
+      quiet:            T::Boolean,
+      # ).returns(Formula)
+    ).void
+  }
+  def self.ensure_installed!(name, reason: "", latest: false, output_to_stderr: true, quiet: false)
+    stub(name).ensure_installed!(reason:, latest:, output_to_stderr:, quiet:)
   end
 
   # True if this formula is provided by Homebrew itself.

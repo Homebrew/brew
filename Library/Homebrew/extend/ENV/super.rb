@@ -235,7 +235,7 @@ module Superenv
       # so that the linker will find those libs before any that may be linked in $HOMEBREW_PREFIX/lib.
       # https://github.com/Homebrew/brew/pull/11459#issuecomment-851075936
       begin
-        f = gcc_version_formula(compiler.to_s)
+        f = gcc_version_formula(compiler.to_s, prefer_stub: true)
       rescue FormulaUnavailableError
         nil
       else

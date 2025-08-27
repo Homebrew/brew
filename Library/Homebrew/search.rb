@@ -74,13 +74,13 @@ module Homebrew
       results = search(Formula.full_names + aliases, string_or_regex).sort
       if string_or_regex.is_a?(String)
         results |= Formula.fuzzy_search(string_or_regex).map do |n|
-          Formulary.factory(n).full_name
+          Formula.stub(n).full_name
         end
       end
 
       results.filter_map do |name|
         formula, canonical_full_name = begin
-          f = Formulary.factory(name)
+          f = Formula.stub(name)
           [f, f.full_name]
         rescue
           [nil, name]

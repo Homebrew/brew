@@ -153,12 +153,7 @@ module Homebrew
             ohai "Migrating formulae from linuxbrew-core to homebrew-core"
 
             LINUXBREW_CORE_MIGRATION_LIST.each do |name|
-              begin
-                formula = Formula[name]
-              rescue FormulaUnavailableError
-                next
-              end
-              next unless formula.any_version_installed?
+              next unless Formula.any_version_installed?(name)
 
               keg = formula.installed_kegs.fetch(-1)
               tab = keg.tab

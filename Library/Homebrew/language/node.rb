@@ -50,7 +50,7 @@ module Language
       # explicitly use our npm and node-gyp executables instead of the user
       # managed ones in HOMEBREW_PREFIX/lib/node_modules which might be broken
       begin
-        ENV.prepend_path "PATH", Formula["node"].opt_libexec/"bin"
+        ENV.prepend_path "PATH", Formula.stub("node").opt_libexec/"bin"
       rescue FormulaUnavailableError
         nil
       end

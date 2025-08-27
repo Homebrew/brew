@@ -323,8 +323,10 @@ module FormulaCellarChecks
 
     # macOS `objdump` is a bit slow, so we prioritise llvm's `llvm-objdump` (~5.7x faster)
     # or binutils' `objdump` (~1.8x faster) if they are installed.
-    objdump   = Formula["llvm"].opt_bin/"llvm-objdump" if Formula["llvm"].any_version_installed?
-    objdump ||= Formula["binutils"].opt_bin/"objdump" if Formula["binutils"].any_version_installed?
+    llvm = Formula.stub("llvm")
+    binutils = Formula.stub("binutils")
+    objdump   = llvm.opt_bin/"llvm-objdump" if llvm.any_version_installed?
+    objdump ||= binutils.opt_bin/"objdump" if binutils.any_version_installed?
     objdump ||= which("objdump")
     objdump ||= which("objdump", ORIGINAL_PATHS)
 

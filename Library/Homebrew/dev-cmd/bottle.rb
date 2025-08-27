@@ -348,7 +348,7 @@ module Homebrew
       sig { returns(T.nilable(Formula)) }
       def gnu_tar_formula_ensure_installed_if_needed!
         gnu_tar_formula = begin
-          Formula["gnu-tar"]
+          Formula.stub("gnu-tar")
         rescue FormulaUnavailableError
           nil
         end

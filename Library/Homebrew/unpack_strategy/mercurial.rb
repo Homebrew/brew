@@ -17,7 +17,7 @@ module UnpackStrategy
     def extract_to_dir(unpack_dir, basename:, verbose:)
       system_command! "hg",
                       args:    ["--cwd", path, "archive", "--subrepos", "-y", "-t", "files", unpack_dir],
-                      env:     { "PATH" => PATH.new(Formula["mercurial"].opt_bin, ENV.fetch("PATH")) },
+                      env:     { "PATH" => PATH.new(Formula.stub("mercurial").opt_bin, ENV.fetch("PATH")) },
                       verbose:
     end
   end

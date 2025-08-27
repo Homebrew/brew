@@ -26,7 +26,7 @@ module UnpackStrategy
       odebug "in unpack_strategy, zip, extract_to_dir, verbose: #{verbose.inspect}"
       unzip = if which("unzip").blank?
         begin
-          Formula["unzip"]
+          Formula.stub("unzip")
         rescue FormulaUnavailableError
           nil
         end

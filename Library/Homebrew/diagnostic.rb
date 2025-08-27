@@ -537,8 +537,7 @@ module Homebrew
         return unless Utils::Git.available?
         return if Version.new(Utils::Git.version) >= Version.new(minimum_version)
 
-        git = Formula["git"]
-        git_upgrade_cmd = git.any_version_installed? ? "upgrade" : "install"
+        git_upgrade_cmd = Formula.any_version_installed?("git") ? "upgrade" : "install"
         <<~EOS
           An outdated version (#{Utils::Git.version}) of Git was detected in your PATH.
           Git #{minimum_version} or newer is required for Homebrew.
@@ -778,7 +777,7 @@ module Homebrew
 
       sig { returns(T.nilable(String)) }
       def check_for_non_prefixed_coreutils
-        coreutils = Formula["coreutils"]
+        coreutils = Formula.stub("coreutils")
         return unless coreutils.any_version_installed?
 
         gnubin = %W[#{coreutils.opt_libexec}/gnubin #{coreutils.libexec}/gnubin]

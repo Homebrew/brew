@@ -6,13 +6,13 @@ module Language
   #
   # @api public
   module Java
-    sig { params(version: T.nilable(String)).returns(T.nilable(Formula)) }
-    def self.find_openjdk_formula(version = nil)
+    sig { params(version: T.nilable(String), prefer_stub: T::Boolean).returns(T.nilable(Formula)) }
+    def self.find_openjdk_formula(version = nil, prefer_stub: false)
       can_be_newer = version&.end_with?("+")
       version = version.to_i
 
-      openjdk = Formula["openjdk"]
-      [openjdk, *openjdk.versioned_formulae].find do |f|
+      openjdk = Formulary.factory("openjdk", prefer_stub:)
+      [openjdk, *openjdk.versioned_formulae(prefer_stubs: prefer_stub)].find do |f|
         next false unless f.any_version_installed?
 
         unless version.zero?
@@ -37,7 +37,7 @@ module Language
     #   (e.g. `"21"`) or a lower-bounded range (e.g. `"21+"`)
     sig { params(version: T.nilable(String)).returns(T.nilable(Pathname)) }
     def self.java_home(version = nil)
-      find_openjdk_formula(version)&.opt_libexec
+      find_openjdk_formula(version, prefer_stub: true)&.opt_libexec
     end
 
     sig { params(version: T.nilable(String)).returns(String) }

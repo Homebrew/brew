@@ -676,14 +676,14 @@ class HomebrewCurlDownloadStrategy < CurlDownloadStrategy
       .returns(T.nilable(SystemCommand::Result))
   }
   def _curl_download(resolved_url, to, timeout)
-    raise HomebrewCurlDownloadStrategyError, url unless Formula["curl"].any_version_installed?
+    raise HomebrewCurlDownloadStrategyError, url unless Formula.any_version_installed?("curl")
 
     curl_download resolved_url, to:, try_partial: @try_partial, timeout:, use_homebrew_curl: true
   end
 
   sig { override.params(args: String, options: T.untyped).returns(SystemCommand::Result) }
   def curl_output(*args, **options)
-    raise HomebrewCurlDownloadStrategyError, url unless Formula["curl"].any_version_installed?
+    raise HomebrewCurlDownloadStrategyError, url unless Formula.any_version_installed?("curl")
 
     options[:use_homebrew_curl] = true
     super

@@ -324,18 +324,21 @@ module Homebrew
 
     def self.shellcheck
       require "formula"
-      Formula["shellcheck"].ensure_installed!(latest: true, reason: "shell style checks").opt_bin/"shellcheck"
+      shellcheck = Formula.stub("shellcheck")
+      shellcheck.ensure_installed!(latest: true, reason: "shell style checks").opt_bin/"shellcheck"
     end
 
     def self.shfmt
       require "formula"
-      Formula["shfmt"].ensure_installed!(latest: true, reason: "formatting shell scripts")
+      shfmt = Formula.stub("shfmt")
+      shfmt.ensure_installed!(latest: true, reason: "formatting shell scripts")
       HOMEBREW_LIBRARY/"Homebrew/utils/shfmt.sh"
     end
 
     def self.actionlint
       require "formula"
-      Formula["actionlint"].ensure_installed!(latest: true, reason: "GitHub Actions checks").opt_bin/"actionlint"
+      actionlint = Formula.stub("actionlint")
+      actionlint.ensure_installed!(latest: true, reason: "GitHub Actions checks").opt_bin/"actionlint"
     end
 
     # Collection of style offenses.

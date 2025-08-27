@@ -258,7 +258,7 @@ module PyPI
     end
 
     missing_dependencies = Array(dependencies).reject do |dependency|
-      Formula[dependency].any_version_installed?
+      Formula.any_version_installed?(dependency)
     rescue FormulaUnavailableError
       odie "Formula \"#{dependency}\" not found but it is a dependency to update \"#{formula.name}\" resources."
     end
@@ -272,7 +272,7 @@ module PyPI
 
     python_deps = formula.deps
                          .select { |d| d.name.match?(/^python(@.+)?$/) }
-                         .map(&:to_formula)
+                         .map { |d| d.to_formula(prefer_stub: true) }
                          .sort_by(&:version)
                          .reverse
     python_name = if python_deps.empty?

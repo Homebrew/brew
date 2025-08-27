@@ -472,8 +472,9 @@ class Pathname
     @which_install_info ||=
       if File.executable?("/usr/bin/install-info")
         "/usr/bin/install-info"
-      elsif Formula["texinfo"].any_version_installed?
-        (Formula["texinfo"].opt_bin/"install-info").to_s
+      else
+        texinfo = Formula.stub("texinfo")
+        (texinfo.opt_bin/"install-info").to_s if texinfo.any_version_installed?
       end
   end
 end

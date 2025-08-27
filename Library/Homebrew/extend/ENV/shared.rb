@@ -286,16 +286,16 @@ module SharedEnvExtension
     end
   end
 
-  sig { params(name: String).returns(Formula) }
-  def gcc_version_formula(name)
+  sig { params(name: String, prefer_stub: T::Boolean).returns(Formula) }
+  def gcc_version_formula(name, prefer_stub: false)
     version = name[GNU_GCC_REGEXP, 1]
     gcc_version_name = "gcc@#{version}"
 
-    gcc = Formulary.factory("gcc")
+    gcc = Formulary.factory("gcc", prefer_stub:)
     if gcc.respond_to?(:version_suffix) && T.unsafe(gcc).version_suffix == version
       gcc
     else
-      Formulary.factory(gcc_version_name)
+      Formulary.factory(gcc_version_name, prefer_stub:)
     end
   end
   private :gcc_version_formula
@@ -303,7 +303,7 @@ module SharedEnvExtension
   sig { params(name: String).void }
   def warn_about_non_apple_gcc(name)
     begin
-      gcc_formula = gcc_version_formula(name)
+      gcc_formula = gcc_version_formula(name, prefer_stub: true)
     rescue FormulaUnavailableError => e
       raise <<~EOS
         Homebrew GCC requested, but formula #{e.name} not found!

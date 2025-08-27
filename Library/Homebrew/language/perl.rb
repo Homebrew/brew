@@ -36,7 +36,7 @@ module Language
         raise ShebangDetectionError.new("Perl", "formula does not depend on Perl") if perl_deps.empty?
 
         perl_path = if perl_deps.any? { |dep| !dep.uses_from_macos? || !dep.use_macos_install? }
-          Formula["perl"].opt_bin/"perl"
+          Formula.stub("perl").opt_bin/"perl"
         else
           "/usr/bin/perl#{MacOS.preferred_perl_version}"
         end
