@@ -1616,6 +1616,7 @@ class DownloadStrategyDetector
     when %r{^https?://.+\.git$},
          %r{^git://},
          %r{^https?://git\.sr\.ht/[^/]+/[^/]+$},
+         %r{^https?://tangled\.sh/[^/]+/[^/]+$},
          %r{^ssh://git}
       GitDownloadStrategy
     when %r{^https?://www\.apache\.org/dyn/closer\.cgi},
