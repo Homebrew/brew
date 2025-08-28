@@ -16,4 +16,13 @@ RSpec.describe Homebrew::DevCmd::Unpack do
       expect(path/"testball-0.1").to be_a_directory
     end
   end
+
+  it "unpacks a given Cask's archive", :integration_test do
+    mktmpdir do |path|
+      expect { brew "unpack", "local-caffeine", "--destdir=#{path}", "--cask" }
+        .to be_a_success
+
+      expect(path/"local-caffeine-1.2.3").to be_a_directory
+    end
+  end
 end
