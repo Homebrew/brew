@@ -42,7 +42,13 @@ module Homebrew
 
       sig { override.void }
       def run
-        formulae_and_casks = args.named.to_formulae_and_casks
+        formulae_and_casks = if args.cask?
+          args.named.to_formulae_and_casks(only: :cask)
+        elsif args.formula?
+          args.named.to_formulae_and_casks(only: :formula)
+        else
+          args.named.to_formulae_and_casks
+        end
 
         if (dir = args.destdir)
           unpack_dir = Pathname.new(dir).expand_path
