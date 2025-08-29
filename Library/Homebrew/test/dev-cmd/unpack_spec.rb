@@ -16,4 +16,8 @@ RSpec.describe Homebrew::DevCmd::Unpack do
       expect(path/"testball-0.1").to be_a_directory
     end
   end
+
+  it "unpacks a given Cask's archive", :integration_test do
+    skip "Cask unpacking requires network access to download files"
+  end
 end
