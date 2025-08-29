@@ -95,11 +95,11 @@ class Caveats
 
       s << "  #{Utils::Shell.export_value("CPPFLAGS", "-I#{formula.opt_include}")}\n" if formula.include.directory?
 
-      if which("pkg-config", ORIGINAL_PATHS) &&
+      if which("pkgconf", ORIGINAL_PATHS) &&
          ((formula.lib/"pkgconfig").directory? || (formula.share/"pkgconfig").directory?)
         s << <<~EOS
 
-          For pkg-config to find #{formula.name} you may need to set:
+          For pkgconf to find #{formula.name} you may need to set:
         EOS
 
         if (formula.lib/"pkgconfig").directory?
@@ -109,6 +109,15 @@ class Caveats
         if (formula.share/"pkgconfig").directory?
           s << "  #{Utils::Shell.export_value("PKG_CONFIG_PATH", "#{formula.opt_share}/pkgconfig")}\n"
         end
+      end
+
+      if which("cmake", ORIGINAL_PATHS) &&
+         ((formula.lib/"cmake").directory? || (formula.share/"cmake").directory?)
+        s << <<~EOS
+
+          For cmake to find #{formula.name} you may need to set:
+            #{Utils::Shell.export_value("CMAKE_PREFIX_PATH", formula.opt_prefix.to_s)}
+        EOS
       end
     end
     s << "\n" unless s.end_with?("\n")
