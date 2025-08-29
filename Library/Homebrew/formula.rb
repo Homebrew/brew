@@ -2319,10 +2319,10 @@ class Formula
   end
 
   # An array of all installed {Formula}e.
-  sig { returns(T::Array[Formula]) }
-  def self.installed
+  sig { params(prefer_stub: T::Boolean).returns(T::Array[Formula]) }
+  def self.installed(prefer_stub: false)
     Formula.cache[:installed] ||= racks.flat_map do |rack|
-      Formulary.from_rack(rack)
+      Formulary.from_rack(rack, prefer_stub:)
     rescue
       []
     end.uniq(&:name)
@@ -2498,16 +2498,16 @@ class Formula
   end
 
   # Returns a list of {Formula} objects that are required at runtime.
-  sig { params(read_from_tab: T::Boolean, undeclared: T::Boolean).returns(T::Array[Formula]) }
-  def runtime_formula_dependencies(read_from_tab: true, undeclared: true)
-    cache_key = "#{full_name}-#{read_from_tab}-#{undeclared}"
+  sig { params(read_from_tab: T::Boolean, undeclared: T::Boolean, prefer_stub: T::Boolean).returns(T::Array[Formula]) }
+  def runtime_formula_dependencies(read_from_tab: true, undeclared: true, prefer_stub: false)
+    cache_key = "#{full_name}-#{read_from_tab}-#{undeclared}-#{prefer_stub}"
 
     Formula.cache[:runtime_formula_dependencies] ||= {}
     Formula.cache[:runtime_formula_dependencies][cache_key] ||= runtime_dependencies(
       read_from_tab:,
       undeclared:,
     ).filter_map do |d|
-      d.to_formula
+      d.to_formula(prefer_stub:)
     rescue FormulaUnavailableError
       nil
     end
@@ -2519,11 +2519,11 @@ class Formula
     # that we don't end up with something `Formula#runtime_dependencies` can't
     # read from a `Tab`.
     Formula.cache[:runtime_installed_formula_dependents] ||= {}
-    Formula.cache[:runtime_installed_formula_dependents][full_name] ||= Formula.installed
+    Formula.cache[:runtime_installed_formula_dependents][full_name] ||= Formula.installed(prefer_stub: true)
                                                                                .select(&:any_installed_keg)
                                                                                .select(&:runtime_dependencies)
                                                                                .select do |f|
-      f.runtime_formula_dependencies.any? do |dep|
+      f.runtime_formula_dependencies(prefer_stub: true).any? do |dep|
         full_name == dep.full_name
       rescue
         name == dep.name
@@ -2533,9 +2533,9 @@ class Formula
 
   # Returns a list of formulae depended on by this formula that aren't
   # installed.
-  sig { params(hide: T::Array[String]).returns(T::Array[Formula]) }
-  def missing_dependencies(hide: [])
-    runtime_formula_dependencies.select do |f|
+  sig { params(hide: T::Array[String], prefer_stub: T::Boolean).returns(T::Array[Formula]) }
+  def missing_dependencies(hide: [], prefer_stub: false)
+    runtime_formula_dependencies(prefer_stub:).select do |f|
       hide.include?(f.name) || f.installed_prefixes.empty?
     end
   # If we're still getting unavailable formulae at this stage the best we can

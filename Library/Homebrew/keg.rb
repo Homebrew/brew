@@ -246,7 +246,7 @@ class Keg
     linkedkegs = linked_keg_record.parent
 
     tap = begin
-      to_formula.tap
+      to_formula(prefer_stub: true).tap
     rescue
       # If the formula can't be found, just ignore aliases for now.
       nil
@@ -410,8 +410,9 @@ class Keg
     [version_scheme, version]
   end
 
-  def to_formula
-    Formulary.from_keg(self)
+  sig { params(prefer_stub: T::Boolean).returns(Formula) }
+  def to_formula(prefer_stub: false)
+    Formulary.from_keg(self, prefer_stub:)
   end
 
   def oldname_opt_records

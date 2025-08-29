@@ -551,7 +551,7 @@ module Formulary
     else
       rack = to_rack(name)
       alias_path = factory(name, force_bottle:, flags:, prefer_stub:).alias_path
-      f = from_rack(rack, *spec, alias_path:, force_bottle:, flags:)
+      f = from_rack(rack, *spec, alias_path:, force_bottle:, flags:, prefer_stub:)
     end
 
     # If this formula was installed with an alias that has since changed,
@@ -1067,7 +1067,12 @@ module Formulary
 
     sig { overridable.params(flags: T::Array[String]).void }
     def load_from_api(flags:)
-      json_formula = Homebrew::API::Formula.all_formulae[name]
+      json_formula = if Homebrew::EnvConfig.use_internal_api?
+        Homebrew::API::Formula.formula_json(name)
+      else
+        Homebrew::API::Formula.all_formulae[name]
+      end
+
       raise FormulaUnavailableError, name if json_formula.nil?
 
       Formulary.load_formula_from_json!(name, json_formula, flags:)
@@ -1177,9 +1182,10 @@ module Formulary
       alias_path:   T.any(NilClass, Pathname, String),
       force_bottle: T::Boolean,
       flags:        T::Array[String],
+      prefer_stub:  T::Boolean,
     ).returns(Formula)
   }
-  def self.from_rack(rack, spec = nil, alias_path: nil, force_bottle: false, flags: [])
+  def self.from_rack(rack, spec = nil, alias_path: nil, force_bottle: false, flags: [], prefer_stub: false)
     kegs = rack.directory? ? rack.subdirs.map { |d| Keg.new(d) } : []
     keg = kegs.find(&:linked?) || kegs.find(&:optlinked?) || kegs.max_by(&:scheme_and_version)
 
@@ -1187,6 +1193,7 @@ module Formulary
       alias_path:,
       force_bottle:,
       flags:,
+      prefer_stub:,
     }.compact
 
     if keg
@@ -1213,6 +1220,7 @@ module Formulary
       alias_path:   T.any(NilClass, Pathname, String),
       force_bottle: T::Boolean,
       flags:        T::Array[String],
+      prefer_stub:  T::Boolean,
     ).returns(Formula)
   }
   def self.from_keg(
@@ -1220,7 +1228,8 @@ module Formulary
     spec = nil,
     alias_path: nil,
     force_bottle: false,
-    flags: []
+    flags: [],
+    prefer_stub: false
   )
     tab = keg.tab
     tap = tab.tap
@@ -1234,6 +1243,7 @@ module Formulary
       warn:         false,
       force_bottle:,
       flags:,
+      prefer_stub:,
     }.compact
 
     f = if tap.nil?

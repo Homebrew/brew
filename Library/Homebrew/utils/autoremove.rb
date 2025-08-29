@@ -25,8 +25,8 @@ module Utils
       def formulae_with_cask_dependents(casks)
         casks.flat_map { |cask| cask.depends_on[:formula] }
              .compact
-             .map { |f| Formula[f] }
-             .flat_map { |f| [f, *f.runtime_formula_dependencies].compact }
+             .map { |f| Formulary.factory(f, prefer_stub: true) }
+             .flat_map { |f| [f, *f.runtime_formula_dependencies(read_from_tab: true, prefer_stub: true)].compact }
       end
 
       # An array of all installed bottled {Formula} without runtime {Formula}
@@ -37,7 +37,7 @@ module Utils
       def bottled_formulae_with_no_formula_dependents(formulae)
         formulae_to_keep = T.let([], T::Array[Formula])
         formulae.each do |formula|
-          formulae_to_keep += formula.runtime_formula_dependencies
+          formulae_to_keep += formula.runtime_formula_dependencies(read_from_tab: true, prefer_stub: true)
 
           if (tab = formula.any_installed_keg&.tab)
             # Ignore build dependencies when the formula is a bottle
