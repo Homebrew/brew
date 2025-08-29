@@ -120,15 +120,6 @@ module Homebrew
         # Extract to destination
         stage_dir.mkpath
         UnpackStrategy.detect(downloaded_path).extract_nestedly(to: stage_dir, verbose: true)
-
-        return unless args.git?
-
-        ohai "Setting up Git repository"
-        cd(stage_dir) do
-          system "git", "init", "-q"
-          system "git", "add", "-A"
-          system "git", "commit", "-q", "-m", "brew-unpack"
-        end
       end
     end
   end
