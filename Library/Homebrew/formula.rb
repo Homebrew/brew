@@ -2478,23 +2478,28 @@ class Formula
   # @api internal
   sig { params(read_from_tab: T::Boolean, undeclared: T::Boolean).returns(T::Array[Dependency]) }
   def runtime_dependencies(read_from_tab: true, undeclared: true)
-    deps = if read_from_tab && undeclared &&
-              (tab_deps = any_installed_keg&.runtime_dependencies)
-      tab_deps.filter_map do |d|
-        full_name = d["full_name"]
-        next unless full_name
+    cache_key = "#{full_name}-#{read_from_tab}-#{undeclared}"
 
-        Dependency.new full_name
+    Formula.cache[:runtime_dependencies] ||= {}
+    Formula.cache[:runtime_dependencies][cache_key] ||= begin
+      deps = if read_from_tab && undeclared &&
+                (tab_deps = any_installed_keg&.runtime_dependencies)
+        tab_deps.filter_map do |d|
+          full_name = d["full_name"]
+          next unless full_name
+
+          Dependency.new full_name
+        end
       end
+      begin
+        deps ||= declared_runtime_dependencies unless undeclared
+        deps ||= (declared_runtime_dependencies | undeclared_runtime_dependencies)
+      rescue FormulaUnavailableError
+        onoe "Could not get runtime dependencies from #{path}!"
+        deps ||= []
+      end
+      deps
     end
-    begin
-      deps ||= declared_runtime_dependencies unless undeclared
-      deps ||= (declared_runtime_dependencies | undeclared_runtime_dependencies)
-    rescue FormulaUnavailableError
-      onoe "Could not get runtime dependencies from #{path}!"
-      deps ||= []
-    end
-    deps
   end
 
   # Returns a list of {Formula} objects that are required at runtime.
@@ -2513,6 +2518,22 @@ class Formula
     end
   end
 
+  # Returns a list of installed {Formula} objects that are required at runtime.
+  sig { params(read_from_tab: T::Boolean, undeclared: T::Boolean).returns(T::Array[Formula]) }
+  def installed_runtime_formula_dependencies(read_from_tab: true, undeclared: true)
+    cache_key = "#{full_name}-#{read_from_tab}-#{undeclared}"
+
+    Formula.cache[:installed_runtime_formula_dependencies] ||= {}
+    Formula.cache[:installed_runtime_formula_dependencies][cache_key] ||= runtime_dependencies(
+      read_from_tab:,
+      undeclared:,
+    ).filter_map do |d|
+      d.to_installed_formula
+    rescue FormulaUnavailableError
+      nil
+    end
+  end
+
   sig { returns(T::Array[Formula]) }
   def runtime_installed_formula_dependents
     # `any_installed_keg` and `runtime_dependencies` `select`s ensure
@@ -2523,7 +2544,7 @@ class Formula
                                                                                .select(&:any_installed_keg)
                                                                                .select(&:runtime_dependencies)
                                                                                .select do |f|
-      f.runtime_formula_dependencies.any? do |dep|
+      f.installed_runtime_formula_dependencies.any? do |dep|
         full_name == dep.full_name
       rescue
         name == dep.name
@@ -2533,10 +2554,10 @@ class Formula
 
   # Returns a list of formulae depended on by this formula that aren't
   # installed.
-  sig { params(hide: T::Array[String]).returns(T::Array[Formula]) }
+  sig { params(hide: T::Array[String]).returns(T::Array[Dependency]) }
   def missing_dependencies(hide: [])
-    runtime_formula_dependencies.select do |f|
-      hide.include?(f.name) || f.installed_prefixes.empty?
+    runtime_dependencies(read_from_tab: true, undeclared: true).select do |f|
+      hide.include?(f.name) || !f.installed?
     end
   # If we're still getting unavailable formulae at this stage the best we can
   # do is just return no results.

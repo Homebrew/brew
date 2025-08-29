@@ -722,7 +722,7 @@ module Homebrew
       # Remove formulae listed in HOMEBREW_NO_CLEANUP_FORMULAE and their dependencies.
       if Homebrew::EnvConfig.no_cleanup_formulae.present?
         formulae -= formulae.select { skip_clean_formula?(_1) }
-                            .flat_map { |f| [f, *f.runtime_formula_dependencies] }
+                            .flat_map { |f| [f, *f.installed_runtime_formula_dependencies] }
       end
       casks = Cask::Caskroom.casks
 
