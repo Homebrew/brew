@@ -258,13 +258,13 @@ module SharedEnvExtension
     flags = []
 
     if fc
-      ohai "Building with an alternative Fortran compiler", "This is unsupported."
+      puts "Building with an alternative Fortran compiler", "This is unsupported."
       self["F77"] ||= fc
     else
       if (gfortran = which("gfortran", (HOMEBREW_PREFIX/"bin").to_s))
-        ohai "Using Homebrew-provided Fortran compiler"
+        puts "Using Homebrew-provided Fortran compiler"
       elsif (gfortran = which("gfortran", PATH.new(ORIGINAL_PATHS)))
-        ohai "Using a Fortran compiler found at #{gfortran}"
+        puts "Using a Fortran compiler found at #{gfortran}"
       end
       if gfortran
         puts "This may be changed by setting the `$FC` environment variable."
