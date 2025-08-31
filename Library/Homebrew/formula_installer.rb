@@ -610,7 +610,7 @@ on_request: installed_on_request?, options:)
 
       # Store the formula used to build the keg in the keg.
       formula_contents = if formula.local_bottle_path
-        Utils::Bottles.formula_contents formula.local_bottle_path, name: formula.name
+        Utils::Bottles.formula_contents T.must(formula.local_bottle_path), name: formula.name
       else
         formula.path.read
       end
