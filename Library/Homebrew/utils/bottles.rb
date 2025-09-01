@@ -339,7 +339,7 @@ module Utils
       def ==(other)
         case other
         when Utils::Bottles::Collector
-          @tag_specs == other.instance_variable_get(:@tag_specs)
+          @tag_specs == other.tag_specs
         else false
         end
       end
@@ -370,6 +370,11 @@ module Utils
         tag = find_matching_tag(tag, no_older_versions:)
         @tag_specs[tag] if tag
       end
+
+      protected
+
+      sig { returns(T::Hash[Utils::Bottles::Tag, Utils::Bottles::TagSpecification]) }
+      attr_reader :tag_specs
 
       private
 
