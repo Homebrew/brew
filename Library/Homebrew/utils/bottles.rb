@@ -187,7 +187,7 @@ module Utils
         case other
         when Symbol
           to_sym == other
-        when Utils::Bottles::Tag
+        when self.class
           system == other.system && standardized_arch == other.standardized_arch
         else false
         end
@@ -196,7 +196,7 @@ module Utils
       sig { override.params(other: BasicObject).returns(T::Boolean) }
       def eql?(other)
         case other
-        when Utils::Bottles::Tag
+        when self.class
           self == other
         else false
         end
@@ -315,7 +315,7 @@ module Utils
       sig { override.params(other: BasicObject).returns(T::Boolean) }
       def ==(other)
         case other
-        when Utils::Bottles::TagSpecification
+        when self.class
           tag == other.tag && checksum == other.checksum && cellar == other.cellar
         else false
         end
@@ -338,7 +338,7 @@ module Utils
       sig { override.params(other: BasicObject).returns(T::Boolean) }
       def ==(other)
         case other
-        when Utils::Bottles::Collector
+        when self.class
           @tag_specs == other.tag_specs
         else false
         end
