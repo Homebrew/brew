@@ -42,7 +42,6 @@ module OS
           @needs_libc_formula ||= OS::Linux::Glibc.below_ci_version?
         end
 
-        # Keep this method around for now to make it easier to add this functionality later.
         sig { returns(Pathname) }
         def host_gcc_path
           # Prioritise versioned path if installed
