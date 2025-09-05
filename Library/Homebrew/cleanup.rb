@@ -718,11 +718,14 @@ module Homebrew
       # the cache of installed formulae may no longer be valid.
       Formula.clear_cache unless dry_run
 
-      formulae = Formula.installed
+      formulae = Formula.installed(prefer_stub: true)
       # Remove formulae listed in HOMEBREW_NO_CLEANUP_FORMULAE and their dependencies.
       if Homebrew::EnvConfig.no_cleanup_formulae.present?
-        formulae -= formulae.select { skip_clean_formula?(_1) }
-                            .flat_map { |f| [f, *f.runtime_formula_dependencies] }
+        skip_clean_formulae_and_deps = formulae.select { skip_clean_formula?(_1) }.flat_map do |f|
+          [f, *f.runtime_formula_dependencies(read_from_tab: true, prefer_stub: true)]
+        end
+
+        formulae -= skip_clean_formulae_and_deps
       end
       casks = Cask::Caskroom.casks
 

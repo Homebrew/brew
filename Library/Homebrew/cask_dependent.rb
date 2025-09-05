@@ -30,9 +30,9 @@ class CaskDependent
     @cask.full_name
   end
 
-  sig { returns(T::Array[Dependency]) }
-  def runtime_dependencies
-    deps.flat_map { |dep| [dep, *dep.to_formula.runtime_dependencies] }.uniq
+  sig { params(prefer_stub: T::Boolean).returns(T::Array[Dependency]) }
+  def runtime_dependencies(prefer_stub: false)
+    deps.flat_map { |dep| [dep, *dep.to_formula(prefer_stub:).runtime_dependencies] }.uniq
   end
 
   sig { returns(T::Array[Dependency]) }
