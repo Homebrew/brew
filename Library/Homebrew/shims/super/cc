@@ -369,9 +369,13 @@ class Cmd
     end
     args += rpath_flags("#{wl}-rpath=", rpath_paths)
     args += ["#{wl}--dynamic-linker=#{dynamic_linker_path}"] if dynamic_linker_path
-    # Use -rpath-link to make sure linker uses versioned glibc rather than the system glibc for indirect
+    # Use -rpath-link to make sure linker uses brew glibc rather than the system glibc for indirect
     # dependencies because -L will only handle direct dependencies.
-    args << "#{wl}-rpath-link=#{@opt}/#{versioned_glibc_dep}/lib" if versioned_glibc_dep
+    if versioned_glibc_dep
+      args << "#{wl}-rpath-link=#{@opt}/#{versioned_glibc_dep}/lib"
+    else
+      args << "#{wl}-rpath-link=#{@opt}/glibc/lib"
+    end
     args
   end
 
