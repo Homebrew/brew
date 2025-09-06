@@ -297,8 +297,8 @@ class Pathname
            env:         T.any(T::Hash[String, String], T::Hash[Symbol, String])).void
   }
   def write_env_script(target, args_or_env, env = T.unsafe(nil))
-    args = if env.nil?
-      env = args_or_env if args_or_env.is_a?(Hash)
+    args = if env.nil? && args_or_env.is_a?(Hash)
+      env = args_or_env
 
       nil
     elsif args_or_env.is_a?(Array)
@@ -307,6 +307,7 @@ class Pathname
       T.cast(args_or_env, T.nilable(String))
     end
 
+    env ||= {}
     env_export = +""
     env.each { |key, value| env_export << "#{key}=\"#{value}\" " }
 
