@@ -38,7 +38,7 @@ RSpec.describe DependencyCollector do
     end
 
     specify "requirement tags" do
-      collector.add xcode: :build
+      collector.add xcode: "build"
       expect(find_requirement(XcodeRequirement)).to be_a_build_requirement
     end
 

@@ -25,6 +25,19 @@ end
 require_relative "../standalone"
 require_relative "../warnings"
 
+module T::Types
+  class TypedArray < TypedEnumerable
+    def recursively_valid?(obj)
+      obj.is_a?(Array) && obj.all? { |e| type.recursively_valid?(e) } && super
+    end
+
+    # overrides Base
+    def valid?(obj)
+      obj.is_a?(Array) && obj.all? { |e| type.valid?(e) }
+    end
+  end
+end
+
 Warnings.ignore :parser_syntax do
   require "rubocop"
 end
