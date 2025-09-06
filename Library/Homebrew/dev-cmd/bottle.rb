@@ -182,7 +182,8 @@ module Homebrew
 
       sig {
         params(old_keys: T::Array[String], old_bottle_spec: BottleSpecification,
-               new_bottle_hash: T::Hash[String, T.untyped]).returns(T::Array[T::Array[String]])
+               new_bottle_hash: T::Hash[String, T.untyped])
+          .returns([T::Array[String], T::Array[T::Hash[Symbol, T.any(String, Symbol)]]])
       }
       def merge_bottle_spec(old_keys, old_bottle_spec, new_bottle_hash)
         mismatches = []
@@ -409,7 +410,7 @@ module Homebrew
 
         bottle_tag, rebuild = if local_bottle_json
           _, tag_string, rebuild_string = Utils::Bottles.extname_tag_rebuild(formula.local_bottle_path.to_s)
-          [tag_string.to_sym, rebuild_string.to_i]
+          [T.must(tag_string).to_sym, rebuild_string.to_i]
         end
 
         bottle_tag = if bottle_tag
@@ -860,8 +861,8 @@ module Homebrew
       end
 
       sig {
-        params(formula: Formula, formula_ast: Utils::AST::FormulaAST,
-               bottle_hash: T::Hash[String, T.untyped]).returns(T.nilable(T::Array[String]))
+        params(formula: Formula, formula_ast: Utils::AST::FormulaAST, bottle_hash: T::Hash[String, T.untyped])
+          .returns(T.nilable(T::Array[T::Hash[Symbol, T.any(String, Symbol)]]))
       }
       def old_checksums(formula, formula_ast, bottle_hash)
         bottle_node = T.cast(formula_ast.bottle_block, T.nilable(RuboCop::AST::BlockNode))

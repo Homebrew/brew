@@ -1,4 +1,4 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
 
 require "tab"
@@ -20,13 +20,14 @@ module Utils
         when Tag
           tag
         else
-          @tag ||= Tag.new(
-            system: HOMEBREW_SYSTEM.downcase.to_sym,
-            arch:   HOMEBREW_PROCESSOR.downcase.to_sym,
-          )
+          @tag ||= T.let(Tag.new(
+                           system: HOMEBREW_SYSTEM.downcase.to_sym,
+                           arch:   HOMEBREW_PROCESSOR.downcase.to_sym,
+                         ), T.nilable(Tag))
         end
       end
 
+      sig { params(formula: Formula).returns(T::Boolean) }
       def built_as?(formula)
         return false unless formula.latest_version_installed?
 
@@ -34,34 +35,40 @@ module Utils
         tab.built_as_bottle
       end
 
+      sig { params(formula: Formula, file: Pathname).returns(T::Boolean) }
       def file_outdated?(formula, file)
         file = file.resolved_path
 
         filename = file.basename.to_s
-        return false if formula.bottle.blank?
+        bottle = formula.bottle
+        return false unless bottle
 
         _, bottle_tag, bottle_rebuild = extname_tag_rebuild(filename)
         return false if bottle_tag.blank?
 
-        bottle_tag != formula.bottle.tag.to_s || bottle_rebuild.to_i != formula.bottle.rebuild
+        bottle_tag != bottle.tag.to_s || bottle_rebuild.to_i != bottle.rebuild
       end
 
+      sig { params(filename: String).returns(T::Array[String]) }
       def extname_tag_rebuild(filename)
         HOMEBREW_BOTTLES_EXTNAME_REGEX.match(filename).to_a
       end
 
+      sig { params(bottle_file: Pathname).returns(T.nilable(String)) }
       def receipt_path(bottle_file)
         bottle_file_list(bottle_file).find do |line|
           %r{.+/.+/INSTALL_RECEIPT.json}.match?(line)
         end
       end
 
+      sig { params(bottle_file: Pathname, file_path: String).returns(String) }
       def file_from_bottle(bottle_file, file_path)
         Utils.popen_read("tar", "--extract", "--to-stdout", "--file", bottle_file, file_path)
       end
 
+      sig { params(bottle_file: Pathname).returns([String, String]) }
       def resolve_formula_names(bottle_file)
-        name = bottle_file_list(bottle_file).first.to_s.split("/").first
+        name = bottle_file_list(bottle_file).first.to_s.split("/").fetch(0)
         full_name = if (receipt_file_path = receipt_path(bottle_file))
           receipt_file = file_from_bottle(bottle_file, receipt_file_path)
           tap = Tab.from_file_content(receipt_file, "#{bottle_file}/#{receipt_file_path}").tap
@@ -80,13 +87,14 @@ module Utils
         [name, full_name]
       end
 
+      sig { params(bottle_file: Pathname).returns(PkgVersion) }
       def resolve_version(bottle_file)
-        version = bottle_file_list(bottle_file).first.to_s.split("/").second
+        version = bottle_file_list(bottle_file).first.to_s.split("/").fetch(1)
         PkgVersion.parse(version)
       end
 
-      def formula_contents(bottle_file,
-                           name: resolve_formula_names(bottle_file)[0])
+      sig { params(bottle_file: Pathname, name: String).returns(String) }
+      def formula_contents(bottle_file, name: resolve_formula_names(bottle_file)[0])
         bottle_version = resolve_version bottle_file
         formula_path = "#{name}/#{bottle_version}/.brew/#{name}.rb"
         contents = file_from_bottle(bottle_file, formula_path)
@@ -95,6 +103,10 @@ module Utils
         contents
       end
 
+      sig {
+        params(root_url: String, name: String, checksum: T.any(Checksum, String),
+               filename: T.nilable(Bottle::Filename)).returns(T.any([String, T.nilable(String)], String))
+      }
       def path_resolved_basename(root_url, name, checksum, filename)
         if root_url.match?(GitHubPackages::URL_REGEX)
           image_name = GitHubPackages.image_formula_name(name)
@@ -104,6 +116,7 @@ module Utils
         end
       end
 
+      sig { params(formula: Formula).returns(Tab) }
       def load_tab(formula)
         keg = Keg.new(formula.prefix)
         tabfile = keg/AbstractTab::FILENAME
@@ -112,7 +125,7 @@ module Utils
         if (tab_attributes = formula.bottle_tab_attributes.presence)
           Tab.from_file_content(tab_attributes.to_json, tabfile)
         elsif !tabfile.exist? && bottle_json_path&.exist?
-          _, tag, = Utils::Bottles.extname_tag_rebuild(formula.local_bottle_path)
+          _, tag, = Utils::Bottles.extname_tag_rebuild(formula.local_bottle_path.to_s)
           bottle_hash = JSON.parse(File.read(bottle_json_path))
           tab_json = bottle_hash[formula.full_name]["bottle"]["tags"][tag]["tab"].to_json
           Tab.from_file_content(tab_json, tabfile)
@@ -130,8 +143,9 @@ module Utils
 
       private
 
+      sig { params(bottle_file: Pathname).returns(T::Array[String]) }
       def bottle_file_list(bottle_file)
-        @bottle_file_list ||= {}
+        @bottle_file_list ||= T.let({}, T.nilable(T::Hash[Pathname, T::Array[String]]))
         @bottle_file_list[bottle_file] ||= Utils.popen_read("tar", "--list", "--file", bottle_file)
                                                 .lines
                                                 .map(&:chomp)
@@ -140,23 +154,24 @@ module Utils
 
     # Denotes the arch and OS of a bottle.
     class Tag
+      sig { returns(Symbol) }
       attr_reader :system, :arch
 
       sig { params(value: Symbol).returns(T.attached_class) }
       def self.from_symbol(value)
         return new(system: :all, arch: :all) if value == :all
 
-        @all_archs_regex ||= begin
+        @all_archs_regex ||= T.let(begin
           all_archs = Hardware::CPU::ALL_ARCHS.map(&:to_s)
           /
             ^((?<arch>#{Regexp.union(all_archs)})_)?
             (?<system>[\w.]+)$
           /x
-        end
+        end, T.nilable(Regexp))
         match = @all_archs_regex.match(value.to_s)
         raise ArgumentError, "Invalid bottle tag symbol" unless match
 
-        system = match[:system].to_sym
+        system = T.must(match[:system]).to_sym
         arch = match[:arch]&.to_sym || :x86_64
         new(system:, arch:)
       end
@@ -167,18 +182,27 @@ module Utils
         @arch = arch
       end
 
+      sig { override.params(other: BasicObject).returns(T::Boolean) }
       def ==(other)
-        if other.is_a?(Symbol)
+        case other
+        when Symbol
           to_sym == other
-        else
-          self.class == other.class && system == other.system && standardized_arch == other.standardized_arch
+        when self.class
+          system == other.system && standardized_arch == other.standardized_arch
+        else false
         end
       end
 
+      sig { override.params(other: BasicObject).returns(T::Boolean) }
       def eql?(other)
-        self.class == other.class && self == other
+        case other
+        when self.class
+          self == other
+        else false
+        end
       end
 
+      sig { override.returns(Integer) }
       def hash
         [system, standardized_arch].hash
       end
@@ -196,11 +220,12 @@ module Utils
         arch_to_symbol(standardized_arch)
       end
 
-      sig { returns(String) }
+      sig { override.returns(String) }
       def to_s
         to_sym.to_s
       end
 
+      sig { returns(Symbol) }
       def to_unstandardized_sym
         # Never allow these generic names
         return to_sym if [:intel, :arm].include? arch
@@ -211,7 +236,7 @@ module Utils
 
       sig { returns(MacOSVersion) }
       def to_macos_version
-        @to_macos_version ||= MacOSVersion.from_symbol(system)
+        @to_macos_version ||= T.let(MacOSVersion.from_symbol(system), T.nilable(MacOSVersion))
       end
 
       sig { returns(T::Boolean) }
@@ -280,14 +305,20 @@ module Utils
       sig { returns(T.any(Symbol, String)) }
       attr_reader :cellar
 
+      sig { params(tag: Utils::Bottles::Tag, checksum: Checksum, cellar: T.any(Symbol, String)).void }
       def initialize(tag:, checksum:, cellar:)
         @tag = tag
         @checksum = checksum
         @cellar = cellar
       end
 
+      sig { override.params(other: BasicObject).returns(T::Boolean) }
       def ==(other)
-        self.class == other.class && tag == other.tag && checksum == other.checksum && cellar == other.cellar
+        case other
+        when self.class
+          tag == other.tag && checksum == other.checksum && cellar == other.cellar
+        else false
+        end
       end
       alias eql? ==
     end
@@ -304,8 +335,13 @@ module Utils
         @tag_specs.keys
       end
 
+      sig { override.params(other: BasicObject).returns(T::Boolean) }
       def ==(other)
-        self.class == other.class && @tag_specs == other.instance_variable_get(:@tag_specs)
+        case other
+        when self.class
+          @tag_specs == other.tag_specs
+        else false
+        end
       end
       alias eql? ==
 
@@ -335,8 +371,14 @@ module Utils
         @tag_specs[tag] if tag
       end
 
+      protected
+
+      sig { returns(T::Hash[Utils::Bottles::Tag, Utils::Bottles::TagSpecification]) }
+      attr_reader :tag_specs
+
       private
 
+      sig { params(tag: Utils::Bottles::Tag, no_older_versions: T::Boolean).returns(T.nilable(Utils::Bottles::Tag)) }
       def find_matching_tag(tag, no_older_versions: false)
         if @tag_specs.key?(tag)
           tag
