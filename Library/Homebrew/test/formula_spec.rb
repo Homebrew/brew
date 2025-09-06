@@ -919,7 +919,7 @@ RSpec.describe Formula do
     f1 = formula "f1" do
       url "f1-1"
 
-      depends_on xcode: ["1.0", :optional]
+      depends_on xcode: ["1.0", "optional"]
     end
     stub_formula_loader(f1)
 
