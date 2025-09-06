@@ -5,37 +5,69 @@ module OS
   module Linux
     # Helper functions for querying `ld` information.
     module Ld
-      sig { returns(String) }
-      def self.brewed_ld_so_diagnostics
-        @brewed_ld_so_diagnostics ||= T.let({}, T.nilable(T::Hash[Pathname, String]))
+      # This is a list of known paths to the host dynamic linker on Linux if
+      # the host glibc is new enough. Brew will fail to create a symlink for
+      # ld.so if the host linker cannot be found in this list.
+      DYNAMIC_LINKERS = %w[
+        /lib64/ld-linux-x86-64.so.2
+        /lib64/ld64.so.2
+        /lib/ld-linux.so.3
+        /lib/ld-linux.so.2
+        /lib/ld-linux-aarch64.so.1
+        /lib/ld-linux-armhf.so.3
+        /system/bin/linker64
+        /system/bin/linker
+      ].freeze
 
-        brewed_ld_so = HOMEBREW_PREFIX/"lib/ld.so"
-        return "" unless brewed_ld_so.exist?
+      # The path to the system's dynamic linker or `nil` if not found
+      sig { returns(T.nilable(Pathname)) }
+      def self.system_ld_so
+        @system_ld_so ||= T.let(nil, T.nilable(Pathname))
+        @system_ld_so ||= begin
+          linker = DYNAMIC_LINKERS.find { |s| File.executable? s }
+          Pathname(linker) if linker
+        end
+      end
 
-        brewed_ld_so_target = brewed_ld_so.readlink
-        @brewed_ld_so_diagnostics[brewed_ld_so_target] ||= begin
-          ld_so_output = Utils.popen_read(brewed_ld_so, "--list-diagnostics")
+      sig { params(brewed: T::Boolean).returns(String) }
+      def self.ld_so_diagnostics(brewed: true)
+        @ld_so_diagnostics ||= T.let({}, T.nilable(T::Hash[Pathname, String]))
+
+        ld_so_target = if brewed
+          ld_so = HOMEBREW_PREFIX/"lib/ld.so"
+          return "" unless ld_so.exist?
+
+          ld_so.readlink
+        else
+          ld_so = system_ld_so
+          return "" unless ld_so&.exist?
+
+          ld_so
+        end
+
+        @ld_so_diagnostics[ld_so_target] ||= begin
+          ld_so_output = Utils.popen_read(ld_so, "--list-diagnostics")
           ld_so_output if $CHILD_STATUS.success?
         end
 
-        @brewed_ld_so_diagnostics[brewed_ld_so_target].to_s
+        @ld_so_diagnostics[ld_so_target].to_s
       end
 
-      sig { returns(String) }
-      def self.sysconfdir
+      sig { params(brewed: T::Boolean).returns(String) }
+      def self.sysconfdir(brewed: true)
         fallback_sysconfdir = "/etc"
 
-        match = brewed_ld_so_diagnostics.match(/path.sysconfdir="(.+)"/)
+        match = ld_so_diagnostics(brewed:).match(/path.sysconfdir="(.+)"/)
         return fallback_sysconfdir unless match
 
         match.captures.compact.first || fallback_sysconfdir
       end
 
-      sig { returns(T::Array[String]) }
-      def self.system_dirs
+      sig { params(brewed: T::Boolean).returns(T::Array[String]) }
+      def self.system_dirs(brewed: true)
         dirs = []
 
-        brewed_ld_so_diagnostics.split("\n").each do |line|
+        ld_so_diagnostics(brewed:).split("\n").each do |line|
           match = line.match(/path.system_dirs\[0x.*\]="(.*)"/)
           next unless match
 
@@ -45,9 +77,9 @@ module OS
         dirs
       end
 
-      sig { params(conf_path: T.any(Pathname, String)).returns(T::Array[String]) }
-      def self.library_paths(conf_path = Pathname(sysconfdir)/"ld.so.conf")
-        conf_file = Pathname(conf_path)
+      sig { params(conf_path: T.any(Pathname, String), brewed: T::Boolean).returns(T::Array[String]) }
+      def self.library_paths(conf_path = "ld.so.conf", brewed: true)
+        conf_file = Pathname(sysconfdir(brewed:))/conf_path
         return [] unless conf_file.exist?
         return [] unless conf_file.file?
         return [] unless conf_file.readable?
@@ -68,8 +100,7 @@ module OS
             line.sub!(/\s*#.*$/, "")
 
             if line.start_with?(/\s*include\s+/)
-              include_path = Pathname(line.sub(/^\s*include\s+/, "")).expand_path
-              wildcard = include_path.absolute? ? include_path : directory/include_path
+              wildcard = Pathname(line.sub(/^\s*include\s+/, "")).expand_path(directory)
 
               Dir.glob(wildcard.to_s).each do |include_file|
                 paths += library_paths(include_file)
