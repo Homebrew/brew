@@ -3,6 +3,7 @@
 
 require "compilers"
 require "os/linux/glibc"
+require "os/linux/libstdcxx"
 require "system_command"
 
 module OS
@@ -15,6 +16,13 @@ module OS
 
         def host_glibc_version
           version = OS::Linux::Glibc.system_version
+          return "N/A" if version.null?
+
+          version
+        end
+
+        def host_libstdcxx_version
+          version = OS::Linux::Libstdcxx.system_version
           return "N/A" if version.null?
 
           version
@@ -49,6 +57,7 @@ module OS
           out.puts "OS: #{OS::Linux.os_version}"
           out.puts "WSL: #{OS::Linux.wsl_version}" if OS::Linux.wsl?
           out.puts "Host glibc: #{host_glibc_version}"
+          out.puts "Host libstdc++: #{host_libstdcxx_version}"
           out.puts "#{::DevelopmentTools.host_gcc_path}: #{host_gcc_version}"
           out.puts "/usr/bin/ruby: #{host_ruby_version}" if RUBY_PATH != HOST_RUBY_PATH
           ["glibc", ::CompilerSelector.preferred_gcc, OS::LINUX_PREFERRED_GCC_RUNTIME_FORMULA, "xorg"].each do |f|

@@ -2,12 +2,13 @@
 # frozen_string_literal: true
 
 require "compilers"
+require "os/linux/libstdcxx"
 
 module OS
   module Linux
     module LinkageChecker
       # Libraries provided by glibc and gcc.
-      SYSTEM_LIBRARY_ALLOWLIST = %w[
+      SYSTEM_LIBRARY_ALLOWLIST = %W[
         ld-linux-x86-64.so.2
         ld-linux-aarch64.so.1
         libanl.so.1
@@ -24,7 +25,7 @@ module OS
         libutil.so.1
         libgcc_s.so.1
         libgomp.so.1
-        libstdc++.so.6
+        #{OS::Linux::Libstdcxx::SONAME}
         libquadmath.so.0
       ].freeze
 

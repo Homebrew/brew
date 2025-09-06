@@ -1,6 +1,7 @@
 # typed: strict
 # frozen_string_literal: true
 
+require "os/linux/libstdcxx"
 require "utils/output"
 
 module OS
@@ -25,12 +26,12 @@ module OS
         # which are linked by the GCC formula. We only use the versioned shared libraries
         # as the other shared and static libraries are only used at build time where
         # GCC can find its own libraries.
-        GCC_RUNTIME_LIBS = %w[
+        GCC_RUNTIME_LIBS = T.let(%W[
           libatomic.so.1
           libgcc_s.so.1
           libgomp.so.1
-          libstdc++.so.6
-        ].freeze
+          #{OS::Linux::Libstdcxx::SONAME}
+        ].freeze, T::Array[String])
 
         sig { params(all_fatal: T::Boolean).void }
         def perform_preinstall_checks(all_fatal: false)

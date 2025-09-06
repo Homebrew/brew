@@ -42,14 +42,14 @@ module OS
           @needs_libc_formula ||= OS::Linux::Glibc.below_ci_version?
         end
 
-        # Keep this method around for now to make it easier to add this functionality later.
-        # rubocop:disable Lint/UselessMethodDefinition
         sig { returns(Pathname) }
         def host_gcc_path
-          # TODO: override this if/when we to pick the GCC based on e.g. the Ubuntu version.
+          # Prioritise versioned path if installed
+          path = Pathname.new("/usr/bin/#{OS::LINUX_PREFERRED_GCC_COMPILER_FORMULA.tr("@", "-")}")
+          return path if path.exist?
+
           super
         end
-        # rubocop:enable Lint/UselessMethodDefinition
 
         sig { returns(T::Boolean) }
         def needs_compiler_formula?
@@ -60,12 +60,7 @@ module OS
           # Undocumented environment variable to make it easier to test compiler
           # formula automatic installation.
           @needs_compiler_formula = true if ENV["HOMEBREW_FORCE_COMPILER_FORMULA"]
-
-          @needs_compiler_formula ||= if host_gcc_path.exist?
-            ::DevelopmentTools.gcc_version(host_gcc_path.to_s) < OS::LINUX_GCC_CI_VERSION
-          else
-            true
-          end
+          @needs_compiler_formula ||= OS::Linux::Libstdcxx.below_ci_version?
         end
 
         sig { returns(T::Hash[String, T.nilable(String)]) }
