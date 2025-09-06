@@ -78,7 +78,7 @@ class SystemCommand
   sig {
     params(
       executable:   T.any(String, Pathname),
-      args:         T::Array[T.any(String, Integer, Float, URI::Generic)],
+      args:         T::Array[T.any(String, Pathname, Integer, Float, URI::Generic)],
       sudo:         T::Boolean,
       sudo_as_root: T::Boolean,
       env:          T::Hash[String, String],

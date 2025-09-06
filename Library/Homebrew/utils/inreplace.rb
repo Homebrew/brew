@@ -86,7 +86,7 @@ module Utils
     sig {
       params(
         path:              T.any(String, Pathname),
-        replacement_pairs: T::Array[[T.any(Regexp, Pathname, String), T.any(Pathname, String)]],
+        replacement_pairs: T::Array[[T.any(NilClass, Regexp, Pathname, String), T.any(Pathname, String)]],
         read_only_run:     T::Boolean,
         silent:            T::Boolean,
       ).returns(String)

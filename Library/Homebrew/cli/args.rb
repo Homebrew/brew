@@ -9,7 +9,7 @@ module Homebrew
       #   1: long option name (e.g. "--debug")
       #   2: option description (e.g. "Print debugging information")
       #   3: whether the option is hidden
-      OptionsType = T.type_alias { T::Array[[String, T.nilable(String), String, T::Boolean]] }
+      OptionsType = T.type_alias { T::Array[[T.nilable(String), T.nilable(String), String, T::Boolean]] }
 
       sig { returns(T::Array[String]) }
       attr_reader :options_only, :flags_only, :remaining
