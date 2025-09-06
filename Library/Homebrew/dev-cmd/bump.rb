@@ -9,6 +9,8 @@ require "utils/repology"
 module Homebrew
   module DevCmd
     class Bump < AbstractCommand
+      NEWER_THAN_UPSTREAM_MSG = " (newer than upstream)"
+
       class VersionBumpInfo < T::Struct
         const :type, Symbol
         const :multiple_versions, T::Boolean
@@ -16,6 +18,7 @@ module Homebrew
         const :current_version, BumpVersionParser
         const :repology_latest, T.any(String, Version)
         const :new_version, BumpVersionParser
+        const :newer_than_upstream, T::Hash[Symbol, T::Boolean], default: {}
         const :duplicate_pull_requests, T.nilable(T.any(T::Array[String], String))
         const :maybe_duplicate_pull_requests, T.nilable(T.any(T::Array[String], String))
       end
@@ -315,6 +318,7 @@ module Homebrew
         new_versions = {}
 
         repology_latest = repositories.present? ? Repology.latest_version(repositories) : "not found"
+        repology_latest_is_a_version = repology_latest.is_a?(Version)
 
         # When blocks are absent, arch is not relevant. For consistency, we simulate the arm architecture.
         arch_options = is_cask_with_blocks ? OnSystem::ARCH_OPTIONS : [:arm]
@@ -331,22 +335,30 @@ module Homebrew
               loaded_formula_or_cask = Cask::CaskLoader.load(formula_or_cask.sourcefile_path)
               current_version_value = Version.new(loaded_formula_or_cask.version)
             end
+            formula_or_cask_has_livecheck = loaded_formula_or_cask.livecheck_defined?
 
             livecheck_latest = livecheck_result(loaded_formula_or_cask)
+            livecheck_latest_is_a_version = livecheck_latest.is_a?(Version)
 
-            new_version_value = if (livecheck_latest.is_a?(Version) &&
+            new_version_value = if (livecheck_latest_is_a_version &&
                                     Livecheck::LivecheckVersion.create(formula_or_cask, livecheck_latest) >=
                                     Livecheck::LivecheckVersion.create(formula_or_cask, current_version_value)) ||
                                    current_version_value == "latest"
               livecheck_latest
             elsif livecheck_latest.is_a?(String) && livecheck_latest.start_with?("skipped")
               "skipped"
-            elsif repology_latest.is_a?(Version) &&
+            elsif repology_latest_is_a_version &&
+                  !formula_or_cask_has_livecheck &&
                   repology_latest > current_version_value &&
-                  !loaded_formula_or_cask.livecheck_defined? &&
                   current_version_value != "latest"
               repology_latest
             end.presence
+
+            # Fall back to the upstream version if there isn't a new version
+            # value at this point, as this will allow us to surface an upstream
+            # version that's lower than the current version.
+            new_version_value ||= livecheck_latest if livecheck_latest_is_a_version
+            new_version_value ||= repology_latest if repology_latest_is_a_version && !formula_or_cask_has_livecheck
 
             # Store old and new versions
             old_versions[version_key] = current_version_value
@@ -380,10 +392,21 @@ module Homebrew
           new_version = BumpVersionParser.new(general: "unable to get versions")
         end
 
+        newer_than_upstream = {}
+        BumpVersionParser::VERSION_SYMBOLS.each do |version_type|
+          new_version_value = new_version.send(version_type)
+          next unless new_version_value.is_a?(Version)
+
+          newer_than_upstream[version_type] =
+            (current_version_value = current_version.send(version_type)).is_a?(Version) &&
+            (current_version_value > new_version_value)
+        end
+
         if !args.no_pull_requests? &&
            (new_version.general != "unable to get versions") &&
            (new_version.general != "skipped") &&
-           (new_version != current_version)
+           (new_version != current_version) &&
+           !newer_than_upstream.all?
           # We use the ARM version for the pull request version. This is
           # consistent with the behavior of bump-cask-pr.
           pull_request_version = if multiple_versions
@@ -410,6 +433,7 @@ module Homebrew
           current_version:,
           repology_latest:,
           new_version:,
+          newer_than_upstream:,
           duplicate_pull_requests:,
           maybe_duplicate_pull_requests:,
         )
@@ -432,8 +456,8 @@ module Homebrew
         new_version = version_info.new_version
         repology_latest = version_info.repology_latest
 
-        # Check if all versions are equal
         versions_equal = (new_version == current_version)
+        all_newer_than_upstream = version_info.newer_than_upstream.all?
 
         title_name = ambiguous_cask ? "#{name} (cask)" : name
         title = if (repology_latest == current_version.general || !repology_latest.is_a?(Version)) && versions_equal
@@ -444,10 +468,13 @@ module Homebrew
 
         # Conditionally format output based on type of formula_or_cask
         current_versions = if version_info.multiple_versions
-          "arm:   #{current_version.arm}
-                          intel: #{current_version.intel}"
+          "arm:   #{current_version.arm}" \
+            "#{NEWER_THAN_UPSTREAM_MSG if version_info.newer_than_upstream[:arm]}" \
+            "\n                          intel: #{current_version.intel}" \
+            "#{NEWER_THAN_UPSTREAM_MSG if version_info.newer_than_upstream[:intel]}"
         else
-          current_version.general.to_s
+          newer_than_upstream_general = version_info.newer_than_upstream[:general]
+          "#{current_version.general}#{NEWER_THAN_UPSTREAM_MSG if newer_than_upstream_general}"
         end
         current_versions << " (deprecated)" if formula_or_cask.deprecated?
 
@@ -482,7 +509,8 @@ module Homebrew
         if !args.no_pull_requests? &&
            (new_version.general != "unable to get versions") &&
            (new_version.general != "skipped") &&
-           !versions_equal
+           !versions_equal &&
+           !all_newer_than_upstream
           if duplicate_pull_requests
             duplicate_pull_requests_text = duplicate_pull_requests
           elsif maybe_duplicate_pull_requests
@@ -501,7 +529,8 @@ module Homebrew
 
         if !args.open_pr? ||
            (new_version.general == "unable to get versions") ||
-           (new_version.general == "skipped")
+           (new_version.general == "skipped") ||
+           all_newer_than_upstream
           return
         end
 

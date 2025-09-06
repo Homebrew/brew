@@ -4,6 +4,8 @@
 module Homebrew
   # Class handling architecture-specific version information.
   class BumpVersionParser
+    VERSION_SYMBOLS = [:general, :arm, :intel].freeze
+
     sig { returns(T.nilable(T.any(Version, Cask::DSL::Version))) }
     attr_reader :arm, :general, :intel
 
