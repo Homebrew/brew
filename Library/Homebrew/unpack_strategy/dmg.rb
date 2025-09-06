@@ -155,7 +155,7 @@ module UnpackStrategy
             filelist.close
 
             system_command! "mkbom",
-                            args:    ["-s", "-i", filelist.path, "--", bomfile.path],
+                            args:    ["-s", "-i", T.must(filelist.path), "--", T.must(bomfile.path)],
                             verbose:
           end
 
@@ -179,8 +179,8 @@ module UnpackStrategy
 
     sig { override.params(path: Pathname).returns(T::Boolean) }
     def self.can_extract?(path)
-      stdout, _, status = system_command("hdiutil", args: ["imageinfo", "-format", path], print_stderr: false)
-      status.success? && !stdout.empty?
+      stdout, _, status = system_command("hdiutil", args: ["imageinfo", "-format", path], print_stderr: false).to_a
+      (status.success? && !stdout.empty?) || false
     end
 
     private

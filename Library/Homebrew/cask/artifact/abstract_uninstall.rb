@@ -172,7 +172,7 @@ module Cask
           .stdout.lines.drop(1) # skip stdout column headers
           .filter_map do |line|
             pid, _state, id = line.chomp.split(/\s+/)
-            id if pid.to_i.nonzero? && id.match?(regex)
+            id if pid.to_i.nonzero? && T.must(id).match?(regex)
           end
       end
 
@@ -460,9 +460,9 @@ module Cask
       def trash_paths(*paths, command: nil, **_)
         return if paths.empty?
 
-        stdout, = system_command HOMEBREW_LIBRARY_PATH/"cask/utils/trash.swift",
-                                 args:         paths,
-                                 print_stderr: Homebrew::EnvConfig.developer?
+        stdout = system_command(HOMEBREW_LIBRARY_PATH/"cask/utils/trash.swift",
+                                args:         paths,
+                                print_stderr: Homebrew::EnvConfig.developer?).stdout
 
         trashed, _, untrashable = stdout.partition("\n")
         trashed = trashed.split(":")

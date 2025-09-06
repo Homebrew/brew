@@ -125,7 +125,7 @@ module Readall
   sig { params(filename: Pathname).returns(T::Boolean) }
   private_class_method def self.syntax_errors_or_warnings?(filename)
     # Retrieve messages about syntax errors/warnings printed to `$stderr`.
-    _, err, status = system_command(RUBY_PATH, args: ["-c", "-w", filename], print_stderr: false)
+    _, err, status = system_command(RUBY_PATH, args: ["-c", "-w", filename], print_stderr: false).to_a
 
     # Ignore unnecessary warning about named capture conflicts.
     # See https://bugs.ruby-lang.org/issues/12359.

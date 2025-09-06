@@ -34,7 +34,7 @@ module Homebrew
 
         private_class_method def self._run(*args, mode:)
           require "system_command"
-          result = SystemCommand.run(executable,
+          result = SystemCommand.run(T.must(executable),
                                      args:         [scope, *args.map(&:to_s)],
                                      print_stdout: mode == :default,
                                      print_stderr: mode == :default,

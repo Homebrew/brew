@@ -36,7 +36,7 @@ module OS
         end
 
         def host_ruby_version
-          out, _, status = system_command(HOST_RUBY_PATH, args: ["-e", "puts RUBY_VERSION"], print_stderr: false)
+          out, _, status = system_command(HOST_RUBY_PATH, args: ["-e", "puts RUBY_VERSION"], print_stderr: false).to_a
           return "N/A" unless status.success?
 
           out

@@ -163,10 +163,10 @@ module GitHub
           "PATH" => PATH.new(HOMEBREW_PREFIX/"opt/gh/bin", ENV.fetch("PATH")),
           "HOME" => Utils::UID.uid_home,
         }.compact
-        gh_out, _, result = system_command "gh",
+        gh_out, _, result = system_command("gh",
                                            args:         ["auth", "token", "--hostname", "github.com"],
                                            env:,
-                                           print_stderr: false
+                                           print_stderr: false).to_a
         return unless result.success?
 
         gh_out.chomp.presence
@@ -179,11 +179,11 @@ module GitHub
     def self.keychain_username_password
       require "utils/uid"
       Utils::UID.drop_euid do
-        git_credential_out, _, result = system_command "git",
+        git_credential_out, _, result = system_command("git",
                                                        args:         ["credential-osxkeychain", "get"],
                                                        input:        ["protocol=https\n", "host=github.com\n"],
                                                        env:          { "HOME" => Utils::UID.uid_home }.compact,
-                                                       print_stderr: false
+                                                       print_stderr: false).to_a
         return unless result.success?
 
         git_credential_out.force_encoding("ASCII-8BIT")

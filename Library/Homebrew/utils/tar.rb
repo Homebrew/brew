@@ -34,7 +34,8 @@ module Utils
         path = Pathname.new(path)
         return unless TAR_FILE_EXTENSIONS.include? path.extname
 
-        stdout, _, status = system_command(executable, args: ["--list", "--file", path], print_stderr: false)
+        stdout, _, status = system_command(T.must(executable), args:         ["--list", "--file", path],
+                                                               print_stderr: false).to_a
         odie "#{path} is not a valid tar file!" if !status.success? || stdout.blank?
       end
 

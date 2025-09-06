@@ -49,7 +49,7 @@ module Cask
 
       SystemCommand.run("/bin/mkdir", args: ["-p", path], sudo:)
       SystemCommand.run("/bin/chmod", args: ["g+rwx", path], sudo:)
-      SystemCommand.run("/usr/sbin/chown", args: [User.current, path], sudo:)
+      SystemCommand.run("/usr/sbin/chown", args: [User.current.to_s, path], sudo:)
       SystemCommand.run("/usr/bin/chgrp", args: ["admin", path], sudo:)
     end
 

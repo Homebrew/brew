@@ -183,7 +183,7 @@ module Utils
 
       return result if result.success? || args.include?("--http1.1")
 
-      raise Timeout::Error, result.stderr.lines.last.chomp if timeout && result.status.exitstatus == 28
+      raise Timeout::Error, result.stderr.lines.fetch(-1).chomp if timeout && result.status.exitstatus == 28
 
       # Error in the HTTP2 framing layer
       if result.exit_status == 16

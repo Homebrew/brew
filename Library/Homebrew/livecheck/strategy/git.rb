@@ -129,9 +129,9 @@ module Homebrew
             print_stderr: false,
             debug:        false,
             verbose:      false,
-          )
+          ).to_a
 
-          tags_data = { tags: [] }
+          tags_data = { tags: T.let([], T::Array[String]) }
           tags_data[:messages] = stderr.split("\n") if stderr.present?
           return tags_data if stdout.blank?
 

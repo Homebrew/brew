@@ -543,6 +543,7 @@ module Cask
                                        print_stderr: false)
           else
             add_error "Unknown artifact type: #{artifact.class}", location: url.location
+            next
           end
 
           next false if result.success?
@@ -697,7 +698,7 @@ module Cask
             add_error "No binaries in App: #{artifact.source}", location: url.location if files.empty?
 
             main_binary = get_plist_main_binary(path)
-            main_binary ||= files.first
+            main_binary ||= files.fetch(0)
 
             system_command("lipo", args: ["-archs", main_binary], print_stderr: false)
           when Artifact::Binary

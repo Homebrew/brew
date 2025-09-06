@@ -102,7 +102,7 @@ module SystemConfig
 
     sig { returns(String) }
     def describe_curl
-      out, = system_command(Utils::Curl.curl_executable, args: ["--version"], verbose: false)
+      out = system_command(Utils::Curl.curl_executable, args: ["--version"], verbose: false).stdout
 
       match_data = /^curl (?<curl_version>[\d.]+)/.match(out)
       if match_data

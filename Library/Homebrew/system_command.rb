@@ -1,4 +1,4 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
 
 require "plist"
@@ -21,33 +21,119 @@ class SystemCommand
     # Run a fallible system command.
     #
     # @api internal
-    def system_command(executable, **options)
-      SystemCommand.run(executable, **options)
+    sig {
+      params(
+        executable:   T.any(String, Pathname),
+        args:         T::Array[T.any(String, Integer, Float, Pathname, URI::Generic)],
+        sudo:         T::Boolean,
+        sudo_as_root: T::Boolean,
+        env:          T::Hash[String, String],
+        input:        T.any(String, T::Array[String]),
+        must_succeed: T::Boolean,
+        print_stdout: T.any(T::Boolean, Symbol),
+        print_stderr: T.any(T::Boolean, Symbol),
+        debug:        T.nilable(T::Boolean),
+        verbose:      T.nilable(T::Boolean),
+        secrets:      T.any(String, T::Array[String]),
+        chdir:        T.any(String, Pathname),
+        reset_uid:    T::Boolean,
+        timeout:      T.nilable(T.any(Integer, Float)),
+      ).returns(SystemCommand::Result)
+    }
+    def system_command(executable, args: [], sudo: false, sudo_as_root: false, env: {}, input: [],
+                       must_succeed: false, print_stdout: false, print_stderr: true, debug: nil, verbose: nil,
+                       secrets: [], chdir: T.unsafe(nil), reset_uid: false, timeout: nil)
+      SystemCommand.run(executable, args:, sudo:, sudo_as_root:, env:, input:, must_succeed:, print_stdout:,
+                        print_stderr:, debug:, verbose:, secrets:, chdir:, reset_uid:, timeout:)
     end
 
     # Run an infallible system command.
     #
     # @api internal
-    def system_command!(command, **options)
-      SystemCommand.run!(command, **options)
+    sig {
+      params(
+        executable:   T.any(String, Pathname),
+        args:         T::Array[T.any(String, Integer, Float, Pathname, URI::Generic)],
+        sudo:         T::Boolean,
+        sudo_as_root: T::Boolean,
+        env:          T::Hash[String, String],
+        input:        T.any(String, T::Array[String]),
+        print_stdout: T.any(T::Boolean, Symbol),
+        print_stderr: T.any(T::Boolean, Symbol),
+        debug:        T.nilable(T::Boolean),
+        verbose:      T.nilable(T::Boolean),
+        secrets:      T.any(String, T::Array[String]),
+        chdir:        T.any(String, Pathname),
+        reset_uid:    T::Boolean,
+        timeout:      T.nilable(T.any(Integer, Float)),
+      ).returns(SystemCommand::Result)
+    }
+    def system_command!(executable, args: [], sudo: false, sudo_as_root: false, env: {}, input: [],
+                        print_stdout: false, print_stderr: true, debug: nil, verbose: nil, secrets: [],
+                        chdir: T.unsafe(nil), reset_uid: false, timeout: nil)
+      SystemCommand.run!(executable, args:, sudo:, sudo_as_root:, env:, input:, print_stdout:,
+                         print_stderr:, debug:, verbose:, secrets:, chdir:, reset_uid:, timeout:)
     end
   end
 
   include Context
 
-  def self.run(executable, **options)
-    new(executable, **options).run!
+  sig {
+    params(
+      executable:   T.any(String, Pathname),
+      args:         T::Array[T.any(String, Integer, Float, Pathname, URI::Generic)],
+      sudo:         T::Boolean,
+      sudo_as_root: T::Boolean,
+      env:          T::Hash[String, String],
+      input:        T.any(String, T::Array[String]),
+      must_succeed: T::Boolean,
+      print_stdout: T.any(T::Boolean, Symbol),
+      print_stderr: T.any(T::Boolean, Symbol),
+      debug:        T.nilable(T::Boolean),
+      verbose:      T.nilable(T::Boolean),
+      secrets:      T.any(String, T::Array[String]),
+      chdir:        T.any(NilClass, String, Pathname),
+      reset_uid:    T::Boolean,
+      timeout:      T.nilable(T.any(Integer, Float)),
+    ).returns(SystemCommand::Result)
+  }
+  def self.run(executable, args: [], sudo: false, sudo_as_root: false, env: {}, input: [], must_succeed: false,
+               print_stdout: false, print_stderr: true, debug: nil, verbose: nil, secrets: [], chdir: nil,
+               reset_uid: false, timeout: nil)
+    new(executable, args:, sudo:, sudo_as_root:, env:, input:, must_succeed:, print_stdout:, print_stderr:, debug:,
+        verbose:, secrets:, chdir:, reset_uid:, timeout:).run!
   end
 
-  def self.run!(command, **options)
-    run(command, **options, must_succeed: true)
+  sig {
+    params(
+      executable:   T.any(String, Pathname),
+      args:         T::Array[T.any(String, Integer, Float, Pathname, URI::Generic)],
+      sudo:         T::Boolean,
+      sudo_as_root: T::Boolean,
+      env:          T::Hash[String, String],
+      input:        T.any(String, T::Array[String]),
+      print_stdout: T.any(T::Boolean, Symbol),
+      print_stderr: T.any(T::Boolean, Symbol),
+      debug:        T.nilable(T::Boolean),
+      verbose:      T.nilable(T::Boolean),
+      secrets:      T.any(String, T::Array[String]),
+      chdir:        T.any(NilClass, String, Pathname),
+      reset_uid:    T::Boolean,
+      timeout:      T.nilable(T.any(Integer, Float)),
+    ).returns(SystemCommand::Result)
+  }
+  def self.run!(executable, args: [], sudo: false, sudo_as_root: false, env: {}, input: [], print_stdout: false,
+                print_stderr: true, debug: nil, verbose: nil, secrets: [], chdir: nil, reset_uid: false, timeout: nil)
+    run(executable, args:, sudo:, sudo_as_root:, env:, input:, must_succeed: true, print_stdout:, print_stderr:,
+        debug:, verbose:, secrets:, chdir:, reset_uid:, timeout:)
   end
 
   sig { returns(SystemCommand::Result) }
   def run!
     $stderr.puts redact_secrets(command.shelljoin.gsub('\=', "="), @secrets) if verbose? && debug?
 
-    @output = []
+    @output = T.let([], T.nilable(T::Array[[Symbol, String]]))
+    @output = T.must(@output)
 
     each_output_line do |type, line|
       case type
@@ -70,7 +156,7 @@ class SystemCommand
       end
     end
 
-    result = Result.new(command, @output, @status, secrets: @secrets)
+    result = Result.new(command, @output, T.must(@status), secrets: @secrets)
     result.assert_success! if must_succeed?
     result
   end
@@ -78,7 +164,7 @@ class SystemCommand
   sig {
     params(
       executable:   T.any(String, Pathname),
-      args:         T::Array[T.any(String, Integer, Float, URI::Generic)],
+      args:         T::Array[T.any(String, Integer, Float, Pathname, URI::Generic)],
       sudo:         T::Boolean,
       sudo_as_root: T::Boolean,
       env:          T::Hash[String, String],
@@ -89,28 +175,14 @@ class SystemCommand
       debug:        T.nilable(T::Boolean),
       verbose:      T.nilable(T::Boolean),
       secrets:      T.any(String, T::Array[String]),
-      chdir:        T.any(String, Pathname),
+      chdir:        T.any(NilClass, String, Pathname),
       reset_uid:    T::Boolean,
       timeout:      T.nilable(T.any(Integer, Float)),
     ).void
   }
-  def initialize(
-    executable,
-    args: [],
-    sudo: false,
-    sudo_as_root: false,
-    env: {},
-    input: [],
-    must_succeed: false,
-    print_stdout: false,
-    print_stderr: true,
-    debug: nil,
-    verbose: T.unsafe(nil),
-    secrets: [],
-    chdir: T.unsafe(nil),
-    reset_uid: false,
-    timeout: nil
-  )
+  def initialize(executable, args: [], sudo: false, sudo_as_root: false, env: {}, input: [], must_succeed: false,
+                 print_stdout: false, print_stderr: true, debug: nil, verbose: nil, secrets: [], chdir: nil,
+                 reset_uid: false, timeout: nil)
     require "extend/ENV"
     @executable = executable
     @args = args
@@ -132,13 +204,13 @@ class SystemCommand
       raise ArgumentError, "Invalid variable name: #{name}"
     end
     @env = env
-    @input = Array(input)
+    @input = T.let(Array(input), T::Array[String])
     @must_succeed = must_succeed
     @print_stdout = print_stdout
     @print_stderr = print_stderr
     @debug = debug
     @verbose = verbose
-    @secrets = (Array(secrets) + ENV.sensitive_environment.values).uniq
+    @secrets = T.let((Array(secrets) + ENV.sensitive_environment.values).uniq, T::Array[String])
     @chdir = chdir
     @reset_uid = reset_uid
     @timeout = timeout
@@ -151,7 +223,20 @@ class SystemCommand
 
   private
 
-  attr_reader :executable, :args, :input, :chdir, :env
+  sig { returns(T.any(Pathname, String)) }
+  attr_reader :executable
+
+  sig { returns(T::Array[T.any(String, Integer, Float, Pathname, URI::Generic)]) }
+  attr_reader :args
+
+  sig { returns(T::Array[String]) }
+  attr_reader :input
+
+  sig { returns(T.any(NilClass, String, Pathname)) }
+  attr_reader :chdir
+
+  sig { returns(T::Hash[String, String]) }
+  attr_reader :env
 
   sig { returns(T::Boolean) }
   def must_succeed? = @must_succeed
@@ -227,15 +312,13 @@ class SystemCommand
 
   sig { returns(T::Array[String]) }
   def expanded_args
-    @expanded_args ||= args.map do |arg|
-      if arg.respond_to?(:to_path)
+    @expanded_args ||= T.let(args.map do |arg|
+      if arg.is_a?(Pathname)
         File.absolute_path(arg)
-      elsif arg.is_a?(Integer) || arg.is_a?(Float) || arg.is_a?(URI::Generic)
-        arg.to_s
       else
-        arg.to_str
+        arg.to_s
       end
-    end
+    end, T.nilable(T::Array[String]))
   end
 
   class ProcessTerminatedInterrupt < StandardError; end
@@ -275,7 +358,7 @@ class SystemCommand
     end_time = Time.now + @timeout if @timeout
     raise Timeout::Error if raw_wait_thr.join(Utils::Timer.remaining(end_time)).nil?
 
-    @status = raw_wait_thr.value
+    @status = T.let(raw_wait_thr.value, T.nilable(Process::Status))
   rescue Interrupt
     Process.kill("INT", raw_wait_thr.pid) if raw_wait_thr && !sudo?
     raise Interrupt
@@ -383,7 +466,14 @@ class SystemCommand
     include Context
     include Utils::Output::Mixin
 
-    attr_accessor :command, :status, :exit_status
+    sig { returns(T::Array[String]) }
+    attr_accessor :command
+
+    sig { returns(Process::Status) }
+    attr_accessor :status
+
+    sig { returns(T.nilable(Integer)) }
+    attr_accessor :exit_status
 
     sig {
       params(
@@ -397,7 +487,7 @@ class SystemCommand
       @command       = command
       @output        = output
       @status        = status
-      @exit_status   = status.exitstatus
+      @exit_status   = T.let(status.exitstatus, T.nilable(Integer))
       @secrets       = secrets
     end
 
@@ -410,22 +500,21 @@ class SystemCommand
 
     sig { returns(String) }
     def stdout
-      @stdout ||= @output.select { |type,| type == :stdout }
-                         .map { |_, line| line }
-                         .join
+      @stdout ||= T.let(@output.select { |type,| type == :stdout }
+                               .map { |_, line| line }
+                               .join, T.nilable(String))
     end
 
     sig { returns(String) }
     def stderr
-      @stderr ||= @output.select { |type,| type == :stderr }
-                         .map { |_, line| line }
-                         .join
+      @stderr ||= T.let(@output.select { |type,| type == :stderr }
+                               .map { |_, line| line }
+                               .join, T.nilable(String))
     end
 
     sig { returns(String) }
     def merged_output
-      @merged_output ||= @output.map { |_, line| line }
-                                .join
+      @merged_output ||= T.let(@output.map { |_, line| line }.join, T.nilable(String))
     end
 
     sig { returns(T::Boolean) }
@@ -439,10 +528,11 @@ class SystemCommand
     def to_ary
       [stdout, stderr, status]
     end
+    alias to_a to_ary
 
-    sig { returns(T.nilable(T.any(Array, Hash))) }
+    sig { returns(T.untyped) }
     def plist
-      @plist ||= begin
+      @plist ||= T.let(begin
         output = stdout
 
         output = output.sub(/\A(.*?)(\s*<\?\s*xml)/m) do
@@ -456,7 +546,7 @@ class SystemCommand
         end
 
         Plist.parse_xml(output, marshal: false)
-      end
+      end, T.untyped)
     end
 
     sig { params(garbage: String).void }

@@ -422,11 +422,13 @@ class Pathname
 
   sig { returns(T::Array[String]) }
   def zipinfo
-    @zipinfo ||= T.let(nil, T.nilable(String))
-    @zipinfo ||= system_command("zipinfo", args: ["-1", self], print_stderr: false)
-                 .stdout
-                 .encode(Encoding::UTF_8, invalid: :replace)
-                 .split("\n")
+    @zipinfo ||= T.let(
+      system_command("zipinfo", args: ["-1", self], print_stderr: false)
+      .stdout
+      .encode(Encoding::UTF_8, invalid: :replace)
+      .split("\n"),
+      T.nilable(T::Array[String]),
+    )
   end
 
   private
