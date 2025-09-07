@@ -170,7 +170,7 @@ module Homebrew
       sig { returns(T::Array[String]) }
       def cli_args
         @cli_args ||= @processed_options.filter_map do |short, long|
-          option = long || short
+          option = T.must(long || short)
           switch = :"#{option_to_name(option)}?"
           flag = option_to_name(option).to_sym
           if @table[switch] == true || @table[flag] == true
