@@ -34,7 +34,7 @@ module Kernel
 
   sig { type_parameters(:U).params(block: T.proc.returns(T.type_parameter(:U))).returns(T.type_parameter(:U)) }
   def with_homebrew_path(&block)
-    with_env(PATH: PATH.new(ORIGINAL_PATHS), &block)
+    with_env(PATH: PATH.new(ORIGINAL_PATHS).to_s, &block)
   end
 
   sig {

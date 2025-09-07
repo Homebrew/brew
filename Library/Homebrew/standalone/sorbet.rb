@@ -47,3 +47,21 @@ else
   T::Configuration.call_validation_error_handler = ->(signature, opts) {}
   T::Configuration.inline_type_error_handler = ->(error, opts) {}
 end
+
+module T
+  module Types
+    class TypedArray < TypedEnumerable
+      # overrides Base
+      def valid?(obj)
+        recursively_valid?(obj)
+      end
+    end
+
+    class TypedHash < TypedEnumerable
+      # overrides Base
+      def valid?(obj)
+        recursively_valid?(obj)
+      end
+    end
+  end
+end
