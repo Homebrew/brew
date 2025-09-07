@@ -67,7 +67,7 @@ RSpec.describe CurlDownloadStrategy do
     context "with a generalized fake user agent" do
       alias_matcher :a_string_matching, :match
 
-      let(:specs) { { user_agent: :fake } }
+      let(:specs) { { user_agent: "fake" } }
 
       it "adds the appropriate curl args" do
         expect(strategy).to receive(:system_command)

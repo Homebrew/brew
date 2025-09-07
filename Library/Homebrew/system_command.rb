@@ -478,7 +478,7 @@ class SystemCommand
     sig {
       params(
         command: T::Array[String],
-        output:  T::Array[[Symbol, String]],
+        output:  T::Array[[T.any(String, Symbol), String]],
         status:  Process::Status,
         secrets: T::Array[String],
       ).void

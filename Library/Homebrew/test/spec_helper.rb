@@ -33,6 +33,13 @@ module T
         recursively_valid?(obj)
       end
     end
+
+    class TypedHash < TypedEnumerable
+      # overrides Base
+      def valid?(obj)
+        recursively_valid?(obj)
+      end
+    end
   end
 end
 

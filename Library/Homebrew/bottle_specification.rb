@@ -9,7 +9,7 @@ class BottleSpecification
 
   attr_reader :collector
 
-  sig { returns(T::Hash[String, T.untyped]) }
+  sig { returns(T::Hash[Symbol, T.untyped]) }
   attr_reader :root_url_specs
 
   sig { returns(String) }
@@ -20,7 +20,7 @@ class BottleSpecification
     @rebuild = T.let(0, Integer)
     @repository = T.let(Homebrew::DEFAULT_REPOSITORY, String)
     @collector = T.let(Utils::Bottles::Collector.new, Utils::Bottles::Collector)
-    @root_url_specs = T.let({}, T::Hash[String, T.untyped])
+    @root_url_specs = T.let({}, T::Hash[Symbol, T.untyped])
     @root_url = T.let(nil, T.nilable(String))
   end
 

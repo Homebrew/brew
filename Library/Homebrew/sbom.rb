@@ -13,7 +13,7 @@ class SBOM
   include Utils::Output::Mixin
 
   FILENAME = "sbom.spdx.json"
-  SCHEMA_FILE = (HOMEBREW_LIBRARY_PATH/"data/schemas/sbom.json").freeze
+  SCHEMA_FILE = T.let((HOMEBREW_LIBRARY_PATH/"data/schemas/sbom.json").freeze, Pathname)
 
   # Instantiates a {SBOM} for a new installation of a formula.
   sig { params(formula: Formula, tab: Tab).returns(T.attached_class) }
@@ -85,7 +85,7 @@ class SBOM
 
   sig { returns(T::Hash[String, T.untyped]) }
   def self.schema
-    @schema ||= JSON.parse(SCHEMA_FILE.read, freeze: true)
+    @schema ||= T.let(JSON.parse(SCHEMA_FILE.read, freeze: true), T.nilable(T::Hash[String, T.untyped]))
   end
 
   sig { params(bottling: T::Boolean).returns(T::Array[T::Hash[String, T.untyped]]) }
@@ -134,17 +134,17 @@ class SBOM
   attr_reader :name, :homebrew_version, :time, :stdlib, :source, :built_on, :license
   attr_accessor :spdxfile
 
-  sig { params(attributes: Hash).void }
+  sig { params(attributes: T::Hash[Symbol, T.untyped]).void }
   def initialize(attributes = {})
     attributes.each { |key, value| instance_variable_set(:"@#{key}", value) }
   end
 
   sig {
     params(
-      runtime_dependency_declaration: T::Array[Hash],
-      compiler_declaration:           Hash,
+      runtime_dependency_declaration: T::Array[T::Hash[Symbol, T.untyped]],
+      compiler_declaration:           T::Hash[String, T.untyped],
       bottling:                       T::Boolean,
-    ).returns(T::Array[Hash])
+    ).returns(T::Array[T::Hash[Symbol, T.untyped]])
   }
   def generate_relations_json(runtime_dependency_declaration, compiler_declaration, bottling:)
     runtime = runtime_dependency_declaration.map do |dependency|
@@ -167,7 +167,7 @@ class SBOM
       spdxElementId:      "SPDXRef-File-#{name}",
       relationshipType:   "PACKAGE_OF",
       relatedSpdxElement: "SPDXRef-Archive-#{name}-src",
-    }], T::Array[Hash])
+    }], T::Array[T::Hash[Symbol, T.untyped]])
 
     unless bottling
       base << {
@@ -189,16 +189,11 @@ class SBOM
   end
 
   sig {
-    params(runtime_dependency_declaration: T::Array[Hash],
-           compiler_declaration:           Hash,
-           bottling:                       T::Boolean).returns(
-             T::Array[
-              T::Hash[
-                Symbol,
-                T.any(String, T::Array[T::Hash[Symbol, String]]),
-              ],
-            ],
-           )
+    params(
+      runtime_dependency_declaration: T::Array[T::Hash[Symbol, T.untyped]],
+      compiler_declaration:           T::Hash[String, T.untyped],
+      bottling:                       T::Boolean,
+    ).returns(T::Array[T::Hash[Symbol, T.untyped]])
   }
   def generate_packages_json(runtime_dependency_declaration, compiler_declaration, bottling:)
     bottle = []
@@ -302,7 +297,7 @@ class SBOM
     end
   end
 
-  sig { params(bottling: T::Boolean).returns(T::Hash[Symbol, T.any(String, T::Array[T::Hash[Symbol, String]])]) }
+  sig { params(bottling: T::Boolean).returns(T::Hash[Symbol, T.anything]) }
   def to_spdx_sbom(bottling:)
     runtime_full = full_spdx_runtime_dependencies(bottling:)
 

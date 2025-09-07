@@ -3963,7 +3963,7 @@ class Formula
     # ```
     #
     # @api public
-    sig { params(dep: T.any(String, Symbol, T::Hash[String, T.untyped], T::Class[Requirement])).void }
+    sig { params(dep: T.any(String, Symbol, T::Hash[T.any(String, Symbol), T.untyped], T::Class[Requirement])).void }
     def depends_on(dep)
       specs.each { |spec| spec.depends_on(dep) }
     end
