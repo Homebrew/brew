@@ -440,7 +440,7 @@ RSpec.describe Homebrew::DevCmd::Bottle do
         old_spec = BottleSpecification.new
         old_spec.rebuild(1)
         new_hash = { "rebuild" => 2 }
-        expect(homebrew.merge_bottle_spec(["rebuild"], old_spec, new_hash)).to eq [
+        expect(homebrew.merge_bottle_spec([:rebuild], old_spec, new_hash)).to eq [
           ['rebuild: old: "1", new: "2"'],
           [],
         ]
