@@ -80,7 +80,8 @@ module Cask
       specs[:revisions]  = @revisions  = T.let(revisions, T.nilable(T::Hash[T.any(Symbol, String), String]))
       specs[:revision]   = @revision   = T.let(revision, T.nilable(String))
       specs[:trust_cert] = @trust_cert = T.let(trust_cert, T.nilable(T::Boolean))
-      specs[:cookies]    = @cookies    = T.let(cookies, T.nilable(T::Hash[T.any(String, Symbol), String]))
+      specs[:cookies]    =
+        @cookies = T.let(cookies&.transform_keys(&:to_s), T.nilable(T::Hash[String, String]))
       specs[:referer]    = @referer    = T.let(referer, T.nilable(T.any(URI::Generic, String)))
       specs[:headers]    = @header     = T.let(header, T.nilable(T.any(String, T::Array[String])))
       specs[:user_agent] = @user_agent = T.let(user_agent || :default, T.nilable(T.any(Symbol, String)))

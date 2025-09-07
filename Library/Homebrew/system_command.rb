@@ -167,7 +167,7 @@ class SystemCommand
       args:         T::Array[T.any(String, Integer, Float, Pathname, URI::Generic)],
       sudo:         T::Boolean,
       sudo_as_root: T::Boolean,
-      env:          T::Hash[String, String],
+      env:          T::Hash[String, T.nilable(String)],
       input:        T.any(String, T::Array[String]),
       must_succeed: T::Boolean,
       print_stdout: T.any(T::Boolean, Symbol),
