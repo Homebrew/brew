@@ -219,7 +219,7 @@ class SoftwareSpec
     options << opt
   end
 
-  sig { params(hash: T::Hash[T.any(String, Symbol), T.any(String, Symbol)]).void }
+  sig { params(hash: T::Hash[T.any(String, Symbol, T::Array[String]), T.any(String, Symbol, T::Array[String])]).void }
   def deprecated_option(hash)
     raise ArgumentError, "deprecated_option hash must not be empty" if hash.empty?
 

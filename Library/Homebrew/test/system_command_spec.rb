@@ -275,7 +275,7 @@ RSpec.describe SystemCommand do
 
       FileUtils.chmod "+x", path/"tool"
 
-      expect(described_class.run("tool", env: { "PATH" => path }).stdout).to include "Hello, world!"
+      expect(described_class.run("tool", env: { "PATH" => path.to_s }).stdout).to include "Hello, world!"
     end
   end
 

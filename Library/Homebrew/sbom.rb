@@ -255,7 +255,7 @@ class SBOM
 
   sig {
     params(bottling: T::Boolean)
-    .returns(T::Array[T::Hash[Symbol, T.any(T::Boolean, String, T::Array[T::Hash[Symbol, String]])]])
+      .returns(T::Array[T::Hash[Symbol, T.any(T::Boolean, String, T::Array[T::Hash[Symbol, String]])]])
   }
   def full_spdx_runtime_dependencies(bottling:)
     return [] if bottling || @runtime_dependencies.blank?

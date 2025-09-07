@@ -809,7 +809,7 @@ on_request: installed_on_request?, options:)
     else
       []
     end
-    options += effective_build_options_for(formula).used_options.to_a
+    options += effective_build_options_for(formula).used_options.to_a.map(&:to_s)
     options
   end
 
