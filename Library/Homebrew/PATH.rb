@@ -12,7 +12,7 @@ class PATH
   delegate each: :@paths
 
   Elem = type_member(:out) { { fixed: String } }
-  Element = T.type_alias { T.any(NilClass, Pathname, String, PATH) }
+  Element = T.type_alias { T.nilable(T.any(Pathname, String, PATH)) }
   private_constant :Element
   Elements = T.type_alias { T.any(Element, T::Array[Element]) }
   sig { params(paths: Elements).void }
