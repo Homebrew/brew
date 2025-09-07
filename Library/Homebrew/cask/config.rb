@@ -71,9 +71,9 @@ module Cask
       config = JSON.parse(json, symbolize_names: true)
 
       new(
-        default:             config.fetch("default",  {}),
-        env:                 config.fetch("env",      {}),
-        explicit:            config.fetch("explicit", {}),
+        default:             config.fetch(:default,  {}),
+        env:                 config.fetch(:env,      {}),
+        explicit:            config.fetch(:explicit, {}),
         ignore_invalid_keys:,
       )
     end

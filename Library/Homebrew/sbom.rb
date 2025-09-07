@@ -62,7 +62,7 @@ class SBOM
     formula.prefix/FILENAME
   end
 
-  sig { params(deps: T::Array[T::Hash[String, String]]).returns(T::Array[T::Hash[String, String]]) }
+  sig { params(deps: T::Array[T::Hash[String, T.untyped]]).returns(T::Array[T::Hash[String, T.untyped]]) }
   def self.runtime_deps_hash(deps)
     deps.map do |dep|
       full_name = dep.fetch("full_name")
@@ -88,7 +88,7 @@ class SBOM
     @schema ||= T.let(JSON.parse(SCHEMA_FILE.read, freeze: true), T.nilable(T::Hash[String, T.untyped]))
   end
 
-  sig { params(bottling: T::Boolean).returns(T::Array[T::Hash[String, T.untyped]]) }
+  sig { params(bottling: T::Boolean).returns(T::Array[String]) }
   def schema_validation_errors(bottling: false)
     unless Homebrew.require? "json_schemer"
       error_message = "Need json_schemer to validate SBOM, run `brew install-bundler-gems --add-groups=bottle`!"
@@ -254,9 +254,8 @@ class SBOM
   end
 
   sig {
-    params(bottling: T::Boolean).returns(T::Array[T::Hash[Symbol,
-                                                          T.any(T::Boolean, String,
-                                                                T::Array[T::Hash[Symbol, String]])]])
+    params(bottling: T::Boolean)
+    .returns(T::Array[T::Hash[Symbol, T.any(T::Boolean, String, T::Array[T::Hash[Symbol, String]])]])
   }
   def full_spdx_runtime_dependencies(bottling:)
     return [] if bottling || @runtime_dependencies.blank?
@@ -355,7 +354,7 @@ class SBOM
     }
   end
 
-  sig { params(base: T.nilable(T::Hash[String, Hash])).returns(T.nilable(T::Hash[String, String])) }
+  sig { params(base: T.nilable(T::Hash[String, T.untyped])).returns(T.nilable(T::Hash[String, String])) }
   def get_bottle_info(base)
     return unless base.present?
 
