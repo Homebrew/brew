@@ -87,8 +87,9 @@ RSpec.describe Homebrew::Services::Cli do
   describe "#run" do
     it "checks missing file causes error" do
       expect(Homebrew::Services::System).not_to receive(:root?)
+      service = instance_double(Homebrew::Services::FormulaWrapper, name: "service_name")
       expect do
-        services_cli.start(["service_name"], "/non/existent/path")
+        services_cli.start([service], "/non/existent/path")
       end.to raise_error(UsageError, "Invalid usage: Provided service file does not exist.")
     end
 
@@ -110,8 +111,9 @@ RSpec.describe Homebrew::Services::Cli do
   describe "#start" do
     it "checks missing file causes error" do
       expect(Homebrew::Services::System).not_to receive(:root?)
+      service = instance_double(Homebrew::Services::FormulaWrapper, name: "service_name")
       expect do
-        services_cli.start(["service_name"], "/hfdkjshksdjhfkjsdhf/fdsjghsdkjhb")
+        services_cli.start([service], "/hfdkjshksdjhfkjsdhf/fdsjghsdkjhb")
       end.to raise_error(UsageError, "Invalid usage: Provided service file does not exist.")
     end
 
