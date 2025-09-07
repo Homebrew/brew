@@ -46,7 +46,7 @@ module RuboCop
         sig {
           params(
             block_node: RuboCop::AST::BlockNode,
-            comments:   T::Array[String],
+            comments:   T::Array[Parser::Source::Comment],
           ).returns(
             T::Array[RuboCop::Cask::AST::Stanza],
           )

@@ -337,7 +337,7 @@ module Homebrew
       parsed
     end
 
-    sig { params(variables: T::Hash[Symbol, String]).returns(T.nilable(T::Hash[Symbol, String])) }
+    sig { params(variables: T::Hash[Symbol, T.any(Pathname, String)]).returns(T.nilable(T::Hash[Symbol, String])) }
     def environment_variables(variables = {})
       @environment_variables = variables.transform_values(&:to_s)
     end
