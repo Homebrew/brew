@@ -68,7 +68,7 @@ module Cask
 
     sig { params(json: String, ignore_invalid_keys: T::Boolean).returns(T.attached_class) }
     def self.from_json(json, ignore_invalid_keys: false)
-      config = JSON.parse(json)
+      config = JSON.parse(json, symbolize_names: true)
 
       new(
         default:             config.fetch("default",  {}),
