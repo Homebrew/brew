@@ -50,7 +50,8 @@ module Formulary
   end
   private_class_method :platform_cache_tag
 
-  sig { returns(T::Hash[Symbol, T::Hash[String, T.class_of(Formula)]]) }
+  # The untyped nested hash values are a mix of Formula instances and Formula classes.
+  sig { returns(T::Hash[Symbol, T::Hash[String, T.untyped]]) }
   def self.platform_cache
     cache[platform_cache_tag] ||= {}
   end
