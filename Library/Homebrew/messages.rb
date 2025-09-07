@@ -14,7 +14,7 @@ class Messages
   sig { returns(Integer) }
   attr_reader :package_count
 
-  sig { returns(T::Array[T::Hash[String, Float]]) }
+  sig { returns(T::Array[{ package: String, time: Float }]) }
   attr_reader :install_times
 
   sig { void }
@@ -22,7 +22,7 @@ class Messages
     @caveats = T.let([], T::Array[{ package: String, caveats: T.any(String, Caveats) }])
     @completions_and_elisp = T.let(Set.new, T::Set[String])
     @package_count = T.let(0, Integer)
-    @install_times = T.let([], T::Array[T::Hash[String, Float]])
+    @install_times = T.let([], T::Array[{ package: String, time: Float }])
   end
 
   sig { params(package: String, caveats: T.any(String, Caveats)).void }
