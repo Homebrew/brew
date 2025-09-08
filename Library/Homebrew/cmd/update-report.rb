@@ -476,7 +476,16 @@ class Reporter
   def report(auto_update: false)
     return @report if @report
 
-    @report = T.unsafe(Hash.new { |h, k| h[k] = [] })
+    @report = {
+      A:  [],
+      AC: [],
+      D:  [],
+      DC: [],
+      M:  [],
+      MC: [],
+      R:  T.let([], T::Array[[String, String]]),
+      RC: T.let([], T::Array[[String, String]]),
+    }
     return @report unless updated?
 
     diff.each_line do |line|
