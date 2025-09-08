@@ -48,6 +48,7 @@ else
   T::Configuration.inline_type_error_handler = ->(error, opts) {}
 end
 
+# TODO: only do this in specs
 module T
   module Types
     class FixedArray < Base

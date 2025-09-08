@@ -167,15 +167,18 @@ class Tab < AbstractTab
   # @api internal
   attr_accessor :poured_from_bottle
 
-  attr_accessor :built_as_bottle, :changed_files, :stdlib, :aliases
+  attr_accessor :built_as_bottle, :stdlib, :aliases
   attr_writer :used_options, :unused_options, :compiler, :source_modified_time
   attr_reader :tapped_from
+
+  sig { returns(T.nilable(T::Array[Pathname])) }
+  attr_accessor :changed_files
 
   sig { params(attributes: T.any(T::Hash[String, T.untyped], T::Hash[Symbol, T.untyped])).void }
   def initialize(attributes = {})
     @poured_from_bottle = T.let(nil, T.nilable(T::Boolean))
     @built_as_bottle = T.let(nil, T.nilable(T::Boolean))
-    @changed_files = T.let(nil, T.nilable(T::Array[Pathname]))
+    @changed_files = nil
     @stdlib = T.let(nil, T.nilable(String))
     @aliases = T.let(nil, T.nilable(T::Array[String]))
     @used_options = T.let(nil, T.nilable(T::Array[String]))
