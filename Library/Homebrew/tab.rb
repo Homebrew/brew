@@ -52,7 +52,14 @@ class AbstractTab
     @built_on = T.let(nil, T.nilable(T::Hash[String, T.untyped]))
     @runtime_dependencies = T.let(nil, T.nilable(T::Array[T.untyped]))
 
-    attributes.each { |key, value| instance_variable_set(:"@#{key}", value) }
+    attributes.each do |key, value|
+      case key.to_sym
+      when :changed_files
+        @changed_files = value&.map { |f| Pathname(f) }
+      else
+        instance_variable_set(:"@#{key}", value)
+      end
+    end
   end
 
   # Instantiates a {Tab} for a new installation of a formula or cask.
