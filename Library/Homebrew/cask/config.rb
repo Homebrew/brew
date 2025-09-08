@@ -34,7 +34,8 @@ module Cask
       T::Hash[Symbol, String],
     )
 
-    sig { returns(T::Hash[Symbol, T.any(LazyObject, String)]) }
+    # runtime recursive evaluation forces the LazyObject to be evaluated
+    T::Sig::WithoutRuntime.sig { returns(T::Hash[Symbol, T.any(LazyObject, String)]) }
     def self.defaults
       {
         languages: LazyObject.new { ::OS::Mac.languages },
