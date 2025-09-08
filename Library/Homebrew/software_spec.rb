@@ -242,7 +242,7 @@ class SoftwareSpec
     @build = BuildOptions.new(Options.create(@flags), options)
   end
 
-  sig { params(spec: T.any(String, Symbol, T::Hash[T.any(String, Symbol), T.untyped], T::Class[Requirement], Dependable)).void }
+  sig { params(spec: T.any(String, Symbol, T::Hash[T.any(String, Symbol, T::Class[Requirement]), T.untyped], T::Class[Requirement], Dependable)).void }
   def depends_on(spec)
     dep = dependency_collector.add(spec)
     add_dep_option(dep) if dep

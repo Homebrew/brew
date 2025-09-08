@@ -3963,7 +3963,7 @@ class Formula
     # ```
     #
     # @api public
-    sig { params(dep: T.any(String, Symbol, T::Hash[T.any(String, Symbol), T.untyped], T::Class[Requirement])).void }
+    sig { params(dep: T.any(String, Symbol, T::Hash[T.any(String, Symbol, T::Class[Requirement]), T.untyped], T::Class[Requirement])).void }
     def depends_on(dep)
       specs.each { |spec| spec.depends_on(dep) }
     end
@@ -4099,7 +4099,7 @@ class Formula
     # @api public
     sig { params(names: T.untyped).void }
     def conflicts_with(*names)
-      opts = T.let(names.last.is_a?(Hash) ? names.pop : {}, T::Hash[Symbol, T.untyped])
+      opts = T.let(names.last.is_a?(Hash) ? names.pop : {}, T::Hash[T.any(String, Symbol), T.untyped])
       names.each { |name| T.must(conflicts) << FormulaConflict.new(name, opts[:because]) }
     end
 
