@@ -73,6 +73,7 @@ module Superenv
     self["HOMEBREW_OPTIMIZATION_LEVEL"] = "Os"
     self["HOMEBREW_BREW_FILE"] = HOMEBREW_BREW_FILE.to_s
     self["HOMEBREW_PREFIX"] = HOMEBREW_PREFIX.to_s
+    self["HOMEBREW_LIBRARY_PATH"] = HOMEBREW_LIBRARY_PATH.to_s
     self["HOMEBREW_CELLAR"] = HOMEBREW_CELLAR.to_s
     self["HOMEBREW_OPT"] = "#{HOMEBREW_PREFIX}/opt"
     self["HOMEBREW_TEMP"] = HOMEBREW_TEMP.to_s
@@ -115,6 +116,7 @@ module Superenv
     # x - Enable C++11 mode.
     # g - Enable "-stdlib=libc++" for clang.
     # h - Enable "-stdlib=libstdc++" for clang.
+    # G - Enable linking to LLVM's libc++ for LLVM clang
     # K - Don't strip -arch <arch>, -m32, or -m64
     # d - Don't strip -march=<target>. Use only in formulae that
     #     have runtime detection of CPU features.
@@ -363,6 +365,11 @@ module Superenv
   sig { void }
   def libcxx
     append_to_cccfg "g" if compiler == :clang
+  end
+
+  sig { void }
+  def llvm_libcxx
+    append_to_cccfg "G" if compiler == :llvm_clang
   end
 
   sig { void }
