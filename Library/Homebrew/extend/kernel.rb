@@ -283,9 +283,10 @@ module Kernel
   # @api public
   sig {
     type_parameters(:U)
-      .params(hash: T::Hash[Object,
-                            T.any(NilClass, PATH, Pathname, String)], _block: T.proc.returns(T.type_parameter(:U)))
-      .returns(T.type_parameter(:U))
+      .params(
+        hash:   T::Hash[Object, T.any(NilClass, PATH, Pathname, String)],
+        _block: T.proc.returns(T.type_parameter(:U)),
+      ).returns(T.type_parameter(:U))
   }
   def with_env(hash, &_block)
     old_values = {}
