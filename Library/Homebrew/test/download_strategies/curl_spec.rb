@@ -73,10 +73,7 @@ RSpec.describe CurlDownloadStrategy do
         expect(strategy).to receive(:system_command)
           .with(
             /curl/,
-            hash_including(args: array_including_cons(
-              "--user-agent",
-              a_string_matching(/Mozilla.*Mac OS X 10_15_7.*AppleWebKit/),
-            )),
+            hash_including(args: array_including_cons("--user-agent", "fake")),
           )
           .at_least(:once)
           .and_return(instance_double(SystemCommand::Result, success?: true, stdout: "", assert_success!: nil))
@@ -173,7 +170,7 @@ RSpec.describe CurlDownloadStrategy do
               hash_including(args: array_including_cons("#{artifact_domain}/#{resource_path}")),
             )
             .at_least(:once)
-            .and_return(SystemCommand::Result.new(["curl"], [""], status, secrets: []))
+            .and_return(SystemCommand::Result.new(["curl"], [[:stdout, ""]], status, secrets: []))
 
           strategy.fetch
         end

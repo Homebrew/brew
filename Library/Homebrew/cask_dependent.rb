@@ -45,7 +45,7 @@ class CaskDependent
     )
   end
 
-  sig { returns(T::Array[CaskDependent::Requirement]) }
+  sig { returns(T::Array[::Requirement]) }
   def requirements
     @requirements ||= T.let(
       begin
@@ -73,7 +73,7 @@ class CaskDependent
 
         requirements
       end,
-      T.nilable(T::Array[CaskDependent::Requirement]),
+      T.nilable(T::Array[::Requirement]),
     )
   end
 
