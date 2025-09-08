@@ -38,6 +38,7 @@ class AbstractTab
   # @api internal
   attr_accessor :runtime_dependencies
 
+  # TODO: Update attributes to only accept symbol keys (kwargs style).
   sig { params(attributes: T.any(T::Hash[String, T.untyped], T::Hash[Symbol, T.untyped])).void }
   def initialize(attributes = {})
     @installed_as_dependency = T.let(nil, T.nilable(T::Boolean))
