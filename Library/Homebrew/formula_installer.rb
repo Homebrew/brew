@@ -1593,7 +1593,7 @@ on_request: installed_on_request?, options:)
 
     keg = Keg.new(formula.prefix)
     skip_linkage = formula.bottle_specification.skip_relocation?
-    keg.replace_placeholders_with_locations(tab.changed_files, skip_linkage:)
+    keg.replace_placeholders_with_locations(tab.changed_files&.map { Pathname(_1) }, skip_linkage:)
 
     cellar = formula.bottle_specification.tag_to_cellar(Utils::Bottles.tag)
     return if [:any, :any_skip_relocation].include?(cellar)

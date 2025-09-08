@@ -25,24 +25,6 @@ end
 require_relative "../standalone"
 require_relative "../warnings"
 
-module T
-  module Types
-    class TypedArray < TypedEnumerable
-      # overrides Base
-      def valid?(obj)
-        recursively_valid?(obj)
-      end
-    end
-
-    class TypedHash < TypedEnumerable
-      # overrides Base
-      def valid?(obj)
-        recursively_valid?(obj)
-      end
-    end
-  end
-end
-
 Warnings.ignore :parser_syntax do
   require "rubocop"
 end

@@ -410,7 +410,7 @@ module Homebrew
 
         bottle_tag, rebuild = if local_bottle_json
           _, tag_string, rebuild_string = Utils::Bottles.extname_tag_rebuild(formula.local_bottle_path.to_s)
-          [T.must(tag_string).to_sym, rebuild_string.to_i]
+          [tag_string.to_sym, rebuild_string.to_i]
         end
 
         bottle_tag = if bottle_tag
@@ -506,7 +506,7 @@ module Homebrew
             tab.time = nil
             tab.changed_files = changed_files.dup
             if args.only_json_tab?
-              tab.changed_files.delete(Pathname.new(AbstractTab::FILENAME))
+              tab.changed_files&.delete(Pathname.new(AbstractTab::FILENAME))
               tab.tabfile.unlink
             else
               tab.write
@@ -861,7 +861,8 @@ module Homebrew
       end
 
       sig {
-        params(formula: Formula, formula_ast: Utils::AST::FormulaAST, bottle_hash: T::Hash[String, T.untyped])
+        params(formula: Formula, formula_ast: Utils::AST::FormulaAST,
+               bottle_hash: T::Hash[String, T.untyped])
           .returns(T.nilable(T::Array[T::Hash[Symbol, T.any(String, Symbol)]]))
       }
       def old_checksums(formula, formula_ast, bottle_hash)

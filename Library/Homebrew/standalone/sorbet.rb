@@ -50,6 +50,24 @@ end
 
 module T
   module Types
+    class FixedArray < Base
+      def valid?(obj)
+        recursively_valid?(obj)
+      end
+    end
+
+    class FixedHash < Base
+      def valid?(obj)
+        recursively_valid?(obj)
+      end
+    end
+
+    class Intersection < Base
+      def valid?(obj)
+        recursively_valid?(obj)
+      end
+    end
+
     class TypedArray < TypedEnumerable
       # overrides Base
       def valid?(obj)
@@ -57,8 +75,44 @@ module T
       end
     end
 
+    class TypedEnumerable < Base
+      def valid?(obj)
+        recursively_valid?(obj)
+      end
+    end
+
+    class TypedEnumeratorChain < TypedEnumerable
+      def valid?(obj)
+        recursively_valid?(obj)
+      end
+    end
+
+    class TypedEnumeratorLazy < TypedEnumerable
+      def valid?(obj)
+        recursively_valid?(obj)
+      end
+    end
+
     class TypedHash < TypedEnumerable
       # overrides Base
+      def valid?(obj)
+        recursively_valid?(obj)
+      end
+    end
+
+    class TypedRange < TypedEnumerable
+      def valid?(obj)
+        recursively_valid?(obj)
+      end
+    end
+
+    class TypedSet < TypedEnumerable
+      def valid?(obj)
+        recursively_valid?(obj)
+      end
+    end
+
+    class Union < Base
       def valid?(obj)
         recursively_valid?(obj)
       end

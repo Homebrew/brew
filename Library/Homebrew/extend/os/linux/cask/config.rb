@@ -15,7 +15,7 @@ module OS
             appdir:         "~/.config/apps",
           }.freeze, T::Hash[Symbol, String])
 
-          sig { returns(T::Hash[Symbol, String]) }
+          sig { returns(T::Hash[Symbol, T.any(LazyObject, String)]) }
           def defaults
             {
               languages: LazyObject.new { Linux.languages },

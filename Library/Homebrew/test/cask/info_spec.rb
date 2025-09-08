@@ -169,8 +169,7 @@ RSpec.describe Cask::Info, :cask do
 
       cask = Cask::CaskLoader.load("local-transmission")
       time = 1_720_189_863
-      tab = Cask::Tab.new("loaded_from_api" => true, "tabfile" => TEST_FIXTURE_DIR/"cask_receipt.json",
-                          "time" => time)
+      tab = Cask::Tab.new(loaded_from_api: true, tabfile: TEST_FIXTURE_DIR/"cask_receipt.json", time:)
       expect(cask).to receive(:installed?).and_return(true)
       expect(cask).to receive(:caskroom_path).and_return(caskroom)
       expect(cask).to receive(:installed_version).and_return("2.61")
