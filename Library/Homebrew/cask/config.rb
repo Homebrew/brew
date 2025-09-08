@@ -12,7 +12,7 @@ module Cask
   #
   # @api internal
   class Config
-    ConfigValue = T.type_alias { T.any(LazyObject, String, Pathname, T::Array[String]) }
+    ConfigHash = T.type_alias { T::Hash[Symbol, T.any(LazyObject, String, Pathname, T::Array[String])] }
     DEFAULT_DIRS = T.let(
       {
         appdir:               "/Applications",
@@ -79,24 +79,15 @@ module Cask
       )
     end
 
-    sig {
-      params(
-        config: T.any(
-          T::Hash[Symbol, T.any(LazyObject, String)],
-          T::Enumerable[[T.any(String, Symbol), ConfigValue]],
-        ),
-      ).returns(T::Hash[Symbol, ConfigValue])
-    }
+    sig { params(config: ConfigHash).returns(ConfigHash) }
     def self.canonicalize(config)
       config.to_h do |k, v|
-        key = k.to_sym
-
-        if DEFAULT_DIRS.key?(key)
+        if DEFAULT_DIRS.key?(k)
           raise TypeError, "Invalid path for default dir #{k}: #{v.inspect}" if v.is_a?(Array)
 
-          [key, Pathname(v.to_s).expand_path]
+          [k, Pathname(v.to_s).expand_path]
         else
-          [key, v]
+          [k, v]
         end
       end
     end
@@ -104,14 +95,14 @@ module Cask
     # Get the explicit configuration.
     #
     # @api internal
-    sig { returns(T::Hash[Symbol, ConfigValue]) }
+    sig { returns(ConfigHash) }
     attr_accessor :explicit
 
     sig {
       params(
-        default:             T.nilable(T::Hash[Symbol, ConfigValue]),
-        env:                 T.nilable(T::Hash[Symbol, ConfigValue]),
-        explicit:            T::Hash[Symbol, ConfigValue],
+        default:             T.nilable(ConfigHash),
+        env:                 T.nilable(ConfigHash),
+        explicit:            ConfigHash,
         ignore_invalid_keys: T::Boolean,
       ).void
     }
@@ -119,18 +110,18 @@ module Cask
       if default
         @default = T.let(
           self.class.canonicalize(self.class.defaults.merge(default)),
-          T.nilable(T::Hash[Symbol, ConfigValue]),
+          T.nilable(ConfigHash),
         )
       end
       if env
         @env = T.let(
           self.class.canonicalize(env),
-          T.nilable(T::Hash[Symbol, ConfigValue]),
+          T.nilable(ConfigHash),
         )
       end
       @explicit = T.let(
         self.class.canonicalize(explicit),
-        T::Hash[Symbol, ConfigValue],
+        ConfigHash,
       )
 
       if ignore_invalid_keys
@@ -143,18 +134,18 @@ module Cask
       @explicit.assert_valid_keys(*self.class.defaults.keys)
     end
 
-    sig { returns(T::Hash[Symbol, ConfigValue]) }
+    sig { returns(ConfigHash) }
     def default
       @default ||= self.class.canonicalize(self.class.defaults)
     end
 
-    sig { returns(T::Hash[Symbol, ConfigValue]) }
+    sig { returns(ConfigHash) }
     def env
       @env ||= self.class.canonicalize(
         Homebrew::EnvConfig.cask_opts
           .select { |arg| arg.include?("=") }
           .map { |arg| T.cast(arg.split("=", 2), [String, String]) }
-          .map do |(flag, value)|
+          .to_h do |(flag, value)|
             key = flag.sub(/^--/, "")
             # converts --language flag to :languages config key
             if key == "language"
@@ -162,7 +153,7 @@ module Cask
               value = value.split(",")
             end
 
-            [key, value]
+            [key.to_sym, value]
           end,
       )
     end

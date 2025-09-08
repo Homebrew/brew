@@ -235,7 +235,7 @@ class SystemCommand
   sig { returns(T.any(NilClass, String, Pathname)) }
   attr_reader :chdir
 
-  sig { returns(T::Hash[String, String]) }
+  sig { returns(T::Hash[String, T.any(NilClass, String, T::Boolean)]) }
   attr_reader :env
 
   sig { returns(T::Boolean) }
