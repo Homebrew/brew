@@ -38,7 +38,7 @@ class AbstractTab
   # @api internal
   attr_accessor :runtime_dependencies
 
-  sig { params(attributes: T::Hash[T.any(String, Symbol), T.untyped]).void }
+  sig { params(attributes: T.any(T::Hash[String, T.untyped], T::Hash[Symbol, T.untyped])).void }
   def initialize(attributes = {})
     @installed_as_dependency = T.let(nil, T.nilable(T::Boolean))
     @installed_on_request = T.let(nil, T.nilable(T::Boolean))
@@ -170,7 +170,7 @@ class Tab < AbstractTab
   attr_writer :used_options, :unused_options, :compiler, :source_modified_time
   attr_reader :tapped_from
 
-  sig { params(attributes: T::Hash[T.any(String, Symbol), T.untyped]).void }
+  sig { params(attributes: T.any(T::Hash[String, T.untyped], T::Hash[Symbol, T.untyped])).void }
   def initialize(attributes = {})
     @poured_from_bottle = T.let(nil, T.nilable(T::Boolean))
     @built_as_bottle = T.let(nil, T.nilable(T::Boolean))
