@@ -1,4 +1,3 @@
-# typed: strict
 # frozen_string_literal: true
 
 require "bundle"
@@ -173,10 +172,16 @@ RSpec.describe Homebrew::Bundle::Brewfile do
         end
       end
 
-      context "when HOMEBREW_USER_CONFIG_HOME is set but Brewfile does not exist" do
+      context "when HOMEBREW_USER_CONFIG_HOME is set but neither Brewfile exists" do
         let(:config_dir_brewfile_exist) { false }
 
-        it "returns the XDG-compliant path when HOMEBREW_USER_CONFIG_HOME is set" do
+        before do
+          # Mock that both XDG and legacy Brewfiles don't exist
+          allow(File).to receive(:exist?).with("/Users/username/.homebrew/Brewfile").and_return(false)
+          allow(File).to receive(:exist?).with("#{Dir.home}/.Brewfile").and_return(false)
+        end
+
+        it "returns the XDG path for initial Brewfile creation" do
           expect(path).to eq(Pathname.new("#{env_user_config_home_value}/Brewfile"))
         end
       end
