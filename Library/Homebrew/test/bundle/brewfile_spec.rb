@@ -29,8 +29,9 @@ RSpec.describe Homebrew::Bundle::Brewfile do
       allow(ENV).to receive(:[]).with("XDG_CONFIG_HOME").and_return(nil)
       allow(File).to receive(:exist?).with("/Users/username/.homebrew/Brewfile")
                                      .and_return(config_dir_brewfile_exist)
-      # Allow any other File.exist? calls to return false by default
+      # Allow any other File.exist? calls and Dir.home calls for flexibility
       allow(File).to receive(:exist?).and_return(false)
+      allow(Dir).to receive(:home).and_return("/Users/username")
     end
 
     context "when `file` is specified with a relative path" do

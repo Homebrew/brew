@@ -28,7 +28,7 @@ module Homebrew
             # In bin/brew: XDG_CONFIG_HOME set -> HOMEBREW_USER_CONFIG_HOME="${XDG_CONFIG_HOME}/homebrew"
             # XDG_CONFIG_HOME not set -> HOMEBREW_USER_CONFIG_HOME="${HOME}/.homebrew"
             using_xdg = user_config_home&.end_with?("/homebrew")
-            
+
             if using_xdg && user_config_home
               # XDG mode: check both XDG and legacy locations, preferring existing files
               xdg_brewfile = "#{user_config_home}/Brewfile"
