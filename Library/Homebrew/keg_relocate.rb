@@ -128,6 +128,12 @@ class Keg
     }
   end
 
+  sig { params(file: Pathname).returns(T::Boolean) }
+  def homebrew_created_file?(file)
+    basename = file.basename.to_s
+    basename.start_with?("homebrew.") && %w[.plist .service .timer].include?(file.extname)
+  end
+
   sig { returns(Relocation) }
   def prepare_relocation_to_placeholders
     relocation = Relocation.new
@@ -251,7 +257,17 @@ class Keg
     regular_files.each do |first, *rest|
       s = first.open("rb", &:read)
 
-      next unless relocation.replace_text!(s)
+      # Use full prefix replacement for Homebrew-created files when using selective relocation
+      current_relocation = if new_usr_local_relocation? && homebrew_created_file?(first)
+        full_relocation = Relocation.new
+        full_relocation.add_replacement_pair(:prefix, HOMEBREW_PREFIX.to_s, PREFIX_PLACEHOLDER, path: true)
+        full_relocation.add_replacement_pair(:cellar, HOMEBREW_CELLAR.to_s, CELLAR_PLACEHOLDER, path: true)
+        full_relocation
+      else
+        relocation
+      end
+
+      next unless current_relocation.replace_text!(s)
 
       changed_files += [first, *rest].map { |file| file.relative_path_from(path) }
 
