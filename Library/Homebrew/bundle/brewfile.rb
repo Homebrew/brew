@@ -24,16 +24,22 @@ module Homebrew
           else
             raise "'HOMEBREW_BUNDLE_FILE' cannot be specified with '--global'" if env_bundle_file.present?
 
-            if user_config_home
-              xdg_path = "#{user_config_home}/Brewfile"
-              legacy_path = Bundle.exchange_uid_if_needed! { "#{Dir.home}/.Brewfile" }
-
-              # Prefer existing file to maintain backwards compatibility
-              if File.exist?(xdg_path) || !File.exist?(legacy_path)
-                xdg_path
+            # Determine if we're in XDG mode by checking if user_config_home is XDG-based
+            # In bin/brew: XDG_CONFIG_HOME set -> HOMEBREW_USER_CONFIG_HOME="${XDG_CONFIG_HOME}/homebrew"
+            # XDG_CONFIG_HOME not set -> HOMEBREW_USER_CONFIG_HOME="${HOME}/.homebrew"
+            using_xdg = user_config_home&.end_with?("/homebrew")
+            
+            if using_xdg && user_config_home
+              # XDG mode: check both XDG and legacy locations, preferring existing files
+              xdg_brewfile = "#{user_config_home}/Brewfile"
+              if File.exist?(xdg_brewfile)
+                xdg_brewfile
               else
-                legacy_path
+                legacy_brewfile = Bundle.exchange_uid_if_needed! { "#{Dir.home}/.Brewfile" }
+                File.exist?(legacy_brewfile) ? legacy_brewfile : xdg_brewfile
               end
+            elsif user_config_home && File.exist?("#{user_config_home}/Brewfile")
+              "#{user_config_home}/Brewfile"
             else
               Bundle.exchange_uid_if_needed! do
                 "#{Dir.home}/.Brewfile"

@@ -26,8 +26,11 @@ RSpec.describe Homebrew::Bundle::Brewfile do
 
       allow(ENV).to receive(:fetch).with("HOMEBREW_USER_CONFIG_HOME", any_args)
                                    .and_return(env_user_config_home_value)
+      allow(ENV).to receive(:[]).with("XDG_CONFIG_HOME").and_return(nil)
       allow(File).to receive(:exist?).with("/Users/username/.homebrew/Brewfile")
                                      .and_return(config_dir_brewfile_exist)
+      # Allow any other File.exist? calls to return false by default
+      allow(File).to receive(:exist?).and_return(false)
     end
 
     context "when `file` is specified with a relative path" do
@@ -175,14 +178,27 @@ RSpec.describe Homebrew::Bundle::Brewfile do
       context "when HOMEBREW_USER_CONFIG_HOME is set but neither Brewfile exists" do
         let(:config_dir_brewfile_exist) { false }
 
-        before do
-          # Mock that both XDG and legacy Brewfiles don't exist
-          allow(File).to receive(:exist?).with("/Users/username/.homebrew/Brewfile").and_return(false)
-          allow(File).to receive(:exist?).with("#{Dir.home}/.Brewfile").and_return(false)
+        context "when XDG_CONFIG_HOME is set" do
+          before do
+            allow(ENV).to receive(:[]).with("XDG_CONFIG_HOME").and_return("/custom/xdg")
+            # Mock that both XDG and legacy Brewfiles don't exist
+            allow(File).to receive(:exist?).with("/Users/username/.homebrew/Brewfile").and_return(false)
+            allow(File).to receive(:exist?).with("#{Dir.home}/.Brewfile").and_return(false)
+          end
+
+          it "returns the XDG path for initial Brewfile creation" do
+            expect(path).to eq(Pathname.new("#{env_user_config_home_value}/Brewfile"))
+          end
         end
 
-        it "returns the XDG path for initial Brewfile creation" do
-          expect(path).to eq(Pathname.new("#{env_user_config_home_value}/Brewfile"))
+        context "when XDG_CONFIG_HOME is not set" do
+          before do
+            allow(ENV).to receive(:[]).with("XDG_CONFIG_HOME").and_return(nil)
+          end
+
+          it "returns the legacy path" do
+            expect(path).to eq(Pathname.new("#{Dir.home}/.Brewfile"))
+          end
         end
       end
     end
