@@ -81,6 +81,7 @@ module Homebrew
       sig { params(file: Pathname, content: String).void }
       def self.write_file(file, content)
         Bundle.exchange_uid_if_needed! do
+          FileUtils.mkdir_p file.parent
           file.open("w") { |io| io.write content }
         end
       end

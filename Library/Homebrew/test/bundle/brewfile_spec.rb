@@ -1,3 +1,4 @@
+# typed: strict
 # frozen_string_literal: true
 
 require "bundle"
@@ -169,6 +170,14 @@ RSpec.describe Homebrew::Bundle::Brewfile do
 
         it "returns the expected path" do
           expect(path).to eq(expected_pathname)
+        end
+      end
+
+      context "when HOMEBREW_USER_CONFIG_HOME is set but Brewfile does not exist" do
+        let(:config_dir_brewfile_exist) { false }
+
+        it "returns the XDG-compliant path when HOMEBREW_USER_CONFIG_HOME is set" do
+          expect(path).to eq(Pathname.new("#{env_user_config_home_value}/Brewfile"))
         end
       end
     end
