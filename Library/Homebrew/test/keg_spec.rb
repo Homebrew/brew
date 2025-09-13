@@ -1,3 +1,4 @@
+# typed: false
 # frozen_string_literal: true
 
 require "keg"
@@ -6,7 +7,7 @@ require "stringio"
 RSpec.describe Keg do
   include FileUtils
 
-  def setup_test_keg(name, version)
+  define_method(:setup_test_keg) do |name, version|
     path = HOMEBREW_CELLAR/name/version
     (path/"bin").mkpath
 
@@ -316,6 +317,29 @@ RSpec.describe Keg do
       keg.opt_record.write("foo")
       keg.optlink
       expect(keg).to be_optlinked
+    end
+  end
+
+  describe "#homebrew_created_file?" do
+    it "identifies Homebrew service files" do
+      plist_file = instance_double(Pathname, extname: ".plist", basename: Pathname.new("homebrew.foo.plist"))
+      service_file = instance_double(Pathname, extname: ".service", basename: Pathname.new("homebrew.foo.service"))
+      timer_file = instance_double(Pathname, extname: ".timer", basename: Pathname.new("homebrew.foo.timer"))
+      regular_file = instance_double(Pathname, extname: ".txt", basename: Pathname.new("readme.txt"))
+      non_homebrew_plist = instance_double(Pathname, extname:  ".plist",
+                                                     basename: Pathname.new("com.example.foo.plist"))
+
+      allow(plist_file.basename).to receive(:to_s).and_return("homebrew.foo.plist")
+      allow(service_file.basename).to receive(:to_s).and_return("homebrew.foo.service")
+      allow(timer_file.basename).to receive(:to_s).and_return("homebrew.foo.timer")
+      allow(regular_file.basename).to receive(:to_s).and_return("readme.txt")
+      allow(non_homebrew_plist.basename).to receive(:to_s).and_return("com.example.foo.plist")
+
+      expect(keg.homebrew_created_file?(plist_file)).to be true
+      expect(keg.homebrew_created_file?(service_file)).to be true
+      expect(keg.homebrew_created_file?(timer_file)).to be true
+      expect(keg.homebrew_created_file?(regular_file)).to be false
+      expect(keg.homebrew_created_file?(non_homebrew_plist)).to be false
     end
   end
 
