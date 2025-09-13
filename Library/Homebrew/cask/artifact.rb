@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 require "cask/artifact/app"
+require "cask/artifact/appimage"
 require "cask/artifact/artifact" # generic 'artifact' stanza
 require "cask/artifact/audio_unit_plugin"
 require "cask/artifact/binary"
