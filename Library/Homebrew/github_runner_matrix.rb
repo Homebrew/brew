@@ -9,7 +9,7 @@ class GitHubRunnerMatrix
   # on homebrew/core and tag the first commit with a bottle e.g.
   # `git tag 15-sequoia f42c4a659e4da887fc714f8f41cc26794a4bb320`
   # to allow people to jump to specific commits based on their macOS version.
-  NEWEST_HOMEBREW_CORE_MACOS_RUNNER = :sequoia
+  NEWEST_HOMEBREW_CORE_MACOS_RUNNER = :tahoe
   OLDEST_HOMEBREW_CORE_MACOS_RUNNER = :sonoma
   NEWEST_HOMEBREW_CORE_INTEL_MACOS_RUNNER = :sonoma
 
