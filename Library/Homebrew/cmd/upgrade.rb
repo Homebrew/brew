@@ -9,6 +9,7 @@ require "cask/utils"
 require "cask/upgrade"
 require "cask/macos"
 require "api"
+require "reinstall"
 
 module Homebrew
   module Cmd
@@ -142,6 +143,8 @@ module Homebrew
         upgrade_outdated_casks!(casks) unless only_upgrade_formulae
 
         Cleanup.periodic_clean!(dry_run: args.dry_run?)
+
+        Homebrew::Reinstall.reinstall_pkgconf_if_needed!(dry_run: args.dry_run?)
 
         Homebrew.messages.display_messages(display_times: args.display_times?)
       end

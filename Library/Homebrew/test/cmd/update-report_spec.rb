@@ -4,6 +4,7 @@ require "cmd/update-report"
 require "formula_versions"
 require "yaml"
 require "cmd/shared_examples/args_parse"
+require "extend/os/pkgconf"
 
 RSpec.describe Homebrew::Cmd::UpdateReport do
   it_behaves_like "parseable arguments"
@@ -128,6 +129,35 @@ RSpec.describe Homebrew::Cmd::UpdateReport do
         expect(hub.select_formula_or_cask(:A)).to eq(%w[foo/bar/lua])
         expect(hub.select_formula_or_cask(:M)).to eq(%w[foo/bar/git])
         expect(hub.select_formula_or_cask(:D)).to be_empty
+      end
+    end
+
+    context "when pkgconf needs reinstall due to SDK mismatch" do
+      before do
+        allow(OS).to receive(:mac?).and_return(true)
+        allow(Homebrew::Pkgconf).to receive(:macos_sdk_mismatch)
+          .and_return({ built_on_version: "13", current_version: "14" })
+      end
+
+      it "calls reinstall_pkgconf_if_needed! without crashing" do
+        expect(Homebrew::Reinstall)
+          .to receive(:reinstall_pkgconf_if_needed!)
+          .with(dry_run: false)
+
+        perform_update("update_git_diff_output_with_formulae_changes")
+      end
+    end
+
+    context "when pkgconf has no mismatch" do
+      before do
+        allow(OS).to receive(:mac?).and_return(true)
+        allow(Homebrew::Pkgconf).to receive(:macos_sdk_mismatch).and_return(nil)
+      end
+
+      it "does not call reinstall_pkgconf_if_needed!" do
+        expect(Homebrew::Reinstall).not_to receive(:reinstall_pkgconf_if_needed!)
+
+        perform_update("update_git_diff_output_with_formulae_changes")
       end
     end
   end

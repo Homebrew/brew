@@ -2,6 +2,7 @@
 
 require "cmd/shared_examples/args_parse"
 require "cmd/upgrade"
+require "extend/os/pkgconf"
 
 RSpec.describe Homebrew::Cmd::UpgradeCmd do
   include FileUtils
@@ -51,5 +52,34 @@ RSpec.describe Homebrew::Cmd::UpgradeCmd do
       .and output(/testball was forbidden/).to_stderr
       .and be_a_failure
     expect(HOMEBREW_CELLAR/"testball/0.1").not_to exist
+  end
+
+  context "when pkgconf needs reinstall due to SDK mismatch" do
+    before do
+      allow(OS).to receive(:mac?).and_return(true)
+      allow(Homebrew::Pkgconf).to receive(:macos_sdk_mismatch)
+        .and_return({ built_on_version: "13", current_version: "14" })
+    end
+
+    it "calls reinstall_pkgconf_if_needed! without crashing" do
+      expect(Homebrew::Reinstall)
+        .to receive(:reinstall_pkgconf_if_needed!)
+        .with(dry_run: false)
+
+      expect { brew "upgrade" }.to be_a_success
+    end
+  end
+
+  context "when pkgconf has no mismatch" do
+    before do
+      allow(OS).to receive(:mac?).and_return(true)
+      allow(Homebrew::Pkgconf).to receive(:macos_sdk_mismatch).and_return(nil)
+    end
+
+    it "does not call reinstall_pkgconf_if_needed!" do
+      expect(Homebrew::Reinstall).not_to receive(:reinstall_pkgconf_if_needed!)
+
+      expect { brew "upgrade" }.to be_a_success
+    end
   end
 end
