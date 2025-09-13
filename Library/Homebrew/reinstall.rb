@@ -4,6 +4,7 @@
 require "development_tools"
 require "messages"
 require "utils/output"
+require "extend/os/pkgconf"
 
 # Needed to handle circular require dependency.
 # rubocop:disable Lint/EmptyClass
@@ -117,6 +118,27 @@ module Homebrew
                 sudo rm -rf #{backup_keg}
             EOS
           end
+        end
+      end
+
+      sig { params(dry_run: T::Boolean).void }
+      def reinstall_pkgconf_if_needed!(dry_run: false)
+        mismatch = Homebrew::Pkgconf.macos_sdk_mismatch
+        return unless mismatch
+
+        if dry_run
+          opoo "pkgconf would be reinstalled due to macOS version mismatch"
+          return
+        end
+
+        pkgconf = ::Formula["pkgconf"]
+        context = build_install_context(pkgconf, flags: [])
+
+        begin
+          reinstall_formula(context)
+          ohai "Reinstalled pkgconf due to macOS version mismatch"
+        rescue
+          ofail Homebrew::Pkgconf.mismatch_warning_message(mismatch)
         end
       end
 

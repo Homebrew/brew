@@ -11,6 +11,7 @@ require "cleanup"
 require "description_cache_store"
 require "settings"
 require "linuxbrew-core-migration"
+require "reinstall"
 
 module Homebrew
   module Cmd
@@ -253,6 +254,8 @@ module Homebrew
         elsif !args.auto_update? && !ENV["HOMEBREW_UPDATE_FAILED"] && !ENV["HOMEBREW_MIGRATE_LINUXBREW_FORMULAE"]
           puts "Already up-to-date." unless args.quiet?
         end
+
+        Homebrew::Reinstall.reinstall_pkgconf_if_needed!
 
         Commands.rebuild_commands_completion_list
         link_completions_manpages_and_docs

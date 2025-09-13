@@ -1,6 +1,8 @@
 # typed: strict
 # frozen_string_literal: true
 
+require "extend/os/pkgconf"
+
 module OS
   module Mac
     module Diagnostic
@@ -542,39 +544,10 @@ module OS
 
         sig { returns(T.nilable(String)) }
         def check_pkgconf_macos_sdk_mismatch
-          # We don't provide suitable bottles for these versions.
-          return if OS::Mac.version.prerelease? || OS::Mac.version.outdated_release?
+          mismatch = Homebrew::Pkgconf.macos_sdk_mismatch
+          return unless mismatch
 
-          pkgconf = begin
-            ::Formula["pkgconf"]
-          rescue FormulaUnavailableError
-            nil
-          end
-          return unless pkgconf
-          return unless pkgconf.any_version_installed?
-
-          tab = Tab.for_formula(pkgconf)
-          return unless tab.built_on
-
-          built_on_version = tab.built_on["os_version"]
-                                &.delete_prefix("macOS ")
-                                &.sub(/\.\d+$/, "")
-          return unless built_on_version
-
-          current_version = MacOS.version.to_s
-          return if built_on_version == current_version
-
-          <<~EOS
-            You have pkgconf installed that was built on macOS #{built_on_version}
-                     but you are running macOS #{current_version}.
-
-            This can cause issues with packages that depend on system libraries, such as libffi.
-            To fix this issue, reinstall pkgconf:
-              brew reinstall pkgconf
-
-            For more information, see: https://github.com/Homebrew/brew/issues/16137
-            We'd welcome a PR to automatically mitigate this instead of just warning about it.
-          EOS
+          Homebrew::Pkgconf.mismatch_warning_message(mismatch)
         end
 
         sig { returns(T.nilable(String)) }
