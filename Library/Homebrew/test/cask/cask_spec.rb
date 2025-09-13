@@ -364,26 +364,6 @@ RSpec.describe Cask::Cask, :cask do
             "url": "file://#{TEST_FIXTURE_DIR}/cask/caffeine/darwin/1.0.0/intel.zip",
             "version": "1.0.0",
             "sha256": "1866dfa833b123bb8fe7fa7185ebf24d28d300d0643d75798bc23730af734216"
-          },
-          "mojave": {
-            "url": "file://#{TEST_FIXTURE_DIR}/cask/caffeine/darwin/1.0.0/intel.zip",
-            "version": "1.0.0",
-            "sha256": "1866dfa833b123bb8fe7fa7185ebf24d28d300d0643d75798bc23730af734216"
-          },
-          "high_sierra": {
-            "url": "file://#{TEST_FIXTURE_DIR}/cask/caffeine/darwin/1.0.0/intel.zip",
-            "version": "1.0.0",
-            "sha256": "1866dfa833b123bb8fe7fa7185ebf24d28d300d0643d75798bc23730af734216"
-          },
-          "sierra": {
-            "url": "file://#{TEST_FIXTURE_DIR}/cask/caffeine/darwin/1.0.0/intel.zip",
-            "version": "1.0.0",
-            "sha256": "1866dfa833b123bb8fe7fa7185ebf24d28d300d0643d75798bc23730af734216"
-          },
-          "el_capitan": {
-            "url": "file://#{TEST_FIXTURE_DIR}/cask/caffeine/darwin/1.0.0/intel.zip",
-            "version": "1.0.0",
-            "sha256": "1866dfa833b123bb8fe7fa7185ebf24d28d300d0643d75798bc23730af734216"
           }
         }
       JSON
@@ -418,22 +398,6 @@ RSpec.describe Cask::Cask, :cask do
           "catalina": {
             "url": "file://#{TEST_FIXTURE_DIR}/cask/caffeine-intel.zip",
             "sha256": "8c62a2b791cf5f0da6066a0a4b6e85f62949cd60975da062df44adf887f4370b"
-          },
-          "mojave": {
-            "url": "file://#{TEST_FIXTURE_DIR}/cask/caffeine-intel.zip",
-            "sha256": "8c62a2b791cf5f0da6066a0a4b6e85f62949cd60975da062df44adf887f4370b"
-          },
-          "high_sierra": {
-            "url": "file://#{TEST_FIXTURE_DIR}/cask/caffeine-intel.zip",
-            "sha256": "8c62a2b791cf5f0da6066a0a4b6e85f62949cd60975da062df44adf887f4370b"
-          },
-          "sierra": {
-            "url": "file://#{TEST_FIXTURE_DIR}/cask/caffeine-intel.zip",
-            "sha256": "8c62a2b791cf5f0da6066a0a4b6e85f62949cd60975da062df44adf887f4370b"
-          },
-          "el_capitan": {
-            "url": "file://#{TEST_FIXTURE_DIR}/cask/caffeine-intel.zip",
-            "sha256": "8c62a2b791cf5f0da6066a0a4b6e85f62949cd60975da062df44adf887f4370b"
           }
         }
       JSON
@@ -466,22 +430,6 @@ RSpec.describe Cask::Cask, :cask do
             "sha256": "8c62a2b791cf5f0da6066a0a4b6e85f62949cd60975da062df44adf887f4370b"
           },
           "catalina": {
-            "url": "file://#{TEST_FIXTURE_DIR}/cask/caffeine-intel-darwin.zip",
-            "sha256": "8c62a2b791cf5f0da6066a0a4b6e85f62949cd60975da062df44adf887f4370b"
-          },
-          "mojave": {
-            "url": "file://#{TEST_FIXTURE_DIR}/cask/caffeine-intel-darwin.zip",
-            "sha256": "8c62a2b791cf5f0da6066a0a4b6e85f62949cd60975da062df44adf887f4370b"
-          },
-          "high_sierra": {
-            "url": "file://#{TEST_FIXTURE_DIR}/cask/caffeine-intel-darwin.zip",
-            "sha256": "8c62a2b791cf5f0da6066a0a4b6e85f62949cd60975da062df44adf887f4370b"
-          },
-          "sierra": {
-            "url": "file://#{TEST_FIXTURE_DIR}/cask/caffeine-intel-darwin.zip",
-            "sha256": "8c62a2b791cf5f0da6066a0a4b6e85f62949cd60975da062df44adf887f4370b"
-          },
-          "el_capitan": {
             "url": "file://#{TEST_FIXTURE_DIR}/cask/caffeine-intel-darwin.zip",
             "sha256": "8c62a2b791cf5f0da6066a0a4b6e85f62949cd60975da062df44adf887f4370b"
           },

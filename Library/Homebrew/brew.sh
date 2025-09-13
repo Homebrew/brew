@@ -576,18 +576,19 @@ esac
 # - docs/Installation.md
 # - https://github.com/Homebrew/install/blob/HEAD/install.sh
 # - Library/Homebrew/os/mac.rb (latest_sdk_version)
+# - Library/Homebrew/os/mac/xcode.rb (latest_version), (minimum_version)
 # and, if needed:
 # - MacOSVersion::SYMBOLS
-HOMEBREW_MACOS_NEWEST_UNSUPPORTED="16"
+HOMEBREW_MACOS_NEWEST_UNSUPPORTED="27"
 # TODO: bump version when new macOS is released
-HOMEBREW_MACOS_NEWEST_SUPPORTED="15"
+HOMEBREW_MACOS_NEWEST_SUPPORTED="26"
 # TODO: bump version when new macOS is released and update references in:
 # - docs/Installation.md
 # - HOMEBREW_MACOS_OLDEST_SUPPORTED in .github/workflows/pkg-installer.yml
 # - `os-version min` in package/Distribution.xml
 # - https://github.com/Homebrew/install/blob/HEAD/install.sh
-HOMEBREW_MACOS_OLDEST_SUPPORTED="13"
-HOMEBREW_MACOS_OLDEST_ALLOWED="10.11"
+HOMEBREW_MACOS_OLDEST_SUPPORTED="14"
+HOMEBREW_MACOS_OLDEST_ALLOWED="10.15"
 
 if [[ -n "${HOMEBREW_MACOS}" ]]
 then

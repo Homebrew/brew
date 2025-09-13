@@ -32,7 +32,7 @@ jobs:
       TEMPORARY_CERTIFICATE_FILE: 'homebrew_developer_id_installer_certificate.p12'
       TEMPORARY_KEYCHAIN_FILE: 'homebrew_installer_signing.keychain-db'
       # Set to the oldest supported version of macOS
-      HOMEBREW_MACOS_OLDEST_SUPPORTED: '13.0'
+      HOMEBREW_MACOS_OLDEST_SUPPORTED: '14.0'
     permissions:
       contents: read # for code access
       attestations: write # for actions/attest-build-provenance
@@ -152,10 +152,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # Intel
-          - runner: macos-13
-            name: macos-13-x86_64
-          # Apple Silicon
           - runner: macos-14
             name: macos-14-arm64
           - runner: macos-15

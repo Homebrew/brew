@@ -120,12 +120,7 @@ As a result, Homebrew will also drop macOS Intel x86_64 support in a future rele
 
 Here's the timescale for planned future Tier support:
 
-- Today (August 2025):
-  - Tier 1: macOS Sequoia 15, Sonoma 14, Ventura 13 on Apple Silicon and Intel x86_64
-  - Tier 2: macOS Tahoe 26
-  - Tier 3: macOS El Capitan 10.11 - Monterey 12
-  - Unsupported: OS X Yosemite 10.10 and earlier
-- September (or later) 2025:
+- Today (September 2025):
   - Tier 1: macOS Tahoe 26, Sequoia 15, Sonoma 14 on Apple Silicon and Intel x86_64
   - Tier 3: macOS Catalina 10.15 - Ventura 13
   - Unsupported: macOS Mojave 10.14 and earlier

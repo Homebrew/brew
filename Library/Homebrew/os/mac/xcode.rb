@@ -17,6 +17,7 @@ module OS
       def self.latest_version(macos: MacOS.version)
         macos = macos.strip_patch
         case macos
+        when "26" then "26.0"
         when "15" then "16.4"
         when "14" then "16.2"
         when "13" then "15.2"
@@ -43,6 +44,7 @@ module OS
       def self.minimum_version
         macos = MacOS.version
         case macos
+        when "26" then "26.0"
         when "15" then "16.0"
         when "14" then "15.0"
         when "13" then "14.1"

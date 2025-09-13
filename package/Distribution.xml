@@ -4,7 +4,7 @@
   <options customize="never" hostArchitectures="x86_64,arm64" rootVolumeOnly="true"/>
   <volume-check>
     <allowed-os-versions>
-        <os-version min="13.0.0"/>
+        <os-version min="14.0.0"/>
     </allowed-os-versions>
   </volume-check>
   <choices-outline>
@@ -27,7 +27,7 @@
   <license file="LICENSE.rtf"/>
   <conclusion file="CONCLUSION.rtf" />
   <allowed-os-versions>
-    <os-version min="13.0.0"/>
+    <os-version min="14.0.0"/>
   </allowed-os-versions>
 
   <script>
