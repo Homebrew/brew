@@ -26,7 +26,7 @@ module InstalledDependents
     kegs_by_source = kegs.group_by do |keg|
       # First, attempt to resolve the keg to a formula
       # to get up-to-date name and tap information.
-      f = keg.to_formula
+      f = keg.to_installed_formula
       keg_formulae << f
       [f.name, f.tap]
     rescue
@@ -47,7 +47,7 @@ module InstalledDependents
         dependent.missing_dependencies(hide: keg_names)
       when Cask::Cask
         # When checking for cask dependents, we don't care about missing or non-runtime dependencies
-        CaskDependent.new(dependent).runtime_dependencies.map(&:to_formula)
+        CaskDependent.new(dependent).runtime_dependencies
       end
 
       required_kegs = required.filter_map do |f|
