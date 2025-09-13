@@ -34,7 +34,7 @@ module Kernel
 
   sig { type_parameters(:U).params(block: T.proc.returns(T.type_parameter(:U))).returns(T.type_parameter(:U)) }
   def with_homebrew_path(&block)
-    with_env(PATH: PATH.new(ORIGINAL_PATHS), &block)
+    with_env(PATH: PATH.new(ORIGINAL_PATHS).to_s, &block)
   end
 
   sig {
@@ -283,8 +283,10 @@ module Kernel
   # @api public
   sig {
     type_parameters(:U)
-      .params(hash: T::Hash[Object, String], _block: T.proc.returns(T.type_parameter(:U)))
-      .returns(T.type_parameter(:U))
+      .params(
+        hash:   T::Hash[Object, T.any(NilClass, PATH, Pathname, String)],
+        _block: T.proc.returns(T.type_parameter(:U)),
+      ).returns(T.type_parameter(:U))
   }
   def with_env(hash, &_block)
     old_values = {}
@@ -292,7 +294,7 @@ module Kernel
       hash.each do |key, value|
         key = key.to_s
         old_values[key] = ENV.delete(key)
-        ENV[key] = value
+        ENV[key] = value&.to_s
       end
 
       yield

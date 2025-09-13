@@ -127,9 +127,7 @@ module Homebrew
       sig {
         params(
           formulae_or_casks: T::Array[T.any(Formula, Cask::Cask)],
-        ).returns(
-          T::Array[T.any(T::Hash[String, T.untyped], T::Hash[String, T.untyped])],
-        )
+        ).returns(T::Array[T::Hash[Symbol, T.untyped]])
       }
       def json_info(formulae_or_casks)
         formulae_or_casks.map do |formula_or_cask|

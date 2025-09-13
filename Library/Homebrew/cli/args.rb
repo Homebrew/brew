@@ -9,7 +9,7 @@ module Homebrew
       #   1: long option name (e.g. "--debug")
       #   2: option description (e.g. "Print debugging information")
       #   3: whether the option is hidden
-      OptionsType = T.type_alias { T::Array[[String, T.nilable(String), String, T::Boolean]] }
+      OptionsType = T.type_alias { T::Array[[T.nilable(String), T.nilable(String), String, T::Boolean]] }
 
       sig { returns(T::Array[String]) }
       attr_reader :options_only, :flags_only, :remaining
@@ -170,7 +170,7 @@ module Homebrew
       sig { returns(T::Array[String]) }
       def cli_args
         @cli_args ||= @processed_options.filter_map do |short, long|
-          option = long || short
+          option = T.must(long || short)
           switch = :"#{option_to_name(option)}?"
           flag = option_to_name(option).to_sym
           if @table[switch] == true || @table[flag] == true

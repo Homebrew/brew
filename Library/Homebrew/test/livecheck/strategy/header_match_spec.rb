@@ -110,7 +110,10 @@ RSpec.describe Homebrew::Livecheck::Strategy::HeaderMatch do
 
     it "errors on an invalid return type from a block" do
       expect { header_match.versions_from_headers(headers) { 123 } }
-        .to raise_error(TypeError, Homebrew::Livecheck::Strategy::INVALID_BLOCK_RETURN_VALUE_MSG)
+        .to raise_error(
+          TypeError,
+          /#{Homebrew::Livecheck::Strategy::INVALID_BLOCK_RETURN_VALUE_MSG}|Expected type T::Hash\[String, String\]/o,
+        )
     end
   end
 end

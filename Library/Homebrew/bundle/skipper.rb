@@ -37,11 +37,11 @@ module Homebrew
 
         private
 
-        sig { returns(T::Hash[Symbol, T::Array[String]]) }
+        sig { returns(T::Hash[Symbol, T.nilable(T::Array[String])]) }
         def skipped_entries
           return @skipped_entries if @skipped_entries
 
-          @skipped_entries ||= T.let({}, T.nilable(T::Hash[Symbol, T::Array[String]]))
+          @skipped_entries ||= T.let({}, T.nilable(T::Hash[Symbol, T.nilable(T::Array[String])]))
           [:brew, :cask, :mas, :tap, :whalebrew].each do |type|
             @skipped_entries[type] =
               ENV["HOMEBREW_BUNDLE_#{type.to_s.upcase}_SKIP"]&.split

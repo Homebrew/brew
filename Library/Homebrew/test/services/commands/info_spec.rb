@@ -23,7 +23,7 @@ RSpec.describe Homebrew::Services::Commands::Info do
 
     it "succeeds with items" do
       out = "service ()\nRunning: true\nLoaded: true\nSchedulable: false\n"
-      formula = {
+      formula_wrapper = instance_double(Homebrew::Services::FormulaWrapper, to_hash: {
         name:        "service",
         user:        "user",
         status:      :started,
@@ -31,9 +31,9 @@ RSpec.describe Homebrew::Services::Commands::Info do
         running:     true,
         loaded:      true,
         schedulable: false,
-      }
+      })
       expect do
-        described_class.run([formula], verbose: false, json: false)
+        described_class.run([formula_wrapper], verbose: false, json: false)
       end.to output(out).to_stdout
     end
 
@@ -48,8 +48,9 @@ RSpec.describe Homebrew::Services::Commands::Info do
         schedulable: false,
       }
       out = "#{JSON.pretty_generate([formula])}\n"
+      formula_wrapper = instance_double(Homebrew::Services::FormulaWrapper, to_hash: formula)
       expect do
-        described_class.run([formula], verbose: false, json: true)
+        described_class.run([formula_wrapper], verbose: false, json: true)
       end.to output(out).to_stdout
     end
   end

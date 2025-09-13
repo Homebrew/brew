@@ -360,7 +360,7 @@ module Utils
         nil
       end
 
-      sig { returns(T::Hash[Symbol, String]) }
+      sig { returns(T::Hash[Symbol, T.any(T::Boolean, String)]) }
       def default_package_tags
         cache[:default_package_tags] ||= begin
           # Only display default prefixes to reduce cardinality and improve privacy

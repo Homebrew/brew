@@ -204,7 +204,7 @@ module Commands
       cmd_parser.processed_options.filter_map do |short, long, desc, hidden|
         next if hidden
 
-        [long || short, desc]
+        [T.must(long || short), desc]
       end
     else
       options = []

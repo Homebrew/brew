@@ -643,11 +643,9 @@ class CurlDownloadStrategy < AbstractFileDownloadStrategy
     args
   end
 
-  sig { returns(T::Hash[Symbol, String]) }
+  sig { returns(T::Hash[Symbol, T.any(String, Symbol)]) }
   def _curl_opts
-    return { user_agent: meta.fetch(:user_agent) } if meta.key?(:user_agent)
-
-    {}
+    meta.slice(:user_agent)
   end
 
   sig { override.params(args: String, options: T.untyped).returns(SystemCommand::Result) }

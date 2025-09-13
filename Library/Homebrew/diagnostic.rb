@@ -1198,9 +1198,9 @@ module Homebrew
 
       private
 
-      sig { returns(T::Array[Pathname]) }
+      sig { returns(T::Array[String]) }
       def paths
-        @paths ||= T.let(ORIGINAL_PATHS.uniq.map(&:to_s), T.nilable(T::Array[Pathname]))
+        @paths ||= T.let(ORIGINAL_PATHS.uniq.map(&:to_s), T.nilable(T::Array[String]))
       end
     end
   end

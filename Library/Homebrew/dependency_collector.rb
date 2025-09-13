@@ -135,7 +135,7 @@ class DependencyCollector
 
   sig {
     params(spec: T.any(String, Resource, Symbol, Requirement, Dependency, Class),
-           tags: T::Array[Symbol]).returns(T.any(Dependency, Requirement, Array, NilClass))
+           tags: T::Array[T.any(String, Symbol)]).returns(T.any(Dependency, Requirement, Array, NilClass))
   }
   def parse_spec(spec, tags)
     raise ArgumentError, "Implicit dependencies cannot be manually specified" if tags.include?(:implicit)

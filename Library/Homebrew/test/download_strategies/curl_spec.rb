@@ -173,7 +173,7 @@ RSpec.describe CurlDownloadStrategy do
               hash_including(args: array_including_cons("#{artifact_domain}/#{resource_path}")),
             )
             .at_least(:once)
-            .and_return(SystemCommand::Result.new(["curl"], [""], status, secrets: []))
+            .and_return(SystemCommand::Result.new(["curl"], [[:stdout, ""]], status, secrets: []))
 
           strategy.fetch
         end
@@ -191,7 +191,7 @@ RSpec.describe CurlDownloadStrategy do
               hash_including(args: array_including_cons("#{artifact_domain}/#{resource_path}")),
             )
             .at_least(:once)
-            .and_return(SystemCommand::Result.new(["curl"], [""], status, secrets: []))
+            .and_return(SystemCommand::Result.new(["curl"], [[:stdout, ""]], status, secrets: []))
 
           strategy.fetch
         end

@@ -181,7 +181,7 @@ module Homebrew
       end
 
       sig {
-        params(old_keys: T::Array[String], old_bottle_spec: BottleSpecification,
+        params(old_keys: T::Array[Symbol], old_bottle_spec: BottleSpecification,
                new_bottle_hash: T::Hash[String, T.untyped])
           .returns([T::Array[String], T::Array[T::Hash[Symbol, T.any(String, Symbol)]]])
       }
@@ -506,7 +506,7 @@ module Homebrew
             tab.time = nil
             tab.changed_files = changed_files.dup
             if args.only_json_tab?
-              tab.changed_files.delete(Pathname.new(AbstractTab::FILENAME))
+              tab.changed_files&.delete(Pathname.new(AbstractTab::FILENAME))
               tab.tabfile.unlink
             else
               tab.write

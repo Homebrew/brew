@@ -11,7 +11,7 @@ module Cask
     sig { returns(T.nilable(T::Array[T.untyped])) }
     attr_accessor :uninstall_artifacts
 
-    sig { params(attributes: T::Hash[String, T.untyped]).void }
+    sig { params(attributes: T.any(T::Hash[String, T.untyped], T::Hash[Symbol, T.untyped])).void }
     def initialize(attributes = {})
       @uninstall_flight_blocks = T.let(nil, T.nilable(T::Boolean))
       @uninstall_artifacts = T.let(nil, T.nilable(T::Array[T.untyped]))

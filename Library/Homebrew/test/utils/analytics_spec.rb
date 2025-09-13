@@ -184,7 +184,7 @@ RSpec.describe Utils::Analytics do
   end
 
   specify "::table_output" do
-    results = { ack: 10, wget: 100 }
+    results = { "ack" => 10, "wget" => 100 }
     expect { described_class.table_output("install", "30", results) }
       .to output(/110 |  100.00%/).to_stdout
       .and not_to_output.to_stderr

@@ -135,9 +135,9 @@ class Build
     end
 
     new_env = {
-      "TMPDIR" => HOMEBREW_TEMP,
-      "TEMP"   => HOMEBREW_TEMP,
-      "TMP"    => HOMEBREW_TEMP,
+      "TMPDIR" => HOMEBREW_TEMP.to_s,
+      "TEMP"   => HOMEBREW_TEMP.to_s,
+      "TMP"    => HOMEBREW_TEMP.to_s,
     }
 
     with_env(new_env) do

@@ -119,7 +119,7 @@ module Homebrew
           # seeds being output when running parallel tests.
           seed = args.seed || rand(0xFFFF).to_i
 
-          bundle_args = ["-I", HOMEBREW_LIBRARY_PATH/"test"]
+          bundle_args = ["-I", (HOMEBREW_LIBRARY_PATH/"test").to_s]
           bundle_args += %W[
             --seed #{seed}
             --color
