@@ -324,6 +324,9 @@ class Cmd
     args << "-std=c++11" if cxx11?
     args << "-stdlib=libc++" if libcxx?
     args << "-stdlib=libstdc++" if libstdcxx?
+    if ENV["HOMEBREW_CC"] == "llvm_clang" && !llvm_libcxx? && mac?
+      args << "-I#{ENV["HOMEBREW_LIBRARY_PATH"]}/os/mac/include/llvm"
+    end
     args
   end
 
@@ -340,6 +343,7 @@ class Cmd
   end
 
   def ldflags_mac(args)
+    args << "-L#{@opt}/llvm/lib/c++" << "-L#{@opt}/llvm/lib/unwind" << "-lunwind" if llvm_libcxx?
     case mode
     when :ld
       args << "-headerpad_max_install_names"
@@ -431,6 +435,10 @@ class Cmd
 
   def libcxx?
     config.include?("g")
+  end
+
+  def llvm_libcxx?
+    config.include?("G")
   end
 
   def libstdcxx?
