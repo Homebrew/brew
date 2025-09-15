@@ -45,7 +45,8 @@ module Homebrew
 
       def self.installed_images
         require "bundle/whalebrew_dumper"
-        @installed_images ||= Homebrew::Bundle::WhalebrewDumper.images
+        # Dup since we append to this array when installing
+        @installed_images ||= Homebrew::Bundle::WhalebrewDumper.images.dup
       end
     end
   end

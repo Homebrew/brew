@@ -45,7 +45,8 @@ module Homebrew
 
       def self.installed_extensions
         require "bundle/vscode_extension_dumper"
-        @installed_extensions ||= Homebrew::Bundle::VscodeExtensionDumper.extensions
+        # Dup since we append to this array when installing
+        @installed_extensions ||= Homebrew::Bundle::VscodeExtensionDumper.extensions.dup
       end
     end
   end

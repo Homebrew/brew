@@ -110,7 +110,8 @@ module Homebrew
 
       def self.installed_casks
         require "bundle/cask_dumper"
-        @installed_casks ||= Homebrew::Bundle::CaskDumper.cask_names
+        # Dup since we append to this array when installing
+        @installed_casks ||= Homebrew::Bundle::CaskDumper.cask_names.dup
       end
 
       def self.outdated_casks
