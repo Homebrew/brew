@@ -92,7 +92,8 @@ RSpec.describe Homebrew::Bundle::CaskInstaller do
 
     context "when cask is not installed" do
       before do
-        allow(described_class).to receive(:installed_casks).and_return([])
+        described_class.reset!
+        allow(Homebrew::Bundle::CaskDumper).to receive(:cask_names).and_return([])
       end
 
       it "installs cask" do
@@ -101,6 +102,9 @@ RSpec.describe Homebrew::Bundle::CaskInstaller do
                                                   .and_return(true)
         expect(described_class.preinstall!("google-chrome")).to be(true)
         expect(described_class.install!("google-chrome")).to be(true)
+
+        # Does not mutate CaskDumper's list of installed casks
+        expect(Homebrew::Bundle::CaskDumper.cask_names).to eq([])
       end
 
       it "installs cask with arguments" do
