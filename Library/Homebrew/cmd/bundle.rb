@@ -189,6 +189,7 @@ module Homebrew
 
           if cleanup
             require "bundle/commands/cleanup"
+            Homebrew::Bundle::Commands::Cleanup.reset!
             Homebrew::Bundle::Commands::Cleanup.run(
               global:, file:, zap:,
               force:  true,
