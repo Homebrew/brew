@@ -13,15 +13,25 @@ module Homebrew
       MAX_JOBS = 256
 
       # Weight for each arch must add up to 1.0.
-      INTEL_RUNNERS = T.let({
+      X86_MACOS_RUNNERS = T.let({
         { symbol: :sequoia, name: "macos-15-intel", arch: :intel } => 1.0,
       }.freeze, T::Hash[T::Hash[Symbol, T.any(Symbol, String)], Float])
-      ARM_RUNNERS = T.let({
+      X86_LINUX_RUNNERS = T.let({
+        { symbol: :linux, name: "ubuntu-24.04", arch: :intel } => 1.0,
+      }.freeze, T::Hash[T::Hash[Symbol, T.any(Symbol, String)], Float])
+      ARM_MACOS_RUNNERS = T.let({
         { symbol: :sonoma,  name: "macos-14", arch: :arm } => 0.0,
         { symbol: :sequoia, name: "macos-15", arch: :arm } => 0.0,
         { symbol: :tahoe,   name: "macos-26", arch: :arm } => 1.0,
       }.freeze, T::Hash[T::Hash[Symbol, T.any(Symbol, String)], Float])
-      RUNNERS = T.let(INTEL_RUNNERS.merge(ARM_RUNNERS).freeze,
+      ARM_LINUX_RUNNERS = T.let({
+        { symbol: :linux, name: "ubuntu-24.04-arm", arch: :arm } => 1.0,
+      }.freeze, T::Hash[T::Hash[Symbol, T.any(Symbol, String)], Float])
+      MACOS_RUNNERS = T.let(X86_MACOS_RUNNERS.merge(ARM_MACOS_RUNNERS).freeze,
+                            T::Hash[T::Hash[Symbol, T.any(Symbol, String)], Float])
+      LINUX_RUNNERS = T.let(X86_LINUX_RUNNERS.merge(ARM_LINUX_RUNNERS).freeze,
+                            T::Hash[T::Hash[Symbol, T.any(Symbol, String)], Float])
+      RUNNERS = T.let(MACOS_RUNNERS.merge(LINUX_RUNNERS).freeze,
                       T::Hash[T::Hash[Symbol, T.any(Symbol, String)], Float])
 
       cmd_args do
@@ -57,7 +67,8 @@ module Homebrew
         pr_url = args.named if args.url?
         syntax_only = args.syntax_only?
 
-        repository = ENV.fetch("GITHUB_REPOSITORY", nil)
+        # repository = ENV.fetch("GITHUB_REPOSITORY", nil)
+        repository = "homebrew/homebrew-cask" # For testing outside GitHub Actions
         raise UsageError, "The `$GITHUB_REPOSITORY` environment variable must be set." if repository.blank?
 
         tap = T.let(Tap.fetch(repository), Tap)
@@ -118,7 +129,8 @@ module Homebrew
       sig { params(cask: Cask::Cask).returns(T::Hash[T::Hash[Symbol, T.any(Symbol, String)], Float]) }
       def filter_runners(cask)
         filtered_macos_runners = RUNNERS.select do |runner, _|
-          cask.depends_on.macos.present? &&
+          runner[:symbol] != :linux &&
+            cask.depends_on.macos.present? &&
             cask.depends_on.macos.allows?(MacOSVersion.from_symbol(T.must(runner[:symbol]).to_sym))
         end
 
@@ -127,6 +139,8 @@ module Homebrew
         else
           RUNNERS.dup
         end
+
+        filtered_runners = filtered_runners.merge(LINUX_RUNNERS) if linux?(cask:)
 
         archs = architectures(cask:)
         filtered_runners.select! do |runner, _|
@@ -143,11 +157,18 @@ module Homebrew
         cask.depends_on.arch.map { |arch| arch[:type] }.uniq.sort
       end
 
+      sig { params(cask: Cask::Cask).returns(T::Boolean) }
+      def linux?(cask:)
+        return true if cask.font?
+
+        cask.supports_linux?
+      end
+
       sig {
         params(available_runners: T::Hash[T::Hash[Symbol, T.any(Symbol, String)],
                                           Float]).returns(T::Hash[Symbol, T.any(Symbol, String)])
       }
-      def random_runner(available_runners = ARM_RUNNERS)
+      def random_runner(available_runners = ARM_MACOS_RUNNERS)
         T.must(available_runners.max_by { |(_, weight)| rand ** (1.0 / weight) })
          .first
       end
