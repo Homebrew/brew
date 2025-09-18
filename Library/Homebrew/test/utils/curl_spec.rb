@@ -401,13 +401,13 @@ RSpec.describe "Utils::Curl" do
       expect(curl_args(*args).join(" ")).to include("--retry 10")
     end
 
-    it "uses `--retry` when `:retries` is a positive Integer" do
+    it "uses `--retry` when `:retries` is a non-negative Integer" do
       expect(curl_args(*args, retries: 5).join(" ")).to include("--retry 5")
+      expect(curl_args(*args, retries: 0).join(" ")).to include("--retry 0")
     end
 
-    it "doesn't use `--retry` when `:retries` is nil or a non-positive Integer" do
+    it "doesn't use `--retry` when `:retries` is nil or a negative Integer" do
       expect(curl_args(*args, retries: nil).join(" ")).not_to include("--retry")
-      expect(curl_args(*args, retries: 0).join(" ")).not_to include("--retry")
       expect(curl_args(*args, retries: -1).join(" ")).not_to include("--retry")
     end
 

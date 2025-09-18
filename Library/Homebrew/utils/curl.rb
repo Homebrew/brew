@@ -136,8 +136,8 @@ module Utils
       args << "--connect-timeout" << connect_timeout.round(3) if connect_timeout.present?
       args << "--max-time" << max_time.round(3) if max_time.present?
 
-      # A non-positive integer (e.g. 0) or `nil` will omit this argument
-      args << "--retry" << retries if retries&.positive?
+      # A negative integer or `nil` will omit this argument
+      args << "--retry" << retries if retries.present? && !retries.negative?
 
       args << "--retry-max-time" << retry_max_time.round if retry_max_time.present?
 
