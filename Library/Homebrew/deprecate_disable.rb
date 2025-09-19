@@ -28,6 +28,7 @@ module DeprecateDisable
     no_longer_meets_criteria: "no longer meets the criteria for acceptable casks",
     unmaintained:             "is not maintained upstream",
     fails_gatekeeper_check:   "does not pass the macOS Gatekeeper check",
+    old_quick_look_plugin:    "is using the old Quick Look framework that is no longer supported by macOS",
     unreachable:              "is no longer reliably reachable upstream",
     # odeprecate: remove the unsigned reason in a future release
     unsigned:                 "is unsigned or does not meet signature requirements",
