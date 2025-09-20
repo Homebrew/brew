@@ -158,6 +158,25 @@ module Cask
       installed_caskfile&.exist? || false
     end
 
+    sig { returns(T::Boolean) }
+    def font?
+      artifacts.all?(Artifact::Font)
+    end
+
+    sig { returns(T::Boolean) }
+    def supports_macos?
+      return true if font?
+
+      true
+    end
+
+    sig { returns(T::Boolean) }
+    def supports_linux?
+      return true if font?
+
+      false
+    end
+
     # The caskfile is needed during installation when there are
     # `*flight` blocks or the cask has multiple languages
     def caskfile_only?
