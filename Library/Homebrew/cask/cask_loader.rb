@@ -377,6 +377,7 @@ module Cask
           end
           desc json_cask[:desc]
           homepage json_cask[:homepage]
+          login_items json_cask[:login_items] if json_cask[:login_items].present?
 
           if (deprecation_date = json_cask[:deprecation_date].presence)
             reason = DeprecateDisable.to_reason_string_or_symbol json_cask[:deprecation_reason], type: :cask
@@ -388,7 +389,7 @@ module Cask
             disable! date: disable_date, because: reason
           end
 
-          auto_updates json_cask[:auto_updates] unless json_cask[:auto_updates].nil?
+          auto_updates json_cask[:auto_updates] if json_cask[:auto_updates].present?
           conflicts_with(**json_cask[:conflicts_with]) if json_cask[:conflicts_with].present?
 
           if json_cask[:rename].present?
