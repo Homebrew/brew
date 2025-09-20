@@ -136,5 +136,23 @@ module Cask
     def cache
       Cache.path
     end
+
+    sig { override.returns(String) }
+    def download_name
+      url_basename = super
+      version = self.version
+      url = self.url
+      return url_basename if version.nil? || url.nil?
+
+      temp_downloader = download_strategy.new(url.to_s, url_basename, version, mirrors: [], cache:, **url.specs)
+      return url_basename unless temp_downloader.is_a?(AbstractFileDownloadStrategy)
+
+      potential_symlink_length = temp_downloader.symlink_location.basename.to_s.length
+      max_filesystem_symlink_length = 255
+
+      return url_basename if potential_symlink_length < max_filesystem_symlink_length
+
+      cask.full_token.gsub("/", "--")
+    end
   end
 end
