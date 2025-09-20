@@ -60,6 +60,8 @@ module Homebrew
 
         Utils::Curl.curl_download(*args, url, to: DATABASE_FILE)
         FileUtils.touch(DATABASE_FILE, mtime: Time.now)
+
+        Settings.write :commandnotfound, true
       end
 
       sig { params(cmd: String).returns(T::Array[String]) }
