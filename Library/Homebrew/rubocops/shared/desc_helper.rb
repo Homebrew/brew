@@ -1,4 +1,4 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
 
 require "rubocops/shared/helper_functions"
@@ -25,7 +25,8 @@ module RuboCop
           return
         end
 
-        @offensive_node = desc_call
+        @offensive_node = T.let(desc_call, T.nilable(RuboCop::AST::Node))
+        @name = T.let(name, T.nilable(String))
 
         desc = T.cast(desc_call, RuboCop::AST::SendNode).first_argument
 
@@ -84,9 +85,10 @@ module RuboCop
       end
 
       # Auto correct desc problems. `regex_match_group` must be called before this to populate @offense_source_range.
+      sig { params(message: String).void }
       def desc_problem(message)
         add_offense(@offensive_source_range, message:) do |corrector|
-          match_data = @offensive_node.source.match(/\A(?<quote>["'])(?<correction>.*)(?:\k<quote>)\Z/)
+          match_data = @offensive_node&.source&.match(/\A(?<quote>["'])(?<correction>.*)(?:\k<quote>)\Z/)
           correction = match_data[:correction]
           quote = match_data[:quote]
 
@@ -112,7 +114,7 @@ module RuboCop
 
           next if correction == match_data[:correction]
 
-          corrector.replace(@offensive_node.source_range, "#{quote}#{correction}#{quote}")
+          corrector.replace(@offensive_node&.source_range, "#{quote}#{correction}#{quote}")
         end
       end
     end
