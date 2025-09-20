@@ -875,6 +875,8 @@ RSpec.describe Formula do
 
       expect(f3.runtime_dependencies.map(&:name)).to eq(["baz/qux/f2"])
 
+      described_class.clear_cache
+
       f1_path = Tap.fetch("foo", "bar").path/"Formula/f1.rb"
       stub_formula_loader(formula("f1", path: f1_path) { url("f1-1.0") }, "foo/bar/f1")
 
@@ -960,6 +962,7 @@ RSpec.describe Formula do
         sha256 cellar: :any, Utils::Bottles.tag.to_sym => TEST_SHA256
       end
     end
+    stub_formula_loader(f1)
 
     h = f1.to_hash
 
@@ -1270,6 +1273,8 @@ RSpec.describe Formula do
     let(:alias_path) { CoreTap.instance.alias_dir/alias_name }
 
     before do
+      stub_formula_loader(f)
+      stub_formula_loader(new_formula)
       allow(described_class).to receive(:installed).and_return([f])
 
       f.build = tab
@@ -1361,6 +1366,12 @@ RSpec.describe Formula do
 
     let(:alias_name) { "bar" }
     let(:alias_path) { f.tap.alias_dir/alias_name }
+
+    before do
+      stub_formula_loader(f)
+      stub_formula_loader(old_formula)
+      stub_formula_loader(new_formula)
+    end
 
     def setup_tab_for_prefix(prefix, options = {})
       prefix.mkpath

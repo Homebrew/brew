@@ -32,7 +32,7 @@ class CaskDependent
 
   sig { returns(T::Array[Dependency]) }
   def runtime_dependencies
-    deps.flat_map { |dep| [dep, *dep.to_formula.runtime_dependencies] }.uniq
+    deps.flat_map { |dep| [dep, *dep.to_installed_formula.runtime_dependencies] }.uniq
   end
 
   sig { returns(T::Array[Dependency]) }

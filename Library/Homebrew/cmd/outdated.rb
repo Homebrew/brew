@@ -101,7 +101,7 @@ module Homebrew
                 # There is a newer HEAD but the version number has not changed.
                 "latest HEAD"
               else
-                f.pkg_version.to_s
+                f.latest_formula.pkg_version.to_s
               end
 
               outdated_versions = outdated_kegs.group_by { |keg| Formulary.from_keg(keg).full_name }
