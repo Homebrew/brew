@@ -71,7 +71,7 @@ class Cmd
   def mode
     if @arg0 == "cpp"
       :cpp
-    elsif ["ld", "ld.gold", "gold"].include? @arg0
+    elsif ["ld", "ld.gold", "gold", "ld.lld", "lld"].include? @arg0
       :ld
     elsif @args.include? "-c"
       if CXX_REGEX.match?(@arg0)
@@ -94,6 +94,7 @@ class Cmd
     @tool ||= case @arg0
     when "ld" then "ld"
     when "gold", "ld.gold" then "ld.gold"
+    when "lld", "ld.lld" then "ld.lld"
     when "cpp" then "cpp"
     when /llvm_(clang(\+\+)?)/
       "#{ENV["HOMEBREW_PREFIX"]}/opt/llvm/bin/#{Regexp.last_match(1)}"
