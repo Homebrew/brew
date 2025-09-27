@@ -24,6 +24,7 @@ DEPRECATED_OFFICIAL_TAPS = %w[
   livecheck
   nginx
   php
+  portable-ruby
   python
   science
   services

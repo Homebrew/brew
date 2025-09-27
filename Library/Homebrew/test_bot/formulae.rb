@@ -401,6 +401,11 @@ module Homebrew
           return
         end
 
+        if tap&.core_tap? && formula.name.start_with?("portable-")
+          test "brew", "portable-package", formula_name
+          return
+        end
+
         test "brew", "deps", "--tree", "--annotate", "--include-build", "--include-test", named_args: formula_name
 
         deps_without_compatible_bottles = formula.deps.map(&:to_formula)

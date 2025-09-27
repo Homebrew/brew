@@ -91,7 +91,7 @@ class GitHubRunnerMatrix
   def linux_runner_spec(arch)
     linux_runner = case arch
     when :arm64 then "ubuntu-22.04-arm"
-    when :x86_64 then ENV.fetch("HOMEBREW_LINUX_RUNNER")
+    when :x86_64 then ENV.fetch("HOMEBREW_LINUX_RUNNER", "ubuntu-latest")
     else raise "Unknown Linux architecture: #{arch}"
     end
 
@@ -150,6 +150,38 @@ class GitHubRunnerMatrix
   def generate_runners!
     return if @runners.present?
 
+    # gracefully handle non-GitHub Actions environments
+    github_run_id = if ENV.key?("GITHUB_ACTIONS")
+      ENV.fetch("GITHUB_RUN_ID")
+    else
+      ENV.fetch("GITHUB_RUN_ID", "")
+    end
+
+    # Portable Ruby logic
+    if @testing_formulae.any? { |tf| tf.name.start_with?("portable-") }
+      @runners << create_runner(:linux, :x86_64)
+      @runners << create_runner(:linux, :arm64)
+
+      x86_64_spec = MacOSRunnerSpec.new(
+        name:    "macOS 10.15 x86_64",
+        runner:  "10.15-#{github_run_id}",
+        timeout: GITHUB_ACTIONS_LONG_TIMEOUT,
+        cleanup: true,
+      )
+      x86_64_macos_version = MacOSVersion.new("10.15")
+      @runners << create_runner(:macos, :x86_64, x86_64_spec, x86_64_macos_version)
+
+      arm64_spec = MacOSRunnerSpec.new(
+        name:    "macOS 11-arm64-cross",
+        runner:  "11-arm64-cross-#{github_run_id}",
+        timeout: GITHUB_ACTIONS_LONG_TIMEOUT,
+        cleanup: true,
+      )
+      arm64_macos_version = MacOSVersion.new("11")
+      @runners << create_runner(:macos, :arm64, arm64_spec, arm64_macos_version)
+      return
+    end
+
     if !@all_supported || ENV.key?("HOMEBREW_LINUX_RUNNER")
       @runners << create_runner(:linux, :x86_64)
 
@@ -157,13 +189,6 @@ class GitHubRunnerMatrix
          @testing_formulae.any? { |tf| tf.formula.bottle_specification.tag?(Utils::Bottles.tag(:arm64_linux)) }
         @runners << create_runner(:linux, :arm64)
       end
-    end
-
-    # gracefully handle non-GitHub Actions environments
-    github_run_id = if ENV.key?("GITHUB_ACTIONS")
-      ENV.fetch("GITHUB_RUN_ID")
-    else
-      ENV.fetch("GITHUB_RUN_ID", "")
     end
 
     long_timeout       = ENV.fetch("HOMEBREW_MACOS_LONG_TIMEOUT", "false") == "true"

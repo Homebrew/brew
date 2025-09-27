@@ -109,17 +109,8 @@ jobs:
       - name: Run brew style on homebrew-core
         run: brew style homebrew/core
 
-      - name: Set up all Homebrew taps
-        run: |
-          brew tap homebrew/portable-ruby
-
-          # brew style doesn't like world writable directories
-          sudo chmod -R g-w,o-w "$(brew --repo)/Library/Taps"
-
-      - name: Run brew style on official taps
-        run: |
-          brew style homebrew/portable-ruby \
-                     homebrew/cask
+      - name: Run brew style on homebrew-cask
+        run: brew style homebrew/cask
 
   formula-audit:
     name: formula audit

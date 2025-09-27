@@ -12,7 +12,6 @@ source "${HOMEBREW_LIBRARY}/Homebrew/utils/ruby.sh"
 
 VENDOR_DIR="${HOMEBREW_LIBRARY}/Homebrew/vendor"
 
-# Built from https://github.com/Homebrew/homebrew-portable-ruby.
 set_ruby_variables() {
   # Handle the case where /usr/local/bin/brew is run under arm64.
   # It's a x86_64 installation there (we refuse to install arm64 binaries) so

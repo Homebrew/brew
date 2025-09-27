@@ -1952,6 +1952,24 @@ _brew_pin() {
   __brew_complete_installed_formulae
 }
 
+_brew_portable_package() {
+  local cur="${COMP_WORDS[COMP_CWORD]}"
+  case "${cur}" in
+    -*)
+      __brewcomp "
+      --debug
+      --help
+      --no-uninstall-deps
+      --quiet
+      --verbose
+      "
+      return
+      ;;
+    *) ;;
+  esac
+  __brew_complete_formulae
+}
+
 _brew_post_install() {
   local cur="${COMP_WORDS[COMP_CWORD]}"
   case "${cur}" in
@@ -3360,6 +3378,7 @@ _brew() {
     options) _brew_options ;;
     outdated) _brew_outdated ;;
     pin) _brew_pin ;;
+    portable-package) _brew_portable_package ;;
     post_install) _brew_post_install ;;
     postinstall) _brew_postinstall ;;
     pr-automerge) _brew_pr_automerge ;;

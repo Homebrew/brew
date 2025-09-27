@@ -1309,6 +1309,15 @@ __fish_brew_complete_arg 'pin' -l verbose -d 'Make some output more verbose'
 __fish_brew_complete_arg 'pin' -a '(__fish_brew_suggest_formulae_installed)'
 
 
+__fish_brew_complete_cmd 'portable-package' 'Build and package portable formulae'
+__fish_brew_complete_arg 'portable-package' -l debug -d 'Display any debugging information'
+__fish_brew_complete_arg 'portable-package' -l help -d 'Show this message'
+__fish_brew_complete_arg 'portable-package' -l no-uninstall-deps -d 'Don\'t uninstall all dependencies of portable formulae before testing'
+__fish_brew_complete_arg 'portable-package' -l quiet -d 'Make some output more quiet'
+__fish_brew_complete_arg 'portable-package' -l verbose -d 'Pass `--verbose` to `brew` commands'
+__fish_brew_complete_arg 'portable-package' -a '(__fish_brew_suggest_formulae_all)'
+
+
 __fish_brew_complete_cmd 'post_install' 'Rerun the post-install steps for formula'
 __fish_brew_complete_arg 'post_install' -l debug -d 'Display any debugging information'
 __fish_brew_complete_arg 'post_install' -l help -d 'Show this message'

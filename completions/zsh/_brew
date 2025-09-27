@@ -199,6 +199,7 @@ __brew_internal_commands() {
     'options:Show install options specific to formula'
     'outdated:List installed casks and formulae that have an updated version available'
     'pin:Pin the specified formula, preventing them from being upgraded when issuing the `brew upgrade` formula command'
+    'portable-package:Build and package portable formulae'
     'postinstall:Rerun the post-install steps for formula'
     'pr-automerge:Find pull requests that can be automatically merged using `brew pr-publish`'
     'pr-publish:Publish bottles for a pull request with GitHub Actions'
@@ -1621,6 +1622,18 @@ _brew_pin() {
     '--verbose[Make some output more verbose]' \
     - installed_formula \
     '*:installed_formula:__brew_installed_formulae'
+}
+
+# brew portable-package
+_brew_portable_package() {
+  _arguments \
+    '--debug[Display any debugging information]' \
+    '--help[Show this message]' \
+    '--no-uninstall-deps[Don'\''t uninstall all dependencies of portable formulae before testing]' \
+    '--quiet[Make some output more quiet]' \
+    '--verbose[Pass `--verbose` to `brew` commands]' \
+    - formula \
+    '*:formula:__brew_formulae'
 }
 
 # brew post_install
