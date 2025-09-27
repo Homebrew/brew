@@ -158,6 +158,47 @@ module Cask
       installed_caskfile&.exist? || false
     end
 
+    sig { returns(T::Boolean) }
+    def font?
+      artifacts.all?(Artifact::Font)
+    end
+
+    sig { returns(T::Boolean) }
+    def supports_macos?
+      return true if font?
+
+      true
+    end
+
+    sig { returns(T::Boolean) }
+    def supports_linux?
+      return true if font?
+
+      return false if artifacts.any? do |artifact|
+        [
+          ::Cask::Artifact::App,
+          ::Cask::Artifact::AudioUnitPlugin,
+          ::Cask::Artifact::Colorpicker,
+          ::Cask::Artifact::Dictionary,
+          ::Cask::Artifact::InputMethod,
+          ::Cask::Artifact::Installer,
+          ::Cask::Artifact::InternetPlugin,
+          ::Cask::Artifact::KeyboardLayout,
+          ::Cask::Artifact::Mdimporter,
+          ::Cask::Artifact::Pkg,
+          ::Cask::Artifact::Prefpane,
+          ::Cask::Artifact::Qlplugin,
+          ::Cask::Artifact::ScreenSaver,
+          ::Cask::Artifact::Service,
+          ::Cask::Artifact::Suite,
+          ::Cask::Artifact::VstPlugin,
+          ::Cask::Artifact::Vst3Plugin,
+        ].include?(artifact.class)
+      end
+
+      @dsl.os.present?
+    end
+
     # The caskfile is needed during installation when there are
     # `*flight` blocks or the cask has multiple languages
     def caskfile_only?
