@@ -389,12 +389,12 @@ module Homebrew
                                                               silent:                   args.quiet?,
                                                               ignore_non_pypi_packages: true
 
-            update_matching_version_resources! commit_formula,
-                                               version: new_formula_version.to_s
+            update_livecheck_defined_resources! commit_formula,
+                                                formula_version: new_formula_version.to_s
           end
 
           if resources_checked.nil? && commit_formula.resources.any? do |resource|
-            resource.livecheck.formula != :parent && !resource.name.start_with?("homebrew-")
+            !resource.livecheck_defined? && !resource.name.start_with?("homebrew-")
           end
             formula_pr_message += <<~EOS
 
@@ -557,60 +557,100 @@ module Homebrew
 
       sig {
         params(
-          formula: Formula,
-          version: String,
+          formula:         Formula,
+          formula_version: String,
         ).void
       }
-      def update_matching_version_resources!(formula, version:)
-        formula.resources.select { |r| r.livecheck.formula == :parent }.each do |resource|
-          new_url = update_url(resource.url, resource.version.to_s, version)
+      def update_livecheck_defined_resources!(formula, formula_version:)
+        formula.resources.each do |resource|
+          next unless resource.livecheck_defined?
+          next if resource.livecheck.skip?
 
-          if new_url == resource.url
-            opoo <<~EOS
-              You need to bump resource "#{resource.name}" manually since the new URL
-              and old URL are both:
-                #{new_url}
-            EOS
-            next
+          old_url = resource.url
+          old_revision = resource.specs[:revision]
+          old_version = resource.version.to_s
+          new_version = formula_version
+
+          if resource.livecheck.formula != :parent
+            require "livecheck/livecheck"
+            version_info = Homebrew::Livecheck.resource_version(resource, formula_version,
+                                                                json:    true,
+                                                                debug:   args.debug?,
+                                                                quiet:   args.quiet?,
+                                                                verbose: args.verbose?)
+            new_version = version_info.dig(:version, :latest)
+            odie "Resource \"#{resource.name}\" livecheck failed to get latest version!" if new_version.blank?
+            next if old_version == new_version
           end
 
-          new_mirrors = resource.mirrors.map do |mirror|
-            update_url(mirror, resource.version.to_s, version)
+          if old_revision.present?
+            new_revision = if old_revision == old_version
+              forced_version = true
+              new_version
+            elsif (old_tag = resource.specs[:tag])
+              new_tag = old_tag.gsub(old_version, new_version)
+              odie "Resource \"#{resource.name}\" tag could not be updated!" if old_tag == new_tag
+              resource_path, forced_version = fetch_resource_and_forced_version(resource, new_version, old_url,
+                                                                                tag: new_tag)
+              Utils.popen_read("git", "-C", resource_path.to_s, "rev-parse", "-q", "--verify", "HEAD").strip
+            else
+              odie <<~EOS
+                Unable to automatically bump resource "#{resource.name}"!
+                Either bump this formula manually or add support to `bump-formula-pr`.
+              EOS
+            end
+            # Allow skipping different tags on same revision
+            next if old_revision == new_revision
+
+            inreplace_regex = /
+              ^(?<ws>[ ]+)resource\ "#{resource.name}"\ do\s+
+                url\ "#{Regexp.escape(old_url)}",\s+
+                    (using:[ ]+.*,\s+)?
+                    (tag:[ ]+.*,\s+)?
+                    revision:\ "#{old_revision}"\n
+                (\s*version\ .*\n)?
+            /x
+
+            new_resource_block  = "\\k<ws>resource \"#{resource.name}\" do\n"
+            new_resource_block += "\\k<ws>  url \"#{old_url}\",\n"
+            new_resource_block += "\\k<ws>      using:    :#{resource.using},\n" if resource.using.is_a?(Symbol)
+            new_resource_block += "\\k<ws>      tag:      \"#{new_tag}\",\n" if new_tag
+            new_resource_block += "\\k<ws>      revision: \"#{new_revision}\"\n"
+            new_resource_block += "\\k<ws>  version \"#{new_version}\"\n" if forced_version
+          else
+            new_url = update_url(old_url, old_version, new_version)
+            if old_url == new_url
+              opoo <<~EOS if resource.livecheck.formula == :parent
+                You need to bump resource "#{resource.name}" manually since the new URL
+                and old URL are both:
+                  #{new_url}
+              EOS
+              next
+            end
+            new_mirrors = resource.mirrors.map do |mirror|
+              update_url(mirror, old_version, new_version)
+            end
+            resource_path, forced_version = fetch_resource_and_forced_version(resource, new_version, new_url)
+            Utils::Tar.validate_file(resource_path)
+            new_hash = resource_path.sha256
+
+            # Capture old_url to avoid possible HEAD resources
+            inreplace_regex = /
+              ^(?<ws>[ ]+)resource\ "#{resource.name}"\ do\s+
+                url\ "#{Regexp.escape(old_url)}"(?<using>,\ using:\ .*)?\s+
+                (mirror\ .*\s+)*
+                (version\ .*\s+)?
+                sha256\ .*\n
+            /x
+
+            new_resource_block  = "\\k<ws>resource \"#{resource.name}\" do\n"
+            new_resource_block += "\\k<ws>  url \"#{new_url}\"\\k<using>\n"
+            new_resource_block += new_mirrors.map { |m| "\\k<ws>  mirror \"#{m}\"\n" }.join
+            new_resource_block += "\\k<ws>  version \"#{new_version}\"\n" if forced_version
+            new_resource_block += "\\k<ws>  sha256 \"#{new_hash}\"\n"
           end
-          resource_path, forced_version = fetch_resource_and_forced_version(resource, version, new_url)
-          Utils::Tar.validate_file(resource_path)
-          new_hash = resource_path.sha256
 
-          inreplace_regex = /
-            [ ]+resource\ "#{resource.name}"\ do\s+
-              url\ .*\s+
-              (mirror\ .*\s+)*
-              sha256\ .*\s+
-              (version\ .*\s+)?
-              (\#.*\s+)*
-              livecheck\ do\s+
-                formula\ :parent\s+
-              end\s+
-              ((\#.*\s+)*
-              patch\ (.*\ )?do\s+
-                url\ .*\s+
-                sha256\ .*\s+
-              end\s+)*
-            end\s
-          /x
-
-          leading_spaces = T.must(formula.path.read.match(/^( +)resource "#{resource.name}"/)).captures.first
-          new_resource_block = <<~EOS
-            #{leading_spaces}resource "#{resource.name}" do
-            #{leading_spaces}  url "#{new_url}"#{new_mirrors.map { |m| "\n#{leading_spaces}  mirror \"#{m}\"" }.join}
-            #{leading_spaces}  sha256 "#{new_hash}"
-            #{"#{leading_spaces}  version \"#{version}\"\n" if forced_version}
-            #{leading_spaces}  livecheck do
-            #{leading_spaces}    formula :parent
-            #{leading_spaces}  end
-            #{leading_spaces}end
-          EOS
-
+          odebug "Updating \"#{resource.name}\" from #{old_version} to #{new_version}"
           Utils::Inreplace.inreplace formula.path do |s|
             s.sub! inreplace_regex, new_resource_block
           end
