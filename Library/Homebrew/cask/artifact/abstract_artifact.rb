@@ -54,12 +54,8 @@ module Cask
         end
       end
 
-      def <=>(other)
-        return unless other.class < AbstractArtifact
-        return 0 if instance_of?(other.class)
-
-        # TODO: Replace class var @@sort_order with a class instance var.
-        @@sort_order ||= [ # rubocop:disable Style/ClassVars
+      def sort_order
+        @sort_order ||= [
           PreflightBlock,
           # The `uninstall` stanza should be run first, as it may
           # depend on other artifacts still being installed.
@@ -94,8 +90,13 @@ module Cask
           PostflightBlock,
           Zap,
         ].each_with_index.flat_map { |classes, i| Array(classes).map { |c| [c, i] } }.to_h
+      end
 
-        (@@sort_order[self.class] <=> @@sort_order[other.class]).to_i
+      def <=>(other)
+        return unless other.class < AbstractArtifact
+        return 0 if instance_of?(other.class)
+
+        (sort_order[self.class] <=> sort_order[other.class]).to_i
       end
 
       # TODO: this sort of logic would make more sense in dsl.rb, or a
@@ -148,6 +149,7 @@ module Cask
         @dsl_key = nil
         @english_article = nil
         @english_name = nil
+        @sort_order = nil
       end
 
       def config
