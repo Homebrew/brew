@@ -157,9 +157,7 @@ module Cask
       oh1 "Installing Cask #{Formatter.identifier(@cask)}"
       # GitHub Actions globally disables Gatekeeper.
       unless quarantine?
-        opoo_outside_github_actions(
-          "You are overriding your security settings to install an app from an unidentified developer.",
-        )
+        opoo_outside_github_actions "macOS security controls are being overridden by use of --no-quarantine"
       end
       stage
 
