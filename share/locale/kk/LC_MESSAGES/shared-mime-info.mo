@@ -1,0 +1,1 @@
+../../../../Cellar/shared-mime-info/2.4/share/locale/kk/LC_MESSAGES/shared-mime-info.mo

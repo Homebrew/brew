@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-amiga-disk-format">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Amiga disk image</comment>
+  <comment xml:lang="zh-Hant-TW">Amiga 磁碟映像檔</comment>
+  <comment xml:lang="zh-Hans-CN">Amiga 磁盘映像</comment>
+  <comment xml:lang="uk">образ диска Amiga</comment>
+  <comment xml:lang="tr">Amiga disk görüntüsü</comment>
+  <comment xml:lang="sv">Amiga-diskavbild</comment>
+  <comment xml:lang="sr-Cyrl">слика диска Амиге</comment>
+  <comment xml:lang="sq">pamje disku Amiga</comment>
+  <comment xml:lang="sl">Slika diska Amiga</comment>
+  <comment xml:lang="si">Amiga තැටි රූපය</comment>
+  <comment xml:lang="sk">Obraz disku Amiga</comment>
+  <comment xml:lang="ru">Образ диска Amiga</comment>
+  <comment xml:lang="pt-BR">Imagem de disco Amiga</comment>
+  <comment xml:lang="pt">imagem de disco Amiga</comment>
+  <comment xml:lang="pl">Obraz dysku Amiga</comment>
+  <comment xml:lang="oc">imatge disc Amiga</comment>
+  <comment xml:lang="nl">Amiga-schijfkopiebestand</comment>
+  <comment xml:lang="ko">Amiga 디스크 이미지</comment>
+  <comment xml:lang="kk-Cyrl">Amiga диск бейнесі</comment>
+  <comment xml:lang="ja">Amiga ディスクイメージ</comment>
+  <comment xml:lang="it">Disco immagine Amiga</comment>
+  <comment xml:lang="is">Amiga diskmynd</comment>
+  <comment xml:lang="id">Image disk Amiga</comment>
+  <comment xml:lang="ia">Imagine de disco Amiga</comment>
+  <comment xml:lang="hu">Amiga lemezkép</comment>
+  <comment xml:lang="hr">Amiga slika diska</comment>
+  <comment xml:lang="he">דמות כונן Amiga</comment>
+  <comment xml:lang="gl">Imaxe de disco de Amiga</comment>
+  <comment xml:lang="ga">íomhá diosca Amiga</comment>
+  <comment xml:lang="fur">imagjin disc Amiga</comment>
+  <comment xml:lang="fr">image disque Amiga</comment>
+  <comment xml:lang="fi">Amiga-levytiedosto</comment>
+  <comment xml:lang="eu">Amiga disko irudia</comment>
+  <comment xml:lang="es">imagen de disco de Amiga</comment>
+  <comment xml:lang="en-GB">Amiga disk image</comment>
+  <comment xml:lang="el">Εικόνα δίσκου Amiga</comment>
+  <comment xml:lang="de">Amiga-Datenträgerabbild</comment>
+  <comment xml:lang="da">Amiga-diskaftryk</comment>
+  <comment xml:lang="cs">obraz disku pro Amigu</comment>
+  <comment xml:lang="ca">imatge de disc d'Amiga</comment>
+  <comment xml:lang="bg">Диск — Amiga</comment>
+  <comment xml:lang="be-Cyrl">вобраз дыска Amiga</comment>
+  <comment xml:lang="ar">صورة قرص Amiga</comment>
+  <comment xml:lang="af">Amiga-skyfbeeldlêer</comment>
+  <glob pattern="*.adf"/>
+</mime-type>

@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/vnd.ms-cab-compressed">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Microsoft Cabinet archive</comment>
+  <comment xml:lang="zh-Hant-TW">微軟 Cabinet 封存檔</comment>
+  <comment xml:lang="zh-Hans-CN">Microsoft Cabinet 归档文件</comment>
+  <comment xml:lang="vi">Kho lưu Cabinet Microsoft</comment>
+  <comment xml:lang="uk">архів Cabinet Microsoft</comment>
+  <comment xml:lang="tr">Microsoft Cabinet arşivi</comment>
+  <comment xml:lang="sv">Microsoft Cabinet-arkiv</comment>
+  <comment xml:lang="sr-Cyrl">Мајкрософтова кабинет архива</comment>
+  <comment xml:lang="sq">arkiv Microsoft Cabinet</comment>
+  <comment xml:lang="sl">Datoteka arhiva Microsoft Cabinet</comment>
+  <comment xml:lang="si">Microsoft කැබිනට් සංරක්ෂිතය</comment>
+  <comment xml:lang="sk">Archív Microsoft Cabinet</comment>
+  <comment xml:lang="ru">Архив Microsoft Cabinet</comment>
+  <comment xml:lang="ro">Arhivă Microsoft Cabinet</comment>
+  <comment xml:lang="pt-BR">Pacote Cabinet da Microsoft</comment>
+  <comment xml:lang="pt">arquivo Microsoft Cabinet</comment>
+  <comment xml:lang="pl">Archiwum Microsoft Cabinet</comment>
+  <comment xml:lang="oc">archiu Cab Microsoft</comment>
+  <comment xml:lang="nl">Microsoft Cabinet-archief</comment>
+  <comment xml:lang="lv">Microsoft kabineta arhīvs</comment>
+  <comment xml:lang="lt">Microsoft Cabinet archyvas</comment>
+  <comment xml:lang="ko">Microsoft Cabinet 압축 파일</comment>
+  <comment xml:lang="kk-Cyrl">Microsoft Cabinet архиві</comment>
+  <comment xml:lang="ka">Microsoft-ის Cabinet არქივი</comment>
+  <comment xml:lang="ja">Microsoft Cabinet アーカイブ</comment>
+  <comment xml:lang="it">Archivio Microsoft Cabinet</comment>
+  <comment xml:lang="is">Microsoft Cabinet safnskrá</comment>
+  <comment xml:lang="id">Arsip Microsoft Cabinet</comment>
+  <comment xml:lang="ia">Archivo Microsoft Cabinet</comment>
+  <comment xml:lang="hu">Microsoft Cabinet archívum</comment>
+  <comment xml:lang="hr">Microsoft Cabinet arhiva</comment>
+  <comment xml:lang="he">ארכיון CAB (מיקרוסופט)</comment>
+  <comment xml:lang="gl">arquivo de Microsoft Cabinet</comment>
+  <comment xml:lang="ga">cartlann Microsoft Cabinet</comment>
+  <comment xml:lang="fur">archivi Cabinet Microsoft</comment>
+  <comment xml:lang="fr">archive Cab Microsoft</comment>
+  <comment xml:lang="fo">Microsoft Cabinet skjalasavn</comment>
+  <comment xml:lang="fi">Microsoft Cabinet -arkisto</comment>
+  <comment xml:lang="eu">Microsoft Cabinet artxiboa</comment>
+  <comment xml:lang="es">archivador Cabinet de Microsoft</comment>
+  <comment xml:lang="en-GB">Microsoft Cabinet archive</comment>
+  <comment xml:lang="el">Συμπιεσμένο αρχείο Microsoft Cabinet</comment>
+  <comment xml:lang="de">Microsoft-Cabinet-Archiv</comment>
+  <comment xml:lang="da">Microsoft Cabinet-arkiv</comment>
+  <comment xml:lang="cs">archiv Microsoft Cabinet</comment>
+  <comment xml:lang="ca">arxiu de Microsoft Cabinet</comment>
+  <comment xml:lang="bg">Архив — Microsoft Cabinet</comment>
+  <comment xml:lang="be-Cyrl">архіў Microsoft Cabinet</comment>
+  <comment xml:lang="ar">أرشيف Microsoft Cabinet</comment>
+  <comment xml:lang="af">Microsoft Cabinet-argief</comment>
+  <generic-icon name="package-x-generic"/>
+  <glob pattern="*.cab"/>
+  <alias type="zz-application/zz-winassoc-cab"/>
+</mime-type>

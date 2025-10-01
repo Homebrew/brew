@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-compress">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>UNIX-compressed file</comment>
+  <comment xml:lang="zh-Hant-TW">UNIX 壓縮檔</comment>
+  <comment xml:lang="zh-Hans-CN">UNIX 压缩文件</comment>
+  <comment xml:lang="vi">Tập tin đã nén UNIX</comment>
+  <comment xml:lang="uk">стиснений файл UNIX</comment>
+  <comment xml:lang="tr">UNIX-sıkıştırılmış dosyası</comment>
+  <comment xml:lang="sv">UNIX-komprimerad fil</comment>
+  <comment xml:lang="sr-Cyrl">датотека запакована ЈУНИКС-ом</comment>
+  <comment xml:lang="sq">kartelë e ngjeshur me Unix</comment>
+  <comment xml:lang="sl">Skrčena Unix datoteka</comment>
+  <comment xml:lang="si">UNIX සම්පීඩිත ගොනුව</comment>
+  <comment xml:lang="sk">Súbor komprimovaný v Unixe</comment>
+  <comment xml:lang="ru">Сжатый файл UNIX</comment>
+  <comment xml:lang="ro">Fișier comprimat UNIX</comment>
+  <comment xml:lang="pt-BR">Arquivo compactado do UNIX</comment>
+  <comment xml:lang="pt">ficheiro comprimido UNIX</comment>
+  <comment xml:lang="pl">Skompresowany plik systemu UNIX</comment>
+  <comment xml:lang="oc">fichièr compressat UNIX</comment>
+  <comment xml:lang="nn">UNIX-komprimert fil</comment>
+  <comment xml:lang="nl">UNIX-ingepakt bestand</comment>
+  <comment xml:lang="nb">UNIX-komprimert fil</comment>
+  <comment xml:lang="ms">Fail termampat-UNIX</comment>
+  <comment xml:lang="lv">UNIX saspiesta datne</comment>
+  <comment xml:lang="lt">UNIX suglaudintas failas</comment>
+  <comment xml:lang="ko">UNIX 압축 파일</comment>
+  <comment xml:lang="kk-Cyrl">файл (UNIX-сығылған)</comment>
+  <comment xml:lang="ja">UNIX-compress ファイル</comment>
+  <comment xml:lang="it">File compresso-UNIX</comment>
+  <comment xml:lang="is">UNIX-þjöppuð skrá</comment>
+  <comment xml:lang="id">Berkas terkompresi UNIX</comment>
+  <comment xml:lang="ia">File comprimite de UNIX</comment>
+  <comment xml:lang="hu">UNIX tömörítésű fájl</comment>
+  <comment xml:lang="hr">UNIX sažeta datoteka</comment>
+  <comment xml:lang="he">קובץ בכיווץ UNIX</comment>
+  <comment xml:lang="gl">ficheiro comprimido de UNIX</comment>
+  <comment xml:lang="ga">comhad UNIX-comhbhrúite</comment>
+  <comment xml:lang="fur">file comprimût di UNIX</comment>
+  <comment xml:lang="fr">fichier compressé UNIX</comment>
+  <comment xml:lang="fo">UNIX-stappað fíla</comment>
+  <comment xml:lang="fi">UNIX-pakattu tiedosto</comment>
+  <comment xml:lang="eu">UNIX-en konprimitutako fitxategia</comment>
+  <comment xml:lang="es">archivo comprimido de Unix</comment>
+  <comment xml:lang="eo">UNIX-kunpremita dosiero</comment>
+  <comment xml:lang="en-GB">UNIX-compressed file</comment>
+  <comment xml:lang="el">Συμπιεσμένο αρχείο UNIX</comment>
+  <comment xml:lang="de">UNIX-komprimierte Datei</comment>
+  <comment xml:lang="da">UNIX-komprimeret fil</comment>
+  <comment xml:lang="cs">soubor komprimovaný v Unixu</comment>
+  <comment xml:lang="ca">fitxer amb compressió UNIX</comment>
+  <comment xml:lang="bg">Файл — компресиран за UNIX</comment>
+  <comment xml:lang="be-Latn">Skampresavany UNIX-fajł</comment>
+  <comment xml:lang="be-Cyrl">файл сціснуты UNIX</comment>
+  <comment xml:lang="ar">ملف يونكس-مضغوط</comment>
+  <comment xml:lang="af">UNIX-saamgepersde lêer</comment>
+  <generic-icon name="package-x-generic"/>
+  <glob pattern="*.Z"/>
+</mime-type>

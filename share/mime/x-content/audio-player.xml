@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="x-content/audio-player">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Portable audio player</comment>
+  <comment xml:lang="uk">портативний звуковий програвач</comment>
+  <comment xml:lang="sv">Bärbar ljudspelare</comment>
+  <comment xml:lang="ru">Портативный аудиопроигрыватель</comment>
+  <comment xml:lang="pl">Przenośny odtwarzacz dźwięku</comment>
+  <comment xml:lang="it">Lettore audio portabile</comment>
+  <comment xml:lang="es">reproductor de audio portátil</comment>
+  <comment xml:lang="de">Portables Audio-Wiedergabegerät</comment>
+  <comment xml:lang="be-Cyrl">партатыўны аўдыяплэер</comment>
+</mime-type>

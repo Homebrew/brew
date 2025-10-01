@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="inode/socket">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Socket</comment>
+  <comment xml:lang="uk">сокет</comment>
+  <comment xml:lang="sv">Uttag</comment>
+  <comment xml:lang="ru">Сокет</comment>
+  <comment xml:lang="pl">Gniazdo</comment>
+  <comment xml:lang="ja">ソケット</comment>
+  <comment xml:lang="it">Socket</comment>
+  <comment xml:lang="gl">Socket</comment>
+  <comment xml:lang="eu">Socket-a</comment>
+  <comment xml:lang="es">zócalo</comment>
+  <comment xml:lang="de">Socket</comment>
+  <comment xml:lang="be-Cyrl">сокет</comment>
+</mime-type>

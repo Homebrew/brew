@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="chemical/x-pdb">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Protein Data Bank file</comment>
+  <comment xml:lang="uk">файл банку даних протеїнів</comment>
+  <comment xml:lang="sv">Protein Data Bank-fil</comment>
+  <comment xml:lang="ru">Файл Protein Data Bank</comment>
+  <comment xml:lang="pl">Plik Protein Data Bank</comment>
+  <comment xml:lang="de">Protein-Datenbank-Datei</comment>
+  <sub-class-of type="text/plain"/>
+  <generic-icon name="text-x-generic"/>
+  <glob pattern="*.pdb"/>
+  <glob pattern="*.brk"/>
+</mime-type>

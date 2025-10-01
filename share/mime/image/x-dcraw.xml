@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="image/x-dcraw">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Digital raw image</comment>
+  <comment xml:lang="uk">простий цифровий негатив</comment>
+  <comment xml:lang="sv">Digital råbild</comment>
+  <comment xml:lang="ru">Необработанное цифровое изображение</comment>
+  <comment xml:lang="pl">Surowy obraz cyfrowy</comment>
+  <comment xml:lang="ja">生写真</comment>
+  <comment xml:lang="it">Immagine raw digitale</comment>
+  <comment xml:lang="gl">Imaxe RAW dixital</comment>
+  <comment xml:lang="eu">Irudi digital gordina</comment>
+  <comment xml:lang="es">imagen digital en bruto</comment>
+  <comment xml:lang="de">Digitales Rohbild</comment>
+  <comment xml:lang="be-Cyrl">неапрацаваная лічбавая выява</comment>
+</mime-type>

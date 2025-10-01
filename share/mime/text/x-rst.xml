@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="text/x-rst">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>ReStructuredText document</comment>
+  <comment xml:lang="uk">документ ReStructuredText</comment>
+  <comment xml:lang="sv">ReStructuredText-dokument</comment>
+  <comment xml:lang="ru">Документ ReStructuredText</comment>
+  <comment xml:lang="pl">Dokument reStructuredText</comment>
+  <comment xml:lang="it">Documento reStructuredText</comment>
+  <comment xml:lang="eu">ReStructuredText dokumentua</comment>
+  <comment xml:lang="es">documento ReStructuredText</comment>
+  <comment xml:lang="de">reStructuredText-Dokument</comment>
+  <comment xml:lang="be-Cyrl">дакумент reStructuredText</comment>
+  <sub-class-of type="text/plain"/>
+  <glob pattern="*.rst"/>
+</mime-type>

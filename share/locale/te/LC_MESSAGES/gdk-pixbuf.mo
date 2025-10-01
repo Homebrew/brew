@@ -1,0 +1,1 @@
+../../../../Cellar/gdk-pixbuf/2.42.12_1/share/locale/te/LC_MESSAGES/gdk-pixbuf.mo

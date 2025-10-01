@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="x-content/blank-cd">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Blank CD disc</comment>
+  <comment xml:lang="uk">порожній компакт-диск</comment>
+  <comment xml:lang="sv">Tom cd-skiva</comment>
+  <comment xml:lang="ru">Чистый диск CD</comment>
+  <comment xml:lang="pt-BR">Disco CD vazio</comment>
+  <comment xml:lang="pl">Pusta płyta CD</comment>
+  <comment xml:lang="ja">空CD</comment>
+  <comment xml:lang="it">Disco vuoto CD</comment>
+  <comment xml:lang="gl">Disco de CD en branco</comment>
+  <comment xml:lang="eu">CD disko hutsa</comment>
+  <comment xml:lang="es">disco CD vacío</comment>
+  <comment xml:lang="de">Leere CD</comment>
+  <comment xml:lang="be-Cyrl">чысты дыск CD</comment>
+</mime-type>

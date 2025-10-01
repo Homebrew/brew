@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-sami">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>SAMI subtitles</comment>
+  <comment xml:lang="zh-Hant-TW">SAMI 字幕</comment>
+  <comment xml:lang="zh-Hans-CN">SAMI 字幕</comment>
+  <comment xml:lang="vi">Phụ đề SAMI</comment>
+  <comment xml:lang="uk">субтитри SAMI</comment>
+  <comment xml:lang="tr">SAMI alt yazıları</comment>
+  <comment xml:lang="sv">SAMI-undertexter</comment>
+  <comment xml:lang="sr-Cyrl">САМИ преводи</comment>
+  <comment xml:lang="sq">titra SAMI</comment>
+  <comment xml:lang="sl">Datoteka podnapisov SAMI</comment>
+  <comment xml:lang="si">SAMI උපසිරැසි</comment>
+  <comment xml:lang="sk">Titulky SAMI</comment>
+  <comment xml:lang="ru">Субтитры SAMI</comment>
+  <comment xml:lang="ro">Subtitrări SAMI</comment>
+  <comment xml:lang="pt-BR">Legendas SAMI</comment>
+  <comment xml:lang="pt">legendas SAMI</comment>
+  <comment xml:lang="pl">Napisy SAMI</comment>
+  <comment xml:lang="oc">sostítols SAMI</comment>
+  <comment xml:lang="nn">SAMI teksting</comment>
+  <comment xml:lang="nl">SAMI-ondertitels</comment>
+  <comment xml:lang="nb">SAMI undertekst</comment>
+  <comment xml:lang="lv">SAMI subtitri</comment>
+  <comment xml:lang="lt">SAMI subtitrai</comment>
+  <comment xml:lang="ko">SAMI 자막 파일</comment>
+  <comment xml:lang="kk-Cyrl">SAMI субтитрлары</comment>
+  <comment xml:lang="ja">SAMI 字幕</comment>
+  <comment xml:lang="it">Sottotitoli SAMI</comment>
+  <comment xml:lang="is">SAMI skjátextar</comment>
+  <comment xml:lang="id">Subjudul SAMI</comment>
+  <comment xml:lang="ia">Subtitulos SAMI</comment>
+  <comment xml:lang="hu">SAMI feliratok</comment>
+  <comment xml:lang="hr">SAMI podnaslovi</comment>
+  <comment xml:lang="he">כתוביות SAMI</comment>
+  <comment xml:lang="gl">subtítulos SAMI</comment>
+  <comment xml:lang="ga">fotheidil SAMI</comment>
+  <comment xml:lang="fur">sottitui SAMI</comment>
+  <comment xml:lang="fr">sous-titres SAMI</comment>
+  <comment xml:lang="fo">SAMI undirtekstir</comment>
+  <comment xml:lang="fi">SAMI-tekstitykset</comment>
+  <comment xml:lang="eu">SAMI azpitituluak</comment>
+  <comment xml:lang="es">subtítulos SAMI</comment>
+  <comment xml:lang="eo">SAMI-subtekstoj</comment>
+  <comment xml:lang="en-GB">SAMI subtitles</comment>
+  <comment xml:lang="el">Υπότιτλοι SAMI</comment>
+  <comment xml:lang="de">SAMI-Untertitel</comment>
+  <comment xml:lang="da">SAMI-undertekster</comment>
+  <comment xml:lang="cs">titulky SAMI</comment>
+  <comment xml:lang="ca">subtítols SAMI</comment>
+  <comment xml:lang="bg">Субтитри — SAMI</comment>
+  <comment xml:lang="be-Latn">Subtytry SAMI</comment>
+  <comment xml:lang="be-Cyrl">субцітры SAMI</comment>
+  <comment xml:lang="ar">ترجمات SAMI</comment>
+  <comment xml:lang="af">SAMI-onderskrifte</comment>
+  <acronym>SAMI</acronym>
+  <expanded-acronym>Synchronized Accessible Media Interchange</expanded-acronym>
+  <sub-class-of type="text/plain"/>
+  <generic-icon name="text-x-generic"/>
+  <glob pattern="*.smi"/>
+  <glob pattern="*.sami"/>
+</mime-type>

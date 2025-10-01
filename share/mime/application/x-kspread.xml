@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-kspread">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>KSpread spreadsheet</comment>
+  <comment xml:lang="zh-Hant-TW">KSpread 試算表</comment>
+  <comment xml:lang="zh-Hans-CN">KSpread 电子表格</comment>
+  <comment xml:lang="vi">Bảng tính KSpread</comment>
+  <comment xml:lang="uk">електронна таблиця KSpread</comment>
+  <comment xml:lang="tr">KSpread hesap çizelgesi</comment>
+  <comment xml:lang="sv">KSpread-kalkylblad</comment>
+  <comment xml:lang="sr-Cyrl">табела К-табеле</comment>
+  <comment xml:lang="sq">fletëllogaritje KSpread</comment>
+  <comment xml:lang="sl">Preglednica KSpread</comment>
+  <comment xml:lang="si">KSpread පැතුරුම්පත</comment>
+  <comment xml:lang="sk">Zošit KSpread</comment>
+  <comment xml:lang="ru">Электронная таблица KSpread</comment>
+  <comment xml:lang="ro">Foaie de calcul KSpread</comment>
+  <comment xml:lang="pt-BR">Planilha do KSpread</comment>
+  <comment xml:lang="pt">folha de cálculo KSpread</comment>
+  <comment xml:lang="pl">Arkusz KSpread</comment>
+  <comment xml:lang="oc">fuèlh de calcul KSpread</comment>
+  <comment xml:lang="nn">KSpread-rekneark</comment>
+  <comment xml:lang="nl">KSpread-rekenblad</comment>
+  <comment xml:lang="nb">KSpread-regneark</comment>
+  <comment xml:lang="ms">Hamparan KSpread</comment>
+  <comment xml:lang="lv">KSpread izklājlapa</comment>
+  <comment xml:lang="lt">KSpread skaičialentė</comment>
+  <comment xml:lang="ko">KSpread 스프레드시트</comment>
+  <comment xml:lang="kk-Cyrl">KSpread электрондық кестесі</comment>
+  <comment xml:lang="ja">KSpread スプレッドシート</comment>
+  <comment xml:lang="it">Foglio di calcolo KSpread</comment>
+  <comment xml:lang="is">KSpread töflureikniskjal</comment>
+  <comment xml:lang="id">Lembar sebar KSpread</comment>
+  <comment xml:lang="ia">Folio de calculo KSpread</comment>
+  <comment xml:lang="hu">KSpread-munkafüzet</comment>
+  <comment xml:lang="hr">KSpread proračunska tablica</comment>
+  <comment xml:lang="he">גיליון נתונים של Kspread</comment>
+  <comment xml:lang="gl">folla de cálculo de KSpread</comment>
+  <comment xml:lang="ga">scarbhileog KSpread</comment>
+  <comment xml:lang="fur">sfuei di calcul KSpread</comment>
+  <comment xml:lang="fr">feuille de calcul KSpread</comment>
+  <comment xml:lang="fo">KSpread rokniark</comment>
+  <comment xml:lang="fi">KSpread-taulukko</comment>
+  <comment xml:lang="eu">KSpread kalkulu-orria</comment>
+  <comment xml:lang="es">hoja de cálculo de KSpread</comment>
+  <comment xml:lang="eo">KSpread-kalkultabelo</comment>
+  <comment xml:lang="en-GB">KSpread spreadsheet</comment>
+  <comment xml:lang="el">Λογιστικό φύλλο KSpread</comment>
+  <comment xml:lang="de">KSpread-Tabelle</comment>
+  <comment xml:lang="da">KSpread-regneark</comment>
+  <comment xml:lang="cs">sešit KSpread</comment>
+  <comment xml:lang="ca">full de càlcul de KSpread</comment>
+  <comment xml:lang="bg">Таблица — KSpread</comment>
+  <comment xml:lang="be-Latn">Raźlikovy arkuš KSpread</comment>
+  <comment xml:lang="be-Cyrl">электронная табліца KSpread</comment>
+  <comment xml:lang="ar">جدول KSpread</comment>
+  <comment xml:lang="af">KSpread-sigblad</comment>
+  <generic-icon name="x-office-spreadsheet"/>
+  <glob pattern="*.ksp"/>
+</mime-type>

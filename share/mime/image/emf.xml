@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="image/emf">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>EMF image</comment>
+  <comment xml:lang="zh-Hant-TW">EMF 影像</comment>
+  <comment xml:lang="zh-Hans-CN">EMF 图像</comment>
+  <comment xml:lang="vi">Ảnh EMF</comment>
+  <comment xml:lang="uk">зображення EMF</comment>
+  <comment xml:lang="tr">EMF görüntüsü</comment>
+  <comment xml:lang="sv">EMF-bild</comment>
+  <comment xml:lang="sr-Cyrl">ЕМФ слика</comment>
+  <comment xml:lang="sq">figurë EMF</comment>
+  <comment xml:lang="sl">Slikovna datoteka EMF</comment>
+  <comment xml:lang="si">EMF රූපය</comment>
+  <comment xml:lang="sk">Obrázok EMF</comment>
+  <comment xml:lang="ru">Изображение EMF</comment>
+  <comment xml:lang="ro">Imagine EMF</comment>
+  <comment xml:lang="pt-BR">Imagem EMF</comment>
+  <comment xml:lang="pt">imagem EMF</comment>
+  <comment xml:lang="pl">Obraz EMF</comment>
+  <comment xml:lang="oc">imatge EMF</comment>
+  <comment xml:lang="nn">EMF-bilete</comment>
+  <comment xml:lang="nl">EMF-afbeelding</comment>
+  <comment xml:lang="nb">EMF-bilde</comment>
+  <comment xml:lang="lv">EMF attēls</comment>
+  <comment xml:lang="lt">EMF paveikslėlis</comment>
+  <comment xml:lang="ko">EMF 그림</comment>
+  <comment xml:lang="kk-Cyrl">EMF суреті</comment>
+  <comment xml:lang="ka">EMF გამოსახულება</comment>
+  <comment xml:lang="ja">EMF 画像</comment>
+  <comment xml:lang="it">Immagine EMF</comment>
+  <comment xml:lang="is">EMF mynd</comment>
+  <comment xml:lang="id">Citra EMF</comment>
+  <comment xml:lang="ia">Imagine EMF</comment>
+  <comment xml:lang="hu">EMF kép</comment>
+  <comment xml:lang="hr">EMF slika</comment>
+  <comment xml:lang="he">תמונת EMF</comment>
+  <comment xml:lang="gl">imaxe EMF</comment>
+  <comment xml:lang="ga">íomhá EMF</comment>
+  <comment xml:lang="fur">imagjin EMF</comment>
+  <comment xml:lang="fr">image EMF</comment>
+  <comment xml:lang="fo">EMF mynd</comment>
+  <comment xml:lang="fi">EMF-kuva</comment>
+  <comment xml:lang="eu">EMF irudia</comment>
+  <comment xml:lang="es">imagen EMF</comment>
+  <comment xml:lang="eo">EMF-bildo</comment>
+  <comment xml:lang="en-GB">EMF image</comment>
+  <comment xml:lang="el">Εικόνα EMF</comment>
+  <comment xml:lang="de">EMF-Bild</comment>
+  <comment xml:lang="da">EMF-billede</comment>
+  <comment xml:lang="cs">obrázek EMF</comment>
+  <comment xml:lang="ca">imatge EMF</comment>
+  <comment xml:lang="bg">Изображение — EMF</comment>
+  <comment xml:lang="be-Latn">Vyjava EMF</comment>
+  <comment xml:lang="be-Cyrl">выява EMF</comment>
+  <comment xml:lang="ar">صورة EMF</comment>
+  <comment xml:lang="af">EMF-beeld</comment>
+  <acronym>EMF</acronym>
+  <expanded-acronym>Enhanced MetaFile</expanded-acronym>
+  <glob pattern="*.emf"/>
+  <alias type="image/x-emf"/>
+  <alias type="application/x-emf"/>
+  <alias type="application/emf"/>
+</mime-type>

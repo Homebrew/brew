@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="x-content/audio-cdda">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Audio CD</comment>
+  <comment xml:lang="uk">звуковий компакт-диск</comment>
+  <comment xml:lang="sv">Ljud-cd</comment>
+  <comment xml:lang="ru">Аудио CD</comment>
+  <comment xml:lang="pt-BR">CD de áudio</comment>
+  <comment xml:lang="pl">CD-Audio</comment>
+  <comment xml:lang="ja">音声CD</comment>
+  <comment xml:lang="it">CD audio</comment>
+  <comment xml:lang="gl">CD de son</comment>
+  <comment xml:lang="eu">Audioko CDa</comment>
+  <comment xml:lang="es">CD de audio</comment>
+  <comment xml:lang="de">Audio-CD</comment>
+  <comment xml:lang="be-Cyrl">аўдыя CD</comment>
+</mime-type>

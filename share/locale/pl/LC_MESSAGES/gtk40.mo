@@ -1,0 +1,1 @@
+../../../../Cellar/gtk4/4.18.5/share/locale/pl/LC_MESSAGES/gtk40.mo

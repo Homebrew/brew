@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-kexi-connectiondata">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Kexi settings</comment>
+  <comment xml:lang="zh-Hant-TW">Kexi 設定</comment>
+  <comment xml:lang="zh-Hans-CN">Kexi 设置</comment>
+  <comment xml:lang="uk">параметри Kexi</comment>
+  <comment xml:lang="tr">Kexi ayarları</comment>
+  <comment xml:lang="sv">Kexi-inställningar</comment>
+  <comment xml:lang="sq">rregullime Kexi</comment>
+  <comment xml:lang="sl">Nastavitve Kexi</comment>
+  <comment xml:lang="si">Kexi සැකසුම්</comment>
+  <comment xml:lang="sk">Nastavenia Kexi</comment>
+  <comment xml:lang="ru">Файл настроек Kexi</comment>
+  <comment xml:lang="pt-BR">Configurações do Kexi</comment>
+  <comment xml:lang="pl">Ustawienia Kexi</comment>
+  <comment xml:lang="oc">paramètres Kexi</comment>
+  <comment xml:lang="nl">Kexi-instellingen</comment>
+  <comment xml:lang="ko">Kexi 설정</comment>
+  <comment xml:lang="kk-Cyrl">Kexi баптаулары</comment>
+  <comment xml:lang="ja">Kexi 設定</comment>
+  <comment xml:lang="it">Impostazioni Kexi</comment>
+  <comment xml:lang="is">Kexi stillingar</comment>
+  <comment xml:lang="id">Pengaturan Kexi</comment>
+  <comment xml:lang="hu">Kexi beállítások</comment>
+  <comment xml:lang="hr">Kexi postavke</comment>
+  <comment xml:lang="he">הגדרות Kexi</comment>
+  <comment xml:lang="gl">Preferencias de Kexi</comment>
+  <comment xml:lang="fr">réglages Kexi</comment>
+  <comment xml:lang="fi">Kexi-asetukset</comment>
+  <comment xml:lang="eu">Kexi ezarpenak</comment>
+  <comment xml:lang="es">configuración de Kexi</comment>
+  <comment xml:lang="en-GB">Kexi settings</comment>
+  <comment xml:lang="de">Kexi-Einstellungen</comment>
+  <comment xml:lang="da">Kexi-indstillinger</comment>
+  <comment xml:lang="ca">ajusts de Kexi</comment>
+  <comment xml:lang="bg">Настройки — Kexi</comment>
+  <comment xml:lang="be-Cyrl">налады Kexi</comment>
+  <comment xml:lang="ar">إعدادات Kexi</comment>
+  <glob pattern="*.kexic"/>
+</mime-type>

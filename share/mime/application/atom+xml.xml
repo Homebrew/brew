@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/atom+xml">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Atom syndication feed</comment>
+  <comment xml:lang="zh-Hant-TW">Atom 聯合供稿饋流</comment>
+  <comment xml:lang="zh-Hans-CN">Atom 聚合种子</comment>
+  <comment xml:lang="vi">Nguồn tin tức Atom</comment>
+  <comment xml:lang="uk">трансляція подач Atom</comment>
+  <comment xml:lang="tr">Atom besleme kaynağı</comment>
+  <comment xml:lang="sv">Atom-syndikeringskanal</comment>
+  <comment xml:lang="sr-Cyrl">Атомов довод синдикализације</comment>
+  <comment xml:lang="sq">prurje RSS Atom</comment>
+  <comment xml:lang="sl">Sindikalni vir Atom</comment>
+  <comment xml:lang="si">පරමාණු සින්ඩිකේෂන් පෝෂණය</comment>
+  <comment xml:lang="sk">Kanál Atom</comment>
+  <comment xml:lang="ru">Лента новостей Atom</comment>
+  <comment xml:lang="ro">Flux agregare Atom</comment>
+  <comment xml:lang="pt-BR">Fonte de notícias Atom</comment>
+  <comment xml:lang="pt">feed Atom</comment>
+  <comment xml:lang="pl">Kanał Atom</comment>
+  <comment xml:lang="oc">fial de sindicacion Atom</comment>
+  <comment xml:lang="nn">Atom-kjelde</comment>
+  <comment xml:lang="nl">Atom-syndicatie-feed</comment>
+  <comment xml:lang="nb">Atom syndikeringsstrøm</comment>
+  <comment xml:lang="lv">Atom sindikāta barotne</comment>
+  <comment xml:lang="lt">Atom sindikacijos kanalas</comment>
+  <comment xml:lang="ko">Atom 묶음 피드</comment>
+  <comment xml:lang="kk-Cyrl">Atom жаңалықтар таспасы</comment>
+  <comment xml:lang="ja">Atom 配信フィード</comment>
+  <comment xml:lang="it">Feed di distribuzione Atom</comment>
+  <comment xml:lang="is">Atom fréttastreymi</comment>
+  <comment xml:lang="id">Umpan sindikasi Atom</comment>
+  <comment xml:lang="ia">Fluxo de syndication Atom</comment>
+  <comment xml:lang="hu">Atom egyesítőfolyam</comment>
+  <comment xml:lang="hr">Atom kanal objavljivanja</comment>
+  <comment xml:lang="he">הזנה דרך הרשת של Atom</comment>
+  <comment xml:lang="gl">fonte de sindicación Atom</comment>
+  <comment xml:lang="ga">fotha sindeacáitithe Atom</comment>
+  <comment xml:lang="fur">canâl di notiziis Atom</comment>
+  <comment xml:lang="fr">fil de syndication Atom</comment>
+  <comment xml:lang="fi">Atom-yhdistevirta</comment>
+  <comment xml:lang="eu">Atom harpidetze-iturria</comment>
+  <comment xml:lang="es">suministro de sindicación Atom</comment>
+  <comment xml:lang="en-GB">Atom syndication feed</comment>
+  <comment xml:lang="el">Τροφοδοσία διανομής Atom</comment>
+  <comment xml:lang="de">Atom-Nachrichtenquelle</comment>
+  <comment xml:lang="da">Atom-syndikeringsfeed</comment>
+  <comment xml:lang="cs">kanál Atom</comment>
+  <comment xml:lang="ca">canal de sindicació Atom</comment>
+  <comment xml:lang="bg">Емисия — Atom</comment>
+  <comment xml:lang="be-Latn">Syndykacyjny kanał navinaŭ Atom</comment>
+  <comment xml:lang="be-Cyrl">канал сіндыкацыі Atom</comment>
+  <comment xml:lang="ar">مروج تغذية Atom</comment>
+  <sub-class-of type="application/xml"/>
+  <generic-icon name="text-html"/>
+  <glob pattern="*.atom"/>
+</mime-type>

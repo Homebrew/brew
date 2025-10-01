@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="text/x-verilog">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Verilog source code</comment>
+  <comment xml:lang="zh-Hant-TW">Verilog 源碼</comment>
+  <comment xml:lang="zh-Hans-CN">Verilog 源代码</comment>
+  <comment xml:lang="uk">початковий код мовою Verilog</comment>
+  <comment xml:lang="tr">Verilog kaynak kodu</comment>
+  <comment xml:lang="sv">Verilog-källkod</comment>
+  <comment xml:lang="sr-Cyrl">изворни код Верилога</comment>
+  <comment xml:lang="sq">kod burim Verilog</comment>
+  <comment xml:lang="sl">Datoteka izvorne kode Verilog</comment>
+  <comment xml:lang="si">Verilog මූලාශ්ර කේතය</comment>
+  <comment xml:lang="sk">Zdrojový kód Verilog</comment>
+  <comment xml:lang="ru">Исходный код Verilog</comment>
+  <comment xml:lang="pt-BR">Código-fonte Verilog</comment>
+  <comment xml:lang="pt">código origem Verilog</comment>
+  <comment xml:lang="pl">Kod źródłowy Verilog</comment>
+  <comment xml:lang="oc">còde font Verilog</comment>
+  <comment xml:lang="nl">Verilog-broncode</comment>
+  <comment xml:lang="lv">Verilog pirmkods</comment>
+  <comment xml:lang="ko">Verilog 소스 코드</comment>
+  <comment xml:lang="kk-Cyrl">Verilog бастапқы коды</comment>
+  <comment xml:lang="ja">Verilog ソースコード</comment>
+  <comment xml:lang="it">Codice sorgente Verilog</comment>
+  <comment xml:lang="is">Verilog frumkóði</comment>
+  <comment xml:lang="id">Kode sumber Verilog</comment>
+  <comment xml:lang="ia">Codice-fonte Verilog</comment>
+  <comment xml:lang="hu">Verilog-forráskód</comment>
+  <comment xml:lang="hr">Verilog izvorni kôd</comment>
+  <comment xml:lang="he">קוד מקור של </comment>
+  <comment xml:lang="gl">código fonte en Verilog</comment>
+  <comment xml:lang="ga">cód foinseach Verilog</comment>
+  <comment xml:lang="fur">codiç sorzint Verilog</comment>
+  <comment xml:lang="fr">code source Verilog</comment>
+  <comment xml:lang="fi">Verilog-lähdekoodi</comment>
+  <comment xml:lang="eu">Verilog iturburu-kodea</comment>
+  <comment xml:lang="es">código fuente en Verilog</comment>
+  <comment xml:lang="eo">Verilog-fontkodo</comment>
+  <comment xml:lang="en-GB">Verilog source code</comment>
+  <comment xml:lang="el">Πηγαίος κώδικας Verilog</comment>
+  <comment xml:lang="de">Verilog-Quelltext</comment>
+  <comment xml:lang="da">Verilog-kildekode</comment>
+  <comment xml:lang="cs">zdrojový kód v jazyce Verilog</comment>
+  <comment xml:lang="ca">codi font en Verilog</comment>
+  <comment xml:lang="bg">Изходен код — Verilog</comment>
+  <comment xml:lang="be-Cyrl">зыходны код Verilog</comment>
+  <comment xml:lang="ar">شفرة مصدر Verilog</comment>
+  <comment xml:lang="af">Verilog-bronkode</comment>
+  <sub-class-of type="text/plain"/>
+  <glob pattern="*.v"/>
+</mime-type>

@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/sql">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>SQL code</comment>
+  <comment xml:lang="zh-Hant-TW">SQL 程式碼</comment>
+  <comment xml:lang="zh-Hans-CN">SQL 代码</comment>
+  <comment xml:lang="vi">Mã SQL</comment>
+  <comment xml:lang="uk">код SQL</comment>
+  <comment xml:lang="tr">SQL kodu</comment>
+  <comment xml:lang="sv">SQL-kod</comment>
+  <comment xml:lang="sr-Cyrl">СКуЛ ко̂д</comment>
+  <comment xml:lang="sq">kod SQL</comment>
+  <comment xml:lang="sl">Datoteka kode SQL</comment>
+  <comment xml:lang="si">SQL කේතය</comment>
+  <comment xml:lang="sk">Kód SQL</comment>
+  <comment xml:lang="ru">Код SQL</comment>
+  <comment xml:lang="ro">Cod SQL</comment>
+  <comment xml:lang="pt-BR">Código SQL</comment>
+  <comment xml:lang="pt">código SQL</comment>
+  <comment xml:lang="pl">Kod SQL</comment>
+  <comment xml:lang="oc">còde SQL</comment>
+  <comment xml:lang="nn">SQL-kode</comment>
+  <comment xml:lang="nl">SQL-code</comment>
+  <comment xml:lang="nb">SQL-kildekode</comment>
+  <comment xml:lang="ms">Kod SQL</comment>
+  <comment xml:lang="lv">SQL kods</comment>
+  <comment xml:lang="lt">SQL kodas</comment>
+  <comment xml:lang="ko">SQL 코드</comment>
+  <comment xml:lang="kk-Cyrl">SQL коды</comment>
+  <comment xml:lang="ja">SQL コード</comment>
+  <comment xml:lang="it">Codice SQL</comment>
+  <comment xml:lang="is">SQL kóði</comment>
+  <comment xml:lang="id">Kode SQL</comment>
+  <comment xml:lang="ia">Codice SQL</comment>
+  <comment xml:lang="hu">SQL-kód</comment>
+  <comment xml:lang="hr">SQL kôd</comment>
+  <comment xml:lang="he">קוד SQL</comment>
+  <comment xml:lang="gl">código SQL</comment>
+  <comment xml:lang="ga">cód SQL</comment>
+  <comment xml:lang="fur">codiç SQL</comment>
+  <comment xml:lang="fr">code SQL</comment>
+  <comment xml:lang="fo">SQL kota</comment>
+  <comment xml:lang="fi">SQL-koodi</comment>
+  <comment xml:lang="eu">SQL kodea</comment>
+  <comment xml:lang="es">código SQL</comment>
+  <comment xml:lang="eo">SQL-kodo</comment>
+  <comment xml:lang="en-GB">SQL code</comment>
+  <comment xml:lang="el">Κώδικας SQL</comment>
+  <comment xml:lang="de">SQL-Befehle</comment>
+  <comment xml:lang="da">SQL-kode</comment>
+  <comment xml:lang="cy">Côd SQL</comment>
+  <comment xml:lang="cs">kód SQL</comment>
+  <comment xml:lang="ca">codi en SQL</comment>
+  <comment xml:lang="bg">Код — SQL</comment>
+  <comment xml:lang="be-Latn">Kod SQL</comment>
+  <comment xml:lang="be-Cyrl">код SQL</comment>
+  <comment xml:lang="az">SQL kodu</comment>
+  <comment xml:lang="ar">شفرة SQL</comment>
+  <comment xml:lang="af">SQL-kode</comment>
+  <sub-class-of type="text/plain"/>
+  <glob pattern="*.sql"/>
+  <alias type="text/x-sql"/>
+</mime-type>

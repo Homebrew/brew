@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/pkcs12">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>PKCS#12 certificate bundle</comment>
+  <comment xml:lang="zh-Hant-TW">PKCS#12 憑證綁包</comment>
+  <comment xml:lang="zh-Hans-CN">PKCS#12 证书束</comment>
+  <comment xml:lang="vi">Bó chứng nhận PKCS#12</comment>
+  <comment xml:lang="uk">комплект сертифікатів PKCS#12</comment>
+  <comment xml:lang="tr">PKCS#12 sertifika paketi</comment>
+  <comment xml:lang="sv">PKCS#12-certifikatsamling</comment>
+  <comment xml:lang="sr-Cyrl">ПКЦС#12 пакет уверења</comment>
+  <comment xml:lang="sq">paketë dëshmish PKCS#12</comment>
+  <comment xml:lang="sl">Datoteka potrdila PKCS#12</comment>
+  <comment xml:lang="si">PKCS#12 සහතික මිටියක්</comment>
+  <comment xml:lang="sk">Zväzok certifikátov PKCS#12</comment>
+  <comment xml:lang="ru">Пакет сертификата PKCS#12</comment>
+  <comment xml:lang="ro">Certificat împachetat PKCS#12</comment>
+  <comment xml:lang="pt-BR">Pacote de certificados PKCS#12</comment>
+  <comment xml:lang="pt">pacote de certificação PKCS#12</comment>
+  <comment xml:lang="pl">Pakiet certyfikatu PKCS#12</comment>
+  <comment xml:lang="oc">lòt de certificats PKCS#12</comment>
+  <comment xml:lang="nn">PKCS#12-sertifikatbunt</comment>
+  <comment xml:lang="nl">PKCS#12-certificaatbundel</comment>
+  <comment xml:lang="nb">PKCS#12 sertifikathaug</comment>
+  <comment xml:lang="ms">Sijil PKCS#12</comment>
+  <comment xml:lang="lv">PKCS#12 sertifikātu saišķis</comment>
+  <comment xml:lang="lt">PKCS#12 liudijimų ryšulys</comment>
+  <comment xml:lang="ko">PKCS#12 인증서 묶음</comment>
+  <comment xml:lang="kk-Cyrl">PKCS#12 сертификаттар дестесі</comment>
+  <comment xml:lang="ja">PKCS#12 証明書バンドル</comment>
+  <comment xml:lang="it">Bundle certificato PKCS#12</comment>
+  <comment xml:lang="is">PKCS#12 skilríkjavöndull</comment>
+  <comment xml:lang="id">Bundel sertifikat PKCS#12</comment>
+  <comment xml:lang="ia">Pacchetto de certificatos PKCS#12</comment>
+  <comment xml:lang="hu">PKCS#12-tanúsítványcsomag</comment>
+  <comment xml:lang="hr">PKCS#12 paket vjerodajnica</comment>
+  <comment xml:lang="he">בקשה מוסמכת PKCS#12</comment>
+  <comment xml:lang="gl">paquete de certificado PKCS#12</comment>
+  <comment xml:lang="ga">burla teastas PKCS#12</comment>
+  <comment xml:lang="fur">côl di certificâts PKCS#12</comment>
+  <comment xml:lang="fr">lot de certificats PKCS#12</comment>
+  <comment xml:lang="fo">PKCS#12 váttanar bundi</comment>
+  <comment xml:lang="fi">PKCS#12-varmennepaketti</comment>
+  <comment xml:lang="eu">PKCS#12 zertifikazio sorta</comment>
+  <comment xml:lang="es">lote de certificados PCKS#12</comment>
+  <comment xml:lang="eo">ligaĵo de PKCS#12-atestiloj</comment>
+  <comment xml:lang="en-GB">PKCS#12 certificate bundle</comment>
+  <comment xml:lang="el">Πακέτο ψηφιακών πιστοποιητικών PKCS#12</comment>
+  <comment xml:lang="de">PKCS#12-Zertifikatpaket</comment>
+  <comment xml:lang="da">PKCS#12-certifikatbundt</comment>
+  <comment xml:lang="cs">svazek certifikátů PKCS#12</comment>
+  <comment xml:lang="ca">conjunt de certificats PKCS#12</comment>
+  <comment xml:lang="bg">Пакет със сертификати — PKCS#12</comment>
+  <comment xml:lang="be-Latn">Viazka sertyfikataŭ PKCS#12</comment>
+  <comment xml:lang="be-Cyrl">пакет сертыфікатаў PKCS#12</comment>
+  <comment xml:lang="ar">رزمة شهادة PKCS#12</comment>
+  <comment xml:lang="af">PKCS#12-sertifikaatbundel</comment>
+  <acronym>PKCS</acronym>
+  <expanded-acronym>Public-Key Cryptography Standards</expanded-acronym>
+  <glob pattern="*.p12"/>
+  <glob pattern="*.pfx"/>
+  <alias type="application/x-pkcs12"/>
+</mime-type>

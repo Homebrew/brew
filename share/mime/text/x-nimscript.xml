@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="text/x-nimscript">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Nimscript source code</comment>
+  <comment xml:lang="uk">початковий код мовою Nimscript</comment>
+  <comment xml:lang="sv">Nimscript-källkod</comment>
+  <comment xml:lang="ru">Исходный код Nimscript</comment>
+  <comment xml:lang="pl">Kod źródłowy NimScript</comment>
+  <comment xml:lang="it">Codice sorgente Nimscript</comment>
+  <comment xml:lang="gl">Código fonte Nimscript</comment>
+  <comment xml:lang="eu">Nimscript iturburu-kodea</comment>
+  <comment xml:lang="es">código fuente en Nimscript</comment>
+  <comment xml:lang="de">Nimscript-Quelltext</comment>
+  <comment xml:lang="be-Cyrl">зыходны код Nimscript</comment>
+  <sub-class-of type="text/x-nim"/>
+  <glob pattern="*.nims"/>
+  <glob pattern="*.nimble"/>
+</mime-type>

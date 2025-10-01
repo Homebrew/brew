@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="text/x-ocl">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>OCL file</comment>
+  <comment xml:lang="zh-Hant-TW">OCL 檔</comment>
+  <comment xml:lang="zh-Hans-CN">OCL 文件</comment>
+  <comment xml:lang="vi">Tập tin OCL</comment>
+  <comment xml:lang="uk">файл OCL</comment>
+  <comment xml:lang="tr">OCL dosyası</comment>
+  <comment xml:lang="sv">OCL-fil</comment>
+  <comment xml:lang="sr-Cyrl">ОЦЛ датотека</comment>
+  <comment xml:lang="sq">kartelë OCL</comment>
+  <comment xml:lang="sl">Datoteka OCL</comment>
+  <comment xml:lang="si">OCL ගොනුව</comment>
+  <comment xml:lang="sk">Súbor OCL</comment>
+  <comment xml:lang="ru">Файл OCL</comment>
+  <comment xml:lang="ro">Fișier OCL</comment>
+  <comment xml:lang="pt-BR">Arquivo OCL</comment>
+  <comment xml:lang="pt">ficheiro OCL</comment>
+  <comment xml:lang="pl">Plik OCL</comment>
+  <comment xml:lang="oc">fichièr OCL</comment>
+  <comment xml:lang="nn">OCL-fil</comment>
+  <comment xml:lang="nl">OCL-bestand</comment>
+  <comment xml:lang="nb">OCL-fil</comment>
+  <comment xml:lang="lv">OCL datne</comment>
+  <comment xml:lang="lt">OCL failas</comment>
+  <comment xml:lang="ko">OCL 파일</comment>
+  <comment xml:lang="kk-Cyrl">OCL файлы</comment>
+  <comment xml:lang="ja">OCL ファイル</comment>
+  <comment xml:lang="it">File OCL</comment>
+  <comment xml:lang="is">OCL skrá</comment>
+  <comment xml:lang="id">Berkas OCL</comment>
+  <comment xml:lang="ia">File OCL</comment>
+  <comment xml:lang="hu">OCL fájl</comment>
+  <comment xml:lang="hr">OCL datoteka</comment>
+  <comment xml:lang="he">קובץ OCL</comment>
+  <comment xml:lang="gl">ficheiro OCL</comment>
+  <comment xml:lang="ga">comhad OCL</comment>
+  <comment xml:lang="fur">file OCL</comment>
+  <comment xml:lang="fr">fichier OCL</comment>
+  <comment xml:lang="fo">OCL fíla</comment>
+  <comment xml:lang="fi">OCL-tiedosto</comment>
+  <comment xml:lang="eu">OCL fitxategia</comment>
+  <comment xml:lang="es">archivo OCL</comment>
+  <comment xml:lang="eo">OCL-dosiero</comment>
+  <comment xml:lang="en-GB">OCL file</comment>
+  <comment xml:lang="el">Αρχείο OCL</comment>
+  <comment xml:lang="de">OCL-Datei</comment>
+  <comment xml:lang="da">OCL-fil</comment>
+  <comment xml:lang="cs">soubor OCL</comment>
+  <comment xml:lang="ca">fitxer OCL</comment>
+  <comment xml:lang="bg">Файл — OCL</comment>
+  <comment xml:lang="be-Latn">Fajł OCL</comment>
+  <comment xml:lang="be-Cyrl">файл OCL</comment>
+  <comment xml:lang="ar">ملف OCL</comment>
+  <comment xml:lang="af">OCL-lêer</comment>
+  <acronym>OCL</acronym>
+  <expanded-acronym>Object Constraint Language</expanded-acronym>
+  <sub-class-of type="text/plain"/>
+  <glob pattern="*.ocl"/>
+</mime-type>

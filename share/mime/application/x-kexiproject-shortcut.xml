@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-kexiproject-shortcut">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Kexi shortcut</comment>
+  <comment xml:lang="zh-Hant-TW">Kexi 捷徑</comment>
+  <comment xml:lang="zh-Hans-CN">Kexi 快捷方式</comment>
+  <comment xml:lang="uk">скорочення Kexi</comment>
+  <comment xml:lang="tr">Kexi kısayolu</comment>
+  <comment xml:lang="sv">Kexi-genväg</comment>
+  <comment xml:lang="sq">shkurtore Kexi</comment>
+  <comment xml:lang="sl">Bližnjica Kexi</comment>
+  <comment xml:lang="si">Kexi කෙටිමඟ</comment>
+  <comment xml:lang="sk">Odkaz Kexi</comment>
+  <comment xml:lang="ru">Ссылка Kexi</comment>
+  <comment xml:lang="pt-BR">Atalho do Kexi</comment>
+  <comment xml:lang="pl">Skrót Kexi</comment>
+  <comment xml:lang="nl">Kexi-snelkoppeling</comment>
+  <comment xml:lang="ko">Kexi 바로 가기</comment>
+  <comment xml:lang="kk-Cyrl">Kexi жарлығы</comment>
+  <comment xml:lang="ja">Kexi ショートカット</comment>
+  <comment xml:lang="it">Scorciatoia Kexi</comment>
+  <comment xml:lang="is">Kexi fýtileið</comment>
+  <comment xml:lang="id">Pintasan Kexi</comment>
+  <comment xml:lang="hu">Kexi parancsiko</comment>
+  <comment xml:lang="hr">Kexi prečac</comment>
+  <comment xml:lang="he">קיצור דרך של Kexi</comment>
+  <comment xml:lang="gl">Atallo de Kexi</comment>
+  <comment xml:lang="fr">raccourci Kexi</comment>
+  <comment xml:lang="fi">Kexi-pikakuvake</comment>
+  <comment xml:lang="eu">Kexi lasterbidea</comment>
+  <comment xml:lang="es">atajo de Kexi</comment>
+  <comment xml:lang="en-GB">Kexi shortcut</comment>
+  <comment xml:lang="de">Kexi-Verweis</comment>
+  <comment xml:lang="da">Kexi-genvej</comment>
+  <comment xml:lang="ca">drecera de Kexi</comment>
+  <comment xml:lang="bg">Ускорител — Kexi</comment>
+  <comment xml:lang="be-Cyrl">ярлык Kexi</comment>
+  <comment xml:lang="ar">اختصار Kexi</comment>
+  <glob pattern="*.kexis"/>
+</mime-type>

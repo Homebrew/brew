@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/pkcs8">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>PKCS#8 private key</comment>
+  <comment xml:lang="zh-Hant-TW">PKCS#8 私人金鑰</comment>
+  <comment xml:lang="zh-Hans-CN">PKCS#8 私钥</comment>
+  <comment xml:lang="uk">закритий ключ PKCS#8</comment>
+  <comment xml:lang="tr">PKCS#8 özel anahtarı</comment>
+  <comment xml:lang="sv">Privat PKCS#8-nyckel</comment>
+  <comment xml:lang="sr-Cyrl">ПКЦС#8 лични кључ</comment>
+  <comment xml:lang="sq">kyç privat PKCS#8</comment>
+  <comment xml:lang="sl">Datoteka osebnega ključa PKCS#8</comment>
+  <comment xml:lang="si">PKCS#8 පුද්ගලික යතුර</comment>
+  <comment xml:lang="sk">Súkromný kľúč PKCS#8</comment>
+  <comment xml:lang="ru">Личный ключ PKCS#8</comment>
+  <comment xml:lang="ro">Cheie privată PKCS#8</comment>
+  <comment xml:lang="pt-BR">Chave privada PKCS#8</comment>
+  <comment xml:lang="pt">chave privada PKCS#8</comment>
+  <comment xml:lang="pl">Klucz prywatny PKCS#8</comment>
+  <comment xml:lang="oc">clau privada PKCS#8</comment>
+  <comment xml:lang="nl">PKCS#8-privésleutel</comment>
+  <comment xml:lang="lv">PKCS#8 privātā atslēga</comment>
+  <comment xml:lang="lt">PKCS#8 asmeninis raktas</comment>
+  <comment xml:lang="ko">PKCS#8 개인 키</comment>
+  <comment xml:lang="kk-Cyrl">PKCS#8 меншік кілті</comment>
+  <comment xml:lang="ja">PKCS#8 秘密鍵</comment>
+  <comment xml:lang="it">Chiave privata PKCS#8</comment>
+  <comment xml:lang="is">PKCS#8 einkalykill</comment>
+  <comment xml:lang="id">Kunci privat PKCS#8</comment>
+  <comment xml:lang="ia">Clave private PKCS#8</comment>
+  <comment xml:lang="hu">PKCS#8 személyes kulcs</comment>
+  <comment xml:lang="hr">PKCS#8 privatni ključ</comment>
+  <comment xml:lang="he">מפתח פרטי של PKCS#8</comment>
+  <comment xml:lang="gl">Chave privada PKCS#8</comment>
+  <comment xml:lang="ga">eochair phríobháideach PKCS#8</comment>
+  <comment xml:lang="fur">clâf privade PKCS#8</comment>
+  <comment xml:lang="fr">clé privée PKCS#8</comment>
+  <comment xml:lang="fo">PKCS#8 privatur lykil</comment>
+  <comment xml:lang="fi">PKCS#8 yksityinen avain</comment>
+  <comment xml:lang="eu">PKCS#8 gako pribatua</comment>
+  <comment xml:lang="es">clave privada PCKS#8</comment>
+  <comment xml:lang="en-GB">PKCS#8 private key</comment>
+  <comment xml:lang="el">Ιδιωτικό κλειδί PKCS#8</comment>
+  <comment xml:lang="de">Privater PKCS#8-Schlüssel</comment>
+  <comment xml:lang="da">PKCS#8-privat nøgle</comment>
+  <comment xml:lang="cs">soukromý klíč PKCS#8</comment>
+  <comment xml:lang="ca">clau privada PKCS#8</comment>
+  <comment xml:lang="bg">Ключ — PKCS#8, частен</comment>
+  <comment xml:lang="be-Cyrl">закрыты ключ PKCS#8</comment>
+  <comment xml:lang="ar">رزمة شهادة PKCS#8</comment>
+  <comment xml:lang="af">PKCS#8- private sleutel</comment>
+  <acronym>PKCS</acronym>
+  <expanded-acronym>Public-Key Cryptography Standards</expanded-acronym>
+  <glob pattern="*.p8"/>
+</mime-type>

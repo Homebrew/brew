@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="image/cgm">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>CGM image</comment>
+  <comment xml:lang="zh-Hant-TW">CGM 影像</comment>
+  <comment xml:lang="zh-Hans-CN">CGM 图像</comment>
+  <comment xml:lang="uk">зображення CGM</comment>
+  <comment xml:lang="tr">CGM görüntüsü</comment>
+  <comment xml:lang="sv">CGM-bild</comment>
+  <comment xml:lang="sq">figurë CGM</comment>
+  <comment xml:lang="sl">Slika CGM</comment>
+  <comment xml:lang="si">CGM රූපය</comment>
+  <comment xml:lang="sk">Obrázok CGM</comment>
+  <comment xml:lang="ru">Изображение CGM</comment>
+  <comment xml:lang="pt-BR">Imagem CGM</comment>
+  <comment xml:lang="pl">Obraz CGM</comment>
+  <comment xml:lang="oc">imatge CGM</comment>
+  <comment xml:lang="nl">CGM-afbeelding</comment>
+  <comment xml:lang="ko">CGM 이미지</comment>
+  <comment xml:lang="kk-Cyrl">CGM суреті</comment>
+  <comment xml:lang="ja">CGM 画像</comment>
+  <comment xml:lang="it">Immagine CGM</comment>
+  <comment xml:lang="is">CGM mynd</comment>
+  <comment xml:lang="id">Citra CGM</comment>
+  <comment xml:lang="hu">CGM-kép</comment>
+  <comment xml:lang="hr">CGM slika</comment>
+  <comment xml:lang="he">תמונת CGM</comment>
+  <comment xml:lang="fr">image CGM</comment>
+  <comment xml:lang="fi">CGM-kuva</comment>
+  <comment xml:lang="eu">CGM irudia</comment>
+  <comment xml:lang="es">imagen CGM</comment>
+  <comment xml:lang="en-GB">CGM image</comment>
+  <comment xml:lang="de">CGM-Bild</comment>
+  <comment xml:lang="da">CGM-billede</comment>
+  <comment xml:lang="ca">imatge CGM</comment>
+  <comment xml:lang="bg">Изображение — CGM</comment>
+  <comment xml:lang="be-Cyrl">выява CGM</comment>
+  <comment xml:lang="ar">صورة CGM</comment>
+  <acronym>CGM</acronym>
+  <expanded-acronym>Computer Graphics Metafile</expanded-acronym>
+  <glob pattern="*.cgm"/>
+</mime-type>

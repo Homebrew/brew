@@ -1,0 +1,1 @@
+../../../Cellar/git-lfs/3.7.0/share/fish/vendor_completions.d/git-lfs.fish

@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-font-dos">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>DOS font</comment>
+  <comment xml:lang="zh-Hant-TW">DOS 字型</comment>
+  <comment xml:lang="zh-Hans-CN">DOS 字体</comment>
+  <comment xml:lang="vi">Phông chữ DOS</comment>
+  <comment xml:lang="uk">шрифт DOS</comment>
+  <comment xml:lang="tr">DOS yazı tipi</comment>
+  <comment xml:lang="sv">DOS-typsnitt</comment>
+  <comment xml:lang="sr-Cyrl">ДОС слова</comment>
+  <comment xml:lang="sq">shkronja DOS</comment>
+  <comment xml:lang="sl">Datoteka pisave DOS</comment>
+  <comment xml:lang="si">DOS අකුරු</comment>
+  <comment xml:lang="sk">Písmo pre DOS</comment>
+  <comment xml:lang="ru">Шрифт DOS</comment>
+  <comment xml:lang="ro">Font DOS</comment>
+  <comment xml:lang="pt-BR">Fonte do DOS</comment>
+  <comment xml:lang="pt">letra DOS</comment>
+  <comment xml:lang="pl">Czcionka DOS</comment>
+  <comment xml:lang="oc">poliça DOS</comment>
+  <comment xml:lang="nn">DOS-skrifttype</comment>
+  <comment xml:lang="nl">DOS-lettertype</comment>
+  <comment xml:lang="nb">DOS-skrifttype</comment>
+  <comment xml:lang="ms">Font DOS</comment>
+  <comment xml:lang="lv">DOS fonts</comment>
+  <comment xml:lang="lt">DOS šriftas</comment>
+  <comment xml:lang="ko">DOS 글꼴</comment>
+  <comment xml:lang="kk-Cyrl">DOS қарібі</comment>
+  <comment xml:lang="ja">DOS フォント</comment>
+  <comment xml:lang="it">Carattere DOS</comment>
+  <comment xml:lang="is">DOS letur</comment>
+  <comment xml:lang="id">Fonta DOS</comment>
+  <comment xml:lang="ia">Typo de litteras DOS</comment>
+  <comment xml:lang="hu">DOS-betűkészlet</comment>
+  <comment xml:lang="hr">DOS font</comment>
+  <comment xml:lang="he">גופן DOS</comment>
+  <comment xml:lang="gl">tipo de fonte de DOS</comment>
+  <comment xml:lang="ga">cló DOS</comment>
+  <comment xml:lang="fur">caratar DOS</comment>
+  <comment xml:lang="fr">police DOS</comment>
+  <comment xml:lang="fo">DOS stavasnið</comment>
+  <comment xml:lang="fi">DOS-fontti</comment>
+  <comment xml:lang="eu">DOS letra-tipoa</comment>
+  <comment xml:lang="es">tipo de letra de DOS</comment>
+  <comment xml:lang="eo">DOS-tiparo</comment>
+  <comment xml:lang="en-GB">DOS font</comment>
+  <comment xml:lang="el">Γραμματοσειρά DOS</comment>
+  <comment xml:lang="de">DOS-Schrift</comment>
+  <comment xml:lang="da">DOS-skrifttype</comment>
+  <comment xml:lang="cy">Ffont DOS</comment>
+  <comment xml:lang="cs">font pro DOS</comment>
+  <comment xml:lang="ca">lletra DOS</comment>
+  <comment xml:lang="bg">Шрифт —  DOS</comment>
+  <comment xml:lang="be-Latn">Šryft DOS</comment>
+  <comment xml:lang="be-Cyrl">шрыфт DOS</comment>
+  <comment xml:lang="az">DOS yazı növü</comment>
+  <comment xml:lang="ar">خط DOS</comment>
+  <comment xml:lang="af">DOS-skriftipe</comment>
+  <generic-icon name="font-x-generic"/>
+</mime-type>

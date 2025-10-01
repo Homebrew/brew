@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-perf-data">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Perf data</comment>
+  <comment xml:lang="uk">дані Perf</comment>
+  <comment xml:lang="sv">Perf-data</comment>
+  <comment xml:lang="ru">Данные Perf</comment>
+  <comment xml:lang="pl">Dane wydajności</comment>
+  <comment xml:lang="it">Dati perf</comment>
+  <comment xml:lang="gl">Datos de Perf</comment>
+  <comment xml:lang="es">datos de rendimiento</comment>
+  <comment xml:lang="de">Leistungsdaten</comment>
+  <glob pattern="perf.data" case-sensitive="true"/>
+</mime-type>

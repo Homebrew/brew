@@ -1,0 +1,1 @@
+../../Cellar/sdl2/2.32.6/share/aclocal/sdl2.m4

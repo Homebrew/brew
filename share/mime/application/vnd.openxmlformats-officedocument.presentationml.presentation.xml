@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/vnd.openxmlformats-officedocument.presentationml.presentation">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>PowerPoint 2007 presentation</comment>
+  <comment xml:lang="zh-Hant-TW">PowerPoint 2007 簡報</comment>
+  <comment xml:lang="zh-Hans-CN">PowerPoint 2007 演示文稿</comment>
+  <comment xml:lang="vi">Trình diễn PowerPoint 2007</comment>
+  <comment xml:lang="uk">презентація PowerPoint 2007</comment>
+  <comment xml:lang="tr">PowerPoint 2007 sunumu</comment>
+  <comment xml:lang="sv">PowerPoint 2007-presentation</comment>
+  <comment xml:lang="sr-Cyrl">презентација Пауер Поинта 2007</comment>
+  <comment xml:lang="sq">paraqitje PowerPoint 2007</comment>
+  <comment xml:lang="sl">Predstavitev Microsoft PowerPoint 2007</comment>
+  <comment xml:lang="si">PowerPoint 2007 ඉදිරිපත් කිරීම</comment>
+  <comment xml:lang="sk">Prezentácia PowerPoint 2007</comment>
+  <comment xml:lang="ru">Презентация PowerPoint 2007</comment>
+  <comment xml:lang="ro">Prezentare PowerPoint 2007</comment>
+  <comment xml:lang="pt-BR">Apresentação do PowerPoint 2007</comment>
+  <comment xml:lang="pt">apresentação PowerPoint 2007</comment>
+  <comment xml:lang="pl">Prezentacja PowerPoint 2007</comment>
+  <comment xml:lang="oc">presentacion PowerPoint 2007</comment>
+  <comment xml:lang="nl">PowerPoint 2007-presentatie</comment>
+  <comment xml:lang="lv">PowerPoint 2007 prezentācija</comment>
+  <comment xml:lang="lt">PowerPoint 2007 pateiktis</comment>
+  <comment xml:lang="ko">PowerPoint 2007 프레젠테이션</comment>
+  <comment xml:lang="kk-Cyrl">PowerPoint 2007 презентациясы</comment>
+  <comment xml:lang="ja">PowerPoint 2007 プレゼンテーション</comment>
+  <comment xml:lang="it">Presentazione standard PowerPoint 2007</comment>
+  <comment xml:lang="is">PowerPoint 2007 kynning</comment>
+  <comment xml:lang="id">Presentasi PowerPoint 2007</comment>
+  <comment xml:lang="ia">Presentation PowerPoint 2007</comment>
+  <comment xml:lang="hu">PowerPoint 2007 prezentáció</comment>
+  <comment xml:lang="hr">PowerPoint 2007 prezentacija</comment>
+  <comment xml:lang="he">מצגת של PowerPoint 2007</comment>
+  <comment xml:lang="gl">presentación de PowerPoint 2007</comment>
+  <comment xml:lang="ga">láithreoireacht PowerPoint 2007</comment>
+  <comment xml:lang="fur">presentazion PowerPoint 2007</comment>
+  <comment xml:lang="fr">présentation PowerPoint 2007</comment>
+  <comment xml:lang="fo">PowerPoint 2007 framløga</comment>
+  <comment xml:lang="fi">PowerPoint 2007 -esitys</comment>
+  <comment xml:lang="eu">PowerPoint 2007 aurkezpena</comment>
+  <comment xml:lang="es">presentación de PowerPoint 2007</comment>
+  <comment xml:lang="en-GB">PowerPoint 2007 presentation</comment>
+  <comment xml:lang="el">Παρουσίαση PowerPoint 2007</comment>
+  <comment xml:lang="de">PowerPoint-2007-Präsentation</comment>
+  <comment xml:lang="da">PowerPoint 2007-præsentation</comment>
+  <comment xml:lang="cs">prezentace PowerPoint 2007</comment>
+  <comment xml:lang="ca">presentació de PowerPoint 2007</comment>
+  <comment xml:lang="bg">Презентация — PowerPoint 2007</comment>
+  <comment xml:lang="be-Cyrl">прэзентацыя PowerPoint 2007</comment>
+  <comment xml:lang="ar">عرض تقديمي بوربوينت 2007</comment>
+  <comment xml:lang="af">PowerPoint 2007-voorlegging</comment>
+  <glob pattern="*.pptx"/>
+  <sub-class-of type="application/zip"/>
+  <generic-icon name="x-office-presentation"/>
+</mime-type>

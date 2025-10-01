@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="text/x-scala">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Scala source code</comment>
+  <comment xml:lang="zh-Hant-TW">Scala 源碼</comment>
+  <comment xml:lang="zh-Hans-CN">Scala 源代码</comment>
+  <comment xml:lang="uk">початковий код мовою Scala</comment>
+  <comment xml:lang="tr">Scala kaynak kodu</comment>
+  <comment xml:lang="sv">Scala-källkod</comment>
+  <comment xml:lang="sr-Cyrl">Скала изворни ко̂д</comment>
+  <comment xml:lang="sq">kod burim Scala</comment>
+  <comment xml:lang="sl">Izvorna koda Scala</comment>
+  <comment xml:lang="si">Scala මූල කේතය</comment>
+  <comment xml:lang="sk">Zdrojový kód Scala</comment>
+  <comment xml:lang="ru">Исходный код Scala</comment>
+  <comment xml:lang="pt-BR">Código-fonte Scala</comment>
+  <comment xml:lang="pt">código origem Scala</comment>
+  <comment xml:lang="pl">Kod źródłowy Scala</comment>
+  <comment xml:lang="oc">còde font Scala</comment>
+  <comment xml:lang="nl">Scala broncode</comment>
+  <comment xml:lang="lv">Scala pirmkods</comment>
+  <comment xml:lang="ko">Scala 소스 코드</comment>
+  <comment xml:lang="kk-Cyrl">Scala бастапқы коды</comment>
+  <comment xml:lang="ka">Scala-ის საწყისი კოდი</comment>
+  <comment xml:lang="ja">Scala ソースコード</comment>
+  <comment xml:lang="it">Codice sorgente Scala</comment>
+  <comment xml:lang="is">Scala frumkóði</comment>
+  <comment xml:lang="id">Kode sumber Scala</comment>
+  <comment xml:lang="ia">Codice-fonte Scala</comment>
+  <comment xml:lang="hu">Scala forráskód</comment>
+  <comment xml:lang="hr">Scala izvorni kôd</comment>
+  <comment xml:lang="he">קוד מקור של Scala</comment>
+  <comment xml:lang="gl">código fnote en Scala</comment>
+  <comment xml:lang="ga">cód foinseach Scala</comment>
+  <comment xml:lang="fur">codiç sorzint Scala</comment>
+  <comment xml:lang="fr">code source Scala</comment>
+  <comment xml:lang="fi">Scala-lähdekoodi</comment>
+  <comment xml:lang="eu">Scala iturburu-kodea</comment>
+  <comment xml:lang="es">código fuente en Scala</comment>
+  <comment xml:lang="en-GB">Scala source code</comment>
+  <comment xml:lang="el">Πηγαίος κώδικας Scala</comment>
+  <comment xml:lang="de">Scala-Quelltext</comment>
+  <comment xml:lang="da">Scala-kildekode</comment>
+  <comment xml:lang="cs">zdrojový kód Scala</comment>
+  <comment xml:lang="ca">codi font en Scala</comment>
+  <comment xml:lang="bg">Изходен код — Scala</comment>
+  <comment xml:lang="be-Cyrl">зыходны код Scala</comment>
+  <comment xml:lang="ar">شفرة مصدر Scala</comment>
+  <comment xml:lang="af">Scala-bronkode</comment>
+  <sub-class-of type="text/plain"/>
+  <glob pattern="*.scala"/>
+  <glob pattern="*.sc"/>
+</mime-type>

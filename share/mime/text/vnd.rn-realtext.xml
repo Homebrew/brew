@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="text/vnd.rn-realtext">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>RealText document</comment>
+  <comment xml:lang="zh-Hant-TW">RealText 文件</comment>
+  <comment xml:lang="zh-Hans-CN">RealText 文档</comment>
+  <comment xml:lang="vi">Tài liệu văn bản RealText</comment>
+  <comment xml:lang="uk">документ RealText</comment>
+  <comment xml:lang="tr">RealText belgesi</comment>
+  <comment xml:lang="sv">RealText-dokument</comment>
+  <comment xml:lang="sr-Cyrl">документ Рил Текста</comment>
+  <comment xml:lang="sq">dokument RealText</comment>
+  <comment xml:lang="sl">Dokument RealText</comment>
+  <comment xml:lang="si">RealText ලේඛනය</comment>
+  <comment xml:lang="sk">Dokument RealText</comment>
+  <comment xml:lang="ru">Документ RealText</comment>
+  <comment xml:lang="ro">Document RealText</comment>
+  <comment xml:lang="pt-BR">Documento RealText</comment>
+  <comment xml:lang="pt">documento RealText</comment>
+  <comment xml:lang="pl">Dokument RealText</comment>
+  <comment xml:lang="oc">document RealText</comment>
+  <comment xml:lang="nn">RealText-dokument</comment>
+  <comment xml:lang="nl">RealText-document</comment>
+  <comment xml:lang="nb">RealText-dokument</comment>
+  <comment xml:lang="lv">RealText dokuments</comment>
+  <comment xml:lang="lt">RealText dokumentas</comment>
+  <comment xml:lang="ko">RealText 문서</comment>
+  <comment xml:lang="kk-Cyrl">RealText құжаты</comment>
+  <comment xml:lang="ja">RealText ドキュメント</comment>
+  <comment xml:lang="it">Documento RealText</comment>
+  <comment xml:lang="is">RealText skjal</comment>
+  <comment xml:lang="id">Dokumen RealText</comment>
+  <comment xml:lang="ia">Documento RealText</comment>
+  <comment xml:lang="hu">RealText dokumentum</comment>
+  <comment xml:lang="hr">RealText dokument</comment>
+  <comment xml:lang="he">מסמך של RealText</comment>
+  <comment xml:lang="gl">documento RealText</comment>
+  <comment xml:lang="ga">cáipéis RealText</comment>
+  <comment xml:lang="fur">document RealText</comment>
+  <comment xml:lang="fr">document RealText</comment>
+  <comment xml:lang="fo">RealText skjal</comment>
+  <comment xml:lang="fi">RealText-asiakirja</comment>
+  <comment xml:lang="eu">RealText dokumentua</comment>
+  <comment xml:lang="es">documento RealText</comment>
+  <comment xml:lang="eo">RealText-dokumento</comment>
+  <comment xml:lang="en-GB">RealText document</comment>
+  <comment xml:lang="el">Έγγραφο RealText</comment>
+  <comment xml:lang="de">RealText-Dokument</comment>
+  <comment xml:lang="da">RealText-dokument</comment>
+  <comment xml:lang="cs">dokument RealText</comment>
+  <comment xml:lang="ca">document RealText</comment>
+  <comment xml:lang="bg">Документ — RealText</comment>
+  <comment xml:lang="be-Latn">Dakument RealText</comment>
+  <comment xml:lang="be-Cyrl">дакумент RealText</comment>
+  <comment xml:lang="ast">Documentu RealText</comment>
+  <comment xml:lang="ar">مستند RealText</comment>
+  <comment xml:lang="af">RealText-dokument</comment>
+  <sub-class-of type="text/plain"/>
+  <glob pattern="*.rt"/>
+</mime-type>

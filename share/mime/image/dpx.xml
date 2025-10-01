@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="image/dpx">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>DPX image</comment>
+  <comment xml:lang="zh-Hant-TW">DPX 影像</comment>
+  <comment xml:lang="zh-Hans-CN">DPX 图像</comment>
+  <comment xml:lang="vi">Ảnh DPX</comment>
+  <comment xml:lang="uk">зображення DPX</comment>
+  <comment xml:lang="tr">DPX görüntüsü</comment>
+  <comment xml:lang="sv">DPX-bild</comment>
+  <comment xml:lang="sr-Cyrl">ДПИкс слика</comment>
+  <comment xml:lang="sq">figurë DPX</comment>
+  <comment xml:lang="sl">Slikovna datoteka DPX</comment>
+  <comment xml:lang="si">DPX රූපය</comment>
+  <comment xml:lang="sk">Obrázok DPX</comment>
+  <comment xml:lang="ru">Изображение DPX</comment>
+  <comment xml:lang="ro">Imagine DPX</comment>
+  <comment xml:lang="pt-BR">Imagem DPX</comment>
+  <comment xml:lang="pt">imagem DPX</comment>
+  <comment xml:lang="pl">Obraz DPX</comment>
+  <comment xml:lang="oc">imatge DPX</comment>
+  <comment xml:lang="nn">DPX-bilete</comment>
+  <comment xml:lang="nl">DPX-afbeelding</comment>
+  <comment xml:lang="nb">DPX-bilde</comment>
+  <comment xml:lang="lv">DPX attēls</comment>
+  <comment xml:lang="lt">DPX paveikslėlis</comment>
+  <comment xml:lang="ko">DPX 그림</comment>
+  <comment xml:lang="kk-Cyrl">DPX суреті</comment>
+  <comment xml:lang="ka">DPX გამოსახულება</comment>
+  <comment xml:lang="ja">DPX 画像</comment>
+  <comment xml:lang="it">Immagine DPX</comment>
+  <comment xml:lang="is">DPX mynd</comment>
+  <comment xml:lang="id">Citra DPX</comment>
+  <comment xml:lang="ia">Imagine DPX</comment>
+  <comment xml:lang="hu">DPX kép</comment>
+  <comment xml:lang="hr">DPX slika</comment>
+  <comment xml:lang="he">תמונת DPX</comment>
+  <comment xml:lang="gl">imaxe DPX</comment>
+  <comment xml:lang="ga">íomhá DPX</comment>
+  <comment xml:lang="fur">imagjin DPX</comment>
+  <comment xml:lang="fr">image DPX</comment>
+  <comment xml:lang="fo">DPX mynd</comment>
+  <comment xml:lang="fi">DPX-kuva</comment>
+  <comment xml:lang="eu">DPX irudia</comment>
+  <comment xml:lang="es">imagen DPX</comment>
+  <comment xml:lang="eo">DPX-bildo</comment>
+  <comment xml:lang="en-GB">DPX image</comment>
+  <comment xml:lang="el">Εικόνα DPX</comment>
+  <comment xml:lang="de">DPX-Bild</comment>
+  <comment xml:lang="da">DPX-billede</comment>
+  <comment xml:lang="cs">obrázek DPX</comment>
+  <comment xml:lang="ca">imatge DPX</comment>
+  <comment xml:lang="bg">Изображение — DPX</comment>
+  <comment xml:lang="be-Latn">Vyjava DPX</comment>
+  <comment xml:lang="be-Cyrl">выява DPX</comment>
+  <comment xml:lang="ar">صورة DPX</comment>
+  <comment xml:lang="af">DPX-beeld</comment>
+  <acronym>DPX</acronym>
+  <expanded-acronym>Digital Moving Picture Exchange</expanded-acronym>
+</mime-type>

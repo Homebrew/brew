@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/vnd.sun.xml.impress">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>LibreOffice Impress presentation</comment>
+  <comment xml:lang="uk">презентація LibreOffice Impress</comment>
+  <comment xml:lang="sv">LibreOffice Impress-presentation</comment>
+  <comment xml:lang="ru">Презентация LibreOffice Impress</comment>
+  <comment xml:lang="pt-BR">Apresentação do LibreOffice Impress</comment>
+  <comment xml:lang="pl">Prezentacja LibreOffice Impress</comment>
+  <comment xml:lang="it">Presentazione LibreOffice Impress</comment>
+  <comment xml:lang="gl">Presentación de LibreOffice Impress</comment>
+  <comment xml:lang="eu">LibreOffice Impress aurkezpena</comment>
+  <comment xml:lang="es">presentación de LibreOffice Impress</comment>
+  <comment xml:lang="de">LibreOffice Impress-Präsentation</comment>
+  <comment xml:lang="be-Cyrl">прэзентацыя LibreOffice Impress</comment>
+  <sub-class-of type="application/zip"/>
+  <generic-icon name="x-office-presentation"/>
+  <glob pattern="*.sxi"/>
+</mime-type>

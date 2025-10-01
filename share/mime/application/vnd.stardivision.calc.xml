@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/vnd.stardivision.calc">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>StarCalc spreadsheet</comment>
+  <comment xml:lang="zh-Hant-TW">StarCalc 試算表</comment>
+  <comment xml:lang="zh-Hans-CN">StarCalc 电子表格</comment>
+  <comment xml:lang="vi">Bảng tính StarCalc</comment>
+  <comment xml:lang="uk">електронна таблиця StarCalc</comment>
+  <comment xml:lang="tr">StarCalc hesap çizelgesi</comment>
+  <comment xml:lang="sv">StarCalc-kalkylblad</comment>
+  <comment xml:lang="sr-Cyrl">Стар калк табела</comment>
+  <comment xml:lang="sq">fletëllogaritje StarCalc</comment>
+  <comment xml:lang="sl">Preglednica StarCalc</comment>
+  <comment xml:lang="si">StarCalc පැතුරුම්පත</comment>
+  <comment xml:lang="sk">Zošit StarCalc</comment>
+  <comment xml:lang="ru">Электронная таблица StarCalc</comment>
+  <comment xml:lang="ro">Foaie de calcul StarCalc</comment>
+  <comment xml:lang="pt-BR">Planilha do StarCalc</comment>
+  <comment xml:lang="pt">folha de cálculo do StarCalc</comment>
+  <comment xml:lang="pl">Arkusz StarCalc</comment>
+  <comment xml:lang="oc">fuèlh de calcul StarCalc</comment>
+  <comment xml:lang="nn">StarCalc-rekneark</comment>
+  <comment xml:lang="nl">StarCalc-rekenblad</comment>
+  <comment xml:lang="nb">StarCalc-regneark</comment>
+  <comment xml:lang="ms">Hamparan StarCalc</comment>
+  <comment xml:lang="lv">StarCalc izklājlapa</comment>
+  <comment xml:lang="lt">StarCalc skaičialentė</comment>
+  <comment xml:lang="ko">StarCalc 스프레드시트</comment>
+  <comment xml:lang="kk-Cyrl">StarCalc электрондық кестесі</comment>
+  <comment xml:lang="ja">StarCalc スプレッドシート</comment>
+  <comment xml:lang="it">Foglio di calcolo StarCalc</comment>
+  <comment xml:lang="is">StarCalc töflureikniskjal</comment>
+  <comment xml:lang="id">Lembar sebar StarCalc</comment>
+  <comment xml:lang="ia">Folio de calculo StarCalc</comment>
+  <comment xml:lang="hu">StarCalc-munkafüzet</comment>
+  <comment xml:lang="hr">StarCalc proračunska tablica</comment>
+  <comment xml:lang="he">גיליון נתונים של StarCalc</comment>
+  <comment xml:lang="gl">folla de cálculo de StarCalc</comment>
+  <comment xml:lang="ga">scarbhileog StarCalc</comment>
+  <comment xml:lang="fur">sfuei di calcul StarCalc</comment>
+  <comment xml:lang="fr">feuille de calcul StarCalc</comment>
+  <comment xml:lang="fo">StarCalc rokniark</comment>
+  <comment xml:lang="fi">StarCalc-taulukko</comment>
+  <comment xml:lang="eu">StarCalc kalkulu-orria</comment>
+  <comment xml:lang="es">hoja de cálculo de StarCalc</comment>
+  <comment xml:lang="eo">StarCalc-kalkultabelo</comment>
+  <comment xml:lang="en-GB">StarCalc spreadsheet</comment>
+  <comment xml:lang="el">Λογιστικό φύλλο StarCalc</comment>
+  <comment xml:lang="de">StarCalc-Tabelle</comment>
+  <comment xml:lang="da">StarCalc-regneark</comment>
+  <comment xml:lang="cy">Taenlen StarCalc</comment>
+  <comment xml:lang="cs">sešit StarCalc</comment>
+  <comment xml:lang="ca">full de càlcul de StarCalc</comment>
+  <comment xml:lang="bg">Таблица — StarCalc</comment>
+  <comment xml:lang="be-Latn">Raźlikovy arkuš StarCalc</comment>
+  <comment xml:lang="be-Cyrl">электронная табліца StarCalc</comment>
+  <comment xml:lang="az">StarCalc hesab cədvəli</comment>
+  <comment xml:lang="ar">جدول StarCalc</comment>
+  <comment xml:lang="af">StarCalc-sigblad</comment>
+  <generic-icon name="x-office-spreadsheet"/>
+  <glob pattern="*.sdc"/>
+</mime-type>

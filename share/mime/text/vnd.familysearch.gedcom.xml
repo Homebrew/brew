@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="text/vnd.familysearch.gedcom">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>GEDCOM family history</comment>
+  <comment xml:lang="zh-Hant-TW">GEDCOM 族譜</comment>
+  <comment xml:lang="zh-Hans-CN">GEDCOM 家谱</comment>
+  <comment xml:lang="vi">Lịch sử gia đình GEDCOM</comment>
+  <comment xml:lang="uk">історія родини GEDCOM</comment>
+  <comment xml:lang="tr">GEDCOM aile geçmişi</comment>
+  <comment xml:lang="sv">GEDCOM-släktträd</comment>
+  <comment xml:lang="sr-Cyrl">ГЕДКОМ историјат породице</comment>
+  <comment xml:lang="sq">historik familjeje GEDCOM</comment>
+  <comment xml:lang="sl">Datoteka družinske zgodovine GEDCOM</comment>
+  <comment xml:lang="si">GEDCOM පවුලේ ඉතිහාසය</comment>
+  <comment xml:lang="sk">Rodokmeň GEDCOM</comment>
+  <comment xml:lang="ru">История семьи GEDCOM</comment>
+  <comment xml:lang="ro">Tablou genealogic GEDCOM</comment>
+  <comment xml:lang="pt-BR">Histórico familiar do GEDCOM</comment>
+  <comment xml:lang="pt">história familiar GEDCOM</comment>
+  <comment xml:lang="pl">Plik historii rodziny GEDCOM</comment>
+  <comment xml:lang="oc">genealogia GEDCOM</comment>
+  <comment xml:lang="nn">GEDCOM-familehistorie</comment>
+  <comment xml:lang="nl">GEDCOM-stamboom</comment>
+  <comment xml:lang="nb">GEDCOM-familiehistorikk</comment>
+  <comment xml:lang="lv">GEDCOM ģimenes vēsture</comment>
+  <comment xml:lang="lt">GEDCOM šeimos istorija</comment>
+  <comment xml:lang="ko">GEDCOM 가족 내력</comment>
+  <comment xml:lang="kk-Cyrl">GEDCOM отбасы тарихы</comment>
+  <comment xml:lang="ka">GEDCOM ოჯახის ისტორია</comment>
+  <comment xml:lang="ja">GEDCOM 家系図データ</comment>
+  <comment xml:lang="it">Cronologia famiglia GEDCOM</comment>
+  <comment xml:lang="is">GEDCOM ættartré</comment>
+  <comment xml:lang="id">Sejarah keluarga GEDCOM</comment>
+  <comment xml:lang="ia">Genealogia GEDCOM</comment>
+  <comment xml:lang="hu">GEDCOM családtörténet</comment>
+  <comment xml:lang="hr">GEDCOM obiteljska povijest</comment>
+  <comment xml:lang="he">היסטוריה משפחתית של GEDCOM</comment>
+  <comment xml:lang="gl">historial de familia GEDCOM</comment>
+  <comment xml:lang="ga">stair theaghlach GEDCOM</comment>
+  <comment xml:lang="fur">gjenealogjie GEDCOM</comment>
+  <comment xml:lang="fr">généalogie GEDCOM</comment>
+  <comment xml:lang="fo">GEDCOM familjusøga</comment>
+  <comment xml:lang="fi">GEDCOM-sukuhistoria</comment>
+  <comment xml:lang="eu">GEDCOM famili historia</comment>
+  <comment xml:lang="es">historial familiar de GEDCOM</comment>
+  <comment xml:lang="en-GB">GEDCOM family history</comment>
+  <comment xml:lang="el">Οικογενειακό ιστορικό GEDCOM</comment>
+  <comment xml:lang="de">GEDCOM-Stammbaum</comment>
+  <comment xml:lang="da">GEDCOM-familiehistorie</comment>
+  <comment xml:lang="cs">rodokmen GEDCOM</comment>
+  <comment xml:lang="ca">antecedents familiars GEDCOM</comment>
+  <comment xml:lang="bg">Родословно дърво — GEDCOM</comment>
+  <comment xml:lang="be-Latn">Siamiejnaja historyja GEDCOM</comment>
+  <comment xml:lang="be-Cyrl">гісторыя сям'і GEDCOM</comment>
+  <comment xml:lang="ar">تاريخ عائلة GEDCOM</comment>
+  <comment xml:lang="af">GEDCOM-familiegeskiedenis</comment>
+  <acronym>GEDCOM</acronym>
+  <expanded-acronym>GEnealogical Data COMmunication</expanded-acronym>
+  <sub-class-of type="text/plain"/>
+  <generic-icon name="x-office-document"/>
+  <glob pattern="*.ged"/>
+  <glob pattern="*.gedcom"/>
+  <alias type="application/x-gedcom"/>
+  <alias type="text/gedcom"/>
+</mime-type>

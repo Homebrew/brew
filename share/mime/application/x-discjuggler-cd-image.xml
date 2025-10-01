@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-discjuggler-cd-image">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Padus DiscJuggler CD image</comment>
+  <comment xml:lang="zh-Hans-CN">Padus DiscJuggler CD 映像</comment>
+  <comment xml:lang="uk">образ CD Padus DiscJuggler</comment>
+  <comment xml:lang="tr">Padus DiscJuggler CD görüntüsü</comment>
+  <comment xml:lang="sv">Padus DiscJuggler cd-avbild</comment>
+  <comment xml:lang="si">Padus DiscJuggler CD රූපය</comment>
+  <comment xml:lang="ru">Образ диска Padus DiscJuggler CD</comment>
+  <comment xml:lang="pt-BR">Imagem de CD do Padus DiscJuggler</comment>
+  <comment xml:lang="pl">Obraz płyty CD programu Padus DiscJuggler</comment>
+  <comment xml:lang="nl">Padus DiscJuggler CD-schijfkopiebestand</comment>
+  <comment xml:lang="ko">Padus DiscJuggler CD 이미지</comment>
+  <comment xml:lang="kk-Cyrl">Padus DiscJuggler CD бейнесі</comment>
+  <comment xml:lang="ja">Padus DiscJuggler CD イメージ</comment>
+  <comment xml:lang="it">Immagine CD DiscJuggler Padus</comment>
+  <comment xml:lang="is">Padus DiscJuggler CD diskmynd</comment>
+  <comment xml:lang="id">image CD Padus DiscJuggler</comment>
+  <comment xml:lang="hu">Padus DiscJuggler CD lemezkép</comment>
+  <comment xml:lang="hr">Padus DiscJuggler CD slika</comment>
+  <comment xml:lang="he">תמונת תקליטור Padus DiscJuggler</comment>
+  <comment xml:lang="gl">Imaxe de CD Padus DiscJuggler</comment>
+  <comment xml:lang="fr">Image CD Padus DiscJuggler</comment>
+  <comment xml:lang="fi">Padus DiscJuggler CD-levykuva</comment>
+  <comment xml:lang="es">imagen de CD de Padus DiscJuggler</comment>
+  <comment xml:lang="en-GB">Padus DiscJuggler CD image</comment>
+  <comment xml:lang="de">Padus-DiscJuggler-CD-Abbild</comment>
+  <comment xml:lang="da">Padus DiscJuggler CD-aftryk</comment>
+  <comment xml:lang="ca">imatge de CD de Padus DiscJuggler</comment>
+  <comment xml:lang="be-Cyrl">вобраз CD Padus DiscJuggler</comment>
+  <comment xml:lang="ar">صورة سي دي Padus DiscJuggler</comment>
+  <generic-icon name="media-optical"/>
+  <glob pattern="*.cdi"/>
+</mime-type>

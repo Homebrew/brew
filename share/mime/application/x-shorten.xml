@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-shorten">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Shorten audio</comment>
+  <comment xml:lang="zh-Hant-TW">Shorten 音訊</comment>
+  <comment xml:lang="zh-Hans-CN">Shorten 音频</comment>
+  <comment xml:lang="vi">Âm thanh Shorten</comment>
+  <comment xml:lang="uk">звук Shorten</comment>
+  <comment xml:lang="tr">Shorten sesi</comment>
+  <comment xml:lang="sv">Shorten-ljud</comment>
+  <comment xml:lang="sr-Cyrl">Шортен звук</comment>
+  <comment xml:lang="sq">audio Shorten</comment>
+  <comment xml:lang="sl">Zvočna datoteka Shorten</comment>
+  <comment xml:lang="si">ශ්රව්ය උපකරණ කෙටි කරන්න</comment>
+  <comment xml:lang="sk">Zvuk Shorten</comment>
+  <comment xml:lang="ru">Аудио Shorten</comment>
+  <comment xml:lang="ro">Audio Shorten</comment>
+  <comment xml:lang="pt-BR">Áudio Shorten</comment>
+  <comment xml:lang="pt">áudio Shorten</comment>
+  <comment xml:lang="pl">Plik dźwiękowy Shorten</comment>
+  <comment xml:lang="oc">àudio Shorten</comment>
+  <comment xml:lang="nn">Shorten-lyd</comment>
+  <comment xml:lang="nl">Shorten-audio</comment>
+  <comment xml:lang="nb">Shorten lyd</comment>
+  <comment xml:lang="lv">Shorten audio</comment>
+  <comment xml:lang="lt">Shorten garso įrašas</comment>
+  <comment xml:lang="ko">Shorten 오디오</comment>
+  <comment xml:lang="kk-Cyrl">Shorten аудиосы</comment>
+  <comment xml:lang="ja">Shorten オーディオ</comment>
+  <comment xml:lang="it">Audio Shorten</comment>
+  <comment xml:lang="is">Shorten hljóðskrá</comment>
+  <comment xml:lang="id">Audio Shorten</comment>
+  <comment xml:lang="ia">Audio Shorten</comment>
+  <comment xml:lang="hu">Shorten hang</comment>
+  <comment xml:lang="hr">Shorten zvučni zapis</comment>
+  <comment xml:lang="he">שמע של Shorten</comment>
+  <comment xml:lang="gl">son Shorten</comment>
+  <comment xml:lang="ga">fuaim Shorten</comment>
+  <comment xml:lang="fur">audio Shorten</comment>
+  <comment xml:lang="fr">audio Shorten</comment>
+  <comment xml:lang="fo">Shorten ljóður</comment>
+  <comment xml:lang="fi">Shorten-ääni</comment>
+  <comment xml:lang="eu">Shorten audioa</comment>
+  <comment xml:lang="es">audio Shorten</comment>
+  <comment xml:lang="eo">Shorten-sondosiero</comment>
+  <comment xml:lang="en-GB">Shorten audio</comment>
+  <comment xml:lang="el">Ήχος Shorten</comment>
+  <comment xml:lang="de">Shorten-Audio</comment>
+  <comment xml:lang="da">Shorten-lyd</comment>
+  <comment xml:lang="cs">zvuk Shorten</comment>
+  <comment xml:lang="ca">àudio de Shorten</comment>
+  <comment xml:lang="bg">Аудио — Shorten</comment>
+  <comment xml:lang="be-Latn">Aŭdyjo Shorten</comment>
+  <comment xml:lang="be-Cyrl">аўдыя Shorten</comment>
+  <comment xml:lang="ar">صوت Shorten</comment>
+  <comment xml:lang="af">Shorten-oudio</comment>
+  <generic-icon name="audio-x-generic"/>
+  <glob pattern="*.shn"/>
+  <alias type="audio/x-shorten"/>
+</mime-type>

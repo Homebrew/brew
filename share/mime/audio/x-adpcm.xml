@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="audio/x-adpcm">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>PCM audio</comment>
+  <comment xml:lang="zh-Hant-TW">PCM 音訊</comment>
+  <comment xml:lang="zh-Hans-CN">PCM 音频</comment>
+  <comment xml:lang="vi">Âm thanh PCM</comment>
+  <comment xml:lang="uk">звук PCM</comment>
+  <comment xml:lang="tr">PCM sesi</comment>
+  <comment xml:lang="sv">PCM-ljud</comment>
+  <comment xml:lang="sr-Cyrl">ПЦМ звук</comment>
+  <comment xml:lang="sq">audio PCM</comment>
+  <comment xml:lang="sl">Zvočna datoteka PCM</comment>
+  <comment xml:lang="si">PCM ශ්රව්ය</comment>
+  <comment xml:lang="sk">Zvuk PCM</comment>
+  <comment xml:lang="ru">Аудио PCM</comment>
+  <comment xml:lang="ro">Audio PCM</comment>
+  <comment xml:lang="pt-BR">Áudio PCM</comment>
+  <comment xml:lang="pt">áudio PCM</comment>
+  <comment xml:lang="pl">Plik dźwiękowy PCM</comment>
+  <comment xml:lang="oc">àudio PCM</comment>
+  <comment xml:lang="nn">PCM-lyd</comment>
+  <comment xml:lang="nl">PCM-audio</comment>
+  <comment xml:lang="nb">PCM-lyd</comment>
+  <comment xml:lang="ms">Audio PCM</comment>
+  <comment xml:lang="lv">PCM audio</comment>
+  <comment xml:lang="lt">PCM garso įrašas</comment>
+  <comment xml:lang="ko">PCM 오디오</comment>
+  <comment xml:lang="kk-Cyrl">PCM аудиосы</comment>
+  <comment xml:lang="ja">PCM オーディオ</comment>
+  <comment xml:lang="it">Audio PCM</comment>
+  <comment xml:lang="is">PCM hljóðskrá</comment>
+  <comment xml:lang="id">Audio PCM</comment>
+  <comment xml:lang="ia">Audio PCM</comment>
+  <comment xml:lang="hu">PCM hang</comment>
+  <comment xml:lang="hr">PCM zvučni zapis</comment>
+  <comment xml:lang="he">שמע PCM</comment>
+  <comment xml:lang="gl">son PCM</comment>
+  <comment xml:lang="ga">fuaim PCM</comment>
+  <comment xml:lang="fur">audio PCM</comment>
+  <comment xml:lang="fr">audio PCM</comment>
+  <comment xml:lang="fo">PCM ljóður</comment>
+  <comment xml:lang="fi">PCM-ääni</comment>
+  <comment xml:lang="eu">PCM audioa</comment>
+  <comment xml:lang="es">sonido PCM</comment>
+  <comment xml:lang="eo">PCM-sondosiero</comment>
+  <comment xml:lang="en-GB">PCM audio</comment>
+  <comment xml:lang="el">Ήχος PCM</comment>
+  <comment xml:lang="de">PCM-Audio</comment>
+  <comment xml:lang="da">PCM-lyd</comment>
+  <comment xml:lang="cy">Sain PCM</comment>
+  <comment xml:lang="cs">zvuk PCM</comment>
+  <comment xml:lang="ca">àudio PCM</comment>
+  <comment xml:lang="bg">Аудио — PCM</comment>
+  <comment xml:lang="be-Latn">Aŭdyjo PCM</comment>
+  <comment xml:lang="be-Cyrl">аўдыя PCM</comment>
+  <comment xml:lang="az">PCM audio faylı</comment>
+  <comment xml:lang="ar">صوت PCM</comment>
+  <comment xml:lang="af">PCM-oudio</comment>
+  <acronym>PCM</acronym>
+  <expanded-acronym>Pulse-code Modulation</expanded-acronym>
+</mime-type>

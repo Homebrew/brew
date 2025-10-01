@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-xz">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>XZ archive</comment>
+  <comment xml:lang="zh-Hant-TW">XZ 封存檔</comment>
+  <comment xml:lang="zh-Hans-CN">XZ 归档文件</comment>
+  <comment xml:lang="uk">архів XZ</comment>
+  <comment xml:lang="tr">XZ arşivi</comment>
+  <comment xml:lang="sv">XZ-arkiv</comment>
+  <comment xml:lang="sr-Cyrl">ИксЗ архива</comment>
+  <comment xml:lang="sq">arkiv XZ</comment>
+  <comment xml:lang="sl">Datoteka arhiva XZ</comment>
+  <comment xml:lang="si">XZ ලේඛනාගාරය</comment>
+  <comment xml:lang="sk">Archív XZ</comment>
+  <comment xml:lang="ru">Архив XZ</comment>
+  <comment xml:lang="ro">Arhivă XZ</comment>
+  <comment xml:lang="pt-BR">Pacote XZ</comment>
+  <comment xml:lang="pt">arquivo XZ</comment>
+  <comment xml:lang="pl">Archiwum XZ</comment>
+  <comment xml:lang="oc">archiu XZ</comment>
+  <comment xml:lang="nl">XZ archief</comment>
+  <comment xml:lang="lv">XZ arhīvs</comment>
+  <comment xml:lang="lt">XZ archyvas</comment>
+  <comment xml:lang="ko">XZ 압축 파일</comment>
+  <comment xml:lang="kk-Cyrl">XZ архиві</comment>
+  <comment xml:lang="ja">XZ アーカイブ</comment>
+  <comment xml:lang="it">Archivio xz</comment>
+  <comment xml:lang="is">XZ safnskrá</comment>
+  <comment xml:lang="id">Arsip XZ</comment>
+  <comment xml:lang="ia">Archivo XZ</comment>
+  <comment xml:lang="hu">XZ-archívum</comment>
+  <comment xml:lang="hr">XZ arhiva</comment>
+  <comment xml:lang="he">ארכיון XZ</comment>
+  <comment xml:lang="gl">ficheiro XZ</comment>
+  <comment xml:lang="ga">cartlann XZ</comment>
+  <comment xml:lang="fur">archivi XZ</comment>
+  <comment xml:lang="fr">archive XZ</comment>
+  <comment xml:lang="fo">XZ skjalasavn</comment>
+  <comment xml:lang="fi">XZ-arkisto</comment>
+  <comment xml:lang="eu">XZ artxiboa</comment>
+  <comment xml:lang="es">archivador XZ</comment>
+  <comment xml:lang="eo">XZ-arkivo</comment>
+  <comment xml:lang="en-GB">XZ archive</comment>
+  <comment xml:lang="el">Συμπιεσμένο αρχείο XZ</comment>
+  <comment xml:lang="de">XZ-Archiv</comment>
+  <comment xml:lang="da">XZ-arkiv</comment>
+  <comment xml:lang="cs">archiv XZ</comment>
+  <comment xml:lang="ca">arxiu XZ</comment>
+  <comment xml:lang="bg">Архив — XZ</comment>
+  <comment xml:lang="be-Cyrl">архіў XZ</comment>
+  <comment xml:lang="ar">أرشيف XZ</comment>
+  <comment xml:lang="af">XZ-argief</comment>
+  <generic-icon name="package-x-generic"/>
+  <glob pattern="*.xz"/>
+</mime-type>

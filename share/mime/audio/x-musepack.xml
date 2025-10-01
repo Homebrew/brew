@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="audio/x-musepack">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Musepack audio</comment>
+  <comment xml:lang="zh-Hant-TW">Musepack 音訊</comment>
+  <comment xml:lang="zh-Hans-CN">Musepack 音频</comment>
+  <comment xml:lang="vi">Âm thanh Musepack</comment>
+  <comment xml:lang="uk">звук Musepack</comment>
+  <comment xml:lang="tr">Musepack sesi</comment>
+  <comment xml:lang="sv">Musepack-ljud</comment>
+  <comment xml:lang="sr-Cyrl">звук Мјузпака</comment>
+  <comment xml:lang="sq">audio Musepack</comment>
+  <comment xml:lang="sl">Zvočna datoteka Musepack</comment>
+  <comment xml:lang="si">Musepack ශ්‍රව්‍ය</comment>
+  <comment xml:lang="sk">Zvuk Musepack</comment>
+  <comment xml:lang="ru">Аудио Musepack</comment>
+  <comment xml:lang="ro">Audio Musepack</comment>
+  <comment xml:lang="pt-BR">Áudio Musepack</comment>
+  <comment xml:lang="pt">áudio Musepack</comment>
+  <comment xml:lang="pl">Plik dźwiękowy Musepack</comment>
+  <comment xml:lang="oc">àudio Musepack</comment>
+  <comment xml:lang="nn">Musepack-lyd</comment>
+  <comment xml:lang="nl">Musepack-audio</comment>
+  <comment xml:lang="nb">Musepack-lyd</comment>
+  <comment xml:lang="lv">Musepack audio</comment>
+  <comment xml:lang="lt">Musepack garso įrašas</comment>
+  <comment xml:lang="ko">Musepack 오디오</comment>
+  <comment xml:lang="kk-Cyrl">Musepack аудиосы</comment>
+  <comment xml:lang="ja">Musepack オーディオ</comment>
+  <comment xml:lang="it">Audio Musepack</comment>
+  <comment xml:lang="is">Musepack hljóðskrá</comment>
+  <comment xml:lang="id">Audio Musepack</comment>
+  <comment xml:lang="ia">Audio Musepack</comment>
+  <comment xml:lang="hu">Musepack hang</comment>
+  <comment xml:lang="hr">Musepack zvučni zapis</comment>
+  <comment xml:lang="he">שמע של Musepack</comment>
+  <comment xml:lang="gl">son de Musepack</comment>
+  <comment xml:lang="ga">fuaim Musepack</comment>
+  <comment xml:lang="fur">audio Musepack</comment>
+  <comment xml:lang="fr">audio Musepack</comment>
+  <comment xml:lang="fo">Musepack ljóður</comment>
+  <comment xml:lang="fi">Musepack-ääni</comment>
+  <comment xml:lang="eu">Musepack audioa</comment>
+  <comment xml:lang="es">sonido Musepack</comment>
+  <comment xml:lang="en-GB">Musepack audio</comment>
+  <comment xml:lang="el">Ήχος Musepack</comment>
+  <comment xml:lang="de">Musepack-Audio</comment>
+  <comment xml:lang="da">Musepack-lyd</comment>
+  <comment xml:lang="cs">zvuk Musepack</comment>
+  <comment xml:lang="ca">àudio de Musepack</comment>
+  <comment xml:lang="bg">Аудио — Musepack</comment>
+  <comment xml:lang="be-Latn">Aŭdyjo Musepack</comment>
+  <comment xml:lang="be-Cyrl">аўдыя Musepack</comment>
+  <comment xml:lang="ar">صوت Musepack</comment>
+  <comment xml:lang="af">Musepack-oudio</comment>
+  <glob pattern="*.mpc"/>
+  <glob pattern="*.mpp"/>
+  <glob pattern="*.mp+"/>
+</mime-type>

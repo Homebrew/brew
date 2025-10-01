@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="image/x-dds">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>DirectDraw surface</comment>
+  <comment xml:lang="zh-Hant-TW">DirectDraw 表面</comment>
+  <comment xml:lang="zh-Hans-CN">DirectDraw 表面</comment>
+  <comment xml:lang="vi">Mặt DirectDraw</comment>
+  <comment xml:lang="uk">поверхня DirectDraw</comment>
+  <comment xml:lang="tr">DirectDraw yüzeyi</comment>
+  <comment xml:lang="sv">DirectDraw-yta</comment>
+  <comment xml:lang="sr-Cyrl">Директ Дров површина</comment>
+  <comment xml:lang="sq">sipërfaqe DirectDraw</comment>
+  <comment xml:lang="sl">Datoteka predmeta DirectDraw</comment>
+  <comment xml:lang="si">DirectDraw මතුපිට</comment>
+  <comment xml:lang="sk">Plocha DirectDraw</comment>
+  <comment xml:lang="ru">Плоскость DirectDraw</comment>
+  <comment xml:lang="ro">Suprafață DirectDraw</comment>
+  <comment xml:lang="pt-BR">Superfície do DirectDraw</comment>
+  <comment xml:lang="pt">superfície DirectDraw</comment>
+  <comment xml:lang="pl">Powierzchnia DirectDraw</comment>
+  <comment xml:lang="oc">surfàcia DirectDraw</comment>
+  <comment xml:lang="nn">DirectDraw-overflate</comment>
+  <comment xml:lang="nl">DirectDraw-oppervlak</comment>
+  <comment xml:lang="nb">DirectDraw-overflate</comment>
+  <comment xml:lang="lv">DirectDraw virsma</comment>
+  <comment xml:lang="lt">DirectDraw paviršius</comment>
+  <comment xml:lang="ko">DirectDraw 서피스</comment>
+  <comment xml:lang="kk-Cyrl">DirectDraw жазықтығы</comment>
+  <comment xml:lang="ka">DirectDraw-ის ზედაპირი</comment>
+  <comment xml:lang="ja">DirectDraw サーフェイス</comment>
+  <comment xml:lang="it">Superficie DirectDraw</comment>
+  <comment xml:lang="is">DirectDraw yfirborðsupplýsingar</comment>
+  <comment xml:lang="id">Permukaan DirectDraw</comment>
+  <comment xml:lang="ia">Superficie DirectDraw</comment>
+  <comment xml:lang="hu">DirectDraw felület</comment>
+  <comment xml:lang="hr">DirectDraw ploha</comment>
+  <comment xml:lang="he">משטח של DirectDraw</comment>
+  <comment xml:lang="gl">superficie de DirectDraw</comment>
+  <comment xml:lang="ga">dromchla DirectDraw</comment>
+  <comment xml:lang="fur">superficie DirectDraw</comment>
+  <comment xml:lang="fr">surface DirectDraw</comment>
+  <comment xml:lang="fo">DirectDraw yvirflata</comment>
+  <comment xml:lang="fi">DirectDraw-piirtoalue</comment>
+  <comment xml:lang="eu">DirectDraw gainazala</comment>
+  <comment xml:lang="es">superficie de DirectDraw</comment>
+  <comment xml:lang="en-GB">DirectDraw surface</comment>
+  <comment xml:lang="el">Επιφάνεια DirectDraw</comment>
+  <comment xml:lang="de">DirectDraw-Oberfläche</comment>
+  <comment xml:lang="da">DirectDraw-overflade</comment>
+  <comment xml:lang="cs">povrch DirectDraw</comment>
+  <comment xml:lang="ca">superfície DirectDraw</comment>
+  <comment xml:lang="bg">Изображение — повърхност на DirectDraw</comment>
+  <comment xml:lang="be-Latn">Pavierchnia DirectDraw</comment>
+  <comment xml:lang="be-Cyrl">паверхня DirectDraw</comment>
+  <comment xml:lang="ar">سطح DirectDraw</comment>
+  <glob pattern="*.dds"/>
+</mime-type>

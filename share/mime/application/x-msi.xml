@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-msi">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Windows Installer package</comment>
+  <comment xml:lang="zh-Hant-TW">Windows Installer 軟體包</comment>
+  <comment xml:lang="zh-Hans-CN">Windows 程序安装包</comment>
+  <comment xml:lang="vi">Gói cài đặt Windows</comment>
+  <comment xml:lang="uk">пакунок Windows Installer</comment>
+  <comment xml:lang="tr">Windows Installer paketi</comment>
+  <comment xml:lang="sv">Windows Installer-paket</comment>
+  <comment xml:lang="sr-Cyrl">пакет Виндоузовог инсталатера</comment>
+  <comment xml:lang="sq">paketë Windows Installer</comment>
+  <comment xml:lang="sl">Datoteka paketa Windows namestilnika</comment>
+  <comment xml:lang="si">වින්ඩෝස් ස්ථාපක පැකේජය</comment>
+  <comment xml:lang="sk">Balík Windows Installer</comment>
+  <comment xml:lang="ru">Пакет Windows Installer</comment>
+  <comment xml:lang="ro">Pachet instalator Windows</comment>
+  <comment xml:lang="pt-BR">Pacote do Windows Installer</comment>
+  <comment xml:lang="pt">pacote de instalação Windows</comment>
+  <comment xml:lang="pl">Pakiet instalatora Windows</comment>
+  <comment xml:lang="oc">paquet d'installacion Windows</comment>
+  <comment xml:lang="nn">Windows Installer-pakke</comment>
+  <comment xml:lang="nl">Windows-installatiepakket</comment>
+  <comment xml:lang="lv">Windows Installer pakotne</comment>
+  <comment xml:lang="lt">Windows Installer paketas</comment>
+  <comment xml:lang="ko">Windows 설치 패키지</comment>
+  <comment xml:lang="kk-Cyrl">Windows Installer дестесі</comment>
+  <comment xml:lang="ja">Windows インストーラパッケージ</comment>
+  <comment xml:lang="it">Pacchetto Windows Installer</comment>
+  <comment xml:lang="is">Windows uppsetningarpakki</comment>
+  <comment xml:lang="id">Paket Windows Installer</comment>
+  <comment xml:lang="ia">Pacchetto Windows Installer</comment>
+  <comment xml:lang="hu">Windows Installer csomag</comment>
+  <comment xml:lang="hr">Windows Instalacijski paket</comment>
+  <comment xml:lang="he">חבילה של Windows Installer</comment>
+  <comment xml:lang="gl">paquete de instalación de Windows</comment>
+  <comment xml:lang="ga">pacáiste Windows Installer</comment>
+  <comment xml:lang="fur">pachet Windows Installer</comment>
+  <comment xml:lang="fr">paquet d'installation Windows</comment>
+  <comment xml:lang="fo">Windows innleggingarpakki</comment>
+  <comment xml:lang="fi">Windows-asennuspaketti</comment>
+  <comment xml:lang="eu">Windows-eko pakete instalatzailea</comment>
+  <comment xml:lang="es">paquete de instalación de Windows</comment>
+  <comment xml:lang="en-GB">Windows Installer package</comment>
+  <comment xml:lang="el">Πακέτο Windows Installer</comment>
+  <comment xml:lang="de">Windows-Installationspaket</comment>
+  <comment xml:lang="da">Windows installationsprogram-pakke</comment>
+  <comment xml:lang="cs">balíček Windows Installer</comment>
+  <comment xml:lang="ca">paquet de Windows Installer</comment>
+  <comment xml:lang="bg">Пакет — инсталация за Windows</comment>
+  <comment xml:lang="be-Latn">Pakunak Windows Installer</comment>
+  <comment xml:lang="be-Cyrl">пакет Windows Installer</comment>
+  <comment xml:lang="ar">حزمة مثبّت ويندوز</comment>
+  <comment xml:lang="af">Windows-installeerpakket</comment>
+  <sub-class-of type="application/x-ole-storage"/>
+  <generic-icon name="package-x-generic"/>
+  <glob pattern="*.msi"/>
+</mime-type>

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="inode/blockdevice">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Block device</comment>
+  <comment xml:lang="uk">блоковий пристрій</comment>
+  <comment xml:lang="sv">Blockenhet</comment>
+  <comment xml:lang="ru">Блочное устройство</comment>
+  <comment xml:lang="pl">Urządzenie blokowe</comment>
+  <comment xml:lang="ja">区画様機器</comment>
+  <comment xml:lang="it">Device a blocchi</comment>
+  <comment xml:lang="gl">Dispositivo de bloque</comment>
+  <comment xml:lang="eu">Bloke-gailua</comment>
+  <comment xml:lang="es">dispositivo de bloques</comment>
+  <comment xml:lang="de">Blockorientiertes Gerät</comment>
+  <comment xml:lang="be-Cyrl">блокавая прылада</comment>
+</mime-type>

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="message/rfc822">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Email message</comment>
+  <comment xml:lang="uk">поштове повідомлення</comment>
+  <comment xml:lang="sv">E-postmeddelande</comment>
+  <comment xml:lang="ru">Почтовое сообщение</comment>
+  <comment xml:lang="pt-BR">Mensagem de e-mail</comment>
+  <comment xml:lang="pl">Wiadomość e-mail</comment>
+  <comment xml:lang="it">Messaggio email</comment>
+  <comment xml:lang="gl">Mensaxe de correo electrónico</comment>
+  <comment xml:lang="es">mensaje de correo electrónico</comment>
+  <comment xml:lang="de">E-Mail-Nachricht</comment>
+  <comment xml:lang="be-Cyrl">электронны ліст</comment>
+  <generic-icon name="text-x-generic"/>
+  <sub-class-of type="text/plain"/>
+  <glob pattern="*.eml"/>
+</mime-type>

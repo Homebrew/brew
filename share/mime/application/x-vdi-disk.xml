@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-vdi-disk">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>VDI disk image</comment>
+  <comment xml:lang="zh-Hant-TW">VDI 磁碟映像檔</comment>
+  <comment xml:lang="zh-Hans-CN">VDI 磁盘映像</comment>
+  <comment xml:lang="uk">образ диска VDI</comment>
+  <comment xml:lang="tr">VDI disk görüntüsü</comment>
+  <comment xml:lang="sv">VDI-diskavbildning</comment>
+  <comment xml:lang="sl">Slika diska VDI</comment>
+  <comment xml:lang="si">VDI තැටි රූපය</comment>
+  <comment xml:lang="ru">Образ диска VDI</comment>
+  <comment xml:lang="pt-BR">Imagem de disco VDI</comment>
+  <comment xml:lang="pl">Obraz dysku VDI</comment>
+  <comment xml:lang="nl">VDI-schijfkopiebestand</comment>
+  <comment xml:lang="ko">VDI 디스크 이미지</comment>
+  <comment xml:lang="kk-Cyrl">VDI диск бейнесі</comment>
+  <comment xml:lang="ja">VDI ディスクイメージ</comment>
+  <comment xml:lang="it">Immagine disco VDI</comment>
+  <comment xml:lang="hr">VDI slika diska</comment>
+  <comment xml:lang="fi">VDI-levykuva</comment>
+  <comment xml:lang="eu">VDI disko-irudia</comment>
+  <comment xml:lang="es">imagen de disco VDI</comment>
+  <comment xml:lang="en-GB">VDI disk image</comment>
+  <comment xml:lang="de">VDI-Datenträgerabbild</comment>
+  <comment xml:lang="be-Cyrl">вобраз дыска VDI</comment>
+  <comment xml:lang="ar">صورة قرص VDI</comment>
+  <acronym>VDI</acronym>
+  <expanded-acronym>Virtual Disk Image</expanded-acronym>
+  <glob pattern="*.vdi"/>
+  <alias type="application/x-virtualbox-vdi"/>
+</mime-type>

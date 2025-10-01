@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/xml-external-parsed-entity">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>XML entities document</comment>
+  <comment xml:lang="zh-Hant-TW">XML 實體文件</comment>
+  <comment xml:lang="zh-Hans-CN">XML 特征文档</comment>
+  <comment xml:lang="vi">Tài liệu thực thể XML</comment>
+  <comment xml:lang="uk">документ об’єктів XML</comment>
+  <comment xml:lang="tr">XML varlıklar belgesi</comment>
+  <comment xml:lang="sv">XML-entitetsdokument</comment>
+  <comment xml:lang="sr-Cyrl">документ ИксМЛ ставки</comment>
+  <comment xml:lang="sq">dokument njësish XML</comment>
+  <comment xml:lang="sl">Dokument XML določil</comment>
+  <comment xml:lang="si">XML ආයතන ලේඛනය</comment>
+  <comment xml:lang="sk">Dokument entít XML</comment>
+  <comment xml:lang="ru">Файл сущностей XML</comment>
+  <comment xml:lang="ro">Document entități XML</comment>
+  <comment xml:lang="pt-BR">Documento de entidades XML</comment>
+  <comment xml:lang="pt">documento de entidades XML</comment>
+  <comment xml:lang="pl">Dokument jednostek XML</comment>
+  <comment xml:lang="oc">document d'entitats XML</comment>
+  <comment xml:lang="nn">XML-entitet-dokument</comment>
+  <comment xml:lang="nl">XML entiteiten-document</comment>
+  <comment xml:lang="nb">XML-entitetsdokument</comment>
+  <comment xml:lang="lv">XML vienību dokuments</comment>
+  <comment xml:lang="lt">XML esybių dokumentas</comment>
+  <comment xml:lang="ko">XML 엔티티 문서</comment>
+  <comment xml:lang="kk-Cyrl">XML мәндер құжаты</comment>
+  <comment xml:lang="ja">XML エントリドキュメント</comment>
+  <comment xml:lang="it">Documento entità XML</comment>
+  <comment xml:lang="is">XML-eininda skjal</comment>
+  <comment xml:lang="id">Dokumen entitas XML</comment>
+  <comment xml:lang="ia">Documento de entitates XML</comment>
+  <comment xml:lang="hu">XML egyeddokumentum</comment>
+  <comment xml:lang="hr">Dokument XML subjekata</comment>
+  <comment xml:lang="he">מסמך ישויות XML</comment>
+  <comment xml:lang="gl">documento de entidades XML</comment>
+  <comment xml:lang="ga">cáipéis aonán XML</comment>
+  <comment xml:lang="fur">document entitâts XML</comment>
+  <comment xml:lang="fr">document d'entités XML</comment>
+  <comment xml:lang="fo">XML einindisskjal</comment>
+  <comment xml:lang="fi">XML-entiteettiasiakirja</comment>
+  <comment xml:lang="eu">XML entitateen dokumentua</comment>
+  <comment xml:lang="es">documento de entidades XML</comment>
+  <comment xml:lang="en-GB">XML entities document</comment>
+  <comment xml:lang="el">Έγγραφο οντοτήτων XML</comment>
+  <comment xml:lang="de">XML-Entitätendokument</comment>
+  <comment xml:lang="da">XML-enhedsdokument</comment>
+  <comment xml:lang="cs">dokument entit XML</comment>
+  <comment xml:lang="ca">document d'entitats XML</comment>
+  <comment xml:lang="bg">Документ — заместващи последователности в XML</comment>
+  <comment xml:lang="be-Latn">Dakument elementaŭ XML</comment>
+  <comment xml:lang="be-Cyrl">дакумент сутнасцей XML</comment>
+  <comment xml:lang="ast">Documentu d'entidaes XML</comment>
+  <comment xml:lang="ar">مستند كيانات XML</comment>
+  <comment xml:lang="af">XML-entiteitedokument</comment>
+  <acronym>XML</acronym>
+  <expanded-acronym>eXtensible Markup Language</expanded-acronym>
+  <sub-class-of type="application/xml"/>
+  <generic-icon name="text-html"/>
+  <glob pattern="*.ent"/>
+  <alias type="text/xml-external-parsed-entity"/>
+</mime-type>

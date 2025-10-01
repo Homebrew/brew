@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="image/x-3ds">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>3D Studio image</comment>
+  <comment xml:lang="zh-Hant-TW">3D Studio 影像</comment>
+  <comment xml:lang="zh-Hans-CN">3D Studio 图像</comment>
+  <comment xml:lang="vi">Ảnh xuởng vẽ 3D</comment>
+  <comment xml:lang="uk">зображення 3D Studio</comment>
+  <comment xml:lang="tr">3D Studio görüntüsü</comment>
+  <comment xml:lang="sv">3D Studio-bild</comment>
+  <comment xml:lang="sr-Cyrl">слика 3Д Студија</comment>
+  <comment xml:lang="sq">figurë 3D Studio</comment>
+  <comment xml:lang="sl">Slikovna datoteka 3D Studio</comment>
+  <comment xml:lang="si">3D ස්ටුඩියෝ රූපය</comment>
+  <comment xml:lang="sk">Obrázok 3D Studio</comment>
+  <comment xml:lang="ru">Сцена 3D Studio</comment>
+  <comment xml:lang="ro">Imagine 3D Studio</comment>
+  <comment xml:lang="pt-BR">Imagem do 3D Studio</comment>
+  <comment xml:lang="pt">imagem 3D Studio</comment>
+  <comment xml:lang="pl">Obraz 3D Studio</comment>
+  <comment xml:lang="oc">imatge 3D Studio</comment>
+  <comment xml:lang="nn">3D Studio-bilete</comment>
+  <comment xml:lang="nl">3D-Studio-afbeelding</comment>
+  <comment xml:lang="nb">3D Studio-bilde</comment>
+  <comment xml:lang="ms">Imej 3D Studio</comment>
+  <comment xml:lang="lv">3D Studio attēls</comment>
+  <comment xml:lang="lt">3D Studio paveikslėlis</comment>
+  <comment xml:lang="ko">3D Studio 그림</comment>
+  <comment xml:lang="kk-Cyrl">3D Studio суреті</comment>
+  <comment xml:lang="ka">3D Studio-ის გამოსახულება</comment>
+  <comment xml:lang="ja">3D Studio 画像</comment>
+  <comment xml:lang="it">Immagine 3D Studio</comment>
+  <comment xml:lang="is">3D Studio mynd</comment>
+  <comment xml:lang="id">Citra 3D Studio</comment>
+  <comment xml:lang="ia">Imagine 3D Studio</comment>
+  <comment xml:lang="hu">3D Studio-kép</comment>
+  <comment xml:lang="hr">3D Studio slika</comment>
+  <comment xml:lang="he">תמונת 3D Studio</comment>
+  <comment xml:lang="gl">Imaxe de 3D Studio</comment>
+  <comment xml:lang="ga">íomhá 3D Studio</comment>
+  <comment xml:lang="fur">imagjin 3D Studio</comment>
+  <comment xml:lang="fr">image 3D Studio</comment>
+  <comment xml:lang="fo">3D Studio mynd</comment>
+  <comment xml:lang="fi">3D Studio -kuva</comment>
+  <comment xml:lang="eu">3D Studio-ko irudia</comment>
+  <comment xml:lang="es">imagen de 3D Studio</comment>
+  <comment xml:lang="eo">bildo de 3D Studio</comment>
+  <comment xml:lang="en-GB">3D Studio image</comment>
+  <comment xml:lang="el">Εικόνα 3D Studio</comment>
+  <comment xml:lang="de">3D-Studio-Bild</comment>
+  <comment xml:lang="da">3D Studio-billede</comment>
+  <comment xml:lang="cy">Delwedd "3D Studio"</comment>
+  <comment xml:lang="cs">obrázek 3D Studio</comment>
+  <comment xml:lang="ca">imatge de 3D Studio</comment>
+  <comment xml:lang="bg">Изображение — 3D Studio</comment>
+  <comment xml:lang="be-Latn">Vyjava 3D Studio</comment>
+  <comment xml:lang="be-Cyrl">выява 3D Studio</comment>
+  <comment xml:lang="az">3D Studio rəsmi</comment>
+  <comment xml:lang="ar">صورة 3دي استديو</comment>
+  <comment xml:lang="af">3D Studio-beeld</comment>
+  <glob pattern="*.3ds"/>
+</mime-type>

@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="text/x-opml+xml">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>OPML syndication feed</comment>
+  <comment xml:lang="zh-Hant-TW">OPML 聯合供稿饋流</comment>
+  <comment xml:lang="zh-Hans-CN">OPML 聚合种子</comment>
+  <comment xml:lang="vi">Nguồn tin tức OPML</comment>
+  <comment xml:lang="uk">трансляція подач OPML</comment>
+  <comment xml:lang="tr">OPML besleme kaynağı</comment>
+  <comment xml:lang="sv">OPML-syndikeringskanal</comment>
+  <comment xml:lang="sr-Cyrl">ОМПЛ довод синдикализације</comment>
+  <comment xml:lang="sq">Prurje RSS OPML</comment>
+  <comment xml:lang="sl">Sindikalni vir OPML</comment>
+  <comment xml:lang="si">OPML සින්ඩිකේෂන් සංග්‍රහය</comment>
+  <comment xml:lang="sk">Kanál OPML</comment>
+  <comment xml:lang="ru">Лента новостей OPML</comment>
+  <comment xml:lang="ro">Flux OPML syndication</comment>
+  <comment xml:lang="pt-BR">Fonte de notícias OPML</comment>
+  <comment xml:lang="pt">feed OPML</comment>
+  <comment xml:lang="pl">Kanał OPML</comment>
+  <comment xml:lang="oc">fial de sindicacion OPML</comment>
+  <comment xml:lang="nn">OPML-kjelde</comment>
+  <comment xml:lang="nl">OPML-syndicatie-feed</comment>
+  <comment xml:lang="nb">OPML syndikeringsstrøm</comment>
+  <comment xml:lang="lv">OPML sindikāta barotne</comment>
+  <comment xml:lang="lt">OPML sindikacijos kanalas</comment>
+  <comment xml:lang="ko">OPML 묶음 피드</comment>
+  <comment xml:lang="kk-Cyrl">OPML жаңалықтар таспасы</comment>
+  <comment xml:lang="ja">OPML 配信フィード</comment>
+  <comment xml:lang="it">Feed di distribuzione OPML</comment>
+  <comment xml:lang="is">OPML fréttastreymi</comment>
+  <comment xml:lang="id">Umpan sindikasi OPML</comment>
+  <comment xml:lang="ia">Fluxo de syndication OPML</comment>
+  <comment xml:lang="hu">OPML egyesítőfolyam</comment>
+  <comment xml:lang="hr">OPML kanal objavljivanja</comment>
+  <comment xml:lang="he">הזנה דרך הרשת OPML</comment>
+  <comment xml:lang="gl">fonte de sindicación OPML</comment>
+  <comment xml:lang="ga">fotha sindeacáitithe OPML</comment>
+  <comment xml:lang="fur">canâl di notiziis OPML</comment>
+  <comment xml:lang="fr">fil de syndication OPML</comment>
+  <comment xml:lang="fi">OPML-yhdistevirta</comment>
+  <comment xml:lang="eu">OPML harpidetze-iturria</comment>
+  <comment xml:lang="es">suministro de sindicación OPML</comment>
+  <comment xml:lang="en-GB">OPML syndication feed</comment>
+  <comment xml:lang="el">Τροφοδοσία OPML</comment>
+  <comment xml:lang="de">OPML-Nachrichtenquelle</comment>
+  <comment xml:lang="da">OPML-syndikeringsfeed</comment>
+  <comment xml:lang="cs">kanál OPML</comment>
+  <comment xml:lang="ca">canal de sindicació OPML</comment>
+  <comment xml:lang="bg">Емисия — OPML</comment>
+  <comment xml:lang="be-Latn">Syndykacyjny kanał OPML</comment>
+  <comment xml:lang="be-Cyrl">канал сіндыкацыі OPML</comment>
+  <comment xml:lang="ar">مروج تغذية OPML</comment>
+  <acronym>OPML</acronym>
+  <expanded-acronym>Outline Processor Markup Language</expanded-acronym>
+  <sub-class-of type="application/xml"/>
+  <alias type="text/x-opml"/>
+  <generic-icon name="text-html"/>
+  <glob pattern="*.opml"/>
+</mime-type>

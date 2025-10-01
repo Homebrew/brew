@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-font-sunos-news">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>SunOS News font</comment>
+  <comment xml:lang="zh-Hant-TW">SunOS News 字型</comment>
+  <comment xml:lang="zh-Hans-CN">SunOS News 字体</comment>
+  <comment xml:lang="vi">Phông chữ SunOS News</comment>
+  <comment xml:lang="uk">шрифт SunOS News</comment>
+  <comment xml:lang="tr">SunOS News yazı tipi</comment>
+  <comment xml:lang="sv">SunOS News-typsnitt</comment>
+  <comment xml:lang="sr-Cyrl">слова СанОС Њуза</comment>
+  <comment xml:lang="sq">shkronja SunOS News</comment>
+  <comment xml:lang="sl">Datoteka pisave SunOS News</comment>
+  <comment xml:lang="si">SunOS News අකුරු</comment>
+  <comment xml:lang="sk">Písmo SunOS News</comment>
+  <comment xml:lang="ru">Шрифт SunOS News</comment>
+  <comment xml:lang="ro">Font SunOS News</comment>
+  <comment xml:lang="pt-BR">Fonte SunOS News</comment>
+  <comment xml:lang="pt">letra SunOS News</comment>
+  <comment xml:lang="pl">Czcionka SunOS News</comment>
+  <comment xml:lang="oc">poliça SunOS News</comment>
+  <comment xml:lang="nn">SunOS NEWS-skrifttype</comment>
+  <comment xml:lang="nl">SunOS News-lettertype</comment>
+  <comment xml:lang="nb">SunOS News-skrifttype</comment>
+  <comment xml:lang="ms">Font News SunOS</comment>
+  <comment xml:lang="lv">SunOS News fonts</comment>
+  <comment xml:lang="lt">SunOS News šriftas</comment>
+  <comment xml:lang="ko">SunOS News 글꼴</comment>
+  <comment xml:lang="kk-Cyrl">SunOS News қарібі</comment>
+  <comment xml:lang="ja">SunOS News フォント</comment>
+  <comment xml:lang="it">Carattere SunOS News</comment>
+  <comment xml:lang="is">SunOS News letur</comment>
+  <comment xml:lang="id">Fonta SunOS News</comment>
+  <comment xml:lang="ia">Typo de litteras SunOS News</comment>
+  <comment xml:lang="hu">SunOS News-betűkészlet</comment>
+  <comment xml:lang="hr">SunOS News font</comment>
+  <comment xml:lang="he">גופן של SunOS News</comment>
+  <comment xml:lang="gl">tipo de letra SunOS News</comment>
+  <comment xml:lang="ga">cló SunOS News</comment>
+  <comment xml:lang="fur">caratar SunOS News</comment>
+  <comment xml:lang="fr">police SunOS News</comment>
+  <comment xml:lang="fo">SunOS News stavasnið</comment>
+  <comment xml:lang="fi">SunOS News -fontti</comment>
+  <comment xml:lang="eu">SunOs News letra-tipoa</comment>
+  <comment xml:lang="es">tipo de letra para NeWS de SunOS</comment>
+  <comment xml:lang="eo">tiparo de SunOS News</comment>
+  <comment xml:lang="en-GB">SunOS News font</comment>
+  <comment xml:lang="el">Γραμματοσειρά SunOS News</comment>
+  <comment xml:lang="de">SunOS-NeWS-Schrift</comment>
+  <comment xml:lang="da">SunOS News-skrifttype</comment>
+  <comment xml:lang="cy">Ffont SunOS News</comment>
+  <comment xml:lang="cs">font SunOS News</comment>
+  <comment xml:lang="ca">lletra News de SunOS</comment>
+  <comment xml:lang="bg">Шрифт — SunOS News</comment>
+  <comment xml:lang="be-Latn">Šryft SunOS News</comment>
+  <comment xml:lang="be-Cyrl">шрыфт SunOS News</comment>
+  <comment xml:lang="az">SunOS News yazı növü</comment>
+  <comment xml:lang="ar">خط SunOS News</comment>
+  <comment xml:lang="af">SunOS News-skriftipe</comment>
+  <generic-icon name="font-x-generic"/>
+</mime-type>

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="text/x-credits">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Author credits</comment>
+  <comment xml:lang="uk">подяки авторам</comment>
+  <comment xml:lang="sv">Författarlista</comment>
+  <comment xml:lang="ru">Авторы программы</comment>
+  <comment xml:lang="pl">Podziękowania autorów programu</comment>
+  <comment xml:lang="it">Riconoscimenti autori</comment>
+  <comment xml:lang="gl">Créditos de autor</comment>
+  <comment xml:lang="eu">Egile-kredituak</comment>
+  <comment xml:lang="es">créditos de autoría</comment>
+  <comment xml:lang="de">Autorendanksagung</comment>
+  <comment xml:lang="be-Cyrl">звесткі пра аўтараў</comment>
+  <sub-class-of type="text/plain"/>
+  <glob pattern="CREDITS"/>
+</mime-type>

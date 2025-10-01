@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/vnd.android.package-archive">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Android package</comment>
+  <comment xml:lang="zh-Hant-TW">Android 軟體包</comment>
+  <comment xml:lang="zh-Hans-CN">Android 应用包</comment>
+  <comment xml:lang="uk">пакунок Android</comment>
+  <comment xml:lang="tr">Android paketi</comment>
+  <comment xml:lang="sv">Android-paket</comment>
+  <comment xml:lang="sr-Cyrl">Андроидов пакет</comment>
+  <comment xml:lang="sq">pakete Android</comment>
+  <comment xml:lang="sl">Paket Android</comment>
+  <comment xml:lang="si">Android පැකේජය</comment>
+  <comment xml:lang="sk">Balík Android</comment>
+  <comment xml:lang="ru">Пакет Android</comment>
+  <comment xml:lang="pt-BR">Pacote do Android</comment>
+  <comment xml:lang="pt">pacote Android</comment>
+  <comment xml:lang="pl">Pakiet Androida</comment>
+  <comment xml:lang="oc">paquet Android</comment>
+  <comment xml:lang="nl">Android-pakket</comment>
+  <comment xml:lang="lv">Android pakotne</comment>
+  <comment xml:lang="lt">Android paketas</comment>
+  <comment xml:lang="ko">Android 패키지</comment>
+  <comment xml:lang="kk-Cyrl">Android дестесі</comment>
+  <comment xml:lang="ka">Android-ის პაკეტი</comment>
+  <comment xml:lang="ja">Android パッケージ</comment>
+  <comment xml:lang="it">Pacchetto Android</comment>
+  <comment xml:lang="is">Android pakki</comment>
+  <comment xml:lang="id">Paket Android</comment>
+  <comment xml:lang="ia">Pacchetto Android</comment>
+  <comment xml:lang="hu">Android csomag</comment>
+  <comment xml:lang="hr">Android paket</comment>
+  <comment xml:lang="he">חבילת Android</comment>
+  <comment xml:lang="gl">paquete de Android</comment>
+  <comment xml:lang="ga">pacáiste Android</comment>
+  <comment xml:lang="fur">pachet Android</comment>
+  <comment xml:lang="fr">paquet Android</comment>
+  <comment xml:lang="fi">Android-paketti</comment>
+  <comment xml:lang="eu">Android paketea</comment>
+  <comment xml:lang="es">paquete de Android</comment>
+  <comment xml:lang="eo">Android-pakaĵo</comment>
+  <comment xml:lang="en-GB">Android package</comment>
+  <comment xml:lang="el">Πακέτο Android</comment>
+  <comment xml:lang="de">Android-Paket</comment>
+  <comment xml:lang="da">Android-pakke</comment>
+  <comment xml:lang="cs">balíčky systému Android</comment>
+  <comment xml:lang="ca">paquet d'Android</comment>
+  <comment xml:lang="bg">Пакет — Android</comment>
+  <comment xml:lang="be-Cyrl">пакет Android</comment>
+  <comment xml:lang="ast">Paquete d'Android</comment>
+  <comment xml:lang="ar">حزمة أندرويد</comment>
+  <comment xml:lang="af">Android-pakket</comment>
+  <sub-class-of type="application/java-archive"/>
+  <glob pattern="*.apk"/>
+</mime-type>

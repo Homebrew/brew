@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/vnd.oasis.opendocument.graphics">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>ODG drawing</comment>
+  <comment xml:lang="zh-Hant-TW">ODG 繪圖</comment>
+  <comment xml:lang="zh-Hans-CN">ODG 绘图</comment>
+  <comment xml:lang="vi">Bản vẽ ODG</comment>
+  <comment xml:lang="uk">малюнок ODG</comment>
+  <comment xml:lang="tr">ODG çizimi</comment>
+  <comment xml:lang="sv">ODG-teckning</comment>
+  <comment xml:lang="sr-Cyrl">ОДГ цртеж</comment>
+  <comment xml:lang="sq">vizatim ODG</comment>
+  <comment xml:lang="sl">Datoteka risbe ODG</comment>
+  <comment xml:lang="si">ODG ඇඳීම</comment>
+  <comment xml:lang="sk">Kresba ODG</comment>
+  <comment xml:lang="ru">Рисунок ODG</comment>
+  <comment xml:lang="ro">Desen ODG</comment>
+  <comment xml:lang="pt-BR">Desenho ODG</comment>
+  <comment xml:lang="pt">desenho ODG</comment>
+  <comment xml:lang="pl">Rysunek ODG</comment>
+  <comment xml:lang="oc">dessenh ODG</comment>
+  <comment xml:lang="nn">ODG-teikning</comment>
+  <comment xml:lang="nl">ODG-tekening</comment>
+  <comment xml:lang="nb">ODG-tegning</comment>
+  <comment xml:lang="lv">ODG zīmējums</comment>
+  <comment xml:lang="lt">ODG piešinys</comment>
+  <comment xml:lang="ko">ODG 드로잉</comment>
+  <comment xml:lang="kk-Cyrl">ODG суреті</comment>
+  <comment xml:lang="ka">ODG-ის ნახაზი</comment>
+  <comment xml:lang="ja">ODG ドロー</comment>
+  <comment xml:lang="it">Disegno ODG</comment>
+  <comment xml:lang="is">ODG teikning</comment>
+  <comment xml:lang="id">Gambar ODG</comment>
+  <comment xml:lang="ia">Designo ODG</comment>
+  <comment xml:lang="hu">ODG-rajz</comment>
+  <comment xml:lang="hr">ODG crtež</comment>
+  <comment xml:lang="he">ציור ODG</comment>
+  <comment xml:lang="gl">debuxo ODG</comment>
+  <comment xml:lang="ga">líníocht ODG</comment>
+  <comment xml:lang="fur">dissen ODG</comment>
+  <comment xml:lang="fr">dessin ODG</comment>
+  <comment xml:lang="fo">ODG tekning</comment>
+  <comment xml:lang="fi">ODG-piirros</comment>
+  <comment xml:lang="eu">ODG marrazkia</comment>
+  <comment xml:lang="es">dibujo ODG</comment>
+  <comment xml:lang="eo">ODG-desegnaĵo</comment>
+  <comment xml:lang="en-GB">ODG drawing</comment>
+  <comment xml:lang="el">Σχέδιο ODG</comment>
+  <comment xml:lang="de">ODG-Zeichnung</comment>
+  <comment xml:lang="da">ODG-tegning</comment>
+  <comment xml:lang="cs">kresba ODG</comment>
+  <comment xml:lang="ca">dibuix ODG</comment>
+  <comment xml:lang="bg">Чертеж — ODG</comment>
+  <comment xml:lang="be-Latn">Rysunak ODG</comment>
+  <comment xml:lang="be-Cyrl">рысунак ODG</comment>
+  <comment xml:lang="ar">تصميم ODG</comment>
+  <comment xml:lang="af">ODG-tekening</comment>
+  <acronym>ODG</acronym>
+  <expanded-acronym>OpenDocument Drawing</expanded-acronym>
+  <sub-class-of type="application/zip"/>
+  <generic-icon name="image-x-generic"/>
+  <glob pattern="*.odg"/>
+</mime-type>

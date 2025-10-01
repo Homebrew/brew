@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="video/webm">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>WebM video</comment>
+  <comment xml:lang="zh-Hant-TW">WebM 視訊</comment>
+  <comment xml:lang="zh-Hans-CN">WebM 视频</comment>
+  <comment xml:lang="uk">відео WebM</comment>
+  <comment xml:lang="tr">WebM video</comment>
+  <comment xml:lang="sv">WebM-video</comment>
+  <comment xml:lang="sr-Cyrl">ВебМ видео</comment>
+  <comment xml:lang="sq">audio WebM</comment>
+  <comment xml:lang="sl">Video datoteka WebM</comment>
+  <comment xml:lang="si">WebM වීඩියෝව</comment>
+  <comment xml:lang="sk">Video WebM</comment>
+  <comment xml:lang="ru">Видео WebM</comment>
+  <comment xml:lang="ro">Video WebM</comment>
+  <comment xml:lang="pt-BR">Vídeo WebM</comment>
+  <comment xml:lang="pt">vídeo WebM</comment>
+  <comment xml:lang="pl">Plik wideo WebM</comment>
+  <comment xml:lang="oc">vidèo WebM</comment>
+  <comment xml:lang="nl">WebM-video</comment>
+  <comment xml:lang="lv">WebM video</comment>
+  <comment xml:lang="lt">WebM vaizdo įrašas</comment>
+  <comment xml:lang="ko">WebM 동영상</comment>
+  <comment xml:lang="kk-Cyrl">WebM видеосы</comment>
+  <comment xml:lang="ja">WebM 動画</comment>
+  <comment xml:lang="it">Video WebM</comment>
+  <comment xml:lang="is">WebM myndskeið</comment>
+  <comment xml:lang="id">Video WebM</comment>
+  <comment xml:lang="ia">Video WebM</comment>
+  <comment xml:lang="hu">WebM videó</comment>
+  <comment xml:lang="hr">WebM video snimka</comment>
+  <comment xml:lang="he">וידאו WebM</comment>
+  <comment xml:lang="gl">vídeo WebM</comment>
+  <comment xml:lang="ga">físeán WebM</comment>
+  <comment xml:lang="fur">video WebM</comment>
+  <comment xml:lang="fr">vidéo WebM</comment>
+  <comment xml:lang="fo">WebM video</comment>
+  <comment xml:lang="fi">WebM-video</comment>
+  <comment xml:lang="eu">WebM bideoa</comment>
+  <comment xml:lang="es">vídeo WebM</comment>
+  <comment xml:lang="eo">WebM-video</comment>
+  <comment xml:lang="en-GB">WebM video</comment>
+  <comment xml:lang="el">Βίντεο WebM</comment>
+  <comment xml:lang="de">WebM-Video</comment>
+  <comment xml:lang="da">WebM-video</comment>
+  <comment xml:lang="cs">video WebM</comment>
+  <comment xml:lang="ca">vídeo WebM</comment>
+  <comment xml:lang="bg">Видео — WebM</comment>
+  <comment xml:lang="be-Cyrl">відэа WebM</comment>
+  <comment xml:lang="ast">Videu en WebM</comment>
+  <comment xml:lang="ar">فيديو WebM</comment>
+  <comment xml:lang="af">WebM-video</comment>
+  <glob pattern="*.webm"/>
+</mime-type>

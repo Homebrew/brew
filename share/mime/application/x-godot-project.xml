@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-godot-project">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Godot Engine project</comment>
+  <comment xml:lang="zh-Hant-TW">Godot Engine 專案</comment>
+  <comment xml:lang="zh-Hans-CN">Godot Engine 项目</comment>
+  <comment xml:lang="uk">проєкт Godot Engine</comment>
+  <comment xml:lang="tr">Godot Engine projesi</comment>
+  <comment xml:lang="sv">Godot Engine-projekt</comment>
+  <comment xml:lang="sl">Projekt Godot Engine</comment>
+  <comment xml:lang="si">ගොඩොට් එන්ජින් ව්යාපෘතිය</comment>
+  <comment xml:lang="ru">Проект Godot Engine</comment>
+  <comment xml:lang="pt-BR">Projeto do Godot Engine</comment>
+  <comment xml:lang="pt">projeto Godot Engine</comment>
+  <comment xml:lang="pl">Projekt Godot Engine</comment>
+  <comment xml:lang="nl">Godot Engine-project</comment>
+  <comment xml:lang="ko">Godot 엔진 프로젝트</comment>
+  <comment xml:lang="kk-Cyrl">Godot Engine жобасы</comment>
+  <comment xml:lang="ja">Godot Engine プロジェクト</comment>
+  <comment xml:lang="it">Progetto Godot Engine</comment>
+  <comment xml:lang="hr">Godot Engine projekt</comment>
+  <comment xml:lang="he">מיזם של מנוע גודו</comment>
+  <comment xml:lang="gl">Proxecto do motor Godot</comment>
+  <comment xml:lang="fi">Godot Engine -projekti</comment>
+  <comment xml:lang="eu">Godot Engine proiektua</comment>
+  <comment xml:lang="es">proyecto de motor Godot</comment>
+  <comment xml:lang="en-GB">Godot Engine project</comment>
+  <comment xml:lang="de">Godot-Engine-Projekt</comment>
+  <comment xml:lang="be-Cyrl">праект Godot Engine</comment>
+  <comment xml:lang="ar">مشروع محرك جودو</comment>
+  <sub-class-of type="text/plain"/>
+  <glob pattern="project.godot"/>
+</mime-type>

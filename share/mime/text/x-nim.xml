@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="text/x-nim">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Nim source code</comment>
+  <comment xml:lang="uk">початковий код мовою Nim</comment>
+  <comment xml:lang="sv">Nim-källkod</comment>
+  <comment xml:lang="ru">Исходный код Nim</comment>
+  <comment xml:lang="pl">Kod źródłowy Nim</comment>
+  <comment xml:lang="it">Codice sorgente Nim</comment>
+  <comment xml:lang="gl">Código fonte Nim</comment>
+  <comment xml:lang="eu">Nim iturburu-kodea</comment>
+  <comment xml:lang="es">código fuente en Nim</comment>
+  <comment xml:lang="de">Nim-Quelltext</comment>
+  <comment xml:lang="be-Cyrl">зыходны код Nim</comment>
+  <sub-class-of type="text/plain"/>
+  <glob pattern="*.nim"/>
+</mime-type>

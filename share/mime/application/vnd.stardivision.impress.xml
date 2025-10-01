@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/vnd.stardivision.impress">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>StarImpress presentation</comment>
+  <comment xml:lang="zh-Hant-TW">StarImpress 簡報</comment>
+  <comment xml:lang="zh-Hans-CN">StarImpress 演示文稿</comment>
+  <comment xml:lang="vi">Trình diễn StarImpress</comment>
+  <comment xml:lang="uk">презентація StarImpress</comment>
+  <comment xml:lang="tr">StarImpress sunumu</comment>
+  <comment xml:lang="sv">StarImpress-presentation</comment>
+  <comment xml:lang="sr-Cyrl">Презентација Стар Импреса</comment>
+  <comment xml:lang="sq">paraqitje StarImpress</comment>
+  <comment xml:lang="sl">Predstavitev StarImpress</comment>
+  <comment xml:lang="si">StarImpress ඉදිරිපත් කිරීම</comment>
+  <comment xml:lang="sk">Prezentácia StarImpress</comment>
+  <comment xml:lang="ru">Презентация StarImpress</comment>
+  <comment xml:lang="ro">Prezentare StarImpress</comment>
+  <comment xml:lang="pt-BR">Apresentação do StarImpress</comment>
+  <comment xml:lang="pt">apresentação do StarImpress</comment>
+  <comment xml:lang="pl">Prezentacja StarImpress</comment>
+  <comment xml:lang="oc">presentacion StarImpress</comment>
+  <comment xml:lang="nn">StarImpress-presentasjon</comment>
+  <comment xml:lang="nl">StarImpress-presentatie</comment>
+  <comment xml:lang="nb">StarImpress-presentasjon</comment>
+  <comment xml:lang="ms">Persembahan StarImpress</comment>
+  <comment xml:lang="lv">StarImpress prezentācija</comment>
+  <comment xml:lang="lt">StarImpress pateiktis</comment>
+  <comment xml:lang="ko">StarImpress 프레젠테이션</comment>
+  <comment xml:lang="kk-Cyrl">StarImpress презентациясы</comment>
+  <comment xml:lang="ja">StarImpress プレゼンテーション</comment>
+  <comment xml:lang="it">Presentazione StarImpress</comment>
+  <comment xml:lang="is">StarImpress framsetning</comment>
+  <comment xml:lang="id">Presentasi StarImpress</comment>
+  <comment xml:lang="ia">Presentation StarImpress</comment>
+  <comment xml:lang="hu">StarImpress-bemutató</comment>
+  <comment xml:lang="hr">StarImpress prezentacija</comment>
+  <comment xml:lang="he">מצגת StarImpress</comment>
+  <comment xml:lang="gl">presentación de StarImpress</comment>
+  <comment xml:lang="ga">láithreoireacht StarImpress</comment>
+  <comment xml:lang="fur">presentazion StarImpress</comment>
+  <comment xml:lang="fr">présentation StarImpress</comment>
+  <comment xml:lang="fo">StarImpress framløga</comment>
+  <comment xml:lang="fi">StarImpress-esitys</comment>
+  <comment xml:lang="eu">StarImpress aurkezpena</comment>
+  <comment xml:lang="es">presentación de StarImpress</comment>
+  <comment xml:lang="eo">StarImpress-prezentaĵo</comment>
+  <comment xml:lang="en-GB">StarImpress presentation</comment>
+  <comment xml:lang="el">Παρουσίαση StarImpress</comment>
+  <comment xml:lang="de">StarImpress-Präsentation</comment>
+  <comment xml:lang="da">StarImpress-præsentation</comment>
+  <comment xml:lang="cy">Cyflwyniad StarImpress</comment>
+  <comment xml:lang="cs">prezentace StarImpress</comment>
+  <comment xml:lang="ca">presentació de StarImpress</comment>
+  <comment xml:lang="bg">Презентация — StarImpress</comment>
+  <comment xml:lang="be-Latn">Prezentacyja StarImpress</comment>
+  <comment xml:lang="be-Cyrl">прэзентацыя StarImpress</comment>
+  <comment xml:lang="az">StarImpress təqdimatı</comment>
+  <comment xml:lang="ar">عرض تقديمي StarImpress</comment>
+  <comment xml:lang="af">StarImpress-voorlegging</comment>
+  <generic-icon name="x-office-presentation"/>
+  <glob pattern="*.sdd"/>
+  <glob pattern="*.sdp"/>
+</mime-type>

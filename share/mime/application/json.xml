@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/json">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>JSON document</comment>
+  <comment xml:lang="zh-Hant-TW">JSON 文件</comment>
+  <comment xml:lang="zh-Hans-CN">JSON 文档</comment>
+  <comment xml:lang="uk">документ JSON</comment>
+  <comment xml:lang="tr">JSON belgesi</comment>
+  <comment xml:lang="sv">JSON-dokument</comment>
+  <comment xml:lang="sr-Cyrl">ЈСОН документ</comment>
+  <comment xml:lang="sq">dokument JSON</comment>
+  <comment xml:lang="sl">Dokument JSON</comment>
+  <comment xml:lang="si">JSON ලේඛනය</comment>
+  <comment xml:lang="sk">Dokument JSON</comment>
+  <comment xml:lang="ru">Документ JSON</comment>
+  <comment xml:lang="pt-BR">Documento JSON</comment>
+  <comment xml:lang="pt">documento JSON</comment>
+  <comment xml:lang="pl">Dokument JSON</comment>
+  <comment xml:lang="oc">document JSON</comment>
+  <comment xml:lang="nl">JSON-document</comment>
+  <comment xml:lang="ko">JSON 문서</comment>
+  <comment xml:lang="kk-Cyrl">JSON құжаты</comment>
+  <comment xml:lang="ja">JSON ドキュメント</comment>
+  <comment xml:lang="it">Documento JSON</comment>
+  <comment xml:lang="is">JSON skjal</comment>
+  <comment xml:lang="id">Dokumen JSON</comment>
+  <comment xml:lang="ia">Documento JSON</comment>
+  <comment xml:lang="hu">JSON dokumentum</comment>
+  <comment xml:lang="hr">JSON dokument</comment>
+  <comment xml:lang="he">מסמך JSON</comment>
+  <comment xml:lang="gl">Documento JSON</comment>
+  <comment xml:lang="ga">cáipéis JSON</comment>
+  <comment xml:lang="fur">document JSON</comment>
+  <comment xml:lang="fr">document JSON</comment>
+  <comment xml:lang="fi">JSON-asiakirja</comment>
+  <comment xml:lang="eu">JSON dokumentua</comment>
+  <comment xml:lang="es">documento JSON</comment>
+  <comment xml:lang="en-GB">JSON document</comment>
+  <comment xml:lang="el">Έγγραφο JSON</comment>
+  <comment xml:lang="de">JSON-Dokument</comment>
+  <comment xml:lang="da">JSON-dokument</comment>
+  <comment xml:lang="cs">dokument JSON</comment>
+  <comment xml:lang="ca">document JSON</comment>
+  <comment xml:lang="bg">Документ — JSON</comment>
+  <comment xml:lang="be-Cyrl">дакумент JSON</comment>
+  <comment xml:lang="ast">Documentu JSON</comment>
+  <comment xml:lang="ar">مستند JSON</comment>
+  <comment xml:lang="af">JSON-dokument</comment>
+  <acronym>JSON</acronym>
+  <expanded-acronym>JavaScript Object Notation</expanded-acronym>
+  <sub-class-of type="application/json5"/>
+  <generic-icon name="text-x-script"/>
+  <glob pattern="*.json"/>
+</mime-type>

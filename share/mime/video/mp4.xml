@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="video/mp4">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>MPEG-4 video</comment>
+  <comment xml:lang="zh-Hant-TW">MPEG-4 視訊</comment>
+  <comment xml:lang="zh-Hans-CN">MPEG-4 视频</comment>
+  <comment xml:lang="vi">Ảnh động MPEG-4</comment>
+  <comment xml:lang="uk">відеокліп MPEG-4</comment>
+  <comment xml:lang="tr">MPEG-4 video</comment>
+  <comment xml:lang="sv">MPEG-4-video</comment>
+  <comment xml:lang="sr-Cyrl">МПЕГ-4 видео</comment>
+  <comment xml:lang="sq">video MPEG-4</comment>
+  <comment xml:lang="sl">Video datoteka MPEG-4</comment>
+  <comment xml:lang="si">MPEG-4 වීඩියෝව</comment>
+  <comment xml:lang="sk">Video MPEG-4</comment>
+  <comment xml:lang="ru">Видео MPEG-4</comment>
+  <comment xml:lang="ro">Video MPEG-4</comment>
+  <comment xml:lang="pt-BR">Vídeo MPEG-4</comment>
+  <comment xml:lang="pt">vídeo MPEG-4</comment>
+  <comment xml:lang="pl">Plik wideo MPEG-4</comment>
+  <comment xml:lang="oc">vidèo MPEG-4</comment>
+  <comment xml:lang="nn">MPEG-4-video</comment>
+  <comment xml:lang="nl">MPEG4-video</comment>
+  <comment xml:lang="nb">MPEG-4-film</comment>
+  <comment xml:lang="lv">MPEG-4 video</comment>
+  <comment xml:lang="lt">MPEG-4 vaizdo įrašas</comment>
+  <comment xml:lang="ko">MPEG-4 동영상</comment>
+  <comment xml:lang="kk-Cyrl">MPEG-4 видеосы</comment>
+  <comment xml:lang="ka">MPEG-4 ვიდეო</comment>
+  <comment xml:lang="ja">MPEG-4 動画</comment>
+  <comment xml:lang="it">Video MPEG-4</comment>
+  <comment xml:lang="is">MPEG-4 myndskeið</comment>
+  <comment xml:lang="id">Video MPEG-4</comment>
+  <comment xml:lang="ia">Video MPEG-4</comment>
+  <comment xml:lang="hu">MPEG-4 videó</comment>
+  <comment xml:lang="hr">MPEG-4 video snimka</comment>
+  <comment xml:lang="he">וידאו MPEG-4</comment>
+  <comment xml:lang="gl">vídeo MPEG-4</comment>
+  <comment xml:lang="ga">físeán MPEG-4</comment>
+  <comment xml:lang="fur">video MPEG-4</comment>
+  <comment xml:lang="fr">vidéo MPEG-4</comment>
+  <comment xml:lang="fo">MPEG-4 video</comment>
+  <comment xml:lang="fi">MPEG-4-video</comment>
+  <comment xml:lang="eu">MPEG-4 bideoa</comment>
+  <comment xml:lang="es">vídeo MPEG-4</comment>
+  <comment xml:lang="eo">MPEG-4-video</comment>
+  <comment xml:lang="en-GB">MPEG-4 video</comment>
+  <comment xml:lang="el">Βίντεο MPEG-4</comment>
+  <comment xml:lang="de">MPEG-4-Video</comment>
+  <comment xml:lang="da">MPEG4-video</comment>
+  <comment xml:lang="cs">video MPEG-4</comment>
+  <comment xml:lang="ca">vídeo MPEG-4</comment>
+  <comment xml:lang="bg">Видео — MPEG-4</comment>
+  <comment xml:lang="be-Latn">Videa MPEG-4</comment>
+  <comment xml:lang="be-Cyrl">відэа MPEG-4</comment>
+  <comment xml:lang="ast">Videu en MPEG-4</comment>
+  <comment xml:lang="ar">فيديو MPEG-4</comment>
+  <comment xml:lang="af">MPEG-4-video</comment>
+  <alias type="video/mp4v-es"/>
+  <glob pattern="*.mp4"/>
+  <glob pattern="*.m4v"/>
+  <glob pattern="*.f4v"/>
+  <glob pattern="*.lrv"/>
+  <alias type="video/x-m4v"/>
+</mime-type>

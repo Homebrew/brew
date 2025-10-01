@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-asar">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Electron Archive (ASAR)</comment>
+  <comment xml:lang="zh-Hans-CN">Electron 归档 (ASAR)</comment>
+  <comment xml:lang="uk">архів Electron (ASAR)</comment>
+  <comment xml:lang="tr">Electron Arşivi (ASAR)</comment>
+  <comment xml:lang="sv">Electron-arkiv (ASAR)</comment>
+  <comment xml:lang="sl">Arhiv Electron (ASAR)</comment>
+  <comment xml:lang="si">ඉලෙක්ට්‍රෝන ලේඛනාගාරය (ASAR)</comment>
+  <comment xml:lang="ru">Electron Archive (ASAR)</comment>
+  <comment xml:lang="pt-BR">Arquivo do Electron (ASAR)</comment>
+  <comment xml:lang="pl">Archiwum Electron (ASAR)</comment>
+  <comment xml:lang="nl">Electron Archive (ASAR)</comment>
+  <comment xml:lang="ko">일렉트론 묶음 파일 (ASAR)</comment>
+  <comment xml:lang="kk-Cyrl">Electron архиві (ASAR)</comment>
+  <comment xml:lang="ja">Electron アーカイブ (ASAR)</comment>
+  <comment xml:lang="it">Archivio Electron (ASAR)</comment>
+  <comment xml:lang="hr">Electron arhiva (ASAR)</comment>
+  <comment xml:lang="he">ארכיון Electron‏ (ASAR)</comment>
+  <comment xml:lang="gl">Arquivo Electron (ASAR)</comment>
+  <comment xml:lang="fi">Electron Archive (ASAR)</comment>
+  <comment xml:lang="eu">Electron artxiboa (ASAR)</comment>
+  <comment xml:lang="es">archivador Electron (ASARP)</comment>
+  <comment xml:lang="en-GB">Electron Archive (ASAR)</comment>
+  <comment xml:lang="de">Electron-Archiv (ASAR)</comment>
+  <comment xml:lang="be-Cyrl">архіў Electron (ASAR)</comment>
+  <comment xml:lang="ar">أرشيف إليكترون (ASAR)</comment>
+  <acronym>ASAR</acronym>
+  <expanded-acronym>Atom Shell Archive Format</expanded-acronym>
+  <glob pattern="*.asar"/>
+</mime-type>

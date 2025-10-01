@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="multipart/report">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Mail system report</comment>
+  <comment xml:lang="uk">звіт поштової системи</comment>
+  <comment xml:lang="sv">E-postsystemrapport</comment>
+  <comment xml:lang="ru">Отчёт почтовой системы</comment>
+  <comment xml:lang="pl">Raport systemu pocztowego</comment>
+  <comment xml:lang="it">Rapporto di sistema posta</comment>
+  <comment xml:lang="de">E-Mail-Systembericht</comment>
+  <comment xml:lang="be-Cyrl">справаздача паштовай сістэмы</comment>
+</mime-type>

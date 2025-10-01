@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-lrzip-compressed-tar">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Tar archive (lrzip-compressed)</comment>
+  <comment xml:lang="zh-Hant-TW">Tar 封存檔 (lrzip 格式壓縮)</comment>
+  <comment xml:lang="zh-Hans-CN">Tar 归档文件（lrzip 压缩）</comment>
+  <comment xml:lang="uk">архів tar (стиснений lrzip)</comment>
+  <comment xml:lang="tr">Tar arşivi (lrzip ile sıkıştırılmış)</comment>
+  <comment xml:lang="sv">Tar-arkiv (lrzip-komprimerat)</comment>
+  <comment xml:lang="sr-Cyrl">Тар архива (запакована лрзипом)</comment>
+  <comment xml:lang="sq">arkiv tar (ngjeshur me lrzip)</comment>
+  <comment xml:lang="sl">Datoteka arhiva Tar (stisnjen z lrzip)</comment>
+  <comment xml:lang="si">තාර සංරක්ෂිතය (lrzip-සම්පීඩිත)</comment>
+  <comment xml:lang="sk">Archív Tar (komprimovaný pomocou lrzip)</comment>
+  <comment xml:lang="ru">Архив TAR (сжатый lrzip)</comment>
+  <comment xml:lang="ro">Arhivă Tar (comprimată lrzip)</comment>
+  <comment xml:lang="pt-BR">Pacote Tar (compactado com lrzip)</comment>
+  <comment xml:lang="pt">arquivo Tar (compressão Lrzip)</comment>
+  <comment xml:lang="pl">Archiwum tar (kompresja lrzip)</comment>
+  <comment xml:lang="oc">archiu tar (compressat lrzip)</comment>
+  <comment xml:lang="nl">Tar-archief (gecomprimeerd met lrzip)</comment>
+  <comment xml:lang="lv">Tar arhīvs (saspiests ar lrzip)</comment>
+  <comment xml:lang="lt">Tar archyvas (suglaudintas su lrzip)</comment>
+  <comment xml:lang="ko">TAR 묶음 파일(LRZIP 압축)</comment>
+  <comment xml:lang="kk-Cyrl">Tar архиві (lrzip-пен сығылған)</comment>
+  <comment xml:lang="ja">Tar アーカイブ (lrzip 圧縮)</comment>
+  <comment xml:lang="it">Archivio tar (compresso con lrzip)</comment>
+  <comment xml:lang="is">Tar safnskrá (lrzip-þjappað)</comment>
+  <comment xml:lang="id">Arsip Tar (terkompresi lrzip)</comment>
+  <comment xml:lang="ia">Archivo Tar (comprimite con lrzip)</comment>
+  <comment xml:lang="hu">Tar archívum (lrzip tömörítésű)</comment>
+  <comment xml:lang="hr">Tar arhiva (lrzip sažeta)</comment>
+  <comment xml:lang="he">ארכיון Tar (מכווץ ע״י lrzip)</comment>
+  <comment xml:lang="gl">arquivo Tar (comprimido con lrzip)</comment>
+  <comment xml:lang="ga">cartlann Tar (comhbhrúite le lrzip)</comment>
+  <comment xml:lang="fur">archivi Tar (comprimût cun lrzip)</comment>
+  <comment xml:lang="fr">archive tar (compressée lrzip)</comment>
+  <comment xml:lang="fo">Tar skjalasavn (lrzip-stappað)</comment>
+  <comment xml:lang="fi">Tar-arkisto (lrzip-pakattu)</comment>
+  <comment xml:lang="eu">Tar artxiboa (lrzip-ekin konprimitua)</comment>
+  <comment xml:lang="es">archivador TAR (comprimido con LRZIP)</comment>
+  <comment xml:lang="en-GB">Tar archive (lrzip-compressed)</comment>
+  <comment xml:lang="el">Αρχείο Tar (συμπιεσμένο με lrzip)</comment>
+  <comment xml:lang="de">Tar-Archiv (lrzip-komprimiert)</comment>
+  <comment xml:lang="da">Tar-arkiv (lrzip-komprimeret)</comment>
+  <comment xml:lang="cs">archiv Tar (komprimovaný pomocí lrzip)</comment>
+  <comment xml:lang="ca">arxiu tar (amb compressió lrzip)</comment>
+  <comment xml:lang="bg">Архив — tar, компресиран с lrzip</comment>
+  <comment xml:lang="be-Cyrl">архіў tar (сцісканне lrzip)</comment>
+  <comment xml:lang="ar">أرشيف Tar (مضغوط-lrzip)</comment>
+  <comment xml:lang="af">Tar-argief (lrzip-saamgepers)</comment>
+  <generic-icon name="package-x-generic"/>
+  <sub-class-of type="application/x-lrzip"/>
+  <glob pattern="*.tar.lrz"/>
+  <glob pattern="*.tlrz"/>
+</mime-type>

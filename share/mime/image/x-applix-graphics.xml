@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="image/x-applix-graphics">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Applix Graphics image</comment>
+  <comment xml:lang="zh-Hant-TW">Applix Graphics 影像</comment>
+  <comment xml:lang="zh-Hans-CN">Applix Graphics 图像</comment>
+  <comment xml:lang="vi">Ảnh Applix Graphics</comment>
+  <comment xml:lang="uk">зображення Applix Graphics</comment>
+  <comment xml:lang="tr">Applix Graphics görüntüsü</comment>
+  <comment xml:lang="sv">Applix Graphics-bild</comment>
+  <comment xml:lang="sr-Cyrl">Апликсов графички документ</comment>
+  <comment xml:lang="sq">figurë Applix Graphics</comment>
+  <comment xml:lang="sl">Slikovna datoteka Applix Graphics</comment>
+  <comment xml:lang="si">Applix Graphics රූපය</comment>
+  <comment xml:lang="sk">Obrázok Applix Graphics</comment>
+  <comment xml:lang="ru">Изображение Applix Graphics</comment>
+  <comment xml:lang="ro">Imagine Applix Graphics</comment>
+  <comment xml:lang="pt-BR">Imagem do Applix Graphics</comment>
+  <comment xml:lang="pt">imagem Applix Graphics</comment>
+  <comment xml:lang="pl">Obraz Applix Graphics</comment>
+  <comment xml:lang="oc">imatge Applix Graphics</comment>
+  <comment xml:lang="nn">Applix Graphics-dokument</comment>
+  <comment xml:lang="nl">Applix Graphics-afbeelding</comment>
+  <comment xml:lang="nb">Applix Graphics-dokument</comment>
+  <comment xml:lang="ms">Imej Applix Graphics</comment>
+  <comment xml:lang="lv">Applix Graphics attēls</comment>
+  <comment xml:lang="lt">Applix Graphics paveikslėlis</comment>
+  <comment xml:lang="ko">Applix Graphics 그림</comment>
+  <comment xml:lang="kk-Cyrl">Applix Graphics суреті</comment>
+  <comment xml:lang="ka">Applix Graphics-ის გამოსახულება</comment>
+  <comment xml:lang="ja">Applix Graphics 画像</comment>
+  <comment xml:lang="it">Immagine Applix Graphics</comment>
+  <comment xml:lang="is">Applix Graphics mynd</comment>
+  <comment xml:lang="id">Citra Applix Graphics</comment>
+  <comment xml:lang="ia">Imagine Applix Graphics</comment>
+  <comment xml:lang="hu">Applix Graphics-kép</comment>
+  <comment xml:lang="hr">Applix Graphics slika</comment>
+  <comment xml:lang="he">תמונה של Applix Graphics</comment>
+  <comment xml:lang="gl">imaxe de Applix Graphics</comment>
+  <comment xml:lang="ga">íomhá Applix Graphics</comment>
+  <comment xml:lang="fur">imagjin Applix Graphics</comment>
+  <comment xml:lang="fr">image Applix Graphics</comment>
+  <comment xml:lang="fo">Applix Graphics mynd</comment>
+  <comment xml:lang="fi">Applix Graphics -kuva</comment>
+  <comment xml:lang="eu">Applix Graphics irudia</comment>
+  <comment xml:lang="es">imagen de Applix Graphics</comment>
+  <comment xml:lang="eo">bildo de Applix Graphics</comment>
+  <comment xml:lang="en-GB">Applix Graphics image</comment>
+  <comment xml:lang="el">Εικόνα Applix Graphics</comment>
+  <comment xml:lang="de">Applix-Graphics-Bild</comment>
+  <comment xml:lang="da">Applix Graphics-billede</comment>
+  <comment xml:lang="cs">obrázek Applix Graphics</comment>
+  <comment xml:lang="ca">imatge d'Applix Graphics</comment>
+  <comment xml:lang="bg">Изображение — Applix Graphics</comment>
+  <comment xml:lang="be-Latn">Vyjava Applix Graphics</comment>
+  <comment xml:lang="be-Cyrl">выява Applix Graphics</comment>
+  <comment xml:lang="ar">صورة رسوميات Applix</comment>
+  <comment xml:lang="af">Applix Graphics-beeld</comment>
+  <glob pattern="*.ag"/>
+</mime-type>

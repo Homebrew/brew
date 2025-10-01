@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="image/x-quicktime">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>QuickTime image</comment>
+  <comment xml:lang="zh-Hant-TW">QuickTime 影像</comment>
+  <comment xml:lang="zh-Hans-CN">QuickTime 图像</comment>
+  <comment xml:lang="vi">Ảnh QuickTime</comment>
+  <comment xml:lang="uk">зображення QuickTime</comment>
+  <comment xml:lang="tr">QuickTime görüntüsü</comment>
+  <comment xml:lang="sv">QuickTime-bild</comment>
+  <comment xml:lang="sr-Cyrl">Квик Тајм слика</comment>
+  <comment xml:lang="sq">figurë QuickTime</comment>
+  <comment xml:lang="sl">Slikovna datoteka QuickTime</comment>
+  <comment xml:lang="si">QuickTime රූපය</comment>
+  <comment xml:lang="sk">Obrázok QuickTime</comment>
+  <comment xml:lang="ru">Изображение QuickTime</comment>
+  <comment xml:lang="ro">Imagine QuickTime</comment>
+  <comment xml:lang="pt-BR">Imagem do QuickTime</comment>
+  <comment xml:lang="pt">imagem QuickTime</comment>
+  <comment xml:lang="pl">Obraz QuickTime</comment>
+  <comment xml:lang="oc">imatge QuickTime</comment>
+  <comment xml:lang="nn">QuickTime-bilete</comment>
+  <comment xml:lang="nl">QuickTime-afbeelding</comment>
+  <comment xml:lang="nb">Quicktime bilde</comment>
+  <comment xml:lang="lv">QuickTime attēls</comment>
+  <comment xml:lang="lt">QuickTime paveikslėlis</comment>
+  <comment xml:lang="ko">퀵타임 그림</comment>
+  <comment xml:lang="kk-Cyrl">QuickTime суреті</comment>
+  <comment xml:lang="ja">QuickTime 画像</comment>
+  <comment xml:lang="it">Immagine QuickTime</comment>
+  <comment xml:lang="is">QuickTime mynd</comment>
+  <comment xml:lang="id">Citra QuickTime</comment>
+  <comment xml:lang="ia">Imagine QuickTime</comment>
+  <comment xml:lang="hu">QuickTime kép</comment>
+  <comment xml:lang="hr">QuickTime slika</comment>
+  <comment xml:lang="he">תמונה של QuickTime</comment>
+  <comment xml:lang="gl">imaxe QuickTime</comment>
+  <comment xml:lang="ga">íomhá QuickTime</comment>
+  <comment xml:lang="fur">imagjin QuickTime</comment>
+  <comment xml:lang="fr">image QuickTime</comment>
+  <comment xml:lang="fo">QuickTime mynd</comment>
+  <comment xml:lang="fi">QuickTime-kuva</comment>
+  <comment xml:lang="eu">QuickTime irudia</comment>
+  <comment xml:lang="es">imagen de QuickTime</comment>
+  <comment xml:lang="eo">QuickTime-bildo</comment>
+  <comment xml:lang="en-GB">QuickTime image</comment>
+  <comment xml:lang="el">Εικόνα QuickTime</comment>
+  <comment xml:lang="de">QuickTime-Bild</comment>
+  <comment xml:lang="da">QuickTime-billede</comment>
+  <comment xml:lang="cs">obrázek QuickTime</comment>
+  <comment xml:lang="ca">imatge QuickTime</comment>
+  <comment xml:lang="bg">Изображение — QuickTime</comment>
+  <comment xml:lang="be-Latn">Vyjava QuickTime</comment>
+  <comment xml:lang="be-Cyrl">выява QuickTime</comment>
+  <comment xml:lang="ar">صورة QuickTime</comment>
+  <comment xml:lang="af">QuickTime-beeld</comment>
+  <glob pattern="*.qtif"/>
+  <glob pattern="*.qif"/>
+</mime-type>

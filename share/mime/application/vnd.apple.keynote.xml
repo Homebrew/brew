@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/vnd.apple.keynote">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Apple Keynote 5 presentation</comment>
+  <comment xml:lang="zh-Hant-TW">Apple Keynote 5 簡報</comment>
+  <comment xml:lang="zh-Hans-CN">Apple Keynote 5 演示文稿</comment>
+  <comment xml:lang="uk">презентація Apple Keynote 5</comment>
+  <comment xml:lang="tr">Apple Keynote 5 sunumu</comment>
+  <comment xml:lang="sv">Apple Keynote 5-presentation</comment>
+  <comment xml:lang="sr-Cyrl">презентација Епл Кинота 5</comment>
+  <comment xml:lang="sq">paraqitje Apple Keynote 5</comment>
+  <comment xml:lang="sl">Predstavitev Apple Keynote 5</comment>
+  <comment xml:lang="si">Apple Keynote 5 ඉදිරිපත් කිරීම</comment>
+  <comment xml:lang="sk">Prezentácia Apple Keynote 5</comment>
+  <comment xml:lang="ru">Презентация Apple Keynote 5</comment>
+  <comment xml:lang="pt-BR">Apresentação do Apple Keynote 5</comment>
+  <comment xml:lang="pt">apresentação Apple Keynote 5</comment>
+  <comment xml:lang="pl">Prezentacja Apple Keynote 5</comment>
+  <comment xml:lang="oc">presentacion Apple Keynote 5</comment>
+  <comment xml:lang="nl">Apple Keynote 5-presentatie</comment>
+  <comment xml:lang="ko">Apple 키노트 5 프레젠테이션</comment>
+  <comment xml:lang="kk-Cyrl">Apple Keynote 5 презентациясы</comment>
+  <comment xml:lang="ja">Apple Keynote 5 プレゼンテーション</comment>
+  <comment xml:lang="it">Presentazione Apple Keynote 5</comment>
+  <comment xml:lang="is">Apple Keynote 5 glærukynning</comment>
+  <comment xml:lang="id">Presentasi Apple Keynote 5</comment>
+  <comment xml:lang="ia">Presentation Apple Keynote 5</comment>
+  <comment xml:lang="hu">Apple Keynote 5 prezentáció</comment>
+  <comment xml:lang="hr">Apple Keynote 5 prezentacija</comment>
+  <comment xml:lang="he">מצגת Apple Keynote 5</comment>
+  <comment xml:lang="gl">Presentación de Apple Keynote 5</comment>
+  <comment xml:lang="ga">láithreoireacht Apple Keynote 5</comment>
+  <comment xml:lang="fur">presentazion Apple Keynote 5</comment>
+  <comment xml:lang="fr">présentation Apple Keynote 5</comment>
+  <comment xml:lang="fi">Apple Keynote 5 -esitys</comment>
+  <comment xml:lang="eu">Apple Keynote 5 aurkezpena</comment>
+  <comment xml:lang="es">presentación de Apple Keynote 5</comment>
+  <comment xml:lang="en-GB">Apple Keynote 5 presentation</comment>
+  <comment xml:lang="el">Παρουσίαση Apple Keynote 5</comment>
+  <comment xml:lang="de">Apple-Keynote-5-Präsentation</comment>
+  <comment xml:lang="da">Apple Keynote 5-præsentation</comment>
+  <comment xml:lang="cs">prezentace Apple Keynote 5</comment>
+  <comment xml:lang="ca">presentació d'Apple Keynote 5</comment>
+  <comment xml:lang="bg">Презентация — Apple Keynote 5</comment>
+  <comment xml:lang="be-Cyrl">прэзентацыя Apple Keynote 5</comment>
+  <comment xml:lang="ar">عرض أبل كي نوت ٥</comment>
+  <comment xml:lang="af">Apple Keynote 5-voorlegging</comment>
+  <sub-class-of type="application/zip"/>
+  <generic-icon name="x-office-presentation"/>
+  <glob pattern="*.key" weight="80"/>
+  <alias type="application/x-iwork-keynote-sffkey"/>
+</mime-type>

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="text/x-log">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Application log</comment>
+  <comment xml:lang="uk">журнал програми</comment>
+  <comment xml:lang="sv">Programlogg</comment>
+  <comment xml:lang="ru">Журнал сообщений</comment>
+  <comment xml:lang="pl">Dziennik programu</comment>
+  <comment xml:lang="ja">アプリケーション記録</comment>
+  <comment xml:lang="it">Registro applicazione</comment>
+  <comment xml:lang="gl">Rexistro de aplicación</comment>
+  <comment xml:lang="eu">Aplikazio-egunkaria</comment>
+  <comment xml:lang="es">registro de aplicaciones</comment>
+  <comment xml:lang="de">Anwendungsprotokoll</comment>
+  <comment xml:lang="be-Cyrl">журнал праграмы</comment>
+  <sub-class-of type="text/plain"/>
+  <glob pattern="*.log"/>
+</mime-type>

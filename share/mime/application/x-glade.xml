@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-glade">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Glade project</comment>
+  <comment xml:lang="zh-Hant-TW">Glade 專案</comment>
+  <comment xml:lang="zh-Hans-CN">Glade 工程</comment>
+  <comment xml:lang="vi">Dự án Glade</comment>
+  <comment xml:lang="uk">проєкт Glade</comment>
+  <comment xml:lang="tr">Glade projesi</comment>
+  <comment xml:lang="sv">Glade-projekt</comment>
+  <comment xml:lang="sr-Cyrl">Глејдов пројекат</comment>
+  <comment xml:lang="sq">projekt Glade</comment>
+  <comment xml:lang="sl">Datoteka projekta Glade</comment>
+  <comment xml:lang="si">ග්ලේඩ් ව්යාපෘතිය</comment>
+  <comment xml:lang="sk">Projekt Glade</comment>
+  <comment xml:lang="ru">Проект Glade</comment>
+  <comment xml:lang="ro">Proiect Glade</comment>
+  <comment xml:lang="pt-BR">Projeto do Glade</comment>
+  <comment xml:lang="pt">projecto Glade</comment>
+  <comment xml:lang="pl">Projekt Glade</comment>
+  <comment xml:lang="oc">projècte Glade</comment>
+  <comment xml:lang="nn">Glade prosjekt</comment>
+  <comment xml:lang="nl">Glade-project</comment>
+  <comment xml:lang="nb">Glade prosjekt</comment>
+  <comment xml:lang="ms">Projek Glade</comment>
+  <comment xml:lang="lv">Glade projekts</comment>
+  <comment xml:lang="lt">Glade projektas</comment>
+  <comment xml:lang="ko">Glade 프로젝트</comment>
+  <comment xml:lang="kk-Cyrl">Glade жобасы</comment>
+  <comment xml:lang="ja">Glade プロジェクト</comment>
+  <comment xml:lang="it">Progetto Glade</comment>
+  <comment xml:lang="is">Glade verkefni</comment>
+  <comment xml:lang="id">Proyek Glade</comment>
+  <comment xml:lang="ia">Projecto Glade</comment>
+  <comment xml:lang="hu">Glade-projekt</comment>
+  <comment xml:lang="hr">Glade projekt</comment>
+  <comment xml:lang="he">מיזם Glade</comment>
+  <comment xml:lang="gl">proxecto de Glade</comment>
+  <comment xml:lang="ga">tionscadal Glade</comment>
+  <comment xml:lang="fur">progjet Glade</comment>
+  <comment xml:lang="fr">projet Glade</comment>
+  <comment xml:lang="fo">Glade verkætlan</comment>
+  <comment xml:lang="fi">Glade-projekti</comment>
+  <comment xml:lang="eu">Glade proiektua</comment>
+  <comment xml:lang="es">proyecto de Glade</comment>
+  <comment xml:lang="eo">Glade-projekto</comment>
+  <comment xml:lang="en-GB">Glade project</comment>
+  <comment xml:lang="el">Έργο Glade</comment>
+  <comment xml:lang="de">Glade-Projekt</comment>
+  <comment xml:lang="da">Gladeprojekt</comment>
+  <comment xml:lang="cy">Prosiect Glade</comment>
+  <comment xml:lang="cs">projekt Glade</comment>
+  <comment xml:lang="ca">projecte de Glade</comment>
+  <comment xml:lang="bg">Проект — Glade</comment>
+  <comment xml:lang="be-Latn">Prajekt Glade</comment>
+  <comment xml:lang="be-Cyrl">праект Glade</comment>
+  <comment xml:lang="az">Glade layihəsi</comment>
+  <comment xml:lang="ar">مشروع Glade</comment>
+  <comment xml:lang="af">Glade-projek</comment>
+  <sub-class-of type="application/xml"/>
+  <generic-icon name="x-office-document"/>
+  <glob pattern="*.glade"/>
+</mime-type>

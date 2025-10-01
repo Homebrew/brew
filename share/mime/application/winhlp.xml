@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/winhlp">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>WinHelp help file</comment>
+  <comment xml:lang="zh-Hant-TW">WinHelp 說明檔</comment>
+  <comment xml:lang="zh-Hans-CN">WinHelp 帮助文件</comment>
+  <comment xml:lang="uk">файл довідки WinHelp</comment>
+  <comment xml:lang="tr">WinHelp yardım dosyası</comment>
+  <comment xml:lang="sv">WinHelp-hjälpfil</comment>
+  <comment xml:lang="sr-Cyrl">датотека помоћи Вин хелпа</comment>
+  <comment xml:lang="sq">kartelë ndihme WinHelp</comment>
+  <comment xml:lang="sl">Datoteka pomoči WinHelp</comment>
+  <comment xml:lang="si">WinHelp උදව් ගොනුව</comment>
+  <comment xml:lang="sk">Súbor Pomocníka WinHelp</comment>
+  <comment xml:lang="ru">Файл справки WinHelp</comment>
+  <comment xml:lang="pt-BR">Arquivo de ajuda WinHelp</comment>
+  <comment xml:lang="pt">ficheiro de ajuda WinHelp</comment>
+  <comment xml:lang="pl">Plik pomocy WinHelp</comment>
+  <comment xml:lang="oc">fichièr d'ajuda WinHelp</comment>
+  <comment xml:lang="nl">WinHelp-hulpbestand</comment>
+  <comment xml:lang="lv">WinHelp palīdzības datne</comment>
+  <comment xml:lang="ko">WinHelp 도움말 파일</comment>
+  <comment xml:lang="kk-Cyrl">WinHelp көмек файлы</comment>
+  <comment xml:lang="ja">WinHelp ヘルプファイル</comment>
+  <comment xml:lang="it">File aiuto WInHelp</comment>
+  <comment xml:lang="is">WinHelp-hjálparskrá</comment>
+  <comment xml:lang="id">Berkas bantuan WinHelp</comment>
+  <comment xml:lang="ia">File de adjuta WinHelp</comment>
+  <comment xml:lang="hu">WinHelp súgófájl</comment>
+  <comment xml:lang="hr">WinHelp datoteka pomoći</comment>
+  <comment xml:lang="he">קובץ עזרה מסוג WinHelp</comment>
+  <comment xml:lang="gl">Ficheiro de axuda WinHelp</comment>
+  <comment xml:lang="ga">comhad cabhrach WinHelp</comment>
+  <comment xml:lang="fur">file di jutori WinHelp</comment>
+  <comment xml:lang="fr">fichier d'aide WinHelp</comment>
+  <comment xml:lang="fi">WinHelp-ohjetiedosto</comment>
+  <comment xml:lang="eu">WinHelp laguntza fitxategia</comment>
+  <comment xml:lang="es">archivo de ayuda de WinHelp</comment>
+  <comment xml:lang="en-GB">WinHelp help file</comment>
+  <comment xml:lang="el">Αρχείο βοήθειας WinHelp</comment>
+  <comment xml:lang="de">WinHelp-Hilfedatei</comment>
+  <comment xml:lang="da">WinHelp-hjælpefil</comment>
+  <comment xml:lang="cs">soubor nápovědy WinHelp</comment>
+  <comment xml:lang="ca">fitxer d'ajuda WinHelp</comment>
+  <comment xml:lang="bg">Помощен файл — WinHelp</comment>
+  <comment xml:lang="be-Cyrl">файл даведкі WinHelp</comment>
+  <comment xml:lang="ar">ملف مساعدة ويندوز</comment>
+  <comment xml:lang="af">WinHelp-hulplêer</comment>
+  <glob pattern="*.hlp"/>
+  <alias type="zz-application/zz-winassoc-hlp"/>
+</mime-type>

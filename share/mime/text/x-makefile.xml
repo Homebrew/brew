@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="text/x-makefile">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Makefile build file</comment>
+  <comment xml:lang="zh-Hans-CN">Makefile 构建文件</comment>
+  <comment xml:lang="uk">файл збирання Makefile</comment>
+  <comment xml:lang="tr">Makefile derleme dosyası</comment>
+  <comment xml:lang="sv">Makefile-byggfil</comment>
+  <comment xml:lang="sq">kartelë montimi Makefile</comment>
+  <comment xml:lang="si">Makefile ගොඩනැගීමේ ගොනුව</comment>
+  <comment xml:lang="sk">Súbor zostavenia Makefile</comment>
+  <comment xml:lang="ru">Сборочный файл Makefile</comment>
+  <comment xml:lang="pt-BR">Arquivo de compilação Makefile</comment>
+  <comment xml:lang="pl">Plik budowania Makefile</comment>
+  <comment xml:lang="nl">Makefile-compilatiebestand</comment>
+  <comment xml:lang="ko">Makefile 빌드 파일</comment>
+  <comment xml:lang="kk-Cyrl">Makefile құрастыру файлы</comment>
+  <comment xml:lang="ja">Makefile ビルドファイル</comment>
+  <comment xml:lang="it">File compilazione Makefile</comment>
+  <comment xml:lang="is">Makefile byggingaskrá</comment>
+  <comment xml:lang="id">Berkas build Makefile</comment>
+  <comment xml:lang="hu">Makefile összeállítási fájl</comment>
+  <comment xml:lang="hr">Makefile datoteka izgradnje</comment>
+  <comment xml:lang="he">קובץ בניית Makefile</comment>
+  <comment xml:lang="gl">Ficheiro de construción Makefile</comment>
+  <comment xml:lang="fr">fichier de construction Makefile</comment>
+  <comment xml:lang="fi">Makefile-rakennustiedosto</comment>
+  <comment xml:lang="eu">Makefile build fitxategia</comment>
+  <comment xml:lang="es">archivo de generación Makefile</comment>
+  <comment xml:lang="en-GB">Makefile build file</comment>
+  <comment xml:lang="de">Makefile Build-Datei</comment>
+  <comment xml:lang="da">Makefile build-fil</comment>
+  <comment xml:lang="ca">fitxer de construcció Makefile</comment>
+  <comment xml:lang="bg">Проект — Makefile</comment>
+  <comment xml:lang="be-Cyrl">файл зборкі Makefile</comment>
+  <comment xml:lang="ar">ملف بناء Makefile</comment>
+  <sub-class-of type="text/plain"/>
+  <glob pattern="makefile"/>
+  <glob pattern="GNUmakefile"/>
+  <glob pattern="*.mk"/>
+  <glob pattern="*.mak"/>
+  <glob weight="10" pattern="Makefile.*"/>
+</mime-type>

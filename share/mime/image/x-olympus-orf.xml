@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="image/x-olympus-orf">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Olympus ORF raw image</comment>
+  <comment xml:lang="zh-Hant-TW">Olympus ORF 原始影像</comment>
+  <comment xml:lang="zh-Hans-CN">奥林巴斯 ORF 原始图像</comment>
+  <comment xml:lang="vi">Ảnh thô Olympus ORF</comment>
+  <comment xml:lang="uk">цифровий негатив ORF Olympus</comment>
+  <comment xml:lang="tr">Olympus ORF ham görüntüsü</comment>
+  <comment xml:lang="sv">Olympus ORF-råbild</comment>
+  <comment xml:lang="sr-Cyrl">Олимпус ОРФ сирова слика</comment>
+  <comment xml:lang="sq">figurë Olympus ORF e papërpunuar</comment>
+  <comment xml:lang="sl">Surova slikovna datoteka Olympus ORF</comment>
+  <comment xml:lang="si">Olympus ORF අමු රූපය</comment>
+  <comment xml:lang="sk">Surový obrázok Olympus ORF</comment>
+  <comment xml:lang="ru">Необработанное изображение Olympus ORF</comment>
+  <comment xml:lang="ro">Imagine brută Olympus ORF</comment>
+  <comment xml:lang="pt-BR">Imagem bruta ORF da Olympus</comment>
+  <comment xml:lang="pt">imagem em bruto Olympus ORF</comment>
+  <comment xml:lang="pl">Surowy obraz Olympus ORF</comment>
+  <comment xml:lang="oc">imatge brut ORF Olympus</comment>
+  <comment xml:lang="nn">Olympus ORF råbilete</comment>
+  <comment xml:lang="nl">onbewerkt Olympus ORF-beeld</comment>
+  <comment xml:lang="nb">Olympus ORF raw-bilde</comment>
+  <comment xml:lang="lv">Olympus ORF jēlattēls</comment>
+  <comment xml:lang="lt">Olympus ORF neapdorotas paveikslėlis</comment>
+  <comment xml:lang="ko">올림푸스 ORF RAW 사진</comment>
+  <comment xml:lang="kk-Cyrl">Olympus ORF өңделмеген суреті</comment>
+  <comment xml:lang="ka">Olympus ORF-ის raw გამოსახულება</comment>
+  <comment xml:lang="ja">Olympus ORF raw 画像</comment>
+  <comment xml:lang="it">Immagine raw Olympus ORF</comment>
+  <comment xml:lang="is">Olympus ORF hrámynd</comment>
+  <comment xml:lang="id">Citra mentah Olympus ORF</comment>
+  <comment xml:lang="ia">Imagine brute Olympus ORF</comment>
+  <comment xml:lang="hu">Olympus ORF nyers kép</comment>
+  <comment xml:lang="hr">Olympus ORF osnovna slika</comment>
+  <comment xml:lang="he">תמונה גולמית של Olympus ORF</comment>
+  <comment xml:lang="gl">imaxe en bruto de Olympus ORF</comment>
+  <comment xml:lang="ga">amhíomhá Olympus ORF</comment>
+  <comment xml:lang="fur">imagjin grese Olympus ORF</comment>
+  <comment xml:lang="fr">image brute ORF Olympus</comment>
+  <comment xml:lang="fo">Olympus ORF rámynd</comment>
+  <comment xml:lang="fi">Olympus-ORF-raakakuva</comment>
+  <comment xml:lang="eu">Olympus ORF irudi gordina</comment>
+  <comment xml:lang="es">imagen en bruto ORF de Olympus</comment>
+  <comment xml:lang="en-GB">Olympus ORF raw image</comment>
+  <comment xml:lang="el">Ανεπεξέργαστη εικόνα Olympus ORF</comment>
+  <comment xml:lang="de">Olympus-ORF-Rohbild</comment>
+  <comment xml:lang="da">Olympus ORF raw-billede</comment>
+  <comment xml:lang="cs">surový obrázek Olympus ORF</comment>
+  <comment xml:lang="ca">imatge en cru d'Olympus ORF</comment>
+  <comment xml:lang="bg">Изображение — Olympus ORF raw</comment>
+  <comment xml:lang="be-Latn">Suvoraja vyjava Olympus ORF</comment>
+  <comment xml:lang="be-Cyrl">неапрацаваная выява Olympus ORF</comment>
+  <comment xml:lang="ar">صورة Olympus ORF خامة</comment>
+  <comment xml:lang="af">Olympus ORF rou beeld</comment>
+  <acronym>ORF</acronym>
+  <expanded-acronym>Olympus Raw Format</expanded-acronym>
+  <sub-class-of type="image/x-dcraw"/>
+  <glob pattern="*.orf"/>
+</mime-type>

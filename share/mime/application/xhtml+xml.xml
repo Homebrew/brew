@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/xhtml+xml">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>XHTML page</comment>
+  <comment xml:lang="zh-Hant-TW">XHTML 網頁</comment>
+  <comment xml:lang="zh-Hans-CN">XHTML 页面</comment>
+  <comment xml:lang="vi">Trang XHTML</comment>
+  <comment xml:lang="uk">сторінка XHTML</comment>
+  <comment xml:lang="tr">XHTML sayfası</comment>
+  <comment xml:lang="sv">XHTML-sida</comment>
+  <comment xml:lang="sr-Cyrl">ИксХТМЛ страница</comment>
+  <comment xml:lang="sq">faqe XHTML</comment>
+  <comment xml:lang="sl">Datoteka spletne strani XHTML</comment>
+  <comment xml:lang="si">XHTML පිටුව</comment>
+  <comment xml:lang="sk">Stránka XHTML</comment>
+  <comment xml:lang="ru">Страница XHTML</comment>
+  <comment xml:lang="ro">Pagină XHTML</comment>
+  <comment xml:lang="pt-BR">Página XHTML</comment>
+  <comment xml:lang="pt">página XHTML</comment>
+  <comment xml:lang="pl">Strona XHTML</comment>
+  <comment xml:lang="oc">pagina XHTML</comment>
+  <comment xml:lang="nn">XHTML-side</comment>
+  <comment xml:lang="nl">XHTML-pagina</comment>
+  <comment xml:lang="nb">XHTML-side</comment>
+  <comment xml:lang="ms">Laman XHTML</comment>
+  <comment xml:lang="lv">XHTML lapa</comment>
+  <comment xml:lang="lt">XHTML puslapis</comment>
+  <comment xml:lang="ko">XHTML 페이지</comment>
+  <comment xml:lang="kk-Cyrl">XHTML парағы</comment>
+  <comment xml:lang="ja">XHTML ページ</comment>
+  <comment xml:lang="it">Pagina XHTML</comment>
+  <comment xml:lang="is">XHTML síða</comment>
+  <comment xml:lang="id">Halaman XHTML</comment>
+  <comment xml:lang="ia">Pagina XHTML</comment>
+  <comment xml:lang="hu">XHTML-oldal</comment>
+  <comment xml:lang="hr">XHTML stranica</comment>
+  <comment xml:lang="he">דף XHTML</comment>
+  <comment xml:lang="gl">Páxina XHTML</comment>
+  <comment xml:lang="ga">leathanach XHTML</comment>
+  <comment xml:lang="fur">pagjine XHTML</comment>
+  <comment xml:lang="fr">page XHTML</comment>
+  <comment xml:lang="fo">XHTML síða</comment>
+  <comment xml:lang="fi">XHTML-sivu</comment>
+  <comment xml:lang="eu">XHTML orria</comment>
+  <comment xml:lang="es">página XHTML</comment>
+  <comment xml:lang="eo">XHTML-paĝo</comment>
+  <comment xml:lang="en-GB">XHTML page</comment>
+  <comment xml:lang="el">Σελίδα XHTML</comment>
+  <comment xml:lang="de">XHTML-Seite</comment>
+  <comment xml:lang="da">XHTML-side</comment>
+  <comment xml:lang="cs">stránka XHTML</comment>
+  <comment xml:lang="ca">pàgina XHTML</comment>
+  <comment xml:lang="bg">Страница — XHTML</comment>
+  <comment xml:lang="be-Latn">Staronka XHTML</comment>
+  <comment xml:lang="be-Cyrl">старонка XHTML</comment>
+  <comment xml:lang="ar">صفحة XHTML</comment>
+  <comment xml:lang="af">XHTML-bladsy</comment>
+  <acronym>XHTML</acronym>
+  <expanded-acronym>Extensible HyperText Markup Language</expanded-acronym>
+  <sub-class-of type="application/xml"/>
+  <generic-icon name="text-html"/>
+  <glob pattern="*.xhtml"/>
+  <glob pattern="*.xht"/>
+  <glob pattern="*.html"/>
+  <glob pattern="*.htm"/>
+</mime-type>

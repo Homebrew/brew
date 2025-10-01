@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-thomson-sap-image">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>SAP Thomson floppy disk image</comment>
+  <comment xml:lang="zh-Hant-TW">SAP Thomson 軟碟映像檔</comment>
+  <comment xml:lang="zh-Hans-CN">SAP Thomson 软盘映像</comment>
+  <comment xml:lang="uk">образ дискети Thomson SAP</comment>
+  <comment xml:lang="tr">SAP Thomson disket görüntüsü</comment>
+  <comment xml:lang="sv">SAP Thomson-diskavbild</comment>
+  <comment xml:lang="sr-Cyrl">САП Томсон слика флопи диска</comment>
+  <comment xml:lang="sq">pamje diskete SAP Thomson</comment>
+  <comment xml:lang="sl">Slika diskete SAP Thomson</comment>
+  <comment xml:lang="si">SAP තොම්සන් නම්ය තැටි රූපය</comment>
+  <comment xml:lang="sk">Obraz pružného disku SAP Thomson</comment>
+  <comment xml:lang="ru">Образ гибкого диска SAP Thomson</comment>
+  <comment xml:lang="pt-BR">Imagem de disco flexível SAP Thomson</comment>
+  <comment xml:lang="pt">imagem de disquete SAP Thomson</comment>
+  <comment xml:lang="pl">Obraz dyskietki SAP Thomson</comment>
+  <comment xml:lang="nl">SAP Thomson diskette-schijfkopiebestand</comment>
+  <comment xml:lang="ko">SAP 톰슨 플로피 디스크 이미지</comment>
+  <comment xml:lang="kk-Cyrl">SAP Thomson иілгіш диск бейнесі</comment>
+  <comment xml:lang="ja">SAP Thomson フロッピーディスクイメージ</comment>
+  <comment xml:lang="it">Immagine disco floppy Thomson SAP</comment>
+  <comment xml:lang="is">SAP Thomson disklingsmynd</comment>
+  <comment xml:lang="id">Image disk floppy SAP Thomson</comment>
+  <comment xml:lang="hu">SAP Thomson flopi lemezkép</comment>
+  <comment xml:lang="hr">SAP Thomson slika diskete</comment>
+  <comment xml:lang="he">דמות כונן תקליטון מסוג SAP Thomson</comment>
+  <comment xml:lang="gl">Imaxe de disquete SAP Thomson</comment>
+  <comment xml:lang="ga">íomhá diosca fhlapaigh SAP Thomson</comment>
+  <comment xml:lang="fur">imagjin disc floppy SAP Thomson</comment>
+  <comment xml:lang="fr">image disquette SAP Thomson</comment>
+  <comment xml:lang="fi">SAP Thomson -levykekuva</comment>
+  <comment xml:lang="eu">SAP Thomson diskete disko irudia</comment>
+  <comment xml:lang="es">imagen de disquete SAP de Thomson</comment>
+  <comment xml:lang="en-GB">SAP Thomson floppy disk image</comment>
+  <comment xml:lang="de">SAP-Thomson-Diskettenabbild</comment>
+  <comment xml:lang="da">SAP Thomson-floppydiskaftryk</comment>
+  <comment xml:lang="cs">Obraz diskety SAP Thomson</comment>
+  <comment xml:lang="ca">imatge de disquet SAP Thomson</comment>
+  <comment xml:lang="bg">Диск — флопи, SAP Thomson</comment>
+  <comment xml:lang="be-Cyrl">вобраз гнуткага дыска SAP Thomson</comment>
+  <comment xml:lang="ar">صورة قرص مرن SAP Thomson</comment>
+  <acronym>SAP</acronym>
+  <expanded-acronym>Système d'Archivage Pukall</expanded-acronym>
+  <generic-icon name="application-x-executable"/>
+  <glob pattern="*.sap"/>
+  <alias type="application/x-sap-file"/>
+</mime-type>

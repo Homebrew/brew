@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="image/x-exr">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>EXR image</comment>
+  <comment xml:lang="zh-Hant-TW">EXR 影像</comment>
+  <comment xml:lang="zh-Hans-CN">EXR 图像</comment>
+  <comment xml:lang="vi">Ảnh EXR</comment>
+  <comment xml:lang="uk">зображення EXR</comment>
+  <comment xml:lang="tr">EXR görüntüsü</comment>
+  <comment xml:lang="sv">EXR-bild</comment>
+  <comment xml:lang="sr-Cyrl">ЕИксР слика</comment>
+  <comment xml:lang="sq">figurë EXR</comment>
+  <comment xml:lang="sl">Slikovna datoteka EXR</comment>
+  <comment xml:lang="si">EXR රූපය</comment>
+  <comment xml:lang="sk">Obrázok EXR</comment>
+  <comment xml:lang="ru">Изображение EXR</comment>
+  <comment xml:lang="ro">Imagine EXR</comment>
+  <comment xml:lang="pt-BR">Imagem EXR</comment>
+  <comment xml:lang="pt">imagem EXR</comment>
+  <comment xml:lang="pl">Obraz EXR</comment>
+  <comment xml:lang="oc">imatge EXR</comment>
+  <comment xml:lang="nn">EXR-bilete</comment>
+  <comment xml:lang="nl">EXR-afbeelding</comment>
+  <comment xml:lang="nb">EXR-bilde</comment>
+  <comment xml:lang="lv">EXR attēls</comment>
+  <comment xml:lang="lt">EXR paveikslėlis</comment>
+  <comment xml:lang="ko">EXR 그림</comment>
+  <comment xml:lang="kk-Cyrl">EXR суреті</comment>
+  <comment xml:lang="ka">EXR გამოსახულება</comment>
+  <comment xml:lang="ja">EXR 画像</comment>
+  <comment xml:lang="it">Immagine EXR</comment>
+  <comment xml:lang="is">EXR mynd</comment>
+  <comment xml:lang="id">Citra EXR</comment>
+  <comment xml:lang="ia">Imagine EXR</comment>
+  <comment xml:lang="hu">EXR kép</comment>
+  <comment xml:lang="hr">EXR slika</comment>
+  <comment xml:lang="he">תמונת EXR</comment>
+  <comment xml:lang="gl">imaxe EXR</comment>
+  <comment xml:lang="ga">íomhá EXR</comment>
+  <comment xml:lang="fur">imagjin EXR</comment>
+  <comment xml:lang="fr">image EXR</comment>
+  <comment xml:lang="fo">EXR mynd</comment>
+  <comment xml:lang="fi">EXR-kuva</comment>
+  <comment xml:lang="eu">EXR irudia</comment>
+  <comment xml:lang="es">imagen EXR</comment>
+  <comment xml:lang="eo">EXR-bildo</comment>
+  <comment xml:lang="en-GB">EXR image</comment>
+  <comment xml:lang="el">Εικόνα EXR</comment>
+  <comment xml:lang="de">EXR-Bild</comment>
+  <comment xml:lang="da">EXR-billede</comment>
+  <comment xml:lang="cs">obrázek EXR</comment>
+  <comment xml:lang="ca">imatge EXR</comment>
+  <comment xml:lang="bg">Изображение — EXR</comment>
+  <comment xml:lang="be-Latn">Vyjava EXR</comment>
+  <comment xml:lang="be-Cyrl">выява EXR</comment>
+  <comment xml:lang="ar">صورة EXR</comment>
+  <comment xml:lang="af">EXR-beeld</comment>
+  <glob pattern="*.exr"/>
+</mime-type>

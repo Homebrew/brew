@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/vnd.oasis.opendocument.presentation-flat-xml">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>ODP presentation (Flat XML)</comment>
+  <comment xml:lang="zh-Hant-TW">ODP 範本 (Flat XML)</comment>
+  <comment xml:lang="zh-Hans-CN">ODP 演示文稿（Flat XML）</comment>
+  <comment xml:lang="uk">презентація ODP (Flat XML)</comment>
+  <comment xml:lang="tr">ODP sunumu (Düz XML)</comment>
+  <comment xml:lang="sv">ODP-presentation (platt XML)</comment>
+  <comment xml:lang="sr-Cyrl">ОДП презентација (Обични ИксМЛ)</comment>
+  <comment xml:lang="sq">paraqitje ODF (Flat XML)</comment>
+  <comment xml:lang="sl">Predstavitev ODP (nepovezan XML)</comment>
+  <comment xml:lang="si">ODP ඉදිරිපත් කිරීම (පැතලි XML)</comment>
+  <comment xml:lang="sk">Prezentácia ODP (čisté XML)</comment>
+  <comment xml:lang="ru">Презентация ODP (простой XML)</comment>
+  <comment xml:lang="ro">Prezentare ODP (XML simplu)</comment>
+  <comment xml:lang="pt-BR">Apresentação ODP (Flat XML)</comment>
+  <comment xml:lang="pt">apresentação ODP (XML plano)</comment>
+  <comment xml:lang="pl">Prezentacja ODP (prosty XML)</comment>
+  <comment xml:lang="oc">presentacion ODP (XML plat)</comment>
+  <comment xml:lang="nl">ODP presentatie (Flat XML)</comment>
+  <comment xml:lang="lv">ODP prezentācija (plakans XML)</comment>
+  <comment xml:lang="lt">ODP pateiktis (Flat XML)</comment>
+  <comment xml:lang="ko">ODP 프레젠테이션(단일 XML)</comment>
+  <comment xml:lang="kk-Cyrl">ODP презентациясы (Тек XML)</comment>
+  <comment xml:lang="ka">ODP პრეზენტაცია (Flat XML)</comment>
+  <comment xml:lang="ja">ODP プレゼンテーション (Flat XML)</comment>
+  <comment xml:lang="it">Presentazione ODP (XML semplice)</comment>
+  <comment xml:lang="is">ODP glærukynning (flatt XML)</comment>
+  <comment xml:lang="id">Presentasi ODP (Flat XML)</comment>
+  <comment xml:lang="ia">Presentation ODP (XML platte)</comment>
+  <comment xml:lang="hu">ODP-prezentáció (egyszerű XML)</comment>
+  <comment xml:lang="hr">ODP prezentacija (Flat XML)</comment>
+  <comment xml:lang="he">מצגת ODP‏ (Flat XML)</comment>
+  <comment xml:lang="gl">presentación ODP (XML plano)</comment>
+  <comment xml:lang="ga">láithreoireacht ODP (XML cothrom)</comment>
+  <comment xml:lang="fur">presentazion ODP (XML sempliç)</comment>
+  <comment xml:lang="fr">présentation ODP (XML plat)</comment>
+  <comment xml:lang="fo">ODP framløga (Flat XML)</comment>
+  <comment xml:lang="fi">ODP-esitys (Flat XML)</comment>
+  <comment xml:lang="eu">ODP aurkezpena (XML soila)</comment>
+  <comment xml:lang="es">presentación ODP (XML plano)</comment>
+  <comment xml:lang="en-GB">ODP presentation (Flat XML)</comment>
+  <comment xml:lang="el">Παρουσίαση ODP (Flat XML)</comment>
+  <comment xml:lang="de">ODP-Präsentation (einfaches XML)</comment>
+  <comment xml:lang="da">ODP-præsentation (flad XML)</comment>
+  <comment xml:lang="cs">prezentace ODP (Flat XML)</comment>
+  <comment xml:lang="ca">presentació ODP (XML pla)</comment>
+  <comment xml:lang="bg">Презентация — ODP (само XML)</comment>
+  <comment xml:lang="be-Cyrl">прэзентацыя ODP (плоскі XML)</comment>
+  <comment xml:lang="ar">عرض ODP (Flat XML)</comment>
+  <comment xml:lang="af">ODP-voorlegging (plat XML)</comment>
+  <acronym>FODP</acronym>
+  <expanded-acronym>OpenDocument Presentation (Flat XML)</expanded-acronym>
+  <sub-class-of type="application/xml"/>
+  <generic-icon name="x-office-presentation"/>
+  <glob pattern="*.fodp"/>
+</mime-type>

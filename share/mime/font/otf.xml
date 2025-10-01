@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="font/otf">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>OpenType font</comment>
+  <comment xml:lang="zh-Hant-TW">OpenType 字型</comment>
+  <comment xml:lang="zh-Hans-CN">OpenType 字体</comment>
+  <comment xml:lang="vi">Phông chữ OpenType</comment>
+  <comment xml:lang="uk">шрифт OpenType</comment>
+  <comment xml:lang="tr">OpenType yazı tipi</comment>
+  <comment xml:lang="sv">OpenType-typsnitt</comment>
+  <comment xml:lang="sr-Cyrl">слова Отворене Врсте</comment>
+  <comment xml:lang="sq">shkronja OpenType</comment>
+  <comment xml:lang="sl">Datoteka pisave OpenType</comment>
+  <comment xml:lang="si">OpenType අකුරු</comment>
+  <comment xml:lang="sk">Písmo OpenType</comment>
+  <comment xml:lang="ru">Шрифт OpenType</comment>
+  <comment xml:lang="ro">Font OpenType</comment>
+  <comment xml:lang="pt-BR">Fonte OpenType</comment>
+  <comment xml:lang="pt">letra OpenType</comment>
+  <comment xml:lang="pl">Czcionka OpenType</comment>
+  <comment xml:lang="oc">poliça OpenType</comment>
+  <comment xml:lang="nn">OpenType-skrifttype</comment>
+  <comment xml:lang="nl">OpenType-lettertype</comment>
+  <comment xml:lang="nb">OpenType-skrifttype</comment>
+  <comment xml:lang="ms">Font OpenType</comment>
+  <comment xml:lang="lv">OpenType fonts</comment>
+  <comment xml:lang="lt">OpenType šriftas</comment>
+  <comment xml:lang="ko">오픈타입 글꼴</comment>
+  <comment xml:lang="kk-Cyrl">OpenType қарібі</comment>
+  <comment xml:lang="ja">OpenType フォント</comment>
+  <comment xml:lang="it">Carattere OpenType</comment>
+  <comment xml:lang="is">Open Type letur</comment>
+  <comment xml:lang="id">Fonta OpenType</comment>
+  <comment xml:lang="ia">Typo de litteras OpenType</comment>
+  <comment xml:lang="hu">OpenType-betűkészlet</comment>
+  <comment xml:lang="hr">OpenType font</comment>
+  <comment xml:lang="he">גופן של OpenType</comment>
+  <comment xml:lang="gl">tipo de fonte OpenType</comment>
+  <comment xml:lang="ga">cló OpenType</comment>
+  <comment xml:lang="fur">caratar OpenType</comment>
+  <comment xml:lang="fr">police OpenType</comment>
+  <comment xml:lang="fo">OpenType stavasnið</comment>
+  <comment xml:lang="fi">OpenType-fontti</comment>
+  <comment xml:lang="eu">OpenType letra-tipoa</comment>
+  <comment xml:lang="es">tipo de letra OpenType</comment>
+  <comment xml:lang="eo">OpenType-tiparo</comment>
+  <comment xml:lang="en-GB">OpenType font</comment>
+  <comment xml:lang="el">Γραμματοσειρά OpenType </comment>
+  <comment xml:lang="de">OpenType-Schrift</comment>
+  <comment xml:lang="da">OpenType-skrifttype</comment>
+  <comment xml:lang="cy">Ffont OpenType</comment>
+  <comment xml:lang="cs">font OpenType</comment>
+  <comment xml:lang="ca">lletra OpenType</comment>
+  <comment xml:lang="bg">Шрифт — OpenType</comment>
+  <comment xml:lang="be-Latn">Šryft OpenType</comment>
+  <comment xml:lang="be-Cyrl">шрыфт OpenType</comment>
+  <comment xml:lang="az">OpenType yazı növü</comment>
+  <comment xml:lang="ar">خط OpenType</comment>
+  <comment xml:lang="af">OpenType-skriftipe</comment>
+  <sub-class-of type="font/ttf"/>
+  <generic-icon name="font-x-generic"/>
+  <glob pattern="*.otf"/>
+  <alias type="application/x-font-otf"/>
+</mime-type>

@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="text/x-vhdl">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>VHDL source code</comment>
+  <comment xml:lang="zh-Hant-TW">VHDL 源碼</comment>
+  <comment xml:lang="zh-Hans-CN">VHDL 源代码</comment>
+  <comment xml:lang="uk">початковий код мовою VHDL</comment>
+  <comment xml:lang="tr">VHDL kaynak kodu</comment>
+  <comment xml:lang="sv">VHDL-källkod</comment>
+  <comment xml:lang="sr-Cyrl">ВХДЛ изворни код</comment>
+  <comment xml:lang="sq">kod burim VHDL</comment>
+  <comment xml:lang="sl">Datoteka izvorne kode VHDL</comment>
+  <comment xml:lang="si">VHDL මූල කේතය</comment>
+  <comment xml:lang="sk">Zdrojový kód VHDL</comment>
+  <comment xml:lang="ru">Исходный код VHDL</comment>
+  <comment xml:lang="pt-BR">Código-fonte VHDL</comment>
+  <comment xml:lang="pt">código origem VHDL</comment>
+  <comment xml:lang="pl">Kod źródłowy VHDL</comment>
+  <comment xml:lang="oc">còde font VHDL</comment>
+  <comment xml:lang="nl">VHDL-broncode</comment>
+  <comment xml:lang="lv">VHDL pirmkods</comment>
+  <comment xml:lang="ko">VHDL 소스 코드</comment>
+  <comment xml:lang="kk-Cyrl">VHDL бастапқы коды</comment>
+  <comment xml:lang="ja">VHDL ソースコード</comment>
+  <comment xml:lang="it">Codice sorgente VHDL</comment>
+  <comment xml:lang="is">VHDL frumkóði</comment>
+  <comment xml:lang="id">Kode sumber VHDL</comment>
+  <comment xml:lang="ia">Codice-fonte VHDL</comment>
+  <comment xml:lang="hu">VHDL-forráskód</comment>
+  <comment xml:lang="hr">VHDL izvorni kôd</comment>
+  <comment xml:lang="he">קוד מקור של VHDL</comment>
+  <comment xml:lang="gl">código fonte en VHDL</comment>
+  <comment xml:lang="ga">cód foinseach VHDL</comment>
+  <comment xml:lang="fur">codiç sorzint VHDL</comment>
+  <comment xml:lang="fr">code source VHDL</comment>
+  <comment xml:lang="fi">VHDL-lähdekoodi</comment>
+  <comment xml:lang="eu">VHDL iturburu-kodea</comment>
+  <comment xml:lang="es">código fuente en VHDL</comment>
+  <comment xml:lang="eo">VHDL-fontkodo</comment>
+  <comment xml:lang="en-GB">VHDL source code</comment>
+  <comment xml:lang="el">Πηγαίος κώδικας VHDL</comment>
+  <comment xml:lang="de">VHDL-Quelltext</comment>
+  <comment xml:lang="da">VHDL-kildekode</comment>
+  <comment xml:lang="cs">zdrojový kód v jazyce VHDL</comment>
+  <comment xml:lang="ca">codi font en VHDL</comment>
+  <comment xml:lang="bg">Изходен код — VHDL</comment>
+  <comment xml:lang="be-Cyrl">зыходны код VHDL</comment>
+  <comment xml:lang="ar">شفرة مصدر VHDL</comment>
+  <comment xml:lang="af">VHDL-bronkode</comment>
+  <acronym>VHDL</acronym>
+  <expanded-acronym>Very-High-Speed Integrated Circuit Hardware Description Language</expanded-acronym>
+  <sub-class-of type="text/plain"/>
+  <glob pattern="*.vhd"/>
+  <glob pattern="*.vhdl"/>
+</mime-type>

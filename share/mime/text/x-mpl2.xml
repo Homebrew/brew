@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="text/x-mpl2">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>MPL2 subtitles</comment>
+  <comment xml:lang="uk">субтитри MPL2</comment>
+  <comment xml:lang="sv">MPL2-undertexter</comment>
+  <comment xml:lang="ru">Субтитры MPL2</comment>
+  <comment xml:lang="pl">Napisy MPL2</comment>
+  <comment xml:lang="es">subtítulos MPL2</comment>
+  <comment xml:lang="de">MPL2-Untertitel</comment>
+  <sub-class-of type="text/plain"/>
+  <glob pattern="*.mpl"/>
+</mime-type>

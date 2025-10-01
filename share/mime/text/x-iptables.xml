@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="text/x-iptables">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>iptables configuration file</comment>
+  <comment xml:lang="zh-Hant-TW">iptables 組態檔</comment>
+  <comment xml:lang="zh-Hans-CN">iptables 防火墙配置文件</comment>
+  <comment xml:lang="vi">tập tin cấu hình iptables</comment>
+  <comment xml:lang="uk">файл налаштувань iptables</comment>
+  <comment xml:lang="tr">iptables yapılandırma dosyası</comment>
+  <comment xml:lang="sv">iptables-konfigurationsfil</comment>
+  <comment xml:lang="sr-Cyrl">датотека подешавања иптабела</comment>
+  <comment xml:lang="sq">kartelë formësimi iptables</comment>
+  <comment xml:lang="sl">nastavitvena datoteka iptables</comment>
+  <comment xml:lang="si">iptables වින්‍යාස ගොනුව</comment>
+  <comment xml:lang="sk">Súbor nastavení iptables</comment>
+  <comment xml:lang="ru">Файл настроек iptables</comment>
+  <comment xml:lang="ro">fișier configurare iptables</comment>
+  <comment xml:lang="pt-BR">Arquivo de configuração do iptables</comment>
+  <comment xml:lang="pt">ficheiro de configuração iptables</comment>
+  <comment xml:lang="pl">Plik konfiguracji iptables</comment>
+  <comment xml:lang="oc">fichièr de configuracion iptables</comment>
+  <comment xml:lang="nn">iptables oppsettfil</comment>
+  <comment xml:lang="nl">iptables-configuratiebestand</comment>
+  <comment xml:lang="nb">konfigurasjonsfil for iptables</comment>
+  <comment xml:lang="lv">iptables konfigurācijas datne</comment>
+  <comment xml:lang="lt">iptables konfigūracijos failas</comment>
+  <comment xml:lang="ko">iptables 설정 파일</comment>
+  <comment xml:lang="kk-Cyrl">iptables баптаулар файлы</comment>
+  <comment xml:lang="ja">iptables 設定ファイル</comment>
+  <comment xml:lang="it">File configurazione iptables</comment>
+  <comment xml:lang="is">iptables stillingaskrá</comment>
+  <comment xml:lang="id">berkas konfigurasi iptables</comment>
+  <comment xml:lang="ia">File de configuration IPTables</comment>
+  <comment xml:lang="hu">iptables beállítófájl</comment>
+  <comment xml:lang="hr">iptables datoteka podešavanja</comment>
+  <comment xml:lang="he">קובץ הגדרה של iptables</comment>
+  <comment xml:lang="gl">ficheiro de configuración de iptables</comment>
+  <comment xml:lang="ga">comhad cumraíochta iptables</comment>
+  <comment xml:lang="fur">file di configurazion di iptables</comment>
+  <comment xml:lang="fr">fichier de configuration iptables</comment>
+  <comment xml:lang="fo">iptables samansetingarfíla</comment>
+  <comment xml:lang="fi">iptables-asetustiedosto</comment>
+  <comment xml:lang="eu">iptables konfigurazio-fitxategia</comment>
+  <comment xml:lang="es">archivo de configuración de iptables</comment>
+  <comment xml:lang="en-GB">iptables configuration file</comment>
+  <comment xml:lang="el">Αρχείο ρυθμίσεων iptables</comment>
+  <comment xml:lang="de">iptables-Konfigurationsdatei</comment>
+  <comment xml:lang="da">iptableskonfigurationsfil</comment>
+  <comment xml:lang="cs">soubor nastavení iptables</comment>
+  <comment xml:lang="ca">fitxer de configuració d'iptables</comment>
+  <comment xml:lang="bg">Настройки за iptables</comment>
+  <comment xml:lang="be-Latn">kanfihuracyjny fajł iptables</comment>
+  <comment xml:lang="be-Cyrl">файл канфігурацыі iptables</comment>
+  <comment xml:lang="ast">ficheru de configuración d'iptables</comment>
+  <comment xml:lang="ar">ملف إعداد iptables</comment>
+  <comment xml:lang="af">iptables-opstellingslêer</comment>
+  <sub-class-of type="text/plain"/>
+  <glob pattern="*.iptables"/>
+</mime-type>

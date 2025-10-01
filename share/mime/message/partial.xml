@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="message/partial">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Partial email message</comment>
+  <comment xml:lang="uk">часткове поштове повідомлення</comment>
+  <comment xml:lang="sv">Del av e-postmeddelande</comment>
+  <comment xml:lang="ru">Фрагмент сообщения электронной почты</comment>
+  <comment xml:lang="pl">Częściowa wiadomość e-mail</comment>
+  <comment xml:lang="it">Messaggio email parziale</comment>
+  <comment xml:lang="es">mensaje de correo electrónico parcial</comment>
+  <comment xml:lang="de">E-Mail-Nachrichtenfragment</comment>
+  <comment xml:lang="be-Cyrl">частка электроннага ліста</comment>
+  <generic-icon name="text-x-generic"/>
+  <sub-class-of type="text/plain"/>
+</mime-type>

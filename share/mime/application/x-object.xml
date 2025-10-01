@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-object">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Object code</comment>
+  <comment xml:lang="uk">об'єктний код</comment>
+  <comment xml:lang="sv">Objektkod</comment>
+  <comment xml:lang="ru">Объектный код</comment>
+  <comment xml:lang="pl">Kod obiektowy</comment>
+  <comment xml:lang="ja">目的符号文書</comment>
+  <comment xml:lang="it">Codice oggetto</comment>
+  <comment xml:lang="gl">Código obxecto</comment>
+  <comment xml:lang="eu">Objektu-kodea</comment>
+  <comment xml:lang="es">código de objeto</comment>
+  <comment xml:lang="de">Objektcode</comment>
+  <comment xml:lang="be-Cyrl">аб'ектны код</comment>
+  <generic-icon name="x-office-document"/>
+  <glob pattern="*.o"/>
+  <glob pattern="*.mod" weight="40"/>
+</mime-type>

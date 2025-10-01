@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/its+xml">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>ITS translation file</comment>
+  <comment xml:lang="uk">файл перекладу ITS</comment>
+  <comment xml:lang="sv">ITS-översättningsfil</comment>
+  <comment xml:lang="ru">Файл перевода ITS</comment>
+  <comment xml:lang="pl">Plik tłumaczenia ITS</comment>
+  <comment xml:lang="es">archivo de traducción ITS</comment>
+  <comment xml:lang="de">ITS-Übersetzungsdatei</comment>
+  <acronym>ITS</acronym>
+  <expanded-acronym>Internationalization Tag Set</expanded-acronym>
+  <sub-class-of type="application/xml"/>
+  <generic-icon name="text-x-generic"/>
+  <glob pattern="*.its"/>
+</mime-type>

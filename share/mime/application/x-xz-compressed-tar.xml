@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-xz-compressed-tar">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Tar archive (XZ-compressed)</comment>
+  <comment xml:lang="zh-Hant-TW">Tar 封存檔 (XZ 壓縮)</comment>
+  <comment xml:lang="zh-Hans-CN">Tar 归档文件（XZ 压缩）</comment>
+  <comment xml:lang="uk">архів tar (стиснений XZ)</comment>
+  <comment xml:lang="tr">Tar arşivi (XZ ile sıkıştırılmış)</comment>
+  <comment xml:lang="sv">Tar-arkiv (XZ-komprimerat)</comment>
+  <comment xml:lang="sr-Cyrl">Тар архива (запакована ИксЗ-ом)</comment>
+  <comment xml:lang="sq">arkiv tar (ngjeshur me XZ)</comment>
+  <comment xml:lang="sl">Datoteka arhiva Tar (stisnjen z XZ)</comment>
+  <comment xml:lang="si">තාර සංරක්ෂිතය (XZ-සම්පීඩිත)</comment>
+  <comment xml:lang="sk">Archív Tar (komprimovaný pomocou XZ)</comment>
+  <comment xml:lang="ru">Архив TAR (сжатый xz)</comment>
+  <comment xml:lang="ro">Arhivă Tar (comprimată XZ)</comment>
+  <comment xml:lang="pt-BR">Pacote Tar (compactado com XZ)</comment>
+  <comment xml:lang="pt">arquivo Tar (compressão XZ)</comment>
+  <comment xml:lang="pl">Archiwum tar (kompresja XZ)</comment>
+  <comment xml:lang="oc">archiu tar (compression XZ)</comment>
+  <comment xml:lang="nl">Tar archief (XZ-compressed)</comment>
+  <comment xml:lang="lv">Tar arhīvs (saspiests ar XZ)</comment>
+  <comment xml:lang="lt">Tar archyvas (suglaudintas su XZ)</comment>
+  <comment xml:lang="ko">TAR 묶음 파일(XZ 압축)</comment>
+  <comment xml:lang="kk-Cyrl">Tar архиві (XZ-мен сығылған)</comment>
+  <comment xml:lang="ja">Tar アーカイブ (XZ 圧縮)</comment>
+  <comment xml:lang="it">Archivio tar (compresso con XZ)</comment>
+  <comment xml:lang="is">Tar safnskrá (XZ-þjappað)</comment>
+  <comment xml:lang="id">Arsip Tar (terkompresi XZ)</comment>
+  <comment xml:lang="ia">Archivo Tar (comprimite con XZ)</comment>
+  <comment xml:lang="hu">Tar archívum (XZ tömörítésű)</comment>
+  <comment xml:lang="hr">Tar arhiva ( XZ sažeta)</comment>
+  <comment xml:lang="he">ארכיון Tar (מכווץ ע״י XZ)</comment>
+  <comment xml:lang="gl">arquivo Tar (comprimido con XZ)</comment>
+  <comment xml:lang="ga">cartlann Tar (comhbhrúite le XZ)</comment>
+  <comment xml:lang="fur">archivi Tar (comprimût cun XZ)</comment>
+  <comment xml:lang="fr">archive tar (compression XZ)</comment>
+  <comment xml:lang="fo">Tar skjalasavn(XZ-stappað)</comment>
+  <comment xml:lang="fi">Tar-arkisto (XZ-pakattu)</comment>
+  <comment xml:lang="eu">Tar artxiboa (XZ-rekin konprimitua)</comment>
+  <comment xml:lang="es">archivador TAR (comprimido con XZ)</comment>
+  <comment xml:lang="en-GB">Tar archive (XZ-compressed)</comment>
+  <comment xml:lang="el">Αρχείο Tar (συμπιεσμένο με XZ)</comment>
+  <comment xml:lang="de">Tar-Archiv (XZ-komprimiert)</comment>
+  <comment xml:lang="da">Tar-arkiv (XZ-komprimeret)</comment>
+  <comment xml:lang="cs">archiv Tar (komprimovaný pomocí XZ)</comment>
+  <comment xml:lang="ca">arxiu tar (amb compressió XZ)</comment>
+  <comment xml:lang="bg">Архив — tar, компресиран с XZ</comment>
+  <comment xml:lang="be-Cyrl">архіў tar (сцісканне XZ)</comment>
+  <comment xml:lang="ar">أرشيف Tar (مضغوط-XZ)</comment>
+  <comment xml:lang="af">Tar-argief (XZ-saamgepers)</comment>
+  <sub-class-of type="application/x-xz"/>
+  <generic-icon name="package-x-generic"/>
+  <glob pattern="*.tar.xz"/>
+  <glob pattern="*.txz"/>
+</mime-type>

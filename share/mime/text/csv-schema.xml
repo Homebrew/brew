@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="text/csv-schema">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>CSV Schema document</comment>
+  <comment xml:lang="zh-Hant-TW">CSV Schema 文件</comment>
+  <comment xml:lang="zh-Hans-CN">CSV 架构文档</comment>
+  <comment xml:lang="uk">документ Schema у форматі CSV</comment>
+  <comment xml:lang="tr">CSV Şeması belgesi</comment>
+  <comment xml:lang="sv">CSV Schema-dokument</comment>
+  <comment xml:lang="sr-Cyrl">документ ЦСВ шеме</comment>
+  <comment xml:lang="sq">dokument CSV Schema</comment>
+  <comment xml:lang="sl">Dokument CSV Schema</comment>
+  <comment xml:lang="si">CSV ක්‍රම ලේඛනය</comment>
+  <comment xml:lang="sk">Dokument schémy CSV</comment>
+  <comment xml:lang="ru">Документ CSV Schema</comment>
+  <comment xml:lang="pt-BR">Documento CSV Schema</comment>
+  <comment xml:lang="pt">documento CSV Schema</comment>
+  <comment xml:lang="pl">Dokument schematu CSV</comment>
+  <comment xml:lang="nl">CSV-schemadocument</comment>
+  <comment xml:lang="ko">CSV 스키마 문서</comment>
+  <comment xml:lang="kk-Cyrl">CSV сұлба құжаты</comment>
+  <comment xml:lang="ja">CSV Schema ドキュメント</comment>
+  <comment xml:lang="it">Documento schema CSV</comment>
+  <comment xml:lang="is">CSV skemaskjal</comment>
+  <comment xml:lang="id">Dokumen Skema CSV</comment>
+  <comment xml:lang="ia">Documento CSV Schema</comment>
+  <comment xml:lang="hu">CSV sémadokumentum</comment>
+  <comment xml:lang="hr">CSV Shema dokument</comment>
+  <comment xml:lang="he">מסמך פריסת CSV</comment>
+  <comment xml:lang="ga">cáipéis scéimre CSV</comment>
+  <comment xml:lang="fur">document scheme CSV</comment>
+  <comment xml:lang="fr">document schéma CSV</comment>
+  <comment xml:lang="fi">CSV Schema -asiakirja</comment>
+  <comment xml:lang="eu">CSV Schema dokumentua</comment>
+  <comment xml:lang="es">documento esquemático CSV</comment>
+  <comment xml:lang="en-GB">CSV Schema document</comment>
+  <comment xml:lang="de">CSV-Schemadokument</comment>
+  <comment xml:lang="da">CSV Schema-dokument</comment>
+  <comment xml:lang="cs">dokument schématu CSV</comment>
+  <comment xml:lang="ca">document Schema de CSV</comment>
+  <comment xml:lang="bg">Документ — схема на CSV</comment>
+  <comment xml:lang="be-Cyrl">дакумент CSV Schema</comment>
+  <comment xml:lang="ast">Documentu d'esquema CSV</comment>
+  <comment xml:lang="ar">مستند مخطط CSV</comment>
+  <comment xml:lang="af">CSV Schema-dokument</comment>
+  <acronym>CSV</acronym>
+  <expanded-acronym>Comma Separated Values</expanded-acronym>
+  <sub-class-of type="text/plain"/>
+  <glob pattern="*.csvs"/>
+</mime-type>

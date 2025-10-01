@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="image/jxr">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>JPEG XR image</comment>
+  <comment xml:lang="uk">зображення JPEG XR</comment>
+  <comment xml:lang="sv">JPEG XR-bild</comment>
+  <comment xml:lang="ru">Изображение JPEG XR</comment>
+  <comment xml:lang="pt-BR">Imagem JPEG XR</comment>
+  <comment xml:lang="pl">Obraz JPEG XR</comment>
+  <comment xml:lang="it">Immagine JPEG XR</comment>
+  <comment xml:lang="gl">Imaxe JPEG XR</comment>
+  <comment xml:lang="eu">JPEG XR irudia</comment>
+  <comment xml:lang="es">imagen JPEG XR</comment>
+  <comment xml:lang="de">JPEG-XR-Bild</comment>
+  <comment xml:lang="be-Cyrl">выява JPEG XR</comment>
+  <acronym>XR</acronym>
+  <expanded-acronym>Extended Range</expanded-acronym>
+  <glob pattern="*.jxr"/>
+  <glob pattern="*.hdp"/>
+  <glob pattern="*.wdp"/>
+  <alias type="image/vnd.ms-photo"/>
+</mime-type>

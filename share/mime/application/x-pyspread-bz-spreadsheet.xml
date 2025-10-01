@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-pyspread-bz-spreadsheet">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Pyspread spreadsheet (bzip2-compressed)</comment>
+  <comment xml:lang="uk">електронна таблиця Pyspread (стиснена bzip2)</comment>
+  <comment xml:lang="sv">Pyspread-kalkylblad (bzip2-komprimerat)</comment>
+  <comment xml:lang="ru">Электронная таблица Pyspread (сжатая bzip2)</comment>
+  <comment xml:lang="pl">Arkusz pyspread (kompresja bzip2)</comment>
+  <comment xml:lang="es">hoja de cálculo de Pyspread (comprimida con BZIP2)</comment>
+  <comment xml:lang="de">Pyspread-Tabelle (bzip2-komprimiert)</comment>
+  <sub-class-of type="application/x-bzip2"/>
+  <glob pattern="*.pys"/>
+  <generic-icon name="x-office-spreadsheet"/>
+</mime-type>

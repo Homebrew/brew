@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="image/apng">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Animated PNG image</comment>
+  <comment xml:lang="uk">анімоване зображення PNG</comment>
+  <comment xml:lang="sv">Animerad PNG-bild</comment>
+  <comment xml:lang="ru">Анимированное изображение  PNG</comment>
+  <comment xml:lang="pl">Animowany obraz PNG</comment>
+  <comment xml:lang="ja">PNG動画</comment>
+  <comment xml:lang="it">Immagine PNG animata</comment>
+  <comment xml:lang="gl">Imaxe de PNG animado</comment>
+  <comment xml:lang="eu">PNG irudi animatua</comment>
+  <comment xml:lang="es">imagen PNG animada</comment>
+  <comment xml:lang="de">Animiertes PNG-Bild</comment>
+  <comment xml:lang="be-Cyrl">анімаваная выява PNG</comment>
+  <acronym>PNG</acronym>
+  <expanded-acronym>Portable Network Graphics</expanded-acronym>
+  <sub-class-of type="image/png"/>
+  <glob pattern="*.apng"/>
+  <glob pattern="*.png" weight="40"/>
+  <alias type="image/vnd.mozilla.apng"/>
+</mime-type>

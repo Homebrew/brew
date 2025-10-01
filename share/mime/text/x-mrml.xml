@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="text/x-mrml">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>MRML playlist</comment>
+  <comment xml:lang="zh-Hant-TW">MRML 播放清單</comment>
+  <comment xml:lang="zh-Hans-CN">MRML 播放列表</comment>
+  <comment xml:lang="vi">Danh mục nhạc MRML</comment>
+  <comment xml:lang="uk">список відтворення MRML</comment>
+  <comment xml:lang="tr">MRML çalma listesi</comment>
+  <comment xml:lang="sv">MRML-spellista</comment>
+  <comment xml:lang="sr-Cyrl">МРМЛ списак нумера</comment>
+  <comment xml:lang="sq">luajlistë MRML</comment>
+  <comment xml:lang="sl">Seznam predvajanja MRML</comment>
+  <comment xml:lang="si">MRML ධාවන ලැයිස්තුව</comment>
+  <comment xml:lang="sk">Zoznam skladieb MRML</comment>
+  <comment xml:lang="ru">Список воспроизведения MRML</comment>
+  <comment xml:lang="ro">Listă redare MRML</comment>
+  <comment xml:lang="pt-BR">Lista de reprodução do MRML</comment>
+  <comment xml:lang="pt">lista de reprodução MRML</comment>
+  <comment xml:lang="pl">Lista odtwarzania MRML</comment>
+  <comment xml:lang="oc">lista de lectura MRML</comment>
+  <comment xml:lang="nn">MRML-speleliste</comment>
+  <comment xml:lang="nl">MRML-afspeellijst</comment>
+  <comment xml:lang="nb">MRML-spilleliste</comment>
+  <comment xml:lang="lv">MRML repertuārs</comment>
+  <comment xml:lang="lt">MRML grojaraštis</comment>
+  <comment xml:lang="ko">MRML 재생 목록</comment>
+  <comment xml:lang="kk-Cyrl">MRML ойнау тізімі</comment>
+  <comment xml:lang="ka">MRML რეპერტუარი</comment>
+  <comment xml:lang="ja">MRML プレイリスト</comment>
+  <comment xml:lang="it">Playlist MRML</comment>
+  <comment xml:lang="is">MRML spilunarlisti</comment>
+  <comment xml:lang="id">Senarai putar MRML</comment>
+  <comment xml:lang="ia">Lista de selection MRML</comment>
+  <comment xml:lang="hu">MRML-lejátszólista</comment>
+  <comment xml:lang="hr">MRML popis izvođenja</comment>
+  <comment xml:lang="he">רשימת השמעה MRML</comment>
+  <comment xml:lang="gl">lista de reprodución MRML</comment>
+  <comment xml:lang="ga">seinmliosta MRML</comment>
+  <comment xml:lang="fur">liste di riproduzion MRML</comment>
+  <comment xml:lang="fr">liste de lecture MRML</comment>
+  <comment xml:lang="fo">MRML avspælingarlisti</comment>
+  <comment xml:lang="fi">MRML-soittolista</comment>
+  <comment xml:lang="eu">MRML erreprodukzio-zerrenda</comment>
+  <comment xml:lang="es">lista de reproducción MRML</comment>
+  <comment xml:lang="eo">MRML-ludlisto</comment>
+  <comment xml:lang="en-GB">MRML playlist</comment>
+  <comment xml:lang="el">Λίστα αναπαραγωγής MRML</comment>
+  <comment xml:lang="de">MRML-Wiedergabeliste</comment>
+  <comment xml:lang="da">MRML-afspilningsliste</comment>
+  <comment xml:lang="cs">seznam k přehrání MRML</comment>
+  <comment xml:lang="ca">llista de reproducció MRML</comment>
+  <comment xml:lang="bg">Списък за изпълнение — MRML</comment>
+  <comment xml:lang="be-Latn">Śpis piesień MRML</comment>
+  <comment xml:lang="be-Cyrl">плэй-ліст MRML</comment>
+  <comment xml:lang="ar">قائمة تشغيل MRML</comment>
+  <comment xml:lang="af">MRML-speellys</comment>
+  <acronym>MRML</acronym>
+  <expanded-acronym>Multimedia Retrieval Markup Language</expanded-acronym>
+  <sub-class-of type="application/xml"/>
+  <glob pattern="*.mrml"/>
+  <glob pattern="*.mrl"/>
+</mime-type>

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="text/x-devicetree-source">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Devicetree source code</comment>
+  <comment xml:lang="uk">початковий код devicetree</comment>
+  <comment xml:lang="sv">Enhetsträdskällkod</comment>
+  <comment xml:lang="ru">Исходный код Devicetree</comment>
+  <comment xml:lang="pl">Kod źródłowy DeviceTree</comment>
+  <comment xml:lang="it">Codice sorgente Devicetree</comment>
+  <comment xml:lang="gl">Código fonte en Devicetree</comment>
+  <comment xml:lang="es">código fuente de árbol de dispositivos</comment>
+  <comment xml:lang="de">Gerätebaum-Quelltext</comment>
+  <comment xml:lang="be-Cyrl">зыходны код Devicetree</comment>
+  <acronym>DTS</acronym>
+  <expanded-acronym>Device Tree Source</expanded-acronym>
+  <sub-class-of type="text/plain"/>
+  <glob pattern="*.dts"/>
+  <glob pattern="*.dtsi"/>
+</mime-type>

@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-gnumeric">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Gnumeric spreadsheet</comment>
+  <comment xml:lang="zh-Hant-TW">Gnumeric 試算表</comment>
+  <comment xml:lang="zh-Hans-CN">Gnumeric 电子表格</comment>
+  <comment xml:lang="vi">Bảng tính Gnumeric.</comment>
+  <comment xml:lang="uk">електронна таблиця Gnumeric</comment>
+  <comment xml:lang="tr">Gnumeric hesap çizelgesi</comment>
+  <comment xml:lang="sv">Gnumeric-kalkylblad</comment>
+  <comment xml:lang="sr-Cyrl">табела Гномовог бројевника</comment>
+  <comment xml:lang="sq">fletëllogaritjesh Gnumeric</comment>
+  <comment xml:lang="sl">Razpredelnica Gnumeric</comment>
+  <comment xml:lang="si">Gnumeric පැතුරුම්පත</comment>
+  <comment xml:lang="sk">Zošit Gnumeric</comment>
+  <comment xml:lang="ru">Электронная таблица Gnumeric</comment>
+  <comment xml:lang="ro">Foaie de calcul Gnumeric</comment>
+  <comment xml:lang="pt-BR">Planilha do Gnumeric</comment>
+  <comment xml:lang="pt">folha de cálculo Gnumeric</comment>
+  <comment xml:lang="pl">Arkusz Gnumeric</comment>
+  <comment xml:lang="oc">fuèlh de calcul Gnumeric</comment>
+  <comment xml:lang="nn">Gnumeric-rekneark</comment>
+  <comment xml:lang="nl">Gnumeric-rekenblad</comment>
+  <comment xml:lang="nb">Gnumeric-regneark</comment>
+  <comment xml:lang="ms">Hamparan Gnumeric</comment>
+  <comment xml:lang="lv">Gnumeric izklājlapa</comment>
+  <comment xml:lang="lt">Gnumeric skaičialentė</comment>
+  <comment xml:lang="ko">Gnumeric 스프레드시트</comment>
+  <comment xml:lang="kk-Cyrl">Gnumeric электрондық кестесі</comment>
+  <comment xml:lang="ja">Gnumeric スプレッドシート</comment>
+  <comment xml:lang="it">Foglio di calcolo Gnumeric</comment>
+  <comment xml:lang="is">Gnumeric töflureikniskjal</comment>
+  <comment xml:lang="id">Lembar sebar Gnumeric</comment>
+  <comment xml:lang="ia">Folio de calculo Gnumeric</comment>
+  <comment xml:lang="hu">Gnumeric-munkafüzet</comment>
+  <comment xml:lang="hr">Gnumeric proračunska tablica</comment>
+  <comment xml:lang="he">גיליון עבודה של Gnumeric</comment>
+  <comment xml:lang="gl">folla de cálculo de Gnumeric</comment>
+  <comment xml:lang="ga">scarbhileog Gnumeric</comment>
+  <comment xml:lang="fur">sfuei di calcul Gnumeric</comment>
+  <comment xml:lang="fr">feuille de calcul Gnumeric</comment>
+  <comment xml:lang="fo">Gnumeric rokniark</comment>
+  <comment xml:lang="fi">Gnumeric-taulukko</comment>
+  <comment xml:lang="eu">Gnumeric kalkulu-orria</comment>
+  <comment xml:lang="es">hoja de cálculo de Gnumeric</comment>
+  <comment xml:lang="eo">Gnumeric-kalkultabelo</comment>
+  <comment xml:lang="en-GB">Gnumeric spreadsheet</comment>
+  <comment xml:lang="el">Λογιστικό φύλλο Gnumeric</comment>
+  <comment xml:lang="de">Gnumeric-Tabelle</comment>
+  <comment xml:lang="da">Gnumeric-regneark</comment>
+  <comment xml:lang="cs">sešit Gnumeric</comment>
+  <comment xml:lang="ca">full de càlcul de Gnumeric</comment>
+  <comment xml:lang="bg">Таблица — Gnumeric</comment>
+  <comment xml:lang="be-Latn">Raźlikovy arkuš Gnumeric</comment>
+  <comment xml:lang="be-Cyrl">электронная табліца Gnumeric</comment>
+  <comment xml:lang="ar">جدول Gnumeric</comment>
+  <comment xml:lang="af">Gnumeric-sigblad</comment>
+  <generic-icon name="x-office-spreadsheet"/>
+  <glob pattern="*.gnumeric"/>
+</mime-type>

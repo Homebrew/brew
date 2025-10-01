@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="image/vnd.ms-modi">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>MDI image</comment>
+  <comment xml:lang="zh-Hant-TW">MDI 影像</comment>
+  <comment xml:lang="zh-Hans-CN">MDI 图像</comment>
+  <comment xml:lang="uk">зображення MDI</comment>
+  <comment xml:lang="tr">MDI görüntüsü</comment>
+  <comment xml:lang="sv">MDI-bild</comment>
+  <comment xml:lang="sq">figurë MDI</comment>
+  <comment xml:lang="sl">Slika MDI</comment>
+  <comment xml:lang="si">MDI රූපය</comment>
+  <comment xml:lang="sk">Obrázok MDI</comment>
+  <comment xml:lang="ru">Изображение MDI</comment>
+  <comment xml:lang="pt-BR">Imagem MDI</comment>
+  <comment xml:lang="pl">Obraz MDI</comment>
+  <comment xml:lang="oc">imatge MDI</comment>
+  <comment xml:lang="nl">MDI-afbeelding</comment>
+  <comment xml:lang="ko">MDI 그림</comment>
+  <comment xml:lang="kk-Cyrl">MDI суреті</comment>
+  <comment xml:lang="ja">MDI 画像</comment>
+  <comment xml:lang="it">Immagine MDI</comment>
+  <comment xml:lang="is">MDI mynd</comment>
+  <comment xml:lang="id">Citra MDI</comment>
+  <comment xml:lang="hu">MDI-kép</comment>
+  <comment xml:lang="hr">MDI slika</comment>
+  <comment xml:lang="he">תמונת MDI</comment>
+  <comment xml:lang="gl">Imaxe MDI</comment>
+  <comment xml:lang="fr">image MDI</comment>
+  <comment xml:lang="fi">MDI-kuva</comment>
+  <comment xml:lang="eu">MDI irudia</comment>
+  <comment xml:lang="es">imagen MDI</comment>
+  <comment xml:lang="en-GB">MDI image</comment>
+  <comment xml:lang="de">MDI-Bild</comment>
+  <comment xml:lang="da">MDI-billede</comment>
+  <comment xml:lang="ca">imatge MDI</comment>
+  <comment xml:lang="bg">Изображение — MDI</comment>
+  <comment xml:lang="be-Cyrl">выява MDI</comment>
+  <comment xml:lang="ar">صورة MDI</comment>
+  <acronym>MDI</acronym>
+  <expanded-acronym>Microsoft Document Imaging</expanded-acronym>
+  <glob pattern="*.mdi"/>
+</mime-type>

@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-gd-rom-cue">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>GD-ROM image cuesheet</comment>
+  <comment xml:lang="uk">таблиця CUE образу GD-ROM</comment>
+  <comment xml:lang="tr">GD-ROM görüntüsü çizelgesi</comment>
+  <comment xml:lang="sv">GD-ROM Indexblad för cd-avbild</comment>
+  <comment xml:lang="si">GD-ROM රූප කුට්ටිය</comment>
+  <comment xml:lang="ru">Файл разметки образа GD-ROM</comment>
+  <comment xml:lang="pt-BR">Índice de Imagem de GD-ROM</comment>
+  <comment xml:lang="pl">Obraz cuesheet płyty GD-ROM</comment>
+  <comment xml:lang="nl">GD-ROM-schijfkopiebestand-cue-sheet</comment>
+  <comment xml:lang="ko">GD-ROM 이미지 큐시트</comment>
+  <comment xml:lang="kk-Cyrl">GD-ROM бейнесінің құрама кестесі</comment>
+  <comment xml:lang="ja">GD-ROM イメージキューシート</comment>
+  <comment xml:lang="it">Cuesheet immagine GD-ROM</comment>
+  <comment xml:lang="is">cuesheet CD-ROM diskmyndar</comment>
+  <comment xml:lang="id">cuesheet image GD-ROM</comment>
+  <comment xml:lang="hu">GD-ROM lemezkép-jelölőlap</comment>
+  <comment xml:lang="hr">GD-ROM popis slika</comment>
+  <comment xml:lang="he">גיליון cue של דמות GD-ROM</comment>
+  <comment xml:lang="fr">Index de pistes GD-ROM</comment>
+  <comment xml:lang="fi">GD-ROM levykuvan taulukko</comment>
+  <comment xml:lang="es">hoja CUE de imagen GD-ROM</comment>
+  <comment xml:lang="en-GB">GD-ROM image cuesheet</comment>
+  <comment xml:lang="de">GD-ROM-Abbild-Cuesheet</comment>
+  <comment xml:lang="da">GD-ROM-aftrykscuesheet</comment>
+  <comment xml:lang="ca">«cuesheet» d'imatge de GD-ROM</comment>
+  <comment xml:lang="be-Cyrl">табліца разметкі вобраза GD-ROM</comment>
+  <comment xml:lang="ar">صفيحة صورة الـGD-ROM جديلة</comment>
+  <sub-class-of type="text/plain"/>
+  <generic-icon name="text-x-generic"/>
+  <glob pattern="*.gdi"/>
+</mime-type>

@@ -1,0 +1,1 @@
+../../../../Cellar/json-glib/1.10.6/share/locale/ka/LC_MESSAGES/json-glib-1.0.mo

@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-markaby">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Markaby script</comment>
+  <comment xml:lang="zh-Hant-TW">Markaby 指令稿</comment>
+  <comment xml:lang="zh-Hans-CN">RMarkaby 脚本</comment>
+  <comment xml:lang="vi">Văn lệnh Markaby</comment>
+  <comment xml:lang="uk">скрипт Markaby</comment>
+  <comment xml:lang="tr">Markaby betiği</comment>
+  <comment xml:lang="sv">Markaby-skript</comment>
+  <comment xml:lang="sr-Cyrl">Маркаби скрипта</comment>
+  <comment xml:lang="sq">programth Markaby</comment>
+  <comment xml:lang="sl">Skriptna datoteka Markaby</comment>
+  <comment xml:lang="si">Markaby පිටපත</comment>
+  <comment xml:lang="sk">Skript Markaby</comment>
+  <comment xml:lang="ru">Сценарий Markaby</comment>
+  <comment xml:lang="ro">Script Markaby</comment>
+  <comment xml:lang="pt-BR">Script Markaby</comment>
+  <comment xml:lang="pt">script Markaby</comment>
+  <comment xml:lang="pl">Skrypt Markaby</comment>
+  <comment xml:lang="oc">escript Markaby</comment>
+  <comment xml:lang="nn">Markaby-skript</comment>
+  <comment xml:lang="nl">Markaby-script</comment>
+  <comment xml:lang="nb">Markaby-skript</comment>
+  <comment xml:lang="lv">Markaby skripts</comment>
+  <comment xml:lang="lt">Markaby scenarijus</comment>
+  <comment xml:lang="ko">Markaby 스크립트</comment>
+  <comment xml:lang="kk-Cyrl">Markaby сценарийі</comment>
+  <comment xml:lang="ka">Markaby-ის სცენარი</comment>
+  <comment xml:lang="ja">Markaby スクリプト</comment>
+  <comment xml:lang="it">Script Markaby</comment>
+  <comment xml:lang="is">Markaby skrifta</comment>
+  <comment xml:lang="id">Skrip Markaby</comment>
+  <comment xml:lang="ia">Script Markaby</comment>
+  <comment xml:lang="hu">Markaby parancsfájl</comment>
+  <comment xml:lang="hr">Markaby skripta</comment>
+  <comment xml:lang="he">תסריט Markby</comment>
+  <comment xml:lang="gl">Script de Markaby</comment>
+  <comment xml:lang="ga">script Markaby</comment>
+  <comment xml:lang="fur">script Markaby</comment>
+  <comment xml:lang="fr">script Markaby</comment>
+  <comment xml:lang="fo">Markaby boðrøð</comment>
+  <comment xml:lang="fi">Markaby-komentotiedosto</comment>
+  <comment xml:lang="eu">Markaby script-a</comment>
+  <comment xml:lang="es">secuencia de órdenes en Markaby</comment>
+  <comment xml:lang="eo">Markaby-skripto</comment>
+  <comment xml:lang="en-GB">Markaby script</comment>
+  <comment xml:lang="el">Δέσμη ενεργειών Markaby</comment>
+  <comment xml:lang="de">Markaby-Skript</comment>
+  <comment xml:lang="da">Markaby-program</comment>
+  <comment xml:lang="cs">skript Markaby</comment>
+  <comment xml:lang="ca">script Markaby</comment>
+  <comment xml:lang="bg">Скрипт — Markaby</comment>
+  <comment xml:lang="be-Latn">Skrypt Markaby</comment>
+  <comment xml:lang="be-Cyrl">скрыпт Markaby</comment>
+  <comment xml:lang="ar">سكربت Markaby</comment>
+  <comment xml:lang="af">Markaby-skrip</comment>
+  <sub-class-of type="application/x-ruby"/>
+  <generic-icon name="text-x-script"/>
+  <glob pattern="*.mab"/>
+</mime-type>

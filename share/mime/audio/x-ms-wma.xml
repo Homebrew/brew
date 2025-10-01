@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="audio/x-ms-wma">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Windows Media audio</comment>
+  <comment xml:lang="zh-Hant-TW">Windows Media 音訊</comment>
+  <comment xml:lang="zh-Hans-CN">Windows Media 音频</comment>
+  <comment xml:lang="vi">Âm thanh Windows Media</comment>
+  <comment xml:lang="uk">звук Windows Media</comment>
+  <comment xml:lang="tr">Windows Media sesi</comment>
+  <comment xml:lang="sv">Windows Media-ljud</comment>
+  <comment xml:lang="sr-Cyrl">Виндоуз Медија звук</comment>
+  <comment xml:lang="sq">audio Windows Media</comment>
+  <comment xml:lang="sl">Zvočna datoteka Windows Media</comment>
+  <comment xml:lang="si">වින්ඩෝස් මීඩියා ඕඩියෝ</comment>
+  <comment xml:lang="sk">Zvuk Windows Media</comment>
+  <comment xml:lang="ru">Аудио Windows Media</comment>
+  <comment xml:lang="ro">Audio Windows Media</comment>
+  <comment xml:lang="pt-BR">Áudio do Windows Media</comment>
+  <comment xml:lang="pt">áudio Windows Media</comment>
+  <comment xml:lang="pl">Plik dźwiękowy Windows Media</comment>
+  <comment xml:lang="oc">àudio Windows Media</comment>
+  <comment xml:lang="nn">Windows Media-lyd</comment>
+  <comment xml:lang="nl">Windows Media-audio</comment>
+  <comment xml:lang="nb">Windows Media lyd</comment>
+  <comment xml:lang="lv">Windows Media audio</comment>
+  <comment xml:lang="lt">Windows Media garso įrašas</comment>
+  <comment xml:lang="ko">Windows 미디어 오디오</comment>
+  <comment xml:lang="kk-Cyrl">Windows Media аудиосы</comment>
+  <comment xml:lang="ja">Windows Media オーディオ</comment>
+  <comment xml:lang="it">Audio Windows Media</comment>
+  <comment xml:lang="is">Windows Media hljóðskrá</comment>
+  <comment xml:lang="id">Audio Windows Media</comment>
+  <comment xml:lang="ia">Audio Windows Media</comment>
+  <comment xml:lang="hu">Windows Media hang</comment>
+  <comment xml:lang="hr">Windows Media zvučni zapis</comment>
+  <comment xml:lang="he">שמע של Windows Media</comment>
+  <comment xml:lang="gl">son de Windows Media</comment>
+  <comment xml:lang="ga">fuaim Windows Media</comment>
+  <comment xml:lang="fur">audio Windows Media</comment>
+  <comment xml:lang="fr">audio Windows Media</comment>
+  <comment xml:lang="fo">Windows Media ljóður</comment>
+  <comment xml:lang="fi">Windows Media -ääni</comment>
+  <comment xml:lang="eu">Windows Media audioa</comment>
+  <comment xml:lang="es">sonido de Windows Media</comment>
+  <comment xml:lang="en-GB">Windows Media audio</comment>
+  <comment xml:lang="el">Ήχος Windows Media</comment>
+  <comment xml:lang="de">Windows-Media-Audio</comment>
+  <comment xml:lang="da">Windows Media-lyd</comment>
+  <comment xml:lang="cs">zvuk Windows Media</comment>
+  <comment xml:lang="ca">àudio de Windows Media</comment>
+  <comment xml:lang="bg">Аудио — Windows Media</comment>
+  <comment xml:lang="be-Latn">Aŭdyjo Windows Media</comment>
+  <comment xml:lang="be-Cyrl">аўдыя Windows Media</comment>
+  <comment xml:lang="ar">فيديو ويندوز ميديا</comment>
+  <comment xml:lang="af">Windows Media-oudio</comment>
+  <sub-class-of type="application/vnd.ms-asf"/>
+  <glob pattern="*.wma"/>
+  <alias type="audio/wma"/>
+</mime-type>

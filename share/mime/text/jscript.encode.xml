@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="text/jscript.encode">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Encoded JScript program</comment>
+  <comment xml:lang="uk">кодована програма JScript</comment>
+  <comment xml:lang="sv">Kodat JScript-program</comment>
+  <comment xml:lang="ru">Зашифрованная программа на JScript</comment>
+  <comment xml:lang="pl">Zakodowany program JScript</comment>
+  <comment xml:lang="es">programa en JScript codificado</comment>
+  <comment xml:lang="de">Verschlüsseltes JScript-Programm</comment>
+  <sub-class-of type="application/x-executable"/>
+  <generic-icon name="text-x-script"/>
+  <glob pattern="*.jse"/>
+</mime-type>

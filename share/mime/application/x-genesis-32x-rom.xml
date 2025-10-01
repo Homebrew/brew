@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-genesis-32x-rom">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Genesis 32X ROM</comment>
+  <comment xml:lang="zh-Hant-TW">Genesis 32X ROM</comment>
+  <comment xml:lang="zh-Hans-CN">Genesis 32X ROM</comment>
+  <comment xml:lang="uk">ППП Genesis 32X</comment>
+  <comment xml:lang="tr">Genesis 32X ROM</comment>
+  <comment xml:lang="sv">Mega Drive 32X-rom</comment>
+  <comment xml:lang="sr-Cyrl">Џенезис 32X РОМ</comment>
+  <comment xml:lang="sq">ROM Genesis 32X</comment>
+  <comment xml:lang="sl">Genesis 32X ROM</comment>
+  <comment xml:lang="si">උත්පත්ති 32X ROM</comment>
+  <comment xml:lang="sk">ROM pre Genesis 32X</comment>
+  <comment xml:lang="ru">Genesis 32X ROM</comment>
+  <comment xml:lang="pt-BR">ROM de Genesis 32X</comment>
+  <comment xml:lang="pt">ROM Genesis 32X</comment>
+  <comment xml:lang="pl">Plik ROM konsoli Mega Drive 32X</comment>
+  <comment xml:lang="nl">Mega Drive 32X-ROM</comment>
+  <comment xml:lang="ko">제네시스 32X 롬</comment>
+  <comment xml:lang="kk-Cyrl">Genesis 32X ROM</comment>
+  <comment xml:lang="ja">メガドライブ 32X ROM</comment>
+  <comment xml:lang="it">ROM Sega Mega Drive 32X</comment>
+  <comment xml:lang="is">Genesis 32X ROM</comment>
+  <comment xml:lang="id">ROM Genesis 32X</comment>
+  <comment xml:lang="hu">Genesis 32X ROM</comment>
+  <comment xml:lang="hr">Genesis 32X ROM</comment>
+  <comment xml:lang="he">ROM מסוג Genesis 32X</comment>
+  <comment xml:lang="gl">ROM Genesis 32X</comment>
+  <comment xml:lang="ga">ROM Genesis 32X</comment>
+  <comment xml:lang="fur">ROM Sega Mega Drive 32X</comment>
+  <comment xml:lang="fr">ROM Genesis 32X</comment>
+  <comment xml:lang="fi">Genesis 32X -ROM</comment>
+  <comment xml:lang="eu">Genesis 32X ROM</comment>
+  <comment xml:lang="es">ROM de Genesis 32X</comment>
+  <comment xml:lang="en-GB">Genesis 32X ROM</comment>
+  <comment xml:lang="de">Mega-32X-ROM</comment>
+  <comment xml:lang="da">Genesis 32X-ROM</comment>
+  <comment xml:lang="cs">ROM pro Genesis 32X</comment>
+  <comment xml:lang="ca">ROM de Genesis 32X</comment>
+  <comment xml:lang="bg">ROM — Genesis 32X</comment>
+  <comment xml:lang="be-Cyrl">Genesis 32X ROM</comment>
+  <comment xml:lang="ar">روم Genesis 32X</comment>
+  <generic-icon name="application-x-executable"/>
+  <glob pattern="*.32x"/>
+  <glob pattern="*.mdx"/>
+</mime-type>

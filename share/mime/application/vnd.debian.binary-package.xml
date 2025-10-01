@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/vnd.debian.binary-package">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Debian package</comment>
+  <comment xml:lang="zh-Hant-TW">Debian 軟體包</comment>
+  <comment xml:lang="zh-Hans-CN">Debian 软件包</comment>
+  <comment xml:lang="vi">Gói Debian</comment>
+  <comment xml:lang="uk">пакунок Debian</comment>
+  <comment xml:lang="tr">Debian paketi</comment>
+  <comment xml:lang="sv">Debianpaket</comment>
+  <comment xml:lang="sr-Cyrl">Дебијанов пакет</comment>
+  <comment xml:lang="sq">Paketë Debian</comment>
+  <comment xml:lang="sl">Datoteka paketa Debian</comment>
+  <comment xml:lang="si">ඩේබියන් පැකේජය</comment>
+  <comment xml:lang="sk">Balíček Debianu</comment>
+  <comment xml:lang="ru">Пакет Debian</comment>
+  <comment xml:lang="ro">Pachet Debian</comment>
+  <comment xml:lang="pt-BR">Pacote Debian</comment>
+  <comment xml:lang="pt">pacote Debian</comment>
+  <comment xml:lang="pl">Pakiet Debiana</comment>
+  <comment xml:lang="oc">paquet Debian</comment>
+  <comment xml:lang="nn">Debian pakke</comment>
+  <comment xml:lang="nl">Debian-pakket</comment>
+  <comment xml:lang="nb">Debian pakke</comment>
+  <comment xml:lang="ms">Pakej Debian</comment>
+  <comment xml:lang="lv">Debian pakotne</comment>
+  <comment xml:lang="lt">Debian paketas</comment>
+  <comment xml:lang="ko">데비안 패키지</comment>
+  <comment xml:lang="kk-Cyrl">Debian дестесі</comment>
+  <comment xml:lang="ka">Debian-ის პაკეტი</comment>
+  <comment xml:lang="ja">Debian パッケージ</comment>
+  <comment xml:lang="it">Pacchetto Debian</comment>
+  <comment xml:lang="is">Debian pakki</comment>
+  <comment xml:lang="id">Paket Debian</comment>
+  <comment xml:lang="ia">Pacchetto Debian</comment>
+  <comment xml:lang="hu">Debian-csomag</comment>
+  <comment xml:lang="hr">Debian paket</comment>
+  <comment xml:lang="he">חבילת Debian</comment>
+  <comment xml:lang="gl">paquete de Debian</comment>
+  <comment xml:lang="ga">pacáiste Debian</comment>
+  <comment xml:lang="fur">pachet Debian</comment>
+  <comment xml:lang="fr">paquet Debian</comment>
+  <comment xml:lang="fo">Debian pakki</comment>
+  <comment xml:lang="fi">Debian-paketti</comment>
+  <comment xml:lang="eu">Debian paketea</comment>
+  <comment xml:lang="es">paquete de Debian</comment>
+  <comment xml:lang="eo">Debian-pakaĵo</comment>
+  <comment xml:lang="en-GB">Debian package</comment>
+  <comment xml:lang="el">Πακέτο Debian</comment>
+  <comment xml:lang="de">Debian-Paket</comment>
+  <comment xml:lang="da">Debianpakke</comment>
+  <comment xml:lang="cy">Pecyn Debian</comment>
+  <comment xml:lang="cs">balíček Debianu</comment>
+  <comment xml:lang="ca">paquet Debian</comment>
+  <comment xml:lang="bg">Пакет — Debian</comment>
+  <comment xml:lang="be-Latn">Pakunak Debian</comment>
+  <comment xml:lang="be-Cyrl">пакет Debian</comment>
+  <comment xml:lang="az">Debian paketi</comment>
+  <comment xml:lang="ar">حزمة ديبيان</comment>
+  <comment xml:lang="af">Debian-pakket</comment>
+  <alias type="application/x-deb"/>
+  <alias type="application/x-debian-package"/>
+  <generic-icon name="package-x-generic"/>
+  <glob pattern="*.deb"/>
+  <glob pattern="*.udeb"/>
+</mime-type>

@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-quicktime-media-link">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>QuickTime playlist</comment>
+  <comment xml:lang="zh-Hant-TW">QuickTime 播放清單</comment>
+  <comment xml:lang="zh-Hans-CN">QuickTime 播放列表</comment>
+  <comment xml:lang="uk">список відтворення QuickTime</comment>
+  <comment xml:lang="tr">QuickTime çalma listesi</comment>
+  <comment xml:lang="sv">QuickTime-spellista</comment>
+  <comment xml:lang="sq">luajlistë QuickTime</comment>
+  <comment xml:lang="sl">Seznam predvajanja QuickTime</comment>
+  <comment xml:lang="si">QuickTime ධාවන ලැයිස්තුව</comment>
+  <comment xml:lang="sk">Zoznam skladieb QuickTime</comment>
+  <comment xml:lang="ru">Список воспроизведения QuickTime</comment>
+  <comment xml:lang="pt-BR">Lista de reprodução do QuickTime</comment>
+  <comment xml:lang="pl">Lista odtwarzania QuickTime</comment>
+  <comment xml:lang="oc">lista de lectura QuickTime</comment>
+  <comment xml:lang="nl">QuickTime-afspeellijst</comment>
+  <comment xml:lang="ko">퀵타임 재생 목록</comment>
+  <comment xml:lang="kk-Cyrl">QuickTime ойнау тізімі</comment>
+  <comment xml:lang="ka">QuickTime დასაკრავი სია</comment>
+  <comment xml:lang="ja">QuickTime プレイリスト</comment>
+  <comment xml:lang="it">Playlist QuickTime</comment>
+  <comment xml:lang="is">QuickTime spilunarlisti</comment>
+  <comment xml:lang="id">Daftar putar QuickTime</comment>
+  <comment xml:lang="hu">QuickTime lejátszólista</comment>
+  <comment xml:lang="hr">QuickTime popis izvođenja</comment>
+  <comment xml:lang="he">רשימת השמעה של QuickTime</comment>
+  <comment xml:lang="fr">liste de lecture QuickTime</comment>
+  <comment xml:lang="fi">QuickTime-soittolista</comment>
+  <comment xml:lang="eu">QuickTime erreprodukzio-zerrenda</comment>
+  <comment xml:lang="es">lista de reproducción de QuickTime</comment>
+  <comment xml:lang="en-GB">QuickTime playlist</comment>
+  <comment xml:lang="de">QuickTime-Wiedergabeliste</comment>
+  <comment xml:lang="da">QuickTime-afspilningsliste</comment>
+  <comment xml:lang="ca">llista de reproducció QuickTime</comment>
+  <comment xml:lang="bg">Списък за изпълнение — QuickTime</comment>
+  <comment xml:lang="be-Cyrl">плэй-ліст QuickTime</comment>
+  <comment xml:lang="ar">قائمة تشغيل كويك تايم</comment>
+  <generic-icon name="video-x-generic"/>
+  <sub-class-of type="video/quicktime"/>
+  <alias type="application/x-quicktimeplayer"/>
+  <glob pattern="*.qtl"/>
+</mime-type>

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="text/x-component">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>HTML component</comment>
+  <comment xml:lang="uk">компонент HTML</comment>
+  <comment xml:lang="sv">HTML-komponent</comment>
+  <comment xml:lang="ru">Компонент HTML</comment>
+  <comment xml:lang="pl">Składnik HTML</comment>
+  <comment xml:lang="es">componente de HTML</comment>
+  <comment xml:lang="de">HTML-Komponente</comment>
+  <acronym>HTML</acronym>
+  <expanded-acronym>HyperText Markup Language</expanded-acronym>
+  <sub-class-of type="application/xml"/>
+  <generic-icon name="text-html"/>
+  <glob pattern="*.htc"/>
+</mime-type>

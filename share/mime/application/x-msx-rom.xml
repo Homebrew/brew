@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-msx-rom">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>MSX ROM</comment>
+  <comment xml:lang="zh-Hant-TW">MSX ROM</comment>
+  <comment xml:lang="zh-Hans-CN">MSX ROM</comment>
+  <comment xml:lang="vi">ROM MSX</comment>
+  <comment xml:lang="uk">ППП MSX</comment>
+  <comment xml:lang="tr">MSX ROM</comment>
+  <comment xml:lang="sv">MSX-rom</comment>
+  <comment xml:lang="sr-Cyrl">МСИкс РОМ</comment>
+  <comment xml:lang="sq">ROM MSX</comment>
+  <comment xml:lang="sl">Bralni pomnilnik MSX</comment>
+  <comment xml:lang="si">MSX ROM</comment>
+  <comment xml:lang="sk">ROM pre MSX</comment>
+  <comment xml:lang="ru">MSX ROM</comment>
+  <comment xml:lang="ro">ROM MSX</comment>
+  <comment xml:lang="pt-BR">ROM de MSX</comment>
+  <comment xml:lang="pt">ROM MSX</comment>
+  <comment xml:lang="pl">Plik ROM konsoli MSX</comment>
+  <comment xml:lang="oc">ROM MSX</comment>
+  <comment xml:lang="nn">MSX-ROM</comment>
+  <comment xml:lang="nl">MSX-ROM</comment>
+  <comment xml:lang="nb">MSX-ROM</comment>
+  <comment xml:lang="ms">ROM MSX</comment>
+  <comment xml:lang="lv">MSX ROM</comment>
+  <comment xml:lang="lt">MSX ROM</comment>
+  <comment xml:lang="ko">MSX 롬</comment>
+  <comment xml:lang="kk-Cyrl">MSX ROM</comment>
+  <comment xml:lang="ka">MSX-ის ROM</comment>
+  <comment xml:lang="ja">MSX ROM</comment>
+  <comment xml:lang="it">ROM MSX</comment>
+  <comment xml:lang="is">MSX ROM</comment>
+  <comment xml:lang="id">Memori baca-saja MSX</comment>
+  <comment xml:lang="ia">ROM pro MSX</comment>
+  <comment xml:lang="hu">MSX ROM</comment>
+  <comment xml:lang="hr">MSX ROM</comment>
+  <comment xml:lang="he">MSX ROM</comment>
+  <comment xml:lang="gl">ROM de MSX</comment>
+  <comment xml:lang="ga">ROM MSX</comment>
+  <comment xml:lang="fur">ROM MSX</comment>
+  <comment xml:lang="fr">ROM MSX</comment>
+  <comment xml:lang="fo">MSX ROM</comment>
+  <comment xml:lang="fi">MSX-ROM</comment>
+  <comment xml:lang="eu">MSX-ko ROMa</comment>
+  <comment xml:lang="es">ROM de MSX</comment>
+  <comment xml:lang="eo">MSX-NLM</comment>
+  <comment xml:lang="en-GB">MSX ROM</comment>
+  <comment xml:lang="el">MSX ROM</comment>
+  <comment xml:lang="de">MSX-ROM</comment>
+  <comment xml:lang="da">MSX-ROM</comment>
+  <comment xml:lang="cy">ROM MSX</comment>
+  <comment xml:lang="cs">ROM pro MSX</comment>
+  <comment xml:lang="ca">ROM de MSX</comment>
+  <comment xml:lang="bg">ROM — MSX</comment>
+  <comment xml:lang="be-Latn">MSX ROM</comment>
+  <comment xml:lang="be-Cyrl">MSX ROM</comment>
+  <comment xml:lang="ar">روم MSX</comment>
+  <generic-icon name="application-x-executable"/>
+  <glob pattern="*.msx"/>
+</mime-type>

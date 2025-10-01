@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="video/x-mjpeg">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>MJPEG video stream</comment>
+  <comment xml:lang="zh-Hant-TW">MJPEG 視訊串流</comment>
+  <comment xml:lang="zh-Hans-CN">MJPEG 视频流</comment>
+  <comment xml:lang="uk">відеопотік MJPEG</comment>
+  <comment xml:lang="tr">MJPEG video akışı</comment>
+  <comment xml:lang="sv">MJPEG-videoström</comment>
+  <comment xml:lang="sq">transmetim video MJEPG</comment>
+  <comment xml:lang="si">MJPEG වීඩියෝ ප්‍රවාහය</comment>
+  <comment xml:lang="sk">Stream videa MJPEG</comment>
+  <comment xml:lang="ru">Видеопоток MJPEG</comment>
+  <comment xml:lang="pt-BR">Fluxo de vídeo MPEG</comment>
+  <comment xml:lang="pl">Strumień wideo MJPEG</comment>
+  <comment xml:lang="nl">MJPEG-video-stream</comment>
+  <comment xml:lang="lt">MJPEG vaizdo srautas</comment>
+  <comment xml:lang="ko">MJPEG 동영상 스트림</comment>
+  <comment xml:lang="kk-Cyrl">MJPEG видео ағыны</comment>
+  <comment xml:lang="ja">MJPEG 動画ストリーム</comment>
+  <comment xml:lang="it">Stream video MJPEG</comment>
+  <comment xml:lang="is">MJPEG myndmerkisstreymi</comment>
+  <comment xml:lang="id">Stream video MJPEG</comment>
+  <comment xml:lang="hu">MJPEG videofolyam</comment>
+  <comment xml:lang="hr">Prijenos MJPEG videa</comment>
+  <comment xml:lang="he">תזרים וידאו MJPEG</comment>
+  <comment xml:lang="ga">sruth físe MJPEG</comment>
+  <comment xml:lang="fur">trasmission video MJPEG</comment>
+  <comment xml:lang="fr">flux vidéo MJPEG</comment>
+  <comment xml:lang="fi">MJPEG-videon suoratoisto</comment>
+  <comment xml:lang="eu">MJPEG bideo korrontea</comment>
+  <comment xml:lang="es">videotransmisión MJPEG</comment>
+  <comment xml:lang="en-GB">MJPEG video stream</comment>
+  <comment xml:lang="de">MJPEG-Videodatenstrom</comment>
+  <comment xml:lang="da">MJPEG-videostrøm</comment>
+  <comment xml:lang="cs">datový tok videa MJPEG</comment>
+  <comment xml:lang="ca">flux de vídeo MJPEG</comment>
+  <comment xml:lang="bg">Поток — MJPEG, видео</comment>
+  <comment xml:lang="be-Cyrl">плынь відэа MJPEG</comment>
+  <comment xml:lang="ar">دفق فيديو MJPEG</comment>
+  <comment xml:lang="af">MJPEG-videostroom</comment>
+  <acronym>MJPEG</acronym>
+  <expanded-acronym>Motion JPEG</expanded-acronym>
+  <sub-class-of type="image/jpeg"/>
+  <glob pattern="*.mjpeg"/>
+  <glob pattern="*.mjpg"/>
+</mime-type>

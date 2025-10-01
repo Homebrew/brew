@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="text/html">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>HTML document</comment>
+  <comment xml:lang="zh-Hant-TW">HTML 文件</comment>
+  <comment xml:lang="zh-Hans-CN">HTML 文档</comment>
+  <comment xml:lang="vi">Tài liệu HTML</comment>
+  <comment xml:lang="uk">документ HTML</comment>
+  <comment xml:lang="tr">HTML belgesi</comment>
+  <comment xml:lang="sv">HTML-dokument</comment>
+  <comment xml:lang="sr-Cyrl">ХТМЛ документ</comment>
+  <comment xml:lang="sq">dokument HTML</comment>
+  <comment xml:lang="sl">Dokument HTML</comment>
+  <comment xml:lang="si">HTML ලේඛනය</comment>
+  <comment xml:lang="sk">Dokument HTML</comment>
+  <comment xml:lang="ru">Документ HTML</comment>
+  <comment xml:lang="ro">Document HTML</comment>
+  <comment xml:lang="pt-BR">Documento HTML</comment>
+  <comment xml:lang="pt">documento HTML</comment>
+  <comment xml:lang="pl">Dokument HTML</comment>
+  <comment xml:lang="oc">document HTML</comment>
+  <comment xml:lang="nn">HTML-dokument</comment>
+  <comment xml:lang="nl">HTML-document</comment>
+  <comment xml:lang="nb">HTML-dokument</comment>
+  <comment xml:lang="lv">HTML dokuments</comment>
+  <comment xml:lang="lt">HTML dokumentas</comment>
+  <comment xml:lang="ko">HTML 문서</comment>
+  <comment xml:lang="kk-Cyrl">HTML құжаты</comment>
+  <comment xml:lang="ja">HTML ドキュメント</comment>
+  <comment xml:lang="it">Documento HTML</comment>
+  <comment xml:lang="is">HTML skjal</comment>
+  <comment xml:lang="id">Dokumen HTML</comment>
+  <comment xml:lang="ia">Documento HTML</comment>
+  <comment xml:lang="hu">HTML dokumentum</comment>
+  <comment xml:lang="hr">HTML dokument</comment>
+  <comment xml:lang="he">מסמך HTML</comment>
+  <comment xml:lang="gl">documento HTML</comment>
+  <comment xml:lang="ga">cáipéis HTML</comment>
+  <comment xml:lang="fur">document HTML</comment>
+  <comment xml:lang="fr">document HTML</comment>
+  <comment xml:lang="fo">HTML skjal</comment>
+  <comment xml:lang="fi">HTML-asiakirja</comment>
+  <comment xml:lang="eu">HTML dokumentua</comment>
+  <comment xml:lang="es">documento HTML</comment>
+  <comment xml:lang="eo">HTML-dokumento</comment>
+  <comment xml:lang="en-GB">HTML document</comment>
+  <comment xml:lang="el">Έγγραφο HTML</comment>
+  <comment xml:lang="de">HTML-Dokument</comment>
+  <comment xml:lang="da">HTML-dokument</comment>
+  <comment xml:lang="cs">dokument HTML</comment>
+  <comment xml:lang="ca">document HTML</comment>
+  <comment xml:lang="bg">Документ — HTML</comment>
+  <comment xml:lang="be-Latn">Dakument HTML</comment>
+  <comment xml:lang="be-Cyrl">дакумент HTML</comment>
+  <comment xml:lang="ast">Documentu HTML</comment>
+  <comment xml:lang="ar">مستند HTML</comment>
+  <comment xml:lang="af">HTML-dokument</comment>
+  <acronym>HTML</acronym>
+  <expanded-acronym>HyperText Markup Language</expanded-acronym>
+  <sub-class-of type="text/plain"/>
+  <glob pattern="*.html" weight="80"/>
+  <glob pattern="*.htm" weight="80"/>
+</mime-type>

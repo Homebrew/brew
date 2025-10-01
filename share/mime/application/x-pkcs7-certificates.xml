@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-pkcs7-certificates">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>PKCS#7 certificate bundle</comment>
+  <comment xml:lang="zh-Hant-TW">PKCS#7 憑證綁包</comment>
+  <comment xml:lang="zh-Hans-CN">PKCS#7 证书束</comment>
+  <comment xml:lang="vi">Bó chứng nhận PKCS#7</comment>
+  <comment xml:lang="uk">комплект сертифікатів PKCS#7</comment>
+  <comment xml:lang="tr">PKCS#7 sertifika paketi</comment>
+  <comment xml:lang="sv">PKCS#7-certifikatsamling</comment>
+  <comment xml:lang="sr-Cyrl">ПКЦС#7 пакет уверења</comment>
+  <comment xml:lang="sq">paketë dëshmish PKCS#7</comment>
+  <comment xml:lang="sl">Datoteka potrdila PKCS#7</comment>
+  <comment xml:lang="si">PKCS#7 සහතික මිටියක්</comment>
+  <comment xml:lang="sk">Zväzok certifikátov PKCS#7</comment>
+  <comment xml:lang="ru">Пакет сертификата PKCS#7</comment>
+  <comment xml:lang="ro">Pachet certificat PKCS#7</comment>
+  <comment xml:lang="pt-BR">Pacote de certificados PKCS#7</comment>
+  <comment xml:lang="pt">pacote de certificação PKCS#7</comment>
+  <comment xml:lang="pl">Pakiet certyfikatu PKCS#7</comment>
+  <comment xml:lang="oc">lòt de certificats PKCS#7</comment>
+  <comment xml:lang="nl">PKCS#7-certificaatbundel</comment>
+  <comment xml:lang="lv">PKCS#7 sertifikātu saišķis</comment>
+  <comment xml:lang="lt">PKCS#7 liudijimų ryšulys</comment>
+  <comment xml:lang="ko">PKCS#7 인증서 묶음</comment>
+  <comment xml:lang="kk-Cyrl">PKCS#7 сертификаттар дестесі</comment>
+  <comment xml:lang="ja">PKCS#7 証明書バンドル</comment>
+  <comment xml:lang="it">Bundle certificato PKCS#7</comment>
+  <comment xml:lang="is">PKCS#7 skilríkjavöndull</comment>
+  <comment xml:lang="id">Bundel sertifikat PKCS#7</comment>
+  <comment xml:lang="ia">Pacchetto de certificatos PKCS#7</comment>
+  <comment xml:lang="hu">PKCS#7-tanúsítványcsomag</comment>
+  <comment xml:lang="hr">PKCS#7 paket vjerodajnica</comment>
+  <comment xml:lang="he">בקשה מוסמכת PKCS#7</comment>
+  <comment xml:lang="gl">paquete de certificado PKCS#7</comment>
+  <comment xml:lang="ga">burla teastas PKCS#7</comment>
+  <comment xml:lang="fur">côl di certificâts PKCS#7</comment>
+  <comment xml:lang="fr">lot de certificats PKCS#7</comment>
+  <comment xml:lang="fo">PKCS#7 váttanar bundi</comment>
+  <comment xml:lang="fi">PKCS#7-varmennepaketti</comment>
+  <comment xml:lang="eu">PKCS#7 zertifikazio sorta</comment>
+  <comment xml:lang="es">lote de certificados PCKS#7</comment>
+  <comment xml:lang="en-GB">PKCS#7 certificate bundle</comment>
+  <comment xml:lang="el">Πακέτο ψηφιακών πιστοποιητικών PKCS#7</comment>
+  <comment xml:lang="de">PKCS#7-Zertifikatpaket</comment>
+  <comment xml:lang="da">PKCS#7-certifikatbundt</comment>
+  <comment xml:lang="cs">svazek certifikátů PKCS#7</comment>
+  <comment xml:lang="ca">conjunt de certificats PKCS#7</comment>
+  <comment xml:lang="bg">Пакет със сертификати — PKCS#7</comment>
+  <comment xml:lang="be-Cyrl">пакет сертыфікатаў PKCS#7</comment>
+  <comment xml:lang="ar">رزمة شهادة PKCS#7</comment>
+  <comment xml:lang="af">PKCS#7-sertifikaatbundel</comment>
+  <acronym>PKCS</acronym>
+  <expanded-acronym>Public-Key Cryptography Standards</expanded-acronym>
+  <glob pattern="*.p7b"/>
+  <glob pattern="*.spc"/>
+</mime-type>

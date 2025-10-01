@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="image/gif">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>GIF image</comment>
+  <comment xml:lang="zh-Hant-TW">GIF 影像</comment>
+  <comment xml:lang="zh-Hans-CN">GIF 图像</comment>
+  <comment xml:lang="vi">Ảnh GIF</comment>
+  <comment xml:lang="uk">зображення GIF</comment>
+  <comment xml:lang="tr">GIF görüntüsü</comment>
+  <comment xml:lang="sv">GIF-bild</comment>
+  <comment xml:lang="sr-Cyrl">ГИФ слика</comment>
+  <comment xml:lang="sq">figurë GIF</comment>
+  <comment xml:lang="sl">Slikovna datoteka GIF</comment>
+  <comment xml:lang="si">GIF රූපය</comment>
+  <comment xml:lang="sk">Obrázok GIF</comment>
+  <comment xml:lang="ru">Изображение GIF</comment>
+  <comment xml:lang="ro">Imagine GIF</comment>
+  <comment xml:lang="pt-BR">Imagem GIF</comment>
+  <comment xml:lang="pt">imagem GIF</comment>
+  <comment xml:lang="pl">Obraz GIF</comment>
+  <comment xml:lang="oc">imatge GIF</comment>
+  <comment xml:lang="nn">GIF-bilete</comment>
+  <comment xml:lang="nl">GIF-afbeelding</comment>
+  <comment xml:lang="nb">GIF-bilde</comment>
+  <comment xml:lang="ms">Imej GIF</comment>
+  <comment xml:lang="lv">GIF attēls</comment>
+  <comment xml:lang="lt">GIF paveikslėlis</comment>
+  <comment xml:lang="ko">GIF 그림</comment>
+  <comment xml:lang="kk-Cyrl">GIF суреті</comment>
+  <comment xml:lang="ka">GIF გამოსახულება</comment>
+  <comment xml:lang="ja">GIF 画像</comment>
+  <comment xml:lang="it">Immagine GIF</comment>
+  <comment xml:lang="is">GIF mynd</comment>
+  <comment xml:lang="id">Citra GIF</comment>
+  <comment xml:lang="ia">Imagine GIF</comment>
+  <comment xml:lang="hu">GIF-kép</comment>
+  <comment xml:lang="hr">GIF slika</comment>
+  <comment xml:lang="he">תמונת GIF</comment>
+  <comment xml:lang="gl">imaxe GIF</comment>
+  <comment xml:lang="ga">íomhá GIF</comment>
+  <comment xml:lang="fur">imagjin GIF</comment>
+  <comment xml:lang="fr">image GIF</comment>
+  <comment xml:lang="fo">GIF mynd</comment>
+  <comment xml:lang="fi">GIF-kuva</comment>
+  <comment xml:lang="eu">GIF irudia</comment>
+  <comment xml:lang="es">imagen GIF</comment>
+  <comment xml:lang="eo">GIF-bildo</comment>
+  <comment xml:lang="en-GB">GIF image</comment>
+  <comment xml:lang="el">Εικόνα GIF</comment>
+  <comment xml:lang="de">GIF-Bild</comment>
+  <comment xml:lang="da">GIF-billede</comment>
+  <comment xml:lang="cy">Delwedd GIF</comment>
+  <comment xml:lang="cs">obrázek GIF</comment>
+  <comment xml:lang="ca">imatge GIF</comment>
+  <comment xml:lang="bg">Изображение — GIF</comment>
+  <comment xml:lang="be-Latn">Vyjava GIF</comment>
+  <comment xml:lang="be-Cyrl">выява GIF</comment>
+  <comment xml:lang="az">GIF rəsmi</comment>
+  <comment xml:lang="ar">صورة GIF</comment>
+  <comment xml:lang="af">GIF-beeld</comment>
+  <acronym>GIF</acronym>
+  <expanded-acronym>Graphics Interchange Format</expanded-acronym>
+  <glob pattern="*.gif"/>
+</mime-type>

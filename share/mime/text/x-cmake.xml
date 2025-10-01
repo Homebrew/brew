@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="text/x-cmake">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>CMake source code</comment>
+  <comment xml:lang="zh-Hant-TW">CMake 源碼</comment>
+  <comment xml:lang="zh-Hans-CN">CMake 源代码</comment>
+  <comment xml:lang="vi">Mã nguồn CMake</comment>
+  <comment xml:lang="uk">початковий код мовою CMake</comment>
+  <comment xml:lang="tr">CMake kaynak kodu</comment>
+  <comment xml:lang="sv">CMake-källkod</comment>
+  <comment xml:lang="sr-Cyrl">Ц Мејк изворни ко̂д</comment>
+  <comment xml:lang="sq">kod burim CMake</comment>
+  <comment xml:lang="sl">Datoteka izvorne kode CMake</comment>
+  <comment xml:lang="si">CMake මූල කේතය</comment>
+  <comment xml:lang="sk">Zdrojový kód CMake</comment>
+  <comment xml:lang="ru">Исходный код CMake</comment>
+  <comment xml:lang="ro">Cod sursă CMake</comment>
+  <comment xml:lang="pt-BR">Código-fonte CMake</comment>
+  <comment xml:lang="pt">código origem CMake</comment>
+  <comment xml:lang="pl">Kod źródłowy CMake</comment>
+  <comment xml:lang="oc">còde font CMake</comment>
+  <comment xml:lang="nn">CMake-kjeldekode</comment>
+  <comment xml:lang="nl">CMake-broncode</comment>
+  <comment xml:lang="nb">CMake-kildekode</comment>
+  <comment xml:lang="lv">CMake pirmkods</comment>
+  <comment xml:lang="lt">CMake pirminis tekstas</comment>
+  <comment xml:lang="ko">CMake 소스 코드</comment>
+  <comment xml:lang="kk-Cyrl">CMake бастапқы коды</comment>
+  <comment xml:lang="ka">CMake-ის საწყისი კოდი</comment>
+  <comment xml:lang="ja">CMake ソースコード</comment>
+  <comment xml:lang="it">Codice sorgente CMake</comment>
+  <comment xml:lang="is">CMake frumkóði</comment>
+  <comment xml:lang="id">Kode sumber CMake</comment>
+  <comment xml:lang="ia">Codice-fonte CMake</comment>
+  <comment xml:lang="hu">CMake-forráskód</comment>
+  <comment xml:lang="hr">CMake izvorni kôd</comment>
+  <comment xml:lang="he">קוד מקור של CMake</comment>
+  <comment xml:lang="gl">código fonte de CMake</comment>
+  <comment xml:lang="ga">cód foinseach CMake</comment>
+  <comment xml:lang="fur">codiç sorzint CMake</comment>
+  <comment xml:lang="fr">code source CMake</comment>
+  <comment xml:lang="fo">CMake keldukota</comment>
+  <comment xml:lang="fi">CMake-lähdekoodi</comment>
+  <comment xml:lang="eu">CMake iturburu-kodea</comment>
+  <comment xml:lang="es">código fuente en CMake</comment>
+  <comment xml:lang="eo">CMake-fontkodo</comment>
+  <comment xml:lang="en-GB">CMake source code</comment>
+  <comment xml:lang="el">Πηγαίος κώδικας CMake</comment>
+  <comment xml:lang="de">CMake-Quelltext</comment>
+  <comment xml:lang="da">CMake-kildekode</comment>
+  <comment xml:lang="cs">zdrojový kód CMake</comment>
+  <comment xml:lang="ca">codi font en CMake</comment>
+  <comment xml:lang="bg">Изходен код — CMake</comment>
+  <comment xml:lang="be-Latn">Kryničny kod CMake</comment>
+  <comment xml:lang="be-Cyrl">зыходны код CMake</comment>
+  <comment xml:lang="ar">شفرة مصدر CMake</comment>
+  <comment xml:lang="af">CMake-bronkode</comment>
+  <glob pattern="*.cmake"/>
+  <glob pattern="CMakeLists.txt"/>
+  <sub-class-of type="text/plain"/>
+</mime-type>

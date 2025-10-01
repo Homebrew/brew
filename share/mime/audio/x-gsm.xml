@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="audio/x-gsm">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>GSM 06.10 audio</comment>
+  <comment xml:lang="zh-Hant-TW">GSM 06.10 音訊</comment>
+  <comment xml:lang="zh-Hans-CN">GSM 06.10 音频</comment>
+  <comment xml:lang="vi">Âm thanh GSM 06.10</comment>
+  <comment xml:lang="uk">звук GSM 06.10</comment>
+  <comment xml:lang="tr">GSM 06.10 ses dosyası</comment>
+  <comment xml:lang="sv">GSM 06.10-ljud</comment>
+  <comment xml:lang="sr-Cyrl">ГСМ 06.10 звук</comment>
+  <comment xml:lang="sq">audio GSM 06.10</comment>
+  <comment xml:lang="sl">Zvočna datoteka GSM 06.10</comment>
+  <comment xml:lang="si">GSM 06.10 ශ්‍රව්‍ය</comment>
+  <comment xml:lang="sk">Zvuk GSM 06.10</comment>
+  <comment xml:lang="ru">Аудио GSM 06.10</comment>
+  <comment xml:lang="ro">GSM 06.10 audio</comment>
+  <comment xml:lang="pt-BR">Áudio GSM 06.10</comment>
+  <comment xml:lang="pt">áudio GSM 06.10</comment>
+  <comment xml:lang="pl">Plik dźwiękowy GSM 06.10</comment>
+  <comment xml:lang="oc">àudio GSM 06.10</comment>
+  <comment xml:lang="nl">GSM 06.10 audio</comment>
+  <comment xml:lang="lv">GSM 06.10 audio</comment>
+  <comment xml:lang="lt">GSM 06.10 garso įrašas</comment>
+  <comment xml:lang="ko">GSM 06.10 오디오</comment>
+  <comment xml:lang="kk-Cyrl">GSM 06.10 аудиосы</comment>
+  <comment xml:lang="ka">GSM 06.10 აუდიო</comment>
+  <comment xml:lang="ja">GSM 06.10 オーディオ</comment>
+  <comment xml:lang="it">Audio GSM 06.10</comment>
+  <comment xml:lang="is">GSM 06.10 hljóð</comment>
+  <comment xml:lang="id">Audio GSM 06.10</comment>
+  <comment xml:lang="ia">Audio GSM 06.10</comment>
+  <comment xml:lang="hu">GSM 06.10 hang</comment>
+  <comment xml:lang="hr">GSM 06.10 zvučni zapis</comment>
+  <comment xml:lang="he">שמע GSM 06.10</comment>
+  <comment xml:lang="gl">son de GSM 06.10</comment>
+  <comment xml:lang="ga">fuaim GSM 06.10</comment>
+  <comment xml:lang="fur">audio GSM 06.10</comment>
+  <comment xml:lang="fr">audio GSM 06.10</comment>
+  <comment xml:lang="fo">GSM 06.10 ljóður</comment>
+  <comment xml:lang="fi">GSM 06.10 -ääni</comment>
+  <comment xml:lang="eu">GSM 06.10 audioa</comment>
+  <comment xml:lang="es">sonido GSM 06.10</comment>
+  <comment xml:lang="en-GB">GSM 06.10 audio</comment>
+  <comment xml:lang="el">Ήχος GSM 06.10</comment>
+  <comment xml:lang="de">GSM-06.10-Audio</comment>
+  <comment xml:lang="da">GSM 06.10-lyd</comment>
+  <comment xml:lang="cs">zvuk GSM 06.10</comment>
+  <comment xml:lang="ca">àudio de GSM 06.10</comment>
+  <comment xml:lang="bg">Аудио — GSM 06.10</comment>
+  <comment xml:lang="be-Cyrl">аўдыя GSM 06.10</comment>
+  <comment xml:lang="ast">Audiu GSM 6.10</comment>
+  <comment xml:lang="ar">صوت GSM 06.10</comment>
+  <comment xml:lang="af">GSM 06.10-oudio</comment>
+  <acronym>GSM</acronym>
+  <expanded-acronym>Global System for Mobile communications</expanded-acronym>
+  <glob pattern="*.gsm"/>
+</mime-type>

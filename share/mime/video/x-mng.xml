@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="video/x-mng">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>MNG animation</comment>
+  <comment xml:lang="zh-Hant-TW">MNG 動畫</comment>
+  <comment xml:lang="zh-Hans-CN">MNG 动画</comment>
+  <comment xml:lang="vi">Hoạt ảnh MNG</comment>
+  <comment xml:lang="uk">анімація MNG</comment>
+  <comment xml:lang="tr">MNG canlandırması</comment>
+  <comment xml:lang="sv">MNG-animering</comment>
+  <comment xml:lang="sr-Cyrl">МНГ анимација</comment>
+  <comment xml:lang="sq">animacion MNG</comment>
+  <comment xml:lang="sl">Datoteka animacije MNG</comment>
+  <comment xml:lang="si">MNG සජීවිකරණය</comment>
+  <comment xml:lang="sk">Animácia MNG</comment>
+  <comment xml:lang="ru">Анимация MNG</comment>
+  <comment xml:lang="ro">Animație MNG</comment>
+  <comment xml:lang="pt-BR">Animação MNG</comment>
+  <comment xml:lang="pt">animação MNG</comment>
+  <comment xml:lang="pl">Animacja MNG</comment>
+  <comment xml:lang="oc">animacion MNG</comment>
+  <comment xml:lang="nn">MNG-animasjon</comment>
+  <comment xml:lang="nl">MNG-animatie</comment>
+  <comment xml:lang="nb">MNG-animasjon</comment>
+  <comment xml:lang="ms">Animasi MNG</comment>
+  <comment xml:lang="lv">MNG animācija</comment>
+  <comment xml:lang="lt">MNG animacija</comment>
+  <comment xml:lang="ko">MNG 동화상</comment>
+  <comment xml:lang="kk-Cyrl">MNG анимациясы</comment>
+  <comment xml:lang="ja">MNG アニメーション</comment>
+  <comment xml:lang="it">Animazione MNG</comment>
+  <comment xml:lang="is">MNG hreyfimynd</comment>
+  <comment xml:lang="id">Animasi MNG</comment>
+  <comment xml:lang="ia">Animation MNG</comment>
+  <comment xml:lang="hu">MNG-animáció</comment>
+  <comment xml:lang="hr">MNG animacija</comment>
+  <comment xml:lang="he">הנפשת MNG</comment>
+  <comment xml:lang="gl">animación MNG</comment>
+  <comment xml:lang="ga">beochan MNG</comment>
+  <comment xml:lang="fur">animazion MNG</comment>
+  <comment xml:lang="fr">animation MNG</comment>
+  <comment xml:lang="fo">MNG teknimyndagerð</comment>
+  <comment xml:lang="fi">MNG-animaatio</comment>
+  <comment xml:lang="eu">MNG animazioa</comment>
+  <comment xml:lang="es">animación MNG</comment>
+  <comment xml:lang="eo">MNG-animacio</comment>
+  <comment xml:lang="en-GB">MNG animation</comment>
+  <comment xml:lang="el">Κινούμενο σχέδιο MNG</comment>
+  <comment xml:lang="de">MNG-Animation</comment>
+  <comment xml:lang="da">MNG-animation</comment>
+  <comment xml:lang="cs">animace MNG</comment>
+  <comment xml:lang="ca">animació MNG</comment>
+  <comment xml:lang="bg">Анимация — MNG</comment>
+  <comment xml:lang="be-Latn">Animacyja MNG</comment>
+  <comment xml:lang="be-Cyrl">анімацыя MNG</comment>
+  <comment xml:lang="ar">تحريكة MNG</comment>
+  <comment xml:lang="af">MNG-animasie</comment>
+  <acronym>MNG</acronym>
+  <expanded-acronym>Multiple-Image Network Graphics</expanded-acronym>
+  <glob pattern="*.mng"/>
+</mime-type>

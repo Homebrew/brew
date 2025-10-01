@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="text/x-typst">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Typst document</comment>
+  <comment xml:lang="uk">документ Typst</comment>
+  <comment xml:lang="sv">Typst-dokument</comment>
+  <comment xml:lang="ru">Документ Typst</comment>
+  <comment xml:lang="pl">Dokument Typst</comment>
+  <comment xml:lang="it">Documento Typst</comment>
+  <comment xml:lang="gl">Documento de Typst</comment>
+  <comment xml:lang="eu">Typst dokumentua</comment>
+  <comment xml:lang="es">documento de Typst</comment>
+  <comment xml:lang="de">Typst-Dokument</comment>
+  <comment xml:lang="be-Cyrl">дакумент Typst</comment>
+  <sub-class-of type="text/plain"/>
+  <glob pattern="*.typ"/>
+</mime-type>

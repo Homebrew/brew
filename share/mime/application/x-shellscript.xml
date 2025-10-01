@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-shellscript">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Shell script</comment>
+  <comment xml:lang="uk">скрипт оболонки</comment>
+  <comment xml:lang="sv">Skalskript</comment>
+  <comment xml:lang="ru">Сценарий shell</comment>
+  <comment xml:lang="pl">Skrypt powłoki</comment>
+  <comment xml:lang="it">Script shell</comment>
+  <comment xml:lang="eu">Shell scripta</comment>
+  <comment xml:lang="es">secuencia de órdenes de consola</comment>
+  <comment xml:lang="de">Shell-Skript</comment>
+  <comment xml:lang="be-Cyrl">скрыпт абалонкі</comment>
+  <sub-class-of type="application/x-executable"/>
+  <sub-class-of type="text/plain"/>
+  <alias type="text/x-sh"/>
+  <generic-icon name="text-x-script"/>
+  <glob pattern="*.sh"/>
+</mime-type>

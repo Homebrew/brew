@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/vnd.ms-xpsdocument">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>XPS document</comment>
+  <comment xml:lang="zh-Hant-TW">XPS 文件</comment>
+  <comment xml:lang="zh-Hans-CN">XPS 文档</comment>
+  <comment xml:lang="vi">Tài liệu XPS</comment>
+  <comment xml:lang="uk">документ XPS</comment>
+  <comment xml:lang="tr">XPS belgesi</comment>
+  <comment xml:lang="sv">XPS-dokument</comment>
+  <comment xml:lang="sr-Cyrl">ИксПС документ</comment>
+  <comment xml:lang="sq">dokument XPS</comment>
+  <comment xml:lang="sl">Dokument XPS</comment>
+  <comment xml:lang="si">XPS ලේඛනය</comment>
+  <comment xml:lang="sk">Dokument XPS</comment>
+  <comment xml:lang="ru">Документ XPS</comment>
+  <comment xml:lang="ro">Document XPS</comment>
+  <comment xml:lang="pt-BR">Documento XPS</comment>
+  <comment xml:lang="pt">documento XPS</comment>
+  <comment xml:lang="pl">Dokument XPS</comment>
+  <comment xml:lang="oc">document XPS</comment>
+  <comment xml:lang="nn">XPS-dokument</comment>
+  <comment xml:lang="nl">XPS-document</comment>
+  <comment xml:lang="nb">XPS-dokument</comment>
+  <comment xml:lang="lv">XPS dokuments</comment>
+  <comment xml:lang="lt">XPS dokumentas</comment>
+  <comment xml:lang="ko">XPS 문서</comment>
+  <comment xml:lang="kk-Cyrl">XPS құжаты</comment>
+  <comment xml:lang="ka">XPS -ის დოკუმენტი</comment>
+  <comment xml:lang="ja">XPS ドキュメント</comment>
+  <comment xml:lang="it">Documento XPS</comment>
+  <comment xml:lang="is">XPS skjal</comment>
+  <comment xml:lang="id">Dokumen XPS</comment>
+  <comment xml:lang="ia">Documento XPS</comment>
+  <comment xml:lang="hu">XPS dokumentum</comment>
+  <comment xml:lang="hr">XPS dokument</comment>
+  <comment xml:lang="he">מסמך XPS</comment>
+  <comment xml:lang="gl">documento XPS</comment>
+  <comment xml:lang="ga">cáipéis XPS</comment>
+  <comment xml:lang="fur">document XPS</comment>
+  <comment xml:lang="fr">document XPS</comment>
+  <comment xml:lang="fo">XPS skjal</comment>
+  <comment xml:lang="fi">XPS-asiakirja</comment>
+  <comment xml:lang="eu">XPS dokumentua</comment>
+  <comment xml:lang="es">documento XPS</comment>
+  <comment xml:lang="eo">XPS-dokumento</comment>
+  <comment xml:lang="en-GB">XPS document</comment>
+  <comment xml:lang="el">Έγγραφο XPS</comment>
+  <comment xml:lang="de">XPS-Dokument</comment>
+  <comment xml:lang="da">XPS-dokument</comment>
+  <comment xml:lang="cs">dokument XPS</comment>
+  <comment xml:lang="ca">document XPS</comment>
+  <comment xml:lang="bg">Документ — XPS</comment>
+  <comment xml:lang="be-Latn">Dakument XPS</comment>
+  <comment xml:lang="be-Cyrl">дакумент XPS</comment>
+  <comment xml:lang="ast">Documentu XPS</comment>
+  <comment xml:lang="ar">مستند XPS</comment>
+  <comment xml:lang="af">XPS-dokument</comment>
+  <acronym>XPS</acronym>
+  <expanded-acronym>XML Paper Specification</expanded-acronym>
+  <sub-class-of type="application/zip"/>
+  <generic-icon name="x-office-document"/>
+  <glob pattern="*.xps"/>
+  <alias type="application/xps"/>
+</mime-type>

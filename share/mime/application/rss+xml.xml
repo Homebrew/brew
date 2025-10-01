@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/rss+xml">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>RSS summary</comment>
+  <comment xml:lang="zh-Hant-TW">RSS 摘要</comment>
+  <comment xml:lang="zh-Hans-CN">RSS 摘要</comment>
+  <comment xml:lang="vi">Bản tóm tắt RSS</comment>
+  <comment xml:lang="uk">зведення сайту RSS</comment>
+  <comment xml:lang="tr">RSS özeti</comment>
+  <comment xml:lang="sv">RSS-sammanfattning</comment>
+  <comment xml:lang="sr-Cyrl">РСС сажетак</comment>
+  <comment xml:lang="sq">përmbledhje RSS</comment>
+  <comment xml:lang="sl">Datoteka povzetek RSS</comment>
+  <comment xml:lang="si">RSS සාරාංශය</comment>
+  <comment xml:lang="sk">Súhrn RSS</comment>
+  <comment xml:lang="ru">Сводка RSS</comment>
+  <comment xml:lang="ro">Rezumat RSS</comment>
+  <comment xml:lang="pt-BR">Resumo RSS</comment>
+  <comment xml:lang="pt">resumo RSS</comment>
+  <comment xml:lang="pl">Podsumowanie RSS</comment>
+  <comment xml:lang="oc">resumit RSS</comment>
+  <comment xml:lang="nn">RSS-samandrag</comment>
+  <comment xml:lang="nl">RSS-samenvatting</comment>
+  <comment xml:lang="nb">RSS-sammendrag</comment>
+  <comment xml:lang="lv">RSS kopsavilkums</comment>
+  <comment xml:lang="lt">RSS santrauka</comment>
+  <comment xml:lang="ko">RSS 요약</comment>
+  <comment xml:lang="kk-Cyrl">RSS жинақталғаны</comment>
+  <comment xml:lang="ja">RSS サマリ</comment>
+  <comment xml:lang="it">Sommario RSS</comment>
+  <comment xml:lang="is">RSS samantekt</comment>
+  <comment xml:lang="id">Ringkasan RSS</comment>
+  <comment xml:lang="ia">Summario RSS</comment>
+  <comment xml:lang="hu">RSS összefoglaló</comment>
+  <comment xml:lang="hr">RSS sažetak</comment>
+  <comment xml:lang="he">תקציר RSS</comment>
+  <comment xml:lang="gl">Resumo RSS</comment>
+  <comment xml:lang="ga">achoimre RSS</comment>
+  <comment xml:lang="fur">somari RSS</comment>
+  <comment xml:lang="fr">résumé RSS</comment>
+  <comment xml:lang="fo">RSS samandráttur</comment>
+  <comment xml:lang="fi">RSS-tiivistelmä</comment>
+  <comment xml:lang="eu">RSS laburpena</comment>
+  <comment xml:lang="es">suministro RSS</comment>
+  <comment xml:lang="en-GB">RSS summary</comment>
+  <comment xml:lang="el">Σύνοψη RSS</comment>
+  <comment xml:lang="de">RSS-Zusammenfassung</comment>
+  <comment xml:lang="da">RSS-sammendrag</comment>
+  <comment xml:lang="cs">souhrn RSS</comment>
+  <comment xml:lang="ca">resum RSS</comment>
+  <comment xml:lang="bg">Обобщение за сайтове — RSS</comment>
+  <comment xml:lang="be-Latn">Karotki ahlad RSS</comment>
+  <comment xml:lang="be-Cyrl">зводка RSS</comment>
+  <comment xml:lang="ar">ملخص RSS</comment>
+  <comment xml:lang="af">RSS-opsomming</comment>
+  <acronym>RSS</acronym>
+  <expanded-acronym>RDF Site Summary</expanded-acronym>
+  <alias type="text/rss"/>
+  <sub-class-of type="application/xml"/>
+  <generic-icon name="text-html"/>
+  <glob pattern="*.rss"/>
+</mime-type>

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/vnd.apple.mpegurl">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Media playlist</comment>
+  <comment xml:lang="zh-Hans-CN">媒体播放列表</comment>
+  <comment xml:lang="uk">мультимедійний список відтворення</comment>
+  <comment xml:lang="tr">Ortam çalma listesi</comment>
+  <comment xml:lang="sv">Mediaspellista</comment>
+  <comment xml:lang="si">මාධ්‍ය ධාවන ලැයිස්තුව</comment>
+  <comment xml:lang="ru">Список воспроизведения медиа-данных</comment>
+  <comment xml:lang="pl">Lista odtwarzania multimediów</comment>
+  <comment xml:lang="nl">Media-afspeellijst</comment>
+  <comment xml:lang="ko">Media 재생 목록</comment>
+  <comment xml:lang="kk-Cyrl">Медиа ойнату тізімі</comment>
+  <comment xml:lang="ka">მედიის დასაკრავი სია</comment>
+  <comment xml:lang="ja">メディアプレイリスト</comment>
+  <comment xml:lang="it">Playlist multimediale</comment>
+  <comment xml:lang="hr">Media popis izvođenja</comment>
+  <comment xml:lang="gl">Lista de reprodución multimedia</comment>
+  <comment xml:lang="fi">Media-soittolista</comment>
+  <comment xml:lang="eu">Multimediako erreprodukzio-zerrenda</comment>
+  <comment xml:lang="es">lista de reproducción de medios</comment>
+  <comment xml:lang="en-GB">Media playlist</comment>
+  <comment xml:lang="de">Medien-Wiedergabeliste</comment>
+  <comment xml:lang="be-Cyrl">плэй-ліст мультымедыя</comment>
+  <comment xml:lang="ar">قائمة تشغيل وسائط</comment>
+  <sub-class-of type="text/plain"/>
+  <glob pattern="*.m3u"/>
+  <glob pattern="*.m3u8"/>
+</mime-type>

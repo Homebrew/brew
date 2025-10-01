@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="text/tcl">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Tcl script</comment>
+  <comment xml:lang="zh-Hant-TW">Tcl 描述語言檔</comment>
+  <comment xml:lang="zh-Hans-CN">Tcl 脚本</comment>
+  <comment xml:lang="vi">Văn lệnh Tcl</comment>
+  <comment xml:lang="uk">скрипт Tcl</comment>
+  <comment xml:lang="tr">Tcl betiği</comment>
+  <comment xml:lang="sv">Tcl-skript</comment>
+  <comment xml:lang="sr-Cyrl">Тцл скрипта</comment>
+  <comment xml:lang="sq">programth Tcl</comment>
+  <comment xml:lang="sl">Skriptna datoteka Tcl</comment>
+  <comment xml:lang="si">Tcl පිටපත</comment>
+  <comment xml:lang="sk">Skript Tcl</comment>
+  <comment xml:lang="ru">Сценарий Tcl</comment>
+  <comment xml:lang="ro">Script Tcl</comment>
+  <comment xml:lang="pt-BR">Script Tcl</comment>
+  <comment xml:lang="pt">script Tcl</comment>
+  <comment xml:lang="pl">Skrypt Tcl</comment>
+  <comment xml:lang="oc">escript Tcl</comment>
+  <comment xml:lang="nn">Tcl-skript</comment>
+  <comment xml:lang="nl">Tcl-script</comment>
+  <comment xml:lang="nb">Tcl-skript</comment>
+  <comment xml:lang="ms">Skrip Tcl</comment>
+  <comment xml:lang="lv">Tcl skripts</comment>
+  <comment xml:lang="lt">Tcl scenarijus</comment>
+  <comment xml:lang="ko">Tcl 스크립트</comment>
+  <comment xml:lang="kk-Cyrl">Tcl сценарийі</comment>
+  <comment xml:lang="ja">Tcl スクリプト</comment>
+  <comment xml:lang="it">Script Tcl</comment>
+  <comment xml:lang="is">Tcl skrifta</comment>
+  <comment xml:lang="id">Skrip Tcl</comment>
+  <comment xml:lang="ia">Script Tcl</comment>
+  <comment xml:lang="hu">Tcl-parancsfájl</comment>
+  <comment xml:lang="hr">Tcl skripta</comment>
+  <comment xml:lang="he">תסריט Tcl</comment>
+  <comment xml:lang="gl">Script en Tcl</comment>
+  <comment xml:lang="ga">script Tcl</comment>
+  <comment xml:lang="fur">script Tcl</comment>
+  <comment xml:lang="fr">script Tcl</comment>
+  <comment xml:lang="fo">Tcl boðrøð</comment>
+  <comment xml:lang="fi">Tcl-komentotiedosto</comment>
+  <comment xml:lang="eu">Tcl script-a</comment>
+  <comment xml:lang="es">secuencia de órdenes en Tcl</comment>
+  <comment xml:lang="eo">Tcl-skripto</comment>
+  <comment xml:lang="en-GB">Tcl script</comment>
+  <comment xml:lang="el">Δέσμη ενεργειών Tcl</comment>
+  <comment xml:lang="de">Tcl-Skript</comment>
+  <comment xml:lang="da">Tcl-program</comment>
+  <comment xml:lang="cs">skript Tcl</comment>
+  <comment xml:lang="ca">script Tcl</comment>
+  <comment xml:lang="bg">Скрипт — Tcl</comment>
+  <comment xml:lang="be-Latn">Skrypt Tcl</comment>
+  <comment xml:lang="be-Cyrl">скрыпт Tcl</comment>
+  <comment xml:lang="ar">سكربت Tcl</comment>
+  <comment xml:lang="af">Tcl-skrip</comment>
+  <alias type="text/x-tcl"/>
+  <sub-class-of type="text/plain"/>
+  <glob pattern="*.tcl"/>
+  <glob pattern="*.tk"/>
+</mime-type>

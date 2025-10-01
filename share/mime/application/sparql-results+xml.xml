@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/sparql-results+xml">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>SPARQL query results</comment>
+  <comment xml:lang="zh-Hans-CN">SPARQL 查询结果</comment>
+  <comment xml:lang="uk">результати запиту SPARQL</comment>
+  <comment xml:lang="tr">SPARQL sorgu sonuçları</comment>
+  <comment xml:lang="sv">SPARQL-frågeresultat</comment>
+  <comment xml:lang="sl">Rezultati poizvedbe SPARQL</comment>
+  <comment xml:lang="si">SPARQL විමසුම් ප්රතිඵල</comment>
+  <comment xml:lang="ru">Результаты запроса SPARQL</comment>
+  <comment xml:lang="pl">Wyniki zapytania SPARQL</comment>
+  <comment xml:lang="nl">SPARQL-zoekopdrachtresultaten</comment>
+  <comment xml:lang="ko">SPARQL 질의문 결과</comment>
+  <comment xml:lang="kk-Cyrl">SPARQL сұраным нәтижелері</comment>
+  <comment xml:lang="ja">SPARQL クエリーの結果</comment>
+  <comment xml:lang="it">Risultati ricerca SPARQL</comment>
+  <comment xml:lang="hr">Rezultati SPARQL zahtjeva</comment>
+  <comment xml:lang="he">תוצאות שאילתת SPARQL</comment>
+  <comment xml:lang="fi">SPARQL-kyselyn tulokset</comment>
+  <comment xml:lang="eu">SPARQL kontsultaren emaitzak</comment>
+  <comment xml:lang="es">resultados de consulta SPARQL</comment>
+  <comment xml:lang="en-GB">SPARQL query results</comment>
+  <comment xml:lang="de">SPARQL-Abfrageergebnisse</comment>
+  <comment xml:lang="be-Cyrl">вынікі запыту SPARQL</comment>
+  <comment xml:lang="ar">نتائج استعلام SPARQL</comment>
+  <acronym>SPARQL</acronym>
+  <expanded-acronym>SPARQL Protocol and RDF Query Language</expanded-acronym>
+  <sub-class-of type="application/xml"/>
+  <glob pattern="*.srx"/>
+</mime-type>

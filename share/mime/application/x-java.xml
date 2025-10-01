@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-java">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Java class</comment>
+  <comment xml:lang="zh-Hant-TW">Java class</comment>
+  <comment xml:lang="zh-Hans-CN">Java 类</comment>
+  <comment xml:lang="vi">Hạng Java</comment>
+  <comment xml:lang="uk">клас Java</comment>
+  <comment xml:lang="tr">Java sınıfı</comment>
+  <comment xml:lang="sv">Java-klass</comment>
+  <comment xml:lang="sr-Cyrl">разред Јаве</comment>
+  <comment xml:lang="sq">klasë Java</comment>
+  <comment xml:lang="sl">Datoteka razreda Java</comment>
+  <comment xml:lang="si">ජාවා පන්තිය</comment>
+  <comment xml:lang="sk">Trieda Java</comment>
+  <comment xml:lang="ru">Класс Java</comment>
+  <comment xml:lang="ro">Clasă Java</comment>
+  <comment xml:lang="pt-BR">Classe Java</comment>
+  <comment xml:lang="pt">classe Java</comment>
+  <comment xml:lang="pl">Klasa Java</comment>
+  <comment xml:lang="oc">classa Java</comment>
+  <comment xml:lang="nn">Java-klasse</comment>
+  <comment xml:lang="nl">Java-klasse</comment>
+  <comment xml:lang="nb">Java-klasse</comment>
+  <comment xml:lang="ms">Kelas Java</comment>
+  <comment xml:lang="lv">Java klase</comment>
+  <comment xml:lang="lt">Java klasė</comment>
+  <comment xml:lang="ko">Java 클래스</comment>
+  <comment xml:lang="kk-Cyrl">Java класы</comment>
+  <comment xml:lang="ja">Java クラス</comment>
+  <comment xml:lang="it">Classe Java</comment>
+  <comment xml:lang="is">Java klassi</comment>
+  <comment xml:lang="id">Kelas Java</comment>
+  <comment xml:lang="ia">Classe Java</comment>
+  <comment xml:lang="hu">Java-osztály</comment>
+  <comment xml:lang="hr">Java klasa</comment>
+  <comment xml:lang="he">מחלקת Java</comment>
+  <comment xml:lang="gl">clase de Java</comment>
+  <comment xml:lang="ga">aicme Java</comment>
+  <comment xml:lang="fur">classe Java</comment>
+  <comment xml:lang="fr">classe Java</comment>
+  <comment xml:lang="fo">Java flokkur</comment>
+  <comment xml:lang="fi">Java-luokka</comment>
+  <comment xml:lang="eu">Java-ko klasea</comment>
+  <comment xml:lang="es">clase de Java</comment>
+  <comment xml:lang="eo">Java-klaso</comment>
+  <comment xml:lang="en-GB">Java class</comment>
+  <comment xml:lang="el">Κλάση Java</comment>
+  <comment xml:lang="de">Java-Klasse</comment>
+  <comment xml:lang="da">Java-klasse</comment>
+  <comment xml:lang="cs">třída Java</comment>
+  <comment xml:lang="ca">classe de Java</comment>
+  <comment xml:lang="bg">Клас — Java</comment>
+  <comment xml:lang="be-Latn">Klasa Java</comment>
+  <comment xml:lang="be-Cyrl">клас Java</comment>
+  <comment xml:lang="ar">صنف java</comment>
+  <comment xml:lang="af">Java-klas</comment>
+  <alias type="application/java"/>
+  <alias type="application/java-byte-code"/>
+  <alias type="application/java-vm"/>
+  <alias type="application/x-java-class"/>
+  <alias type="application/x-java-vm"/>
+  <glob pattern="*.class"/>
+</mime-type>

@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="audio/x-speex">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Speex audio</comment>
+  <comment xml:lang="zh-Hant-TW">Speex 音訊</comment>
+  <comment xml:lang="zh-Hans-CN">Speex 音频</comment>
+  <comment xml:lang="vi">Âm thanh Speex</comment>
+  <comment xml:lang="uk">звук Speex</comment>
+  <comment xml:lang="tr">Speex sesi</comment>
+  <comment xml:lang="sv">Speex-ljud</comment>
+  <comment xml:lang="sr-Cyrl">Спикс звук</comment>
+  <comment xml:lang="sq">audio Speex</comment>
+  <comment xml:lang="sl">Zvočna datoteka Speex</comment>
+  <comment xml:lang="si">ස්පීක්ස් ඕඩියෝ</comment>
+  <comment xml:lang="sk">Zvuk Speex</comment>
+  <comment xml:lang="ru">Аудио Speex</comment>
+  <comment xml:lang="ro">Audio Speex</comment>
+  <comment xml:lang="pt-BR">Áudio Speex</comment>
+  <comment xml:lang="pt">áudio Speex</comment>
+  <comment xml:lang="pl">Plik dźwiękowy Speex</comment>
+  <comment xml:lang="oc">àudio Speex</comment>
+  <comment xml:lang="nn">Speex-lyd</comment>
+  <comment xml:lang="nl">Speex-audio</comment>
+  <comment xml:lang="nb">Speex lyd</comment>
+  <comment xml:lang="lv">Speex audio</comment>
+  <comment xml:lang="lt">Speex garso įrašas</comment>
+  <comment xml:lang="ko">Speex 오디오</comment>
+  <comment xml:lang="kk-Cyrl">Speex аудиосы</comment>
+  <comment xml:lang="ja">Speex オーディオ</comment>
+  <comment xml:lang="it">Audio Speex</comment>
+  <comment xml:lang="is">Speex hljóðskrá</comment>
+  <comment xml:lang="id">Audio Speex</comment>
+  <comment xml:lang="ia">Audio Speex</comment>
+  <comment xml:lang="hu">Speex hang</comment>
+  <comment xml:lang="hr">Speex zvučni zapis</comment>
+  <comment xml:lang="he">שמע של Speex</comment>
+  <comment xml:lang="gl">son Speex</comment>
+  <comment xml:lang="ga">fuaim Speex</comment>
+  <comment xml:lang="fur">audio Speex</comment>
+  <comment xml:lang="fr">audio Speex</comment>
+  <comment xml:lang="fo">Speex ljóður</comment>
+  <comment xml:lang="fi">Speex-ääni</comment>
+  <comment xml:lang="eu">Speex audioa</comment>
+  <comment xml:lang="es">sonido Speex</comment>
+  <comment xml:lang="en-GB">Speex audio</comment>
+  <comment xml:lang="el">Ήχος Speex</comment>
+  <comment xml:lang="de">Speex-Audio</comment>
+  <comment xml:lang="da">Speex-lyd</comment>
+  <comment xml:lang="cs">zvuk Speex</comment>
+  <comment xml:lang="ca">àudio Speex</comment>
+  <comment xml:lang="bg">Аудио — Speex</comment>
+  <comment xml:lang="be-Latn">Aŭdyjo Speex</comment>
+  <comment xml:lang="be-Cyrl">аўдыя Speex</comment>
+  <comment xml:lang="ar">صوت Speex</comment>
+  <comment xml:lang="af">Speex-oudio</comment>
+  <glob pattern="*.spx"/>
+</mime-type>

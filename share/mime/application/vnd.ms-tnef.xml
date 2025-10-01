@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/vnd.ms-tnef">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>TNEF message</comment>
+  <comment xml:lang="zh-Hant-TW">TNEF 訊息</comment>
+  <comment xml:lang="zh-Hans-CN">TNEF 信件</comment>
+  <comment xml:lang="vi">Thông điệp TNEF</comment>
+  <comment xml:lang="uk">повідомлення TNEF</comment>
+  <comment xml:lang="tr">TNEF iletisi</comment>
+  <comment xml:lang="sv">TNEF-meddelande</comment>
+  <comment xml:lang="sr-Cyrl">ТНЕФ порука</comment>
+  <comment xml:lang="sq">mesazh TNEF</comment>
+  <comment xml:lang="sl">Datoteka sporočila TNEF</comment>
+  <comment xml:lang="si">TNEF පණිවිඩය</comment>
+  <comment xml:lang="sk">Správa TNEF</comment>
+  <comment xml:lang="ru">Сообщение TNEF</comment>
+  <comment xml:lang="ro">Mesaj TNEF</comment>
+  <comment xml:lang="pt-BR">Mensagem TNEF</comment>
+  <comment xml:lang="pt">mensagem TNEF</comment>
+  <comment xml:lang="pl">Wiadomość TNEF</comment>
+  <comment xml:lang="oc">messatge TNEF</comment>
+  <comment xml:lang="nn">TNEF-melding</comment>
+  <comment xml:lang="nl">TNEF-bericht</comment>
+  <comment xml:lang="nb">TNEF-melding</comment>
+  <comment xml:lang="lv">TNEF ziņojums</comment>
+  <comment xml:lang="lt">TNEF žinutė</comment>
+  <comment xml:lang="ko">TNEF 메시지</comment>
+  <comment xml:lang="kk-Cyrl">TNEF мәлімдемесі</comment>
+  <comment xml:lang="ja">TNEF メッセージ</comment>
+  <comment xml:lang="it">Messaggio TNEF</comment>
+  <comment xml:lang="is">TNEF skilaboð</comment>
+  <comment xml:lang="id">Pesan TNEF</comment>
+  <comment xml:lang="ia">Message TNEF</comment>
+  <comment xml:lang="hu">TNEF üzenet</comment>
+  <comment xml:lang="hr">TNEF poruka</comment>
+  <comment xml:lang="he">הודעת TNEF</comment>
+  <comment xml:lang="gl">mensaxe TNEF</comment>
+  <comment xml:lang="ga">teachtaireacht TNEF</comment>
+  <comment xml:lang="fur">messaç TNEF</comment>
+  <comment xml:lang="fr">message TNEF</comment>
+  <comment xml:lang="fo">TNEF boð</comment>
+  <comment xml:lang="fi">TNEF-viesti</comment>
+  <comment xml:lang="eu">TNEF mezua</comment>
+  <comment xml:lang="es">mensaje TNEF</comment>
+  <comment xml:lang="en-GB">TNEF message</comment>
+  <comment xml:lang="el">Μήνυμα TNEF</comment>
+  <comment xml:lang="de">TNEF-Nachricht</comment>
+  <comment xml:lang="da">TNEF-meddelelse</comment>
+  <comment xml:lang="cs">zpráva TNEF</comment>
+  <comment xml:lang="ca">missatge TNEF</comment>
+  <comment xml:lang="bg">Съобщение — TNEF</comment>
+  <comment xml:lang="be-Latn">List TNEF</comment>
+  <comment xml:lang="be-Cyrl">паведамленне TNEF</comment>
+  <comment xml:lang="ast">Mensaxe TNEF</comment>
+  <comment xml:lang="ar">رسالة TNEF</comment>
+  <comment xml:lang="af">TNEF-boodskap</comment>
+  <acronym>TNEF</acronym>
+  <expanded-acronym>Transport Neutral Encapsulation Format</expanded-acronym>
+  <glob pattern="*.tnef"/>
+  <glob pattern="*.tnf"/>
+  <glob pattern="winmail.dat"/>
+  <alias type="application/ms-tnef"/>
+</mime-type>

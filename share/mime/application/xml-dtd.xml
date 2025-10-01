@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/xml-dtd">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>DTD file</comment>
+  <comment xml:lang="zh-Hant-TW">DTD 檔</comment>
+  <comment xml:lang="zh-Hans-CN">DTD 文件</comment>
+  <comment xml:lang="vi">Tập tin DTD</comment>
+  <comment xml:lang="uk">файл DTD</comment>
+  <comment xml:lang="tr">DTD dosyası</comment>
+  <comment xml:lang="sv">DTD-fil</comment>
+  <comment xml:lang="sr-Cyrl">ДТД датотека</comment>
+  <comment xml:lang="sq">kartelë DTD</comment>
+  <comment xml:lang="sl">Datoteka DTD</comment>
+  <comment xml:lang="si">DTD ගොනුව</comment>
+  <comment xml:lang="sk">Súbor DTD</comment>
+  <comment xml:lang="ru">Файл DTD</comment>
+  <comment xml:lang="ro">Fișier DTD</comment>
+  <comment xml:lang="pt-BR">Arquivo DTD</comment>
+  <comment xml:lang="pt">ficheiro DTD</comment>
+  <comment xml:lang="pl">Plik DTD</comment>
+  <comment xml:lang="oc">fichièr DTD</comment>
+  <comment xml:lang="nn">DTD-fil</comment>
+  <comment xml:lang="nl">DTD-bestand</comment>
+  <comment xml:lang="nb">DTD-fil</comment>
+  <comment xml:lang="lv">DTD datne</comment>
+  <comment xml:lang="lt">DTD failas</comment>
+  <comment xml:lang="ko">DTD 파일</comment>
+  <comment xml:lang="kk-Cyrl">DTD файлы</comment>
+  <comment xml:lang="ka">DTD ფაილი</comment>
+  <comment xml:lang="ja">DTD ファイル</comment>
+  <comment xml:lang="it">File DTD</comment>
+  <comment xml:lang="is">DTD-skrá</comment>
+  <comment xml:lang="id">Berkas DTD</comment>
+  <comment xml:lang="ia">File DTD</comment>
+  <comment xml:lang="hu">DTD fájl</comment>
+  <comment xml:lang="hr">DTD datoteka</comment>
+  <comment xml:lang="he">מסמך DTD</comment>
+  <comment xml:lang="gl">ficheiro DTD</comment>
+  <comment xml:lang="ga">comhad DTD</comment>
+  <comment xml:lang="fur">file DTD</comment>
+  <comment xml:lang="fr">fichier DTD</comment>
+  <comment xml:lang="fo">DTD fíla</comment>
+  <comment xml:lang="fi">DTD-tiedosto</comment>
+  <comment xml:lang="eu">DTD fitxategia</comment>
+  <comment xml:lang="es">archivo DTD</comment>
+  <comment xml:lang="eo">DTD-dosiero</comment>
+  <comment xml:lang="en-GB">DTD file</comment>
+  <comment xml:lang="el">Αρχείο DTD</comment>
+  <comment xml:lang="de">DTD-Datei</comment>
+  <comment xml:lang="da">DTD-fil</comment>
+  <comment xml:lang="cs">soubor DTD</comment>
+  <comment xml:lang="ca">fitxer DTD</comment>
+  <comment xml:lang="bg">Документ — DTD</comment>
+  <comment xml:lang="be-Latn">Fajł DTD</comment>
+  <comment xml:lang="be-Cyrl">файл DTD</comment>
+  <comment xml:lang="ar">ملف DTD</comment>
+  <comment xml:lang="af">DTD-lêer</comment>
+  <acronym>DTD</acronym>
+  <expanded-acronym>Document Type Definition</expanded-acronym>
+  <sub-class-of type="text/plain"/>
+  <generic-icon name="text-x-generic"/>
+  <glob pattern="*.dtd"/>
+  <alias type="text/x-dtd"/>
+</mime-type>

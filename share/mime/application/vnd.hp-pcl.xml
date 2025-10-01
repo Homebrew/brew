@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/vnd.hp-pcl">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>PCL file</comment>
+  <comment xml:lang="zh-Hant-TW">PCL 檔</comment>
+  <comment xml:lang="zh-Hans-CN">PCL 文件</comment>
+  <comment xml:lang="vi">Tập tin PCL</comment>
+  <comment xml:lang="uk">файл PCL</comment>
+  <comment xml:lang="tr">PCL dosyası</comment>
+  <comment xml:lang="sv">PCL-fil</comment>
+  <comment xml:lang="sr-Cyrl">ПЦЛ датотека</comment>
+  <comment xml:lang="sq">kartelë PCL</comment>
+  <comment xml:lang="sl">Datoteka PCL</comment>
+  <comment xml:lang="si">PCL ගොනුව</comment>
+  <comment xml:lang="sk">Súbor PCL</comment>
+  <comment xml:lang="ru">Файл PCL</comment>
+  <comment xml:lang="ro">Fișier PCL</comment>
+  <comment xml:lang="pt-BR">Arquivo PCL</comment>
+  <comment xml:lang="pt">ficheiro PCL</comment>
+  <comment xml:lang="pl">Plik PCL</comment>
+  <comment xml:lang="oc">fichièr PCL</comment>
+  <comment xml:lang="nn">PCL-fil</comment>
+  <comment xml:lang="nl">PCL-bestand</comment>
+  <comment xml:lang="nb">PCL-fil</comment>
+  <comment xml:lang="lv">PCL datne</comment>
+  <comment xml:lang="lt">PCL failas</comment>
+  <comment xml:lang="ko">PCL 파일</comment>
+  <comment xml:lang="kk-Cyrl">PCL файлы</comment>
+  <comment xml:lang="ka">PCL ფაილი</comment>
+  <comment xml:lang="ja">PCL ファイル</comment>
+  <comment xml:lang="it">File PCL</comment>
+  <comment xml:lang="is">PCL skrá</comment>
+  <comment xml:lang="id">Berkas PCL</comment>
+  <comment xml:lang="ia">File PCL</comment>
+  <comment xml:lang="hu">PCL fájl</comment>
+  <comment xml:lang="hr">PCL datoteka</comment>
+  <comment xml:lang="he">קובץ PCL</comment>
+  <comment xml:lang="gl">ficheiro PCL</comment>
+  <comment xml:lang="ga">comhad PCL</comment>
+  <comment xml:lang="fur">file PCL</comment>
+  <comment xml:lang="fr">fichier PCL</comment>
+  <comment xml:lang="fo">PCL fíla</comment>
+  <comment xml:lang="fi">PCL-tiedosto</comment>
+  <comment xml:lang="eu">PCL fitxategia</comment>
+  <comment xml:lang="es">archivo PCL</comment>
+  <comment xml:lang="eo">PCL-dosiero</comment>
+  <comment xml:lang="en-GB">PCL file</comment>
+  <comment xml:lang="el">Αρχείο PCL</comment>
+  <comment xml:lang="de">PCL-Datei</comment>
+  <comment xml:lang="da">PCL-fil</comment>
+  <comment xml:lang="cs">soubor PCL</comment>
+  <comment xml:lang="ca">fitxer PCL</comment>
+  <comment xml:lang="bg">Файл — PCL</comment>
+  <comment xml:lang="be-Latn">Fajł PCL</comment>
+  <comment xml:lang="be-Cyrl">файл PCL</comment>
+  <comment xml:lang="ast">FIcheru PCL</comment>
+  <comment xml:lang="ar">ملف PCL</comment>
+  <comment xml:lang="af">PCL-lêer</comment>
+  <acronym>PCL</acronym>
+  <expanded-acronym>HP Printer Control Language</expanded-acronym>
+  <generic-icon name="image-x-generic"/>
+  <glob pattern="*.pcl"/>
+</mime-type>

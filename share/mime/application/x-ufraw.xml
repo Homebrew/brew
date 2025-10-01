@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-ufraw">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>UFRaw ID image</comment>
+  <comment xml:lang="zh-Hant-TW">UFRaw ID 影像</comment>
+  <comment xml:lang="zh-Hans-CN">UFRaw ID 图像</comment>
+  <comment xml:lang="vi">Ảnh ID UFRaw</comment>
+  <comment xml:lang="uk">зображення UFRaw ID</comment>
+  <comment xml:lang="tr">UFRaw ID görüntüsü</comment>
+  <comment xml:lang="sv">UFRaw ID-bild</comment>
+  <comment xml:lang="sr-Cyrl">УФ сирова ИД слика</comment>
+  <comment xml:lang="sq">figurë UFRaw ID</comment>
+  <comment xml:lang="sl">Slikovna datoteka UFRaw ID</comment>
+  <comment xml:lang="si">UFRaw ID රූපය</comment>
+  <comment xml:lang="sk">Obrázok ID UFRaw</comment>
+  <comment xml:lang="ru">Изображение UFRaw ID</comment>
+  <comment xml:lang="ro">ID imagine UFRaw</comment>
+  <comment xml:lang="pt-BR">Imagem ID do UFRaw</comment>
+  <comment xml:lang="pt">imagem UFRaw ID</comment>
+  <comment xml:lang="pl">Obraz UFRaw ID</comment>
+  <comment xml:lang="oc">imatge ID UFRaw</comment>
+  <comment xml:lang="nn">UFRaw ID-bilete</comment>
+  <comment xml:lang="nl">UFRaw ID-afbeelding</comment>
+  <comment xml:lang="nb">UFRaw ID-bilde</comment>
+  <comment xml:lang="lv">UFRaw ID attēls</comment>
+  <comment xml:lang="lt">UFRaw ID paveikslėlis</comment>
+  <comment xml:lang="ko">UFRaw ID 그림</comment>
+  <comment xml:lang="kk-Cyrl">UFRaw ID суреті</comment>
+  <comment xml:lang="ja">UFRaw ID イメージ</comment>
+  <comment xml:lang="it">Immagine UFRaw ID</comment>
+  <comment xml:lang="is">UFRaw ID mynd</comment>
+  <comment xml:lang="id">Citra UFRaw ID</comment>
+  <comment xml:lang="ia">Imagine UFRaw ID</comment>
+  <comment xml:lang="hu">UFRaw azonosítófájl</comment>
+  <comment xml:lang="hr">UFRaw ID slika</comment>
+  <comment xml:lang="he">תמונה של UFRaw ID</comment>
+  <comment xml:lang="gl">imaxe de identificación UFRaw</comment>
+  <comment xml:lang="ga">íomhá aitheantais UFRaw</comment>
+  <comment xml:lang="fur">imagjin UFRaw ID</comment>
+  <comment xml:lang="fr">image ID UFRaw</comment>
+  <comment xml:lang="fo">UFRaw ID mynd</comment>
+  <comment xml:lang="fi">UFRaw ID -kuva</comment>
+  <comment xml:lang="eu">UFRaw ID irudia</comment>
+  <comment xml:lang="es">imagen de identificación UFRaw</comment>
+  <comment xml:lang="en-GB">UFRaw ID image</comment>
+  <comment xml:lang="el">Εικόνα UFRaw</comment>
+  <comment xml:lang="de">UFRaw-Bildbeschreibungsdatei</comment>
+  <comment xml:lang="da">UFRaw ID-billede</comment>
+  <comment xml:lang="cs">obrázek ID UFRaw</comment>
+  <comment xml:lang="ca">imatge ID UFRaw</comment>
+  <comment xml:lang="bg">Изображение — UFRaw ID</comment>
+  <comment xml:lang="be-Latn">Vyjava UFRaw ID</comment>
+  <comment xml:lang="be-Cyrl">выява UFRaw ID</comment>
+  <comment xml:lang="ar">صورة UFRaw ID</comment>
+  <comment xml:lang="af">UFRaw ID-beeld</comment>
+  <acronym>UFRaw</acronym>
+  <expanded-acronym>Unidentified Flying Raw</expanded-acronym>
+  <sub-class-of type="application/xml"/>
+  <generic-icon name="image-x-generic"/>
+  <glob pattern="*.ufraw"/>
+</mime-type>

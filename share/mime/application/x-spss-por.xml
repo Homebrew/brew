@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-spss-por">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>SPSS portable data file</comment>
+  <comment xml:lang="zh-Hant-TW">SPSS 可攜資料檔</comment>
+  <comment xml:lang="zh-Hans-CN">SPSS 便携式数据文件</comment>
+  <comment xml:lang="uk">портативний файл даних SPSS</comment>
+  <comment xml:lang="tr">SPSS taşınabilir veri dosyası</comment>
+  <comment xml:lang="sv">SPSS portabel datafil</comment>
+  <comment xml:lang="sq">kartelë të dhënash të bartshme SPSS</comment>
+  <comment xml:lang="sl">Prenosna podatkovna datoteka SPSS</comment>
+  <comment xml:lang="si">SPSS අතේ ගෙන යා හැකි දත්ත ගොනුව</comment>
+  <comment xml:lang="sk">Súbor prenosných údajov SPSS</comment>
+  <comment xml:lang="ru">Файл переносимых данных SPSS</comment>
+  <comment xml:lang="pt-BR">Arquivo de dados portáteis SPSS</comment>
+  <comment xml:lang="pt">ficheiro de dados portátil SPSS</comment>
+  <comment xml:lang="pl">Plik przenośnych danych SPSS</comment>
+  <comment xml:lang="nl">SPSS-portable-gegevensbestand</comment>
+  <comment xml:lang="ko">SPSS 휴대 데이터 파일</comment>
+  <comment xml:lang="kk-Cyrl">SPSS тасымалы деректер файлы</comment>
+  <comment xml:lang="ka">SPSS გადატანადი მონაცემების ფაილი</comment>
+  <comment xml:lang="ja">SPSS ポータブルデータファイル</comment>
+  <comment xml:lang="it">File dati SPSS Portable</comment>
+  <comment xml:lang="is">yfirfæranleg SPSS gagnaskrá</comment>
+  <comment xml:lang="id">Berkas data portabel SPSS</comment>
+  <comment xml:lang="hu">SPSS hordozható adatfájl</comment>
+  <comment xml:lang="hr">SPSS prenosiva podatkovna datoteka</comment>
+  <comment xml:lang="he">קובץ נתונים נייד של SPSS</comment>
+  <comment xml:lang="gl">Ficheiro de datos portábel de SPSS</comment>
+  <comment xml:lang="fr">fichier portable de données SPSS</comment>
+  <comment xml:lang="fi">Siirrettävä SPSS-tiedosto</comment>
+  <comment xml:lang="eu">SPSS datu fitxategi eramangarria</comment>
+  <comment xml:lang="es">archivo de datos portátiles de SPSS</comment>
+  <comment xml:lang="en-GB">SPSS portable data file</comment>
+  <comment xml:lang="de">Portierbare SPSS-Datendatei</comment>
+  <comment xml:lang="da">SPSS portable data-fil</comment>
+  <comment xml:lang="ca">fitxer de dades portables SPSS</comment>
+  <comment xml:lang="bg">Данни — SPSS, преносими</comment>
+  <comment xml:lang="be-Cyrl">файл пераносу даных SPSS</comment>
+  <comment xml:lang="ar">ملف بيانات SPSS متنقل</comment>
+  <acronym>SPSS</acronym>
+  <expanded-acronym>Statistical Package for the Social Sciences</expanded-acronym>
+  <glob pattern="*.por"/>
+</mime-type>

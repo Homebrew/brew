@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-par2">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Parchive archive</comment>
+  <comment xml:lang="zh-Hant-TW">Parchive 封存檔</comment>
+  <comment xml:lang="zh-Hans-CN">Parchive 归档文件</comment>
+  <comment xml:lang="vi">Kho nén Parchive</comment>
+  <comment xml:lang="uk">архів Parchive</comment>
+  <comment xml:lang="tr">Parchive arşivi</comment>
+  <comment xml:lang="sv">Parchive-arkiv</comment>
+  <comment xml:lang="sr-Cyrl">архива Пархива</comment>
+  <comment xml:lang="sq">arkiv Parchive</comment>
+  <comment xml:lang="sl">Datoteka arhiva Parchive</comment>
+  <comment xml:lang="si">Parchive ලේඛනාගාරය</comment>
+  <comment xml:lang="sk">Archív Parchive</comment>
+  <comment xml:lang="ru">Архив Parchive</comment>
+  <comment xml:lang="ro">Arhivă Parchive</comment>
+  <comment xml:lang="pt-BR">Pacote Parchive</comment>
+  <comment xml:lang="pt">arquivo Parchive</comment>
+  <comment xml:lang="pl">Archiwum parchive</comment>
+  <comment xml:lang="oc">archiu Parchive</comment>
+  <comment xml:lang="nn">Parchive-arkiv</comment>
+  <comment xml:lang="nl">Parchive-archief</comment>
+  <comment xml:lang="nb">Parchive-arkiv</comment>
+  <comment xml:lang="lv">Parchive arhīvs</comment>
+  <comment xml:lang="lt">Parchive archyvas</comment>
+  <comment xml:lang="ko">Parchive 압축 파일</comment>
+  <comment xml:lang="kk-Cyrl">Parchive архиві</comment>
+  <comment xml:lang="ja">Parchive アーカイブ</comment>
+  <comment xml:lang="it">Archivio Parchive</comment>
+  <comment xml:lang="is">Parchive safnskrá</comment>
+  <comment xml:lang="id">Arsip Parchive</comment>
+  <comment xml:lang="ia">Archivo Parchive</comment>
+  <comment xml:lang="hu">Parchive archívum</comment>
+  <comment xml:lang="hr">Parchive arhiva</comment>
+  <comment xml:lang="he">ארכיון של Parchive</comment>
+  <comment xml:lang="gl">arquivo Parchive</comment>
+  <comment xml:lang="ga">cartlann Parchive</comment>
+  <comment xml:lang="fur">archivi Parchive</comment>
+  <comment xml:lang="fr">archive Parchive</comment>
+  <comment xml:lang="fo">Parchive skjalasavn</comment>
+  <comment xml:lang="fi">Parchive-arkisto</comment>
+  <comment xml:lang="eu">Parchive artxiboa</comment>
+  <comment xml:lang="es">archivador Parchive</comment>
+  <comment xml:lang="en-GB">Parchive archive</comment>
+  <comment xml:lang="el">Συμπιεσμένο αρχείο Parchive</comment>
+  <comment xml:lang="de">Parchive-Archiv</comment>
+  <comment xml:lang="da">Parchive-arkiv</comment>
+  <comment xml:lang="cs">archiv Parchive</comment>
+  <comment xml:lang="ca">arxiu Parchive</comment>
+  <comment xml:lang="bg">Архив — parchive</comment>
+  <comment xml:lang="be-Latn">Archiŭ Parchive</comment>
+  <comment xml:lang="be-Cyrl">архіў Parchive</comment>
+  <comment xml:lang="ar">أرشيف Parchive</comment>
+  <comment xml:lang="af">Parchive-argief</comment>
+  <acronym>Parchive</acronym>
+  <expanded-acronym>Parity Volume Set Archive</expanded-acronym>
+  <generic-icon name="package-x-generic"/>
+  <glob pattern="*.PAR2"/>
+  <glob pattern="*.par2"/>
+</mime-type>

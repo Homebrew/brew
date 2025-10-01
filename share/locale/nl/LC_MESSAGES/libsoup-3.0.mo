@@ -1,0 +1,1 @@
+../../../../Cellar/libsoup/3.6.5/share/locale/nl/LC_MESSAGES/libsoup-3.0.mo

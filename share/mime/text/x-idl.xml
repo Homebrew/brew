@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="text/x-idl">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>IDL document</comment>
+  <comment xml:lang="zh-Hant-TW">IDL 文件</comment>
+  <comment xml:lang="zh-Hans-CN">IDL 文档</comment>
+  <comment xml:lang="vi">Tài liệu IDL</comment>
+  <comment xml:lang="uk">документ IDL</comment>
+  <comment xml:lang="tr">IDL belgesi</comment>
+  <comment xml:lang="sv">IDL-dokument</comment>
+  <comment xml:lang="sr-Cyrl">ИДЛ документ</comment>
+  <comment xml:lang="sq">dokument IDL</comment>
+  <comment xml:lang="sl">Dokument IDL</comment>
+  <comment xml:lang="si">IDL ලේඛනය</comment>
+  <comment xml:lang="sk">Dokument IDL</comment>
+  <comment xml:lang="ru">Документ IDL</comment>
+  <comment xml:lang="ro">Document IDL</comment>
+  <comment xml:lang="pt-BR">Documento IDL</comment>
+  <comment xml:lang="pt">documento IDL</comment>
+  <comment xml:lang="pl">Dokument IDL</comment>
+  <comment xml:lang="oc">document IDL</comment>
+  <comment xml:lang="nn">IDL-dokument</comment>
+  <comment xml:lang="nl">IDL-document</comment>
+  <comment xml:lang="nb">IDL-dokument</comment>
+  <comment xml:lang="ms">Dokumen IDL</comment>
+  <comment xml:lang="lv">IDL dokuments</comment>
+  <comment xml:lang="lt">IDL dokumentas</comment>
+  <comment xml:lang="ko">IDL 문서</comment>
+  <comment xml:lang="kk-Cyrl">IDL құжаты</comment>
+  <comment xml:lang="ja">IDL ドキュメント</comment>
+  <comment xml:lang="it">Documento IDL</comment>
+  <comment xml:lang="is">IDL skjal</comment>
+  <comment xml:lang="id">Dokumen IDL</comment>
+  <comment xml:lang="ia">Documento IDL</comment>
+  <comment xml:lang="hu">IDL-dokumentum</comment>
+  <comment xml:lang="hr">IDL dokument</comment>
+  <comment xml:lang="he">מסמך IDL</comment>
+  <comment xml:lang="gl">documento IDL</comment>
+  <comment xml:lang="ga">cáipéis IDL</comment>
+  <comment xml:lang="fur">document IDL</comment>
+  <comment xml:lang="fr">document IDL</comment>
+  <comment xml:lang="fo">IDL skjal</comment>
+  <comment xml:lang="fi">IDL-asiakirja</comment>
+  <comment xml:lang="eu">IDL dokumentua</comment>
+  <comment xml:lang="es">documento IDL</comment>
+  <comment xml:lang="eo">IDL-dokumento</comment>
+  <comment xml:lang="en-GB">IDL document</comment>
+  <comment xml:lang="el">Έγγραφο IDL</comment>
+  <comment xml:lang="de">IDL-Dokument</comment>
+  <comment xml:lang="da">IDL-dokument</comment>
+  <comment xml:lang="cy">Dogfen IDL</comment>
+  <comment xml:lang="cs">dokument IDL</comment>
+  <comment xml:lang="ca">document IDL</comment>
+  <comment xml:lang="bg">Документ — IDL</comment>
+  <comment xml:lang="be-Latn">Dakument IDL</comment>
+  <comment xml:lang="be-Cyrl">дакумент IDL</comment>
+  <comment xml:lang="az">IDL sənədi</comment>
+  <comment xml:lang="ast">Documentu IDL</comment>
+  <comment xml:lang="ar">مستند IDL</comment>
+  <comment xml:lang="af">IDL-dokument</comment>
+  <acronym>IDL</acronym>
+  <expanded-acronym>Interface Definition Language</expanded-acronym>
+  <sub-class-of type="text/plain"/>
+  <glob pattern="*.idl"/>
+</mime-type>

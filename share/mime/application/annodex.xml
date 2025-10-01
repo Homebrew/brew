@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/annodex">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Annodex exchange format</comment>
+  <comment xml:lang="zh-Hant-TW">Annodex 交換格式</comment>
+  <comment xml:lang="zh-Hans-CN">Annodex 交换格式</comment>
+  <comment xml:lang="vi">Định dạng trao đổi Annodex</comment>
+  <comment xml:lang="uk">формат обміну даними Annodex</comment>
+  <comment xml:lang="tr">Annodex değişim biçimi</comment>
+  <comment xml:lang="sv">Annodex-utväxlingsformat</comment>
+  <comment xml:lang="sr-Cyrl">Анодексов запис размене</comment>
+  <comment xml:lang="sl">Izmenjalna datoteka Annodex</comment>
+  <comment xml:lang="si">Annodex හුවමාරු ආකෘතිය</comment>
+  <comment xml:lang="sk">Formát pre výmenu Annodex</comment>
+  <comment xml:lang="ru">Формат обмена Annodex</comment>
+  <comment xml:lang="ro">Format schimb Annodex</comment>
+  <comment xml:lang="pt-BR">Formato de troca Annodex</comment>
+  <comment xml:lang="pt">formato de troca Annodex</comment>
+  <comment xml:lang="pl">Format wymiany Annodex</comment>
+  <comment xml:lang="oc">format d'escambi Annodex</comment>
+  <comment xml:lang="nl">Annodex-exchange</comment>
+  <comment xml:lang="lv">Annodex apmaiņas formāts</comment>
+  <comment xml:lang="lt">Annodex mainų formatas</comment>
+  <comment xml:lang="ko">Annodex 교환 형식</comment>
+  <comment xml:lang="kk-Cyrl">Annodex алмасу пішімі</comment>
+  <comment xml:lang="ka">Annodex-ის გაცვლითი ფორმატი</comment>
+  <comment xml:lang="ja">Annodex 交換フォーマット</comment>
+  <comment xml:lang="it">Formato di scambio Annodex</comment>
+  <comment xml:lang="is">Annodex skiptiskráasnið</comment>
+  <comment xml:lang="id">Format pertukaran Annodex</comment>
+  <comment xml:lang="ia">Formato de excambio Annodex</comment>
+  <comment xml:lang="hu">Annodex csereformátum</comment>
+  <comment xml:lang="hr">Annodex format razmjene</comment>
+  <comment xml:lang="he">תבנית החלפת Annodex</comment>
+  <comment xml:lang="gl">formato intercambiábel de Annodex</comment>
+  <comment xml:lang="ga">formáid mhalairte Annodex</comment>
+  <comment xml:lang="fur">formât di scambi Annodex</comment>
+  <comment xml:lang="fr">format d'échange Annodex</comment>
+  <comment xml:lang="fo">Annodex umbýtingarsnið</comment>
+  <comment xml:lang="fi">Annodex-siirtomuoto</comment>
+  <comment xml:lang="eu">Annodex trukatze-formatua</comment>
+  <comment xml:lang="es">formato de intercambio de Annodex</comment>
+  <comment xml:lang="en-GB">Annodex exchange format</comment>
+  <comment xml:lang="el">Μορφή ανταλλαγής Annodex</comment>
+  <comment xml:lang="de">Annodex-Austauschformat</comment>
+  <comment xml:lang="da">Udvekslingsformat for Annodex</comment>
+  <comment xml:lang="cs">výměnný formát Annodex</comment>
+  <comment xml:lang="ca">format d'intercanvi Annodex</comment>
+  <comment xml:lang="bg">Формат за обмяна — Annodex</comment>
+  <comment xml:lang="be-Cyrl">фармат абмену Annodex</comment>
+  <comment xml:lang="ar">صيغة تبادل Annodex</comment>
+  <generic-icon name="video-x-generic"/>
+  <glob pattern="*.anx"/>
+  <alias type="application/x-annodex"/>
+</mime-type>

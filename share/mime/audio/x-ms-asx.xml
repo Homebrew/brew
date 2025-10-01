@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="audio/x-ms-asx">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Microsoft ASX playlist</comment>
+  <comment xml:lang="zh-Hant-TW">微軟 ASX 播放清單</comment>
+  <comment xml:lang="zh-Hans-CN">Microsoft ASX 播放列表</comment>
+  <comment xml:lang="vi">Danh mục nhạc Microsoft ASX</comment>
+  <comment xml:lang="uk">список відтворення ASX Microsoft</comment>
+  <comment xml:lang="tr">Microsoft ASX çalma listesi</comment>
+  <comment xml:lang="sv">Microsoft ASX-spellista</comment>
+  <comment xml:lang="sr-Cyrl">Мајкрософтов АСИкс списак нумера</comment>
+  <comment xml:lang="sq">luajlistë Microsoft ASF</comment>
+  <comment xml:lang="sl">Seznam predvajanja Microsoft ASX</comment>
+  <comment xml:lang="si">Microsoft ASX ධාවන ලැයිස්තුව</comment>
+  <comment xml:lang="sk">Zoznam skladieb Microsoft ASX</comment>
+  <comment xml:lang="ru">Список воспроизведения Microsoft ASX</comment>
+  <comment xml:lang="ro">Listă redare Microsoft ASX</comment>
+  <comment xml:lang="pt-BR">Lista de reprodução do Microsoft ASX</comment>
+  <comment xml:lang="pt">lista de reprodução Microsoft ASX</comment>
+  <comment xml:lang="pl">Lista odtwarzania Microsoft ASX</comment>
+  <comment xml:lang="oc">lista de lectura Microsoft ASX</comment>
+  <comment xml:lang="nn">Microsoft ASX-speleliste</comment>
+  <comment xml:lang="nl">Microsoft ASX-afspeellijst</comment>
+  <comment xml:lang="nb">Microsoft ASX-spilleliste</comment>
+  <comment xml:lang="lv">Microsoft ASX repertuārs</comment>
+  <comment xml:lang="lt">Microsoft ASX grojaraštis</comment>
+  <comment xml:lang="ko">Microsoft ASX 재생 목록</comment>
+  <comment xml:lang="kk-Cyrl">Microsoft ASX ойнау тізімі</comment>
+  <comment xml:lang="ka">Microsoft-ის ASX რეპერტუარი</comment>
+  <comment xml:lang="ja">Microsoft ASX プレイリスト</comment>
+  <comment xml:lang="it">Playlist Microsoft ASX</comment>
+  <comment xml:lang="is">Microsoft ASX spilunarlisti</comment>
+  <comment xml:lang="id">Senarai putar Microsoft ASX</comment>
+  <comment xml:lang="ia">Lista de selection Microsoft ASX</comment>
+  <comment xml:lang="hu">Microsoft ASX lejátszólista</comment>
+  <comment xml:lang="hr">Microsoft ASX popis izvođenja</comment>
+  <comment xml:lang="he">רשימת השמעה ASX (מיקרוסופט)</comment>
+  <comment xml:lang="gl">lista de reprodución Microsoft ASX</comment>
+  <comment xml:lang="ga">seinmliosta Microsoft ASX</comment>
+  <comment xml:lang="fur">liste di riproduzion Microsoft ASX</comment>
+  <comment xml:lang="fr">liste de lecture Microsoft ASX</comment>
+  <comment xml:lang="fo">Microsoft ASX avspælingarlisti</comment>
+  <comment xml:lang="fi">Microsoft ASX -soittolista</comment>
+  <comment xml:lang="eu">Microsoft ASX erreprodukzio-zerrenda</comment>
+  <comment xml:lang="es">lista de reproducción ASX de Microsoft</comment>
+  <comment xml:lang="en-GB">Microsoft ASX playlist</comment>
+  <comment xml:lang="el">Λίστα αναπαραγωγής Microsoft ASX</comment>
+  <comment xml:lang="de">Microsoft-ASX-Wiedergabeliste</comment>
+  <comment xml:lang="da">Microsoft ASX-afspilningsliste</comment>
+  <comment xml:lang="cs">seznam k přehrání Microsoft ASX</comment>
+  <comment xml:lang="ca">llista de reproducció de Microsoft ASX</comment>
+  <comment xml:lang="bg">Списък за изпълнение — Microsoft ASX</comment>
+  <comment xml:lang="be-Latn">Śpis Microsoft ASX</comment>
+  <comment xml:lang="be-Cyrl">плэй-ліст Microsoft ASX</comment>
+  <comment xml:lang="ar">قائمة تشغيل مايكروسوفت ASX</comment>
+  <alias type="video/x-ms-wvx"/>
+  <alias type="video/x-ms-wax"/>
+  <alias type="video/x-ms-wmx"/>
+  <alias type="application/x-ms-asx"/>
+  <glob pattern="*.asx"/>
+  <glob pattern="*.wax"/>
+  <glob pattern="*.wvx"/>
+  <glob pattern="*.wmx"/>
+</mime-type>

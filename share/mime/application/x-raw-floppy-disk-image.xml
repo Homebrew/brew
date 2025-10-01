@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-raw-floppy-disk-image">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Floppy disk image</comment>
+  <comment xml:lang="zh-Hant-TW">Floppy 軟碟映像檔</comment>
+  <comment xml:lang="zh-Hans-CN">软盘映像</comment>
+  <comment xml:lang="uk">образ дискети</comment>
+  <comment xml:lang="tr">Disket görüntüsü</comment>
+  <comment xml:lang="sv">Diskettavbild</comment>
+  <comment xml:lang="sr-Cyrl">одраз флопи диска</comment>
+  <comment xml:lang="sq">pamje diskete</comment>
+  <comment xml:lang="sl">Slika diskete</comment>
+  <comment xml:lang="si">නම්ය තැටි රූපය</comment>
+  <comment xml:lang="sk">Obraz pružného disku</comment>
+  <comment xml:lang="ru">Образ дискеты</comment>
+  <comment xml:lang="pt-BR">Imagem de disco flexível</comment>
+  <comment xml:lang="pt">imagem da disquete</comment>
+  <comment xml:lang="pl">Obraz dyskietki</comment>
+  <comment xml:lang="oc">imatge disc disqueta</comment>
+  <comment xml:lang="nl">Diskette-schijfkopiebestand</comment>
+  <comment xml:lang="ko">플로피 디스크 이미지</comment>
+  <comment xml:lang="kk-Cyrl">Иілгіш диск бейнесі</comment>
+  <comment xml:lang="ja">Floppy ディスクイメージ</comment>
+  <comment xml:lang="it">Immagine disco floppy</comment>
+  <comment xml:lang="is">Disklingsmynd</comment>
+  <comment xml:lang="id">Image disk floppy</comment>
+  <comment xml:lang="hu">Flopi lemezkép</comment>
+  <comment xml:lang="hr">Slika diskete</comment>
+  <comment xml:lang="he">דמות תקליטון</comment>
+  <comment xml:lang="gl">Imaxe de disco de Disquete</comment>
+  <comment xml:lang="ga">íomhá diosca fhlapaigh</comment>
+  <comment xml:lang="fur">imagjin disc floppy</comment>
+  <comment xml:lang="fr">image disquette</comment>
+  <comment xml:lang="fi">Levykkeen levykuva</comment>
+  <comment xml:lang="eu">Diskete disko irudia</comment>
+  <comment xml:lang="es">imagen de disquete</comment>
+  <comment xml:lang="en-GB">Floppy disk image</comment>
+  <comment xml:lang="de">Diskettenabbild</comment>
+  <comment xml:lang="da">Floppy-diskaftryk</comment>
+  <comment xml:lang="cs">obraz diskety</comment>
+  <comment xml:lang="ca">imatge de disquet</comment>
+  <comment xml:lang="bg">Диск — флопи</comment>
+  <comment xml:lang="be-Cyrl">вобраз гнуткага дыска</comment>
+  <comment xml:lang="ar">صورة قرص مرن</comment>
+  <comment xml:lang="af">Disket-skyfbeeldlêer</comment>
+  <sub-class-of type="application/vnd.efi.img"/>
+  <generic-icon name="media-floppy"/>
+  <alias type="application/x-fd-file"/>
+  <glob pattern="*.fd"/>
+  <glob pattern="*.qd"/>
+</mime-type>

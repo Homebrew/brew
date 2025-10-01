@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-lzop">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>LZO archive</comment>
+  <comment xml:lang="zh-Hant-TW">LZO 封存檔</comment>
+  <comment xml:lang="zh-Hans-CN">LZO 归档文件</comment>
+  <comment xml:lang="vi">Kho nén LZO</comment>
+  <comment xml:lang="uk">архів LZO</comment>
+  <comment xml:lang="tr">LZO arşivi</comment>
+  <comment xml:lang="sv">LZO-arkiv</comment>
+  <comment xml:lang="sr-Cyrl">ЛЗО архива</comment>
+  <comment xml:lang="sq">arkiv LZO</comment>
+  <comment xml:lang="sl">Datoteka arhiva LZO</comment>
+  <comment xml:lang="si">LZO ලේඛනාගාරය</comment>
+  <comment xml:lang="sk">Archív LZO</comment>
+  <comment xml:lang="ru">Архив LZO</comment>
+  <comment xml:lang="ro">Arhivă LZO</comment>
+  <comment xml:lang="pt-BR">Pacote LZO</comment>
+  <comment xml:lang="pt">arquivo LZO</comment>
+  <comment xml:lang="pl">Archiwum LZO</comment>
+  <comment xml:lang="oc">archiu LZO</comment>
+  <comment xml:lang="nn">LZO-arkiv</comment>
+  <comment xml:lang="nl">LZO-archief</comment>
+  <comment xml:lang="nb">LZO-arkiv</comment>
+  <comment xml:lang="ms">Arkib LZO</comment>
+  <comment xml:lang="lv">LZO arhīvs</comment>
+  <comment xml:lang="lt">LZO archyvas</comment>
+  <comment xml:lang="ko">LZO 압축 파일</comment>
+  <comment xml:lang="kk-Cyrl">LZO архиві</comment>
+  <comment xml:lang="ja">LZO アーカイブ</comment>
+  <comment xml:lang="it">Archivio LZO</comment>
+  <comment xml:lang="is">LZO safnskrá</comment>
+  <comment xml:lang="id">Arsip LZO</comment>
+  <comment xml:lang="ia">Archivo LZO</comment>
+  <comment xml:lang="hu">LZO-archívum</comment>
+  <comment xml:lang="hr">LZO arhiva</comment>
+  <comment xml:lang="he">ארכיון LZO</comment>
+  <comment xml:lang="gl">arquivo LZO</comment>
+  <comment xml:lang="ga">cartlann LZO</comment>
+  <comment xml:lang="fur">archivi LZO</comment>
+  <comment xml:lang="fr">archive LZO</comment>
+  <comment xml:lang="fo">LZO skjalasavn</comment>
+  <comment xml:lang="fi">LZO-arkisto</comment>
+  <comment xml:lang="eu">LZO artxiboa</comment>
+  <comment xml:lang="es">archivador LZO</comment>
+  <comment xml:lang="eo">LZO-arkivo</comment>
+  <comment xml:lang="en-GB">LZO archive</comment>
+  <comment xml:lang="el">Συμπιεσμένο αρχείο LZO</comment>
+  <comment xml:lang="de">LZO-Archiv</comment>
+  <comment xml:lang="da">LZO-arkiv</comment>
+  <comment xml:lang="cs">archiv LZO</comment>
+  <comment xml:lang="ca">arxiu LZO</comment>
+  <comment xml:lang="bg">Архив — LZO</comment>
+  <comment xml:lang="be-Latn">Archiŭ LZO</comment>
+  <comment xml:lang="be-Cyrl">архіў LZO</comment>
+  <comment xml:lang="ar">أرشيف LZO</comment>
+  <comment xml:lang="af">LZO-argief</comment>
+  <acronym>LZO</acronym>
+  <expanded-acronym>Lempel-Ziv-Oberhumer</expanded-acronym>
+  <generic-icon name="package-x-generic"/>
+  <glob pattern="*.lzo"/>
+</mime-type>

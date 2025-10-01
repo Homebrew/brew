@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/vnd.rar">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>RAR archive</comment>
+  <comment xml:lang="zh-Hant-TW">RAR 封存檔</comment>
+  <comment xml:lang="zh-Hans-CN">RAR 归档文件</comment>
+  <comment xml:lang="vi">Kho nén RAR</comment>
+  <comment xml:lang="uk">архів RAR</comment>
+  <comment xml:lang="tr">RAR arşivi</comment>
+  <comment xml:lang="sv">RAR-arkiv</comment>
+  <comment xml:lang="sr-Cyrl">РАР архива</comment>
+  <comment xml:lang="sq">arkiv RAR</comment>
+  <comment xml:lang="sl">Datoteka arhiva RAR</comment>
+  <comment xml:lang="si">RAR ලේඛනාගාරය</comment>
+  <comment xml:lang="sk">Archív RAR</comment>
+  <comment xml:lang="ru">Архив RAR</comment>
+  <comment xml:lang="ro">Arhivă RAR</comment>
+  <comment xml:lang="pt-BR">Pacote RAR</comment>
+  <comment xml:lang="pt">arquivo RAR</comment>
+  <comment xml:lang="pl">Archiwum RAR</comment>
+  <comment xml:lang="oc">archiu RAR</comment>
+  <comment xml:lang="nn">RAR-arkiv</comment>
+  <comment xml:lang="nl">RAR-archief</comment>
+  <comment xml:lang="nb">RAR-arkiv</comment>
+  <comment xml:lang="ms">Arkib RAR</comment>
+  <comment xml:lang="lv">RAR arhīvs</comment>
+  <comment xml:lang="lt">RAR archyvas</comment>
+  <comment xml:lang="ko">RAR 압축 파일</comment>
+  <comment xml:lang="kk-Cyrl">RAR архиві</comment>
+  <comment xml:lang="ja">RAR アーカイブ</comment>
+  <comment xml:lang="it">Archivio RAR</comment>
+  <comment xml:lang="is">RAR safnskrá</comment>
+  <comment xml:lang="id">Arsip RAR</comment>
+  <comment xml:lang="ia">Archivo RAR</comment>
+  <comment xml:lang="hu">RAR-archívum</comment>
+  <comment xml:lang="hr">RAR arhiva</comment>
+  <comment xml:lang="he">ארכיון RAR</comment>
+  <comment xml:lang="gl">ficheiro RAR</comment>
+  <comment xml:lang="ga">cartlann RAR</comment>
+  <comment xml:lang="fur">archivi RAR</comment>
+  <comment xml:lang="fr">archive RAR</comment>
+  <comment xml:lang="fo">RAR skjalasavn</comment>
+  <comment xml:lang="fi">RAR-arkisto</comment>
+  <comment xml:lang="eu">RAR artxiboa</comment>
+  <comment xml:lang="es">archivador RAR</comment>
+  <comment xml:lang="eo">RAR-arkivo</comment>
+  <comment xml:lang="en-GB">RAR archive</comment>
+  <comment xml:lang="el">Συμπιεσμένο αρχείο RAR</comment>
+  <comment xml:lang="de">RAR-Archiv</comment>
+  <comment xml:lang="da">RAR-arkiv</comment>
+  <comment xml:lang="cy">Archif RAR</comment>
+  <comment xml:lang="cs">archiv RAR</comment>
+  <comment xml:lang="ca">arxiu RAR</comment>
+  <comment xml:lang="bg">Архив — RAR</comment>
+  <comment xml:lang="be-Latn">Archiŭ RAR</comment>
+  <comment xml:lang="be-Cyrl">архіў RAR</comment>
+  <comment xml:lang="ar">أرشيف RAR</comment>
+  <comment xml:lang="af">RAR-argief</comment>
+  <acronym>RAR</acronym>
+  <expanded-acronym>Roshal ARchive</expanded-acronym>
+  <alias type="application/x-rar"/>
+  <alias type="application/x-rar-compressed"/>
+  <generic-icon name="package-x-generic"/>
+  <glob pattern="*.rar"/>
+</mime-type>

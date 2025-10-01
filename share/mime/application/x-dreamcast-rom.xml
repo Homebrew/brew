@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-dreamcast-rom">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Dreamcast disc image</comment>
+  <comment xml:lang="zh-Hant-TW">Dreamcast 光碟映像檔</comment>
+  <comment xml:lang="zh-Hans-CN">Dreamcast 光盘映像</comment>
+  <comment xml:lang="uk">образ диска Dreamcast</comment>
+  <comment xml:lang="tr">Dreamcast disk görüntüsü</comment>
+  <comment xml:lang="sv">Dreamcast-skivavbild</comment>
+  <comment xml:lang="sq">pamje disku Dreamcast</comment>
+  <comment xml:lang="sl">Slika diska Dreamcast</comment>
+  <comment xml:lang="si">Dreamcast තැටි රූපය</comment>
+  <comment xml:lang="sk">Obraz disku Dreamcast</comment>
+  <comment xml:lang="ru">Образ диска Dreamcast</comment>
+  <comment xml:lang="pt-BR">Imagem de disco do Dreamcast</comment>
+  <comment xml:lang="pt">imagem de disco Dreamcast</comment>
+  <comment xml:lang="pl">Obraz płyty konsoli Dreamcast</comment>
+  <comment xml:lang="oc">imatge disc Dreamcast</comment>
+  <comment xml:lang="nl">Dreamcast-schijfkopiebestand</comment>
+  <comment xml:lang="ko">드림캐스트 디스크 이미지</comment>
+  <comment xml:lang="kk-Cyrl">Dreamcast диск бейнесі</comment>
+  <comment xml:lang="ja">Dreamcast ディスクイメージ</comment>
+  <comment xml:lang="it">Immagine disco Dreamcast</comment>
+  <comment xml:lang="is">Dreamcast diskmynd</comment>
+  <comment xml:lang="id">Image cakram Dreamcast</comment>
+  <comment xml:lang="hu">Dreamcast lemezkép</comment>
+  <comment xml:lang="hr">Dreamcast slika disa</comment>
+  <comment xml:lang="he">דמות כונן Dreamcast</comment>
+  <comment xml:lang="gl">Imaxe de disco de Dreamcast</comment>
+  <comment xml:lang="fr">image disque Dreamcast</comment>
+  <comment xml:lang="fi">Dreamcast-levykuva</comment>
+  <comment xml:lang="eu">Dreamcast disko irudia</comment>
+  <comment xml:lang="es">imagen de disco de Dreamcast</comment>
+  <comment xml:lang="en-GB">Dreamcast disc image</comment>
+  <comment xml:lang="de">Dreamcast-Datenträgerabbild</comment>
+  <comment xml:lang="da">Dreamcast-diskaftryk</comment>
+  <comment xml:lang="ca">imatge de disc de Dreamcast</comment>
+  <comment xml:lang="bg">Диск — Dreamcast</comment>
+  <comment xml:lang="be-Cyrl">вобраз дыска Dreamcast</comment>
+  <comment xml:lang="ar">صورة قرص Dreamcast</comment>
+  <generic-icon name="application-x-executable"/>
+  <glob pattern="*.iso"/>
+</mime-type>

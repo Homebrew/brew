@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-godot-scene">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Godot Engine scene</comment>
+  <comment xml:lang="zh-Hant-TW">Godot Engine 場景</comment>
+  <comment xml:lang="zh-Hans-CN">Godot Engine 场景</comment>
+  <comment xml:lang="uk">сцена Godot Engine</comment>
+  <comment xml:lang="tr">Godot Engine sahnesi</comment>
+  <comment xml:lang="sv">Godot Engine-scen</comment>
+  <comment xml:lang="sl">Prizor Godot Engine</comment>
+  <comment xml:lang="si">ගොඩෝ එන්ජින් දර්ශනය</comment>
+  <comment xml:lang="ru">Сцена Godot Engine</comment>
+  <comment xml:lang="pt-BR">Cena do Godot Engine</comment>
+  <comment xml:lang="pt">cena do Godot Engine</comment>
+  <comment xml:lang="pl">Scena Godot Engine</comment>
+  <comment xml:lang="nl">Godot Engine-scène</comment>
+  <comment xml:lang="ko">Godot 엔진 장면</comment>
+  <comment xml:lang="kk-Cyrl">Godot Engine сахнасы</comment>
+  <comment xml:lang="ja">Godot Engine シーン</comment>
+  <comment xml:lang="it">Scena Godot Engine</comment>
+  <comment xml:lang="hr">Godot Engine scena</comment>
+  <comment xml:lang="he">סצנה של מנוע גודו</comment>
+  <comment xml:lang="gl">Escena do motor Godot</comment>
+  <comment xml:lang="fi">Godot Engine -näkymä</comment>
+  <comment xml:lang="eu">Godot Engine eszena</comment>
+  <comment xml:lang="es">escena de motor Godot</comment>
+  <comment xml:lang="en-GB">Godot Engine scene</comment>
+  <comment xml:lang="de">Godot-Engine-Szene</comment>
+  <comment xml:lang="be-Cyrl">сцэна Godot Engine</comment>
+  <comment xml:lang="ar">مشهد محرك جودو</comment>
+  <glob pattern="*.scn"/>
+  <glob pattern="*.tscn"/>
+  <glob pattern="*.escn"/>
+</mime-type>

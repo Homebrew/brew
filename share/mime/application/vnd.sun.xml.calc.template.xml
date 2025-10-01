@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/vnd.sun.xml.calc.template">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>LibreOffice Calc template</comment>
+  <comment xml:lang="uk">шаблон LibreOffice Calc</comment>
+  <comment xml:lang="sv">LibreOffice Calc-mall</comment>
+  <comment xml:lang="ru">Шаблон LibreOffice Calc</comment>
+  <comment xml:lang="pt-BR">Modelo do LibreOffice Calc</comment>
+  <comment xml:lang="pl">Szablon arkusza LibreOffice Calc</comment>
+  <comment xml:lang="it">Modello LibreOffice Calc</comment>
+  <comment xml:lang="gl">Modelo de LibreOffice Calc</comment>
+  <comment xml:lang="eu">LibreOffice Calc txantiloia</comment>
+  <comment xml:lang="es">plantilla de LibreOffice Calc</comment>
+  <comment xml:lang="de">LibreOffice Calc-Vorlage</comment>
+  <comment xml:lang="be-Cyrl">шаблон LibreOffice Calc</comment>
+  <sub-class-of type="application/zip"/>
+  <generic-icon name="x-office-spreadsheet"/>
+  <glob pattern="*.stc"/>
+</mime-type>

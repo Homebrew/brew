@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="image/rle">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>RLE bitmap image</comment>
+  <comment xml:lang="zh-Hant-TW">RLE 點陣影像</comment>
+  <comment xml:lang="zh-Hans-CN">RLE 位图图像</comment>
+  <comment xml:lang="uk">растрове зображення RLE</comment>
+  <comment xml:lang="tr">RLE bit eşlem görüntüsü</comment>
+  <comment xml:lang="sv">RLE bitmappsbild</comment>
+  <comment xml:lang="sq">figurë bitmap RLE</comment>
+  <comment xml:lang="sl">Bitna slika RLE</comment>
+  <comment xml:lang="si">RLE බිට්මැප් රූපය</comment>
+  <comment xml:lang="ru">Растровое изображение RLE</comment>
+  <comment xml:lang="pt-BR">Imagem bitmap RLE</comment>
+  <comment xml:lang="pl">Obraz bitmapy RLE</comment>
+  <comment xml:lang="nl">RLE-bitmapafbeelding</comment>
+  <comment xml:lang="ko">RLE 비트맵 그림</comment>
+  <comment xml:lang="kk-Cyrl">RLE растрлық суреті</comment>
+  <comment xml:lang="ja">RLE ビットマップ画像</comment>
+  <comment xml:lang="it">Immagine bitmap RLE</comment>
+  <comment xml:lang="is">RLE bitamynd</comment>
+  <comment xml:lang="id">Citra bitmap RLE</comment>
+  <comment xml:lang="hu">RLE bitkép</comment>
+  <comment xml:lang="hr">RLE bitmap slika</comment>
+  <comment xml:lang="he">תמונת מפת סיביות RLE</comment>
+  <comment xml:lang="gl">Imaxe de mapa de bits RLE</comment>
+  <comment xml:lang="fr">image matricielle RLE</comment>
+  <comment xml:lang="fi">RLE-bittikarttakuva</comment>
+  <comment xml:lang="eu">RLE bitmap irudia</comment>
+  <comment xml:lang="es">imagen de mapa de los bit RLE</comment>
+  <comment xml:lang="en-GB">RLE bitmap image</comment>
+  <comment xml:lang="de">Lauflängenkodiertes Bitmap-Bild</comment>
+  <comment xml:lang="da">RLE bitmap-billede</comment>
+  <comment xml:lang="ca">imatge de mapa de bits RLE</comment>
+  <comment xml:lang="bg">Изображение — RLE bitmap</comment>
+  <comment xml:lang="be-Cyrl">растравая выява RLE</comment>
+  <comment xml:lang="ar">صورة نقطية RLE</comment>
+  <acronym>RLE</acronym>
+  <expanded-acronym>Run Length Encoded</expanded-acronym>
+  <glob pattern="*.rle"/>
+</mime-type>

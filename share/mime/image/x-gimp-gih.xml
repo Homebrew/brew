@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="image/x-gimp-gih">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>GIMP brush pipe</comment>
+  <comment xml:lang="zh-Hant-TW">GIMP 筆刷導管</comment>
+  <comment xml:lang="zh-Hans-CN">GIMP 管刷</comment>
+  <comment xml:lang="uk">канал пензлів GIMP</comment>
+  <comment xml:lang="tr">GIMP fırça borusu</comment>
+  <comment xml:lang="sv">GIMP-penselrör</comment>
+  <comment xml:lang="si">GIMP බුරුසු පයිප්ප</comment>
+  <comment xml:lang="ru">Анимированная кисть GIMP</comment>
+  <comment xml:lang="pt-BR">Tubo de pincel do GIMP</comment>
+  <comment xml:lang="pl">Potok pędzla programu GIMP</comment>
+  <comment xml:lang="nl">GIMP-kwast-pijp</comment>
+  <comment xml:lang="ko">GIMP 붓 파이프</comment>
+  <comment xml:lang="kk-Cyrl">GIMP бояу жаққыш түтігі</comment>
+  <comment xml:lang="ja">GIMP パイプブラシ</comment>
+  <comment xml:lang="it">Pipe pennello GIMP</comment>
+  <comment xml:lang="is">GIMP-pensilpípa</comment>
+  <comment xml:lang="id">Pipa kuas GIMP</comment>
+  <comment xml:lang="hu">GIMP ecsetcsatorna</comment>
+  <comment xml:lang="hr">Proces GIMP kista</comment>
+  <comment xml:lang="he">צינורית מברשת GIMP</comment>
+  <comment xml:lang="ga">píopa scuaba GIMP</comment>
+  <comment xml:lang="fur">condot pinel GIMP</comment>
+  <comment xml:lang="fr">brosse animée GIMP</comment>
+  <comment xml:lang="fi">GIMP-sivellinputki</comment>
+  <comment xml:lang="eu">GIMP pintzel hodia pipe</comment>
+  <comment xml:lang="es">pincel animado del GIMP</comment>
+  <comment xml:lang="en-GB">GIMP brush pipe</comment>
+  <comment xml:lang="de">Animierter GIMP-Pinsel</comment>
+  <comment xml:lang="da">GIMP-penselrør</comment>
+  <comment xml:lang="cs">zřetězení štětců GIMP</comment>
+  <comment xml:lang="ca">conducte del pinzell de GIMP</comment>
+  <comment xml:lang="bg">Конвейер с четки — GIMP</comment>
+  <comment xml:lang="be-Cyrl">самаробны пэндзаль GIMP</comment>
+  <comment xml:lang="ar">أنبوب فرشاة GIMP</comment>
+  <glob pattern="*.gih"/>
+</mime-type>

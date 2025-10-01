@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-gamecube-rom">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>GameCube disc image</comment>
+  <comment xml:lang="zh-Hant-TW">GameCube 光碟映像檔</comment>
+  <comment xml:lang="zh-Hans-CN">GameCube 光盘映像</comment>
+  <comment xml:lang="uk">образ диска GameCube</comment>
+  <comment xml:lang="tr">GameCube disk görüntüsü</comment>
+  <comment xml:lang="sv">GameCube-skivavbild</comment>
+  <comment xml:lang="sr-Cyrl">одраз диска Гејм Коцке</comment>
+  <comment xml:lang="sq">pamje disku GameCube</comment>
+  <comment xml:lang="sl">Odtis diska GameCube</comment>
+  <comment xml:lang="si">GameCube තැටි රූපය</comment>
+  <comment xml:lang="sk">Obraz disku GameCube</comment>
+  <comment xml:lang="ru">Образ диска GameCube</comment>
+  <comment xml:lang="pt-BR">Imagem de disco GameCube</comment>
+  <comment xml:lang="pt">imagem de disco GameCube</comment>
+  <comment xml:lang="pl">Obraz płyty konsoli GameCube</comment>
+  <comment xml:lang="oc">imatge disc GameCube</comment>
+  <comment xml:lang="nl">GameCube-schijfkopiebestand</comment>
+  <comment xml:lang="ko">게임큐브 디스크 이미지</comment>
+  <comment xml:lang="kk-Cyrl">GameCube диск бейнесі</comment>
+  <comment xml:lang="ja">GameCube ディスクイメージ</comment>
+  <comment xml:lang="it">Immagine disco GameCube</comment>
+  <comment xml:lang="is">GameCube diskmynd</comment>
+  <comment xml:lang="id">Image disk GameCube</comment>
+  <comment xml:lang="ia">Imagine de disco GameCube</comment>
+  <comment xml:lang="hu">GameCube lemezkép</comment>
+  <comment xml:lang="hr">GameCube slika diska</comment>
+  <comment xml:lang="he">דמות כונן GameCube</comment>
+  <comment xml:lang="gl">Imae de disco de GameCube</comment>
+  <comment xml:lang="ga">íomhá diosca GameCube</comment>
+  <comment xml:lang="fur">imagjin disc GameCube</comment>
+  <comment xml:lang="fr">image disque GameCube</comment>
+  <comment xml:lang="fi">GameCube-levykuva</comment>
+  <comment xml:lang="eu">GameCube disko irudia</comment>
+  <comment xml:lang="es">imagen de disco de GameCube</comment>
+  <comment xml:lang="en-GB">GameCube disc image</comment>
+  <comment xml:lang="el">Εικόνα δίσκου GameCube</comment>
+  <comment xml:lang="de">GameCube-Datenträgerabbild</comment>
+  <comment xml:lang="da">GameCube-diskaftryk</comment>
+  <comment xml:lang="cs">obraz disku pro GameCube</comment>
+  <comment xml:lang="ca">imatge de disc de GameCube</comment>
+  <comment xml:lang="bg">Диск — GameCube</comment>
+  <comment xml:lang="be-Cyrl">вобраз дыска GameCube</comment>
+  <comment xml:lang="ar">صورة قرص GameCube</comment>
+  <comment xml:lang="af">GameCube-skyfbeeldlêer</comment>
+  <generic-icon name="application-x-executable"/>
+  <alias type="application/x-gamecube-iso-image"/>
+  <glob pattern="*.iso"/>
+</mime-type>

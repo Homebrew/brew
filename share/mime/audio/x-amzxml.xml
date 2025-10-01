@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="audio/x-amzxml">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>AmazonMP3 download file</comment>
+  <comment xml:lang="zh-Hant-TW">AmazonMP3 下載檔</comment>
+  <comment xml:lang="zh-Hans-CN">AmazonMP3 下载文件</comment>
+  <comment xml:lang="uk">файл завантаження AmazonMP3</comment>
+  <comment xml:lang="tr">AmazonMP3 indirme dosyası</comment>
+  <comment xml:lang="sv">AmazonMP3-hämtningsfil</comment>
+  <comment xml:lang="sr-Cyrl">датотека преузимања АмазонаМП3</comment>
+  <comment xml:lang="sq">kartelë shkarkimi AmazonMP3</comment>
+  <comment xml:lang="sl">Datoteka prenosa AmazonMP3</comment>
+  <comment xml:lang="si">AmazonMP3 බාගත කිරීමේ ගොනුව</comment>
+  <comment xml:lang="sk">Stiahnutý súbor AmazonMP3 </comment>
+  <comment xml:lang="ru">Файл загрузки AmazonMP3</comment>
+  <comment xml:lang="pt-BR">Arquivo de download AmazonMP3</comment>
+  <comment xml:lang="pt">ficheiro transferido AmazonMP3</comment>
+  <comment xml:lang="pl">Pobrany plik AmazonMP3</comment>
+  <comment xml:lang="oc">fichièr telecargat AmazonMP3</comment>
+  <comment xml:lang="nl">AmazonMP3-downloadbestand</comment>
+  <comment xml:lang="lv">AmazonMP3 lejupielādes datne</comment>
+  <comment xml:lang="ko">AmazonMP3 다운로드 파일</comment>
+  <comment xml:lang="kk-Cyrl">AmazonMP3 жүктеме файлы</comment>
+  <comment xml:lang="ka">AmazonMP3 გადმოწერის ფაილი</comment>
+  <comment xml:lang="ja">AmazonMP3 ダウンロードファイル</comment>
+  <comment xml:lang="it">File scaricamento AmazonMP3</comment>
+  <comment xml:lang="is">AmazonMP3 niðurhalsskrá</comment>
+  <comment xml:lang="id">Berkas unduh AmazonMP3</comment>
+  <comment xml:lang="ia">File de discargamento AmazonMP3</comment>
+  <comment xml:lang="hu">AmazonMP3 letöltésfájl</comment>
+  <comment xml:lang="hr">AmazonMP3 preuzeta datoteka</comment>
+  <comment xml:lang="he">קובץ הורדת AmazonMP3</comment>
+  <comment xml:lang="gl">Ficheiro de descarga de AmazonMP3</comment>
+  <comment xml:lang="ga">comhad íoslódáilte AmazonMP3</comment>
+  <comment xml:lang="fur">file discjariât AmazonMP3</comment>
+  <comment xml:lang="fr">fichier téléchargé AmazonMP3</comment>
+  <comment xml:lang="fi">AmazonMP3-lataustiedosto</comment>
+  <comment xml:lang="eu">AmazonMP3 deskarga fitxategia</comment>
+  <comment xml:lang="es">archivo de descarga de AmazonMP3</comment>
+  <comment xml:lang="en-GB">AmazonMP3 download file</comment>
+  <comment xml:lang="el">Αρχείο λήψης AmazonMP3</comment>
+  <comment xml:lang="de">Amazon MP3-Download-Datei</comment>
+  <comment xml:lang="da">AmazonMP3-downloadfil</comment>
+  <comment xml:lang="cs">soubor stahování AmazonMP3</comment>
+  <comment xml:lang="ca">fitxer baixat d'AmazonMP3</comment>
+  <comment xml:lang="bg">Файл за изтегляне — AmazonMP3</comment>
+  <comment xml:lang="be-Cyrl">файл спампоўвання AmazonMP3</comment>
+  <comment xml:lang="ast">Ficheru de descarga AmazonMP3</comment>
+  <comment xml:lang="ar">ملف تنزيل AmazonMP3 </comment>
+  <comment xml:lang="af">AmazonMP3-aflaailêer</comment>
+  <glob pattern="*.amz"/>
+</mime-type>

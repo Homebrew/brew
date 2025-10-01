@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-blender">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Blender scene</comment>
+  <comment xml:lang="zh-Hant-TW">Blender 場景</comment>
+  <comment xml:lang="zh-Hans-CN">Blender 场景</comment>
+  <comment xml:lang="vi">Cảnh Blender</comment>
+  <comment xml:lang="uk">сцена Blender</comment>
+  <comment xml:lang="tr">Blender sahnesi</comment>
+  <comment xml:lang="sv">Blender-scen</comment>
+  <comment xml:lang="sr-Cyrl">Блендерова сцена</comment>
+  <comment xml:lang="sq">skenë Blender</comment>
+  <comment xml:lang="sl">Datoteka scene Blender</comment>
+  <comment xml:lang="si">බ්ලෙන්ඩර් දර්ශනය</comment>
+  <comment xml:lang="sk">Scéna Blender</comment>
+  <comment xml:lang="ru">Сцена Blender</comment>
+  <comment xml:lang="ro">Scenă Blender</comment>
+  <comment xml:lang="pt-BR">Cena do Blender</comment>
+  <comment xml:lang="pt">cenário Blender</comment>
+  <comment xml:lang="pl">Scena programu Blender</comment>
+  <comment xml:lang="oc">scèna Blender</comment>
+  <comment xml:lang="nn">Blender-scene</comment>
+  <comment xml:lang="nl">Blender-scène</comment>
+  <comment xml:lang="nb">Blender-scene</comment>
+  <comment xml:lang="ms">Babak Blender</comment>
+  <comment xml:lang="lv">Blender aina</comment>
+  <comment xml:lang="lt">Blender scena</comment>
+  <comment xml:lang="ko">Blender 장면</comment>
+  <comment xml:lang="kk-Cyrl">Blender сахнасы</comment>
+  <comment xml:lang="ka">Blender-ის სცენა</comment>
+  <comment xml:lang="ja">Blender シーン</comment>
+  <comment xml:lang="it">Scena Blender</comment>
+  <comment xml:lang="is">Blender sviðsmynd</comment>
+  <comment xml:lang="id">Scene Blender</comment>
+  <comment xml:lang="ia">Scena Blender</comment>
+  <comment xml:lang="hu">Blender-jelenet</comment>
+  <comment xml:lang="hr">Blender scena</comment>
+  <comment xml:lang="he">סצנת Blender</comment>
+  <comment xml:lang="gl">escena de Blender</comment>
+  <comment xml:lang="ga">radharc Blender</comment>
+  <comment xml:lang="fur">sene Blender</comment>
+  <comment xml:lang="fr">scène Blender</comment>
+  <comment xml:lang="fo">Blender leikmynd</comment>
+  <comment xml:lang="fi">Blender-näkymä</comment>
+  <comment xml:lang="eu">Blender-eko fitxategia</comment>
+  <comment xml:lang="es">escena de Blender</comment>
+  <comment xml:lang="eo">Blender-sceno</comment>
+  <comment xml:lang="en-GB">Blender scene</comment>
+  <comment xml:lang="el">Σκηνή Blender</comment>
+  <comment xml:lang="de">Blender-Szene</comment>
+  <comment xml:lang="da">Blenderscene</comment>
+  <comment xml:lang="cs">scéna Blender</comment>
+  <comment xml:lang="ca">escena de Blender</comment>
+  <comment xml:lang="bg">Сцена — Blender</comment>
+  <comment xml:lang="be-Latn">Scena Blender</comment>
+  <comment xml:lang="be-Cyrl">сцэна Blender</comment>
+  <comment xml:lang="ast">Escena de Blender</comment>
+  <comment xml:lang="ar">مشهد بلندر</comment>
+  <comment xml:lang="af">Blender-toneel</comment>
+  <generic-icon name="image-x-generic"/>
+  <glob pattern="*.blend"/>
+  <glob pattern="*.BLEND"/>
+  <glob pattern="*.blender"/>
+</mime-type>

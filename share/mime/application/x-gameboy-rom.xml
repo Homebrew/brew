@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-gameboy-rom">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Game Boy ROM</comment>
+  <comment xml:lang="zh-Hant-TW">Game Boy ROM</comment>
+  <comment xml:lang="zh-Hans-CN">Game Boy ROM</comment>
+  <comment xml:lang="vi">ROM Game Boy</comment>
+  <comment xml:lang="uk">ППП Game Boy</comment>
+  <comment xml:lang="tr">Game Boy ROM</comment>
+  <comment xml:lang="sv">Game Boy-rom</comment>
+  <comment xml:lang="sr-Cyrl">Гејм Бој РОМ</comment>
+  <comment xml:lang="sq">ROM Game Boy</comment>
+  <comment xml:lang="sl">Bralni pomnilnik Game Boy</comment>
+  <comment xml:lang="si">Game Boy ROM</comment>
+  <comment xml:lang="sk">ROM pre Game Boy</comment>
+  <comment xml:lang="ru">Game Boy ROM</comment>
+  <comment xml:lang="ro">ROM Game Boy</comment>
+  <comment xml:lang="pt-BR">ROM de Game Boy</comment>
+  <comment xml:lang="pt">ROM Game Boy</comment>
+  <comment xml:lang="pl">Plik ROM konsoli Game Boy</comment>
+  <comment xml:lang="oc">ROM Game Boy</comment>
+  <comment xml:lang="nn">Game Boy-ROM</comment>
+  <comment xml:lang="nl">Game Boy-ROM</comment>
+  <comment xml:lang="nb">Game Boy-ROM</comment>
+  <comment xml:lang="ms">ROM Game Boy</comment>
+  <comment xml:lang="lv">Game Boy ROM</comment>
+  <comment xml:lang="lt">Game Boy ROM</comment>
+  <comment xml:lang="ko">게임보이 롬</comment>
+  <comment xml:lang="kk-Cyrl">Game Boy ROM</comment>
+  <comment xml:lang="ka">Game Boy-ის ROM</comment>
+  <comment xml:lang="ja">ゲームボーイ ROM</comment>
+  <comment xml:lang="it">ROM Game Boy</comment>
+  <comment xml:lang="is">Game Boy ROM</comment>
+  <comment xml:lang="id">Memori baca-saja Game Boy</comment>
+  <comment xml:lang="ia">ROM de Game Boy</comment>
+  <comment xml:lang="hu">Game Boy ROM</comment>
+  <comment xml:lang="hr">Game Boy ROM</comment>
+  <comment xml:lang="he">ROM של Game Boy</comment>
+  <comment xml:lang="gl">ROM de Game Boy</comment>
+  <comment xml:lang="ga">ROM Game Boy</comment>
+  <comment xml:lang="fur">ROM Game Boy</comment>
+  <comment xml:lang="fr">ROM Game Boy</comment>
+  <comment xml:lang="fo">Game Boy ROM</comment>
+  <comment xml:lang="fi">Game Boy -ROM</comment>
+  <comment xml:lang="eu">Game Boy-eko ROMa</comment>
+  <comment xml:lang="es">ROM de Game Boy</comment>
+  <comment xml:lang="eo">NLM de Game Boy</comment>
+  <comment xml:lang="en-GB">Game Boy ROM</comment>
+  <comment xml:lang="el">Game Boy ROM</comment>
+  <comment xml:lang="de">Game-Boy-ROM</comment>
+  <comment xml:lang="da">Game Boy-ROM</comment>
+  <comment xml:lang="cs">ROM pro Game Boy</comment>
+  <comment xml:lang="ca">ROM de Game Boy</comment>
+  <comment xml:lang="bg">ROM — Game Boy</comment>
+  <comment xml:lang="be-Latn">Game Boy ROM</comment>
+  <comment xml:lang="be-Cyrl">Game Boy ROM</comment>
+  <comment xml:lang="ar">Game Boy ROM</comment>
+  <generic-icon name="application-x-executable"/>
+  <glob pattern="*.gb"/>
+  <glob pattern="*.sgb"/>
+</mime-type>

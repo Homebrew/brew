@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-archive">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>AR archive</comment>
+  <comment xml:lang="zh-Hant-TW">AR 封存檔</comment>
+  <comment xml:lang="zh-Hans-CN">AR 归档文件</comment>
+  <comment xml:lang="vi">Kho nén AR</comment>
+  <comment xml:lang="uk">архів AR</comment>
+  <comment xml:lang="tr">AR arşivi</comment>
+  <comment xml:lang="sv">AR-arkiv</comment>
+  <comment xml:lang="sr-Cyrl">АР архива</comment>
+  <comment xml:lang="sq">arkiv AR</comment>
+  <comment xml:lang="sl">Datoteka arhiva AR</comment>
+  <comment xml:lang="si">AR ලේඛනාගාරය</comment>
+  <comment xml:lang="sk">Archív AR</comment>
+  <comment xml:lang="ru">Архив AR</comment>
+  <comment xml:lang="ro">Arhivă AR</comment>
+  <comment xml:lang="pt-BR">Pacote AR</comment>
+  <comment xml:lang="pt">arquivo AR</comment>
+  <comment xml:lang="pl">Archiwum AR</comment>
+  <comment xml:lang="oc">archiu AR</comment>
+  <comment xml:lang="nn">AR-arkiv</comment>
+  <comment xml:lang="nl">AR-archief</comment>
+  <comment xml:lang="nb">AR-arkiv</comment>
+  <comment xml:lang="ms">Arkib AR</comment>
+  <comment xml:lang="lv">AR arhīvs</comment>
+  <comment xml:lang="lt">AR archyvas</comment>
+  <comment xml:lang="ko">AR 묶음 파일</comment>
+  <comment xml:lang="kk-Cyrl">AR архиві</comment>
+  <comment xml:lang="ka">AR არქივი</comment>
+  <comment xml:lang="ja">AR アーカイブ</comment>
+  <comment xml:lang="it">Archivio AR</comment>
+  <comment xml:lang="is">AR safnskrá</comment>
+  <comment xml:lang="id">Arsip AR</comment>
+  <comment xml:lang="ia">Archivo AR</comment>
+  <comment xml:lang="hu">AR-archívum</comment>
+  <comment xml:lang="hr">AR arhiva</comment>
+  <comment xml:lang="he">ארכיון AR</comment>
+  <comment xml:lang="gl">arquivo AR</comment>
+  <comment xml:lang="ga">cartlann AR</comment>
+  <comment xml:lang="fur">archivi AR</comment>
+  <comment xml:lang="fr">archive AR</comment>
+  <comment xml:lang="fo">AR skjalasavn</comment>
+  <comment xml:lang="fi">AR-arkisto</comment>
+  <comment xml:lang="eu">AR artxiboa</comment>
+  <comment xml:lang="es">archivador AR</comment>
+  <comment xml:lang="eo">AR-arkivo</comment>
+  <comment xml:lang="en-GB">AR archive</comment>
+  <comment xml:lang="el">Συμπιεσμένο αρχείο AR</comment>
+  <comment xml:lang="de">AR-Archiv</comment>
+  <comment xml:lang="da">AR-arkiv</comment>
+  <comment xml:lang="cs">archiv AR</comment>
+  <comment xml:lang="ca">arxiu AR</comment>
+  <comment xml:lang="bg">Архив — AR</comment>
+  <comment xml:lang="be-Latn">Archiŭ AR</comment>
+  <comment xml:lang="be-Cyrl">архіў AR</comment>
+  <comment xml:lang="ar">أرشيف AR</comment>
+  <comment xml:lang="af">AR-argief</comment>
+  <generic-icon name="package-x-generic"/>
+  <glob pattern="*.a"/>
+  <glob pattern="*.ar"/>
+</mime-type>

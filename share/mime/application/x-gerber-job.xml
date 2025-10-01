@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-gerber-job">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Gerber job file</comment>
+  <comment xml:lang="uk">файл завдання Gerber</comment>
+  <comment xml:lang="sv">Gerber-jobbfil</comment>
+  <comment xml:lang="ru">Файл работ Gerber</comment>
+  <comment xml:lang="pl">Plik zadania Gerber</comment>
+  <comment xml:lang="it">File lavoro Gerber</comment>
+  <comment xml:lang="es">archivo de tarea de Gerber</comment>
+  <comment xml:lang="de">Gerber-Aufgabendatei</comment>
+  <comment xml:lang="be-Cyrl">працоўны файл Gerber</comment>
+  <sub-class-of type="application/json"/>
+  <glob pattern="*.gbrjob"/>
+  <generic-icon name="text-x-generic"/>
+</mime-type>

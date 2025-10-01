@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="text/x-literate-haskell">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>LHS source code</comment>
+  <comment xml:lang="zh-Hant-TW">LHS 源碼</comment>
+  <comment xml:lang="zh-Hans-CN">LHS 源代码</comment>
+  <comment xml:lang="vi">Mã nguồn LHS</comment>
+  <comment xml:lang="uk">початковий код LHS</comment>
+  <comment xml:lang="tr">LHS kaynak kodu</comment>
+  <comment xml:lang="sv">LHS-källkod</comment>
+  <comment xml:lang="sr-Cyrl">ЛХС изворни ко̂д</comment>
+  <comment xml:lang="sq">kod burim LHS</comment>
+  <comment xml:lang="sl">Datoteka izvorne kode LHS</comment>
+  <comment xml:lang="si">LHS මූල කේතය</comment>
+  <comment xml:lang="sk">Zdrojový kód LHS</comment>
+  <comment xml:lang="ru">Исходный код LHS</comment>
+  <comment xml:lang="ro">Cod sursă LHS</comment>
+  <comment xml:lang="pt-BR">Código-fonte LHS</comment>
+  <comment xml:lang="pt">código origem LHS</comment>
+  <comment xml:lang="pl">Kod źródłowy LHS</comment>
+  <comment xml:lang="oc">còde font LHS</comment>
+  <comment xml:lang="nn">LHS-kjeldekode</comment>
+  <comment xml:lang="nl">LHS-broncode</comment>
+  <comment xml:lang="nb">LHS-kildekode</comment>
+  <comment xml:lang="lv">LHS pirmkods</comment>
+  <comment xml:lang="lt">LHS pradinis kodas</comment>
+  <comment xml:lang="ko">LHS 소스 코드</comment>
+  <comment xml:lang="kk-Cyrl">LHS бастапқы коды</comment>
+  <comment xml:lang="ja">LHS ソースコード</comment>
+  <comment xml:lang="it">Codice sorgente LHS</comment>
+  <comment xml:lang="is">LHS frumkóði</comment>
+  <comment xml:lang="id">Kode sumber LHS</comment>
+  <comment xml:lang="ia">Codice-fonte LHS</comment>
+  <comment xml:lang="hu">LHS forráskód</comment>
+  <comment xml:lang="hr">LHS izvorni kôd</comment>
+  <comment xml:lang="he">קוד מקור של LHS</comment>
+  <comment xml:lang="gl">código fonte en LHS</comment>
+  <comment xml:lang="ga">cód foinseach LHS</comment>
+  <comment xml:lang="fur">codiç sorzint LHS</comment>
+  <comment xml:lang="fr">code source LHS</comment>
+  <comment xml:lang="fo">LHS keld</comment>
+  <comment xml:lang="fi">LHS-lähdekoodi</comment>
+  <comment xml:lang="eu">LHS iturburu-kodea</comment>
+  <comment xml:lang="es">código fuente en LHS</comment>
+  <comment xml:lang="eo">LHS-fontkodo</comment>
+  <comment xml:lang="en-GB">LHS source code</comment>
+  <comment xml:lang="el">Πηγαίος κώδικας LHS</comment>
+  <comment xml:lang="de">LHS-Quelltext</comment>
+  <comment xml:lang="da">LHS-kildekode</comment>
+  <comment xml:lang="cs">zdrojový kód LHS</comment>
+  <comment xml:lang="ca">codi font en LHS</comment>
+  <comment xml:lang="bg">Изходен код — LHS</comment>
+  <comment xml:lang="be-Latn">Kryničny kod LHS</comment>
+  <comment xml:lang="be-Cyrl">зыходны код LHS</comment>
+  <comment xml:lang="ar">شفرة مصدر LHS</comment>
+  <comment xml:lang="af">LHS-bronkode</comment>
+  <acronym>LHS</acronym>
+  <expanded-acronym>Literate Haskell source code</expanded-acronym>
+  <sub-class-of type="text/plain"/>
+  <glob pattern="*.lhs"/>
+</mime-type>

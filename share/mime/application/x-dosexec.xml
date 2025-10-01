@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-dosexec">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>DOS executable</comment>
+  <acronym>DOS</acronym>
+  <expanded-acronym>Disk Operating System</expanded-acronym>
+  <sub-class-of type="application/x-msdownload"/>
+  <generic-icon name="application-x-executable"/>
+  <glob pattern="*.exe" weight="30"/>
+</mime-type>

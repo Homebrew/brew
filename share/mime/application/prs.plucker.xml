@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/prs.plucker">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Plucker document</comment>
+  <comment xml:lang="zh-Hant-TW">Plucker 文件</comment>
+  <comment xml:lang="zh-Hans-CN">Plucker 文档</comment>
+  <comment xml:lang="vi">Tài liệu Plucker</comment>
+  <comment xml:lang="uk">документ Plucker</comment>
+  <comment xml:lang="tr">Plucker belgesi</comment>
+  <comment xml:lang="sv">Plucker-dokument</comment>
+  <comment xml:lang="sr-Cyrl">Плакер документ</comment>
+  <comment xml:lang="sq">dokument Plucker</comment>
+  <comment xml:lang="sl">Dokument Plucker</comment>
+  <comment xml:lang="si">ප්ලකර් ලේඛනය</comment>
+  <comment xml:lang="sk">Dokument Plucker</comment>
+  <comment xml:lang="ru">Документ Plucker</comment>
+  <comment xml:lang="ro">Document Plucker</comment>
+  <comment xml:lang="pt-BR">Documento do Plucker</comment>
+  <comment xml:lang="pt">documento Plucker</comment>
+  <comment xml:lang="pl">Dokument Plucker</comment>
+  <comment xml:lang="oc">document Plucker</comment>
+  <comment xml:lang="nn">Plucker-dokument</comment>
+  <comment xml:lang="nl">Plucker-document</comment>
+  <comment xml:lang="nb">Plucker-dokument</comment>
+  <comment xml:lang="lv">Plucker dokuments</comment>
+  <comment xml:lang="lt">Plucker dokumentas</comment>
+  <comment xml:lang="ko">Plucker 문서</comment>
+  <comment xml:lang="kk-Cyrl">Plucker құжаты</comment>
+  <comment xml:lang="ka">Plucker-ის დოკუმენტი</comment>
+  <comment xml:lang="ja">Plucker ドキュメント</comment>
+  <comment xml:lang="it">Documento Plucker</comment>
+  <comment xml:lang="is">Plucker skjal</comment>
+  <comment xml:lang="id">Dokumen Plucker</comment>
+  <comment xml:lang="ia">Documento Plucker</comment>
+  <comment xml:lang="hu">Plucker dokumentum</comment>
+  <comment xml:lang="hr">Plucker dokument</comment>
+  <comment xml:lang="he">מסמך של Plucker</comment>
+  <comment xml:lang="gl">documento de Plucker</comment>
+  <comment xml:lang="ga">cáipéis Plucker</comment>
+  <comment xml:lang="fur">document Plucker</comment>
+  <comment xml:lang="fr">document Plucker</comment>
+  <comment xml:lang="fo">Plucker skjal</comment>
+  <comment xml:lang="fi">Plucker-asiakirja</comment>
+  <comment xml:lang="eu">Plucker dokumentua</comment>
+  <comment xml:lang="es">documento de Plucker</comment>
+  <comment xml:lang="eo">Plucker-dokumento</comment>
+  <comment xml:lang="en-GB">Plucker document</comment>
+  <comment xml:lang="el">Έγγραφο Plucker</comment>
+  <comment xml:lang="de">Plucker-Dokument</comment>
+  <comment xml:lang="da">Pluckerdokument</comment>
+  <comment xml:lang="cs">dokument Plucker</comment>
+  <comment xml:lang="ca">document Plucker</comment>
+  <comment xml:lang="bg">Документ — Plucker</comment>
+  <comment xml:lang="be-Latn">Dakument Plucker</comment>
+  <comment xml:lang="be-Cyrl">дакумент Plucker</comment>
+  <comment xml:lang="ast">Documentu Plucker</comment>
+  <comment xml:lang="ar">مستند Plucker</comment>
+  <comment xml:lang="af">Plucker-dokument</comment>
+  <generic-icon name="x-office-document"/>
+</mime-type>

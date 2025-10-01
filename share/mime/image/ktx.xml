@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="image/ktx">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Khronos texture image</comment>
+  <comment xml:lang="zh-Hant-TW">Khronos 紋理影像</comment>
+  <comment xml:lang="zh-Hans-CN">Khronos 纹理图像</comment>
+  <comment xml:lang="uk">зображення текстури Khronos</comment>
+  <comment xml:lang="tr">Khronos kaplama görüntüsü</comment>
+  <comment xml:lang="sv">Khronos-texturbild</comment>
+  <comment xml:lang="sr-Cyrl">слика Кронос текстуре</comment>
+  <comment xml:lang="sl">Slika teksture Khronos</comment>
+  <comment xml:lang="si">ක්‍රොනොස් වයනය රූපය</comment>
+  <comment xml:lang="sk">Obrázok textúry Khronos</comment>
+  <comment xml:lang="ru">Изображение текстуры Khronos</comment>
+  <comment xml:lang="pt-BR">Imagem de textura do Khronos</comment>
+  <comment xml:lang="pl">Obraz tekstury Khronos</comment>
+  <comment xml:lang="nl">Khronos-textuurafbeelding</comment>
+  <comment xml:lang="ko">크로노스 텍스처 파일</comment>
+  <comment xml:lang="kk-Cyrl">Khronos текстура суреті</comment>
+  <comment xml:lang="ja">Khronos テクスチャ画像</comment>
+  <comment xml:lang="it">Immagine texture Khronos</comment>
+  <comment xml:lang="is">Khronos efnisáferðarmynd</comment>
+  <comment xml:lang="id">Citra tekstur Khronos</comment>
+  <comment xml:lang="hu">Khronos textúra kép</comment>
+  <comment xml:lang="hr">Khronos tekstura slika</comment>
+  <comment xml:lang="he">תמונת מרקם של Khronos</comment>
+  <comment xml:lang="gl">Imaxe de textura Khronos</comment>
+  <comment xml:lang="ga">íomhá uigeachta Khronos</comment>
+  <comment xml:lang="fur">imagjin di struture/texture Khronos</comment>
+  <comment xml:lang="fr">image de texture Khronos</comment>
+  <comment xml:lang="fi">Khronos-tekstuurikuva</comment>
+  <comment xml:lang="eu">Khronos testura irudia</comment>
+  <comment xml:lang="es">imagen de textura de Khronos</comment>
+  <comment xml:lang="en-GB">Khronos texture image</comment>
+  <comment xml:lang="de">Khronos-Texturbild</comment>
+  <comment xml:lang="da">Khronos-strukturbillede</comment>
+  <comment xml:lang="cs">obrázek s texturou Khronos</comment>
+  <comment xml:lang="ca">imatge de textura de Khronos</comment>
+  <comment xml:lang="bg">Изображение — текстура за Khronos</comment>
+  <comment xml:lang="be-Cyrl">выява тэкстуры Khronos</comment>
+  <comment xml:lang="ar">صور نسيج Khronos</comment>
+  <comment xml:lang="af">Khronos-tekstuurbeeld</comment>
+  <glob pattern="*.ktx"/>
+</mime-type>

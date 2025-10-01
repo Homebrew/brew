@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="text/x-basic">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>BASIC program</comment>
+  <comment xml:lang="uk">програма BASIC</comment>
+  <comment xml:lang="sv">BASIC-program</comment>
+  <comment xml:lang="ru">Программа BASIC</comment>
+  <comment xml:lang="pl">Program BASIC</comment>
+  <comment xml:lang="es">programa en BASIC</comment>
+  <comment xml:lang="de">BASIC-Programm</comment>
+  <sub-class-of type="text/plain"/>
+  <generic-icon name="text-x-script"/>
+  <glob pattern="*.bas"/>
+</mime-type>

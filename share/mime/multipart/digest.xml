@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="multipart/digest">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Message digest</comment>
+  <comment xml:lang="uk">контрольна сума повідомлення</comment>
+  <comment xml:lang="sv">Meddelandesamling</comment>
+  <comment xml:lang="ru">Дайджест сообщения</comment>
+  <comment xml:lang="pl">Wiadomość przetwarzania</comment>
+  <comment xml:lang="it">Digest di messaggi</comment>
+  <comment xml:lang="es">resumen de mensajes</comment>
+  <comment xml:lang="de">Nachrichtensammlung</comment>
+  <comment xml:lang="be-Cyrl">дайджэст паведамлення</comment>
+</mime-type>

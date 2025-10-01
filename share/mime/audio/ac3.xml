@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="audio/ac3">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Dolby Digital audio</comment>
+  <comment xml:lang="zh-Hant-TW">杜比數位音訊</comment>
+  <comment xml:lang="zh-Hans-CN">杜比数字音频</comment>
+  <comment xml:lang="vi">Âm thanh Dolby Digital</comment>
+  <comment xml:lang="uk">звук Dolby Digital</comment>
+  <comment xml:lang="tr">Dolby Digital sesi</comment>
+  <comment xml:lang="sv">Dolby Digital-ljud</comment>
+  <comment xml:lang="sr-Cyrl">Дигитални Долби звук</comment>
+  <comment xml:lang="sq">audio Dolby Digital</comment>
+  <comment xml:lang="sl">Zvočna datoteka Dolby Digital</comment>
+  <comment xml:lang="si">ඩොල්බි ඩිජිටල් ඕඩියෝ</comment>
+  <comment xml:lang="sk">Zvuk Dolby Digital</comment>
+  <comment xml:lang="ru">Аудио Dolby Digital</comment>
+  <comment xml:lang="ro">Audio Dolby Digital</comment>
+  <comment xml:lang="pt-BR">Áudio Dolby Digital</comment>
+  <comment xml:lang="pt">áudio Dolby Digital</comment>
+  <comment xml:lang="pl">Plik dźwiękowy Dolby Digital</comment>
+  <comment xml:lang="oc">àudio Dolby Digital</comment>
+  <comment xml:lang="nn">Dolby Digital lyd</comment>
+  <comment xml:lang="nl">Dolby Digital-audio</comment>
+  <comment xml:lang="nb">Dolby digital lyd</comment>
+  <comment xml:lang="ms">Audio Digital Dolby</comment>
+  <comment xml:lang="lv">Dolby Digital audio</comment>
+  <comment xml:lang="lt">Dolby Digital garso įrašas</comment>
+  <comment xml:lang="ko">돌비 디지털 오디오</comment>
+  <comment xml:lang="kk-Cyrl">Dolby Digital аудиосы</comment>
+  <comment xml:lang="ka">Dolby Digital-ის აუდიო</comment>
+  <comment xml:lang="ja">ドルビーデジタルオーディオ</comment>
+  <comment xml:lang="it">Audio Dolby Digital</comment>
+  <comment xml:lang="is">Dolby Digital hljóðskrá</comment>
+  <comment xml:lang="id">Audio Dolby Digital</comment>
+  <comment xml:lang="ia">Audio Dolby Digital</comment>
+  <comment xml:lang="hu">Dolby Digital hang</comment>
+  <comment xml:lang="hr">Dolby Digital zvučni zapis</comment>
+  <comment xml:lang="he">שמע Dolby Digital</comment>
+  <comment xml:lang="gl">son Dolby Digital</comment>
+  <comment xml:lang="ga">fuaim Dolby Digital</comment>
+  <comment xml:lang="fur">audio Dolby Digital</comment>
+  <comment xml:lang="fr">audio Dolby Digital</comment>
+  <comment xml:lang="fo">Dolby Digital ljóður</comment>
+  <comment xml:lang="fi">Dolby Digital -ääni</comment>
+  <comment xml:lang="eu">Dolby audio digitala</comment>
+  <comment xml:lang="es">sonido Dolby Digital</comment>
+  <comment xml:lang="eo">Sondosiero en Dolby Digital</comment>
+  <comment xml:lang="en-GB">Dolby Digital audio</comment>
+  <comment xml:lang="el">Ψηφιακός Ήχος Dolby</comment>
+  <comment xml:lang="de">Dolby-Digital-Audio</comment>
+  <comment xml:lang="da">Dolby Ditital-lyd</comment>
+  <comment xml:lang="cy">Sain Dolby Digital</comment>
+  <comment xml:lang="cs">zvuk Dolby Digital</comment>
+  <comment xml:lang="ca">àudio Dolby Digital</comment>
+  <comment xml:lang="bg">Аудио — Dolby Digital</comment>
+  <comment xml:lang="be-Latn">Aŭdyjo Dolby Digital</comment>
+  <comment xml:lang="be-Cyrl">аўдыя Dolby Digital</comment>
+  <comment xml:lang="az">Dolby Digital audio</comment>
+  <comment xml:lang="ar">صوت Dolby Digital</comment>
+  <comment xml:lang="af">Dolby Digital-oudio</comment>
+  <glob pattern="*.ac3"/>
+</mime-type>

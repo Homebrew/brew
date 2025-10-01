@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-qed-disk">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>QEMU QED disk image</comment>
+  <comment xml:lang="zh-Hant-TW">QEMU QED 磁碟映像檔</comment>
+  <comment xml:lang="zh-Hans-CN">QEMU QED 磁盘映像</comment>
+  <comment xml:lang="uk">образ диска QED QEMU</comment>
+  <comment xml:lang="tr">QEMU QED disk görüntüsü</comment>
+  <comment xml:lang="sv">QEMU QED-diskavbildning</comment>
+  <comment xml:lang="sl">Slika diska QEMU QED</comment>
+  <comment xml:lang="si">QEMU QED තැටි රූපය</comment>
+  <comment xml:lang="ru">Образ диска QEMU QED</comment>
+  <comment xml:lang="pt-BR">Imagem de disco QEMU QED</comment>
+  <comment xml:lang="pl">Obraz dysku QED QEMU</comment>
+  <comment xml:lang="nl">QEMU QED-schijfkopiebestand</comment>
+  <comment xml:lang="ko">QEMU QED 디스크 이미지</comment>
+  <comment xml:lang="kk-Cyrl">QEMU QED диск бейнесі</comment>
+  <comment xml:lang="ja">QEMU QED ディスクイメージ</comment>
+  <comment xml:lang="it">Immagine disco QEMU QED</comment>
+  <comment xml:lang="hr">QEMU QED slika diska</comment>
+  <comment xml:lang="fi">QEMU QED-levykuva</comment>
+  <comment xml:lang="eu">QEMU QED disko-irudia</comment>
+  <comment xml:lang="es">imagen de disco QED de QEMU</comment>
+  <comment xml:lang="en-GB">QEMU QED disk image</comment>
+  <comment xml:lang="de">QEMU-QED-Datenträgerabbild</comment>
+  <comment xml:lang="be-Cyrl">вобраз дыска QEMU QED</comment>
+  <comment xml:lang="ar">صورة قرص QEMU QED</comment>
+  <acronym>QED</acronym>
+  <expanded-acronym>QEMU Enhanced Disk</expanded-acronym>
+  <glob pattern="*.qed"/>
+</mime-type>

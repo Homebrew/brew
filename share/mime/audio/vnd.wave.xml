@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="audio/vnd.wave">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>WAV audio</comment>
+  <comment xml:lang="zh-Hant-TW">WAV 音訊</comment>
+  <comment xml:lang="zh-Hans-CN">WAV 音频</comment>
+  <comment xml:lang="vi">Âm thanh WAV</comment>
+  <comment xml:lang="uk">звук WAV</comment>
+  <comment xml:lang="tr">WAV sesi</comment>
+  <comment xml:lang="sv">WAV-ljud</comment>
+  <comment xml:lang="sr-Cyrl">ВАВ звук</comment>
+  <comment xml:lang="sq">audio WAV</comment>
+  <comment xml:lang="sl">Zvočna datoteka WAV</comment>
+  <comment xml:lang="si">WAV ශ්රව්ය</comment>
+  <comment xml:lang="sk">Zvuk WAV</comment>
+  <comment xml:lang="ru">Аудио WAV</comment>
+  <comment xml:lang="ro">Audio WAV</comment>
+  <comment xml:lang="pt-BR">Áudio WAV</comment>
+  <comment xml:lang="pt">áudio WAV</comment>
+  <comment xml:lang="pl">Plik dźwiękowy WAV</comment>
+  <comment xml:lang="oc">àudio WAV</comment>
+  <comment xml:lang="nn">WAV-lyd</comment>
+  <comment xml:lang="nl">WAV-audio</comment>
+  <comment xml:lang="nb">WAV-lyd</comment>
+  <comment xml:lang="ms">Audio VOC</comment>
+  <comment xml:lang="lv">WAV audio</comment>
+  <comment xml:lang="lt">WAV garso įrašas</comment>
+  <comment xml:lang="ko">WAV 오디오</comment>
+  <comment xml:lang="kk-Cyrl">WAV аудиосы</comment>
+  <comment xml:lang="ja">WAV オーディオ</comment>
+  <comment xml:lang="it">Audio WAV</comment>
+  <comment xml:lang="is">WAV hljóðskrá</comment>
+  <comment xml:lang="id">Audio WAV</comment>
+  <comment xml:lang="ia">Audio WAV</comment>
+  <comment xml:lang="hu">WAV hang</comment>
+  <comment xml:lang="hr">WAV zvučni zapis</comment>
+  <comment xml:lang="he">שמע WAV</comment>
+  <comment xml:lang="gl">son WAV</comment>
+  <comment xml:lang="ga">fuaim WAV</comment>
+  <comment xml:lang="fur">audio WAV</comment>
+  <comment xml:lang="fr">audio WAV</comment>
+  <comment xml:lang="fo">WAV ljóður</comment>
+  <comment xml:lang="fi">WAV-ääni</comment>
+  <comment xml:lang="eu">WAV audioa</comment>
+  <comment xml:lang="es">sonido WAV</comment>
+  <comment xml:lang="eo">WAV-sonkodo</comment>
+  <comment xml:lang="en-GB">WAV audio</comment>
+  <comment xml:lang="el">Ήχος WAV</comment>
+  <comment xml:lang="de">WAV-Audio</comment>
+  <comment xml:lang="da">WAV-lyd</comment>
+  <comment xml:lang="cy">Sain WAV</comment>
+  <comment xml:lang="cs">zvuk WAV</comment>
+  <comment xml:lang="ca">àudio WAV</comment>
+  <comment xml:lang="bg">Аудио — WAV</comment>
+  <comment xml:lang="be-Latn">Aŭdyjo WAV</comment>
+  <comment xml:lang="be-Cyrl">аўдыя WAV</comment>
+  <comment xml:lang="az">WAV audio faylı</comment>
+  <comment xml:lang="ar">صوت WAV</comment>
+  <comment xml:lang="af">WAV-oudio</comment>
+  <alias type="audio/wav"/>
+  <alias type="audio/x-wav"/>
+  <sub-class-of type="application/x-riff"/>
+  <glob pattern="*.wav"/>
+</mime-type>

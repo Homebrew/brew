@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-kword">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>KWord document</comment>
+  <comment xml:lang="zh-Hant-TW">KWord 文件</comment>
+  <comment xml:lang="zh-Hans-CN">KWord 文档</comment>
+  <comment xml:lang="vi">Tài liệu KWord</comment>
+  <comment xml:lang="uk">документ KWord</comment>
+  <comment xml:lang="tr">KWord belgesi</comment>
+  <comment xml:lang="sv">KWord-dokument</comment>
+  <comment xml:lang="sr-Cyrl">документ К-речи</comment>
+  <comment xml:lang="sq">dokument KWord</comment>
+  <comment xml:lang="sl">Dokument KWord</comment>
+  <comment xml:lang="si">KWord ලේඛනය</comment>
+  <comment xml:lang="sk">Dokument KWord</comment>
+  <comment xml:lang="ru">Документ KWord</comment>
+  <comment xml:lang="ro">Document KWord</comment>
+  <comment xml:lang="pt-BR">Documento do KWord</comment>
+  <comment xml:lang="pt">documento KWord</comment>
+  <comment xml:lang="pl">Dokument KWord</comment>
+  <comment xml:lang="oc">document KWord</comment>
+  <comment xml:lang="nn">KWord-dokument</comment>
+  <comment xml:lang="nl">KWord-document</comment>
+  <comment xml:lang="nb">KWord-dokument</comment>
+  <comment xml:lang="ms">Dokumen KWord</comment>
+  <comment xml:lang="lv">KWord dokuments</comment>
+  <comment xml:lang="lt">KWord dokumentas</comment>
+  <comment xml:lang="ko">KWord 문서</comment>
+  <comment xml:lang="kk-Cyrl">KWord құжаты</comment>
+  <comment xml:lang="ja">KWord ドキュメント</comment>
+  <comment xml:lang="it">Documento KWord</comment>
+  <comment xml:lang="is">KWord skjal</comment>
+  <comment xml:lang="id">Dokumen KWord</comment>
+  <comment xml:lang="ia">Documento KWord</comment>
+  <comment xml:lang="hu">KWord-dokumentum</comment>
+  <comment xml:lang="hr">KWord dokument</comment>
+  <comment xml:lang="he">מסמך KWord</comment>
+  <comment xml:lang="gl">documento de KWord</comment>
+  <comment xml:lang="ga">cáipéis KWord</comment>
+  <comment xml:lang="fur">document KWord</comment>
+  <comment xml:lang="fr">document KWord</comment>
+  <comment xml:lang="fo">KWord skjal</comment>
+  <comment xml:lang="fi">KWord-asiakirja</comment>
+  <comment xml:lang="eu">KWord dokumentua</comment>
+  <comment xml:lang="es">documento de KWord</comment>
+  <comment xml:lang="eo">KWord-dokumento</comment>
+  <comment xml:lang="en-GB">KWord document</comment>
+  <comment xml:lang="el">Έγγραφο KWord</comment>
+  <comment xml:lang="de">KWord-Dokument</comment>
+  <comment xml:lang="da">KWord-dokument</comment>
+  <comment xml:lang="cy">Dogfen KWord</comment>
+  <comment xml:lang="cs">dokument KWord</comment>
+  <comment xml:lang="ca">document KWord</comment>
+  <comment xml:lang="bg">Документ — KWord</comment>
+  <comment xml:lang="be-Latn">Dakument KWord</comment>
+  <comment xml:lang="be-Cyrl">дакумент KWord</comment>
+  <comment xml:lang="ast">Documentu de Kword</comment>
+  <comment xml:lang="ar">مستند KWord</comment>
+  <comment xml:lang="af">KWord-dokument</comment>
+  <generic-icon name="x-office-document"/>
+  <glob pattern="*.kwd"/>
+  <glob pattern="*.kwt"/>
+</mime-type>

@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="image/x-niff">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>NIFF image</comment>
+  <comment xml:lang="zh-Hant-TW">NIFF 影像</comment>
+  <comment xml:lang="zh-Hans-CN">NIFF 图像</comment>
+  <comment xml:lang="vi">Ảnh NIFF</comment>
+  <comment xml:lang="uk">зображення NIFF</comment>
+  <comment xml:lang="tr">NIFF görüntüsü</comment>
+  <comment xml:lang="sv">NIFF-bild</comment>
+  <comment xml:lang="sr-Cyrl">НИФФ слика</comment>
+  <comment xml:lang="sq">figurë NIFF</comment>
+  <comment xml:lang="sl">Slikovna datoteka NIFF</comment>
+  <comment xml:lang="si">NIFF රූපය</comment>
+  <comment xml:lang="sk">Obrázok NIFF</comment>
+  <comment xml:lang="ru">Изображение NIFF</comment>
+  <comment xml:lang="ro">Imagine NIF</comment>
+  <comment xml:lang="pt-BR">Imagem NIFF</comment>
+  <comment xml:lang="pt">imagem NIFF</comment>
+  <comment xml:lang="pl">Obraz NIFF</comment>
+  <comment xml:lang="oc">imatge NIFF</comment>
+  <comment xml:lang="nn">NIFF-bilete</comment>
+  <comment xml:lang="nl">NIFF-afbeelding</comment>
+  <comment xml:lang="nb">NIFF-bilde</comment>
+  <comment xml:lang="lv">NIFF attēls</comment>
+  <comment xml:lang="lt">NIFF paveikslėlis</comment>
+  <comment xml:lang="ko">NIFF 그림</comment>
+  <comment xml:lang="kk-Cyrl">NIFF суреті</comment>
+  <comment xml:lang="ja">NIFF 画像</comment>
+  <comment xml:lang="it">Immagine NIFF</comment>
+  <comment xml:lang="is">NIFF mynd</comment>
+  <comment xml:lang="id">Citra NIFF</comment>
+  <comment xml:lang="ia">Imagine NIFF</comment>
+  <comment xml:lang="hu">NIFF kép</comment>
+  <comment xml:lang="hr">NIFF slika</comment>
+  <comment xml:lang="he">תמונת NIFF</comment>
+  <comment xml:lang="gl">imaxe NIFF</comment>
+  <comment xml:lang="ga">íomhá NIFF</comment>
+  <comment xml:lang="fur">imagjin NIFF</comment>
+  <comment xml:lang="fr">image NIFF</comment>
+  <comment xml:lang="fo">NIFF mynd</comment>
+  <comment xml:lang="fi">NIFF-kuva</comment>
+  <comment xml:lang="eu">NIFF irudia</comment>
+  <comment xml:lang="es">imagen NIFF</comment>
+  <comment xml:lang="eo">NIFF-bildo</comment>
+  <comment xml:lang="en-GB">NIFF image</comment>
+  <comment xml:lang="el">Εικόνα NIFF</comment>
+  <comment xml:lang="de">NIFF-Bild</comment>
+  <comment xml:lang="da">NIFF-billede</comment>
+  <comment xml:lang="cs">obrázek NIFF</comment>
+  <comment xml:lang="ca">imatge NIFF</comment>
+  <comment xml:lang="bg">Изображение — NIFF</comment>
+  <comment xml:lang="be-Latn">Vyjava NIFF</comment>
+  <comment xml:lang="be-Cyrl">выява NIFF</comment>
+  <comment xml:lang="ar">صورة NIFF</comment>
+  <comment xml:lang="af">NIFF-beeld</comment>
+  <acronym>NIFF</acronym>
+  <expanded-acronym>Navy Image File Format</expanded-acronym>
+</mime-type>

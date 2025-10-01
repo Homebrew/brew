@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="text/x-uil">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>X-Motif UIL table</comment>
+  <comment xml:lang="zh-Hant-TW">X-Motif UIL 表格</comment>
+  <comment xml:lang="zh-Hans-CN">X-Motif UIL 表</comment>
+  <comment xml:lang="vi">Bảng UIL X-Motif</comment>
+  <comment xml:lang="uk">таблиця X-Motif UIL</comment>
+  <comment xml:lang="tr">X-Motif UIL tablosu</comment>
+  <comment xml:lang="sv">X-Motif UIL-tabell</comment>
+  <comment xml:lang="sr-Cyrl">Икс-Мотиф УИЛ табела</comment>
+  <comment xml:lang="sq">tabelë X-Motif UIL</comment>
+  <comment xml:lang="sl">Preglednica X-Motif UIL</comment>
+  <comment xml:lang="si">X-Motif UIL වගුව</comment>
+  <comment xml:lang="sk">Tabuľka X-Motif UIL</comment>
+  <comment xml:lang="ru">Таблица UIL X-Motif</comment>
+  <comment xml:lang="ro">Tabel X-Motif UIL</comment>
+  <comment xml:lang="pt-BR">Tabela UIL do X-Motif</comment>
+  <comment xml:lang="pt">tabela UIL do X-Motif</comment>
+  <comment xml:lang="pl">Tabela UIL X-Motif</comment>
+  <comment xml:lang="oc">taula X-Motif UIL</comment>
+  <comment xml:lang="nn">X-Motif UIL-tabell</comment>
+  <comment xml:lang="nl">X-Motif UIL-tabel</comment>
+  <comment xml:lang="nb">X-Motif UIL-tabell</comment>
+  <comment xml:lang="ms">Jadual X-Motif UIL</comment>
+  <comment xml:lang="lv">X-Motif UIL tabula</comment>
+  <comment xml:lang="lt">X-Motif UIL lentelė</comment>
+  <comment xml:lang="ko">X-Motif UIL 테이블</comment>
+  <comment xml:lang="kk-Cyrl">X-Motif UIL кестесі</comment>
+  <comment xml:lang="ja">X-Motif UIL 表</comment>
+  <comment xml:lang="it">Tabella UIL X-Motif</comment>
+  <comment xml:lang="is">X-Motif UIL tafla</comment>
+  <comment xml:lang="id">Tabel X-Motif UIL</comment>
+  <comment xml:lang="ia">Tabella X-Motif UIL</comment>
+  <comment xml:lang="hu">X-Motif UIL-táblázat</comment>
+  <comment xml:lang="hr">X-Motif UIL tablica</comment>
+  <comment xml:lang="he">טבלה של X-Motif UIL</comment>
+  <comment xml:lang="gl">Táboa de X-Motif UIL</comment>
+  <comment xml:lang="ga">tábla X-Motif UIL</comment>
+  <comment xml:lang="fur">tabele X-Motif UIL</comment>
+  <comment xml:lang="fr">table X-Motif UIL</comment>
+  <comment xml:lang="fo">X-Motif UIL talva</comment>
+  <comment xml:lang="fi">X-Motif UIL -taulukko</comment>
+  <comment xml:lang="eu">X-Motif UIL taula</comment>
+  <comment xml:lang="es">tabla de X-Motif UIL</comment>
+  <comment xml:lang="en-GB">X-Motif UIL table</comment>
+  <comment xml:lang="el">Πίνακας X-Motif UIL</comment>
+  <comment xml:lang="de">X-Motif-UIL-Tabelle</comment>
+  <comment xml:lang="da">X-Motif UIL-tabel</comment>
+  <comment xml:lang="cs">tabulka X-Motif UIL</comment>
+  <comment xml:lang="ca">taula UIL de X-Motif</comment>
+  <comment xml:lang="bg">Таблица — X-Motif UIL</comment>
+  <comment xml:lang="be-Latn">Tablica X-Motif UIL</comment>
+  <comment xml:lang="be-Cyrl">табліца X-Motif UIL</comment>
+  <comment xml:lang="ar">جدول X-Motif UIL</comment>
+  <comment xml:lang="af">X-Motif UIL-tabel</comment>
+  <sub-class-of type="text/plain"/>
+  <glob pattern="*.uil"/>
+</mime-type>

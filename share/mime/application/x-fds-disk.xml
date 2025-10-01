@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-fds-disk">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Nintendo FDS disk image</comment>
+  <comment xml:lang="zh-Hant-TW">Nintendo FDS 磁碟映像檔</comment>
+  <comment xml:lang="zh-Hans-CN">任天堂 FDS 磁盘映像</comment>
+  <comment xml:lang="uk">образ диска FDS Nintendo</comment>
+  <comment xml:lang="tr">Nintendo FDS disk görüntüsü</comment>
+  <comment xml:lang="sv">Nintendo FDS-diskavbild</comment>
+  <comment xml:lang="sr-Cyrl">Нинтендо ФДС слика диска</comment>
+  <comment xml:lang="sq">pamje disku Nintendo FDS</comment>
+  <comment xml:lang="sl">Slika diska Nintendo FDS</comment>
+  <comment xml:lang="si">Nintendo FDS තැටි රූපය</comment>
+  <comment xml:lang="sk">Obraz disku Nintendo FDS</comment>
+  <comment xml:lang="ru">Образ диска Nintendo FDS</comment>
+  <comment xml:lang="pt-BR">Imagem de disco Nintendo FDS</comment>
+  <comment xml:lang="pl">Obraz dysku Nintendo FDS</comment>
+  <comment xml:lang="nl">Nintendo FDS-schijfkopiebestand</comment>
+  <comment xml:lang="ko">닌텐도 FDS 디스크 이미지</comment>
+  <comment xml:lang="kk-Cyrl">Nintendo FDS диск бейнесі</comment>
+  <comment xml:lang="ja">Nintendo FDS ディスクイメージ</comment>
+  <comment xml:lang="it">Immagine disco Nintendo FDS</comment>
+  <comment xml:lang="is">Nintendo FDS diskmynd</comment>
+  <comment xml:lang="id">Image disk Nintendo FDS</comment>
+  <comment xml:lang="hu">Nintendo FDS lemezkép</comment>
+  <comment xml:lang="hr">Nintendo FDS slika diska</comment>
+  <comment xml:lang="he">תמונת כונן Nintendo FDS</comment>
+  <comment xml:lang="ga">íomhá diosca Nintendo FDS</comment>
+  <comment xml:lang="fur">imagjin disc Nintendo FDS</comment>
+  <comment xml:lang="fr">image disque Nintendo FDS</comment>
+  <comment xml:lang="fi">Nintendo FDS -levykuva</comment>
+  <comment xml:lang="eu">Nintendo FDS disko irudia</comment>
+  <comment xml:lang="es">imagen de disco FDS de Nintendo</comment>
+  <comment xml:lang="en-GB">Nintendo FDS disk image</comment>
+  <comment xml:lang="de">Nintendo-FDS-Datenträgerabbild</comment>
+  <comment xml:lang="da">Nintendo FDS-diskaftryk</comment>
+  <comment xml:lang="cs">obraz disku pro Nintendo FDS</comment>
+  <comment xml:lang="ca">imatge de disc Nintendo FDS</comment>
+  <comment xml:lang="bg">Диск — Nintendo FDS</comment>
+  <comment xml:lang="be-Cyrl">вобраз дыска Nintendo FDS</comment>
+  <comment xml:lang="ar">صورة قرص نينتندو اف دي اس</comment>
+  <comment xml:lang="af">Nintendo FDS-skyfbeeldlêer</comment>
+  <acronym>FDS</acronym>
+  <expanded-acronym>Famicom Disk System</expanded-acronym>
+  <glob pattern="*.fds"/>
+</mime-type>

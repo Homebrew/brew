@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-wii-rom">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Wii disc image</comment>
+  <comment xml:lang="zh-Hant-TW">Wii 光碟映像檔</comment>
+  <comment xml:lang="zh-Hans-CN">Wii 光盘映像</comment>
+  <comment xml:lang="uk">образ диска Wii</comment>
+  <comment xml:lang="tr">Wii disk görüntüsü</comment>
+  <comment xml:lang="sv">Wii-skivavbild</comment>
+  <comment xml:lang="sr-Cyrl">одраз диска Вии-ја</comment>
+  <comment xml:lang="sq">pamje disku Wii</comment>
+  <comment xml:lang="sl">Odtis diska Wii</comment>
+  <comment xml:lang="si">Wii තැටි රූපය</comment>
+  <comment xml:lang="sk">Obraz disku Wii</comment>
+  <comment xml:lang="ru">Образ диска Wii</comment>
+  <comment xml:lang="pt-BR">Imagem de disco Wii</comment>
+  <comment xml:lang="pt">imagem de disco Wii</comment>
+  <comment xml:lang="pl">Obraz płyty konsoli Wii</comment>
+  <comment xml:lang="oc">imatge disc Wii</comment>
+  <comment xml:lang="nl">Wii-schijfkopiebestand</comment>
+  <comment xml:lang="ko">Wii 디스크 이미지</comment>
+  <comment xml:lang="kk-Cyrl">Wii диск бейнесі</comment>
+  <comment xml:lang="ja">Wii ディスクイメージ</comment>
+  <comment xml:lang="it">Immagine disco Wii</comment>
+  <comment xml:lang="is">Wii diskmynd</comment>
+  <comment xml:lang="id">Image disk Wii</comment>
+  <comment xml:lang="ia">Imagine de disco Wii</comment>
+  <comment xml:lang="hu">Wii lemezkép</comment>
+  <comment xml:lang="hr">Wii slika diska</comment>
+  <comment xml:lang="he">דמות כונן Wii</comment>
+  <comment xml:lang="gl">Imaxe de disco de Wii</comment>
+  <comment xml:lang="ga">íomhá diosca Wii</comment>
+  <comment xml:lang="fur">imagjin disc Wii</comment>
+  <comment xml:lang="fr">image disque Wii</comment>
+  <comment xml:lang="fi">Wii-levykuva</comment>
+  <comment xml:lang="eu">Wii disko irudia</comment>
+  <comment xml:lang="es">imagen de disco de Wii</comment>
+  <comment xml:lang="en-GB">Wii disc image</comment>
+  <comment xml:lang="el">Εικόνα δίσκου Wii</comment>
+  <comment xml:lang="de">Wii-Datenträgerabbild</comment>
+  <comment xml:lang="da">Wii-diskaftryk</comment>
+  <comment xml:lang="cs">obraz disku pro Wii</comment>
+  <comment xml:lang="ca">imatge de disc de Wii</comment>
+  <comment xml:lang="bg">Диск — Wii</comment>
+  <comment xml:lang="be-Cyrl">вобраз дыска Wii</comment>
+  <comment xml:lang="ast">Imaxe de discu de Wii</comment>
+  <comment xml:lang="ar">صورة قرص وي</comment>
+  <comment xml:lang="af">Wii-skyfbeeldlêer</comment>
+  <alias type="application/x-wii-iso-image"/>
+  <alias type="application/x-wbfs"/>
+  <alias type="application/x-wia"/>
+  <generic-icon name="application-x-executable"/>
+  <glob pattern="*.iso"/>
+</mime-type>

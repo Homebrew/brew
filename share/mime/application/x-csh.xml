@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-csh">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>C shell script</comment>
+  <comment xml:lang="zh-Hant-TW">C shell 指令稿</comment>
+  <comment xml:lang="zh-Hans-CN">C shell 脚本</comment>
+  <comment xml:lang="vi">Văn lệnh trình bao C</comment>
+  <comment xml:lang="uk">скрипт оболонки C</comment>
+  <comment xml:lang="tr">C kabuk betiği</comment>
+  <comment xml:lang="sv">Skalskript (csh)</comment>
+  <comment xml:lang="sr-Cyrl">скрипта Ц шкољке</comment>
+  <comment xml:lang="sq">programth C shell</comment>
+  <comment xml:lang="sl">Skriptna datoteka lupine C</comment>
+  <comment xml:lang="si">C shell පිටපත</comment>
+  <comment xml:lang="sk">Skript shellu C</comment>
+  <comment xml:lang="ru">Сценарий C shell</comment>
+  <comment xml:lang="ro">Script C shell</comment>
+  <comment xml:lang="pt-BR">Script de shell C</comment>
+  <comment xml:lang="pt">script de terminal C</comment>
+  <comment xml:lang="pl">Skrypt powłoki C</comment>
+  <comment xml:lang="oc">escript C shell</comment>
+  <comment xml:lang="nn">C-skalskript</comment>
+  <comment xml:lang="nl">C-shellscript</comment>
+  <comment xml:lang="nb">C-skallskript</comment>
+  <comment xml:lang="ms">Skrip shell C</comment>
+  <comment xml:lang="lv">C čaulas skripts</comment>
+  <comment xml:lang="lt">C shell scenarijus</comment>
+  <comment xml:lang="ko">C 셸 스크립트</comment>
+  <comment xml:lang="kk-Cyrl">C shell сценарийі</comment>
+  <comment xml:lang="ja">C シェルスクリプト</comment>
+  <comment xml:lang="it">Script C shell</comment>
+  <comment xml:lang="is">C skjeljarskrifta</comment>
+  <comment xml:lang="id">Skrip shell C</comment>
+  <comment xml:lang="ia">Script C-shell</comment>
+  <comment xml:lang="hu">C héj-parancsfájl</comment>
+  <comment xml:lang="hr">C skripta ljuske</comment>
+  <comment xml:lang="he">תסריט מעטפת C</comment>
+  <comment xml:lang="gl">script de C shell</comment>
+  <comment xml:lang="ga">script bhlaoisce C</comment>
+  <comment xml:lang="fur">script di shell in C</comment>
+  <comment xml:lang="fr">script C shell</comment>
+  <comment xml:lang="fo">C skel boðrøð</comment>
+  <comment xml:lang="fi">C shell -komentotiedosto</comment>
+  <comment xml:lang="eu">C shell script-a</comment>
+  <comment xml:lang="es">secuencia de órdenes de consola en C</comment>
+  <comment xml:lang="eo">skripto de C-ŝelo</comment>
+  <comment xml:lang="en-GB">C shell script</comment>
+  <comment xml:lang="el">Δέσμη ενεργειών κελύφους C</comment>
+  <comment xml:lang="de">C-Shell-Skript</comment>
+  <comment xml:lang="da">C-skalprogram</comment>
+  <comment xml:lang="cy">Sgript plisgyn C</comment>
+  <comment xml:lang="cs">skript shellu C</comment>
+  <comment xml:lang="ca">script C shell</comment>
+  <comment xml:lang="bg">Скрипт — обвивка C</comment>
+  <comment xml:lang="be-Latn">Skrypt abałonki C</comment>
+  <comment xml:lang="be-Cyrl">скрыпт C shell</comment>
+  <comment xml:lang="az">C qabıq skripti</comment>
+  <comment xml:lang="ar">سكربت شِل سي</comment>
+  <comment xml:lang="af">C shell-skrip</comment>
+  <sub-class-of type="application/x-shellscript"/>
+  <sub-class-of type="text/plain"/>
+  <generic-icon name="text-x-script"/>
+  <glob pattern="*.csh"/>
+</mime-type>

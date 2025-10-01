@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-lyx">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>LyX document</comment>
+  <comment xml:lang="zh-Hant-TW">LyX 文件</comment>
+  <comment xml:lang="zh-Hans-CN">LyX 文档</comment>
+  <comment xml:lang="vi">Tài liệu LyX</comment>
+  <comment xml:lang="uk">документ LyX</comment>
+  <comment xml:lang="tr">LyX belgesi</comment>
+  <comment xml:lang="sv">LyX-dokument</comment>
+  <comment xml:lang="sr-Cyrl">ЛиКс документ</comment>
+  <comment xml:lang="sq">dokument LyX</comment>
+  <comment xml:lang="sl">Dokument LyX</comment>
+  <comment xml:lang="si">LyX ලේඛනය</comment>
+  <comment xml:lang="sk">Dokument LyX</comment>
+  <comment xml:lang="ru">Документ LyX</comment>
+  <comment xml:lang="ro">Document LyX</comment>
+  <comment xml:lang="pt-BR">Documento LyX</comment>
+  <comment xml:lang="pt">documento LyX</comment>
+  <comment xml:lang="pl">Dokument LyX</comment>
+  <comment xml:lang="oc">document LyX</comment>
+  <comment xml:lang="nn">LyX-dokument</comment>
+  <comment xml:lang="nl">LyX-document</comment>
+  <comment xml:lang="nb">LyX-dokument</comment>
+  <comment xml:lang="ms">Dokumen LyX</comment>
+  <comment xml:lang="lv">LyX dokuments</comment>
+  <comment xml:lang="lt">LyX dokumentas</comment>
+  <comment xml:lang="ko">LyX 문서</comment>
+  <comment xml:lang="kk-Cyrl">LyX құжаты</comment>
+  <comment xml:lang="ja">LyX ドキュメント</comment>
+  <comment xml:lang="it">Documento LyX</comment>
+  <comment xml:lang="is">LyX skjal</comment>
+  <comment xml:lang="id">Dokumen LyX</comment>
+  <comment xml:lang="ia">Documento LyX</comment>
+  <comment xml:lang="hu">LyX-dokumentum</comment>
+  <comment xml:lang="hr">LyX dokument</comment>
+  <comment xml:lang="he">מסמך Lyx</comment>
+  <comment xml:lang="gl">documento LyX</comment>
+  <comment xml:lang="ga">cáipéis LyX</comment>
+  <comment xml:lang="fur">document LyX</comment>
+  <comment xml:lang="fr">document LyX</comment>
+  <comment xml:lang="fo">LyX skjal</comment>
+  <comment xml:lang="fi">LyX-asiakirja</comment>
+  <comment xml:lang="eu">LyX dokumentua</comment>
+  <comment xml:lang="es">documento de LyX</comment>
+  <comment xml:lang="eo">LyX-dokumento</comment>
+  <comment xml:lang="en-GB">LyX document</comment>
+  <comment xml:lang="el">Έγγραφο LyX</comment>
+  <comment xml:lang="de">LyX-Dokument</comment>
+  <comment xml:lang="da">LyX-dokument</comment>
+  <comment xml:lang="cs">dokument LyX</comment>
+  <comment xml:lang="ca">document LyX</comment>
+  <comment xml:lang="bg">Документ — LyX</comment>
+  <comment xml:lang="be-Latn">Dakument LyX</comment>
+  <comment xml:lang="be-Cyrl">дакумент LyX</comment>
+  <comment xml:lang="ast">Documentu de Lyx</comment>
+  <comment xml:lang="ar">مستند LyX</comment>
+  <comment xml:lang="af">LyX-dokument</comment>
+  <sub-class-of type="text/plain"/>
+  <generic-icon name="x-office-document"/>
+  <glob pattern="*.lyx"/>
+  <alias type="text/x-lyx"/>
+</mime-type>

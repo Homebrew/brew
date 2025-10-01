@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="audio/x-xm">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>FastTracker II audio</comment>
+  <comment xml:lang="zh-Hant-TW">FastTracker II 音訊</comment>
+  <comment xml:lang="zh-Hans-CN">FastTracker II 音频</comment>
+  <comment xml:lang="vi">Âm thanh FastTracker II</comment>
+  <comment xml:lang="uk">звук FastTracker II</comment>
+  <comment xml:lang="tr">FastTracker II sesi</comment>
+  <comment xml:lang="sv">FastTracker II-ljud</comment>
+  <comment xml:lang="sr-Cyrl">звук Фаст Тракера ИИ</comment>
+  <comment xml:lang="sq">audio FastTracker II</comment>
+  <comment xml:lang="sl">Zvočna datoteka FastTracker II</comment>
+  <comment xml:lang="si">FastTracker II ශ්‍රව්‍ය</comment>
+  <comment xml:lang="sk">Zvuk FastTracker II</comment>
+  <comment xml:lang="ru">Аудио FastTracker II</comment>
+  <comment xml:lang="ro">Audio FastTracker II</comment>
+  <comment xml:lang="pt-BR">Áudio FastTracker II</comment>
+  <comment xml:lang="pt">áudio FastTracker II</comment>
+  <comment xml:lang="pl">Plik dźwiękowy FastTracker II</comment>
+  <comment xml:lang="oc">àudio FastTracker II</comment>
+  <comment xml:lang="nn">FastTracker II lyd</comment>
+  <comment xml:lang="nl">FastTracker II-audio</comment>
+  <comment xml:lang="nb">FastTracker II-lyd</comment>
+  <comment xml:lang="ms">Audio FastTracker II</comment>
+  <comment xml:lang="lv">FastTracker II audio</comment>
+  <comment xml:lang="lt">FastTracker II garso įrašas</comment>
+  <comment xml:lang="ko">FastTracker II 오디오</comment>
+  <comment xml:lang="kk-Cyrl">FastTracker II аудиосы</comment>
+  <comment xml:lang="ka">FastTracker II-ის აუდიო</comment>
+  <comment xml:lang="ja">FastTracker II オーディオ</comment>
+  <comment xml:lang="it">Audio FastTracker II</comment>
+  <comment xml:lang="is">FastTracker II hljóðskrá</comment>
+  <comment xml:lang="id">Audio FastTracker II</comment>
+  <comment xml:lang="ia">Audio FastTracker II</comment>
+  <comment xml:lang="hu">FastTracker II hang</comment>
+  <comment xml:lang="hr">FastTracker II zvučni zapis</comment>
+  <comment xml:lang="he">שמע FastTracker II</comment>
+  <comment xml:lang="gl">son de FastTracker II</comment>
+  <comment xml:lang="ga">fuaim FastTracker II</comment>
+  <comment xml:lang="fur">audio FastTracker II</comment>
+  <comment xml:lang="fr">audio FastTracker II</comment>
+  <comment xml:lang="fo">FastTracker II ljóður</comment>
+  <comment xml:lang="fi">FastTracker II -ääni</comment>
+  <comment xml:lang="eu">FastTracker II.ren audioa</comment>
+  <comment xml:lang="es">sonido FastTracker II</comment>
+  <comment xml:lang="eo">Sondosiero de FastTracker II</comment>
+  <comment xml:lang="en-GB">FastTracker II audio</comment>
+  <comment xml:lang="el">Ήχος FastTracker II</comment>
+  <comment xml:lang="de">FastTracker-II-Audio</comment>
+  <comment xml:lang="da">FastTracker II-lyd</comment>
+  <comment xml:lang="cy">Sain FastTracker II</comment>
+  <comment xml:lang="cs">zvuk FastTracker II</comment>
+  <comment xml:lang="ca">àudio de FastTracker II</comment>
+  <comment xml:lang="bg">Аудио — FastTracker II</comment>
+  <comment xml:lang="be-Latn">Aŭdyjo FastTracker II</comment>
+  <comment xml:lang="be-Cyrl">аўдыя FastTracker II</comment>
+  <comment xml:lang="az">FastTracker II audio faylı</comment>
+  <comment xml:lang="ar">صوت FastTracker II</comment>
+  <glob pattern="*.xm"/>
+</mime-type>

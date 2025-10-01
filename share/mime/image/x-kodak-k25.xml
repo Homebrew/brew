@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="image/x-kodak-k25">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Kodak K25 raw image</comment>
+  <comment xml:lang="zh-Hant-TW">Kodak K25 原始影像</comment>
+  <comment xml:lang="zh-Hans-CN">柯达 K25 原始图像</comment>
+  <comment xml:lang="vi">Ảnh thô Kodak K25</comment>
+  <comment xml:lang="uk">цифровий негатив K25 Kodak</comment>
+  <comment xml:lang="tr">Kodak K25 ham görüntüsü</comment>
+  <comment xml:lang="sv">Kodak K25-råbild</comment>
+  <comment xml:lang="sr-Cyrl">Кодак К25 сирова слика</comment>
+  <comment xml:lang="sq">figurë Kodak K25 e papërpunuar</comment>
+  <comment xml:lang="sl">Surova slikovna datoteka Kodak K25</comment>
+  <comment xml:lang="si">Kodak K25 අමු රූපය</comment>
+  <comment xml:lang="sk">Surový obrázok Kodak K25</comment>
+  <comment xml:lang="ru">Необработанное изображение Kodak K25</comment>
+  <comment xml:lang="ro">Imagine brută Kodak K25</comment>
+  <comment xml:lang="pt-BR">Imagem bruta K25 da Kodak</comment>
+  <comment xml:lang="pt">imagem em bruto Kodak K25</comment>
+  <comment xml:lang="pl">Surowy obraz K25 Kodak</comment>
+  <comment xml:lang="oc">imatge brut K25 Kodak</comment>
+  <comment xml:lang="nn">Kodak K25 råbilete</comment>
+  <comment xml:lang="nl">onbewerkt Kodak K25-beeld</comment>
+  <comment xml:lang="nb">Kodak K25 raw-bilde</comment>
+  <comment xml:lang="lv">Kodak K25 jēlattēls</comment>
+  <comment xml:lang="lt">Kodak K25 neapdorotas paveikslėlis</comment>
+  <comment xml:lang="ko">코닥 K25 RAW 사진</comment>
+  <comment xml:lang="kk-Cyrl">Kodak K25 өңделмеген суреті</comment>
+  <comment xml:lang="ja">Kodak K25 raw 画像</comment>
+  <comment xml:lang="it">Immagine raw Kodak K25</comment>
+  <comment xml:lang="is">Kodak K25 hrámynd</comment>
+  <comment xml:lang="id">Citra mentah Kodak K25</comment>
+  <comment xml:lang="ia">Imagine brute K25 de Kodak</comment>
+  <comment xml:lang="hu">Kodak K25 nyers kép</comment>
+  <comment xml:lang="hr">Kodak K25 osnovna slika</comment>
+  <comment xml:lang="he">תמונה גולמית של Kodak K25</comment>
+  <comment xml:lang="gl">imaxe en bruto de Kodad K25</comment>
+  <comment xml:lang="ga">amhíomhá Kodak K25</comment>
+  <comment xml:lang="fur">imagjin grese Kodak K25</comment>
+  <comment xml:lang="fr">image brute K25 Kodak</comment>
+  <comment xml:lang="fo">Kodak K25 rámynd</comment>
+  <comment xml:lang="fi">Kodak-K25-raakakuva</comment>
+  <comment xml:lang="eu">Kodak K25 raw image</comment>
+  <comment xml:lang="es">imagen en bruto K25 de Kodak</comment>
+  <comment xml:lang="en-GB">Kodak K25 raw image</comment>
+  <comment xml:lang="el">Ανεπεξέργαστη εικόνα Kodak K25</comment>
+  <comment xml:lang="de">Kodak-K25-Rohbild</comment>
+  <comment xml:lang="da">Kodak K25 raw-billede</comment>
+  <comment xml:lang="cs">surový obrázek Kodak K25</comment>
+  <comment xml:lang="ca">imatge en cru de Kodak K25</comment>
+  <comment xml:lang="bg">Изображение — Kodak K25 raw</comment>
+  <comment xml:lang="be-Latn">Suvoraja vyjava Kodak K25</comment>
+  <comment xml:lang="be-Cyrl">неапрацаваная выява Kodak K25</comment>
+  <comment xml:lang="ar">صورة Kodak K25 خامة</comment>
+  <comment xml:lang="af">Kodak K25 rou beeld</comment>
+  <acronym>K25</acronym>
+  <expanded-acronym>Kodak DC25</expanded-acronym>
+  <sub-class-of type="image/x-dcraw"/>
+  <sub-class-of type="image/tiff"/>
+  <glob pattern="*.k25"/>
+</mime-type>

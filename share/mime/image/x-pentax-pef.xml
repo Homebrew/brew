@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="image/x-pentax-pef">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Pentax PEF raw image</comment>
+  <comment xml:lang="zh-Hant-TW">Pentax PEF 原始影像</comment>
+  <comment xml:lang="zh-Hans-CN">宾得 PEF 原始图像</comment>
+  <comment xml:lang="vi">Ảnh thô Pentax PEF</comment>
+  <comment xml:lang="uk">цифровий негатив PEF Pentax</comment>
+  <comment xml:lang="tr">Pentax PEF ham görüntüsü</comment>
+  <comment xml:lang="sv">Pentax PEF-råbild</comment>
+  <comment xml:lang="sr-Cyrl">Пентакс ПЕФ сирова слика</comment>
+  <comment xml:lang="sq">figurë Pentax PEF e papërpunuar</comment>
+  <comment xml:lang="sl">Surova slikovna datoteka Pentax PEF</comment>
+  <comment xml:lang="si">Pentax PEF අමු රූපය</comment>
+  <comment xml:lang="sk">Surový obrázok Pentax PEF</comment>
+  <comment xml:lang="ru">Необработанное изображение Pentax PEF</comment>
+  <comment xml:lang="ro">Imagine brută Pentax PEF</comment>
+  <comment xml:lang="pt-BR">Imagem bruta PEF da Pentax</comment>
+  <comment xml:lang="pt">imagem em bruto Pentax PEF</comment>
+  <comment xml:lang="pl">Surowy obraz Pentax PEF</comment>
+  <comment xml:lang="oc">imatge brut PEF Pentax</comment>
+  <comment xml:lang="nn">Pentax PEF råbilete</comment>
+  <comment xml:lang="nl">onbewerkt Pentax PEF-beeld</comment>
+  <comment xml:lang="nb">Pentax PEF raw-bilde</comment>
+  <comment xml:lang="lv">Pentax PEF jēlattēls</comment>
+  <comment xml:lang="lt">Pentax PEF neapdorotas paveikslėlis</comment>
+  <comment xml:lang="ko">펜탁스 PEF RAW 사진</comment>
+  <comment xml:lang="kk-Cyrl">Pentax PEF өңделмеген суреті</comment>
+  <comment xml:lang="ja">Pentax PEF raw 画像</comment>
+  <comment xml:lang="it">Immagine raw Pentax PEF</comment>
+  <comment xml:lang="is">Pentax PEF hrámynd</comment>
+  <comment xml:lang="id">Citra mentah Pentax PEF</comment>
+  <comment xml:lang="ia">Imagine brute Pentax PEF</comment>
+  <comment xml:lang="hu">Pentax PEF nyers kép</comment>
+  <comment xml:lang="hr">Pentax PEF osnovna slika</comment>
+  <comment xml:lang="he">תמונה גולמית של Pentax PEF</comment>
+  <comment xml:lang="gl">imaxe en bruto PEF de Pentax</comment>
+  <comment xml:lang="ga">amhíomhá Pentax PEF</comment>
+  <comment xml:lang="fur">imagjin grese Pentax PEF</comment>
+  <comment xml:lang="fr">image brute PEF Pentax</comment>
+  <comment xml:lang="fo">Pentax PEF rámynd</comment>
+  <comment xml:lang="fi">Pentax-PEF-raakakuva</comment>
+  <comment xml:lang="eu">Pentax PEF irudi gordina</comment>
+  <comment xml:lang="es">imagen en bruto PEF de Pentax</comment>
+  <comment xml:lang="en-GB">Pentax PEF raw image</comment>
+  <comment xml:lang="el">Ανεπεξέργαστη εικόνα Pentax PEF</comment>
+  <comment xml:lang="de">Pentax-PEF-Rohbild</comment>
+  <comment xml:lang="da">Pentax PEF raw-billede</comment>
+  <comment xml:lang="cs">surový obrázek Pentax PEF</comment>
+  <comment xml:lang="ca">imatge en cru de Pentax PEF</comment>
+  <comment xml:lang="bg">Изображение — Pentax PEF raw</comment>
+  <comment xml:lang="be-Latn">Suvoraja vyjava Pentax PEF</comment>
+  <comment xml:lang="be-Cyrl">неапрацаваная выява Pentax PEF</comment>
+  <comment xml:lang="ar">صورة Pentax PEF خامة</comment>
+  <comment xml:lang="af">Pentax PEF rou beeld</comment>
+  <acronym>PEF</acronym>
+  <expanded-acronym>Pentax Electronic Format</expanded-acronym>
+  <sub-class-of type="image/x-dcraw"/>
+  <sub-class-of type="image/tiff"/>
+  <glob pattern="*.pef"/>
+</mime-type>

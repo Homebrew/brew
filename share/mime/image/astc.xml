@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="image/astc">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>ASTC texture</comment>
+  <comment xml:lang="uk">текстура ASTC</comment>
+  <comment xml:lang="tr">ASTC dokusu</comment>
+  <comment xml:lang="sv">ASTC-textur</comment>
+  <comment xml:lang="sl">Tekstura ASTC</comment>
+  <comment xml:lang="si">ASTC වයනය</comment>
+  <comment xml:lang="ru">Текстура ASTC</comment>
+  <comment xml:lang="pt-BR">Textura ASTC</comment>
+  <comment xml:lang="pl">Tekstura ASTC</comment>
+  <comment xml:lang="nl">ASTC-textuur</comment>
+  <comment xml:lang="ko">ASTC 텍스처</comment>
+  <comment xml:lang="kk-Cyrl">ASTC текстурасы</comment>
+  <comment xml:lang="ja">ASTC テクスチャ</comment>
+  <comment xml:lang="it">Texture ASTC</comment>
+  <comment xml:lang="is">ASTC efnisáferð</comment>
+  <comment xml:lang="id">tekstur ASTC</comment>
+  <comment xml:lang="hu">ASTC textúra</comment>
+  <comment xml:lang="hr">ASTC tekstura</comment>
+  <comment xml:lang="he">מרקם של ASTC</comment>
+  <comment xml:lang="gl">Textura ASTC</comment>
+  <comment xml:lang="fr">Texture ASTC</comment>
+  <comment xml:lang="fi">ASTC-tekstuuri</comment>
+  <comment xml:lang="es">textura ASTC</comment>
+  <comment xml:lang="en-GB">ASTC texture</comment>
+  <comment xml:lang="de">ASTC-Textur</comment>
+  <comment xml:lang="da">ASTC-struktur</comment>
+  <comment xml:lang="ca">textura ASTC</comment>
+  <comment xml:lang="be-Cyrl">тэкстура ASTC</comment>
+  <comment xml:lang="ar">نسيج ASTC</comment>
+  <acronym>ASTC</acronym>
+  <expanded-acronym>Advanced Scalable Texture Compression</expanded-acronym>
+  <glob pattern="*.astc"/>
+</mime-type>

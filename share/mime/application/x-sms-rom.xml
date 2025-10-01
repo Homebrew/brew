@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-sms-rom">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Master System ROM</comment>
+  <comment xml:lang="zh-Hant-TW">Master System ROM</comment>
+  <comment xml:lang="zh-Hans-CN">Master System ROM</comment>
+  <comment xml:lang="uk">ППП Master System</comment>
+  <comment xml:lang="tr">Master System ROM</comment>
+  <comment xml:lang="sv">Master System-rom</comment>
+  <comment xml:lang="sr-Cyrl">Мастер Систем РОМ</comment>
+  <comment xml:lang="sq">ROM Master System</comment>
+  <comment xml:lang="si">Master System ROM</comment>
+  <comment xml:lang="sk">ROM pre Master System</comment>
+  <comment xml:lang="ru">Master System ROM</comment>
+  <comment xml:lang="pt-BR">ROM de Master System</comment>
+  <comment xml:lang="pl">Plik ROM konsoli SMS</comment>
+  <comment xml:lang="nl">Master System-ROM</comment>
+  <comment xml:lang="ko">마스터 시스템 롬</comment>
+  <comment xml:lang="kk-Cyrl">Master System ROM</comment>
+  <comment xml:lang="ja">マスターシステム ROM</comment>
+  <comment xml:lang="it">ROM Master System</comment>
+  <comment xml:lang="is">Master System ROM</comment>
+  <comment xml:lang="id">ROM Master System</comment>
+  <comment xml:lang="hu">Master System ROM</comment>
+  <comment xml:lang="hr">Master System ROM</comment>
+  <comment xml:lang="he">ROM של Master System</comment>
+  <comment xml:lang="ga">ROM Master System</comment>
+  <comment xml:lang="fur">ROM Master System</comment>
+  <comment xml:lang="fr">ROM Master System</comment>
+  <comment xml:lang="fi">Master System -ROM</comment>
+  <comment xml:lang="eu">Master System ROM</comment>
+  <comment xml:lang="es">ROM de Master System</comment>
+  <comment xml:lang="en-GB">Master System ROM</comment>
+  <comment xml:lang="de">Master-System-ROM</comment>
+  <comment xml:lang="da">Master System-ROM</comment>
+  <comment xml:lang="cs">ROM pro Master System</comment>
+  <comment xml:lang="ca">ROM de Master System</comment>
+  <comment xml:lang="bg">ROM — Master System</comment>
+  <comment xml:lang="be-Cyrl">Master System ROM</comment>
+  <comment xml:lang="ar">روم Master System</comment>
+  <generic-icon name="application-x-executable"/>
+  <glob pattern="*.sms"/>
+</mime-type>

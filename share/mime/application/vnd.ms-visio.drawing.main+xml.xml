@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/vnd.ms-visio.drawing.main+xml">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Office Open XML Visio drawing</comment>
+  <comment xml:lang="zh-Hant-TW">Office Open XML Visio 繪圖</comment>
+  <comment xml:lang="zh-Hans-CN">Office Open XML Visio 绘图</comment>
+  <comment xml:lang="uk">малюнок Visio Office Open у XML</comment>
+  <comment xml:lang="tr">Office Open XML Visio çizimi</comment>
+  <comment xml:lang="sv">Office Open XML Visio-ritning</comment>
+  <comment xml:lang="sq">vizatim Office Open XML Visio</comment>
+  <comment xml:lang="sl">Risba Office Open XML Visio</comment>
+  <comment xml:lang="si">කාර්යාල විවෘත XML Visio ඇඳීම</comment>
+  <comment xml:lang="sk">Kresba aplikácie Office Open XML Visio</comment>
+  <comment xml:lang="ru">Рисунок Visio формата Office Open XML</comment>
+  <comment xml:lang="pt-BR">Desenho do Office Open XML Visio</comment>
+  <comment xml:lang="pt">desenho Visio do Open Office XML</comment>
+  <comment xml:lang="pl">Rysunek Office Open XML Visio</comment>
+  <comment xml:lang="nl">Office Open XML Visio-tekening</comment>
+  <comment xml:lang="ko">오피스 오픈 XML Visio 드로잉</comment>
+  <comment xml:lang="kk-Cyrl">Office Open XML Visio суреті</comment>
+  <comment xml:lang="ja">Office Open XML Visio ドロー</comment>
+  <comment xml:lang="it">Disegno Visio Office Open XML</comment>
+  <comment xml:lang="is">Office Open XML Visio teikning</comment>
+  <comment xml:lang="id">Gambar Office Open XML Visio</comment>
+  <comment xml:lang="hu">Office Open XML Visio rajz</comment>
+  <comment xml:lang="hr">Office Open XML Visio crtež</comment>
+  <comment xml:lang="he">ציור Office Open XML Visio</comment>
+  <comment xml:lang="gl">Debuxo de Office Open XML Visio</comment>
+  <comment xml:lang="fr">dessin Visio Office Open XML</comment>
+  <comment xml:lang="fi">Office Open XML Visio -piirros</comment>
+  <comment xml:lang="eu">Office Open XML Visio marrazkia</comment>
+  <comment xml:lang="es">dibujo Office Open XML de Visio</comment>
+  <comment xml:lang="en-GB">Office Open XML Visio drawing</comment>
+  <comment xml:lang="de">Office-Open-XML-Visio-Zeichnung</comment>
+  <comment xml:lang="da">Office Open XML Visio-tegning</comment>
+  <comment xml:lang="ca">dibuix en Office Open XML de Visio</comment>
+  <comment xml:lang="bg">Чертеж — Office Open XML Visio</comment>
+  <comment xml:lang="be-Cyrl">рысунак Office Open XML Visio</comment>
+  <comment xml:lang="ar">رسم فيزيو Open XML</comment>
+  <generic-icon name="image-x-generic"/>
+  <glob pattern="*.vsdx"/>
+  <sub-class-of type="application/zip"/>
+</mime-type>

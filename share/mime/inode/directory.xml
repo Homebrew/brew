@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="inode/directory">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Folder</comment>
+  <comment xml:lang="uk">Тека</comment>
+  <comment xml:lang="sv">Mapp</comment>
+  <comment xml:lang="ru">Папка</comment>
+  <comment xml:lang="pt-BR">Pasta</comment>
+  <comment xml:lang="pl">Katalog</comment>
+  <comment xml:lang="ja">フォルダ</comment>
+  <comment xml:lang="it">Cartella</comment>
+  <comment xml:lang="gl">Cartafol</comment>
+  <comment xml:lang="eu">Karpeta</comment>
+  <comment xml:lang="es">carpeta</comment>
+  <comment xml:lang="de">Ordner</comment>
+  <comment xml:lang="be-Cyrl">папка</comment>
+  <generic-icon name="folder"/>
+  <alias type="x-directory/normal"/>
+</mime-type>

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="text/htmlh">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Help page</comment>
+  <comment xml:lang="uk">Довідкова сторінка</comment>
+  <comment xml:lang="sv">Hjälpsida</comment>
+  <comment xml:lang="ru">Страница справки</comment>
+  <comment xml:lang="pt-BR">Página de ajuda</comment>
+  <comment xml:lang="pl">Strona pomocy</comment>
+  <comment xml:lang="ja">取説文書</comment>
+  <comment xml:lang="it">Pagina di aiuto</comment>
+  <comment xml:lang="eu">Laguntza-orria</comment>
+  <comment xml:lang="es">página de ayuda</comment>
+  <comment xml:lang="de">Hilfeseite</comment>
+  <comment xml:lang="be-Cyrl">старонка даведкі</comment>
+  <sub-class-of type="text/plain"/>
+</mime-type>

@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="text/x-gcode-gx">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>G-code Extended file</comment>
+  <comment xml:lang="uk">файл G-code Extended</comment>
+  <comment xml:lang="tr">G-code Uzatılmış dosyası</comment>
+  <comment xml:lang="sv">Utökad G-code-fil</comment>
+  <comment xml:lang="si">G-කේත විස්තීරණ ගොනුව</comment>
+  <comment xml:lang="ru">Файл G-code Extended</comment>
+  <comment xml:lang="pl">Plik rozszerzonego G-code</comment>
+  <comment xml:lang="nl">G-code Extended-bestand</comment>
+  <comment xml:lang="ko">G-code 확장 파일</comment>
+  <comment xml:lang="kk-Cyrl">G-code Extended файлы</comment>
+  <comment xml:lang="ja">G-code 拡張ファイル</comment>
+  <comment xml:lang="it">File G-code Extended</comment>
+  <comment xml:lang="hr">G-kôd proširena datoteka</comment>
+  <comment xml:lang="fi">G-code Extended-tiedosto</comment>
+  <comment xml:lang="es">archivo G-code extendido</comment>
+  <comment xml:lang="en-GB">G-code Extended file</comment>
+  <comment xml:lang="de">Erweiterte G-Code-Datei</comment>
+  <comment xml:lang="be-Cyrl">файл G-code Extended</comment>
+  <comment xml:lang="ar">ملف غي-كود الموسع</comment>
+  <glob pattern="*.gx"/>
+</mime-type>

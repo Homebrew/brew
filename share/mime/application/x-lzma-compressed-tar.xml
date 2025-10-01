@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-lzma-compressed-tar">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Tar archive (LZMA-compressed)</comment>
+  <comment xml:lang="zh-Hant-TW">Tar 封存檔 (LZMA 壓縮)</comment>
+  <comment xml:lang="zh-Hans-CN">Tar 归档文件（LZMA 压缩）</comment>
+  <comment xml:lang="vi">Kho nén tar (đã nén LZMA)</comment>
+  <comment xml:lang="uk">архів tar (стиснений LZMA)</comment>
+  <comment xml:lang="tr">Tar arşivi (LZMA ile sıkıştırılmış)</comment>
+  <comment xml:lang="sv">Tar-arkiv (LZMA-komprimerat)</comment>
+  <comment xml:lang="sr-Cyrl">Тар архива (запакована ЛЗМА-ом)</comment>
+  <comment xml:lang="sq">arkiv Tar (ngjeshur me LZMA)</comment>
+  <comment xml:lang="sl">Datoteka arhiva Tar (stisnjen z LZMA)</comment>
+  <comment xml:lang="si">තාර සංරක්ෂිතය (LZMA-සම්පීඩිත)</comment>
+  <comment xml:lang="sk">Archív Tar (komprimovaný pomocou LZMA)</comment>
+  <comment xml:lang="ru">Архив TAR (сжатый lzma)</comment>
+  <comment xml:lang="ro">Arhivă Tar (comprimată LZMA)</comment>
+  <comment xml:lang="pt-BR">Pacote Tar (compactado com LZMA)</comment>
+  <comment xml:lang="pt">arquivo Tar (compressão LZMA)</comment>
+  <comment xml:lang="pl">Archiwum tar (kompresja LZMA)</comment>
+  <comment xml:lang="oc">archiu tar (compression LZMA)</comment>
+  <comment xml:lang="nn">Tar-arkiv (pakka med LZMA)</comment>
+  <comment xml:lang="nl">Tar-archief (gecomprimeerd met LZMA)</comment>
+  <comment xml:lang="nb">Tar-arkiv (LZMA-komprimert)</comment>
+  <comment xml:lang="lv">Tar arhīvs (saspiests ar LZMA)</comment>
+  <comment xml:lang="lt">Tar archyvas (suglaudintas su LZMA)</comment>
+  <comment xml:lang="ko">TAR 묶음 파일(LZMA 압축)</comment>
+  <comment xml:lang="kk-Cyrl">Tar архиві (LZMA-мен сығылған)</comment>
+  <comment xml:lang="ja">Tar アーカイブ (LZMA 圧縮)</comment>
+  <comment xml:lang="it">Archivio tar (compresso con LZMA)</comment>
+  <comment xml:lang="is">Tar safnskrá (LZMA-þjappað)</comment>
+  <comment xml:lang="id">Arsip Tar (terkompresi LZMA)</comment>
+  <comment xml:lang="ia">Archivo Tar (comprimite con LZMA)</comment>
+  <comment xml:lang="hu">Tar archívum (LZMA tömörítésű)</comment>
+  <comment xml:lang="hr">Tar arhiva (LZMA sažeta)</comment>
+  <comment xml:lang="he">ארכיון Tar (מכווץ ע״י LZMA)</comment>
+  <comment xml:lang="gl">arquivo Tar (comprimido con LZMA)</comment>
+  <comment xml:lang="ga">cartlann Tar (comhbhrúite le LZMA)</comment>
+  <comment xml:lang="fur">archivi Tar (comprimût cun LZMA)</comment>
+  <comment xml:lang="fr">archive tar (compression LZMA)</comment>
+  <comment xml:lang="fo">Tar skjalasavn (LZMA-stappað)</comment>
+  <comment xml:lang="fi">Tar-arkisto (LZMA-pakattu)</comment>
+  <comment xml:lang="eu">Tar artxiboa (LZMA-rekin konprimitua)</comment>
+  <comment xml:lang="es">archivador TAR (comprimido con LZMA)</comment>
+  <comment xml:lang="en-GB">Tar archive (LZMA-compressed)</comment>
+  <comment xml:lang="el">Αρχείο Tar (συμπιεσμένο με LZMA)</comment>
+  <comment xml:lang="de">Tar-Archiv (LZMA-komprimiert)</comment>
+  <comment xml:lang="da">Tar-arkiv (LZMA-komprimeret)</comment>
+  <comment xml:lang="cs">archiv Tar (komprimace LZMA)</comment>
+  <comment xml:lang="ca">arxiu tar (amb compressió LZMA)</comment>
+  <comment xml:lang="bg">Архив — tar, компресиран с LZMA</comment>
+  <comment xml:lang="be-Latn">Archiŭ tar (LZMA-skampresavany)</comment>
+  <comment xml:lang="be-Cyrl">архіў tar (сцісканне LZMA)</comment>
+  <comment xml:lang="ar">أرشيف Tar (مضغوط-LZMA)</comment>
+  <comment xml:lang="af">Tar-argief (LZMA-saamgepers)</comment>
+  <sub-class-of type="application/x-lzma"/>
+  <generic-icon name="package-x-generic"/>
+  <glob pattern="*.tar.lzma"/>
+  <glob pattern="*.tlz"/>
+</mime-type>

@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-slp">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Stampede package</comment>
+  <comment xml:lang="zh-Hant-TW">Stampede 軟體包</comment>
+  <comment xml:lang="zh-Hans-CN">Stampede 软件包</comment>
+  <comment xml:lang="vi">Gói Stampede</comment>
+  <comment xml:lang="uk">пакунок Stampede</comment>
+  <comment xml:lang="tr">Stampede paketi</comment>
+  <comment xml:lang="sv">Stampede-paket</comment>
+  <comment xml:lang="sr-Cyrl">Стампеде пакет</comment>
+  <comment xml:lang="sq">paketë Stampede</comment>
+  <comment xml:lang="sl">Datoteka paketa Stampede</comment>
+  <comment xml:lang="si">මුද්දර පැකේජය</comment>
+  <comment xml:lang="sk">Balíček Stampede</comment>
+  <comment xml:lang="ru">Пакет Stampede</comment>
+  <comment xml:lang="ro">Pachet Stampede</comment>
+  <comment xml:lang="pt-BR">Pacote Stampede</comment>
+  <comment xml:lang="pt">pacote Stampede</comment>
+  <comment xml:lang="pl">Pakiet Stampede</comment>
+  <comment xml:lang="oc">paquet Stampede</comment>
+  <comment xml:lang="nn">Stampede-pakke</comment>
+  <comment xml:lang="nl">Stampede-pakket</comment>
+  <comment xml:lang="nb">Stampede-pakke</comment>
+  <comment xml:lang="ms">Pakej Stampede</comment>
+  <comment xml:lang="lv">Stampede pakotne</comment>
+  <comment xml:lang="lt">Stampede paketas</comment>
+  <comment xml:lang="ko">Stampete 패키지</comment>
+  <comment xml:lang="kk-Cyrl">Stampede дестесі</comment>
+  <comment xml:lang="ja">Stampede パッケージ</comment>
+  <comment xml:lang="it">Pacchetto Stampede</comment>
+  <comment xml:lang="is">Stampede pakki</comment>
+  <comment xml:lang="id">Paket Stampede</comment>
+  <comment xml:lang="ia">Pacchetto Stampede</comment>
+  <comment xml:lang="hu">Stampede-csomag</comment>
+  <comment xml:lang="hr">Stampede paket</comment>
+  <comment xml:lang="he">חבילה של Stampede</comment>
+  <comment xml:lang="gl">paquete Stampede</comment>
+  <comment xml:lang="ga">pacáiste Stampede</comment>
+  <comment xml:lang="fur">pachet Stampede</comment>
+  <comment xml:lang="fr">paquet Stampede</comment>
+  <comment xml:lang="fo">Stampede pakki</comment>
+  <comment xml:lang="fi">Stampede-paketti</comment>
+  <comment xml:lang="eu">Stampede paketea</comment>
+  <comment xml:lang="es">paquete Stampede</comment>
+  <comment xml:lang="eo">Stampede-pakaĵo</comment>
+  <comment xml:lang="en-GB">Stampede package</comment>
+  <comment xml:lang="el">Πακέτο Stampede</comment>
+  <comment xml:lang="de">Stampede-Paket</comment>
+  <comment xml:lang="da">Stampedepakke</comment>
+  <comment xml:lang="cy">Pecyn Stampede</comment>
+  <comment xml:lang="cs">balíček Stampede</comment>
+  <comment xml:lang="ca">paquet Stampede</comment>
+  <comment xml:lang="bg">Пакет — Stampede</comment>
+  <comment xml:lang="be-Latn">Pakunak Stampede</comment>
+  <comment xml:lang="be-Cyrl">пакет Stampede</comment>
+  <comment xml:lang="az">Stampede paketi</comment>
+  <comment xml:lang="ar">حزمة Stampede</comment>
+  <comment xml:lang="af">Stampede-pakket</comment>
+  <generic-icon name="package-x-generic"/>
+</mime-type>

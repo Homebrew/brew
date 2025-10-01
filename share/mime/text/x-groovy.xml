@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="text/x-groovy">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Groovy source code</comment>
+  <comment xml:lang="zh-Hant-TW">Groovy 原始碼</comment>
+  <comment xml:lang="zh-Hans-CN">Groovy 源代码</comment>
+  <comment xml:lang="uk">початковий код мовою Groovy</comment>
+  <comment xml:lang="tr">Groovy kaynak kodu</comment>
+  <comment xml:lang="sv">Groovy-källkod</comment>
+  <comment xml:lang="sq">kod burim Groovy</comment>
+  <comment xml:lang="sl">Izvorna koda Groovy</comment>
+  <comment xml:lang="si">Groovy මූල කේතය</comment>
+  <comment xml:lang="ru">Исходный код Groovy</comment>
+  <comment xml:lang="pt-BR">Código-fonte Groovy</comment>
+  <comment xml:lang="pl">Kod źródłowy Groovy</comment>
+  <comment xml:lang="oc">còdi font Groovy</comment>
+  <comment xml:lang="nl">Groovy-broncode</comment>
+  <comment xml:lang="ko">그루비 소스 코드</comment>
+  <comment xml:lang="kk-Cyrl">Groovy бастапқы коды</comment>
+  <comment xml:lang="ja">Groovy ソースコード</comment>
+  <comment xml:lang="it">Codice sorgente Groovy</comment>
+  <comment xml:lang="is">Groovy frumkóði</comment>
+  <comment xml:lang="id">Kode sumber Groovy</comment>
+  <comment xml:lang="hu">Groovy forráskód</comment>
+  <comment xml:lang="hr">Groovy izvorni kôd</comment>
+  <comment xml:lang="he">קוד מקור ב־Groovy</comment>
+  <comment xml:lang="gl">Código fonte en Groovy</comment>
+  <comment xml:lang="fr">code source Groovy</comment>
+  <comment xml:lang="fi">Groovy-lähdekoodi</comment>
+  <comment xml:lang="eu">Groovy iturburu-kodea</comment>
+  <comment xml:lang="es">código fuente en Groovy</comment>
+  <comment xml:lang="en-GB">Groovy source code</comment>
+  <comment xml:lang="de">Groovy-Quelltext</comment>
+  <comment xml:lang="da">Groovy-kildekode</comment>
+  <comment xml:lang="ca">codi font en Groovy</comment>
+  <comment xml:lang="bg">Изходен код — Groovy</comment>
+  <comment xml:lang="be-Cyrl">зыходны код Groovy</comment>
+  <comment xml:lang="ar">شفرة مصدر Groovy</comment>
+  <sub-class-of type="text/x-csrc"/>
+  <generic-icon name="text-x-script"/>
+  <glob pattern="*.groovy"/>
+  <glob pattern="*.gvy"/>
+  <glob pattern="*.gy"/>
+  <glob pattern="*.gsh"/>
+</mime-type>

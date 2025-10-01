@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/sieve">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Sieve mail filter script</comment>
+  <comment xml:lang="zh-Hant-TW">Sieve 郵件篩選指令稿</comment>
+  <comment xml:lang="zh-Hans-CN">Sieve 邮件过滤脚本</comment>
+  <comment xml:lang="vi">Văn lệnh lọc thư Sieve</comment>
+  <comment xml:lang="uk">скрипт поштового фільтру Sieve</comment>
+  <comment xml:lang="tr">Sieve posta süzgeç betiği</comment>
+  <comment xml:lang="sv">Sieve-epostfilterskript</comment>
+  <comment xml:lang="sr-Cyrl">Сјев скрипта пропусника поште</comment>
+  <comment xml:lang="sq">programth filtrimi poste Sieve</comment>
+  <comment xml:lang="sl">Skriptna datoteka Sieve poštnega filtra</comment>
+  <comment xml:lang="si">තැපැල් පෙරහන් ස්ක්‍රිප්ට් පෙරා ගන්න</comment>
+  <comment xml:lang="sk">Skript poštového filtra Sieve</comment>
+  <comment xml:lang="ru">Сценарий почтового фильтра Sieve</comment>
+  <comment xml:lang="ro">Script filtrare email Sieve</comment>
+  <comment xml:lang="pt-BR">Script de filtro de mensagens do Sieve</comment>
+  <comment xml:lang="pt">Script de filtragem de correio Sieve</comment>
+  <comment xml:lang="pl">Skrypt filtra poczty Sieve</comment>
+  <comment xml:lang="oc">escript de filtratge de corrièr electronic Sieve</comment>
+  <comment xml:lang="nn">Sieve e-postfilterskript</comment>
+  <comment xml:lang="nl">Sieve mailfilter-script</comment>
+  <comment xml:lang="nb">Sieve e-postfilter skript</comment>
+  <comment xml:lang="lv">Sieve pasta filtra skripts</comment>
+  <comment xml:lang="lt">Sieve pašto filtro scenarijus</comment>
+  <comment xml:lang="ko">Sieve 메일 필터 스크립트</comment>
+  <comment xml:lang="kk-Cyrl">Sieve пошталық фильтр сценарийі</comment>
+  <comment xml:lang="ja">Sieve メールフィルタスクリプト</comment>
+  <comment xml:lang="it">Script filtro posta Sieve</comment>
+  <comment xml:lang="is">Sieve póstsíuskrifta</comment>
+  <comment xml:lang="id">Skrip filter surat Sieve</comment>
+  <comment xml:lang="ia">Script de filtration de e-mail Sieve</comment>
+  <comment xml:lang="hu">Sieve levélszűrő parancsfájl</comment>
+  <comment xml:lang="hr">Sieve skripta filtriranja pošte</comment>
+  <comment xml:lang="he">תסריט סינון דואר של Sieve</comment>
+  <comment xml:lang="gl">Script de filtro de correo Sieve</comment>
+  <comment xml:lang="ga">script scagaire r-phost Sieve</comment>
+  <comment xml:lang="fur">script filtri pueste Sieve</comment>
+  <comment xml:lang="fr">script de filtrage de courriel Sieve</comment>
+  <comment xml:lang="fi">Sieve-postinsuodatuskomentotiedosto</comment>
+  <comment xml:lang="eu">Sieve posta-iragazki script-a</comment>
+  <comment xml:lang="es">secuencia de órdenes de filtro en Sieve</comment>
+  <comment xml:lang="en-GB">Sieve mail filter script</comment>
+  <comment xml:lang="el">Δέσμη ενεργειών φιλτραρίσματος αλληλογραφίας Sieve</comment>
+  <comment xml:lang="de">Sieve E-Mail-Filterskript</comment>
+  <comment xml:lang="da">Sieve e-post-filterprogram</comment>
+  <comment xml:lang="cs">skript poštovního filtru Sieve</comment>
+  <comment xml:lang="ca">script de filtre de correu Sieve</comment>
+  <comment xml:lang="bg">Скрипт-филтър за пресяване на поща</comment>
+  <comment xml:lang="be-Latn">Skrypt filtravańnia pošty Sieve</comment>
+  <comment xml:lang="be-Cyrl">скрыпт паштовага фільтра Sieve</comment>
+  <comment xml:lang="ar">سكربت مرشح بريد Sieve</comment>
+  <comment xml:lang="af">Sieve-posfiltreerskrip</comment>
+  <generic-icon name="text-x-script"/>
+  <glob pattern="*.siv"/>
+  <glob pattern="*.sieve"/>
+</mime-type>

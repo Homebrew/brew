@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-tiled-tsx">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Tiled tileset files</comment>
+  <comment xml:lang="uk">файл набору плиток мозаїки</comment>
+  <comment xml:lang="sv">Tiled-kartrutuppsättningsfiler</comment>
+  <comment xml:lang="ru">Файлы наборов плиток Tiled</comment>
+  <comment xml:lang="pl">Pliki zestawów kafli Tiled</comment>
+  <comment xml:lang="de">Tiled-Kartensetdatei</comment>
+  <sub-class-of type="application/xml"/>
+  <glob pattern="*.tsx"/>
+</mime-type>

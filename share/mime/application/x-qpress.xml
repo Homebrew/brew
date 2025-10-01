@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-qpress">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Qpress archive</comment>
+  <comment xml:lang="zh-Hant-TW">Qpress 封存檔</comment>
+  <comment xml:lang="zh-Hans-CN">Qpress 归档文件</comment>
+  <comment xml:lang="uk">архів Qpress</comment>
+  <comment xml:lang="tr">Qpress arşivi</comment>
+  <comment xml:lang="sv">Qpress-arkiv</comment>
+  <comment xml:lang="sr-Cyrl">Купрес архива</comment>
+  <comment xml:lang="sq">arkiv Qpress</comment>
+  <comment xml:lang="sl">Datoteka arhiva Qpress</comment>
+  <comment xml:lang="si">Qpress සංරක්ෂිතය</comment>
+  <comment xml:lang="sk">Archív Qpress</comment>
+  <comment xml:lang="ru">Архив Qpress</comment>
+  <comment xml:lang="pt-BR">Pacote Qpress</comment>
+  <comment xml:lang="pt">arquivo Qpress</comment>
+  <comment xml:lang="pl">Archiwum Qpress</comment>
+  <comment xml:lang="oc">Archiu Qpress</comment>
+  <comment xml:lang="nl">Qpress-archief</comment>
+  <comment xml:lang="ko">Qpress 압축 파일</comment>
+  <comment xml:lang="kk-Cyrl">Qpress архиві</comment>
+  <comment xml:lang="ja">Qpress アーカイブ</comment>
+  <comment xml:lang="it">Archivio Qpress</comment>
+  <comment xml:lang="is">Qpress safnskrá</comment>
+  <comment xml:lang="id">Arsip Qpress</comment>
+  <comment xml:lang="ia">Archivo Qpress</comment>
+  <comment xml:lang="hu">Qpress archívum</comment>
+  <comment xml:lang="hr">Qpress arhiva</comment>
+  <comment xml:lang="he">ארכיון Qpress</comment>
+  <comment xml:lang="gl">Arquivo Qpress</comment>
+  <comment xml:lang="ga">cartlann Qpress</comment>
+  <comment xml:lang="fur">archivi Qpress</comment>
+  <comment xml:lang="fr">Archive Qpress</comment>
+  <comment xml:lang="fi">Qpress-arkisto</comment>
+  <comment xml:lang="eu">Qpress artxiboa</comment>
+  <comment xml:lang="es">archivador de Qpress</comment>
+  <comment xml:lang="en-GB">Qpress archive</comment>
+  <comment xml:lang="el">Συμπιεσμένο αρχείο Qpress</comment>
+  <comment xml:lang="de">Qpress-Archiv</comment>
+  <comment xml:lang="da">Qpress-arkiv</comment>
+  <comment xml:lang="cs">archiv Qpress</comment>
+  <comment xml:lang="ca">arxiu Qpress</comment>
+  <comment xml:lang="bg">Архив — Qpress</comment>
+  <comment xml:lang="be-Cyrl">архіў Qpress</comment>
+  <comment xml:lang="ar">أرشيف Qpress</comment>
+  <comment xml:lang="af">Qpress-argief</comment>
+  <generic-icon name="package-x-generic"/>
+  <glob pattern="*.qp"/>
+</mime-type>

@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="font/ttf">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>TrueType font</comment>
+  <comment xml:lang="zh-Hant-TW">TrueType 字型</comment>
+  <comment xml:lang="zh-Hans-CN">TrueType 字体</comment>
+  <comment xml:lang="vi">Phông chữ TrueType</comment>
+  <comment xml:lang="uk">шрифт TrueType</comment>
+  <comment xml:lang="tr">TrueType yazı tipi</comment>
+  <comment xml:lang="sv">Truetype-typsnitt</comment>
+  <comment xml:lang="sr-Cyrl">Трутајп слова</comment>
+  <comment xml:lang="sq">shkronja TrueType</comment>
+  <comment xml:lang="sl">Datoteka pisave TrueType</comment>
+  <comment xml:lang="si">TrueType අකුරු</comment>
+  <comment xml:lang="sk">Písmo TrueType</comment>
+  <comment xml:lang="ru">Шрифт TrueType</comment>
+  <comment xml:lang="ro">Font TrueType</comment>
+  <comment xml:lang="pt-BR">Fonte TrueType</comment>
+  <comment xml:lang="pt">letra TrueType</comment>
+  <comment xml:lang="pl">Czcionka TrueType</comment>
+  <comment xml:lang="oc">poliça Truetype</comment>
+  <comment xml:lang="nn">TrueType-skrifttype</comment>
+  <comment xml:lang="nl">TrueType-lettertype</comment>
+  <comment xml:lang="nb">TrueType-skrift</comment>
+  <comment xml:lang="ms">Font TrueType</comment>
+  <comment xml:lang="lv">TrueType fonts</comment>
+  <comment xml:lang="lt">TrueType šriftas</comment>
+  <comment xml:lang="ko">트루타입 글꼴</comment>
+  <comment xml:lang="kk-Cyrl">TrueType қарібі</comment>
+  <comment xml:lang="ja">TrueType フォント</comment>
+  <comment xml:lang="it">Carattere TrueType</comment>
+  <comment xml:lang="is">TrueType letur</comment>
+  <comment xml:lang="id">Fonta TrueType</comment>
+  <comment xml:lang="ia">Typo de litteras TrueType</comment>
+  <comment xml:lang="hu">TrueType-betűkészlet</comment>
+  <comment xml:lang="hr">TrueType font</comment>
+  <comment xml:lang="he">גופן מסוג TrueType</comment>
+  <comment xml:lang="gl">tipo de letra TrueType</comment>
+  <comment xml:lang="ga">cló TrueType</comment>
+  <comment xml:lang="fur">caratar TrueType</comment>
+  <comment xml:lang="fr">police Truetype</comment>
+  <comment xml:lang="fo">TrueType stavasnið</comment>
+  <comment xml:lang="fi">TrueType-fontti</comment>
+  <comment xml:lang="eu">TrueType letra-tipoa</comment>
+  <comment xml:lang="es">tipo de letra TrueType</comment>
+  <comment xml:lang="eo">TrueType-tiparo</comment>
+  <comment xml:lang="en-GB">TrueType font</comment>
+  <comment xml:lang="el">Γραμματοσειρά TrueType</comment>
+  <comment xml:lang="de">TrueType-Schrift</comment>
+  <comment xml:lang="da">TrueType-skrifttype</comment>
+  <comment xml:lang="cs">font TrueType</comment>
+  <comment xml:lang="ca">lletra TrueType</comment>
+  <comment xml:lang="bg">Шрифт — TrueType</comment>
+  <comment xml:lang="be-Latn">Šryft TrueType</comment>
+  <comment xml:lang="be-Cyrl">шрыфт TrueType</comment>
+  <comment xml:lang="ar">خط TrueType</comment>
+  <comment xml:lang="af">TrueType-skriftipe</comment>
+  <generic-icon name="font-x-generic"/>
+  <glob pattern="*.ttf"/>
+  <alias type="application/x-font-ttf"/>
+</mime-type>

@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="image/heif">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>HEIF image</comment>
+  <comment xml:lang="zh-Hant-TW">HEIF 影像</comment>
+  <comment xml:lang="zh-Hans-CN">HEIF 图像</comment>
+  <comment xml:lang="uk">зображення HEIF</comment>
+  <comment xml:lang="tr">HEIF görüntüsü</comment>
+  <comment xml:lang="sv">HEIF-bild</comment>
+  <comment xml:lang="sq">figurë HEIF</comment>
+  <comment xml:lang="sl">Slika HEIF</comment>
+  <comment xml:lang="si">HEIF රූපය</comment>
+  <comment xml:lang="sk">Obrázok HEIF</comment>
+  <comment xml:lang="ru">Изображение HEIF</comment>
+  <comment xml:lang="pt-BR">Imagem HEIF</comment>
+  <comment xml:lang="pl">Obraz HEIF</comment>
+  <comment xml:lang="nl">HEIF-afbeelding</comment>
+  <comment xml:lang="ko">HEIF 그림</comment>
+  <comment xml:lang="kk-Cyrl">HEIF суреті</comment>
+  <comment xml:lang="ja">HEIF 画像</comment>
+  <comment xml:lang="it">Immagine HEIF</comment>
+  <comment xml:lang="is">HEIF mynd</comment>
+  <comment xml:lang="id">Citra HEIF</comment>
+  <comment xml:lang="hu">HEIF kép</comment>
+  <comment xml:lang="hr">HEIF slika</comment>
+  <comment xml:lang="he">תמונת HEIF</comment>
+  <comment xml:lang="ga">íomhá HEIF</comment>
+  <comment xml:lang="fur">imagjin HEIF</comment>
+  <comment xml:lang="fr">image HEIF</comment>
+  <comment xml:lang="fi">HEIF-kuva</comment>
+  <comment xml:lang="eu">HEIF irudia</comment>
+  <comment xml:lang="es">imagen HEIF</comment>
+  <comment xml:lang="en-GB">HEIF image</comment>
+  <comment xml:lang="de">HEIF-Bild</comment>
+  <comment xml:lang="da">HEIF-billede</comment>
+  <comment xml:lang="cs">obrázek HEIF</comment>
+  <comment xml:lang="ca">imatge HEIF</comment>
+  <comment xml:lang="bg">Изображение — HEIF</comment>
+  <comment xml:lang="be-Cyrl">выява HEIF</comment>
+  <comment xml:lang="ar">صورة HEIF</comment>
+  <comment xml:lang="af">HEIF-beeld</comment>
+  <acronym>HEIF</acronym>
+  <expanded-acronym>High Efficiency Image File</expanded-acronym>
+  <glob pattern="*.heic"/>
+  <glob pattern="*.heif"/>
+  <glob pattern="*.hif"/>
+  <alias type="image/heic"/>
+  <alias type="image/heic-sequence"/>
+  <alias type="image/heif-sequence"/>
+</mime-type>

@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-designer">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Qt Designer interface document</comment>
+  <comment xml:lang="zh-Hant-TW">Qt Designer 介面文件</comment>
+  <comment xml:lang="zh-Hans-CN">Qt Designer 界面文档</comment>
+  <comment xml:lang="uk">документ інтерфейсу Qt Designer</comment>
+  <comment xml:lang="tr">Qt Designer arayüz belgesi</comment>
+  <comment xml:lang="sv">Qt Designer-gränssnittsdokument</comment>
+  <comment xml:lang="sq">dokument ndërfaqesh Qt Designer</comment>
+  <comment xml:lang="sl">Dokument vmesnika Qt Designer</comment>
+  <comment xml:lang="si">Qt Designer අතුරුමුහුණත් ලේඛනය</comment>
+  <comment xml:lang="ru">Документ интерфейса Qt Designer</comment>
+  <comment xml:lang="pt-BR">Documento de interface do Qt Designer</comment>
+  <comment xml:lang="pt">documento de interface Qt Designer</comment>
+  <comment xml:lang="pl">Dokument interfejsu Qt Designer</comment>
+  <comment xml:lang="nl">Qt Designer-interfacedocument</comment>
+  <comment xml:lang="ko">Qt 디자이너 인터페이스 문서</comment>
+  <comment xml:lang="kk-Cyrl">Qt Designer интерфейс құжаты</comment>
+  <comment xml:lang="ja">Qt Designer インターフェイスドキュメント</comment>
+  <comment xml:lang="it">Documento interfaccia Qt Designer</comment>
+  <comment xml:lang="is">Qt Designer viðmótsskjal</comment>
+  <comment xml:lang="id">Dokumen antarmuka Qt Designer</comment>
+  <comment xml:lang="hu">Qt Designer felületleíró dokumentum</comment>
+  <comment xml:lang="hr">Qt Designer dokument sučelja</comment>
+  <comment xml:lang="he">מסמך מנשק של Qt Designer</comment>
+  <comment xml:lang="fr">document d'interface Qt Designer</comment>
+  <comment xml:lang="fi">Qt Designer -käyttöliittymän asiakirja</comment>
+  <comment xml:lang="eu">Qt Designer interfaze dokumentua</comment>
+  <comment xml:lang="es">documento de interfaz de Qt Designer</comment>
+  <comment xml:lang="en-GB">Qt Designer interface document</comment>
+  <comment xml:lang="de">Qt-Designer-Oberflächendokument</comment>
+  <comment xml:lang="da">Qt Designer-brugerflade-dokument</comment>
+  <comment xml:lang="ca">document d'interfície Qt Designer</comment>
+  <comment xml:lang="bg">Документ — интерфейс, Qt Designer</comment>
+  <comment xml:lang="be-Cyrl">дакумент інтэрфейсу Qt Designer</comment>
+  <comment xml:lang="ar">مستند واجهة مصمم كيوت</comment>
+  <generic-icon name="x-office-document"/>
+  <sub-class-of type="application/xml"/>
+  <glob pattern="*.ui"/>
+</mime-type>

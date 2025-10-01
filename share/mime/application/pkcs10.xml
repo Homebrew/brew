@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/pkcs10">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>PKCS#10 certification request</comment>
+  <comment xml:lang="zh-Hant-TW">PKCS#10 憑證請求</comment>
+  <comment xml:lang="zh-Hans-CN">PKCS#10 认证请求</comment>
+  <comment xml:lang="vi">Yêu cầu chứng nhận PKCS#10</comment>
+  <comment xml:lang="uk">комплект сертифікатів PKCS#10</comment>
+  <comment xml:lang="tr">PKCS#10 sertifika isteği</comment>
+  <comment xml:lang="sv">PKCS#10-certifikatbegäran</comment>
+  <comment xml:lang="sr-Cyrl">ПКЦС#10 зхатев уверења</comment>
+  <comment xml:lang="sq">kërkesë certifikimi PKCS#10</comment>
+  <comment xml:lang="sl">Datoteka potrdila PKCS#10</comment>
+  <comment xml:lang="si">PKCS#10 සහතික කිරීමේ ඉල්ලීම</comment>
+  <comment xml:lang="sk">Požiadavka na certifikát PKCS#10</comment>
+  <comment xml:lang="ru">Запрос сертификации PKCS#10</comment>
+  <comment xml:lang="ro">Cerere de certificat PKCS#10</comment>
+  <comment xml:lang="pt-BR">Pedido de certificação PKCS#12</comment>
+  <comment xml:lang="pt">pedido de certificação PKCS#10</comment>
+  <comment xml:lang="pl">Żądanie certyfikatu PKCS#10</comment>
+  <comment xml:lang="oc">requèsta de certificacion PKCS#10</comment>
+  <comment xml:lang="nn">PKCS#10-sertifiseringsførespurnad</comment>
+  <comment xml:lang="nl">PKCS#10-certificatieverzoek</comment>
+  <comment xml:lang="nb">PKCS#10-sertifikatforespørsel</comment>
+  <comment xml:lang="lv">PKCS#10 sertifikācijas pieprasījums</comment>
+  <comment xml:lang="lt">PKCS#10 liudijimų užklausa</comment>
+  <comment xml:lang="ko">PKCS#10 인증서 요청</comment>
+  <comment xml:lang="kk-Cyrl">PKCS#10 сертификацияға сұранымы</comment>
+  <comment xml:lang="ja">PKCS#10 証明書署名要求</comment>
+  <comment xml:lang="it">Richiesta certificazione PKCS#10</comment>
+  <comment xml:lang="is">PKCS#10 skilríkisbeiðni</comment>
+  <comment xml:lang="id">Permintaan sertifikasi PKCS#10</comment>
+  <comment xml:lang="ia">Requesta de certification PKCS#10</comment>
+  <comment xml:lang="hu">PKCS#10-tanúsítványkérés</comment>
+  <comment xml:lang="hr">PKCS#10 zahtjev vjerodajnice</comment>
+  <comment xml:lang="he">בקשה מוסמכת PLCS#10</comment>
+  <comment xml:lang="gl">Solicitude de certificado PKCS#10</comment>
+  <comment xml:lang="ga">iarratas dheimhniúchán PKCS#10</comment>
+  <comment xml:lang="fur">richieste certificazion PKCS#10</comment>
+  <comment xml:lang="fr">requête de certification PKCS#10</comment>
+  <comment xml:lang="fo">PKCS#10 váttanarumbøn</comment>
+  <comment xml:lang="fi">PKCS#10-varmennepyyntö</comment>
+  <comment xml:lang="eu">PKCS#10 ziurtagirien eskaera</comment>
+  <comment xml:lang="es">petición de certificados PKCS#10</comment>
+  <comment xml:lang="en-GB">PKCS#10 certification request</comment>
+  <comment xml:lang="el">Αίτηση πιστοποίησης PKCS#10</comment>
+  <comment xml:lang="de">PKCS#10-Zertifikatanfrage</comment>
+  <comment xml:lang="da">PKCS#10-certifikatanmodning</comment>
+  <comment xml:lang="cs">žádost o certifikát PKCS#10</comment>
+  <comment xml:lang="ca">sol·licitud de certificació PKCS#10</comment>
+  <comment xml:lang="bg">Заявка за сертификат — PKCS#10</comment>
+  <comment xml:lang="be-Latn">Zapyt sertyfikacyi PKCS#10</comment>
+  <comment xml:lang="be-Cyrl">запыт сертыфікацыі PKCS#10</comment>
+  <comment xml:lang="ar">طلب شهادة PKCS#10</comment>
+  <comment xml:lang="af">PKCS#10-sertifiseringsversoek</comment>
+  <acronym>PKCS</acronym>
+  <expanded-acronym>Public-Key Cryptography Standards</expanded-acronym>
+  <generic-icon name="text-x-generic"/>
+  <glob pattern="*.p10"/>
+</mime-type>

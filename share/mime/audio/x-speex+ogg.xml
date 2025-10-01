@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="audio/x-speex+ogg">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Ogg Speex audio</comment>
+  <comment xml:lang="zh-Hant-TW">Ogg Speex 音訊</comment>
+  <comment xml:lang="zh-Hans-CN">Ogg Speex 音频</comment>
+  <comment xml:lang="vi">Âm thanh Speex Ogg</comment>
+  <comment xml:lang="uk">звук ogg Speex</comment>
+  <comment xml:lang="tr">Ogg Speex sesi</comment>
+  <comment xml:lang="sv">Ogg Speex-ljud</comment>
+  <comment xml:lang="sr-Cyrl">Огг Спикс звук</comment>
+  <comment xml:lang="sq">audio Ogg Speex</comment>
+  <comment xml:lang="sl">Zvočna datoteka Ogg Speex</comment>
+  <comment xml:lang="si">Ogg Speex ශ්‍රව්‍ය</comment>
+  <comment xml:lang="sk">Zvuk Ogg Speex</comment>
+  <comment xml:lang="ru">Аудио Ogg Speex</comment>
+  <comment xml:lang="ro">Audio Ogg Speex</comment>
+  <comment xml:lang="pt-BR">Áudio Ogg Speex</comment>
+  <comment xml:lang="pt">áudio Ogg Speex</comment>
+  <comment xml:lang="pl">Plik dźwiękowy Ogg Speex</comment>
+  <comment xml:lang="oc">àudio Ogg Speex</comment>
+  <comment xml:lang="nn">Ogg Speex-lyd</comment>
+  <comment xml:lang="nl">Ogg Speex-audio</comment>
+  <comment xml:lang="nb">Ogg Speex lyd</comment>
+  <comment xml:lang="lv">Ogg Speex audio</comment>
+  <comment xml:lang="lt">Ogg Speex garso įrašas</comment>
+  <comment xml:lang="ko">Ogg Speex 오디오</comment>
+  <comment xml:lang="kk-Cyrl">Ogg Speex аудиосы</comment>
+  <comment xml:lang="ka">Ogg Speex აუდიო</comment>
+  <comment xml:lang="ja">Ogg Speex オーディオ</comment>
+  <comment xml:lang="it">Audio Ogg Speex</comment>
+  <comment xml:lang="is">Ogg Speex hljóðskrá</comment>
+  <comment xml:lang="id">Audio Ogg Speex</comment>
+  <comment xml:lang="ia">Audio Ogg Speex</comment>
+  <comment xml:lang="hu">Ogg Speex hang</comment>
+  <comment xml:lang="hr">Ogg Speex zvučni zapis</comment>
+  <comment xml:lang="he">שמע Ogg Speex</comment>
+  <comment xml:lang="gl">son Ogg Speex</comment>
+  <comment xml:lang="ga">fuaim Ogg Speex</comment>
+  <comment xml:lang="fur">audio Ogg Speex</comment>
+  <comment xml:lang="fr">audio Ogg Speex</comment>
+  <comment xml:lang="fo">Ogg Speex ljóður</comment>
+  <comment xml:lang="fi">Ogg Speex -ääni</comment>
+  <comment xml:lang="eu">Ogg Speex audioa</comment>
+  <comment xml:lang="es">sonido Ogg Speex</comment>
+  <comment xml:lang="en-GB">Ogg Speex audio</comment>
+  <comment xml:lang="el">Ήχος Ogg Speex</comment>
+  <comment xml:lang="de">Ogg-Speex-Audio</comment>
+  <comment xml:lang="da">Ogg Speex-lyd</comment>
+  <comment xml:lang="cs">zvuk Ogg Speex</comment>
+  <comment xml:lang="ca">àudio Ogg Speex</comment>
+  <comment xml:lang="bg">Аудио — Ogg Speex</comment>
+  <comment xml:lang="be-Latn">Aŭdyjo Ogg Speex</comment>
+  <comment xml:lang="be-Cyrl">аўдыя Ogg Speex</comment>
+  <comment xml:lang="ar">صوت Ogg Speex</comment>
+  <comment xml:lang="af">Ogg Speex-oudio</comment>
+  <sub-class-of type="audio/ogg"/>
+  <glob pattern="*.oga"/>
+  <glob pattern="*.ogg"/>
+  <glob pattern="*.spx"/>
+</mime-type>

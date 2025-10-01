@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="text/x-todo-txt">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Todo.txt file</comment>
+  <comment xml:lang="uk">файл Todo.txt</comment>
+  <comment xml:lang="sv">Todo.txt-fil</comment>
+  <comment xml:lang="ru">Файл Todo.txt</comment>
+  <comment xml:lang="pl">Plik Todo.txt</comment>
+  <comment xml:lang="ja">TODO文書</comment>
+  <comment xml:lang="it">File todo.txt</comment>
+  <comment xml:lang="es">archivo Todo.txt</comment>
+  <comment xml:lang="de">Todo.txt-Datei</comment>
+  <sub-class-of type="text/plain"/>
+  <glob weight="10" pattern="todo.txt"/>
+</mime-type>

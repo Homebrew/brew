@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="video/isivideo">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>ISI video</comment>
+  <comment xml:lang="zh-Hant-TW">ISI 視訊</comment>
+  <comment xml:lang="zh-Hans-CN">ISI 视频</comment>
+  <comment xml:lang="vi">Ảnh động ISI</comment>
+  <comment xml:lang="uk">відеокліп ISI</comment>
+  <comment xml:lang="tr">ISI videosu</comment>
+  <comment xml:lang="sv">ISI-video</comment>
+  <comment xml:lang="sr-Cyrl">ИСИ видео</comment>
+  <comment xml:lang="sq">video ISI</comment>
+  <comment xml:lang="sl">Video datoteka ISI</comment>
+  <comment xml:lang="si">ISI වීඩියෝව</comment>
+  <comment xml:lang="sk">Video ISI</comment>
+  <comment xml:lang="ru">Видео ISI</comment>
+  <comment xml:lang="ro">Video ISI</comment>
+  <comment xml:lang="pt-BR">Vídeo ISI</comment>
+  <comment xml:lang="pt">vídeo ISI</comment>
+  <comment xml:lang="pl">Plik wideo ISI</comment>
+  <comment xml:lang="oc">vidèo ISI</comment>
+  <comment xml:lang="nn">ISI video</comment>
+  <comment xml:lang="nl">ISI-video</comment>
+  <comment xml:lang="nb">ISI-film</comment>
+  <comment xml:lang="ms">Video ISI</comment>
+  <comment xml:lang="lv">ISI video</comment>
+  <comment xml:lang="lt">ISI vaizdo įrašas</comment>
+  <comment xml:lang="ko">ISI 동영상</comment>
+  <comment xml:lang="kk-Cyrl">ISI видеосы</comment>
+  <comment xml:lang="ja">ISI 動画</comment>
+  <comment xml:lang="it">Video ISI</comment>
+  <comment xml:lang="is">ISI myndskeið</comment>
+  <comment xml:lang="id">Video ISI</comment>
+  <comment xml:lang="ia">Video ISI</comment>
+  <comment xml:lang="hu">ISI-videó</comment>
+  <comment xml:lang="hr">ISI video snimka</comment>
+  <comment xml:lang="he">וידאו ISI</comment>
+  <comment xml:lang="gl">vídeo ISI</comment>
+  <comment xml:lang="ga">físeán ISI</comment>
+  <comment xml:lang="fur">video ISI</comment>
+  <comment xml:lang="fr">vidéo ISI</comment>
+  <comment xml:lang="fo">ISI video</comment>
+  <comment xml:lang="fi">ISI-video</comment>
+  <comment xml:lang="eu">ISI bideoa</comment>
+  <comment xml:lang="es">vídeo ISI</comment>
+  <comment xml:lang="eo">ISI-video</comment>
+  <comment xml:lang="en-GB">ISI video</comment>
+  <comment xml:lang="el">Βίντεο ISI</comment>
+  <comment xml:lang="de">ISI-Video</comment>
+  <comment xml:lang="da">ISI-video</comment>
+  <comment xml:lang="cy">Fideo ISI</comment>
+  <comment xml:lang="cs">video ISI</comment>
+  <comment xml:lang="ca">vídeo ISI</comment>
+  <comment xml:lang="bg">Видео — ISI</comment>
+  <comment xml:lang="be-Latn">Videa ISI</comment>
+  <comment xml:lang="be-Cyrl">відэа ISI</comment>
+  <comment xml:lang="az">ISI video faylı</comment>
+  <comment xml:lang="ast">Videu n'ISI</comment>
+  <comment xml:lang="ar">فيديو ISI</comment>
+  <comment xml:lang="af">ISI-video</comment>
+</mime-type>

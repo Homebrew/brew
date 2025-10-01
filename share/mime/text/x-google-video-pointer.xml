@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="text/x-google-video-pointer">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Google Video Pointer shortcut</comment>
+  <comment xml:lang="zh-Hans-CN">Google Video Pointer 快捷方式</comment>
+  <comment xml:lang="uk">скорочення вказівника відео Google</comment>
+  <comment xml:lang="tr">Google Video Pointer kısayolu</comment>
+  <comment xml:lang="sv">Google Video Pointer-genväg</comment>
+  <comment xml:lang="sq">shkurtore Google Video Pointer</comment>
+  <comment xml:lang="si">Google Video Pointer කෙටිමඟ</comment>
+  <comment xml:lang="ru">Ссылка Google Video Pointer</comment>
+  <comment xml:lang="pt-BR">Atalho do Google Video Pointer</comment>
+  <comment xml:lang="pl">Skrót listy odtwarzania Google Video</comment>
+  <comment xml:lang="nl">Google Video Pointer-snelkoppeling</comment>
+  <comment xml:lang="ko">구글 동영상 포인터 바로 가기</comment>
+  <comment xml:lang="kk-Cyrl">Google Video Pointer жарлығы</comment>
+  <comment xml:lang="ja">Google Video Pointer ショートカット</comment>
+  <comment xml:lang="it">Scorciatoia Google Video Pointer</comment>
+  <comment xml:lang="is">Google Video Pointer flýtivísun</comment>
+  <comment xml:lang="id">Pintasan Google Video Pointer</comment>
+  <comment xml:lang="hu">Google Video Pointer parancsikon</comment>
+  <comment xml:lang="hr">Google Video pretraživač prečac</comment>
+  <comment xml:lang="he">קיצור למצביע וידאו של Google</comment>
+  <comment xml:lang="fr">raccourci de pointeur vidéo Google</comment>
+  <comment xml:lang="fi">Google Video Pointer -pikakuvake</comment>
+  <comment xml:lang="eu">Google Video Pointer lasterbidea</comment>
+  <comment xml:lang="es">atajo de Google Video Pointer</comment>
+  <comment xml:lang="en-GB">Google Video Pointer shortcut</comment>
+  <comment xml:lang="de">Google-Videozeiger-Verweis</comment>
+  <comment xml:lang="da">Google Video Pointer-genvej</comment>
+  <comment xml:lang="ca">drecera d'apuntador a vídeo de Google</comment>
+  <comment xml:lang="bg">Отметка — Google Video</comment>
+  <comment xml:lang="be-Cyrl">ярлык Google Video Pointer</comment>
+  <comment xml:lang="ar">اختصار مؤشر فيديو غوغل</comment>
+  <sub-class-of type="text/plain"/>
+  <glob pattern="*.gvp"/>
+  <alias type="text/google-video-pointer"/>
+</mime-type>

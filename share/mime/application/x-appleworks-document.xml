@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-appleworks-document">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>AppleWorks document</comment>
+  <comment xml:lang="zh-Hant-TW">AppleWorks 文件</comment>
+  <comment xml:lang="zh-Hans-CN">AppleWorks 文档</comment>
+  <comment xml:lang="uk">документ AppleWorks</comment>
+  <comment xml:lang="tr">AppleWorks belgesi</comment>
+  <comment xml:lang="sv">AppleWorks-dokument</comment>
+  <comment xml:lang="sl">Dokument AppleWorks</comment>
+  <comment xml:lang="si">AppleWorks ලේඛනය</comment>
+  <comment xml:lang="ru">Документ AppleWorks</comment>
+  <comment xml:lang="pt-BR">Documento AppleWorks</comment>
+  <comment xml:lang="pl">Dokument AppleWorks</comment>
+  <comment xml:lang="oc">document AppleWorks</comment>
+  <comment xml:lang="nl">AppleWorks-document</comment>
+  <comment xml:lang="ko">AppleWorks 문서</comment>
+  <comment xml:lang="kk-Cyrl">AppleWorks құжаты</comment>
+  <comment xml:lang="ja">AppleWorks ドキュメント</comment>
+  <comment xml:lang="it">Documento AppleWorks</comment>
+  <comment xml:lang="is">AppleWorks skjal</comment>
+  <comment xml:lang="id">Dokumen AppleWorks</comment>
+  <comment xml:lang="hu">AppleWorks-dokumentum</comment>
+  <comment xml:lang="hr">AppleWorks dokument</comment>
+  <comment xml:lang="he">מסמך AppleWorks</comment>
+  <comment xml:lang="fr">document AppleWorks</comment>
+  <comment xml:lang="fi">AppleWorks-asiakirja</comment>
+  <comment xml:lang="eu">AppleWorks dokumentua</comment>
+  <comment xml:lang="es">documento de AppleWorks</comment>
+  <comment xml:lang="en-GB">AppleWorks document</comment>
+  <comment xml:lang="de">AppleWorks-Dokument</comment>
+  <comment xml:lang="da">AppleWorks-dokument</comment>
+  <comment xml:lang="ca">document AppleWorks</comment>
+  <comment xml:lang="be-Cyrl">дакумент AppleWorks</comment>
+  <comment xml:lang="ar">مستند AppleWorks</comment>
+  <generic-icon name="x-office-document"/>
+  <glob pattern="*.cwk"/>
+</mime-type>

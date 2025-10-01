@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="text/x-microdvd">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>MicroDVD subtitles</comment>
+  <comment xml:lang="zh-Hant-TW">MicroDVD 字幕</comment>
+  <comment xml:lang="zh-Hans-CN">MicroDVD 字幕</comment>
+  <comment xml:lang="vi">Phụ đề MicroDVD</comment>
+  <comment xml:lang="uk">субтитри MicroDVD</comment>
+  <comment xml:lang="tr">MicroDVD alt yazısı</comment>
+  <comment xml:lang="sv">MicroDVD-undertexter</comment>
+  <comment xml:lang="sr-Cyrl">Микро ДВД преводи</comment>
+  <comment xml:lang="sq">titra MicroDVD</comment>
+  <comment xml:lang="sl">Datoteka podnapisov MicroDVD</comment>
+  <comment xml:lang="si">MicroDVD උපසිරැසි</comment>
+  <comment xml:lang="sk">Titulky MicroDVD</comment>
+  <comment xml:lang="ru">Субтитры MicroDVD</comment>
+  <comment xml:lang="ro">Subtitrări MicroDVD</comment>
+  <comment xml:lang="pt-BR">Legendas MicroDVD</comment>
+  <comment xml:lang="pt">legendas MicroDVD</comment>
+  <comment xml:lang="pl">Napisy MicroDVD</comment>
+  <comment xml:lang="oc">sostítols MicroDVD</comment>
+  <comment xml:lang="nn">MicroDVD-teksting</comment>
+  <comment xml:lang="nl">MicroDVD-ondertitels</comment>
+  <comment xml:lang="nb">MicroDVD undertekst</comment>
+  <comment xml:lang="lv">MicroDVD subtitri</comment>
+  <comment xml:lang="lt">MicroDVD subtitrai</comment>
+  <comment xml:lang="ko">MicroDVD 자막 파일</comment>
+  <comment xml:lang="kk-Cyrl">MicroDVD субтитрлары</comment>
+  <comment xml:lang="ka">MicroDVD-ის ქვეტიტრები</comment>
+  <comment xml:lang="ja">MicroDVD 字幕</comment>
+  <comment xml:lang="it">Sottotitoli MicroDVD</comment>
+  <comment xml:lang="is">MicroDVD skjátextar</comment>
+  <comment xml:lang="id">Subjudul MicroDVD</comment>
+  <comment xml:lang="ia">Subtitulos MicroDVD</comment>
+  <comment xml:lang="hu">MicroDVD feliratok</comment>
+  <comment xml:lang="hr">MicroDVD podnaslovi</comment>
+  <comment xml:lang="he">כתוביות של MicroDVD</comment>
+  <comment xml:lang="gl">subtítulos de MicroDVD</comment>
+  <comment xml:lang="ga">fotheidil MicroDVD</comment>
+  <comment xml:lang="fur">sottitui MicroDVD</comment>
+  <comment xml:lang="fr">sous-titres MicroDVD</comment>
+  <comment xml:lang="fo">MicroDVD undirtekstir</comment>
+  <comment xml:lang="fi">MicroDVD-tekstitykset</comment>
+  <comment xml:lang="eu">MicroDVD azpitituluak</comment>
+  <comment xml:lang="es">subtítulos de MicroDVD</comment>
+  <comment xml:lang="eo">MicroDVD-subtekstoj</comment>
+  <comment xml:lang="en-GB">MicroDVD subtitles</comment>
+  <comment xml:lang="el">Υπότιτλοι MicroDVD</comment>
+  <comment xml:lang="de">MicroDVD-Untertitel</comment>
+  <comment xml:lang="da">MicroDVD-undertekster</comment>
+  <comment xml:lang="cs">titulky MicroDVD</comment>
+  <comment xml:lang="ca">subtítols MicroDVD</comment>
+  <comment xml:lang="bg">Субтитри — MicroDVD</comment>
+  <comment xml:lang="be-Latn">Subtytry MicroDVD</comment>
+  <comment xml:lang="be-Cyrl">субцітры MicroDVD</comment>
+  <comment xml:lang="ar">ترجمات MicroDVD</comment>
+  <comment xml:lang="af">MicroDVD-onderskrifte</comment>
+  <sub-class-of type="text/plain"/>
+  <glob pattern="*.sub"/>
+</mime-type>

@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/pkcs7-mime">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>PKCS#7 file</comment>
+  <comment xml:lang="zh-Hant-TW">PKCS#7 檔案</comment>
+  <comment xml:lang="zh-Hans-CN">PKCS#7 文件</comment>
+  <comment xml:lang="uk">файл PKCS#7</comment>
+  <comment xml:lang="tr">PKCS#7 dosyası</comment>
+  <comment xml:lang="sv">PKCS#7-fil</comment>
+  <comment xml:lang="sq">kartelë PKCS#7</comment>
+  <comment xml:lang="sl">Datoteka PKCS#7</comment>
+  <comment xml:lang="si">PKCS#7 ගොනුව</comment>
+  <comment xml:lang="sk">Súbor PKCS#7</comment>
+  <comment xml:lang="ru">Файл PKCS#7</comment>
+  <comment xml:lang="pt-BR">Arquivo PKCS#7</comment>
+  <comment xml:lang="pt">ficheiro PKCS#7</comment>
+  <comment xml:lang="pl">Plik PKCS#7</comment>
+  <comment xml:lang="oc">fichièr PKCS#7</comment>
+  <comment xml:lang="nl">PKCS#7-bestand</comment>
+  <comment xml:lang="lt">PKCS#7 failas</comment>
+  <comment xml:lang="ko">PKCS#7 파일</comment>
+  <comment xml:lang="kk-Cyrl">PKCS#7 файлы</comment>
+  <comment xml:lang="ka">PKCS#7 ფაილი</comment>
+  <comment xml:lang="ja">PKCS#7 ファイル</comment>
+  <comment xml:lang="it">File PKCS#7</comment>
+  <comment xml:lang="is">PKCS#7 skrá</comment>
+  <comment xml:lang="id">Berkas PKCS#7</comment>
+  <comment xml:lang="hu">PKCS#7 fájl</comment>
+  <comment xml:lang="hr">PKCS#7 datoteka</comment>
+  <comment xml:lang="he">קובץ PKCS#7</comment>
+  <comment xml:lang="gl">Ficheiro PKCS#7</comment>
+  <comment xml:lang="fr">fichier PKCS#7</comment>
+  <comment xml:lang="fi">PKCS#7-tiedosto</comment>
+  <comment xml:lang="eu">PKCS#7 fitxategia</comment>
+  <comment xml:lang="es">archivo PKCS#7</comment>
+  <comment xml:lang="en-GB">PKCS#7 file</comment>
+  <comment xml:lang="de">PKCS#7-Datei</comment>
+  <comment xml:lang="da">PKCS#7-fil</comment>
+  <comment xml:lang="ca">fitxer PKCS#7</comment>
+  <comment xml:lang="bg">Файл за PKCS#7</comment>
+  <comment xml:lang="be-Cyrl">файл PKCS#7</comment>
+  <comment xml:lang="ar">ملف PKCS#7</comment>
+  <acronym>PKCS</acronym>
+  <expanded-acronym>Public-Key Cryptography Standards</expanded-acronym>
+  <generic-icon name="text-x-generic"/>
+  <glob pattern="*.p7c"/>
+  <glob pattern="*.p7m"/>
+</mime-type>

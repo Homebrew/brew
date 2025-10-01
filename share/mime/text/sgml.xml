@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="text/sgml">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>SGML document</comment>
+  <comment xml:lang="zh-Hant-TW">SGML 文件</comment>
+  <comment xml:lang="zh-Hans-CN">SGML 文档</comment>
+  <comment xml:lang="vi">Tài liệu SGML</comment>
+  <comment xml:lang="uk">документ SGML</comment>
+  <comment xml:lang="tr">SGML belgesi</comment>
+  <comment xml:lang="sv">SGML-dokument</comment>
+  <comment xml:lang="sr-Cyrl">СГМЛ документ</comment>
+  <comment xml:lang="sq">dokument SGML</comment>
+  <comment xml:lang="sl">Dokument SGML</comment>
+  <comment xml:lang="si">SGML ලේඛනය</comment>
+  <comment xml:lang="sk">Dokument SGML</comment>
+  <comment xml:lang="ru">Документ SGML</comment>
+  <comment xml:lang="ro">Document SGML</comment>
+  <comment xml:lang="pt-BR">Documento SGML</comment>
+  <comment xml:lang="pt">documento SGML</comment>
+  <comment xml:lang="pl">Dokument SGML</comment>
+  <comment xml:lang="oc">document SGML</comment>
+  <comment xml:lang="nn">SGML-dokument</comment>
+  <comment xml:lang="nl">SGML-document</comment>
+  <comment xml:lang="nb">SGML-dokument</comment>
+  <comment xml:lang="ms">Dokumen SGML</comment>
+  <comment xml:lang="lv">SGML dokuments</comment>
+  <comment xml:lang="lt">SGML dokumentas</comment>
+  <comment xml:lang="ko">SGML 문서</comment>
+  <comment xml:lang="kk-Cyrl">SGML құжаты</comment>
+  <comment xml:lang="ja">SGML ドキュメント</comment>
+  <comment xml:lang="it">Documento SGML</comment>
+  <comment xml:lang="is">SGML skjal</comment>
+  <comment xml:lang="id">Dokumen SGML</comment>
+  <comment xml:lang="ia">Documento SGML</comment>
+  <comment xml:lang="hu">SGML-dokumentum</comment>
+  <comment xml:lang="hr">SGML dokument</comment>
+  <comment xml:lang="he">מסמך SGML</comment>
+  <comment xml:lang="gl">documento SGML</comment>
+  <comment xml:lang="ga">cáipéis SGML</comment>
+  <comment xml:lang="fur">document SGML</comment>
+  <comment xml:lang="fr">document SGML</comment>
+  <comment xml:lang="fo">SGML skjal</comment>
+  <comment xml:lang="fi">SGML-asiakirja</comment>
+  <comment xml:lang="eu">SGML dokumentua</comment>
+  <comment xml:lang="es">documento SGML</comment>
+  <comment xml:lang="eo">SGML-dokumento</comment>
+  <comment xml:lang="en-GB">SGML document</comment>
+  <comment xml:lang="el">Έγγραφο SGML</comment>
+  <comment xml:lang="de">SGML-Dokument</comment>
+  <comment xml:lang="da">SGML-dokument</comment>
+  <comment xml:lang="cy">Dogfen SGML</comment>
+  <comment xml:lang="cs">dokument SGML</comment>
+  <comment xml:lang="ca">document SGML</comment>
+  <comment xml:lang="bg">Документ — SGML</comment>
+  <comment xml:lang="be-Latn">Dakument SGML</comment>
+  <comment xml:lang="be-Cyrl">дакумент SGML</comment>
+  <comment xml:lang="ast">Documentu SGML</comment>
+  <comment xml:lang="ar">مستند SGML</comment>
+  <comment xml:lang="af">SGML-dokument</comment>
+  <acronym>SGML</acronym>
+  <expanded-acronym>Standard Generalized Markup Language</expanded-acronym>
+  <sub-class-of type="text/plain"/>
+  <glob pattern="*.sgml"/>
+  <glob pattern="*.sgm"/>
+</mime-type>

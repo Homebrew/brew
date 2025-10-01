@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/vnd.google-earth.kmz">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>KML geographic compressed data</comment>
+  <comment xml:lang="zh-Hant-TW">KML 地理壓縮資料</comment>
+  <comment xml:lang="zh-Hans-CN">KML 地理压缩数据</comment>
+  <comment xml:lang="uk">стиснуті географічні дані KML</comment>
+  <comment xml:lang="tr">KML sıkıştırılmış coğrafi verisi</comment>
+  <comment xml:lang="sv">KML geografiskt komprimerat data</comment>
+  <comment xml:lang="sr-Cyrl">КМЛ географски запаковани подаци</comment>
+  <comment xml:lang="sq">të dhëna gjeografike KML të ngjeshura</comment>
+  <comment xml:lang="sl">Skrčeni geografski podatki KML</comment>
+  <comment xml:lang="si">KML භූගෝලීය සම්පීඩිත දත්ත</comment>
+  <comment xml:lang="sk">Komprimované zemepisné údaje KML</comment>
+  <comment xml:lang="ru">Сжатые географические данные KML</comment>
+  <comment xml:lang="ro">Date geografice comprimate KML</comment>
+  <comment xml:lang="pt-BR">Dados geográficos KML compactados</comment>
+  <comment xml:lang="pt">dados geográficos comprimidos KML</comment>
+  <comment xml:lang="pl">Skompresowane dane geograficzne KML</comment>
+  <comment xml:lang="oc">donadas geograficas KML compressats</comment>
+  <comment xml:lang="nl">KML geografische gecomprimeerde gegevens</comment>
+  <comment xml:lang="lv">KML saspiesti ģeogrāfiskie dati</comment>
+  <comment xml:lang="lt">KML geografiniai suglaudinti duomenys</comment>
+  <comment xml:lang="ko">KML 지리 정보 압축 데이터</comment>
+  <comment xml:lang="kk-Cyrl">KML географиялық сығылған ақпарат</comment>
+  <comment xml:lang="ja">KML 地理圧縮データ</comment>
+  <comment xml:lang="it">Dati geografici KML compressi</comment>
+  <comment xml:lang="is">KML þjöppuð hnattstaðsetningargögn</comment>
+  <comment xml:lang="id">Data geografis KML terkompresi</comment>
+  <comment xml:lang="ia">Datos geographic KML comprimite</comment>
+  <comment xml:lang="hu">KML tömörített földrajzi adatok</comment>
+  <comment xml:lang="hr">KML sažeti geografski podaci</comment>
+  <comment xml:lang="he">מידע גאוגרפי דחוס KML</comment>
+  <comment xml:lang="gl">datos xeográficos KML comprimidos </comment>
+  <comment xml:lang="ga">sonraí comhbhrúite geografacha KML</comment>
+  <comment xml:lang="fur">dâts gjeografics KML comprimûts</comment>
+  <comment xml:lang="fr">données géographiques KML compressées</comment>
+  <comment xml:lang="fo">KML landafrøðilig stappað dáta</comment>
+  <comment xml:lang="fi">pakattu KML-paikkatieto</comment>
+  <comment xml:lang="eu">KML datu geografiko konprimituak</comment>
+  <comment xml:lang="es">datos geográficos comprimidos KML</comment>
+  <comment xml:lang="en-GB">KML geographic compressed data</comment>
+  <comment xml:lang="el">Γεωγραφικά συμπιεσμένα δεδομένα KML</comment>
+  <comment xml:lang="de">Komprimierte KML-Geodaten</comment>
+  <comment xml:lang="da">KML-geografiske komprimerede data</comment>
+  <comment xml:lang="cs">komprimovaná geografická data KML</comment>
+  <comment xml:lang="ca">dades geogràfiques KML amb compressió</comment>
+  <comment xml:lang="bg">Географски данни — KML, компресирани</comment>
+  <comment xml:lang="be-Cyrl">сціснутыя геаграфічныя даныя KML</comment>
+  <comment xml:lang="ar">بيانات جغرافية مضغوطة KML</comment>
+  <comment xml:lang="af">KML saamgepersde geografiese data</comment>
+  <acronym>KML</acronym>
+  <expanded-acronym>Keyhole Markup Language</expanded-acronym>
+  <sub-class-of type="application/zip"/>
+  <glob pattern="*.kmz"/>
+</mime-type>

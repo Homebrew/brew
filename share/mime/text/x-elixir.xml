@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="text/x-elixir">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Elixir source code</comment>
+  <comment xml:lang="zh-Hant-TW">Elixir 原始碼</comment>
+  <comment xml:lang="zh-Hans-CN">Elixir 源代码</comment>
+  <comment xml:lang="uk">початковий код мовою Elixir</comment>
+  <comment xml:lang="tr">Elixir kaynak kodu</comment>
+  <comment xml:lang="sv">Elixir-källkod</comment>
+  <comment xml:lang="sl">Izvorna koda Elixir</comment>
+  <comment xml:lang="si">Elixir මූල කේතය</comment>
+  <comment xml:lang="ru">Исходный код Elixir</comment>
+  <comment xml:lang="pt-BR">Código-fonte Elixir</comment>
+  <comment xml:lang="pl">Kod źródłowy Elixir</comment>
+  <comment xml:lang="nl">Elixir-broncode</comment>
+  <comment xml:lang="ko">Elixir 소스 코드</comment>
+  <comment xml:lang="kk-Cyrl">Elixir бастапқы коды</comment>
+  <comment xml:lang="ja">Elixir ソースコード</comment>
+  <comment xml:lang="it">Codice sorgente Elixir</comment>
+  <comment xml:lang="hr">Elixir izvorni kôd</comment>
+  <comment xml:lang="he">קוד מקור ב־Elixir</comment>
+  <comment xml:lang="gl">Código de fonte Elixir</comment>
+  <comment xml:lang="fi">Elixir-lähdekoodi</comment>
+  <comment xml:lang="eu">Elixir iturburu-kodea</comment>
+  <comment xml:lang="es">código fuente Elixir</comment>
+  <comment xml:lang="en-GB">Elixir source code</comment>
+  <comment xml:lang="de">Elixir-Quelltext</comment>
+  <comment xml:lang="be-Cyrl">зыходны код Elixir</comment>
+  <comment xml:lang="ar">شفرة مصدر Elixir</comment>
+  <sub-class-of type="text/plain"/>
+  <glob pattern="*.ex"/>
+  <glob pattern="*.exs"/>
+</mime-type>

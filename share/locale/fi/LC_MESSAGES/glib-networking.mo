@@ -1,0 +1,1 @@
+../../../../Cellar/glib-networking/2.80.1/share/locale/fi/LC_MESSAGES/glib-networking.mo

@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="x-content/video-svcd">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Super Video CD</comment>
+  <comment xml:lang="zh-Hant-TW">Super Video CD</comment>
+  <comment xml:lang="zh-Hans-CN">SVCD</comment>
+  <comment xml:lang="vi">Đĩa CD siêu ảnh động</comment>
+  <comment xml:lang="uk">Super Video CD</comment>
+  <comment xml:lang="tr">Super Video CD</comment>
+  <comment xml:lang="sv">Super Video CD</comment>
+  <comment xml:lang="sr-Cyrl">Супер видео ЦД</comment>
+  <comment xml:lang="sq">CD Super Video</comment>
+  <comment xml:lang="sl">Super Video CD</comment>
+  <comment xml:lang="si">සුපිරි වීඩියෝ CD</comment>
+  <comment xml:lang="sk">Super Video CD</comment>
+  <comment xml:lang="ru">Super Video CD</comment>
+  <comment xml:lang="ro">Super Video CD</comment>
+  <comment xml:lang="pt-BR">CD de Super Vídeo (SVCD)</comment>
+  <comment xml:lang="pt">Super Video CD</comment>
+  <comment xml:lang="pl">Super Video CD</comment>
+  <comment xml:lang="oc">Super VCD</comment>
+  <comment xml:lang="nn">Super Video-CD</comment>
+  <comment xml:lang="nl">super-video-CD</comment>
+  <comment xml:lang="lv">Super Video CD</comment>
+  <comment xml:lang="lt">Super vaizdo CD</comment>
+  <comment xml:lang="ko">수퍼 비디오 CD</comment>
+  <comment xml:lang="kk-Cyrl">Super Video CD</comment>
+  <comment xml:lang="ka">Super Video CD</comment>
+  <comment xml:lang="ja">スーパービデオ CD</comment>
+  <comment xml:lang="it">Super Video CD</comment>
+  <comment xml:lang="is">Super Video CD-mynddiskur</comment>
+  <comment xml:lang="id">Super Video CD</comment>
+  <comment xml:lang="ia">Super Video CD</comment>
+  <comment xml:lang="hu">Super Video CD</comment>
+  <comment xml:lang="hr">Super Video CD</comment>
+  <comment xml:lang="he">Super Video CD</comment>
+  <comment xml:lang="gl">Super vídeo CD</comment>
+  <comment xml:lang="ga">dlúthdhiosca Super Video</comment>
+  <comment xml:lang="fur">Super Video CD</comment>
+  <comment xml:lang="fr">Super VCD</comment>
+  <comment xml:lang="fo">Super Video CD</comment>
+  <comment xml:lang="fi">Super Video CD</comment>
+  <comment xml:lang="eu">Super Bideo CDa</comment>
+  <comment xml:lang="es">Super Video CD</comment>
+  <comment xml:lang="eo">Super-Video-KD</comment>
+  <comment xml:lang="en-GB">Super Video CD</comment>
+  <comment xml:lang="el">Super Video CD</comment>
+  <comment xml:lang="de">Super-Video-CD</comment>
+  <comment xml:lang="da">Super Video-cd</comment>
+  <comment xml:lang="cs">Super Video CD</comment>
+  <comment xml:lang="ca">Super Video CD</comment>
+  <comment xml:lang="bg">CD — супер видео</comment>
+  <comment xml:lang="be-Latn">Super Video CD</comment>
+  <comment xml:lang="be-Cyrl">Super Video CD</comment>
+  <comment xml:lang="ast">CD de Super Video</comment>
+  <comment xml:lang="ar">سي دي فيديو فائق</comment>
+  <comment xml:lang="af">Super Video-CD</comment>
+</mime-type>

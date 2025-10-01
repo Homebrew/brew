@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-font-type1">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>PostScript type-1 font</comment>
+  <comment xml:lang="zh-Hant-TW">PostScript type-1 字型</comment>
+  <comment xml:lang="zh-Hans-CN">PostScript type-1 字体</comment>
+  <comment xml:lang="uk">шрифт type-1 PostScript</comment>
+  <comment xml:lang="tr">PostScript tip-1 yazı tipi</comment>
+  <comment xml:lang="sv">PostScript type-1-typsnitt</comment>
+  <comment xml:lang="sr-Cyrl">слова Постскрипта врсте-1</comment>
+  <comment xml:lang="sq">shkronja PostScript type-1</comment>
+  <comment xml:lang="sl">Datoteka pisave PostScript vrsta-1</comment>
+  <comment xml:lang="si">PostScript වර්ගය-1 අකුරු</comment>
+  <comment xml:lang="sk">Písmo PostScript typu 1</comment>
+  <comment xml:lang="ru">Шрифт PostScript Type-1</comment>
+  <comment xml:lang="pt-BR">Fonte PostScript tipo-1</comment>
+  <comment xml:lang="pt">letra PostScript Tipo 1</comment>
+  <comment xml:lang="pl">Czcionka PostScript Type-1</comment>
+  <comment xml:lang="nl">PostScript type-1-lettertype</comment>
+  <comment xml:lang="ko">PostScript Type-1 글꼴</comment>
+  <comment xml:lang="kk-Cyrl">PostScript type-1 қарібі</comment>
+  <comment xml:lang="ja">PostScript type-1 フォント</comment>
+  <comment xml:lang="it">Carattere PostScript type-1</comment>
+  <comment xml:lang="is">PostScript type-1 letur</comment>
+  <comment xml:lang="id">Fonta PostScript type-1</comment>
+  <comment xml:lang="hu">PostScript type-1 betűkészlet</comment>
+  <comment xml:lang="hr">PostScript type-1 font</comment>
+  <comment xml:lang="he">גופן PostScript type-1</comment>
+  <comment xml:lang="gl">Tipo de letra PostScript tipo 1</comment>
+  <comment xml:lang="ga">cló PostScript type-1</comment>
+  <comment xml:lang="fur">caratar PostScript type-1</comment>
+  <comment xml:lang="fr">police PostScript Type 1</comment>
+  <comment xml:lang="fi">PostScript type-1 -fontti</comment>
+  <comment xml:lang="eu">PostScript type-1 letra-tipoa</comment>
+  <comment xml:lang="es">tipo de letra PostScript Type-1</comment>
+  <comment xml:lang="en-GB">PostScript type-1 font</comment>
+  <comment xml:lang="de">PostScript-Typ-1-Schrift</comment>
+  <comment xml:lang="da">PostScript type-1-skrifttype</comment>
+  <comment xml:lang="cs">font PostScript type-1</comment>
+  <comment xml:lang="ca">lletra type-1 de PostScript</comment>
+  <comment xml:lang="bg">Шрифт — PostScript type-1</comment>
+  <comment xml:lang="be-Cyrl">шрыфт PostScript type-1</comment>
+  <comment xml:lang="ar">خط بوستسكربت النوع ١</comment>
+  <comment xml:lang="af">PostScript tipe 1-skriftipe</comment>
+  <sub-class-of type="application/postscript"/>
+  <generic-icon name="font-x-generic"/>
+  <glob pattern="*.pfa"/>
+  <glob pattern="*.pfb"/>
+  <glob pattern="*.gsf"/>
+</mime-type>

@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/vnd.efi.img">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Raw disk image</comment>
+  <comment xml:lang="zh-Hant-TW">原始磁碟映像檔</comment>
+  <comment xml:lang="zh-Hans-CN">原始磁盘映像</comment>
+  <comment xml:lang="uk">простий образ диска</comment>
+  <comment xml:lang="tr">Ham disk görüntüsü</comment>
+  <comment xml:lang="sv">Rå diskavbild</comment>
+  <comment xml:lang="sr-Cyrl">сиров одраз диска</comment>
+  <comment xml:lang="sq">pamje disku e papërpunuar</comment>
+  <comment xml:lang="sl">Surovi odtis diska</comment>
+  <comment xml:lang="si">අමු තැටි රූපය</comment>
+  <comment xml:lang="sk">Obraz disku</comment>
+  <comment xml:lang="ru">Необработанный образ диска</comment>
+  <comment xml:lang="pt-BR">Imagem bruta de disco</comment>
+  <comment xml:lang="pt">imagem de disco Raw</comment>
+  <comment xml:lang="pl">Surowy obraz dysku</comment>
+  <comment xml:lang="oc">imatge disc Raw</comment>
+  <comment xml:lang="nl">Onbewerkt schijfkopiebestand</comment>
+  <comment xml:lang="ko">RAW 디스크 이미지</comment>
+  <comment xml:lang="kk-Cyrl">Шикі диск бейнесі</comment>
+  <comment xml:lang="ja">Raw ディスクイメージ</comment>
+  <comment xml:lang="it">Immagine disco raw</comment>
+  <comment xml:lang="is">Hrá diskmynd</comment>
+  <comment xml:lang="id">Image disk mentah</comment>
+  <comment xml:lang="ia">Imagine de disco crude</comment>
+  <comment xml:lang="hu">Nyers lemezkép</comment>
+  <comment xml:lang="hr">Osnovna slika diska</comment>
+  <comment xml:lang="he">דמות גולמית של כונן</comment>
+  <comment xml:lang="gl">Imaxe de disco en bruto</comment>
+  <comment xml:lang="ga">Amhíomha diosca</comment>
+  <comment xml:lang="fur">imagjin disc grese</comment>
+  <comment xml:lang="fr">image disque Raw</comment>
+  <comment xml:lang="fi">Raaka levykuva</comment>
+  <comment xml:lang="eu">Disko gordinaren irudia</comment>
+  <comment xml:lang="es">imagen de disco en bruto</comment>
+  <comment xml:lang="en-GB">Raw disk image</comment>
+  <comment xml:lang="el">Ανεπεξέργαστη εικόνα δίσκου</comment>
+  <comment xml:lang="de">Rohes Datenträgerabbild</comment>
+  <comment xml:lang="da">Raw-diskaftryk</comment>
+  <comment xml:lang="cs">surový obraz disku</comment>
+  <comment xml:lang="ca">imatge de disc RAW</comment>
+  <comment xml:lang="bg">Диск — raw</comment>
+  <comment xml:lang="be-Cyrl">неапрацаваны вобраз дыска</comment>
+  <comment xml:lang="ast">Imaxe de discu en bruto</comment>
+  <comment xml:lang="ar">صورة قرص خام</comment>
+  <comment xml:lang="af">Rou skyfbeeldlêer</comment>
+  <alias type="application/x-raw-disk-image"/>
+  <glob pattern="*.raw-disk-image"/>
+  <glob pattern="*.img"/>
+</mime-type>

@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="text/x-subviewer">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>SubViewer subtitles</comment>
+  <comment xml:lang="zh-Hant-TW">SubViewer 字幕</comment>
+  <comment xml:lang="zh-Hans-CN">SubViewer 字幕</comment>
+  <comment xml:lang="vi">Phụ đề SubViewer</comment>
+  <comment xml:lang="uk">субтитри SubViewer</comment>
+  <comment xml:lang="tr">SubViewer alt yazıları</comment>
+  <comment xml:lang="sv">SubViewer-undertexter</comment>
+  <comment xml:lang="sr-Cyrl">Суб Вјивер преводи</comment>
+  <comment xml:lang="sq">titra SubViewer</comment>
+  <comment xml:lang="sl">Datoteka podnapisov SubViewer</comment>
+  <comment xml:lang="si">SubViewer උපසිරැසි</comment>
+  <comment xml:lang="sk">Titulky SubViewer</comment>
+  <comment xml:lang="ru">Субтитры SubViewer</comment>
+  <comment xml:lang="ro">Subtitrare SubViewer</comment>
+  <comment xml:lang="pt-BR">Legendas SubViewer</comment>
+  <comment xml:lang="pt">legendas SubViewer</comment>
+  <comment xml:lang="pl">Napisy SubViewer</comment>
+  <comment xml:lang="oc">sostítols SubViewer</comment>
+  <comment xml:lang="nn">SubViewer-teksting</comment>
+  <comment xml:lang="nl">SubViewer-ondertitels</comment>
+  <comment xml:lang="nb">SubViewer undertekst</comment>
+  <comment xml:lang="lv">SubViewer subtitri</comment>
+  <comment xml:lang="lt">SubViewer subtitrai</comment>
+  <comment xml:lang="ko">SubViewer 자막 파일</comment>
+  <comment xml:lang="kk-Cyrl">SubViewer субтитрлары</comment>
+  <comment xml:lang="ja">SubViewer 字幕</comment>
+  <comment xml:lang="it">Sottotitoli SubViewer</comment>
+  <comment xml:lang="is">SubViewer skjátextar</comment>
+  <comment xml:lang="id">Subjudul SubViewer</comment>
+  <comment xml:lang="ia">Subtitulos SubViewer</comment>
+  <comment xml:lang="hu">SubViewer feliratok</comment>
+  <comment xml:lang="hr">SubViewer podnaslovi</comment>
+  <comment xml:lang="he">כתוביות של SubViewer</comment>
+  <comment xml:lang="gl">subtítulos SubViewer</comment>
+  <comment xml:lang="ga">fotheidil SubViewer</comment>
+  <comment xml:lang="fur">sottitui SubViewer</comment>
+  <comment xml:lang="fr">sous-titres SubViewer</comment>
+  <comment xml:lang="fo">SubViewer undirtekstir</comment>
+  <comment xml:lang="fi">SubViewer-tekstitykset</comment>
+  <comment xml:lang="eu">SubViewer azpitituluak</comment>
+  <comment xml:lang="es">subtítulos SubViewer</comment>
+  <comment xml:lang="eo">SubViewer-subtekstoj</comment>
+  <comment xml:lang="en-GB">SubViewer subtitles</comment>
+  <comment xml:lang="el">Υπότιτλοι SubViewer</comment>
+  <comment xml:lang="de">SubViewer-Untertitel</comment>
+  <comment xml:lang="da">SubViewer-undertekster</comment>
+  <comment xml:lang="cs">titulky SubViewer</comment>
+  <comment xml:lang="ca">subtítols SubViewer</comment>
+  <comment xml:lang="bg">Субтитри — SubViewer</comment>
+  <comment xml:lang="be-Latn">Subtytry SubViewer</comment>
+  <comment xml:lang="be-Cyrl">субцітры SubViewer</comment>
+  <comment xml:lang="ar">ترجمات SubViewer</comment>
+  <comment xml:lang="af">SubViewer-onderskrifte</comment>
+  <sub-class-of type="text/plain"/>
+  <glob pattern="*.sub"/>
+</mime-type>

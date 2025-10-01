@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="image/x-gimp-gbr">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>GIMP brush</comment>
+  <comment xml:lang="zh-Hant-TW">GIMP 筆刷</comment>
+  <comment xml:lang="zh-Hans-CN">GIMP 笔刷</comment>
+  <comment xml:lang="uk">пензель GIMP</comment>
+  <comment xml:lang="tr">GIMP fırçası</comment>
+  <comment xml:lang="sv">GIMP-pensel</comment>
+  <comment xml:lang="sq">penel GIMP</comment>
+  <comment xml:lang="sl">Čopič GIMP</comment>
+  <comment xml:lang="si">GIMP බුරුසුව</comment>
+  <comment xml:lang="sk">Štetec aplikácie GIMP</comment>
+  <comment xml:lang="ru">Кисть GIMP</comment>
+  <comment xml:lang="pt-BR">Pincel do GIMP</comment>
+  <comment xml:lang="pl">Pędzel programu GIMP</comment>
+  <comment xml:lang="nl">GIMP-kwast</comment>
+  <comment xml:lang="ko">GIMP 붓</comment>
+  <comment xml:lang="kk-Cyrl">GIMP бояу жаққышы</comment>
+  <comment xml:lang="ka">GIMP-ის ფუნჯი</comment>
+  <comment xml:lang="ja">GIMP ブラシ</comment>
+  <comment xml:lang="it">Pennello GIMP</comment>
+  <comment xml:lang="is">GIMP-pensill</comment>
+  <comment xml:lang="id">Kuas GIMP</comment>
+  <comment xml:lang="hu">GIMP ecset</comment>
+  <comment xml:lang="hr">GIMP kist</comment>
+  <comment xml:lang="he">מברשת GIMP</comment>
+  <comment xml:lang="gl">Pincel de GIMP</comment>
+  <comment xml:lang="ga">scuab GIMP</comment>
+  <comment xml:lang="fur">pinel GIMP</comment>
+  <comment xml:lang="fr">brosse GIMP</comment>
+  <comment xml:lang="fi">GIMP-sivellin</comment>
+  <comment xml:lang="eu">GIMP pintzela</comment>
+  <comment xml:lang="es">pincel del GIMP</comment>
+  <comment xml:lang="en-GB">GIMP brush</comment>
+  <comment xml:lang="de">GIMP-Pinsel</comment>
+  <comment xml:lang="da">GIMP-pensel</comment>
+  <comment xml:lang="cs">štětec GIMP</comment>
+  <comment xml:lang="ca">pinzell de GIMP</comment>
+  <comment xml:lang="bg">Четка — GIMP</comment>
+  <comment xml:lang="be-Cyrl">пэндзаль GIMP</comment>
+  <comment xml:lang="ar">فرشاة جمب</comment>
+  <comment xml:lang="af">GIMP-kwas</comment>
+  <glob pattern="*.gbr"/>
+</mime-type>

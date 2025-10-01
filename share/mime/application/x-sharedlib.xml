@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-sharedlib">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Shared library</comment>
+  <comment xml:lang="uk">спільна бібліотека</comment>
+  <comment xml:lang="sv">Delat bibliotek</comment>
+  <comment xml:lang="ru">Разделяемая библиотека</comment>
+  <comment xml:lang="pl">Biblioteka współdzielona</comment>
+  <comment xml:lang="ja">共有ライブラリ</comment>
+  <comment xml:lang="it">Libreria condivisa</comment>
+  <comment xml:lang="gl">Biblioteca compartida</comment>
+  <comment xml:lang="eu">Liburutegi partekatua</comment>
+  <comment xml:lang="es">biblioteca compartida</comment>
+  <comment xml:lang="de">Gemeinsam genutzte Bibliothek</comment>
+  <comment xml:lang="be-Cyrl">агульная бібліятэка</comment>
+  <glob pattern="*.so"/>
+  <glob weight="60" pattern="*.so.[0-9]*"/>
+</mime-type>

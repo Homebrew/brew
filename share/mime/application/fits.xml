@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/fits">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>FITS document</comment>
+  <comment xml:lang="zh-Hant-TW">FITS 文件</comment>
+  <comment xml:lang="zh-Hans-CN">FITS 文档</comment>
+  <comment xml:lang="vi">Tài liệu FITS</comment>
+  <comment xml:lang="uk">документ FITS</comment>
+  <comment xml:lang="tr">FITS belgesi</comment>
+  <comment xml:lang="sv">FITS-dokument</comment>
+  <comment xml:lang="sr-Cyrl">ФИТС документ</comment>
+  <comment xml:lang="sq">dokument FITS</comment>
+  <comment xml:lang="sl">Dokument FITS</comment>
+  <comment xml:lang="si">FITS ලේඛනය</comment>
+  <comment xml:lang="sk">Dokument FITS</comment>
+  <comment xml:lang="ru">Документ FITS</comment>
+  <comment xml:lang="ro">Document FITS</comment>
+  <comment xml:lang="pt-BR">Documento FITS</comment>
+  <comment xml:lang="pt">documento FITS</comment>
+  <comment xml:lang="pl">Dokument FITS</comment>
+  <comment xml:lang="oc">document FITS</comment>
+  <comment xml:lang="nn">FITS-dokument</comment>
+  <comment xml:lang="nl">FITS-document</comment>
+  <comment xml:lang="nb">FITS-dokument</comment>
+  <comment xml:lang="lv">FITS dokuments</comment>
+  <comment xml:lang="lt">FITS dokumentas</comment>
+  <comment xml:lang="ko">FITS 문서</comment>
+  <comment xml:lang="kk-Cyrl">FITS құжаты</comment>
+  <comment xml:lang="ka">FITS დოკუმენტი</comment>
+  <comment xml:lang="ja">FITS ドキュメント</comment>
+  <comment xml:lang="it">Documento FITS</comment>
+  <comment xml:lang="is">FITS skjalskjal</comment>
+  <comment xml:lang="id">Dokumen FITS</comment>
+  <comment xml:lang="ia">Documento FITS</comment>
+  <comment xml:lang="hu">FITS dokumentum</comment>
+  <comment xml:lang="hr">FITS dokument</comment>
+  <comment xml:lang="he">מסמך FITS</comment>
+  <comment xml:lang="gl">documento FICT</comment>
+  <comment xml:lang="ga">cáipéis FITS</comment>
+  <comment xml:lang="fur">document FITS</comment>
+  <comment xml:lang="fr">document FITS</comment>
+  <comment xml:lang="fo">FITS skjal</comment>
+  <comment xml:lang="fi">FITS-asiakirja</comment>
+  <comment xml:lang="eu">FITS dokumentua</comment>
+  <comment xml:lang="es">documento FITS</comment>
+  <comment xml:lang="eo">FITS-dokumento</comment>
+  <comment xml:lang="en-GB">FITS document</comment>
+  <comment xml:lang="el">Έγγραφο FITS</comment>
+  <comment xml:lang="de">FITS-Dokument</comment>
+  <comment xml:lang="da">FITS-dokument</comment>
+  <comment xml:lang="cs">dokument FITS</comment>
+  <comment xml:lang="ca">document FITS</comment>
+  <comment xml:lang="bg">Документ — FITS</comment>
+  <comment xml:lang="be-Latn">Dakument FITS</comment>
+  <comment xml:lang="be-Cyrl">дакумент FITS</comment>
+  <comment xml:lang="ast">Documentu FITS</comment>
+  <comment xml:lang="ar">مستند FITS</comment>
+  <comment xml:lang="af">FITS-dokument</comment>
+  <acronym>FITS</acronym>
+  <expanded-acronym>Flexible Image Transport System</expanded-acronym>
+  <glob pattern="*.fits"/>
+  <glob pattern="*.fit"/>
+  <glob pattern="*.fts"/>
+  <alias type="image/x-fits"/>
+  <alias type="image/fits"/>
+</mime-type>

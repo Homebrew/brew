@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-openzim">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>OpenZIM file</comment>
+  <comment xml:lang="zh-Hans-CN">OpenZIM 文件</comment>
+  <comment xml:lang="uk">файл OpenZIM</comment>
+  <comment xml:lang="tr">OpenZIM dosyası</comment>
+  <comment xml:lang="sv">OpenZIM-fil</comment>
+  <comment xml:lang="sl">Datoteka OpenZIM</comment>
+  <comment xml:lang="si">OpenZIM ගොනුව</comment>
+  <comment xml:lang="ru">Файл OpenZIM</comment>
+  <comment xml:lang="pt-BR">Arquivo OpenZIM</comment>
+  <comment xml:lang="pl">Plik OpenZIM</comment>
+  <comment xml:lang="oc">fichièr OpenZIM</comment>
+  <comment xml:lang="nl">OpenZIM-bestand</comment>
+  <comment xml:lang="ko">OpenZIM 파일</comment>
+  <comment xml:lang="kk-Cyrl">OpenZIM файлы</comment>
+  <comment xml:lang="ja">OpenZIM ファイル</comment>
+  <comment xml:lang="it">File OpenZIM</comment>
+  <comment xml:lang="hr">OpenZIM datoteka</comment>
+  <comment xml:lang="fi">OpenZIM-tiedosto</comment>
+  <comment xml:lang="eu">OpenZIM fitxategia</comment>
+  <comment xml:lang="es">archivo OpenZIM</comment>
+  <comment xml:lang="en-GB">OpenZIM file</comment>
+  <comment xml:lang="de">OpenZIM-Datei</comment>
+  <comment xml:lang="be-Cyrl">файл OpenZIM</comment>
+  <comment xml:lang="ar">ملف OpenZIM </comment>
+  <acronym>ZIM</acronym>
+  <expanded-acronym>Zeno IMproved</expanded-acronym>
+  <glob pattern="*.zim"/>
+</mime-type>

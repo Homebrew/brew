@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="image/x-fpx">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>FPX image</comment>
+  <comment xml:lang="zh-Hant-TW">FPX 影像</comment>
+  <comment xml:lang="zh-Hans-CN">FPX 图像</comment>
+  <comment xml:lang="vi">Ảnh FPX</comment>
+  <comment xml:lang="uk">зображення FPX</comment>
+  <comment xml:lang="tr">FPX görüntüsü</comment>
+  <comment xml:lang="sv">FPX-bild</comment>
+  <comment xml:lang="sr-Cyrl">ФПИкс слика</comment>
+  <comment xml:lang="sq">figurë FPX</comment>
+  <comment xml:lang="sl">Slikovna datoteka FPX</comment>
+  <comment xml:lang="si">FPX රූපය</comment>
+  <comment xml:lang="sk">Obrázok FPX</comment>
+  <comment xml:lang="ru">Изображение FPX</comment>
+  <comment xml:lang="ro">Imagine FPX</comment>
+  <comment xml:lang="pt-BR">Imagem FPX</comment>
+  <comment xml:lang="pt">imagem FPX</comment>
+  <comment xml:lang="pl">Obraz FPX</comment>
+  <comment xml:lang="oc">imatge FPX</comment>
+  <comment xml:lang="nn">FPX-bilete</comment>
+  <comment xml:lang="nl">FPX-afbeelding</comment>
+  <comment xml:lang="nb">FPX-bilde</comment>
+  <comment xml:lang="lv">FPX attēls</comment>
+  <comment xml:lang="lt">FPX paveikslėlis</comment>
+  <comment xml:lang="ko">FPX 그림</comment>
+  <comment xml:lang="kk-Cyrl">FPX суреті</comment>
+  <comment xml:lang="ka">FPX გამოსახულება</comment>
+  <comment xml:lang="ja">FPX 画像</comment>
+  <comment xml:lang="it">Immagine FPX</comment>
+  <comment xml:lang="is">FPX mynd</comment>
+  <comment xml:lang="id">Citra FPX</comment>
+  <comment xml:lang="ia">Imagine FPX</comment>
+  <comment xml:lang="hu">FPX kép</comment>
+  <comment xml:lang="hr">FPX slika</comment>
+  <comment xml:lang="he">תמונת FPX</comment>
+  <comment xml:lang="gl">imaxe FPX</comment>
+  <comment xml:lang="ga">íomhá FPX</comment>
+  <comment xml:lang="fur">imagjin FPX</comment>
+  <comment xml:lang="fr">image FPX</comment>
+  <comment xml:lang="fo">FPX mynd</comment>
+  <comment xml:lang="fi">FPX-kuva</comment>
+  <comment xml:lang="eu">FPX irudia</comment>
+  <comment xml:lang="es">imagen FPX</comment>
+  <comment xml:lang="eo">FPX-bildo</comment>
+  <comment xml:lang="en-GB">FPX image</comment>
+  <comment xml:lang="el">Εικόνα FPX</comment>
+  <comment xml:lang="de">FPX-Bild</comment>
+  <comment xml:lang="da">FPX-billede</comment>
+  <comment xml:lang="cs">obrázek FPX</comment>
+  <comment xml:lang="ca">imatge FPX</comment>
+  <comment xml:lang="bg">Изображение — FPX</comment>
+  <comment xml:lang="be-Latn">Vyjava FPX</comment>
+  <comment xml:lang="be-Cyrl">выява FPX</comment>
+  <comment xml:lang="ar">صورة FPX</comment>
+  <comment xml:lang="af">FPX-beeld</comment>
+  <acronym>FPX</acronym>
+  <expanded-acronym>FlashPiX</expanded-acronym>
+</mime-type>

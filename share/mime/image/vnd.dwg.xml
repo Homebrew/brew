@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="image/vnd.dwg">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>AutoCAD image</comment>
+  <comment xml:lang="zh-Hant-TW">AutoCAD 影像</comment>
+  <comment xml:lang="zh-Hans-CN">AutoCAD 图像</comment>
+  <comment xml:lang="vi">Ảnh AutoCAD</comment>
+  <comment xml:lang="uk">зображення AutoCAD</comment>
+  <comment xml:lang="tr">AutoCAD görüntüsü</comment>
+  <comment xml:lang="sv">AutoCAD-bild</comment>
+  <comment xml:lang="sr-Cyrl">АутоКАД слика</comment>
+  <comment xml:lang="sq">figurë AutoCAD</comment>
+  <comment xml:lang="sl">Slikovna datoteka AutoCAD</comment>
+  <comment xml:lang="si">AutoCAD රූපය</comment>
+  <comment xml:lang="sk">Obrázok AutoCAD</comment>
+  <comment xml:lang="ru">Изображение AutoCAD</comment>
+  <comment xml:lang="ro">Imagine AutoCAD</comment>
+  <comment xml:lang="pt-BR">Imagem do AutoCAD</comment>
+  <comment xml:lang="pt">imagem AutoCAD</comment>
+  <comment xml:lang="pl">Obraz AutoCAD</comment>
+  <comment xml:lang="oc">imatge AutoCAD</comment>
+  <comment xml:lang="nn">AutoCAD-bilete</comment>
+  <comment xml:lang="nl">AutoCAD-afbeelding</comment>
+  <comment xml:lang="nb">AutoCAD-bilde</comment>
+  <comment xml:lang="ms">Imej AutoCAD</comment>
+  <comment xml:lang="lv">AutoCAD attēls</comment>
+  <comment xml:lang="lt">AutoCAD paveikslėlis</comment>
+  <comment xml:lang="ko">AutoCAD 그림</comment>
+  <comment xml:lang="kk-Cyrl">AutoCAD суреті</comment>
+  <comment xml:lang="ka">AutoCAD-ის გამოსახულება</comment>
+  <comment xml:lang="ja">AutoCAD 画像</comment>
+  <comment xml:lang="it">Immagine AutoCAD</comment>
+  <comment xml:lang="is">AutoCAD mynd</comment>
+  <comment xml:lang="id">Citra AutoCAD</comment>
+  <comment xml:lang="ia">Imagine AutoCAD</comment>
+  <comment xml:lang="hu">AutoCAD-kép</comment>
+  <comment xml:lang="hr">AutoCAD slika</comment>
+  <comment xml:lang="he">תמונה של AutoCAD</comment>
+  <comment xml:lang="gl">imaxe de AutoCAD</comment>
+  <comment xml:lang="ga">íomhá AutoCAD</comment>
+  <comment xml:lang="fur">imagjin AutoCAD</comment>
+  <comment xml:lang="fr">image AutoCAD</comment>
+  <comment xml:lang="fo">AutoCAD mynd</comment>
+  <comment xml:lang="fi">AutoCAD-kuva</comment>
+  <comment xml:lang="eu">AutoCAD-eko irudia</comment>
+  <comment xml:lang="es">imagen de AutoCAD</comment>
+  <comment xml:lang="eo">AutoCAD-bildo</comment>
+  <comment xml:lang="en-GB">AutoCAD image</comment>
+  <comment xml:lang="el">Εικόνα AutoCAD</comment>
+  <comment xml:lang="de">AutoCAD-Bild</comment>
+  <comment xml:lang="da">AutoCAD-billede</comment>
+  <comment xml:lang="cy">Delwedd AutoCAD</comment>
+  <comment xml:lang="cs">výkres AutoCAD</comment>
+  <comment xml:lang="ca">imatge d'AutoCAD</comment>
+  <comment xml:lang="bg">Изображение — AutoCAD</comment>
+  <comment xml:lang="be-Latn">Vyjava AutoCAD</comment>
+  <comment xml:lang="be-Cyrl">выява AutoCAD</comment>
+  <comment xml:lang="az">AutoCAD rəsmi</comment>
+  <comment xml:lang="ar">صورة AutoCAD</comment>
+  <comment xml:lang="af">AutoCAD-beeld</comment>
+  <glob pattern="*.dwg"/>
+</mime-type>

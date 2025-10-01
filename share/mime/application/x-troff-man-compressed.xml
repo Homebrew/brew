@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-troff-man-compressed">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Manual page (compressed)</comment>
+  <comment xml:lang="zh-Hans-CN">手册页（压缩）</comment>
+  <comment xml:lang="uk">сторінка підручника (стиснена)</comment>
+  <comment xml:lang="tr">Kılavuz sayfası (sıkıştırılmış)</comment>
+  <comment xml:lang="sv">Manualsida (komprimerad)</comment>
+  <comment xml:lang="si">අතින් පිටුව (සම්පීඩිත)</comment>
+  <comment xml:lang="ru">Страница руководства (сжатая)</comment>
+  <comment xml:lang="pt-BR">Página de manual (compactada)</comment>
+  <comment xml:lang="pl">Strona podręcznika (skompresowana)</comment>
+  <comment xml:lang="nl">Handleidingpagina (gecomprimeerd)</comment>
+  <comment xml:lang="ko">man 페이지 (압축)</comment>
+  <comment xml:lang="kk-Cyrl">Нұсқаулық парағы (сығылған)</comment>
+  <comment xml:lang="ja">マニュアルページ (圧縮)</comment>
+  <comment xml:lang="it">Pagina di manuale (compressa)</comment>
+  <comment xml:lang="hr">Stranica priručnika (sažeta)</comment>
+  <comment xml:lang="gl">Páxina de manual (comprimida)</comment>
+  <comment xml:lang="fi">Manuaalisivu (pakattu)</comment>
+  <comment xml:lang="eu">Eskuliburu-orria (konprimatua)</comment>
+  <comment xml:lang="es">página de manual (comprimida)</comment>
+  <comment xml:lang="en-GB">Manual page (compressed)</comment>
+  <comment xml:lang="de">Handbuchseite (komprimiert)</comment>
+  <comment xml:lang="be-Cyrl">старонка даведкі (сціснутая)</comment>
+  <comment xml:lang="ar">صفحة دليل (مضغوطة)</comment>
+  <generic-icon name="text-x-generic"/>
+</mime-type>

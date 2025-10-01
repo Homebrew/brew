@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="text/troff">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Troff document</comment>
+  <comment xml:lang="zh-Hant-TW">Troff 文件</comment>
+  <comment xml:lang="zh-Hans-CN">Troff 文档</comment>
+  <comment xml:lang="vi">Tài liệu Troff</comment>
+  <comment xml:lang="uk">документ Troff</comment>
+  <comment xml:lang="tr">Troff belgesi</comment>
+  <comment xml:lang="sv">Troff-dokument</comment>
+  <comment xml:lang="sr-Cyrl">Трофф документ</comment>
+  <comment xml:lang="sq">dokument Troff</comment>
+  <comment xml:lang="sl">Dokument Troff</comment>
+  <comment xml:lang="si">ට්රොෆ් ලේඛනය</comment>
+  <comment xml:lang="sk">Dokument troff</comment>
+  <comment xml:lang="ru">Документ Troff</comment>
+  <comment xml:lang="ro">Document Troff</comment>
+  <comment xml:lang="pt-BR">Documento Troff</comment>
+  <comment xml:lang="pt">documento Troff</comment>
+  <comment xml:lang="pl">Dokument Troff</comment>
+  <comment xml:lang="oc">document Troff</comment>
+  <comment xml:lang="nn">Troff-dokument</comment>
+  <comment xml:lang="nl">Troff-document</comment>
+  <comment xml:lang="nb">Troff-dokument</comment>
+  <comment xml:lang="ms">Dokumen Troff</comment>
+  <comment xml:lang="lv">Troff dokuments</comment>
+  <comment xml:lang="lt">Troff dokumentas</comment>
+  <comment xml:lang="ko">Troff 문서</comment>
+  <comment xml:lang="kk-Cyrl">Troff құжаты</comment>
+  <comment xml:lang="ja">Troff 入力ドキュメント</comment>
+  <comment xml:lang="it">Documento Troff</comment>
+  <comment xml:lang="is">Troff skjal</comment>
+  <comment xml:lang="id">Dokumen Troff</comment>
+  <comment xml:lang="ia">Documento Troff</comment>
+  <comment xml:lang="hu">Troff-dokumentum</comment>
+  <comment xml:lang="hr">Troff dokument</comment>
+  <comment xml:lang="he">מסמך Troff</comment>
+  <comment xml:lang="gl">documento Troff</comment>
+  <comment xml:lang="ga">cáipéis Troff</comment>
+  <comment xml:lang="fur">document Troff</comment>
+  <comment xml:lang="fr">document Troff</comment>
+  <comment xml:lang="fo">Troff skjal</comment>
+  <comment xml:lang="fi">Troff-asiakirja</comment>
+  <comment xml:lang="eu">Troff dokumentua</comment>
+  <comment xml:lang="es">documento de Troff</comment>
+  <comment xml:lang="eo">Troff-dokumento</comment>
+  <comment xml:lang="en-GB">Troff document</comment>
+  <comment xml:lang="el">Έγγραφο troff</comment>
+  <comment xml:lang="de">Troff-Dokument</comment>
+  <comment xml:lang="da">Troffdokument</comment>
+  <comment xml:lang="cy">Dogfen troff</comment>
+  <comment xml:lang="cs">dokument Troff</comment>
+  <comment xml:lang="ca">document Troff</comment>
+  <comment xml:lang="bg">Документ — Troff</comment>
+  <comment xml:lang="be-Latn">Dakument Troff</comment>
+  <comment xml:lang="be-Cyrl">дакумент Troff</comment>
+  <comment xml:lang="az">Troff sənədi</comment>
+  <comment xml:lang="ast">Documentu de Troff</comment>
+  <comment xml:lang="ar">مستند Troff</comment>
+  <comment xml:lang="af">Troff-dokument</comment>
+  <sub-class-of type="text/plain"/>
+  <alias type="application/x-troff"/>
+  <alias type="text/x-troff"/>
+  <glob pattern="*.tr"/>
+  <glob pattern="*.roff"/>
+  <glob weight="10" pattern="*.t"/>
+</mime-type>

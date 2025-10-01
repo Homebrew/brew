@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/vnd.ms-excel.sheet.macroEnabled.12">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Excel spreadsheet</comment>
+  <comment xml:lang="zh-Hant-TW">Excel 試算表</comment>
+  <comment xml:lang="zh-Hans-CN">Excel 电子表格</comment>
+  <comment xml:lang="vi">Bảng tính Excel</comment>
+  <comment xml:lang="uk">електронна таблиця Excel</comment>
+  <comment xml:lang="tr">Excel hesap çizelgesi</comment>
+  <comment xml:lang="sv">Excel-kalkylblad</comment>
+  <comment xml:lang="sr-Cyrl">Екселова табела</comment>
+  <comment xml:lang="sq">fletëllogaritje Excel</comment>
+  <comment xml:lang="sl">Razpredelnica Microsoft Excel</comment>
+  <comment xml:lang="si">එක්සෙල් පැතුරුම්පත</comment>
+  <comment xml:lang="sk">Zošit Excel</comment>
+  <comment xml:lang="ru">Электронная таблица Excel</comment>
+  <comment xml:lang="ro">Foaie de calcul Excel</comment>
+  <comment xml:lang="pt-BR">Planilha do Excel</comment>
+  <comment xml:lang="pt">folha de cálculo Excel</comment>
+  <comment xml:lang="pl">Arkusz Excel</comment>
+  <comment xml:lang="oc">fuèlh de calcul Excel</comment>
+  <comment xml:lang="nn">Excel-rekneark</comment>
+  <comment xml:lang="nl">Excel-rekenblad</comment>
+  <comment xml:lang="nb">Excel regneark</comment>
+  <comment xml:lang="lv">Excel izklājlapa</comment>
+  <comment xml:lang="lt">Excel skaičialentė</comment>
+  <comment xml:lang="ko">Excel 스프레드시트</comment>
+  <comment xml:lang="kk-Cyrl">Excel электрондық кестесі</comment>
+  <comment xml:lang="ka">Excel-ის ცხრილი</comment>
+  <comment xml:lang="ja">Excel スプレッドシート</comment>
+  <comment xml:lang="it">Foglio di calcolo Excel</comment>
+  <comment xml:lang="is">Excel töflureikniskjal</comment>
+  <comment xml:lang="id">Lembar sebar Excel</comment>
+  <comment xml:lang="ia">Folio de calculo Excel</comment>
+  <comment xml:lang="hu">Excel táblázat</comment>
+  <comment xml:lang="hr">Excel proračunska tablica</comment>
+  <comment xml:lang="he">גיליון נתונים של Excel</comment>
+  <comment xml:lang="gl">folla de cálculo de Excel</comment>
+  <comment xml:lang="ga">scarbhileog Excel</comment>
+  <comment xml:lang="fur">sfuei di calcul Excel</comment>
+  <comment xml:lang="fr">feuille de calcul Excel</comment>
+  <comment xml:lang="fo">Excel rokniark</comment>
+  <comment xml:lang="fi">Excel-taulukko</comment>
+  <comment xml:lang="eu">Excel kalkulu-orria</comment>
+  <comment xml:lang="es">hoja de cálculo de Excel</comment>
+  <comment xml:lang="eo">Excel-kalkultabelo</comment>
+  <comment xml:lang="en-GB">Excel spreadsheet</comment>
+  <comment xml:lang="el">Λογιστικό φύλλο Excel</comment>
+  <comment xml:lang="de">Excel-Tabelle</comment>
+  <comment xml:lang="da">Excelregneark</comment>
+  <comment xml:lang="cs">sešit Excel</comment>
+  <comment xml:lang="ca">full de càlcul d'Excel</comment>
+  <comment xml:lang="bg">Таблица — Excel</comment>
+  <comment xml:lang="be-Latn">Raźlikovy akruš Excel</comment>
+  <comment xml:lang="be-Cyrl">электронная табліца Excel</comment>
+  <comment xml:lang="ar">جدول اكسل</comment>
+  <comment xml:lang="af">Excel-sigblad</comment>
+  <generic-icon name="x-office-spreadsheet"/>
+  <glob pattern="*.xlsm"/>
+  <sub-class-of type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"/>
+</mime-type>

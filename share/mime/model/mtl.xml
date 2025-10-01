@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="model/mtl">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>OBJ 3D model material library</comment>
+  <comment xml:lang="uk">бібліотека матеріалів просторової моделі OBJ</comment>
+  <comment xml:lang="tr">OBJ 3B modeli malzeme kitaplığı</comment>
+  <comment xml:lang="sv">Materialbibliotek för OBJ 3D-modell</comment>
+  <comment xml:lang="sl">Knjižnica materialov 3D-modelov OBJ</comment>
+  <comment xml:lang="si">OBJ 3D ආදර්ශ ද්රව්ය පුස්තකාලය</comment>
+  <comment xml:lang="ru">Библиотека материалов OBJ 3D-модели</comment>
+  <comment xml:lang="pl">Biblioteka materiałów modeli 3D OBJ</comment>
+  <comment xml:lang="nl">OBJ-3D-model-materiaal­bibliotheek</comment>
+  <comment xml:lang="ko">OBJ 3D 모델 실체 라이브러리</comment>
+  <comment xml:lang="kk-Cyrl">OBJ 3D-моделінің материалдар кітапханасы</comment>
+  <comment xml:lang="ja">OBJ 3D モデルマテリアルライブラリー</comment>
+  <comment xml:lang="it">Modello libreria materiale OBJ 3D</comment>
+  <comment xml:lang="hr">OBJ 3D model biblioteka materijala</comment>
+  <comment xml:lang="fi">OBJ 3D-mallin materiaalikirjasto</comment>
+  <comment xml:lang="es">biblioteca de modelo material OBJ 3D</comment>
+  <comment xml:lang="en-GB">OBJ 3D model material library</comment>
+  <comment xml:lang="de">OBJ-3D-Modell-Materialbibliothek</comment>
+  <comment xml:lang="be-Cyrl">бібліятэка матэрыялаў мадэлі OBJ 3D</comment>
+  <comment xml:lang="ar">مكتبة المواد النموذجية OBJ 3D</comment>
+  <generic-icon name="image-x-generic"/>
+  <sub-class-of type="text/plain"/>
+  <glob pattern="*.mtl"/>
+</mime-type>

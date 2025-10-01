@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-sc">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>SC/Xspread spreadsheet</comment>
+  <comment xml:lang="zh-Hant-TW">SC/Xspread 試算表</comment>
+  <comment xml:lang="zh-Hans-CN">SC/Xspread 电子表格</comment>
+  <comment xml:lang="vi">Bảng tính SC/Xspread</comment>
+  <comment xml:lang="uk">електронна таблиця SC/Xspread</comment>
+  <comment xml:lang="tr">SC/Xspread hesap çizelgesi</comment>
+  <comment xml:lang="sv">SC/Xspread-kalkylblad</comment>
+  <comment xml:lang="sr-Cyrl">табела СЦ/Икс-табеле</comment>
+  <comment xml:lang="sq">fletëllogaritje SC/Xspread</comment>
+  <comment xml:lang="sl">Preglednica SC/Xspread</comment>
+  <comment xml:lang="si">SC/Xspread පැතුරුම්පත</comment>
+  <comment xml:lang="sk">Zošit SC/Xspread</comment>
+  <comment xml:lang="ru">Электронная таблица SC/Xspread</comment>
+  <comment xml:lang="ro">Foaie de calcul SC/Xspread</comment>
+  <comment xml:lang="pt-BR">Planilha do SC/Xspread</comment>
+  <comment xml:lang="pt">folha de cálculo SC/Xspread</comment>
+  <comment xml:lang="pl">Arkusz SC/Xspread</comment>
+  <comment xml:lang="oc">fuèlh de calcul SC/Xspread</comment>
+  <comment xml:lang="nn">SC/Xspread-rekneark</comment>
+  <comment xml:lang="nl">SC/Xspread-rekenblad</comment>
+  <comment xml:lang="nb">SC/Xspread-regneark</comment>
+  <comment xml:lang="lv">SC/Xspread izklājlapa</comment>
+  <comment xml:lang="lt">SC/Xspread skaičialentė</comment>
+  <comment xml:lang="ko">SC/Xspread 스프레드시트</comment>
+  <comment xml:lang="kk-Cyrl">SC/Xspread электрондық кестесі</comment>
+  <comment xml:lang="ja">SC/Xspread スプレッドシート</comment>
+  <comment xml:lang="it">Foglio di calcolo SC/Xspread</comment>
+  <comment xml:lang="is">SC/Xspread töflureikniskjal</comment>
+  <comment xml:lang="id">Lembar sebar SC/Xspread</comment>
+  <comment xml:lang="ia">Folio de calculo SC/Xspread</comment>
+  <comment xml:lang="hu">SC/Xspread táblázat</comment>
+  <comment xml:lang="hr">SC/Xspread proračunska tablica</comment>
+  <comment xml:lang="he">גיליון נתונים של SC/Xspread</comment>
+  <comment xml:lang="gl">folla de cálculo SC/Xspread</comment>
+  <comment xml:lang="ga">scarbhileog SC/Xspread</comment>
+  <comment xml:lang="fur">sfuei di calcul SC/Xspread</comment>
+  <comment xml:lang="fr">feuille de calcul SC/Xspread</comment>
+  <comment xml:lang="fo">SC/Xspread rokniark</comment>
+  <comment xml:lang="fi">SC/Xspread-taulukko</comment>
+  <comment xml:lang="eu">SC/Xspread kalkulu-orria</comment>
+  <comment xml:lang="es">hoja de cálculo SC/Xspread</comment>
+  <comment xml:lang="eo">SC/Xspread-kalkultabelo</comment>
+  <comment xml:lang="en-GB">SC/Xspread spreadsheet</comment>
+  <comment xml:lang="el">Λογιστικό φύλλο SC/Xspread</comment>
+  <comment xml:lang="de">SC/Xspread-Tabelle</comment>
+  <comment xml:lang="da">SC/Xspread-regneark</comment>
+  <comment xml:lang="cs">sešit SC/Xspread</comment>
+  <comment xml:lang="ca">full de càlcul de SC/Xspread</comment>
+  <comment xml:lang="bg">Таблица — SC/Xspread</comment>
+  <comment xml:lang="be-Latn">Raźlikovy arkuš SC/Xspread</comment>
+  <comment xml:lang="be-Cyrl">электронная табліца SC/Xspread</comment>
+  <comment xml:lang="ar">جدول SC/Xspread</comment>
+  <comment xml:lang="af">SC/Xspread-sigblad</comment>
+  <generic-icon name="x-office-spreadsheet"/>
+</mime-type>

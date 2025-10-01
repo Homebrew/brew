@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/cbor">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>CBOR Data</comment>
+  <comment xml:lang="zh-Hant-TW">CBOR 資料</comment>
+  <comment xml:lang="uk">дані CBOR</comment>
+  <comment xml:lang="sv">CBOR-data</comment>
+  <comment xml:lang="ru">Данные CBOR</comment>
+  <comment xml:lang="pl">Dane CBOR</comment>
+  <comment xml:lang="it">Dati CBOR</comment>
+  <comment xml:lang="es">datos CBOR</comment>
+  <comment xml:lang="de">CBOR-Daten</comment>
+  <comment xml:lang="be-Cyrl">даныя CBOR</comment>
+  <acronym>CBOR</acronym>
+  <expanded-acronym>Concise Binary Object Representation</expanded-acronym>
+  <glob pattern="*.cbor"/>
+</mime-type>

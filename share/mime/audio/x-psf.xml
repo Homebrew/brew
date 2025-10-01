@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="audio/x-psf">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>PSF audio</comment>
+  <comment xml:lang="zh-Hant-TW">PSF 音訊</comment>
+  <comment xml:lang="zh-Hans-CN">PSF 音频</comment>
+  <comment xml:lang="vi">Âm thanh PSF</comment>
+  <comment xml:lang="uk">звук PSF</comment>
+  <comment xml:lang="tr">PSF sesi</comment>
+  <comment xml:lang="sv">PSF-ljud</comment>
+  <comment xml:lang="sr-Cyrl">ПСФ звук</comment>
+  <comment xml:lang="sq">audio PSF</comment>
+  <comment xml:lang="sl">Zvočna datoteka PSF</comment>
+  <comment xml:lang="si">PSF ශ්රව්ය උපකරණ</comment>
+  <comment xml:lang="sk">Zvuk PSF</comment>
+  <comment xml:lang="ru">Аудио PSF</comment>
+  <comment xml:lang="ro">Audio PSF</comment>
+  <comment xml:lang="pt-BR">Áudio PSF</comment>
+  <comment xml:lang="pt">áudio PSF</comment>
+  <comment xml:lang="pl">Plik dźwiękowy PSF</comment>
+  <comment xml:lang="oc">àudio PSF</comment>
+  <comment xml:lang="nn">PSF-lyd</comment>
+  <comment xml:lang="nl">PSF-audio</comment>
+  <comment xml:lang="nb">PSF-lyd</comment>
+  <comment xml:lang="lv">PSF audio</comment>
+  <comment xml:lang="lt">PSF garso įrašas</comment>
+  <comment xml:lang="ko">PSF 오디오</comment>
+  <comment xml:lang="kk-Cyrl">PSF аудиосы</comment>
+  <comment xml:lang="ja">PSF オーディオ</comment>
+  <comment xml:lang="it">Audio PSF</comment>
+  <comment xml:lang="is">PSF hljóðskrá</comment>
+  <comment xml:lang="id">Audio PSF</comment>
+  <comment xml:lang="ia">Audio PSF</comment>
+  <comment xml:lang="hu">PSF hang</comment>
+  <comment xml:lang="hr">PSF zvučni zapis</comment>
+  <comment xml:lang="he">שמע PSF</comment>
+  <comment xml:lang="gl">son PSF</comment>
+  <comment xml:lang="ga">fuaim PSF</comment>
+  <comment xml:lang="fur">audio PSF</comment>
+  <comment xml:lang="fr">audio PSF</comment>
+  <comment xml:lang="fo">PSF ljóður</comment>
+  <comment xml:lang="fi">PSF-ääni</comment>
+  <comment xml:lang="eu">PSF audioa</comment>
+  <comment xml:lang="es">sonido PSF</comment>
+  <comment xml:lang="eo">PSF-sondosiero</comment>
+  <comment xml:lang="en-GB">PSF audio</comment>
+  <comment xml:lang="el">Ήχος PSF</comment>
+  <comment xml:lang="de">PSF-Audio</comment>
+  <comment xml:lang="da">PSF-lyd</comment>
+  <comment xml:lang="cs">zvuk PSF</comment>
+  <comment xml:lang="ca">àudio PSF</comment>
+  <comment xml:lang="bg">Аудио — PSF</comment>
+  <comment xml:lang="be-Latn">Aŭdyjo PSF</comment>
+  <comment xml:lang="be-Cyrl">аўдыя PSF</comment>
+  <comment xml:lang="ar">صوت PSF</comment>
+  <comment xml:lang="af">PSF-oudio</comment>
+  <acronym>PSF</acronym>
+  <expanded-acronym>Portable Sound Format</expanded-acronym>
+  <glob pattern="*.psf"/>
+</mime-type>

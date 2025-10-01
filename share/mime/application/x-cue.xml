@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-cue">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>CD image cuesheet</comment>
+  <comment xml:lang="zh-Hant-TW">CD 映像指示表</comment>
+  <comment xml:lang="zh-Hans-CN">CD 映像标记文件</comment>
+  <comment xml:lang="vi">Tờ tín hiệu báo ảnh CD</comment>
+  <comment xml:lang="uk">таблиця CUE образу CD</comment>
+  <comment xml:lang="tr">CD görüntüsü çizelgesi</comment>
+  <comment xml:lang="sv">Indexblad för cd-avbild</comment>
+  <comment xml:lang="sr-Cyrl">Кју лист ЦД одраза</comment>
+  <comment xml:lang="sl">Datoteka razpredelnice odtisa CD cue</comment>
+  <comment xml:lang="si">සීඩී රූප කුට්ටිය</comment>
+  <comment xml:lang="sk">Rozvrhnutie stôp obrazu CD</comment>
+  <comment xml:lang="ru">Таблица содержания образа CD</comment>
+  <comment xml:lang="ro">Imagine CD cuesheet</comment>
+  <comment xml:lang="pt-BR">Índice de Imagem de CD</comment>
+  <comment xml:lang="pt">índice de imagem do CD</comment>
+  <comment xml:lang="pl">Obraz cuesheet płyty CD</comment>
+  <comment xml:lang="oc">indèx de pistas de CD</comment>
+  <comment xml:lang="nn">CD-bilete-indeksfil</comment>
+  <comment xml:lang="nl">CD-inhoudsopgave</comment>
+  <comment xml:lang="nb">Filliste for CD-avtrykk</comment>
+  <comment xml:lang="lv">CD attēla rindulapa</comment>
+  <comment xml:lang="lt">CD atvaizdžio aprašas</comment>
+  <comment xml:lang="ko">CD 이미지 큐시트</comment>
+  <comment xml:lang="kk-Cyrl">CD бейнесінің құрама кестесі</comment>
+  <comment xml:lang="ja">CD イメージキューシート</comment>
+  <comment xml:lang="it">Cuesheet immagine CD</comment>
+  <comment xml:lang="is">cuesheet CD diskmyndar</comment>
+  <comment xml:lang="id">Citra cuesheet CD</comment>
+  <comment xml:lang="ia">Indice de pistas de CD</comment>
+  <comment xml:lang="hu">CD lemezkép-jelölőlap</comment>
+  <comment xml:lang="hr">CD slika s meta podacima</comment>
+  <comment xml:lang="he">גיליון נתונים לדמות תקליטור</comment>
+  <comment xml:lang="gl">cue sheet dunha imaxe de CD</comment>
+  <comment xml:lang="ga">bileog chiúála íomhá CD</comment>
+  <comment xml:lang="fur">sfuei-brivade CUE de imagjin CD</comment>
+  <comment xml:lang="fr">index de pistes de CD</comment>
+  <comment xml:lang="fi">CD-levykuvan taulukko</comment>
+  <comment xml:lang="eu">CD irudiaren CUE orria</comment>
+  <comment xml:lang="es">hoja CUE de imagen de CD</comment>
+  <comment xml:lang="en-GB">CD image cuesheet</comment>
+  <comment xml:lang="el">Φύλλο cue εικόνας CD</comment>
+  <comment xml:lang="de">CD-Abbild-Cuesheet</comment>
+  <comment xml:lang="da">Cd-aftrykscuesheet</comment>
+  <comment xml:lang="cs">rozvržení stop obrazu CD</comment>
+  <comment xml:lang="ca">«cuesheet» d'imatge de CD</comment>
+  <comment xml:lang="bg">Съдържание на CD</comment>
+  <comment xml:lang="be-Latn">Infarmacyjny arkuš vyjavy CD</comment>
+  <comment xml:lang="be-Cyrl">табліца разметкі вобраза CD</comment>
+  <comment xml:lang="ar">صفيحة صورة CD جديلة</comment>
+  <sub-class-of type="text/plain"/>
+  <generic-icon name="text-x-generic"/>
+  <glob pattern="*.cue"/>
+</mime-type>

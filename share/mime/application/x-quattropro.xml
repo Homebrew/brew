@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-quattropro">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Quattro Pro spreadsheet</comment>
+  <comment xml:lang="zh-Hant-TW">Quattro Pro 試算表</comment>
+  <comment xml:lang="zh-Hans-CN">Quattro Pro 电子表格</comment>
+  <comment xml:lang="vi">Bảng tính Quattro Pro</comment>
+  <comment xml:lang="uk">електронна таблиця Quattro Pro</comment>
+  <comment xml:lang="tr">Quattro Pro hesap çizelgesi</comment>
+  <comment xml:lang="sv">Quattro Pro-kalkylblad</comment>
+  <comment xml:lang="sr-Cyrl">Кватро Про табела</comment>
+  <comment xml:lang="sq">fletëllogaritje Quattro Pro</comment>
+  <comment xml:lang="sl">Preglednica Quattro Pro</comment>
+  <comment xml:lang="si">Quattro Pro පැතුරුම්පත</comment>
+  <comment xml:lang="sk">Zošit Quattro Pro</comment>
+  <comment xml:lang="ru">Электронная таблица Quattro Pro</comment>
+  <comment xml:lang="ro">Foaie de calcul Quattro Pro</comment>
+  <comment xml:lang="pt-BR">Planilha do Quattro Pro</comment>
+  <comment xml:lang="pt">folha de cálculo Quattro Pro</comment>
+  <comment xml:lang="pl">Arkusz Quattro Pro</comment>
+  <comment xml:lang="oc">fuèlh de calcul Quattro Pro</comment>
+  <comment xml:lang="nn">Quattro Pro-rekneark</comment>
+  <comment xml:lang="nl">Quattro Pro-rekenblad</comment>
+  <comment xml:lang="nb">Quattro Pro-regneark</comment>
+  <comment xml:lang="ms">Hamparan Quatro Pro</comment>
+  <comment xml:lang="lv">Quattro Pro izklājlapa</comment>
+  <comment xml:lang="lt">Quattro Pro skaičialentė</comment>
+  <comment xml:lang="ko">Quattro Pro 스프레드시트</comment>
+  <comment xml:lang="kk-Cyrl">Quattro Pro электрондық кестесі</comment>
+  <comment xml:lang="ja">Quattro Pro スプレッドシート</comment>
+  <comment xml:lang="it">Foglio di calcolo Quattro Pro</comment>
+  <comment xml:lang="is">Quattro Pro töflureikniskjal</comment>
+  <comment xml:lang="id">Lembar sebar Quattro Pro</comment>
+  <comment xml:lang="ia">Folio de calculo Quattro Pro</comment>
+  <comment xml:lang="hu">Quattro Pro-munkafüzet</comment>
+  <comment xml:lang="hr">Quattro Pro proračunska tablica</comment>
+  <comment xml:lang="he">גיליון נתונים של Quattro Pro</comment>
+  <comment xml:lang="gl">folla de cálculo Quattro Pro</comment>
+  <comment xml:lang="ga">scarbhileog Quattro Pro</comment>
+  <comment xml:lang="fur">sfuei di calcul Quattro Pro</comment>
+  <comment xml:lang="fr">feuille de calcul Quattro Pro</comment>
+  <comment xml:lang="fo">Quattro Pro rokniark</comment>
+  <comment xml:lang="fi">Quattro Pro -taulukko</comment>
+  <comment xml:lang="eu">Quattro Pro kalkulu-orria</comment>
+  <comment xml:lang="es">hoja de cálculo de Quattro Pro</comment>
+  <comment xml:lang="eo">sterntabelo de Quattro Pro</comment>
+  <comment xml:lang="en-GB">Quattro Pro spreadsheet</comment>
+  <comment xml:lang="el">Λογιστικό φύλλο Quattro Pro</comment>
+  <comment xml:lang="de">Quattro-Pro-Tabelle</comment>
+  <comment xml:lang="da">Quattro Pro-regneark</comment>
+  <comment xml:lang="cs">sešit Quattro Pro</comment>
+  <comment xml:lang="ca">full de càlcul de Quattro Pro</comment>
+  <comment xml:lang="bg">Таблица — Quattro Pro</comment>
+  <comment xml:lang="be-Latn">Raźlikovy arkuš Quattro Pro</comment>
+  <comment xml:lang="be-Cyrl">электронная табліца Quattro Pro</comment>
+  <comment xml:lang="ar">جدول Quattro Pro</comment>
+  <comment xml:lang="af">Quattro Pro-sigblad</comment>
+  <generic-icon name="x-office-spreadsheet"/>
+  <glob pattern="*.wb1"/>
+  <glob pattern="*.wb2"/>
+  <glob pattern="*.wb3"/>
+</mime-type>

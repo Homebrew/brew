@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="text/x-scheme">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Scheme source code</comment>
+  <comment xml:lang="zh-Hant-TW">Scheme 源碼</comment>
+  <comment xml:lang="zh-Hans-CN">Scheme 源代码</comment>
+  <comment xml:lang="vi">Mã nguồn Scheme</comment>
+  <comment xml:lang="uk">початковий код мовою Scheme</comment>
+  <comment xml:lang="tr">Scheme kaynak kodu</comment>
+  <comment xml:lang="sv">Scheme-källkod</comment>
+  <comment xml:lang="sr-Cyrl">Шемски изворни ко̂д</comment>
+  <comment xml:lang="sq">kod burim Scheme</comment>
+  <comment xml:lang="sl">Datoteka izvorne kode Scheme</comment>
+  <comment xml:lang="si">යෝජනා ක්‍රම මූල කේතය</comment>
+  <comment xml:lang="sk">Zdrojový kód Scheme</comment>
+  <comment xml:lang="ru">Исходный код Scheme</comment>
+  <comment xml:lang="ro">Cod sursă Scheme</comment>
+  <comment xml:lang="pt-BR">Código-fonte Scheme</comment>
+  <comment xml:lang="pt">código origem Scheme</comment>
+  <comment xml:lang="pl">Kod źródłowy Scheme</comment>
+  <comment xml:lang="oc">còde font Scheme</comment>
+  <comment xml:lang="nn">Scheme-kjeldekode</comment>
+  <comment xml:lang="nl">Scheme-broncode</comment>
+  <comment xml:lang="nb">Scheme-kildekode</comment>
+  <comment xml:lang="ms">Kod sumber Scheme</comment>
+  <comment xml:lang="lv">Scheme pirmkods</comment>
+  <comment xml:lang="lt">Scheme pradinis kodas</comment>
+  <comment xml:lang="ko">Scheme 소스 코드</comment>
+  <comment xml:lang="kk-Cyrl">Scheme бастапқы коды</comment>
+  <comment xml:lang="ja">Scheme ソースコード</comment>
+  <comment xml:lang="it">Codice sorgente Scheme</comment>
+  <comment xml:lang="is">Scheme frumkóði</comment>
+  <comment xml:lang="id">Kode program Scheme</comment>
+  <comment xml:lang="ia">Codice-fonte Scheme</comment>
+  <comment xml:lang="hu">Scheme-forráskód</comment>
+  <comment xml:lang="hr">Scheme izvorni kôd</comment>
+  <comment xml:lang="he">קוד מקור של Scheme</comment>
+  <comment xml:lang="gl">código fonte en Scheme</comment>
+  <comment xml:lang="ga">cód foinseach Scheme</comment>
+  <comment xml:lang="fur">codiç sorzint Scheme</comment>
+  <comment xml:lang="fr">code source Scheme</comment>
+  <comment xml:lang="fo">Scheme keldukota</comment>
+  <comment xml:lang="fi">Scheme-lähdekoodi</comment>
+  <comment xml:lang="eu">Scheme iturburu-kodea</comment>
+  <comment xml:lang="es">código fuente en Scheme</comment>
+  <comment xml:lang="eo">Scheme-fontkodo</comment>
+  <comment xml:lang="en-GB">Scheme source code</comment>
+  <comment xml:lang="el">Πηγαίος κώδικας Scheme</comment>
+  <comment xml:lang="de">Scheme-Quelltext</comment>
+  <comment xml:lang="da">Scheme-kildekode</comment>
+  <comment xml:lang="cy">Ffynhonnell Rhaglen Scheme</comment>
+  <comment xml:lang="cs">zdrojový kód Scheme</comment>
+  <comment xml:lang="ca">codi font en Scheme</comment>
+  <comment xml:lang="bg">Изходен код — Scheme</comment>
+  <comment xml:lang="be-Latn">Kryničny kod Scheme</comment>
+  <comment xml:lang="be-Cyrl">зыходны код Scheme</comment>
+  <comment xml:lang="az">Sxem mənbə kodu</comment>
+  <comment xml:lang="ar">شفرة مصدر Scheme</comment>
+  <comment xml:lang="af">Scheme-bronkode</comment>
+  <sub-class-of type="text/plain"/>
+  <glob pattern="*.scm"/>
+  <glob pattern="*.ss"/>
+</mime-type>

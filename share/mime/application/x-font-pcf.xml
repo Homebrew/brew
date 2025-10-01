@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-font-pcf">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>PCF font</comment>
+  <comment xml:lang="zh-Hant-TW">PCF 字型</comment>
+  <comment xml:lang="zh-Hans-CN">PCF 字体</comment>
+  <comment xml:lang="vi">Phông chữ PCF</comment>
+  <comment xml:lang="uk">шрифт PCF</comment>
+  <comment xml:lang="tr">PCF yazı tipi</comment>
+  <comment xml:lang="sv">PCF-typsnitt</comment>
+  <comment xml:lang="sr-Cyrl">ПЦФ слова</comment>
+  <comment xml:lang="sq">shkronja PCF</comment>
+  <comment xml:lang="sl">Datoteka pisave PCF</comment>
+  <comment xml:lang="si">PCF අකුරු</comment>
+  <comment xml:lang="sk">Písmo PCF</comment>
+  <comment xml:lang="ru">Шрифт PCF</comment>
+  <comment xml:lang="ro">Font PCF</comment>
+  <comment xml:lang="pt-BR">Fonte PCF</comment>
+  <comment xml:lang="pt">letra PCF</comment>
+  <comment xml:lang="pl">Czcionka PCF</comment>
+  <comment xml:lang="oc">poliça PCF</comment>
+  <comment xml:lang="nn">PCF-skrifttype</comment>
+  <comment xml:lang="nl">PCF-lettertype</comment>
+  <comment xml:lang="nb">PCF-skrifttype</comment>
+  <comment xml:lang="ms">Font PCF</comment>
+  <comment xml:lang="lv">PCF fonts</comment>
+  <comment xml:lang="lt">PCF šriftas</comment>
+  <comment xml:lang="ko">PCF 글꼴</comment>
+  <comment xml:lang="kk-Cyrl">PCF қарібі</comment>
+  <comment xml:lang="ja">PCF フォント</comment>
+  <comment xml:lang="it">Carattere PCF</comment>
+  <comment xml:lang="is">PCF letur</comment>
+  <comment xml:lang="id">Fonta PCF</comment>
+  <comment xml:lang="ia">Typo de litteras PCF</comment>
+  <comment xml:lang="hu">PCF-betűkészlet</comment>
+  <comment xml:lang="hr">PCF font</comment>
+  <comment xml:lang="he">גופן PCF</comment>
+  <comment xml:lang="gl">tipo de letra PCF</comment>
+  <comment xml:lang="ga">cló PCF</comment>
+  <comment xml:lang="fur">caratar PCF</comment>
+  <comment xml:lang="fr">police PCF</comment>
+  <comment xml:lang="fo">PCF stavasnið</comment>
+  <comment xml:lang="fi">PCF-fontti</comment>
+  <comment xml:lang="eu">PCF letra-tipoa</comment>
+  <comment xml:lang="es">tipo de letra PCF</comment>
+  <comment xml:lang="eo">PCF-tiparo</comment>
+  <comment xml:lang="en-GB">PCF font</comment>
+  <comment xml:lang="el">Γραμματοσειρά PCF</comment>
+  <comment xml:lang="de">PCF-Schrift</comment>
+  <comment xml:lang="da">PCF-skrifttype</comment>
+  <comment xml:lang="cy">Ffont PCF</comment>
+  <comment xml:lang="cs">font PCF</comment>
+  <comment xml:lang="ca">lletra PCF</comment>
+  <comment xml:lang="bg">Шрифт — PCF</comment>
+  <comment xml:lang="be-Latn">Šryft PCF</comment>
+  <comment xml:lang="be-Cyrl">шрыфт PCF</comment>
+  <comment xml:lang="az">PCF yazı növü</comment>
+  <comment xml:lang="ar">خط PCF</comment>
+  <comment xml:lang="af">PCF-skriftipe</comment>
+  <acronym>PCF</acronym>
+  <expanded-acronym>Portable Compiled Format</expanded-acronym>
+  <generic-icon name="font-x-generic"/>
+  <glob pattern="*.pcf"/>
+  <glob pattern="*.pcf.Z"/>
+  <glob pattern="*.pcf.gz"/>
+</mime-type>

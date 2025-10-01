@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="text/x-qml">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Qt Markup Language file</comment>
+  <comment xml:lang="zh-Hant-TW">Qt 標記語言檔</comment>
+  <comment xml:lang="zh-Hans-CN">Qt Markup Language 文件</comment>
+  <comment xml:lang="uk">файл мови розмітки Qt</comment>
+  <comment xml:lang="tr">Qt İşaretleme Dili dosyası</comment>
+  <comment xml:lang="sv">Qt-märkspråksfil</comment>
+  <comment xml:lang="sr-Cyrl">датотека КуТ-овог језика означавања</comment>
+  <comment xml:lang="sq">kartelë Qt Markup Language</comment>
+  <comment xml:lang="sl">Datoteka označevalnega jezika Qt</comment>
+  <comment xml:lang="si">Qt Markup භාෂා ගොනුව</comment>
+  <comment xml:lang="sk">Súbor značkovacieho jazyka Qt</comment>
+  <comment xml:lang="ru">Файл Qt Markup Language</comment>
+  <comment xml:lang="pt-BR">Arquivo de Qt Markup Language</comment>
+  <comment xml:lang="pt">ficheiro de linguagem Qt Markup</comment>
+  <comment xml:lang="pl">Plik języka znaczników Qt</comment>
+  <comment xml:lang="oc">fichièr Qt Markup Language</comment>
+  <comment xml:lang="nl">Qt Markup Tallbestand</comment>
+  <comment xml:lang="lv">Qt marķēšanas valodas datne</comment>
+  <comment xml:lang="ko">Qt 마크업 언어 파일</comment>
+  <comment xml:lang="kk-Cyrl">Qt Markup Language файлы</comment>
+  <comment xml:lang="ja">Qt マークアップ言語ファイル</comment>
+  <comment xml:lang="it">File Qt Markup Language</comment>
+  <comment xml:lang="is">Qt Markup Language skrá</comment>
+  <comment xml:lang="id">Berkas Bahasa Markup Qt</comment>
+  <comment xml:lang="ia">File de linguage de marcation Qt</comment>
+  <comment xml:lang="hu">Qt jelölőnyelvű fájl</comment>
+  <comment xml:lang="hr">Qt Markup Language datoteka</comment>
+  <comment xml:lang="he">קובץ שפת סימון של Qt</comment>
+  <comment xml:lang="gl">ficheiro de linguaxe de marcado Qt</comment>
+  <comment xml:lang="ga">comhad teanga mharcála Qt</comment>
+  <comment xml:lang="fur">file Qt Markup Language</comment>
+  <comment xml:lang="fr">fichier Qt Markup Language</comment>
+  <comment xml:lang="fi">QML-tiedosto</comment>
+  <comment xml:lang="eu">Qt Markup lengoai fitxategia</comment>
+  <comment xml:lang="es">archivo de lenguaje de marcado Qt</comment>
+  <comment xml:lang="en-GB">Qt Markup Language file</comment>
+  <comment xml:lang="el">Αρχείο Qt Markup Language</comment>
+  <comment xml:lang="de">Qt-Auszeichnungssprachendatei</comment>
+  <comment xml:lang="da">Qt Markup Language-fil</comment>
+  <comment xml:lang="cs">soubor Qt Markup Language</comment>
+  <comment xml:lang="ca">fitxer de llenguatge de marcadors Qt</comment>
+  <comment xml:lang="bg">Интерфейс — Qt Markup</comment>
+  <comment xml:lang="be-Cyrl">файл Qt Markup Language</comment>
+  <comment xml:lang="ar">ملف لغة وصف Qt</comment>
+  <comment xml:lang="af">Qt Markup Language-lêer</comment>
+  <sub-class-of type="text/plain"/>
+  <glob pattern="*.qml"/>
+  <glob pattern="*.qmltypes"/>
+  <glob pattern="*.qmlproject"/>
+</mime-type>

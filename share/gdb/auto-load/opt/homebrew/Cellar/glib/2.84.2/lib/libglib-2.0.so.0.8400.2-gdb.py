@@ -1,0 +1,1 @@
+../../../../../../../../../Cellar/glib/2.84.2/share/gdb/auto-load/opt/homebrew/Cellar/glib/2.84.2/lib/libglib-2.0.so.0.8400.2-gdb.py

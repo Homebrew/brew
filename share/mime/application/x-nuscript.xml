@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-nuscript">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Nu shell script</comment>
+  <comment xml:lang="uk">скрипт оболонки nu</comment>
+  <comment xml:lang="sv">Nu-skalskript</comment>
+  <comment xml:lang="ru">Сценарий nu shell</comment>
+  <comment xml:lang="pl">Skrypt powłoki Nu</comment>
+  <comment xml:lang="it">Script shell Nu</comment>
+  <comment xml:lang="eu">Nu shell scripta</comment>
+  <comment xml:lang="es">secuencia de órdenes de consola Nu</comment>
+  <comment xml:lang="de">Nu-Shell-Skript</comment>
+  <comment xml:lang="be-Cyrl">скрыпт Nu shell</comment>
+  <sub-class-of type="application/x-executable"/>
+  <sub-class-of type="text/plain"/>
+  <alias type="text/x-nu"/>
+  <generic-icon name="text-x-script"/>
+  <glob pattern="*.nu"/>
+</mime-type>

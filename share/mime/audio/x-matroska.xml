@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="audio/x-matroska">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Matroska audio</comment>
+  <comment xml:lang="zh-Hant-TW">Matroska 音訊</comment>
+  <comment xml:lang="zh-Hans-CN">Matroska 音频</comment>
+  <comment xml:lang="vi">Âm thanh Matroska</comment>
+  <comment xml:lang="uk">звук Matroska</comment>
+  <comment xml:lang="tr">Matroska ses</comment>
+  <comment xml:lang="sv">Matroska-ljud</comment>
+  <comment xml:lang="sr-Cyrl">Матрошкин звук</comment>
+  <comment xml:lang="sq">audio Matroska</comment>
+  <comment xml:lang="sl">Zvočna datoteka Matroska</comment>
+  <comment xml:lang="si">Matroska ශ්රව්ය</comment>
+  <comment xml:lang="sk">Zvuk Matroska</comment>
+  <comment xml:lang="ru">Аудио Matroska</comment>
+  <comment xml:lang="ro">Audio Matroska</comment>
+  <comment xml:lang="pt-BR">Áudio Matroska</comment>
+  <comment xml:lang="pt">áudio Matroska</comment>
+  <comment xml:lang="pl">Plik dźwiękowy Matroska</comment>
+  <comment xml:lang="oc">àudio Matroska</comment>
+  <comment xml:lang="nn">Matroska-lyd</comment>
+  <comment xml:lang="nl">Matroska-audio</comment>
+  <comment xml:lang="nb">Matroska-lyd</comment>
+  <comment xml:lang="lv">Matroska audio</comment>
+  <comment xml:lang="lt">Matroska garso įrašas</comment>
+  <comment xml:lang="ko">Matroska 오디오</comment>
+  <comment xml:lang="kk-Cyrl">Matroska аудиосы</comment>
+  <comment xml:lang="ka">Matroska-ის აუდიო</comment>
+  <comment xml:lang="ja">Matroska オーディオ</comment>
+  <comment xml:lang="it">Audio Matroska</comment>
+  <comment xml:lang="is">Matroska hljóðskrá</comment>
+  <comment xml:lang="id">Audio Matroska</comment>
+  <comment xml:lang="ia">Audio Matroska</comment>
+  <comment xml:lang="hu">Matroska hang</comment>
+  <comment xml:lang="hr">Matroška zvučni zapis</comment>
+  <comment xml:lang="he">שמע Matroska</comment>
+  <comment xml:lang="gl">son de Matroska</comment>
+  <comment xml:lang="ga">fuaim Matroska</comment>
+  <comment xml:lang="fur">audio Matroska</comment>
+  <comment xml:lang="fr">audio Matroska</comment>
+  <comment xml:lang="fo">Matroska ljóður</comment>
+  <comment xml:lang="fi">Matroska-ääni</comment>
+  <comment xml:lang="eu">Matroska audioa</comment>
+  <comment xml:lang="es">sonido Matroska</comment>
+  <comment xml:lang="eo">Matroska-sondosiero</comment>
+  <comment xml:lang="en-GB">Matroska audio</comment>
+  <comment xml:lang="el">Ήχος Matroska</comment>
+  <comment xml:lang="de">Matroska-Audio</comment>
+  <comment xml:lang="da">Matroska-lyd</comment>
+  <comment xml:lang="cs">zvuk Matroska</comment>
+  <comment xml:lang="ca">àudio Matroska</comment>
+  <comment xml:lang="bg">Аудио — Matroska</comment>
+  <comment xml:lang="be-Latn">Aŭdyjo Matroska</comment>
+  <comment xml:lang="be-Cyrl">аўдыя Matroska</comment>
+  <comment xml:lang="ar">صوت Matroska</comment>
+  <comment xml:lang="af">Matroska-oudio</comment>
+  <glob pattern="*.mka"/>
+  <sub-class-of type="application/x-matroska"/>
+</mime-type>

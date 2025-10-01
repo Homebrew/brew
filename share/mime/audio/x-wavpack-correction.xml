@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="audio/x-wavpack-correction">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>WavPack audio correction file</comment>
+  <comment xml:lang="zh-Hant-TW">WavPack 音訊校正檔</comment>
+  <comment xml:lang="zh-Hans-CN">WavPack 音频校正文件</comment>
+  <comment xml:lang="vi">Tập tin sửa chữa âm thanh WavPack</comment>
+  <comment xml:lang="uk">файл корекції звуку WavPack</comment>
+  <comment xml:lang="tr">WavPack ses düzeltme dosyası</comment>
+  <comment xml:lang="sv">WavPack-ljudkorrigeringsfil</comment>
+  <comment xml:lang="sr-Cyrl">датотека поправке Вејвпак звука</comment>
+  <comment xml:lang="sq">kartelë saktësimi audio WavPack</comment>
+  <comment xml:lang="sl">popravljalna zvočna datoteka WavPack</comment>
+  <comment xml:lang="si">WavPack ශ්‍රව්‍ය නිවැරදි කිරීමේ ගොනුව</comment>
+  <comment xml:lang="sk">Opravný zvukový súbor WavPack</comment>
+  <comment xml:lang="ru">Файл коррекции аудио WavPack</comment>
+  <comment xml:lang="ro">Fișier audio de corecție WavPack</comment>
+  <comment xml:lang="pt-BR">Arquivo de correção de áudio WavPack</comment>
+  <comment xml:lang="pt">ficheiro de correção áudio WavPack</comment>
+  <comment xml:lang="pl">Plik korekcji dźwięku WavPack</comment>
+  <comment xml:lang="oc">fichièr de correccion àudio WavPack</comment>
+  <comment xml:lang="nn">WawPack lydopprettingsfil</comment>
+  <comment xml:lang="nl">WavPack-audio-correctiebestand</comment>
+  <comment xml:lang="nb">WavPack lydkorrigeringsfil</comment>
+  <comment xml:lang="lv">WavPack audio korekciju datne</comment>
+  <comment xml:lang="lt">WavPack garso korekcijos failas</comment>
+  <comment xml:lang="ko">WavPack 오디오 교정 파일</comment>
+  <comment xml:lang="kk-Cyrl">WavPack аудио түзету файлы</comment>
+  <comment xml:lang="ja">WavPack オーディオコレクションファイル</comment>
+  <comment xml:lang="it">File correzione audio WavPack</comment>
+  <comment xml:lang="is">WavPack hljóðleiðréttingaskrá</comment>
+  <comment xml:lang="id">Berkas koreksi audio WavPack</comment>
+  <comment xml:lang="ia">File de correction audio WavPack</comment>
+  <comment xml:lang="hu">WavPack hangjavítási fájl</comment>
+  <comment xml:lang="hr">WavPack datoteka ispravke zvuka</comment>
+  <comment xml:lang="he">קובץ תיקון שמע של WavPack</comment>
+  <comment xml:lang="gl">ficheiro de corrección de son WavPack</comment>
+  <comment xml:lang="ga">comhad ceartúchán fuaime WavPack</comment>
+  <comment xml:lang="fur">file di corezion audio WavPack</comment>
+  <comment xml:lang="fr">fichier de correction audio WavPack</comment>
+  <comment xml:lang="fo">WavPack ljóðrættingarfíla</comment>
+  <comment xml:lang="fi">WavPack-äänikorjaustiedosto</comment>
+  <comment xml:lang="eu">WavPack audio-zuzenketaren fitxategia</comment>
+  <comment xml:lang="es">archivo de corrección de sonido WavPack</comment>
+  <comment xml:lang="en-GB">WavPack audio correction file</comment>
+  <comment xml:lang="el">Αρχείο διόρθωσης ήχου WavePack</comment>
+  <comment xml:lang="de">WavPack-Audiokorrekturdatei</comment>
+  <comment xml:lang="da">WavPack-lydkorrektionsfil</comment>
+  <comment xml:lang="cs">opravný zvukový soubor WavPack</comment>
+  <comment xml:lang="ca">fitxer de correcció d'àudio de WavPack</comment>
+  <comment xml:lang="bg">Файл за корекции на аудио — WavPack</comment>
+  <comment xml:lang="be-Latn">Fajł aŭdyjokarekcyi WavPack</comment>
+  <comment xml:lang="be-Cyrl">файл аўдыякарэкцыі WavPack</comment>
+  <comment xml:lang="ar">ملف تصحيح صوت WavPack</comment>
+  <glob pattern="*.wvc"/>
+</mime-type>

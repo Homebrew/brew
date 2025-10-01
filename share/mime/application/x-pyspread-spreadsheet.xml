@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-pyspread-spreadsheet">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Pyspread spreadsheet</comment>
+  <comment xml:lang="zh-Hant-TW">Pyspread 試算表</comment>
+  <comment xml:lang="zh-Hans-CN">Pyspread 电子表格</comment>
+  <comment xml:lang="uk">електронна таблиця Pyspread</comment>
+  <comment xml:lang="tr">Pyspread hesap çizelgesi</comment>
+  <comment xml:lang="sv">Pyspread-kalkylblad</comment>
+  <comment xml:lang="sl">Preglednica Pyspread</comment>
+  <comment xml:lang="si">Pyspread පැතුරුම්පත</comment>
+  <comment xml:lang="ru">Электронная таблица Pyspread</comment>
+  <comment xml:lang="pt-BR">Planilha do Pyspread</comment>
+  <comment xml:lang="pl">Arkusz pyspread</comment>
+  <comment xml:lang="nl">Pyspread werkblad</comment>
+  <comment xml:lang="ko">Pyspread 스프레드시트</comment>
+  <comment xml:lang="kk-Cyrl">Pyspread электрондық кестесі</comment>
+  <comment xml:lang="ja">Pyspread スプレッドシート</comment>
+  <comment xml:lang="it">Foglio di calcolo Pyspread</comment>
+  <comment xml:lang="is">Pyspread töflureikniskjal</comment>
+  <comment xml:lang="id">lembar kerja Pyspread</comment>
+  <comment xml:lang="hu">Pyspread-munkafüzet</comment>
+  <comment xml:lang="hr">Pyspread proračunska tablica</comment>
+  <comment xml:lang="he">גיליון Pyspread</comment>
+  <comment xml:lang="fr">feuille de calcul Pyspread</comment>
+  <comment xml:lang="fi">Pyspread-taulukko</comment>
+  <comment xml:lang="es">hoja de cálculo de Pyspread</comment>
+  <comment xml:lang="en-GB">Pyspread spreadsheet</comment>
+  <comment xml:lang="de">Pyspread-Tabelle</comment>
+  <comment xml:lang="da">Pyspread-regneark</comment>
+  <comment xml:lang="ca">full de càlcul de Pyspread</comment>
+  <comment xml:lang="be-Cyrl">электронная табліца Pyspread</comment>
+  <comment xml:lang="ar">ورقة عمل Pyspread</comment>
+  <glob pattern="*.pysu"/>
+  <generic-icon name="x-office-spreadsheet"/>
+</mime-type>

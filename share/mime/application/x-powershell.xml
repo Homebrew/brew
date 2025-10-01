@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-powershell">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>PowerShell script</comment>
+  <comment xml:lang="uk">скрипт PowerShell</comment>
+  <comment xml:lang="sv">PowerShell-skript</comment>
+  <comment xml:lang="ru">Сценарий PowerShell</comment>
+  <comment xml:lang="pl">Skrypt PowerShell</comment>
+  <comment xml:lang="es">secuencia de órdenes de PowerShell</comment>
+  <comment xml:lang="de">PowerShell-Skript</comment>
+  <sub-class-of type="text/plain"/>
+  <generic-icon name="text-x-script"/>
+  <glob pattern="*.ps1"/>
+</mime-type>

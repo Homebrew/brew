@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="audio/x-wavpack">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>WavPack audio</comment>
+  <comment xml:lang="zh-Hant-TW">WavPack 音訊</comment>
+  <comment xml:lang="zh-Hans-CN">WavPack 音频</comment>
+  <comment xml:lang="vi">Âm thanh WavPack</comment>
+  <comment xml:lang="uk">звук WavPack</comment>
+  <comment xml:lang="tr">WavPack sesi</comment>
+  <comment xml:lang="sv">WavPack-ljud</comment>
+  <comment xml:lang="sr-Cyrl">Вејвпак звук</comment>
+  <comment xml:lang="sq">audio WavPack</comment>
+  <comment xml:lang="sl">Zvočna datoteka WavPack</comment>
+  <comment xml:lang="si">WavPack ශ්රව්ය</comment>
+  <comment xml:lang="sk">Zvuk WavPack</comment>
+  <comment xml:lang="ru">Аудио WavPack</comment>
+  <comment xml:lang="ro">Audio WavPack</comment>
+  <comment xml:lang="pt-BR">Áudio WavPack</comment>
+  <comment xml:lang="pt">áudio WavPack</comment>
+  <comment xml:lang="pl">Plik dźwiękowy WavPack</comment>
+  <comment xml:lang="oc">àudio WavPack</comment>
+  <comment xml:lang="nn">WavPack-lyd</comment>
+  <comment xml:lang="nl">WavPack-audio</comment>
+  <comment xml:lang="nb">WavPack-lyd</comment>
+  <comment xml:lang="lv">WavPack audio</comment>
+  <comment xml:lang="lt">WavPack garso įrašas</comment>
+  <comment xml:lang="ko">WavPack 오디오</comment>
+  <comment xml:lang="kk-Cyrl">WavPack аудиосы</comment>
+  <comment xml:lang="ja">WavPack オーディオ</comment>
+  <comment xml:lang="it">Audio WavPack</comment>
+  <comment xml:lang="is">WavPack hljóðskrá</comment>
+  <comment xml:lang="id">Audio WavPack</comment>
+  <comment xml:lang="ia">Audio WavPack</comment>
+  <comment xml:lang="hu">WavPack hang</comment>
+  <comment xml:lang="hr">WavPack zvučni zapis</comment>
+  <comment xml:lang="he">שמע WavPack</comment>
+  <comment xml:lang="gl">son WavPack</comment>
+  <comment xml:lang="ga">fuaim WavPack</comment>
+  <comment xml:lang="fur">audio WavPack</comment>
+  <comment xml:lang="fr">audio WavPack</comment>
+  <comment xml:lang="fo">WavPack ljóður</comment>
+  <comment xml:lang="fi">WavPack-ääni</comment>
+  <comment xml:lang="eu">WavPack audioa</comment>
+  <comment xml:lang="es">sonido WavPack</comment>
+  <comment xml:lang="eo">WavPack-sondosiero</comment>
+  <comment xml:lang="en-GB">WavPack audio</comment>
+  <comment xml:lang="el">Ήχος WavePack</comment>
+  <comment xml:lang="de">WavPack-Audio</comment>
+  <comment xml:lang="da">WavPack-lyd</comment>
+  <comment xml:lang="cs">zvuk WavPack</comment>
+  <comment xml:lang="ca">àudio de WavPack</comment>
+  <comment xml:lang="bg">Аудио — WavPack</comment>
+  <comment xml:lang="be-Latn">Aŭdyjo WavPack</comment>
+  <comment xml:lang="be-Cyrl">аўдыя WavPack</comment>
+  <comment xml:lang="ar">صوت WavPack</comment>
+  <comment xml:lang="af">WavPack-oudio</comment>
+  <glob pattern="*.wv"/>
+  <glob pattern="*.wvp"/>
+</mime-type>

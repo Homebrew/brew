@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="video/x-theora+ogg">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Ogg Theora video</comment>
+  <comment xml:lang="zh-Hant-TW">Ogg Theora 視訊</comment>
+  <comment xml:lang="zh-Hans-CN">Ogg Theora 视频</comment>
+  <comment xml:lang="vi">Ảnh động Theora Ogg</comment>
+  <comment xml:lang="uk">відеокліп ogg Theora</comment>
+  <comment xml:lang="tr">Ogg Theora video</comment>
+  <comment xml:lang="sv">Ogg Theora-video</comment>
+  <comment xml:lang="sr-Cyrl">Огг Теора видео</comment>
+  <comment xml:lang="sq">video Ogg Theora</comment>
+  <comment xml:lang="sl">Video datoteka Ogg Theora</comment>
+  <comment xml:lang="si">Ogg Theora වීඩියෝව</comment>
+  <comment xml:lang="sk">Video Ogg Theora</comment>
+  <comment xml:lang="ru">Видео Ogg Theora</comment>
+  <comment xml:lang="ro">Video Ogg Theora</comment>
+  <comment xml:lang="pt-BR">Vídeo Ogg Theora</comment>
+  <comment xml:lang="pt">vídeo Ogg Theora</comment>
+  <comment xml:lang="pl">Plik wideo Ogg Theora</comment>
+  <comment xml:lang="oc">vidèo Ogg Theora</comment>
+  <comment xml:lang="nn">Ogg Theora-video</comment>
+  <comment xml:lang="nl">Ogg Theora-video</comment>
+  <comment xml:lang="nb">Ogg Theora video</comment>
+  <comment xml:lang="lv">Ogg Theora video</comment>
+  <comment xml:lang="lt">Ogg Theora vaizdo įrašas</comment>
+  <comment xml:lang="ko">Ogg Theora 동영상</comment>
+  <comment xml:lang="kk-Cyrl">Ogg Theora видеосы</comment>
+  <comment xml:lang="ka">Ogg Theora ვიდეო</comment>
+  <comment xml:lang="ja">Ogg Theora 動画</comment>
+  <comment xml:lang="it">Video Ogg Theora</comment>
+  <comment xml:lang="is">Ogg Theora myndskeið</comment>
+  <comment xml:lang="id">Video Ogg Theora</comment>
+  <comment xml:lang="ia">Video Ogg Theora</comment>
+  <comment xml:lang="hu">Ogg Theora videó</comment>
+  <comment xml:lang="hr">Ogg Theora video snimka</comment>
+  <comment xml:lang="he">שמע Ogg Theora</comment>
+  <comment xml:lang="gl">vídeo Ogg Theora</comment>
+  <comment xml:lang="ga">físeán Ogg Theora</comment>
+  <comment xml:lang="fur">video Ogg Theora</comment>
+  <comment xml:lang="fr">vidéo Ogg Theora</comment>
+  <comment xml:lang="fo">Ogg Theora video</comment>
+  <comment xml:lang="fi">Ogg Theora -video</comment>
+  <comment xml:lang="eu">Ogg Theora bideoa</comment>
+  <comment xml:lang="es">vídeo Ogg Theora</comment>
+  <comment xml:lang="en-GB">Ogg Theora video</comment>
+  <comment xml:lang="el">Βίντεο Ogg Theora</comment>
+  <comment xml:lang="de">Ogg-Theora-Video</comment>
+  <comment xml:lang="da">Ogg Theora-video</comment>
+  <comment xml:lang="cs">video Ogg Theora</comment>
+  <comment xml:lang="ca">vídeo Ogg Theora</comment>
+  <comment xml:lang="bg">Видео — Ogg Theora</comment>
+  <comment xml:lang="be-Latn">Videa Ogg Theora</comment>
+  <comment xml:lang="be-Cyrl">відэа Ogg Theora</comment>
+  <comment xml:lang="ast">Videu n'Ogg Theora</comment>
+  <comment xml:lang="ar">فيديو Ogg Theora</comment>
+  <comment xml:lang="af">Ogg Theora-video</comment>
+  <sub-class-of type="video/ogg"/>
+  <alias type="video/x-theora"/>
+  <glob pattern="*.ogg"/>
+</mime-type>

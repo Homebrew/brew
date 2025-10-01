@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/vnd.gerber">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Gerber file</comment>
+  <comment xml:lang="uk">файл Gerber</comment>
+  <comment xml:lang="sv">Gerber-fil</comment>
+  <comment xml:lang="ru">Файл Gerber</comment>
+  <comment xml:lang="pl">Plik Gerber</comment>
+  <comment xml:lang="it">File Gerber</comment>
+  <comment xml:lang="es">archivo de Gerber</comment>
+  <comment xml:lang="de">Gerber-Datei</comment>
+  <comment xml:lang="be-Cyrl">файл Gerber</comment>
+  <sub-class-of type="text/plain"/>
+  <glob pattern="*.gbr"/>
+  <generic-icon name="text-x-generic"/>
+  <alias type="application/x-gerber"/>
+</mime-type>

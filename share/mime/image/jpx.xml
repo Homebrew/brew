@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="image/jpx">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>JPEG-2000 JPX image</comment>
+  <comment xml:lang="zh-Hant-TW">JPEG-2000 JPX 影像</comment>
+  <comment xml:lang="zh-Hans-CN">JPEG-2000 JPX 图像</comment>
+  <comment xml:lang="uk">зображення JPX JPEG-2000</comment>
+  <comment xml:lang="tr">JPEG-2000 JPX görüntüsü</comment>
+  <comment xml:lang="sv">JPEG-2000 JPX-bild</comment>
+  <comment xml:lang="sq"> image JPEG-2000 JPX</comment>
+  <comment xml:lang="sl">Slika JPEG-2000 JPX</comment>
+  <comment xml:lang="si">JPEG-2000 JPX රූපය</comment>
+  <comment xml:lang="sk">Obrázok JPEG-2000 JPX</comment>
+  <comment xml:lang="ru">Изображение JPEG-2000 JPX</comment>
+  <comment xml:lang="pt-BR">Imagem JPX de JPEG-2000</comment>
+  <comment xml:lang="pl">Obraz JPX JPEG-2000</comment>
+  <comment xml:lang="oc">imatge JPEG-2000 JPX</comment>
+  <comment xml:lang="nl">JPEG-2000 JPX-afbeelding</comment>
+  <comment xml:lang="ko">JPEG-2000 JPX 그림</comment>
+  <comment xml:lang="kk-Cyrl">JPEG-2000 JPX суреті</comment>
+  <comment xml:lang="ja">JPEG-2000 JPX 画像</comment>
+  <comment xml:lang="it">Immagine JPEG-2000 JPX</comment>
+  <comment xml:lang="is">JPEG-2000 JPX mynd</comment>
+  <comment xml:lang="id">Citra JPEG-2000 JPX</comment>
+  <comment xml:lang="hu">JPEG-2000 JPX kép</comment>
+  <comment xml:lang="hr">JPEG-2000 JPX slika</comment>
+  <comment xml:lang="he">תמונת JPX של JPEG-2000</comment>
+  <comment xml:lang="ga">íomhá JPEG-2000 JPX</comment>
+  <comment xml:lang="fur">imagjinJPEG-2000 JPX</comment>
+  <comment xml:lang="fr">image JPEG-2000 JPX</comment>
+  <comment xml:lang="fi">JPEG-2000 JPX -kuva</comment>
+  <comment xml:lang="eu">JPEG-2000 JPX irudia</comment>
+  <comment xml:lang="es">imagen JPEG-2000 JPX</comment>
+  <comment xml:lang="en-GB">JPEG-2000 JPX image</comment>
+  <comment xml:lang="de">JPEG-2000 JPX-Bild</comment>
+  <comment xml:lang="da">JPEG-2000 JPX-billede</comment>
+  <comment xml:lang="cs">obrázek JPEG-2000 JPX</comment>
+  <comment xml:lang="ca">imatge JPEG-2000 JPX</comment>
+  <comment xml:lang="bg">Изображение — JPEG-2000 JPX</comment>
+  <comment xml:lang="be-Cyrl">выява JPEG-2000 JPX</comment>
+  <comment xml:lang="ar">صورة JPEG-2000 JPX</comment>
+  <comment xml:lang="af">JPEG-2000 JPX-beeld</comment>
+  <acronym>JPX</acronym>
+  <expanded-acronym>JPEG-2000 eXtended</expanded-acronym>
+  <glob pattern="*.jpf"/>
+  <glob pattern="*.jpx"/>
+</mime-type>

@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/owl+xml">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>OWL XML file</comment>
+  <comment xml:lang="zh-Hant-TW">OWL XML 檔案</comment>
+  <comment xml:lang="zh-Hans-CN">OWL XML 文件</comment>
+  <comment xml:lang="uk">файл XML OWL</comment>
+  <comment xml:lang="tr">OWL XML dosyası</comment>
+  <comment xml:lang="sv">OWL XML-fil</comment>
+  <comment xml:lang="sr-Cyrl">ОВЛ ИксМЛ датотека</comment>
+  <comment xml:lang="sq">kartelë OWL XML</comment>
+  <comment xml:lang="sl">Datoteka OWL XML</comment>
+  <comment xml:lang="si">OWL XML ගොනුව</comment>
+  <comment xml:lang="sk">Súbor XML OWL</comment>
+  <comment xml:lang="ru">Файл XML OWL</comment>
+  <comment xml:lang="pt-BR">Arquivo OWL XML</comment>
+  <comment xml:lang="pt">ficheiro OWL XML</comment>
+  <comment xml:lang="pl">Plik XML OWL</comment>
+  <comment xml:lang="oc">fichièr OWL XML</comment>
+  <comment xml:lang="nl">OWL XML-bestand</comment>
+  <comment xml:lang="ko">OWL XML 파일</comment>
+  <comment xml:lang="kk-Cyrl">OWL XML файлы</comment>
+  <comment xml:lang="ja">OWL XML ファイル</comment>
+  <comment xml:lang="it">File XML OWL</comment>
+  <comment xml:lang="is">OWL XML skrá</comment>
+  <comment xml:lang="id">Berkas XML OWL</comment>
+  <comment xml:lang="ia">File XML OWL</comment>
+  <comment xml:lang="hu">OWL XML-fájl</comment>
+  <comment xml:lang="hr">OWL XML datoteka</comment>
+  <comment xml:lang="he">קובץ XML מסוג OWL</comment>
+  <comment xml:lang="ga">comhad XML OWL</comment>
+  <comment xml:lang="fur">file OWL XML</comment>
+  <comment xml:lang="fr">fichier XML OWL</comment>
+  <comment xml:lang="fi">OWL XML -tiedosto</comment>
+  <comment xml:lang="eu">OWL XML fitxategia</comment>
+  <comment xml:lang="es">archivo en XML OWL</comment>
+  <comment xml:lang="en-GB">OWL XML file</comment>
+  <comment xml:lang="el">Αρχείο OWL XML</comment>
+  <comment xml:lang="de">OWL-XML-Datei</comment>
+  <comment xml:lang="da">OWL XML-fil</comment>
+  <comment xml:lang="cs">soubor OWL XML</comment>
+  <comment xml:lang="ca">fitxer XML OWL</comment>
+  <comment xml:lang="bg">Файл — OWL XML</comment>
+  <comment xml:lang="be-Cyrl">файл OWL XML</comment>
+  <comment xml:lang="ar">ملف OWL XML</comment>
+  <comment xml:lang="af">OWL XML-lêer</comment>
+  <acronym>OWL</acronym>
+  <expanded-acronym>Web Ontology Language</expanded-acronym>
+  <sub-class-of type="application/xml"/>
+  <glob pattern="*.owx"/>
+</mime-type>

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/vnd.comicbook+zip">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Comic book archive (zip container)</comment>
+  <comment xml:lang="uk">архів коміксів (контейнер zip)</comment>
+  <comment xml:lang="sv">Serietidningsarkiv (zip-behållare)</comment>
+  <comment xml:lang="ru">Архив комиксов (zip-контейнер)</comment>
+  <comment xml:lang="pl">Archiwum komiksu (kontener ZIP)</comment>
+  <comment xml:lang="it">Archivio comic book (contenitore zip)</comment>
+  <comment xml:lang="gl">Arquivo de libro de banda deseñada (contedor zip)</comment>
+  <comment xml:lang="es">archivador de libro de historietas (contenedor ZIP)</comment>
+  <comment xml:lang="de">Comic-Book-Archiv (zip-Container)</comment>
+  <comment xml:lang="be-Cyrl">архіў comic book (кантэйнер zip)</comment>
+  <sub-class-of type="application/zip"/>
+  <generic-icon name="x-office-document"/>
+  <glob pattern="*.cbz"/>
+  <alias type="application/x-cbz"/>
+</mime-type>

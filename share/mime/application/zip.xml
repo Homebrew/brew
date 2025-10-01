@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/zip">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Zip archive</comment>
+  <comment xml:lang="zh-Hant-TW">Zip 封存檔</comment>
+  <comment xml:lang="zh-Hans-CN">Zip 归档文件</comment>
+  <comment xml:lang="vi">Kho nén zip</comment>
+  <comment xml:lang="uk">архів zip</comment>
+  <comment xml:lang="tr">Zip arşivi</comment>
+  <comment xml:lang="sv">Zip-arkiv</comment>
+  <comment xml:lang="sr-Cyrl">Зип архива</comment>
+  <comment xml:lang="sq">arkiv zip</comment>
+  <comment xml:lang="sl">Datoteka arhiva ZIP</comment>
+  <comment xml:lang="si">Zip සංරක්ෂිතය</comment>
+  <comment xml:lang="sk">Archív ZIP</comment>
+  <comment xml:lang="ru">Архив ZIP</comment>
+  <comment xml:lang="ro">Arhivă zip</comment>
+  <comment xml:lang="pt-BR">Pacote Zip</comment>
+  <comment xml:lang="pt">arquivo Zip</comment>
+  <comment xml:lang="pl">Archiwum ZIP</comment>
+  <comment xml:lang="oc">archiu zip</comment>
+  <comment xml:lang="nn">Zip-arkiv</comment>
+  <comment xml:lang="nl">Zip-archief</comment>
+  <comment xml:lang="nb">Zip-arkiv</comment>
+  <comment xml:lang="lv">Zip arhīvs</comment>
+  <comment xml:lang="lt">Zip archyvas</comment>
+  <comment xml:lang="ko">ZIP 압축 파일</comment>
+  <comment xml:lang="kk-Cyrl">Zip архиві</comment>
+  <comment xml:lang="ja">Zip アーカイブ</comment>
+  <comment xml:lang="it">Archivio zip</comment>
+  <comment xml:lang="is">Zip safnskrá</comment>
+  <comment xml:lang="id">Arsip Zip</comment>
+  <comment xml:lang="ia">Archivo Zip</comment>
+  <comment xml:lang="hu">Zip archívum</comment>
+  <comment xml:lang="hr">Zip arhiva</comment>
+  <comment xml:lang="he">ארכיון Zip</comment>
+  <comment xml:lang="gl">ficheiro Zip</comment>
+  <comment xml:lang="ga">cartlann Zip</comment>
+  <comment xml:lang="fur">archivi Zip</comment>
+  <comment xml:lang="fr">archive zip</comment>
+  <comment xml:lang="fo">Zip skjalasavn</comment>
+  <comment xml:lang="fi">Zip-arkisto</comment>
+  <comment xml:lang="eu">Zip artxiboa</comment>
+  <comment xml:lang="es">archivador Zip</comment>
+  <comment xml:lang="eo">Zip-arkivo</comment>
+  <comment xml:lang="en-GB">Zip archive</comment>
+  <comment xml:lang="el">Συμπιεσμένο αρχείο Zip</comment>
+  <comment xml:lang="de">Zip-Archiv</comment>
+  <comment xml:lang="da">Zip-arkiv</comment>
+  <comment xml:lang="cy">Archif ZIP</comment>
+  <comment xml:lang="cs">archiv ZIP</comment>
+  <comment xml:lang="ca">arxiu zip</comment>
+  <comment xml:lang="bg">Архив — zip</comment>
+  <comment xml:lang="be-Latn">Archiŭ zip</comment>
+  <comment xml:lang="be-Cyrl">архіў zip</comment>
+  <comment xml:lang="az">Zip arxivi</comment>
+  <comment xml:lang="ar">أرشيف Zip</comment>
+  <comment xml:lang="af">Zip-argief</comment>
+  <alias type="application/x-zip-compressed"/>
+  <alias type="application/x-zip"/>
+  <generic-icon name="package-x-generic"/>
+  <glob pattern="*.zip"/>
+  <glob pattern="*.zipx"/>
+</mime-type>

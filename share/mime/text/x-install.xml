@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="text/x-install">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Installation instructions</comment>
+  <comment xml:lang="uk">настанови щодо встановлення</comment>
+  <comment xml:lang="sv">Installationsinstruktioner</comment>
+  <comment xml:lang="ru">Инструкции по установке</comment>
+  <comment xml:lang="pt-BR">Instruções de instalação</comment>
+  <comment xml:lang="pl">Instrukcje instalacji</comment>
+  <comment xml:lang="ja">導入指南</comment>
+  <comment xml:lang="it">Istruzioni di installazione</comment>
+  <comment xml:lang="eu">Instalazio-argibideak</comment>
+  <comment xml:lang="es">instrucciones de instalación</comment>
+  <comment xml:lang="de">Installationsanleitung</comment>
+  <comment xml:lang="be-Cyrl">інструкцыі для ўсталявання</comment>
+  <sub-class-of type="text/plain"/>
+  <glob pattern="INSTALL"/>
+</mime-type>

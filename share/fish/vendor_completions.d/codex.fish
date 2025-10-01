@@ -1,0 +1,1 @@
+../../../Cellar/codex/0.42.0/share/fish/vendor_completions.d/codex.fish

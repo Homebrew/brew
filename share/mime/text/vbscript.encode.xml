@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="text/vbscript.encode">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Encoded VBScript program</comment>
+  <comment xml:lang="uk">кодована програма VBScript</comment>
+  <comment xml:lang="sv">Kodat VBScript-program</comment>
+  <comment xml:lang="ru">Зашифрованная программа на VBScript</comment>
+  <comment xml:lang="pl">Zakodowany program VBScript</comment>
+  <comment xml:lang="es">Programa en VBScript codificado</comment>
+  <comment xml:lang="de">Verschlüsseltes VBScript-Programm</comment>
+  <sub-class-of type="application/x-executable"/>
+  <sub-class-of type="text/plain"/>
+  <generic-icon name="text-x-script"/>
+  <glob pattern="*.vbe"/>
+</mime-type>

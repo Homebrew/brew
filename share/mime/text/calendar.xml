@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="text/calendar">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>VCS/ICS calendar</comment>
+  <comment xml:lang="zh-Hant-TW">VCS/ICS 行事曆</comment>
+  <comment xml:lang="zh-Hans-CN">VCS/ICS 日历</comment>
+  <comment xml:lang="vi">Lịch VCS/ICS</comment>
+  <comment xml:lang="uk">календар VCS/ICS</comment>
+  <comment xml:lang="tr">VCS/ICS takvimi</comment>
+  <comment xml:lang="sv">VCS/ICS-kalender</comment>
+  <comment xml:lang="sr-Cyrl">ВЦС/ИЦС календар</comment>
+  <comment xml:lang="sq">kalendar VCS/ICS</comment>
+  <comment xml:lang="sl">Datoteka koledarja VCS/ICS</comment>
+  <comment xml:lang="si">VCS/ICS දින දර්ශනය</comment>
+  <comment xml:lang="sk">Kalendár VCS/ICS</comment>
+  <comment xml:lang="ru">Календарь VCS/ICS</comment>
+  <comment xml:lang="ro">Calendar VCS/ICS</comment>
+  <comment xml:lang="pt-BR">Calendário VCS/ICS</comment>
+  <comment xml:lang="pt">calendário VCS/ICS</comment>
+  <comment xml:lang="pl">Kalendarz VCS/ICS</comment>
+  <comment xml:lang="oc">calendièr VCS/ICS</comment>
+  <comment xml:lang="nn">VCS/ICS-kalender</comment>
+  <comment xml:lang="nl">VCS/ICS-kalender</comment>
+  <comment xml:lang="nb">VCS/ICS-kalender</comment>
+  <comment xml:lang="lv">VCS/ICS kalendārs</comment>
+  <comment xml:lang="lt">VCS/ICS kalendorius</comment>
+  <comment xml:lang="ko">VCS/ICS 달력</comment>
+  <comment xml:lang="kk-Cyrl">VCS/ICS күнтізбесі</comment>
+  <comment xml:lang="ja">VCS/ICS カレンダー</comment>
+  <comment xml:lang="it">Calendario VCS/ICS</comment>
+  <comment xml:lang="is">VCS/ICS-dagatal</comment>
+  <comment xml:lang="id">Kalender VCS/ICS</comment>
+  <comment xml:lang="ia">Calendario VCS/ICS</comment>
+  <comment xml:lang="hu">VCS/ICS naptár</comment>
+  <comment xml:lang="hr">VCS/ICS kalendar</comment>
+  <comment xml:lang="he">לוח שנה VCS/ICS</comment>
+  <comment xml:lang="gl">Calendario VCS/ICS</comment>
+  <comment xml:lang="ga">féilire VCS/ICS</comment>
+  <comment xml:lang="fur">calendari VCS/ICS</comment>
+  <comment xml:lang="fr">calendrier VCS/ICS</comment>
+  <comment xml:lang="fo">VCS/ICS kalendari</comment>
+  <comment xml:lang="fi">VCS/ICS-kalenteri</comment>
+  <comment xml:lang="eu">VCS/ICS egutegia</comment>
+  <comment xml:lang="es">calendario VCS/ICS</comment>
+  <comment xml:lang="eo">VCS/ICS-kalendaro</comment>
+  <comment xml:lang="en-GB">VCS/ICS calendar</comment>
+  <comment xml:lang="el">Ημερολόγιο VCS/ICS</comment>
+  <comment xml:lang="de">VCS/ICS-Kalender</comment>
+  <comment xml:lang="da">VCS/ICS-kalender</comment>
+  <comment xml:lang="cs">kalendář VCS/ICS</comment>
+  <comment xml:lang="ca">calendari VCS/ICS</comment>
+  <comment xml:lang="bg">Календар — VCS/ICS</comment>
+  <comment xml:lang="be-Latn">Kalandar VCS/ICS</comment>
+  <comment xml:lang="be-Cyrl">каляндар VCS/ICS</comment>
+  <comment xml:lang="ar">سجل VCS/ICS</comment>
+  <comment xml:lang="af">VCS/ICS-kalender</comment>
+  <acronym>VCS/ICS</acronym>
+  <expanded-acronym>vCalendar/iCalendar</expanded-acronym>
+  <sub-class-of type="text/plain"/>
+  <alias type="text/x-vcalendar"/>
+  <alias type="application/ics"/>
+  <glob pattern="*.vcs"/>
+  <glob pattern="*.ics"/>
+</mime-type>

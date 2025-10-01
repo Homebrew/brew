@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="image/x-win-bitmap">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Windows cursor</comment>
+  <comment xml:lang="zh-Hant-TW">Windows 滑鼠游標</comment>
+  <comment xml:lang="zh-Hans-CN">Windows 光标</comment>
+  <comment xml:lang="vi">Con chạy Windows</comment>
+  <comment xml:lang="uk">курсор Windows</comment>
+  <comment xml:lang="tr">Windows imleci</comment>
+  <comment xml:lang="sv">Windows-muspekare</comment>
+  <comment xml:lang="sr-Cyrl">Виндоузов курсор</comment>
+  <comment xml:lang="sq">kursor Windows</comment>
+  <comment xml:lang="sl">Datoteka kazalke Windows</comment>
+  <comment xml:lang="si">වින්ඩෝස් කර්සරය</comment>
+  <comment xml:lang="sk">Kurzor Windows</comment>
+  <comment xml:lang="ru">Курсор Windows</comment>
+  <comment xml:lang="ro">Cursor Windows</comment>
+  <comment xml:lang="pt-BR">Cursor do Windows</comment>
+  <comment xml:lang="pt">cursor Windows</comment>
+  <comment xml:lang="pl">Kursor Windows</comment>
+  <comment xml:lang="oc">cursor Windows</comment>
+  <comment xml:lang="nn">Windows-peikar</comment>
+  <comment xml:lang="nl">Windows-muisaanwijzer</comment>
+  <comment xml:lang="nb">Windows-markør</comment>
+  <comment xml:lang="ms">Kursor Windows</comment>
+  <comment xml:lang="lv">Windows kursors</comment>
+  <comment xml:lang="lt">Windows žymeklis</comment>
+  <comment xml:lang="ko">Windows 커서</comment>
+  <comment xml:lang="kk-Cyrl">Windows курсоры</comment>
+  <comment xml:lang="ja">Windows カーソル</comment>
+  <comment xml:lang="it">Cursore Windows</comment>
+  <comment xml:lang="is">Windows bendill</comment>
+  <comment xml:lang="id">Kursor Windows</comment>
+  <comment xml:lang="ia">Cursor pro Windows</comment>
+  <comment xml:lang="hu">Windows-kurzor</comment>
+  <comment xml:lang="hr">Windows pokazivač</comment>
+  <comment xml:lang="he">סמן של Windows</comment>
+  <comment xml:lang="gl">Cursor de Windows</comment>
+  <comment xml:lang="ga">cúrsóir Windows</comment>
+  <comment xml:lang="fur">cursôr di Windows</comment>
+  <comment xml:lang="fr">curseur Windows</comment>
+  <comment xml:lang="fo">Windows vísi</comment>
+  <comment xml:lang="fi">Windows-osoitin</comment>
+  <comment xml:lang="eu">Windows kurtsorea</comment>
+  <comment xml:lang="es">cursor de Windows</comment>
+  <comment xml:lang="eo">Windows-kursoro</comment>
+  <comment xml:lang="en-GB">Windows cursor</comment>
+  <comment xml:lang="el">Δρομέας Windows</comment>
+  <comment xml:lang="de">Windows-Mauszeiger</comment>
+  <comment xml:lang="da">Windowsmarkør</comment>
+  <comment xml:lang="cs">kurzor Windows</comment>
+  <comment xml:lang="ca">cursor de Windows</comment>
+  <comment xml:lang="bg">Курсор — Windows</comment>
+  <comment xml:lang="be-Latn">Kursor Windows</comment>
+  <comment xml:lang="be-Cyrl">курсор Windows</comment>
+  <comment xml:lang="ar">مؤشر ويندوز</comment>
+  <comment xml:lang="af">Windows-wyser</comment>
+  <glob pattern="*.cur"/>
+</mime-type>

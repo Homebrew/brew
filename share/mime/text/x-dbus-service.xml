@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="text/x-dbus-service">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>D-Bus service file</comment>
+  <comment xml:lang="zh-Hant-TW">D-Bus 服務檔</comment>
+  <comment xml:lang="zh-Hans-CN">D-Bus 服务文件</comment>
+  <comment xml:lang="uk">файл служби D-Bus</comment>
+  <comment xml:lang="tr">D-Bus hizmeti dosyası</comment>
+  <comment xml:lang="sv">D-BUS-tjänstfil</comment>
+  <comment xml:lang="sr-Cyrl">датотека услуге Д-сабирнице</comment>
+  <comment xml:lang="sq">kartelë shërbimi D-Bus</comment>
+  <comment xml:lang="si">D-බස් සේවා ගොනුව</comment>
+  <comment xml:lang="sk">Súbor služby D-Bus</comment>
+  <comment xml:lang="ru">Файл службы D-Bus</comment>
+  <comment xml:lang="pt-BR">Arquivo de serviço do D-Bus</comment>
+  <comment xml:lang="pl">Plik usługi D-Bus</comment>
+  <comment xml:lang="nl">D-Bus-servicebestand</comment>
+  <comment xml:lang="ko">D-Bus 서비스 파일</comment>
+  <comment xml:lang="kk-Cyrl">D-Bus қызметтік файлы</comment>
+  <comment xml:lang="ja">D-Bus サービスファイル</comment>
+  <comment xml:lang="it">File servizio D-Bus</comment>
+  <comment xml:lang="is">D-Bus þjónustuskrá</comment>
+  <comment xml:lang="id">Berkas layanan D-Bus</comment>
+  <comment xml:lang="hu">D-Bus szolgáltatás fájl</comment>
+  <comment xml:lang="hr">Datoteka D-Bus usluge</comment>
+  <comment xml:lang="he">קובץ שירות D-Bus</comment>
+  <comment xml:lang="gl">Ficheiro de servizo D-Bus</comment>
+  <comment xml:lang="ga">comhad seirbhíse D-Bus</comment>
+  <comment xml:lang="fur">file di servizi D-Bus</comment>
+  <comment xml:lang="fr">fichier de service D-Bus</comment>
+  <comment xml:lang="fi">D-Bus-palvelutiedosto</comment>
+  <comment xml:lang="eu">D-Bus zerbitzu fitxategia</comment>
+  <comment xml:lang="es">archivo de servicio de D-Bus</comment>
+  <comment xml:lang="en-GB">D-Bus service file</comment>
+  <comment xml:lang="de">D-Bus-Dienstdatei</comment>
+  <comment xml:lang="da">D-Bus-tjenestefil</comment>
+  <comment xml:lang="cs">soubor služby D-Bus</comment>
+  <comment xml:lang="ca">fitxer de servei de D-Bus</comment>
+  <comment xml:lang="bg">Услуга — D-Bus</comment>
+  <comment xml:lang="be-Cyrl">файл сэрвісу D-Bus</comment>
+  <comment xml:lang="ar">ملف خدمة دي-باص</comment>
+  <comment xml:lang="af">D-Bus-dienslêer</comment>
+  <sub-class-of type="text/plain"/>
+  <glob pattern="*.service"/>
+</mime-type>

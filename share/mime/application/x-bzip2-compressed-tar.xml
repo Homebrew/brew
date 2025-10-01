@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-bzip2-compressed-tar">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Tar archive (bzip2-compressed)</comment>
+  <comment xml:lang="uk">архів tar (стиснений bzip2)</comment>
+  <comment xml:lang="sv">Tar-arkiv (bzip2-komprimerat)</comment>
+  <comment xml:lang="ru">Архив Tar (сжатый bzip2)</comment>
+  <comment xml:lang="pl">Archiwum tar (kompresja bzip2)</comment>
+  <comment xml:lang="es">archivador TAR (comprimido con BZIP2)</comment>
+  <comment xml:lang="de">Tar-Archiv (bzip2-komprimiert)</comment>
+  <generic-icon name="package-x-generic"/>
+  <sub-class-of type="application/x-bzip2"/>
+  <glob pattern="*.tar.bz2"/>
+  <glob pattern="*.tbz2"/>
+  <glob pattern="*.tb2"/>
+  <alias type="application/x-bzip-compressed-tar"/>
+</mime-type>

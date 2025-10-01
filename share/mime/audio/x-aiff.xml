@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="audio/x-aiff">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>AIFF/Amiga/Mac audio</comment>
+  <comment xml:lang="zh-Hant-TW">AIFF/Amiga/Mac 音訊</comment>
+  <comment xml:lang="zh-Hans-CN">AIFF/Amiga/Mac 音频</comment>
+  <comment xml:lang="vi">Âm thanh AIFF/Amiga/Mac</comment>
+  <comment xml:lang="uk">звук AIFF/Amiga/Mac</comment>
+  <comment xml:lang="tr">AIFF/Amiga/Mac sesi</comment>
+  <comment xml:lang="sv">AIFF/Amiga/Mac-ljud</comment>
+  <comment xml:lang="sr-Cyrl">АИФФ/Амига/Мекинтош звук</comment>
+  <comment xml:lang="sq">audio AIFF/Amiga/Mac</comment>
+  <comment xml:lang="sl">Zvočna datoteka AIFF/Amiga/Mac</comment>
+  <comment xml:lang="si">AIFF/Amiga/Mac ශ්‍රව්‍ය</comment>
+  <comment xml:lang="sk">Zvuk AIFF/Amiga/Mac</comment>
+  <comment xml:lang="ru">Аудио AIFF/Amiga/Mac</comment>
+  <comment xml:lang="ro">Audio AIFF/Amiga/Mac</comment>
+  <comment xml:lang="pt-BR">Áudio AIFF/Amiga/Mac</comment>
+  <comment xml:lang="pt">áudio AIFF/Amiga/Mac</comment>
+  <comment xml:lang="pl">Plik dźwiękowy AIFF/Amiga/Mac</comment>
+  <comment xml:lang="oc">àudio AIFF/Amiga/Mac</comment>
+  <comment xml:lang="nn">AIFF/Amiga/Mac-lyd</comment>
+  <comment xml:lang="nl">AIFF/Amiga/Mac-audio</comment>
+  <comment xml:lang="nb">AIFF/Amiga/Mac-lyd</comment>
+  <comment xml:lang="ms">Audio AIFF/Amiga/Mac</comment>
+  <comment xml:lang="lv">AIFF/Amiga/Mac audio</comment>
+  <comment xml:lang="lt">AIFF/Amiga/Mac garso įrašas</comment>
+  <comment xml:lang="ko">AIFF/Amiga/Mac 오디오</comment>
+  <comment xml:lang="kk-Cyrl">AIFF/Amiga/Mac аудиосы</comment>
+  <comment xml:lang="ka">AIFF/Amiga/Mac აუდიო</comment>
+  <comment xml:lang="ja">AIFF/Amiga/Mac オーディオ</comment>
+  <comment xml:lang="it">Audio AIFF/Amiga/Mac</comment>
+  <comment xml:lang="is">AIFF/Amiga/Mac hljóðskrá</comment>
+  <comment xml:lang="id">Audio AIFF/Amiga/Mac</comment>
+  <comment xml:lang="ia">Audio AIFF/Amiga/Mac</comment>
+  <comment xml:lang="hu">AIFF/Amiga/Mac hang</comment>
+  <comment xml:lang="hr">AIFF/Amiga/Mac zvučni zapis</comment>
+  <comment xml:lang="he">שמע AIFF/Amiga/Mac</comment>
+  <comment xml:lang="gl">son AIFF/Amiga/Mac</comment>
+  <comment xml:lang="ga">fuaim AIFF/Amiga/Mac</comment>
+  <comment xml:lang="fur">audio AIFF/Amiga/Mac</comment>
+  <comment xml:lang="fr">audio AIFF/Amiga/Mac</comment>
+  <comment xml:lang="fo">AIFF/Amiga/Mac ljóður</comment>
+  <comment xml:lang="fi">AIFF/Amiga/Mac-ääni</comment>
+  <comment xml:lang="eu">AIFF/Amiga/Mac audioa</comment>
+  <comment xml:lang="es">sonido AIFF/Amiga/Mac</comment>
+  <comment xml:lang="eo">AIFF/Amiga/Mac-sondosiero</comment>
+  <comment xml:lang="en-GB">AIFF/Amiga/Mac audio</comment>
+  <comment xml:lang="el">Ήχος AIFF/Amiga/Mac</comment>
+  <comment xml:lang="de">AIFF/Amiga/Mac-Audio</comment>
+  <comment xml:lang="da">AIFF-/Amiga-/Mac-lyd</comment>
+  <comment xml:lang="cy">Sain AIFF/Amiga/Mac</comment>
+  <comment xml:lang="cs">zvuk AIFF/Amiga/Mac</comment>
+  <comment xml:lang="ca">àudio AIFF/Amiga/Mac</comment>
+  <comment xml:lang="bg">Аудио — AIFF/Amiga/Mac</comment>
+  <comment xml:lang="be-Latn">Aŭdyjo AIFF/Amiga/Mac</comment>
+  <comment xml:lang="be-Cyrl">аўдыя AIFF/Amiga/Mac</comment>
+  <comment xml:lang="az">AIFF/Amiga/Mac audio faylı</comment>
+  <comment xml:lang="ar">صوت AIFF/Amiga/Mac</comment>
+  <comment xml:lang="af">AIFF/Amiga/Mac-oudio</comment>
+  <acronym>AIFF</acronym>
+  <expanded-acronym>Audio Interchange File Format</expanded-acronym>
+  <sub-class-of type="application/x-iff"/>
+  <glob pattern="*.aiff"/>
+  <glob pattern="*.aif"/>
+</mime-type>

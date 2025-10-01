@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="text/x-chdr">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>C header</comment>
+  <comment xml:lang="zh-Hant-TW">C 標頭檔</comment>
+  <comment xml:lang="zh-Hans-CN">C 程序头文件</comment>
+  <comment xml:lang="vi">Phần đầu mã nguồn C</comment>
+  <comment xml:lang="uk">файл заголовків мовою C</comment>
+  <comment xml:lang="tr">C başlığı</comment>
+  <comment xml:lang="sv">C-huvud</comment>
+  <comment xml:lang="sr-Cyrl">Ц заглавље</comment>
+  <comment xml:lang="sq">krye C</comment>
+  <comment xml:lang="sl">Datoteka glave C</comment>
+  <comment xml:lang="si">C ශීර්ෂකය</comment>
+  <comment xml:lang="sk">Hlavičky jazyka C</comment>
+  <comment xml:lang="ru">Заголовочный файл C</comment>
+  <comment xml:lang="ro">Antet C</comment>
+  <comment xml:lang="pt-BR">Cabeçalho C</comment>
+  <comment xml:lang="pt">cabeçalho C</comment>
+  <comment xml:lang="pl">Plik nagłówkowy C</comment>
+  <comment xml:lang="oc">entèsta C</comment>
+  <comment xml:lang="nn">C-kjeldekode-hovud</comment>
+  <comment xml:lang="nl">C-header</comment>
+  <comment xml:lang="nb">C-kildekodeheader</comment>
+  <comment xml:lang="lv">C galvene</comment>
+  <comment xml:lang="lt">C antraštė</comment>
+  <comment xml:lang="ko">C 헤더</comment>
+  <comment xml:lang="kk-Cyrl">C тақырыптама файлы</comment>
+  <comment xml:lang="ka">C-ის თავსართი</comment>
+  <comment xml:lang="ja">C ヘッダー</comment>
+  <comment xml:lang="it">Header C</comment>
+  <comment xml:lang="is">C haus</comment>
+  <comment xml:lang="id">Header C</comment>
+  <comment xml:lang="ia">Capite C</comment>
+  <comment xml:lang="hu">C fejléc</comment>
+  <comment xml:lang="hr">C zaglavlje</comment>
+  <comment xml:lang="he">כותר C</comment>
+  <comment xml:lang="gl">cabeceira de códifo fonte de C</comment>
+  <comment xml:lang="ga">ceanntásc C</comment>
+  <comment xml:lang="fur">intestazion C</comment>
+  <comment xml:lang="fr">en-tête C</comment>
+  <comment xml:lang="fo">C tekshøvd</comment>
+  <comment xml:lang="fi">C-otsake</comment>
+  <comment xml:lang="eu">C goiburua</comment>
+  <comment xml:lang="es">cabecera de código fuente en C</comment>
+  <comment xml:lang="en-GB">C header</comment>
+  <comment xml:lang="el">Κεφαλίδα C</comment>
+  <comment xml:lang="de">C-Header</comment>
+  <comment xml:lang="da">C-posthoved</comment>
+  <comment xml:lang="cs">hlavičkový soubor C</comment>
+  <comment xml:lang="ca">capçalera en C</comment>
+  <comment xml:lang="bg">Заглавен файл — C</comment>
+  <comment xml:lang="be-Latn">Zahałoŭny fajł C</comment>
+  <comment xml:lang="be-Cyrl">загаловачны файл C</comment>
+  <comment xml:lang="ar">ترويسة C</comment>
+  <sub-class-of type="text/x-csrc"/>
+  <glob pattern="*.h"/>
+</mime-type>

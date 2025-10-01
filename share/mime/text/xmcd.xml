@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="text/xmcd">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>XMCD CD database</comment>
+  <comment xml:lang="zh-Hant-TW">XMCD CD 資料庫</comment>
+  <comment xml:lang="zh-Hans-CN">XMCD CD 数据库</comment>
+  <comment xml:lang="vi">Cơ sở dữ liệu CD XMCD</comment>
+  <comment xml:lang="uk">база даних XMCD CD</comment>
+  <comment xml:lang="tr">XMCD CD veri tabanı</comment>
+  <comment xml:lang="sv">XMCD cd-databas</comment>
+  <comment xml:lang="sr-Cyrl">ИксМЦД ЦД база података</comment>
+  <comment xml:lang="sq">bazë të dhënash XMCD CD</comment>
+  <comment xml:lang="sl">Podatkovna zbirka XMCD CD</comment>
+  <comment xml:lang="si">XMCD CD දත්ත ගබඩාව</comment>
+  <comment xml:lang="sk">Databáza XMCD CD</comment>
+  <comment xml:lang="ru">База данных компакт-дисков XMCD</comment>
+  <comment xml:lang="ro">Bază de date XMCD CD</comment>
+  <comment xml:lang="pt-BR">Banco de dados de CD XMCD</comment>
+  <comment xml:lang="pt">base de dados XMCD CD</comment>
+  <comment xml:lang="pl">Baza danych CD XMCD</comment>
+  <comment xml:lang="oc">banca de donadas de CD XMCD</comment>
+  <comment xml:lang="nn">XMCD CD-database</comment>
+  <comment xml:lang="nl">XMCD CD-gegevensbank</comment>
+  <comment xml:lang="nb">XMCD CD-database</comment>
+  <comment xml:lang="lv">XMCD CD datubāze</comment>
+  <comment xml:lang="lt">XMCD CD duomenų bazė</comment>
+  <comment xml:lang="ko">XMCD CD 데이터베이스</comment>
+  <comment xml:lang="kk-Cyrl">XMCD CD дерекқоры</comment>
+  <comment xml:lang="ja">XMCD CD データベース</comment>
+  <comment xml:lang="it">Database XMCD CD</comment>
+  <comment xml:lang="is">XMCD CD gagnagrunnur</comment>
+  <comment xml:lang="id">Basis data XMCD CD</comment>
+  <comment xml:lang="ia">Base de datos de CD XMCD</comment>
+  <comment xml:lang="hu">XMCD CD-adatbázis</comment>
+  <comment xml:lang="hr">XMCD CD baza podataka</comment>
+  <comment xml:lang="he">מסד נתונים XMCD CD</comment>
+  <comment xml:lang="gl">base de datos de CD XMCD</comment>
+  <comment xml:lang="ga">bunachar sonraí XMCD CD</comment>
+  <comment xml:lang="fur">base di dâts XMCD CD</comment>
+  <comment xml:lang="fr">base de données de CD XMCD</comment>
+  <comment xml:lang="fo">XMCD fløgu dátustovnur</comment>
+  <comment xml:lang="fi">XMCD CD -tietokanta</comment>
+  <comment xml:lang="eu">XMCD CD datu-basea</comment>
+  <comment xml:lang="es">base de datos de CD XMCD</comment>
+  <comment xml:lang="en-GB">XMCD CD database</comment>
+  <comment xml:lang="el">Βάση δεδομένων CD XMCD</comment>
+  <comment xml:lang="de">XMCD-CD-Datenbank</comment>
+  <comment xml:lang="da">XMCD-cd-database</comment>
+  <comment xml:lang="cs">databáze XMCD CD</comment>
+  <comment xml:lang="ca">base de dades de CD XMCD</comment>
+  <comment xml:lang="bg">База от данни за CD-та — XMCD</comment>
+  <comment xml:lang="be-Latn">Baza źviestak ab dyskach XMCD</comment>
+  <comment xml:lang="be-Cyrl">база даных кампакт-дыскаў XMCD</comment>
+  <comment xml:lang="ar">قاعدة بيانات XMCD CD</comment>
+  <comment xml:lang="af">XMCD CD-databasis</comment>
+  <sub-class-of type="text/plain"/>
+</mime-type>

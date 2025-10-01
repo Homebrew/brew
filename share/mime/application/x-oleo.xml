@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-oleo">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>GNU Oleo spreadsheet</comment>
+  <comment xml:lang="zh-Hant-TW">GNU Oleo 試算表</comment>
+  <comment xml:lang="zh-Hans-CN">GNU Oleo 电子表格</comment>
+  <comment xml:lang="vi">Bảng tính Oleo của GNU</comment>
+  <comment xml:lang="uk">електронна таблиця GNU Oleo</comment>
+  <comment xml:lang="tr">GNU Oleo hesap çizelgesi</comment>
+  <comment xml:lang="sv">GNU Oleo-kalkylblad</comment>
+  <comment xml:lang="sr-Cyrl">ГНУ Олео табела</comment>
+  <comment xml:lang="sq">fletëllogaritje GNU Oleo</comment>
+  <comment xml:lang="sl">Preglednica GNU Oleo</comment>
+  <comment xml:lang="si">GNU Oleo පැතුරුම්පත</comment>
+  <comment xml:lang="sk">Zošit GNU Oleo</comment>
+  <comment xml:lang="ru">Электронная таблица GNU Oleo</comment>
+  <comment xml:lang="ro">Foaie de calcul GNU Oleo</comment>
+  <comment xml:lang="pt-BR">Planilha do GNU Oleo</comment>
+  <comment xml:lang="pt">folha de cálculo GNU Oleo</comment>
+  <comment xml:lang="pl">Arkusz GNU Oleo</comment>
+  <comment xml:lang="oc">fuèlh de calcul GNU Oleo</comment>
+  <comment xml:lang="nn">GNU Oleo-rekneark</comment>
+  <comment xml:lang="nl">GNU Oleo-rekenblad</comment>
+  <comment xml:lang="nb">GNU Oleo regneark</comment>
+  <comment xml:lang="ms">Hamparan GNU Oleo</comment>
+  <comment xml:lang="lv">GNU Oleo izklājlapa</comment>
+  <comment xml:lang="lt">GNU Oleo skaičialentė</comment>
+  <comment xml:lang="ko">GNU Oleo 스프레드시트</comment>
+  <comment xml:lang="kk-Cyrl">GNU Oleo электрондық кестесі</comment>
+  <comment xml:lang="ka">GNU Oleo ცხრილი</comment>
+  <comment xml:lang="ja">GNU Oleo スプレッドシート</comment>
+  <comment xml:lang="it">Foglio di calcolo GNU Oleo</comment>
+  <comment xml:lang="is">GNU Oleo töflureikniskjal</comment>
+  <comment xml:lang="id">Lembar sebar GNU Oleo</comment>
+  <comment xml:lang="ia">Folio de calculo GNU Oleo</comment>
+  <comment xml:lang="hu">GNU Oleo-munkafüzet</comment>
+  <comment xml:lang="hr">GNU Oleo proračunska tablica</comment>
+  <comment xml:lang="he">גיליון נתונים של GNU Oleo</comment>
+  <comment xml:lang="gl">folla de cálculo de Oleo GNU</comment>
+  <comment xml:lang="ga">scarbhileog GNU Oleo</comment>
+  <comment xml:lang="fur">sfuei di calcul GNU Oleo</comment>
+  <comment xml:lang="fr">feuille de calcul GNU Oleo</comment>
+  <comment xml:lang="fo">GNU Oleo rokniark</comment>
+  <comment xml:lang="fi">GNU Oleo -taulukko</comment>
+  <comment xml:lang="eu">GNU Oleo kalkulu-orria</comment>
+  <comment xml:lang="es">hoja de cálculo de GNU Oleo</comment>
+  <comment xml:lang="eo">Kalkultabelo de GNU Oleo</comment>
+  <comment xml:lang="en-GB">GNU Oleo spreadsheet</comment>
+  <comment xml:lang="el">Λογιστικό φύλλο GNU Oleo</comment>
+  <comment xml:lang="de">GNU-Oleo-Tabelle</comment>
+  <comment xml:lang="da">GNU Oleo-regneark</comment>
+  <comment xml:lang="cs">sešit GNU Oleo</comment>
+  <comment xml:lang="ca">full de càlcul de GNU Oleo</comment>
+  <comment xml:lang="bg">Таблица — GNU Oleo</comment>
+  <comment xml:lang="be-Latn">Raźlikovy arkuš GNU Oleo</comment>
+  <comment xml:lang="be-Cyrl">электронная табліца GNU Oleo</comment>
+  <comment xml:lang="ar">جدول جنو Oleo</comment>
+  <comment xml:lang="af">GNU Oleo-sigblad</comment>
+  <generic-icon name="x-office-spreadsheet"/>
+  <glob pattern="*.oleo"/>
+</mime-type>

@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-ips-patch">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>IPS patch</comment>
+  <comment xml:lang="zh-Hant-TW">IPS 修補檔</comment>
+  <comment xml:lang="zh-Hans-CN">IPS 补丁</comment>
+  <comment xml:lang="uk">латка IPS</comment>
+  <comment xml:lang="tr">IPS yaması</comment>
+  <comment xml:lang="sv">IPS-patch</comment>
+  <comment xml:lang="sl">Popravek IPS</comment>
+  <comment xml:lang="si">IPS පැච්</comment>
+  <comment xml:lang="ru">Патч IPS</comment>
+  <comment xml:lang="pt-BR">Patch IPS</comment>
+  <comment xml:lang="pl">Łata IPS</comment>
+  <comment xml:lang="nl">IPS-patch</comment>
+  <comment xml:lang="ko">IPS 패치</comment>
+  <comment xml:lang="kk-Cyrl">IPS өзгерісі</comment>
+  <comment xml:lang="ja">IPS パッチ</comment>
+  <comment xml:lang="it">Patch IPS</comment>
+  <comment xml:lang="is">IPS kóðabót</comment>
+  <comment xml:lang="id">Patch IPS</comment>
+  <comment xml:lang="hu">IPS javítócsomag</comment>
+  <comment xml:lang="hr">IPS zakrpa</comment>
+  <comment xml:lang="he">טלאי IPS</comment>
+  <comment xml:lang="fr">correctif IPS</comment>
+  <comment xml:lang="fi">IPS-korjaus</comment>
+  <comment xml:lang="es">parche IPS</comment>
+  <comment xml:lang="en-GB">IPS patch</comment>
+  <comment xml:lang="de">IPS-Patch</comment>
+  <comment xml:lang="da">IPS-rettelse</comment>
+  <comment xml:lang="ca">pedaç d'IPS</comment>
+  <comment xml:lang="be-Cyrl">патч IPS</comment>
+  <comment xml:lang="ar">رقعة IPS</comment>
+  <acronym>IPS</acronym>
+  <expanded-acronym>International Patching System</expanded-acronym>
+  <glob pattern="*.ips"/>
+</mime-type>

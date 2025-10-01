@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="multipart/x-mixed-replace">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Stream of data (server push)</comment>
+  <comment xml:lang="uk">потік даних (від сервера)</comment>
+  <comment xml:lang="sv">Dataflöde (serverutsändning)</comment>
+  <comment xml:lang="ru">Поток данных (server push)</comment>
+  <comment xml:lang="pl">Strumień danych (wymuszenie serwera)</comment>
+  <comment xml:lang="it">Flusso di dati (server push)</comment>
+  <comment xml:lang="de">Datenstrom (Server-Push)</comment>
+  <comment xml:lang="be-Cyrl">плынь даных (ад сервера)</comment>
+</mime-type>

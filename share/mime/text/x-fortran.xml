@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="text/x-fortran">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Fortran source code</comment>
+  <comment xml:lang="zh-Hant-TW">Fortran 源碼</comment>
+  <comment xml:lang="zh-Hans-CN">Fortran 源代码</comment>
+  <comment xml:lang="vi">Mã nguồn Fortran</comment>
+  <comment xml:lang="uk">початковий код мовою Fortran</comment>
+  <comment xml:lang="tr">Fortran kaynak kodu</comment>
+  <comment xml:lang="sv">Fortran-källkod</comment>
+  <comment xml:lang="sr-Cyrl">Фортран изворни ко̂д</comment>
+  <comment xml:lang="sq">kod burim Fortran</comment>
+  <comment xml:lang="sl">Datoteka izvorne kode Fortran</comment>
+  <comment xml:lang="si">Fortran මූල කේතය</comment>
+  <comment xml:lang="sk">Zdrojový kód Fortran</comment>
+  <comment xml:lang="ru">Исходный код Fortran</comment>
+  <comment xml:lang="ro">Cod sursă Fortran</comment>
+  <comment xml:lang="pt-BR">Código-fonte Fortran</comment>
+  <comment xml:lang="pt">código origem Fortran</comment>
+  <comment xml:lang="pl">Kod źródłowy Fortran</comment>
+  <comment xml:lang="oc">còde font Fortran</comment>
+  <comment xml:lang="nn">Fortran-kjeldekode</comment>
+  <comment xml:lang="nl">Fortran-broncode</comment>
+  <comment xml:lang="nb">Fortran-kildekode</comment>
+  <comment xml:lang="ms">kod sumber Fortran</comment>
+  <comment xml:lang="lv">Fortran pirmkods</comment>
+  <comment xml:lang="lt">Fortran pradinis kodas</comment>
+  <comment xml:lang="ko">포트란 소스 코드</comment>
+  <comment xml:lang="kk-Cyrl">Fortran бастапқы коды</comment>
+  <comment xml:lang="ka">Fortran-ის საწყისი კოდი</comment>
+  <comment xml:lang="ja">Fortran ソースコード</comment>
+  <comment xml:lang="it">Codice sorgente Fortran</comment>
+  <comment xml:lang="is">Fortran frumkóði</comment>
+  <comment xml:lang="id">Kode sumber Fortran</comment>
+  <comment xml:lang="ia">Codice-fonte Fortran</comment>
+  <comment xml:lang="hu">Fortran-forráskód</comment>
+  <comment xml:lang="hr">Fortran izvorni kôd</comment>
+  <comment xml:lang="he">קוד מקור של Fortran</comment>
+  <comment xml:lang="gl">código fonte de Fortran</comment>
+  <comment xml:lang="ga">cód foinseach Fortran</comment>
+  <comment xml:lang="fur">codiç sorzint Fortran</comment>
+  <comment xml:lang="fr">code source Fortran</comment>
+  <comment xml:lang="fo">Fortran keldukota</comment>
+  <comment xml:lang="fi">Fortran-lähdekoodi</comment>
+  <comment xml:lang="eu">Fortran-en iturburu-kodea</comment>
+  <comment xml:lang="es">código fuente en Fortran</comment>
+  <comment xml:lang="eo">Fotran-fontkodo</comment>
+  <comment xml:lang="en-GB">Fortran source code</comment>
+  <comment xml:lang="el">Πηγαίος κώδικας Fortran</comment>
+  <comment xml:lang="de">Fortran-Quelltext</comment>
+  <comment xml:lang="da">Fortran-kildekode</comment>
+  <comment xml:lang="cy">Ffynhonnell rhaglen FORTRAN</comment>
+  <comment xml:lang="cs">zdrojový kód v jazyce Fortran</comment>
+  <comment xml:lang="ca">codi font en Fortran</comment>
+  <comment xml:lang="bg">Изходен код — Fortran</comment>
+  <comment xml:lang="be-Latn">Kryničny kod Fortran</comment>
+  <comment xml:lang="be-Cyrl">зыходны код Fortran</comment>
+  <comment xml:lang="az">Fortran mənbə kodu</comment>
+  <comment xml:lang="ar">شفرة مصدر Fortran</comment>
+  <comment xml:lang="af">Fortran-bronkode</comment>
+  <sub-class-of type="text/plain"/>
+  <glob pattern="*.f"/>
+  <glob pattern="*.f90"/>
+  <glob pattern="*.f95"/>
+  <glob pattern="*.for"/>
+</mime-type>

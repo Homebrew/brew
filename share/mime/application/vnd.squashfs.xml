@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/vnd.squashfs">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Squashfs filesystem image</comment>
+  <comment xml:lang="zh-Hant-TW">Squashfs 檔案系統映像</comment>
+  <comment xml:lang="zh-Hans-CN">Squashfs 文件系统映像</comment>
+  <comment xml:lang="uk">образ файлової системи squashfs</comment>
+  <comment xml:lang="tr">Squashfs dosya sistemi görüntüsü</comment>
+  <comment xml:lang="sv">Squashfs filsystemsavbildning</comment>
+  <comment xml:lang="sq">pamje sistemi kartelash Squashfs</comment>
+  <comment xml:lang="si">Squashfs ගොනු පද්ධති රූපය</comment>
+  <comment xml:lang="sk">Obraz systému súborov Squashfs</comment>
+  <comment xml:lang="ru">Образ файловой системы Squashfs</comment>
+  <comment xml:lang="pt-BR">Imagem de sistema de arquivos Squashfs</comment>
+  <comment xml:lang="pl">Obraz systemu plików SquashFS</comment>
+  <comment xml:lang="nl">Squashfs-schijfkopiebestand</comment>
+  <comment xml:lang="ko">Squashfs 파일 시스템 이미지</comment>
+  <comment xml:lang="kk-Cyrl">Squashfs файлдық жүйе бейнесі</comment>
+  <comment xml:lang="ja">Squashfs ファイルシステムイメージ</comment>
+  <comment xml:lang="it">Immagine file system squashfs</comment>
+  <comment xml:lang="is">Squashfs skráakerfismynd</comment>
+  <comment xml:lang="id">Image sistem berkas Squashfs</comment>
+  <comment xml:lang="hu">Squashfs fájlrenszerkép</comment>
+  <comment xml:lang="hr">Squashfs slika datotečnog sustava</comment>
+  <comment xml:lang="he">תמונת מערכת קבצים Squashfs</comment>
+  <comment xml:lang="fr">image de système de fichiers Squashfs</comment>
+  <comment xml:lang="fi">Squashfs-tiedostojärjestelmän levykuva</comment>
+  <comment xml:lang="eu">Squashfs fitxategi sistema irudia</comment>
+  <comment xml:lang="es">imagen de sistema de archivos de Squashfs</comment>
+  <comment xml:lang="en-GB">Squashfs filesystem image</comment>
+  <comment xml:lang="de">Squashfs-Dateisystemabbild</comment>
+  <comment xml:lang="da">Squashfs-filsystemaftryk</comment>
+  <comment xml:lang="ca">imatge de sistema de fitxers Squashfs</comment>
+  <comment xml:lang="bg">Диск — Squashfs</comment>
+  <comment xml:lang="be-Cyrl">вобраз файлавай сістэмы Squashfs</comment>
+  <comment xml:lang="ar">صورة نظام ملفات Squashfs</comment>
+  <sub-class-of type="application/vnd.efi.img"/>
+  <glob pattern="*.sqsh"/>
+</mime-type>

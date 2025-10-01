@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="audio/x-xi">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>FastTracker II instrument</comment>
+  <comment xml:lang="uk">інструмент FastTracker II</comment>
+  <comment xml:lang="sv">FastTracker II-instrument</comment>
+  <comment xml:lang="ru">Инструмент FastTracker II</comment>
+  <comment xml:lang="pl">Instrument FastTracker II</comment>
+  <comment xml:lang="it">Strumento FastTracker II</comment>
+  <comment xml:lang="eu">FastTracker II tresna</comment>
+  <comment xml:lang="es">instrumento de FastTracker II</comment>
+  <comment xml:lang="de">FastTracker-II-Instrument</comment>
+  <comment xml:lang="be-Cyrl">інструмент FastTracker II</comment>
+  <glob pattern="*.xi"/>
+</mime-type>

@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="audio/AMR">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>AMR audio</comment>
+  <comment xml:lang="zh-Hant-TW">AMR 音訊</comment>
+  <comment xml:lang="zh-Hans-CN">AMR 音频</comment>
+  <comment xml:lang="vi">Âm thanh AMR</comment>
+  <comment xml:lang="uk">звук AMR</comment>
+  <comment xml:lang="tr">AMR sesi</comment>
+  <comment xml:lang="sv">AMR-ljud</comment>
+  <comment xml:lang="sr-Cyrl">АМР звук</comment>
+  <comment xml:lang="sq">audio AMR</comment>
+  <comment xml:lang="sl">Zvočna datoteka AMR</comment>
+  <comment xml:lang="si">AMR ශ්‍රව්‍ය</comment>
+  <comment xml:lang="sk">Zvuk AMR</comment>
+  <comment xml:lang="ru">Аудио AMR</comment>
+  <comment xml:lang="ro">Audio AMR</comment>
+  <comment xml:lang="pt-BR">Áudio AMR</comment>
+  <comment xml:lang="pt">áudio AMR</comment>
+  <comment xml:lang="pl">Plik dźwiękowy AMR</comment>
+  <comment xml:lang="oc">àudio AMR</comment>
+  <comment xml:lang="nn">AMR-lyd</comment>
+  <comment xml:lang="nl">AMR-audio</comment>
+  <comment xml:lang="nb">AMR-lyd</comment>
+  <comment xml:lang="lv">AMR audio</comment>
+  <comment xml:lang="lt">AMR garso įrašas</comment>
+  <comment xml:lang="ko">AMR 오디오</comment>
+  <comment xml:lang="kk-Cyrl">AMR аудиосы</comment>
+  <comment xml:lang="ka">AMR აუდიო</comment>
+  <comment xml:lang="ja">AMR オーディオ</comment>
+  <comment xml:lang="it">Audio AMR</comment>
+  <comment xml:lang="is">AMR hljóðskrá</comment>
+  <comment xml:lang="id">Audio AMR</comment>
+  <comment xml:lang="ia">Audio AMR</comment>
+  <comment xml:lang="hu">AMR hang</comment>
+  <comment xml:lang="hr">AMR zvučni zapis</comment>
+  <comment xml:lang="he">שמע AMR</comment>
+  <comment xml:lang="gl">son AMR</comment>
+  <comment xml:lang="ga">fuaim AMR</comment>
+  <comment xml:lang="fur">audio AMR</comment>
+  <comment xml:lang="fr">audio AMR</comment>
+  <comment xml:lang="fo">AMR ljóður</comment>
+  <comment xml:lang="fi">AMR-ääni</comment>
+  <comment xml:lang="eu">AMR audioa</comment>
+  <comment xml:lang="es">sonido AMR</comment>
+  <comment xml:lang="eo">AMR-sondosiero</comment>
+  <comment xml:lang="en-GB">AMR audio</comment>
+  <comment xml:lang="el">Ήχος AMR</comment>
+  <comment xml:lang="de">AMR-Audio</comment>
+  <comment xml:lang="da">AMR-lyd</comment>
+  <comment xml:lang="cs">zvuk AMR</comment>
+  <comment xml:lang="ca">àudio AMR</comment>
+  <comment xml:lang="bg">Аудио — AMR</comment>
+  <comment xml:lang="be-Latn">Aŭdyjo AMR</comment>
+  <comment xml:lang="be-Cyrl">аўдыя AMR</comment>
+  <comment xml:lang="ar">صوت AMR</comment>
+  <comment xml:lang="af">AMR-oudio</comment>
+  <acronym>AMR</acronym>
+  <expanded-acronym>Adaptive Multi-Rate</expanded-acronym>
+  <glob pattern="*.amr"/>
+  <alias type="audio/amr-encrypted"/>
+</mime-type>

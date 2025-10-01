@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-arj">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>ARJ archive</comment>
+  <comment xml:lang="zh-Hant-TW">ARJ 封存檔</comment>
+  <comment xml:lang="zh-Hans-CN">ARJ 归档文件</comment>
+  <comment xml:lang="vi">Kho nén ARJ</comment>
+  <comment xml:lang="uk">архів ARJ</comment>
+  <comment xml:lang="tr">ARJ arşivi</comment>
+  <comment xml:lang="sv">ARJ-arkiv</comment>
+  <comment xml:lang="sr-Cyrl">АРЈ архива</comment>
+  <comment xml:lang="sq">arkiv ARJ</comment>
+  <comment xml:lang="sl">Datoteka arhiva ARJ</comment>
+  <comment xml:lang="si">ARJ ලේඛනාගාරය</comment>
+  <comment xml:lang="sk">Archív ARJ</comment>
+  <comment xml:lang="ru">Архив ARJ</comment>
+  <comment xml:lang="ro">Arhivă ARJ</comment>
+  <comment xml:lang="pt-BR">Pacote ARJ</comment>
+  <comment xml:lang="pt">arquivo ARJ</comment>
+  <comment xml:lang="pl">Archiwum ARJ</comment>
+  <comment xml:lang="oc">archiu ARJ</comment>
+  <comment xml:lang="nn">ARJ-arkiv</comment>
+  <comment xml:lang="nl">ARJ-archief</comment>
+  <comment xml:lang="nb">ARJ-arkiv</comment>
+  <comment xml:lang="ms">Arkib ARJ</comment>
+  <comment xml:lang="lv">ARJ arhīvs</comment>
+  <comment xml:lang="lt">ARJ archyvas</comment>
+  <comment xml:lang="ko">ARJ 압축 파일</comment>
+  <comment xml:lang="kk-Cyrl">ARJ архиві</comment>
+  <comment xml:lang="ka">ARJ არქივი</comment>
+  <comment xml:lang="ja">ARJ アーカイブ</comment>
+  <comment xml:lang="it">Archivio ARJ</comment>
+  <comment xml:lang="is">ARJ safnskrá</comment>
+  <comment xml:lang="id">Arsip ARJ</comment>
+  <comment xml:lang="ia">Archivo ARJ</comment>
+  <comment xml:lang="hu">ARJ-archívum</comment>
+  <comment xml:lang="hr">ARJ arhiva</comment>
+  <comment xml:lang="he">ארכיון ARJ</comment>
+  <comment xml:lang="gl">arquivo ARJ</comment>
+  <comment xml:lang="ga">cartlann ARJ</comment>
+  <comment xml:lang="fur">archivi ARJ</comment>
+  <comment xml:lang="fr">archive ARJ</comment>
+  <comment xml:lang="fo">ARJ skjalasavn</comment>
+  <comment xml:lang="fi">ARJ-arkisto</comment>
+  <comment xml:lang="eu">ARJ artxiboa</comment>
+  <comment xml:lang="es">archivador ARJ</comment>
+  <comment xml:lang="eo">ARJ-arkivo</comment>
+  <comment xml:lang="en-GB">ARJ archive</comment>
+  <comment xml:lang="el">Συμπιεσμένο αρχείο ARJ</comment>
+  <comment xml:lang="de">ARJ-Archiv</comment>
+  <comment xml:lang="da">ARJ-arkiv</comment>
+  <comment xml:lang="cy">Archif ARJ</comment>
+  <comment xml:lang="cs">archiv ARJ</comment>
+  <comment xml:lang="ca">arxiu ARJ</comment>
+  <comment xml:lang="bg">Архив — ARJ</comment>
+  <comment xml:lang="be-Latn">Archiŭ ARJ</comment>
+  <comment xml:lang="be-Cyrl">архіў ARJ</comment>
+  <comment xml:lang="az">ARJ arxivi</comment>
+  <comment xml:lang="ar">أرشيف ARJ</comment>
+  <comment xml:lang="af">ARJ-argief</comment>
+  <acronym>ARJ</acronym>
+  <expanded-acronym>Archived by Robert Jung</expanded-acronym>
+  <generic-icon name="package-x-generic"/>
+  <glob pattern="*.arj"/>
+</mime-type>

@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-lrzip">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Lrzip archive</comment>
+  <comment xml:lang="zh-Hant-TW">Lrzip 封存檔</comment>
+  <comment xml:lang="zh-Hans-CN">Lrzip 归档文件</comment>
+  <comment xml:lang="uk">архів lrzip</comment>
+  <comment xml:lang="tr">Lrzip arşivi</comment>
+  <comment xml:lang="sv">Lrzip-arkiv</comment>
+  <comment xml:lang="sr-Cyrl">Лрзип архива</comment>
+  <comment xml:lang="sq">arkiv Lrzip</comment>
+  <comment xml:lang="sl">Datoteka arhiva Lrzip</comment>
+  <comment xml:lang="si">Lrzip සංරක්ෂිතය</comment>
+  <comment xml:lang="sk">Archív Lrzip</comment>
+  <comment xml:lang="ru">Архив LRZIP</comment>
+  <comment xml:lang="ro">Arhivă Lrzip</comment>
+  <comment xml:lang="pt-BR">Pacote Lrzip</comment>
+  <comment xml:lang="pt">arquivo Lrzip</comment>
+  <comment xml:lang="pl">Archiwum lrzip</comment>
+  <comment xml:lang="oc">archiu lrzip</comment>
+  <comment xml:lang="nl">Lrzip-archief</comment>
+  <comment xml:lang="lv">Lrzip arhīvs</comment>
+  <comment xml:lang="lt">Lrzip archyvas</comment>
+  <comment xml:lang="ko">LRZIP 압축 파일</comment>
+  <comment xml:lang="kk-Cyrl">Lrzip архиві</comment>
+  <comment xml:lang="ja">Lrzip アーカイブ</comment>
+  <comment xml:lang="it">Archivio Lrzip</comment>
+  <comment xml:lang="is">Lrzip safnskrá</comment>
+  <comment xml:lang="id">Arsip Lrzip</comment>
+  <comment xml:lang="ia">Archivo Lrzip</comment>
+  <comment xml:lang="hu">Lrzip archívum</comment>
+  <comment xml:lang="hr">Lrzip arhiva</comment>
+  <comment xml:lang="he">ארכיון Lrzip</comment>
+  <comment xml:lang="gl">arquivo Lrzip</comment>
+  <comment xml:lang="ga">cartlann Lrzip</comment>
+  <comment xml:lang="fur">archivi Lrzip</comment>
+  <comment xml:lang="fr">archive lrzip</comment>
+  <comment xml:lang="fo">Lrzip skjalasavn</comment>
+  <comment xml:lang="fi">Lrzip-arkisto</comment>
+  <comment xml:lang="eu">Lrzip artxiboa</comment>
+  <comment xml:lang="es">archivador LRZIP</comment>
+  <comment xml:lang="eo">Lrzip-arkivo</comment>
+  <comment xml:lang="en-GB">Lrzip archive</comment>
+  <comment xml:lang="el">Συμπιεσμένο αρχείο Lrzip</comment>
+  <comment xml:lang="de">Lrzip-Archiv</comment>
+  <comment xml:lang="da">Lrzip-arkiv</comment>
+  <comment xml:lang="cs">archiv Lrzip</comment>
+  <comment xml:lang="ca">arxiu lrzip</comment>
+  <comment xml:lang="bg">Архив — lrzip</comment>
+  <comment xml:lang="be-Cyrl">архіў Lrzip</comment>
+  <comment xml:lang="ar">أرشيف Lrzip</comment>
+  <comment xml:lang="af">Lrzip-argief</comment>
+  <acronym>Lrzip</acronym>
+  <expanded-acronym>Long Range Zip</expanded-acronym>
+  <generic-icon name="package-x-generic"/>
+  <glob pattern="*.lrz"/>
+</mime-type>

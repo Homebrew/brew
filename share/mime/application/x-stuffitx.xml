@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-stuffitx">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>StuffIt X archive</comment>
+  <comment xml:lang="uk">архів StuffIt X</comment>
+  <comment xml:lang="sv">StuffIt X-arkiv </comment>
+  <comment xml:lang="ru">Архив StuffIt X</comment>
+  <comment xml:lang="pl">Archiwum StuffIt X</comment>
+  <comment xml:lang="it">Archivio StuffIt X</comment>
+  <comment xml:lang="eu">StuffIt X artxiboa</comment>
+  <comment xml:lang="es">archivador de StuffIt X</comment>
+  <comment xml:lang="de">StuffIt-X-Archiv</comment>
+  <comment xml:lang="be-Cyrl">архіў StuffIt X</comment>
+  <generic-icon name="package-x-generic"/>
+  <alias type="application/x-sitx"/>
+  <glob pattern="*.sitx"/>
+</mime-type>

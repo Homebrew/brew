@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="audio/prs.sid">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Commodore 64 audio</comment>
+  <comment xml:lang="zh-Hant-TW">Commodore 64 音訊</comment>
+  <comment xml:lang="zh-Hans-CN">Commodore 64 音频</comment>
+  <comment xml:lang="vi">Âm thanh Commodore 64</comment>
+  <comment xml:lang="uk">звук Commodore 64</comment>
+  <comment xml:lang="tr">Commodore 64 sesi</comment>
+  <comment xml:lang="sv">Commodore 64-ljud</comment>
+  <comment xml:lang="sr-Cyrl">звук Комодора 64</comment>
+  <comment xml:lang="sq">audio Commodore 64</comment>
+  <comment xml:lang="sl">Zvočna datoteka Commodore 64</comment>
+  <comment xml:lang="si">කොමදෝරු 64 ශ්‍රව්‍ය</comment>
+  <comment xml:lang="sk">Zvuk Commodore 64</comment>
+  <comment xml:lang="ru">Аудио Commodore 64</comment>
+  <comment xml:lang="ro">Audio Commodore 64</comment>
+  <comment xml:lang="pt-BR">Áudio Commodore 64</comment>
+  <comment xml:lang="pt">áudio Commodore 64</comment>
+  <comment xml:lang="pl">Plik dźwiękowy Commodore 64</comment>
+  <comment xml:lang="oc">àudio Commodore 64</comment>
+  <comment xml:lang="nn">Commodore 64-lyd</comment>
+  <comment xml:lang="nl">Commodore 64-audio</comment>
+  <comment xml:lang="nb">Commodore 64-lyd</comment>
+  <comment xml:lang="ms">Audio Commodore 64</comment>
+  <comment xml:lang="lv">Commodore 64 audio</comment>
+  <comment xml:lang="lt">Commodore 64 garso įrašas</comment>
+  <comment xml:lang="ko">Commodore 64 오디오</comment>
+  <comment xml:lang="kk-Cyrl">Commodore 64 аудиосы</comment>
+  <comment xml:lang="ka">Commodore 64-ის აუდიო</comment>
+  <comment xml:lang="ja">Commodore 64 オーディオ</comment>
+  <comment xml:lang="it">Audio Commodore 64</comment>
+  <comment xml:lang="is">Commodore 64 hljóðskrá</comment>
+  <comment xml:lang="id">Audio Commodore 64</comment>
+  <comment xml:lang="ia">Audio Commodore 64</comment>
+  <comment xml:lang="hu">Commodore 64 hang</comment>
+  <comment xml:lang="hr">Commodore 64 zvučni zapis</comment>
+  <comment xml:lang="he">שמע של Commodore 64</comment>
+  <comment xml:lang="gl">son de Commodore 64</comment>
+  <comment xml:lang="ga">fuaim Commodore 64</comment>
+  <comment xml:lang="fur">audio Commodore 64</comment>
+  <comment xml:lang="fr">audio Commodore 64</comment>
+  <comment xml:lang="fo">Commodore 64 ljóð</comment>
+  <comment xml:lang="fi">Commodore 64 -ääni</comment>
+  <comment xml:lang="eu">Commodore 64 Audioa</comment>
+  <comment xml:lang="es">sonido de Commodore 64</comment>
+  <comment xml:lang="eo">Sondosiero de Commodore 64</comment>
+  <comment xml:lang="en-GB">Commodore 64 audio</comment>
+  <comment xml:lang="el">Ήχος Commodore 64</comment>
+  <comment xml:lang="de">Commodore-64-Audio</comment>
+  <comment xml:lang="da">Commodore 64-lyd</comment>
+  <comment xml:lang="cs">zvuk Commodore 64</comment>
+  <comment xml:lang="ca">àudio de Commodore 64</comment>
+  <comment xml:lang="bg">Аудио — Commodore 64</comment>
+  <comment xml:lang="be-Latn">Aŭdyjo Commodore 64</comment>
+  <comment xml:lang="be-Cyrl">аўдыя Commodore 64</comment>
+  <comment xml:lang="ar">صوت Commodore 64</comment>
+  <comment xml:lang="af">Commodore 64-oudio</comment>
+  <glob pattern="*.sid"/>
+  <glob pattern="*.psid"/>
+</mime-type>

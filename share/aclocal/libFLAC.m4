@@ -1,0 +1,1 @@
+../../Cellar/flac/1.5.0/share/aclocal/libFLAC.m4

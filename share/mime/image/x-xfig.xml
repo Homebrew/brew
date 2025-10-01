@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="image/x-xfig">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>XFig image</comment>
+  <comment xml:lang="zh-Hant-TW">XFig 影像</comment>
+  <comment xml:lang="zh-Hans-CN">XFig 图像</comment>
+  <comment xml:lang="vi">Ảnh XFig</comment>
+  <comment xml:lang="uk">зображення XFig</comment>
+  <comment xml:lang="tr">XFig görüntüsü</comment>
+  <comment xml:lang="sv">XFig-bild</comment>
+  <comment xml:lang="sr-Cyrl">ИксФиг слика</comment>
+  <comment xml:lang="sq">figurë XFig</comment>
+  <comment xml:lang="sl">Slikovna datoteka XFig</comment>
+  <comment xml:lang="si">XFig රූපය</comment>
+  <comment xml:lang="sk">Obrázok XFig</comment>
+  <comment xml:lang="ru">Изображение XFig</comment>
+  <comment xml:lang="ro">Imagine XFig</comment>
+  <comment xml:lang="pt-BR">Imagem do XFig</comment>
+  <comment xml:lang="pt">imagem XFig</comment>
+  <comment xml:lang="pl">Obraz XFig</comment>
+  <comment xml:lang="oc">imatge XFig</comment>
+  <comment xml:lang="nn">XFig-bilete</comment>
+  <comment xml:lang="nl">XFig-afbeelding</comment>
+  <comment xml:lang="nb">XFig-bilde</comment>
+  <comment xml:lang="ms">Imej XFig</comment>
+  <comment xml:lang="lv">XFig attēls</comment>
+  <comment xml:lang="lt">XFig paveikslėlis</comment>
+  <comment xml:lang="ko">XFig 그림</comment>
+  <comment xml:lang="kk-Cyrl">XFig суреті</comment>
+  <comment xml:lang="ja">XFig 画像</comment>
+  <comment xml:lang="it">Immagine XFig</comment>
+  <comment xml:lang="is">XFig mynd</comment>
+  <comment xml:lang="id">Citra XFig</comment>
+  <comment xml:lang="ia">Imagine XFig</comment>
+  <comment xml:lang="hu">XFig-kép</comment>
+  <comment xml:lang="hr">XFig slika</comment>
+  <comment xml:lang="he">תמונת XFig</comment>
+  <comment xml:lang="gl">imaxe de XFig</comment>
+  <comment xml:lang="ga">íomhá XFig</comment>
+  <comment xml:lang="fur">imagjin XFig</comment>
+  <comment xml:lang="fr">image XFig</comment>
+  <comment xml:lang="fo">XFig mynd</comment>
+  <comment xml:lang="fi">XFig-kuva</comment>
+  <comment xml:lang="eu">XFig irudia</comment>
+  <comment xml:lang="es">imagen de XFig</comment>
+  <comment xml:lang="eo">XFig-bildo</comment>
+  <comment xml:lang="en-GB">XFig image</comment>
+  <comment xml:lang="el">Εικόνα XFig</comment>
+  <comment xml:lang="de">XFig-Bild</comment>
+  <comment xml:lang="da">XFig-billede</comment>
+  <comment xml:lang="cs">obrázek XFig</comment>
+  <comment xml:lang="ca">imatge de XFig</comment>
+  <comment xml:lang="bg">Изображение — XFig</comment>
+  <comment xml:lang="be-Latn">Vyjava XFig</comment>
+  <comment xml:lang="be-Cyrl">выява XFig</comment>
+  <comment xml:lang="ar">صورة XFig</comment>
+  <comment xml:lang="af">XFig-beeld</comment>
+  <glob pattern="*.fig"/>
+</mime-type>

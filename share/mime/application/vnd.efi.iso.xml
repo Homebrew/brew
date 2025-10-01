@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/vnd.efi.iso">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Raw CD image</comment>
+  <comment xml:lang="uk">простий образ CD</comment>
+  <comment xml:lang="sv">Rå cd-avbild</comment>
+  <comment xml:lang="ru">Необработанный образ компакт-диска</comment>
+  <comment xml:lang="pl">Surowy obraz CD</comment>
+  <comment xml:lang="it">Immagine raw CD</comment>
+  <comment xml:lang="gl">Imaxe de CD en bruto</comment>
+  <comment xml:lang="eu">CD irudi gordina</comment>
+  <comment xml:lang="es">imagen de CD en bruto</comment>
+  <comment xml:lang="de">CD-Roh-Abbild</comment>
+  <comment xml:lang="be-Cyrl">Неапрацаваны вобраз CD</comment>
+  <sub-class-of type="application/vnd.efi.img"/>
+  <generic-icon name="media-optical"/>
+  <alias type="application/x-cd-image"/>
+  <alias type="application/x-iso9660-image"/>
+  <glob pattern="*.iso" weight="80"/>
+  <glob pattern="*.iso9660"/>
+</mime-type>

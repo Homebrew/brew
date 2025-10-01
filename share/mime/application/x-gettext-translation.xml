@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-gettext-translation">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Translated messages (machine-readable)</comment>
+  <comment xml:lang="uk">перекладені повідомлення (у машинній формі)</comment>
+  <comment xml:lang="sv">Översatta meddelanden (maskinläsbara)</comment>
+  <comment xml:lang="ru">Переводы сообщений (откомпилированые)</comment>
+  <comment xml:lang="pl">Przetłumaczone komunikaty (czytelne dla komputera)</comment>
+  <comment xml:lang="it">Messaggi tradotti (leggibili da macchina)</comment>
+  <comment xml:lang="gl">Mensaxes traducidos (lexíbel pola máquina)</comment>
+  <comment xml:lang="eu">Itzulitako mezuak (makinak irakurtzeko modukoak)</comment>
+  <comment xml:lang="es">mensajes traducidos (legibles por máquinas)</comment>
+  <comment xml:lang="de">Übersetzte Meldungen (maschinenlesbar)</comment>
+  <comment xml:lang="be-Cyrl">перакладзеныя паведамленні (для чытання камп'ютарам)</comment>
+  <glob pattern="*.gmo"/>
+  <glob pattern="*.mo"/>
+</mime-type>

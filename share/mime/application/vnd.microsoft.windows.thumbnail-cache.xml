@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/vnd.microsoft.windows.thumbnail-cache">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Microsoft Windows Thumbnail Cache</comment>
+  <comment xml:lang="uk">кеш мініатюр Microsoft Windows</comment>
+  <comment xml:lang="sv">Microsoft Windows-miniatyrbildscache</comment>
+  <comment xml:lang="ru">Кэш миниатюр Microsoft Windows</comment>
+  <comment xml:lang="pl">Pamięć podręczna miniatur Microsoft Windows</comment>
+  <comment xml:lang="it">Cache miniuature Microsoft Windows</comment>
+  <comment xml:lang="eu">Microsoft Windows miniatura-cachea</comment>
+  <comment xml:lang="es">antememoria de miniaturas de Microsoft Windows</comment>
+  <comment xml:lang="de">Microsoft Windows-Vorschaubilderzwischenspeicher</comment>
+  <comment xml:lang="be-Cyrl">пакет тэмы Microsoft Windows</comment>
+  <sub-class-of type="application/x-ole-storage"/>
+  <generic-icon name="image-x-generic"/>
+  <glob pattern="ehthumbs.db"/>
+  <glob pattern="ehthumbs_vista.db"/>
+  <glob pattern="image.db"/>
+  <glob pattern="musicthumbs.db"/>
+  <glob pattern="thumbs.db"/>
+  <glob pattern="tvthumb.db"/>
+  <glob pattern="video.db"/>
+</mime-type>

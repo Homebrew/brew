@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/vnd.ms-wpl">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>WPL playlist</comment>
+  <comment xml:lang="zh-Hant-TW">WPL 播放清單</comment>
+  <comment xml:lang="zh-Hans-CN">WPL 播放列表</comment>
+  <comment xml:lang="vi">Danh mục nhạc WPL</comment>
+  <comment xml:lang="uk">список відтворення WPL</comment>
+  <comment xml:lang="tr">WPL çalma listesi</comment>
+  <comment xml:lang="sv">WPL-spellista</comment>
+  <comment xml:lang="sr-Cyrl">ВПЛ списак нумера</comment>
+  <comment xml:lang="sq">luajlistë WPL</comment>
+  <comment xml:lang="sl">Seznam predvajanja WPL</comment>
+  <comment xml:lang="si">WPL ධාවන ලැයිස්තුව</comment>
+  <comment xml:lang="sk">Zoznam skladieb WPL</comment>
+  <comment xml:lang="ru">Список воспроизведения WPL</comment>
+  <comment xml:lang="ro">Listă redare WPL</comment>
+  <comment xml:lang="pt-BR">Lista de reprodução do WPL</comment>
+  <comment xml:lang="pt">lista de reprodução WPL</comment>
+  <comment xml:lang="pl">Lista odtwarzania WPL</comment>
+  <comment xml:lang="oc">lista de lectura WPL</comment>
+  <comment xml:lang="nl">WPL-afspeellijst</comment>
+  <comment xml:lang="lv">WPL repertuārs</comment>
+  <comment xml:lang="lt">WPL grojaraštis</comment>
+  <comment xml:lang="ko">WPL 재생 목록</comment>
+  <comment xml:lang="kk-Cyrl">WPL ойнау тізімі</comment>
+  <comment xml:lang="ka">WPL დასაკრავი სია</comment>
+  <comment xml:lang="ja">WPL プレイリスト</comment>
+  <comment xml:lang="it">Playlist WPL</comment>
+  <comment xml:lang="is">WPL spilunarlisti</comment>
+  <comment xml:lang="id">Senarai putar WPL</comment>
+  <comment xml:lang="ia">Lista de selection WPL</comment>
+  <comment xml:lang="hu">WPL-lejátszólista</comment>
+  <comment xml:lang="hr">WPL popis izvođenja</comment>
+  <comment xml:lang="he">רשימת נגינה WPL</comment>
+  <comment xml:lang="gl">lista de reprodución WPL</comment>
+  <comment xml:lang="ga">seinmliosta WPL</comment>
+  <comment xml:lang="fur">liste di riproduzion WPL</comment>
+  <comment xml:lang="fr">liste de lecture WPL</comment>
+  <comment xml:lang="fo">WPL avspælingarlisti</comment>
+  <comment xml:lang="fi">WPL-soittolista</comment>
+  <comment xml:lang="eu">WPL erreprodukzio-zerrenda</comment>
+  <comment xml:lang="es">lista de reproducción WPL</comment>
+  <comment xml:lang="eo">WPL-ludlisto</comment>
+  <comment xml:lang="en-GB">WPL playlist</comment>
+  <comment xml:lang="el">Λίστα αναπαραγωγής WPL</comment>
+  <comment xml:lang="de">WPL-Wiedergabeliste</comment>
+  <comment xml:lang="da">WPL-afspilningsliste</comment>
+  <comment xml:lang="cs">seznam k přehrání WPL</comment>
+  <comment xml:lang="ca">llista de reproducció WPL</comment>
+  <comment xml:lang="bg">Списък за изпълнение — WPL</comment>
+  <comment xml:lang="be-Cyrl">плэй-ліст WPL</comment>
+  <comment xml:lang="ar">قائمة تشغيل WPL</comment>
+  <comment xml:lang="af">WPL-speellys</comment>
+  <acronym>WPL</acronym>
+  <expanded-acronym>Windows Media Player Playlist</expanded-acronym>
+  <generic-icon name="video-x-generic"/>
+  <glob pattern="*.wpl"/>
+</mime-type>

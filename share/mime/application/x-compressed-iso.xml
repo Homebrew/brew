@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-compressed-iso">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Compressed CD image</comment>
+  <comment xml:lang="zh-Hans-CN">压缩的 CD 映像</comment>
+  <comment xml:lang="uk">стиснений образ CD</comment>
+  <comment xml:lang="tr">Sıkıştırılmış CD görüntüsü</comment>
+  <comment xml:lang="sv">Komprimerad cd-avbild</comment>
+  <comment xml:lang="sr-Cyrl">компресовани ЦД одраз</comment>
+  <comment xml:lang="sl">Stisnjena slika CD</comment>
+  <comment xml:lang="si">සම්පීඩිත CD රූපය</comment>
+  <comment xml:lang="ru">Сжатый образ компакт-диска</comment>
+  <comment xml:lang="pt-BR">Imagem de CD compactada</comment>
+  <comment xml:lang="pt">Imagem de CD comprimida</comment>
+  <comment xml:lang="pl">Skompresowany obraz płyty CD</comment>
+  <comment xml:lang="oc">imatge CD compressat</comment>
+  <comment xml:lang="nl">Gecomprimeerd CD-schijfkopiebestand</comment>
+  <comment xml:lang="ko">압축된 CD 이미지</comment>
+  <comment xml:lang="kk-Cyrl">Сығылған CD бейнесі</comment>
+  <comment xml:lang="ja">圧縮 CD イメージ</comment>
+  <comment xml:lang="it">Immagine CD compressa</comment>
+  <comment xml:lang="is">Þjöppuð CD diskmynd</comment>
+  <comment xml:lang="id">Image CD terkompresi</comment>
+  <comment xml:lang="hu">Tömörített CD lemezkép</comment>
+  <comment xml:lang="hr">Sažeta CD slika</comment>
+  <comment xml:lang="he">דמות תקליטור דחוסה</comment>
+  <comment xml:lang="gl">Imaxe de CD comprimido</comment>
+  <comment xml:lang="fr">Image CD compressée</comment>
+  <comment xml:lang="fi">Pakattu CD-levykuva</comment>
+  <comment xml:lang="eu">Konprimatutako CD irudia</comment>
+  <comment xml:lang="es">imagen comprimida de CD</comment>
+  <comment xml:lang="en-GB">Compressed CD image</comment>
+  <comment xml:lang="de">Komprimiertes CD-Abbild</comment>
+  <comment xml:lang="da">Komprimeret CD-aftryk</comment>
+  <comment xml:lang="ca">imatge de CD amb compressió</comment>
+  <comment xml:lang="be-Cyrl">сціснуты вобраз CD</comment>
+  <comment xml:lang="ar">صورة سي دي مضغوطة</comment>
+  <generic-icon name="media-optical"/>
+  <glob pattern="*.cso"/>
+</mime-type>

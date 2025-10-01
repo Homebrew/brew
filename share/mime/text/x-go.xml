@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="text/x-go">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Go source code</comment>
+  <comment xml:lang="zh-Hant-TW">Go 源碼</comment>
+  <comment xml:lang="zh-Hans-CN">Go 源代码</comment>
+  <comment xml:lang="uk">початковий код мовою Go</comment>
+  <comment xml:lang="tr">Go kaynak kodu</comment>
+  <comment xml:lang="sv">Go-källkod</comment>
+  <comment xml:lang="sr-Cyrl">Гоу изворни ко̂д</comment>
+  <comment xml:lang="sq">kod burim Go</comment>
+  <comment xml:lang="sl">Izvorna koda Go</comment>
+  <comment xml:lang="si">මූල කේතය වෙත යන්න</comment>
+  <comment xml:lang="sk">Zdrojový kód Go</comment>
+  <comment xml:lang="ru">Исходный код Go</comment>
+  <comment xml:lang="pt-BR">Código-fonte Go</comment>
+  <comment xml:lang="pt">cigo origem Go</comment>
+  <comment xml:lang="pl">Kod źródłowy Go</comment>
+  <comment xml:lang="oc">còde font Go</comment>
+  <comment xml:lang="nl">Go-broncode</comment>
+  <comment xml:lang="lv">Go pirmkods</comment>
+  <comment xml:lang="ko">Go 소스 코드</comment>
+  <comment xml:lang="kk-Cyrl">Go бастапқы коды</comment>
+  <comment xml:lang="ka">Go-ის საწყისი კოდი</comment>
+  <comment xml:lang="ja">Go ソースコード</comment>
+  <comment xml:lang="it">Codice sorgente Go</comment>
+  <comment xml:lang="is">Go frumkóði</comment>
+  <comment xml:lang="id">Kode sumber Go</comment>
+  <comment xml:lang="ia">Codice-fonte Go</comment>
+  <comment xml:lang="hu">Go forráskód</comment>
+  <comment xml:lang="hr">Go izvorni kôd</comment>
+  <comment xml:lang="he">קוד מקור של Go</comment>
+  <comment xml:lang="gl">código fonte de Go</comment>
+  <comment xml:lang="ga">cód foinseach Go</comment>
+  <comment xml:lang="fur">codiç sorzint Go</comment>
+  <comment xml:lang="fr">code source Go</comment>
+  <comment xml:lang="fi">Go-lähdekoodi</comment>
+  <comment xml:lang="eu">Go iturburu-kodea</comment>
+  <comment xml:lang="es">código fuente en Go</comment>
+  <comment xml:lang="eo">Go-fontkodo</comment>
+  <comment xml:lang="en-GB">Go source code</comment>
+  <comment xml:lang="el">Πηγαίος κώδικας Go</comment>
+  <comment xml:lang="de">Go-Quelltext</comment>
+  <comment xml:lang="da">Go-kildekode</comment>
+  <comment xml:lang="cs">zdrojový kód v jazyce Go</comment>
+  <comment xml:lang="ca">codi font en Go</comment>
+  <comment xml:lang="bg">Изходен код — Go</comment>
+  <comment xml:lang="be-Cyrl">зыходны код Go</comment>
+  <comment xml:lang="ar">شفرة مصدر غو</comment>
+  <comment xml:lang="af">Go-bronkode</comment>
+  <sub-class-of type="text/plain"/>
+  <glob pattern="*.go"/>
+</mime-type>

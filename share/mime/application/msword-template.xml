@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/msword-template">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Word template</comment>
+  <comment xml:lang="zh-Hant-TW">Word 範本</comment>
+  <comment xml:lang="zh-Hans-CN">Word 模板</comment>
+  <comment xml:lang="vi">Mẫu Word</comment>
+  <comment xml:lang="uk">шаблон Word</comment>
+  <comment xml:lang="tr">Word şablonu</comment>
+  <comment xml:lang="sv">Word-mall</comment>
+  <comment xml:lang="sr-Cyrl">Ворд шаблон</comment>
+  <comment xml:lang="sq">gjedhe Word</comment>
+  <comment xml:lang="sl">Predloga dokumenta Microsoft Word</comment>
+  <comment xml:lang="si">වචන සැකිල්ල</comment>
+  <comment xml:lang="sk">Šablóna Word</comment>
+  <comment xml:lang="ru">Шаблон Word</comment>
+  <comment xml:lang="ro">Șablon Word</comment>
+  <comment xml:lang="pt-BR">Modelo do Word</comment>
+  <comment xml:lang="pt">modelo Word</comment>
+  <comment xml:lang="pl">Szablon Word</comment>
+  <comment xml:lang="oc">modèl Word</comment>
+  <comment xml:lang="nn">Word-mal</comment>
+  <comment xml:lang="nl">Word-sjabloon</comment>
+  <comment xml:lang="nb">Word-mal</comment>
+  <comment xml:lang="lv">Word veidne</comment>
+  <comment xml:lang="lt">Word šablonas</comment>
+  <comment xml:lang="ko">Word 서식</comment>
+  <comment xml:lang="kk-Cyrl">Word үлгісі</comment>
+  <comment xml:lang="ja">Word テンプレート</comment>
+  <comment xml:lang="it">Modello Word</comment>
+  <comment xml:lang="is">Word sniðmát</comment>
+  <comment xml:lang="id">Templat Word</comment>
+  <comment xml:lang="ia">Patrono Word</comment>
+  <comment xml:lang="hu">Word sablon</comment>
+  <comment xml:lang="hr">Word predložak</comment>
+  <comment xml:lang="he">תבנית Word</comment>
+  <comment xml:lang="gl">Plantilla de Word</comment>
+  <comment xml:lang="ga">teimpléad Word</comment>
+  <comment xml:lang="fur">model Word</comment>
+  <comment xml:lang="fr">modèle Word</comment>
+  <comment xml:lang="fo">Word formur</comment>
+  <comment xml:lang="fi">Word-malli</comment>
+  <comment xml:lang="eu">Word txantiloia</comment>
+  <comment xml:lang="es">plantilla de Word</comment>
+  <comment xml:lang="eo">Word-ŝablono</comment>
+  <comment xml:lang="en-GB">Word template</comment>
+  <comment xml:lang="el">Πρότυπο έγγραφο Word</comment>
+  <comment xml:lang="de">Word-Vorlage</comment>
+  <comment xml:lang="da">Wordskabelon</comment>
+  <comment xml:lang="cs">šablona Word</comment>
+  <comment xml:lang="ca">plantilla de Word</comment>
+  <comment xml:lang="bg">Шаблон за документи — Word</comment>
+  <comment xml:lang="be-Latn">Šablon Word</comment>
+  <comment xml:lang="be-Cyrl">шаблон Word</comment>
+  <comment xml:lang="ast">Plantía de Word</comment>
+  <comment xml:lang="ar">قالب ورد</comment>
+  <comment xml:lang="af">Word-sjabloon</comment>
+  <sub-class-of type="application/msword"/>
+  <generic-icon name="x-office-document"/>
+  <glob pattern="*.dot"/>
+</mime-type>

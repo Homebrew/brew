@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-genesis-rom">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Genesis ROM</comment>
+  <comment xml:lang="zh-Hant-TW">Genesis ROM</comment>
+  <comment xml:lang="zh-Hans-CN">Genesis ROM</comment>
+  <comment xml:lang="vi">ROM Genesis</comment>
+  <comment xml:lang="uk">ППП Genesis</comment>
+  <comment xml:lang="tr">Genesis ROM</comment>
+  <comment xml:lang="sv">Mega Drive-rom</comment>
+  <comment xml:lang="sr-Cyrl">Мегадрајв РОМ</comment>
+  <comment xml:lang="sq">ROM Genesis</comment>
+  <comment xml:lang="sl">Bralni pomnilnik Genesis</comment>
+  <comment xml:lang="si">උත්පත්ති ROM</comment>
+  <comment xml:lang="sk">ROM pre Megadrive</comment>
+  <comment xml:lang="ru">Genesis ROM</comment>
+  <comment xml:lang="ro">ROM Genesis</comment>
+  <comment xml:lang="pt-BR">ROM de Genesis (Mega Drive)</comment>
+  <comment xml:lang="pt">ROM Mega Drive</comment>
+  <comment xml:lang="pl">Plik ROM konsoli Mega Drive</comment>
+  <comment xml:lang="oc">ROM Mega Drive/Genesis</comment>
+  <comment xml:lang="nn">Genesis-ROM</comment>
+  <comment xml:lang="nl">Mega Drive-ROM</comment>
+  <comment xml:lang="nb">Genesis-ROM</comment>
+  <comment xml:lang="ms">ROM Genesis</comment>
+  <comment xml:lang="lv">Genesis ROM</comment>
+  <comment xml:lang="lt">Genesis ROM</comment>
+  <comment xml:lang="ko">제네시스 롬</comment>
+  <comment xml:lang="kk-Cyrl">Genesis ROM</comment>
+  <comment xml:lang="ja">メガドライブ ROM</comment>
+  <comment xml:lang="it">ROM Megadrive</comment>
+  <comment xml:lang="is">Genesis ROM</comment>
+  <comment xml:lang="id">Memori baca-saja Genesis</comment>
+  <comment xml:lang="ia">ROM de Mega Drive/Genesis</comment>
+  <comment xml:lang="hu">Genesis ROM</comment>
+  <comment xml:lang="hr">Genesis ROM</comment>
+  <comment xml:lang="he">ROM מסוג Genesis</comment>
+  <comment xml:lang="gl">ROM xenérica</comment>
+  <comment xml:lang="ga">ROM Genesis</comment>
+  <comment xml:lang="fur">ROM Sega Mega Drive</comment>
+  <comment xml:lang="fr">ROM Mega Drive/Genesis</comment>
+  <comment xml:lang="fo">Genesis ROM</comment>
+  <comment xml:lang="fi">Genesis-ROM</comment>
+  <comment xml:lang="eu">Genesis-eko ROMa</comment>
+  <comment xml:lang="es">ROM de Genesis (Mega Drive)</comment>
+  <comment xml:lang="eo">Genesis-NLM</comment>
+  <comment xml:lang="en-GB">Genesis ROM</comment>
+  <comment xml:lang="el">Genesis ROM</comment>
+  <comment xml:lang="de">Mega-Drive-ROM</comment>
+  <comment xml:lang="da">Genesis-ROM</comment>
+  <comment xml:lang="cs">ROM pro Genesis</comment>
+  <comment xml:lang="ca">ROM de Genesis</comment>
+  <comment xml:lang="bg">ROM — Genesis</comment>
+  <comment xml:lang="be-Latn">Genesis ROM</comment>
+  <comment xml:lang="be-Cyrl">Genesis ROM</comment>
+  <comment xml:lang="ar">روم Genesis</comment>
+  <generic-icon name="application-x-executable"/>
+  <glob pattern="*.gen"/>
+  <glob pattern="*.smd"/>
+  <glob pattern="*.sgd"/>
+</mime-type>

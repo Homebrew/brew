@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-lha">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>LHA archive</comment>
+  <comment xml:lang="zh-Hant-TW">LHA 封存檔</comment>
+  <comment xml:lang="zh-Hans-CN">LHA 归档文件</comment>
+  <comment xml:lang="vi">Kho nén LHA</comment>
+  <comment xml:lang="uk">архів LHA</comment>
+  <comment xml:lang="tr">LHA arşivi</comment>
+  <comment xml:lang="sv">LHA-arkiv</comment>
+  <comment xml:lang="sr-Cyrl">ЛХА архива</comment>
+  <comment xml:lang="sq">arkiv LHA</comment>
+  <comment xml:lang="sl">Datoteka arhiva LHA</comment>
+  <comment xml:lang="si">LHA ලේඛනාගාරය</comment>
+  <comment xml:lang="sk">Archív LHA</comment>
+  <comment xml:lang="ru">Архив LHA</comment>
+  <comment xml:lang="ro">Arhivă LHA</comment>
+  <comment xml:lang="pt-BR">Pacote LHA</comment>
+  <comment xml:lang="pt">arquivo LHA</comment>
+  <comment xml:lang="pl">Archiwum LHA</comment>
+  <comment xml:lang="oc">archiu LHA</comment>
+  <comment xml:lang="nn">LHA-arkiv</comment>
+  <comment xml:lang="nl">LHA-archief</comment>
+  <comment xml:lang="nb">LHA-arkiv</comment>
+  <comment xml:lang="ms">Arkib LHA</comment>
+  <comment xml:lang="lv">LHA arhīvs</comment>
+  <comment xml:lang="lt">LHA archyvas</comment>
+  <comment xml:lang="ko">LHA 압축 파일</comment>
+  <comment xml:lang="kk-Cyrl">LHA архиві</comment>
+  <comment xml:lang="ja">LHA アーカイブ</comment>
+  <comment xml:lang="it">Archivio LHA</comment>
+  <comment xml:lang="is">LHA safnskrá</comment>
+  <comment xml:lang="id">Arsip LHA</comment>
+  <comment xml:lang="ia">Archivo LHA</comment>
+  <comment xml:lang="hu">LHA-archívum</comment>
+  <comment xml:lang="hr">LHA arhiva</comment>
+  <comment xml:lang="he">ארכיון LHA</comment>
+  <comment xml:lang="gl">arquivo LHA</comment>
+  <comment xml:lang="ga">cartlann LHA</comment>
+  <comment xml:lang="fur">archivi LHA</comment>
+  <comment xml:lang="fr">archive LHA</comment>
+  <comment xml:lang="fo">LHA skjalasavn</comment>
+  <comment xml:lang="fi">LHA-arkisto</comment>
+  <comment xml:lang="eu">LHA artxiboa</comment>
+  <comment xml:lang="es">archivador LHA</comment>
+  <comment xml:lang="eo">LHA-arkivo</comment>
+  <comment xml:lang="en-GB">LHA archive</comment>
+  <comment xml:lang="el">Συμπιεσμένο αρχείο LHA</comment>
+  <comment xml:lang="de">LHA-Archiv</comment>
+  <comment xml:lang="da">LHA-arkiv</comment>
+  <comment xml:lang="cy">Archif LHA</comment>
+  <comment xml:lang="cs">archiv LHA</comment>
+  <comment xml:lang="ca">arxiu LHA</comment>
+  <comment xml:lang="bg">Архив — LHA</comment>
+  <comment xml:lang="be-Latn">Archiŭ LHA</comment>
+  <comment xml:lang="be-Cyrl">архіў LHA</comment>
+  <comment xml:lang="az">LHA arxivi</comment>
+  <comment xml:lang="ar">أرشيف LHA</comment>
+  <comment xml:lang="af">LHA-argief</comment>
+  <generic-icon name="package-x-generic"/>
+  <glob pattern="*.lha"/>
+  <glob pattern="*.lzh"/>
+  <alias type="application/x-lzh-compressed"/>
+</mime-type>

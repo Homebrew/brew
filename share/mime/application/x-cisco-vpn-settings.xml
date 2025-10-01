@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-cisco-vpn-settings">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Cisco VPN settings</comment>
+  <comment xml:lang="zh-Hant-TW">Cisco VPN 設定</comment>
+  <comment xml:lang="zh-Hans-CN">Cisco VPN 设置</comment>
+  <comment xml:lang="uk">параметри VPN Cisco</comment>
+  <comment xml:lang="tr">Cisco VPN ayarları</comment>
+  <comment xml:lang="sv">Cisco VPN-inställningar</comment>
+  <comment xml:lang="sq">rregullime VPN-je Cisco</comment>
+  <comment xml:lang="sl">Nastavitve Cisco VPN</comment>
+  <comment xml:lang="si">Cisco VPN සැකසුම්</comment>
+  <comment xml:lang="sk">Nastavenia Cisco VPN</comment>
+  <comment xml:lang="ru">Файл настроек Cisco VPN</comment>
+  <comment xml:lang="pt-BR">Configurações de VPN da Cisco</comment>
+  <comment xml:lang="pl">Ustawienia VPN Cisco</comment>
+  <comment xml:lang="oc">paramètres VPN Cisco</comment>
+  <comment xml:lang="nl">Cisco VPN-instellingen</comment>
+  <comment xml:lang="ko">시스코 VPN 설정</comment>
+  <comment xml:lang="kk-Cyrl">Cisco VPN баптаулары</comment>
+  <comment xml:lang="ja">Cisco VPN 設定</comment>
+  <comment xml:lang="it">Impostazioni VPN Cisco</comment>
+  <comment xml:lang="is">Cisco VPN-stillingar</comment>
+  <comment xml:lang="id">Pengaturan VPN Cisco</comment>
+  <comment xml:lang="hu">Cisco VPN beállítások</comment>
+  <comment xml:lang="hr">Cisco VPN postavke</comment>
+  <comment xml:lang="he">הגדרות VPN של Cisco</comment>
+  <comment xml:lang="gl">Configuracións de Cisco VPN</comment>
+  <comment xml:lang="fr">paramètres VPN Cisco</comment>
+  <comment xml:lang="fi">Ciscon VPN-asetukset</comment>
+  <comment xml:lang="eu">Cisco VPN ezarpenak</comment>
+  <comment xml:lang="es">configuración de Cisco VPN</comment>
+  <comment xml:lang="en-GB">Cisco VPN settings</comment>
+  <comment xml:lang="de">Cisco-VPN-Einstellungen</comment>
+  <comment xml:lang="da">Cisco VPN-indstillinger</comment>
+  <comment xml:lang="ca">ajusts VPN de Cisco</comment>
+  <comment xml:lang="bg">Настройки — ВЧМ на Cisco</comment>
+  <comment xml:lang="be-Cyrl">налады Cisco VPN</comment>
+  <comment xml:lang="ar">إعدادات Cisco VPN</comment>
+  <sub-class-of type="text/plain"/>
+  <generic-icon name="text-x-generic"/>
+  <glob pattern="*.pcf"/>
+</mime-type>

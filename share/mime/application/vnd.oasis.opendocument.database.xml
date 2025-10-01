@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/vnd.oasis.opendocument.database">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>ODB database</comment>
+  <comment xml:lang="zh-Hant-TW">ODB 資料庫</comment>
+  <comment xml:lang="zh-Hans-CN">ODB 数据库</comment>
+  <comment xml:lang="vi">Cơ sở dữ liệu ODB</comment>
+  <comment xml:lang="uk">база даних ODB</comment>
+  <comment xml:lang="tr">ODB veri tabanı</comment>
+  <comment xml:lang="sv">ODB-databas</comment>
+  <comment xml:lang="sr-Cyrl">ОДБ база података</comment>
+  <comment xml:lang="sq">bazë të dhënash ODB</comment>
+  <comment xml:lang="sl">Podatkovna zbirka ODB</comment>
+  <comment xml:lang="si">ODB දත්ත සමුදාය</comment>
+  <comment xml:lang="sk">Databáza ODB</comment>
+  <comment xml:lang="ru">База данных ODB</comment>
+  <comment xml:lang="ro">Bază de date ODB</comment>
+  <comment xml:lang="pt-BR">Banco de dados ODB</comment>
+  <comment xml:lang="pt">base de dados ODB</comment>
+  <comment xml:lang="pl">Baza danych ODB</comment>
+  <comment xml:lang="oc">banca de donadas ODB</comment>
+  <comment xml:lang="nn">ODB-database</comment>
+  <comment xml:lang="nl">ODB-gegevensbank</comment>
+  <comment xml:lang="nb">ODB-database</comment>
+  <comment xml:lang="lv">ODB datubāze</comment>
+  <comment xml:lang="lt">ODB duomenų bazė</comment>
+  <comment xml:lang="ko">ODB 데이터베이스</comment>
+  <comment xml:lang="kk-Cyrl">ODB дерекқоры</comment>
+  <comment xml:lang="ka">ODB-ის მონაცემთა ბაზა</comment>
+  <comment xml:lang="ja">ODB データベース</comment>
+  <comment xml:lang="it">Database ODB</comment>
+  <comment xml:lang="is">ODB gagnagrunnur</comment>
+  <comment xml:lang="id">Basis data ODB</comment>
+  <comment xml:lang="ia">Base de datos ODB</comment>
+  <comment xml:lang="hu">ODB-adatbázis</comment>
+  <comment xml:lang="hr">ODB baza podataka</comment>
+  <comment xml:lang="he">מסד נתונים ODB</comment>
+  <comment xml:lang="gl">base de datos ODB</comment>
+  <comment xml:lang="ga">bunachar sonraí ODB</comment>
+  <comment xml:lang="fur">base di dâts ODB</comment>
+  <comment xml:lang="fr">base de données ODB</comment>
+  <comment xml:lang="fo">ODB dátustovnur</comment>
+  <comment xml:lang="fi">ODB-tietokanta</comment>
+  <comment xml:lang="eu">ODB datu-basea</comment>
+  <comment xml:lang="es">base de datos ODB</comment>
+  <comment xml:lang="eo">ODB-datumbazo</comment>
+  <comment xml:lang="en-GB">ODB database</comment>
+  <comment xml:lang="el">Βάση δεδομένων ODB</comment>
+  <comment xml:lang="de">ODB-Datenbank</comment>
+  <comment xml:lang="da">ODB-database</comment>
+  <comment xml:lang="cs">databáze ODB</comment>
+  <comment xml:lang="ca">base de dades ODB</comment>
+  <comment xml:lang="bg">База от данни — ODB</comment>
+  <comment xml:lang="be-Latn">Baza źviestak ODB</comment>
+  <comment xml:lang="be-Cyrl">база даных ODB</comment>
+  <comment xml:lang="ar">قاعدة بيانات ODB</comment>
+  <comment xml:lang="af">ODB-databasis</comment>
+  <acronym>ODB</acronym>
+  <expanded-acronym>OpenDocument Database</expanded-acronym>
+  <sub-class-of type="application/zip"/>
+  <generic-icon name="x-office-document"/>
+  <glob pattern="*.odb"/>
+  <alias type="application/vnd.sun.xml.base"/>
+</mime-type>

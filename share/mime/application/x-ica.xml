@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-ica">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Citrix ICA settings file</comment>
+  <comment xml:lang="zh-Hant-TW">Citrix ICA 設定值檔案</comment>
+  <comment xml:lang="zh-Hans-CN">Citrix ICA 设置文件</comment>
+  <comment xml:lang="vi">Tập tin thiết lập ICA Citrix</comment>
+  <comment xml:lang="uk">файл параметрів ICA Citrix</comment>
+  <comment xml:lang="tr">Citrix ICA ayar dosyası</comment>
+  <comment xml:lang="sv">Citrix ICA-inställningsfil</comment>
+  <comment xml:lang="sr-Cyrl">датотека подешавања Цитрикс ИЦА-а</comment>
+  <comment xml:lang="sq">kartelë rregullimesh Citrix ICA</comment>
+  <comment xml:lang="sl">Nastavitvena datoteka Citrix ICA</comment>
+  <comment xml:lang="si">Citrix ICA සැකසුම් ගොනුව</comment>
+  <comment xml:lang="sk">Súbor nastavení Citrix ICA</comment>
+  <comment xml:lang="ru">Файл настроек Citrix ICA</comment>
+  <comment xml:lang="ro">Fișier de configurări Citrix ICA</comment>
+  <comment xml:lang="pt-BR">Arquivo de configuração do Citrix ICA</comment>
+  <comment xml:lang="pt">ficheiro de definições Citrix ICA</comment>
+  <comment xml:lang="pl">Plik ustawień Citrix ICA</comment>
+  <comment xml:lang="oc">fichièr de paramètres ICA Citrix</comment>
+  <comment xml:lang="nn">Citrix ICA-innstillingsfil</comment>
+  <comment xml:lang="nl">Citrix ICA-instellingen</comment>
+  <comment xml:lang="nb">Innstillingsfil for Citrix ICA</comment>
+  <comment xml:lang="lv">Citrix ICA iestatījumu datne</comment>
+  <comment xml:lang="lt">Citrix ICA parametrų failas</comment>
+  <comment xml:lang="ko">시트릭스 ICA 설정 파일</comment>
+  <comment xml:lang="kk-Cyrl">Citrix ICA баптаулар файлы</comment>
+  <comment xml:lang="ka">Citrix ICA-ის პარამეტრების ფაილი</comment>
+  <comment xml:lang="ja">Citrix ICA 設定ファイル</comment>
+  <comment xml:lang="it">File impostazioni Citrix ICA</comment>
+  <comment xml:lang="is">Citrix ICA stillingaskrá</comment>
+  <comment xml:lang="id">Berkas penataan Citrix ICA</comment>
+  <comment xml:lang="ia">File de configuration ICA Citrix</comment>
+  <comment xml:lang="hu">Citrix ICA beállításfájl</comment>
+  <comment xml:lang="hr">Citrix ICA datoteka postavki</comment>
+  <comment xml:lang="he">קובץ הגדרות של Citrix ICA</comment>
+  <comment xml:lang="gl">ficheiro de configuracións de Citrix ICA</comment>
+  <comment xml:lang="ga">comhad socruithe Citrix ICA</comment>
+  <comment xml:lang="fur">file impostazions Citrix ICA</comment>
+  <comment xml:lang="fr">fichier de paramètres ICA Citrix</comment>
+  <comment xml:lang="fo">Citrix ICA stillingarfíla</comment>
+  <comment xml:lang="fi">Citrix ICA -asetustiedosto</comment>
+  <comment xml:lang="eu">Citrix ICA ezarpenen fitxategia</comment>
+  <comment xml:lang="es">archivo de configuración de Citrix ICA</comment>
+  <comment xml:lang="en-GB">Citrix ICA settings file</comment>
+  <comment xml:lang="el">Αρχείο ρυθμίσεων Citrix ICA</comment>
+  <comment xml:lang="de">Citrix-ICA-Einstellungsdatei</comment>
+  <comment xml:lang="da">Citrix ICA-opsætningsfil</comment>
+  <comment xml:lang="cs">soubor nastavení Citrix ICA</comment>
+  <comment xml:lang="ca">fitxer d'ajusts de Citrix ICA</comment>
+  <comment xml:lang="bg">Настройки — Citrix ICA</comment>
+  <comment xml:lang="be-Latn">Fajł naładaŭ Citrix ICA</comment>
+  <comment xml:lang="be-Cyrl">файл налад Citrix ICA</comment>
+  <comment xml:lang="ar">ملف إعدادات Citrix ICA</comment>
+  <comment xml:lang="af">Citrix ICA-instellingslêer</comment>
+  <acronym>ICA</acronym>
+  <expanded-acronym>Independent Computing Architecture</expanded-acronym>
+  <sub-class-of type="text/plain"/>
+  <generic-icon name="text-x-generic"/>
+  <glob pattern="*.ica"/>
+</mime-type>

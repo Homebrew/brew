@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="model/3mf">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>3MF document</comment>
+  <comment xml:lang="zh-Hans-CN">3MF 文档</comment>
+  <comment xml:lang="uk">документ 3MF</comment>
+  <comment xml:lang="tr">3MF belgesi</comment>
+  <comment xml:lang="sv">3MF-dokument</comment>
+  <comment xml:lang="sl">Dokument 3MF</comment>
+  <comment xml:lang="si">3MF ලේඛනය</comment>
+  <comment xml:lang="ru">Документ 3MF</comment>
+  <comment xml:lang="pt-BR">Documento 3MF</comment>
+  <comment xml:lang="pl">Dokument 3MF</comment>
+  <comment xml:lang="nl">3MF-document</comment>
+  <comment xml:lang="ko">3MF 문서</comment>
+  <comment xml:lang="kk-Cyrl">3MF құжаты</comment>
+  <comment xml:lang="ja">3MF ドキュメント</comment>
+  <comment xml:lang="it">Documento 3MF</comment>
+  <comment xml:lang="hr">3MF dokument</comment>
+  <comment xml:lang="fi">3MF-asiakirja</comment>
+  <comment xml:lang="eu">3MF dokumentua</comment>
+  <comment xml:lang="es">documento 3MF</comment>
+  <comment xml:lang="en-GB">3MF document</comment>
+  <comment xml:lang="de">3MF-Dokument</comment>
+  <comment xml:lang="be-Cyrl">дакумент 3MF</comment>
+  <comment xml:lang="ar">مستند 3MF</comment>
+  <acronym>3MF</acronym>
+  <expanded-acronym>3D Manufacturing Format</expanded-acronym>
+  <glob pattern="*.3mf"/>
+  <alias type="application/vnd.ms-3mfdocument"/>
+  <sub-class-of type="application/zip"/>
+  <generic-icon name="image-x-generic"/>
+</mime-type>

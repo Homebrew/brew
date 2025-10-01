@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="video/x-ogm+ogg">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>OGM video</comment>
+  <comment xml:lang="zh-Hant-TW">OGM 視訊</comment>
+  <comment xml:lang="zh-Hans-CN">OGM 视频</comment>
+  <comment xml:lang="vi">Ảnh động OGM</comment>
+  <comment xml:lang="uk">відеокліп OGM</comment>
+  <comment xml:lang="tr">OGM video</comment>
+  <comment xml:lang="sv">OGM-video</comment>
+  <comment xml:lang="sr-Cyrl">ОГМ видео</comment>
+  <comment xml:lang="sq">video OGM</comment>
+  <comment xml:lang="sl">Video datoteka OGM</comment>
+  <comment xml:lang="si">OGM වීඩියෝව</comment>
+  <comment xml:lang="sk">Video OGM</comment>
+  <comment xml:lang="ru">Видео OGM</comment>
+  <comment xml:lang="ro">Video OGM</comment>
+  <comment xml:lang="pt-BR">Vídeo OGM</comment>
+  <comment xml:lang="pt">vídeo OGM</comment>
+  <comment xml:lang="pl">Plik wideo OGM</comment>
+  <comment xml:lang="oc">vidèo OGM</comment>
+  <comment xml:lang="nn">OGM-video</comment>
+  <comment xml:lang="nl">OGM-video</comment>
+  <comment xml:lang="nb">OGM-film</comment>
+  <comment xml:lang="lv">OGM video</comment>
+  <comment xml:lang="lt">OGM vaizdo įrašas</comment>
+  <comment xml:lang="ko">OGM 동영상</comment>
+  <comment xml:lang="kk-Cyrl">OGM видеосы</comment>
+  <comment xml:lang="ka">OGM ვიდეო</comment>
+  <comment xml:lang="ja">OGM 動画</comment>
+  <comment xml:lang="it">Video OGM</comment>
+  <comment xml:lang="is">OGM myndskeið</comment>
+  <comment xml:lang="id">Video OGM</comment>
+  <comment xml:lang="ia">Video OGM</comment>
+  <comment xml:lang="hu">OGM-videó</comment>
+  <comment xml:lang="hr">OGM video snimka</comment>
+  <comment xml:lang="he">וידאו OGM</comment>
+  <comment xml:lang="gl">vídeo OGM</comment>
+  <comment xml:lang="ga">físeán OGM</comment>
+  <comment xml:lang="fur">video OGM</comment>
+  <comment xml:lang="fr">vidéo OGM</comment>
+  <comment xml:lang="fo">OGM video</comment>
+  <comment xml:lang="fi">OGM-video</comment>
+  <comment xml:lang="eu">OGM bideoa</comment>
+  <comment xml:lang="es">vídeo OGM</comment>
+  <comment xml:lang="eo">OGM-video</comment>
+  <comment xml:lang="en-GB">OGM video</comment>
+  <comment xml:lang="el">Βίντεο OGM</comment>
+  <comment xml:lang="de">OGM-Video</comment>
+  <comment xml:lang="da">OGM-video</comment>
+  <comment xml:lang="cs">video OGM</comment>
+  <comment xml:lang="ca">vídeo OGM</comment>
+  <comment xml:lang="bg">Видео — OGM</comment>
+  <comment xml:lang="be-Latn">Videa OGM</comment>
+  <comment xml:lang="be-Cyrl">відэа OGM</comment>
+  <comment xml:lang="ast">Videu n'OGM</comment>
+  <comment xml:lang="ar">فيديو OGM</comment>
+  <comment xml:lang="af">OGM-video</comment>
+  <sub-class-of type="video/ogg"/>
+  <alias type="video/x-ogm"/>
+  <glob pattern="*.ogm"/>
+</mime-type>

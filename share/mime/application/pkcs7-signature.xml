@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/pkcs7-signature">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Detached S/MIME signature</comment>
+  <comment xml:lang="zh-Hant-TW">卸離的 S/MIME 簽章</comment>
+  <comment xml:lang="uk">відокремлений підпис S/MIME</comment>
+  <comment xml:lang="sv">Frikopplad S/MIME-signatur</comment>
+  <comment xml:lang="ru">Отсоединённая подпись S/MIME</comment>
+  <comment xml:lang="pt-BR">Assinatura S/MIME destacada</comment>
+  <comment xml:lang="pl">Oddzielony podpis S/MIME</comment>
+  <comment xml:lang="it">Firma staccata S/MIME</comment>
+  <comment xml:lang="gl">Sinatura S/MIME desancorada</comment>
+  <comment xml:lang="eu">S/MIME sinadura askea</comment>
+  <comment xml:lang="es">firma S/MIME separada</comment>
+  <comment xml:lang="de">Isolierte S/MIME-Signatur</comment>
+  <comment xml:lang="be-Cyrl">адлучаны подпіс S/MIME</comment>
+  <acronym>S/MIME</acronym>
+  <expanded-acronym>Secure/Multipurpose Internet Mail Extensions</expanded-acronym>
+  <sub-class-of type="text/plain"/>
+  <generic-icon name="text-x-generic"/>
+  <glob pattern="*.p7s"/>
+</mime-type>

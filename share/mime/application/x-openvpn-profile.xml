@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-openvpn-profile">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>OpenVPN profile</comment>
+  <comment xml:lang="uk">профіль OpenVPN</comment>
+  <comment xml:lang="sv">OpenVPN-profil</comment>
+  <comment xml:lang="ru">Профиль OpenVPN</comment>
+  <comment xml:lang="pl">Profil OpenVPN</comment>
+  <comment xml:lang="it">Profilo OpenVPN</comment>
+  <comment xml:lang="es">perfil OpenVPN</comment>
+  <comment xml:lang="de">OpenVPN-Profil</comment>
+  <comment xml:lang="be-Cyrl">профіль OpenVPN</comment>
+  <sub-class-of type="text/plain"/>
+  <generic-icon name="text-x-generic"/>
+  <glob pattern="*.openvpn"/>
+  <glob pattern="*.ovpn"/>
+</mime-type>

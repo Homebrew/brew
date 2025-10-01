@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="text/x-modelica">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Modelica model</comment>
+  <comment xml:lang="zh-Hant-TW">Modelica 模型</comment>
+  <comment xml:lang="zh-Hans-CN">Modelica 模型</comment>
+  <comment xml:lang="uk">модель Modelica</comment>
+  <comment xml:lang="tr">Modelica modeli</comment>
+  <comment xml:lang="sv">Modelica-modell</comment>
+  <comment xml:lang="sr-Cyrl">модел Моделике</comment>
+  <comment xml:lang="sq">model Modelica</comment>
+  <comment xml:lang="sl">Model Modelica</comment>
+  <comment xml:lang="si">Modelica ආකෘතිය</comment>
+  <comment xml:lang="sk">Model Modelica</comment>
+  <comment xml:lang="ru">Модель Modelica</comment>
+  <comment xml:lang="pt-BR">Modelo da Modelica</comment>
+  <comment xml:lang="pt">modelo Modelica</comment>
+  <comment xml:lang="pl">Model Modelica</comment>
+  <comment xml:lang="oc">modèl Modelica</comment>
+  <comment xml:lang="nl">Modelica-model</comment>
+  <comment xml:lang="lv">Modelica modelis</comment>
+  <comment xml:lang="ko">Modelica 모델</comment>
+  <comment xml:lang="kk-Cyrl">Modelica моделі</comment>
+  <comment xml:lang="ja">Modelica モデル</comment>
+  <comment xml:lang="it">Modello Modelica</comment>
+  <comment xml:lang="is">Modelica líkan</comment>
+  <comment xml:lang="id">Model Modelica</comment>
+  <comment xml:lang="ia">Modello Modelica</comment>
+  <comment xml:lang="hu">Modelica modell</comment>
+  <comment xml:lang="hr">Modelica model</comment>
+  <comment xml:lang="he">דגם של Modelica</comment>
+  <comment xml:lang="gl">Modelo de Modelica</comment>
+  <comment xml:lang="ga">samhail Modelica</comment>
+  <comment xml:lang="fur">model Modelica</comment>
+  <comment xml:lang="fr">modèle Modelica</comment>
+  <comment xml:lang="fi">Modelica-malli</comment>
+  <comment xml:lang="eu">Modelica modeloa</comment>
+  <comment xml:lang="es">modelo de Modelica</comment>
+  <comment xml:lang="en-GB">Modelica model</comment>
+  <comment xml:lang="el">Μοντέλο Modelica</comment>
+  <comment xml:lang="de">Modelica-Modell</comment>
+  <comment xml:lang="da">Modelica-model</comment>
+  <comment xml:lang="cs">model Modelica</comment>
+  <comment xml:lang="ca">model de Modelica</comment>
+  <comment xml:lang="bg">Модел — Modelica</comment>
+  <comment xml:lang="be-Cyrl">мадэль Modelica</comment>
+  <comment xml:lang="ar">نموذج Modelica</comment>
+  <comment xml:lang="af">Modelica-model</comment>
+  <sub-class-of type="text/plain"/>
+  <glob pattern="*.mo"/>
+</mime-type>

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-shared-library-la">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Libtool shared library</comment>
+  <comment xml:lang="uk">спільна бібліотека libtool</comment>
+  <comment xml:lang="sv">Delat libtool-bibliotek</comment>
+  <comment xml:lang="ru">Разделяемая библиотека libtool</comment>
+  <comment xml:lang="pl">Biblioteka współdzielona libtool</comment>
+  <comment xml:lang="it">Libreria condivisa libtool</comment>
+  <comment xml:lang="eu">Libtool liburutegi partekatua</comment>
+  <comment xml:lang="es">biblioteca compartida de Libtool</comment>
+  <comment xml:lang="de">Gemeinsame libtool-Bibliothek</comment>
+  <comment xml:lang="be-Cyrl">агульная бібліятэка libtool</comment>
+  <sub-class-of type="text/plain"/>
+  <generic-icon name="text-x-script"/>
+  <glob pattern="*.la"/>
+</mime-type>

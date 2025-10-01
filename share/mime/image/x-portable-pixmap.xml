@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="image/x-portable-pixmap">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>PPM image</comment>
+  <comment xml:lang="zh-Hant-TW">PPM 影像</comment>
+  <comment xml:lang="zh-Hans-CN">PPM 图像</comment>
+  <comment xml:lang="vi">Ảnh PPM</comment>
+  <comment xml:lang="uk">зображення PPM</comment>
+  <comment xml:lang="tr">PPM görüntüsü</comment>
+  <comment xml:lang="sv">PPM-bild</comment>
+  <comment xml:lang="sr-Cyrl">ППМ слика</comment>
+  <comment xml:lang="sq">figurë PPM</comment>
+  <comment xml:lang="sl">Slikovna datoteka PPM</comment>
+  <comment xml:lang="si">PPM රූපය</comment>
+  <comment xml:lang="sk">Obrázok PPM</comment>
+  <comment xml:lang="ru">Изображение PPM</comment>
+  <comment xml:lang="ro">Imagine PPM</comment>
+  <comment xml:lang="pt-BR">Imagem PPM</comment>
+  <comment xml:lang="pt">imagem PPM</comment>
+  <comment xml:lang="pl">Obraz PPM</comment>
+  <comment xml:lang="oc">imatge PPM</comment>
+  <comment xml:lang="nn">PPM-bilete</comment>
+  <comment xml:lang="nl">PPM-afbeelding</comment>
+  <comment xml:lang="nb">PPM-bilde</comment>
+  <comment xml:lang="lv">PPM attēls</comment>
+  <comment xml:lang="lt">PPM paveikslėlis</comment>
+  <comment xml:lang="ko">PPM 그림</comment>
+  <comment xml:lang="kk-Cyrl">PPM суреті</comment>
+  <comment xml:lang="ka">PPM გამოსახულება</comment>
+  <comment xml:lang="ja">PPM 画像</comment>
+  <comment xml:lang="it">Immagine PPM</comment>
+  <comment xml:lang="is">PPM mynd</comment>
+  <comment xml:lang="id">Citra PPM</comment>
+  <comment xml:lang="ia">Imagine PPM</comment>
+  <comment xml:lang="hu">PPM kép</comment>
+  <comment xml:lang="hr">PPM slika</comment>
+  <comment xml:lang="he">תמונת PPM</comment>
+  <comment xml:lang="gl">imaxe PPM</comment>
+  <comment xml:lang="ga">íomhá PPM</comment>
+  <comment xml:lang="fur">imagjin PPM</comment>
+  <comment xml:lang="fr">image PPM</comment>
+  <comment xml:lang="fo">PPM mynd</comment>
+  <comment xml:lang="fi">PPM-kuva</comment>
+  <comment xml:lang="eu">PPM irudia</comment>
+  <comment xml:lang="es">imagen PPM</comment>
+  <comment xml:lang="eo">PPM-bildo</comment>
+  <comment xml:lang="en-GB">PPM image</comment>
+  <comment xml:lang="el">Εικόνα PPM</comment>
+  <comment xml:lang="de">PPM-Bild</comment>
+  <comment xml:lang="da">PPM-billede</comment>
+  <comment xml:lang="cy">Delwedd PPM</comment>
+  <comment xml:lang="cs">obrázek PPM</comment>
+  <comment xml:lang="ca">imatge PPM</comment>
+  <comment xml:lang="bg">Изображение — PPM</comment>
+  <comment xml:lang="be-Latn">Vyjava PPM</comment>
+  <comment xml:lang="be-Cyrl">выява PPM</comment>
+  <comment xml:lang="ar">صورة PPM</comment>
+  <comment xml:lang="af">PPM-beeld</comment>
+  <acronym>PPM</acronym>
+  <expanded-acronym>Portable PixMap</expanded-acronym>
+  <sub-class-of type="image/x-portable-anymap"/>
+  <glob pattern="*.ppm"/>
+</mime-type>

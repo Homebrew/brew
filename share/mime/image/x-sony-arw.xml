@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="image/x-sony-arw">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Sony ARW raw image</comment>
+  <comment xml:lang="zh-Hant-TW">Sony ARW 原始影像</comment>
+  <comment xml:lang="zh-Hans-CN">索尼 ARW 原始映像</comment>
+  <comment xml:lang="vi">Ảnh thô Sony ARW</comment>
+  <comment xml:lang="uk">цифровий негатив ARW Sony</comment>
+  <comment xml:lang="tr">Sony ARW ham görüntüsü</comment>
+  <comment xml:lang="sv">Sony ARW-råbild</comment>
+  <comment xml:lang="sr-Cyrl">Сони АРВ сирова слика</comment>
+  <comment xml:lang="sq">figurë Sony ARW e papërpunuar</comment>
+  <comment xml:lang="sl">Surova slikovna datoteka Sony ARW</comment>
+  <comment xml:lang="si">Sony ARW අමු රූපය</comment>
+  <comment xml:lang="sk">Surový obrázok Sony ARW</comment>
+  <comment xml:lang="ru">Необработанное изображение Sony ARW</comment>
+  <comment xml:lang="ro">Imagine brută Sony ARW</comment>
+  <comment xml:lang="pt-BR">Imagem bruta ARW da Sony</comment>
+  <comment xml:lang="pt">imagem em bruto Sony ARW</comment>
+  <comment xml:lang="pl">Surowy obraz ARW Sony</comment>
+  <comment xml:lang="oc">imatge brut ARW Sony</comment>
+  <comment xml:lang="nn">Sony ARW råbilete</comment>
+  <comment xml:lang="nl">onbewerkt Sony ARW-beeld</comment>
+  <comment xml:lang="nb">Sony ARW raw-bilde</comment>
+  <comment xml:lang="lv">Sony ARW jēlattēls</comment>
+  <comment xml:lang="lt">Sony ARW neapdorotas paveikslėlis</comment>
+  <comment xml:lang="ko">소니 ARW RAW 사진</comment>
+  <comment xml:lang="kk-Cyrl">Sony ARW өңделмеген суреті</comment>
+  <comment xml:lang="ja">Sony ARW raw 画像</comment>
+  <comment xml:lang="it">Immagine raw Sony ARW</comment>
+  <comment xml:lang="is">Sony ARW hrámynd</comment>
+  <comment xml:lang="id">Citra mentah Sony ARW</comment>
+  <comment xml:lang="ia">Imagine brute Sony ARW</comment>
+  <comment xml:lang="hu">Sony ARW nyers kép</comment>
+  <comment xml:lang="hr">Sony ARW osnovna slika</comment>
+  <comment xml:lang="he">תמונה גולמית של Sony ARW</comment>
+  <comment xml:lang="gl">imaxe en bruto ARW de sony</comment>
+  <comment xml:lang="ga">amhíomhá Sony ARW</comment>
+  <comment xml:lang="fur">imagjin grese Sony ARW</comment>
+  <comment xml:lang="fr">image brute ARW Sony</comment>
+  <comment xml:lang="fo">Sony ARW rámynd</comment>
+  <comment xml:lang="fi">Sony-ARW-raakakuva</comment>
+  <comment xml:lang="eu">Sony ARW irudi gordina</comment>
+  <comment xml:lang="es">imagen en bruto ARW de Sony</comment>
+  <comment xml:lang="en-GB">Sony ARW raw image</comment>
+  <comment xml:lang="el">Ανεπεξέργαστη εικόνα Sony ARW</comment>
+  <comment xml:lang="de">Sony-ARW-Rohbild</comment>
+  <comment xml:lang="da">Sony ARW raw-billede</comment>
+  <comment xml:lang="cs">surový obrázek Sony ARW</comment>
+  <comment xml:lang="ca">imatge en cru de Sony ARW</comment>
+  <comment xml:lang="bg">Изображение — Sony ARW raw</comment>
+  <comment xml:lang="be-Latn">Suvoraja vyjava Sony ARW</comment>
+  <comment xml:lang="be-Cyrl">неапрацаваная выява Sony ARW</comment>
+  <comment xml:lang="ar">صورة Sony ARW خامة</comment>
+  <comment xml:lang="af">Sony ARW rou beeld</comment>
+  <acronym>ARW</acronym>
+  <expanded-acronym>Alpha Raw format</expanded-acronym>
+  <sub-class-of type="image/x-dcraw"/>
+  <sub-class-of type="image/tiff"/>
+  <glob pattern="*.arw"/>
+</mime-type>

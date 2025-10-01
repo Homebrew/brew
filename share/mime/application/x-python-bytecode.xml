@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-python-bytecode">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Python bytecode</comment>
+  <comment xml:lang="zh-Hant-TW">Python 位元組碼</comment>
+  <comment xml:lang="zh-Hans-CN">Python 字节码</comment>
+  <comment xml:lang="vi">Mã byte Python</comment>
+  <comment xml:lang="uk">байт-код Python</comment>
+  <comment xml:lang="tr">Python bayt kodu</comment>
+  <comment xml:lang="sv">Python-bytekod</comment>
+  <comment xml:lang="sr-Cyrl">Питонов бајтни ко̂д</comment>
+  <comment xml:lang="sl">Datoteka bitne kode Python</comment>
+  <comment xml:lang="si">පයිතන් බයිට්කෝඩ්</comment>
+  <comment xml:lang="sk">Bajtový kód Python</comment>
+  <comment xml:lang="ru">Байт-код Python</comment>
+  <comment xml:lang="ro">Bytecode Python</comment>
+  <comment xml:lang="pt-BR">Código compilado Python</comment>
+  <comment xml:lang="pt">código binário Python</comment>
+  <comment xml:lang="pl">Kod bajtowy Python</comment>
+  <comment xml:lang="oc">bytecode Python</comment>
+  <comment xml:lang="nn">Python-bytekode</comment>
+  <comment xml:lang="nl">Python-bytecode</comment>
+  <comment xml:lang="nb">Python-bytekode</comment>
+  <comment xml:lang="ms">Kodbait Python</comment>
+  <comment xml:lang="lv">Python bitkods</comment>
+  <comment xml:lang="lt">Python baitinis kodas</comment>
+  <comment xml:lang="ko">파이썬 바이트코드</comment>
+  <comment xml:lang="kk-Cyrl">Python байткоды</comment>
+  <comment xml:lang="ja">Python バイトコード</comment>
+  <comment xml:lang="it">Bytecode Python</comment>
+  <comment xml:lang="is">Python bætakóði</comment>
+  <comment xml:lang="id">Kode bita Python</comment>
+  <comment xml:lang="ia">Codice intermediari Python</comment>
+  <comment xml:lang="hu">Python-bájtkód</comment>
+  <comment xml:lang="hr">Python bajt kôd</comment>
+  <comment xml:lang="he">Bytecode של Python</comment>
+  <comment xml:lang="gl">bytecode de Python</comment>
+  <comment xml:lang="ga">beartchód Python</comment>
+  <comment xml:lang="fur">bytecode di Python</comment>
+  <comment xml:lang="fr">bytecode Python</comment>
+  <comment xml:lang="fo">Python býtkota</comment>
+  <comment xml:lang="fi">Python-tavukoodi</comment>
+  <comment xml:lang="eu">Python byte-kodea</comment>
+  <comment xml:lang="es">código intermedio de Python</comment>
+  <comment xml:lang="eo">Python-bajtkodo</comment>
+  <comment xml:lang="en-GB">Python bytecode</comment>
+  <comment xml:lang="el">Συμβολοκώδικας Python</comment>
+  <comment xml:lang="de">Python-Bytecode</comment>
+  <comment xml:lang="da">Python-bytekode</comment>
+  <comment xml:lang="cy">Côd beit Python</comment>
+  <comment xml:lang="cs">bajtový kód Python</comment>
+  <comment xml:lang="ca">bytecode de Python</comment>
+  <comment xml:lang="bg">Байт код — Python</comment>
+  <comment xml:lang="be-Latn">Bajtavy kod Python</comment>
+  <comment xml:lang="be-Cyrl">байт-код Python</comment>
+  <comment xml:lang="az">Python bayt kodu</comment>
+  <comment xml:lang="ar">Python bytecode</comment>
+  <comment xml:lang="af">Python binêre kode</comment>
+  <glob pattern="*.pyc"/>
+  <glob pattern="*.pyo"/>
+</mime-type>

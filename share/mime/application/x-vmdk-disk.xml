@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-vmdk-disk">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>VMDK disk image</comment>
+  <comment xml:lang="zh-Hant-TW">VMDK 磁碟映像檔</comment>
+  <comment xml:lang="zh-Hans-CN">VMDK 磁盘映像</comment>
+  <comment xml:lang="uk">образ диска VMDK</comment>
+  <comment xml:lang="tr">VMDK disk görüntüsü</comment>
+  <comment xml:lang="sv">VMDK-diskavbildning</comment>
+  <comment xml:lang="sl">Slika diska VMDK</comment>
+  <comment xml:lang="si">VMDK තැටි රූපය</comment>
+  <comment xml:lang="ru">Образ диска VMDK</comment>
+  <comment xml:lang="pt-BR">Imagem de disco VMDK</comment>
+  <comment xml:lang="pl">Obraz dysku VMDK</comment>
+  <comment xml:lang="nl">VMDK-schijfkopiebestand</comment>
+  <comment xml:lang="ko">VMDK 디스크 이미지</comment>
+  <comment xml:lang="kk-Cyrl">VMDK диск бейнесі</comment>
+  <comment xml:lang="ja">VMDK ディスクイメージ</comment>
+  <comment xml:lang="it">Immagine disco VMDK</comment>
+  <comment xml:lang="hr">VMDK slika diska</comment>
+  <comment xml:lang="fi">VMDK-levykuva</comment>
+  <comment xml:lang="eu">VMDK disko-irudia</comment>
+  <comment xml:lang="es">imagen de disco VMDK</comment>
+  <comment xml:lang="en-GB">VMDK disk image</comment>
+  <comment xml:lang="de">VMDK-Datenträgerabbild</comment>
+  <comment xml:lang="be-Cyrl">вобраз дыска VMDK</comment>
+  <comment xml:lang="ar">صورة قرص VMDK</comment>
+  <acronym>VMDK</acronym>
+  <expanded-acronym>Virtual Machine Disk</expanded-acronym>
+  <glob pattern="*.vmdk"/>
+  <alias type="application/x-virtualbox-vmdk"/>
+</mime-type>

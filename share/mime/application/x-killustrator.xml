@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-killustrator">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>KIllustrator drawing</comment>
+  <comment xml:lang="zh-Hant-TW">KIllustrator 繪圖</comment>
+  <comment xml:lang="zh-Hans-CN">KIllustrator 绘图</comment>
+  <comment xml:lang="vi">Bản vẽ KIllustrator</comment>
+  <comment xml:lang="uk">малюнок KIllustrator</comment>
+  <comment xml:lang="tr">KIllustrator çizimi</comment>
+  <comment xml:lang="sv">KIllustrator-teckning</comment>
+  <comment xml:lang="sr-Cyrl">цртеж К-илустратора</comment>
+  <comment xml:lang="sq">vizatim KIllustrator</comment>
+  <comment xml:lang="sl">Datoteka risbe KIllustrator</comment>
+  <comment xml:lang="si">කිලිස්ට්රේටර් ඇඳීම</comment>
+  <comment xml:lang="sk">Kresba KIllustrator</comment>
+  <comment xml:lang="ru">Рисунок KIllustrator</comment>
+  <comment xml:lang="ro">Desen KIllustrator</comment>
+  <comment xml:lang="pt-BR">Desenho do KIllustrator</comment>
+  <comment xml:lang="pt">desenho KIllustrator</comment>
+  <comment xml:lang="pl">Rysunek KIllustrator</comment>
+  <comment xml:lang="oc">dessenh KIllustrator</comment>
+  <comment xml:lang="nn">KIllustrator-teikning</comment>
+  <comment xml:lang="nl">KIllustrator-tekening</comment>
+  <comment xml:lang="nb">KIllustrator-tegning</comment>
+  <comment xml:lang="ms">Lukisan KIllustrator</comment>
+  <comment xml:lang="lv">KIllustrator zīmējums</comment>
+  <comment xml:lang="lt">KIllustrator piešinys</comment>
+  <comment xml:lang="ko">KIllustrator 그림</comment>
+  <comment xml:lang="kk-Cyrl">KIllustrator суреті</comment>
+  <comment xml:lang="ja">KIllustrator ドロー</comment>
+  <comment xml:lang="it">Disegno KIllustrator</comment>
+  <comment xml:lang="is">KIllustrator teikning</comment>
+  <comment xml:lang="id">Gambar KIllustrator</comment>
+  <comment xml:lang="ia">Designo KIllustrator</comment>
+  <comment xml:lang="hu">KIllustrator-rajz</comment>
+  <comment xml:lang="hr">KIllustrator crtež</comment>
+  <comment xml:lang="he">ציור KIllustrator</comment>
+  <comment xml:lang="gl">debuxo de KIllustrator</comment>
+  <comment xml:lang="ga">líníocht KIllustrator</comment>
+  <comment xml:lang="fur">dissen KIllustrator</comment>
+  <comment xml:lang="fr">dessin KIllustrator</comment>
+  <comment xml:lang="fo">KIllustrator tekning</comment>
+  <comment xml:lang="fi">KIllustrator-piirros</comment>
+  <comment xml:lang="eu">KIllustrator marrazkia</comment>
+  <comment xml:lang="es">dibujo de KIllustrator</comment>
+  <comment xml:lang="eo">KIllustrator-grafikaĵo</comment>
+  <comment xml:lang="en-GB">KIllustrator drawing</comment>
+  <comment xml:lang="el">Σχέδιο KIllustrator</comment>
+  <comment xml:lang="de">KIllustrator-Zeichnung</comment>
+  <comment xml:lang="da">KIllustrator-tegning</comment>
+  <comment xml:lang="cs">kresba KIllustrator</comment>
+  <comment xml:lang="ca">dibuix de KIllustrator</comment>
+  <comment xml:lang="bg">Чертеж — KIllustrator</comment>
+  <comment xml:lang="be-Latn">Rysunak KIllustrator</comment>
+  <comment xml:lang="be-Cyrl">рысунак KIllustrator</comment>
+  <comment xml:lang="ar">تصميم KIllustrator</comment>
+  <comment xml:lang="af">KIllustrator-tekening</comment>
+  <generic-icon name="image-x-generic"/>
+  <glob pattern="*.kil"/>
+</mime-type>

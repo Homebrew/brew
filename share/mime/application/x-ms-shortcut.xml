@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-ms-shortcut">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Windows shortcut</comment>
+  <comment xml:lang="uk">ярлик Windows</comment>
+  <comment xml:lang="sv">Windows-genväg</comment>
+  <comment xml:lang="ru">Ярлык Windows</comment>
+  <comment xml:lang="pl">Skrót Windows</comment>
+  <comment xml:lang="es">acceso directo de Windows</comment>
+  <comment xml:lang="de">Windows-Verweis</comment>
+  <generic-icon name="emblem-symbolic-link"/>
+  <glob pattern="*.lnk"/>
+  <alias type="application/x-win-lnk"/>
+</mime-type>

@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-pef-executable">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>PEF executable</comment>
+  <comment xml:lang="zh-Hant-TW">PEF 可執行檔</comment>
+  <comment xml:lang="zh-Hans-CN">PEF 可执行文件</comment>
+  <comment xml:lang="vi">Tập tin thực hiện được PEF</comment>
+  <comment xml:lang="uk">виконуваний файл PEF</comment>
+  <comment xml:lang="tr">PEF çalıştırılabilir</comment>
+  <comment xml:lang="sv">Körbar PEF-fil</comment>
+  <comment xml:lang="sr-Cyrl">ПЕФ извршна</comment>
+  <comment xml:lang="sq">e ekzekutueshme PEF</comment>
+  <comment xml:lang="sl">Izvedljiva datoteka PEF</comment>
+  <comment xml:lang="si">PEF ක්‍රියාත්මක කළ හැකිය</comment>
+  <comment xml:lang="sk">Spustiteľný súbor PEF</comment>
+  <comment xml:lang="ru">Исполняемый файл PEF</comment>
+  <comment xml:lang="ro">Executabil PEF</comment>
+  <comment xml:lang="pt-BR">Executável PEF</comment>
+  <comment xml:lang="pt">executável PEF</comment>
+  <comment xml:lang="pl">Program PEF</comment>
+  <comment xml:lang="oc">executable PEF</comment>
+  <comment xml:lang="nn">Køyrbar PEF-fil</comment>
+  <comment xml:lang="nl">PEF-programmabestand</comment>
+  <comment xml:lang="nb">PEF-kjørbar</comment>
+  <comment xml:lang="ms">Bolehlaksana PEF</comment>
+  <comment xml:lang="lv">PEF izpildāmais</comment>
+  <comment xml:lang="lt">PEF vykdomasis failas</comment>
+  <comment xml:lang="ko">PEF 실행 파일</comment>
+  <comment xml:lang="kk-Cyrl">PEF орындалатын файлы</comment>
+  <comment xml:lang="ja">PEF 実行ファイル</comment>
+  <comment xml:lang="it">Eseguibile PEF</comment>
+  <comment xml:lang="is">PEF keyrsluskrá</comment>
+  <comment xml:lang="id">PEF dapat dieksekusi</comment>
+  <comment xml:lang="ia">Executabile PEF</comment>
+  <comment xml:lang="hu">PEF futtatható</comment>
+  <comment xml:lang="hr">PEF izvršna datoteka</comment>
+  <comment xml:lang="he">קובץ הרצה PEF</comment>
+  <comment xml:lang="gl">Executábel PEF</comment>
+  <comment xml:lang="ga">comhad inrite PEF</comment>
+  <comment xml:lang="fur">eseguibil PEF</comment>
+  <comment xml:lang="fr">exécutable PEF</comment>
+  <comment xml:lang="fo">PEF inningarfør</comment>
+  <comment xml:lang="fi">PEF-ohjelma</comment>
+  <comment xml:lang="eu">PEF exekutagarria</comment>
+  <comment xml:lang="es">ejecutable PEF</comment>
+  <comment xml:lang="eo">PEF-plenumebla</comment>
+  <comment xml:lang="en-GB">PEF executable</comment>
+  <comment xml:lang="el">Εκτελέσιμο PEF</comment>
+  <comment xml:lang="de">PEF-Programm</comment>
+  <comment xml:lang="da">PEF-kørbar</comment>
+  <comment xml:lang="cs">spustitelný soubor PEF</comment>
+  <comment xml:lang="ca">executable PEF</comment>
+  <comment xml:lang="bg">Изпълним файл — PEF</comment>
+  <comment xml:lang="be-Latn">Vykonvalny fajł PEF</comment>
+  <comment xml:lang="be-Cyrl">выконвальны файл PEF</comment>
+  <comment xml:lang="ar">PEF تنفيذي</comment>
+  <comment xml:lang="af">PEF-uitvoerbaar</comment>
+  <acronym>PEF</acronym>
+  <expanded-acronym>Preferred Executable Format</expanded-acronym>
+  <generic-icon name="application-x-executable"/>
+</mime-type>

@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="image/openraster">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>OpenRaster image</comment>
+  <comment xml:lang="zh-Hant-TW">OpenRaster 影像</comment>
+  <comment xml:lang="zh-Hans-CN">OpenRaster 图像</comment>
+  <comment xml:lang="uk">зображення OpenRaster</comment>
+  <comment xml:lang="tr">OpenRaster görüntüsü</comment>
+  <comment xml:lang="sv">OpenRaster-bild</comment>
+  <comment xml:lang="sq">figurë OpenRaster</comment>
+  <comment xml:lang="sl">Slika OpenRaster</comment>
+  <comment xml:lang="si">OpenRaster රූපය</comment>
+  <comment xml:lang="sk">Obrázok OpenRaster</comment>
+  <comment xml:lang="ru">Изображение OpenRaster</comment>
+  <comment xml:lang="pt-BR">Imagem OpenRaster</comment>
+  <comment xml:lang="pl">Obraz OpenRaster</comment>
+  <comment xml:lang="oc">imatge OpenRaster</comment>
+  <comment xml:lang="nl">OpenRaster-afbeelding</comment>
+  <comment xml:lang="ko">OpenRaster 그림</comment>
+  <comment xml:lang="kk-Cyrl">OpenRaster суреті</comment>
+  <comment xml:lang="ja">OpenRaster 画像</comment>
+  <comment xml:lang="it">Immagine OpenRaster</comment>
+  <comment xml:lang="is">OpenRaster-mynd</comment>
+  <comment xml:lang="id">Citra OpenRaster</comment>
+  <comment xml:lang="hu">OpenRaster kép</comment>
+  <comment xml:lang="hr">OpenRaster slika</comment>
+  <comment xml:lang="he">תמונת OpenRaster</comment>
+  <comment xml:lang="gl">Imaxe OpenRaster</comment>
+  <comment xml:lang="fr">image OpenRaster</comment>
+  <comment xml:lang="fi">OpenRaster-kuva</comment>
+  <comment xml:lang="eu">OpenRaster irudia</comment>
+  <comment xml:lang="es">imagen OpenRaster</comment>
+  <comment xml:lang="en-GB">OpenRaster image</comment>
+  <comment xml:lang="de">OpenRaster-Bild</comment>
+  <comment xml:lang="da">OpenRaster-billede</comment>
+  <comment xml:lang="ca">imatge OpenRaster</comment>
+  <comment xml:lang="bg">Изображение — OpenRaster</comment>
+  <comment xml:lang="be-Cyrl">выява OpenRaster</comment>
+  <comment xml:lang="ar">صورة OpenRaster</comment>
+  <sub-class-of type="application/zip"/>
+  <glob pattern="*.ora"/>
+</mime-type>

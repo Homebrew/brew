@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/gnunet-directory">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>GNUnet search file</comment>
+  <comment xml:lang="zh-Hant-TW">GNUnet 搜尋檔案</comment>
+  <comment xml:lang="zh-Hans-CN">GNUnet 搜索文件</comment>
+  <comment xml:lang="vi">Tập tin tìm kiếm GNUnet</comment>
+  <comment xml:lang="uk">файл пошуку GNUnet</comment>
+  <comment xml:lang="tr">GNUnet arama dosyası</comment>
+  <comment xml:lang="sv">GNUnet-sökfil</comment>
+  <comment xml:lang="sr-Cyrl">ГНУнет датотека претраге</comment>
+  <comment xml:lang="sq">kartelë kërkimi GNUnet</comment>
+  <comment xml:lang="sl">Iskalna datoteka GNUnet</comment>
+  <comment xml:lang="si">GNUnet සෙවුම් ගොනුව</comment>
+  <comment xml:lang="sk">Vyhľadávací súbor GNUnet</comment>
+  <comment xml:lang="ru">Файл поиска GNUnet</comment>
+  <comment xml:lang="ro">Fișier căutare GNUnet</comment>
+  <comment xml:lang="pt-BR">Arquivo de pesquisa do GNUnet</comment>
+  <comment xml:lang="pt">ficheiro de procura GNUnet</comment>
+  <comment xml:lang="pl">Plik wyszukiwania GNUnet</comment>
+  <comment xml:lang="oc">fichièr de recèrca GNUnet</comment>
+  <comment xml:lang="nn">GNUnet-søkjefil</comment>
+  <comment xml:lang="nl">GNUnet-zoekbestand</comment>
+  <comment xml:lang="nb">GNUnet søkefil</comment>
+  <comment xml:lang="lv">GNUnet meklēšanas datne</comment>
+  <comment xml:lang="lt">GNUnet paieškos failas</comment>
+  <comment xml:lang="ko">GNUnet 검색 파일</comment>
+  <comment xml:lang="kk-Cyrl">GNUnet іздеу файлы</comment>
+  <comment xml:lang="ka">GNUnet ძებნის ფაილი</comment>
+  <comment xml:lang="ja">GNUnet 検索ファイル</comment>
+  <comment xml:lang="it">File ricerca GNUnet</comment>
+  <comment xml:lang="is">GNUnet leitarskrá</comment>
+  <comment xml:lang="id">Berkas telusur GNUnet</comment>
+  <comment xml:lang="ia">File de recerca GNUnet</comment>
+  <comment xml:lang="hu">GNUnet keresési fájl</comment>
+  <comment xml:lang="hr">GNUnet datoteka pretrage</comment>
+  <comment xml:lang="he">קובץ חיפוש של GNUnet</comment>
+  <comment xml:lang="gl">ficheiro de busca de GNUnet</comment>
+  <comment xml:lang="ga">comhad cuardaigh GNUnet</comment>
+  <comment xml:lang="fur">file di ricercje GNUnet</comment>
+  <comment xml:lang="fr">fichier de recherche GNUnet</comment>
+  <comment xml:lang="fo">GNUnet leitifíla</comment>
+  <comment xml:lang="fi">GNUnet-hakutiedosto</comment>
+  <comment xml:lang="eu">GNUnet bilaketako fitxategia</comment>
+  <comment xml:lang="es">archivo de búsqueda GNUnet</comment>
+  <comment xml:lang="en-GB">GNUnet search file</comment>
+  <comment xml:lang="el">Αρχείο αναζήτησης GNUnet</comment>
+  <comment xml:lang="de">GNUnet-Suchdatei</comment>
+  <comment xml:lang="da">GNunet-søgefil</comment>
+  <comment xml:lang="cs">vyhledávací soubor GNUnet</comment>
+  <comment xml:lang="ca">fitxer de cerca GNUnet</comment>
+  <comment xml:lang="bg">Указател за търсене — GNUnet</comment>
+  <comment xml:lang="be-Latn">fajł pošuku GNUnet</comment>
+  <comment xml:lang="be-Cyrl">файл пошуку GNUnet</comment>
+  <comment xml:lang="ar">ملف بحث GNUnet</comment>
+  <comment xml:lang="af">GNUnet-soeklêer</comment>
+  <glob pattern="*.gnd"/>
+</mime-type>

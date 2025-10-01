@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-godot-shader">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Godot Engine shader</comment>
+  <comment xml:lang="zh-Hans-CN">Godot Engine 着色器</comment>
+  <comment xml:lang="uk">шейдер Godot Engine</comment>
+  <comment xml:lang="tr">Godot Engine gölgelendiricisi</comment>
+  <comment xml:lang="sv">Godot Engine-shader</comment>
+  <comment xml:lang="sl">Senčilnik Godot Engine</comment>
+  <comment xml:lang="si">ගොඩොට් එන්ජින් සෙවන</comment>
+  <comment xml:lang="ru">Шейдер Godot Engine</comment>
+  <comment xml:lang="pt-BR">Sombra do Godot Engine</comment>
+  <comment xml:lang="pt">sombra do Godot Engine</comment>
+  <comment xml:lang="pl">Program cieniujący Godot Engine</comment>
+  <comment xml:lang="nl">Godot Engine-shader</comment>
+  <comment xml:lang="ko">Godot 엔진 셰이더</comment>
+  <comment xml:lang="kk-Cyrl">Godot Engine шейдері</comment>
+  <comment xml:lang="ja">Godot Engine シェーダー</comment>
+  <comment xml:lang="it">Shader Godot Engine</comment>
+  <comment xml:lang="hr">Godot Engine shader</comment>
+  <comment xml:lang="he">הצללה של מנוע גודו</comment>
+  <comment xml:lang="gl">Sombreador do motor Godot</comment>
+  <comment xml:lang="fi">Godot Engine -varjostin</comment>
+  <comment xml:lang="eu">Godot Engine itzalgilea</comment>
+  <comment xml:lang="es">sombreador de Godot Engine</comment>
+  <comment xml:lang="en-GB">Godot Engine shader</comment>
+  <comment xml:lang="de">Godot-Engine-Shader</comment>
+  <comment xml:lang="be-Cyrl">шэйдар Godot Engine</comment>
+  <comment xml:lang="ar">مظلل محرك جودو</comment>
+  <sub-class-of type="text/plain"/>
+  <glob pattern="*.gdshader"/>
+</mime-type>

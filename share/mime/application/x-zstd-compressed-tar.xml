@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-zstd-compressed-tar">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Tar archive (Zstandard-compressed)</comment>
+  <comment xml:lang="zh-Hant-TW">Tar 封存檔 (Zstandard 壓縮)</comment>
+  <comment xml:lang="zh-Hans-CN">Tar 归档文件（Zstandard 压缩）</comment>
+  <comment xml:lang="uk">архів tar archive (стиснений Zstandard)</comment>
+  <comment xml:lang="tr">Tar arşivi (Zstandard ile sıkıştırılmış)</comment>
+  <comment xml:lang="sv">Tar-arkiv (Zstandard-komprimerat)</comment>
+  <comment xml:lang="sq">arkiv tar (ngjeshur me Zstandard)</comment>
+  <comment xml:lang="sl">Arhiv tar (stisnjen, Zstandard)</comment>
+  <comment xml:lang="si">තාර සංරක්ෂිතය (Zstandard-compressed)</comment>
+  <comment xml:lang="ru">Архив TAR (сжатый zstandard)</comment>
+  <comment xml:lang="pt-BR">Pacote Tar (compactado com Zstandard)</comment>
+  <comment xml:lang="pl">Archiwum tar (kompresja Zstandard)</comment>
+  <comment xml:lang="oc">archiu Tar (compressat amb Zstandard)</comment>
+  <comment xml:lang="nl">Tar-archief (gecomprimeerd met Zstandard)</comment>
+  <comment xml:lang="ko">TAR 묶음 파일(Zstandard 압축)</comment>
+  <comment xml:lang="kk-Cyrl">Tar архиві (Zstandard-пен сығылған)</comment>
+  <comment xml:lang="ja">Tar アーカイブ (ZStandard 圧縮)</comment>
+  <comment xml:lang="it">Archivio tar (compresso con Zstandard)</comment>
+  <comment xml:lang="is">Tar safnskrá (Zstandard þjappað)</comment>
+  <comment xml:lang="id">Arsip Tar (terkompresi Zstandard)</comment>
+  <comment xml:lang="hu">Tar archívum (Zstandard tömörítésű)</comment>
+  <comment xml:lang="hr">Tar arhiva (Zstandard-sažeta)</comment>
+  <comment xml:lang="he">ארכיון Tar (מכווץ ע״י Zstandard)</comment>
+  <comment xml:lang="gl">Arquivo Tar (comprimido Zstandard)</comment>
+  <comment xml:lang="fur">archivi Tar (comprimût cun Zstandard)</comment>
+  <comment xml:lang="fr">archive tar (compression Zstandard)</comment>
+  <comment xml:lang="fi">Tar-arkisto (Zstandard-pakattu)</comment>
+  <comment xml:lang="eu">Tar artxiboa (Zstandard-rekin konprimitua)</comment>
+  <comment xml:lang="es">archivador TAR (comprimido con Zstandard)</comment>
+  <comment xml:lang="en-GB">Tar archive (Zstandard-compressed)</comment>
+  <comment xml:lang="de">Tar-Archiv (Zstandard-komprimiert)</comment>
+  <comment xml:lang="da">Tar-arkiv (Zstandard-komprimeret)</comment>
+  <comment xml:lang="cs">archiv Tar (komprimovaný pomocí Zstandard)</comment>
+  <comment xml:lang="ca">arxiu tar (amb compressió Zstandard)</comment>
+  <comment xml:lang="bg">Архив — tar, компресиран със Zstandard</comment>
+  <comment xml:lang="be-Cyrl">архіў tar (сцісканне Zstandard)</comment>
+  <comment xml:lang="ar">أرشيف Tar (مضغوط-Zstandard)</comment>
+  <generic-icon name="package-x-generic"/>
+  <sub-class-of type="application/zstd"/>
+  <glob pattern="*.tar.zst"/>
+  <glob pattern="*.tzst"/>
+</mime-type>

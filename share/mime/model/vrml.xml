@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="model/vrml">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>VRML document</comment>
+  <comment xml:lang="zh-Hant-TW">VRML 文件</comment>
+  <comment xml:lang="zh-Hans-CN">VRML 文档</comment>
+  <comment xml:lang="vi">Tài liệu VRML</comment>
+  <comment xml:lang="uk">документ VRML</comment>
+  <comment xml:lang="tr">VRML belgesi</comment>
+  <comment xml:lang="sv">VRML-dokument</comment>
+  <comment xml:lang="sr-Cyrl">ВРМЛ документ</comment>
+  <comment xml:lang="sq">dokument VRML</comment>
+  <comment xml:lang="sl">Dokument VRML</comment>
+  <comment xml:lang="si">VRML ලේඛනය</comment>
+  <comment xml:lang="sk">Dokument VRML</comment>
+  <comment xml:lang="ru">Документ VRML</comment>
+  <comment xml:lang="ro">Document VRML</comment>
+  <comment xml:lang="pt-BR">Documento VRML</comment>
+  <comment xml:lang="pt">documento VRML</comment>
+  <comment xml:lang="pl">Dokument VRML</comment>
+  <comment xml:lang="oc">document VRML</comment>
+  <comment xml:lang="nn">VRML-dokument</comment>
+  <comment xml:lang="nl">VRML-document</comment>
+  <comment xml:lang="nb">VRML-dokument</comment>
+  <comment xml:lang="ms">Dokumen VRML</comment>
+  <comment xml:lang="lv">VRML dokuments</comment>
+  <comment xml:lang="lt">VRML dokumentas</comment>
+  <comment xml:lang="ko">VRML 문서</comment>
+  <comment xml:lang="kk-Cyrl">VRML құжаты</comment>
+  <comment xml:lang="ja">VRML ドキュメント</comment>
+  <comment xml:lang="it">Documento VRML</comment>
+  <comment xml:lang="is">VRML skjal</comment>
+  <comment xml:lang="id">Dokumen VRML</comment>
+  <comment xml:lang="ia">Documento VRML</comment>
+  <comment xml:lang="hu">VRML-dokumentum</comment>
+  <comment xml:lang="hr">VRML dokument</comment>
+  <comment xml:lang="he">מסמך VRML</comment>
+  <comment xml:lang="gl">documento VRML</comment>
+  <comment xml:lang="ga">cáipéis VRML</comment>
+  <comment xml:lang="fur">document VRML</comment>
+  <comment xml:lang="fr">document VRML</comment>
+  <comment xml:lang="fo">VRML skjal</comment>
+  <comment xml:lang="fi">VRML-asiakirja</comment>
+  <comment xml:lang="eu">VRML dokumentua</comment>
+  <comment xml:lang="es">documento VRML</comment>
+  <comment xml:lang="eo">VRML-dokumento</comment>
+  <comment xml:lang="en-GB">VRML document</comment>
+  <comment xml:lang="el">Έγγραφο VRML</comment>
+  <comment xml:lang="de">VRML-Dokument</comment>
+  <comment xml:lang="da">VRML-dokument</comment>
+  <comment xml:lang="cy">Dogfen VRML</comment>
+  <comment xml:lang="cs">dokument VRML</comment>
+  <comment xml:lang="ca">document VRML</comment>
+  <comment xml:lang="bg">Документ — VRML</comment>
+  <comment xml:lang="be-Latn">Dakument VRML</comment>
+  <comment xml:lang="be-Cyrl">дакумент VRML</comment>
+  <comment xml:lang="az">VRML sənədi</comment>
+  <comment xml:lang="ast">Documentu VRML</comment>
+  <comment xml:lang="ar">مستند VRML</comment>
+  <comment xml:lang="af">VRML-dokument</comment>
+  <acronym>VRML</acronym>
+  <expanded-acronym>Virtual Reality Modeling Language</expanded-acronym>
+  <generic-icon name="x-office-document"/>
+  <sub-class-of type="text/plain"/>
+  <glob pattern="*.vrm"/>
+  <glob pattern="*.vrml"/>
+  <glob pattern="*.wrl"/>
+</mime-type>

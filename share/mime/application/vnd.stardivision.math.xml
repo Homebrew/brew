@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/vnd.stardivision.math">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>StarMath formula</comment>
+  <comment xml:lang="zh-Hant-TW">StarMath 公式</comment>
+  <comment xml:lang="zh-Hans-CN">StarMath 公式</comment>
+  <comment xml:lang="vi">Công thức StarMath</comment>
+  <comment xml:lang="uk">формула StarMath</comment>
+  <comment xml:lang="tr">StarMath formülü</comment>
+  <comment xml:lang="sv">StarMath-formel</comment>
+  <comment xml:lang="sr-Cyrl">Формула Стар Математике</comment>
+  <comment xml:lang="sq">formulë StarMath</comment>
+  <comment xml:lang="sl">Datoteka formule StarMath</comment>
+  <comment xml:lang="si">StarMath සූත්‍රය</comment>
+  <comment xml:lang="sk">Vzorec StarMath</comment>
+  <comment xml:lang="ru">Формула StarMath</comment>
+  <comment xml:lang="ro">Formulă StarMath</comment>
+  <comment xml:lang="pt-BR">Fórmula do StarMath</comment>
+  <comment xml:lang="pt">fórmula do StarMath</comment>
+  <comment xml:lang="pl">Formuła StarMath</comment>
+  <comment xml:lang="oc">formula StarMath</comment>
+  <comment xml:lang="nn">StarMath-formel</comment>
+  <comment xml:lang="nl">StarMath-formule</comment>
+  <comment xml:lang="nb">StarMath-formel</comment>
+  <comment xml:lang="ms">Formula StarMath</comment>
+  <comment xml:lang="lv">StarMath formula</comment>
+  <comment xml:lang="lt">StarMath formulė</comment>
+  <comment xml:lang="ko">StarMath 수식</comment>
+  <comment xml:lang="kk-Cyrl">StarMath формуласы</comment>
+  <comment xml:lang="ja">StarMath 計算式</comment>
+  <comment xml:lang="it">Formula StarMath</comment>
+  <comment xml:lang="is">StarMath formúla</comment>
+  <comment xml:lang="id">Formula StarMath</comment>
+  <comment xml:lang="ia">Formula StarMath</comment>
+  <comment xml:lang="hu">StarMath-képlet</comment>
+  <comment xml:lang="hr">StarMath formula</comment>
+  <comment xml:lang="he">נוסחה של StarMath</comment>
+  <comment xml:lang="gl">fórmula de StarMath</comment>
+  <comment xml:lang="ga">foirmle StarMath</comment>
+  <comment xml:lang="fur">formule StarMath</comment>
+  <comment xml:lang="fr">formule StarMath</comment>
+  <comment xml:lang="fo">StarMath frymil</comment>
+  <comment xml:lang="fi">StarMath-kaava</comment>
+  <comment xml:lang="eu">StarMath formula</comment>
+  <comment xml:lang="es">fórmula de StarMath</comment>
+  <comment xml:lang="eo">StarMath-formulo</comment>
+  <comment xml:lang="en-GB">StarMath formula</comment>
+  <comment xml:lang="el">Μαθηματικός τύπος StarMath</comment>
+  <comment xml:lang="de">StarMath-Formel</comment>
+  <comment xml:lang="da">StarMath-formel</comment>
+  <comment xml:lang="cs">vzorec StarMath</comment>
+  <comment xml:lang="ca">fórmula de StarMath</comment>
+  <comment xml:lang="bg">Формула — StarMath</comment>
+  <comment xml:lang="be-Latn">Formuła StarMath</comment>
+  <comment xml:lang="be-Cyrl">формула StarMath</comment>
+  <comment xml:lang="ar">صيغة StarMath</comment>
+  <comment xml:lang="af">StarMath-formule</comment>
+  <generic-icon name="x-office-document"/>
+  <glob pattern="*.smf"/>
+</mime-type>

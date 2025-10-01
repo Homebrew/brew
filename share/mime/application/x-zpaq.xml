@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-zpaq">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Zpaq Archive</comment>
+  <comment xml:lang="uk">архів zpaq</comment>
+  <comment xml:lang="sv">Zpaq-arkiv</comment>
+  <comment xml:lang="ru">Архив zpaq</comment>
+  <comment xml:lang="pl">Archiwum ZPAQ</comment>
+  <comment xml:lang="it">Archivio zpaq</comment>
+  <comment xml:lang="gl">Arquivo Zpaq</comment>
+  <comment xml:lang="eu">Zpaq artxiboa</comment>
+  <comment xml:lang="es">archivador Zpaq</comment>
+  <comment xml:lang="de">Zpaq-Archiv</comment>
+  <comment xml:lang="be-Cyrl">архіў Zpaq</comment>
+  <generic-icon name="package-x-generic"/>
+  <glob pattern="*.zpaq"/>
+</mime-type>

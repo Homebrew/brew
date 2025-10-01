@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="image/x-sgi">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>SGI image</comment>
+  <comment xml:lang="zh-Hant-TW">SGI 影像</comment>
+  <comment xml:lang="zh-Hans-CN">SGI 图像</comment>
+  <comment xml:lang="vi">Ảnh SGI</comment>
+  <comment xml:lang="uk">зображення SGI</comment>
+  <comment xml:lang="tr">SGI görüntüsü</comment>
+  <comment xml:lang="sv">SGI-bild</comment>
+  <comment xml:lang="sr-Cyrl">СГИ слика</comment>
+  <comment xml:lang="sq">figurë SGI</comment>
+  <comment xml:lang="sl">Slikovna datoteka SGI</comment>
+  <comment xml:lang="si">SGI රූපය</comment>
+  <comment xml:lang="sk">Obrázok SGI</comment>
+  <comment xml:lang="ru">Изображение SGI</comment>
+  <comment xml:lang="ro">Imagine SGI</comment>
+  <comment xml:lang="pt-BR">Imagem SGI</comment>
+  <comment xml:lang="pt">imagem SGI</comment>
+  <comment xml:lang="pl">Obraz SGI</comment>
+  <comment xml:lang="oc">imatge SGI</comment>
+  <comment xml:lang="nn">SGI-bilete</comment>
+  <comment xml:lang="nl">SGI-afbeelding</comment>
+  <comment xml:lang="nb">SGI-bilde</comment>
+  <comment xml:lang="lv">SGI attēls</comment>
+  <comment xml:lang="lt">SGI paveikslėlis</comment>
+  <comment xml:lang="ko">SGI 그림</comment>
+  <comment xml:lang="kk-Cyrl">SGI суреті</comment>
+  <comment xml:lang="ja">SGI 画像</comment>
+  <comment xml:lang="it">Immagine SGI</comment>
+  <comment xml:lang="is">SGI mynd</comment>
+  <comment xml:lang="id">Citra SGI</comment>
+  <comment xml:lang="ia">Imagine SGI</comment>
+  <comment xml:lang="hu">SGI kép</comment>
+  <comment xml:lang="hr">SGI slika</comment>
+  <comment xml:lang="he">תמונת SGI</comment>
+  <comment xml:lang="gl">imaxe SGI</comment>
+  <comment xml:lang="ga">íomhá SGI</comment>
+  <comment xml:lang="fur">imagjin SGI</comment>
+  <comment xml:lang="fr">image SGI</comment>
+  <comment xml:lang="fo">SGI mynd</comment>
+  <comment xml:lang="fi">SGI-kuva</comment>
+  <comment xml:lang="eu">SGI irudia</comment>
+  <comment xml:lang="es">imagen SGI</comment>
+  <comment xml:lang="eo">SGI-bildo</comment>
+  <comment xml:lang="en-GB">SGI image</comment>
+  <comment xml:lang="el">Εικόνα SGI</comment>
+  <comment xml:lang="de">SGI-Bild</comment>
+  <comment xml:lang="da">SGI-billede</comment>
+  <comment xml:lang="cs">obrázek SGI</comment>
+  <comment xml:lang="ca">imatge SGI</comment>
+  <comment xml:lang="bg">Изображение — SGI</comment>
+  <comment xml:lang="be-Latn">Vyjava SGI</comment>
+  <comment xml:lang="be-Cyrl">выява SGI</comment>
+  <comment xml:lang="ar">صورة SGI</comment>
+  <comment xml:lang="af">SGI-beeld</comment>
+  <glob pattern="*.sgi"/>
+</mime-type>

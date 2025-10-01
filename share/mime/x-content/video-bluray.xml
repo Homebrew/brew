@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="x-content/video-bluray">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Blu-ray video disc</comment>
+  <comment xml:lang="zh-Hant-TW">Blu-ray 視訊光碟</comment>
+  <comment xml:lang="zh-Hans-CN">蓝光视频光盘</comment>
+  <comment xml:lang="vi">Đĩa ảnh động Blu-ray</comment>
+  <comment xml:lang="uk">відеодиск Blu-ray</comment>
+  <comment xml:lang="tr">Blu-ray video diski</comment>
+  <comment xml:lang="sv">Blu-ray-videoskiva</comment>
+  <comment xml:lang="sr-Cyrl">Блу-реј видео диск</comment>
+  <comment xml:lang="sq">disk video Blu-ray</comment>
+  <comment xml:lang="sl">Blu-ray video disk</comment>
+  <comment xml:lang="si">Blu-ray වීඩියෝ තැටිය</comment>
+  <comment xml:lang="sk">Videodisk Blu-ray</comment>
+  <comment xml:lang="ru">Видеодиск Blu-ray</comment>
+  <comment xml:lang="ro">Disc video Blu-ray</comment>
+  <comment xml:lang="pt-BR">Disco de vídeo Blu-ray</comment>
+  <comment xml:lang="pt">Blu-ray de vídeo</comment>
+  <comment xml:lang="pl">Płyta wideo Blu-ray</comment>
+  <comment xml:lang="oc">disc vidèo Blu-Ray</comment>
+  <comment xml:lang="nn">Blu-Ray videoplate</comment>
+  <comment xml:lang="nl">Blu-ray-videodisk</comment>
+  <comment xml:lang="lv">Blu-ray video disks</comment>
+  <comment xml:lang="lt">Blu-ray vaizdo diskas</comment>
+  <comment xml:lang="ko">블루레이 동영상 디스크</comment>
+  <comment xml:lang="kk-Cyrl">Blu-ray видео дискі</comment>
+  <comment xml:lang="ka">Blu-ray ვიდეო დისკი</comment>
+  <comment xml:lang="ja">Blu-ray ビデオディスク</comment>
+  <comment xml:lang="it">Disco video Blu-ray</comment>
+  <comment xml:lang="is">Blu-Ray mynddiskur</comment>
+  <comment xml:lang="id">Cakram video Blu-ray</comment>
+  <comment xml:lang="ia">Disco video Blu-ray</comment>
+  <comment xml:lang="hu">Blu-ray videolemez</comment>
+  <comment xml:lang="hr">Blu-ray video disk</comment>
+  <comment xml:lang="he">תקליטור וידאו מסוג בלו־ריי</comment>
+  <comment xml:lang="gl">disco de vídeo Blu-ray</comment>
+  <comment xml:lang="ga">diosca físe Blu-Ray</comment>
+  <comment xml:lang="fur">disc video Blu-ray</comment>
+  <comment xml:lang="fr">disque vidéo Blu-Ray</comment>
+  <comment xml:lang="fo">Blu-ray diskur</comment>
+  <comment xml:lang="fi">Blu-ray-videolevy</comment>
+  <comment xml:lang="eu">Blu-ray bideo-diskoa</comment>
+  <comment xml:lang="es">disco de vídeo Blu-ray</comment>
+  <comment xml:lang="en-GB">Blu-ray video disc</comment>
+  <comment xml:lang="el">Δίσκος βίντεο Blu-ray</comment>
+  <comment xml:lang="de">Blu-ray-Video</comment>
+  <comment xml:lang="da">Blu-ray-videodisk</comment>
+  <comment xml:lang="cs">videodisk Blu-ray</comment>
+  <comment xml:lang="ca">disc de vídeo Blu-Ray</comment>
+  <comment xml:lang="bg">Blu-ray — видео</comment>
+  <comment xml:lang="be-Latn">Videadysk Blu-ray</comment>
+  <comment xml:lang="be-Cyrl">відэадыск Blu-ray</comment>
+  <comment xml:lang="ast">Discu Blu-ray de videu</comment>
+  <comment xml:lang="ar">قرص فيديو بلو-راي</comment>
+  <comment xml:lang="af">Blu-ray-videoskyf</comment>
+</mime-type>

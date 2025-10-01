@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="text/x-dsrc">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>D source code</comment>
+  <comment xml:lang="zh-Hant-TW">D 源碼</comment>
+  <comment xml:lang="zh-Hans-CN">D 源代码</comment>
+  <comment xml:lang="vi">Mã nguồn D</comment>
+  <comment xml:lang="uk">початковий код мовою D</comment>
+  <comment xml:lang="tr">D kaynak kodu</comment>
+  <comment xml:lang="sv">D-källkod</comment>
+  <comment xml:lang="sr-Cyrl">Д изворни ко̂д</comment>
+  <comment xml:lang="sq">kod burim D</comment>
+  <comment xml:lang="sl">Datoteka izvorne kode D</comment>
+  <comment xml:lang="si">D මූල කේතය</comment>
+  <comment xml:lang="sk">Zdrojový kód jazyka D</comment>
+  <comment xml:lang="ru">Исходный код D</comment>
+  <comment xml:lang="ro">Cod sursă D</comment>
+  <comment xml:lang="pt-BR">Código-fonte D</comment>
+  <comment xml:lang="pt">código origem D</comment>
+  <comment xml:lang="pl">Kod źródłowy D</comment>
+  <comment xml:lang="oc">còde font D</comment>
+  <comment xml:lang="nn">D-kjeldekode</comment>
+  <comment xml:lang="nl">D-broncode</comment>
+  <comment xml:lang="nb">D-kildekode</comment>
+  <comment xml:lang="lv">D pirmkods</comment>
+  <comment xml:lang="lt">D pradinis kodas</comment>
+  <comment xml:lang="ko">D 소스 코드</comment>
+  <comment xml:lang="kk-Cyrl">D бастапқы коды</comment>
+  <comment xml:lang="ka">D-ის საწყისი კოდი</comment>
+  <comment xml:lang="ja">D ソースコード</comment>
+  <comment xml:lang="it">Codice sorgente D</comment>
+  <comment xml:lang="is">D frumkóði</comment>
+  <comment xml:lang="id">Kode sumber D</comment>
+  <comment xml:lang="ia">Codice-fonte D</comment>
+  <comment xml:lang="hu">D-forráskód</comment>
+  <comment xml:lang="hr">D izvorni kôd</comment>
+  <comment xml:lang="he">קוד מקור לשפת D</comment>
+  <comment xml:lang="gl">código fonte de D</comment>
+  <comment xml:lang="ga">cód foinseach D</comment>
+  <comment xml:lang="fur">codiç sorzint D</comment>
+  <comment xml:lang="fr">code source D</comment>
+  <comment xml:lang="fo">D keldukota</comment>
+  <comment xml:lang="fi">D-lähdekoodi</comment>
+  <comment xml:lang="eu">D iturburu-kodea</comment>
+  <comment xml:lang="es">código fuente en D</comment>
+  <comment xml:lang="eo">D-fontkodo</comment>
+  <comment xml:lang="en-GB">D source code</comment>
+  <comment xml:lang="el">Πηγαίος κώδικας D</comment>
+  <comment xml:lang="de">D-Quelltext</comment>
+  <comment xml:lang="da">D-kildekode</comment>
+  <comment xml:lang="cs">zdrojový kód v jazyce D</comment>
+  <comment xml:lang="ca">codi font en D</comment>
+  <comment xml:lang="bg">Изходен код — D</comment>
+  <comment xml:lang="be-Latn">Kryničny kod D</comment>
+  <comment xml:lang="be-Cyrl">зыходны код D</comment>
+  <comment xml:lang="ar">شفرة مصدر D</comment>
+  <comment xml:lang="af">D-bronkode</comment>
+  <sub-class-of type="text/x-csrc"/>
+  <glob pattern="*.d"/>
+  <glob pattern="*.di"/>
+</mime-type>

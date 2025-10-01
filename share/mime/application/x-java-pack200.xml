@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-java-pack200">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Pack200 Java archive</comment>
+  <comment xml:lang="zh-Hant-TW">Pack200 Java 封存檔</comment>
+  <comment xml:lang="zh-Hans-CN">Pack200 Java 归档文件</comment>
+  <comment xml:lang="vi">Kho nén Java Pack200</comment>
+  <comment xml:lang="uk">архів Java Pack200</comment>
+  <comment xml:lang="tr">Pack200 Java arşivi</comment>
+  <comment xml:lang="sv">Pack200 Java-arkiv</comment>
+  <comment xml:lang="sr-Cyrl">архива Јаве Пак200</comment>
+  <comment xml:lang="sq">arkiv Java Pack200</comment>
+  <comment xml:lang="sl">Datoteka arhiva Pack200 Java</comment>
+  <comment xml:lang="si">Pack200 Java සංරක්ෂිතය</comment>
+  <comment xml:lang="sk">Archív Java Pack200</comment>
+  <comment xml:lang="ru">Архив Java Pack200</comment>
+  <comment xml:lang="ro">Arhivă Java Pack2000</comment>
+  <comment xml:lang="pt-BR">Pacote Java Pack200</comment>
+  <comment xml:lang="pt">arquivo Java Pack200</comment>
+  <comment xml:lang="pl">Archiwum Java Pack200</comment>
+  <comment xml:lang="oc">archiu Java Pack200</comment>
+  <comment xml:lang="nn">Pack200 Java-arkiv</comment>
+  <comment xml:lang="nl">Pack200 Java-archief</comment>
+  <comment xml:lang="nb">Pack200 Java-arkiv</comment>
+  <comment xml:lang="lv">Pack200 Java arhīvs</comment>
+  <comment xml:lang="lt">Pack200 Java archyvas</comment>
+  <comment xml:lang="ko">Pack200 Java 압축 파일</comment>
+  <comment xml:lang="kk-Cyrl">Pack200 Java архиві</comment>
+  <comment xml:lang="ja">Pack200 Java アーカイブ</comment>
+  <comment xml:lang="it">Archivio Pack200 Java</comment>
+  <comment xml:lang="is">Pack200 Java safnskrá</comment>
+  <comment xml:lang="id">Arsip Pack200 Java</comment>
+  <comment xml:lang="ia">Archivo Java Pack200</comment>
+  <comment xml:lang="hu">Pack200 Java-archívum</comment>
+  <comment xml:lang="hr">Pack200 Java arhiva</comment>
+  <comment xml:lang="he">ארכיון מסוג Pack200 Java</comment>
+  <comment xml:lang="gl">arquivo Pack200 Java</comment>
+  <comment xml:lang="ga">cartlann Java Pack200</comment>
+  <comment xml:lang="fur">archivi Java Pack200</comment>
+  <comment xml:lang="fr">archive Java Pack200</comment>
+  <comment xml:lang="fo">Pack200 Java skjalasavn</comment>
+  <comment xml:lang="fi">Pack200-Java-arkisto</comment>
+  <comment xml:lang="eu">Pack2000 Java artxiboa</comment>
+  <comment xml:lang="es">archivador Pack200 Java</comment>
+  <comment xml:lang="en-GB">Pack200 Java archive</comment>
+  <comment xml:lang="el">Συμπιεσμένο αρχείο Java Pack200</comment>
+  <comment xml:lang="de">Pack200-Java-Archiv</comment>
+  <comment xml:lang="da">Pack200 Java-arkiv</comment>
+  <comment xml:lang="cs">archiv Java Pack200</comment>
+  <comment xml:lang="ca">arxiu de Java en Pack200</comment>
+  <comment xml:lang="bg">Архив — Java Pack200</comment>
+  <comment xml:lang="be-Latn">Archiŭ Pack200 Java</comment>
+  <comment xml:lang="be-Cyrl">архіў Pack200 Java</comment>
+  <comment xml:lang="ar">أرشيف Pack200 Java</comment>
+  <generic-icon name="package-x-generic"/>
+  <glob pattern="*.pack"/>
+</mime-type>

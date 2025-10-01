@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/pkix-crl">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Certificate revocation list</comment>
+  <comment xml:lang="uk">список відкликання сертифікатів</comment>
+  <comment xml:lang="sv">Certifikatåterkallningslista</comment>
+  <comment xml:lang="sq">listë shfuqizimi dëshmish</comment>
+  <comment xml:lang="ru">Список отзыва сертификатов</comment>
+  <comment xml:lang="pt-BR">Lista de revogação de certificado</comment>
+  <comment xml:lang="pl">Lista unieważnień certyfikatów</comment>
+  <comment xml:lang="it">Elenco certificati di revoca</comment>
+  <comment xml:lang="gl">Lista de revogación de certificados</comment>
+  <comment xml:lang="es">lista de revocación de certificados</comment>
+  <comment xml:lang="de">Zertifikat-Widerrufliste</comment>
+  <comment xml:lang="be-Cyrl">спіс адкліканых сертыфікатаў</comment>
+  <glob pattern="*.crl"/>
+</mime-type>

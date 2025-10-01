@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-sega-pico-rom">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Sega Pico ROM</comment>
+  <comment xml:lang="zh-Hant-TW">Sega Pico ROM</comment>
+  <comment xml:lang="zh-Hans-CN">Sega Pico ROM</comment>
+  <comment xml:lang="uk">ППП Sega Pico</comment>
+  <comment xml:lang="tr">Sega Pico ROM</comment>
+  <comment xml:lang="sv">Sega Pico-rom</comment>
+  <comment xml:lang="sr-Cyrl">Сега Пико РОМ</comment>
+  <comment xml:lang="sq">ROM Sega Pico</comment>
+  <comment xml:lang="sl">Sega Pico ROM</comment>
+  <comment xml:lang="si">Sega Pico ROM</comment>
+  <comment xml:lang="sk">ROM pre Sega Pico</comment>
+  <comment xml:lang="ru">Sega Pico ROM</comment>
+  <comment xml:lang="pt-BR">ROM de Sega Pico</comment>
+  <comment xml:lang="pt">ROM Sega Pico</comment>
+  <comment xml:lang="pl">Plik ROM konsoli Sega Pico</comment>
+  <comment xml:lang="oc">ROM Sega Pico</comment>
+  <comment xml:lang="nl">Sega Pico-ROM</comment>
+  <comment xml:lang="ko">세가 피코 롬</comment>
+  <comment xml:lang="kk-Cyrl">Sega Pico ROM</comment>
+  <comment xml:lang="ja">キッズコンピュータ・ピコ ROM</comment>
+  <comment xml:lang="it">ROM Sega Pico</comment>
+  <comment xml:lang="is">Sega Pico ROM</comment>
+  <comment xml:lang="id">ROM Sega Pico</comment>
+  <comment xml:lang="hu">Sega Pico ROM</comment>
+  <comment xml:lang="hr">Sega Pico ROM</comment>
+  <comment xml:lang="he">ROM של Sega Pico</comment>
+  <comment xml:lang="gl">ROM de Sega Pico</comment>
+  <comment xml:lang="ga">ROM Sega Pico</comment>
+  <comment xml:lang="fur">ROM Sega Pico</comment>
+  <comment xml:lang="fr">ROM Sega Pico</comment>
+  <comment xml:lang="fi">Sega Pico ROM</comment>
+  <comment xml:lang="eu">Sega Pico ROM</comment>
+  <comment xml:lang="es">ROM de Sega Pico</comment>
+  <comment xml:lang="en-GB">Sega Pico ROM</comment>
+  <comment xml:lang="de">Sega-Pico-ROM</comment>
+  <comment xml:lang="da">Sega Pico-ROM</comment>
+  <comment xml:lang="cs">ROM pro Sega Pico</comment>
+  <comment xml:lang="ca">ROM de Sega Pico</comment>
+  <comment xml:lang="bg">ROM — Sega Pico</comment>
+  <comment xml:lang="be-Cyrl">Sega Pico ROM</comment>
+  <comment xml:lang="ast">ROM de Sega Pico</comment>
+  <comment xml:lang="ar">روم سيجا بيك</comment>
+  <generic-icon name="application-x-executable"/>
+  <glob pattern="*.iso"/>
+</mime-type>

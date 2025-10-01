@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="message/delivery-status">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Mail delivery report</comment>
+  <comment xml:lang="uk">звіт щодо доставлення пошти</comment>
+  <comment xml:lang="sv">E-postleveransrapport</comment>
+  <comment xml:lang="ru">Отчёт о доставке сообщения</comment>
+  <comment xml:lang="pl">Raport z dostarczenia poczty</comment>
+  <comment xml:lang="it">Rapporto di consegna posta</comment>
+  <comment xml:lang="gl">Informe de envío de coreo electrónico</comment>
+  <comment xml:lang="es">informe de entrega de correo</comment>
+  <comment xml:lang="de">E-Mail-Zustellungsbericht</comment>
+  <comment xml:lang="be-Cyrl">справаздача пра дастаўку пошты</comment>
+  <generic-icon name="text-x-generic"/>
+  <sub-class-of type="text/plain"/>
+</mime-type>

@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/vnd.appimage">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>AppImage application bundle</comment>
+  <comment xml:lang="zh-Hant-TW">AppImage 應用程式套組</comment>
+  <comment xml:lang="zh-Hans-CN">AppImage 应用组合包</comment>
+  <comment xml:lang="uk">пакунок із програмами AppImage</comment>
+  <comment xml:lang="tr">AppImage uygulama paketi</comment>
+  <comment xml:lang="sv">AppImage-programbunt</comment>
+  <comment xml:lang="sr-Cyrl">скуп програма Ап-слике</comment>
+  <comment xml:lang="sq">paketë aplikacioni AppImage</comment>
+  <comment xml:lang="si">AppImage යෙදුම් මිටියක්</comment>
+  <comment xml:lang="sk">Balík aplikácií AppImage</comment>
+  <comment xml:lang="ru">Пакет приложения AppImage</comment>
+  <comment xml:lang="pt-BR">Pacote de aplicativo AppImage</comment>
+  <comment xml:lang="pt">pacote de aplicação AppImage</comment>
+  <comment xml:lang="pl">Pakiet programu AppImage</comment>
+  <comment xml:lang="nl">AppImage-toepassingsbundel</comment>
+  <comment xml:lang="ko">AppImage 프로그램 번들</comment>
+  <comment xml:lang="kk-Cyrl">AppImage қолданбалар дестесі</comment>
+  <comment xml:lang="ja">AppImage アプリケーションバンドル</comment>
+  <comment xml:lang="it">Bundle applicazione AppImage</comment>
+  <comment xml:lang="is">AppImage forritavöndull</comment>
+  <comment xml:lang="id">Bundel aplikasi AppImage</comment>
+  <comment xml:lang="hu">AppImage alkalmazáscsomag</comment>
+  <comment xml:lang="hr">AppImage paket aplikacije</comment>
+  <comment xml:lang="he">חבילת יישומי AppImage</comment>
+  <comment xml:lang="gl">Paquete de aplicación de AppImage</comment>
+  <comment xml:lang="ga">burla feidhmchláir AppImage</comment>
+  <comment xml:lang="fur">côl di aplicazions AppImage</comment>
+  <comment xml:lang="fr">lot applicatif AppImage</comment>
+  <comment xml:lang="fi">AppImage-sovelluspaketti</comment>
+  <comment xml:lang="eu">AppImage aplikazio bilduma</comment>
+  <comment xml:lang="es">paquete de aplicación AppImage</comment>
+  <comment xml:lang="en-GB">AppImage application bundle</comment>
+  <comment xml:lang="de">AppImage-Anwendungspaket</comment>
+  <comment xml:lang="da">AppImage-programsamling</comment>
+  <comment xml:lang="cs">balíček AppImage s aplikací</comment>
+  <comment xml:lang="ca">paquet d'aplicació AppImage</comment>
+  <comment xml:lang="bg">Програмен пакет — AppImage</comment>
+  <comment xml:lang="be-Cyrl">пакет праграмы AppImage</comment>
+  <comment xml:lang="ar">حزمة تطبيق AppImage</comment>
+  <comment xml:lang="af">AppImage-toepassingsbundel</comment>
+  <sub-class-of type="application/x-executable"/>
+  <sub-class-of type="application/vnd.squashfs"/>
+  <generic-icon name="application-x-executable"/>
+  <glob weight="60" pattern="*.appimage"/>
+</mime-type>

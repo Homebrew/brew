@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="x-content/ostree-repository">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>OSTree software updates</comment>
+  <comment xml:lang="zh-Hant-TW">OSTree 軟體更新</comment>
+  <comment xml:lang="zh-Hans-CN">OSTree 软件更新</comment>
+  <comment xml:lang="uk">оновлення програмного забезпечення OSTree</comment>
+  <comment xml:lang="tr">OSTree yazılım güncellemeleri</comment>
+  <comment xml:lang="sv">OSTree programvaruuppdateringar</comment>
+  <comment xml:lang="sq">përditësime software-i OSTree</comment>
+  <comment xml:lang="sl">Posodobitve programja OSTree</comment>
+  <comment xml:lang="si">OSTree මෘදුකාංග යාවත්කාලීන</comment>
+  <comment xml:lang="ru">Обновления программного обеспечения OSTree</comment>
+  <comment xml:lang="pt-BR">Atualizações de software OSTree</comment>
+  <comment xml:lang="pl">Aktualizacje oprogramowania OSTree</comment>
+  <comment xml:lang="nl">OSTree-software-updates</comment>
+  <comment xml:lang="ko">OSTree 소프트웨어 업데이트</comment>
+  <comment xml:lang="kk-Cyrl">OSTree бағдарламалық қамтама жаңартулары</comment>
+  <comment xml:lang="ja">OSTree ソフトウェアアップデート</comment>
+  <comment xml:lang="it">Aggiornamenti software OSTree</comment>
+  <comment xml:lang="is">OSTree hugbúnaðaruppfærslur</comment>
+  <comment xml:lang="id">Pemutakhiran perangkat lunak OSTree</comment>
+  <comment xml:lang="hu">OSTree szoftverfrissítések</comment>
+  <comment xml:lang="hr">OSTree nadopune softvera</comment>
+  <comment xml:lang="he">עדכוני תכנה של OSTree</comment>
+  <comment xml:lang="fr">mises à jour logicielles OSTree</comment>
+  <comment xml:lang="fi">OSTree-ohjelmistopäivitykset</comment>
+  <comment xml:lang="eu">OSTree software eguneraketak</comment>
+  <comment xml:lang="es">actualizaciones de programas de OSTree</comment>
+  <comment xml:lang="en-GB">OSTree software updates</comment>
+  <comment xml:lang="de">OSTree-Softwareaktualisierungen</comment>
+  <comment xml:lang="da">OSTree-softwareopdateringer</comment>
+  <comment xml:lang="ca">actualitzacions de programari OSTree</comment>
+  <comment xml:lang="bg">Обновление — OSTree</comment>
+  <comment xml:lang="be-Cyrl">абнаўленні ПЗ OSTree</comment>
+  <comment xml:lang="ar">تحديثات برامج OSTree</comment>
+</mime-type>

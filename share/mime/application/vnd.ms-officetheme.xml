@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/vnd.ms-officetheme">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Microsoft Office 2007 theme</comment>
+  <comment xml:lang="uk">тема Microsoft Office 2007</comment>
+  <comment xml:lang="sv">Microsoft Office 2007-tema</comment>
+  <comment xml:lang="ru">Тема Microsoft Office 2007</comment>
+  <comment xml:lang="pl">Motyw Microsoft Office 2007</comment>
+  <comment xml:lang="it">Tema Microsoft Office 2007</comment>
+  <comment xml:lang="eu">Microsoft Office 2007 gaia</comment>
+  <comment xml:lang="es">tema de Microsoft Office 2007</comment>
+  <comment xml:lang="de">Microsoft-Office-2007-Thema</comment>
+  <comment xml:lang="be-Cyrl">тэма Microsoft Office 2007</comment>
+  <glob pattern="*.thmx"/>
+  <sub-class-of type="application/zip"/>
+  <generic-icon name="text-x-generic-template"/>
+</mime-type>

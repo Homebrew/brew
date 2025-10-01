@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-bzip3">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Bzip3 archive</comment>
+  <comment xml:lang="uk">архів bzip3</comment>
+  <comment xml:lang="sv">Bzip3-arkiv</comment>
+  <comment xml:lang="ru">Архив Bzip3</comment>
+  <comment xml:lang="pl">Archiwum bzip3</comment>
+  <comment xml:lang="it">Archivio bzip3</comment>
+  <comment xml:lang="gl">Arquivo Bzip3</comment>
+  <comment xml:lang="eu">Bzip3 artxiboa</comment>
+  <comment xml:lang="es">archivador BZIP3</comment>
+  <comment xml:lang="de">Bzip3-Archiv</comment>
+  <comment xml:lang="be-Cyrl">архіў bzip3</comment>
+  <generic-icon name="package-x-generic"/>
+  <glob pattern="*.bz3"/>
+</mime-type>

@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/vnd.ms-powerpoint.addin.macroEnabled.12">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>PowerPoint add-in</comment>
+  <comment xml:lang="zh-Hant-TW">PowerPoint 增益集</comment>
+  <comment xml:lang="zh-Hans-CN">PowerPoint 外接程序</comment>
+  <comment xml:lang="uk">додаток PowerPoint</comment>
+  <comment xml:lang="tr">PowerPoint eklentisi</comment>
+  <comment xml:lang="sv">PowerPoint-tillägg</comment>
+  <comment xml:lang="sr-Cyrl">Пауер поинт додатак</comment>
+  <comment xml:lang="sq">shtojcë PowerPoint</comment>
+  <comment xml:lang="sl">Vstavek PowerPoint</comment>
+  <comment xml:lang="si">PowerPoint ඇඩෝනය</comment>
+  <comment xml:lang="sk">Doplnok aplikácie PowerPoint </comment>
+  <comment xml:lang="ru">Дополнение PowerPoint</comment>
+  <comment xml:lang="pt-BR">Suplemento do PowerPoint</comment>
+  <comment xml:lang="pt">extensão PowerPoint</comment>
+  <comment xml:lang="pl">Dodatek PowerPoint</comment>
+  <comment xml:lang="oc">complement PowerPoint</comment>
+  <comment xml:lang="nl">PowerPoint-add-in</comment>
+  <comment xml:lang="lv">PowerPoint pievienojumprogramma</comment>
+  <comment xml:lang="ko">PowerPoint 추가 기능</comment>
+  <comment xml:lang="kk-Cyrl">PowerPoint қосымшасы</comment>
+  <comment xml:lang="ka">PowerPoint-ის დამატება</comment>
+  <comment xml:lang="ja">PowerPoint アドイン</comment>
+  <comment xml:lang="it">Add-in PowerPoint</comment>
+  <comment xml:lang="is">PowerPoint viðbót</comment>
+  <comment xml:lang="id">Add-in PowerPoint</comment>
+  <comment xml:lang="ia">Add-in PowerPoint</comment>
+  <comment xml:lang="hu">PowerPoint bővítmény</comment>
+  <comment xml:lang="hr">PowerPoint dodatak</comment>
+  <comment xml:lang="he">תוסף של PowerPoint</comment>
+  <comment xml:lang="gl">complemento de PowerPoint</comment>
+  <comment xml:lang="ga">breiseán PowerPoint</comment>
+  <comment xml:lang="fur">zonte PowerPoint</comment>
+  <comment xml:lang="fr">complément PowerPoint</comment>
+  <comment xml:lang="fi">PowerPoint-lisäosa</comment>
+  <comment xml:lang="eu">PowerPoint gehigarria</comment>
+  <comment xml:lang="es">complemento de PowerPoint</comment>
+  <comment xml:lang="en-GB">PowerPoint add-in</comment>
+  <comment xml:lang="el">Πρόσθετο PowerPoint</comment>
+  <comment xml:lang="de">PowerPoint-Add-in</comment>
+  <comment xml:lang="da">PowerPoint-tilføjelse</comment>
+  <comment xml:lang="cs">doplněk PowerPoint</comment>
+  <comment xml:lang="ca">complement de PowerPoint</comment>
+  <comment xml:lang="bg">Приставка — PowerPoint</comment>
+  <comment xml:lang="be-Cyrl">надбудова PowerPoint</comment>
+  <comment xml:lang="ar">إضافة بوربوينت</comment>
+  <comment xml:lang="af">PowerPoint-byvoeging</comment>
+  <generic-icon name="x-office-presentation"/>
+  <glob pattern="*.ppam"/>
+</mime-type>

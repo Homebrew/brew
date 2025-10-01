@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/schema+json">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>JSON schema</comment>
+  <comment xml:lang="uk">схема JSON</comment>
+  <comment xml:lang="tr">JSON şeması</comment>
+  <comment xml:lang="sv">JSON-schema</comment>
+  <comment xml:lang="sl">Shema JSON</comment>
+  <comment xml:lang="si">JSON යෝජනා ක්රමය</comment>
+  <comment xml:lang="ru">Схема JSON</comment>
+  <comment xml:lang="pl">Schemat JSON</comment>
+  <comment xml:lang="oc">esquèma JSON</comment>
+  <comment xml:lang="nl">JSON-schema</comment>
+  <comment xml:lang="ko">JSON 스키마</comment>
+  <comment xml:lang="kk-Cyrl">JSON сұлбасы</comment>
+  <comment xml:lang="ja">JSON スキーマ</comment>
+  <comment xml:lang="it">Schema JSON</comment>
+  <comment xml:lang="hr">JSON shema</comment>
+  <comment xml:lang="he">סכמת JSON</comment>
+  <comment xml:lang="gl">Esquema de JSON</comment>
+  <comment xml:lang="fi">JSON-skeema</comment>
+  <comment xml:lang="eu">JSON eskema</comment>
+  <comment xml:lang="es">esquema JSON</comment>
+  <comment xml:lang="en-GB">JSON schema</comment>
+  <comment xml:lang="de">JSON-Schema</comment>
+  <comment xml:lang="be-Cyrl">схема JSON</comment>
+  <comment xml:lang="ar">مخطط JSON</comment>
+  <sub-class-of type="application/json"/>
+  <generic-icon name="text-x-script"/>
+  <glob pattern="*.json"/>
+</mime-type>

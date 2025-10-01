@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="image/x-sigma-x3f">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Sigma X3F raw image</comment>
+  <comment xml:lang="zh-Hant-TW">Sigma X3F 原始影像</comment>
+  <comment xml:lang="zh-Hans-CN">适马 X3F 原始图像</comment>
+  <comment xml:lang="vi">Ảnh thô Sigma X3F</comment>
+  <comment xml:lang="uk">цифровий негатив X3F Sigma</comment>
+  <comment xml:lang="tr">Sigma X3F ham görüntüsü</comment>
+  <comment xml:lang="sv">Sigma X3F-råbild</comment>
+  <comment xml:lang="sr-Cyrl">Сигма Икс3Ф сирова слика</comment>
+  <comment xml:lang="sq">figurë Sigma X3F e papërpunuar</comment>
+  <comment xml:lang="sl">Surova slikovna datoteka Sigma X3F</comment>
+  <comment xml:lang="si">Sigma X3F අමු රූපය</comment>
+  <comment xml:lang="sk">Surový obrázok Sigma X3F</comment>
+  <comment xml:lang="ru">Необработанное изображение Sigma X3F</comment>
+  <comment xml:lang="ro">Imagine brută Sigma X3F</comment>
+  <comment xml:lang="pt-BR">Imagem bruta X3F da Sigma</comment>
+  <comment xml:lang="pt">imagem em bruto Sigma X3F</comment>
+  <comment xml:lang="pl">Surowy obraz X3F Sigma</comment>
+  <comment xml:lang="oc">imatge brut X3F Sigma</comment>
+  <comment xml:lang="nn">Sigma X3F råbilete</comment>
+  <comment xml:lang="nl">onbewerkt Sigma X3F-beeld</comment>
+  <comment xml:lang="nb">Sigma X3F raw-bilde</comment>
+  <comment xml:lang="lv">Sigma X3F jēlattēls</comment>
+  <comment xml:lang="lt">Sigma X3F neapdorotas paveikslėlis</comment>
+  <comment xml:lang="ko">시그마 X3F RAW 사진</comment>
+  <comment xml:lang="kk-Cyrl">Sigma X3F өңделмеген суреті</comment>
+  <comment xml:lang="ja">Sigma X3F raw 画像</comment>
+  <comment xml:lang="it">Immagine raw Sigma X3F</comment>
+  <comment xml:lang="is">Sigma X3F hrámynd</comment>
+  <comment xml:lang="id">Citra mentah Sigma X3F</comment>
+  <comment xml:lang="ia">Imagine brute Sigma X3F</comment>
+  <comment xml:lang="hu">Sigma XF3 nyers kép</comment>
+  <comment xml:lang="hr">Sigma X3F osnovna slika</comment>
+  <comment xml:lang="he">תמונה גולמית של Sigma X3F</comment>
+  <comment xml:lang="gl">imaxe en bruto X3F de Sigma</comment>
+  <comment xml:lang="ga">amhíomhá Sigma X3F</comment>
+  <comment xml:lang="fur">imagjin grese Sigma X3F</comment>
+  <comment xml:lang="fr">image brute X3F Sigma</comment>
+  <comment xml:lang="fo">Sigma X3F rámynd</comment>
+  <comment xml:lang="fi">Sigma-X3F-raakakuva</comment>
+  <comment xml:lang="eu">Sigma X3F irudi gordina</comment>
+  <comment xml:lang="es">imagen en bruto X3F de Sigma</comment>
+  <comment xml:lang="en-GB">Sigma X3F raw image</comment>
+  <comment xml:lang="el">Ανεπεξέργαστη εικόνα Sigma X3F</comment>
+  <comment xml:lang="de">Sigma-X3F-Rohbild</comment>
+  <comment xml:lang="da">Sigma X3F raw-billede</comment>
+  <comment xml:lang="cs">surový obrázek Sigma X3F</comment>
+  <comment xml:lang="ca">imatge en cru de Sigma X3F</comment>
+  <comment xml:lang="bg">Изображение — Sigma X3F raw</comment>
+  <comment xml:lang="be-Latn">Suvoraja vyjava Sigma X3F</comment>
+  <comment xml:lang="be-Cyrl">неапрацаваная выява Sigma X3F</comment>
+  <comment xml:lang="ar">صورة Sigma X3F خامة</comment>
+  <comment xml:lang="af">Sigma X3F rou beeld</comment>
+  <acronym>X3F</acronym>
+  <expanded-acronym>X3 Foveon</expanded-acronym>
+  <sub-class-of type="image/x-dcraw"/>
+  <glob pattern="*.x3f"/>
+</mime-type>

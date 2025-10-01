@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="text/vnd.wap.wmlscript">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>WMLScript program</comment>
+  <comment xml:lang="zh-Hant-TW">WMLScript 程式</comment>
+  <comment xml:lang="zh-Hans-CN">WMLScript 程序</comment>
+  <comment xml:lang="vi">Chương trình WMLScript</comment>
+  <comment xml:lang="uk">програма мовою WMLScript</comment>
+  <comment xml:lang="tr">WMLScript programı</comment>
+  <comment xml:lang="sv">WMLScript-program</comment>
+  <comment xml:lang="sr-Cyrl">програм ВМЛ скрипте</comment>
+  <comment xml:lang="sq">program WMLScript</comment>
+  <comment xml:lang="sl">Programska datoteka WMLScript</comment>
+  <comment xml:lang="si">WMLScript වැඩසටහන</comment>
+  <comment xml:lang="sk">Program WMLScript</comment>
+  <comment xml:lang="ru">Программа WMLScript</comment>
+  <comment xml:lang="ro">Program WMLScript</comment>
+  <comment xml:lang="pt-BR">Programa WMLScript</comment>
+  <comment xml:lang="pt">programa WMLScript</comment>
+  <comment xml:lang="pl">Pogram WMLScript</comment>
+  <comment xml:lang="oc">programa WMLEscript</comment>
+  <comment xml:lang="nn">WMLScript-program</comment>
+  <comment xml:lang="nl">WMLScript-toepassing</comment>
+  <comment xml:lang="nb">WMLScript-program</comment>
+  <comment xml:lang="lv">WMLScript programma</comment>
+  <comment xml:lang="lt">WMLScript programa</comment>
+  <comment xml:lang="ko">WMLScript 프로그램</comment>
+  <comment xml:lang="kk-Cyrl">WMLScript бағдарламасы</comment>
+  <comment xml:lang="ja">WMLScript プログラム</comment>
+  <comment xml:lang="it">Programma WMLScript</comment>
+  <comment xml:lang="is">WMLScript forrit</comment>
+  <comment xml:lang="id">Program WMLScript</comment>
+  <comment xml:lang="ia">Programma WMLScript</comment>
+  <comment xml:lang="hu">WMLScript program</comment>
+  <comment xml:lang="hr">WMLScript program</comment>
+  <comment xml:lang="he">תכנית של WMLScript</comment>
+  <comment xml:lang="gl">programa en WMLScript</comment>
+  <comment xml:lang="ga">ríomhchlár WMLScript</comment>
+  <comment xml:lang="fur">program WMLScript</comment>
+  <comment xml:lang="fr">programme WMLScript</comment>
+  <comment xml:lang="fo">WMLScript forrit</comment>
+  <comment xml:lang="fi">WMLScript-ohjelma</comment>
+  <comment xml:lang="eu">WMLScript programa</comment>
+  <comment xml:lang="es">programa en WMLScript</comment>
+  <comment xml:lang="en-GB">WMLScript program</comment>
+  <comment xml:lang="el">Πρόγραμμα WMLScript</comment>
+  <comment xml:lang="de">WMLScript-Programm</comment>
+  <comment xml:lang="da">WMLScript-program</comment>
+  <comment xml:lang="cs">program WMLScript</comment>
+  <comment xml:lang="ca">programa WMLScript</comment>
+  <comment xml:lang="bg">Програма — WMLScript</comment>
+  <comment xml:lang="be-Latn">Prahrama WMLScript</comment>
+  <comment xml:lang="be-Cyrl">праграма WMLScript</comment>
+  <comment xml:lang="ar">برنامج WMLScript</comment>
+  <comment xml:lang="af">WMLScript-program</comment>
+  <sub-class-of type="text/plain"/>
+  <glob pattern="*.wmls"/>
+</mime-type>

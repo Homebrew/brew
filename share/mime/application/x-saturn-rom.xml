@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-saturn-rom">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Sega Saturn disc image</comment>
+  <comment xml:lang="zh-Hant-TW">Sega Saturn 光碟映像檔</comment>
+  <comment xml:lang="zh-Hans-CN">Sega Saturn 光盘映像</comment>
+  <comment xml:lang="uk">образ диска Sega Saturn</comment>
+  <comment xml:lang="tr">Sega Saturn disk görüntüsü</comment>
+  <comment xml:lang="sv">Sega Saturn-skivavbild</comment>
+  <comment xml:lang="sr-Cyrl">одраз диска Сега Сатурна</comment>
+  <comment xml:lang="sq">pamje disku Sega Saturn</comment>
+  <comment xml:lang="sl">Slika diska Sega Saturn</comment>
+  <comment xml:lang="si">සේගා සෙනසුරු තැටි රූපය</comment>
+  <comment xml:lang="sk">Obraz disku Sega Saturn</comment>
+  <comment xml:lang="ru">Образ диска Sega Saturn</comment>
+  <comment xml:lang="pt-BR">Imagem de disco do Sega Saturn</comment>
+  <comment xml:lang="pt">imagem de disco Sega Saturn</comment>
+  <comment xml:lang="pl">Obraz płyty konsoli Sega Saturn</comment>
+  <comment xml:lang="oc">imatge disc Sega Saturn</comment>
+  <comment xml:lang="nl">Sega Saturn-schijfkopiebestand</comment>
+  <comment xml:lang="ko">세가 새턴 디스크 이미지</comment>
+  <comment xml:lang="kk-Cyrl">Sega Saturn диск бейнесі</comment>
+  <comment xml:lang="ja">Sega Saturn ディスクイメージ</comment>
+  <comment xml:lang="it">Immagine disco Sega Saturn</comment>
+  <comment xml:lang="is">Sega Saturn diskmynd</comment>
+  <comment xml:lang="id">Image cakram Sega Saturn</comment>
+  <comment xml:lang="ia">Imagine de disco Sega Saturn</comment>
+  <comment xml:lang="hu">Sega Saturn lemezkép</comment>
+  <comment xml:lang="hr">Sega Saturn slika diska</comment>
+  <comment xml:lang="he">דמות כונן Sega Saturn</comment>
+  <comment xml:lang="gl">Imaxe de disco de Sega Saturn</comment>
+  <comment xml:lang="ga">íomhá diosca Sega Saturn</comment>
+  <comment xml:lang="fur">imagjin disc Sega Saturn</comment>
+  <comment xml:lang="fr">image disque Sega Saturn</comment>
+  <comment xml:lang="fi">Sega Saturn -levykuva</comment>
+  <comment xml:lang="eu">Sega Saturn disko irudia</comment>
+  <comment xml:lang="es">imagen de disco de Sega Saturn</comment>
+  <comment xml:lang="en-GB">Sega Saturn disc image</comment>
+  <comment xml:lang="el">Εικόνα δίσκου Sega Saturn</comment>
+  <comment xml:lang="de">Sega-Saturn-Datenträgerabbild</comment>
+  <comment xml:lang="da">Sega Saturn-diskaftryk</comment>
+  <comment xml:lang="cs">obraz disku pro Sega Saturn</comment>
+  <comment xml:lang="ca">imatge de disc de Sega Saturn</comment>
+  <comment xml:lang="bg">Диск — Sega Saturn</comment>
+  <comment xml:lang="be-Cyrl">вобраз дыска Sega Saturn</comment>
+  <comment xml:lang="ast">Imaxe de discu de Sega Saturn</comment>
+  <comment xml:lang="ar">صورة قرص ميجا ساتورن</comment>
+  <comment xml:lang="af">Sega Saturn-skyfbeeldlêer</comment>
+  <generic-icon name="application-x-executable"/>
+  <glob pattern="*.iso"/>
+</mime-type>

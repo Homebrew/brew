@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/vnd.sun.xml.draw.template">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>LibreOffice Draw template</comment>
+  <comment xml:lang="uk">шаблон LibreOffice Draw</comment>
+  <comment xml:lang="sv">LibreOffice Draw-mall</comment>
+  <comment xml:lang="ru">Шаблон LibreOffice Draw</comment>
+  <comment xml:lang="pt-BR">Modelo do LibreOffice Draw</comment>
+  <comment xml:lang="pl">Szablon rysunku LibreOffice Draw</comment>
+  <comment xml:lang="it">Modello LibreOffice Draw</comment>
+  <comment xml:lang="gl">Modelo de LibreOffice Draw</comment>
+  <comment xml:lang="eu">LibreOffice Draw txantiloia</comment>
+  <comment xml:lang="es">plantilla de LibreOffice Draw</comment>
+  <comment xml:lang="de">LibreOffice Draw-Vorlage</comment>
+  <comment xml:lang="be-Cyrl">шаблон LibreOffice Draw</comment>
+  <sub-class-of type="application/zip"/>
+  <generic-icon name="image-x-generic"/>
+  <glob pattern="*.std"/>
+</mime-type>

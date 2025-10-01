@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="audio/midi">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>MIDI audio</comment>
+  <comment xml:lang="zh-Hant-TW">MIDI 音訊</comment>
+  <comment xml:lang="zh-Hans-CN">MIDI 音频</comment>
+  <comment xml:lang="vi">Âm thanh MIDI</comment>
+  <comment xml:lang="uk">звук MIDI</comment>
+  <comment xml:lang="tr">MIDI sesi</comment>
+  <comment xml:lang="sv">MIDI-ljud</comment>
+  <comment xml:lang="sr-Cyrl">МИДИ звук</comment>
+  <comment xml:lang="sq">audio MIDI</comment>
+  <comment xml:lang="sl">Zvočna datoteka MIDI</comment>
+  <comment xml:lang="si">MIDI ශ්‍රව්‍ය</comment>
+  <comment xml:lang="sk">Zvuk MIDI</comment>
+  <comment xml:lang="ru">Аудио MIDI</comment>
+  <comment xml:lang="ro">Audio MIDI</comment>
+  <comment xml:lang="pt-BR">Áudio MIDI</comment>
+  <comment xml:lang="pt">áudio MIDI</comment>
+  <comment xml:lang="pl">Plik dźwiękowy MIDI</comment>
+  <comment xml:lang="oc">àudio MIDI</comment>
+  <comment xml:lang="nn">MIDI-lyd</comment>
+  <comment xml:lang="nl">MIDI-audio</comment>
+  <comment xml:lang="nb">MIDI-lyd</comment>
+  <comment xml:lang="ms">Audio MIDI</comment>
+  <comment xml:lang="lv">MIDI audio</comment>
+  <comment xml:lang="lt">MIDI garso įrašas</comment>
+  <comment xml:lang="ko">미디 오디오</comment>
+  <comment xml:lang="kk-Cyrl">MIDI аудиосы</comment>
+  <comment xml:lang="ja">MIDI オーディオ</comment>
+  <comment xml:lang="it">Audio MIDI</comment>
+  <comment xml:lang="is">MIDI hljóðskrá</comment>
+  <comment xml:lang="id">Audio MIDI</comment>
+  <comment xml:lang="ia">Audio MIDI</comment>
+  <comment xml:lang="hu">MIDI hang</comment>
+  <comment xml:lang="hr">MIDI zvučni zapis</comment>
+  <comment xml:lang="he">שמע MIDI</comment>
+  <comment xml:lang="gl">son MIDI</comment>
+  <comment xml:lang="ga">fuaim MIDI</comment>
+  <comment xml:lang="fur">audio MIDI</comment>
+  <comment xml:lang="fr">audio MIDI</comment>
+  <comment xml:lang="fo">MIDI ljóður</comment>
+  <comment xml:lang="fi">MIDI-ääni</comment>
+  <comment xml:lang="eu">MIDI audioa</comment>
+  <comment xml:lang="es">sonido MIDI</comment>
+  <comment xml:lang="eo">MIDI-sondosiero</comment>
+  <comment xml:lang="en-GB">MIDI audio</comment>
+  <comment xml:lang="el">Ήχος MIDI</comment>
+  <comment xml:lang="de">MIDI-Audio</comment>
+  <comment xml:lang="da">MIDI-lyd</comment>
+  <comment xml:lang="cy">Sain MIDI</comment>
+  <comment xml:lang="cs">zvuk MIDI</comment>
+  <comment xml:lang="ca">àudio MIDI</comment>
+  <comment xml:lang="bg">Аудио — MIDI</comment>
+  <comment xml:lang="be-Latn">Aŭdyjo MIDI</comment>
+  <comment xml:lang="be-Cyrl">аўдыя MIDI</comment>
+  <comment xml:lang="az">MIDI audio faylı</comment>
+  <comment xml:lang="ar">صوت MIDI</comment>
+  <comment xml:lang="af">MIDI-oudio</comment>
+  <acronym>MIDI</acronym>
+  <expanded-acronym>Musical Instrument Digital Interface</expanded-acronym>
+  <alias type="audio/x-midi"/>
+  <glob pattern="*.mid"/>
+  <glob pattern="*.midi"/>
+  <glob pattern="*.kar"/>
+</mime-type>

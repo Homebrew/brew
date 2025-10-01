@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="inode/symlink">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Symbolic link</comment>
+  <comment xml:lang="uk">Символічне посилання</comment>
+  <comment xml:lang="sv">Symbolisk länk</comment>
+  <comment xml:lang="ru">Символьная ссылка</comment>
+  <comment xml:lang="pt-BR">Link simbólico</comment>
+  <comment xml:lang="pl">Dowiązanie symboliczne</comment>
+  <comment xml:lang="ja">シンボリックリンク</comment>
+  <comment xml:lang="it">Collegamento simbolico</comment>
+  <comment xml:lang="gl">Ligazón simbólica</comment>
+  <comment xml:lang="eu">Esteka sinbolikoa</comment>
+  <comment xml:lang="es">enlace simbólico</comment>
+  <comment xml:lang="de">Symbolische Verknüpfung</comment>
+  <comment xml:lang="be-Cyrl">сімвалічная спасылка</comment>
+</mime-type>

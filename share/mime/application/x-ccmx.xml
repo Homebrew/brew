@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-ccmx">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>CCMX color correction file</comment>
+  <comment xml:lang="zh-Hant-TW">CCMX 色彩校正檔</comment>
+  <comment xml:lang="zh-Hans-CN">CCMX 色彩校准文件</comment>
+  <comment xml:lang="uk">файл даних виправлення кольорів CCMX</comment>
+  <comment xml:lang="tr">CCMX renk düzeltme dosyası</comment>
+  <comment xml:lang="sv">CCMX-färgkorrigeringsfil</comment>
+  <comment xml:lang="sr-Cyrl">ЦЦМИкс датотека поправке боје</comment>
+  <comment xml:lang="sq">kartelë saktësimi ngjyrash CCMX</comment>
+  <comment xml:lang="sl">Datoteka barvne poprave CCMX</comment>
+  <comment xml:lang="si">CCMX වර්ණ නිවැරදි කිරීමේ ගොනුව</comment>
+  <comment xml:lang="sk">Súbor korekcie farieb CCMX</comment>
+  <comment xml:lang="ru">Файл цветовой коррекции CCMX</comment>
+  <comment xml:lang="pt-BR">Arquivo de correção de cor CCMX</comment>
+  <comment xml:lang="pt">ficheiro de correção de cor CCMX</comment>
+  <comment xml:lang="pl">Plik korekcji kolorów CCMX</comment>
+  <comment xml:lang="oc">fichièr de correccion colorimetrica CCMX</comment>
+  <comment xml:lang="nl">CCMX-kleurcorrectiebestand</comment>
+  <comment xml:lang="lv">CCMX krāsu korekciju datne</comment>
+  <comment xml:lang="ko">CCMX 색상 보정 파일</comment>
+  <comment xml:lang="kk-Cyrl">CCMX түсті келтіру файлы</comment>
+  <comment xml:lang="ja">CCMX カラー訂正ファイル</comment>
+  <comment xml:lang="it">File correzione colore CCMX</comment>
+  <comment xml:lang="is">CCMX litleiðréttingarskrá</comment>
+  <comment xml:lang="id">Berkas koreksi warna CCMX</comment>
+  <comment xml:lang="ia">File de correction de colores CCMX</comment>
+  <comment xml:lang="hu">CCMX színjavítási fájl</comment>
+  <comment xml:lang="hr">CCMX datotkea ispravka boja</comment>
+  <comment xml:lang="he">קובץ תיקון צבע מסוג CCMX</comment>
+  <comment xml:lang="gl">Ficheiro de corrección de cor CCMX</comment>
+  <comment xml:lang="ga">comhad ceartúchán dathanna CCMX</comment>
+  <comment xml:lang="fur">file corezion colôr CCMX</comment>
+  <comment xml:lang="fr">fichier de correction colorimétrique CCMX</comment>
+  <comment xml:lang="fi">CCMX-värikorjaustiedosto</comment>
+  <comment xml:lang="eu">CCMX kolore-kalibrazioaren fitxategia</comment>
+  <comment xml:lang="es">archivo de corrección de color CCMX</comment>
+  <comment xml:lang="en-GB">CCMX colour correction file</comment>
+  <comment xml:lang="el">Αρχείο διόρθωσης χρωμάτων CCMX</comment>
+  <comment xml:lang="de">CCMX-Farbkorrekturdatei</comment>
+  <comment xml:lang="da">CCMX-farvekorrektionsfil</comment>
+  <comment xml:lang="cs">soubor korekce barev CCMX</comment>
+  <comment xml:lang="ca">fitxer de correcció de color CCMX</comment>
+  <comment xml:lang="bg">Цветови поправки — CCMX</comment>
+  <comment xml:lang="be-Cyrl">файл карэкцыі колеру CCMX</comment>
+  <comment xml:lang="ar">ملف تصحيح لون CCMX</comment>
+  <sub-class-of type="text/plain"/>
+  <generic-icon name="text-x-generic"/>
+  <glob pattern="*.ccmx"/>
+</mime-type>

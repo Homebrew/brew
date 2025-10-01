@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="text/x-ldif">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>LDIF address book</comment>
+  <comment xml:lang="zh-Hant-TW">LDIF 通訊錄</comment>
+  <comment xml:lang="zh-Hans-CN">LDIF 地址簿</comment>
+  <comment xml:lang="vi">Sổ địa chỉ LDIF</comment>
+  <comment xml:lang="uk">адресна книга LDIF</comment>
+  <comment xml:lang="tr">LDIF adres defteri</comment>
+  <comment xml:lang="sv">LDIF-adressbok</comment>
+  <comment xml:lang="sr-Cyrl">ЛДИФ адресар</comment>
+  <comment xml:lang="sq">libër adresash LDIF</comment>
+  <comment xml:lang="sl">Datoteka imenika naslovov LDIF</comment>
+  <comment xml:lang="si">LDIF ලිපින පොත</comment>
+  <comment xml:lang="sk">Adresár LDIF</comment>
+  <comment xml:lang="ru">Адресная книга LDIF</comment>
+  <comment xml:lang="ro">Agendă LDIF</comment>
+  <comment xml:lang="pt-BR">Livro de endereços LDIF</comment>
+  <comment xml:lang="pt">livro de endereços LDIF</comment>
+  <comment xml:lang="pl">Książka adresowa LDIF</comment>
+  <comment xml:lang="oc">quasernet d'adreças LDIF</comment>
+  <comment xml:lang="nn">LDIF-adressebok</comment>
+  <comment xml:lang="nl">LDIF-adresboek</comment>
+  <comment xml:lang="nb">LDIF-adressebok</comment>
+  <comment xml:lang="lv">LDIF adrešu grāmata</comment>
+  <comment xml:lang="lt">LDIF adresų knygelė</comment>
+  <comment xml:lang="ko">LDIF 주소록</comment>
+  <comment xml:lang="kk-Cyrl">LDIF адрестер кітабы</comment>
+  <comment xml:lang="ja">LDIF アドレス帳</comment>
+  <comment xml:lang="it">Rubrica LDIF</comment>
+  <comment xml:lang="is">LDIF-nafnaskrá</comment>
+  <comment xml:lang="id">Buku alamat LDIF</comment>
+  <comment xml:lang="ia">Adressario LDIF</comment>
+  <comment xml:lang="hu">LDIF címjegyzék</comment>
+  <comment xml:lang="hr">LDIF adresar</comment>
+  <comment xml:lang="he">ספר כתובות של LDIF</comment>
+  <comment xml:lang="gl">lista de enderezos LDIF</comment>
+  <comment xml:lang="ga">leabhar seoltaí LDIF</comment>
+  <comment xml:lang="fur">rubriche LDIF</comment>
+  <comment xml:lang="fr">carnet d'adresses LDIF</comment>
+  <comment xml:lang="fo">LDIF adressubók</comment>
+  <comment xml:lang="fi">LDIF-osoitekirja</comment>
+  <comment xml:lang="eu">LDIF helbide-liburua</comment>
+  <comment xml:lang="es">libreta de direcciones LDIF</comment>
+  <comment xml:lang="eo">LDIF-adresaro</comment>
+  <comment xml:lang="en-GB">LDIF address book</comment>
+  <comment xml:lang="el">Βιβλίο διευθύνσεων LDIF</comment>
+  <comment xml:lang="de">LDIF-Adressbuch</comment>
+  <comment xml:lang="da">LDIF-adressebog</comment>
+  <comment xml:lang="cs">adresář LDIF</comment>
+  <comment xml:lang="ca">llibreta d'adreces LDIF</comment>
+  <comment xml:lang="bg">Адресна книга — LDIF</comment>
+  <comment xml:lang="be-Latn">Adrasnaja kniha LDIF</comment>
+  <comment xml:lang="be-Cyrl">адрасная кніга LDIF</comment>
+  <comment xml:lang="ar">دفتر عناوين LDIF</comment>
+  <comment xml:lang="af">LDIF-adresboek</comment>
+  <acronym>LDIF</acronym>
+  <expanded-acronym>LDAP Data Interchange Format</expanded-acronym>
+  <sub-class-of type="text/plain"/>
+  <glob pattern="*.ldif"/>
+</mime-type>

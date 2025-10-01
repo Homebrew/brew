@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-profile">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Profiler results</comment>
+  <comment xml:lang="uk">результати профілювання</comment>
+  <comment xml:lang="sv">Profilerarresultat</comment>
+  <comment xml:lang="ru">Результаты профилирования</comment>
+  <comment xml:lang="pl">Wyniki profilowania</comment>
+  <comment xml:lang="it">Risultati profiler</comment>
+  <comment xml:lang="gl">Resultados dos perfiladores</comment>
+  <comment xml:lang="eu">Profilatzaile-emaitzak</comment>
+  <comment xml:lang="es">resultados de generador de perfiles</comment>
+  <comment xml:lang="de">Profiler-Ergebnisse</comment>
+  <comment xml:lang="be-Cyrl">вынікі прафіліроўшчыка</comment>
+  <sub-class-of type="text/plain"/>
+  <generic-icon name="text-x-generic"/>
+  <glob pattern="gmon.out"/>
+</mime-type>

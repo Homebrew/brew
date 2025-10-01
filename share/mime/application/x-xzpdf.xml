@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-xzpdf">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>PDF document (XZ-compressed)</comment>
+  <comment xml:lang="zh-Hant-TW">PDF 文件 (XZ 壓縮)</comment>
+  <comment xml:lang="zh-Hans-CN">PDF 文档（XZ）</comment>
+  <comment xml:lang="uk">документ PDF (стиснений xz)</comment>
+  <comment xml:lang="tr">PDF belgesi (XZ ile sıkıştırılmış)</comment>
+  <comment xml:lang="sv">PDF-dokument (XZ-komprimerat)</comment>
+  <comment xml:lang="sr-Cyrl">ПДФ документ (запакован ИксЗ-ом)</comment>
+  <comment xml:lang="sq">dokument PDF (ngjeshur me XZ)</comment>
+  <comment xml:lang="sl">Dokument PDF (XZ-stisnjen)</comment>
+  <comment xml:lang="si">PDF ලේඛනය (XZ-සම්පීඩිත)</comment>
+  <comment xml:lang="sk">Dokument PDF (komprimovaný pomocou XZ)</comment>
+  <comment xml:lang="ru">Документ PDF (сжатый xz)</comment>
+  <comment xml:lang="pt-BR">Documento PDF (compactado com XZ)</comment>
+  <comment xml:lang="pt">documento PDF (compressão XZ)</comment>
+  <comment xml:lang="pl">Dokument PDF (kompresja XZ)</comment>
+  <comment xml:lang="oc">document PDF (compressat XZ)</comment>
+  <comment xml:lang="nl">PDF document (XZ-compressed)</comment>
+  <comment xml:lang="lv">PDF dokuments (saspiests ar XZ)</comment>
+  <comment xml:lang="ko">PDF 문서(XZ 압축)</comment>
+  <comment xml:lang="kk-Cyrl">PDF құжаты (XZ-мен сығылған)</comment>
+  <comment xml:lang="ka">PDF დოკუმენტი (XZ-ით შეკუმშული)</comment>
+  <comment xml:lang="ja">PDF 文書（XZ 圧縮）</comment>
+  <comment xml:lang="it">Documento PDF (compresso con XZ)</comment>
+  <comment xml:lang="is">PDF skjal (XZ-þjappað)</comment>
+  <comment xml:lang="id">Dokumen PDF (terkompresi XZ)</comment>
+  <comment xml:lang="ia">Documento PDF (comprimite con XZ)</comment>
+  <comment xml:lang="hu">PDF dokumentum (XZ tömörítésű)</comment>
+  <comment xml:lang="hr">PDF dokument ( XZ sažet)</comment>
+  <comment xml:lang="he">מסמך PDF (מכווץ ע״י XZ)</comment>
+  <comment xml:lang="gl">documento PDF (comprimido en XZ)</comment>
+  <comment xml:lang="ga">cáipéis PDF (comhbhrúite le XZ)</comment>
+  <comment xml:lang="fur">document PDF (comprimût cun XZ)</comment>
+  <comment xml:lang="fr">document PDF (compressé XZ)</comment>
+  <comment xml:lang="fi">PDF-asiakirja (XZ-pakattu)</comment>
+  <comment xml:lang="eu">PDF dokumentua (XZ-rekin konprimitua)</comment>
+  <comment xml:lang="es">documento PDF (comprimido con XZ)</comment>
+  <comment xml:lang="en-GB">PDF document (XZ-compressed)</comment>
+  <comment xml:lang="el">Έγγραφο PDF (συμπιεσμένο με XZ)</comment>
+  <comment xml:lang="de">PDF-Dokument (XZ-komprimiert)</comment>
+  <comment xml:lang="da">PDF-dokument (XZ-komprimeret)</comment>
+  <comment xml:lang="cs">dokument PDF (komprimovaný pomocí XZ)</comment>
+  <comment xml:lang="ca">document PDF (amb compressió XZ)</comment>
+  <comment xml:lang="bg">Документ — PDF, компресиран с XZ</comment>
+  <comment xml:lang="be-Cyrl">дакумент PDF (сцісканне XZ)</comment>
+  <comment xml:lang="ast">Documentu PDF (comprimíu en XZ)</comment>
+  <comment xml:lang="ar">مستند PDF (مضغوط-XZ)</comment>
+  <comment xml:lang="af">PDF-dokument (XZ-saamgepers)</comment>
+  <sub-class-of type="application/x-xz"/>
+  <generic-icon name="x-office-document"/>
+  <glob pattern="*.pdf.xz"/>
+</mime-type>

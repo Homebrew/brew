@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/vnd.oasis.opendocument.image">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>ODI image</comment>
+  <comment xml:lang="zh-Hant-TW">ODI 影像</comment>
+  <comment xml:lang="zh-Hans-CN">ODI 图像</comment>
+  <comment xml:lang="vi">Ảnh ODI</comment>
+  <comment xml:lang="uk">зображення ODI</comment>
+  <comment xml:lang="tr">ODI görüntüsü</comment>
+  <comment xml:lang="sv">ODI-bild</comment>
+  <comment xml:lang="sr-Cyrl">ОДИ слика</comment>
+  <comment xml:lang="sq">figurë ODI</comment>
+  <comment xml:lang="sl">Slikovna datoteka ODI</comment>
+  <comment xml:lang="si">ODI රූපය</comment>
+  <comment xml:lang="sk">Obrázok ODI</comment>
+  <comment xml:lang="ru">Изображение ODI</comment>
+  <comment xml:lang="ro">Imagine ODI</comment>
+  <comment xml:lang="pt-BR">Imagem ODI</comment>
+  <comment xml:lang="pt">imagem ODI</comment>
+  <comment xml:lang="pl">Obraz ODI</comment>
+  <comment xml:lang="oc">imatge ODI</comment>
+  <comment xml:lang="nn">ODI-bilete</comment>
+  <comment xml:lang="nl">ODI-afbeelding</comment>
+  <comment xml:lang="nb">ODI-bilde</comment>
+  <comment xml:lang="lv">ODI attēls</comment>
+  <comment xml:lang="lt">ODI paveikslėlis</comment>
+  <comment xml:lang="ko">ODI 그림</comment>
+  <comment xml:lang="kk-Cyrl">ODI суреті</comment>
+  <comment xml:lang="ka">ODI გამოსახულება</comment>
+  <comment xml:lang="ja">ODI 画像</comment>
+  <comment xml:lang="it">Immagine ODI</comment>
+  <comment xml:lang="is">ODI mynd</comment>
+  <comment xml:lang="id">Citra ODI</comment>
+  <comment xml:lang="ia">Imagine ODI</comment>
+  <comment xml:lang="hu">ODI-kép</comment>
+  <comment xml:lang="hr">ODI slika</comment>
+  <comment xml:lang="he">תמונת ODI</comment>
+  <comment xml:lang="gl">imaxe ODI</comment>
+  <comment xml:lang="ga">íomhá ODI</comment>
+  <comment xml:lang="fur">imagjin ODI</comment>
+  <comment xml:lang="fr">image ODI</comment>
+  <comment xml:lang="fo">ODI mynd</comment>
+  <comment xml:lang="fi">ODI-kuva</comment>
+  <comment xml:lang="eu">ODI irudia</comment>
+  <comment xml:lang="es">imagen ODI</comment>
+  <comment xml:lang="eo">ODI-bildo</comment>
+  <comment xml:lang="en-GB">ODI image</comment>
+  <comment xml:lang="el">Εικόνα ODI</comment>
+  <comment xml:lang="de">ODI-Bild</comment>
+  <comment xml:lang="da">ODI-billede</comment>
+  <comment xml:lang="cs">obrázek ODI</comment>
+  <comment xml:lang="ca">imatge ODI</comment>
+  <comment xml:lang="bg">Изображение — ODI</comment>
+  <comment xml:lang="be-Latn">Vyjava ODI</comment>
+  <comment xml:lang="be-Cyrl">выява ODI</comment>
+  <comment xml:lang="ast">Imaxe ODI</comment>
+  <comment xml:lang="ar">صورة ODI</comment>
+  <comment xml:lang="af">ODI-beeld</comment>
+  <acronym>ODI</acronym>
+  <expanded-acronym>OpenDocument Image</expanded-acronym>
+  <sub-class-of type="application/zip"/>
+  <generic-icon name="image-x-generic"/>
+  <glob pattern="*.odi"/>
+</mime-type>

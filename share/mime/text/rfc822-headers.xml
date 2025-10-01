@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="text/rfc822-headers">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Email headers</comment>
+  <comment xml:lang="uk">заголовки повідомлення ел. пошти</comment>
+  <comment xml:lang="sv">E-posthuvuden</comment>
+  <comment xml:lang="ru">Почтовые заголовки</comment>
+  <comment xml:lang="pl">Nagłówki wiadomości e-mail</comment>
+  <comment xml:lang="it">Intestazioni email</comment>
+  <comment xml:lang="eu">Posta-goiburuak</comment>
+  <comment xml:lang="es">cabeceras de correo electrónico</comment>
+  <comment xml:lang="de">E-Mail-Kopfzeilen</comment>
+  <comment xml:lang="be-Cyrl">паштовыя загалоўкі</comment>
+  <sub-class-of type="text/plain"/>
+</mime-type>

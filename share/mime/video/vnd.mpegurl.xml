@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="video/vnd.mpegurl">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Video playlist</comment>
+  <comment xml:lang="zh-Hans-CN">视频播放列表</comment>
+  <comment xml:lang="uk">список відтворення відео</comment>
+  <comment xml:lang="tr">Video çalma listesi</comment>
+  <comment xml:lang="sv">Videospellista</comment>
+  <comment xml:lang="sl">Seznam predvajanja videoposnetkov</comment>
+  <comment xml:lang="si">වීඩියෝ ධාවන ලැයිස්තුව</comment>
+  <comment xml:lang="ru">Список воспроизведения видео-данных</comment>
+  <comment xml:lang="pl">Lista odtwarzania wideo</comment>
+  <comment xml:lang="oc">lista de lectura vidèo</comment>
+  <comment xml:lang="nl">Video-afspeellijst</comment>
+  <comment xml:lang="ko">동영상 재생 목록</comment>
+  <comment xml:lang="kk-Cyrl">Видео ойнату тізімі</comment>
+  <comment xml:lang="ka">ვიდეო დასაკრავი სია</comment>
+  <comment xml:lang="ja">ビデオ再生リスト</comment>
+  <comment xml:lang="it">Playlist video</comment>
+  <comment xml:lang="hr">Video popis izvođenja</comment>
+  <comment xml:lang="gl">Lista de reprodución de vídeos</comment>
+  <comment xml:lang="fi">Video-soittolista</comment>
+  <comment xml:lang="eu">Bideoen erreprodukzio-zerrenda</comment>
+  <comment xml:lang="es">lista de reproducción de vídeo</comment>
+  <comment xml:lang="en-GB">Video playlist</comment>
+  <comment xml:lang="de">Video-Wiedergabeliste</comment>
+  <comment xml:lang="be-Cyrl">плэй-ліст відэа</comment>
+  <comment xml:lang="ar">قائمة تشغيل فيديو</comment>
+  <sub-class-of type="text/plain"/>
+  <alias type="video/x-mpegurl"/>
+  <glob pattern="*.m1u"/>
+  <glob pattern="*.m4u"/>
+  <glob pattern="*.mxu"/>
+</mime-type>

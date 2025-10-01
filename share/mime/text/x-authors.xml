@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="text/x-authors">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Author list</comment>
+  <comment xml:lang="uk">список авторів</comment>
+  <comment xml:lang="sv">Författarlista</comment>
+  <comment xml:lang="ru">Список авторов</comment>
+  <comment xml:lang="pl">Lista autorów</comment>
+  <comment xml:lang="it">Elenco autori</comment>
+  <comment xml:lang="eu">Egile-zerrenda</comment>
+  <comment xml:lang="es">lista de autores</comment>
+  <comment xml:lang="de">Autorenliste</comment>
+  <comment xml:lang="be-Cyrl">спіс аўтараў</comment>
+  <sub-class-of type="text/plain"/>
+  <glob pattern="AUTHORS"/>
+</mime-type>

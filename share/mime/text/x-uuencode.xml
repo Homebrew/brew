@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="text/x-uuencode">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>uuencoded file</comment>
+  <comment xml:lang="zh-Hant-TW">uuencoded 檔</comment>
+  <comment xml:lang="zh-Hans-CN">Uuencode 文件</comment>
+  <comment xml:lang="uk">файл даних у форматі UUE</comment>
+  <comment xml:lang="tr">uuencoded dosyası</comment>
+  <comment xml:lang="sv">uuencode-fil</comment>
+  <comment xml:lang="sr-Cyrl">уукодирана датотека</comment>
+  <comment xml:lang="sl">Datoteka uuencode</comment>
+  <comment xml:lang="si">uuencoded ගොනුව</comment>
+  <comment xml:lang="sk">Súbor v kódovaní uuencode</comment>
+  <comment xml:lang="ru">Файл, кодированный uuencode</comment>
+  <comment xml:lang="pt-BR">Arquivo codificado UUE</comment>
+  <comment xml:lang="pt">ficheiro uuencoded</comment>
+  <comment xml:lang="pl">Plik zakodowany za pomocą uuencode</comment>
+  <comment xml:lang="oc">fichièr uuencodat</comment>
+  <comment xml:lang="nl">uuencoded bestand</comment>
+  <comment xml:lang="lv">uu kodējuma datne</comment>
+  <comment xml:lang="ko">uuencoded 파일</comment>
+  <comment xml:lang="kk-Cyrl">uuencode кодталған файлы</comment>
+  <comment xml:lang="ja">未エンコードファイル</comment>
+  <comment xml:lang="it">File uuencoded</comment>
+  <comment xml:lang="is">uuencoded skrá</comment>
+  <comment xml:lang="id">berkas ter-uuencode</comment>
+  <comment xml:lang="ia">File in uuencode</comment>
+  <comment xml:lang="hu">uuencode-olt fájl</comment>
+  <comment xml:lang="hr">uuencoded datoteka</comment>
+  <comment xml:lang="he">קובץ בקידוד uu</comment>
+  <comment xml:lang="gl">Ficheiro uuencoded</comment>
+  <comment xml:lang="ga">comhad uuencoded</comment>
+  <comment xml:lang="fur">file codificât cun uuencode</comment>
+  <comment xml:lang="fr">fichier uuencodé</comment>
+  <comment xml:lang="fi">uuenkoodattu tiedosto</comment>
+  <comment xml:lang="eu">uuencode-aturiko fitxategia</comment>
+  <comment xml:lang="es">archivo codificado con uuencode</comment>
+  <comment xml:lang="en-GB">uuencoded file</comment>
+  <comment xml:lang="el">Αρχείο κωδικοποιημένο unix σε unix (uuencoded)</comment>
+  <comment xml:lang="de">Datei im uuencode-Format</comment>
+  <comment xml:lang="da">uuencodede-fil</comment>
+  <comment xml:lang="cs">soubor kódovaný pomocí uuencoding</comment>
+  <comment xml:lang="ca">fitxer uuencoded</comment>
+  <comment xml:lang="bg">Файл — кодиран с uuencode</comment>
+  <comment xml:lang="be-Cyrl">файл, закадаваны uuencode</comment>
+  <comment xml:lang="ar">ملف uuencoded</comment>
+  <comment xml:lang="af">uu-geënkodeerde lêer</comment>
+  <sub-class-of type="text/plain"/>
+  <glob pattern="*.uue"/>
+  <alias type="zz-application/zz-winassoc-uu"/>
+</mime-type>

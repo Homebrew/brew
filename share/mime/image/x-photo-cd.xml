@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="image/x-photo-cd">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>PCD image</comment>
+  <comment xml:lang="zh-Hant-TW">PCD 影像</comment>
+  <comment xml:lang="zh-Hans-CN">PCD 图像</comment>
+  <comment xml:lang="vi">Ảnh PCD</comment>
+  <comment xml:lang="uk">зображення PCD</comment>
+  <comment xml:lang="tr">PCD görüntüsü</comment>
+  <comment xml:lang="sv">PCD-bild</comment>
+  <comment xml:lang="sr-Cyrl">ПЦД слика</comment>
+  <comment xml:lang="sq">figurë PCD</comment>
+  <comment xml:lang="sl">Slikovna datoteka PCD</comment>
+  <comment xml:lang="si">PCD රූපය</comment>
+  <comment xml:lang="sk">Obrázok PCD</comment>
+  <comment xml:lang="ru">Изображение PCD</comment>
+  <comment xml:lang="ro">Imagine PCD</comment>
+  <comment xml:lang="pt-BR">Imagem PCD</comment>
+  <comment xml:lang="pt">imagem PCD</comment>
+  <comment xml:lang="pl">Obraz PCD</comment>
+  <comment xml:lang="oc">imatge PCD</comment>
+  <comment xml:lang="nn">PCD-bilete</comment>
+  <comment xml:lang="nl">PCD-afbeelding</comment>
+  <comment xml:lang="nb">PCD-bilde</comment>
+  <comment xml:lang="lv">PCD attēls</comment>
+  <comment xml:lang="lt">PCD paveikslėlis</comment>
+  <comment xml:lang="ko">PCD 그림</comment>
+  <comment xml:lang="kk-Cyrl">PCD суреті</comment>
+  <comment xml:lang="ka">PCD გამოსახულება</comment>
+  <comment xml:lang="ja">PCD 画像</comment>
+  <comment xml:lang="it">Immagine PCD</comment>
+  <comment xml:lang="is">PCD mynd</comment>
+  <comment xml:lang="id">Citra PCD</comment>
+  <comment xml:lang="ia">Imagine PCD</comment>
+  <comment xml:lang="hu">PCD kép</comment>
+  <comment xml:lang="hr">PCD slika</comment>
+  <comment xml:lang="he">תמונת PCD</comment>
+  <comment xml:lang="gl">imaxe PCD</comment>
+  <comment xml:lang="ga">íomhá PCD</comment>
+  <comment xml:lang="fur">imagjin PCD</comment>
+  <comment xml:lang="fr">image PCD</comment>
+  <comment xml:lang="fo">PCD mynd</comment>
+  <comment xml:lang="fi">PCD-kuva</comment>
+  <comment xml:lang="eu">PCD irudia</comment>
+  <comment xml:lang="es">imagen PCD</comment>
+  <comment xml:lang="eo">PCD-bildo</comment>
+  <comment xml:lang="en-GB">PCD image</comment>
+  <comment xml:lang="el">Εικόνα PCD</comment>
+  <comment xml:lang="de">PCD-Bild</comment>
+  <comment xml:lang="da">PCD-billede</comment>
+  <comment xml:lang="cs">obrázek PCD</comment>
+  <comment xml:lang="ca">imatge PCD</comment>
+  <comment xml:lang="bg">Изображение — PCD</comment>
+  <comment xml:lang="be-Latn">Vyjava PCD</comment>
+  <comment xml:lang="be-Cyrl">выява PCD</comment>
+  <comment xml:lang="ar">صورة PCD</comment>
+  <comment xml:lang="af">PCD-beeld</comment>
+  <acronym>PCD</acronym>
+  <expanded-acronym>PhotoCD</expanded-acronym>
+  <generic-icon name="media-optical"/>
+  <glob pattern="*.pcd"/>
+</mime-type>

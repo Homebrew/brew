@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="x-content/unix-software">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>UNIX software</comment>
+  <comment xml:lang="zh-Hant-TW">UNIX 軟體</comment>
+  <comment xml:lang="zh-Hans-CN">UNIX 软件</comment>
+  <comment xml:lang="uk">програмне забезпечення UNIX</comment>
+  <comment xml:lang="tr">UNIX yazılımı</comment>
+  <comment xml:lang="sv">UNIX-programvara</comment>
+  <comment xml:lang="sr-Cyrl">ЈУНИКС-ов софтвер</comment>
+  <comment xml:lang="sq">software UNIX</comment>
+  <comment xml:lang="sl">Programska datoteka UNIX</comment>
+  <comment xml:lang="si">UNIX මෘදුකාංගය</comment>
+  <comment xml:lang="sk">Softvér UNIX</comment>
+  <comment xml:lang="ru">Программа UNIX</comment>
+  <comment xml:lang="ro">Software UNIX</comment>
+  <comment xml:lang="pt-BR">Aplicativo UNIX</comment>
+  <comment xml:lang="pt">programa UNIX</comment>
+  <comment xml:lang="pl">Oprogramowanie systemu UNIX</comment>
+  <comment xml:lang="oc">logicial UNIX</comment>
+  <comment xml:lang="nl">UNIX-software</comment>
+  <comment xml:lang="lv">UNIX programmatūra</comment>
+  <comment xml:lang="lt">UNIX programinė įranga</comment>
+  <comment xml:lang="ko">UNIX 소프트웨어</comment>
+  <comment xml:lang="kk-Cyrl">UNIX бағдарламасы</comment>
+  <comment xml:lang="ja">UNIX ソフトウェア</comment>
+  <comment xml:lang="it">Software UNIX</comment>
+  <comment xml:lang="is">UNIX hugbúnaður</comment>
+  <comment xml:lang="id">Peranti lunak UNIX</comment>
+  <comment xml:lang="ia">Software pro UNIX</comment>
+  <comment xml:lang="hu">UNIX-szoftver</comment>
+  <comment xml:lang="hr">UNIX softver</comment>
+  <comment xml:lang="he">תכנה ל־UNIX</comment>
+  <comment xml:lang="gl">Software de UNIX</comment>
+  <comment xml:lang="ga">bogearraí UNIX</comment>
+  <comment xml:lang="fur">software UNIX</comment>
+  <comment xml:lang="fr">logiciel UNIX</comment>
+  <comment xml:lang="fo">UNIX ritbúnaður</comment>
+  <comment xml:lang="fi">UNIX-ohjelmisto</comment>
+  <comment xml:lang="eu">UNIXeko softwarea</comment>
+  <comment xml:lang="es">software de UNIX</comment>
+  <comment xml:lang="en-GB">UNIX software</comment>
+  <comment xml:lang="el">Λογισμικό UNIX</comment>
+  <comment xml:lang="de">UNIX-Software</comment>
+  <comment xml:lang="da">UNIX-programmer</comment>
+  <comment xml:lang="cs">software systému UNIX</comment>
+  <comment xml:lang="ca">programari d'UNIX</comment>
+  <comment xml:lang="bg">Софтуер — UNIX</comment>
+  <comment xml:lang="be-Cyrl">ПЗ UNIX</comment>
+  <comment xml:lang="ar">برنامج يونكس</comment>
+  <comment xml:lang="af">UNIX-sagteware</comment>
+  <sub-class-of type="x-content/software"/>
+</mime-type>

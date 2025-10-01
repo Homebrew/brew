@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="x-content/image-picturecd">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Picture CD</comment>
+  <comment xml:lang="zh-Hant-TW">圖片 CD</comment>
+  <comment xml:lang="zh-Hans-CN">柯达 Picture CD</comment>
+  <comment xml:lang="vi">Đĩa CD ảnh</comment>
+  <comment xml:lang="uk">CD з зображеннями</comment>
+  <comment xml:lang="tr">Resim CD'si</comment>
+  <comment xml:lang="sv">Picture CD</comment>
+  <comment xml:lang="sr-Cyrl">ЦД са сликама</comment>
+  <comment xml:lang="sq">Picture CD</comment>
+  <comment xml:lang="sl">Slikovni CD</comment>
+  <comment xml:lang="si">පින්තූර සීඩී</comment>
+  <comment xml:lang="sk">Picture CD</comment>
+  <comment xml:lang="ru">Picture CD</comment>
+  <comment xml:lang="ro">CD cu fotografii</comment>
+  <comment xml:lang="pt-BR">CD de Fotos</comment>
+  <comment xml:lang="pt">Picture CD</comment>
+  <comment xml:lang="pl">Picture CD</comment>
+  <comment xml:lang="oc">CD Picture</comment>
+  <comment xml:lang="nn">Bilete-CD</comment>
+  <comment xml:lang="nl">Picture CD</comment>
+  <comment xml:lang="lv">Attēlu CD</comment>
+  <comment xml:lang="lt">Paveikslėlių CD</comment>
+  <comment xml:lang="ko">Picture CD</comment>
+  <comment xml:lang="kk-Cyrl">Picture CD</comment>
+  <comment xml:lang="ka">ფოტო სურათებიანი CD</comment>
+  <comment xml:lang="ja">ピクチャー CD</comment>
+  <comment xml:lang="it">Picture CD</comment>
+  <comment xml:lang="is">Picture CD-mynddiskur</comment>
+  <comment xml:lang="id">CD Gambar</comment>
+  <comment xml:lang="ia">Disco Picture CD</comment>
+  <comment xml:lang="hu">Picture CD</comment>
+  <comment xml:lang="hr">Slikovni CD</comment>
+  <comment xml:lang="he">תקליטור תמונות</comment>
+  <comment xml:lang="gl">Picture CD</comment>
+  <comment xml:lang="ga">dlúthdhiosca grianghraf</comment>
+  <comment xml:lang="fur">Picture CD</comment>
+  <comment xml:lang="fr">CD Picture</comment>
+  <comment xml:lang="fo">Picture CD</comment>
+  <comment xml:lang="fi">Picture CD</comment>
+  <comment xml:lang="eu">Picture CD</comment>
+  <comment xml:lang="es">Picture CD</comment>
+  <comment xml:lang="en-GB">Picture CD</comment>
+  <comment xml:lang="el">CD εικόνων</comment>
+  <comment xml:lang="de">Kodak Picture-CD</comment>
+  <comment xml:lang="da">Billedcd</comment>
+  <comment xml:lang="cs">Picture CD</comment>
+  <comment xml:lang="ca">CD d'imatges</comment>
+  <comment xml:lang="bg">Picture CD — изображения</comment>
+  <comment xml:lang="be-Latn">Picture CD</comment>
+  <comment xml:lang="be-Cyrl">Picture CD</comment>
+  <comment xml:lang="ar">سي دي صورة</comment>
+  <comment xml:lang="af">Picture CD</comment>
+</mime-type>

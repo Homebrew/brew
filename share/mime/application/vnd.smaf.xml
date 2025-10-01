@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/vnd.smaf">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>SMAF audio</comment>
+  <comment xml:lang="zh-Hant-TW">SMAF 音訊</comment>
+  <comment xml:lang="zh-Hans-CN">SMAF 音频</comment>
+  <comment xml:lang="vi">Âm thanh SMAF</comment>
+  <comment xml:lang="uk">звук SMAF</comment>
+  <comment xml:lang="tr">SMAF sesi</comment>
+  <comment xml:lang="sv">SMAF-ljud</comment>
+  <comment xml:lang="sr-Cyrl">СМАФ звук</comment>
+  <comment xml:lang="sq">audio SMAF</comment>
+  <comment xml:lang="sl">Zvočna datoteka SMAF</comment>
+  <comment xml:lang="si">SMAF ශ්රව්ය</comment>
+  <comment xml:lang="sk">Zvuk SMAF</comment>
+  <comment xml:lang="ru">Аудио SMAF</comment>
+  <comment xml:lang="ro">Audio SMAF</comment>
+  <comment xml:lang="pt-BR">Áudio SMAF</comment>
+  <comment xml:lang="pt">áudio SMAF</comment>
+  <comment xml:lang="pl">Plik dźwiękowy SMAF</comment>
+  <comment xml:lang="oc">àudio SMAF</comment>
+  <comment xml:lang="nn">SMAF-lyd</comment>
+  <comment xml:lang="nl">SMAF-audio</comment>
+  <comment xml:lang="nb">SMAF-lyd</comment>
+  <comment xml:lang="lv">SMAF audio</comment>
+  <comment xml:lang="lt">SMAF garso įrašas</comment>
+  <comment xml:lang="ko">SMAF 오디오</comment>
+  <comment xml:lang="kk-Cyrl">SMAF аудиосы</comment>
+  <comment xml:lang="ja">SMAF オーディオ</comment>
+  <comment xml:lang="it">Audio SMAF</comment>
+  <comment xml:lang="is">SMAF hljóðskrá</comment>
+  <comment xml:lang="id">Audio SMAF</comment>
+  <comment xml:lang="ia">Audio SMAF</comment>
+  <comment xml:lang="hu">SMAF hang</comment>
+  <comment xml:lang="hr">SMAF zvučni zapis</comment>
+  <comment xml:lang="he">שמע SMAF</comment>
+  <comment xml:lang="gl">son SMAF</comment>
+  <comment xml:lang="ga">fuaim SMAF</comment>
+  <comment xml:lang="fur">audio SMAF</comment>
+  <comment xml:lang="fr">audio SMAF</comment>
+  <comment xml:lang="fo">SMAF ljóður</comment>
+  <comment xml:lang="fi">SMAF-ääni</comment>
+  <comment xml:lang="eu">SMAF audioa</comment>
+  <comment xml:lang="es">audio SMAF</comment>
+  <comment xml:lang="eo">SMAF-sondosiero</comment>
+  <comment xml:lang="en-GB">SMAF audio</comment>
+  <comment xml:lang="el">Ήχος SMAF</comment>
+  <comment xml:lang="de">SMAF-Audio</comment>
+  <comment xml:lang="da">SMAF-lyd</comment>
+  <comment xml:lang="cs">zvuk SMAF</comment>
+  <comment xml:lang="ca">àudio SMAF</comment>
+  <comment xml:lang="bg">Аудио — SMAF</comment>
+  <comment xml:lang="be-Latn">Aŭdyjo SMAF</comment>
+  <comment xml:lang="be-Cyrl">аўдыя SMAF</comment>
+  <comment xml:lang="ar">صوت SMAF</comment>
+  <comment xml:lang="af">SMAF-oudio</comment>
+  <acronym>SMAF</acronym>
+  <expanded-acronym>Synthetic music Mobile Application Format</expanded-acronym>
+  <generic-icon name="audio-x-generic"/>
+  <glob pattern="*.mmf"/>
+  <glob pattern="*.smaf"/>
+  <alias type="application/x-smaf"/>
+</mime-type>

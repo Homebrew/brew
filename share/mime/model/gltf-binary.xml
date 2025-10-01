@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="model/gltf-binary">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>glTF model</comment>
+  <comment xml:lang="zh-Hans-CN">glTF 模型</comment>
+  <comment xml:lang="uk">модель glTF</comment>
+  <comment xml:lang="tr">glTF modeli</comment>
+  <comment xml:lang="sv">glTF-modell</comment>
+  <comment xml:lang="sl">Model gITF</comment>
+  <comment xml:lang="si">glTF ආකෘතිය</comment>
+  <comment xml:lang="ru">glTF-модель</comment>
+  <comment xml:lang="pt-BR">Modelo gITF</comment>
+  <comment xml:lang="pl">Model glTF</comment>
+  <comment xml:lang="oc">modèl glTF</comment>
+  <comment xml:lang="nl">glTF-model</comment>
+  <comment xml:lang="ko">glTF 모델</comment>
+  <comment xml:lang="kk-Cyrl">glTF моделі</comment>
+  <comment xml:lang="ja">glTF モデル</comment>
+  <comment xml:lang="it">Modello glTF</comment>
+  <comment xml:lang="hr">glTF model</comment>
+  <comment xml:lang="he">דגם gITF</comment>
+  <comment xml:lang="gl">Modelo glTF</comment>
+  <comment xml:lang="fi">glTF malli</comment>
+  <comment xml:lang="eu">glTF eredua</comment>
+  <comment xml:lang="es">modelo gITF</comment>
+  <comment xml:lang="en-GB">glTF model</comment>
+  <comment xml:lang="de">glTF-Modell</comment>
+  <comment xml:lang="be-Cyrl">мадэль glTF</comment>
+  <comment xml:lang="ar">نموذج glTF</comment>
+  <acronym>glTF</acronym>
+  <expanded-acronym>GL Transmission Format</expanded-acronym>
+  <generic-icon name="image-x-generic"/>
+  <glob pattern="*.glb"/>
+</mime-type>

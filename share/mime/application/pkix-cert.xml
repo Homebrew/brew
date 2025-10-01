@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/pkix-cert">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>X.509 certificate</comment>
+  <comment xml:lang="zh-Hant-TW">X.509 憑證</comment>
+  <comment xml:lang="zh-Hans-CN">X.509 证书</comment>
+  <comment xml:lang="uk">сертифікат X.509</comment>
+  <comment xml:lang="tr">X.509 sertifikası</comment>
+  <comment xml:lang="sv">X.509-certifikat</comment>
+  <comment xml:lang="sr-Cyrl">Икс.509 уверење</comment>
+  <comment xml:lang="sq">dëshmi X.509</comment>
+  <comment xml:lang="sl">Datoteka potrdila X.509</comment>
+  <comment xml:lang="si">X.509 සහතිකය</comment>
+  <comment xml:lang="sk">Certifikát X.509</comment>
+  <comment xml:lang="ru">Сертификат X.509</comment>
+  <comment xml:lang="ro">Certificat X.509</comment>
+  <comment xml:lang="pt-BR">Certificado X.509</comment>
+  <comment xml:lang="pt">certificado X.509</comment>
+  <comment xml:lang="pl">Certyfikat X.509</comment>
+  <comment xml:lang="oc">certificat X.509</comment>
+  <comment xml:lang="nl">X.509-certificaat</comment>
+  <comment xml:lang="lv">X.509 sertifikāts</comment>
+  <comment xml:lang="lt">X.509 liudijimas</comment>
+  <comment xml:lang="ko">X.509 인증서</comment>
+  <comment xml:lang="kk-Cyrl">X.509 сертификаты</comment>
+  <comment xml:lang="ka">X.509 სერტიფიკატი</comment>
+  <comment xml:lang="ja">X.509 証明書</comment>
+  <comment xml:lang="it">Certificato X.509</comment>
+  <comment xml:lang="is">X.509 skilríki</comment>
+  <comment xml:lang="id">Sertifikat X.509</comment>
+  <comment xml:lang="ia">Certificato X.509</comment>
+  <comment xml:lang="hu">X.509 tanúsítvány</comment>
+  <comment xml:lang="hr">X.509 vjerodajnica</comment>
+  <comment xml:lang="he">אישור X.509</comment>
+  <comment xml:lang="gl">Certificado X.509</comment>
+  <comment xml:lang="ga">teastas X.509</comment>
+  <comment xml:lang="fur">certificât X.509</comment>
+  <comment xml:lang="fr">certificat X.509</comment>
+  <comment xml:lang="fo">X.509 prógv</comment>
+  <comment xml:lang="fi">X.509-varmenne</comment>
+  <comment xml:lang="eu">X.509 ziurtagiria</comment>
+  <comment xml:lang="es">certificado X.509</comment>
+  <comment xml:lang="en-GB">X.509 certificate</comment>
+  <comment xml:lang="el">Πιστοποιητικό X.509</comment>
+  <comment xml:lang="de">X.509-Zertifikat</comment>
+  <comment xml:lang="da">X.509-certifikat</comment>
+  <comment xml:lang="cs">certifikát X.509</comment>
+  <comment xml:lang="ca">certificat X.509</comment>
+  <comment xml:lang="bg">Сертификат — X.509</comment>
+  <comment xml:lang="be-Cyrl">сертыфікат X.509</comment>
+  <comment xml:lang="ast">Certificáu X.509</comment>
+  <comment xml:lang="ar">شهادة X.509</comment>
+  <comment xml:lang="af">X.509-sertifikaat</comment>
+  <glob pattern="*.cer"/>
+</mime-type>

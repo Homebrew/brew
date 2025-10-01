@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-kword-crypt">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>KWord document (encrypted)</comment>
+  <comment xml:lang="zh-Hant-TW">KWord 文件 (加密)</comment>
+  <comment xml:lang="zh-Hans-CN">KWord 文档（加密）</comment>
+  <comment xml:lang="vi">Tài liệu KWord (đã mật mã)</comment>
+  <comment xml:lang="uk">документ KWord (зашифрований)</comment>
+  <comment xml:lang="tr">KWord belgesi (şifreli)</comment>
+  <comment xml:lang="sv">KWord-dokument (krypterat)</comment>
+  <comment xml:lang="sr-Cyrl">документ К-речи (шифровани)</comment>
+  <comment xml:lang="sq">dokument KWord (i fshehtëzuar)</comment>
+  <comment xml:lang="sl">Dokument KWord (šifriran)</comment>
+  <comment xml:lang="si">KWord ලේඛනය (සංකේතනය කළ)</comment>
+  <comment xml:lang="sk">Dokument KWord (šifrovaný)</comment>
+  <comment xml:lang="ru">Документ KWord (зашифрованный)</comment>
+  <comment xml:lang="ro">Document KWord (criptat)</comment>
+  <comment xml:lang="pt-BR">Documento do KWord (criptografado)</comment>
+  <comment xml:lang="pt">documento KWord (encriptado)</comment>
+  <comment xml:lang="pl">Dokument KWord (zaszyfrowany)</comment>
+  <comment xml:lang="oc">document KWord (chifrat)</comment>
+  <comment xml:lang="nn">Kryptert KWord-dokument</comment>
+  <comment xml:lang="nl">KWord-document (versleuteld)</comment>
+  <comment xml:lang="nb">KWord-dokument (kryptert)</comment>
+  <comment xml:lang="ms">Dokumen Kword (terenkripsi)</comment>
+  <comment xml:lang="lv">KWord dokuments (šifrēts)</comment>
+  <comment xml:lang="lt">KWord dokumentas (užšifruotas)</comment>
+  <comment xml:lang="ko">암호화된 KWord 문서</comment>
+  <comment xml:lang="kk-Cyrl">KWord құжаты (шифрленген)</comment>
+  <comment xml:lang="ja">KWord (暗号化) ドキュメント</comment>
+  <comment xml:lang="it">Documento KWord (cifrato)</comment>
+  <comment xml:lang="is">KWord skjal (dulritað)</comment>
+  <comment xml:lang="id">Dokumen KWord (terenkripsi)</comment>
+  <comment xml:lang="ia">Documento KWord (cryptate)</comment>
+  <comment xml:lang="hu">KWord-dokumentum (titkosított)</comment>
+  <comment xml:lang="hr">KWord dokument (šifriran)</comment>
+  <comment xml:lang="he">מסמך KWord (מוצפן)</comment>
+  <comment xml:lang="gl">documento de KWord (cifrado)</comment>
+  <comment xml:lang="ga">cáipéis KWord (criptithe)</comment>
+  <comment xml:lang="fur">document KWord (cifrât)</comment>
+  <comment xml:lang="fr">document KWord (chiffré)</comment>
+  <comment xml:lang="fo">KWord skjal (bronglað)</comment>
+  <comment xml:lang="fi">KWord-asiakirja (salattu)</comment>
+  <comment xml:lang="eu">KWord dokumentua (zifratuta)</comment>
+  <comment xml:lang="es">documento de KWord (cifrado)</comment>
+  <comment xml:lang="eo">KWord-dokumento (ĉifrita)</comment>
+  <comment xml:lang="en-GB">KWord document (encrypted)</comment>
+  <comment xml:lang="el">Έγγραφο KWord (κρυπτογραφημένο)</comment>
+  <comment xml:lang="de">KWord-Dokument (verschlüsselt)</comment>
+  <comment xml:lang="da">KWord-dokument (krypteret)</comment>
+  <comment xml:lang="cs">dokument KWord (šifrovaný)</comment>
+  <comment xml:lang="ca">document KWord (xifrat)</comment>
+  <comment xml:lang="bg">Документ — KWord, шифриран</comment>
+  <comment xml:lang="be-Latn">Dakument KWord (zašyfravany)</comment>
+  <comment xml:lang="be-Cyrl">дакумент KWord (зашыфраваны)</comment>
+  <comment xml:lang="ast">Documentu de Kword (cifráu)</comment>
+  <comment xml:lang="ar">مستند KWord (مشفر)</comment>
+  <comment xml:lang="af">KWord-dokument (geënkripteer)</comment>
+  <generic-icon name="x-office-document"/>
+</mime-type>

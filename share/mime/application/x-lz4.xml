@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-lz4">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>LZ4 archive</comment>
+  <comment xml:lang="zh-Hant-TW">LZ4 封存檔</comment>
+  <comment xml:lang="zh-Hans-CN">LZ4 归档文件</comment>
+  <comment xml:lang="uk">архів LZ4</comment>
+  <comment xml:lang="tr">LZ4 arşivi</comment>
+  <comment xml:lang="sv">LZ4-arkiv</comment>
+  <comment xml:lang="sr-Cyrl">ЛЗ4 архива</comment>
+  <comment xml:lang="sq">arkiv LZ4</comment>
+  <comment xml:lang="sl">Datoteka arhiva LZ4</comment>
+  <comment xml:lang="si">LZ4 ලේඛනාගාරය</comment>
+  <comment xml:lang="sk">Archív LZ4</comment>
+  <comment xml:lang="ru">Архив LZ4</comment>
+  <comment xml:lang="pt-BR">Pacote LZ4</comment>
+  <comment xml:lang="pt">arquivo LZ4</comment>
+  <comment xml:lang="pl">Archiwum LZ4</comment>
+  <comment xml:lang="oc">archiu LZ4</comment>
+  <comment xml:lang="nl">LZ4-archief</comment>
+  <comment xml:lang="ko">LZ4 압축 파일</comment>
+  <comment xml:lang="kk-Cyrl">LZ4 архиві</comment>
+  <comment xml:lang="ja">LZ4 アーカイヴ</comment>
+  <comment xml:lang="it">Archivio LZ4</comment>
+  <comment xml:lang="is">LZ4 safnskrá</comment>
+  <comment xml:lang="id">Arsip LZ4</comment>
+  <comment xml:lang="ia">Archivo LZ4</comment>
+  <comment xml:lang="hu">LZ4 archívum</comment>
+  <comment xml:lang="hr">LZ4 arhiva</comment>
+  <comment xml:lang="he">ארכיון LZ4</comment>
+  <comment xml:lang="gl">Arquivo LZ4</comment>
+  <comment xml:lang="ga">Cartlann LZ4</comment>
+  <comment xml:lang="fur">archivi LZ4</comment>
+  <comment xml:lang="fr">archive LZ4</comment>
+  <comment xml:lang="fi">LZ4-arkisto</comment>
+  <comment xml:lang="eu">LZ4 artxiboa</comment>
+  <comment xml:lang="es">archivador LZ4</comment>
+  <comment xml:lang="en-GB">LZ4 archive</comment>
+  <comment xml:lang="el">Συμπιεσμένο αρχείο LZ4</comment>
+  <comment xml:lang="de">LZ4-Archiv</comment>
+  <comment xml:lang="da">LZ4-arkiv</comment>
+  <comment xml:lang="cs">archiv LZ4</comment>
+  <comment xml:lang="ca">arxiu LZ4</comment>
+  <comment xml:lang="bg">Архив — LZ4</comment>
+  <comment xml:lang="be-Cyrl">архіў LZ4</comment>
+  <comment xml:lang="ar">أرشيف LZ4</comment>
+  <comment xml:lang="af">LZ4-argief</comment>
+  <generic-icon name="package-x-generic"/>
+  <glob pattern="*.lz4"/>
+</mime-type>

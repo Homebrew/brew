@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/vnd.hp-hpgl">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>HPGL file</comment>
+  <comment xml:lang="zh-Hant-TW">HPGL 檔案</comment>
+  <comment xml:lang="zh-Hans-CN">HPGL 文件</comment>
+  <comment xml:lang="vi">Tập tin HPGL</comment>
+  <comment xml:lang="uk">файл HPGL</comment>
+  <comment xml:lang="tr">HPGL dosyası</comment>
+  <comment xml:lang="sv">HPGL-fil</comment>
+  <comment xml:lang="sr-Cyrl">ХПГЛ датотека</comment>
+  <comment xml:lang="sq">kartelë HPGL</comment>
+  <comment xml:lang="sl">Datoteka HPGL</comment>
+  <comment xml:lang="si">HPGL ගොනුව</comment>
+  <comment xml:lang="sk">Súbor HPGL</comment>
+  <comment xml:lang="ru">Файл HPGL</comment>
+  <comment xml:lang="ro">Fișier HPGL</comment>
+  <comment xml:lang="pt-BR">Arquivo HPGL</comment>
+  <comment xml:lang="pt">ficheiro HPGL</comment>
+  <comment xml:lang="pl">Plik HPGL</comment>
+  <comment xml:lang="oc">fichièr HPGL</comment>
+  <comment xml:lang="nn">HPGL-fil</comment>
+  <comment xml:lang="nl">HPGL-bestand</comment>
+  <comment xml:lang="nb">HPGL-fil</comment>
+  <comment xml:lang="lv">HPGL datne</comment>
+  <comment xml:lang="lt">HPGL failas</comment>
+  <comment xml:lang="ko">HPGL 파일</comment>
+  <comment xml:lang="kk-Cyrl">HPGL файлы</comment>
+  <comment xml:lang="ka">HPGL ფაილი</comment>
+  <comment xml:lang="ja">HPGL ファイル</comment>
+  <comment xml:lang="it">File HPGL</comment>
+  <comment xml:lang="is">HPGL skrá</comment>
+  <comment xml:lang="id">Berkas HPGL</comment>
+  <comment xml:lang="ia">File HPGL</comment>
+  <comment xml:lang="hu">HPGL fájl</comment>
+  <comment xml:lang="hr">HPGL datoteka</comment>
+  <comment xml:lang="he">קובץ HGPL</comment>
+  <comment xml:lang="gl">ficheiro HPGL</comment>
+  <comment xml:lang="ga">comhad HPGL</comment>
+  <comment xml:lang="fur">file HPGL</comment>
+  <comment xml:lang="fr">fichier HPGL</comment>
+  <comment xml:lang="fo">HPGL fíla</comment>
+  <comment xml:lang="fi">HPGL-tiedosto</comment>
+  <comment xml:lang="eu">HPGL fitxategia</comment>
+  <comment xml:lang="es">archivo HPGL</comment>
+  <comment xml:lang="eo">HPGL-dosiero</comment>
+  <comment xml:lang="en-GB">HPGL file</comment>
+  <comment xml:lang="el">Αρχείο HPGL</comment>
+  <comment xml:lang="de">HPGL-Datei</comment>
+  <comment xml:lang="da">HPGL-fil</comment>
+  <comment xml:lang="cs">soubor HPGL</comment>
+  <comment xml:lang="ca">fitxer HPGL</comment>
+  <comment xml:lang="bg">Файл — HPGL</comment>
+  <comment xml:lang="be-Latn">Fajł HPGL</comment>
+  <comment xml:lang="be-Cyrl">файл HPGL</comment>
+  <comment xml:lang="ast">Ficheru HPGL</comment>
+  <comment xml:lang="ar">ملف HPGL</comment>
+  <comment xml:lang="af">HPGL-lêer</comment>
+  <acronym>HPGL</acronym>
+  <expanded-acronym>HP Graphics Language</expanded-acronym>
+  <generic-icon name="image-x-generic"/>
+  <glob pattern="*.hpgl"/>
+</mime-type>

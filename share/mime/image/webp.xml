@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="image/webp">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>WebP image</comment>
+  <comment xml:lang="zh-Hant-TW">WebP 影像</comment>
+  <comment xml:lang="zh-Hans-CN">WebP 图像</comment>
+  <comment xml:lang="uk">зображення WebP</comment>
+  <comment xml:lang="tr">WebP görüntüsü</comment>
+  <comment xml:lang="sv">WebP-bild</comment>
+  <comment xml:lang="sr-Cyrl">ВебП слика</comment>
+  <comment xml:lang="sq">figurë WebP</comment>
+  <comment xml:lang="sl">Slika WebP</comment>
+  <comment xml:lang="si">WebP රූපය</comment>
+  <comment xml:lang="sk">Obrázok WebP</comment>
+  <comment xml:lang="ru">Изображение WebP</comment>
+  <comment xml:lang="pt-BR">Imagem WebP</comment>
+  <comment xml:lang="pt">imagem WebP</comment>
+  <comment xml:lang="pl">Obraz WebP</comment>
+  <comment xml:lang="oc">imatge WebP</comment>
+  <comment xml:lang="nl">WebP-afbeelding</comment>
+  <comment xml:lang="ko">WebP 그림</comment>
+  <comment xml:lang="kk-Cyrl">WebP суреті</comment>
+  <comment xml:lang="ja">WebP 画像</comment>
+  <comment xml:lang="it">Immagine WebP</comment>
+  <comment xml:lang="is">WebP-mynd</comment>
+  <comment xml:lang="id">Citra WebP</comment>
+  <comment xml:lang="ia">Imagine WebP</comment>
+  <comment xml:lang="hu">WebP kép</comment>
+  <comment xml:lang="hr">WebP slika</comment>
+  <comment xml:lang="he">תמונת WebP</comment>
+  <comment xml:lang="gl">Imaxe WebP</comment>
+  <comment xml:lang="ga">íomhá WebP</comment>
+  <comment xml:lang="fur">imagjin WebP</comment>
+  <comment xml:lang="fr">image WebP</comment>
+  <comment xml:lang="fi">WebP-kuva</comment>
+  <comment xml:lang="eu">WebP irudia</comment>
+  <comment xml:lang="es">imagen WebP</comment>
+  <comment xml:lang="en-GB">WebP image</comment>
+  <comment xml:lang="el">Εικόνα WebP</comment>
+  <comment xml:lang="de">WebP-Bild</comment>
+  <comment xml:lang="da">WebP-billede</comment>
+  <comment xml:lang="cs">obrázek WebP</comment>
+  <comment xml:lang="ca">imatge WebP</comment>
+  <comment xml:lang="bg">Изображение — WebP</comment>
+  <comment xml:lang="be-Cyrl">выява WebP</comment>
+  <comment xml:lang="ar">صورة WebP</comment>
+  <comment xml:lang="af">WebP-beeld</comment>
+  <glob pattern="*.webp"/>
+</mime-type>

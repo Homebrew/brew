@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/oxps">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>OpenXPS document</comment>
+  <comment xml:lang="zh-Hant-TW">OpenXPS 文件</comment>
+  <comment xml:lang="zh-Hans-CN">OpenXPS 文档</comment>
+  <comment xml:lang="uk">документ OpenXPS</comment>
+  <comment xml:lang="tr">OpenXPS belgesi</comment>
+  <comment xml:lang="sv">OpenXPS-dokument</comment>
+  <comment xml:lang="sl">Dokument OpenXPS</comment>
+  <comment xml:lang="si">OpenXPS ලේඛනය</comment>
+  <comment xml:lang="sk">Dokument OpenXPS</comment>
+  <comment xml:lang="ru">Документ OpenXPS</comment>
+  <comment xml:lang="pt-BR">Documento OpenXPS</comment>
+  <comment xml:lang="pt">documento OpenXPS</comment>
+  <comment xml:lang="pl">Dokument OpenXPS</comment>
+  <comment xml:lang="oc">document OpenXPS</comment>
+  <comment xml:lang="nl">OpenXPS-document</comment>
+  <comment xml:lang="ko">OpenXPS 문서</comment>
+  <comment xml:lang="kk-Cyrl">OpenXPS құжаты</comment>
+  <comment xml:lang="ka">OpenXPS -ის დოკუმენტი</comment>
+  <comment xml:lang="ja">OpenXPS ドキュメント</comment>
+  <comment xml:lang="it">Documento OpenXPS</comment>
+  <comment xml:lang="is">OpenXPS skjal</comment>
+  <comment xml:lang="id">Dokumen OpenXPS</comment>
+  <comment xml:lang="hu">OpenXPS-dokumentum</comment>
+  <comment xml:lang="hr">OpenXPS dokument</comment>
+  <comment xml:lang="he">מסמך OpenXPS</comment>
+  <comment xml:lang="gl">Documento de OpenXPS</comment>
+  <comment xml:lang="fr">Document OpenXPS</comment>
+  <comment xml:lang="fi">OpenXPS-asiakirja</comment>
+  <comment xml:lang="eu">OpenXPS dokumentua</comment>
+  <comment xml:lang="es">documento OpenXPS</comment>
+  <comment xml:lang="en-GB">OpenXPS document</comment>
+  <comment xml:lang="de">OpenXPS-Dokument</comment>
+  <comment xml:lang="da">OpenXPS-dokument</comment>
+  <comment xml:lang="ca">document OpenXPS</comment>
+  <comment xml:lang="be-Cyrl">дакумент OpenXPS</comment>
+  <comment xml:lang="ar">مستند OpenXPS</comment>
+  <acronym>OpenXPS</acronym>
+  <expanded-acronym>Open XML Paper Specification</expanded-acronym>
+  <sub-class-of type="application/zip"/>
+  <generic-icon name="x-office-document"/>
+  <glob pattern="*.oxps"/>
+</mime-type>

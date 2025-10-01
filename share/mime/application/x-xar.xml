@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-xar">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>XAR archive</comment>
+  <comment xml:lang="zh-Hant-TW">XAR 封存檔</comment>
+  <comment xml:lang="zh-Hans-CN">XAR 归档文件</comment>
+  <comment xml:lang="uk">архів XAR</comment>
+  <comment xml:lang="tr">XAR arşivi</comment>
+  <comment xml:lang="sv">XAR-arkiv</comment>
+  <comment xml:lang="sr-Cyrl">ИксАР архива</comment>
+  <comment xml:lang="sq">arkvi XAR</comment>
+  <comment xml:lang="sl">Arhiv XAR</comment>
+  <comment xml:lang="si">XAR ලේඛනාගාරය</comment>
+  <comment xml:lang="sk">Archív XAR</comment>
+  <comment xml:lang="ru">Архив XAR</comment>
+  <comment xml:lang="pt-BR">Arquivo XAR</comment>
+  <comment xml:lang="pl">Archiwum XAR</comment>
+  <comment xml:lang="oc">Archiu XAR</comment>
+  <comment xml:lang="nl">XAR-archief</comment>
+  <comment xml:lang="ko">XAR 압축 파일</comment>
+  <comment xml:lang="kk-Cyrl">XAR архиві</comment>
+  <comment xml:lang="ja">XAR アーカイブ</comment>
+  <comment xml:lang="it">Archivio XAR</comment>
+  <comment xml:lang="is">XAR safnskrá</comment>
+  <comment xml:lang="id">Arsip XAR</comment>
+  <comment xml:lang="hu">XAR archívum</comment>
+  <comment xml:lang="hr">XAR arhiva</comment>
+  <comment xml:lang="he">ארכיון XAR</comment>
+  <comment xml:lang="gl">Arquivo XAR</comment>
+  <comment xml:lang="ga">cartlann XAR</comment>
+  <comment xml:lang="fur">archivi XAR</comment>
+  <comment xml:lang="fr">archive XAR</comment>
+  <comment xml:lang="fi">XAR-arkisto</comment>
+  <comment xml:lang="eu">XAR artxiboa</comment>
+  <comment xml:lang="es">archivador XAR</comment>
+  <comment xml:lang="en-GB">XAR archive</comment>
+  <comment xml:lang="de">XAR-Archiv</comment>
+  <comment xml:lang="da">XAR-arkiv</comment>
+  <comment xml:lang="cs">archiv XAR</comment>
+  <comment xml:lang="ca">arxiu XAR</comment>
+  <comment xml:lang="bg">Архив — XAR</comment>
+  <comment xml:lang="be-Cyrl">архіў XAR</comment>
+  <comment xml:lang="ar">أرشيف XAR</comment>
+  <comment xml:lang="af">XAR-argief</comment>
+  <acronym>XAR</acronym>
+  <expanded-acronym>eXtensible ARchive</expanded-acronym>
+  <generic-icon name="package-x-generic"/>
+  <glob pattern="*.xar"/>
+  <glob pattern="*.pkg"/>
+</mime-type>

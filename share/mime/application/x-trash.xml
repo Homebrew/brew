@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-trash">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Backup file</comment>
+  <comment xml:lang="uk">Файл резервної копії</comment>
+  <comment xml:lang="sv">Säkerhetskopia</comment>
+  <comment xml:lang="ru">Резервная копия</comment>
+  <comment xml:lang="pt-BR">Arquivo de backup</comment>
+  <comment xml:lang="pl">Plik zapasowy</comment>
+  <comment xml:lang="ja">控え</comment>
+  <comment xml:lang="it">File di backup</comment>
+  <comment xml:lang="gl">Ficheiro de respaldo</comment>
+  <comment xml:lang="eu">Babeskopia-fitxategia</comment>
+  <comment xml:lang="es">archivo de copia de respaldo</comment>
+  <comment xml:lang="de">Sicherungsdatei</comment>
+  <comment xml:lang="be-Cyrl">рэзервовая копія файла</comment>
+  <glob pattern="*~"/>
+  <glob pattern="*%"/>
+  <glob pattern="*.bak"/>
+  <glob pattern="*.old"/>
+  <glob pattern="*.sik"/>
+</mime-type>

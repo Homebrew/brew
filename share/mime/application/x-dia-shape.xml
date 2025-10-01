@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-dia-shape">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Dia shape</comment>
+  <comment xml:lang="zh-Hant-TW">Dia 形狀</comment>
+  <comment xml:lang="zh-Hans-CN">Dia 形状</comment>
+  <comment xml:lang="uk">форма Dia</comment>
+  <comment xml:lang="tr">Dia şekli</comment>
+  <comment xml:lang="sv">Dia-figur</comment>
+  <comment xml:lang="sr-Cyrl">облик Дие</comment>
+  <comment xml:lang="sq">formë Dia</comment>
+  <comment xml:lang="sl">Datoteka oblik Dia</comment>
+  <comment xml:lang="si">Dia හැඩය</comment>
+  <comment xml:lang="sk">Tvar Dia</comment>
+  <comment xml:lang="ru">Фигура Dia</comment>
+  <comment xml:lang="ro">Figură Dia</comment>
+  <comment xml:lang="pt-BR">Formato Dia</comment>
+  <comment xml:lang="pt">forma Dia</comment>
+  <comment xml:lang="pl">Kształt Dia</comment>
+  <comment xml:lang="oc">forma Dia</comment>
+  <comment xml:lang="nl">Diavorm</comment>
+  <comment xml:lang="lv">Dia forma</comment>
+  <comment xml:lang="lt">Dia forma</comment>
+  <comment xml:lang="ko">Dia 그림</comment>
+  <comment xml:lang="kk-Cyrl">Dia сызбасы</comment>
+  <comment xml:lang="ja">Dia 図形</comment>
+  <comment xml:lang="it">Sagoma Dia</comment>
+  <comment xml:lang="is">Dia lögun</comment>
+  <comment xml:lang="id">Shape Dia</comment>
+  <comment xml:lang="ia">Forma Dia</comment>
+  <comment xml:lang="hu">Dia alakzat</comment>
+  <comment xml:lang="hr">Dia oblik</comment>
+  <comment xml:lang="he">צורה של Dia</comment>
+  <comment xml:lang="gl">forma de Dia</comment>
+  <comment xml:lang="ga">cruth Dia</comment>
+  <comment xml:lang="fur">sagome Dia</comment>
+  <comment xml:lang="fr">forme Dia</comment>
+  <comment xml:lang="fo">Dia skapur</comment>
+  <comment xml:lang="fi">Dia-muoto</comment>
+  <comment xml:lang="eu">Dia-ren forma</comment>
+  <comment xml:lang="es">forma de Dia</comment>
+  <comment xml:lang="en-GB">Dia shape</comment>
+  <comment xml:lang="el">Σχήμα Dia</comment>
+  <comment xml:lang="de">Dia-Form</comment>
+  <comment xml:lang="da">Dia-figur</comment>
+  <comment xml:lang="cs">symboly Dia</comment>
+  <comment xml:lang="ca">forma de Dia</comment>
+  <comment xml:lang="bg">Фигура — Dia</comment>
+  <comment xml:lang="be-Cyrl">фігура Dia</comment>
+  <comment xml:lang="ar">شكل Dia</comment>
+  <comment xml:lang="af">Dia-vorm</comment>
+  <generic-icon name="image-x-generic"/>
+  <sub-class-of type="application/xml"/>
+  <glob pattern="*.shape"/>
+</mime-type>

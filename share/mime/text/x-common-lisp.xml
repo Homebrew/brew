@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="text/x-common-lisp">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Common Lisp source code</comment>
+  <comment xml:lang="zh-Hant-TW">Common Lisp 原始碼</comment>
+  <comment xml:lang="zh-Hans-CN">Common Lisp 源代码</comment>
+  <comment xml:lang="uk">початковий код мовою Common Lisp</comment>
+  <comment xml:lang="tr">Common Lisp kaynak kodu</comment>
+  <comment xml:lang="sv">Common Lisp-källkod</comment>
+  <comment xml:lang="si">පොදු Lisp මූලාශ්‍ර කේතය</comment>
+  <comment xml:lang="ru">Исходный код Common Lisp</comment>
+  <comment xml:lang="pt-BR">Código-fonte Common Lisp</comment>
+  <comment xml:lang="pl">Kod źródłowy Common Lisp</comment>
+  <comment xml:lang="nl">Common Lisp-broncode</comment>
+  <comment xml:lang="ko">Common Lisp 소스 코드</comment>
+  <comment xml:lang="kk-Cyrl">Common Lisp бастапқы коды</comment>
+  <comment xml:lang="ja">Common Lisp ソースコード</comment>
+  <comment xml:lang="it">Codice sorgente Common Lisp</comment>
+  <comment xml:lang="is">Sameiginlegur Lisp frumkóði</comment>
+  <comment xml:lang="id">kode sumber Common Lisp</comment>
+  <comment xml:lang="hu">Common Lisp forráskód</comment>
+  <comment xml:lang="hr">Common Lisp izvorni kôd</comment>
+  <comment xml:lang="he">קוד מקור של Common Lisp</comment>
+  <comment xml:lang="gl">Código fonte en Common Lisp</comment>
+  <comment xml:lang="fr">code source Common Lisp</comment>
+  <comment xml:lang="fi">Common Lisp -lähdekoodi</comment>
+  <comment xml:lang="es">código fuente en Common Lisp</comment>
+  <comment xml:lang="en-GB">Common Lisp source code</comment>
+  <comment xml:lang="de">Common-Lisp-Quelltext</comment>
+  <comment xml:lang="da">Common Lisp-kildekode</comment>
+  <comment xml:lang="ca">codi font en Common Lisp</comment>
+  <comment xml:lang="be-Cyrl">зыходны код Common Lisp</comment>
+  <comment xml:lang="ar">شفرة مصدر Common Lisp</comment>
+  <sub-class-of type="text/plain"/>
+  <glob pattern="*.asd"/>
+  <glob pattern="*.fasl"/>
+  <glob pattern="*.lisp"/>
+  <glob pattern="*.ros"/>
+</mime-type>

@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-karbon">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Karbon14 drawing</comment>
+  <comment xml:lang="zh-Hant-TW">Karbon14 繪圖</comment>
+  <comment xml:lang="zh-Hans-CN">Karbon14 绘图</comment>
+  <comment xml:lang="vi">Bản vẽ Karbon14</comment>
+  <comment xml:lang="uk">малюнок Karbon14</comment>
+  <comment xml:lang="tr">Karbon14 çizimi</comment>
+  <comment xml:lang="sv">Karbon14-teckning</comment>
+  <comment xml:lang="sr-Cyrl">цртеж Карбона14</comment>
+  <comment xml:lang="sq">vizatim Karbon14</comment>
+  <comment xml:lang="sl">Datoteka risbe Karbon14</comment>
+  <comment xml:lang="si">Karbon14 ඇඳීම</comment>
+  <comment xml:lang="sk">Kresba Karbon14</comment>
+  <comment xml:lang="ru">Рисунок Karbon14</comment>
+  <comment xml:lang="ro">Desen Karbon14</comment>
+  <comment xml:lang="pt-BR">Desenho do Karbon14</comment>
+  <comment xml:lang="pt">desenho Karbon14</comment>
+  <comment xml:lang="pl">Rysunek Karbon14</comment>
+  <comment xml:lang="oc">dessenh Karbon14</comment>
+  <comment xml:lang="nn">Karbon14-teikning</comment>
+  <comment xml:lang="nl">Karbon14-tekening</comment>
+  <comment xml:lang="nb">Karbon14-tegning</comment>
+  <comment xml:lang="ms">Lukisan Karbon14</comment>
+  <comment xml:lang="lv">Karbon14 zīmējums</comment>
+  <comment xml:lang="lt">Karbon14 piešinys</comment>
+  <comment xml:lang="ko">Karbon14 그림</comment>
+  <comment xml:lang="kk-Cyrl">Karbon14 суреті</comment>
+  <comment xml:lang="ja">Karbon14 ドロー</comment>
+  <comment xml:lang="it">Disegno Karbon14</comment>
+  <comment xml:lang="is">Karbon14 Tteikning</comment>
+  <comment xml:lang="id">Gambar Karbon14</comment>
+  <comment xml:lang="ia">Designo Karbon14</comment>
+  <comment xml:lang="hu">Karbon14-rajz</comment>
+  <comment xml:lang="hr">Karbon14 crtež</comment>
+  <comment xml:lang="he">ציור Karbon14</comment>
+  <comment xml:lang="gl">debuxo de Karbon14</comment>
+  <comment xml:lang="ga">líníocht Karbon14</comment>
+  <comment xml:lang="fur">dissen Karbon14</comment>
+  <comment xml:lang="fr">dessin Karbon14</comment>
+  <comment xml:lang="fo">Karbon14 tekning</comment>
+  <comment xml:lang="fi">Karbon14-piirros</comment>
+  <comment xml:lang="eu">Karbon14 marrazkia</comment>
+  <comment xml:lang="es">dibujo de Karbon14</comment>
+  <comment xml:lang="eo">Karbon14-grafikaĵo</comment>
+  <comment xml:lang="en-GB">Karbon14 drawing</comment>
+  <comment xml:lang="el">Σχέδιο Karbon14</comment>
+  <comment xml:lang="de">Karbon14-Zeichnung</comment>
+  <comment xml:lang="da">Karbon14-tegning</comment>
+  <comment xml:lang="cs">kresba Karbon14</comment>
+  <comment xml:lang="ca">dibuix de Karbon14</comment>
+  <comment xml:lang="bg">Чертеж — Karbon14</comment>
+  <comment xml:lang="be-Latn">Rysunak Karbon14</comment>
+  <comment xml:lang="be-Cyrl">рысунак Karbon14</comment>
+  <comment xml:lang="ar">تصميم Karbon14</comment>
+  <comment xml:lang="af">Karbon14-tekening</comment>
+  <generic-icon name="image-x-generic"/>
+  <glob pattern="*.karbon"/>
+</mime-type>

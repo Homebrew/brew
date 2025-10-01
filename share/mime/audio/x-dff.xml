@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="audio/x-dff">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>DSDIFF audio</comment>
+  <comment xml:lang="zh-Hant-TW">DSDIFF 音訊</comment>
+  <comment xml:lang="zh-Hans-CN">DSDIFF 音频</comment>
+  <comment xml:lang="uk">звукові дані DSDIFF</comment>
+  <comment xml:lang="tr">DSDIFF sesi</comment>
+  <comment xml:lang="sv">DSDIFF-ljud</comment>
+  <comment xml:lang="sl">Zvok DSDIFF</comment>
+  <comment xml:lang="si">DSDIFF ශ්රව්ය</comment>
+  <comment xml:lang="ru">Аудио DSDIFF</comment>
+  <comment xml:lang="pt-BR">Áudio DSDIFF</comment>
+  <comment xml:lang="pl">Plik dźwiękowy DSDIFF</comment>
+  <comment xml:lang="nl">DSDIFF-audio</comment>
+  <comment xml:lang="ko">DSDIFF 오디오</comment>
+  <comment xml:lang="kk-Cyrl">DSDIFF аудиосы</comment>
+  <comment xml:lang="ja">DSDIFF オーディオ</comment>
+  <comment xml:lang="it">Audio DSDIFF</comment>
+  <comment xml:lang="hr">DSDIFF zvučni zapis</comment>
+  <comment xml:lang="fi">DSDIFF-ääni</comment>
+  <comment xml:lang="eu">DSDIFF audioa</comment>
+  <comment xml:lang="es">sonido DSDIFF</comment>
+  <comment xml:lang="en-GB">DSDIFF audio</comment>
+  <comment xml:lang="de">DSDIFF-Audio</comment>
+  <comment xml:lang="be-Cyrl">аўдыя DSDIFF</comment>
+  <comment xml:lang="ar">صوت DSDIFF</comment>
+  <acronym>DSDIFF</acronym>
+  <expanded-acronym>Direct Stream Digital Interchange File Format</expanded-acronym>
+  <glob pattern="*.dff"/>
+  <alias type="audio/dff"/>
+</mime-type>

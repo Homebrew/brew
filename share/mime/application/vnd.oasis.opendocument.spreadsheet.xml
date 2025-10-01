@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/vnd.oasis.opendocument.spreadsheet">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>ODS spreadsheet</comment>
+  <comment xml:lang="zh-Hant-TW">ODS 試算表</comment>
+  <comment xml:lang="zh-Hans-CN">ODS 电子表格</comment>
+  <comment xml:lang="vi">Bảng tính ODS</comment>
+  <comment xml:lang="uk">електронна таблиця ODS</comment>
+  <comment xml:lang="tr">ODS hesap çizelgesi</comment>
+  <comment xml:lang="sv">ODS-kalkylblad</comment>
+  <comment xml:lang="sr-Cyrl">ОДС табела</comment>
+  <comment xml:lang="sq">fletëllogaritje ODS</comment>
+  <comment xml:lang="sl">Preglednica ODS</comment>
+  <comment xml:lang="si">ODS පැතුරුම්පත</comment>
+  <comment xml:lang="sk">Zošit ODS</comment>
+  <comment xml:lang="ru">Электронная таблица ODS</comment>
+  <comment xml:lang="ro">Foaie de calcul ODS</comment>
+  <comment xml:lang="pt-BR">Planilha ODS</comment>
+  <comment xml:lang="pt">folha de cálculo ODS</comment>
+  <comment xml:lang="pl">Arkusz ODS</comment>
+  <comment xml:lang="oc">fuèlh de calcul ODS</comment>
+  <comment xml:lang="nn">ODS-rekneark</comment>
+  <comment xml:lang="nl">ODS-rekenblad</comment>
+  <comment xml:lang="nb">ODS-regneark</comment>
+  <comment xml:lang="lv">ODS izklājlapa</comment>
+  <comment xml:lang="lt">ODS skaičialentė</comment>
+  <comment xml:lang="ko">ODS 스프레드시트</comment>
+  <comment xml:lang="kk-Cyrl">ODS электрондық кестесі</comment>
+  <comment xml:lang="ka">ODS ცხრილი</comment>
+  <comment xml:lang="ja">ODS スプレッドシート</comment>
+  <comment xml:lang="it">Foglio di calcolo ODS</comment>
+  <comment xml:lang="is">ODS töflureikniskjal</comment>
+  <comment xml:lang="id">Lembar sebar ODS</comment>
+  <comment xml:lang="ia">Folio de calculo ODS</comment>
+  <comment xml:lang="hu">ODS-táblázat</comment>
+  <comment xml:lang="hr">ODS proračunska tablica</comment>
+  <comment xml:lang="he">גיליון נתונים ODS</comment>
+  <comment xml:lang="gl">folla de cálculo ODS</comment>
+  <comment xml:lang="ga">scarbhileog ODS</comment>
+  <comment xml:lang="fur">sfuei di calcul ODS</comment>
+  <comment xml:lang="fr">feuille de calcul ODS</comment>
+  <comment xml:lang="fo">ODS rokniark</comment>
+  <comment xml:lang="fi">ODS-taulukko</comment>
+  <comment xml:lang="eu">ODS kalkulu-orria</comment>
+  <comment xml:lang="es">hoja de cálculo ODS</comment>
+  <comment xml:lang="eo">ODS-kalkultabelo</comment>
+  <comment xml:lang="en-GB">ODS spreadsheet</comment>
+  <comment xml:lang="el">Λογιστικό φύλλο ODS</comment>
+  <comment xml:lang="de">ODS-Tabelle</comment>
+  <comment xml:lang="da">ODS-regneark</comment>
+  <comment xml:lang="cs">sešit ODS</comment>
+  <comment xml:lang="ca">full de càlcul ODS</comment>
+  <comment xml:lang="bg">Таблица — ODS</comment>
+  <comment xml:lang="be-Latn">Raźlikovy arkuš ODS</comment>
+  <comment xml:lang="be-Cyrl">электронная табліца ODS</comment>
+  <comment xml:lang="ar">جدول ODS</comment>
+  <comment xml:lang="af">ODS-sigblad</comment>
+  <acronym>ODS</acronym>
+  <expanded-acronym>OpenDocument Spreadsheet</expanded-acronym>
+  <sub-class-of type="application/zip"/>
+  <generic-icon name="x-office-spreadsheet"/>
+  <glob pattern="*.ods"/>
+</mime-type>

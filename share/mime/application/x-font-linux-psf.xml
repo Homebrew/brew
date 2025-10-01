@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-font-linux-psf">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Linux PSF console font</comment>
+  <comment xml:lang="zh-Hant-TW">Linux PSF console 字型</comment>
+  <comment xml:lang="zh-Hans-CN">Linux PSF 控制台字体</comment>
+  <comment xml:lang="vi">Phông chữ bàn giao tiếp PSF Linux</comment>
+  <comment xml:lang="uk">консольний шрифт Linux PSF</comment>
+  <comment xml:lang="tr">Linux PSF konsol yazı tipi</comment>
+  <comment xml:lang="sv">Linux PSF-konsoltypsnitt</comment>
+  <comment xml:lang="sr-Cyrl">слова Линуксове ПСФ конзоле</comment>
+  <comment xml:lang="sq">shkronja konsole Linux PSF</comment>
+  <comment xml:lang="sl">Datoteka pisave konzole Linux PSF</comment>
+  <comment xml:lang="si">Linux PSF කොන්සෝල අකුරු</comment>
+  <comment xml:lang="sk">Písmo PSF pre konzolu Linuxu</comment>
+  <comment xml:lang="ru">Консольный шрифт Linux PSF</comment>
+  <comment xml:lang="ro">Font consolă Linux PSF</comment>
+  <comment xml:lang="pt-BR">Fonte de console Linux PSF</comment>
+  <comment xml:lang="pt">letra de consola Linux PSF</comment>
+  <comment xml:lang="pl">Czcionka konsoli PSF Linux</comment>
+  <comment xml:lang="oc">poliça consòla Linux PSF</comment>
+  <comment xml:lang="nn">Linux PSF konsoll-skrifttype</comment>
+  <comment xml:lang="nl">Linux PSF-console-lettertype</comment>
+  <comment xml:lang="nb">Linux PSF konsollskrifttype</comment>
+  <comment xml:lang="ms">Font konsol PSF Linux</comment>
+  <comment xml:lang="lv">Linux PSF konsoles fonts</comment>
+  <comment xml:lang="lt">Linux PSF konsolės šriftas</comment>
+  <comment xml:lang="ko">리눅스 PSF 콘솔 글꼴</comment>
+  <comment xml:lang="kk-Cyrl">Linux PSF консольдік қарібі</comment>
+  <comment xml:lang="ja">Linux PSF コンソールフォント</comment>
+  <comment xml:lang="it">Carattere console Linux PSF</comment>
+  <comment xml:lang="is">Linux PSF stjórnskjáaletur</comment>
+  <comment xml:lang="id">Fonta konsol Linux PSF</comment>
+  <comment xml:lang="ia">Typo de litteras console Linux PSF</comment>
+  <comment xml:lang="hu">Linux PSF konzolos betűkészlet</comment>
+  <comment xml:lang="hr">Linux PSF font konzole</comment>
+  <comment xml:lang="he">גופן לקונסול מסוג Linux PSF</comment>
+  <comment xml:lang="gl">tipo de fonte de consola Linux PSF</comment>
+  <comment xml:lang="ga">cló consóil Linux PSF</comment>
+  <comment xml:lang="fur">caratar console Linux PSF</comment>
+  <comment xml:lang="fr">police console Linux PSF</comment>
+  <comment xml:lang="fo">Linux PSF stýristøðs stavasnið</comment>
+  <comment xml:lang="fi">Linux PSF -konsolifontti</comment>
+  <comment xml:lang="eu">Linux PSF kontsolako letra-tipoa</comment>
+  <comment xml:lang="es">tipo de letra de consola Linux PSF</comment>
+  <comment xml:lang="eo">PSF-tiparo de Linux-konzolo</comment>
+  <comment xml:lang="en-GB">Linux PSF console font</comment>
+  <comment xml:lang="el">Γραμματοσειρά κονσόλας PSF Linux</comment>
+  <comment xml:lang="de">Linux-PSF-Konsolenschrift</comment>
+  <comment xml:lang="da">Linux PSF-konsolskrifttype</comment>
+  <comment xml:lang="cy">Ffont Linux PSF</comment>
+  <comment xml:lang="cs">font PSF pro konzolu Linuxu</comment>
+  <comment xml:lang="ca">lletra de consola PSF de Linux</comment>
+  <comment xml:lang="bg">Шрифт — PSF, за конзолата на Линукс</comment>
+  <comment xml:lang="be-Latn">Kansolny šryft PSF dla Linuksa</comment>
+  <comment xml:lang="be-Cyrl">шрыфт кансолі PSF для Linux</comment>
+  <comment xml:lang="az">Linux PSF konsol yazı növü</comment>
+  <comment xml:lang="ar">خط كونسول PSF لينكس</comment>
+  <comment xml:lang="af">Linux PSF-konsoleskriftipe</comment>
+  <acronym>PSF</acronym>
+  <expanded-acronym>PC Screen Font</expanded-acronym>
+  <generic-icon name="font-x-generic"/>
+  <glob pattern="*.psf"/>
+</mime-type>

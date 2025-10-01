@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/ld+json">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>JSON-LD document</comment>
+  <comment xml:lang="zh-Hant-TW">JSON-LD 文件</comment>
+  <comment xml:lang="zh-Hans-CN">JSON-LD 文档</comment>
+  <comment xml:lang="uk">документ JSON-LD</comment>
+  <comment xml:lang="tr">JSON-LD belgesi</comment>
+  <comment xml:lang="sv">JSON-LD-dokument</comment>
+  <comment xml:lang="sr-Cyrl">ЈСОН-ЛД документ</comment>
+  <comment xml:lang="sq">dokument JSON-LD</comment>
+  <comment xml:lang="sl">Dokument JSON-LD</comment>
+  <comment xml:lang="si">JSON-LD ලේඛනය</comment>
+  <comment xml:lang="sk">Dokument JSON-LD</comment>
+  <comment xml:lang="ru">Документ JSON-LD</comment>
+  <comment xml:lang="pt-BR">Documento JSON-LD</comment>
+  <comment xml:lang="pt">documento JSON-LD</comment>
+  <comment xml:lang="pl">Dokument JSON-LD</comment>
+  <comment xml:lang="oc">Document JSON-LD</comment>
+  <comment xml:lang="nl">JSON-LD-document</comment>
+  <comment xml:lang="ko">JSON-LD 문서</comment>
+  <comment xml:lang="kk-Cyrl">JSON-LD құжаты</comment>
+  <comment xml:lang="ja">JSON-LD ドキュメント</comment>
+  <comment xml:lang="it">Documento JSON-LD</comment>
+  <comment xml:lang="is">JSON-LD skjal</comment>
+  <comment xml:lang="id">Dokumen JSON-LD</comment>
+  <comment xml:lang="ia">Documento JSON-LD</comment>
+  <comment xml:lang="hu">JSON-LD dokumentum</comment>
+  <comment xml:lang="hr">JSON-LD dokument</comment>
+  <comment xml:lang="he">מסמך JSON-LD</comment>
+  <comment xml:lang="gl">Documento de JSON-LD</comment>
+  <comment xml:lang="ga">cáipéis JSON-LD</comment>
+  <comment xml:lang="fur">document JSON-LD</comment>
+  <comment xml:lang="fr">document JSON-LD</comment>
+  <comment xml:lang="fi">JSON-LD-asiakirja</comment>
+  <comment xml:lang="eu">JSON-LD dokumentua</comment>
+  <comment xml:lang="es">documento JSON-LD</comment>
+  <comment xml:lang="en-GB">JSON-LD document</comment>
+  <comment xml:lang="el">Έγγραφο JSON-LD</comment>
+  <comment xml:lang="de">JSON-LD-Dokument</comment>
+  <comment xml:lang="da">JSON-LD-dokument</comment>
+  <comment xml:lang="cs">dokument JSON-LD</comment>
+  <comment xml:lang="ca">document JSON-LD</comment>
+  <comment xml:lang="bg">Документ — JSON-LD</comment>
+  <comment xml:lang="be-Cyrl">дакумент JSON-LD</comment>
+  <comment xml:lang="ast">Documentu JSON-LD</comment>
+  <comment xml:lang="ar">مستند JSON-LD</comment>
+  <acronym>JSON-LD</acronym>
+  <expanded-acronym>JavaScript Object Notation for Linked Data</expanded-acronym>
+  <sub-class-of type="application/json"/>
+  <generic-icon name="text-x-script"/>
+  <glob pattern="*.jsonld"/>
+</mime-type>

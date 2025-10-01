@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/wasm">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>WASM binary module</comment>
+  <comment xml:lang="uk">двійковий модуль WASM</comment>
+  <comment xml:lang="sv">WASM-binärmodul</comment>
+  <comment xml:lang="ru">Двоичный модуль WASM</comment>
+  <comment xml:lang="pl">Moduł binarny WASM</comment>
+  <comment xml:lang="es">módulo binario de WASM</comment>
+  <comment xml:lang="de">WASM-Binärmodul</comment>
+  <acronym>WASM</acronym>
+  <expanded-acronym>Web Assembly</expanded-acronym>
+  <glob pattern="*.wasm"/>
+</mime-type>

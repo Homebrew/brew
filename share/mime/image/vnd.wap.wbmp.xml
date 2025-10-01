@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="image/vnd.wap.wbmp">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>WBMP image</comment>
+  <comment xml:lang="zh-Hant-TW">WBMP 影像</comment>
+  <comment xml:lang="zh-Hans-CN">WBMP 图像</comment>
+  <comment xml:lang="vi">Ảnh WBMP</comment>
+  <comment xml:lang="uk">зображення WBMP</comment>
+  <comment xml:lang="tr">WBMP görüntüsü</comment>
+  <comment xml:lang="sv">WBMP-bild</comment>
+  <comment xml:lang="sr-Cyrl">ВБМП слика</comment>
+  <comment xml:lang="sq">figurë WBMP</comment>
+  <comment xml:lang="sl">Slikovna datoteka WBMP</comment>
+  <comment xml:lang="si">WBMP රූපය</comment>
+  <comment xml:lang="sk">Obrázok WBMP</comment>
+  <comment xml:lang="ru">Изображение WBMP</comment>
+  <comment xml:lang="ro">Imagine WBMP</comment>
+  <comment xml:lang="pt-BR">Imagem WBMP</comment>
+  <comment xml:lang="pt">imagem WBMP</comment>
+  <comment xml:lang="pl">Obraz WBMP</comment>
+  <comment xml:lang="oc">imatge WBMP</comment>
+  <comment xml:lang="nn">WBMP-bilete</comment>
+  <comment xml:lang="nl">WBMP-afbeelding</comment>
+  <comment xml:lang="nb">WBMP-bilde</comment>
+  <comment xml:lang="lv">WBMP attēls</comment>
+  <comment xml:lang="lt">WBMP paveikslėlis</comment>
+  <comment xml:lang="ko">WBMP 그림</comment>
+  <comment xml:lang="kk-Cyrl">WBMP суреті</comment>
+  <comment xml:lang="ja">WBMP 画像</comment>
+  <comment xml:lang="it">Immagine WBMP</comment>
+  <comment xml:lang="is">WBMP mynd</comment>
+  <comment xml:lang="id">Citra WBMP</comment>
+  <comment xml:lang="ia">Imagine WBMP</comment>
+  <comment xml:lang="hu">WBMP kép</comment>
+  <comment xml:lang="hr">WBMP slika</comment>
+  <comment xml:lang="he">תמונת WBMP</comment>
+  <comment xml:lang="gl">imaxe WBMP</comment>
+  <comment xml:lang="ga">íomhá WBMP</comment>
+  <comment xml:lang="fur">imagjin WBMP</comment>
+  <comment xml:lang="fr">image WBMP</comment>
+  <comment xml:lang="fo">WBMP mynd</comment>
+  <comment xml:lang="fi">WBMP-kuva</comment>
+  <comment xml:lang="eu">WBMP irudia</comment>
+  <comment xml:lang="es">imagen WBMP</comment>
+  <comment xml:lang="eo">WBMP-bildo</comment>
+  <comment xml:lang="en-GB">WBMP image</comment>
+  <comment xml:lang="el">Εικόνα WBMP</comment>
+  <comment xml:lang="de">WBMP-Bild</comment>
+  <comment xml:lang="da">WBMP-billede</comment>
+  <comment xml:lang="cs">obrázek WBMP</comment>
+  <comment xml:lang="ca">imatge WBMP</comment>
+  <comment xml:lang="bg">Изображение — WBMP</comment>
+  <comment xml:lang="be-Latn">Vyjava WBMP</comment>
+  <comment xml:lang="be-Cyrl">выява WBMP</comment>
+  <comment xml:lang="ar">صورة WBMP</comment>
+  <comment xml:lang="af">WBMP-beeld</comment>
+  <acronym>WBMP</acronym>
+  <expanded-acronym>WAP bitmap</expanded-acronym>
+  <glob pattern="*.wbmp"/>
+</mime-type>

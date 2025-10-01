@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-kchart">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>KChart chart</comment>
+  <comment xml:lang="zh-Hant-TW">KChart 圖表</comment>
+  <comment xml:lang="zh-Hans-CN">KChart 图表</comment>
+  <comment xml:lang="vi">Sơ đồ KChart</comment>
+  <comment xml:lang="uk">діаграма KChart</comment>
+  <comment xml:lang="tr">KChart çizgesi</comment>
+  <comment xml:lang="sv">KChart-diagram</comment>
+  <comment xml:lang="sr-Cyrl">графикон К-графика</comment>
+  <comment xml:lang="sq">grafik KChart</comment>
+  <comment xml:lang="sl">Datoteka grafikona KChart</comment>
+  <comment xml:lang="si">KChart ප්‍රස්ථාරය</comment>
+  <comment xml:lang="sk">Graf KChart</comment>
+  <comment xml:lang="ru">Диаграмма KChart</comment>
+  <comment xml:lang="ro">Diagramă KChart</comment>
+  <comment xml:lang="pt-BR">Gráfico do KChart</comment>
+  <comment xml:lang="pt">gráfico KChart</comment>
+  <comment xml:lang="pl">Wykres KChart</comment>
+  <comment xml:lang="oc">grafic KChart</comment>
+  <comment xml:lang="nn">KChart-diagram</comment>
+  <comment xml:lang="nl">KChart-grafiek</comment>
+  <comment xml:lang="nb">KChart-graf</comment>
+  <comment xml:lang="ms">Carta KChart</comment>
+  <comment xml:lang="lv">KChart diagramma</comment>
+  <comment xml:lang="lt">KChart diagrama</comment>
+  <comment xml:lang="ko">KChart 차트</comment>
+  <comment xml:lang="kk-Cyrl">KChart диаграммасы</comment>
+  <comment xml:lang="ja">KChart チャート</comment>
+  <comment xml:lang="it">Grafico KChart</comment>
+  <comment xml:lang="is">KChart línurit</comment>
+  <comment xml:lang="id">Bagan KChart</comment>
+  <comment xml:lang="ia">Graphico KChart</comment>
+  <comment xml:lang="hu">KChart-grafikon</comment>
+  <comment xml:lang="hr">KChart grafikon</comment>
+  <comment xml:lang="he">תרשים KChart</comment>
+  <comment xml:lang="gl">gráfica de KChart</comment>
+  <comment xml:lang="ga">cairt KChart</comment>
+  <comment xml:lang="fur">grafic KChart</comment>
+  <comment xml:lang="fr">graphique KChart</comment>
+  <comment xml:lang="fo">KChart strikumynd</comment>
+  <comment xml:lang="fi">KChart-kaavio</comment>
+  <comment xml:lang="eu">KChart diagrama</comment>
+  <comment xml:lang="es">gráfico de KChart</comment>
+  <comment xml:lang="eo">KChart-diagramo</comment>
+  <comment xml:lang="en-GB">KChart chart</comment>
+  <comment xml:lang="el">Γράφημα KChart</comment>
+  <comment xml:lang="de">KChart-Diagramm</comment>
+  <comment xml:lang="da">KChart-diagram</comment>
+  <comment xml:lang="cs">graf Chart</comment>
+  <comment xml:lang="ca">diagrama de KChart</comment>
+  <comment xml:lang="bg">Диаграма — KChart</comment>
+  <comment xml:lang="be-Latn">Hrafik KChart</comment>
+  <comment xml:lang="be-Cyrl">графік KChart</comment>
+  <comment xml:lang="ar">رسم بياني KChart</comment>
+  <comment xml:lang="af">KChart-grafiek</comment>
+  <generic-icon name="x-office-spreadsheet"/>
+  <glob pattern="*.chrt"/>
+</mime-type>

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="text/x-gradle">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Gradle script</comment>
+  <comment xml:lang="zh-Hant-TW">Gradle 指令稿</comment>
+  <comment xml:lang="zh-Hans-CN">Gradle 脚本</comment>
+  <comment xml:lang="uk">скрипт Gradle</comment>
+  <comment xml:lang="tr">Gradle betiği</comment>
+  <comment xml:lang="sv">Gradle-skript</comment>
+  <comment xml:lang="sl">Skript Gradle</comment>
+  <comment xml:lang="si">Gradle පිටපත</comment>
+  <comment xml:lang="ru">Сценарий Gradle</comment>
+  <comment xml:lang="pt-BR">Script Gradle</comment>
+  <comment xml:lang="pl">Skrypt Gradle</comment>
+  <comment xml:lang="nl">Gradle-script</comment>
+  <comment xml:lang="ko">Gradle 스크립트</comment>
+  <comment xml:lang="kk-Cyrl">Gradle сценарийі</comment>
+  <comment xml:lang="ja">Gradle スクリプト</comment>
+  <comment xml:lang="it">Script Gradle</comment>
+  <comment xml:lang="hr">Gradle skripta</comment>
+  <comment xml:lang="gl">Script de Gradle</comment>
+  <comment xml:lang="fi">Gradle-skripti</comment>
+  <comment xml:lang="eu">Gradle script-a</comment>
+  <comment xml:lang="es">secuencia de órdenes de Gradle</comment>
+  <comment xml:lang="en-GB">Gradle script</comment>
+  <comment xml:lang="de">Gradle-Skript</comment>
+  <comment xml:lang="be-Cyrl">скрыпт Gradle</comment>
+  <comment xml:lang="ar">سكربت Gradle</comment>
+  <sub-class-of type="text/x-groovy"/>
+  <glob pattern="*.gradle"/>
+</mime-type>

@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="text/vnd.senx.warpscript">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>WarpScript source code</comment>
+  <comment xml:lang="zh-Hant-TW">WarpScript 原始碼</comment>
+  <comment xml:lang="zh-Hans-CN">WarpScript 源代码</comment>
+  <comment xml:lang="uk">початковий код мовою WarpScript</comment>
+  <comment xml:lang="tr">WarpScript kaynak kodu</comment>
+  <comment xml:lang="sv">WarpScript-källkod</comment>
+  <comment xml:lang="sq">kod burim WarpScript</comment>
+  <comment xml:lang="sl">Izvorna koda WarpScript</comment>
+  <comment xml:lang="si">WarpScript මූලාශ්‍ර කේතය</comment>
+  <comment xml:lang="ru">Исходный код WarpScript</comment>
+  <comment xml:lang="pt-BR">Código-fonte WarpScript</comment>
+  <comment xml:lang="pl">Kod źródłowy WarpScript</comment>
+  <comment xml:lang="nl">WarpScript-broncode</comment>
+  <comment xml:lang="ko">WarpScript 소스 코드</comment>
+  <comment xml:lang="kk-Cyrl">WarpScript бастапқы коды</comment>
+  <comment xml:lang="ja">WarpScript ソースコード</comment>
+  <comment xml:lang="it">Codice sorgente WarpScript</comment>
+  <comment xml:lang="is">WarpScript frumkóði</comment>
+  <comment xml:lang="id">Kode sumber WarpScript</comment>
+  <comment xml:lang="hu">WarpScript forráskód</comment>
+  <comment xml:lang="hr">WarpScript izvorni kôd</comment>
+  <comment xml:lang="he">קוד מקור ב־WarpScript</comment>
+  <comment xml:lang="gl">Código fonte en WarpScript</comment>
+  <comment xml:lang="fur">codiç sorzint WarpScript</comment>
+  <comment xml:lang="fr">code source WarpScript</comment>
+  <comment xml:lang="fi">WarpScript-lähdekoodi</comment>
+  <comment xml:lang="eu">WarpScript iturburu-kodea</comment>
+  <comment xml:lang="es">código fuente en WarpScript</comment>
+  <comment xml:lang="en-GB">WarpScript source code</comment>
+  <comment xml:lang="de">WarpScript-Quelltext</comment>
+  <comment xml:lang="da">WarpScript-kildekode</comment>
+  <comment xml:lang="cs">zdrojový kód v jazyce WarpScript</comment>
+  <comment xml:lang="ca">codi font en WarpScript</comment>
+  <comment xml:lang="bg">Изходен код — WarpScript</comment>
+  <comment xml:lang="be-Cyrl">зыходны код WarpScript</comment>
+  <comment xml:lang="ar">شفرة مصدر WarpScript</comment>
+  <sub-class-of type="text/plain"/>
+  <glob pattern="*.mc2"/>
+</mime-type>

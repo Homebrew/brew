@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="image/jpm">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>JPEG-2000 JPM image</comment>
+  <comment xml:lang="zh-Hant-TW">JPEG-2000 JPM 影像</comment>
+  <comment xml:lang="zh-Hans-CN">JPEG-2000 JPM 图像</comment>
+  <comment xml:lang="uk">зображення JPM JPEG-2000</comment>
+  <comment xml:lang="tr">JPEG-2000 JPM görüntüsü</comment>
+  <comment xml:lang="sv">JPEG-2000 JPM-bild</comment>
+  <comment xml:lang="sq">figurë JPEG-2000 JPM</comment>
+  <comment xml:lang="sl">Slika JPEG-2000 JPM</comment>
+  <comment xml:lang="si">JPEG-2000 JPM රූපය</comment>
+  <comment xml:lang="sk">Obrázok JPEG-2000 JPM</comment>
+  <comment xml:lang="ru">Изображение JPEG-2000 JPM</comment>
+  <comment xml:lang="pt-BR">Imagem JPM de JPEG-2000</comment>
+  <comment xml:lang="pl">Obraz JPM JPEG-2000</comment>
+  <comment xml:lang="oc">imatge JPEG-2000 JPM</comment>
+  <comment xml:lang="nl">JPEG-2000 JPM-afbeelding</comment>
+  <comment xml:lang="ko">JPEG-2000 JPM 그림</comment>
+  <comment xml:lang="kk-Cyrl">JPEG-2000 JPM суреті</comment>
+  <comment xml:lang="ja">JPEG-2000 JPM 画像</comment>
+  <comment xml:lang="it">Immagine JPEG-2000 JPM</comment>
+  <comment xml:lang="is">JPEG-2000 JPM mynd</comment>
+  <comment xml:lang="id">Citra JPEG-2000 JPM</comment>
+  <comment xml:lang="hu">JPEG-2000 JPM kép</comment>
+  <comment xml:lang="hr">JPEG-2000 JPM slika</comment>
+  <comment xml:lang="he">תמונת JPM של JPEG-2000</comment>
+  <comment xml:lang="ga">íomhá JPEG-2000 JPM</comment>
+  <comment xml:lang="fur">imagjin JPEG-2000 JPM</comment>
+  <comment xml:lang="fr">image JPEG-2000 JPM</comment>
+  <comment xml:lang="fi">JPEG-2000 JPM -kuva</comment>
+  <comment xml:lang="eu">JPEG-2000 JPM irudia</comment>
+  <comment xml:lang="es">imagen JPEG-2000 JPM</comment>
+  <comment xml:lang="en-GB">JPEG-2000 JPM image</comment>
+  <comment xml:lang="de">JPEG-2000 JPM-Bild</comment>
+  <comment xml:lang="da">JPEG-2000 JPM-billede</comment>
+  <comment xml:lang="cs">obrázek JPEG-2000 JPM</comment>
+  <comment xml:lang="ca">imatge JPEG-2000 JPM</comment>
+  <comment xml:lang="bg">Изображение — JPEG-2000 JPM</comment>
+  <comment xml:lang="be-Cyrl">выява JPEG-2000 JPM</comment>
+  <comment xml:lang="ar">صورة JPEG-2000 JPM</comment>
+  <comment xml:lang="af">JPEG-2000 JPM-beeld</comment>
+  <acronym>JPM</acronym>
+  <expanded-acronym>JPEG-2000 Mixed</expanded-acronym>
+  <glob pattern="*.jpm"/>
+  <glob pattern="*.jpgm"/>
+</mime-type>

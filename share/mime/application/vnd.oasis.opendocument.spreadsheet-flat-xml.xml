@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/vnd.oasis.opendocument.spreadsheet-flat-xml">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>ODS spreadsheet (Flat XML)</comment>
+  <comment xml:lang="zh-Hant-TW">ODS 試算表 (Flat XML)</comment>
+  <comment xml:lang="zh-Hans-CN">ODS 电子表格 (Flat XML)</comment>
+  <comment xml:lang="uk">електронна таблиця ODS (Flat XML)</comment>
+  <comment xml:lang="tr">ODS hesap çizelgesi (Düz XML)</comment>
+  <comment xml:lang="sv">ODS-kalkylblad (platt XML)</comment>
+  <comment xml:lang="sr-Cyrl">ОДС табела (обични ИксМЛ)</comment>
+  <comment xml:lang="sq">fletëllogaritje ODF (Flat XML)</comment>
+  <comment xml:lang="sl">Preglednica ODS (nepovezan XML)</comment>
+  <comment xml:lang="si">ODS පැතුරුම්පත (පැතලි XML)</comment>
+  <comment xml:lang="sk">Zošit ODS (čisté XML)</comment>
+  <comment xml:lang="ru">Электронная таблица ODS (простой XML)</comment>
+  <comment xml:lang="ro">Foaie de calcul ODS (XML simplu)</comment>
+  <comment xml:lang="pt-BR">Planilha ODS (Flat XML)</comment>
+  <comment xml:lang="pt">folha de cálculo ODS (XML plano)</comment>
+  <comment xml:lang="pl">Arkusz ODS (prosty XML)</comment>
+  <comment xml:lang="oc">fuèlh de calcul ODS (XML plat)</comment>
+  <comment xml:lang="nl">ODS spreadsheet (Flat XML)</comment>
+  <comment xml:lang="lv">ODS izklājlapa (plakans XML)</comment>
+  <comment xml:lang="lt">ODS skaičialentė (Flat XML)</comment>
+  <comment xml:lang="ko">ODS 스프레드시트(단일 XML)</comment>
+  <comment xml:lang="kk-Cyrl">ODS электрондық кестесі (Тек XML)</comment>
+  <comment xml:lang="ka">ODS ცხრილი (Flat XML)</comment>
+  <comment xml:lang="ja">ODS スプレッドシート (Flat XML)</comment>
+  <comment xml:lang="it">Foglio di calcolo ODS (XML semplice)</comment>
+  <comment xml:lang="is">ODS töflureikniskjal (flatt XML)</comment>
+  <comment xml:lang="id">Lembar sebar ODS (Flat XML)</comment>
+  <comment xml:lang="ia">Folio de calculo ODS (XML platte)</comment>
+  <comment xml:lang="hu">ODS-táblázat (egyszerű XML)</comment>
+  <comment xml:lang="hr">ODS proračunska tablica (Flat XML)</comment>
+  <comment xml:lang="he">גיליון נתונים ODS‏ (XML פשוט)</comment>
+  <comment xml:lang="gl">folla de cálculo ODS (XML plano)</comment>
+  <comment xml:lang="ga">scarbhileog ODS (XML cothrom)</comment>
+  <comment xml:lang="fur">sfuei di calcul ODS (XML sempliç)</comment>
+  <comment xml:lang="fr">feuille de calcul ODS (XML plat)</comment>
+  <comment xml:lang="fo">ODS rokniark (Flat XML)</comment>
+  <comment xml:lang="fi">ODS-laskentataulukko (Flat XML)</comment>
+  <comment xml:lang="eu">ODS kalkulu-orria (XML soila)</comment>
+  <comment xml:lang="es">hoja de cálculo ODS (XML plano)</comment>
+  <comment xml:lang="en-GB">ODS spreadsheet (Flat XML)</comment>
+  <comment xml:lang="el">Λογιστικό φύλλο ODS (Flat XML)</comment>
+  <comment xml:lang="de">ODS-Tabelle (einfaches XML)</comment>
+  <comment xml:lang="da">ODS-regneark (flad XML)</comment>
+  <comment xml:lang="cs">sešit ODS (Flat XML)</comment>
+  <comment xml:lang="ca">full de càlcul ODS (XML pla)</comment>
+  <comment xml:lang="bg">Таблица — ODS (само XML)</comment>
+  <comment xml:lang="be-Cyrl">электронная табліца ODS (плоскі XML)</comment>
+  <comment xml:lang="ar">جدول ODS (Flat XML)</comment>
+  <comment xml:lang="af">ODS-sigblad (plat XML)</comment>
+  <acronym>FODS</acronym>
+  <expanded-acronym>OpenDocument Spreadsheet (Flat XML)</expanded-acronym>
+  <sub-class-of type="application/xml"/>
+  <generic-icon name="x-office-spreadsheet"/>
+  <glob pattern="*.fods"/>
+</mime-type>

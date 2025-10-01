@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-lzpdf">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>PDF document (lzip-compressed)</comment>
+  <comment xml:lang="zh-Hant-TW">PDF 文件 (lzip 壓縮)</comment>
+  <comment xml:lang="zh-Hans-CN">PDF 文档（lzip 压缩）</comment>
+  <comment xml:lang="uk">документ PDF (стиснений lzip)</comment>
+  <comment xml:lang="tr">PDF belgesi (lzip ile sıkıştırılmış)</comment>
+  <comment xml:lang="sv">PDF-dokument (lzip-komprimerat)</comment>
+  <comment xml:lang="sr-Cyrl">ПДФ документ (запакован лзип-ом)</comment>
+  <comment xml:lang="sq">dokument PDF (ngjeshur me lzip)</comment>
+  <comment xml:lang="sl">Dokument PDF (stisnjen, lzip)</comment>
+  <comment xml:lang="si">PDF ලේඛනය (lzip-compressed)</comment>
+  <comment xml:lang="sk">Dokument PDF (komprimovaný pomocou lzip)</comment>
+  <comment xml:lang="ru">Документ PDF (сжатый lzip)</comment>
+  <comment xml:lang="pt-BR">Documento PDF (compactado com lzip)</comment>
+  <comment xml:lang="pl">Dokument PDF (kompresja lzip)</comment>
+  <comment xml:lang="oc">document PDF (compressat amb lzip)</comment>
+  <comment xml:lang="nl">PDF-document (gecomprimeerd met lzip)</comment>
+  <comment xml:lang="ko">PDF 문서(LZIP 압축)</comment>
+  <comment xml:lang="kk-Cyrl">PDF құжаты (lzip-пен сығылған)</comment>
+  <comment xml:lang="ja">PDF ドキュメント (lzip 圧縮)</comment>
+  <comment xml:lang="it">Documento PDF (compresso con lzip)</comment>
+  <comment xml:lang="is">PDF skjal (lzip-þjappað)</comment>
+  <comment xml:lang="id">Dokumen PDF (termkompresi lzip)</comment>
+  <comment xml:lang="hu">PDF dokumentum (lzip tömörítésű)</comment>
+  <comment xml:lang="hr">PDF dokument (lzip sažeto)</comment>
+  <comment xml:lang="he">מסמך PDF (דחוס ב־lzip)</comment>
+  <comment xml:lang="ga">cáipéis PDF (comhbhrúite le lzip)</comment>
+  <comment xml:lang="fur">document PDF (comprimût cun lzip)</comment>
+  <comment xml:lang="fr">document PDF (compressé lzip)</comment>
+  <comment xml:lang="fi">PDF-asiakirja (lzip-pakattu)</comment>
+  <comment xml:lang="eu">PDF dokumentua (lzip-rekin konprimitua)</comment>
+  <comment xml:lang="es">documento PDF (comprimido con LZIP)</comment>
+  <comment xml:lang="en-GB">PDF document (lzip-compressed)</comment>
+  <comment xml:lang="de">PDF-Dokument (lzip-komprimiert)</comment>
+  <comment xml:lang="da">PDF-dokument (lzip-komprimeret)</comment>
+  <comment xml:lang="cs">dokument PDF (komprimace lzip)</comment>
+  <comment xml:lang="ca">document PDF (amb compressió lzip)</comment>
+  <comment xml:lang="bg">Документ — PDF, компресиран с Lzip</comment>
+  <comment xml:lang="be-Cyrl">дакумент PDF (сцісканне lzip)</comment>
+  <comment xml:lang="ast">Documentu PDF (comprimíu en lzip)</comment>
+  <comment xml:lang="ar">مستند PDF (مضغوط-lzip)</comment>
+  <comment xml:lang="af">PDF-dokument (lzip-saamgepers)</comment>
+  <sub-class-of type="application/x-lzip"/>
+  <generic-icon name="x-office-document"/>
+  <glob pattern="*.pdf.lz"/>
+</mime-type>

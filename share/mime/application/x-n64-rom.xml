@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-n64-rom">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Nintendo64 ROM</comment>
+  <comment xml:lang="zh-Hant-TW">Nintendo64 ROM</comment>
+  <comment xml:lang="zh-Hans-CN">任天堂 64 ROM</comment>
+  <comment xml:lang="vi">ROM Nintendo64</comment>
+  <comment xml:lang="uk">ППП Nintendo64</comment>
+  <comment xml:lang="tr">Nintendo64 ROM</comment>
+  <comment xml:lang="sv">Nintendo64-rom</comment>
+  <comment xml:lang="sr-Cyrl">Нинтендо64 РОМ</comment>
+  <comment xml:lang="sq">ROM Nintendo64</comment>
+  <comment xml:lang="sl">Bralni pomnilnik Nintendo64</comment>
+  <comment xml:lang="si">Nintendo64 ROM</comment>
+  <comment xml:lang="sk">ROM pre Nintendo64</comment>
+  <comment xml:lang="ru">Nintendo64 ROM</comment>
+  <comment xml:lang="ro">ROM Nintendo64</comment>
+  <comment xml:lang="pt-BR">ROM de Nintendo64</comment>
+  <comment xml:lang="pt">ROM Nintendo64</comment>
+  <comment xml:lang="pl">Plik ROM konsoli Nintendo64</comment>
+  <comment xml:lang="oc">ROM Nintendo64</comment>
+  <comment xml:lang="nn">Nintendo64-ROM</comment>
+  <comment xml:lang="nl">Nintendo64-ROM</comment>
+  <comment xml:lang="nb">Nintendo64-ROM</comment>
+  <comment xml:lang="ms">ROM Nintendo64</comment>
+  <comment xml:lang="lv">Nintendo64 ROM</comment>
+  <comment xml:lang="lt">Nintendo64 ROM</comment>
+  <comment xml:lang="ko">닌텐도 64 롬</comment>
+  <comment xml:lang="kk-Cyrl">Nintendo64 ROM</comment>
+  <comment xml:lang="ja">Nintendo64 ROM</comment>
+  <comment xml:lang="it">ROM Nintendo64</comment>
+  <comment xml:lang="is">Nintendo64 ROM</comment>
+  <comment xml:lang="id">Memori baca-saja Nintendo64</comment>
+  <comment xml:lang="ia">ROM pro Nintendo64</comment>
+  <comment xml:lang="hu">Nintendo64 ROM</comment>
+  <comment xml:lang="hr">Nintendo64 ROM</comment>
+  <comment xml:lang="he">ROM של Nintendo64</comment>
+  <comment xml:lang="gl">ROM de Nintendo64</comment>
+  <comment xml:lang="ga">ROM Nintendo64</comment>
+  <comment xml:lang="fur">ROM Nintendo64</comment>
+  <comment xml:lang="fr">ROM Nintendo64</comment>
+  <comment xml:lang="fo">Nintendo64 ROM</comment>
+  <comment xml:lang="fi">Nintendo64-ROM</comment>
+  <comment xml:lang="eu">Nintendo64-ko ROMa</comment>
+  <comment xml:lang="es">ROM de Nintendo64</comment>
+  <comment xml:lang="eo">Nintendo64-NLM</comment>
+  <comment xml:lang="en-GB">Nintendo64 ROM</comment>
+  <comment xml:lang="el">Nintendo64 ROM</comment>
+  <comment xml:lang="de">Nintendo64-ROM</comment>
+  <comment xml:lang="da">Nintendo64-ROM</comment>
+  <comment xml:lang="cs">ROM pro Nintendo64</comment>
+  <comment xml:lang="ca">ROM de Nintendo64</comment>
+  <comment xml:lang="bg">ROM — Nintendo64</comment>
+  <comment xml:lang="be-Latn">Nintendo64 ROM</comment>
+  <comment xml:lang="be-Cyrl">Nintendo64 ROM</comment>
+  <comment xml:lang="ar">روم Nintendo64</comment>
+  <generic-icon name="application-x-executable"/>
+  <glob pattern="*.n64"/>
+  <glob pattern="*.z64"/>
+  <glob pattern="*.v64"/>
+</mime-type>

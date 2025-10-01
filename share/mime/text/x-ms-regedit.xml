@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="text/x-ms-regedit">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Windows Registry extract</comment>
+  <comment xml:lang="zh-Hant-TW">Windows Registry 抽出</comment>
+  <comment xml:lang="zh-Hans-CN">Windows 注册表提取</comment>
+  <comment xml:lang="vi">Bản trích Registry Windows</comment>
+  <comment xml:lang="uk">частина реєстру Windows</comment>
+  <comment xml:lang="tr">Windows Kayıt Defteri özü</comment>
+  <comment xml:lang="sv">Windows Registry-utdrag</comment>
+  <comment xml:lang="sr-Cyrl">исцедак Виндоузовог регистра</comment>
+  <comment xml:lang="sq">copëz Windows Registry</comment>
+  <comment xml:lang="sl">izvleček vpisnika Windows</comment>
+  <comment xml:lang="si">වින්ඩෝස් රෙජිස්ට්රි උපුටා ගැනීම</comment>
+  <comment xml:lang="sk">Časť registrov Windows</comment>
+  <comment xml:lang="ru">Фрагмент Windows Registry</comment>
+  <comment xml:lang="ro">Extras al registrului Windows</comment>
+  <comment xml:lang="pt-BR">Extrator de registro do Windows</comment>
+  <comment xml:lang="pt">extrato do registo do Windows</comment>
+  <comment xml:lang="pl">Wycinek rejestru Windows</comment>
+  <comment xml:lang="oc">extrait de registre Windows</comment>
+  <comment xml:lang="nn">Windows Registry-utdrag</comment>
+  <comment xml:lang="nl">Windows Registry-extract</comment>
+  <comment xml:lang="nb">Utdrag av Windows Registry</comment>
+  <comment xml:lang="lv">Windows Registry izvilkums</comment>
+  <comment xml:lang="lt">Windows registro ištrauka</comment>
+  <comment xml:lang="ko">Windows 레지스트리 파일</comment>
+  <comment xml:lang="kk-Cyrl">Windows Registry бөлігі</comment>
+  <comment xml:lang="ja">WIndows レジストリ抽出ファイル</comment>
+  <comment xml:lang="it">Estratto Windows Registry</comment>
+  <comment xml:lang="is">Windows Registry útdráttur</comment>
+  <comment xml:lang="id">Ekstrak Windows Registry</comment>
+  <comment xml:lang="ia">Extracto de registro de systema Windows</comment>
+  <comment xml:lang="hu">Windows Registry kivonat</comment>
+  <comment xml:lang="hr">Izdvojeni Windows registar</comment>
+  <comment xml:lang="he">קובץ רשומות מערכת של Windows</comment>
+  <comment xml:lang="gl">Extracto do rexistro de Windows</comment>
+  <comment xml:lang="ga">sliocht as Clárlann Windows</comment>
+  <comment xml:lang="fur">estrat dal regjistri di Windows</comment>
+  <comment xml:lang="fr">extrait de registre Windows</comment>
+  <comment xml:lang="fo">Windows Registry úrdráttur</comment>
+  <comment xml:lang="fi">Windows-rekisteritietue</comment>
+  <comment xml:lang="eu">Windows-eko erregistro erauzlea</comment>
+  <comment xml:lang="es">extracto del registro de Windows</comment>
+  <comment xml:lang="en-GB">Windows Registry extract</comment>
+  <comment xml:lang="el">Αποσυμπίεση Windows Registry</comment>
+  <comment xml:lang="de">Windows-Registry-Auszug</comment>
+  <comment xml:lang="da">Windows registreringsdatabase-udtrækning</comment>
+  <comment xml:lang="cs">výtah registru Windows</comment>
+  <comment xml:lang="ca">extracte de Windows Registry</comment>
+  <comment xml:lang="bg">Извадка от регистъра на Windows</comment>
+  <comment xml:lang="be-Latn">Element rehistru Windows</comment>
+  <comment xml:lang="be-Cyrl">элемент рэгістру Windows</comment>
+  <comment xml:lang="ar">استخراج مسجل ويندوز</comment>
+  <comment xml:lang="af">Windows-registerlêeruittreksel</comment>
+  <sub-class-of type="text/plain"/>
+  <glob pattern="*.reg"/>
+</mime-type>

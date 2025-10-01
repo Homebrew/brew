@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="image/x-gimp-pat">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>GIMP pattern</comment>
+  <comment xml:lang="zh-Hant-TW">GIMP 樣式</comment>
+  <comment xml:lang="zh-Hans-CN">GIMP 图案</comment>
+  <comment xml:lang="uk">візерунок GIMP</comment>
+  <comment xml:lang="tr">GIMP deseni</comment>
+  <comment xml:lang="sv">GIMP-mönster</comment>
+  <comment xml:lang="sl">Vzorec GIMP</comment>
+  <comment xml:lang="si">GIMP රටාව</comment>
+  <comment xml:lang="sk">Vzor aplikácie GIMP</comment>
+  <comment xml:lang="ru">Шаблон GIMP</comment>
+  <comment xml:lang="pt-BR">Textura do GIMP</comment>
+  <comment xml:lang="pl">Deseń programu GIMP</comment>
+  <comment xml:lang="nl">GIMP-patroon</comment>
+  <comment xml:lang="ko">GIMP 패턴</comment>
+  <comment xml:lang="kk-Cyrl">GIMP оюы</comment>
+  <comment xml:lang="ka">GIMP შაბლონი</comment>
+  <comment xml:lang="ja">GIMP パターン</comment>
+  <comment xml:lang="it">Motivo GIMP</comment>
+  <comment xml:lang="is">GIMP-mynstur</comment>
+  <comment xml:lang="id">Pola GIMP</comment>
+  <comment xml:lang="hu">GIMP minta</comment>
+  <comment xml:lang="hr">GIMP uzorak</comment>
+  <comment xml:lang="he">מרקם של GIMP</comment>
+  <comment xml:lang="gl">Patrón de GIMP</comment>
+  <comment xml:lang="ga">patrún GIMP</comment>
+  <comment xml:lang="fur">motîf GIMP</comment>
+  <comment xml:lang="fr">motif GIMP</comment>
+  <comment xml:lang="fi">GIMP-kuvio</comment>
+  <comment xml:lang="eu">GIMP eredua</comment>
+  <comment xml:lang="es">patrón del GIMP</comment>
+  <comment xml:lang="en-GB">GIMP pattern</comment>
+  <comment xml:lang="de">GIMP-Muster</comment>
+  <comment xml:lang="da">GIMP-mønster</comment>
+  <comment xml:lang="cs">vzorek GIMP</comment>
+  <comment xml:lang="ca">patró de GIMP</comment>
+  <comment xml:lang="bg">Шарка — GIMP</comment>
+  <comment xml:lang="be-Cyrl">узор GIMP</comment>
+  <comment xml:lang="ar">نقش GIMP</comment>
+  <comment xml:lang="af">GIMP-patroon</comment>
+  <glob pattern="*.pat"/>
+</mime-type>

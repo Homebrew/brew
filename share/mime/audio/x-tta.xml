@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="audio/x-tta">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>TrueAudio audio</comment>
+  <comment xml:lang="zh-Hant-TW">TrueAudio 音訊</comment>
+  <comment xml:lang="zh-Hans-CN">TrueAudio 音频</comment>
+  <comment xml:lang="vi">Âm thanh TrueAudio</comment>
+  <comment xml:lang="uk">звук TrueAudio</comment>
+  <comment xml:lang="tr">TrueAudio sesi</comment>
+  <comment xml:lang="sv">TrueAudio-ljud</comment>
+  <comment xml:lang="sr-Cyrl">Тру Аудио звук</comment>
+  <comment xml:lang="sq">audio TrueAudio</comment>
+  <comment xml:lang="sl">Zvočna datoteka TrueAudio</comment>
+  <comment xml:lang="si">TrueAudio ශ්රව්ය</comment>
+  <comment xml:lang="sk">Zvuk TrueAudio</comment>
+  <comment xml:lang="ru">Аудио TrueAudio</comment>
+  <comment xml:lang="ro">Audio TrueAudio</comment>
+  <comment xml:lang="pt-BR">Áudio TrueAudio</comment>
+  <comment xml:lang="pt">áudio TrueAudio</comment>
+  <comment xml:lang="pl">Plik dźwiękowy TrueAudio</comment>
+  <comment xml:lang="oc">àudio TrueAudio</comment>
+  <comment xml:lang="nn">TrueAudio-lyd</comment>
+  <comment xml:lang="nl">TrueAudio-audio</comment>
+  <comment xml:lang="nb">TrueAudio-lyd</comment>
+  <comment xml:lang="lv">TrueAudio audio</comment>
+  <comment xml:lang="lt">TrueAudio garso įrašas</comment>
+  <comment xml:lang="ko">TrueAudio 오디오</comment>
+  <comment xml:lang="kk-Cyrl">TrueAudio аудиосы</comment>
+  <comment xml:lang="ja">TrueAudio オーディオ</comment>
+  <comment xml:lang="it">Audio TrueAudio</comment>
+  <comment xml:lang="is">TrueAudio hljóðskrá</comment>
+  <comment xml:lang="id">Audio TrueAudio</comment>
+  <comment xml:lang="ia">Audio TrueAudio</comment>
+  <comment xml:lang="hu">TrueAudio hang</comment>
+  <comment xml:lang="hr">TrueAudio zvučni zapis</comment>
+  <comment xml:lang="he">שמע TrueAudio</comment>
+  <comment xml:lang="gl">son Trueson</comment>
+  <comment xml:lang="ga">fuaim TrueAudio</comment>
+  <comment xml:lang="fur">audio TrueAudio</comment>
+  <comment xml:lang="fr">audio TrueAudio</comment>
+  <comment xml:lang="fo">TrueAudio ljóður</comment>
+  <comment xml:lang="fi">TrueAudio-ääni</comment>
+  <comment xml:lang="eu">TrueAudio audioa</comment>
+  <comment xml:lang="es">sonido TrueAudio</comment>
+  <comment xml:lang="eo">TrueAudio-sondosiero</comment>
+  <comment xml:lang="en-GB">TrueAudio audio</comment>
+  <comment xml:lang="el">Ήχος TrueAudio</comment>
+  <comment xml:lang="de">TrueAudio-Audio</comment>
+  <comment xml:lang="da">TrueAudio-lyd</comment>
+  <comment xml:lang="cs">zvuk TrueAudio</comment>
+  <comment xml:lang="ca">àudio TrueAudio</comment>
+  <comment xml:lang="bg">Аудио — TrueAudio</comment>
+  <comment xml:lang="be-Latn">Aŭdyjo TrueAudio</comment>
+  <comment xml:lang="be-Cyrl">аўдыя TrueAudio</comment>
+  <comment xml:lang="ar">صوت TrueAudio</comment>
+  <comment xml:lang="af">TrueAudio-oudio</comment>
+  <alias type="audio/tta"/>
+  <glob pattern="*.tta"/>
+</mime-type>

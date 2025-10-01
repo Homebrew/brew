@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="text/x-erlang">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Erlang source code</comment>
+  <comment xml:lang="zh-Hant-TW">Erlang 源碼</comment>
+  <comment xml:lang="zh-Hans-CN">Erlang 源代码</comment>
+  <comment xml:lang="vi">Mã nguồn Erlang</comment>
+  <comment xml:lang="uk">початковий код мовою Erlang</comment>
+  <comment xml:lang="tr">Erlang kaynak kodu</comment>
+  <comment xml:lang="sv">Erlang-källkod</comment>
+  <comment xml:lang="sr-Cyrl">Ерланг изворни ко̂д</comment>
+  <comment xml:lang="sq">kod burim Erlang</comment>
+  <comment xml:lang="sl">Datoteka izvorne kode Erlang</comment>
+  <comment xml:lang="si">Erlang මූල කේතය</comment>
+  <comment xml:lang="sk">Zdrojový kód Erlang</comment>
+  <comment xml:lang="ru">Исходный код Erlang</comment>
+  <comment xml:lang="ro">Cod sursă Erlang</comment>
+  <comment xml:lang="pt-BR">Código-fonte Erlang</comment>
+  <comment xml:lang="pt">código origem Erlang</comment>
+  <comment xml:lang="pl">Kod źródłowy Erlang</comment>
+  <comment xml:lang="oc">còde font Erlang</comment>
+  <comment xml:lang="nn">Erlang-kjeldekode</comment>
+  <comment xml:lang="nl">Erlang-broncode</comment>
+  <comment xml:lang="nb">Erlang-kildekode</comment>
+  <comment xml:lang="lv">Erlang pirmkods</comment>
+  <comment xml:lang="lt">Erlang pradinis kodas</comment>
+  <comment xml:lang="ko">Erlang 소스 코드</comment>
+  <comment xml:lang="kk-Cyrl">Erlang бастапқы коды</comment>
+  <comment xml:lang="ka">Erlang-ის საწყისი კოდი</comment>
+  <comment xml:lang="ja">Erlang ソースコード</comment>
+  <comment xml:lang="it">Codice sorgente Erlang</comment>
+  <comment xml:lang="is">Erlang frumkóði</comment>
+  <comment xml:lang="id">Kode sumber Erlang</comment>
+  <comment xml:lang="ia">Codice-fonte Erlang</comment>
+  <comment xml:lang="hu">Erlang forráskód</comment>
+  <comment xml:lang="hr">Erlang izvorni kôd</comment>
+  <comment xml:lang="he">קוד מקור של Erlang</comment>
+  <comment xml:lang="gl">código fonte de Erlang</comment>
+  <comment xml:lang="ga">cód foinseach Erlang</comment>
+  <comment xml:lang="fur">codiç sorzint Erlang</comment>
+  <comment xml:lang="fr">code source Erlang</comment>
+  <comment xml:lang="fo">Erlang keldukota</comment>
+  <comment xml:lang="fi">Erlang-lähdekoodi</comment>
+  <comment xml:lang="eu">Erlang iturburu-kodea</comment>
+  <comment xml:lang="es">código fuente en Erlang</comment>
+  <comment xml:lang="eo">Erlang-fontkodo</comment>
+  <comment xml:lang="en-GB">Erlang source code</comment>
+  <comment xml:lang="el">Πηγαίος κώδικας Erlang</comment>
+  <comment xml:lang="de">Erlang-Quelltext</comment>
+  <comment xml:lang="da">Erlang-kildekode</comment>
+  <comment xml:lang="cs">zdrojový kód v jazyce Erlang</comment>
+  <comment xml:lang="ca">codi font en Erlang</comment>
+  <comment xml:lang="bg">Изходен код — Erlang</comment>
+  <comment xml:lang="be-Latn">Kryničny kod Erlang</comment>
+  <comment xml:lang="be-Cyrl">зыходны код Erlang</comment>
+  <comment xml:lang="ar">شفرة مصدر Erlang</comment>
+  <comment xml:lang="af">Erlang-bronkode</comment>
+  <sub-class-of type="text/plain"/>
+  <glob pattern="*.erl"/>
+</mime-type>
