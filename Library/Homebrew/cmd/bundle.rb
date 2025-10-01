@@ -215,7 +215,7 @@ module Homebrew
             formulae:   args.formulae? || no_type_args,
             casks:      args.casks? || no_type_args,
             mas:        args.mas? || no_type_args,
-            whalebrew:  args.whalebrew? || no_type_args,
+            whalebrew:  args.whalebrew?,
             vscode:
           )
         when "edit"
