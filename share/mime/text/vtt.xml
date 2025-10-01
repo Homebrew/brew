@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="text/vtt">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>WebVTT subtitles</comment>
+  <comment xml:lang="zh-Hant-TW">WebVTT 字幕</comment>
+  <comment xml:lang="zh-Hans-CN">WebVTT 字幕</comment>
+  <comment xml:lang="uk">субтитри WebVTT</comment>
+  <comment xml:lang="tr">WebVTT alt yazıları</comment>
+  <comment xml:lang="sv">WebVTT-undertexter</comment>
+  <comment xml:lang="sr-Cyrl">Веб ВТТ преводи</comment>
+  <comment xml:lang="sq">titra WebVTT</comment>
+  <comment xml:lang="sl">Podnapisi WebVTT</comment>
+  <comment xml:lang="si">WebVTT උපසිරැසි</comment>
+  <comment xml:lang="sk">Titulky WebVTT</comment>
+  <comment xml:lang="ru">Субтитры WebVTT</comment>
+  <comment xml:lang="pt-BR">Legendas WebVTT</comment>
+  <comment xml:lang="pt">legendas WebVTT</comment>
+  <comment xml:lang="pl">Napisy WebVTT</comment>
+  <comment xml:lang="oc">sostítols WebVTT</comment>
+  <comment xml:lang="nl">WebVTT ondertitels</comment>
+  <comment xml:lang="lv">WebVTT subtitri</comment>
+  <comment xml:lang="ko">WebVTT 자막 파일</comment>
+  <comment xml:lang="kk-Cyrl">WebVTT субтитрлары</comment>
+  <comment xml:lang="ka">WebVTT ქვეტიტრები</comment>
+  <comment xml:lang="ja">WebVTT 字幕</comment>
+  <comment xml:lang="it">Sottotitoli WebVTT</comment>
+  <comment xml:lang="is">WebVTT skjátextar</comment>
+  <comment xml:lang="id">Subjudul WebVTT</comment>
+  <comment xml:lang="ia">Subtitulos WebVTT</comment>
+  <comment xml:lang="hu">WebVTT feliratok</comment>
+  <comment xml:lang="hr">WebVTT podnaslovi</comment>
+  <comment xml:lang="he">כתוביות WebVTT</comment>
+  <comment xml:lang="gl">subtítulos WebVTT</comment>
+  <comment xml:lang="ga">fotheidil WebVTT</comment>
+  <comment xml:lang="fur">sottitui WebVTT</comment>
+  <comment xml:lang="fr">sous-titres WebVTT</comment>
+  <comment xml:lang="fi">WebVTT-tekstitykset</comment>
+  <comment xml:lang="eu">WebVTT azpitituluak</comment>
+  <comment xml:lang="es">subtítulos WebVTT</comment>
+  <comment xml:lang="en-GB">WebVTT subtitles</comment>
+  <comment xml:lang="el">Υπότιτλοι WebVTT</comment>
+  <comment xml:lang="de">WebVTT-Untertitel</comment>
+  <comment xml:lang="da">WebVTT-undertekster</comment>
+  <comment xml:lang="cs">titulky WebVTT</comment>
+  <comment xml:lang="ca">subtítols WebVTT</comment>
+  <comment xml:lang="bg">Субтитри — WebVTT</comment>
+  <comment xml:lang="be-Cyrl">субцітры WebVTT</comment>
+  <comment xml:lang="ar">ترجمات WebVTT</comment>
+  <comment xml:lang="af">WebVTT-onderskrifte</comment>
+  <acronym>VTT</acronym>
+  <expanded-acronym>Video Text Tracks</expanded-acronym>
+  <sub-class-of type="text/plain"/>
+  <generic-icon name="text-x-generic"/>
+  <glob pattern="*.vtt"/>
+</mime-type>

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/vnd.apple.numbers">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Apple Numbers spreadsheet</comment>
+  <comment xml:lang="zh-Hant-TW">Apple Numbers 試算表</comment>
+  <comment xml:lang="uk">електронні таблиці Apple Numbers</comment>
+  <comment xml:lang="tr">Apple Numbers hesap çizelgesi</comment>
+  <comment xml:lang="sv">Apple Numbers-kalkylblad</comment>
+  <comment xml:lang="sl">Razpredelnica Apple Numbers</comment>
+  <comment xml:lang="si">ඇපල් අංක පැතුරුම්පත</comment>
+  <comment xml:lang="ru">Электронная таблица Apple Numbers</comment>
+  <comment xml:lang="pl">Arkusz Apple Numbers</comment>
+  <comment xml:lang="nl">Apple Numbers-werkblad</comment>
+  <comment xml:lang="ko">애플 넘버스 스프레드시트</comment>
+  <comment xml:lang="kk-Cyrl">Apple Numbers электрондық кестесі</comment>
+  <comment xml:lang="ja">Apple Numbers スプレッドシート</comment>
+  <comment xml:lang="it">Foglio di calcolo Apple Numbers</comment>
+  <comment xml:lang="hr">Apple Numbers proračunska tablica</comment>
+  <comment xml:lang="fi">Apple Numbers-taulukko</comment>
+  <comment xml:lang="es">hoja de cálculo Apple Numbers</comment>
+  <comment xml:lang="en-GB">Apple Numbers spreadsheet</comment>
+  <comment xml:lang="de">Apple-Numbers-Tabelle</comment>
+  <comment xml:lang="be-Cyrl">электронная табліца Apple Numbers</comment>
+  <comment xml:lang="ar">جدول أرقام أبل</comment>
+  <sub-class-of type="application/zip"/>
+  <generic-icon name="x-office-spreadsheet"/>
+  <glob pattern="*.numbers"/>
+  <alias type="application/x-iwork-numbers-sffnumbers"/>
+</mime-type>

@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="text/css">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>CSS stylesheet</comment>
+  <comment xml:lang="zh-Hant-TW">CSS 樣式表</comment>
+  <comment xml:lang="zh-Hans-CN">CSS 样式表</comment>
+  <comment xml:lang="vi">Tờ kiểu dáng CSS</comment>
+  <comment xml:lang="uk">таблиця стилів CSS</comment>
+  <comment xml:lang="tr">CSS stil kağıdı</comment>
+  <comment xml:lang="sv">CSS-stilmall</comment>
+  <comment xml:lang="sr-Cyrl">ЦСС стилски лист</comment>
+  <comment xml:lang="sq">fletëstil CSS</comment>
+  <comment xml:lang="sl">Slogovna predloga CSS</comment>
+  <comment xml:lang="si">CSS මෝස්තර පත්‍රිකාව</comment>
+  <comment xml:lang="sk">Štýly CSS</comment>
+  <comment xml:lang="ru">Таблица стилей CSS</comment>
+  <comment xml:lang="ro">Pagină de stil CSS</comment>
+  <comment xml:lang="pt-BR">Folha de estilo CSS</comment>
+  <comment xml:lang="pt">folha de estilos CSS</comment>
+  <comment xml:lang="pl">Arkusz stylów CSS</comment>
+  <comment xml:lang="oc">fuèlh d'estil CSS</comment>
+  <comment xml:lang="nn">CSS-stilark</comment>
+  <comment xml:lang="nl">CSS-stijlblad</comment>
+  <comment xml:lang="nb">CSS-stilark</comment>
+  <comment xml:lang="lv">CSS stilu saraksts</comment>
+  <comment xml:lang="lt">CSS stiliaus aprašas</comment>
+  <comment xml:lang="ko">CSS 스타일시트</comment>
+  <comment xml:lang="kk-Cyrl">CSS стильдер кестесі</comment>
+  <comment xml:lang="ka">CSS სტილი</comment>
+  <comment xml:lang="ja">CSS スタイルシート</comment>
+  <comment xml:lang="it">Foglio di stile CSS</comment>
+  <comment xml:lang="is">CSS-stílsnið</comment>
+  <comment xml:lang="id">Lembar gaya CSS</comment>
+  <comment xml:lang="ia">Folio de stilo CSS</comment>
+  <comment xml:lang="hu">CSS stíluslap</comment>
+  <comment xml:lang="hr">CSS stilska tablica</comment>
+  <comment xml:lang="he">גיליון עיצוב CSS</comment>
+  <comment xml:lang="gl">folla de estilos CSS</comment>
+  <comment xml:lang="ga">stílbhileog CSS</comment>
+  <comment xml:lang="fur">sfuei di stîl CSS</comment>
+  <comment xml:lang="fr">feuille de style CSS</comment>
+  <comment xml:lang="fo">CSS sniðark</comment>
+  <comment xml:lang="fi">CSS-tyylitiedosto</comment>
+  <comment xml:lang="eu">CSS estilo-orria</comment>
+  <comment xml:lang="es">hoja de estilos CSS</comment>
+  <comment xml:lang="eo">CSS-stilfolio</comment>
+  <comment xml:lang="en-GB">CSS stylesheet</comment>
+  <comment xml:lang="el">Φύλλο στυλ CSS</comment>
+  <comment xml:lang="de">CSS-Stilvorlage</comment>
+  <comment xml:lang="da">CSS-stilark</comment>
+  <comment xml:lang="cs">stylopis CSS</comment>
+  <comment xml:lang="ca">llista d'estil CSS</comment>
+  <comment xml:lang="bg">Стилове — CSS</comment>
+  <comment xml:lang="be-Latn">Arkuš stylaŭ CSS</comment>
+  <comment xml:lang="be-Cyrl">табліца стыляў CSS</comment>
+  <comment xml:lang="ar">نمط CSS</comment>
+  <comment xml:lang="af">CSS-stylblad</comment>
+  <acronym>CSS</acronym>
+  <expanded-acronym>Cascading Style Sheets</expanded-acronym>
+  <sub-class-of type="text/plain"/>
+  <glob pattern="*.css"/>
+</mime-type>

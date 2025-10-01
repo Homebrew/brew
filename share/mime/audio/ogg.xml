@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="audio/ogg">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Ogg audio</comment>
+  <comment xml:lang="zh-Hant-TW">Ogg 音訊</comment>
+  <comment xml:lang="zh-Hans-CN">Ogg 音频</comment>
+  <comment xml:lang="uk">звук ogg</comment>
+  <comment xml:lang="tr">Ogg sesi</comment>
+  <comment xml:lang="sv">Ogg-ljud</comment>
+  <comment xml:lang="sr-Cyrl">ОГГ аудио</comment>
+  <comment xml:lang="sq">audio Ogg</comment>
+  <comment xml:lang="sl">Zvok Ogg</comment>
+  <comment xml:lang="si">ඕග් ඕඩියෝ</comment>
+  <comment xml:lang="sk">Zvuk Ogg</comment>
+  <comment xml:lang="ru">Аудио Ogg</comment>
+  <comment xml:lang="pt-BR">Áudio Ogg</comment>
+  <comment xml:lang="pl">Plik dźwiękowy Ogg</comment>
+  <comment xml:lang="oc">àudio Ogg</comment>
+  <comment xml:lang="nl">Ogg-audio</comment>
+  <comment xml:lang="ko">Ogg 오디오</comment>
+  <comment xml:lang="kk-Cyrl">Ogg аулиосы</comment>
+  <comment xml:lang="ja">Ogg オーディオ</comment>
+  <comment xml:lang="it">Audio Ogg</comment>
+  <comment xml:lang="is">Ogg hljóðskrá</comment>
+  <comment xml:lang="id">Audio Ogg</comment>
+  <comment xml:lang="hu">Ogg hang</comment>
+  <comment xml:lang="hr">Ogg zvučni zapis</comment>
+  <comment xml:lang="he">שמע Ogg</comment>
+  <comment xml:lang="gl">Son Ogg</comment>
+  <comment xml:lang="fr">audio Ogg</comment>
+  <comment xml:lang="fi">Ogg-ääni</comment>
+  <comment xml:lang="eu">Ogg audioa</comment>
+  <comment xml:lang="es">sonido Ogg</comment>
+  <comment xml:lang="en-GB">Ogg audio</comment>
+  <comment xml:lang="de">Ogg-Audio</comment>
+  <comment xml:lang="da">Ogg-lyd</comment>
+  <comment xml:lang="ca">àudio Ogg</comment>
+  <comment xml:lang="bg">Аудио — Ogg</comment>
+  <comment xml:lang="be-Cyrl">аўдыя Ogg</comment>
+  <comment xml:lang="ar">صوت Ogg</comment>
+  <sub-class-of type="application/ogg"/>
+  <glob pattern="*.oga"/>
+  <glob pattern="*.ogg"/>
+  <glob pattern="*.opus"/>
+  <alias type="audio/x-ogg"/>
+</mime-type>

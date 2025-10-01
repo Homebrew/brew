@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-font-libgrx">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>LIBGRX font</comment>
+  <comment xml:lang="zh-Hant-TW">LIBGRX 字型</comment>
+  <comment xml:lang="zh-Hans-CN">LIBGRX 字体</comment>
+  <comment xml:lang="vi">Phông chữ LIBGRX</comment>
+  <comment xml:lang="uk">шрифт LIBGRX</comment>
+  <comment xml:lang="tr">LIBGRX yazı tipi</comment>
+  <comment xml:lang="sv">LIBGRX-typsnitt</comment>
+  <comment xml:lang="sr-Cyrl">ЛИБГРИкс слова</comment>
+  <comment xml:lang="sq">shkronja LIBGRX</comment>
+  <comment xml:lang="sl">Datoteka pisave LIBGRX</comment>
+  <comment xml:lang="si">LIBGRX අකුරු</comment>
+  <comment xml:lang="sk">Písmo LIBGRX</comment>
+  <comment xml:lang="ru">Шрифт LIBGRX</comment>
+  <comment xml:lang="ro">Font LIBGRX</comment>
+  <comment xml:lang="pt-BR">Fonte LIBGRX</comment>
+  <comment xml:lang="pt">letra LIBGRX</comment>
+  <comment xml:lang="pl">Czcionka LIBGRX</comment>
+  <comment xml:lang="oc">poliça LIBGRX</comment>
+  <comment xml:lang="nn">LIBGRX skrifttype</comment>
+  <comment xml:lang="nl">LIBGRX-lettertype</comment>
+  <comment xml:lang="nb">LIBGRX-skrifttype</comment>
+  <comment xml:lang="ms">Font LIBGRX</comment>
+  <comment xml:lang="lv">LIBGRX fonts</comment>
+  <comment xml:lang="lt">LIBGRX šriftas</comment>
+  <comment xml:lang="ko">LIBGRX 글꼴</comment>
+  <comment xml:lang="kk-Cyrl">LIBGRX қарібі</comment>
+  <comment xml:lang="ja">LIBGRX フォーマット</comment>
+  <comment xml:lang="it">Carattere LIBGRX</comment>
+  <comment xml:lang="is">LIBGRX letur</comment>
+  <comment xml:lang="id">Fonta LIBGRX</comment>
+  <comment xml:lang="ia">Typo de litteras LIBGRX</comment>
+  <comment xml:lang="hu">LIBGRX-betűkészlet</comment>
+  <comment xml:lang="hr">LIBGRX font</comment>
+  <comment xml:lang="he">גופן LIBGRX</comment>
+  <comment xml:lang="gl">tipo de fonte en LIBGRX</comment>
+  <comment xml:lang="ga">cló LIBGRX</comment>
+  <comment xml:lang="fur">caratar LIBGRX</comment>
+  <comment xml:lang="fr">police LIBGRX</comment>
+  <comment xml:lang="fo">LIBGRX stavasnið</comment>
+  <comment xml:lang="fi">LIBGRX-fontti</comment>
+  <comment xml:lang="eu">LIBGRX letra-tipoa</comment>
+  <comment xml:lang="es">tipo de letra LIBGRX</comment>
+  <comment xml:lang="eo">LIBGRX-tiparo</comment>
+  <comment xml:lang="en-GB">LIBGRX font</comment>
+  <comment xml:lang="el">Γραμματοσειρά LIBGRX</comment>
+  <comment xml:lang="de">LIBGRX-Schrift</comment>
+  <comment xml:lang="da">LIBGRX-skrifttype</comment>
+  <comment xml:lang="cy">Ffont LIBGRX</comment>
+  <comment xml:lang="cs">font LIBGRX</comment>
+  <comment xml:lang="ca">lletra LIBGRX</comment>
+  <comment xml:lang="bg">Шрифт — LIBGRX</comment>
+  <comment xml:lang="be-Latn">Šryft LIBGRX</comment>
+  <comment xml:lang="be-Cyrl">шрыфт LIBGRX</comment>
+  <comment xml:lang="az">LIBGRX yazı növü</comment>
+  <comment xml:lang="ar">خط LIBGRX</comment>
+  <comment xml:lang="af">LIBGRX-skriftipe</comment>
+  <generic-icon name="font-x-generic"/>
+</mime-type>

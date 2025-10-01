@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="audio/x-riff">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>RIFF audio</comment>
+  <comment xml:lang="zh-Hant-TW">RIFF 音訊</comment>
+  <comment xml:lang="zh-Hans-CN">RIFF 音频</comment>
+  <comment xml:lang="vi">Âm thanh RIFF</comment>
+  <comment xml:lang="uk">звук RIFF</comment>
+  <comment xml:lang="tr">RIFF sesi</comment>
+  <comment xml:lang="sv">RIFF-ljud</comment>
+  <comment xml:lang="sr-Cyrl">РИФФ звук</comment>
+  <comment xml:lang="sq">audio RIFF</comment>
+  <comment xml:lang="sl">Zvočna datoteka RIFF</comment>
+  <comment xml:lang="si">RIFF ශ්‍රව්‍ය</comment>
+  <comment xml:lang="sk">Zvuk RIFF</comment>
+  <comment xml:lang="ru">Аудио RIFF</comment>
+  <comment xml:lang="ro">Audio RIFF</comment>
+  <comment xml:lang="pt-BR">Áudio RIFF</comment>
+  <comment xml:lang="pt">áudio RIFF</comment>
+  <comment xml:lang="pl">Plik dźwiękowy RIFF</comment>
+  <comment xml:lang="oc">àudio RIFF</comment>
+  <comment xml:lang="nn">RIFF-lyd</comment>
+  <comment xml:lang="nl">RIFF-audio</comment>
+  <comment xml:lang="nb">RIFF-lyd</comment>
+  <comment xml:lang="ms">Audio RIFF</comment>
+  <comment xml:lang="lv">RIFF audio</comment>
+  <comment xml:lang="lt">RIFF garso įrašas</comment>
+  <comment xml:lang="ko">RIFF 오디오</comment>
+  <comment xml:lang="kk-Cyrl">RIFF аудиосы</comment>
+  <comment xml:lang="ja">RIFF オーディオ</comment>
+  <comment xml:lang="it">Audio RIFF</comment>
+  <comment xml:lang="is">RIFF hljóðskrá</comment>
+  <comment xml:lang="id">Audio RIFF</comment>
+  <comment xml:lang="ia">Audio RIFF</comment>
+  <comment xml:lang="hu">RIFF-kép</comment>
+  <comment xml:lang="hr">RIFF zvučni zapis</comment>
+  <comment xml:lang="he">שמע RIFF</comment>
+  <comment xml:lang="gl">son RIFF</comment>
+  <comment xml:lang="ga">fuaim RIFF</comment>
+  <comment xml:lang="fur">audio RIFF</comment>
+  <comment xml:lang="fr">audio RIFF</comment>
+  <comment xml:lang="fo">RIFF ljóð</comment>
+  <comment xml:lang="fi">RIFF-ääni</comment>
+  <comment xml:lang="eu">RIFF audioa</comment>
+  <comment xml:lang="es">sonido RIFF</comment>
+  <comment xml:lang="eo">RIFF-sondosiero</comment>
+  <comment xml:lang="en-GB">RIFF audio</comment>
+  <comment xml:lang="el">Ήχος RIFF</comment>
+  <comment xml:lang="de">RIFF-Audio</comment>
+  <comment xml:lang="da">RIFF-lyd</comment>
+  <comment xml:lang="cy">Sain RIFF</comment>
+  <comment xml:lang="cs">zvuk RIFF</comment>
+  <comment xml:lang="ca">àudio RIFF</comment>
+  <comment xml:lang="bg">Аудио — RIFF</comment>
+  <comment xml:lang="be-Latn">Aŭdyjo RIFF</comment>
+  <comment xml:lang="be-Cyrl">аўдыя RIFF</comment>
+  <comment xml:lang="az">RIFF audio faylı</comment>
+  <comment xml:lang="ar">صوت RIFF</comment>
+  <comment xml:lang="af">RIFF-oudio</comment>
+</mime-type>

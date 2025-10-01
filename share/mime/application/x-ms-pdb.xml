@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-ms-pdb">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Windows program database</comment>
+  <comment xml:lang="uk">база даних програм Windows</comment>
+  <comment xml:lang="sv">Windows-programdatabas</comment>
+  <comment xml:lang="ru">База данных программ Windows</comment>
+  <comment xml:lang="pl">Baza danych programów Windows</comment>
+  <comment xml:lang="eu">Windows programen datu-basea</comment>
+  <comment xml:lang="es">base de datos de programa de Windows</comment>
+  <comment xml:lang="de">Windows-Programmdatenbank</comment>
+  <glob pattern="*.pdb"/>
+</mime-type>

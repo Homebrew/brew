@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/epub+zip">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Electronic book document</comment>
+  <comment xml:lang="zh-Hant-TW">電子書文件</comment>
+  <comment xml:lang="uk">документ електронної книги</comment>
+  <comment xml:lang="sv">Elektroniskt bokdokument</comment>
+  <comment xml:lang="sq">Dokument libri elektronik</comment>
+  <comment xml:lang="ru">Документ электронной книги</comment>
+  <comment xml:lang="pt-BR">Documento de livro eletrônico</comment>
+  <comment xml:lang="pl">Dokument książki elektronicznej</comment>
+  <comment xml:lang="ja">電子書籍</comment>
+  <comment xml:lang="it">Documento libro elettronico</comment>
+  <comment xml:lang="gl">Documento de libro electrónico</comment>
+  <comment xml:lang="eu">Liburu elektronikoa</comment>
+  <comment xml:lang="es">documento de libro electrónico</comment>
+  <comment xml:lang="de">E-Book</comment>
+  <comment xml:lang="be-Cyrl">электроннай кніга</comment>
+  <sub-class-of type="application/zip"/>
+  <generic-icon name="x-office-document"/>
+  <glob pattern="*.epub"/>
+</mime-type>

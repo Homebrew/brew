@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-xpinstall">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>XPInstall installer module</comment>
+  <comment xml:lang="zh-Hant-TW">XPInstall 安裝程式模組</comment>
+  <comment xml:lang="zh-Hans-CN">XPInstall 安装工具模块</comment>
+  <comment xml:lang="uk">модуль засобу встановлення XPInstall</comment>
+  <comment xml:lang="tr">XPInstall kurulum modülü</comment>
+  <comment xml:lang="sv">XPInstall-installeringsmodul</comment>
+  <comment xml:lang="sr-Cyrl">модул инсталатера Инсталирања ИксПе-а</comment>
+  <comment xml:lang="sq">modul instaluesi XPInstall</comment>
+  <comment xml:lang="sl">modul namestilnika XPInstall</comment>
+  <comment xml:lang="si">XPI ස්ථාපක මොඩියුලය ස්ථාපනය කරන්න</comment>
+  <comment xml:lang="sk">Modul inštalátora XPInstall</comment>
+  <comment xml:lang="ru">Модуль установщика XPInstall</comment>
+  <comment xml:lang="ro">Modul de instalare XPInstall</comment>
+  <comment xml:lang="pt-BR">Módulo de instalador XPInstall</comment>
+  <comment xml:lang="pt">módulo de instalador XPInstall</comment>
+  <comment xml:lang="pl">Moduł instalatora XPInstall</comment>
+  <comment xml:lang="oc">modul d'installacion XPInstall</comment>
+  <comment xml:lang="nl">XPInstall installeer module</comment>
+  <comment xml:lang="lv">XPInstall instalatora modulis</comment>
+  <comment xml:lang="lt">XPInstall įdiegiklio modulis</comment>
+  <comment xml:lang="ko">XPInstall 설치 프로그램 모듈</comment>
+  <comment xml:lang="kk-Cyrl">XPInstall орнату модулі</comment>
+  <comment xml:lang="ja">XPInstall インストーラモジュール</comment>
+  <comment xml:lang="it">Modulo installatore XPInstall</comment>
+  <comment xml:lang="is">XPInstall uppsetningareining</comment>
+  <comment xml:lang="id">Modul installer XPInstall</comment>
+  <comment xml:lang="ia">Modulo de installation XPInstall</comment>
+  <comment xml:lang="hu">XPInstall telepítőmodul</comment>
+  <comment xml:lang="hr">XPInstall instalacijski modul</comment>
+  <comment xml:lang="he">מודול התקנה של XPInstall</comment>
+  <comment xml:lang="gl">Módulo do instalador XPInstall</comment>
+  <comment xml:lang="ga">modúl suiteála XPInstall</comment>
+  <comment xml:lang="fur">modul instaladôr XPInstall</comment>
+  <comment xml:lang="fr">module d'installation XPInstall</comment>
+  <comment xml:lang="fo">XPInstall innleggjaramótul</comment>
+  <comment xml:lang="fi">XPInstall-asennuspaketti</comment>
+  <comment xml:lang="eu">XPInstall instalatzailearen modulua</comment>
+  <comment xml:lang="es">módulo del instalador XPInstall</comment>
+  <comment xml:lang="en-GB">XPInstall installer module</comment>
+  <comment xml:lang="el">Άρθρωμα εγκατάστασης XPInstall</comment>
+  <comment xml:lang="de">XPInstall-Installationsmodul</comment>
+  <comment xml:lang="da">XPInstall-installationsmodul</comment>
+  <comment xml:lang="cs">modul instalátoru XPInstall</comment>
+  <comment xml:lang="ca">mòdul de l'instal·lador XPinstall</comment>
+  <comment xml:lang="bg">Пакет — инсталация XPInstall</comment>
+  <comment xml:lang="be-Cyrl">модуль усталёўшчыка XPInstall</comment>
+  <comment xml:lang="ar">وحدة مثبت XPInstall</comment>
+  <comment xml:lang="af">XPInstall-installasiemodule</comment>
+  <sub-class-of type="application/zip"/>
+  <glob pattern="*.xpi"/>
+</mime-type>

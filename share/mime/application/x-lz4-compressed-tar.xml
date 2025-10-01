@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-lz4-compressed-tar">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Tar archive (LZ4-compressed)</comment>
+  <comment xml:lang="zh-Hant-TW">Tar 封存檔 (LZ4 壓縮)</comment>
+  <comment xml:lang="zh-Hans-CN">Tar 归档文件（LZ4 压缩）</comment>
+  <comment xml:lang="uk">архів tar (стиснений LZ4)</comment>
+  <comment xml:lang="tr">Tar arşivi (LZ4 ile sıkıştırılmış)</comment>
+  <comment xml:lang="sv">Tar-arkiv (LZ4-komprimerat)</comment>
+  <comment xml:lang="sr-Cyrl">Тар архива (запакована ЛЗ4-ом)</comment>
+  <comment xml:lang="sq">arkiv tar (ngjeshur me LZ4)</comment>
+  <comment xml:lang="sl">Arhiv tar (stisnjen, LZ4)</comment>
+  <comment xml:lang="si">තාර සංරක්ෂිතය (LZ4-සම්පීඩිත)</comment>
+  <comment xml:lang="sk">Archív Tar (komprimovaný pomocou LZ4)</comment>
+  <comment xml:lang="ru">Архив TAR (сжатый lz4)</comment>
+  <comment xml:lang="pt-BR">Arquivo Tar (compactado com LZ4)</comment>
+  <comment xml:lang="pl">Archiwum tar (kompresja LZ4)</comment>
+  <comment xml:lang="oc">archiu Tar (compression LZ4)</comment>
+  <comment xml:lang="nl">Tar-archief (gecomprimeerd met LZ4)</comment>
+  <comment xml:lang="ko">Tar 묶음 파일(LZ4 압축)</comment>
+  <comment xml:lang="kk-Cyrl">Tar архиві (LZ4-пен сығылған)</comment>
+  <comment xml:lang="ja">Tar アーカイブ (LZ4 圧縮)</comment>
+  <comment xml:lang="it">Archivio tar (compresso con LZ4)</comment>
+  <comment xml:lang="is">Tar safnskrá (LZ4-þjappað)</comment>
+  <comment xml:lang="id">Arsip tar (terkompresi LZ4)</comment>
+  <comment xml:lang="hu">Tar archívum (LZ4 tömörítésű)</comment>
+  <comment xml:lang="hr">Tar arhiva (LZ4 sažeto)</comment>
+  <comment xml:lang="he">ארכיון Tar (מכווץ ע״י LZ4)</comment>
+  <comment xml:lang="ga">cartlann Tar (comhbhrúite le LZ4)</comment>
+  <comment xml:lang="fur">archivi Tar (comprimût cun LZ4)</comment>
+  <comment xml:lang="fr">archive tar (compression LZ4)</comment>
+  <comment xml:lang="fi">Tar-arkisto (LZ4-pakattu)</comment>
+  <comment xml:lang="eu">Tar artxiboa (LZ4-rekin konprimatua)</comment>
+  <comment xml:lang="es">archivador TAR (comprimido con LZ4)</comment>
+  <comment xml:lang="en-GB">Tar archive (LZ4-compressed)</comment>
+  <comment xml:lang="de">Tar-Archiv (LZ4-komprimiert)</comment>
+  <comment xml:lang="da">Tar-arkiv (LZ4-komprimeret)</comment>
+  <comment xml:lang="cs">archiv Tar (komprimace LZ4)</comment>
+  <comment xml:lang="ca">arxiu tar (amb compressió LZ4)</comment>
+  <comment xml:lang="bg">Архив — tar, компресиран с LZ4</comment>
+  <comment xml:lang="be-Cyrl">архіў tar (сцісканне LZ4)</comment>
+  <comment xml:lang="ar">أرشيف Tar (مضغوط-LZ4)</comment>
+  <comment xml:lang="af">Tar-argief (LZ4-saamgepers)</comment>
+  <generic-icon name="package-x-generic"/>
+  <sub-class-of type="application/x-lz4"/>
+  <glob pattern="*.tar.lz4"/>
+</mime-type>

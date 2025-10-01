@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="image/x-icns">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>MacOS X icon</comment>
+  <comment xml:lang="zh-Hant-TW">MacOS X 圖示</comment>
+  <comment xml:lang="zh-Hans-CN">MacOS X 图标</comment>
+  <comment xml:lang="vi">Biểu tượng MacOS X</comment>
+  <comment xml:lang="uk">піктограма MacOS X</comment>
+  <comment xml:lang="tr">MacOS X simgesi</comment>
+  <comment xml:lang="sv">MacOS X-ikon</comment>
+  <comment xml:lang="sr-Cyrl">МекОС Икс иконица</comment>
+  <comment xml:lang="sq">ikonë MacOS X</comment>
+  <comment xml:lang="sl">Datoteka ikone MacOS X</comment>
+  <comment xml:lang="si">MacOS X නිරූපකය</comment>
+  <comment xml:lang="sk">Ikona MacOS X</comment>
+  <comment xml:lang="ru">Значок MacOS X</comment>
+  <comment xml:lang="ro">Iconiță MacOS X</comment>
+  <comment xml:lang="pt-BR">Ícone do MacOS X</comment>
+  <comment xml:lang="pt">ícone MacOS X</comment>
+  <comment xml:lang="pl">Ikona Mac OS X</comment>
+  <comment xml:lang="oc">icòna MacOS X</comment>
+  <comment xml:lang="nn">MacOS X-ikon</comment>
+  <comment xml:lang="nl">MacOS-X-pictogram</comment>
+  <comment xml:lang="nb">MacOS X-ikon</comment>
+  <comment xml:lang="lv">MacOS X ikona</comment>
+  <comment xml:lang="lt">MacOS X piktograma</comment>
+  <comment xml:lang="ko">Mac OS X 아이콘</comment>
+  <comment xml:lang="kk-Cyrl">MacOS X таңбашасы</comment>
+  <comment xml:lang="ka">MacOS X-ის ხატულა</comment>
+  <comment xml:lang="ja">MacOS X アイコン</comment>
+  <comment xml:lang="it">Icona MacOS X</comment>
+  <comment xml:lang="is">MacOS X táknmynd</comment>
+  <comment xml:lang="id">Ikon MacOS X</comment>
+  <comment xml:lang="ia">Icone de Mac OS X</comment>
+  <comment xml:lang="hu">MacOS X ikon</comment>
+  <comment xml:lang="hr">MacOS X ikona</comment>
+  <comment xml:lang="he">סמל בתקן MacOS X</comment>
+  <comment xml:lang="gl">Icona de MacOS X</comment>
+  <comment xml:lang="ga">deilbhín MacOS X</comment>
+  <comment xml:lang="fur">icone MacOS X</comment>
+  <comment xml:lang="fr">icône MacOS X</comment>
+  <comment xml:lang="fo">MacOS X ímynd</comment>
+  <comment xml:lang="fi">MacOS X -kuvake</comment>
+  <comment xml:lang="eu">MacOS X ikonoa</comment>
+  <comment xml:lang="es">icono de OS X</comment>
+  <comment xml:lang="eo">MacOS-X-piktogramo</comment>
+  <comment xml:lang="en-GB">MacOS X icon</comment>
+  <comment xml:lang="el">Εικονίδιο MacOS X</comment>
+  <comment xml:lang="de">MacOS-X-Symbol</comment>
+  <comment xml:lang="da">MacOS X-ikon</comment>
+  <comment xml:lang="cs">ikona MacOS X</comment>
+  <comment xml:lang="ca">icona MacOS X</comment>
+  <comment xml:lang="bg">Икона — MacOS X</comment>
+  <comment xml:lang="be-Latn">Ikona MacOS X</comment>
+  <comment xml:lang="be-Cyrl">значок MacOS X</comment>
+  <comment xml:lang="ar">أيقونة MacOS X</comment>
+  <comment xml:lang="af">MacOS X-ikoon</comment>
+  <glob pattern="*.icns"/>
+</mime-type>

@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/vnd.palm">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Palm OS database</comment>
+  <comment xml:lang="zh-Hant-TW">Palm OS 資料庫</comment>
+  <comment xml:lang="zh-Hans-CN">Palm OS 数据库</comment>
+  <comment xml:lang="vi">Cơ sở dữ liệu PalmOS</comment>
+  <comment xml:lang="uk">база даних Palm OS</comment>
+  <comment xml:lang="tr">Palm OS veri tabanı</comment>
+  <comment xml:lang="sv">Palm OS-databas</comment>
+  <comment xml:lang="sr-Cyrl">база података Палм ОС-а</comment>
+  <comment xml:lang="sq">bazë të dhënash Palm OS</comment>
+  <comment xml:lang="sl">Podatkovna zbirka Palm OS</comment>
+  <comment xml:lang="si">Palm OS දත්ත ගබඩාව</comment>
+  <comment xml:lang="sk">Databáza Palm OS</comment>
+  <comment xml:lang="ru">База данных Palm OS</comment>
+  <comment xml:lang="ro">Bază de date Palm OS</comment>
+  <comment xml:lang="pt-BR">Banco de dados do Palm OS</comment>
+  <comment xml:lang="pt">base de dados Palm OS</comment>
+  <comment xml:lang="pl">Baza danych Palm OS</comment>
+  <comment xml:lang="oc">banca de donadas Palm OS</comment>
+  <comment xml:lang="nn">Palm OS-database</comment>
+  <comment xml:lang="nl">Palm OS-database</comment>
+  <comment xml:lang="nb">Palm OS-database</comment>
+  <comment xml:lang="ms">Pangkalandata PalmOS</comment>
+  <comment xml:lang="lv">Palm OS datubāze</comment>
+  <comment xml:lang="lt">Palm OS duomenų bazė</comment>
+  <comment xml:lang="ko">Palm OS 데이터베이스</comment>
+  <comment xml:lang="kk-Cyrl">Palm OS дерекқоры</comment>
+  <comment xml:lang="ja">Palm OS データベース</comment>
+  <comment xml:lang="it">Database Palm OS</comment>
+  <comment xml:lang="is">Palm OS gagnagrunnur</comment>
+  <comment xml:lang="id">Basis data Palm OS</comment>
+  <comment xml:lang="ia">Base de datos Palm OS</comment>
+  <comment xml:lang="hu">Palm OS-adatbázis</comment>
+  <comment xml:lang="hr">Palm OS baza podataka</comment>
+  <comment xml:lang="he">מסד נתונים של Palm OS</comment>
+  <comment xml:lang="gl">base de datos de Palm OS</comment>
+  <comment xml:lang="ga">bunachar sonraí Palm OS</comment>
+  <comment xml:lang="fur">base di dâts Palm OS</comment>
+  <comment xml:lang="fr">base de données Palm OS</comment>
+  <comment xml:lang="fo">Palm OS dátustovnur</comment>
+  <comment xml:lang="fi">Palm OS -tietokanta</comment>
+  <comment xml:lang="eu">Palm OS datu-basea</comment>
+  <comment xml:lang="es">base de datos de Palm OS</comment>
+  <comment xml:lang="eo">datumbazo de Palm OS</comment>
+  <comment xml:lang="en-GB">Palm OS database</comment>
+  <comment xml:lang="el">Βάση δεδομένων Palm OS</comment>
+  <comment xml:lang="de">Palm-OS-Datenbank</comment>
+  <comment xml:lang="da">Palm OS-database</comment>
+  <comment xml:lang="cy">Cronfa Ddata Palm OS</comment>
+  <comment xml:lang="cs">databáze Palm OS</comment>
+  <comment xml:lang="ca">base de dades Palm OS</comment>
+  <comment xml:lang="bg">База от данни — Palm OS</comment>
+  <comment xml:lang="be-Latn">Baza źviestak Palm OS</comment>
+  <comment xml:lang="be-Cyrl">база даных Palm OS</comment>
+  <comment xml:lang="az">Palm OS mə'lumat bazası</comment>
+  <comment xml:lang="ar">قاعدة بيانات Palm OS</comment>
+  <comment xml:lang="af">Palm OS-databasis</comment>
+  <glob pattern="*.prc"/>
+  <glob pattern="*.pdb" weight="40"/>
+  <glob pattern="*.pqa"/>
+  <glob pattern="*.oprc"/>
+  <alias type="application/x-palm-database"/>
+</mime-type>

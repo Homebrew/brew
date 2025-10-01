@@ -1,0 +1,1 @@
+../../../../Cellar/shared-mime-info/2.4/share/locale/en_GB/LC_MESSAGES/shared-mime-info.mo

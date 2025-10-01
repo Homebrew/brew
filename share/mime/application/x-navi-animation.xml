@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-navi-animation">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Windows animated cursor</comment>
+  <comment xml:lang="zh-Hant-TW">Windows 滑鼠動畫游標</comment>
+  <comment xml:lang="zh-Hans-CN">Windows 动态光标</comment>
+  <comment xml:lang="vi">Con chạy hoạt họa Windows</comment>
+  <comment xml:lang="uk">анімований курсор Windows</comment>
+  <comment xml:lang="tr">Windows canlandırmalı imleci</comment>
+  <comment xml:lang="sv">Animerad Windows-muspekare</comment>
+  <comment xml:lang="sr-Cyrl">Виндоузов анимирани курсор</comment>
+  <comment xml:lang="sq">kursor i animuar Windows</comment>
+  <comment xml:lang="sl">Datoteka animirane kazalke Windows</comment>
+  <comment xml:lang="si">වින්ඩෝස් සජීවිකරණ කර්සරය</comment>
+  <comment xml:lang="sk">Animovaný kurzor Windows</comment>
+  <comment xml:lang="ru">Анимированный курсор Windows</comment>
+  <comment xml:lang="ro">Cursor animat Windows</comment>
+  <comment xml:lang="pt-BR">Cursor animado do Windows</comment>
+  <comment xml:lang="pt">cursor animado Windows</comment>
+  <comment xml:lang="pl">Animowany kursor Windows</comment>
+  <comment xml:lang="oc">cursor animat Windows</comment>
+  <comment xml:lang="nn">Windows animert peikar</comment>
+  <comment xml:lang="nl">geanimeerde Windows-muisaanwijzer</comment>
+  <comment xml:lang="lv">Windows animēts kursors</comment>
+  <comment xml:lang="lt">Animuotas Windows žymeklis</comment>
+  <comment xml:lang="ko">Windows 움직이는 커서</comment>
+  <comment xml:lang="kk-Cyrl">Windows анимациясы бар курсор</comment>
+  <comment xml:lang="ka">Windows -ის ანიმირებული კურსორი</comment>
+  <comment xml:lang="ja">Windows アニメーションカーソル</comment>
+  <comment xml:lang="it">Cursore animato Windows</comment>
+  <comment xml:lang="is">Windows hreyfibendill</comment>
+  <comment xml:lang="id">Kursor animasi Windows</comment>
+  <comment xml:lang="ia">Cursor animate pro Windows</comment>
+  <comment xml:lang="hu">Windows animált kurzor</comment>
+  <comment xml:lang="hr">Windows animirani pokazivač</comment>
+  <comment xml:lang="he">סמן מונפש של Windows</comment>
+  <comment xml:lang="gl">Cursor animado de Windows</comment>
+  <comment xml:lang="ga">cúrsóir beoite Windows</comment>
+  <comment xml:lang="fur">cursôr animât di Windows</comment>
+  <comment xml:lang="fr">curseur animé Windows</comment>
+  <comment xml:lang="fo">Windows livindaigjørdur vísi</comment>
+  <comment xml:lang="fi">animoitu Windows-osoitin</comment>
+  <comment xml:lang="eu">Windows-eko kurtsore animatua</comment>
+  <comment xml:lang="es">cursor animado de Windows</comment>
+  <comment xml:lang="en-GB">Windows animated cursor</comment>
+  <comment xml:lang="el">Κινούμενος δρομέας Windows</comment>
+  <comment xml:lang="de">Animierter Windows-Mauszeiger</comment>
+  <comment xml:lang="da">Windowsanimeret markør</comment>
+  <comment xml:lang="cs">animovaný kurzor Windows</comment>
+  <comment xml:lang="ca">cursor animat de Windows</comment>
+  <comment xml:lang="bg">Курсор — Windows, анимиран</comment>
+  <comment xml:lang="be-Latn">Animavany kursor Windows</comment>
+  <comment xml:lang="be-Cyrl">анімаваны курсор Windows</comment>
+  <comment xml:lang="ar">مؤشر ويندوز متحرك</comment>
+  <comment xml:lang="af">Windows geanimeerde wyser</comment>
+  <glob pattern="*.ani"/>
+</mime-type>

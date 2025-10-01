@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="image/vnd.adobe.photoshop">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Photoshop image</comment>
+  <comment xml:lang="zh-Hant-TW">Photoshop 影像</comment>
+  <comment xml:lang="zh-Hans-CN">Photoshop 图像</comment>
+  <comment xml:lang="vi">Ảnh Photoshop</comment>
+  <comment xml:lang="uk">зображення Photoshop</comment>
+  <comment xml:lang="tr">Photoshop görüntüsü</comment>
+  <comment xml:lang="sv">Photoshop-bild</comment>
+  <comment xml:lang="sr-Cyrl">Фотошоп слика</comment>
+  <comment xml:lang="sq">figurë Photoshop</comment>
+  <comment xml:lang="sl">Slikovna datoteka Photoshop</comment>
+  <comment xml:lang="si">Photoshop රූපය</comment>
+  <comment xml:lang="sk">Obrázok Photoshop</comment>
+  <comment xml:lang="ru">Изображение Photoshop</comment>
+  <comment xml:lang="ro">Imagine Photoshop</comment>
+  <comment xml:lang="pt-BR">Imagem do Photoshop</comment>
+  <comment xml:lang="pt">imagem Photoshop</comment>
+  <comment xml:lang="pl">Obraz Photoshop</comment>
+  <comment xml:lang="oc">imatge Photoshop</comment>
+  <comment xml:lang="nl">Photoshop-afbeelding</comment>
+  <comment xml:lang="ms">Imej Photoshop</comment>
+  <comment xml:lang="lv">Photoshop attēls</comment>
+  <comment xml:lang="lt">Photoshop paveikslėlis</comment>
+  <comment xml:lang="ko">포토샵 이미지</comment>
+  <comment xml:lang="kk-Cyrl">изображение Photoshop</comment>
+  <comment xml:lang="ja">Photoshop 画像</comment>
+  <comment xml:lang="it">Immagine Photoshop</comment>
+  <comment xml:lang="is">Photoshop mynd</comment>
+  <comment xml:lang="id">Citra Photoshop</comment>
+  <comment xml:lang="ia">Imagine Photoshop</comment>
+  <comment xml:lang="hu">Photoshop-kép</comment>
+  <comment xml:lang="hr">Photoshop slika</comment>
+  <comment xml:lang="he">תמונת Photoshop</comment>
+  <comment xml:lang="gl">imaxe de Photoshop</comment>
+  <comment xml:lang="ga">íomhá Photoshop</comment>
+  <comment xml:lang="fur">imagjin Photoshop</comment>
+  <comment xml:lang="fr">image Photoshop</comment>
+  <comment xml:lang="fo">Photoshop mynd</comment>
+  <comment xml:lang="fi">Photoshop-kuva</comment>
+  <comment xml:lang="eu">Photoshop irudia</comment>
+  <comment xml:lang="es">imagen de Photoshop</comment>
+  <comment xml:lang="eo">Photoshop-bildo</comment>
+  <comment xml:lang="en-GB">Photoshop image</comment>
+  <comment xml:lang="el">Εικόνα Photoshop</comment>
+  <comment xml:lang="de">Photoshop-Bild</comment>
+  <comment xml:lang="da">Photoshop-billede</comment>
+  <comment xml:lang="cs">obrázek Photoshop</comment>
+  <comment xml:lang="ca">imatge de Photoshop</comment>
+  <comment xml:lang="bg">Изображение — Photoshop</comment>
+  <comment xml:lang="be-Cyrl">выява Photoshop</comment>
+  <comment xml:lang="ar">صورة فوتوشوب</comment>
+  <comment xml:lang="af">Photoshop-beeld</comment>
+  <glob pattern="*.psd"/>
+  <alias type="image/psd"/>
+  <alias type="image/x-psd"/>
+  <alias type="image/photoshop"/>
+  <alias type="image/x-photoshop"/>
+  <alias type="application/photoshop"/>
+  <alias type="application/x-photoshop"/>
+</mime-type>

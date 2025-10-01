@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-neo-geo-pocket-rom">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Neo-Geo Pocket ROM</comment>
+  <comment xml:lang="zh-Hant-TW">Neo-Geo Pocket ROM</comment>
+  <comment xml:lang="zh-Hans-CN">Neo-Geo Pocket ROM</comment>
+  <comment xml:lang="uk">ППП Neo-Geo Pocket</comment>
+  <comment xml:lang="tr">Neo-Geo Pocket ROM</comment>
+  <comment xml:lang="sv">Neo-Geo Pocket-rom</comment>
+  <comment xml:lang="sr-Cyrl">Нео-Гео Покет РОМ</comment>
+  <comment xml:lang="sq">ROM Neo-Geo Pocket</comment>
+  <comment xml:lang="sl">Neo-Geo Pocket ROM</comment>
+  <comment xml:lang="si">Neo-Geo Pocket ROM</comment>
+  <comment xml:lang="sk">ROM pre Neo-Geo Pocket</comment>
+  <comment xml:lang="ru">Neo-Geo Pocket ROM</comment>
+  <comment xml:lang="pt-BR">ROM de Neo-Geo Pocket</comment>
+  <comment xml:lang="pl">Plik ROM konsoli Neo-Geo Pocket</comment>
+  <comment xml:lang="nl">Neo-Geo Pocket-ROM</comment>
+  <comment xml:lang="ko">네오지오 포켓 롬</comment>
+  <comment xml:lang="kk-Cyrl">Neo-Geo Pocket ROM</comment>
+  <comment xml:lang="ja">ネオジオポケット ROM</comment>
+  <comment xml:lang="it">ROM Neo-Geo Pocket</comment>
+  <comment xml:lang="is">Neo-Geo Pocket ROM</comment>
+  <comment xml:lang="id">ROM Neo-Geo Pocket</comment>
+  <comment xml:lang="hu">Neo-Geo Pocket ROM</comment>
+  <comment xml:lang="hr">Neo-Geo Pocket ROM</comment>
+  <comment xml:lang="he">ROM מסוג Neo-Geo Pocket</comment>
+  <comment xml:lang="gl">ROM de Neo-Geo Pocket</comment>
+  <comment xml:lang="ga">ROM Neo-Geo Pocket</comment>
+  <comment xml:lang="fur">ROM Neo-Geo Pocket</comment>
+  <comment xml:lang="fr">ROM Neo-Geo Pocket</comment>
+  <comment xml:lang="fi">Neo-Geo Pocket -ROM</comment>
+  <comment xml:lang="eu">Neo-Geo Pocket ROM</comment>
+  <comment xml:lang="es">ROM de Neo-Geo Pocket</comment>
+  <comment xml:lang="en-GB">Neo-Geo Pocket ROM</comment>
+  <comment xml:lang="de">Neo-Geo-Pocket-ROM</comment>
+  <comment xml:lang="da">Neo-Geo Pocket-ROM</comment>
+  <comment xml:lang="cs">ROM pro Neo-Geo Pocket</comment>
+  <comment xml:lang="ca">ROM de Neo-Geo Pocket</comment>
+  <comment xml:lang="bg">ROM — Neo-Geo Pocket</comment>
+  <comment xml:lang="be-Cyrl">Neo-Geo Pocket ROM</comment>
+  <comment xml:lang="ar">روم Neo-Geo Pocket</comment>
+  <generic-icon name="application-x-executable"/>
+  <glob pattern="*.ngp"/>
+</mime-type>

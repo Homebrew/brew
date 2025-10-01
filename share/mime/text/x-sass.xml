@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="text/x-sass">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Sass CSS pre-processor file</comment>
+  <comment xml:lang="zh-Hant-TW">Sass CSS 處理器前檔案</comment>
+  <comment xml:lang="zh-Hans-CN">Sass CSS 预处理器文件</comment>
+  <comment xml:lang="uk">файл препроцесора CSS Sass</comment>
+  <comment xml:lang="tr">Sass CSS önişlemci dosyası</comment>
+  <comment xml:lang="sv">Sass CSS-preprocessorfil</comment>
+  <comment xml:lang="sr-Cyrl">датотека Сас ЦСС пре-процесора</comment>
+  <comment xml:lang="sq">kartelë pre-procesori CSS Sass</comment>
+  <comment xml:lang="si">Sass CSS පෙර-ප්‍රොසෙසර ගොනුව</comment>
+  <comment xml:lang="sk">Súbor Sass CSS pre-procesora</comment>
+  <comment xml:lang="ru">Файл препроцессора Sass CSS</comment>
+  <comment xml:lang="pt-BR">Arquivo de pré-processamento Sass CSS</comment>
+  <comment xml:lang="pl">Plik preprocesora CSS Sass</comment>
+  <comment xml:lang="nl">SaSS CSS-voorverwerkersbestand</comment>
+  <comment xml:lang="ko">Sass CSS 전처리기 파일</comment>
+  <comment xml:lang="kk-Cyrl">Sass CSS препроцессор файлы</comment>
+  <comment xml:lang="ja">Sass CSS プリプロセッサファイル</comment>
+  <comment xml:lang="it">File CSS Sass</comment>
+  <comment xml:lang="is">Sass CSS pre-processor skrá</comment>
+  <comment xml:lang="id">Berkas pre-processor Sass CSS</comment>
+  <comment xml:lang="hu">Sass CSS előfeldolgozó fájl</comment>
+  <comment xml:lang="hr">Sass CSS datoteka predobrade</comment>
+  <comment xml:lang="he">קובץ קדם עיבוד Sass CSS</comment>
+  <comment xml:lang="ga">comhad réamhphróiseálaí CSS Sass</comment>
+  <comment xml:lang="fur">file di pre-elaborazion di CSS Sass</comment>
+  <comment xml:lang="fr">fichier de prétraitement CSS Sass</comment>
+  <comment xml:lang="fi">Sass CSS esikäsittelijä -tiedosto</comment>
+  <comment xml:lang="eu">Sass CSS fitxategi prozesatu gabea</comment>
+  <comment xml:lang="es">archivo de preprocesador de CSS Sass</comment>
+  <comment xml:lang="en-GB">Sass CSS pre-processor file</comment>
+  <comment xml:lang="de">Sass-CSS-Präprozessordatei</comment>
+  <comment xml:lang="da">Sass CSS pre-processor-fil</comment>
+  <comment xml:lang="cs">soubor preprocesoru Sass CSS</comment>
+  <comment xml:lang="ca">fitxer preprocessador CSS Sass</comment>
+  <comment xml:lang="bg">Директиви за препроцесора — Sass CSS</comment>
+  <comment xml:lang="be-Cyrl">файл прэпрацэсара Sass CSS</comment>
+  <comment xml:lang="ar">ملف Sass CSS قبل المعالج</comment>
+  <comment xml:lang="af">Sass CSS-voorverwerkerlêer</comment>
+  <acronym>Sass</acronym>
+  <expanded-acronym>Syntactically Awesome Style Sheets</expanded-acronym>
+  <sub-class-of type="text/plain"/>
+  <glob pattern="*.sass"/>
+  <generic-icon name="text-x-generic"/>
+</mime-type>

@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-iff">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>IFF file</comment>
+  <comment xml:lang="zh-Hant-TW">IFF 檔案</comment>
+  <comment xml:lang="zh-Hans-CN">IFF 文件</comment>
+  <comment xml:lang="uk">файл IFF</comment>
+  <comment xml:lang="tr">IFF dosyası</comment>
+  <comment xml:lang="sv">IFF-fil</comment>
+  <comment xml:lang="sr-Cyrl">ИФФ датотека</comment>
+  <comment xml:lang="sq">kartelë IFF</comment>
+  <comment xml:lang="sl">Datoteka IFF</comment>
+  <comment xml:lang="si">IFF ගොනුව</comment>
+  <comment xml:lang="sk">Súbor IFF</comment>
+  <comment xml:lang="ru">Файл IFF</comment>
+  <comment xml:lang="pt-BR">Arquivo IFF</comment>
+  <comment xml:lang="pt">ficheiro IFF</comment>
+  <comment xml:lang="pl">Plik IFF</comment>
+  <comment xml:lang="oc">fichièr IFF</comment>
+  <comment xml:lang="nl">IFF-bestand</comment>
+  <comment xml:lang="lv">IFF datne</comment>
+  <comment xml:lang="ko">IFF 파일</comment>
+  <comment xml:lang="kk-Cyrl">IFF файлы</comment>
+  <comment xml:lang="ja">IFF ファイル</comment>
+  <comment xml:lang="it">File IFF</comment>
+  <comment xml:lang="is">IFF skrá</comment>
+  <comment xml:lang="id">Berkas IFF</comment>
+  <comment xml:lang="ia">File IFF</comment>
+  <comment xml:lang="hu">IFF fájl</comment>
+  <comment xml:lang="hr">IFF datoteka</comment>
+  <comment xml:lang="he">קובץ IFF</comment>
+  <comment xml:lang="gl">Ficheiro IFF</comment>
+  <comment xml:lang="ga">comhad IFF</comment>
+  <comment xml:lang="fur">file IFF</comment>
+  <comment xml:lang="fr">fichier IFF</comment>
+  <comment xml:lang="fi">IFF-tiedosto</comment>
+  <comment xml:lang="eu">IFF fitxtegia</comment>
+  <comment xml:lang="es">archivo IFF</comment>
+  <comment xml:lang="en-GB">IFF file</comment>
+  <comment xml:lang="el">Αρχείο IFF</comment>
+  <comment xml:lang="de">IFF-Datei</comment>
+  <comment xml:lang="da">IFF-fil</comment>
+  <comment xml:lang="cs">soubor IFF</comment>
+  <comment xml:lang="ca">fitxer IFF</comment>
+  <comment xml:lang="bg">Пакет — IFF</comment>
+  <comment xml:lang="be-Cyrl">файл IFF</comment>
+  <comment xml:lang="ar">ملف IFF</comment>
+  <comment xml:lang="af">IFF-lêer</comment>
+  <acronym>IFF</acronym>
+  <expanded-acronym>Interchange File Format</expanded-acronym>
+</mime-type>

@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-ole-storage">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>OLE2 compound document storage</comment>
+  <comment xml:lang="zh-Hant-TW">OLE2 複合文件儲存</comment>
+  <comment xml:lang="zh-Hans-CN">OLE2 组合文档存储</comment>
+  <comment xml:lang="vi">Kho lưu tài liệu ghép OLE2</comment>
+  <comment xml:lang="uk">сховище складних документів OLE2</comment>
+  <comment xml:lang="tr">OLE2 bileşik belge depolama</comment>
+  <comment xml:lang="sv">Sammansatt OLE2-dokumentlager</comment>
+  <comment xml:lang="sr-Cyrl">смештај ОЛЕ2 сједињеног документа</comment>
+  <comment xml:lang="sq">depozitë dokumenti të përbërë OLE2</comment>
+  <comment xml:lang="sl">Združeni dokument OLE2</comment>
+  <comment xml:lang="si">OLE2 සංයුක්ත ලේඛන ගබඩා කිරීම</comment>
+  <comment xml:lang="sk">Úložisko zloženého dokumentu OLE2</comment>
+  <comment xml:lang="ru">Хранилище составных документов OLE2</comment>
+  <comment xml:lang="ro">Document de stocare compus OLE2</comment>
+  <comment xml:lang="pt-BR">Armazenamento de documento composto OLE2</comment>
+  <comment xml:lang="pt">armazenamento de documento composto OLE2</comment>
+  <comment xml:lang="pl">Magazyn dokumentu złożonego OLE2</comment>
+  <comment xml:lang="oc">document d'emmagazinatge compausat OLE2</comment>
+  <comment xml:lang="nn">OLE2 lager for samansett dokument</comment>
+  <comment xml:lang="nl">OLE2-samengestelde documentopslag</comment>
+  <comment xml:lang="nb">OLE-lager for sammensatte dokumenter</comment>
+  <comment xml:lang="ms">Storan dokumen halaman OLE2</comment>
+  <comment xml:lang="lv">OLE2 savienoto dokumentu glabātuve</comment>
+  <comment xml:lang="lt">OLE2 sudėtinių dokumentų laikmena</comment>
+  <comment xml:lang="ko">OLE2 복합 문서</comment>
+  <comment xml:lang="kk-Cyrl">OLE2 құрама құжаттар қоймасы</comment>
+  <comment xml:lang="ja">OLE2 複合ドキュメントストレージ</comment>
+  <comment xml:lang="it">Memorizzazione documento composto OLE2</comment>
+  <comment xml:lang="is">OLE2 samsett skjalageymsla</comment>
+  <comment xml:lang="id">Penyimpan dokumen kompon OLE2</comment>
+  <comment xml:lang="ia">Magazin de documentos composite OLE2</comment>
+  <comment xml:lang="hu">OLE2 összetett dokumentumtároló</comment>
+  <comment xml:lang="hr">OLE2 pohrana složenog dokumenta</comment>
+  <comment xml:lang="he">אחסון מסמך משותף OLE2</comment>
+  <comment xml:lang="gl">almacenamento de documento composto OLE2</comment>
+  <comment xml:lang="ga">stóras cáipéisí comhshuite OLE2</comment>
+  <comment xml:lang="fur">memorizazion document compost OLE2</comment>
+  <comment xml:lang="fr">document de stockage composé OLE2</comment>
+  <comment xml:lang="fo">OLE2 samansett skjalagoymsla</comment>
+  <comment xml:lang="fi">OLE2-yhdisteasiakirjatallenne</comment>
+  <comment xml:lang="eu">OLE2 konposatutako dokumentu-bilduma</comment>
+  <comment xml:lang="es">almacenamiento de documentos compuestos OLE2</comment>
+  <comment xml:lang="eo">OLE2-deponejo de parentezaj dokumentoj</comment>
+  <comment xml:lang="en-GB">OLE2 compound document storage</comment>
+  <comment xml:lang="el">Αρχείο συμπαγούς αποθήκευσης εγγράφων OLE2</comment>
+  <comment xml:lang="de">OLE2-Verbunddokumentspeicher</comment>
+  <comment xml:lang="da">OLE2-sammensat dokumentlager</comment>
+  <comment xml:lang="cs">úložiště složeného dokumentu OLE2</comment>
+  <comment xml:lang="ca">emmagatzematge de documents compostos OLE2</comment>
+  <comment xml:lang="bg">Съставен документ-хранилище — OLE2</comment>
+  <comment xml:lang="be-Latn">Schovišča dla kampanentaŭ dakumentu OLE2</comment>
+  <comment xml:lang="be-Cyrl">сховішча складаных дакументаў OLE2</comment>
+  <comment xml:lang="ast">Almacenamientu de documentos compuestu por OLE2</comment>
+  <comment xml:lang="ar">تخزين مجمع مستند OLE2</comment>
+  <generic-icon name="x-office-document"/>
+</mime-type>

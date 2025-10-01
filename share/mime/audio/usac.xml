@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="audio/usac">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>USAC audio</comment>
+  <comment xml:lang="zh-Hant-TW">USAC 音訊</comment>
+  <comment xml:lang="zh-Hans-CN">USAC 音频</comment>
+  <comment xml:lang="uk">звукові дані USAC</comment>
+  <comment xml:lang="tr">USAC sesi</comment>
+  <comment xml:lang="sv">USAC-ljud</comment>
+  <comment xml:lang="sq">audio USAC</comment>
+  <comment xml:lang="sl">Zvok USAC</comment>
+  <comment xml:lang="si">USAC ශ්රව්ය</comment>
+  <comment xml:lang="sk">Zvuk USAC</comment>
+  <comment xml:lang="ru">Аудио USAC</comment>
+  <comment xml:lang="pt-BR">Áudio USAC</comment>
+  <comment xml:lang="pl">Plik dźwiękowy USAC</comment>
+  <comment xml:lang="nl">USAC-audio</comment>
+  <comment xml:lang="ko">USAC 오디오</comment>
+  <comment xml:lang="kk-Cyrl">USAC аудиосы</comment>
+  <comment xml:lang="ja">USAC オーディオ</comment>
+  <comment xml:lang="it">Audio USAC</comment>
+  <comment xml:lang="is">USAC hljóðskrá</comment>
+  <comment xml:lang="id">Audio USAC</comment>
+  <comment xml:lang="hu">USAC hang</comment>
+  <comment xml:lang="hr">USAC zvučni zapis</comment>
+  <comment xml:lang="he">שמע USAC</comment>
+  <comment xml:lang="gl">Son USAC</comment>
+  <comment xml:lang="ga">fuaim USAC</comment>
+  <comment xml:lang="fur">audio USAC</comment>
+  <comment xml:lang="fr">audio USAC</comment>
+  <comment xml:lang="fi">USAC-ääni</comment>
+  <comment xml:lang="eu">USAC audioa</comment>
+  <comment xml:lang="es">sonido USAC</comment>
+  <comment xml:lang="en-GB">USAC audio</comment>
+  <comment xml:lang="de">USAC-Audio</comment>
+  <comment xml:lang="da">USAC-lyd</comment>
+  <comment xml:lang="cs">zvuk USAC</comment>
+  <comment xml:lang="ca">àudio USAC</comment>
+  <comment xml:lang="bg">Аудио — USAC</comment>
+  <comment xml:lang="be-Cyrl">аўдыя USAC</comment>
+  <comment xml:lang="ar">صوت USAC</comment>
+  <comment xml:lang="af">USAC-oudio</comment>
+  <acronym>USAC</acronym>
+  <expanded-acronym>Unified Speech and Audio Coding</expanded-acronym>
+  <glob pattern="*.loas"/>
+  <glob pattern="*.xhe"/>
+</mime-type>

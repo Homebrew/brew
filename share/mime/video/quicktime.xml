@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="video/quicktime">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>QuickTime video</comment>
+  <comment xml:lang="zh-Hant-TW">QuickTime 視訊</comment>
+  <comment xml:lang="zh-Hans-CN">QuickTime 视频</comment>
+  <comment xml:lang="vi">Ảnh động QuickTime</comment>
+  <comment xml:lang="uk">відеокліп QuickTime</comment>
+  <comment xml:lang="tr">QuickTime videosu</comment>
+  <comment xml:lang="sv">QuickTime-video</comment>
+  <comment xml:lang="sr-Cyrl">Квик Тајм видео</comment>
+  <comment xml:lang="sq">video QuickTime</comment>
+  <comment xml:lang="sl">Video datoteka QuickTime</comment>
+  <comment xml:lang="si">QuickTime වීඩියෝව</comment>
+  <comment xml:lang="sk">Video QuickTime</comment>
+  <comment xml:lang="ru">Видео QuickTime</comment>
+  <comment xml:lang="ro">Video QuickTime</comment>
+  <comment xml:lang="pt-BR">Vídeo do QuickTime</comment>
+  <comment xml:lang="pt">vídeo QuickTime</comment>
+  <comment xml:lang="pl">Plik wideo QuickTime</comment>
+  <comment xml:lang="oc">vidèo QuickTime</comment>
+  <comment xml:lang="nn">QuickTime-video</comment>
+  <comment xml:lang="nl">QuickTime-video</comment>
+  <comment xml:lang="nb">Quicktime film</comment>
+  <comment xml:lang="ms">Video QuickTime</comment>
+  <comment xml:lang="lv">QuickTime video</comment>
+  <comment xml:lang="lt">QuickTime vaizdo įrašas</comment>
+  <comment xml:lang="ko">퀵타임 동영상</comment>
+  <comment xml:lang="kk-Cyrl">QuickTime видеосы</comment>
+  <comment xml:lang="ja">QuickTime 動画</comment>
+  <comment xml:lang="it">Video QuickTime</comment>
+  <comment xml:lang="is">QuickTime myndskeið</comment>
+  <comment xml:lang="id">Video QuickTime</comment>
+  <comment xml:lang="ia">Video QuickTime</comment>
+  <comment xml:lang="hu">QuickTime videó</comment>
+  <comment xml:lang="hr">QuickTime video snimka</comment>
+  <comment xml:lang="he">וידאו של QuickTime</comment>
+  <comment xml:lang="gl">vídeo QuickTime</comment>
+  <comment xml:lang="ga">físeán QuickTime</comment>
+  <comment xml:lang="fur">video QuickTime</comment>
+  <comment xml:lang="fr">vidéo QuickTime</comment>
+  <comment xml:lang="fo">QuickTime video</comment>
+  <comment xml:lang="fi">QuickTime-video</comment>
+  <comment xml:lang="eu">QuickTime bideoa</comment>
+  <comment xml:lang="es">vídeo QuickTime</comment>
+  <comment xml:lang="eo">QuickTime-video</comment>
+  <comment xml:lang="en-GB">QuickTime video</comment>
+  <comment xml:lang="el">Βίντεο QuickTime</comment>
+  <comment xml:lang="de">QuickTime-Video</comment>
+  <comment xml:lang="da">QuickTime-video</comment>
+  <comment xml:lang="cs">video QuickTime</comment>
+  <comment xml:lang="ca">vídeo QuickTime</comment>
+  <comment xml:lang="bg">Видео — QuickTime</comment>
+  <comment xml:lang="be-Latn">Videa QuickTime</comment>
+  <comment xml:lang="be-Cyrl">відэа QuickTime</comment>
+  <comment xml:lang="ast">Videu en QuickTime</comment>
+  <comment xml:lang="ar">فيديو QuickTime</comment>
+  <comment xml:lang="af">QuickTime-video</comment>
+  <glob pattern="*.qt"/>
+  <glob pattern="*.mov"/>
+  <glob pattern="*.moov"/>
+  <glob pattern="*.qtvr"/>
+</mime-type>

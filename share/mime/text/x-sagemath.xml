@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="text/x-sagemath">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>SageMath script</comment>
+  <comment xml:lang="zh-Hant-TW">SageMath 指令稿</comment>
+  <comment xml:lang="zh-Hans-CN">SageMath 脚本</comment>
+  <comment xml:lang="uk">скрипт SageMath</comment>
+  <comment xml:lang="tr">SageMath betiği</comment>
+  <comment xml:lang="sv">SageMath-skript</comment>
+  <comment xml:lang="sl">Skript SageMath</comment>
+  <comment xml:lang="si">SageMath පිටපත</comment>
+  <comment xml:lang="ru">Сценарий SageMath</comment>
+  <comment xml:lang="pt-BR">Script SageMath</comment>
+  <comment xml:lang="pl">Skrypt SageMath</comment>
+  <comment xml:lang="nl">SageMath-script</comment>
+  <comment xml:lang="ko">SageMath 스크립트</comment>
+  <comment xml:lang="kk-Cyrl">SageMath сценарийі</comment>
+  <comment xml:lang="ja">SageMath スクリプト</comment>
+  <comment xml:lang="it">Script SageMath</comment>
+  <comment xml:lang="is">SageMath skrifta</comment>
+  <comment xml:lang="id">skrip SageMath</comment>
+  <comment xml:lang="hu">SageMath parancsfájl</comment>
+  <comment xml:lang="hr">SageMath skripta</comment>
+  <comment xml:lang="he">סקריפט SageMath</comment>
+  <comment xml:lang="fr">Script SageMath</comment>
+  <comment xml:lang="fi">SageMath-komentotiedosto</comment>
+  <comment xml:lang="eu">SageMath script-a</comment>
+  <comment xml:lang="es">secuencia de órdenes de SageMath</comment>
+  <comment xml:lang="en-GB">SageMath script</comment>
+  <comment xml:lang="de">SageMath-Skript</comment>
+  <comment xml:lang="da">SageMath-program</comment>
+  <comment xml:lang="ca">script SageMath</comment>
+  <comment xml:lang="be-Cyrl">скрыпт SageMath</comment>
+  <comment xml:lang="ar">سكربت SageMath</comment>
+  <sub-class-of type="text/x-python"/>
+  <glob pattern="*.sage" weight="60"/>
+</mime-type>

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/vnd.tcpdump.pcap">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Network packet capture</comment>
+  <comment xml:lang="uk">перехоплення пакетів мережі</comment>
+  <comment xml:lang="sv">Nätverkspaketsspårning</comment>
+  <comment xml:lang="ru">Захваченные сетевые пакеты</comment>
+  <comment xml:lang="pt-BR">Captura de pacotes de rede</comment>
+  <comment xml:lang="pl">Przechwycenie pakietu sieciowego</comment>
+  <comment xml:lang="it">Cattura pacchetti di rete</comment>
+  <comment xml:lang="gl">Captura de paquetes de red</comment>
+  <comment xml:lang="es">captura de paquetes de red</comment>
+  <comment xml:lang="de">Netzwerkpaket-Aufzeichnung</comment>
+  <comment xml:lang="be-Cyrl">захопленыя сеткавыя пакеты</comment>
+  <glob pattern="*.pcap"/>
+  <glob pattern="*.cap"/>
+  <glob pattern="*.dmp"/>
+  <alias type="application/x-pcap"/>
+  <alias type="application/pcap"/>
+</mime-type>

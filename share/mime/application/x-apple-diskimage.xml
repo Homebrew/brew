@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-apple-diskimage">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Apple disk image</comment>
+  <comment xml:lang="zh-Hant-TW">Apple 磁碟映像檔</comment>
+  <comment xml:lang="zh-Hans-CN">Apple 磁盘映像</comment>
+  <comment xml:lang="uk">образ диска Apple</comment>
+  <comment xml:lang="tr">Apple disk görüntüsü</comment>
+  <comment xml:lang="sv">Apple-diskavbild</comment>
+  <comment xml:lang="sr-Cyrl">Еплов одраз диска</comment>
+  <comment xml:lang="sq">pamje disku Apple</comment>
+  <comment xml:lang="sl">Odtis diska Apple</comment>
+  <comment xml:lang="si">ඇපල් තැටි රූපය</comment>
+  <comment xml:lang="sk">Obraz disku Apple</comment>
+  <comment xml:lang="ru">Образ диска Apple Mac OS X</comment>
+  <comment xml:lang="pt-BR">Imagem de disco Apple</comment>
+  <comment xml:lang="pt">imagem de disco Apple</comment>
+  <comment xml:lang="pl">Obraz dysku Apple</comment>
+  <comment xml:lang="oc">imatge disc Apple</comment>
+  <comment xml:lang="nl">Apple-schijfkopiebestand</comment>
+  <comment xml:lang="lv">Apple diska attēls</comment>
+  <comment xml:lang="ko">Apple 디스크 이미지</comment>
+  <comment xml:lang="kk-Cyrl">Apple диск бейнесі</comment>
+  <comment xml:lang="ka">Apple-ის სადისკო გამოსახულება</comment>
+  <comment xml:lang="ja">Apple ディスクイメージ</comment>
+  <comment xml:lang="it">Immagine disco Apple</comment>
+  <comment xml:lang="is">Apple diskmynd</comment>
+  <comment xml:lang="id">Image disk Apple</comment>
+  <comment xml:lang="ia">Imagine de disco Apple</comment>
+  <comment xml:lang="hu">Apple lemezkép</comment>
+  <comment xml:lang="hr">Apple slika diska</comment>
+  <comment xml:lang="he">תמונת כונן Apple</comment>
+  <comment xml:lang="gl">imaxe de disco de Appl</comment>
+  <comment xml:lang="ga">íomhá diosca Apple</comment>
+  <comment xml:lang="fur">imagjin disc Apple</comment>
+  <comment xml:lang="fr">image disque Apple</comment>
+  <comment xml:lang="fi">Apple-levykuva</comment>
+  <comment xml:lang="eu">Apple disko irudia</comment>
+  <comment xml:lang="es">imagen de disco de Apple</comment>
+  <comment xml:lang="en-GB">Apple disk image</comment>
+  <comment xml:lang="el">Εικόνα δίσκου Apple</comment>
+  <comment xml:lang="de">Apple-Datenträgerabbild</comment>
+  <comment xml:lang="da">Apple-diskaftryk</comment>
+  <comment xml:lang="cs">obraz disku Apple</comment>
+  <comment xml:lang="ca">imatge de disc d'Apple</comment>
+  <comment xml:lang="bg">Диск — Apple</comment>
+  <comment xml:lang="be-Cyrl">вобраз дыска Apple</comment>
+  <comment xml:lang="ast">Imaxe de discu d'Apple</comment>
+  <comment xml:lang="ar">صورة قرص أبل</comment>
+  <comment xml:lang="af">Apple-skyfbeeldlêer</comment>
+  <glob pattern="*.dmg"/>
+</mime-type>

@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-mozilla-bookmarks">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Mozilla bookmarks</comment>
+  <comment xml:lang="zh-Hant-TW">Mozilla 書籤</comment>
+  <comment xml:lang="zh-Hans-CN">Mozilla 书签</comment>
+  <comment xml:lang="vi">Liên kết đã lưu Mozilla</comment>
+  <comment xml:lang="uk">закладки Mozilla</comment>
+  <comment xml:lang="tr">Mozilla yer imleri</comment>
+  <comment xml:lang="sv">Mozilla-bokmärken</comment>
+  <comment xml:lang="sr-Cyrl">Мозилини обележивачи</comment>
+  <comment xml:lang="sq">faqerojtës Mozilla</comment>
+  <comment xml:lang="sl">Datoteka zaznamkov Mozilla</comment>
+  <comment xml:lang="si">මොසිල්ලා පිටු සලකුණු</comment>
+  <comment xml:lang="sk">Záložky Mozilla</comment>
+  <comment xml:lang="ru">Закладки Mozilla</comment>
+  <comment xml:lang="ro">Semne de carte Mozilla</comment>
+  <comment xml:lang="pt-BR">Favoritos do Mozilla</comment>
+  <comment xml:lang="pt">marcadores do Mozilla</comment>
+  <comment xml:lang="pl">Zakładki Mozilla</comment>
+  <comment xml:lang="oc">marcapaginas Mozilla</comment>
+  <comment xml:lang="nn">Mozilla-bokmerker</comment>
+  <comment xml:lang="nl">Mozilla-bladwijzers</comment>
+  <comment xml:lang="nb">Mozilla-bokmerker</comment>
+  <comment xml:lang="ms">Tandabuku Mozilla</comment>
+  <comment xml:lang="lv">Mozilla grāmatzīmes</comment>
+  <comment xml:lang="lt">Mozilla žymelės</comment>
+  <comment xml:lang="ko">모질라 책갈피</comment>
+  <comment xml:lang="kk-Cyrl">Mozilla бетбелгілері</comment>
+  <comment xml:lang="ja">Mozilla ブックマーク</comment>
+  <comment xml:lang="it">Segnalibri Mozilla</comment>
+  <comment xml:lang="is">Mozilla bókamerki</comment>
+  <comment xml:lang="id">Bookmark Mozilla</comment>
+  <comment xml:lang="ia">Marcapaginas Mozilla</comment>
+  <comment xml:lang="hu">Mozilla-könyvjelzők</comment>
+  <comment xml:lang="hr">Mozilla zabilješke</comment>
+  <comment xml:lang="he">סימניה של Mozilla</comment>
+  <comment xml:lang="gl">Marcadores de Mozilla</comment>
+  <comment xml:lang="ga">leabharmharcanna Mozilla</comment>
+  <comment xml:lang="fur">segnelibris Mozilla</comment>
+  <comment xml:lang="fr">marque-pages Mozilla</comment>
+  <comment xml:lang="fo">Mozilla bókamerki</comment>
+  <comment xml:lang="fi">Mozilla-kirjanmerkit</comment>
+  <comment xml:lang="eu">Mozillako laster-markak</comment>
+  <comment xml:lang="es">marcadores de Mozilla</comment>
+  <comment xml:lang="eo">Mozilla-legosignoj</comment>
+  <comment xml:lang="en-GB">Mozilla bookmarks</comment>
+  <comment xml:lang="el">Σελιδοδείκτες Mozilla</comment>
+  <comment xml:lang="de">Mozilla-Lesezeichen</comment>
+  <comment xml:lang="da">Mozillabogmærker</comment>
+  <comment xml:lang="cs">záložky Mozilla</comment>
+  <comment xml:lang="ca">llista d'adreces d'interès de Mozilla</comment>
+  <comment xml:lang="bg">Отметки — Mozilla</comment>
+  <comment xml:lang="be-Latn">Zakładki Mozilla</comment>
+  <comment xml:lang="be-Cyrl">закладкі Mozilla</comment>
+  <comment xml:lang="ar">علامات موزيلا</comment>
+  <comment xml:lang="af">Mozilla-boekmerke</comment>
+  <sub-class-of type="text/html"/>
+  <generic-icon name="text-html"/>
+  <alias type="application/x-netscape-bookmarks"/>
+</mime-type>

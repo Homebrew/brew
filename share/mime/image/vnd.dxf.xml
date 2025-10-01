@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="image/vnd.dxf">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>DXF vector image</comment>
+  <comment xml:lang="zh-Hant-TW">DXF 向量圖</comment>
+  <comment xml:lang="zh-Hans-CN">DXF 矢量图像</comment>
+  <comment xml:lang="vi">Ảnh véc-tơ DXF</comment>
+  <comment xml:lang="uk">векторне зображення DXF</comment>
+  <comment xml:lang="tr">DXF vektör görüntüsü</comment>
+  <comment xml:lang="sv">DXF-vektorbild</comment>
+  <comment xml:lang="sr-Cyrl">ДИксФ векторска графика</comment>
+  <comment xml:lang="sq">figurë vektoriale DFX</comment>
+  <comment xml:lang="sl">Slikovna vektorska datoteka DXF</comment>
+  <comment xml:lang="si">DXF දෛශික රූපය</comment>
+  <comment xml:lang="sk">Vektorový obrázok DXF</comment>
+  <comment xml:lang="ru">Векторное изображение DXF</comment>
+  <comment xml:lang="ro">Imagine vectorială DXF</comment>
+  <comment xml:lang="pt-BR">Imagem vetorial DXF</comment>
+  <comment xml:lang="pt">imagem de vectores DXF</comment>
+  <comment xml:lang="pl">Obraz wektorowy DXF</comment>
+  <comment xml:lang="oc">imatge vectorial DXF</comment>
+  <comment xml:lang="nn">DXF-vektorgrafikk</comment>
+  <comment xml:lang="nl">DXF-vectorafbeelding</comment>
+  <comment xml:lang="nb">DXF-vektorgrafikk</comment>
+  <comment xml:lang="ms">Imej vektor DXF</comment>
+  <comment xml:lang="lv">DXF vektora attēls</comment>
+  <comment xml:lang="lt">DXF vektorinis paveikslėlis</comment>
+  <comment xml:lang="ko">DXF 벡터 그림</comment>
+  <comment xml:lang="kk-Cyrl">DXF векторлық суреті</comment>
+  <comment xml:lang="ka">DXF ვექტორული გამოსახულება</comment>
+  <comment xml:lang="ja">DXF ベクター画像</comment>
+  <comment xml:lang="it">Immagine vettoriale DXF</comment>
+  <comment xml:lang="is">DXF vigurteikning</comment>
+  <comment xml:lang="id">Citra vektor DXF</comment>
+  <comment xml:lang="ia">Imagine vectorial DXF</comment>
+  <comment xml:lang="hu">DXF-vektorkép</comment>
+  <comment xml:lang="hr">DXF vektorska slika</comment>
+  <comment xml:lang="he">תמונת DXF וקטורית</comment>
+  <comment xml:lang="gl">imaxe de vector DXF</comment>
+  <comment xml:lang="ga">íomhá veicteoireach DXF</comment>
+  <comment xml:lang="fur">imagjin vetoriâl DXF</comment>
+  <comment xml:lang="fr">image vectorielle DXF</comment>
+  <comment xml:lang="fo">DXF vektormynd</comment>
+  <comment xml:lang="fi">DXF-vektorikuva</comment>
+  <comment xml:lang="eu">DXF bektore-grafikoa</comment>
+  <comment xml:lang="es">imagen vectorial DXF</comment>
+  <comment xml:lang="eo">vektora DXF-bildo</comment>
+  <comment xml:lang="en-GB">DXF vector image</comment>
+  <comment xml:lang="el">Διανυσματική εικόνα DXF</comment>
+  <comment xml:lang="de">DXF-Vektorbild</comment>
+  <comment xml:lang="da">DXF-vektorbillede</comment>
+  <comment xml:lang="cs">vektorový obrázek DXF</comment>
+  <comment xml:lang="ca">imatge vectorial DXF</comment>
+  <comment xml:lang="bg">Изображение — DXF</comment>
+  <comment xml:lang="be-Latn">Vektarnaja vyjava DXF</comment>
+  <comment xml:lang="be-Cyrl">вектарная выява DXF</comment>
+  <comment xml:lang="ar">صورة DXF نقطية</comment>
+  <comment xml:lang="af">DXF-vektorbeeld</comment>
+  <glob pattern="*.dxf"/>
+</mime-type>

@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/vnd.ms-access">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>JET database</comment>
+  <comment xml:lang="zh-Hant-TW">JET 資料庫</comment>
+  <comment xml:lang="zh-Hans-CN">JET 数据库</comment>
+  <comment xml:lang="vi">Cơ sở dữ liệu JET</comment>
+  <comment xml:lang="uk">База даних JET</comment>
+  <comment xml:lang="tr">JET veri tabanı</comment>
+  <comment xml:lang="sv">JET-databas</comment>
+  <comment xml:lang="sr-Cyrl">ЈЕТ база података</comment>
+  <comment xml:lang="sq">bazë të dhënash JET</comment>
+  <comment xml:lang="sl">Podatkovna zbirka JET</comment>
+  <comment xml:lang="si">JET දත්ත සමුදාය</comment>
+  <comment xml:lang="sk">Databáza JET</comment>
+  <comment xml:lang="ru">База данных JET</comment>
+  <comment xml:lang="ro">Bază de date JET</comment>
+  <comment xml:lang="pt-BR">Banco de dados JET</comment>
+  <comment xml:lang="pt">base de dados JET</comment>
+  <comment xml:lang="pl">Baza Danych JET</comment>
+  <comment xml:lang="oc">banca de donadas JET</comment>
+  <comment xml:lang="nn">JET-database</comment>
+  <comment xml:lang="nl">JET-gegevensbank</comment>
+  <comment xml:lang="nb">JET-database</comment>
+  <comment xml:lang="lv">JET datubāze</comment>
+  <comment xml:lang="lt">JET duomenų bazė</comment>
+  <comment xml:lang="ko">JET 데이터베이스</comment>
+  <comment xml:lang="kk-Cyrl">JET дерекқоры</comment>
+  <comment xml:lang="ja">JET データベース</comment>
+  <comment xml:lang="it">Database JET</comment>
+  <comment xml:lang="is">JET gagnagrunnur</comment>
+  <comment xml:lang="id">Basis data JET</comment>
+  <comment xml:lang="ia">Base de datos JET</comment>
+  <comment xml:lang="hu">JET adatbázis</comment>
+  <comment xml:lang="hr">JET baza podataka</comment>
+  <comment xml:lang="he">מסד נתונים מסוג JET</comment>
+  <comment xml:lang="gl">base de datos JET</comment>
+  <comment xml:lang="ga">bunachar sonraí JET</comment>
+  <comment xml:lang="fur">base di dâts JET</comment>
+  <comment xml:lang="fr">base de données JET</comment>
+  <comment xml:lang="fo">JET dátustovnur</comment>
+  <comment xml:lang="fi">JET-tietokanta</comment>
+  <comment xml:lang="eu">JET datu-basea</comment>
+  <comment xml:lang="es">base de datos JET</comment>
+  <comment xml:lang="eo">JET-datumbazo</comment>
+  <comment xml:lang="en-GB">JET database</comment>
+  <comment xml:lang="el">Βάση δεδομένων JET</comment>
+  <comment xml:lang="de">JET-Datenbank</comment>
+  <comment xml:lang="da">JET-database</comment>
+  <comment xml:lang="cs">databáze JET</comment>
+  <comment xml:lang="ca">base de dades JET</comment>
+  <comment xml:lang="bg">База от данни — JET</comment>
+  <comment xml:lang="be-Latn">Baza źviestak JET</comment>
+  <comment xml:lang="be-Cyrl">база даных JET</comment>
+  <comment xml:lang="ast">Base de datos JETº</comment>
+  <comment xml:lang="ar">قاعدة بيانات JET</comment>
+  <comment xml:lang="af">JET-databasis</comment>
+  <acronym>JET</acronym>
+  <expanded-acronym>Joint Engine Technology</expanded-acronym>
+  <generic-icon name="x-office-document"/>
+  <glob pattern="*.mdb" weight="60"/>
+  <alias type="application/msaccess"/>
+  <alias type="application/vnd.msaccess"/>
+  <alias type="application/x-msaccess"/>
+  <alias type="application/mdb"/>
+  <alias type="application/x-mdb"/>
+  <alias type="zz-application/zz-winassoc-mdb"/>
+</mime-type>

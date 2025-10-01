@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="audio/basic">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>ULAW (Sun) audio</comment>
+  <comment xml:lang="zh-Hant-TW">ULAW (Sun) 音訊</comment>
+  <comment xml:lang="zh-Hans-CN">ULAW (Sun) 音频</comment>
+  <comment xml:lang="vi">Âm thanh ULAW (Sun)</comment>
+  <comment xml:lang="uk">звук ULAW (Sun)</comment>
+  <comment xml:lang="tr">ULAW (Sun) sesi</comment>
+  <comment xml:lang="sv">ULAW-ljud (Sun)</comment>
+  <comment xml:lang="sr-Cyrl">УЛАВ (Сан) звук</comment>
+  <comment xml:lang="sq">audio ULAW (Sun)</comment>
+  <comment xml:lang="sl">Zvočna datoteka ULAW (Sun)</comment>
+  <comment xml:lang="si">ULAW (හිරු) ශ්‍රව්‍ය</comment>
+  <comment xml:lang="sk">Zvuk ULAW (Sun)</comment>
+  <comment xml:lang="ru">Аудио ULAW (Sun)</comment>
+  <comment xml:lang="ro">Fișier audio ULAW (Sun)</comment>
+  <comment xml:lang="pt-BR">Áudio ULAW (Sun)</comment>
+  <comment xml:lang="pt">áudio ULAW (Sun)</comment>
+  <comment xml:lang="pl">Plik dźwiękowy ULAW (Sun)</comment>
+  <comment xml:lang="oc">àudio ULAW (Sun)</comment>
+  <comment xml:lang="nn">ULAW (Sun)-lyd</comment>
+  <comment xml:lang="nl">(Sun) ULAW-audio</comment>
+  <comment xml:lang="nb">ULAW-lyd (Sun)</comment>
+  <comment xml:lang="ms">Audio ULAW (Sun)</comment>
+  <comment xml:lang="lv">ULAW (Sun) audio</comment>
+  <comment xml:lang="lt">ULAW (Sun) garso įrašas</comment>
+  <comment xml:lang="ko">ULAW(Sun) 오디오</comment>
+  <comment xml:lang="kk-Cyrl">ULAW (Sun) аудиосы</comment>
+  <comment xml:lang="ja">ULAW (Sun) オーディオ</comment>
+  <comment xml:lang="it">Audio ULAW (Sun)</comment>
+  <comment xml:lang="is">ULAW (Sun) hljóðskrá</comment>
+  <comment xml:lang="id">Audio ULAW (Sun)</comment>
+  <comment xml:lang="ia">Audio ULAW (sun)</comment>
+  <comment xml:lang="hu">ULAW (Sun) hang</comment>
+  <comment xml:lang="hr">ULAW (Sun) zvučni zapis</comment>
+  <comment xml:lang="he">שמע ULAW (של Sun)</comment>
+  <comment xml:lang="gl">son ULAW (Sun)</comment>
+  <comment xml:lang="ga">fuaim ULAW (Sun)</comment>
+  <comment xml:lang="fur">audio ULAW (Sun)</comment>
+  <comment xml:lang="fr">audio ULAW (Sun)</comment>
+  <comment xml:lang="fo">ULAW (Sun) ljóður</comment>
+  <comment xml:lang="fi">ULAW (Sun) -ääni</comment>
+  <comment xml:lang="eu">ULAW (sun) audioa</comment>
+  <comment xml:lang="es">sonido ULAW (Sun)</comment>
+  <comment xml:lang="eo">ULAW-sondosiero (Sun)</comment>
+  <comment xml:lang="en-GB">ULAW (Sun) audio</comment>
+  <comment xml:lang="el">Ήχος ULAW (Sun)</comment>
+  <comment xml:lang="de">ULAW-Audio (Sun)</comment>
+  <comment xml:lang="da">ULAW-lyd (Sun)</comment>
+  <comment xml:lang="cy">Sain ULAW (Sun)</comment>
+  <comment xml:lang="cs">zvuk ULAW (Sun)</comment>
+  <comment xml:lang="ca">àudio ULAW (Sun)</comment>
+  <comment xml:lang="bg">Аудио — ULAW, Sun</comment>
+  <comment xml:lang="be-Latn">Aŭdyjo ULAW (Sun)</comment>
+  <comment xml:lang="be-Cyrl">аўдыя ULAW (Sun)</comment>
+  <comment xml:lang="az">ULAW (Sun) audio faylı</comment>
+  <comment xml:lang="ar">صوت ULAW (صن)</comment>
+  <comment xml:lang="af">ULAW- (Sun) oudio</comment>
+  <glob pattern="*.au"/>
+  <glob pattern="*.snd"/>
+</mime-type>

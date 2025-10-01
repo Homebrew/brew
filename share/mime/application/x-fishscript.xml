@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-fishscript">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Fish shell script</comment>
+  <comment xml:lang="uk">скрипт оболонки fish</comment>
+  <comment xml:lang="sv">Fish-skalskript</comment>
+  <comment xml:lang="ru">Сценарий fish shell</comment>
+  <comment xml:lang="pl">Skrypt powłoki Fish</comment>
+  <comment xml:lang="it">Script shell Fish</comment>
+  <comment xml:lang="eu">Fish shell scripta</comment>
+  <comment xml:lang="es">secuencia de órdenes de consola Fish</comment>
+  <comment xml:lang="de">Fish-Shell-Skript</comment>
+  <comment xml:lang="be-Cyrl">скрыпт Fish shell</comment>
+  <sub-class-of type="application/x-executable"/>
+  <sub-class-of type="text/plain"/>
+  <alias type="text/x-fish"/>
+  <generic-icon name="text-x-script"/>
+  <glob pattern="*.fish"/>
+</mime-type>

@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="image/bmp">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Windows BMP image</comment>
+  <comment xml:lang="zh-Hant-TW">Windows BMP 影像</comment>
+  <comment xml:lang="zh-Hans-CN">Windows BMP 图像</comment>
+  <comment xml:lang="vi">Ảnh BMP Windows</comment>
+  <comment xml:lang="uk">зображення Windows BMP</comment>
+  <comment xml:lang="tr">Windows BMP görüntüsü</comment>
+  <comment xml:lang="sv">Windows BMP-bild</comment>
+  <comment xml:lang="sr-Cyrl">Виндоузова БМП слика</comment>
+  <comment xml:lang="sq">figurë Windows BMP</comment>
+  <comment xml:lang="sl">Slikovna datoteka Windows BMP</comment>
+  <comment xml:lang="si">වින්ඩෝස් BMP රූපය</comment>
+  <comment xml:lang="sk">Obrázok Windows BMP</comment>
+  <comment xml:lang="ru">Изображение Windows BMP</comment>
+  <comment xml:lang="ro">Imagine Windows BMP</comment>
+  <comment xml:lang="pt-BR">Imagem BMP do Windows</comment>
+  <comment xml:lang="pt">imagem BMP Windows</comment>
+  <comment xml:lang="pl">Obraz BMP Windows</comment>
+  <comment xml:lang="oc">imatge Windows BMP</comment>
+  <comment xml:lang="nn">Windows BMP-bilete</comment>
+  <comment xml:lang="nl">Windows BMP-afbeelding</comment>
+  <comment xml:lang="nb">Windows BMP-bilde</comment>
+  <comment xml:lang="ms">Imej BMP Windows</comment>
+  <comment xml:lang="lv">Windows BMP attēls</comment>
+  <comment xml:lang="lt">Windows BMP paveikslėlis</comment>
+  <comment xml:lang="ko">Windows BMP 그림</comment>
+  <comment xml:lang="kk-Cyrl">Windows BMP суреті</comment>
+  <comment xml:lang="ja">Windows BMP 画像</comment>
+  <comment xml:lang="it">Immagine Windows BMP</comment>
+  <comment xml:lang="is">Windows BMP mynd</comment>
+  <comment xml:lang="id">Citra Windows BMP</comment>
+  <comment xml:lang="ia">Imagine BMP de Windows</comment>
+  <comment xml:lang="hu">Windows BMP-kép</comment>
+  <comment xml:lang="hr">Windows BMP slika</comment>
+  <comment xml:lang="he">תמונת BMP של Windows</comment>
+  <comment xml:lang="gl">imaxe BMP de Windows</comment>
+  <comment xml:lang="ga">íomhá BMP Windows</comment>
+  <comment xml:lang="fur">imagjin Windows BMP</comment>
+  <comment xml:lang="fr">image Windows BMP</comment>
+  <comment xml:lang="fo">Windows BMP mynd</comment>
+  <comment xml:lang="fi">Windows BMP -kuva</comment>
+  <comment xml:lang="eu">Windows BMP irudia</comment>
+  <comment xml:lang="es">imagen BMP de Windows</comment>
+  <comment xml:lang="eo">BMP-bildo de Vindozo</comment>
+  <comment xml:lang="en-GB">Windows BMP image</comment>
+  <comment xml:lang="el">Εικόνα Windows BMP</comment>
+  <comment xml:lang="de">Windows BMP-Bild</comment>
+  <comment xml:lang="da">Windows BMP-billede</comment>
+  <comment xml:lang="cy">Delwedd BMP Windows</comment>
+  <comment xml:lang="cs">obrázek Windows BMP</comment>
+  <comment xml:lang="ca">imatge BMP de Windows</comment>
+  <comment xml:lang="bg">Изображение — Windows BMP</comment>
+  <comment xml:lang="be-Latn">Vyjava Windows BMP</comment>
+  <comment xml:lang="be-Cyrl">выява Windows BMP</comment>
+  <comment xml:lang="az">Windows BMP rəsmi</comment>
+  <comment xml:lang="ar">صورة Windows BMP</comment>
+  <comment xml:lang="af">Windows BMP-beeld</comment>
+  <glob pattern="*.bmp"/>
+  <glob pattern="*.dib"/>
+  <alias type="image/x-bmp"/>
+  <alias type="image/x-MS-bmp"/>
+</mime-type>

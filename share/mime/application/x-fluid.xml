@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-fluid">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>FLTK Fluid file</comment>
+  <comment xml:lang="zh-Hant-TW">FLTK Fluid 檔</comment>
+  <comment xml:lang="zh-Hans-CN">FLTK 流体文档</comment>
+  <comment xml:lang="vi">Tập tin Fluid FLTK</comment>
+  <comment xml:lang="uk">файл FLTK Fluid</comment>
+  <comment xml:lang="tr">FLTK Fluid dosyası</comment>
+  <comment xml:lang="sv">FLTK Fluid-fil</comment>
+  <comment xml:lang="sr-Cyrl">датотека ФЛТК Флуида</comment>
+  <comment xml:lang="sq">kartelë FLTK Fluid</comment>
+  <comment xml:lang="sl">Datoteka FLTK Fluid</comment>
+  <comment xml:lang="si">FLTK තරල ගොනුව</comment>
+  <comment xml:lang="sk">Súbor FLTK Fluid</comment>
+  <comment xml:lang="ru">Файл FLTK Fluid</comment>
+  <comment xml:lang="ro">Fișier FLTK Fluid</comment>
+  <comment xml:lang="pt-BR">Arquivo Fluid do FLTK</comment>
+  <comment xml:lang="pt">ficheiro FLTK Fluid</comment>
+  <comment xml:lang="pl">Plik Fluid FLTK</comment>
+  <comment xml:lang="oc">fichièr Fluid FLTK</comment>
+  <comment xml:lang="nn">FLTK Fluid-fil</comment>
+  <comment xml:lang="nl">FLTK FLUID-bestand</comment>
+  <comment xml:lang="nb">FLTK Fluid-fil</comment>
+  <comment xml:lang="lv">FLTK Fluid datne</comment>
+  <comment xml:lang="lt">FLTK Fluid failas</comment>
+  <comment xml:lang="ko">FLTK Fluid 파일</comment>
+  <comment xml:lang="kk-Cyrl">FLTK Fluid файлы</comment>
+  <comment xml:lang="ka">FLTK Fluid-ის ფაილი</comment>
+  <comment xml:lang="ja">FLTK Fluid ファイル</comment>
+  <comment xml:lang="it">File FLTK Fluid</comment>
+  <comment xml:lang="is">FLTK Fluid skrá</comment>
+  <comment xml:lang="id">Berkas FLTK Fluid</comment>
+  <comment xml:lang="ia">File Fluid de FLTK</comment>
+  <comment xml:lang="hu">FLTK Fluid fájl</comment>
+  <comment xml:lang="hr">FLTK Fluid datoteka</comment>
+  <comment xml:lang="he">קובץ FLTK Fluid</comment>
+  <comment xml:lang="gl">ficheiro FLTK Fluid</comment>
+  <comment xml:lang="ga">comhad FLTK Fluid</comment>
+  <comment xml:lang="fur">file FLTK Fluid</comment>
+  <comment xml:lang="fr">fichier Fluid FLTK</comment>
+  <comment xml:lang="fo">FLTK Fluid fíla</comment>
+  <comment xml:lang="fi">FLTK Fluid -tiedosto</comment>
+  <comment xml:lang="eu">FLTK Fluid fitxategia</comment>
+  <comment xml:lang="es">archivo FLTK Fluid</comment>
+  <comment xml:lang="en-GB">FLTK Fluid file</comment>
+  <comment xml:lang="el">Αρχείο FLTK Fluid</comment>
+  <comment xml:lang="de">FLTK-Fluid-Datei</comment>
+  <comment xml:lang="da">FLTK Fluid-fil</comment>
+  <comment xml:lang="cs">soubor FLTK Fluid</comment>
+  <comment xml:lang="ca">fitxer FLTK Fluid</comment>
+  <comment xml:lang="bg">Интерфейс — FLTK Fluid</comment>
+  <comment xml:lang="be-Latn">Fajł FLTK Fluid</comment>
+  <comment xml:lang="be-Cyrl">файл FLTK Fluid</comment>
+  <comment xml:lang="ar">ملف FLTK Fluid</comment>
+  <comment xml:lang="af">FLTK Fluit-lêer</comment>
+  <acronym>FLTK</acronym>
+  <expanded-acronym>Fast Light Toolkit</expanded-acronym>
+  <sub-class-of type="text/plain"/>
+  <generic-icon name="x-office-document"/>
+  <glob pattern="*.fl"/>
+</mime-type>

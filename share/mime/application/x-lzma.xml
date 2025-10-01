@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-lzma">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>LZMA archive</comment>
+  <comment xml:lang="zh-Hant-TW">LZMA 封存檔</comment>
+  <comment xml:lang="zh-Hans-CN">LZMA 归档文件</comment>
+  <comment xml:lang="vi">Kho nén LZMA</comment>
+  <comment xml:lang="uk">архів LZMA</comment>
+  <comment xml:lang="tr">LZMA arşivi</comment>
+  <comment xml:lang="sv">LZMA-arkiv</comment>
+  <comment xml:lang="sr-Cyrl">ЛЗМА архива</comment>
+  <comment xml:lang="sq">arkiv LZMA</comment>
+  <comment xml:lang="sl">Datoteka arhiva LZMA</comment>
+  <comment xml:lang="si">LZMA ලේඛනාගාරය</comment>
+  <comment xml:lang="sk">Archív LZMA</comment>
+  <comment xml:lang="ru">Архив LZMA</comment>
+  <comment xml:lang="ro">Arhivă LZMA</comment>
+  <comment xml:lang="pt-BR">Pacote LZMA</comment>
+  <comment xml:lang="pt">arquivo LZMA</comment>
+  <comment xml:lang="pl">Archiwum LZMA</comment>
+  <comment xml:lang="oc">archiu LZMA</comment>
+  <comment xml:lang="nn">LZMA-arkiv</comment>
+  <comment xml:lang="nl">LZMA-archief</comment>
+  <comment xml:lang="nb">LZMA-arkiv</comment>
+  <comment xml:lang="lv">LZMA arhīvs</comment>
+  <comment xml:lang="lt">LZMA archyvas</comment>
+  <comment xml:lang="ko">LZMA 압축 파일</comment>
+  <comment xml:lang="kk-Cyrl">LZMA архиві</comment>
+  <comment xml:lang="ja">LZMA アーカイブ</comment>
+  <comment xml:lang="it">Archivio LZMA</comment>
+  <comment xml:lang="is">LZMA safnskrá</comment>
+  <comment xml:lang="id">Arsip LZMA</comment>
+  <comment xml:lang="ia">Archivo LZMA</comment>
+  <comment xml:lang="hu">LZMA-archívum</comment>
+  <comment xml:lang="hr">LZMA arhiva</comment>
+  <comment xml:lang="he">ארכיון LZMA</comment>
+  <comment xml:lang="gl">arquivo LZMA</comment>
+  <comment xml:lang="ga">cartlann LZMA</comment>
+  <comment xml:lang="fur">archivi LZMA</comment>
+  <comment xml:lang="fr">archive LZMA</comment>
+  <comment xml:lang="fo">LZMA skjalasavn</comment>
+  <comment xml:lang="fi">LZMA-arkisto</comment>
+  <comment xml:lang="eu">LZMA artxiboa</comment>
+  <comment xml:lang="es">archivador LZMA</comment>
+  <comment xml:lang="eo">LZMA-arkivo</comment>
+  <comment xml:lang="en-GB">LZMA archive</comment>
+  <comment xml:lang="el">Συμπιεσμένο αρχείο LZMA</comment>
+  <comment xml:lang="de">LZMA-Archiv</comment>
+  <comment xml:lang="da">LZHA-arkiv</comment>
+  <comment xml:lang="cs">archiv LZMA</comment>
+  <comment xml:lang="ca">arxiu LZMA</comment>
+  <comment xml:lang="bg">Архив — LZMA</comment>
+  <comment xml:lang="be-Latn">Archiŭ LZMA</comment>
+  <comment xml:lang="be-Cyrl">архіў LZMA</comment>
+  <comment xml:lang="ar">أرشيف LZMA</comment>
+  <comment xml:lang="af">LZMA-argief</comment>
+  <acronym>LZMA</acronym>
+  <expanded-acronym>Lempel-Ziv-Markov chain-Algorithm</expanded-acronym>
+  <generic-icon name="package-x-generic"/>
+  <glob pattern="*.lzma"/>
+</mime-type>

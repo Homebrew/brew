@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="audio/vnd.dts">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>DTS audio</comment>
+  <comment xml:lang="zh-Hant-TW">DTS 音訊</comment>
+  <comment xml:lang="zh-Hans-CN">DTS 音频</comment>
+  <comment xml:lang="uk">звукові дані DTS</comment>
+  <comment xml:lang="tr">DTS sesi</comment>
+  <comment xml:lang="sv">DTS-ljud</comment>
+  <comment xml:lang="sr-Cyrl">ДТС звук</comment>
+  <comment xml:lang="sq">audio DTS</comment>
+  <comment xml:lang="sl">Zvok DTS</comment>
+  <comment xml:lang="si">DTS ශ්රව්ය</comment>
+  <comment xml:lang="sk">Zvuk DTS</comment>
+  <comment xml:lang="ru">Аудио DTS</comment>
+  <comment xml:lang="pt-BR">Áudio DTS</comment>
+  <comment xml:lang="pt">aúdio DTS</comment>
+  <comment xml:lang="pl">Plik dźwiękowy DTS</comment>
+  <comment xml:lang="oc">àudio DTS</comment>
+  <comment xml:lang="nl">DTS-audio</comment>
+  <comment xml:lang="lv">DTS audio</comment>
+  <comment xml:lang="ko">DTS 오디오</comment>
+  <comment xml:lang="kk-Cyrl">DTS аудиосы</comment>
+  <comment xml:lang="ja">DTS オーディオ</comment>
+  <comment xml:lang="it">Audio DTS</comment>
+  <comment xml:lang="is">DTS hljóðskrá</comment>
+  <comment xml:lang="id">Audio DTS</comment>
+  <comment xml:lang="ia">Audio DTS</comment>
+  <comment xml:lang="hu">DTS hang</comment>
+  <comment xml:lang="hr">DTS zvučni zapis</comment>
+  <comment xml:lang="he">שמע DTS</comment>
+  <comment xml:lang="gl">Son DTS</comment>
+  <comment xml:lang="ga">fuaim DTS</comment>
+  <comment xml:lang="fur">audio DTS</comment>
+  <comment xml:lang="fr">audio DTS</comment>
+  <comment xml:lang="fi">DTS-ääni</comment>
+  <comment xml:lang="eu">DTS audioa</comment>
+  <comment xml:lang="es">sonido DTS</comment>
+  <comment xml:lang="en-GB">DTS audio</comment>
+  <comment xml:lang="el">Ήχος DTS</comment>
+  <comment xml:lang="de">DTS-Audio</comment>
+  <comment xml:lang="da">DTS-lyd</comment>
+  <comment xml:lang="cs">zvuk DTS</comment>
+  <comment xml:lang="ca">àudio DTS</comment>
+  <comment xml:lang="bg">Аудио — DTS</comment>
+  <comment xml:lang="be-Cyrl">аўдыя DTS</comment>
+  <comment xml:lang="ar">صوت DTS</comment>
+  <comment xml:lang="af">DTS-oudio</comment>
+  <acronym>DTS</acronym>
+  <expanded-acronym>Digital Theater Systems</expanded-acronym>
+  <alias type="audio/x-dts"/>
+  <glob pattern="*.dts"/>
+</mime-type>

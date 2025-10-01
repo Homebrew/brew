@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="audio/webm">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>WebM audio</comment>
+  <comment xml:lang="zh-Hant-TW">WebM 音訊</comment>
+  <comment xml:lang="zh-Hans-CN">WebM 音频</comment>
+  <comment xml:lang="uk">звук WebM</comment>
+  <comment xml:lang="tr">WebM sesi</comment>
+  <comment xml:lang="sv">WebM-ljud</comment>
+  <comment xml:lang="sr-Cyrl">ВебМ звук</comment>
+  <comment xml:lang="sq">audio WebM</comment>
+  <comment xml:lang="sl">Zvočna datoteka WebM</comment>
+  <comment xml:lang="si">WebM ශ්‍රව්‍ය</comment>
+  <comment xml:lang="sk">Zvuk WebM</comment>
+  <comment xml:lang="ru">Аудио WebM</comment>
+  <comment xml:lang="ro">Audio WebM</comment>
+  <comment xml:lang="pt-BR">Áudio WebM</comment>
+  <comment xml:lang="pt">áudio WebM</comment>
+  <comment xml:lang="pl">Plik dźwiękowy WebM</comment>
+  <comment xml:lang="oc">àudio WebM</comment>
+  <comment xml:lang="nl">WebM-audio</comment>
+  <comment xml:lang="lv">WebM audio</comment>
+  <comment xml:lang="lt">WebM garso įrašas</comment>
+  <comment xml:lang="ko">WebM 오디오</comment>
+  <comment xml:lang="kk-Cyrl">WebM аудиосы</comment>
+  <comment xml:lang="ja">WebM オーディオ</comment>
+  <comment xml:lang="it">Audio WebM</comment>
+  <comment xml:lang="is">WebM hljóðskrá</comment>
+  <comment xml:lang="id">Audio WebM</comment>
+  <comment xml:lang="ia">Audio WebM</comment>
+  <comment xml:lang="hu">WebM hang</comment>
+  <comment xml:lang="hr">WebM zvučni zapis</comment>
+  <comment xml:lang="he">שמע WebM</comment>
+  <comment xml:lang="gl">son WebM</comment>
+  <comment xml:lang="ga">fuaim WebM</comment>
+  <comment xml:lang="fur">audio WebM</comment>
+  <comment xml:lang="fr">audio WebM</comment>
+  <comment xml:lang="fo">WebM ljóður</comment>
+  <comment xml:lang="fi">WebM-ääni</comment>
+  <comment xml:lang="eu">WebM audioa</comment>
+  <comment xml:lang="es">sonido WebM</comment>
+  <comment xml:lang="eo">WebM-sondosiero</comment>
+  <comment xml:lang="en-GB">WebM audio</comment>
+  <comment xml:lang="el">Ήχος WebM</comment>
+  <comment xml:lang="de">WebM-Audio</comment>
+  <comment xml:lang="da">WebM-lyd</comment>
+  <comment xml:lang="cs">zvuk WebM</comment>
+  <comment xml:lang="ca">àudio WebM</comment>
+  <comment xml:lang="bg">Аудио — WebM</comment>
+  <comment xml:lang="be-Cyrl">аўдыя WebM</comment>
+  <comment xml:lang="ar">صوت WebM</comment>
+  <comment xml:lang="af">WebM-oudio</comment>
+  <sub-class-of type="video/webm"/>
+</mime-type>

@@ -1,0 +1,1 @@
+../../Cellar/gtk+3/3.24.43/share/aclocal/gtk-3.0.m4

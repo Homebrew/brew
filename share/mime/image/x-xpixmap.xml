@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="image/x-xpixmap">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>XPM image</comment>
+  <comment xml:lang="zh-Hant-TW">XPM 影像</comment>
+  <comment xml:lang="zh-Hans-CN">XPM 图像</comment>
+  <comment xml:lang="vi">Ảnh XPM</comment>
+  <comment xml:lang="uk">зображення XPM</comment>
+  <comment xml:lang="tr">XPM görüntüsü</comment>
+  <comment xml:lang="sv">XPM-bild</comment>
+  <comment xml:lang="sr-Cyrl">ИксПМ слика</comment>
+  <comment xml:lang="sq">figurë XPM</comment>
+  <comment xml:lang="sl">Slikovna datoteka XPM</comment>
+  <comment xml:lang="si">XPM රූපය</comment>
+  <comment xml:lang="sk">Obrázok XPM</comment>
+  <comment xml:lang="ru">Изображение XPM</comment>
+  <comment xml:lang="ro">Imagine XPM</comment>
+  <comment xml:lang="pt-BR">Imagem XPM</comment>
+  <comment xml:lang="pt">imagem XPM</comment>
+  <comment xml:lang="pl">Obraz XPM</comment>
+  <comment xml:lang="oc">imatge XPM</comment>
+  <comment xml:lang="nn">XPM-bilete</comment>
+  <comment xml:lang="nl">XPM-afbeelding</comment>
+  <comment xml:lang="nb">XPM-bilde</comment>
+  <comment xml:lang="lv">XPM attēls</comment>
+  <comment xml:lang="lt">XPM paveikslėlis</comment>
+  <comment xml:lang="ko">XPM 그림</comment>
+  <comment xml:lang="kk-Cyrl">XPM суреті</comment>
+  <comment xml:lang="ja">XPM 画像</comment>
+  <comment xml:lang="it">Immagine XPM</comment>
+  <comment xml:lang="is">XPM mynd</comment>
+  <comment xml:lang="id">Citra XPM</comment>
+  <comment xml:lang="ia">Imagine XPM</comment>
+  <comment xml:lang="hu">XPM kép</comment>
+  <comment xml:lang="hr">XPM slika</comment>
+  <comment xml:lang="he">תמונת XPM</comment>
+  <comment xml:lang="gl">imaxe XPM</comment>
+  <comment xml:lang="ga">íomhá XPM</comment>
+  <comment xml:lang="fur">imagjin XPM</comment>
+  <comment xml:lang="fr">image XPM</comment>
+  <comment xml:lang="fo">XPM mynd</comment>
+  <comment xml:lang="fi">XPM-kuva</comment>
+  <comment xml:lang="eu">XPM irudia</comment>
+  <comment xml:lang="es">imagen XPM</comment>
+  <comment xml:lang="eo">XPM-bildo</comment>
+  <comment xml:lang="en-GB">XPM image</comment>
+  <comment xml:lang="el">Εικόνα XPM</comment>
+  <comment xml:lang="de">XPM-Bild</comment>
+  <comment xml:lang="da">XPM-billede</comment>
+  <comment xml:lang="cy">Delwedd XPM</comment>
+  <comment xml:lang="cs">obrázek XPM</comment>
+  <comment xml:lang="ca">imatge XPM</comment>
+  <comment xml:lang="bg">Изображение — XPM</comment>
+  <comment xml:lang="be-Latn">Vyjava XPM</comment>
+  <comment xml:lang="be-Cyrl">выява XPM</comment>
+  <comment xml:lang="ar">صورة XPM</comment>
+  <comment xml:lang="af">XPM-beeld</comment>
+  <acronym>XPM</acronym>
+  <expanded-acronym>X PixMap</expanded-acronym>
+  <glob pattern="*.xpm"/>
+  <alias type="image/x-xpm"/>
+</mime-type>

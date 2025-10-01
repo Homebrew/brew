@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="video/x-nsv">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>NullSoft video</comment>
+  <comment xml:lang="zh-Hant-TW">NullSoft 視訊</comment>
+  <comment xml:lang="zh-Hans-CN">NullSoft 视频</comment>
+  <comment xml:lang="vi">Ảnh động NullSoft</comment>
+  <comment xml:lang="uk">відеокліп NullSoft</comment>
+  <comment xml:lang="tr">Nullsoft videosu</comment>
+  <comment xml:lang="sv">NullSoft-video</comment>
+  <comment xml:lang="sr-Cyrl">Нул Софт видео</comment>
+  <comment xml:lang="sq">video NullSoft</comment>
+  <comment xml:lang="sl">Video datoteka NullSoft</comment>
+  <comment xml:lang="si">NullSoft වීඩියෝව</comment>
+  <comment xml:lang="sk">Video NullSoft</comment>
+  <comment xml:lang="ru">Видео Nullsoft</comment>
+  <comment xml:lang="ro">Video NullSoft</comment>
+  <comment xml:lang="pt-BR">Vídeo do NullSoft</comment>
+  <comment xml:lang="pt">vídeo NullSoft</comment>
+  <comment xml:lang="pl">Plik wideo NullSoft</comment>
+  <comment xml:lang="oc">vidèo NullSoft</comment>
+  <comment xml:lang="nn">NullSoft-video</comment>
+  <comment xml:lang="nl">NullSoft-video</comment>
+  <comment xml:lang="nb">Nullsoft-film</comment>
+  <comment xml:lang="lv">NullSoft video</comment>
+  <comment xml:lang="lt">NullSoft vaizdo įrašas</comment>
+  <comment xml:lang="ko">널소프트 동영상</comment>
+  <comment xml:lang="kk-Cyrl">NullSoft видеосы</comment>
+  <comment xml:lang="ja">NullSoft 動画</comment>
+  <comment xml:lang="it">Video NullSoft</comment>
+  <comment xml:lang="is">Nullsoft myndskeið</comment>
+  <comment xml:lang="id">Video NullSoft</comment>
+  <comment xml:lang="ia">Video NullSoft</comment>
+  <comment xml:lang="hu">NullSoft videó</comment>
+  <comment xml:lang="hr">NullSoft video snimka</comment>
+  <comment xml:lang="he">וידאו של NullSot</comment>
+  <comment xml:lang="gl">vídeo de NullSoft</comment>
+  <comment xml:lang="ga">físeán NullSoft</comment>
+  <comment xml:lang="fur">video NullSoft</comment>
+  <comment xml:lang="fr">vidéo NullSoft</comment>
+  <comment xml:lang="fo">NullSoft video</comment>
+  <comment xml:lang="fi">NullSoft-video</comment>
+  <comment xml:lang="eu">NullSoft bideoa</comment>
+  <comment xml:lang="es">vídeo NullSoft</comment>
+  <comment xml:lang="eo">NullSoft-video</comment>
+  <comment xml:lang="en-GB">NullSoft video</comment>
+  <comment xml:lang="el">Βίντεο Nullsoft</comment>
+  <comment xml:lang="de">NullSoft-Video</comment>
+  <comment xml:lang="da">NullSoft-video</comment>
+  <comment xml:lang="cs">video NullSoft</comment>
+  <comment xml:lang="ca">vídeo NullSoft</comment>
+  <comment xml:lang="bg">Видео — NullSoft</comment>
+  <comment xml:lang="be-Latn">Videa NullSoft</comment>
+  <comment xml:lang="be-Cyrl">відэа NullSoft</comment>
+  <comment xml:lang="ast">Videu de NullSoft</comment>
+  <comment xml:lang="ar">فيديو NullSoft</comment>
+  <comment xml:lang="af">NullSoft-video</comment>
+  <glob pattern="*.nsv"/>
+</mime-type>

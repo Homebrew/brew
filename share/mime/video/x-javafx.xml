@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="video/x-javafx">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>JavaFX video</comment>
+  <comment xml:lang="zh-Hant-TW">JavaFX 視訊</comment>
+  <comment xml:lang="zh-Hans-CN">JavaFX 视频</comment>
+  <comment xml:lang="uk">відеокліп JavaFX</comment>
+  <comment xml:lang="tr">JavaFX video</comment>
+  <comment xml:lang="sv">JavaFX-video</comment>
+  <comment xml:lang="sr-Cyrl">ЈаваФИкс видео</comment>
+  <comment xml:lang="sq">video JavaFX</comment>
+  <comment xml:lang="sl">Video JavaFX</comment>
+  <comment xml:lang="si">JavaFX වීඩියෝව</comment>
+  <comment xml:lang="sk">Video JavaFX</comment>
+  <comment xml:lang="ru">Видео JavaFX</comment>
+  <comment xml:lang="ro">Video JavaFX</comment>
+  <comment xml:lang="pt-BR">Vídeo JavaFX</comment>
+  <comment xml:lang="pt">vídeo JavaFX</comment>
+  <comment xml:lang="pl">Plik wideo JavaFX</comment>
+  <comment xml:lang="oc">vidèo JavaFX</comment>
+  <comment xml:lang="nl">JavaFX video</comment>
+  <comment xml:lang="lv">JavaFX video</comment>
+  <comment xml:lang="lt">JavaFX vaizdo įrašas</comment>
+  <comment xml:lang="ko">JavaFX 동영상</comment>
+  <comment xml:lang="kk-Cyrl">JavaFX аудиосы</comment>
+  <comment xml:lang="ja">JavaFX 動画</comment>
+  <comment xml:lang="it">Video JavaFX</comment>
+  <comment xml:lang="is">JavaFX myndskeið</comment>
+  <comment xml:lang="id">Video JavaFX</comment>
+  <comment xml:lang="ia">Video JavaFX</comment>
+  <comment xml:lang="hu">JavaFX videó</comment>
+  <comment xml:lang="hr">JavaFX video snimka</comment>
+  <comment xml:lang="he">וידאו JavaFX</comment>
+  <comment xml:lang="gl">vídeo JavaFX</comment>
+  <comment xml:lang="ga">físeán JavaFX</comment>
+  <comment xml:lang="fur">video JavaFX</comment>
+  <comment xml:lang="fr">vidéo JavaFX</comment>
+  <comment xml:lang="fo">JavaFX video</comment>
+  <comment xml:lang="fi">JavaFX-video</comment>
+  <comment xml:lang="eu">JavaFX bideoa</comment>
+  <comment xml:lang="es">vídeo JavaFX</comment>
+  <comment xml:lang="eo">JavaFX-video</comment>
+  <comment xml:lang="en-GB">JavaFX video</comment>
+  <comment xml:lang="el">Βίντεο JavaFX</comment>
+  <comment xml:lang="de">JavaFX-Video</comment>
+  <comment xml:lang="da">JavaFX-video</comment>
+  <comment xml:lang="cs">video JavaFX</comment>
+  <comment xml:lang="ca">vídeo de JavaFX</comment>
+  <comment xml:lang="bg">Видео — JavaFX</comment>
+  <comment xml:lang="be-Cyrl">відэа JavaFX</comment>
+  <comment xml:lang="ast">Videu en JavaFX</comment>
+  <comment xml:lang="ar">فيديو JavaFX</comment>
+  <comment xml:lang="af">JavaFX-video</comment>
+  <generic-icon name="video-x-generic"/>
+  <glob pattern="*.fxm"/>
+  <sub-class-of type="video/x-flv"/>
+</mime-type>

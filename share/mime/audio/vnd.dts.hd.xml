@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="audio/vnd.dts.hd">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>DTS-HD audio</comment>
+  <comment xml:lang="zh-Hant-TW">DTS-HD 音訊</comment>
+  <comment xml:lang="zh-Hans-CN">DTS-HD 音频</comment>
+  <comment xml:lang="uk">звукові дані DTS-HD</comment>
+  <comment xml:lang="tr">DTS-HD sesi</comment>
+  <comment xml:lang="sv">DTS-HD-ljud</comment>
+  <comment xml:lang="sl">Zvok DTS-HD</comment>
+  <comment xml:lang="si">DTS-HD ශ්රව්ය</comment>
+  <comment xml:lang="ru">Аудио DTS-HD</comment>
+  <comment xml:lang="pt-BR">Áudio DTS-HD</comment>
+  <comment xml:lang="pl">Plik dźwiękowy DTS-HD</comment>
+  <comment xml:lang="nl">DTS-HD-audio</comment>
+  <comment xml:lang="ko">DTS-HD 오디오</comment>
+  <comment xml:lang="kk-Cyrl">DTS-HD аудиосы</comment>
+  <comment xml:lang="ja">DTS-HD オーディオ</comment>
+  <comment xml:lang="it">Audio DTS-HD</comment>
+  <comment xml:lang="hr">DTS-HD zvučni zapis</comment>
+  <comment xml:lang="fi">DTS-HD-ääni</comment>
+  <comment xml:lang="eu">DTS-HD audioa</comment>
+  <comment xml:lang="es">sonido DTS-HD</comment>
+  <comment xml:lang="en-GB">DTS-HD audio</comment>
+  <comment xml:lang="de">DTS-HD-Audio</comment>
+  <comment xml:lang="be-Cyrl">аўдыя DTS-HD</comment>
+  <comment xml:lang="ar">صوت DTS-HD</comment>
+  <acronym>DTS-HD</acronym>
+  <expanded-acronym>Digital Theater Systems High Definition</expanded-acronym>
+  <sub-class-of type="audio/vnd.dts"/>
+  <alias type="audio/x-dtshd"/>
+  <glob pattern="*.dtshd"/>
+</mime-type>

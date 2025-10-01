@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-modrinth-modpack+zip">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Modrinth Modpack</comment>
+  <comment xml:lang="uk">модпак Modrinth</comment>
+  <comment xml:lang="sv">Modrinth-moddpack</comment>
+  <comment xml:lang="ru">Модификационный пакет Modrinth</comment>
+  <comment xml:lang="pl">Pakiet modów Modrinth</comment>
+  <comment xml:lang="it">Modpack Modrinth</comment>
+  <comment xml:lang="es">paquete de modificaciones de Modrinth</comment>
+  <comment xml:lang="de">Modrinth-Modpack</comment>
+  <sub-class-of type="application/zip"/>
+  <generic-icon name="package-x-generic"/>
+  <glob pattern="*.mrpack"/>
+</mime-type>

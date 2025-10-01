@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/vnd.oasis.opendocument.chart-template">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>ODC template</comment>
+  <comment xml:lang="zh-Hant-TW">ODC 範本</comment>
+  <comment xml:lang="zh-Hans-CN">ODC 模板</comment>
+  <comment xml:lang="vi">Mẫu ODC</comment>
+  <comment xml:lang="uk">шаблон ODC</comment>
+  <comment xml:lang="tr">ODC şablonu</comment>
+  <comment xml:lang="sv">ODC-mall</comment>
+  <comment xml:lang="sr-Cyrl">ОДЦ шаблон</comment>
+  <comment xml:lang="sq">gjedhe ODC</comment>
+  <comment xml:lang="sl">Predloga ODC</comment>
+  <comment xml:lang="si">ODC අච්චුව</comment>
+  <comment xml:lang="sk">Šablóna ODC</comment>
+  <comment xml:lang="ru">Шаблон ODC</comment>
+  <comment xml:lang="ro">Șablon ODC</comment>
+  <comment xml:lang="pt-BR">Modelo ODC</comment>
+  <comment xml:lang="pt">modelo ODC</comment>
+  <comment xml:lang="pl">Szablon ODC</comment>
+  <comment xml:lang="oc">modèl ODC</comment>
+  <comment xml:lang="nl">ODC-sjabloon</comment>
+  <comment xml:lang="lv">ODC veidne</comment>
+  <comment xml:lang="lt">ODC šablonas</comment>
+  <comment xml:lang="ko">ODC 문서 서식</comment>
+  <comment xml:lang="kk-Cyrl">ODC үлгісі</comment>
+  <comment xml:lang="ka">ODC შაბლონი</comment>
+  <comment xml:lang="ja">ODC テンプレート</comment>
+  <comment xml:lang="it">Modello ODC</comment>
+  <comment xml:lang="is">ODC sniðmát</comment>
+  <comment xml:lang="id">Templat ODC</comment>
+  <comment xml:lang="ia">Patrono ODC</comment>
+  <comment xml:lang="hu">ODC-sablon</comment>
+  <comment xml:lang="hr">ODC predložak</comment>
+  <comment xml:lang="he">תבנית ODC</comment>
+  <comment xml:lang="gl">modelo ODC</comment>
+  <comment xml:lang="ga">teimpléad ODC</comment>
+  <comment xml:lang="fur">model ODC</comment>
+  <comment xml:lang="fr">modèle ODC</comment>
+  <comment xml:lang="fo">ODC formur</comment>
+  <comment xml:lang="fi">ODC-malli</comment>
+  <comment xml:lang="eu">ODC txantiloia</comment>
+  <comment xml:lang="es">plantilla ODC</comment>
+  <comment xml:lang="eo">ODC-ŝablono</comment>
+  <comment xml:lang="en-GB">ODC template</comment>
+  <comment xml:lang="el">Πρότυπο ODC</comment>
+  <comment xml:lang="de">ODC-Vorlage</comment>
+  <comment xml:lang="da">ODC-skabelon</comment>
+  <comment xml:lang="cs">šablona ODC</comment>
+  <comment xml:lang="ca">plantilla ODC</comment>
+  <comment xml:lang="bg">Шаблон за диаграми — ODC</comment>
+  <comment xml:lang="be-Cyrl">шаблон ODC</comment>
+  <comment xml:lang="ar">قالب ODC</comment>
+  <comment xml:lang="af">ODC-sjabloon</comment>
+  <acronym>ODC</acronym>
+  <expanded-acronym>OpenDocument Chart</expanded-acronym>
+  <sub-class-of type="application/zip"/>
+  <generic-icon name="x-office-spreadsheet"/>
+  <glob pattern="*.otc"/>
+</mime-type>

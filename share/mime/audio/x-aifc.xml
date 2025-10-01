@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="audio/x-aifc">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>AIFC audio</comment>
+  <comment xml:lang="zh-Hant-TW">AIFC 音訊</comment>
+  <comment xml:lang="zh-Hans-CN">AIFC 音频</comment>
+  <comment xml:lang="vi">Âm thanh AIFC</comment>
+  <comment xml:lang="uk">звук AIFC</comment>
+  <comment xml:lang="tr">AIFC sesi</comment>
+  <comment xml:lang="sv">AIFC-ljud</comment>
+  <comment xml:lang="sr-Cyrl">АИФЦ звук</comment>
+  <comment xml:lang="sq">audio AIFC</comment>
+  <comment xml:lang="sl">Zvočna datoteka AIFC</comment>
+  <comment xml:lang="si">AIFC ශ්‍රව්‍ය</comment>
+  <comment xml:lang="sk">Zvuk AIFC</comment>
+  <comment xml:lang="ru">Аудио AIFC</comment>
+  <comment xml:lang="ro">Fișier audio AIFC</comment>
+  <comment xml:lang="pt-BR">Áudio AIFC</comment>
+  <comment xml:lang="pt">áudio AIFC</comment>
+  <comment xml:lang="pl">Plik dźwiękowy AIFC</comment>
+  <comment xml:lang="oc">àudio AIFC</comment>
+  <comment xml:lang="nn">AIFC-lyd</comment>
+  <comment xml:lang="nl">AIFC-audio</comment>
+  <comment xml:lang="nb">AIFC-lyd</comment>
+  <comment xml:lang="ms">Audio AIFC</comment>
+  <comment xml:lang="lv">AIFC audio</comment>
+  <comment xml:lang="lt">AIFC garso įrašas</comment>
+  <comment xml:lang="ko">AIFC 오디오</comment>
+  <comment xml:lang="kk-Cyrl">AIFC аудиосы</comment>
+  <comment xml:lang="ka">AIFC აუდიო</comment>
+  <comment xml:lang="ja">AIFC オーディオ</comment>
+  <comment xml:lang="it">Audio AIFC</comment>
+  <comment xml:lang="is">AIFC hljóðskrá</comment>
+  <comment xml:lang="id">Audio AIFC</comment>
+  <comment xml:lang="ia">Audio AIFC</comment>
+  <comment xml:lang="hu">AIFC hang</comment>
+  <comment xml:lang="hr">AIFC zvučni zapis</comment>
+  <comment xml:lang="he">שמע AIFC</comment>
+  <comment xml:lang="gl">son AIFC</comment>
+  <comment xml:lang="ga">fuaim AIFC</comment>
+  <comment xml:lang="fur">audio AIFC</comment>
+  <comment xml:lang="fr">audio AIFC</comment>
+  <comment xml:lang="fo">AIFC ljóður</comment>
+  <comment xml:lang="fi">AIFC-ääni</comment>
+  <comment xml:lang="eu">AIFC audioa</comment>
+  <comment xml:lang="es">sonido AIFC</comment>
+  <comment xml:lang="eo">AIFC-sondosiero</comment>
+  <comment xml:lang="en-GB">AIFC audio</comment>
+  <comment xml:lang="el">Ήχος AIFC</comment>
+  <comment xml:lang="de">AIFC-Audio</comment>
+  <comment xml:lang="da">AIFC-lyd</comment>
+  <comment xml:lang="cy">Sain AIFC</comment>
+  <comment xml:lang="cs">zvuk AIFC</comment>
+  <comment xml:lang="ca">àudio AIFC</comment>
+  <comment xml:lang="bg">Аудио — AIFC</comment>
+  <comment xml:lang="be-Latn">Aŭdyjo AIFC</comment>
+  <comment xml:lang="be-Cyrl">аўдыя AIFC</comment>
+  <comment xml:lang="az">AIFC audio faylı</comment>
+  <comment xml:lang="ar">صوت AIFC</comment>
+  <comment xml:lang="af">AIFC-oudio</comment>
+  <acronym>AIFC</acronym>
+  <expanded-acronym>Audio Interchange File format Compressed</expanded-acronym>
+  <sub-class-of type="application/x-iff"/>
+  <glob pattern="*.aifc"/>
+  <glob pattern="*.aiffc"/>
+  <alias type="audio/x-aiffc"/>
+</mime-type>

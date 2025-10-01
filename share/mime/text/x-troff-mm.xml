@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="text/x-troff-mm">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Troff MM input document</comment>
+  <comment xml:lang="zh-Hant-TW">Troff MM 輸入文件</comment>
+  <comment xml:lang="zh-Hans-CN">Troff MM 输入文档</comment>
+  <comment xml:lang="vi">Tài liệu nhập MM Troff</comment>
+  <comment xml:lang="uk">вхідний документ Troff MM</comment>
+  <comment xml:lang="tr">Troff MM girdi belgesi</comment>
+  <comment xml:lang="sv">Troff MM-indatadokument</comment>
+  <comment xml:lang="sr-Cyrl">Трофф ММ улазни документ</comment>
+  <comment xml:lang="sq">dokument MM input-i për Troff</comment>
+  <comment xml:lang="sl">Vnosni dokument Troff MM</comment>
+  <comment xml:lang="si">Troff MM ආදාන ලේඛනය</comment>
+  <comment xml:lang="sk">Vstupný dokument Troff MM</comment>
+  <comment xml:lang="ru">Входной документ Troff MM</comment>
+  <comment xml:lang="ro">Document intrare Troff MM</comment>
+  <comment xml:lang="pt-BR">Documento de entrada Troff MM</comment>
+  <comment xml:lang="pt">documento origem Troff MM</comment>
+  <comment xml:lang="pl">Dokument wejściowy Troff MM</comment>
+  <comment xml:lang="oc">document d'entrada Troff MM</comment>
+  <comment xml:lang="nn">Troff MM inndata-dokument</comment>
+  <comment xml:lang="nl">Troff MM-invoerdocument</comment>
+  <comment xml:lang="nb">Troff MM-inndatadokument</comment>
+  <comment xml:lang="ms">Dokumen input Troff MM</comment>
+  <comment xml:lang="lv">Troff MM ievades dokuments</comment>
+  <comment xml:lang="lt">Troff MM įvesties dokumentas</comment>
+  <comment xml:lang="ko">Troff MM 입력 문서</comment>
+  <comment xml:lang="kk-Cyrl">Troff MM кіріс құжаты</comment>
+  <comment xml:lang="ja">Troff MM 入力ドキュメント</comment>
+  <comment xml:lang="it">Documento di input Troff MM</comment>
+  <comment xml:lang="is">Troff MM inngangsskjal</comment>
+  <comment xml:lang="id">Dokumen masukan Troff MM</comment>
+  <comment xml:lang="ia">Documento de entrata Troff MM</comment>
+  <comment xml:lang="hu">Troff MM bemeneti dokumentum</comment>
+  <comment xml:lang="hr">Troff MM ulazni dokument</comment>
+  <comment xml:lang="he">מסמך קלט של Troff MM</comment>
+  <comment xml:lang="gl">documento de entrada Troff MM</comment>
+  <comment xml:lang="ga">cáipéis ionchurtha Troff MM</comment>
+  <comment xml:lang="fur">document di jentrade Troff MM</comment>
+  <comment xml:lang="fr">document d'entrée Troff MM</comment>
+  <comment xml:lang="fo">Troff MM inntaksskjal</comment>
+  <comment xml:lang="fi">Troff MM -syöteasiakirja</comment>
+  <comment xml:lang="eu">Troff MM sarrerako dokumentua</comment>
+  <comment xml:lang="es">documento de entrada Troff MM</comment>
+  <comment xml:lang="eo">eniga dokumento de Troff MM</comment>
+  <comment xml:lang="en-GB">Troff MM input document</comment>
+  <comment xml:lang="el">Έγγραφο εντολών troff MM</comment>
+  <comment xml:lang="de">Troff-MM-Eingabedokument</comment>
+  <comment xml:lang="da">Troff MM inddata-dokument</comment>
+  <comment xml:lang="cs">vstupní dokument Troff MM</comment>
+  <comment xml:lang="ca">document d'entrada Troff MM</comment>
+  <comment xml:lang="bg">Изходен документ — Troff MM</comment>
+  <comment xml:lang="be-Latn">Uvodny dakument Troff MM</comment>
+  <comment xml:lang="be-Cyrl">уваходны дакумент Troff MM</comment>
+  <comment xml:lang="ast">Documentu d'entrada de Troff MM</comment>
+  <comment xml:lang="ar">مستند Troff MM input</comment>
+  <comment xml:lang="af">Troff MM-toevoerdokument</comment>
+  <sub-class-of type="text/troff"/>
+  <glob pattern="*.mm"/>
+</mime-type>

@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="audio/x-m4b">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>MPEG-4 audio book</comment>
+  <comment xml:lang="zh-Hant-TW">MPEG-4 音訊書</comment>
+  <comment xml:lang="zh-Hans-CN">MPEG-4 有声书</comment>
+  <comment xml:lang="vi">Sách âm thanh MPEG-4</comment>
+  <comment xml:lang="uk">аудіокнига MPEG-4</comment>
+  <comment xml:lang="tr">MPEG-4 sesli kitabı</comment>
+  <comment xml:lang="sv">MPEG-4-ljudbok</comment>
+  <comment xml:lang="sr-Cyrl">МПЕГ-4 звукотека</comment>
+  <comment xml:lang="sq">audiolibër MPEG-4</comment>
+  <comment xml:lang="sl">Zvočna knjiga MPEG-4</comment>
+  <comment xml:lang="si">MPEG-4 ශ්රව්ය පොත</comment>
+  <comment xml:lang="sk">Zvuková kniha MPEG-4</comment>
+  <comment xml:lang="ru">Аудиокнига MPEG-4</comment>
+  <comment xml:lang="ro">Carte audio MPEG-4</comment>
+  <comment xml:lang="pt-BR">Áudio livro MPEG-4</comment>
+  <comment xml:lang="pt">livro áudio MPEG-4</comment>
+  <comment xml:lang="pl">Książka dźwiękowa MPEG-4</comment>
+  <comment xml:lang="oc">libre àudio MPEG-4</comment>
+  <comment xml:lang="nn">MPEG-4-lydbok</comment>
+  <comment xml:lang="nl">MPEG4-audioboek</comment>
+  <comment xml:lang="nb">MPEG-4-lydbok</comment>
+  <comment xml:lang="lv">MPEG-4 audio grāmata</comment>
+  <comment xml:lang="lt">MPEG-4 garso knyga</comment>
+  <comment xml:lang="ko">MPEG-4 오디오북</comment>
+  <comment xml:lang="kk-Cyrl">MPEG-4 аудио кітабы</comment>
+  <comment xml:lang="ka">MPEG-4 აუდიოწიგნი</comment>
+  <comment xml:lang="ja">MPEG-4 オーディオブック</comment>
+  <comment xml:lang="it">Audiolibro MPEG-4</comment>
+  <comment xml:lang="is">MPEG-4 hljóðbók</comment>
+  <comment xml:lang="id">Buku audio MPEG-4</comment>
+  <comment xml:lang="ia">Libro audio MPEG-4</comment>
+  <comment xml:lang="hu">MPEG-4 hangoskönyv</comment>
+  <comment xml:lang="hr">MPEG-4 zvučna knjiga</comment>
+  <comment xml:lang="he">ספר דיגיטלי MPEG-4</comment>
+  <comment xml:lang="gl">sonlibro de MPEG-4</comment>
+  <comment xml:lang="ga">closleabhar MPEG-4</comment>
+  <comment xml:lang="fur">audio-libri MPEG-4</comment>
+  <comment xml:lang="fr">livre audio MPEG-4</comment>
+  <comment xml:lang="fo">MPEG-4 ljóðbók</comment>
+  <comment xml:lang="fi">MPEG-4-äänikirja</comment>
+  <comment xml:lang="eu">MPEG-4 audio-liburua</comment>
+  <comment xml:lang="es">audiolibro MPEG-4</comment>
+  <comment xml:lang="eo">MPEG-4-sonlibro</comment>
+  <comment xml:lang="en-GB">MPEG-4 audio book</comment>
+  <comment xml:lang="el">Ηχητικό βιβλίο MPEG-4</comment>
+  <comment xml:lang="de">MPEG-4-Hörbuch</comment>
+  <comment xml:lang="da">MPEG4-lydbog</comment>
+  <comment xml:lang="cs">zvuková kniha MPEG-4</comment>
+  <comment xml:lang="ca">llibre d'àudio MPEG-4</comment>
+  <comment xml:lang="bg">Аудио книга — MPEG-4</comment>
+  <comment xml:lang="be-Latn">Aŭdyjokniha MPEG-4</comment>
+  <comment xml:lang="be-Cyrl">аўдыякніга MPEG-4</comment>
+  <comment xml:lang="ar">كتاب MPEG-4 صوتي</comment>
+  <comment xml:lang="af">MPEG-4-oudioboek</comment>
+  <sub-class-of type="audio/mp4"/>
+  <glob pattern="*.m4b"/>
+  <glob pattern="*.f4b"/>
+</mime-type>

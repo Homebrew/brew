@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-lmdb">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>LMDB database</comment>
+  <comment xml:lang="uk">база даних LMDB</comment>
+  <comment xml:lang="sv">LMDB-databas</comment>
+  <comment xml:lang="sq">bazë të dhënash LMDB</comment>
+  <comment xml:lang="ru">База данных LMDB</comment>
+  <comment xml:lang="pt-BR">Banco de dados LMDB</comment>
+  <comment xml:lang="pl">Baza danych LMDB</comment>
+  <comment xml:lang="it">Database LMDB</comment>
+  <comment xml:lang="gl">Base de datos LMDB</comment>
+  <comment xml:lang="eu">LMDB datu-basea</comment>
+  <comment xml:lang="es">base de datos LMDB</comment>
+  <comment xml:lang="de">LMDB-Datenbank</comment>
+  <comment xml:lang="be-Cyrl">база даных LMDB</comment>
+  <acronym>LMDB</acronym>
+  <expanded-acronym>Lightning Memory-Mapped Database</expanded-acronym>
+  <generic-icon name="x-office-document"/>
+  <glob pattern="*.mdb"/>
+  <glob pattern="*.lmdb"/>
+</mime-type>

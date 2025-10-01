@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-ms-wim">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>WIM disk image</comment>
+  <comment xml:lang="zh-Hant-TW">WIM 磁碟映像檔</comment>
+  <comment xml:lang="zh-Hans-CN">WIM 磁盘映像</comment>
+  <comment xml:lang="uk">образ диска WIM</comment>
+  <comment xml:lang="tr">WIM disk görüntüsü</comment>
+  <comment xml:lang="sv">WIM-diskavbildning</comment>
+  <comment xml:lang="sq">pamje disku WIM</comment>
+  <comment xml:lang="sl">Slika diska WIM</comment>
+  <comment xml:lang="si">WIM තැටි රූපය</comment>
+  <comment xml:lang="sk">Obraz disku WIM</comment>
+  <comment xml:lang="ru">Образ диска WIM</comment>
+  <comment xml:lang="pt-BR">Imagem de disco WIM</comment>
+  <comment xml:lang="pl">Obraz dysku WIM</comment>
+  <comment xml:lang="nl">WIM-schijfkopiebestand</comment>
+  <comment xml:lang="ko">WIM 디스크 이미지</comment>
+  <comment xml:lang="kk-Cyrl">WIM диск бейнесі</comment>
+  <comment xml:lang="ja">WIM ディスクイメージ</comment>
+  <comment xml:lang="it">Immagine disco WIM</comment>
+  <comment xml:lang="is">WIM diskmynd</comment>
+  <comment xml:lang="id">Image disk WIM</comment>
+  <comment xml:lang="hu">WIM lemezkép</comment>
+  <comment xml:lang="hr">WIM slika diska</comment>
+  <comment xml:lang="he">דמות כונן WIM</comment>
+  <comment xml:lang="fr">image disque WIM</comment>
+  <comment xml:lang="fi">WIM-levykuva</comment>
+  <comment xml:lang="eu">WIM disko irudia</comment>
+  <comment xml:lang="es">imagen de disco WIM</comment>
+  <comment xml:lang="en-GB">WIM disk image</comment>
+  <comment xml:lang="de">WIM-Datenträgerabbild</comment>
+  <comment xml:lang="da">WIM-diskaftryk</comment>
+  <comment xml:lang="ca">imatge de disc WIM</comment>
+  <comment xml:lang="bg">Диск — WIM</comment>
+  <comment xml:lang="be-Cyrl">вобраз дыска WIM</comment>
+  <comment xml:lang="ar">صورة قرص WIM</comment>
+  <acronym>WIM</acronym>
+  <expanded-acronym>Windows Imaging Format</expanded-acronym>
+  <glob pattern="*.wim"/>
+  <glob pattern="*.swm"/>
+</mime-type>

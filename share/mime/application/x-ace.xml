@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-ace">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>ACE archive</comment>
+  <comment xml:lang="zh-Hant-TW">ACE 封存檔</comment>
+  <comment xml:lang="zh-Hans-CN">ACE 归档文件</comment>
+  <comment xml:lang="vi">Kho nén ACE</comment>
+  <comment xml:lang="uk">архів ACE</comment>
+  <comment xml:lang="tr">ACE arşivi</comment>
+  <comment xml:lang="sv">ACE-arkiv</comment>
+  <comment xml:lang="sr-Cyrl">АЦЕ архива</comment>
+  <comment xml:lang="sq">arkiv ACE</comment>
+  <comment xml:lang="sl">Datoteka arhiva ACE</comment>
+  <comment xml:lang="si">ACE ලේඛනාගාරය</comment>
+  <comment xml:lang="sk">Archív ACE</comment>
+  <comment xml:lang="ru">Архив ACE</comment>
+  <comment xml:lang="ro">Arhivă ACE</comment>
+  <comment xml:lang="pt-BR">Pacote ACE</comment>
+  <comment xml:lang="pt">arquivo ACE</comment>
+  <comment xml:lang="pl">Archiwum ACE</comment>
+  <comment xml:lang="oc">archiu ACE</comment>
+  <comment xml:lang="nn">ACE-arkiv</comment>
+  <comment xml:lang="nl">ACE-archief</comment>
+  <comment xml:lang="nb">ACE-arkiv</comment>
+  <comment xml:lang="lv">ACE arhīvs</comment>
+  <comment xml:lang="lt">ACE archyvas</comment>
+  <comment xml:lang="ko">ACE 압축 파일</comment>
+  <comment xml:lang="kk-Cyrl">ACE архиві</comment>
+  <comment xml:lang="ka">ACE არქივი</comment>
+  <comment xml:lang="ja">ACE アーカイブ</comment>
+  <comment xml:lang="it">Archivio ACE</comment>
+  <comment xml:lang="is">ACE safnskrá</comment>
+  <comment xml:lang="id">Arsip ACE</comment>
+  <comment xml:lang="ia">Archivo ACE</comment>
+  <comment xml:lang="hu">ACE archívum</comment>
+  <comment xml:lang="hr">ACE arhiva</comment>
+  <comment xml:lang="he">ארכיון ACE</comment>
+  <comment xml:lang="gl">arquivo ACE</comment>
+  <comment xml:lang="ga">cartlann ACE</comment>
+  <comment xml:lang="fur">archivi ACE</comment>
+  <comment xml:lang="fr">archive ACE</comment>
+  <comment xml:lang="fo">ACE skjalasavn</comment>
+  <comment xml:lang="fi">ACE-arkisto</comment>
+  <comment xml:lang="eu">ACE artxiboa</comment>
+  <comment xml:lang="es">archivador ACE</comment>
+  <comment xml:lang="eo">ACE-arkivo</comment>
+  <comment xml:lang="en-GB">ACE archive</comment>
+  <comment xml:lang="el">Συμπιεσμένο αρχείο ACE</comment>
+  <comment xml:lang="de">ACE-Archiv</comment>
+  <comment xml:lang="da">ACE-arkiv</comment>
+  <comment xml:lang="cs">archiv ACE</comment>
+  <comment xml:lang="ca">arxiu ACE</comment>
+  <comment xml:lang="bg">Архив — ACE</comment>
+  <comment xml:lang="be-Latn">Archiŭ ACE</comment>
+  <comment xml:lang="be-Cyrl">архіў ACE</comment>
+  <comment xml:lang="ar">أرشيف ACE</comment>
+  <comment xml:lang="af">ACE-argief</comment>
+  <generic-icon name="package-x-generic"/>
+  <glob pattern="*.ace"/>
+</mime-type>

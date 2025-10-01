@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-gzpostscript">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>PostScript document (gzip-compressed)</comment>
+  <comment xml:lang="zh-Hant-TW">PostScript 文件 (gzip 壓縮)</comment>
+  <comment xml:lang="zh-Hans-CN">PostScript 文档（gzip 压缩）</comment>
+  <comment xml:lang="vi">Tài liệu PostScript (đã nén gzip)</comment>
+  <comment xml:lang="uk">документ PostScript (стиснене gzip)</comment>
+  <comment xml:lang="tr">PostScript belgesi (gzip ile sıkıştırılmış)</comment>
+  <comment xml:lang="sv">Postscript-dokument (gzip-komprimerat)</comment>
+  <comment xml:lang="sr-Cyrl">Постскрипт документ (запакован гзип-ом)</comment>
+  <comment xml:lang="sq">dokument PostScript (ngjeshur me gzip)</comment>
+  <comment xml:lang="sl">Dokument PostScript (stisnjen z gzip)</comment>
+  <comment xml:lang="si">PostScript ලේඛනය (gzip-compressed)</comment>
+  <comment xml:lang="sk">Dokument PostScript (komprimovaný pomocou gzip)</comment>
+  <comment xml:lang="ru">Документ PostScript (сжатый gzip)</comment>
+  <comment xml:lang="ro">Document PostScript (comprimat gzip)</comment>
+  <comment xml:lang="pt-BR">Documento PostScript (compactado com gzip)</comment>
+  <comment xml:lang="pt">documento PostScript (compressão gzip)</comment>
+  <comment xml:lang="pl">Dokument PostScript (kompresja gzip)</comment>
+  <comment xml:lang="oc">document PostEscript (compressat gzip)</comment>
+  <comment xml:lang="nn">PostScript-dokument (pakka med gzip)</comment>
+  <comment xml:lang="nl">PostScript-document (ingepakt met gzip)</comment>
+  <comment xml:lang="nb">PostScript-dokument (gzip-komprimert)</comment>
+  <comment xml:lang="ms">Dokumen PostScript (dimampatkan-gzip)</comment>
+  <comment xml:lang="lv">PostScript dokuments (saspiests ar gzip)</comment>
+  <comment xml:lang="lt">PostScript dokumentas (suglaudintas su gzip)</comment>
+  <comment xml:lang="ko">PostScript 문서(GZIP 압축)</comment>
+  <comment xml:lang="kk-Cyrl">PostScript құжаты (gzip-пен сығылған)</comment>
+  <comment xml:lang="ja">PostScript ドキュメント (gzip 圧縮)</comment>
+  <comment xml:lang="it">Documento PostScript (compresso con gzip)</comment>
+  <comment xml:lang="is">PostScript skjal (gzip-þjappað)</comment>
+  <comment xml:lang="id">Dokumen PostScript (terkompresi gzip)</comment>
+  <comment xml:lang="ia">Documento PostScript (comprimite con gzip)</comment>
+  <comment xml:lang="hu">PostScript-dokumentum (gzip tömörítésű)</comment>
+  <comment xml:lang="hr">PostScript dokument (gzip sažet)</comment>
+  <comment xml:lang="he">מסמך PostScript (מכוות ע״י gzip)</comment>
+  <comment xml:lang="gl">documento PostScript (comprimido con gzip)</comment>
+  <comment xml:lang="ga">cáipéis PostScript (comhbhrúite le gzip)</comment>
+  <comment xml:lang="fur">document PostScript (comprimût cun gzip)</comment>
+  <comment xml:lang="fr">document PostScript (compressé gzip)</comment>
+  <comment xml:lang="fo">PostScript skjal (gzip-stappað)</comment>
+  <comment xml:lang="fi">PostScript-asiakirja (gzip-pakattu)</comment>
+  <comment xml:lang="eu">PostScript dokumentua (gzip-konprimitua)</comment>
+  <comment xml:lang="es">documento PostScript (comprimido con GZIP)</comment>
+  <comment xml:lang="eo">PostScript-dokumento (kunpremita per gzip)</comment>
+  <comment xml:lang="en-GB">PostScript document (gzip-compressed)</comment>
+  <comment xml:lang="el">Έγγραφο PostScript (συμπιεσμένο με gzip)</comment>
+  <comment xml:lang="de">PostScript-Dokument (gzip-komprimiert)</comment>
+  <comment xml:lang="da">PostScript-dokument (gzip-komprimeret)</comment>
+  <comment xml:lang="cs">dokument PostScript (komprimovaný pomocí gzip)</comment>
+  <comment xml:lang="ca">document PostScript (amb compressió gzip)</comment>
+  <comment xml:lang="bg">Документ — PostScript, компресиран с gzip</comment>
+  <comment xml:lang="be-Latn">Dakument PostScript (gzip-skampresavany)</comment>
+  <comment xml:lang="be-Cyrl">дакумент PostScript (сцісканне gzip)</comment>
+  <comment xml:lang="ast">Documentu PostScript (comprimíu en gzip)</comment>
+  <comment xml:lang="ar">مستند PostScript (مضغوط-gzip)</comment>
+  <comment xml:lang="af">PostScript-dokument (gzip-saamgepers)</comment>
+  <sub-class-of type="application/gzip"/>
+  <generic-icon name="x-office-document"/>
+  <glob pattern="*.ps.gz"/>
+</mime-type>

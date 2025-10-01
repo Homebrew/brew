@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-tex-pk">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Packed font file</comment>
+  <comment xml:lang="uk">запакований файл шрифту</comment>
+  <comment xml:lang="sv">Packad typsnittsfil</comment>
+  <comment xml:lang="ru">Сжатый файл шрифта</comment>
+  <comment xml:lang="pl">Plik ze spakowaną czcionką</comment>
+  <comment xml:lang="it">File tipo di carattere condensato</comment>
+  <comment xml:lang="eu">Letra-tipoen fitxategi paketatua</comment>
+  <comment xml:lang="es">archivo de tipo de letra empaquetado</comment>
+  <comment xml:lang="de">Gepackte Schriftdatei</comment>
+  <comment xml:lang="be-Cyrl">запакаваны файл шрыфту</comment>
+  <generic-icon name="font-x-generic"/>
+  <glob pattern="*.pk"/>
+</mime-type>

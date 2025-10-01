@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/vnd.oasis.opendocument.text-web">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>OTH template</comment>
+  <comment xml:lang="zh-Hant-TW">OTH 範本</comment>
+  <comment xml:lang="zh-Hans-CN">OTH 模板</comment>
+  <comment xml:lang="vi">Mẫu ODH</comment>
+  <comment xml:lang="uk">шаблон OTH</comment>
+  <comment xml:lang="tr">OTH şablonu</comment>
+  <comment xml:lang="sv">OTH-mall</comment>
+  <comment xml:lang="sr-Cyrl">ОТХ шаблон</comment>
+  <comment xml:lang="sq">gjedhe OTH</comment>
+  <comment xml:lang="sl">Predloga OTH</comment>
+  <comment xml:lang="si">OTH අච්චුව</comment>
+  <comment xml:lang="sk">Šablóna OTH</comment>
+  <comment xml:lang="ru">Шаблон OTH</comment>
+  <comment xml:lang="ro">Șablon OTH</comment>
+  <comment xml:lang="pt-BR">Modelo OTH</comment>
+  <comment xml:lang="pt">modelo OTH</comment>
+  <comment xml:lang="pl">Szablon OTH</comment>
+  <comment xml:lang="oc">modèl OTH</comment>
+  <comment xml:lang="nn">OTH-mal</comment>
+  <comment xml:lang="nl">OTH-sjabloon</comment>
+  <comment xml:lang="nb">OTH-mal</comment>
+  <comment xml:lang="lv">OTH veidne</comment>
+  <comment xml:lang="lt">OTH šablonas</comment>
+  <comment xml:lang="ko">OTH 문서 서식</comment>
+  <comment xml:lang="kk-Cyrl">OTH үлгісі</comment>
+  <comment xml:lang="ka">OTH შაბლონი</comment>
+  <comment xml:lang="ja">OTH テンプレート</comment>
+  <comment xml:lang="it">Modello OTH</comment>
+  <comment xml:lang="is">OTH sniðmát</comment>
+  <comment xml:lang="id">Templat OTH</comment>
+  <comment xml:lang="ia">Patrono OTH</comment>
+  <comment xml:lang="hu">OTH-sablon</comment>
+  <comment xml:lang="hr">OTH predložak</comment>
+  <comment xml:lang="he">תבנית OTH</comment>
+  <comment xml:lang="gl">modelo OTH</comment>
+  <comment xml:lang="ga">teimpléad OTH</comment>
+  <comment xml:lang="fur">model OTH</comment>
+  <comment xml:lang="fr">modèle OTH</comment>
+  <comment xml:lang="fo">OTH formur</comment>
+  <comment xml:lang="fi">OTH-malli</comment>
+  <comment xml:lang="eu">OTH txantiloia</comment>
+  <comment xml:lang="es">plantilla OTH</comment>
+  <comment xml:lang="eo">OTH-ŝablono</comment>
+  <comment xml:lang="en-GB">OTH template</comment>
+  <comment xml:lang="el">Πρότυπο OTH</comment>
+  <comment xml:lang="de">OTH-Vorlage</comment>
+  <comment xml:lang="da">OTH-skabelon</comment>
+  <comment xml:lang="cs">šablona OTH</comment>
+  <comment xml:lang="ca">plantilla OTH</comment>
+  <comment xml:lang="bg">Шаблон за страници — OTH</comment>
+  <comment xml:lang="be-Latn">Šablon OTH</comment>
+  <comment xml:lang="be-Cyrl">шаблон OTH</comment>
+  <comment xml:lang="ar">قالب OTH</comment>
+  <comment xml:lang="af">OTH-sjabloon</comment>
+  <acronym>OTH</acronym>
+  <expanded-acronym>OpenDocument HTML</expanded-acronym>
+  <sub-class-of type="application/zip"/>
+  <generic-icon name="text-html"/>
+  <glob pattern="*.oth"/>
+</mime-type>

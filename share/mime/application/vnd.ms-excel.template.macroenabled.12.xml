@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/vnd.ms-excel.template.macroEnabled.12">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Excel spreadsheet template</comment>
+  <comment xml:lang="zh-Hant-TW">Excel 試算表範本</comment>
+  <comment xml:lang="zh-Hans-CN">Excel 电子表格模板</comment>
+  <comment xml:lang="uk">шаблон електронної таблиці Excel</comment>
+  <comment xml:lang="tr">Excel hesap çizelgesi şablonu</comment>
+  <comment xml:lang="sv">Excel-kalkylarksmall</comment>
+  <comment xml:lang="sr-Cyrl">Екселов шаблон табеле</comment>
+  <comment xml:lang="sq">gjedhe fletëllogaritjesh Excel</comment>
+  <comment xml:lang="sl">Predloga preglednice Excel</comment>
+  <comment xml:lang="si">එක්සෙල් පැතුරුම්පත් අච්චුව</comment>
+  <comment xml:lang="sk">Šablóna tabuľky aplikácie Excel</comment>
+  <comment xml:lang="ru">Шаблон таблицы Excel</comment>
+  <comment xml:lang="pt-BR">Modelo de planilha do Excel</comment>
+  <comment xml:lang="pt">predefinição da folha de cálculo Excel</comment>
+  <comment xml:lang="pl">Szablon arkusza Excel</comment>
+  <comment xml:lang="oc">Modèl de fuèlh de calcul Excel</comment>
+  <comment xml:lang="nl">Excel-rekenbladsjabloon</comment>
+  <comment xml:lang="ko">Excel 스프레드시트 서식</comment>
+  <comment xml:lang="kk-Cyrl">Excel кестесінің үлгісі</comment>
+  <comment xml:lang="ja">Excel スプレッドシートテンプレート</comment>
+  <comment xml:lang="it">Modello foglio di calcolo Excel</comment>
+  <comment xml:lang="is">Excel töflureiknisniðmát</comment>
+  <comment xml:lang="id">Templat lembar kerja Excel</comment>
+  <comment xml:lang="ia">Patrono de folio de calculo Excel</comment>
+  <comment xml:lang="hu">Excel munkafüzetsablon</comment>
+  <comment xml:lang="hr">Predložak Excel proračunske tablice</comment>
+  <comment xml:lang="he">תבנית גיליון נתונים של Excel</comment>
+  <comment xml:lang="gl">Modelo de folla de cálculo de Excel</comment>
+  <comment xml:lang="ga">teimpléad scarbhileoige Excel</comment>
+  <comment xml:lang="fur">model sfuei di calcul Excel</comment>
+  <comment xml:lang="fr">modèle de feuille de calcul Excel</comment>
+  <comment xml:lang="fi">Excel-taulukkomalli</comment>
+  <comment xml:lang="eu">Excel kalkulu-orri txantiloia</comment>
+  <comment xml:lang="es">plantilla de hoja de cálculo de Excel</comment>
+  <comment xml:lang="en-GB">Excel spreadsheet template</comment>
+  <comment xml:lang="el">Πρότυπο λογιστικού φύλλου Excel</comment>
+  <comment xml:lang="de">Excel-Tabellenvorlage</comment>
+  <comment xml:lang="da">Excel-regnearksskabelon</comment>
+  <comment xml:lang="cs">šablona tabulky Excel</comment>
+  <comment xml:lang="ca">plantilla de full de càlcul d'Excel</comment>
+  <comment xml:lang="bg">Шаблон за таблица — Excel</comment>
+  <comment xml:lang="be-Cyrl">шаблон электроннай табліцы Excel</comment>
+  <comment xml:lang="ar">قالب جدول اكسل</comment>
+  <comment xml:lang="af">Excel-sigbladsjabloon</comment>
+  <generic-icon name="x-office-spreadsheet"/>
+  <glob pattern="*.xltm"/>
+  <sub-class-of type="application/vnd.openxmlformats-officedocument.spreadsheetml.template"/>
+</mime-type>

@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-pc-engine-rom">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>PC Engine ROM</comment>
+  <comment xml:lang="zh-Hant-TW">PC Engine ROM</comment>
+  <comment xml:lang="zh-Hans-CN">PC Engine ROM</comment>
+  <comment xml:lang="uk">ROM для рушія на ПК</comment>
+  <comment xml:lang="tr">PC Engine ROM</comment>
+  <comment xml:lang="sv">PC Engine-rom</comment>
+  <comment xml:lang="sr-Cyrl">ПЦ Енџин РОМ</comment>
+  <comment xml:lang="sl">Pomnilnik PC Engine ROM</comment>
+  <comment xml:lang="si">PC Engine ROM</comment>
+  <comment xml:lang="sk">PC Engine ROM</comment>
+  <comment xml:lang="ru">PC Engine ROM</comment>
+  <comment xml:lang="pt-BR">ROM de PC Engine</comment>
+  <comment xml:lang="pt">ROM PC Engine</comment>
+  <comment xml:lang="pl">Plik ROM konsoli PC Engine</comment>
+  <comment xml:lang="oc">ROM PC Engine</comment>
+  <comment xml:lang="nl">PC Engine-ROM</comment>
+  <comment xml:lang="ko">PC 엔진 롬</comment>
+  <comment xml:lang="kk-Cyrl">PC Engine ROM</comment>
+  <comment xml:lang="ja">PCエンジン ROM</comment>
+  <comment xml:lang="it">ROM PC Engine</comment>
+  <comment xml:lang="is">PC Engine ROM</comment>
+  <comment xml:lang="id">ROM PC Engine</comment>
+  <comment xml:lang="ia">ROM PC Engine</comment>
+  <comment xml:lang="hu">PC Engine ROM</comment>
+  <comment xml:lang="hr">PC Engine ROM</comment>
+  <comment xml:lang="he">ROM של PC Engine</comment>
+  <comment xml:lang="gl">ROM de máquina de PC</comment>
+  <comment xml:lang="ga">ROM PC Engine</comment>
+  <comment xml:lang="fur">ROM PC Engine</comment>
+  <comment xml:lang="fr">ROM PC Engine</comment>
+  <comment xml:lang="fi">PC Engine -ROM</comment>
+  <comment xml:lang="eu">PC Engine ROM</comment>
+  <comment xml:lang="es">ROM de PC Engine</comment>
+  <comment xml:lang="en-GB">PC Engine ROM</comment>
+  <comment xml:lang="el">PC Engine ROM</comment>
+  <comment xml:lang="de">PC-Engine ROM</comment>
+  <comment xml:lang="da">PC Engine-ROM</comment>
+  <comment xml:lang="cs">ROM pro PC Engine</comment>
+  <comment xml:lang="ca">ROM de PC Engine</comment>
+  <comment xml:lang="bg">ROM — PC Engine</comment>
+  <comment xml:lang="be-Cyrl">PC Engine ROM</comment>
+  <comment xml:lang="ast">ROM de PC Engine</comment>
+  <comment xml:lang="ar">روم محرك PC</comment>
+  <generic-icon name="application-x-executable"/>
+  <glob pattern="*.pce"/>
+</mime-type>

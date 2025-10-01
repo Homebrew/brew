@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="image/x-bzeps">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>EPS image (bzip2-compressed)</comment>
+  <comment xml:lang="uk">зображення EPS (стиснений bzip2)</comment>
+  <comment xml:lang="sv">EPS-bild (bzip2-komprimerad)</comment>
+  <comment xml:lang="ru">Изображение EPS (сжатое bzip2)</comment>
+  <comment xml:lang="pl">Obraz EPS (kompresja bzip2)</comment>
+  <comment xml:lang="es">imagen EPS (comprimida con BZIP2)</comment>
+  <comment xml:lang="de">EPS-Bild (bzip2-komprimiert)</comment>
+  <sub-class-of type="application/x-bzip2"/>
+  <glob pattern="*.eps.bz2"/>
+  <glob pattern="*.epsi.bz2"/>
+  <glob pattern="*.epsf.bz2"/>
+</mime-type>

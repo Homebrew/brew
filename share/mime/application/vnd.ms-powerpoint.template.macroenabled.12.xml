@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/vnd.ms-powerpoint.template.macroEnabled.12">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>PowerPoint presentation template</comment>
+  <comment xml:lang="zh-Hant-TW">PowerPoint 簡報範本</comment>
+  <comment xml:lang="zh-Hans-CN">PowerPoint 演示文稿模板</comment>
+  <comment xml:lang="uk">шаблон презентації PowerPoint</comment>
+  <comment xml:lang="tr">PowerPoint sunum şablonu</comment>
+  <comment xml:lang="sv">PowerPoint-presentationsmall</comment>
+  <comment xml:lang="sr-Cyrl">Шаблон презентације Пауер поинта</comment>
+  <comment xml:lang="sq">gjedhe paraqitjeje PowerPoint</comment>
+  <comment xml:lang="sl">Predloga predstavitve PowerPoint</comment>
+  <comment xml:lang="si">PowerPoint ඉදිරිපත් කිරීමේ අච්චුව</comment>
+  <comment xml:lang="sk">Šablóna prezentácie aplikácie PowerPoint</comment>
+  <comment xml:lang="ru">Шаблон презентации PowerPoint</comment>
+  <comment xml:lang="pt-BR">Modelo de apresentação do PowerPoint</comment>
+  <comment xml:lang="pt">predefinição de apresentação PowerPoint</comment>
+  <comment xml:lang="pl">Szablon prezentacji PowerPoint</comment>
+  <comment xml:lang="oc">Modèl de presentacion PowerPoint</comment>
+  <comment xml:lang="nl">PowerPoint-presentatiesjabloon</comment>
+  <comment xml:lang="ko">PowerPoint 프레젠테이션 서식</comment>
+  <comment xml:lang="kk-Cyrl">PowerPoint презентация үлгісі</comment>
+  <comment xml:lang="ja">PowerPoint プレゼンテーションテンプレート</comment>
+  <comment xml:lang="it">Modello presentazione PowerPoint</comment>
+  <comment xml:lang="is">PowerPoint sniðmát fyrir glærukynningu</comment>
+  <comment xml:lang="id">Templat presentasi PowerPoint</comment>
+  <comment xml:lang="ia">Patrono de presentation PowerPoint</comment>
+  <comment xml:lang="hu">PowerPoint bemutatósablon</comment>
+  <comment xml:lang="hr">Predložak PowerPoint prezentacije</comment>
+  <comment xml:lang="he">תבנית מצגת PowerPoint</comment>
+  <comment xml:lang="gl">Modelo de presentación de PowerPoint</comment>
+  <comment xml:lang="ga">teimpléad láithreoireachta PowerPoint</comment>
+  <comment xml:lang="fur">model di presentazion PowerPoint</comment>
+  <comment xml:lang="fr">modèle de présentation PowerPoint</comment>
+  <comment xml:lang="fi">PowerPoint-esitysmalli</comment>
+  <comment xml:lang="eu">PowerPoint aurkezpen txantiloia</comment>
+  <comment xml:lang="es">plantilla de presentación de PowerPoint</comment>
+  <comment xml:lang="en-GB">PowerPoint presentation template</comment>
+  <comment xml:lang="el">Πρότυπο παρουσίασης PowerPoint</comment>
+  <comment xml:lang="de">PowerPoint-Präsentationsvorlage</comment>
+  <comment xml:lang="da">PowerPoint-præsentationsskabelon</comment>
+  <comment xml:lang="cs">šablona prezentace PowerPoint</comment>
+  <comment xml:lang="ca">plantilla de presentació de PowerPoint</comment>
+  <comment xml:lang="bg">Шаблон за презентация — PowerPoint</comment>
+  <comment xml:lang="be-Cyrl">шаблон прэзентацыі PowerPoint</comment>
+  <comment xml:lang="ast">Plantía de presentaciones de PowerPoint</comment>
+  <comment xml:lang="ar">قالب عرض بوربوينت</comment>
+  <comment xml:lang="af">PowerPoint-voorleggingsjabloon</comment>
+  <generic-icon name="x-office-presentation"/>
+  <glob pattern="*.potm"/>
+  <sub-class-of type="application/vnd.openxmlformats-officedocument.presentationml.template"/>
+</mime-type>

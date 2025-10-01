@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="image/x-ilbm">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>ILBM image</comment>
+  <comment xml:lang="zh-Hant-TW">ILBM 影像</comment>
+  <comment xml:lang="zh-Hans-CN">ILBM 图像</comment>
+  <comment xml:lang="vi">Ảnh ILBM</comment>
+  <comment xml:lang="uk">зображення ILBM</comment>
+  <comment xml:lang="tr">ILBM görüntüsü</comment>
+  <comment xml:lang="sv">ILBM-bild</comment>
+  <comment xml:lang="sr-Cyrl">ИЛБМ слика</comment>
+  <comment xml:lang="sq">figurë ILBM</comment>
+  <comment xml:lang="sl">Slikovna datoteka ILBM</comment>
+  <comment xml:lang="si">ILBM රූපය</comment>
+  <comment xml:lang="sk">Obrázok ILMB</comment>
+  <comment xml:lang="ru">Изображение ILBM</comment>
+  <comment xml:lang="ro">Imagine ILBM</comment>
+  <comment xml:lang="pt-BR">Imagem ILBM</comment>
+  <comment xml:lang="pt">imagem ILBM</comment>
+  <comment xml:lang="pl">Obraz ILBM</comment>
+  <comment xml:lang="oc">imatge ILBM</comment>
+  <comment xml:lang="nn">ILMB-bilete</comment>
+  <comment xml:lang="nl">ILBM-afbeelding</comment>
+  <comment xml:lang="nb">ILBM-bilde</comment>
+  <comment xml:lang="ms">Imej ILBM</comment>
+  <comment xml:lang="lv">ILBM attēls</comment>
+  <comment xml:lang="lt">ILBM paveikslėlis</comment>
+  <comment xml:lang="ko">ILBM 그림</comment>
+  <comment xml:lang="kk-Cyrl">ILBM суреті</comment>
+  <comment xml:lang="ja">ILBM 画像</comment>
+  <comment xml:lang="it">Immagine ILBM</comment>
+  <comment xml:lang="is">ILBM mynd</comment>
+  <comment xml:lang="id">Citra ILBM</comment>
+  <comment xml:lang="ia">Imagine ILBM</comment>
+  <comment xml:lang="hu">ILBM-kép</comment>
+  <comment xml:lang="hr">ILBM slika</comment>
+  <comment xml:lang="he">תמונת ILBM</comment>
+  <comment xml:lang="gl">imaxe  ILBM</comment>
+  <comment xml:lang="ga">íomhá ILBM</comment>
+  <comment xml:lang="fur">imagjin ILBM</comment>
+  <comment xml:lang="fr">image ILBM</comment>
+  <comment xml:lang="fo">ILBM mynd</comment>
+  <comment xml:lang="fi">ILBM-kuva</comment>
+  <comment xml:lang="eu">ILBM irudia</comment>
+  <comment xml:lang="es">imagen ILBM</comment>
+  <comment xml:lang="eo">ILBM-bildo</comment>
+  <comment xml:lang="en-GB">ILBM image</comment>
+  <comment xml:lang="el">Εικόνα ILBM</comment>
+  <comment xml:lang="de">ILBM-Bild</comment>
+  <comment xml:lang="da">ILBM-billede</comment>
+  <comment xml:lang="cy">Delwedd ILBM</comment>
+  <comment xml:lang="cs">obrázek ILMB</comment>
+  <comment xml:lang="ca">imatge ILBM</comment>
+  <comment xml:lang="bg">Изображение — ILBM</comment>
+  <comment xml:lang="be-Latn">Vyjava ILBM</comment>
+  <comment xml:lang="be-Cyrl">выява ILBM</comment>
+  <comment xml:lang="az">ILBM rəsmi</comment>
+  <comment xml:lang="ar">صورة ILBM</comment>
+  <comment xml:lang="af">ILBM-beeld</comment>
+  <acronym>ILBM</acronym>
+  <expanded-acronym>InterLeaved BitMap</expanded-acronym>
+  <sub-class-of type="application/x-iff"/>
+  <glob pattern="*.iff"/>
+  <glob pattern="*.ilbm"/>
+  <glob pattern="*.lbm"/>
+  <alias type="image/x-iff"/>
+</mime-type>

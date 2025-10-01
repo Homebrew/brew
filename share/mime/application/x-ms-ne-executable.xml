@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-ms-ne-executable">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>16-bit Windows program</comment>
+  <sub-class-of type="application/x-msdownload"/>
+  <generic-icon name="application-x-executable"/>
+  <glob pattern="*.exe" weight="20"/>
+  <glob pattern="*.dll" weight="20"/>
+  <glob pattern="*.cpl" weight="20"/>
+  <glob pattern="*.drv" weight="20"/>
+  <glob pattern="*.scr" weight="20"/>
+</mime-type>

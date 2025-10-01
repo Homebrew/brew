@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/oda">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>ODA document</comment>
+  <comment xml:lang="zh-Hant-TW">ODA 文件</comment>
+  <comment xml:lang="zh-Hans-CN">ODA 文档</comment>
+  <comment xml:lang="vi">Tài liệu ODA</comment>
+  <comment xml:lang="uk">документ ODA</comment>
+  <comment xml:lang="tr">ODA belgesi</comment>
+  <comment xml:lang="sv">ODA-dokument</comment>
+  <comment xml:lang="sr-Cyrl">ОДА документ</comment>
+  <comment xml:lang="sq">dokument ODA</comment>
+  <comment xml:lang="sl">Dokument ODA</comment>
+  <comment xml:lang="si">ODA ලේඛනය</comment>
+  <comment xml:lang="sk">Dokument ODA</comment>
+  <comment xml:lang="ru">Документ ODA</comment>
+  <comment xml:lang="ro">Document ODA</comment>
+  <comment xml:lang="pt-BR">Documento ODA</comment>
+  <comment xml:lang="pt">documento ODA</comment>
+  <comment xml:lang="pl">Dokument ODA</comment>
+  <comment xml:lang="oc">document ODA</comment>
+  <comment xml:lang="nn">ODA-dokument</comment>
+  <comment xml:lang="nl">ODA-document</comment>
+  <comment xml:lang="nb">ODA-dokument</comment>
+  <comment xml:lang="ms">Dokumen ODA</comment>
+  <comment xml:lang="lv">ODA dokuments</comment>
+  <comment xml:lang="lt">ODA dokumentas</comment>
+  <comment xml:lang="ko">ODA 문서</comment>
+  <comment xml:lang="kk-Cyrl">ODA құжаты</comment>
+  <comment xml:lang="ka">ODA დოკუმენტი</comment>
+  <comment xml:lang="ja">ODA ドキュメント</comment>
+  <comment xml:lang="it">Documento ODA</comment>
+  <comment xml:lang="is">ODA skjal</comment>
+  <comment xml:lang="id">Dokumen ODA</comment>
+  <comment xml:lang="ia">Documento ODA</comment>
+  <comment xml:lang="hu">ODA-dokumentum</comment>
+  <comment xml:lang="hr">ODA dokument</comment>
+  <comment xml:lang="he">מסמך ODA</comment>
+  <comment xml:lang="gl">documento ODA</comment>
+  <comment xml:lang="ga">cáipéis ODA</comment>
+  <comment xml:lang="fur">document ODA</comment>
+  <comment xml:lang="fr">document ODA</comment>
+  <comment xml:lang="fo">ODA skjal</comment>
+  <comment xml:lang="fi">ODA-asiakirja</comment>
+  <comment xml:lang="eu">ODA dokumentua</comment>
+  <comment xml:lang="es">documento ODA</comment>
+  <comment xml:lang="eo">ODA-dokumento</comment>
+  <comment xml:lang="en-GB">ODA document</comment>
+  <comment xml:lang="el">Έγγραφο ODA</comment>
+  <comment xml:lang="de">ODA-Dokument</comment>
+  <comment xml:lang="da">ODA-dokument</comment>
+  <comment xml:lang="cy">Dogfen ODA</comment>
+  <comment xml:lang="cs">dokument ODA</comment>
+  <comment xml:lang="ca">document ODA</comment>
+  <comment xml:lang="bg">Документ — ODA</comment>
+  <comment xml:lang="be-Latn">Dakument ODA</comment>
+  <comment xml:lang="be-Cyrl">дакумент ODA</comment>
+  <comment xml:lang="az">ODA sənədi</comment>
+  <comment xml:lang="ast">Documentu ODA</comment>
+  <comment xml:lang="ar">مستند ODA</comment>
+  <comment xml:lang="af">ODA-dokument</comment>
+  <acronym>ODA</acronym>
+  <expanded-acronym>Office Document Architecture</expanded-acronym>
+  <generic-icon name="x-office-document"/>
+  <glob pattern="*.oda"/>
+</mime-type>

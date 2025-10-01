@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="multipart/alternative">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Message in several formats</comment>
+  <comment xml:lang="uk">повідомлення у кількох форматах</comment>
+  <comment xml:lang="sv">Meddelande i flera format</comment>
+  <comment xml:lang="ru">Сообщение в нескольких форматах</comment>
+  <comment xml:lang="pl">Wiadomość w wielu formatach</comment>
+  <comment xml:lang="it">Messaggio in diversi formati</comment>
+  <comment xml:lang="es">mensaje en varios formatos</comment>
+  <comment xml:lang="de">Nachricht in verschiedenen Formaten</comment>
+  <comment xml:lang="be-Cyrl">паведамленне ў некалькіх фарматах</comment>
+</mime-type>

@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="video/mj2">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>JPEG-2000 MJ2 video</comment>
+  <comment xml:lang="zh-Hant-TW">JPEG-2000 MJ2 視訊</comment>
+  <comment xml:lang="zh-Hans-CN">JPEG-2000 MJ2 视频</comment>
+  <comment xml:lang="uk">зображення MJ2 JPEG-2000</comment>
+  <comment xml:lang="tr">JPEG-2000 MJ2 videosu</comment>
+  <comment xml:lang="sv">JPEG-2000 MJ2-bild</comment>
+  <comment xml:lang="sq">video JPEG-2000 MJ2</comment>
+  <comment xml:lang="sl">Video JPEG-2000 MJ2</comment>
+  <comment xml:lang="si">JPEG-2000 MJ2 වීඩියෝව</comment>
+  <comment xml:lang="sk">Video JPEG-2000 MJ2</comment>
+  <comment xml:lang="ru">Видео JPEG-2000 MJ2</comment>
+  <comment xml:lang="pt-BR">Imagem MJ2 de JPEG-2000</comment>
+  <comment xml:lang="pl">Plik wideo MJ2 JPEG-2000</comment>
+  <comment xml:lang="oc">vidèo JPEG-2000 MJ2</comment>
+  <comment xml:lang="nl">JPEG-2000 MJ2-video</comment>
+  <comment xml:lang="ko">JPEG-2000 MJ2 동영상</comment>
+  <comment xml:lang="kk-Cyrl">JPEG-2000 MJ2 видеосы</comment>
+  <comment xml:lang="ja">JPEG-2000 MJ2 動画</comment>
+  <comment xml:lang="it">Video JPEG-2000 MJ2</comment>
+  <comment xml:lang="is">JPEG-2000 MJ2 myndskeið</comment>
+  <comment xml:lang="id">Video JPEG-2000 MJ2</comment>
+  <comment xml:lang="hu">JPEG-2000 MJ2 videó</comment>
+  <comment xml:lang="hr">JPEG-2000 MJ2 video snimka</comment>
+  <comment xml:lang="he">סרטון MJ2 של JPEG-2000</comment>
+  <comment xml:lang="ga">íomhá JPEG-2000 MJ2</comment>
+  <comment xml:lang="fur">video JPEG-2000 MJ2</comment>
+  <comment xml:lang="fr">vidéo JPEG-2000 MJ2</comment>
+  <comment xml:lang="fi">JPEG-2000 MJ2 -video</comment>
+  <comment xml:lang="eu">JPEG-2000 MJ2 bideoa</comment>
+  <comment xml:lang="es">vídeo JPEG-2000 MJ2</comment>
+  <comment xml:lang="en-GB">JPEG-2000 MJ2 video</comment>
+  <comment xml:lang="de">JPEG-2000 MJ2-Video</comment>
+  <comment xml:lang="da">JPEG-2000 MJ2-video</comment>
+  <comment xml:lang="cs">video JPEG-2000 MJ2</comment>
+  <comment xml:lang="ca">vídeo JPEG-2000 MJ2</comment>
+  <comment xml:lang="bg">Видео — JPEG-2000 MJ2</comment>
+  <comment xml:lang="be-Cyrl">відэа JPEG-2000 MJ2</comment>
+  <comment xml:lang="ar">فيديو JPEG-2000 MJ2</comment>
+  <comment xml:lang="af">JPEG-2000 MJ2-video</comment>
+  <acronym>MJ2</acronym>
+  <expanded-acronym>Motion JPEG-2000</expanded-acronym>
+  <glob pattern="*.mj2"/>
+  <glob pattern="*.mjp2"/>
+</mime-type>

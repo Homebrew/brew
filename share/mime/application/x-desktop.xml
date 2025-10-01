@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-desktop">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Desktop entry</comment>
+  <comment xml:lang="uk">стільничний запис</comment>
+  <comment xml:lang="sv">Skrivbordspost</comment>
+  <comment xml:lang="ru">Запись рабочего стола</comment>
+  <comment xml:lang="pl">Wpis środowiska</comment>
+  <comment xml:lang="it">Elemento desktop</comment>
+  <comment xml:lang="gl">Entrada de escritorio</comment>
+  <comment xml:lang="eu">Mahaigaineko sarrera</comment>
+  <comment xml:lang="es">entrada de escritorio</comment>
+  <comment xml:lang="de">Desktop-Eintrag</comment>
+  <comment xml:lang="be-Cyrl">запіс desktop</comment>
+  <sub-class-of type="text/plain"/>
+  <generic-icon name="text-x-generic"/>
+  <glob pattern="*.desktop"/>
+  <glob pattern="*.kdelnk"/>
+  <alias type="application/x-gnome-app-info"/>
+</mime-type>

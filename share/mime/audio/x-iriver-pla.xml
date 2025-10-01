@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="audio/x-iriver-pla">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>iRiver playlist</comment>
+  <comment xml:lang="zh-Hant-TW">iRiver 播放清單</comment>
+  <comment xml:lang="zh-Hans-CN">iRiver 播放列表</comment>
+  <comment xml:lang="uk">список відтворення iRiver</comment>
+  <comment xml:lang="tr">iRiver çalma listesi</comment>
+  <comment xml:lang="sv">iRiver-spellista</comment>
+  <comment xml:lang="sq">luajlistë iRiver</comment>
+  <comment xml:lang="sl">Seznam predvajanja iRiver</comment>
+  <comment xml:lang="si">iRiver ධාවන ලැයිස්තුව</comment>
+  <comment xml:lang="sk">Zoznam skladieb iRiver</comment>
+  <comment xml:lang="ru">Список воспроизведения iRiver</comment>
+  <comment xml:lang="pt-BR">Lista de reprodução do iRiver</comment>
+  <comment xml:lang="pt">lista de reprodução do iRiver</comment>
+  <comment xml:lang="pl">Lista odtwarzania iRiver</comment>
+  <comment xml:lang="oc">lista de lectura iRiver</comment>
+  <comment xml:lang="nl">iRiver-playlist</comment>
+  <comment xml:lang="lt">iRiver grojaraštis</comment>
+  <comment xml:lang="ko">아이리버 재생 목록</comment>
+  <comment xml:lang="kk-Cyrl">iRiver ойнау тізімі</comment>
+  <comment xml:lang="ka">iRiver დასაკრავი სია</comment>
+  <comment xml:lang="ja">iRiver プレイリスト</comment>
+  <comment xml:lang="it">Playlist iRiver</comment>
+  <comment xml:lang="is">iRiver spilunarlisti</comment>
+  <comment xml:lang="id">daftar putar iRiver</comment>
+  <comment xml:lang="hu">iRiver lejátszólista</comment>
+  <comment xml:lang="hr">iRiver popis izvođenja</comment>
+  <comment xml:lang="he">רשימת נגינה של iRiver</comment>
+  <comment xml:lang="gl">Lista de reprodución de iRiver</comment>
+  <comment xml:lang="fr">liste de lecture iRiver</comment>
+  <comment xml:lang="fi">iRiver-soittolista</comment>
+  <comment xml:lang="eu">iRiver erreprodukzio-zerrenda</comment>
+  <comment xml:lang="es">lista de reproducción de iRiver</comment>
+  <comment xml:lang="en-GB">iRiver playlist</comment>
+  <comment xml:lang="de">iRiver-Wiedergabeliste</comment>
+  <comment xml:lang="da">iRiver-afspilningsliste</comment>
+  <comment xml:lang="ca">llista de reproducció iRiver</comment>
+  <comment xml:lang="bg">Списък за изпълнение — iRiver</comment>
+  <comment xml:lang="be-Cyrl">плэй-ліст iRiver</comment>
+  <comment xml:lang="ar">قائمة تشغيل iRiver</comment>
+  <glob pattern="*.pla"/>
+</mime-type>

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/vnd.apple.pages">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Apple Pages document</comment>
+  <comment xml:lang="zh-Hant-TW">Apple Pages 文件</comment>
+  <comment xml:lang="uk">документ Apple Pages</comment>
+  <comment xml:lang="tr">Apple Pages belgesi</comment>
+  <comment xml:lang="sv">Apple Pages-dokument</comment>
+  <comment xml:lang="sl">Dokument Apple Pages</comment>
+  <comment xml:lang="si">Apple පිටු ලේඛනය</comment>
+  <comment xml:lang="ru">Документ Apple Pages</comment>
+  <comment xml:lang="pl">Dokument Apple Pages</comment>
+  <comment xml:lang="nl">Apple Pages-document</comment>
+  <comment xml:lang="ko">애플 페이지 문서</comment>
+  <comment xml:lang="kk-Cyrl">Apple Pages құжаты</comment>
+  <comment xml:lang="ja">Apple Pages ドキュメント</comment>
+  <comment xml:lang="it">Documento Apple Pages</comment>
+  <comment xml:lang="hr">Apple Pages dokument</comment>
+  <comment xml:lang="fi">Apple Pages-asiakirja</comment>
+  <comment xml:lang="eu">Apple Pages dokumentua</comment>
+  <comment xml:lang="es">documento de Apple Pages</comment>
+  <comment xml:lang="en-GB">Apple Pages document</comment>
+  <comment xml:lang="de">Apple-Pages-Dokument</comment>
+  <comment xml:lang="be-Cyrl">дакумент Apple Pages</comment>
+  <comment xml:lang="ar">مستند صفحات أبل</comment>
+  <sub-class-of type="application/zip"/>
+  <generic-icon name="x-office-document"/>
+  <glob pattern="*.pages"/>
+  <alias type="application/x-iwork-pages-sffpages"/>
+</mime-type>

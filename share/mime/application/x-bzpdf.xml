@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-bzpdf">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>PDF document (bzip2-compressed)</comment>
+  <comment xml:lang="uk">документ PDF (стиснений bzip2)</comment>
+  <comment xml:lang="sv">PDF-dokument (bzip2-komprimerat)</comment>
+  <comment xml:lang="ru">Документ PDF (сжатый bzip2)</comment>
+  <comment xml:lang="pl">Dokument PDF (kompresja bzip2)</comment>
+  <comment xml:lang="es">documento PDF (comprimido con BZIP2)</comment>
+  <comment xml:lang="de">PDF-Dokument (bzip2-komprimiert)</comment>
+  <sub-class-of type="application/x-bzip2"/>
+  <generic-icon name="x-office-document"/>
+  <glob pattern="*.pdf.bz2"/>
+</mime-type>

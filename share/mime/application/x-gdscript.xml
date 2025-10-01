@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-gdscript">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>GDScript script</comment>
+  <comment xml:lang="zh-Hant-TW">GDScript 指令稿</comment>
+  <comment xml:lang="zh-Hans-CN">GDScript 脚本</comment>
+  <comment xml:lang="uk">скрипт GDScript</comment>
+  <comment xml:lang="tr">GDScript betiği</comment>
+  <comment xml:lang="sv">GDScript-skript</comment>
+  <comment xml:lang="sl">Skript GDScript</comment>
+  <comment xml:lang="si">GDScript පිටපත</comment>
+  <comment xml:lang="ru">Сценарий GDScript</comment>
+  <comment xml:lang="pt-BR">Script GDScript</comment>
+  <comment xml:lang="pl">Skrypt GDScript</comment>
+  <comment xml:lang="nl">GDScript-script</comment>
+  <comment xml:lang="ko">GDScript 스크립트</comment>
+  <comment xml:lang="kk-Cyrl">GDScript скрипті</comment>
+  <comment xml:lang="ka">GDScript-ის სკრიპტი</comment>
+  <comment xml:lang="ja">GDScript スクリプト</comment>
+  <comment xml:lang="it">Script GDScript</comment>
+  <comment xml:lang="hr">GDScript skripta</comment>
+  <comment xml:lang="he">סקריפט GDScript</comment>
+  <comment xml:lang="gl">Script de GDScript</comment>
+  <comment xml:lang="fi">GDScript-skripti</comment>
+  <comment xml:lang="eu">GDScript scripta</comment>
+  <comment xml:lang="es">secuencia de órdenes en GDScript</comment>
+  <comment xml:lang="en-GB">GDScript script</comment>
+  <comment xml:lang="de">GDScript-Skript</comment>
+  <comment xml:lang="be-Cyrl">скрыпт GDScript</comment>
+  <comment xml:lang="ar">سكربت GDScript</comment>
+  <sub-class-of type="text/plain"/>
+  <glob pattern="*.gd"/>
+</mime-type>

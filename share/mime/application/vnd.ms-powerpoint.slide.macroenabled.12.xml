@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/vnd.ms-powerpoint.slide.macroEnabled.12">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>PowerPoint slide</comment>
+  <comment xml:lang="zh-Hant-TW">PowerPoint 投影片</comment>
+  <comment xml:lang="zh-Hans-CN">PowerPoint 幻灯片</comment>
+  <comment xml:lang="uk">слайд PowerPoint</comment>
+  <comment xml:lang="tr">PowerPoint sunusu</comment>
+  <comment xml:lang="sv">PowerPoint-bildspel</comment>
+  <comment xml:lang="sr-Cyrl">Пауер поинт слајд</comment>
+  <comment xml:lang="sq">diapozitiv PowerPoint</comment>
+  <comment xml:lang="sl">Prosojnica PowerPoint</comment>
+  <comment xml:lang="si">PowerPoint ස්ලයිඩය</comment>
+  <comment xml:lang="sk">Snímka aplikácie PowerPoint</comment>
+  <comment xml:lang="ru">Слайд PowerPoint</comment>
+  <comment xml:lang="pt-BR">Slide do PowerPoint</comment>
+  <comment xml:lang="pt">diapositivo PowerPoint</comment>
+  <comment xml:lang="pl">Slajd PowerPoint</comment>
+  <comment xml:lang="oc">Diapositiva PowerPoint</comment>
+  <comment xml:lang="nl">PowerPoint-dia</comment>
+  <comment xml:lang="ko">PowerPoint 슬라이드</comment>
+  <comment xml:lang="kk-Cyrl">PowerPoint слайды</comment>
+  <comment xml:lang="ja">PowerPoint スライド</comment>
+  <comment xml:lang="it">Diapositiva PowerPoint</comment>
+  <comment xml:lang="is">PowerPoint skyggna</comment>
+  <comment xml:lang="id">Salindia PowerPoint</comment>
+  <comment xml:lang="ia">Diapositiva PowerPoint</comment>
+  <comment xml:lang="hu">PowerPoint dia</comment>
+  <comment xml:lang="hr">PowerPoint prezentacija</comment>
+  <comment xml:lang="he">שקופית של PowerPoint</comment>
+  <comment xml:lang="gl">Diapositiva de PowerPoint</comment>
+  <comment xml:lang="ga">sleamhnán PowerPoint</comment>
+  <comment xml:lang="fur">diapositive PowerPoint</comment>
+  <comment xml:lang="fr">diapositive PowerPoint</comment>
+  <comment xml:lang="fi">PowerPoint-dia</comment>
+  <comment xml:lang="eu">PowerPoint diapositiba</comment>
+  <comment xml:lang="es">diapositiva de PowerPoint</comment>
+  <comment xml:lang="en-GB">PowerPoint slide</comment>
+  <comment xml:lang="el">Διαφάνεια PowerPoint</comment>
+  <comment xml:lang="de">PowerPoint-Folie</comment>
+  <comment xml:lang="da">PowerPoint-dias</comment>
+  <comment xml:lang="cs">promítání PowerPoint</comment>
+  <comment xml:lang="ca">dispositiva de PowerPoint</comment>
+  <comment xml:lang="bg">Кадър — PowerPoint</comment>
+  <comment xml:lang="be-Cyrl">слайд PowerPoint</comment>
+  <comment xml:lang="ast">Diapositiva de PowerPoint</comment>
+  <comment xml:lang="ar">شريحة بوربوينت</comment>
+  <comment xml:lang="af">PowerPoint-skyfie</comment>
+  <generic-icon name="x-office-presentation"/>
+  <glob pattern="*.sldm"/>
+  <sub-class-of type="application/vnd.openxmlformats-officedocument.presentationml.slide"/>
+</mime-type>

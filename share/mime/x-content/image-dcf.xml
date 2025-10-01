@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="x-content/image-dcf">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Digital photos</comment>
+  <comment xml:lang="uk">цифрові фотографії</comment>
+  <comment xml:lang="sv">Digitalbilder</comment>
+  <comment xml:lang="ru">Цифровые фотографии</comment>
+  <comment xml:lang="pt-BR">Fotos digitais</comment>
+  <comment xml:lang="pl">Zdjęcia cyfrowe</comment>
+  <comment xml:lang="it">Foto digitali</comment>
+  <comment xml:lang="gl">Fotos dixitais</comment>
+  <comment xml:lang="eu">Argazki digitalak</comment>
+  <comment xml:lang="es">fotografías digitales</comment>
+  <comment xml:lang="de">Digitale Fotos</comment>
+  <comment xml:lang="be-Cyrl">лічбавыя фатаграфіі</comment>
+</mime-type>

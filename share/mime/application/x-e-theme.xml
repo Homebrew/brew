@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-e-theme">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Enlightenment theme</comment>
+  <comment xml:lang="zh-Hant-TW">Enlightenment 佈景主題</comment>
+  <comment xml:lang="zh-Hans-CN">Enlightenment 主题</comment>
+  <comment xml:lang="vi">Sắc thái Enlightenment</comment>
+  <comment xml:lang="uk">тема Enlightenment</comment>
+  <comment xml:lang="tr">Enlightenment teması</comment>
+  <comment xml:lang="sv">Enlightenment-tema</comment>
+  <comment xml:lang="sr-Cyrl">тема за Енлајтмент</comment>
+  <comment xml:lang="sq">temë Enlightenment</comment>
+  <comment xml:lang="sl">Datoteka teme Enlightenment</comment>
+  <comment xml:lang="si">බුද්ධත්වයේ තේමාව</comment>
+  <comment xml:lang="sk">Motív Enlightenment</comment>
+  <comment xml:lang="ru">Тема Enlightenment</comment>
+  <comment xml:lang="ro">Temă Enlightenment</comment>
+  <comment xml:lang="pt-BR">Tema do Enlightenment</comment>
+  <comment xml:lang="pt">tema Enlightenment</comment>
+  <comment xml:lang="pl">Motyw Enlightenment</comment>
+  <comment xml:lang="oc">tèma Enlightenment</comment>
+  <comment xml:lang="nn">Enlightenment-tema</comment>
+  <comment xml:lang="nl">Enlightenment-thema</comment>
+  <comment xml:lang="nb">Enlightenment tema</comment>
+  <comment xml:lang="ms">Tema Enlightenment</comment>
+  <comment xml:lang="lv">Enlightenment motīvs</comment>
+  <comment xml:lang="lt">Enlightenment tema</comment>
+  <comment xml:lang="ko">인라이튼먼트 테마</comment>
+  <comment xml:lang="kk-Cyrl">Enlightenment темасы</comment>
+  <comment xml:lang="ka">Enlightenment-ის თემა</comment>
+  <comment xml:lang="ja">Enlightenment テーマ</comment>
+  <comment xml:lang="it">Tema Enlightenment</comment>
+  <comment xml:lang="is">Enlightenment þema</comment>
+  <comment xml:lang="id">Tema Enlightenment</comment>
+  <comment xml:lang="ia">Thema de Enlightenment</comment>
+  <comment xml:lang="hu">Enlightenment-téma</comment>
+  <comment xml:lang="hr">Enlightenment tema</comment>
+  <comment xml:lang="he">ערכת נושא של Enlightenment</comment>
+  <comment xml:lang="gl">tema de Enlightenment</comment>
+  <comment xml:lang="ga">téama Enlightenment</comment>
+  <comment xml:lang="fur">teme di Enlightenment</comment>
+  <comment xml:lang="fr">thème Enlightenment</comment>
+  <comment xml:lang="fo">Enlightenment tema</comment>
+  <comment xml:lang="fi">Enlightenment-teema</comment>
+  <comment xml:lang="eu">Enlightenment gaia</comment>
+  <comment xml:lang="es">tema de Enlightenment</comment>
+  <comment xml:lang="eo">etoso de Enlightenment</comment>
+  <comment xml:lang="en-GB">Enlightenment theme</comment>
+  <comment xml:lang="el">Θέμα Enlightenment</comment>
+  <comment xml:lang="de">Enlightenment-Thema</comment>
+  <comment xml:lang="da">Enlightenmenttema</comment>
+  <comment xml:lang="cy">Thema Enlightenment</comment>
+  <comment xml:lang="cs">motiv Enlightenment</comment>
+  <comment xml:lang="ca">tema d'Enlightenment</comment>
+  <comment xml:lang="bg">Тема — Enlightenment</comment>
+  <comment xml:lang="be-Latn">Matyŭ Enlightenment</comment>
+  <comment xml:lang="be-Cyrl">тэма Enlightenment</comment>
+  <comment xml:lang="az">Enlightenment örtüyü</comment>
+  <comment xml:lang="ar">سمة Enlightenment</comment>
+  <comment xml:lang="af">Enlightenment-tema</comment>
+  <glob pattern="*.etheme"/>
+</mime-type>

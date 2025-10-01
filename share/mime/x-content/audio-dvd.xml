@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="x-content/audio-dvd">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Audio DVD</comment>
+  <comment xml:lang="uk">Звуковий DVD</comment>
+  <comment xml:lang="sv">Ljud-dvd</comment>
+  <comment xml:lang="ru">Аудио DVD</comment>
+  <comment xml:lang="pt-BR">DVD de áudio</comment>
+  <comment xml:lang="pl">DVD-Audio</comment>
+  <comment xml:lang="it">DVD audio</comment>
+  <comment xml:lang="gl">DVD de son</comment>
+  <comment xml:lang="eu">Audioko DVDa</comment>
+  <comment xml:lang="es">DVD de audio</comment>
+  <comment xml:lang="de">Audio-DVD</comment>
+  <comment xml:lang="be-Cyrl">аўдыя DVD</comment>
+</mime-type>

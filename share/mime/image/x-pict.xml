@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="image/x-pict">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Macintosh Quickdraw/PICT drawing</comment>
+  <comment xml:lang="zh-Hant-TW">Macintosh Quickdraw/PICT 繪圖</comment>
+  <comment xml:lang="zh-Hans-CN">Macintosh Quickdraw/PICT 绘图</comment>
+  <comment xml:lang="vi">Bản vẽ Quickdraw/PICT của Macintosh</comment>
+  <comment xml:lang="uk">малюнок Macintosh Quickdraw/PICT</comment>
+  <comment xml:lang="tr">Macintosh Quickdraw/PICT çizimi</comment>
+  <comment xml:lang="sv">Macintosh Quickdraw/PICT-teckning</comment>
+  <comment xml:lang="sr-Cyrl">Мекинтошов Квикдров/ПИЦТ цртеж</comment>
+  <comment xml:lang="sq">vizatim Macintosh Quickdraw/PICT</comment>
+  <comment xml:lang="sl">Datoteka risbe Macintosh Quickdraw/PICT</comment>
+  <comment xml:lang="si">Macintosh Quickdraw/PICT ඇඳීම</comment>
+  <comment xml:lang="sk">Kresba Macintosh QuickDraw/PICT</comment>
+  <comment xml:lang="ru">Рисунок Macintosh Quickdraw/PICT</comment>
+  <comment xml:lang="ro">Desen Macintosh Quickdraw/PICT</comment>
+  <comment xml:lang="pt-BR">Desenho do Macintosh Quickdraw/PICT</comment>
+  <comment xml:lang="pt">desenho Quickdraw/PICT de Macintosh</comment>
+  <comment xml:lang="pl">Rysunek QuickDraw/PICT Macintosh</comment>
+  <comment xml:lang="oc">dessenh Macintosh Quickdraw/PICT</comment>
+  <comment xml:lang="nn">Macintosh Quickdraw/PICT-teikning</comment>
+  <comment xml:lang="nl">Macintosh Quickdraw/PICT-tekening</comment>
+  <comment xml:lang="nb">Macintosh Quickdraw/PICT-tegning</comment>
+  <comment xml:lang="ms">Lukisan Macintosh Quickdraw/PICT</comment>
+  <comment xml:lang="lv">Macintosh Quickdraw/PICT zīmējums</comment>
+  <comment xml:lang="lt">Macintosh Quickdraw/PICT piešinys</comment>
+  <comment xml:lang="ko">매킨토시 Quickdraw/PICT 그림</comment>
+  <comment xml:lang="kk-Cyrl">Macintosh Quickdraw/PICT суреті</comment>
+  <comment xml:lang="ja">Macintosh Quickdraw/PICT ドロー</comment>
+  <comment xml:lang="it">Disegno Macintosh Quickdraw/PICT</comment>
+  <comment xml:lang="is">Macintosh Quickdraw/PICT teikning</comment>
+  <comment xml:lang="id">Gambar Macintosh Quickdraw/PICT</comment>
+  <comment xml:lang="ia">Designo QuickDraw/PICT de Macintosh</comment>
+  <comment xml:lang="hu">Macintosh Quickdraw/PICT-rajz</comment>
+  <comment xml:lang="hr">Macintosh Quickdraw/PICT crtež</comment>
+  <comment xml:lang="he">ציור של Macintosh Quickdraw/PICT</comment>
+  <comment xml:lang="gl">debuxo de Macintosh Quickdraw/PICT</comment>
+  <comment xml:lang="ga">líníocht Macintosh Quickdraw/PICT</comment>
+  <comment xml:lang="fur">dissen Macintosh Quickdraw/PICT</comment>
+  <comment xml:lang="fr">dessin Macintosh Quickdraw/PICT</comment>
+  <comment xml:lang="fo">Macintosh Quickdraw/PICT tekning</comment>
+  <comment xml:lang="fi">Macintosh Quickdraw/PICT -piirros</comment>
+  <comment xml:lang="eu">Macintosh Quickdraw/PICT marrazkia</comment>
+  <comment xml:lang="es">dibujo de Macintosh Quickdraw/PICT</comment>
+  <comment xml:lang="eo">Quickdraw/PICT-grafikaĵo de Macintosh</comment>
+  <comment xml:lang="en-GB">Macintosh Quickdraw/PICT drawing</comment>
+  <comment xml:lang="el">Σχέδιο Macintosh Quickdraw/PICT</comment>
+  <comment xml:lang="de">Macintosh-Quickdraw/PICT-Zeichnung</comment>
+  <comment xml:lang="da">Macintosh Quickdraw/PICT-tegning</comment>
+  <comment xml:lang="cs">kresba Macintosh Quickdraw/PICT</comment>
+  <comment xml:lang="ca">dibuix Quickdraw/PICT de Macintosh</comment>
+  <comment xml:lang="bg">Чертеж — Macintosh Quickdraw/PICT</comment>
+  <comment xml:lang="be-Latn">Rysunak Macintosh Quickdraw/PICT</comment>
+  <comment xml:lang="be-Cyrl">рысунак Macintosh Quickdraw/PICT</comment>
+  <comment xml:lang="ar">رسمة ماكنتوش Quickdraw/PICT</comment>
+  <comment xml:lang="af">Macintosh Quickdraw/PICT-tekening</comment>
+  <glob pattern="*.pct"/>
+  <glob pattern="*.pict"/>
+  <glob pattern="*.pict1"/>
+  <glob pattern="*.pict2"/>
+</mime-type>

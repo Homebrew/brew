@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="audio/annodex">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Annodex audio</comment>
+  <comment xml:lang="zh-Hant-TW">Annodex 音訊</comment>
+  <comment xml:lang="zh-Hans-CN">Annodex 音频</comment>
+  <comment xml:lang="uk">звук Annodex</comment>
+  <comment xml:lang="tr">Annodex sesi</comment>
+  <comment xml:lang="sv">Annodex-ljud</comment>
+  <comment xml:lang="sq">audio Annodex</comment>
+  <comment xml:lang="sl">Zvok Annodex</comment>
+  <comment xml:lang="si">ඇනෝඩෙක්ස් ඕඩියෝ</comment>
+  <comment xml:lang="ru">Аудио Annodex</comment>
+  <comment xml:lang="pt-BR">Áudio Annodex</comment>
+  <comment xml:lang="pl">Plik dźwiękowy Annodex</comment>
+  <comment xml:lang="oc">àudio Annodex</comment>
+  <comment xml:lang="nl">Annodex-audio</comment>
+  <comment xml:lang="ko">Annodex 오디오</comment>
+  <comment xml:lang="kk-Cyrl">Annodex аудиосы</comment>
+  <comment xml:lang="ja">Annodex オーディオ</comment>
+  <comment xml:lang="it">Audio Annodex</comment>
+  <comment xml:lang="is">Annodex hljóðskrá</comment>
+  <comment xml:lang="id">Audio Annodex</comment>
+  <comment xml:lang="hu">Annodex hang</comment>
+  <comment xml:lang="hr">Annodex zvučni zapis</comment>
+  <comment xml:lang="he">שמע Annodex</comment>
+  <comment xml:lang="gl">Son de Annodex</comment>
+  <comment xml:lang="fr">audio Annodex</comment>
+  <comment xml:lang="fi">Annodex-ääni</comment>
+  <comment xml:lang="eu">Annodex audioa</comment>
+  <comment xml:lang="es">sonido Annodex</comment>
+  <comment xml:lang="en-GB">Annodex audio</comment>
+  <comment xml:lang="de">Annodex-Audio</comment>
+  <comment xml:lang="da">Annodex-lyd</comment>
+  <comment xml:lang="ca">àudio Annodex</comment>
+  <comment xml:lang="bg">Аудио — Annodex</comment>
+  <comment xml:lang="be-Cyrl">аўдыя Annodex</comment>
+  <comment xml:lang="ar">صوت Annodex</comment>
+  <sub-class-of type="application/annodex"/>
+  <glob pattern="*.axa"/>
+  <alias type="audio/x-annodex"/>
+</mime-type>

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-zerosize">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Empty document</comment>
+  <comment xml:lang="uk">порожній документ</comment>
+  <comment xml:lang="sv">Tomt dokument</comment>
+  <comment xml:lang="ru">Пустой документ</comment>
+  <comment xml:lang="pt-BR">Documento em branco</comment>
+  <comment xml:lang="pl">Pusty dokument</comment>
+  <comment xml:lang="ja">空の文書</comment>
+  <comment xml:lang="it">Documento vuoto</comment>
+  <comment xml:lang="eu">Dokumentu hutsa</comment>
+  <comment xml:lang="es">documento vacío</comment>
+  <comment xml:lang="de">Leeres Dokument</comment>
+  <comment xml:lang="be-Cyrl">пусты дакумент</comment>
+</mime-type>

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="x-content/blank-dvd">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Blank DVD disc</comment>
+  <comment xml:lang="uk">порожній диск DVD</comment>
+  <comment xml:lang="sv">Tom dvd-skiva</comment>
+  <comment xml:lang="ru">Чистый диск DVD</comment>
+  <comment xml:lang="pt-BR">Disco DVD vazio</comment>
+  <comment xml:lang="pl">Pusta płyta DVD</comment>
+  <comment xml:lang="ja">空DVD</comment>
+  <comment xml:lang="it">Disco vuoto DVD</comment>
+  <comment xml:lang="gl">Disco de DVD en branco</comment>
+  <comment xml:lang="eu">DVD disko hutsa</comment>
+  <comment xml:lang="es">disco DVD vacío</comment>
+  <comment xml:lang="de">Leere DVD</comment>
+  <comment xml:lang="be-Cyrl">чысты дыск DVD</comment>
+</mime-type>

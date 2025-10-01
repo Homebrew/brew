@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/vnd.oasis.opendocument.spreadsheet-template">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>ODS template</comment>
+  <comment xml:lang="zh-Hant-TW">ODS 範本</comment>
+  <comment xml:lang="zh-Hans-CN">ODS 模板</comment>
+  <comment xml:lang="vi">Mẫu ODS</comment>
+  <comment xml:lang="uk">шаблон ODS</comment>
+  <comment xml:lang="tr">ODS şablonu</comment>
+  <comment xml:lang="sv">ODS-mall</comment>
+  <comment xml:lang="sr-Cyrl">ОДС шаблон</comment>
+  <comment xml:lang="sq">gjedhe ODS</comment>
+  <comment xml:lang="sl">Predloga dokumenta ODS</comment>
+  <comment xml:lang="si">ODS ආකෘතිය</comment>
+  <comment xml:lang="sk">Šablóna ODS</comment>
+  <comment xml:lang="ru">Шаблон ODS</comment>
+  <comment xml:lang="ro">Șablon ODS</comment>
+  <comment xml:lang="pt-BR">Modelo ODS</comment>
+  <comment xml:lang="pt">modelo ODS</comment>
+  <comment xml:lang="pl">Szablon ODS</comment>
+  <comment xml:lang="oc">modèl ODS</comment>
+  <comment xml:lang="nn">ODS-mal</comment>
+  <comment xml:lang="nl">ODS-sjabloon</comment>
+  <comment xml:lang="nb">ODS-mal</comment>
+  <comment xml:lang="lv">ODS veidne</comment>
+  <comment xml:lang="lt">ODS šablonas</comment>
+  <comment xml:lang="ko">ODS 문서 서식</comment>
+  <comment xml:lang="kk-Cyrl">ODS үлгісі</comment>
+  <comment xml:lang="ka">ODS-ის შაბლონი</comment>
+  <comment xml:lang="ja">ODS テンプレート</comment>
+  <comment xml:lang="it">Modello ODS</comment>
+  <comment xml:lang="is">ODS sniðmát</comment>
+  <comment xml:lang="id">Templat ODS</comment>
+  <comment xml:lang="ia">Patrono ODS</comment>
+  <comment xml:lang="hu">ODS-sablon</comment>
+  <comment xml:lang="hr">ODS predložak</comment>
+  <comment xml:lang="he">תבנית ODS</comment>
+  <comment xml:lang="gl">modelo ODS</comment>
+  <comment xml:lang="ga">teimpléad ODS</comment>
+  <comment xml:lang="fur">model ODS</comment>
+  <comment xml:lang="fr">modèle ODS</comment>
+  <comment xml:lang="fo">ODS formur</comment>
+  <comment xml:lang="fi">ODS-malli</comment>
+  <comment xml:lang="eu">ODS txantiloia</comment>
+  <comment xml:lang="es">plantilla ODS</comment>
+  <comment xml:lang="eo">ODS-ŝablono</comment>
+  <comment xml:lang="en-GB">ODS template</comment>
+  <comment xml:lang="el">Πρότυπο ODS</comment>
+  <comment xml:lang="de">ODS-Vorlage</comment>
+  <comment xml:lang="da">ODS-skabelon</comment>
+  <comment xml:lang="cs">šablona ODS</comment>
+  <comment xml:lang="ca">plantilla ODS</comment>
+  <comment xml:lang="bg">Шаблон за таблици — ODS</comment>
+  <comment xml:lang="be-Latn">Šablon ODS</comment>
+  <comment xml:lang="be-Cyrl">шаблон ODS</comment>
+  <comment xml:lang="ar">قالب ODS</comment>
+  <comment xml:lang="af">ODS-sjabloon</comment>
+  <acronym>ODS</acronym>
+  <expanded-acronym>OpenDocument Spreadsheet</expanded-acronym>
+  <sub-class-of type="application/zip"/>
+  <generic-icon name="x-office-spreadsheet"/>
+  <glob pattern="*.ots"/>
+</mime-type>

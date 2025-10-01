@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/pgp-encrypted">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>PGP/MIME-encrypted message header</comment>
+  <comment xml:lang="zh-Hant-TW">PGP/MIME 加密訊息標頭</comment>
+  <comment xml:lang="zh-Hans-CN">PGP/MIME 加密的信件头</comment>
+  <comment xml:lang="vi">Phần đầu thông điệp đã mật mã bằng PGP/MIME</comment>
+  <comment xml:lang="uk">заголовок шифрованого PGP/MIME повідомлення</comment>
+  <comment xml:lang="tr">PGP/MIME-şifreli ileti başlığı</comment>
+  <comment xml:lang="sv">PGP/MIME-krypterat meddelandehuvud</comment>
+  <comment xml:lang="sr-Cyrl">ПГП/МИМЕ шифровано заглавље поруке</comment>
+  <comment xml:lang="sq">krye mesazhi fshehtëzuar me PGP/MIME</comment>
+  <comment xml:lang="sl">Datoteka glave šifriranega sporočila PGP/MIME</comment>
+  <comment xml:lang="si">PGP/MIME-සංකේතනය කළ පණිවිඩ ශීර්ෂකය</comment>
+  <comment xml:lang="sk">Hlavičke správy zašifrovaná pomocou PGP/MIME</comment>
+  <comment xml:lang="ru">Заголовок сообщения, зашифрованный PGP/MIME</comment>
+  <comment xml:lang="ro">Antet de mesaj encriptat PGP/MIME</comment>
+  <comment xml:lang="pt-BR">Cabeçalho de mensagem criptografada PGP/MIME</comment>
+  <comment xml:lang="pt">cabeçalho de mensagem encriptada com PGP/MIME</comment>
+  <comment xml:lang="pl">Nagłówek listu zaszyfrowanego PGP/MIME</comment>
+  <comment xml:lang="oc">entèsta de messatge encodat PGP/MIME</comment>
+  <comment xml:lang="nn">PGP/MIME-kryptert meldingshovud</comment>
+  <comment xml:lang="nl">PGP/MIME-versleutelde berichtkopregels</comment>
+  <comment xml:lang="nb">PGP/MIME-kryptert meldingshode</comment>
+  <comment xml:lang="ms">Pengepala mesej terenkripsi PGP/MIME</comment>
+  <comment xml:lang="lv">PGP/MIME-šifrēta ziņas galvene</comment>
+  <comment xml:lang="lt">PGP/MIME užšifruota žinutės antraštė</comment>
+  <comment xml:lang="ko">PGP/MIME으로 암호화된 메시지 헤더</comment>
+  <comment xml:lang="kk-Cyrl">PGP/MIME-шифрленген мәлімдеме тақырыптамасы</comment>
+  <comment xml:lang="ja">PGP/MIME 暗号化メッセージヘッダー</comment>
+  <comment xml:lang="it">Intestazione messaggio PGP/MIME-encrypted</comment>
+  <comment xml:lang="is">PGP-dulritaður skilaboðahaus</comment>
+  <comment xml:lang="id">Tajuk pesan terenkripsi PGP/MIME</comment>
+  <comment xml:lang="ia">Capite de message cryptate con PGP/MIME</comment>
+  <comment xml:lang="hu">PGP/MIME titkosított üzenetfejléc</comment>
+  <comment xml:lang="hr">PGP/MIME-šrifrirano zaglavlje poruke</comment>
+  <comment xml:lang="he">כותר של קובץ מוצפן מסוג PGP/MIME</comment>
+  <comment xml:lang="gl">cabeceira de mensaxe cifrado PGP/MIME</comment>
+  <comment xml:lang="ga">ceanntásc teachtaireachta ionchódaithe le PGP/MIME</comment>
+  <comment xml:lang="fur">intestazion messaç cifrât in PGP/MIME</comment>
+  <comment xml:lang="fr">en-tête de message codé PGP/MIME</comment>
+  <comment xml:lang="fo">PGP/MIME-encrypted boð tekshøvd</comment>
+  <comment xml:lang="fi">PGP/MIME-salattu viestiotsake</comment>
+  <comment xml:lang="eu">PGP/MIME zifratutako mezu-goiburua</comment>
+  <comment xml:lang="es">cabecera de mensaje cifrado PGP/MIME</comment>
+  <comment xml:lang="eo">PGP/MIME-ĉifrita ĉapo de mesaĝo</comment>
+  <comment xml:lang="en-GB">PGP/MIME-encrypted message header</comment>
+  <comment xml:lang="el">Κεφαλίδα μηνύματος κρυπτογραφημένου κατά PGP/MIME</comment>
+  <comment xml:lang="de">PGP/MIME-verschlüsselter Nachrichtenkopf</comment>
+  <comment xml:lang="da">PGP-/MIME-krypteret meddelelseshoved</comment>
+  <comment xml:lang="cs">záhlaví zprávy zašifrované pomocí PGP/MIME</comment>
+  <comment xml:lang="ca">capçalera de missatge amb xifrat PGP/MIME</comment>
+  <comment xml:lang="bg">Заглавна част на шифрирано съобщение — PGP/MIME</comment>
+  <comment xml:lang="be-Latn">Zahałovak paviedamleńnia, zašyfravany ŭ PGP/MIME</comment>
+  <comment xml:lang="be-Cyrl">загаловак паведамлення з шыфраваннем PGP/MIME</comment>
+  <comment xml:lang="ast">Testera de mensaxe cifrada en PGP/MIME</comment>
+  <comment xml:lang="ar">ترويسة رسالة PGP/MIME-مشفرة</comment>
+  <comment xml:lang="af">Kop van PGP/MIME-geënkripteerde boodskap</comment>
+  <glob pattern="*.pgp"/>
+  <glob pattern="*.gpg"/>
+  <glob pattern="*.asc" weight="10"/>
+  <alias type="application/pgp"/>
+</mime-type>

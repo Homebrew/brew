@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="image/qoi">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Quite OK Image Format</comment>
+  <comment xml:lang="uk">формат зображень Quite OK</comment>
+  <comment xml:lang="sv">Quite OK Image-format</comment>
+  <comment xml:lang="ru">Формат изображений Quite OK</comment>
+  <comment xml:lang="pl">Obraz QOI</comment>
+  <comment xml:lang="it">Formato immagine Quite OK</comment>
+  <comment xml:lang="es">formato de imagen Quite OK</comment>
+  <comment xml:lang="de">Quite-OK-Bildformat</comment>
+  <glob pattern="*.qoi"/>
+</mime-type>

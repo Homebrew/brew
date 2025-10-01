@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/vnd.sun.xml.writer">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>LibreOffice Writer document</comment>
+  <comment xml:lang="uk">документ LibreOffice Writer</comment>
+  <comment xml:lang="sv">LibreOffice Writer-dokument</comment>
+  <comment xml:lang="ru">Документ LibreOffice Writer</comment>
+  <comment xml:lang="pt-BR">Documento do LibreOffice Writer</comment>
+  <comment xml:lang="pl">Dokument LibreOffice Writer</comment>
+  <comment xml:lang="it">Documento LibreOffice Writer</comment>
+  <comment xml:lang="gl">Documento de LibreOffice Writer</comment>
+  <comment xml:lang="eu">LibreOffice Writer dokumentua</comment>
+  <comment xml:lang="es">documento de LibreOffice Writer</comment>
+  <comment xml:lang="de">LibreOffice Writer-Dokument</comment>
+  <comment xml:lang="be-Cyrl">дакумент LibreOffice Writer</comment>
+  <sub-class-of type="application/zip"/>
+  <generic-icon name="x-office-document"/>
+  <glob pattern="*.sxw"/>
+</mime-type>

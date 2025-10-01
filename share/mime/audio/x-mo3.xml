@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="audio/x-mo3">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Compressed Tracker audio</comment>
+  <comment xml:lang="uk">стиснутий звук tracker</comment>
+  <comment xml:lang="sv">Komprimerat Tracker-ljud</comment>
+  <comment xml:lang="ru">Сжатое аудио Tracker</comment>
+  <comment xml:lang="pl">Skompresowany plik dźwiękowy Tracker</comment>
+  <comment xml:lang="it">Audio compresso Tracker</comment>
+  <comment xml:lang="gl">Son de Tracker comprimido</comment>
+  <comment xml:lang="es">audio de Tracker comprimido</comment>
+  <comment xml:lang="de">Komprimiertes Tracker-Audio</comment>
+  <comment xml:lang="be-Cyrl">сціснутае аўдыя Tracker</comment>
+  <glob pattern="*.mo3"/>
+</mime-type>

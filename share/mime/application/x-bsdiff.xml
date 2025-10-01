@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-bsdiff">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Binary differences between files</comment>
+  <comment xml:lang="uk">двійкова різниця між файлами</comment>
+  <comment xml:lang="sv">Binära skillnader mellan filer</comment>
+  <comment xml:lang="ru">Двоичные различия между файлами</comment>
+  <comment xml:lang="pl">Binarna różnica pomiędzy plikami</comment>
+  <comment xml:lang="it">Differenze binarie tra file</comment>
+  <comment xml:lang="eu">Fitxategien arteko diferentzia bitarra</comment>
+  <comment xml:lang="es">diferencias binarias entre archivos</comment>
+  <comment xml:lang="de">Binäre Unterschiede zwischen Dateien</comment>
+  <comment xml:lang="be-Cyrl">бінарныя адрозненні паміж файламі</comment>
+  <glob pattern="*.bsdiff"/>
+</mime-type>

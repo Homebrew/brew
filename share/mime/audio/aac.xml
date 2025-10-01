@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="audio/aac">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>AAC audio</comment>
+  <comment xml:lang="zh-Hant-TW">AAC 音訊</comment>
+  <comment xml:lang="zh-Hans-CN">AAC 音频</comment>
+  <comment xml:lang="uk">звукові дані AAC</comment>
+  <comment xml:lang="tr">AAC sesi</comment>
+  <comment xml:lang="sv">AAC-ljud</comment>
+  <comment xml:lang="sr-Cyrl">ААЦ звук</comment>
+  <comment xml:lang="sq">audio AAC</comment>
+  <comment xml:lang="sl">Zvok AAC</comment>
+  <comment xml:lang="si">AAC ශ්රව්ය</comment>
+  <comment xml:lang="sk">Zvuk AAC</comment>
+  <comment xml:lang="ru">Аудио AAC</comment>
+  <comment xml:lang="pt-BR">Áudio AAC</comment>
+  <comment xml:lang="pt">áudio AAC</comment>
+  <comment xml:lang="pl">Plik dźwiękowy AAC</comment>
+  <comment xml:lang="oc">àudio AAC</comment>
+  <comment xml:lang="nl">AAC-audio</comment>
+  <comment xml:lang="lv">AAC audio</comment>
+  <comment xml:lang="ko">AAC 오디오</comment>
+  <comment xml:lang="kk-Cyrl">AAC аудиосы</comment>
+  <comment xml:lang="ja">AAC オーディオ</comment>
+  <comment xml:lang="it">Audio AAC</comment>
+  <comment xml:lang="is">AAC hljóðskrá</comment>
+  <comment xml:lang="id">Audio AAC</comment>
+  <comment xml:lang="ia">Audio ACC</comment>
+  <comment xml:lang="hu">AAC hang</comment>
+  <comment xml:lang="hr">AAC zvučni zapis</comment>
+  <comment xml:lang="he">שמע AAC</comment>
+  <comment xml:lang="gl">Son AAC</comment>
+  <comment xml:lang="ga">fuaim AAC</comment>
+  <comment xml:lang="fur">audio AAC</comment>
+  <comment xml:lang="fr">audio AAC</comment>
+  <comment xml:lang="fi">AAC-ääni</comment>
+  <comment xml:lang="eu">AAC audioa</comment>
+  <comment xml:lang="es">sonido AAC</comment>
+  <comment xml:lang="en-GB">AAC audio</comment>
+  <comment xml:lang="el">Ήχος AAC</comment>
+  <comment xml:lang="de">AAC-Audio</comment>
+  <comment xml:lang="da">AAC-lyd</comment>
+  <comment xml:lang="cs">zvuk AAC</comment>
+  <comment xml:lang="ca">àudio AAC</comment>
+  <comment xml:lang="bg">Аудио — AAC</comment>
+  <comment xml:lang="be-Cyrl">аўдыя AAC</comment>
+  <comment xml:lang="ar">صوت AAC</comment>
+  <comment xml:lang="af">AAC-oudio</comment>
+  <acronym>AAC</acronym>
+  <expanded-acronym>Advanced Audio Coding</expanded-acronym>
+  <glob pattern="*.aac"/>
+  <glob pattern="*.adts"/>
+  <glob pattern="*.ass" weight="10"/>
+  <alias type="audio/x-aac"/>
+</mime-type>

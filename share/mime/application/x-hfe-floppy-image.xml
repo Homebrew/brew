@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-hfe-floppy-image">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>HFE floppy disk image</comment>
+  <comment xml:lang="zh-Hant-TW">HFE 軟碟映像檔</comment>
+  <comment xml:lang="zh-Hans-CN">HFE 软盘映像</comment>
+  <comment xml:lang="uk">образ дискети HFE</comment>
+  <comment xml:lang="tr">HFE disket görüntüsü</comment>
+  <comment xml:lang="sv">HFE-diskavbild</comment>
+  <comment xml:lang="sr-Cyrl">ХФЕ слика флопи диска</comment>
+  <comment xml:lang="sq">pamje diskete HFE</comment>
+  <comment xml:lang="sl">Slika diskete HFE</comment>
+  <comment xml:lang="si">HFE නම්ය තැටි රූපය</comment>
+  <comment xml:lang="sk">Obraz pružného disku HFE</comment>
+  <comment xml:lang="ru">Образ гибкого диска HFE</comment>
+  <comment xml:lang="pt-BR">Imagem de disco flexível HFE</comment>
+  <comment xml:lang="pt">imagem de disquete HFE</comment>
+  <comment xml:lang="pl">Obraz dyskietki HFE</comment>
+  <comment xml:lang="nl">HFE-diskette-schijfkopiebestand</comment>
+  <comment xml:lang="ko">HFE 플로피 디스크 이미지</comment>
+  <comment xml:lang="kk-Cyrl">HFE иілгіш диск бейнесі</comment>
+  <comment xml:lang="ja">HFE フロッピーディスクイメージ</comment>
+  <comment xml:lang="it">Immagine disco floppy HFE</comment>
+  <comment xml:lang="is">HFE disklingsmynd</comment>
+  <comment xml:lang="id">Image disk floppy HFE</comment>
+  <comment xml:lang="hu">HFE flopi lemezkép</comment>
+  <comment xml:lang="hr">HFE slika diskete</comment>
+  <comment xml:lang="he">דמות כונן תקליטון מסוג HPE</comment>
+  <comment xml:lang="gl">Imaxe de disquete HHFE</comment>
+  <comment xml:lang="ga">íomhá diosca fhlapaigh HFE</comment>
+  <comment xml:lang="fur">imagjin disc floppy HFE</comment>
+  <comment xml:lang="fr">image disquette HFE</comment>
+  <comment xml:lang="fi">HFE-levykekuva</comment>
+  <comment xml:lang="eu">HFE diskete disko irudia</comment>
+  <comment xml:lang="es">imagen de disquete HFE</comment>
+  <comment xml:lang="en-GB">HFE floppy disk image</comment>
+  <comment xml:lang="de">HFE-Diskettenabbild</comment>
+  <comment xml:lang="da">HFE-floppydiskaftryk</comment>
+  <comment xml:lang="cs">Obraz diskety HFE</comment>
+  <comment xml:lang="ca">imatge de disquet HFE</comment>
+  <comment xml:lang="bg">Диск — флопи, HFE</comment>
+  <comment xml:lang="be-Cyrl">вобраз гнуткага дыска HFE</comment>
+  <comment xml:lang="ar">صورة قرص مرن HFE</comment>
+  <acronym>HFE</acronym>
+  <expanded-acronym>HxC Floppy Emulator</expanded-acronym>
+  <generic-icon name="application-x-executable"/>
+  <glob pattern="*.hfe"/>
+  <alias type="application/x-hfe-file"/>
+</mime-type>

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="multipart/encrypted">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Encrypted message</comment>
+  <comment xml:lang="uk">зашифроване повідомлення</comment>
+  <comment xml:lang="sv">Krypterat meddelande</comment>
+  <comment xml:lang="ru">Зашифрованное сообщение</comment>
+  <comment xml:lang="pl">Wiadomość zaszyfrowana</comment>
+  <comment xml:lang="it">Messaggio cifrato</comment>
+  <comment xml:lang="es">mensaje cifrado</comment>
+  <comment xml:lang="de">Verschlüsselte Nachricht</comment>
+  <comment xml:lang="be-Cyrl">зашыфраванае паведамленне</comment>
+</mime-type>

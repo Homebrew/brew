@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="text/x-ocaml">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>OCaml source code</comment>
+  <comment xml:lang="zh-Hant-TW">OCaml 源碼</comment>
+  <comment xml:lang="zh-Hans-CN">OCaml 源代码</comment>
+  <comment xml:lang="vi">Mã nguồn OCaml</comment>
+  <comment xml:lang="uk">початковий код мовою OCaml</comment>
+  <comment xml:lang="tr">OCaml kaynak kodu</comment>
+  <comment xml:lang="sv">OCaml-källkod</comment>
+  <comment xml:lang="sr-Cyrl">Окемл изворни ко̂д</comment>
+  <comment xml:lang="sq">kod burim OCaml</comment>
+  <comment xml:lang="sl">Datoteka izvorne kode OCaml</comment>
+  <comment xml:lang="si">OCaml මූල කේතය</comment>
+  <comment xml:lang="sk">Zdrojový kód OCaml</comment>
+  <comment xml:lang="ru">Исходный код OCaml</comment>
+  <comment xml:lang="ro">Cod sursă OCaml</comment>
+  <comment xml:lang="pt-BR">Código-fonte OCaml</comment>
+  <comment xml:lang="pt">código origem OCaml</comment>
+  <comment xml:lang="pl">Kod źródłowy OCaml</comment>
+  <comment xml:lang="oc">còde font OCaml</comment>
+  <comment xml:lang="nn">OCaml-kjeldekode</comment>
+  <comment xml:lang="nl">OCaml-broncode</comment>
+  <comment xml:lang="nb">OCaml-kildekode</comment>
+  <comment xml:lang="lv">OCaml pirmkods</comment>
+  <comment xml:lang="lt">OCaml pradinis kodas</comment>
+  <comment xml:lang="ko">OCaml 소스 코드</comment>
+  <comment xml:lang="kk-Cyrl">OCaml бастапқы коды</comment>
+  <comment xml:lang="ja">OCaml ソースコード</comment>
+  <comment xml:lang="it">Codice sorgente OCaml</comment>
+  <comment xml:lang="is">OCaml frumkóði</comment>
+  <comment xml:lang="id">Kode sumber OCaml</comment>
+  <comment xml:lang="ia">Codice-fonte OCaml</comment>
+  <comment xml:lang="hu">OCaml forráskód</comment>
+  <comment xml:lang="hr">OCaml izvorni kôd</comment>
+  <comment xml:lang="he">קוד מקור של OCaml</comment>
+  <comment xml:lang="gl">código fonte de OCaml</comment>
+  <comment xml:lang="ga">cód foinseach OCaml</comment>
+  <comment xml:lang="fur">codiç sorzint OCaml</comment>
+  <comment xml:lang="fr">code source OCaml</comment>
+  <comment xml:lang="fo">OCaml keldukota</comment>
+  <comment xml:lang="fi">OCaml-lähdekoodi</comment>
+  <comment xml:lang="eu">OCaml iturburu-kodea</comment>
+  <comment xml:lang="es">código fuente en OCaml</comment>
+  <comment xml:lang="eo">OCaml-fontkodo</comment>
+  <comment xml:lang="en-GB">OCaml source code</comment>
+  <comment xml:lang="el">Πηγαίος κώδικας OCaml</comment>
+  <comment xml:lang="de">OCaml-Quelltext</comment>
+  <comment xml:lang="da">OCaml-kildekode</comment>
+  <comment xml:lang="cs">zdrojový kód v jazyce OCaml</comment>
+  <comment xml:lang="ca">codi font en OCaml</comment>
+  <comment xml:lang="bg">Изходен код — OCaml</comment>
+  <comment xml:lang="be-Latn">Kryničny kod OCaml</comment>
+  <comment xml:lang="be-Cyrl">зыходны код OCaml</comment>
+  <comment xml:lang="ar">شفرة مصدر OCaml</comment>
+  <comment xml:lang="af">OCaml-bronkode</comment>
+  <sub-class-of type="text/plain"/>
+  <glob pattern="*.ml"/>
+  <glob pattern="*.mli"/>
+</mime-type>

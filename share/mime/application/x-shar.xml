@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-shar">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Shell archive</comment>
+  <comment xml:lang="uk">архів оболонки</comment>
+  <comment xml:lang="sv">Skalarkiv</comment>
+  <comment xml:lang="ru">Архив shell</comment>
+  <comment xml:lang="pl">Archiwum powłoki</comment>
+  <comment xml:lang="ja">シェル自己解凍ファイル</comment>
+  <comment xml:lang="it">Archivio shell</comment>
+  <comment xml:lang="gl">Arquivo de Shell</comment>
+  <comment xml:lang="eu">Shell artxiboa</comment>
+  <comment xml:lang="es">archivador Shell</comment>
+  <comment xml:lang="de">Shell-Archiv</comment>
+  <comment xml:lang="be-Cyrl">архіў абалонкі</comment>
+  <generic-icon name="package-x-generic"/>
+  <glob pattern="*.shar"/>
+</mime-type>

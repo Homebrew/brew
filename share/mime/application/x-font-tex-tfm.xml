@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-font-tex-tfm">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>TeX font metrics</comment>
+  <comment xml:lang="zh-Hant-TW">TeX 字型描述檔</comment>
+  <comment xml:lang="zh-Hans-CN">TeX 字体规格</comment>
+  <comment xml:lang="vi">Cách đo phông chữ TeX</comment>
+  <comment xml:lang="uk">метрики шрифту TeX</comment>
+  <comment xml:lang="tr">TeX yazı tipi ölçüleri</comment>
+  <comment xml:lang="sv">TeX-typsnittsmetrik</comment>
+  <comment xml:lang="sr-Cyrl">метрика слова ТеКс-а</comment>
+  <comment xml:lang="sq">vlera shkronjash TeX</comment>
+  <comment xml:lang="sl">Matrika pisave Tex</comment>
+  <comment xml:lang="si">TeX අකුරු ප්‍රමිතික</comment>
+  <comment xml:lang="sk">Metrika písma TeX</comment>
+  <comment xml:lang="ru">Метрика шрифта TeX</comment>
+  <comment xml:lang="ro">Dimensiuni font TeX</comment>
+  <comment xml:lang="pt-BR">Métrica de fonte TeX</comment>
+  <comment xml:lang="pt">métricas de letra TeX</comment>
+  <comment xml:lang="pl">Metryki czcionki TeX</comment>
+  <comment xml:lang="oc">metricas de poliça TeX</comment>
+  <comment xml:lang="nn">TeX skrifttypemetrikk</comment>
+  <comment xml:lang="nl">TeX-lettertype-metrieken</comment>
+  <comment xml:lang="nb">TeX skrifttypemetrikk</comment>
+  <comment xml:lang="ms">Metrik font TeX</comment>
+  <comment xml:lang="lv">TeX fonta metrikas</comment>
+  <comment xml:lang="lt">TeX šriftų metrika</comment>
+  <comment xml:lang="ko">TeX 글꼴 메트릭</comment>
+  <comment xml:lang="kk-Cyrl">TeX қаріп метрикалары</comment>
+  <comment xml:lang="ja">TeX フォントメトリック</comment>
+  <comment xml:lang="it">Metriche tipo carattere TeX</comment>
+  <comment xml:lang="is">TeX leturupplýsingar</comment>
+  <comment xml:lang="id">Fonta metrik TeX</comment>
+  <comment xml:lang="ia">Metricas de typo de litteras TeX</comment>
+  <comment xml:lang="hu">TeX-betűmetrika</comment>
+  <comment xml:lang="hr">Metrika TeX fonta</comment>
+  <comment xml:lang="he">ממדי גופן של TeX</comment>
+  <comment xml:lang="gl">Métricas de tipo de letra de TeX</comment>
+  <comment xml:lang="ga">meadarachtaí cló TeX</comment>
+  <comment xml:lang="fur">metrichis caratar TeX</comment>
+  <comment xml:lang="fr">métriques de police TeX</comment>
+  <comment xml:lang="fi">TeX-fonttimitat</comment>
+  <comment xml:lang="eu">TeX letra-tipoen neurriak</comment>
+  <comment xml:lang="es">métricas tipográficas de TeX</comment>
+  <comment xml:lang="eo">metrikoj de TeX-tiparo</comment>
+  <comment xml:lang="en-GB">TeX font metrics</comment>
+  <comment xml:lang="el">Μετρικά γραμματοσειράς TeX</comment>
+  <comment xml:lang="de">TeX-Schriftmetriken</comment>
+  <comment xml:lang="da">TeX-skrifttypeinformation</comment>
+  <comment xml:lang="cy">Metrigau Ffont TeX</comment>
+  <comment xml:lang="cs">metrika fontu TeX</comment>
+  <comment xml:lang="ca">mètrica de lletra de TeX</comment>
+  <comment xml:lang="bg">Шрифтова метрика — TeX</comment>
+  <comment xml:lang="be-Latn">Metryka šryftu TeX</comment>
+  <comment xml:lang="be-Cyrl">метрыкі шрыфту TeX</comment>
+  <comment xml:lang="az">TeX yazı növü metrikləri</comment>
+  <comment xml:lang="ar">مقاييس خط TeX</comment>
+  <comment xml:lang="af">TeX-skriftipeafmetings</comment>
+  <generic-icon name="font-x-generic"/>
+</mime-type>

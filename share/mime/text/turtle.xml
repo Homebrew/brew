@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="text/turtle">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Turtle document</comment>
+  <comment xml:lang="zh-Hant-TW">Turtle 文件</comment>
+  <comment xml:lang="zh-Hans-CN">Turtle 文档</comment>
+  <comment xml:lang="uk">документ Turtle</comment>
+  <comment xml:lang="tr">Turtle belgesi</comment>
+  <comment xml:lang="sv">Turtle-dokument</comment>
+  <comment xml:lang="sr-Cyrl">Тартл документ</comment>
+  <comment xml:lang="sq">dokument Turtle</comment>
+  <comment xml:lang="sl">Dokument Turtle</comment>
+  <comment xml:lang="si">කැස්බෑ ලියවිල්ල</comment>
+  <comment xml:lang="sk">Dokument Turtle</comment>
+  <comment xml:lang="ru">Документ Turtle</comment>
+  <comment xml:lang="pt-BR">Documento Turtle</comment>
+  <comment xml:lang="pt">documento Turtle</comment>
+  <comment xml:lang="pl">Dokument Turtle</comment>
+  <comment xml:lang="oc">document Turtle</comment>
+  <comment xml:lang="nl">Turtle-document</comment>
+  <comment xml:lang="ko">Turtle 문서</comment>
+  <comment xml:lang="kk-Cyrl">Turtle құжаты</comment>
+  <comment xml:lang="ja">Turtle ドキュメント</comment>
+  <comment xml:lang="it">Documento Turtle</comment>
+  <comment xml:lang="is">Turtle skjal</comment>
+  <comment xml:lang="id">Dokumen Turtle</comment>
+  <comment xml:lang="ia">Documento Turtle</comment>
+  <comment xml:lang="hu">Turtle dokumentum</comment>
+  <comment xml:lang="hr">Turtle dokument</comment>
+  <comment xml:lang="he">מסמך Turtle</comment>
+  <comment xml:lang="ga">cáipéis Turtle</comment>
+  <comment xml:lang="fur">document Turtle</comment>
+  <comment xml:lang="fr">document Turtle</comment>
+  <comment xml:lang="fi">Turtle-asiakirja</comment>
+  <comment xml:lang="eu">Turtle dokumentua</comment>
+  <comment xml:lang="es">documento de Turtle</comment>
+  <comment xml:lang="en-GB">Turtle document</comment>
+  <comment xml:lang="el">Έγγραφο Turtle</comment>
+  <comment xml:lang="de">Turtle-Dokument</comment>
+  <comment xml:lang="da">Turtle-dokument</comment>
+  <comment xml:lang="cs">dokument Turtle</comment>
+  <comment xml:lang="ca">document Turtle</comment>
+  <comment xml:lang="bg">Документ — Turtle</comment>
+  <comment xml:lang="be-Cyrl">дакумент Turtle</comment>
+  <comment xml:lang="ast">Documentu Turtle</comment>
+  <comment xml:lang="ar">وثيقة Turtle</comment>
+  <comment xml:lang="af">Turtle-dokument</comment>
+  <glob pattern="*.ttl"/>
+  <sub-class-of type="text/plain"/>
+</mime-type>

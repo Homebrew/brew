@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="image/x-eps">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>EPS image</comment>
+  <comment xml:lang="zh-Hant-TW">EPS 影像</comment>
+  <comment xml:lang="zh-Hans-CN">EPS 图像</comment>
+  <comment xml:lang="vi">Ảnh EPS</comment>
+  <comment xml:lang="uk">зображення EPS</comment>
+  <comment xml:lang="tr">EPS görüntüsü</comment>
+  <comment xml:lang="sv">EPS-bild</comment>
+  <comment xml:lang="sr-Cyrl">ЕПС слика</comment>
+  <comment xml:lang="sq">figurë EPS</comment>
+  <comment xml:lang="sl">Slikovna datoteka EPS</comment>
+  <comment xml:lang="si">EPS රූපය</comment>
+  <comment xml:lang="sk">Obrázok EPS</comment>
+  <comment xml:lang="ru">Изображение EPS</comment>
+  <comment xml:lang="ro">Imagine EPS</comment>
+  <comment xml:lang="pt-BR">Imagem EPS</comment>
+  <comment xml:lang="pt">imagem EPS</comment>
+  <comment xml:lang="pl">Obraz EPS</comment>
+  <comment xml:lang="oc">imatge EPS</comment>
+  <comment xml:lang="nn">EPS-bilete</comment>
+  <comment xml:lang="nl">EPS-afbeelding</comment>
+  <comment xml:lang="nb">EPS-bilde</comment>
+  <comment xml:lang="lv">EPS attēls</comment>
+  <comment xml:lang="lt">EPS paveikslėlis</comment>
+  <comment xml:lang="ko">EPS 그림</comment>
+  <comment xml:lang="kk-Cyrl">EPS суреті</comment>
+  <comment xml:lang="ka">EPS გამოსახულება</comment>
+  <comment xml:lang="ja">EPS 画像</comment>
+  <comment xml:lang="it">Immagine EPS</comment>
+  <comment xml:lang="is">EPS mynd</comment>
+  <comment xml:lang="id">Citra EPS</comment>
+  <comment xml:lang="ia">Imagine EPS</comment>
+  <comment xml:lang="hu">EPS kép</comment>
+  <comment xml:lang="hr">EPS slika</comment>
+  <comment xml:lang="he">תמונת EPS</comment>
+  <comment xml:lang="gl">imaxe EPS</comment>
+  <comment xml:lang="ga">íomhá EPS</comment>
+  <comment xml:lang="fur">imagjin EPS</comment>
+  <comment xml:lang="fr">image EPS</comment>
+  <comment xml:lang="fo">EPS mynd</comment>
+  <comment xml:lang="fi">EPS-kuva</comment>
+  <comment xml:lang="eu">EPS irudia</comment>
+  <comment xml:lang="es">imagen EPS</comment>
+  <comment xml:lang="eo">EPS-bildo</comment>
+  <comment xml:lang="en-GB">EPS image</comment>
+  <comment xml:lang="el">Εικόνα EPS</comment>
+  <comment xml:lang="de">EPS-Bild</comment>
+  <comment xml:lang="da">EPS-billede</comment>
+  <comment xml:lang="cs">obrázek EPS</comment>
+  <comment xml:lang="ca">imatge EPS</comment>
+  <comment xml:lang="bg">Изображение — EPS</comment>
+  <comment xml:lang="be-Latn">Vyjava EPS</comment>
+  <comment xml:lang="be-Cyrl">выява EPS</comment>
+  <comment xml:lang="ar">صورة EPS</comment>
+  <comment xml:lang="af">EPS-beeld</comment>
+  <acronym>EPS</acronym>
+  <expanded-acronym>Encapsulated PostScript</expanded-acronym>
+  <sub-class-of type="application/postscript"/>
+  <glob pattern="*.eps"/>
+  <glob pattern="*.epsi"/>
+  <glob pattern="*.epsf"/>
+</mime-type>

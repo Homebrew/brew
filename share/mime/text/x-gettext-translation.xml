@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="text/x-gettext-translation">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Translation file</comment>
+  <comment xml:lang="uk">Файл перекладу</comment>
+  <comment xml:lang="sv">Översättningsfil</comment>
+  <comment xml:lang="ru">Файл перевода</comment>
+  <comment xml:lang="pt-BR">Arquivo de tradução</comment>
+  <comment xml:lang="pl">Plik tłumaczenia</comment>
+  <comment xml:lang="ja">翻訳文書</comment>
+  <comment xml:lang="it">File traduzione</comment>
+  <comment xml:lang="gl">Ficheiro de traducións</comment>
+  <comment xml:lang="eu">Itzulpen-fitxategia</comment>
+  <comment xml:lang="es">archivo de traducción</comment>
+  <comment xml:lang="de">Übersetzungsdatei</comment>
+  <comment xml:lang="be-Cyrl">файл перакладу</comment>
+  <sub-class-of type="text/plain"/>
+  <glob pattern="*.po"/>
+  <alias type="text/x-po"/>
+  <alias type="application/x-gettext"/>
+</mime-type>

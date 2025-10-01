@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="image/vnd.microsoft.icon">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Windows icon</comment>
+  <comment xml:lang="zh-Hant-TW">Windows 圖示</comment>
+  <comment xml:lang="zh-Hans-CN">Windows 图标</comment>
+  <comment xml:lang="uk">піктограма Windows</comment>
+  <comment xml:lang="tr">Windows simgesi</comment>
+  <comment xml:lang="sv">Windows-ikon</comment>
+  <comment xml:lang="sr-Cyrl">Иконица Виндоуза</comment>
+  <comment xml:lang="sq">ikonë Windows</comment>
+  <comment xml:lang="sl">Ikona Windows</comment>
+  <comment xml:lang="si">වින්ඩෝස් නිරූපකය</comment>
+  <comment xml:lang="sk">Ikona Windows</comment>
+  <comment xml:lang="ru">Значок Windows</comment>
+  <comment xml:lang="pt-BR">Ícone do Windows</comment>
+  <comment xml:lang="pt">ícone Windows</comment>
+  <comment xml:lang="pl">Ikona Windows</comment>
+  <comment xml:lang="oc">icòna Windows</comment>
+  <comment xml:lang="nl">Windows-pictogram</comment>
+  <comment xml:lang="lt">Windows piktograma</comment>
+  <comment xml:lang="ko">Windows 아이콘</comment>
+  <comment xml:lang="kk-Cyrl">Windows таңбашасы</comment>
+  <comment xml:lang="ka">Windows icon</comment>
+  <comment xml:lang="ja">Windows アイコン</comment>
+  <comment xml:lang="it">Icona Windows</comment>
+  <comment xml:lang="is">Windows táknmynd</comment>
+  <comment xml:lang="id">Ikon Windows</comment>
+  <comment xml:lang="ia">Icone pro Windows</comment>
+  <comment xml:lang="hu">Windows ikon</comment>
+  <comment xml:lang="hr">Windows ikona</comment>
+  <comment xml:lang="he">סמל של Windows</comment>
+  <comment xml:lang="gl">Icona de Windows</comment>
+  <comment xml:lang="ga">deilbhín Windows</comment>
+  <comment xml:lang="fur">icone Windows</comment>
+  <comment xml:lang="fr">icône Windows</comment>
+  <comment xml:lang="fi">Windows-kuvake</comment>
+  <comment xml:lang="eu">Windows ikonoa</comment>
+  <comment xml:lang="es">icono de Windows</comment>
+  <comment xml:lang="en-GB">Windows icon</comment>
+  <comment xml:lang="el">Εικονίδιο Windows</comment>
+  <comment xml:lang="de">Windows-Symbol</comment>
+  <comment xml:lang="da">Windows-ikon</comment>
+  <comment xml:lang="cs">ikona Windows</comment>
+  <comment xml:lang="ca">icona de Windows</comment>
+  <comment xml:lang="bg">Икона — Windows</comment>
+  <comment xml:lang="be-Cyrl">значок Windows</comment>
+  <comment xml:lang="ar">أيقونة ويندوز</comment>
+  <comment xml:lang="af">Windows-ikoon</comment>
+  <glob pattern="*.ico"/>
+  <alias type="application/ico"/>
+  <alias type="image/ico"/>
+  <alias type="image/icon"/>
+  <alias type="image/x-ico"/>
+  <alias type="image/x-icon"/>
+  <alias type="text/ico"/>
+</mime-type>

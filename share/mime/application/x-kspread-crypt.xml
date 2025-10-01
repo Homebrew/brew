@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-kspread-crypt">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>KSpread spreadsheet (encrypted)</comment>
+  <comment xml:lang="zh-Hant-TW">KSpread 試算表 (加密)</comment>
+  <comment xml:lang="zh-Hans-CN">KSpread 电子表格（加密）</comment>
+  <comment xml:lang="vi">Bảng tính KSpread (đã mật mã)</comment>
+  <comment xml:lang="uk">електронна таблиця KSpread (зашифрована)</comment>
+  <comment xml:lang="tr">KSpread hesap çizelgesi (şifreli)</comment>
+  <comment xml:lang="sv">KSpread-kalkylblad (krypterat)</comment>
+  <comment xml:lang="sr-Cyrl">табела К-табеле (шифрована)</comment>
+  <comment xml:lang="sq">fletëllogaritje KSpread (e fshehtëzuar)</comment>
+  <comment xml:lang="sl">Preglednica KSpread (šifrirana)</comment>
+  <comment xml:lang="si">KSpread පැතුරුම්පත (සංකේතනය කළ)</comment>
+  <comment xml:lang="sk">Zošit KSpread (šifrovaný)</comment>
+  <comment xml:lang="ru">Электронная таблица KSpread (зашифрованная)</comment>
+  <comment xml:lang="ro">Foaie de calcul KSpread (criptat)</comment>
+  <comment xml:lang="pt-BR">Planilha do KSpread (criptografada)</comment>
+  <comment xml:lang="pt">folha de cálculo KSpread (encriptada)</comment>
+  <comment xml:lang="pl">Arkusz KSpread (zaszyfrowany)</comment>
+  <comment xml:lang="oc">fuèlh de calcul KSpread (chifrada)</comment>
+  <comment xml:lang="nn">Kryptert KSpread-rekneark</comment>
+  <comment xml:lang="nl">KSpread-rekenblad (versleuteld)</comment>
+  <comment xml:lang="nb">KSpread-regneark (kryptert)</comment>
+  <comment xml:lang="ms">Hampatan KSpread (terenkripsi)</comment>
+  <comment xml:lang="lv">KSpread izklājlapa (šifrēta)</comment>
+  <comment xml:lang="lt">KSpread skaičialentė (užšifruota)</comment>
+  <comment xml:lang="ko">암호화된 KSpread 스프레드시트</comment>
+  <comment xml:lang="kk-Cyrl">KSpread электрондық кестесі (шифрленген)</comment>
+  <comment xml:lang="ja">KSpread (暗号化) スプレッドシート</comment>
+  <comment xml:lang="it">Foglio di calcolo KSpread (cifrato)</comment>
+  <comment xml:lang="is">KSpread töflureikniskjal (dulritað)</comment>
+  <comment xml:lang="id">Lembar sebar KSpread (terenkripsi)</comment>
+  <comment xml:lang="ia">Folio de calculo KSpread (cryptate)</comment>
+  <comment xml:lang="hu">KSpread-munkafüzet (titkosított)</comment>
+  <comment xml:lang="hr">KSpread proračunska tablica (šifrirana)</comment>
+  <comment xml:lang="he">גיליון נתונים של KSpread (מוצפן)</comment>
+  <comment xml:lang="gl">folla de cálculo de KSpread (cifrada)</comment>
+  <comment xml:lang="ga">scarbhileog KSpread (criptithe)</comment>
+  <comment xml:lang="fur">sfuei di calcul KSpread (cifrât)</comment>
+  <comment xml:lang="fr">feuille de calcul KSpread (chiffrée)</comment>
+  <comment xml:lang="fo">KSpread rokniark (bronglað)</comment>
+  <comment xml:lang="fi">KSpread-taulukko (salattu)</comment>
+  <comment xml:lang="eu">KSpread kalkulu-orria (zifratuta)</comment>
+  <comment xml:lang="es">hoja de cálculo de KSpread (cifrada)</comment>
+  <comment xml:lang="eo">KSpread-kalkultabelo (ĉifrita)</comment>
+  <comment xml:lang="en-GB">KSpread spreadsheet (encrypted)</comment>
+  <comment xml:lang="el">Λογιστικό φύλλο KSpread (κρυπτογραφημένο)</comment>
+  <comment xml:lang="de">KSpread-Tabelle (verschlüsselt)</comment>
+  <comment xml:lang="da">KSpread-regneark (krypteret)</comment>
+  <comment xml:lang="cs">sešit KSpread (šifrovaný)</comment>
+  <comment xml:lang="ca">full de càlcul de KSpread (xifrat)</comment>
+  <comment xml:lang="bg">Таблица — KSpread, шифрирана</comment>
+  <comment xml:lang="be-Latn">Raźlikovy arkuš KSpread (zašyfravany)</comment>
+  <comment xml:lang="be-Cyrl">электронная табліца KSpread (зашыфравана)</comment>
+  <comment xml:lang="ar">جدول KSpread (مشفر)</comment>
+  <comment xml:lang="af">KSpread-sigblad (geënkripteer)</comment>
+  <generic-icon name="x-office-spreadsheet"/>
+</mime-type>

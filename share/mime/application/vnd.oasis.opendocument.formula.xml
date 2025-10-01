@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/vnd.oasis.opendocument.formula">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>ODF formula</comment>
+  <comment xml:lang="zh-Hant-TW">ODF 公式</comment>
+  <comment xml:lang="zh-Hans-CN">ODF 公式</comment>
+  <comment xml:lang="vi">Công thức ODF</comment>
+  <comment xml:lang="uk">формула ODF</comment>
+  <comment xml:lang="tr">ODF formülü</comment>
+  <comment xml:lang="sv">ODF-formel</comment>
+  <comment xml:lang="sr-Cyrl">ОДФ формула</comment>
+  <comment xml:lang="sq">formulë ODF</comment>
+  <comment xml:lang="sl">Dokument formule ODF</comment>
+  <comment xml:lang="si">ODF සූත්‍රය</comment>
+  <comment xml:lang="sk">Vzorec ODF</comment>
+  <comment xml:lang="ru">Формула ODF</comment>
+  <comment xml:lang="ro">Formulă ODF</comment>
+  <comment xml:lang="pt-BR">Fórmula ODF</comment>
+  <comment xml:lang="pt">fórmula ODF</comment>
+  <comment xml:lang="pl">Formuła ODF</comment>
+  <comment xml:lang="oc">formula ODF</comment>
+  <comment xml:lang="nn">ODF-formel</comment>
+  <comment xml:lang="nl">ODF-formule</comment>
+  <comment xml:lang="nb">ODF-formel</comment>
+  <comment xml:lang="lv">ODF formula</comment>
+  <comment xml:lang="lt">ODF formulė</comment>
+  <comment xml:lang="ko">ODF 수식</comment>
+  <comment xml:lang="kk-Cyrl">ODF формуласы</comment>
+  <comment xml:lang="ka">ODF-ის ფორმულა</comment>
+  <comment xml:lang="ja">ODF 計算式</comment>
+  <comment xml:lang="it">Formula ODF</comment>
+  <comment xml:lang="is">ODF formúla</comment>
+  <comment xml:lang="id">Formula ODF</comment>
+  <comment xml:lang="ia">Formula ODF</comment>
+  <comment xml:lang="hu">ODF-képlet</comment>
+  <comment xml:lang="hr">ODF formula</comment>
+  <comment xml:lang="he">נוסחת ODF</comment>
+  <comment xml:lang="gl">Fórula ODF</comment>
+  <comment xml:lang="ga">foirmle ODF</comment>
+  <comment xml:lang="fur">formule ODF</comment>
+  <comment xml:lang="fr">formule ODF</comment>
+  <comment xml:lang="fo">ODF frymil</comment>
+  <comment xml:lang="fi">ODF-kaava</comment>
+  <comment xml:lang="eu">ODF formula</comment>
+  <comment xml:lang="es">fórmula ODF</comment>
+  <comment xml:lang="eo">ODF-formulo</comment>
+  <comment xml:lang="en-GB">ODF formula</comment>
+  <comment xml:lang="el">Μαθηματικός τύπος ODF</comment>
+  <comment xml:lang="de">ODF-Formel</comment>
+  <comment xml:lang="da">ODF-formel</comment>
+  <comment xml:lang="cs">vzorec ODF</comment>
+  <comment xml:lang="ca">fórmula ODF</comment>
+  <comment xml:lang="bg">Формула — ODF</comment>
+  <comment xml:lang="be-Latn">Formuła ODF</comment>
+  <comment xml:lang="be-Cyrl">формула ODF</comment>
+  <comment xml:lang="ar">صيغة ODF</comment>
+  <comment xml:lang="af">ODF-formule</comment>
+  <acronym>ODF</acronym>
+  <expanded-acronym>OpenDocument Formula</expanded-acronym>
+  <sub-class-of type="application/zip"/>
+  <generic-icon name="x-office-document"/>
+  <glob pattern="*.odf"/>
+</mime-type>

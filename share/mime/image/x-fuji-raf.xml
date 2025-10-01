@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="image/x-fuji-raf">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Fuji RAF raw image</comment>
+  <comment xml:lang="zh-Hant-TW">Fuji RAF 原始影像</comment>
+  <comment xml:lang="zh-Hans-CN">富士 RAF 原始图像</comment>
+  <comment xml:lang="vi">Ảnh thô Fuji RAF</comment>
+  <comment xml:lang="uk">Цифровий негатив RAF Fuji</comment>
+  <comment xml:lang="tr">Fuji RAF ham görüntüsü</comment>
+  <comment xml:lang="sv">Fuji RAF-råbild</comment>
+  <comment xml:lang="sr-Cyrl">Фуџи РАФ сирова слика</comment>
+  <comment xml:lang="sq">figurë Fuji RAF e papërpunuar</comment>
+  <comment xml:lang="sl">Surova slikovna datoteka Fuji RAF</comment>
+  <comment xml:lang="si">Fuji RAF අමු රූපය</comment>
+  <comment xml:lang="sk">Surový obrázok Fuji RAF</comment>
+  <comment xml:lang="ru">Необработанное изображение Fuji RAF</comment>
+  <comment xml:lang="ro">Imagine brută Fuji RAF</comment>
+  <comment xml:lang="pt-BR">Imagem bruta RAF da Fuji</comment>
+  <comment xml:lang="pt">imagem em bruto Fuji RAF</comment>
+  <comment xml:lang="pl">Surowy obraz RAF Fuji</comment>
+  <comment xml:lang="oc">imatge brut RAF Fuji</comment>
+  <comment xml:lang="nn">Fuji RAF rått bilete</comment>
+  <comment xml:lang="nl">onbewerkt Fuji RAF-beeld</comment>
+  <comment xml:lang="nb">Fuji RAF raw-bilde</comment>
+  <comment xml:lang="lv">Fuji RAF jēlattēls</comment>
+  <comment xml:lang="lt">Fuji RAF neapdorotas paveikslėlis</comment>
+  <comment xml:lang="ko">후지 RAF RAW 사진</comment>
+  <comment xml:lang="kk-Cyrl">Fuji RAF өңделмеген суреті</comment>
+  <comment xml:lang="ka">Fuji RAF-ის raw გამოსახულება</comment>
+  <comment xml:lang="ja">Fuji RAF raw 画像</comment>
+  <comment xml:lang="it">Immagine raw Fuji RAF</comment>
+  <comment xml:lang="is">Fuji RAF hrámynd</comment>
+  <comment xml:lang="id">Citra mentah Fuji RAF</comment>
+  <comment xml:lang="ia">Imagine brute RAF de Fuji</comment>
+  <comment xml:lang="hu">Fuji RAF nyers kép</comment>
+  <comment xml:lang="hr">Fuji RAF osnovna slika</comment>
+  <comment xml:lang="he">תמונה גולמית של Fuji RAF</comment>
+  <comment xml:lang="gl">imaxe en bruto de Fuji RAF</comment>
+  <comment xml:lang="ga">amhíomhá Fuji RAF</comment>
+  <comment xml:lang="fur">imagjin grese Fuji RAF</comment>
+  <comment xml:lang="fr">image brute RAF Fuji</comment>
+  <comment xml:lang="fo">Fuji RAF raw mynd</comment>
+  <comment xml:lang="fi">Fuji-RAF-raakakuva</comment>
+  <comment xml:lang="eu">Fuji RAF irudi gordina</comment>
+  <comment xml:lang="es">imagen en bruto RAF de Fuji</comment>
+  <comment xml:lang="en-GB">Fuji RAF raw image</comment>
+  <comment xml:lang="el">Ανεπεξέργαστη εικόνα Fuji RAF</comment>
+  <comment xml:lang="de">Fuji-RAF-Rohbild</comment>
+  <comment xml:lang="da">Fuji RAF raw-billede</comment>
+  <comment xml:lang="cs">surový obrázek Fuji RAF</comment>
+  <comment xml:lang="ca">imatge en cru de Fuji RAF</comment>
+  <comment xml:lang="bg">Изображение — Fuji RAF raw</comment>
+  <comment xml:lang="be-Latn">Suvoraja vyjava Fuji RAF</comment>
+  <comment xml:lang="be-Cyrl">неапрацаваная выява Fuji RAF</comment>
+  <comment xml:lang="ar">صورة Fuji RAF خامة</comment>
+  <comment xml:lang="af">Fuji RAF rou beeld</comment>
+  <acronym>RAF</acronym>
+  <expanded-acronym>RAw Format</expanded-acronym>
+  <sub-class-of type="image/x-dcraw"/>
+  <glob pattern="*.raf"/>
+</mime-type>

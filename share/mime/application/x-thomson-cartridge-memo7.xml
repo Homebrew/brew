@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-thomson-cartridge-memo7">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Thomson Mémo7 cartridge</comment>
+  <comment xml:lang="zh-Hant-TW">Thomson Mémo7 卡匣</comment>
+  <comment xml:lang="zh-Hans-CN">Thomson Mémo7 卡带</comment>
+  <comment xml:lang="uk">картридж Thomson Mémo7</comment>
+  <comment xml:lang="tr">Thomson Mémo7 kartuşu</comment>
+  <comment xml:lang="sv">Thomson Mémo7-spelkassett</comment>
+  <comment xml:lang="sr-Cyrl">Томсон Мемо7 кертриџ</comment>
+  <comment xml:lang="sq">bobinë Thomson Mémo7</comment>
+  <comment xml:lang="si">Thomson Mémo7 කාට්රිජ්</comment>
+  <comment xml:lang="sk">Kazeta Thomson Mémo7</comment>
+  <comment xml:lang="ru">Картридж Thomson Mémo7</comment>
+  <comment xml:lang="pt-BR">Cartucho Thomson Mémo7</comment>
+  <comment xml:lang="pt">cartucho Thomson Mémo7</comment>
+  <comment xml:lang="pl">Kartridż Thomson Mémo7</comment>
+  <comment xml:lang="nl">Thomson Mémo7-casette</comment>
+  <comment xml:lang="ko">톰슨 Mémo7 카트리지</comment>
+  <comment xml:lang="kk-Cyrl">Thomson Mémo7 картриджі</comment>
+  <comment xml:lang="ja">Thomson Mémo7 カートリッジ</comment>
+  <comment xml:lang="it">Cartuccia Thomson Mémo7</comment>
+  <comment xml:lang="is">Thomson Mémo7 hylki</comment>
+  <comment xml:lang="id">Cartridge Thomson Mémo7</comment>
+  <comment xml:lang="hu">Thomson Mémo7 kazetta</comment>
+  <comment xml:lang="hr">Thomson Mémo7 uložak</comment>
+  <comment xml:lang="he">קלטת Thomson Mémo7</comment>
+  <comment xml:lang="gl">Cartucho de Thomson Mémo7</comment>
+  <comment xml:lang="ga">cartús Thomson Mémo7</comment>
+  <comment xml:lang="fur">cartucje Mémo7 Thomson</comment>
+  <comment xml:lang="fr">cartouche Thomson Mémo7</comment>
+  <comment xml:lang="fi">Thomson Mémo7 -patruuna</comment>
+  <comment xml:lang="eu">Thomson Mémo7 kartutxoa</comment>
+  <comment xml:lang="es">cartucho Mémo7 de Thomson</comment>
+  <comment xml:lang="en-GB">Thomson Mémo7 cartridge</comment>
+  <comment xml:lang="de">Thomson-Mémo7-Steckmodul</comment>
+  <comment xml:lang="da">Thomson Mémo7-kassette</comment>
+  <comment xml:lang="cs">Kazeta Thomson Mémo7</comment>
+  <comment xml:lang="ca">cartutx Thomson Mémo7</comment>
+  <comment xml:lang="bg">Касета — Thomson Mémo7</comment>
+  <comment xml:lang="be-Cyrl">картрыдж Thomson Mémo7</comment>
+  <comment xml:lang="ar">خرطوشة Thomson Mémo7</comment>
+  <generic-icon name="application-x-executable"/>
+  <glob pattern="*.m7"/>
+</mime-type>

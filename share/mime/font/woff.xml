@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="font/woff">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>WOFF font</comment>
+  <comment xml:lang="zh-Hant-TW">WOFF 字型</comment>
+  <comment xml:lang="zh-Hans-CN">WOFF 字体</comment>
+  <comment xml:lang="uk">шрифт WOFF</comment>
+  <comment xml:lang="tr">WOFF yazı tipi</comment>
+  <comment xml:lang="sv">WOFF-typsnitt</comment>
+  <comment xml:lang="sr-Cyrl">ВОФФ слова</comment>
+  <comment xml:lang="sq">shkronja WOFF</comment>
+  <comment xml:lang="sl">Pisava WOFF</comment>
+  <comment xml:lang="si">WOFF අකුරු</comment>
+  <comment xml:lang="sk">Písmo WOFF</comment>
+  <comment xml:lang="ru">Шрифт WOFF</comment>
+  <comment xml:lang="pt-BR">Fonte WOFF</comment>
+  <comment xml:lang="pt">letra WOFF</comment>
+  <comment xml:lang="pl">Czcionka WOFF</comment>
+  <comment xml:lang="oc">poliça WOFF</comment>
+  <comment xml:lang="nl">WOFF-lettertype</comment>
+  <comment xml:lang="lv">WOFF fonts</comment>
+  <comment xml:lang="lt">WOFF šriftas</comment>
+  <comment xml:lang="ko">WOFF 글꼴</comment>
+  <comment xml:lang="kk-Cyrl">WOFF қарібі</comment>
+  <comment xml:lang="ja">WOFF フォント</comment>
+  <comment xml:lang="it">Carattere WOFF</comment>
+  <comment xml:lang="is">WOFF letur</comment>
+  <comment xml:lang="id">Fonta WOFF</comment>
+  <comment xml:lang="ia">Typo de litteras WOFF</comment>
+  <comment xml:lang="hu">WOFF-betűkészlet</comment>
+  <comment xml:lang="hr">WOFF font</comment>
+  <comment xml:lang="he">גופן WOFF</comment>
+  <comment xml:lang="gl">Tipo de letra WOFF</comment>
+  <comment xml:lang="ga">cló WOFF</comment>
+  <comment xml:lang="fur">caratar WOFF</comment>
+  <comment xml:lang="fr">police WOFF</comment>
+  <comment xml:lang="fi">WOFF-fontti</comment>
+  <comment xml:lang="eu">WOFF letra-tipoa</comment>
+  <comment xml:lang="es">tipo de letra WOFF</comment>
+  <comment xml:lang="en-GB">WOFF font</comment>
+  <comment xml:lang="el">Γραμματοσειρά WOFF</comment>
+  <comment xml:lang="de">WOFF-Schrift</comment>
+  <comment xml:lang="da">WOFF-skrifttype</comment>
+  <comment xml:lang="cs">font WOFF</comment>
+  <comment xml:lang="ca">lletra WOFF</comment>
+  <comment xml:lang="bg">Шрифт — WOFF</comment>
+  <comment xml:lang="be-Cyrl">шрыфт WOFF</comment>
+  <comment xml:lang="ast">Fonte WOFF</comment>
+  <comment xml:lang="ar">خط WOFF</comment>
+  <comment xml:lang="af">WOFF-skriftipe</comment>
+  <acronym>WOFF</acronym>
+  <expanded-acronym>Web Open Font Format</expanded-acronym>
+  <generic-icon name="font-x-generic"/>
+  <glob pattern="*.woff"/>
+  <alias type="application/font-woff"/>
+</mime-type>

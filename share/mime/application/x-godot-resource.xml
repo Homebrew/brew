@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-godot-resource">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Godot Engine resource</comment>
+  <comment xml:lang="zh-Hans-CN">Godot Engine 资源</comment>
+  <comment xml:lang="uk">ресурс Godot Engine</comment>
+  <comment xml:lang="tr">Godot Engine kaynağı</comment>
+  <comment xml:lang="sv">Godot Engine-resurs</comment>
+  <comment xml:lang="sl">Vir Godot Engine</comment>
+  <comment xml:lang="si">ගොඩොට් එන්ජින් සම්පත</comment>
+  <comment xml:lang="ru">Ресурс Godot Engine</comment>
+  <comment xml:lang="pt-BR">Recurso do Godot Engine</comment>
+  <comment xml:lang="pt">recurso do Motor Godot</comment>
+  <comment xml:lang="pl">Zasób Godot Engine</comment>
+  <comment xml:lang="nl">Godot Engine-bron</comment>
+  <comment xml:lang="ko">Godot 엔진 자원</comment>
+  <comment xml:lang="kk-Cyrl">Godot Engine ресурсы</comment>
+  <comment xml:lang="ja">Godot Engine リソース</comment>
+  <comment xml:lang="it">Risorsa Godot Engine</comment>
+  <comment xml:lang="hr">Godot Engine resurs</comment>
+  <comment xml:lang="he">משאב של מנוע גודו</comment>
+  <comment xml:lang="gl">Recurso do motor Godot</comment>
+  <comment xml:lang="fi">Godot Engine -resurssi</comment>
+  <comment xml:lang="eu">Godot Engine baliabidea</comment>
+  <comment xml:lang="es">recurso de motor Godot</comment>
+  <comment xml:lang="en-GB">Godot Engine resource</comment>
+  <comment xml:lang="de">Godot-Engine-Ressource</comment>
+  <comment xml:lang="be-Cyrl">рэсурс Godot Engine</comment>
+  <comment xml:lang="ar">مورد محرك جودو</comment>
+  <glob pattern="*.res"/>
+  <glob pattern="*.tres"/>
+</mime-type>

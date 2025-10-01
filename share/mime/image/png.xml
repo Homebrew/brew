@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="image/png">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>PNG image</comment>
+  <comment xml:lang="zh-Hant-TW">PNG 影像</comment>
+  <comment xml:lang="zh-Hans-CN">PNG 图像</comment>
+  <comment xml:lang="vi">Ảnh PNG</comment>
+  <comment xml:lang="uk">зображення PNG</comment>
+  <comment xml:lang="tr">PNG görüntüsü</comment>
+  <comment xml:lang="sv">PNG-bild</comment>
+  <comment xml:lang="sr-Cyrl">ПНГ слика</comment>
+  <comment xml:lang="sq">figurë PNG</comment>
+  <comment xml:lang="sl">Slikovna datoteka PNG</comment>
+  <comment xml:lang="si">PNG රූපය</comment>
+  <comment xml:lang="sk">Obrázok PNG</comment>
+  <comment xml:lang="ru">Изображение PNG</comment>
+  <comment xml:lang="ro">Imagine PNG</comment>
+  <comment xml:lang="pt-BR">Imagem PNG</comment>
+  <comment xml:lang="pt">imagem PNG</comment>
+  <comment xml:lang="pl">Obraz PNG</comment>
+  <comment xml:lang="oc">imatge PNG</comment>
+  <comment xml:lang="nn">PNG-bilete</comment>
+  <comment xml:lang="nl">PNG-afbeelding</comment>
+  <comment xml:lang="nb">PNG-bilde</comment>
+  <comment xml:lang="ms">Imej PNG</comment>
+  <comment xml:lang="lv">PNG attēls</comment>
+  <comment xml:lang="lt">PNG paveikslėlis</comment>
+  <comment xml:lang="ko">PNG 그림</comment>
+  <comment xml:lang="kk-Cyrl">PNG суреті</comment>
+  <comment xml:lang="ka">PNG გამოსახულება</comment>
+  <comment xml:lang="ja">PNG 画像</comment>
+  <comment xml:lang="it">Immagine PNG</comment>
+  <comment xml:lang="is">PNG mynd</comment>
+  <comment xml:lang="id">Citra PNG</comment>
+  <comment xml:lang="ia">Imagine PNG</comment>
+  <comment xml:lang="hu">PNG-kép</comment>
+  <comment xml:lang="hr">PNG slika</comment>
+  <comment xml:lang="he">תמונת PNG</comment>
+  <comment xml:lang="gl">imaxe PNG</comment>
+  <comment xml:lang="ga">íomhá PNG</comment>
+  <comment xml:lang="fur">imagjin PNG</comment>
+  <comment xml:lang="fr">image PNG</comment>
+  <comment xml:lang="fo">PNG mynd</comment>
+  <comment xml:lang="fi">PNG-kuva</comment>
+  <comment xml:lang="eu">PNG irudia</comment>
+  <comment xml:lang="es">imagen PNG</comment>
+  <comment xml:lang="eo">PNG-bildo</comment>
+  <comment xml:lang="en-GB">PNG image</comment>
+  <comment xml:lang="el">Εικόνα PNG</comment>
+  <comment xml:lang="de">PNG-Bild</comment>
+  <comment xml:lang="da">PNG-billede</comment>
+  <comment xml:lang="cy">Delwedd PNG</comment>
+  <comment xml:lang="cs">obrázek PNG</comment>
+  <comment xml:lang="ca">imatge PNG</comment>
+  <comment xml:lang="bg">Изображение — PNG</comment>
+  <comment xml:lang="be-Latn">Vyjava PNG</comment>
+  <comment xml:lang="be-Cyrl">выява PNG</comment>
+  <comment xml:lang="az">PNG rəsmi</comment>
+  <comment xml:lang="ar">صورة PNG</comment>
+  <comment xml:lang="af">PNG-beeld</comment>
+  <acronym>PNG</acronym>
+  <expanded-acronym>Portable Network Graphics</expanded-acronym>
+  <glob pattern="*.png"/>
+</mime-type>

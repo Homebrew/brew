@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="image/svg+xml-compressed">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Compressed SVG image</comment>
+  <comment xml:lang="uk">стиснене зображення SVG</comment>
+  <comment xml:lang="sv">Komprimerad SVG-bild</comment>
+  <comment xml:lang="ru">Сжатое изображение SVG</comment>
+  <comment xml:lang="pl">Skompresowany obraz SVG</comment>
+  <comment xml:lang="ja">SVG画像（圧縮）</comment>
+  <comment xml:lang="it">Immagine SVG compressa</comment>
+  <comment xml:lang="gl">Imaxe SVG comprimido</comment>
+  <comment xml:lang="eu">SVG irudi konprimatua</comment>
+  <comment xml:lang="es">imagen SVG comprimida</comment>
+  <comment xml:lang="de">Komprimiertes SVG-Bild</comment>
+  <comment xml:lang="be-Cyrl">сціснутая выява SVG</comment>
+  <acronym>SVG</acronym>
+  <expanded-acronym>Scalable Vector Graphics</expanded-acronym>
+  <sub-class-of type="application/gzip"/>
+  <glob pattern="*.svgz"/>
+  <glob pattern="*.svg.gz"/>
+</mime-type>

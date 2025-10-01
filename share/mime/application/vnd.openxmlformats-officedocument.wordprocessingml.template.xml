@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/vnd.openxmlformats-officedocument.wordprocessingml.template">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Word 2007 document template</comment>
+  <comment xml:lang="zh-Hant-TW">Word 2007 文件範本</comment>
+  <comment xml:lang="zh-Hans-CN">Word 2007 文档模板</comment>
+  <comment xml:lang="uk">шаблон документа Word 2007</comment>
+  <comment xml:lang="tr">Word 2007 belge şablonu</comment>
+  <comment xml:lang="sv">Word 2007-dokumentmall</comment>
+  <comment xml:lang="sr-Cyrl">шаблон документа Ворда 2007</comment>
+  <comment xml:lang="sq">gjedhe dokumentesh Word 2007</comment>
+  <comment xml:lang="sl">Predloga dokumenta Word 2007</comment>
+  <comment xml:lang="si">Word 2007 ලේඛන සැකිල්ල</comment>
+  <comment xml:lang="sk">Šablóna dokumentu Word 2007</comment>
+  <comment xml:lang="ru">Шаблон документа Word 2007</comment>
+  <comment xml:lang="pt-BR">Modelo de documento do Word 2007</comment>
+  <comment xml:lang="pt">modelo de documento Word 2007</comment>
+  <comment xml:lang="pl">Szablon dokumentu Word 2007</comment>
+  <comment xml:lang="oc">modèl de document Word 2007</comment>
+  <comment xml:lang="nl">Word 2007-documentsjabloon</comment>
+  <comment xml:lang="lv">Word 2007 dokumenta veidne</comment>
+  <comment xml:lang="ko">Word 2007 문서 서식</comment>
+  <comment xml:lang="kk-Cyrl">Word 2007 құжатының үлгісі</comment>
+  <comment xml:lang="ka">Word 2007-ის დოკუმენტის შაბლონი</comment>
+  <comment xml:lang="ja">Word 2007 ドキュメントテンプレート</comment>
+  <comment xml:lang="it">Modello documento Word 2007</comment>
+  <comment xml:lang="is">Word sniðmát fyrir textaskjal</comment>
+  <comment xml:lang="id">Templat dokumen Word 2007</comment>
+  <comment xml:lang="ia">Patrono de documento Word 2007</comment>
+  <comment xml:lang="hu">Word 2007 dokumentumsablon</comment>
+  <comment xml:lang="hr">Word 2007 predložak dokumenta</comment>
+  <comment xml:lang="he">תבנית מסמך של Word 2007</comment>
+  <comment xml:lang="gl">Plantilla de documento de Word 2007</comment>
+  <comment xml:lang="ga">teimpléad cháipéis Word 2007</comment>
+  <comment xml:lang="fur">model document Word 2007</comment>
+  <comment xml:lang="fr">modèle de document Word 2007</comment>
+  <comment xml:lang="fi">Word 2007 -asiakirjamalli</comment>
+  <comment xml:lang="eu">Word 2007 dokumentuaren txantiloia</comment>
+  <comment xml:lang="es">plantilla de documento de Word 2007</comment>
+  <comment xml:lang="en-GB">Word 2007 document template</comment>
+  <comment xml:lang="el">Πρότυπο έγγραφο Word 2007</comment>
+  <comment xml:lang="de">Word-2007-Dokumentvorlage</comment>
+  <comment xml:lang="da">Word 2007-dokumentskabelon</comment>
+  <comment xml:lang="cs">šablona dokumentu Word 2007</comment>
+  <comment xml:lang="ca">plantilla de document de Word 2007</comment>
+  <comment xml:lang="bg">Шаблон за документи — Word 2007</comment>
+  <comment xml:lang="be-Cyrl">шаблон дакумента Word 2007</comment>
+  <comment xml:lang="ast">Plantía de documentu de Word 2007</comment>
+  <comment xml:lang="ar">قالب مستند ورد 2007</comment>
+  <comment xml:lang="af">Word 2007-dokumentsjabloon</comment>
+  <glob pattern="*.dotx"/>
+  <sub-class-of type="application/zip"/>
+  <generic-icon name="x-office-document"/>
+</mime-type>

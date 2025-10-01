@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="x-content/software">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Software</comment>
+  <comment xml:lang="uk">програмне забезпечення</comment>
+  <comment xml:lang="sv">Programvara</comment>
+  <comment xml:lang="ru">Программное обеспечение</comment>
+  <comment xml:lang="pt-BR">Software</comment>
+  <comment xml:lang="pl">Oprogramowanie</comment>
+  <comment xml:lang="ja">ソフトウェア</comment>
+  <comment xml:lang="it">Software</comment>
+  <comment xml:lang="gl">Software</comment>
+  <comment xml:lang="eu">Softwarea</comment>
+  <comment xml:lang="es">sóftwer</comment>
+  <comment xml:lang="de">Software</comment>
+  <comment xml:lang="be-Cyrl">праграмнае забеспячэнне</comment>
+</mime-type>

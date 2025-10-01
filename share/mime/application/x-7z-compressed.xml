@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-7z-compressed">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>7-zip archive</comment>
+  <comment xml:lang="zh-Hant-TW">7-zip 封存檔</comment>
+  <comment xml:lang="zh-Hans-CN">7-zip 归档文件</comment>
+  <comment xml:lang="vi">Kho nén 7-zip</comment>
+  <comment xml:lang="uk">архів 7-zip</comment>
+  <comment xml:lang="tr">7-Zip arşivi</comment>
+  <comment xml:lang="sv">7-zip-arkiv</comment>
+  <comment xml:lang="sr-Cyrl">7-зип архива</comment>
+  <comment xml:lang="sq">arkiv 7-zip</comment>
+  <comment xml:lang="sl">Datoteka arhiva 7-zip</comment>
+  <comment xml:lang="si">7-zip සංරක්ෂිතය</comment>
+  <comment xml:lang="sk">Archív 7-zip</comment>
+  <comment xml:lang="ru">Архив 7-zip</comment>
+  <comment xml:lang="ro">Arhivă 7-zip</comment>
+  <comment xml:lang="pt-BR">Pacote 7-Zip</comment>
+  <comment xml:lang="pt">arquivo 7-zip</comment>
+  <comment xml:lang="pl">Archiwum 7-zip</comment>
+  <comment xml:lang="oc">archiu 7-zip</comment>
+  <comment xml:lang="nn">7-zip-arkiv</comment>
+  <comment xml:lang="nl">7-zip-archief</comment>
+  <comment xml:lang="nb">7-zip-arkiv</comment>
+  <comment xml:lang="lv">7-zip arhīvs</comment>
+  <comment xml:lang="lt">7-zip archyvas</comment>
+  <comment xml:lang="ko">7-ZIP 압축 파일</comment>
+  <comment xml:lang="kk-Cyrl">7-zip архиві</comment>
+  <comment xml:lang="ka">7-zip არქივი</comment>
+  <comment xml:lang="ja">7-zip アーカイブ</comment>
+  <comment xml:lang="it">Archivio 7-zip</comment>
+  <comment xml:lang="is">7-zip safnskrá</comment>
+  <comment xml:lang="id">Arsip 7-zip</comment>
+  <comment xml:lang="ia">Archivo 7-zip</comment>
+  <comment xml:lang="hu">7-zip archívum</comment>
+  <comment xml:lang="hr">7-zip arhiva</comment>
+  <comment xml:lang="he">ארכיון 7-zip</comment>
+  <comment xml:lang="gl">arquivo 7-zip</comment>
+  <comment xml:lang="ga">cartlann 7-zip</comment>
+  <comment xml:lang="fur">archivi 7-zip</comment>
+  <comment xml:lang="fr">archive 7-zip</comment>
+  <comment xml:lang="fo">7-zip skjalasavn</comment>
+  <comment xml:lang="fi">7-zip-arkisto</comment>
+  <comment xml:lang="eu">7-zip artxiboa</comment>
+  <comment xml:lang="es">archivador 7-zip</comment>
+  <comment xml:lang="eo">7z-arkivo</comment>
+  <comment xml:lang="en-GB">7-zip archive</comment>
+  <comment xml:lang="el">Συμπιεσμένο αρχείο 7-zip</comment>
+  <comment xml:lang="de">7-Zip-Archiv</comment>
+  <comment xml:lang="da">7-zip-arkiv</comment>
+  <comment xml:lang="cs">archiv 7-zip</comment>
+  <comment xml:lang="ca">arxiu 7-zip</comment>
+  <comment xml:lang="bg">Архив — 7-zip</comment>
+  <comment xml:lang="be-Latn">Archiŭ 7-zip</comment>
+  <comment xml:lang="be-Cyrl">архіў 7-zip</comment>
+  <comment xml:lang="ast">Archivu 7-zip</comment>
+  <comment xml:lang="ar">أرشيف 7-zip</comment>
+  <comment xml:lang="af">7-zip-argief</comment>
+  <generic-icon name="package-x-generic"/>
+  <glob pattern="*.7z"/>
+  <glob pattern="*.7z.001"/>
+</mime-type>

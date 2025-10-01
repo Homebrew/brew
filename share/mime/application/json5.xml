@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/json5">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>JSON5 document</comment>
+  <comment xml:lang="uk">документ JSON5</comment>
+  <comment xml:lang="sv">JSON5-dokument</comment>
+  <comment xml:lang="ru">Документ JSON5</comment>
+  <comment xml:lang="pl">Dokument JSON5</comment>
+  <comment xml:lang="es">documento JSON5</comment>
+  <comment xml:lang="de">JSON5-Dokument</comment>
+  <acronym>JSON5</acronym>
+  <expanded-acronym>JavaScript Object Notation 5</expanded-acronym>
+  <sub-class-of type="text/javascript"/>
+  <generic-icon name="text-x-script"/>
+  <glob pattern="*.json5"/>
+</mime-type>

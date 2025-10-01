@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="model/obj">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>OBJ 3D model</comment>
+  <comment xml:lang="zh-Hans-CN">OBJ 3D 模型</comment>
+  <comment xml:lang="uk">просторова модель OBJ</comment>
+  <comment xml:lang="tr">OBJ 3B modeli</comment>
+  <comment xml:lang="sv">OBJ-3D-modell</comment>
+  <comment xml:lang="sl">3D-model OBJ</comment>
+  <comment xml:lang="si">OBJ 3D ආකෘතිය</comment>
+  <comment xml:lang="ru">OBJ 3D-модель</comment>
+  <comment xml:lang="pt-BR">Modelo OBJ 3D</comment>
+  <comment xml:lang="pl">Model 3D OBJ</comment>
+  <comment xml:lang="oc">modèl OBJ 3D</comment>
+  <comment xml:lang="nl">OBJ 3D-model</comment>
+  <comment xml:lang="ko">OBJ 3D 모델</comment>
+  <comment xml:lang="kk-Cyrl">OBJ 3D моделі</comment>
+  <comment xml:lang="ja">OBJ 3D モデル</comment>
+  <comment xml:lang="it">Modello OBJ 3D</comment>
+  <comment xml:lang="hr">OBJ 3D model</comment>
+  <comment xml:lang="gl">Modelo OBJ 3D</comment>
+  <comment xml:lang="fi">OBJ 3D-malli</comment>
+  <comment xml:lang="eu">OBJ 3D eredua</comment>
+  <comment xml:lang="es">modelo OBJ 3D</comment>
+  <comment xml:lang="en-GB">OBJ 3D model</comment>
+  <comment xml:lang="de">OBJ-3D-Modell</comment>
+  <comment xml:lang="be-Cyrl">мадэль OBJ 3D</comment>
+  <comment xml:lang="ar">نموذج OBJ 3D</comment>
+  <sub-class-of type="text/plain"/>
+  <generic-icon name="image-x-generic"/>
+  <glob pattern="*.obj"/>
+</mime-type>

@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-wonderswan-color-rom">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Bandai WonderSwan Color ROM</comment>
+  <comment xml:lang="zh-Hant-TW">萬代 WonderSwan Color ROM</comment>
+  <comment xml:lang="zh-Hans-CN">万代 WonderSwan Color ROM</comment>
+  <comment xml:lang="uk">ROM Bandai WonderSwan Color</comment>
+  <comment xml:lang="tr">Bandai WonderSwan Color ROM</comment>
+  <comment xml:lang="sv">Bandai WonderSwan Color-rom</comment>
+  <comment xml:lang="sq">ROM Bandai WonderSwan Color</comment>
+  <comment xml:lang="si">Bandai WonderSwan වර්ණ ROM</comment>
+  <comment xml:lang="sk">ROM pre Bandai WonderSwan Color</comment>
+  <comment xml:lang="ru">Bandai WonderSwan Color ROM</comment>
+  <comment xml:lang="pt-BR">ROM de WonderSwan Color da Bandai</comment>
+  <comment xml:lang="pl">Plik ROM konsoli Bandai WonderSwan Color</comment>
+  <comment xml:lang="nl">Bandai WonderSwan Color-ROM</comment>
+  <comment xml:lang="ko">반다이 원더스완 컬러 롬</comment>
+  <comment xml:lang="kk-Cyrl">Bandai WonderSwan Color ROM</comment>
+  <comment xml:lang="ja">バンダイワンダースワンカラー ROM</comment>
+  <comment xml:lang="it">ROM Bandai WonderSwan Color</comment>
+  <comment xml:lang="is">Bandai WonderSwan Color ROM</comment>
+  <comment xml:lang="id">ROM Bandai WonderSwan Color</comment>
+  <comment xml:lang="hu">Bandai WonderSwan Color ROM</comment>
+  <comment xml:lang="hr">Bandai WonderSwan Color ROM</comment>
+  <comment xml:lang="he">ROM של Bandai WonderSwan Color</comment>
+  <comment xml:lang="ga">ROM datha Bandai WonderSwan</comment>
+  <comment xml:lang="fur">ROM Bandai WonderSwan Color</comment>
+  <comment xml:lang="fr">ROM Bandai WonderSwan Color</comment>
+  <comment xml:lang="fi">Bandai WonderSwan Color -ROM</comment>
+  <comment xml:lang="eu">Bandai WonderSwan Color ROM</comment>
+  <comment xml:lang="es">ROM de Bandai WonderSwan Color</comment>
+  <comment xml:lang="en-GB">Bandai WonderSwan Color ROM</comment>
+  <comment xml:lang="de">Bandai-WonderSwan-Color-ROM</comment>
+  <comment xml:lang="da">Bandai WonderSwan Color-ROM</comment>
+  <comment xml:lang="cs">ROM pro Bandai WonderSwan Color</comment>
+  <comment xml:lang="ca">ROM de Bandai WonderSwan Color</comment>
+  <comment xml:lang="bg">ROM — Bandai WonderSwan Color</comment>
+  <comment xml:lang="be-Cyrl">Bandai WonderSwan Color ROM</comment>
+  <comment xml:lang="ar">روم لون Bandai WonderSwan</comment>
+  <generic-icon name="application-x-executable"/>
+  <glob pattern="*.wsc"/>
+</mime-type>

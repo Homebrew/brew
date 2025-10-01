@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="text/x-lilypond">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Lilypond music sheet</comment>
+  <comment xml:lang="zh-Hant-TW">Lilypond 樂譜</comment>
+  <comment xml:lang="zh-Hans-CN">Lilypond 乐谱</comment>
+  <comment xml:lang="vi">Bản nhạc Lilypond</comment>
+  <comment xml:lang="uk">нотний запис Lilypond</comment>
+  <comment xml:lang="tr">Lilypond müzik sayfası</comment>
+  <comment xml:lang="sv">Lilypond-notblad</comment>
+  <comment xml:lang="sr-Cyrl">Лилипонд музички лист</comment>
+  <comment xml:lang="sq">partiturë Lilypond</comment>
+  <comment xml:lang="sl">Glasbena predloga Lilypond</comment>
+  <comment xml:lang="si">ලිලිපොන්ඩ් සංගීත පත්රය</comment>
+  <comment xml:lang="sk">Notový papier Lilypond</comment>
+  <comment xml:lang="ru">Список музыки Lilypond</comment>
+  <comment xml:lang="ro">Fișă muzică Lilypond</comment>
+  <comment xml:lang="pt-BR">Partitura do Lilypond</comment>
+  <comment xml:lang="pt">folha de música Lilypond</comment>
+  <comment xml:lang="pl">Plik partytury Lilypond</comment>
+  <comment xml:lang="oc">particion musicala Lilypond</comment>
+  <comment xml:lang="nn">Lilypond noteark</comment>
+  <comment xml:lang="nl">Lilypond-muziekblad</comment>
+  <comment xml:lang="lv">Lilypond mūzikas lapa</comment>
+  <comment xml:lang="lt">Lilypond muzikos lapas</comment>
+  <comment xml:lang="ko">Lilypond 악보</comment>
+  <comment xml:lang="kk-Cyrl">Lilypond музыка тізімі</comment>
+  <comment xml:lang="ja">Lilypond 楽譜データ</comment>
+  <comment xml:lang="it">Partitura Lilypond</comment>
+  <comment xml:lang="is">LilyPond nótnablað</comment>
+  <comment xml:lang="id">Lembar musik Lilypond</comment>
+  <comment xml:lang="ia">Partition musical Lilypond</comment>
+  <comment xml:lang="hu">Lilypond kotta</comment>
+  <comment xml:lang="hr">Lilypond glazbena ljestvica</comment>
+  <comment xml:lang="he">דף מוזיקה של Lilypond</comment>
+  <comment xml:lang="gl">folla de música de Lilypond</comment>
+  <comment xml:lang="ga">bileog cheoil Lilypond</comment>
+  <comment xml:lang="fur">spartît Lilypond</comment>
+  <comment xml:lang="fr">partition musicale Lilypond</comment>
+  <comment xml:lang="fo">Lilypond tónleika ark</comment>
+  <comment xml:lang="fi">Lilypond-nuotit</comment>
+  <comment xml:lang="eu">Lilypond musika-orria</comment>
+  <comment xml:lang="es">partitura de LilyPond</comment>
+  <comment xml:lang="en-GB">Lilypond music sheet</comment>
+  <comment xml:lang="el">Παρτιτούρα Lilypond</comment>
+  <comment xml:lang="de">Lilypond-Notenblatt</comment>
+  <comment xml:lang="da">Lilypondmusikkort</comment>
+  <comment xml:lang="cs">notový papír Lilypond</comment>
+  <comment xml:lang="ca">full de música Lilypond</comment>
+  <comment xml:lang="bg">Нотация на Lilypond</comment>
+  <comment xml:lang="be-Latn">Muzyčny arkuš Lilypond</comment>
+  <comment xml:lang="be-Cyrl">нотны запіс Lilypond</comment>
+  <comment xml:lang="ar">صفحة موسيقى Lilypond</comment>
+  <comment xml:lang="af">Lilypond-musiekblad</comment>
+  <glob pattern="*.ly"/>
+  <sub-class-of type="text/plain"/>
+</mime-type>

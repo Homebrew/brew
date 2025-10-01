@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/vnd.oasis.opendocument.presentation-template">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>ODP template</comment>
+  <comment xml:lang="zh-Hant-TW">ODP 範本</comment>
+  <comment xml:lang="zh-Hans-CN">ODP 模板</comment>
+  <comment xml:lang="vi">Mẫu ODP</comment>
+  <comment xml:lang="uk">шаблон ODP</comment>
+  <comment xml:lang="tr">ODP şablonu</comment>
+  <comment xml:lang="sv">ODP-mall</comment>
+  <comment xml:lang="sr-Cyrl">ОДП шаблон</comment>
+  <comment xml:lang="sq">gjedhe ODP</comment>
+  <comment xml:lang="sl">Predloga dokumenta ODP</comment>
+  <comment xml:lang="si">ODP අච්චුව</comment>
+  <comment xml:lang="sk">Šablóna ODP</comment>
+  <comment xml:lang="ru">Шаблон ODP</comment>
+  <comment xml:lang="ro">Șablon ODP</comment>
+  <comment xml:lang="pt-BR">Modelo ODP</comment>
+  <comment xml:lang="pt">modelo ODP</comment>
+  <comment xml:lang="pl">Szablon ODP</comment>
+  <comment xml:lang="oc">modèl ODP</comment>
+  <comment xml:lang="nn">ODP-mal</comment>
+  <comment xml:lang="nl">ODP-sjabloon</comment>
+  <comment xml:lang="nb">ODP-mal</comment>
+  <comment xml:lang="lv">ODP veidne</comment>
+  <comment xml:lang="lt">ODP šablonas</comment>
+  <comment xml:lang="ko">ODP 문서 서식</comment>
+  <comment xml:lang="kk-Cyrl">ODP үлгісі</comment>
+  <comment xml:lang="ka">ODP შაბლონი</comment>
+  <comment xml:lang="ja">ODP テンプレート</comment>
+  <comment xml:lang="it">Modello ODP</comment>
+  <comment xml:lang="is">ODP sniðmát</comment>
+  <comment xml:lang="id">Templat ODP</comment>
+  <comment xml:lang="ia">Patrono ODP</comment>
+  <comment xml:lang="hu">ODP-sablon</comment>
+  <comment xml:lang="hr">ODP predložak</comment>
+  <comment xml:lang="he">תבנית ODP</comment>
+  <comment xml:lang="gl">modelo ODP</comment>
+  <comment xml:lang="ga">teimpléad ODP</comment>
+  <comment xml:lang="fur">model ODP</comment>
+  <comment xml:lang="fr">modèle ODP</comment>
+  <comment xml:lang="fo">ODP formur</comment>
+  <comment xml:lang="fi">ODP-malli</comment>
+  <comment xml:lang="eu">ODP txantiloia</comment>
+  <comment xml:lang="es">plantilla ODP</comment>
+  <comment xml:lang="eo">ODP-ŝablono</comment>
+  <comment xml:lang="en-GB">ODP template</comment>
+  <comment xml:lang="el">Πρότυπο ODP</comment>
+  <comment xml:lang="de">ODP-Vorlage</comment>
+  <comment xml:lang="da">ODP-skabelon</comment>
+  <comment xml:lang="cs">šablona ODP</comment>
+  <comment xml:lang="ca">plantilla ODP</comment>
+  <comment xml:lang="bg">Шаблон за презентации — ODP</comment>
+  <comment xml:lang="be-Latn">Šablon ODP</comment>
+  <comment xml:lang="be-Cyrl">шаблон ODP</comment>
+  <comment xml:lang="ar">قالب ODP</comment>
+  <comment xml:lang="af">ODP-sjabloon</comment>
+  <acronym>ODP</acronym>
+  <expanded-acronym>OpenDocument Presentation</expanded-acronym>
+  <sub-class-of type="application/zip"/>
+  <generic-icon name="x-office-presentation"/>
+  <glob pattern="*.otp"/>
+</mime-type>

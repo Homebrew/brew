@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/vnd.sun.xml.math">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>LibreOffice Math formula</comment>
+  <comment xml:lang="uk">формула LibreOffice Math</comment>
+  <comment xml:lang="sv">LibreOffice Math-formel</comment>
+  <comment xml:lang="ru">Формула LibreOffice Math</comment>
+  <comment xml:lang="pt-BR">Fórmula do LibreOffice Math</comment>
+  <comment xml:lang="pl">Formuła LibreOffice Math</comment>
+  <comment xml:lang="it">Formula LibreOffice Math</comment>
+  <comment xml:lang="gl">Fórmula de LibreOffice Math</comment>
+  <comment xml:lang="eu">LibreOffice Math formula</comment>
+  <comment xml:lang="es">fórmula de LibreOffice Math</comment>
+  <comment xml:lang="de">LibreOffice Math-Formel</comment>
+  <comment xml:lang="be-Cyrl">формула LibreOffice Math</comment>
+  <sub-class-of type="application/zip"/>
+  <generic-icon name="x-office-document"/>
+  <glob pattern="*.sxm"/>
+</mime-type>

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-bzip2">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Bzip2 archive</comment>
+  <comment xml:lang="uk">архів bzip2</comment>
+  <comment xml:lang="sv">Bzip2-arkiv</comment>
+  <comment xml:lang="ru">Архив Bzip2</comment>
+  <comment xml:lang="pt-BR">Pacote Bzip2</comment>
+  <comment xml:lang="pl">Archiwum bzip2</comment>
+  <comment xml:lang="it">Archivio bzip2</comment>
+  <comment xml:lang="gl">Arquivo Bzip2</comment>
+  <comment xml:lang="eu">Bzip2 artxiboa</comment>
+  <comment xml:lang="es">archivador BZIP2</comment>
+  <comment xml:lang="de">Bzip2-Archiv</comment>
+  <comment xml:lang="be-Cyrl">архіў bzip2</comment>
+  <generic-icon name="package-x-generic"/>
+  <glob pattern="*.bz2"/>
+  <alias type="application/bzip2"/>
+  <alias type="application/x-bzip"/>
+</mime-type>

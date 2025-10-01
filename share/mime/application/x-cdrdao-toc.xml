@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-cdrdao-toc">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>CD Table Of Contents</comment>
+  <comment xml:lang="zh-Hant-TW">CD 內容目錄</comment>
+  <comment xml:lang="zh-Hans-CN">CD 索引</comment>
+  <comment xml:lang="vi">Mục Lục của đĩa CD</comment>
+  <comment xml:lang="uk">зміст CD</comment>
+  <comment xml:lang="tr">CD İçindekiler Tablosu</comment>
+  <comment xml:lang="sv">Cd-innehållsförteckning</comment>
+  <comment xml:lang="sr-Cyrl">табела садржаја ЦД-а</comment>
+  <comment xml:lang="sq">Tryezë Lënde CD</comment>
+  <comment xml:lang="sl">Kazalo vsebine CD nosilca</comment>
+  <comment xml:lang="si">CD පටුන</comment>
+  <comment xml:lang="sk">Obsah CD</comment>
+  <comment xml:lang="ru">Содержание компакт-диска</comment>
+  <comment xml:lang="ro">Tabel conținut CD</comment>
+  <comment xml:lang="pt-BR">Sumário de CD</comment>
+  <comment xml:lang="pt">Tabela de conteúdos de CD</comment>
+  <comment xml:lang="pl">Plik zawartości płyty CD</comment>
+  <comment xml:lang="oc">ensenhador de CD</comment>
+  <comment xml:lang="nn">CD innhaldsliste</comment>
+  <comment xml:lang="nl">CD-inhoudsopgave</comment>
+  <comment xml:lang="nb">Innholdsfortegnelse for CD</comment>
+  <comment xml:lang="lv">CD satura rādītājs</comment>
+  <comment xml:lang="lt">CD turinys</comment>
+  <comment xml:lang="ko">CD 내용 목록</comment>
+  <comment xml:lang="kk-Cyrl">CD құрама кестесі</comment>
+  <comment xml:lang="ja">CD Table Of Contents</comment>
+  <comment xml:lang="it">Indice CD</comment>
+  <comment xml:lang="is">Efnisyfirlit CD-disks</comment>
+  <comment xml:lang="id">Tabel Isi CD</comment>
+  <comment xml:lang="ia">Tabula de contento de CD</comment>
+  <comment xml:lang="hu">CD tartalomjegyzék</comment>
+  <comment xml:lang="hr">CD sadržaj</comment>
+  <comment xml:lang="he">תוכן עניינים של דיסק</comment>
+  <comment xml:lang="gl">táboa de contidos de CD</comment>
+  <comment xml:lang="ga">clár ábhar dlúthdhiosca</comment>
+  <comment xml:lang="fur">tabele dai contignûts di CD</comment>
+  <comment xml:lang="fr">table des matières de CD</comment>
+  <comment xml:lang="fo">CD innihaldsyvurlit</comment>
+  <comment xml:lang="fi">CD-sisällysluettelo</comment>
+  <comment xml:lang="eu">CDaren edukien aurkibidea</comment>
+  <comment xml:lang="es">índice de contenido de CD</comment>
+  <comment xml:lang="en-GB">CD Table Of Contents</comment>
+  <comment xml:lang="el">Πίνακας περιεχομένων CD</comment>
+  <comment xml:lang="de">CD-Inhaltsverzeichnis</comment>
+  <comment xml:lang="da">Cd-indholdsfortegnelse</comment>
+  <comment xml:lang="cs">obsah CD</comment>
+  <comment xml:lang="ca">taula de continguts de CD</comment>
+  <comment xml:lang="bg">Съдържание на CD</comment>
+  <comment xml:lang="be-Latn">Źmieściva CD</comment>
+  <comment xml:lang="be-Cyrl">табліца змесціва CD</comment>
+  <comment xml:lang="ar">جدول محتويات CD</comment>
+  <comment xml:lang="af">CD-inhoudsopgawe</comment>
+  <sub-class-of type="text/plain"/>
+  <generic-icon name="text-x-generic"/>
+  <glob pattern="*.toc"/>
+</mime-type>

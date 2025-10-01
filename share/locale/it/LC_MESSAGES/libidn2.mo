@@ -1,0 +1,1 @@
+../../../../Cellar/libidn2/2.3.8/share/locale/it/LC_MESSAGES/libidn2.mo

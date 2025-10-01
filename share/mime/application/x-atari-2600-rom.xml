@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-atari-2600-rom">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Atari 2600 ROM</comment>
+  <comment xml:lang="zh-Hant-TW">雅達利 2600 ROM</comment>
+  <comment xml:lang="zh-Hans-CN">雅达利 2600 ROM</comment>
+  <comment xml:lang="uk">Atari 2600 ROM</comment>
+  <comment xml:lang="tr">Atari 2600 ROM</comment>
+  <comment xml:lang="sv">Atari 2600-rom</comment>
+  <comment xml:lang="sr-Cyrl">Атари 2600 РОМ</comment>
+  <comment xml:lang="sq">ROM Atari 2600</comment>
+  <comment xml:lang="sl">Atari 2600 ROM</comment>
+  <comment xml:lang="si">Atari 2600 ROM</comment>
+  <comment xml:lang="ru">Atari 2600 ROM</comment>
+  <comment xml:lang="pt-BR">ROM do Atari 2600</comment>
+  <comment xml:lang="pt">ROM Atari 2600</comment>
+  <comment xml:lang="pl">Plik ROM konsoli Atari 2600</comment>
+  <comment xml:lang="nl">Atari 2600-ROM</comment>
+  <comment xml:lang="ko">아타리 2600 롬</comment>
+  <comment xml:lang="kk-Cyrl">Atari 2600 ROM</comment>
+  <comment xml:lang="ka">Atari 2600 ROM</comment>
+  <comment xml:lang="ja">Atari 2600 ROM</comment>
+  <comment xml:lang="it">ROM Atari 2600</comment>
+  <comment xml:lang="is">Atari 2600 ROM</comment>
+  <comment xml:lang="id">Atari 2600 ROM</comment>
+  <comment xml:lang="hu">Atari 2600 ROM</comment>
+  <comment xml:lang="hr">Atari 2600 ROM</comment>
+  <comment xml:lang="he">Atari 2600 ROM</comment>
+  <comment xml:lang="gl">ROM de Atari 2600</comment>
+  <comment xml:lang="fur">ROM Atari 2600</comment>
+  <comment xml:lang="fr">ROM Atari 2600</comment>
+  <comment xml:lang="fi">Atari 2600 -ROM</comment>
+  <comment xml:lang="eu">Atari 2600 ROMa</comment>
+  <comment xml:lang="es">ROM de Atari 2600</comment>
+  <comment xml:lang="en-GB">Atari 2600 ROM</comment>
+  <comment xml:lang="de">Atari-2600-ROM</comment>
+  <comment xml:lang="da">Atari 2600-ROM</comment>
+  <comment xml:lang="ca">ROM d'Atari 2600</comment>
+  <comment xml:lang="bg">ROM — Atari 2600</comment>
+  <comment xml:lang="be-Cyrl">Atari 2600 ROM</comment>
+  <comment xml:lang="ar">روم Atari 2600</comment>
+  <generic-icon name="application-x-executable"/>
+  <glob pattern="*.a26"/>
+</mime-type>

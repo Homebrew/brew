@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-font-speedo">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Speedo font</comment>
+  <comment xml:lang="zh-Hant-TW">Speedo 字型</comment>
+  <comment xml:lang="zh-Hans-CN">Speedo 字体</comment>
+  <comment xml:lang="vi">Phông chữ Speedo</comment>
+  <comment xml:lang="uk">шрифт Speedo</comment>
+  <comment xml:lang="tr">Speedo yazı tipi</comment>
+  <comment xml:lang="sv">Speedo-typsnitt</comment>
+  <comment xml:lang="sr-Cyrl">Спидо слова</comment>
+  <comment xml:lang="sq">shkronja Speedo</comment>
+  <comment xml:lang="sl">Datoteka pisave Speedo</comment>
+  <comment xml:lang="si">ස්පීඩෝ අකුරු</comment>
+  <comment xml:lang="sk">Písmo Speedo</comment>
+  <comment xml:lang="ru">Шрифт Speedo</comment>
+  <comment xml:lang="ro">Font Speedo</comment>
+  <comment xml:lang="pt-BR">Fonte Speedo</comment>
+  <comment xml:lang="pt">letra Speedo</comment>
+  <comment xml:lang="pl">Czcionka Speedo</comment>
+  <comment xml:lang="oc">poliça Speedo</comment>
+  <comment xml:lang="nn">Speedo-skrifttype</comment>
+  <comment xml:lang="nl">Speedo-lettertype</comment>
+  <comment xml:lang="nb">Speedo-skrifttype</comment>
+  <comment xml:lang="ms">Font Speedo</comment>
+  <comment xml:lang="lv">Speedo fonts</comment>
+  <comment xml:lang="lt">Speedo šriftas</comment>
+  <comment xml:lang="ko">Speedo 글꼴</comment>
+  <comment xml:lang="kk-Cyrl">Speedo қарібі</comment>
+  <comment xml:lang="ja">Speedo フォント</comment>
+  <comment xml:lang="it">Carattere Speedo</comment>
+  <comment xml:lang="is">Speedo letur</comment>
+  <comment xml:lang="id">Fonta Speedo</comment>
+  <comment xml:lang="ia">Typo de litteras Speedo</comment>
+  <comment xml:lang="hu">Speedo-betűkészlet</comment>
+  <comment xml:lang="hr">Speedo font</comment>
+  <comment xml:lang="he">גופן של Speedo</comment>
+  <comment xml:lang="gl">tipo de letra Speedo</comment>
+  <comment xml:lang="ga">cló Speedo</comment>
+  <comment xml:lang="fur">caratar Speedo</comment>
+  <comment xml:lang="fr">police Speedo</comment>
+  <comment xml:lang="fo">Speedo stavasnið</comment>
+  <comment xml:lang="fi">Speedo-fontti</comment>
+  <comment xml:lang="eu">Speedo letra-tipoa</comment>
+  <comment xml:lang="es">tipo de letra de Speedo</comment>
+  <comment xml:lang="eo">Speedo-tiparo</comment>
+  <comment xml:lang="en-GB">Speedo font</comment>
+  <comment xml:lang="el">Γραμματοσειρά Speedo</comment>
+  <comment xml:lang="de">Speedo-Schrift</comment>
+  <comment xml:lang="da">Speedoskrifttype</comment>
+  <comment xml:lang="cy">Ffont Speedo</comment>
+  <comment xml:lang="cs">font Speedo</comment>
+  <comment xml:lang="ca">lletra Speedo</comment>
+  <comment xml:lang="bg">Шрифт — Speedo</comment>
+  <comment xml:lang="be-Latn">Šryft Speedo</comment>
+  <comment xml:lang="be-Cyrl">шрыфт Speedo</comment>
+  <comment xml:lang="az">Speedo yazı növü</comment>
+  <comment xml:lang="ar">خط Speedo</comment>
+  <comment xml:lang="af">Speedo-skriftipe</comment>
+  <generic-icon name="font-x-generic"/>
+  <glob pattern="*.spd"/>
+</mime-type>

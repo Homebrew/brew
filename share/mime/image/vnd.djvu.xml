@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="image/vnd.djvu">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>DjVu image</comment>
+  <comment xml:lang="zh-Hant-TW">DjVu 影像</comment>
+  <comment xml:lang="zh-Hans-CN">DjVu 图像</comment>
+  <comment xml:lang="vi">Ảnh DjVu</comment>
+  <comment xml:lang="uk">зображення DjVu</comment>
+  <comment xml:lang="tr">DjVu görüntüsü</comment>
+  <comment xml:lang="sv">DjVu-bild</comment>
+  <comment xml:lang="sr-Cyrl">ДјВу слика</comment>
+  <comment xml:lang="sq">figurë DjVu</comment>
+  <comment xml:lang="sl">Slikovna datoteka DjVu</comment>
+  <comment xml:lang="si">DjVu රූපය</comment>
+  <comment xml:lang="sk">Obrázok DjVu</comment>
+  <comment xml:lang="ru">Изображение DjVu</comment>
+  <comment xml:lang="ro">Imagine DjVu</comment>
+  <comment xml:lang="pt-BR">Imagem DjVu</comment>
+  <comment xml:lang="pt">imagem DjVu</comment>
+  <comment xml:lang="pl">Obraz DjVu</comment>
+  <comment xml:lang="oc">imatge DjVu</comment>
+  <comment xml:lang="nn">DjVu-bilete</comment>
+  <comment xml:lang="nl">DjVu-afbeelding</comment>
+  <comment xml:lang="nb">DjVu-bilde</comment>
+  <comment xml:lang="ms">Imej DjVu</comment>
+  <comment xml:lang="lv">DjVu attēls</comment>
+  <comment xml:lang="lt">DjVu paveikslėlis</comment>
+  <comment xml:lang="ko">DjVu 그림</comment>
+  <comment xml:lang="kk-Cyrl">DjVu суреті</comment>
+  <comment xml:lang="ka">DjVu გამოსახულება</comment>
+  <comment xml:lang="ja">DjVu 画像</comment>
+  <comment xml:lang="it">Immagine DjVu</comment>
+  <comment xml:lang="is">DjVu mynd</comment>
+  <comment xml:lang="id">Citra DjVu</comment>
+  <comment xml:lang="ia">Imagine DjVu</comment>
+  <comment xml:lang="hu">DjVu-kép</comment>
+  <comment xml:lang="hr">DjVu slika</comment>
+  <comment xml:lang="he">תמונת DjVu</comment>
+  <comment xml:lang="gl">imaxe de DjVu</comment>
+  <comment xml:lang="ga">íomhá DjVu</comment>
+  <comment xml:lang="fur">imagjin DjVu</comment>
+  <comment xml:lang="fr">image DjVu</comment>
+  <comment xml:lang="fo">DjVu mynd</comment>
+  <comment xml:lang="fi">DjVu-kuva</comment>
+  <comment xml:lang="eu">DjVU-ko irudia</comment>
+  <comment xml:lang="es">imagen DjVu</comment>
+  <comment xml:lang="eo">DjVu-bildo</comment>
+  <comment xml:lang="en-GB">DjVu image</comment>
+  <comment xml:lang="el">Εικόνα DjVu</comment>
+  <comment xml:lang="de">DjVu-Bild</comment>
+  <comment xml:lang="da">DjVu-billede</comment>
+  <comment xml:lang="cs">obrázek DjVu</comment>
+  <comment xml:lang="ca">imatge DjVu</comment>
+  <comment xml:lang="bg">Изображение — DjVu</comment>
+  <comment xml:lang="be-Latn">Vyjava DjVu</comment>
+  <comment xml:lang="be-Cyrl">выява DjVu</comment>
+  <comment xml:lang="ar">صورة DjVu</comment>
+  <comment xml:lang="af">DjVu-beeld</comment>
+  <alias type="image/x-djvu"/>
+  <alias type="image/x.djvu"/>
+  <glob pattern="*.djvu"/>
+  <glob pattern="*.djv"/>
+</mime-type>

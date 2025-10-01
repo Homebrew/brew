@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="message/news">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Usenet news message</comment>
+  <comment xml:lang="zh-Hant-TW">Usenet 新聞訊息</comment>
+  <comment xml:lang="zh-Hans-CN">Usenet 新闻信</comment>
+  <comment xml:lang="vi">Thông điệp tin tức USENET</comment>
+  <comment xml:lang="uk">повідомлення новин Usenet</comment>
+  <comment xml:lang="tr">Usenet haber iletisi</comment>
+  <comment xml:lang="sv">Usenet-diskussionsgruppsmeddelande</comment>
+  <comment xml:lang="sr-Cyrl">Порука новости Јузнета</comment>
+  <comment xml:lang="sq">mesazh lajmesh Usenet</comment>
+  <comment xml:lang="sl">novičarsko sporočilo Usenet</comment>
+  <comment xml:lang="si">යූස්නෙට් පුවත් පණිවිඩය</comment>
+  <comment xml:lang="sk">Príspevok do diskusných skupín Usenet</comment>
+  <comment xml:lang="ru">Новостное сообщение Usenet</comment>
+  <comment xml:lang="ro">Mesaj Usenet de știri </comment>
+  <comment xml:lang="pt-BR">Mensagem de notícias da Usenet</comment>
+  <comment xml:lang="pt">mensagem de notícias Usenet</comment>
+  <comment xml:lang="pl">Wiadomość grupy dyskusyjnej</comment>
+  <comment xml:lang="oc">messatge de grop d'escambi Usenet</comment>
+  <comment xml:lang="nn">USENET diskusjonsmelding</comment>
+  <comment xml:lang="nl">Usenet-nieuwsbericht</comment>
+  <comment xml:lang="nb">Usenet nyhetsmelding</comment>
+  <comment xml:lang="ms">Mesej berita USENET</comment>
+  <comment xml:lang="lv">Usenet jaunumu ziņojums</comment>
+  <comment xml:lang="lt">Usenet naujienų žinutė</comment>
+  <comment xml:lang="ko">유즈넷 뉴스 메시지</comment>
+  <comment xml:lang="kk-Cyrl">Usenet жаңалық мәлімдемесі</comment>
+  <comment xml:lang="ja">Usenet news メッセージ</comment>
+  <comment xml:lang="it">Messaggio news Usenet</comment>
+  <comment xml:lang="is">USENET fréttaskilaboð</comment>
+  <comment xml:lang="id">Pesan berita Usenet</comment>
+  <comment xml:lang="ia">Message de gruppo Usenet</comment>
+  <comment xml:lang="hu">USENET-hírcsoportüzenet</comment>
+  <comment xml:lang="hr">Usenet poruka novosti</comment>
+  <comment xml:lang="he">הודעת חדשות של Usenet</comment>
+  <comment xml:lang="gl">mensaxes de noticias de Usenet</comment>
+  <comment xml:lang="ga">teachtaireacht nuachta Usenet</comment>
+  <comment xml:lang="fur">messaç gnovis Usenet</comment>
+  <comment xml:lang="fr">message de groupe d'échange Usenet</comment>
+  <comment xml:lang="fo">Usenet news boð</comment>
+  <comment xml:lang="fi">nyyssiviesti</comment>
+  <comment xml:lang="eu">Usenet berrien mezua</comment>
+  <comment xml:lang="es">mensaje de noticias de Usenet</comment>
+  <comment xml:lang="eo">novaĵmesaĝo de Usenet</comment>
+  <comment xml:lang="en-GB">Usenet news message</comment>
+  <comment xml:lang="el">Μήνυμα ομάδων συζητήσεων Usenet</comment>
+  <comment xml:lang="de">Usenet-News-Nachricht</comment>
+  <comment xml:lang="da">Usenet-nyhedsmeddelelse</comment>
+  <comment xml:lang="cy">Neges newyddion Usenet</comment>
+  <comment xml:lang="cs">příspěvek do diskusních skupin Usenet</comment>
+  <comment xml:lang="ca">missatge de notícies Usenet</comment>
+  <comment xml:lang="bg">Съобщение — Usenet</comment>
+  <comment xml:lang="be-Latn">Navina Usenet</comment>
+  <comment xml:lang="be-Cyrl">навіна Usenet</comment>
+  <comment xml:lang="az">Usenet xəbərlər ismarışı</comment>
+  <comment xml:lang="ar">رسالة أخبار Usenet</comment>
+  <comment xml:lang="af">Usenet-nuusboodskap</comment>
+  <generic-icon name="text-x-generic"/>
+  <sub-class-of type="text/plain"/>
+</mime-type>

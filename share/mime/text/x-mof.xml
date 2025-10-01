@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="text/x-mof">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>MOF file</comment>
+  <comment xml:lang="zh-Hant-TW">MOF 檔</comment>
+  <comment xml:lang="zh-Hans-CN">MOF 文件</comment>
+  <comment xml:lang="uk">файл MOF</comment>
+  <comment xml:lang="tr">MOF dosyası</comment>
+  <comment xml:lang="sv">MOF-fil</comment>
+  <comment xml:lang="sq">kartelë MOF</comment>
+  <comment xml:lang="sl">Datoteka MOF</comment>
+  <comment xml:lang="si">MOF ගොනුව</comment>
+  <comment xml:lang="sk">Súbor MOF</comment>
+  <comment xml:lang="ru">Файл MOF</comment>
+  <comment xml:lang="pt-BR">Arquivo MOF</comment>
+  <comment xml:lang="pl">Plik MOF</comment>
+  <comment xml:lang="oc">fichièr MOF</comment>
+  <comment xml:lang="nl">MOF-bestand</comment>
+  <comment xml:lang="ko">MOF 파일</comment>
+  <comment xml:lang="kk-Cyrl">MOF файлы</comment>
+  <comment xml:lang="ja">MOF ファイル</comment>
+  <comment xml:lang="it">File MOF</comment>
+  <comment xml:lang="is">MOF-skrá</comment>
+  <comment xml:lang="id">Berkas MOF</comment>
+  <comment xml:lang="hu">MOF fájl</comment>
+  <comment xml:lang="hr">MOF datoteka</comment>
+  <comment xml:lang="he">קובץ MOF</comment>
+  <comment xml:lang="gl">Ficheiro MOF</comment>
+  <comment xml:lang="fr">fichier MOF</comment>
+  <comment xml:lang="fi">MOF-tiedosto</comment>
+  <comment xml:lang="eu">MOF fitxategia</comment>
+  <comment xml:lang="es">archivo MOF</comment>
+  <comment xml:lang="en-GB">MOF file</comment>
+  <comment xml:lang="de">MOF-Datei</comment>
+  <comment xml:lang="da">MOF-fil</comment>
+  <comment xml:lang="ca">fitxer MOF</comment>
+  <comment xml:lang="bg">Модел — MOF</comment>
+  <comment xml:lang="be-Cyrl">файл MOF</comment>
+  <comment xml:lang="ar">ملف MOF</comment>
+  <acronym>MOF</acronym>
+  <expanded-acronym>Windows Managed Object File</expanded-acronym>
+  <sub-class-of type="text/x-csrc"/>
+  <glob pattern="*.mof"/>
+</mime-type>

@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="image/x-sony-srf">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Sony SRF raw image</comment>
+  <comment xml:lang="zh-Hant-TW">Sony SRF 原始影像</comment>
+  <comment xml:lang="zh-Hans-CN">索尼 SRF 原始映像</comment>
+  <comment xml:lang="vi">Ảnh thô Sony SRF</comment>
+  <comment xml:lang="uk">цифровий негатив SRF Sony</comment>
+  <comment xml:lang="tr">Sony SRF ham görüntüsü</comment>
+  <comment xml:lang="sv">Sony SRF-råbild</comment>
+  <comment xml:lang="sr-Cyrl">Сони СРФ сирова слика</comment>
+  <comment xml:lang="sq">figurë Sony SRF e papërpunuar</comment>
+  <comment xml:lang="sl">Surova slikovna datoteka Sony SRF</comment>
+  <comment xml:lang="si">Sony SRF අමු රූපය</comment>
+  <comment xml:lang="sk">Surový obrázok Sony SRF</comment>
+  <comment xml:lang="ru">Необработанное изображение Sony SRF</comment>
+  <comment xml:lang="ro">Imagine brută Sony SRF</comment>
+  <comment xml:lang="pt-BR">Imagem bruta SRF da Sony</comment>
+  <comment xml:lang="pt">imagem em bruto Sony SRF</comment>
+  <comment xml:lang="pl">Surowy obraz SRF Sony</comment>
+  <comment xml:lang="oc">imatge brut SRF Sony</comment>
+  <comment xml:lang="nn">Sony SRF råbilete</comment>
+  <comment xml:lang="nl">onbewerkt Sony SRF-beeld</comment>
+  <comment xml:lang="nb">Sony SRF raw-bilde</comment>
+  <comment xml:lang="lv">Sony SRF jēlattēls</comment>
+  <comment xml:lang="lt">Sony SRF neapdorotas paveikslėlis</comment>
+  <comment xml:lang="ko">소니 SRF RAW 사진</comment>
+  <comment xml:lang="kk-Cyrl">Sony SRF өңделмеген суреті</comment>
+  <comment xml:lang="ja">Sony SRF raw 画像</comment>
+  <comment xml:lang="it">Immagine raw Sony SRF</comment>
+  <comment xml:lang="is">Sony SRF hrámynd</comment>
+  <comment xml:lang="id">Citra mentah Sony SRF</comment>
+  <comment xml:lang="ia">Imagine brute Sony SRF</comment>
+  <comment xml:lang="hu">Sony SRF nyers kép</comment>
+  <comment xml:lang="hr">Sony SRF osnovna slika</comment>
+  <comment xml:lang="he">תמונה גולמית של Sony SRF</comment>
+  <comment xml:lang="gl">imaxe en bruto SRF de sony</comment>
+  <comment xml:lang="ga">amhíomhá Sony SRF</comment>
+  <comment xml:lang="fur">imagjin grese Sony SRF</comment>
+  <comment xml:lang="fr">image brute SRF Sony</comment>
+  <comment xml:lang="fo">Sony SRF rámynd</comment>
+  <comment xml:lang="fi">Sony-SRF-raakakuva</comment>
+  <comment xml:lang="eu">Sony SRF irudi gordina</comment>
+  <comment xml:lang="es">imagen en bruto SRF de Sony</comment>
+  <comment xml:lang="en-GB">Sony SRF raw image</comment>
+  <comment xml:lang="el">Ανεπεξέργαστη εικόνα Sony SRF</comment>
+  <comment xml:lang="de">Sony-SRF-Rohbild</comment>
+  <comment xml:lang="da">Sony SRF raw-billede</comment>
+  <comment xml:lang="cs">surový obrázek Sony SRF</comment>
+  <comment xml:lang="ca">imatge en cru de Sony SRF</comment>
+  <comment xml:lang="bg">Изображение — Sony SRF raw</comment>
+  <comment xml:lang="be-Latn">Suvoraja vyjava Sony SRF</comment>
+  <comment xml:lang="be-Cyrl">неапрацаваная выява Sony SRF</comment>
+  <comment xml:lang="ar">صورة Sony SRF خامة</comment>
+  <comment xml:lang="af">Sony SRF rou beeld</comment>
+  <acronym>SRF</acronym>
+  <expanded-acronym>Sony Raw Format</expanded-acronym>
+  <sub-class-of type="image/x-dcraw"/>
+  <sub-class-of type="image/tiff"/>
+  <glob pattern="*.srf"/>
+</mime-type>

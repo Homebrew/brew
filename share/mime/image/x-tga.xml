@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="image/x-tga">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>TGA image</comment>
+  <comment xml:lang="zh-Hant-TW">TGA 影像</comment>
+  <comment xml:lang="zh-Hans-CN">TGA 图像</comment>
+  <comment xml:lang="vi">Ảnh TGA</comment>
+  <comment xml:lang="uk">зображення TGA</comment>
+  <comment xml:lang="tr">TGA görüntüsü</comment>
+  <comment xml:lang="sv">TGA-bild</comment>
+  <comment xml:lang="sr-Cyrl">ТГА слика</comment>
+  <comment xml:lang="sq">figurë TGA</comment>
+  <comment xml:lang="sl">Slikovna datoteka TGA</comment>
+  <comment xml:lang="si">TGA රූපය</comment>
+  <comment xml:lang="sk">Obrázok TGA</comment>
+  <comment xml:lang="ru">Изображение TGA</comment>
+  <comment xml:lang="ro">Imagine TGA</comment>
+  <comment xml:lang="pt-BR">Imagem TGA</comment>
+  <comment xml:lang="pt">imagem TGA</comment>
+  <comment xml:lang="pl">Obraz TGA</comment>
+  <comment xml:lang="oc">imatge TGA</comment>
+  <comment xml:lang="nn">TGA-bilete</comment>
+  <comment xml:lang="nl">TGA-afbeelding</comment>
+  <comment xml:lang="nb">TGA-bilde</comment>
+  <comment xml:lang="lv">TGA attēls</comment>
+  <comment xml:lang="lt">TGA paveikslėlis</comment>
+  <comment xml:lang="ko">TGA 그림</comment>
+  <comment xml:lang="kk-Cyrl">TGA суреті</comment>
+  <comment xml:lang="ja">TGA 画像</comment>
+  <comment xml:lang="it">Immagine TGA</comment>
+  <comment xml:lang="is">TGA mynd</comment>
+  <comment xml:lang="id">Citra TGA</comment>
+  <comment xml:lang="ia">Imagine TGA</comment>
+  <comment xml:lang="hu">TGA kép</comment>
+  <comment xml:lang="hr">TGA slika</comment>
+  <comment xml:lang="he">תמונת TGA</comment>
+  <comment xml:lang="gl">imaxe TGA</comment>
+  <comment xml:lang="ga">íomhá TGA</comment>
+  <comment xml:lang="fur">imagjin TGA</comment>
+  <comment xml:lang="fr">image TGA</comment>
+  <comment xml:lang="fo">TGA mynd</comment>
+  <comment xml:lang="fi">TGA-kuva</comment>
+  <comment xml:lang="eu">TGA irudia</comment>
+  <comment xml:lang="es">imagen TGA</comment>
+  <comment xml:lang="eo">TGA-bildo</comment>
+  <comment xml:lang="en-GB">TGA image</comment>
+  <comment xml:lang="el">Εικόνα TGA</comment>
+  <comment xml:lang="de">TGA-Bild</comment>
+  <comment xml:lang="da">TGA-billede</comment>
+  <comment xml:lang="cs">obrázek TGA</comment>
+  <comment xml:lang="ca">imatge TGA</comment>
+  <comment xml:lang="bg">Изображение — TGA</comment>
+  <comment xml:lang="be-Latn">Vyjava TGA</comment>
+  <comment xml:lang="be-Cyrl">выява TGA</comment>
+  <comment xml:lang="ar">صورة TGA</comment>
+  <comment xml:lang="af">TGA-beeld</comment>
+  <acronym>TGA</acronym>
+  <expanded-acronym>Truevision Graphics Adapter</expanded-acronym>
+  <glob pattern="*.tga"/>
+  <glob pattern="*.icb"/>
+  <glob pattern="*.tpic"/>
+  <glob pattern="*.vda"/>
+  <glob pattern="*.vst"/>
+  <alias type="application/tga"/>
+  <alias type="application/x-targa"/>
+  <alias type="application/x-tga"/>
+  <alias type="image/targa"/>
+  <alias type="image/tga"/>
+  <alias type="image/x-icb"/>
+  <alias type="image/x-targa"/>
+</mime-type>

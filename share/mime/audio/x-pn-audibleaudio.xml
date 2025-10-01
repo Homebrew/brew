@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="audio/x-pn-audibleaudio">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Audible.Com audio</comment>
+  <comment xml:lang="zh-Hant-TW">Audible.Com 音訊</comment>
+  <comment xml:lang="zh-Hans-CN">Audible.Com 音频</comment>
+  <comment xml:lang="uk">звук Audible.Com</comment>
+  <comment xml:lang="tr">Audible.Com sesi</comment>
+  <comment xml:lang="sv">Audible.Com-ljud</comment>
+  <comment xml:lang="sq">audio Audible.Com</comment>
+  <comment xml:lang="sl">Zvok Audible.Com</comment>
+  <comment xml:lang="si">Audible.Com ශ්‍රව්‍ය</comment>
+  <comment xml:lang="sk">Audio Audible.Com</comment>
+  <comment xml:lang="ru">Аудио Audible.Com</comment>
+  <comment xml:lang="pt-BR">Áudio de audible.com</comment>
+  <comment xml:lang="pl">Plik dźwiękowy Audible.com</comment>
+  <comment xml:lang="nl">Audible.com-audio</comment>
+  <comment xml:lang="ko">Audible.Com 오디오</comment>
+  <comment xml:lang="kk-Cyrl">Audible.Com аудиосы</comment>
+  <comment xml:lang="ja">Audible.Com オーディオ</comment>
+  <comment xml:lang="it">Audio Audible.Com</comment>
+  <comment xml:lang="is">Audible.Com hljóðskrá</comment>
+  <comment xml:lang="id">Audio Audible.Com</comment>
+  <comment xml:lang="hu">Audible.Com hang</comment>
+  <comment xml:lang="hr">Audible.Com zvučni zapis</comment>
+  <comment xml:lang="he">שמע של Audible.Com</comment>
+  <comment xml:lang="ga">fuaim Audible.Com</comment>
+  <comment xml:lang="fur">audio Audible.Com</comment>
+  <comment xml:lang="fr">audio Audible.Com</comment>
+  <comment xml:lang="fi">Audible.Com-ääni</comment>
+  <comment xml:lang="eu">Audible.Com audioa</comment>
+  <comment xml:lang="es">sonido de Audible.com</comment>
+  <comment xml:lang="en-GB">Audible.Com audio</comment>
+  <comment xml:lang="de">Audible.com-Audio</comment>
+  <comment xml:lang="da">Audible.Com-lyd</comment>
+  <comment xml:lang="cs">zvuk Audible.Com</comment>
+  <comment xml:lang="ca">àudio d'Audible.Com</comment>
+  <comment xml:lang="bg">Аудио — Audible.Com</comment>
+  <comment xml:lang="be-Cyrl">аўдыя Audible.Com</comment>
+  <comment xml:lang="ar">صوت Audible.Com</comment>
+  <glob pattern="*.aa"/>
+  <alias type="audio/vnd.audible"/>
+</mime-type>

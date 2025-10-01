@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="text/x-blueprint">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Blueprint source code</comment>
+  <comment xml:lang="uk">початковий код синьки</comment>
+  <comment xml:lang="sv">Blueprint-källkod</comment>
+  <comment xml:lang="ru">Исходный код Blueprint</comment>
+  <comment xml:lang="pl">Kod źródłowy Blueprint</comment>
+  <comment xml:lang="it">Codice sorgente Blueprint</comment>
+  <comment xml:lang="gl">Código fonte en Blueprint</comment>
+  <comment xml:lang="es">código fuente en Blueprint</comment>
+  <comment xml:lang="de">Blueprint-Quelltext</comment>
+  <comment xml:lang="be-Cyrl">зыходны код Blueprint</comment>
+  <sub-class-of type="text/plain"/>
+  <glob pattern="*.blp"/>
+</mime-type>

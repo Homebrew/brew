@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="text/x-moc">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Qt MOC file</comment>
+  <comment xml:lang="zh-Hant-TW">Qt MOC 檔</comment>
+  <comment xml:lang="zh-Hans-CN">Qt 元对象编译器文件</comment>
+  <comment xml:lang="vi">Tập tin MOC của Qt</comment>
+  <comment xml:lang="uk">файл-метаоб'єкт Qt</comment>
+  <comment xml:lang="tr">Qt MOC dosyası</comment>
+  <comment xml:lang="sv">Qt MOC-fil</comment>
+  <comment xml:lang="sr-Cyrl">Кут МОЦ датотека</comment>
+  <comment xml:lang="sq">kartelë Qt MOC</comment>
+  <comment xml:lang="sl">Datoteka Qt MOC</comment>
+  <comment xml:lang="si">Qt MOC ගොනුව</comment>
+  <comment xml:lang="sk">Súbor Qt MOC</comment>
+  <comment xml:lang="ru">Файл Qt MOC</comment>
+  <comment xml:lang="ro">Fișier Qt MOC</comment>
+  <comment xml:lang="pt-BR">Arquivo Qt MOC</comment>
+  <comment xml:lang="pt">ficheiro Qt MOC</comment>
+  <comment xml:lang="pl">Plik Qt MOC</comment>
+  <comment xml:lang="oc">fichièr Qt MOC</comment>
+  <comment xml:lang="nn">Qt MOC-fil</comment>
+  <comment xml:lang="nl">Qt MOC-bestand</comment>
+  <comment xml:lang="nb">Qt MOC-fil</comment>
+  <comment xml:lang="lv">Qt MOC datne</comment>
+  <comment xml:lang="lt">Qt MOC failas</comment>
+  <comment xml:lang="ko">Qt MOC 파일</comment>
+  <comment xml:lang="kk-Cyrl">Qt MOC файлы</comment>
+  <comment xml:lang="ja">Qt MOC ファイル</comment>
+  <comment xml:lang="it">File MOC Qt</comment>
+  <comment xml:lang="is">Qt MOC-skrá</comment>
+  <comment xml:lang="id">Berkas Qt MOC</comment>
+  <comment xml:lang="ia">File Qt MOC</comment>
+  <comment xml:lang="hu">Qt MOC fájl</comment>
+  <comment xml:lang="hr">Qt MOC datoteka</comment>
+  <comment xml:lang="he">קובץ Qt MOC</comment>
+  <comment xml:lang="gl">ficheiro MOC Qt</comment>
+  <comment xml:lang="ga">comhad MOC Qt</comment>
+  <comment xml:lang="fur">file Qt MOC</comment>
+  <comment xml:lang="fr">fichier Qt MOC</comment>
+  <comment xml:lang="fo">Qt MOC fíla</comment>
+  <comment xml:lang="fi">Qt MOC -tiedosto</comment>
+  <comment xml:lang="eu">Qt MOC fitxategia</comment>
+  <comment xml:lang="es">archivo MOC Qt</comment>
+  <comment xml:lang="en-GB">Qt MOC file</comment>
+  <comment xml:lang="el">Αρχείο Qt MOC</comment>
+  <comment xml:lang="de">Qt-MOC-Datei</comment>
+  <comment xml:lang="da">Qt MOC-fil</comment>
+  <comment xml:lang="cs">soubor Qt MOC</comment>
+  <comment xml:lang="ca">fitxer MOC de Qt</comment>
+  <comment xml:lang="bg">Файл — Qt MOC</comment>
+  <comment xml:lang="be-Latn">Fajł Qt MOC</comment>
+  <comment xml:lang="be-Cyrl">файл Qt MOC</comment>
+  <comment xml:lang="ar">ملف Qt MOC</comment>
+  <acronym>Qt MOC</acronym>
+  <expanded-acronym>Qt Meta Object Compiler</expanded-acronym>
+  <sub-class-of type="text/plain"/>
+  <glob pattern="*.moc"/>
+</mime-type>

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="inode/chardevice">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Character device</comment>
+  <comment xml:lang="uk">Символьний пристрій</comment>
+  <comment xml:lang="sv">Teckenenhet</comment>
+  <comment xml:lang="ru">Символьное устройство</comment>
+  <comment xml:lang="pl">Urządzenie znakowe</comment>
+  <comment xml:lang="ja">文字様機器</comment>
+  <comment xml:lang="it">Device a caratteri</comment>
+  <comment xml:lang="gl">Dispositivo de caracter</comment>
+  <comment xml:lang="eu">Karaktere-gailua</comment>
+  <comment xml:lang="es">dispositivo de caracteres</comment>
+  <comment xml:lang="de">Zeichenorientiertes Gerät</comment>
+  <comment xml:lang="be-Cyrl">сімвальная прылада</comment>
+</mime-type>

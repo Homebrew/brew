@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-tiled-tmx">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Tiled map files</comment>
+  <comment xml:lang="uk">файли мозаїчної карти</comment>
+  <comment xml:lang="sv">Tiled-kartfiler</comment>
+  <comment xml:lang="ru">Файлы карты Tiled</comment>
+  <comment xml:lang="pl">Pliki map Tiled</comment>
+  <comment xml:lang="es">archivos de mapa en mosaico</comment>
+  <comment xml:lang="de">Tiled-Kartendatei</comment>
+  <sub-class-of type="application/xml"/>
+  <glob pattern="*.tmx"/>
+</mime-type>

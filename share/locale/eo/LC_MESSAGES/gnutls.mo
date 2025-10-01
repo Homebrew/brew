@@ -1,0 +1,1 @@
+../../../../Cellar/gnutls/3.8.9/share/locale/eo/LC_MESSAGES/gnutls.mo

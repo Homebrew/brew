@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-siag">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Siag spreadsheet</comment>
+  <comment xml:lang="zh-Hant-TW">Siag 試算表</comment>
+  <comment xml:lang="zh-Hans-CN">Siag 电子表格</comment>
+  <comment xml:lang="vi">Bảng tính Slag</comment>
+  <comment xml:lang="uk">електронна таблиця Siag</comment>
+  <comment xml:lang="tr">Siag hesap çizelgesi</comment>
+  <comment xml:lang="sv">Siag-kalkylblad</comment>
+  <comment xml:lang="sr-Cyrl">Сјаг табела</comment>
+  <comment xml:lang="sq">fletëllogaritje Siag</comment>
+  <comment xml:lang="sl">Preglednica Siag</comment>
+  <comment xml:lang="si">Siag පැතුරුම්පත</comment>
+  <comment xml:lang="sk">Zošit Siag</comment>
+  <comment xml:lang="ru">Электронная таблица Siag</comment>
+  <comment xml:lang="ro">Foaie de calcul Siag</comment>
+  <comment xml:lang="pt-BR">Planilha do Siag</comment>
+  <comment xml:lang="pt">folha de cálculo Siag</comment>
+  <comment xml:lang="pl">Arkusz Siag</comment>
+  <comment xml:lang="oc">fuèlh de calcul Siag</comment>
+  <comment xml:lang="nn">Siag-rekneark</comment>
+  <comment xml:lang="nl">Siag-rekenblad</comment>
+  <comment xml:lang="nb">Siag-regneark</comment>
+  <comment xml:lang="ms">Hamparan Siag</comment>
+  <comment xml:lang="lv">Siag izklājlapa</comment>
+  <comment xml:lang="lt">Siag skaičialentė</comment>
+  <comment xml:lang="ko">Siag 스프레드시트</comment>
+  <comment xml:lang="kk-Cyrl">Siag электрондық кестесі</comment>
+  <comment xml:lang="ja">Siag スプレッドシート</comment>
+  <comment xml:lang="it">Foglio di calcolo Siag</comment>
+  <comment xml:lang="is">Siag töflureikniskjal</comment>
+  <comment xml:lang="id">Lembar sebar Siag</comment>
+  <comment xml:lang="ia">Folio de calculo Siag</comment>
+  <comment xml:lang="hu">Siag-munkafüzet</comment>
+  <comment xml:lang="hr">Siag proračunska tablica</comment>
+  <comment xml:lang="he">גיליון נתונים של Siag</comment>
+  <comment xml:lang="gl">folla de cálculo de Siag</comment>
+  <comment xml:lang="ga">scarbhileog Siag</comment>
+  <comment xml:lang="fur">sfuei di calcul Siag</comment>
+  <comment xml:lang="fr">feuille de calcul Siag</comment>
+  <comment xml:lang="fo">Siag rokniark</comment>
+  <comment xml:lang="fi">Siag-taulukko</comment>
+  <comment xml:lang="eu">Siag kalkulu-orria</comment>
+  <comment xml:lang="es">hoja de cálculo de Siag</comment>
+  <comment xml:lang="eo">Siag-kalkultabelo</comment>
+  <comment xml:lang="en-GB">Siag spreadsheet</comment>
+  <comment xml:lang="el">Λογιστικό φύλλο Siag</comment>
+  <comment xml:lang="de">Siag-Tabelle</comment>
+  <comment xml:lang="da">Siagregneark</comment>
+  <comment xml:lang="cs">sešit Siag</comment>
+  <comment xml:lang="ca">full de càlcul Siag</comment>
+  <comment xml:lang="bg">Таблица — Siag</comment>
+  <comment xml:lang="be-Latn">Raźlikovy arkuš Siag</comment>
+  <comment xml:lang="be-Cyrl">электронная табліца Siag</comment>
+  <comment xml:lang="ar">جدول Siag</comment>
+  <comment xml:lang="af">Siag-sigblad</comment>
+  <generic-icon name="x-office-spreadsheet"/>
+  <glob pattern="*.siag"/>
+</mime-type>

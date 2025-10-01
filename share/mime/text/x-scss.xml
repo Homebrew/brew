@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="text/x-scss">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>SCSS pre-processor file</comment>
+  <comment xml:lang="zh-Hant-TW">SCSS 前處理器檔</comment>
+  <comment xml:lang="zh-Hans-CN">SCSS 预处理文件</comment>
+  <comment xml:lang="uk">файл засобу попередньої обробки SCSS</comment>
+  <comment xml:lang="tr">SCSS ön işleyici dosyası</comment>
+  <comment xml:lang="sv">SCSS förprocessorfil</comment>
+  <comment xml:lang="sq">kartelë pre-procesori SCSS</comment>
+  <comment xml:lang="si">SCSS පෙර සැකසුම් ගොනුව</comment>
+  <comment xml:lang="ru">Файл препроцессора SCSS</comment>
+  <comment xml:lang="pt-BR">Arquivo de pré-processamento SCSS</comment>
+  <comment xml:lang="pl">Plik preprocesora SCSS</comment>
+  <comment xml:lang="nl">SCSS-voorverwerkersbestand</comment>
+  <comment xml:lang="ko">SCSS 전처리 파일</comment>
+  <comment xml:lang="kk-Cyrl">SCSS препроцессор файлы</comment>
+  <comment xml:lang="ja">SCSS プリプロセッサファイル</comment>
+  <comment xml:lang="it">File SCSS</comment>
+  <comment xml:lang="is">SCSS pre-processor skrá</comment>
+  <comment xml:lang="id">Berkas preprosesor SCSS</comment>
+  <comment xml:lang="hu">SCSS előfeldolgozófájl</comment>
+  <comment xml:lang="hr">SCSS datoteka predobrade</comment>
+  <comment xml:lang="he">קובץ עיבוד קדם SCSS</comment>
+  <comment xml:lang="fr">fichier de prétraitement SCSS</comment>
+  <comment xml:lang="fi">SCSS esikäsittelijä -tiedosto</comment>
+  <comment xml:lang="eu">SCSS fitxategi prozesatu gabea</comment>
+  <comment xml:lang="es">archivo de preprocesador SCSS</comment>
+  <comment xml:lang="en-GB">SCSS pre-processor file</comment>
+  <comment xml:lang="de">SCSS-Präprozessordatei</comment>
+  <comment xml:lang="da">SCSS pre-processor-fil</comment>
+  <comment xml:lang="ca">fitxer preprocessador SCSS</comment>
+  <comment xml:lang="bg">Директиви за препроцесора — SCSS</comment>
+  <comment xml:lang="be-Cyrl">файл прэпрацэсара SCSS</comment>
+  <comment xml:lang="ar">ملف SCSS قبل المعالج</comment>
+  <acronym>SCSS</acronym>
+  <expanded-acronym>Sassy CSS</expanded-acronym>
+  <sub-class-of type="text/plain"/>
+  <glob pattern="*.scss"/>
+  <generic-icon name="text-x-generic"/>
+</mime-type>

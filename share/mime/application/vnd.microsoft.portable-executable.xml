@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/vnd.microsoft.portable-executable">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Windows or EFI program</comment>
+  <acronym>EFI</acronym>
+  <expanded-acronym>Extensible Firmware Interface</expanded-acronym>
+  <sub-class-of type="application/x-msdownload"/>
+  <generic-icon name="application-x-executable"/>
+  <glob pattern="*.exe" weight="40"/>
+  <glob pattern="*.dll" weight="40"/>
+  <glob pattern="*.cpl" weight="40"/>
+  <glob pattern="*.drv" weight="40"/>
+  <glob pattern="*.scr" weight="40"/>
+  <glob pattern="*.efi"/>
+  <glob pattern="*.ocx"/>
+  <glob pattern="*.sys"/>
+  <glob pattern="*.lib"/>
+</mime-type>

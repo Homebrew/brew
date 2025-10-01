@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-nintendo-3ds-rom">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Nintendo 3DS ROM</comment>
+  <comment xml:lang="uk">ППП Nintendo 3DS</comment>
+  <comment xml:lang="tr">Nintendo 3DS ROM</comment>
+  <comment xml:lang="sv">Nintendo 3DS-rom</comment>
+  <comment xml:lang="sl">Nintendo 3DS ROM</comment>
+  <comment xml:lang="si">Nintendo 3DS ROM</comment>
+  <comment xml:lang="ru">Nintendo 3DS ROM</comment>
+  <comment xml:lang="pt-BR">ROM do Nintendo 3DS</comment>
+  <comment xml:lang="pt">ROM Nintendo 3DS</comment>
+  <comment xml:lang="pl">Plik ROM konsoli Nintendo 3DS</comment>
+  <comment xml:lang="oc">ROM Nintendo 3DS</comment>
+  <comment xml:lang="nl">Nintendo 3DS-ROM</comment>
+  <comment xml:lang="ko">닌텐도 3DS 롬</comment>
+  <comment xml:lang="kk-Cyrl">Nintendo 3DS ROM</comment>
+  <comment xml:lang="ja">ニンテンドー3DS ROM</comment>
+  <comment xml:lang="it">ROM Nintendo 3DS</comment>
+  <comment xml:lang="is">Nintendo 3DS ROM</comment>
+  <comment xml:lang="id">ROM Nintendo 3DS</comment>
+  <comment xml:lang="hu">Nintendo 3DS ROM</comment>
+  <comment xml:lang="hr">Nintendo 3DS ROM</comment>
+  <comment xml:lang="he">ROM של Nintendo 3DS</comment>
+  <comment xml:lang="gl">ROM de Nintendo 3DS</comment>
+  <comment xml:lang="fr">ROM Nintendo 3DS</comment>
+  <comment xml:lang="fi">Nintendo 3DS ROM</comment>
+  <comment xml:lang="eu">Nintendo 3DS ROMa</comment>
+  <comment xml:lang="es">ROM de Nintendo 3DS</comment>
+  <comment xml:lang="en-GB">Nintendo 3DS ROM</comment>
+  <comment xml:lang="de">Nintendo-3DS-ROM</comment>
+  <comment xml:lang="da">Nintendo 3DS-ROM</comment>
+  <comment xml:lang="ca">ROM de Nintendo 3DS</comment>
+  <comment xml:lang="be-Cyrl">Nintendo 3DS ROM</comment>
+  <comment xml:lang="ar">روم نينتندو 3دي</comment>
+  <generic-icon name="application-x-executable"/>
+  <glob pattern="*.3ds"/>
+  <glob pattern="*.cci"/>
+</mime-type>

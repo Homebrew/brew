@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="x-content/video-dvd">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Video DVD</comment>
+  <comment xml:lang="uk">DVD з відеозаписами</comment>
+  <comment xml:lang="sv">Video-dvd</comment>
+  <comment xml:lang="ru">Видео DVD</comment>
+  <comment xml:lang="pt-BR">DVD de vídeo</comment>
+  <comment xml:lang="pl">DVD-Video</comment>
+  <comment xml:lang="ja">動画DVD</comment>
+  <comment xml:lang="it">DVD video</comment>
+  <comment xml:lang="gl">DVD de vídeo</comment>
+  <comment xml:lang="eu">Bideoko DVDa</comment>
+  <comment xml:lang="es">DVD de vídeo</comment>
+  <comment xml:lang="de">Video-DVD</comment>
+  <comment xml:lang="be-Cyrl">відэа DVD</comment>
+</mime-type>

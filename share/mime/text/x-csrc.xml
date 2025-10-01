@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="text/x-csrc">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>C source code</comment>
+  <comment xml:lang="zh-Hant-TW">C 源碼</comment>
+  <comment xml:lang="zh-Hans-CN">C 源代码</comment>
+  <comment xml:lang="vi">Mã nguồn C</comment>
+  <comment xml:lang="uk">початковий код мовою C</comment>
+  <comment xml:lang="tr">C kaynak kodu</comment>
+  <comment xml:lang="sv">C-källkod</comment>
+  <comment xml:lang="sr-Cyrl">Ц изворни ко̂д</comment>
+  <comment xml:lang="sq">kod burim C</comment>
+  <comment xml:lang="sl">Datoteka izvorne kode C</comment>
+  <comment xml:lang="si">C මූල කේතය</comment>
+  <comment xml:lang="sk">Zdrojový kód jazyka C</comment>
+  <comment xml:lang="ru">Исходный код C</comment>
+  <comment xml:lang="ro">Cod sursă C</comment>
+  <comment xml:lang="pt-BR">Código-fonte C</comment>
+  <comment xml:lang="pt">código origem C</comment>
+  <comment xml:lang="pl">Kod źródłowy C</comment>
+  <comment xml:lang="oc">còde font C</comment>
+  <comment xml:lang="nn">C-kjeldekode</comment>
+  <comment xml:lang="nl">C-broncode</comment>
+  <comment xml:lang="nb">C-kildekode</comment>
+  <comment xml:lang="ms">Kod sumber C</comment>
+  <comment xml:lang="lv">C pirmkods</comment>
+  <comment xml:lang="lt">C pradinis kodas</comment>
+  <comment xml:lang="ko">C 소스 코드</comment>
+  <comment xml:lang="kk-Cyrl">C бастапқы коды</comment>
+  <comment xml:lang="ka">C-ის საწყისი კოდი</comment>
+  <comment xml:lang="ja">C ソースコード</comment>
+  <comment xml:lang="it">Codice sorgente C</comment>
+  <comment xml:lang="is">C frumkóði</comment>
+  <comment xml:lang="id">Kode sumber C</comment>
+  <comment xml:lang="ia">Codice-fonte C</comment>
+  <comment xml:lang="hu">C-forráskód</comment>
+  <comment xml:lang="hr">C izvorni kôd</comment>
+  <comment xml:lang="he">קוד מקור של C</comment>
+  <comment xml:lang="gl">código fonte en C</comment>
+  <comment xml:lang="ga">cód foinseach C</comment>
+  <comment xml:lang="fur">codiç sorzint C</comment>
+  <comment xml:lang="fr">code source C</comment>
+  <comment xml:lang="fo">C keldukota</comment>
+  <comment xml:lang="fi">C-lähdekoodi</comment>
+  <comment xml:lang="eu">C iturburu-kodea</comment>
+  <comment xml:lang="es">código fuente en C</comment>
+  <comment xml:lang="eo">C-fontkodo</comment>
+  <comment xml:lang="en-GB">C source code</comment>
+  <comment xml:lang="el">Πηγαίος κώδικας C</comment>
+  <comment xml:lang="de">C-Quelltext</comment>
+  <comment xml:lang="da">C-kildekode</comment>
+  <comment xml:lang="cs">zdrojový kód v jazyce C</comment>
+  <comment xml:lang="ca">codi font en C</comment>
+  <comment xml:lang="bg">Изходен код — C</comment>
+  <comment xml:lang="be-Latn">Kryničny kod C</comment>
+  <comment xml:lang="be-Cyrl">зыходны код C</comment>
+  <comment xml:lang="ar">شفرة مصدر سي</comment>
+  <comment xml:lang="af">C-bronkode</comment>
+  <sub-class-of type="text/plain"/>
+  <alias type="text/x-c"/>
+  <glob pattern="*.c" case-sensitive="true"/>
+</mime-type>

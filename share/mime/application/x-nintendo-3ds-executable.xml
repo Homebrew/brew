@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-nintendo-3ds-executable">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Nintendo 3DS Executable</comment>
+  <comment xml:lang="uk">виконуваний файл Nintendo 3DS</comment>
+  <comment xml:lang="tr">Nintendo 3DS Executable</comment>
+  <comment xml:lang="sv">Körbar Nintendo 3DS-fil</comment>
+  <comment xml:lang="si">Nintendo 3DS Executable</comment>
+  <comment xml:lang="ru">Nintendo 3DS Executable</comment>
+  <comment xml:lang="pt-BR">Executável do Nintendo 3DS</comment>
+  <comment xml:lang="pt">Executável da Nintendo 3DS</comment>
+  <comment xml:lang="pl">Plik wykonywalny konsoli Nintendo 3DS</comment>
+  <comment xml:lang="oc">Executable Nintendo 3DS</comment>
+  <comment xml:lang="nl">Nintendo 3DS-programmabestand</comment>
+  <comment xml:lang="ko">닌텐도 3DS 실행 파일</comment>
+  <comment xml:lang="kk-Cyrl">Nintendo 3DS орындалатын файлы</comment>
+  <comment xml:lang="ja">Nintendo 3DS 実行ファイル</comment>
+  <comment xml:lang="it">Eseguibile Nintendo 3DS</comment>
+  <comment xml:lang="is">Nintendo 3DS keyrsluskrá</comment>
+  <comment xml:lang="id">Executable Nintendo 3DS</comment>
+  <comment xml:lang="hu">Nintendo 3DS végrehajtható fájl</comment>
+  <comment xml:lang="hr">Nintendo 3DS izvršna datoteka</comment>
+  <comment xml:lang="he">קובץ הפעלה של Nintendo 3DS</comment>
+  <comment xml:lang="gl">Executábel de Nintendo 3DS</comment>
+  <comment xml:lang="fr">Exécutable Nintendo 3DS</comment>
+  <comment xml:lang="fi">Nintendo 3DS -ohjelma</comment>
+  <comment xml:lang="eu">Nintendo 3DS exekutagarria</comment>
+  <comment xml:lang="es">ejecutable de Nintendo 3DS</comment>
+  <comment xml:lang="en-GB">Nintendo 3DS Executable</comment>
+  <comment xml:lang="de">Nintendo-3DS-Programmdatei</comment>
+  <comment xml:lang="da">Nintendo 3DS-kørbar</comment>
+  <comment xml:lang="ca">executable de Nintendo 3DS</comment>
+  <comment xml:lang="be-Cyrl">выконвальны файл Nintendo 3DS</comment>
+  <comment xml:lang="ar">تنفيذي نينتندو 3دي إس</comment>
+  <generic-icon name="application-x-executable"/>
+  <glob pattern="*.3dsx"/>
+</mime-type>

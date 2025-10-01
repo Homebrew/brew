@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/ovf">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>OVF disk image</comment>
+  <comment xml:lang="zh-Hans-CN">OVF 磁盘映像</comment>
+  <comment xml:lang="uk">образ диска OVF</comment>
+  <comment xml:lang="tr">OVF disk görüntüsü</comment>
+  <comment xml:lang="sv">OVF-diskavbildning</comment>
+  <comment xml:lang="sl">Slika diska OVF</comment>
+  <comment xml:lang="si">OVF තැටි රූපය</comment>
+  <comment xml:lang="ru">Образ диска OVF</comment>
+  <comment xml:lang="pt-BR">Imagem de disco OVF</comment>
+  <comment xml:lang="pl">Obraz dysku OVF</comment>
+  <comment xml:lang="nl">OVF-schijfkopiebestand</comment>
+  <comment xml:lang="ko">OVF 디스크 이미지</comment>
+  <comment xml:lang="kk-Cyrl">OVF диск бейнесі</comment>
+  <comment xml:lang="ja">OVF ディスクイメージ</comment>
+  <comment xml:lang="it">Immagine disco OVF</comment>
+  <comment xml:lang="hr">OVF slika diska</comment>
+  <comment xml:lang="fi">OVF-levykuva</comment>
+  <comment xml:lang="eu">OVF disko-irudia</comment>
+  <comment xml:lang="es">imagen de disco OVF</comment>
+  <comment xml:lang="en-GB">OVF disk image</comment>
+  <comment xml:lang="de">OVF-Datenträgerabbild</comment>
+  <comment xml:lang="be-Cyrl">вобраз дыска OVF</comment>
+  <comment xml:lang="ar">صورة قرص OVF</comment>
+  <acronym>OVF</acronym>
+  <expanded-acronym>Open Virtualization Format</expanded-acronym>
+  <glob pattern="*.ova"/>
+  <alias type="application/x-virtualbox-ova"/>
+  <sub-class-of type="application/x-tar"/>
+</mime-type>

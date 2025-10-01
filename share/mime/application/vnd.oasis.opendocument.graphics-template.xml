@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/vnd.oasis.opendocument.graphics-template">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>ODG template</comment>
+  <comment xml:lang="zh-Hant-TW">ODG 範本</comment>
+  <comment xml:lang="zh-Hans-CN">ODG 模板</comment>
+  <comment xml:lang="vi">Mẫu ODG</comment>
+  <comment xml:lang="uk">шаблон ODG</comment>
+  <comment xml:lang="tr">ODG şablonu</comment>
+  <comment xml:lang="sv">ODG-mall</comment>
+  <comment xml:lang="sr-Cyrl">ОДГ шаблон</comment>
+  <comment xml:lang="sq">gjedhe ODG</comment>
+  <comment xml:lang="sl">Predloga dokumenta ODG</comment>
+  <comment xml:lang="si">ODG අච්චුව</comment>
+  <comment xml:lang="sk">Šablóna ODG</comment>
+  <comment xml:lang="ru">Шаблон ODG</comment>
+  <comment xml:lang="ro">Șablon ODG</comment>
+  <comment xml:lang="pt-BR">Modelo ODG</comment>
+  <comment xml:lang="pt">modelo ODG</comment>
+  <comment xml:lang="pl">Szablon ODG</comment>
+  <comment xml:lang="oc">modèl ODG</comment>
+  <comment xml:lang="nn">ODG-mal</comment>
+  <comment xml:lang="nl">ODG-sjabloon</comment>
+  <comment xml:lang="nb">ODG-mal</comment>
+  <comment xml:lang="lv">ODG veidne</comment>
+  <comment xml:lang="lt">ODG šablonas</comment>
+  <comment xml:lang="ko">ODG 문서 서식</comment>
+  <comment xml:lang="kk-Cyrl">ODG үлгісі</comment>
+  <comment xml:lang="ka">ODG-ის შაბლონი</comment>
+  <comment xml:lang="ja">ODG テンプレート</comment>
+  <comment xml:lang="it">Modello ODG</comment>
+  <comment xml:lang="is">ODG sniðmát</comment>
+  <comment xml:lang="id">Templat ODG</comment>
+  <comment xml:lang="ia">Patrono ODG</comment>
+  <comment xml:lang="hu">ODG-sablon</comment>
+  <comment xml:lang="hr">ODG predložak</comment>
+  <comment xml:lang="he">תבנית ODG</comment>
+  <comment xml:lang="gl">modelo ODG</comment>
+  <comment xml:lang="ga">teimpléad ODG</comment>
+  <comment xml:lang="fur">model ODG</comment>
+  <comment xml:lang="fr">modèle ODG</comment>
+  <comment xml:lang="fo">ODG formur</comment>
+  <comment xml:lang="fi">ODG-malli</comment>
+  <comment xml:lang="eu">ODG txantiloia</comment>
+  <comment xml:lang="es">plantilla ODG</comment>
+  <comment xml:lang="eo">ODG-ŝablono</comment>
+  <comment xml:lang="en-GB">ODG template</comment>
+  <comment xml:lang="el">Πρότυπο ODG</comment>
+  <comment xml:lang="de">ODG-Vorlage</comment>
+  <comment xml:lang="da">ODG-skabelon</comment>
+  <comment xml:lang="cs">šablona ODG</comment>
+  <comment xml:lang="ca">plantilla ODG</comment>
+  <comment xml:lang="bg">Шаблон за чертежи — ODG</comment>
+  <comment xml:lang="be-Latn">Šablon ODG</comment>
+  <comment xml:lang="be-Cyrl">шаблон ODG</comment>
+  <comment xml:lang="ar">قالب ODG</comment>
+  <comment xml:lang="af">ODG-sjabloon</comment>
+  <acronym>ODG</acronym>
+  <expanded-acronym>OpenDocument Drawing</expanded-acronym>
+  <sub-class-of type="application/zip"/>
+  <generic-icon name="image-x-generic"/>
+  <glob pattern="*.otg"/>
+</mime-type>

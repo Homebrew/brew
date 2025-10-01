@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-font-framemaker">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Adobe FrameMaker font</comment>
+  <comment xml:lang="zh-Hant-TW">Adobe FrameMaker 字型</comment>
+  <comment xml:lang="zh-Hans-CN">Adobe FrameMaker 字体</comment>
+  <comment xml:lang="vi">Phông chữ Adobe FrameMaker</comment>
+  <comment xml:lang="uk">шрифт Adobe FrameMaker</comment>
+  <comment xml:lang="tr">Adobe FrameMaker yazı tipi</comment>
+  <comment xml:lang="sv">Adobe FrameMaker-typsnitt</comment>
+  <comment xml:lang="sr-Cyrl">слова Адобе Фрејм Мејкера</comment>
+  <comment xml:lang="sq">shkronja Adobe FrameMaker</comment>
+  <comment xml:lang="sl">Datoteka pisave Adobe FrameMaker</comment>
+  <comment xml:lang="si">Adobe FrameMaker අකුරු</comment>
+  <comment xml:lang="sk">Písmo Adobe FrameMaker</comment>
+  <comment xml:lang="ru">Шрифт Adobe FrameMaker</comment>
+  <comment xml:lang="ro">Font Adobe FrameMaker</comment>
+  <comment xml:lang="pt-BR">Fonte do Adobe FrameMaker</comment>
+  <comment xml:lang="pt">letra Adobe FrameMaker</comment>
+  <comment xml:lang="pl">Czcionka Adobe FrameMaker</comment>
+  <comment xml:lang="oc">poliça Adobe FrameMaker</comment>
+  <comment xml:lang="nn">Adobe FrameMaker-skrifttype</comment>
+  <comment xml:lang="nl">Adobe FrameMaker-lettertype</comment>
+  <comment xml:lang="nb">Adobe FrameMaker skrifttype</comment>
+  <comment xml:lang="ms">Font Adobe FrameMaker</comment>
+  <comment xml:lang="lv">Adobe FrameMaker fonts</comment>
+  <comment xml:lang="lt">Adobe FrameMaker šriftas</comment>
+  <comment xml:lang="ko">Adobe 프레임메이커 글꼴</comment>
+  <comment xml:lang="kk-Cyrl">Adobe FrameMaker қарібі</comment>
+  <comment xml:lang="ja">Adobe FrameMaker フォント</comment>
+  <comment xml:lang="it">Carattere Adobe FrameMaker</comment>
+  <comment xml:lang="is">Adobe FrameMaker letur</comment>
+  <comment xml:lang="id">Fonta Adobe FrameMaker</comment>
+  <comment xml:lang="ia">Typo de litteras pro Adobe FrameMaker</comment>
+  <comment xml:lang="hu">Adobe FrameMaker-betűkészlet</comment>
+  <comment xml:lang="hr">Adobe FrameMaker font</comment>
+  <comment xml:lang="he">גופן של Adobe FrameMaker</comment>
+  <comment xml:lang="gl">tipo de fonte de Adobe FrameMaker</comment>
+  <comment xml:lang="ga">cló Adobe FrameMaker</comment>
+  <comment xml:lang="fur">caratar Adobe FrameMaker</comment>
+  <comment xml:lang="fr">police Adobe FrameMaker</comment>
+  <comment xml:lang="fo">Adobe FrameMaker stavasnið</comment>
+  <comment xml:lang="fi">Adobe FrameMaker -fontti</comment>
+  <comment xml:lang="eu">Adobe FrameMaker-en letra-tipoa</comment>
+  <comment xml:lang="es">tipo de letra de Adobe FrameMaker</comment>
+  <comment xml:lang="eo">Tiparo de Adobe FrameMaker</comment>
+  <comment xml:lang="en-GB">Adobe FrameMaker font</comment>
+  <comment xml:lang="el">Γραμματοσειρά Adobe FrameMaker</comment>
+  <comment xml:lang="de">Adobe-FrameMaker-Schrift</comment>
+  <comment xml:lang="da">Adobe FrameMaker-skrifttype</comment>
+  <comment xml:lang="cy">Ffont Adobe FrameMaker</comment>
+  <comment xml:lang="cs">font Adobe FrameMaker</comment>
+  <comment xml:lang="ca">lletra d'Adobe FrameMaker</comment>
+  <comment xml:lang="bg">Шрифт — Adobe FrameMaker</comment>
+  <comment xml:lang="be-Latn">Šryft Adobe FrameMaker</comment>
+  <comment xml:lang="be-Cyrl">шрыфт Adobe FrameMaker</comment>
+  <comment xml:lang="az">Adobe FrameMaker yazı növü</comment>
+  <comment xml:lang="ar">خط أدوبي FrameMaker</comment>
+  <comment xml:lang="af">Adobe FrameMaker-skriftipe</comment>
+  <generic-icon name="font-x-generic"/>
+</mime-type>

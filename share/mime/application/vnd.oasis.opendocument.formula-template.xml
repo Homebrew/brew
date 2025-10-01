@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/vnd.oasis.opendocument.formula-template">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>ODF template</comment>
+  <comment xml:lang="zh-Hant-TW">ODF 範本</comment>
+  <comment xml:lang="zh-Hans-CN">ODF 模板</comment>
+  <comment xml:lang="vi">Mẫu ODF</comment>
+  <comment xml:lang="uk">шаблон ODF</comment>
+  <comment xml:lang="tr">ODF şablonu</comment>
+  <comment xml:lang="sv">ODF-mall</comment>
+  <comment xml:lang="sr-Cyrl">ОДФ шаблон</comment>
+  <comment xml:lang="sq">gjedhe ODF</comment>
+  <comment xml:lang="sl">Predloga dokumenta ODF</comment>
+  <comment xml:lang="si">ODF ආකෘතිය</comment>
+  <comment xml:lang="sk">Šablóna ODF</comment>
+  <comment xml:lang="ru">Шаблон ODF</comment>
+  <comment xml:lang="ro">Șablon ODF</comment>
+  <comment xml:lang="pt-BR">Modelo ODF</comment>
+  <comment xml:lang="pt">modelo ODF</comment>
+  <comment xml:lang="pl">Szablon ODF</comment>
+  <comment xml:lang="oc">modèl ODF</comment>
+  <comment xml:lang="nl">ODF-sjabloon</comment>
+  <comment xml:lang="lv">ODF veidne</comment>
+  <comment xml:lang="lt">ODF šablonas</comment>
+  <comment xml:lang="ko">ODF 문서 서식</comment>
+  <comment xml:lang="kk-Cyrl">ODF үлгісі</comment>
+  <comment xml:lang="ka">ODF-ის შაბლონი</comment>
+  <comment xml:lang="ja">ODF テンプレート</comment>
+  <comment xml:lang="it">Modello ODF</comment>
+  <comment xml:lang="is">ODF sniðmát</comment>
+  <comment xml:lang="id">Templat ODF</comment>
+  <comment xml:lang="ia">Patrono ODF</comment>
+  <comment xml:lang="hu">ODG-sablon</comment>
+  <comment xml:lang="hr">ODF predložak</comment>
+  <comment xml:lang="he">תבנית ODF</comment>
+  <comment xml:lang="gl">modelo ODF</comment>
+  <comment xml:lang="ga">teimpléad ODF</comment>
+  <comment xml:lang="fur">model ODF</comment>
+  <comment xml:lang="fr">modèle ODF</comment>
+  <comment xml:lang="fo">ODF formur</comment>
+  <comment xml:lang="fi">ODF-malli</comment>
+  <comment xml:lang="eu">ODF txantiloia</comment>
+  <comment xml:lang="es">plantilla ODF</comment>
+  <comment xml:lang="eo">ODF-ŝablono</comment>
+  <comment xml:lang="en-GB">ODF template</comment>
+  <comment xml:lang="el">Πρότυπο ODF</comment>
+  <comment xml:lang="de">ODF-Vorlage</comment>
+  <comment xml:lang="da">ODF-skabelon</comment>
+  <comment xml:lang="cs">šablona ODF</comment>
+  <comment xml:lang="ca">plantilla ODF</comment>
+  <comment xml:lang="bg">Шаблон за формули — ODF</comment>
+  <comment xml:lang="be-Cyrl">шаблон ODF</comment>
+  <comment xml:lang="ar">قالب ODF</comment>
+  <comment xml:lang="af">ODF-sjabloon</comment>
+  <acronym>ODF</acronym>
+  <expanded-acronym>OpenDocument Formula</expanded-acronym>
+  <sub-class-of type="application/zip"/>
+  <generic-icon name="x-office-document"/>
+  <glob pattern="*.otf"/>
+</mime-type>

@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/sdp">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>SDP multicast stream file</comment>
+  <comment xml:lang="zh-Hant-TW">SDP multicast 串流檔</comment>
+  <comment xml:lang="zh-Hans-CN">SDP 多播流文件</comment>
+  <comment xml:lang="vi">Tập tin luồng truyền một-nhiều SDP</comment>
+  <comment xml:lang="uk">файл потокової трансляції SDP</comment>
+  <comment xml:lang="tr">SDP çoklu yayın akışı dosyası</comment>
+  <comment xml:lang="sv">SDP multicast stream-fil</comment>
+  <comment xml:lang="sr-Cyrl">СДП датотека тока вишеструког емитовања</comment>
+  <comment xml:lang="sq">kartelë transmetimi multicast SDP</comment>
+  <comment xml:lang="sl">Pretočni vir večsmernega oddajanja</comment>
+  <comment xml:lang="si">SDP බහු විකාශන ප්‍රවාහ ගොනුව</comment>
+  <comment xml:lang="sk">Súbor viacsmerového vysielania prúdu SDP</comment>
+  <comment xml:lang="ru">Файл мультикаст-потока SDP</comment>
+  <comment xml:lang="ro">Fișier flux multicast SDP</comment>
+  <comment xml:lang="pt-BR">Arquivo de canal multicast SDP</comment>
+  <comment xml:lang="pt">ficheiro de fluxo SDP multicast</comment>
+  <comment xml:lang="pl">Plik strumienia multicast SDP</comment>
+  <comment xml:lang="oc">fichièr de flux multidifusion SDP</comment>
+  <comment xml:lang="nn">SDP multicast straumfil</comment>
+  <comment xml:lang="nl">SDP-multicast-streambestand</comment>
+  <comment xml:lang="nb">SDP-multicaststrøm</comment>
+  <comment xml:lang="lv">SDP multiraides straumes datne</comment>
+  <comment xml:lang="lt">SDP daugiaadresio srauto failas</comment>
+  <comment xml:lang="ko">SDP 멀티캐스트 스트림 파일</comment>
+  <comment xml:lang="kk-Cyrl">SDP мультикаст ағым файлы</comment>
+  <comment xml:lang="ja">SDP マルチキャストストリームファイル</comment>
+  <comment xml:lang="it">File stream multicast SDP</comment>
+  <comment xml:lang="is">SDP multicast streymisskrá</comment>
+  <comment xml:lang="id">Berkas SDP multicast stream</comment>
+  <comment xml:lang="ia">File de fluxo multidiffusion SDP</comment>
+  <comment xml:lang="hu">SDP multicast műsorfájl</comment>
+  <comment xml:lang="hr">SDP datoteka strujanja emitiranja</comment>
+  <comment xml:lang="he">קובץ שידור בזרימה SDP</comment>
+  <comment xml:lang="gl">ficheiro de fluxo multicast SDP</comment>
+  <comment xml:lang="ga">comhad shruth ilchraolacháin SDP</comment>
+  <comment xml:lang="fur">file di flus a trasmission multiple SDP</comment>
+  <comment xml:lang="fr">fichier de flux multidiffusion SDP</comment>
+  <comment xml:lang="fo">SDP margvarpað streymafíla</comment>
+  <comment xml:lang="fi">SDP-monilähetysvirran tiedosto</comment>
+  <comment xml:lang="eu">SDP multicast korrontearen fitxategia</comment>
+  <comment xml:lang="es">archivo de flujo multicast SDP</comment>
+  <comment xml:lang="en-GB">SDP multicast stream file</comment>
+  <comment xml:lang="el">Αρχείο ροής πολλαπλής αναμετάδοσης SDP</comment>
+  <comment xml:lang="de">SDP-Multicast-Datenstromdatei</comment>
+  <comment xml:lang="da">SDP multicast-strømfil</comment>
+  <comment xml:lang="cs">soubor vícesměrového vysílání proudu SDP</comment>
+  <comment xml:lang="ca">fitxer de flux de multidifusió SDP</comment>
+  <comment xml:lang="bg">Поток — SDP multicast</comment>
+  <comment xml:lang="be-Latn">Šmatadrasny płynievy fajł SDP</comment>
+  <comment xml:lang="be-Cyrl">файл шматадраснай плыні SDP</comment>
+  <comment xml:lang="ar">ملف دفق متعدد البث SDP</comment>
+  <acronym>SDP</acronym>
+  <expanded-acronym>Session Description Protocol</expanded-acronym>
+  <sub-class-of type="text/plain"/>
+  <alias type="application/x-sdp"/>
+  <alias type="application/vnd.sdp"/>
+  <generic-icon name="video-x-generic"/>
+  <glob pattern="*.sdp"/>
+</mime-type>

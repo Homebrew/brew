@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="image/x-gzeps">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>EPS image (gzip-compressed)</comment>
+  <comment xml:lang="zh-Hant-TW">EPS 影像 (gzip 壓縮)</comment>
+  <comment xml:lang="zh-Hans-CN">EPS 图像（gzip 压缩）</comment>
+  <comment xml:lang="vi">Ảnh EPS (đã nén gzip)</comment>
+  <comment xml:lang="uk">зображення EPS (стиснене gzip)</comment>
+  <comment xml:lang="tr">EPS görüntüsü (gzip ile sıkıştırılmış)</comment>
+  <comment xml:lang="sv">EPS-bild (gzip-komprimerad)</comment>
+  <comment xml:lang="sr-Cyrl">ЕПС слика (запакована гзип-ом)</comment>
+  <comment xml:lang="sq">figurë EPS (ngjeshur me gzip)</comment>
+  <comment xml:lang="sl">Slikovna datoteka EPS (stisnjena z gzip)</comment>
+  <comment xml:lang="si">EPS රූපය (gzip සම්පීඩිත)</comment>
+  <comment xml:lang="sk">Obrázok EPS (komprimovaný pomocou gzip)</comment>
+  <comment xml:lang="ru">Изображение EPS (сжатое gzip)</comment>
+  <comment xml:lang="ro">Imagine EPS (compresie gzip)</comment>
+  <comment xml:lang="pt-BR">Imagem EPS (compactada com gzip)</comment>
+  <comment xml:lang="pt">imagem EPS (compressão gzip)</comment>
+  <comment xml:lang="pl">Obraz EPS (kompresja gzip)</comment>
+  <comment xml:lang="oc">imatge EPS (compressat gzip)</comment>
+  <comment xml:lang="nn">EPS-bilete (pakka med gzip)</comment>
+  <comment xml:lang="nl">EPS-afbeelding (ingepakt met gzip)</comment>
+  <comment xml:lang="nb">EPS-bilde (gzip-komprimert)</comment>
+  <comment xml:lang="lv">EPS attēls (saspiests ar gzip)</comment>
+  <comment xml:lang="lt">EPS paveikslėlis (suglaudintas su gzip)</comment>
+  <comment xml:lang="ko">EPS 그림(GZIP 압축)</comment>
+  <comment xml:lang="kk-Cyrl">EPS суреті (gzip-пен сығылған)</comment>
+  <comment xml:lang="ka">EPS გამოსახულება (gzip-ით შეკუმშული)</comment>
+  <comment xml:lang="ja">EPS 画像 (gzip 圧縮)</comment>
+  <comment xml:lang="it">Immagine EPS (compressa con gzip)</comment>
+  <comment xml:lang="is">EPS mynd (gzip-þjöppuð)</comment>
+  <comment xml:lang="id">Citra EPS (terkompresi gzip)</comment>
+  <comment xml:lang="ia">Imagine EPS (comprimite con gzip)</comment>
+  <comment xml:lang="hu">EPS kép (gzip tömörítésű)</comment>
+  <comment xml:lang="hr">EPS slika (gzip sažeta)</comment>
+  <comment xml:lang="he">תמונת EPS (מכווץ ע״י gzip)</comment>
+  <comment xml:lang="gl">imaxe EPS (comprimida con gzip)</comment>
+  <comment xml:lang="ga">íomhá EPS (comhbhrúite le gzip)</comment>
+  <comment xml:lang="fur">imagjin EPS (comprimude cun gzip)</comment>
+  <comment xml:lang="fr">image EPS (compressée gzip)</comment>
+  <comment xml:lang="fo">EPS mynd (gzip-stappað)</comment>
+  <comment xml:lang="fi">EPS-kuva (gzip-pakattu)</comment>
+  <comment xml:lang="eu">EPS irudia (gzip-ekin konprimitua)</comment>
+  <comment xml:lang="es">imagen EPS (comprimida con GZIP)</comment>
+  <comment xml:lang="en-GB">EPS image (gzip-compressed)</comment>
+  <comment xml:lang="el">Εικόνα EPS (συμπιεσμένη gzip)</comment>
+  <comment xml:lang="de">EPS-Bild (gzip-komprimiert)</comment>
+  <comment xml:lang="da">EPS-billede (gzip-komprimeret)</comment>
+  <comment xml:lang="cs">obrázek EPS (komprimovaný pomocí gzip)</comment>
+  <comment xml:lang="ca">imatge EPS (amb compressió gzip)</comment>
+  <comment xml:lang="bg">Изображение — EPS, компресирано с gzip</comment>
+  <comment xml:lang="be-Latn">Vyjava EPS (gzip-skampresavanaja)</comment>
+  <comment xml:lang="be-Cyrl">выява EPS (сцісканне gzip)</comment>
+  <comment xml:lang="ar">صورة EPS (مضغوط-gzip)</comment>
+  <comment xml:lang="af">EPS-beeld (gzip-saamgepers)</comment>
+  <sub-class-of type="application/gzip"/>
+  <glob pattern="*.eps.gz"/>
+  <glob pattern="*.epsi.gz"/>
+  <glob pattern="*.epsf.gz"/>
+</mime-type>

@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="text/x-pascal">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Pascal source code</comment>
+  <comment xml:lang="zh-Hant-TW">Pascal 源碼</comment>
+  <comment xml:lang="zh-Hans-CN">Pascal 源代码</comment>
+  <comment xml:lang="vi">Mã nguồn Pascal</comment>
+  <comment xml:lang="uk">початковий код мовою Pascal</comment>
+  <comment xml:lang="tr">Pascal kaynak kodu</comment>
+  <comment xml:lang="sv">Pascal-källkod</comment>
+  <comment xml:lang="sr-Cyrl">Паскалов изворни ко̂д</comment>
+  <comment xml:lang="sq">kod burim Pascal</comment>
+  <comment xml:lang="sl">Datoteka izvorne kode Pascal</comment>
+  <comment xml:lang="si">පැස්කල් මූල කේතය</comment>
+  <comment xml:lang="sk">Zdrojový kód Pascal</comment>
+  <comment xml:lang="ru">Исходный код Pascal</comment>
+  <comment xml:lang="ro">Cod sursă Pascal</comment>
+  <comment xml:lang="pt-BR">Código-fonte Pascal</comment>
+  <comment xml:lang="pt">código origem Pascal</comment>
+  <comment xml:lang="pl">Kod źródłowy Pascal</comment>
+  <comment xml:lang="oc">còde font Pascal</comment>
+  <comment xml:lang="nn">Pascal-kjeldekode</comment>
+  <comment xml:lang="nl">Pascal-broncode</comment>
+  <comment xml:lang="nb">Pascal-kildekode</comment>
+  <comment xml:lang="ms">Kod sumber Pascal</comment>
+  <comment xml:lang="lv">Pascal pirmkods</comment>
+  <comment xml:lang="lt">Pascal pradinis kodas</comment>
+  <comment xml:lang="ko">파스칼 소스 코드</comment>
+  <comment xml:lang="kk-Cyrl">Pascal бастапқы коды</comment>
+  <comment xml:lang="ja">Pascal ソースコード</comment>
+  <comment xml:lang="it">Codice sorgente Pascal</comment>
+  <comment xml:lang="is">Pascal frumkóði</comment>
+  <comment xml:lang="id">Kode sumber Pascal</comment>
+  <comment xml:lang="ia">Codice-fonte Pascal</comment>
+  <comment xml:lang="hu">Pascal-forráskód</comment>
+  <comment xml:lang="hr">Pascal izvorni kôd</comment>
+  <comment xml:lang="he">קוד מקור של Pascal</comment>
+  <comment xml:lang="gl">código fonte en Pascal</comment>
+  <comment xml:lang="ga">cód foinseach Pascal</comment>
+  <comment xml:lang="fur">codiç sorzint Pascal</comment>
+  <comment xml:lang="fr">code source Pascal</comment>
+  <comment xml:lang="fo">Pascal keldukota</comment>
+  <comment xml:lang="fi">Pascal-lähdekoodi</comment>
+  <comment xml:lang="eu">Pascal iturburu-kodea</comment>
+  <comment xml:lang="es">código fuente en Pascal</comment>
+  <comment xml:lang="eo">Pascal-fontkodo</comment>
+  <comment xml:lang="en-GB">Pascal source code</comment>
+  <comment xml:lang="el">Πηγαίος κώδικας Pascal</comment>
+  <comment xml:lang="de">Pascal-Quelltext</comment>
+  <comment xml:lang="da">Pascal-kildekode</comment>
+  <comment xml:lang="cs">zdrojový kód v jazyce Pascal</comment>
+  <comment xml:lang="ca">codi font en Pascal</comment>
+  <comment xml:lang="bg">Изходен код — Pascal</comment>
+  <comment xml:lang="be-Latn">Kryničny kod Pascal</comment>
+  <comment xml:lang="be-Cyrl">зыходны код Pascal</comment>
+  <comment xml:lang="ar">شفرة مصدر باسكال</comment>
+  <comment xml:lang="af">Pascal-bronkode</comment>
+  <sub-class-of type="text/plain"/>
+  <glob pattern="*.p"/>
+  <glob pattern="*.pas"/>
+</mime-type>

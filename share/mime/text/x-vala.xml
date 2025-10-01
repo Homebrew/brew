@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="text/x-vala">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Vala source code</comment>
+  <comment xml:lang="zh-Hant-TW">Vala 源碼</comment>
+  <comment xml:lang="zh-Hans-CN">Vala 源代码</comment>
+  <comment xml:lang="vi">Mã nguồn Vala</comment>
+  <comment xml:lang="uk">початковий код мовою Vala</comment>
+  <comment xml:lang="tr">Vala kaynak kodu</comment>
+  <comment xml:lang="sv">Vala-källkod</comment>
+  <comment xml:lang="sr-Cyrl">Вала изворни ко̂д</comment>
+  <comment xml:lang="sq">kod burim Vala</comment>
+  <comment xml:lang="sl">Datoteka izvorne kode Vala</comment>
+  <comment xml:lang="si">වාල මූල කේතය</comment>
+  <comment xml:lang="sk">Zdrojový kód Vala</comment>
+  <comment xml:lang="ru">Исходный код Vala</comment>
+  <comment xml:lang="ro">Cod sursă Vala</comment>
+  <comment xml:lang="pt-BR">Código-fonte Vala</comment>
+  <comment xml:lang="pt">código origem Vala</comment>
+  <comment xml:lang="pl">Kod źródłowy Vala</comment>
+  <comment xml:lang="oc">còde font Vala</comment>
+  <comment xml:lang="nn">Vala-kjeldekode</comment>
+  <comment xml:lang="nl">Vala-broncode</comment>
+  <comment xml:lang="nb">Vala-kildekode</comment>
+  <comment xml:lang="lv">Vala pirmkods</comment>
+  <comment xml:lang="lt">Vala pradinis kodas</comment>
+  <comment xml:lang="ko">Vala 소스 코드</comment>
+  <comment xml:lang="kk-Cyrl">Vala бастапқы коды</comment>
+  <comment xml:lang="ja">Vala ソースコード</comment>
+  <comment xml:lang="it">Codice sorgente Vala</comment>
+  <comment xml:lang="is">Vala frumkóði</comment>
+  <comment xml:lang="id">Kode sumber Vala</comment>
+  <comment xml:lang="ia">Codice-fonte Vala</comment>
+  <comment xml:lang="hu">Vala forráskód</comment>
+  <comment xml:lang="hr">Vala izvorni kôd</comment>
+  <comment xml:lang="he">קוד מקור של Vala</comment>
+  <comment xml:lang="gl">código fonte en Vala</comment>
+  <comment xml:lang="ga">cód foinseach Vala</comment>
+  <comment xml:lang="fur">codiç sorzint Vala</comment>
+  <comment xml:lang="fr">code source Vala</comment>
+  <comment xml:lang="fo">Vala keldukota</comment>
+  <comment xml:lang="fi">Vala-lähdekoodi</comment>
+  <comment xml:lang="eu">Vala iturburu-kodea</comment>
+  <comment xml:lang="es">código fuente en Vala</comment>
+  <comment xml:lang="eo">Vala-fontkodo</comment>
+  <comment xml:lang="en-GB">Vala source code</comment>
+  <comment xml:lang="el">Πηγαίος κώδικας Vala</comment>
+  <comment xml:lang="de">Vala-Quelltext</comment>
+  <comment xml:lang="da">Vala-kildekode</comment>
+  <comment xml:lang="cs">zdrojový kód v jazyce Vala</comment>
+  <comment xml:lang="ca">codi font en Vala</comment>
+  <comment xml:lang="bg">Изходен код — Vala</comment>
+  <comment xml:lang="be-Latn">Kryničny kod Vala</comment>
+  <comment xml:lang="be-Cyrl">зыходны код Vala</comment>
+  <comment xml:lang="ar">شفرة مصدر Vala</comment>
+  <comment xml:lang="af">Vala-bronkode</comment>
+  <sub-class-of type="text/x-csrc"/>
+  <glob pattern="*.vala"/>
+  <glob pattern="*.vapi"/>
+</mime-type>

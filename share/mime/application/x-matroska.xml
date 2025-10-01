@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-matroska">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Matroska stream</comment>
+  <comment xml:lang="zh-Hant-TW">Matroska 串流</comment>
+  <comment xml:lang="zh-Hans-CN">Matroska 流</comment>
+  <comment xml:lang="vi">Luồng Matroska</comment>
+  <comment xml:lang="uk">потік даних Matroska</comment>
+  <comment xml:lang="tr">Matroska akışı</comment>
+  <comment xml:lang="sv">Matroska-ström</comment>
+  <comment xml:lang="sr-Cyrl">Матрошкин ток</comment>
+  <comment xml:lang="sq">rrjedhë Matroska</comment>
+  <comment xml:lang="sl">Pretočni vir Matroska</comment>
+  <comment xml:lang="si">Matroska ධාරාව</comment>
+  <comment xml:lang="sk">Stream Matroska</comment>
+  <comment xml:lang="ru">Поток Matroska</comment>
+  <comment xml:lang="ro">Flux Matroska</comment>
+  <comment xml:lang="pt-BR">Transmissão do Matroska</comment>
+  <comment xml:lang="pt">fluxo Matroska</comment>
+  <comment xml:lang="pl">Strumień Matroska</comment>
+  <comment xml:lang="oc">flux Matroska</comment>
+  <comment xml:lang="nn">Matroska-straum</comment>
+  <comment xml:lang="nl">Matroska-stream</comment>
+  <comment xml:lang="lv">Matroska straume</comment>
+  <comment xml:lang="lt">Matroska srautas</comment>
+  <comment xml:lang="ko">Matroska 스트림</comment>
+  <comment xml:lang="kk-Cyrl">Matroska ағымы</comment>
+  <comment xml:lang="ka">Matroska-ის ნაკადი</comment>
+  <comment xml:lang="ja">Matroska ストリーム</comment>
+  <comment xml:lang="it">Stream Matroska</comment>
+  <comment xml:lang="is">Matroska streymi</comment>
+  <comment xml:lang="id">Stream Matroska</comment>
+  <comment xml:lang="ia">Fluxo Matroska</comment>
+  <comment xml:lang="hu">Matroska adatfolyam</comment>
+  <comment xml:lang="hr">Matroška zapis</comment>
+  <comment xml:lang="he">זרימת Matroska</comment>
+  <comment xml:lang="gl">fluxo de Matroska</comment>
+  <comment xml:lang="ga">sruth Matroska</comment>
+  <comment xml:lang="fur">flus Matroska</comment>
+  <comment xml:lang="fr">flux Matroska</comment>
+  <comment xml:lang="fo">Matroska streymur</comment>
+  <comment xml:lang="fi">Matroska-virta</comment>
+  <comment xml:lang="eu">Matroska korrontea</comment>
+  <comment xml:lang="es">flujo Matroska</comment>
+  <comment xml:lang="en-GB">Matroska stream</comment>
+  <comment xml:lang="el">Ροή Matroska</comment>
+  <comment xml:lang="de">Matroska-Datenstrom</comment>
+  <comment xml:lang="da">Matroska-strøm</comment>
+  <comment xml:lang="cs">proud Matroska</comment>
+  <comment xml:lang="ca">flux Matroska</comment>
+  <comment xml:lang="bg">Поток — Matroska</comment>
+  <comment xml:lang="be-Latn">Płyń Matroska</comment>
+  <comment xml:lang="be-Cyrl">плынь Matroska</comment>
+  <comment xml:lang="ar">دفق Matroska</comment>
+  <comment xml:lang="af">Matroska-stroom</comment>
+  <generic-icon name="video-x-generic"/>
+</mime-type>

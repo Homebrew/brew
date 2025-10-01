@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-arc">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>ARC archive</comment>
+  <comment xml:lang="zh-Hant-TW">ARC 封存檔</comment>
+  <comment xml:lang="zh-Hans-CN">ARC 归档文件</comment>
+  <comment xml:lang="vi">Kho nén ARC</comment>
+  <comment xml:lang="uk">архів ARC</comment>
+  <comment xml:lang="tr">ARC arşivi</comment>
+  <comment xml:lang="sv">ARC-arkiv</comment>
+  <comment xml:lang="sr-Cyrl">АРЦ архива</comment>
+  <comment xml:lang="sq">arkiv ARC</comment>
+  <comment xml:lang="sl">Datoteka arhiva ARC</comment>
+  <comment xml:lang="si">ARC ලේඛනාගාරය</comment>
+  <comment xml:lang="sk">Archív ARC</comment>
+  <comment xml:lang="ru">Архив ARC</comment>
+  <comment xml:lang="ro">Arhivă ARC</comment>
+  <comment xml:lang="pt-BR">Pacote ARC</comment>
+  <comment xml:lang="pt">arquivo ARC</comment>
+  <comment xml:lang="pl">Archiwum ARC</comment>
+  <comment xml:lang="oc">archiu ARC</comment>
+  <comment xml:lang="nn">ARC-arkiv</comment>
+  <comment xml:lang="nl">ARC-archief</comment>
+  <comment xml:lang="nb">ARC-arkiv</comment>
+  <comment xml:lang="lv">ARC arhīvs</comment>
+  <comment xml:lang="lt">ARC archyvas</comment>
+  <comment xml:lang="ko">ARC 압축 파일</comment>
+  <comment xml:lang="kk-Cyrl">ARC архиві</comment>
+  <comment xml:lang="ka">ARC არქივი</comment>
+  <comment xml:lang="ja">ARC アーカイブ</comment>
+  <comment xml:lang="it">Archivio ARC</comment>
+  <comment xml:lang="is">ARC safnskrá</comment>
+  <comment xml:lang="id">Arsip ARC</comment>
+  <comment xml:lang="ia">Archivo ARC</comment>
+  <comment xml:lang="hu">ARC-archívum</comment>
+  <comment xml:lang="hr">ARC arhiva</comment>
+  <comment xml:lang="he">ארכיון ARC</comment>
+  <comment xml:lang="gl">arquivo ARC</comment>
+  <comment xml:lang="ga">cartlann ARC</comment>
+  <comment xml:lang="fur">archivi ARC</comment>
+  <comment xml:lang="fr">archive ARC</comment>
+  <comment xml:lang="fo">ARC skjalasavn</comment>
+  <comment xml:lang="fi">ARC-arkisto</comment>
+  <comment xml:lang="eu">ARC artxiboa</comment>
+  <comment xml:lang="es">archivador ARC</comment>
+  <comment xml:lang="eo">ARC-arkivo</comment>
+  <comment xml:lang="en-GB">ARC archive</comment>
+  <comment xml:lang="el">Συμπιεσμένο αρχείο ARC</comment>
+  <comment xml:lang="de">ARC-Archiv</comment>
+  <comment xml:lang="da">ARC-arkiv</comment>
+  <comment xml:lang="cs">archiv ARC</comment>
+  <comment xml:lang="ca">arxiu ARC</comment>
+  <comment xml:lang="bg">Архив — ARC</comment>
+  <comment xml:lang="be-Latn">Archiŭ ARC</comment>
+  <comment xml:lang="be-Cyrl">архіў ARC</comment>
+  <comment xml:lang="ar">أرشيف ARC</comment>
+  <comment xml:lang="af">ARC-argief</comment>
+  <generic-icon name="package-x-generic"/>
+</mime-type>

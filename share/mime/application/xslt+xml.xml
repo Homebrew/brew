@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/xslt+xml">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>XSLT stylesheet</comment>
+  <comment xml:lang="zh-Hant-TW">XSLT 樣式表</comment>
+  <comment xml:lang="zh-Hans-CN">XSLT 样式表</comment>
+  <comment xml:lang="vi">Tờ kiểu dáng XSLT</comment>
+  <comment xml:lang="uk">таблиця стилів XSLT</comment>
+  <comment xml:lang="tr">XSLT çalışma sayfası</comment>
+  <comment xml:lang="sv">XSLT-stilmall</comment>
+  <comment xml:lang="sr-Cyrl">ИксСЛТ стилски лист</comment>
+  <comment xml:lang="sq">fletëstil XSLT</comment>
+  <comment xml:lang="sl">Slogovna predloga XSLT</comment>
+  <comment xml:lang="si">XSLT මෝස්තර පත්‍රිකාව</comment>
+  <comment xml:lang="sk">Štýl XSLT</comment>
+  <comment xml:lang="ru">Таблица стилей XSLT</comment>
+  <comment xml:lang="ro">Fișă de stil XSLT</comment>
+  <comment xml:lang="pt-BR">Folha de estilo XSLT</comment>
+  <comment xml:lang="pt">folha de estilos XSLT</comment>
+  <comment xml:lang="pl">Arkusz stylów XSLT</comment>
+  <comment xml:lang="oc">fuèlh d'estil XSLT</comment>
+  <comment xml:lang="nn">XSLT-stilark</comment>
+  <comment xml:lang="nl">XSLT-stijlblad</comment>
+  <comment xml:lang="nb">XSLT-stilark</comment>
+  <comment xml:lang="ms">Helaian Gaya XSLT</comment>
+  <comment xml:lang="lv">XSLT izklājlapa</comment>
+  <comment xml:lang="lt">XSLT stiliaus aprašas</comment>
+  <comment xml:lang="ko">XSLT 스타일시트</comment>
+  <comment xml:lang="kk-Cyrl">XSLT стильдер кестесі</comment>
+  <comment xml:lang="ja">XSLT スタイルシート</comment>
+  <comment xml:lang="it">Foglio di stile XSLT</comment>
+  <comment xml:lang="is">XSLT stílblað</comment>
+  <comment xml:lang="id">Lembar gaya XSLT</comment>
+  <comment xml:lang="ia">Folio de stilo XSLT</comment>
+  <comment xml:lang="hu">XSLT-stíluslap</comment>
+  <comment xml:lang="hr">XSLT stilska tablica</comment>
+  <comment xml:lang="he">גיליון סגנון XSLT</comment>
+  <comment xml:lang="gl">folla de estilo XSLT</comment>
+  <comment xml:lang="ga">stílbhileog XSLT</comment>
+  <comment xml:lang="fur">sfuei di calcul XSLT</comment>
+  <comment xml:lang="fr">feuille de style XSLT</comment>
+  <comment xml:lang="fo">XSLT sniðark</comment>
+  <comment xml:lang="fi">XSLT-tyylitiedosto</comment>
+  <comment xml:lang="eu">XSLT estilo-orria</comment>
+  <comment xml:lang="es">hoja de estilos XSLT</comment>
+  <comment xml:lang="eo">XSLT-stilfolio</comment>
+  <comment xml:lang="en-GB">XSLT stylesheet</comment>
+  <comment xml:lang="el">Φύλλο στυλ XSLT</comment>
+  <comment xml:lang="de">XSLT-Stilvorlage</comment>
+  <comment xml:lang="da">XSLT-stilark</comment>
+  <comment xml:lang="cs">stylopis XSLT</comment>
+  <comment xml:lang="ca">full d'estil XSLT</comment>
+  <comment xml:lang="bg">Стилове — XSLT</comment>
+  <comment xml:lang="be-Latn">Arkuš stylaŭ XSLT</comment>
+  <comment xml:lang="be-Cyrl">табліца стыляў XSLT</comment>
+  <comment xml:lang="ar">نمط XSLT</comment>
+  <comment xml:lang="af">XSLT-stylblad</comment>
+  <acronym>XSLT</acronym>
+  <expanded-acronym>eXtensible Stylesheet Language Transformation</expanded-acronym>
+  <generic-icon name="text-x-generic"/>
+  <glob pattern="*.xsl"/>
+  <glob pattern="*.xslt"/>
+  <sub-class-of type="application/xml"/>
+</mime-type>

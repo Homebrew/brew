@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/mxf">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>MXF video</comment>
+  <comment xml:lang="zh-Hant-TW">MXF 視訊</comment>
+  <comment xml:lang="zh-Hans-CN">MXF 视频</comment>
+  <comment xml:lang="uk">відеокліп MXF</comment>
+  <comment xml:lang="tr">MXF video</comment>
+  <comment xml:lang="sv">MXF-video</comment>
+  <comment xml:lang="sr-Cyrl">МИксФ видео</comment>
+  <comment xml:lang="sq">video MXF</comment>
+  <comment xml:lang="sl">Video datoteka MXF</comment>
+  <comment xml:lang="si">MXF වීඩියෝව</comment>
+  <comment xml:lang="sk">Video MXF</comment>
+  <comment xml:lang="ru">Видео MXF</comment>
+  <comment xml:lang="ro">Video MXF</comment>
+  <comment xml:lang="pt-BR">Vídeo MXF</comment>
+  <comment xml:lang="pt">vídeo MXF</comment>
+  <comment xml:lang="pl">Plik wideo MXF</comment>
+  <comment xml:lang="oc">vidèo MXF</comment>
+  <comment xml:lang="nl">MXF-video</comment>
+  <comment xml:lang="lv">MXF video</comment>
+  <comment xml:lang="lt">MXF vaizdo įrašas</comment>
+  <comment xml:lang="ko">MXF 동영상</comment>
+  <comment xml:lang="kk-Cyrl">MXF видеосы</comment>
+  <comment xml:lang="ka">MXF ვიდეო</comment>
+  <comment xml:lang="ja">MXF 動画</comment>
+  <comment xml:lang="it">Video MXF</comment>
+  <comment xml:lang="is">MXF myndskeið</comment>
+  <comment xml:lang="id">Video MXF</comment>
+  <comment xml:lang="ia">Video MXF</comment>
+  <comment xml:lang="hu">MXF videó</comment>
+  <comment xml:lang="hr">MXF video snimka</comment>
+  <comment xml:lang="he">וידאו MXF</comment>
+  <comment xml:lang="gl">vídeo MXF</comment>
+  <comment xml:lang="ga">físeán MXF</comment>
+  <comment xml:lang="fur">video MXF</comment>
+  <comment xml:lang="fr">vidéo MXF</comment>
+  <comment xml:lang="fo">MXF video</comment>
+  <comment xml:lang="fi">MXF-video</comment>
+  <comment xml:lang="eu">MXF bideoa</comment>
+  <comment xml:lang="es">vídeo MXF</comment>
+  <comment xml:lang="eo">MXF-video</comment>
+  <comment xml:lang="en-GB">MXF video</comment>
+  <comment xml:lang="el">Βίντεο MXF</comment>
+  <comment xml:lang="de">MXF-Video</comment>
+  <comment xml:lang="da">MXF-video</comment>
+  <comment xml:lang="cs">video MXF</comment>
+  <comment xml:lang="ca">vídeo MXF</comment>
+  <comment xml:lang="bg">Видео — MXF</comment>
+  <comment xml:lang="be-Cyrl">відэа MXF</comment>
+  <comment xml:lang="ast">Videu en MXF</comment>
+  <comment xml:lang="ar">فيديو MXF</comment>
+  <comment xml:lang="af">MXF-video</comment>
+  <acronym>MXF</acronym>
+  <expanded-acronym>Material Exchange Format</expanded-acronym>
+  <generic-icon name="video-x-generic"/>
+  <glob pattern="*.mxf"/>
+</mime-type>

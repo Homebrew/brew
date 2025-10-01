@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-applix-spreadsheet">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Applix Spreadsheets spreadsheet</comment>
+  <comment xml:lang="zh-Hant-TW">Applix Spreadsheets 試算表</comment>
+  <comment xml:lang="zh-Hans-CN">Applix Spreadsheets 电子表格</comment>
+  <comment xml:lang="vi">Bảng tính Applix Spreadsheets</comment>
+  <comment xml:lang="uk">електронна таблиця Applix Spreadsheets</comment>
+  <comment xml:lang="tr">Applix Spreadsheets hesap çizelgesi</comment>
+  <comment xml:lang="sv">Applix Spreadsheets-kalkylblad</comment>
+  <comment xml:lang="sr-Cyrl">документ Апликсове Табеле</comment>
+  <comment xml:lang="sq">fletëllogaritje Applix Spreadsheets</comment>
+  <comment xml:lang="sl">Razpredelnica Applix Spreadsheets</comment>
+  <comment xml:lang="si">Applix පැතුරුම්පත් පැතුරුම්පත</comment>
+  <comment xml:lang="sk">Zošit Applix Spreadsheets</comment>
+  <comment xml:lang="ru">Электронная таблица Applix Spreadsheets</comment>
+  <comment xml:lang="ro">Foaie de calcul Applix</comment>
+  <comment xml:lang="pt-BR">Planilha do Applix Spreadsheets</comment>
+  <comment xml:lang="pt">folha de cálculo Applix Spreadsheets</comment>
+  <comment xml:lang="pl">Arkusz Applix Spreadsheets</comment>
+  <comment xml:lang="oc">fuèlh de calcul Applix</comment>
+  <comment xml:lang="nn">Applix Spreadsheets-dokument</comment>
+  <comment xml:lang="nl">Applix Spreadsheets-rekenblad</comment>
+  <comment xml:lang="nb">Applix Spreadsheets-regneark</comment>
+  <comment xml:lang="ms">Hamparan Applix Spreadsheets</comment>
+  <comment xml:lang="lv">Applix Spreadsheets izklājlapa</comment>
+  <comment xml:lang="lt">Applix Spreadsheets skaičialentė</comment>
+  <comment xml:lang="ko">Applix 스프레드시트</comment>
+  <comment xml:lang="kk-Cyrl">Applix Spreadsheets электрондық кестесі</comment>
+  <comment xml:lang="ka">Applix Spreadsheets-ის ცხრილი</comment>
+  <comment xml:lang="ja">Applix Spreadsheets スプレッドシート</comment>
+  <comment xml:lang="it">Foglio di calcolo Applix Spreadsheets</comment>
+  <comment xml:lang="is">Applix Spreadsheets töflureikniskjal</comment>
+  <comment xml:lang="id">Lembar sebar Applix Spreadsheets</comment>
+  <comment xml:lang="ia">Folio de calculo Applix Spreadsheets</comment>
+  <comment xml:lang="hu">Applix Spreadsheets-munkafüzet</comment>
+  <comment xml:lang="hr">Applix Spreadsheets proračunska tablica</comment>
+  <comment xml:lang="he">גיליון נתונים של Applix Spreadsheets</comment>
+  <comment xml:lang="gl">folla de cálculo de Applix</comment>
+  <comment xml:lang="ga">scarbhileog Applix Spreadsheets</comment>
+  <comment xml:lang="fur">sfuei di calcul Applix Spreadsheets</comment>
+  <comment xml:lang="fr">feuille de calcul Applix</comment>
+  <comment xml:lang="fo">Applix Spreadsheets rokniark</comment>
+  <comment xml:lang="fi">Applix Spreadsheets -taulukko</comment>
+  <comment xml:lang="eu">Applix Spreadsheets kalkulu-orria</comment>
+  <comment xml:lang="es">hoja de cálculo de Applix Spreadsheets</comment>
+  <comment xml:lang="eo">sterntabelo de Applix Spreadsheets</comment>
+  <comment xml:lang="en-GB">Applix Spreadsheets spreadsheet</comment>
+  <comment xml:lang="el">Λογιστικό φύλλο Applix Spreadsheets</comment>
+  <comment xml:lang="de">Applix-Spreadsheets-Tabelle</comment>
+  <comment xml:lang="da">Applix Spreadsheets-regneark</comment>
+  <comment xml:lang="cs">sešit Applix Spreadsheets</comment>
+  <comment xml:lang="ca">full de càlcul d'Applix Spreadsheets</comment>
+  <comment xml:lang="bg">Таблица — Applix Spreadsheets</comment>
+  <comment xml:lang="be-Latn">Raźlikovy arkuš Applix Spreadsheets</comment>
+  <comment xml:lang="be-Cyrl">электронная табліца Applix Spreadsheets</comment>
+  <comment xml:lang="ar">جداول بيانات Applix</comment>
+  <comment xml:lang="af">Applix Spreadsheets-sigblad</comment>
+  <generic-icon name="x-office-spreadsheet"/>
+  <glob pattern="*.as"/>
+</mime-type>

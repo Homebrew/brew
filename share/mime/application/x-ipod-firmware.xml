@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-ipod-firmware">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>iPod firmware</comment>
+  <comment xml:lang="zh-Hant-TW">iPod 韌體</comment>
+  <comment xml:lang="zh-Hans-CN">iPod 固件</comment>
+  <comment xml:lang="vi">phần vững iPod</comment>
+  <comment xml:lang="uk">мікропрограма iPod</comment>
+  <comment xml:lang="tr">iPod donanım yazılımı</comment>
+  <comment xml:lang="sv">fast iPod-program</comment>
+  <comment xml:lang="sr-Cyrl">ајПод-ов уграђени</comment>
+  <comment xml:lang="sq">firmware iPod</comment>
+  <comment xml:lang="sl">Programska strojna oprema iPod</comment>
+  <comment xml:lang="si">iPod ස්ථිරාංග</comment>
+  <comment xml:lang="sk">Firmware iPod</comment>
+  <comment xml:lang="ru">Микропрограмма iPod</comment>
+  <comment xml:lang="ro">Firmware iPod</comment>
+  <comment xml:lang="pt-BR">Firmware do iPod</comment>
+  <comment xml:lang="pt">firmware iPod</comment>
+  <comment xml:lang="pl">Oprogramowanie wewnętrzne iPod</comment>
+  <comment xml:lang="oc">firmware iPod</comment>
+  <comment xml:lang="nn">iPod-firmvare</comment>
+  <comment xml:lang="nl">iPod-firmware</comment>
+  <comment xml:lang="nb">iPod-firmware</comment>
+  <comment xml:lang="ms">Firmware iPod</comment>
+  <comment xml:lang="lv">iPod aparātprogrammatūra</comment>
+  <comment xml:lang="lt">iPod programinė įranga</comment>
+  <comment xml:lang="ko">iPod 펌웨어</comment>
+  <comment xml:lang="kk-Cyrl">iPod микробағдарламасы</comment>
+  <comment xml:lang="ja">iPod ファームウェア</comment>
+  <comment xml:lang="it">Firmware iPod</comment>
+  <comment xml:lang="is">iPod grunnhugbúnaður</comment>
+  <comment xml:lang="id">peranti tegar iPod</comment>
+  <comment xml:lang="ia">Firmware iPod</comment>
+  <comment xml:lang="hu">iPod-firmware</comment>
+  <comment xml:lang="hr">iPod firmver</comment>
+  <comment xml:lang="he">קושחת ipod</comment>
+  <comment xml:lang="gl">firmware de iPod</comment>
+  <comment xml:lang="ga">dochtearraí iPod</comment>
+  <comment xml:lang="fur">firmware iPod</comment>
+  <comment xml:lang="fr">firmware iPod</comment>
+  <comment xml:lang="fo">iPod fastbúnaður</comment>
+  <comment xml:lang="fi">iPod-laiteohjelmisto</comment>
+  <comment xml:lang="eu">iPod firmwarea</comment>
+  <comment xml:lang="es">firmware de iPod</comment>
+  <comment xml:lang="eo">iPod-mikroprogramaro</comment>
+  <comment xml:lang="en-GB">iPod firmware</comment>
+  <comment xml:lang="el">Υλικολογισμικό iPod</comment>
+  <comment xml:lang="de">iPod-Firmware</comment>
+  <comment xml:lang="da">iPod-styreprogram</comment>
+  <comment xml:lang="cs">firmware iPod</comment>
+  <comment xml:lang="ca">microprogramari d'iPod</comment>
+  <comment xml:lang="bg">Фърмуер — iPod</comment>
+  <comment xml:lang="be-Latn">Firmware iPod</comment>
+  <comment xml:lang="be-Cyrl">убудаванае ПЗ iPod</comment>
+  <comment xml:lang="ar">برنامج عتاد الـiPod</comment>
+</mime-type>

@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/vnd.iccprofile">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>ICC profile</comment>
+  <comment xml:lang="zh-Hant-TW">ICC 設定組合</comment>
+  <comment xml:lang="zh-Hans-CN">ICC 配置文件</comment>
+  <comment xml:lang="uk">профіль ICC</comment>
+  <comment xml:lang="tr">ICC profili</comment>
+  <comment xml:lang="sv">ICC-profil</comment>
+  <comment xml:lang="sr-Cyrl">ИЦЦ профил</comment>
+  <comment xml:lang="sq">profil ICC</comment>
+  <comment xml:lang="sl">Datoteka profila ICC</comment>
+  <comment xml:lang="si">ICC පැතිකඩ</comment>
+  <comment xml:lang="sk">Profil farieb ICC</comment>
+  <comment xml:lang="ru">Профиль ICC</comment>
+  <comment xml:lang="ro">Profil ICC</comment>
+  <comment xml:lang="pt-BR">Perfil ICC</comment>
+  <comment xml:lang="pt">perfil ICC</comment>
+  <comment xml:lang="pl">Profil ICC</comment>
+  <comment xml:lang="oc">perfil ICC</comment>
+  <comment xml:lang="nl">ICC-profiel</comment>
+  <comment xml:lang="lv">ICC profils</comment>
+  <comment xml:lang="lt">ICC profilis</comment>
+  <comment xml:lang="ko">ICC 프로필</comment>
+  <comment xml:lang="kk-Cyrl">ICC профайлы</comment>
+  <comment xml:lang="ka">ICC პროფილი</comment>
+  <comment xml:lang="ja">ICC プロファイル</comment>
+  <comment xml:lang="it">Profilo ICC</comment>
+  <comment xml:lang="is">ICC snið</comment>
+  <comment xml:lang="id">Profil ICC</comment>
+  <comment xml:lang="ia">Profilo ICC</comment>
+  <comment xml:lang="hu">ICC profil</comment>
+  <comment xml:lang="hr">ICC profil</comment>
+  <comment xml:lang="he">פרופיל ICC</comment>
+  <comment xml:lang="gl">perfíl ICC</comment>
+  <comment xml:lang="ga">próifíl ICC</comment>
+  <comment xml:lang="fur">profîl ICC</comment>
+  <comment xml:lang="fr">profil ICC</comment>
+  <comment xml:lang="fo">ICC umhvarv</comment>
+  <comment xml:lang="fi">ICC-profiili</comment>
+  <comment xml:lang="eu">ICC profila</comment>
+  <comment xml:lang="es">perfil ICC</comment>
+  <comment xml:lang="eo">ICC-profilo</comment>
+  <comment xml:lang="en-GB">ICC profile</comment>
+  <comment xml:lang="el">Προφίλ ICC</comment>
+  <comment xml:lang="de">ICC-Profil</comment>
+  <comment xml:lang="da">ICC-profil</comment>
+  <comment xml:lang="cs">profil ICC</comment>
+  <comment xml:lang="ca">perfil ICC</comment>
+  <comment xml:lang="bg">Цветови профил — OCL</comment>
+  <comment xml:lang="be-Cyrl">профіль ICC</comment>
+  <comment xml:lang="ast">Perfil ICC</comment>
+  <comment xml:lang="ar">تشكيلة ICC</comment>
+  <comment xml:lang="af">ICC-profiel</comment>
+  <acronym>ICC</acronym>
+  <expanded-acronym>International Color Consortium</expanded-acronym>
+  <glob pattern="*.icc"/>
+  <glob pattern="*.icm"/>
+</mime-type>

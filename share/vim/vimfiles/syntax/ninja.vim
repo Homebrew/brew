@@ -1,0 +1,1 @@
+../../../../Cellar/ninja/1.13.1/share/vim/vimfiles/syntax/ninja.vim

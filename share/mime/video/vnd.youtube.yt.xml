@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="video/vnd.youtube.yt">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>YouTube media archive</comment>
+  <comment xml:lang="zh-Hans-CN">YouTube 媒体存档</comment>
+  <comment xml:lang="uk">мультимедійний архів YouTube</comment>
+  <comment xml:lang="tr">YouTube ortam arşivi</comment>
+  <comment xml:lang="sv">YouTube-mediaarkiv</comment>
+  <comment xml:lang="sq">arkiv media YouTube</comment>
+  <comment xml:lang="sl">Medijski arhiv YouTube</comment>
+  <comment xml:lang="si">YouTube මාධ්‍ය සංරක්ෂිතය</comment>
+  <comment xml:lang="sk">Archív médií YouTube</comment>
+  <comment xml:lang="ru">Медиа-архив YouTube</comment>
+  <comment xml:lang="pt-BR">Arquivo de mídia do Youtube</comment>
+  <comment xml:lang="pt">arquivo multimédia do YouTube</comment>
+  <comment xml:lang="pl">Archiwum multimediów YouTube</comment>
+  <comment xml:lang="oc">archiu mèdia YouTube</comment>
+  <comment xml:lang="nl">YouTube-media-archief</comment>
+  <comment xml:lang="ko">유튜브 미디어 저장 파일</comment>
+  <comment xml:lang="kk-Cyrl">YouTube медиа архиві</comment>
+  <comment xml:lang="ja">YouTube メディアアーカイブ</comment>
+  <comment xml:lang="it">Archivio multimediale YouTube</comment>
+  <comment xml:lang="is">YouTube margmiðlunarsafnskrá</comment>
+  <comment xml:lang="id">Arsip media YouTube</comment>
+  <comment xml:lang="hu">YouTube médiaarchívum</comment>
+  <comment xml:lang="hr">YouTube medijska arhiva</comment>
+  <comment xml:lang="he">ארכיון מדיה של YouTube</comment>
+  <comment xml:lang="gl">Arquivo multimedia de Youtube</comment>
+  <comment xml:lang="fr">archive média YouTube</comment>
+  <comment xml:lang="fi">YouTube-media-arkisto</comment>
+  <comment xml:lang="eu">YouTube media fitxategia</comment>
+  <comment xml:lang="es">archivador multimedia de YouTube</comment>
+  <comment xml:lang="en-GB">YouTube media archive</comment>
+  <comment xml:lang="de">YouTube-Medienarchiv</comment>
+  <comment xml:lang="da">YouTube-mediearkiv</comment>
+  <comment xml:lang="ca">arxiu de mitjans de YouTube</comment>
+  <comment xml:lang="bg">Медиен архив — YouTube</comment>
+  <comment xml:lang="be-Cyrl">архіў мультымедыя YouTube</comment>
+  <comment xml:lang="ar">أرشيف وسائط يوتيوب</comment>
+  <alias type="application/vnd.youtube.yt"/>
+  <generic-icon name="video-x-generic"/>
+  <glob pattern="*.yt"/>
+  <sub-class-of type="application/zip"/>
+</mime-type>

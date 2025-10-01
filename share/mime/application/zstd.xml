@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/zstd">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Zstandard archive</comment>
+  <comment xml:lang="zh-Hant-TW">Zstandard 封存檔</comment>
+  <comment xml:lang="zh-Hans-CN">Zstandard 归档文件</comment>
+  <comment xml:lang="uk">архів Zstandard</comment>
+  <comment xml:lang="tr">Zstandard arşivi</comment>
+  <comment xml:lang="sv">Zstandard-arkiv</comment>
+  <comment xml:lang="sq">arkiv Zstandard</comment>
+  <comment xml:lang="sl">Arhiv Zstandard</comment>
+  <comment xml:lang="si">Zstandard ලේඛනාගාරය</comment>
+  <comment xml:lang="sk">Archív Zstandard</comment>
+  <comment xml:lang="ru">Архив Zstandard</comment>
+  <comment xml:lang="pt-BR">Pacote Zstandard</comment>
+  <comment xml:lang="pl">Archiwum Zstandard</comment>
+  <comment xml:lang="oc">archiu Zstandard</comment>
+  <comment xml:lang="nl">Zstandard-archief</comment>
+  <comment xml:lang="ko">Zstandard 압축 파일</comment>
+  <comment xml:lang="kk-Cyrl">Zstandard архиві</comment>
+  <comment xml:lang="ja">Zstandard アーカイブ</comment>
+  <comment xml:lang="it">Archivio Zstandard</comment>
+  <comment xml:lang="is">Zstandard safnskrá</comment>
+  <comment xml:lang="id">Arsip Zstandard</comment>
+  <comment xml:lang="hu">Zstandard archívum</comment>
+  <comment xml:lang="hr">Zstandard arhiva</comment>
+  <comment xml:lang="he">ארכיון Zstandard</comment>
+  <comment xml:lang="gl">Arquivo de Zstandard</comment>
+  <comment xml:lang="fur">archivi Zstandard</comment>
+  <comment xml:lang="fr">archive Zstandard</comment>
+  <comment xml:lang="fi">Zstandard-arkisto</comment>
+  <comment xml:lang="eu">Zstandard archive</comment>
+  <comment xml:lang="es">archivador Zstandard</comment>
+  <comment xml:lang="en-GB">Zstandard archive</comment>
+  <comment xml:lang="de">Zstandard-Archiv</comment>
+  <comment xml:lang="da">Zstandard-arkiv</comment>
+  <comment xml:lang="cs">archiv Zstandard</comment>
+  <comment xml:lang="ca">arxiu Zstandard</comment>
+  <comment xml:lang="bg">Архив — Zstandard</comment>
+  <comment xml:lang="be-Cyrl">архіў Zstandard</comment>
+  <comment xml:lang="ar">أرشيف Zstandard</comment>
+  <generic-icon name="package-x-generic"/>
+  <glob pattern="*.zst"/>
+</mime-type>

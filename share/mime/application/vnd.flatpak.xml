@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/vnd.flatpak">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Flatpak application bundle</comment>
+  <comment xml:lang="zh-Hant-TW">Flatpak 應用程式套組</comment>
+  <comment xml:lang="zh-Hans-CN">Flatpak 应用组合包</comment>
+  <comment xml:lang="uk">пакунок із програмами Flatpak</comment>
+  <comment xml:lang="tr">Flatpak uygulama paketi</comment>
+  <comment xml:lang="sv">Flatpak-programbunt</comment>
+  <comment xml:lang="sr-Cyrl">скуп програма Флатпака</comment>
+  <comment xml:lang="sq">paketë aplikacionesh Flatpak</comment>
+  <comment xml:lang="si">Flatpak යෙදුම් මිටියක්</comment>
+  <comment xml:lang="sk">Balík aplikácií Flatpak</comment>
+  <comment xml:lang="ru">Пакет приложения Flatpak</comment>
+  <comment xml:lang="pt-BR">Pacote de aplicativo Flatpak</comment>
+  <comment xml:lang="pl">Pakiet programu Flatpak</comment>
+  <comment xml:lang="nl">Flatpak-toepassingsbundel</comment>
+  <comment xml:lang="ko">Flatpak 프로그램 번들</comment>
+  <comment xml:lang="kk-Cyrl">Flatpak қолданбалар дестесі</comment>
+  <comment xml:lang="ja">Flatpak アプリケーションバンドル</comment>
+  <comment xml:lang="it">Bundle applicazione Flatpak</comment>
+  <comment xml:lang="is">Flatpak forritavöndull</comment>
+  <comment xml:lang="id">Bundel aplikasi Flatpak</comment>
+  <comment xml:lang="hu">Flatpak alkalmazáscsomag</comment>
+  <comment xml:lang="hr">Flatpak paket aplikacije</comment>
+  <comment xml:lang="he">חבילת יישומי Flatpak</comment>
+  <comment xml:lang="ga">burla feidhmchláir Flatpak</comment>
+  <comment xml:lang="fur">côl di aplicazions Flatpak</comment>
+  <comment xml:lang="fr">lot applicatif Flatpak</comment>
+  <comment xml:lang="fi">Flatpak-sovelluspaketti</comment>
+  <comment xml:lang="eu">Flatpak aplikazio bilduma</comment>
+  <comment xml:lang="es">paquete de aplicación Flatpak</comment>
+  <comment xml:lang="en-GB">Flatpak application bundle</comment>
+  <comment xml:lang="de">Flatpak-Anwendungspaket</comment>
+  <comment xml:lang="da">Flatpak-programsamling</comment>
+  <comment xml:lang="cs">balíček Flatpak s aplikací</comment>
+  <comment xml:lang="ca">paquet d'aplicació Flatpak</comment>
+  <comment xml:lang="bg">Програмен пакет — Flatpak</comment>
+  <comment xml:lang="be-Cyrl">пакет праграмы Flatpak</comment>
+  <comment xml:lang="ar">حزمة تطبيق Flatpak</comment>
+  <comment xml:lang="af">Flatpak-toepassingsbundel</comment>
+  <generic-icon name="package-x-generic"/>
+  <glob pattern="*.flatpak"/>
+  <glob pattern="*.xdgapp"/>
+  <alias type="application/vnd.xdgapp"/>
+</mime-type>

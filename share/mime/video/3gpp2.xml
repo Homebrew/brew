@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="video/3gpp2">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>3GPP2 multimedia file</comment>
+  <comment xml:lang="zh-Hant-TW">3GPP2 多媒體檔案</comment>
+  <comment xml:lang="zh-Hans-CN">3GPP2 多媒体文件</comment>
+  <comment xml:lang="uk">файл мультимедійних даних 3GPP2</comment>
+  <comment xml:lang="tr">3GPP2 çoklu ortam dosyası</comment>
+  <comment xml:lang="sv">3GPP2-multimediafil</comment>
+  <comment xml:lang="sr-Cyrl">3ГПП2 мултимедијална датотека</comment>
+  <comment xml:lang="sq">kartelë multimedia 3GPP2</comment>
+  <comment xml:lang="sl">Večpredstavnostna datoteka 3GPP2</comment>
+  <comment xml:lang="si">3GPP2 බහුමාධ්‍ය ගොනුව</comment>
+  <comment xml:lang="sk">Súbor multimédií 3GPP2</comment>
+  <comment xml:lang="ru">Мультимедийный файл 3GPP2</comment>
+  <comment xml:lang="ro">Fișier multimedia 3GPP2</comment>
+  <comment xml:lang="pt-BR">Arquivo multimídia 3GPP2</comment>
+  <comment xml:lang="pt">ficheiro multimédia 3GPP2</comment>
+  <comment xml:lang="pl">Plik multimedialny 3GPP2</comment>
+  <comment xml:lang="oc">fichièr multimèdia 3GPP2</comment>
+  <comment xml:lang="nl">3GPP2-multimediabestand</comment>
+  <comment xml:lang="lv">3GPP2 multimediju datne</comment>
+  <comment xml:lang="lt">3GPP2 multimedijos failas</comment>
+  <comment xml:lang="ko">3GPP2 멀티미디어 파일</comment>
+  <comment xml:lang="kk-Cyrl">3GPP2 мультимедиялық файлы</comment>
+  <comment xml:lang="ka">3GPP2 მულტიმედიური ფაილი</comment>
+  <comment xml:lang="ja">3GPP2 マルチメディアファイル</comment>
+  <comment xml:lang="it">File multimediale 3GPP2</comment>
+  <comment xml:lang="is">3GPP2 margmiðlunarskrá</comment>
+  <comment xml:lang="id">Berkas multimedia 3GPP2</comment>
+  <comment xml:lang="ia">File multimedial 3GPP2</comment>
+  <comment xml:lang="hu">3GPP2 multimédiafájl</comment>
+  <comment xml:lang="hr">3GPP2 multimedijska datoteka</comment>
+  <comment xml:lang="he">קובץ מולטימדיה 3GPP2</comment>
+  <comment xml:lang="gl">ficheiro multimedia 3GPP2</comment>
+  <comment xml:lang="ga">comhad ilmheán 3GPP2</comment>
+  <comment xml:lang="fur">file multimediâl 3GPP2</comment>
+  <comment xml:lang="fr">fichier multimédia 3GPP2</comment>
+  <comment xml:lang="fo">3GGP2 margmiðlafíla</comment>
+  <comment xml:lang="fi">3GPP2-multimediatiedosto</comment>
+  <comment xml:lang="eu">3GPP2 multimediako fitxategia</comment>
+  <comment xml:lang="es">archivo multimedia 3GPP2</comment>
+  <comment xml:lang="en-GB">3GPP2 multimedia file</comment>
+  <comment xml:lang="el">Αρχείο πολυμέσων 3GPP2</comment>
+  <comment xml:lang="de">3GPP2-Multimediadatei</comment>
+  <comment xml:lang="da">3GPP2 multimedie-fil</comment>
+  <comment xml:lang="cs">multimediální soubor 3GPP2</comment>
+  <comment xml:lang="ca">fitxer multimèdia 3GPP2</comment>
+  <comment xml:lang="bg">Мултимедия — 3GPP2</comment>
+  <comment xml:lang="be-Cyrl">мультымедыйны файл 3GPP2</comment>
+  <comment xml:lang="ar">ملف وسائط متعددة 3GPP2</comment>
+  <comment xml:lang="af">3GPP2-multimedialêer</comment>
+  <acronym>3GPP2</acronym>
+  <expanded-acronym>3rd Generation Partnership Project 2</expanded-acronym>
+  <glob pattern="*.3g2"/>
+  <glob pattern="*.3gp2"/>
+  <glob pattern="*.3gpp2"/>
+  <alias type="audio/3gpp2"/>
+</mime-type>

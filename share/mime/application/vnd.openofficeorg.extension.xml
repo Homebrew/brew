@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/vnd.openofficeorg.extension">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>OpenOffice.org extension</comment>
+  <comment xml:lang="zh-Hant-TW">OpenOffice.org 擴充套件</comment>
+  <comment xml:lang="zh-Hans-CN">OpenOffice.org 扩展</comment>
+  <comment xml:lang="vi">Phần mở rộng của OpenOffice.org</comment>
+  <comment xml:lang="uk">розширення OpenOffice.org</comment>
+  <comment xml:lang="tr">OpenOffice.org eklentisi</comment>
+  <comment xml:lang="sv">OpenOffice.org-tillägg</comment>
+  <comment xml:lang="sr-Cyrl">проширење ОпенОфис.орг-а</comment>
+  <comment xml:lang="sq">zgjerim OpenOffice.org</comment>
+  <comment xml:lang="sl">Razširitev OpenOffice.org</comment>
+  <comment xml:lang="si">OpenOffice.org දිගුව</comment>
+  <comment xml:lang="sk">Rozšírenie OpenOffice.org</comment>
+  <comment xml:lang="ru">Расширение OpenOffice.org</comment>
+  <comment xml:lang="ro">Extensie OpenOffice.org</comment>
+  <comment xml:lang="pt-BR">Extensão do OpenOffice</comment>
+  <comment xml:lang="pt">extensão OpenOffice.org</comment>
+  <comment xml:lang="pl">Rozszerzenie OpenOffice.org</comment>
+  <comment xml:lang="oc">extension OpenOffice.org</comment>
+  <comment xml:lang="nn">OpenOffice Writer-utviding</comment>
+  <comment xml:lang="nl">OpenOffice.org-uitbreiding</comment>
+  <comment xml:lang="lv">OpenOffice.org paplašinājums</comment>
+  <comment xml:lang="lt">OpenOffice.org plėtinys</comment>
+  <comment xml:lang="ko">OpenOffice.org 확장</comment>
+  <comment xml:lang="kk-Cyrl">OpenOffice.org кеңейтуі</comment>
+  <comment xml:lang="ka">OpenOffice.org-ის გაფართოება</comment>
+  <comment xml:lang="ja">OpenOffice.org 拡張機能</comment>
+  <comment xml:lang="it">Estensione OpenOffice.org</comment>
+  <comment xml:lang="is">OpenOffice.org viðauki</comment>
+  <comment xml:lang="id">Ekstensi OpenOffice.org</comment>
+  <comment xml:lang="ia">Extension OpenOffice.org</comment>
+  <comment xml:lang="hu">OpenOffice.org kiterjesztés</comment>
+  <comment xml:lang="hr">OpenOffice.org proširenje</comment>
+  <comment xml:lang="he">הרחבה של OpenOffice.org</comment>
+  <comment xml:lang="gl">Extensión de OpenOffice.org</comment>
+  <comment xml:lang="ga">eisínteacht OpenOffice.org</comment>
+  <comment xml:lang="fur">estension OpenOffice.org</comment>
+  <comment xml:lang="fr">extension OpenOffice.org</comment>
+  <comment xml:lang="fo">OpenOffice.org víðkan</comment>
+  <comment xml:lang="fi">OpenOffice.org-laajennus</comment>
+  <comment xml:lang="eu">OpenOffice.org luzapena</comment>
+  <comment xml:lang="es">extensión de LibreOffice</comment>
+  <comment xml:lang="en-GB">OpenOffice.org extension</comment>
+  <comment xml:lang="el">Επέκταση OpenOffice.org</comment>
+  <comment xml:lang="de">OpenOffice.org-Erweiterung</comment>
+  <comment xml:lang="da">OpenOffice.org-udvidelse</comment>
+  <comment xml:lang="cs">rozšíření OpenOffice.org</comment>
+  <comment xml:lang="ca">extensió d'OpenOffice.org</comment>
+  <comment xml:lang="bg">Приставка — OpenOffice</comment>
+  <comment xml:lang="be-Latn">Pašyreńnie OpenOffice.org</comment>
+  <comment xml:lang="be-Cyrl">пашырэнне OpenOffice.org</comment>
+  <comment xml:lang="ast">Estensión d'OpenOffice.org</comment>
+  <comment xml:lang="ar">امتداد OpenOffice.org</comment>
+  <comment xml:lang="af">OpenOffice.org-uitbreiding</comment>
+  <sub-class-of type="application/zip"/>
+  <generic-icon name="x-office-document"/>
+  <glob pattern="*.oxt"/>
+</mime-type>

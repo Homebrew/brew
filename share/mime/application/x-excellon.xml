@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-excellon">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Excellon drill file</comment>
+  <comment xml:lang="uk">файл drill Excellon</comment>
+  <comment xml:lang="sv">Excellon-borrfil</comment>
+  <comment xml:lang="ru">Файл Excellon drill</comment>
+  <comment xml:lang="pl">Plik wiercenia Excellon</comment>
+  <comment xml:lang="es">archivo de perforación de Excellon</comment>
+  <comment xml:lang="de">Excellon-Bohrdatei</comment>
+  <sub-class-of type="text/plain"/>
+  <glob pattern="*.drl"/>
+  <generic-icon name="text-x-generic"/>
+</mime-type>

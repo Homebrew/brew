@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="audio/x-voc">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>VOC audio</comment>
+  <comment xml:lang="zh-Hant-TW">VOC 音訊</comment>
+  <comment xml:lang="zh-Hans-CN">VOC 音频</comment>
+  <comment xml:lang="vi">Âm thanh VOC</comment>
+  <comment xml:lang="uk">звук VOC</comment>
+  <comment xml:lang="tr">VOC sesi</comment>
+  <comment xml:lang="sv">VOC-ljud</comment>
+  <comment xml:lang="sr-Cyrl">ВОЦ звук</comment>
+  <comment xml:lang="sq">audio VOC</comment>
+  <comment xml:lang="sl">Zvočna datoteka VOC</comment>
+  <comment xml:lang="si">VOC ශ්‍රව්‍ය</comment>
+  <comment xml:lang="sk">Zvuk VOC</comment>
+  <comment xml:lang="ru">Аудио VOC</comment>
+  <comment xml:lang="ro">Audio VOC</comment>
+  <comment xml:lang="pt-BR">Áudio VOC</comment>
+  <comment xml:lang="pt">áudio VOC</comment>
+  <comment xml:lang="pl">Plik dźwiękowy VOC</comment>
+  <comment xml:lang="oc">àudio VOC</comment>
+  <comment xml:lang="nn">VOC-lyd</comment>
+  <comment xml:lang="nl">VOC-audio</comment>
+  <comment xml:lang="nb">VOC-lyd</comment>
+  <comment xml:lang="ms">Audio VOC</comment>
+  <comment xml:lang="lv">VOC audio</comment>
+  <comment xml:lang="lt">VOC garso įrašas</comment>
+  <comment xml:lang="ko">VOC 오디오</comment>
+  <comment xml:lang="kk-Cyrl">VOC аудиосы</comment>
+  <comment xml:lang="ja">VOC オーディオ</comment>
+  <comment xml:lang="it">Audio VOC</comment>
+  <comment xml:lang="is">VOC hljóðskrá</comment>
+  <comment xml:lang="id">Audio VOC</comment>
+  <comment xml:lang="ia">Audio VOC</comment>
+  <comment xml:lang="hu">VOC hang</comment>
+  <comment xml:lang="hr">VOC zvučni zapis</comment>
+  <comment xml:lang="he">שמע VOC</comment>
+  <comment xml:lang="gl">son VOC</comment>
+  <comment xml:lang="ga">fuaim VOC</comment>
+  <comment xml:lang="fur">audio VOC</comment>
+  <comment xml:lang="fr">audio VOC</comment>
+  <comment xml:lang="fo">VOC ljóður</comment>
+  <comment xml:lang="fi">VOC-ääni</comment>
+  <comment xml:lang="eu">VOC audioa</comment>
+  <comment xml:lang="es">sonido VOC</comment>
+  <comment xml:lang="eo">VOC-sondosiero</comment>
+  <comment xml:lang="en-GB">VOC audio</comment>
+  <comment xml:lang="el">Ήχος VOC</comment>
+  <comment xml:lang="de">VOC-Audio</comment>
+  <comment xml:lang="da">VOC-lyd</comment>
+  <comment xml:lang="cy">Sain VOC</comment>
+  <comment xml:lang="cs">zvuk VOC</comment>
+  <comment xml:lang="ca">àudio VOC</comment>
+  <comment xml:lang="bg">Аудио — VOC</comment>
+  <comment xml:lang="be-Latn">Aŭdyjo VOC</comment>
+  <comment xml:lang="be-Cyrl">аўдыя VOC</comment>
+  <comment xml:lang="az">VOC audio faylı</comment>
+  <comment xml:lang="ar">صوت VOC</comment>
+  <comment xml:lang="af">VOC-oudio</comment>
+  <glob pattern="*.voc"/>
+</mime-type>

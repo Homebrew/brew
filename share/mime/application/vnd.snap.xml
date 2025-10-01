@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/vnd.snap">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Snap package</comment>
+  <comment xml:lang="zh-Hant-TW">Snap 軟體包</comment>
+  <comment xml:lang="zh-Hans-CN">Snap 软件包</comment>
+  <comment xml:lang="uk">пакунок snap</comment>
+  <comment xml:lang="tr">Snap paketi</comment>
+  <comment xml:lang="sv">Snap-paket</comment>
+  <comment xml:lang="sr-Cyrl">Снап пакет</comment>
+  <comment xml:lang="sq">paketë Snap</comment>
+  <comment xml:lang="sl">Paket Snap</comment>
+  <comment xml:lang="si">Snap පැකේජය</comment>
+  <comment xml:lang="sk">Balík Snap</comment>
+  <comment xml:lang="ru">Пакет Snap</comment>
+  <comment xml:lang="pt-BR">Pacote Snap</comment>
+  <comment xml:lang="pl">Pakiet Snap</comment>
+  <comment xml:lang="oc">paquet Snap</comment>
+  <comment xml:lang="nl">Snap-pakket</comment>
+  <comment xml:lang="ko">Snap 패키지</comment>
+  <comment xml:lang="kk-Cyrl">Snap дестесі</comment>
+  <comment xml:lang="ja">Snap パッケージ</comment>
+  <comment xml:lang="it">Pacchetto snap</comment>
+  <comment xml:lang="is">Snap-pakki</comment>
+  <comment xml:lang="id">Paket Snap</comment>
+  <comment xml:lang="hu">Snap-csomag</comment>
+  <comment xml:lang="hr">Snap paket</comment>
+  <comment xml:lang="he">חבילת Snap</comment>
+  <comment xml:lang="ga">pacáiste Snap</comment>
+  <comment xml:lang="fur">pachet Snap</comment>
+  <comment xml:lang="fr">paquet Snap</comment>
+  <comment xml:lang="fi">Snap-paketti</comment>
+  <comment xml:lang="eu">Snap paketea</comment>
+  <comment xml:lang="es">paquete Snap</comment>
+  <comment xml:lang="en-GB">Snap package</comment>
+  <comment xml:lang="de">Snap-Paket</comment>
+  <comment xml:lang="da">Snap-pakke</comment>
+  <comment xml:lang="cs">balíček Snap</comment>
+  <comment xml:lang="ca">paquet snap</comment>
+  <comment xml:lang="bg">Пакет — Snap</comment>
+  <comment xml:lang="be-Cyrl">пакет Snap</comment>
+  <comment xml:lang="ar">حزمة سناب</comment>
+  <comment xml:lang="af">Snap-pakket</comment>
+  <glob pattern="*.snap"/>
+  <sub-class-of type="application/vnd.squashfs"/>
+</mime-type>

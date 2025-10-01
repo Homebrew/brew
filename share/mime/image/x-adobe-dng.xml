@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="image/x-adobe-dng">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Adobe DNG negative</comment>
+  <comment xml:lang="zh-Hant-TW">Adobe DNG 負片</comment>
+  <comment xml:lang="zh-Hans-CN">Adobe DNG 负片</comment>
+  <comment xml:lang="vi">Âm bản Adobe DNG</comment>
+  <comment xml:lang="uk">цифровий негатив DNG Adobe</comment>
+  <comment xml:lang="tr">Adobe DNG negatifi</comment>
+  <comment xml:lang="sv">Adobe DNG-negativ</comment>
+  <comment xml:lang="sr-Cyrl">Адобов ДНГ негатив</comment>
+  <comment xml:lang="sq">negativ Adobe DNG</comment>
+  <comment xml:lang="sl">Datoteka negativa Adobe DNG</comment>
+  <comment xml:lang="si">Adobe DNG සෘණ</comment>
+  <comment xml:lang="sk">Adobe Digital Negative (DNG)</comment>
+  <comment xml:lang="ru">Негатив Adobe DNG</comment>
+  <comment xml:lang="ro">Negativ Adobe DNG</comment>
+  <comment xml:lang="pt-BR">Negativo DNG da Adobe</comment>
+  <comment xml:lang="pt">negativo Adobe DNG</comment>
+  <comment xml:lang="pl">Negatyw DNG Adobe</comment>
+  <comment xml:lang="oc">négatif DNG Adobe</comment>
+  <comment xml:lang="nn">Adobe DNG-negativ</comment>
+  <comment xml:lang="nl">Adobe DNG-negatief</comment>
+  <comment xml:lang="nb">Adobe DNG-negativ</comment>
+  <comment xml:lang="lv">Adobe DNG negatīvs</comment>
+  <comment xml:lang="lt">Adobe DNG negatyvas</comment>
+  <comment xml:lang="ko">Adobe DNG 네거티브</comment>
+  <comment xml:lang="kk-Cyrl">Adobe DNG негативі</comment>
+  <comment xml:lang="ka">Adobe DNG-ის ნეგატივი</comment>
+  <comment xml:lang="ja">Adobe DNG ネガ</comment>
+  <comment xml:lang="it">Negativo Adobe DNG</comment>
+  <comment xml:lang="is">Adobe DNG negatíva</comment>
+  <comment xml:lang="id">Negatif Adobe DNG</comment>
+  <comment xml:lang="ia">Negativo Adobe DNG</comment>
+  <comment xml:lang="hu">Adobe DNG negatív</comment>
+  <comment xml:lang="hr">Adobe DNG negativ</comment>
+  <comment xml:lang="he">תשליל Adobe DNG</comment>
+  <comment xml:lang="gl">negativo DNG de Adobe</comment>
+  <comment xml:lang="ga">claonchló DNG Adobe</comment>
+  <comment xml:lang="fur">negatîf Adobe DNG</comment>
+  <comment xml:lang="fr">négatif DNG Adobe</comment>
+  <comment xml:lang="fo">Adobe DNG negativ</comment>
+  <comment xml:lang="fi">Adobe-DNG-negatiivi</comment>
+  <comment xml:lang="eu">Adobe DNG negatiboa</comment>
+  <comment xml:lang="es">negativo DNG de Adobe</comment>
+  <comment xml:lang="en-GB">Adobe DNG negative</comment>
+  <comment xml:lang="el">Αρνητικό Adobe DNG</comment>
+  <comment xml:lang="de">Adobe Digitales Negativ</comment>
+  <comment xml:lang="da">Adobe DNG-negativ</comment>
+  <comment xml:lang="cs">negativ Adobe (DNG)</comment>
+  <comment xml:lang="ca">negatiu DNG d'Adobe</comment>
+  <comment xml:lang="bg">Изображение — Adobe DNG negative</comment>
+  <comment xml:lang="be-Latn">Adobe DNG Negative</comment>
+  <comment xml:lang="be-Cyrl">Adobe DNG Negative</comment>
+  <comment xml:lang="ar">سالبة Adobe DNG</comment>
+  <comment xml:lang="af">Adobe DNG-negatief</comment>
+  <acronym>DNG</acronym>
+  <expanded-acronym>Digital Negative</expanded-acronym>
+  <sub-class-of type="image/x-dcraw"/>
+  <sub-class-of type="image/tiff"/>
+  <glob pattern="*.dng"/>
+</mime-type>

@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-mswinurl">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Internet shortcut</comment>
+  <comment xml:lang="zh-Hant-TW">網際網路捷徑</comment>
+  <comment xml:lang="zh-Hans-CN">Internet 快捷方式</comment>
+  <comment xml:lang="vi">Lối tắt Internet</comment>
+  <comment xml:lang="uk">інтернет-посилання</comment>
+  <comment xml:lang="tr">İnternet kısayolu</comment>
+  <comment xml:lang="sv">Internetgenväg</comment>
+  <comment xml:lang="sr-Cyrl">интернет пречица</comment>
+  <comment xml:lang="sq">shkurtore Internet</comment>
+  <comment xml:lang="sl">Internetna bližnjica</comment>
+  <comment xml:lang="si">අන්තර්ජාල කෙටි මග</comment>
+  <comment xml:lang="sk">Internetový odkaz</comment>
+  <comment xml:lang="ru">Интернет-ссылка</comment>
+  <comment xml:lang="ro">Scurtătură Internet</comment>
+  <comment xml:lang="pt-BR">Atalho da Internet</comment>
+  <comment xml:lang="pt">atalho da Internet</comment>
+  <comment xml:lang="pl">Skrót internetowy</comment>
+  <comment xml:lang="oc">acorchi Internet</comment>
+  <comment xml:lang="nn">Internett-snarveg</comment>
+  <comment xml:lang="nl">internetkoppeling</comment>
+  <comment xml:lang="nb">Internettsnarvei</comment>
+  <comment xml:lang="lv">Interneta īsceļš</comment>
+  <comment xml:lang="lt">Interneto nuoroda</comment>
+  <comment xml:lang="ko">인터넷 바로 가기</comment>
+  <comment xml:lang="kk-Cyrl">Интернет сілтемесі</comment>
+  <comment xml:lang="ja">インターネットショートカット</comment>
+  <comment xml:lang="it">Scorciatoia Internet</comment>
+  <comment xml:lang="is">Internet-flýtileið</comment>
+  <comment xml:lang="id">Jalan pintas Internet</comment>
+  <comment xml:lang="ia">Ligamine Internet</comment>
+  <comment xml:lang="hu">Internetes indítóikon</comment>
+  <comment xml:lang="hr">Internetski prečac</comment>
+  <comment xml:lang="he">קיצור דרך של האינטרנט</comment>
+  <comment xml:lang="gl">atallo de Internet</comment>
+  <comment xml:lang="ga">aicearra Idirlín</comment>
+  <comment xml:lang="fur">scurte di internet</comment>
+  <comment xml:lang="fr">raccourci Internet</comment>
+  <comment xml:lang="fo">Alnetssnarvegur</comment>
+  <comment xml:lang="fi">Internet-pikakuvake</comment>
+  <comment xml:lang="eu">Interneteko lasterbidea</comment>
+  <comment xml:lang="es">acceso directo a Internet</comment>
+  <comment xml:lang="en-GB">Internet shortcut</comment>
+  <comment xml:lang="el">Συντόμευση διαδικτύου</comment>
+  <comment xml:lang="de">Internet-Verweis</comment>
+  <comment xml:lang="da">Internetgenvej</comment>
+  <comment xml:lang="cs">odkaz do Internetu</comment>
+  <comment xml:lang="ca">drecera d'Internet</comment>
+  <comment xml:lang="bg">Адрес в Интернет</comment>
+  <comment xml:lang="be-Latn">Sieciŭnaja spasyłka</comment>
+  <comment xml:lang="be-Cyrl">ярлык інтэрнэту</comment>
+  <comment xml:lang="ar">اختصار إنترنت</comment>
+  <comment xml:lang="af">Internet-kortpad</comment>
+  <sub-class-of type="text/plain"/>
+  <generic-icon name="emblem-symbolic-link"/>
+  <glob pattern="*.url"/>
+</mime-type>

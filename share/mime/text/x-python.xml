@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="text/x-python">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Python script</comment>
+  <comment xml:lang="zh-Hant-TW">Python 指令稿</comment>
+  <comment xml:lang="zh-Hans-CN">Python 脚本</comment>
+  <comment xml:lang="vi">Văn lệnh Python</comment>
+  <comment xml:lang="uk">скрипт мовою Python</comment>
+  <comment xml:lang="tr">Python betiği</comment>
+  <comment xml:lang="sv">Pythonskript</comment>
+  <comment xml:lang="sr-Cyrl">Питонова скрипта</comment>
+  <comment xml:lang="sq">programth Python</comment>
+  <comment xml:lang="sl">Skriptna datoteka Python</comment>
+  <comment xml:lang="si">පයිතන් පිටපත</comment>
+  <comment xml:lang="sk">Skript Python</comment>
+  <comment xml:lang="ru">Сценарий Python</comment>
+  <comment xml:lang="ro">Script Python</comment>
+  <comment xml:lang="pt-BR">Script Python</comment>
+  <comment xml:lang="pt">script Python</comment>
+  <comment xml:lang="pl">Skrypt Python</comment>
+  <comment xml:lang="oc">escript Python</comment>
+  <comment xml:lang="nn">Python-skript</comment>
+  <comment xml:lang="nl">Python-script</comment>
+  <comment xml:lang="nb">Python-skript</comment>
+  <comment xml:lang="ms">Skrip Python</comment>
+  <comment xml:lang="lv">Python skripts</comment>
+  <comment xml:lang="lt">Python scenarijus</comment>
+  <comment xml:lang="ko">파이썬 스크립트</comment>
+  <comment xml:lang="kk-Cyrl">Python сценарийі</comment>
+  <comment xml:lang="ja">Python スクリプト</comment>
+  <comment xml:lang="it">Script Python</comment>
+  <comment xml:lang="is">Python skrifta</comment>
+  <comment xml:lang="id">Skrip Python</comment>
+  <comment xml:lang="ia">Script Python</comment>
+  <comment xml:lang="hu">Python-parancsfájl</comment>
+  <comment xml:lang="hr">Python skripta</comment>
+  <comment xml:lang="he">תסריט Python</comment>
+  <comment xml:lang="gl">Script en Python</comment>
+  <comment xml:lang="ga">script Python</comment>
+  <comment xml:lang="fur">script Python</comment>
+  <comment xml:lang="fr">script Python</comment>
+  <comment xml:lang="fo">Python boðrøð</comment>
+  <comment xml:lang="fi">Python-komentotiedosto</comment>
+  <comment xml:lang="eu">Python script-a</comment>
+  <comment xml:lang="es">secuencia de órdenes en Python</comment>
+  <comment xml:lang="eo">Python-skripto</comment>
+  <comment xml:lang="en-GB">Python script</comment>
+  <comment xml:lang="el">Δέσμη ενεργειών Python</comment>
+  <comment xml:lang="de">Python-Skript</comment>
+  <comment xml:lang="da">Python-program</comment>
+  <comment xml:lang="cs">skript v jazyce Python</comment>
+  <comment xml:lang="ca">script Python</comment>
+  <comment xml:lang="bg">Скрипт — Python</comment>
+  <comment xml:lang="be-Latn">Skrypt Python</comment>
+  <comment xml:lang="be-Cyrl">скрыпт Python</comment>
+  <comment xml:lang="ar">سكربت بايثون</comment>
+  <comment xml:lang="af">Python-skrip</comment>
+  <sub-class-of type="application/x-executable"/>
+  <sub-class-of type="text/plain"/>
+  <glob pattern="*.py" weight="60"/>
+  <glob pattern="*.pyx" weight="60"/>
+  <glob pattern="*.wsgi" weight="60"/>
+</mime-type>

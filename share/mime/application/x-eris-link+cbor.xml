@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-eris-link+cbor">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>ERIS Link</comment>
+  <comment xml:lang="uk">посилання ERIS</comment>
+  <comment xml:lang="sv">ERIS-länk</comment>
+  <comment xml:lang="ru">Ссылка ERIS</comment>
+  <comment xml:lang="pl">Dowiązanie ERIS</comment>
+  <comment xml:lang="it">Collegamento ERIS</comment>
+  <comment xml:lang="es">enlace ERIS</comment>
+  <comment xml:lang="de">ERIS-Verweis</comment>
+  <comment xml:lang="be-Cyrl">спасылка ERIS</comment>
+  <acronym>ERIS</acronym>
+  <expanded-acronym>Encoding for Robust Immutable Storage</expanded-acronym>
+  <sub-class-of type="application/cbor"/>
+  <glob pattern="*.eris"/>
+</mime-type>

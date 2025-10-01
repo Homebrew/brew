@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-cbt">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Comic book archive (tar container)</comment>
+  <comment xml:lang="uk">архів коміксів (контейнер tar)</comment>
+  <comment xml:lang="sv">Serietidningsarkiv (tar-behållare)</comment>
+  <comment xml:lang="ru">Архив комиксов (tar-контейнер)</comment>
+  <comment xml:lang="pl">Archiwum komiksu (kontener tar)</comment>
+  <comment xml:lang="it">Archivio comic book (contenitore tar)</comment>
+  <comment xml:lang="gl">Arquivo de libro de banda deseñada (contedor tar)</comment>
+  <comment xml:lang="es">archivador de libro de historietas (contenedor TAR)</comment>
+  <comment xml:lang="de">Comic-Book-Archiv (tar-Container)</comment>
+  <comment xml:lang="be-Cyrl">архіў comic book (кантэйнер tar)</comment>
+  <sub-class-of type="application/x-tar"/>
+  <generic-icon name="x-office-document"/>
+  <glob pattern="*.cbt"/>
+</mime-type>

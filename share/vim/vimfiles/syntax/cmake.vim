@@ -1,0 +1,1 @@
+../../../../Cellar/cmake/4.1.1/share/vim/vimfiles/syntax/cmake.vim

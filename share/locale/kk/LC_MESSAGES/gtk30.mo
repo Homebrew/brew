@@ -1,0 +1,1 @@
+../../../../Cellar/gtk+3/3.24.43/share/locale/kk/LC_MESSAGES/gtk30.mo

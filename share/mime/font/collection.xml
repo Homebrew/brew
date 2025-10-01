@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="font/collection">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Font collection</comment>
+  <comment xml:lang="zh-Hant-TW">字型集</comment>
+  <comment xml:lang="zh-Hans-CN">字体集</comment>
+  <comment xml:lang="uk">збірка шрифтів</comment>
+  <comment xml:lang="tr">Yazı tipi derlemi</comment>
+  <comment xml:lang="sv">Typsnittssamling</comment>
+  <comment xml:lang="sq">koleksion shkronjash</comment>
+  <comment xml:lang="sl">Zbirka pisav</comment>
+  <comment xml:lang="si">අකුරු එකතුව</comment>
+  <comment xml:lang="sk">Zbierka písiem</comment>
+  <comment xml:lang="ru">Коллекция шрифтов</comment>
+  <comment xml:lang="pt-BR">Coleção de fontes</comment>
+  <comment xml:lang="pt">coleção de letras</comment>
+  <comment xml:lang="pl">Kolekcja czcionek</comment>
+  <comment xml:lang="nl">Lettertypeverzameling</comment>
+  <comment xml:lang="ko">글꼴 모음</comment>
+  <comment xml:lang="kk-Cyrl">Қаріптер жинағы</comment>
+  <comment xml:lang="ja">フォントコレクション</comment>
+  <comment xml:lang="it">Raccolta di caratteri</comment>
+  <comment xml:lang="is">Letursafn</comment>
+  <comment xml:lang="id">Koleksi fonta</comment>
+  <comment xml:lang="hu">Betűkészlet-gyűjtemény</comment>
+  <comment xml:lang="hr">Zbirka fontova</comment>
+  <comment xml:lang="he">אוסף גופנים</comment>
+  <comment xml:lang="gl">Colección de tipo de letra</comment>
+  <comment xml:lang="ga">bailiúchán clónna</comment>
+  <comment xml:lang="fur">colezion di caratars</comment>
+  <comment xml:lang="fr">Collection de polices</comment>
+  <comment xml:lang="fi">Fonttikokoelma</comment>
+  <comment xml:lang="eu">Letra-tipo bilduma</comment>
+  <comment xml:lang="es">colección tipográfica</comment>
+  <comment xml:lang="en-GB">Font collection</comment>
+  <comment xml:lang="de">Schriftsammlung</comment>
+  <comment xml:lang="da">Skrifttypesamling</comment>
+  <comment xml:lang="cs">kolekce fontů</comment>
+  <comment xml:lang="ca">ccol·lecció de lletres</comment>
+  <comment xml:lang="bg">Шрифтова колекция</comment>
+  <comment xml:lang="be-Cyrl">калекцыя шрыфтоў</comment>
+  <comment xml:lang="ar">تجميعة خط</comment>
+  <comment xml:lang="af">Skriftipeversameling</comment>
+  <generic-icon name="font-x-generic"/>
+  <glob pattern="*.ttc"/>
+</mime-type>

@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/vnd.ms-htmlhelp">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>CHM document</comment>
+  <comment xml:lang="zh-Hant-TW">CHM 文件</comment>
+  <comment xml:lang="zh-Hans-CN">CHM 文档</comment>
+  <comment xml:lang="vi">Tài liệu CHM</comment>
+  <comment xml:lang="uk">документ CHM</comment>
+  <comment xml:lang="tr">CHM belgesi</comment>
+  <comment xml:lang="sv">CHM-dokument</comment>
+  <comment xml:lang="sr-Cyrl">ЦХМ документ</comment>
+  <comment xml:lang="sq">dokument CHM</comment>
+  <comment xml:lang="sl">Dokument CHM</comment>
+  <comment xml:lang="si">CHM ලේඛනය</comment>
+  <comment xml:lang="sk">Dokument CHM</comment>
+  <comment xml:lang="ru">Документ CHM</comment>
+  <comment xml:lang="ro">Document CHM</comment>
+  <comment xml:lang="pt-BR">Documento CHM</comment>
+  <comment xml:lang="pt">documento CHM</comment>
+  <comment xml:lang="pl">Dokument CHM</comment>
+  <comment xml:lang="oc">document CHM</comment>
+  <comment xml:lang="nn">CHM-dokument</comment>
+  <comment xml:lang="nl">CHM-document</comment>
+  <comment xml:lang="nb">CHM-dokument</comment>
+  <comment xml:lang="lv">CHM dokuments</comment>
+  <comment xml:lang="lt">CHM dokumentas</comment>
+  <comment xml:lang="ko">CHM 문서</comment>
+  <comment xml:lang="kk-Cyrl">CHM құжаты</comment>
+  <comment xml:lang="ka">CHM დოკუმენტი</comment>
+  <comment xml:lang="ja">CHM ドキュメント</comment>
+  <comment xml:lang="it">Documento CHM</comment>
+  <comment xml:lang="is">CHM skjal</comment>
+  <comment xml:lang="id">Dokumen CHM</comment>
+  <comment xml:lang="ia">Documento CHM</comment>
+  <comment xml:lang="hu">CHM dokumentum</comment>
+  <comment xml:lang="hr">CHM dokument</comment>
+  <comment xml:lang="he">מסמך CHM</comment>
+  <comment xml:lang="gl">documento CHM</comment>
+  <comment xml:lang="ga">cáipéis CHM</comment>
+  <comment xml:lang="fur">document CHM</comment>
+  <comment xml:lang="fr">document CHM</comment>
+  <comment xml:lang="fo">CHM skjal</comment>
+  <comment xml:lang="fi">CHM-asiakirja</comment>
+  <comment xml:lang="eu">CHM dokumentua</comment>
+  <comment xml:lang="es">documento CHM</comment>
+  <comment xml:lang="eo">CHM-dokumento</comment>
+  <comment xml:lang="en-GB">CHM document</comment>
+  <comment xml:lang="el">Έγγραφο CHM</comment>
+  <comment xml:lang="de">CHM-Dokument</comment>
+  <comment xml:lang="da">CHM-dokument</comment>
+  <comment xml:lang="cs">dokument CHM</comment>
+  <comment xml:lang="ca">document CHM</comment>
+  <comment xml:lang="bg">Документ — CHM</comment>
+  <comment xml:lang="be-Latn">Dakument CHM</comment>
+  <comment xml:lang="be-Cyrl">дакумент CHM</comment>
+  <comment xml:lang="ast">Documentu CHM</comment>
+  <comment xml:lang="ar">مستند CHM</comment>
+  <comment xml:lang="af">CHM-dokument</comment>
+  <acronym>CHM</acronym>
+  <expanded-acronym>Compiled Help Modules</expanded-acronym>
+  <generic-icon name="x-office-document"/>
+  <glob pattern="*.chm"/>
+  <alias type="application/x-chm"/>
+</mime-type>

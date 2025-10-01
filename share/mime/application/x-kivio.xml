@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-kivio">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Kivio flowchart</comment>
+  <comment xml:lang="zh-Hant-TW">Kivio 流程圖</comment>
+  <comment xml:lang="zh-Hans-CN">Kivio 流程图</comment>
+  <comment xml:lang="vi">Lược đồ Kivio</comment>
+  <comment xml:lang="uk">блок-схема Kivio</comment>
+  <comment xml:lang="tr">Kivio akış çizgesi</comment>
+  <comment xml:lang="sv">Kivio-flödesschema</comment>
+  <comment xml:lang="sr-Cyrl">Кивиов дијаграм тока</comment>
+  <comment xml:lang="sq">diagram hapash Kivio</comment>
+  <comment xml:lang="sl">Datoteka grafikona Kivio</comment>
+  <comment xml:lang="si">කිවියෝ ගැලීම් සටහන</comment>
+  <comment xml:lang="sk">Vývojový diagram Kivio</comment>
+  <comment xml:lang="ru">Диаграмма Kivio</comment>
+  <comment xml:lang="ro">Diagramă Kivio</comment>
+  <comment xml:lang="pt-BR">Fluxograma do Kivio</comment>
+  <comment xml:lang="pt">gráfico de fluxo Kivio</comment>
+  <comment xml:lang="pl">Diagram przepływów Kivio</comment>
+  <comment xml:lang="oc">diagrama de flux Kivio</comment>
+  <comment xml:lang="nn">Kivio-flytdiagram</comment>
+  <comment xml:lang="nl">Kivio-stroomschema</comment>
+  <comment xml:lang="nb">Kivio-flytdiagram</comment>
+  <comment xml:lang="ms">Cartalir Kivio</comment>
+  <comment xml:lang="lv">Kivio blokshēma</comment>
+  <comment xml:lang="lt">Kivio eigos diagrama</comment>
+  <comment xml:lang="ko">Kivio 순서도</comment>
+  <comment xml:lang="kk-Cyrl">Kivio диаграммасы</comment>
+  <comment xml:lang="ja">Kivio フローチャート</comment>
+  <comment xml:lang="it">Diagramma di flusso Kivio</comment>
+  <comment xml:lang="is">Kivio flæðirit</comment>
+  <comment xml:lang="id">Bagan Kivio</comment>
+  <comment xml:lang="ia">Diagramma de fluxo Kivio</comment>
+  <comment xml:lang="hu">Kivio-folyamatábra</comment>
+  <comment xml:lang="hr">Kivio dijagram toka</comment>
+  <comment xml:lang="he">תרשים זרימה של Kivio</comment>
+  <comment xml:lang="gl">gráfica de fluxo de Kivio</comment>
+  <comment xml:lang="ga">sreabhchairt Kivio</comment>
+  <comment xml:lang="fur">diagram di flus Kivio</comment>
+  <comment xml:lang="fr">diagramme de flux Kivio</comment>
+  <comment xml:lang="fo">Kivio leiðarit</comment>
+  <comment xml:lang="fi">Kivio-vuokaavio</comment>
+  <comment xml:lang="eu">Kivio diagrama</comment>
+  <comment xml:lang="es">diagrama de flujo de Kivio</comment>
+  <comment xml:lang="eo">Kivo-fluskemo</comment>
+  <comment xml:lang="en-GB">Kivio flowchart</comment>
+  <comment xml:lang="el">Διάγραμμα ροής Kivio</comment>
+  <comment xml:lang="de">Kivio-Flussdiagramm</comment>
+  <comment xml:lang="da">Kiviorutediagram</comment>
+  <comment xml:lang="cs">vývojový diagram Kivio</comment>
+  <comment xml:lang="ca">diagrama de flux de Kivio</comment>
+  <comment xml:lang="bg">Диаграма — Kivio</comment>
+  <comment xml:lang="be-Latn">Blok-schiema Kivio</comment>
+  <comment xml:lang="be-Cyrl">блок-схема Kivio</comment>
+  <comment xml:lang="ar">قائمة تدفق Kivio</comment>
+  <comment xml:lang="af">Kivio-vloeidiagram</comment>
+  <generic-icon name="x-office-document"/>
+  <glob pattern="*.flw"/>
+</mime-type>

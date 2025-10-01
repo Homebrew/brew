@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-gzdvi">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>TeX DVI document (gzip-compressed)</comment>
+  <comment xml:lang="zh-Hant-TW">TeX DVI 文件 (gzip 壓縮)</comment>
+  <comment xml:lang="zh-Hans-CN">TeX DVI 文档（gzip 压缩）</comment>
+  <comment xml:lang="vi">Tài liệu DVI TeX (đã nén gzip)</comment>
+  <comment xml:lang="uk">документ TeX DVI (стиснений gzip)</comment>
+  <comment xml:lang="tr">TeX DVI belgesi (gzip ile sıkıştırılmış)</comment>
+  <comment xml:lang="sv">TeX DVI-dokument (gzip-komprimerat)</comment>
+  <comment xml:lang="sr-Cyrl">ТеКс ДВИ документ (запакован гзип-ом)</comment>
+  <comment xml:lang="sq">dokument TeX DVI (ngjeshur me gzip)</comment>
+  <comment xml:lang="sl">Dokument TeX DVI (stisnjen z gzip)</comment>
+  <comment xml:lang="si">TeX DVI ලේඛනය (gzip-සම්පීඩිත)</comment>
+  <comment xml:lang="sk">Dokument TeX DVI (komprimovaný pomocou gzip)</comment>
+  <comment xml:lang="ru">Документ DVI издательской системы TeX (сжатый gzip)</comment>
+  <comment xml:lang="ro">Document TeX DVI (comprimat gzip)</comment>
+  <comment xml:lang="pt-BR">Documento DVI TeX (compactado com gzip)</comment>
+  <comment xml:lang="pt">documento TeX DVI (compressão gzip)</comment>
+  <comment xml:lang="pl">Dokument TeX DVI (kompresja gzip)</comment>
+  <comment xml:lang="oc">document DVI TeX (compressat gzip)</comment>
+  <comment xml:lang="nn">TeX DVI-dokument (pakka med gzip)</comment>
+  <comment xml:lang="nl">TeX DVI-document (ingepakt met gzip)</comment>
+  <comment xml:lang="nb">TeX DVI-dokument (gzip-komprimert)</comment>
+  <comment xml:lang="lv">TeX DVI dokuments (saspiests ar gzip)</comment>
+  <comment xml:lang="lt">TeX DVI dokumentas (suglaudintas su gzip)</comment>
+  <comment xml:lang="ko">TeX DVI 문서(GZIP 압축)</comment>
+  <comment xml:lang="kk-Cyrl">TeX DVI құжаты (gzip-пен сығылған)</comment>
+  <comment xml:lang="ja">Tex DVI ドキュメント (gzip 圧縮)</comment>
+  <comment xml:lang="it">Documento Tex DVI (compresso con gzip)</comment>
+  <comment xml:lang="is">TeX DVI skjal (gzip-þjappað)</comment>
+  <comment xml:lang="id">Dokumen TeX DVI (terkompresi gzip)</comment>
+  <comment xml:lang="ia">Documento TeX DVI (comprimite con gzip)</comment>
+  <comment xml:lang="hu">TeX DVI dokumentum (gzip tömörítésű)</comment>
+  <comment xml:lang="hr">TeX DVI dokument (gzip sažet)</comment>
+  <comment xml:lang="he">מסמך מסוג TeX DVI (מכווץ ע״י gzip)</comment>
+  <comment xml:lang="gl">documento DVI de TeX (comprimido con gzip)</comment>
+  <comment xml:lang="ga">cáipéis DVI TeX (comhbhrúite le gzip)</comment>
+  <comment xml:lang="fur">document DVI TeX (comprimût cun gzip)</comment>
+  <comment xml:lang="fr">document DVI TeX (compressé gzip)</comment>
+  <comment xml:lang="fo">TeX DVI skjal (gzip-stappað)</comment>
+  <comment xml:lang="fi">TeX DVI -asiakirja (gzip-pakattu)</comment>
+  <comment xml:lang="eu">TeX DVI dokumentua (gzip-ekin konprimitua)</comment>
+  <comment xml:lang="es">documento DVI de TeX (comprimido con GZIP)</comment>
+  <comment xml:lang="en-GB">TeX DVI document (gzip-compressed)</comment>
+  <comment xml:lang="el">Έγγραφο TeX DVI (συμπιεσμένο με gzip)</comment>
+  <comment xml:lang="de">TeX-DVI-Dokument (gzip-komprimiert)</comment>
+  <comment xml:lang="da">TeX DVI-dokument (gzip-komprimeret)</comment>
+  <comment xml:lang="cs">dokument TeX DVI (komprimovaný pomocí gzip)</comment>
+  <comment xml:lang="ca">document DVI de TeX (amb compressió gzip)</comment>
+  <comment xml:lang="bg">Документ — TeX DVI, компресиран с gzip</comment>
+  <comment xml:lang="be-Latn">Dakument TeX DVI (gzip-skampresavany)</comment>
+  <comment xml:lang="be-Cyrl">дакумент TeX DVI (сцісканне gzip)</comment>
+  <comment xml:lang="ast">Documentu Tex DVI (comprimíu en gzip)</comment>
+  <comment xml:lang="ar">مستند TeX DVI (مضغوط-gzip)</comment>
+  <comment xml:lang="af">TeX DVI-dokument (gzip-saamgepers)</comment>
+  <sub-class-of type="application/gzip"/>
+  <generic-icon name="x-office-document"/>
+  <glob pattern="*.dvi.gz"/>
+</mime-type>

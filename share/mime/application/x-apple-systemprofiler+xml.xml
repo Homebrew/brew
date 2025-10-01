@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-apple-systemprofiler+xml">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Apple System Profiler</comment>
+  <comment xml:lang="zh-Hans-CN">Apple 系统概述</comment>
+  <comment xml:lang="uk">засіб профілювання системи Apple</comment>
+  <comment xml:lang="tr">Apple Sistem Profilcisi</comment>
+  <comment xml:lang="sv">Apple Systeminformation</comment>
+  <comment xml:lang="sq">Apple System Profiler</comment>
+  <comment xml:lang="si">ඇපල් පද්ධති පැතිකඩ</comment>
+  <comment xml:lang="ru">Apple System Profiler</comment>
+  <comment xml:lang="pt-BR">Apple System Profiler</comment>
+  <comment xml:lang="pt">Perfilador do sistema Apple</comment>
+  <comment xml:lang="pl">Profiler komputera Apple</comment>
+  <comment xml:lang="nl">Apple System Profiler</comment>
+  <comment xml:lang="ko">Apple 시스템 프로파일러</comment>
+  <comment xml:lang="kk-Cyrl">Apple жүйелік профильдеуші</comment>
+  <comment xml:lang="ja">Apple システムプロファイラー</comment>
+  <comment xml:lang="it">Profiler di sistema Apple</comment>
+  <comment xml:lang="is">Apple System Profiler</comment>
+  <comment xml:lang="id">Profiler Sistem Apple</comment>
+  <comment xml:lang="hu">Apple rendszerprofilozó</comment>
+  <comment xml:lang="hr">Apple profiler sustava</comment>
+  <comment xml:lang="he">מאפיין מערכת של Apple</comment>
+  <comment xml:lang="gl">Perfilador de sistema de Appl</comment>
+  <comment xml:lang="fr">Profileur système Apple</comment>
+  <comment xml:lang="fi">Applen järjestelmän profiloija</comment>
+  <comment xml:lang="eu">Apple sistemaren profilatzailea</comment>
+  <comment xml:lang="es">perfil del sistema de Apple</comment>
+  <comment xml:lang="en-GB">Apple System Profiler</comment>
+  <comment xml:lang="de">Apple-Systeminformationen</comment>
+  <comment xml:lang="da">Apple System Profiler</comment>
+  <comment xml:lang="ca">System Profiler d'Apple</comment>
+  <comment xml:lang="be-Cyrl">Apple System Profiler</comment>
+  <comment xml:lang="ar">محلل نظام أبل</comment>
+  <sub-class-of type="application/xml"/>
+  <glob pattern="*.spx" weight="40"/>
+</mime-type>

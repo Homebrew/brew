@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/andrew-inset">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>ATK inset</comment>
+  <comment xml:lang="zh-Hant-TW">ATK 內嵌</comment>
+  <comment xml:lang="zh-Hans-CN">ATK 嵌入对象</comment>
+  <comment xml:lang="vi">Bộ dát ATK</comment>
+  <comment xml:lang="uk">вкладка ATK</comment>
+  <comment xml:lang="tr">ATK iç metni</comment>
+  <comment xml:lang="sv">ATK-inlägg</comment>
+  <comment xml:lang="sr-Cyrl">АТК уметак</comment>
+  <comment xml:lang="sl">Vložka ATK</comment>
+  <comment xml:lang="si">ATK ඇතුළු කිරීම</comment>
+  <comment xml:lang="sk">Vložka ATK</comment>
+  <comment xml:lang="ru">Вкладка ATK</comment>
+  <comment xml:lang="ro">Inset ATK</comment>
+  <comment xml:lang="pt-BR">Conjunto de entrada do ATK</comment>
+  <comment xml:lang="pt">Suplemento ATK</comment>
+  <comment xml:lang="pl">Wstawka ATK</comment>
+  <comment xml:lang="oc">encart ATK</comment>
+  <comment xml:lang="nn">ATK-innskot</comment>
+  <comment xml:lang="nl">ATK-invoegsel</comment>
+  <comment xml:lang="nb">ATK-innsats</comment>
+  <comment xml:lang="lv">ATK ielaidums</comment>
+  <comment xml:lang="lt">ATK inset</comment>
+  <comment xml:lang="ko">ATK 인세트</comment>
+  <comment xml:lang="kk-Cyrl">ATK беті</comment>
+  <comment xml:lang="ja">ATK インセット</comment>
+  <comment xml:lang="it">Inset ATK</comment>
+  <comment xml:lang="is">ATK innfelling</comment>
+  <comment xml:lang="id">Inset ATK</comment>
+  <comment xml:lang="ia">Folio intercalari ATK</comment>
+  <comment xml:lang="hu">ATK betét</comment>
+  <comment xml:lang="hr">ATK umetak</comment>
+  <comment xml:lang="he">תוספת ATK</comment>
+  <comment xml:lang="gl">conxunto ATK</comment>
+  <comment xml:lang="ga">intlis ATK</comment>
+  <comment xml:lang="fur">inset ATK</comment>
+  <comment xml:lang="fr">encart ATK</comment>
+  <comment xml:lang="fo">ATK innskot</comment>
+  <comment xml:lang="fi">ATK-osio</comment>
+  <comment xml:lang="eu">ATK sartzapena</comment>
+  <comment xml:lang="es">inserción ATK</comment>
+  <comment xml:lang="en-GB">ATK inset</comment>
+  <comment xml:lang="el">Ένθετο ATK</comment>
+  <comment xml:lang="de">ATK-Inset</comment>
+  <comment xml:lang="da">ATK-indsættelse</comment>
+  <comment xml:lang="cs">vložka ATK</comment>
+  <comment xml:lang="ca">ATK inset</comment>
+  <comment xml:lang="bg">Притурка — ATK</comment>
+  <comment xml:lang="be-Latn">Ustaŭka ATK</comment>
+  <comment xml:lang="be-Cyrl">устаўка ATK</comment>
+  <comment xml:lang="ar">شكل ATK</comment>
+  <acronym>ATK</acronym>
+  <expanded-acronym>Andrew Toolkit</expanded-acronym>
+  <generic-icon name="x-office-document"/>
+  <glob pattern="*.ez"/>
+</mime-type>

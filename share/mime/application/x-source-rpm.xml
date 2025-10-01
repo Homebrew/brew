@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-source-rpm">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Source RPM package</comment>
+  <comment xml:lang="zh-Hant-TW">來源 RPM 軟體包</comment>
+  <comment xml:lang="zh-Hans-CN">源码 RPM 软件包</comment>
+  <comment xml:lang="uk">пакунок RPM з початковим кодом</comment>
+  <comment xml:lang="tr">Kaynak RPM paketi</comment>
+  <comment xml:lang="sv">Käll-RPM-paket</comment>
+  <comment xml:lang="sr-Cyrl">изворни РПМ пакет</comment>
+  <comment xml:lang="sq">paketë RPM burimi</comment>
+  <comment xml:lang="sl">Paket izvorne kode RPM</comment>
+  <comment xml:lang="si">මූලාශ්‍ර RPM පැකේජය</comment>
+  <comment xml:lang="sk">Zdrojový balík RPM</comment>
+  <comment xml:lang="ru">Пакет RPM с исходным кодом</comment>
+  <comment xml:lang="pt-BR">Pacote fonte RPM</comment>
+  <comment xml:lang="pt">pacote origem RPM</comment>
+  <comment xml:lang="pl">Źródłowy pakiet RPM</comment>
+  <comment xml:lang="oc">paquet font RPM</comment>
+  <comment xml:lang="nl">Source RPM-pakket</comment>
+  <comment xml:lang="lv">Avota RPM pakotne</comment>
+  <comment xml:lang="ko">소스 RPM 패키지</comment>
+  <comment xml:lang="kk-Cyrl">RPM бастапқы код дестесі</comment>
+  <comment xml:lang="ja">ソース RPM パッケージ</comment>
+  <comment xml:lang="it">Pacchetto sorgente RPM</comment>
+  <comment xml:lang="is">RPM grunnkóðapakki</comment>
+  <comment xml:lang="id">Paket RPM sumber</comment>
+  <comment xml:lang="ia">Pacchetto de fonte RPM</comment>
+  <comment xml:lang="hu">Forrás RPM-csomag</comment>
+  <comment xml:lang="hr">RPM paket izvora</comment>
+  <comment xml:lang="he">חבילת מקור RPM</comment>
+  <comment xml:lang="gl">Paquete RPM de fontes</comment>
+  <comment xml:lang="ga">pacáiste foinse RPM</comment>
+  <comment xml:lang="fur">pachet sorzint RPM</comment>
+  <comment xml:lang="fr">paquet source RPM</comment>
+  <comment xml:lang="fi">RPM-lähdepaketti</comment>
+  <comment xml:lang="eu">Iturburu RPM paketea</comment>
+  <comment xml:lang="es">paquete de fuente RPM</comment>
+  <comment xml:lang="en-GB">Source RPM package</comment>
+  <comment xml:lang="el">Πακέτο πηγής RPM</comment>
+  <comment xml:lang="de">RPM-Quellpaket</comment>
+  <comment xml:lang="da">Kilde RPM-pakke</comment>
+  <comment xml:lang="cs">zdrojový balíček RPM</comment>
+  <comment xml:lang="ca">paquet RPM de codi font</comment>
+  <comment xml:lang="bg">Пакет — RPM с изходен код</comment>
+  <comment xml:lang="be-Cyrl">пакет RPM з зыходным кодам</comment>
+  <comment xml:lang="ar">حزمة RPM مصدرية</comment>
+  <comment xml:lang="af">Bron-RPM-pakket</comment>
+  <generic-icon name="package-x-generic"/>
+  <sub-class-of type="application/x-rpm"/>
+  <glob pattern="*.src.rpm"/>
+  <glob pattern="*.spm"/>
+</mime-type>

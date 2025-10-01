@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-netshow-channel">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Windows Media Station file</comment>
+  <comment xml:lang="zh-Hant-TW">Windows Media Station 檔</comment>
+  <comment xml:lang="zh-Hans-CN">Windows 媒体工作站文件</comment>
+  <comment xml:lang="vi">Tập tin Windows Media Station</comment>
+  <comment xml:lang="uk">файл Windows Media Station</comment>
+  <comment xml:lang="tr">Windows Media Station dosyası</comment>
+  <comment xml:lang="sv">Windows Media Station-fil</comment>
+  <comment xml:lang="sr-Cyrl">датотека станице Виндоузовог Медија</comment>
+  <comment xml:lang="sq">kartelë Windows Media Station</comment>
+  <comment xml:lang="sl">Datoteka Windows Media Station</comment>
+  <comment xml:lang="si">Windows Media Station ගොනුව</comment>
+  <comment xml:lang="sk">Súbor Windows Media Station</comment>
+  <comment xml:lang="ru">Файл Windows Media Station</comment>
+  <comment xml:lang="ro">Fișier Windows Media Station</comment>
+  <comment xml:lang="pt-BR">Arquivo de estação do Windows Media</comment>
+  <comment xml:lang="pt">ficheiro Windows Media Station</comment>
+  <comment xml:lang="pl">Plik Windows Media Station</comment>
+  <comment xml:lang="oc">fichièr Windows Media Station</comment>
+  <comment xml:lang="nn">Windows Media Station-fil</comment>
+  <comment xml:lang="nl">Windows Media Station-bestand</comment>
+  <comment xml:lang="nb">Windows Media Station-fil</comment>
+  <comment xml:lang="lv">Windows Media Station datne</comment>
+  <comment xml:lang="lt">Windows Media Station failas</comment>
+  <comment xml:lang="ko">Windows Media Station 파일</comment>
+  <comment xml:lang="kk-Cyrl">Windows Media Station файлы</comment>
+  <comment xml:lang="ja">Windows Media Station ファイル</comment>
+  <comment xml:lang="it">File Windows Media Station</comment>
+  <comment xml:lang="is">Windows Media Station skrá</comment>
+  <comment xml:lang="id">Berkas Windows Media Station</comment>
+  <comment xml:lang="ia">File de station Windows Media</comment>
+  <comment xml:lang="hu">Windows Media Station fájl</comment>
+  <comment xml:lang="hr">Windows Media Station datoteka</comment>
+  <comment xml:lang="he">קובץ תחנה של Windows Media</comment>
+  <comment xml:lang="gl">ficheiro de emisora de Windows Media</comment>
+  <comment xml:lang="ga">comhad Windows Media Station</comment>
+  <comment xml:lang="fur">file Windows Media Station</comment>
+  <comment xml:lang="fr">fichier Windows Media Station</comment>
+  <comment xml:lang="fo">Windows Media Station fíla</comment>
+  <comment xml:lang="fi">Windows Media Station -tiedosto</comment>
+  <comment xml:lang="eu">Windows Media Station fitxategia</comment>
+  <comment xml:lang="es">archivo de emisora de Windows Media</comment>
+  <comment xml:lang="en-GB">Windows Media Station file</comment>
+  <comment xml:lang="el">Αρχείο Windows Media Station</comment>
+  <comment xml:lang="de">Windows-Media-Station-Datei</comment>
+  <comment xml:lang="da">Windows Media Station-fil</comment>
+  <comment xml:lang="cs">soubor Windows Media Station</comment>
+  <comment xml:lang="ca">fitxer de Windows Media Station</comment>
+  <comment xml:lang="bg">Файл — Windows Media Station</comment>
+  <comment xml:lang="be-Latn">Fajł Windows Media Station</comment>
+  <comment xml:lang="be-Cyrl">файл Windows Media Station</comment>
+  <comment xml:lang="ar">ملف محطة ويندوز ميديا</comment>
+  <comment xml:lang="af">Windows Media Station-lêer</comment>
+  <sub-class-of type="application/vnd.ms-asf"/>
+  <generic-icon name="video-x-generic"/>
+  <glob pattern="*.nsc"/>
+</mime-type>

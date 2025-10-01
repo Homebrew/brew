@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-nintendo-ds-rom">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Nintendo DS ROM</comment>
+  <comment xml:lang="zh-Hant-TW">任天堂 DS ROM</comment>
+  <comment xml:lang="zh-Hans-CN">任天堂 DS ROM</comment>
+  <comment xml:lang="vi">ROM DS Nintendo</comment>
+  <comment xml:lang="uk">ППП Nintendo</comment>
+  <comment xml:lang="tr">Nintendo DS ROM</comment>
+  <comment xml:lang="sv">Nintendo DS-rom</comment>
+  <comment xml:lang="sr-Cyrl">Нинтендо ДС РОМ</comment>
+  <comment xml:lang="sq">ROM Nintendo DS</comment>
+  <comment xml:lang="sl">Bralni pomnilnik Nintendo DS</comment>
+  <comment xml:lang="si">Nintendo DS ROM</comment>
+  <comment xml:lang="sk">ROM pre Nintendo DS</comment>
+  <comment xml:lang="ru">Nintendo DS ROM</comment>
+  <comment xml:lang="ro">ROM Nintendo DS</comment>
+  <comment xml:lang="pt-BR">ROM de Nintendo DS</comment>
+  <comment xml:lang="pt">ROM Nintendo DS</comment>
+  <comment xml:lang="pl">Plik ROM konsoli Nintendo DS</comment>
+  <comment xml:lang="oc">ROM Nintendo DS</comment>
+  <comment xml:lang="nn">Nintendo DS-ROM</comment>
+  <comment xml:lang="nl">Nintendo DS-ROM</comment>
+  <comment xml:lang="nb">Nintendo DS-ROM</comment>
+  <comment xml:lang="lv">Nintendo DS ROM</comment>
+  <comment xml:lang="lt">Nintendo DS ROM</comment>
+  <comment xml:lang="ko">닌텐도 DS 롬</comment>
+  <comment xml:lang="kk-Cyrl">Nintendo DS ROM</comment>
+  <comment xml:lang="ja">ニンテンドーDS ROM</comment>
+  <comment xml:lang="it">ROM Nintendo DS</comment>
+  <comment xml:lang="is">Nintendo DS ROM</comment>
+  <comment xml:lang="id">Memori baca-saja Nintendo DS</comment>
+  <comment xml:lang="ia">ROM pro Nintendo DS</comment>
+  <comment xml:lang="hu">Nintendo DS ROM</comment>
+  <comment xml:lang="hr">Nintendo DS ROM</comment>
+  <comment xml:lang="he">ROM של Nintendo</comment>
+  <comment xml:lang="gl">ROM de Nintendo DS</comment>
+  <comment xml:lang="ga">ROM Nintendo DS</comment>
+  <comment xml:lang="fur">ROM Nintendo DS</comment>
+  <comment xml:lang="fr">ROM Nintendo DS</comment>
+  <comment xml:lang="fo">Nintendo DS ROM</comment>
+  <comment xml:lang="fi">Nintendo DS-ROM</comment>
+  <comment xml:lang="eu">Nintendo DS-ko ROMa</comment>
+  <comment xml:lang="es">ROM de Nintendo DS</comment>
+  <comment xml:lang="en-GB">Nintendo DS ROM</comment>
+  <comment xml:lang="el">Nintendo DS ROM</comment>
+  <comment xml:lang="de">Nintendo-DS-ROM</comment>
+  <comment xml:lang="da">Nintendo DS-ROM</comment>
+  <comment xml:lang="cs">ROM pro Nintendo DS</comment>
+  <comment xml:lang="ca">ROM de Nintendo DS</comment>
+  <comment xml:lang="bg">ROM — Nintendo DS</comment>
+  <comment xml:lang="be-Latn">Nintendo DS ROM</comment>
+  <comment xml:lang="be-Cyrl">Nintendo DS ROM</comment>
+  <comment xml:lang="ast">ROM de Nintendo DS</comment>
+  <comment xml:lang="ar">روم نينتندو دي</comment>
+  <generic-icon name="application-x-executable"/>
+  <glob pattern="*.nds"/>
+</mime-type>

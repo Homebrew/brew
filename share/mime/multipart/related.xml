@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="multipart/related">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Compound document</comment>
+  <comment xml:lang="uk">складний документ</comment>
+  <comment xml:lang="sv">Sammansatt dokument</comment>
+  <comment xml:lang="ru">Составной документ</comment>
+  <comment xml:lang="pl">Dokument złożony</comment>
+  <comment xml:lang="it">Documento composto</comment>
+  <comment xml:lang="de">Verbunddokument</comment>
+  <comment xml:lang="be-Cyrl">складаны дакумент</comment>
+</mime-type>

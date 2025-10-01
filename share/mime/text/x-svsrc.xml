@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="text/x-svsrc">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>SystemVerilog source code</comment>
+  <comment xml:lang="zh-Hant-TW">SystemVerilog 源碼</comment>
+  <comment xml:lang="zh-Hans-CN">SystemVerilog 源代码</comment>
+  <comment xml:lang="uk">початковий код мовою SystemVerilog</comment>
+  <comment xml:lang="tr">SystemVerilog kaynak kodu</comment>
+  <comment xml:lang="sv">SystemVerilog-källkod</comment>
+  <comment xml:lang="sr-Cyrl">изворни код Система Верилога</comment>
+  <comment xml:lang="sq">kod burim SystemVerilog</comment>
+  <comment xml:lang="sl">Datoteka izvorne kode SystemVerilog</comment>
+  <comment xml:lang="si">SystemVerilog මූලාශ්‍ර කේතය</comment>
+  <comment xml:lang="sk">Zdrojový kód SystemVerilog</comment>
+  <comment xml:lang="ru">Исходный код SystemVerilog</comment>
+  <comment xml:lang="pt-BR">Código-fonte de SystemVerilog</comment>
+  <comment xml:lang="pt">código origem SystemVerilog</comment>
+  <comment xml:lang="pl">Kod źródłowy SystemVerilog</comment>
+  <comment xml:lang="oc">còde font SystemVerilog</comment>
+  <comment xml:lang="nl">SystemVerilog-broncode</comment>
+  <comment xml:lang="lv">SystemVerilog pirmkods</comment>
+  <comment xml:lang="ko">SystemVerilog 소스 코드</comment>
+  <comment xml:lang="kk-Cyrl">SystemVerilog бастапқы коды</comment>
+  <comment xml:lang="ja">SystemVerilog ソースコード</comment>
+  <comment xml:lang="it">Codice sorgente </comment>
+  <comment xml:lang="is">SystemVerilog frumkóði</comment>
+  <comment xml:lang="id">Kode sumber SystemVerilog</comment>
+  <comment xml:lang="ia">Codice-fonte SystemVerilog</comment>
+  <comment xml:lang="hu">SystemVerilog-forráskód</comment>
+  <comment xml:lang="hr">SystemVerilog izvorni kôd</comment>
+  <comment xml:lang="he">קוד מקור של SystemVerilog</comment>
+  <comment xml:lang="gl">código fonte en SystemVerilog</comment>
+  <comment xml:lang="ga">cód foinseach SystemVerilog</comment>
+  <comment xml:lang="fur">codiç sorzint SystemVerilog</comment>
+  <comment xml:lang="fr">code source </comment>
+  <comment xml:lang="fi">SystemVerilog-lähdekoodi</comment>
+  <comment xml:lang="eu">SystemVerilog iturburu-kodea</comment>
+  <comment xml:lang="es">código fuente en SystemVerilog</comment>
+  <comment xml:lang="en-GB">SystemVerilog source code</comment>
+  <comment xml:lang="el">Πηγαίος κώδικας SystemVerilog</comment>
+  <comment xml:lang="de">SystemVerilog-Quelltext</comment>
+  <comment xml:lang="da">SystemVerilog-kildekode</comment>
+  <comment xml:lang="cs">zdrojový kód SystemVerilog</comment>
+  <comment xml:lang="ca">codi font en SystemVerilog</comment>
+  <comment xml:lang="bg">Изходен код — SystemVerilog</comment>
+  <comment xml:lang="be-Cyrl">зыходны код SystemVerilog</comment>
+  <comment xml:lang="ar">شفرة مصدر SystemVerilog</comment>
+  <comment xml:lang="af">SystemVerilog-bronkode</comment>
+  <sub-class-of type="text/x-verilog"/>
+  <glob pattern="*.sv"/>
+</mime-type>

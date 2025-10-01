@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="text/vnd.trolltech.linguist">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Message catalog</comment>
+  <comment xml:lang="uk">каталог повідомлень</comment>
+  <comment xml:lang="sv">Meddelandekatalog</comment>
+  <comment xml:lang="ru">Каталог сообщений</comment>
+  <comment xml:lang="pl">Katalog wiadomości</comment>
+  <comment xml:lang="it">Catalogo di messaggi</comment>
+  <comment xml:lang="gl">Catálogo de mensaxes</comment>
+  <comment xml:lang="eu">Mezu-katalogoa</comment>
+  <comment xml:lang="es">catálogo de mensajes</comment>
+  <comment xml:lang="de">Nachrichtenkatalog</comment>
+  <comment xml:lang="be-Cyrl">каталог паведамленняў</comment>
+  <sub-class-of type="application/xml"/>
+  <glob pattern="*.ts"/>
+  <alias type="application/x-linguist"/>
+  <alias type="text/vnd.qt.linguist"/>
+</mime-type>

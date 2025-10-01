@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/vnd.oasis.opendocument.text-flat-xml">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>ODT document (Flat XML)</comment>
+  <comment xml:lang="zh-Hant-TW">ODT 文件 (Flat XML)</comment>
+  <comment xml:lang="zh-Hans-CN">ODT 文档（Flat XML）</comment>
+  <comment xml:lang="uk">документ ODT (Flat XML)</comment>
+  <comment xml:lang="tr">ODT belgesi (Düz XML)</comment>
+  <comment xml:lang="sv">ODT-dokument (platt XML)</comment>
+  <comment xml:lang="sr-Cyrl">ОДТ документ (Обични ИксМЛ)</comment>
+  <comment xml:lang="sq">dokument ODT (Flat XML)</comment>
+  <comment xml:lang="sl">Datoteka dokumenta ODT (nepovezan XML)</comment>
+  <comment xml:lang="si">ODT ලේඛනය (පැතලි XML)</comment>
+  <comment xml:lang="sk">Dokument ODT (čisté XML)</comment>
+  <comment xml:lang="ru">Документ ODT (простой XML)</comment>
+  <comment xml:lang="ro">Document ODT (XML simplu)</comment>
+  <comment xml:lang="pt-BR">Documento ODT (Flat XML)</comment>
+  <comment xml:lang="pt">documento ODT (XML plano)</comment>
+  <comment xml:lang="pl">Dokument ODT (prosty XML)</comment>
+  <comment xml:lang="oc">document ODT (XML plat)</comment>
+  <comment xml:lang="nl">ODT document (Flat XML)</comment>
+  <comment xml:lang="lv">ODT dokuments (plakans XML)</comment>
+  <comment xml:lang="lt">ODT dokumentas (Flat XML)</comment>
+  <comment xml:lang="ko">ODT 문서(단일 XML)</comment>
+  <comment xml:lang="kk-Cyrl">ODT құжаты (Тек XML)</comment>
+  <comment xml:lang="ka">ODT დოკუმენტი (Flat XML)</comment>
+  <comment xml:lang="ja">ODT ドキュメント (Flat XML)</comment>
+  <comment xml:lang="it">Documento ODT (XML semplice)</comment>
+  <comment xml:lang="is">ODT skjal (flatt XML)</comment>
+  <comment xml:lang="id">Dokumen ODT (Flat XML)</comment>
+  <comment xml:lang="ia">Documento ODT (XML platte)</comment>
+  <comment xml:lang="hu">ODT-dokumentum (egyszerű XML)</comment>
+  <comment xml:lang="hr">ODT dokument (Flat XML)</comment>
+  <comment xml:lang="he">מסמך ODT‏ (Flat XML)</comment>
+  <comment xml:lang="gl">documento ODT (XML plano)</comment>
+  <comment xml:lang="ga">cáipéis ODT (XML cothrom)</comment>
+  <comment xml:lang="fur">document ODT (XML sempliç)</comment>
+  <comment xml:lang="fr">document ODT (XML plat)</comment>
+  <comment xml:lang="fo">ODT skjal (Flat XML)</comment>
+  <comment xml:lang="fi">ODT-asiakirja (Flat XML)</comment>
+  <comment xml:lang="eu">ODT dokumentua (XML soila)</comment>
+  <comment xml:lang="es">documento ODT (XML plano)</comment>
+  <comment xml:lang="en-GB">ODT document (Flat XML)</comment>
+  <comment xml:lang="el">Έγγραφο ODT (Flat XML)</comment>
+  <comment xml:lang="de">ODT-Dokument (einfaches XML)</comment>
+  <comment xml:lang="da">ODT-dokument (flad XML)</comment>
+  <comment xml:lang="cs">dokument ODT (Flat XML)</comment>
+  <comment xml:lang="ca">document ODT (XML pla)</comment>
+  <comment xml:lang="bg">Документ — ODT (само XML)</comment>
+  <comment xml:lang="be-Cyrl">дакумент ODT (плоскі XML)</comment>
+  <comment xml:lang="ast">Documentu ODT (XML planu)</comment>
+  <comment xml:lang="ar">مستند ODT (Flat XML)</comment>
+  <comment xml:lang="af">ODT-dokument (plat XML)</comment>
+  <acronym>FODT</acronym>
+  <expanded-acronym>OpenDocument Text (Flat XML)</expanded-acronym>
+  <sub-class-of type="application/xml"/>
+  <generic-icon name="x-office-document"/>
+  <glob pattern="*.fodt"/>
+</mime-type>

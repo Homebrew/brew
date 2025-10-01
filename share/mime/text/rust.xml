@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="text/rust">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Rust source code</comment>
+  <comment xml:lang="zh-Hant-TW">Rust 源碼</comment>
+  <comment xml:lang="zh-Hans-CN">Rust 源代码</comment>
+  <comment xml:lang="uk">початковий код мовою Rust</comment>
+  <comment xml:lang="tr">Rust kaynak kodu</comment>
+  <comment xml:lang="sv">Rust-källkod</comment>
+  <comment xml:lang="sr-Cyrl">Раст изворни ко̂д</comment>
+  <comment xml:lang="sq">kod burim Rust</comment>
+  <comment xml:lang="sl">Izvorna koda Rust</comment>
+  <comment xml:lang="si">මලකඩ මූලාශ්ර කේතය</comment>
+  <comment xml:lang="sk">Zdrojový kód Rust</comment>
+  <comment xml:lang="ru">Исходный код Rust</comment>
+  <comment xml:lang="pt-BR">Código-fonte Rust</comment>
+  <comment xml:lang="pt">código origem Rust</comment>
+  <comment xml:lang="pl">Kod źródłowy Rust</comment>
+  <comment xml:lang="oc">còde font Rust</comment>
+  <comment xml:lang="nl">Rust-broncode</comment>
+  <comment xml:lang="ko">Rust 소스 코드</comment>
+  <comment xml:lang="kk-Cyrl">Rust бастапқы коды</comment>
+  <comment xml:lang="ja">Rust ソースコード</comment>
+  <comment xml:lang="it">Codice sorgente Rust</comment>
+  <comment xml:lang="is">Rust frumkóði</comment>
+  <comment xml:lang="id">Kode program Rust</comment>
+  <comment xml:lang="ia">Codice-fonte Rust</comment>
+  <comment xml:lang="hu">Rust forrásfájl</comment>
+  <comment xml:lang="hr">Rust izvorni kôd</comment>
+  <comment xml:lang="he">קוד מקור של Rust</comment>
+  <comment xml:lang="gl">Código fonte en Rust</comment>
+  <comment xml:lang="ga">cód foinseach Rust</comment>
+  <comment xml:lang="fur">codiç sorzint Rust</comment>
+  <comment xml:lang="fr">code source Rust</comment>
+  <comment xml:lang="fi">Rust-lähdekoodi</comment>
+  <comment xml:lang="eu">Rust iturburu-kodea</comment>
+  <comment xml:lang="es">código fuente en Rust</comment>
+  <comment xml:lang="en-GB">Rust source code</comment>
+  <comment xml:lang="el">Πηγαίος κώδικας Rust</comment>
+  <comment xml:lang="de">Rust-Quelltext</comment>
+  <comment xml:lang="da">Rust-kildekode</comment>
+  <comment xml:lang="cs">zdrojový kód v jazyce Rust</comment>
+  <comment xml:lang="ca">codi font en Rust</comment>
+  <comment xml:lang="bg">Изходен код — Rust</comment>
+  <comment xml:lang="be-Cyrl">зыходны код Rust</comment>
+  <comment xml:lang="ar">شفرة مصدر رست</comment>
+  <comment xml:lang="af">Rust-bronkode</comment>
+  <sub-class-of type="text/plain"/>
+  <glob pattern="*.rs"/>
+</mime-type>

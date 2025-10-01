@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/appinstaller">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Windows app store installer</comment>
+  <comment xml:lang="uk">встановлювач крамниці програм Windows</comment>
+  <comment xml:lang="sv">Windows app store-installerare</comment>
+  <comment xml:lang="ru">Программа установки магазина приложений Windows</comment>
+  <comment xml:lang="pl">Instalator sklepu z aplikacjami Windows</comment>
+  <comment xml:lang="es">instalador de la tienda de aplicaciones de Windows</comment>
+  <comment xml:lang="de">Windows-Appstore-Installationsprogramm</comment>
+  <sub-class-of type="application/xml"/>
+  <generic-icon name="package-x-generic"/>
+  <glob pattern="*.appinstaller"/>
+</mime-type>

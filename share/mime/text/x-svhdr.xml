@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="text/x-svhdr">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>SystemVerilog header</comment>
+  <comment xml:lang="zh-Hant-TW">SystemVerilog 標頭</comment>
+  <comment xml:lang="zh-Hans-CN">SystemVerilog 头文件</comment>
+  <comment xml:lang="uk">заголовки SystemVerilog</comment>
+  <comment xml:lang="tr">SystemVerilog başlığı</comment>
+  <comment xml:lang="sv">SystemVerilog-headerfil</comment>
+  <comment xml:lang="sr-Cyrl">заглавље Система Верилога</comment>
+  <comment xml:lang="sq">krye SystemVerilog</comment>
+  <comment xml:lang="sl">Datoteka glave SystemVerilog</comment>
+  <comment xml:lang="si">SystemVerilog ශීර්ෂකය</comment>
+  <comment xml:lang="sk">Hlavičky SystemVerilog</comment>
+  <comment xml:lang="ru">Заголовочный файл SystemVerilog</comment>
+  <comment xml:lang="pt-BR">Cabeçalho de SystemVerilog</comment>
+  <comment xml:lang="pt">cabeçalho SystemVerilog</comment>
+  <comment xml:lang="pl">Nagłówek SystemVerilog</comment>
+  <comment xml:lang="oc">entèsta SystemVerilog</comment>
+  <comment xml:lang="nl">SystemVerilog-header</comment>
+  <comment xml:lang="lv">SystemVerilog galvene</comment>
+  <comment xml:lang="ko">SystemVerilog 헤더</comment>
+  <comment xml:lang="kk-Cyrl">SystemVerilog тақырыптамасы</comment>
+  <comment xml:lang="ja">SystemVerilog ヘッダー</comment>
+  <comment xml:lang="it">Header SystemVerilog</comment>
+  <comment xml:lang="is">SystemVerilog haus</comment>
+  <comment xml:lang="id">Header SystemVerilog</comment>
+  <comment xml:lang="ia">Capite SystemVerilog</comment>
+  <comment xml:lang="hu">SystemVerilog fejléc</comment>
+  <comment xml:lang="hr">SystemVerilog zaglavlje</comment>
+  <comment xml:lang="he">כותרת SystemVerilog</comment>
+  <comment xml:lang="gl">Cabeceiras de SystemVerilog</comment>
+  <comment xml:lang="ga">ceanntásc SystemVerilog</comment>
+  <comment xml:lang="fur">intestazion SystemVerilog</comment>
+  <comment xml:lang="fr">en-tête </comment>
+  <comment xml:lang="fi">SystemVerilog-otsake</comment>
+  <comment xml:lang="eu">SystemVerilog goiburua</comment>
+  <comment xml:lang="es">cabeceras de SystemVerilog</comment>
+  <comment xml:lang="en-GB">SystemVerilog header</comment>
+  <comment xml:lang="el">Κεφαλίδα SystemVerilog</comment>
+  <comment xml:lang="de">SystemVerilog-Header</comment>
+  <comment xml:lang="da">SystemVerilog-teksthoved</comment>
+  <comment xml:lang="cs">záhlaví SystemVerilog</comment>
+  <comment xml:lang="ca">capçalera en SystemVerilog</comment>
+  <comment xml:lang="bg">Заглавен файл — SystemVerilog</comment>
+  <comment xml:lang="be-Cyrl">загаловак SystemVerilog</comment>
+  <comment xml:lang="ar">ترويسة SystemVerilog</comment>
+  <sub-class-of type="text/x-verilog"/>
+  <glob pattern="*.svh"/>
+</mime-type>

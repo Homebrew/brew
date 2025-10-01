@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-qemu-disk">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>QEMU QCOW disk image</comment>
+  <comment xml:lang="zh-Hant-TW">QEMU QCOW 磁碟映像檔</comment>
+  <comment xml:lang="zh-Hans-CN">QEMU QCOW 磁盘映像</comment>
+  <comment xml:lang="uk">образ диска QCOW QEMU</comment>
+  <comment xml:lang="tr">QEMU QCOW disk görüntüsü</comment>
+  <comment xml:lang="sv">QEMU QCOW-diskavbildning</comment>
+  <comment xml:lang="sl">Slika diska QEMU QCOW</comment>
+  <comment xml:lang="si">QEMU QCOW තැටි රූපය</comment>
+  <comment xml:lang="ru">Образ диска QEMU QCOW</comment>
+  <comment xml:lang="pt-BR">Imagem de disco QEMU QCOW</comment>
+  <comment xml:lang="pl">Obraz dysku QCOW QEMU</comment>
+  <comment xml:lang="nl">QEMU QCOW-schijfkopiebestand</comment>
+  <comment xml:lang="ko">QEMU QCOW 디스크 이미지</comment>
+  <comment xml:lang="kk-Cyrl">QEMU QCOW диск бейнесі</comment>
+  <comment xml:lang="ja">QEMU QCOW ディスクイメージ</comment>
+  <comment xml:lang="it">Immagine disco QEMU QCOW</comment>
+  <comment xml:lang="is">QEMU QCOW diskmynd</comment>
+  <comment xml:lang="id">Image disk QCOW QEMU</comment>
+  <comment xml:lang="hu">QEMU QCOW lemezkép</comment>
+  <comment xml:lang="hr">QEMU QCOW slika diska</comment>
+  <comment xml:lang="he">תמונת כונן QEMU QCOW</comment>
+  <comment xml:lang="fr">image disque QEMU QCOW</comment>
+  <comment xml:lang="fi">QEMU QCOW -levykuva</comment>
+  <comment xml:lang="eu">QEMU QCOW disko-irudia</comment>
+  <comment xml:lang="es">imagen de disco QCOW de QEMU</comment>
+  <comment xml:lang="en-GB">QEMU QCOW disk image</comment>
+  <comment xml:lang="de">QEMU-QCOW-Datenträgerabbild</comment>
+  <comment xml:lang="da">QEMU QCOW-diskaftryk</comment>
+  <comment xml:lang="ca">imatge de disc QEMU QCOW</comment>
+  <comment xml:lang="be-Cyrl">вобраз дыска QEMU QCOW</comment>
+  <comment xml:lang="ar">صورة قرص QEMU QCOW</comment>
+  <acronym>QCOW</acronym>
+  <expanded-acronym>QEMU Copy On Write</expanded-acronym>
+  <glob pattern="*.qcow2"/>
+  <glob pattern="*.qcow"/>
+</mime-type>

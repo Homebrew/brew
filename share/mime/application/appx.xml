@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/appx">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Windows app store package</comment>
+  <comment xml:lang="uk">пакунок крамниці програм Windows</comment>
+  <comment xml:lang="sv">Windows app store-paket</comment>
+  <comment xml:lang="ru">Пакет магазина приложений Windows</comment>
+  <comment xml:lang="pl">Pakiet sklepu z aplikacjami Windows</comment>
+  <comment xml:lang="es">paquete de la tienda de aplicaciones de Windows</comment>
+  <comment xml:lang="de">Windows-Appstore-Paket</comment>
+  <sub-class-of type="application/zip"/>
+  <generic-icon name="package-x-generic"/>
+  <glob pattern="*.appx"/>
+</mime-type>

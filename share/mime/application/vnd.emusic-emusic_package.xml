@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/vnd.emusic-emusic_package">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>eMusic download package</comment>
+  <comment xml:lang="zh-Hant-TW">eMusic 下載包</comment>
+  <comment xml:lang="zh-Hans-CN">eMusic 下载包</comment>
+  <comment xml:lang="vi">gói nhạc tải xuống eMusic</comment>
+  <comment xml:lang="uk">пакунок завантаження eMusic</comment>
+  <comment xml:lang="tr">eMusic indirme paketi</comment>
+  <comment xml:lang="sv">eMusic-hämtningspaket</comment>
+  <comment xml:lang="sr-Cyrl">пакет преузимања еМузике</comment>
+  <comment xml:lang="sq">paketë shkarkimi eMusic</comment>
+  <comment xml:lang="sl">Datoteka paketa eMusic</comment>
+  <comment xml:lang="si">eMusic බාගත කිරීමේ පැකේජය</comment>
+  <comment xml:lang="sk">Balíček sťahovania eMusic</comment>
+  <comment xml:lang="ru">Пакет загрузок eMusic</comment>
+  <comment xml:lang="ro">pachet descărcare eMusic</comment>
+  <comment xml:lang="pt-BR">Pacote de download do eMusic</comment>
+  <comment xml:lang="pt">pacote transferido eMusic</comment>
+  <comment xml:lang="pl">Pobrany pakiet eMusic</comment>
+  <comment xml:lang="oc">paquet de telecargament eMusic</comment>
+  <comment xml:lang="nn">eMusic nedlastingspakke</comment>
+  <comment xml:lang="nl">eMusic-downloadpakket</comment>
+  <comment xml:lang="nb">eMusic nedlastingspakke</comment>
+  <comment xml:lang="lv">eMusic lejupielādes paciņa</comment>
+  <comment xml:lang="lt">eMusic atsiuntimo paketas</comment>
+  <comment xml:lang="ko">eMusic 다운로드 패키지</comment>
+  <comment xml:lang="kk-Cyrl">eMusic жүктемелер дестесі</comment>
+  <comment xml:lang="ja">eMusic ダウンロードパッケージ</comment>
+  <comment xml:lang="it">Pacchetto scaricamento eMusic</comment>
+  <comment xml:lang="is">eMusic niðurhalspakki</comment>
+  <comment xml:lang="id">paket unduh eMusic</comment>
+  <comment xml:lang="ia">Pacchetto de discargamento eMusic</comment>
+  <comment xml:lang="hu">eMusic letöltési csomag</comment>
+  <comment xml:lang="hr">eMusic preuzeti paket</comment>
+  <comment xml:lang="he">חבילת הורדה של eMusic</comment>
+  <comment xml:lang="gl">paquete de descarga de eMusic</comment>
+  <comment xml:lang="ga">pacáiste íosluchtú eMusic</comment>
+  <comment xml:lang="fur">pachet di discjariament eMusic</comment>
+  <comment xml:lang="fr">paquet de téléchargement eMusic</comment>
+  <comment xml:lang="fo">eMusic niðurtøkupakki</comment>
+  <comment xml:lang="fi">eMusic-imurointipaketti</comment>
+  <comment xml:lang="eu">eMusic deskargaren paketea</comment>
+  <comment xml:lang="es">paquete de descarga eMusic</comment>
+  <comment xml:lang="en-GB">eMusic download package</comment>
+  <comment xml:lang="el">Πακέτο λήψης eMusic</comment>
+  <comment xml:lang="de">eMusic-Download-Paket</comment>
+  <comment xml:lang="da">eMusic-downloadpakke</comment>
+  <comment xml:lang="cs">balíček stahování eMusic</comment>
+  <comment xml:lang="ca">paquet de baixades d'eMusic</comment>
+  <comment xml:lang="bg">Пакет за сваляне — eMusic</comment>
+  <comment xml:lang="be-Latn">pakunak zahruzki eMusic</comment>
+  <comment xml:lang="be-Cyrl">пакет спампоўвання eMusic</comment>
+  <comment xml:lang="ar">حزمة تنزيل eMusic</comment>
+  <comment xml:lang="af">eMusic-aflaaipakket</comment>
+  <generic-icon name="package-x-generic"/>
+  <glob pattern="*.emp"/>
+</mime-type>

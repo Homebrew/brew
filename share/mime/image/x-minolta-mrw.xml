@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="image/x-minolta-mrw">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Minolta MRW raw image</comment>
+  <comment xml:lang="zh-Hant-TW">Minolta MRW 原始影像</comment>
+  <comment xml:lang="zh-Hans-CN">美能达 MRW 原始图像</comment>
+  <comment xml:lang="vi">Ảnh thô Minolta MRW</comment>
+  <comment xml:lang="uk">цифровий негатив MRW Minolta</comment>
+  <comment xml:lang="tr">Minolta MRW ham görüntüsü</comment>
+  <comment xml:lang="sv">Minolta MRW-råbild</comment>
+  <comment xml:lang="sr-Cyrl">Минолта МРВ сирова слика</comment>
+  <comment xml:lang="sq">figurë Minolta MRW e papërpunuar</comment>
+  <comment xml:lang="sl">Surova slikovna datoteka Minolta MRW</comment>
+  <comment xml:lang="si">Minolta MRW අමු රූපය</comment>
+  <comment xml:lang="sk">Surový obrázok Minolta MRW</comment>
+  <comment xml:lang="ru">Необработанное изображение Minolta MRW</comment>
+  <comment xml:lang="ro">Imagine brută Minolta MRW</comment>
+  <comment xml:lang="pt-BR">Imagem bruta MRW do Minolta</comment>
+  <comment xml:lang="pt">imagem em bruto Minolta MRW</comment>
+  <comment xml:lang="pl">Surowy obraz MRW Minolta</comment>
+  <comment xml:lang="oc">imatge brut MRW Minolta</comment>
+  <comment xml:lang="nn">Minolta MRW råbilete</comment>
+  <comment xml:lang="nl">onbewerkt Minolta MRW-beeld</comment>
+  <comment xml:lang="nb">Minolta MRW raw-bilde</comment>
+  <comment xml:lang="lv">Minolta MRW jēlattēls</comment>
+  <comment xml:lang="lt">Minolta MRW neapdorotas paveikslėlis</comment>
+  <comment xml:lang="ko">미놀타 MRW RAW 사진</comment>
+  <comment xml:lang="kk-Cyrl">Minolta MRW өңделмеген суреті</comment>
+  <comment xml:lang="ja">Minolta MRW raw 画像</comment>
+  <comment xml:lang="it">Immagine raw Minolta MRW</comment>
+  <comment xml:lang="is">Minolta MRW hrámynd</comment>
+  <comment xml:lang="id">Citra mentah Minolta MRW</comment>
+  <comment xml:lang="ia">Imagine brute Minolta MRW</comment>
+  <comment xml:lang="hu">Minolta MRW nyers kép</comment>
+  <comment xml:lang="hr">Minolta MRW osnovna slika</comment>
+  <comment xml:lang="he">תמונה גולמית של Minolta MRW</comment>
+  <comment xml:lang="gl">imaxe RAW de Minolta MRW</comment>
+  <comment xml:lang="ga">amhíomhá Minolta MRW</comment>
+  <comment xml:lang="fur">imagjin grese Minolta MRW</comment>
+  <comment xml:lang="fr">image brute MRW Minolta</comment>
+  <comment xml:lang="fo">Minolta MRW rámynd</comment>
+  <comment xml:lang="fi">Minolta-MRW-raakakuva</comment>
+  <comment xml:lang="eu">Minolta MRW irudi gordina</comment>
+  <comment xml:lang="es">imagen en bruto MRW de Minolta</comment>
+  <comment xml:lang="en-GB">Minolta MRW raw image</comment>
+  <comment xml:lang="el">Ανεπεξέργαστη εικόνα Minolta MRW</comment>
+  <comment xml:lang="de">Minolta-MRW-Rohbild</comment>
+  <comment xml:lang="da">Minolta MRW raw-billede</comment>
+  <comment xml:lang="cs">surový obrázek Minolta MRW</comment>
+  <comment xml:lang="ca">imatge en cru de Minolta MRW</comment>
+  <comment xml:lang="bg">Изображение — Minolta MRW raw</comment>
+  <comment xml:lang="be-Latn">Suvoraja vyjava Minolta MRW</comment>
+  <comment xml:lang="be-Cyrl">неапрацаваная выява Minolta MRW</comment>
+  <comment xml:lang="ar">صورة Minolta MRW خامة</comment>
+  <comment xml:lang="af">Minolta MRW rou beeld</comment>
+  <acronym>MRW</acronym>
+  <expanded-acronym>Minolta RaW</expanded-acronym>
+  <sub-class-of type="image/x-dcraw"/>
+  <glob pattern="*.mrw"/>
+</mime-type>

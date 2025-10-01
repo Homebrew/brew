@@ -1,0 +1,1 @@
+../../../Cellar/glib/2.84.2/share/glib-2.0/gdb/gobject_gdb.py

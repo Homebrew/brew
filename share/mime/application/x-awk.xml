@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-awk">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>AWK script</comment>
+  <comment xml:lang="zh-Hant-TW">AWK 指令稿</comment>
+  <comment xml:lang="zh-Hans-CN">AWK 脚本</comment>
+  <comment xml:lang="vi">Văn lệnh AWK</comment>
+  <comment xml:lang="uk">скрипт AWK</comment>
+  <comment xml:lang="tr">AWK betiği</comment>
+  <comment xml:lang="sv">AWK-skript</comment>
+  <comment xml:lang="sr-Cyrl">АВК скрипта</comment>
+  <comment xml:lang="sq">programth AWK</comment>
+  <comment xml:lang="sl">Skriptna datoteka AWK</comment>
+  <comment xml:lang="si">AWK පිටපත</comment>
+  <comment xml:lang="sk">Skript AWK</comment>
+  <comment xml:lang="ru">Сценарий AWK</comment>
+  <comment xml:lang="ro">Script AWK</comment>
+  <comment xml:lang="pt-BR">Script AWK</comment>
+  <comment xml:lang="pt">script AWK</comment>
+  <comment xml:lang="pl">Skrypt AWK</comment>
+  <comment xml:lang="oc">escript AWK</comment>
+  <comment xml:lang="nn">WAK-skript</comment>
+  <comment xml:lang="nl">AWK-script</comment>
+  <comment xml:lang="nb">AWK-skript</comment>
+  <comment xml:lang="ms">Skrip AWK</comment>
+  <comment xml:lang="lv">AWK skripts</comment>
+  <comment xml:lang="lt">AWK scenarijus</comment>
+  <comment xml:lang="ko">AWK 스크립트</comment>
+  <comment xml:lang="kk-Cyrl">AWK сценарийі</comment>
+  <comment xml:lang="ka">AWK სცენარი</comment>
+  <comment xml:lang="ja">AWK スクリプト</comment>
+  <comment xml:lang="it">Script AWK</comment>
+  <comment xml:lang="is">AWK skrifta</comment>
+  <comment xml:lang="id">Skrip AWK</comment>
+  <comment xml:lang="ia">Script AWK</comment>
+  <comment xml:lang="hu">AWK-parancsfájl</comment>
+  <comment xml:lang="hr">AWK skripta</comment>
+  <comment xml:lang="he">תסריט AWK</comment>
+  <comment xml:lang="gl">script de AWK</comment>
+  <comment xml:lang="ga">script AWK</comment>
+  <comment xml:lang="fur">script AWK</comment>
+  <comment xml:lang="fr">script AWK</comment>
+  <comment xml:lang="fo">AWK boðrøð</comment>
+  <comment xml:lang="fi">AWK-komentotiedosto</comment>
+  <comment xml:lang="eu">AWK script-a</comment>
+  <comment xml:lang="es">secuencia de órdenes en AWK</comment>
+  <comment xml:lang="eo">AWK-skripto</comment>
+  <comment xml:lang="en-GB">AWK script</comment>
+  <comment xml:lang="el">Δέσμη ενεργειών AWK</comment>
+  <comment xml:lang="de">AWK-Skript</comment>
+  <comment xml:lang="da">AWK-program</comment>
+  <comment xml:lang="cy">Sgript AWK</comment>
+  <comment xml:lang="cs">skript AWK</comment>
+  <comment xml:lang="ca">script AWK</comment>
+  <comment xml:lang="bg">Скрипт — AWK</comment>
+  <comment xml:lang="be-Latn">Skrypt AWK</comment>
+  <comment xml:lang="be-Cyrl">скрыпт AWK</comment>
+  <comment xml:lang="az">AWK skripti</comment>
+  <comment xml:lang="ast">Script AWK</comment>
+  <comment xml:lang="ar">سكربت AWK</comment>
+  <comment xml:lang="af">AWK-skrip</comment>
+  <sub-class-of type="application/x-executable"/>
+  <sub-class-of type="text/plain"/>
+  <generic-icon name="text-x-script"/>
+  <glob pattern="*.awk"/>
+</mime-type>

@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/ogg">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Ogg multimedia file</comment>
+  <comment xml:lang="zh-Hant-TW">Ogg 多媒體檔案</comment>
+  <comment xml:lang="zh-Hans-CN">Ogg 多媒体文件</comment>
+  <comment xml:lang="vi">Tập tin đa phương tiện Ogg</comment>
+  <comment xml:lang="uk">мультимедійний файл Ogg</comment>
+  <comment xml:lang="tr">Ogg çoklu ortam dosyası</comment>
+  <comment xml:lang="sv">Ogg-multimediafil</comment>
+  <comment xml:lang="sr-Cyrl">Огг мултимедијална датотека</comment>
+  <comment xml:lang="sq">kartelë multimediale Ogg</comment>
+  <comment xml:lang="sl">Večpredstavnostna datoteka Ogg</comment>
+  <comment xml:lang="si">Ogg බහුමාධ්‍ය ගොනුව</comment>
+  <comment xml:lang="sk">Súbor multimédií Ogg</comment>
+  <comment xml:lang="ru">Мультимедийный файл Ogg</comment>
+  <comment xml:lang="ro">Fișier multimedia Ogg</comment>
+  <comment xml:lang="pt-BR">Arquivo multimídia Ogg</comment>
+  <comment xml:lang="pt">ficheiro multimédia Ogg</comment>
+  <comment xml:lang="pl">Plik multimedialny Ogg</comment>
+  <comment xml:lang="oc">fichièr multimèdia Ogg</comment>
+  <comment xml:lang="nn">Ogg multimediafil</comment>
+  <comment xml:lang="nl">Ogg-multimediabestand</comment>
+  <comment xml:lang="nb">Ogg-multimediafil</comment>
+  <comment xml:lang="lv">Ogg multimediju datne</comment>
+  <comment xml:lang="lt">Ogg multimedijos failas</comment>
+  <comment xml:lang="ko">Ogg 멀티미디어 파일</comment>
+  <comment xml:lang="kk-Cyrl">Ogg мультимедиа файлы</comment>
+  <comment xml:lang="ka">Ogg-ის მულტიმედია ფაილი</comment>
+  <comment xml:lang="ja">Ogg マルチメディアファイル</comment>
+  <comment xml:lang="it">File multimediale Ogg</comment>
+  <comment xml:lang="is">OGG margmiðlunarskrá</comment>
+  <comment xml:lang="id">Berkas multimedia Ogg</comment>
+  <comment xml:lang="ia">File multimedial Ogg</comment>
+  <comment xml:lang="hu">Ogg multimédiafájl</comment>
+  <comment xml:lang="hr">Ogg multimedijalna datoteka</comment>
+  <comment xml:lang="he">קובץ מולטימדיה Ogg</comment>
+  <comment xml:lang="gl">ficheiro multimedia Ogg</comment>
+  <comment xml:lang="ga">comhad ilmheán Ogg</comment>
+  <comment xml:lang="fur">file multimediâl Ogg</comment>
+  <comment xml:lang="fr">fichier multimédia Ogg</comment>
+  <comment xml:lang="fo">Ogg margmiðlafíla</comment>
+  <comment xml:lang="fi">Ogg-multimediatiedosto</comment>
+  <comment xml:lang="eu">Ogg multimediako fitxategia</comment>
+  <comment xml:lang="es">archivo multimedia Ogg</comment>
+  <comment xml:lang="en-GB">Ogg multimedia file</comment>
+  <comment xml:lang="el">Αρχείο πολυμέσων Ogg</comment>
+  <comment xml:lang="de">Ogg-Multimediadatei</comment>
+  <comment xml:lang="da">Ogg multimedie-fil</comment>
+  <comment xml:lang="cs">multimediální soubor Ogg</comment>
+  <comment xml:lang="ca">fitxer multimèdia Ogg</comment>
+  <comment xml:lang="bg">Мултимедия — Ogg</comment>
+  <comment xml:lang="be-Latn">Multymedyjny fajł Ogg</comment>
+  <comment xml:lang="be-Cyrl">мультымедыйны файл Ogg</comment>
+  <comment xml:lang="ar">ملف وسائط متعددة Ogg</comment>
+  <comment xml:lang="af">Ogg-multimedialêer</comment>
+  <generic-icon name="video-x-generic"/>
+  <alias type="application/x-ogg"/>
+  <glob pattern="*.ogx"/>
+</mime-type>

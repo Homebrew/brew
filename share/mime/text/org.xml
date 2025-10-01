@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="text/org">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Org-mode file</comment>
+  <comment xml:lang="zh-Hans-CN">Org-mode 文件</comment>
+  <comment xml:lang="uk">файл Org-mode</comment>
+  <comment xml:lang="tr">Org-mode dosyası</comment>
+  <comment xml:lang="sv">Org-mode-fil</comment>
+  <comment xml:lang="sl">Datoteka org-mode</comment>
+  <comment xml:lang="si">Org-mode ගොනුව</comment>
+  <comment xml:lang="ru">Файл Org-mode</comment>
+  <comment xml:lang="pl">Plik Org-mode</comment>
+  <comment xml:lang="nl">Org-mode-bestand</comment>
+  <comment xml:lang="ko">Org-mode 파일</comment>
+  <comment xml:lang="kk-Cyrl">Org-mode файлы</comment>
+  <comment xml:lang="ja">Org-mode ファイル</comment>
+  <comment xml:lang="it">File Org-mode</comment>
+  <comment xml:lang="hr">Org-mode datoteka</comment>
+  <comment xml:lang="fi">Org-mode-tiedosto</comment>
+  <comment xml:lang="es">archivo modo Org</comment>
+  <comment xml:lang="en-GB">Org-mode file</comment>
+  <comment xml:lang="de">Org-mode-Datei</comment>
+  <comment xml:lang="be-Cyrl">файл Org-mode</comment>
+  <comment xml:lang="ar">ملف Org-mode</comment>
+  <sub-class-of type="text/plain"/>
+  <glob pattern="*.org"/>
+</mime-type>

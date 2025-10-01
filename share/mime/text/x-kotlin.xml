@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="text/x-kotlin">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Kotlin source code</comment>
+  <comment xml:lang="zh-Hant-TW">Kotlin 原始碼</comment>
+  <comment xml:lang="zh-Hans-CN">Kotlin 源代码</comment>
+  <comment xml:lang="uk">початковий код мовою Kotlin</comment>
+  <comment xml:lang="tr">Kotlin kaynak kodu</comment>
+  <comment xml:lang="sv">Kotlin-källkod</comment>
+  <comment xml:lang="sl">Izvorna koda Kotlin</comment>
+  <comment xml:lang="si">Kotlin මූල කේතය</comment>
+  <comment xml:lang="ru">Исходный код Kotlin</comment>
+  <comment xml:lang="pt-BR">Código-fonte Kotlin</comment>
+  <comment xml:lang="pl">Kod źródłowy Kotlin</comment>
+  <comment xml:lang="oc">còdi font Kotlin</comment>
+  <comment xml:lang="nl">Kotlin-broncode</comment>
+  <comment xml:lang="ko">Kotlin 소스 코드</comment>
+  <comment xml:lang="kk-Cyrl">Kotlin бастапқы коды</comment>
+  <comment xml:lang="ja">Kotlin ソースコード</comment>
+  <comment xml:lang="it">Codice sorgente Kotlin</comment>
+  <comment xml:lang="is">Kotlin frumkóði</comment>
+  <comment xml:lang="id">kode sumber Kotlin</comment>
+  <comment xml:lang="hu">Kotlin forráskód</comment>
+  <comment xml:lang="hr">Kotlin izvorni kôd</comment>
+  <comment xml:lang="he">קוד מקור של Kotlin</comment>
+  <comment xml:lang="gl">Código fonte en Kotlin</comment>
+  <comment xml:lang="fr">code source Kotlin</comment>
+  <comment xml:lang="fi">Kotlin-lähdekoodi</comment>
+  <comment xml:lang="es">código fuente en Kotlin</comment>
+  <comment xml:lang="en-GB">Kotlin source code</comment>
+  <comment xml:lang="de">Kotlin-Quelltext</comment>
+  <comment xml:lang="da">Kotlin-kildekode</comment>
+  <comment xml:lang="ca">codi font en Kotlin</comment>
+  <comment xml:lang="be-Cyrl">зыходны код Kotlin</comment>
+  <comment xml:lang="ar">شفرة مصدر Kotlin</comment>
+  <sub-class-of type="text/plain"/>
+  <glob pattern="*.kt"/>
+</mime-type>

@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="text/x-eiffel">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Eiffel source code</comment>
+  <comment xml:lang="zh-Hant-TW">Eiffel 源碼</comment>
+  <comment xml:lang="zh-Hans-CN">Eiffel 源代码</comment>
+  <comment xml:lang="vi">Mã nguồn Eiffel</comment>
+  <comment xml:lang="uk">початковий код мовою Eiffel</comment>
+  <comment xml:lang="tr">Eiffel kaynak kodu</comment>
+  <comment xml:lang="sv">Eiffel-källkod</comment>
+  <comment xml:lang="sr-Cyrl">Ајфел изворни ко̂д</comment>
+  <comment xml:lang="sq">kod burim Eiffel</comment>
+  <comment xml:lang="sl">Datoteka izvorne kode Eiffel</comment>
+  <comment xml:lang="si">අයිෆල් මූල කේතය</comment>
+  <comment xml:lang="sk">Zdrojový kód Eiffel</comment>
+  <comment xml:lang="ru">Исходный код Eiffel</comment>
+  <comment xml:lang="ro">Cod sursă Eiffel</comment>
+  <comment xml:lang="pt-BR">Código-fonte Eiffel</comment>
+  <comment xml:lang="pt">código origem Eiffel</comment>
+  <comment xml:lang="pl">Kod źródłowy Eiffel</comment>
+  <comment xml:lang="oc">còde font Eiffel</comment>
+  <comment xml:lang="nn">Eiffel-kjeldekode</comment>
+  <comment xml:lang="nl">Eiffel-broncode</comment>
+  <comment xml:lang="nb">Eiffel-kildekode</comment>
+  <comment xml:lang="lv">Eiffel pirmkods</comment>
+  <comment xml:lang="lt">Eiffel pirminis programos tekstas</comment>
+  <comment xml:lang="ko">Eiffel 소스 코드</comment>
+  <comment xml:lang="kk-Cyrl">Eiffel бастапқы коды</comment>
+  <comment xml:lang="ka">Eiffel-ის საწყისი კოდი</comment>
+  <comment xml:lang="ja">Eiffel ソースコード</comment>
+  <comment xml:lang="it">Codice sorgente Eiffel</comment>
+  <comment xml:lang="is">Eiffel frumkóði</comment>
+  <comment xml:lang="id">Kode sumber Eiffel</comment>
+  <comment xml:lang="ia">Codice-fonte Eiffel</comment>
+  <comment xml:lang="hu">Eiffel forráskód</comment>
+  <comment xml:lang="hr">Eiffel izvorni kôd</comment>
+  <comment xml:lang="he">קוד מקור של Eiffel</comment>
+  <comment xml:lang="gl">código fone de Eiffel</comment>
+  <comment xml:lang="ga">cód foinseach Eiffel</comment>
+  <comment xml:lang="fur">codiç sorzint Eiffel</comment>
+  <comment xml:lang="fr">code source Eiffel</comment>
+  <comment xml:lang="fo">Eiffel keldukota</comment>
+  <comment xml:lang="fi">Eiffel-lähdekoodi</comment>
+  <comment xml:lang="eu">Eiffel iturburu-kodea</comment>
+  <comment xml:lang="es">código fuente en Eiffel</comment>
+  <comment xml:lang="eo">Eiffel-fontkodo</comment>
+  <comment xml:lang="en-GB">Eiffel source code</comment>
+  <comment xml:lang="el">Πηγαίος κώδικας Eiffel</comment>
+  <comment xml:lang="de">Eiffel-Quelltext</comment>
+  <comment xml:lang="da">Eiffel-kildekode</comment>
+  <comment xml:lang="cs">zdrojový kód v jazyce Eiffel</comment>
+  <comment xml:lang="ca">codi font en Eiffel</comment>
+  <comment xml:lang="bg">Изходен код — Eiffel</comment>
+  <comment xml:lang="be-Latn">Kryničny kod Eiffel</comment>
+  <comment xml:lang="be-Cyrl">зыходны код Eiffel</comment>
+  <comment xml:lang="ar">شفرة مصدر Eiffel</comment>
+  <comment xml:lang="af">Eiffel-bronkode</comment>
+  <sub-class-of type="text/plain"/>
+  <glob pattern="*.e"/>
+  <glob pattern="*.eif"/>
+</mime-type>

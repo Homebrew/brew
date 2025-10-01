@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-zip-compressed-fb2">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Compressed FictionBook document</comment>
+  <comment xml:lang="zh-Hant-TW">壓縮版 FictionBook 文件</comment>
+  <comment xml:lang="zh-Hans-CN">压缩的 FictionBook 文档</comment>
+  <comment xml:lang="uk">стиснений документ FictionBook</comment>
+  <comment xml:lang="tr">Sıkıştırılmış FictionBook belgesi</comment>
+  <comment xml:lang="sv">Komprimerat FictionBook-dokument</comment>
+  <comment xml:lang="sr-Cyrl">запаковани документ Фикшон Књиге</comment>
+  <comment xml:lang="sq">dokument FictionBook i ngjeshur</comment>
+  <comment xml:lang="sl">Stisnjeni dokument FictionBook</comment>
+  <comment xml:lang="si">සම්පීඩිත FictionBook ලේඛනය</comment>
+  <comment xml:lang="sk">Komprimovaný dokument FictionBook</comment>
+  <comment xml:lang="ru">Сжатый документ FictionBook</comment>
+  <comment xml:lang="pt-BR">Documento FictionBook comprimido</comment>
+  <comment xml:lang="pt">documento comprimido FictionBook</comment>
+  <comment xml:lang="pl">Skompresowany dokument FictionBook</comment>
+  <comment xml:lang="oc">document FictionBook compressat</comment>
+  <comment xml:lang="nl">Gecomprimeerd FictionBook-document</comment>
+  <comment xml:lang="ko">압축한 FictionBook 문서</comment>
+  <comment xml:lang="kk-Cyrl">Сығылған FictionBook құжаты</comment>
+  <comment xml:lang="ja">圧縮 FictionBook ドキュメント</comment>
+  <comment xml:lang="it">Documento FictionBook compresso</comment>
+  <comment xml:lang="is">Þjappað FictionBook skjal</comment>
+  <comment xml:lang="id">Dokumen FictionBook terkompresi</comment>
+  <comment xml:lang="ia">Documento FictionBook comprimite</comment>
+  <comment xml:lang="hu">Tömörített FictionBook dokumentum</comment>
+  <comment xml:lang="hr">Sažet FictionBook dokument</comment>
+  <comment xml:lang="he">מסמך FictionBook מכווץ</comment>
+  <comment xml:lang="gl">Documento de FictionBook comprimida</comment>
+  <comment xml:lang="ga">cáipéis chomhbhrúite FictionBook</comment>
+  <comment xml:lang="fur">document FictionBook comprimût</comment>
+  <comment xml:lang="fr">document FictionBook compressé</comment>
+  <comment xml:lang="fi">Pakattu FictionBook-asiakirja</comment>
+  <comment xml:lang="eu">Konprimitutako FictionBook dokumentua</comment>
+  <comment xml:lang="es">documento comprimido de FictionBook</comment>
+  <comment xml:lang="en-GB">Compressed FictionBook document</comment>
+  <comment xml:lang="el">Συμπιεσμένο έγγραφο FictionBook</comment>
+  <comment xml:lang="de">Komprimiertes FictionBook-Dokument</comment>
+  <comment xml:lang="da">Komprimeret FictionBook-dokument</comment>
+  <comment xml:lang="cs">komprimovaný dokument FictionBook</comment>
+  <comment xml:lang="ca">document FictionBook amb compressió</comment>
+  <comment xml:lang="bg">Документ — FictionBook, компресиран</comment>
+  <comment xml:lang="be-Cyrl">сціснуты дакумент FictionBook</comment>
+  <comment xml:lang="ast">Documentu comprimíu de FictionBook</comment>
+  <comment xml:lang="ar">مستند FictionBook مضغوط</comment>
+  <comment xml:lang="af">Saamgepersde FictionBook-dokument</comment>
+  <sub-class-of type="application/zip"/>
+  <glob pattern="*.fb2.zip"/>
+</mime-type>

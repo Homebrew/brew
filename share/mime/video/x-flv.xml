@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="video/x-flv">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Flash video</comment>
+  <comment xml:lang="zh-Hant-TW">Flash 視訊</comment>
+  <comment xml:lang="zh-Hans-CN">Flash 视频</comment>
+  <comment xml:lang="vi">Ảnh động Flash</comment>
+  <comment xml:lang="uk">відеокліп Flash</comment>
+  <comment xml:lang="tr">Flash video</comment>
+  <comment xml:lang="sv">Flash-video</comment>
+  <comment xml:lang="sr-Cyrl">Флеш видео</comment>
+  <comment xml:lang="sq">video Flash</comment>
+  <comment xml:lang="sl">Video datoteka Flash</comment>
+  <comment xml:lang="si">ෆ්ලෑෂ් වීඩියෝව</comment>
+  <comment xml:lang="sk">Video Flash</comment>
+  <comment xml:lang="ru">Видео Flash</comment>
+  <comment xml:lang="ro">Video Flash</comment>
+  <comment xml:lang="pt-BR">Vídeo Flash</comment>
+  <comment xml:lang="pt">vídeo Flash</comment>
+  <comment xml:lang="pl">Plik wideo Flash</comment>
+  <comment xml:lang="oc">vidèo Flash</comment>
+  <comment xml:lang="nn">Flash-video</comment>
+  <comment xml:lang="nl">Flash-video</comment>
+  <comment xml:lang="nb">Flash-film</comment>
+  <comment xml:lang="lv">Flash video</comment>
+  <comment xml:lang="lt">Flash vaizdo įrašas</comment>
+  <comment xml:lang="ko">Flash 동영상</comment>
+  <comment xml:lang="kk-Cyrl">Flash видеосы</comment>
+  <comment xml:lang="ka">Flash-ის ვიდეო</comment>
+  <comment xml:lang="ja">Flash 動画</comment>
+  <comment xml:lang="it">Video Flash</comment>
+  <comment xml:lang="is">Flash myndskeið</comment>
+  <comment xml:lang="id">Video Flash</comment>
+  <comment xml:lang="ia">Video Flash</comment>
+  <comment xml:lang="hu">Flash videó</comment>
+  <comment xml:lang="hr">Flash video snimka</comment>
+  <comment xml:lang="he">וידאו Flash</comment>
+  <comment xml:lang="gl">vídeo Flash</comment>
+  <comment xml:lang="ga">físeán Flash</comment>
+  <comment xml:lang="fur">video Flash</comment>
+  <comment xml:lang="fr">vidéo Flash</comment>
+  <comment xml:lang="fo">Flash video</comment>
+  <comment xml:lang="fi">Flash-video</comment>
+  <comment xml:lang="eu">Flash bideoa</comment>
+  <comment xml:lang="es">vídeo Flash</comment>
+  <comment xml:lang="eo">Flash-video</comment>
+  <comment xml:lang="en-GB">Flash video</comment>
+  <comment xml:lang="el">Βίντεο Flash</comment>
+  <comment xml:lang="de">Flash-Video</comment>
+  <comment xml:lang="da">Flashvideo</comment>
+  <comment xml:lang="cs">video Flash</comment>
+  <comment xml:lang="ca">vídeo de Flash</comment>
+  <comment xml:lang="bg">Видео — Flash</comment>
+  <comment xml:lang="be-Latn">Videa Flash</comment>
+  <comment xml:lang="be-Cyrl">відэа Flash</comment>
+  <comment xml:lang="ast">Videu en Flash</comment>
+  <comment xml:lang="ar">فيديو فلاش</comment>
+  <comment xml:lang="af">Flash-video</comment>
+  <generic-icon name="video-x-generic"/>
+  <glob pattern="*.flv"/>
+  <alias type="application/x-flash-video"/>
+  <alias type="flv-application/octet-stream"/>
+  <alias type="video/flv"/>
+</mime-type>

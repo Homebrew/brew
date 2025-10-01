@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-bps-patch">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>BPS patch</comment>
+  <comment xml:lang="zh-Hant-TW">BPS 修補檔</comment>
+  <comment xml:lang="zh-Hans-CN">BPS 补丁</comment>
+  <comment xml:lang="uk">латка BPS</comment>
+  <comment xml:lang="tr">BPS yaması</comment>
+  <comment xml:lang="sv">BPS-patch</comment>
+  <comment xml:lang="sl">Popravek BPS</comment>
+  <comment xml:lang="si">BPS පැච්</comment>
+  <comment xml:lang="sk">Záplata BPS</comment>
+  <comment xml:lang="ru">Патч BPS</comment>
+  <comment xml:lang="pt-BR">Patch BPS</comment>
+  <comment xml:lang="pl">Łata BPS</comment>
+  <comment xml:lang="nl">BPS-patch</comment>
+  <comment xml:lang="ko">BPS 패치</comment>
+  <comment xml:lang="kk-Cyrl">BPS өзгерісі</comment>
+  <comment xml:lang="ja">BPS パッチ</comment>
+  <comment xml:lang="it">Patch BPS</comment>
+  <comment xml:lang="is">BPS kóðabót</comment>
+  <comment xml:lang="id">Patch BPS</comment>
+  <comment xml:lang="hu">BPS javítócsomag</comment>
+  <comment xml:lang="hr">BPS zakrpa</comment>
+  <comment xml:lang="he">טלאי BPS</comment>
+  <comment xml:lang="fr">correctif BPS</comment>
+  <comment xml:lang="fi">BPS-korjaus</comment>
+  <comment xml:lang="es">parche BPS</comment>
+  <comment xml:lang="en-GB">BPS patch</comment>
+  <comment xml:lang="de">BPS-Patch</comment>
+  <comment xml:lang="da">BPS-rettelse</comment>
+  <comment xml:lang="ca">pedaç de BPS</comment>
+  <comment xml:lang="be-Cyrl">патч BPS</comment>
+  <comment xml:lang="ar">رقعة BPS</comment>
+  <acronym>BPS</acronym>
+  <expanded-acronym>Binary Patching System</expanded-acronym>
+  <glob pattern="*.bps"/>
+</mime-type>

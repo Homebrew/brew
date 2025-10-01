@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="text/x-txt2tags">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>txt2tags document</comment>
+  <comment xml:lang="zh-Hant-TW">txt2tags 文件</comment>
+  <comment xml:lang="zh-Hans-CN">txt2tags 文档</comment>
+  <comment xml:lang="vi">tài liệu txt2tags</comment>
+  <comment xml:lang="uk">документ txt2tags</comment>
+  <comment xml:lang="tr">txt2tags belgesi</comment>
+  <comment xml:lang="sv">txt2tags-dokument</comment>
+  <comment xml:lang="sr-Cyrl">документ текста-у-ознаке</comment>
+  <comment xml:lang="sq">dokument txt2tags</comment>
+  <comment xml:lang="sl">Dokument txt2tags</comment>
+  <comment xml:lang="si">txt2tags ලේඛනය</comment>
+  <comment xml:lang="sk">Dokument txt2tags</comment>
+  <comment xml:lang="ru">Документ txt2tags</comment>
+  <comment xml:lang="ro">document txt2tags</comment>
+  <comment xml:lang="pt-BR">Documento do txt2tags</comment>
+  <comment xml:lang="pt">documento txt2tags</comment>
+  <comment xml:lang="pl">Dokument txt2tags</comment>
+  <comment xml:lang="oc">document txt2tags</comment>
+  <comment xml:lang="nn">txt2tags-dokument</comment>
+  <comment xml:lang="nl">txt2tags-document</comment>
+  <comment xml:lang="nb">txt2tags-dokument</comment>
+  <comment xml:lang="lv">txt2tags dokuments</comment>
+  <comment xml:lang="lt">txt2tags dokumentas</comment>
+  <comment xml:lang="ko">txt2tags 문서</comment>
+  <comment xml:lang="kk-Cyrl">txt2tags құжаты</comment>
+  <comment xml:lang="ka">txt2tags დოკუმენტი</comment>
+  <comment xml:lang="ja">txt2tags ドキュメント</comment>
+  <comment xml:lang="it">Documento txt2tags</comment>
+  <comment xml:lang="is">txt2tags skjalskjal</comment>
+  <comment xml:lang="id">dokumen txt2tags</comment>
+  <comment xml:lang="ia">Documento txt2tags</comment>
+  <comment xml:lang="hu">txt2tags dokumentum</comment>
+  <comment xml:lang="hr">txt2tags dokument</comment>
+  <comment xml:lang="he">מסמך txt2tags</comment>
+  <comment xml:lang="gl">documento txt2tags</comment>
+  <comment xml:lang="ga">cáipéis txt2tags</comment>
+  <comment xml:lang="fur">document txt2tags</comment>
+  <comment xml:lang="fr">document txt2tags</comment>
+  <comment xml:lang="fo">txt2tags skjal</comment>
+  <comment xml:lang="fi">txt2tags-asiakirja</comment>
+  <comment xml:lang="eu">txt2tags dokumentua</comment>
+  <comment xml:lang="es">documento txt2tags</comment>
+  <comment xml:lang="eo">txt2tags-dokumento</comment>
+  <comment xml:lang="en-GB">txt2tags document</comment>
+  <comment xml:lang="el">Έγγραφο txt2tags</comment>
+  <comment xml:lang="de">txt2tags-Dokument</comment>
+  <comment xml:lang="da">txt2tags-dokument</comment>
+  <comment xml:lang="cs">dokument txt2tags</comment>
+  <comment xml:lang="ca">document txt2tags</comment>
+  <comment xml:lang="bg">Документ — txt2tags</comment>
+  <comment xml:lang="be-Latn">dakument txt2tags</comment>
+  <comment xml:lang="be-Cyrl">дакумент txt2tags</comment>
+  <comment xml:lang="ast">Documentu txt2tags</comment>
+  <comment xml:lang="ar">مستند txt2tags</comment>
+  <comment xml:lang="af">txt2tags-dokument</comment>
+  <sub-class-of type="text/plain"/>
+  <glob pattern="*.t2t"/>
+</mime-type>

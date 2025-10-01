@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-spss-sav">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>SPSS data file</comment>
+  <comment xml:lang="zh-Hant-TW">SPSS 資料檔</comment>
+  <comment xml:lang="zh-Hans-CN">SPSS 数据文件</comment>
+  <comment xml:lang="uk">файл даних SPSS</comment>
+  <comment xml:lang="tr">SPSS veri dosyası</comment>
+  <comment xml:lang="sv">SPSS-datafil</comment>
+  <comment xml:lang="sq">kartelë të dhënash SPSS</comment>
+  <comment xml:lang="sl">Podatkovna datoteka SPSS</comment>
+  <comment xml:lang="si">SPSS දත්ත ගොනුව</comment>
+  <comment xml:lang="sk">Súbor údajov SPSS</comment>
+  <comment xml:lang="ru">Файл данных SPSS</comment>
+  <comment xml:lang="pt-BR">Arquivo de dados SPSS</comment>
+  <comment xml:lang="pt">ficheiro de dados SPSS</comment>
+  <comment xml:lang="pl">Plik danych SPSS</comment>
+  <comment xml:lang="nl">SPSS-gegevensbestand</comment>
+  <comment xml:lang="ko">SPSS 데이터 파일</comment>
+  <comment xml:lang="kk-Cyrl">SPSS деректер файлы</comment>
+  <comment xml:lang="ja">SPSS データファイル</comment>
+  <comment xml:lang="it">File dati SPSS</comment>
+  <comment xml:lang="is">SPSS gagnaskrá</comment>
+  <comment xml:lang="id">Berkas data SPSS</comment>
+  <comment xml:lang="hu">SPSS adatfájl</comment>
+  <comment xml:lang="hr">SPSS podatkovna datoteka</comment>
+  <comment xml:lang="he">קובץ נתונים של SPSS</comment>
+  <comment xml:lang="gl">Ficheiro de datos SPSS</comment>
+  <comment xml:lang="fr">fichier de données SPSS</comment>
+  <comment xml:lang="fi">SPSS-datatiedosto</comment>
+  <comment xml:lang="eu">SPSS datu fitxategia</comment>
+  <comment xml:lang="es">archivo de datos de SPSS</comment>
+  <comment xml:lang="en-GB">SPSS data file</comment>
+  <comment xml:lang="de">SPSS-Datendatei</comment>
+  <comment xml:lang="da">SPSS data-fil</comment>
+  <comment xml:lang="ca">fitxer de dades SPSS</comment>
+  <comment xml:lang="bg">Данни — SPSS</comment>
+  <comment xml:lang="be-Cyrl">файл даных SPSS</comment>
+  <comment xml:lang="ar">ملف بيانات SPSS</comment>
+  <acronym>SPSS</acronym>
+  <expanded-acronym>Statistical Package for the Social Sciences</expanded-acronym>
+  <alias type="application/x-spss-savefile"/>
+  <glob pattern="*.sav"/>
+  <glob pattern="*.zsav"/>
+</mime-type>

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="image/x-nikon-nrw">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Nikon NRW raw image</comment>
+  <comment xml:lang="zh-Hant-TW">Nikon NRW 原始影像</comment>
+  <comment xml:lang="zh-Hans-CN">尼康 NRW 原始图像</comment>
+  <comment xml:lang="uk">цифровий негатив NRW Nikon</comment>
+  <comment xml:lang="tr">Nikon NRW ham görüntüsü</comment>
+  <comment xml:lang="sv">Nikon NRW-råbild</comment>
+  <comment xml:lang="sl">Neobdelana slika NRW</comment>
+  <comment xml:lang="si">Nikon NRW අමු රූපය</comment>
+  <comment xml:lang="ru">Необработанное изображение Nikon NRW</comment>
+  <comment xml:lang="pt-BR">Imagem bruta NRW da Nikon</comment>
+  <comment xml:lang="pl">Surowy obraz NRW Nikon</comment>
+  <comment xml:lang="oc">imatge brut Nikon NRW</comment>
+  <comment xml:lang="nl">onbewerkt Nikon NRW beeld</comment>
+  <comment xml:lang="ko">니콘 NRW RAW 사진</comment>
+  <comment xml:lang="kk-Cyrl">Nikon NRW өңделмеген суреті</comment>
+  <comment xml:lang="ja">Nikon NRW raw 画像ファイル</comment>
+  <comment xml:lang="it">Immagine raw Nikon NRW</comment>
+  <comment xml:lang="hr">Nikon NRW osnovna slika</comment>
+  <comment xml:lang="gl">Imaxe RAW de Nikon NRW</comment>
+  <comment xml:lang="fi">Nikon-NRW-raakakuva</comment>
+  <comment xml:lang="eu">Nikon NRW irudi gordina</comment>
+  <comment xml:lang="es">imagen en bruto NRW de Nikon</comment>
+  <comment xml:lang="en-GB">Nikon NRW raw image</comment>
+  <comment xml:lang="de">Nikon-NRW-Rohbild</comment>
+  <comment xml:lang="be-Cyrl">неапрацаваная выява Nikon NRW</comment>
+  <comment xml:lang="ar">صورة Nikon NRW خامة</comment>
+  <sub-class-of type="image/x-dcraw"/>
+  <sub-class-of type="image/tiff"/>
+  <glob pattern="*.nrw"/>
+</mime-type>

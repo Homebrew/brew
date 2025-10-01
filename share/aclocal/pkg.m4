@@ -1,0 +1,1 @@
+../../Cellar/pkgconf/2.5.1/share/aclocal/pkg.m4

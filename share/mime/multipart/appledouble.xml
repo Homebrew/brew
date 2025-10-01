@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="multipart/appledouble">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Macintosh AppleDouble-encoded file</comment>
+  <comment xml:lang="zh-Hant-TW">Macintosh AppleDouble 編碼檔</comment>
+  <comment xml:lang="zh-Hans-CN">Macintosh AppleDouble 编码的文件</comment>
+  <comment xml:lang="vi">Tập tin đã mã hoá Apple-Double của Macintosh</comment>
+  <comment xml:lang="uk">файл закодований Macintosh AppleDouble</comment>
+  <comment xml:lang="tr">Macintosh AppleDouble-şifreli dosyası</comment>
+  <comment xml:lang="sv">Macintosh AppleDouble-kodad fil</comment>
+  <comment xml:lang="sr-Cyrl">Мекинтошова датотека кодирана Епл Дуплим</comment>
+  <comment xml:lang="sq">kartelë Macintosh koduar me AppleDouble</comment>
+  <comment xml:lang="sl">Kodirana datoteka Macintosh (AppleDouble)</comment>
+  <comment xml:lang="si">Macintosh AppleDouble-කේතනය කළ ගොනුව</comment>
+  <comment xml:lang="sk">Súbor kódovaný pomocou Macintosh AppleDouble</comment>
+  <comment xml:lang="ru">Файл, закодированный Macintosh AppleDouble</comment>
+  <comment xml:lang="ro">Fișier codat Macintosh AppleDouble</comment>
+  <comment xml:lang="pt-BR">Arquivo do Macintosh codificado com AppleDouble</comment>
+  <comment xml:lang="pt">ficheiro codificado em AppleDouble de Macintosh</comment>
+  <comment xml:lang="pl">Zakodowany w AppleDouble plik Macintosh</comment>
+  <comment xml:lang="oc">fichièr encodat Macintosh AppleDouble</comment>
+  <comment xml:lang="nn">Macintosh AppleDouble-koda fil</comment>
+  <comment xml:lang="nl">Macintosh AppleDouble-gecodeerd bestand</comment>
+  <comment xml:lang="nb">dokument kodet med Macintosh AppleDouble</comment>
+  <comment xml:lang="ms">Fail terenkod-AppleDouble Macintosh</comment>
+  <comment xml:lang="lv">Macintosh AppleDouble-kodēts datne</comment>
+  <comment xml:lang="lt">Macintosh AppleDouble-encoded failas</comment>
+  <comment xml:lang="ko">매킨토시 AppleDouble 인코딩된 파일</comment>
+  <comment xml:lang="kk-Cyrl">Macintosh AppleDouble кодталған файлы</comment>
+  <comment xml:lang="ja">Macintosh AppleDouble エンコードファイル</comment>
+  <comment xml:lang="it">File Macintosh codificato AppleDouble</comment>
+  <comment xml:lang="is">Macintosh AppleDouble-kóðuð skrá</comment>
+  <comment xml:lang="id">Berkas tersandi Macintosh AppleDouble</comment>
+  <comment xml:lang="ia">File codificate in AppleDouble de Macintosh</comment>
+  <comment xml:lang="hu">Macintosh AppleDouble kódolású fájl</comment>
+  <comment xml:lang="hr">Macintosh AppleDouble-kôdirana datoteka</comment>
+  <comment xml:lang="he">קובץ מסוג Macintosh AppleDouble-encoded</comment>
+  <comment xml:lang="gl">ficheiro de Macintosh codificado con AppleDouble</comment>
+  <comment xml:lang="ga">comhad ionchódaithe le Macintosh AppleDouble</comment>
+  <comment xml:lang="fur">file codificât in Macintosh AppleDouble</comment>
+  <comment xml:lang="fr">fichier codé Macintosh AppleDouble</comment>
+  <comment xml:lang="fo">Macintosh AppleDouble-bronglað fíla</comment>
+  <comment xml:lang="fi">Macintosh AppleDouble -koodattu tiedosto</comment>
+  <comment xml:lang="eu">Macintosh AppleDouble-rekin kodetutako fitxategia</comment>
+  <comment xml:lang="es">archivo Macintosh codificado con AppleDouble</comment>
+  <comment xml:lang="eo">dosiero kodigita laŭ Macintosh AppleDouble</comment>
+  <comment xml:lang="en-GB">Macintosh AppleDouble-encoded file</comment>
+  <comment xml:lang="el">Αρχείο Macintosh κωδικοποίησης AppleDouble</comment>
+  <comment xml:lang="de">Macintosh-Datei (AppleDouble-Format)</comment>
+  <comment xml:lang="da">Macintosh AppleDouble-kodet fil</comment>
+  <comment xml:lang="cy">Ffeil AppleDouble-amgodedig Macintosh</comment>
+  <comment xml:lang="cs">soubor kódovaný pomocí Macintosh AppleDouble</comment>
+  <comment xml:lang="ca">fitxer codificat AppleDouble de Macintosh</comment>
+  <comment xml:lang="bg">Файл — кодиран с Macintosh AppleDouble</comment>
+  <comment xml:lang="be-Latn">Fajł Macintosh, AppleDouble-zakadavany</comment>
+  <comment xml:lang="be-Cyrl">файл з кадаваннем Macintosh AppleDouble</comment>
+  <comment xml:lang="az">Macintosh AppleDouble-kodlanmış fayl</comment>
+  <comment xml:lang="ar">ملف Macintosh AppleDouble مشفر</comment>
+  <comment xml:lang="af">Macintosh AppleDouble-geënkodeerde lêer</comment>
+</mime-type>

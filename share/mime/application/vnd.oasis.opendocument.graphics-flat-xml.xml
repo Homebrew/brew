@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/vnd.oasis.opendocument.graphics-flat-xml">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>ODG drawing (Flat XML)</comment>
+  <comment xml:lang="zh-Hant-TW">ODG 繪圖 (Flat XML)</comment>
+  <comment xml:lang="zh-Hans-CN">ODG 绘图（Flat XML）</comment>
+  <comment xml:lang="uk">малюнок ODG (простий XML)</comment>
+  <comment xml:lang="tr">ODG çizimi (Düz XML)</comment>
+  <comment xml:lang="sv">ODG-teckning (platt XML)</comment>
+  <comment xml:lang="sr-Cyrl">ОДГ цртеж (Обичан ИксМЛ)</comment>
+  <comment xml:lang="sq">vizatim ODF (Flat XML)</comment>
+  <comment xml:lang="sl">Datoteka risbe ODG (nepovezan XML)</comment>
+  <comment xml:lang="si">ODG ඇඳීම (පැතලි XML)</comment>
+  <comment xml:lang="sk">Kresba ODG (čisté XML)</comment>
+  <comment xml:lang="ru">Рисунок ODG (простой XML)</comment>
+  <comment xml:lang="ro">Desen ODG (XML simplu)</comment>
+  <comment xml:lang="pt-BR">Desenho ODG (Flat XML)</comment>
+  <comment xml:lang="pt">desenho ODG (XML plano)</comment>
+  <comment xml:lang="pl">Rysunek ODG (prosty XML)</comment>
+  <comment xml:lang="oc">dessenh ODG (XML plat)</comment>
+  <comment xml:lang="nl">ODG-tekening (Flat XML)</comment>
+  <comment xml:lang="lv">ODG zīmējums (plakans XML)</comment>
+  <comment xml:lang="lt">ODG piešinys (Flat XML)</comment>
+  <comment xml:lang="ko">ODG 드로잉(단일 XML)</comment>
+  <comment xml:lang="kk-Cyrl">ODG сызбасы (Тек XML)</comment>
+  <comment xml:lang="ka">ODG-ის ნახაზი (Flat XML)</comment>
+  <comment xml:lang="ja">ODG ドロー (Flat XML)</comment>
+  <comment xml:lang="it">Disegno ODG (XML semplice)</comment>
+  <comment xml:lang="is">ODG teikning (flatt XML)</comment>
+  <comment xml:lang="id">Gambar ODG (FLAT XML)</comment>
+  <comment xml:lang="ia">Designo ODG (XML platte)</comment>
+  <comment xml:lang="hu">ODG-rajz (egyszerű XML)</comment>
+  <comment xml:lang="hr">ODG crtež (Flat XML)</comment>
+  <comment xml:lang="he">ציור ODG ‏(Flat XML)</comment>
+  <comment xml:lang="gl">debuxo ODB (XML plano)</comment>
+  <comment xml:lang="ga">líníocht ODG (XML cothrom)</comment>
+  <comment xml:lang="fur">dissen ODG (XML sempliç)</comment>
+  <comment xml:lang="fr">dessin ODG (XML plat)</comment>
+  <comment xml:lang="fo">ODG tekning (Flat XML)</comment>
+  <comment xml:lang="fi">ODG-piirros (Flat XML)</comment>
+  <comment xml:lang="eu">ODG marrazkia (XML soila)</comment>
+  <comment xml:lang="es">dibujo ODG (XML plano)</comment>
+  <comment xml:lang="en-GB">ODG drawing (Flat XML)</comment>
+  <comment xml:lang="el">Σχέδιο ODG (Flat XML)</comment>
+  <comment xml:lang="de">ODG-Zeichnung (einfaches XML)</comment>
+  <comment xml:lang="da">ODG-tegning (flad XML)</comment>
+  <comment xml:lang="cs">kresba ODG (Flat XML)</comment>
+  <comment xml:lang="ca">dibuix ODG (XML pla) </comment>
+  <comment xml:lang="bg">Чертеж — ODG (само XML)</comment>
+  <comment xml:lang="be-Cyrl">рысунак ODG (плоскі XML)</comment>
+  <comment xml:lang="ar">رسمة ODG (Flat XML)</comment>
+  <comment xml:lang="af">ODG-tekening (plat XML)</comment>
+  <acronym>FODG</acronym>
+  <expanded-acronym>OpenDocument Drawing (Flat XML)</expanded-acronym>
+  <sub-class-of type="application/xml"/>
+  <generic-icon name="image-x-generic"/>
+  <glob pattern="*.fodg"/>
+</mime-type>

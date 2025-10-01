@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-thomson-cassette">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Thomson cassette</comment>
+  <comment xml:lang="zh-Hant-TW">Thomson 卡匣</comment>
+  <comment xml:lang="zh-Hans-CN">Thomson 磁带</comment>
+  <comment xml:lang="uk">касета Thomson</comment>
+  <comment xml:lang="tr">Thomson kaset</comment>
+  <comment xml:lang="sv">Thomson-kassett</comment>
+  <comment xml:lang="sr-Cyrl">Томсон касете</comment>
+  <comment xml:lang="sq">kasetë Thomson</comment>
+  <comment xml:lang="sl">Kaseta Thomson</comment>
+  <comment xml:lang="si">තොම්සන් කැසට් පටය</comment>
+  <comment xml:lang="sk">Kazeta Thomson</comment>
+  <comment xml:lang="ru">Кассета Thomson</comment>
+  <comment xml:lang="pt-BR">Cassete Thomson</comment>
+  <comment xml:lang="pt">cassete Thomson</comment>
+  <comment xml:lang="pl">Kaseta Thomson</comment>
+  <comment xml:lang="nl">Thomson-cassette</comment>
+  <comment xml:lang="ko">톰슨 카세트</comment>
+  <comment xml:lang="kk-Cyrl">Thomson кассетасы</comment>
+  <comment xml:lang="ja">Thomson カセット</comment>
+  <comment xml:lang="it">Cassetta Thomson</comment>
+  <comment xml:lang="is">Thomson snælda</comment>
+  <comment xml:lang="id">Kaset Thomson</comment>
+  <comment xml:lang="hu">Thomson kazetta</comment>
+  <comment xml:lang="hr">Thomson kaseta</comment>
+  <comment xml:lang="he">קלטת Thomson</comment>
+  <comment xml:lang="ga">caiséad Thomson</comment>
+  <comment xml:lang="fur">cassete Thomson</comment>
+  <comment xml:lang="fr">cassette Thomson</comment>
+  <comment xml:lang="fi">Thomson-kasetti</comment>
+  <comment xml:lang="eu">Thomson kasetea</comment>
+  <comment xml:lang="es">casete de Thomson</comment>
+  <comment xml:lang="en-GB">Thomson cassette</comment>
+  <comment xml:lang="de">Thomson-Kassette</comment>
+  <comment xml:lang="da">Thomson-kassette</comment>
+  <comment xml:lang="cs">Kazeta Thomson</comment>
+  <comment xml:lang="ca">cinta de casset Thomson</comment>
+  <comment xml:lang="bg">Касета — Thomson</comment>
+  <comment xml:lang="be-Cyrl">касета Thomson</comment>
+  <comment xml:lang="ar">شريط Thomson</comment>
+  <generic-icon name="application-x-executable"/>
+  <glob pattern="*.k7"/>
+</mime-type>

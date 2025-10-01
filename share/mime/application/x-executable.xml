@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-executable">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Executable</comment>
+  <comment xml:lang="uk">виконуваний файл</comment>
+  <comment xml:lang="sv">Körbar fil</comment>
+  <comment xml:lang="ru">Исполняемый</comment>
+  <comment xml:lang="pt-BR">Executável</comment>
+  <comment xml:lang="pl">Program</comment>
+  <comment xml:lang="it">Eseguibile</comment>
+  <comment xml:lang="gl">Executábel</comment>
+  <comment xml:lang="eu">Exekutagarria</comment>
+  <comment xml:lang="es">ejecutable</comment>
+  <comment xml:lang="de">Ausführbare Datei</comment>
+  <comment xml:lang="be-Cyrl">выконвальны файл</comment>
+  <generic-icon name="application-x-executable"/>
+</mime-type>

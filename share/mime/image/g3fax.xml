@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="image/g3fax">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>CCITT G3 fax image</comment>
+  <comment xml:lang="zh-Hant-TW">CCITT G3 傳真影像</comment>
+  <comment xml:lang="zh-Hans-CN">CCITT G3 传真图像</comment>
+  <comment xml:lang="uk">зображення факсу G3 CCITT</comment>
+  <comment xml:lang="tr">CCITT G3 faks görüntüsü</comment>
+  <comment xml:lang="sv">CCITT G3 faxbild</comment>
+  <comment xml:lang="sq">figurë faks CCITT G3</comment>
+  <comment xml:lang="sl">Slikovna datoteka faksimila CCITT G3</comment>
+  <comment xml:lang="si">CCITT G3 ෆැක්ස් රූපය</comment>
+  <comment xml:lang="ru">Факсовое изображение CCITT G3</comment>
+  <comment xml:lang="pt-BR">Imagem de fax CCITT G3</comment>
+  <comment xml:lang="pl">Obraz faksowy G3 CCITT</comment>
+  <comment xml:lang="nl">CCITT G3-faxafbeelding</comment>
+  <comment xml:lang="ko">CCITT G3 팩스 이미지</comment>
+  <comment xml:lang="kk-Cyrl">CCITT G3 факс суреті</comment>
+  <comment xml:lang="ja">CCITT G3 ファックス画像</comment>
+  <comment xml:lang="it">Immagine fax CCIT G3</comment>
+  <comment xml:lang="is">CCITT G3 faxmynd</comment>
+  <comment xml:lang="id">Citra faks CCITT G3</comment>
+  <comment xml:lang="hu">CCITT G3-faxkép</comment>
+  <comment xml:lang="hr">CCITT G3 slika faksa</comment>
+  <comment xml:lang="he">תמונת פקס של CCITT G3</comment>
+  <comment xml:lang="fr">image de télécopie CCITT G3</comment>
+  <comment xml:lang="fi">CCITT G3 -faksikuva</comment>
+  <comment xml:lang="eu">CCITT G3 fax irudia</comment>
+  <comment xml:lang="es">imagen de fax CCITT G3</comment>
+  <comment xml:lang="en-GB">CCITT G3 fax image</comment>
+  <comment xml:lang="de">CCITT-G3-Fax</comment>
+  <comment xml:lang="da">CCITT G3-faxbillede</comment>
+  <comment xml:lang="ca">imatge de fax CCITT G3</comment>
+  <comment xml:lang="bg">Изображение — CCITT G3, факс</comment>
+  <comment xml:lang="be-Cyrl">выява факса CCITT G3</comment>
+  <comment xml:lang="ar">صورة فاكس CCITT G3</comment>
+  <acronym>CCITT</acronym>
+  <expanded-acronym>Comité Consultatif International Téléphonique et Télégraphique</expanded-acronym>
+  <glob pattern="*.g3"/>
+  <alias type="image/fax-g3"/>
+</mime-type>

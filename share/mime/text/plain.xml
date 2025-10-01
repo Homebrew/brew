@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="text/plain">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Plain text document</comment>
+  <comment xml:lang="uk">простий текстовий документ</comment>
+  <comment xml:lang="sv">Vanligt textdokument</comment>
+  <comment xml:lang="ru">Текстовый документ</comment>
+  <comment xml:lang="pt-BR">Documento de texto simples</comment>
+  <comment xml:lang="pl">Zwykły dokument tekstowy</comment>
+  <comment xml:lang="ja">平文文書</comment>
+  <comment xml:lang="it">Documento in testo semplice</comment>
+  <comment xml:lang="eu">Testu soileko dokumentua</comment>
+  <comment xml:lang="es">documento de texto sin formato</comment>
+  <comment xml:lang="de">Einfaches Textdokument</comment>
+  <comment xml:lang="be-Cyrl">звычайны тэкст</comment>
+  <glob pattern="*.txt"/>
+  <glob pattern="*.asc"/>
+  <glob pattern="*,v"/>
+</mime-type>

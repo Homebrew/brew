@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-mobipocket-ebook">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Mobipocket e-book</comment>
+  <comment xml:lang="zh-Hant-TW">Mobipocket e-book</comment>
+  <comment xml:lang="zh-Hans-CN">Mobipocket 电子书</comment>
+  <comment xml:lang="uk">електронна книга Mobipocket</comment>
+  <comment xml:lang="tr">Mobipocket e-kitap</comment>
+  <comment xml:lang="sv">Mobipocket-e-bok</comment>
+  <comment xml:lang="sr-Cyrl">Мобипокет ел. књига</comment>
+  <comment xml:lang="sq">e-libër Mobipocket</comment>
+  <comment xml:lang="sl">e-knjiga Mobipocket</comment>
+  <comment xml:lang="si">මොබිපොකට් ඊ-පොත</comment>
+  <comment xml:lang="sk">E-kniha Mobipocket</comment>
+  <comment xml:lang="ru">Электронная книга Mobipocket</comment>
+  <comment xml:lang="pt-BR">E-book Mobipocket</comment>
+  <comment xml:lang="pt">ebook Mobipocket</comment>
+  <comment xml:lang="pl">E-book Mobipocket</comment>
+  <comment xml:lang="oc">libre numeric Mobipocket</comment>
+  <comment xml:lang="nl">Mobipocket e-book</comment>
+  <comment xml:lang="lv">Mobipocket e-grāmata</comment>
+  <comment xml:lang="ko">Mobipocket 전자책</comment>
+  <comment xml:lang="kk-Cyrl">Mobipocket эл. кітабы</comment>
+  <comment xml:lang="ka">Mobipocket-ის ელწიგნი</comment>
+  <comment xml:lang="ja">Mobipocket 電子書籍</comment>
+  <comment xml:lang="it">E-book Mobipocket</comment>
+  <comment xml:lang="is">Mobipocket rafbók</comment>
+  <comment xml:lang="id">E-book Mobipocket</comment>
+  <comment xml:lang="ia">E-libro Mobipocket</comment>
+  <comment xml:lang="hu">Mobipocket e-könyv</comment>
+  <comment xml:lang="hr">Mobipocket e-knjiga</comment>
+  <comment xml:lang="he">ספר אלקטרוני של Mobipocket</comment>
+  <comment xml:lang="gl">E-book Mobipocket</comment>
+  <comment xml:lang="ga">r-leabhar Mobipocket</comment>
+  <comment xml:lang="fur">e-book Mobipocket</comment>
+  <comment xml:lang="fr">livre numérique Mobipocket</comment>
+  <comment xml:lang="fi">Mobipocket-e-kirja</comment>
+  <comment xml:lang="eu">Mobipocket liburua</comment>
+  <comment xml:lang="es">libro electrónico de Mobipocket</comment>
+  <comment xml:lang="en-GB">Mobipocket e-book</comment>
+  <comment xml:lang="el">Ηλεκτρονικό βιβλίο Mobipocket</comment>
+  <comment xml:lang="de">Mobipocket E-Book</comment>
+  <comment xml:lang="da">Mobipocket e-bog</comment>
+  <comment xml:lang="cs">elektronická kniha Mobipocket</comment>
+  <comment xml:lang="ca">llibre electrònic Mobipocket </comment>
+  <comment xml:lang="bg">Е-книга — Mobipocket</comment>
+  <comment xml:lang="be-Cyrl">электронная кніга Mobipocket</comment>
+  <comment xml:lang="ar">كتاب إلكتروني Mobipocket</comment>
+  <comment xml:lang="af">Mobipocket e-boek</comment>
+  <sub-class-of type="application/vnd.palm"/>
+  <generic-icon name="x-office-document"/>
+  <glob pattern="*.mobi"/>
+  <glob pattern="*.prc"/>
+</mime-type>

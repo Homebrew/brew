@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-gzpdf">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>PDF document (gzip-compressed)</comment>
+  <comment xml:lang="zh-Hant-TW">PDF 文件 (gzip 壓縮)</comment>
+  <comment xml:lang="zh-Hans-CN">PDF 文档（gzip 压缩）</comment>
+  <comment xml:lang="vi">Tài liệu PDF (đã nén gzip)</comment>
+  <comment xml:lang="uk">документ PDF (стиснений gzip)</comment>
+  <comment xml:lang="tr">PDF belgesi (gzip ile sıkıştırılmış)</comment>
+  <comment xml:lang="sv">PDF-dokument (gzip-komprimerat)</comment>
+  <comment xml:lang="sr-Cyrl">ПДФ документ (запакован гзип-ом)</comment>
+  <comment xml:lang="sq">dokument PDF (ngjeshur me gzip)</comment>
+  <comment xml:lang="sl">Dokument PDF (stisnjen z gzip)</comment>
+  <comment xml:lang="si">PDF ලේඛනය (gzip-compressed)</comment>
+  <comment xml:lang="sk">Dokument PDF (komprimovaný pomocou gzip)</comment>
+  <comment xml:lang="ru">Документ PDF (сжатый gzip)</comment>
+  <comment xml:lang="ro">Document PDF (comprimat gzip)</comment>
+  <comment xml:lang="pt-BR">Documento PDF (compactado com gzip)</comment>
+  <comment xml:lang="pt">documento PDF (compressão gzip)</comment>
+  <comment xml:lang="pl">Dokument PDF (kompresja gzip)</comment>
+  <comment xml:lang="oc">document PDF (compressat gzip)</comment>
+  <comment xml:lang="nn">PDF-dokument (pakka med gzip)</comment>
+  <comment xml:lang="nl">PDF-document (ingepakt met gzip)</comment>
+  <comment xml:lang="nb">PDF-dokument (gzip-komprimert)</comment>
+  <comment xml:lang="lv">PDF dokuments (saspiests ar gzip)</comment>
+  <comment xml:lang="lt">PDF dokumentas (suglaudintas su gzip)</comment>
+  <comment xml:lang="ko">PDF 문서(GZIP 압축)</comment>
+  <comment xml:lang="kk-Cyrl">PDF құжаты (gzip-пен сығылған)</comment>
+  <comment xml:lang="ja">PDF ドキュメント (gzip 圧縮)</comment>
+  <comment xml:lang="it">Documento PDF (compresso con gzip)</comment>
+  <comment xml:lang="is">PDF skjal (gzip-þjappað)</comment>
+  <comment xml:lang="id">Dokumen PDF (terkompresi gzip)</comment>
+  <comment xml:lang="ia">Documento PDF (comprimite con gzip)</comment>
+  <comment xml:lang="hu">PDF dokumentum (gzip tömörítésű)</comment>
+  <comment xml:lang="hr">PDF dokument (gzip sažet)</comment>
+  <comment xml:lang="he">מסמך PDF (מכווץ ע״י gzip)</comment>
+  <comment xml:lang="gl">documento PDF (comprimido en gzip)</comment>
+  <comment xml:lang="ga">cáipéis PDF (comhbhrúite le gzip)</comment>
+  <comment xml:lang="fur">document PDF (comprimût cun gzip)</comment>
+  <comment xml:lang="fr">document PDF (compressé gzip)</comment>
+  <comment xml:lang="fo">PDF skjal (gzip-stappað)</comment>
+  <comment xml:lang="fi">PDF-asiakirja (gzip-pakattu)</comment>
+  <comment xml:lang="eu">PDF dokumentua (gzip-ekin konprimitua)</comment>
+  <comment xml:lang="es">documento PDF (comprimido con GZIP)</comment>
+  <comment xml:lang="en-GB">PDF document (gzip-compressed)</comment>
+  <comment xml:lang="el">Έγγραφο PDF (συμπιεσμένο με gzip)</comment>
+  <comment xml:lang="de">PDF-Dokument (gzip-komprimiert)</comment>
+  <comment xml:lang="da">PDF-dokument (gzip-komprimeret)</comment>
+  <comment xml:lang="cs">dokument PDF (komprimovaný pomocí gzip)</comment>
+  <comment xml:lang="ca">document PDF (amb compressió gzip)</comment>
+  <comment xml:lang="bg">Документ — PDF, компресиран с gzip</comment>
+  <comment xml:lang="be-Latn">Dakument PDF (gzip-skampresavany)</comment>
+  <comment xml:lang="be-Cyrl">дакумент PDF (сцісканне gzip)</comment>
+  <comment xml:lang="ast">Documentu PDF (comprimíu en gzip)</comment>
+  <comment xml:lang="ar">مستند PDF (مضغوط-gzip)</comment>
+  <comment xml:lang="af">PDF-dokument (gzip-saamgepers)</comment>
+  <sub-class-of type="application/gzip"/>
+  <generic-icon name="x-office-document"/>
+  <glob pattern="*.pdf.gz"/>
+</mime-type>

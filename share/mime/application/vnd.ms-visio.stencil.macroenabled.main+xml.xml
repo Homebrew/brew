@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/vnd.ms-visio.stencil.macroEnabled.main+xml">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Office Open XML Visio stencil</comment>
+  <comment xml:lang="zh-Hans-CN">Office Open XML Visio 模具</comment>
+  <comment xml:lang="uk">трафарет Visio Office Open у XML</comment>
+  <comment xml:lang="tr">Office Open XML Visio kalıbı</comment>
+  <comment xml:lang="sv">Office Open XML Visio-stencil</comment>
+  <comment xml:lang="sq">model Office Open XML Visio</comment>
+  <comment xml:lang="si">කාර්යාල විවෘත XML Visio ස්ටෙන්සිල්</comment>
+  <comment xml:lang="ru">Трафарет Visio формата Office Open XML</comment>
+  <comment xml:lang="pt-BR">Estêncil do Office Open XML Visio</comment>
+  <comment xml:lang="pt">estêncil Visio do Open Office XML</comment>
+  <comment xml:lang="pl">Wzór Office Open XML Visio</comment>
+  <comment xml:lang="nl">Office Open XML Visio-stencil</comment>
+  <comment xml:lang="ko">오피스 오픈 XML Visio 스텐실</comment>
+  <comment xml:lang="kk-Cyrl">Office Open XML Visio трафареті</comment>
+  <comment xml:lang="ja">Office Open XML Visio ステンシル</comment>
+  <comment xml:lang="it">Stencil Visio Office Open XML</comment>
+  <comment xml:lang="is">Office Open XML Visio stensill</comment>
+  <comment xml:lang="id">Stensil Office Open XML Visio</comment>
+  <comment xml:lang="hu">Office Open XML Visio stencil</comment>
+  <comment xml:lang="hr">Office Open XML Visio šablona</comment>
+  <comment xml:lang="he">סטנסיל ל־Visio ב־Open XML מבית Office</comment>
+  <comment xml:lang="gl">Pincel de de Office Open XML Visio</comment>
+  <comment xml:lang="fr">stencil Visio Office Open XML</comment>
+  <comment xml:lang="fi">Office Open XML Visio -malli</comment>
+  <comment xml:lang="eu">Office Open XML Visio txantiloia</comment>
+  <comment xml:lang="es">galería de símbolos Office Open XML de Visio</comment>
+  <comment xml:lang="en-GB">Office Open XML Visio stencil</comment>
+  <comment xml:lang="de">Office-Open-XML-Visio-Schablone</comment>
+  <comment xml:lang="da">Office Open XML Visio-stencil</comment>
+  <comment xml:lang="ca">patró en Office Open XML de Visio</comment>
+  <comment xml:lang="bg">Образци — Office Open XML Visio</comment>
+  <comment xml:lang="be-Cyrl">трафарэт Office Open XML Visio</comment>
+  <comment xml:lang="ar">شكل فيزيو Open XML</comment>
+  <generic-icon name="image-x-generic"/>
+  <glob pattern="*.vssm"/>
+  <sub-class-of type="application/zip"/>
+</mime-type>

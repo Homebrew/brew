@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/pgp-keys">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>PGP keys</comment>
+  <comment xml:lang="zh-Hant-TW">PGP 金鑰</comment>
+  <comment xml:lang="zh-Hans-CN">PGP 密钥</comment>
+  <comment xml:lang="vi">Khoá PGP</comment>
+  <comment xml:lang="uk">ключі PGP</comment>
+  <comment xml:lang="tr">PGP anahtarları</comment>
+  <comment xml:lang="sv">PGP-nycklar</comment>
+  <comment xml:lang="sr-Cyrl">ПГП кључеви</comment>
+  <comment xml:lang="sq">kyçe PGP</comment>
+  <comment xml:lang="sl">Datoteka ključa PGP</comment>
+  <comment xml:lang="si">PGP යතුරු</comment>
+  <comment xml:lang="sk">Kľúče PGP</comment>
+  <comment xml:lang="ru">Ключи PGP</comment>
+  <comment xml:lang="ro">Chei PGP</comment>
+  <comment xml:lang="pt-BR">Chaves PGP</comment>
+  <comment xml:lang="pt">chaves PGP</comment>
+  <comment xml:lang="pl">Klucze PGP</comment>
+  <comment xml:lang="oc">claus PGP</comment>
+  <comment xml:lang="nn">PGP-nøkler</comment>
+  <comment xml:lang="nl">PGP-sleutels</comment>
+  <comment xml:lang="nb">PGP-nøkler</comment>
+  <comment xml:lang="ms">Kekunci PGP</comment>
+  <comment xml:lang="lv">PGP atslēgas</comment>
+  <comment xml:lang="lt">PGP raktai</comment>
+  <comment xml:lang="ko">PGP 키</comment>
+  <comment xml:lang="kk-Cyrl">PGP кілттері</comment>
+  <comment xml:lang="ka">PGP გასაღები</comment>
+  <comment xml:lang="ja">PGP 鍵</comment>
+  <comment xml:lang="it">Chiavi PGP</comment>
+  <comment xml:lang="is">PGP-lyklar</comment>
+  <comment xml:lang="id">Kunci PGP</comment>
+  <comment xml:lang="ia">Claves PGP</comment>
+  <comment xml:lang="hu">PGP-kulcs</comment>
+  <comment xml:lang="hr">PGP ključevi</comment>
+  <comment xml:lang="he">מפתחות PGP</comment>
+  <comment xml:lang="gl">Chaves PGP</comment>
+  <comment xml:lang="ga">eochracha PGP</comment>
+  <comment xml:lang="fur">clâfs PGP</comment>
+  <comment xml:lang="fr">clés PGP</comment>
+  <comment xml:lang="fo">PGP lyklar</comment>
+  <comment xml:lang="fi">PGP-avainrengas</comment>
+  <comment xml:lang="eu">PGP giltzak</comment>
+  <comment xml:lang="es">claves PGP</comment>
+  <comment xml:lang="eo">PGP-ŝlosiloj</comment>
+  <comment xml:lang="en-GB">PGP keys</comment>
+  <comment xml:lang="el">Κλειδιά PGP</comment>
+  <comment xml:lang="de">PGP-Schlüssel</comment>
+  <comment xml:lang="da">PGP-nøgler</comment>
+  <comment xml:lang="cy">Allweddi PGP</comment>
+  <comment xml:lang="cs">klíče PGP</comment>
+  <comment xml:lang="ca">claus PGP</comment>
+  <comment xml:lang="bg">Ключове — PGP</comment>
+  <comment xml:lang="be-Latn">Klučy PGP</comment>
+  <comment xml:lang="be-Cyrl">ключы PGP</comment>
+  <comment xml:lang="az">PGP açarları</comment>
+  <comment xml:lang="ast">Claves PGP</comment>
+  <comment xml:lang="ar">مفاتيح PGP</comment>
+  <comment xml:lang="af">PGP-sleutels</comment>
+  <acronym>PGP</acronym>
+  <expanded-acronym>Pretty Good Privacy</expanded-acronym>
+  <glob pattern="*.skr"/>
+  <glob pattern="*.pkr"/>
+  <glob pattern="*.asc" weight="10"/>
+  <glob pattern="*.pgp"/>
+  <glob pattern="*.gpg"/>
+  <glob pattern="*.key"/>
+</mime-type>

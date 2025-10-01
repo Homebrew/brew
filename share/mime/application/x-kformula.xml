@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-kformula">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>KFormula formula</comment>
+  <comment xml:lang="zh-Hant-TW">KFormula 公式</comment>
+  <comment xml:lang="zh-Hans-CN">KFormula 公式</comment>
+  <comment xml:lang="vi">Công thức KFormula</comment>
+  <comment xml:lang="uk">формула KFormula</comment>
+  <comment xml:lang="tr">KFormula formülü</comment>
+  <comment xml:lang="sv">KFormula-formel</comment>
+  <comment xml:lang="sr-Cyrl">формула К-формуле</comment>
+  <comment xml:lang="sq">formulë KFormula</comment>
+  <comment xml:lang="sl">Datoteka formule KFormula</comment>
+  <comment xml:lang="si">KFormula සූත්‍රය</comment>
+  <comment xml:lang="sk">Vzorec KFormula</comment>
+  <comment xml:lang="ru">Формула KFormula</comment>
+  <comment xml:lang="ro">Formulă KFormula</comment>
+  <comment xml:lang="pt-BR">Fórmula do KFormula</comment>
+  <comment xml:lang="pt">fórmula KFormula</comment>
+  <comment xml:lang="pl">Formuła KFormula</comment>
+  <comment xml:lang="oc">formula KFormula</comment>
+  <comment xml:lang="nn">KFormula-formel</comment>
+  <comment xml:lang="nl">KFormula-formule</comment>
+  <comment xml:lang="nb">KFormula-formel</comment>
+  <comment xml:lang="ms">Formula KFormula</comment>
+  <comment xml:lang="lv">KFormula formula</comment>
+  <comment xml:lang="lt">KFormula formulė</comment>
+  <comment xml:lang="ko">KFormula 수식</comment>
+  <comment xml:lang="kk-Cyrl">KFormula формуласы</comment>
+  <comment xml:lang="ja">KFormula 計算式</comment>
+  <comment xml:lang="it">Formula KFormula</comment>
+  <comment xml:lang="is">KFormula formúla</comment>
+  <comment xml:lang="id">Formula KFormula</comment>
+  <comment xml:lang="ia">Formula KFormula</comment>
+  <comment xml:lang="hu">KFormula-képlet</comment>
+  <comment xml:lang="hr">KFormula formula</comment>
+  <comment xml:lang="he">נוסחת KFormula</comment>
+  <comment xml:lang="gl">fórmula de KFormula</comment>
+  <comment xml:lang="ga">foirmle KFormula</comment>
+  <comment xml:lang="fur">formule KFormula</comment>
+  <comment xml:lang="fr">formule KFormula</comment>
+  <comment xml:lang="fo">KFormula frymil</comment>
+  <comment xml:lang="fi">KFormula-kaava</comment>
+  <comment xml:lang="eu">KFormula formula</comment>
+  <comment xml:lang="es">fórmula de KFormula</comment>
+  <comment xml:lang="eo">KFormula-formulo</comment>
+  <comment xml:lang="en-GB">KFormula formula</comment>
+  <comment xml:lang="el">Μαθηματικός τύπος KFormula</comment>
+  <comment xml:lang="de">KFormula-Formel</comment>
+  <comment xml:lang="da">KFormula-formel</comment>
+  <comment xml:lang="cs">vzorec KFormula</comment>
+  <comment xml:lang="ca">fórmula de KFormula</comment>
+  <comment xml:lang="bg">Формула — KFormula</comment>
+  <comment xml:lang="be-Latn">Formuła KFormula</comment>
+  <comment xml:lang="be-Cyrl">формула KFormula</comment>
+  <comment xml:lang="ar">صيغة KFormula</comment>
+  <comment xml:lang="af">KFormula-formule</comment>
+  <generic-icon name="x-office-document"/>
+  <glob pattern="*.kfo"/>
+</mime-type>

@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-lzip">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Lzip archive</comment>
+  <comment xml:lang="zh-Hant-TW">Lzip 封存檔</comment>
+  <comment xml:lang="zh-Hans-CN">Lzip 归档文件</comment>
+  <comment xml:lang="uk">архів lzip</comment>
+  <comment xml:lang="tr">Lzip arşivi</comment>
+  <comment xml:lang="sv">Lzip-arkiv</comment>
+  <comment xml:lang="sr-Cyrl">Лзип архива</comment>
+  <comment xml:lang="sq">arkiv Lzip</comment>
+  <comment xml:lang="sl">Datoteka arhiva Lzip</comment>
+  <comment xml:lang="si">Lzip සංරක්ෂිතය</comment>
+  <comment xml:lang="sk">Archív Lzip</comment>
+  <comment xml:lang="ru">Архив LZIP</comment>
+  <comment xml:lang="ro">Arhivă Lzip</comment>
+  <comment xml:lang="pt-BR">Pacote Lzip</comment>
+  <comment xml:lang="pt">arquivo LZip</comment>
+  <comment xml:lang="pl">Archiwum lzip</comment>
+  <comment xml:lang="oc">archiu lzip</comment>
+  <comment xml:lang="nl">Lzip-archief</comment>
+  <comment xml:lang="lv">Lzip arhīvs</comment>
+  <comment xml:lang="lt">Lzip archyvas</comment>
+  <comment xml:lang="ko">LZIP 압축 파일</comment>
+  <comment xml:lang="kk-Cyrl">Lzip архиві</comment>
+  <comment xml:lang="ja">Lzip アーカイブ</comment>
+  <comment xml:lang="it">Archivio Lzip</comment>
+  <comment xml:lang="is">Lzip safnskrá</comment>
+  <comment xml:lang="id">Arsip Lzip</comment>
+  <comment xml:lang="ia">Archivo Lzip</comment>
+  <comment xml:lang="hu">Lzip archívum</comment>
+  <comment xml:lang="hr">Lzip arhiva</comment>
+  <comment xml:lang="he">ארכיון Lzip</comment>
+  <comment xml:lang="gl">arquivo Lzip</comment>
+  <comment xml:lang="ga">cartlann Lzip</comment>
+  <comment xml:lang="fur">archivi Lzip</comment>
+  <comment xml:lang="fr">archive lzip</comment>
+  <comment xml:lang="fo">Lzip skjalasavn</comment>
+  <comment xml:lang="fi">Lzip-arkisto</comment>
+  <comment xml:lang="eu">Lzip artxiboa</comment>
+  <comment xml:lang="es">archivador Lzip</comment>
+  <comment xml:lang="eo">Lzip-arkivo</comment>
+  <comment xml:lang="en-GB">Lzip archive</comment>
+  <comment xml:lang="el">Συμπιεσμένο αρχείο Lzip</comment>
+  <comment xml:lang="de">Lzip-Archiv</comment>
+  <comment xml:lang="da">Lzip-arkiv</comment>
+  <comment xml:lang="cs">archiv Lzip</comment>
+  <comment xml:lang="ca">arxiu lzip</comment>
+  <comment xml:lang="bg">Архив — Lzip</comment>
+  <comment xml:lang="be-Cyrl">архіў Lzip</comment>
+  <comment xml:lang="ar">أرشيف Lzip</comment>
+  <comment xml:lang="af">Lzip-argief</comment>
+  <generic-icon name="package-x-generic"/>
+  <glob pattern="*.lz"/>
+</mime-type>

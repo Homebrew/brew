@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="text/x-vb">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Visual Basic .NET source code</comment>
+  <comment xml:lang="uk">початковий код Visual Basic .NET</comment>
+  <comment xml:lang="sv">Visual Basic .NET-källkod</comment>
+  <comment xml:lang="ru">Исходный код Visual Basic .NET</comment>
+  <comment xml:lang="pl">Kod źródłowy Visual Basic .NET</comment>
+  <comment xml:lang="es">código fuente en Visual Basic .NET</comment>
+  <comment xml:lang="de">Visual-Basic-.NET-Quelltext</comment>
+  <sub-class-of type="text/plain"/>
+  <glob pattern="*.vb"/>
+</mime-type>

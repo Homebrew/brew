@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="message/x-gnu-rmail">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>GNU mail message</comment>
+  <comment xml:lang="zh-Hant-TW">GNU 郵件訊息</comment>
+  <comment xml:lang="zh-Hans-CN">GNU mail 信件</comment>
+  <comment xml:lang="vi">Thư điện tử của GNU</comment>
+  <comment xml:lang="uk">поштове повідомлення GNU</comment>
+  <comment xml:lang="tr">GNU posta iletisi</comment>
+  <comment xml:lang="sv">GNU-epostmeddelande</comment>
+  <comment xml:lang="sr-Cyrl">порука Гнуове поште</comment>
+  <comment xml:lang="sq">mesazh GNU mail</comment>
+  <comment xml:lang="sl">Sporočilo pošte GNU</comment>
+  <comment xml:lang="si">GNU තැපැල් පණිවිඩය</comment>
+  <comment xml:lang="sk">Správa GNU mail</comment>
+  <comment xml:lang="ru">Почтовое сообщение GNU</comment>
+  <comment xml:lang="ro">Mesaj GNU mail</comment>
+  <comment xml:lang="pt-BR">Mensagem de e-mail GNU</comment>
+  <comment xml:lang="pt">mensagem de email GNU</comment>
+  <comment xml:lang="pl">Wiadomość pocztowa GNU</comment>
+  <comment xml:lang="oc">messatge de corrièr electronic GNU</comment>
+  <comment xml:lang="nn">GNU e-postmelding</comment>
+  <comment xml:lang="nl">GNU-mailbericht</comment>
+  <comment xml:lang="nb">GNU e-postmelding</comment>
+  <comment xml:lang="ms">Mesej emel GNU</comment>
+  <comment xml:lang="lv">GNU pasta vēstule</comment>
+  <comment xml:lang="lt">GNU pašto žinutė</comment>
+  <comment xml:lang="ko">GNU 메일 메시지</comment>
+  <comment xml:lang="kk-Cyrl">GNU пошта хабарламасы</comment>
+  <comment xml:lang="ka">GNU mail შეტყობინება</comment>
+  <comment xml:lang="ja">GNU メールメッセージ</comment>
+  <comment xml:lang="it">Messaggio GNU mail</comment>
+  <comment xml:lang="is">GNU póst skilaboð</comment>
+  <comment xml:lang="id">Pesan surat GNU</comment>
+  <comment xml:lang="ia">Message electronic de GNU</comment>
+  <comment xml:lang="hu">GNU elektronikus levél</comment>
+  <comment xml:lang="hr">GNU poruka pošte</comment>
+  <comment xml:lang="he">הודעת דואר של GNU</comment>
+  <comment xml:lang="gl">mensaxe de correo electrónico de GNU</comment>
+  <comment xml:lang="ga">teachtaireacht r-phoist GNU</comment>
+  <comment xml:lang="fur">messaç di pueste GNU</comment>
+  <comment xml:lang="fr">message de courriel GNU</comment>
+  <comment xml:lang="fo">GNU mail boð</comment>
+  <comment xml:lang="fi">GNU-postiviesti</comment>
+  <comment xml:lang="eu">GNU posta mezua</comment>
+  <comment xml:lang="es">mensaje de correo de GNU</comment>
+  <comment xml:lang="eo">mesaĝo de GNU mail</comment>
+  <comment xml:lang="en-GB">GNU mail message</comment>
+  <comment xml:lang="el">Μήνυμα αλληλογραφίας GNU</comment>
+  <comment xml:lang="de">GNU-Mail-Nachricht</comment>
+  <comment xml:lang="da">GNU-postmeddelelse</comment>
+  <comment xml:lang="cy">Neges E-Bost GNU</comment>
+  <comment xml:lang="cs">zpráva GNU mail</comment>
+  <comment xml:lang="ca">missatge de GNU mail</comment>
+  <comment xml:lang="bg">Съобщение — GNU mail</comment>
+  <comment xml:lang="be-Latn">List GNU</comment>
+  <comment xml:lang="be-Cyrl">электронны ліст GNU</comment>
+  <comment xml:lang="az">GNU poçt ismarışı</comment>
+  <comment xml:lang="ar">رسالة بريد جنو</comment>
+  <comment xml:lang="af">GNU-posboodskap</comment>
+  <generic-icon name="text-x-generic"/>
+  <glob pattern="RMAIL"/>
+</mime-type>

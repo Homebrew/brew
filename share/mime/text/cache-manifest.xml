@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="text/cache-manifest">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Web application cache file</comment>
+  <comment xml:lang="zh-Hans-CN">Web 应用缓存文件</comment>
+  <comment xml:lang="uk">файл кешу вебпрограми</comment>
+  <comment xml:lang="tr">Web uygulama önbellek dosyası</comment>
+  <comment xml:lang="sv">Webbapplikationscachefil</comment>
+  <comment xml:lang="sq">kartelë fshehtine aplikacioni Web</comment>
+  <comment xml:lang="si">වෙබ් යෙදුම් හැඹිලි ගොනුව</comment>
+  <comment xml:lang="ru">Файл кэша веб-приложения</comment>
+  <comment xml:lang="pt-BR">Arquivo de cache de aplicativo Web</comment>
+  <comment xml:lang="pl">Plik pamięci podręcznej aplikacji WWW</comment>
+  <comment xml:lang="oc">fichièr d'escondedor aplicacion Web</comment>
+  <comment xml:lang="nl">Cachebestand van webtoepassing</comment>
+  <comment xml:lang="ko">웹 애플리케이션 캐시 파일</comment>
+  <comment xml:lang="kk-Cyrl">Веб қолданбасының кэш файлы</comment>
+  <comment xml:lang="ja">Web アプリケーションキャッシュファイル</comment>
+  <comment xml:lang="it">File cache applicazione Web</comment>
+  <comment xml:lang="is">skyndiminnisskrá vefforrits</comment>
+  <comment xml:lang="id">Berkas singgahan aplikasi web</comment>
+  <comment xml:lang="hu">Webalkalmazás gyorsítótárfájl</comment>
+  <comment xml:lang="hr"> Web aplikacija datoteka predmemorije </comment>
+  <comment xml:lang="he">קובץ מטמון של תוכנית ברשת</comment>
+  <comment xml:lang="gl">Ficheiro de caché de aplicación web</comment>
+  <comment xml:lang="fr">fichier de cache d'application Web</comment>
+  <comment xml:lang="fi">Web-sovelluksen välimuistitiedosto</comment>
+  <comment xml:lang="eu">Web-aplikazio katxe fitxategia</comment>
+  <comment xml:lang="es">archivo de antememoria de aplicación web</comment>
+  <comment xml:lang="en-GB">Web application cache file</comment>
+  <comment xml:lang="de">Webanwendungs-Zwischenspeicherdatei</comment>
+  <comment xml:lang="da">Webprogrammellemlagerfil</comment>
+  <comment xml:lang="ca">fitxer de memòria cau d'aplicació Web</comment>
+  <comment xml:lang="bg">Кеш — уеб приложение</comment>
+  <comment xml:lang="be-Cyrl">файл кэша вэб-праграмы</comment>
+  <comment xml:lang="ar">ملف خبيئة تطبيق ويب</comment>
+  <sub-class-of type="text/plain"/>
+  <glob pattern="*.manifest"/>
+</mime-type>

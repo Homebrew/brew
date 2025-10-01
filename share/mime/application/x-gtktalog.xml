@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-gtktalog">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>GTKtalog catalog</comment>
+  <comment xml:lang="zh-Hant-TW">GTKtalog 光碟目錄</comment>
+  <comment xml:lang="zh-Hans-CN">GTKtalog 目录</comment>
+  <comment xml:lang="vi">Phân loại GTKtalog</comment>
+  <comment xml:lang="uk">каталог GTKtalog</comment>
+  <comment xml:lang="tr">GTKtalog kataloğu</comment>
+  <comment xml:lang="sv">GTKtalog-katalog</comment>
+  <comment xml:lang="sr-Cyrl">каталог ГТКталога</comment>
+  <comment xml:lang="sq">katalog GTKtalog</comment>
+  <comment xml:lang="sl">Datoteka kataloga GTKtalog</comment>
+  <comment xml:lang="si">GTKtalog නාමාවලිය</comment>
+  <comment xml:lang="sk">Katalóg GTKtalog</comment>
+  <comment xml:lang="ru">Каталог GTKtalog</comment>
+  <comment xml:lang="ro">Catalog GTKalog</comment>
+  <comment xml:lang="pt-BR">Catálogo GTKtalog</comment>
+  <comment xml:lang="pt">catálogo GTKtalog</comment>
+  <comment xml:lang="pl">Katalog programu GTKtalog</comment>
+  <comment xml:lang="oc">catalòg Gtktalog</comment>
+  <comment xml:lang="nn">GTKtalog-katalog</comment>
+  <comment xml:lang="nl">GTKtalog-catalogus</comment>
+  <comment xml:lang="nb">GTKtalog-katalog</comment>
+  <comment xml:lang="ms">Katalog GTKtalog</comment>
+  <comment xml:lang="lv">GTKtalog katalogs</comment>
+  <comment xml:lang="lt">GTKtalog katalogas</comment>
+  <comment xml:lang="ko">GTKtalog 카탈로그</comment>
+  <comment xml:lang="kk-Cyrl">GTKtalog каталогы</comment>
+  <comment xml:lang="ka">GTKtalog-ის კატალოგი</comment>
+  <comment xml:lang="ja">GTKtalog カタログ</comment>
+  <comment xml:lang="it">Catalogo GTKtalog</comment>
+  <comment xml:lang="is">GTKtalog efnisskrá</comment>
+  <comment xml:lang="id">Katalog GTKtalog</comment>
+  <comment xml:lang="ia">Catalogo GTKtalog</comment>
+  <comment xml:lang="hu">GTKtalog-katalógus</comment>
+  <comment xml:lang="hr">GTKtalog katalog</comment>
+  <comment xml:lang="he">קטלוג GTKtalog</comment>
+  <comment xml:lang="gl">catálogo de GTKtalog</comment>
+  <comment xml:lang="ga">catalóg GTKtalog</comment>
+  <comment xml:lang="fur">catalic GTKtalog</comment>
+  <comment xml:lang="fr">catalogue Gtktalog</comment>
+  <comment xml:lang="fo">GTKtalog skrá</comment>
+  <comment xml:lang="fi">GTKtalog-luettelo</comment>
+  <comment xml:lang="eu">Gtktalog katalogoa</comment>
+  <comment xml:lang="es">catálogo de GTKtalog</comment>
+  <comment xml:lang="eo">katalogo de GTKtalog</comment>
+  <comment xml:lang="en-GB">GTKtalog catalogue</comment>
+  <comment xml:lang="el">Κατάλογος GTKtalog</comment>
+  <comment xml:lang="de">GTKtalog-Katalog</comment>
+  <comment xml:lang="da">GTKtalog-katalog</comment>
+  <comment xml:lang="cs">katalog GTKtalog</comment>
+  <comment xml:lang="ca">catàleg de GTKtalog</comment>
+  <comment xml:lang="bg">Каталог — Gtktalog</comment>
+  <comment xml:lang="be-Latn">Kataloh GTKtalog</comment>
+  <comment xml:lang="be-Cyrl">каталог GTKtalog</comment>
+  <comment xml:lang="ar">كتالوج GTKtalog</comment>
+  <generic-icon name="x-office-document"/>
+</mime-type>

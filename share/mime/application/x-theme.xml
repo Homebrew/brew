@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-theme">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Theme</comment>
+  <comment xml:lang="uk">тема</comment>
+  <comment xml:lang="sv">Tema</comment>
+  <comment xml:lang="ru">Тема</comment>
+  <comment xml:lang="pl">Motyw</comment>
+  <comment xml:lang="it">Tema</comment>
+  <comment xml:lang="gl">Tema</comment>
+  <comment xml:lang="eu">Gaia</comment>
+  <comment xml:lang="es">tema</comment>
+  <comment xml:lang="de">Thema</comment>
+  <comment xml:lang="be-Cyrl">тэма</comment>
+  <sub-class-of type="application/x-desktop"/>
+  <generic-icon name="package-x-generic"/>
+  <glob pattern="*.theme"/>
+</mime-type>

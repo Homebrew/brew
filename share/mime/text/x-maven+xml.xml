@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="text/x-maven+xml">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Maven description file</comment>
+  <comment xml:lang="zh-Hant-TW">Maven 描述檔</comment>
+  <comment xml:lang="zh-Hans-CN">Maven 描述文件</comment>
+  <comment xml:lang="uk">файл опису Maven</comment>
+  <comment xml:lang="tr">Maven açıklama dosyası</comment>
+  <comment xml:lang="sv">Maven-beskrivningsfil</comment>
+  <comment xml:lang="sq">kartelë përshkrimi Maven</comment>
+  <comment xml:lang="sl">Opisna datoteka Maven</comment>
+  <comment xml:lang="si">Maven විස්තර ගොනුව</comment>
+  <comment xml:lang="sk">Súbor popisu Maven</comment>
+  <comment xml:lang="ru">Файл описания Maven</comment>
+  <comment xml:lang="pt-BR">Arquivo de descrição Maven</comment>
+  <comment xml:lang="pl">Plik opisu Maven</comment>
+  <comment xml:lang="nl">Maven-omschrijvingsbestand</comment>
+  <comment xml:lang="ko">Maven 설명 파일</comment>
+  <comment xml:lang="kk-Cyrl">Maven сипаттама файлы</comment>
+  <comment xml:lang="ja">Maven 説明ファイル</comment>
+  <comment xml:lang="it">File descrizione Mave</comment>
+  <comment xml:lang="is">Maven lýsingarskrá</comment>
+  <comment xml:lang="id">Berkas deskripsi Maven</comment>
+  <comment xml:lang="hu">Maven leírófájl</comment>
+  <comment xml:lang="hr">Maven datoteka opisa</comment>
+  <comment xml:lang="he">קובץ תיאור Maven</comment>
+  <comment xml:lang="gl">Ficheiro de descrición de Maven</comment>
+  <comment xml:lang="ga">cur síos Maven</comment>
+  <comment xml:lang="fur">file di descrizion Maven</comment>
+  <comment xml:lang="fr">fichier de description Maven</comment>
+  <comment xml:lang="fi">Maven-kuvaustiedosto</comment>
+  <comment xml:lang="eu">Maven azalpen fitxategia</comment>
+  <comment xml:lang="es">archivo de descripción de Maven</comment>
+  <comment xml:lang="en-GB">Maven description file</comment>
+  <comment xml:lang="de">Maven-Beschreibungsdatei</comment>
+  <comment xml:lang="da">Maven-beskrivelsesfil</comment>
+  <comment xml:lang="cs">popisný soubor Maven</comment>
+  <comment xml:lang="ca">fitxer de descripció Maven</comment>
+  <comment xml:lang="bg">Модел — Maven</comment>
+  <comment xml:lang="be-Cyrl">файл апісання Maven</comment>
+  <comment xml:lang="ar">ملف وصف Maven</comment>
+  <comment xml:lang="af">Maven-beskrywingslêer</comment>
+  <generic-icon name="text-x-generic"/>
+  <glob pattern="pom.xml"/>
+  <glob pattern="settings.xml"/>
+  <sub-class-of type="application/xml"/>
+</mime-type>

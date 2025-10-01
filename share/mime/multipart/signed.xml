@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="multipart/signed">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Signed message</comment>
+  <comment xml:lang="uk">підписане повідомлення</comment>
+  <comment xml:lang="sv">Signerat meddelande</comment>
+  <comment xml:lang="ru">Подписанное сообщение</comment>
+  <comment xml:lang="pl">Podpisana wiadomość</comment>
+  <comment xml:lang="it">Messaggio firmato</comment>
+  <comment xml:lang="es">mensaje firmado</comment>
+  <comment xml:lang="de">Signierte Nachricht</comment>
+  <comment xml:lang="be-Cyrl">падпісанае паведамленне</comment>
+</mime-type>

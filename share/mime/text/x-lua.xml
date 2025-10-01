@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="text/x-lua">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Lua script</comment>
+  <comment xml:lang="zh-Hant-TW">Lua 指令稿</comment>
+  <comment xml:lang="zh-Hans-CN">Lua 脚本</comment>
+  <comment xml:lang="vi">Văn lệnh Lua</comment>
+  <comment xml:lang="uk">скрипт Lua</comment>
+  <comment xml:lang="tr">Lua betiği</comment>
+  <comment xml:lang="sv">Lua-skript</comment>
+  <comment xml:lang="sr-Cyrl">Луа скрипта</comment>
+  <comment xml:lang="sq">programth Lua</comment>
+  <comment xml:lang="sl">Skriptna datoteka Lua</comment>
+  <comment xml:lang="si">Lua පිටපත</comment>
+  <comment xml:lang="sk">Skript Lua</comment>
+  <comment xml:lang="ru">Сценарий Lua</comment>
+  <comment xml:lang="ro">Script Lua</comment>
+  <comment xml:lang="pt-BR">Script Lua</comment>
+  <comment xml:lang="pt">script Lua</comment>
+  <comment xml:lang="pl">Skrypt Lua</comment>
+  <comment xml:lang="oc">escript Lua</comment>
+  <comment xml:lang="nn">Lua-skript</comment>
+  <comment xml:lang="nl">Lua-script</comment>
+  <comment xml:lang="nb">Lua-skript</comment>
+  <comment xml:lang="lv">Lua skripts</comment>
+  <comment xml:lang="lt">Lua scenarijus</comment>
+  <comment xml:lang="ko">Lua 스크립트</comment>
+  <comment xml:lang="kk-Cyrl">Lua сценарийі</comment>
+  <comment xml:lang="ja">Lua スクリプト</comment>
+  <comment xml:lang="it">Script Lua</comment>
+  <comment xml:lang="is">Lua skrifta</comment>
+  <comment xml:lang="id">Skrip Lua</comment>
+  <comment xml:lang="ia">Script Lua</comment>
+  <comment xml:lang="hu">Lua parancsfájl</comment>
+  <comment xml:lang="hr">Lua skripta</comment>
+  <comment xml:lang="he">תסריט Lua</comment>
+  <comment xml:lang="gl">script de Lua</comment>
+  <comment xml:lang="ga">script Lua</comment>
+  <comment xml:lang="fur">script Lua</comment>
+  <comment xml:lang="fr">script Lua</comment>
+  <comment xml:lang="fo">Lua boðrøð</comment>
+  <comment xml:lang="fi">Lua-komentotiedosto</comment>
+  <comment xml:lang="eu">Lua script-a</comment>
+  <comment xml:lang="es">secuencia de órdenes en Lua</comment>
+  <comment xml:lang="eo">Lua-skripto</comment>
+  <comment xml:lang="en-GB">Lua script</comment>
+  <comment xml:lang="el">Δέσμη ενεργειών Lua</comment>
+  <comment xml:lang="de">Lua-Skript</comment>
+  <comment xml:lang="da">Lua-program</comment>
+  <comment xml:lang="cs">skript v jazyce Lua</comment>
+  <comment xml:lang="ca">script Lua</comment>
+  <comment xml:lang="bg">Скрипт на Lua</comment>
+  <comment xml:lang="be-Latn">Skrypt Lua</comment>
+  <comment xml:lang="be-Cyrl">скрыпт Lua</comment>
+  <comment xml:lang="ar">سكربت Lua</comment>
+  <comment xml:lang="af">Lua-skrip</comment>
+  <sub-class-of type="application/x-executable"/>
+  <sub-class-of type="text/plain"/>
+  <glob pattern="*.lua"/>
+</mime-type>

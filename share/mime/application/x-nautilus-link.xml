@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-nautilus-link">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Nautilus link</comment>
+  <comment xml:lang="zh-Hant-TW">Nautilus 連結</comment>
+  <comment xml:lang="zh-Hans-CN">Nautilus 链接</comment>
+  <comment xml:lang="vi">Liên kết Nautilus</comment>
+  <comment xml:lang="uk">посилання Nautilus</comment>
+  <comment xml:lang="tr">Nautilus bağlantısı</comment>
+  <comment xml:lang="sv">Nautiluslänk</comment>
+  <comment xml:lang="sr-Cyrl">Наутилусова веза</comment>
+  <comment xml:lang="sq">lidhje Nautilus</comment>
+  <comment xml:lang="sl">Datoteka povezave Nautilus</comment>
+  <comment xml:lang="si">Nautilus සබැඳිය</comment>
+  <comment xml:lang="sk">Odkaz Nautilus</comment>
+  <comment xml:lang="ru">Ссылка Nautilus</comment>
+  <comment xml:lang="ro">Legătură Nautilus</comment>
+  <comment xml:lang="pt-BR">Link do Nautilus</comment>
+  <comment xml:lang="pt">atalho Nautilus</comment>
+  <comment xml:lang="pl">Odnośnik Nautilus</comment>
+  <comment xml:lang="oc">ligam Nautilus</comment>
+  <comment xml:lang="nn">Nautilus-lenke</comment>
+  <comment xml:lang="nl">Nautilus-verwijzing</comment>
+  <comment xml:lang="nb">Nautilus-lenke</comment>
+  <comment xml:lang="ms">Pautan Nautilus</comment>
+  <comment xml:lang="lv">Nautilus saite</comment>
+  <comment xml:lang="lt">Nautilus nuoroda</comment>
+  <comment xml:lang="ko">노틸러스 바로 가기</comment>
+  <comment xml:lang="kk-Cyrl">Nautilus сілтемесі</comment>
+  <comment xml:lang="ja">Nautilus リンク</comment>
+  <comment xml:lang="it">Collegamento Nautilus</comment>
+  <comment xml:lang="is">Nautilus tengill</comment>
+  <comment xml:lang="id">Taut Nautilus</comment>
+  <comment xml:lang="ia">Ligamine Nautilus</comment>
+  <comment xml:lang="hu">Nautilus-link</comment>
+  <comment xml:lang="hr">Nautilusova poveznica</comment>
+  <comment xml:lang="he">קישור של Nautilus</comment>
+  <comment xml:lang="gl">ligazón de nautilus</comment>
+  <comment xml:lang="ga">nasc Nautilus</comment>
+  <comment xml:lang="fur">colegament Nautilus</comment>
+  <comment xml:lang="fr">lien Nautilus</comment>
+  <comment xml:lang="fo">Nautilus leinkja</comment>
+  <comment xml:lang="fi">Nautilus-linkki</comment>
+  <comment xml:lang="eu">Nautilus esteka</comment>
+  <comment xml:lang="es">enlace de Nautilus</comment>
+  <comment xml:lang="eo">Nautilus-ligilo</comment>
+  <comment xml:lang="en-GB">Nautilus link</comment>
+  <comment xml:lang="el">Σύνδεσμος Nautilus</comment>
+  <comment xml:lang="de">Nautilus-Verknüpfung</comment>
+  <comment xml:lang="da">Nautilus-henvisning</comment>
+  <comment xml:lang="cy">Cyswllt Nautilus</comment>
+  <comment xml:lang="cs">odkaz Nautilus</comment>
+  <comment xml:lang="ca">enllaç de Nautilus</comment>
+  <comment xml:lang="bg">Връзка — Nautilus</comment>
+  <comment xml:lang="be-Latn">Spasyłka Nautilus</comment>
+  <comment xml:lang="be-Cyrl">спасылка Nautilus</comment>
+  <comment xml:lang="az">Nautilus körpüsü</comment>
+  <comment xml:lang="ar">وصلة Nautilus</comment>
+  <comment xml:lang="af">Nautilus-skakel</comment>
+  <sub-class-of type="text/plain"/>
+  <generic-icon name="text-x-generic"/>
+</mime-type>

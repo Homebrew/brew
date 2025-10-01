@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/vnd.openxmlformats-officedocument.spreadsheetml.template">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Excel 2007 spreadsheet template</comment>
+  <comment xml:lang="zh-Hant-TW">Excel 2007 試算表範本</comment>
+  <comment xml:lang="zh-Hans-CN">Excel 2007 电子表格模板</comment>
+  <comment xml:lang="uk">шаблон електронної таблиці Excel 2007</comment>
+  <comment xml:lang="tr">Excel 2007 hesap çizelgesi şablonu</comment>
+  <comment xml:lang="sv">Excel 2007-kalkylarksmall</comment>
+  <comment xml:lang="sr-Cyrl">шаблон табеле Ексела 2007</comment>
+  <comment xml:lang="sq">gjedhe fletëllogaritjesh Excel 2007</comment>
+  <comment xml:lang="sl">Predloga razpredelnice Excel 2007</comment>
+  <comment xml:lang="si">Excel 2007 පැතුරුම්පත් අච්චුව</comment>
+  <comment xml:lang="sk">Šablóna zošitu Excel 2007</comment>
+  <comment xml:lang="ru">Шаблон электронной таблицы Excel 2007</comment>
+  <comment xml:lang="pt-BR">Modelo de planilha do Excel 2007</comment>
+  <comment xml:lang="pt">modelo de folha de cálculo Excel 2007</comment>
+  <comment xml:lang="pl">Szablon arkusza Excel 2007</comment>
+  <comment xml:lang="oc">modèl de fuèlh de calcul Excel 2007</comment>
+  <comment xml:lang="nl">Excel 2007 spreadsheet sjabloon</comment>
+  <comment xml:lang="lv">Excel 2007 izklājlapas veidne</comment>
+  <comment xml:lang="ko">Excel 2007 스프레드시트 서식</comment>
+  <comment xml:lang="kk-Cyrl">Excel 2007 кесте шаблоны</comment>
+  <comment xml:lang="ka">Excel 2007-ის ცხრილის შაბლონი</comment>
+  <comment xml:lang="ja">Excel 2007 スプレッドシートテンプレート</comment>
+  <comment xml:lang="it">Modello foglio di calcolo Excel 2007</comment>
+  <comment xml:lang="is">Excel 2007 töflureiknisniðmát</comment>
+  <comment xml:lang="id">Templat lembar kerja Excel 2007</comment>
+  <comment xml:lang="ia">Patrono de folio de calculo Excel 2007</comment>
+  <comment xml:lang="hu">Excel 2007 táblázatsablon</comment>
+  <comment xml:lang="hr">Excel 2007 predložak proračunske tablice</comment>
+  <comment xml:lang="he">תבנית של גיליון נתונים של Excel 2007</comment>
+  <comment xml:lang="gl">modelo de folla de cálculo Excel 2007</comment>
+  <comment xml:lang="ga">teimpléad scarbhileoige Excel 2007</comment>
+  <comment xml:lang="fur">model sfuei di calcul Excel 2007</comment>
+  <comment xml:lang="fr">modèle de feuille de calcul Excel 2007</comment>
+  <comment xml:lang="fi">Excel 2007 -taulukkomalli</comment>
+  <comment xml:lang="eu">Excel 2007 kalkulu-orri txantiloia</comment>
+  <comment xml:lang="es">plantilla de hoja de cálculo de Excel 2007</comment>
+  <comment xml:lang="en-GB">Excel 2007 spreadsheet template</comment>
+  <comment xml:lang="el">Πρότυπο λογιστικού φύλλου Excel 2007</comment>
+  <comment xml:lang="de">Excel-2007-Tabellenvorlage</comment>
+  <comment xml:lang="da">Excel 2007-regnearksskabelon</comment>
+  <comment xml:lang="cs">šablona sešitu Excel 2007</comment>
+  <comment xml:lang="ca">plantilla de full de càlcul d'Excel 2007</comment>
+  <comment xml:lang="bg">Шаблон за таблици — Excel 2007</comment>
+  <comment xml:lang="be-Cyrl">шаблон электроннай табліцы Excel 2007</comment>
+  <comment xml:lang="ar">قالب جدول اكسل 2007</comment>
+  <comment xml:lang="af">Excel 2007-sigbladsjabloon</comment>
+  <glob pattern="*.xltx"/>
+  <sub-class-of type="application/zip"/>
+  <generic-icon name="x-office-spreadsheet"/>
+</mime-type>

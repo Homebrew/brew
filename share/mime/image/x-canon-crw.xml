@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="image/x-canon-crw">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Canon CRW raw image</comment>
+  <comment xml:lang="zh-Hant-TW">Canon CRW 原始影像</comment>
+  <comment xml:lang="zh-Hans-CN">佳能 CRW 原始图像</comment>
+  <comment xml:lang="vi">Ảnh thô Canon CRW</comment>
+  <comment xml:lang="uk">цифровий негатив CRW Canon</comment>
+  <comment xml:lang="tr">Canon CRW ham görüntüsü</comment>
+  <comment xml:lang="sv">Canon CRW-råbild</comment>
+  <comment xml:lang="sr-Cyrl">Кенон ЦРВ сирова слика</comment>
+  <comment xml:lang="sq">figurë Canon CRW e papërpunuar</comment>
+  <comment xml:lang="sl">Surova slikovna datoteka Canon CRW</comment>
+  <comment xml:lang="si">Canon CRW අමු රූපය</comment>
+  <comment xml:lang="sk">Surový obrázok Canon CRW</comment>
+  <comment xml:lang="ru">Необработанное изображение Canon CRW</comment>
+  <comment xml:lang="ro">Imagine brută Canon CRW</comment>
+  <comment xml:lang="pt-BR">Imagem bruta CRW da Canon</comment>
+  <comment xml:lang="pt">imagem em bruto Canon CRW</comment>
+  <comment xml:lang="pl">Surowy obraz CRW Canon</comment>
+  <comment xml:lang="oc">imatge brut CRW Canon</comment>
+  <comment xml:lang="nn">Canon CRW råbilete</comment>
+  <comment xml:lang="nl">onbewerkt Canon CRW-beeld</comment>
+  <comment xml:lang="nb">Canon CRW raw-bilde</comment>
+  <comment xml:lang="lv">Canon CRW jēlattēls</comment>
+  <comment xml:lang="lt">Canon CRW neapdorotas paveikslėlis</comment>
+  <comment xml:lang="ko">캐논 CRW RAW 사진</comment>
+  <comment xml:lang="kk-Cyrl">Canon CRW өңделмеген суреті</comment>
+  <comment xml:lang="ka">Canon CRW raw გამოსახულება</comment>
+  <comment xml:lang="ja">Canon CRW raw 画像</comment>
+  <comment xml:lang="it">Immagine raw Canon CRW</comment>
+  <comment xml:lang="is">Canon CRW hrámynd</comment>
+  <comment xml:lang="id">Citra mentah Canon CRW</comment>
+  <comment xml:lang="ia">Imagine brute CRW Canon</comment>
+  <comment xml:lang="hu">Canon CRW nyers kép</comment>
+  <comment xml:lang="hr">Canon CRW osnovna slika</comment>
+  <comment xml:lang="he">תמונה גולמית של Canon CRW</comment>
+  <comment xml:lang="gl">imaxe en bruto de Canon CRW</comment>
+  <comment xml:lang="ga">amhíomhá Canon CRW</comment>
+  <comment xml:lang="fur">imagjin grese Canon CRW</comment>
+  <comment xml:lang="fr">image brute CRW Canon</comment>
+  <comment xml:lang="fo">Canon CRW rámynd</comment>
+  <comment xml:lang="fi">Canon-CRW-raakakuva</comment>
+  <comment xml:lang="eu">Canon CRW irudi gordina</comment>
+  <comment xml:lang="es">imagen en bruto CRW de Canon</comment>
+  <comment xml:lang="en-GB">Canon CRW raw image</comment>
+  <comment xml:lang="el">Ανεπεξέργαστη εικόνα Canon CRW</comment>
+  <comment xml:lang="de">Canon-CRW-Rohbild</comment>
+  <comment xml:lang="da">Canon CRW raw-billede</comment>
+  <comment xml:lang="cs">surový obrázek Canon CRW</comment>
+  <comment xml:lang="ca">imatge en cru de Canon CRW</comment>
+  <comment xml:lang="bg">Изображение — Canon CRW raw</comment>
+  <comment xml:lang="be-Latn">Suvoraja vyjava Canon CRW</comment>
+  <comment xml:lang="be-Cyrl">неапрацаваная выява Canon CRW</comment>
+  <comment xml:lang="ar">صورة Canon CRW خامة</comment>
+  <comment xml:lang="af">Canon CRW rou beeld</comment>
+  <acronym>CRW</acronym>
+  <expanded-acronym>Canon RaW</expanded-acronym>
+  <sub-class-of type="image/x-dcraw"/>
+  <glob pattern="*.crw"/>
+</mime-type>

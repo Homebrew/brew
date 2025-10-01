@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/vnd.apple.pkpass">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Apple Wallet pass</comment>
+  <comment xml:lang="uk">пропуск Apple Wallet</comment>
+  <comment xml:lang="tr">Apple Cüzdan geçişi</comment>
+  <comment xml:lang="sv">Apple Wallet-pass</comment>
+  <comment xml:lang="si">Apple Wallet පාස්</comment>
+  <comment xml:lang="ru">Пропуск Apple Wallet</comment>
+  <comment xml:lang="pl">Hasło Apple Wallet</comment>
+  <comment xml:lang="nl">Apple Wallet-pas</comment>
+  <comment xml:lang="ko">애플 지갑 인증</comment>
+  <comment xml:lang="kk-Cyrl">Apple Wallet рұқсатнамасы</comment>
+  <comment xml:lang="ja">Apple ウォレットパス</comment>
+  <comment xml:lang="it">Pass Apple Wallet</comment>
+  <comment xml:lang="hr">Apple Novčanik propusnica</comment>
+  <comment xml:lang="gl">Pase de Apple Wallet</comment>
+  <comment xml:lang="fi">Apple Wallet-kulkulupa</comment>
+  <comment xml:lang="es">monedero Apple Wallet</comment>
+  <comment xml:lang="en-GB">Apple Wallet pass</comment>
+  <comment xml:lang="de">Apple-Wallet-Pass</comment>
+  <comment xml:lang="be-Cyrl">пропуск Apple Wallet</comment>
+  <comment xml:lang="ar">بطاقة محفظة أبل</comment>
+  <sub-class-of type="application/zip"/>
+  <glob pattern="*.pkpass"/>
+</mime-type>

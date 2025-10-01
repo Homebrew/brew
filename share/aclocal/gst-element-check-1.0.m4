@@ -1,0 +1,1 @@
+../../Cellar/gstreamer/1.26.2/share/aclocal/gst-element-check-1.0.m4

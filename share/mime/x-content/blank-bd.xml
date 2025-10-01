@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="x-content/blank-bd">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Blank Blu-ray disc</comment>
+  <comment xml:lang="uk">порожній диск Blu-ray</comment>
+  <comment xml:lang="sv">Tom Blu-ray-skiva</comment>
+  <comment xml:lang="ru">Чистый диск Blu-ray</comment>
+  <comment xml:lang="pt-BR">Disco Blu-ray vazio</comment>
+  <comment xml:lang="pl">Pusta płyta Blu-ray</comment>
+  <comment xml:lang="it">Disco vuoto Blu-ray</comment>
+  <comment xml:lang="gl">Disco Blu-ray en branco</comment>
+  <comment xml:lang="eu">Blu-ray disko hutsa</comment>
+  <comment xml:lang="es">disco Blu-ray vacío</comment>
+  <comment xml:lang="de">Leere Blu-ray</comment>
+  <comment xml:lang="be-Cyrl">чысты дыск Blu-ray</comment>
+</mime-type>

@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-sqlite2">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>SQLite2 database</comment>
+  <comment xml:lang="zh-Hant-TW">SQLite2 資料庫</comment>
+  <comment xml:lang="zh-Hans-CN">SQLite2 数据库</comment>
+  <comment xml:lang="vi">Cơ sở dữ liệu SQLite2</comment>
+  <comment xml:lang="uk">База даних SQLite2</comment>
+  <comment xml:lang="tr">SQLite2 veri tabanı</comment>
+  <comment xml:lang="sv">SQLite2-databas</comment>
+  <comment xml:lang="sr-Cyrl">СКуЛајт2 база података</comment>
+  <comment xml:lang="sq">bazë të dhënash SQLite2</comment>
+  <comment xml:lang="sl">Podatkovna zbirka SQLite2</comment>
+  <comment xml:lang="si">SQLite2 දත්ත සමුදාය</comment>
+  <comment xml:lang="sk">Databáza SQLite2</comment>
+  <comment xml:lang="ru">База данных SQLite2</comment>
+  <comment xml:lang="ro">Bază de date SQLite2</comment>
+  <comment xml:lang="pt-BR">Banco de dados SQLite2</comment>
+  <comment xml:lang="pt">base de dados SQLite2</comment>
+  <comment xml:lang="pl">Baza danych SQLite2</comment>
+  <comment xml:lang="oc">banca de donadas SQLite2</comment>
+  <comment xml:lang="nn">SQLite2-database</comment>
+  <comment xml:lang="nl">SQLite2-gegevensbank</comment>
+  <comment xml:lang="nb">SQLite2-database</comment>
+  <comment xml:lang="lv">SQLite2 datubāze</comment>
+  <comment xml:lang="lt">SQLite2 duomenų bazė</comment>
+  <comment xml:lang="ko">SQLite2 데이터베이스</comment>
+  <comment xml:lang="kk-Cyrl">SQLite2 дерекқоры</comment>
+  <comment xml:lang="ja">SQLite2 データベース</comment>
+  <comment xml:lang="it">Database SQLite2</comment>
+  <comment xml:lang="is">SQLite2 gagnagrunnur</comment>
+  <comment xml:lang="id">Basis data SQLite2</comment>
+  <comment xml:lang="ia">Base de datos SQLite2</comment>
+  <comment xml:lang="hu">SQLite2 adatbázis</comment>
+  <comment xml:lang="hr">SQLite2 baza podataka</comment>
+  <comment xml:lang="he">מסד נתונים מסוג SQLite2</comment>
+  <comment xml:lang="gl">base de datos SQLite2</comment>
+  <comment xml:lang="ga">bunachar sonraí SQLite2</comment>
+  <comment xml:lang="fur">base di dâts SQLite2</comment>
+  <comment xml:lang="fr">base de données SQLite2</comment>
+  <comment xml:lang="fo">SQLite2 dátustovnur</comment>
+  <comment xml:lang="fi">SQLite2-tietokanta</comment>
+  <comment xml:lang="eu">SQLite2 datu-basea</comment>
+  <comment xml:lang="es">base de datos SQLite2</comment>
+  <comment xml:lang="eo">SQLite2-datumbazo</comment>
+  <comment xml:lang="en-GB">SQLite2 database</comment>
+  <comment xml:lang="el">Βάση δεδομένων SQLite2</comment>
+  <comment xml:lang="de">SQLite2-Datenbank</comment>
+  <comment xml:lang="da">SQLite2-database</comment>
+  <comment xml:lang="cs">databáze SQLite2</comment>
+  <comment xml:lang="ca">base de dades SQLite2</comment>
+  <comment xml:lang="bg">База от данни — SQLite2</comment>
+  <comment xml:lang="be-Latn">Baza źviestak SQLite2</comment>
+  <comment xml:lang="be-Cyrl">база даных SQLite2</comment>
+  <comment xml:lang="ar">قاعدة بيانات SQLite2</comment>
+  <comment xml:lang="af">SQLite2-databasis</comment>
+  <glob pattern="*.sqlite2"/>
+</mime-type>

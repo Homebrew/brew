@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="model/stl">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>STL 3D model</comment>
+  <comment xml:lang="zh-Hant-TW">STL 3D 模型</comment>
+  <comment xml:lang="zh-Hans-CN">STL 3D 模型</comment>
+  <comment xml:lang="uk">просторова модель STL</comment>
+  <comment xml:lang="tr">STL 3D modeli</comment>
+  <comment xml:lang="sv">STL-3D-modell</comment>
+  <comment xml:lang="sq">model STL 3D</comment>
+  <comment xml:lang="sl">Model STL 3D</comment>
+  <comment xml:lang="si">STL 3D ආකෘතිය</comment>
+  <comment xml:lang="sk">STL 3D model</comment>
+  <comment xml:lang="ru">3D-модель STL</comment>
+  <comment xml:lang="pt-BR">Modelo 3D STL</comment>
+  <comment xml:lang="pl">Model 3D STL</comment>
+  <comment xml:lang="nl">STL 3D-model</comment>
+  <comment xml:lang="ko">STL 3D 모델</comment>
+  <comment xml:lang="kk-Cyrl">STL 3D моделі</comment>
+  <comment xml:lang="ja">STL 3D モデル</comment>
+  <comment xml:lang="it">Modello 3D STL</comment>
+  <comment xml:lang="is">STL 3D-líkan</comment>
+  <comment xml:lang="id">Model 3D STL</comment>
+  <comment xml:lang="hu">STL 3D modell</comment>
+  <comment xml:lang="hr">STL 3D model</comment>
+  <comment xml:lang="he">דגם תלת ממדי של STL</comment>
+  <comment xml:lang="ga">samhail 3T STL</comment>
+  <comment xml:lang="fur">model STL 3D</comment>
+  <comment xml:lang="fr">modèle 3D STL</comment>
+  <comment xml:lang="fi">STL 3D-malli</comment>
+  <comment xml:lang="eu">STL 3D modeloa</comment>
+  <comment xml:lang="es">modelo 3D de STL</comment>
+  <comment xml:lang="en-GB">STL 3D model</comment>
+  <comment xml:lang="de">STL 3D-Modell</comment>
+  <comment xml:lang="da">STL 3D-model</comment>
+  <comment xml:lang="cs">3D model STL</comment>
+  <comment xml:lang="ca">model 3D STL</comment>
+  <comment xml:lang="bg">Модел — STL 3D</comment>
+  <comment xml:lang="be-Cyrl">мадэль STL 3D</comment>
+  <comment xml:lang="ar">نموذج STL 3D</comment>
+  <comment xml:lang="af">STL 3D-model</comment>
+  <acronym>STL</acronym>
+  <expanded-acronym>StereoLithography</expanded-acronym>
+  <generic-icon name="image-x-generic"/>
+  <glob pattern="*.stl"/>
+  <alias type="model/x.stl-ascii"/>
+  <alias type="model/x.stl-binary"/>
+</mime-type>

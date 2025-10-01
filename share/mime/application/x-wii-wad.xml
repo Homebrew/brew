@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-wii-wad">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>WiiWare bundle</comment>
+  <comment xml:lang="zh-Hant-TW">WiiWare 綁包</comment>
+  <comment xml:lang="zh-Hans-CN">WiiWare 捆绑包</comment>
+  <comment xml:lang="uk">пакет WiiWare</comment>
+  <comment xml:lang="tr">WiiWare paketi</comment>
+  <comment xml:lang="sv">WiiWare-paket</comment>
+  <comment xml:lang="sr-Cyrl">ВииВер комплет</comment>
+  <comment xml:lang="sq">paketë WiiWare</comment>
+  <comment xml:lang="si">WiiWare බණ්ඩලය</comment>
+  <comment xml:lang="sk">Balík WiiWare</comment>
+  <comment xml:lang="ru">Пакет WiiWare</comment>
+  <comment xml:lang="pt-BR">Pacote WiiWare</comment>
+  <comment xml:lang="pt">pacote WiiWare</comment>
+  <comment xml:lang="pl">Pakiet WiiWare</comment>
+  <comment xml:lang="oc">lòt WiiWare</comment>
+  <comment xml:lang="nl">WiiWare-bundel</comment>
+  <comment xml:lang="ko">WiiWare 번들</comment>
+  <comment xml:lang="kk-Cyrl">WiiWare дестесі</comment>
+  <comment xml:lang="ja">WiiWare バンドル</comment>
+  <comment xml:lang="it">Bundle WiiWare</comment>
+  <comment xml:lang="is">WiiWare vöndull</comment>
+  <comment xml:lang="id">Bundel WiiWare</comment>
+  <comment xml:lang="ia">Pacchetto WiiWare</comment>
+  <comment xml:lang="hu">WiiWare csomag</comment>
+  <comment xml:lang="hr">WiiWare paket</comment>
+  <comment xml:lang="he">מאגד WiiWare</comment>
+  <comment xml:lang="gl">Empaquetado WiiWare</comment>
+  <comment xml:lang="ga">burla WiiWare</comment>
+  <comment xml:lang="fur">côl WiiWare</comment>
+  <comment xml:lang="fr">lot WiiWare</comment>
+  <comment xml:lang="fi">WiiWare-lisäpaketti</comment>
+  <comment xml:lang="eu">WiiWare bilduma</comment>
+  <comment xml:lang="es">conjunto de WiiWare</comment>
+  <comment xml:lang="en-GB">WiiWare bundle</comment>
+  <comment xml:lang="de">WiiWare-Paket</comment>
+  <comment xml:lang="da">WiiWare-samling</comment>
+  <comment xml:lang="cs">balíček pro WiiWare</comment>
+  <comment xml:lang="ca">paquet de WiiWare</comment>
+  <comment xml:lang="bg">Програмен пакет — WiiWare</comment>
+  <comment xml:lang="be-Cyrl">пакет WiiWare</comment>
+  <comment xml:lang="ar">حزمة وي واير</comment>
+  <comment xml:lang="af">WiiWare-bundel</comment>
+  <generic-icon name="application-x-executable"/>
+  <glob pattern="*.wad"/>
+</mime-type>

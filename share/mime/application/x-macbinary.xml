@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-macbinary">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Macintosh MacBinary file</comment>
+  <comment xml:lang="zh-Hant-TW">Macintosh MacBinary 檔</comment>
+  <comment xml:lang="zh-Hans-CN">Macintosh MacBinary 文件</comment>
+  <comment xml:lang="vi">Tập tin nhị phân MacBinary của Macintosh</comment>
+  <comment xml:lang="uk">файл Macintosh MacBinary</comment>
+  <comment xml:lang="tr">Macintosh MacBinary dosyası</comment>
+  <comment xml:lang="sv">Macintosh MacBinary-fil</comment>
+  <comment xml:lang="sr-Cyrl">Мекинтош Мек Бинари датотека</comment>
+  <comment xml:lang="sq">kartelë MacBinary Macintosh</comment>
+  <comment xml:lang="sl">Izvedljiva dvojiška datoteka Macintosh MacBinary</comment>
+  <comment xml:lang="si">Macintosh MacBinary ගොනුව</comment>
+  <comment xml:lang="sk">Súbor pre Macintosh MacBinary</comment>
+  <comment xml:lang="ru">Файл Macintosh MacBinary</comment>
+  <comment xml:lang="ro">Fișier Macintosh MacBinary</comment>
+  <comment xml:lang="pt-BR">Arquivo do Macintosh MacBinary</comment>
+  <comment xml:lang="pt">ficheiro MacBinary de Macintosh</comment>
+  <comment xml:lang="pl">Plik MacBinary Macintosh</comment>
+  <comment xml:lang="oc">fichièr Macintosh MacBinary</comment>
+  <comment xml:lang="nn">Macintosh MacBinary-fil</comment>
+  <comment xml:lang="nl">Macintosh MacBinary-bestand</comment>
+  <comment xml:lang="nb">Macintosh MacBinary-fil</comment>
+  <comment xml:lang="ms">Fail MacBinary Macintosh</comment>
+  <comment xml:lang="lv">Macintosh MacBinary datne</comment>
+  <comment xml:lang="lt">Macintosh MacBinary failas</comment>
+  <comment xml:lang="ko">MacBinary 파일</comment>
+  <comment xml:lang="kk-Cyrl">Macintosh MacBinary файлы</comment>
+  <comment xml:lang="ja">Macintosh MacBinary ファイル</comment>
+  <comment xml:lang="it">File Macintosh MacBinary</comment>
+  <comment xml:lang="is">Macintosh MacBinary skrá</comment>
+  <comment xml:lang="id">Berkas Macintosh MacBinary</comment>
+  <comment xml:lang="ia">File MacBinary de Macintosh</comment>
+  <comment xml:lang="hu">Macintosh MacBinary-fájl</comment>
+  <comment xml:lang="hr">Macintosh MacBinary datoteka</comment>
+  <comment xml:lang="he">קובץ בינרי של מקינטוש</comment>
+  <comment xml:lang="gl">ficheiro MacBinary de Macintosh</comment>
+  <comment xml:lang="ga">comhad Macintosh MacBinary</comment>
+  <comment xml:lang="fur">file MacBinary di Macintosh</comment>
+  <comment xml:lang="fr">fichier Macintosh MacBinary</comment>
+  <comment xml:lang="fo">Macintosh MacBinary fíla</comment>
+  <comment xml:lang="fi">Macintosh MacBinary -tiedosto</comment>
+  <comment xml:lang="eu">Macintosh MacBinary fitxategia</comment>
+  <comment xml:lang="es">archivo de Macintosh MacBinary</comment>
+  <comment xml:lang="eo">MacBinary-dosiero de Macintosh</comment>
+  <comment xml:lang="en-GB">Macintosh MacBinary file</comment>
+  <comment xml:lang="el">Εκτελέσιμο Macintosh MacBinary</comment>
+  <comment xml:lang="de">Macintosh-MacBinary-Datei</comment>
+  <comment xml:lang="da">Macintosh MacBinary-fil</comment>
+  <comment xml:lang="cs">soubor MacBinary pro Macintosh </comment>
+  <comment xml:lang="ca">fitxer MacBinary de Macintosh</comment>
+  <comment xml:lang="bg">Файл — MacBinary</comment>
+  <comment xml:lang="be-Latn">Fajł Macintosh MacBinary</comment>
+  <comment xml:lang="be-Cyrl">файл Macintosh MacBinary</comment>
+  <comment xml:lang="ar">ملف Macintosh MacBinary</comment>
+  <comment xml:lang="af">Macintosh MacBinary-lêer</comment>
+  <generic-icon name="package-x-generic"/>
+</mime-type>

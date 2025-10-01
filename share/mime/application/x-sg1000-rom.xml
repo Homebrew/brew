@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-sg1000-rom">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>SG-1000 ROM</comment>
+  <comment xml:lang="zh-Hant-TW">SG-1000 ROM</comment>
+  <comment xml:lang="zh-Hans-CN">SG-1000 ROM</comment>
+  <comment xml:lang="uk">ППП SG-1000</comment>
+  <comment xml:lang="tr">SG-1000 ROM</comment>
+  <comment xml:lang="sv">SG-1000-rom</comment>
+  <comment xml:lang="sr-Cyrl">СГ-1000 РОМ</comment>
+  <comment xml:lang="sq">ROM SG-1000</comment>
+  <comment xml:lang="sl">SG-1000 ROM</comment>
+  <comment xml:lang="si">SG-1000 ROM</comment>
+  <comment xml:lang="sk">ROM pre SG-1000</comment>
+  <comment xml:lang="ru">SG-1000 ROM</comment>
+  <comment xml:lang="pt-BR">ROM de SG-1000</comment>
+  <comment xml:lang="pl">Plik ROM konsoli SG-1000</comment>
+  <comment xml:lang="nl">SG-1000-ROM</comment>
+  <comment xml:lang="ko">SG-1000 롬</comment>
+  <comment xml:lang="kk-Cyrl">SG-1000 ROM</comment>
+  <comment xml:lang="ja">SG-1000 ROM</comment>
+  <comment xml:lang="it">ROM SG-1000</comment>
+  <comment xml:lang="is">SG-1000 ROM</comment>
+  <comment xml:lang="id">ROM SG-1000</comment>
+  <comment xml:lang="hu">SG-1000 ROM</comment>
+  <comment xml:lang="hr">SG-1000 ROM</comment>
+  <comment xml:lang="he">ROM של SG-1000</comment>
+  <comment xml:lang="ga">ROM SG-1000</comment>
+  <comment xml:lang="fur">ROM SG-1000</comment>
+  <comment xml:lang="fr">ROM SG-1000</comment>
+  <comment xml:lang="fi">SG-1000 -ROM</comment>
+  <comment xml:lang="eu">SG-1000 ROM</comment>
+  <comment xml:lang="es">ROM de SG-1000</comment>
+  <comment xml:lang="en-GB">SG-1000 ROM</comment>
+  <comment xml:lang="de">SG-1000-ROM</comment>
+  <comment xml:lang="da">SG-1000-ROM</comment>
+  <comment xml:lang="cs">ROM pro SG-1000</comment>
+  <comment xml:lang="ca">ROM de SG-1000</comment>
+  <comment xml:lang="bg">ROM — SG-1000</comment>
+  <comment xml:lang="be-Cyrl">SG-1000 ROM</comment>
+  <comment xml:lang="ar">روم SG-1000</comment>
+  <generic-icon name="application-x-executable"/>
+  <glob pattern="*.sg"/>
+</mime-type>

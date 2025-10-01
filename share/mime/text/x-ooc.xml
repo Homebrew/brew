@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="text/x-ooc">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>OOC source code</comment>
+  <comment xml:lang="zh-Hant-TW">OOC 源碼</comment>
+  <comment xml:lang="zh-Hans-CN">OOC 源代码</comment>
+  <comment xml:lang="uk">початковий код мовою OOC</comment>
+  <comment xml:lang="tr">OOC kaynak kodu</comment>
+  <comment xml:lang="sv">OOC-källkod</comment>
+  <comment xml:lang="sr-Cyrl">ООЦ изворни ко̂д</comment>
+  <comment xml:lang="sq">kod burim OOC</comment>
+  <comment xml:lang="sl">Izvorna koda OOC</comment>
+  <comment xml:lang="si">OOC මූල කේතය</comment>
+  <comment xml:lang="sk">Zdrojový kód OOC</comment>
+  <comment xml:lang="ru">Исходный код OOC</comment>
+  <comment xml:lang="pt-BR">Código-fonte OOC</comment>
+  <comment xml:lang="pt">código origem OOC</comment>
+  <comment xml:lang="pl">Kod źródłowy OOC</comment>
+  <comment xml:lang="oc">font còde OOC</comment>
+  <comment xml:lang="nl">OOC-broncode</comment>
+  <comment xml:lang="lv">OOC pirmkods</comment>
+  <comment xml:lang="ko">OOC 소스 코드</comment>
+  <comment xml:lang="kk-Cyrl">OOC бастапқы коды</comment>
+  <comment xml:lang="ka">OOC-ის საწყისი კოდი</comment>
+  <comment xml:lang="ja">OOC ソースコード</comment>
+  <comment xml:lang="it">Codice sorgente OOC</comment>
+  <comment xml:lang="is">OOC frumkóði</comment>
+  <comment xml:lang="id">Kode sumber OOC</comment>
+  <comment xml:lang="ia">Codice-fonte OCC</comment>
+  <comment xml:lang="hu">OOC forráskód</comment>
+  <comment xml:lang="hr">OOC izvorni kôd</comment>
+  <comment xml:lang="he">קוד מקור של OOC</comment>
+  <comment xml:lang="gl">código fonte de OOC</comment>
+  <comment xml:lang="ga">cód foinseach OOC</comment>
+  <comment xml:lang="fur">codiç sorzint OOC</comment>
+  <comment xml:lang="fr">source code OOC</comment>
+  <comment xml:lang="fi">OOC-lähdekoodi</comment>
+  <comment xml:lang="eu">OOC iturburu-kodea</comment>
+  <comment xml:lang="es">código fuente en OOC</comment>
+  <comment xml:lang="eo">OOC-fontkodo</comment>
+  <comment xml:lang="en-GB">OOC source code</comment>
+  <comment xml:lang="el">Πηγαίος κώδικας OOC</comment>
+  <comment xml:lang="de">OOC-Quelltext</comment>
+  <comment xml:lang="da">OOC-kildekode</comment>
+  <comment xml:lang="cs">zdrojový kód OOC</comment>
+  <comment xml:lang="ca">codi font en OOC</comment>
+  <comment xml:lang="bg">Изходен код — OOC</comment>
+  <comment xml:lang="be-Cyrl">зыходны код OOC</comment>
+  <comment xml:lang="ar">شفرة مصدر OOC</comment>
+  <comment xml:lang="af">OOC-bronkode</comment>
+  <acronym>OOC</acronym>
+  <expanded-acronym>Out Of Class</expanded-acronym>
+  <sub-class-of type="text/x-csrc"/>
+  <glob pattern="*.ooc"/>
+</mime-type>

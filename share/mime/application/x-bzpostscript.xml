@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-bzpostscript">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>PostScript document (bzip2-compressed)</comment>
+  <comment xml:lang="uk">документ PostScript (стиснений bzip2)</comment>
+  <comment xml:lang="sv">Postscript-dokument (bzip2-komprimerat)</comment>
+  <comment xml:lang="ru">Документ PostScript (сжатый bzip2)</comment>
+  <comment xml:lang="pl">Dokument PostScript (kompresja bzip2)</comment>
+  <comment xml:lang="es">documento PostScript (comprimido con BZIP2)</comment>
+  <comment xml:lang="de">PostScript-Dokument (bzip2-komprimiert)</comment>
+  <sub-class-of type="application/x-bzip2"/>
+  <generic-icon name="x-office-document"/>
+  <glob pattern="*.ps.bz2"/>
+</mime-type>

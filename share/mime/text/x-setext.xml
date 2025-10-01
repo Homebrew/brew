@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="text/x-setext">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Setext document</comment>
+  <comment xml:lang="zh-Hant-TW">Setext 文件</comment>
+  <comment xml:lang="zh-Hans-CN">Setext 文档</comment>
+  <comment xml:lang="vi">Tài liệu Setext</comment>
+  <comment xml:lang="uk">документ Setext</comment>
+  <comment xml:lang="tr">Setext belgesi</comment>
+  <comment xml:lang="sv">Setext-dokument</comment>
+  <comment xml:lang="sr-Cyrl">Сетекст документ</comment>
+  <comment xml:lang="sq">dokument Setext</comment>
+  <comment xml:lang="sl">Dokument Setext</comment>
+  <comment xml:lang="si">පෙළ ලේඛනය</comment>
+  <comment xml:lang="sk">Dokument Setext</comment>
+  <comment xml:lang="ru">Документ Setext</comment>
+  <comment xml:lang="ro">Document Setext</comment>
+  <comment xml:lang="pt-BR">Documento Setext</comment>
+  <comment xml:lang="pt">documento Setext</comment>
+  <comment xml:lang="pl">Dokument Setext</comment>
+  <comment xml:lang="oc">document Setext</comment>
+  <comment xml:lang="nn">Setext-dokument</comment>
+  <comment xml:lang="nl">Setext-document</comment>
+  <comment xml:lang="nb">Setext-dokument</comment>
+  <comment xml:lang="ms">Dokumen Setext</comment>
+  <comment xml:lang="lv">Setext dokuments</comment>
+  <comment xml:lang="lt">Setext dokumentas</comment>
+  <comment xml:lang="ko">Setext 문서</comment>
+  <comment xml:lang="kk-Cyrl">Setext құжаты</comment>
+  <comment xml:lang="ja">Setext ドキュメント</comment>
+  <comment xml:lang="it">Documento Setext</comment>
+  <comment xml:lang="is">Setext skjal</comment>
+  <comment xml:lang="id">Dokumen Setext</comment>
+  <comment xml:lang="ia">Documento Setext</comment>
+  <comment xml:lang="hu">Setext-dokumentum</comment>
+  <comment xml:lang="hr">Setext dokument</comment>
+  <comment xml:lang="he">מסמך של Setext</comment>
+  <comment xml:lang="gl">documento Settext</comment>
+  <comment xml:lang="ga">cáipéis Setext</comment>
+  <comment xml:lang="fur">document Setext</comment>
+  <comment xml:lang="fr">document Setext</comment>
+  <comment xml:lang="fo">Setext skjal</comment>
+  <comment xml:lang="fi">Setext-asiakirja</comment>
+  <comment xml:lang="eu">Setext dokumentua</comment>
+  <comment xml:lang="es">documento Setext</comment>
+  <comment xml:lang="eo">Setext-dokumento</comment>
+  <comment xml:lang="en-GB">Setext document</comment>
+  <comment xml:lang="el">Έγγραφο Setext</comment>
+  <comment xml:lang="de">Setext-Dokument</comment>
+  <comment xml:lang="da">Setextdokument</comment>
+  <comment xml:lang="cy">Dogfen Setext</comment>
+  <comment xml:lang="cs">dokument Setext</comment>
+  <comment xml:lang="ca">document Setext</comment>
+  <comment xml:lang="bg">Документ — Setext</comment>
+  <comment xml:lang="be-Latn">Dakument Setext</comment>
+  <comment xml:lang="be-Cyrl">дакумент Setext</comment>
+  <comment xml:lang="az">Setext sənədi</comment>
+  <comment xml:lang="ast">Documentu Setext</comment>
+  <comment xml:lang="ar">مستند Setext</comment>
+  <comment xml:lang="af">Setext-dokument</comment>
+  <sub-class-of type="text/plain"/>
+  <glob pattern="*.etx"/>
+</mime-type>

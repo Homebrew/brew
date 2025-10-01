@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-wpg">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>WordPerfect/Drawperfect image</comment>
+  <comment xml:lang="zh-Hant-TW">WordPerfect/Drawperfect 影像</comment>
+  <comment xml:lang="zh-Hans-CN">WordPerfect/Drawperfect 图像</comment>
+  <comment xml:lang="vi">Ảnh WordPerfect/Drawperfect</comment>
+  <comment xml:lang="uk">зображення WordPerfect/Drawperfect</comment>
+  <comment xml:lang="tr">WordPerfect/DrawPerfect görüntüsü</comment>
+  <comment xml:lang="sv">WordPerfect/Drawperfect-bild</comment>
+  <comment xml:lang="sr-Cyrl">Ворд Перфект/Дров Перфект слика</comment>
+  <comment xml:lang="sq">figurë WordPerfect/Drawperfect</comment>
+  <comment xml:lang="sl">Slikovna datoteka Drawperfect</comment>
+  <comment xml:lang="si">WordPerfect/Drawperfect රූපය</comment>
+  <comment xml:lang="sk">Obrázok WordPerfect/Drawperfect</comment>
+  <comment xml:lang="ru">Изображение WordPerfect/Drawperfect</comment>
+  <comment xml:lang="ro">Imagine WordPerfect/Drawperfect</comment>
+  <comment xml:lang="pt-BR">Imagem do WordPerfect/Drawperfect</comment>
+  <comment xml:lang="pt">imagem do WordPerfect/Drawperfect</comment>
+  <comment xml:lang="pl">Obraz WordPerfect/DrawPerfect</comment>
+  <comment xml:lang="oc">imatge WordPerfect/DrawPerfect</comment>
+  <comment xml:lang="nn">WordPerfect/DrawPerfect-bilete</comment>
+  <comment xml:lang="nl">WordPerfect/Drawperfect-afbeelding</comment>
+  <comment xml:lang="nb">WordPerfect-/Drawperfect-bilde</comment>
+  <comment xml:lang="ms">Imej WordPerfect/Drawperfect</comment>
+  <comment xml:lang="lv">WordPerfect/Drawperfect attēls</comment>
+  <comment xml:lang="lt">WordPerfect/Drawperfect paveikslėlis</comment>
+  <comment xml:lang="ko">WordPerfect/Drawperfect 그림</comment>
+  <comment xml:lang="kk-Cyrl">WordPerfect/Drawperfect суреті</comment>
+  <comment xml:lang="ja">WordPerfect/Drawperfect 画像</comment>
+  <comment xml:lang="it">Immagine WordPerfect/Drawperfect</comment>
+  <comment xml:lang="is">WordPerfect/Drawperfect mynd</comment>
+  <comment xml:lang="id">Gambar WordPerfect/Drawperfect</comment>
+  <comment xml:lang="ia">Imagine WordPerfect/DrawPerfect</comment>
+  <comment xml:lang="hu">WordPerfect/Drawperfect-kép</comment>
+  <comment xml:lang="hr">WordPerfect/Drawperfect slika</comment>
+  <comment xml:lang="he">תמונה של WordPerfect/Drawperfect</comment>
+  <comment xml:lang="gl">imaxe de WordPerfect/DrawPerfect</comment>
+  <comment xml:lang="ga">íomhá WordPerfect/Drawperfect</comment>
+  <comment xml:lang="fur">imagjin WordPerfect/Drawperfect</comment>
+  <comment xml:lang="fr">image WordPerfect/DrawPerfect</comment>
+  <comment xml:lang="fo">WordPerfect/Drawperfect mynd</comment>
+  <comment xml:lang="fi">WordPerfect/Drawperfect-kuva</comment>
+  <comment xml:lang="eu">WordPerfect/Drawperfect irudia</comment>
+  <comment xml:lang="es">imagen de WordPerfect/Drawperfect</comment>
+  <comment xml:lang="eo">WordPerfect/Drawperfect-bildo</comment>
+  <comment xml:lang="en-GB">WordPerfect/Drawperfect image</comment>
+  <comment xml:lang="el">Εικόνα WordPerfect/Drawperfect</comment>
+  <comment xml:lang="de">WordPerfect/DrawPerfect-Bild</comment>
+  <comment xml:lang="da">WordPerfect/Drawperfect-billede</comment>
+  <comment xml:lang="cs">obrázek WordPerfect/Drawperfect</comment>
+  <comment xml:lang="ca">imatge de WordPerfect/Drawperfect</comment>
+  <comment xml:lang="bg">Изображение — WordPerfect/Drawperfect</comment>
+  <comment xml:lang="be-Latn">Vyjava WordPerfect/Drawperfect</comment>
+  <comment xml:lang="be-Cyrl">выява WordPerfect/Drawperfect</comment>
+  <comment xml:lang="ar">صورة WordPerfect/Drawperfect</comment>
+  <comment xml:lang="af">WordPerfect/Drawperfect-beeld</comment>
+  <generic-icon name="image-x-generic"/>
+  <glob pattern="*.wpg"/>
+</mime-type>

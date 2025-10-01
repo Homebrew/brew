@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-sega-cd-rom">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Sega CD disc image</comment>
+  <comment xml:lang="zh-Hant-TW">Sega CD 光碟映像檔</comment>
+  <comment xml:lang="zh-Hans-CN">Sega CD 光盘映像</comment>
+  <comment xml:lang="uk">образ диска Sega CD</comment>
+  <comment xml:lang="tr">Sega CD disk görüntüsü</comment>
+  <comment xml:lang="sv">Mega-CD-skivavbild</comment>
+  <comment xml:lang="sr-Cyrl">одраз диска Сега ЦД-а</comment>
+  <comment xml:lang="sq">pamje disku CD Sega</comment>
+  <comment xml:lang="sl">Slika diska CD Sega</comment>
+  <comment xml:lang="si">Sega CD තැටි රූපය</comment>
+  <comment xml:lang="sk">Obraz disku CD Sega</comment>
+  <comment xml:lang="ru">Образ диска CD Sega</comment>
+  <comment xml:lang="pt-BR">Imagem de disco Sega CD</comment>
+  <comment xml:lang="pt">imagem de disco Mega-CD</comment>
+  <comment xml:lang="pl">Obraz płyty konsoli Mega-CD</comment>
+  <comment xml:lang="oc">imatge disc Sega CD</comment>
+  <comment xml:lang="nl">Sega CD-schijfkopiebestand</comment>
+  <comment xml:lang="ko">세가 CD 디스크 이미지</comment>
+  <comment xml:lang="kk-Cyrl">Sega CD диск бейнесі</comment>
+  <comment xml:lang="ja">Sega CD ディスクイメージ</comment>
+  <comment xml:lang="it">Immagine disco Sega Mega CD</comment>
+  <comment xml:lang="is">Sega CD diskmynd</comment>
+  <comment xml:lang="id">Image cakram CD Sega</comment>
+  <comment xml:lang="hu">Sega CD-lemezkép</comment>
+  <comment xml:lang="hr">Sega CD slika diska</comment>
+  <comment xml:lang="he">דמות כונן Sega CD</comment>
+  <comment xml:lang="gl">Imaxe de disco de Sega CD</comment>
+  <comment xml:lang="ga">íomhá dlúthdhiosca Sega</comment>
+  <comment xml:lang="fur">imagjin disc CD Sega</comment>
+  <comment xml:lang="fr">image disque Sega CD</comment>
+  <comment xml:lang="fi">Sega CD -levykuva</comment>
+  <comment xml:lang="eu">Sega CD disko irudia</comment>
+  <comment xml:lang="es">imagen de disco CD de Sega</comment>
+  <comment xml:lang="en-GB">Sega CD disc image</comment>
+  <comment xml:lang="de">Sega-CD-Datenträgerabbild</comment>
+  <comment xml:lang="da">Sega CD-diskaftryk</comment>
+  <comment xml:lang="cs">obraz disku CD pro Sega</comment>
+  <comment xml:lang="ca">imatge de disc de Sega CD</comment>
+  <comment xml:lang="bg">Диск — Mega-CD (Sega)</comment>
+  <comment xml:lang="be-Cyrl">вобраз CD-дыска Sega</comment>
+  <comment xml:lang="ast">Imaxe de discu de Sega CD</comment>
+  <comment xml:lang="ar">صورة قرص ميجا سي دي</comment>
+  <comment xml:lang="af">Mega CD-skyfbeeldlêer</comment>
+  <generic-icon name="application-x-executable"/>
+  <glob pattern="*.iso"/>
+</mime-type>

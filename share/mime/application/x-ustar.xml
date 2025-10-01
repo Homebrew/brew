@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-ustar">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Ustar archive</comment>
+  <comment xml:lang="zh-Hant-TW">Ustar 封存檔</comment>
+  <comment xml:lang="zh-Hans-CN">Ustar 归档文件</comment>
+  <comment xml:lang="vi">Kho nén ustar</comment>
+  <comment xml:lang="uk">архів ustar</comment>
+  <comment xml:lang="tr">Ustar arşivi</comment>
+  <comment xml:lang="sv">Ustar-arkiv</comment>
+  <comment xml:lang="sr-Cyrl">Устар архива</comment>
+  <comment xml:lang="sq">arkiv Ustar</comment>
+  <comment xml:lang="sl">Datoteka arhiva Ustar</comment>
+  <comment xml:lang="si">Ustar ලේඛනාගාරය</comment>
+  <comment xml:lang="sk">Archív Ustar</comment>
+  <comment xml:lang="ru">Архив Ustar</comment>
+  <comment xml:lang="ro">Arhivă Ustar</comment>
+  <comment xml:lang="pt-BR">Pacote Ustar</comment>
+  <comment xml:lang="pt">arquivo Ustar</comment>
+  <comment xml:lang="pl">Archiwum ustar</comment>
+  <comment xml:lang="oc">archiu Ustar</comment>
+  <comment xml:lang="nn">Ustar-arkiv</comment>
+  <comment xml:lang="nl">Ustar-archief</comment>
+  <comment xml:lang="nb">Ustar-arkiv</comment>
+  <comment xml:lang="lv">Ustar arhīvs</comment>
+  <comment xml:lang="lt">Ustar archyvas</comment>
+  <comment xml:lang="ko">Ustar 압축 파일</comment>
+  <comment xml:lang="kk-Cyrl">Ustar архиві</comment>
+  <comment xml:lang="ja">Ustar アーカイブ</comment>
+  <comment xml:lang="it">Archivio ustar</comment>
+  <comment xml:lang="is">Ustar safnskrá</comment>
+  <comment xml:lang="id">Arsip Ustar</comment>
+  <comment xml:lang="ia">Archivo Ustar</comment>
+  <comment xml:lang="hu">Ustar archívum</comment>
+  <comment xml:lang="hr">Ustar arhiva</comment>
+  <comment xml:lang="he">ארכיון Ustar</comment>
+  <comment xml:lang="gl">arquivo Ustar</comment>
+  <comment xml:lang="ga">cartlann Ustar</comment>
+  <comment xml:lang="fur">archivi Ustar</comment>
+  <comment xml:lang="fr">archive Ustar</comment>
+  <comment xml:lang="fo">Ustar skjalasavn</comment>
+  <comment xml:lang="fi">Ustar-arkisto</comment>
+  <comment xml:lang="eu">Ustar artxiboa</comment>
+  <comment xml:lang="es">archivador de Ustar</comment>
+  <comment xml:lang="eo">Ustar-arkivo</comment>
+  <comment xml:lang="en-GB">Ustar archive</comment>
+  <comment xml:lang="el">Συμπιεσμένο αρχείο Ustar</comment>
+  <comment xml:lang="de">Ustar-Archiv</comment>
+  <comment xml:lang="da">Ustar-arkiv</comment>
+  <comment xml:lang="cs">archiv Ustar</comment>
+  <comment xml:lang="ca">arxiu ustar</comment>
+  <comment xml:lang="bg">Архив — ustar</comment>
+  <comment xml:lang="be-Latn">Archiŭ ustar</comment>
+  <comment xml:lang="be-Cyrl">архіў ustar</comment>
+  <comment xml:lang="ar">أرشيف Ustar</comment>
+  <comment xml:lang="af">Ustar-argief</comment>
+  <generic-icon name="package-x-generic"/>
+  <glob pattern="*.ustar"/>
+</mime-type>

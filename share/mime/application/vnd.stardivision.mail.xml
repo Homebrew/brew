@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/vnd.stardivision.mail">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>StarMail email</comment>
+  <comment xml:lang="zh-Hant-TW">StarMail 郵件</comment>
+  <comment xml:lang="zh-Hans-CN">StarMail 电子邮件</comment>
+  <comment xml:lang="vi">Thư điện tử StarMail</comment>
+  <comment xml:lang="uk">поштове повідомлення StarMail</comment>
+  <comment xml:lang="tr">StarMail epostası</comment>
+  <comment xml:lang="sv">StarMail-e-post</comment>
+  <comment xml:lang="sr-Cyrl">Ел. пошта Стар Поште</comment>
+  <comment xml:lang="sq">email StarMail</comment>
+  <comment xml:lang="sl">Datoteka pošte StarMail</comment>
+  <comment xml:lang="si">StarMail ඊමේල්</comment>
+  <comment xml:lang="sk">E-mail StarMail</comment>
+  <comment xml:lang="ru">Электронное письмо StarMail</comment>
+  <comment xml:lang="ro">Email StarEmail</comment>
+  <comment xml:lang="pt-BR">E-mail do StarMail</comment>
+  <comment xml:lang="pt">email do StarMail</comment>
+  <comment xml:lang="pl">E-Mail StarMail</comment>
+  <comment xml:lang="oc">corrièr electronic StarMail</comment>
+  <comment xml:lang="nn">StarMail-fil</comment>
+  <comment xml:lang="nl">StarMail-e-mail</comment>
+  <comment xml:lang="nb">StarMail-melding</comment>
+  <comment xml:lang="ms">Emel StarMail</comment>
+  <comment xml:lang="lv">StarMail epasts</comment>
+  <comment xml:lang="lt">StarMail el. laiškas</comment>
+  <comment xml:lang="ko">StarMail 전자우편</comment>
+  <comment xml:lang="kk-Cyrl">StarMail электрондық хаты</comment>
+  <comment xml:lang="ja">StarMail メール</comment>
+  <comment xml:lang="it">Email StarMail</comment>
+  <comment xml:lang="is">StarMail tölvupóstur</comment>
+  <comment xml:lang="id">Email StarMail</comment>
+  <comment xml:lang="ia">Message electronic StarMail</comment>
+  <comment xml:lang="hu">StarMail e-mail</comment>
+  <comment xml:lang="hr">StarMail e-pošta</comment>
+  <comment xml:lang="he">דוא״ל של StarMail</comment>
+  <comment xml:lang="gl">Correo electrónico de StarMail</comment>
+  <comment xml:lang="ga">ríomhphost StarMail</comment>
+  <comment xml:lang="fur">e-mail StarMail</comment>
+  <comment xml:lang="fr">courriel StarMail</comment>
+  <comment xml:lang="fo">StarMail t-postur</comment>
+  <comment xml:lang="fi">StarMail-sähköposti</comment>
+  <comment xml:lang="eu">StarMail helb.el.</comment>
+  <comment xml:lang="es">correo electrónico de StarMail</comment>
+  <comment xml:lang="eo">StarMail-retpoŝto</comment>
+  <comment xml:lang="en-GB">StarMail e-mail</comment>
+  <comment xml:lang="el">Ηλ. μήνυμα StarMail</comment>
+  <comment xml:lang="de">StarMail-E-Mail</comment>
+  <comment xml:lang="da">StarMail-e-brev</comment>
+  <comment xml:lang="cs">e-mail StarMail</comment>
+  <comment xml:lang="ca">correu electrònic de StarMail</comment>
+  <comment xml:lang="bg">Електронно писмо — StarMail</comment>
+  <comment xml:lang="be-Latn">Email StarMail</comment>
+  <comment xml:lang="be-Cyrl">Email StarMail</comment>
+  <comment xml:lang="ar">بريد إلكتروني StarMail</comment>
+  <comment xml:lang="af">StarMail-e-pos</comment>
+  <glob pattern="*.smd"/>
+</mime-type>

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/pgp-signature">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Detached OpenPGP signature</comment>
+  <comment xml:lang="zh-Hant-TW">卸離的 OpenGPG 簽章</comment>
+  <comment xml:lang="uk">відокремлений підпис OpenPGP</comment>
+  <comment xml:lang="sv">Frikopplad OpenPGP-signatur</comment>
+  <comment xml:lang="ru">Отсоединённая подпись OpenPGP</comment>
+  <comment xml:lang="pt-BR">Assinatura OpenPGP destacada</comment>
+  <comment xml:lang="pl">Oddzielony podpis OpenPGP</comment>
+  <comment xml:lang="it">Firma staccata OpenPGP</comment>
+  <comment xml:lang="gl">Sinatura OpenPGP desancorada</comment>
+  <comment xml:lang="eu">OpenPGP sinadura askea</comment>
+  <comment xml:lang="es">firma OpenGPG separada</comment>
+  <comment xml:lang="de">Isolierte OpenPGP-Signatur</comment>
+  <comment xml:lang="be-Cyrl">адлучаны подпіс OpenPGP</comment>
+  <glob pattern="*.asc" weight="10"/>
+  <glob pattern="*.sig"/>
+  <glob pattern="*.pgp"/>
+  <glob pattern="*.gpg"/>
+</mime-type>

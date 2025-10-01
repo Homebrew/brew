@@ -1,0 +1,1 @@
+../../../Cellar/guile/3.0.10/share/gdb/auto-load/libguile-3.0.a-gdb.scm

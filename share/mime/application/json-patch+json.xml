@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/json-patch+json">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>JSON patch</comment>
+  <comment xml:lang="zh-Hant-TW">JSON 修補檔</comment>
+  <comment xml:lang="zh-Hans-CN">JSON 补丁</comment>
+  <comment xml:lang="uk">латка JSON</comment>
+  <comment xml:lang="tr">JSON yaması</comment>
+  <comment xml:lang="sv">JSON patch</comment>
+  <comment xml:lang="sr-Cyrl">ЈСОН закрпа</comment>
+  <comment xml:lang="sq">arnë JSON</comment>
+  <comment xml:lang="sl">Popravek JSON</comment>
+  <comment xml:lang="si">JSON පැච්</comment>
+  <comment xml:lang="sk">Záplata JSON</comment>
+  <comment xml:lang="ru">Патч JSON</comment>
+  <comment xml:lang="pt-BR">Patch JSON</comment>
+  <comment xml:lang="pt">patch JSON</comment>
+  <comment xml:lang="pl">Łata JSON</comment>
+  <comment xml:lang="oc">correctiu JSON</comment>
+  <comment xml:lang="nl">JSON-patch</comment>
+  <comment xml:lang="ko">JSON 패치</comment>
+  <comment xml:lang="kk-Cyrl">JSON өзгерісі</comment>
+  <comment xml:lang="ja">JSON パッチ</comment>
+  <comment xml:lang="it">Patch JSON</comment>
+  <comment xml:lang="is">JSON kóðabót</comment>
+  <comment xml:lang="id">Patch JSON</comment>
+  <comment xml:lang="ia">Patch JSON</comment>
+  <comment xml:lang="hu">JSON javítócsomag</comment>
+  <comment xml:lang="hr">JSON zakrpa</comment>
+  <comment xml:lang="he">טלאי JSON</comment>
+  <comment xml:lang="gl">Parche JSON</comment>
+  <comment xml:lang="ga">paiste JSON</comment>
+  <comment xml:lang="fur">blec JSON</comment>
+  <comment xml:lang="fr">correctif JSON</comment>
+  <comment xml:lang="fi">JSON-paikkatiedosto</comment>
+  <comment xml:lang="eu">JSON adabakia</comment>
+  <comment xml:lang="es">parche en JSON</comment>
+  <comment xml:lang="en-GB">JSON patch</comment>
+  <comment xml:lang="de">JSON-Patch</comment>
+  <comment xml:lang="da">JSON-rettelse</comment>
+  <comment xml:lang="cs">cesta JSON</comment>
+  <comment xml:lang="ca">pedaç de JSON</comment>
+  <comment xml:lang="bg">Кръпка — JSON</comment>
+  <comment xml:lang="be-Cyrl">патч JSON</comment>
+  <comment xml:lang="ar">رقعة JSON</comment>
+  <acronym>JSON</acronym>
+  <expanded-acronym>JavaScript Object Notation</expanded-acronym>
+  <sub-class-of type="application/json"/>
+  <generic-icon name="text-x-script"/>
+  <glob pattern="*.json-patch"/>
+</mime-type>

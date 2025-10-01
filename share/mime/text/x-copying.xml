@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="text/x-copying">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>License terms</comment>
+  <comment xml:lang="uk">умови ліцензування</comment>
+  <comment xml:lang="sv">Licensvillkor</comment>
+  <comment xml:lang="ru">Лицензионное соглашение</comment>
+  <comment xml:lang="pl">Warunki licencji</comment>
+  <comment xml:lang="ja">利用許諾</comment>
+  <comment xml:lang="it">Termini di licenza</comment>
+  <comment xml:lang="gl">Termos de licenza</comment>
+  <comment xml:lang="eu">Lizentziaren terminoak</comment>
+  <comment xml:lang="es">términos de licencia</comment>
+  <comment xml:lang="de">Lizenzbedingungen</comment>
+  <comment xml:lang="be-Cyrl">умовы карыстання</comment>
+  <sub-class-of type="text/plain"/>
+  <glob pattern="COPYING"/>
+</mime-type>

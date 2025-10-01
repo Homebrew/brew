@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="text/x-genie">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Genie source code</comment>
+  <comment xml:lang="zh-Hant-TW">Genie 源碼</comment>
+  <comment xml:lang="zh-Hans-CN">Genie 源代码</comment>
+  <comment xml:lang="uk">початковий код мовою Genie</comment>
+  <comment xml:lang="tr">Genie kaynak kodu</comment>
+  <comment xml:lang="sv">Genie-källkod</comment>
+  <comment xml:lang="sr-Cyrl">Гение изворни ко̂д</comment>
+  <comment xml:lang="sq">kod burim Genie</comment>
+  <comment xml:lang="sl">Izvorna koda Genie</comment>
+  <comment xml:lang="si">Genie මූල කේතය</comment>
+  <comment xml:lang="sk">Zdrojový kód Genie</comment>
+  <comment xml:lang="ru">Исходный код Genie</comment>
+  <comment xml:lang="pt-BR">Código-fonte Genie</comment>
+  <comment xml:lang="pt">código origem Genie</comment>
+  <comment xml:lang="pl">Kod źródłowy Genie</comment>
+  <comment xml:lang="oc">còde font Genie</comment>
+  <comment xml:lang="nl">Genie-broncode</comment>
+  <comment xml:lang="ko">Genie 소스 코드</comment>
+  <comment xml:lang="kk-Cyrl">Genie бастапқы коды</comment>
+  <comment xml:lang="ja">Genie ソースコード</comment>
+  <comment xml:lang="it">Codice sorgente Genie</comment>
+  <comment xml:lang="is">Genie frumkóði</comment>
+  <comment xml:lang="id">Kode sumber Genie</comment>
+  <comment xml:lang="ia">Codice-fonte Genie</comment>
+  <comment xml:lang="hu">Genie forráskód</comment>
+  <comment xml:lang="hr">Genie izvorni kôd</comment>
+  <comment xml:lang="he">קוד מקור של Genie</comment>
+  <comment xml:lang="gl">Código de fonte Genie</comment>
+  <comment xml:lang="ga">cód foinseach Genie</comment>
+  <comment xml:lang="fur">codiç sorzint Genie</comment>
+  <comment xml:lang="fr">code source Genie</comment>
+  <comment xml:lang="fi">Genie-lähdekoodi</comment>
+  <comment xml:lang="eu">Genie iturburu-kodea</comment>
+  <comment xml:lang="es">código fuente en Genie</comment>
+  <comment xml:lang="en-GB">Genie source code</comment>
+  <comment xml:lang="el">Πηγαίος κώδικας Genie</comment>
+  <comment xml:lang="de">Genie-Quelltext</comment>
+  <comment xml:lang="da">Genie-kildekode</comment>
+  <comment xml:lang="cs">zdrojový kód v jazyce Genie</comment>
+  <comment xml:lang="ca">codi font en Genie</comment>
+  <comment xml:lang="bg">Изходен код — Genie</comment>
+  <comment xml:lang="be-Cyrl">зыходны код Genie</comment>
+  <comment xml:lang="ar">شفرة مصدر Genie</comment>
+  <comment xml:lang="af">Genie-bronkode</comment>
+  <sub-class-of type="text/plain"/>
+  <glob pattern="*.gs" case-sensitive="true"/>
+  <generic-icon name="text-x-generic"/>
+</mime-type>

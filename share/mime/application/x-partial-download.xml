@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-partial-download">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Partially downloaded file</comment>
+  <comment xml:lang="zh-Hant-TW">已部份下載的檔案</comment>
+  <comment xml:lang="zh-Hans-CN">部分下载的文件</comment>
+  <comment xml:lang="uk">частково отриманий файл</comment>
+  <comment xml:lang="tr">Kısmen indirilmiş dosya</comment>
+  <comment xml:lang="sv">Delvis hämtad fil</comment>
+  <comment xml:lang="sr-Cyrl">делимично преузета датотека</comment>
+  <comment xml:lang="sq">Kartelë e shkarkuar pjesërisht</comment>
+  <comment xml:lang="sl">Delno prenesena datoteka</comment>
+  <comment xml:lang="si">අර්ධ වශයෙන් බාගත කළ ගොනුව</comment>
+  <comment xml:lang="sk">Čiastočne stiahnutý súbor</comment>
+  <comment xml:lang="ru">Частично загруженный файл</comment>
+  <comment xml:lang="pt-BR">Arquivo baixado parcialmente</comment>
+  <comment xml:lang="pt">ficheiro descarregado parcialmente</comment>
+  <comment xml:lang="pl">Częściowo pobrany plik</comment>
+  <comment xml:lang="oc">fichièr parcialament telecargat</comment>
+  <comment xml:lang="nl">Gedeeltelijk gedownload bestand</comment>
+  <comment xml:lang="lt">Dalinai atsiųstas failas</comment>
+  <comment xml:lang="ko">일부 다운로드한 파일</comment>
+  <comment xml:lang="kk-Cyrl">Жартылай жүктелген файл</comment>
+  <comment xml:lang="ka">ნაწილობრივ გადმოწერილი ფაილი</comment>
+  <comment xml:lang="ja">部分的にダウンロードされたファイル</comment>
+  <comment xml:lang="it">File parzialmente scaricato</comment>
+  <comment xml:lang="is">skrá sótt að hluta</comment>
+  <comment xml:lang="id">Berkas yang terunduh sebagian</comment>
+  <comment xml:lang="ia">File partialmente discargate</comment>
+  <comment xml:lang="hu">Részben letöltött fájl</comment>
+  <comment xml:lang="hr">Djelomično preuzeta datoteka</comment>
+  <comment xml:lang="he">קובץ שהתקבל חלקית</comment>
+  <comment xml:lang="gl">Ficheiro descargado parcialmente</comment>
+  <comment xml:lang="ga">Comhad leath-íoslódáilte</comment>
+  <comment xml:lang="fur">file no discjariât dal dut</comment>
+  <comment xml:lang="fr">fichier partiellement téléchargé</comment>
+  <comment xml:lang="fi">Osittain ladattu tiedosto</comment>
+  <comment xml:lang="eu">Partzialki deskargatutako fitxategia</comment>
+  <comment xml:lang="es">archivo descargado parcialmente</comment>
+  <comment xml:lang="en-GB">Partially downloaded file</comment>
+  <comment xml:lang="el">Μερικώς ληφθέντο αρχείο</comment>
+  <comment xml:lang="de">Teilweise heruntergeladene Datei</comment>
+  <comment xml:lang="da">Delvist downloadet fil</comment>
+  <comment xml:lang="cs">částečně stažený soubor</comment>
+  <comment xml:lang="ca">fitxer baixat parcialment</comment>
+  <comment xml:lang="bg">Частично изтеглен файл</comment>
+  <comment xml:lang="be-Cyrl">часткова спампаваны файл</comment>
+  <comment xml:lang="ast">Ficheru baxáu parcialmente</comment>
+  <comment xml:lang="ar">ملف منزل جزئياً</comment>
+  <comment xml:lang="af">Gedeeltelik afgelaaide lêer</comment>
+  <generic-icon name="package-x-generic"/>
+  <glob pattern="*.wkdownload"/>
+  <glob pattern="*.crdownload"/>
+  <glob pattern="*.part"/>
+</mime-type>

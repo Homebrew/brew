@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/octet-stream">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Unknown</comment>
+  <comment xml:lang="zh-Hant-TW">未知</comment>
+  <comment xml:lang="uk">невідомий</comment>
+  <comment xml:lang="sv">Okänd</comment>
+  <comment xml:lang="sq">I panjohur</comment>
+  <comment xml:lang="ru">Неизвестно</comment>
+  <comment xml:lang="pt-BR">Desconhecido</comment>
+  <comment xml:lang="pl">Nieznany typ</comment>
+  <comment xml:lang="ja">不明</comment>
+  <comment xml:lang="it">Sconosciuto</comment>
+  <comment xml:lang="gl">Descoñecido</comment>
+  <comment xml:lang="eu">Ezezaguna</comment>
+  <comment xml:lang="es">desconocido</comment>
+  <comment xml:lang="de">Unbekannt</comment>
+  <comment xml:lang="be-Cyrl">невядома</comment>
+</mime-type>

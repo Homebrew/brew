@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="text/enriched">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Enriched text document</comment>
+  <comment xml:lang="uk">форматований текстовий документ</comment>
+  <comment xml:lang="sv">Enriched text-dokument</comment>
+  <comment xml:lang="ru">Форматированный текстовый документ</comment>
+  <comment xml:lang="pl">Wzbogacony dokument tekstowy</comment>
+  <comment xml:lang="ja">装飾された文書</comment>
+  <comment xml:lang="it">Documento testo arricchito</comment>
+  <comment xml:lang="es">documento de texto enriquecido</comment>
+  <comment xml:lang="de">Angereichertes Textdokument</comment>
+  <comment xml:lang="be-Cyrl">дакумент з фарматаваннем enriched text</comment>
+  <sub-class-of type="text/plain"/>
+</mime-type>

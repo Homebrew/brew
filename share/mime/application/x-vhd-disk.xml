@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-vhd-disk">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>VHD disk image</comment>
+  <comment xml:lang="zh-Hant-TW">VHD 磁碟映像檔</comment>
+  <comment xml:lang="zh-Hans-CN">VHD 磁盘映像</comment>
+  <comment xml:lang="uk">образ диска VHD</comment>
+  <comment xml:lang="tr">VHD disk görüntüsü</comment>
+  <comment xml:lang="sv">VHD-diskavbildning</comment>
+  <comment xml:lang="sl">Slika diska VHD</comment>
+  <comment xml:lang="si">VHD තැටි රූපය</comment>
+  <comment xml:lang="ru">Образ диска VHD</comment>
+  <comment xml:lang="pt-BR">Imagem de disco VHD</comment>
+  <comment xml:lang="pl">Obraz dysku VHD</comment>
+  <comment xml:lang="nl">VHD-schijfkopiebestand</comment>
+  <comment xml:lang="ko">VHD 디스크 이미지</comment>
+  <comment xml:lang="kk-Cyrl">VHD диск бейнесі</comment>
+  <comment xml:lang="ja">VHD ディスクイメージ</comment>
+  <comment xml:lang="it">Immagine disco VHD</comment>
+  <comment xml:lang="hr">VHD slika diska</comment>
+  <comment xml:lang="fi">VHD-levykuva</comment>
+  <comment xml:lang="eu">VHD disko-irudia</comment>
+  <comment xml:lang="es">imagen de disco VHD</comment>
+  <comment xml:lang="en-GB">VHD disk image</comment>
+  <comment xml:lang="de">VHD-Datenträgerabbild</comment>
+  <comment xml:lang="be-Cyrl">вобраз дыска VHD</comment>
+  <comment xml:lang="ar">صورة قرص VHD</comment>
+  <acronym>VHD</acronym>
+  <expanded-acronym>Virtual Hard Disk</expanded-acronym>
+  <glob pattern="*.vhd"/>
+  <glob pattern="*.vpc"/>
+  <alias type="application/x-virtualbox-vhd"/>
+</mime-type>

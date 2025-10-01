@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-nzb">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>NewzBin usenet index</comment>
+  <comment xml:lang="zh-Hant-TW">NewzBin usenet 索引</comment>
+  <comment xml:lang="zh-Hans-CN">NewzBin Usenet 索引</comment>
+  <comment xml:lang="uk">покажчик usenet NewzBin</comment>
+  <comment xml:lang="tr">NewzBin usenet dizini</comment>
+  <comment xml:lang="sv">NewzBin-usenetindex</comment>
+  <comment xml:lang="sr-Cyrl">Њузбин попис јузнета</comment>
+  <comment xml:lang="sq">tregues usenet NewzBin</comment>
+  <comment xml:lang="sl">Kazalo usenet NewzBin</comment>
+  <comment xml:lang="si">NewzBin Usenet index</comment>
+  <comment xml:lang="sk">Index Usenetu NewzBin</comment>
+  <comment xml:lang="ru">Индекс usenet NewzBin</comment>
+  <comment xml:lang="pt-BR">Índice de usenet NewzBin</comment>
+  <comment xml:lang="pt">índice usenet NewzBin</comment>
+  <comment xml:lang="pl">Indeks grup dyskusyjnych NewzBin</comment>
+  <comment xml:lang="oc">indèx usenet NewzBin</comment>
+  <comment xml:lang="nl">NewzBin usenet-index</comment>
+  <comment xml:lang="lv">NewzBin usenet rādītājs</comment>
+  <comment xml:lang="ko">NewzBin 유즈넷 인덱스</comment>
+  <comment xml:lang="kk-Cyrl">NewzBin usenet индексі</comment>
+  <comment xml:lang="ja">NewzBin Usenet インデックス</comment>
+  <comment xml:lang="it">Indice Usenet NewzBiz</comment>
+  <comment xml:lang="is">NewzBin usenet yfirlit</comment>
+  <comment xml:lang="id">Indeks usenet NewzBin</comment>
+  <comment xml:lang="ia">Indice de usenet NewzBin</comment>
+  <comment xml:lang="hu">NewzBin usenet index</comment>
+  <comment xml:lang="hr">NewzBin usenet indeks</comment>
+  <comment xml:lang="he">אינדקס שרתי חדשות NewzBin</comment>
+  <comment xml:lang="gl">Índice de usenet NEwzBin</comment>
+  <comment xml:lang="ga">innéacs usenet NewzBin</comment>
+  <comment xml:lang="fur">tabele usenet NewzBin</comment>
+  <comment xml:lang="fr">index usenet </comment>
+  <comment xml:lang="fi">NewzBin usenet -indeksi</comment>
+  <comment xml:lang="eu">NewzBin usenet indizea</comment>
+  <comment xml:lang="es">índice NewzBin de usenet</comment>
+  <comment xml:lang="en-GB">NewzBin usenet index</comment>
+  <comment xml:lang="el">Ευρετήριο usenet NewzBin</comment>
+  <comment xml:lang="de">NewzBin Usenet-Index</comment>
+  <comment xml:lang="da">NewzBin usenet-indeks</comment>
+  <comment xml:lang="cs">index NewzBin diskuzních skupin Usenet</comment>
+  <comment xml:lang="ca">índex d'Usenet NewzBin</comment>
+  <comment xml:lang="bg">Индекс — Usenet, NewzBin</comment>
+  <comment xml:lang="be-Cyrl">індэкс usenet NewzBin</comment>
+  <comment xml:lang="ar">فهرس يوزنت NewzBin</comment>
+  <sub-class-of type="application/xml"/>
+  <glob pattern="*.nzb"/>
+</mime-type>

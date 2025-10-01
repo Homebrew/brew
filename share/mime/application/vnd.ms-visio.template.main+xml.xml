@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/vnd.ms-visio.template.main+xml">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Office Open XML Visio template</comment>
+  <comment xml:lang="zh-Hant-TW">Office Open XML Visio 範本</comment>
+  <comment xml:lang="zh-Hans-CN">Office Open XML Visio 模板</comment>
+  <comment xml:lang="uk">шаблон Visio Office Open у XML</comment>
+  <comment xml:lang="tr">Office Open XML Visio şablonu</comment>
+  <comment xml:lang="sv">Office Open XML Visio-mall</comment>
+  <comment xml:lang="sq">gjedhe Office Open XML Visio</comment>
+  <comment xml:lang="sl">Predloga Office Open XML Visio</comment>
+  <comment xml:lang="si">Office Open XML Visio අච්චුව</comment>
+  <comment xml:lang="sk">Šablóna aplikácie Office Open XML Visio</comment>
+  <comment xml:lang="ru">Шаблон Visio формата Office Open XML</comment>
+  <comment xml:lang="pt-BR">Modelo Office Open XML Visio</comment>
+  <comment xml:lang="pt">predefinição Visio do Open Office XML</comment>
+  <comment xml:lang="pl">Szablon Office Open XML Visio</comment>
+  <comment xml:lang="nl">Office Open XML Visio-sjabloon</comment>
+  <comment xml:lang="ko">오피스 오픈 XML Visio 양식</comment>
+  <comment xml:lang="kk-Cyrl">Office Open XML Visio үлгісі</comment>
+  <comment xml:lang="ja">Office Open XML Visio テンプレート</comment>
+  <comment xml:lang="it">Modello Visio Office Open XML</comment>
+  <comment xml:lang="is">Office Open XML Visio sniðmát</comment>
+  <comment xml:lang="id">Templat Office Open XML Visio</comment>
+  <comment xml:lang="hu">Office Open XML Visio sablon</comment>
+  <comment xml:lang="hr">Office Open XML Visio predložak</comment>
+  <comment xml:lang="he">תבנית Office Open XML Visio</comment>
+  <comment xml:lang="gl">Modelo de Office Open XML Visio</comment>
+  <comment xml:lang="fr">modèle Visio Office Open XML</comment>
+  <comment xml:lang="fi">Office Open XML Visio -malli</comment>
+  <comment xml:lang="eu">Office Open XML Visio txantiloia</comment>
+  <comment xml:lang="es">plantilla Office Open XML de Visio</comment>
+  <comment xml:lang="en-GB">Office Open XML Visio template</comment>
+  <comment xml:lang="de">Office-Open-XML-Visio-Vorlage</comment>
+  <comment xml:lang="da">Office Open XML Visio-skabelon</comment>
+  <comment xml:lang="ca">plantilla en Office Open XML de Visio</comment>
+  <comment xml:lang="bg">Шаблон за чертеж — Office Open XML Visio</comment>
+  <comment xml:lang="be-Cyrl">шаблон Office Open XML Visio</comment>
+  <comment xml:lang="ar">قالب فيزيو Open XML</comment>
+  <generic-icon name="image-x-generic"/>
+  <glob pattern="*.vstx"/>
+  <sub-class-of type="application/zip"/>
+</mime-type>

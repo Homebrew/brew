@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-t602">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>T602 document</comment>
+  <comment xml:lang="zh-Hant-TW">T602 文件</comment>
+  <comment xml:lang="zh-Hans-CN">T602 文档</comment>
+  <comment xml:lang="vi">Tài liệu T602</comment>
+  <comment xml:lang="uk">документ T602</comment>
+  <comment xml:lang="tr">T602 belgesi</comment>
+  <comment xml:lang="sv">T602-dokument</comment>
+  <comment xml:lang="sr-Cyrl">Т602 документ</comment>
+  <comment xml:lang="sq">dokument T602</comment>
+  <comment xml:lang="sl">Dokument T602</comment>
+  <comment xml:lang="si">T602 ලේඛනය</comment>
+  <comment xml:lang="sk">Dokument T602</comment>
+  <comment xml:lang="ru">Документ T602</comment>
+  <comment xml:lang="ro">Document T602</comment>
+  <comment xml:lang="pt-BR">Documento T602</comment>
+  <comment xml:lang="pt">documento T602</comment>
+  <comment xml:lang="pl">Dokument T602</comment>
+  <comment xml:lang="oc">document T602</comment>
+  <comment xml:lang="nn">T602-dokument</comment>
+  <comment xml:lang="nl">T602-document</comment>
+  <comment xml:lang="nb">T602-dokument</comment>
+  <comment xml:lang="lv">T602 dokuments</comment>
+  <comment xml:lang="lt">T602 dokumentas</comment>
+  <comment xml:lang="ko">T602 문서</comment>
+  <comment xml:lang="kk-Cyrl">T602 құжаты</comment>
+  <comment xml:lang="ja">T602 ドキュメント</comment>
+  <comment xml:lang="it">Documento T602</comment>
+  <comment xml:lang="is">T602 skjal</comment>
+  <comment xml:lang="id">Dokumen T602</comment>
+  <comment xml:lang="ia">Documento T602</comment>
+  <comment xml:lang="hu">T602 dokumentum</comment>
+  <comment xml:lang="hr">T602 dokument</comment>
+  <comment xml:lang="he">מסמך T602</comment>
+  <comment xml:lang="gl">documento T602</comment>
+  <comment xml:lang="ga">cáipéis T602</comment>
+  <comment xml:lang="fur">document T602</comment>
+  <comment xml:lang="fr">document T602</comment>
+  <comment xml:lang="fo">T602 skjal</comment>
+  <comment xml:lang="fi">T602-asiakirja</comment>
+  <comment xml:lang="eu">T602 dokumentua</comment>
+  <comment xml:lang="es">documento T602</comment>
+  <comment xml:lang="eo">T602-dokumento</comment>
+  <comment xml:lang="en-GB">T602 document</comment>
+  <comment xml:lang="el">Έγγραφο T602</comment>
+  <comment xml:lang="de">T602-Dokument</comment>
+  <comment xml:lang="da">T602-dokument</comment>
+  <comment xml:lang="cs">dokument T602</comment>
+  <comment xml:lang="ca">document T602</comment>
+  <comment xml:lang="bg">Документ — T602</comment>
+  <comment xml:lang="be-Latn">Dakument T602</comment>
+  <comment xml:lang="be-Cyrl">дакумент T602</comment>
+  <comment xml:lang="ast">Documentu T602</comment>
+  <comment xml:lang="ar">مستند T602</comment>
+  <comment xml:lang="af">T602-dokument</comment>
+  <generic-icon name="x-office-document"/>
+  <glob pattern="*.602"/>
+</mime-type>

@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/vnd.ms-excel.addin.macroEnabled.12">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Excel add-in</comment>
+  <comment xml:lang="zh-Hant-TW">Excel 增益集</comment>
+  <comment xml:lang="zh-Hans-CN">Excel 外接程序</comment>
+  <comment xml:lang="uk">додаток Excel</comment>
+  <comment xml:lang="tr">Excel eklentisi</comment>
+  <comment xml:lang="sv">Excel-tillägg</comment>
+  <comment xml:lang="sr-Cyrl">Екселов додатак</comment>
+  <comment xml:lang="sq">shtojcë Excel</comment>
+  <comment xml:lang="sl">Vstavek Excel</comment>
+  <comment xml:lang="si">එක්සෙල් ඇඩෝනය</comment>
+  <comment xml:lang="sk">Doplnok aplikácie Excel</comment>
+  <comment xml:lang="ru">Дополнение Excel</comment>
+  <comment xml:lang="pt-BR">Suplemento do Excel</comment>
+  <comment xml:lang="pt">Extensão Excel</comment>
+  <comment xml:lang="pl">Dodatek Excel</comment>
+  <comment xml:lang="oc">complement Excel</comment>
+  <comment xml:lang="nl">Excel-add-in</comment>
+  <comment xml:lang="lv">Excel pievienojumprogramma</comment>
+  <comment xml:lang="ko">Excel 추가 기능</comment>
+  <comment xml:lang="kk-Cyrl">Excel қосымшасы</comment>
+  <comment xml:lang="ka">Excel-ის დამატება</comment>
+  <comment xml:lang="ja">Excel アドイン</comment>
+  <comment xml:lang="it">Add-in Excel</comment>
+  <comment xml:lang="is">Excel viðbót</comment>
+  <comment xml:lang="id">Add-in Excel</comment>
+  <comment xml:lang="ia">Add-in Excel</comment>
+  <comment xml:lang="hu">Excel bővítmény</comment>
+  <comment xml:lang="hr">Excel dodatak</comment>
+  <comment xml:lang="he">תוסף של Excel</comment>
+  <comment xml:lang="gl">complemento de Excel</comment>
+  <comment xml:lang="ga">breiseán Excel</comment>
+  <comment xml:lang="fur">zonte Excel</comment>
+  <comment xml:lang="fr">complément Excel</comment>
+  <comment xml:lang="fi">Excel-lisäosa</comment>
+  <comment xml:lang="eu">Excel gehigarria</comment>
+  <comment xml:lang="es">complemento de Excel</comment>
+  <comment xml:lang="en-GB">Excel add-in</comment>
+  <comment xml:lang="el">Πρόσθετο Excel</comment>
+  <comment xml:lang="de">Excel-Add-in</comment>
+  <comment xml:lang="da">Excel-tilføjelse</comment>
+  <comment xml:lang="cs">doplněk aplikace Excel</comment>
+  <comment xml:lang="ca">complement d'Excel</comment>
+  <comment xml:lang="bg">Приставка — Excel</comment>
+  <comment xml:lang="be-Cyrl">надбудова Excel</comment>
+  <comment xml:lang="ar">إضافة اكسل</comment>
+  <comment xml:lang="af">Excel-byvoeging</comment>
+  <generic-icon name="x-office-spreadsheet"/>
+  <glob pattern="*.xlam"/>
+  <sub-class-of type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"/>
+</mime-type>

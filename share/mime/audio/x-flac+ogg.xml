@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="audio/x-flac+ogg">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Ogg FLAC audio</comment>
+  <comment xml:lang="zh-Hant-TW">Ogg FLAC 音訊</comment>
+  <comment xml:lang="zh-Hans-CN">Ogg FLAC 音频</comment>
+  <comment xml:lang="vi">Âm thanh FLAC Ogg</comment>
+  <comment xml:lang="uk">звук ogg FLAC</comment>
+  <comment xml:lang="tr">Ogg FLAC sesi</comment>
+  <comment xml:lang="sv">Ogg FLAC-ljud</comment>
+  <comment xml:lang="sr-Cyrl">Огг ФЛАЦ звук</comment>
+  <comment xml:lang="sq">audio Ogg FLAC</comment>
+  <comment xml:lang="sl">Zvočna datoteka Ogg FLAC</comment>
+  <comment xml:lang="si">Ogg FLAC ශ්රව්ය</comment>
+  <comment xml:lang="sk">Zvuk Ogg FLAC</comment>
+  <comment xml:lang="ru">Аудио Ogg FLAC</comment>
+  <comment xml:lang="ro">Audio Ogg FLAC</comment>
+  <comment xml:lang="pt-BR">Áudio Ogg FLAC</comment>
+  <comment xml:lang="pt">áudio Ogg FLAC</comment>
+  <comment xml:lang="pl">Plik dźwiękowy Ogg FLAC</comment>
+  <comment xml:lang="oc">àudio Ogg FLAC</comment>
+  <comment xml:lang="nn">Ogg FLAC-lyd</comment>
+  <comment xml:lang="nl">Ogg FLAC-audio</comment>
+  <comment xml:lang="nb">Ogg FLAC-lyd</comment>
+  <comment xml:lang="lv">Ogg FLAC audio</comment>
+  <comment xml:lang="lt">Ogg FLAC garso įrašas</comment>
+  <comment xml:lang="ko">Ogg FLAC 오디오</comment>
+  <comment xml:lang="kk-Cyrl">Ogg FLAC аудиосы</comment>
+  <comment xml:lang="ka">Ogg FLAC აუდიო</comment>
+  <comment xml:lang="ja">Ogg FLAC オーディオ</comment>
+  <comment xml:lang="it">Audio Ogg FLAC</comment>
+  <comment xml:lang="is">Ogg FLAC hljóðskrá</comment>
+  <comment xml:lang="id">Audio Ogg FLAC</comment>
+  <comment xml:lang="ia">Audio Ogg FLAC</comment>
+  <comment xml:lang="hu">Ogg FLAC hang</comment>
+  <comment xml:lang="hr">Ogg FLAC zvučni zapis</comment>
+  <comment xml:lang="he">שמע Ogg FLAC</comment>
+  <comment xml:lang="gl">son Ogg FLAC</comment>
+  <comment xml:lang="ga">fuaim Ogg FLAC</comment>
+  <comment xml:lang="fur">audio Ogg FLAC</comment>
+  <comment xml:lang="fr">audio Ogg FLAC</comment>
+  <comment xml:lang="fo">Ogg FLAC ljóður</comment>
+  <comment xml:lang="fi">Ogg FLAC -ääni</comment>
+  <comment xml:lang="eu">Ogg FLAC audioa</comment>
+  <comment xml:lang="es">sonido Ogg FLAC</comment>
+  <comment xml:lang="en-GB">Ogg FLAC audio</comment>
+  <comment xml:lang="el">Ήχος Ogg FLAC</comment>
+  <comment xml:lang="de">Ogg-FLAC-Audio</comment>
+  <comment xml:lang="da">Ogg FLAC-lyd</comment>
+  <comment xml:lang="cs">zvuk Ogg FLAC</comment>
+  <comment xml:lang="ca">àudio Ogg FLAC</comment>
+  <comment xml:lang="bg">Аудио — Ogg FLAC</comment>
+  <comment xml:lang="be-Latn">Aŭdyjo Ogg FLAC</comment>
+  <comment xml:lang="be-Cyrl">аўдыя Ogg FLAC</comment>
+  <comment xml:lang="ar">صوت Ogg FLAC</comment>
+  <comment xml:lang="af">Ogg FLAC-oudio</comment>
+  <sub-class-of type="audio/ogg"/>
+  <alias type="audio/x-oggflac"/>
+  <glob pattern="*.oga"/>
+  <glob pattern="*.ogg"/>
+</mime-type>

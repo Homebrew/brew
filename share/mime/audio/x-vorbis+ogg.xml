@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="audio/x-vorbis+ogg">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Ogg Vorbis audio</comment>
+  <comment xml:lang="zh-Hant-TW">Ogg Vorbis 音訊</comment>
+  <comment xml:lang="zh-Hans-CN">Ogg Vorbis 音频</comment>
+  <comment xml:lang="vi">Âm thanh Vorbis Ogg</comment>
+  <comment xml:lang="uk">звук ogg Vorbis</comment>
+  <comment xml:lang="tr">Ogg Vorbis sesi</comment>
+  <comment xml:lang="sv">Ogg Vorbis-ljud</comment>
+  <comment xml:lang="sr-Cyrl">Огг Ворбис звук</comment>
+  <comment xml:lang="sq">audio Ogg Vorbis</comment>
+  <comment xml:lang="sl">Zvočna datoteka Ogg Vorbis</comment>
+  <comment xml:lang="si">Ogg Vorbis ශ්රව්ය</comment>
+  <comment xml:lang="sk">Zvuk Ogg Vorbis</comment>
+  <comment xml:lang="ru">Аудио Ogg Vorbis</comment>
+  <comment xml:lang="ro">Audio Ogg Vorbis</comment>
+  <comment xml:lang="pt-BR">Áudio Ogg Vorbis</comment>
+  <comment xml:lang="pt">áudio Ogg Vorbis</comment>
+  <comment xml:lang="pl">Plik dźwiękowy Ogg Vorbis</comment>
+  <comment xml:lang="oc">àudio Ogg Vorbis</comment>
+  <comment xml:lang="nn">Ogg Vorbis-lyd</comment>
+  <comment xml:lang="nl">Ogg Vorbis-audio</comment>
+  <comment xml:lang="nb">Ogg Vorbis lyd</comment>
+  <comment xml:lang="ms">Audio Ogg Vorbis</comment>
+  <comment xml:lang="lv">Ogg Vorbis audio</comment>
+  <comment xml:lang="lt">Ogg Vorbis garso įrašas</comment>
+  <comment xml:lang="ko">Ogg Vorbis 오디오</comment>
+  <comment xml:lang="kk-Cyrl">Ogg Vorbis аудиосы</comment>
+  <comment xml:lang="ka">Ogg Vorbis აუდიო</comment>
+  <comment xml:lang="ja">Ogg Vorbis オーディオ</comment>
+  <comment xml:lang="it">Audio Ogg Vorbis</comment>
+  <comment xml:lang="is">Ogg Vorbis hljóðskrá</comment>
+  <comment xml:lang="id">Audio Ogg Vorbis</comment>
+  <comment xml:lang="ia">Audio Ogg Vorbis</comment>
+  <comment xml:lang="hu">Ogg Vorbis hang</comment>
+  <comment xml:lang="hr">Ogg Vorbis zvučni zapis</comment>
+  <comment xml:lang="he">שמע Ogg Vorbis</comment>
+  <comment xml:lang="gl">son Ogg Vorbis</comment>
+  <comment xml:lang="ga">fuaim Ogg Vorbis</comment>
+  <comment xml:lang="fur">audio Ogg Vorbis</comment>
+  <comment xml:lang="fr">audio Ogg Vorbis</comment>
+  <comment xml:lang="fo">Ogg Vorbis ljóður</comment>
+  <comment xml:lang="fi">Ogg Vorbis -ääni</comment>
+  <comment xml:lang="eu">Ogg Vorbis audioa</comment>
+  <comment xml:lang="es">sonido Ogg Vorbis</comment>
+  <comment xml:lang="eo">Ogg-Vorbis-sondosiero</comment>
+  <comment xml:lang="en-GB">Ogg Vorbis audio</comment>
+  <comment xml:lang="el">Ήχος Ogg Vobris</comment>
+  <comment xml:lang="de">Ogg-Vorbis-Audio</comment>
+  <comment xml:lang="da">Ogg Vorbis-lyd</comment>
+  <comment xml:lang="cy">Sain Ogg Vorbis</comment>
+  <comment xml:lang="cs">zvuk Ogg Vorbis</comment>
+  <comment xml:lang="ca">àudio Ogg Vorbis</comment>
+  <comment xml:lang="bg">Аудио — Ogg Vorbis</comment>
+  <comment xml:lang="be-Latn">Aŭdyjo Ogg Vorbis</comment>
+  <comment xml:lang="be-Cyrl">аўдыя Ogg Vorbis</comment>
+  <comment xml:lang="az">Ogg Vorbis audio faylı</comment>
+  <comment xml:lang="ar">صوت Ogg Vorbis</comment>
+  <comment xml:lang="af">Ogg Vorbis-oudio</comment>
+  <sub-class-of type="audio/ogg"/>
+  <alias type="audio/vorbis"/>
+  <alias type="audio/x-vorbis"/>
+  <glob pattern="*.oga"/>
+  <glob pattern="*.ogg"/>
+</mime-type>

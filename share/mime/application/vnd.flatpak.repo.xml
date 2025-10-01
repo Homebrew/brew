@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/vnd.flatpak.repo">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Flatpak repository description</comment>
+  <comment xml:lang="zh-Hant-TW">Flatpak 軟體庫描述</comment>
+  <comment xml:lang="zh-Hans-CN">Flatpak 软件库描述</comment>
+  <comment xml:lang="uk">опис сховища Flatpak</comment>
+  <comment xml:lang="tr">Flatpak depo açıklaması</comment>
+  <comment xml:lang="sv">Flatpak-förrådsbeskrivning</comment>
+  <comment xml:lang="sr-Cyrl">опис ризнице Флатпака</comment>
+  <comment xml:lang="sq">përshkrim depoje Flatpak</comment>
+  <comment xml:lang="si">Flatpak ගබඩා විස්තරය</comment>
+  <comment xml:lang="sk">Popis repozitára Flatpak</comment>
+  <comment xml:lang="ru">Описание репозитория Flatpak</comment>
+  <comment xml:lang="pt-BR">Descrição de repositório Flatpak</comment>
+  <comment xml:lang="pl">Opis repozytorium Flatpak</comment>
+  <comment xml:lang="nl">Flatpak-pakketbronomschrijving</comment>
+  <comment xml:lang="ko">Flatpak 저장소 디스크립션</comment>
+  <comment xml:lang="kk-Cyrl">Flatpak репозиторийі сипаттамасы</comment>
+  <comment xml:lang="ja">Flatpak リポジトリ説明</comment>
+  <comment xml:lang="it">Descrizione repository Flatpack</comment>
+  <comment xml:lang="is">Flatpak lýsing gagnasafns</comment>
+  <comment xml:lang="id">Deskripsi repositori Flatpak</comment>
+  <comment xml:lang="hu">Flatpak tárolóleírás</comment>
+  <comment xml:lang="hr">Flatpak opis repozitorija</comment>
+  <comment xml:lang="he">תיאור מאגר Flatpak</comment>
+  <comment xml:lang="ga">cur síos ar stórlann Flatpak</comment>
+  <comment xml:lang="fur">descrizion dipuesit Flatpak</comment>
+  <comment xml:lang="fr">description de dépôt Flatpak</comment>
+  <comment xml:lang="fi">Flatpak-ohjelmistolähdekuvaus</comment>
+  <comment xml:lang="eu">Flatpak biltegi deskribapena</comment>
+  <comment xml:lang="es">descripción de repositorio de Flatpak</comment>
+  <comment xml:lang="en-GB">Flatpak repository description</comment>
+  <comment xml:lang="de">Flatpak-Repositorybeschreibung</comment>
+  <comment xml:lang="da">Flatpak-arkivbeskrivelse</comment>
+  <comment xml:lang="cs">popis repozitáře Flatpak</comment>
+  <comment xml:lang="ca">descripció de dipòsit de Flatpak</comment>
+  <comment xml:lang="bg">Описание на хранилище — Flatpak</comment>
+  <comment xml:lang="be-Cyrl">апісанне рэпазіторыя Flatpak</comment>
+  <comment xml:lang="ar">وصف مستودع Flatpak</comment>
+  <generic-icon name="package-x-generic"/>
+  <sub-class-of type="text/plain"/>
+  <glob pattern="*.flatpakrepo"/>
+</mime-type>

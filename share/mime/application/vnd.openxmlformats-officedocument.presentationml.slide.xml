@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/vnd.openxmlformats-officedocument.presentationml.slide">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>PowerPoint 2007 slide</comment>
+  <comment xml:lang="zh-Hant-TW">PowerPoint 2007 投影片</comment>
+  <comment xml:lang="zh-Hans-CN">PowerPoint 2007 幻灯片</comment>
+  <comment xml:lang="uk">слайд PowerPoint 2007</comment>
+  <comment xml:lang="tr">PowerPoint 2007 slaytı</comment>
+  <comment xml:lang="sv">PowerPoint 2007-bildspel</comment>
+  <comment xml:lang="sr-Cyrl">слајд Пауер Поинта 2007</comment>
+  <comment xml:lang="sq">diapozitiv PowerPoint 2007</comment>
+  <comment xml:lang="sl">Prosojnica PowerPoint 2007</comment>
+  <comment xml:lang="si">PowerPoint 2007 ස්ලයිඩය</comment>
+  <comment xml:lang="sk">Snímka PowerPoint 2007</comment>
+  <comment xml:lang="ru">Слайд PowerPoint 2007</comment>
+  <comment xml:lang="pt-BR">Slide do PowerPoint 2007</comment>
+  <comment xml:lang="pt">diapositivo PowerPoint 2007</comment>
+  <comment xml:lang="pl">Slajd PowerPoint 2007</comment>
+  <comment xml:lang="oc">diapositive PowerPoint 2007</comment>
+  <comment xml:lang="nl">PowerPoint 2007-dia</comment>
+  <comment xml:lang="lv">PowerPoint 2007 slaids</comment>
+  <comment xml:lang="ko">PowerPoint 2007 슬라이드</comment>
+  <comment xml:lang="kk-Cyrl">PowerPoint 2007 слайды</comment>
+  <comment xml:lang="ka">PowerPoint 2007-ის სლაიდი</comment>
+  <comment xml:lang="ja">PowerPoint 2007 スライド</comment>
+  <comment xml:lang="it">Diapositiva PowerPoint 2007</comment>
+  <comment xml:lang="is">PowerPoint 2007 skyggna</comment>
+  <comment xml:lang="id">Slide PowerPoint 2007</comment>
+  <comment xml:lang="ia">Diapositiva PowerPoint 2007</comment>
+  <comment xml:lang="hu">PowerPoint 2007 dia</comment>
+  <comment xml:lang="hr">PowerPoint 2007 slikovna prezentacija</comment>
+  <comment xml:lang="he">שקופית של PowerPoint 2007</comment>
+  <comment xml:lang="gl">Diaporama de PowerPoint 2007</comment>
+  <comment xml:lang="ga">sleamhnán PowerPoint 2007</comment>
+  <comment xml:lang="fur">diapositive PowerPoint 2007</comment>
+  <comment xml:lang="fr">diapositive PowerPoint 2007</comment>
+  <comment xml:lang="fi">PowerPoint 2007 -dia</comment>
+  <comment xml:lang="eu">PowerPoint 2007 diapositiba</comment>
+  <comment xml:lang="es">diapositiva de PowerPoint 2007</comment>
+  <comment xml:lang="en-GB">PowerPoint 2007 slide</comment>
+  <comment xml:lang="el">Διαφάνεια PowerPoint 2007</comment>
+  <comment xml:lang="de">PowerPoint-2007-Folie</comment>
+  <comment xml:lang="da">PowerPoint 2007-slide</comment>
+  <comment xml:lang="cs">snímek PowerPoint 2007</comment>
+  <comment xml:lang="ca">dispositiva de PowerPoint 2007</comment>
+  <comment xml:lang="bg">Кадър — PoerPoint 2007</comment>
+  <comment xml:lang="be-Cyrl">слайд PowerPoint 2007</comment>
+  <comment xml:lang="ar">شريحة بوربوينت 2007</comment>
+  <comment xml:lang="af">PowerPoint 2007-skyfie</comment>
+  <glob pattern="*.sldx"/>
+  <sub-class-of type="application/zip"/>
+  <generic-icon name="x-office-presentation"/>
+</mime-type>

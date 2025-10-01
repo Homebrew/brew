@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-tex-gf">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Generic font file</comment>
+  <comment xml:lang="uk">типовий файл шрифту</comment>
+  <comment xml:lang="sv">Allmän typsnittsfil</comment>
+  <comment xml:lang="ru">Обычный файл шрифта</comment>
+  <comment xml:lang="pl">Zwykły plik czcionki</comment>
+  <comment xml:lang="ja">汎用フォント</comment>
+  <comment xml:lang="it">File tipo di carattere generico</comment>
+  <comment xml:lang="eu">Letra-tipoen fitxategi orokorra</comment>
+  <comment xml:lang="es">archivo de tipo de letra genérico</comment>
+  <comment xml:lang="de">Allgemeine Schriftdatei</comment>
+  <comment xml:lang="be-Cyrl">файл тыповага шрыфту</comment>
+  <generic-icon name="font-x-generic"/>
+  <glob pattern="*.gf"/>
+</mime-type>

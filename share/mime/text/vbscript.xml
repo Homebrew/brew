@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="text/vbscript">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>VBScript program</comment>
+  <comment xml:lang="zh-Hant-TW">VBScript 程式</comment>
+  <comment xml:lang="zh-Hans-CN">VBScript 程序</comment>
+  <comment xml:lang="uk">програма мовою VBScript</comment>
+  <comment xml:lang="tr">VBScript programı</comment>
+  <comment xml:lang="sv">VBScript-program</comment>
+  <comment xml:lang="sl">Programska datoteka VBScript</comment>
+  <comment xml:lang="si">VBScript වැඩසටහන</comment>
+  <comment xml:lang="ru">Программа VBScript</comment>
+  <comment xml:lang="pt-BR">Programa VBScript</comment>
+  <comment xml:lang="pl">Pogram VBScript</comment>
+  <comment xml:lang="oc">programa VBScript</comment>
+  <comment xml:lang="nl">VBScript-programma</comment>
+  <comment xml:lang="ko">VBScript 프로그램</comment>
+  <comment xml:lang="kk-Cyrl">VBScript бағдарламасы</comment>
+  <comment xml:lang="ja">VBScript プログラム</comment>
+  <comment xml:lang="it">Programma VBScript</comment>
+  <comment xml:lang="is">VBScript forrit</comment>
+  <comment xml:lang="id">program VBScript</comment>
+  <comment xml:lang="hu">VBScript program</comment>
+  <comment xml:lang="hr">VBScript program</comment>
+  <comment xml:lang="he">תכנית VBScript</comment>
+  <comment xml:lang="gl">Programa VBScript</comment>
+  <comment xml:lang="fr">programme VBScript</comment>
+  <comment xml:lang="fi">VBScript-ohjelma</comment>
+  <comment xml:lang="eu">VBScript programa</comment>
+  <comment xml:lang="es">programa en VBScript</comment>
+  <comment xml:lang="en-GB">VBScript program</comment>
+  <comment xml:lang="de">VBScript-Programm</comment>
+  <comment xml:lang="da">VBScript-program</comment>
+  <comment xml:lang="ca">programa VBScript</comment>
+  <comment xml:lang="be-Cyrl">праграма VBScript</comment>
+  <comment xml:lang="ar">برنامج في بي سكريبت</comment>
+  <alias type="text/vbs"/>
+  <sub-class-of type="text/plain"/>
+  <generic-icon name="text-x-script"/>
+  <glob pattern="*.vbs"/>
+</mime-type>

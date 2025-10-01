@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="image/vnd.rn-realpix">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>RealPix document</comment>
+  <comment xml:lang="zh-Hant-TW">RealPix 文件</comment>
+  <comment xml:lang="zh-Hans-CN">RealPix 文档</comment>
+  <comment xml:lang="vi">Tài liệu ảnh RealPix</comment>
+  <comment xml:lang="uk">документ RealPix</comment>
+  <comment xml:lang="tr">RealPix belgesi</comment>
+  <comment xml:lang="sv">RealPix-dokument</comment>
+  <comment xml:lang="sr-Cyrl">документ Рил Пикса</comment>
+  <comment xml:lang="sq">dokument RealPix</comment>
+  <comment xml:lang="sl">Dokument RealPix</comment>
+  <comment xml:lang="si">RealPix ලේඛනය</comment>
+  <comment xml:lang="sk">Dokument RealPix</comment>
+  <comment xml:lang="ru">Документ RealPix</comment>
+  <comment xml:lang="ro">Document RealPix</comment>
+  <comment xml:lang="pt-BR">Documento RealPix</comment>
+  <comment xml:lang="pt">documento RealPix</comment>
+  <comment xml:lang="pl">Dokument RealPix</comment>
+  <comment xml:lang="oc">document RealPix</comment>
+  <comment xml:lang="nn">RealPix-dokument</comment>
+  <comment xml:lang="nl">RealPix-document</comment>
+  <comment xml:lang="nb">RealPix-dokument</comment>
+  <comment xml:lang="lv">RealPix dokuments</comment>
+  <comment xml:lang="lt">RealPix dokumentas</comment>
+  <comment xml:lang="ko">RealPix 문서</comment>
+  <comment xml:lang="kk-Cyrl">RealPix құжаты</comment>
+  <comment xml:lang="ja">RealPix ドキュメント</comment>
+  <comment xml:lang="it">Documento RealPix</comment>
+  <comment xml:lang="is">RealPix skjal</comment>
+  <comment xml:lang="id">Dokumen RealPix</comment>
+  <comment xml:lang="ia">Documento RealPix</comment>
+  <comment xml:lang="hu">RealPix dokumentum</comment>
+  <comment xml:lang="hr">RealPix dokument</comment>
+  <comment xml:lang="he">מסמך של RealPix</comment>
+  <comment xml:lang="gl">documento RealPix</comment>
+  <comment xml:lang="ga">cáipéis RealPix</comment>
+  <comment xml:lang="fur">document RealPix</comment>
+  <comment xml:lang="fr">document RealPix</comment>
+  <comment xml:lang="fo">RealPix skjal</comment>
+  <comment xml:lang="fi">RealPix-asiakirja</comment>
+  <comment xml:lang="eu">RealPix dokumentua</comment>
+  <comment xml:lang="es">documento RealPix</comment>
+  <comment xml:lang="eo">RealPix-dokumento</comment>
+  <comment xml:lang="en-GB">RealPix document</comment>
+  <comment xml:lang="el">Έγγραφο RealPix</comment>
+  <comment xml:lang="de">RealPix-Dokument</comment>
+  <comment xml:lang="da">RealPix-dokument</comment>
+  <comment xml:lang="cs">dokument RealPix</comment>
+  <comment xml:lang="ca">document RealPix</comment>
+  <comment xml:lang="bg">Документ — RealPix</comment>
+  <comment xml:lang="be-Latn">Dakument RealPix</comment>
+  <comment xml:lang="be-Cyrl">дакумент RealPix</comment>
+  <comment xml:lang="ast">Documentu RealPix</comment>
+  <comment xml:lang="ar">مستند RealPix</comment>
+  <comment xml:lang="af">RealPix-dokument</comment>
+  <glob pattern="*.rp"/>
+</mime-type>

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="multipart/mixed">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Compound documents</comment>
+  <comment xml:lang="uk">складні документи</comment>
+  <comment xml:lang="sv">Sammansatta dokument</comment>
+  <comment xml:lang="ru">Составные документы</comment>
+  <comment xml:lang="pl">Dokumenty złożone</comment>
+  <comment xml:lang="it">Documenti composti</comment>
+  <comment xml:lang="de">Verbunddokumente</comment>
+  <comment xml:lang="be-Cyrl">складаныя дакументы</comment>
+</mime-type>

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="text/x-gettext-translation-template">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Translation template</comment>
+  <comment xml:lang="uk">шаблон перекладу</comment>
+  <comment xml:lang="sv">Översättningsmall</comment>
+  <comment xml:lang="ru">Шаблон перевода</comment>
+  <comment xml:lang="pt-BR">Modelo de tradução</comment>
+  <comment xml:lang="pl">Szablon tłumaczenia</comment>
+  <comment xml:lang="ja">翻訳雛形</comment>
+  <comment xml:lang="it">Modello traduzione</comment>
+  <comment xml:lang="gl">Modelo de tradución</comment>
+  <comment xml:lang="eu">Itzulpen-txantiloia</comment>
+  <comment xml:lang="es">plantilla de traducciones</comment>
+  <comment xml:lang="de">Übersetzungsvorlage</comment>
+  <comment xml:lang="be-Cyrl">шаблон перакладу</comment>
+  <sub-class-of type="text/plain"/>
+  <glob pattern="*.pot"/>
+  <alias type="text/x-pot"/>
+</mime-type>

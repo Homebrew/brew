@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="inode/fifo">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Pipe</comment>
+  <comment xml:lang="uk">Канал</comment>
+  <comment xml:lang="sv">Rör</comment>
+  <comment xml:lang="ru">Канал</comment>
+  <comment xml:lang="pl">Potok</comment>
+  <comment xml:lang="ja">パイプ</comment>
+  <comment xml:lang="it">Pipe</comment>
+  <comment xml:lang="gl">Tubería</comment>
+  <comment xml:lang="eu">Kanalizazioa</comment>
+  <comment xml:lang="es">canalización</comment>
+  <comment xml:lang="de">Weiterleitung</comment>
+  <comment xml:lang="be-Cyrl">канал</comment>
+</mime-type>

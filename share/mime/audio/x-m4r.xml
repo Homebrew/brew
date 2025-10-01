@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="audio/x-m4r">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>MPEG-4 ringtone</comment>
+  <comment xml:lang="zh-Hant-TW">MPEG-4 鈴聲</comment>
+  <comment xml:lang="zh-Hans-CN">MPEG-4 铃声</comment>
+  <comment xml:lang="uk">рингтон MPEG-4</comment>
+  <comment xml:lang="tr">MPEG-4 zil sesi</comment>
+  <comment xml:lang="sv">MPEG-4-ringsignal</comment>
+  <comment xml:lang="sq">zile MPEG-4</comment>
+  <comment xml:lang="sl">Zvonjenje MPEG-4</comment>
+  <comment xml:lang="si">MPEG-4 නාද රටාව</comment>
+  <comment xml:lang="sk">Zvonenie MPEG-4</comment>
+  <comment xml:lang="ru">Мелодия MPEG-4</comment>
+  <comment xml:lang="pt-BR">Toque MPEG-4</comment>
+  <comment xml:lang="pl">Dzwonek MPEG-4</comment>
+  <comment xml:lang="nl">MPEG-4-ringtone</comment>
+  <comment xml:lang="ko">MPEG-4 벨소리</comment>
+  <comment xml:lang="kk-Cyrl">MPEG-4 рингтоны</comment>
+  <comment xml:lang="ja">MPEG-4 着信音</comment>
+  <comment xml:lang="it">Suoneria MPEG-4</comment>
+  <comment xml:lang="is">MPEG-4 hringitónn</comment>
+  <comment xml:lang="id">Nada panggil MPEG-4</comment>
+  <comment xml:lang="hu">MPEG-4 csengőhang</comment>
+  <comment xml:lang="hr">MPEG-4 melodija zvona</comment>
+  <comment xml:lang="he">נעימון MPEG-4</comment>
+  <comment xml:lang="gl">Ton de chamada MPEG-4</comment>
+  <comment xml:lang="fr">sonnerie MPEG-4</comment>
+  <comment xml:lang="fi">MPEG-4-soittoääni</comment>
+  <comment xml:lang="eu">MPEG-4 dei-tonua</comment>
+  <comment xml:lang="es">tono de llamada MPEG-4</comment>
+  <comment xml:lang="en-GB">MPEG-4 ringtone</comment>
+  <comment xml:lang="de">MPEG-4-Klingelton</comment>
+  <comment xml:lang="da">MPEG-4-ringetone</comment>
+  <comment xml:lang="ca">to de trucada MPEG-4</comment>
+  <comment xml:lang="bg">Аудио — MPEG-4, звънене</comment>
+  <comment xml:lang="be-Cyrl">мелодыя выкліку MPEG-4</comment>
+  <comment xml:lang="ar">نغمة MPEG-4</comment>
+  <glob pattern="*.m4r"/>
+  <sub-class-of type="video/mp4"/>
+</mime-type>

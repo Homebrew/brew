@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="text/x-iMelody">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>iMelody ringtone</comment>
+  <comment xml:lang="zh-Hant-TW">iMelody 鈴聲</comment>
+  <comment xml:lang="zh-Hans-CN">iMelody 铃声</comment>
+  <comment xml:lang="vi">tiếng réo iMelody</comment>
+  <comment xml:lang="uk">рінгтон iMelody</comment>
+  <comment xml:lang="tr">iMelody melodisi</comment>
+  <comment xml:lang="sv">iMelody-ringsignal</comment>
+  <comment xml:lang="sr-Cyrl">звоно ајМелодије</comment>
+  <comment xml:lang="sq">zile iMelody</comment>
+  <comment xml:lang="sl">Zvonjenje iMelody</comment>
+  <comment xml:lang="si">iMelody නාද රටා</comment>
+  <comment xml:lang="sk">Vyzváňacie melódie iMelody</comment>
+  <comment xml:lang="ru">Мелодия iMelody</comment>
+  <comment xml:lang="ro">Sonerie iMelody</comment>
+  <comment xml:lang="pt-BR">Toque de celular do iMelody</comment>
+  <comment xml:lang="pt">toque iMelody</comment>
+  <comment xml:lang="pl">Dzwonek iMelody</comment>
+  <comment xml:lang="oc">sonariá iMelody</comment>
+  <comment xml:lang="nn">iMelody-ringetone</comment>
+  <comment xml:lang="nl">iMelody-beltoon</comment>
+  <comment xml:lang="nb">iMelody ringetone</comment>
+  <comment xml:lang="lv">iMelody melodija</comment>
+  <comment xml:lang="lt">iMelody skambučio melodija</comment>
+  <comment xml:lang="ko">iMelody 벨소리</comment>
+  <comment xml:lang="kk-Cyrl">iMelody әуені</comment>
+  <comment xml:lang="ja">iMelody リングトーン</comment>
+  <comment xml:lang="it">Suoneria iMelody</comment>
+  <comment xml:lang="is">iMelody hringitónn</comment>
+  <comment xml:lang="id">nada dering iMelody</comment>
+  <comment xml:lang="ia">Tono de appello iMelody</comment>
+  <comment xml:lang="hu">iMelody csengőhang</comment>
+  <comment xml:lang="hr">iMelody melodija zvona</comment>
+  <comment xml:lang="he">צלצול של iMelody</comment>
+  <comment xml:lang="gl">Melodía de iMelody</comment>
+  <comment xml:lang="ga">ton buailte iMelody</comment>
+  <comment xml:lang="fur">sunarie iMelody</comment>
+  <comment xml:lang="fr">sonnerie iMelody</comment>
+  <comment xml:lang="fo">iMelody ringitóni</comment>
+  <comment xml:lang="fi">iMelody-soittoääni</comment>
+  <comment xml:lang="eu">iMelody doinua</comment>
+  <comment xml:lang="es">tono de llamada iMelody</comment>
+  <comment xml:lang="en-GB">iMelody ringtone</comment>
+  <comment xml:lang="el">ringtone iMelody</comment>
+  <comment xml:lang="de">iMelody-Klingelton</comment>
+  <comment xml:lang="da">iMelody-ringetone</comment>
+  <comment xml:lang="cs">vyzváněcí melodie iMelody</comment>
+  <comment xml:lang="ca">to de trucada iMelody</comment>
+  <comment xml:lang="bg">Аудио — iMelody</comment>
+  <comment xml:lang="be-Latn">Rington iMelody</comment>
+  <comment xml:lang="be-Cyrl">мелодыя выкліку iMelody</comment>
+  <comment xml:lang="ar">نغمة iMelody</comment>
+  <comment xml:lang="af">iMelody-luitoon</comment>
+  <sub-class-of type="text/plain"/>
+  <glob pattern="*.imy"/>
+  <glob pattern="*.ime"/>
+  <alias type="audio/x-iMelody"/>
+  <alias type="audio/iMelody"/>
+</mime-type>

@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="text/x-python3">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Python 3 script</comment>
+  <comment xml:lang="zh-Hant-TW">Python 3 指令稿</comment>
+  <comment xml:lang="zh-Hans-CN">Python 3 脚本</comment>
+  <comment xml:lang="uk">скрипт мовою Python 3</comment>
+  <comment xml:lang="tr">Python 3 betiği</comment>
+  <comment xml:lang="sv">Python 3-skript</comment>
+  <comment xml:lang="sq">programth Python 3</comment>
+  <comment xml:lang="sl">Skript Python 3</comment>
+  <comment xml:lang="si">Python 3 පිටපත</comment>
+  <comment xml:lang="sk">Skript Python 3</comment>
+  <comment xml:lang="ru">Сценарий Python 3</comment>
+  <comment xml:lang="pt-BR">Script Python 3</comment>
+  <comment xml:lang="pl">Skrypt Python 3</comment>
+  <comment xml:lang="oc">script Python 3</comment>
+  <comment xml:lang="nl">Python 3-script</comment>
+  <comment xml:lang="ko">파이썬 3 스크립트</comment>
+  <comment xml:lang="kk-Cyrl">Python 3 скрипті</comment>
+  <comment xml:lang="ja">Python 3 スクリプト</comment>
+  <comment xml:lang="it">Script Python 3</comment>
+  <comment xml:lang="is">Python 3 skrifta</comment>
+  <comment xml:lang="id">Skrip Python 3</comment>
+  <comment xml:lang="hu">Python 3 parancsfájl</comment>
+  <comment xml:lang="hr">Python3 skripta</comment>
+  <comment xml:lang="he">סקריפט Python 3</comment>
+  <comment xml:lang="ga">script Python 3</comment>
+  <comment xml:lang="fur">script Python 3</comment>
+  <comment xml:lang="fr">script Python 3</comment>
+  <comment xml:lang="fi">Python 3 -komentotiedosto</comment>
+  <comment xml:lang="eu">Python 3 script-a</comment>
+  <comment xml:lang="es">secuencia de órdenes en Python 3</comment>
+  <comment xml:lang="en-GB">Python 3 script</comment>
+  <comment xml:lang="de">Python-3-Skript</comment>
+  <comment xml:lang="da">Python 3-program</comment>
+  <comment xml:lang="cs">skript v jazyce Python 3</comment>
+  <comment xml:lang="ca">script Python 3</comment>
+  <comment xml:lang="bg">Скрипт — Python 3</comment>
+  <comment xml:lang="be-Cyrl">скрыпт Python 3</comment>
+  <comment xml:lang="ar">سكربت بايثون٣</comment>
+  <comment xml:lang="af">Python 3-skrip</comment>
+  <sub-class-of type="text/x-python"/>
+  <glob pattern="*.py"/>
+  <glob pattern="*.py3" weight="60"/>
+  <glob pattern="*.py3x" weight="60"/>
+  <glob pattern="*.pyi" weight="60"/>
+</mime-type>

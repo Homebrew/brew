@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-bcpio">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>BCPIO archive</comment>
+  <comment xml:lang="zh-Hans-CN">BCPIO 归档</comment>
+  <comment xml:lang="uk">архів BCPIO</comment>
+  <comment xml:lang="tr">BCPIO arşivi</comment>
+  <comment xml:lang="sv">BCPIO-arkiv</comment>
+  <comment xml:lang="sl">Arhiv BCPIO</comment>
+  <comment xml:lang="si">BCPIO ලේඛනාගාරය</comment>
+  <comment xml:lang="sk">Archív BCPIO</comment>
+  <comment xml:lang="ru">Архив BCPIO</comment>
+  <comment xml:lang="pt-BR">Arquivo BCPIO</comment>
+  <comment xml:lang="pl">Archiwum BCPIO</comment>
+  <comment xml:lang="oc">archiu BCPIO</comment>
+  <comment xml:lang="nl">BCPIO-archief</comment>
+  <comment xml:lang="ko">BCPIO 묶음 파일</comment>
+  <comment xml:lang="kk-Cyrl">BCPIO архиві</comment>
+  <comment xml:lang="ja">BCPIO アーカイブ</comment>
+  <comment xml:lang="it">Archivio BCPIO</comment>
+  <comment xml:lang="hr">BCPIO arhiva</comment>
+  <comment xml:lang="he">ארכיון BCPIO</comment>
+  <comment xml:lang="gl">Arquivo BCPIO</comment>
+  <comment xml:lang="fi">BCPIO-arkisto</comment>
+  <comment xml:lang="eu">BCPIO artxiboa</comment>
+  <comment xml:lang="es">archivador BCPIO</comment>
+  <comment xml:lang="en-GB">BCPIO archive</comment>
+  <comment xml:lang="de">BCPIO-Archiv</comment>
+  <comment xml:lang="be-Cyrl">архіў BCPIO</comment>
+  <comment xml:lang="ar">أرشيف BCPIO</comment>
+  <acronym>BCPIO</acronym>
+  <expanded-acronym>Binary CPIO</expanded-acronym>
+  <generic-icon name="package-x-generic"/>
+  <glob pattern="*.bcpio"/>
+</mime-type>

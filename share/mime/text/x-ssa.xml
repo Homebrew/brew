@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="text/x-ssa">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>SSA subtitles</comment>
+  <comment xml:lang="zh-Hant-TW">SSA 字幕</comment>
+  <comment xml:lang="zh-Hans-CN">SSA 字幕</comment>
+  <comment xml:lang="vi">Phụ đề SSA</comment>
+  <comment xml:lang="uk">субтитри SSA</comment>
+  <comment xml:lang="tr">SSA alt yazıları</comment>
+  <comment xml:lang="sv">SSA-undertexter</comment>
+  <comment xml:lang="sr-Cyrl">ССА преводи</comment>
+  <comment xml:lang="sq">titra SSA</comment>
+  <comment xml:lang="sl">Datoteka podnapisov SSA</comment>
+  <comment xml:lang="si">SSA උපසිරැසි</comment>
+  <comment xml:lang="sk">Titulky SSA</comment>
+  <comment xml:lang="ru">Субтитры SSA</comment>
+  <comment xml:lang="ro">Subtitrări SSA</comment>
+  <comment xml:lang="pt-BR">Legendas SSA</comment>
+  <comment xml:lang="pt">legendas SSA</comment>
+  <comment xml:lang="pl">Napisy SSA</comment>
+  <comment xml:lang="oc">sostítols SSA</comment>
+  <comment xml:lang="nn">SSA-teksting</comment>
+  <comment xml:lang="nl">SSA-ondertitels</comment>
+  <comment xml:lang="nb">SSA undertekst</comment>
+  <comment xml:lang="lv">SSA subtitri</comment>
+  <comment xml:lang="lt">SSA subtitrai</comment>
+  <comment xml:lang="ko">SSA 자막 파일</comment>
+  <comment xml:lang="kk-Cyrl">SSA субтитрлары</comment>
+  <comment xml:lang="ja">SSA 字幕</comment>
+  <comment xml:lang="it">Sottotitoli SSA</comment>
+  <comment xml:lang="is">SSA skjátextar</comment>
+  <comment xml:lang="id">Subjudul SSA</comment>
+  <comment xml:lang="ia">Subtitulos SSA</comment>
+  <comment xml:lang="hu">SSA feliratok</comment>
+  <comment xml:lang="hr">SSA podnaslovi</comment>
+  <comment xml:lang="he">כתובית SSA</comment>
+  <comment xml:lang="gl">Subtitulos SSA</comment>
+  <comment xml:lang="ga">fotheidil SSA</comment>
+  <comment xml:lang="fur">sottitui SSA</comment>
+  <comment xml:lang="fr">sous-titres SSA</comment>
+  <comment xml:lang="fo">SSA undirtekstir</comment>
+  <comment xml:lang="fi">SSA-tekstitykset</comment>
+  <comment xml:lang="eu">SSA azpitituluak</comment>
+  <comment xml:lang="es">subtítulos SSA</comment>
+  <comment xml:lang="eo">SSA-subtekstoj</comment>
+  <comment xml:lang="en-GB">SSA subtitles</comment>
+  <comment xml:lang="el">Υπότιτλοι SSA</comment>
+  <comment xml:lang="de">SSA-Untertitel</comment>
+  <comment xml:lang="da">SSA-undertekster</comment>
+  <comment xml:lang="cs">titulky SSA</comment>
+  <comment xml:lang="ca">subtítols SSA</comment>
+  <comment xml:lang="bg">Субтитри — SSA</comment>
+  <comment xml:lang="be-Latn">Subtytry SSA</comment>
+  <comment xml:lang="be-Cyrl">субцітры SSA</comment>
+  <comment xml:lang="ar">ترجمات SSA</comment>
+  <comment xml:lang="af">SSA-onderskrifte</comment>
+  <acronym>SSA</acronym>
+  <expanded-acronym>SubStation Alpha</expanded-acronym>
+  <sub-class-of type="text/plain"/>
+  <glob pattern="*.ssa"/>
+  <glob pattern="*.ass"/>
+</mime-type>

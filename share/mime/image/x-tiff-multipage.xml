@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="image/x-tiff-multipage">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Multi-page TIFF image</comment>
+  <comment xml:lang="zh-Hant-TW">多頁 TIFF 影像</comment>
+  <comment xml:lang="zh-Hans-CN">多页 TIFF 图像</comment>
+  <comment xml:lang="uk">багатосторінкове зображення TIFF</comment>
+  <comment xml:lang="tr">Çok sayfalı TIFF görüntüsü</comment>
+  <comment xml:lang="sv">Flersidig TIFF-bild</comment>
+  <comment xml:lang="sr-Cyrl">Вишестранична ТИФФ слика</comment>
+  <comment xml:lang="sq">figurë TIFF me shumë faqe</comment>
+  <comment xml:lang="sl">Večstranska slika TIFF</comment>
+  <comment xml:lang="si">බහු-පිටු TIFF රූපය</comment>
+  <comment xml:lang="sk">Viacstránkový obrázok TIFF</comment>
+  <comment xml:lang="ru">Многостраничное изображение TIFF</comment>
+  <comment xml:lang="pt-BR">Imagem TIFF multipágina</comment>
+  <comment xml:lang="pt">imagem TIFF multipágina</comment>
+  <comment xml:lang="pl">Wielostronnicowy obraz TIFF</comment>
+  <comment xml:lang="oc">Imatge TIFF multipagina</comment>
+  <comment xml:lang="nl">Multi-pagina TIFF-afbeelding</comment>
+  <comment xml:lang="ko">다중 페이지 TIFF 그림</comment>
+  <comment xml:lang="kk-Cyrl">Көпбеттік TIFF суреті</comment>
+  <comment xml:lang="ja">マルチページ TIFF 画像</comment>
+  <comment xml:lang="it">Immagine TIFF multi-pagina</comment>
+  <comment xml:lang="is">Margsíðna TIFF mynd</comment>
+  <comment xml:lang="id">Citra TIFF multi halaman</comment>
+  <comment xml:lang="ia">Imagine TIFF multi-pagina</comment>
+  <comment xml:lang="hu">Többoldalas TIFF kép</comment>
+  <comment xml:lang="hr">Višestrana TIFF slika</comment>
+  <comment xml:lang="he">תמונת TIFF עם ריבוי עמודים</comment>
+  <comment xml:lang="gl">Imaxe TIFF multipáxina</comment>
+  <comment xml:lang="ga">íomhá il-leathanach TIFF</comment>
+  <comment xml:lang="fur">imagjin a plui pagjinis TIFF</comment>
+  <comment xml:lang="fr">Image TIFF multi-page</comment>
+  <comment xml:lang="fi">Monisivuinen TIFF-kuva</comment>
+  <comment xml:lang="eu">Multi-page TIFF irudia</comment>
+  <comment xml:lang="es">imagen TIFF multipágina</comment>
+  <comment xml:lang="en-GB">Multi-page TIFF image</comment>
+  <comment xml:lang="el">Πολυσέλιδη εικόνα TIFF</comment>
+  <comment xml:lang="de">Mehrseitiges TIFF-Bild</comment>
+  <comment xml:lang="da">Flersidet TIFF-billede</comment>
+  <comment xml:lang="cs">vícestránkový obrázek TIFF</comment>
+  <comment xml:lang="ca">imatge TIFF multipàgina</comment>
+  <comment xml:lang="bg">Изображение — TIFF, много страници</comment>
+  <comment xml:lang="be-Cyrl">шматстаронкавая выява TIFF</comment>
+  <comment xml:lang="ar">صورة TIFF متعددة الصفحات</comment>
+  <comment xml:lang="af">Multibladsy TIFF-beeld</comment>
+  <acronym>TIFF</acronym>
+  <expanded-acronym>Tagged Image File Format</expanded-acronym>
+  <sub-class-of type="image/tiff"/>
+</mime-type>

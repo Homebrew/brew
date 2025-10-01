@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="text/vnd.graphviz">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Graphviz DOT graph</comment>
+  <comment xml:lang="zh-Hant-TW">Graphviz DOT 圖表</comment>
+  <comment xml:lang="zh-Hans-CN">Graphviz DOT 图形</comment>
+  <comment xml:lang="vi">Biểu đồ DOT Graphviz</comment>
+  <comment xml:lang="uk">граф DOT Graphviz</comment>
+  <comment xml:lang="tr">Graphviz DOT grafiği</comment>
+  <comment xml:lang="sv">Graphviz DOT-graf</comment>
+  <comment xml:lang="sr-Cyrl">график Графвиз ДОТ-а</comment>
+  <comment xml:lang="sq">grafik Graphviz DOT</comment>
+  <comment xml:lang="sl">Datoteka grafikona Graphviz DOT</comment>
+  <comment xml:lang="si">Graphviz DOT ප්‍රස්ථාරය</comment>
+  <comment xml:lang="sk">Graf Graphviz DOT</comment>
+  <comment xml:lang="ru">Диаграмма Graphviz DOT</comment>
+  <comment xml:lang="ro">Grafic Graphviz DOT</comment>
+  <comment xml:lang="pt-BR">Gráfico do Graphviz DOT</comment>
+  <comment xml:lang="pt">gráfico Graphviz DOT</comment>
+  <comment xml:lang="pl">Wykres DOT Graphviz</comment>
+  <comment xml:lang="oc">graf Graphviz DOT</comment>
+  <comment xml:lang="nl">Graphviz DOT-grafiek</comment>
+  <comment xml:lang="lv">Graphviz DOT grafiks</comment>
+  <comment xml:lang="lt">Graphviz DOT diagrama</comment>
+  <comment xml:lang="ko">Graphviz DOT 그래프</comment>
+  <comment xml:lang="kk-Cyrl">Graphviz DOT сызбасы</comment>
+  <comment xml:lang="ja">Graphviz DOT グラフ</comment>
+  <comment xml:lang="it">Grafico Graphviz DOT</comment>
+  <comment xml:lang="is">Graphviz DOT punktgraf</comment>
+  <comment xml:lang="id">Grafik Graphviz DOT</comment>
+  <comment xml:lang="ia">Graphico DOT de Graphviz</comment>
+  <comment xml:lang="hu">Graphviz DOT-grafikon</comment>
+  <comment xml:lang="hr">Graphviz DOT grafikon</comment>
+  <comment xml:lang="he">תרשים של Graphviz DOT</comment>
+  <comment xml:lang="gl">gráfica DOT de Graphviz</comment>
+  <comment xml:lang="ga">graf DOT Graphviz</comment>
+  <comment xml:lang="fur">grafic Graphviz DOT</comment>
+  <comment xml:lang="fr">graphe Graphviz DOT</comment>
+  <comment xml:lang="fo">Graphviz DOT ritmynd</comment>
+  <comment xml:lang="fi">Graphviz DOT -graafi</comment>
+  <comment xml:lang="eu">Graphviz DOT grafikoa</comment>
+  <comment xml:lang="es">gráfico de Graphviz DOT</comment>
+  <comment xml:lang="en-GB">Graphviz DOT graph</comment>
+  <comment xml:lang="el">Γράφημα Graphviz DOT</comment>
+  <comment xml:lang="de">Graphviz-DOT-Graph</comment>
+  <comment xml:lang="da">Graphviz DOT-graf</comment>
+  <comment xml:lang="cs">graf Graphviz DOT</comment>
+  <comment xml:lang="ca">gràfic Graphviz DOT</comment>
+  <comment xml:lang="bg">Граф — Graphviz DOT</comment>
+  <comment xml:lang="be-Cyrl">граф Graphviz DOT</comment>
+  <comment xml:lang="ar">مبيان Graphviz DOT</comment>
+  <comment xml:lang="af">Graphviz DOT-grafiek</comment>
+  <sub-class-of type="text/plain"/>
+  <generic-icon name="x-office-document"/>
+  <glob pattern="*.gv"/>
+  <glob pattern="*.dot"/>
+</mime-type>

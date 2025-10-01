@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="text/x-systemd-unit">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Systemd unit file</comment>
+  <comment xml:lang="uk">файл модуля systemd</comment>
+  <comment xml:lang="sv">Systemd-enhetsfil</comment>
+  <comment xml:lang="ru">Модульный файл Systemd</comment>
+  <comment xml:lang="pl">Plik jednostki systemd</comment>
+  <comment xml:lang="ja">systemdのunitファイル</comment>
+  <comment xml:lang="it">File unità systemd</comment>
+  <comment xml:lang="gl">Ficheiro de unidade de Systemd</comment>
+  <comment xml:lang="eu">Systemd unitate-fitxategia</comment>
+  <comment xml:lang="es">archivo de unidad de Systemd</comment>
+  <comment xml:lang="de">Systemd-Einheitendatei</comment>
+  <comment xml:lang="be-Cyrl">файл адзінкі systemd</comment>
+  <sub-class-of type="text/plain"/>
+  <glob pattern="*.automount"/>
+  <glob pattern="*.device"/>
+  <glob pattern="*.mount"/>
+  <glob pattern="*.path"/>
+  <glob pattern="*.scope"/>
+  <glob pattern="*.service"/>
+  <glob pattern="*.slice"/>
+  <glob pattern="*.socket"/>
+  <glob pattern="*.swap"/>
+  <glob pattern="*.target"/>
+  <glob pattern="*.timer"/>
+</mime-type>

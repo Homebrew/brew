@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/vnd.ms-excel.sheet.binary.macroEnabled.12">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Excel 2007 binary spreadsheet</comment>
+  <comment xml:lang="zh-Hant-TW">Excel 2007 二進位試算表</comment>
+  <comment xml:lang="zh-Hans-CN">Excel 2007 二进制电子表格</comment>
+  <comment xml:lang="uk">бінарна електронна таблиця Excel 2007</comment>
+  <comment xml:lang="tr">Excel 2007 ikilik hesap çizelgesi</comment>
+  <comment xml:lang="sv">Binärt Excel 2007-kalkylblad</comment>
+  <comment xml:lang="sr-Cyrl">Ексел 2007 бинарна табела</comment>
+  <comment xml:lang="sq">fletëllogaritje dyore Excel 2007</comment>
+  <comment xml:lang="sl">Binarna preglednica Excel 2007</comment>
+  <comment xml:lang="si">Excel 2007 ද්විමය පැතුරුම්පත</comment>
+  <comment xml:lang="sk">Binárny zošit Excel 2007</comment>
+  <comment xml:lang="ru">Двоичная электронная таблица Excel 2007</comment>
+  <comment xml:lang="pt-BR">Planilha binária do Excel 2007</comment>
+  <comment xml:lang="pt">folha de cálculo binária Excel 2007</comment>
+  <comment xml:lang="pl">Binarny arkusz Excel 2007</comment>
+  <comment xml:lang="oc">fuèlh de calcul binaire Excel 2007</comment>
+  <comment xml:lang="nl">Excel 2007 binair rekenblad</comment>
+  <comment xml:lang="lv">Excel 2007 binārā izklājlapa</comment>
+  <comment xml:lang="ko">Excel 2007 바이너리 스프레드시트</comment>
+  <comment xml:lang="kk-Cyrl">Excel 2007 бинарды кестесі</comment>
+  <comment xml:lang="ka">Excel 2007-ის ბინარული ცხრილი</comment>
+  <comment xml:lang="ja">Excel 2007 バイナリスプレッドシート</comment>
+  <comment xml:lang="it">Foglio di calcolo binario Excel 2007</comment>
+  <comment xml:lang="is">Excel tvíunddarkerfis töflureikniskjal</comment>
+  <comment xml:lang="id">Lembar kerja biner Excel 2007</comment>
+  <comment xml:lang="ia">Folio de calculo binari Excel 2007</comment>
+  <comment xml:lang="hu">Excel 2007 bináris táblázat</comment>
+  <comment xml:lang="hr">Excel 2007 binarna proračunska tablica</comment>
+  <comment xml:lang="he">גיליון נתונים בינרי של Excel 2007</comment>
+  <comment xml:lang="gl">ficheiro binario de folla de cálculo Excel 2007</comment>
+  <comment xml:lang="ga">scarbhileog dhénártha Excel 2007</comment>
+  <comment xml:lang="fur">sfuei di calcul binari Excel 2007</comment>
+  <comment xml:lang="fr">feuille de calcul binaire Excel 2007</comment>
+  <comment xml:lang="fi">Excel 2007 binäärinen taulukko</comment>
+  <comment xml:lang="eu">Excel 2007 kalkulu-orri binarioa</comment>
+  <comment xml:lang="es">hoja de cálculo binaria de Excel 2007</comment>
+  <comment xml:lang="en-GB">Excel 2007 binary spreadsheet</comment>
+  <comment xml:lang="el">Δυαδικό λογιστικό φύλλο Excel 2007</comment>
+  <comment xml:lang="de">Excel-2007-Tabelle (binär)</comment>
+  <comment xml:lang="da">Binært Excel 2007-regneark</comment>
+  <comment xml:lang="cs">binární formát sešitu Excel 2007</comment>
+  <comment xml:lang="ca">full de càlcul binari d'Excel 2007</comment>
+  <comment xml:lang="bg">Таблица — Excel 2007, двоична</comment>
+  <comment xml:lang="be-Cyrl">двайковая электронная табліца Excel 2007</comment>
+  <comment xml:lang="ar">مستند اكسل 2007 ثنائي</comment>
+  <comment xml:lang="af">Excel 2007 binêre sigblad</comment>
+  <generic-icon name="x-office-spreadsheet"/>
+  <glob pattern="*.xlsb"/>
+  <sub-class-of type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"/>
+</mime-type>

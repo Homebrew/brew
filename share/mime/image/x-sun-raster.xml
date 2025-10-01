@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="image/x-sun-raster">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Sun raster image</comment>
+  <comment xml:lang="zh-Hant-TW">Sun raster 影像</comment>
+  <comment xml:lang="zh-Hans-CN">Sun 光栅图像</comment>
+  <comment xml:lang="vi">Ảnh mành Sun</comment>
+  <comment xml:lang="uk">растрове зображення Sun</comment>
+  <comment xml:lang="tr">Sun raster görüntüsü</comment>
+  <comment xml:lang="sv">Sun-rasterbild</comment>
+  <comment xml:lang="sr-Cyrl">слика Сановог растера</comment>
+  <comment xml:lang="sq">figurë raster Sun</comment>
+  <comment xml:lang="sl">Slikovna rastrska datoteka Sun</comment>
+  <comment xml:lang="si">හිරු රස්ටර් රූපය</comment>
+  <comment xml:lang="sk">Rastrový obrázok Sun</comment>
+  <comment xml:lang="ru">Растровое изображение Sun</comment>
+  <comment xml:lang="ro">Imagine rasterizată Sun</comment>
+  <comment xml:lang="pt-BR">Imagem raster da Sun</comment>
+  <comment xml:lang="pt">imagem raster Sun</comment>
+  <comment xml:lang="pl">Obraz rastrowy Sun</comment>
+  <comment xml:lang="oc">imatge raster Sun</comment>
+  <comment xml:lang="nn">Sun rasterbilete</comment>
+  <comment xml:lang="nl">Sun-rasterafbeelding</comment>
+  <comment xml:lang="nb">Sun rasterbilde</comment>
+  <comment xml:lang="lv">Sun rastra attēls</comment>
+  <comment xml:lang="lt">Sun rastrinis paveikslėlis</comment>
+  <comment xml:lang="ko">Sun 래스터 그림</comment>
+  <comment xml:lang="kk-Cyrl">Sun растрлық суреті</comment>
+  <comment xml:lang="ja">Sun ラスタ画像</comment>
+  <comment xml:lang="it">Immagine raster Sun</comment>
+  <comment xml:lang="is">Sun rastamynd</comment>
+  <comment xml:lang="id">Citra raster Sun</comment>
+  <comment xml:lang="ia">Imagine raster Sun</comment>
+  <comment xml:lang="hu">SUN raszterkép</comment>
+  <comment xml:lang="hr">Sun iscrtana slika</comment>
+  <comment xml:lang="he">תמונה סרוקה של Sun</comment>
+  <comment xml:lang="gl">imaxe ráster de Sun</comment>
+  <comment xml:lang="ga">íomhá rastar Sun</comment>
+  <comment xml:lang="fur">imagjin raster Sun</comment>
+  <comment xml:lang="fr">image raster Sun</comment>
+  <comment xml:lang="fo">Sun raster mynd</comment>
+  <comment xml:lang="fi">Sun-rasterikuva</comment>
+  <comment xml:lang="eu">Sun raster irudia</comment>
+  <comment xml:lang="es">imagen rasterizada de Sun</comment>
+  <comment xml:lang="en-GB">Sun raster image</comment>
+  <comment xml:lang="el">Εικόνα Sun raster</comment>
+  <comment xml:lang="de">Sun-Rasterbild</comment>
+  <comment xml:lang="da">Sun rasterbillede</comment>
+  <comment xml:lang="cs">rastrový obrázek Sun</comment>
+  <comment xml:lang="ca">imatge ràster Sun</comment>
+  <comment xml:lang="bg">Изображение — Sun raster</comment>
+  <comment xml:lang="be-Latn">Rastravaja vyjava Sun</comment>
+  <comment xml:lang="be-Cyrl">выява Sun raster</comment>
+  <comment xml:lang="ar">صورة Sun raster</comment>
+  <comment xml:lang="af">Sun-roosterbeeld</comment>
+  <glob pattern="*.sun"/>
+</mime-type>

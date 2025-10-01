@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-troff-man">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Manual page</comment>
+  <comment xml:lang="zh-Hans-CN">手册页</comment>
+  <comment xml:lang="uk">сторінка підручника</comment>
+  <comment xml:lang="tr">Kılavuz sayfası</comment>
+  <comment xml:lang="sv">Manualsida</comment>
+  <comment xml:lang="si">අත්පොත පිටුව</comment>
+  <comment xml:lang="ru">Страница руководства</comment>
+  <comment xml:lang="pt-BR">Página de manual</comment>
+  <comment xml:lang="pl">Strona podręcznika</comment>
+  <comment xml:lang="nl">Handleidingpagina</comment>
+  <comment xml:lang="ko">man 페이지</comment>
+  <comment xml:lang="kk-Cyrl">Нұсқаулық парағы</comment>
+  <comment xml:lang="ja">マニュアルページ</comment>
+  <comment xml:lang="it">Pagina di manuale</comment>
+  <comment xml:lang="hr">Stranica priručnika</comment>
+  <comment xml:lang="gl">Páxina de manual</comment>
+  <comment xml:lang="fi">Manuaalisivu</comment>
+  <comment xml:lang="eu">Eskuliburu-orria</comment>
+  <comment xml:lang="es">página de manual</comment>
+  <comment xml:lang="en-GB">Manual page</comment>
+  <comment xml:lang="de">Handbuchseite</comment>
+  <comment xml:lang="be-Cyrl">старонка даведкі</comment>
+  <comment xml:lang="ar">صفحة دليل</comment>
+  <sub-class-of type="text/plain"/>
+  <generic-icon name="text-x-generic"/>
+  <glob pattern="*.man"/>
+  <glob pattern="*.[1-9]"/>
+</mime-type>

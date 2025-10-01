@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="image/x-rgb">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>RGB image</comment>
+  <comment xml:lang="zh-Hant-TW">RGB 影像</comment>
+  <comment xml:lang="zh-Hans-CN">RGB 图像</comment>
+  <comment xml:lang="vi">Ảnh kiểu RGB</comment>
+  <comment xml:lang="uk">зображення RGB</comment>
+  <comment xml:lang="tr">RGB görüntüsü</comment>
+  <comment xml:lang="sv">RGB-bild</comment>
+  <comment xml:lang="sr-Cyrl">РГБ слика</comment>
+  <comment xml:lang="sq">figurë RGB</comment>
+  <comment xml:lang="sl">Slikovna datoteka RGB</comment>
+  <comment xml:lang="si">RGB රූපය</comment>
+  <comment xml:lang="sk">Obrázok RGB</comment>
+  <comment xml:lang="ru">Изображение RGB</comment>
+  <comment xml:lang="ro">Imagine RGB</comment>
+  <comment xml:lang="pt-BR">Imagem RGB</comment>
+  <comment xml:lang="pt">imagem RGB</comment>
+  <comment xml:lang="pl">Obraz RGB</comment>
+  <comment xml:lang="oc">imatge RGB</comment>
+  <comment xml:lang="nn">RGB-bilete</comment>
+  <comment xml:lang="nl">RGB-afbeelding</comment>
+  <comment xml:lang="nb">RGB-bilde</comment>
+  <comment xml:lang="ms">Imej RGB</comment>
+  <comment xml:lang="lv">RGB attēls</comment>
+  <comment xml:lang="lt">RGB paveikslėlis</comment>
+  <comment xml:lang="ko">RGB 그림</comment>
+  <comment xml:lang="kk-Cyrl">RGB суреті</comment>
+  <comment xml:lang="ja">RGB 画像</comment>
+  <comment xml:lang="it">Immagine RGB</comment>
+  <comment xml:lang="is">RGB mynd</comment>
+  <comment xml:lang="id">Citra RGB</comment>
+  <comment xml:lang="ia">Imagine RGB</comment>
+  <comment xml:lang="hu">RGB-kép</comment>
+  <comment xml:lang="hr">RGB slika</comment>
+  <comment xml:lang="he">תמונת RGB</comment>
+  <comment xml:lang="gl">imaxe RGB</comment>
+  <comment xml:lang="ga">íomhá RGB</comment>
+  <comment xml:lang="fur">imagjin RGB</comment>
+  <comment xml:lang="fr">image RGB</comment>
+  <comment xml:lang="fo">RGB mynd</comment>
+  <comment xml:lang="fi">RGB-kuva</comment>
+  <comment xml:lang="eu">RGB irudia</comment>
+  <comment xml:lang="es">imagen RGB</comment>
+  <comment xml:lang="eo">RGB-bildo</comment>
+  <comment xml:lang="en-GB">RGB image</comment>
+  <comment xml:lang="el">Εικόνα RGB</comment>
+  <comment xml:lang="de">RGB-Bild</comment>
+  <comment xml:lang="da">RGB-billede</comment>
+  <comment xml:lang="cy">Delwedd RGB</comment>
+  <comment xml:lang="cs">obrázek RGB</comment>
+  <comment xml:lang="ca">imatge RGB</comment>
+  <comment xml:lang="bg">Изображение — RGB</comment>
+  <comment xml:lang="be-Latn">Vyjava RGB</comment>
+  <comment xml:lang="be-Cyrl">выява RGB</comment>
+  <comment xml:lang="az">RGB rəsmi</comment>
+  <comment xml:lang="ar">صورة RGB</comment>
+  <comment xml:lang="af">RGB-beeld</comment>
+  <glob pattern="*.rgb"/>
+</mime-type>

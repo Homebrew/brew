@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-gdbm">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>GDBM database</comment>
+  <comment xml:lang="zh-Hant-TW">GDBM 資料庫</comment>
+  <comment xml:lang="zh-Hans-CN">GDBM 数据库</comment>
+  <comment xml:lang="vi">Cơ sở dữ liệu GDBM</comment>
+  <comment xml:lang="uk">база даних GDBM</comment>
+  <comment xml:lang="tr">GDBM veri tabanı</comment>
+  <comment xml:lang="sv">GDBM-databas</comment>
+  <comment xml:lang="sr-Cyrl">ГДБМ база података</comment>
+  <comment xml:lang="sq">bazë të dhënash GDBM</comment>
+  <comment xml:lang="sl">Podatkovna zbirka GDBM</comment>
+  <comment xml:lang="si">GDBM දත්ත සමුදාය</comment>
+  <comment xml:lang="sk">Databáza GDBM</comment>
+  <comment xml:lang="ru">База данных GDBM</comment>
+  <comment xml:lang="ro">Bază de date GDBM</comment>
+  <comment xml:lang="pt-BR">Banco de dados GDBM</comment>
+  <comment xml:lang="pt">base de dados GDMB</comment>
+  <comment xml:lang="pl">Baza danych GDBM</comment>
+  <comment xml:lang="oc">banca de donadas GDBM</comment>
+  <comment xml:lang="nn">GDBM-database</comment>
+  <comment xml:lang="nl">GDBM-database</comment>
+  <comment xml:lang="nb">GDBM-database</comment>
+  <comment xml:lang="lv">GDBM datubāze</comment>
+  <comment xml:lang="lt">GDBM duomenų bazė</comment>
+  <comment xml:lang="ko">GDBM 데이터베이스</comment>
+  <comment xml:lang="kk-Cyrl">GDBM дерекқоры</comment>
+  <comment xml:lang="ka">GDBM მონაცემთა ბაზა</comment>
+  <comment xml:lang="ja">GDBM データベース</comment>
+  <comment xml:lang="it">Database GDBM</comment>
+  <comment xml:lang="is">GDBM gagnagrunnur</comment>
+  <comment xml:lang="id">Basis data GDBM</comment>
+  <comment xml:lang="ia">Base de datos GDBM</comment>
+  <comment xml:lang="hu">GDBM adatbázis</comment>
+  <comment xml:lang="hr">GDBM baza podataka</comment>
+  <comment xml:lang="he">מסד נתונים GDBM</comment>
+  <comment xml:lang="gl">base de datos GDBM</comment>
+  <comment xml:lang="ga">bunachar sonraí GDBM</comment>
+  <comment xml:lang="fur">base di dâts GDBM</comment>
+  <comment xml:lang="fr">base de données GDBM</comment>
+  <comment xml:lang="fo">GDBM dátustovnur</comment>
+  <comment xml:lang="fi">GDBM-tietokanta</comment>
+  <comment xml:lang="eu">GDBM datu-basea</comment>
+  <comment xml:lang="es">base de datos GDBM</comment>
+  <comment xml:lang="eo">GDBM-datumbazo</comment>
+  <comment xml:lang="en-GB">GDBM database</comment>
+  <comment xml:lang="el">Βάση δεδομένων GDBM</comment>
+  <comment xml:lang="de">GDBM-Datenbank</comment>
+  <comment xml:lang="da">GDBM-database</comment>
+  <comment xml:lang="cs">databáze GDBM</comment>
+  <comment xml:lang="ca">base de dades GDBM</comment>
+  <comment xml:lang="bg">База от данни — GDBM</comment>
+  <comment xml:lang="be-Latn">Baza źviestak GDBM</comment>
+  <comment xml:lang="be-Cyrl">база даных GDBM</comment>
+  <comment xml:lang="ar">قاعدة بيانات GDBM</comment>
+  <comment xml:lang="af">GDBM-databasis</comment>
+  <acronym>GDBM</acronym>
+  <expanded-acronym>GNU Database Manager</expanded-acronym>
+</mime-type>

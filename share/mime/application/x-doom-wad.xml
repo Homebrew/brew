@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-doom-wad">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Doom WAD file</comment>
+  <comment xml:lang="zh-Hant-TW">Doom WAD 檔</comment>
+  <comment xml:lang="zh-Hans-CN">Doom WAD 文件</comment>
+  <comment xml:lang="uk">файл WAD Doom</comment>
+  <comment xml:lang="tr">Doom WAD dosyası</comment>
+  <comment xml:lang="sv">Doom WAD-fil</comment>
+  <comment xml:lang="sq">kartelë Doom WAD</comment>
+  <comment xml:lang="sl">Datoteka Doom WAD</comment>
+  <comment xml:lang="si">Doom WAD ගොනුව</comment>
+  <comment xml:lang="ru">Файл Doom WAD</comment>
+  <comment xml:lang="pt-BR">Arquivo Doom WAD</comment>
+  <comment xml:lang="pl">Plik WAD gry Doom</comment>
+  <comment xml:lang="nl">Doom WAD-bestand</comment>
+  <comment xml:lang="ko">둠 WAD 파일</comment>
+  <comment xml:lang="kk-Cyrl">Doom WAD файлы</comment>
+  <comment xml:lang="ja">Doom WAD ファイル</comment>
+  <comment xml:lang="it">File WAD Doom</comment>
+  <comment xml:lang="is">Doom WAD skrá</comment>
+  <comment xml:lang="id">Berkas WAD Doom</comment>
+  <comment xml:lang="hu">Doom WAD fájl</comment>
+  <comment xml:lang="hr">Doom WAD datoteka</comment>
+  <comment xml:lang="he">קובץ WAD של Doom</comment>
+  <comment xml:lang="gl">Ficheiro de Doom WAD</comment>
+  <comment xml:lang="fr">fichier Doom WAD</comment>
+  <comment xml:lang="fi">Doom WAD -tiedosto</comment>
+  <comment xml:lang="eu">Doom WAD fitxategia</comment>
+  <comment xml:lang="es">archivo WAD de Doom</comment>
+  <comment xml:lang="en-GB">Doom WAD file</comment>
+  <comment xml:lang="de">Doom-WAD-Datei</comment>
+  <comment xml:lang="da">Doom WAD-fil</comment>
+  <comment xml:lang="ca">fitxer WAD de Doom</comment>
+  <comment xml:lang="bg">Ниво — Doom</comment>
+  <comment xml:lang="be-Cyrl">файл Doom WAD</comment>
+  <comment xml:lang="ar">ملف Doom WAD</comment>
+  <acronym>WAD</acronym>
+  <expanded-acronym>Where's All the Data</expanded-acronym>
+  <generic-icon name="package-x-generic"/>
+  <glob pattern="*.wad" weight="80"/>
+</mime-type>

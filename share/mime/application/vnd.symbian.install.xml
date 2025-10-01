@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/vnd.symbian.install">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>SIS package</comment>
+  <comment xml:lang="zh-Hant-TW">SIS 軟體包</comment>
+  <comment xml:lang="zh-Hans-CN">SIS 软件包</comment>
+  <comment xml:lang="vi">Gói SIS</comment>
+  <comment xml:lang="uk">пакунок SIS</comment>
+  <comment xml:lang="tr">SIS paketi</comment>
+  <comment xml:lang="sv">SIS-paket</comment>
+  <comment xml:lang="sr-Cyrl">СИС пакет</comment>
+  <comment xml:lang="sq">paketë SIS</comment>
+  <comment xml:lang="sl">Datoteka paketa SIS</comment>
+  <comment xml:lang="si">SIS පැකේජය</comment>
+  <comment xml:lang="sk">Balíček SIS</comment>
+  <comment xml:lang="ru">Пакет SIS</comment>
+  <comment xml:lang="ro">Pachet SIS</comment>
+  <comment xml:lang="pt-BR">Pacote SIS</comment>
+  <comment xml:lang="pt">pacote SIS</comment>
+  <comment xml:lang="pl">Pakiet SIS</comment>
+  <comment xml:lang="oc">paquet SIS</comment>
+  <comment xml:lang="nn">SIS-pakke</comment>
+  <comment xml:lang="nl">SIS-pakket</comment>
+  <comment xml:lang="nb">SIS-pakke</comment>
+  <comment xml:lang="lv">SIS pakotne</comment>
+  <comment xml:lang="lt">SIS paketas</comment>
+  <comment xml:lang="ko">SIS 패키지</comment>
+  <comment xml:lang="kk-Cyrl">SIS дестесі</comment>
+  <comment xml:lang="ja">SIS パッケージ</comment>
+  <comment xml:lang="it">Pacchetto SIS</comment>
+  <comment xml:lang="is">SIS pakki</comment>
+  <comment xml:lang="id">Paket SIS</comment>
+  <comment xml:lang="ia">Pacchetto SIS</comment>
+  <comment xml:lang="hu">SIS csomag</comment>
+  <comment xml:lang="hr">SIS paket</comment>
+  <comment xml:lang="he">חבילת SIS</comment>
+  <comment xml:lang="gl">paquete SIS</comment>
+  <comment xml:lang="ga">pacáiste SIS</comment>
+  <comment xml:lang="fur">pachet SIS</comment>
+  <comment xml:lang="fr">paquet SIS</comment>
+  <comment xml:lang="fo">SIS pakki</comment>
+  <comment xml:lang="fi">SIS-paketti</comment>
+  <comment xml:lang="eu">SIS paketea</comment>
+  <comment xml:lang="es">paquete SIS</comment>
+  <comment xml:lang="eo">SIS-pakaĵo</comment>
+  <comment xml:lang="en-GB">SIS package</comment>
+  <comment xml:lang="el">Πακέτο SIS</comment>
+  <comment xml:lang="de">SIS-Paket</comment>
+  <comment xml:lang="da">SIS-pakke</comment>
+  <comment xml:lang="cs">balíček SIS</comment>
+  <comment xml:lang="ca">paquet SIS</comment>
+  <comment xml:lang="bg">Пакет — SIS</comment>
+  <comment xml:lang="be-Latn">Pakunak SIS</comment>
+  <comment xml:lang="be-Cyrl">пакет SIS</comment>
+  <comment xml:lang="ast">Paquete SIS</comment>
+  <comment xml:lang="ar">حزمة SIS</comment>
+  <comment xml:lang="af">SIS-pakket</comment>
+  <acronym>SIS</acronym>
+  <expanded-acronym>Symbian Installation File</expanded-acronym>
+  <generic-icon name="package-x-generic"/>
+  <glob pattern="*.sis"/>
+</mime-type>

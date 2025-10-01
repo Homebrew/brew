@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="image/wmf">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>WMF image</comment>
+  <comment xml:lang="zh-Hant-TW">WMF 影像</comment>
+  <comment xml:lang="zh-Hans-CN">WMF 图像</comment>
+  <comment xml:lang="vi">Ảnh WMF</comment>
+  <comment xml:lang="uk">зображення WMF</comment>
+  <comment xml:lang="tr">WMF görüntüsü</comment>
+  <comment xml:lang="sv">WMF-bild</comment>
+  <comment xml:lang="sr-Cyrl">ВМФ слика</comment>
+  <comment xml:lang="sq">figurë WMF</comment>
+  <comment xml:lang="sl">Slikovna datoteka WMF</comment>
+  <comment xml:lang="si">WMF රූපය</comment>
+  <comment xml:lang="sk">Obrázok WMF</comment>
+  <comment xml:lang="ru">Изображение WMF</comment>
+  <comment xml:lang="ro">Imagine WMF</comment>
+  <comment xml:lang="pt-BR">Imagem WMF</comment>
+  <comment xml:lang="pt">imagem WMF</comment>
+  <comment xml:lang="pl">Obraz WMF</comment>
+  <comment xml:lang="oc">imatge WMF</comment>
+  <comment xml:lang="nn">WMF-bilete</comment>
+  <comment xml:lang="nl">WMF-afbeelding</comment>
+  <comment xml:lang="nb">WMF-bilde</comment>
+  <comment xml:lang="lv">WMF attēls</comment>
+  <comment xml:lang="lt">WMF paveikslėlis</comment>
+  <comment xml:lang="ko">WMF 그림</comment>
+  <comment xml:lang="kk-Cyrl">WMF суреті</comment>
+  <comment xml:lang="ja">WMF 画像</comment>
+  <comment xml:lang="it">Immagine WMF</comment>
+  <comment xml:lang="is">WMF mynd</comment>
+  <comment xml:lang="id">Citra WMF</comment>
+  <comment xml:lang="ia">Imagine WMF</comment>
+  <comment xml:lang="hu">WMF kép</comment>
+  <comment xml:lang="hr">WMF slika</comment>
+  <comment xml:lang="he">תמונת WMF</comment>
+  <comment xml:lang="gl">imaxe WMF</comment>
+  <comment xml:lang="ga">íomhá WMF</comment>
+  <comment xml:lang="fur">imagjin WMF</comment>
+  <comment xml:lang="fr">image WMF</comment>
+  <comment xml:lang="fo">WMF mynd</comment>
+  <comment xml:lang="fi">WMF-kuva</comment>
+  <comment xml:lang="eu">WMF irudia</comment>
+  <comment xml:lang="es">imagen WMF</comment>
+  <comment xml:lang="eo">WMF-bildo</comment>
+  <comment xml:lang="en-GB">WMF image</comment>
+  <comment xml:lang="el">Εικόνα WML</comment>
+  <comment xml:lang="de">WMF-Bild</comment>
+  <comment xml:lang="da">WMF-billede</comment>
+  <comment xml:lang="cs">obrázek WMF</comment>
+  <comment xml:lang="ca">imatge WMF</comment>
+  <comment xml:lang="bg">Изображение — WMF</comment>
+  <comment xml:lang="be-Latn">Vyjava WMF</comment>
+  <comment xml:lang="be-Cyrl">выява WMF</comment>
+  <comment xml:lang="ar">صورة WMF</comment>
+  <comment xml:lang="af">WMF-beeld</comment>
+  <acronym>WMF</acronym>
+  <expanded-acronym>Windows Metafile</expanded-acronym>
+  <glob pattern="*.wmf"/>
+  <alias type="image/x-wmf"/>
+  <alias type="image/x-win-metafile"/>
+  <alias type="application/x-wmf"/>
+  <alias type="application/wmf"/>
+  <alias type="application/x-msmetafile"/>
+</mime-type>

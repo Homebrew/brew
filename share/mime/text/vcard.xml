@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="text/vcard">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Electronic business card</comment>
+  <comment xml:lang="uk">електронна бізнес-картка</comment>
+  <comment xml:lang="sv">Elektroniskt visitkort</comment>
+  <comment xml:lang="ru">Электронная визитная карточка</comment>
+  <comment xml:lang="pl">Wizytówka elektroniczna</comment>
+  <comment xml:lang="ja">電子名刺</comment>
+  <comment xml:lang="it">Biglietto da visita elettronico</comment>
+  <comment xml:lang="es">tarjeta de visita electrónica</comment>
+  <comment xml:lang="de">Elektronische Visitenkarte</comment>
+  <comment xml:lang="be-Cyrl">электронная візітная картка</comment>
+  <alias type="text/directory"/>
+  <alias type="text/x-vcard"/>
+  <sub-class-of type="text/plain"/>
+  <glob pattern="*.vcard"/>
+  <glob pattern="*.vcf"/>
+  <glob pattern="*.vct"/>
+  <glob pattern="*.gcrd"/>
+</mime-type>

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="image/x-compressed-xcf">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Compressed GIMP image</comment>
+  <comment xml:lang="uk">стиснене зображення GIMP</comment>
+  <comment xml:lang="sv">Komprimerad GIMP-bild</comment>
+  <comment xml:lang="ru">Сжатое изображение GIMP</comment>
+  <comment xml:lang="pl">Skompresowany obraz GIMP</comment>
+  <comment xml:lang="ja">GIMP画像（圧縮）</comment>
+  <comment xml:lang="it">Immagine GIMP compressa</comment>
+  <comment xml:lang="gl">Imaxe GIMP comprimida</comment>
+  <comment xml:lang="eu">GIMP irudi konprimatua</comment>
+  <comment xml:lang="es">imagen de GIMP comprimida</comment>
+  <comment xml:lang="de">Komprimiertes GIMP-Bild</comment>
+  <comment xml:lang="be-Cyrl">сціснутая выява GIMP</comment>
+  <glob pattern="*.xcf.gz"/>
+  <glob pattern="*.xcf.bz2"/>
+</mime-type>

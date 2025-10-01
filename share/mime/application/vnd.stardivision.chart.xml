@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/vnd.stardivision.chart">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>StarChart chart</comment>
+  <comment xml:lang="zh-Hant-TW">StarChart 圖表</comment>
+  <comment xml:lang="zh-Hans-CN">StarCalc 图表</comment>
+  <comment xml:lang="vi">Đồ thị StarChart</comment>
+  <comment xml:lang="uk">діаграма StarChart</comment>
+  <comment xml:lang="tr">StarChart çizgesi</comment>
+  <comment xml:lang="sv">StarChart-diagram</comment>
+  <comment xml:lang="sr-Cyrl">График Стар Графика</comment>
+  <comment xml:lang="sq">grafik StarChart</comment>
+  <comment xml:lang="sl">Datoteka grafikona StarChart</comment>
+  <comment xml:lang="si">StarChart සටහන</comment>
+  <comment xml:lang="sk">Graf StarChart</comment>
+  <comment xml:lang="ru">Диаграмма StarChart</comment>
+  <comment xml:lang="ro">Diagramă StarChart</comment>
+  <comment xml:lang="pt-BR">Gráfico do StarChart</comment>
+  <comment xml:lang="pt">gráfico do StarChart</comment>
+  <comment xml:lang="pl">Wykres StarChart</comment>
+  <comment xml:lang="oc">grafic StarChart</comment>
+  <comment xml:lang="nn">StarChart-graf</comment>
+  <comment xml:lang="nl">StarChart-kaart</comment>
+  <comment xml:lang="nb">StarChart graf</comment>
+  <comment xml:lang="ms">Carta StarChart</comment>
+  <comment xml:lang="lv">StarChart diagramma</comment>
+  <comment xml:lang="lt">StarChart diagrama</comment>
+  <comment xml:lang="ko">StarCalc 표</comment>
+  <comment xml:lang="kk-Cyrl">StarChart диаграммасы</comment>
+  <comment xml:lang="ja">StarChart チャート</comment>
+  <comment xml:lang="it">Grafico StarChart</comment>
+  <comment xml:lang="is">StarChart kort</comment>
+  <comment xml:lang="id">Bagan StarChart</comment>
+  <comment xml:lang="ia">Graphico StarChart</comment>
+  <comment xml:lang="hu">StarChart-grafikon</comment>
+  <comment xml:lang="hr">StarChart grafikon</comment>
+  <comment xml:lang="he">טבלת StarChart</comment>
+  <comment xml:lang="gl">gráfica de StarChart</comment>
+  <comment xml:lang="ga">cairt StarChart</comment>
+  <comment xml:lang="fur">grafic StarChart</comment>
+  <comment xml:lang="fr">graphique StarChart</comment>
+  <comment xml:lang="fo">StarChart strikumynd</comment>
+  <comment xml:lang="fi">StarChart-kaavio</comment>
+  <comment xml:lang="eu">StarChart diagrama</comment>
+  <comment xml:lang="es">gráfico de StarChart</comment>
+  <comment xml:lang="eo">StarChart-diagramo</comment>
+  <comment xml:lang="en-GB">StarChart chart</comment>
+  <comment xml:lang="el">Γράφημα StarChart</comment>
+  <comment xml:lang="de">StarChart-Diagramm</comment>
+  <comment xml:lang="da">StarChart-diagram</comment>
+  <comment xml:lang="cy">Siart StarChart</comment>
+  <comment xml:lang="cs">graf StarChart</comment>
+  <comment xml:lang="ca">diagrama de StarChart</comment>
+  <comment xml:lang="bg">Диаграма — StarChart</comment>
+  <comment xml:lang="be-Latn">Dyjahrama StarChart</comment>
+  <comment xml:lang="be-Cyrl">дыяграма StarChart</comment>
+  <comment xml:lang="az">StarChart cədvəli</comment>
+  <comment xml:lang="ar">مخطط StarChart</comment>
+  <comment xml:lang="af">StarChart-grafiek</comment>
+  <generic-icon name="x-office-spreadsheet"/>
+  <glob pattern="*.sds"/>
+</mime-type>

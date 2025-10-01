@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/mathematica">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Mathematica Notebook file</comment>
+  <comment xml:lang="zh-Hant-TW">Mathematica 筆記本檔案</comment>
+  <comment xml:lang="zh-Hans-CN">Mathematica 笔记本文件</comment>
+  <comment xml:lang="uk">файл нотатника Mathematica</comment>
+  <comment xml:lang="tr">Mathematica Notebook dosyası</comment>
+  <comment xml:lang="sv">Mathematica-anteckningsboksfil</comment>
+  <comment xml:lang="sq">kartelë Mathematica Notebook</comment>
+  <comment xml:lang="sl">Datoteka Mathematica Notebook</comment>
+  <comment xml:lang="si">Mathematica Notebook ගොනුව</comment>
+  <comment xml:lang="ru">Файл Mathematica Notebook</comment>
+  <comment xml:lang="pt-BR">Arquivo Notebook do Mathematica</comment>
+  <comment xml:lang="pt">ficheiro de Mathematica Notebook do Wolfram</comment>
+  <comment xml:lang="pl">Plik notatnika Mathematica</comment>
+  <comment xml:lang="nl">Mathematica Notebook-bestand</comment>
+  <comment xml:lang="ko">Mathematica 기록장 파일</comment>
+  <comment xml:lang="kk-Cyrl">Mathematica блокнот файлы</comment>
+  <comment xml:lang="ka">Mathematica Notebook-ის ფაილი</comment>
+  <comment xml:lang="ja">Mathematica ノートブックファイル</comment>
+  <comment xml:lang="it">File Mathematica Notebook</comment>
+  <comment xml:lang="is">Mathematica Notebook skrá</comment>
+  <comment xml:lang="id">Berkas Mathematica Notebook</comment>
+  <comment xml:lang="hu">Mathematica munkafüzetfájl</comment>
+  <comment xml:lang="hr">Mathematica Notebook datoteka</comment>
+  <comment xml:lang="he">קובץ מחברת של Mathematica</comment>
+  <comment xml:lang="gl">Ficheiro de caderno de Mathematica</comment>
+  <comment xml:lang="fr">fichier carnet Mathematica</comment>
+  <comment xml:lang="fi">Mathematica Notebook -tiedosto</comment>
+  <comment xml:lang="eu">Mathematica Notebook fitxategia</comment>
+  <comment xml:lang="es">archivo de Mathematica Notebook</comment>
+  <comment xml:lang="en-GB">Mathematica Notebook file</comment>
+  <comment xml:lang="de">Mathematica-Notebook-Datei</comment>
+  <comment xml:lang="da">Mathematica Notebook-fil</comment>
+  <comment xml:lang="ca">llibreta de Mathematica Notebook</comment>
+  <comment xml:lang="bg">Скицник — Mathematica</comment>
+  <comment xml:lang="be-Cyrl">файл Mathematica Notebook</comment>
+  <comment xml:lang="ar">ملف دفتر ماثماتيكا</comment>
+  <sub-class-of type="text/plain"/>
+  <generic-icon name="x-office-document"/>
+  <glob pattern="*.nb"/>
+  <alias type="application/x-mathematica"/>
+</mime-type>

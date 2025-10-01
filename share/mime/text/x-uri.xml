@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="text/x-uri">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Resource location</comment>
+  <comment xml:lang="uk">розташування ресурсу</comment>
+  <comment xml:lang="sv">Resursplats</comment>
+  <comment xml:lang="ru">Расположение ресурса</comment>
+  <comment xml:lang="pl">Położenie zasobu</comment>
+  <comment xml:lang="it">Posizione risorsa</comment>
+  <comment xml:lang="gl">Localización de recurso</comment>
+  <comment xml:lang="eu">Baliabideen kokalekua</comment>
+  <comment xml:lang="es">ubicación de recurso</comment>
+  <comment xml:lang="de">Ressourcenort</comment>
+  <comment xml:lang="be-Cyrl">размяшчэнне рэсурсу</comment>
+  <sub-class-of type="text/plain"/>
+</mime-type>

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/font-tdpfr">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>TDPFR font</comment>
+  <comment xml:lang="uk">шрифт TDPFR</comment>
+  <comment xml:lang="sv">TDPFR-typsnitt</comment>
+  <comment xml:lang="ru">Шрифт TDPFR</comment>
+  <comment xml:lang="pt-BR">Fonte TDPFR</comment>
+  <comment xml:lang="pl">Czcionka TDPFR</comment>
+  <comment xml:lang="it">Carattere TDPFR</comment>
+  <comment xml:lang="gl">Tipo de letra TDPFR</comment>
+  <comment xml:lang="eu">TDPFR letra-tipoa</comment>
+  <comment xml:lang="es">tipo de letra TDPFR</comment>
+  <comment xml:lang="de">TDPFR-Schrift</comment>
+  <comment xml:lang="be-Cyrl">шрыфт TDPFR</comment>
+  <acronym>TDPFR</acronym>
+  <expanded-acronym>TrueDoc Portable Font Resource</expanded-acronym>
+  <generic-icon name="font-x-generic"/>
+  <glob pattern="*.pfr"/>
+  <alias type="application/vnd.truedoc"/>
+</mime-type>

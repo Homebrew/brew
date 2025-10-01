@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="text/x-reject">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Rejected patch</comment>
+  <comment xml:lang="uk">відкинута латка</comment>
+  <comment xml:lang="sv">Avvisad programfix</comment>
+  <comment xml:lang="ru">Отклонённый патч</comment>
+  <comment xml:lang="pl">Odrzucona łata</comment>
+  <comment xml:lang="it">Patch rifiutata</comment>
+  <comment xml:lang="gl">Parche rexeitado</comment>
+  <comment xml:lang="eu">Baztertutako adabakia</comment>
+  <comment xml:lang="es">parche rechazado</comment>
+  <comment xml:lang="de">Abgelehnter Patch</comment>
+  <comment xml:lang="be-Cyrl">адхілены патч</comment>
+  <sub-class-of type="text/plain"/>
+  <generic-icon name="text-x-generic"/>
+  <alias type="application/x-reject"/>
+  <glob pattern="*.rej"/>
+</mime-type>

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/vnd.dart">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Dart source code</comment>
+  <comment xml:lang="zh-Hant-TW">Dart 原始碼</comment>
+  <comment xml:lang="zh-Hans-CN">Dart 源代码</comment>
+  <comment xml:lang="uk">початковий код мовою Dart</comment>
+  <comment xml:lang="tr">Dart kaynak kodu</comment>
+  <comment xml:lang="sv">Dart-källkod</comment>
+  <comment xml:lang="sl">Izvorna koda Dart</comment>
+  <comment xml:lang="si">ඩාර්ට් මූලාශ්‍ර කේතය</comment>
+  <comment xml:lang="ru">Исходный код Dart</comment>
+  <comment xml:lang="pt-BR">Código-fonte Dart</comment>
+  <comment xml:lang="pl">Kod źródłowy Dart</comment>
+  <comment xml:lang="nl">Dart-broncode</comment>
+  <comment xml:lang="ko">Dart 소스 코드</comment>
+  <comment xml:lang="kk-Cyrl">Dart бастапқы коды</comment>
+  <comment xml:lang="ja">Dart ソースコード</comment>
+  <comment xml:lang="it">Codice sorgente Dart</comment>
+  <comment xml:lang="hr">Dart izvorni kôd</comment>
+  <comment xml:lang="he">קוד מקור ב־Dart</comment>
+  <comment xml:lang="gl">Código fonte Dart</comment>
+  <comment xml:lang="fi">Dart-lähdekoodi</comment>
+  <comment xml:lang="eu">Dart iturburu-kodea</comment>
+  <comment xml:lang="es">código fuente Dart</comment>
+  <comment xml:lang="en-GB">Dart source code</comment>
+  <comment xml:lang="de">Dart-Quelltext</comment>
+  <comment xml:lang="be-Cyrl">зыходны код Dart</comment>
+  <comment xml:lang="ar">شفرة مصدر Dart</comment>
+  <sub-class-of type="text/plain"/>
+  <glob pattern="*.dart"/>
+  <alias type="text/x-dart"/>
+</mime-type>

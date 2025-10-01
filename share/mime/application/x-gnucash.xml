@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-gnucash">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>GnuCash financial data</comment>
+  <comment xml:lang="zh-Hant-TW">GnuCash 財務資料</comment>
+  <comment xml:lang="zh-Hans-CN">GnuCash 财务数据</comment>
+  <comment xml:lang="vi">Dữ liệu tài chính GnuCash</comment>
+  <comment xml:lang="uk">фінансові дані GnuCash</comment>
+  <comment xml:lang="tr">GnuCash mali verisi</comment>
+  <comment xml:lang="sv">GnuCash-finansdata</comment>
+  <comment xml:lang="sr-Cyrl">финансијски подаци Гнуовог новца</comment>
+  <comment xml:lang="sq">të dhëna financiare GnuCash</comment>
+  <comment xml:lang="sl">Datoteka finančnih podatkov GnuCash</comment>
+  <comment xml:lang="si">GnuCash මූල්ය දත්ත</comment>
+  <comment xml:lang="sk">Finančné údaje GnuCash</comment>
+  <comment xml:lang="ru">Финансовые данные GnuCash</comment>
+  <comment xml:lang="ro">Date financiare GnuCash</comment>
+  <comment xml:lang="pt-BR">Dados financeiros do GnuCash</comment>
+  <comment xml:lang="pt">dados financeiros GnuCash</comment>
+  <comment xml:lang="pl">Dane finansowe GnuCash</comment>
+  <comment xml:lang="oc">donadas financières GnuCash</comment>
+  <comment xml:lang="nl">GnuCash financiële gegevens</comment>
+  <comment xml:lang="lv">GnuCash finanšu dati</comment>
+  <comment xml:lang="lt">GnuCash finansiniai duomenys</comment>
+  <comment xml:lang="ko">GnuCash 재정 자료</comment>
+  <comment xml:lang="kk-Cyrl">GnuCash қаржы ақпараты</comment>
+  <comment xml:lang="ja">GnuCash 会計データ</comment>
+  <comment xml:lang="it">Dati finanziari GnuCash</comment>
+  <comment xml:lang="is">GnuCash fjárhagsgögn</comment>
+  <comment xml:lang="id">Data keuangan GnuCash</comment>
+  <comment xml:lang="ia">Datos financiari GnuCash</comment>
+  <comment xml:lang="hu">GnuCash pénzügyi adatok</comment>
+  <comment xml:lang="hr">GnuCash financijski podaci</comment>
+  <comment xml:lang="he">מידע כלכלי של GnuCash</comment>
+  <comment xml:lang="gl">datos financeiros de GNUCash</comment>
+  <comment xml:lang="ga">sonraí airgeadúla GnuCash</comment>
+  <comment xml:lang="fur">dâts finanziaris GnuCash</comment>
+  <comment xml:lang="fr">données financières GnuCash</comment>
+  <comment xml:lang="fo">GnuCash fíggjarligar dátur</comment>
+  <comment xml:lang="fi">GnuCash-taloustiedot</comment>
+  <comment xml:lang="eu">GnuCash finantzako datuak</comment>
+  <comment xml:lang="es">datos financieros de GnuCash</comment>
+  <comment xml:lang="en-GB">GnuCash financial data</comment>
+  <comment xml:lang="el">Οικονομικά στοιχεία GnuCash</comment>
+  <comment xml:lang="de">GnuCash-Finanzdaten</comment>
+  <comment xml:lang="da">Finansielle data til GnuCash</comment>
+  <comment xml:lang="cs">finanční data GnuCash</comment>
+  <comment xml:lang="ca">dades financeres de GnuCash</comment>
+  <comment xml:lang="bg">Финансови данни — GnuCash</comment>
+  <comment xml:lang="be-Cyrl">фінансавыя даныя GnuCash</comment>
+  <comment xml:lang="ar">بيانات مالية GnuCash</comment>
+  <comment xml:lang="af">GnuCash finansiële data</comment>
+  <generic-icon name="x-office-spreadsheet"/>
+  <glob pattern="*.gnucash"/>
+  <glob pattern="*.gnc"/>
+  <glob pattern="*.xac"/>
+</mime-type>

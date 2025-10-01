@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="video/x-anim">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>ANIM animation</comment>
+  <comment xml:lang="zh-Hant-TW">ANIM 動畫</comment>
+  <comment xml:lang="zh-Hans-CN">ANIM 动画</comment>
+  <comment xml:lang="vi">Hoạt ảnh ANIM</comment>
+  <comment xml:lang="uk">анімація ANIM</comment>
+  <comment xml:lang="tr">ANIM canlandırması</comment>
+  <comment xml:lang="sv">ANIM-animering</comment>
+  <comment xml:lang="sr-Cyrl">АНИМ анимација</comment>
+  <comment xml:lang="sq">animacion ANIM</comment>
+  <comment xml:lang="sl">Datoteka animacije ANIM</comment>
+  <comment xml:lang="si">ANIM සජීවිකරණය</comment>
+  <comment xml:lang="sk">Animácia ANIM</comment>
+  <comment xml:lang="ru">Анимация ANIM</comment>
+  <comment xml:lang="ro">Animație ANIM</comment>
+  <comment xml:lang="pt-BR">Animação ANIM</comment>
+  <comment xml:lang="pt">animação ANIM</comment>
+  <comment xml:lang="pl">Plik animacji ANIM</comment>
+  <comment xml:lang="oc">animacion ANIM</comment>
+  <comment xml:lang="nn">ANIM-animasjon</comment>
+  <comment xml:lang="nl">ANIM-animatie</comment>
+  <comment xml:lang="nb">ANIM-animasjon</comment>
+  <comment xml:lang="ms">Animasi ANIM</comment>
+  <comment xml:lang="lv">ANIM animācija</comment>
+  <comment xml:lang="lt">ANIM animacija</comment>
+  <comment xml:lang="ko">ANIM 동화상</comment>
+  <comment xml:lang="kk-Cyrl">ANIM анимациясы</comment>
+  <comment xml:lang="ka">ANIM ანიმაცია</comment>
+  <comment xml:lang="ja">ANIM アニメーション</comment>
+  <comment xml:lang="it">Animazione ANIM</comment>
+  <comment xml:lang="is">ANIM hreyfimynd</comment>
+  <comment xml:lang="id">Animasi ANIM</comment>
+  <comment xml:lang="ia">Animation ANIM</comment>
+  <comment xml:lang="hu">ANIM-animáció</comment>
+  <comment xml:lang="hr">ANIM animacija</comment>
+  <comment xml:lang="he">הנפשת ANIM</comment>
+  <comment xml:lang="gl">animación ANIM</comment>
+  <comment xml:lang="ga">beochan ANIM</comment>
+  <comment xml:lang="fur">animazion ANIM</comment>
+  <comment xml:lang="fr">animation ANIM</comment>
+  <comment xml:lang="fo">ANIM teknmyndagerð</comment>
+  <comment xml:lang="fi">ANIM-animaatio</comment>
+  <comment xml:lang="eu">ANIM animazioa</comment>
+  <comment xml:lang="es">animación ANIM</comment>
+  <comment xml:lang="eo">ANIM-animacio</comment>
+  <comment xml:lang="en-GB">ANIM animation</comment>
+  <comment xml:lang="el">Κινούμενο σχέδιο ANIM</comment>
+  <comment xml:lang="de">ANIM-Animation</comment>
+  <comment xml:lang="da">ANIM-animation</comment>
+  <comment xml:lang="cy">Animeiddiad ANIM</comment>
+  <comment xml:lang="cs">animace ANIM</comment>
+  <comment xml:lang="ca">animació ANIM</comment>
+  <comment xml:lang="bg">Анимация — ANIM</comment>
+  <comment xml:lang="be-Latn">Animacyja ANIM</comment>
+  <comment xml:lang="be-Cyrl">анімацыя ANIM</comment>
+  <comment xml:lang="az">ANIM animasiyası</comment>
+  <comment xml:lang="ar">تحريكة ANIM</comment>
+  <comment xml:lang="af">ANIM-animasie</comment>
+  <glob pattern="*.anim[1-9j]"/>
+</mime-type>

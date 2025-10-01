@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="x-content/win32-software">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Windows software</comment>
+  <comment xml:lang="zh-Hant-TW">Windows 軟體</comment>
+  <comment xml:lang="zh-Hans-CN">Windows 软件</comment>
+  <comment xml:lang="uk">програмне забезпечення Windows</comment>
+  <comment xml:lang="tr">Windows yazılımı</comment>
+  <comment xml:lang="sv">Windows-program</comment>
+  <comment xml:lang="sr-Cyrl">Виндоузов софтвер</comment>
+  <comment xml:lang="sq">software Windows</comment>
+  <comment xml:lang="sl">Programska oprema za okolje Windows</comment>
+  <comment xml:lang="si">වින්ඩෝස් මෘදුකාංග</comment>
+  <comment xml:lang="sk">Softvér Windows</comment>
+  <comment xml:lang="ru">Программа Windows</comment>
+  <comment xml:lang="ro">Software Windows</comment>
+  <comment xml:lang="pt-BR">Programa do Windows</comment>
+  <comment xml:lang="pt">programa Windows</comment>
+  <comment xml:lang="pl">Oprogramowanie systemu Windows</comment>
+  <comment xml:lang="oc">logicial Windows</comment>
+  <comment xml:lang="nl">Windows-software</comment>
+  <comment xml:lang="lv">Windows programmatūra</comment>
+  <comment xml:lang="lt">Windows programinė įranga</comment>
+  <comment xml:lang="ko">Windows 소프트웨어</comment>
+  <comment xml:lang="kk-Cyrl">Windows бағдарламасы</comment>
+  <comment xml:lang="ka">Windows-ის პროგრამა</comment>
+  <comment xml:lang="ja">Windows ソフトウェア</comment>
+  <comment xml:lang="it">Software Windows</comment>
+  <comment xml:lang="is">Windows hugbúnaður</comment>
+  <comment xml:lang="id">Piranti lunak Windows</comment>
+  <comment xml:lang="ia">Software Windows</comment>
+  <comment xml:lang="hu">Windows-szoftver</comment>
+  <comment xml:lang="hr">Windows softver</comment>
+  <comment xml:lang="he">תכנה ל־Windows</comment>
+  <comment xml:lang="gl">Software de Windows</comment>
+  <comment xml:lang="ga">bogearraí Windows</comment>
+  <comment xml:lang="fur">software Windows</comment>
+  <comment xml:lang="fr">logiciel Windows</comment>
+  <comment xml:lang="fo">Windows ritbúnaður</comment>
+  <comment xml:lang="fi">Windows-ohjelmisto</comment>
+  <comment xml:lang="eu">Windows-eko softwarea</comment>
+  <comment xml:lang="es">software de Windows</comment>
+  <comment xml:lang="en-GB">Windows software</comment>
+  <comment xml:lang="el">Λογισμικό Windows</comment>
+  <comment xml:lang="de">Windows-Software</comment>
+  <comment xml:lang="da">Windowsprogram</comment>
+  <comment xml:lang="cs">software systému Windows</comment>
+  <comment xml:lang="ca">programari de Windows</comment>
+  <comment xml:lang="bg">Софтуер — Windows</comment>
+  <comment xml:lang="be-Cyrl">ПЗ Windows</comment>
+  <comment xml:lang="ar">برنامج ويندوز</comment>
+  <comment xml:lang="af">Windows-sagteware</comment>
+  <sub-class-of type="x-content/software"/>
+</mime-type>

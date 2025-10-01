@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="font/woff2">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>WOFF2 font</comment>
+  <comment xml:lang="zh-Hant-TW">WOFF2 字型</comment>
+  <comment xml:lang="zh-Hans-CN">WOFF2 字体</comment>
+  <comment xml:lang="uk">шрифт WOFF2</comment>
+  <comment xml:lang="tr">WOFF2 yazı tipi</comment>
+  <comment xml:lang="sv">WOFF2-typsnitt</comment>
+  <comment xml:lang="sq">shkronja WOFF2</comment>
+  <comment xml:lang="sl">Pisava WOFF2</comment>
+  <comment xml:lang="si">WOFF2 අකුරු</comment>
+  <comment xml:lang="sk">Písmo WOFF2</comment>
+  <comment xml:lang="ru">Шрифт WOFF2</comment>
+  <comment xml:lang="pt-BR">Fonte WOFF2</comment>
+  <comment xml:lang="pt">letra WOFF2</comment>
+  <comment xml:lang="pl">Czcionka WOFF2</comment>
+  <comment xml:lang="oc">poliça WOFF2</comment>
+  <comment xml:lang="nl">WOFF2-lettertype</comment>
+  <comment xml:lang="lt">WOFF2 šriftas</comment>
+  <comment xml:lang="ko">WOFF2 글꼴</comment>
+  <comment xml:lang="kk-Cyrl">WOFF2 қарібі</comment>
+  <comment xml:lang="ja">WOFF2 フォント</comment>
+  <comment xml:lang="it">Carattere WOFF2</comment>
+  <comment xml:lang="is">WOFF2 letur</comment>
+  <comment xml:lang="id">Fonta WOFF2</comment>
+  <comment xml:lang="hu">WOFF2 betűkészlet</comment>
+  <comment xml:lang="hr">WOFF2 font</comment>
+  <comment xml:lang="he">גופן WOFF2</comment>
+  <comment xml:lang="gl">Tipo de letra WOFF2</comment>
+  <comment xml:lang="ga">cló WOFF2</comment>
+  <comment xml:lang="fur">caratar WOFF2</comment>
+  <comment xml:lang="fr">police WOFF2</comment>
+  <comment xml:lang="fi">WOFF2-fontti</comment>
+  <comment xml:lang="eu">WOFF2 letra-tipoa</comment>
+  <comment xml:lang="es">tipo de letra WOFF2</comment>
+  <comment xml:lang="en-GB">WOFF2 font</comment>
+  <comment xml:lang="de">WOFF2-Schrift</comment>
+  <comment xml:lang="da">WOFF2-skrifttype</comment>
+  <comment xml:lang="cs">font WOFF2</comment>
+  <comment xml:lang="ca">lletra WOFF2</comment>
+  <comment xml:lang="bg">Шрифт — WOFF2</comment>
+  <comment xml:lang="be-Cyrl">шрыфт WOFF 2</comment>
+  <comment xml:lang="ast">Fonte WOFF2</comment>
+  <comment xml:lang="ar">خط WOFF2</comment>
+  <comment xml:lang="af">WOFF2-skriftipe</comment>
+  <acronym>WOFF2</acronym>
+  <expanded-acronym>Web Open Font Format 2.0</expanded-acronym>
+  <generic-icon name="font-x-generic"/>
+  <glob pattern="*.woff2"/>
+</mime-type>

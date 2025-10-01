@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-alz">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Alzip archive</comment>
+  <comment xml:lang="zh-Hant-TW">Alzip 封存檔</comment>
+  <comment xml:lang="zh-Hans-CN">Alzip 归档文件</comment>
+  <comment xml:lang="vi">Kho nén Alzip</comment>
+  <comment xml:lang="uk">архів Alzip</comment>
+  <comment xml:lang="tr">Alzip arşivi</comment>
+  <comment xml:lang="sv">Alzip-arkiv</comment>
+  <comment xml:lang="sr-Cyrl">Алзип архива</comment>
+  <comment xml:lang="sq">arkiv Alzip</comment>
+  <comment xml:lang="sl">Datoteka arhiva Alzip</comment>
+  <comment xml:lang="si">Alzip සංරක්ෂිතය</comment>
+  <comment xml:lang="sk">Archív Alzip</comment>
+  <comment xml:lang="ru">Архив ALZIP</comment>
+  <comment xml:lang="ro">Arhivă Alzip</comment>
+  <comment xml:lang="pt-BR">Pacote Alzip</comment>
+  <comment xml:lang="pt">arquivo Alzip</comment>
+  <comment xml:lang="pl">Archiwum alzip</comment>
+  <comment xml:lang="oc">archiu alzip</comment>
+  <comment xml:lang="nn">Alzip-arkiv</comment>
+  <comment xml:lang="nl">Alzip-archief</comment>
+  <comment xml:lang="nb">Alzip-arkiv</comment>
+  <comment xml:lang="lv">Alzip arhīvs</comment>
+  <comment xml:lang="lt">Alzip archyvas</comment>
+  <comment xml:lang="ko">알집 압축 파일</comment>
+  <comment xml:lang="kk-Cyrl">Alzip архиві</comment>
+  <comment xml:lang="ka">Alzip არქივი</comment>
+  <comment xml:lang="ja">Alzip アーカイブ</comment>
+  <comment xml:lang="it">Archivio Alzip</comment>
+  <comment xml:lang="is">Alzip safnskrá</comment>
+  <comment xml:lang="id">Arsip Alzip</comment>
+  <comment xml:lang="ia">Archivo Alzip</comment>
+  <comment xml:lang="hu">Alzip archívum</comment>
+  <comment xml:lang="hr">Alzip arhiva</comment>
+  <comment xml:lang="he">ארכיון Alzip</comment>
+  <comment xml:lang="gl">arquivo Alzip</comment>
+  <comment xml:lang="ga">cartlann Alzip</comment>
+  <comment xml:lang="fur">archivi Alzip</comment>
+  <comment xml:lang="fr">archive alzip</comment>
+  <comment xml:lang="fo">Alsip skjalasavn</comment>
+  <comment xml:lang="fi">Alzip-arkisto</comment>
+  <comment xml:lang="eu">Alzip artxiboa</comment>
+  <comment xml:lang="es">archivador Alzip</comment>
+  <comment xml:lang="eo">Alzip-arkivo</comment>
+  <comment xml:lang="en-GB">Alzip archive</comment>
+  <comment xml:lang="el">Συμπιεσμένο αρχείο Alzip</comment>
+  <comment xml:lang="de">ALZip-Archiv</comment>
+  <comment xml:lang="da">Alzip-arkiv</comment>
+  <comment xml:lang="cs">archiv Alzip</comment>
+  <comment xml:lang="ca">arxiu Alzip</comment>
+  <comment xml:lang="bg">Архив — alzip</comment>
+  <comment xml:lang="be-Latn">Archiŭ Alzip</comment>
+  <comment xml:lang="be-Cyrl">архіў Alzip</comment>
+  <comment xml:lang="ar">أرشيف Alzip</comment>
+  <comment xml:lang="af">Alzip-argief</comment>
+  <generic-icon name="package-x-generic"/>
+  <glob pattern="*.alz"/>
+</mime-type>

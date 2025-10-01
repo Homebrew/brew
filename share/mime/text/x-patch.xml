@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="text/x-patch">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Differences between files</comment>
+  <comment xml:lang="uk">різниця між файлами</comment>
+  <comment xml:lang="sv">Skillnader mellan filer</comment>
+  <comment xml:lang="ru">Различия между файлами</comment>
+  <comment xml:lang="pl">Różnica pomiędzy plikami</comment>
+  <comment xml:lang="ja">差分文書</comment>
+  <comment xml:lang="it">Differenze tra file</comment>
+  <comment xml:lang="gl">Diferenzas entre ficheiros</comment>
+  <comment xml:lang="eu">Fitxategien arteko diferentziak</comment>
+  <comment xml:lang="es">diferencias entre archivos</comment>
+  <comment xml:lang="de">Unterschiede zwischen Dateien</comment>
+  <comment xml:lang="be-Cyrl">адрозненні паміж файламі</comment>
+  <alias type="text/x-diff"/>
+  <sub-class-of type="text/plain"/>
+  <glob pattern="*.diff"/>
+  <glob pattern="*.patch"/>
+</mime-type>

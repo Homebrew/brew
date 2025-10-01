@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-cpio">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>CPIO archive</comment>
+  <comment xml:lang="zh-Hant-TW">CPIO 封存檔</comment>
+  <comment xml:lang="zh-Hans-CN">CPIO 归档文件</comment>
+  <comment xml:lang="vi">Kho nén CPIO</comment>
+  <comment xml:lang="uk">архів CPIO</comment>
+  <comment xml:lang="tr">CPIO arşivi</comment>
+  <comment xml:lang="sv">CPIO-arkiv</comment>
+  <comment xml:lang="sr-Cyrl">ЦПИО архива</comment>
+  <comment xml:lang="sq">arkiv CPIO</comment>
+  <comment xml:lang="sl">Datoteka arhiva CPIO</comment>
+  <comment xml:lang="si">CPIO ලේඛනාගාරය</comment>
+  <comment xml:lang="sk">Archív CPIO</comment>
+  <comment xml:lang="ru">Архив CPIO</comment>
+  <comment xml:lang="ro">Arhivă CPIO</comment>
+  <comment xml:lang="pt-BR">Pacote CPIO</comment>
+  <comment xml:lang="pt">arquivo CPIO</comment>
+  <comment xml:lang="pl">Archiwum CPIO</comment>
+  <comment xml:lang="oc">archiu CPIO</comment>
+  <comment xml:lang="nn">CPIO-arkiv</comment>
+  <comment xml:lang="nl">CPIO-archief</comment>
+  <comment xml:lang="nb">CPIO-arkiv</comment>
+  <comment xml:lang="ms">Arkib CPIO</comment>
+  <comment xml:lang="lv">CPIO arhīvs</comment>
+  <comment xml:lang="lt">CPIO archyvas</comment>
+  <comment xml:lang="ko">CPIO 묶음 파일</comment>
+  <comment xml:lang="kk-Cyrl">CPIO архиві</comment>
+  <comment xml:lang="ka">CPIO არქივი</comment>
+  <comment xml:lang="ja">CPIO アーカイブ</comment>
+  <comment xml:lang="it">Archivio CPIO</comment>
+  <comment xml:lang="is">CPIO safnskrá</comment>
+  <comment xml:lang="id">Arsip CPIO</comment>
+  <comment xml:lang="ia">Archivo CPIO</comment>
+  <comment xml:lang="hu">CPIO-archívum</comment>
+  <comment xml:lang="hr">CPIO arhiva</comment>
+  <comment xml:lang="he">ארכיון CPIO</comment>
+  <comment xml:lang="gl">arquivo CPIO</comment>
+  <comment xml:lang="ga">cartlann CPIO</comment>
+  <comment xml:lang="fur">archivi CPIO</comment>
+  <comment xml:lang="fr">archive CPIO</comment>
+  <comment xml:lang="fo">CPIO skjalasavn</comment>
+  <comment xml:lang="fi">CPIO-arkisto</comment>
+  <comment xml:lang="eu">CPIO artxiboa</comment>
+  <comment xml:lang="es">archivador CPIO</comment>
+  <comment xml:lang="eo">CPIO-arkivo</comment>
+  <comment xml:lang="en-GB">CPIO archive</comment>
+  <comment xml:lang="el">Συμπιεσμένο αρχείο CPIO</comment>
+  <comment xml:lang="de">CPIO-Archiv</comment>
+  <comment xml:lang="da">CPIO-arkiv</comment>
+  <comment xml:lang="cy">Archif CPIO</comment>
+  <comment xml:lang="cs">archiv CPIO</comment>
+  <comment xml:lang="ca">arxiu CPIO</comment>
+  <comment xml:lang="bg">Архив — CPIO</comment>
+  <comment xml:lang="be-Latn">Archiŭ CPIO</comment>
+  <comment xml:lang="be-Cyrl">архіў CPIO</comment>
+  <comment xml:lang="az">CPIO arxivi</comment>
+  <comment xml:lang="ast">Archivu CPIO</comment>
+  <comment xml:lang="ar">أرشيف CPIO</comment>
+  <comment xml:lang="af">CPIO-argief</comment>
+  <generic-icon name="package-x-generic"/>
+  <glob pattern="*.cpio"/>
+</mime-type>

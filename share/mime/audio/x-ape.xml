@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="audio/x-ape">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Monkey's audio</comment>
+  <comment xml:lang="zh-Hant-TW">Monkey's 音訊</comment>
+  <comment xml:lang="zh-Hans-CN">Monkey's Audio 音频</comment>
+  <comment xml:lang="vi">Âm thanh cua Monkey</comment>
+  <comment xml:lang="uk">звук Monkey's</comment>
+  <comment xml:lang="tr">Monkey's sesi</comment>
+  <comment xml:lang="sv">Monkey's audio</comment>
+  <comment xml:lang="sr-Cyrl">Монкијев звук</comment>
+  <comment xml:lang="sq">audio Monkey's</comment>
+  <comment xml:lang="sl">Zvočna datoteka Monkey</comment>
+  <comment xml:lang="si">වඳුරාගේ හඬ පටය</comment>
+  <comment xml:lang="sk">Zvuk Monkey's</comment>
+  <comment xml:lang="ru">Аудио Monkey's</comment>
+  <comment xml:lang="ro">Audio Monkey's</comment>
+  <comment xml:lang="pt-BR">Áudio Monkey's</comment>
+  <comment xml:lang="pt">áudio Monkey</comment>
+  <comment xml:lang="pl">Plik dźwiękowy Monkey's Audio</comment>
+  <comment xml:lang="oc">àudio Monkey</comment>
+  <comment xml:lang="nn">Monkey's Audio-lyd</comment>
+  <comment xml:lang="nl">Monkey's-audio</comment>
+  <comment xml:lang="nb">Monkey's-lyd</comment>
+  <comment xml:lang="lv">Monkey's audio</comment>
+  <comment xml:lang="lt">Monkey garso įrašas</comment>
+  <comment xml:lang="ko">Monkey's 오디오</comment>
+  <comment xml:lang="kk-Cyrl">Monkey аудиосы</comment>
+  <comment xml:lang="ja">Monkey's オーディオ</comment>
+  <comment xml:lang="it">Audio Monkey's</comment>
+  <comment xml:lang="is">Monkey's hljóðskrá</comment>
+  <comment xml:lang="id">Audio Monkey</comment>
+  <comment xml:lang="ia">Audio Monkey's</comment>
+  <comment xml:lang="hu">Monkey hang</comment>
+  <comment xml:lang="hr">Monkey zvučni zapis</comment>
+  <comment xml:lang="he">שמע של Monkey's</comment>
+  <comment xml:lang="gl">son de Monkey</comment>
+  <comment xml:lang="ga">fuaim Monkey's</comment>
+  <comment xml:lang="fur">audio Monkey's</comment>
+  <comment xml:lang="fr">audio Monkey</comment>
+  <comment xml:lang="fo">Monkey's ljóður</comment>
+  <comment xml:lang="fi">Monkey's Audio -ääni</comment>
+  <comment xml:lang="eu">Monkey audioa</comment>
+  <comment xml:lang="es">sonido de Monkey</comment>
+  <comment xml:lang="en-GB">Monkey's audio</comment>
+  <comment xml:lang="el">Ήχος Monkey's</comment>
+  <comment xml:lang="de">Monkey's-Audio</comment>
+  <comment xml:lang="da">Monkey's-lyd</comment>
+  <comment xml:lang="cs">zvuk Monkey's</comment>
+  <comment xml:lang="ca">àudio de Monkey</comment>
+  <comment xml:lang="bg">Аудио — Monkey</comment>
+  <comment xml:lang="be-Latn">Aŭdyjo Monkey's</comment>
+  <comment xml:lang="be-Cyrl">аўдыя Monkey's</comment>
+  <comment xml:lang="ar">صوت Monkey</comment>
+  <glob pattern="*.ape"/>
+</mime-type>

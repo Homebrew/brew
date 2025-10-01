@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="image/x-msod">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Office drawing</comment>
+  <comment xml:lang="zh-Hant-TW">Office 繪圖</comment>
+  <comment xml:lang="zh-Hans-CN">Office 绘图</comment>
+  <comment xml:lang="vi">Bản vẽ Office</comment>
+  <comment xml:lang="uk">малюнок Office</comment>
+  <comment xml:lang="tr">Ofis çizimi</comment>
+  <comment xml:lang="sv">Office-teckning</comment>
+  <comment xml:lang="sr-Cyrl">Канцеларијски цртеж</comment>
+  <comment xml:lang="sq">vizatim Office</comment>
+  <comment xml:lang="sl">Datoteka risbe Office</comment>
+  <comment xml:lang="si">කාර්යාල ඇඳීම</comment>
+  <comment xml:lang="sk">Kresba Office</comment>
+  <comment xml:lang="ru">Рисунок Office</comment>
+  <comment xml:lang="ro">Desen Office</comment>
+  <comment xml:lang="pt-BR">Desenho do Office</comment>
+  <comment xml:lang="pt">desenho Office</comment>
+  <comment xml:lang="pl">Rysunek Office</comment>
+  <comment xml:lang="oc">dessenh Office</comment>
+  <comment xml:lang="nn">Office-teikning</comment>
+  <comment xml:lang="nl">Office-tekening</comment>
+  <comment xml:lang="nb">Office-tegning</comment>
+  <comment xml:lang="lv">Office zīmējums</comment>
+  <comment xml:lang="lt">Office piešinys</comment>
+  <comment xml:lang="ko">오피스 그리기</comment>
+  <comment xml:lang="kk-Cyrl">Office суреті</comment>
+  <comment xml:lang="ja">Office ドロー</comment>
+  <comment xml:lang="it">Disegno Office</comment>
+  <comment xml:lang="is">Office teikning</comment>
+  <comment xml:lang="id">Gambar Office</comment>
+  <comment xml:lang="ia">Designo Office</comment>
+  <comment xml:lang="hu">Office rajz</comment>
+  <comment xml:lang="hr">Office crtež</comment>
+  <comment xml:lang="he">ציור של Office</comment>
+  <comment xml:lang="gl">debuxo de Office</comment>
+  <comment xml:lang="ga">líníocht Office</comment>
+  <comment xml:lang="fur">dissen di Office</comment>
+  <comment xml:lang="fr">dessin Office</comment>
+  <comment xml:lang="fo">Office tekning</comment>
+  <comment xml:lang="fi">Office-piirros</comment>
+  <comment xml:lang="eu">Office marrazkia</comment>
+  <comment xml:lang="es">dibujo de Office</comment>
+  <comment xml:lang="en-GB">Office drawing</comment>
+  <comment xml:lang="el">Σχέδιο Office</comment>
+  <comment xml:lang="de">Office-Zeichnung</comment>
+  <comment xml:lang="da">Officetegning</comment>
+  <comment xml:lang="cs">kresba Office</comment>
+  <comment xml:lang="ca">dibuix d'Office</comment>
+  <comment xml:lang="bg">Чертеж — Office</comment>
+  <comment xml:lang="be-Latn">Ofisny rysunak</comment>
+  <comment xml:lang="be-Cyrl">рысунак Office</comment>
+  <comment xml:lang="ar">تصميم أوفيس</comment>
+  <comment xml:lang="af">Office-tekening</comment>
+  <glob pattern="*.msod"/>
+</mime-type>

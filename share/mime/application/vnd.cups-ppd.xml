@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/vnd.cups-ppd">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>PostScript printer description</comment>
+  <comment xml:lang="uk">опис принтера PostScript</comment>
+  <comment xml:lang="sv">Postscript-skrivarbeskrivning</comment>
+  <comment xml:lang="ru">Описание принтера PostScript</comment>
+  <comment xml:lang="pt-BR">Descrição de impressora PostScript</comment>
+  <comment xml:lang="pl">Opis drukarki PostScript</comment>
+  <comment xml:lang="es">descripción de impresora PostScript</comment>
+  <comment xml:lang="de">PostScript-Druckerbeschreibung</comment>
+  <sub-class-of type="text/plain"/>
+  <glob pattern="*.ppd"/>
+</mime-type>

@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-fictionbook+xml">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>FictionBook document</comment>
+  <comment xml:lang="zh-Hant-TW">FictionBook 文件</comment>
+  <comment xml:lang="zh-Hans-CN">FictionBook 文档</comment>
+  <comment xml:lang="vi">Tài liệu FictionBook</comment>
+  <comment xml:lang="uk">документ FictionBook</comment>
+  <comment xml:lang="tr">FictionBook belgesi</comment>
+  <comment xml:lang="sv">FictionBook-dokument</comment>
+  <comment xml:lang="sr-Cyrl">документ Фикшон Књиге</comment>
+  <comment xml:lang="sq">dokument FictionBook</comment>
+  <comment xml:lang="sl">Dokument FictionBook</comment>
+  <comment xml:lang="si">ප්‍රබන්ධ පොත් ලේඛනය</comment>
+  <comment xml:lang="sk">Dokument FictionBook</comment>
+  <comment xml:lang="ru">Документ FictionBook</comment>
+  <comment xml:lang="ro">Document FictionBook</comment>
+  <comment xml:lang="pt-BR">Documento FictionBook</comment>
+  <comment xml:lang="pt">documento FictionBook</comment>
+  <comment xml:lang="pl">Dokument FictionBook</comment>
+  <comment xml:lang="oc">document FictionBook</comment>
+  <comment xml:lang="nl">FictionBook-document</comment>
+  <comment xml:lang="lv">FictionBook dokuments</comment>
+  <comment xml:lang="lt">FictionBook dokumentas</comment>
+  <comment xml:lang="ko">FictionBook 문서</comment>
+  <comment xml:lang="kk-Cyrl">FictionBook құжаты</comment>
+  <comment xml:lang="ka">FictionBook-ის დოკუმენტი</comment>
+  <comment xml:lang="ja">FictionBook ドキュメント</comment>
+  <comment xml:lang="it">Documento FictionBook</comment>
+  <comment xml:lang="is">FictionBook skjal</comment>
+  <comment xml:lang="id">Dokumen FictionBook</comment>
+  <comment xml:lang="ia">Documento FictionBook</comment>
+  <comment xml:lang="hu">FictionBook-dokumentum</comment>
+  <comment xml:lang="hr">FictionBook dokument</comment>
+  <comment xml:lang="he">מסמך FictionBook</comment>
+  <comment xml:lang="gl">documento de FictionBook</comment>
+  <comment xml:lang="ga">cáipéis FictionBook</comment>
+  <comment xml:lang="fur">document FictionBook</comment>
+  <comment xml:lang="fr">document FictionBook</comment>
+  <comment xml:lang="fo">FictionBook skjal</comment>
+  <comment xml:lang="fi">FictionBook-asiakirja</comment>
+  <comment xml:lang="eu">FictionBook dokumentua</comment>
+  <comment xml:lang="es">documento FictionBook</comment>
+  <comment xml:lang="eo">FictionBook-dokumento</comment>
+  <comment xml:lang="en-GB">FictionBook document</comment>
+  <comment xml:lang="el">Έγγραφο FictionBook</comment>
+  <comment xml:lang="de">FictionBook-Dokument</comment>
+  <comment xml:lang="da">FictionBook-dokument</comment>
+  <comment xml:lang="cs">dokument FictionBook</comment>
+  <comment xml:lang="ca">document FictionBook</comment>
+  <comment xml:lang="bg">Документ — FictionBook</comment>
+  <comment xml:lang="be-Cyrl">дакумент FictionBook</comment>
+  <comment xml:lang="ast">Documentu de FictionBook</comment>
+  <comment xml:lang="ar">مستند FictionBook</comment>
+  <comment xml:lang="af">FictionBook-dokument</comment>
+  <sub-class-of type="application/xml"/>
+  <glob pattern="*.fb2"/>
+  <alias type="application/x-fictionbook"/>
+</mime-type>

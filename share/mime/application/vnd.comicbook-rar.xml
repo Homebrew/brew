@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/vnd.comicbook-rar">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Comic book archive (rar container)</comment>
+  <comment xml:lang="uk">архів коміксів (контейнер rar)</comment>
+  <comment xml:lang="sv">Serietidningsarkiv (rar-behållare)</comment>
+  <comment xml:lang="ru">Архив комиксов (rar-контейнер)</comment>
+  <comment xml:lang="pl">Archiwum komiksu (kontener RAR)</comment>
+  <comment xml:lang="it">Archivio comic book (contenitore rar)</comment>
+  <comment xml:lang="gl">Arquivo de libro de banda deseñada (contedor rar)</comment>
+  <comment xml:lang="es">archivador de libro de historietas (contenedor RAR)</comment>
+  <comment xml:lang="de">Comic-Book-Archiv (rar-Container)</comment>
+  <comment xml:lang="be-Cyrl">архіў comic book (кантэйнер rar)</comment>
+  <sub-class-of type="application/vnd.rar"/>
+  <generic-icon name="x-office-document"/>
+  <glob pattern="*.cbr"/>
+  <alias type="application/x-cbr"/>
+</mime-type>

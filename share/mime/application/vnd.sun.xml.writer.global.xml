@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/vnd.sun.xml.writer.global">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>LibreOffice Writer global document</comment>
+  <comment xml:lang="uk">загальний документ LibreOffice Writer</comment>
+  <comment xml:lang="sv">LibreOffice Writer-globaldokument</comment>
+  <comment xml:lang="ru">Основной документ LibreOffice Writer</comment>
+  <comment xml:lang="pt-BR">Documento global do LibreOffice Writer</comment>
+  <comment xml:lang="pl">Globalny dokument LibreOffice Writer</comment>
+  <comment xml:lang="it">Documento globale LibreOffice Writer</comment>
+  <comment xml:lang="gl">Documento global de LibreOffice Writer</comment>
+  <comment xml:lang="eu">LibreOffice Writer dokumentu globala</comment>
+  <comment xml:lang="es">documento global de LibreOffice Writer</comment>
+  <comment xml:lang="de">LibreOffice Writer-Globaldokument</comment>
+  <comment xml:lang="be-Cyrl">глабальны дакумент LibreOffice Writer</comment>
+  <sub-class-of type="application/zip"/>
+  <generic-icon name="x-office-document"/>
+  <glob pattern="*.sxg"/>
+</mime-type>

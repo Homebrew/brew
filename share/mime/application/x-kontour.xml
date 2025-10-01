@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-kontour">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Kontour drawing</comment>
+  <comment xml:lang="zh-Hant-TW">Kontour 繪圖</comment>
+  <comment xml:lang="zh-Hans-CN">Kontour 绘图</comment>
+  <comment xml:lang="vi">Bản vẽ Kontour</comment>
+  <comment xml:lang="uk">малюнок Kontour</comment>
+  <comment xml:lang="tr">Kontour çizimi</comment>
+  <comment xml:lang="sv">Kontour-teckning</comment>
+  <comment xml:lang="sr-Cyrl">Контуров цртеж</comment>
+  <comment xml:lang="sq">vizatim Kontour</comment>
+  <comment xml:lang="sl">Datoteka risbe Kontour</comment>
+  <comment xml:lang="si">කොන්ටූර් ඇඳීම</comment>
+  <comment xml:lang="sk">Kresba Kontour</comment>
+  <comment xml:lang="ru">Рисунок Kontour</comment>
+  <comment xml:lang="ro">Desen Kontour</comment>
+  <comment xml:lang="pt-BR">Desenho do Kontour</comment>
+  <comment xml:lang="pt">desenho Kontour</comment>
+  <comment xml:lang="pl">Rysunek Kontour</comment>
+  <comment xml:lang="oc">dessenh Kontour</comment>
+  <comment xml:lang="nn">Kontour-teikning</comment>
+  <comment xml:lang="nl">Kontour-tekening</comment>
+  <comment xml:lang="nb">Kontour-tegning</comment>
+  <comment xml:lang="ms">Lukisan Kontour</comment>
+  <comment xml:lang="lv">Kontour zīmējums</comment>
+  <comment xml:lang="lt">Kontour piešinys</comment>
+  <comment xml:lang="ko">Kontour 그림</comment>
+  <comment xml:lang="kk-Cyrl">Kontour суреті</comment>
+  <comment xml:lang="ja">Kontour ドロー</comment>
+  <comment xml:lang="it">Disegno Kontour</comment>
+  <comment xml:lang="is">Kontour teikning</comment>
+  <comment xml:lang="id">Gambar Kontour</comment>
+  <comment xml:lang="ia">Designo Kontour</comment>
+  <comment xml:lang="hu">Kontour-rajz</comment>
+  <comment xml:lang="hr">Kontour crtež</comment>
+  <comment xml:lang="he">ציור Kontour</comment>
+  <comment xml:lang="gl">debuxo de Kontour</comment>
+  <comment xml:lang="ga">líníocht Kontour</comment>
+  <comment xml:lang="fur">dissen Kontour</comment>
+  <comment xml:lang="fr">dessin Kontour</comment>
+  <comment xml:lang="fo">Kontour tekning</comment>
+  <comment xml:lang="fi">Kontour-piirros</comment>
+  <comment xml:lang="eu">Kontour marrazkia</comment>
+  <comment xml:lang="es">dibujo de Kontour</comment>
+  <comment xml:lang="eo">Kontour-grafikaĵo</comment>
+  <comment xml:lang="en-GB">Kontour drawing</comment>
+  <comment xml:lang="el">Σχέδιο Kontour</comment>
+  <comment xml:lang="de">Kontour-Zeichnung</comment>
+  <comment xml:lang="da">Kontourtegning</comment>
+  <comment xml:lang="cs">kresba Kontour</comment>
+  <comment xml:lang="ca">dibuix de Kontour</comment>
+  <comment xml:lang="bg">Чертеж — Kontour</comment>
+  <comment xml:lang="be-Latn">Rysunak Kontour</comment>
+  <comment xml:lang="be-Cyrl">рысунак Kontour</comment>
+  <comment xml:lang="ar">تصميم Kontour</comment>
+  <comment xml:lang="af">Kontour-tekening</comment>
+  <generic-icon name="image-x-generic"/>
+  <glob pattern="*.kon"/>
+</mime-type>

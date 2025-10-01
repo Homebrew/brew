@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-raw-disk-image-xz-compressed">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Raw disk image (XZ-compressed)</comment>
+  <comment xml:lang="zh-Hant-TW">原始磁碟映像檔 (XZ 壓縮)</comment>
+  <comment xml:lang="zh-Hans-CN">原始磁盘映像（XZ 压缩）</comment>
+  <comment xml:lang="uk">простий образ диска (стиснений XZ)</comment>
+  <comment xml:lang="tr">Ham disk görüntüsü (XZ ile sıkıştırılmış)</comment>
+  <comment xml:lang="sv">Rå diskavbild (XZ-komprimerad)</comment>
+  <comment xml:lang="sr-Cyrl">сиров одраз диска (запакована ИксЗ-ом)</comment>
+  <comment xml:lang="sq">pamje disku e papërpunuar (ngjeshur me XZ)</comment>
+  <comment xml:lang="sl">Surovi odtis diska (stisnjeno z XZ)</comment>
+  <comment xml:lang="si">අමු තැටි රූපය (XZ-සම්පීඩිත)</comment>
+  <comment xml:lang="sk">Obraz disku (komprimovaný pomocou XZ)</comment>
+  <comment xml:lang="ru">Необработанный образ диска (сжатый XZ)</comment>
+  <comment xml:lang="pt-BR">Imagem bruta de disco (compactada com XZ)</comment>
+  <comment xml:lang="pt">imagem de disco Raw (compressão XZ)</comment>
+  <comment xml:lang="pl">Surowy obraz dysku (kompresja XZ)</comment>
+  <comment xml:lang="oc">imatge disc Raw (compression XZ)</comment>
+  <comment xml:lang="nl">Onbewerkt schijfkopiebestand (gecomprimeerd met XZ)</comment>
+  <comment xml:lang="ko">RAW 디스크 이미지(XZ 압축)</comment>
+  <comment xml:lang="kk-Cyrl">Шикі диск бейнесі (XZ-мен сығылған)</comment>
+  <comment xml:lang="ja">Raw ディスクイメージ (XZ 圧縮)</comment>
+  <comment xml:lang="it">Immagine disco raw (compressa XZ)</comment>
+  <comment xml:lang="is">Hrá diskmynd (XZ-þjöppuð)</comment>
+  <comment xml:lang="id">Image disk mentah (terkompresi XZ)</comment>
+  <comment xml:lang="ia">Imagine de disco crude (comprimite con XZ)</comment>
+  <comment xml:lang="hu">Nyers lemezkép (XZ tömörítésű)</comment>
+  <comment xml:lang="hr">Osnovna slika diska (XZ sažeta)</comment>
+  <comment xml:lang="he">דמות גולמית של כונן (בדחיסת XZ)</comment>
+  <comment xml:lang="gl">Imaxe de disco en bruto (comprimida en XZ)</comment>
+  <comment xml:lang="ga">Amhíomhá (comhbhrúite le XZ)</comment>
+  <comment xml:lang="fur">imagjin disc grese (comprimude cun XZ)</comment>
+  <comment xml:lang="fr">image disque Raw (compression XZ)</comment>
+  <comment xml:lang="fi">Raaka levykuva (XZ-pakattu)</comment>
+  <comment xml:lang="eu">Disko gordinaren irudia (XZ-rekin konprimitua)</comment>
+  <comment xml:lang="es">imagen de disco en bruto (comprimida con XZ)</comment>
+  <comment xml:lang="en-GB">Raw disk image (XZ-compressed)</comment>
+  <comment xml:lang="el">Ανεπεξέργαστη εικόνα δίσκου (συμπιεσμένη XZ)</comment>
+  <comment xml:lang="de">Rohes Datenträgerabbild (XZ-komprimiert)</comment>
+  <comment xml:lang="da">Raw-diskaftryk (XZ-komprimeret)</comment>
+  <comment xml:lang="cs">surový obraz disku (komprimovaný pomocí XZ)</comment>
+  <comment xml:lang="ca">imatge de disc RAW (amb compressió XZ)</comment>
+  <comment xml:lang="bg">Диск — raw, компресиран с xz</comment>
+  <comment xml:lang="be-Cyrl">неапрацаваны вобраз дыска (сцісканне XZ)</comment>
+  <comment xml:lang="ast">Imaxe de discu en bruto (comprimida en XZ)</comment>
+  <comment xml:lang="ar">صورة قرص خام (مضغوطة-ZX)</comment>
+  <comment xml:lang="af">Rou skyfbeeldlêer (XZ-saamgepers)</comment>
+  <sub-class-of type="application/x-xz"/>
+  <glob pattern="*.raw-disk-image.xz"/>
+  <glob pattern="*.img.xz"/>
+</mime-type>

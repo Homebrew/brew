@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="message/external-body">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Reference to remote file</comment>
+  <comment xml:lang="uk">посилання на віддалений файл</comment>
+  <comment xml:lang="sv">Referens till fjärrfil</comment>
+  <comment xml:lang="ru">Ссылка на удалённый файл</comment>
+  <comment xml:lang="pl">Odwołanie do pliku zdalnego</comment>
+  <comment xml:lang="it">Riferimento a file remoto</comment>
+  <comment xml:lang="es">referencia a archivo remoto</comment>
+  <comment xml:lang="de">Verweis auf entfernte Datei</comment>
+  <comment xml:lang="be-Cyrl">спасылка на выдалены файл</comment>
+  <generic-icon name="text-x-generic"/>
+</mime-type>

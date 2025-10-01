@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-core">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Program crash data</comment>
+  <comment xml:lang="uk">дані щодо аварії програми</comment>
+  <comment xml:lang="sv">Programkraschdata</comment>
+  <comment xml:lang="ru">Данные аварийного завершения программы</comment>
+  <comment xml:lang="pl">Dane awarii programu</comment>
+  <comment xml:lang="it">Dati crash di applicazione</comment>
+  <comment xml:lang="es">datos de cierre inesperado de programa</comment>
+  <comment xml:lang="de">Programmabsturz-Daten</comment>
+  <comment xml:lang="be-Cyrl">даныя пра збой праграмы</comment>
+  <glob pattern="core" case-sensitive="true"/>
+</mime-type>

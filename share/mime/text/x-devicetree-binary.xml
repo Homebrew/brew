@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="text/x-devicetree-binary">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Flattened Devicetree</comment>
+  <comment xml:lang="uk">зведене Devicetree</comment>
+  <comment xml:lang="sv">Utplattat enhetsträd</comment>
+  <comment xml:lang="ru">Плоское дерево устройств</comment>
+  <comment xml:lang="pl">Spłaszczone DeviceTree</comment>
+  <comment xml:lang="it">Devicetree compatto</comment>
+  <comment xml:lang="es">árbol de dispositivos aplanado</comment>
+  <comment xml:lang="de">Verflachter Gerätebaum</comment>
+  <acronym>DTB</acronym>
+  <expanded-acronym>Device Tree Binary</expanded-acronym>
+  <glob pattern="*.dtb"/>
+</mime-type>

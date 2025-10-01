@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-bzdvi">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>TeX DVI document (bzip2-compressed)</comment>
+  <comment xml:lang="uk">документ DVI TeX (стиснений bzip2)</comment>
+  <comment xml:lang="sv">TeX DVI-dokument (bzip2-komprimerat)</comment>
+  <comment xml:lang="ru">Документ DVI издательской системы TeX (сжатый bzip2)</comment>
+  <comment xml:lang="pt-BR">Documento DVI TeX (compactado com bzip2)</comment>
+  <comment xml:lang="pl">Dokument TeX DVI (kompresja bzip2)</comment>
+  <comment xml:lang="es">documento DVI de TeX (comprimido con BZIP2)</comment>
+  <comment xml:lang="de">TeX-DVI-Dokument (bzip2-komprimiert)</comment>
+  <sub-class-of type="application/x-bzip2"/>
+  <generic-icon name="x-office-document"/>
+  <glob pattern="*.dvi.bz2"/>
+</mime-type>

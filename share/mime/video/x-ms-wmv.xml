@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="video/x-ms-wmv">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Windows Media video</comment>
+  <comment xml:lang="zh-Hant-TW">Windows Media 視訊</comment>
+  <comment xml:lang="zh-Hans-CN">Windows Media 视频</comment>
+  <comment xml:lang="vi">Ảnh động Windows Media</comment>
+  <comment xml:lang="uk">відеокліп Windows Media</comment>
+  <comment xml:lang="tr">Windows Media videosu</comment>
+  <comment xml:lang="sv">Windows Media-video</comment>
+  <comment xml:lang="sr-Cyrl">Виндоуз Медија видео</comment>
+  <comment xml:lang="sq">video Windows Media</comment>
+  <comment xml:lang="sl">Video datoteka Windows Media</comment>
+  <comment xml:lang="si">වින්ඩෝස් මීඩියා වීඩියෝව</comment>
+  <comment xml:lang="sk">Video Windows Media</comment>
+  <comment xml:lang="ru">Видео Windows Media</comment>
+  <comment xml:lang="ro">Video Windows Media</comment>
+  <comment xml:lang="pt-BR">Vídeo do Windows Media</comment>
+  <comment xml:lang="pt">vídeo Windows Media</comment>
+  <comment xml:lang="pl">Plik wideo Windows Media</comment>
+  <comment xml:lang="oc">vidèo Windows Media</comment>
+  <comment xml:lang="nn">Windows Media-video</comment>
+  <comment xml:lang="nl">Windows Media-video</comment>
+  <comment xml:lang="nb">Windows Media film</comment>
+  <comment xml:lang="lv">Windows Media video</comment>
+  <comment xml:lang="lt">Windows Media vaizdo įrašas</comment>
+  <comment xml:lang="ko">Windows 미디어 오디오</comment>
+  <comment xml:lang="kk-Cyrl">Windows Media видеосы</comment>
+  <comment xml:lang="ja">Windows Media 動画</comment>
+  <comment xml:lang="it">Video Windows Media</comment>
+  <comment xml:lang="is">Windows Media myndskeið</comment>
+  <comment xml:lang="id">Video Windows Media</comment>
+  <comment xml:lang="ia">Video Windows Media</comment>
+  <comment xml:lang="hu">Windows Media videó</comment>
+  <comment xml:lang="hr">Windows Media video snimka</comment>
+  <comment xml:lang="he">וידאו של Windows Media</comment>
+  <comment xml:lang="gl">vídeo de Windows Media</comment>
+  <comment xml:lang="ga">físeán Windows Media</comment>
+  <comment xml:lang="fur">video Windows Media</comment>
+  <comment xml:lang="fr">vidéo Windows Media</comment>
+  <comment xml:lang="fo">Windows Media video</comment>
+  <comment xml:lang="fi">Windows Media -video</comment>
+  <comment xml:lang="eu">Windows Media bideoa</comment>
+  <comment xml:lang="es">vídeo de Windows Media</comment>
+  <comment xml:lang="en-GB">Windows Media video</comment>
+  <comment xml:lang="el">Βίντεο Windows Media</comment>
+  <comment xml:lang="de">Windows-Media-Video</comment>
+  <comment xml:lang="da">Windows Medie-video</comment>
+  <comment xml:lang="cs">video Windows Media</comment>
+  <comment xml:lang="ca">vídeo de Windows Media</comment>
+  <comment xml:lang="bg">Видео — Windows Media</comment>
+  <comment xml:lang="be-Latn">Videa Windows Media</comment>
+  <comment xml:lang="be-Cyrl">відэа Windows Media</comment>
+  <comment xml:lang="ast">Videu de Windows Media</comment>
+  <comment xml:lang="ar">فيديو ويندوز ميديا</comment>
+  <comment xml:lang="af">Windows Media-video</comment>
+  <sub-class-of type="application/vnd.ms-asf"/>
+  <glob pattern="*.wmv"/>
+</mime-type>

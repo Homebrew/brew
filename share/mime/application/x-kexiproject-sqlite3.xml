@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-kexiproject-sqlite3">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Kexi database file</comment>
+  <comment xml:lang="zh-Hant-TW">Kexi 資料庫檔案</comment>
+  <comment xml:lang="zh-Hans-CN">Kexi 数据库文件</comment>
+  <comment xml:lang="uk">файл бази даних Kexi</comment>
+  <comment xml:lang="tr">Kexi veri tabanı dosyası</comment>
+  <comment xml:lang="sv">Kexi-databasfil</comment>
+  <comment xml:lang="sq">kartelë baze të dhënash Kexi</comment>
+  <comment xml:lang="sl">Datoteka zbirke podatkov Kexi</comment>
+  <comment xml:lang="si">Kexi දත්ත සමුදා ගොනුව</comment>
+  <comment xml:lang="sk">Súbor databázy Kexi</comment>
+  <comment xml:lang="ru">Файл базы данных Kexi</comment>
+  <comment xml:lang="pt-BR">Arquivo de banco de dados do Kexi</comment>
+  <comment xml:lang="pl">Plik bazy danych Kexi</comment>
+  <comment xml:lang="nl">Kexi-databasebestand</comment>
+  <comment xml:lang="ko">Kexi 데이터베이스 파일</comment>
+  <comment xml:lang="kk-Cyrl">Kexi дерекқор файлы</comment>
+  <comment xml:lang="ja">Kexi データベースファイル</comment>
+  <comment xml:lang="it">File database Kexi</comment>
+  <comment xml:lang="is">Kexi gagnagrunnsskrá</comment>
+  <comment xml:lang="id">Berkas basis data Kexi</comment>
+  <comment xml:lang="hu">Kexi adatbázisfájl</comment>
+  <comment xml:lang="hr">Kexi datoteka baze podataka</comment>
+  <comment xml:lang="he">קובץ מסד נתונים של Kexi</comment>
+  <comment xml:lang="gl">Ficheiro de base de datos Kexi</comment>
+  <comment xml:lang="fr">fichier de base de données Kexi</comment>
+  <comment xml:lang="fi">Kexi-tietokanta</comment>
+  <comment xml:lang="eu">Kexi datu-base fitxategia</comment>
+  <comment xml:lang="es">archivo de base de datos de Kexi</comment>
+  <comment xml:lang="en-GB">Kexi database file</comment>
+  <comment xml:lang="de">Kexi-Datenbankdatei</comment>
+  <comment xml:lang="da">Kexi database-fil</comment>
+  <comment xml:lang="ca">fitxer de base de dades de Kexi</comment>
+  <comment xml:lang="bg">База от данни — Kexi</comment>
+  <comment xml:lang="be-Cyrl">база даных Kexi</comment>
+  <comment xml:lang="ar">ملف قاعدة Kexi</comment>
+  <sub-class-of type="application/vnd.sqlite3"/>
+  <glob pattern="*.kexi"/>
+  <alias type="application/x-vnd.kde.kexi"/>
+  <alias type="application/x-kexiproject-sqlite"/>
+</mime-type>

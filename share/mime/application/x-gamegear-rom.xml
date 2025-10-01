@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-gamegear-rom">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Game Gear ROM</comment>
+  <comment xml:lang="zh-Hant-TW">Game Gear ROM</comment>
+  <comment xml:lang="zh-Hans-CN">Game Gear ROM</comment>
+  <comment xml:lang="uk">ППП Game Gear</comment>
+  <comment xml:lang="tr">Game Gear ROM</comment>
+  <comment xml:lang="sv">Game Gear-rom</comment>
+  <comment xml:lang="sr-Cyrl">Гејм Гир РОМ</comment>
+  <comment xml:lang="sq">ROM Game Gear</comment>
+  <comment xml:lang="sl">Game Gear ROM</comment>
+  <comment xml:lang="si">Game Gear ROM</comment>
+  <comment xml:lang="sk">ROM pre Game Gear</comment>
+  <comment xml:lang="ru">Game Gear ROM</comment>
+  <comment xml:lang="pt-BR">ROM de Game Gear</comment>
+  <comment xml:lang="pl">Plik ROM konsoli Game Gear</comment>
+  <comment xml:lang="nl">Game Gear-ROM</comment>
+  <comment xml:lang="ko">게임 기어 롬</comment>
+  <comment xml:lang="kk-Cyrl">Game Gear ROM</comment>
+  <comment xml:lang="ja">ゲームギア ROM</comment>
+  <comment xml:lang="it">ROM Game Gear</comment>
+  <comment xml:lang="is">Game Gear ROM</comment>
+  <comment xml:lang="id">ROM Game Gear</comment>
+  <comment xml:lang="hu">Game Gear ROM</comment>
+  <comment xml:lang="hr">Game Gear ROM</comment>
+  <comment xml:lang="he">ROM של Game Gear</comment>
+  <comment xml:lang="ga">ROM Game Gear</comment>
+  <comment xml:lang="fur">ROM Game Gear</comment>
+  <comment xml:lang="fr">ROM Game Gear</comment>
+  <comment xml:lang="fi">Game Gear -ROM</comment>
+  <comment xml:lang="eu">Game Gear ROM</comment>
+  <comment xml:lang="es">ROM de Game Gear</comment>
+  <comment xml:lang="en-GB">Game Gear ROM</comment>
+  <comment xml:lang="de">Game-Gear-ROM</comment>
+  <comment xml:lang="da">Game Gear-ROM</comment>
+  <comment xml:lang="cs">ROM pro Game Gear</comment>
+  <comment xml:lang="ca">ROM de Game Gear</comment>
+  <comment xml:lang="bg">ROM — Game Gear</comment>
+  <comment xml:lang="be-Cyrl">Game Gear ROM</comment>
+  <comment xml:lang="ar">روم جيم جير</comment>
+  <generic-icon name="application-x-executable"/>
+  <glob pattern="*.gg"/>
+</mime-type>

@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/vnd.google-earth.kml+xml">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>KML geographic data</comment>
+  <comment xml:lang="zh-Hant-TW">KML 地理資料</comment>
+  <comment xml:lang="zh-Hans-CN">KML 地理数据</comment>
+  <comment xml:lang="uk">географічні дані KML</comment>
+  <comment xml:lang="tr">KML coğrafi verisi</comment>
+  <comment xml:lang="sv">KML geografisk data</comment>
+  <comment xml:lang="sr-Cyrl">КМЛ географски подаци</comment>
+  <comment xml:lang="sq">të dhëna gjeografike KML</comment>
+  <comment xml:lang="sl">Datoteka geografskih podatkov KML</comment>
+  <comment xml:lang="si">KML භූගෝලීය දත්ත</comment>
+  <comment xml:lang="sk">Zemepisné údaje KML</comment>
+  <comment xml:lang="ru">Географические данные KML</comment>
+  <comment xml:lang="ro">Date geografice KML</comment>
+  <comment xml:lang="pt-BR">Dados geográficos KML</comment>
+  <comment xml:lang="pt">dados geográficos KML</comment>
+  <comment xml:lang="pl">Dane geograficzne KML</comment>
+  <comment xml:lang="oc">donadas geograficas KML</comment>
+  <comment xml:lang="nl">KML geografische gegevens</comment>
+  <comment xml:lang="lv">KML ģeogrāfiskie dati</comment>
+  <comment xml:lang="lt">KML geografiniai duomenys</comment>
+  <comment xml:lang="ko">KML 지리 정보 데이터</comment>
+  <comment xml:lang="kk-Cyrl">KML географилық ақпараты</comment>
+  <comment xml:lang="ja">KML 地理データ</comment>
+  <comment xml:lang="it">Dati geografici KML</comment>
+  <comment xml:lang="is">KML hnattstaðsetningargögn</comment>
+  <comment xml:lang="id">Data geografis KML</comment>
+  <comment xml:lang="ia">Datos geographic KML</comment>
+  <comment xml:lang="hu">KML földrajzi adatok</comment>
+  <comment xml:lang="hr">KML geografski podaci</comment>
+  <comment xml:lang="he">מידע גאוגרפי KML</comment>
+  <comment xml:lang="gl">datos xeográficos KML</comment>
+  <comment xml:lang="ga">sonraí geografacha KML</comment>
+  <comment xml:lang="fur">dâts gjeografics KML</comment>
+  <comment xml:lang="fr">données géographiques KML</comment>
+  <comment xml:lang="fo">KML landafrøðilig dáta</comment>
+  <comment xml:lang="fi">KML-paikkatieto</comment>
+  <comment xml:lang="eu">KML datu geografikoak</comment>
+  <comment xml:lang="es">datos geográficos KML</comment>
+  <comment xml:lang="en-GB">KML geographic data</comment>
+  <comment xml:lang="el">Γεωγραφικά δεδομένα KML</comment>
+  <comment xml:lang="de">KML-Geodaten</comment>
+  <comment xml:lang="da">Geografiske data i KML-format</comment>
+  <comment xml:lang="cs">geografická data KML</comment>
+  <comment xml:lang="ca">dades geogràfiques KML</comment>
+  <comment xml:lang="bg">Географски данни — KML</comment>
+  <comment xml:lang="be-Cyrl">геаграфічныя даныя KML</comment>
+  <comment xml:lang="ar">بيانات جغرافية KML</comment>
+  <comment xml:lang="af">KML geografiese data</comment>
+  <acronym>KML</acronym>
+  <expanded-acronym>Keyhole Markup Language</expanded-acronym>
+  <sub-class-of type="application/xml"/>
+  <glob pattern="*.kml"/>
+</mime-type>

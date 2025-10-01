@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="text/x-meson">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Meson source code</comment>
+  <comment xml:lang="zh-Hant-TW">Meson 源碼</comment>
+  <comment xml:lang="zh-Hans-CN">Meson 源代码</comment>
+  <comment xml:lang="uk">початковий код мовою Meson</comment>
+  <comment xml:lang="tr">Meson kaynak kodu</comment>
+  <comment xml:lang="sv">Meson-källkod</comment>
+  <comment xml:lang="sr-Cyrl">Месон изворни ко̂д</comment>
+  <comment xml:lang="sq">kod burim Meson</comment>
+  <comment xml:lang="sl">Izvorna koda Meson</comment>
+  <comment xml:lang="si">Meson මූල කේතය</comment>
+  <comment xml:lang="sk">Zdrojový kód Meson</comment>
+  <comment xml:lang="ru">Исходный код Meson</comment>
+  <comment xml:lang="pt-BR">Código-fonte Meson</comment>
+  <comment xml:lang="pt">código origem Meson</comment>
+  <comment xml:lang="pl">Kod źródłowy Meson</comment>
+  <comment xml:lang="oc">còde font Meson</comment>
+  <comment xml:lang="nl">Meson-broncode</comment>
+  <comment xml:lang="ko">Meson 소스 코드</comment>
+  <comment xml:lang="kk-Cyrl">Meson бастапқы коды</comment>
+  <comment xml:lang="ja">Meson ソースコード</comment>
+  <comment xml:lang="it">Codice sorgente Meson</comment>
+  <comment xml:lang="is">Meson frumkóði</comment>
+  <comment xml:lang="id">Kode sumber Meson</comment>
+  <comment xml:lang="ia">Codice-fonte Meson</comment>
+  <comment xml:lang="hu">Meson forráskód</comment>
+  <comment xml:lang="hr">Meson izvorni kôd</comment>
+  <comment xml:lang="he">קוד מקור Meson</comment>
+  <comment xml:lang="gl">Código fonte Meson</comment>
+  <comment xml:lang="ga">cód foinseach Meson</comment>
+  <comment xml:lang="fur">codiç sorzint Meson</comment>
+  <comment xml:lang="fr">code source Meson</comment>
+  <comment xml:lang="fi">Meson-lähdekoodi</comment>
+  <comment xml:lang="eu">Meson iturburu-kodea</comment>
+  <comment xml:lang="es">código fuente en Meson</comment>
+  <comment xml:lang="en-GB">Meson source code</comment>
+  <comment xml:lang="el">Πηγαίος κώδικας Meson</comment>
+  <comment xml:lang="de">Meson-Quelltext</comment>
+  <comment xml:lang="da">Meson-kildekode</comment>
+  <comment xml:lang="cs">zdrojový kód Meson</comment>
+  <comment xml:lang="ca">codi font en Meson</comment>
+  <comment xml:lang="bg">Изходен код — Meson</comment>
+  <comment xml:lang="be-Cyrl">зыходны код Meson</comment>
+  <comment xml:lang="ar">شفرة مصدر Meson</comment>
+  <comment xml:lang="af">Meson-bronkode</comment>
+  <glob pattern="meson.build"/>
+  <glob pattern="meson_options.txt"/>
+  <sub-class-of type="text/plain"/>
+</mime-type>

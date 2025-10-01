@@ -1,0 +1,1 @@
+../../../../Cellar/gsettings-desktop-schemas/48.0/share/locale/lt/LC_MESSAGES/gsettings-desktop-schemas.mo

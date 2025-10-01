@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-ruby">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Ruby script</comment>
+  <comment xml:lang="zh-Hant-TW">Ruby 指令稿</comment>
+  <comment xml:lang="zh-Hans-CN">Ruby 脚本</comment>
+  <comment xml:lang="vi">Văn lệnh Ruby</comment>
+  <comment xml:lang="uk">скрипт Ruby</comment>
+  <comment xml:lang="tr">Ruby betiği</comment>
+  <comment xml:lang="sv">Ruby-skript</comment>
+  <comment xml:lang="sr-Cyrl">Руби скрипта</comment>
+  <comment xml:lang="sq">programth Ruby</comment>
+  <comment xml:lang="sl">Skriptna datoteka Ruby</comment>
+  <comment xml:lang="si">Ruby පිටපත</comment>
+  <comment xml:lang="sk">Skript Ruby</comment>
+  <comment xml:lang="ru">Сценарий Ruby</comment>
+  <comment xml:lang="ro">Script Ruby</comment>
+  <comment xml:lang="pt-BR">Script Ruby</comment>
+  <comment xml:lang="pt">script Ruby</comment>
+  <comment xml:lang="pl">Skrypt Ruby</comment>
+  <comment xml:lang="oc">escript Ruby</comment>
+  <comment xml:lang="nn">Ruby-skript</comment>
+  <comment xml:lang="nl">Ruby-script</comment>
+  <comment xml:lang="nb">Ruby-skript</comment>
+  <comment xml:lang="ms">Skrip Ruby</comment>
+  <comment xml:lang="lv">Ruby skripts</comment>
+  <comment xml:lang="lt">Ruby scenarijus</comment>
+  <comment xml:lang="ko">루비 스크립트</comment>
+  <comment xml:lang="kk-Cyrl">Ruby сценарийі</comment>
+  <comment xml:lang="ja">Ruby スクリプト</comment>
+  <comment xml:lang="it">Script Ruby</comment>
+  <comment xml:lang="is">Ruby skrifta</comment>
+  <comment xml:lang="id">Skrip Ruby</comment>
+  <comment xml:lang="ia">Script Ruby</comment>
+  <comment xml:lang="hu">Ruby-parancsfájl</comment>
+  <comment xml:lang="hr">Ruby skripta</comment>
+  <comment xml:lang="he">תסריט Ruby</comment>
+  <comment xml:lang="gl">Script de Ruby</comment>
+  <comment xml:lang="ga">script Ruby</comment>
+  <comment xml:lang="fur">script Ruby</comment>
+  <comment xml:lang="fr">script Ruby</comment>
+  <comment xml:lang="fo">Ruby boðrøð</comment>
+  <comment xml:lang="fi">Ruby-komentotiedosto</comment>
+  <comment xml:lang="eu">Ruby script-a</comment>
+  <comment xml:lang="es">secuencia de órdenes en Ruby</comment>
+  <comment xml:lang="eo">Ruby-skripto</comment>
+  <comment xml:lang="en-GB">Ruby script</comment>
+  <comment xml:lang="el">Δέσμη ενεργειών Ruby</comment>
+  <comment xml:lang="de">Ruby-Skript</comment>
+  <comment xml:lang="da">Ruby-program</comment>
+  <comment xml:lang="cs">skript Ruby</comment>
+  <comment xml:lang="ca">script Ruby</comment>
+  <comment xml:lang="bg">Скрипт — Ruby</comment>
+  <comment xml:lang="be-Latn">Skrypt Ruby</comment>
+  <comment xml:lang="be-Cyrl">скрыпт Ruby</comment>
+  <comment xml:lang="ar">سكربت روبي</comment>
+  <comment xml:lang="af">Ruby-skrip</comment>
+  <sub-class-of type="application/x-executable"/>
+  <sub-class-of type="text/plain"/>
+  <generic-icon name="text-x-script"/>
+  <glob pattern="*.rb"/>
+</mime-type>

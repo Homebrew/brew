@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="audio/x-tak">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>TAK audio</comment>
+  <comment xml:lang="uk">звук TAK</comment>
+  <comment xml:lang="sv">TAK-ljud</comment>
+  <comment xml:lang="ru">Аудио TAK</comment>
+  <comment xml:lang="pt-BR">Áudio TAK</comment>
+  <comment xml:lang="pl">Plik dźwiękowy TAK</comment>
+  <comment xml:lang="it">Audio Tak</comment>
+  <comment xml:lang="gl">Son TAK</comment>
+  <comment xml:lang="eu">TAK audioa</comment>
+  <comment xml:lang="es">audio TAK</comment>
+  <comment xml:lang="de">TAK-Audio</comment>
+  <comment xml:lang="be-Cyrl">аўдыя TAK</comment>
+  <acronym>TAK</acronym>
+  <expanded-acronym>Tom's lossless Audio Kompressor</expanded-acronym>
+  <glob pattern="*.tak"/>
+</mime-type>

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="text/spreadsheet">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Spreadsheet interchange document</comment>
+  <comment xml:lang="uk">документ обміну ел. таблицями</comment>
+  <comment xml:lang="sv">Spreadsheet interchange-dokument</comment>
+  <comment xml:lang="ru">Документ Spreadsheet Interchange</comment>
+  <comment xml:lang="pl">Dokument wymiany arkuszy kalkulacyjnych</comment>
+  <comment xml:lang="it">Documento di scambio per foglio di calcolo</comment>
+  <comment xml:lang="es">documento de intercambio de hojas de cálculo</comment>
+  <comment xml:lang="de">Tabellenkalkulations-Austauschdokument</comment>
+  <comment xml:lang="be-Cyrl">дакумент для абмену электроннымі табліцамі</comment>
+  <sub-class-of type="text/plain"/>
+  <glob pattern="*.sylk"/>
+  <glob pattern="*.slk"/>
+</mime-type>

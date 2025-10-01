@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-ksysv-package">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>KSysV init package</comment>
+  <comment xml:lang="zh-Hant-TW">KSysV init 軟體包</comment>
+  <comment xml:lang="zh-Hans-CN">KSysV init 软件包</comment>
+  <comment xml:lang="vi">Gói sở khởi KSysV</comment>
+  <comment xml:lang="uk">пакунок KSysV init</comment>
+  <comment xml:lang="tr">KSysV init paketi</comment>
+  <comment xml:lang="sv">KSysV init-paket</comment>
+  <comment xml:lang="sr-Cyrl">КСисВ побудни пакет</comment>
+  <comment xml:lang="sq">paketë init KSysV</comment>
+  <comment xml:lang="sl">Datoteka paketa KSysV init</comment>
+  <comment xml:lang="si">KSysV init පැකේජය</comment>
+  <comment xml:lang="sk">Balíček KSysV init</comment>
+  <comment xml:lang="ru">Пакет инициализации KSysV</comment>
+  <comment xml:lang="ro">Pachet KSysV init</comment>
+  <comment xml:lang="pt-BR">Pacote init do KSysV</comment>
+  <comment xml:lang="pt">pacote inicial KSysV</comment>
+  <comment xml:lang="pl">Pakiet KSysV init</comment>
+  <comment xml:lang="oc">paquet d'initializacion KSysV</comment>
+  <comment xml:lang="nn">KSysV init-pakke</comment>
+  <comment xml:lang="nl">KSysV-init-pakket</comment>
+  <comment xml:lang="nb">KSysV init-pakke</comment>
+  <comment xml:lang="lv">KSysV inicializācijas pakotne</comment>
+  <comment xml:lang="lt">KSysV init paketas</comment>
+  <comment xml:lang="ko">KSysV init 패키지</comment>
+  <comment xml:lang="kk-Cyrl">KSysV инициализация дестесі</comment>
+  <comment xml:lang="ja">KSysV init パッケージ</comment>
+  <comment xml:lang="it">Pacchetto init KSysV</comment>
+  <comment xml:lang="is">KSysV init-pakki</comment>
+  <comment xml:lang="id">Paket init KSysV</comment>
+  <comment xml:lang="ia">Pacchetto de initialisation KSysV</comment>
+  <comment xml:lang="hu">KSysV init csomag</comment>
+  <comment xml:lang="hr">KSysV init paket</comment>
+  <comment xml:lang="he">חבילת KSysV init</comment>
+  <comment xml:lang="gl">paquete de KsysV init</comment>
+  <comment xml:lang="ga">pacáiste túsaithe KSysV</comment>
+  <comment xml:lang="fur">pachet init KSysV</comment>
+  <comment xml:lang="fr">paquet d'initialisation KSysV</comment>
+  <comment xml:lang="fo">KSysV init pakki</comment>
+  <comment xml:lang="fi">KSysV init -paketti</comment>
+  <comment xml:lang="eu">KSysV hasieratzeko paketea</comment>
+  <comment xml:lang="es">paquete de configuración de init para KSysV</comment>
+  <comment xml:lang="en-GB">KSysV init package</comment>
+  <comment xml:lang="el">Αρχικό πακέτο KSysV</comment>
+  <comment xml:lang="de">KSysV-Init-Paket</comment>
+  <comment xml:lang="da">KSsV init-pakke</comment>
+  <comment xml:lang="cs">balíček init KSysV</comment>
+  <comment xml:lang="ca">paquet de KSysV init</comment>
+  <comment xml:lang="bg">Пакет — KSysV init</comment>
+  <comment xml:lang="be-Latn">Inicyjalny pakunak KSysV</comment>
+  <comment xml:lang="be-Cyrl">пакет ініцыялізацыі KSysV</comment>
+  <comment xml:lang="ar">حزمة KSysV init</comment>
+  <generic-icon name="package-x-generic"/>
+</mime-type>

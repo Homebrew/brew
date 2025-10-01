@@ -1,0 +1,1 @@
+../../../Cellar/tree-sitter-cli/0.25.9/share/fish/vendor_completions.d/tree-sitter.fish

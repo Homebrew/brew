@@ -1,0 +1,1 @@
+../../../Cellar/gh/2.80.0/share/fish/vendor_completions.d/gh.fish

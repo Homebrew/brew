@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/vnd.ms-word.template.macroEnabled.12">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Word document template</comment>
+  <comment xml:lang="zh-Hant-TW">Word 文件範本</comment>
+  <comment xml:lang="zh-Hans-CN">Word 文档模板</comment>
+  <comment xml:lang="uk">шаблон документа Word</comment>
+  <comment xml:lang="tr">Word belgesi şablonu</comment>
+  <comment xml:lang="sv">Word-dokumentmall</comment>
+  <comment xml:lang="sr-Cyrl">Шаблон Ворд документа</comment>
+  <comment xml:lang="sq">gjedhe dokumenti Word</comment>
+  <comment xml:lang="sl">Predloga dokumenta Word</comment>
+  <comment xml:lang="si">වචන ලේඛන ආකෘතිය</comment>
+  <comment xml:lang="sk">Šablóna dokumentu aplikácie Word</comment>
+  <comment xml:lang="ru">Шаблон документа Word</comment>
+  <comment xml:lang="pt-BR">Modelo de documento do Word</comment>
+  <comment xml:lang="pt">modelo de documento Word</comment>
+  <comment xml:lang="pl">Szablon dokumentu Word</comment>
+  <comment xml:lang="oc">modèl de document Word</comment>
+  <comment xml:lang="nl">Word-documentsjabloon</comment>
+  <comment xml:lang="ko">Word 문서 서식</comment>
+  <comment xml:lang="kk-Cyrl">Word құжатының үлгісі</comment>
+  <comment xml:lang="ja">Word ドキュメントテンプレート</comment>
+  <comment xml:lang="it">Modello documento Word</comment>
+  <comment xml:lang="is">Word sniðmát fyrir textaskjal</comment>
+  <comment xml:lang="id">Templat dokumen Word</comment>
+  <comment xml:lang="ia">Patrono de documento Word</comment>
+  <comment xml:lang="hu">Word dokumentumsablon</comment>
+  <comment xml:lang="hr">Predložak Word dokumenta</comment>
+  <comment xml:lang="he">תבנית מסמך Word</comment>
+  <comment xml:lang="gl">Modelo de documento Word</comment>
+  <comment xml:lang="ga">teimpléad Word</comment>
+  <comment xml:lang="fur">model di document Word</comment>
+  <comment xml:lang="fr">modèle de document Word</comment>
+  <comment xml:lang="fi">Word-asiakirjamalli</comment>
+  <comment xml:lang="eu">Word dokumentuaren txantiloia</comment>
+  <comment xml:lang="es">plantilla de documento de Word</comment>
+  <comment xml:lang="en-GB">Word document template</comment>
+  <comment xml:lang="el">Πρότυπο έγγραφο Word</comment>
+  <comment xml:lang="de">Word-Dokumentvorlage</comment>
+  <comment xml:lang="da">Word-dokumentskabelon</comment>
+  <comment xml:lang="cs">šablona dokumentu Word</comment>
+  <comment xml:lang="ca">plantilla de document Word</comment>
+  <comment xml:lang="bg">Шаблон за документ — Word</comment>
+  <comment xml:lang="be-Cyrl">шаблон дакумента Word</comment>
+  <comment xml:lang="ast">Plantía de documentu de Word</comment>
+  <comment xml:lang="ar">قالب مستند ورد</comment>
+  <comment xml:lang="af">Word-dokumentsjabloon</comment>
+  <generic-icon name="x-office-document"/>
+  <glob pattern="*.dotm"/>
+  <sub-class-of type="application/vnd.openxmlformats-officedocument.wordprocessingml.template"/>
+</mime-type>

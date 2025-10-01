@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="text/x-twig">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Twig template</comment>
+  <comment xml:lang="zh-Hant-TW">Twig 範本</comment>
+  <comment xml:lang="zh-Hans-CN">Twig 模板</comment>
+  <comment xml:lang="uk">шаблон twig</comment>
+  <comment xml:lang="tr">Twig şablonu</comment>
+  <comment xml:lang="sv">Twig-mall</comment>
+  <comment xml:lang="sr-Cyrl">Твиг шаблон</comment>
+  <comment xml:lang="sq">gjedhe Twig</comment>
+  <comment xml:lang="sl">Predloga Twig</comment>
+  <comment xml:lang="si">අතු අච්චුව</comment>
+  <comment xml:lang="sk">Šablóna Twig</comment>
+  <comment xml:lang="ru">Шаблон Twig</comment>
+  <comment xml:lang="pt-BR">Modelo Twig</comment>
+  <comment xml:lang="pl">Szablon Twig</comment>
+  <comment xml:lang="oc">modèl Twig</comment>
+  <comment xml:lang="nl">Twig-sjabloon</comment>
+  <comment xml:lang="ko">Twig 문서 서식</comment>
+  <comment xml:lang="kk-Cyrl">Twig үлгісі</comment>
+  <comment xml:lang="ja">Twig テンプレート</comment>
+  <comment xml:lang="it">Modello twig</comment>
+  <comment xml:lang="is">Twig-sniðmát</comment>
+  <comment xml:lang="id">Templat Twig</comment>
+  <comment xml:lang="hu">Twig-sablon</comment>
+  <comment xml:lang="hr">Twig predložak</comment>
+  <comment xml:lang="he">תבנית Twig</comment>
+  <comment xml:lang="gl">Plantilla de Twig</comment>
+  <comment xml:lang="ga">teimpléad Twig</comment>
+  <comment xml:lang="fur">model Twig</comment>
+  <comment xml:lang="fr">modèle Twig</comment>
+  <comment xml:lang="fi">Twig-malli</comment>
+  <comment xml:lang="eu">Twig txantiloia</comment>
+  <comment xml:lang="es">plantilla de Twig</comment>
+  <comment xml:lang="en-GB">Twig template</comment>
+  <comment xml:lang="de">Twig-Vorlage</comment>
+  <comment xml:lang="da">Twig-skabelon</comment>
+  <comment xml:lang="cs">šablona Twig</comment>
+  <comment xml:lang="ca">plantilla Twig</comment>
+  <comment xml:lang="bg">Шаблон — Twig</comment>
+  <comment xml:lang="be-Cyrl">шаблон Twig</comment>
+  <comment xml:lang="ar">قالب Twig</comment>
+  <comment xml:lang="af">Twig-sjabloon</comment>
+  <sub-class-of type="text/plain"/>
+  <glob pattern="*.twig"/>
+  <generic-icon name="text-x-generic-template"/>
+</mime-type>

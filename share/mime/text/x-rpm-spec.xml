@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="text/x-rpm-spec">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>RPM spec file</comment>
+  <comment xml:lang="zh-Hant-TW">RPM spec 規格檔</comment>
+  <comment xml:lang="zh-Hans-CN">RPM spec 文件</comment>
+  <comment xml:lang="vi">Tập tin đặc tả RPM</comment>
+  <comment xml:lang="uk">spec-файл RPM</comment>
+  <comment xml:lang="tr">RPM spec dosyası</comment>
+  <comment xml:lang="sv">RPM spec-fil</comment>
+  <comment xml:lang="sr-Cyrl">РПМ посебна датотека</comment>
+  <comment xml:lang="sq">kartelë specifikimesh RPM</comment>
+  <comment xml:lang="sl">Določilna datoteka RPM</comment>
+  <comment xml:lang="si">RPM පිරිවිතර ගොනුව</comment>
+  <comment xml:lang="sk">Súbor RPM spec</comment>
+  <comment xml:lang="ru">Файл описания RPM</comment>
+  <comment xml:lang="ro">Fișier RPM spec</comment>
+  <comment xml:lang="pt-BR">Arquivo de especificação RPM</comment>
+  <comment xml:lang="pt">ficheiro de especificações RPM</comment>
+  <comment xml:lang="pl">Plik spec RPM</comment>
+  <comment xml:lang="oc">fichièr d'especificacion RPM</comment>
+  <comment xml:lang="nn">RPM spec-fil</comment>
+  <comment xml:lang="nl">RPM-spec-bestand</comment>
+  <comment xml:lang="nb">RPM-spesifikasjonsfil</comment>
+  <comment xml:lang="lv">RPM specifikācijas datne</comment>
+  <comment xml:lang="lt">RPM spec failas</comment>
+  <comment xml:lang="ko">RPM spec 파일</comment>
+  <comment xml:lang="kk-Cyrl">RPM анықтама файлы</comment>
+  <comment xml:lang="ja">RPM spec ファイル</comment>
+  <comment xml:lang="it">File specifica RPM</comment>
+  <comment xml:lang="is">RPM spec-skrá</comment>
+  <comment xml:lang="id">Berkas spesifikasi RPM</comment>
+  <comment xml:lang="ia">File de specification RPM</comment>
+  <comment xml:lang="hu">RPM spec fájl</comment>
+  <comment xml:lang="hr">RPM određena datoteka</comment>
+  <comment xml:lang="he">קובץ מפרט RPM</comment>
+  <comment xml:lang="gl">ficheiro de especificacións RPM</comment>
+  <comment xml:lang="ga">comhad spec RPM</comment>
+  <comment xml:lang="fur">file di specifiche RPM</comment>
+  <comment xml:lang="fr">fichier de spécification RPM</comment>
+  <comment xml:lang="fo">RPM tøknilýsingarfíla</comment>
+  <comment xml:lang="fi">RPM spec -tiedosto</comment>
+  <comment xml:lang="eu">RPM espezifikazio fitxategia</comment>
+  <comment xml:lang="es">archivo de especificaciones RPM</comment>
+  <comment xml:lang="en-GB">RPM spec file</comment>
+  <comment xml:lang="el">Αρχείο spec RPM</comment>
+  <comment xml:lang="de">RPM-Spezifikationsdatei</comment>
+  <comment xml:lang="da">RPM spec-fil</comment>
+  <comment xml:lang="cs">soubor specifikace RPM</comment>
+  <comment xml:lang="ca">fitxer spec RPM</comment>
+  <comment xml:lang="bg">Файл — спецификация за RPM</comment>
+  <comment xml:lang="be-Latn">Specyfikacyjny fajł RPM</comment>
+  <comment xml:lang="be-Cyrl">файл спецыфікацыі RPM</comment>
+  <comment xml:lang="ar">ملف مواصفات RPM</comment>
+  <comment xml:lang="af">RPM-spesifikasielêer</comment>
+  <acronym>RPM</acronym>
+  <expanded-acronym>Red Hat Package Manager</expanded-acronym>
+  <sub-class-of type="text/plain"/>
+  <glob pattern="*.spec"/>
+</mime-type>

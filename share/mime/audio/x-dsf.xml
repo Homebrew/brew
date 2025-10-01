@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="audio/x-dsf">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>DSF audio</comment>
+  <comment xml:lang="zh-Hant-TW">DSF 音訊</comment>
+  <comment xml:lang="zh-Hans-CN">DSF 音频</comment>
+  <comment xml:lang="uk">звукові дані DSF</comment>
+  <comment xml:lang="tr">DSF sesi</comment>
+  <comment xml:lang="sv">DSF-ljud</comment>
+  <comment xml:lang="sl">Zvok DSF</comment>
+  <comment xml:lang="si">DSF ශ්‍රව්‍ය</comment>
+  <comment xml:lang="ru">Аудио DSF</comment>
+  <comment xml:lang="pt-BR">Áudio DSF</comment>
+  <comment xml:lang="pl">Plik dźwiękowy DSF</comment>
+  <comment xml:lang="nl">DSF-audio</comment>
+  <comment xml:lang="ko">DSF 오디오</comment>
+  <comment xml:lang="kk-Cyrl">DSF аудиосы</comment>
+  <comment xml:lang="ja">DSF オーディオ</comment>
+  <comment xml:lang="it">Audio DSF</comment>
+  <comment xml:lang="hr">DSF zvučni zapis</comment>
+  <comment xml:lang="gl">Son DSF</comment>
+  <comment xml:lang="fi">DSF-ääni</comment>
+  <comment xml:lang="eu">DSF audioa</comment>
+  <comment xml:lang="es">sonido DSF</comment>
+  <comment xml:lang="en-GB">DSF audio</comment>
+  <comment xml:lang="de">DSF-Audio</comment>
+  <comment xml:lang="be-Cyrl">аўдыя DSF</comment>
+  <comment xml:lang="ar">صوت DSF</comment>
+  <acronym>DSF</acronym>
+  <expanded-acronym>Direct stream digital Stream File</expanded-acronym>
+  <glob pattern="*.dsf"/>
+  <alias type="audio/dsf"/>
+  <alias type="audio/x-dsd"/>
+  <alias type="audio/dsd"/>
+</mime-type>

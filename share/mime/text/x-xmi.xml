@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="text/x-xmi">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>XMI file</comment>
+  <comment xml:lang="zh-Hant-TW">XMI 檔</comment>
+  <comment xml:lang="zh-Hans-CN">XMI 文件</comment>
+  <comment xml:lang="vi">Tập tin XMI</comment>
+  <comment xml:lang="uk">файл XMI</comment>
+  <comment xml:lang="tr">XMI dosyası</comment>
+  <comment xml:lang="sv">XMI-fil</comment>
+  <comment xml:lang="sr-Cyrl">ИксМИ датотека</comment>
+  <comment xml:lang="sq">kartelë XMI</comment>
+  <comment xml:lang="sl">Datoteka XMI</comment>
+  <comment xml:lang="si">XMI ගොනුව</comment>
+  <comment xml:lang="sk">Súbor XMI</comment>
+  <comment xml:lang="ru">Файл XMI</comment>
+  <comment xml:lang="ro">Fișier XMI</comment>
+  <comment xml:lang="pt-BR">Arquivo XMI</comment>
+  <comment xml:lang="pt">ficheiro XMI</comment>
+  <comment xml:lang="pl">Plik XMI</comment>
+  <comment xml:lang="oc">fichièr XMI</comment>
+  <comment xml:lang="nn">XMI-fil</comment>
+  <comment xml:lang="nl">XMI-bestand</comment>
+  <comment xml:lang="nb">XMI-fil</comment>
+  <comment xml:lang="lv">XMI datne</comment>
+  <comment xml:lang="lt">XMI failas</comment>
+  <comment xml:lang="ko">XMI 파일</comment>
+  <comment xml:lang="kk-Cyrl">XMI файлы</comment>
+  <comment xml:lang="ja">XMI ファイル</comment>
+  <comment xml:lang="it">File XMI</comment>
+  <comment xml:lang="is">XMI-skrá</comment>
+  <comment xml:lang="id">Berkas XMI</comment>
+  <comment xml:lang="ia">File XMI</comment>
+  <comment xml:lang="hu">XMI fájl</comment>
+  <comment xml:lang="hr">XMI datoteka</comment>
+  <comment xml:lang="he">קובץ XMI</comment>
+  <comment xml:lang="gl">ficheiro XMI</comment>
+  <comment xml:lang="ga">comhad XMI</comment>
+  <comment xml:lang="fur">file XMI</comment>
+  <comment xml:lang="fr">fichier XMI</comment>
+  <comment xml:lang="fo">XMI fíla</comment>
+  <comment xml:lang="fi">XMI-tiedosto</comment>
+  <comment xml:lang="eu">XMI fitxategia</comment>
+  <comment xml:lang="es">archivo XMI</comment>
+  <comment xml:lang="eo">XMI-dosiero</comment>
+  <comment xml:lang="en-GB">XMI file</comment>
+  <comment xml:lang="el">Αρχείο XML</comment>
+  <comment xml:lang="de">XMI-Datei</comment>
+  <comment xml:lang="da">XMI-fil</comment>
+  <comment xml:lang="cs">soubor XMI</comment>
+  <comment xml:lang="ca">fitxer XMI</comment>
+  <comment xml:lang="bg">Файл — XMI</comment>
+  <comment xml:lang="be-Latn">Fajł XMI</comment>
+  <comment xml:lang="be-Cyrl">файл XMI</comment>
+  <comment xml:lang="ar">ملف XMI</comment>
+  <comment xml:lang="af">XMI-lêer</comment>
+  <acronym>XMI</acronym>
+  <expanded-acronym>XML Metadata Interchange</expanded-acronym>
+  <sub-class-of type="application/xml"/>
+  <glob pattern="*.xmi"/>
+</mime-type>

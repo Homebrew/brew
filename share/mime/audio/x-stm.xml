@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="audio/x-stm">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Scream Tracker audio</comment>
+  <comment xml:lang="zh-Hant-TW">Scream Tracker 音訊</comment>
+  <comment xml:lang="zh-Hans-CN">Scream Tracker 音频</comment>
+  <comment xml:lang="vi">Âm thanh Scream Tracker</comment>
+  <comment xml:lang="uk">звук Scream Tracker</comment>
+  <comment xml:lang="tr">Scream Tracker sesi</comment>
+  <comment xml:lang="sv">Scream Tracker-ljud</comment>
+  <comment xml:lang="sr-Cyrl">звук Скрим Тракера</comment>
+  <comment xml:lang="sq">audio Scream Tracker</comment>
+  <comment xml:lang="sl">Zvočna datoteka Scream Tracker</comment>
+  <comment xml:lang="si">Scream Tracker ශ්‍රව්‍ය</comment>
+  <comment xml:lang="sk">Skladba Scream Tracker</comment>
+  <comment xml:lang="ru">Аудио Scream Tracker</comment>
+  <comment xml:lang="ro">Audio Scream Tracker</comment>
+  <comment xml:lang="pt-BR">Áudio Scream Tracker</comment>
+  <comment xml:lang="pt">áudio Scream Tracker</comment>
+  <comment xml:lang="pl">Plik dźwiękowy Scream Tracker</comment>
+  <comment xml:lang="oc">àudio Scream Tracker</comment>
+  <comment xml:lang="nn">Scream Tracker lyd</comment>
+  <comment xml:lang="nl">Scream Tracker-audio</comment>
+  <comment xml:lang="nb">Scream Tracker-lyd</comment>
+  <comment xml:lang="ms">Audio Scream Tracker</comment>
+  <comment xml:lang="lv">Scream Tracker audio</comment>
+  <comment xml:lang="lt">Scream Tracker garso įrašas</comment>
+  <comment xml:lang="ko">Scream Tracker 오디오</comment>
+  <comment xml:lang="kk-Cyrl">Scream Tracker аудиосы</comment>
+  <comment xml:lang="ja">Scream Tracker オーディオ</comment>
+  <comment xml:lang="it">Audio Scream Tracker</comment>
+  <comment xml:lang="is">Scream Tracker hljóðskrá</comment>
+  <comment xml:lang="id">Audio Scream Tracker</comment>
+  <comment xml:lang="ia">Audio Scream Tracker</comment>
+  <comment xml:lang="hu">Scream Tracker hang</comment>
+  <comment xml:lang="hr">Scream Tracker zvučni zapis</comment>
+  <comment xml:lang="he">שמע של Scream Tracker</comment>
+  <comment xml:lang="gl">son Scream Tracker</comment>
+  <comment xml:lang="ga">fuaim Scream Tracker</comment>
+  <comment xml:lang="fur">audio Scream Tracker</comment>
+  <comment xml:lang="fr">audio Scream Tracker</comment>
+  <comment xml:lang="fo">Scream Tracker ljóður</comment>
+  <comment xml:lang="fi">Scream Tracker -ääni</comment>
+  <comment xml:lang="eu">Scream Tracker audioa</comment>
+  <comment xml:lang="es">sonido Scream Tracker</comment>
+  <comment xml:lang="eo">Sondosiero de Scream Tracker</comment>
+  <comment xml:lang="en-GB">Scream Tracker audio</comment>
+  <comment xml:lang="el">Ήχος Scream Tracker</comment>
+  <comment xml:lang="de">Scream-Tracker-Audio</comment>
+  <comment xml:lang="da">Scream Tracker-lyd</comment>
+  <comment xml:lang="cy">Sain Scream Tracker</comment>
+  <comment xml:lang="cs">skladba Scream Tracker</comment>
+  <comment xml:lang="ca">àudio de Scream Tracker</comment>
+  <comment xml:lang="bg">Аудио — Scream Tracker</comment>
+  <comment xml:lang="be-Latn">Aŭdyjo Scream Tracker</comment>
+  <comment xml:lang="be-Cyrl">аўдыя Scream Tracker</comment>
+  <comment xml:lang="az">Scream Tracker audio faylı</comment>
+  <comment xml:lang="ar">صوت Scream Tracker</comment>
+  <glob pattern="*.stm"/>
+</mime-type>

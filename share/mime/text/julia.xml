@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="text/julia">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Julia source code</comment>
+  <comment xml:lang="uk">початковий код Julia</comment>
+  <comment xml:lang="sv">Julia-källkod</comment>
+  <comment xml:lang="ru">Исходный код Julia</comment>
+  <comment xml:lang="pl">Kod źródłowy Julia</comment>
+  <comment xml:lang="ja">Julia算譜</comment>
+  <comment xml:lang="it">Codice sorgente Julia</comment>
+  <comment xml:lang="gl">Código fonte en Julia</comment>
+  <comment xml:lang="eu">Julia iturburu-kodea</comment>
+  <comment xml:lang="es">código fuente en Julia</comment>
+  <comment xml:lang="de">Julia-Quelltext</comment>
+  <comment xml:lang="be-Cyrl">зыходны код Julia</comment>
+  <sub-class-of type="text/plain"/>
+  <glob pattern="*.jl"/>
+</mime-type>

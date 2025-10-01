@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="x-epoc/x-sisx-app">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>SISX package</comment>
+  <comment xml:lang="zh-Hant-TW">SISX 軟體包</comment>
+  <comment xml:lang="zh-Hans-CN">SISX 软件包</comment>
+  <comment xml:lang="vi">Gói SISX</comment>
+  <comment xml:lang="uk">пакунок SISX</comment>
+  <comment xml:lang="tr">SISX paketi</comment>
+  <comment xml:lang="sv">SISX-paket</comment>
+  <comment xml:lang="sr-Cyrl">СИСИкс пакет</comment>
+  <comment xml:lang="sq">paketë SISX</comment>
+  <comment xml:lang="sl">Datoteka paketa SISX</comment>
+  <comment xml:lang="si">SISX පැකේජය</comment>
+  <comment xml:lang="sk">Balíček SISX</comment>
+  <comment xml:lang="ru">Пакет SISX</comment>
+  <comment xml:lang="ro">Pachet SISX</comment>
+  <comment xml:lang="pt-BR">Pacote SISX</comment>
+  <comment xml:lang="pt">pacote SISX</comment>
+  <comment xml:lang="pl">Pakiet SISX</comment>
+  <comment xml:lang="oc">paquet SISX</comment>
+  <comment xml:lang="nn">SISX-pakke</comment>
+  <comment xml:lang="nl">SISX-pakket</comment>
+  <comment xml:lang="nb">SISX-pakke</comment>
+  <comment xml:lang="lv">SISX pakotne</comment>
+  <comment xml:lang="lt">SISX paketas</comment>
+  <comment xml:lang="ko">SISX 패키지</comment>
+  <comment xml:lang="kk-Cyrl">SISX дестесі</comment>
+  <comment xml:lang="ja">SISX パッケージ</comment>
+  <comment xml:lang="it">Pacchetto SISX</comment>
+  <comment xml:lang="is">SISX pakki</comment>
+  <comment xml:lang="id">Paket SISX</comment>
+  <comment xml:lang="ia">Pacchetto SISX</comment>
+  <comment xml:lang="hu">SISX csomag</comment>
+  <comment xml:lang="hr">SISX paket</comment>
+  <comment xml:lang="he">חבילת SISX</comment>
+  <comment xml:lang="gl">paquete SISX</comment>
+  <comment xml:lang="ga">pacáiste SISX</comment>
+  <comment xml:lang="fur">pachet SISX</comment>
+  <comment xml:lang="fr">paquet SISX</comment>
+  <comment xml:lang="fo">SISX pakki</comment>
+  <comment xml:lang="fi">SISX-paketti</comment>
+  <comment xml:lang="eu">SISX paketea</comment>
+  <comment xml:lang="es">paquete SISX</comment>
+  <comment xml:lang="eo">SISX-pakaĵo</comment>
+  <comment xml:lang="en-GB">SISX package</comment>
+  <comment xml:lang="el">Πακέτο SISX</comment>
+  <comment xml:lang="de">SISX-Paket</comment>
+  <comment xml:lang="da">SISX-pakke</comment>
+  <comment xml:lang="cs">balíček SISX</comment>
+  <comment xml:lang="ca">paquet SISX</comment>
+  <comment xml:lang="bg">Пакет — SISX</comment>
+  <comment xml:lang="be-Latn">Pakunak SISX</comment>
+  <comment xml:lang="be-Cyrl">пакет SISX</comment>
+  <comment xml:lang="ast">Paquete SISX</comment>
+  <comment xml:lang="ar">حزمة SISX</comment>
+  <comment xml:lang="af">SISX-pakket</comment>
+  <acronym>SIS</acronym>
+  <expanded-acronym>Symbian Installation File</expanded-acronym>
+  <generic-icon name="package-x-generic"/>
+  <glob pattern="*.sisx"/>
+</mime-type>

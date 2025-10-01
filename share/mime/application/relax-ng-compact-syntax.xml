@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/relax-ng-compact-syntax">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>RELAX NG XML schema</comment>
+  <comment xml:lang="zh-Hant-TW">RELAX NG XML 綱要</comment>
+  <comment xml:lang="zh-Hans-CN">RELAX NG XML 模式</comment>
+  <comment xml:lang="uk">XML-схема RELAX NG</comment>
+  <comment xml:lang="tr">RELAX NG XML şeması</comment>
+  <comment xml:lang="sv">RELAX NG XML-schema</comment>
+  <comment xml:lang="sr-Cyrl">РЕЛАКС НГ ИксМЛ шема</comment>
+  <comment xml:lang="sl">Datoteka shema RELAX NG XML</comment>
+  <comment xml:lang="si">RELAX NG XML ක්‍රමය</comment>
+  <comment xml:lang="sk">XML schéma RELAX NG</comment>
+  <comment xml:lang="ru">XML-схема RELAX NG</comment>
+  <comment xml:lang="ro">Schemă RELAX NG XML</comment>
+  <comment xml:lang="pt-BR">Esquema XML de RELAX NG</comment>
+  <comment xml:lang="pt">Esquema RELAX NG XML</comment>
+  <comment xml:lang="pl">Schemat XML RELAX NG</comment>
+  <comment xml:lang="oc">esquèma XML RELAX NG</comment>
+  <comment xml:lang="nl">RELAX NG XML-schema</comment>
+  <comment xml:lang="lv">RELAX NG XML shēma</comment>
+  <comment xml:lang="lt">RELAX NG XML schema</comment>
+  <comment xml:lang="ko">RELAX NG XML 스키마</comment>
+  <comment xml:lang="kk-Cyrl">RELAX NG XML сұлбасы</comment>
+  <comment xml:lang="ja">RELAX NG XML スキーマ</comment>
+  <comment xml:lang="it">Schema XML RELAX NG</comment>
+  <comment xml:lang="is">RELAX NG XML skema</comment>
+  <comment xml:lang="id">Skema XML RELAX NG</comment>
+  <comment xml:lang="ia">Schema XML RELAX NG</comment>
+  <comment xml:lang="hu">RELAX NG XML-séma</comment>
+  <comment xml:lang="hr">RELAX NG XML shema</comment>
+  <comment xml:lang="he">סכנת RELAX NG XML</comment>
+  <comment xml:lang="gl">Esquema XML RELAX NG</comment>
+  <comment xml:lang="ga">scéimre XML RELAX NG</comment>
+  <comment xml:lang="fur">scheme XML RELAX NG</comment>
+  <comment xml:lang="fr">schéma XML RELAX NG</comment>
+  <comment xml:lang="fi">RELAX NG XML-skeema</comment>
+  <comment xml:lang="eu">RELAX NG XML eskema</comment>
+  <comment xml:lang="es">esquema XML RELAX NG</comment>
+  <comment xml:lang="en-GB">RELAX NG XML schema</comment>
+  <comment xml:lang="el">Σχήμα RELAX NG XML</comment>
+  <comment xml:lang="de">RELAX NG XML-Schema</comment>
+  <comment xml:lang="da">RELAX NG XML-skema</comment>
+  <comment xml:lang="cs">schéma RELAX NG XML</comment>
+  <comment xml:lang="ca">esquema XML en RELAX NG</comment>
+  <comment xml:lang="bg">Схема за XML — RELAX NG</comment>
+  <comment xml:lang="be-Cyrl">XML-схема RELAX NG</comment>
+  <comment xml:lang="ar">مخطط  RELAX NG XML</comment>
+  <comment xml:lang="af">RELAX NG XML-skema</comment>
+  <acronym>RELAX NG</acronym>
+  <expanded-acronym>REgular LAnguage for XML Next Generation</expanded-acronym>
+  <sub-class-of type="text/plain"/>
+  <generic-icon name="text-x-generic"/>
+  <glob pattern="*.rnc"/>
+  <alias type="application/x-rnc"/>
+</mime-type>

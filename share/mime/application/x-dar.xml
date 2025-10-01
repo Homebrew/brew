@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-dar">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>DAR archive</comment>
+  <comment xml:lang="zh-Hant-TW">DAR 封存檔</comment>
+  <comment xml:lang="zh-Hans-CN">DAR 归档文件</comment>
+  <comment xml:lang="vi">Kho nén DAR</comment>
+  <comment xml:lang="uk">архів DAR</comment>
+  <comment xml:lang="tr">DAR arşivi</comment>
+  <comment xml:lang="sv">DAR-arkiv</comment>
+  <comment xml:lang="sr-Cyrl">ДАР архива</comment>
+  <comment xml:lang="sq">arkiv DAR</comment>
+  <comment xml:lang="sl">Datoteka arhiva DAR</comment>
+  <comment xml:lang="si">DAR ලේඛනාගාරය</comment>
+  <comment xml:lang="sk">Archív DAR</comment>
+  <comment xml:lang="ru">Архив DAR</comment>
+  <comment xml:lang="ro">Arhivă DAR</comment>
+  <comment xml:lang="pt-BR">Pacote DAR</comment>
+  <comment xml:lang="pt">arquivo DAR</comment>
+  <comment xml:lang="pl">Archiwum DAR</comment>
+  <comment xml:lang="oc">archiu DAR</comment>
+  <comment xml:lang="nn">DAR-arkiv</comment>
+  <comment xml:lang="nl">DAR-archief</comment>
+  <comment xml:lang="nb">DAR-arkiv</comment>
+  <comment xml:lang="lv">DAR arhīvs</comment>
+  <comment xml:lang="lt">DAR archyvas</comment>
+  <comment xml:lang="ko">DAR 묶음 파일</comment>
+  <comment xml:lang="kk-Cyrl">DAR архиві</comment>
+  <comment xml:lang="ka">DAR არქივი</comment>
+  <comment xml:lang="ja">DAR アーカイブ</comment>
+  <comment xml:lang="it">Archivio DAR</comment>
+  <comment xml:lang="is">DAR safnskrá</comment>
+  <comment xml:lang="id">Arsip DAR</comment>
+  <comment xml:lang="ia">Archivo DAR</comment>
+  <comment xml:lang="hu">DAR archívum</comment>
+  <comment xml:lang="hr">DAR arhiva</comment>
+  <comment xml:lang="he">ארכיון DAR</comment>
+  <comment xml:lang="gl">arquivo DAR</comment>
+  <comment xml:lang="ga">cartlann DAR</comment>
+  <comment xml:lang="fur">archivi DAR</comment>
+  <comment xml:lang="fr">archive DAR</comment>
+  <comment xml:lang="fo">DAR skjalasavn</comment>
+  <comment xml:lang="fi">DAR-arkisto</comment>
+  <comment xml:lang="eu">DAR artxiboa</comment>
+  <comment xml:lang="es">archivador DAR</comment>
+  <comment xml:lang="eo">DAR-arkivo</comment>
+  <comment xml:lang="en-GB">DAR archive</comment>
+  <comment xml:lang="el">Συμπιεσμένο αρχείο DAR</comment>
+  <comment xml:lang="de">DAR-Archiv</comment>
+  <comment xml:lang="da">DAR-arkiv</comment>
+  <comment xml:lang="cs">archiv DAR</comment>
+  <comment xml:lang="ca">arxiu DAR</comment>
+  <comment xml:lang="bg">Архив — DAR</comment>
+  <comment xml:lang="be-Latn">Archiŭ DAR</comment>
+  <comment xml:lang="be-Cyrl">архіў DAR</comment>
+  <comment xml:lang="ar">أرشيف DAR</comment>
+  <comment xml:lang="af">DAR-argief</comment>
+  <acronym>DAR</acronym>
+  <expanded-acronym>Disk ARchive</expanded-acronym>
+  <generic-icon name="package-x-generic"/>
+  <glob pattern="*.dar"/>
+</mime-type>

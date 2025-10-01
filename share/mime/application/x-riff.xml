@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-riff">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>RIFF container</comment>
+  <comment xml:lang="zh-Hant-TW">RIFF 容器</comment>
+  <comment xml:lang="zh-Hans-CN">RIFF 容器</comment>
+  <comment xml:lang="uk">контейнер RIFF</comment>
+  <comment xml:lang="tr">RIFF deposu</comment>
+  <comment xml:lang="sv">RIFF-behållare</comment>
+  <comment xml:lang="sr-Cyrl">РИФФ садржалац</comment>
+  <comment xml:lang="sq">kontejner RIFF</comment>
+  <comment xml:lang="sl">Vsebnik RIFF</comment>
+  <comment xml:lang="si">RIFF කන්ටේනරය</comment>
+  <comment xml:lang="sk">Kontajner RIFF</comment>
+  <comment xml:lang="ru">Контейнер RIFF</comment>
+  <comment xml:lang="pt-BR">Contêiner RIFF</comment>
+  <comment xml:lang="pt">contentor RIFF</comment>
+  <comment xml:lang="pl">Kontener RIFF</comment>
+  <comment xml:lang="oc">contenidor RIFF</comment>
+  <comment xml:lang="nl">RIFF-container</comment>
+  <comment xml:lang="lt">RIFF konteineris</comment>
+  <comment xml:lang="ko">RIFF 컨테이너</comment>
+  <comment xml:lang="kk-Cyrl">RIFF контейнері</comment>
+  <comment xml:lang="ja">RIFF コンテナ</comment>
+  <comment xml:lang="it">Container RIFF</comment>
+  <comment xml:lang="is">RIFF gagnagámur</comment>
+  <comment xml:lang="id">Wadah RIFF</comment>
+  <comment xml:lang="ia">Receptaculo RIFF</comment>
+  <comment xml:lang="hu">RIFF konténer</comment>
+  <comment xml:lang="hr">RIFF spremnik</comment>
+  <comment xml:lang="he">מכולת RIFF</comment>
+  <comment xml:lang="gl">Contenedor RIFF</comment>
+  <comment xml:lang="ga">coimeádán RIFF</comment>
+  <comment xml:lang="fur">contignidôr RIFF</comment>
+  <comment xml:lang="fr">conteneur RIFF</comment>
+  <comment xml:lang="fi">RIFF-kontti</comment>
+  <comment xml:lang="eu">RIFF edukitzailea</comment>
+  <comment xml:lang="es">contenedor RIFF</comment>
+  <comment xml:lang="en-GB">RIFF container</comment>
+  <comment xml:lang="el">Περιέκτης RIFF</comment>
+  <comment xml:lang="de">RIFF-Container</comment>
+  <comment xml:lang="da">RIFF-container</comment>
+  <comment xml:lang="cs">kontejner RIFF</comment>
+  <comment xml:lang="ca">contenidor RIFF</comment>
+  <comment xml:lang="bg">Контейнер — RIFF</comment>
+  <comment xml:lang="be-Cyrl">кантэйнер RIFF</comment>
+  <comment xml:lang="ar">حاوية RIFF</comment>
+  <comment xml:lang="af">RIFF-houer</comment>
+</mime-type>

@@ -1,0 +1,1 @@
+../../../../Cellar/gstreamer/1.26.2/share/locale/tr/LC_MESSAGES/gst-plugins-bad-1.0.mo

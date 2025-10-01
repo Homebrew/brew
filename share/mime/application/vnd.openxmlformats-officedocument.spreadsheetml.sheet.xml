@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Excel 2007 spreadsheet</comment>
+  <comment xml:lang="zh-Hant-TW">Excel 2007 試算表</comment>
+  <comment xml:lang="zh-Hans-CN">Excel 2007 电子表格</comment>
+  <comment xml:lang="vi">Bảng tính Excel 2007</comment>
+  <comment xml:lang="uk">електронна таблиця Excel 2007</comment>
+  <comment xml:lang="tr">Excel 2007 hesap çizelgesi sayfası</comment>
+  <comment xml:lang="sv">Excel 2007-kalkylblad</comment>
+  <comment xml:lang="sr-Cyrl">табела Ексела 2007</comment>
+  <comment xml:lang="sq">fletëllogaritje Excel 2007</comment>
+  <comment xml:lang="sl">Razpredelnica Microsoft Excel 2007</comment>
+  <comment xml:lang="si">Excel 2007 පැතුරුම්පත</comment>
+  <comment xml:lang="sk">Zošit Excel 2007</comment>
+  <comment xml:lang="ru">Электронная таблица Excel 2007</comment>
+  <comment xml:lang="ro">Foaie de calcul Excel 2007</comment>
+  <comment xml:lang="pt-BR">Planilha do Excel 2007</comment>
+  <comment xml:lang="pt">folha de cálculo Excel 2007</comment>
+  <comment xml:lang="pl">Arkusz Excel 2007</comment>
+  <comment xml:lang="oc">fuèlh de calcul Excel 2007</comment>
+  <comment xml:lang="nl">Excel 2007-rekenblad</comment>
+  <comment xml:lang="lv">Excel 2007 izklājlapa</comment>
+  <comment xml:lang="lt">Excel 2007 skaičialentė</comment>
+  <comment xml:lang="ko">Excel 2007 스프레드시트</comment>
+  <comment xml:lang="kk-Cyrl">Excel 2007 электрондық кестесі</comment>
+  <comment xml:lang="ka">Excel 2007-ის ცხრილი</comment>
+  <comment xml:lang="ja">Excel 2007 スプレッドシート</comment>
+  <comment xml:lang="it">Foglio di calcolo Excel 2007</comment>
+  <comment xml:lang="is">Excel 2007 töflureikniskjal</comment>
+  <comment xml:lang="id">Lembar sebar Excel 2007</comment>
+  <comment xml:lang="ia">Folio de calculo Excel 2007</comment>
+  <comment xml:lang="hu">Excel 2007 táblázat</comment>
+  <comment xml:lang="hr">Excel 2007 proračunska tablica</comment>
+  <comment xml:lang="he">גיליון נתונים של Excel 2007</comment>
+  <comment xml:lang="gl">folla de cálculo de Excel 2007</comment>
+  <comment xml:lang="ga">scarbhileog Excel 2007</comment>
+  <comment xml:lang="fur">sfuei di calcul Excel 2007</comment>
+  <comment xml:lang="fr">feuille de calcul Excel 2007</comment>
+  <comment xml:lang="fo">Excel 2007 rokniark</comment>
+  <comment xml:lang="fi">Excel 2007 -taulukko</comment>
+  <comment xml:lang="eu">Excel 2007 kalkulu-orria</comment>
+  <comment xml:lang="es">hoja de cálculo de Excel 2007</comment>
+  <comment xml:lang="en-GB">Excel 2007 spreadsheet</comment>
+  <comment xml:lang="el">Λογιστικό φύλλο Excel 2007</comment>
+  <comment xml:lang="de">Excel-2007-Tabelle</comment>
+  <comment xml:lang="da">Excel 2007-regneark</comment>
+  <comment xml:lang="cs">sešit Excel 2007</comment>
+  <comment xml:lang="ca">full de càlcul d'Excel 2007</comment>
+  <comment xml:lang="bg">Таблица — Excel 2007</comment>
+  <comment xml:lang="be-Cyrl">электронная табліца Excel 2007</comment>
+  <comment xml:lang="ar">جدول اكسل 2007</comment>
+  <comment xml:lang="af">Excel 2007-sigblad</comment>
+  <glob pattern="*.xlsx"/>
+  <sub-class-of type="application/zip"/>
+  <generic-icon name="x-office-spreadsheet"/>
+</mime-type>

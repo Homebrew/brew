@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/pkix-pkipath">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>PkiPath certification path</comment>
+  <comment xml:lang="zh-Hant-TW">PkiPath 憑證路徑</comment>
+  <comment xml:lang="zh-Hans-CN">PkiPath 证书目录</comment>
+  <comment xml:lang="vi">Đường dẫn cấp chứng nhận PkiPath</comment>
+  <comment xml:lang="uk">шлях сертифікації PkiPath</comment>
+  <comment xml:lang="tr">PkiPath sertifika yolu</comment>
+  <comment xml:lang="sv">PkiPath-certifikatsekvens</comment>
+  <comment xml:lang="sr-Cyrl">путања уверења ПкиПат-а</comment>
+  <comment xml:lang="sq">shteg dëshmish PkiPath</comment>
+  <comment xml:lang="sl">Datoteka poti potrdila PkiPath</comment>
+  <comment xml:lang="si">PkiPath සහතික කිරීමේ මාර්ගය</comment>
+  <comment xml:lang="sk">Cesta k certifikátu PkiPath</comment>
+  <comment xml:lang="ru">Путь сертификации PkiPath</comment>
+  <comment xml:lang="ro">Cale certificare PkiPath</comment>
+  <comment xml:lang="pt-BR">Pedido de certificação PkiPath</comment>
+  <comment xml:lang="pt">caminho de certificação PkiPath</comment>
+  <comment xml:lang="pl">Ścieżka certyfikacji PkiPath</comment>
+  <comment xml:lang="oc">camin de certificacion PkiPath</comment>
+  <comment xml:lang="nl">PkiPath-certificatiepad</comment>
+  <comment xml:lang="lv">PkiPath sertifikāta ceļš</comment>
+  <comment xml:lang="lt">PkiPath liudijimų maršrutas</comment>
+  <comment xml:lang="ko">PkiPath 인증서 요청</comment>
+  <comment xml:lang="kk-Cyrl">PkiPath сертификаттау жолы</comment>
+  <comment xml:lang="ja">PkiPath 証明書パス</comment>
+  <comment xml:lang="it">Percorso certificazione PkiPath</comment>
+  <comment xml:lang="is">PkiPath vottunarslóð</comment>
+  <comment xml:lang="id">Alamat sertifikasi PkiPath</comment>
+  <comment xml:lang="ia">Cammino de certification PkiPath</comment>
+  <comment xml:lang="hu">PkiPath tanúsítványútvonal</comment>
+  <comment xml:lang="hr">PkiPath putanja vjerodajnice</comment>
+  <comment xml:lang="he">נתיב מאושר של PkiPath</comment>
+  <comment xml:lang="gl">Ruta de certificación PkiPath</comment>
+  <comment xml:lang="ga">conair dheimhniúcháin PkiPath</comment>
+  <comment xml:lang="fur">percors di certificazion PkiPath</comment>
+  <comment xml:lang="fr">chemin de certification PkiPath</comment>
+  <comment xml:lang="fo">PkiPath váttanleið</comment>
+  <comment xml:lang="fi">PkiPath-varmennepolku</comment>
+  <comment xml:lang="eu">PkiPath ziurtagirien bide-izena</comment>
+  <comment xml:lang="es">ruta de certificación PkiPath</comment>
+  <comment xml:lang="en-GB">PkiPath certification path</comment>
+  <comment xml:lang="el">Διαδρομή πιστοποιητικού PkiPath</comment>
+  <comment xml:lang="de">PkiPath-Zertifikatspfad</comment>
+  <comment xml:lang="da">PkiPath-certifikationssti</comment>
+  <comment xml:lang="cs">cesta k certifikátu PkiPath</comment>
+  <comment xml:lang="ca">camí cap a la certificació PkiPath</comment>
+  <comment xml:lang="bg">Сертификационна верига — PkiPath</comment>
+  <comment xml:lang="be-Cyrl">шлях сертыфікацыі PkiPath</comment>
+  <comment xml:lang="ast">Camín de certificación PkiPath</comment>
+  <comment xml:lang="ar">مسار شهادة PkiPath</comment>
+  <comment xml:lang="af">PkiPath-sertifiseringspad</comment>
+  <glob pattern="*.pkipath"/>
+</mime-type>

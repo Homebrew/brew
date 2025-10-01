@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="text/x-mpsub">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>MPlayer subtitles</comment>
+  <comment xml:lang="uk">субтитри MPlayer</comment>
+  <comment xml:lang="sv">MPlayer-undertexter</comment>
+  <comment xml:lang="ru">Субтитры MPlayer</comment>
+  <comment xml:lang="pl">Napisy MPlayer</comment>
+  <comment xml:lang="es">subtítulos de MPlayer</comment>
+  <comment xml:lang="de">MPlayer-Untertitel</comment>
+  <sub-class-of type="text/plain"/>
+  <glob pattern="*.sub"/>
+</mime-type>

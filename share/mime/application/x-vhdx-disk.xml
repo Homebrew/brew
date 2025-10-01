@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-vhdx-disk">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>VHDX disk image</comment>
+  <comment xml:lang="zh-Hant-TW">VHDX 磁碟映像檔</comment>
+  <comment xml:lang="zh-Hans-CN">VHDX 磁盘映像</comment>
+  <comment xml:lang="uk">образ диска VHDX</comment>
+  <comment xml:lang="tr">VHDX disk görüntüsü</comment>
+  <comment xml:lang="sv">VHDX-diskavbildning</comment>
+  <comment xml:lang="sl">Slika diska VHDX</comment>
+  <comment xml:lang="si">VHDX තැටි රූපය</comment>
+  <comment xml:lang="ru">Образ диска VHDX</comment>
+  <comment xml:lang="pt-BR">Imagem de disco VHDX</comment>
+  <comment xml:lang="pl">Obraz dysku VHDX</comment>
+  <comment xml:lang="nl">VHDX-schijfkopiebestand</comment>
+  <comment xml:lang="ko">VHDX 디스크 이미지</comment>
+  <comment xml:lang="kk-Cyrl">VHDX диск бейнесі</comment>
+  <comment xml:lang="ja">VHDX ディスクイメージ</comment>
+  <comment xml:lang="it">Immagine disco VHDX</comment>
+  <comment xml:lang="hr">VHDX slika diska</comment>
+  <comment xml:lang="fi">VHDX-levykuva</comment>
+  <comment xml:lang="eu">VHDX disko-irudia</comment>
+  <comment xml:lang="es">imagen de disco VHDX</comment>
+  <comment xml:lang="en-GB">VHDX disk image</comment>
+  <comment xml:lang="de">VHDX-Datenträgerabbild</comment>
+  <comment xml:lang="be-Cyrl">вобраз дыска VHDX</comment>
+  <comment xml:lang="ar">صورة قرص VHDX</comment>
+  <acronym>VHDX</acronym>
+  <expanded-acronym>Virtual Hard Disk v2</expanded-acronym>
+  <glob pattern="*.vhdx"/>
+  <alias type="application/x-virtualbox-vhdx"/>
+</mime-type>

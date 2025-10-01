@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="video/ogg">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Ogg video</comment>
+  <comment xml:lang="zh-Hant-TW">Ogg 視訊</comment>
+  <comment xml:lang="zh-Hans-CN">Ogg 视频</comment>
+  <comment xml:lang="uk">відео ogg</comment>
+  <comment xml:lang="tr">Ogg video</comment>
+  <comment xml:lang="sv">Ogg-video</comment>
+  <comment xml:lang="sr-Cyrl">ОГГ видео</comment>
+  <comment xml:lang="sq">video Ogg</comment>
+  <comment xml:lang="sl">Video Ogg</comment>
+  <comment xml:lang="si">ඔග් වීඩියෝව</comment>
+  <comment xml:lang="sk">Video Ogg</comment>
+  <comment xml:lang="ru">Видео Ogg</comment>
+  <comment xml:lang="pt-BR">Vídeo Ogg</comment>
+  <comment xml:lang="pl">Plik wideo Ogg</comment>
+  <comment xml:lang="oc">vidèo Ogg</comment>
+  <comment xml:lang="nl">Ogg-video</comment>
+  <comment xml:lang="ko">Ogg 동영상</comment>
+  <comment xml:lang="kk-Cyrl">Ogg видеосы</comment>
+  <comment xml:lang="ja">Ogg 動画</comment>
+  <comment xml:lang="it">Video Ogg</comment>
+  <comment xml:lang="is">Ogg myndskeið</comment>
+  <comment xml:lang="id">Video Ogg</comment>
+  <comment xml:lang="hu">Ogg videó</comment>
+  <comment xml:lang="hr">Ogg video snimka</comment>
+  <comment xml:lang="he">וידאו Ogg</comment>
+  <comment xml:lang="gl">Vídeo Ogg</comment>
+  <comment xml:lang="fr">vidéo Ogg</comment>
+  <comment xml:lang="fi">Ogg-video</comment>
+  <comment xml:lang="eu">Ogg bideoa</comment>
+  <comment xml:lang="es">vídeo Ogg</comment>
+  <comment xml:lang="en-GB">Ogg video</comment>
+  <comment xml:lang="de">Ogg-Video</comment>
+  <comment xml:lang="da">Ogg-video</comment>
+  <comment xml:lang="ca">vídeo Ogg</comment>
+  <comment xml:lang="bg">Видео — Ogg</comment>
+  <comment xml:lang="be-Cyrl">відэа Ogg</comment>
+  <comment xml:lang="ar">فيديو Ogg</comment>
+  <sub-class-of type="application/ogg"/>
+  <glob pattern="*.ogv"/>
+  <glob pattern="*.ogg"/>
+  <alias type="video/x-ogg"/>
+</mime-type>

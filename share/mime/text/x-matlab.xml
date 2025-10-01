@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="text/x-matlab">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>MATLAB file</comment>
+  <comment xml:lang="zh-Hant-TW">MATLAB 檔</comment>
+  <comment xml:lang="zh-Hans-CN">MATLAB 文件</comment>
+  <comment xml:lang="uk">файл MATLAB</comment>
+  <comment xml:lang="tr">MATLAB dosyası</comment>
+  <comment xml:lang="sv">MATLAB-fil</comment>
+  <comment xml:lang="sq">kartelë MATLAB</comment>
+  <comment xml:lang="sl">Datoteka MATLAB</comment>
+  <comment xml:lang="si">MATLAB ගොනුව</comment>
+  <comment xml:lang="sk">Súbor MATLAB</comment>
+  <comment xml:lang="ru">Файл MATLAB</comment>
+  <comment xml:lang="pt-BR">Arquivo do MATLAB</comment>
+  <comment xml:lang="pl">Plik MATLAB</comment>
+  <comment xml:lang="nl">MATLAB-bestand</comment>
+  <comment xml:lang="ko">MATLAB 파일</comment>
+  <comment xml:lang="kk-Cyrl">MATLAB файлы</comment>
+  <comment xml:lang="ja">MATLAB ファイル</comment>
+  <comment xml:lang="it">File MATLAB</comment>
+  <comment xml:lang="is">MATLAB-skrá</comment>
+  <comment xml:lang="id">Berkas MATLAB</comment>
+  <comment xml:lang="hu">MATLAB fájl</comment>
+  <comment xml:lang="hr">MATLAB datoteka</comment>
+  <comment xml:lang="he">קובץ MATLAB</comment>
+  <comment xml:lang="gl">Ficheiro de MATLAB</comment>
+  <comment xml:lang="fr">fichier MATLAB</comment>
+  <comment xml:lang="fi">MATLAB-tiedosto</comment>
+  <comment xml:lang="eu">MATLAB fitxategia</comment>
+  <comment xml:lang="es">archivo de MATLAB</comment>
+  <comment xml:lang="en-GB">MATLAB file</comment>
+  <comment xml:lang="de">MATLAB-Datei</comment>
+  <comment xml:lang="da">MATLAB-fil</comment>
+  <comment xml:lang="ca">fitxer MATLAB</comment>
+  <comment xml:lang="bg">Файл — MATLAB</comment>
+  <comment xml:lang="be-Cyrl">файл MATLAB</comment>
+  <comment xml:lang="ar">ملف ماتلاب</comment>
+  <sub-class-of type="text/plain"/>
+  <glob pattern="*.m"/>
+  <alias type="text/x-octave"/>
+</mime-type>

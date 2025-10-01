@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-subrip">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>SubRip subtitles</comment>
+  <comment xml:lang="zh-Hant-TW">SubRip 字幕</comment>
+  <comment xml:lang="zh-Hans-CN">SubRip 字幕</comment>
+  <comment xml:lang="vi">Phụ đề SubRip</comment>
+  <comment xml:lang="uk">субтитри SubRip</comment>
+  <comment xml:lang="tr">SubRip alt yazıları</comment>
+  <comment xml:lang="sv">SubRip-undertexter</comment>
+  <comment xml:lang="sr-Cyrl">Суб Рип преводи</comment>
+  <comment xml:lang="sq">titra SubRip</comment>
+  <comment xml:lang="sl">Datoteka podnapisov SubRip</comment>
+  <comment xml:lang="si">SubRip උපසිරැසි</comment>
+  <comment xml:lang="sk">Titulky SubRip</comment>
+  <comment xml:lang="ru">Субтитры SubRip</comment>
+  <comment xml:lang="ro">Subtitrare SubRip</comment>
+  <comment xml:lang="pt-BR">Legendas SubRip</comment>
+  <comment xml:lang="pt">legendas SubRip</comment>
+  <comment xml:lang="pl">Napisy SubRip</comment>
+  <comment xml:lang="oc">sostítols SubRip</comment>
+  <comment xml:lang="nn">SubRip-teksting</comment>
+  <comment xml:lang="nl">SubRip-ondertitels</comment>
+  <comment xml:lang="nb">SubRip undertekst</comment>
+  <comment xml:lang="lv">SubRip subtitri</comment>
+  <comment xml:lang="lt">SubRip subtitrai</comment>
+  <comment xml:lang="ko">SubRip 자막 파일</comment>
+  <comment xml:lang="kk-Cyrl">SubRip субтитрлары</comment>
+  <comment xml:lang="ja">SubRip 字幕</comment>
+  <comment xml:lang="it">Sottotitoli SubRip</comment>
+  <comment xml:lang="is">SubRip skjátextar</comment>
+  <comment xml:lang="id">Subjudul SubRip</comment>
+  <comment xml:lang="ia">Subtitulos SubRip</comment>
+  <comment xml:lang="hu">SubRip feliratok</comment>
+  <comment xml:lang="hr">SubRip podnaslovi</comment>
+  <comment xml:lang="he">כתוביות של SubRip</comment>
+  <comment xml:lang="gl">subtítulos SubRip</comment>
+  <comment xml:lang="ga">fotheidil SubRip</comment>
+  <comment xml:lang="fur">sottitui SubRip</comment>
+  <comment xml:lang="fr">sous-titres SubRip</comment>
+  <comment xml:lang="fo">SubRip undirtekstir</comment>
+  <comment xml:lang="fi">SubRip-tekstitykset</comment>
+  <comment xml:lang="eu">SubRip azpitituluak</comment>
+  <comment xml:lang="es">subtítulos SubRip</comment>
+  <comment xml:lang="eo">SubRip-subtekstoj</comment>
+  <comment xml:lang="en-GB">SubRip subtitles</comment>
+  <comment xml:lang="el">Υπότιτλοι SubRip</comment>
+  <comment xml:lang="de">SubRip-Untertitel</comment>
+  <comment xml:lang="da">SubRip-undertekster</comment>
+  <comment xml:lang="cs">titulky SubRip</comment>
+  <comment xml:lang="ca">subtítols SubRip</comment>
+  <comment xml:lang="bg">Субтитри — SubRip</comment>
+  <comment xml:lang="be-Latn">Subtytry SubRip</comment>
+  <comment xml:lang="be-Cyrl">субцітры SubRip</comment>
+  <comment xml:lang="ar">ترجمات SubRip</comment>
+  <comment xml:lang="af">SubRip-onderskrifte</comment>
+  <alias type="application/x-srt"/>
+  <sub-class-of type="text/plain"/>
+  <generic-icon name="text-x-generic"/>
+  <glob pattern="*.srt"/>
+</mime-type>

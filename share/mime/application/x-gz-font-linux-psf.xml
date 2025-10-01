@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-gz-font-linux-psf">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Linux PSF console font (gzip-compressed)</comment>
+  <comment xml:lang="zh-Hant-TW">Linux PSF console 字型 (gzip 壓縮)</comment>
+  <comment xml:lang="zh-Hans-CN">Linux PSF 控制台字体（gzip 压缩）</comment>
+  <comment xml:lang="vi">Phông chữ bàn giao tiếp PSF Linux (đã nén gzip)</comment>
+  <comment xml:lang="uk">консольний шрифт Linux PSF (стиснений gzip)</comment>
+  <comment xml:lang="tr">Linux PSF konsol yazı tipi (gzip ile sıkıştırılmış)</comment>
+  <comment xml:lang="sv">Linux PSF-konsoltypsnitt (gzip-komprimerat)</comment>
+  <comment xml:lang="sr-Cyrl">слова Линуксове ПСФ конзоле (запакована гзип-ом)</comment>
+  <comment xml:lang="sq">shkronja konsole Linux PSF (ngjeshur me gzip)</comment>
+  <comment xml:lang="sl">Datoteka pisave konzole Linux PSF (skrčena z gzip)</comment>
+  <comment xml:lang="si">Linux PSF කොන්සෝල අකුරු (gzip-compressed)</comment>
+  <comment xml:lang="sk">Písmo PSF pre konzolu Linuxu (komprimované pomocou gzip)</comment>
+  <comment xml:lang="ru">Консольный шрифт Linux PSF (сжатый gzip)</comment>
+  <comment xml:lang="ro">Font consolă Linux PSF (compresie gzip)</comment>
+  <comment xml:lang="pt-BR">Fonte de console Linux PSF (compactada com gzip)</comment>
+  <comment xml:lang="pt">letra de consola Linux PSF (compressão gzip)</comment>
+  <comment xml:lang="pl">Czcionka konsoli PSF Linux (kompresja gzip)</comment>
+  <comment xml:lang="oc">poliça consòla Linux PSF (compressat gzip)</comment>
+  <comment xml:lang="nn">Linux PSF konsoll-skrifttype (gzip-pakka)</comment>
+  <comment xml:lang="nl">Linux PSF-console-lettertype (ingepakt met gzip)</comment>
+  <comment xml:lang="nb">Linux PSF konsollskrifttype (gzip-komprimert)</comment>
+  <comment xml:lang="lv">Linux PSF konsoles fonts (saspiests ar gzip)</comment>
+  <comment xml:lang="lt">Linux PSF konsolės šriftas (suglaudintas su gzip)</comment>
+  <comment xml:lang="ko">리눅스 PSF 콘솔 글꼴(GZIP 압축)</comment>
+  <comment xml:lang="kk-Cyrl">Linux PSF консольдік қарібі (gzip-пен сығылған)</comment>
+  <comment xml:lang="ja">Linux PSF コンソールフォント (gzip 圧縮)</comment>
+  <comment xml:lang="it">Carattere console Linux PSF (compresso con gzip)</comment>
+  <comment xml:lang="is">Linux PSF stjórnskjáaletur (gzip-þjöppað)</comment>
+  <comment xml:lang="id">Fonta konsol Linux PSF (terkompresi gzip)</comment>
+  <comment xml:lang="ia">Typo de litteras console Linux PSF (comprimite con gzip)</comment>
+  <comment xml:lang="hu">Linux PSF konzolos betűkészlet (gzip tömörítésű)</comment>
+  <comment xml:lang="hr">Linux PSF font konzolne (gzip komprimirano)</comment>
+  <comment xml:lang="he">גופן למסוף מסוג Linux PSF (מכווץ ע״י gzip)</comment>
+  <comment xml:lang="gl">tipo de fonte de consola Linux PSF (comprimida con gzip)</comment>
+  <comment xml:lang="ga">cló consóil Linux PSF (comhbhrúite le gzip)</comment>
+  <comment xml:lang="fur">caratar console Linux PSF (comprimût cun gzip)</comment>
+  <comment xml:lang="fr">police console Linux PSF (compressée gzip)</comment>
+  <comment xml:lang="fo">Linux PSF stýristøðs stavasnið (gzip-stappað)</comment>
+  <comment xml:lang="fi">Linux PSF -konsolifontti (gzip-pakattu)</comment>
+  <comment xml:lang="eu">Linux PSF kontsolako letra-tipoa (gzip-ekin konprimitua)</comment>
+  <comment xml:lang="es">tipo de letra de consola Linux PSF (comprimido con GZIP)</comment>
+  <comment xml:lang="en-GB">Linux PSF console font (gzip-compressed)</comment>
+  <comment xml:lang="el">Γραμματοσειρά κονσόλας PSF Linux (συμπιεσμένη με gzip)</comment>
+  <comment xml:lang="de">Linux-PSF-Konsolenschrift (gzip-komprimiert)</comment>
+  <comment xml:lang="da">Linux PSF-konsolskrifttype (gzip-komprimeret)</comment>
+  <comment xml:lang="cs">font PSF pro konzolu Linuxu (komprimace gzip)</comment>
+  <comment xml:lang="ca">lletra de consola PSF de Linux (amb compressió gzip)</comment>
+  <comment xml:lang="bg">Шрифт — Linux PSF, компресиран с gzip</comment>
+  <comment xml:lang="be-Latn">Kansolny šryft PSF dla Linuksa (gzip-skampresavany)</comment>
+  <comment xml:lang="be-Cyrl">шрыфт кансолі PSF для Linux (сцісканне gzip)</comment>
+  <comment xml:lang="ar">خط كونسول PSF لينكس (مضغوط-gzip)</comment>
+  <comment xml:lang="af">Linux PSF-konsoleskriftipe (gzip-saamgepers)</comment>
+  <acronym>PSF</acronym>
+  <expanded-acronym>PC Screen Font</expanded-acronym>
+  <sub-class-of type="application/gzip"/>
+  <generic-icon name="font-x-generic"/>
+  <glob pattern="*.psf.gz"/>
+</mime-type>

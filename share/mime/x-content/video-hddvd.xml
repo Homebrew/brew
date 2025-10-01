@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="x-content/video-hddvd">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>HD DVD video disc</comment>
+  <comment xml:lang="zh-Hant-TW">HD DVD 視訊光碟</comment>
+  <comment xml:lang="zh-Hans-CN">HD DVD 视频光盘</comment>
+  <comment xml:lang="vi">Đĩa ảnh động DVD HD</comment>
+  <comment xml:lang="uk">відеодиск HD DVD</comment>
+  <comment xml:lang="tr">HD DVD vidyo diski</comment>
+  <comment xml:lang="sv">HD DVD-videoskiva</comment>
+  <comment xml:lang="sr-Cyrl">ХД ДВД видео диск</comment>
+  <comment xml:lang="sq">disk video DVD HD</comment>
+  <comment xml:lang="sl">HD DVD video disk</comment>
+  <comment xml:lang="si">HD DVD වීඩියෝ තැටිය</comment>
+  <comment xml:lang="sk">Videodisk HD DVD</comment>
+  <comment xml:lang="ru">Видеодиск HD DVD</comment>
+  <comment xml:lang="ro">Disc video HD DVD</comment>
+  <comment xml:lang="pt-BR">Disco de vídeo HD DVD</comment>
+  <comment xml:lang="pt">HD DVD de vídeo</comment>
+  <comment xml:lang="pl">Płyta wideo HD DVD</comment>
+  <comment xml:lang="oc">disc vidèo HD DVD</comment>
+  <comment xml:lang="nn">HD-DVD-videodisk</comment>
+  <comment xml:lang="nl">HD-DVD-videodisk</comment>
+  <comment xml:lang="lv">HD DVD video disks</comment>
+  <comment xml:lang="lt">HD DVD vaizdo diskas</comment>
+  <comment xml:lang="ko">HD DVD 동영상 디스크</comment>
+  <comment xml:lang="kk-Cyrl">HD DVD видео дискі</comment>
+  <comment xml:lang="ka">HD DVD ვიდეო დისკი</comment>
+  <comment xml:lang="ja">HD DVD ビデオディスク</comment>
+  <comment xml:lang="it">Disco video DVD HD</comment>
+  <comment xml:lang="is">HD DVD mynddiskur</comment>
+  <comment xml:lang="id">Cakram video HD DVD</comment>
+  <comment xml:lang="ia">Disco video HD DVD</comment>
+  <comment xml:lang="hu">HD DVD videolemez</comment>
+  <comment xml:lang="hr">HD DVD video disk</comment>
+  <comment xml:lang="he">תקליטור וידאו HD DVD</comment>
+  <comment xml:lang="gl">disco de vídeo HD DVD</comment>
+  <comment xml:lang="ga">diosca físe HD DVD</comment>
+  <comment xml:lang="fur">disc video HD DVD</comment>
+  <comment xml:lang="fr">disque vidéo HD DVD</comment>
+  <comment xml:lang="fo">HD DVD video diskur</comment>
+  <comment xml:lang="fi">HD DVD -videolevy</comment>
+  <comment xml:lang="eu">HD DVD bideo-diskoa</comment>
+  <comment xml:lang="es">disco de vídeo HD DVD</comment>
+  <comment xml:lang="en-GB">HD DVD video disc</comment>
+  <comment xml:lang="el">Δίσκος βίντεο HD DVD</comment>
+  <comment xml:lang="de">HD-DVD-Video</comment>
+  <comment xml:lang="da">HD DVD-videodisk</comment>
+  <comment xml:lang="cs">Videodisk HD DVD</comment>
+  <comment xml:lang="ca">disc de vídeo HD-DVD</comment>
+  <comment xml:lang="bg">HD DVD — видео</comment>
+  <comment xml:lang="be-Latn">Videadysk HD DVD</comment>
+  <comment xml:lang="be-Cyrl">відэадыск HD DVD</comment>
+  <comment xml:lang="ast">Discu HD DVD de videu</comment>
+  <comment xml:lang="ar">قرص فيديو HD DVD</comment>
+  <comment xml:lang="af">HD-DVD-videoskyf</comment>
+</mime-type>

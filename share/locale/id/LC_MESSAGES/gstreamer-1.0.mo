@@ -1,0 +1,1 @@
+../../../../Cellar/gstreamer/1.26.2/share/locale/id/LC_MESSAGES/gstreamer-1.0.mo

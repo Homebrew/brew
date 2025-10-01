@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-font-bdf">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>BDF font</comment>
+  <comment xml:lang="zh-Hant-TW">BDF 字型</comment>
+  <comment xml:lang="zh-Hans-CN">BDF 字体</comment>
+  <comment xml:lang="vi">Phông chữ BDF</comment>
+  <comment xml:lang="uk">шрифт BDF</comment>
+  <comment xml:lang="tr">BDF yazı tipi</comment>
+  <comment xml:lang="sv">BDF-typsnitt</comment>
+  <comment xml:lang="sr-Cyrl">БДФ слова</comment>
+  <comment xml:lang="sq">shkronja BDF</comment>
+  <comment xml:lang="sl">Datoteka pisave BDF</comment>
+  <comment xml:lang="si">BDF අකුරු</comment>
+  <comment xml:lang="sk">Písmo BDF</comment>
+  <comment xml:lang="ru">Шрифт BDF</comment>
+  <comment xml:lang="ro">Font BDF</comment>
+  <comment xml:lang="pt-BR">Fonte BDF</comment>
+  <comment xml:lang="pt">letra BDF</comment>
+  <comment xml:lang="pl">Czcionka BDF</comment>
+  <comment xml:lang="oc">poliça BDF</comment>
+  <comment xml:lang="nn">BDF-skrifttype</comment>
+  <comment xml:lang="nl">BDF-lettertype</comment>
+  <comment xml:lang="nb">BDF-skrifttype</comment>
+  <comment xml:lang="ms">Font BDF</comment>
+  <comment xml:lang="lv">BDF fonts</comment>
+  <comment xml:lang="lt">BDF šriftas</comment>
+  <comment xml:lang="ko">BDF 글꼴</comment>
+  <comment xml:lang="kk-Cyrl">BDF қарібі</comment>
+  <comment xml:lang="ja">BDF フォント</comment>
+  <comment xml:lang="it">Carattere BDF</comment>
+  <comment xml:lang="is">BDF letur</comment>
+  <comment xml:lang="id">Fonta BDF</comment>
+  <comment xml:lang="ia">Typo de litteras BDF</comment>
+  <comment xml:lang="hu">BDF-betűkészlet</comment>
+  <comment xml:lang="hr">BDF font</comment>
+  <comment xml:lang="he">גופן BDF</comment>
+  <comment xml:lang="gl">tipo de fonte BDF</comment>
+  <comment xml:lang="ga">cló BDF</comment>
+  <comment xml:lang="fur">caratar BDF</comment>
+  <comment xml:lang="fr">police BDF</comment>
+  <comment xml:lang="fo">BDF stavasnið</comment>
+  <comment xml:lang="fi">BDF-fontti</comment>
+  <comment xml:lang="eu">BDF letra-tipoa</comment>
+  <comment xml:lang="es">tipo de letra BDF</comment>
+  <comment xml:lang="eo">BDF-tiparo</comment>
+  <comment xml:lang="en-GB">BDF font</comment>
+  <comment xml:lang="el">Γραμματοσειρά BDF</comment>
+  <comment xml:lang="de">BDF-Schrift</comment>
+  <comment xml:lang="da">BDF-skrifttype</comment>
+  <comment xml:lang="cy">Ffont BDF</comment>
+  <comment xml:lang="cs">font BDF</comment>
+  <comment xml:lang="ca">lletra BDF</comment>
+  <comment xml:lang="bg">Шрифт — BDF</comment>
+  <comment xml:lang="be-Latn">Šryft BDF</comment>
+  <comment xml:lang="be-Cyrl">шрыфт BDF</comment>
+  <comment xml:lang="az">BDF yazı növü</comment>
+  <comment xml:lang="ar">خط BDF</comment>
+  <comment xml:lang="af">BDF-skriftipe</comment>
+  <generic-icon name="font-x-generic"/>
+  <glob pattern="*.bdf"/>
+</mime-type>

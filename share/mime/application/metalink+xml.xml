@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/metalink+xml">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Metalink file</comment>
+  <comment xml:lang="zh-Hant-TW">Metalink 檔案</comment>
+  <comment xml:lang="zh-Hans-CN">Metalink 文件</comment>
+  <comment xml:lang="uk">файл метапосилання</comment>
+  <comment xml:lang="tr">Metalink dosyası</comment>
+  <comment xml:lang="sv">Metalink-fil</comment>
+  <comment xml:lang="sr-Cyrl">датотека метавезе</comment>
+  <comment xml:lang="sq">kartelë Metalink</comment>
+  <comment xml:lang="sl">Datoteka povezave Metalink</comment>
+  <comment xml:lang="si">Metalink ගොනුව</comment>
+  <comment xml:lang="sk">Súbor Metalink</comment>
+  <comment xml:lang="ru">Файл Metalink</comment>
+  <comment xml:lang="ro">Fișier Metalink</comment>
+  <comment xml:lang="pt-BR">Arquivo Metalink</comment>
+  <comment xml:lang="pt">ficheiro Metalink</comment>
+  <comment xml:lang="pl">Plik Metalink</comment>
+  <comment xml:lang="oc">fichièr metalink</comment>
+  <comment xml:lang="nl">Metalink-bestand</comment>
+  <comment xml:lang="lv">Metalink datne</comment>
+  <comment xml:lang="lt">Metalink failas</comment>
+  <comment xml:lang="ko">Metalink 파일</comment>
+  <comment xml:lang="kk-Cyrl">Metalink файлы</comment>
+  <comment xml:lang="ka">მეტაბმულის ფაილი</comment>
+  <comment xml:lang="ja">Metalink ファイル</comment>
+  <comment xml:lang="it">File Metalink</comment>
+  <comment xml:lang="is">Metalink skrá</comment>
+  <comment xml:lang="id">Berkas Metalink</comment>
+  <comment xml:lang="ia">File Metalink</comment>
+  <comment xml:lang="hu">Metalink fájl</comment>
+  <comment xml:lang="hr">Datoteka meta poveznice</comment>
+  <comment xml:lang="he">קובץ Metalink</comment>
+  <comment xml:lang="gl">ficheiro Metalink</comment>
+  <comment xml:lang="ga">comhad Metalink</comment>
+  <comment xml:lang="fur">file Metalink</comment>
+  <comment xml:lang="fr">fichier metalink</comment>
+  <comment xml:lang="fo">Metalink fíla</comment>
+  <comment xml:lang="fi">Metalink-tiedosto</comment>
+  <comment xml:lang="eu">Metaestekaren fitxategia</comment>
+  <comment xml:lang="es">archivo de Metalink</comment>
+  <comment xml:lang="eo">Metalink-dosiero</comment>
+  <comment xml:lang="en-GB">Metalink file</comment>
+  <comment xml:lang="el">Αρχείο Metalink</comment>
+  <comment xml:lang="de">Metalink-Datei</comment>
+  <comment xml:lang="da">Metahenvisningsfil</comment>
+  <comment xml:lang="cs">soubor metalink</comment>
+  <comment xml:lang="ca">fitxer Metalink</comment>
+  <comment xml:lang="bg">Изтегляне — Metalink</comment>
+  <comment xml:lang="be-Cyrl">файл Metalink</comment>
+  <comment xml:lang="ast">Ficheru d'enllaz meta</comment>
+  <comment xml:lang="ar">ملف ميتالنك</comment>
+  <comment xml:lang="af">Metalink-lêer</comment>
+  <sub-class-of type="application/xml"/>
+  <glob pattern="*.metalink"/>
+</mime-type>

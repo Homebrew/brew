@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-m4">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>M4 macro</comment>
+  <comment xml:lang="zh-Hant-TW">M4 巨集</comment>
+  <comment xml:lang="zh-Hans-CN">M4 宏</comment>
+  <comment xml:lang="vi">Vĩ lệnh M4</comment>
+  <comment xml:lang="uk">макрос M4</comment>
+  <comment xml:lang="tr">M4 makrosu</comment>
+  <comment xml:lang="sv">M4-makro</comment>
+  <comment xml:lang="sr-Cyrl">М4 макро</comment>
+  <comment xml:lang="sq">Macro M4</comment>
+  <comment xml:lang="sl">Makro datoteka M4</comment>
+  <comment xml:lang="si">M4 මැක්රෝ</comment>
+  <comment xml:lang="sk">Makro M4</comment>
+  <comment xml:lang="ru">Макрос M4</comment>
+  <comment xml:lang="ro">Macro M4</comment>
+  <comment xml:lang="pt-BR">Macro M4</comment>
+  <comment xml:lang="pt">macro M4</comment>
+  <comment xml:lang="pl">Makro M4</comment>
+  <comment xml:lang="oc">macro M4</comment>
+  <comment xml:lang="nn">M4-makro</comment>
+  <comment xml:lang="nl">M4-macro</comment>
+  <comment xml:lang="nb">M4-makro</comment>
+  <comment xml:lang="lv">M4 makross</comment>
+  <comment xml:lang="lt">M4 macro</comment>
+  <comment xml:lang="ko">M4 매크로</comment>
+  <comment xml:lang="kk-Cyrl">M4 макросы</comment>
+  <comment xml:lang="ja">M4 マクロ</comment>
+  <comment xml:lang="it">Macro M4</comment>
+  <comment xml:lang="is">M4 fjölvi</comment>
+  <comment xml:lang="id">Makro M4</comment>
+  <comment xml:lang="ia">Macro M4</comment>
+  <comment xml:lang="hu">M4 makró</comment>
+  <comment xml:lang="hr">M4 makro</comment>
+  <comment xml:lang="he">מאקרו M4</comment>
+  <comment xml:lang="gl">macro M4</comment>
+  <comment xml:lang="ga">macra M4</comment>
+  <comment xml:lang="fur">macro M4</comment>
+  <comment xml:lang="fr">macro M4</comment>
+  <comment xml:lang="fo">M4 fjølvi</comment>
+  <comment xml:lang="fi">M4-makro</comment>
+  <comment xml:lang="eu">M4 makroa</comment>
+  <comment xml:lang="es">macro M4</comment>
+  <comment xml:lang="en-GB">M4 macro</comment>
+  <comment xml:lang="el">Μακροεντολή m4</comment>
+  <comment xml:lang="de">M4-Makro</comment>
+  <comment xml:lang="da">M4-makro</comment>
+  <comment xml:lang="cs">makro M4</comment>
+  <comment xml:lang="ca">macro M4</comment>
+  <comment xml:lang="bg">Макроси — M4</comment>
+  <comment xml:lang="be-Latn">Makras M4</comment>
+  <comment xml:lang="be-Cyrl">макрас M4</comment>
+  <comment xml:lang="ar">ماكرو M4</comment>
+  <comment xml:lang="af">M4-makro</comment>
+  <sub-class-of type="text/plain"/>
+  <generic-icon name="text-x-script"/>
+  <glob pattern="*.m4"/>
+</mime-type>

@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-virtual-boy-rom">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Virtual Boy ROM</comment>
+  <comment xml:lang="zh-Hant-TW">Virtual Boy ROM</comment>
+  <comment xml:lang="zh-Hans-CN">Virtual Boy ROM</comment>
+  <comment xml:lang="uk">ROM Virtual Boy</comment>
+  <comment xml:lang="tr">Virtual Boy ROM</comment>
+  <comment xml:lang="sv">Virtual Boy-rom</comment>
+  <comment xml:lang="sq">ROM Virtual Boy</comment>
+  <comment xml:lang="sl">Virtual Boy ROM</comment>
+  <comment xml:lang="si">Virtual Boy ROM</comment>
+  <comment xml:lang="sk">ROM pre Virtual Boy</comment>
+  <comment xml:lang="ru">Virtual Boy ROM</comment>
+  <comment xml:lang="pt-BR">ROM de Virtual Boy</comment>
+  <comment xml:lang="pt">ROM Virtua Boy</comment>
+  <comment xml:lang="pl">Plik ROM konsoli Virtual Boy</comment>
+  <comment xml:lang="nl">Virtual Boy-ROM</comment>
+  <comment xml:lang="ko">버추얼 보이 롬</comment>
+  <comment xml:lang="kk-Cyrl">Virtual Boy ROM</comment>
+  <comment xml:lang="ja">バーチャルボーイ ROM</comment>
+  <comment xml:lang="it">ROM Virtual Boy</comment>
+  <comment xml:lang="is">Virtual Boy ROM</comment>
+  <comment xml:lang="id">ROM Virtual Boy</comment>
+  <comment xml:lang="hu">Virtual Boy ROM</comment>
+  <comment xml:lang="hr">Virtual Boy ROM</comment>
+  <comment xml:lang="he">ROM של Virtual Boy</comment>
+  <comment xml:lang="gl">ROM de Virtual Boy</comment>
+  <comment xml:lang="ga">ROM Virtual Boy</comment>
+  <comment xml:lang="fur">ROM Virtual Boy</comment>
+  <comment xml:lang="fr">ROM Virtual Boy</comment>
+  <comment xml:lang="fi">Virtual Boy -ROM</comment>
+  <comment xml:lang="eu">Virtual Boy ROM</comment>
+  <comment xml:lang="es">ROM de Virtual Boy</comment>
+  <comment xml:lang="en-GB">Virtual Boy ROM</comment>
+  <comment xml:lang="de">Virtual-Boy-ROM</comment>
+  <comment xml:lang="da">Virtual Boy-ROM</comment>
+  <comment xml:lang="cs">ROM pro Virtual Boy</comment>
+  <comment xml:lang="ca">ROM de Virtual Boy</comment>
+  <comment xml:lang="bg">ROM — Virtual Boy</comment>
+  <comment xml:lang="be-Cyrl">Virtual Boy ROM</comment>
+  <comment xml:lang="ar">روم بوي الافتراضي</comment>
+  <generic-icon name="application-x-executable"/>
+  <glob pattern="*.vb"/>
+</mime-type>

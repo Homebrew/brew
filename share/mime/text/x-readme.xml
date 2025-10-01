@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="text/x-readme">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>README document</comment>
+  <comment xml:lang="zh-Hant-TW">README 說明文件</comment>
+  <comment xml:lang="zh-Hans-CN">README 文档</comment>
+  <comment xml:lang="vi">Tài liệu Đọc Đi (README)</comment>
+  <comment xml:lang="uk">документ README</comment>
+  <comment xml:lang="tr">README belgesi</comment>
+  <comment xml:lang="sv">README-dokument</comment>
+  <comment xml:lang="sr-Cyrl">документ ПРОЧИТАЈМЕ</comment>
+  <comment xml:lang="sq">dokument README</comment>
+  <comment xml:lang="sl">Dokument README</comment>
+  <comment xml:lang="si">README ලේඛනය</comment>
+  <comment xml:lang="sk">Dokument README</comment>
+  <comment xml:lang="ru">Документ README</comment>
+  <comment xml:lang="ro">Document README</comment>
+  <comment xml:lang="pt-BR">Documento README</comment>
+  <comment xml:lang="pt">documento LEIA-ME</comment>
+  <comment xml:lang="pl">Dokument README</comment>
+  <comment xml:lang="oc">document LISEZ-MOI</comment>
+  <comment xml:lang="nn">README-dokument</comment>
+  <comment xml:lang="nl">LEESMIJ-document</comment>
+  <comment xml:lang="nb">README-dokument</comment>
+  <comment xml:lang="ms">Dokumen README</comment>
+  <comment xml:lang="lv">README dokuments</comment>
+  <comment xml:lang="lt">README dokumentas</comment>
+  <comment xml:lang="ko">README 문서</comment>
+  <comment xml:lang="kk-Cyrl">README құжаты</comment>
+  <comment xml:lang="ja">README ドキュメント</comment>
+  <comment xml:lang="it">Documento README</comment>
+  <comment xml:lang="is">README skjal</comment>
+  <comment xml:lang="id">Dokumen README</comment>
+  <comment xml:lang="ia">Documento LEGE-ME</comment>
+  <comment xml:lang="hu">README-dokumentum</comment>
+  <comment xml:lang="hr">README dokument</comment>
+  <comment xml:lang="he">מסמך README</comment>
+  <comment xml:lang="gl">documento README</comment>
+  <comment xml:lang="ga">cáipéis README</comment>
+  <comment xml:lang="fur">document README</comment>
+  <comment xml:lang="fr">document LISEZ-MOI</comment>
+  <comment xml:lang="fo">README skjal</comment>
+  <comment xml:lang="fi">LUEMINUT-asiakirja</comment>
+  <comment xml:lang="eu">README dokumentua</comment>
+  <comment xml:lang="es">documento README</comment>
+  <comment xml:lang="eo">README-dokumento</comment>
+  <comment xml:lang="en-GB">README document</comment>
+  <comment xml:lang="el">Έγγραφο README</comment>
+  <comment xml:lang="de">README-Dokument</comment>
+  <comment xml:lang="da">README-dokument</comment>
+  <comment xml:lang="cy">Dogfen README</comment>
+  <comment xml:lang="cs">dokument README</comment>
+  <comment xml:lang="ca">document README</comment>
+  <comment xml:lang="bg">Документ — „Да се прочете“</comment>
+  <comment xml:lang="be-Latn">Dakument README</comment>
+  <comment xml:lang="be-Cyrl">дакумент README</comment>
+  <comment xml:lang="az">README sənədi</comment>
+  <comment xml:lang="ast">Documentu LLEIME</comment>
+  <comment xml:lang="ar">مستند README</comment>
+  <comment xml:lang="af">README-dokument</comment>
+  <sub-class-of type="text/plain"/>
+  <glob weight="10" pattern="README*"/>
+</mime-type>

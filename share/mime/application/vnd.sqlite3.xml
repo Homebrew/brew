@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/vnd.sqlite3">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>SQLite3 database</comment>
+  <comment xml:lang="zh-Hant-TW">SQLite3 資料庫</comment>
+  <comment xml:lang="zh-Hans-CN">SQLite3 数据库</comment>
+  <comment xml:lang="vi">Cơ sở dữ liệu SQLite3</comment>
+  <comment xml:lang="uk">база даних SQLite3</comment>
+  <comment xml:lang="tr">SQLite3 veri tabanı</comment>
+  <comment xml:lang="sv">SQLite3-databas</comment>
+  <comment xml:lang="sr-Cyrl">СКуЛајт3 база података</comment>
+  <comment xml:lang="sq">bazë të dhënash SQLite3</comment>
+  <comment xml:lang="sl">Podatkovna zbirka SQLite3</comment>
+  <comment xml:lang="si">SQLite3 දත්ත සමුදාය</comment>
+  <comment xml:lang="sk">Databáza SQLite3</comment>
+  <comment xml:lang="ru">База данных SQLite3</comment>
+  <comment xml:lang="ro">Bază de date SQLite3</comment>
+  <comment xml:lang="pt-BR">Banco de dados SQLite3</comment>
+  <comment xml:lang="pt">base de dados SQLite3</comment>
+  <comment xml:lang="pl">Baza danych SQLite3</comment>
+  <comment xml:lang="oc">banca de donadas SQLite3</comment>
+  <comment xml:lang="nn">SQLite3-database</comment>
+  <comment xml:lang="nl">SQLite3-gegevensbank</comment>
+  <comment xml:lang="nb">SQLite3-database</comment>
+  <comment xml:lang="lv">SQLite3 datubāze</comment>
+  <comment xml:lang="lt">SQLite3 duomenų bazė</comment>
+  <comment xml:lang="ko">SQLite3 데이터베이스</comment>
+  <comment xml:lang="kk-Cyrl">SQLite3 дерекқоры</comment>
+  <comment xml:lang="ja">SQLite3 データベース</comment>
+  <comment xml:lang="it">Database SQLite3</comment>
+  <comment xml:lang="is">SQLite3 gagnagrunnur</comment>
+  <comment xml:lang="id">Basis data SQLite3</comment>
+  <comment xml:lang="ia">Base de datos SQLite3</comment>
+  <comment xml:lang="hu">SQLite3 adatbázis</comment>
+  <comment xml:lang="hr">SQLite3 baza podataka</comment>
+  <comment xml:lang="he">מסד נתונים מסוג SQLite3</comment>
+  <comment xml:lang="gl">base de datos SQLite3</comment>
+  <comment xml:lang="ga">bunachar sonraí SQLite3</comment>
+  <comment xml:lang="fur">base di dâts SQLite3</comment>
+  <comment xml:lang="fr">base de données SQLite3</comment>
+  <comment xml:lang="fo">SQLite3 dátustovnur</comment>
+  <comment xml:lang="fi">SQLite3-tietokanta</comment>
+  <comment xml:lang="eu">SQLite3 datu-basea</comment>
+  <comment xml:lang="es">base de datos SQLite3</comment>
+  <comment xml:lang="eo">SQLite3-datumbazo</comment>
+  <comment xml:lang="en-GB">SQLite3 database</comment>
+  <comment xml:lang="el">Βάση δεδομένων SQLite3</comment>
+  <comment xml:lang="de">SQLite3-Datenbank</comment>
+  <comment xml:lang="da">SQLite3-database</comment>
+  <comment xml:lang="cs">databáze SQLite3</comment>
+  <comment xml:lang="ca">base de dades SQLite3</comment>
+  <comment xml:lang="bg">База от данни — SQLite3</comment>
+  <comment xml:lang="be-Latn">Baza źviestak SQLite3</comment>
+  <comment xml:lang="be-Cyrl">база даных SQLite3</comment>
+  <comment xml:lang="ar">قاعدة بيانات SQLite3</comment>
+  <comment xml:lang="af">SQLite3-databasis</comment>
+  <glob pattern="*.sqlite3"/>
+  <alias type="application/x-sqlite3"/>
+</mime-type>

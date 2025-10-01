@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/msixbundle">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Windows app store bundle</comment>
+  <comment xml:lang="uk">комплект крамниці програм Windows</comment>
+  <comment xml:lang="sv">Windows app store-bunt</comment>
+  <comment xml:lang="ru">Объединённый пакет магазина приложений Windows</comment>
+  <comment xml:lang="pl">Paczka sklepu z aplikacjami Windows</comment>
+  <comment xml:lang="de">Zusammengefasste Windows-Appstore-Pakete</comment>
+  <sub-class-of type="application/zip"/>
+  <generic-icon name="package-x-generic"/>
+  <glob pattern="*.msixbundle"/>
+</mime-type>

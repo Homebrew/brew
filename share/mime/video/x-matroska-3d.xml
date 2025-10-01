@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="video/x-matroska-3d">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Matroska 3D video</comment>
+  <comment xml:lang="zh-Hant-TW">Matroska 3D 視訊</comment>
+  <comment xml:lang="zh-Hans-CN">Matroska 3D 视频</comment>
+  <comment xml:lang="uk">відеокліп Matroska 3D</comment>
+  <comment xml:lang="tr">Matroska 3B video</comment>
+  <comment xml:lang="sv">Matroska 3D-video</comment>
+  <comment xml:lang="sr-Cyrl">Матрошкин 3Д видео</comment>
+  <comment xml:lang="sq">video Matroska 3D</comment>
+  <comment xml:lang="sl">Video datoteka Matroska 3D</comment>
+  <comment xml:lang="si">Matroska 3D වීඩියෝ</comment>
+  <comment xml:lang="sk">3D video Matroska</comment>
+  <comment xml:lang="ru">Видео Matroska 3D</comment>
+  <comment xml:lang="pt-BR">Vídeo 3D Matroska</comment>
+  <comment xml:lang="pt">vídeo 3D Matroska</comment>
+  <comment xml:lang="pl">Plik wideo Matroska 3D</comment>
+  <comment xml:lang="oc">vidèo Matroska 3D</comment>
+  <comment xml:lang="nl">Matroska-3D-video</comment>
+  <comment xml:lang="ko">Matroska 3D 동영상</comment>
+  <comment xml:lang="kk-Cyrl">Matroska 3D видеосы</comment>
+  <comment xml:lang="ja">Matroska 3D ビデオ</comment>
+  <comment xml:lang="it">Video Matroska 3D</comment>
+  <comment xml:lang="is">Matroska 3D myndskeið</comment>
+  <comment xml:lang="id">Video 3D Matroska</comment>
+  <comment xml:lang="ia">Video 3D Matroska</comment>
+  <comment xml:lang="hu">Matroska 3D videó</comment>
+  <comment xml:lang="hr">Matroška 3D video snimka</comment>
+  <comment xml:lang="he">סרטון תלת ממדי מסוג Matroska</comment>
+  <comment xml:lang="gl">Video Matroska 3D</comment>
+  <comment xml:lang="ga">físeán Matroska 3D</comment>
+  <comment xml:lang="fur">video 3D Matroska</comment>
+  <comment xml:lang="fr">vidéo Matroska 3D</comment>
+  <comment xml:lang="fi">Matroska 3D-video</comment>
+  <comment xml:lang="eu">Matroska 3D bideoa</comment>
+  <comment xml:lang="es">vídeo Matroska en 3D</comment>
+  <comment xml:lang="en-GB">Matroska 3D video</comment>
+  <comment xml:lang="el">Βίντεο 3Δ Matroska</comment>
+  <comment xml:lang="de">Matroska-3D-Video</comment>
+  <comment xml:lang="da">Matroska 3D-video</comment>
+  <comment xml:lang="cs">3D video Matroska</comment>
+  <comment xml:lang="ca">vídeo Matroska 3D</comment>
+  <comment xml:lang="bg">Видео — Matroska 3D</comment>
+  <comment xml:lang="be-Cyrl">відэа Matroska 3D</comment>
+  <comment xml:lang="ast">Videu en Matroska 3D</comment>
+  <comment xml:lang="ar">فيديو Matroska 3D</comment>
+  <comment xml:lang="af">Matroska 3D video</comment>
+  <glob pattern="*.mk3d"/>
+  <sub-class-of type="application/x-matroska"/>
+</mime-type>

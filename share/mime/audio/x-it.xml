@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="audio/x-it">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Impulse Tracker audio</comment>
+  <comment xml:lang="zh-Hant-TW">Impulse Tracker 音訊</comment>
+  <comment xml:lang="zh-Hans-CN">Impulse Tracker 音频</comment>
+  <comment xml:lang="vi">Âm thanh Impulse Tracker</comment>
+  <comment xml:lang="uk">звук Impulse Tracker</comment>
+  <comment xml:lang="tr">Impulse Tracker sesi</comment>
+  <comment xml:lang="sv">Impulse Tracker-ljud</comment>
+  <comment xml:lang="sr-Cyrl">звук Пратиоца Импулса</comment>
+  <comment xml:lang="sq">audio Impulse Tracker</comment>
+  <comment xml:lang="sl">Zvočna datoteka Impulse Tracker</comment>
+  <comment xml:lang="si">Impulse Tracker ශ්‍රව්‍ය</comment>
+  <comment xml:lang="sk">Zvuk Impulse Tracker</comment>
+  <comment xml:lang="ru">Аудио Impulse Tracker</comment>
+  <comment xml:lang="ro">Audio Impulse Tracker</comment>
+  <comment xml:lang="pt-BR">Áudio Impulse Tracker</comment>
+  <comment xml:lang="pt">áudio Impulse Tracker</comment>
+  <comment xml:lang="pl">Plik dźwiękowy Impulse Tracker</comment>
+  <comment xml:lang="oc">àudio Impulse Tracker</comment>
+  <comment xml:lang="nn">Impulse Tracker lyd</comment>
+  <comment xml:lang="nl">Impulse Tracker-audio</comment>
+  <comment xml:lang="nb">Impulse Tracker-lyd</comment>
+  <comment xml:lang="ms">Audio Impulse Tracker</comment>
+  <comment xml:lang="lv">Impulse Tracker audio</comment>
+  <comment xml:lang="lt">Impulse Tracker garso įrašas</comment>
+  <comment xml:lang="ko">Impulse Tracker 오디오</comment>
+  <comment xml:lang="kk-Cyrl">Impulse Tracker аудиосы</comment>
+  <comment xml:lang="ja">Impulse Tracker オーディオ</comment>
+  <comment xml:lang="it">Audio Impulse Tracker</comment>
+  <comment xml:lang="is">Impulse Tracker hljóðskrá</comment>
+  <comment xml:lang="id">Audio Impulse Tracker</comment>
+  <comment xml:lang="ia">Audio Impulse Tracker</comment>
+  <comment xml:lang="hu">Impulse Tracker hang</comment>
+  <comment xml:lang="hr">Impulse Tracker zvučni zapis</comment>
+  <comment xml:lang="he">שמע של Impulse Tracker</comment>
+  <comment xml:lang="gl">son de Impulse Tracker</comment>
+  <comment xml:lang="ga">fuaim Impulse Tracker</comment>
+  <comment xml:lang="fur">audio Impulse Tracker</comment>
+  <comment xml:lang="fr">audio Impulse Tracker</comment>
+  <comment xml:lang="fo">Impulse Tracker ljóður</comment>
+  <comment xml:lang="fi">Impulse Tracker -ääni</comment>
+  <comment xml:lang="eu">Impulse Tracker audioa</comment>
+  <comment xml:lang="es">sonido de Impulse Tracker</comment>
+  <comment xml:lang="eo">Sondosiero de Impulse Tracker</comment>
+  <comment xml:lang="en-GB">Impulse Tracker audio</comment>
+  <comment xml:lang="el">Ήχος Impulse Tracker</comment>
+  <comment xml:lang="de">Impulse-Tracker-Audio</comment>
+  <comment xml:lang="da">Impulse Tracker-lyd</comment>
+  <comment xml:lang="cy">Sain Impulse Tracker</comment>
+  <comment xml:lang="cs">zvuk Impulse Tracker</comment>
+  <comment xml:lang="ca">àudio d'Impulse Tracker</comment>
+  <comment xml:lang="bg">Аудио — Impulse Tracker</comment>
+  <comment xml:lang="be-Latn">Aŭdyjo Impulse Tracker</comment>
+  <comment xml:lang="be-Cyrl">аўдыя Impulse Tracker</comment>
+  <comment xml:lang="az">Impulse Tracker audio faylı</comment>
+  <comment xml:lang="ar">صوت Impulse Tracker</comment>
+  <glob pattern="*.it"/>
+</mime-type>

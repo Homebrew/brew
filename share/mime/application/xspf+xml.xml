@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/xspf+xml">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>XSPF playlist</comment>
+  <comment xml:lang="zh-Hant-TW">XSPF 播放清單</comment>
+  <comment xml:lang="zh-Hans-CN">XSPF 播放列表</comment>
+  <comment xml:lang="vi">Danh mục nhạc XSPF</comment>
+  <comment xml:lang="uk">список програвання XSPF</comment>
+  <comment xml:lang="tr">XSPF çalma listesi</comment>
+  <comment xml:lang="sv">XSPF-spellista</comment>
+  <comment xml:lang="sr-Cyrl">ИксСПФ списак нумера</comment>
+  <comment xml:lang="sq">luajlistë XSPF</comment>
+  <comment xml:lang="sl">Seznam predvajanja XSPF</comment>
+  <comment xml:lang="si">XSPF ධාවන ලැයිස්තුව</comment>
+  <comment xml:lang="sk">Zoznam skladieb XSPF</comment>
+  <comment xml:lang="ru">Список воспроизведения XSPF</comment>
+  <comment xml:lang="ro">Listă XSPF</comment>
+  <comment xml:lang="pt-BR">Lista de reprodução XSPF</comment>
+  <comment xml:lang="pt">lista de reprodução XSPF</comment>
+  <comment xml:lang="pl">Lista odtwarzania XSPF</comment>
+  <comment xml:lang="oc">lista de lectura XSPF</comment>
+  <comment xml:lang="nn">XSPF-speleliste</comment>
+  <comment xml:lang="nl">XSPF-afspeellijst</comment>
+  <comment xml:lang="nb">XSPF-spilleliste</comment>
+  <comment xml:lang="lv">XSPF repertuārs</comment>
+  <comment xml:lang="lt">XSPF grojaraštis</comment>
+  <comment xml:lang="ko">XSPF 재생 목록</comment>
+  <comment xml:lang="kk-Cyrl">XSPF ойнау тізімі</comment>
+  <comment xml:lang="ka">XSPF დასაკრავი სია</comment>
+  <comment xml:lang="ja">XSPF プレイリスト</comment>
+  <comment xml:lang="it">Playlist XSPF</comment>
+  <comment xml:lang="is">XSPF spilunarlisti</comment>
+  <comment xml:lang="id">Senarai pular XSPF</comment>
+  <comment xml:lang="ia">Lista de selection XSPF</comment>
+  <comment xml:lang="hu">XSPF-lejátszólista</comment>
+  <comment xml:lang="hr">XSPF popis izvođenja</comment>
+  <comment xml:lang="he">רשימת נגינה XSPF</comment>
+  <comment xml:lang="gl">lista de reprodución XSPF</comment>
+  <comment xml:lang="ga">seinmliosta XSPF</comment>
+  <comment xml:lang="fur">liste di riproduzion XSPF</comment>
+  <comment xml:lang="fr">liste de lecture XSPF</comment>
+  <comment xml:lang="fo">XSPF avspælingarlisti</comment>
+  <comment xml:lang="fi">XSPF-soittolista</comment>
+  <comment xml:lang="eu">XSPF erreprodukzio-zerrenda</comment>
+  <comment xml:lang="es">lista de reproducción XSPF</comment>
+  <comment xml:lang="eo">XSPF-ludlisto</comment>
+  <comment xml:lang="en-GB">XSPF playlist</comment>
+  <comment xml:lang="el">Λίστα αναπαραγωγής XSPF</comment>
+  <comment xml:lang="de">XSPF-Wiedergabeliste</comment>
+  <comment xml:lang="da">XSPF-afspilningsliste</comment>
+  <comment xml:lang="cs">seznam k přehrání XSPF</comment>
+  <comment xml:lang="ca">llista de reproducció XSPF</comment>
+  <comment xml:lang="bg">Списък за изпълнение — XSPF</comment>
+  <comment xml:lang="be-Latn">Śpis piesień XSPF</comment>
+  <comment xml:lang="be-Cyrl">плэй-ліст XSPF</comment>
+  <comment xml:lang="ast">Llista de reproducción XSPF</comment>
+  <comment xml:lang="ar">قائمة تشغيل XSPF</comment>
+  <comment xml:lang="af">XSPF-speellys</comment>
+  <acronym>XSPF</acronym>
+  <expanded-acronym>XML Shareable Playlist Format</expanded-acronym>
+  <sub-class-of type="application/xml"/>
+  <generic-icon name="audio-x-generic"/>
+  <glob pattern="*.xspf"/>
+  <alias type="application/x-xspf+xml"/>
+</mime-type>

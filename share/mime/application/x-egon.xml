@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="application/x-egon">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Egon Animator animation</comment>
+  <comment xml:lang="zh-Hant-TW">Egon Animator 動畫</comment>
+  <comment xml:lang="zh-Hans-CN">Egon Animator 动画</comment>
+  <comment xml:lang="vi">Hoạt ảnh Egon Animator</comment>
+  <comment xml:lang="uk">анімація Egon Animator</comment>
+  <comment xml:lang="tr">Egon Animator canlandırması</comment>
+  <comment xml:lang="sv">Egon Animator-animering</comment>
+  <comment xml:lang="sr-Cyrl">анимација Егон аниматора</comment>
+  <comment xml:lang="sq">animacion Egon Animator</comment>
+  <comment xml:lang="sl">Datoteka animacije Egon Animator</comment>
+  <comment xml:lang="si">Egon Animator සජීවිකරණය</comment>
+  <comment xml:lang="sk">Animácia Egon Animator</comment>
+  <comment xml:lang="ru">Анимация Egon Animator</comment>
+  <comment xml:lang="ro">Animație Egon Animator</comment>
+  <comment xml:lang="pt-BR">Animação do Egon Animator</comment>
+  <comment xml:lang="pt">animação Egon Animator</comment>
+  <comment xml:lang="pl">Animacja Egon Animator</comment>
+  <comment xml:lang="oc">animacion Egon Animator</comment>
+  <comment xml:lang="nn">Egon Animator-animasjon</comment>
+  <comment xml:lang="nl">Egon Animator-animatie</comment>
+  <comment xml:lang="nb">Egon animator-animasjon</comment>
+  <comment xml:lang="ms">Animasi Egon Animator</comment>
+  <comment xml:lang="lv">Egon Animator animācija</comment>
+  <comment xml:lang="lt">Egon Animator animacija</comment>
+  <comment xml:lang="ko">Egon 애니메이터 애니메이션</comment>
+  <comment xml:lang="kk-Cyrl">Egon Animator анимациясы</comment>
+  <comment xml:lang="ka">Egon Animator-ის ანიმაცია</comment>
+  <comment xml:lang="ja">Egon Animator アニメーション</comment>
+  <comment xml:lang="it">Animazione Egon Animator</comment>
+  <comment xml:lang="is">Egon Animator hreyfimynd</comment>
+  <comment xml:lang="id">Animasi Egon Animator</comment>
+  <comment xml:lang="ia">Imagine Egon Animator</comment>
+  <comment xml:lang="hu">Egon Animator-animáció</comment>
+  <comment xml:lang="hr">Egon Animator animacija</comment>
+  <comment xml:lang="he">אנימצייה של Egon Animator</comment>
+  <comment xml:lang="gl">animación de Egon Animator</comment>
+  <comment xml:lang="ga">beochan Egon Animator</comment>
+  <comment xml:lang="fur">animazion Egon Animator</comment>
+  <comment xml:lang="fr">animation Egon Animator</comment>
+  <comment xml:lang="fo">Egon Animator teknimyndagerð</comment>
+  <comment xml:lang="fi">Egon Animator -animaatio</comment>
+  <comment xml:lang="eu">Egon Animator-eko animazioa</comment>
+  <comment xml:lang="es">animación de Egon Animator</comment>
+  <comment xml:lang="eo">animacio de Egon Animator</comment>
+  <comment xml:lang="en-GB">Egon Animator animation</comment>
+  <comment xml:lang="el">Κινούμενο σχέδιο Egon Animator</comment>
+  <comment xml:lang="de">Egon-Animator-Animation</comment>
+  <comment xml:lang="da">Egon Animator-animation</comment>
+  <comment xml:lang="cs">animace Egon Animator</comment>
+  <comment xml:lang="ca">animació d'Egon Animator</comment>
+  <comment xml:lang="bg">Анимация — Egon Animator</comment>
+  <comment xml:lang="be-Latn">Animacyja Egon Animator</comment>
+  <comment xml:lang="be-Cyrl">анімацыя Egon Animator</comment>
+  <comment xml:lang="ar">تحريكة محرك Egon</comment>
+  <generic-icon name="image-x-generic"/>
+  <glob pattern="*.egon"/>
+</mime-type>

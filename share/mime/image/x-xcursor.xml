@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="image/x-xcursor">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>X11 cursor</comment>
+  <comment xml:lang="zh-Hant-TW">X11 滑鼠游標</comment>
+  <comment xml:lang="zh-Hans-CN">X11 指针</comment>
+  <comment xml:lang="vi">Con chạy X11</comment>
+  <comment xml:lang="uk">курсор X11</comment>
+  <comment xml:lang="tr">X11 imleci</comment>
+  <comment xml:lang="sv">X11-muspekare</comment>
+  <comment xml:lang="sr-Cyrl">Икс11 курсор</comment>
+  <comment xml:lang="sq">kursor X11</comment>
+  <comment xml:lang="sl">Datoteka kazalke X11</comment>
+  <comment xml:lang="si">X11 කර්සරය</comment>
+  <comment xml:lang="sk">Kurzor X11</comment>
+  <comment xml:lang="ru">Курсор X11</comment>
+  <comment xml:lang="ro">Cursor X11</comment>
+  <comment xml:lang="pt-BR">Cursor do X11</comment>
+  <comment xml:lang="pt">cursor X11</comment>
+  <comment xml:lang="pl">Kursor X11</comment>
+  <comment xml:lang="oc">cursor X11</comment>
+  <comment xml:lang="nn">X11-peikar</comment>
+  <comment xml:lang="nl">X11-muisaanwijzer</comment>
+  <comment xml:lang="nb">X11-markør</comment>
+  <comment xml:lang="lv">X11 kursors</comment>
+  <comment xml:lang="lt">X11 žymeklis</comment>
+  <comment xml:lang="ko">X11 커서</comment>
+  <comment xml:lang="kk-Cyrl">X11 курсоры</comment>
+  <comment xml:lang="ja">X11 カーソル</comment>
+  <comment xml:lang="it">Cursore X11</comment>
+  <comment xml:lang="is">X11 bendill</comment>
+  <comment xml:lang="id">Kursor X11</comment>
+  <comment xml:lang="ia">Cursor X11</comment>
+  <comment xml:lang="hu">X11 kurzor</comment>
+  <comment xml:lang="hr">X11 pokazivač</comment>
+  <comment xml:lang="he">סמן של X11</comment>
+  <comment xml:lang="gl">Cursor X11</comment>
+  <comment xml:lang="ga">cúrsóir X11</comment>
+  <comment xml:lang="fur">cursôr X11</comment>
+  <comment xml:lang="fr">curseur X11</comment>
+  <comment xml:lang="fo">X11 vísi</comment>
+  <comment xml:lang="fi">X11-osoitin</comment>
+  <comment xml:lang="eu">X11 kurtsorea</comment>
+  <comment xml:lang="es">cursor de X11</comment>
+  <comment xml:lang="en-GB">X11 cursor</comment>
+  <comment xml:lang="el">Δρομέας X11</comment>
+  <comment xml:lang="de">X11-Mauszeiger</comment>
+  <comment xml:lang="da">X11-markør</comment>
+  <comment xml:lang="cs">kurzor X11</comment>
+  <comment xml:lang="ca">cursor de X11</comment>
+  <comment xml:lang="bg">Курсор — X11</comment>
+  <comment xml:lang="be-Latn">Kursor X11</comment>
+  <comment xml:lang="be-Cyrl">курсор X11</comment>
+  <comment xml:lang="ar">مؤشر X11</comment>
+  <comment xml:lang="af">X11-wyser</comment>
+</mime-type>

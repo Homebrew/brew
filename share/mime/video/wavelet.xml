@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="video/wavelet">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Wavelet video</comment>
+  <comment xml:lang="zh-Hant-TW">Wavelet 視訊</comment>
+  <comment xml:lang="zh-Hans-CN">Wavelet 视频</comment>
+  <comment xml:lang="vi">Ảnh động Wavelet</comment>
+  <comment xml:lang="uk">відеокліп Wavelet</comment>
+  <comment xml:lang="tr">Wavelet videosu</comment>
+  <comment xml:lang="sv">Wavelet-video</comment>
+  <comment xml:lang="sr-Cyrl">Вејвелет видео</comment>
+  <comment xml:lang="sq">video Wavelet</comment>
+  <comment xml:lang="sl">Video datoteka Wavelet</comment>
+  <comment xml:lang="si">Wavelet වීඩියෝව</comment>
+  <comment xml:lang="sk">Video Wavelet</comment>
+  <comment xml:lang="ru">Видео Wavelet</comment>
+  <comment xml:lang="ro">Video Wavelet</comment>
+  <comment xml:lang="pt-BR">Vídeo Wavelet</comment>
+  <comment xml:lang="pt">vídeo Wavelet</comment>
+  <comment xml:lang="pl">Plik wideo Wavelet</comment>
+  <comment xml:lang="oc">vidèo Wavelet</comment>
+  <comment xml:lang="nn">Wavelet video</comment>
+  <comment xml:lang="nl">Wavelet-video</comment>
+  <comment xml:lang="nb">Wavelet-film</comment>
+  <comment xml:lang="ms">Video Wavelet</comment>
+  <comment xml:lang="lv">Wavelet video</comment>
+  <comment xml:lang="lt">Wavelet vaizdo įrašas</comment>
+  <comment xml:lang="ko">Wavelet 동영상</comment>
+  <comment xml:lang="kk-Cyrl">Wavelet видеосы</comment>
+  <comment xml:lang="ja">Wavelet 動画</comment>
+  <comment xml:lang="it">Video Wavelet</comment>
+  <comment xml:lang="is">Wavelet myndskeið</comment>
+  <comment xml:lang="id">Video Wavelet</comment>
+  <comment xml:lang="ia">Video Wavelet</comment>
+  <comment xml:lang="hu">Wavelet-videó</comment>
+  <comment xml:lang="hr">Wavelet video snimka</comment>
+  <comment xml:lang="he">וידאו של Wavelet</comment>
+  <comment xml:lang="gl">vídeo Wavelet</comment>
+  <comment xml:lang="ga">físeán Wavelet</comment>
+  <comment xml:lang="fur">video Wavelet</comment>
+  <comment xml:lang="fr">vidéo Wavelet</comment>
+  <comment xml:lang="fo">Wavelet video</comment>
+  <comment xml:lang="fi">Wavelet-video</comment>
+  <comment xml:lang="eu">Wavelet bideoa</comment>
+  <comment xml:lang="es">vídeo Wavelet</comment>
+  <comment xml:lang="eo">Wavelet-video</comment>
+  <comment xml:lang="en-GB">Wavelet video</comment>
+  <comment xml:lang="el">Βίντεο Wavelet</comment>
+  <comment xml:lang="de">Wavelet-Video</comment>
+  <comment xml:lang="da">Wavelet-video</comment>
+  <comment xml:lang="cy">Fideo Wavelet</comment>
+  <comment xml:lang="cs">video Wavelet</comment>
+  <comment xml:lang="ca">vídeo Wavelet</comment>
+  <comment xml:lang="bg">Видео — Wavelet</comment>
+  <comment xml:lang="be-Latn">Videa Wavelet</comment>
+  <comment xml:lang="be-Cyrl">відэа Wavelet</comment>
+  <comment xml:lang="az">Wavelet video faylı</comment>
+  <comment xml:lang="ast">Videu en Wavelet</comment>
+  <comment xml:lang="ar">فيديو Wavelet</comment>
+  <comment xml:lang="af">Wavelet-video</comment>
+</mime-type>

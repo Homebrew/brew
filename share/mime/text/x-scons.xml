@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="text/x-scons">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>SCons configuration file</comment>
+  <comment xml:lang="zh-Hant-TW">SCons 組態檔</comment>
+  <comment xml:lang="zh-Hans-CN">SCons 配置文件</comment>
+  <comment xml:lang="uk">файл налаштувань SCons</comment>
+  <comment xml:lang="tr">SCons yapılandırma dosyası</comment>
+  <comment xml:lang="sv">SCons-konfigurationsfil</comment>
+  <comment xml:lang="sr-Cyrl">СКонс датотека подешавања</comment>
+  <comment xml:lang="sq">kartelë formësimi SCons</comment>
+  <comment xml:lang="sl">Prilagoditvena datoteka SCons</comment>
+  <comment xml:lang="si">SCons වින්‍යාස ගොනුව</comment>
+  <comment xml:lang="sk">Konfiguračný súbor SCons</comment>
+  <comment xml:lang="ru">Файл настроек SCons</comment>
+  <comment xml:lang="pt-BR">Arquivo de configuração do SCons</comment>
+  <comment xml:lang="pt">ficheiro de configuração SCons</comment>
+  <comment xml:lang="pl">Plik konfiguracji SCons</comment>
+  <comment xml:lang="oc">fichièr de configuracion SCons</comment>
+  <comment xml:lang="nl">SCons-configuratiebestand</comment>
+  <comment xml:lang="ko">SCons 설정 파일</comment>
+  <comment xml:lang="kk-Cyrl">SCons баптаулар файлы</comment>
+  <comment xml:lang="ja">SCons 設定ファイル</comment>
+  <comment xml:lang="it">File configurazione SCons</comment>
+  <comment xml:lang="is">SCons stillingaskrá</comment>
+  <comment xml:lang="id">Berkas konfigurasi SCons</comment>
+  <comment xml:lang="ia">File de cofniguration SCons</comment>
+  <comment xml:lang="hu">SCons beállítófájl</comment>
+  <comment xml:lang="hr">SCons datoteka podešavanja</comment>
+  <comment xml:lang="he">קובץ תצורה של SCons</comment>
+  <comment xml:lang="gl">Ficheiro de configuración SCons</comment>
+  <comment xml:lang="ga">comhad cumraíochta SCons</comment>
+  <comment xml:lang="fur">file di configurazion SCons</comment>
+  <comment xml:lang="fr">fichier de configuration SCons</comment>
+  <comment xml:lang="fi">SCons-asetustiedosto</comment>
+  <comment xml:lang="eu">SCons konfigurazio-fitxategia</comment>
+  <comment xml:lang="es">archivo de configuración de SCons</comment>
+  <comment xml:lang="en-GB">SCons configuration file</comment>
+  <comment xml:lang="el">Αρχείο ρυθμίσεων SCons</comment>
+  <comment xml:lang="de">SCons-Konfigurationsdatei</comment>
+  <comment xml:lang="da">SCons-konfigurationsfil</comment>
+  <comment xml:lang="cs">konfigurační soubor SCons</comment>
+  <comment xml:lang="ca">fitxer de configuració de SCons</comment>
+  <comment xml:lang="bg">Настройки — SCons</comment>
+  <comment xml:lang="be-Cyrl">файл канфігурацыі SCons</comment>
+  <comment xml:lang="ar">ملف إعداد SCons</comment>
+  <comment xml:lang="af">SCons-opstellingslêer</comment>
+  <sub-class-of type="text/x-python"/>
+  <glob pattern="SConstruct"/>
+  <glob pattern="SConscript"/>
+  <glob pattern="SConscript.*"/>
+</mime-type>

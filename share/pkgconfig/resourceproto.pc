@@ -1,0 +1,1 @@
+../../Cellar/xorgproto/2024.1/share/pkgconfig/resourceproto.pc

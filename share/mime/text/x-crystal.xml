@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="text/x-crystal">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Crystal source code</comment>
+  <comment xml:lang="zh-Hant-TW">Crystal 原始碼</comment>
+  <comment xml:lang="zh-Hans-CN">Crystal 源代码</comment>
+  <comment xml:lang="uk">початковий код мовою Crystal</comment>
+  <comment xml:lang="tr">Crystal kaynak kodu</comment>
+  <comment xml:lang="sv">Crystal-källkod</comment>
+  <comment xml:lang="sl">Izvorna koda Crystal</comment>
+  <comment xml:lang="si">Crystal source code</comment>
+  <comment xml:lang="ru">Исходный код Crystal</comment>
+  <comment xml:lang="pl">Kod źródłowy Crystal</comment>
+  <comment xml:lang="oc">còdi font Crystal</comment>
+  <comment xml:lang="nl">Crystal-broncode</comment>
+  <comment xml:lang="ko">Crystal 소스 코드</comment>
+  <comment xml:lang="kk-Cyrl">Crystal бастапқы коды</comment>
+  <comment xml:lang="ja">Crystal ソースコード</comment>
+  <comment xml:lang="it">Codice sorgente Crystal</comment>
+  <comment xml:lang="hr">Crystal izvorni kôd</comment>
+  <comment xml:lang="gl">Código fonte en Crystal</comment>
+  <comment xml:lang="fi">Crystal-lähdekoodi</comment>
+  <comment xml:lang="eu">Crystal iturburu-kodea</comment>
+  <comment xml:lang="es">código fuente en Crystal</comment>
+  <comment xml:lang="en-GB">Crystal source code</comment>
+  <comment xml:lang="de">Crystal-Quelltext</comment>
+  <comment xml:lang="be-Cyrl">зыходны код Crystal</comment>
+  <comment xml:lang="ar">شفرة مصدر Crystal</comment>
+  <sub-class-of type="text/plain"/>
+  <glob pattern="*.cr"/>
+  <alias type="text/crystal"/>
+</mime-type>
