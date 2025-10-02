@@ -7,6 +7,7 @@ require "bundle/cask_installer"
 require "bundle/mac_app_store_installer"
 require "bundle/whalebrew_installer"
 require "bundle/vscode_extension_installer"
+require "bundle/go_installer"
 require "bundle/tap_installer"
 require "bundle/skipper"
 
@@ -40,6 +41,8 @@ module Homebrew
             Homebrew::Bundle::WhalebrewInstaller
           when :vscode
             Homebrew::Bundle::VscodeExtensionInstaller
+          when :go
+            Homebrew::Bundle::GoInstaller
           when :tap
             verb = "Tapping"
             options = entry.options
