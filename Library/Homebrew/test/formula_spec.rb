@@ -1,3 +1,4 @@
+# typed: strict
 # frozen_string_literal: true
 
 require "test/support/fixtures/testball"
@@ -676,7 +677,7 @@ RSpec.describe Formula do
     f1 = formula do
       url "foo-1.0"
 
-      def post_install
+      define_method(:post_install) do
         # do nothing
       end
     end
@@ -1146,7 +1147,7 @@ RSpec.describe Formula do
       f = formula "foo" do
         url "foo-1.0"
 
-        def pour_bottle?
+        define_method(:pour_bottle?) do
           false
         end
       end
@@ -1158,7 +1159,7 @@ RSpec.describe Formula do
       f = formula "foo" do
         url "foo-1.0"
 
-        def pour_bottle?
+        define_method(:pour_bottle?) do
           true
         end
       end
@@ -1362,7 +1363,7 @@ RSpec.describe Formula do
     let(:alias_name) { "bar" }
     let(:alias_path) { f.tap.alias_dir/alias_name }
 
-    def setup_tab_for_prefix(prefix, options = {})
+    define_method(:setup_tab_for_prefix) do |prefix, options = {}|
       prefix.mkpath
 
       keg = Keg.new(prefix)
@@ -1698,7 +1699,7 @@ RSpec.describe Formula do
       Class.new(Testball) do
         attr_reader :test
 
-        def install
+        define_method(:install) do
           @test = 0
           on_macos do
             @test = 1
@@ -1721,7 +1722,7 @@ RSpec.describe Formula do
       Class.new(Testball) do
         attr_reader :test
 
-        def install
+        define_method(:install) do
           @test = 0
           on_macos do
             @test = 1
@@ -1745,7 +1746,7 @@ RSpec.describe Formula do
         attr_reader :foo
         attr_reader :bar
 
-        def install
+        define_method(:install) do
           @foo = 0
           @bar = 0
           on_system :linux, macos: :monterey do
@@ -1804,7 +1805,7 @@ RSpec.describe Formula do
       Class.new(Testball) do
         attr_reader :test
 
-        def install
+        define_method(:install) do
           @test = 0
           on_monterey :or_newer do
             @test = 1
@@ -1864,7 +1865,7 @@ RSpec.describe Formula do
       Class.new(Testball) do
         attr_reader :test
 
-        def install
+        define_method(:install) do
           @test = 0
           on_arm do
             @test = 1
@@ -1891,7 +1892,7 @@ RSpec.describe Formula do
       Class.new(Testball) do
         attr_reader :test
 
-        def install
+        define_method(:install) do
           @test = 0
           on_arm do
             @test = 1
@@ -1912,7 +1913,7 @@ RSpec.describe Formula do
   describe "#generate_completions_from_executable" do
     let(:f) do
       Class.new(Testball) do
-        def install
+        define_method(:install) do
           bin.mkpath
           (bin/"foo").write <<-EOF
             echo completion
@@ -2003,6 +2004,34 @@ RSpec.describe Formula do
       it "returns the API path" do
         expect(f.specified_path).to eq(Homebrew::API::Formula.cached_json_file_path)
       end
+    end
+  end
+
+  describe "#preserve_rpath" do
+    it "defaults to false" do
+      f = formula do
+        url "foo-1.0"
+      end
+
+      expect(f.class.preserve_rpath?).to be(false)
+    end
+
+    it "can be enabled" do
+      f = formula do
+        url "foo-1.0"
+        preserve_rpath
+      end
+
+      expect(f.class.preserve_rpath?).to be(true)
+    end
+
+    it "can be explicitly disabled" do
+      f = formula do
+        url "foo-1.0"
+        preserve_rpath value: false
+      end
+
+      expect(f.class.preserve_rpath?).to be(false)
     end
   end
 end
