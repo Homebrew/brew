@@ -112,4 +112,14 @@ RSpec.describe Dependency do
     dependency = described_class.new("foo/bar/dog")
     expect(dependency.option_names).to eq(%w[dog])
   end
+
+  describe "with no_linkage tag" do
+    it "marks dependency as no_linkage" do
+      dep = described_class.new("foo", [:no_linkage])
+      expect(dep).to be_no_linkage
+      expect(dep).to be_required
+      expect(dep).not_to be_build
+      expect(dep).not_to be_test
+    end
+  end
 end

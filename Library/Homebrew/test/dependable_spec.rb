@@ -30,4 +30,28 @@ RSpec.describe Dependable do
   specify "#recommended?" do
     expect(dependable).not_to be_recommended
   end
+
+  specify "#no_linkage?" do
+    expect(dependable).not_to be_no_linkage
+  end
+
+  describe "with no_linkage tag" do
+    subject(:dependable_no_linkage) do
+      Class.new do
+        include Dependable
+
+        def initialize
+          @tags = [:no_linkage]
+        end
+      end.new
+    end
+
+    specify "#no_linkage?" do
+      expect(dependable_no_linkage).to be_no_linkage
+    end
+
+    specify "#required?" do
+      expect(dependable_no_linkage).to be_required
+    end
+  end
 end

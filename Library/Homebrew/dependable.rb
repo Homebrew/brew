@@ -9,7 +9,7 @@ module Dependable
 
   # `:run` and `:linked` are no longer used but keep them here to avoid their
   # misuse in future.
-  RESERVED_TAGS = [:build, :optional, :recommended, :run, :test, :linked, :implicit].freeze
+  RESERVED_TAGS = [:build, :optional, :recommended, :run, :test, :linked, :implicit, :no_linkage].freeze
 
   attr_reader :tags
 
@@ -36,6 +36,10 @@ module Dependable
 
   def implicit?
     tags.include? :implicit
+  end
+
+  def no_linkage?
+    tags.include? :no_linkage
   end
 
   def required?
