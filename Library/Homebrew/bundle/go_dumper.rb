@@ -26,14 +26,16 @@ module Homebrew
             next if output.empty?
 
             # Parse the output to find the path line
-            # Format: "path\tgithub.com/user/repo"
+            # Format: "\tpath\tgithub.com/user/repo"
             lines = output.split("\n")
-            path_line = lines.find { |line| line.start_with?("path\t") || line.strip.start_with?("path\t") }
+            path_line = lines.find { |line| line.strip.start_with?("path\t") }
             next unless path_line
 
-            # Extract the package path (second field after tab)
-            path_line.split("\t", 2).last&.strip
-          end.uniq
+            # Extract the package path (second field after splitting by tab)
+            # The line format is: "\tpath\tgithub.com/user/repo"
+            parts = path_line.split("\t")
+            parts[2]&.strip if parts.length >= 3
+          end.compact.uniq
         else
           []
         end
