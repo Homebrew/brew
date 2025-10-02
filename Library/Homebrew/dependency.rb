@@ -282,15 +282,15 @@ class UsesFromMacOSDependency < Dependency
   def use_macos_install?(bottle_os_version: nil)
     # Check whether macOS is new enough for dependency to not be required.
     if Homebrew::SimulateSystem.simulating_or_running_on_macos?
+      # If there's no since bound, the dependency is always available from macOS
+      return true if !bounds.key?(:since) && Homebrew::SimulateSystem.current_os == :macos
+
       # When installing a bottle built on an older macOS version, use that version
       # to determine if the dependency should come from macOS or Homebrew
       effective_os = if bottle_os_version.present? && Homebrew::SimulateSystem.current_os != :macos
         # bottle_os_version is a string like "14" for Sonoma, "15" for Sequoia
         # Convert it to a MacOS version symbol for comparison
         MacOSVersion.new(bottle_os_version)
-      elsif Homebrew::SimulateSystem.current_os == :macos && !bounds.key?(:since)
-        # Assume the oldest macOS version when simulating a generic macOS version
-        return true
       else
         MacOSVersion.from_symbol(Homebrew::SimulateSystem.current_os)
       end
