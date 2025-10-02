@@ -349,9 +349,13 @@ class FormulaInstaller
                                          .fetch("runtime_dependencies", []).then { |deps| deps || [] }
                                          .each_with_object({}) { |dep, h| h[dep["full_name"]] = dep }
                                          .freeze
-      # Extract the OS version the bottle was built on
-      # Only use this for bottles built on older OS versions than the current OS
-      @bottle_built_os_version = bottle_tab_attrs.dig("built_on", "os_version")
+      # Extract the OS version the bottle was built on.
+      # Only use this for bottles built on a different OS version than the current OS.
+      # This ensures that when installing older bottles (e.g., sonoma bottle on sequoia),
+      # we resolve dependencies according to the bottle's built OS, not the current OS.
+      bottle_os_version = bottle_tab_attrs.dig("built_on", "os_version")
+      current_os_version = OS_VERSION
+      @bottle_built_os_version = (bottle_os_version == current_os_version) ? nil : bottle_os_version
     rescue Resource::BottleManifest::Error
       # If we can't get the bottle manifest, assume a full dependencies install.
     end
