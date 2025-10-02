@@ -151,11 +151,21 @@ module OS
         # Swift dylib IDs should be /usr/lib/swift
         return file.dylib_id if file.dylib_id.start_with?("/usr/lib/swift/libswift")
 
+        # Preserve @rpath install names if the formula has specified preserve_rpath
+        return file.dylib_id if file.dylib_id.start_with?("@rpath") && formula_preserve_rpath?
+
         # The new dylib ID should have the same basename as the old dylib ID, not
         # the basename of the file itself.
         basename = File.basename(file.dylib_id)
         relative_dirname = file.dirname.relative_path_from(path)
         (opt_record/relative_dirname/basename).to_s
+      end
+
+      sig { returns(T::Boolean) }
+      def formula_preserve_rpath?
+        Formula[name].preserve_rpath?
+      rescue FormulaUnavailableError
+        false
       end
 
       sig { params(old_name: String, relocation: ::Keg::Relocation).returns(T.nilable(String)) }
