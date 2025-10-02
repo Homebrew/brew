@@ -10,7 +10,7 @@ module Homebrew
         usage_banner <<~EOS
           `bundle` [<subcommand>]
 
-          Bundler for non-Ruby dependencies from Homebrew, Homebrew Cask, Mac App Store, Whalebrew and Visual Studio Code (and forks/variants).
+          Bundler for non-Ruby dependencies from Homebrew, Homebrew Cask, Mac App Store, Whalebrew, Visual Studio Code (and forks/variants) and Go packages.
 
           `brew bundle` [`install`]:
           Install and upgrade (by default) all dependencies from the `Brewfile`.

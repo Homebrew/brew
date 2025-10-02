@@ -56,7 +56,7 @@ brew bundle check || brew bundle install
 
 ### Types
 
-As well as supporting formulae (`brew "..."`), you can also use `brew bundle` with casks, taps, Mac App Store apps, VSCode extensions and to start background services with `brew services`.
+As well as supporting formulae (`brew "..."`), you can also use `brew bundle` with casks, taps, Mac App Store apps, VSCode extensions, Go packages and to start background services with `brew services`.
 
 ```ruby
 tap "apple/apple"
@@ -65,6 +65,7 @@ brew "postgresql@16", restart_service: true
 cask "firefox"
 mas "Refined GitHub", id: 1519867270
 vscode "editorconfig.editorconfig"
+go "github.com/charmbracelet/crush"
 ```
 
 Run `brew bundle` again and this outputs:
@@ -77,7 +78,8 @@ Using postgresql@16
 Using firefox
 Using Refined GitHub
 Using editorconfig.editorconfig
-`brew bundle` complete! 6 Brewfile dependencies now installed.
+Using github.com/charmbracelet/crush
+`brew bundle` complete! 7 Brewfile dependencies now installed.
 ```
 
 ### Projects
@@ -319,7 +321,7 @@ This must be done with solutions outside or built on top of `brew bundle` instea
 
 ## Adding New Packages Support
 
-`brew bundle` currently supports Homebrew, Homebrew Cask, Mac App Store and Visual Studio Code (and forks/variants).
+`brew bundle` currently supports Homebrew, Homebrew Cask, Mac App Store, Visual Studio Code (and forks/variants) and Go packages.
 
 We are interested in contributions for other packages' installers/checkers/dumpers but they must:
 
