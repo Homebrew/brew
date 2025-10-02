@@ -434,6 +434,57 @@ RSpec.describe Cask::Installer, :cask do
     end
   end
 
+  describe "#forbidden_cask_artifacts_check" do
+    it "raises when cask contains forbidden pkg artifact" do
+      ENV["HOMEBREW_FORBIDDEN_CASK_ARTIFACTS"] = "pkg"
+      cask = Cask::Cask.new("homebrew-pkg-cask") do
+        url "file://#{TEST_FIXTURE_DIR}/cask/container.tar.gz"
+        pkg "MyInstaller.pkg"
+      end
+
+      expect do
+        described_class.new(cask).forbidden_cask_artifacts_check
+      end.to raise_error(Cask::CaskCannotBeInstalledError, /contains a 'pkg' artifact/)
+    end
+
+    it "raises when cask contains forbidden installer artifact" do
+      ENV["HOMEBREW_FORBIDDEN_CASK_ARTIFACTS"] = "installer"
+      cask = Cask::Cask.new("homebrew-installer-cask") do
+        url "file://#{TEST_FIXTURE_DIR}/cask/container.tar.gz"
+        installer script: {
+          executable: "MyInstaller.sh",
+          args:       ["--silent"],
+        }
+      end
+
+      expect do
+        described_class.new(cask).forbidden_cask_artifacts_check
+      end.to raise_error(Cask::CaskCannotBeInstalledError, /contains a 'installer' artifact/)
+    end
+
+    it "raises when cask contains multiple forbidden artifacts" do
+      ENV["HOMEBREW_FORBIDDEN_CASK_ARTIFACTS"] = "pkg installer"
+      cask = Cask::Cask.new("homebrew-multi-forbidden-cask") do
+        url "file://#{TEST_FIXTURE_DIR}/cask/container.tar.gz"
+        pkg "MyInstaller.pkg"
+      end
+
+      expect do
+        described_class.new(cask).forbidden_cask_artifacts_check
+      end.to raise_error(Cask::CaskCannotBeInstalledError, /contains a 'pkg' artifact/)
+    end
+
+    it "does not raise when cask does not contain forbidden artifacts" do
+      ENV["HOMEBREW_FORBIDDEN_CASK_ARTIFACTS"] = "pkg installer"
+      cask = Cask::Cask.new("homebrew-allowed-cask") do
+        url "file://#{TEST_FIXTURE_DIR}/cask/container.tar.gz"
+        app "MyApp.app"
+      end
+
+      expect { described_class.new(cask).forbidden_cask_artifacts_check }.not_to raise_error
+    end
+  end
+
   describe "rename operations" do
     let(:tmpdir) { mktmpdir }
     let(:staged_path) { Pathname(tmpdir) }
