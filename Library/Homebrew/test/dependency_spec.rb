@@ -122,4 +122,20 @@ RSpec.describe Dependency do
       expect(dep).not_to be_test
     end
   end
+
+  describe "Dependency#installed? with bottle_os_version" do
+    it "accepts bottle_os_version parameter" do
+      dep = described_class.new("foo")
+      # Should not raise an error with the new parameter
+      expect { dep.installed?(bottle_os_version: "14") }.not_to raise_error
+    end
+  end
+
+  describe "Dependency#satisfied? with bottle_os_version" do
+    it "accepts bottle_os_version parameter" do
+      dep = described_class.new("foo")
+      # Should not raise an error with the new parameter
+      expect { dep.satisfied?([], bottle_os_version: "14") }.not_to raise_error
+    end
+  end
 end

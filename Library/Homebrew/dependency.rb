@@ -42,8 +42,14 @@ class Dependency
     formula
   end
 
-  sig { params(minimum_version: T.nilable(Version), minimum_revision: T.nilable(Integer)).returns(T::Boolean) }
-  def installed?(minimum_version: nil, minimum_revision: nil)
+  sig {
+    params(
+      minimum_version:   T.nilable(Version),
+      minimum_revision:  T.nilable(Integer),
+      bottle_os_version: T.nilable(String),
+    ).returns(T::Boolean)
+  }
+  def installed?(minimum_version: nil, minimum_revision: nil, bottle_os_version: nil)
     formula = begin
       to_formula(prefer_stub: true)
     rescue FormulaUnavailableError
@@ -80,8 +86,8 @@ class Dependency
     end
   end
 
-  def satisfied?(inherited_options = [], minimum_version: nil, minimum_revision: nil)
-    installed?(minimum_version:, minimum_revision:) &&
+  def satisfied?(inherited_options = [], minimum_version: nil, minimum_revision: nil, bottle_os_version: nil)
+    installed?(minimum_version:, minimum_revision:, bottle_os_version:) &&
       missing_options(inherited_options).empty?
   end
 
@@ -261,22 +267,37 @@ class UsesFromMacOSDependency < Dependency
     [name, tags, bounds].hash
   end
 
-  sig { params(minimum_version: T.nilable(Version), minimum_revision: T.nilable(Integer)).returns(T::Boolean) }
-  def installed?(minimum_version: nil, minimum_revision: nil)
-    use_macos_install? || super
+  sig {
+    params(
+      minimum_version:   T.nilable(Version),
+      minimum_revision:  T.nilable(Integer),
+      bottle_os_version: T.nilable(String),
+    ).returns(T::Boolean)
+  }
+  def installed?(minimum_version: nil, minimum_revision: nil, bottle_os_version: nil)
+    use_macos_install?(bottle_os_version:) || super
   end
 
-  sig { returns(T::Boolean) }
-  def use_macos_install?
+  sig { params(bottle_os_version: T.nilable(String)).returns(T::Boolean) }
+  def use_macos_install?(bottle_os_version: nil)
     # Check whether macOS is new enough for dependency to not be required.
     if Homebrew::SimulateSystem.simulating_or_running_on_macos?
-      # Assume the oldest macOS version when simulating a generic macOS version
-      return true if Homebrew::SimulateSystem.current_os == :macos && !bounds.key?(:since)
+      # If there's no since bound, the dependency is always available from macOS
+      return true if !bounds.key?(:since) && Homebrew::SimulateSystem.current_os == :macos
 
-      if Homebrew::SimulateSystem.current_os != :macos
-        current_os = MacOSVersion.from_symbol(Homebrew::SimulateSystem.current_os)
-        since_os = MacOSVersion.from_symbol(bounds[:since]) if bounds.key?(:since)
-        return true if current_os >= since_os
+      # When installing a bottle built on an older macOS version, use that version
+      # to determine if the dependency should come from macOS or Homebrew
+      effective_os = if bottle_os_version.present? && Homebrew::SimulateSystem.current_os != :macos
+        # bottle_os_version is a string like "14" for Sonoma, "15" for Sequoia
+        # Convert it to a MacOS version symbol for comparison
+        MacOSVersion.new(bottle_os_version)
+      else
+        MacOSVersion.from_symbol(Homebrew::SimulateSystem.current_os)
+      end
+
+      if bounds.key?(:since)
+        since_os = MacOSVersion.from_symbol(bounds[:since])
+        return true if effective_os >= since_os
       end
     end
 
