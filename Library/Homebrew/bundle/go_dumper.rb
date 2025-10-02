@@ -22,16 +22,17 @@ module Homebrew
           binaries = Dir.glob("#{bin_dir}/*").select { |f| File.executable?(f) && !File.directory?(f) }
 
           binaries.filter_map do |binary|
-            require "json"
-            output = `go version -m -json "#{binary}" 2>/dev/null`
+            output = `go version -m "#{binary}" 2>/dev/null`
             next if output.empty?
 
-            begin
-              data = JSON.parse(output)
-              data["Path"] if data["Path"]
-            rescue JSON::ParserError
-              nil
-            end
+            # Parse the output to find the path line
+            # Format: "path\tgithub.com/user/repo"
+            lines = output.split("\n")
+            path_line = lines.find { |line| line.start_with?("path\t") || line.strip.start_with?("path\t") }
+            next unless path_line
+
+            # Extract the package path (second field after tab)
+            path_line.split("\t", 2).last&.strip
           end.uniq
         else
           []
