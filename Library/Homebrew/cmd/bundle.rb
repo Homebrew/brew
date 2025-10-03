@@ -220,7 +220,7 @@ module Homebrew
             mas:        args.mas? || no_type_args,
             whalebrew:  args.whalebrew?,
             vscode:,
-            packages:   args.go? || no_type_args
+            go:         args.go? || no_type_args
           )
         when "edit"
           require "bundle/brewfile"
@@ -248,7 +248,7 @@ module Homebrew
             mas:       args.mas? || args.all?,
             whalebrew: args.whalebrew? || args.all?,
             vscode:    args.vscode? || args.all?,
-            packages:  args.go? || args.all?,
+            go:        args.go? || args.all?,
           )
         when "add", "remove"
           # We intentionally omit the s from `brews`, `casks`, and `taps` for ease of handling later.
