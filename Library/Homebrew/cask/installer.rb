@@ -825,7 +825,11 @@ on_request: true)
 
       artifacts.each do |artifact|
         # Get the artifact class name (e.g., "Pkg", "Installer", "App")
-        artifact_type = T.must(T.must(artifact.class.name).split("::").last).downcase
+        artifact_name = artifact.class.name
+        next if artifact_name.nil?
+
+        artifact_type = artifact_name.split("::").last&.downcase
+        next if artifact_type.nil?
 
         next unless forbidden_artifacts.include?(artifact_type)
 
