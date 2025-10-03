@@ -163,7 +163,7 @@ module OS
 
       sig { returns(T::Boolean) }
       def formula_preserve_rpath?
-        Formula[name].preserve_rpath?
+        T.unsafe(::Formula)[name].preserve_rpath?
       rescue FormulaUnavailableError
         false
       end
