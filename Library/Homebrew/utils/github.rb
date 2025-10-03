@@ -700,7 +700,7 @@ module GitHub
     username = tap.user
 
     tap.path.cd do
-      if args.no_fork?
+      if args.no_fork? || args.write_only?
         remote_url = Utils.popen_read("git", "remote", "get-url", "--push", "origin").chomp
         username = tap.user
         add_auth_token_to_url!(remote_url)

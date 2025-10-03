@@ -491,7 +491,7 @@ module Homebrew
           tap_remote_repo:,
           pr_message:,
         }
-        GitHub.create_bump_pr(pr_info, args:) unless args.write_only?
+        GitHub.create_bump_pr(pr_info, args:)
       end
 
       private
