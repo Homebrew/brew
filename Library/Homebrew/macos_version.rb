@@ -32,7 +32,21 @@ class MacOSVersion < Version
 
   sig { params(version: String).returns(T.nilable(String)) }
   def self.analytics_pretty_name(version)
-    MacOSVersion.new(version).pretty_name
+    macos_version = begin
+      MacOSVersion.new(version)
+    rescue Error
+      nil
+    end
+    return unless macos_version
+    return if macos_version.to_sym == :dunno
+
+    pretty_name = macos_version.pretty_name
+    version_str = if macos_version >= :big_sur
+      macos_version.major.to_s
+    else
+      macos_version.major_minor.to_s
+    end
+    "macOS #{pretty_name} (#{version_str})"
   end
 
   sig { params(macos_version: MacOSVersion).returns(Version) }
