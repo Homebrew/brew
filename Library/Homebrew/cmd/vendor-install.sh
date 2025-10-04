@@ -59,8 +59,7 @@ set_ruby_variables() {
       ruby_URLs+=("${HOMEBREW_BOTTLE_DOMAIN}/bottles-portable-ruby/${ruby_FILENAME}")
     fi
     ruby_URLs+=(
-      "https://ghcr.io/v2/homebrew/portable-ruby/portable-ruby/blobs/sha256:${ruby_SHA}"
-      "https://github.com/Homebrew/homebrew-portable-ruby/releases/download/${HOMEBREW_PORTABLE_RUBY_VERSION}/${ruby_FILENAME}"
+      "https://ghcr.io/v2/homebrew/core/portable-ruby/blobs/sha256:${ruby_SHA}"
     )
     ruby_URL="${ruby_URLs[0]}"
   fi
