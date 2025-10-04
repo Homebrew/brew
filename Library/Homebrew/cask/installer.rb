@@ -116,6 +116,7 @@ module Cask
 
       forbidden_tap_check
       forbidden_cask_and_formula_check
+      forbidden_cask_artifacts_check
 
       download(quiet:, timeout:) if @download_queue.nil?
 
@@ -810,6 +811,33 @@ on_request: true)
         forbidden for installation by #{owner} in `#{variable}`.#{owner_contact}
       EOS
       )
+    end
+
+    sig { void }
+    def forbidden_cask_artifacts_check
+      forbidden_artifacts = Set.new(Homebrew::EnvConfig.forbidden_cask_artifacts.to_s.split)
+      return if forbidden_artifacts.blank?
+
+      owner = Homebrew::EnvConfig.forbidden_owner
+      owner_contact = if (contact = Homebrew::EnvConfig.forbidden_owner_contact.presence)
+        "\n#{contact}"
+      end
+
+      artifacts.each do |artifact|
+        # Get the artifact class name (e.g., "Pkg", "Installer", "App")
+        artifact_name = artifact.class.name
+        next if artifact_name.nil?
+
+        artifact_type = artifact_name.split("::").last&.downcase
+        next if artifact_type.nil?
+
+        next unless forbidden_artifacts.include?(artifact_type)
+
+        raise CaskCannotBeInstalledError.new(@cask, <<~EOS
+          contains a '#{artifact_type}' artifact, which is forbidden for installation by #{owner} in `HOMEBREW_FORBIDDEN_CASK_ARTIFACTS`.#{owner_contact}
+        EOS
+        )
+      end
     end
 
     sig { void }

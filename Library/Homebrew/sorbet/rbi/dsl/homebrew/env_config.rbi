@@ -125,6 +125,9 @@ module Homebrew::EnvConfig
     def forbid_casks?; end
 
     sig { returns(T.nilable(::String)) }
+    def forbidden_cask_artifacts; end
+
+    sig { returns(T.nilable(::String)) }
     def forbidden_casks; end
 
     sig { returns(T.nilable(::String)) }
