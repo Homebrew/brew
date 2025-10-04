@@ -79,10 +79,40 @@ RSpec.shared_examples "#uninstall_phase or #zap_phase" do
 
       expect(fake_system_command).to receive(:run)
         .with("/bin/launchctl", args: ["remove", "my.fancy.package.service"],
-        must_succeed: true, sudo: true, sudo_as_root: true)
+        must_succeed: false, sudo: true, sudo_as_root: true)
         .and_return(instance_double(SystemCommand::Result, success?: true))
 
       subject.public_send(:"#{artifact_dsl_key}_phase", command: fake_system_command)
+    end
+
+    it "does not fail when sudo removal fails" do
+      allow(fake_system_command).to receive(:run)
+        .with(
+          "/bin/launchctl",
+          args:         ["list", "my.fancy.package.service"],
+          print_stderr: false,
+          sudo:         false,
+          sudo_as_root: false,
+        )
+        .and_return(instance_double(SystemCommand::Result, stdout: unknown_response))
+      allow(fake_system_command).to receive(:run)
+        .with(
+          "/bin/launchctl",
+          args:         ["list", "my.fancy.package.service"],
+          print_stderr: false,
+          sudo:         true,
+          sudo_as_root: true,
+        )
+        .and_return(instance_double(SystemCommand::Result, stdout: service_info))
+
+      expect(fake_system_command).to receive(:run)
+        .with("/bin/launchctl", args: ["remove", "my.fancy.package.service"],
+        must_succeed: false, sudo: true, sudo_as_root: true)
+        .and_return(instance_double(SystemCommand::Result, success?: false))
+
+      expect do
+        subject.public_send(:"#{artifact_dsl_key}_phase", command: fake_system_command)
+      end.not_to raise_error
     end
   end
 
@@ -140,7 +170,7 @@ RSpec.shared_examples "#uninstall_phase or #zap_phase" do
 
       expect(fake_system_command).to receive(:run)
         .with("/bin/launchctl", args: ["remove", "my.fancy.package.service.12345"],
-        must_succeed: true, sudo: true, sudo_as_root: true)
+        must_succeed: false, sudo: true, sudo_as_root: true)
         .and_return(instance_double(SystemCommand::Result, success?: true))
 
       subject.public_send(:"#{artifact_dsl_key}_phase", command: fake_system_command)

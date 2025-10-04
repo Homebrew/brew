@@ -119,11 +119,11 @@ module Cask
               result = command.run(
                 "/bin/launchctl",
                 args:         ["remove", service],
-                must_succeed: sudo,
+                must_succeed: false,
                 sudo:,
                 sudo_as_root: sudo,
               )
-              next if !sudo && !result.success?
+              next unless result.success?
 
               sleep 1
             end
@@ -134,20 +134,22 @@ module Cask
             paths.each { |elt| elt.prepend(Dir.home).freeze } unless sudo
             paths = paths.map { |elt| Pathname(elt) }.select(&:exist?)
             paths.each do |path|
-              command.run!("/bin/rm", args: ["-f", "--", path], sudo:, sudo_as_root: sudo)
+              command.run("/bin/rm", args: ["-f", "--", path], must_succeed: false, sudo:, sudo_as_root: sudo)
             end
             # undocumented and untested: pass a path to uninstall :launchctl
             next unless Pathname(service).exist?
 
-            command.run!(
+            command.run(
               "/bin/launchctl",
               args:         ["unload", "-w", "--", service],
+              must_succeed: false,
               sudo:,
               sudo_as_root: sudo,
             )
-            command.run!(
+            command.run(
               "/bin/rm",
               args:         ["-f", "--", service],
+              must_succeed: false,
               sudo:,
               sudo_as_root: sudo,
             )
