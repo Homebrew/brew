@@ -11,6 +11,12 @@ on:
   release:
     types:
       - published
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Git tag for the release'
+        required: true
+        type: string
 env:
   PKG_APPLE_DEVELOPER_TEAM_ID: ${{ secrets.PKG_APPLE_DEVELOPER_TEAM_ID }}
   HOMEBREW_NO_ANALYTICS_THIS_RUN: 1
@@ -85,6 +91,7 @@ jobs:
           path: brew
           fetch-depth: 0
           persist-credentials: false
+          ref: ${{ inputs.tag || github.ref }}
 
       - name: Get Homebrew version from Git
         id: homebrew-version
@@ -230,13 +237,17 @@ jobs:
                                     --wait
 
       - name: Upload installer to GitHub release
-        if: github.event_name == 'release'
+        if: github.event_name == 'release' || github.event_name == 'workflow_dispatch'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           INSTALLER_PATH: ${{ needs.build.outputs.installer_path }}
         run: |
           VERSION="${INSTALLER_PATH#Homebrew-}"
           VERSION="${VERSION%.pkg}"
+          # For workflow_dispatch, create a draft release if it doesn't exist yet
+          if ! gh release view --repo Homebrew/brew "${VERSION}" >/dev/null 2>&1; then
+            gh release create --repo Homebrew/brew "${VERSION}" --draft --title "${VERSION}" --notes ""
+          fi
           gh release upload --repo Homebrew/brew "${VERSION}" "${INSTALLER_PATH}"
 
   issue:
