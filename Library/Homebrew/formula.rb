@@ -3406,6 +3406,7 @@ class Formula
         @network_access_allowed = T.let(SUPPORTED_NETWORK_ACCESS_PHASES.to_h do |phase|
           [phase, DEFAULT_NETWORK_ACCESS_ALLOWED]
         end, T.nilable(T::Hash[Symbol, T::Boolean]))
+        @preserve_rpath = T.let(false, T.nilable(T::Boolean))
       end
     end
 
@@ -3416,6 +3417,7 @@ class Formula
       @conflicts.freeze
       @skip_clean_paths.freeze
       @link_overwrite_paths.freeze
+      @preserve_rpath&.freeze
       super
     end
 
@@ -4128,6 +4130,34 @@ class Formula
       paths.flatten!
       # Specifying :all is deprecated and will become an error
       T.must(skip_clean_paths).merge(paths)
+    end
+
+    # Preserve `@rpath` install names when fixing dynamic linkage on macOS.
+    #
+    # By default, Homebrew rewrites library install names (including those starting
+    # with `@rpath`) to use absolute paths. This can break tools like `macdeployqt`
+    # that expect `@rpath`-based install names to remain unchanged.
+    #
+    # Call this method to skip rewriting install names that start with `@rpath`.
+    #
+    # ### Example
+    #
+    # ```ruby
+    # preserve_rpath
+    # ```
+    #
+    # @api public
+    sig { params(value: T::Boolean).returns(T::Boolean) }
+    def preserve_rpath(value: true)
+      @preserve_rpath = value
+    end
+
+    # Check if `@rpath` install names should be preserved.
+    #
+    # @api internal
+    sig { returns(T::Boolean) }
+    def preserve_rpath?
+      @preserve_rpath == true
     end
 
     # Software that will not be symlinked into the `brew --prefix` and will
