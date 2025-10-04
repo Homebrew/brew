@@ -65,6 +65,7 @@ module Homebrew
         apps_to_install:       "Apps",
         formulae_to_install:   "Formulae",
         formulae_to_start:     "Services",
+        packages_to_install:   "Go Packages",
       }.freeze
 
       def self.check(global: false, file: nil, exit_on_first_error: false, no_upgrade: false, verbose: false)
@@ -132,6 +133,14 @@ module Homebrew
       def self.formulae_to_start(exit_on_first_error: false, no_upgrade: false, verbose: false)
         require "bundle/brew_service_checker"
         Homebrew::Bundle::Checker::BrewServiceChecker.new.find_actionable(
+          @dsl.entries,
+          exit_on_first_error:, no_upgrade:, verbose:,
+        )
+      end
+
+      def self.packages_to_install(exit_on_first_error: false, no_upgrade: false, verbose: false)
+        require "bundle/go_checker"
+        Homebrew::Bundle::Checker::GoChecker.new.find_actionable(
           @dsl.entries,
           exit_on_first_error:, no_upgrade:, verbose:,
         )

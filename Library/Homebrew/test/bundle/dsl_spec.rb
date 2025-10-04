@@ -25,6 +25,7 @@ RSpec.describe Homebrew::Bundle::Dsl do
         mas '1Password', id: 443987910
         whalebrew 'whalebrew/wget'
         vscode 'GitHub.codespaces'
+        go 'github.com/charmbracelet/crush'
       EOS
     end
 
@@ -54,6 +55,7 @@ RSpec.describe Homebrew::Bundle::Dsl do
       expect(dsl.entries[9].options).to eql(id: 443_987_910)
       expect(dsl.entries[10].name).to eql("whalebrew/wget")
       expect(dsl.entries[11].name).to eql("GitHub.codespaces")
+      expect(dsl.entries[12].name).to eql("github.com/charmbracelet/crush")
     end
   end
 

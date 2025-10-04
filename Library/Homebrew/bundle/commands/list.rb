@@ -10,13 +10,14 @@ module Homebrew
       module List
         sig {
           params(global: T::Boolean, file: T.nilable(String), formulae: T::Boolean, casks: T::Boolean,
-                 taps: T::Boolean, mas: T::Boolean, whalebrew: T::Boolean, vscode: T::Boolean).void
+                 taps: T::Boolean, mas: T::Boolean, whalebrew: T::Boolean, vscode: T::Boolean,
+                 go: T::Boolean).void
         }
-        def self.run(global:, file:, formulae:, casks:, taps:, mas:, whalebrew:, vscode:)
+        def self.run(global:, file:, formulae:, casks:, taps:, mas:, whalebrew:, vscode:, go:)
           parsed_entries = Brewfile.read(global:, file:).entries
           Homebrew::Bundle::Lister.list(
             parsed_entries,
-            formulae:, casks:, taps:, mas:, whalebrew:, vscode:,
+            formulae:, casks:, taps:, mas:, whalebrew:, vscode:, go:,
           )
         end
       end

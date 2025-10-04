@@ -63,6 +63,11 @@ module Homebrew
       end
 
       sig { returns(T::Boolean) }
+      def go_installed?
+        @go_installed ||= which("go", ORIGINAL_PATHS).present?
+      end
+
+      sig { returns(T::Boolean) }
       def cask_installed?
         @cask_installed ||= File.directory?("#{HOMEBREW_PREFIX}/Caskroom") &&
                             (File.directory?("#{HOMEBREW_LIBRARY}/Taps/homebrew/homebrew-cask") ||
@@ -139,6 +144,7 @@ module Homebrew
         @vscode_installed = T.let(nil, T.nilable(T::Boolean))
         @which_vscode = T.let(nil, T.nilable(Pathname))
         @whalebrew_installed = T.let(nil, T.nilable(T::Boolean))
+        @go_installed = T.let(nil, T.nilable(T::Boolean))
         @cask_installed = T.let(nil, T.nilable(T::Boolean))
         @formula_versions_from_env = T.let(nil, T.nilable(T::Hash[String, String]))
         @upgrade_formulae = T.let(nil, T.nilable(T::Array[String]))

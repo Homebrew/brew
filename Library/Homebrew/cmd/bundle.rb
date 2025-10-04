@@ -10,7 +10,7 @@ module Homebrew
         usage_banner <<~EOS
           `bundle` [<subcommand>]
 
-          Bundler for non-Ruby dependencies from Homebrew, Homebrew Cask, Mac App Store, Whalebrew and Visual Studio Code (and forks/variants).
+          Bundler for non-Ruby dependencies from Homebrew, Homebrew Cask, Mac App Store, Whalebrew, Visual Studio Code (and forks/variants) and Go packages.
 
           `brew bundle` [`install`]:
           Install and upgrade (by default) all dependencies from the `Brewfile`.
@@ -109,6 +109,8 @@ module Homebrew
                description: "`list` or `dump` Whalebrew dependencies."
         switch "--vscode",
                description: "`list`, `dump` or `cleanup` VSCode (and forks/variants) extensions."
+        switch "--go",
+               description: "`list` or `dump` Go packages."
         switch "--no-vscode",
                description: "`dump` without VSCode (and forks/variants) extensions.",
                env:         :bundle_dump_no_vscode
@@ -163,7 +165,8 @@ module Homebrew
         zap = args.zap?
         Homebrew::Bundle.upgrade_formulae = args.upgrade_formulae
 
-        no_type_args = [args.formulae?, args.casks?, args.taps?, args.mas?, args.whalebrew?, args.vscode?].none?
+        no_type_args = [args.formulae?, args.casks?, args.taps?, args.mas?, args.whalebrew?, args.vscode?,
+                        args.go?].none?
 
         if args.install?
           if [nil, "install", "upgrade"].include?(subcommand)
@@ -216,7 +219,8 @@ module Homebrew
             casks:      args.casks? || no_type_args,
             mas:        args.mas? || no_type_args,
             whalebrew:  args.whalebrew?,
-            vscode:
+            vscode:,
+            go:         args.go? || no_type_args
           )
         when "edit"
           require "bundle/brewfile"
@@ -244,6 +248,7 @@ module Homebrew
             mas:       args.mas? || args.all?,
             whalebrew: args.whalebrew? || args.all?,
             vscode:    args.vscode? || args.all?,
+            go:        args.go? || args.all?,
           )
         when "add", "remove"
           # We intentionally omit the s from `brews`, `casks`, and `taps` for ease of handling later.
@@ -254,6 +259,7 @@ module Homebrew
             mas:       args.mas?,
             whalebrew: args.whalebrew?,
             vscode:    args.vscode?,
+            go:        args.go?,
             none:      no_type_args,
           }
           selected_types = type_hash.select { |_, v| v }.keys
