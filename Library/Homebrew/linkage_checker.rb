@@ -27,6 +27,8 @@ class LinkageChecker
     @indirect_deps    = []
     @undeclared_deps  = []
     @unnecessary_deps = []
+    @no_linkage_deps  = []
+    @unexpected_linkage_deps = []
     @unwanted_system_dylibs = []
     @version_conflict_deps = []
     @files_missing_rpaths = []
@@ -44,6 +46,8 @@ class LinkageChecker
     display_items "Broken dependencies", @broken_deps
     display_items "Undeclared dependencies with linkage", @undeclared_deps
     display_items "Dependencies with no linkage", @unnecessary_deps
+    display_items "Homebrew dependencies not requiring linkage", @no_linkage_deps
+    display_items "Unexpected linkage for no_linkage dependencies", @unexpected_linkage_deps
     display_items "Unwanted system libraries", @unwanted_system_dylibs
     display_items "Files with missing rpath", @files_missing_rpaths
     display_items "@executable_path references in libraries", @executable_path_dylibs
@@ -72,6 +76,7 @@ class LinkageChecker
 
     display_items("Indirect dependencies with linkage", @indirect_deps, puts_output:)
     display_items("Undeclared dependencies with linkage", @undeclared_deps, puts_output:)
+    display_items("Unexpected linkage for no_linkage dependencies", @unexpected_linkage_deps, puts_output:)
     display_items("Files with missing rpath", @files_missing_rpaths, puts_output:)
     display_items "@executable_path references in libraries", @executable_path_dylibs, puts_output:
   end
@@ -83,7 +88,10 @@ class LinkageChecker
     issues = [@broken_deps, @broken_dylibs]
     if test
       issues += [@unwanted_system_dylibs, @version_conflict_deps]
-      issues += [@indirect_deps, @undeclared_deps, @files_missing_rpaths, @executable_path_dylibs] if strict
+      if strict
+        issues += [@indirect_deps, @undeclared_deps, @unexpected_linkage_deps,
+                   @files_missing_rpaths, @executable_path_dylibs]
+      end
     end
     issues.any?(&:present?)
   end
@@ -184,7 +192,7 @@ class LinkageChecker
 
     if formula
       @indirect_deps, @undeclared_deps, @unnecessary_deps,
-        @version_conflict_deps = check_formula_deps
+        @version_conflict_deps, @no_linkage_deps, @unexpected_linkage_deps = check_formula_deps
     end
 
     return unless keg_files_dylibs_was_empty
@@ -223,14 +231,31 @@ class LinkageChecker
     declared_deps_names = declared_deps_full_names.map do |dep|
       dep.split("/").last
     end
+
+    # Get dependencies marked with :no_linkage
+    no_linkage_deps_full_names = formula.deps
+                                        .reject { |dep| filter_out.call(dep) }
+                                        .select(&:no_linkage?)
+                                        .map(&:name)
+    no_linkage_deps_names = no_linkage_deps_full_names.map do |dep|
+      dep.split("/").last
+    end
+
     recursive_deps = formula.runtime_formula_dependencies(undeclared: false)
                             .map(&:name)
 
     indirect_deps = []
     undeclared_deps = []
+    unexpected_linkage_deps = []
     @brewed_dylibs.each_key do |full_name|
       name = full_name.split("/").last
       next if name == formula.name
+
+      # Check if this is a no_linkage dependency with unexpected linkage
+      if no_linkage_deps_names.include?(name)
+        unexpected_linkage_deps << full_name
+        next
+      end
 
       if recursive_deps.include?(name)
         indirect_deps << full_name unless declared_deps_names.include?(name)
@@ -241,6 +266,7 @@ class LinkageChecker
 
     sort_by_formula_full_name!(indirect_deps)
     sort_by_formula_full_name!(undeclared_deps)
+    sort_by_formula_full_name!(unexpected_linkage_deps)
 
     unnecessary_deps = declared_deps_full_names.reject do |full_name|
       next true if Formula[full_name].bin.directory?
@@ -248,6 +274,9 @@ class LinkageChecker
       name = full_name.split("/").last
       @brewed_dylibs.keys.map { |l| l.split("/").last }.include?(name)
     end
+
+    # Remove no_linkage dependencies from unnecessary_deps since they're expected not to have linkage
+    unnecessary_deps -= no_linkage_deps_full_names
 
     missing_deps = @broken_deps.values.flatten.map { |d| dylib_to_dep(d) }
     unnecessary_deps -= missing_deps
@@ -265,7 +294,7 @@ class LinkageChecker
     end
 
     [indirect_deps, undeclared_deps,
-     unnecessary_deps, version_conflict_deps.to_a]
+     unnecessary_deps, version_conflict_deps.to_a, no_linkage_deps_full_names, unexpected_linkage_deps]
   end
 
   def sort_by_formula_full_name!(arr)
