@@ -218,6 +218,30 @@ RSpec.describe Tab do
       ]
       expect(described_class.runtime_deps_hash(formula, formula_recursive_deps)).to eq(expected_output)
     end
+
+    it "includes compatibility_version when set" do
+      foo = formula("foo") do
+        url "foo-1.0"
+        compatibility_version 1
+      end
+      stub_formula_loader foo
+
+      formula_declared_deps = [Dependency.new("foo")]
+      formula_recursive_deps = [Dependency.new("foo")]
+      formula = instance_double(Formula, deps: formula_declared_deps)
+
+      expected_output = [
+        {
+          "full_name"             => "foo",
+          "version"               => "1.0",
+          "revision"              => 0,
+          "pkg_version"           => "1.0",
+          "declared_directly"     => true,
+          "compatibility_version" => 1,
+        },
+      ]
+      expect(described_class.runtime_deps_hash(formula, formula_recursive_deps)).to eq(expected_output)
+    end
   end
 
   specify "#cxxstdlib" do

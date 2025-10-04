@@ -259,6 +259,11 @@ RSpec.describe Formula do
     expect(f.prefix).to eq(HOMEBREW_CELLAR/f.name/"0.1_1")
   end
 
+  example "compatibility_version" do
+    f = Class.new(Testball) { compatibility_version(1) }.new
+    expect(f.class.compatibility_version).to eq(1)
+  end
+
   specify "#any_version_installed?" do
     f = formula do
       url "foo"

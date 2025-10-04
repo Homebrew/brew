@@ -42,8 +42,11 @@ class Dependency
     formula
   end
 
-  sig { params(minimum_version: T.nilable(Version), minimum_revision: T.nilable(Integer)).returns(T::Boolean) }
-  def installed?(minimum_version: nil, minimum_revision: nil)
+  sig {
+    params(minimum_version: T.nilable(Version), minimum_revision: T.nilable(Integer),
+           minimum_compatibility_version: T.nilable(Integer)).returns(T::Boolean)
+  }
+  def installed?(minimum_version: nil, minimum_revision: nil, minimum_compatibility_version: nil)
     formula = begin
       to_formula(prefer_stub: true)
     rescue FormulaUnavailableError
@@ -66,6 +69,17 @@ class Dependency
 
     installed_version = installed_keg.version
 
+    # If both the formula and minimum dependency have a compatibility_version set,
+    # and they match, the dependency is satisfied regardless of version/revision.
+    if minimum_compatibility_version.present? && formula.class.compatibility_version.present?
+      installed_tab = Tab.for_keg(installed_keg)
+      installed_compatibility_version = installed_tab.source&.dig("versions", "compatibility_version")
+
+      # If installed version has same compatibility_version as required, it's compatible
+      return true if installed_compatibility_version == minimum_compatibility_version &&
+                     formula.class.compatibility_version == minimum_compatibility_version
+    end
+
     # Tabs prior to 4.1.18 did not have revision or pkg_version fields.
     # As a result, we have to be more conversative when we do not have
     # a minimum revision from the tab and assume that if the formula has a
@@ -80,8 +94,9 @@ class Dependency
     end
   end
 
-  def satisfied?(inherited_options = [], minimum_version: nil, minimum_revision: nil)
-    installed?(minimum_version:, minimum_revision:) &&
+  def satisfied?(inherited_options = [], minimum_version: nil, minimum_revision: nil,
+                 minimum_compatibility_version: nil)
+    installed?(minimum_version:, minimum_revision:, minimum_compatibility_version:) &&
       missing_options(inherited_options).empty?
   end
 

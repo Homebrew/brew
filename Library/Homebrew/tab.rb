@@ -131,12 +131,13 @@ class AbstractTab
 
   def self.formula_to_dep_hash(formula, declared_deps)
     {
-      "full_name"         => formula.full_name,
-      "version"           => formula.version.to_s,
-      "revision"          => formula.revision,
-      "bottle_rebuild"    => formula.bottle&.rebuild,
-      "pkg_version"       => formula.pkg_version.to_s,
-      "declared_directly" => declared_deps.include?(formula.full_name),
+      "full_name"             => formula.full_name,
+      "version"               => formula.version.to_s,
+      "revision"              => formula.revision,
+      "bottle_rebuild"        => formula.bottle&.rebuild,
+      "pkg_version"           => formula.pkg_version.to_s,
+      "declared_directly"     => declared_deps.include?(formula.full_name),
+      "compatibility_version" => formula.class.compatibility_version,
     }.compact
   end
   private_class_method :formula_to_dep_hash
@@ -222,9 +223,10 @@ class Tab < AbstractTab
     tab.source["spec"] = formula.active_spec_sym.to_s
     tab.source["path"] = formula.specified_path.to_s
     tab.source["versions"] = {
-      "stable"         => formula.stable&.version&.to_s,
-      "head"           => formula.head&.version&.to_s,
-      "version_scheme" => formula.version_scheme,
+      "stable"                => formula.stable&.version&.to_s,
+      "head"                  => formula.head&.version&.to_s,
+      "version_scheme"        => formula.version_scheme,
+      "compatibility_version" => formula.class.compatibility_version,
     }
 
     tab
@@ -358,9 +360,10 @@ class Tab < AbstractTab
   sig { returns(T::Hash[String, T.untyped]) }
   def self.empty_source_versions
     {
-      "stable"         => nil,
-      "head"           => nil,
-      "version_scheme" => 0,
+      "stable"                => nil,
+      "head"                  => nil,
+      "version_scheme"        => 0,
+      "compatibility_version" => nil,
     }
   end
   private_class_method :empty_source_versions
