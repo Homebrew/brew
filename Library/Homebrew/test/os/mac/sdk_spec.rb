@@ -48,7 +48,7 @@ RSpec.describe OS::Mac::CLTSDKLocator do
   describe "#all_sdks" do
     let(:big_sur_sdk_prefix) { TEST_FIXTURE_DIR/"sdks/big_sur" }
     let(:mojave_broken_sdk_prefix) { TEST_FIXTURE_DIR/"sdks/mojave_broken" }
-    let(:high_sierra_sdk_prefix) { TEST_FIXTURE_DIR/"sdks/high_sierra" }
+    let(:catalina_sdk_prefix) { TEST_FIXTURE_DIR/"sdks/catalina" }
     let(:malformed_sdk_prefix) { TEST_FIXTURE_DIR/"sdks/malformed" }
 
     it "reads the SDKSettings.json version of unversioned SDKs folders" do
@@ -76,14 +76,14 @@ RSpec.describe OS::Mac::CLTSDKLocator do
     end
 
     it "reads the SDKSettings.plist version" do
-      allow(locator).to receive(:sdk_prefix).and_return(high_sierra_sdk_prefix.to_s)
+      allow(locator).to receive(:sdk_prefix).and_return(catalina_sdk_prefix.to_s)
 
       sdks = locator.all_sdks
       expect(sdks.count).to eq(1)
 
       sdk = sdks.first
-      expect(sdk.path).to eq(high_sierra_sdk_prefix/"MacOSX10.13.sdk")
-      expect(sdk.version).to eq(MacOSVersion.new("10.13"))
+      expect(sdk.path).to eq(catalina_sdk_prefix/"MacOSX10.15.sdk")
+      expect(sdk.version).to eq(MacOSVersion.new("10.15"))
       expect(sdk.source).to eq(:clt)
     end
 

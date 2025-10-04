@@ -86,7 +86,6 @@ module OS
         else
           MacOS.sdk(version)
         end
-        return if !MacOS.sdk_root_needed? && sdk&.source != :xcode
 
         Homebrew::Diagnostic.checks(:fatal_setup_build_environment_checks)
         sdk = T.must(sdk).path

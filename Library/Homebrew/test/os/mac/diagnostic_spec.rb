@@ -16,15 +16,6 @@ RSpec.describe Homebrew::Diagnostic::Checks do
       .to match("We do not provide support for this pre-release version.")
   end
 
-  specify "#check_if_xcode_needs_clt_installed" do
-    macos_version = MacOSVersion.new("10.11")
-    allow(OS::Mac).to receive_messages(version: macos_version, full_version: macos_version)
-    allow(OS::Mac::Xcode).to receive_messages(installed?: true, version: "8.0", without_clt?: true)
-
-    expect(checks.check_if_xcode_needs_clt_installed)
-      .to match("Xcode alone is not sufficient on El Capitan")
-  end
-
   describe "#check_if_supported_sdk_available" do
     let(:macos_version) { MacOSVersion.new("11") }
 
@@ -35,30 +26,21 @@ RSpec.describe Homebrew::Diagnostic::Checks do
       allow(OS::Mac::Xcode).to receive(:below_minimum_version?).and_return(false)
     end
 
-    it "doesn't trigger when SDK root is not needed" do
-      allow(OS::Mac).to receive_messages(sdk_root_needed?: false, sdk: nil)
-
-      expect(checks.check_if_supported_sdk_available).to be_nil
-    end
-
     it "doesn't trigger when a valid SDK is present" do
-      allow(OS::Mac).to receive_messages(sdk_root_needed?: true,
-                                         sdk:              OS::Mac::SDK.new(
-                                           macos_version, "/some/path/MacOSX.sdk", :clt
-                                         ))
+      allow(OS::Mac).to receive(:sdk).and_return(OS::Mac::SDK.new(macos_version, "/some/path/MacOSX.sdk", :clt))
 
       expect(checks.check_if_supported_sdk_available).to be_nil
     end
 
     it "triggers when a valid SDK is not present on CLT systems" do
-      allow(OS::Mac).to receive_messages(sdk_root_needed?: true, sdk: nil, sdk_locator: OS::Mac::CLT.sdk_locator)
+      allow(OS::Mac).to receive_messages(sdk: nil, sdk_locator: OS::Mac::CLT.sdk_locator)
 
       expect(checks.check_if_supported_sdk_available)
         .to include("Your Command Line Tools (CLT) does not support macOS #{macos_version}")
     end
 
     it "triggers when a valid SDK is not present on Xcode systems" do
-      allow(OS::Mac).to receive_messages(sdk_root_needed?: true, sdk: nil, sdk_locator: OS::Mac::Xcode.sdk_locator)
+      allow(OS::Mac).to receive_messages(sdk: nil, sdk_locator: OS::Mac::Xcode.sdk_locator)
 
       expect(checks.check_if_supported_sdk_available)
         .to include("Your Xcode does not support macOS #{macos_version}")

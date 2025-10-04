@@ -86,10 +86,8 @@ module OS
         sdk = formula ? MacOS.sdk_for_formula(formula) : MacOS.sdk
         is_xcode_sdk = sdk&.source == :xcode
 
-        if is_xcode_sdk || MacOS.sdk_root_needed?
-          Homebrew::Diagnostic.checks(:fatal_setup_build_environment_checks)
-          self["HOMEBREW_SDKROOT"] = sdk.path.to_s if sdk
-        end
+        Homebrew::Diagnostic.checks(:fatal_setup_build_environment_checks)
+        self["HOMEBREW_SDKROOT"] = sdk.path.to_s if sdk
 
         self["HOMEBREW_DEVELOPER_DIR"] = if is_xcode_sdk
           MacOS::Xcode.prefix.to_s
@@ -108,24 +106,6 @@ module OS
         end
 
         super
-
-        # Filter out symbols known not to be defined since GNU Autotools can't
-        # reliably figure this out with Xcode 8 and above.
-        if MacOS.version == "10.12" && MacOS::Xcode.version >= "9.0"
-          %w[fmemopen futimens open_memstream utimensat].each do |s|
-            ENV["ac_cv_func_#{s}"] = "no"
-          end
-        elsif MacOS.version == "10.11" && MacOS::Xcode.version >= "8.0"
-          %w[basename_r clock_getres clock_gettime clock_settime dirname_r
-             getentropy mkostemp mkostemps timingsafe_bcmp].each do |s|
-            ENV["ac_cv_func_#{s}"] = "no"
-          end
-
-          ENV["ac_cv_search_clock_gettime"] = "no"
-
-          # works around libev.m4 unsetting ac_cv_func_clock_gettime
-          ENV["ac_have_clock_syscall"] = "no"
-        end
 
         # On macOS Sonoma (at least release candidate), iconv() is generally
         # present and working, but has a minor regression that defeats the

@@ -38,7 +38,7 @@ RSpec.describe RuboCop::Cop::FormulaAudit::Miscellaneous do
           bottle do
             rebuild 0
             ^^^^^^^^^ FormulaAudit/Miscellaneous: `rebuild 0` should be removed
-            sha256 "fe0679b932dd43a87fd415b609a7fbac7a069d117642ae8ebaac46ae1fb9f0b3" => :sierra
+            sha256 "fe0679b932dd43a87fd415b609a7fbac7a069d117642ae8ebaac46ae1fb9f0b3" => :monterey
           end
         end
       RUBY
@@ -50,7 +50,7 @@ RSpec.describe RuboCop::Cop::FormulaAudit::Miscellaneous do
           desc "foo"
           url 'https://brew.sh/foo-1.0.tgz'
           bottle do
-            sha256 "fe0679b932dd43a87fd415b609a7fbac7a069d117642ae8ebaac46ae1fb9f0b3" => :sierra
+            sha256 "fe0679b932dd43a87fd415b609a7fbac7a069d117642ae8ebaac46ae1fb9f0b3" => :monterey
           end
           fails_with :llvm do
           ^^^^^^^^^^^^^^^^ FormulaAudit/Miscellaneous: `fails_with :llvm` is now a no-op and should be removed

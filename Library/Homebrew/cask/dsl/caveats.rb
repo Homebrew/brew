@@ -57,8 +57,6 @@ module Cask
       end
 
       caveat :kext do
-        next if MacOS.version < :high_sierra
-
         navigation_path = if MacOS.version >= :ventura
           "System Settings → Privacy & Security"
         else

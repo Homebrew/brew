@@ -595,7 +595,7 @@ then
   HOMEBREW_PRODUCT="Homebrew"
   HOMEBREW_SYSTEM="Macintosh"
   [[ "${HOMEBREW_PROCESSOR}" == "x86_64" ]] && HOMEBREW_PROCESSOR="Intel"
-  # Don't change this from Mac OS X to match what macOS itself does in Safari on 10.12
+  # Don't change this from Mac OS X to match what macOS itself does in Safari
   HOMEBREW_OS_USER_AGENT_VERSION="Mac OS X ${HOMEBREW_MACOS_VERSION}"
 
   if [[ "$(sysctl -n hw.optional.arm64 2>/dev/null)" == "1" ]]
@@ -618,50 +618,16 @@ then
     HOMEBREW_OS_VERSION="macOS ${HOMEBREW_MACOS_VERSION}"
   fi
 
-  # Refuse to run on pre-El Capitan
+  # Refuse to run on versions older than the minimum supported macOS.
   if [[ "${HOMEBREW_MACOS_VERSION_NUMERIC}" -lt "${HOMEBREW_MACOS_OLDEST_ALLOWED_NUMERIC}" ]]
   then
     printf "ERROR: Your version of macOS (%s) is too old to run Homebrew!\\n" "${HOMEBREW_MACOS_VERSION}" >&2
-    if [[ "${HOMEBREW_MACOS_VERSION_NUMERIC}" -lt "100700" ]]
-    then
-      printf "         For 10.4 - 10.6 support see: https://github.com/mistydemeo/tigerbrew\\n" >&2
-    fi
     printf "\\n" >&2
   fi
 
-  # Versions before Sierra don't handle custom cert files correctly, so need a full brewed curl.
-  if [[ "${HOMEBREW_MACOS_VERSION_NUMERIC}" -lt "101200" ]]
-  then
-    HOMEBREW_SYSTEM_CURL_TOO_OLD="1"
-    HOMEBREW_FORCE_BREWED_CURL="1"
-  fi
+  # All allowed versions of macOS include a new enough git.
+  HOMEBREW_MINIMUM_GIT_VERSION="2.14.3"
 
-  # The system libressl has a bug before macOS 10.15.6 where it incorrectly handles expired roots.
-  if [[ -z "${HOMEBREW_SYSTEM_CURL_TOO_OLD}" && "${HOMEBREW_MACOS_VERSION_NUMERIC}" -lt "101506" ]]
-  then
-    HOMEBREW_SYSTEM_CA_CERTIFICATES_TOO_OLD="1"
-    HOMEBREW_FORCE_BREWED_CA_CERTIFICATES="1"
-  fi
-
-  # TEMP: backwards compatiblity with existing 10.11-cross image
-  # Can (probably) be removed in March 2024.
-  if [[ -n "${HOMEBREW_FAKE_EL_CAPITAN}" ]]
-  then
-    export HOMEBREW_FAKE_MACOS="10.11.6"
-  fi
-
-  if [[ "${HOMEBREW_FAKE_MACOS}" =~ ^10\.11(\.|$) ]]
-  then
-    # We only need this to work enough to update brew and build the set portable formulae, so relax the requirement.
-    HOMEBREW_MINIMUM_GIT_VERSION="2.7.4"
-  else
-    # The system Git on macOS versions before Sierra is too old for some Homebrew functionality we rely on.
-    HOMEBREW_MINIMUM_GIT_VERSION="2.14.3"
-    if [[ "${HOMEBREW_MACOS_VERSION_NUMERIC}" -lt "101200" ]]
-    then
-      HOMEBREW_FORCE_BREWED_GIT="1"
-    fi
-  fi
 else
   HOMEBREW_PRODUCT="${HOMEBREW_SYSTEM}brew"
   # Don't try to follow /etc/os-release
