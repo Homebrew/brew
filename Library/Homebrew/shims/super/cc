@@ -211,6 +211,11 @@ class Cmd
     when "-Xpreprocessor", "-Xclang"
       # used for -Xpreprocessor -fopenmp
       args << arg << enum.next
+    when /-mmacosx-version-min=(\d+)\.(\d+)/
+      if Regexp.last_match(1) == "10" && Regexp.last_match(2).to_i < 15
+        arg = "-mmacosx-version-min=10.15"
+      end
+      args << arg
     when "--fast-math"
       arg = "-ffast-math" if /^clang/.match?(tool)
       args << arg
