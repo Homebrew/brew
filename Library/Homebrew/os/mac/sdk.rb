@@ -174,20 +174,10 @@ module OS
 
       private
 
-      # While CLT SDKs existed prior to Xcode 10, those packages also
-      # installed a traditional Unix-style header layout and we prefer
-      # using that.
-      # As of Xcode 10, the Unix-style headers are installed via a
-      # separate package, so we can't rely on their being present.
-      # This will only look up SDKs on Xcode 10 or newer and still
-      # return `nil` SDKs for Xcode 9 and older.
+      # Always use the CLT SDKs path for locating headers.
       sig { override.returns(String) }
       def sdk_prefix
-        @sdk_prefix ||= if CLT.provides_sdk?
-          "#{CLT::PKG_PATH}/SDKs"
-        else
-          ""
-        end
+        @sdk_prefix ||= "#{CLT::PKG_PATH}/SDKs"
       end
     end
   end

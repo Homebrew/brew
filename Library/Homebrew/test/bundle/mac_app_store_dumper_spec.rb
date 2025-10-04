@@ -55,7 +55,6 @@ RSpec.describe Homebrew::Bundle::MacAppStoreDumper do
         497799835 Xcode (9.2)
         425424353 The Unarchiver (4.0.0)
         08981434 iMovie (10.1.8)
-         Install macOS High Sierra (13105)
         409201541 Pages (7.1)
         123456789 123AppNameWithNumbers (1.0)
         409203825 Numbers (5.1)

@@ -20,43 +20,19 @@ class MacOSVersion < Version
   # NOTE: When removing symbols here, ensure that they are added
   #       to `DEPRECATED_MACOS_VERSIONS` in `MacOSRequirement`.
   SYMBOLS = T.let({
-    tahoe:       "26",
-    sequoia:     "15",
-    sonoma:      "14",
-    ventura:     "13",
-    monterey:    "12",
-    big_sur:     "11",
-    catalina:    "10.15",
-    mojave:      "10.14",
-    high_sierra: "10.13",
-    sierra:      "10.12",
-    el_capitan:  "10.11",
+    tahoe:    "26",
+    sequoia:  "15",
+    sonoma:   "14",
+    ventura:  "13",
+    monterey: "12",
+    big_sur:  "11",
+    catalina: "10.15",
+    mojave:   "10.14",
   }.freeze, T::Hash[Symbol, String])
-
-  # TODO: can be replaced with a call to `#pretty_name` once we remove support
-  # for El Capitan.
-  VERSIONS_TO_ANALYTICS_PRETTY_NAMES = T.let({
-    "26"    => "macOS Tahoe (26)",
-    "15"    => "macOS Sequoia (15)",
-    "14"    => "macOS Sonoma (14)",
-    "13"    => "macOS Ventura (13)",
-    "12"    => "macOS Monterey (12)",
-    "11"    => "macOS Big Sur (11)",
-    "10.16" => "macOS Big Sur (11)",
-    "10.15" => "macOS Catalina (10.15)",
-    "10.14" => "macOS Mojave (10.14)",
-    "10.13" => "macOS High Sierra (10.13)",
-    "10.12" => "macOS Sierra (10.12)",
-    "10.11" => "OS X El Capitan (10.11)",
-  }.freeze, T::Hash[String, String])
 
   sig { params(version: String).returns(T.nilable(String)) }
   def self.analytics_pretty_name(version)
-    VERSIONS_TO_ANALYTICS_PRETTY_NAMES.fetch(version) do
-      VERSIONS_TO_ANALYTICS_PRETTY_NAMES.find do |v, _|
-        version.start_with?(v)
-      end&.last
-    end
+    MacOSVersion.new(version).pretty_name
   end
 
   sig { params(macos_version: MacOSVersion).returns(Version) }

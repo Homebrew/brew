@@ -176,11 +176,6 @@ class DevelopmentTools
       !curl_handles_most_https_certificates? && !HOMEBREW_BREWED_CURL_PATH.exist?
     end
 
-    sig { returns(T::Boolean) }
-    def subversion_handles_most_https_certificates?
-      true
-    end
-
     sig { returns(T::Hash[String, T.nilable(String)]) }
     def build_system_info
       {

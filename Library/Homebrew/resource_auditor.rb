@@ -170,7 +170,6 @@ module Homebrew
           end
           problem "The URL #{url} is not a valid Git URL" unless remote_exists
         elsif strategy <= SubversionDownloadStrategy
-          next unless DevelopmentTools.subversion_handles_most_https_certificates?
           next unless Utils::Svn.available?
 
           problem "The URL #{url} is not a valid SVN URL" unless Utils::Svn.remote_exists? url

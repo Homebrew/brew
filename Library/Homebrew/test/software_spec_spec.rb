@@ -198,11 +198,11 @@ RSpec.describe SoftwareSpec do
     context "when running on macOS", :needs_macos do
       before do
         allow(OS).to receive(:mac?).and_return(true)
-        allow(OS::Mac).to receive(:version).and_return(MacOSVersion.from_symbol(:sierra))
+        allow(OS::Mac).to receive(:version).and_return(MacOSVersion.from_symbol(:monterey))
       end
 
       it "adds a macOS dependency if the OS version meets requirements" do
-        spec.uses_from_macos("foo", since: :el_capitan)
+        spec.uses_from_macos("foo", since: :big_sur)
 
         expect(spec.deps).to be_empty
         expect(spec.declared_deps).not_to be_empty
@@ -211,7 +211,7 @@ RSpec.describe SoftwareSpec do
       end
 
       it "adds a macOS dependency if the OS version doesn't meet requirements" do
-        spec.uses_from_macos("foo", since: :high_sierra)
+        spec.uses_from_macos("foo", since: :ventura)
 
         expect(spec.declared_deps).not_to be_empty
         expect(spec.deps).not_to be_empty
@@ -221,7 +221,7 @@ RSpec.describe SoftwareSpec do
       end
 
       it "works with tags" do
-        spec.uses_from_macos("foo" => :build, :since => :high_sierra)
+        spec.uses_from_macos("foo" => :build, :since => :ventura)
 
         expect(spec.declared_deps).not_to be_empty
         expect(spec.deps).not_to be_empty

@@ -76,7 +76,6 @@ module OS
             check_xcode_license_approved
             check_xcode_minimum_version
             check_clt_minimum_version
-            check_if_xcode_needs_clt_installed
             check_if_supported_sdk_available
             check_broken_sdks
           ].freeze
@@ -187,10 +186,6 @@ module OS
           # Homebrew/brew is currently using.
           return if GitHub::Actions.env_set?
 
-          # With fake El Capitan for Portable Ruby, we are intentionally not using Xcode 8.
-          # This is because we are not using the CLT and Xcode 8 has the 10.12 SDK.
-          return if ENV["HOMEBREW_FAKE_MACOS"]
-
           message = <<~EOS
             Your Xcode (#{MacOS::Xcode.version}) is outdated.
             Please update to Xcode #{MacOS::Xcode.latest_version} (or delete it).
@@ -253,16 +248,6 @@ module OS
           <<~EOS
             Your Command Line Tools are too outdated.
             #{MacOS::CLT.update_instructions}
-          EOS
-        end
-
-        sig { returns(T.nilable(String)) }
-        def check_if_xcode_needs_clt_installed
-          return unless MacOS::Xcode.needs_clt_installed?
-
-          <<~EOS
-            Xcode alone is not sufficient on #{MacOS.version.pretty_name}.
-            #{::DevelopmentTools.installation_instructions}
           EOS
         end
 
@@ -459,7 +444,6 @@ module OS
         sig { returns(T.nilable(String)) }
         def check_if_supported_sdk_available
           return unless ::DevelopmentTools.installed?
-          return unless MacOS.sdk_root_needed?
           return if MacOS.sdk
 
           locator = MacOS.sdk_locator

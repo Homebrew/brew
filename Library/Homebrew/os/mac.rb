@@ -98,31 +98,18 @@ module OS
       )
     end
 
-    sig { returns(T::Boolean) }
-    def self.sdk_root_needed?
-      if MacOS::CLT.installed?
-        # If there's no CLT SDK, return false
-        return false unless MacOS::CLT.provides_sdk?
-        # If the CLT is installed and headers are provided by the system, return false
-        return false unless MacOS::CLT.separate_header_package?
-      end
-
-      true
-    end
-
-    # If a specific SDK is requested:
+    # When a specific SDK is requested:
+    #   1. Return it if installed.
+    #   2. Otherwise, return the newest available SDK.
+    #   3. If no SDKs are available, return nil.
     #
-    #   1. The requested SDK is returned, if it's installed.
-    #   2. If the requested SDK is not installed, the newest SDK (if any SDKs
-    #      are available) is returned.
-    #   3. If no SDKs are available, nil is returned.
-    #
-    # If no specific SDK is requested, the SDK matching the OS version is returned,
-    # if available. Otherwise, the latest SDK is returned.
+    # When no specific SDK is requested:
+    #   1. Return the SDK matching the current OS version, if available.
+    #   2. Otherwise, return the newest available SDK.
 
     sig { returns(T.any(CLTSDKLocator, XcodeSDKLocator)) }
     def self.sdk_locator
-      if CLT.installed? && CLT.provides_sdk?
+      if CLT.installed?
         CLT.sdk_locator
       else
         Xcode.sdk_locator
@@ -164,16 +151,6 @@ module OS
 
     sig { params(version: T.nilable(MacOSVersion)).returns(T.nilable(Pathname)) }
     def self.sdk_path_if_needed(version = nil)
-      # Prefer CLT SDK when both Xcode and the CLT are installed.
-      # Expected results:
-      # 1. On Xcode-only systems, return the Xcode SDK.
-      # 2. On Xcode-and-CLT systems where headers are provided by the system, return nil.
-      # 3. On CLT-only systems with no CLT SDK, return nil.
-      # 4. On CLT-only systems with a CLT SDK, where headers are provided by the system, return nil.
-      # 5. On CLT-only systems with a CLT SDK, where headers are not provided by the system, return the CLT SDK.
-
-      return unless sdk_root_needed?
-
       sdk_path(version)
     end
 

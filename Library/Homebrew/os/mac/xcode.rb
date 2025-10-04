@@ -25,9 +25,6 @@ module OS
         when "11" then "13.2.1"
         when "10.15" then "12.4"
         when "10.14" then "11.3.1"
-        when "10.13" then "10.1"
-        when "10.12" then "9.2"
-        when "10.11" then "8.2.1"
         else
           raise "macOS '#{macos}' is invalid" unless macos.prerelease?
 
@@ -52,9 +49,6 @@ module OS
         when "11" then "12.2"
         when "10.15" then "11.0"
         when "10.14" then "10.2"
-        when "10.13" then "9.0"
-        when "10.12" then "8.0"
-        when "10.11" then "7.3"
         else
           "#{macos}.0"
         end
@@ -75,11 +69,6 @@ module OS
       sig { returns(T::Boolean) }
       def self.needs_clt_installed?
         return false if latest_sdk_version?
-
-        # With fake El Capitan for Portable Ruby, we want the full 10.11 SDK so that we can link
-        # against the correct set of libraries in the SDK sysroot rather than the system's copies.
-        # We therefore do not use the CLT under this setup, which installs to /usr/include.
-        return false if ENV["HOMEBREW_FAKE_MACOS"]
 
         without_clt?
       end
@@ -239,14 +228,6 @@ module OS
         # simultaneously so workarounds need to apply to both based on their
         # comparable version.
         case version
-        when "6.0.0"  then "6.2"
-        when "6.1.0"  then "6.4"
-        when "7.0.0"  then "7.1"
-        when "7.0.2"  then "7.2.1"
-        when "7.3.0"  then "7.3.1"
-        when "8.0.0"  then "8.2.1"
-        when "8.1.0"  then "8.3.3"
-        when "9.0.0"  then "9.2"
         when "9.1.0"  then "9.4.1"
         when "10.0.0" then "10.1"
         when "10.0.1" then "10.3"
@@ -281,16 +262,6 @@ module OS
       sig { returns(T::Boolean) }
       def self.installed?
         !version.null?
-      end
-
-      sig { returns(T::Boolean) }
-      def self.separate_header_package?
-        version >= "10" && MacOS.version >= "10.14"
-      end
-
-      sig { returns(T::Boolean) }
-      def self.provides_sdk?
-        version >= "8"
       end
 
       sig { returns(CLTSDKLocator) }
@@ -382,9 +353,7 @@ module OS
         when "11"    then "1300.0.29.30"
         when "10.15" then "1200.0.32.29"
         when "10.14" then "1100.0.33.17"
-        when "10.13" then "1000.10.44.2"
-        when "10.12" then "900.0.39.2"
-        else              "800.0.42.1"
+        else              "1000.10.44.2"
         end
       end
 
@@ -402,9 +371,6 @@ module OS
         when "11" then "12.5.0"
         when "10.15" then "11.0.0"
         when "10.14" then "10.0.0"
-        when "10.13" then "9.0.0"
-        when "10.12" then "8.0.0"
-        when "10.11" then "7.3.0"
         else
           "#{macos}.0.0"
         end

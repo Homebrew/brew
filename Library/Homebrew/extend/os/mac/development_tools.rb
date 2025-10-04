@@ -56,13 +56,6 @@ module OS
           ENV["HOMEBREW_SYSTEM_CURL_TOO_OLD"].nil?
         end
 
-        sig { returns(T::Boolean) }
-        def subversion_handles_most_https_certificates?
-          # The system Subversion is too old for some HTTPS certificates on
-          # older macOS versions.
-          MacOS.version >= :sierra
-        end
-
         sig { returns(String) }
         def installation_instructions
           MacOS::CLT.installation_instructions

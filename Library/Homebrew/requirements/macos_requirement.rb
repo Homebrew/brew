@@ -12,6 +12,9 @@ class MacOSRequirement < Requirement
   # TODO: when Yosemite is removed here, keep these around as empty arrays so we
   #       can keep the deprecation/disabling code the same.
   DISABLED_MACOS_VERSIONS = [
+    :high_sierra,
+    :sierra,
+    :el_capitan,
     :yosemite,
   ].freeze
   DEPRECATED_MACOS_VERSIONS = [].freeze

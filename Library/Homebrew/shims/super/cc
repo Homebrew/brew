@@ -24,10 +24,6 @@ def mac?
   RUBY_PLATFORM[/darwin/]
 end
 
-def high_sierra_or_later?
-  mac? && ENV["HOMEBREW_MACOS_VERSION_NUMERIC"].to_s.to_i >= 101300
-end
-
 def linux?
   RUBY_PLATFORM[/linux/]
 end
@@ -215,11 +211,6 @@ class Cmd
     when "-Xpreprocessor", "-Xclang"
       # used for -Xpreprocessor -fopenmp
       args << arg << enum.next
-    when /-mmacosx-version-min=(\d+)\.(\d+)/
-      if high_sierra_or_later? && Regexp.last_match(1) == "10" && Regexp.last_match(2).to_i < 9
-        arg = "-mmacosx-version-min=10.9"
-      end
-      args << arg
     when "--fast-math"
       arg = "-ffast-math" if /^clang/.match?(tool)
       args << arg
