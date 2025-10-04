@@ -455,7 +455,14 @@ module Homebrew
       options << "Type=#{(@launch_only_once == true) ? "oneshot" : "simple"}"
       options << "ExecStart=#{cmd}"
 
-      options << "Restart=always" if @keep_alive.present? && @keep_alive[:always].present?
+      if @keep_alive.present?
+        if @keep_alive[:always].present? || @keep_alive[:crashed].present?
+          # Use on-failure instead of always to allow manual stops via systemctl
+          options << "Restart=on-failure"
+        elsif @keep_alive[:successful_exit].present?
+          options << "Restart=on-success"
+        end
+      end
       options << "RestartSec=#{restart_delay}" if @restart_delay.present?
       options << "WorkingDirectory=#{File.expand_path(@working_dir)}" if @working_dir.present?
       options << "RootDirectory=#{File.expand_path(@root_dir)}" if @root_dir.present?

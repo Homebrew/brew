@@ -728,7 +728,7 @@ RSpec.describe Homebrew::Service do
         [Service]
         Type=simple
         ExecStart="#{HOMEBREW_PREFIX}/opt/#{name}/bin/beanstalkd" "test"
-        Restart=always
+        Restart=on-failure
         RestartSec=30
         WorkingDirectory=#{HOMEBREW_PREFIX}/var
         RootDirectory=#{HOMEBREW_PREFIX}/var
@@ -785,6 +785,77 @@ RSpec.describe Homebrew::Service do
         Type=simple
         ExecStart="#{HOMEBREW_PREFIX}/opt/#{name}/bin/beanstalkd"
         WorkingDirectory=#{Dir.home}
+      SYSTEMD
+      expect(unit).to eq(unit_expect)
+    end
+
+    it "returns valid unit with keep_alive crashed" do
+      f = stub_formula do
+        service do
+          run opt_bin/"beanstalkd"
+          keep_alive crashed: true
+        end
+      end
+
+      unit = f.service.to_systemd_unit
+      unit_expect = <<~SYSTEMD
+        [Unit]
+        Description=Homebrew generated unit for formula_name
+
+        [Install]
+        WantedBy=default.target
+
+        [Service]
+        Type=simple
+        ExecStart="#{HOMEBREW_PREFIX}/opt/#{name}/bin/beanstalkd"
+        Restart=on-failure
+      SYSTEMD
+      expect(unit).to eq(unit_expect)
+    end
+
+    it "returns valid unit with keep_alive successful_exit" do
+      f = stub_formula do
+        service do
+          run opt_bin/"beanstalkd"
+          keep_alive successful_exit: true
+        end
+      end
+
+      unit = f.service.to_systemd_unit
+      unit_expect = <<~SYSTEMD
+        [Unit]
+        Description=Homebrew generated unit for formula_name
+
+        [Install]
+        WantedBy=default.target
+
+        [Service]
+        Type=simple
+        ExecStart="#{HOMEBREW_PREFIX}/opt/#{name}/bin/beanstalkd"
+        Restart=on-success
+      SYSTEMD
+      expect(unit).to eq(unit_expect)
+    end
+
+    it "returns valid unit without restart when keep_alive is false" do
+      f = stub_formula do
+        service do
+          run opt_bin/"beanstalkd"
+          keep_alive false
+        end
+      end
+
+      unit = f.service.to_systemd_unit
+      unit_expect = <<~SYSTEMD
+        [Unit]
+        Description=Homebrew generated unit for formula_name
+
+        [Install]
+        WantedBy=default.target
+
+        [Service]
+        Type=simple
+        ExecStart="#{HOMEBREW_PREFIX}/opt/#{name}/bin/beanstalkd"
       SYSTEMD
       expect(unit).to eq(unit_expect)
     end
