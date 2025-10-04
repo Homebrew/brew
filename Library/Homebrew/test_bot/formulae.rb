@@ -188,13 +188,8 @@ module Homebrew
       end
 
       def cleanup_bottle_etc_var(formula)
-        bottle_prefix = formula.opt_prefix/".bottle"
-        # Nuke etc/var to have them be clean to detect bottle etc/var
-        # file additions.
-        Pathname.glob("#{bottle_prefix}/{etc,var}/**/*").each do |bottle_path|
-          prefix_path = bottle_path.sub(bottle_prefix, HOMEBREW_PREFIX)
-          FileUtils.rm_rf prefix_path
-        end
+        # Restore etc/var files from bottle so dependents can use them.
+        formula.install_etc_var
       end
 
       def verify_local_bottles
