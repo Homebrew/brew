@@ -682,7 +682,8 @@ class Reporter
 
       new_tap = Tap.fetch(new_tap_name)
       # For formulae migrated to cask: Auto-install cask or provide install instructions.
-      if new_tap_name.start_with?("homebrew/cask")
+      # Check if the migration target is a cask (either in homebrew/cask or any other tap)
+      if new_tap_name.start_with?("homebrew/cask") || new_tap.cask_tokens.include?(new_name)
         if new_tap.installed? && (HOMEBREW_PREFIX/"Caskroom").directory?
           ohai "#{name} has been moved to Homebrew Cask."
           ohai "brew unlink #{name}"

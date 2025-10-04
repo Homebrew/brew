@@ -132,6 +132,25 @@ RSpec.describe Homebrew::Cmd::UpdateReport do
         expect(hub.select_formula_or_cask(:M)).to eq(%w[foo/bar/git])
         expect(hub.instance_variable_get(:@hash)[:R]).to be_nil
       end
+
+      specify "with formula migrated to cask in same tap" do
+        # Setup a tap with both formulae and casks
+        (tap.path/"Formula").mkpath
+        (tap.path/"Casks").mkpath
+        (tap.path/"tap_migrations.json").write <<~JSON
+          { "old-formula": "foo/bar/new-cask" }
+        JSON
+
+        # Mock that the tap has a cask with the migration target name
+        allow(tap).to receive(:cask_tokens).and_return(["new-cask"])
+
+        reporter_instance = reporter_class.new(tap)
+        allow(reporter_instance).to receive(:report).and_return({ D: ["foo/bar/old-formula"] })
+
+        # Verify the migration would be detected as formula-to-cask migration
+        expect(tap.tap_migrations).to eq({ "old-formula" => "foo/bar/new-cask" })
+        expect(tap.cask_tokens).to include("new-cask")
+      end
     end
   end
 
