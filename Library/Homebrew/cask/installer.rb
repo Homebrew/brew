@@ -84,6 +84,15 @@ module Cask
     def skip_cask_deps? = @skip_cask_deps
 
     sig { returns(T::Boolean) }
+    def skip_uninstall?
+      return false unless Homebrew::EnvConfig.no_uninstall_on_cask_upgrade?
+      return false if @cask.uninstall_on_upgrade?
+      return false if !reinstall? && !upgrade?
+
+      true
+    end
+
+    sig { returns(T::Boolean) }
     def upgrade? = @upgrade
 
     sig { returns(T::Boolean) }
@@ -160,6 +169,7 @@ module Cask
         opoo_outside_github_actions "--no-quarantine bypasses macOS’s Gatekeeper, reducing system security. " \
                                     "Do not use this flag unless you understand the risks."
       end
+      purge_versioned_files if skip_uninstall? && @cask.staged_path.exist?
       stage
 
       @cask.config = @cask.default_config.merge(old_config)
@@ -222,6 +232,7 @@ on_request: true)
 
     sig { void }
     def uninstall_existing_cask
+      return if skip_uninstall?
       return unless @cask.installed?
 
       # Always force uninstallation, ignore method parameter
@@ -342,7 +353,7 @@ on_request: true)
 
         artifact.install_phase(
           command: @command, verbose: verbose?, adopt: adopt?, auto_updates: @cask.auto_updates,
-          force: force?, predecessor:
+          force: force? || skip_uninstall?, predecessor: skip_uninstall? ? nil : predecessor
         )
         already_installed_artifacts.unshift(artifact)
       end
@@ -552,7 +563,7 @@ on_request: true)
 
     sig { params(successor: T.nilable(Cask)).void }
     def start_upgrade(successor:)
-      uninstall_artifacts(successor:)
+      uninstall_artifacts(successor:) unless skip_uninstall?
       backup
     end
 

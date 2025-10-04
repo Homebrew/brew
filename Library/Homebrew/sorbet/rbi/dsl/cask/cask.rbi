@@ -193,6 +193,12 @@ class Cask::Cask
   def uninstall(*args, &block); end
 
   sig { params(args: T.untyped, block: T.untyped).returns(T.untyped) }
+  def uninstall_on_upgrade!(*args, &block); end
+
+  sig { params(args: T.untyped, block: T.untyped).returns(T::Boolean) }
+  def uninstall_on_upgrade?(*args, &block); end
+
+  sig { params(args: T.untyped, block: T.untyped).returns(T.untyped) }
   def uninstall_postflight(*args, &block); end
 
   sig { params(args: T.untyped, block: T.untyped).returns(T.untyped) }

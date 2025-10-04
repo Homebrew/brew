@@ -444,6 +444,11 @@ module Homebrew
                      "outdated.",
         boolean:     true,
       },
+      HOMEBREW_NO_UNINSTALL_ON_CASK_UPGRADE:     {
+        description: "If set, `brew upgrade` will not run the uninstall script during cask upgrades and will " \
+                     "install over the top instead.",
+        boolean:     true,
+      },
       HOMEBREW_NO_UPDATE_REPORT_NEW:             {
         description: "If set, `brew update` will not show the list of newly added formulae/casks.",
         boolean:     true,

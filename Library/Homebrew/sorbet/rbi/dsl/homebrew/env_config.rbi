@@ -263,6 +263,9 @@ module Homebrew::EnvConfig
     def no_proxy; end
 
     sig { returns(T::Boolean) }
+    def no_uninstall_on_cask_upgrade?; end
+
+    sig { returns(T::Boolean) }
     def no_update_report_new?; end
 
     sig { returns(T::Boolean) }
