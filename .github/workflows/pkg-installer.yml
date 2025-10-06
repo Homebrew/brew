@@ -17,6 +17,10 @@ on:
         description: 'Git tag for the release'
         required: true
         type: string
+      release_notes:
+        description: 'Release notes for the release'
+        required: false
+        type: string
 env:
   PKG_APPLE_DEVELOPER_TEAM_ID: ${{ secrets.PKG_APPLE_DEVELOPER_TEAM_ID }}
   HOMEBREW_NO_ANALYTICS_THIS_RUN: 1
@@ -40,7 +44,7 @@ jobs:
       # Set to the oldest supported version of macOS
       HOMEBREW_MACOS_OLDEST_SUPPORTED: '14.0'
     permissions:
-      contents: read # for code access
+      contents: write # for creating tags and releases
       attestations: write # for actions/attest-build-provenance
       id-token: write # for actions/attest-build-provenance
     steps:
@@ -91,7 +95,28 @@ jobs:
           path: brew
           fetch-depth: 0
           persist-credentials: false
-          ref: ${{ inputs.tag || github.ref }}
+
+      - name: Create tag and draft release
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          cd brew
+          git config user.name "BrewTestBot"
+          git config user.email "1589480+BrewTestBot@users.noreply.github.com"
+          git tag -a "${{ inputs.tag }}" -m "Release ${{ inputs.tag }}"
+          git push origin "${{ inputs.tag }}"
+          
+          # Create draft release with notes
+          NOTES="${{ inputs.release_notes }}"
+          if [ -z "$NOTES" ]; then
+            NOTES=""
+          fi
+          gh release create "${{ inputs.tag }}" \
+            --repo Homebrew/brew \
+            --draft \
+            --title "${{ inputs.tag }}" \
+            --notes "$NOTES"
 
       - name: Get Homebrew version from Git
         id: homebrew-version
@@ -244,10 +269,6 @@ jobs:
         run: |
           VERSION="${INSTALLER_PATH#Homebrew-}"
           VERSION="${VERSION%.pkg}"
-          # For workflow_dispatch, create a draft release if it doesn't exist yet
-          if ! gh release view --repo Homebrew/brew "${VERSION}" >/dev/null 2>&1; then
-            gh release create --repo Homebrew/brew "${VERSION}" --draft --title "${VERSION}" --notes ""
-          fi
           gh release upload --repo Homebrew/brew "${VERSION}" "${INSTALLER_PATH}"
 
   issue:
