@@ -8,9 +8,6 @@ on:
     paths:
       - .github/workflows/pkg-installer.yml
       - package/**/*
-  release:
-    types:
-      - published
   workflow_dispatch:
     inputs:
       tag:
@@ -95,28 +92,6 @@ jobs:
           path: brew
           fetch-depth: 0
           persist-credentials: false
-
-      - name: Create tag and draft release
-        if: github.event_name == 'workflow_dispatch'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          cd brew
-          git config user.name "BrewTestBot"
-          git config user.email "1589480+BrewTestBot@users.noreply.github.com"
-          git tag -a "${{ inputs.tag }}" -m "Release ${{ inputs.tag }}"
-          git push origin "${{ inputs.tag }}"
-          
-          # Create draft release with notes
-          NOTES="${{ inputs.release_notes }}"
-          if [ -z "$NOTES" ]; then
-            NOTES=""
-          fi
-          gh release create "${{ inputs.tag }}" \
-            --repo Homebrew/brew \
-            --draft \
-            --title "${{ inputs.tag }}" \
-            --notes "$NOTES"
 
       - name: Get Homebrew version from Git
         id: homebrew-version
@@ -245,6 +220,13 @@ jobs:
       # To write assets to GitHub release
       contents: write
     steps:
+      - name: Checkout Homebrew/brew
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
       - name: Download installer from GitHub Actions
         uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5.0.0
         with:
@@ -261,8 +243,29 @@ jobs:
                                     --password "${PKG_APPLE_ID_APP_SPECIFIC_PASSWORD}"
                                     --wait
 
+      - name: Create tag and draft release
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config user.name "BrewTestBot"
+          git config user.email "1589480+BrewTestBot@users.noreply.github.com"
+          git tag -a "${{ inputs.tag }}" -m "Release ${{ inputs.tag }}"
+          git push origin "${{ inputs.tag }}"
+          
+          # Create draft release with notes
+          NOTES="${{ inputs.release_notes }}"
+          if [ -z "$NOTES" ]; then
+            NOTES=""
+          fi
+          gh release create "${{ inputs.tag }}" \
+            --repo Homebrew/brew \
+            --draft \
+            --title "${{ inputs.tag }}" \
+            --notes "$NOTES"
+
       - name: Upload installer to GitHub release
-        if: github.event_name == 'release' || github.event_name == 'workflow_dispatch'
+        if: github.event_name == 'workflow_dispatch'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           INSTALLER_PATH: ${{ needs.build.outputs.installer_path }}
@@ -273,7 +276,7 @@ jobs:
 
   issue:
     needs: [build, test, upload]
-    if: always() && github.event_name == 'release'
+    if: always() && github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     env:
       RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}

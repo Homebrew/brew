@@ -15,12 +15,18 @@ module Homebrew
           The command will fail if the previous major or minor release was made less than
           one month ago.
 
+          Without `--force`, this command will just output the release notes without creating
+          the release or triggering the workflow.
+
           *Note:* Requires write access to the Homebrew/brew repository.
         EOS
         switch "--major",
                description: "Create a major release."
         switch "--minor",
                description: "Create a minor release."
+        switch "--force",
+               description: "Actually create the release and trigger the workflow. Without this, just show " \
+                            "what would be done."
 
         conflicts "--major", "--minor"
 
@@ -77,6 +83,7 @@ module Homebrew
           puts blog_post_notes
         end
 
+        ohai "Generating release notes for #{new_version}"
         release_notes = if args.major? || args.minor?
           "Release notes for this release can be found on the [Homebrew blog](https://brew.sh/blog/#{new_version}).\n"
         else
@@ -84,6 +91,17 @@ module Homebrew
         end
         release_notes += GitHub.generate_release_notes("Homebrew", "brew", new_version,
                                                        previous_tag: latest_version)["body"]
+
+        puts "\nRelease notes:"
+        puts "=============="
+        puts release_notes
+        puts "=============="
+
+        unless args.force?
+          opoo "This is a dry run. Use `brew release --force` to actually create the release and trigger " \
+               "the workflow."
+          return
+        end
 
         # Get the current commit SHA
         current_sha = Utils.safe_popen_read("git", "-C", HOMEBREW_REPOSITORY, "rev-parse", "HEAD").strip
@@ -150,6 +168,7 @@ module Homebrew
         end
 
         # Open the release page
+        ohai "Release created at:"
         release_url = "https://github.com/Homebrew/brew/releases/tag/#{new_version}"
         puts release_url
         exec_browser release_url
