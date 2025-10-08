@@ -792,7 +792,7 @@ on_request: installed_on_request?, options:)
         Dependency.prune
       elsif dep.satisfied?(inherited_options[dep.name], minimum_version:   bottle_runtime_version,
                                                         minimum_revision:  bottle_runtime_revision,
-                                                        bottle_os_version:)
+                                                        bottle_os_version: @bottle_built_os_version)
         Dependency.skip
       end
     end
