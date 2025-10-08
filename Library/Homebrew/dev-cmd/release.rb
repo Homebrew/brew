@@ -122,7 +122,7 @@ module Homebrew
         max_attempts = 60 # 30 minutes (30 seconds * 60)
         attempt = 0
         workflow_completed = T.let(false, T::Boolean)
-        workflow_run_url = nil
+        workflow_run_url = T.let(nil, T.nilable(String))
 
         while attempt < max_attempts
           sleep 30
@@ -156,8 +156,8 @@ module Homebrew
                 end
               end
             end
-          rescue *GitHub::API::ERRORS => e
-            opoo "Error checking workflow status: #{e.message}" if attempt == 1
+          rescue *GitHub::API::ERRORS => _e
+            opoo "Error checking workflow status: #{_e.message}" if attempt == 1
           end
         end
 
