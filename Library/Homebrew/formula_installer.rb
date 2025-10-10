@@ -40,6 +40,9 @@ class FormulaInstaller
   sig { returns(T::Hash[String, T::Hash[String, String]]) }
   attr_reader :bottle_tab_runtime_dependencies
 
+  sig { returns(T.nilable(String)) }
+  attr_reader :bottle_built_os_version
+
   sig { returns(Options) }
   attr_accessor :options
 
@@ -138,6 +141,7 @@ class FormulaInstaller
     @poured_bottle = T.let(false, T::Boolean)
     @start_time = T.let(nil, T.nilable(Time))
     @bottle_tab_runtime_dependencies = T.let({}.freeze, T::Hash[String, T::Hash[String, String]])
+    @bottle_built_os_version = T.let(nil, T.nilable(String))
     @hold_locks = T.let(false, T::Boolean)
     @show_summary_heading = T.let(false, T::Boolean)
     @etc_var_preinstall = T.let([], T::Array[Pathname])
@@ -340,10 +344,18 @@ class FormulaInstaller
 
     # Setup bottle_tab_runtime_dependencies for compute_dependencies
     begin
-      @bottle_tab_runtime_dependencies = formula.bottle_tab_attributes
-                                                .fetch("runtime_dependencies", []).then { |deps| deps || [] }
-                                                .each_with_object({}) { |dep, h| h[dep["full_name"]] = dep }
-                                                .freeze
+      bottle_tab_attrs = formula.bottle_tab_attributes
+      @bottle_tab_runtime_dependencies = bottle_tab_attrs
+                                         .fetch("runtime_dependencies", []).then { |deps| deps || [] }
+                                         .each_with_object({}) { |dep, h| h[dep["full_name"]] = dep }
+                                         .freeze
+      # Extract the OS version the bottle was built on.
+      # Only use this for bottles built on a different OS version than the current OS.
+      # This ensures that when installing older bottles (e.g., sonoma bottle on sequoia),
+      # we resolve dependencies according to the bottle's built OS, not the current OS.
+      bottle_os_version = bottle_tab_attrs.dig("built_on", "os_version")
+      current_os_version = OS_VERSION
+      @bottle_built_os_version = bottle_os_version if bottle_os_version != current_os_version
     rescue Resource::BottleManifest::Error
       # If we can't get the bottle manifest, assume a full dependencies install.
     end
@@ -778,8 +790,9 @@ on_request: installed_on_request?, options:)
 
       if dep.prune_from_option?(build) || ((dep.build? || dep.test?) && !keep_build_test)
         Dependency.prune
-      elsif dep.satisfied?(inherited_options[dep.name], minimum_version:  bottle_runtime_version,
-                                                        minimum_revision: bottle_runtime_revision)
+      elsif dep.satisfied?(inherited_options[dep.name], minimum_version:   bottle_runtime_version,
+                                                        minimum_revision:  bottle_runtime_revision,
+                                                        bottle_os_version: @bottle_built_os_version)
         Dependency.skip
       end
     end
