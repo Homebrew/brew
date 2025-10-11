@@ -19,13 +19,13 @@ class AbstractTab
   # Check whether the formula or cask was installed as a dependency.
   #
   # @api internal
-  sig { returns(T.nilable(T::Boolean)) } # TODO: change this to always return a boolean
+  sig { returns(T::Boolean) }
   attr_accessor :installed_as_dependency
 
   # Check whether the formula or cask was installed on request.
   #
   # @api internal
-  sig { returns(T.nilable(T::Boolean)) } # TODO: change this to always return a boolean
+  sig { returns(T::Boolean) }
   attr_accessor :installed_on_request
 
   sig { returns(T.nilable(String)) }
@@ -41,8 +41,8 @@ class AbstractTab
   # TODO: Update attributes to only accept symbol keys (kwargs style).
   sig { params(attributes: T.any(T::Hash[String, T.untyped], T::Hash[Symbol, T.untyped])).void }
   def initialize(attributes = {})
-    @installed_as_dependency = T.let(nil, T.nilable(T::Boolean))
-    @installed_on_request = T.let(nil, T.nilable(T::Boolean))
+    @installed_as_dependency = T::Boolean
+    @installed_on_request = T::Boolean
     @homebrew_version = T.let(nil, T.nilable(String))
     @tabfile = T.let(nil, T.nilable(Pathname))
     @loaded_from_api = T.let(nil, T.nilable(T::Boolean))
