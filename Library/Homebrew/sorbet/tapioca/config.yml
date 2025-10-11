@@ -1,6 +1,8 @@
 ---
 # see https://github.com/Shopify/tapioca?tab=readme-ov-file#configuration
 gem:
+  doc: false
+  loc: false
   exclude:
     # These conflict with the rbi files provided by sorbet:
     - base64

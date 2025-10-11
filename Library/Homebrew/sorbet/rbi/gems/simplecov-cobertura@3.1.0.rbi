@@ -5,62 +5,28 @@
 # Please instead update this file by running `bin/tapioca gem simplecov-cobertura`.
 
 
-# source://simplecov-cobertura//lib/simplecov-cobertura/version.rb#1
 module SimpleCov; end
-
-# source://simplecov-cobertura//lib/simplecov-cobertura/version.rb#2
 module SimpleCov::Formatter; end
 
-# source://simplecov-cobertura//lib/simplecov-cobertura/version.rb#3
 class SimpleCov::Formatter::CoberturaFormatter
-  # @return [CoberturaFormatter] a new instance of CoberturaFormatter
-  #
-  # source://simplecov-cobertura//lib/simplecov-cobertura.rb#13
   def initialize(result_file_name: T.unsafe(nil)); end
 
-  # source://simplecov-cobertura//lib/simplecov-cobertura.rb#17
   def format(result); end
 
   private
 
-  # source://simplecov-cobertura//lib/simplecov-cobertura.rb#158
   def extract_rate(percent); end
-
-  # Roughly mirrors private method SimpleCov::Formatter::HTMLFormatter#output_coverage
-  #
-  # source://simplecov-cobertura//lib/simplecov-cobertura.rb#147
   def output_message(result, output_path); end
-
-  # source://simplecov-cobertura//lib/simplecov-cobertura.rb#162
   def project_root; end
-
-  # source://simplecov-cobertura//lib/simplecov-cobertura.rb#154
   def resolve_filename(filename); end
-
-  # source://simplecov-cobertura//lib/simplecov-cobertura.rb#35
   def result_to_xml(result); end
-
-  # source://simplecov-cobertura//lib/simplecov-cobertura.rb#136
   def set_branch_attributes(line, file_line, branched_lines, branched_lines_covered); end
-
-  # source://simplecov-cobertura//lib/simplecov-cobertura.rb#117
   def set_class_attributes(class_, file); end
-
-  # source://simplecov-cobertura//lib/simplecov-cobertura.rb#88
   def set_coverage_attributes(coverage, result); end
-
-  # source://simplecov-cobertura//lib/simplecov-cobertura.rb#131
   def set_line_attributes(line, file_line); end
-
-  # source://simplecov-cobertura//lib/simplecov-cobertura.rb#105
   def set_package_attributes(package, name, result); end
 end
 
-# source://simplecov-cobertura//lib/simplecov-cobertura.rb#11
 SimpleCov::Formatter::CoberturaFormatter::DTD_URL = T.let(T.unsafe(nil), String)
-
-# source://simplecov-cobertura//lib/simplecov-cobertura.rb#10
 SimpleCov::Formatter::CoberturaFormatter::RESULT_FILE_NAME = T.let(T.unsafe(nil), String)
-
-# source://simplecov-cobertura//lib/simplecov-cobertura/version.rb#4
 SimpleCov::Formatter::CoberturaFormatter::VERSION = T.let(T.unsafe(nil), String)
