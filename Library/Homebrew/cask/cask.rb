@@ -164,17 +164,65 @@ module Cask
     end
 
     sig { returns(T::Boolean) }
-    def supports_macos? = true
+    def supports_macos?
+      return true if font?
+
+      if @dsl.on_system_blocks_exist?
+        any_loaded = false
+        begin
+          [:arm, :intel].each do |arch|
+            bottle_tag = ::Utils::Bottles::Tag.new(system: :macos, arch: arch)
+            Homebrew::SimulateSystem.with_tag(bottle_tag) do
+              refresh
+
+              any_loaded = true
+              return false if artifacts.any? do |artifact|
+                ::Cask::Artifact::LINUX_ONLY_ARTIFACTS.include?(artifact.class)
+              end
+            end
+          end
+        rescue CaskInvalidError
+          # Invalid cask for macOS
+        ensure
+          refresh
+        end
+
+        return false if !any_loaded
+      end
+
+      true
+    end
 
     sig { returns(T::Boolean) }
     def supports_linux?
       return true if font?
 
-      return false if artifacts.any? do |artifact|
-        ::Cask::Artifact::MACOS_ONLY_ARTIFACTS.include?(artifact.class)
+      if @dsl.on_system_blocks_exist?
+        any_loaded = false
+        begin
+          [:arm, :intel].each do |arch|
+            bottle_tag = ::Utils::Bottles::Tag.new(system: :linux, arch: arch)
+            begin
+              Homebrew::SimulateSystem.with_tag(bottle_tag) do
+                refresh
+
+                any_loaded = true
+                return false if artifacts.any? do |artifact|
+                  ::Cask::Artifact::MACOS_ONLY_ARTIFACTS.include?(artifact.class)
+                end
+              rescue CaskInvalidError => e
+                # Invalid cask for Linux
+              end
+            end
+          end
+        ensure
+          refresh
+        end
+
+        return false if !any_loaded
       end
 
-      @dsl.os.present?
+      true
     end
 
     # The caskfile is needed during installation when there are

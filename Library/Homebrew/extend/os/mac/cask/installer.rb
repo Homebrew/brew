@@ -2,7 +2,7 @@
 # frozen_string_literal: true
 
 module OS
-  module Linux
+  module Mac
     module Cask
       module Installer
         extend T::Helpers
@@ -11,13 +11,13 @@ module OS
 
         sig { void }
         def check_stanza_os_requirements
-          return unless @cask.supports_linux?
+          return unless @cask.supports_macos?
 
-          raise ::Cask::CaskError, "macOS is required for this software."
+          raise ::Cask::CaskError, "Linux is required for this software."
         end
       end
     end
   end
 end
 
-Cask::Installer.prepend(OS::Linux::Cask::Installer)
+Cask::Installer.prepend(OS::Mac::Cask::Installer)
