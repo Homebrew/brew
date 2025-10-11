@@ -423,6 +423,7 @@ module Cask
         "disable_reason"                  => disable_reason,
         "disable_replacement_formula"     => disable_replacement_formula,
         "disable_replacement_cask"        => disable_replacement_cask,
+        "uninstall_on_upgrade"            => uninstall_on_upgrade?,
         "tap_git_head"                    => tap_git_head,
         "languages"                       => languages,
         "ruby_source_path"                => ruby_source_path,
