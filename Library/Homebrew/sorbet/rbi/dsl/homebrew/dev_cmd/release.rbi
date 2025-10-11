@@ -12,6 +12,9 @@ end
 
 class Homebrew::DevCmd::Release::Args < Homebrew::CLI::Args
   sig { returns(T::Boolean) }
+  def force?; end
+
+  sig { returns(T::Boolean) }
   def major?; end
 
   sig { returns(T::Boolean) }
