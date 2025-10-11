@@ -20,7 +20,7 @@ class FormulaVersions
   sig { params(formula: Formula).void }
   def initialize(formula)
     @name = formula.name
-    @path = formula.path
+    @path = formula.tap_path
     @repository = T.must(formula.tap).path
     @relative_path = @path.relative_path_from(repository).to_s
     # Also look at e.g. older homebrew-core paths before sharding.

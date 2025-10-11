@@ -661,8 +661,8 @@ module Homebrew
             "formula" => {
               "name"             => formula.name,
               "pkg_version"      => formula.pkg_version.to_s,
-              "path"             => formula.path.to_s.delete_prefix("#{HOMEBREW_REPOSITORY}/"),
-              "tap_git_path"     => formula.path.to_s.delete_prefix("#{tap_path}/"),
+              "path"             => formula.tap_path.to_s.delete_prefix("#{HOMEBREW_REPOSITORY}/"),
+              "tap_git_path"     => formula.tap_path.to_s.delete_prefix("#{tap_path}/"),
               "tap_git_revision" => tap_git_revision,
               "tap_git_remote"   => tap_git_remote,
               # descriptions can contain emoji. sigh.

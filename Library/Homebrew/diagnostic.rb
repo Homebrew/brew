@@ -21,7 +21,7 @@ module Homebrew
 
     sig {
       params(formulae: T::Array[Formula], hide: T::Array[String], _block: T.nilable(
-        T.proc.params(formula_name: String, missing_dependencies: T::Array[Formula]).void,
+        T.proc.params(formula_name: String, missing_dependencies: T::Array[Dependency]).void,
       )).returns(T::Hash[String, T::Array[String]])
     }
     def self.missing_deps(formulae, hide = [], &_block)

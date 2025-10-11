@@ -21,6 +21,9 @@ RSpec.describe Migrator do
 
   before do |example|
     allow(new_formula).to receive(:oldnames).and_return(["oldname"])
+    allow(Formulary).to receive(:factory).with("homebrew/core/oldname", any_args).and_return(old_formula)
+    allow(Formulary).to receive(:factory).with("oldname", any_args).and_return(old_formula)
+    allow(Formulary).to receive(:factory).with("newname", any_args).and_return(new_formula)
 
     # do not create directories for error tests
     next if example.metadata[:description].start_with?("raises an error")

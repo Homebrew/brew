@@ -141,7 +141,7 @@ module Homebrew
             end
             Migrator.migrate_if_needed(formula, force: args.force?)
             Homebrew::Reinstall.build_install_context(
-              formula,
+              formula.latest_formula,
               flags:                      args.flags_only,
               force_bottle:               args.force_bottle?,
               build_from_source_formulae: args.build_from_source_formulae,

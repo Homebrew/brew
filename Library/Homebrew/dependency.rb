@@ -36,8 +36,14 @@ class Dependency
     [name, tags].hash
   end
 
-  def to_formula(prefer_stub: false)
-    formula = Formulary.factory(name, warn: false, prefer_stub:)
+  def to_installed_formula
+    formula = Formulary.resolve(name)
+    formula.build = BuildOptions.new(options, formula.options)
+    formula
+  end
+
+  def to_formula
+    formula = Formulary.factory(name, warn: false)
     formula.build = BuildOptions.new(options, formula.options)
     formula
   end
@@ -48,7 +54,7 @@ class Dependency
   }
   def installed?(minimum_version: nil, minimum_revision: nil, minimum_compatibility_version: nil)
     formula = begin
-      to_formula(prefer_stub: true)
+      to_installed_formula
     rescue FormulaUnavailableError
       nil
     end
@@ -101,7 +107,7 @@ class Dependency
   end
 
   def missing_options(inherited_options)
-    formula = to_formula(prefer_stub: true)
+    formula = to_installed_formula
     required = options
     required |= inherited_options
     required &= formula.options.to_a
