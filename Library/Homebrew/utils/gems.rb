@@ -128,6 +128,14 @@ module Homebrew
       # `build_args: []` stops ARGV being used as a default
       # `env_shebang: true` makes shebangs generic to allow switching between system and Portable Ruby
       specs = Gem.install name, version, document: [], build_args: [], env_shebang: true
+
+      if name == "bundler"
+        require "digest"
+        cache_file = Dir["#{Gem.dir}/cache/#{name}-*.gem"].max_by { |f| File.mtime(f) }
+        puts "==> SHA256 of #{name} gem: #{Digest::SHA256.file(cache_file).hexdigest}"
+        puts "==> Cached gem path: #{cache_file}"
+        puts "==> File size: #{File.size(T.must(cache_file))} bytes"
+      end
     end
 
     specs += specs.flat_map(&:runtime_dependencies)
@@ -308,6 +316,7 @@ module Homebrew
           Process::UID.change_privilege(Process.euid) if Process.euid != Process.uid
           exec bundle, "install", out: :err
         end)
+
         if $CHILD_STATUS.success?
           Homebrew::Bootsnap.reset! if defined?(Homebrew::Bootsnap) # Gem install can run before Bootsnap loads
           true
