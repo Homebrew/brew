@@ -36,7 +36,7 @@ There are many checks that run on every PR. The following is a quick list of the
 - `CI / docker`: This builds and deploys a new Homebrew Docker image to GitHub Packages and Docker Hub.
 - `CI / test everything (macOS)`: This runs several checks on macOS including `brew tests`, `brew update-tests`, `brew test-bot --only-formulae --test-default-formula`, `brew readall` and `brew doctor`.
 - `CI / tests (generic OS)` and `CI / tests (Linux)`: These run `brew tests` with various options on Linux.
-- `Documentation CI / linting` and `rubydoc`: These check the prose and formatting of the written documentation, and verify the [Homebrew Ruby API documentation](https://rubydoc.brew.sh/) can be built without issue.
+- `Documentation CI / linting` and `rubydoc`: These check the prose and formatting of the written documentation, and verify the [Homebrew Ruby API documentation](/rubydoc/index.html) can be built without issue.
 
 _Note that this list is non-exhaustive and can change over time._
 

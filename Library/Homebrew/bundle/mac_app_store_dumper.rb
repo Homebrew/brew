@@ -16,7 +16,7 @@ module Homebrew
         @apps ||= T.let(nil, T.nilable(T::Array[[String, String]]))
         @apps ||= if Bundle.mas_installed?
           `mas list 2>/dev/null`.split("\n").map do |app|
-            app_details = app.match(/\A(?<id>\d+)\s+(?<name>.*?)\s+\((?<version>[\d.]*)\)\Z/)
+            app_details = app.match(/\A\s*(?<id>\d+)\s+(?<name>.*?)\s+\((?<version>[\d.]*)\)\Z/)
 
             # Only add the application details should we have a valid match.
             # Strip unprintable characters

@@ -20,7 +20,7 @@ Other formula and cask specific reasons for why a package is not autobumped are 
 
 When using `no_autobump!`, a reason for exclusion must be provided.
 
-There are two ways to indicate the reason. The preferred way is to use a pre-existing symbol, which can be found in [`NO_AUTOBUMP_REASONS_LIST`](https://rubydoc.brew.sh/top-level-namespace#NO_AUTOBUMP_REASONS_LIST-constant), for example:
+There are two ways to indicate the reason. The preferred way is to use a pre-existing symbol, which can be found in [`NO_AUTOBUMP_REASONS_LIST`](/rubydoc/top-level-namespace.html#NO_AUTOBUMP_REASONS_LIST-constant), for example:
 
 ```ruby
 no_autobump! because: :bumped_by_upstream

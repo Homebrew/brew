@@ -64,7 +64,7 @@ last_review_date: "2025-02-08"
 - [Type Checking with Sorbet](Typechecking.md)
 - [Reproducible Builds](Reproducible-Builds.md)
 
-- [Ruby API Documentation](https://rubydoc.brew.sh/) (e.g. for `Formula` etc.)
+- [Ruby API Documentation](/rubydoc/index.html) (e.g. for `Formula` etc.)
 
 ## Maintainers
 

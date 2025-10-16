@@ -40,7 +40,7 @@ An executable script for a command named `extcmd` should be named `brew-extcmd`.
 
 ## Providing `--help`
 
-All internal and external Homebrew commands can provide styled `--help` output by using Homebrew’s [argument parser](https://rubydoc.brew.sh/Homebrew/CLI/Parser), as seen in the [`brew test-bot` command](https://github.com/Homebrew/homebrew-test-bot/blob/HEAD/cmd/test-bot.rb); or by including lines starting with `#:` (a comment then `:` character in both Bash and Ruby), as seen in the [header of `update.sh`](https://github.com/Homebrew/brew/blob/cf7def0c68903814c6b4e04a55fe8f3cb3f5605e/Library/Homebrew/cmd/update.sh#L1-L10), which is printed with `brew update --help`.
+All internal and external Homebrew commands can provide styled `--help` output by using Homebrew’s [argument parser](/rubydoc/Homebrew/CLI/Parser.html), as seen in the [`brew test-bot` command](https://github.com/Homebrew/homebrew-test-bot/blob/HEAD/cmd/test-bot.rb); or by including lines starting with `#:` (a comment then `:` character in both Bash and Ruby), as seen in the [header of `update.sh`](https://github.com/Homebrew/brew/blob/cf7def0c68903814c6b4e04a55fe8f3cb3f5605e/Library/Homebrew/cmd/update.sh#L1-L10), which is printed with `brew update --help`.
 
 ## Unofficial external commands
 

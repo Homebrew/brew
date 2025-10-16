@@ -90,7 +90,7 @@ A cask should be removed if it does not meet our criteria for [acceptable casks]
 
 When a cask is deprecated or disabled, a reason explaining the action must be provided.
 
-There are two ways to indicate the reason. The preferred way is to use a pre-existing symbol to indicate the reason. The available symbols are listed below and can be found in the [`DeprecateDisable` module](https://rubydoc.brew.sh/DeprecateDisable.html):
+There are two ways to indicate the reason. The preferred way is to use a pre-existing symbol to indicate the reason. The available symbols are listed below and can be found in the [`DeprecateDisable` module](/rubydoc/DeprecateDisable.html.html):
 
 - `:discontinued`: the cask is discontinued upstream
 - `:moved_to_mas`: the cask is now exclusively distributed on the Mac App Store

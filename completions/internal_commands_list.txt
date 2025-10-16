@@ -76,7 +76,6 @@ nodenv-sync
 options
 outdated
 pin
-portable-package
 post_install
 postinstall
 pr-automerge

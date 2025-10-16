@@ -1,12 +1,11 @@
 name: Command-not-found scheduled database updates
 
 on:
-  push:
-    branches:
-      - main
+  pull_request:
     paths:
       - .github/workflows/command-not-found-db-update.yml
-  pull_request:
+      - Library/Homebrew/dev-cmd/which-update.rb
+      - Library/Homebrew/executables_db.rb
   schedule:
     - cron: "0 0 * * *"
   workflow_dispatch:

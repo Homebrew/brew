@@ -49,6 +49,19 @@ RSpec.describe Homebrew::Bundle::MacAppStoreDumper do
     end
   end
 
+  context "when apps `foo`, `bar`, `baz` and `qux` are installed including right-justified IDs" do
+    before do
+      described_class.reset!
+      allow(Homebrew::Bundle).to receive(:mas_installed?).and_return(true)
+      allow(described_class).to receive(:`).and_return("123 foo (1.0)\n456 bar (2.0)\n789 baz (3.0)")
+      allow(described_class).to receive(:`).and_return("123 foo (1.0)\n456 bar (2.0)\n789 baz (3.0)\n 10 qux (4.0)")
+    end
+
+    it "returns list %w[foo bar baz qux]" do
+      expect(dumper.apps).to eql([["123", "foo"], ["456", "bar"], ["789", "baz"], ["10", "qux"]])
+    end
+  end
+
   context "with invalid app details" do
     let(:invalid_mas_output) do
       <<~HEREDOC

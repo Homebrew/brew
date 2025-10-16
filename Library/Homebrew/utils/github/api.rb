@@ -66,12 +66,13 @@ module GitHub
 
     # Error when the API rate limit is exceeded.
     class RateLimitExceededError < Error
-      sig { params(reset: Integer, github_message: String).void }
-      def initialize(reset, github_message)
+      sig { params(github_message: String, reset: Integer, resource: String, limit: Integer).void }
+      def initialize(github_message, reset:, resource:, limit:)
         @reset = T.let(reset, Integer)
         new_pat_message = ", or:\n#{GitHub.pat_blurb}" if API.credentials.blank?
         message = <<~EOS
           GitHub API Error: #{github_message}
+          Rate limit exceeded for #{resource} resource (#{limit} limit).
           Try again in #{pretty_ratelimit_reset}#{new_pat_message}
         EOS
         super(message, github_message)
@@ -456,7 +457,9 @@ module GitHub
       when "403"
         if meta.fetch("x-ratelimit-remaining", 1).to_i <= 0
           reset = meta.fetch("x-ratelimit-reset").to_i
-          raise RateLimitExceededError.new(reset, message)
+          resource = meta.fetch("x-ratelimit-resource")
+          limit = meta.fetch("x-ratelimit-limit").to_i
+          raise RateLimitExceededError.new(message, reset:, resource:, limit:)
         end
 
         raise AuthenticationFailedError.new(credentials_type, message)

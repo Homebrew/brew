@@ -9,6 +9,9 @@ gem "github-pages", group: :jekyll_plugins
 gem "csv"
 gem "faraday-retry"
 gem "logger"
+gem "redcarpet"
+gem "yard"
+gem "yard-sorbet"
 
 group :test do
   gem "html-proofer"

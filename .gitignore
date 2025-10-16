@@ -177,6 +177,7 @@
 /docs/tmp/.htmlproofer
 /docs/vendor
 /docs/Gemfile.lock
+/docs/rubydoc
 
 # Unignore our root-level metadata files.
 !/.dockerignore

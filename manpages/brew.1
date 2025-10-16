@@ -1551,7 +1551,7 @@ Date (ISO 8601 format) to stop searching contributions\.
 Print a CSV of contributions across repositories over the time period\.
 .SS "\fBcreate\fP \fR[\fIoptions\fP] \fIURL\fP"
 Generate a formula or, with \fB\-\-cask\fP, a cask for the downloadable file at \fIURL\fP and open it in the editor\. Homebrew will attempt to automatically derive the formula name and version, but if it fails, you\[u2019]ll have to make your own template\. The \fBwget\fP formula serves as a simple example\. For the complete API, see: 
-.UR https://rubydoc\.brew\.sh/Formula
+.UR https://docs\.brew\.sh/rubydoc/Formula
 .UE
 .TP
 \fB\-\-autotools\fP
@@ -1953,10 +1953,12 @@ Use \fBstackprof\fP instead of \fBruby\-prof\fP (the default)\.
 .TP
 \fB\-\-vernier\fP
 Use \fBvernier\fP instead of \fBruby\-prof\fP (the default)\.
-.SS "\fBrelease\fP \fR[\fB\-\-major\fP] \fR[\fB\-\-minor\fP]"
+.SS "\fBrelease\fP \fR[\fIoptions\fP]"
 Create a new draft Homebrew/brew release with the appropriate version number and release notes\.
 .P
 By default, \fBbrew release\fP will bump the patch version number\. Pass \fB\-\-major\fP or \fB\-\-minor\fP to bump the major or minor version numbers, respectively\. The command will fail if the previous major or minor release was made less than one month ago\.
+.P
+Without \fB\-\-force\fP, this command will just output the release notes without creating the release or triggering the workflow\.
 .P
 \fINote:\fP Requires write access to the Homebrew/brew repository\.
 .TP
@@ -1965,6 +1967,9 @@ Create a major release\.
 .TP
 \fB\-\-minor\fP
 Create a minor release\.
+.TP
+\fB\-\-force\fP
+Actually create the release and trigger the workflow\. Without this, just show what would be done\.
 .SS "\fBrubocop\fP"
 Installs, configures and runs Homebrew\[u2019]s \fBrubocop\fP\&\.
 .SS "\fBruby\fP \fR[\fIoptions\fP] (\fB\-e\fP \fItext\fP|\fIfile\fP)"
@@ -2984,7 +2989,7 @@ Homebrew Documentation:
 .UE
 .P
 Homebrew API: 
-.UR https://rubydoc\.brew\.sh
+.UR https://docs\.brew\.sh/rubydoc/
 .UE
 .P
 \fBgit\fP(1), \fBgit\-log\fP(1)

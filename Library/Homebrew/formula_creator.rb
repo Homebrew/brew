@@ -162,7 +162,7 @@ module Homebrew
     def template
       <<~ERB
         # Documentation: https://docs.brew.sh/Formula-Cookbook
-        #                https://rubydoc.brew.sh/Formula
+        #                https://docs.brew.sh/rubydoc/Formula
         # PLEASE REMOVE ALL GENERATED COMMENTS BEFORE SUBMITTING YOUR PULL REQUEST!
         class #{Formulary.class_s(name)} < Formula
         <% if @mode == :python %>
@@ -229,7 +229,7 @@ module Homebrew
             system "cmake", "--install", "build"
         <% elsif @mode == :autotools %>
             # Remove unrecognized options if they cause configure to fail
-            # https://rubydoc.brew.sh/Formula.html#std_configure_args-instance_method
+            # https://docs.brew.sh/rubydoc/Formula.html#std_configure_args-instance_method
             system "./configure", "--disable-silent-rules", *std_configure_args
             system "make", "install" # if this fails, try separate make/make install steps
         <% elsif @mode == :crystal %>
@@ -283,7 +283,7 @@ module Homebrew
             system "zig", "build", *std_zig_args
         <% else %>
             # Remove unrecognized options if they cause configure to fail
-            # https://rubydoc.brew.sh/Formula.html#std_configure_args-instance_method
+            # https://docs.brew.sh/rubydoc/Formula.html#std_configure_args-instance_method
             system "./configure", "--disable-silent-rules", *std_configure_args
             # system "cmake", "-S", ".", "-B", "build", *std_cmake_args
         <% end %>

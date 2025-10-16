@@ -16,7 +16,7 @@ module Homebrew
           and open it in the editor. Homebrew will attempt to automatically derive the
           formula name and version, but if it fails, you'll have to make your own template.
           The `wget` formula serves as a simple example. For the complete API, see:
-          <https://rubydoc.brew.sh/Formula>
+          <https://docs.brew.sh/rubydoc/Formula>
         EOS
         switch "--autotools",
                description: "Create a basic template for an Autotools-style build."

@@ -129,7 +129,7 @@ Each of the following stanzas is required for every cask.
 
 ### At least one artifact stanza is also required
 
-Each cask must declare one or more [artifacts](https://rubydoc.brew.sh/Cask/Artifact) (i.e. something to install).
+Each cask must declare one or more [artifacts](/rubydoc/Cask/Artifact.html) (i.e. something to install).
 
 | name                             | multiple occurrences allowed? | value |
 | -------------------------------- | :---------------------------: | ----- |
@@ -291,7 +291,7 @@ caveats "Using #{token} may be hazardous to your health."
 
 #### `caveats` as a block
 
-When `caveats` is a Ruby block, evaluation is deferred until install time. Within a block you may refer to the `@cask` instance variable, and invoke [any method available on `@cask`](https://rubydoc.brew.sh/Cask/Cask).
+When `caveats` is a Ruby block, evaluation is deferred until install time. Within a block you may refer to the `@cask` instance variable, and invoke [any method available on `@cask`](/rubydoc/Cask/Cask.html).
 
 #### `caveats` mini-DSL
 
@@ -371,7 +371,7 @@ depends_on formula: "unar"
 
 ##### Requiring an exact macOS release
 
-The value for `depends_on macos:` may be a symbol or an array of symbols, listing the exact compatible macOS releases. The values for supported macOS releases can be found in the [`MacOSVersion` class](https://rubydoc.brew.sh/MacOSVersion) documentation.
+The value for `depends_on macos:` may be a symbol or an array of symbols, listing the exact compatible macOS releases. The values for supported macOS releases can be found in the [`MacOSVersion` class](/rubydoc/MacOSVersion.html) documentation.
 
 Only major releases are covered (10.x numbers containing a single dot or whole numbers since macOS 11). The symbol form is used for readability. The following are all valid ways to enumerate the exact macOS release requirements for a cask:
 
@@ -449,7 +449,7 @@ The `because:` parameter can also accept a symbol that corresponds to a preset r
 deprecate! date: "YYYY-MM-DD", because: :discontinued
 ```
 
-A complete list of allowable symbols can be found in the [`DeprecateDisable` module](https://rubydoc.brew.sh/DeprecateDisable) documentation.
+A complete list of allowable symbols can be found in the [`DeprecateDisable` module](/rubydoc/DeprecateDisable.html) documentation.
 
 #### `replacement_formula:` / `replacement_cask:` parameter
 
@@ -527,7 +527,7 @@ The stanzas `preflight`, `postflight`, `uninstall_preflight`, and `uninstall_pos
 
 #### Evaluation of blocks is always deferred
 
-The Ruby blocks defined by these stanzas are not evaluated until install time or uninstall time. Within a block you may refer to the `@cask` instance variable, and invoke [any method available on `@cask`](https://rubydoc.brew.sh/Cask/Cask).
+The Ruby blocks defined by these stanzas are not evaluated until install time or uninstall time. Within a block you may refer to the `@cask` instance variable, and invoke [any method available on `@cask`](/rubydoc/Cask/Cask.html).
 
 #### `*flight` mini-DSL
 
@@ -655,7 +655,7 @@ The `no_autobump!` stanza excludes a cask from the autobump list. This means all
 no_autobump! because: :incompatible_version_format
 ```
 
-A complete list of allowed symbols can be found in [`NO_AUTOBUMP_REASONS_LIST`](https://rubydoc.brew.sh/top-level-namespace#NO_AUTOBUMP_REASONS_LIST-constant).
+A complete list of allowed symbols can be found in [`NO_AUTOBUMP_REASONS_LIST`](/rubydoc/top-level-namespace.html#NO_AUTOBUMP_REASONS_LIST-constant).
 
 Casks that use `strategy :extract_plist` in their `livecheck` block or have `version :latest` are always excluded from the autobump list and do not require `no_autobump!` to be declared.
 

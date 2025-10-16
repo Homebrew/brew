@@ -47,8 +47,12 @@ module Homebrew
         @tested_formulae_count = 0
 
         sorted_formulae.each do |f|
-          formula!(f, args:)
           verify_local_bottles
+          if testing_portable_ruby?
+            portable_formula!(f)
+          else
+            formula!(f, args:)
+          end
           puts
           next if @testing_formulae_count < 3
 
@@ -402,14 +406,6 @@ module Homebrew
           return
         end
 
-        if testing_portable_ruby?
-          test "brew", "portable-package", "portable-ruby",
-               # TODO: resolve glibc@2.13 attestation issues
-               env:     { "HOMEBREW_NO_VERIFY_ATTESTATIONS" => "1" },
-               verbose: true
-          return
-        end
-
         test "brew", "deps", "--tree", "--prune", "--annotate", "--include-build", "--include-test",
              named_args: formula_name
 
@@ -622,6 +618,41 @@ report_analytics: true)
         if @unchanged_dependencies.present?
           test "brew", "uninstall", "--formulae", "--force", "--ignore-dependencies", *@unchanged_dependencies
         end
+      end
+
+      def portable_formula!(formula_name)
+        test_header(:Formulae, method: "portable_formula!(#{formula_name})")
+
+        install_ca_certificates_if_needed
+
+        # Can't resolve attestations properly on old macOS versions.
+        ENV["HOMEBREW_NO_VERIFY_ATTESTATIONS"] = "1"
+
+        # On Linux, install glibc and linux-headers from bottles and don't install their build dependencies.
+        bottled_dep_allowlist = /\A(?:glibc|linux-headers)@/
+        deps = Dependency.expand(Formula[formula_name],
+                                 cache_key: "portable-package-#{formula_name}") do |_dependent, dep|
+          Dependency.prune if dep.test? || dep.optional?
+
+          next unless bottled_dep_allowlist.match?(dep.name)
+
+          Dependency.keep_but_prune_recursive_deps
+        end.map(&:name)
+
+        bottled_deps, deps = deps.partition { |dep| bottled_dep_allowlist.match?(dep) }
+
+        # Install bottled dependencies.
+        test "brew", "install", *bottled_deps if bottled_deps.present?
+
+        # Build bottles for all other dependencies.
+        test "brew", "install", "--build-bottle", *deps
+
+        # Build main bottle.
+        test "brew", "install", "--build-bottle", formula_name
+        test "brew", "uninstall", "--force", "--ignore-dependencies", *deps
+        test "brew", "test", formula_name
+        test "brew", "linkage", formula_name
+        test "brew", "bottle", "--skip-relocation", "--json", "--no-rebuild", formula_name
       end
 
       def deleted_formula!(formula_name)

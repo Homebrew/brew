@@ -90,7 +90,7 @@ A formula should be removed if it does not meet our criteria for [acceptable for
 
 When a formula is deprecated or disabled, a reason explaining the action must be provided.
 
-There are two ways to indicate the reason. The preferred way is to use a pre-existing symbol to indicate the reason. The available symbols are listed below and can be found in the [`DeprecateDisable` module](https://rubydoc.brew.sh/DeprecateDisable.html):
+There are two ways to indicate the reason. The preferred way is to use a pre-existing symbol to indicate the reason. The available symbols are listed below and can be found in the [`DeprecateDisable` module](/rubydoc/DeprecateDisable.html.html):
 
 - `:does_not_build`: the formula cannot be built from source on any supported macOS version or Linux.
 - `:no_license`: we cannot identify a license for the formula
