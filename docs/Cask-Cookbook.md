@@ -1018,14 +1018,6 @@ This must be added so a user auditing the cask knows the URL was verified by the
 
 The parameter doesn’t mean you should trust the source blindly, but we only approve casks in which users can easily verify its authenticity with basic means, such as checking the official homepage or public repository. Occasionally, slightly more elaborate techniques may be used, such as inspecting a [`livecheck`](#stanza-livecheck) URL we established as official. Cases where such quick verifications aren’t possible (e.g. when the download URL is behind a registration wall) are [treated in a stricter manner](Acceptable-Casks.md#unofficial-vendorless-and-walled-builds).
 
-#### Difficulty finding a URL
-
-Web browsers may obscure the direct `url` of a download for a variety of reasons. Homebrew Cask supplies a [`list_url_attributes_on_file`](https://github.com/Homebrew/homebrew-cask/blob/HEAD/developer/bin/list_url_attributes_on_file) script which can read extended file attributes to extract the actual source URL of most files downloaded by a browser on macOS. The script usually emits multiple candidate URLs; you may have to test each of them:
-
-```bash
-$(brew --repository homebrew/cask)/developer/bin/list_url_attributes_on_file <file>
-```
-
 #### Subversion URLs
 
 In rare cases, a distribution may not be available over ordinary HTTP(S). Subversion URLs are also supported, and can be specified by appending the following key-value pairs to `url`:
