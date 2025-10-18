@@ -43,6 +43,7 @@ FORMULA_COMPONENT_PRECEDENCE_LIST = T.let([
   [{ name: :cxxstdlib_check, type: :method_call }],
   [{ name: :link_overwrite, type: :method_call }],
   [{ name: :fails_with, type: :method_call }, { name: :fails_with, type: :block_call }],
+  [{ name: :pypi_packages, type: :method_call }],
   [{ name: :resource, type: :block_call }],
   [{ name: :patch, type: :method_call }, { name: :patch, type: :block_call }],
   [{ name: :needs, type: :method_call }],

@@ -237,23 +237,16 @@ module PyPI
                                     exclude_packages: nil, dependencies: nil, install_dependencies: false,
                                     print_only: false, silent: false, verbose: false,
                                     ignore_errors: false, ignore_non_pypi_packages: false)
-    auto_update_list = formula.tap&.pypi_formula_mappings
-    if auto_update_list.present? && auto_update_list.key?(formula.full_name) &&
-       package_name.blank? && extra_packages.blank? && exclude_packages.blank?
+    list_entry = formula.pypi_packages_info
+    if list_entry.defined_pypi_mapping? && package_name.blank? && extra_packages.blank? && exclude_packages.blank?
 
-      list_entry = auto_update_list[formula.full_name]
-      case list_entry
-      when false
-        unless print_only
-          odie "The resources for \"#{formula.name}\" need special attention. Please update them manually."
-        end
-      when String
-        package_name = list_entry
-      when Hash
-        package_name = list_entry["package_name"]
-        extra_packages = list_entry["extra_packages"]
-        exclude_packages = list_entry["exclude_packages"]
-        dependencies = list_entry["dependencies"]
+      if list_entry.needs_manual_update? && !print_only
+        odie "The resources for \"#{formula.name}\" need special attention. Please update them manually."
+      else
+        package_name = list_entry.package_name
+        extra_packages = list_entry.extra_packages
+        exclude_packages = list_entry.exclude_packages
+        dependencies = list_entry.dependencies
       end
     end
 
