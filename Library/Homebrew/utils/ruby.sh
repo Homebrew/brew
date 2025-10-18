@@ -119,7 +119,7 @@ If there's no Homebrew Portable Ruby available for your processor:
 
   unset HOMEBREW_RUBY_PATH
 
-  if [[ "${HOMEBREW_COMMAND}" == "vendor-install" ]]
+  if [[ "${HOMEBREW_COMMAND}" == "vendor-install" && -z "${HOMEBREW_HELP}" ]]
   then
     return 0
   fi

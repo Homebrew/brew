@@ -114,29 +114,43 @@ then
   HOMEBREW_TEMP="${HOMEBREW_DEFAULT_TEMP}"
 fi
 
-# commands that take a single or no arguments.
-# HOMEBREW_LIBRARY set by bin/brew
-# shellcheck disable=SC2154
-# doesn't need a default case as other arguments handled elsewhere.
-# shellcheck disable=SC2249
-case "$1" in
-  formulae)
-    source "${HOMEBREW_LIBRARY}/Homebrew/cmd/formulae.sh"
-    homebrew-formulae
-    exit 0
-    ;;
-  casks)
-    source "${HOMEBREW_LIBRARY}/Homebrew/cmd/casks.sh"
-    homebrew-casks
-    exit 0
-    ;;
-  shellenv)
-    source "${HOMEBREW_LIBRARY}/Homebrew/cmd/shellenv.sh"
-    shift
-    homebrew-shellenv "$1"
-    exit 0
-    ;;
-esac
+for arg in "$@"
+do
+  [[ "${arg}" == "--" ]] && break
+
+  if [[ "${arg}" == "--help" || "${arg}" == "-h" || "${arg}" == "--usage" || "${arg}" == "-?" ]]
+  then
+    export HOMEBREW_HELP="1"
+    break
+  fi
+done
+
+if [[ -z "${HOMEBREW_HELP}" ]]
+then
+  # commands that take a single or no arguments.
+  # HOMEBREW_LIBRARY set by bin/brew
+  # shellcheck disable=SC2154
+  # doesn't need a default case as other arguments handled elsewhere.
+  # shellcheck disable=SC2249
+  case "$1" in
+    formulae)
+      source "${HOMEBREW_LIBRARY}/Homebrew/cmd/formulae.sh"
+      homebrew-formulae
+      exit 0
+      ;;
+    casks)
+      source "${HOMEBREW_LIBRARY}/Homebrew/cmd/casks.sh"
+      homebrew-casks
+      exit 0
+      ;;
+    shellenv)
+      source "${HOMEBREW_LIBRARY}/Homebrew/cmd/shellenv.sh"
+      shift
+      homebrew-shellenv "$1"
+      exit 0
+      ;;
+  esac
+fi
 
 source "${HOMEBREW_LIBRARY}/Homebrew/help.sh"
 
@@ -192,19 +206,22 @@ esac
 source "${HOMEBREW_LIBRARY}/Homebrew/utils/wrapper.sh"
 check-brew-wrapper "$1"
 
-# commands that take a single or no arguments and need to write to HOMEBREW_PREFIX.
-# HOMEBREW_LIBRARY set by bin/brew
-# shellcheck disable=SC2154
-# doesn't need a default case as other arguments handled elsewhere.
-# shellcheck disable=SC2249
-case "$1" in
-  setup-ruby)
-    source "${HOMEBREW_LIBRARY}/Homebrew/cmd/setup-ruby.sh"
-    shift
-    homebrew-setup-ruby "$1"
-    exit 0
-    ;;
-esac
+if [[ -z "${HOMEBREW_HELP}" ]]
+then
+  # commands that take a single or no arguments and need to write to HOMEBREW_PREFIX.
+  # HOMEBREW_LIBRARY set by bin/brew
+  # shellcheck disable=SC2154
+  # doesn't need a default case as other arguments handled elsewhere.
+  # shellcheck disable=SC2249
+  case "$1" in
+    setup-ruby)
+      source "${HOMEBREW_LIBRARY}/Homebrew/cmd/setup-ruby.sh"
+      shift
+      homebrew-setup-ruby "$1"
+      exit 0
+      ;;
+  esac
+fi
 
 #####
 ##### Next, define all other helper functions.
@@ -852,17 +869,6 @@ EOS
   fi
 fi
 
-for arg in "$@"
-do
-  [[ "${arg}" == "--" ]] && break
-
-  if [[ "${arg}" == "--help" || "${arg}" == "-h" || "${arg}" == "--usage" || "${arg}" == "-?" ]]
-  then
-    export HOMEBREW_HELP="1"
-    break
-  fi
-done
-
 HOMEBREW_ARG_COUNT="$#"
 HOMEBREW_COMMAND="$1"
 shift
@@ -1077,7 +1083,7 @@ unset SUDO
 # Remove internal variables
 unset HOMEBREW_INTERNAL_ALLOW_PACKAGES_FROM_PATHS
 
-if [[ -n "${HOMEBREW_BASH_COMMAND}" ]]
+if [[ -n "${HOMEBREW_BASH_COMMAND}" ]] && [[ -z "${HOMEBREW_HELP}" ]]
 then
   # source rather than executing directly to ensure the entire file is read into
   # memory before it is run. This makes running a Bash script behave more like

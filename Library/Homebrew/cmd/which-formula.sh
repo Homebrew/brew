@@ -74,6 +74,9 @@ homebrew-which-formula() {
   while [[ "$#" -gt 0 ]]
   do
     case "$1" in
+      -d | --debug | -q | --quiet | -v | --verbose)
+        shift
+        ;;
       --explain)
         HOMEBREW_EXPLAIN=1
         shift
