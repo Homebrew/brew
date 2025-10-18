@@ -138,6 +138,7 @@ class FormulaInstaller
     @poured_bottle = T.let(false, T::Boolean)
     @start_time = T.let(nil, T.nilable(Time))
     @bottle_tab_runtime_dependencies = T.let({}.freeze, T::Hash[String, T::Hash[String, String]])
+    @bottle_built_os_version = T.let(nil, T.nilable(String))
     @hold_locks = T.let(false, T::Boolean)
     @show_summary_heading = T.let(false, T::Boolean)
     @etc_var_preinstall = T.let([], T::Array[Pathname])
@@ -338,12 +339,22 @@ class FormulaInstaller
 
     Tab.clear_cache
 
-    # Setup bottle_tab_runtime_dependencies for compute_dependencies
+    # Setup bottle_tab_runtime_dependencies for compute_dependencies and
+    # bottle_built_os_version for dependency resolution.
     begin
-      @bottle_tab_runtime_dependencies = formula.bottle_tab_attributes
-                                                .fetch("runtime_dependencies", []).then { |deps| deps || [] }
-                                                .each_with_object({}) { |dep, h| h[dep["full_name"]] = dep }
-                                                .freeze
+      bottle_tab_attributes = formula.bottle_tab_attributes
+      @bottle_tab_runtime_dependencies = bottle_tab_attributes
+                                         .fetch("runtime_dependencies", []).then { |deps| deps || [] }
+                                         .each_with_object({}) { |dep, h| h[dep["full_name"]] = dep }
+                                         .freeze
+
+      if (bottle_tag = formula.bottle_for_tag(Utils::Bottles.tag)&.tag) &&
+         bottle_tag.system != :all
+        # Extract the OS version the bottle was built on.
+        # This ensures that when installing older bottles (e.g. Sonoma bottle on Sequoia),
+        # we resolve dependencies according to the bottle's built OS, not the current OS.
+        @bottle_built_os_version = bottle_tab_attributes.dig("built_on", "os_version")
+      end
     rescue Resource::BottleManifest::Error
       # If we can't get the bottle manifest, assume a full dependencies install.
     end
@@ -772,14 +783,14 @@ on_request: installed_on_request?, options:)
       keep_build_test ||= dep.build? && !install_bottle_for?(dependent, build) &&
                           (formula.head? || !dependent.latest_version_installed?)
 
-      bottle_runtime_version = @bottle_tab_runtime_dependencies.dig(dep.name, "version").presence
-      bottle_runtime_version = Version.new(bottle_runtime_version) if bottle_runtime_version
-      bottle_runtime_revision = @bottle_tab_runtime_dependencies.dig(dep.name, "revision")
+      minimum_version = @bottle_tab_runtime_dependencies.dig(dep.name, "version").presence
+      minimum_version = Version.new(minimum_version) if minimum_version
+      minimum_revision = @bottle_tab_runtime_dependencies.dig(dep.name, "revision")
+      bottle_os_version = @bottle_built_os_version
 
       if dep.prune_from_option?(build) || ((dep.build? || dep.test?) && !keep_build_test)
         Dependency.prune
-      elsif dep.satisfied?(inherited_options[dep.name], minimum_version:  bottle_runtime_version,
-                                                        minimum_revision: bottle_runtime_revision)
+      elsif dep.satisfied?(inherited_options[dep.name], minimum_version:, minimum_revision:, bottle_os_version:)
         Dependency.skip
       end
     end
