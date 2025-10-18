@@ -115,6 +115,7 @@
   "disable_reason": null,
   "disable_replacement_formula": null,
   "disable_replacement_cask": null,
+  "uninstall_on_upgrade": true,
   "tap_git_head": "abcdef1234567890abcdef1234567890abcdef12",
   "languages": [
     "en",
@@ -122,6 +123,6 @@
   ],
   "ruby_source_path": "Casks/everything.rb",
   "ruby_source_checksum": {
-    "sha256": "d3c19b564ee5a17f22191599ad795a6cc9c4758d0e1269f2d13207155b378dea"
+    "sha256": "d4799fe58288f669de4688e57eb9f568b7c48d04abddfaaf8aa0a21beba0f2d3"
   }
 }
