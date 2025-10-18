@@ -96,21 +96,21 @@ RSpec.describe Utils::Autoremove do
     end
 
     specify "installed on request" do
-      allow(tab_from_keg).to receive(:installed_on_request).and_return(true)
+      allow(tab_from_keg).to receive_messages(installed_on_request: true, installed_on_request_present?: true)
 
       expect(described_class.send(:unused_formulae_with_no_formula_dependents, formulae))
         .to eq([])
     end
 
     specify "not installed on request" do
-      allow(tab_from_keg).to receive(:installed_on_request).and_return(false)
+      allow(tab_from_keg).to receive_messages(installed_on_request: false, installed_on_request_present?: true)
 
       expect(described_class.send(:unused_formulae_with_no_formula_dependents, formulae))
         .to match_array(formulae)
     end
 
     specify "installed on request is null" do
-      allow(tab_from_keg).to receive(:installed_on_request).and_return(nil)
+      allow(tab_from_keg).to receive_messages(installed_on_request: false, installed_on_request_present?: false)
 
       expect(described_class.send(:unused_formulae_with_no_formula_dependents, formulae))
         .to eq([])

@@ -68,7 +68,11 @@ module Utils
       sig { params(formulae: T::Array[Formula]).returns(T::Array[Formula]) }
       def unused_formulae_with_no_formula_dependents(formulae)
         unused_formulae = bottled_formulae_with_no_formula_dependents(formulae).select do |f|
-          f.any_installed_keg&.tab&.installed_on_request == false
+          tab = f.any_installed_keg&.tab
+          next unless tab
+          next unless tab.installed_on_request_present?
+
+          tab.installed_on_request == false
         end
 
         unless unused_formulae.empty?
