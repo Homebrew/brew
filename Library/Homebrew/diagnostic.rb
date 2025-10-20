@@ -698,7 +698,7 @@ module Homebrew
         <<~EOS
           Some installed formulae are missing dependencies.
           You should `brew install` the missing dependencies:
-            brew install #{missing.map(&:to_installed_formula).sort_by(&:full_name) * " "}
+            brew install #{missing.sort_by(&:full_name) * " "}
 
           Run `brew missing` for more details.
         EOS
