@@ -337,6 +337,10 @@ class UsesFromMacOSDependency < Dependency
       since_os_bounds = bounds[:since]
       return true if since_os_bounds.blank?
 
+      # Assume the oldest macOS version when simulating a generic macOS version.
+      # If `since_os_bounds` is not empty we should use brewed dependencies on such system
+      return false if Homebrew::SimulateSystem.current_os == :macos
+
       # When installing a bottle built on an older macOS version, use that version
       # to determine if the dependency should come from macOS or Homebrew
       effective_os = if bottle_os_version.present? &&
