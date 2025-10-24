@@ -71,15 +71,11 @@ jobs:
               tags+=(
                 "ghcr.io/homebrew/ubuntu${version}:${brew_version}"
                 "ghcr.io/homebrew/ubuntu${version}:latest"
-                "homebrew/ubuntu${version}:${brew_version}"
-                "homebrew/ubuntu${version}:latest"
               )
               if [[ "${version}" == "22.04" ]]; then
                 tags+=(
                   "ghcr.io/homebrew/brew:${brew_version}"
                   "ghcr.io/homebrew/brew:latest"
-                  "homebrew/brew:${brew_version}"
-                  "homebrew/brew:latest"
                 )
               fi
             elif [[ "${GITHUB_EVENT_NAME}" == "push" &&
@@ -90,10 +86,6 @@ jobs:
                 "ghcr.io/homebrew/brew:master"
                 "ghcr.io/homebrew/ubuntu${version}:main"
                 "ghcr.io/homebrew/ubuntu${version}:master"
-                "homebrew/brew:main"
-                "homebrew/brew:master"
-                "homebrew/ubuntu${version}:main"
-                "homebrew/ubuntu${version}:master"
               )
             fi
 
@@ -263,12 +255,6 @@ jobs:
           path: ${{ runner.temp }}/digests
           pattern: digest-${{ matrix.version }}-*
           merge-multiple: true
-
-      - name: Log in to Docker Hub
-        uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # v3.6.0
-        with:
-          username: brewtestbot
-          password: ${{ secrets.HOMEBREW_BREW_DOCKER_TOKEN }}
 
       - name: Log in to GitHub Packages (BrewTestBot)
         uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # v3.6.0
