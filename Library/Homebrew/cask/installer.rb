@@ -25,14 +25,15 @@ module Cask
         skip_cask_deps: T::Boolean, binaries: T::Boolean, verbose: T::Boolean, zap: T::Boolean,
         require_sha: T::Boolean, upgrade: T::Boolean, reinstall: T::Boolean, installed_as_dependency: T::Boolean,
         installed_on_request: T::Boolean, quarantine: T::Boolean, verify_download_integrity: T::Boolean,
-        quiet: T::Boolean, download_queue: T.nilable(Homebrew::DownloadQueue)
+        quiet: T::Boolean, download_queue: T.nilable(Homebrew::DownloadQueue), login_items: T::Boolean
       ).void
     }
     def initialize(cask, command: SystemCommand, force: false, adopt: false,
                    skip_cask_deps: false, binaries: true, verbose: false,
                    zap: false, require_sha: false, upgrade: false, reinstall: false,
                    installed_as_dependency: false, installed_on_request: true,
-                   quarantine: true, verify_download_integrity: true, quiet: false, download_queue: nil)
+                   quarantine: true, verify_download_integrity: true, quiet: false, download_queue: nil,
+                   login_items: false)
       @cask = cask
       @command = command
       @force = force
@@ -51,6 +52,7 @@ module Cask
       @quiet = quiet
       @download_queue = download_queue
       @ran_prelude = T.let(false, T::Boolean)
+      @login_items = login_items
     end
 
     sig { returns(T::Boolean) }
@@ -67,6 +69,9 @@ module Cask
 
     sig { returns(T::Boolean) }
     def installed_on_request? = @installed_on_request
+
+    sig { returns(T::Boolean) }
+    def login_items? = @login_items
 
     sig { returns(T::Boolean) }
     def quarantine? = @quarantine
@@ -348,6 +353,17 @@ on_request: true)
         already_installed_artifacts.unshift(artifact)
       end
 
+      unless @cask.login_items.empty?
+        if login_items?
+          @cask.login_items.each do |lgi|
+            # TODO: register the login_items here using osascript
+            ohai "***** Will REGISTER login_item: #{lgi}"
+          end
+        else
+          ohai "Skipping processing of login_items"
+        end
+      end
+
       save_config_file
       save_download_sha if @cask.version.latest?
     rescue => e
@@ -591,6 +607,15 @@ on_request: true)
     def uninstall_artifacts(clear: false, successor: nil)
       odebug "Uninstalling artifacts"
       odebug "#{::Utils.pluralize("artifact", artifacts.length, include_count: true)} defined", artifacts
+
+      if login_items?
+        @cask.login_items.each do |lgi|
+          # TODO: unregister the login_items here using osascript
+          ohai "***** Will UNREGISTER login_item: #{lgi}"
+        end
+      else
+        ohai "Skipping processing of login_items"
+      end
 
       artifacts.each do |artifact|
         if artifact.respond_to?(:uninstall_phase)
