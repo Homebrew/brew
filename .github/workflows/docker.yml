@@ -5,7 +5,6 @@ on:
   push:
     branches:
       - main
-      - master
   merge_group:
   release:
     types:
@@ -79,13 +78,11 @@ jobs:
                 )
               fi
             elif [[ "${GITHUB_EVENT_NAME}" == "push" &&
-                    ("${GITHUB_REF}" == "refs/heads/master" || "${GITHUB_REF}" == "refs/heads/main") &&
+                    ("${GITHUB_REF}" == "refs/heads/main") &&
                     "${version}" == "22.04" ]]; then
               tags+=(
                 "ghcr.io/homebrew/brew:main"
-                "ghcr.io/homebrew/brew:master"
                 "ghcr.io/homebrew/ubuntu${version}:main"
-                "ghcr.io/homebrew/ubuntu${version}:master"
               )
             fi
 
