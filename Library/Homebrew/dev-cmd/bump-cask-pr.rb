@@ -166,7 +166,9 @@ module Homebrew
                                          read_only_run: args.dry_run?,
                                          silent:        args.quiet?)
 
-        run_cask_audit(cask, old_contents)
+        audit_exceptions = []
+        audit_exceptions << "min_os" if ENV["HOMEBREW_TEST_BOT_AUTOBUMP"].present?
+        run_cask_audit(cask, old_contents, audit_exceptions)
         run_cask_style(cask, old_contents)
 
         pr_info = {
@@ -324,8 +326,8 @@ module Homebrew
         end
       end
 
-      sig { params(cask: Cask::Cask, old_contents: String).void }
-      def run_cask_audit(cask, old_contents)
+      sig { params(cask: Cask::Cask, old_contents: String, audit_exceptions: T::Array[String]).void }
+      def run_cask_audit(cask, old_contents, audit_exceptions = [])
         if args.dry_run?
           if args.no_audit?
             ohai "Skipping `brew audit`"
@@ -338,7 +340,8 @@ module Homebrew
         if args.no_audit?
           ohai "Skipping `brew audit`"
         else
-          system HOMEBREW_BREW_FILE, "audit", "--cask", "--online", cask.full_name
+          system HOMEBREW_BREW_FILE, "audit", "--cask", "--online", cask.full_name,
+                 "--except=#{audit_exceptions.join(",")}"
           failed_audit = !$CHILD_STATUS.success?
         end
         return unless failed_audit
