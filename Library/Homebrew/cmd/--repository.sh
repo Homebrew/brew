@@ -31,8 +31,19 @@ tap_path() {
 
 homebrew---repository() {
   local tap
+  local taps=()
 
-  if [[ "$#" -eq 0 ]]
+  for arg in "$@"
+  do
+    case "${arg}" in
+      -d | --debug | -q | --quiet | -v | --verbose) ;;
+      *)
+        taps+=("${arg}")
+        ;;
+    esac
+  done
+
+  if [[ "${#taps[@]}" -eq 0 ]]
   then
     echo "${HOMEBREW_REPOSITORY}"
     return
@@ -40,7 +51,7 @@ homebrew---repository() {
 
   (
     shopt -s extglob
-    for tap in "$@"
+    for tap in "${taps[@]}"
     do
       tap_path "${tap}"
     done
