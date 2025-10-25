@@ -51,7 +51,7 @@ jobs:
 
       - name: Log in to GitHub Packages
         if: github.ref == 'refs/heads/main'
-        run: echo "${{ secrets.GITHUB_TOKEN }}" | oras login ghcr.io --username brewtestbot --password-stdin
+        run: echo "${{ secrets.HOMEBREW_BREW_GITHUB_PACKAGES_TOKEN }}" | oras login ghcr.io --username brewtestbot --password-stdin
 
       - name: Push to GitHub Packages
         if: github.ref == 'refs/heads/main'
