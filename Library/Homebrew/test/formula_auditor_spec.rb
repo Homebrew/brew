@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "formula_auditor"
+require "securerandom"
 
 RSpec.describe Homebrew::FormulaAuditor do
   include FileUtils
@@ -955,6 +956,7 @@ RSpec.describe Homebrew::FormulaAuditor do
       fa.problems.first&.fetch(:message)
     end
 
+    # Mock tap behaviour the Formula helper expects (e.g. PyPI lookups, audit exceptions).
     before do
       origin_formula_path.dirname.mkpath
       origin_formula_path.write <<~RUBY
@@ -1128,6 +1130,256 @@ RSpec.describe Homebrew::FormulaAuditor do
 
         it { is_expected.to be_nil }
       end
+    end
+  end
+
+  describe "#audit_revision_and_compatibility_version_relationships" do
+    include Test::Helper::Formula
+
+    around do |example|
+      original = ENV.fetch("HOMEBREW_NO_INSTALL_FROM_API", nil)
+      ENV["HOMEBREW_NO_INSTALL_FROM_API"] = "1"
+      example.run
+    ensure
+      if original
+        ENV["HOMEBREW_NO_INSTALL_FROM_API"] = original
+      else
+        ENV.delete("HOMEBREW_NO_INSTALL_FROM_API")
+      end
+    end
+
+    let(:tap_path) { Pathname("#{dir}/test-tap") }
+    let(:tap) do
+      instance_double(
+        Tap,
+        git?:             true,
+        core_tap?:        false,
+        to_s:             "test/tap",
+        path:             tap_path,
+        name:             "test/tap",
+        audit_exceptions: {},
+        formula_renames:  {},
+      )
+    end
+
+    before do
+      allow(tap).to receive_messages(audit_exception: nil, pypi_formula_mappings: {})
+    end
+
+    # Snapshot the per-formula metadata we feed into the audit cache. This mirrors the structure
+    # produced in the implementation so tests can describe each scenario in a compact way.
+    def build_info(formula:, previous_revision:, previous_cv:, compat_diff:, revision_diff:, dependencies:,
+                   from_previous_commit: true)
+      {
+        full_name:                      formula.full_name,
+        previous_revision:              previous_revision,
+        revision:                       formula.revision,
+        revision_diff:                  revision_diff,
+        compatibility_version:          formula.compatibility_version,
+        previous_compatibility_version: previous_cv,
+        compatibility_diff:             compat_diff,
+        dependencies:                   dependencies,
+        from_previous_commit:           from_previous_commit,
+      }
+    end
+
+    # Create a lightweight formula using the helper and ensure it behaves like a real tap-backed formula.
+    def build_formula(name:, compatibility_version: nil, revision: 0, depends_on: [])
+      Formulary.clear_cache
+
+      formula_dir = tap_path/"Formula"
+      formula_dir.mkpath
+      formula_path = formula_dir/"#{name}.rb"
+
+      class_name = name.gsub(/[^0-9a-z]/i, "_").split("_").reject(&:empty?).map(&:capitalize).join
+      class_name = "TestFormula#{SecureRandom.hex(2)}" if class_name.empty?
+
+      body_lines = []
+      body_lines << "class #{class_name} < Formula"
+      body_lines << '  desc "Test formula"'
+      body_lines << '  homepage "https://brew.sh"'
+      body_lines << %Q(  url "https://brew.sh/#{name}-1.0.tar.gz")
+      body_lines << '  sha256 "31cccfc6630528db1c8e3a06f6decf2a370060b982841cfab2b8677400a5092e"'
+      body_lines << "  compatibility_version #{compatibility_version}" if compatibility_version
+      body_lines << "  revision #{revision}" if revision.positive?
+      Array(depends_on).each do |dep|
+        body_lines << %Q(  depends_on "#{dep}")
+      end
+      body_lines << "  def install"
+      body_lines << "    bin.mkpath"
+      body_lines << "  end"
+      body_lines << "end"
+
+      formula_path.write("#{body_lines.join("\n")}\n")
+
+      formula = Formulary.factory(formula_path)
+      allow(formula).to receive_messages(tap: tap, full_name: name)
+      formula
+    end
+
+    # Provide the cached PR data expected by the auditor: the formula metadata and reverse dependents map.
+    def stub_pr_data(*infos)
+      info_map = infos.to_h { |info| [info[:full_name], info] }
+      dependents = Hash.new { |h, k| h[k] = [] }
+      info_map.each_value do |info|
+        info[:dependencies].each do |dep|
+          dependents[dep] << info[:full_name] if info_map.key?(dep)
+        end
+      end
+      allow(described_class).to receive(:pr_audit_data_for_tap)
+        .with(tap)
+        .and_return({ infos: info_map, dependents: dependents })
+    end
+
+    # Construct an auditor wired for git-aware checks without needing real git state.
+    def auditor_for(formula)
+      allow(formula).to receive(:tap).and_return(tap)
+      described_class.new(formula, git: true)
+    end
+
+    it "flags compatibility_version increases without a dependent revision bump" do
+      foo_formula = build_formula(name: "foo", compatibility_version: 2)
+
+      stub_pr_data(
+        build_info(
+          formula:           foo_formula,
+          previous_revision: 0,
+          previous_cv:       1,
+          compat_diff:       1,
+          revision_diff:     nil,
+          dependencies:      [],
+        ),
+      )
+
+      auditor = auditor_for(foo_formula)
+      auditor.audit_revision_and_compatibility_version_relationships
+
+      expect(auditor.problems).to include(
+        a_hash_including(
+          message: a_string_matching(/`compatibility_version` increased from 1 to 2/),
+        ),
+      )
+    end
+
+    it "accepts compatibility_version increases when a dependent bumps revision" do
+      foo_formula = build_formula(name: "foo", compatibility_version: 2)
+      bar_formula = build_formula(name: "bar", revision: 2, depends_on: ["foo"])
+
+      stub_pr_data(
+        build_info(
+          formula:           foo_formula,
+          previous_revision: 0,
+          previous_cv:       1,
+          compat_diff:       1,
+          revision_diff:     nil,
+          dependencies:      [],
+        ),
+        build_info(
+          formula:           bar_formula,
+          previous_revision: 1,
+          previous_cv:       nil,
+          compat_diff:       nil,
+          revision_diff:     1,
+          dependencies:      [foo_formula.full_name],
+        ),
+      )
+
+      auditor = auditor_for(foo_formula)
+      auditor.audit_revision_and_compatibility_version_relationships
+
+      expect(auditor.problems).to be_empty
+    end
+
+    it "flags revision increases when dependencies do not bump compatibility_version by 1" do
+      foo_formula = build_formula(name: "foo", compatibility_version: 3)
+      bar_formula = build_formula(name: "bar", revision: 2, depends_on: ["foo"])
+
+      stub_pr_data(
+        build_info(
+          formula:           foo_formula,
+          previous_revision: 0,
+          previous_cv:       1,
+          compat_diff:       2,
+          revision_diff:     nil,
+          dependencies:      [],
+        ),
+        build_info(
+          formula:           bar_formula,
+          previous_revision: 1,
+          previous_cv:       nil,
+          compat_diff:       nil,
+          revision_diff:     1,
+          dependencies:      [foo_formula.full_name],
+        ),
+      )
+
+      auditor = auditor_for(bar_formula)
+      auditor.audit_revision_and_compatibility_version_relationships
+
+      expect(auditor.problems).to include(
+        a_hash_including(
+          message: a_string_matching(/`revision` increased but recursive dependencies must increase/),
+        ),
+      )
+    end
+
+    it "accepts revision increases when dependencies bump compatibility_version by 1" do
+      foo_formula = build_formula(name: "foo", compatibility_version: 2)
+      bar_formula = build_formula(name: "bar", revision: 2, depends_on: ["foo"])
+
+      stub_pr_data(
+        build_info(
+          formula:           foo_formula,
+          previous_revision: 0,
+          previous_cv:       1,
+          compat_diff:       1,
+          revision_diff:     nil,
+          dependencies:      [],
+        ),
+        build_info(
+          formula:           bar_formula,
+          previous_revision: 1,
+          previous_cv:       nil,
+          compat_diff:       nil,
+          revision_diff:     1,
+          dependencies:      [foo_formula.full_name],
+        ),
+      )
+
+      auditor = auditor_for(bar_formula)
+      auditor.audit_revision_and_compatibility_version_relationships
+
+      expect(auditor.problems).to be_empty
+    end
+
+    it "ignores formulas without a previous commit" do
+      foo_formula = build_formula(name: "foo", compatibility_version: 2)
+      new_formula = build_formula(name: "baz", revision: 1, depends_on: ["foo"])
+
+      stub_pr_data(
+        build_info(
+          formula:           foo_formula,
+          previous_revision: 0,
+          previous_cv:       1,
+          compat_diff:       1,
+          revision_diff:     nil,
+          dependencies:      [],
+        ),
+        build_info(
+          formula:              new_formula,
+          previous_revision:    nil,
+          previous_cv:          nil,
+          compat_diff:          nil,
+          revision_diff:        1,
+          dependencies:         [foo_formula.full_name],
+          from_previous_commit: false,
+        ),
+      )
+
+      auditor = auditor_for(new_formula)
+      auditor.audit_revision_and_compatibility_version_relationships
+
+      expect(auditor.problems).to be_empty
     end
   end
 

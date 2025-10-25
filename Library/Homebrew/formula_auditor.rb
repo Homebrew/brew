@@ -7,6 +7,7 @@ require "formula_name_cask_token_auditor"
 require "resource_auditor"
 require "utils/shared_audits"
 require "utils/output"
+require "utils/git"
 
 module Homebrew
   # Auditor for checking common violations in {Formula}e.
@@ -16,6 +17,139 @@ module Homebrew
     include Utils::Output::Mixin
 
     attr_reader :formula, :text, :problems, :new_formula_problems
+
+    class << self
+      # Cache per-tap PR metadata to avoid recalculating git diffs for every formula.
+      @pr_audit_data_cache = T.let({}, T::Hash[String, T.untyped])
+
+      sig {
+        params(tap: Tap).returns(
+          T.nilable({
+            infos:      T::Hash[String, T::Hash[Symbol, T.untyped]],
+            dependents: T::Hash[String, T::Array[String]],
+          }),
+        )
+      }
+      def pr_audit_data_for_tap(tap)
+        return unless tap.git?
+
+        cache_key = tap.path.to_s
+        cache = T.cast(@pr_audit_data_cache, T::Hash[String, T.untyped])
+
+        cache.fetch(cache_key) do
+          base_branch = tap.git_repository.origin_branch_name
+          base_ref = base_branch ? "origin/#{base_branch}" : "origin/HEAD"
+
+          # Collect every Ruby file touched by the PR so we can compare current and previous definitions.
+          changed_relative_paths = Set.new
+          [
+            [Utils::Git.git, "-C", tap.path, "diff", "--name-only", "#{base_ref}...HEAD"],
+            [Utils::Git.git, "-C", tap.path, "diff", "--name-only", base_ref],
+            [Utils::Git.git, "-C", tap.path, "diff", "--name-only"],
+            [Utils::Git.git, "-C", tap.path, "diff", "--name-only", "--cached"],
+          ].each do |command|
+            Utils.safe_popen_read(*command).each_line do |line|
+              relative_path = line.chomp
+              next unless relative_path.end_with?(".rb")
+
+              changed_relative_paths << relative_path
+            end
+          rescue ErrorDuringExecution
+            next
+          end
+
+          result = nil
+          unless changed_relative_paths.empty?
+            infos = T.let({}, T::Hash[String, T::Hash[Symbol, T.untyped]])
+
+            changed_relative_paths.each do |relative_path|
+              absolute_path = tap.path/relative_path
+              next unless absolute_path.exist?
+
+              current_formula = begin
+                Formulary.factory(absolute_path)
+              rescue FormulaUnavailableError, FormulaUnreadableError, TapFormulaAmbiguityError
+                next
+              end
+
+              previous_formula = begin
+                contents = Utils.safe_popen_read(
+                  Utils::Git.git,
+                  "-C",
+                  tap.path,
+                  "show",
+                  "#{base_ref}:#{relative_path}",
+                )
+                Formulary.from_contents(current_formula.full_name, current_formula.path, contents)
+              rescue ErrorDuringExecution, FormulaUnavailableError, FormulaUnreadableError,
+                     TapFormulaAmbiguityError, FormulaClassUnavailableError
+                nil
+              end
+
+              previous_revision = previous_formula&.revision
+              revision_diff = if previous_revision.nil?
+                nil
+              else
+                current_formula.revision - previous_revision
+              end
+
+              previous_cv = previous_formula&.compatibility_version
+              current_cv = current_formula.compatibility_version
+              compatibility_diff = if previous_cv.nil? || current_cv.nil?
+                nil
+              else
+                diff = current_cv - previous_cv
+                diff.positive? ? diff : nil
+              end
+
+              dependencies = begin
+                deps = Set.new
+                current_formula.recursive_dependencies.each do |dependency|
+                  deps << dependency.to_formula.full_name
+                rescue FormulaUnavailableError, TapFormulaAmbiguityError, TapFormulaUnavailableError
+                  next
+                end
+                deps.to_a
+              end
+
+              # Record the formula's new state alongside the previous commit so we can reason about deltas.
+              infos[current_formula.full_name] = {
+                full_name:                      current_formula.full_name,
+                previous_revision:              previous_revision,
+                revision:                       current_formula.revision,
+                revision_diff:                  revision_diff,
+                compatibility_version:          current_cv,
+                previous_compatibility_version: previous_cv,
+                compatibility_diff:             compatibility_diff,
+                dependencies:                   dependencies,
+                from_previous_commit:           !previous_formula.nil?,
+              }
+            end
+
+            unless infos.empty?
+              # Build a reverse lookup table (dependency -> formulas that depend on it) for fast auditing later.
+              dependents = T.let({}, T::Hash[String, T::Array[String]])
+              infos.each_value do |info|
+                info[:dependencies].each do |dep_full_name|
+                  next unless infos.key?(dep_full_name)
+
+                  current_dependents = dependents[dep_full_name]
+                  if current_dependents
+                    current_dependents << T.unsafe(info[:full_name])
+                  else
+                    dependents[dep_full_name] = [T.unsafe(info[:full_name])]
+                  end
+                end
+              end
+
+              result = { infos:, dependents: }
+            end
+          end
+
+          cache[cache_key] = result
+        end
+      end
+    end
 
     def initialize(formula, options = {})
       @formula = formula
@@ -900,6 +1034,73 @@ module Homebrew
             current_revision > (newest_committed[:revision] + 1)
         problem "`revision` should only increment by 1"
       end
+    end
+
+    def audit_revision_and_compatibility_version_relationships
+      return unless @git
+
+      tap = formula.tap
+      return if tap.nil?
+      return unless tap.git?
+
+      tap_data = self.class.pr_audit_data_for_tap(tap)
+      return if tap_data.nil?
+
+      info_map = T.let(tap_data[:infos], T::Hash[String, T::Hash[Symbol, T.untyped]])
+      dependents_map = T.let(tap_data[:dependents], T::Hash[String, T::Array[String]])
+
+      info = info_map[formula.full_name]
+      return if info.nil?
+
+      # Ensure compatibility bumps in dependencies propagate to dependents in the same PR.
+      compatibility_diff = T.let(info[:compatibility_diff], T.nilable(Integer))
+      if compatibility_diff && info[:from_previous_commit]
+        dependents = dependents_map.fetch(formula.full_name, [])
+        has_revision_bump = dependents.any? do |dependent_name|
+          dependent_info = info_map[dependent_name]
+          next false if dependent_info.nil?
+
+          revision_diff = T.let(dependent_info[:revision_diff], T.nilable(Integer))
+          revision_diff&.positive?
+        end
+
+        unless has_revision_bump
+          previous_cv = info[:previous_compatibility_version] || 0
+          current_cv = info[:compatibility_version] || previous_cv
+          message_parts = [
+            "`compatibility_version` increased from #{previous_cv} to #{current_cv}",
+            "but no recursive dependents increased `revision` in this PR.",
+          ]
+          problem message_parts.join(" ")
+        end
+      end
+
+      # Validate the converse: dependent revision bumps must track dependency compatibility shifts.
+      revision_diff = T.let(info[:revision_diff], T.nilable(Integer))
+      return unless revision_diff&.positive?
+
+      invalid_dependencies = info[:dependencies].filter_map do |dep_full_name|
+        dep_info = info_map[dep_full_name]
+        next if dep_info.nil?
+        next unless dep_info[:from_previous_commit]
+        next if dep_info[:compatibility_diff] == 1
+
+        dep_info
+      end
+
+      return if invalid_dependencies.empty?
+
+      details = invalid_dependencies.map do |dep_info|
+        previous_cv = dep_info[:previous_compatibility_version] || 0
+        current_cv = dep_info[:compatibility_version] || previous_cv
+        "#{dep_info[:full_name]} (#{previous_cv} to #{current_cv})"
+      end
+
+      message_parts = [
+        "`revision` increased but recursive dependencies must increase `compatibility_version` by 1:",
+        details.join(", "),
+      ]
+      problem message_parts.join(" ")
     end
 
     def audit_version_scheme
