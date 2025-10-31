@@ -593,17 +593,7 @@ on_request: installed_on_request?, options:)
         pour
       # Catch any other types of exceptions as they leave us with nothing installed.
       rescue Exception # rubocop:disable Lint/RescueException
-        ignore_interrupts do
-          begin
-            FileUtils.rm_r(formula.prefix) if formula.prefix.directory?
-          rescue Errno::EACCES, Errno::ENOTEMPTY
-            odie <<~EOS
-              Could not remove #{formula.prefix.basename} keg! Do so manually:
-                sudo rm -rf #{formula.prefix}
-            EOS
-          end
-          formula.rack.rmdir_if_possible
-        end
+        Keg.new(formula.prefix).uninstall_ignore_interrupts_and_raise_failures! if formula.prefix.directory?
         raise
       else
         @poured_bottle = true
