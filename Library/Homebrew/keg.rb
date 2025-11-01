@@ -279,6 +279,7 @@ class Keg
     opt_record.parent.rmdir_if_possible
   end
 
+  sig { params(raise_failures: T::Boolean).void }
   def uninstall(raise_failures: false)
     CacheStoreDatabase.use(:linkage) do |db|
       break unless db.created?
@@ -299,6 +300,13 @@ class Keg
       Could not remove #{name} keg! Do so manually:
         sudo rm -rf #{path}
     EOS
+  end
+
+  sig { void }
+  def uninstall_ignore_interrupts_and_raise_failures!
+    ignore_interrupts do
+      uninstall(raise_failures: true)
+    end
   end
 
   def unlink(verbose: false, dry_run: false)

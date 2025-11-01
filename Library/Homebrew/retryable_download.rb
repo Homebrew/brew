@@ -80,6 +80,10 @@ module Homebrew
 
       if pour && downloadable.is_a?(Bottle)
         HOMEBREW_CELLAR.mkpath
+
+        bottle_filename = T.cast(downloadable, Bottle).filename
+        bottle_keg = HOMEBREW_CELLAR/bottle_filename.name/bottle_filename.version.to_s
+
         UnpackStrategy.detect(download, prioritize_extension: true)
                       .extract_nestedly(to: HOMEBREW_CELLAR)
       elsif json_download
@@ -89,7 +93,10 @@ module Homebrew
       download
     rescue DownloadError, ChecksumMismatchError, Resource::BottleManifest::Error
       tries_remaining = @tries - @try
-      raise if tries_remaining.zero?
+      if tries_remaining.zero?
+        cleanup_partial_installation_on_error!(bottle_keg)
+        raise
+      end
 
       wait = 2 ** @try
       unless quiet
@@ -100,6 +107,10 @@ module Homebrew
 
       downloadable.clear_cache
       retry
+    # Catch any other types of exceptions as they leave us with partial installations.
+    rescue Exception # rubocop:disable Lint/RescueException
+      cleanup_partial_installation_on_error!(bottle_keg)
+      raise
     end
 
     sig { override.params(filename: Pathname).void }
@@ -112,5 +123,13 @@ module Homebrew
 
     sig { returns(T::Boolean) }
     attr_reader :pour
+
+    sig { params(path: T.nilable(Pathname)).void }
+    def cleanup_partial_installation_on_error!(path)
+      return if path.nil?
+      return unless path.directory?
+
+      Keg.new(path).uninstall_ignore_interrupts_and_raise_failures!
+    end
   end
 end
