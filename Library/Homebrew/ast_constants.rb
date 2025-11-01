@@ -7,6 +7,7 @@ FORMULA_COMPONENT_PRECEDENCE_LIST = T.let([
   [{ name: :include,   type: :method_call }],
   [{ name: :desc,      type: :method_call }],
   [{ name: :homepage,  type: :method_call }],
+  [{ name: :login_items, type: :method_call }],
   [{ name: :url,       type: :method_call }],
   [{ name: :mirror,    type: :method_call }],
   [{ name: :version,   type: :method_call }],
