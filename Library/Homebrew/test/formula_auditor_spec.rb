@@ -1,9 +1,12 @@
 # frozen_string_literal: true
 
 require "formula_auditor"
+require "git_repository"
+require "securerandom"
 
 RSpec.describe Homebrew::FormulaAuditor do
   include FileUtils
+  include Test::Helper::Formula
 
   let(:dir) { mktmpdir }
   let(:foo_version) do
@@ -39,6 +42,26 @@ RSpec.describe Homebrew::FormulaAuditor do
     text.gsub! before, after
     formula_path.unlink
     formula_path.write text
+  end
+
+  def test_formula_source(name:, compatibility_version: nil, revision: 0, depends_on: [])
+    class_name = name.gsub(/[^0-9a-z]/i, "_").split("_").reject(&:empty?).map(&:capitalize).join
+    class_name = "TestFormula#{SecureRandom.hex(2)}" if class_name.empty?
+
+    lines = []
+    lines << "class #{class_name} < Formula"
+    lines << '  desc "Test formula"'
+    lines << '  homepage "https://brew.sh"'
+    lines << %Q(  url "https://brew.sh/#{name}-1.0.tar.gz")
+    lines << '  sha256 "31cccfc6630528db1c8e3a06f6decf2a370060b982841cfab2b8677400a5092e"'
+    lines << "  compatibility_version #{compatibility_version}" if compatibility_version
+    lines << "  revision #{revision}" if revision.positive?
+    Array(depends_on).each { |dep| lines << %Q(  depends_on "#{dep}") }
+    lines << "  def install"
+    lines << "    bin.mkpath"
+    lines << "  end"
+    lines << "end"
+    "#{lines.join("\n")}\n"
   end
 
   def formula_gsub_origin_commit(before, after = "")
@@ -955,6 +978,7 @@ RSpec.describe Homebrew::FormulaAuditor do
       fa.problems.first&.fetch(:message)
     end
 
+    # Mock tap behaviour the Formula helper expects (e.g. PyPI lookups, audit exceptions).
     before do
       origin_formula_path.dirname.mkpath
       origin_formula_path.write <<~RUBY
@@ -1007,7 +1031,7 @@ RSpec.describe Homebrew::FormulaAuditor do
     end
   end
 
-  describe "#audit_revision" do
+  describe "#audit_revision dependency relationships" do
     subject do
       fa = described_class.new(Formulary.factory(formula_path), git: true)
       fa.audit_revision
@@ -1131,154 +1155,299 @@ RSpec.describe Homebrew::FormulaAuditor do
     end
   end
 
-  describe "#audit_version_scheme" do
-    subject do
-      fa = described_class.new(Formulary.factory(formula_path), git: true)
-      fa.audit_version_scheme
-      fa.problems.first&.fetch(:message)
+  def build_formula_for_audit(tap:, tap_path:, name:, compatibility_version: nil, revision: 0, depends_on: [])
+    path = tap_path/"Formula/#{name}.rb"
+    path.dirname.mkpath
+    path.write(test_formula_source(name:, compatibility_version:, revision:, depends_on:))
+
+    Formulary.clear_cache
+    formula = Formulary.factory(path)
+    allow(formula).to receive_messages(tap:, full_name: "#{tap.name}/#{name}")
+
+    formula
+  end
+
+  def dependency_stub(name)
+    instance_double(Dependency, name:)
+  end
+
+  def stub_committed_info(auditor, default:, overrides: {})
+    allow(auditor).to receive(:committed_version_info) do |*_args, **kwargs|
+      formula = kwargs.fetch(:formula, auditor.formula)
+      raw = overrides.fetch(formula, default)
+      committed = raw.map { |info| info ? info.dup : {} }
+      committed.each do |info|
+        info[:version] ||= formula.stable&.version
+        info[:revision] = info.fetch(:revision, formula.revision)
+        info[:compatibility_version] = info.fetch(:compatibility_version, formula.compatibility_version)
+        info[:version_scheme] = info.fetch(:version_scheme, formula.version_scheme)
+      end
+      committed.each(&:compact!)
+      committed
     end
+  end
+
+  def stub_changed_paths(auditor, all_paths:, filtered_paths: all_paths)
+    allow(auditor).to receive(:changed_formulae_paths) do |_tap_arg, only_names: nil|
+      only_names ? filtered_paths : all_paths
+    end
+  end
+
+  describe "#audit_compatibility_version" do
+    let(:tap_path) { Pathname("#{dir}/compat-tap") }
+    let(:tap) do
+      instance_double(
+        Tap,
+        git?:             true,
+        core_tap?:        false,
+        git_repository:   instance_double(GitRepository, origin_branch_name: "main"),
+        audit_exceptions: {},
+        formula_renames:  {},
+        path:             tap_path,
+        name:             "test/tap",
+      )
+    end
+    let(:current_compatibility_version) { 2 }
+    let(:target_formula) do
+      build_formula_for_audit(
+        tap:,
+        tap_path:,
+        name:                  "foo",
+        compatibility_version: current_compatibility_version,
+      )
+    end
+    let(:auditor) { described_class.new(target_formula, git: true) }
+    let(:foo_path) { tap_path/"Formula/foo.rb" }
+    let(:bar_path) { tap_path/"Formula/bar.rb" }
 
     before do
-      origin_formula_path.dirname.mkpath
-      origin_formula_path.write <<~RUBY
-        class Foo#{foo_version} < Formula
-          url "https://brew.sh/foo-1.0.tar.gz"
-          sha256 "31cccfc6630528db1c8e3a06f6decf2a370060b982841cfab2b8677400a5092e"
-          revision 2
-          version_scheme 1
-        end
-      RUBY
+      allow(tap).to receive_messages(formula_dir: tap_path/"Formula", pypi_formula_mappings: {})
+      allow(target_formula).to receive_messages(full_name: "test/tap/foo", recursive_dependencies: [])
+      allow(Formulary).to receive(:factory).and_call_original
+      allow(Formulary).to receive(:factory).with(foo_path).and_return(target_formula)
+    end
 
-      origin_tap_path.mkpath
-      origin_tap_path.cd do
-        system "git", "init"
-        system "git", "add", "--all"
-        system "git", "commit", "-m", "init"
+    it "ignores formulae without a previous commit" do
+      stub_committed_info(auditor, default: [{}, {}])
+      stub_changed_paths(auditor, all_paths: [])
+
+      auditor.audit_compatibility_version
+
+      expect(auditor.problems).to be_empty
+    end
+
+    context "with existing committed compatibility_version" do
+      before do
+        stub_changed_paths(auditor, all_paths: [])
       end
 
-      tap_path.mkpath
-      tap_path.cd do
-        system "git", "clone", origin_tap_path, "."
+      it "flags decreases" do
+        stub_committed_info(
+          auditor,
+          default: [{ compatibility_version: 2 }, { compatibility_version: 2 }],
+        )
+        allow(target_formula).to receive(:compatibility_version).and_return(1)
+
+        auditor.audit_compatibility_version
+
+        expect(auditor.problems).to include(
+          a_hash_including(message: a_string_matching(/should not decrease/)),
+        )
+      end
+
+      it "flags increments larger than one" do
+        allow(target_formula).to receive(:compatibility_version).and_return(3)
+        stub_committed_info(
+          auditor,
+          default: [{ compatibility_version: 1 }, { compatibility_version: 1 }],
+        )
+
+        auditor.audit_compatibility_version
+
+        expect(auditor.problems).to include(
+          a_hash_including(message: a_string_matching(/should only increment by 1/)),
+        )
+      end
+
+      it "allows unchanged compatibility_version" do
+        allow(target_formula).to receive(:compatibility_version).and_return(1)
+        stub_committed_info(
+          auditor,
+          default: [{ compatibility_version: 1 }, { compatibility_version: 1 }],
+        )
+
+        auditor.audit_compatibility_version
+
+        expect(auditor.problems).to be_empty
       end
     end
 
-    describe "version_schemes" do
-      describe "should not decrease with the same version" do
-        before { formula_gsub_origin_commit "version_scheme 1" }
-
-        it { is_expected.to match("`version_scheme` should not decrease (from 1 to 0)") }
+    context "when compatibility_version increments by one" do
+      let(:dependent_formula) do
+        build_formula_for_audit(
+          tap:,
+          tap_path:,
+          name:       "bar",
+          revision:   2,
+          depends_on: ["foo"],
+        )
       end
 
-      describe "should not decrease with a new version" do
-        before do
-          formula_gsub_origin_commit "foo-1.0.tar.gz", "foo-1.1.tar.gz"
-          formula_gsub_origin_commit "revision 2", ""
-          formula_gsub_origin_commit "version_scheme 1", ""
-        end
-
-        it { is_expected.to match("`version_scheme` should not decrease (from 1 to 0)") }
+      before do
+        allow(dependent_formula).to receive_messages(full_name:              "test/tap/bar",
+                                                     recursive_dependencies: [dependency_stub("foo")])
+        allow(Formulary).to receive(:factory).with(bar_path).and_return(dependent_formula)
+        stub_changed_paths(auditor, all_paths: [foo_path, bar_path])
       end
 
-      describe "should only increment by 1" do
-        before do
-          formula_gsub_origin_commit "version_scheme 1", "# no version_scheme"
-          formula_gsub_origin_commit "foo-1.0.tar.gz", "foo-1.1.tar.gz"
-          formula_gsub_origin_commit "revision 2", ""
-          formula_gsub_origin_commit "# no version_scheme", "version_scheme 3"
-        end
+      it "flags missing dependent revision bumps" do
+        stub_committed_info(
+          auditor,
+          default:   [{ compatibility_version: 1 }, { compatibility_version: 1 }],
+          overrides: { dependent_formula => [{ revision: 2 }, { revision: 2 }] },
+        )
 
-        it { is_expected.to match("`version_scheme` should only increment by 1") }
+        auditor.audit_compatibility_version
+
+        expect(auditor.problems).to include(
+          a_hash_including(message: a_string_matching(/no recursive dependent formulae increased `revision` by 1/)),
+        )
+      end
+
+      it "accepts a dependent revision bump" do
+        stub_committed_info(
+          auditor,
+          default:   [{ compatibility_version: 1 }, { compatibility_version: 1 }],
+          overrides: { dependent_formula => [{ revision: 1 }, { revision: 1 }] },
+        )
+
+        auditor.audit_compatibility_version
+
+        expect(auditor.problems).to be_empty
       end
     end
   end
 
-  describe "#audit_unconfirmed_checksum_change" do
-    subject do
-      fa = described_class.new(Formulary.factory(formula_path), git: true)
-      fa.audit_unconfirmed_checksum_change
-      fa.problems.first&.fetch(:message)
+  describe "#audit_revision" do
+    let(:tap_path) { Pathname("#{dir}/revision-tap") }
+    let(:tap) do
+      instance_double(
+        Tap,
+        git?:             true,
+        core_tap?:        false,
+        git_repository:   instance_double(GitRepository, origin_branch_name: "main"),
+        audit_exceptions: {},
+        formula_renames:  {},
+        path:             tap_path,
+        name:             "test/tap",
+      )
+    end
+    let(:current_revision) { 2 }
+    let(:dependency_names) { ["foo"] }
+    let(:dependency_list) { dependency_names.map { |name| dependency_stub(name) } }
+    let(:target_formula) do
+      build_formula_for_audit(
+        tap:,
+        tap_path:,
+        name:       "bar",
+        revision:   current_revision,
+        depends_on: dependency_names,
+      )
+    end
+    let(:auditor) { described_class.new(target_formula, git: true) }
+    let(:bar_path) { tap_path/"Formula/bar.rb" }
+    let(:foo_path) { tap_path/"Formula/foo.rb" }
+    let(:current_dependency_compatibility) { 1 }
+    let(:dependency_revision) { 0 }
+    let(:dependency_formula) do
+      build_formula_for_audit(
+        tap:,
+        tap_path:,
+        name:                  "foo",
+        compatibility_version: current_dependency_compatibility,
+        revision:              dependency_revision,
+      )
     end
 
     before do
-      origin_formula_path.dirname.mkpath
-      origin_formula_path.write <<~RUBY
-        class Foo#{foo_version} < Formula
-          url "https://brew.sh/foo-1.0.tar.gz"
-          sha256 "31cccfc6630528db1c8e3a06f6decf2a370060b982841cfab2b8677400a5092e"
-          revision 2
-          version_scheme 1
-        end
-      RUBY
-
-      origin_tap_path.mkpath
-      origin_tap_path.cd do
-        system "git", "init"
-        system "git", "add", "--all"
-        system "git", "commit", "-m", "init"
-      end
-
-      tap_path.mkpath
-      tap_path.cd do
-        system "git", "clone", origin_tap_path, "."
-      end
+      allow(tap).to receive_messages(formula_dir: tap_path/"Formula", pypi_formula_mappings: {})
+      allow(target_formula).to receive_messages(full_name: "test/tap/bar", recursive_dependencies: dependency_list)
+      allow(Formulary).to receive(:factory).and_call_original
+      allow(Formulary).to receive(:factory).with(bar_path).and_return(target_formula)
+      allow(Formulary).to receive(:factory).with(foo_path).and_return(dependency_formula)
     end
 
-    describe "checksums" do
-      describe "should not change with the same version" do
-        before do
-          formula_gsub(
-            'sha256 "31cccfc6630528db1c8e3a06f6decf2a370060b982841cfab2b8677400a5092e"',
-            'sha256 "3622d2a53236ed9ca62de0616a7e80fd477a9a3f862ba09d503da188f53ca523"',
-          )
-        end
+    it "ignores revision changes when not incremented by one" do
+      stub_committed_info(
+        auditor,
+        default: [{ revision: current_revision }, { revision: current_revision }],
+      )
+      stub_changed_paths(auditor, all_paths: [], filtered_paths: [])
 
-        it { is_expected.to match("stable sha256 changed without the url/version also changing") }
+      auditor.audit_revision
+
+      expect(auditor.problems).to be_empty
+    end
+
+    context "with a revision increment" do
+      before do
+        stub_committed_info(
+          auditor,
+          default: [{ revision: current_revision - 1 }, { revision: current_revision - 1 }],
+        )
       end
 
-      describe "should not change with the same version when not the first commit" do
-        before do
-          formula_gsub_origin_commit(
-            'sha256 "31cccfc6630528db1c8e3a06f6decf2a370060b982841cfab2b8677400a5092e"',
-            'sha256 "3622d2a53236ed9ca62de0616a7e80fd477a9a3f862ba09d503da188f53ca523"',
-          )
-          formula_gsub_origin_commit "revision 2"
-          formula_gsub_origin_commit "foo-1.0.tar.gz", "foo-1.1.tar.gz"
-          formula_gsub(
-            'sha256 "3622d2a53236ed9ca62de0616a7e80fd477a9a3f862ba09d503da188f53ca523"',
-            'sha256 "e048c5e6144f5932d8672c2fade81d9073d5b3ca1517b84df006de3d25414fc1"',
-          )
-        end
+      it "allows revision increases when there are no recursive dependencies" do
+        allow(target_formula).to receive(:recursive_dependencies).and_return([])
+        stub_changed_paths(auditor, all_paths: [], filtered_paths: [])
 
-        it { is_expected.to match("stable sha256 changed without the url/version also changing") }
+        auditor.audit_revision
+
+        expect(auditor.problems).to be_empty
       end
 
-      describe "can change with the different version" do
-        before do
-          formula_gsub_origin_commit(
-            'sha256 "31cccfc6630528db1c8e3a06f6decf2a370060b982841cfab2b8677400a5092e"',
-            'sha256 "3622d2a53236ed9ca62de0616a7e80fd477a9a3f862ba09d503da188f53ca523"',
-          )
-          formula_gsub "foo-1.0.tar.gz", "foo-1.1.tar.gz"
-          formula_gsub_origin_commit(
-            'sha256 "3622d2a53236ed9ca62de0616a7e80fd477a9a3f862ba09d503da188f53ca523"',
-            'sha256 "e048c5e6144f5932d8672c2fade81d9073d5b3ca1517b84df006de3d25414fc1"',
-          )
-        end
+      it "allows revision increases when dependencies are unchanged" do
+        stub_changed_paths(auditor, all_paths: [], filtered_paths: [])
 
-        it { is_expected.to be_nil }
+        auditor.audit_revision
+
+        expect(auditor.problems).to be_empty
       end
 
-      describe "can be removed when switching schemes" do
+      context "when dependencies change" do
         before do
-          formula_gsub_origin_commit(
-            'url "https://brew.sh/foo-1.0.tar.gz"',
-            'url "https://foo.com/brew/bar.git", tag: "1.0", revision: "f5e00e485e7aa4c5baa20355b27e3b84a6912790"',
-          )
-          formula_gsub_origin_commit('sha256 "31cccfc6630528db1c8e3a06f6decf2a370060b982841cfab2b8677400a5092e"',
-                                     "")
+          stub_changed_paths(auditor, all_paths: [foo_path], filtered_paths: [foo_path])
         end
 
-        it { is_expected.to be_nil }
+        it "flags missing compatibility_version bumps" do
+          stub_committed_info(
+            auditor,
+            default:   [{ revision: current_revision - 1 }, { revision: current_revision - 1 }],
+            overrides: { dependency_formula => [{ compatibility_version: 1 }, { compatibility_version: 1 }] },
+          )
+          allow(dependency_formula).to receive(:compatibility_version).and_return(1)
+
+          auditor.audit_revision
+
+          expect(auditor.problems).to include(
+            a_hash_including(
+              message: a_string_matching(/must increase `compatibility_version` by 1: foo \(1 to 1\)/),
+            ),
+          )
+        end
+
+        it "accepts compatibility_version bumps of one" do
+          stub_committed_info(
+            auditor,
+            default:   [{ revision: current_revision - 1 }, { revision: current_revision - 1 }],
+            overrides: { dependency_formula => [{ compatibility_version: 1 }, { compatibility_version: 1 }] },
+          )
+          allow(dependency_formula).to receive(:compatibility_version).and_return(2)
+
+          auditor.audit_revision
+
+          expect(auditor.problems).to be_empty
+        end
       end
     end
   end
