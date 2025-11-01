@@ -88,6 +88,8 @@ module Cask
       :rename,
       :sha256,
       :staged_path,
+      :uninstall_on_upgrade!,
+      :uninstall_on_upgrade?,
       :url,
       :version,
       :appdir,
@@ -143,6 +145,7 @@ module Cask
       @container_set_in_block = T.let(false, T::Boolean)
       @depends_on = T.let(DSL::DependsOn.new, DSL::DependsOn)
       @depends_on_set_in_block = T.let(false, T::Boolean)
+      @uninstall_on_upgrade = T.let(false, T::Boolean)
       @deprecated = T.let(false, T::Boolean)
       @deprecation_date = T.let(nil, T.nilable(Date))
       @deprecation_reason = T.let(nil, T.nilable(T.any(String, Symbol)))
@@ -557,6 +560,19 @@ module Cask
     # @api public
     def auto_updates(auto_updates = nil)
       set_unique_stanza(:auto_updates, auto_updates.nil?) { auto_updates }
+    end
+
+    # Forces the uninstall to run during upgrades and reinstalls even when
+    # `HOMEBREW_NO_UNINSTALL_ON_CASK_UPGRADE` is set.
+    #
+    # @api public
+    def uninstall_on_upgrade!
+      @uninstall_on_upgrade = true
+    end
+
+    # Is uninstall_on_upgrade! method defined?
+    def uninstall_on_upgrade?
+      @uninstall_on_upgrade == true
     end
 
     # Automatically fetch the latest version of a cask from changelogs.

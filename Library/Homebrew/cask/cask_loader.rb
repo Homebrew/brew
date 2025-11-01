@@ -434,6 +434,8 @@ module Cask
             container(**container_hash)
           end
 
+          uninstall_on_upgrade! if json_cask[:uninstall_on_upgrade]
+
           json_cask[:artifacts]&.each do |artifact|
             # convert generic string replacements into actual ones
             artifact = cask.loader.from_h_gsubs(artifact, appdir)

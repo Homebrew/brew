@@ -26,6 +26,8 @@ cask "everything" do
   rename "Foobar.app", "Foo.app"
   rename "Foo.app", "Bar.app"
 
+  uninstall_on_upgrade!
+
   app "Everything.app"
   installer script: {
     executable:   "~/just/another/path/install.sh",
