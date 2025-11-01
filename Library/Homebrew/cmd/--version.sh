@@ -36,3 +36,7 @@ homebrew-version() {
     echo "Homebrew/homebrew-cask $(version_string "${HOMEBREW_CASK_REPOSITORY}")"
   fi
 }
+
+homebrew---version() {
+  homebrew-version
+}
