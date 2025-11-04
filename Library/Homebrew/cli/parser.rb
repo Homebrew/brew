@@ -202,13 +202,30 @@ module Homebrew
       end
 
       sig {
-        params(names: String, description: T.nilable(String), replacement: T.untyped, env: T.untyped,
-               depends_on: T.nilable(String), method: Symbol, hidden: T::Boolean, disable: T::Boolean).void
+        params(names: String, description: T.nilable(String), env: T.untyped,
+               depends_on: T.nilable(String), method: Symbol,
+               hidden: T::Boolean, replacement: T.nilable(T.any(String, FalseClass)),
+               odeprecated: T::Boolean, odisabled: T::Boolean, disable: T::Boolean).void
       }
-      def switch(*names, description: nil, replacement: nil, env: nil, depends_on: nil,
-                 method: :on, hidden: false, disable: false)
+      def switch(*names, description: nil, env: nil,
+                 depends_on: nil, method: :on,
+                 hidden: false, replacement: nil,
+                 odeprecated: false, odisabled: false, disable: false)
         global_switch = names.first.is_a?(Symbol)
         return if global_switch
+
+        if disable
+          # this odeprecated should turn into odisabled in 4.8.0
+          odeprecated "disable:", "odisabled:"
+          odisabled = disable
+        end
+        if !odeprecated && !odisabled && replacement
+          # this odeprecated should turn into odisabled in 4.8.0
+          odeprecated "replacement: without :odeprecated or :odisabled",
+                      "replacement: with :odeprecated or :odisabled"
+          odeprecated = true
+        end
+        hidden = true if odisabled || odeprecated
 
         description = option_description(description, *names, hidden:)
         env, counterpart = env
@@ -216,14 +233,17 @@ module Homebrew
           affix = counterpart ? " and `#{counterpart}` is passed." : "."
           description += " Enabled by default if `$HOMEBREW_#{env.upcase}` is set#{affix}"
         end
-        if replacement || disable
-          description += " (#{disable ? "disabled" : "deprecated"}#{"; replaced by #{replacement}" if replacement})"
+        if odeprecated || odisabled
+          description += " (#{odisabled ? "disabled" : "deprecated"}#{"; replaced by #{replacement}" if replacement})"
         end
-        process_option(*names, description, type: :switch, hidden:) unless disable
+        process_option(*names, description, type: :switch, hidden:) unless odisabled
 
         @parser.public_send(method, *names, *wrap_option_desc(description)) do |value|
           # This odeprecated should stick around indefinitely.
-          odeprecated "the `#{names.first}` switch", replacement, disable: disable if !replacement.nil? || disable
+          replacement_string = replacement if replacement
+          if odeprecated || odisabled
+            odeprecated "the `#{names.first}` switch", replacement_string, disable: odisabled
+          end
           value = true if names.none? { |name| name.start_with?("--[no-]") }
 
           set_switch(*names, value:, from: :args)

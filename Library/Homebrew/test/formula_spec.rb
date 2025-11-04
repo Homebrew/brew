@@ -991,12 +991,12 @@ RSpec.describe Formula do
             depends_on "intel-formula"
           end
 
-          on_big_sur do
-            depends_on "big-sur-formula"
+          on_sequoia do
+            depends_on "sequoia-formula"
           end
 
-          on_catalina :or_older do
-            depends_on "catalina-or-older-formula"
+          on_sonoma :or_older do
+            depends_on "sonoma-or-older-formula"
           end
 
           on_linux do
@@ -1008,32 +1008,35 @@ RSpec.describe Formula do
     let(:expected_variations) do
       <<~JSON
         {
-          "monterey": {
+          "tahoe": {
             "dependencies": [
               "intel-formula"
             ]
           },
-          "big_sur": {
+          "arm64_tahoe": {
+            "dependencies": []
+          },
+          "sequoia": {
             "dependencies": [
               "intel-formula",
-              "big-sur-formula"
+              "sequoia-formula"
             ]
           },
-          "arm64_big_sur": {
+          "arm64_sequoia": {
             "dependencies": [
-              "big-sur-formula"
+              "sequoia-formula"
             ]
           },
-          "catalina": {
-            "dependencies": [
-              "intel-formula",
-              "catalina-or-older-formula"
-            ]
-          },
-          "mojave": {
+          "sonoma": {
             "dependencies": [
               "intel-formula",
-              "catalina-or-older-formula"
+              "sonoma-or-older-formula"
+            ]
+          },
+          "ventura": {
+            "dependencies": [
+              "intel-formula",
+              "sonoma-or-older-formula"
             ]
           },
           "x86_64_linux": {
@@ -1053,7 +1056,7 @@ RSpec.describe Formula do
 
     before do
       # Use a more limited os list to shorten the variations hash
-      os_list = [:monterey, :big_sur, :catalina, :mojave, :linux]
+      os_list = [:tahoe, :sequoia, :sonoma, :ventura, :linux]
       valid_tags = os_list.product(OnSystem::ARCH_OPTIONS).filter_map do |os, arch|
         tag = Utils::Bottles::Tag.new(system: os, arch:)
         next unless tag.valid_combination?
@@ -1062,7 +1065,7 @@ RSpec.describe Formula do
       end
       stub_const("OnSystem::VALID_OS_ARCH_TAGS", valid_tags)
 
-      # For consistency, always run on Monterey and ARM
+      # For consistency, always run on Tahoe and ARM
       allow(MacOS).to receive(:version).and_return(MacOSVersion.new("12"))
       allow(Hardware::CPU).to receive(:type).and_return(:arm)
 
@@ -1764,18 +1767,18 @@ RSpec.describe Formula do
         def install
           @foo = 0
           @bar = 0
-          on_system :linux, macos: :monterey do
+          on_system :linux, macos: :tahoe do
             @foo = 1
           end
-          on_system :linux, macos: :big_sur_or_older do
+          on_system :linux, macos: :sonoma_or_older do
             @bar = 1
           end
         end
       end.new
     end
 
-    it "doesn't call code on Ventura", :needs_macos do
-      Homebrew::SimulateSystem.with os: :ventura do
+    it "doesn't call code on Sequoia", :needs_macos do
+      Homebrew::SimulateSystem.with os: :sequoia do
         f.brew { f.install }
         expect(f.foo).to eq(0)
         expect(f.bar).to eq(0)
@@ -1790,24 +1793,24 @@ RSpec.describe Formula do
       end
     end
 
-    it "calls code within `on_system :linux, macos: :monterey` on Monterey", :needs_macos do
-      Homebrew::SimulateSystem.with os: :monterey do
+    it "calls code within `on_system :linux, macos: :tahoe` on Tahoe", :needs_macos do
+      Homebrew::SimulateSystem.with os: :tahoe do
         f.brew { f.install }
         expect(f.foo).to eq(1)
         expect(f.bar).to eq(0)
       end
     end
 
-    it "calls code within `on_system :linux, macos: :big_sur_or_older` on Big Sur", :needs_macos do
-      Homebrew::SimulateSystem.with os: :big_sur do
+    it "calls code within `on_system :linux, macos: :sonoma_or_older` on Sonoma", :needs_macos do
+      Homebrew::SimulateSystem.with os: :sonoma do
         f.brew { f.install }
         expect(f.foo).to eq(0)
         expect(f.bar).to eq(1)
       end
     end
 
-    it "calls code within `on_system :linux, macos: :big_sur_or_older` on Catalina", :needs_macos do
-      Homebrew::SimulateSystem.with os: :catalina do
+    it "calls code within `on_system :linux, macos: :sonoma_or_older` on Ventura", :needs_macos do
+      Homebrew::SimulateSystem.with os: :ventura do
         f.brew { f.install }
         expect(f.foo).to eq(0)
         expect(f.bar).to eq(1)
@@ -1822,49 +1825,49 @@ RSpec.describe Formula do
 
         def install
           @test = 0
-          on_monterey :or_newer do
+          on_sequoia :or_newer do
             @test = 1
           end
-          on_big_sur do
+          on_sonoma do
             @test = 2
           end
-          on_catalina :or_older do
+          on_ventura :or_older do
             @test = 3
           end
         end
       end.new
     end
 
-    it "only calls code within `on_monterey`" do
-      Homebrew::SimulateSystem.with os: :monterey do
+    it "only calls code within `on_sequoia`" do
+      Homebrew::SimulateSystem.with os: :tahoe do
         f.brew { f.install }
         expect(f.test).to eq(1)
       end
     end
 
-    it "only calls code within `on_monterey :or_newer`" do
-      Homebrew::SimulateSystem.with os: :ventura do
+    it "only calls code within `on_sequoia :or_newer`" do
+      Homebrew::SimulateSystem.with os: :sequoia do
         f.brew { f.install }
         expect(f.test).to eq(1)
       end
     end
 
-    it "only calls code within `on_big_sur`" do
-      Homebrew::SimulateSystem.with os: :big_sur do
+    it "only calls code within `on_sonoma`" do
+      Homebrew::SimulateSystem.with os: :sonoma do
         f.brew { f.install }
         expect(f.test).to eq(2)
       end
     end
 
-    it "only calls code within `on_catalina`" do
-      Homebrew::SimulateSystem.with os: :catalina do
+    it "only calls code within `on_ventura`" do
+      Homebrew::SimulateSystem.with os: :ventura do
         f.brew { f.install }
         expect(f.test).to eq(3)
       end
     end
 
-    it "only calls code within `on_catalina :or_older`" do
-      Homebrew::SimulateSystem.with os: :mojave do
+    it "only calls code within `on_ventura :or_older`" do
+      Homebrew::SimulateSystem.with os: :monterey do
         f.brew { f.install }
         expect(f.test).to eq(3)
       end

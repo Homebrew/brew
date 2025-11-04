@@ -34,19 +34,12 @@ class StringInreplaceExtension
   # @api public
   sig {
     params(
-      before:           T.any(Pathname, Regexp, String),
-      after:            T.any(Pathname, String),
-      old_audit_result: T.nilable(T::Boolean),
-      audit_result:     T::Boolean,
+      before:       T.any(Pathname, Regexp, String),
+      after:        T.any(Pathname, String),
+      audit_result: T::Boolean,
     ).returns(T.nilable(String))
   }
-  def gsub!(before, after, old_audit_result = nil, audit_result: true)
-    # NOTE: must check for `#nil?` and not `#blank?`, or else `old_audit_result = false` will not call `odisabled`.
-    unless old_audit_result.nil?
-      odisabled "gsub!(before, after, #{old_audit_result})",
-                "gsub!(before, after, audit_result: #{old_audit_result})"
-      audit_result = old_audit_result
-    end
+  def gsub!(before, after, audit_result: true)
     before = before.to_s if before.is_a?(Pathname)
     result = inreplace_string.gsub!(before, after.to_s)
     errors << "expected replacement of #{before.inspect} with #{after.inspect}" if audit_result && result.nil?

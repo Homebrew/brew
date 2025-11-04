@@ -330,5 +330,3 @@ We are interested in contributions for other packages' installers/checkers/dumpe
 - be able to dump the installed software to a format that can be stored in a `Brewfile`
 - not require `sudo` to install (casks are an exception here)
 - be extremely widely used
-
-Note: based on these criteria, we would not accept e.g. Whalebrew today.

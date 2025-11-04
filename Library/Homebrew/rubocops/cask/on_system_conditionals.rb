@@ -14,14 +14,14 @@ module RuboCop
       # ```ruby
       # # bad
       # cask 'foo' do
-      #   if MacOS.version == :high_sierra
+      #   if MacOS.version == :tahoe
       #     sha256 "..."
       #   end
       # end
       #
       # # good
       # cask 'foo' do
-      #   on_high_sierra do
+      #   on_tahoe do
       #     sha256 "..."
       #   end
       # end

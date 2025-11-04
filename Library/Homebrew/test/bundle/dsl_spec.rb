@@ -23,7 +23,6 @@ RSpec.describe Homebrew::Bundle::Dsl do
         cask 'java' unless system '/usr/libexec/java_home --failfast'
         cask 'firefox', args: { appdir: '~/my-apps/Applications' }
         mas '1Password', id: 443987910
-        whalebrew 'whalebrew/wget'
         vscode 'GitHub.codespaces'
         go 'github.com/charmbracelet/crush'
       EOS
@@ -53,9 +52,8 @@ RSpec.describe Homebrew::Bundle::Dsl do
       expect(dsl.entries[8].options).to eql(args: { appdir: "~/my-apps/Applications" }, full_name: "firefox")
       expect(dsl.entries[9].name).to eql("1Password")
       expect(dsl.entries[9].options).to eql(id: 443_987_910)
-      expect(dsl.entries[10].name).to eql("whalebrew/wget")
-      expect(dsl.entries[11].name).to eql("GitHub.codespaces")
-      expect(dsl.entries[12].name).to eql("github.com/charmbracelet/crush")
+      expect(dsl.entries[10].name).to eql("GitHub.codespaces")
+      expect(dsl.entries[11].name).to eql("github.com/charmbracelet/crush")
     end
   end
 

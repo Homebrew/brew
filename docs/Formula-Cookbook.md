@@ -696,10 +696,10 @@ on_linux do
 end
 ```
 
-Components can also be declared for specific macOS versions or version ranges. For example, to declare a dependency only on High Sierra, nest the `depends_on` call inside an `on_high_sierra` block. Add an `:or_older` or `:or_newer` parameter to the `on_high_sierra` method to add the dependency to all macOS versions that meet the condition. For example, to add `gettext` as a build dependency on Mojave and all later macOS versions, use:
+Components can also be declared for specific macOS versions or version ranges. For example, to declare a dependency only on High Sierra, nest the `depends_on` call inside an `on_sequoia` block. Add an `:or_older` or `:or_newer` parameter to the `on_sequoia` method to add the dependency to all macOS versions that meet the condition. For example, to add `gettext` as a build dependency on Mojave and all later macOS versions, use:
 
 ```ruby
-on_mojave :or_newer do
+on_sequoia :or_newer do
   depends_on "gettext" => :build
 end
 ```

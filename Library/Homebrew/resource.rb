@@ -167,17 +167,6 @@ class Resource
     @livecheck_defined == true
   end
 
-  # Whether a livecheck specification is defined or not. This is a legacy alias
-  # for `#livecheck_defined?`.
-  #
-  # It returns `true` when a `livecheck` block is present in the {Resource}
-  # and `false` otherwise.
-  sig { returns(T::Boolean) }
-  def livecheckable?
-    odisabled "`livecheckable?`", "`livecheck_defined?`"
-    @livecheck_defined == true
-  end
-
   def sha256(val)
     @checksum = Checksum.new(val)
   end

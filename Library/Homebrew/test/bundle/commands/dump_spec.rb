@@ -5,13 +5,12 @@ require "bundle/commands/dump"
 require "bundle/cask_dumper"
 require "bundle/formula_dumper"
 require "bundle/tap_dumper"
-require "bundle/whalebrew_dumper"
 require "bundle/vscode_extension_dumper"
 
 RSpec.describe Homebrew::Bundle::Commands::Dump do
   subject(:dump) do
     described_class.run(global:, file: nil, describe: false, force:, no_restart: false, taps: true, formulae: true,
-                        casks: true, mas: true, whalebrew: true, vscode: true, go: true)
+                        casks: true, mas: true, vscode: true, go: true)
   end
 
   let(:force) { false }
@@ -21,7 +20,6 @@ RSpec.describe Homebrew::Bundle::Commands::Dump do
     Homebrew::Bundle::CaskDumper.reset!
     Homebrew::Bundle::FormulaDumper.reset!
     Homebrew::Bundle::TapDumper.reset!
-    Homebrew::Bundle::WhalebrewDumper.reset!
     Homebrew::Bundle::VscodeExtensionDumper.reset!
   end
 
@@ -41,7 +39,6 @@ RSpec.describe Homebrew::Bundle::Commands::Dump do
       expect(Homebrew::Bundle::TapDumper).not_to receive(:dump)
       expect(Homebrew::Bundle::FormulaDumper).not_to receive(:dump)
       expect(Homebrew::Bundle::CaskDumper).not_to receive(:dump)
-      expect(Homebrew::Bundle::WhalebrewDumper).not_to receive(:dump)
       expect do
         dump
       end.to raise_error(RuntimeError)
@@ -62,7 +59,6 @@ RSpec.describe Homebrew::Bundle::Commands::Dump do
       allow(DevelopmentTools).to receive_messages(needs_libc_formula?: false, needs_compiler_formula?: false)
 
       stub_formula_loader formula("mas") { url "mas-1.0" }
-      stub_formula_loader formula("whalebrew") { url "whalebrew-1.0" }
     end
 
     it "doesn't raise error" do

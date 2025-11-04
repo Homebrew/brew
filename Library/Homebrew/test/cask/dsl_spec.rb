@@ -500,11 +500,11 @@ RSpec.describe Cask::DSL, :cask, :no_api do
       end
     end
 
-    context "with deprecated conflicts_with key" do
-      let(:token) { "conflicts-with-deprecated-key" }
+    context "with disabled conflicts_with key" do
+      let(:token) { "conflicts-with-disabled-key" }
 
-      it "loads but shows deprecation warning for deprecated key" do
-        expect { cask.conflicts_with }.to raise_error(Cask::CaskInvalidError, /is deprecated/)
+      it "loads but shows disabled warning for disabled key" do
+        expect { cask.conflicts_with }.to raise_error(Cask::CaskInvalidError, /is disabled/)
       end
     end
   end

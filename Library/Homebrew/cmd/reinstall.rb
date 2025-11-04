@@ -87,11 +87,9 @@ module Homebrew
             description: "Require all casks to have a checksum.",
             env:         :cask_opts_require_sha,
           }],
-          # odeprecated deprecate for 4.7.0
           [:switch, "--[no-]quarantine", {
-            description: "Disable/enable quarantining of downloads (default: enabled).",
             env:         :cask_opts_quarantine,
-            hidden:      true,
+            odeprecated: true,
           }],
           [:switch, "--adopt", {
             description: "Adopt existing artifacts in the destination that are identical to those being installed. " \

@@ -5,14 +5,13 @@ require "bundle/commands/list"
 
 RSpec.describe Homebrew::Bundle::Commands::List do
   subject(:list) do
-    described_class.run(global: false, file: nil, formulae:, casks:, taps:, mas:, whalebrew:, vscode:, go:)
+    described_class.run(global: false, file: nil, formulae:, casks:, taps:, mas:, vscode:, go:)
   end
 
   let(:formulae) { true }
   let(:casks) { false }
   let(:taps) { false }
   let(:mas) { false }
-  let(:whalebrew) { false }
   let(:vscode) { false }
   let(:go) { false }
 
@@ -28,7 +27,6 @@ RSpec.describe Homebrew::Bundle::Commands::List do
           brew 'mysql', conflicts_with: ['mysql56']
           cask 'google-chrome'
           mas '1Password', id: 443987910
-          whalebrew 'whalebrew/imagemagick'
           vscode 'shopify.ruby-lsp'
           go 'github.com/charmbracelet/crush'
         EOS
@@ -41,13 +39,12 @@ RSpec.describe Homebrew::Bundle::Commands::List do
 
     describe "limiting when certain options are passed" do
       types_and_deps = {
-        taps:      "phinze/cask",
-        formulae:  "mysql",
-        casks:     "google-chrome",
-        mas:       "1Password",
-        whalebrew: "whalebrew/imagemagick",
-        vscode:    "shopify.ruby-lsp",
-        go:        "github.com/charmbracelet/crush",
+        taps:     "phinze/cask",
+        formulae: "mysql",
+        casks:    "google-chrome",
+        mas:      "1Password",
+        vscode:   "shopify.ruby-lsp",
+        go:       "github.com/charmbracelet/crush",
       }
 
       combinations = 1.upto(types_and_deps.length).flat_map do |i|
@@ -65,7 +62,6 @@ RSpec.describe Homebrew::Bundle::Commands::List do
           let(:casks) { args_hash.fetch(:casks, false) }
           let(:taps) { args_hash.fetch(:taps, false) }
           let(:mas) { args_hash.fetch(:mas, false) }
-          let(:whalebrew) { args_hash.fetch(:whalebrew, false) }
           let(:vscode) { args_hash.fetch(:vscode, false) }
           let(:go) { args_hash.fetch(:go, false) }
 

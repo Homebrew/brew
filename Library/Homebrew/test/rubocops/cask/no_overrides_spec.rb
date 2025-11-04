@@ -17,7 +17,7 @@ RSpec.describe RuboCop::Cop::Cask::NoOverrides, :config do
   it "accepts when there are no top-level standalone stanzas" do
     expect_no_offenses <<~CASK
       cask 'foo' do
-        on_mojave :or_later do
+        on_sequoia :or_later do
           version :latest
         end
       end
@@ -46,7 +46,7 @@ RSpec.describe RuboCop::Cop::Cask::NoOverrides, :config do
         arch arm: "arm64", intel: "x86"
         version '1.2.3'
 
-        on_mojave :or_later do
+        on_sequoia :or_later do
           sha256 "aaa"
 
           url "https://brew.sh/foo-\#{version}-\#{arch}.pkg"
@@ -60,7 +60,7 @@ RSpec.describe RuboCop::Cop::Cask::NoOverrides, :config do
       cask 'foo' do
         version '0.99,123.3'
 
-        on_mojave :or_later do
+        on_sequoia :or_later do
           url "https://brew.sh/foo-\#{version.csv.first}-\#{version.csv.second}.pkg"
         end
       end
@@ -74,7 +74,7 @@ RSpec.describe RuboCop::Cop::Cask::NoOverrides, :config do
 
         version '0.99,123.3'
 
-        on_mojave :or_later do
+        on_sequoia :or_later do
           url "https://brew.sh/foo-\#{arch}-\#{version.csv.first}-\#{version.csv.last}.pkg"
 
           livecheck do
@@ -148,7 +148,7 @@ RSpec.describe RuboCop::Cop::Cask::NoOverrides, :config do
         version '2.3.4'
         ^^^^^^^^^^^^^^^ Do not use a top-level `version` stanza as the default. Add it to an `on_{system}` block instead. Use `:or_older` or `:or_newer` to specify a range of macOS versions.
 
-        on_mojave :or_older do
+        on_sequoia :or_older do
           version '1.2.3'
         end
 

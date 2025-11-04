@@ -1225,7 +1225,7 @@ To adjust the installed version depending on the current macOS release, use a se
 
 ```ruby
 cask "calibre" do
-  on_high_sierra :or_older do
+  on_sonoma :or_older do
     version "3.48.0"
     sha256 "68829cd902b8e0b2b7d5cf7be132df37bcc274a1e5720b4605d2dd95f3a29168"
 
@@ -1233,13 +1233,10 @@ cask "calibre" do
       skip "Legacy version"
     end
   end
-  on_mojave do
+  on_sequoia do
     # ...
   end
-  on_catalina do
-    # ...
-  end
-  on_big_sur :or_newer do
+  on_tahoe :or_newer do
     version "6.25.0"
     sha256 "a7ed19ae0526630ccb138b9afee6dc5169904180b02f7a3089e78d3e0022753b"
 

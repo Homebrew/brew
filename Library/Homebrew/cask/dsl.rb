@@ -105,7 +105,6 @@ module Cask
       :disable_replacement_formula,
       :livecheck,
       :livecheck_defined?,
-      :livecheckable?, # TODO: remove once `#livecheckable?` was odisabled and is now removed
       :no_autobump!,
       :autobump?,
       :no_autobump_message,
@@ -575,14 +574,6 @@ module Cask
       @livecheck
     end
 
-    # Whether the cask contains a `livecheck` block. This is a legacy alias
-    # for `#livecheck_defined?`.
-    sig { returns(T::Boolean) }
-    def livecheckable?
-      odisabled "`livecheckable?`", "`livecheck_defined?`"
-      @livecheck_defined == true
-    end
-
     # Excludes the cask from autobump list.
     #
     # TODO: limit this method to the official taps only
@@ -623,9 +614,6 @@ module Cask
       if [replacement, replacement_formula, replacement_cask].filter_map(&:presence).length > 1
         raise ArgumentError, "more than one of replacement, replacement_formula and/or replacement_cask specified!"
       end
-
-      # odeprecate: remove this remapping when the :unsigned reason is removed
-      because = :fails_gatekeeper_check if because == :unsigned
 
       if replacement
         odeprecated(

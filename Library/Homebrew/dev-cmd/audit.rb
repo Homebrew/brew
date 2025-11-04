@@ -48,14 +48,6 @@ module Homebrew
                description: "Run various additional style checks to determine if a new formula or cask is eligible " \
                             "for Homebrew. This should be used when creating new formulae or casks and implies " \
                             "`--strict` and `--online`."
-        switch "--new-formula",
-               replacement: "--new",
-               disable:     true,
-               hidden:      true
-        switch "--new-cask",
-               replacement: "--new",
-               disable:     true,
-               hidden:      true
         switch "--[no-]signing",
                description: "Audit for app signatures, which are required by macOS on ARM."
         switch "--token-conflicts",
@@ -106,7 +98,7 @@ module Homebrew
 
       sig { override.void }
       def run
-        odeprecated "`brew audit --token-conflicts`" if args.token_conflicts?
+        odisabled "`brew audit --token-conflicts`" if args.token_conflicts?
 
         Formulary.enable_factory_cache!
 

@@ -4,9 +4,8 @@
 raise "HOMEBREW_BREW_FILE was not exported! Please call bin/brew directly!" unless ENV["HOMEBREW_BREW_FILE"]
 
 # The path to the executable that should be used to run `brew`.
-# This may be HOMEBREW_ORIGINAL_BREW_FILE or HOMEBREW_BREW_WRAPPER depending on
-# the system configuration. Favour this instead of running `brew` and expecting
-# it to be in the `PATH`.
+# This may be HOMEBREW_ORIGINAL_BREW_FILE depending on the system configuration.
+# Favour this instead of running `brew` and expecting it to be in the `PATH`.
 # @api public
 HOMEBREW_BREW_FILE = Pathname(ENV.fetch("HOMEBREW_BREW_FILE")).freeze
 

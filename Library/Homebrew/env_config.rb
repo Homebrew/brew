@@ -92,12 +92,6 @@ module Homebrew
         description: "Use this URL as the Homebrew/brew `git`(1) remote.",
         default:     HOMEBREW_BREW_DEFAULT_GIT_REMOTE,
       },
-      HOMEBREW_BREW_WRAPPER:                     {
-        description: "If set, use wrapper to call `brew` rather than auto-detecting it.",
-        # We use backticks to render "Deprecated:" in bold.
-        # TODO: uncomment line below and remove the line above when odeprecated.
-        # description: "`Deprecated:` If set, use wrapper to call `brew` rather than auto-detecting it.",
-      },
       HOMEBREW_BROWSER:                          {
         description:  "Use this as the browser when opening project homepages.",
         default_text: "`$BROWSER` or the OS's default browser.",
@@ -412,10 +406,7 @@ module Homebrew
         boolean:     true,
       },
       HOMEBREW_NO_FORCE_BREW_WRAPPER:            {
-        description: "If set, disables `$HOMEBREW_FORCE_BREW_WRAPPER` behaviour, even if set.",
-        # We use backticks to render "Deprecated:" in bold.
-        # TODO: uncomment line below and remove the line above when odeprecated.
-        # description: "`Deprecated:` If set, disables `$HOMEBREW_FORCE_BREW_WRAPPER` behaviour, even if set.",
+        description: "`Deprecated:` If set, disables `$HOMEBREW_FORCE_BREW_WRAPPER` behaviour, even if set.",
         boolean:     true,
       },
       HOMEBREW_NO_GITHUB_API:                    {
@@ -580,23 +571,12 @@ module Homebrew
     end
 
     CUSTOM_IMPLEMENTATIONS = T.let(Set.new([
-      :HOMEBREW_BREW_WRAPPER,
       :HOMEBREW_MAKE_JOBS,
-      :HOMEBREW_NO_FORCE_BREW_WRAPPER,
       :HOMEBREW_CASK_OPTS,
       :HOMEBREW_FORBID_PACKAGES_FROM_PATHS,
     ]).freeze, T::Set[Symbol])
 
     FALSY_VALUES = T.let(%w[false no off nil 0].freeze, T::Array[String])
-
-    sig { params(env: String, env_value: T.nilable(String)).void }
-    def check_falsy_values(env, env_value)
-      return unless FALSY_VALUES.include?(env_value&.downcase)
-
-      odisabled "#{env}=#{env_value}", <<~EOS.chomp
-        #{env}=1 to enable and #{env}= (an empty value) to disable
-      EOS
-    end
 
     ENVS.each do |env, hash|
       # Needs a custom implementation.
@@ -609,10 +589,7 @@ module Homebrew
         define_method(method_name) do
           env_value = ENV.fetch(env, nil)
 
-          check_falsy_values(env, env_value)
-
-          # TODO: Uncomment the remaining part of the line below after `check_falsy_values` has been removed.
-          env_value.present? # && !FALSY_VALUES.include?(env_value.downcase)
+          env_value.present? && FALSY_VALUES.exclude?(env_value.downcase)
         end
       elsif hash[:default].present?
         define_method(method_name) do
@@ -623,25 +600,6 @@ module Homebrew
           ENV[env].presence
         end
       end
-    end
-
-    # Needs a custom implementation.
-    sig { returns(T::Boolean) }
-    def no_force_brew_wrapper?
-      # odeprecated "`HOMEBREW_NO_FORCE_BREW_WRAPPER`"
-      env = "HOMEBREW_NO_FORCE_BREW_WRAPPER"
-      env_value = ENV.fetch(env, nil)
-
-      check_falsy_values(env, env_value)
-
-      # TODO: Uncomment the remaining part of the line below after `check_falsy_values` has been removed.
-      env_value.present? # && !FALSY_VALUES.include?(env_value.downcase)
-    end
-
-    sig { returns(T.nilable(String)) }
-    def brew_wrapper
-      # odeprecated "`HOMEBREW_BREW_WRAPPER`"
-      ENV["HOMEBREW_BREW_WRAPPER"].presence
     end
 
     sig { returns(String) }

@@ -5,7 +5,6 @@ require "bundle/dsl"
 require "bundle/formula_installer"
 require "bundle/cask_installer"
 require "bundle/mac_app_store_installer"
-require "bundle/whalebrew_installer"
 require "bundle/vscode_extension_installer"
 require "bundle/go_installer"
 require "bundle/tap_installer"
@@ -37,8 +36,6 @@ module Homebrew
           when :mas
             args << entry.options[:id]
             Homebrew::Bundle::MacAppStoreInstaller
-          when :whalebrew
-            Homebrew::Bundle::WhalebrewInstaller
           when :vscode
             Homebrew::Bundle::VscodeExtensionInstaller
           when :go

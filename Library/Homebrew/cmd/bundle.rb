@@ -10,14 +10,14 @@ module Homebrew
         usage_banner <<~EOS
           `bundle` [<subcommand>]
 
-          Bundler for non-Ruby dependencies from Homebrew, Homebrew Cask, Mac App Store, Whalebrew, Visual Studio Code (and forks/variants) and Go packages.
+          Bundler for non-Ruby dependencies from Homebrew, Homebrew Cask, Mac App Store, Visual Studio Code (and forks/variants) and Go packages.
 
           `brew bundle` [`install`]:
           Install and upgrade (by default) all dependencies from the `Brewfile`.
 
           You can specify the `Brewfile` location using `--file` or by setting the `$HOMEBREW_BUNDLE_FILE` environment variable.
 
-          You can skip the installation of dependencies by adding space-separated values to one or more of the following environment variables: `$HOMEBREW_BUNDLE_BREW_SKIP`, `$HOMEBREW_BUNDLE_CASK_SKIP`, `$HOMEBREW_BUNDLE_MAS_SKIP`, `$HOMEBREW_BUNDLE_WHALEBREW_SKIP`, `$HOMEBREW_BUNDLE_TAP_SKIP`.
+          You can skip the installation of dependencies by adding space-separated values to one or more of the following environment variables: `$HOMEBREW_BUNDLE_BREW_SKIP`, `$HOMEBREW_BUNDLE_CASK_SKIP`, `$HOMEBREW_BUNDLE_MAS_SKIP`, `$HOMEBREW_BUNDLE_TAP_SKIP`.
 
           `brew bundle upgrade`:
           Shorthand for `brew bundle install --upgrade`.
@@ -46,10 +46,10 @@ module Homebrew
           Edit the `Brewfile` in your editor.
 
           `brew bundle add` <name> [...]:
-          Add entries to your `Brewfile`. Adds formulae by default. Use `--cask`, `--tap`, `--whalebrew` or `--vscode` to add the corresponding entry instead.
+          Add entries to your `Brewfile`. Adds formulae by default. Use `--cask`, `--tap` or `--vscode` to add the corresponding entry instead.
 
           `brew bundle remove` <name> [...]:
-          Remove entries that match `name` from your `Brewfile`. Use `--formula`, `--cask`, `--tap`, `--mas`, `--whalebrew` or `--vscode` to remove only entries of the corresponding type. Passing `--formula` also removes matches against formula aliases and old formula names.
+          Remove entries that match `name` from your `Brewfile`. Use `--formula`, `--cask`, `--tap`, `--mas` or `--vscode` to remove only entries of the corresponding type. Passing `--formula` also removes matches against formula aliases and old formula names.
 
           `brew bundle exec` [`--check`] <command>:
           Run an external command in an isolated build environment based on the `Brewfile` dependencies.
@@ -105,8 +105,6 @@ module Homebrew
                description: "`list`, `dump` or `cleanup` Homebrew tap dependencies."
         switch "--mas",
                description: "`list` or `dump` Mac App Store dependencies."
-        switch "--whalebrew",
-               description: "`list` or `dump` Whalebrew dependencies."
         switch "--vscode",
                description: "`list`, `dump` or `cleanup` VSCode (and forks/variants) extensions."
         switch "--go",
@@ -165,8 +163,7 @@ module Homebrew
         zap = args.zap?
         Homebrew::Bundle.upgrade_formulae = args.upgrade_formulae
 
-        no_type_args = [args.formulae?, args.casks?, args.taps?, args.mas?, args.whalebrew?, args.vscode?,
-                        args.go?].none?
+        no_type_args = [args.formulae?, args.casks?, args.taps?, args.mas?, args.vscode?, args.go?].none?
 
         if args.install?
           if [nil, "install", "upgrade"].include?(subcommand)
@@ -218,7 +215,6 @@ module Homebrew
             formulae:   args.formulae? || no_type_args,
             casks:      args.casks? || no_type_args,
             mas:        args.mas? || no_type_args,
-            whalebrew:  args.whalebrew?,
             vscode:,
             go:         args.go? || no_type_args
           )
@@ -242,25 +238,23 @@ module Homebrew
           Homebrew::Bundle::Commands::List.run(
             global:,
             file:,
-            formulae:  args.formulae? || args.all? || no_type_args,
-            casks:     args.casks? || args.all?,
-            taps:      args.taps? || args.all?,
-            mas:       args.mas? || args.all?,
-            whalebrew: args.whalebrew? || args.all?,
-            vscode:    args.vscode? || args.all?,
-            go:        args.go? || args.all?,
+            formulae: args.formulae? || args.all? || no_type_args,
+            casks:    args.casks? || args.all?,
+            taps:     args.taps? || args.all?,
+            mas:      args.mas? || args.all?,
+            vscode:   args.vscode? || args.all?,
+            go:       args.go? || args.all?,
           )
         when "add", "remove"
           # We intentionally omit the s from `brews`, `casks`, and `taps` for ease of handling later.
           type_hash = {
-            brew:      args.formulae?,
-            cask:      args.casks?,
-            tap:       args.taps?,
-            mas:       args.mas?,
-            whalebrew: args.whalebrew?,
-            vscode:    args.vscode?,
-            go:        args.go?,
-            none:      no_type_args,
+            brew:   args.formulae?,
+            cask:   args.casks?,
+            tap:    args.taps?,
+            mas:    args.mas?,
+            vscode: args.vscode?,
+            go:     args.go?,
+            none:   no_type_args,
           }
           selected_types = type_hash.select { |_, v| v }.keys
           raise UsageError, "`#{subcommand}` supports only one type of entry at a time." if selected_types.count != 1

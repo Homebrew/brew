@@ -676,7 +676,6 @@ _brew_bundle() {
       --upgrade-formulae
       --verbose
       --vscode
-      --whalebrew
       --zap
       "
       return

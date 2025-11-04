@@ -103,25 +103,13 @@ class RuboCop::Cask::AST::Stanza
   def on_catalina?; end
 
   sig { returns(T::Boolean) }
-  def on_el_capitan?; end
-
-  sig { returns(T::Boolean) }
-  def on_high_sierra?; end
-
-  sig { returns(T::Boolean) }
   def on_intel?; end
-
-  sig { returns(T::Boolean) }
-  def on_mojave?; end
 
   sig { returns(T::Boolean) }
   def on_monterey?; end
 
   sig { returns(T::Boolean) }
   def on_sequoia?; end
-
-  sig { returns(T::Boolean) }
-  def on_sierra?; end
 
   sig { returns(T::Boolean) }
   def on_sonoma?; end

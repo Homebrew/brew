@@ -90,8 +90,5 @@ class Homebrew::Cmd::Bundle::Args < Homebrew::CLI::Args
   def vscode?; end
 
   sig { returns(T::Boolean) }
-  def whalebrew?; end
-
-  sig { returns(T::Boolean) }
   def zap?; end
 end

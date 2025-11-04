@@ -137,7 +137,7 @@ and are now no longer needed.
 ### `bundle` \[*`subcommand`*\]
 
 Bundler for non-Ruby dependencies from Homebrew, Homebrew Cask, Mac App Store,
-Whalebrew, Visual Studio Code (and forks/variants) and Go packages.
+Visual Studio Code (and forks/variants) and Go packages.
 
 `brew bundle` \[`install`\]
 
@@ -149,8 +149,7 @@ You can specify the `Brewfile` location using `--file` or by setting the
 You can skip the installation of dependencies by adding space-separated values
 to one or more of the following environment variables:
 `$HOMEBREW_BUNDLE_BREW_SKIP`, `$HOMEBREW_BUNDLE_CASK_SKIP`,
-`$HOMEBREW_BUNDLE_MAS_SKIP`, `$HOMEBREW_BUNDLE_WHALEBREW_SKIP`,
-`$HOMEBREW_BUNDLE_TAP_SKIP`.
+`$HOMEBREW_BUNDLE_MAS_SKIP`, `$HOMEBREW_BUNDLE_TAP_SKIP`.
 
 `brew bundle upgrade`
 
@@ -191,14 +190,14 @@ By default, only Homebrew formula dependencies are listed.
 `brew bundle add` *`name`* \[...\]
 
 : Add entries to your `Brewfile`. Adds formulae by default. Use `--cask`,
-  `--tap`, `--whalebrew` or `--vscode` to add the corresponding entry instead.
+  `--tap` or `--vscode` to add the corresponding entry instead.
 
 `brew bundle remove` *`name`* \[...\]
 
 : Remove entries that match `name` from your `Brewfile`. Use `--formula`,
-  `--cask`, `--tap`, `--mas`, `--whalebrew` or `--vscode` to remove only entries
-  of the corresponding type. Passing `--formula` also removes matches against
-  formula aliases and old formula names.
+  `--cask`, `--tap`, `--mas` or `--vscode` to remove only entries of the
+  corresponding type. Passing `--formula` also removes matches against formula
+  aliases and old formula names.
 
 `brew bundle exec` \[`--check`\] *`command`*
 
@@ -292,10 +291,6 @@ flags which will help with finding keg-only dependencies like `openssl`,
 `--mas`
 
 : `list` or `dump` Mac App Store dependencies.
-
-`--whalebrew`
-
-: `list` or `dump` Whalebrew dependencies.
 
 `--vscode`
 
@@ -3969,10 +3964,6 @@ command execution (e.g. `$(cat file)`).
   
   *Default:* `https://github.com/Homebrew/brew`.
 
-`HOMEBREW_BREW_WRAPPER`
-
-: If set, use wrapper to call `brew` rather than auto-detecting it.
-
 `HOMEBREW_BROWSER`
 
 : Use this as the browser when opening project homepages.
@@ -4354,7 +4345,8 @@ command execution (e.g. `$(cat file)`).
 
 `HOMEBREW_NO_FORCE_BREW_WRAPPER`
 
-: If set, disables `$HOMEBREW_FORCE_BREW_WRAPPER` behaviour, even if set.
+: `Deprecated:` If set, disables `$HOMEBREW_FORCE_BREW_WRAPPER` behaviour, even
+  if set.
 
 `HOMEBREW_NO_GITHUB_API`
 

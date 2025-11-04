@@ -57,11 +57,6 @@ module Homebrew
         @which_vscode ||= which("code-insiders", ORIGINAL_PATHS)
       end
 
-      sig { returns(T::Boolean) }
-      def whalebrew_installed?
-        @whalebrew_installed ||= which_formula?("whalebrew")
-      end
-
       sig { returns(T.nilable(Pathname)) }
       def which_go
         @which_go ||= which("go", ORIGINAL_PATHS)
@@ -149,7 +144,6 @@ module Homebrew
         @vscode_installed = T.let(nil, T.nilable(T::Boolean))
         @which_vscode = T.let(nil, T.nilable(Pathname))
         @which_go = T.let(nil, T.nilable(Pathname))
-        @whalebrew_installed = T.let(nil, T.nilable(T::Boolean))
         @go_installed = T.let(nil, T.nilable(T::Boolean))
         @cask_installed = T.let(nil, T.nilable(T::Boolean))
         @formula_versions_from_env = T.let(nil, T.nilable(T::Hash[String, String]))

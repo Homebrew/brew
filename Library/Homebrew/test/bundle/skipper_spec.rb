@@ -11,7 +11,6 @@ RSpec.describe Homebrew::Bundle::Skipper do
   before do
     allow(ENV).to receive(:[]).and_return(nil)
     allow(ENV).to receive(:[]).with("HOMEBREW_BUNDLE_BREW_SKIP").and_return("mysql")
-    allow(ENV).to receive(:[]).with("HOMEBREW_BUNDLE_WHALEBREW_SKIP").and_return("whalebrew/imagemagick")
     allow(ENV).to receive(:[]).with("HOMEBREW_BUNDLE_TAP_SKIP").and_return("org/repo")
     allow(Formatter).to receive(:warning)
     skipper.instance_variable_set(:@skipped_entries, nil)
@@ -44,14 +43,6 @@ RSpec.describe Homebrew::Bundle::Skipper do
 
       it "returns false" do
         expect(skipper.skip?(entry)).to be false
-      end
-    end
-
-    context "with a listed whalebrew image" do
-      let(:entry) { Homebrew::Bundle::Dsl::Entry.new(:whalebrew, "whalebrew/imagemagick") }
-
-      it "returns true" do
-        expect(skipper.skip?(entry)).to be true
       end
     end
 

@@ -71,12 +71,6 @@ module Homebrew
         @entries << Entry.new(:mas, name, id:)
       end
 
-      def whalebrew(name)
-        raise "name(#{name.inspect}) should be a String object" unless name.is_a? String
-
-        @entries << Entry.new(:whalebrew, name)
-      end
-
       def vscode(name)
         raise "name(#{name.inspect}) should be a String object" unless name.is_a? String
 

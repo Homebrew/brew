@@ -1629,7 +1629,7 @@ class Formula
 
   sig { returns(T::Boolean) }
   def skip_cxxstdlib_check?
-    # odeprecated "`Formula#skip_cxxstdlib_check?`"
+    odeprecated "`Formula#skip_cxxstdlib_check?`"
     false
   end
 
@@ -3705,17 +3705,6 @@ class Formula
       @livecheck_defined == true
     end
 
-    # Checks whether a `livecheck` specification is defined or not. This is a
-    # legacy alias for `#livecheck_defined?`.
-    #
-    # It returns `true` when a `livecheck` block is present in the {Formula}
-    # and `false` otherwise.
-    sig { returns(T::Boolean) }
-    def livecheckable?
-      odisabled "`livecheckable?`", "`livecheck_defined?`"
-      @livecheck_defined == true
-    end
-
     # Checks whether a service specification is defined or not.
     #
     # It returns `true` when a service block is present in the {Formula}
@@ -4108,7 +4097,7 @@ class Formula
     # ```ruby
     # depends_on "sqlite" if MacOS.version >= :catalina
     # depends_on xcode: :build # If the formula really needs full Xcode to compile.
-    # depends_on macos: :mojave # Needs at least macOS Mojave (10.14) to run.
+    # depends_on macos: :sequoia # Needs at least macOS Sequoia (15) to run.
     # ```
     #
     # It is possible to only depend on something if
@@ -4347,7 +4336,7 @@ class Formula
     # @api public
     sig { params(check_type: Symbol).void }
     def cxxstdlib_check(check_type)
-      # odeprecated "`cxxstdlib_check :skip`"
+      odeprecated "`cxxstdlib_check :skip`"
       define_method(:skip_cxxstdlib_check?) { true } if check_type == :skip
     end
 

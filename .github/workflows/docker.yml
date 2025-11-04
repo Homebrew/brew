@@ -19,8 +19,7 @@ defaults:
     shell: bash -xeuo pipefail {0}
 
 env:
-  # odeprecated: remove 20.04 image in Homebrew >=4.7
-  VERSIONS: '["20.04", "22.04", "24.04"]'
+  VERSIONS: '["22.04", "24.04"]'
 
 jobs:
   generate-tags:
@@ -151,13 +150,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # odeprecated: remove 20.04 image in Homebrew >=4.7
-        version: ["20.04", "22.04", "24.04"]
+        version: ["22.04", "24.04"]
         arch: ["x86_64", "arm64"]
-        exclude:
-          # odeprecated: remove 20.04 image in Homebrew >=4.7
-          - version: "20.04"
-            arch: "arm64"
+
     steps:
       - name: Checkout
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
@@ -179,11 +174,6 @@ jobs:
           VERSION: ${{ matrix.version }}
           PUSH: ${{ needs.generate-tags.outputs.push }}
         run: |
-          # odeprecated: remove 20.04 image in Homebrew >=4.7
-          if [[ "${VERSION}" == "20.04" ]]; then
-            echo "The homebrew/ubuntu20.04 image is deprecated and will soon be retired. Use homebrew/ubuntu24.04 or homebrew/brew." > .docker-deprecate
-          fi
-
           filter="$(printf '.["%s"]' "${VERSION}")"
           echo "push=$(jq --raw-output "${filter}" <<<"${PUSH}")" >>"${GITHUB_OUTPUT}"
 
@@ -208,11 +198,6 @@ jobs:
         run: |
           if [[ "${ARCH}" == "arm64" ]]; then
             echo "HOMEBREW_ARM64_TESTING=1" >> "$GITHUB_ENV"
-          fi
-
-          # odeprecated: remove 20.04 in Homebrew >=4.7
-          if [[ "${VERSION}" == "20.04" ]]; then
-            echo "HOMEBREW_GLIBC_TESTING=1" >> "$GITHUB_ENV"
           fi
         env:
           VERSION: ${{ matrix.version }}
@@ -305,10 +290,7 @@ jobs:
           done <<<"$(jq --raw-output "${filter}" <<<"${TAGS}")"
 
           image_args=("ghcr.io/homebrew/ubuntu${VERSION}@sha256:$(<"${RUNNER_TEMP}/digests/${VERSION}-x86_64")")
-          # odeprecated: remove 20.04 image in Homebrew >=4.7
-          if [[ "${VERSION}" != 20.04 ]]; then
-            image_args+=("ghcr.io/homebrew/ubuntu${VERSION}@sha256:$(<"${RUNNER_TEMP}/digests/${VERSION}-arm64")")
-          fi
+          image_args+=("ghcr.io/homebrew/ubuntu${VERSION}@sha256:$(<"${RUNNER_TEMP}/digests/${VERSION}-arm64")")
 
           attempts=0
           until docker buildx imagetools create "${tag_args[@]}" "${image_args[@]}"; do

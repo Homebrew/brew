@@ -88,7 +88,7 @@ module Language
 
     sig { params(prefix: Pathname, python: T.any(String, Pathname)).returns(T::Array[String]) }
     def self.setup_install_args(prefix, python = "python3")
-      # odeprecated "Language::Python.setup_install_args", "pip and `std_pip_args`"
+      odeprecated "Language::Python.setup_install_args", "pip and `std_pip_args`"
       shim = <<~PYTHON
         import setuptools, tokenize
         __file__ = 'setup.py'
