@@ -1,5 +1,5 @@
 ---
-last_review_date: "1970-01-01"
+last_review_date: "08-NOV-2025"
 ---
 
 # `brew` Shell Completion
