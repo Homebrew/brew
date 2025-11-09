@@ -1,20 +1,33 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
 
 module Homebrew
   module TestBot
     class FormulaeDetect < Test
+      sig { returns(T::Array[String]) }
       attr_reader :testing_formulae, :added_formulae, :deleted_formulae
 
+      sig {
+        params(
+          argument:  String,
+          tap:       T.nilable(Tap),
+          git:       String,
+          dry_run:   T::Boolean,
+          fail_fast: T::Boolean,
+          verbose:   T::Boolean,
+        ).void
+      }
       def initialize(argument, tap:, git:, dry_run:, fail_fast:, verbose:)
         super(tap:, git:, dry_run:, fail_fast:, verbose:)
 
         @argument = argument
-        @added_formulae = []
-        @deleted_formulae = []
-        @formulae_to_fetch = []
+        @testing_formulae = T.let([], T::Array[String])
+        @added_formulae = T.let([], T::Array[String])
+        @deleted_formulae = T.let([], T::Array[String])
+        @formulae_to_fetch = T.let([], T::Array[String])
       end
 
+      sig { params(args: Cmd::TestBotCmd::Args).void }
       def run!(args:)
         detect_formulae!(args:)
 
@@ -30,6 +43,7 @@ module Homebrew
 
       private
 
+      sig { params(args: Cmd::TestBotCmd::Args).void }
       def detect_formulae!(args:)
         test_header(:FormulaeDetect, method: :detect_formulae!)
 
@@ -132,11 +146,11 @@ module Homebrew
         if tap && diff_start_sha1 != diff_end_sha1
           formula_path = tap.formula_dir.to_s
           @added_formulae +=
-            diff_formulae(diff_start_sha1, diff_end_sha1, formula_path, "A")
+            diff_formulae(diff_start_sha1, diff_end_sha1, formula_path, "A") || []
           modified_formulae +=
-            diff_formulae(diff_start_sha1, diff_end_sha1, formula_path, "M")
+            diff_formulae(diff_start_sha1, diff_end_sha1, formula_path, "M") || []
           @deleted_formulae +=
-            diff_formulae(diff_start_sha1, diff_end_sha1, formula_path, "D")
+            diff_formulae(diff_start_sha1, diff_end_sha1, formula_path, "D") || []
         end
 
         # If a formula is both added and deleted: it's actually modified.
@@ -205,6 +219,7 @@ module Homebrew
         EOS
       end
 
+      sig { params(formula_name: String, args: Cmd::TestBotCmd::Args).returns(T.nilable(String)) }
       def safe_formula_canonical_name(formula_name, args:)
         Homebrew.with_no_api_env do
           Formulary.factory(formula_name).full_name
@@ -221,14 +236,26 @@ module Homebrew
         puts e.backtrace if args.debug?
       end
 
+      sig { params(ref: String).returns(String) }
       def rev_parse(ref)
         Utils.popen_read(git, "-C", repository, "rev-parse", "--verify", ref).strip
       end
 
+      sig { returns(String) }
       def current_sha1
         rev_parse("HEAD")
       end
 
+      sig {
+        params(
+          start_revision: String,
+          end_revision:   String,
+          path:           String,
+          filter:         String,
+        ).returns(
+          T.nilable(T::Array[String]),
+        )
+      }
       def diff_formulae(start_revision, end_revision, path, filter)
         return unless tap
 

@@ -1,11 +1,13 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
 
 module Homebrew
   module TestBot
     class BottlesFetch < TestFormulae
+      sig { returns(T::Array[String]) }
       attr_accessor :testing_formulae
 
+      sig { params(args: Homebrew::CLI::Args).void }
       def run!(args:)
         info_header "Testing formulae:"
         puts testing_formulae
@@ -19,6 +21,7 @@ module Homebrew
 
       private
 
+      sig { params(formula_name: String, args: Homebrew::CLI::Args).void }
       def fetch_bottles!(formula_name, args:)
         test_header(:BottlesFetch, method: "fetch_bottles!(#{formula_name})")
 

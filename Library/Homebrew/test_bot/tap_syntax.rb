@@ -1,9 +1,10 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
 
 module Homebrew
   module TestBot
     class TapSyntax < Test
+      sig { params(args: Homebrew::Cmd::TestBotCmd::Args).void }
       def run!(args:)
         test_header(:TapSyntax)
         return unless tap.installed?
