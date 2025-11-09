@@ -22,14 +22,16 @@ end.freeze
 RSpec.describe Homebrew::Bundle::Commands::List do
   subject(:list) do
     described_class.run(
-      global:   false,
-      file:     nil,
-      formulae: formulae,
-      casks:    casks,
-      taps:     taps,
-      mas:      mas,
-      vscode:   vscode,
-      go:       go,
+      global:          false,
+      file:            nil,
+      formulae:        formulae,
+      casks:           casks,
+      taps:            taps,
+      mas:             mas,
+      vscode:          vscode,
+      go:              go,
+      flatpak:         false,
+      flatpak_remotes: false,
     )
   end
 

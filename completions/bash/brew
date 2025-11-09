@@ -675,6 +675,8 @@ _brew_bundle() {
       --debug
       --describe
       --file
+      --flatpak
+      --flatpak-remotes
       --force
       --formula
       --global
@@ -682,6 +684,8 @@ _brew_bundle() {
       --help
       --install
       --mas
+      --no-flatpak
+      --no-flatpak-remotes
       --no-go
       --no-restart
       --no-upgrade

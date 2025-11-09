@@ -7,6 +7,8 @@ require "bundle/cask_installer"
 require "bundle/mac_app_store_installer"
 require "bundle/vscode_extension_installer"
 require "bundle/go_installer"
+require "bundle/flatpak_installer"
+require "bundle/flatpak_remote_installer"
 require "bundle/tap_installer"
 require "bundle/skipper"
 
@@ -40,6 +42,13 @@ module Homebrew
             Homebrew::Bundle::VscodeExtensionInstaller
           when :go
             Homebrew::Bundle::GoInstaller
+          when :flatpak
+            options = entry.options
+            Homebrew::Bundle::FlatpakInstaller
+          when :flatpak_remote
+            verb = "Adding"
+            options = entry.options
+            Homebrew::Bundle::FlatpakRemoteInstaller
           when :tap
             verb = "Tapping"
             options = entry.options

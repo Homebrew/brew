@@ -48,7 +48,7 @@ RSpec.describe Homebrew::Bundle::Dumper do
   it "generates output" do
     expect(dumper.build_brewfile(
              describe: false, no_restart: false, formulae: true, taps: true, casks: true, mas: true,
-             vscode: true, go: true
+             vscode: true, go: true, flatpak: false, flatpak_remotes: false
            )).to eql("cask \"google-chrome\"\ncask \"java\"\ncask \"iterm2-beta\"\n")
   end
 

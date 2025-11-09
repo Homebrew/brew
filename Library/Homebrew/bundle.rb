@@ -67,6 +67,16 @@ module Homebrew
         @go_installed ||= which_go.present?
       end
 
+      sig { returns(T.nilable(Pathname)) }
+      def which_flatpak
+        @which_flatpak ||= which("flatpak", ORIGINAL_PATHS)
+      end
+
+      sig { returns(T::Boolean) }
+      def flatpak_installed?
+        @flatpak_installed ||= which_flatpak.present?
+      end
+
       sig { returns(T::Boolean) }
       def cask_installed?
         @cask_installed ||= File.directory?("#{HOMEBREW_PREFIX}/Caskroom") &&
@@ -145,6 +155,8 @@ module Homebrew
         @which_vscode = T.let(nil, T.nilable(Pathname))
         @which_go = T.let(nil, T.nilable(Pathname))
         @go_installed = T.let(nil, T.nilable(T::Boolean))
+        @which_flatpak = T.let(nil, T.nilable(Pathname))
+        @flatpak_installed = T.let(nil, T.nilable(T::Boolean))
         @cask_installed = T.let(nil, T.nilable(T::Boolean))
         @formula_versions_from_env = T.let(nil, T.nilable(T::Hash[String, String]))
         @upgrade_formulae = T.let(nil, T.nilable(T::Array[String]))

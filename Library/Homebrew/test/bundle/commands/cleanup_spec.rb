@@ -128,6 +128,16 @@ RSpec.describe Homebrew::Bundle::Commands::Cleanup do
       allow(Homebrew::Bundle::VscodeExtensionDumper).to receive(:extensions).and_return(%w[z vscodeextension1])
       expect(described_class.vscode_extensions_to_uninstall).to eql(%w[z])
     end
+
+    it "computes which flatpaks to uninstall" do
+      allow(OS).to receive(:mac?).and_return(false)
+      allow_any_instance_of(Pathname).to receive(:read).and_return <<~EOS
+        flatpak 'org.gnome.Calculator'
+      EOS
+      allow(Homebrew::Bundle::FlatpakDumper).to receive(:packages).and_return(%w[org.gnome.Calculator
+                                                                                 org.mozilla.firefox])
+      expect(described_class.flatpaks_to_uninstall).to eql(%w[org.mozilla.firefox])
+    end
   end
 
   context "when there are no formulae to uninstall and no taps to untap" do
@@ -136,7 +146,9 @@ RSpec.describe Homebrew::Bundle::Commands::Cleanup do
       allow(described_class).to receive_messages(casks_to_uninstall:             [],
                                                  formulae_to_uninstall:          [],
                                                  taps_to_untap:                  [],
-                                                 vscode_extensions_to_uninstall: [])
+                                                 vscode_extensions_to_uninstall: [],
+                                                 flatpaks_to_uninstall:          [],
+                                                 flatpak_remotes_to_remove:      [])
     end
 
     it "does nothing" do
@@ -152,7 +164,9 @@ RSpec.describe Homebrew::Bundle::Commands::Cleanup do
       allow(described_class).to receive_messages(casks_to_uninstall:             %w[a b],
                                                  formulae_to_uninstall:          [],
                                                  taps_to_untap:                  [],
-                                                 vscode_extensions_to_uninstall: [])
+                                                 vscode_extensions_to_uninstall: [],
+                                                 flatpaks_to_uninstall:          [],
+                                                 flatpak_remotes_to_remove:      [])
     end
 
     it "uninstalls casks" do
@@ -174,7 +188,9 @@ RSpec.describe Homebrew::Bundle::Commands::Cleanup do
       allow(described_class).to receive_messages(casks_to_uninstall:             %w[a b],
                                                  formulae_to_uninstall:          [],
                                                  taps_to_untap:                  [],
-                                                 vscode_extensions_to_uninstall: [])
+                                                 vscode_extensions_to_uninstall: [],
+                                                 flatpaks_to_uninstall:          [],
+                                                 flatpak_remotes_to_remove:      [])
     end
 
     it "uninstalls casks" do
@@ -196,7 +212,9 @@ RSpec.describe Homebrew::Bundle::Commands::Cleanup do
       allow(described_class).to receive_messages(casks_to_uninstall:             [],
                                                  formulae_to_uninstall:          %w[a b],
                                                  taps_to_untap:                  [],
-                                                 vscode_extensions_to_uninstall: [])
+                                                 vscode_extensions_to_uninstall: [],
+                                                 flatpaks_to_uninstall:          [],
+                                                 flatpak_remotes_to_remove:      [])
     end
 
     it "uninstalls formulae" do
@@ -218,7 +236,9 @@ RSpec.describe Homebrew::Bundle::Commands::Cleanup do
       allow(described_class).to receive_messages(casks_to_uninstall:             [],
                                                  formulae_to_uninstall:          [],
                                                  taps_to_untap:                  %w[a b],
-                                                 vscode_extensions_to_uninstall: [])
+                                                 vscode_extensions_to_uninstall: [],
+                                                 flatpaks_to_uninstall:          [],
+                                                 flatpak_remotes_to_remove:      [])
     end
 
     it "untaps taps" do
@@ -241,7 +261,9 @@ RSpec.describe Homebrew::Bundle::Commands::Cleanup do
       allow(described_class).to receive_messages(casks_to_uninstall:             [],
                                                  formulae_to_uninstall:          [],
                                                  taps_to_untap:                  [],
-                                                 vscode_extensions_to_uninstall: %w[GitHub.codespaces])
+                                                 vscode_extensions_to_uninstall: %w[GitHub.codespaces],
+                                                 flatpaks_to_uninstall:          [],
+                                                 flatpak_remotes_to_remove:      [])
     end
 
     it "uninstalls extensions" do
@@ -257,23 +279,51 @@ RSpec.describe Homebrew::Bundle::Commands::Cleanup do
     end
   end
 
+  context "when there are flatpaks to uninstall" do
+    before do
+      described_class.reset!
+      allow(described_class).to receive_messages(casks_to_uninstall:             [],
+                                                 formulae_to_uninstall:          [],
+                                                 taps_to_untap:                  [],
+                                                 vscode_extensions_to_uninstall: [],
+                                                 flatpaks_to_uninstall:          %w[org.gnome.Calculator],
+                                                 flatpak_remotes_to_remove:      [])
+    end
+
+    it "uninstalls flatpaks" do
+      expect(Kernel).to receive(:system).with("flatpak", "uninstall", "-y", "--system", "org.gnome.Calculator")
+      expect(described_class).to receive(:system_output_no_stderr).and_return("")
+      expect { described_class.run(force: true) }.to output(/Uninstalled 1 flatpak/).to_stdout
+    end
+
+    it "does not uninstall flatpaks if --flatpak is disabled" do
+      expect(Kernel).not_to receive(:system)
+      expect(described_class).to receive(:system_output_no_stderr).and_return("")
+      described_class.run(force: true, flatpak: false)
+    end
+  end
+
   context "when there are casks and formulae to uninstall and taps to untap but without passing `--force`" do
     before do
       described_class.reset!
       allow(described_class).to receive_messages(casks_to_uninstall:             %w[a b],
                                                  formulae_to_uninstall:          %w[a b],
                                                  taps_to_untap:                  %w[a b],
-                                                 vscode_extensions_to_uninstall: %w[a b])
+                                                 vscode_extensions_to_uninstall: %w[a b],
+                                                 flatpaks_to_uninstall:          %w[a b],
+                                                 flatpak_remotes_to_remove:      %w[a b])
     end
 
     it "lists casks, formulae and taps" do
-      expect(Formatter).to receive(:columns).with(%w[a b]).exactly(4).times
+      expect(Formatter).to receive(:columns).with(%w[a b]).exactly(6).times
       expect(Kernel).not_to receive(:system)
       expect(described_class).to receive(:system_output_no_stderr).and_return("")
+      output_pattern = /Would uninstall formulae:.*Would untap:.*Would uninstall VSCode extensions:.*
+                        Would uninstall flatpaks:.*Would remove flatpak remotes:/m
       expect do
         described_class.run
       end.to raise_error(SystemExit)
-        .and output(/Would uninstall formulae:.*Would untap:.*Would uninstall VSCode extensions:/m).to_stdout
+        .and output(output_pattern).to_stdout
     end
   end
 
@@ -283,10 +333,12 @@ RSpec.describe Homebrew::Bundle::Commands::Cleanup do
       allow(described_class).to receive_messages(casks_to_uninstall:             [],
                                                  formulae_to_uninstall:          [],
                                                  taps_to_untap:                  [],
-                                                 vscode_extensions_to_uninstall: [])
+                                                 vscode_extensions_to_uninstall: [],
+                                                 flatpaks_to_uninstall:          [],
+                                                 flatpak_remotes_to_remove:      [])
     end
 
-    def sane?
+    define_method(:sane?) do
       expect(described_class).to receive(:system_output_no_stderr).and_return("cleaned")
     end
 

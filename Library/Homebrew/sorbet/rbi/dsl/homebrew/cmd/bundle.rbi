@@ -39,6 +39,12 @@ class Homebrew::Cmd::Bundle::Args < Homebrew::CLI::Args
   def file; end
 
   sig { returns(T::Boolean) }
+  def flatpak?; end
+
+  sig { returns(T::Boolean) }
+  def flatpak_remotes?; end
+
+  sig { returns(T::Boolean) }
   def force?; end
 
   sig { returns(T::Boolean) }
@@ -58,6 +64,12 @@ class Homebrew::Cmd::Bundle::Args < Homebrew::CLI::Args
 
   sig { returns(T::Boolean) }
   def mas?; end
+
+  sig { returns(T::Boolean) }
+  def no_flatpak?; end
+
+  sig { returns(T::Boolean) }
+  def no_flatpak_remotes?; end
 
   sig { returns(T::Boolean) }
   def no_go?; end

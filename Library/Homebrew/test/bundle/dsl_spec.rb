@@ -71,6 +71,26 @@ RSpec.describe Homebrew::Bundle::Dsl do
     end
   end
 
+  context "with flatpak entries" do
+    it "processes flatpak without options" do
+      dsl = dsl_from_string 'flatpak "org.gnome.Calculator"'
+      expect(dsl.entries[0].name).to eql("org.gnome.Calculator")
+      expect(dsl.entries[0].options[:remote]).to eql("flathub")
+    end
+
+    it "processes flatpak with remote option" do
+      dsl = dsl_from_string 'flatpak "com.custom.App", remote: "custom-repo"'
+      expect(dsl.entries[0].name).to eql("com.custom.App")
+      expect(dsl.entries[0].options[:remote]).to eql("custom-repo")
+    end
+
+    it "processes flatpak with explicit flathub remote" do
+      dsl = dsl_from_string 'flatpak "org.gnome.Calculator", remote: "flathub"'
+      expect(dsl.entries[0].name).to eql("org.gnome.Calculator")
+      expect(dsl.entries[0].options[:remote]).to eql("flathub")
+    end
+  end
+
   context "with invalid input" do
     it "handles completely invalid code" do
       expect { dsl_from_string "abcdef" }.to raise_error(RuntimeError)
@@ -87,6 +107,7 @@ RSpec.describe Homebrew::Bundle::Dsl do
       expect { dsl_from_string "brew 'foo', ['bad_option']" }.to raise_error(RuntimeError)
       expect { dsl_from_string "cask 'foo', ['bad_option']" }.to raise_error(RuntimeError)
       expect { dsl_from_string "tap 'foo', ['bad_clone_target']" }.to raise_error(RuntimeError)
+      expect { dsl_from_string "flatpak 'foo', ['bad_option']" }.to raise_error(RuntimeError)
     end
   end
 

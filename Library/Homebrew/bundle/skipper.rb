@@ -16,6 +16,11 @@ module Homebrew
             entry.name.start_with?(prefix) || entry.options[:full_name]&.start_with?(prefix)
           end
 
+          return true if @failed_flatpak_remotes&.any? do |remote|
+            # Skip flatpak entries if their remote failed
+            entry.type == :flatpak && entry.options[:remote] == remote
+          end
+
           entry_type_skips = Array(skipped_entries[entry.type])
           return false if entry_type_skips.empty?
 
@@ -35,6 +40,12 @@ module Homebrew
           @failed_taps << tap_name
         end
 
+        sig { params(remote_name: String).void }
+        def flatpak_remote_failed!(remote_name)
+          @failed_flatpak_remotes ||= T.let([], T.nilable(T::Array[String]))
+          @failed_flatpak_remotes << remote_name
+        end
+
         private
 
         sig { returns(T::Hash[Symbol, T.nilable(T::Array[String])]) }
@@ -42,7 +53,7 @@ module Homebrew
           return @skipped_entries if @skipped_entries
 
           @skipped_entries ||= T.let({}, T.nilable(T::Hash[Symbol, T.nilable(T::Array[String])]))
-          [:brew, :cask, :mas, :tap].each do |type|
+          [:brew, :cask, :mas, :tap, :flatpak, :flatpak_remote].each do |type|
             @skipped_entries[type] =
               ENV["HOMEBREW_BUNDLE_#{type.to_s.upcase}_SKIP"]&.split
           end

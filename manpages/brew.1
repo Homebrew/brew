@@ -83,7 +83,7 @@ Uninstall formulae that were only installed as a dependency of another formula a
 \fB\-n\fP, \fB\-\-dry\-run\fP
 List what would be uninstalled, but do not actually uninstall anything\.
 .SS "\fBbundle\fP \fR[\fIsubcommand\fP]"
-Bundler for non\-Ruby dependencies from Homebrew, Homebrew Cask, Mac App Store, Visual Studio Code (and forks/variants) and Go packages\.
+Bundler for non\-Ruby dependencies from Homebrew, Homebrew Cask, Mac App Store, Visual Studio Code (and forks/variants), Go packages and Flatpak\.
 .TP
 \fBbrew bundle\fP [\fBinstall\fP]
 Install and upgrade (by default) all dependencies from the \fBBrewfile\fP\&\.
@@ -186,11 +186,23 @@ Temporarily start services while running the \fBexec\fP or \fBsh\fP command\. En
 \fB\-\-go\fP
 \fBlist\fP or \fBdump\fP Go packages\.
 .TP
+\fB\-\-flatpak\fP
+\fBlist\fP or \fBdump\fP Flatpak packages\.
+.TP
+\fB\-\-flatpak\-remotes\fP
+\fBlist\fP or \fBdump\fP Flatpak remotes\.
+.TP
 \fB\-\-no\-vscode\fP
 \fBdump\fP without VSCode (and forks/variants) extensions\. Enabled by default if \fB$HOMEBREW_BUNDLE_DUMP_NO_VSCODE\fP is set\.
 .TP
 \fB\-\-no\-go\fP
 \fBdump\fP without Go packages\. Enabled by default if \fB$HOMEBREW_BUNDLE_DUMP_NO_GO\fP is set\.
+.TP
+\fB\-\-no\-flatpak\fP
+\fBdump\fP without Flatpak packages\. Enabled by default if \fB$HOMEBREW_BUNDLE_DUMP_NO_FLATPAK\fP is set\.
+.TP
+\fB\-\-no\-flatpak\-remotes\fP
+\fBdump\fP without Flatpak remotes\. Enabled by default if \fB$HOMEBREW_BUNDLE_DUMP_NO_FLATPAK_REMOTES\fP is set\.
 .TP
 \fB\-\-describe\fP
 \fBdump\fP adds a description comment above each line, unless the dependency does not have a description\. Enabled by default if \fB$HOMEBREW_BUNDLE_DUMP_DESCRIBE\fP is set\.

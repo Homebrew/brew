@@ -59,6 +59,7 @@ module Homebrew
       CheckResult = Struct.new :work_to_be_done, :errors
 
       CHECKS = {
+        flatpak_remotes_to_add: "Flatpak Remotes",
         taps_to_tap:            "Taps",
         casks_to_install:       "Casks",
         extensions_to_install:  "VSCode Extensions",
@@ -66,6 +67,7 @@ module Homebrew
         formulae_to_install:    "Formulae",
         formulae_to_start:      "Services",
         go_packages_to_install: "Go Packages",
+        flatpaks_to_install:    "Flatpaks",
       }.freeze
 
       def self.check(global: false, file: nil, exit_on_first_error: false, no_upgrade: false, verbose: false)
@@ -141,6 +143,22 @@ module Homebrew
       def self.go_packages_to_install(exit_on_first_error: false, no_upgrade: false, verbose: false)
         require "bundle/go_checker"
         Homebrew::Bundle::Checker::GoChecker.new.find_actionable(
+          @dsl.entries,
+          exit_on_first_error:, no_upgrade:, verbose:,
+        )
+      end
+
+      def self.flatpaks_to_install(exit_on_first_error: false, no_upgrade: false, verbose: false)
+        require "bundle/flatpak_checker"
+        Homebrew::Bundle::Checker::FlatpakChecker.new.find_actionable(
+          @dsl.entries,
+          exit_on_first_error:, no_upgrade:, verbose:,
+        )
+      end
+
+      def self.flatpak_remotes_to_add(exit_on_first_error: false, no_upgrade: false, verbose: false)
+        require "bundle/flatpak_remote_checker"
+        Homebrew::Bundle::Checker::FlatpakRemoteChecker.new.find_actionable(
           @dsl.entries,
           exit_on_first_error:, no_upgrade:, verbose:,
         )
