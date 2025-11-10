@@ -167,15 +167,13 @@ module Cask
         # This may fail and need sudo if the source has files with restricted permissions.
         [!source.parent.writable?, true].uniq.each do |sudo|
           result = command.run(
-            "/bin/cp",
-            args:         ["-pR", target, source],
+            "/bin/mv",
+            args:         [target, source.dirname],
             must_succeed: sudo,
             sudo:,
           )
           break if result.success?
         end
-
-        delete(target, force:, command:, **options)
       end
 
       def delete(target, force: false, successor: nil, command: nil, **_)
