@@ -3249,6 +3249,8 @@ class Formula
         if !verbose? || verbose_using_dots
           puts "Last #{log_lines} lines from #{log_filename}:"
           Kernel.system "/usr/bin/tail", "-n", log_lines.to_s, log_filename
+          puts
+          puts "IMPORTANT: If submitting a bug report, please include the full content of #{log_filename}"
         end
         log.puts
 
