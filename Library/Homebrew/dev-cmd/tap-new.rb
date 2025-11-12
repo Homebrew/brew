@@ -107,7 +107,7 @@ module Homebrew
                     key: ${{ matrix.os }}-rubygems-${{ steps.set-up-homebrew.outputs.gems-hash }}
                     restore-keys: ${{ matrix.os }}-rubygems-
 
-                - run: brew test-bot --only-cleanup-before
+                - run: brew test-bot --cleanup --only-cleanup-before
 
                 - run: brew test-bot --only-setup
 
