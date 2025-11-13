@@ -31,7 +31,7 @@ module Utils
         when Cask::Cask
           formula_deps = cask_or_formula.depends_on
                                         .formula
-                                        .map { |f| Formula[f] }
+                                        .map { |f| Formulary.factory_stub(f) }
           cask_deps = cask_or_formula.depends_on
                                      .cask
                                      .map { |c| Cask::CaskLoader.load(c, config: nil) }
@@ -39,7 +39,7 @@ module Utils
           formula_deps = cask_or_formula.deps
                                         .reject(&:build?)
                                         .reject(&:test?)
-                                        .map(&:to_formula)
+                                        .map { |d| d.to_formula(prefer_stub: true) }
           cask_deps = cask_or_formula.requirements
                                      .filter_map(&:cask)
                                      .map { |c| Cask::CaskLoader.load(c, config: nil) }
