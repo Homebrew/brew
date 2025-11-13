@@ -128,7 +128,7 @@ RSpec.describe Cask::Tab, :cask do
         url "my_url"
         version "1.2"
       end.new("unar", Pathname.new(__FILE__).expand_path, :stable)
-      expect(Formulary).to receive(:factory).with("unar").and_return(unar)
+      expect(Formulary).to receive(:factory_stub).with("unar").and_return(unar)
 
       expected_hash = {
         cask:    [

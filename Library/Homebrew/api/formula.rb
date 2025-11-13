@@ -25,6 +25,8 @@ module Homebrew
 
       sig { params(name: String, download_queue: T.nilable(DownloadQueue)).void }
       def self.fetch_formula_json!(name, download_queue: nil)
+        raise "#{name}: attempted to fetch formula JSON!" if ENV["HOMEBREW_NO_FETCH_API_FORMULA_JSON"]
+
         endpoint = "formula/#{name}.json"
         json_formula, updated = Homebrew::API.fetch_json_api_file endpoint, download_queue: download_queue
         return if download_queue
