@@ -182,8 +182,6 @@ module Homebrew
         formulae_to_install = formulae.reject { |f| f.core_formula? && f.versioned_formula? }
         return no_dependents if formulae_to_install.empty?
 
-        already_broken = check_broken_dependents(formulae_to_install)
-
         # TODO: this should be refactored to use FormulaInstaller new logic
         outdated = formulae_to_install.flat_map(&:runtime_installed_formula_dependents)
                                       .uniq
@@ -193,7 +191,7 @@ module Homebrew
         outdated, skipped = outdated.partition do |dependent|
           dependent.bottled? && dependent.deps.map(&:to_formula).all?(&:bottled?)
         end
-        return no_dependents if outdated.blank? && already_broken.blank?
+        return no_dependents if outdated.blank?
 
         outdated -= formulae_to_install if dry_run
         upgradeable = outdated.reject(&:pinned?)

@@ -190,7 +190,7 @@ module Homebrew
         pinned = outdated.select(&:pinned?)
         outdated -= pinned
         formulae_to_install = outdated.map do |f|
-          f_latest = f.latest_formula
+          f_latest = f.latest_formula(prefer_stub: true)
           if f_latest.latest_version_installed?
             f
           else
