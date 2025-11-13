@@ -496,7 +496,8 @@ module Formulary
 
     class_name = class_s(name)
 
-    klass = Class.new(::Formula) do
+    require "formula_stub"
+    klass = Class.new(::FormulaStub) do
       @loaded_from_api = T.let(true, T.nilable(T::Boolean))
       @loaded_from_stub = T.let(true, T.nilable(T::Boolean))
 

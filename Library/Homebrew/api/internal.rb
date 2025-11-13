@@ -27,7 +27,9 @@ module Homebrew
 
       sig { params(name: String).returns(Homebrew::API::FormulaInternalStub) }
       def self.formula_internal_stub(name)
-        return cache["formula_internal_stubs"][name] if cache.key?("formula_internal_stubs") && cache["formula_internal_stubs"].key?(name)
+        if cache.key?("formula_internal_stubs") && cache["formula_internal_stubs"].key?(name)
+          return cache["formula_internal_stubs"][name]
+        end
 
         stub_array = formula_arrays[name]
         raise "No formula stub found for #{name}" unless stub_array
