@@ -24,9 +24,10 @@ RSpec.describe Homebrew::API::Internal do
       <<~JSON
         {
           "formulae": {
-            "foo": ["1.0.0", 0, 0, "09f88b61e36045188ddb1b1ba8e402b9f3debee1770cc4ca91355eeccb5f4a38"],
-            "bar": ["0.4.0_5", 1, 0, "bb6e3408f39a404770529cfce548dc2666e861077acd173825cb3138c27c205a"],
-            "baz": ["10.4.5_2", 0, 2, "404c97537d65ca0b75c389e7d439dcefb9b56f34d3b98017669eda0d0501add7"]
+            "foo": ["1.0.0", 0, 0, "09f88b61e36045188ddb1b1ba8e402b9f3debee1770cc4ca91355eeccb5f4a38", []],
+            "bar": ["0.4.0_5", 1, 0, "bb6e3408f39a404770529cfce548dc2666e861077acd173825cb3138c27c205a", ["baz"]],
+            "baz": ["10.4.5_2", 0, 2, "404c97537d65ca0b75c389e7d439dcefb9b56f34d3b98017669eda0d0501add7",
+                    ["foo", "bar"]]
           },
           "aliases": {
             "foo-alias1": "foo",
@@ -47,21 +48,19 @@ RSpec.describe Homebrew::API::Internal do
     end
     let(:formula_arrays) do
       {
-        "foo" => ["1.0.0", 0, 0, "09f88b61e36045188ddb1b1ba8e402b9f3debee1770cc4ca91355eeccb5f4a38"],
-        "bar" => ["0.4.0_5", 1, 0, "bb6e3408f39a404770529cfce548dc2666e861077acd173825cb3138c27c205a"],
-        "baz" => ["10.4.5_2", 0, 2, "404c97537d65ca0b75c389e7d439dcefb9b56f34d3b98017669eda0d0501add7"],
+        "foo" => ["1.0.0", 0, 0, "09f88b61e36045188ddb1b1ba8e402b9f3debee1770cc4ca91355eeccb5f4a38", []],
+        "bar" => ["0.4.0_5", 1, 0, "bb6e3408f39a404770529cfce548dc2666e861077acd173825cb3138c27c205a", ["baz"]],
+        "baz" => ["10.4.5_2", 0, 2, "404c97537d65ca0b75c389e7d439dcefb9b56f34d3b98017669eda0d0501add7",
+                  ["foo", "bar"]],
       }
     end
     let(:formula_stubs) do
-      formula_arrays.to_h do |name, (pkg_version, version_scheme, rebuild, sha256)|
+      formula_arrays.to_h do |name, (pkg_version, version_scheme, rebuild, sha256, dependencies)|
         stub = Homebrew::FormulaStub.new(
-          name:           name,
+          name:, version_scheme:, rebuild:, sha256:, dependencies:,
           pkg_version:    PkgVersion.parse(pkg_version),
-          version_scheme: version_scheme,
-          rebuild:        rebuild,
-          sha256:         sha256,
           aliases:        formulae_aliases.select { |_, new_name| new_name == name }.keys,
-          oldnames:       formulae_renames.select { |_, new_name| new_name == name }.keys,
+          oldnames:       formulae_renames.select { |_, new_name| new_name == name }.keys
         )
         [name, stub]
       end

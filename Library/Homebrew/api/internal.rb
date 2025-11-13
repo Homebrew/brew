@@ -46,6 +46,7 @@ module Homebrew
           version_scheme: stub_array[1],
           rebuild:        stub_array[2],
           sha256:         stub_array[3],
+          dependencies:   stub_array[4],
           aliases:,
           oldnames:,
         )
@@ -124,7 +125,7 @@ module Homebrew
         Homebrew::API.write_names_file!(cask_hashes.keys, "cask", regenerate:)
       end
 
-      sig { returns(T::Hash[String, [String, Integer, Integer, T.nilable(String)]]) }
+      sig { returns(T::Hash[String, [String, Integer, Integer, T.nilable(String), T::Array[String]]]) }
       def self.formula_arrays
         unless cache.key?("formula_arrays")
           updated = download_and_cache_formula_data!

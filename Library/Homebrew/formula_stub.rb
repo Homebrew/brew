@@ -11,6 +11,7 @@ module Homebrew
     const :version_scheme, Integer, default: 0
     const :rebuild, Integer, default: 0
     const :sha256, T.nilable(String)
+    const :dependencies, T::Array[String], default: []
     const :aliases, T::Array[String], default: []
     const :oldnames, T::Array[String], default: []
 
@@ -33,6 +34,7 @@ module Homebrew
           version_scheme == other.version_scheme &&
           rebuild == other.rebuild &&
           sha256 == other.sha256 &&
+          dependencies == other.dependencies &&
           aliases == other.aliases &&
           oldnames == other.oldnames
       else
