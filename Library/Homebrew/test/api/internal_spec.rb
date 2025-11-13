@@ -54,9 +54,9 @@ RSpec.describe Homebrew::API::Internal do
                   ["foo", "bar"]],
       }
     end
-    let(:formula_stubs) do
+    let(:formula_internal_stubs) do
       formula_arrays.to_h do |name, (pkg_version, version_scheme, rebuild, sha256, dependencies)|
-        stub = Homebrew::FormulaStub.new(
+        stub = Homebrew::API::FormulaInternalStub.new(
           name:, version_scheme:, rebuild:, sha256:, dependencies:,
           pkg_version:    PkgVersion.parse(pkg_version),
           aliases:        formulae_aliases.select { |_, new_name| new_name == name }.keys,
@@ -86,10 +86,10 @@ RSpec.describe Homebrew::API::Internal do
       }
     end
 
-    it "returns the expected formula stubs" do
+    it "returns the expected formula internal stubs" do
       mock_curl_download stdout: formula_json
-      formula_stubs.each do |name, stub|
-        expect(described_class.formula_stub(name)).to eq stub
+      formula_internal_stubs.each do |name, stub|
+        expect(described_class.formula_internal_stub(name)).to eq stub
       end
     end
 

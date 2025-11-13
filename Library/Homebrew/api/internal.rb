@@ -5,7 +5,7 @@ require "cachable"
 require "api"
 require "api/source_download"
 require "download_queue"
-require "formula_stub"
+require "api/formula_internal_stub"
 
 module Homebrew
   module API
@@ -25,9 +25,9 @@ module Homebrew
         "internal/cask.#{SimulateSystem.current_tag}.jws.json"
       end
 
-      sig { params(name: String).returns(Homebrew::FormulaStub) }
-      def self.formula_stub(name)
-        return cache["formula_stubs"][name] if cache.key?("formula_stubs") && cache["formula_stubs"].key?(name)
+      sig { params(name: String).returns(Homebrew::API::FormulaInternalStub) }
+      def self.formula_internal_stub(name)
+        return cache["formula_internal_stubs"][name] if cache.key?("formula_internal_stubs") && cache["formula_internal_stubs"].key?(name)
 
         stub_array = formula_arrays[name]
         raise "No formula stub found for #{name}" unless stub_array
@@ -40,7 +40,7 @@ module Homebrew
           oldname if newname == name
         end
 
-        stub = Homebrew::FormulaStub.new(
+        stub = Homebrew::API::FormulaInternalStub.new(
           name:           name,
           pkg_version:    PkgVersion.parse(stub_array[0]),
           version_scheme: stub_array[1],
@@ -51,8 +51,8 @@ module Homebrew
           oldnames:,
         )
 
-        cache["formula_stubs"] ||= {}
-        cache["formula_stubs"][name] = stub
+        cache["formula_internal_stubs"] ||= {}
+        cache["formula_internal_stubs"][name] = stub
 
         stub
       end
@@ -88,7 +88,7 @@ module Homebrew
       sig { returns(T::Boolean) }
       def self.download_and_cache_formula_data!
         json_contents, updated = fetch_formula_api!
-        cache["formula_stubs"] = {}
+        cache["formula_internal_stubs"] = {}
         cache["formula_aliases"] = json_contents["aliases"]
         cache["formula_renames"] = json_contents["renames"]
         cache["formula_tap_migrations"] = json_contents["tap_migrations"]

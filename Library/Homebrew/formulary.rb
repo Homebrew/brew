@@ -484,9 +484,9 @@ module Formulary
     platform_cache.fetch(:api)[name] = klass
   end
 
-  sig { params(name: String, formula_stub: Homebrew::FormulaStub, flags: T::Array[String]).returns(T.class_of(Formula)) }
-  def self.load_formula_from_stub!(name, formula_stub, flags:)
-    namespace = :"FormulaNamespaceStub#{namespace_key(formula_stub.to_json)}"
+  sig { params(name: String, formula_internal_stub: Homebrew::API::FormulaInternalStub, flags: T::Array[String]).returns(T.class_of(Formula)) }
+  def self.load_formula_from_stub!(name, formula_internal_stub, flags:)
+    namespace = :"FormulaNamespaceStub#{namespace_key(formula_internal_stub.to_json)}"
 
     mod = Module.new
     remove_const(namespace) if const_defined?(namespace)
@@ -500,9 +500,9 @@ module Formulary
       @loaded_from_api = T.let(true, T.nilable(T::Boolean))
       @loaded_from_stub = T.let(true, T.nilable(T::Boolean))
 
-      url "formula-stub://#{name}/#{formula_stub.pkg_version}"
-      version formula_stub.version.to_s
-      revision formula_stub.revision
+      url "formula-stub://#{name}/#{formula_internal_stub.pkg_version}"
+      version formula_internal_stub.version.to_s
+      revision formula_internal_stub.revision
 
       bottle do
         if Homebrew::EnvConfig.bottle_domain == HOMEBREW_BOTTLE_DEFAULT_DOMAIN
@@ -510,20 +510,20 @@ module Formulary
         else
           root_url Homebrew::EnvConfig.bottle_domain
         end
-        rebuild formula_stub.rebuild
-        sha256 Utils::Bottles.tag.to_sym => formula_stub.sha256
+        rebuild formula_internal_stub.rebuild
+        sha256 Utils::Bottles.tag.to_sym => formula_internal_stub.sha256
       end
 
       define_method :install do
         raise NotImplementedError, "Cannot build from source from abstract stubbed formula."
       end
 
-      @aliases_array = formula_stub.aliases
+      @aliases_array = formula_internal_stub.aliases
       define_method(:aliases) do
         self.class.instance_variable_get(:@aliases_array)
       end
 
-      @oldnames_array = formula_stub.oldnames
+      @oldnames_array = formula_internal_stub.oldnames
       define_method(:oldnames) do
         self.class.instance_variable_get(:@oldnames_array)
       end
@@ -1121,9 +1121,9 @@ module Formulary
 
     sig { override.params(flags: T::Array[String]).void }
     def load_from_api(flags:)
-      formula_stub = Homebrew::API::Internal.formula_stub(name)
+      formula_internal_stub = Homebrew::API::Internal.formula_internal_stub(name)
 
-      Formulary.load_formula_from_stub!(name, formula_stub, flags:)
+      Formulary.load_formula_from_stub!(name, formula_internal_stub, flags:)
     end
   end
 
