@@ -7,6 +7,7 @@ require "cask/artifact/audio_unit_plugin"
 require "cask/artifact/binary"
 require "cask/artifact/colorpicker"
 require "cask/artifact/dictionary"
+require "cask/artifact/flatpak"
 require "cask/artifact/font"
 require "cask/artifact/input_method"
 require "cask/artifact/installer"
@@ -52,6 +53,10 @@ module Cask
       ::Cask::Artifact::Suite,
       ::Cask::Artifact::VstPlugin,
       ::Cask::Artifact::Vst3Plugin,
+    ].freeze
+
+    LINUX_ONLY_ARTIFACTS = [
+      ::Cask::Artifact::Flatpak,
     ].freeze
   end
 end

@@ -43,6 +43,7 @@ module Cask
       Artifact::Binary,
       Artifact::Colorpicker,
       Artifact::Dictionary,
+      Artifact::Flatpak,
       Artifact::Font,
       Artifact::InputMethod,
       Artifact::InternetPlugin,
