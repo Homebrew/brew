@@ -514,6 +514,10 @@ module Formulary
         sha256 Utils::Bottles.tag.to_sym => formula_stub.sha256
       end
 
+      formula_stub.dependencies.each do |dep|
+        depends_on dep
+      end
+
       define_method :install do
         raise NotImplementedError, "Cannot build from source from abstract stubbed formula."
       end
