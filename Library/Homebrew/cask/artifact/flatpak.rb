@@ -71,7 +71,7 @@ module Cask
       def app_installed?
         return false unless flatpak_installed?
 
-        output = Utils.safe_popen_read(flatpak_command, "list", "--app", "--columns=application,origin")
+        output = ::Utils.safe_popen_read(flatpak_command, "list", "--app", "--columns=application,origin")
         output.lines.any? do |line|
           parts = line.strip.split("\t")
           parts[0] == app_id && (parts[1].blank? || parts[1] == remote)
@@ -141,7 +141,7 @@ module Cask
       def remote_exists?
         return false unless flatpak_installed?
 
-        output = Utils.safe_popen_read(flatpak_command, "remote-list", "--system", "--columns=name")
+        output = ::Utils.safe_popen_read(flatpak_command, "remote-list", "--system", "--columns=name")
         output.lines.map(&:strip).include?(remote)
       rescue
         false

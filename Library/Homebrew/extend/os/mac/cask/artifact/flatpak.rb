@@ -10,12 +10,12 @@ module OS
 
           requires_ancestor { ::Cask::Artifact::Flatpak }
 
-          sig { override.params(command: T.untyped, verbose: T::Boolean, _options: T.untyped).void }
+          sig { params(command: T.untyped, verbose: T::Boolean, _options: T.untyped).void }
           def install_phase(command: nil, verbose: false, **_options)
             opoo "Flatpak artifacts are only supported on Linux"
           end
 
-          sig { override.params(command: T.untyped, verbose: T::Boolean, _options: T.untyped).void }
+          sig { params(command: T.untyped, verbose: T::Boolean, _options: T.untyped).void }
           def uninstall_phase(command: nil, verbose: false, **_options)
             # No-op on macOS
           end

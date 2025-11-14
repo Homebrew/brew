@@ -31,7 +31,7 @@ module Homebrew
         #
         # @param url [String] the URL to match against
         # @return [Boolean]
-        sig { override.params(url: String).returns(T::Boolean) }
+        sig { override.params(_url: String).returns(T::Boolean) }
         def self.match?(_url)
           false
         end
@@ -113,7 +113,7 @@ module Homebrew
             # Apply regex to version text if provided
             match = version_text.match(regex)
             if match&.captures&.any?
-              version = match.captures.first
+              version = T.must(T.must(match).captures.first)
               match_data[:matches][version] = Version.new(version)
             end
           else
@@ -121,8 +121,6 @@ module Homebrew
             match_data[:matches][version_text] = Version.new(version_text)
           end
 
-          match_data
-        rescue TypeError
           match_data
         end
       end
