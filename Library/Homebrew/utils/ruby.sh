@@ -173,7 +173,6 @@ If there's no Homebrew Portable Ruby available for your processor:
   then
     "${homebrew_ruby_bin}/gem" install bundler -v "${HOMEBREW_BUNDLER_VERSION}"
   fi
-  PATH="${homebrew_ruby_bin}:${PATH}"
 
   export HOMEBREW_RUBY_PATH HOMEBREW_BOOTSNAP_GEM_PATH
   [[ -n "${HOMEBREW_LINUX}" && -n "${TERMINFO_DIRS}" ]] && export TERMINFO_DIRS
