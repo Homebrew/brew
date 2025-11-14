@@ -1,15 +1,14 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
 
 module Homebrew
   module TestBot
     class CleanupBefore < TestCleanup
+      sig { params(args: Homebrew::Cmd::TestBotCmd::Args).void }
       def run!(args:)
         test_header(:CleanupBefore)
 
-        if tap.to_s != CoreTap.instance.name && CoreTap.instance.installed?
-          reset_if_needed(CoreTap.instance.path.to_s)
-        end
+        reset_if_needed(CoreTap.instance.path) if tap.to_s != CoreTap.instance.name && CoreTap.instance.installed?
 
         Pathname.glob("*.bottle*.*").each(&:unlink)
 

@@ -1,4 +1,4 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
 
 require "test_bot/junit"
@@ -19,6 +19,15 @@ module Homebrew
     module TestRunner
       module_function
 
+      sig { void }
+      def initialize
+        @skipped_or_failed_formulae_output_path = T.let(
+          Pathname.new("skipped_or_failed_formulae-PLACEHOLDER.txt"),
+          Pathname,
+        )
+      end
+
+      sig { params(file: Pathname).void }
       def ensure_blank_file_exists!(file)
         if file.exist?
           file.truncate(0)
@@ -27,6 +36,7 @@ module Homebrew
         end
       end
 
+      sig { params(tap: T.nilable(Tap), git: String, args: Cmd::TestBotCmd::Args).returns(T::Boolean) }
       def run!(tap, git:, args:)
         tests = T.let([], T::Array[Test])
         skip_setup = args.skip_setup?
@@ -107,6 +117,7 @@ module Homebrew
         failed_steps.empty?
       end
 
+      sig { params(args: Cmd::TestBotCmd::Args).returns(T::Boolean) }
       def no_only_args?(args)
         any_only = args.only_cleanup_before? ||
                    args.only_setup? ||
@@ -119,6 +130,18 @@ module Homebrew
         !any_only
       end
 
+      sig {
+        params(
+          argument:            String,
+          tap:                 T.nilable(Tap),
+          git:                 String,
+          output_paths:        T::Hash[Symbol, Pathname],
+          skip_setup:          T::Boolean,
+          skip_cleanup_before: T::Boolean,
+          skip_cleanup_after:  T::Boolean,
+          args:                Cmd::TestBotCmd::Args,
+        ).returns(T::Hash[Symbol, Test])
+      }
       def build_tests(argument, tap:, git:, output_paths:, skip_setup:,
                       skip_cleanup_before:, skip_cleanup_after:, args:)
         tests = {}
@@ -196,6 +219,7 @@ module Homebrew
         tests
       end
 
+      sig { params(tests: T::Hash[Symbol, T.untyped], args: Cmd::TestBotCmd::Args).void }
       def run_tests(tests, args:)
         tests[:cleanup_before]&.run!(args:)
         begin
@@ -227,7 +251,7 @@ module Homebrew
 
             formulae_test.skipped_or_failed_formulae
           elsif args.skipped_or_failed_formulae.present?
-            Array.new(args.skipped_or_failed_formulae)
+            [args.skipped_or_failed_formulae]
           elsif @skipped_or_failed_formulae_output_path.exist?
             @skipped_or_failed_formulae_output_path.read.chomp.split(",")
           else

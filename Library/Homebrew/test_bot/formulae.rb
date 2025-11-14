@@ -1,21 +1,40 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
 
 module Homebrew
   module TestBot
     class Formulae < TestFormulae
-      attr_writer :testing_formulae, :added_formulae, :deleted_formulae
-
+      sig {
+        params(
+          tap:          T.nilable(Tap),
+          git:          String,
+          dry_run:      T::Boolean,
+          fail_fast:    T::Boolean,
+          verbose:      T::Boolean,
+          output_paths: T::Hash[Symbol, Pathname],
+        ).void
+      }
       def initialize(tap:, git:, dry_run:, fail_fast:, verbose:, output_paths:)
         super(tap:, git:, dry_run:, fail_fast:, verbose:)
 
-        @built_formulae = []
-        @bottle_checksums = {}
-        @bottle_output_path = output_paths[:bottle]
-        @linkage_output_path = output_paths[:linkage]
-        @skipped_or_failed_formulae_output_path = output_paths[:skipped_or_failed_formulae]
+        @built_formulae = T.let([], T::Array[String])
+        @bottle_checksums = T.let({}, T::Hash[Pathname, String])
+        @bottle_output_path = T.let(T.must(output_paths[:bottle]), Pathname)
+        @linkage_output_path = T.let(T.must(output_paths[:linkage]), Pathname)
+        @skipped_or_failed_formulae_output_path = T.let(
+          T.must(output_paths[:skipped_or_failed_formulae]),
+          Pathname,
+        )
+
+        @testing_formulae = T.let([], T::Array[String])
+        @added_formulae = T.let([], T::Array[String])
+        @deleted_formulae = T.let([], T::Array[String])
+
+        @tested_formulae_count = T.let(0, Integer)
+        @testing_formulae_count = T.let(0, Integer)
       end
 
+      sig { params(args: Cmd::TestBotCmd::Args).void }
       def run!(args:)
         test_header(:Formulae)
 
@@ -44,7 +63,6 @@ module Homebrew
         # #run! modifies `@testing_formulae`, so we need to track this separately.
         @testing_formulae_count = @testing_formulae.count
         perform_bash_cleanup = @testing_formulae.include?("bash")
-        @tested_formulae_count = 0
 
         sorted_formulae.each do |f|
           verify_local_bottles
@@ -87,6 +105,7 @@ module Homebrew
 
       private
 
+      sig { params(deps: T::Array[Dependency]).void }
       def tap_needed_taps(deps)
         deps.each { |d| d.to_formula.recursive_dependencies }
       rescue TapFormulaUnavailableError => e
@@ -97,6 +116,7 @@ module Homebrew
         retry
       end
 
+      sig { void }
       def install_ca_certificates_if_needed
         return if DevelopmentTools.ca_file_handles_most_https_certificates?
 
@@ -104,6 +124,7 @@ module Homebrew
              env: { "HOMEBREW_DEVELOPER" => nil }
       end
 
+      sig { params(formula: Formula, formula_name: String, args: Cmd::TestBotCmd::Args).void }
       def setup_formulae_deps_instances(formula, formula_name, args:)
         conflicts = formula.conflicts
         formula_recursive_dependencies = formula.recursive_dependencies.map(&:to_formula)
@@ -157,8 +178,8 @@ module Homebrew
         end
 
         dependencies -= installed
-        @unchanged_dependencies = dependencies - @testing_formulae
-        unless @unchanged_dependencies.empty?
+        @unchanged_dependencies = T.let(dependencies - @testing_formulae, T.nilable(T::Array[Dependency]))
+        if @unchanged_dependencies.present?
           test "brew", "fetch", "--formulae", "--retry",
                *@unchanged_dependencies
         end
@@ -188,17 +209,19 @@ module Homebrew
           Utils.safe_popen_read("brew", "deps", "--formula", "--include-test", formula_name)
                .split("\n")
         build_dependencies = dependencies - runtime_or_test_dependencies
-        @unchanged_build_dependencies = build_dependencies - @testing_formulae
+        @unchanged_build_dependencies = T.let(build_dependencies - @testing_formulae, T.nilable(T::Array[Dependency]))
       end
 
+      sig { params(formula: Formula).void }
       def cleanup_bottle_etc_var(formula)
         # Restore etc/var files from bottle so dependents can use them.
         formula.install_etc_var
       end
 
+      sig { returns(T::Boolean) }
       def verify_local_bottles
         # Portable Ruby bottles are handled differently.
-        return if testing_portable_ruby?
+        return false if testing_portable_ruby?
 
         # Setting `HOMEBREW_DISABLE_LOAD_FORMULA` probably doesn't do anything here but let's set it just to be safe.
         with_env(HOMEBREW_DISABLE_LOAD_FORMULA: "1") do
@@ -245,9 +268,10 @@ module Homebrew
         end
       end
 
+      sig { params(formula: Formula, new_formula: T::Boolean, args: Cmd::TestBotCmd::Args).void }
       def bottle_reinstall_formula(formula, new_formula, args:)
         unless build_bottle?(formula, args:)
-          @bottle_filename = nil
+          @bottle_filename = T.let(nil, T.nilable(Pathname))
           return
         end
 
@@ -282,16 +306,20 @@ module Homebrew
           return
         end
 
-        @bottle_filename = Pathname.new(
-          bottle_step.output
-                    .gsub(%r{.*(\./\S+#{HOMEBREW_BOTTLES_EXTNAME_REGEX}).*}om, '\1'),
-        )
-        @bottle_json_filename = Pathname.new(
-          @bottle_filename.to_s.gsub(/\.(\d+\.)?tar\.gz$/, ".json"),
+        @bottle_filename = T.let(
+          Pathname.new(
+            bottle_step.output.gsub(%r{.*(\./\S+#{HOMEBREW_BOTTLES_EXTNAME_REGEX}).*}om, '\1'),
+          ),
+          T.nilable(Pathname),
         )
 
-        @bottle_checksums[@bottle_filename.realpath] = @bottle_filename.sha256
-        @bottle_checksums[@bottle_json_filename.realpath] = @bottle_json_filename.sha256
+        @bottle_json_filename = T.let(
+          Pathname.new(@bottle_filename.to_s.gsub(/\.(\d+\.)?tar\.gz$/, ".json")),
+          T.nilable(Pathname),
+        )
+
+        @bottle_checksums[T.must(@bottle_filename).realpath] = T.must(@bottle_filename).sha256
+        @bottle_checksums[T.must(@bottle_json_filename).realpath] = T.must(@bottle_json_filename).sha256
 
         @bottle_output_path.write(bottle_step.output, mode: "a")
 
@@ -304,9 +332,9 @@ module Homebrew
 
         @testing_formulae.delete(formula.name)
 
-        unless @unchanged_build_dependencies.empty?
+        if @unchanged_build_dependencies.present?
           test "brew", "uninstall", "--formulae", "--force", "--ignore-dependencies", *@unchanged_build_dependencies
-          @unchanged_dependencies -= @unchanged_build_dependencies
+          @unchanged_dependencies -= @unchanged_build_dependencies if @unchanged_dependencies.present?
         end
 
         verify_attestations = if formula.name == "gh"
@@ -320,6 +348,7 @@ module Homebrew
              env: { "HOMEBREW_VERIFY_ATTESTATIONS" => verify_attestations }
       end
 
+      sig { params(formula: Formula, args: Cmd::TestBotCmd::Args).returns(T::Boolean) }
       def build_bottle?(formula, args:)
         # Build and runtime dependencies must be bottled on the current OS,
         # but accept an older compatible bottle for test dependencies.
@@ -334,6 +363,7 @@ module Homebrew
         !args.build_from_source?
       end
 
+      sig { params(formula: Formula).void }
       def livecheck(formula)
         return unless formula.livecheck_defined?
         return if formula.livecheck.skip?
@@ -395,6 +425,7 @@ module Homebrew
         end
       end
 
+      sig { params(formula_name: String, args: Cmd::TestBotCmd::Args).void }
       def formula!(formula_name, args:)
         cleanup_during!(@testing_formulae, args:)
 
@@ -595,7 +626,9 @@ report_analytics: true)
         if failed_linkage_or_test_messages.present?
           if @bottle_filename
             failed_dir = @bottle_filename.dirname/"failed"
-            moved_artifacts = [@bottle_filename, @bottle_json_filename].map(&:realpath)
+            moved_artifacts = [@bottle_filename, @bottle_json_filename].map do |path|
+              T.must(path).realpath
+            end
             failed_dir.install moved_artifacts
 
             moved_artifacts.each do |old_location|
@@ -613,13 +646,14 @@ report_analytics: true)
         end
       ensure
         @tested_formulae_count += 1
-        cleanup_bottle_etc_var(formula) if cleanup?(args)
+        cleanup_bottle_etc_var(T.must(formula)) if cleanup?(args)
 
         if @unchanged_dependencies.present?
           test "brew", "uninstall", "--formulae", "--force", "--ignore-dependencies", *@unchanged_dependencies
         end
       end
 
+      sig { params(formula_name: String).void }
       def portable_formula!(formula_name)
         test_header(:Formulae, method: "portable_formula!(#{formula_name})")
 
@@ -655,6 +689,7 @@ report_analytics: true)
         test "brew", "bottle", "--skip-relocation", "--json", "--no-rebuild", formula_name
       end
 
+      sig { params(formula_name: String).void }
       def deleted_formula!(formula_name)
         test_header(:Formulae, method: "deleted_formula!(#{formula_name})")
 
@@ -667,8 +702,11 @@ report_analytics: true)
              formula_name
       end
 
+      sig { returns(T::Boolean) }
       def testing_portable_ruby?
-        tap&.core_tap? && @testing_formulae.include?("portable-ruby")
+        return false unless tap&.core_tap?
+
+        @testing_formulae.include?("portable-ruby")
       end
     end
   end
