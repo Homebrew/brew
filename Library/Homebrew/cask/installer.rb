@@ -92,6 +92,13 @@ module Cask
     sig { returns(T::Boolean) }
     def zap? = @zap
 
+    sig { returns(T::Boolean) }
+    def download_free_cask?
+      @cask.url.nil? && artifacts.all? do |artifact|
+        Artifact::DOWNLOAD_FREE_ARTIFACTS.include?(artifact.class)
+      end
+    end
+
     def self.caveats(cask)
       odebug "Printing caveats"
 
@@ -118,7 +125,7 @@ module Cask
       forbidden_cask_and_formula_check
       forbidden_cask_artifacts_check
 
-      download(quiet:, timeout:) if @download_queue.nil?
+      download(quiet:, timeout:) if @download_queue.nil? && !download_free_cask?
 
       satisfy_cask_and_formula_dependencies
     end
@@ -129,8 +136,12 @@ module Cask
 
       Caskroom.ensure_caskroom_exists
 
-      extract_primary_container
-      process_rename_operations
+      if download_free_cask?
+        @cask.staged_path.mkpath
+      else
+        extract_primary_container
+        process_rename_operations
+      end
       save_caskfile
     rescue => e
       purge_versioned_files
@@ -331,6 +342,7 @@ on_request: true)
           artifact,
           T.any(
             Artifact::AbstractFlightBlock,
+            Artifact::Flatpak,
             Artifact::Installer,
             Artifact::KeyboardLayout,
             Artifact::Mdimporter,
@@ -412,7 +424,9 @@ on_request: true)
 
       raise CaskSelfReferencingDependencyError, @cask.token if graph.fetch(@cask).include?(@cask)
 
-      ::Utils::TopologicalHash.graph_package_dependencies(primary_container.dependencies, graph)
+      unless download_free_cask?
+        ::Utils::TopologicalHash.graph_package_dependencies(primary_container.dependencies, graph)
+      end
 
       begin
         @cask_and_formula_dependencies = graph.tsort - [@cask]
@@ -598,6 +612,7 @@ on_request: true)
             artifact,
             T.any(
               Artifact::AbstractFlightBlock,
+              Artifact::Flatpak,
               Artifact::KeyboardLayout,
               Artifact::Moved,
               Artifact::Qlplugin,

@@ -58,5 +58,9 @@ module Cask
     LINUX_ONLY_ARTIFACTS = [
       ::Cask::Artifact::Flatpak,
     ].freeze
+
+    DOWNLOAD_FREE_ARTIFACTS = [
+      ::Cask::Artifact::Flatpak,
+    ].freeze
   end
 end
