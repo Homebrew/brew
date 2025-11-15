@@ -42,7 +42,7 @@ module Homebrew
                             "The first part of the team name will be used as the organisation."
         flag   "--quarter=",
                description: "Quarter to search (1-4). " \
-                            "Omitting this flag searches the past year." \
+                            "Omitting this flag searches the past year. " \
                             "If `--from` or `--to` are set, they take precedence."
         flag   "--from=",
                description: "Date (ISO 8601 format) to start searching contributions. " \
