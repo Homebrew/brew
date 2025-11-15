@@ -853,6 +853,7 @@ _brew_contributions() {
       --from
       --help
       --organisation
+      --quarter
       --quiet
       --repositories
       --team

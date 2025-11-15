@@ -619,6 +619,7 @@ __fish_brew_complete_arg 'contributions' -l debug -d 'Display any debugging info
 __fish_brew_complete_arg 'contributions' -l from -d 'Date (ISO 8601 format) to start searching contributions. Omitting this flag searches the past year'
 __fish_brew_complete_arg 'contributions' -l help -d 'Show this message'
 __fish_brew_complete_arg 'contributions' -l organisation -d 'Specify the organisation to populate sources repositories from. Omitting this flag searches the Homebrew primary repositories'
+__fish_brew_complete_arg 'contributions' -l quarter -d 'Quarter to search (1-4). Omitting this flag searches the past year.If `--from` or `--to` are set, they take precedence'
 __fish_brew_complete_arg 'contributions' -l quiet -d 'Make some output more quiet'
 __fish_brew_complete_arg 'contributions' -l repositories -d 'Specify a comma-separated list of repositories to search. All repositories must be under the same user or organisation. Omitting this flag, or specifying `--repositories=primary`, searches only the main repositories: `Homebrew/brew`, `Homebrew/homebrew-core`, `Homebrew/homebrew-cask`'
 __fish_brew_complete_arg 'contributions' -l team -d 'Specify the team to populate users from. The first part of the team name will be used as the organisation'
