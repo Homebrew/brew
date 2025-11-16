@@ -606,17 +606,24 @@ class Formula
   def fully_loaded_formula
     @fully_loaded_formula ||= if loaded_from_stub?
       json_contents = Homebrew::API::Formula.formula_json(name)
-      Formulary.from_json_contents(name, json_contents)
+      f = Formulary.from_json_contents(name, json_contents)
+      if f.pkg_version != pkg_version
+        Formulary.platform_cache[:api]&.delete(name)
+        fetch_fully_loaded_formula!(stale_seconds: 0)
+        json_contents = Homebrew::API::Formula.formula_json(name)
+        f = Formulary.from_json_contents(name, json_contents)
+      end
+      f
     else
       self
     end
   end
 
-  sig { params(download_queue: T.nilable(Homebrew::DownloadQueue)).void }
-  def fetch_fully_loaded_formula!(download_queue: nil)
+  sig { params(download_queue: T.nilable(Homebrew::DownloadQueue), stale_seconds: T.nilable(Integer)).void }
+  def fetch_fully_loaded_formula!(download_queue: nil, stale_seconds: nil)
     return unless loaded_from_stub?
 
-    Homebrew::API::Formula.fetch_formula_json!(name, download_queue:)
+    Homebrew::API::Formula.fetch_formula_json!(name, download_queue:, stale_seconds:)
   end
 
   sig { void }
@@ -1817,11 +1824,10 @@ class Formula
     return T.must(current_installed_alias_target) if installed_alias_target_changed?
     return self if !core_formula? || !Homebrew::EnvConfig.use_internal_api?
 
-    if prefer_stub
-      Formulary.factory_stub(full_name, active_spec_sym, force_bottle:, flags: self.class.build_flags)
-    else
-      Formulary.factory(full_name, active_spec_sym, force_bottle:, flags: self.class.build_flags)
-    end
+    stub = Formulary.factory_stub(full_name, active_spec_sym, force_bottle:, flags: self.class.build_flags)
+    return stub if prefer_stub
+
+    stub.fully_loaded_formula
   end
 
   sig { returns(T::Array[Formula]) }
