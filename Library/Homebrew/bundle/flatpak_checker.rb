@@ -15,8 +15,6 @@ module Homebrew
                  no_upgrade: T::Boolean, verbose: T::Boolean).returns(T::Array[String])
         }
         def find_actionable(entries, exit_on_first_error: false, no_upgrade: false, verbose: false)
-          return [] if OS.mac?
-
           super
         end
 
@@ -53,3 +51,5 @@ module Homebrew
     end
   end
 end
+
+require "extend/os/bundle/flatpak_checker"

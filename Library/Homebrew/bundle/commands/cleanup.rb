@@ -249,8 +249,6 @@ module Homebrew
         end
 
         def self.flatpaks_to_uninstall(global: false, file: nil)
-          return [].freeze if OS.mac?
-
           require "bundle/brewfile"
           @dsl ||= Brewfile.read(global:, file:)
           kept_flatpaks = @dsl.entries.select { |e| e.type == :flatpak }.map(&:name)
@@ -266,8 +264,6 @@ module Homebrew
         end
 
         def self.flatpak_remotes_to_remove(global: false, file: nil)
-          return [].freeze if OS.mac?
-
           require "bundle/brewfile"
           @dsl ||= Brewfile.read(global:, file:)
           kept_remotes = @dsl.entries.select { |e| e.type == :flatpak_remote }.map(&:name)
@@ -289,3 +285,5 @@ module Homebrew
     end
   end
 end
+
+require "extend/os/bundle/commands/cleanup"

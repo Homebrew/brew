@@ -19,7 +19,6 @@ module Homebrew
       sig { returns(T::Array[T::Hash[Symbol, String]]) }
       def self.remotes
         @remotes ||= T.let(nil, T.nilable(T::Array[T::Hash[Symbol, String]]))
-        return @remotes = [] if OS.mac?
 
         @remotes ||= if Bundle.flatpak_installed?
           flatpak = Bundle.which_flatpak
@@ -51,3 +50,5 @@ module Homebrew
     end
   end
 end
+
+require "extend/os/bundle/flatpak_remote_dumper"

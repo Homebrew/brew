@@ -15,8 +15,6 @@ module Homebrew
                  no_upgrade: T::Boolean, verbose: T::Boolean).returns(T::Array[String])
         }
         def find_actionable(entries, exit_on_first_error: false, no_upgrade: false, verbose: false)
-          return [] if OS.mac?
-
           requested_remotes = format_checkable(entries)
           return [] if requested_remotes.empty?
 
@@ -28,3 +26,5 @@ module Homebrew
     end
   end
 end
+
+require "extend/os/bundle/flatpak_remote_checker"

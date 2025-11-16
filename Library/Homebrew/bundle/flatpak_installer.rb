@@ -9,8 +9,6 @@ module Homebrew
       end
 
       def self.preinstall!(name, verbose: false, remote: "flathub", **_options)
-        return false if OS.mac?
-
         unless Bundle.flatpak_installed?
           puts "Installing flatpak. It is not currently installed." if verbose
           Bundle.brew("install", "--formula", "flatpak", verbose:)
@@ -55,3 +53,5 @@ module Homebrew
     end
   end
 end
+
+require "extend/os/bundle/flatpak_installer"
