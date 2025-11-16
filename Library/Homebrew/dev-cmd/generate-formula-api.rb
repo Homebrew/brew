@@ -68,12 +68,14 @@ module Homebrew
           canonical_json = JSON.pretty_generate(tap.formula_renames.merge(tap.alias_table))
           File.write("_data/formula_canonical.json", "#{canonical_json}\n") unless args.dry_run?
 
+          all_casks = Homebrew::API.generate_cask_api!(dry_run: true)
+
           OnSystem::VALID_OS_ARCH_TAGS.each do |bottle_tag|
             macos_version = bottle_tag.to_macos_version if bottle_tag.macos?
 
             aliases = {}
             renames = {}
-            variation_formulae = all_formulae.to_h do |name, formula|
+            formulae = all_formulae.to_h do |name, formula|
               formula = Homebrew::API.merge_variations(formula, bottle_tag:)
 
               formula["aliases"]&.each do |alias_name|
@@ -119,15 +121,34 @@ module Homebrew
               [name, [pkg_version.to_s, version_scheme, rebuild, sha256, dependencies.to_a]]
             end
 
-            json_contents = {
-              formulae:       variation_formulae,
-              casks:          [],
-              aliases:        aliases,
-              renames:        renames,
-              tap_migrations: CoreTap.instance.tap_migrations,
-            }
+            tap_migrations = CoreTap.instance.tap_migrations
+            json_contents = { formulae:, aliases:, renames:, tap_migrations: }
 
             File.write("api/internal/formula.#{bottle_tag}.json", JSON.generate(json_contents)) unless args.dry_run?
+
+            internal_formulae = all_formulae.to_h do |name, formula|
+              formula = Homebrew::API.merge_variations(formula, bottle_tag:)
+
+              [name, formula]
+            end
+
+            casks_json_contents = all_casks.fetch(bottle_tag.to_sym)
+
+            formulae = internal_formulae
+            casks = casks_json_contents.fetch(:casks)
+            core_aliases = aliases
+            core_renames = renames
+            core_tap_migrations = tap_migrations
+            cask_renames = casks_json_contents.fetch(:renames)
+            cask_tap_migrations = casks_json_contents.fetch(:tap_migrations)
+
+            internal_json_contents = { formulae:, casks:,
+            core_aliases:, core_renames:, core_tap_migrations:,
+cask_renames:, cask_tap_migrations: }
+            unless args.dry_run?
+              puts "api/internal/packages.#{bottle_tag}.json"
+              File.write("api/internal/packages.#{bottle_tag}.json", JSON.generate(internal_json_contents))
+            end
           end
         end
       end
