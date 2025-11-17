@@ -315,11 +315,15 @@ RSpec.describe Homebrew::Bundle::Commands::Cleanup do
     end
 
     it "lists casks, formulae and taps" do
-      expect(Formatter).to receive(:columns).with(%w[a b]).exactly(6).times
+      expect(Formatter).to receive(:columns).with(%w[a b]).exactly(6).times.and_return("a b")
       expect(Kernel).not_to receive(:system)
       expect(described_class).to receive(:system_output_no_stderr).and_return("")
-      output_pattern = /Would uninstall formulae:.*Would untap:.*Would uninstall VSCode extensions:.*
-                        Would uninstall flatpaks:.*Would remove flatpak remotes:/m
+      output_pattern = Regexp.new(
+        "Would uninstall casks:.*Would uninstall formulae:.*Would untap:.*" \
+        "Would uninstall VSCode extensions:.*Would uninstall flatpaks:.*" \
+        "Would remove flatpak remotes:",
+        Regexp::MULTILINE,
+      )
       expect do
         described_class.run
       end.to raise_error(SystemExit)
