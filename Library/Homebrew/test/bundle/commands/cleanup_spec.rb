@@ -129,8 +129,7 @@ RSpec.describe Homebrew::Bundle::Commands::Cleanup do
       expect(described_class.vscode_extensions_to_uninstall).to eql(%w[z])
     end
 
-    it "computes which flatpaks to uninstall" do
-      allow(OS).to receive(:mac?).and_return(false)
+    it "computes which flatpaks to uninstall", :needs_linux do
       allow_any_instance_of(Pathname).to receive(:read).and_return <<~EOS
         flatpak 'org.gnome.Calculator'
       EOS
@@ -279,7 +278,7 @@ RSpec.describe Homebrew::Bundle::Commands::Cleanup do
     end
   end
 
-  context "when there are flatpaks to uninstall" do
+  context "when there are flatpaks to uninstall", :needs_linux do
     before do
       described_class.reset!
       allow(described_class).to receive_messages(casks_to_uninstall:             [],

@@ -5,7 +5,7 @@ require "bundle/flatpak_remote_checker"
 require "bundle/flatpak_remote_dumper"
 require "bundle/dsl"
 
-RSpec.describe Homebrew::Bundle::Checker::FlatpakRemoteChecker do
+RSpec.describe Homebrew::Bundle::Checker::FlatpakRemoteChecker, :needs_linux do
   subject(:checker) { described_class.new }
 
   let(:entry) do
@@ -16,7 +16,6 @@ RSpec.describe Homebrew::Bundle::Checker::FlatpakRemoteChecker do
   let(:entries) { [entry] }
 
   before do
-    allow(OS).to receive(:mac?).and_return(false)
     allow(Homebrew::Bundle::FlatpakRemoteDumper).to receive(:remote_names).and_return([])
   end
 

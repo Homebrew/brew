@@ -23,10 +23,9 @@ RSpec.describe Homebrew::Bundle::FlatpakRemoteDumper do
     end
   end
 
-  context "with remotes" do
+  context "with remotes", :needs_linux do
     before do
       described_class.reset!
-      allow(OS).to receive(:mac?).and_return(false)
       allow(Homebrew::Bundle).to receive_messages(flatpak_installed?: true,
                                                   which_flatpak:      Pathname.new("/usr/bin/flatpak"))
 

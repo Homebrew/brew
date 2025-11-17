@@ -13,7 +13,7 @@ RSpec.describe Homebrew::Bundle::Checker::FlatpakChecker do
     allow(Homebrew::Bundle::FlatpakInstaller).to receive(:package_installed?).and_return(false)
   end
 
-  describe "#installed_and_up_to_date?" do
+  describe "#installed_and_up_to_date?", :needs_linux do
     it "returns false when package is not installed" do
       expect(checker.installed_and_up_to_date?("org.gnome.Calculator")).to be(false)
     end
@@ -24,7 +24,7 @@ RSpec.describe Homebrew::Bundle::Checker::FlatpakChecker do
     end
   end
 
-  describe "#failure_reason" do
+  describe "#failure_reason", :needs_linux do
     it "returns the correct failure message" do
       expect(checker.failure_reason("org.gnome.Calculator", no_upgrade: false))
         .to eq("Flatpak org.gnome.Calculator needs to be installed.")

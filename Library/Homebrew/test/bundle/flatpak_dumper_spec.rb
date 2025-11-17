@@ -21,10 +21,9 @@ RSpec.describe Homebrew::Bundle::FlatpakDumper do
     end
   end
 
-  context "when flatpak is installed" do
+  context "when flatpak is installed", :needs_linux do
     before do
       described_class.reset!
-      allow(OS).to receive(:mac?).and_return(false)
       allow(Homebrew::Bundle).to receive_messages(flatpak_installed?: true,
                                                   which_flatpak:      Pathname.new("flatpak"))
     end

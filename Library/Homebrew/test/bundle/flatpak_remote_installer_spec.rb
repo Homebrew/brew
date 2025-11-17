@@ -4,11 +4,7 @@ require "bundle"
 require "bundle/flatpak_remote_installer"
 require "bundle/flatpak_remote_dumper"
 
-RSpec.describe Homebrew::Bundle::FlatpakRemoteInstaller do
-  before do
-    allow(OS).to receive(:mac?).and_return(false)
-  end
-
+RSpec.describe Homebrew::Bundle::FlatpakRemoteInstaller, :needs_linux do
   describe ".installed_remotes" do
     before do
       Homebrew::Bundle::FlatpakRemoteDumper.reset!

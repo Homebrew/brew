@@ -4,11 +4,7 @@ require "bundle"
 require "bundle/flatpak_installer"
 
 RSpec.describe Homebrew::Bundle::FlatpakInstaller do
-  before do
-    allow(OS).to receive(:mac?).and_return(false)
-  end
-
-  context "when Flatpak is not installed" do
+  context "when Flatpak is not installed", :needs_linux do
     before do
       described_class.reset!
       allow(Homebrew::Bundle).to receive(:flatpak_installed?).and_return(false)
@@ -22,7 +18,7 @@ RSpec.describe Homebrew::Bundle::FlatpakInstaller do
     end
   end
 
-  context "when Flatpak is installed" do
+  context "when Flatpak is installed", :needs_linux do
     before do
       allow(Homebrew::Bundle).to receive(:flatpak_installed?).and_return(true)
     end
