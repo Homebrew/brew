@@ -1,0 +1,55 @@
+{
+	"folders": [
+		{
+			"path": ".",
+      "name": "brew"
+		},
+		{
+			"path": "Library/Taps/homebrew/homebrew-core",
+      "name": "homebrew-core"
+		},
+		{
+			"path": "Library/Taps/homebrew/homebrew-cask",
+      "name": "homebrew-cask"
+		}
+	],
+	"settings": {
+    "files.exclude": {
+      "Library/Taps": true,
+      // Exclude all files in bin except for brew
+      "bin/[^b]*": true,
+      "bin/b[^r]*": true,
+      "bin/br[^e]*": true,
+      "bin/bre[^w]*": true,
+      // brew aliases are in the form brew-*
+      "bin/brew-*": true,
+    },
+		"rubyLsp.rubyVersionManager": {
+			"identifier": "custom"
+		},
+		"rubyLsp.customRubyCommand": "source /opt/homebrew/.vscode/ruby-lsp-activate.sh",
+		"rubyLsp.bundleGemfile": "Library/Homebrew/Gemfile",
+		"rubyLsp.formatter": "rubocop",
+		"sorbet.enabled": true,
+		"sorbet.lspConfigs": [
+			{
+				"id": "default",
+				"name": "Brew Typecheck",
+				"description": "Default configuration",
+				"command": [
+					"./bin/brew",
+					"typecheck",
+					"--lsp"
+				]
+			}
+		],
+		"sorbet.selectedLspConfigId": "default",
+		"shellformat.effectLanguages": [
+			"shellscript"
+		],
+		"shellformat.path": "${workspaceFolder}/Library/Homebrew/utils/shfmt.sh",
+		"shellformat.flag": "-i 2 -ci -ln bash",
+		"simplecov-vscode.path": "Library/Homebrew/test/coverage/.resultset.json",
+    "simplecov-vscode.enabled": false,
+	}
+}
