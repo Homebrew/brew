@@ -28,18 +28,31 @@ RSpec.describe Homebrew::Bundle::FlatpakDumper do
                                                   which_flatpak:      Pathname.new("flatpak"))
     end
 
-    it "returns package list with remotes" do
+    it "returns remote URLs" do
+      allow(described_class).to receive(:`).with("flatpak remote-list --system --columns=name,url 2>/dev/null")
+                                           .and_return("flathub\thttps://dl.flathub.org/repo/\nfedora\thttps://registry.fedoraproject.org/\n")
+      expect(dumper.remote_urls).to eql({
+        "flathub" => "https://dl.flathub.org/repo/",
+        "fedora"  => "https://registry.fedoraproject.org/",
+      })
+    end
+
+    it "returns package list with remotes and URLs" do
       allow(described_class).to receive(:`).with("flatpak list --app --columns=application,origin 2>/dev/null")
                                            .and_return("org.gnome.Calculator\tflathub\ncom.spotify.Client\tflathub\n")
+      allow(described_class).to receive(:`).with("flatpak remote-list --system --columns=name,url 2>/dev/null")
+                                           .and_return("flathub\thttps://dl.flathub.org/repo/\n")
       expect(dumper.packages_with_remotes).to eql([
-        { name: "com.spotify.Client", remote: "flathub" },
-        { name: "org.gnome.Calculator", remote: "flathub" },
+        { name: "com.spotify.Client", remote: "flathub", remote_url: "https://dl.flathub.org/repo/" },
+        { name: "org.gnome.Calculator", remote: "flathub", remote_url: "https://dl.flathub.org/repo/" },
       ])
     end
 
     it "returns package names only" do
       allow(described_class).to receive(:`).with("flatpak list --app --columns=application,origin 2>/dev/null")
                                            .and_return("org.gnome.Calculator\tflathub\ncom.spotify.Client\tflathub\n")
+      allow(described_class).to receive(:`).with("flatpak remote-list --system --columns=name,url 2>/dev/null")
+                                           .and_return("flathub\thttps://dl.flathub.org/repo/\n")
       expect(dumper.packages).to eql(["com.spotify.Client", "org.gnome.Calculator"])
     end
 
@@ -51,21 +64,32 @@ RSpec.describe Homebrew::Bundle::FlatpakDumper do
       expect(dumper.dump).to eql("flatpak \"org.gnome.Calculator\"\nflatpak \"com.spotify.Client\"")
     end
 
-    it "dumps package list with remote for non-flathub packages" do
+    it "dumps package list with remote URL for non-flathub packages" do
       allow(dumper).to receive(:packages_with_remotes).and_return([
-        { name: "org.gnome.Calculator", remote: "flathub" },
-        { name: "com.custom.App", remote: "custom-repo" },
+        { name: "org.gnome.Calculator", remote: "flathub", remote_url: "https://dl.flathub.org/repo/" },
+        { name: "org.godotengine.Godot", remote: "godot-beta", remote_url: "https://dl.flathub.org/beta-repo/" },
       ])
       expect(dumper.dump).to eql(
-        "flatpak \"org.gnome.Calculator\"\nflatpak \"com.custom.App\", remote: \"custom-repo\"",
+        "flatpak \"org.gnome.Calculator\"\nflatpak \"org.godotengine.Godot\", remote: \"https://dl.flathub.org/beta-repo/\"",
+      )
+    end
+
+    it "dumps package with remote name when URL is not available" do
+      allow(dumper).to receive(:packages_with_remotes).and_return([
+        { name: "com.custom.App", remote: "custom-repo", remote_url: nil },
+      ])
+      expect(dumper.dump).to eql(
+        "flatpak \"com.custom.App\", remote: \"custom-repo\"",
       )
     end
 
     it "handles packages without origin" do
       allow(described_class).to receive(:`).with("flatpak list --app --columns=application,origin 2>/dev/null")
                                            .and_return("org.gnome.Calculator\n")
+      allow(described_class).to receive(:`).with("flatpak remote-list --system --columns=name,url 2>/dev/null")
+                                           .and_return("flathub\thttps://dl.flathub.org/repo/\n")
       expect(dumper.packages_with_remotes).to eql([
-        { name: "org.gnome.Calculator", remote: "flathub" },
+        { name: "org.gnome.Calculator", remote: "flathub", remote_url: "https://dl.flathub.org/repo/" },
       ])
     end
   end

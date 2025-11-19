@@ -111,8 +111,6 @@ module Homebrew
                description: "`list` or `dump` Go packages."
         switch "--flatpak",
                description: "`list` or `dump` Flatpak packages."
-        switch "--flatpak-remotes",
-               description: "`list` or `dump` Flatpak remotes."
         switch "--no-vscode",
                description: "`dump` without VSCode (and forks/variants) extensions.",
                env:         :bundle_dump_no_vscode
@@ -122,9 +120,6 @@ module Homebrew
         switch "--no-flatpak",
                description: "`dump` without Flatpak packages.",
                env:         :bundle_dump_no_flatpak
-        switch "--no-flatpak-remotes",
-               description: "`dump` without Flatpak remotes.",
-               env:         :bundle_dump_no_flatpak_remotes
         switch "--describe",
                description: "`dump` adds a description comment above each line, unless the " \
                             "dependency does not have a description.",
@@ -143,8 +138,6 @@ module Homebrew
         conflicts "--go", "--no-go"
         conflicts "--all", "--no-flatpak"
         conflicts "--flatpak", "--no-flatpak"
-        conflicts "--all", "--no-flatpak-remotes"
-        conflicts "--flatpak-remotes", "--no-flatpak-remotes"
         conflicts "--install", "--upgrade"
         conflicts "--file", "--global"
 
@@ -183,7 +176,7 @@ module Homebrew
         Homebrew::Bundle.upgrade_formulae = args.upgrade_formulae
 
         no_type_args = [args.formulae?, args.casks?, args.taps?, args.mas?, args.vscode?, args.go?,
-                        args.flatpak?, args.flatpak_remotes?].none?
+                        args.flatpak?].none?
 
         if args.install?
           if [nil, "install", "upgrade"].include?(subcommand)
@@ -242,14 +235,6 @@ module Homebrew
             no_type_args
           end
 
-          flatpak_remotes = if args.no_flatpak_remotes?
-            false
-          elsif args.flatpak_remotes?
-            true
-          else
-            no_type_args
-          end
-
           require "bundle/commands/dump"
           Homebrew::Bundle::Commands::Dump.run(
             global:, file:, force:,
@@ -261,8 +246,7 @@ module Homebrew
             mas:        args.mas? || no_type_args,
             vscode:,
             go:,
-            flatpak:,
-            flatpak_remotes:
+            flatpak:
           )
         when "edit"
           require "bundle/brewfile"
@@ -275,8 +259,7 @@ module Homebrew
             casks:           args.casks? || no_type_args,
             taps:            args.taps? || no_type_args,
             vscode:          args.vscode? || no_type_args,
-            flatpak:         args.flatpak? || no_type_args,
-            flatpak_remotes: args.flatpak_remotes? || no_type_args
+            flatpak:         args.flatpak? || no_type_args
           )
         when "check"
           require "bundle/commands/check"
@@ -286,27 +269,25 @@ module Homebrew
           Homebrew::Bundle::Commands::List.run(
             global:,
             file:,
-            formulae:        args.formulae? || args.all? || no_type_args,
-            casks:           args.casks? || args.all?,
-            taps:            args.taps? || args.all?,
-            mas:             args.mas? || args.all?,
-            vscode:          args.vscode? || args.all?,
-            go:              args.go? || args.all?,
-            flatpak:         args.flatpak? || args.all?,
-            flatpak_remotes: args.flatpak_remotes? || args.all?,
+            formulae: args.formulae? || args.all? || no_type_args,
+            casks:    args.casks? || args.all?,
+            taps:     args.taps? || args.all?,
+            mas:      args.mas? || args.all?,
+            vscode:   args.vscode? || args.all?,
+            go:       args.go? || args.all?,
+            flatpak:  args.flatpak? || args.all?,
           )
         when "add", "remove"
           # We intentionally omit the s from `brews`, `casks`, and `taps` for ease of handling later.
           type_hash = {
-            brew:           args.formulae?,
-            cask:           args.casks?,
-            tap:            args.taps?,
-            mas:            args.mas?,
-            vscode:         args.vscode?,
-            go:             args.go?,
-            flatpak:        args.flatpak?,
-            flatpak_remote: args.flatpak_remotes?,
-            none:           no_type_args,
+            brew:    args.formulae?,
+            cask:    args.casks?,
+            tap:     args.taps?,
+            mas:     args.mas?,
+            vscode:  args.vscode?,
+            go:      args.go?,
+            flatpak: args.flatpak?,
+            none:    no_type_args,
           }
           selected_types = type_hash.select { |_, v| v }.keys
           raise UsageError, "`#{subcommand}` supports only one type of entry at a time." if selected_types.count != 1

@@ -34,7 +34,6 @@ Naming/PredicateMethod:
 Naming/MethodParameterName:
   AllowedNames:
     - go
-    - flatpak
 
 # Only enforce documentation for public APIs.
 # Checked by the tests.yml syntax job

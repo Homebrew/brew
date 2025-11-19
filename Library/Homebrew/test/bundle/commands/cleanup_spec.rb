@@ -146,8 +146,7 @@ RSpec.describe Homebrew::Bundle::Commands::Cleanup do
                                                  formulae_to_uninstall:          [],
                                                  taps_to_untap:                  [],
                                                  vscode_extensions_to_uninstall: [],
-                                                 flatpaks_to_uninstall:          [],
-                                                 flatpak_remotes_to_remove:      [])
+                                                 flatpaks_to_uninstall:          [])
     end
 
     it "does nothing" do
@@ -164,8 +163,7 @@ RSpec.describe Homebrew::Bundle::Commands::Cleanup do
                                                  formulae_to_uninstall:          [],
                                                  taps_to_untap:                  [],
                                                  vscode_extensions_to_uninstall: [],
-                                                 flatpaks_to_uninstall:          [],
-                                                 flatpak_remotes_to_remove:      [])
+                                                 flatpaks_to_uninstall:          [])
     end
 
     it "uninstalls casks" do
@@ -188,8 +186,7 @@ RSpec.describe Homebrew::Bundle::Commands::Cleanup do
                                                  formulae_to_uninstall:          [],
                                                  taps_to_untap:                  [],
                                                  vscode_extensions_to_uninstall: [],
-                                                 flatpaks_to_uninstall:          [],
-                                                 flatpak_remotes_to_remove:      [])
+                                                 flatpaks_to_uninstall:          [])
     end
 
     it "uninstalls casks" do
@@ -212,8 +209,7 @@ RSpec.describe Homebrew::Bundle::Commands::Cleanup do
                                                  formulae_to_uninstall:          %w[a b],
                                                  taps_to_untap:                  [],
                                                  vscode_extensions_to_uninstall: [],
-                                                 flatpaks_to_uninstall:          [],
-                                                 flatpak_remotes_to_remove:      [])
+                                                 flatpaks_to_uninstall:          [])
     end
 
     it "uninstalls formulae" do
@@ -236,8 +232,7 @@ RSpec.describe Homebrew::Bundle::Commands::Cleanup do
                                                  formulae_to_uninstall:          [],
                                                  taps_to_untap:                  %w[a b],
                                                  vscode_extensions_to_uninstall: [],
-                                                 flatpaks_to_uninstall:          [],
-                                                 flatpak_remotes_to_remove:      [])
+                                                 flatpaks_to_uninstall:          [])
     end
 
     it "untaps taps" do
@@ -261,8 +256,7 @@ RSpec.describe Homebrew::Bundle::Commands::Cleanup do
                                                  formulae_to_uninstall:          [],
                                                  taps_to_untap:                  [],
                                                  vscode_extensions_to_uninstall: %w[GitHub.codespaces],
-                                                 flatpaks_to_uninstall:          [],
-                                                 flatpak_remotes_to_remove:      [])
+                                                 flatpaks_to_uninstall:          [])
     end
 
     it "uninstalls extensions" do
@@ -285,8 +279,7 @@ RSpec.describe Homebrew::Bundle::Commands::Cleanup do
                                                  formulae_to_uninstall:          [],
                                                  taps_to_untap:                  [],
                                                  vscode_extensions_to_uninstall: [],
-                                                 flatpaks_to_uninstall:          %w[org.gnome.Calculator],
-                                                 flatpak_remotes_to_remove:      [])
+                                                 flatpaks_to_uninstall:          %w[org.gnome.Calculator])
     end
 
     it "uninstalls flatpaks" do
@@ -309,18 +302,16 @@ RSpec.describe Homebrew::Bundle::Commands::Cleanup do
                                                  formulae_to_uninstall:          %w[a b],
                                                  taps_to_untap:                  %w[a b],
                                                  vscode_extensions_to_uninstall: %w[a b],
-                                                 flatpaks_to_uninstall:          %w[a b],
-                                                 flatpak_remotes_to_remove:      %w[a b])
+                                                 flatpaks_to_uninstall:          %w[a b])
     end
 
     it "lists casks, formulae and taps" do
-      expect(Formatter).to receive(:columns).with(%w[a b]).exactly(6).times.and_return("a b")
+      expect(Formatter).to receive(:columns).with(%w[a b]).exactly(5).times.and_return("a b")
       expect(Kernel).not_to receive(:system)
       expect(described_class).to receive(:system_output_no_stderr).and_return("")
       output_pattern = Regexp.new(
         "Would uninstall casks:.*Would uninstall formulae:.*Would untap:.*" \
-        "Would uninstall VSCode extensions:.*Would uninstall flatpaks:.*" \
-        "Would remove flatpak remotes:",
+        "Would uninstall VSCode extensions:.*Would uninstall flatpaks:",
         Regexp::MULTILINE,
       )
       expect do
@@ -337,8 +328,7 @@ RSpec.describe Homebrew::Bundle::Commands::Cleanup do
                                                  formulae_to_uninstall:          [],
                                                  taps_to_untap:                  [],
                                                  vscode_extensions_to_uninstall: [],
-                                                 flatpaks_to_uninstall:          [],
-                                                 flatpak_remotes_to_remove:      [])
+                                                 flatpaks_to_uninstall:          [])
     end
 
     define_method(:sane?) do

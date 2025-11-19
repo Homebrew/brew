@@ -16,20 +16,18 @@ module Homebrew
 
       sig {
         params(
-          describe:        T::Boolean,
-          no_restart:      T::Boolean,
-          formulae:        T::Boolean,
-          taps:            T::Boolean,
-          casks:           T::Boolean,
-          mas:             T::Boolean,
-          vscode:          T::Boolean,
-          go:              T::Boolean,
-          flatpak:         T::Boolean,
-          flatpak_remotes: T::Boolean,
+          describe:   T::Boolean,
+          no_restart: T::Boolean,
+          formulae:   T::Boolean,
+          taps:       T::Boolean,
+          casks:      T::Boolean,
+          mas:        T::Boolean,
+          vscode:     T::Boolean,
+          go:         T::Boolean,
+          flatpak:    T::Boolean,
         ).returns(String)
       }
-      def self.build_brewfile(describe:, no_restart:, formulae:, taps:, casks:, mas:, vscode:, go:, flatpak:,
-                              flatpak_remotes:)
+      def self.build_brewfile(describe:, no_restart:, formulae:, taps:, casks:, mas:, vscode:, go:, flatpak:)
         require "bundle/tap_dumper"
         require "bundle/formula_dumper"
         require "bundle/cask_dumper"
@@ -37,10 +35,8 @@ module Homebrew
         require "bundle/vscode_extension_dumper"
         require "bundle/go_dumper"
         require "bundle/flatpak_dumper"
-        require "bundle/flatpak_remote_dumper"
 
         content = []
-        content << FlatpakRemoteDumper.dump if flatpak_remotes
         content << TapDumper.dump if taps
         content << FormulaDumper.dump(describe:, no_restart:) if formulae
         content << CaskDumper.dump(describe:) if casks
@@ -53,27 +49,25 @@ module Homebrew
 
       sig {
         params(
-          global:          T::Boolean,
-          file:            T.nilable(String),
-          describe:        T::Boolean,
-          force:           T::Boolean,
-          no_restart:      T::Boolean,
-          formulae:        T::Boolean,
-          taps:            T::Boolean,
-          casks:           T::Boolean,
-          mas:             T::Boolean,
-          vscode:          T::Boolean,
-          go:              T::Boolean,
-          flatpak:         T::Boolean,
-          flatpak_remotes: T::Boolean,
+          global:     T::Boolean,
+          file:       T.nilable(String),
+          describe:   T::Boolean,
+          force:      T::Boolean,
+          no_restart: T::Boolean,
+          formulae:   T::Boolean,
+          taps:       T::Boolean,
+          casks:      T::Boolean,
+          mas:        T::Boolean,
+          vscode:     T::Boolean,
+          go:         T::Boolean,
+          flatpak:    T::Boolean,
         ).void
       }
       def self.dump_brewfile(global:, file:, describe:, force:, no_restart:, formulae:, taps:, casks:, mas:,
-                             vscode:, go:, flatpak:, flatpak_remotes:)
+                             vscode:, go:, flatpak:)
         path = brewfile_path(global:, file:)
         can_write_to_brewfile?(path, force:)
-        content = build_brewfile(describe:, no_restart:, taps:, formulae:, casks:, mas:, vscode:, go:, flatpak:,
-                                 flatpak_remotes:)
+        content = build_brewfile(describe:, no_restart:, taps:, formulae:, casks:, mas:, vscode:, go:, flatpak:)
         write_file path, content
       end
 

@@ -59,7 +59,6 @@ module Homebrew
       CheckResult = Struct.new :work_to_be_done, :errors
 
       CHECKS = {
-        flatpak_remotes_to_add: "Flatpak Remotes",
         taps_to_tap:            "Taps",
         casks_to_install:       "Casks",
         extensions_to_install:  "VSCode Extensions",
@@ -151,14 +150,6 @@ module Homebrew
       def self.flatpaks_to_install(exit_on_first_error: false, no_upgrade: false, verbose: false)
         require "bundle/flatpak_checker"
         Homebrew::Bundle::Checker::FlatpakChecker.new.find_actionable(
-          @dsl.entries,
-          exit_on_first_error:, no_upgrade:, verbose:,
-        )
-      end
-
-      def self.flatpak_remotes_to_add(exit_on_first_error: false, no_upgrade: false, verbose: false)
-        require "bundle/flatpak_remote_checker"
-        Homebrew::Bundle::Checker::FlatpakRemoteChecker.new.find_actionable(
           @dsl.entries,
           exit_on_first_error:, no_upgrade:, verbose:,
         )

@@ -14,7 +14,6 @@ module Homebrew
           require "bundle/tap_dumper"
           require "bundle/vscode_extension_dumper"
           require "bundle/flatpak_dumper"
-          require "bundle/flatpak_remote_dumper"
           require "bundle/brew_services"
 
           @dsl = nil
@@ -25,12 +24,11 @@ module Homebrew
           Homebrew::Bundle::TapDumper.reset!
           Homebrew::Bundle::VscodeExtensionDumper.reset!
           Homebrew::Bundle::FlatpakDumper.reset!
-          Homebrew::Bundle::FlatpakRemoteDumper.reset!
           Homebrew::Bundle::BrewServices.reset!
         end
 
         def self.run(global: false, file: nil, force: false, zap: false, dsl: nil,
-                     formulae: true, casks: true, taps: true, vscode: true, flatpak: true, flatpak_remotes: true)
+                     formulae: true, casks: true, taps: true, vscode: true, flatpak: true)
           @dsl ||= dsl
 
           casks = casks ? casks_to_uninstall(global:, file:) : []
@@ -38,11 +36,6 @@ module Homebrew
           taps = taps ? taps_to_untap(global:, file:) : []
           vscode_extensions = vscode ? vscode_extensions_to_uninstall(global:, file:) : []
           flatpaks = flatpak ? flatpaks_to_uninstall(global:, file:) : []
-          remotes_to_delete = if flatpak_remotes
-            flatpak_remotes_to_remove(global:, file:)
-          else
-            []
-          end
           if force
             if casks.any?
               args = zap ? ["--zap"] : []
@@ -68,13 +61,6 @@ module Homebrew
                 Kernel.system "flatpak", "uninstall", "-y", "--system", flatpak_name
               end
               puts "Uninstalled #{flatpaks.size} flatpak#{"s" if flatpaks.size != 1}"
-            end
-
-            if remotes_to_delete.any?
-              remotes_to_delete.each do |remote_name|
-                Kernel.system "flatpak", "remote-delete", "--system", remote_name
-              end
-              puts "Removed #{remotes_to_delete.size} flatpak remote#{"s" if remotes_to_delete.size != 1}"
             end
 
             cleanup = system_output_no_stderr(HOMEBREW_BREW_FILE, "cleanup")
@@ -109,12 +95,6 @@ module Homebrew
             if flatpaks.any?
               puts "Would uninstall flatpaks:"
               puts Formatter.columns flatpaks
-              would_uninstall = true
-            end
-
-            if remotes_to_delete.any?
-              puts "Would remove flatpak remotes:"
-              puts Formatter.columns remotes_to_delete
               would_uninstall = true
             end
 
@@ -261,21 +241,6 @@ module Homebrew
           require "bundle/flatpak_dumper"
           current_flatpaks = Homebrew::Bundle::FlatpakDumper.packages
           current_flatpaks - kept_flatpaks
-        end
-
-        def self.flatpak_remotes_to_remove(global: false, file: nil)
-          require "bundle/brewfile"
-          @dsl ||= Brewfile.read(global:, file:)
-          kept_remotes = @dsl.entries.select { |e| e.type == :flatpak_remote }.map(&:name)
-
-          # To provide a graceful migration from `Brewfile`s that don't yet or
-          # don't want to use `flatpak_remote`: don't remove any remotes if we don't
-          # find any in the `Brewfile`.
-          return [].freeze if kept_remotes.empty?
-
-          require "bundle/flatpak_remote_dumper"
-          current_remotes = Homebrew::Bundle::FlatpakRemoteDumper.remote_names
-          current_remotes - kept_remotes
         end
 
         def self.system_output_no_stderr(cmd, *args)

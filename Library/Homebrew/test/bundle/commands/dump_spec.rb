@@ -10,7 +10,7 @@ require "bundle/vscode_extension_dumper"
 RSpec.describe Homebrew::Bundle::Commands::Dump do
   subject(:dump) do
     described_class.run(global:, file: nil, describe: false, force:, no_restart: false, taps: true, formulae: true,
-                        casks: true, mas: true, vscode: true, go: true, flatpak: false, flatpak_remotes: false)
+                        casks: true, mas: true, vscode: true, go: true, flatpak: false)
   end
 
   let(:force) { false }

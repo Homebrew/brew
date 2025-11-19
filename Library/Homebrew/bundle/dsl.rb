@@ -90,12 +90,6 @@ module Homebrew
         @entries << Entry.new(:flatpak, name, options)
       end
 
-      sig { params(name: String, url: T.nilable(String), options: T::Hash[Symbol, T.untyped]).void }
-      def flatpak_remote(name, url = nil, options = {})
-        options[:url] = url
-        @entries << Entry.new(:flatpak_remote, name, options)
-      end
-
       def tap(name, clone_target = nil, options = {})
         raise "name(#{name.inspect}) should be a String object" unless name.is_a? String
         if clone_target && !clone_target.is_a?(String)

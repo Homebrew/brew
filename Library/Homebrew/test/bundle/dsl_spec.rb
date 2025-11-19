@@ -89,6 +89,12 @@ RSpec.describe Homebrew::Bundle::Dsl do
       expect(dsl.entries[0].name).to eql("org.gnome.Calculator")
       expect(dsl.entries[0].options[:remote]).to eql("flathub")
     end
+
+    it "processes flatpak with URL remote" do
+      dsl = dsl_from_string 'flatpak "org.godotengine.Godot", remote: "https://dl.flathub.org/beta-repo/"'
+      expect(dsl.entries[0].name).to eql("org.godotengine.Godot")
+      expect(dsl.entries[0].options[:remote]).to eql("https://dl.flathub.org/beta-repo/")
+    end
   end
 
   context "with invalid input" do
