@@ -163,48 +163,6 @@ module Homebrew
       json.except("variations")
     end
 
-    sig { params(json: T::Hash[String, T.untyped]).returns(T::Hash[String, T.untyped]) }
-    def self.strip_unneeded_internal_fields(json)
-      json.slice(*%w[
-        caveats
-        uses_from_macos
-        requirements
-        specs
-        _dependencies
-        desc
-        homepage
-        license
-        revision
-        version_scheme
-        urls
-        versions
-        no_autobump_msg
-        bottle
-        pour_bottle_only_if
-        keg_only_reason
-        deprecation_date
-        deprecation_replacement_formula
-        deprecation_replacement_cask
-        disable_date
-        disable_reason
-        disable_replacement_formula
-        disable_replacement_cask
-        conflicts_with
-        conflicts_with_reasons
-        link_overwrite
-        post_install_defined
-        service
-        tap_git_head
-        oldnames
-        oldname
-        aliases
-        versioned_formulae
-        ruby_source_path
-        ruby_source_checksum
-        ruby_source_sha256
-      ])
-    end
-
     sig { void }
     def self.fetch_api_files!
       download_queue = if Homebrew::EnvConfig.download_concurrency > 1
