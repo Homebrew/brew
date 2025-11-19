@@ -137,8 +137,7 @@ module Homebrew
       sig { params(tap: Tap).returns(T::Hash[String, T.untyped]) }
       def formulae(tap)
         reset_debugging!
-        # TODO: remove the slicing when done testing
-        @formulae ||= T.let(T.must(tap.formula_names.slice(0, 2)).to_h do |name|
+        @formulae ||= T.let(tap.formula_names.to_h do |name|
           debug_load!(name, type: :formula)
           formula = Formulary.factory(name)
           [formula.name, formula.to_hash_with_variations]
@@ -151,8 +150,7 @@ module Homebrew
       sig { params(tap: Tap).returns(T::Hash[String, T.untyped]) }
       def casks(tap)
         reset_debugging!
-        # TODO: remove the slicing when done testing
-        @casks ||= T.let(T.must(tap.cask_files.slice(0, 2)).to_h do |path|
+        @casks ||= T.let(tap.cask_files.to_h do |path|
           debug_load!(path.stem, type: :cask)
           cask = ::Cask::CaskLoader.load(path)
           [cask.token, cask.to_hash_with_variations]
