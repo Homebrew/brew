@@ -12,11 +12,8 @@ RSpec.describe Homebrew::Bundle::FlatpakDumper do
       allow(Homebrew::Bundle).to receive(:flatpak_installed?).and_return(false)
     end
 
-    it "returns an empty list" do
+    it "returns an empty list and dumps an empty string" do
       expect(dumper.packages).to be_empty
-    end
-
-    it "dumps an empty string" do
       expect(dumper.dump).to eql("")
     end
   end
