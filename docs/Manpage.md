@@ -304,10 +304,6 @@ flags which will help with finding keg-only dependencies like `openssl`,
 
 : `list` or `dump` Flatpak packages.
 
-`--flatpak-remotes`
-
-: `list` or `dump` Flatpak remotes.
-
 `--no-vscode`
 
 : `dump` without VSCode (and forks/variants) extensions. Enabled by default if
@@ -322,11 +318,6 @@ flags which will help with finding keg-only dependencies like `openssl`,
 
 : `dump` without Flatpak packages. Enabled by default if
   `$HOMEBREW_BUNDLE_DUMP_NO_FLATPAK` is set.
-
-`--no-flatpak-remotes`
-
-: `dump` without Flatpak remotes. Enabled by default if
-  `$HOMEBREW_BUNDLE_DUMP_NO_FLATPAK_REMOTES` is set.
 
 `--describe`
 

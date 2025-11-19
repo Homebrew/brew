@@ -667,7 +667,7 @@ _brew_bump_unversioned_casks() {
 # brew bundle
 _brew_bundle() {
   _arguments \
-    '(--no-vscode --no-go --no-flatpak --no-flatpak-remotes)--all[`list` all dependencies]' \
+    '(--no-vscode --no-go --no-flatpak)--all[`list` all dependencies]' \
     '--cask[`list`, `dump` or `cleanup` Homebrew cask dependencies]' \
     '--check[Check that all dependencies in the Brewfile are installed before running `exec`, `sh`, or `env`]' \
     '--cleanup[`install` performs cleanup operation, same as running `cleanup --force`. Enabled by default if `$HOMEBREW_BUNDLE_INSTALL_CLEANUP` is set and `--global` is passed]' \
@@ -675,7 +675,6 @@ _brew_bundle() {
     '--describe[`dump` adds a description comment above each line, unless the dependency does not have a description. Enabled by default if `$HOMEBREW_BUNDLE_DUMP_DESCRIBE` is set]' \
     '(--global)--file[Read from or write to the `Brewfile` from this location. Use `--file=-` to pipe to stdin/stdout]' \
     '(--no-flatpak)--flatpak[`list` or `dump` Flatpak packages]' \
-    '(--no-flatpak-remotes)--flatpak-remotes[`list` or `dump` Flatpak remotes]' \
     '--force[`install` runs with `--force`/`--overwrite`. `dump` overwrites an existing `Brewfile`. `cleanup` actually performs its cleanup operations]' \
     '--formula[`list`, `dump` or `cleanup` Homebrew formula dependencies]' \
     '(--file)--global[Read from or write to the `Brewfile` from `$HOMEBREW_BUNDLE_FILE_GLOBAL` (if set), `${XDG_CONFIG_HOME}/homebrew/Brewfile` (if `$XDG_CONFIG_HOME` is set), `~/.homebrew/Brewfile` or `~/.Brewfile` otherwise]' \
@@ -684,7 +683,6 @@ _brew_bundle() {
     '(--upgrade)--install[Run `install` before continuing to other operations, e.g. `exec`]' \
     '--mas[`list` or `dump` Mac App Store dependencies]' \
     '(--all --flatpak)--no-flatpak[`dump` without Flatpak packages. Enabled by default if `$HOMEBREW_BUNDLE_DUMP_NO_FLATPAK` is set]' \
-    '(--all --flatpak-remotes)--no-flatpak-remotes[`dump` without Flatpak remotes. Enabled by default if `$HOMEBREW_BUNDLE_DUMP_NO_FLATPAK_REMOTES` is set]' \
     '(--all --go)--no-go[`dump` without Go packages. Enabled by default if `$HOMEBREW_BUNDLE_DUMP_NO_GO` is set]' \
     '--no-restart[`dump` does not add `restart_service` to formula lines]' \
     '--no-upgrade[`install` does not run `brew upgrade` on outdated dependencies. `check` does not check for outdated dependencies. Note they may still be upgraded by `brew install` if needed. Enabled by default if `$HOMEBREW_BUNDLE_NO_UPGRADE` is set]' \
