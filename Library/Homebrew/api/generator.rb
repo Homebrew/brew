@@ -114,7 +114,7 @@ module Homebrew
           end
 
           casks = casks(cask_tap).transform_values do |hash|
-            Homebrew::API.merge_variations(hash, bottle_tag:)
+            InternalCaskHash.from_hash(hash, bottle_tag:)
           end
 
           next if dry_run?
@@ -264,7 +264,43 @@ module Homebrew
       sig { params(hash: T::Hash[String, T.untyped], bottle_tag: ::Utils::Bottles::Tag).returns(InternalFormulaHash) }
       def self.from_hash(hash, bottle_tag:)
         hash = Homebrew::API.merge_variations(hash, bottle_tag: bottle_tag).transform_keys(&:to_sym)
-        InternalFormulaHash.new(**hash.slice(*PROPERTIES.keys))
+        new(**hash.slice(*PROPERTIES.keys))
+      end
+    end
+
+    class InternalCaskHash < T::Struct
+      include CompactSerializable
+
+      # TODO: simplify these types when possible
+      PROPERTIES = T.let({
+        artifacts:          T::Array[T.untyped],
+        auto_updates:       T::Boolean,
+        caveats:            T::Array[String],
+        conflicts_with:     T::Array[String],
+        container:          T::Hash[String, T.untyped],
+        depends_on:         ::Cask::DSL::DependsOn,
+        deprecation_date:   String,
+        deprecation_reason: String,
+        desc:               String,
+        disable_date:       String,
+        disable_reason:     String,
+        homepage:           String,
+        name:               T::Array[String],
+        rename:             T::Array[String],
+        sha256:             Checksum,
+        url:                ::Cask::URL,
+        url_specs:          T::Hash[Symbol, T.untyped],
+        version:            String,
+      }.freeze, T::Hash[Symbol, T.untyped])
+
+      PROPERTIES.each do |property, type|
+        const property, T.nilable(type)
+      end
+
+      sig { params(hash: T::Hash[String, T.untyped], bottle_tag: ::Utils::Bottles::Tag).returns(InternalCaskHash) }
+      def self.from_hash(hash, bottle_tag:)
+        hash = Homebrew::API.merge_variations(hash, bottle_tag: bottle_tag).transform_keys(&:to_sym)
+        new(**hash.slice(*PROPERTIES.keys))
       end
     end
   end
