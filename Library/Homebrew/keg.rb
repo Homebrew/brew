@@ -629,6 +629,7 @@ class Keg
     keepme.readlines.select { |ref| File.exist?(ref.strip) }
   end
 
+  sig { returns(T::Array[Pathname]) }
   def binary_executable_or_library_files
     []
   end

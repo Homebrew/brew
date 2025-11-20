@@ -198,7 +198,7 @@ class Build
             (formula.logs/"00.options.out").write \
               "#{formula.full_name} #{formula.build.used_options.sort.join(" ")}".strip
 
-            Pathname.prepend WriteMkpathExtension
+            Pathname.activate_extensions!
             formula.install
 
             stdlibs = detect_stdlibs

@@ -31,7 +31,7 @@ begin
     formula.extend(Debrew::Formula)
   end
 
-  Pathname.prepend WriteMkpathExtension
+  Pathname.activate_extensions!
   formula.run_post_install
 
 # Handle all possible exceptions.

@@ -44,6 +44,14 @@ module ELFShim
 
   requires_ancestor { Pathname }
 
+  sig { params(path: T.any(Pathname, ELFShim)).returns(ELFShim) }
+  def self.wrap(path)
+    return path if path.is_a?(ELFShim)
+
+    path.extend(ELFShim)
+    T.cast(path, ELFShim)
+  end
+
   sig { params(path: T.anything).void }
   def initialize(path)
     @elf = T.let(nil, T.nilable(T::Boolean))
@@ -214,7 +222,7 @@ module ELFShim
 
     private
 
-    sig { params(basename: String).returns(Pathname) }
+    sig { params(basename: String).returns(::Pathname) }
     def find_full_lib_path(basename)
       basename = Pathname(basename)
       local_paths = rpath&.split(":")
@@ -223,7 +231,9 @@ module ELFShim
       local_paths&.each do |local_path|
         local_path = OS::Linux::Elf.expand_elf_dst(local_path, "ORIGIN", path.parent)
         candidate = Pathname(local_path)/basename
-        return candidate if candidate.exist? && candidate.elf?
+        elf_candidate = candidate.extend(ELFShim)
+        elf_candidate = T.cast(elf_candidate, ELFShim)
+        return candidate if candidate.exist? && elf_candidate.elf?
       end
 
       # Check if DF_1_NODEFLIB is set
@@ -248,14 +258,18 @@ module ELFShim
       # paths that are subdirectories of the system dirs if DF_1_NODEFLIB is set)
       linker_library_paths.each do |linker_library_path|
         candidate = Pathname(linker_library_path)/basename
-        return candidate if candidate.exist? && candidate.elf?
+        elf_candidate = candidate.extend(ELFShim)
+        elf_candidate = T.cast(elf_candidate, ELFShim)
+        return candidate if candidate.exist? && elf_candidate.elf?
       end
 
       # If not found, search in the system dirs, unless DF_1_NODEFLIB is set
       unless nodeflib_flag
         linker_system_dirs.each do |linker_system_dir|
           candidate = Pathname(linker_system_dir)/basename
-          return candidate if candidate.exist? && candidate.elf?
+          elf_candidate = candidate.extend(ELFShim)
+          elf_candidate = T.cast(elf_candidate, ELFShim)
+          return candidate if candidate.exist? && elf_candidate.elf?
         end
       end
 

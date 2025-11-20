@@ -47,7 +47,7 @@ begin
 
   ENV.extend(Stdenv)
   ENV.setup_build_environment(formula:, testing_formula: true)
-  Pathname.prepend WriteMkpathExtension
+  Pathname.activate_extensions!
 
   # tests can also return false to indicate failure
   run_test = proc { |_ = nil| raise "test returned false" if formula.run_test(keep_tmp: args.keep_tmp?) == false }

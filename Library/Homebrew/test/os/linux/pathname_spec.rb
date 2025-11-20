@@ -3,7 +3,7 @@
 require "extend/pathname"
 
 RSpec.describe Pathname do
-  let(:elf_dir) { described_class.new "#{TEST_FIXTURE_DIR}/elf" }
+  let(:elf_dir) { OSPathname.new "#{TEST_FIXTURE_DIR}/elf" }
   let(:sho) { elf_dir/"libforty.so.0" }
   let(:sho_without_runpath_rpath) { elf_dir/"libhello.so.0" }
   let(:exec) { elf_dir/"hello_with_rpath" }

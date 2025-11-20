@@ -12,6 +12,14 @@ module MachOShim
 
   delegate [:dylib_id] => :macho
 
+  sig { params(path: T.any(Pathname, MachOShim)).returns(MachOShim) }
+  def self.wrap(path)
+    return path if path.is_a?(MachOShim)
+
+    path.extend(MachOShim)
+    T.cast(path, MachOShim)
+  end
+
   sig { params(args: T.untyped).void }
   def initialize(*args)
     @macho = T.let(nil, T.nilable(T.any(MachO::MachOFile, MachO::FatFile)))

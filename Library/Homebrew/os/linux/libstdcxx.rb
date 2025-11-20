@@ -25,20 +25,22 @@ module OS
         end
       end
 
-      sig { returns(T.nilable(Pathname)) }
+      sig { returns(T.nilable(::Pathname)) }
       def self.system_path
-        @system_path ||= T.let(nil, T.nilable(Pathname))
+        @system_path ||= T.let(nil, T.nilable(::Pathname))
         @system_path ||= find_library(OS::Linux::Ld.library_paths(brewed: false))
         @system_path ||= find_library(OS::Linux::Ld.system_dirs(brewed: false))
       end
 
-      sig { params(paths: T::Array[String]).returns(T.nilable(Pathname)) }
+      sig { params(paths: T::Array[String]).returns(T.nilable(::Pathname)) }
       private_class_method def self.find_library(paths)
         paths.each do |path|
           next if path.start_with?(HOMEBREW_PREFIX)
 
           candidate = Pathname(path)/SONAME
-          return candidate if candidate.exist? && candidate.elf?
+          elf_candidate = ELFShim.extend(candidate)
+          elf_candidate = T.cast(candidate, ELFShim)
+          return candidate if candidate.exist? && elf_candidate.elf?
         end
         nil
       end

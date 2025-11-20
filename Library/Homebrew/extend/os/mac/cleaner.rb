@@ -6,9 +6,13 @@ module OS
     module Cleaner
       private
 
-      sig { params(path: Pathname).returns(T::Boolean) }
+      sig { params(path: ::Pathname).returns(T::Boolean) }
       def executable_path?(path)
-        path.mach_o_executable? || path.text_executable?
+        return true if path.text_executable?
+
+        path.extend(MachOShim)
+        path = T.cast(path, MachOShim)
+        path.mach_o_executable?
       end
     end
   end

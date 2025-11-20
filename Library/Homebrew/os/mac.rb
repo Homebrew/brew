@@ -5,7 +5,6 @@ require "macos_version"
 
 require "os/mac/xcode"
 require "os/mac/sdk"
-require "os/mac/keg"
 
 module OS
   # Helper module for querying system information on macOS.
