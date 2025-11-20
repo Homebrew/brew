@@ -15,12 +15,11 @@ module OS
           def skip?(entry, silent: false)
             if linux_only_entry?(entry)
               unless silent
-                $stdout.puts Formatter.warning "Skipping #{entry.type} #{entry.name} (unsupported on macOS)"
+                Kernel.puts Formatter.warning "Skipping #{entry.type} #{entry.name} (unsupported on macOS)"
               end
-
               true
             else
-              super(entry)
+              super
             end
           end
         end
