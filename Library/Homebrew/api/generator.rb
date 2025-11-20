@@ -6,6 +6,7 @@ require "formulary"
 require "utils/output"
 require "formula"
 require "context"
+require "api/formula_hash"
 
 module Homebrew
   module API
@@ -110,11 +111,12 @@ module Homebrew
 
         OnSystem::VALID_OS_ARCH_TAGS.each do |bottle_tag|
           formulae = formulae(core_tap).transform_values do |hash|
-            InternalFormulaHash.from_hash(hash, bottle_tag:)
+            FormulaHash.from_hash(hash, bottle_tag:)
           end
 
           casks = casks(cask_tap).transform_values do |hash|
-            InternalCaskHash.from_hash(hash, bottle_tag:)
+            # InternalCaskHash.from_hash(hash, bottle_tag:)
+            Homebrew::API.merge_variations(hash, bottle_tag: bottle_tag)
           end
 
           next if dry_run?
@@ -137,6 +139,7 @@ module Homebrew
       sig { params(tap: Tap).returns(T::Hash[String, T.untyped]) }
       def formulae(tap)
         reset_debugging!
+        # @formulae ||= T.let(T.must(tap.formula_names.slice(0, 2)).to_h do |name|
         @formulae ||= T.let(tap.formula_names.to_h do |name|
           debug_load!(name, type: :formula)
           formula = Formulary.factory(name)
@@ -150,6 +153,7 @@ module Homebrew
       sig { params(tap: Tap).returns(T::Hash[String, T.untyped]) }
       def casks(tap)
         reset_debugging!
+        # @casks ||= T.let(T.must(tap.cask_files.slice(0, 2)).to_h do |path|
         @casks ||= T.let(tap.cask_files.to_h do |path|
           debug_load!(path.stem, type: :cask)
           cask = ::Cask::CaskLoader.load(path)
@@ -207,62 +211,6 @@ module Homebrew
       def to_json(*args)
         # TODO: this should recursively remove nils from nested hashes/arrays too
         serialize.compact.to_json(*args)
-      end
-    end
-
-    class InternalFormulaHash < T::Struct
-      include CompactSerializable
-
-      # TODO: simplify these types when possible
-      PROPERTIES = T.let({
-        aliases:                         T::Array[String],
-        # TODO: only include the relevant bottle info
-        #       I think sample code used to live in `generate-formula-api`, but this commit removes it...
-        bottle:                          T::Hash[String, T.untyped],
-        caveats:                         T::Array[String],
-        conflicts_with:                  T::Array[String],
-        conflicts_with_reasons:          T::Array[String],
-        dependencies:                    T::Array[String],
-        deprecation_date:                String,
-        deprecation_reason:              String,
-        deprecation_replacement_cask:    String,
-        deprecation_replacement_formula: String,
-        desc:                            String,
-        disable_date:                    String,
-        disable_reason:                  String,
-        disable_replacement_cask:        String,
-        disable_replacement_formula:     String,
-        head_dependencies:               T::Array[String],
-        homepage:                        String,
-        keg_only_reason:                 String,
-        license:                         String,
-        link_overwrite:                  T::Array[String],
-        no_autobump_msg:                 String,
-        oldnames:                        T::Array[String],
-        post_install_defined:            T::Boolean,
-        pour_bottle_only_if:             T::Hash[String, T.untyped],
-        requirements:                    T::Array[String],
-        revision:                        Integer,
-        ruby_source_checksum:            T::Hash[String, T.untyped],
-        ruby_source_path:                String,
-        service:                         T::Hash[String, T.untyped],
-        tap_git_head:                    String,
-        urls:                            T::Hash[String, T.untyped],
-        uses_from_macos:                 T::Array[String],
-        uses_from_macos_bounds:          T::Array[T::Hash[String, T.untyped]],
-        version_scheme:                  Integer,
-        versioned_formulae:              T::Array[String],
-        versions:                        T::Hash[String, T.untyped],
-      }.freeze, T::Hash[Symbol, T.untyped])
-
-      PROPERTIES.each do |property, type|
-        const property, T.nilable(type)
-      end
-
-      sig { params(hash: T::Hash[String, T.untyped], bottle_tag: ::Utils::Bottles::Tag).returns(InternalFormulaHash) }
-      def self.from_hash(hash, bottle_tag:)
-        hash = Homebrew::API.merge_variations(hash, bottle_tag: bottle_tag).transform_keys(&:to_sym)
-        new(**hash.slice(*PROPERTIES.keys))
       end
     end
 
