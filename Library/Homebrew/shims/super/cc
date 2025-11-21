@@ -410,7 +410,7 @@ class Cmd
   end
 
   def system_library_paths
-    paths = ["#{sysroot}/usr/lib"]
+    paths = [canonical_path("#{sysroot}/usr/lib")]
     paths << "/usr/local/lib" if !sysroot && !ENV["SDKROOT"]
     paths
   end
