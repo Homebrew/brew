@@ -6,24 +6,29 @@ require "api/generator"
 
 module Homebrew
   module DevCmd
-    class GenerateCaskApi < AbstractCommand
+    class GeneratePackageApi < AbstractCommand
       cmd_args do
         description <<~EOS
-          Generate `homebrew/cask` API data files for <#{HOMEBREW_API_WWW}>.
+          Generate API data files for <#{HOMEBREW_API_WWW}>.
           The generated files are written to the current directory.
         EOS
+        switch "--only-core",
+               description: "Only generate API data for packages in `homebrew/core`."
+        switch "--only-cask",
+               description: "Only generate API data for packages in `homebrew/cask`."
         switch "-n", "--dry-run",
                description: "Generate API data without writing it to files."
+
+        conflicts "--only-core", "--only-cask"
 
         named_args :none
       end
 
       sig { override.void }
       def run
-        # odeprecated "brew generate-cask-api", "brew generate-package-api --only-cask"
-
         Homebrew::API::Generator.new(
-          only_cask: true,
+          only_core: args.only_core?,
+          only_cask: args.only_cask?,
           dry_run:   args.dry_run?,
         ).generate!
       end
