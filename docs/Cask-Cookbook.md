@@ -1323,9 +1323,9 @@ Details of software names and brands will inevitably be lost in the conversion t
 
 * If the version number is arranged to occur in the middle of the App name, it should also be removed.
 
-* Remove from the end: “Launcher”, “Quick Launcher”.
+* Remove from the end: “Launcher”, “Quick Launcher”, "Desktop", "for Desktop".
 
-* Remove from the end: strings such as “Desktop”, “for Desktop”.
+  * Exception: when the suffix is an intrinsic part of the product name, as in [Docker Desktop.app](https://github.com/Homebrew/homebrew-cask/blob/HEAD/Casks/d/docker-desktop.rb).
 
 * Remove from the end: strings such as “Mac”, “for Mac”, “for OS X”, “macOS”, “for macOS”. These terms are generally added to ported software such as “MAME OS X.app”.
 
