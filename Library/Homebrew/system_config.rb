@@ -1,4 +1,4 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
 
 require "hardware"
@@ -13,6 +13,13 @@ module SystemConfig
   class << self
     include SystemCommand::Mixin
 
+    sig { void }
+    def initialize
+      @clang = T.let(nil, T.nilable(Version))
+      @clang_build = T.let(nil, T.nilable(Version))
+    end
+
+    sig { returns(Version) }
     def clang
       @clang ||= if DevelopmentTools.installed?
         DevelopmentTools.clang_version
@@ -21,6 +28,7 @@ module SystemConfig
       end
     end
 
+    sig { returns(Version) }
     def clang_build
       @clang_build ||= if DevelopmentTools.installed?
         DevelopmentTools.clang_build_version
@@ -65,12 +73,13 @@ module SystemConfig
       end
     end
 
+    sig { params(path: T.nilable(Pathname)).returns(String) }
     def describe_path(path)
       return "N/A" if path.nil?
 
       realpath = path.realpath
       if realpath == path
-        path
+        path.to_s
       else
         "#{path} => #{realpath}"
       end
@@ -112,6 +121,7 @@ module SystemConfig
       end
     end
 
+    sig { params(tap: Tap, out: T.any(File, StringIO, IO)).void }
     def dump_tap_config(tap, out = $stdout)
       case tap
       when CoreTap
@@ -140,10 +150,12 @@ module SystemConfig
       end
     end
 
+    sig { params(out: T.any(File, StringIO, IO)).void }
     def core_tap_config(out = $stdout)
       dump_tap_config(CoreTap.instance, out)
     end
 
+    sig { params(out: T.any(File, StringIO, IO)).void }
     def homebrew_config(out = $stdout)
       out.puts "HOMEBREW_VERSION: #{HOMEBREW_VERSION}"
       out.puts "ORIGIN: #{origin}"
@@ -152,6 +164,7 @@ module SystemConfig
       out.puts "Branch: #{branch}"
     end
 
+    sig { params(out: T.any(File, StringIO, IO)).void }
     def homebrew_env_config(out = $stdout)
       out.puts "HOMEBREW_PREFIX: #{HOMEBREW_PREFIX}"
       {
@@ -183,12 +196,14 @@ module SystemConfig
       out.puts "Homebrew Ruby: #{describe_homebrew_ruby}"
     end
 
+    sig { params(out: T.any(File, StringIO, IO)).void }
     def host_software_config(out = $stdout)
       out.puts "Clang: #{describe_clang}"
       out.puts "Git: #{describe_git}"
       out.puts "Curl: #{describe_curl}"
     end
 
+    sig { params(out: T.any(File, StringIO, IO)).void }
     def dump_verbose_config(out = $stdout)
       homebrew_config(out)
       core_tap_config(out)

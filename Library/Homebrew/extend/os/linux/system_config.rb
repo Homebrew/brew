@@ -1,4 +1,4 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
 
 require "compilers"
@@ -14,6 +14,7 @@ module OS
 
         HOST_RUBY_PATH = "/usr/bin/ruby"
 
+        sig { returns(T.any(String, Version)) }
         def host_glibc_version
           version = OS::Linux::Glibc.system_version
           return "N/A" if version.null?
@@ -21,6 +22,7 @@ module OS
           version
         end
 
+        sig { returns(T.any(String, Version)) }
         def host_libstdcxx_version
           version = OS::Linux::Libstdcxx.system_version
           return "N/A" if version.null?
@@ -28,13 +30,15 @@ module OS
           version
         end
 
+        sig { returns(String) }
         def host_gcc_version
           gcc = ::DevelopmentTools.host_gcc_path
           return "N/A" unless gcc.executable?
 
-          Utils.popen_read(gcc, "--version")[/ (\d+\.\d+\.\d+)/, 1]
+          Utils.popen_read(gcc, "--version")[/ (\d+\.\d+\.\d+)/, 1] || "N/A"
         end
 
+        sig { params(formula: T.any(Pathname, String)).returns(T.any(String, PkgVersion)) }
         def formula_linked_version(formula)
           return "N/A" if Homebrew::EnvConfig.no_install_from_api? && !CoreTap.instance.installed?
 
@@ -43,6 +47,7 @@ module OS
           "N/A"
         end
 
+        sig { returns(String) }
         def host_ruby_version
           out, _, status = system_command(HOST_RUBY_PATH, args: ["-e", "puts RUBY_VERSION"], print_stderr: false).to_a
           return "N/A" unless status.success?
@@ -50,6 +55,7 @@ module OS
           out
         end
 
+        sig { params(out: T.any(File, StringIO, IO)).void }
         def dump_verbose_config(out = $stdout)
           kernel = Utils.safe_popen_read("uname", "-mors").chomp
           super
