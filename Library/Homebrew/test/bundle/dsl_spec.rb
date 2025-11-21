@@ -4,7 +4,7 @@ require "bundle"
 require "bundle/dsl"
 
 RSpec.describe Homebrew::Bundle::Dsl do
-  define_method(:dsl_from_string) do |string|
+  def dsl_from_string(string)
     described_class.new(StringIO.new(string))
   end
 

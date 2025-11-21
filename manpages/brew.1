@@ -84,6 +84,8 @@ Uninstall formulae that were only installed as a dependency of another formula a
 List what would be uninstalled, but do not actually uninstall anything\.
 .SS "\fBbundle\fP \fR[\fIsubcommand\fP]"
 Bundler for non\-Ruby dependencies from Homebrew, Homebrew Cask, Mac App Store, Visual Studio Code (and forks/variants), Go packages and Flatpak\.
+.P
+Note: Flatpak support is only available on Linux\.
 .TP
 \fBbrew bundle\fP [\fBinstall\fP]
 Install and upgrade (by default) all dependencies from the \fBBrewfile\fP\&\.
@@ -187,7 +189,7 @@ Temporarily start services while running the \fBexec\fP or \fBsh\fP command\. En
 \fBlist\fP or \fBdump\fP Go packages\.
 .TP
 \fB\-\-flatpak\fP
-\fBlist\fP or \fBdump\fP Flatpak packages\.
+\fBlist\fP or \fBdump\fP Flatpak packages\. Note: Linux only\.
 .TP
 \fB\-\-no\-vscode\fP
 \fBdump\fP without VSCode (and forks/variants) extensions\. Enabled by default if \fB$HOMEBREW_BUNDLE_DUMP_NO_VSCODE\fP is set\.

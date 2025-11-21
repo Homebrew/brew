@@ -10,11 +10,10 @@ RSpec.describe Homebrew::Bundle::FlatpakInstaller do
       allow(Homebrew::Bundle).to receive(:flatpak_installed?).and_return(false)
     end
 
-    it "tries to install flatpak" do
-      expect(Homebrew::Bundle).to \
-        receive(:system).with(HOMEBREW_BREW_FILE, "install", "--formula", "flatpak", verbose: false)
-                        .and_return(true)
-      expect { described_class.preinstall!("org.gnome.Calculator") }.to raise_error(RuntimeError)
+    it "returns false without attempting installation" do
+      expect(Homebrew::Bundle).not_to receive(:system)
+      expect(described_class.preinstall!("org.gnome.Calculator")).to be(false)
+      expect(described_class.install!("org.gnome.Calculator")).to be(true)
     end
   end
 

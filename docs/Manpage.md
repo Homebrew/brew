@@ -139,6 +139,8 @@ and are now no longer needed.
 Bundler for non-Ruby dependencies from Homebrew, Homebrew Cask, Mac App Store,
 Visual Studio Code (and forks/variants), Go packages and Flatpak.
 
+Note: Flatpak support is only available on Linux.
+
 `brew bundle` \[`install`\]
 
 : Install and upgrade (by default) all dependencies from the `Brewfile`.
@@ -302,7 +304,7 @@ flags which will help with finding keg-only dependencies like `openssl`,
 
 `--flatpak`
 
-: `list` or `dump` Flatpak packages.
+: `list` or `dump` Flatpak packages. Note: Linux only.
 
 `--no-vscode`
 

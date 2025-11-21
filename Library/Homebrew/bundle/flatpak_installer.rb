@@ -9,11 +9,7 @@ module Homebrew
       end
 
       def self.preinstall!(name, verbose: false, remote: "flathub", **_options)
-        unless Bundle.flatpak_installed?
-          puts "Installing flatpak. It is not currently installed." if verbose
-          Bundle.brew("install", "--formula", "flatpak", verbose:)
-          raise "Unable to install #{name} package. Flatpak installation failed." unless Bundle.flatpak_installed?
-        end
+        return false unless Bundle.flatpak_installed?
 
         # Check if package is installed at all (regardless of remote)
         if package_installed?(name)
@@ -25,6 +21,7 @@ module Homebrew
       end
 
       def self.install!(name, preinstall: true, verbose: false, force: false, remote: "flathub", **_options)
+        return true unless Bundle.flatpak_installed?
         return true unless preinstall
 
         puts "Installing #{name} Flatpak from #{remote}. It is not currently installed." if verbose

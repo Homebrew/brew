@@ -12,6 +12,8 @@ module Homebrew
 
           Bundler for non-Ruby dependencies from Homebrew, Homebrew Cask, Mac App Store, Visual Studio Code (and forks/variants), Go packages and Flatpak.
 
+          Note: Flatpak support is only available on Linux.
+
           `brew bundle` [`install`]:
           Install and upgrade (by default) all dependencies from the `Brewfile`.
 
@@ -110,7 +112,7 @@ module Homebrew
         switch "--go",
                description: "`list` or `dump` Go packages."
         switch "--flatpak",
-               description: "`list` or `dump` Flatpak packages."
+               description: "`list` or `dump` Flatpak packages. Note: Linux only."
         switch "--no-vscode",
                description: "`dump` without VSCode (and forks/variants) extensions.",
                env:         :bundle_dump_no_vscode

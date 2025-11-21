@@ -521,7 +521,7 @@ __fish_brew_complete_arg 'bundle' -l cleanup -d '`install` performs cleanup oper
 __fish_brew_complete_arg 'bundle' -l debug -d 'Display any debugging information'
 __fish_brew_complete_arg 'bundle' -l describe -d '`dump` adds a description comment above each line, unless the dependency does not have a description. Enabled by default if `$HOMEBREW_BUNDLE_DUMP_DESCRIBE` is set'
 __fish_brew_complete_arg 'bundle' -l file -d 'Read from or write to the `Brewfile` from this location. Use `--file=-` to pipe to stdin/stdout'
-__fish_brew_complete_arg 'bundle' -l flatpak -d '`list` or `dump` Flatpak packages'
+__fish_brew_complete_arg 'bundle' -l flatpak -d '`list` or `dump` Flatpak packages. Note: Linux only'
 __fish_brew_complete_arg 'bundle' -l force -d '`install` runs with `--force`/`--overwrite`. `dump` overwrites an existing `Brewfile`. `cleanup` actually performs its cleanup operations'
 __fish_brew_complete_arg 'bundle' -l formula -d '`list`, `dump` or `cleanup` Homebrew formula dependencies'
 __fish_brew_complete_arg 'bundle' -l global -d 'Read from or write to the `Brewfile` from `$HOMEBREW_BUNDLE_FILE_GLOBAL` (if set), `${XDG_CONFIG_HOME}/homebrew/Brewfile` (if `$XDG_CONFIG_HOME` is set), `~/.homebrew/Brewfile` or `~/.Brewfile` otherwise'
