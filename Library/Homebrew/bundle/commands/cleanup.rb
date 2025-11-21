@@ -13,6 +13,7 @@ module Homebrew
           require "bundle/formula_dumper"
           require "bundle/tap_dumper"
           require "bundle/vscode_extension_dumper"
+          require "bundle/flatpak_dumper"
           require "bundle/brew_services"
 
           @dsl = nil
@@ -22,17 +23,19 @@ module Homebrew
           Homebrew::Bundle::FormulaDumper.reset!
           Homebrew::Bundle::TapDumper.reset!
           Homebrew::Bundle::VscodeExtensionDumper.reset!
+          Homebrew::Bundle::FlatpakDumper.reset!
           Homebrew::Bundle::BrewServices.reset!
         end
 
         def self.run(global: false, file: nil, force: false, zap: false, dsl: nil,
-                     formulae: true, casks: true, taps: true, vscode: true)
+                     formulae: true, casks: true, taps: true, vscode: true, flatpak: true)
           @dsl ||= dsl
 
           casks = casks ? casks_to_uninstall(global:, file:) : []
           formulae = formulae ? formulae_to_uninstall(global:, file:) : []
           taps = taps ? taps_to_untap(global:, file:) : []
           vscode_extensions = vscode ? vscode_extensions_to_uninstall(global:, file:) : []
+          flatpaks = flatpak ? flatpaks_to_uninstall(global:, file:) : []
           if force
             if casks.any?
               args = zap ? ["--zap"] : []
@@ -51,6 +54,13 @@ module Homebrew
               vscode_extensions.each do |extension|
                 Kernel.system(T.must(Bundle.which_vscode).to_s, "--uninstall-extension", extension)
               end
+            end
+
+            if flatpaks.any?
+              flatpaks.each do |flatpak_name|
+                Kernel.system "flatpak", "uninstall", "-y", "--system", flatpak_name
+              end
+              puts "Uninstalled #{flatpaks.size} flatpak#{"s" if flatpaks.size != 1}"
             end
 
             cleanup = system_output_no_stderr(HOMEBREW_BREW_FILE, "cleanup")
@@ -79,6 +89,12 @@ module Homebrew
             if vscode_extensions.any?
               puts "Would uninstall VSCode extensions:"
               puts Formatter.columns vscode_extensions
+              would_uninstall = true
+            end
+
+            if flatpaks.any?
+              puts "Would uninstall flatpaks:"
+              puts Formatter.columns flatpaks
               would_uninstall = true
             end
 
@@ -212,6 +228,21 @@ module Homebrew
           current_extensions - kept_extensions
         end
 
+        def self.flatpaks_to_uninstall(global: false, file: nil)
+          require "bundle/brewfile"
+          @dsl ||= Brewfile.read(global:, file:)
+          kept_flatpaks = @dsl.entries.select { |e| e.type == :flatpak }.map(&:name)
+
+          # To provide a graceful migration from `Brewfile`s that don't yet or
+          # don't want to use `flatpak`: don't remove any flatpaks if we don't
+          # find any in the `Brewfile`.
+          return [].freeze if kept_flatpaks.empty?
+
+          require "bundle/flatpak_dumper"
+          current_flatpaks = Homebrew::Bundle::FlatpakDumper.packages
+          current_flatpaks - kept_flatpaks
+        end
+
         def self.system_output_no_stderr(cmd, *args)
           IO.popen([cmd, *args], err: :close).read
         end
@@ -219,3 +250,5 @@ module Homebrew
     end
   end
 end
+
+require "extend/os/bundle/commands/cleanup"

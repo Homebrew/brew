@@ -29,12 +29,14 @@ RSpec.describe Homebrew::Bundle::Commands::Install do
         cask 'phinze/cask/google-chrome', greedy: true
         mas '1Password', id: 443987910
         vscode 'GitHub.codespaces'
+        flatpak 'org.gnome.Calculator'
       EOS
     end
 
     it "does not raise an error" do
       allow(Homebrew::Bundle::TapInstaller).to receive(:preinstall!).and_return(false)
       allow(Homebrew::Bundle::VscodeExtensionInstaller).to receive(:preinstall!).and_return(false)
+      allow(Homebrew::Bundle::FlatpakInstaller).to receive(:preinstall!).and_return(false)
       allow(Homebrew::Bundle::FormulaInstaller).to receive_messages(preinstall!: true, install!: true)
       allow(Homebrew::Bundle::CaskInstaller).to receive_messages(preinstall!: true, install!: true)
       allow(Homebrew::Bundle::MacAppStoreInstaller).to receive_messages(preinstall!: true, install!: true)
@@ -45,6 +47,7 @@ RSpec.describe Homebrew::Bundle::Commands::Install do
     it "#dsl returns a valid DSL" do
       allow(Homebrew::Bundle::TapInstaller).to receive(:preinstall!).and_return(false)
       allow(Homebrew::Bundle::VscodeExtensionInstaller).to receive(:preinstall!).and_return(false)
+      allow(Homebrew::Bundle::FlatpakInstaller).to receive(:preinstall!).and_return(false)
       allow(Homebrew::Bundle::FormulaInstaller).to receive_messages(preinstall!: true, install!: true)
       allow(Homebrew::Bundle::CaskInstaller).to receive_messages(preinstall!: true, install!: true)
       allow(Homebrew::Bundle::MacAppStoreInstaller).to receive_messages(preinstall!: true, install!: true)
@@ -68,6 +71,7 @@ RSpec.describe Homebrew::Bundle::Commands::Install do
       allow(Homebrew::Bundle::MacAppStoreInstaller).to receive_messages(preinstall!: true, install!: false)
       allow(Homebrew::Bundle::TapInstaller).to receive_messages(preinstall!: true, install!: false)
       allow(Homebrew::Bundle::VscodeExtensionInstaller).to receive_messages(preinstall!: true, install!: false)
+      allow(Homebrew::Bundle::FlatpakInstaller).to receive_messages(preinstall!: true, install!: false)
       allow_any_instance_of(Pathname).to receive(:read).and_return(brewfile_contents)
 
       expect { described_class.run }.to raise_error(SystemExit)
@@ -79,6 +83,7 @@ RSpec.describe Homebrew::Bundle::Commands::Install do
       allow(Homebrew::Bundle::FormulaInstaller).to receive_messages(preinstall!: true, install!: true)
       allow(Homebrew::Bundle::MacAppStoreInstaller).to receive_messages(preinstall!: true, install!: true)
       allow(Homebrew::Bundle::VscodeExtensionInstaller).to receive_messages(preinstall!: true, install!: true)
+      allow(Homebrew::Bundle::FlatpakInstaller).to receive_messages(preinstall!: true, install!: true)
       allow_any_instance_of(Pathname).to receive(:read).and_return(brewfile_contents)
 
       expect(Homebrew::Bundle).not_to receive(:system)

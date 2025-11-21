@@ -24,15 +24,17 @@ module Homebrew
           mas:        T::Boolean,
           vscode:     T::Boolean,
           go:         T::Boolean,
+          flatpak:    T::Boolean,
         ).returns(String)
       }
-      def self.build_brewfile(describe:, no_restart:, formulae:, taps:, casks:, mas:, vscode:, go:)
+      def self.build_brewfile(describe:, no_restart:, formulae:, taps:, casks:, mas:, vscode:, go:, flatpak:)
         require "bundle/tap_dumper"
         require "bundle/formula_dumper"
         require "bundle/cask_dumper"
         require "bundle/mac_app_store_dumper"
         require "bundle/vscode_extension_dumper"
         require "bundle/go_dumper"
+        require "bundle/flatpak_dumper"
 
         content = []
         content << TapDumper.dump if taps
@@ -41,6 +43,7 @@ module Homebrew
         content << MacAppStoreDumper.dump if mas
         content << VscodeExtensionDumper.dump if vscode
         content << GoDumper.dump if go
+        content << FlatpakDumper.dump if flatpak
         "#{content.reject(&:empty?).join("\n")}\n"
       end
 
@@ -57,13 +60,14 @@ module Homebrew
           mas:        T::Boolean,
           vscode:     T::Boolean,
           go:         T::Boolean,
+          flatpak:    T::Boolean,
         ).void
       }
       def self.dump_brewfile(global:, file:, describe:, force:, no_restart:, formulae:, taps:, casks:, mas:,
-                             vscode:, go:)
+                             vscode:, go:, flatpak:)
         path = brewfile_path(global:, file:)
         can_write_to_brewfile?(path, force:)
-        content = build_brewfile(describe:, no_restart:, taps:, formulae:, casks:, mas:, vscode:, go:)
+        content = build_brewfile(describe:, no_restart:, taps:, formulae:, casks:, mas:, vscode:, go:, flatpak:)
         write_file path, content
       end
 

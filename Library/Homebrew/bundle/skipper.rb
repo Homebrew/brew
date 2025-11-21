@@ -42,7 +42,7 @@ module Homebrew
           return @skipped_entries if @skipped_entries
 
           @skipped_entries ||= T.let({}, T.nilable(T::Hash[Symbol, T.nilable(T::Array[String])]))
-          [:brew, :cask, :mas, :tap].each do |type|
+          [:brew, :cask, :mas, :tap, :flatpak].each do |type|
             @skipped_entries[type] =
               ENV["HOMEBREW_BUNDLE_#{type.to_s.upcase}_SKIP"]&.split
           end

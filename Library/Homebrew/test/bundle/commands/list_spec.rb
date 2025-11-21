@@ -30,6 +30,7 @@ RSpec.describe Homebrew::Bundle::Commands::List do
       mas:      mas,
       vscode:   vscode,
       go:       go,
+      flatpak:  false,
     )
   end
 

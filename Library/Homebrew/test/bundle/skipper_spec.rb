@@ -46,6 +46,30 @@ RSpec.describe Homebrew::Bundle::Skipper do
       end
     end
 
+    context "with a flatpak entry", :needs_macos do
+      let(:entry) { Homebrew::Bundle::Dsl::Entry.new(:flatpak, "org.gnome.Calculator") }
+
+      it "skips on macOS with warning" do
+        expect($stdout).to receive(:puts).with(
+          Formatter.warning("Skipping flatpak org.gnome.Calculator (unsupported on macOS)"),
+        )
+        expect(skipper.skip?(entry)).to be true
+      end
+
+      it "skips silently when silent flag is set" do
+        expect($stdout).not_to receive(:puts)
+        expect(skipper.skip?(entry, silent: true)).to be true
+      end
+    end
+
+    context "with a flatpak entry on Linux", :needs_linux do
+      let(:entry) { Homebrew::Bundle::Dsl::Entry.new(:flatpak, "org.gnome.Calculator") }
+
+      it "does not skip" do
+        expect(skipper.skip?(entry)).to be false
+      end
+    end
+
     context "with a listed formula in a failed tap" do
       let(:entry) { Homebrew::Bundle::Dsl::Entry.new(:brew, "org/repo/formula") }
 
