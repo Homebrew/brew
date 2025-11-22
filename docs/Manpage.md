@@ -1,7 +1,7 @@
 # brew(1) -- The Missing Package Manager for macOS (or Linux)
 
 ## SYNOPSIS
-
+ 
 `brew` `--version`  
 `brew` *`command`* \[`--verbose`\|`-v`\] \[*`options`*\] \[*`formula`*\] ...
 
