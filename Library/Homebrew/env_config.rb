@@ -107,7 +107,7 @@ module Homebrew
       },
       HOMEBREW_CASK_OPTS:                        {
         description: "Append these options to all `cask` commands. All `--*dir` options, " \
-                     "`--language`, `--require-sha` and `--no-binaries` are supported. " \
+                     "`--language`, `--require-sha`, `--no-login-items` and `--no-binaries` are supported. " \
                      "For example, you might add something like the following to your " \
                      "`~/.profile`, `~/.bash_profile`, or `~/.zshenv`:" \
                      "\n\n    `export HOMEBREW_CASK_OPTS=\"--appdir=${HOME}/Applications --fontdir=/Library/Fonts\"`",
@@ -638,6 +638,16 @@ module Homebrew
       end
 
       true
+    end
+
+    sig { returns(T::Boolean) }
+    def cask_opts_login_items?
+      cask_opts.reverse_each do |opt|
+        return true if opt == "--login-items"
+        return false if opt == "--no-login-items"
+      end
+
+      false
     end
 
     sig { returns(T::Boolean) }
