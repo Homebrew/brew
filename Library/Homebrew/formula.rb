@@ -43,6 +43,12 @@ require "api"
 require "api_hashable"
 require "utils/output"
 require "pypi_packages"
+# ... (around line 20-30 in formula.rb)
+require "utils/shell"
+require "utils/git" # <-- ADD THIS LINE
+require "utils/git_repository"
+require "build_environment"
+# ...
 
 # A formula provides instructions and metadata for Homebrew to install a piece
 # of software. Every Homebrew formula is a {Formula}.
@@ -681,7 +687,30 @@ class Formula
 
     @tap.synced_versions_formulae.any? { |synced_formulae| synced_formulae.include?(name) }
   end
+# In Library/Homebrew/formula.rb (inside the class Formula block)
+# ...
 
+  # ADDED for dependency cooldown check
+  # Retrieves the last Git commit time for the formula file.
+  # @api internal
+  sig { returns(T.nilable(Time)) }
+  def git_commit_time
+    # 1. Skip check if the formula is not associated with a Git-backed tap
+    #    or if it was loaded from the API (API formulas don't have local Git history).
+    return unless tap&.git? && !loaded_from_api?
+
+    # 2. Use Homebrew's Git utility to get the last commit date for this file path.
+    #    The `path` instance variable holds the location of the formula file.
+    Utils::Git.last_commit_time(path)
+  rescue StandardError => e
+    # 3. Handle errors gracefully (e.g., shallow clone, repository corruption, Git unavailable).
+    #    If debug is enabled, log the error, but otherwise, silently return nil
+    #    so the install proceeds without the cooldown delay (treating it as trusted/old).
+    odebug "Git commit time retrieval failed: #{e.message}" if debug?
+    nil
+  end
+
+# ... (rest of the Formula class methods)
   # A named {Resource} for the currently active {SoftwareSpec}.
   # Additional downloads can be defined as {#resource}s.
   # {Resource#stage} will create a temporary directory and yield to a block.

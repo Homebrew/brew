@@ -36,7 +36,7 @@ module Homebrew
                             "or a shell inside the temporary build directory."
         switch "--display-times",
                description: "Print install times for each package at the end of the run.",
-               env:         :display_install_times
+               env:         :display_install_times
         switch "-f", "--force",
                description: "Install formulae without checking for previously installed keg-only or " \
                             "non-migrated versions. When installing casks, overwrite existing files " \
@@ -48,14 +48,14 @@ module Homebrew
         switch "--ask",
                description: "Ask for confirmation before downloading and installing formulae. " \
                             "Print download and install sizes of bottles and dependencies.",
-               env:         :ask
+               env:         :ask
         [
           [:switch, "--formula", "--formulae", {
             description: "Treat all named arguments as formulae.",
           }],
           [:flag, "--env=", {
             description: "Disabled other than for internal Homebrew use.",
-            hidden:      true,
+            hidden:      true,
           }],
           [:switch, "--ignore-dependencies", {
             description: "An unsupported Homebrew development option to skip installing any dependencies of any " \
@@ -97,7 +97,7 @@ module Homebrew
             description: "Retain the temporary files created during installation.",
           }],
           [:switch, "--debug-symbols", {
-            depends_on:  "--build-from-source",
+            depends_on:  "--build-from-source",
             description: "Generate debug symbols on build. Source will be retained in a cache directory.",
           }],
           [:switch, "--build-bottle", {
@@ -114,7 +114,7 @@ module Homebrew
             description: "Install but mark as installed as a dependency and not installed on request.",
           }],
           [:flag, "--bottle-arch=", {
-            depends_on:  "--build-bottle",
+            depends_on:  "--build-bottle",
             description: "Optimise bottles for the specified architecture rather than the oldest " \
                          "architecture supported by the version of macOS the bottles are built on.",
           }],
@@ -129,6 +129,10 @@ module Homebrew
           [:switch, "--overwrite", {
             description: "Delete files that already exist in the prefix while linking.",
           }],
+          # ADDED FOR DEPENDENCY COOLDOWN
+          [:switch, "--no-cooldown", {
+            description: "Skip the dependency cooldown delay, installing immediately to bypass the security check.",
+          }],
         ].each do |args|
           options = args.pop
           send(*args, **options)
@@ -141,14 +145,14 @@ module Homebrew
           }],
           [:switch, "--[no-]binaries", {
             description: "Disable/enable linking of helper executables (default: enabled).",
-            env:         :cask_opts_binaries,
+            env:         :cask_opts_binaries,
           }],
           [:switch, "--require-sha", {
             description: "Require all casks to have a checksum.",
-            env:         :cask_opts_require_sha,
+            env:         :cask_opts_require_sha,
           }],
           [:switch, "--[no-]quarantine", {
-            env:         :cask_opts_quarantine,
+            env:         :cask_opts_quarantine,
             odeprecated: true,
           }],
           [:switch, "--adopt", {
@@ -229,9 +233,9 @@ module Homebrew
             end
             casks.each do |cask|
               dep_names = CaskDependent.new(cask)
-                                       .runtime_dependencies
-                                       .reject(&:installed?)
-                                       .map(&:name)
+                                     .runtime_dependencies
+                                     .reject(&:installed?)
+                                     .map(&:name)
               next if dep_names.blank?
 
               ohai "Would install #{::Utils.pluralize("dependency", dep_names.count, include_count: true)} " \
@@ -280,28 +284,28 @@ module Homebrew
           new_casks.each do |cask|
             Cask::Installer.new(
               cask,
-              adopt:          args.adopt?,
-              binaries:       args.binaries?,
-              force:          args.force?,
-              quarantine:     args.quarantine?,
-              quiet:          args.quiet?,
-              require_sha:    args.require_sha?,
+              adopt:          args.adopt?,
+              binaries:       args.binaries?,
+              force:          args.force?,
+              quarantine:     args.quarantine?,
+              quiet:          args.quiet?,
+              require_sha:    args.require_sha?,
               skip_cask_deps: args.skip_cask_deps?,
-              verbose:        args.verbose?,
+              verbose:        args.verbose?,
             ).install
           end
 
           if !Homebrew::EnvConfig.no_install_upgrade? && installed_casks.any?
             Cask::Upgrade.upgrade_casks!(
               *installed_casks,
-              force:          args.force?,
-              dry_run:        args.dry_run?,
-              binaries:       args.binaries?,
-              quarantine:     args.quarantine?,
-              require_sha:    args.require_sha?,
+              force:          args.force?,
+              dry_run:        args.dry_run?,
+              binaries:       args.binaries?,
+              quarantine:     args.quarantine?,
+              require_sha:    args.require_sha?,
               skip_cask_deps: args.skip_cask_deps?,
-              verbose:        args.verbose?,
-              quiet:          args.quiet?,
+              verbose:        args.verbose?,
+              quiet:          args.quiet?,
               args:,
             )
           end
@@ -328,13 +332,13 @@ module Homebrew
         installed_formulae = formulae.select do |f|
           Install.install_formula?(
             f,
-            head:              args.HEAD?,
-            fetch_head:        args.fetch_HEAD?,
+            head:              args.HEAD?,
+            fetch_head:        args.fetch_HEAD?,
             only_dependencies: args.only_dependencies?,
-            force:             args.force?,
-            quiet:             args.quiet?,
-            skip_link:         args.skip_link?,
-            overwrite:         args.overwrite?,
+            force:             args.force?,
+            quiet:             args.quiet?,
+            skip_link:         args.skip_link?,
+            overwrite:         args.overwrite?,
           )
         end
 
@@ -345,45 +349,47 @@ module Homebrew
 
         formulae_installer = Install.formula_installers(
           installed_formulae,
-          installed_on_request:       !args.as_dependency?,
-          installed_as_dependency:    args.as_dependency?,
-          build_bottle:               args.build_bottle?,
-          force_bottle:               args.force_bottle?,
-          bottle_arch:                args.bottle_arch,
-          ignore_deps:                args.ignore_dependencies?,
-          only_deps:                  args.only_dependencies?,
-          include_test_formulae:      args.include_test_formulae,
+          installed_on_request:       !args.as_dependency?,
+          installed_as_dependency:    args.as_dependency?,
+          build_bottle:               args.build_bottle?,
+          force_bottle:               args.force_bottle?,
+          bottle_arch:                args.bottle_arch,
+          ignore_deps:                args.ignore_dependencies?,
+          only_deps:                  args.only_dependencies?,
+          include_test_formulae:      args.include_test_formulae,
           build_from_source_formulae: args.build_from_source_formulae,
-          cc:                         args.cc,
-          git:                        args.git?,
-          interactive:                args.interactive?,
-          keep_tmp:                   args.keep_tmp?,
-          debug_symbols:              args.debug_symbols?,
-          force:                      args.force?,
-          overwrite:                  args.overwrite?,
-          debug:                      args.debug?,
-          quiet:                      args.quiet?,
-          verbose:                    args.verbose?,
-          dry_run:                    args.dry_run?,
-          skip_post_install:          args.skip_post_install?,
-          skip_link:                  args.skip_link?,
+          cc:                         args.cc,
+          git:                        args.git?,
+          interactive:                args.interactive?,
+          keep_tmp:                   args.keep_tmp?,
+          debug_symbols:              args.debug_symbols?,
+          force:                      args.force?,
+          overwrite:                  args.overwrite?,
+          debug:                      args.debug?,
+          quiet:                      args.quiet?,
+          verbose:                    args.verbose?,
+          dry_run:                    args.dry_run?,
+          skip_post_install:          args.skip_post_install?,
+          skip_link:                  args.skip_link?,
+          # ADDED for Dependency Cooldown: pass the flag down to the installer
+          no_cooldown:                 args.no_cooldown?,
         )
 
         dependants = Upgrade.dependants(
           installed_formulae,
-          flags:                      args.flags_only,
-          ask:                        args.ask?,
-          installed_on_request:       !args.as_dependency?,
-          force_bottle:               args.force_bottle?,
+          flags:                      args.flags_only,
+          ask:                        args.ask?,
+          installed_on_request:       !args.as_dependency?,
+          force_bottle:               args.force_bottle?,
           build_from_source_formulae: args.build_from_source_formulae,
-          interactive:                args.interactive?,
-          keep_tmp:                   args.keep_tmp?,
-          debug_symbols:              args.debug_symbols?,
-          force:                      args.force?,
-          debug:                      args.debug?,
-          quiet:                      args.quiet?,
-          verbose:                    args.verbose?,
-          dry_run:                    args.dry_run?,
+          interactive:                args.interactive?,
+          keep_tmp:                   args.keep_tmp?,
+          debug_symbols:              args.debug_symbols?,
+          force:                      args.force?,
+          debug:                      args.debug?,
+          quiet:                      args.quiet?,
+          verbose:                    args.verbose?,
+          dry_run:                    args.dry_run?,
         )
 
         # Main block: if asking the user is enabled, show dependency and size information.
@@ -399,17 +405,17 @@ module Homebrew
 
         Upgrade.upgrade_dependents(
           dependants, installed_formulae,
-          flags:                      args.flags_only,
-          dry_run:                    args.dry_run?,
-          force_bottle:               args.force_bottle?,
+          flags:                      args.flags_only,
+          dry_run:                    args.dry_run?,
+          force_bottle:               args.force_bottle?,
           build_from_source_formulae: args.build_from_source_formulae,
-          interactive:                args.interactive?,
-          keep_tmp:                   args.keep_tmp?,
-          debug_symbols:              args.debug_symbols?,
-          force:                      args.force?,
-          debug:                      args.debug?,
-          quiet:                      args.quiet?,
-          verbose:                    args.verbose?
+          interactive:                args.interactive?,
+          keep_tmp:                   args.keep_tmp?,
+          debug_symbols:              args.debug_symbols?,
+          force:                      args.force?,
+          debug:                      args.debug?,
+          quiet:                      args.quiet?,
+          verbose:                    args.verbose?
         )
 
         Cleanup.periodic_clean!(dry_run: args.dry_run?)

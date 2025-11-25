@@ -27,6 +27,9 @@ require "utils/fork"
 require "utils/output"
 require "utils/attestation"
 
+# Add the Cooldown Constant here
+COOLDOWN_SECONDS = 5 * 60 # 5 minutes
+
 # Installer for a formula.
 class FormulaInstaller
   include FormulaCellarChecks
@@ -49,34 +52,40 @@ class FormulaInstaller
   sig { returns(T.nilable(Homebrew::DownloadQueue)) }
   attr_accessor :download_queue
 
+  # ADDED: Accessor for the new flag
+  sig { returns(T::Boolean) }
+  attr_accessor :no_cooldown
+
   sig {
     params(
-      formula:                    Formula,
-      link_keg:                   T::Boolean,
-      installed_as_dependency:    T::Boolean,
-      installed_on_request:       T::Boolean,
-      show_header:                T::Boolean,
-      build_bottle:               T::Boolean,
-      skip_post_install:          T::Boolean,
-      skip_link:                  T::Boolean,
-      force_bottle:               T::Boolean,
-      bottle_arch:                T.nilable(String),
-      ignore_deps:                T::Boolean,
-      only_deps:                  T::Boolean,
-      include_test_formulae:      T::Array[String],
+      formula:                      Formula,
+      link_keg:                     T::Boolean,
+      installed_as_dependency:      T::Boolean,
+      installed_on_request:         T::Boolean,
+      show_header:                  T::Boolean,
+      build_bottle:                 T::Boolean,
+      skip_post_install:            T::Boolean,
+      skip_link:                    T::Boolean,
+      force_bottle:                 T::Boolean,
+      bottle_arch:                  T.nilable(String),
+      ignore_deps:                  T::Boolean,
+      only_deps:                    T::Boolean,
+      include_test_formulae:        T::Array[String],
       build_from_source_formulae: T::Array[String],
-      env:                        T.nilable(String),
-      git:                        T::Boolean,
-      interactive:                T::Boolean,
-      keep_tmp:                   T::Boolean,
-      debug_symbols:              T::Boolean,
-      cc:                         T.nilable(String),
-      options:                    Options,
-      force:                      T::Boolean,
-      overwrite:                  T::Boolean,
-      debug:                      T::Boolean,
-      quiet:                      T::Boolean,
-      verbose:                    T::Boolean,
+      env:                          T.nilable(String),
+      git:                          T::Boolean,
+      interactive:                  T::Boolean,
+      keep_tmp:                     T::Boolean,
+      debug_symbols:                T::Boolean,
+      cc:                           T.nilable(String),
+      options:                      Options,
+      force:                        T::Boolean,
+      overwrite:                    T::Boolean,
+      debug:                        T::Boolean,
+      quiet:                        T::Boolean,
+      verbose:                      T::Boolean,
+      # ADDED FOR DEPENDENCY COOLDOWN
+      no_cooldown:                  T::Boolean,
     ).void
   }
   def initialize(
@@ -105,7 +114,9 @@ class FormulaInstaller
     overwrite: false,
     debug: false,
     quiet: false,
-    verbose: false
+    verbose: false,
+    # ADDED FOR DEPENDENCY COOLDOWN
+    no_cooldown: false
   )
     @formula = formula
     @env = env
@@ -134,6 +145,8 @@ class FormulaInstaller
     @installed_as_dependency = installed_as_dependency
     @installed_on_request = installed_on_request
     @options = options
+    # ADDED FOR DEPENDENCY COOLDOWN
+    @no_cooldown = T.let(no_cooldown, T::Boolean)
     @requirement_messages = T.let([], T::Array[String])
     @poured_bottle = T.let(false, T::Boolean)
     @start_time = T.let(nil, T.nilable(Time))
@@ -256,7 +269,7 @@ class FormulaInstaller
   sig { params(output_warning: T::Boolean).returns(T::Boolean) }
   def pour_bottle?(output_warning: false)
     return false if !formula.bottle_tag? && !formula.local_bottle_path
-    return true  if force_bottle?
+    return true  if force_bottle?
     return false if build_from_source? || build_bottle? || interactive?
     return false if @cc
     return false unless options.empty?
@@ -344,12 +357,12 @@ class FormulaInstaller
     begin
       bottle_tab_attributes = formula.bottle_tab_attributes
       @bottle_tab_runtime_dependencies = bottle_tab_attributes
-                                         .fetch("runtime_dependencies", []).then { |deps| deps || [] }
-                                         .each_with_object({}) { |dep, h| h[dep["full_name"]] = dep }
-                                         .freeze
+                           .fetch("runtime_dependencies", []).then { |deps| deps || [] }
+                           .each_with_object({}) { |dep, h| h[dep["full_name"]] = dep }
+                           .freeze
 
       if (bottle_tag = formula.bottle_for_tag(Utils::Bottles.tag)&.tag) &&
-         bottle_tag.system != :all
+          bottle_tag.system != :all
         # Extract the OS version the bottle was built on.
         # This ensures that when installing older bottles (e.g. Sonoma bottle on Sequoia),
         # we resolve dependencies according to the bottle's built OS, not the current OS.
@@ -453,7 +466,7 @@ class FormulaInstaller
       if cyclic_dependencies.present?
         raise CannotInstallFormulaError, <<~EOS
           #{formula.full_name} contains a recursive dependency on itself:
-            #{cyclic_dependencies.join("\n  ")}
+            #{cyclic_dependencies.join("\n  ")}
         EOS
       end
     end
@@ -481,7 +494,7 @@ class FormulaInstaller
     if invalid_arch_dependencies.present?
       raise CannotInstallFormulaError, <<~EOS
         #{formula.full_name} dependencies not built for the #{Hardware::CPU.arch} CPU architecture:
-          #{invalid_arch_dependencies.join("\n  ")}
+          #{invalid_arch_dependencies.join("\n  ")}
       EOS
     end
 
@@ -537,6 +550,34 @@ class FormulaInstaller
   def install
     lock
 
+    # --- START DEPENDENCY COOLDOWN LOGIC (INJECTED) ---
+    if no_cooldown
+      opoo "Skipping dependency cooldown check due to user request."
+    else
+      begin
+        # This requires Formula#git_commit_time to be implemented in formula.rb
+        published_time = formula.git_commit_time
+
+        if published_time.is_a?(Time)
+          time_since_publish = Time.now - published_time
+
+          if time_since_publish < COOLDOWN_SECONDS
+            wait_time = (COOLDOWN_SECONDS - time_since_publish).to_i
+
+            opoo "Formula '#{formula.name}' was recently published (#{time_since_publish.to_i}s ago)."
+            opoo "Pausing installation for #{wait_time}s to mitigate supply chain risk. Use --no-cooldown to skip."
+
+            # This is the actual pause
+            sleep(wait_time)
+          end
+        end
+      rescue StandardError => e
+        # Silently ignore errors during Git time retrieval
+        odebug "Cooldown check failed: #{e}", Utils::Backtrace.clean(e) if debug?
+      end
+    end
+    # --- END DEPENDENCY COOLDOWN LOGIC (INJECTED) ---
+
     start_time = Time.now
     if !pour_bottle? && DevelopmentTools.installed?
       require "install"
@@ -546,7 +587,7 @@ class FormulaInstaller
     # Warn if a more recent version of this formula is available in the tap.
     begin
       if !quiet? &&
-         formula.pkg_version < (v = Formulary.factory(formula.full_name, force_bottle: force_bottle?).pkg_version)
+          formula.pkg_version < (v = Formulary.factory(formula.full_name, force_bottle: force_bottle?).pkg_version)
         opoo "#{formula.full_name} #{v} is available and more recent than version #{formula.pkg_version}."
       end
     rescue FormulaUnavailableError
@@ -560,7 +601,7 @@ class FormulaInstaller
     unless ignore_deps?
       deps = compute_dependencies(use_cache: false)
       if ((pour_bottle? && !DevelopmentTools.installed?) || build_bottle?) &&
-         (unbottled = unbottled_dependencies(deps)).presence
+          (unbottled = unbottled_dependencies(deps)).presence
         # Check that each dependency in deps has a bottle available, terminating
         # abnormally with a UnbottledError if one or more don't.
         raise UnbottledError, unbottled
@@ -614,7 +655,7 @@ on_request: installed_on_request?, options:)
       else
         formula.path.read
       end
-      s = formula_contents.gsub(/  bottle do.+?end\n\n?/m, "")
+      s = formula_contents.gsub(/  bottle do.+?end\n\n?/m, "")
       brew_prefix = formula.prefix/".brew"
       brew_prefix.mkpath
       Pathname(brew_prefix/"#{formula.name}.rb").atomic_write(s)
@@ -727,7 +768,7 @@ on_request: installed_on_request?, options:)
     unsatisfied_reqs = Hash.new { |h, k| h[k] = [] }
     formulae = [formula]
     formula_deps_map = formula.recursive_dependencies
-                              .each_with_object({}) { |dep, h| h[dep.name] = dep }
+                           .each_with_object({}) { |dep, h| h[dep.name] = dep }
 
     while (f = formulae.pop)
       runtime_requirements = runtime_requirements(f)
@@ -769,7 +810,7 @@ on_request: installed_on_request?, options:)
       keep_build_test = false
       keep_build_test ||= dep.test? && include_test? && @include_test_formulae.include?(dependent.full_name)
       keep_build_test ||= dep.build? && !install_bottle_for?(dependent, build) &&
-                          (formula.head? || !dependent.latest_version_installed?)
+                           (formula.head? || !dependent.latest_version_installed?)
 
       minimum_version = @bottle_tab_runtime_dependencies.dig(dep.name, "version").presence
       minimum_version = Version.new(minimum_version) if minimum_version
@@ -795,7 +836,7 @@ on_request: installed_on_request?, options:)
 
   sig { params(dependent: Formula, inherited_options: Options).returns(BuildOptions) }
   def effective_build_options_for(dependent, inherited_options = Options.new)
-    args  = dependent.build.used_options
+    args  = dependent.build.used_options
     args |= (dependent == formula) ? options : inherited_options
     args |= Tab.for_formula(dependent).used_options
     args &= dependent.options
@@ -830,8 +871,8 @@ on_request: installed_on_request?, options:)
     elsif !deps.empty?
       if deps.length > 1
         oh1 "Installing dependencies for #{formula.full_name}: " \
-            "#{deps.map(&:first).map { Formatter.identifier(_1) }.to_sentence}",
-            truncate: false
+                      "#{deps.map(&:first).map { Formatter.identifier(_1) }.to_sentence}",
+                      truncate: false
       end
       deps.each { |dep, options| install_dependency(dep, options) }
     end
@@ -844,21 +885,21 @@ on_request: installed_on_request?, options:)
     df = dep.to_formula
     fi = FormulaInstaller.new(
       df,
-      force_bottle:               false,
+      force_bottle:               false,
       # When fetching we don't need to recurse the dependency tree as it's already
       # been done for us in `compute_dependencies` and there's no requirement to
       # fetch in a particular order.
       # Note, this tree can vary when pouring bottles so we need to check it then.
-      ignore_deps:                !pour_bottle?,
-      installed_as_dependency:    true,
-      include_test_formulae:      @include_test_formulae,
+      ignore_deps:                !pour_bottle?,
+      installed_as_dependency:    true,
+      include_test_formulae:      @include_test_formulae,
       build_from_source_formulae: @build_from_source_formulae,
-      keep_tmp:                   keep_tmp?,
-      debug_symbols:              debug_symbols?,
-      force:                      force?,
-      debug:                      debug?,
-      quiet:                      quiet?,
-      verbose:                    verbose?,
+      keep_tmp:                   keep_tmp?,
+      debug_symbols:              debug_symbols?,
+      force:                      force?,
+      debug:                      debug?,
+      quiet:                      quiet?,
+      verbose:                    verbose?,
     )
     fi.download_queue = download_queue
     fi.prelude
@@ -887,7 +928,7 @@ on_request: installed_on_request?, options:)
     end
 
     if df.tap.present? && tab.present? && (tab_tap = tab.source["tap"].presence) &&
-       df.tap.to_s != tab_tap.to_s
+        df.tap.to_s != tab_tap.to_s
       odie <<~EOS
         #{df} is already installed from #{tab_tap}!
         Please `brew uninstall #{df}` first."
@@ -906,18 +947,20 @@ on_request: installed_on_request?, options:)
     fi = FormulaInstaller.new(
       df,
       options:,
-      link_keg:                   keg_had_linked_keg && keg_was_linked,
-      installed_as_dependency:    true,
+      link_keg:                   keg_had_linked_keg && keg_was_linked,
+      installed_as_dependency:    true,
       installed_on_request:,
-      force_bottle:               false,
-      include_test_formulae:      @include_test_formulae,
+      force_bottle:               false,
+      include_test_formulae:      @include_test_formulae,
       build_from_source_formulae: @build_from_source_formulae,
-      keep_tmp:                   keep_tmp?,
-      debug_symbols:              debug_symbols?,
-      force:                      force?,
-      debug:                      debug?,
-      quiet:                      quiet?,
-      verbose:                    verbose?,
+      keep_tmp:                   keep_tmp?,
+      debug_symbols:              debug_symbols?,
+      force:                      force?,
+      debug:                      debug?,
+      quiet:                      quiet?,
+      verbose:                    verbose?,
+      # ADDED: Pass the new flag to dependent installers
+      no_cooldown:                 @no_cooldown,
     )
     oh1 "Installing #{formula.full_name} dependency: #{Formatter.identifier(dep.name)}"
     # prelude only needed to populate bottle_tab_runtime_dependencies, fetching has already been done.
@@ -970,7 +1013,7 @@ on_request: installed_on_request?, options:)
       unless quiet?
         ohai "Skipping 'link' on request"
         puts "You can run it manually using:"
-        puts "  brew link #{formula.full_name}"
+        puts "  brew link #{formula.full_name}"
       end
     else
       link(keg)
@@ -991,7 +1034,7 @@ on_request: installed_on_request?, options:)
           ohai "Skipping 'post_install' on request"
         end
         puts "You can run it manually using:"
-        puts "  brew postinstall #{formula.full_name}"
+        puts "  brew postinstall #{formula.full_name}"
       end
     else
       formula.install_etc_var
@@ -1025,14 +1068,14 @@ on_request: installed_on_request?, options:)
 
     # use installed ca-certificates when it's needed and available
     if formula.name == "ca-certificates" &&
-       !DevelopmentTools.ca_file_handles_most_https_certificates?
+        !DevelopmentTools.ca_file_handles_most_https_certificates?
       ENV["SSL_CERT_FILE"] = ENV["GIT_SSL_CAINFO"] = (formula.pkgetc/"cert.pem").to_s
       ENV["GIT_SSL_CAPATH"] = formula.pkgetc.to_s
     end
 
     # use installed curl when it's needed and available
     if formula.name == "curl" &&
-       !DevelopmentTools.curl_handles_most_https_certificates?
+        !DevelopmentTools.curl_handles_most_https_certificates?
       ENV["HOMEBREW_CURL"] = (formula.opt_bin/"curl").to_s
       Utils::Curl.clear_path_cache
     end
@@ -1050,7 +1093,7 @@ on_request: installed_on_request?, options:)
   sig { returns(String) }
   def summary
     s = +""
-    s << "#{Homebrew::EnvConfig.install_badge}  " unless Homebrew::EnvConfig.no_emoji?
+    s << "#{Homebrew::EnvConfig.install_badge}  " unless Homebrew::EnvConfig.no_emoji?
     s << "#{formula.prefix.resolved_path}: #{formula.prefix.abv}"
     s << ", built in #{pretty_duration build_time}" if build_time
     s.freeze
@@ -1104,8 +1147,8 @@ on_request: installed_on_request?, options:)
     @start_time = Time.now
 
     # 1. formulae can modify ENV, so we must ensure that each
-    #    installation has a pristine ENV when it starts, forking now is
-    #    the easiest way to do this
+    #    installation has a pristine ENV when it starts, forking now is
+    #    the easiest way to do this
     args = [
       "nice",
       *HOMEBREW_RUBY_EXEC_ARGS,
@@ -1213,7 +1256,7 @@ on_request: installed_on_request?, options:)
       puts e
       puts
       puts "You can try again using:"
-      puts "  brew link #{formula.name}"
+      puts "  brew link #{formula.name}"
       @show_summary_heading = true
     # Handle all other possible exceptions when linking.
     rescue Exception => e # rubocop:disable Lint/RescueException
@@ -1376,7 +1419,7 @@ on_request: installed_on_request?, options:)
   rescue Exception => e # rubocop:disable Lint/RescueException
     opoo "The post-install step did not complete successfully"
     puts "You can try again using:"
-    puts "  brew postinstall #{formula.full_name}"
+    puts "  brew postinstall #{formula.full_name}"
 
     require "utils/backtrace"
     odebug e, Utils::Backtrace.clean(e), always_display: Homebrew::EnvConfig.developer?
@@ -1398,8 +1441,8 @@ on_request: installed_on_request?, options:)
 
     unless download_queue
       dependencies_string = deps.map(&:first)
-                                .map { |dep| Formatter.identifier(dep) }
-                                .to_sentence
+                                 .map { |dep| Formatter.identifier(dep) }
+                                 .to_sentence
       oh1 "Fetching dependencies for #{formula.full_name}: #{dependencies_string}",
           truncate: false
     end
@@ -1424,8 +1467,8 @@ on_request: installed_on_request?, options:)
     return if @fetch_bottle_tab
 
     if (download_queue = self.download_queue) &&
-       (bottle = formula.bottle) &&
-       (manifest_resource = bottle.github_packages_manifest_resource)
+        (bottle = formula.bottle) &&
+        (manifest_resource = bottle.github_packages_manifest_resource)
       download_queue.enqueue(manifest_resource)
     else
       begin
