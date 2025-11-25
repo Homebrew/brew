@@ -794,8 +794,8 @@ The easiest and most useful `uninstall` directive is [`pkgutil:`](#uninstall-pkg
 
 * **`early_script:`** (string or hash) - like [`script:`](#uninstall-script), but runs early (for special cases, best avoided)
 * [`launchctl:`](#uninstall-launchctl) (string or array) - IDs of `launchd` jobs to remove
-* [`quit:`](#uninstall-quit) (string or array) - bundle IDs of running applications to quit (does not run when uninstall is initiated by `brew upgrade` or `brew reinstall`)
-* [`signal:`](#uninstall-signal) (array of arrays) - signal numbers and bundle IDs of running applications to send a Unix signal to, for when `quit:` does not work (does not run when uninstall is initiated by `brew upgrade` or `brew reinstall`)
+* [`quit:`](#uninstall-quit) (string or array) - bundle IDs of running applications to quit (does not run when uninstall is initiated by `brew upgrade` or `brew reinstall` unless `quit_on_upgrade: true` is present)
+* [`signal:`](#uninstall-signal) (array of arrays) - signal numbers and bundle IDs of running applications to send a Unix signal to, for when `quit:` does not work (does not run when uninstall is initiated by `brew upgrade` or `brew reinstall` unless `signal_on_upgrade: true` is present)
 * [`login_item:`](#uninstall-login_item) (string or array) - names of login items to remove
 * [`kext:`](#uninstall-kext) (string or array) - bundle IDs of kexts to unload from the system
 * [`script:`](#uninstall-script) (string or hash) - relative path to an uninstall script to be run via *sudo*; use hash if args are needed
@@ -852,6 +852,14 @@ IDs for all installed `launchd` jobs can be listed using [`list_installed_launch
 
 #### `uninstall` *quit*
 
+Some applications need to be quit (or explicitly signaled) in order to be safely upgraded in-place. By default, Homebrew does not run `:quit` or `:signal` directives when an uninstall is being performed as part of a `brew upgrade` or `brew reinstall` operation. This avoids unexpectedly terminating user processes during automated upgrades and is designed to avoid data loss; `uninstall quit:` is equivalent to a normal macOS quit and can still discard unsaved in-memory state such as web forms or editor buffers.
+
+Use `quit_on_upgrade: true` only when the application genuinely needs to be closed to upgrade or reinstall correctly and you have verified that it handles a normal macOS quit without losing important user data. In that case, you may opt a cask into running this directive during an upgrade or reinstall by adding `quit_on_upgrade: true` to the `uninstall` stanza:
+
+```ruby
+uninstall quit: "com.example.app", quit_on_upgrade: true
+```
+
 Bundle IDs for currently running applications can be listed using [`list_running_app_ids`](https://github.com/Homebrew/homebrew-cask/blob/HEAD/developer/bin/list_running_app_ids):
 
 ```bash
@@ -891,6 +899,12 @@ uninstall signal: [
 Note that when multiple running processes match the given bundle ID, all matching processes will be signaled.
 
 Unlike `quit:` directives, Unix signals originate from the current user, not from the superuser. This is construed as a safety feature, since the superuser is capable of bringing down the system via signals. However, this inconsistency could also be considered a bug, and may be addressed in some fashion in a future version.
+
+To opt a cask into running this directive during an upgrade or reinstall, add `signal_on_upgrade: true` to the `uninstall` stanza:
+
+```ruby
+uninstall signal: [["TERM", "com.example.daemon"]], signal_on_upgrade: true
+```
 
 #### `uninstall` *login_item*
 

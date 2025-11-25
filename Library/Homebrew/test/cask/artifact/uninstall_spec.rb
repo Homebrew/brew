@@ -4,7 +4,119 @@ require_relative "shared_examples/uninstall_zap"
 
 RSpec.describe Cask::Artifact::Uninstall, :cask do
   describe "#uninstall_phase" do
+    let(:fake_system_command) { NeverSudoSystemCommand }
+
     include_examples "#uninstall_phase or #zap_phase"
+
+    describe "upgrade/reinstall opt-in uninstall directives" do
+      context "with-uninstall-quit" do
+        let(:cask) { Cask::CaskLoader.load(cask_path("with-uninstall-quit")) }
+        let(:artifact) { cask.artifacts.find { |a| a.is_a?(described_class) } }
+
+        it "skips :quit by default during upgrade" do
+          quit_called = false
+          allow(artifact).to receive(:dispatch_uninstall_directive) do |directive, **options|
+            quit_called ||= directive == :quit && options[:command] == fake_system_command
+          end
+
+          artifact.uninstall_phase(upgrade: true, command: fake_system_command)
+
+          expect(quit_called).to be false
+        end
+
+        it "skips :quit by default during reinstall" do
+          quit_called = false
+          allow(artifact).to receive(:dispatch_uninstall_directive) do |directive, **options|
+            quit_called ||= directive == :quit && options[:command] == fake_system_command
+          end
+
+          artifact.uninstall_phase(reinstall: true, command: fake_system_command)
+
+          expect(quit_called).to be false
+        end
+      end
+
+      context "with-uninstall-quit-on-upgrade" do
+        let(:cask) { Cask::CaskLoader.load(cask_path("with-uninstall-quit-on-upgrade")) }
+        let(:artifact) { cask.artifacts.find { |a| a.is_a?(described_class) } }
+
+        it "invokes :quit during upgrade" do
+          quit_called = false
+          allow(artifact).to receive(:dispatch_uninstall_directive) do |directive, **options|
+            quit_called ||= directive == :quit && options[:command] == fake_system_command
+          end
+
+          artifact.uninstall_phase(upgrade: true, command: fake_system_command)
+
+          expect(quit_called).to be true
+        end
+
+        it "invokes :quit during reinstall" do
+          quit_called = false
+          allow(artifact).to receive(:dispatch_uninstall_directive) do |directive, **options|
+            quit_called ||= directive == :quit && options[:command] == fake_system_command
+          end
+
+          artifact.uninstall_phase(reinstall: true, command: fake_system_command)
+
+          expect(quit_called).to be true
+        end
+      end
+
+      context "with-uninstall-signal" do
+        let(:cask) { Cask::CaskLoader.load(cask_path("with-uninstall-signal")) }
+        let(:artifact) { cask.artifacts.find { |a| a.is_a?(described_class) } }
+
+        it "skips :signal by default during upgrade" do
+          signal_called = false
+          allow(artifact).to receive(:dispatch_uninstall_directive) do |directive, **options|
+            signal_called ||= directive == :signal && options[:command] == fake_system_command
+          end
+
+          artifact.uninstall_phase(upgrade: true, command: fake_system_command)
+
+          expect(signal_called).to be false
+        end
+
+        it "skips :signal by default during reinstall" do
+          signal_called = false
+          allow(artifact).to receive(:dispatch_uninstall_directive) do |directive, **options|
+            signal_called ||= directive == :signal && options[:command] == fake_system_command
+          end
+
+          artifact.uninstall_phase(reinstall: true, command: fake_system_command)
+
+          expect(signal_called).to be false
+        end
+      end
+
+      context "with-uninstall-signal-on-upgrade" do
+        let(:cask) { Cask::CaskLoader.load(cask_path("with-uninstall-signal-on-upgrade")) }
+        let(:artifact) { cask.artifacts.find { |a| a.is_a?(described_class) } }
+
+        it "invokes :signal during upgrade" do
+          signal_called = false
+          allow(artifact).to receive(:dispatch_uninstall_directive) do |directive, **options|
+            signal_called ||= directive == :signal && options[:command] == fake_system_command
+          end
+
+          artifact.uninstall_phase(upgrade: true, command: fake_system_command)
+
+          expect(signal_called).to be true
+        end
+
+        it "invokes :signal during reinstall" do
+          signal_called = false
+          allow(artifact).to receive(:dispatch_uninstall_directive) do |directive, **options|
+            signal_called ||= directive == :signal && options[:command] == fake_system_command
+          end
+
+          artifact.uninstall_phase(reinstall: true, command: fake_system_command)
+
+          expect(signal_called).to be true
+        end
+      end
+    end
   end
 
   describe "#post_uninstall_phase" do
