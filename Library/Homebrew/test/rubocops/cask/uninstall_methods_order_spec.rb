@@ -78,6 +78,28 @@ RSpec.describe RuboCop::Cop::Cask::UninstallMethodsOrder, :config do
           end
         CASK
       end
+
+      it "ignores opt-in boolean keys such as quit_on_upgrade and signal_on_upgrade" do
+        expect_no_offenses(<<~CASK)
+          cask "foo" do
+            url "https://example.com/foo.zip"
+
+            uninstall quit:      "com.example.foo",
+                      quit_on_upgrade: true,
+                      signal:    ["TERM", "com.example.foo"],
+                      signal_on_upgrade: true,
+                      script:  {
+                        executable: "/usr/local/bin/foo",
+                        sudo:       false,
+                      },
+                      pkgutil: "org.foo.bar",
+                      delete:  [
+                        "/usr/local/bin/foo",
+                        "/usr/local/bin/foobar",
+                      ]
+          end
+        CASK
+      end
     end
 
     context "with a single method" do
