@@ -196,6 +196,7 @@ module Homebrew
           depends_on "meson" => :build
           depends_on "ninja" => :build
         <% elsif @mode == :node %>
+          depends_on "pnpm" => :build
           depends_on "node"
         <% elsif @mode == :perl %>
           uses_from_macos "perl"
@@ -242,7 +243,7 @@ module Homebrew
             system "meson", "compile", "-C", "build", "--verbose"
             system "meson", "install", "-C", "build"
         <% elsif @mode == :node %>
-            system "npm", "install", *std_npm_args
+            system "pnpm", "install", *std_npm_args
             bin.install_symlink Dir["\#{libexec}/bin/*"]
         <% elsif @mode == :perl %>
             ENV.prepend_create_path "PERL5LIB", libexec/"lib/perl5"
