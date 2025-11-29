@@ -150,7 +150,7 @@ module Homebrew
       end
 
       sig { params(hash: T::Hash[String, T.untyped], bottle_tag: ::Utils::Bottles::Tag).returns(FormulaHash) }
-      def self.from_hash(hash, bottle_tag:)
+      def self.from_hash(hash, bottle_tag: ::Utils::Bottles.tag)
         hash = Homebrew::API.merge_variations(hash, bottle_tag: bottle_tag)
 
         hash["bottle"] = begin

@@ -216,9 +216,9 @@ module Formulary
     platform_cache.fetch(:path)[path.to_s] = klass
   end
 
-  sig { params(name: String, json_formula_with_variations: T::Hash[String, T.untyped], flags: T::Array[String]).returns(T.class_of(Formula)) }
-  def self.load_formula_from_json!(name, json_formula_with_variations, flags:)
-    namespace = :"FormulaNamespaceAPI#{namespace_key(json_formula_with_variations.to_json)}"
+  sig { params(name: String, formula_struct: Homebrew::API::FormulaHash, flags: T::Array[String]).returns(T.class_of(Formula)) }
+  def self.load_formula_from_formula_struct!(name, formula_struct, flags:)
+    namespace = :"FormulaNamespaceAPI#{namespace_key(formula_struct.to_json)}"
 
     mod = Module.new
     remove_const(namespace) if const_defined?(namespace)
@@ -227,9 +227,8 @@ module Formulary
     mod.const_set(:BUILD_FLAGS, flags)
 
     class_name = class_s(name)
-    json_formula = Homebrew::API.merge_variations(json_formula_with_variations)
 
-    caveats_string = (replace_placeholders(json_formula["caveats"]) if json_formula["caveats"])
+    caveats_string = (replace_placeholders(formula_struct.caveats) if formula_struct.caveats)
 
     uses_from_macos_names = json_formula.fetch("uses_from_macos", []).map do |dep|
       next dep unless dep.is_a? Hash
@@ -1079,7 +1078,8 @@ module Formulary
 
       raise FormulaUnavailableError, name if json_formula.nil?
 
-      Formulary.load_formula_from_json!(name, json_formula, flags:)
+      formula_struct = Homebrew::API::FormulaHash.from_hash(json_formula)
+      Formulary.load_formula_from_formula_struct!(name, formula_struct, flags:)
     end
   end
 
@@ -1095,7 +1095,8 @@ module Formulary
 
     sig { override.params(flags: T::Array[String]).void }
     def load_from_api(flags:)
-      Formulary.load_formula_from_json!(name, @contents, flags:)
+      formula_struct = Homebrew::API::FormulaHash.from_hash(@contents)
+      Formulary.load_formula_from_formula_struct!(name, formula_struct, flags:)
     end
   end
 
