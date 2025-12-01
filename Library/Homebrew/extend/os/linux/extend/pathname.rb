@@ -31,8 +31,6 @@ module OS
         sig { void }
         def activate_extensions!
           super
-
-          prepend(ELFShim)
         end
       end
     end
