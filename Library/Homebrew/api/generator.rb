@@ -13,10 +13,11 @@ module Homebrew
     class Generator
       include Utils::Output::Mixin
 
-      sig { params(only_core: T::Boolean, only_cask: T::Boolean, dry_run: T::Boolean).void }
-      def initialize(only_core: false, only_cask: false, dry_run: false)
-        @generate_formula_api = T.let(!only_cask, T::Boolean)
-        @generate_cask_api = T.let(!only_core, T::Boolean)
+      sig { params(only_core: T::Boolean, only_cask: T::Boolean, only_packages: T::Boolean, dry_run: T::Boolean).void }
+      def initialize(only_core: false, only_cask: false, only_packages: false, dry_run: false)
+        @generate_formula_api = T.let(!only_cask && !only_packages, T::Boolean)
+        @generate_cask_api = T.let(!only_core && !only_packages, T::Boolean)
+        @generate_packages_api = T.let(!only_core && !only_cask, T::Boolean)
         @dry_run = T.let(dry_run, T::Boolean)
         @first_letter = T.let(nil, T.nilable(String))
       end
@@ -25,7 +26,7 @@ module Homebrew
       def generate!
         generate_api!(type: :formula) if generate_formula_api?
         generate_api!(type: :cask) if generate_cask_api?
-        generate_packages_api! if generate_formula_api? && generate_cask_api?
+        generate_packages_api! if generate_packages_api?
       end
 
       private
@@ -35,6 +36,9 @@ module Homebrew
 
       sig { returns(T::Boolean) }
       def generate_cask_api? = @generate_cask_api
+
+      sig { returns(T::Boolean) }
+      def generate_packages_api? = @generate_packages_api
 
       sig { returns(T::Boolean) }
       def dry_run? = @dry_run
@@ -111,6 +115,7 @@ module Homebrew
 
         OnSystem::VALID_OS_ARCH_TAGS.each do |bottle_tag|
           formulae = formulae(core_tap).transform_values do |hash|
+            # FormulaHash.from_hash(hash, bottle_tag:)
             FormulaHash.from_hash(hash, bottle_tag:)
           end
 
@@ -121,6 +126,8 @@ module Homebrew
 
           next if dry_run?
 
+          # TODO: renames and aliases can be inferred from the formula data. They should only be kept in one of these places.
+          # TODO: add tap git heads to this top-level data
           packages_hash = {
             formulae:            formulae,
             casks:               casks,
@@ -139,7 +146,9 @@ module Homebrew
       sig { params(tap: Tap).returns(T::Hash[String, T.untyped]) }
       def formulae(tap)
         reset_debugging!
-        # @formulae ||= T.let(T.must(tap.formula_names.slice(0, 2)).to_h do |name|
+        # @formulae ||= T.let(["act_runner", "black", "dotnet@6", "gcc", "readline", "wownero", "xboard"].to_h do |name|
+        # @formulae ||= T.let(T.must(tap.formula_names.slice(0, 2000)).to_h do |name|
+        # @formulae ||= T.let(["macpine"].to_h do |name|
         @formulae ||= T.let(tap.formula_names.to_h do |name|
           debug_load!(name, type: :formula)
           formula = Formulary.factory(name)
@@ -153,8 +162,8 @@ module Homebrew
       sig { params(tap: Tap).returns(T::Hash[String, T.untyped]) }
       def casks(tap)
         reset_debugging!
-        # @casks ||= T.let(T.must(tap.cask_files.slice(0, 2)).to_h do |path|
-        @casks ||= T.let(tap.cask_files.to_h do |path|
+        # @casks ||= T.let(tap.cask_files.to_h do |path|
+        @casks ||= T.let(T.must(tap.cask_files.slice(0, 0)).to_h do |path|
           debug_load!(path.stem, type: :cask)
           cask = ::Cask::CaskLoader.load(path)
           [cask.token, cask.to_hash_with_variations]

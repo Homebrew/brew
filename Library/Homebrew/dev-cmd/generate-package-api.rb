@@ -16,10 +16,12 @@ module Homebrew
                description: "Only generate API data for packages in `homebrew/core`."
         switch "--only-cask",
                description: "Only generate API data for packages in `homebrew/cask`."
+        switch "--only-packages",
+               description: "Only generate the combined packages API data."
         switch "-n", "--dry-run",
                description: "Generate API data without writing it to files."
 
-        conflicts "--only-core", "--only-cask"
+        conflicts "--only-core", "--only-cask", "--only-packages"
 
         named_args :none
       end
@@ -27,9 +29,10 @@ module Homebrew
       sig { override.void }
       def run
         Homebrew::API::Generator.new(
-          only_core: args.only_core?,
-          only_cask: args.only_cask?,
-          dry_run:   args.dry_run?,
+          only_core:     args.only_core?,
+          only_cask:     args.only_cask?,
+          only_packages: args.only_packages?,
+          dry_run:       args.dry_run?,
         ).generate!
       end
     end

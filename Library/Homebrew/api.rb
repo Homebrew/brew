@@ -5,6 +5,7 @@ require "api/analytics"
 require "api/cask"
 require "api/formula"
 require "api/internal"
+require "api/generator"
 require "base64"
 require "utils/output"
 

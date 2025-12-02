@@ -1,224 +1,181 @@
 # typed: strict
 # frozen_string_literal: true
 
-require "utils/bottles"
+# require "utils/bottles"
+
+require "api/generator_mixin"
 
 module Homebrew
   module API
-    module CompactSerializable
-      extend T::Helpers
-
-      requires_ancestor { T::Struct }
-
-      sig { params(args: T.anything).returns(T::Hash[String, T.untyped]) }
-      def serialize(*args)
-        super.compact_blank
-      end
-    end
-
-    module StringifySymbols
-      sig { params(value: T.nilable(T.any(String, Symbol))).returns(T.nilable(String)) }
-      def to_symbolized_string(value)
-        return value unless value.is_a? Symbol
-
-        ":#{value}"
-      end
-    end
-
-    class BottleHash < T::Struct
-      include CompactSerializable
-
-      const :rebuild, T.nilable(Integer), default: 0
-      const :cellar, T.nilable(String), default: ":any"
-      const :sha256, T.nilable(String)
-    end
-
-    class DependencyHash < T::Struct
-      include CompactSerializable
-
-      const :name, String
-      const :context, T.nilable(Symbol)
-    end
-
-    class HeadURLHash < T::Struct
-      include CompactSerializable
-
-      const :url, String
-      const :branch, T.nilable(String)
-      const :using, T.nilable(String)
-    end
-
-    # TODO: simplify this
-    class RequirementHash < T::Struct
-      include CompactSerializable
-
-      const :name, String
-      const :cask, T.nilable(String)
-      const :download, T.nilable(String)
-      const :version, T.nilable(String)
-      const :contexts, T::Array[T.untyped]
-      const :specs, T::Array[T.untyped]
-    end
-
-    class ServiceHash < T::Struct
-      include CompactSerializable
-
-      const :name, String
-      const :run, T.nilable(String)
-      const :run_type, T.nilable(String)
-      const :interval, T.nilable(Integer)
-      const :cron, T.nilable(String)
-      const :keep_alive, T.nilable(T::Boolean)
-      const :launch_only_once, T.nilable(T::Boolean)
-      const :require_root, T.nilable(T::Boolean)
-      const :environment_variables, T.nilable(T::Hash[String, String])
-      const :working_dir, T.nilable(String)
-      const :root_dir, T.nilable(String)
-      const :input_path, T.nilable(String)
-      const :log_path, T.nilable(String)
-      const :error_log_path, T.nilable(String)
-      const :restart_delay, T.nilable(Integer)
-      const :process_type, T.nilable(String)
-      const :macos_legacy_timers, T.nilable(T::Boolean)
-      const :sockets, T.nilable(T::Array[String])
-    end
-
-    class StableURLHash < T::Struct
-      include CompactSerializable
-
-      const :url, String
-      const :tag, T.nilable(String)
-      const :revision, T.nilable(String)
-      const :using, T.nilable(String)
-      const :checksum, T.nilable(String)
-    end
-
-    class UsesFromMacOSHash < T::Struct
-      include CompactSerializable
-
-      const :context, T.nilable(Symbol)
-      const :since, T.nilable(String)
-    end
-
     class FormulaHash < T::Struct
-      include CompactSerializable
-      extend StringifySymbols
+      include GeneratorMixin
 
-      DEPENDENCY_CONTEXTS = T.let([:build, :test, :recommended, :optional].freeze, T::Array[Symbol])
+      class BottleHash < T::Struct
+        include GeneratorMixin
 
-      PROPERTIES = T.let({
-        aliases:                         T::Array[String],
-        bottle:                          BottleHash,
-        caveats:                         T::Array[String],
-        conflicts_with:                  T::Array[String],
-        conflicts_with_reasons:          T::Array[String],
-        deprecation_date:                String,
-        deprecation_reason:              String,
-        deprecation_replacement_cask:    String,
-        deprecation_replacement_formula: String,
-        desc:                            String,
-        disable_date:                    String,
-        disable_reason:                  String,
-        disable_replacement_cask:        String,
-        disable_replacement_formula:     String,
-        head_dependencies:               T::Array[DependencyHash],
-        head_url:                        HeadURLHash,
-        homepage:                        String,
-        keg_only_reason:                 String,
-        license:                         String,
-        link_overwrite:                  T::Array[String],
-        no_autobump_msg:                 String,
-        oldnames:                        T::Array[String],
-        post_install_defined:            T::Boolean,
-        pour_bottle_only_if:             Symbol,
-        requirements:                    T::Array[RequirementHash],
-        revision:                        Integer,
-        ruby_source_sha256:              String,
-        ruby_source_path:                String,
-        service:                         T::Hash[String, T.untyped],
-        stable_dependencies:             T::Array[DependencyHash],
-        stable_url:                      StableURLHash,
-        stable_version:                  String,
-        tap_git_head:                    String,
-        uses_from_macos:                 T::Hash[String, UsesFromMacOSHash],
-        version_scheme:                  Integer,
-        versioned_formulae:              T::Array[String],
-      }.freeze, T::Hash[Symbol, T.untyped])
-
-      PROPERTIES.each do |property, type|
-        const property, T.nilable(type)
+        elem :rebuild, Integer
+        elem :cellar, String, default: ":any", from: ["files", bottle_tag, "cellar"]
+        elem :sha256, String, from: ["files", bottle_tag, "sha256"]
       end
 
-      sig { params(hash: T::Hash[String, T.untyped], bottle_tag: ::Utils::Bottles::Tag).returns(FormulaHash) }
-      def self.from_hash(hash, bottle_tag:)
-        hash = Homebrew::API.merge_variations(hash, bottle_tag: bottle_tag)
+      class DependencyHash < T::Struct
+        include GeneratorMixin
 
-        hash["bottle"] = begin
-          bottle_collector = ::Utils::Bottles::Collector.new
-          hash.dig("bottle", "stable", "files")&.each do |tag, data|
-            tag = ::Utils::Bottles::Tag.from_symbol(tag)
-            bottle_collector.add tag, checksum: Checksum.new(data["sha256"]), cellar: :any
-          end
-          BottleHash.new(
-            rebuild: hash.dig("bottle", "stable", "rebuild"),
-            cellar:  to_symbolized_string(bottle_collector.specification_for(bottle_tag)&.cellar),
-            sha256:  bottle_collector.specification_for(bottle_tag)&.checksum&.to_s,
-          )
+        elem :runtime, T::Array[String], from: "dependencies"
+        elem :build, T::Array[String], from: "build_dependencies"
+        elem :test, T::Array[String], from: "test_dependencies"
+      end
+
+      class HeadURLHash < T::Struct
+        include GeneratorMixin
+
+        elem :url, String
+        elem :branch, String
+        elem :using, String
+      end
+
+      class KegOnlyReasonHash < T::Struct
+        include GeneratorMixin
+
+        elem :reason, String
+        elem :explanation, String
+      end
+
+      # # TODO: simplify this
+      # class RequirementHash < T::Struct
+      #   include GeneratorMixin
+
+      #   elem :name, String
+      #   elem :cask, String
+      #   elem :download, String
+      #   elem :version, String
+      #   elem :contexts, T::Array[T.untyped]
+      #   elem :specs, T::Array[T.untyped]
+      # end
+
+      class ServiceHash < T::Struct
+        include GeneratorMixin
+
+        class KeepAlive < T::Struct
+          include GeneratorMixin
+
+          elem :always, T::Boolean
+          elem :crashed, T::Boolean
+          elem :path, String
+          elem :successful_exit, T::Boolean
         end
 
-        head_dependencies = []
-        hash.dig("head_dependencies", "dependencies")&.each do |dep_name|
-          head_dependencies << DependencyHash.new(name: dep_name)
-        end
-        DEPENDENCY_CONTEXTS.each do |context|
-          hash.dig("head_dependencies", "#{context}_dependencies")&.each do |dep_name|
-            head_dependencies << DependencyHash.new(name: dep_name, context:)
-          end
-        end
-        hash["head_dependencies"] = head_dependencies
+        class NameHash < T::Struct
+          include GeneratorMixin
 
-        hash["head_url"] = if (specs = hash["head_url"])
-          HeadURLHash.new(**specs.transform_keys(&:to_sym))
+          elem :macos, String
+          elem :linux, String
         end
 
-        hash["requirements"] = hash["requirements"]&.map do |specs|
-          RequirementHash.new(**specs.transform_keys(&:to_sym))
+        class RunHash < T::Struct
+          include GeneratorMixin
+
+          elem :macos, T::Array[String]
+          elem :linux, T::Array[String]
+          elem :all, T::Array[String]
         end
 
-        hash["service"] = if (specs = hash["service"])
-          ServiceHash.new(**specs.transform_keys(&:to_sym))
-        end
-
-        hash["stable_url"] = if (specs = hash["stable_url"])
-          StableURLHash.new(**specs.transform_keys(&:to_sym))
-        end
-
-        hash["ruby_source_sha256"] = hash.dig("ruby_source_checksum", "sha256")
-
-        stable_dependencies = hash.fetch("dependencies", []).map do |dep_name|
-          DependencyHash.new(name: dep_name)
-        end
-        DEPENDENCY_CONTEXTS.each do |context|
-          hash.fetch("#{context}_dependencies", []).each do |dep_name|
-            stable_dependencies << DependencyHash.new(name: dep_name, context:)
-          end
-        end
-        hash["stable_dependencies"] = stable_dependencies
-
-        hash["stable_version"] = hash.dig("stable", "version")
-
-        uses_from_macos_bounds = hash.fetch("uses_from_macos_bounds", [])
-        hash["uses_from_macos"] = hash["uses_from_macos"].zip(uses_from_macos_bounds).to_h do |name, bounds|
-          name, context = if name.is_a?(Hash)
-            [name.keys.first, name.values.first.to_sym]
+        elem :name, hash_as: NameHash
+        elem :run, hash_as: RunHash do |h|
+          case (run = h["run"])
+          when Hash, nil
+            run
           else
-            [name, nil]
+            { "all" => Array(run) }
           end
-          [name, UsesFromMacOSHash.new(context:, since: bounds["since"])]
         end
-
-        new(**hash.transform_keys(&:to_sym).slice(*PROPERTIES.keys))
+        elem :run_type, String
+        elem :interval, Integer
+        elem :cron, String
+        elem :keep_alive, hash_as: KeepAlive
+        elem :launch_only_once, T::Boolean
+        elem :require_root, T::Boolean
+        elem :environment_variables, T::Hash[String, String]
+        elem :working_dir, String
+        elem :root_dir, String
+        elem :input_path, String
+        elem :log_path, String
+        elem :error_log_path, String
+        elem :restart_delay, Integer
+        elem :process_type, String
+        elem :macos_legacy_timers, T::Boolean
+        elem :sockets, T::Array[String] do |h|
+          Array(h["sockets"])
+        end
       end
+
+      class StableURLHash < T::Struct
+        include GeneratorMixin
+
+        elem :url, String
+        elem :tag, String
+        elem :revision, String
+        elem :using, String
+        elem :checksum, String
+      end
+
+      # class UsesFromMacOSHash < T::Struct
+      #   include GeneratorMixin
+
+      #   elem :context, Symbol
+      #   elem :since, String
+      # end
+
+      elem :aliases, T::Array[String]
+      elem :bottle, hash_as: BottleHash, from: ["bottle", "stable"]
+      elem :caveats, String
+
+      # elem :conflicts_with, T::Array[String] # TODO: simplify as a hash?
+      # elem :conflicts_with_reasons, T::Array[String]
+
+      elem :deprecation_date, String
+      elem :deprecation_reason, String
+      elem :deprecation_replacement_cask, String
+      elem :deprecation_replacement_formula, String
+      elem :desc, String
+      elem :disable_date, String
+      elem :disable_reason, String
+      elem :disable_replacement_cask, String
+      elem :disable_replacement_formula, String
+      elem :head_dependencies, hash_as: DependencyHash, from: "head_dependencies"
+      elem :head_url, hash_as: HeadURLHash, from: ["urls", "head"]
+      elem :homepage, String
+      elem :keg_only_reason, hash_as: KegOnlyReasonHash
+      elem :license, String
+      elem :link_overwrite, T::Array[String]
+      elem :no_autobump_msg, String
+      elem :oldnames, T::Array[String]
+      elem :post_install_defined, T::Boolean
+      elem :pour_bottle_only_if, String # TODO: symbolify
+
+      #     requirements:                    T::Array[RequirementHash],
+
+      elem :revision, Integer
+      elem :ruby_source_sha256, String, from: ["ruby_source_checksum", "sha256"]
+      elem :service, hash_as: ServiceHash
+      elem :stable_dependencies, hash_as: DependencyHash, from: []
+      elem :stable_url, hash_as: StableURLHash, from: ["urls", "stable"]
+      elem :stable_version, String, from: ["stable", "version"]
+
+      #     uses_from_macos:                 T::Hash[String, UsesFromMacOSHash],
+
+      elem :version_scheme, Integer
+      elem :versioned_formulae, T::Array[String]
     end
+
+    #     uses_from_macos_bounds = hash.fetch("uses_from_macos_bounds", [])
+    #     hash["uses_from_macos"] = hash["uses_from_macos"].zip(uses_from_macos_bounds).to_h do |name, bounds|
+    #       name, context = if name.is_a?(Hash)
+    #         [name.keys.first, name.values.first.to_sym]
+    #       else
+    #         [name, nil]
+    #       end
+    #       [name, UsesFromMacOSHash.new(context:, since: bounds["since"])]
+    #     end
   end
 end

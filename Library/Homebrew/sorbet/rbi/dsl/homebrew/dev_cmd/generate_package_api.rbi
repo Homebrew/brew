@@ -22,4 +22,7 @@ class Homebrew::DevCmd::GeneratePackageApi::Args < Homebrew::CLI::Args
 
   sig { returns(T::Boolean) }
   def only_core?; end
+
+  sig { returns(T::Boolean) }
+  def only_packages?; end
 end
