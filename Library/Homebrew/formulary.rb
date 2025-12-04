@@ -216,8 +216,11 @@ module Formulary
     platform_cache.fetch(:path)[path.to_s] = klass
   end
 
-  sig { params(name: String, json_formula_with_variations: T::Hash[String, T.untyped], flags: T::Array[String]).returns(T.class_of(Formula)) }
-  def self.load_formula_from_json!(name, json_formula_with_variations, flags:)
+  sig {
+    params(name: String, json_formula_with_variations: T::Hash[String, T.untyped], formula_struct: FormulaStruct,
+           flags: T::Array[String]).returns(T.class_of(Formula))
+  }
+  def self.load_formula_from_json!(name, json_formula_with_variations, formula_struct, flags:)
     namespace = :"FormulaNamespaceAPI#{namespace_key(json_formula_with_variations.to_json)}"
 
     mod = Module.new
@@ -227,18 +230,19 @@ module Formulary
     mod.const_set(:BUILD_FLAGS, flags)
 
     class_name = class_s(name)
-    json_formula = Homebrew::API.merge_variations(json_formula_with_variations)
 
-    caveats_string = (replace_placeholders(json_formula["caveats"]) if json_formula["caveats"])
+    caveats_string = if (caveats = formula_struct.caveats)
+      replace_placeholders(caveats)
+    end
 
-    uses_from_macos_names = json_formula.fetch("uses_from_macos", []).map do |dep|
+    uses_from_macos_names = formula_struct.uses_from_macos.map do |dep|
       next dep unless dep.is_a? Hash
 
       dep.keys.first
     end
 
     requirements = {}
-    json_formula["requirements"]&.map do |req|
+    formula_struct.requirements.map do |req|
       req_name = req["name"].to_sym
       next if API_SUPPORTED_REQUIREMENTS.exclude?(req_name)
 
@@ -277,11 +281,11 @@ module Formulary
     add_deps = lambda do |spec|
       T.bind(self, SoftwareSpec)
 
-      dep_json = json_formula.fetch("#{spec}_dependencies", json_formula)
+      dep_json = formula_struct.send("#{spec}_dependencies")
 
       dep_json["dependencies"]&.each do |dep|
         # Backwards compatibility check - uses_from_macos used to be a part of dependencies on Linux
-        next if !json_formula.key?("uses_from_macos_bounds") && uses_from_macos_names.include?(dep) &&
+        next if formula_struct.uses_from_macos_bounds.nil? && uses_from_macos_names.include?(dep) &&
                 !Homebrew::SimulateSystem.simulating_or_running_on_macos?
 
         depends_on dep
@@ -290,7 +294,7 @@ module Formulary
       [:build, :test, :recommended, :optional].each do |type|
         dep_json["#{type}_dependencies"]&.each do |dep|
           # Backwards compatibility check - uses_from_macos used to be a part of dependencies on Linux
-          next if !json_formula.key?("uses_from_macos_bounds") && uses_from_macos_names.include?(dep) &&
+          next if formula_struct.uses_from_macos_bounds.nil? && uses_from_macos_names.include?(dep) &&
                   !Homebrew::SimulateSystem.simulating_or_running_on_macos?
 
           depends_on dep => type
@@ -314,22 +318,24 @@ module Formulary
       @loaded_from_api = T.let(true, T.nilable(T::Boolean))
       @api_source = T.let(json_formula_with_variations, T.nilable(T::Hash[String, T.untyped]))
 
-      desc json_formula["desc"]
-      homepage json_formula["homepage"]
-      license SPDX.string_to_license_expression(json_formula["license"])
-      revision json_formula.fetch("revision", 0)
-      version_scheme json_formula.fetch("version_scheme", 0)
+      desc formula_struct.desc
+      homepage formula_struct.homepage
+      license SPDX.string_to_license_expression(formula_struct.license)
+      revision formula_struct.revision
+      version_scheme formula_struct.version_scheme
 
-      if (urls_stable = json_formula["urls"]["stable"].presence)
+      if (urls_stable = formula_struct.urls["stable"].presence)
         stable do
           url_spec = {
             tag:      urls_stable["tag"],
             revision: urls_stable["revision"],
             using:    urls_stable["using"]&.to_sym,
           }.compact
-          url urls_stable["url"], **url_spec
-          version json_formula["versions"]["stable"]
-          sha256 urls_stable["checksum"] if urls_stable["checksum"].present?
+          url T.must(urls_stable.fetch("url")), **url_spec
+          version formula_struct.versions["stable"]
+          if (checksum = urls_stable["checksum"])
+            sha256 checksum
+          end
 
           instance_exec(:stable, &add_deps)
           requirements[:stable]&.each do |req|
@@ -338,13 +344,13 @@ module Formulary
         end
       end
 
-      if (urls_head = json_formula["urls"]["head"].presence)
+      if (urls_head = formula_struct.urls["head"].presence)
         head do
           url_spec = {
             branch: urls_head["branch"],
             using:  urls_head["using"]&.to_sym,
           }.compact
-          url urls_head["url"], **url_spec
+          url T.must(urls_head.fetch("url")), **url_spec
 
           instance_exec(:head, &add_deps)
           requirements[:head]&.each do |req|
@@ -353,12 +359,12 @@ module Formulary
         end
       end
 
-      if (because = json_formula["no_autobump_msg"])
+      if (because = formula_struct.no_autobump_msg)
         because = because.to_sym if NO_AUTOBUMP_REASONS_LIST.key?(because.to_sym)
         no_autobump!(because:)
       end
 
-      bottles_stable = json_formula["bottle"]["stable"].presence
+      bottles_stable = formula_struct.bottle["stable"].presence
 
       if bottles_stable
         bottle do
@@ -375,34 +381,34 @@ module Formulary
         end
       end
 
-      if (pour_bottle_only_if = json_formula["pour_bottle_only_if"])
+      if (pour_bottle_only_if = formula_struct.pour_bottle_only_if)
         pour_bottle? only_if: pour_bottle_only_if.to_sym
       end
 
-      if (keg_only_reason = json_formula["keg_only_reason"].presence)
-        reason = Formulary.convert_to_string_or_symbol keg_only_reason["reason"]
-        keg_only reason, keg_only_reason["explanation"]
+      if (keg_only_reason = formula_struct.keg_only_reason.presence)
+        reason = Formulary.convert_to_string_or_symbol keg_only_reason.fetch("reason")
+        keg_only reason, keg_only_reason.fetch("explanation")
       end
 
-      if (deprecation_date = json_formula["deprecation_date"].presence)
-        reason = DeprecateDisable.to_reason_string_or_symbol json_formula["deprecation_reason"], type: :formula
-        replacement_formula = json_formula["deprecation_replacement_formula"]
-        replacement_cask = json_formula["deprecation_replacement_cask"]
+      if (deprecation_date = formula_struct.deprecation_date.presence)
+        reason = DeprecateDisable.to_reason_string_or_symbol formula_struct.deprecation_reason, type: :formula
+        replacement_formula = formula_struct.deprecation_replacement_formula
+        replacement_cask = formula_struct.deprecation_replacement_cask
         deprecate! date: deprecation_date, because: reason, replacement_formula:, replacement_cask:
       end
 
-      if (disable_date = json_formula["disable_date"].presence)
-        reason = DeprecateDisable.to_reason_string_or_symbol json_formula["disable_reason"], type: :formula
-        replacement_formula = json_formula["disable_replacement_formula"]
-        replacement_cask = json_formula["disable_replacement_cask"]
+      if (disable_date = formula_struct.disable_date.presence)
+        reason = DeprecateDisable.to_reason_string_or_symbol formula_struct.disable_reason, type: :formula
+        replacement_formula = formula_struct.disable_replacement_formula
+        replacement_cask = formula_struct.disable_replacement_cask
         disable! date: disable_date, because: reason, replacement_formula:, replacement_cask:
       end
 
-      json_formula["conflicts_with"]&.each_with_index do |conflict, index|
-        conflicts_with conflict, because: json_formula.dig("conflicts_with_reasons", index)
+      formula_struct.conflicts_with.zip(formula_struct.conflicts_with_reasons) do |conflict, reason|
+        conflicts_with conflict, because: reason
       end
 
-      json_formula["link_overwrite"]&.each do |overwrite_path|
+      formula_struct.link_overwrite.each do |overwrite_path|
         link_overwrite overwrite_path
       end
 
@@ -410,13 +416,13 @@ module Formulary
         raise NotImplementedError, "Cannot build from source from abstract formula."
       end
 
-      @post_install_defined_boolean = T.let(json_formula["post_install_defined"], T.nilable(T::Boolean))
+      @post_install_defined_boolean = T.let(formula_struct.post_install_defined, T.nilable(T::Boolean))
       @post_install_defined_boolean = true if @post_install_defined_boolean.nil? # Backwards compatibility
       define_method(:post_install_defined?) do
         self.class.instance_variable_get(:@post_install_defined_boolean)
       end
 
-      if (service_hash = json_formula["service"].presence)
+      if (service_hash = formula_struct.service.presence)
         service_hash = Homebrew::Service.from_hash(service_hash)
         service do
           T.bind(self, Homebrew::Service)
@@ -445,33 +451,33 @@ module Formulary
         self.class.instance_variable_get(:@caveats_string)
       end
 
-      @tap_git_head_string = T.let(json_formula["tap_git_head"], T.nilable(String))
+      @tap_git_head_string = T.let(formula_struct.tap_git_head, T.nilable(String))
       define_method(:tap_git_head) do
         self.class.instance_variable_get(:@tap_git_head_string)
       end
 
-      @oldnames_array = T.let(json_formula["oldnames"] || [json_formula["oldname"]].compact, T.nilable(T::Array[String]))
+      @oldnames_array = T.let(formula_struct.oldnames || [formula_struct.oldname].compact, T.nilable(T::Array[String]))
       define_method(:oldnames) do
         self.class.instance_variable_get(:@oldnames_array)
       end
 
-      @aliases_array = T.let(json_formula.fetch("aliases", []), T.nilable(T::Array[String]))
+      @aliases_array = T.let(formula_struct.aliases, T.nilable(T::Array[String]))
       define_method(:aliases) do
         self.class.instance_variable_get(:@aliases_array)
       end
 
-      @versioned_formulae_array = T.let(json_formula.fetch("versioned_formulae", []), T.nilable(T::Array[String]))
+      @versioned_formulae_array = T.let(formula_struct.versioned_formulae, T.nilable(T::Array[String]))
       define_method(:versioned_formulae_names) do
         self.class.instance_variable_get(:@versioned_formulae_array)
       end
 
-      @ruby_source_path_string = T.let(json_formula["ruby_source_path"], T.nilable(String))
+      @ruby_source_path_string = T.let(formula_struct.ruby_source_path, T.nilable(String))
       define_method(:ruby_source_path) do
         self.class.instance_variable_get(:@ruby_source_path_string)
       end
 
-      @ruby_source_checksum_string = T.let(json_formula.dig("ruby_source_checksum", "sha256"), T.nilable(String))
-      @ruby_source_checksum_string ||= json_formula["ruby_source_sha256"]
+      @ruby_source_checksum_string = T.let(formula_struct.ruby_source_checksum.fetch("sha256"), T.nilable(String))
+      @ruby_source_checksum_string ||= formula_struct.ruby_source_sha256
       define_method(:ruby_source_checksum) do
         checksum = self.class.instance_variable_get(:@ruby_source_checksum_string)
         Checksum.new(checksum) if checksum
@@ -1079,7 +1085,8 @@ module Formulary
 
       raise FormulaUnavailableError, name if json_formula.nil?
 
-      Formulary.load_formula_from_json!(name, json_formula, flags:)
+      formula_struct = FormulaStruct.from_hash(json_formula)
+      Formulary.load_formula_from_json!(name, json_formula, formula_struct, flags:)
     end
   end
 
@@ -1095,7 +1102,8 @@ module Formulary
 
     sig { override.params(flags: T::Array[String]).void }
     def load_from_api(flags:)
-      Formulary.load_formula_from_json!(name, @contents, flags:)
+      formula_struct = FormulaStruct.from_hash(@contents)
+      Formulary.load_formula_from_json!(name, @contents, formula_struct, flags:)
     end
   end
 
