@@ -93,8 +93,6 @@ module Homebrew
         keg = install_context.keg
         formula = install_context.formula
         options = install_context.options
-        link_keg = keg&.linked?
-        verbose = formula_installer.verbose?
 
         oh1 "Reinstalling #{Formatter.identifier(formula.full_name)} #{options.to_a.join " "}"
 
@@ -104,7 +102,7 @@ module Homebrew
         nil
         # Any other exceptions we want to restore the previous keg and report the error.
       rescue Exception # rubocop:disable Lint/RescueException
-        ignore_interrupts { restore_backup(keg, link_keg, verbose:) if keg }
+        ignore_interrupts { restore_backup(install_context) }
         raise
       else
         if keg
@@ -125,6 +123,24 @@ module Homebrew
         nil
       end
 
+      sig { params(install_context: InstallationContext).void }
+      def restore_backup(install_context)
+        keg = install_context.keg
+        return unless keg
+
+        path = backup_path(keg)
+        return unless path.directory?
+
+        formula_installer = install_context.formula_installer
+        keg_was_linked = formula_installer.link_keg
+        verbose = formula_installer.verbose?
+
+        FileUtils.rm_r(Pathname.new(keg)) if keg.exist?
+
+        path.rename keg.to_s
+        keg.link(verbose:) if keg_was_linked
+      end
+
       private
 
       sig { params(keg: Keg).void }
@@ -138,18 +154,6 @@ module Homebrew
               sudo chown -R #{ENV.fetch("USER", "$(whoami)")} #{keg}
           EOS
         end
-      end
-
-      sig { params(keg: Keg, keg_was_linked: T::Boolean, verbose: T::Boolean).void }
-      def restore_backup(keg, keg_was_linked, verbose:)
-        path = backup_path(keg)
-
-        return unless path.directory?
-
-        FileUtils.rm_r(Pathname.new(keg)) if keg.exist?
-
-        path.rename keg.to_s
-        keg.link(verbose:) if keg_was_linked
       end
 
       sig { params(keg: Keg).returns(Pathname) }
