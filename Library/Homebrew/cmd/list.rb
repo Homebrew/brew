@@ -8,6 +8,8 @@ require "cli/parser"
 require "cask/list"
 require "system_command"
 require "tab"
+require "json"
+require "descriptions"
 
 module Homebrew
   module Cmd
@@ -24,6 +26,8 @@ module Homebrew
                description: "List only formulae, or treat all named arguments as formulae."
         switch "--cask", "--casks",
                description: "List only casks, or treat all named arguments as casks."
+        switch "--eval-all",
+               description: "List all available packages in the default tap, whether installed or not."
         switch "--full-name",
                description: "Print formulae with fully-qualified names. Unless `--full-name`, `--versions` " \
                             "or `--pinned` are passed, other options (i.e. `-1`, `-l`, `-r` and `-t`) are " \
@@ -45,6 +49,12 @@ module Homebrew
                description: "List the formulae installed from a bottle."
         switch "--built-from-source",
                description: "List the formulae compiled from source."
+        switch "--desc",
+               description: "Show descriptions for listed formulae and casks."
+        flag   "--json",
+               description: "Print output in JSON format. There are two versions: `v1` and `v2`. " \
+                            "`v1` is deprecated and is currently the default if no version is specified. " \
+                            "`v2` prints all packages (or optionally only formulae or casks)."
 
         # passed through to ls
         switch "-1",
@@ -64,6 +74,11 @@ module Homebrew
         conflicts "--pinned", "--cask"
         conflicts "--multiple", "--cask"
         conflicts "--pinned", "--multiple"
+        conflicts "--eval-all", "--pinned"
+        conflicts "--eval-all", "--installed-on-request"
+        conflicts "--eval-all", "--installed-as-dependency"
+        conflicts "--eval-all", "--poured-from-bottle"
+        conflicts "--eval-all", "--built-from-source"
         ["--installed-on-request", "--installed-as-dependency",
          "--poured-from-bottle", "--built-from-source"].each do |flag|
           conflicts "--cask", flag
@@ -79,22 +94,88 @@ module Homebrew
           conflicts "--full-name", flag
         end
 
+        ["--versions", "--pinned", "--installed-on-request", "--installed-as-dependency",
+         "--poured-from-bottle", "--built-from-source", "-1", "-l", "-r", "-t"].each do |flag|
+          conflicts "--desc", flag
+        end
+
         named_args [:installed_formula, :installed_cask]
       end
 
       sig { override.void }
       def run
-        if args.full_name? &&
-           !(args.installed_on_request? || args.installed_as_dependency? ||
-             args.poured_from_bottle? || args.built_from_source?)
+        case json_version(T.unsafe(args).json)
+        when :v2
+          output_json_v2
+        else
+          legacy_list
+        end
+      end
+
+      sig { void }
+      def output_json_v2
+        formulae = if T.unsafe(args).eval_all?
+          if T.unsafe(args).formula? || (!T.unsafe(args).cask? && !T.unsafe(args).formula?)
+            Formula.all(eval_all: true)
+          else
+            []
+          end
+        elsif T.unsafe(args).cask?
+          []
+        else
+          args.no_named? ? Formula.installed : args.named.to_resolved_formulae
+        end
+
+        casks = if T.unsafe(args).eval_all?
+          if T.unsafe(args).cask? || (!T.unsafe(args).cask? && !T.unsafe(args).formula?)
+            Cask::Cask.all(eval_all: true)
+          else
+            []
+          end
+        elsif T.unsafe(args).cask?
+          args.no_named? ? Cask::Cask.all(eval_all: true) : args.named.to_casks
+        elsif T.unsafe(args).formula?
+          []
+        else
+          args.no_named? ? Cask::Caskroom.casks : args.named.to_casks
+        end
+
+        json = {
+          formulae: json_info(formulae),
+          casks:    json_info_casks(casks),
+        }
+        # json v2.8.1 is inconsistent in how it renders empty arrays,
+        # so we use `[]` for consistency:
+        puts JSON.pretty_generate(json).gsub(/\[\n\n\s*\]/, "[]")
+      end
+
+      sig { void }
+      def legacy_list
+        if args.desc?
+          list_descriptions
+        elsif args.full_name? &&
+              !(args.installed_on_request? || args.installed_as_dependency? ||
+                args.poured_from_bottle? || args.built_from_source?)
           unless args.cask?
-            formula_names = args.no_named? ? Formula.installed : args.named.to_resolved_formulae
+            formula_names = if T.unsafe(args).eval_all?
+              Formula.all(eval_all: true)
+            elsif args.no_named?
+              Formula.installed
+            else
+              args.named.to_resolved_formulae
+            end
             full_formula_names = formula_names.map(&:full_name).sort(&tap_and_name_comparison)
             full_formula_names = Formatter.columns(full_formula_names) unless args.public_send(:"1?")
             puts full_formula_names if full_formula_names.present?
           end
           if args.cask? || (!args.formula? && args.no_named?)
-            cask_names = if args.no_named?
+            cask_names = if T.unsafe(args).eval_all?
+              if args.no_named?
+                Cask::Cask.all(eval_all: true)
+              else
+                args.named.to_casks
+              end
+            elsif args.no_named?
               Cask::Caskroom.casks
             else
               args.named.to_formulae_and_casks(only: :cask, method: :resolve)
@@ -157,14 +238,32 @@ module Homebrew
           ls_args << "-r" if args.r?
           ls_args << "-t" if args.t?
 
-          if !args.cask? && HOMEBREW_CELLAR.exist? && HOMEBREW_CELLAR.children.any?
-            ohai "Formulae" if $stdout.tty? && !args.formula?
-            safe_system "ls", *ls_args, HOMEBREW_CELLAR
-            puts if $stdout.tty? && !args.formula?
+          # List formulae if --cask is not specified
+          unless args.cask?
+            if T.unsafe(args).eval_all?
+              # List all available formulae
+              ohai "Formulae" if $stdout.tty?
+              all_formulae = Formula.all(eval_all: true).map(&:name).sort
+              puts Formatter.columns(all_formulae) unless all_formulae.empty?
+              puts if $stdout.tty? && !args.formula?
+            elsif HOMEBREW_CELLAR.exist? && HOMEBREW_CELLAR.children.any?
+              ohai "Formulae" if $stdout.tty? && !args.formula?
+              safe_system "ls", *ls_args, HOMEBREW_CELLAR
+              puts if $stdout.tty? && !args.formula?
+            end
           end
-          if !args.formula? && Cask::Caskroom.any_casks_installed?
-            ohai "Casks" if $stdout.tty? && !args.cask?
-            safe_system "ls", *ls_args, Cask::Caskroom.path
+
+          # List casks if --formula is not specified
+          unless args.formula?
+            if T.unsafe(args).eval_all?
+              # List all available casks
+              ohai "Casks" if $stdout.tty?
+              all_casks = Cask::Cask.all(eval_all: true).map(&:token).sort
+              puts Formatter.columns(all_casks) unless all_casks.empty?
+            elsif Cask::Caskroom.any_casks_installed?
+              ohai "Casks" if $stdout.tty? && !args.cask?
+              safe_system "ls", *ls_args, Cask::Caskroom.path
+            end
           end
         else
           kegs, casks = args.named.to_kegs_to_casks
@@ -180,7 +279,93 @@ module Homebrew
         end
       end
 
+      sig { params(version: T.nilable(T.any(TrueClass, String))).returns(T.nilable(Symbol)) }
+      def json_version(version)
+        version_hash = {
+          nil  => nil,
+          true => :default,
+          "v1" => :v1,
+          "v2" => :v2,
+        }
+        version_hash.fetch(version) { raise UsageError, "invalid JSON version: #{version}" }
+      end
+
+      sig {
+        params(
+          formulae: T::Array[Formula],
+        ).returns(T::Array[T::Hash[Symbol, T.untyped]])
+      }
+      def json_info(formulae)
+        formulae.map do |formula|
+          {
+            name:      formula.full_name,
+            full_name: formula.full_name,
+            version:   formula.version.to_s,
+            installed: formula.rack.exist?,
+            desc:      formula.desc,
+          }
+        end
+      end
+
+      sig {
+        params(
+          casks: T::Array[Cask::Cask],
+        ).returns(T::Array[T::Hash[Symbol, T.untyped]])
+      }
+      def json_info_casks(casks)
+        casks.map do |cask|
+          {
+            name:      cask.token,
+            full_name: cask.full_name,
+            version:   cask.version.to_s,
+            installed: cask.installed?,
+            desc:      cask.desc,
+          }
+        end
+      end
+
       private
+
+      sig { void }
+      def list_descriptions
+        formulae = if T.unsafe(args).eval_all?
+          if T.unsafe(args).formula? || (!T.unsafe(args).cask? && !T.unsafe(args).formula?)
+            Formula.all(eval_all: true)
+          else
+            []
+          end
+        elsif T.unsafe(args).cask?
+          []
+        else
+          args.no_named? ? Formula.installed : args.named.to_resolved_formulae
+        end
+
+        casks = if T.unsafe(args).eval_all?
+          if T.unsafe(args).cask? || (!T.unsafe(args).cask? && !T.unsafe(args).formula?)
+            Cask::Cask.all(eval_all: true)
+          else
+            []
+          end
+        elsif T.unsafe(args).cask?
+          args.no_named? ? Cask::Cask.all(eval_all: true) : args.named.to_casks
+        elsif T.unsafe(args).formula?
+          []
+        else
+          args.no_named? ? Cask::Caskroom.casks : args.named.to_casks
+        end
+
+        descriptions = {}
+
+        formulae.each do |formula|
+          descriptions[formula.full_name] = formula.desc
+        end
+
+        casks.each do |cask|
+          descriptions[cask.full_name] = [cask.name.join(", "), cask.desc.presence]
+        end
+
+        Descriptions.new(descriptions).print
+      end
 
       sig { void }
       def filtered_list
