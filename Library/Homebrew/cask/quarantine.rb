@@ -155,8 +155,8 @@ module Cask
                                      *swift_target_args,
                                      QUARANTINE_SCRIPT,
                                      download_path,
-                                     cask.url.to_s,
-                                     cask.homepage.to_s,
+                                     cask.url.to_s, # Use the Cask's URL specification as the source URL
+                                     cask.homepage.to_s, # Use the Cask's homepage as the referrer URL
                                    ],
                                    print_stderr: false)
 
