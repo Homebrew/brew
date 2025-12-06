@@ -107,9 +107,27 @@ module Homebrew
         case json_version(T.unsafe(args).json)
         when :v2
           output_json_v2
+        when :v1, :default
+          output_json_v1
         else
           legacy_list
         end
+      end
+
+      sig { void }
+      def output_json_v1
+        raise UsageError, "Cannot specify `--cask` when using `--json=v1`!" if T.unsafe(args).cask?
+
+        formulae = if T.unsafe(args).eval_all?
+          Formula.all(eval_all: true)
+        elsif args.no_named?
+          Formula.installed
+        else
+          args.named.to_resolved_formulae
+        end
+
+        json = json_info(formulae)
+        puts JSON.pretty_generate(json)
       end
 
       sig { void }
@@ -132,8 +150,6 @@ module Homebrew
           else
             []
           end
-        elsif T.unsafe(args).cask?
-          args.no_named? ? Cask::Cask.all(eval_all: true) : args.named.to_casks
         elsif T.unsafe(args).formula?
           []
         else
@@ -346,8 +362,6 @@ module Homebrew
           else
             []
           end
-        elsif T.unsafe(args).cask?
-          args.no_named? ? Cask::Cask.all(eval_all: true) : args.named.to_casks
         elsif T.unsafe(args).formula?
           []
         else
