@@ -30,6 +30,9 @@ class Homebrew::Cmd::List::Args < Homebrew::CLI::Args
   def full_name?; end
 
   sig { returns(T::Boolean) }
+  def desc?; end
+
+  sig { returns(T::Boolean) }
   def installed_as_dependency?; end
 
   sig { returns(T::Boolean) }
