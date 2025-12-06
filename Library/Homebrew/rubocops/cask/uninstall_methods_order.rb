@@ -13,6 +13,13 @@ module RuboCop
 
         MSG = T.let("`%<method>s` method out of order", String)
 
+        # These keys are ignored when checking method order.
+        # Mirrors AbstractUninstall::UPGRADE_METADATA_KEYS.
+        UPGRADE_METADATA_KEYS = T.let(
+          [:quit_on_upgrade, :signal_on_upgrade].freeze,
+          T::Array[Symbol],
+        )
+
         sig { params(node: AST::SendNode).void }
         def on_send(node)
           return unless [:zap, :uninstall].include?(node.method_name)
@@ -21,6 +28,12 @@ module RuboCop
           return if hash_node.nil? || (!hash_node.is_a?(AST::Node) && !hash_node.hash_type?)
 
           method_nodes = hash_node.pairs.map(&:key)
+
+          method_nodes = method_nodes.reject do |method|
+            name = method.children.first
+            UPGRADE_METADATA_KEYS.include?(name)
+          end
+
           expected_order = method_nodes.sort_by { |method| method_order_index(method) }
           comments = processed_source.comments
 

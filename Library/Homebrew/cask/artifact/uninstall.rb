@@ -13,7 +13,16 @@ module Cask
         filtered_directives = ORDERED_DIRECTIVES.filter do |directive_sym|
           next false if directive_sym == :rmdir
 
-          next false if (upgrade || reinstall) && UPGRADE_REINSTALL_SKIP_DIRECTIVES.include?(directive_sym)
+          if (upgrade || reinstall) && UPGRADE_REINSTALL_SKIP_DIRECTIVES.include?(directive_sym)
+            case directive_sym
+            when :quit
+              next false unless directives.fetch(:quit_on_upgrade, false)
+            when :signal
+              next false unless directives.fetch(:signal_on_upgrade, false)
+            else
+              next false
+            end
+          end
 
           true
         end
