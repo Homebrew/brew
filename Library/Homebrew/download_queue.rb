@@ -298,7 +298,7 @@ module Homebrew
         ""
       else
         percent = if (total_size = downloadable.total_size)
-          fetched_size.to_f / [1, total_size].max
+          (fetched_size.to_f / [1, total_size].max).clamp(0.0, 1.0)
         else
           0.0
         end
