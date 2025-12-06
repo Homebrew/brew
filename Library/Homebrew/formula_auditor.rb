@@ -915,7 +915,7 @@ module Homebrew
 
         "#{changed_formula.name} (#{previous_compatibility_version} to #{current_compatibility_version})"
       end
-      return if missing_compatibility_bumps.empty?
+      return if missing_compatibility_bumps.empty? || !formula.core_formula?
 
       problem "`revision` increased but recursive dependencies must increase `compatibility_version` by 1: " \
               "#{missing_compatibility_bumps.join(", ")}."
