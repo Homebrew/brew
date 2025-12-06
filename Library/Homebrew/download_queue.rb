@@ -294,7 +294,7 @@ module Homebrew
 
       max_phase_length = 11
       phase = format("%-<phase>#{max_phase_length}s", phase: downloadable.phase.to_s.capitalize)
-      progress_bar = if future.fulfilled?
+      progress_bar = if future.fulfilled? || downloadable.phase != :downloading
         ""
       else
         percent = if (total_size = downloadable.total_size)
