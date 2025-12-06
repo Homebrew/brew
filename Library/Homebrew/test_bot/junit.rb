@@ -1,23 +1,26 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
+
+require "rexml/document"
 
 module Homebrew
   module TestBot
     # Creates Junit report with only required by BuildPulse attributes
     # See https://github.com/Homebrew/homebrew-test-bot/pull/621#discussion_r658712640
     class Junit
+      sig { params(tests: T::Array[Test]).void }
       def initialize(tests)
         @tests = tests
+        @xml_document = T.let(REXML::Document.new, REXML::Document)
       end
 
+      sig { params(filters: T.nilable(T::Array[String])).void }
       def build(filters: nil)
         filters ||= []
 
-        require "rexml/document"
         require "rexml/xmldecl"
         require "rexml/cdata"
 
-        @xml_document = REXML::Document.new
         @xml_document << REXML::XMLDecl.new
         testsuites = @xml_document.add_element "testsuites"
 
@@ -45,6 +48,7 @@ module Homebrew
         end
       end
 
+      sig { params(filename: String).void }
       def write(filename)
         output_path = Pathname(filename)
         output_path.unlink if output_path.exist?
