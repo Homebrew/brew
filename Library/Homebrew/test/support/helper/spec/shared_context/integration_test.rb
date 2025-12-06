@@ -144,6 +144,12 @@ RSpec.shared_context "integration test" do # rubocop:disable RSpec/ContextWordin
       else
         TEST_FIXTURE_DIR/"tarballs/#{prefix}-0.1.tbz"
       end
+      bottle_block ||= <<~RUBY if name == "testball_bottle"
+        bottle do
+          root_url "file://#{TEST_FIXTURE_DIR}/bottles"
+          sha256 cellar: :any_skip_relocation, all: "d7b9f4e8bf83608b71fe958a99f19f2e5e68bb2582965d32e41759c24f1aef97"
+        end
+      RUBY
       content = <<~RUBY
         desc "Some test"
         homepage "https://brew.sh/#{name}"
