@@ -10,7 +10,6 @@ require "descriptions"
 require "cleanup"
 require "description_cache_store"
 require "settings"
-require "linuxbrew-core-migration"
 require "reinstall"
 
 module Homebrew
@@ -149,28 +148,6 @@ module Homebrew
           next if !tap.git? || tap.git_repository.origin_url.nil?
           next if (tap.core_tap? || tap.core_cask_tap?) && !Homebrew::EnvConfig.no_install_from_api?
 
-          if ENV["HOMEBREW_MIGRATE_LINUXBREW_FORMULAE"].present? && tap.core_tap? &&
-             Settings.read("linuxbrewmigrated") != "true"
-            ohai "Migrating formulae from linuxbrew-core to homebrew-core"
-
-            LINUXBREW_CORE_MIGRATION_LIST.each do |name|
-              begin
-                formula = Formula[name]
-              rescue FormulaUnavailableError
-                next
-              end
-              next unless formula.any_version_installed?
-
-              keg = formula.installed_kegs.fetch(-1)
-              tab = keg.tab
-              # force a `brew upgrade` from the linuxbrew-core version to the homebrew-core version (even if lower)
-              tab.source["versions"]["version_scheme"] = -1
-              tab.write
-            end
-
-            Settings.write "linuxbrewmigrated", true
-          end
-
           begin
             reporter = Reporter.new(tap)
           rescue Reporter::ReporterRevisionUnsetError => e
@@ -251,7 +228,7 @@ module Homebrew
             end
           end
           puts if args.auto_update?
-        elsif !args.auto_update? && !ENV["HOMEBREW_UPDATE_FAILED"] && !ENV["HOMEBREW_MIGRATE_LINUXBREW_FORMULAE"]
+        elsif !args.auto_update? && !ENV["HOMEBREW_UPDATE_FAILED"]
           puts "Already up-to-date." unless args.quiet?
         end
 

@@ -830,18 +830,6 @@ module RuboCop
             problem "Define method `#{method_name(@offensive_node)}` in the class body, not at the top-level"
           end
 
-          find_instance_method_call(body_node, :build, :universal?) do
-            next if @formula_name == "wine"
-
-            problem "macOS has been 64-bit only since 10.6 so build.universal? is deprecated."
-          end
-
-          find_instance_method_call(body_node, "ENV", :universal_binary) do
-            next if @formula_name == "wine"
-
-            problem "macOS has been 64-bit only since 10.6 so ENV.universal_binary is deprecated."
-          end
-
           find_instance_method_call(body_node, "ENV", :runtime_cpu_detection) do
             next if tap_style_exception? :runtime_cpu_detection_allowlist
 

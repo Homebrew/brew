@@ -104,16 +104,15 @@ class Dependency
     end
   end
 
-  def satisfied?(inherited_options = [], minimum_version: nil, minimum_revision: nil,
+  def satisfied?(minimum_version: nil, minimum_revision: nil,
                  minimum_compatibility_version: nil, bottle_os_version: nil)
     installed?(minimum_version:, minimum_revision:, minimum_compatibility_version:, bottle_os_version:) &&
-      missing_options(inherited_options).empty?
+      missing_options.empty?
   end
 
-  def missing_options(inherited_options)
+  def missing_options
     formula = to_installed_formula
     required = options
-    required |= inherited_options
     required &= formula.options.to_a
     required -= Tab.for_formula(formula).used_options
     required

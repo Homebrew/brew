@@ -8,9 +8,6 @@ module RuboCop
     module FormulaAudit
       # This cop audits `option`s in formulae.
       class Options < FormulaCop
-        DEPRECATION_MSG = "macOS has been 64-bit only since 10.6 so 32-bit options are deprecated."
-        UNI_DEPRECATION_MSG = "macOS has been 64-bit only since 10.6 so universal options are deprecated."
-
         DEP_OPTION = "Formulae in homebrew/core should not use `deprecated_option`."
         OPTION = "Formulae in homebrew/core should not use `option`."
 
@@ -21,15 +18,10 @@ module RuboCop
           option_call_nodes = find_every_method_call_by_name(body_node, :option)
           option_call_nodes.each do |option_call|
             option = parameters(option_call).first
-            problem DEPRECATION_MSG if regex_match_group(option, /32-bit/)
-
             offending_node(option_call)
             option = string_content(option)
-            problem UNI_DEPRECATION_MSG if option == "universal"
 
-            if !/with(out)?-/.match?(option) &&
-               option != "cxx11" &&
-               option != "universal"
+            unless /with(out)?-/.match?(option)
               problem "Options should begin with `with` or `without`. " \
                       "Migrate '--#{option}' with `deprecated_option`."
             end

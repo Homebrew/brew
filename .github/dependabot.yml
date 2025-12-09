@@ -1,47 +1,64 @@
 # This file is synced from the `.github` repository, do not modify it directly.
 ---
 version: 2
-multi-ecosystem-groups:
-  all:
-    schedule:
-      interval: weekly
-      day: friday
-      time: '08:00'
-      timezone: Etc/UTC
 updates:
 - package-ecosystem: bundler
   directories:
   - "/Library/Homebrew"
-  multi-ecosystem-group: all
-  patterns:
-  - "*"
+  schedule:
+    interval: weekly
+    day: friday
+    time: '08:00'
+    timezone: Etc/UTC
+  groups:
+    bundler:
+      patterns:
+      - "*"
   allow:
   - dependency-type: all
   cooldown:
     default-days: 7
 - package-ecosystem: devcontainers
   directory: "/"
-  multi-ecosystem-group: all
-  patterns:
-  - "*"
+  schedule:
+    interval: weekly
+    day: friday
+    time: '08:00'
+    timezone: Etc/UTC
+  groups:
+    devcontainers:
+      patterns:
+      - "*"
   allow:
   - dependency-type: all
   cooldown:
     default-days: 7
 - package-ecosystem: docker
   directory: "/"
-  multi-ecosystem-group: all
-  patterns:
-  - "*"
+  schedule:
+    interval: weekly
+    day: friday
+    time: '08:00'
+    timezone: Etc/UTC
+  groups:
+    docker:
+      patterns:
+      - "*"
   allow:
   - dependency-type: all
   cooldown:
     default-days: 7
 - package-ecosystem: github-actions
   directory: "/"
-  multi-ecosystem-group: all
-  patterns:
-  - "*"
+  schedule:
+    interval: weekly
+    day: friday
+    time: '08:00'
+    timezone: Etc/UTC
+  groups:
+    github-actions:
+      patterns:
+      - "*"
   allow:
   - dependency-type: all
   cooldown:
@@ -49,9 +66,15 @@ updates:
 - package-ecosystem: pip
   directories:
   - "/Library/Homebrew/formula-analytics/"
-  multi-ecosystem-group: all
-  patterns:
-  - "*"
+  schedule:
+    interval: weekly
+    day: friday
+    time: '08:00'
+    timezone: Etc/UTC
+  groups:
+    pip:
+      patterns:
+      - "*"
   allow:
   - dependency-type: all
   cooldown:

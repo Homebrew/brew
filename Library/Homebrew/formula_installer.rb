@@ -473,7 +473,7 @@ class FormulaInstaller
       end
 
       next unless dep.to_formula.pinned?
-      next if dep.satisfied?(inherited_options_for(dep))
+      next if dep.satisfied?
 
       pinned_unsatisfied_deps << dep
     end
@@ -499,7 +499,7 @@ class FormulaInstaller
   def fetch_fetch_deps
     return if @compute_dependencies.blank?
 
-    compute_dependencies(use_cache: false) if @compute_dependencies.any? do |dep,|
+    compute_dependencies(use_cache: false) if @compute_dependencies.any? do |dep|
       next false unless dep.implicit?
 
       fetch_dependencies
@@ -511,11 +511,11 @@ class FormulaInstaller
   def install_fetch_deps
     return if @compute_dependencies.blank?
 
-    compute_dependencies(use_cache: false) if @compute_dependencies.any? do |dep, options|
+    compute_dependencies(use_cache: false) if @compute_dependencies.any? do |dep|
       next false unless dep.implicit?
 
       fetch_dependencies
-      install_dependency(dep, options)
+      install_dependency(dep)
       true
     end
   end
@@ -666,9 +666,9 @@ on_request: installed_on_request?, options:)
 
   # Compute and collect the dependencies needed by the formula currently
   # being installed.
-  sig { params(use_cache: T::Boolean).returns(T::Array[[Dependency, Options]]) }
+  sig { params(use_cache: T::Boolean).returns(T::Array[Dependency]) }
   def compute_dependencies(use_cache: true)
-    @compute_dependencies = T.let(nil, T.nilable(T::Array[[Dependency, Options]])) unless use_cache
+    @compute_dependencies = T.let(nil, T.nilable(T::Array[Dependency])) unless use_cache
     @compute_dependencies ||= begin
       # Needs to be done before expand_dependencies
       fetch_bottle_tab if pour_bottle?
@@ -678,9 +678,9 @@ on_request: installed_on_request?, options:)
     end
   end
 
-  sig { params(deps: T::Array[[Dependency, Options]]).returns(T::Array[Formula]) }
+  sig { params(deps: T::Array[Dependency]).returns(T::Array[Formula]) }
   def unbottled_dependencies(deps)
-    deps.map { |(dep, _options)| dep.to_formula }.reject do |dep_f|
+    deps.map(&:to_formula).reject do |dep_f|
       next false unless dep_f.pour_bottle?
 
       dep_f.bottled?
@@ -755,16 +755,12 @@ on_request: installed_on_request?, options:)
     unsatisfied_reqs
   end
 
-  sig { params(formula: Formula, inherited_options: T::Hash[String, Options]).returns(T::Array[Dependency]) }
-  def expand_dependencies_for_formula(formula, inherited_options)
+  sig { params(formula: Formula).returns(T::Array[Dependency]) }
+  def expand_dependencies_for_formula(formula)
     # Cache for this expansion only. FormulaInstaller has a lot of inputs which can alter expansion.
     cache_key = "FormulaInstaller-#{formula.full_name}-#{Time.now.to_f}"
     Dependency.expand(formula, cache_key:) do |dependent, dep|
-      inherited_options[dep.name] |= inherited_options_for(dep)
-      build = effective_build_options_for(
-        dependent,
-        inherited_options.fetch(dependent.name, Options.new),
-      )
+      build = effective_build_options_for(dependent)
 
       keep_build_test = false
       keep_build_test ||= dep.test? && include_test? && @include_test_formulae.include?(dependent.full_name)
@@ -778,25 +774,19 @@ on_request: installed_on_request?, options:)
 
       if dep.prune_from_option?(build) || ((dep.build? || dep.test?) && !keep_build_test)
         Dependency.prune
-      elsif dep.satisfied?(inherited_options[dep.name], minimum_version:, minimum_revision:, bottle_os_version:)
+      elsif dep.satisfied?(minimum_version:, minimum_revision:, bottle_os_version:)
         Dependency.skip
       end
     end
   end
 
-  sig { returns(T::Array[[Dependency, Options]]) }
-  def expand_dependencies
-    inherited_options = Hash.new { |hash, key| hash[key] = Options.new }
+  sig { returns(T::Array[Dependency]) }
+  def expand_dependencies = expand_dependencies_for_formula(formula)
 
-    expanded_deps = expand_dependencies_for_formula(formula, inherited_options)
-
-    expanded_deps.map { |dep| [dep, inherited_options[dep.name]] }
-  end
-
-  sig { params(dependent: Formula, inherited_options: Options).returns(BuildOptions) }
-  def effective_build_options_for(dependent, inherited_options = Options.new)
+  sig { params(dependent: Formula).returns(BuildOptions) }
+  def effective_build_options_for(dependent)
     args  = dependent.build.used_options
-    args |= (dependent == formula) ? options : inherited_options
+    args |= options if dependent == formula
     args |= Tab.for_formula(dependent).used_options
     args &= dependent.options
     BuildOptions.new(args, dependent.options)
@@ -813,27 +803,17 @@ on_request: installed_on_request?, options:)
     options
   end
 
-  sig { params(dep: Dependency).returns(Options) }
-  def inherited_options_for(dep)
-    inherited_options = Options.new
-    u = Option.new("universal")
-    if (options.include?(u) || formula.require_universal_deps?) && !dep.build? && dep.to_formula.option_defined?(u)
-      inherited_options << u
-    end
-    inherited_options
-  end
-
-  sig { params(deps: T::Array[[Dependency, Options]]).void }
+  sig { params(deps: T::Array[Dependency]).void }
   def install_dependencies(deps)
     if deps.empty? && only_deps?
       puts "All dependencies for #{formula.full_name} are satisfied."
     elsif !deps.empty?
       if deps.length > 1
         oh1 "Installing dependencies for #{formula.full_name}: " \
-            "#{deps.map(&:first).map { Formatter.identifier(_1) }.to_sentence}",
+            "#{deps.map { Formatter.identifier(_1) }.to_sentence}",
             truncate: false
       end
-      deps.each { |dep, options| install_dependency(dep, options) }
+      deps.each { install_dependency(_1) }
     end
 
     @show_header = true if deps.length > 1
@@ -865,8 +845,8 @@ on_request: installed_on_request?, options:)
     fi.fetch
   end
 
-  sig { params(dep: Dependency, inherited_options: Options).void }
-  def install_dependency(dep, inherited_options)
+  sig { params(dep: Dependency).void }
+  def install_dependency(dep)
     df = dep.to_formula
 
     if df.linked_keg.directory?
@@ -897,7 +877,6 @@ on_request: installed_on_request?, options:)
     options = Options.new
     options |= tab.used_options if tab.present?
     options |= Tab.remap_deprecated_options(df.deprecated_options, dep.options)
-    options |= inherited_options
     options &= df.options
 
     installed_on_request = df.any_version_installed? && tab.present? && tab.installed_on_request
@@ -1390,21 +1369,20 @@ on_request: installed_on_request?, options:)
     return if ignore_deps?
 
     # Don't output dependencies if we're explicitly installing them.
-    deps = compute_dependencies.reject do |(dep, _options)|
+    deps = compute_dependencies.reject do |dep|
       self.class.fetched.include?(dep.to_formula)
     end
 
     return if deps.empty?
 
     unless download_queue
-      dependencies_string = deps.map(&:first)
-                                .map { |dep| Formatter.identifier(dep) }
+      dependencies_string = deps.map { |dep| Formatter.identifier(dep) }
                                 .to_sentence
       oh1 "Fetching dependencies for #{formula.full_name}: #{dependencies_string}",
           truncate: false
     end
 
-    deps.each { |(dep, _options)| fetch_dependency(dep) }
+    deps.each { fetch_dependency(_1) }
   end
 
   sig { returns(T.nilable(Formula)) }
@@ -1627,7 +1605,7 @@ on_request: installed_on_request?, options:)
     end
 
     unless ignore_deps?
-      compute_dependencies.each do |(dep, _options)|
+      compute_dependencies.each do |dep|
         dep_f = dep.to_formula
         next unless SPDX.licenses_forbid_installation? dep_f.license, forbidden_licenses
 
@@ -1659,7 +1637,7 @@ on_request: installed_on_request?, options:)
     end
 
     unless ignore_deps?
-      compute_dependencies.each do |(dep, _options)|
+      compute_dependencies.each do |dep|
         dep_tap = dep.tap
         next if dep_tap.blank? || (dep_tap.allowed_by_env? && !dep_tap.forbidden_by_env?)
 
@@ -1700,7 +1678,7 @@ on_request: installed_on_request?, options:)
     end
 
     unless ignore_deps?
-      compute_dependencies.each do |(dep, _options)|
+      compute_dependencies.each do |dep|
         dep_name = if forbidden_formulae.include?(dep.name)
           dep.name
         elsif dep.tap.present? &&

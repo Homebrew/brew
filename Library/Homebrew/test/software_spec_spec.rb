@@ -77,12 +77,6 @@ RSpec.describe SoftwareSpec do
       end.to raise_error(ArgumentError)
     end
 
-    it "special cases the cxx11 option" do
-      spec.option(:cxx11)
-      expect(spec).to have_defined_option("c++11")
-      expect(spec).not_to have_defined_option("cxx11")
-    end
-
     it "supports options with descriptions" do
       spec.option("bar", "description")
       expect(spec.options.first.description).to eq("description")

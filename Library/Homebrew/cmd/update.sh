@@ -674,13 +674,6 @@ EOS
      [[ "${HOMEBREW_CORE_DEFAULT_GIT_REMOTE}" != "${HOMEBREW_CORE_GIT_REMOTE}" ||
         -n "${HOMEBREW_LINUXBREW_CORE_MIGRATION}" ]]
   then
-    if [[ -n "${HOMEBREW_LINUXBREW_CORE_MIGRATION}" ]]
-    then
-      # This means a migration is needed (in case it isn't run this time)
-      safe_cd "${HOMEBREW_REPOSITORY}"
-      git config --bool homebrew.linuxbrewmigrated false
-    fi
-
     safe_cd "${HOMEBREW_CORE_REPOSITORY}"
     echo "HOMEBREW_CORE_GIT_REMOTE set: using ${HOMEBREW_CORE_GIT_REMOTE} as the Homebrew/homebrew-core Git remote."
     git remote set-url origin "${HOMEBREW_CORE_GIT_REMOTE}"
@@ -691,12 +684,6 @@ EOS
   fi
 
   safe_cd "${HOMEBREW_REPOSITORY}"
-
-  # This means a migration is needed but hasn't completed (yet).
-  if [[ "$(git config get --type=bool homebrew.linuxbrewmigrated 2>/dev/null)" == "false" ]]
-  then
-    export HOMEBREW_MIGRATE_LINUXBREW_FORMULAE=1
-  fi
 
   # This means the user has run `brew which-formula` before and we should fetch executables.txt
   if [[ "$(git config get --type=bool homebrew.commandnotfound 2>/dev/null)" == "true" ]]
@@ -1056,7 +1043,6 @@ EOS
      [[ -n "${HOMEBREW_UPDATE_FAILED}" ]] ||
      [[ -n "${HOMEBREW_MISSING_REMOTE_REF_DIRS}" ]] ||
      [[ -n "${HOMEBREW_UPDATE_FORCE}" ]] ||
-     [[ -n "${HOMEBREW_MIGRATE_LINUXBREW_FORMULAE}" ]] ||
      [[ -d "${HOMEBREW_LIBRARY}/LinkedKegs" ]] ||
      [[ ! -f "${HOMEBREW_CACHE}/all_commands_list.txt" ]] ||
      [[ -n "${HOMEBREW_DEVELOPER}" && -z "${HOMEBREW_UPDATE_AUTO}" ]]

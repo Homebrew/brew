@@ -86,56 +86,6 @@ RSpec.describe RuboCop::Cop::FormulaAudit::Miscellaneous do
       RUBY
     end
 
-    it "reports an offense when `build.universal?` is used" do
-      expect_offense(<<~RUBY)
-        class Foo < Formula
-          desc "foo"
-          url 'https://brew.sh/foo-1.0.tgz'
-          if build.universal?
-             ^^^^^^^^^^^^^^^^ FormulaAudit/Miscellaneous: macOS has been 64-bit only since 10.6 so build.universal? is deprecated.
-             "foo"
-          end
-        end
-      RUBY
-    end
-
-    it "reports no offenses when `build.universal?` is used in an exempt formula" do
-      expect_no_offenses(<<~RUBY, "/homebrew-core/Formula/wine.rb")
-        class Wine < Formula
-          desc "foo"
-          url 'https://brew.sh/foo-1.0.tgz'
-          if build.universal?
-             "foo"
-          end
-        end
-      RUBY
-    end
-
-    it "reports an offense when `ENV.universal_binary` is used" do
-      expect_offense(<<~RUBY)
-        class Foo < Formula
-          desc "foo"
-          url 'https://brew.sh/foo-1.0.tgz'
-          if build?
-             ENV.universal_binary
-             ^^^^^^^^^^^^^^^^^^^^ FormulaAudit/Miscellaneous: macOS has been 64-bit only since 10.6 so ENV.universal_binary is deprecated.
-          end
-        end
-      RUBY
-    end
-
-    it "reports no offenses when `ENV.universal_binary` is used in an exempt formula" do
-      expect_no_offenses(<<~RUBY, "/homebrew-core/Formula/wine.rb")
-        class Wine < Formula
-          desc "foo"
-          url 'https://brew.sh/foo-1.0.tgz'
-          if build?
-            ENV.universal_binary
-          end
-        end
-      RUBY
-    end
-
     it "reports an offense when `install_name_tool` is called" do
       expect_offense(<<~RUBY)
         class Foo < Formula

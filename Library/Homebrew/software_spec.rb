@@ -20,11 +20,6 @@ class SoftwareSpec
   extend Forwardable
   include OnSystem::MacOSAndLinux
 
-  PREDEFINED_OPTIONS = T.let({
-    universal: Option.new("universal", "Build a universal binary"),
-    cxx11:     Option.new("c++11",     "Build using C++11 mode"),
-  }.freeze, T::Hash[T.any(Symbol, String), Option])
-
   sig { returns(T.nilable(String)) }
   attr_reader :name
 
@@ -207,16 +202,13 @@ class SoftwareSpec
     options.include?(name)
   end
 
-  sig { params(name: T.any(Symbol, String), description: String).void }
+  sig { params(name: String, description: String).void }
   def option(name, description = "")
-    opt = PREDEFINED_OPTIONS.fetch(name) do
-      raise ArgumentError, "option name is required" if name.empty?
-      raise ArgumentError, "option name must be longer than one character: #{name}" if name.length <= 1
-      raise ArgumentError, "option name must not start with dashes: #{name}" if name.start_with?("-")
+    raise ArgumentError, "option name is required" if name.empty?
+    raise ArgumentError, "option name must be longer than one character: #{name}" if name.length <= 1
+    raise ArgumentError, "option name must not start with dashes: #{name}" if name.start_with?("-")
 
-      Option.new(name, description)
-    end
-    options << opt
+    options << Option.new(name, description)
   end
 
   sig { params(hash: T::Hash[T.any(String, Symbol, T::Array[String]), T.any(String, Symbol, T::Array[String])]).void }

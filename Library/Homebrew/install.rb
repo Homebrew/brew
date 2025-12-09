@@ -425,7 +425,7 @@ module Homebrew
       sig {
         params(
           formula:      Formula,
-          dependencies: T::Array[[Dependency, Options]],
+          dependencies: T::Array[Dependency],
           _block:       T.proc.params(arg0: Formula).returns(String),
         ).void
       }
@@ -434,7 +434,7 @@ module Homebrew
 
         ohai "Would install #{Utils.pluralize("dependency", dependencies.count, include_count: true)} " \
              "for #{formula.name}:"
-        formula_names = dependencies.map { |(dep, _options)| yield dep.to_formula }
+        formula_names = dependencies.map { |dep| yield dep.to_formula }
         puts formula_names.join(" ")
       end
 

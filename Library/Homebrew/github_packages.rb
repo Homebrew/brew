@@ -1,4 +1,4 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
 
 require "utils/curl"
@@ -16,8 +16,8 @@ class GitHubPackages
   include Utils::Output::Mixin
 
   URL_DOMAIN = "ghcr.io"
-  URL_PREFIX = "https://#{URL_DOMAIN}/v2/".freeze
-  DOCKER_PREFIX = "docker://#{URL_DOMAIN}/".freeze
+  URL_PREFIX = T.let("https://#{URL_DOMAIN}/v2/".freeze, String)
+  DOCKER_PREFIX = T.let("docker://#{URL_DOMAIN}/".freeze, String)
   public_constant :URL_DOMAIN
   private_constant :URL_PREFIX
   private_constant :DOCKER_PREFIX
@@ -30,16 +30,22 @@ class GitHubPackages
   INVALID_OCI_TAG_CHARS_REGEX = /[^a-zA-Z0-9._-]/
 
   # Translate Homebrew tab.arch to OCI platform.architecture
-  TAB_ARCH_TO_PLATFORM_ARCHITECTURE = {
-    "arm64"  => "arm64",
-    "x86_64" => "amd64",
-  }.freeze
+  TAB_ARCH_TO_PLATFORM_ARCHITECTURE = T.let(
+    {
+      "arm64"  => "arm64",
+      "x86_64" => "amd64",
+    }.freeze,
+    T::Hash[String, String],
+  )
 
   # Translate Homebrew built_on.os to OCI platform.os
-  BUILT_ON_OS_TO_PLATFORM_OS = {
-    "Linux"     => "linux",
-    "Macintosh" => "darwin",
-  }.freeze
+  BUILT_ON_OS_TO_PLATFORM_OS = T.let(
+    {
+      "Linux"     => "linux",
+      "Macintosh" => "darwin",
+    }.freeze,
+    T::Hash[String, String],
+  )
 
   sig {
     params(
@@ -79,10 +85,11 @@ class GitHubPackages
     # rubocop:enable Style/CombinableLoops
   end
 
+  sig { params(version: Version, rebuild: Integer, bottle_tag: T.nilable(String)).returns(String) }
   def self.version_rebuild(version, rebuild, bottle_tag = nil)
     bottle_tag = (".#{bottle_tag}" if bottle_tag.present?)
 
-    rebuild = if rebuild.to_i.positive?
+    rebuild = if rebuild.positive?
       if bottle_tag
         ".#{rebuild}"
       else
@@ -93,11 +100,13 @@ class GitHubPackages
     "#{version}#{bottle_tag}#{rebuild}"
   end
 
+  sig { params(repo: String).returns(String) }
   def self.repo_without_prefix(repo)
     # Remove redundant repository prefix for a shorter name.
     repo.delete_prefix("homebrew-")
   end
 
+  sig { params(org: String, repo: String, prefix: String).returns(String) }
   def self.root_url(org, repo, prefix = URL_PREFIX)
     # `docker`/`skopeo` insist on lowercase organisation (“repository name”).
     org = org.downcase
@@ -105,6 +114,7 @@ class GitHubPackages
     "#{prefix}#{org}/#{repo_without_prefix(repo)}"
   end
 
+  sig { params(url: T.nilable(String)).returns(T.nilable(String)) }
   def self.root_url_if_match(url)
     return if url.blank?
 
@@ -114,6 +124,7 @@ class GitHubPackages
     root_url(org, repo)
   end
 
+  sig { params(formula_name: String).returns(String) }
   def self.image_formula_name(formula_name)
     # Invalid docker name characters:
     # - `/` makes sense because we already use it to separate repository/formula.
@@ -122,6 +133,7 @@ class GitHubPackages
                 .tr("+", "x")
   end
 
+  sig { params(version_rebuild: String).returns(String) }
   def self.image_version_rebuild(version_rebuild)
     unless version_rebuild.match?(VALID_OCI_TAG_REGEX)
       raise ArgumentError, "GitHub Packages versions must match #{VALID_OCI_TAG_REGEX.source}!"
@@ -141,6 +153,7 @@ class GitHubPackages
   private_constant :IMAGE_CONFIG_SCHEMA_URI, :IMAGE_INDEX_SCHEMA_URI, :IMAGE_LAYOUT_SCHEMA_URI,
                    :IMAGE_MANIFEST_SCHEMA_URI, :GITHUB_PACKAGE_TYPE
 
+  sig { void }
   def load_schemas!
     schema_uri("content-descriptor",
                "https://opencontainers.org/schema/image/content-descriptor.json")
@@ -168,6 +181,7 @@ class GitHubPackages
     schema_uri("image-manifest-schema", IMAGE_MANIFEST_SCHEMA_URI)
   end
 
+  sig { params(basename: String, uris: T.any(String, T::Array[String])).void }
   def schema_uri(basename, uris)
     # The current `main` version has an invalid JSON schema.
     # Going forward, this should probably be pinned to tags.
@@ -176,18 +190,20 @@ class GitHubPackages
     out = Utils::Curl.curl_output(url).stdout
     json = JSON.parse(out)
 
-    @schema_json ||= {}
+    @schema_json ||= T.let({}, T.nilable(T::Hash[String, T::Hash[String, T.untyped]]))
     Array(uris).each do |uri|
       @schema_json[uri] = json
     end
   end
 
+  sig { params(uri: URI::Generic).returns(T.nilable(T::Hash[String, T.untyped])) }
   def schema_resolver(uri)
-    @schema_json[uri.to_s.gsub(/#.*/, "")]
+    @schema_json&.fetch(uri.to_s.gsub(/#.*/, ""))
   end
 
+  sig { params(schema_uri: String, json: T::Hash[String, T.untyped]).void }
   def validate_schema!(schema_uri, json)
-    schema = JSONSchemer.schema(@schema_json[schema_uri], ref_resolver: method(:schema_resolver))
+    schema = JSONSchemer.schema(@schema_json&.fetch(schema_uri), ref_resolver: method(:schema_resolver))
     json = json.deep_stringify_keys
     return if schema.valid?(json)
 
@@ -200,6 +216,7 @@ class GitHubPackages
     exit 1
   end
 
+  sig { params(user: String, token: String, skopeo: Pathname, image_uri: String, root: Pathname, dry_run: T::Boolean).void }
   def download(user, token, skopeo, image_uri, root, dry_run:)
     puts
     args = ["copy", "--all", image_uri.to_s, "oci:#{root}"]
@@ -211,14 +228,22 @@ class GitHubPackages
     end
   end
 
+  sig {
+    params(
+      user: String, token: String, skopeo: Pathname, _formula_full_name: String,
+      bottle_hash: T::Hash[String, T.untyped], keep_old: T::Boolean, dry_run: T::Boolean, warn_on_error: T::Boolean
+    ).returns(
+      T.nilable([String, String, String, Version, Integer, String, String, String, T::Boolean]),
+    )
+  }
   def preupload_check(user, token, skopeo, _formula_full_name, bottle_hash, keep_old:, dry_run:, warn_on_error:)
     formula_name = bottle_hash["formula"]["name"]
 
     _, org, repo, = *bottle_hash["bottle"]["root_url"].match(URL_REGEX)
     repo = "homebrew-#{repo}" unless repo.start_with?("homebrew-")
 
-    version = bottle_hash["formula"]["pkg_version"]
-    rebuild = bottle_hash["bottle"]["rebuild"]
+    version = Version.new(bottle_hash["formula"]["pkg_version"])
+    rebuild = bottle_hash["bottle"]["rebuild"].to_i
     version_rebuild = GitHubPackages.version_rebuild(version, rebuild)
 
     image_name = GitHubPackages.image_formula_name(formula_name)
@@ -260,6 +285,12 @@ class GitHubPackages
     [formula_name, org, repo, version, rebuild, version_rebuild, image_name, image_uri, keep_old]
   end
 
+  sig {
+    params(
+      user: String, token: String, skopeo: Pathname, formula_full_name: String,
+      bottle_hash: T::Hash[String, T.untyped], keep_old: T::Boolean, dry_run: T::Boolean, warn_on_error: T::Boolean
+    ).void
+  }
   def upload_bottle(user, token, skopeo, formula_full_name, bottle_hash, keep_old:, dry_run:, warn_on_error:)
     # We run the preupload check twice to prevent TOCTOU bugs.
     result = preupload_check(user, token, skopeo, formula_full_name, bottle_hash,
@@ -326,7 +357,7 @@ class GitHubPackages
         "org.opencontainers.image.title"         => formula_full_name,
         "org.opencontainers.image.url"           => bottle_hash["formula"]["homepage"],
         "org.opencontainers.image.vendor"        => org,
-        "org.opencontainers.image.version"       => version,
+        "org.opencontainers.image.version"       => version.to_s, # Schema accepts strings for version
       }.compact_blank
       manifests = []
     end
@@ -479,12 +510,14 @@ class GitHubPackages
     end
   end
 
+  sig { params(root: Pathname).returns([String, Integer]) }
   def write_image_layout(root)
     image_layout = { imageLayoutVersion: "1.0.0" }
     validate_schema!(IMAGE_LAYOUT_SCHEMA_URI, image_layout)
     write_hash(root, image_layout, "oci-layout")
   end
 
+  sig { params(local_file: String, blobs: Pathname).returns(String) }
   def write_tar_gz(local_file, blobs)
     tar_gz_sha256 = Digest::SHA256.file(local_file)
                                   .hexdigest
@@ -492,6 +525,7 @@ class GitHubPackages
     tar_gz_sha256
   end
 
+  sig { params(platform_hash: T::Hash[String, T.untyped], tar_sha256: String, blobs: Pathname).returns([String, Integer]) }
   def write_image_config(platform_hash, tar_sha256, blobs)
     image_config = platform_hash.merge({
       rootfs: {
@@ -503,6 +537,7 @@ class GitHubPackages
     write_hash(blobs, image_config)
   end
 
+  sig { params(manifests: T::Array[T::Hash[String, T.untyped]], blobs: Pathname, annotations: T::Hash[String, String]).returns([String, Integer]) }
   def write_image_index(manifests, blobs, annotations)
     image_index = {
       schemaVersion: 2,
@@ -513,6 +548,7 @@ class GitHubPackages
     write_hash(blobs, image_index)
   end
 
+  sig { params(index_json_sha256: String, index_json_size: Integer, root: Pathname, annotations: T::Hash[String, String]).void }
   def write_index_json(index_json_sha256, index_json_size, root, annotations)
     index_json = {
       schemaVersion: 2,
@@ -527,6 +563,7 @@ class GitHubPackages
     write_hash(root, index_json, "index.json")
   end
 
+  sig { params(directory: Pathname, hash: T::Hash[String, T.untyped], filename: T.nilable(String)).returns([String, Integer]) }
   def write_hash(directory, hash, filename = nil)
     json = JSON.pretty_generate(hash)
     sha256 = Digest::SHA256.hexdigest(json)

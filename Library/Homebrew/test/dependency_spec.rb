@@ -139,7 +139,7 @@ RSpec.describe Dependency do
     subject(:dependency) { described_class.new("foo") }
 
     it "accepts bottle_os_version parameter" do
-      expect { dependency.satisfied?([], bottle_os_version: "macOS 14") }.not_to raise_error
+      expect { dependency.satisfied?(bottle_os_version: "macOS 14") }.not_to raise_error
     end
 
     it "accepts Ubuntu bottle_os_version parameter" do

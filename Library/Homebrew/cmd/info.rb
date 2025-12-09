@@ -387,7 +387,7 @@ module Homebrew
       sig { params(dependencies: T::Array[Dependency]).returns(String) }
       def decorate_dependencies(dependencies)
         deps_status = dependencies.map do |dep|
-          if dep.satisfied?([])
+          if dep.satisfied?
             pretty_installed(dep_display_s(dep))
           else
             pretty_uninstalled(dep_display_s(dep))
