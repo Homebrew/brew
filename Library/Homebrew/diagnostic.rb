@@ -712,11 +712,25 @@ module Homebrew
         deprecated_or_disabled += Formula.installed.select(&:disabled?)
         return if deprecated_or_disabled.empty?
 
+        formula_lines = deprecated_or_disabled.sort_by(&:full_name).uniq.map do |f|
+          url = f.homepage.presence || f.head&.url.presence || formula_tap_url(f)
+          url ? "#{f.full_name} (#{Formatter.url(url)})" : f.full_name
+        end
+
         <<~EOS
           Some installed formulae are deprecated or disabled.
           You should find replacements for the following formulae:
-            #{deprecated_or_disabled.sort_by(&:full_name).uniq * "\n  "}
+            #{formula_lines.join("\n  ")}
         EOS
+      end
+
+      sig { params(formula: Formula).returns(T.nilable(String)) }
+      def formula_tap_url(formula)
+        tap = formula.tap
+        return if tap.blank? || tap.remote.blank?
+
+        path = formula.path.relative_path_from(tap.path)
+        "#{tap.remote}/blob/HEAD/#{path}"
       end
 
       sig { returns(T.nilable(String)) }
@@ -725,11 +739,24 @@ module Homebrew
         deprecated_or_disabled += Cask::Caskroom.casks.select(&:disabled?)
         return if deprecated_or_disabled.empty?
 
+        cask_lines = deprecated_or_disabled.sort_by(&:token).uniq.map do |c|
+          url = c.homepage.presence || cask_tap_url(c)
+          url ? "#{c.token} (#{Formatter.url(url)})" : c.token
+        end
+
         <<~EOS
           Some installed casks are deprecated or disabled.
           You should find replacements for the following casks:
-            #{deprecated_or_disabled.sort_by(&:token).uniq * "\n  "}
+            #{cask_lines.join("\n  ")}
         EOS
+      end
+
+      sig { params(cask: Cask::Cask).returns(T.nilable(String)) }
+      def cask_tap_url(cask)
+        tap = cask.tap
+        return if tap.blank? || tap.remote.blank?
+
+        "#{tap.remote}/blob/HEAD/#{tap.relative_cask_path(cask.token)}"
       end
 
       sig { returns(T.nilable(String)) }
