@@ -493,6 +493,16 @@ module Homebrew
       # https://github.com/nghttp2/nghttp2/issues/2194
       return if formula.tap&.audit_exception(:linux_only_gcc_dependency_allowlist, formula.name)
 
+      # Allow to depend on brewed GCC if formula fails to build with the
+      # minimal supported version
+      min_gcc_version = CompilerConstants::GNU_GCC_VERSIONS.map(&:to_i).min
+      min_gcc = CompilerSelector::Compiler.new(
+        type:    :gcc,
+        name:    "gcc-#{min_gcc_version}",
+        version: Version.parse("#{min_gcc_version}.999"),
+      )
+      return if formula.stable.compiler_failures.any? { |c| c.fails_with?(min_gcc) }
+
       problem "Formulae in homebrew/core should not have a Linux-only dependency on GCC."
     end
 
