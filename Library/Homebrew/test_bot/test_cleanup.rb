@@ -1,4 +1,4 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
 
 require "os"
@@ -9,21 +9,26 @@ module Homebrew
     class TestCleanup < Test
       protected
 
-      ALLOWED_TAPS = [
-        CoreTap.instance.name,
-        CoreCaskTap.instance.name,
-      ].freeze
+      ALLOWED_TAPS = T.let(
+        [
+          CoreTap.instance.name,
+          CoreCaskTap.instance.name,
+        ].freeze,
+        T::Array[String],
+      )
 
+      sig { params(repository: Pathname).void }
       def reset_if_needed(repository)
         default_ref = default_origin_ref(repository)
 
-        return if system(git, "-C", repository, "diff", "--quiet", default_ref)
+        return if system(git, "-C", repository.to_s, "diff", "--quiet", default_ref)
 
-        test git, "-C", repository, "reset", "--hard", default_ref
+        test git, "-C", repository.to_s, "reset", "--hard", default_ref
       end
 
       # Moving files is faster than removing them,
       # so move them if the current runner is ephemeral.
+      sig { params(paths: T::Array[Pathname], sudo: T::Boolean).void }
       def delete_or_move(paths, sudo: false)
         return if paths.blank?
 
@@ -52,6 +57,7 @@ module Homebrew
         end
       end
 
+      sig { void }
       def cleanup_shared
         FileUtils.chmod_R("u+X", HOMEBREW_CELLAR, force: true)
 
@@ -130,6 +136,7 @@ module Homebrew
 
       private
 
+      sig { params(repository: Pathname).returns(String) }
       def default_origin_ref(repository)
         default_branch = Utils.popen_read(
           git, "-C", repository, "symbolic-ref", "refs/remotes/origin/HEAD", "--short"
@@ -138,6 +145,7 @@ module Homebrew
         default_branch
       end
 
+      sig { params(repository: Pathname).void }
       def checkout_branch_if_needed(repository)
         # We limit this to two parts, because branch names can have slashes in
         default_branch = default_origin_ref(repository).split("/", 2).last
@@ -149,12 +157,14 @@ module Homebrew
         test git, "-C", repository, "checkout", "-f", default_branch
       end
 
+      sig { params(repository: Pathname).void }
       def cleanup_git_meta(repository)
         pr_locks = "#{repository}/.git/refs/remotes/*/pr/*/*.lock"
         Dir.glob(pr_locks) { |lock| FileUtils.rm_f lock }
         FileUtils.rm_f "#{repository}/.git/gc.log"
       end
 
+      sig { params(repository: Pathname).void }
       def clean_if_needed(repository)
         return if repository == HOMEBREW_PREFIX && HOMEBREW_PREFIX != HOMEBREW_REPOSITORY
 
@@ -171,6 +181,7 @@ module Homebrew
         test git, "-C", repository, "clean", "-ff", *clean_args
       end
 
+      sig { params(repository: Pathname).void }
       def prune_if_needed(repository)
         return unless Utils.safe_popen_read(
           "#{git} -C '#{repository}' -c gc.autoDetach=false gc --auto 2>&1",

@@ -17,6 +17,10 @@ module Homebrew
         @steps.select(&:ignored?)
       end
 
+      def passed?
+        failed_steps.empty?
+      end
+
       attr_reader :steps
 
       protected

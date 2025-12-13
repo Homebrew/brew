@@ -1,36 +1,58 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
 
 module Homebrew
   module TestBot
     class TestFormulae < Test
+      sig { returns(T::Array[String]) }
       attr_accessor :skipped_or_failed_formulae
+
+      sig { returns(Pathname) }
       attr_reader :artifact_cache
 
+      sig {
+        params(
+          tap: T.nilable(T.any(CoreTap, Tap)), git: String, dry_run: T::Boolean, fail_fast: T::Boolean,
+          verbose: T::Boolean
+        ).void
+      }
       def initialize(tap:, git:, dry_run:, fail_fast:, verbose:)
         super
 
-        @skipped_or_failed_formulae = []
-        @artifact_cache = Pathname.new("artifact-cache")
+        @skip_candidates = T.let([], T::Array[String])
+        @skipped_or_failed_formulae = T.let([], T::Array[String])
+
+        @artifact_cache = T.let(Pathname.new("artifact-cache"), Pathname)
         # Let's keep track of the artifacts we've already downloaded
         # to avoid repeatedly trying to download the same thing.
-        @downloaded_artifacts = Hash.new { |h, k| h[k] = [] }
+        @downloaded_artifacts = T.let(
+          Hash.new { |h, k| h[k] = T.let([], T::Array[String]) },
+          T::Hash[String, T::Array[String]],
+        )
+
+        @testing_formulae = T.let([], T::Array[String])
+        @tested_formulae = T.let([], T::Array[String])
+        @testing_formulae_with_tested_dependents = T.let([], T::Array[String])
+        @tested_dependents_list = T.let(Pathname.new("tested-dependents-placeholder.txt"), Pathname)
       end
 
       protected
 
+      sig { returns(T.nilable(Pathname)) }
       def cached_event_json
         return unless (event_json = artifact_cache/"event.json").exist?
 
         event_json
       end
 
+      sig { returns(T.nilable(T::Hash[String, T.untyped])) }
       def github_event_payload
         return if (github_event_path = ENV.fetch("GITHUB_EVENT_PATH", nil)).blank?
 
         JSON.parse(File.read(github_event_path))
       end
 
+      sig { returns(T.nilable(String)) }
       def previous_github_sha
         return if tap.blank?
         return unless repository.directory?
@@ -43,12 +65,20 @@ module Homebrew
 
         # If we have a cached event payload, then we failed to get the artifact we wanted
         # from `GITHUB_EVENT_PATH`, so use the cached payload to check for a SHA1.
-        event_payload = JSON.parse(cached_event_json.read) if cached_event_json.present?
+        event_payload = if (cached_event = cached_event_json).present?
+          JSON.parse(cached_event.read)
+        end
         event_payload ||= payload
 
         event_payload.fetch("before", nil)
       end
 
+      sig {
+        params(
+          check_suite_nodes: T::Array[T::Hash[String, T.untyped]], repo: String, event_name: String,
+          workflow_name: String, check_run_name: String, artifact_pattern: String
+        ).returns(T::Array[T::Hash[String, T.untyped]])
+      }
       def artifact_metadata(check_suite_nodes, repo, event_name, workflow_name, check_run_name, artifact_pattern)
         candidate_nodes = check_suite_nodes.select do |node|
           next false if node.fetch("status") != "COMPLETED"
@@ -68,7 +98,7 @@ module Homebrew
         return [] if candidate_nodes.blank?
 
         run_id = candidate_nodes.max_by { |node| Time.parse(node.fetch("updatedAt")) }
-                                .dig("workflowRun", "databaseId")
+                                &.dig("workflowRun", "databaseId")
         return [] if run_id.blank?
 
         url = GitHub.url_to("repos", repo, "actions", "runs", run_id, "artifacts")
@@ -111,12 +141,13 @@ module Homebrew
         }
       GRAPHQL
 
+      sig { params(artifact_pattern: String, dry_run: T::Boolean).void }
       def download_artifacts_from_previous_run!(artifact_pattern, dry_run:)
         return if dry_run
         return if GitHub::API.credentials_type == :none
         return if (sha = previous_github_sha).blank?
 
-        pull_number = github_event_payload.dig("pull_request", "number")
+        pull_number = github_event_payload&.dig("pull_request", "number")
         return if pull_number.blank?
 
         github_repository = ENV.fetch("GITHUB_REPOSITORY")
@@ -147,7 +178,7 @@ module Homebrew
         return if wanted_artifacts.empty?
 
         if (attempted_artifact = wanted_artifacts.find do |artifact|
-              @downloaded_artifacts[sha].include?(artifact.fetch("name"))
+              @downloaded_artifacts[sha]&.include?(artifact.fetch("name"))
             end)
           opoo "Already tried #{attempted_artifact.fetch("name")} from #{sha}, giving up"
           return
@@ -163,7 +194,7 @@ module Homebrew
           wanted_artifacts.each do |artifact|
             name = artifact.fetch("name")
             ohai "Downloading artifact #{name} from #{sha}"
-            @downloaded_artifacts[sha] << name
+            T.must(@downloaded_artifacts[sha]) << name
 
             download_url = artifact.fetch("archive_download_url")
             artifact_id = artifact.fetch("id")
@@ -180,30 +211,35 @@ module Homebrew
         opoo e
       end
 
+      sig { params(formula: Formula, git_ref: String).returns(T::Boolean) }
       def no_diff?(formula, git_ref)
         return false unless repository.directory?
 
-        @fetched_refs ||= []
+        @fetched_refs ||= T.let([], T.nilable(T::Array[String]))
         if @fetched_refs.exclude?(git_ref)
           test git, "-C", repository, "fetch", "origin", git_ref, ignore_failures: true
           @fetched_refs << git_ref if steps.last.passed?
         end
 
         relative_formula_path = formula.path.relative_path_from(repository)
-        system(git, "-C", repository, "diff", "--no-ext-diff", "--quiet", git_ref, "--", relative_formula_path)
+        T.must(system(git, "-C", repository, "diff", "--no-ext-diff", "--quiet", git_ref, "--",
+                      relative_formula_path.to_s))
       end
 
+      sig { params(formula: String, bottle_dir: Pathname).returns(T.nilable(T::Hash[String, T.untyped])) }
       def local_bottle_hash(formula, bottle_dir:)
         return if (local_bottle_json = bottle_glob(formula, bottle_dir, ".json").first).blank?
 
         JSON.parse(local_bottle_json.read)
       end
 
+      sig { params(formula: Formula, formulae_dependents: T::Boolean).returns(T::Boolean) }
       def artifact_cache_valid?(formula, formulae_dependents: false)
         sha = if formulae_dependents
           previous_github_sha
         else
-          local_bottle_hash(formula, bottle_dir: artifact_cache)&.dig(formula.name, "formula", "tap_git_revision")
+          local_bottle_hash(formula.name, bottle_dir: artifact_cache)&.dig(formula.name, "formula",
+                                                                           "tap_git_revision")
         end
 
         return false if sha.blank?
@@ -222,10 +258,17 @@ module Homebrew
         end
       end
 
+      sig { params(formula_name: String, bottle_dir: Pathname, ext: String, bottle_tag: String).returns(T::Array[Pathname]) }
       def bottle_glob(formula_name, bottle_dir = Pathname.pwd, ext = ".tar.gz", bottle_tag: Utils::Bottles.tag.to_s)
         bottle_dir.glob("#{formula_name}--*.#{bottle_tag}.bottle*#{ext}")
       end
 
+      sig {
+        params(
+          formula_name: String, testing_formulae_dependents: T::Boolean, dry_run: T::Boolean,
+          bottle_dir: Pathname
+        ).returns(T.nilable(T::Boolean))
+      }
       def install_formula_from_bottle!(formula_name, testing_formulae_dependents:, dry_run:,
                                        bottle_dir: Pathname.pwd)
         bottle_filename = bottle_glob(formula_name, bottle_dir).first
@@ -246,9 +289,9 @@ module Homebrew
 
         if !dry_run && !testing_formulae_dependents && install_step.passed?
           bottle_hash = local_bottle_hash(formula_name, bottle_dir:)
-          bottle_revision = bottle_hash.dig(formula_name, "formula", "tap_git_revision")
+          bottle_revision = T.must(bottle_hash).dig(formula_name, "formula", "tap_git_revision")
           bottle_header = "Bottle cache hit"
-          bottle_commit_details = if @fetched_refs&.include?(bottle_revision)
+          bottle_commit_details = if T.must(@fetched_refs).include?(bottle_revision)
             Utils.safe_popen_read(git, "-C", repository, "show", "--format=reference", bottle_revision)
           else
             bottle_revision
@@ -259,7 +302,7 @@ module Homebrew
             puts GitHub::Actions::Annotation.new(
               :notice,
               bottle_message,
-              file:  bottle_hash.dig(formula_name, "formula", "tap_git_path"),
+              file:  T.must(bottle_hash).dig(formula_name, "formula", "tap_git_path"),
               title: bottle_header,
             )
           else
@@ -274,6 +317,7 @@ module Homebrew
         install_step.passed?
       end
 
+      sig { params(formula: Formula, no_older_versions: T::Boolean).returns(T::Boolean) }
       def bottled?(formula, no_older_versions: false)
         # If a formula has an `:all` bottle, then all its dependencies have
         # to be bottled too for us to use it. We only need to recurse
@@ -289,10 +333,12 @@ module Homebrew
         end
       end
 
+      sig { params(formula: Formula, built_formulae: T::Array[String], no_older_versions: T::Boolean).returns(T::Boolean) }
       def bottled_or_built?(formula, built_formulae, no_older_versions: false)
         bottled?(formula, no_older_versions:) || built_formulae.include?(formula.full_name)
       end
 
+      sig { params(formula: Formula).returns(T::Boolean) }
       def downloads_using_homebrew_curl?(formula)
         [:stable, :head].any? do |spec_name|
           next false unless (spec = formula.send(spec_name))
@@ -301,6 +347,7 @@ module Homebrew
         end
       end
 
+      sig { params(formula: Formula).void }
       def install_curl_if_needed(formula)
         return unless downloads_using_homebrew_curl?(formula)
 
@@ -308,6 +355,7 @@ module Homebrew
              env: { "HOMEBREW_DEVELOPER" => nil }
       end
 
+      sig { params(deps: T::Array[Dependency], reqs: T::Array[Requirement]).void }
       def install_mercurial_if_needed(deps, reqs)
         return if (deps | reqs).none? { |d| d.name == "mercurial" && d.build? }
 
@@ -315,6 +363,7 @@ module Homebrew
              env:  { "HOMEBREW_DEVELOPER" => nil }
       end
 
+      sig { params(deps: T::Array[Dependency], reqs: T::Array[Requirement]).void }
       def install_subversion_if_needed(deps, reqs)
         return if (deps | reqs).none? { |d| d.name == "subversion" && d.build? }
 
@@ -322,6 +371,7 @@ module Homebrew
              env:  { "HOMEBREW_DEVELOPER" => nil }
       end
 
+      sig { params(formula_name: String, reason: String).void }
       def skipped(formula_name, reason)
         @skipped_or_failed_formulae << formula_name
 
@@ -332,6 +382,7 @@ module Homebrew
         opoo reason
       end
 
+      sig { params(formula_name: String, reason: String).void }
       def failed(formula_name, reason)
         @skipped_or_failed_formulae << formula_name
 
@@ -342,6 +393,7 @@ module Homebrew
         onoe reason
       end
 
+      sig { params(formula: Formula).returns(T.nilable(String)) }
       def unsatisfied_requirements_messages(formula)
         f = Formulary.factory(formula.full_name)
         fi = FormulaInstaller.new(f, build_bottle: true)
@@ -352,6 +404,7 @@ module Homebrew
         unsatisfied_requirements.values.flatten.map(&:message).join("\n").presence
       end
 
+      sig { params(keep_formulae: T::Array[String], args: Homebrew::CLI::Args).void }
       def cleanup_during!(keep_formulae = [], args:)
         return unless cleanup?(args)
         return unless HOMEBREW_CACHE.exist?
@@ -378,16 +431,19 @@ module Homebrew
         end
 
         if @cleaned_up_during.blank?
-          @cleaned_up_during = true
+          @cleaned_up_during = T.let(true, T.nilable(T::Boolean))
           return
         end
 
         installed_formulae = Utils.safe_popen_read("brew", "list", "--full-name", "--formulae").split("\n")
         uninstallable_formulae = installed_formulae - keep_formulae
 
-        @installed_formulae_deps ||= Hash.new do |h, formula|
-          h[formula] = Utils.safe_popen_read("brew", "deps", "--full-name", formula).split("\n")
-        end
+        @installed_formulae_deps ||= T.let(
+          Hash.new do |h, formula|
+            h[formula] = Utils.safe_popen_read("brew", "deps", "--full-name", formula).split("\n")
+          end,
+          T.nilable(T::Hash[String, T::Array[String]]),
+        )
         uninstallable_formulae.reject! do |name|
           keep_formulae.any? { |f| @installed_formulae_deps[f].include?(name) }
         end
@@ -397,6 +453,7 @@ module Homebrew
         test "brew", "uninstall", "--force", "--ignore-dependencies", *uninstallable_formulae
       end
 
+      sig { returns(T::Array[String]) }
       def sorted_formulae
         changed_formulae_dependents = {}
 
