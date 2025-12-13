@@ -1,4 +1,4 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
 
 require "services/cli"
@@ -11,7 +11,7 @@ module Homebrew
       module List
         extend Utils::Output::Mixin
 
-        TRIGGERS = [nil, "list", "ls"].freeze
+        TRIGGERS = T.let([nil, "list", "ls"].freeze, T::Array[T.nilable(String)])
 
         sig { params(json: T::Boolean).void }
         def self.run(json: false)
@@ -28,10 +28,11 @@ module Homebrew
           end
         end
 
-        JSON_FIELDS = [:name, :status, :user, :file, :exit_code].freeze
+        JSON_FIELDS = T.let([:name, :status, :user, :file, :exit_code].freeze, T::Array[Symbol])
 
         # Print the JSON representation in the CLI
         # @private
+        sig { params(formulae: T::Array[T::Hash[Symbol, T.untyped]]).void }
         def self.print_json(formulae)
           services = formulae.map do |formula|
             formula.slice(*JSON_FIELDS)
@@ -42,6 +43,7 @@ module Homebrew
 
         # Print the table in the CLI
         # @private
+        sig { params(formulae: T::Array[T::Hash[Symbol, T.untyped]]).void }
         def self.print_table(formulae)
           services = formulae.map do |formula|
             status = T.must(get_status_string(formula[:status]))

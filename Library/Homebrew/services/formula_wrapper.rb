@@ -1,4 +1,4 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
 
 require "utils/output"
@@ -29,71 +29,85 @@ module Homebrew
       # Initialize a new `Service` instance with supplied formula.
       sig { params(formula: Formula).void }
       def initialize(formula)
-        @formula = formula
+        @formula = T.let(formula, Formula)
+        @status_output_success_type = T.let(nil, T.nilable(StatusOutputSuccessType))
       end
 
       # Delegate access to `formula.name`.
       sig { returns(String) }
       def name
-        @name ||= formula.name
+        @name ||= T.let(formula.name, T.nilable(String))
       end
 
       # Delegate access to `formula.service?`.
       sig { returns(T::Boolean) }
       def service?
-        @service ||= @formula.service?
+        @service ||= T.let(formula.service?, T.nilable(T::Boolean))
       end
 
       # Delegate access to `formula.service.timed?`.
       # TODO: this should either be T::Boolean or renamed to `timed`
       sig { returns(T.nilable(T::Boolean)) }
       def timed?
-        @timed ||= (load_service.timed? if service?)
+        @timed ||= T.let((load_service.timed? if service?), T.nilable(T::Boolean))
       end
 
       # Delegate access to `formula.service.keep_alive?`.
       # TODO: this should either be T::Boolean or renamed to `keep_alive`
       sig { returns(T.nilable(T::Boolean)) }
       def keep_alive?
-        @keep_alive ||= (load_service.keep_alive? if service?)
+        @keep_alive ||= T.let((load_service.keep_alive? if service?), T.nilable(T::Boolean))
       end
 
       # service_name delegates with formula.plist_name or formula.service_name
       # for systemd (e.g., `homebrew.<formula>`).
-      sig { returns(T.nilable(String)) }
+      sig { returns(String) }
       def service_name
-        @service_name ||= if System.launchctl?
-          formula.plist_name
-        elsif System.systemctl?
-          formula.service_name
-        end
+        @service_name ||= T.let(
+          T.must(
+            if System.launchctl?
+              formula.plist_name
+            elsif System.systemctl?
+              formula.service_name
+            end,
+          ), T.nilable(String)
+        )
       end
 
       # service_file delegates with formula.launchd_service_path or formula.systemd_service_path for systemd.
+      sig { returns(Pathname) }
       def service_file
-        @service_file ||= if System.launchctl?
-          formula.launchd_service_path
-        elsif System.systemctl?
-          formula.systemd_service_path
-        end
+        @service_file ||= T.let(
+          T.must(
+            if System.launchctl?
+              formula.launchd_service_path
+            elsif System.systemctl?
+              formula.systemd_service_path
+            end,
+          ), T.nilable(Pathname)
+        )
       end
 
       # Whether the service should be launched at startup
       sig { returns(T::Boolean) }
       def service_startup?
-        @service_startup ||= if service?
-          load_service.requires_root?
-        else
-          false
-        end
+        @service_startup ||= T.let(
+          if service?
+            load_service.requires_root?
+          else
+            false
+          end, T.nilable(T::Boolean)
+        )
       end
 
       # Path to destination service directory. If run as root, it's `boot_path`, else `user_path`.
+      sig { returns(Pathname) }
       def dest_dir
         System.root? ? System.boot_path : System.user_path
       end
 
       # Path to destination service. If run as root, it's in `boot_path`, else `user_path`.
+      sig { returns(Pathname) }
       def dest
         dest_dir + service_file.basename
       end
@@ -123,16 +137,16 @@ module Homebrew
       end
 
       # Returns `true` if the service is loaded, else false.
-      # TODO: this should either be T::Boolean or renamed to `loaded`
-      sig { params(cached: T::Boolean).returns(T.nilable(T::Boolean)) }
+      sig { params(cached: T::Boolean).returns(T::Boolean) }
       def loaded?(cached: false)
-        if System.launchctl?
-          reset_cache! unless cached
-          _, status_success, = status_output_success_type
-          status_success
-        elsif System.systemctl?
-          System::Systemctl.quiet_run("status", service_file.basename)
-        end
+        T.must(
+          if System.launchctl?
+            reset_cache! unless cached
+            status_success
+          elsif System.systemctl?
+            System::Systemctl.quiet_run("status", service_file.basename)
+          end,
+        )
       end
 
       # Returns `true` if service is present (e.g. .plist is present in boot or user service path), else `false`
@@ -170,14 +184,14 @@ module Homebrew
 
       sig { returns(T::Boolean) }
       def pid?
-        pid.present? && pid.positive?
+        pid.present? && T.must(pid).positive?
       end
 
       sig { returns(T::Boolean) }
       def error?
         return false if pid?
 
-        exit_code.present? && !exit_code.zero?
+        exit_code.present? && !T.must(exit_code).zero?
       end
 
       sig { returns(T::Boolean) }
@@ -186,19 +200,19 @@ module Homebrew
       end
 
       # Get current PID of daemon process from status output.
+      sig { returns(T.nilable(Integer)) }
       def pid
-        status_output, _, status_type = status_output_success_type
         Regexp.last_match(1).to_i if status_output =~ pid_regex(status_type)
       end
 
       # Get current exit code of daemon process from status output.
+      sig { returns(T.nilable(Integer)) }
       def exit_code
-        status_output, _, status_type = status_output_success_type
         Regexp.last_match(1).to_i if status_output =~ exit_code_regex(status_type)
       end
 
+      sig { returns(T.nilable(String)) }
       def loaded_file
-        status_output, _, status_type = status_output_success_type
         Regexp.last_match(1) if status_output =~ loaded_file_regex(status_type)
       end
 
@@ -248,34 +262,46 @@ module Homebrew
         formula.service
       end
 
+      sig { returns(StatusOutputSuccessType) }
       def status_output_success_type
-        @status_output_success_type ||= if System.launchctl?
-          cmd = [System.launchctl.to_s, "print", "#{System.domain_target}/#{service_name}"]
-          output = Utils.popen_read(*cmd).chomp
-          if $CHILD_STATUS.present? && $CHILD_STATUS.success? && output.present?
-            success = true
-            type = :launchctl_print
-          else
-            cmd = [System.launchctl.to_s, "list", service_name]
+        @status_output_success_type ||= T.must(
+          if System.launchctl?
+            cmd = [System.launchctl.to_s, "print", "#{System.domain_target}/#{service_name}"]
             output = Utils.popen_read(*cmd).chomp
-            success = $CHILD_STATUS.present? && $CHILD_STATUS.success? && output.present?
-            type = :launchctl_list
-          end
-          odebug cmd.join(" "), output
-          [output, success, type]
-        elsif System.systemctl?
-          cmd = ["status", service_name]
-          output = System::Systemctl.popen_read(*cmd).chomp
-          success = $CHILD_STATUS.present? && $CHILD_STATUS.success? && output.present?
-          odebug [System::Systemctl.executable, System::Systemctl.scope, *cmd].join(" "), output
-          [output, success, :systemctl]
-        end
+            if $CHILD_STATUS.present? && $CHILD_STATUS.success? && output.present?
+              success = true
+              type = :launchctl_print
+            else
+              cmd = [System.launchctl.to_s, "list", service_name]
+              output = Utils.popen_read(*cmd).chomp
+              success = T.cast($CHILD_STATUS.present? && $CHILD_STATUS.success? && output.present?, T::Boolean)
+              type = :launchctl_list
+            end
+            odebug cmd.join(" "), output
+            StatusOutputSuccessType.new(output, success, type)
+          elsif System.systemctl?
+            cmd = ["status", service_name]
+            output = System::Systemctl.popen_read(*cmd).chomp
+            success = T.cast($CHILD_STATUS.present? && $CHILD_STATUS.success? && output.present?, T::Boolean)
+            odebug [System::Systemctl.executable, System::Systemctl.scope, *cmd].join(" "), output
+            StatusOutputSuccessType.new(output, success, :systemctl)
+          end,
+        )
       end
 
-      sig { returns(T.nilable(String)) }
+      sig { returns(String) }
       def status_output
-        status_output, = status_output_success_type
-        status_output
+        status_output_success_type.output
+      end
+
+      sig { returns(T::Boolean) }
+      def status_success
+        status_output_success_type.success
+      end
+
+      sig { returns(Symbol) }
+      def status_type
+        status_output_success_type.type
       end
 
       sig { returns(Symbol) }
@@ -284,7 +310,7 @@ module Homebrew
           :started
         elsif !loaded?(cached: true)
           :none
-        elsif exit_code.present? && exit_code.zero?
+        elsif exit_code.present? && T.must(exit_code).zero?
           if timed?
             :scheduled
           else
@@ -299,30 +325,33 @@ module Homebrew
         end
       end
 
+      sig { params(status_type: Symbol).returns(Regexp) }
       def exit_code_regex(status_type)
-        @exit_code_regex ||= {
+        @exit_code_regex ||= T.let({
           launchctl_list:  /"LastExitStatus"\ =\ ([0-9]*);/,
           launchctl_print: /last exit code = ([0-9]+)/,
           systemctl:       /\(code=exited, status=([0-9]*)\)|\(dead\)/,
-        }
+        }, T.nilable(T::Hash[Symbol, Regexp]))
         @exit_code_regex.fetch(status_type)
       end
 
+      sig { params(status_type: Symbol).returns(Regexp) }
       def pid_regex(status_type)
-        @pid_regex ||= {
+        @pid_regex ||= T.let({
           launchctl_list:  /"PID"\ =\ ([0-9]*);/,
           launchctl_print: /pid = ([0-9]+)/,
           systemctl:       /Main PID: ([0-9]*) \((?!code=)/,
-        }
+        }, T.nilable(T::Hash[Symbol, Regexp]))
         @pid_regex.fetch(status_type)
       end
 
+      sig { params(status_type: Symbol).returns(Regexp) }
       def loaded_file_regex(status_type)
-        @loaded_file_regex ||= {
+        @loaded_file_regex ||= T.let({
           launchctl_list:  //, # not available
           launchctl_print: /path = (.*)/,
           systemctl:       /Loaded: .*? \((.*);/,
-        }
+        }, T.nilable(T::Hash[Symbol, Regexp]))
         @loaded_file_regex.fetch(status_type)
       end
 
@@ -345,6 +374,24 @@ module Homebrew
       sig { returns(Regexp) }
       private_class_method def self.path_or_label_regex
         /homebrew(?>\.mxcl)?\.([\w+-.@]+)(\.plist|\.service)?\z/
+      end
+
+      class StatusOutputSuccessType
+        sig { returns(String) }
+        attr_reader :output
+
+        sig { returns(T::Boolean) }
+        attr_reader :success
+
+        sig { returns(Symbol) }
+        attr_reader :type
+
+        sig { params(output: String, success: T::Boolean, type: Symbol).void }
+        def initialize(output, success, type)
+          @output = T.let(output, String)
+          @success = T.let(success, T::Boolean)
+          @type = T.let(type, Symbol)
+        end
       end
     end
   end

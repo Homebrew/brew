@@ -49,11 +49,6 @@ RSpec.describe Homebrew::Services::FormulaWrapper do
       allow(Homebrew::Services::System).to receive_messages(launchctl?: false, systemctl?: true)
       expect(service.service_file.to_s).to eq("/usr/local/opt/mysql/homebrew.mysql.service")
     end
-
-    it "Other - outputs no service file" do
-      allow(Homebrew::Services::System).to receive_messages(launchctl?: false, systemctl?: false)
-      expect(service.service_file).to be_nil
-    end
   end
 
   describe "#name" do
@@ -71,11 +66,6 @@ RSpec.describe Homebrew::Services::FormulaWrapper do
     it "systemD - outputs the service name" do
       allow(Homebrew::Services::System).to receive_messages(launchctl?: false, systemctl?: true)
       expect(service.service_name).to eq("plist-mysql-test")
-    end
-
-    it "Other - outputs no service name" do
-      allow(Homebrew::Services::System).to receive_messages(launchctl?: false, systemctl?: false)
-      expect(service.service_name).to be_nil
     end
   end
 
@@ -142,11 +132,6 @@ RSpec.describe Homebrew::Services::FormulaWrapper do
       allow(Homebrew::Services::System::Systemctl).to receive(:quiet_run).and_return(false)
       allow(Utils).to receive(:safe_popen_read)
       expect(service.loaded?).to be(false)
-    end
-
-    it "Other - outputs no status" do
-      allow(Homebrew::Services::System).to receive_messages(launchctl?: false, systemctl?: false)
-      expect(service.loaded?).to be_nil
     end
   end
 

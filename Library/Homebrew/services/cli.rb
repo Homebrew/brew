@@ -1,4 +1,4 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
 
 require "services/formula_wrapper"
@@ -10,6 +10,11 @@ module Homebrew
     module Cli
       extend FileUtils
       extend Utils::Output::Mixin
+
+      sig { void }
+      def self.initialize
+        @sudo_service_user = T.let(nil, T.nilable(String))
+      end
 
       sig { returns(T.nilable(String)) }
       def self.sudo_service_user
@@ -44,6 +49,7 @@ module Homebrew
       end
 
       # Check if formula has been found.
+      sig { params(targets: T::Array[Services::FormulaWrapper]).returns(T::Boolean) }
       def self.check!(targets)
         raise UsageError, "Formula(e) missing, please provide a formula name or use `--all`." if targets.empty?
 
@@ -51,6 +57,7 @@ module Homebrew
       end
 
       # Kill services that don't have a service file
+      sig { returns(T::Array[String]) }
       def self.kill_orphaned_services
         cleaned_labels = []
         cleaned_services = []
@@ -68,6 +75,7 @@ module Homebrew
         cleaned_labels
       end
 
+      sig { returns(T::Array[String]) }
       def self.remove_unused_service_files
         cleaned = []
         Dir["#{System.path}homebrew.*.{plist,service}"].each do |file|
@@ -149,7 +157,7 @@ module Homebrew
             puts
           end
 
-          next if take_root_ownership(service).nil? && System.root?
+          next if !take_root_ownership?(service) && System.root?
 
           service_load(service, nil, enable: true)
         end
@@ -270,9 +278,10 @@ module Homebrew
       end
 
       # protections to avoid users editing root services
-      def self.take_root_ownership(service)
-        return unless System.root?
-        return if sudo_service_user
+      sig { params(service: Services::FormulaWrapper).returns(T::Boolean) }
+      def self.take_root_ownership?(service)
+        return false unless System.root?
+        return false if sudo_service_user
 
         root_paths = T.let([], T::Array[Pathname])
 
@@ -287,7 +296,7 @@ module Homebrew
           rescue
             nil
           end
-          return unless plist
+          return false unless plist
 
           program_location = plist["ProgramArguments"]&.first
           key = "first ProgramArguments value"
@@ -332,6 +341,7 @@ module Homebrew
         EOS
         chown "root", group, root_paths
         chmod "+t", root_paths
+        true
       end
 
       sig {
@@ -374,6 +384,7 @@ module Homebrew
         ohai("Successfully #{function} `#{service.name}` (label: #{service.service_name})")
       end
 
+      sig { params(service: Services::FormulaWrapper, file: T.nilable(Pathname)).void }
       def self.install_service_file(service, file)
         raise UsageError, "Formula `#{service.name}` is not installed." unless service.installed?
 

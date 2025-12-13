@@ -51,8 +51,9 @@ RSpec.describe Homebrew::Services::Cli do
     end
 
     it "checks the input exists" do
+      service = instance_double(Homebrew::Services::FormulaWrapper, name: "name", installed?: false)
       expect do
-        services_cli.check!("hello")
+        services_cli.check!([service])
       end.not_to raise_error
     end
   end
@@ -68,12 +69,12 @@ RSpec.describe Homebrew::Services::Cli do
     it "tries but is unable to kill a non existing service" do
       service = instance_double(
         service_string,
-        name:        "example_service",
-        pid?:        true,
-        dest:        Pathname("this_path_does_not_exist"),
-        keep_alive?: false,
+        name:         "example_service",
+        service_name: "homebrew.example_service",
+        pid?:         true,
+        dest:         Pathname("this_path_does_not_exist"),
+        keep_alive?:  false,
       )
-      allow(service).to receive(:service_name)
       allow(service).to receive(:reset_cache!)
       allow(Homebrew::Services::FormulaWrapper).to receive(:from).and_return(service)
       allow(services_cli).to receive(:running).and_return(["example_service"])
