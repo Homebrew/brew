@@ -181,7 +181,10 @@ module Homebrew
           exit 1 if Homebrew.failed?
 
           reinstall_contexts.each do |reinstall_context|
-            next unless valid_formula_installers.include?(reinstall_context.formula_installer)
+            unless valid_formula_installers.include?(reinstall_context.formula_installer)
+              ignore_interrupts { Homebrew::Reinstall.restore_backup(reinstall_context) }
+              next
+            end
 
             Homebrew::Reinstall.reinstall_formula(reinstall_context)
             Cleanup.install_formula_clean!(reinstall_context.formula)
@@ -219,6 +222,10 @@ module Homebrew
         Cleanup.periodic_clean!
 
         Homebrew.messages.display_messages(display_times: args.display_times?)
+      rescue Exception # rubocop:disable Lint/RescueException
+        # We need to restore the previous kegs on any exception
+        ignore_interrupts { reinstall_contexts&.each { Homebrew::Reinstall.restore_backup(_1) } }
+        raise
       end
     end
   end
