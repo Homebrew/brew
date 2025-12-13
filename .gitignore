@@ -204,6 +204,7 @@
 !/.sublime
 /.sublime/homebrew.sublime-workspace
 !/.vscode
+!/homebrew.code-workspace
 
 # Unignore AI configuration
 !/.cursor
