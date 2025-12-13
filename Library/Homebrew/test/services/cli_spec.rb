@@ -51,8 +51,9 @@ RSpec.describe Homebrew::Services::Cli do
     end
 
     it "checks the input exists" do
+      service = instance_double(Homebrew::Services::FormulaWrapper, name: "name", installed?: false)
       expect do
-        services_cli.check!("hello")
+        services_cli.check!([service])
       end.not_to raise_error
     end
   end

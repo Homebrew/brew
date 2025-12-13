@@ -51,27 +51,31 @@ module Homebrew
       end
 
       # Run at boot.
-      sig { returns(T.nilable(Pathname)) }
+      sig { returns(Pathname) }
       def self.boot_path
-        if launchctl?
-          Pathname.new("/Library/LaunchDaemons")
-        elsif systemctl?
-          Pathname.new("/usr/lib/systemd/system")
-        end
+        T.must(
+          if launchctl?
+            Pathname.new("/Library/LaunchDaemons")
+          elsif systemctl?
+            Pathname.new("/usr/lib/systemd/system")
+          end,
+        )
       end
 
       # Run at login.
-      sig { returns(T.nilable(Pathname)) }
+      sig { returns(Pathname) }
       def self.user_path
-        if launchctl?
-          Pathname.new("#{Dir.home}/Library/LaunchAgents")
-        elsif systemctl?
-          Pathname.new("#{Dir.home}/.config/systemd/user")
-        end
+        T.must(
+          if launchctl?
+            Pathname.new("#{Dir.home}/Library/LaunchAgents")
+          elsif systemctl?
+            Pathname.new("#{Dir.home}/.config/systemd/user")
+          end,
+        )
       end
 
       # If root, return `boot_path`, else return `user_path`.
-      sig { returns(T.nilable(Pathname)) }
+      sig { returns(Pathname) }
       def self.path
         root? ? boot_path : user_path
       end

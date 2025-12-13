@@ -1,4 +1,4 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
 
 module Homebrew
@@ -20,18 +20,22 @@ module Homebrew
           System.root? ? "--system" : "--user"
         end
 
+        sig { params(args: T.any(String, Pathname)).void }
         def self.run(*args)
           _run(*args, mode: :default)
         end
 
+        sig { params(args: T.any(String, Pathname)).returns(T::Boolean) }
         def self.quiet_run(*args)
           _run(*args, mode: :quiet)
         end
 
+        sig { params(args: T.any(String, Pathname)).returns(String) }
         def self.popen_read(*args)
           _run(*args, mode: :read)
         end
 
+        sig { params(args: T.any(String, Pathname), mode: Symbol).returns(T.nilable(T.any(String, T::Boolean))) }
         private_class_method def self._run(*args, mode:)
           require "system_command"
           result = SystemCommand.run(T.must(executable),
