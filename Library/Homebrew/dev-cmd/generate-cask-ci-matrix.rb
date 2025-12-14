@@ -173,7 +173,11 @@ module Homebrew
             cask.refresh
 
             if cask.depends_on.arch.blank?
-              architectures = RUNNERS.keys.map { |r| r.fetch(:arch).to_sym }.uniq.sort
+              if cask.artifacts.any? { |a| a.is_a?(Cask::Artifact::AppImage) }
+                architectures = [:intel]
+              else
+                architectures = RUNNERS.keys.map { |r| r.fetch(:arch).to_sym }.uniq.sort
+              end
               next
             end
 
