@@ -8,10 +8,11 @@ plugins:
       plugin_class_name: RuboCop::RSpec::Plugin
   - rubocop-sorbet:
       plugin_class_name: RuboCop::Sorbet::Plugin
+  - test-prof:
+      plugin_class_name: RuboCop::TestProf::Plugin
 
 require:
   - ./Homebrew/rubocops.rb
-  - test_prof/rubocop
 
 inherit_mode:
   merge:

@@ -1,4 +1,4 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
 
 require "utils/user"
@@ -13,13 +13,14 @@ module Cask
     requires_ancestor { ::Cask::DSL::Base }
 
     Paths = T.type_alias { T.any(String, Pathname, T::Array[T.any(String, Pathname)]) }
+
     sig { params(paths: Paths, permissions_str: String).void }
     def set_permissions(paths, permissions_str)
       full_paths = remove_nonexistent(paths)
       return if full_paths.empty?
 
-      @command.run!("chmod", args: ["-R", "--", permissions_str, *full_paths],
-                             sudo: false)
+      command.run!("chmod", args: ["-R", "--", permissions_str, *full_paths],
+                            sudo: false)
     end
 
     sig { params(paths: Paths, user: T.any(String, User), group: String).void }
@@ -27,9 +28,9 @@ module Cask
       full_paths = remove_nonexistent(paths)
       return if full_paths.empty?
 
-      ohai "Changing ownership of paths required by #{@cask} with `sudo` (which may request your password)..."
-      @command.run!("chown", args: ["-R", "--", "#{user}:#{group}", *full_paths],
-                             sudo: true)
+      ohai "Changing ownership of paths required by #{cask} with `sudo` (which may request your password)..."
+      command.run!("chown", args: ["-R", "--", "#{user}:#{group}", *full_paths],
+                            sudo: true)
     end
 
     private

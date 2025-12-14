@@ -1612,6 +1612,7 @@ __fish_brew_complete_arg 'sh' -l debug -d 'Display any debugging information'
 __fish_brew_complete_arg 'sh' -l env -d 'Use the standard `$PATH` instead of superenv\'s when `std` is passed'
 __fish_brew_complete_arg 'sh' -l help -d 'Show this message'
 __fish_brew_complete_arg 'sh' -l quiet -d 'Make some output more quiet'
+__fish_brew_complete_arg 'sh' -l ruby -d 'Set up Homebrew\'s Ruby environment'
 __fish_brew_complete_arg 'sh' -l verbose -d 'Make some output more verbose'
 
 

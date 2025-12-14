@@ -10,6 +10,12 @@ module Cask
     class Base
       extend Forwardable
 
+      sig { returns(Cask) }
+      attr_reader :cask
+
+      sig { returns(T.class_of(SystemCommand)) }
+      attr_reader :command
+
       sig { params(cask: Cask, command: T.class_of(SystemCommand)).void }
       def initialize(cask, command = SystemCommand)
         @cask = T.let(cask, Cask)

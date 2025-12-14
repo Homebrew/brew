@@ -21,7 +21,7 @@ module Cask
 
     sig {
       params(
-        cask: ::Cask::Cask, command: T::Class[SystemCommand], force: T::Boolean, adopt: T::Boolean,
+        cask: ::Cask::Cask, command: T.class_of(SystemCommand), force: T::Boolean, adopt: T::Boolean,
         skip_cask_deps: T::Boolean, binaries: T::Boolean, verbose: T::Boolean, zap: T::Boolean,
         require_sha: T::Boolean, upgrade: T::Boolean, reinstall: T::Boolean, installed_as_dependency: T::Boolean,
         installed_on_request: T::Boolean, quarantine: T::Boolean, verify_download_integrity: T::Boolean,

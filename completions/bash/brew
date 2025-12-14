@@ -2451,6 +2451,7 @@ _brew_sh() {
       --env
       --help
       --quiet
+      --ruby
       --verbose
       "
       return

@@ -1,4 +1,4 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
 
 require "cask/macos"
@@ -72,36 +72,41 @@ module Cask
 
     sig { returns(T::Array[Pathname]) }
     def pkgutil_bom_files
-      @pkgutil_bom_files ||= pkgutil_bom_all.select(&:file?) - pkgutil_bom_specials
+      @pkgutil_bom_files ||= T.let(pkgutil_bom_all.select(&:file?) - pkgutil_bom_specials,
+                                   T.nilable(T::Array[Pathname]))
     end
 
     sig { returns(T::Array[Pathname]) }
     def pkgutil_bom_specials
-      @pkgutil_bom_specials ||= pkgutil_bom_all.select { special?(_1) }
+      @pkgutil_bom_specials ||= T.let(pkgutil_bom_all.select { special?(_1) }, T.nilable(T::Array[Pathname]))
     end
 
     sig { returns(T::Array[Pathname]) }
     def pkgutil_bom_dirs
-      @pkgutil_bom_dirs ||= pkgutil_bom_all.select(&:directory?) - pkgutil_bom_specials
+      @pkgutil_bom_dirs ||= T.let(pkgutil_bom_all.select(&:directory?) - pkgutil_bom_specials,
+                                  T.nilable(T::Array[Pathname]))
     end
 
     sig { returns(T::Array[Pathname]) }
     def pkgutil_bom_all
-      @pkgutil_bom_all ||= @command.run!("/usr/sbin/pkgutil", args: ["--files", package_id])
-                                   .stdout
-                                   .split("\n")
-                                   .map { |path| root.join(path) }
-                                   .reject { |path| MacOS.undeletable?(path) }
+      @pkgutil_bom_all ||= T.let(
+        @command.run!("/usr/sbin/pkgutil", args: ["--files", package_id])
+                .stdout
+                .split("\n")
+                .map { |path| root.join(path) }
+                .reject { |path| MacOS.undeletable?(path) },
+        T.nilable(T::Array[Pathname]),
+      )
     end
 
     sig { returns(Pathname) }
     def root
-      @root ||= Pathname.new(info.fetch("volume")).join(info.fetch("install-location"))
+      @root ||= T.let(Pathname.new(info.fetch("volume")).join(info.fetch("install-location")), T.nilable(Pathname))
     end
 
+    sig { returns(T.untyped) }
     def info
-      @info ||= @command.run!("/usr/sbin/pkgutil", args: ["--pkg-info-plist", package_id])
-                        .plist
+      @info ||= T.let(@command.run!("/usr/sbin/pkgutil", args: ["--pkg-info-plist", package_id]).plist, T.untyped)
     end
 
     private
@@ -113,7 +118,7 @@ module Cask
 
     # Helper script to delete empty directories after deleting `.DS_Store` files and broken symlinks.
     # Needed in order to execute all file operations with `sudo`.
-    RMDIR_SH = (HOMEBREW_LIBRARY_PATH/"cask/utils/rmdir.sh").freeze
+    RMDIR_SH = T.let((HOMEBREW_LIBRARY_PATH/"cask/utils/rmdir.sh").freeze, Pathname)
     private_constant :RMDIR_SH
 
     sig { params(path: T.any(Pathname, T::Array[Pathname])).void }

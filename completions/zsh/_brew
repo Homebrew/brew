@@ -1978,9 +1978,10 @@ _brew_sh() {
   _arguments \
     '--cmd[Execute commands in a non-interactive shell]' \
     '--debug[Display any debugging information]' \
-    '--env[Use the standard `$PATH` instead of superenv'\''s when `std` is passed]' \
+    '(--ruby)--env[Use the standard `$PATH` instead of superenv'\''s when `std` is passed]' \
     '--help[Show this message]' \
     '--quiet[Make some output more quiet]' \
+    '(--env)--ruby[Set up Homebrew'\''s Ruby environment]' \
     '--verbose[Make some output more verbose]' \
     - file \
     '*:file:__brew_formulae_or_ruby_files'

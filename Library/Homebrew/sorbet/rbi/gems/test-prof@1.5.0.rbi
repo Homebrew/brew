@@ -272,8 +272,6 @@ class TestProf::EventProf::ProfilersGroup
   def profilers; end
 end
 
-TestProf::FACTORY_GIRL_NAMES = T.let(T.unsafe(nil), Hash)
-
 module TestProf::FactoryAllStub
   class << self
     def disable!; end
@@ -386,6 +384,8 @@ class TestProf::FactoryProf::Configuration
   def printer=(_arg0); end
   def threshold; end
   def threshold=(_arg0); end
+  def truncate_names; end
+  def truncate_names=(_arg0); end
   def variations_limit; end
   def variations_limit=(_arg0); end
 end
@@ -451,11 +451,13 @@ module TestProf::FactoryProf::Printers::Simple
   extend ::TestProf::Logging
 
   class << self
-    def dump(result, start_time:, threshold:); end
+    def dump(result, start_time:, threshold:, truncate_names:); end
 
     private
 
     def format_args(stat); end
+    def format_string(indent_len, name_len, truncate_names); end
+    def formatted(indent_len, name_len, truncate_names, stat); end
   end
 end
 

@@ -19,7 +19,18 @@ RSpec.describe "RuboCop" do
     end
 
     it "loads all Formula cops without errors" do
-      stdout, stderr, status = Open3.capture3(RUBY_PATH, "-W0", "-S", "rubocop", TEST_FIXTURE_DIR/"testball.rb")
+      # TODO: Remove these args once TestProf fixes their RuboCop plugin.
+      test_prof_rubocop_args = [
+        # Require "sorbet-runtime" to bring T into scope for warnings.rb
+        "-r", "sorbet-runtime",
+        # Require "extend/module" to include T::Sig in Module for warnings.rb
+        "-r", HOMEBREW_LIBRARY_PATH/"extend/module.rb",
+        # Work around TestProf RuboCop plugin issues
+        "-r", HOMEBREW_LIBRARY_PATH/"utils/test_prof_rubocop_stub.rb"
+      ]
+
+      stdout, stderr, status = Open3.capture3(RUBY_PATH, "-W0", "-S", "rubocop", TEST_FIXTURE_DIR/"testball.rb",
+                                              *test_prof_rubocop_args)
       expect(stderr).to be_empty
       expect(stdout).to include("no offenses detected")
       expect(status).to be_a_success

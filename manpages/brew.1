@@ -2002,8 +2002,13 @@ Only generate public API documentation\.
 .TP
 \fB\-\-open\fP
 Open generated documentation in a browser\.
-.SS "\fBsh\fP \fR[\fB\-\-env=\fP] \fR[\fB\-\-cmd=\fP] \fR[\fIfile\fP]"
+.SS "\fBsh\fP \fR[\fIoptions\fP] \fR[\fIfile\fP]"
 Enter an interactive shell for Homebrew\[u2019]s build environment\. Use years\-battle\-hardened build logic to help your \fB\&\./configure && make && make install\fP and even your \fBgem install\fP succeed\. Especially handy if you run Homebrew in an Xcode\-only configuration since it adds tools like \fBmake\fP to your \fB$PATH\fP which build systems would not find otherwise\.
+.P
+With \fB\-\-ruby\fP, enter an interactive shell for Homebrew\[u2019]s Ruby environment\. This sets up the correct Ruby paths, \fB$GEM_HOME\fP and bundle configuration used by Homebrew\[u2019]s development tools\. The environment includes gems from the installed groups, making tools like RuboCop, Sorbet and RSpec available via \fBbundle exec\fP\&\.
+.TP
+\fB\-r\fP, \fB\-\-ruby\fP
+Set up Homebrew\[u2019]s Ruby environment\.
 .TP
 \fB\-\-env\fP
 Use the standard \fB$PATH\fP instead of superenv\[u2019]s when \fBstd\fP is passed\.

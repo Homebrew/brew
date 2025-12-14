@@ -163,7 +163,7 @@ module Utils
         zdotdir.mkpath
         FileUtils.chmod_R(0700, zdotdir)
         FileUtils.cp(HOMEBREW_LIBRARY_PATH/"utils/zsh/brew-sh-prompt-zshrc.zsh", zdotdir/".zshrc")
-        %w[.zcompdump .zsh_history .zsh_sessions].each do |file|
+        %w[.zshenv .zcompdump .zsh_history .zsh_sessions].each do |file|
           FileUtils.ln_sf("#{home}/#{file}", zdotdir/file)
         end
         <<~ZSH.strip

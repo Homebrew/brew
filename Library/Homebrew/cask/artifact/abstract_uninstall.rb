@@ -475,7 +475,7 @@ module Cask
         untrashable = untrashable.split(":")
 
         trashed_with_permissions, untrashable = untrashable.partition do |path|
-          Utils.gain_permissions(path, ["-R"], SystemCommand) do
+          Utils.gain_permissions(Pathname(path), ["-R"], SystemCommand) do
             system_command! HOMEBREW_LIBRARY_PATH/"cask/utils/trash.swift",
                             args:         [path],
                             print_stderr: Homebrew::EnvConfig.developer?

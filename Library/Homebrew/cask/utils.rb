@@ -1,4 +1,4 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
 
 require "utils/user"
@@ -12,17 +12,19 @@ module Cask
 
     BUG_REPORTS_URL = "https://github.com/Homebrew/homebrew-cask#reporting-bugs"
 
+    sig { params(path: Pathname, command: T.class_of(SystemCommand)).void }
     def self.gain_permissions_mkpath(path, command: SystemCommand)
       dir = path.ascend.find(&:directory?)
       return if path == dir
 
-      if dir.writable?
+      if dir&.writable?
         path.mkpath
       else
         command.run!("mkdir", args: ["-p", "--", path], sudo: true, print_stderr: false)
       end
     end
 
+    sig { params(path: Pathname, command: T.class_of(SystemCommand)).void }
     def self.gain_permissions_rmdir(path, command: SystemCommand)
       gain_permissions(path, [], command) do |p|
         if p.parent.writable?
@@ -33,6 +35,7 @@ module Cask
       end
     end
 
+    sig { params(path: Pathname, command: T.class_of(SystemCommand)).void }
     def self.gain_permissions_remove(path, command: SystemCommand)
       directory = false
       permission_flags = if path.symlink?
@@ -61,7 +64,15 @@ module Cask
       end
     end
 
-    def self.gain_permissions(path, command_args, command)
+    sig {
+      params(
+        path:         Pathname,
+        command_args: T::Array[String],
+        command:      T.class_of(SystemCommand),
+        _block:       T.proc.params(path: Pathname).void,
+      ).void
+    }
+    def self.gain_permissions(path, command_args, command, &_block)
       tried_permissions = false
       tried_ownership = false
       begin
@@ -129,6 +140,7 @@ module Cask
       EOS
     end
 
+    sig { params(method: Symbol, token: String, section: T.nilable(String)).void }
     def self.method_missing_message(method, token, section = nil)
       message = "Unexpected method '#{method}' called "
       message << "during #{section} " if section

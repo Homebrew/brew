@@ -31,6 +31,10 @@ module Downloadable
   sig { void }
   def downloaded! = (@phase = :downloaded)
   sig { void }
+  def verifying! = (@phase = :verifying)
+  sig { void }
+  def verified! = (@phase = :verified)
+  sig { void }
   def extracting! = (@phase = :extracting)
 
   sig { void }
@@ -146,11 +150,12 @@ module Downloadable
 
   sig { overridable.params(filename: Pathname).void }
   def verify_download_integrity(filename)
-    @phase = :verifying
+    verifying!
 
     if filename.file?
       ohai "Verifying checksum for '#{filename.basename}'" if verbose?
       filename.verify_checksum(checksum)
+      verified!
     end
   rescue ChecksumMissingError
     return if silence_checksum_missing_error?

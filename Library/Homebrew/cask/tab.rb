@@ -1,4 +1,4 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
 
 require "tab"
@@ -65,6 +65,7 @@ module Cask
       tab
     end
 
+    sig { params(cask: Cask).returns(T::Hash[Symbol, T::Array[T::Hash[String, T.untyped]]]) }
     def self.runtime_deps_hash(cask)
       cask_and_formula_dep_graph = ::Utils::TopologicalHash.graph_package_dependencies(cask)
       cask_deps, formula_deps = cask_and_formula_dep_graph.values.flatten.uniq.partition do |dep|

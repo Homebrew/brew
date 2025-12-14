@@ -168,8 +168,9 @@ module Homebrew
 
             top_level_info_plist_paths.each(&parse_info_plist)
           ensure
+            extract_dir = Pathname(extract_dir)
             Cask::Utils.gain_permissions_remove(extract_dir)
-            Pathname(extract_dir).mkpath
+            extract_dir.mkpath
           end
         end
 
@@ -262,8 +263,9 @@ module Homebrew
                                    path.to_s.sub(regex, '\1')
                                  }.uniq
           ensure
+            extract_dir = Pathname(extract_dir)
             Cask::Utils.gain_permissions_remove(extract_dir)
-            Pathname(extract_dir).mkpath
+            extract_dir.mkpath
           end
         end
 
