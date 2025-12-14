@@ -9,6 +9,8 @@ require "system_command"
 
 module Homebrew
   module DevCmd
+    # Generates a GitHub Actions CI matrix for Casks.
+    # @api private
     class GenerateCaskCiMatrix < AbstractCommand
       MAX_JOBS = 256
 
@@ -173,10 +175,10 @@ module Homebrew
             cask.refresh
 
             if cask.depends_on.arch.blank?
-              if cask.artifacts.any? { |a| a.is_a?(Cask::Artifact::AppImage) }
-                architectures = [:intel]
+              architectures = if cask.artifacts.any?(Cask::Artifact::AppImage)
+                [:intel]
               else
-                architectures = RUNNERS.keys.map { |r| r.fetch(:arch).to_sym }.uniq.sort
+                RUNNERS.keys.map { |r| r.fetch(:arch).to_sym }.uniq.sort
               end
               next
             end
