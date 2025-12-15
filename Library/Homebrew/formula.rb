@@ -1249,9 +1249,19 @@ class Formula
   # This is symlinked into `HOMEBREW_PREFIX` after installation or with
   # `brew link` for formulae that are not keg-only.
   #
+  # By default the compatibility directory is used to support system Bash 3
+  # on macOS. Pass in `compat: false` when installing completions that need
+  # Bash >= 4 or bash-completion >= 2.
+  #
   # @api public
-  sig { returns(Pathname) }
-  def bash_completion = prefix/"etc/bash_completion.d"
+  sig { params(compat: T::Boolean).returns(Pathname) }
+  def bash_completion(compat: true)
+    if compat
+      prefix/"etc/bash_completion.d"
+    else
+      share/"bash-completion/completions"
+    end
+  end
 
   # The directory where the formula's `zsh` completion files should be
   # installed.
@@ -2273,7 +2283,7 @@ class Formula
     base_name ||= name
 
     completion_script_path_map = {
-      bash: bash_completion/base_name,
+      bash: bash_completion(compat: shell_parameter_format != :click)/base_name,
       zsh:  zsh_completion/"_#{base_name}",
       fish: fish_completion/"#{base_name}.fish",
       pwsh: pwsh_completion/"_#{base_name}.ps1",
