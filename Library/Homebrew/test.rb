@@ -63,14 +63,30 @@ rescue Exception => e # rubocop:disable Lint/RescueException
   error_pipe&.puts e.to_json
   error_pipe&.close
 ensure
-  pid = Process.pid.to_s
-  pkill = "/usr/bin/pkill"
-  pgrep = "/usr/bin/pgrep"
-  if File.executable?(pkill) && File.executable?(pgrep) && system(pgrep, "-P", pid, out: File::NULL)
-    $stderr.puts "Killing child processes..."
-    system pkill, "-P", pid
+  test_failed = e
+
+  begin
+    pgid = Process.getpgrp
+
+    $stderr.puts 'Terminating child processes...'
+    trap_saved = Signal.trap('TERM', 'IGNORE')
+    Process.kill('TERM', -pgid) rescue nil
+    Signal.trap('TERM', trap_saved)
+
     sleep 1
-    system pgrep, "-9", "-P", pid
+
+    pgrep = '/usr/bin/pgrep'
+    if File.executable?(pgrep)
+      $stderr.puts 'Killing child processes...'
+      pids = IO.popen([pgrep, '-g', pgid.to_s]) { |io| io.read.split.map(&:to_i) } rescue []
+      pids.each do |pid|
+        next if pid == Process.pid
+        Process.kill('KILL', pid) rescue nil
+      end
+    end
+  rescue Exception => cleanup_ex
+    $stderr.puts "Cleanup failed: #{cleanup_ex.message}"
   end
-  exit! 1 if e
+
+  exit! 1 if test_failed
 end
