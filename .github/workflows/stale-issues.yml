@@ -31,7 +31,7 @@ jobs:
           contains(github.event.pull_request.labels.*.name, 'stale')
         )
       )
-    runs-on: ubuntu-slim
+    runs-on: ubuntu-latest
     permissions:
       contents: write
       issues: write
@@ -61,7 +61,7 @@ jobs:
           contains(github.event.pull_request.labels.*.name, 'stale')
         )
       )
-    runs-on: ubuntu-slim
+    runs-on: ubuntu-latest
     permissions:
       contents: write
       issues: write
