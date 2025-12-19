@@ -202,6 +202,8 @@
 !/.sublime
 /.sublime/homebrew.sublime-workspace
 !/.vscode
+# Ignore emacs backup files
+*~
 
 # Unignore AI configuration
 !/.cursor

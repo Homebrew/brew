@@ -649,7 +649,7 @@ Refer to the [`brew livecheck`](Brew-Livecheck.md) documentation for how to writ
 
 The `no_autobump!` stanza excludes a cask from the autobump list. This means all updates are to be handled manually by submitting pull requests to the `Homebrew/homebrew-cask` repository.
 
-`no_autobump!` requires a reason to be provided with the `because:` paramater. It accepts a string or a symbol that corresponds to a preset reason, for example:
+`no_autobump!` requires a reason to be provided with the `because:` parameter. It accepts a string or a symbol that corresponds to a preset reason, for example:
 
 ```ruby
 no_autobump! because: :incompatible_version_format
