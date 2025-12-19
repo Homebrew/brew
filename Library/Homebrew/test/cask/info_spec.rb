@@ -41,7 +41,7 @@ RSpec.describe Cask::Info, :cask do
       ==> Description
       None
       ==> Dependencies
-      local-caffeine (cask), local-transmission-zip (cask)
+      local-caffeine (cask) ✘, local-transmission-zip (cask) ✘
       ==> Artifacts
       Caffeine.app (App)
     EOS
@@ -60,40 +60,10 @@ RSpec.describe Cask::Info, :cask do
       ==> Description
       None
       ==> Dependencies
-      unar, local-caffeine (cask), with-depends-on-cask (cask)
+      unar ✘, local-caffeine (cask) ✘, with-depends-on-cask (cask) ✘
       ==> Artifacts
       Caffeine.app (App)
     EOS
-  end
-
-  it "checks installation status of cask dependencies" do
-    cask = Cask::CaskLoader.load("with-depends-on-cask-multiple")
-
-    dep_cask = instance_double(Cask::Cask)
-    expect(dep_cask).to receive(:installed?).and_return(true)
-    expect(dep_cask).to receive(:installed?).and_return(false)
-    allow(Cask::CaskLoader).to receive(:load).with("local-caffeine").and_return(dep_cask)
-    allow(Cask::CaskLoader).to receive(:load).with("local-transmission-zip").and_return(dep_cask)
-
-    expect do
-      described_class.info(cask, args:)
-    end.to output(/==> Dependencies/).to_stdout
-  end
-
-  it "checks installation status of formula dependencies" do
-    cask = Cask::CaskLoader.load("with-depends-on-everything")
-
-    formula = instance_double(Formula)
-    expect(formula).to receive(:any_version_installed?).and_return(true)
-    allow(Formula).to receive(:[]).with("unar").and_return(formula)
-
-    dep_cask = instance_double(Cask::Cask, installed?: true)
-    allow(Cask::CaskLoader).to receive(:load).with("local-caffeine").and_return(dep_cask)
-    allow(Cask::CaskLoader).to receive(:load).with("with-depends-on-cask").and_return(dep_cask)
-
-    expect do
-      described_class.info(cask, args:)
-    end.to output(/==> Dependencies/).to_stdout
   end
 
   it "prints auto_updates if the Cask has `auto_updates true`" do
