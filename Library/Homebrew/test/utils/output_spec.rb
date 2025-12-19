@@ -34,7 +34,7 @@ RSpec.describe Utils::Output do
       before { allow($stdout).to receive(:tty?).and_return(false) }
 
       it "returns plain text" do
-        expect(pretty_installed_output).to eq("foo")
+        expect(pretty_installed_output).to eq("foo ✔")
       end
     end
   end
@@ -66,7 +66,7 @@ RSpec.describe Utils::Output do
       before { allow($stdout).to receive(:tty?).and_return(false) }
 
       it "returns plain text" do
-        expect(pretty_uninstalled_output).to eq("foo")
+        expect(pretty_uninstalled_output).to eq("foo ✘")
       end
     end
   end

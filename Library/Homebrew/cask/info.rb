@@ -91,8 +91,25 @@ module Cask
     def self.deps_info(cask)
       depends_on = cask.depends_on
 
-      formula_deps = Array(depends_on[:formula]).map(&:to_s)
-      cask_deps = Array(depends_on[:cask]).map { |dep| "#{dep} (cask)" }
+      formula_deps = Array(depends_on[:formula]).map do |dep|
+        name = dep.to_s
+        installed = begin
+          Formula[name].any_version_installed?
+        rescue FormulaUnavailableError
+          false
+        end
+        decorate_dependency(name, installed:)
+      end
+
+      cask_deps = Array(depends_on[:cask]).map do |dep|
+        name = dep.to_s
+        installed = begin
+          CaskLoader.load(name).installed?
+        rescue CaskUnavailableError
+          false
+        end
+        decorate_dependency("#{name} (cask)", installed:)
+      end
 
       all_deps = formula_deps + cask_deps
       return if all_deps.empty?
@@ -101,6 +118,11 @@ module Cask
         #{ohai_title("Dependencies")}
         #{all_deps.join(", ")}
       EOS
+    end
+
+    sig { params(dep: String, installed: T::Boolean).returns(String) }
+    def self.decorate_dependency(dep, installed:)
+      installed ? pretty_installed(dep) : pretty_uninstalled(dep)
     end
 
     sig { params(cask: Cask).returns(T.nilable(String)) }
