@@ -66,6 +66,78 @@ RSpec.describe Cask::Info, :cask do
     EOS
   end
 
+  it "decorates installed dependencies as plain text without TTY" do
+    expect(described_class.decorate_dependency("foo", installed: true)).to eq("foo")
+  end
+
+  it "decorates uninstalled dependencies as plain text without TTY" do
+    expect(described_class.decorate_dependency("foo", installed: false)).to eq("foo")
+  end
+
+  it "decorates installed dependencies with a checkmark when TTY" do
+    allow($stdout).to receive(:tty?).and_return(true)
+    expect(described_class.decorate_dependency("foo", installed: true)).to include("✔")
+  end
+
+  it "decorates uninstalled dependencies with a cross when TTY" do
+    allow($stdout).to receive(:tty?).and_return(true)
+    expect(described_class.decorate_dependency("foo", installed: false)).to include("✘")
+  end
+
+  it "shows installed indicator for installed cask dependencies" do
+    allow($stdout).to receive(:tty?).and_return(true)
+    cask = Cask::CaskLoader.load("with-depends-on-cask-multiple")
+
+    dep_cask = instance_double(Cask::Cask, installed?: true)
+    allow(Cask::CaskLoader).to receive(:load).with("local-caffeine").and_return(dep_cask)
+    allow(Cask::CaskLoader).to receive(:load).with("local-transmission-zip").and_return(dep_cask)
+
+    result = described_class.deps_info(cask)
+    expect(result).to include("✔")
+  end
+
+  it "shows uninstalled indicator for uninstalled cask dependencies" do
+    allow($stdout).to receive(:tty?).and_return(true)
+    cask = Cask::CaskLoader.load("with-depends-on-cask-multiple")
+
+    dep_cask = instance_double(Cask::Cask, installed?: false)
+    allow(Cask::CaskLoader).to receive(:load).with("local-caffeine").and_return(dep_cask)
+    allow(Cask::CaskLoader).to receive(:load).with("local-transmission-zip").and_return(dep_cask)
+
+    result = described_class.deps_info(cask)
+    expect(result).to include("✘")
+  end
+
+  it "shows installed indicator for installed formula dependencies" do
+    allow($stdout).to receive(:tty?).and_return(true)
+    cask = Cask::CaskLoader.load("with-depends-on-everything")
+
+    formula = instance_double(Formula, any_version_installed?: true)
+    allow(Formula).to receive(:[]).with("unar").and_return(formula)
+
+    dep_cask_installed = instance_double(Cask::Cask, installed?: true)
+    allow(Cask::CaskLoader).to receive(:load).with("local-caffeine").and_return(dep_cask_installed)
+    allow(Cask::CaskLoader).to receive(:load).with("with-depends-on-cask").and_return(dep_cask_installed)
+
+    result = described_class.deps_info(cask)
+    expect(result).to include("✔")
+  end
+
+  it "shows uninstalled indicator for uninstalled formula dependencies" do
+    allow($stdout).to receive(:tty?).and_return(true)
+    cask = Cask::CaskLoader.load("with-depends-on-everything")
+
+    formula = instance_double(Formula, any_version_installed?: false)
+    allow(Formula).to receive(:[]).with("unar").and_return(formula)
+
+    dep_cask = instance_double(Cask::Cask, installed?: false)
+    allow(Cask::CaskLoader).to receive(:load).with("local-caffeine").and_return(dep_cask)
+    allow(Cask::CaskLoader).to receive(:load).with("with-depends-on-cask").and_return(dep_cask)
+
+    result = described_class.deps_info(cask)
+    expect(result).to include("✘")
+  end
+
   it "prints auto_updates if the Cask has `auto_updates true`" do
     expect do
       described_class.info(Cask::CaskLoader.load("with-auto-updates"), args:)
