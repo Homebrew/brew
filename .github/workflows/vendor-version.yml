@@ -15,7 +15,7 @@ defaults:
 
 jobs:
   check-vendor-version:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     steps:
       - name: Set up Homebrew
         id: set-up-homebrew

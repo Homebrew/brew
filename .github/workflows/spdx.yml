@@ -20,7 +20,7 @@ defaults:
 jobs:
   spdx:
     if: github.repository == 'Homebrew/brew'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     steps:
       - name: Set up Homebrew
         id: set-up-homebrew

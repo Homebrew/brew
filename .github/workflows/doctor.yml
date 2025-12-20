@@ -22,7 +22,7 @@ defaults:
 
 jobs:
   determine-runners:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     outputs:
       runners: ${{ steps.determine-runners.outputs.runners }}
     steps:
