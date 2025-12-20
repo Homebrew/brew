@@ -29,7 +29,7 @@ concurrency:
 jobs:
   syntax:
     if: github.repository_owner == 'Homebrew'
-    runs-on: ubuntu-slim
+    runs-on: ubuntu-latest
     steps:
       - name: Set up Homebrew
         id: set-up-homebrew
@@ -162,7 +162,7 @@ jobs:
   vendored-gems:
     name: vendored gems
     needs: syntax
-    runs-on: ubuntu-slim
+    runs-on: ubuntu-latest
     steps:
       - name: Set up Homebrew
         id: set-up-homebrew

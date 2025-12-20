@@ -23,7 +23,7 @@ defaults:
 
 jobs:
   docs:
-    runs-on: ubuntu-slim
+    runs-on: ubuntu-latest
     steps:
       - name: Set up Homebrew
         id: set-up-homebrew

@@ -28,7 +28,7 @@ defaults:
 
 jobs:
   updates:
-    runs-on: ubuntu-slim
+    runs-on: ubuntu-latest
     if: github.repository == 'Homebrew/brew'
     steps:
       - name: Setup Homebrew
