@@ -226,7 +226,7 @@ module Utils
       sig { params(string: String).returns(String) }
       def pretty_outdated(string)
         if !$stdout.tty?
-          "#{string} ⚠"
+          string
         elsif Homebrew::EnvConfig.no_emoji?
           Formatter.error("#{Tty.bold}#{string} (outdated)#{Tty.reset}")
         else
