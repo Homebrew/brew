@@ -8,6 +8,10 @@ RSpec.describe Cask::Info, :cask do
 
   let(:args) { instance_double(Homebrew::Cmd::Info::Args) }
 
+  def uninstalled(string)
+    "#{Tty.bold}#{string} #{Formatter.error("✘")}#{Tty.reset}"
+  end
+
   before do
     # Prevent unnecessary network requests in `Utils::Analytics.cask_output`
     ENV["HOMEBREW_NO_ANALYTICS"] = "1"
@@ -31,7 +35,6 @@ RSpec.describe Cask::Info, :cask do
   end
 
   it "prints cask dependencies if the Cask has any" do
-    allow_any_instance_of(IO).to receive(:tty?).and_return(true)
     allow_any_instance_of(StringIO).to receive(:tty?).and_return(true)
     expect do
       described_class.info(Cask::CaskLoader.load("with-depends-on-cask-multiple"), args:)
@@ -45,14 +48,13 @@ RSpec.describe Cask::Info, :cask do
       #{ohai_title "Description"}
       #{Formatter.error("None")}
       #{ohai_title "Dependencies"}
-      #{Tty.bold}local-caffeine (cask) #{Formatter.error("✘")}#{Tty.reset}, #{Tty.bold}local-transmission-zip (cask) #{Formatter.error("✘")}#{Tty.reset}
+      #{uninstalled("local-caffeine (cask)")}, #{uninstalled("local-transmission-zip (cask)")}
       #{ohai_title "Artifacts"}
       Caffeine.app (App)
     EOS
   end
 
   it "prints cask and formulas dependencies if the Cask has both" do
-    allow_any_instance_of(IO).to receive(:tty?).and_return(true)
     allow_any_instance_of(StringIO).to receive(:tty?).and_return(true)
     expect do
       described_class.info(Cask::CaskLoader.load("with-depends-on-everything"), args:)
@@ -66,7 +68,7 @@ RSpec.describe Cask::Info, :cask do
       #{ohai_title "Description"}
       #{Formatter.error("None")}
       #{ohai_title "Dependencies"}
-      #{Tty.bold}unar #{Formatter.error("✘")}#{Tty.reset}, #{Tty.bold}local-caffeine (cask) #{Formatter.error("✘")}#{Tty.reset}, #{Tty.bold}with-depends-on-cask (cask) #{Formatter.error("✘")}#{Tty.reset}
+      #{uninstalled("unar")}, #{uninstalled("local-caffeine (cask)")}, #{uninstalled("with-depends-on-cask (cask)")}
       #{ohai_title "Artifacts"}
       Caffeine.app (App)
     EOS
