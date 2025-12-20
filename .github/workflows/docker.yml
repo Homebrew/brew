@@ -23,7 +23,7 @@ env:
 jobs:
   generate-tags:
     if: github.repository_owner == 'Homebrew'
-    runs-on: ubuntu-slim
+    runs-on: ubuntu-latest
     outputs:
       matrix: ${{ steps.attributes.outputs.matrix }}
       tags: ${{ steps.attributes.outputs.tags }}
