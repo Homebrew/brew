@@ -242,12 +242,12 @@ RSpec.describe Homebrew::Cmd::UpdateReport do
       allow(Homebrew::SimulateSystem).to receive(:simulating_or_running_on_linux?).and_return(false)
       expect { hub.dump }.to output(<<~EOS).to_stdout
         ==> Deleted Installed Formulae
-        bar ✘
-        baz ✘
-        foo ✘
+        bar
+        baz
+        foo
         ==> Deleted Installed Casks
-        cask1 ✘
-        cask2 ✘
+        cask1
+        cask2
       EOS
     end
 

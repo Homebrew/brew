@@ -215,7 +215,7 @@ module Utils
       sig { params(string: String).returns(String) }
       def pretty_installed(string)
         if !$stdout.tty?
-          "#{string} ✔"
+          string
         elsif Homebrew::EnvConfig.no_emoji?
           Formatter.success("#{Tty.bold}#{string} (installed)#{Tty.reset}")
         else
@@ -237,7 +237,7 @@ module Utils
       sig { params(string: String).returns(String) }
       def pretty_uninstalled(string)
         if !$stdout.tty?
-          "#{string} ✘"
+          string
         elsif Homebrew::EnvConfig.no_emoji?
           Formatter.error("#{Tty.bold}#{string} (uninstalled)#{Tty.reset}")
         else
