@@ -17,7 +17,7 @@ module Debrew
       Debrew.debrew { super }
     end
 
-    sig { returns(T.nilable(T::Boolean)) }
+    sig { void }
     def test
       Debrew.debrew { super }
     end

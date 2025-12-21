@@ -49,14 +49,13 @@ begin
   ENV.setup_build_environment(formula:, testing_formula: true)
   Pathname.activate_extensions!
 
-  # tests can also return false to indicate failure
-  run_test = proc { |_| raise "test returned false" if formula.run_test(keep_tmp: args.keep_tmp?) == false }
+  keep_tmp = args.keep_tmp?
   if args.debug? # --debug is interactive
-    run_test.call(nil)
+    formula.run_test(keep_tmp:)
   else
     # HOMEBREW_TEST_TIMEOUT_SECS is private API and subject to change.
     timeout = ENV["HOMEBREW_TEST_TIMEOUT_SECS"]&.to_i || DEFAULT_TEST_TIMEOUT_SECONDS
-    Timeout.timeout(timeout, &run_test)
+    Timeout.timeout(timeout) { formula.run_test(keep_tmp:) }
   end
 # Any exceptions during the test run are reported.
 rescue Exception => e # rubocop:disable Lint/RescueException
