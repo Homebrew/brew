@@ -1,4 +1,5 @@
 # typed: strict
+# rubocop:disable RSpec/NoExpectationExample
 # frozen_string_literal: true
 
 require "cmd/shared_examples/args_parse"
@@ -13,7 +14,7 @@ RSpec.describe Homebrew::DevCmd::GenerateCaskCiMatrix do
     let(:standard_cask) { Cask::CaskLoader.load(TEST_FIXTURE_DIR/"cask/Casks/basic-cask.rb") }
 
     it "returns only [:intel] for Casks with an on_linux arch dependency" do
-      expect(cmd.architectures(cask: linux_arch_cask)).to eq([:intel])
+      T.unsafe(self).expect(cmd.architectures(cask: linux_arch_cask)).to T.unsafe(self).eq([:intel])
     end
 
     it "returns all runners for standard Casks" do
@@ -21,7 +22,9 @@ RSpec.describe Homebrew::DevCmd::GenerateCaskCiMatrix do
       expected_archs = Homebrew::DevCmd::GenerateCaskCiMatrix::RUNNERS.keys.map do |r|
         r.fetch(:arch).to_sym
       end.uniq.sort
-      expect(cmd.architectures(cask: standard_cask)).to eq(expected_archs)
+      T.unsafe(self).expect(cmd.architectures(cask: standard_cask)).to T.unsafe(self).eq(expected_archs)
     end
   end
 end
+
+# rubocop:enable RSpec/NoExpectationExample
