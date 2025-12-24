@@ -41,6 +41,41 @@ module RuboCop
         end
       end
 
+      # This cop makes sure that `url`s use HTTPS.
+      class HttpUrls < FormulaCop
+        extend AutoCorrector
+
+        sig { override.params(formula_nodes: FormulaNodes).void }
+        def audit_formula(formula_nodes)
+          return if (body_node = formula_nodes.body_node).nil?
+          return if formula_tap != "homebrew-core"
+          # TODO: Remove the deprecated/disabled check after homebrew/core has no more
+          # deprecated/disabled formulae using http:// URLs
+          return if method_called_ever?(body_node, :deprecate!) || method_called_ever?(body_node, :disable!)
+
+          urls = find_every_func_call_by_name(body_node, :url)
+
+          # Identify livecheck URL to skip checking it (symbols like :homepage are implicitly skipped)
+          livecheck_url = if (livecheck = find_every_func_call_by_name(body_node, :livecheck).first) &&
+                             (livecheck_url_node = find_every_func_call_by_name(livecheck.parent, :url).first)
+            string_content(parameters(livecheck_url_node).first)
+          end
+
+          urls.each do |url_node|
+            url_string_node = parameters(url_node).first
+            url_string = string_content(url_string_node)
+
+            next unless url_string.start_with?("http://")
+            next if url_string == livecheck_url
+
+            offending_node(url_string_node)
+            problem "Formulae in homebrew/core should not use http:// URLs" do |corrector|
+              corrector.replace(url_string_node.source_range, url_string_node.source.sub("http://", "https://"))
+            end
+          end
+        end
+      end
+
       # This cop makes sure that the correct format for PyPI URLs is used.
       class PyPiUrls < FormulaCop
         sig { override.params(formula_nodes: FormulaNodes).void }

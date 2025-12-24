@@ -39,6 +39,19 @@ module RuboCop
 
           audit_url(:cask, [stanza.stanza_node], [], livecheck_url: false)
 
+          # Check for http:// URLs in homebrew-cask (skip deprecated/disabled casks)
+          # TODO: Remove the deprecated/disabled check after Homebrew/cask has no more
+          # deprecated/disabled casks using http:// URLs
+          deprecated_or_disabled = toplevel_stanzas.any? { |s| [:deprecate!, :disable!].include?(s.stanza_name) }
+          if cask_tap == "homebrew-cask" && !deprecated_or_disabled && url_stanza.source.match?(%r{^"http://})
+            add_offense(
+              stanza_node.source_range,
+              message: "Casks in homebrew/cask should not use http:// URLs",
+            ) do |corrector|
+              corrector.replace(stanza_node.source_range, stanza_node.source.sub("http://", "https://"))
+            end
+          end
+
           return unless hash_node.hash_type?
 
           unless stanza_node.source.match?(/",\n      *\w+:/)
