@@ -1,11 +1,16 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
 
 module Homebrew
   module TestBot
     class FormulaeDependents < TestFormulae
-      attr_writer :testing_formulae, :tested_formulae
+      sig { params(testing_formulae: T::Array[String]).returns(T::Array[String]) }
+      attr_writer :testing_formulae
 
+      sig { params(tested_formulae: T::Array[String]).returns(T::Array[String]) }
+      attr_writer :tested_formulae
+
+      sig { params(args: Cmd::TestBotCmd::Args).void }
       def run!(args:)
         test "brew", "untap", "--force", "homebrew/cask" if !tap&.core_cask_tap? && CoreCaskTap.instance.installed?
 
@@ -16,10 +21,9 @@ module Homebrew
         info_header "Skipped or failed formulae:"
         puts skipped_or_failed_formulae
 
-        @testing_formulae_with_tested_dependents = []
-        @tested_dependents_list = Pathname("tested-dependents-#{Utils::Bottles.tag}.txt")
+        @tested_dependents_list = Pathname.new("tested-dependents-#{Utils::Bottles.tag}.txt")
 
-        @dependent_testing_formulae = sorted_formulae - skipped_or_failed_formulae
+        @dependent_testing_formulae = T.let(sorted_formulae - skipped_or_failed_formulae, T.nilable(T::Array[String]))
 
         install_formulae_if_needed_from_bottles!(installable_bottles, args:)
 
@@ -39,7 +43,7 @@ module Homebrew
           []
         end
 
-        @dependent_testing_formulae.each do |formula_name|
+        @dependent_testing_formulae&.each do |formula_name|
           dependent_formulae!(formula_name, args:)
           puts
         end
@@ -49,13 +53,14 @@ module Homebrew
         # Remove `bash` after it is tested, since leaving a broken `bash`
         # installation in the environment can cause issues with subsequent
         # GitHub Actions steps.
-        return unless @dependent_testing_formulae.include?("bash")
+        return unless @dependent_testing_formulae&.include?("bash")
 
         test "brew", "uninstall", "--formula", "--force", "bash"
       end
 
       private
 
+      sig { params(installable_bottles: T::Array[String], args: Cmd::TestBotCmd::Args).void }
       def install_formulae_if_needed_from_bottles!(installable_bottles, args:)
         installable_bottles.each do |formula_name|
           formula = Formulary.factory(formula_name)
@@ -65,8 +70,9 @@ module Homebrew
         end
       end
 
+      sig { params(formula_name: String, args: Cmd::TestBotCmd::Args).void }
       def dependent_formulae!(formula_name, args:)
-        cleanup_during!(@dependent_testing_formulae, args:)
+        cleanup_during!(T.must(@dependent_testing_formulae), args:)
 
         test_header(:FormulaeDependents, method: "dependent_formulae!(#{formula_name})")
         @testing_formulae_with_tested_dependents << formula_name
@@ -121,6 +127,7 @@ module Homebrew
         end
       end
 
+      sig { params(formula: Formula, formula_name: String, args: Cmd::TestBotCmd::Args).returns([[Formula], [Formula], [Formula]]) }
       def dependents_for_formula(formula, formula_name, args:)
         info_header "Determining dependents..."
 
@@ -178,7 +185,7 @@ module Homebrew
         # Defer formulae which could be tested later
         # i.e. formulae that also depend on something else yet to be built in this test run.
         dependents.reject! do |_, deps|
-          still_to_test = @dependent_testing_formulae - @testing_formulae_with_tested_dependents
+          still_to_test = T.must(@dependent_testing_formulae) - @testing_formulae_with_tested_dependents
           deps.map { |d| d.to_formula.full_name }.intersect?(still_to_test)
         end
 
@@ -193,7 +200,7 @@ module Homebrew
           # rubocop:enable Homebrew/MoveToExtendOS
 
           all_deps_bottled_or_built = deps.all? do |d|
-            bottled_or_built?(d.to_formula, @dependent_testing_formulae)
+            bottled_or_built?(d.to_formula, T.must(@dependent_testing_formulae))
           end
           args.build_dependents_from_source? && all_deps_bottled_or_built
         end
@@ -224,6 +231,14 @@ module Homebrew
         [source_dependents, bottled_dependents, testable_dependents]
       end
 
+      sig {
+        params(
+          dependent:           Formula,
+          testable_dependents: T::Array[Formula],
+          args:                Cmd::TestBotCmd::Args,
+          build_from_source:   T::Boolean,
+        ).void
+      }
       def install_dependent(dependent, testable_dependents, args:, build_from_source: false)
         if @skip_candidates.include?(dependent.full_name) &&
            artifact_cache_valid?(dependent, formulae_dependents: true)
@@ -234,7 +249,7 @@ module Homebrew
         end
 
         if (messages = unsatisfied_requirements_messages(dependent))
-          skipped dependent, messages
+          skipped dependent.name, messages
           return
         end
 
@@ -244,7 +259,7 @@ module Homebrew
           return
         end
 
-        cleanup_during!(@dependent_testing_formulae, args:)
+        cleanup_during!(T.must(@dependent_testing_formulae), args:)
 
         required_dependent_deps = dependent.deps.reject(&:optional?)
         bottled_on_current_version = bottled?(dependent, no_older_versions: true)
@@ -388,6 +403,7 @@ module Homebrew
         end
       end
 
+      sig { params(formula: Formula).void }
       def unlink_conflicts(formula)
         return if formula.keg_only?
         return if formula.linked_keg.exist?
