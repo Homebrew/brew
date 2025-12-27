@@ -368,11 +368,15 @@ class Resource
 
   # A resource containing a patch.
   class Patch < Resource
-    attr_reader :patch_files
+    attr_reader :patch_files, :remove_with_version_bump, :remove_with_version_bump_notes,
+                :remove_with_version_bump_issue_ref
 
     def initialize(&block)
       @patch_files = []
       @directory = nil
+      @remove_with_version_bump = false
+      @remove_with_version_bump_notes = nil
+      @remove_with_version_bump_issue_ref = nil
       super "patch", &block
     end
 
@@ -386,6 +390,30 @@ class Resource
       return @directory if val.nil?
 
       @directory = val
+    end
+
+    # Marks this patch to be removed when the formula version is bumped.
+    # This is useful for patches that are only needed for a specific version
+    # (e.g., version bump patches) or patches that have been merged upstream.
+    #
+    # @param notes [String, nil] Optional notes about why the patch should be removed
+    # @param issue_ref [String, nil] Optional reference to a PR or issue
+    # @example
+    #   patch do
+    #     url "https://example.com/patch.patch"
+    #     sha256 "..."
+    #     remove_with_version_bump!
+    #   end
+    # @example With notes and issue reference
+    #   patch do
+    #     url "https://example.com/patch.patch"
+    #     sha256 "..."
+    #     remove_with_version_bump! notes: "Patch merged upstream", issue_ref: "https://github.com/foo/bar/pull/123"
+    #   end
+    def remove_with_version_bump!(notes: nil, issue_ref: nil)
+      @remove_with_version_bump = true
+      @remove_with_version_bump_notes = notes
+      @remove_with_version_bump_issue_ref = issue_ref
     end
 
     sig { override.returns(String) }

@@ -111,7 +111,9 @@ class ExternalPatch
 
   def_delegators :resource,
                  :url, :fetch, :patch_files, :verify_download_integrity,
-                 :cached_download, :downloaded?, :clear_cache
+                 :cached_download, :downloaded?, :clear_cache,
+                 :remove_with_version_bump, :remove_with_version_bump_notes,
+                 :remove_with_version_bump_issue_ref
 
   def initialize(strip, &block)
     @strip    = strip
