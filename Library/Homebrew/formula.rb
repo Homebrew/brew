@@ -1751,7 +1751,7 @@ class Formula
 
   sig { params(fetch_head: T::Boolean).returns(T::Array[Keg]) }
   def outdated_kegs(fetch_head: false)
-    raise Migrator::MigrationNeededError.new(oldnames_to_migrate.first, name) if migration_needed?
+    raise Migrator::MigrationNeededError.new(oldnames_to_migrate.fetch(0), name) if migration_needed?
 
     cache_key = "#{full_name}-#{fetch_head}"
     Formula.cache[:outdated_kegs] ||= {}
