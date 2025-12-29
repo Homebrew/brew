@@ -765,7 +765,7 @@ EOS
           # shellcheck disable=SC2016
           echo 'Adjust how often this is run with `$HOMEBREW_AUTO_UPDATE_SECS` or disable with' >&2
           # shellcheck disable=SC2016
-          echo '`$HOMEBREW_NO_AUTO_UPDATE=1`. Hide these hints with `$HOMEBREW_NO_ENV_HINTS=1` (see `man brew`).' >&2
+          echo '`HOMEBREW_NO_AUTO_UPDATE=1`. Hide these hints with `HOMEBREW_NO_ENV_HINTS=1` (see `man brew`).' >&2
         fi
       else
         ohai 'Updating Homebrew...' >&2
