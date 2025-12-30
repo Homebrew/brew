@@ -99,7 +99,7 @@ module Homebrew
         stdout_thread = Thread.new do
           stdout.each_char { |char| buffer << char }
         rescue Errno::EIO, IOError
-          # Ignore Error::EIO raised by Linux when read is done on a closed pty.
+          # Ignore Errno::EIO raised by Linux when read is done on a closed pty.
           # Ignore IOError from closing stdout on another thread.
         end
 
