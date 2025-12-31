@@ -1,5 +1,5 @@
 ---
-last_review_date: "1970-01-01"
+last_review_date: "2025-12-31"
 ---
 
 # Anonymous Analytics
@@ -45,13 +45,12 @@ You can also view all the information that is sent by Homebrew's analytics by se
 
 It is impossible for the Homebrew developers to match any particular event to any particular user. We do not store or receive IP addresses.
 
-## When/Where?
-
+## When/Where?"We prioritize user privacy by ensuring that no personally identifiable information (PII) is included in the analytics sent to InfluxDB."
 Homebrew's analytics are sent throughout Homebrew's execution to InfluxDB over HTTPS.
 
 ## Who?
 
-Aggregates of analytics events are [publicly available](https://formulae.brew.sh/analytics/). A JSON API is also available. The majority of Homebrew maintainers are not granted more detailed analytics data beyond these public resources.
+Analytics event aggregates are [publicly accessible via our dashboard](https://formulae.brew.sh/analytics/) and a JSON API. Most Homebrew maintainers only have access to these public resources and do not see detailed raw data."
 
 ## How?
 
@@ -59,11 +58,10 @@ The code is viewable in [`analytics.rb`](https://github.com/Homebrew/brew/blob/H
 
 ## Opting out
 
-Homebrew analytics helps us maintainers and leaving it on is appreciated. However, if you want to opt out of Homebrew's analytics, you can set this variable in your environment:
-
+While analytics help maintainers improve the project, you can opt out at any time by setting the following environment variable:"
 ```sh
-export HOMEBREW_NO_ANALYTICS=1
-```
+export HOMEBREW_NO_ANALYTICS=1```
+
 
 Alternatively, this will prevent analytics from ever being sent:
 
