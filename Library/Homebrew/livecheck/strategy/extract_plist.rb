@@ -103,10 +103,28 @@ module Homebrew
           match_data = { matches: {}, regex:, url: }
 
           unversioned_cask_checker = if url.present? && url != cask.url.to_s
-            # Create a copy of the `cask` that uses the `livecheck` block URL
+            # Create a copy of the `cask` to use the `livecheck` block URL
             cask_copy = Cask::CaskLoader.load(cask.sourcefile_path)
             cask_copy.allow_reassignment = true
-            cask_copy.url url
+
+            # Collect the `Cask::URL` initializer keyword parameter symbols
+            @cask_url_kw_params ||= T.let(
+              T::Utils.signature_for_method(
+                Cask::URL.instance_method(:initialize),
+              ).parameters.filter_map { |type, sym| (type == :key) ? sym : nil },
+              T.nilable(T::Array[Symbol]),
+            )
+
+            # Use `livecheck` block URL options that correspond to a `Cask::URL`
+            # keyword parameter
+            url_kwargs = {}
+            cask.livecheck.options.url_options.compact.each_key do |option_key|
+              next unless @cask_url_kw_params.include?(option_key)
+
+              url_kwargs[option_key] = cask.livecheck.options.public_send(option_key)
+            end
+            cask_copy.url(url, **url_kwargs)
+
             UnversionedCaskChecker.new(cask_copy)
           else
             UnversionedCaskChecker.new(cask)
