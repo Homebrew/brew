@@ -375,6 +375,99 @@ module Homebrew
             EOS
           end
 
+          # Remove patches marked with remove_with_version_bump! if version changed
+          if new_formula_version > old_formula_version
+            patches_to_remove = commit_formula.patchlist.select(&:remove_with_version_bump)
+            if patches_to_remove.present?
+              ohai "Removing patches marked with remove_with_version_bump!"
+              lines = new_contents.lines
+              indices_to_remove = []
+
+              patches_to_remove.each do |patch|
+                next unless patch.is_a?(ExternalPatch)
+
+                patch_url = patch.url.to_s
+
+                # Find the patch block by matching from patch do to end
+                patch_start_idx = T.let(nil, T.nilable(Integer))
+                patch_end_idx = T.let(nil, T.nilable(Integer))
+                base_indent = T.let(nil, T.nilable(Integer))
+
+                # Find the start of the patch block containing our URL and remove_with_version_bump!
+                lines.each_with_index do |line, idx|
+                  next if indices_to_remove.any? { |range| range.include?(idx) }
+
+                  next unless line.match?(/^(\s+)patch\s+(?::\w+)?\s+do\s*$/)
+
+                  # Check if this block contains our URL and remove_with_version_bump!
+                  # Look ahead up to 30 lines to find both
+                  lookahead_lines = lines[idx..[idx + 30, lines.length - 1].min]
+                  next if lookahead_lines.nil?
+
+                  lookahead_text = lookahead_lines.join
+                  next unless lookahead_text.include?(patch_url)
+                  next unless lookahead_text.include?("remove_with_version_bump!")
+
+                  patch_start_idx = idx
+                  indent_match = line[/^\s*/]
+                  base_indent = indent_match ? indent_match.length : 0
+                  break
+                end
+
+                # Find the matching end
+                if patch_start_idx
+                  block_depth = 1
+                  remaining_lines = lines[(patch_start_idx + 1)..]
+                  remaining_lines&.each_with_index do |line, rel_idx|
+                    indent_match = line[/^\s*/]
+                    current_indent = indent_match ? indent_match.length : 0
+                    if line.match?(/^\s+do\s*$/) && base_indent && current_indent > base_indent
+                      block_depth += 1
+                    elsif line.match?(/^\s+end\s*$/)
+                      if base_indent && current_indent == base_indent
+                        block_depth -= 1
+                        if block_depth.zero?
+                          patch_end_idx = patch_start_idx + rel_idx + 1
+                          break
+                        end
+                      elsif base_indent && current_indent > base_indent
+                        block_depth -= 1
+                      end
+                    end
+                  end
+                end
+
+                if patch_start_idx && patch_end_idx
+                  indices_to_remove << (patch_start_idx..patch_end_idx)
+                  ohai "Removed patch: #{patch_url}"
+                  if patch.remove_with_version_bump_notes.present?
+                    ohai "  Notes: #{patch.remove_with_version_bump_notes}"
+                  end
+                  if patch.remove_with_version_bump_issue_ref.present?
+                    ohai "  Reference: #{patch.remove_with_version_bump_issue_ref}"
+                  end
+                else
+                  opoo "Could not find patch block to remove for: #{patch_url}"
+                end
+              end
+
+              # Remove all patch blocks in reverse order to preserve indices
+              if indices_to_remove.present?
+                indices_to_remove.sort_by(&:begin).reverse.each do |range|
+                  range.to_a.reverse.each { |i| lines.delete_at(i) }
+                end
+                new_contents = lines.join
+
+                # Write the updated contents back
+                unless args.dry_run?
+                  commit_formula.path.atomic_write(new_contents)
+                  # Reload the formula to get updated patch list
+                  commit_formula = Formula[commit_formula.name]
+                end
+              end
+            end
+          end
+
           alias_rename = alias_update_pair(commit_formula, new_formula_version)
           if alias_rename.present?
             ohai "Renaming alias #{alias_rename.first} to #{alias_rename.last}"

@@ -24,6 +24,7 @@ module RuboCop
             sha256_node = find_every_method_call_by_name(patch_block, :sha256).first
             sha256_string = parameters(sha256_node).first if sha256_node
             patch_problems(url_string, sha256_string)
+            check_remove_with_version_bump(patch_block)
           end
 
           inline_patches = find_every_method_call_by_name(body_node, :patch)
@@ -157,6 +158,19 @@ module RuboCop
             source_range(@source_buf, @line_no, @column, @length),
             T.nilable(Parser::Source::Range),
           )
+        end
+
+        sig { params(patch_block: RuboCop::AST::Node).void }
+        def check_remove_with_version_bump(patch_block)
+          remove_with_version_bump_nodes = find_every_method_call_by_name(patch_block, :remove_with_version_bump!)
+          return if remove_with_version_bump_nodes.empty?
+
+          remove_with_version_bump_nodes.each do |node|
+            offending_node(node)
+            problem "Patch marked with `remove_with_version_bump!` should be removed when the " \
+                    "formula version is bumped. Run `brew bump-formula-pr` to automatically " \
+                    "remove it, or remove it manually."
+          end
         end
       end
     end
