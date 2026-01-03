@@ -1942,6 +1942,7 @@ RSpec.describe Formula do
           FileUtils.chmod "+x", bin/"foo"
 
           generate_completions_from_executable(bin/"foo", "test")
+          generate_completions_from_executable(bin/"foo", base_name: "bar", shell_parameter_format: :click)
         end
       end.new
     end
@@ -1951,6 +1952,11 @@ RSpec.describe Formula do
       expect(f.bash_completion/"foo").to be_a_file
       expect(f.zsh_completion/"_foo").to be_a_file
       expect(f.fish_completion/"foo.fish").to be_a_file
+
+      expect(f.bash_completion(compat: false)/"bar").to be_a_file
+      expect(f.bash_completion/"bar").not_to exist
+      expect(f.zsh_completion/"_bar").to be_a_file
+      expect(f.fish_completion/"bar.fish").to be_a_file
     end
   end
 
