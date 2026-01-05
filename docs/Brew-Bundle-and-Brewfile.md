@@ -234,7 +234,7 @@ You can check for this variable in your scripts like:
 
 ```bash
 if [ -n "${HOMEBREW_INSIDE_BUNDLE}" ]; then
-  echo "Running inside brew bundle exec"
+  echo "Running inside brew bundle environment"
 fi
 ```
 
