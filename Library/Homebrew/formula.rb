@@ -3938,16 +3938,26 @@ class Formula
     # is unreliable. If {.url} is really unreliable then we may swap the
     # {.mirror} and {.url}.
     #
-    # ### Example
+    # Mirrors support the same `using:` options as {.url}:
+    # - `:nounzip` (without extracting)
+    # - `:curl` (normal file download)
+    # - `:homebrew_curl` (use brewed `curl`)
+    # - etc.
+    #
+    # ### Examples
     #
     # ```ruby
     # mirror "https://in.case.the.host.is.down.example.com"
-    # mirror "https://in.case.the.mirror.is.down.example.com
+    # mirror "https://in.case.the.mirror.is.down.example.com"
+    # ```
+    #
+    # ```ruby
+    # mirror "https://example.com/download.zip", using: :nounzip
     # ```
     #
     # @api public
-    sig { params(val: String).void }
-    def mirror(val) = stable.mirror(val)
+    sig { params(val: String, specs: T::Hash[Symbol, T.anything]).void }
+    def mirror(val, **specs) = stable.mirror(val, **specs)
 
     # @scope class
     # To verify the cached download's integrity and security we verify the

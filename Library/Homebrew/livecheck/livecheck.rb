@@ -552,7 +552,7 @@ module Homebrew
       when Formula
         if package_or_resource.stable
           urls << T.must(package_or_resource.stable).url
-          urls.concat(T.must(package_or_resource.stable).mirrors)
+          urls.concat(T.must(package_or_resource.stable).mirrors.map(&:to_s))
         end
         urls << T.must(package_or_resource.head).url if package_or_resource.head
         urls << package_or_resource.homepage if package_or_resource.homepage

@@ -186,7 +186,7 @@ module Homebrew
             opoo "This formula has resources that may need to be updated."
           end
 
-          old_mirrors = commit_formula_spec.mirrors
+          old_mirrors = commit_formula_spec.mirrors.map(&:to_s)
           new_mirrors ||= args.mirror
           if new_url.present? && (new_mirror = determine_mirror(new_url))
             new_mirrors ||= [new_mirror]
@@ -268,7 +268,7 @@ module Homebrew
             ]
           end
 
-          replacement_pairs += commit_formula_spec.mirrors.map do |mirror|
+          replacement_pairs += commit_formula_spec.mirrors.map(&:to_s).map do |mirror|
             [
               / +mirror "#{Regexp.escape(mirror)}"\n/m,
               "",
@@ -579,7 +579,7 @@ module Homebrew
           end
 
           new_mirrors = resource.mirrors.map do |mirror|
-            update_url(mirror, resource.version.to_s, version)
+            update_url(mirror.to_s, resource.version.to_s, version)
           end
           resource_path, forced_version = fetch_resource_and_forced_version(resource, version, new_url)
           Utils::Tar.validate_file(resource_path)

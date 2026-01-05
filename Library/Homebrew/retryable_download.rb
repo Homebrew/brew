@@ -16,7 +16,7 @@ module Homebrew
     sig { override.returns(T.nilable(Checksum)) }
     def checksum = downloadable.checksum
 
-    sig { override.returns(T::Array[String]) }
+    sig { override.returns(T::Array[URL]) }
     def mirrors = downloadable.mirrors
 
     sig { params(downloadable: Downloadable, tries: Integer, pour: T::Boolean).void }

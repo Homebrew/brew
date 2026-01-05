@@ -20,7 +20,7 @@ module Downloadable
   sig { overridable.returns(T.nilable(Checksum)) }
   attr_reader :checksum
 
-  sig { overridable.returns(T::Array[String]) }
+  sig { overridable.returns(T::Array[URL]) }
   attr_reader :mirrors
 
   sig { overridable.returns(Symbol) }
@@ -41,7 +41,7 @@ module Downloadable
   def initialize
     @url = T.let(nil, T.nilable(URL))
     @checksum = T.let(nil, T.nilable(Checksum))
-    @mirrors = T.let([], T::Array[String])
+    @mirrors = T.let([], T::Array[URL])
     @version = T.let(nil, T.nilable(Version))
     @download_strategy = T.let(nil, T.nilable(T::Class[AbstractDownloadStrategy]))
     @downloader = T.let(nil, T.nilable(AbstractDownloadStrategy))
@@ -122,7 +122,7 @@ module Downloadable
       primary_url, *mirrors = determine_url_mirrors
       raise ArgumentError, "attempted to use a `Downloadable` without a URL!" if primary_url.blank?
 
-      download_strategy.new(primary_url, download_name, version,
+      download_strategy.new(primary_url.to_s, download_name, version,
                             mirrors:, cache:, **T.must(@url).specs)
     end
   end
@@ -210,9 +210,9 @@ module Downloadable
     @url
   end
 
-  sig { overridable.returns(T::Array[String]) }
+  sig { overridable.returns(T::Array[URL]) }
   def determine_url_mirrors
-    [determine_url.to_s, *mirrors].uniq
+    [T.must(determine_url), *mirrors].uniq
   end
 
   sig { overridable.returns(Pathname) }

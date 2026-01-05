@@ -429,13 +429,13 @@ class CurlDownloadStrategy < AbstractFileDownloadStrategy
   # url, basename, time, file_size, content_type, is_redirection
   URLMetadata = T.type_alias { [String, String, T.nilable(Time), T.nilable(Integer), T.nilable(String), T::Boolean] }
 
-  sig { returns(T::Array[String]) }
+  sig { returns(T::Array[URL]) }
   attr_reader :mirrors
 
   sig { params(url: String, name: String, version: T.nilable(T.any(String, Version)), meta: T.untyped).void }
   def initialize(url, name, version, **meta)
     @try_partial = T.let(true, T::Boolean)
-    @mirrors = T.let(meta.fetch(:mirrors, []), T::Array[String])
+    @mirrors = T.let(meta.fetch(:mirrors, []), T::Array[URL])
     @file_size = T.let(nil, T.nilable(Integer))
 
     # Merge `:header` with `:headers`.
@@ -458,7 +458,7 @@ class CurlDownloadStrategy < AbstractFileDownloadStrategy
     begin
       download_lock.lock
 
-      urls = [url, *mirrors]
+      urls = [url, *mirrors.map(&:to_s)]
 
       begin
         url = T.must(urls.shift)
@@ -761,7 +761,7 @@ class CurlApacheMirrorDownloadStrategy < CurlDownloadStrategy
                     .map { |mirror| "#{mirror}#{apache_mirrors["path_info"]}" }
     end
 
-    T.must(@combined_mirrors = T.let([*@mirrors, *backup_mirrors], T.nilable(T::Array[String])))
+    T.must(@combined_mirrors = T.let([*@mirrors.map(&:to_s), *backup_mirrors], T.nilable(T::Array[String])))
   end
 
   sig { override.params(url: String, timeout: T.nilable(T.any(Float, Integer))).returns(URLMetadata) }

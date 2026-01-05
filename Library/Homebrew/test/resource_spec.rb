@@ -119,14 +119,19 @@ RSpec.describe Resource do
   end
 
   describe "#mirrors" do
-    it "is empty by defaults" do
+    it "is empty by default" do
       expect(resource.mirrors).to be_empty
     end
 
     it "returns an array of mirrors added with #mirror" do
       resource.mirror("foo")
       resource.mirror("bar")
-      expect(resource.mirrors).to eq(%w[foo bar])
+      expect(resource.mirrors.map(&:to_s)).to eq(%w[foo bar])
+    end
+
+    it "preserves specs passed to #mirror" do
+      resource.mirror("https://example.com/foo.zip", using: :nounzip)
+      expect(resource.mirrors.first.using).to eq(:nounzip)
     end
   end
 

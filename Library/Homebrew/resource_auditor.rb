@@ -130,7 +130,7 @@ module Homebrew
     end
 
     def audit_urls
-      urls = [url] + mirrors
+      urls = [url, *mirrors.map(&:to_s)]
 
       curl_dep = self.class.curl_deps.include?(owner.name)
       # Ideally `ca-certificates` would not be excluded here, but sourcing a HTTP mirror was tricky.
@@ -143,8 +143,9 @@ module Homebrew
 
       return unless @online
 
+      mirror_strings = mirrors.map(&:to_s)
       urls.each do |url|
-        next if !@strict && mirrors.include?(url)
+        next if !@strict && mirror_strings.include?(url)
 
         strategy = DownloadStrategyDetector.detect(url, using)
         if strategy <= CurlDownloadStrategy && !url.start_with?("file")
