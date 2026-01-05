@@ -220,6 +220,24 @@ brew bundle $ which node
 
 It's got the same backbone as `brew bundle exec` so the same arguments (e.g. `--check`, `--install`, `--services`) apply.
 
+### `HOMEBREW_INSIDE_BUNDLE=1`
+
+When running commands with `brew bundle exec` or `brew bundle sh`, the `HOMEBREW_INSIDE_BUNDLE` environment variable is automatically set to `1`.
+
+This allows scripts and programs to detect when they are running inside a `brew bundle exec` environment, which can be useful for:
+
+- Conditional logic based on whether code is running in a bundled environment
+- Debugging and logging purposes
+- Ensuring certain operations only run within the controlled `brew bundle exec` environment
+
+You can check for this variable in your scripts like:
+
+```bash
+if [ -n "${HOMEBREW_INSIDE_BUNDLE}" ]; then
+  echo "Running inside brew bundle exec"
+fi
+```
+
 ### `brew bundle env`
 
 `brew bundle env` dumps out all the environment variables in a form suitable for adding to a shell.
