@@ -224,11 +224,11 @@ It's got the same backbone as `brew bundle exec` so the same arguments (e.g. `--
 
 When running commands with `brew bundle exec` or `brew bundle sh`, the `HOMEBREW_INSIDE_BUNDLE` environment variable is automatically set to `1`.
 
-This allows scripts and programs to detect when they are running inside a `brew bundle exec` environment, which can be useful for:
+This allows scripts and programs to detect when they are running inside a `brew bundle exec` or `brew bundle sh` environment, which can be useful for:
 
 - Conditional logic based on whether code is running in a bundled environment
 - Debugging and logging purposes
-- Ensuring certain operations only run within the controlled `brew bundle exec` environment
+- Ensuring certain operations only run within the controlled `brew bundle exec` or `brew bundle sh` environment
 
 You can check for this variable in your scripts like:
 
