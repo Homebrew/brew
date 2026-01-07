@@ -3283,23 +3283,27 @@ _brew_which_formula() {
   __brew_complete_commands
 }
 
-_brew_which_entry() {
+_brew_which_update() {
   local cur="${COMP_WORDS[COMP_CWORD]}"
   case "${cur}" in
     -*)
       __brewcomp "
-      --append-to
+      --commit
       --debug
+      --eval-all
       --help
-      --no-fallback
+      --install-missing
+      --max-downloads
       --quiet
+      --stats
+      --summary-file
+      --update-existing
       --verbose
       "
       return
       ;;
     *) ;;
   esac
-  __brew_complete_formulae
 }
 
 _brew() {
@@ -3469,8 +3473,8 @@ _brew() {
     vendor-gems) _brew_vendor_gems ;;
     vendor-install) _brew_vendor_install ;;
     verify) _brew_verify ;;
-    which-entry) _brew_which_entry ;;
     which-formula) _brew_which_formula ;;
+    which-update) _brew_which_update ;;
     *) ;;
   esac
 }

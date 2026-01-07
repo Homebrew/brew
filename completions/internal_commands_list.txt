@@ -133,5 +133,5 @@ uses
 vendor-gems
 vendor-install
 verify
-which-entry
 which-formula
+which-update

@@ -2102,14 +2102,18 @@ __fish_brew_complete_arg 'which-formula' -l verbose -d 'Make some output more ve
 __fish_brew_complete_arg 'which-formula' -a '(__fish_brew_suggest_commands)'
 
 
-__fish_brew_complete_cmd 'which-entry' 'Generate executables database entry from bottle manifest'
-__fish_brew_complete_arg 'which-entry' -l append-to -d 'Append or update entries in the given database file'
-__fish_brew_complete_arg 'which-entry' -l debug -d 'Display any debugging information'
-__fish_brew_complete_arg 'which-entry' -l help -d 'Show this message'
-__fish_brew_complete_arg 'which-entry' -l no-fallback -d 'Do not fall back to scanning the bottle tarball when the manifest is missing annotations'
-__fish_brew_complete_arg 'which-entry' -l quiet -d 'Make some output more quiet'
-__fish_brew_complete_arg 'which-entry' -l verbose -d 'Make some output more verbose'
-__fish_brew_complete_arg 'which-entry' -a '(__fish_brew_suggest_formulae_all)'
+__fish_brew_complete_cmd 'which-update' 'Database update for `brew which-formula`'
+__fish_brew_complete_arg 'which-update' -l commit -d 'Commit the changes using `git`'
+__fish_brew_complete_arg 'which-update' -l debug -d 'Display any debugging information'
+__fish_brew_complete_arg 'which-update' -l eval-all -d 'Evaluate all installed taps, rather than just the core tap'
+__fish_brew_complete_arg 'which-update' -l help -d 'Show this message'
+__fish_brew_complete_arg 'which-update' -l install-missing -d 'Install and update formulae that are missing from the database and don\'t have bottles'
+__fish_brew_complete_arg 'which-update' -l max-downloads -d 'Specify a maximum number of formulae to download and update'
+__fish_brew_complete_arg 'which-update' -l quiet -d 'Make some output more quiet'
+__fish_brew_complete_arg 'which-update' -l stats -d 'Print statistics about the database contents (number of commands and formulae, list of missing formulae)'
+__fish_brew_complete_arg 'which-update' -l summary-file -d 'Output a summary of the changes to a file'
+__fish_brew_complete_arg 'which-update' -l update-existing -d 'Update database entries with outdated formula versions'
+__fish_brew_complete_arg 'which-update' -l verbose -d 'Make some output more verbose'
 
 
 

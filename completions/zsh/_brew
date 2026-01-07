@@ -252,8 +252,8 @@ __brew_internal_commands() {
     'vendor-gems:Install and commit Homebrew'\''s vendored gems'
     'vendor-install:Install Homebrew'\''s portable Ruby'
     'verify:Verify the build provenance of bottles using GitHub'\''s attestation tools'
-    'which-entry:Generate executables database entry from bottle manifest'
     'which-formula:Show which formula(e) provides the given command'
+    'which-update:Database update for `brew which-formula`'
   )
   _describe -t internal-commands 'internal commands' commands
 }
@@ -2581,17 +2581,20 @@ _brew_which_formula() {
     '*:command:__brew_commands'
 }
 
-# brew which-entry
-_brew_which_entry() {
+# brew which-update
+_brew_which_update() {
   _arguments \
-    '--append-to[Append or update entries in the given database file]' \
+    '(--stats)--commit[Commit the changes using `git`]' \
     '--debug[Display any debugging information]' \
+    '--eval-all[Evaluate all installed taps, rather than just the core tap]' \
     '--help[Show this message]' \
-    '--no-fallback[Do not fall back to scanning the bottle tarball when the manifest is missing annotations]' \
+    '(--stats)--install-missing[Install and update formulae that are missing from the database and don'\''t have bottles]' \
+    '(--stats)--max-downloads[Specify a maximum number of formulae to download and update]' \
     '--quiet[Make some output more quiet]' \
-    '--verbose[Make some output more verbose]' \
-    - formula \
-    '*:formula:__brew_formulae'
+    '(--commit --install-missing --update-existing --max-downloads)--stats[Print statistics about the database contents (number of commands and formulae, list of missing formulae)]' \
+    '--summary-file[Output a summary of the changes to a file]' \
+    '(--stats)--update-existing[Update database entries with outdated formula versions]' \
+    '--verbose[Make some output more verbose]'
 }
 
 # The main completion function
