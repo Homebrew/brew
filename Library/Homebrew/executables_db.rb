@@ -270,7 +270,7 @@ module Homebrew
       sig { params(formula: Formula, fallback_to_tar: T::Boolean).returns(T.nilable(String)) }
       def entry_from_manifest(formula, fallback_to_tar: true)
       return unless (bottle = formula.bottle)
-      return unless bottle.bottled?
+      return unless formula.bottled?
 
       manifest_resource = bottle.github_packages_manifest_resource
       return unless manifest_resource
@@ -294,7 +294,12 @@ module Homebrew
       rescue => e
         return unless fallback_to_tar
 
-        odebug "Manifest fetch failed for #{formula.full_name}, falling back to tar scan: #{e.message}"
+        if Context.current.debug?
+          $stderr.puts Formatter.headline(
+            "Manifest fetch failed for #{formula.full_name}, falling back to tar scan: #{e.message}",
+            color: :magenta,
+          )
+        end
       end
 
       # Fallback: scan the bottle tar directly

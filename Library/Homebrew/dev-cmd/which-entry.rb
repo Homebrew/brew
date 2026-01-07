@@ -31,8 +31,9 @@ module Homebrew
         formulae = args.named.to_a.map { |name| Formulary.factory(name) }
 
         lines = []
+        fallback_to_tar = args.flags_only.exclude?("--no-fallback")
         formulae.each do |f|
-          entry = ExecutablesDB.entry_from_manifest(f, fallback_to_tar: !args.no_fallback?)
+          entry = ExecutablesDB.entry_from_manifest(f, fallback_to_tar:)
           if entry.nil?
             opoo "No executables metadata found for #{f.full_name}."
             next
@@ -40,8 +41,9 @@ module Homebrew
           lines << entry
         end
 
-        if (path = args.append_to)
-          update_db_file(Pathname(path), lines)
+        append_to_path = args.value("append-to")
+        if append_to_path
+          update_db_file(Pathname(append_to_path), lines)
         else
           print lines.join
         end
