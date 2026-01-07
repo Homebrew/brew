@@ -3770,39 +3770,18 @@ Note that this command depends on the GitHub CLI. Run `brew install gh`.
 
 : Return JSON for the attestation data for each bottle.
 
-### `which-update` \[*`options`*\] *`database`*
+### `which-entry` [`--append-to=`] [`--no-fallback`] `formula` [...]
 
-Database update for `brew which-formula`.
+Generate an executables database entry for one or more formulae using their bottle manifest metadata.
+When `--append-to` is provided, update or append entries in the specified database file (e.g. `executables.txt`).
 
-`--stats`
+`--append-to`
 
-: Print statistics about the database contents (number of commands and formulae,
-  list of missing formulae).
+: Append or update entries in the given database file.
 
-`--commit`
+`--no-fallback`
 
-: Commit the changes using `git`.
-
-`--update-existing`
-
-: Update database entries with outdated formula versions.
-
-`--install-missing`
-
-: Install and update formulae that are missing from the database and don't have
-  bottles.
-
-`--eval-all`
-
-: Evaluate all installed taps, rather than just the core tap.
-
-`--max-downloads`
-
-: Specify a maximum number of formulae to download and update.
-
-`--summary-file`
-
-: Output a summary of the changes to a file.
+: Do not fall back to scanning the bottle tarball when the manifest is missing annotations.
 
 ## GLOBAL CASK OPTIONS
 

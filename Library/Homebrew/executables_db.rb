@@ -26,11 +26,13 @@ module Homebrew
 
     DB_LINE_REGEX = /^(?<name>.*?)(?:\((?<version>.*)\)):(?<exes_line>.*)?$/
 
+    # Represents a single formula entry in the executables database.
     class FormulaEntry < T::Struct
       const :version, String
       const :binaries, T::Array[String]
     end
 
+    # Tracks changes to the executables database.
     class Changes
       TYPES = [:add, :remove, :update, :version_bump].freeze
 
@@ -259,6 +261,65 @@ module Homebrew
       end
 
       update_formula_binaries formula, binaries
+    end
+
+    class << self
+      # Generate a DB entry line from a formula's bottle manifest.
+      # Uses the sh.brew.path_exec_files annotation when available,
+      # falling back to scanning the tar if needed.
+      sig { params(formula: Formula, fallback_to_tar: T::Boolean).returns(T.nilable(String)) }
+      def entry_from_manifest(formula, fallback_to_tar: true)
+      return unless (bottle = formula.bottle)
+      return unless bottle.bottled?
+
+      manifest_resource = bottle.github_packages_manifest_resource
+      return unless manifest_resource
+
+      # Try to fetch the manifest and extract the path_exec_files annotation
+      begin
+        manifest_resource.fetch
+        manifest_annotations = manifest_resource.send(:manifest_annotations)
+        path_exec_files_str = manifest_annotations["sh.brew.path_exec_files"]
+
+        if path_exec_files_str.present?
+          # Annotation is comma-separated, convert to basenames
+          binaries = path_exec_files_str.split(",")
+                                        .map { |path| Pathname.new(path).basename.to_s }
+                                        .sort
+          version_string = "(#{formula.pkg_version})"
+          return "#{formula.full_name}#{version_string}:#{binaries.join(" ")}\n"
+        elsif !fallback_to_tar
+          return
+        end
+      rescue => e
+        return unless fallback_to_tar
+
+        odebug "Manifest fetch failed for #{formula.full_name}, falling back to tar scan: #{e.message}"
+      end
+
+      # Fallback: scan the bottle tar directly
+      bottle.fetch
+      path = bottle.resource.cached_download.to_s
+      content = Utils.popen_read("tar", "tzvf", path, "*/bin/*", "*/sbin/*")
+      binaries = Set.new
+      prefix = formula.prefix.relative_path_from(HOMEBREW_CELLAR).to_s
+      binpath_re = %r{^#{prefix}/s?bin/}
+
+      content.each_line do |line|
+        next unless /^[l-]r.x/.match?(line)
+
+        line = line.chomp.sub(/\s+->.+$/, "")
+        path_entry = line.split(/\s+/).last
+        next unless binpath_re.match?(path_entry)
+
+        binaries << Pathname.new(path_entry).basename.to_s
+      end
+
+      return if binaries.empty?
+
+      version_string = "(#{formula.pkg_version})"
+      "#{formula.full_name}#{version_string}:#{binaries.sort.join(" ")}\n"
+      end
     end
   end
 end
