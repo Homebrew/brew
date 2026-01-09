@@ -179,21 +179,24 @@ module Cask
       any_loaded = false
       @contains_os_specific_artifacts ||= begin
         OnSystem::VALID_OS_ARCH_TAGS.each do |bottle_tag|
-          Homebrew::SimulateSystem.with_tag(bottle_tag) do
-            refresh
+          begin
+            Homebrew::SimulateSystem.with_tag(bottle_tag) do
+              refresh
 
-            any_loaded = true if artifacts.any? do |artifact|
-              (bottle_tag.linux? && ::Cask::Artifact::MACOS_ONLY_ARTIFACTS.include?(artifact.class)) ||
-              (bottle_tag.macos? && ::Cask::Artifact::LINUX_ONLY_ARTIFACTS.include?(artifact.class))
+              any_loaded = true if artifacts.any? do |artifact|
+                (bottle_tag.linux? && ::Cask::Artifact::MACOS_ONLY_ARTIFACTS.include?(artifact.class)) ||
+                (bottle_tag.macos? && ::Cask::Artifact::LINUX_ONLY_ARTIFACTS.include?(artifact.class))
+              end
             end
+          rescue CaskInvalidError
+            # Invalid for this OS/arch tag; treat as having no OS-specific artifacts.
+            next
+          ensure
+            refresh
           end
         end
 
         any_loaded
-      rescue CaskInvalidError
-        # Invalid cask
-      ensure
-        refresh
       end
 
       @contains_os_specific_artifacts
