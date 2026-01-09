@@ -52,5 +52,7 @@ module Cask
       ::Cask::Artifact::VstPlugin,
       ::Cask::Artifact::Vst3Plugin,
     ].freeze
+
+    LINUX_ONLY_ARTIFACTS = [].freeze
   end
 end

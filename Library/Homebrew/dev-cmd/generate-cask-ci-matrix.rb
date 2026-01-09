@@ -139,21 +139,41 @@ module Homebrew
           RUNNERS.dup
         end
 
-        filtered_runners = filtered_runners.merge(LINUX_RUNNERS) if cask.supports_linux?
-
-        archs = architectures(cask:)
+        macos_archs = architectures(cask:, os: :macos)
         filtered_runners.select! do |runner, _|
-          archs.include?(runner.fetch(:arch))
+          macos_archs.include?(runner.fetch(:arch))
         end
 
-        filtered_runners
+        return filtered_runners unless cask.supports_linux?
+
+        linux_archs = architectures(cask:, os: :linux)
+        linux_runners = LINUX_RUNNERS.select do |runner, _|
+          linux_archs.include?(runner.fetch(:arch))
+        end
+
+        filtered_runners.merge(linux_runners)
       end
 
-      sig { params(cask: Cask::Cask).returns(T::Array[Symbol]) }
-      def architectures(cask:)
-        return RUNNERS.keys.map { |r| r.fetch(:arch).to_sym }.uniq.sort if cask.depends_on.arch.blank?
+      sig { params(cask: Cask::Cask, os: Symbol).returns(T::Array[Symbol]) }
+      def architectures(cask:, os: :macos)
+        architectures = []
+        [:arm, :intel].each do |arch|
+            tag = Utils::Bottles::Tag.new(system: os, arch: arch)
+            Homebrew::SimulateSystem.with_tag(tag) do
+              cask.refresh
 
-        cask.depends_on.arch.map { |arch| arch[:type] }.uniq.sort
+              if cask.depends_on.arch.blank?
+                architectures = RUNNERS.keys.map { |r| r.fetch(:arch).to_sym }.uniq.sort
+                next
+              end
+
+              architectures = cask.depends_on.arch.map { |arch| arch[:type] }
+            end
+        rescue ::Cask::CaskInvalidError
+          # Can't read cask for this system-arch combination.
+        end
+
+        architectures
       end
 
       sig {
@@ -253,9 +273,9 @@ module Homebrew
           runners, multi_os = runners(cask:)
           runners.product(architectures(cask:)).filter_map do |runner, arch|
             native_runner_arch = arch == runner.fetch(:arch)
-            # we don't need to run simulated archs on Linux
+            # we don't need to run simulated archs on Linux or macOS Sequoia
+            # because it has a GitHub hosted x86_64 runner
             next if runner.fetch(:symbol) == :linux && !native_runner_arch
-            # we don't need to run simulated archs on macOS
             next if runner.fetch(:symbol) == :sequoia && !native_runner_arch
 
             # If it's just a single OS test then we can just use the two real arch runners.
