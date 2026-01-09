@@ -158,17 +158,17 @@ module Homebrew
       def architectures(cask:, os: :macos)
         architectures = []
         [:arm, :intel].each do |arch|
-            tag = Utils::Bottles::Tag.new(system: os, arch: arch)
-            Homebrew::SimulateSystem.with_tag(tag) do
-              cask.refresh
+          tag = Utils::Bottles::Tag.new(system: os, arch: arch)
+          Homebrew::SimulateSystem.with_tag(tag) do
+            cask.refresh
 
-              if cask.depends_on.arch.blank?
-                architectures = RUNNERS.keys.map { |r| r.fetch(:arch).to_sym }.uniq.sort
-                next
-              end
-
-              architectures = cask.depends_on.arch.map { |arch| arch[:type] }
+            if cask.depends_on.arch.blank?
+              architectures = RUNNERS.keys.map { |r| r.fetch(:arch).to_sym }.uniq.sort
+              next
             end
+
+            architectures = cask.depends_on.arch.map { |arch| arch[:type] }
+          end
         rescue ::Cask::CaskInvalidError
           # Can't read cask for this system-arch combination.
         end
