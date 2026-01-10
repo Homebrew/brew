@@ -9,7 +9,7 @@ module Concurrent
   # queue of length one, or a special kind of mutable variable.
   #
   # On top of the fundamental `#put` and `#take` operations, we also provide a
-  # `#mutate` that is atomic with respect to operations on the same instance.
+  # `#modify` that is atomic with respect to operations on the same instance.
   # These operations all support timeouts.
   #
   # We also support non-blocking operations `#try_put!` and `#try_take!`, a
@@ -87,7 +87,7 @@ module Concurrent
       @mutex.synchronize do
         wait_for_full(timeout)
 
-        # if we timeoud out we'll still be empty
+        # If we timed out we'll still be empty
         if unlocked_full?
           yield @value
         else
@@ -116,10 +116,10 @@ module Concurrent
     end
 
     # Atomically `take`, yield the value to a block for transformation, and then
-    # `put` the transformed value. Returns the transformed value. A timeout can
+    # `put` the transformed value. Returns the pre-transform value. A timeout can
     # be set to limit the time spent blocked, in which case it returns `TIMEOUT`
     # if the time is exceeded.
-    # @return [Object] the transformed value, or `TIMEOUT`
+    # @return [Object] the pre-transform value, or `TIMEOUT`
     def modify(timeout = nil)
       raise ArgumentError.new('no block given') unless block_given?
 

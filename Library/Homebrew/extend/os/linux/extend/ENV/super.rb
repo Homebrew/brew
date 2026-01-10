@@ -39,7 +39,7 @@ module OS
         self["HOMEBREW_DYNAMIC_LINKER"] = determine_dynamic_linker_path
         self["HOMEBREW_RPATH_PATHS"] = determine_rpath_paths(formula)
         m4_path_deps = ["libtool", "bison"]
-        self["M4"] = "#{HOMEBREW_PREFIX}/opt/m4/bin/m4" if deps.any? { m4_path_deps.include?(_1.name) }
+        self["M4"] = "#{HOMEBREW_PREFIX}/opt/m4/bin/m4" if deps.any? { m4_path_deps.include?(it.name) }
         return unless ::Hardware::CPU.arm64?
 
         # Build jemalloc-sys rust crate on ARM64/AArch64 with support for page sizes up to 64K.

@@ -6,6 +6,7 @@ require "api/cask"
 require "api/formula"
 require "api/internal"
 require "api/formula_struct"
+require "api/cask_struct"
 require "base64"
 require "utils/output"
 

@@ -211,6 +211,8 @@ RSpec.describe Homebrew::Bundle::Commands::Cleanup do
                                                  taps_to_untap:                  [],
                                                  vscode_extensions_to_uninstall: [],
                                                  flatpaks_to_uninstall:          [])
+      allow(Homebrew::Bundle).to receive(:mark_as_installed_on_request!)
+      allow_any_instance_of(Pathname).to receive(:read).and_return("")
     end
 
     it "uninstalls formulae" do
@@ -355,6 +357,27 @@ RSpec.describe Homebrew::Bundle::Commands::Cleanup do
     it "shells out" do
       expect(IO).to receive(:popen).and_return(StringIO.new("true"))
       described_class.system_output_no_stderr("true")
+    end
+  end
+
+  context "when running with force" do
+    before do
+      described_class.reset!
+      allow(described_class).to receive_messages(
+        casks_to_uninstall:             [],
+        formulae_to_uninstall:          %w[some_formula],
+        taps_to_untap:                  [],
+        vscode_extensions_to_uninstall: [],
+        flatpaks_to_uninstall:          [],
+      )
+      allow(Kernel).to receive(:system)
+      allow(described_class).to receive(:system_output_no_stderr).and_return("")
+      allow_any_instance_of(Pathname).to receive(:read).and_return("")
+    end
+
+    it "marks Brewfile formulae as installed_on_request before uninstalling" do
+      expect(Homebrew::Bundle).to receive(:mark_as_installed_on_request!)
+      described_class.run(force: true)
     end
   end
 end

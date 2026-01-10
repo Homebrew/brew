@@ -61,7 +61,7 @@ module Homebrew
         end
 
         if args.print_path?
-          paths.each { puts _1 }
+          paths.each { puts it }
           return
         end
 

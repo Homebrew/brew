@@ -31,6 +31,7 @@ module RuboCop
           cask_block = RuboCop::Cask::AST::CaskBlock.new(block_node, comments)
           on_cask(cask_block)
         end
+        alias on_itblock on_block
 
         sig {
           params(

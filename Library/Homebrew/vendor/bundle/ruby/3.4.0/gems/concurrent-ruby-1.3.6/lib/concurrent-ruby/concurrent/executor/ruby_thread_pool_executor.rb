@@ -3,6 +3,7 @@ require 'concurrent/atomic/event'
 require 'concurrent/concern/logging'
 require 'concurrent/executor/ruby_executor_service'
 require 'concurrent/utility/monotonic_time'
+require 'concurrent/collection/timeout_queue'
 
 module Concurrent
 
@@ -10,6 +11,7 @@ module Concurrent
   # @!macro thread_pool_options
   # @!visibility private
   class RubyThreadPoolExecutor < RubyExecutorService
+    include Concern::Deprecation
 
     # @!macro thread_pool_executor_constant_default_max_pool_size
     DEFAULT_MAX_POOL_SIZE      = 2_147_483_647 # java.lang.Integer::MAX_VALUE
@@ -94,9 +96,28 @@ module Concurrent
       end
     end
 
+    # removes the worker if it can be pruned
+    #
+    # @return [true, false] if the worker was pruned
+    #
     # @!visibility private
-    def remove_busy_worker(worker)
-      synchronize { ns_remove_busy_worker worker }
+    def prune_worker(worker)
+      synchronize do
+        if ns_prunable_capacity > 0
+          remove_worker worker
+          true
+        else
+          false
+        end
+      end
+    end
+
+    # @!visibility private
+    def remove_worker(worker)
+      synchronize do
+        ns_remove_ready_worker worker
+        ns_remove_busy_worker worker
+      end
     end
 
     # @!visibility private
@@ -116,7 +137,7 @@ module Concurrent
 
     # @!macro thread_pool_executor_method_prune_pool
     def prune_pool
-      synchronize { ns_prune_pool }
+      deprecated "#prune_pool has no effect and will be removed in next the release, see https://github.com/ruby-concurrency/concurrent-ruby/pull/1082."
     end
 
     private
@@ -146,9 +167,6 @@ module Concurrent
       @largest_length       = 0
       @workers_counter      = 0
       @ruby_pid             = $$ # detects if Ruby has forked
-
-      @gc_interval  = opts.fetch(:gc_interval, @idletime / 2.0).to_i # undocumented
-      @next_gc_time = Concurrent.monotonic_time + @gc_interval
     end
 
     # @!visibility private
@@ -162,12 +180,10 @@ module Concurrent
 
       if ns_assign_worker(*args, &task) || ns_enqueue(*args, &task)
         @scheduled_task_count += 1
+        nil
       else
-        return fallback_action(*args, &task)
+        fallback_action(*args, &task)
       end
-
-      ns_prune_pool if @next_gc_time < Concurrent.monotonic_time
-      nil
     end
 
     # @!visibility private
@@ -218,7 +234,7 @@ module Concurrent
     # @!visibility private
     def ns_enqueue(*args, &task)
       return false if @synchronous
-      
+
       if !ns_limited_queue? || @queue.size < @max_queue
         @queue << [task, args]
         true
@@ -265,7 +281,7 @@ module Concurrent
       end
     end
 
-    # removes a worker which is not in not tracked in @ready
+    # removes a worker which is not tracked in @ready
     #
     # @!visibility private
     def ns_remove_busy_worker(worker)
@@ -274,25 +290,27 @@ module Concurrent
       true
     end
 
-    # try oldest worker if it is idle for enough time, it's returned back at the start
-    #
     # @!visibility private
-    def ns_prune_pool
-      now = Concurrent.monotonic_time
-      stopped_workers = 0
-      while !@ready.empty? && (@pool.size - stopped_workers > @min_length)
-        worker, last_message = @ready.first
-        if now - last_message > self.idletime
-          stopped_workers += 1
-          @ready.shift
-          worker << :stop
-        else break
-        end
+    def ns_remove_ready_worker(worker)
+      if index = @ready.index { |rw, _| rw == worker }
+        @ready.delete_at(index)
       end
-
-      @next_gc_time = Concurrent.monotonic_time + @gc_interval
+      true
     end
 
+    # @return [Integer] number of excess idle workers which can be removed without
+    #                   going below min_length, or all workers if not running
+    #
+    # @!visibility private
+    def ns_prunable_capacity
+      if running?
+        [@pool.size - @min_length, @ready.size].min
+      else
+        @pool.size
+      end
+    end
+
+    # @!visibility private
     def ns_reset_if_forked
       if $$ != @ruby_pid
         @queue.clear
@@ -312,7 +330,7 @@ module Concurrent
 
       def initialize(pool, id)
         # instance variables accessed only under pool's lock so no need to sync here again
-        @queue  = Queue.new
+        @queue  = Collection::TimeoutQueue.new
         @pool   = pool
         @thread = create_worker @queue, pool, pool.idletime
 
@@ -338,17 +356,22 @@ module Concurrent
       def create_worker(queue, pool, idletime)
         Thread.new(queue, pool, idletime) do |my_queue, my_pool, my_idletime|
           catch(:stop) do
+            prunable = true
+
             loop do
-
-              case message = my_queue.pop
+              timeout = prunable && my_pool.running? ? my_idletime : nil
+              case message = my_queue.pop(timeout: timeout)
+              when nil
+                throw :stop if my_pool.prune_worker(self)
+                prunable = false
               when :stop
-                my_pool.remove_busy_worker(self)
+                my_pool.remove_worker(self)
                 throw :stop
-
               else
                 task, args = message
                 run_task my_pool, task, args
                 my_pool.ready_worker(self, Concurrent.monotonic_time)
+                prunable = true
               end
             end
           end

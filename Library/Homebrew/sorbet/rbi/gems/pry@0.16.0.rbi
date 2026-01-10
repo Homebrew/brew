@@ -1104,7 +1104,6 @@ class Pry::Command::ShowDoc < ::Pry::Command::ShowInfo
   def content_for(code_object); end
   def docs_for(code_object); end
   def header_options; end
-  def process; end
   def render_doc_markup_for(code_object); end
   def start_line_for(code_object); end
 end
@@ -1140,15 +1139,9 @@ class Pry::Command::ShowInput < ::Pry::ClassCommand
 end
 
 class Pry::Command::ShowSource < ::Pry::Command::ShowInfo
-  include ::Pry::Helpers::DocumentationHelpers
-
   def content_for(code_object); end
-  def docs_for(code_object); end
-  def header_options; end
   def options(opt); end
   def process; end
-  def render_doc_markup_for(code_object); end
-  def start_line_for(code_object); end
 end
 
 class Pry::Command::Stat < ::Pry::ClassCommand

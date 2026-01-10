@@ -29,6 +29,7 @@ module Homebrew
       @pool = T.let(Concurrent::FixedThreadPool.new(concurrency), Concurrent::FixedThreadPool)
       @tty = T.let($stdout.tty?, T::Boolean)
       @spinner = T.let(nil, T.nilable(Spinner))
+      @symlink_targets = T.let({}, T::Hash[Pathname, T::Set[Downloadable]])
     end
 
     sig {
@@ -38,6 +39,12 @@ module Homebrew
       ).void
     }
     def enqueue(downloadable, check_attestation: false)
+      cached_location = downloadable.cached_download
+
+      @symlink_targets[cached_location] ||= Set.new
+      targets = @symlink_targets.fetch(cached_location)
+      targets << downloadable
+
       downloads[downloadable] ||= Concurrent::Promises.future_on(
         pool, RetryableDownload.new(downloadable, tries:, pour:),
         force, quiet, check_attestation
@@ -47,6 +54,7 @@ module Homebrew
         if check_attestation && downloadable.is_a?(Bottle)
           Utils::Attestation.check_attestation(downloadable, quiet: true)
         end
+        create_symlinks_for_shared_download(cached_location)
       end
     end
 
@@ -186,6 +194,20 @@ module Homebrew
 
     private
 
+    sig { params(cached_location: Pathname).void }
+    def create_symlinks_for_shared_download(cached_location)
+      targets = @symlink_targets.fetch(cached_location, Set.new)
+      targets.each do |target|
+        downloader = target.downloader
+        next unless downloader.is_a?(AbstractFileDownloadStrategy)
+
+        symlink_location = downloader.symlink_location
+        next if symlink_location.symlink? && symlink_location.exist?
+
+        downloader.create_symlink_to_cached_download(cached_location)
+      end
+    end
+
     sig { params(downloadable: Downloadable, exception: T.nilable(Exception)).returns(T::Boolean) }
     def bottle_manifest_error?(downloadable, exception)
       return false if exception.nil?
@@ -282,9 +304,10 @@ module Homebrew
       size, unit = disk_usage_readable_size_unit(fetched_size, precision:)
       formatted_fetched_size = format(size_formatting_string, size:, unit:)
 
+      total_size = downloadable.total_size
       formatted_total_size = if future.fulfilled?
         formatted_fetched_size
-      elsif (total_size = downloadable.total_size)
+      elsif total_size
         size, unit = disk_usage_readable_size_unit(total_size, precision:)
         format(size_formatting_string, size:, unit:)
       else
@@ -296,15 +319,11 @@ module Homebrew
       phase = format("%-<phase>#{max_phase_length}s", phase: downloadable.phase.to_s.capitalize)
       progress = " #{phase} #{formatted_fetched_size}/#{formatted_total_size}"
       bar_length = [4, available_width - progress.length - message_length_max - 1].max
-      if downloadable.phase == :downloading
-        percent = if (total_size = downloadable.total_size)
-          (fetched_size.to_f / [1, total_size].max).clamp(0.0, 1.0)
-        else
-          0.0
-        end
+      if downloadable.phase == :downloading && total_size
+        percent = (fetched_size.to_f / [1, total_size].max).clamp(0.0, 1.0)
         bar_used = (percent * bar_length).round
         bar_completed = "#" * bar_used
-        bar_pending = "-" * (bar_length - bar_used)
+        bar_pending = " " * (bar_length - bar_used)
         progress = " #{bar_completed}#{bar_pending}#{progress}"
       end
       message_length = available_width - progress.length

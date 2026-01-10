@@ -2,6 +2,7 @@ require 'concurrent/collection/copy_on_notify_observer_set'
 require 'concurrent/concern/dereferenceable'
 require 'concurrent/concern/observable'
 require 'concurrent/atomic/atomic_boolean'
+require 'concurrent/atomic/atomic_fixnum'
 require 'concurrent/executor/executor_service'
 require 'concurrent/executor/ruby_executor_service'
 require 'concurrent/executor/safe_task_executor'
@@ -236,6 +237,7 @@ module Concurrent
       synchronize do
         if @running.false?
           @running.make_true
+          @age.increment
           schedule_next_task(@run_now ? 0 : @execution_interval)
         end
       end
@@ -309,6 +311,7 @@ module Concurrent
       @task = Concurrent::SafeTaskExecutor.new(task)
       @executor = opts[:executor] || Concurrent.global_io_executor
       @running = Concurrent::AtomicBoolean.new(false)
+      @age = Concurrent::AtomicFixnum.new(0)
       @value = nil
 
       self.observers = Collection::CopyOnNotifyObserverSet.new
@@ -328,13 +331,15 @@ module Concurrent
 
     # @!visibility private
     def schedule_next_task(interval = execution_interval)
-      ScheduledTask.execute(interval, executor: @executor, args: [Concurrent::Event.new], &method(:execute_task))
+      ScheduledTask.execute(interval, executor: @executor, args: [Concurrent::Event.new, @age.value], &method(:execute_task))
       nil
     end
 
     # @!visibility private
-    def execute_task(completion)
+    def execute_task(completion, age_when_scheduled)
       return nil unless @running.true?
+      return nil unless @age.value == age_when_scheduled
+
       start_time = Concurrent.monotonic_time
       _success, value, reason = @task.execute(self)
       if completion.try?

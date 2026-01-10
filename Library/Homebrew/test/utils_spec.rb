@@ -117,4 +117,11 @@ RSpec.describe Utils do
       end
     end
   end
+
+  describe ".convert_to_string_or_symbol" do
+    specify(:aggregate_failures) do
+      expect(described_class.convert_to_string_or_symbol(":example")).to eq(:example)
+      expect(described_class.convert_to_string_or_symbol("example")).to eq("example")
+    end
+  end
 end

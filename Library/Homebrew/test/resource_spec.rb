@@ -152,15 +152,15 @@ RSpec.describe Resource do
   end
 
   describe "#owner" do
+    let(:owner) { described_class.new("test-owner") }
+
     it "sets the owner" do
-      owner = Object.new
       resource.owner = owner
       expect(resource.owner).to eq(owner)
     end
 
     it "sets its owner to be the patches' owner" do
       resource.patch(:p1) { url "file:///my.patch" }
-      owner = Object.new
       resource.owner = owner
       resource.patches.each do |p|
         expect(p.resource.owner).to eq(owner)

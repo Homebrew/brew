@@ -97,12 +97,14 @@ module Cask
       :deprecation_reason,
       :deprecation_replacement_cask,
       :deprecation_replacement_formula,
+      :deprecate_args,
       :disable!,
       :disabled?,
       :disable_date,
       :disable_reason,
       :disable_replacement_cask,
       :disable_replacement_formula,
+      :disable_args,
       :livecheck,
       :livecheck_defined?,
       :no_autobump!,
@@ -119,9 +121,9 @@ module Cask
     include OnSystem::MacOSAndLinux
 
     attr_reader :cask, :token, :no_autobump_message, :artifacts, :deprecation_date, :deprecation_reason,
-                :deprecation_replacement_cask, :deprecation_replacement_formula,
+                :deprecation_replacement_cask, :deprecation_replacement_formula, :deprecate_args,
                 :disable_date, :disable_reason, :disable_replacement_cask,
-                :disable_replacement_formula, :on_system_block_min_os
+                :disable_replacement_formula, :disable_args, :on_system_block_min_os
 
     sig { params(cask: Cask).void }
     def initialize(cask)
@@ -147,12 +149,14 @@ module Cask
       @deprecation_reason = T.let(nil, T.nilable(T.any(String, Symbol)))
       @deprecation_replacement_cask = T.let(nil, T.nilable(String))
       @deprecation_replacement_formula = T.let(nil, T.nilable(String))
+      @deprecate_args = T.let(nil, T.nilable(T::Hash[Symbol, T.nilable(T.any(String, Symbol))]))
       @desc = T.let(nil, T.nilable(String))
       @desc_set_in_block = T.let(false, T::Boolean)
       @disable_date = T.let(nil, T.nilable(Date))
       @disable_reason = T.let(nil, T.nilable(T.any(String, Symbol)))
       @disable_replacement_cask = T.let(nil, T.nilable(String))
       @disable_replacement_formula = T.let(nil, T.nilable(String))
+      @disable_args = T.let(nil, T.nilable(T::Hash[Symbol, T.nilable(T.any(String, Symbol))]))
       @disabled = T.let(false, T::Boolean)
       @homepage = T.let(nil, T.nilable(String))
       @homepage_set_in_block = T.let(false, T::Boolean)
@@ -622,6 +626,8 @@ module Cask
         )
       end
 
+      @deprecate_args = { date:, because:, replacement_formula:, replacement_cask: }
+
       @deprecation_date = Date.parse(date)
       return if @deprecation_date > Date.today
 
@@ -650,6 +656,8 @@ module Cask
           "disable!(:replacement_formula) or disable!(:replacement_cask)",
         )
       end
+
+      @disable_args = { date:, because:, replacement_formula:, replacement_cask: }
 
       @disable_date = Date.parse(date)
 

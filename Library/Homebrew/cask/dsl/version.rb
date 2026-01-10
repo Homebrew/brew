@@ -1,15 +1,15 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
 
 module Cask
   class DSL
     # Class corresponding to the `version` stanza.
     class Version < ::String
-      DIVIDERS = {
+      DIVIDERS = T.let({
         "." => :dots,
         "-" => :hyphens,
         "_" => :underscores,
-      }.freeze
+      }.freeze, T::Hash[String, Symbol])
 
       DIVIDER_REGEX = /(#{DIVIDERS.keys.map { |v| Regexp.quote(v) }.join("|")})/
 
@@ -20,11 +20,13 @@ module Cask
       class << self
         private
 
+        sig { params(divider: String).void }
         def define_divider_methods(divider)
           define_divider_deletion_method(divider)
           define_divider_conversion_methods(divider)
         end
 
+        sig { params(divider: String).void }
         def define_divider_deletion_method(divider)
           method_name = deletion_method_name(divider)
           define_method(method_name) do
@@ -33,16 +35,19 @@ module Cask
           end
         end
 
+        sig { params(divider: String).returns(String) }
         def deletion_method_name(divider)
           "no_#{DIVIDERS[divider]}"
         end
 
+        sig { params(left_divider: String).void }
         def define_divider_conversion_methods(left_divider)
           (DIVIDERS.keys - [left_divider]).each do |right_divider|
             define_divider_conversion_method(left_divider, right_divider)
           end
         end
 
+        sig { params(left_divider: String, right_divider: String).void }
         def define_divider_conversion_method(left_divider, right_divider)
           method_name = conversion_method_name(left_divider, right_divider)
           define_method(method_name) do
@@ -51,6 +56,7 @@ module Cask
           end
         end
 
+        sig { params(left_divider: String, right_divider: String).returns(String) }
         def conversion_method_name(left_divider, right_divider)
           "#{DIVIDERS[left_divider]}_to_#{DIVIDERS[right_divider]}"
         end
@@ -60,6 +66,7 @@ module Cask
         define_divider_methods(divider)
       end
 
+      sig { returns(T.nilable(T.any(String, Symbol))) }
       attr_reader :raw_version
 
       sig { params(raw_version: T.nilable(T.any(String, Symbol))).void }
@@ -71,10 +78,11 @@ module Cask
         raise TypeError, "#{raw_version} contains invalid characters: #{invalid.uniq.join}!" if invalid.present?
       end
 
+      sig { returns(T::Array[T.any(T::Array[String], String)]) }
       def invalid_characters
         return [] if raw_version.blank? || latest?
 
-        raw_version.scan(INVALID_CHARACTERS)
+        raw_version.to_s.scan(INVALID_CHARACTERS)
       end
 
       sig { returns(T::Boolean) }
@@ -147,7 +155,7 @@ module Cask
       # @api public
       sig { returns(T::Array[Version]) } # Only top-level T.self_type is supported https://sorbet.org/docs/self-type
       def csv
-        split(",").map { self.class.new(_1) }
+        split(",").map { self.class.new(it) }
       end
 
       # The version part before the first comma.
@@ -186,8 +194,8 @@ module Cask
 
       private
 
-      sig { returns(T.self_type) }
-      def version
+      sig { params(_block: T.proc.returns(T.nilable(String))).returns(T.self_type) }
+      def version(&_block)
         return self if empty? || latest?
 
         self.class.new(yield)

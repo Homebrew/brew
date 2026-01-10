@@ -6,6 +6,8 @@ RSpec.describe Cask::CaskLoader::FromAPILoader, :cask do
     let(:cask_from_source) { Cask::CaskLoader.load(local_token) }
     let(:cask_json) do
       hash = cask_from_source.to_hash_with_variations
+      # This value will always be present in the json API, but is skipped in tests
+      hash["tap_git_head"] = "abcdef1234567890abcdef1234567890abcdef12"
       json = JSON.pretty_generate(hash)
       JSON.parse(json)
     end

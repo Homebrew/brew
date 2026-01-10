@@ -61,6 +61,7 @@ module Concurrent
     # not running.
     def kill
       shutdown
+      @timer_executor.kill
     end
 
     private :<<
@@ -122,7 +123,9 @@ module Concurrent
     def ns_shutdown_execution
       ns_reset_if_forked
       @queue.clear
-      @timer_executor.kill
+      @condition.set
+      @condition.reset
+      @timer_executor.shutdown
       stopped_event.set
     end
 

@@ -96,7 +96,7 @@ module Homebrew
 
             # Only run bump on the first formula in each synced group
             if args.bump_synced? && args.formula?
-              synced_formulae = Set.new(tap.synced_versions_formulae.flat_map { _1.drop(1) })
+              synced_formulae = Set.new(tap.synced_versions_formulae.flat_map { it.drop(1) })
             end
 
             autobump_list.filter_map do |name|

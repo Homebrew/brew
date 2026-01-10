@@ -20,11 +20,12 @@ module Homebrew
           querying them multiple times.
           To help guarantee idempotence, this command produces no output when Homebrew's `bin` and `sbin` directories
           are first and second respectively in your `$PATH`. Consider adding evaluation of this command's output to
-          your dotfiles (e.g. `~/.bash_profile` or ~/.zprofile` on macOS and ~/.bashrc` or ~/.zshrc` on Linux) with:
-            `eval "$(brew shellenv)"`
+          your dotfiles (e.g. `~/.bash_profile` or ~/.zprofile` on macOS and ~/.bashrc` or ~/.zshrc` on Linux)
+          with e.g.:
+            `eval "$(brew shellenv zsh)"` or `eval "$(brew shellenv bash)"`
 
-          The shell can be specified explicitly with a supported shell name parameter. Unknown shells will output
-          POSIX exports.
+          The shell should be specified explicitly with a supported shell name parameter but will be detected
+          automatically if not provided (but this may not be correct). Unknown shells will output POSIX exports.
         EOS
 
         named_args :shell

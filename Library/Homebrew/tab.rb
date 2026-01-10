@@ -291,7 +291,12 @@ class Tab < AbstractTab
   # or a fake one if the formula is not installed.
   sig { params(name: String).returns(T.attached_class) }
   def self.for_name(name)
-    for_formula(Formulary.factory(name))
+    rack = HOMEBREW_CELLAR/name
+    if (keg = Keg.from_rack(rack))
+      for_keg(keg)
+    else
+      for_formula(Formulary.from_rack(rack, keg:))
+    end
   end
 
   def self.remap_deprecated_options(deprecated_options, options)
@@ -467,12 +472,12 @@ class Tab < AbstractTab
 
   sig { returns(T.nilable(Version)) }
   def stable_version
-    versions["stable"]&.then { Version.new(_1) }
+    versions["stable"]&.then { Version.new(it) }
   end
 
   sig { returns(T.nilable(Version)) }
   def head_version
-    versions["head"]&.then { Version.new(_1) }
+    versions["head"]&.then { Version.new(it) }
   end
 
   sig { returns(Integer) }

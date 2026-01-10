@@ -32,7 +32,7 @@ module UnpackStrategy
 
   mixes_in_class_methods(ClassMethods)
 
-  sig { returns(T.nilable(T::Array[UnpackStrategyType])) }
+  sig { returns(T::Array[UnpackStrategyType]) }
   def self.strategies
     @strategies ||= T.let([
       Tar, # Needs to be before Bzip2/Gzip/Xz/Lzma/Zstd.
@@ -88,21 +88,19 @@ module UnpackStrategy
 
   sig { params(extension: String).returns(T.nilable(UnpackStrategyType)) }
   def self.from_extension(extension)
-    return unless strategies
-
-    strategies&.sort_by { |s| s.extensions.map(&:length).max || 0 }
-              &.reverse
-              &.find { |s| extension.end_with?(*s.extensions) }
+    strategies.sort_by { |s| s.extensions.map(&:length).max || 0 }
+              .reverse
+              .find { |s| extension.end_with?(*s.extensions) }
   end
 
   sig { params(path: Pathname).returns(T.nilable(UnpackStrategyType)) }
   def self.from_magic(path)
-    strategies&.find { |s| s.can_extract?(path) }
+    strategies.find { |s| s.can_extract?(path) }
   end
 
   sig {
     params(path: Pathname, prioritize_extension: T::Boolean, type: T.nilable(Symbol), ref_type: T.nilable(Symbol),
-           ref: T.nilable(String), merge_xattrs: T::Boolean).returns(T.untyped)
+           ref: T.nilable(String), merge_xattrs: T::Boolean).returns(UnpackStrategy)
   }
   def self.detect(path, prioritize_extension: false, type: nil, ref_type: nil, ref: nil, merge_xattrs: false)
     strategy = from_type(type) if type
@@ -110,7 +108,7 @@ module UnpackStrategy
     if prioritize_extension && path.extname.present?
       strategy ||= from_extension(path.extname)
 
-      strategy ||= strategies&.find { |s| (s < Directory || s == Fossil) && s.can_extract?(path) }
+      strategy ||= strategies.find { |s| (s < Directory || s == Fossil) && s.can_extract?(path) }
     else
       strategy ||= from_magic(path)
       strategy ||= from_extension(path.extname)
@@ -160,7 +158,7 @@ module UnpackStrategy
       basename:             T.nilable(T.any(String, Pathname)),
       verbose:              T::Boolean,
       prioritize_extension: T::Boolean,
-    ).returns(T.untyped)
+    ).void
   }
   def extract_nestedly(to: nil, basename: nil, verbose: false, prioritize_extension: false)
     Mktemp.new("homebrew-unpack").run(chdir: false) do |unpack_dir|
@@ -202,7 +200,7 @@ module UnpackStrategy
     params(
       pathname: Pathname,
       _block:   T.proc.params(path: Pathname).void,
-    ).returns(T.nilable(Pathname))
+    ).void
   }
   def each_directory(pathname, &_block)
     pathname.find do |path|

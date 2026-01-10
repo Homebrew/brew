@@ -167,7 +167,7 @@ module Concurrent
   # c2 = p.then(-> reason { raise 'Boom!' })
   #
   # c1.wait.state  #=> :fulfilled
-  # c1.value       #=> 45
+  # c1.value       #=> 42
   # c2.wait.state  #=> :rejected
   # c2.reason      #=> #<RuntimeError: Boom!>
   # ```

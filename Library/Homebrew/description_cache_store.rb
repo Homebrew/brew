@@ -83,7 +83,7 @@ class DescriptionCacheStore < CacheStore
   def delete_from_formula_names!(formula_names)
     return if database.empty?
 
-    formula_names.each { delete!(_1) }
+    formula_names.each { delete!(it) }
   end
   alias delete_from_cask_tokens! delete_from_formula_names!
 

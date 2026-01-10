@@ -533,6 +533,8 @@ class Concurrent::Collection::RubyNonConcurrentPriorityQueue
   end
 end
 
+class Concurrent::Collection::TimeoutQueue < ::Thread::Queue; end
+Concurrent::Collection::TimeoutQueueImplementation = Thread::Queue
 module Concurrent::Concern; end
 
 module Concurrent::Concern::Deprecation
@@ -1761,6 +1763,8 @@ class Concurrent::RubyExecutorService < ::Concurrent::AbstractExecutorService
 end
 
 class Concurrent::RubySingleThreadExecutor < ::Concurrent::RubyThreadPoolExecutor
+  include ::Concurrent::SerialExecutorService
+
   def initialize(opts = T.unsafe(nil)); end
 end
 
@@ -1777,10 +1781,11 @@ class Concurrent::RubyThreadPoolExecutor < ::Concurrent::RubyExecutorService
   def max_queue; end
   def min_length; end
   def prune_pool; end
+  def prune_worker(worker); end
   def queue_length; end
   def ready_worker(worker, last_message); end
   def remaining_capacity; end
-  def remove_busy_worker(worker); end
+  def remove_worker(worker); end
   def scheduled_task_count; end
   def synchronous; end
   def worker_died(worker); end
@@ -1795,9 +1800,10 @@ class Concurrent::RubyThreadPoolExecutor < ::Concurrent::RubyExecutorService
   def ns_initialize(opts); end
   def ns_kill_execution; end
   def ns_limited_queue?; end
-  def ns_prune_pool; end
+  def ns_prunable_capacity; end
   def ns_ready_worker(worker, last_message, success = T.unsafe(nil)); end
   def ns_remove_busy_worker(worker); end
+  def ns_remove_ready_worker(worker); end
   def ns_reset_if_forked; end
   def ns_shutdown_execution; end
   def ns_worker_died(worker); end
@@ -2231,7 +2237,7 @@ class Concurrent::TimerTask < ::Concurrent::RubyExecutorService
 
   def <<(task); end
   def calculate_next_interval(start_time); end
-  def execute_task(completion); end
+  def execute_task(completion, age_when_scheduled); end
   def ns_initialize(opts, &task); end
   def ns_kill_execution; end
   def ns_shutdown_execution; end

@@ -17,6 +17,8 @@ module Homebrew
           Generate Homebrew's manpages and shell completions.
         EOS
 
+        switch "--no-exit-code", description: "Exit with code 0 even if no changes were made."
+
         named_args :none
       end
 
@@ -32,12 +34,18 @@ module Homebrew
           "-C", HOMEBREW_REPOSITORY,
           "diff", "--shortstat", "--patch", "--exit-code", "docs/Manpage.md", "manpages", "completions"
         ]
-        if diff.status.success?
-          ofail "No changes to manpage or completions."
+        status, message = if diff.status.success?
+          [:failure, "No changes to manpage or completions."]
         elsif /1 file changed, 1 insertion\(\+\), 1 deletion\(-\).*-\.TH "BREW" "1" "\w+ \d+"/m.match?(diff.stdout)
-          ofail "No changes to manpage or completions other than the date."
+          [:failure, "No changes to manpage or completions other than the date."]
         else
-          puts "Manpage and completions updated."
+          [:success, "Manpage and completions updated."]
+        end
+
+        if status == :failure && !args.no_exit_code?
+          ofail message
+        else
+          puts message
         end
       end
     end

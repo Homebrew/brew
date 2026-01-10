@@ -93,11 +93,7 @@ module Homebrew
 
       sig { params(taps: T::Array[Tap]).void }
       def print_tap_json(taps)
-        taps_hashes = taps.map do |tap|
-          Homebrew.failed = true unless tap.installed?
-          tap.to_hash
-        end
-        puts JSON.pretty_generate(taps_hashes)
+        puts JSON.pretty_generate(taps.map(&:to_hash))
       end
     end
   end

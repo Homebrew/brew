@@ -42,16 +42,6 @@ RSpec.describe Patch do
       it { is_expected.to be_a DATAPatch }
       it(:strip) { expect(patch.strip).to eq(:p1) }
     end
-
-    it "raises an error for unknown values" do
-      expect do
-        described_class.create(Object.new)
-      end.to raise_error(ArgumentError)
-
-      expect do
-        described_class.create(Object.new, Object.new)
-      end.to raise_error(ArgumentError)
-    end
   end
 
   describe "#patch_files" do
@@ -78,14 +68,6 @@ RSpec.describe Patch do
 
       patch.resource.apply("patch4.diff", ["patch5.diff", "patch6.diff"], "patch7.diff")
       expect(patch.patch_files.count).to eq(7)
-    end
-  end
-
-  describe EmbeddedPatch do
-    describe "#new" do
-      subject(:patch) { described_class.new(:p1) }
-
-      it(:inspect) { expect(patch.inspect).to eq("#<EmbeddedPatch: :p1>") }
     end
   end
 

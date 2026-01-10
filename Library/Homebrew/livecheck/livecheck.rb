@@ -61,7 +61,7 @@ module Homebrew
 
       other_taps.each_value do |tap|
         tap_strategy_path = "#{tap.path}/livecheck/strategy"
-        Dir["#{tap_strategy_path}/*.rb"].each { require(_1) } if Dir.exist?(tap_strategy_path)
+        Dir["#{tap_strategy_path}/*.rb"].each { require(it) } if Dir.exist?(tap_strategy_path)
       end
     end
 

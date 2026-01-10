@@ -6,6 +6,7 @@ module Concurrent
   # @!visibility private
   def self.mutex_owned_per_thread?
     return false if Concurrent.on_jruby? || Concurrent.on_truffleruby?
+    return RUBY_VERSION < "3.0" if Concurrent.on_cruby?
 
     mutex = Mutex.new
     # Lock the mutex:

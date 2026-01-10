@@ -86,6 +86,7 @@
 **/vendor/bundle/ruby/*/gems/erubi-*/
 **/vendor/bundle/ruby/*/gems/hana-*/
 **/vendor/bundle/ruby/*/gems/highline-*/
+**/vendor/bundle/ruby/*/gems/io-console-*/
 **/vendor/bundle/ruby/*/gems/jaro_winkler-*/
 **/vendor/bundle/ruby/*/gems/json-*/
 **/vendor/bundle/ruby/*/gems/json_schemer-*/
@@ -116,6 +117,7 @@
 **/vendor/bundle/ruby/*/gems/rdoc-*/
 **/vendor/bundle/ruby/*/gems/redcarpet-*/
 **/vendor/bundle/ruby/*/gems/regexp_parser-*/
+**/vendor/bundle/ruby/*/gems/reline-*/
 **/vendor/bundle/ruby/*/gems/require-hooks-*/
 **/vendor/bundle/ruby/*/gems/rexml-*/
 **/vendor/bundle/ruby/*/gems/rspec-*/

@@ -657,7 +657,7 @@ else
   if [[ -r "/proc/cpuinfo" ]] &&
      [[ "${HOMEBREW_PROCESSOR}" == "x86_64" ]]
   then
-    if ! grep -E "^(flags|Features)" /proc/cpuinfo | grep -q "ssse3"
+    if ! grep -qE '^(flags|Features).*\bssse3\b' /proc/cpuinfo
     then
       odie "Homebrew's x86_64 support on Linux requires a CPU with SSSE3 support!"
     fi

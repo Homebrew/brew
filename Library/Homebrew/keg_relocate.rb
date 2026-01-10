@@ -105,6 +105,10 @@ class Keg
         old: "/usr/local/var/homebrew",
         new: "#{PREFIX_PLACEHOLDER}/var/homebrew",
       },
+      var_www:      {
+        old: "/usr/local/var/www",
+        new: "#{PREFIX_PLACEHOLDER}/var/www",
+      },
       var_name:     {
         old: "/usr/local/var/#{name}",
         new: "#{PREFIX_PLACEHOLDER}/var/#{name}",
@@ -211,7 +215,7 @@ class Keg
     files ||= text_files | libtool_files
 
     changed_files = T.let([], T::Array[Pathname])
-    files.map { path.join(_1) }.group_by { |f| f.stat.ino }.each_value do |first, *rest|
+    files.map { path.join(it) }.group_by { |f| f.stat.ino }.each_value do |first, *rest|
       first = T.must(first)
       s = first.open("rb", &:read)
 

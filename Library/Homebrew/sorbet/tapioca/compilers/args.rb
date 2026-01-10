@@ -9,7 +9,7 @@ module Tapioca
     class Args < Tapioca::Dsl::Compiler
       GLOBAL_OPTIONS = T.let(
         Homebrew::CLI::Parser.global_options.map do |short_option, long_option, _|
-          [short_option, long_option].map { "#{Homebrew::CLI::Parser.option_to_name(_1)}?" }
+          [short_option, long_option].map { "#{Homebrew::CLI::Parser.option_to_name(it)}?" }
         end.flatten.freeze, T::Array[String]
       )
 
@@ -19,7 +19,7 @@ module Tapioca
       def self.gather_constants
         # require all the commands to ensure the command subclasses are defined
         ["cmd", "dev-cmd"].each do |dir|
-          Dir[File.join(__dir__, "../../../#{dir}", "*.rb")].each { require(_1) }
+          Dir[File.join(__dir__, "../../../#{dir}", "*.rb")].each { require(it) }
         end
         Homebrew::AbstractCommand.subclasses
       end

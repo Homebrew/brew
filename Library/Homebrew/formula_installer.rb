@@ -810,10 +810,10 @@ on_request: installed_on_request?, options:)
     elsif !deps.empty?
       if deps.length > 1
         oh1 "Installing dependencies for #{formula.full_name}: " \
-            "#{deps.map { Formatter.identifier(_1) }.to_sentence}",
+            "#{deps.map { Formatter.identifier(it) }.to_sentence}",
             truncate: false
       end
-      deps.each { install_dependency(_1) }
+      deps.each { install_dependency(it) }
     end
 
     @show_header = true if deps.length > 1
@@ -1382,7 +1382,7 @@ on_request: installed_on_request?, options:)
           truncate: false
     end
 
-    deps.each { fetch_dependency(_1) }
+    deps.each { fetch_dependency(it) }
   end
 
   sig { returns(T.nilable(Formula)) }

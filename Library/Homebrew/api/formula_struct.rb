@@ -7,6 +7,14 @@ require "utils/spdx"
 module Homebrew
   module API
     class FormulaStruct < T::Struct
+      sig { params(formula_hash: T::Hash[String, T.untyped]).returns(FormulaStruct) }
+      def self.from_hash(formula_hash)
+        formula_hash = formula_hash.transform_keys(&:to_sym)
+                                   .slice(*decorator.all_props)
+                                   .compact_blank
+        new(**formula_hash)
+      end
+
       PREDICATES = [
         :bottle,
         :deprecate,
@@ -57,6 +65,25 @@ module Homebrew
         ]
       end
 
+      DependencyHash = T.type_alias do
+        T::Hash[
+          # Keys are strings of the dependency type (e.g. "dependencies", "build_dependencies")
+          String,
+          # Values are arrays of either:
+          T::Array[
+            T.any(
+              # Formula name: "foo"
+              String,
+              # Hash like { "foo" => "build" } or { :foo => ["build", "test"] }
+              T::Hash[
+                String,
+                T.any(String, T::Array[String]),
+              ],
+            ),
+          ],
+        ]
+      end
+
       PREDICATES.each do |predicate_name|
         present_method_name = :"#{predicate_name}_present"
         predicate_method_name = :"#{predicate_name}?"
@@ -71,7 +98,7 @@ module Homebrew
       # Changes to this struct must be mirrored in Homebrew::API::Formula.generate_formula_struct_hash
       const :aliases, T::Array[String], default: []
       const :bottle, T::Hash[String, T.anything], default: {}
-      const :bottle_checksums, T::Array[T::Hash[String, T.anything]], default: []
+      const :bottle_checksums, T::Array[T::Hash[Symbol, T.anything]], default: []
       const :bottle_rebuild, Integer, default: 0
       const :caveats, T.nilable(String)
       const :conflicts, T::Array[[String, T::Hash[Symbol, String]]], default: []
@@ -123,8 +150,8 @@ module Homebrew
 
       private
 
-      const :stable_dependency_hash, T::Hash[String, T::Array[String]], default: {}
-      const :head_dependency_hash, T::Hash[String, T::Array[String]], default: {}
+      const :stable_dependency_hash, DependencyHash, default: {}
+      const :head_dependency_hash, DependencyHash, default: {}
       const :requirements_array, T::Array[T::Hash[String, T.untyped]], default: []
 
       sig { params(spec: Symbol).returns(T::Array[DependencyArgs]) }

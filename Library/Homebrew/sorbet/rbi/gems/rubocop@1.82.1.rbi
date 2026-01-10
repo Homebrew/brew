@@ -371,6 +371,8 @@ class RuboCop::ConfigLoader
     def add_loaded_features(loaded_features); end
     def add_loaded_plugins(loaded_plugins); end
     def add_missing_namespaces(path, hash); end
+    def cache_root; end
+    def cache_root=(_arg0); end
     def clear_options; end
     def configuration_file_for(target_dir); end
     def configuration_from_file(config_file, check: T.unsafe(nil)); end
@@ -2508,10 +2510,6 @@ RuboCop::Cop::Style::ConditionalAssignment::ASSIGN_TO_CONDITION_MSG = T.let(T.un
 
 RuboCop::Cop::Style::ConditionalAssignment::ENABLED = T.let(T.unsafe(nil), String)
 
-RuboCop::Cop::Style::ConditionalAssignment::LINE_LENGTH = T.let(T.unsafe(nil), String)
-
-RuboCop::Cop::Style::ConditionalAssignment::MAX = T.let(T.unsafe(nil), String)
-
 RuboCop::Cop::Style::ConditionalAssignment::MSG = T.let(T.unsafe(nil), String)
 
 RuboCop::Cop::Style::ConditionalAssignment::SINGLE_LINE_CONDITIONS_ONLY = T.let(T.unsafe(nil), String)
@@ -2921,6 +2919,10 @@ RuboCop::Cop::Style::ModuleFunction::EXTEND_SELF_MSG = T.let(T.unsafe(nil), Stri
 RuboCop::Cop::Style::ModuleFunction::FORBIDDEN_MSG = T.let(T.unsafe(nil), String)
 
 RuboCop::Cop::Style::ModuleFunction::MODULE_FUNCTION_MSG = T.let(T.unsafe(nil), String)
+
+RuboCop::Cop::Style::ModuleMemberExistenceCheck::MSG = T.let(T.unsafe(nil), String)
+
+RuboCop::Cop::Style::ModuleMemberExistenceCheck::RESTRICT_ON_SEND = T.let(T.unsafe(nil), Array)
 
 RuboCop::Cop::Style::MultilineBlockChain::MSG = T.let(T.unsafe(nil), String)
 
@@ -3731,6 +3733,9 @@ class RuboCop::DirectiveComment
   def missing_cop_name?; end
   def mode; end
   def overridden_by_department?(cop); end
+  def pop?; end
+  def push?; end
+  def push_args; end
   def range; end
   def raw_cop_names; end
   def single_line?; end
@@ -3742,6 +3747,7 @@ class RuboCop::DirectiveComment
   def cop_names_for_department(department); end
   def department?(name); end
   def exclude_lint_department_cops(cops); end
+  def parse_push_args; end
   def parsed_cop_names; end
 
   class << self
@@ -3755,7 +3761,11 @@ RuboCop::DirectiveComment::COPS_PATTERN = T.let(T.unsafe(nil), String)
 
 RuboCop::DirectiveComment::COP_NAMES_PATTERN = T.let(T.unsafe(nil), String)
 
+RuboCop::DirectiveComment::COP_NAMES_PATTERN_NC = T.let(T.unsafe(nil), String)
+
 RuboCop::DirectiveComment::COP_NAME_PATTERN = T.let(T.unsafe(nil), String)
+
+RuboCop::DirectiveComment::COP_NAME_PATTERN_NC = T.let(T.unsafe(nil), String)
 
 RuboCop::DirectiveComment::DIRECTIVE_COMMENT_REGEXP = T.let(T.unsafe(nil), Regexp)
 
@@ -3772,6 +3782,8 @@ RuboCop::DirectiveComment::LINT_REDUNDANT_DIRECTIVE_COP = T.let(T.unsafe(nil), S
 RuboCop::DirectiveComment::LINT_SYNTAX_COP = T.let(T.unsafe(nil), String)
 
 RuboCop::DirectiveComment::MALFORMED_DIRECTIVE_WITHOUT_COP_NAME_REGEXP = T.let(T.unsafe(nil), Regexp)
+
+RuboCop::DirectiveComment::PUSH_POP_ARGS_PATTERN = T.let(T.unsafe(nil), String)
 
 RuboCop::DirectiveComment::TRAILING_COMMENT_MARKER = T.let(T.unsafe(nil), String)
 
@@ -4011,11 +4023,8 @@ class RuboCop::ResultCache
 
   def any_symlink?(path); end
   def context_checksum(team, options); end
-  def digest(path); end
   def file_checksum(file, config_store); end
   def relevant_options_digest(options); end
-  def rubocop_checksum; end
-  def rubocop_extra_features; end
   def symlink_protection_triggered?(path); end
 
   class << self
@@ -4027,13 +4036,14 @@ class RuboCop::ResultCache
     def rubocop_required_features; end
     def rubocop_required_features=(_arg0); end
     def source_checksum; end
-    def source_checksum=(_arg0); end
 
     private
 
-    def remove_files(files, dirs, remove_count); end
-    def remove_oldest_files(files, dirs, rubocop_cache_dir, verbose); end
+    def digest(path); end
+    def remove_files(files, remove_count); end
+    def remove_oldest_files(files, rubocop_cache_dir, verbose); end
     def requires_file_removal?(file_count, config_store); end
+    def rubocop_extra_features; end
   end
 end
 

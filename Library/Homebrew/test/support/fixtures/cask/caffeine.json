@@ -1,7 +1,7 @@
 {
   "token": "caffeine",
   "full_token": "caffeine",
-  "tap": null,
+  "tap": "homebrew/cask",
   "name": [
 
   ],
@@ -31,9 +31,14 @@
   },
   "conflicts_with": null,
   "container": null,
+  "rename": [],
   "auto_updates": null,
-  "tap_git_head": null,
+  "tap_git_head": "abcdef1234567890abcdef1234567890abcdef12",
   "languages": [
 
-  ]
+  ],
+  "ruby_source_path": "Casks/caffeine.rb",
+  "ruby_source_checksum": {
+    "sha256": "d3c19b564ee5a17f22191599ad795a6cc9c4758d0e1269f2d13207155b378dea"
+  }
 }

@@ -7,7 +7,6 @@
 
 module Minitest
   class << self
-    def __run(reporter, options); end
     def after_run(&block); end
     def allow_fork; end
     def allow_fork=(_arg0); end
@@ -23,6 +22,7 @@ module Minitest
     def info_signal; end
     def info_signal=(_arg0); end
     def init_plugins(options); end
+    def load(*names); end
     def load_plugins; end
     def parallel_executor; end
     def parallel_executor=(_arg0); end
@@ -31,7 +31,7 @@ module Minitest
     def reporter; end
     def reporter=(_arg0); end
     def run(args = T.unsafe(nil)); end
-    def run_one_method(klass, method_name); end
+    def run_all_suites(reporter, options); end
     def seed; end
     def seed=(_arg0); end
   end
@@ -58,7 +58,6 @@ end
 Minitest::Assertion::RE = T.let(T.unsafe(nil), Regexp)
 
 module Minitest::Assertions
-  def _caller_uplevel; end
   def _synchronize; end
   def _where; end
   def assert(test, msg = T.unsafe(nil)); end
@@ -79,7 +78,6 @@ module Minitest::Assertions
   def assert_raises(*exp); end
   def assert_respond_to(obj, meth, msg = T.unsafe(nil), include_all: T.unsafe(nil)); end
   def assert_same(exp, act, msg = T.unsafe(nil)); end
-  def assert_send(send_ary, m = T.unsafe(nil)); end
   def assert_silent; end
   def assert_throws(sym, msg = T.unsafe(nil)); end
   def capture_io; end
@@ -97,7 +95,7 @@ module Minitest::Assertions
   def refute_equal(exp, act, msg = T.unsafe(nil)); end
   def refute_in_delta(exp, act, delta = T.unsafe(nil), msg = T.unsafe(nil)); end
   def refute_in_epsilon(exp, act, epsilon = T.unsafe(nil), msg = T.unsafe(nil)); end
-  def refute_includes(collection, obj, msg = T.unsafe(nil)); end
+  def refute_includes(obj, sub, msg = T.unsafe(nil)); end
   def refute_instance_of(cls, obj, msg = T.unsafe(nil)); end
   def refute_kind_of(cls, obj, msg = T.unsafe(nil)); end
   def refute_match(matcher, obj, msg = T.unsafe(nil)); end
@@ -119,7 +117,6 @@ module Minitest::Assertions
   end
 end
 
-Minitest::Assertions::E = T.let(T.unsafe(nil), String)
 Minitest::Assertions::UNDEFINED = T.let(T.unsafe(nil), Object)
 
 class Minitest::BacktraceFilter
@@ -152,10 +149,8 @@ end
 
 module Minitest::Guard
   def jruby?(platform = T.unsafe(nil)); end
-  def maglev?(platform = T.unsafe(nil)); end
   def mri?(platform = T.unsafe(nil)); end
   def osx?(platform = T.unsafe(nil)); end
-  def rubinius?(platform = T.unsafe(nil)); end
   def windows?(platform = T.unsafe(nil)); end
 end
 
@@ -175,8 +170,8 @@ module Minitest::Parallel::Test
 end
 
 module Minitest::Parallel::Test::ClassMethods
-  def run_one_method(klass, method_name, reporter); end
-  def test_order; end
+  def run(klass, method_name, reporter); end
+  def run_order; end
 end
 
 class Minitest::ProgressReporter < ::Minitest::Reporter
@@ -227,8 +222,6 @@ class Minitest::Runnable
   def failure; end
   def failures; end
   def failures=(_arg0); end
-  def marshal_dump; end
-  def marshal_load(ary); end
   def metadata; end
   def metadata=(_arg0); end
   def metadata?; end
@@ -243,16 +236,17 @@ class Minitest::Runnable
   def time_it; end
 
   class << self
+    def filter_runnable_methods(options = T.unsafe(nil)); end
     def inherited(klass); end
     def methods_matching(re); end
     def on_signal(name, action); end
     def reset; end
-    def run(reporter, options = T.unsafe(nil)); end
-    def run_one_method(klass, method_name, reporter); end
+    def run(klass, method_name, reporter); end
+    def run_order; end
+    def run_suite(reporter, options = T.unsafe(nil)); end
     def runnable_methods; end
     def runnables; end
-    def test_order; end
-    def with_info_handler(reporter, &block); end
+    def with_info_handler(_reporter = T.unsafe(nil), &block); end
   end
 end
 
@@ -310,7 +304,6 @@ class Minitest::Test < ::Minitest::Runnable
   extend ::Minitest::Guard
 
   def capture_exceptions; end
-  def class_name; end
   def neuter_exception(e); end
   def new_exception(klass, msg, bt, kill = T.unsafe(nil)); end
   def run; end

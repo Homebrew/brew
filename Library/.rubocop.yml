@@ -96,11 +96,6 @@ Layout/ArgumentAlignment:
 Layout/CaseIndentation:
   EnforcedStyle: end
 
-# currently bugged and as relevant/urgent in taps:
-# https://github.com/rubocop/rubocop/issues/14443
-Layout/EmptyLinesAfterModuleInclusion:
-  Enabled: false
-
 # significantly less indentation involved; more consistent
 Layout/FirstArrayElementIndentation:
   EnforcedStyle: consistent
@@ -115,6 +110,10 @@ Layout/EndAlignment:
 Layout/HashAlignment:
   EnforcedHashRocketStyle: table
   EnforcedColonStyle: table
+
+# TODO: undisable when fixed: https://github.com/rubocop/rubocop/issues/14747
+Layout/IndentationWidth:
+  Enabled: false
 
 # Need to allow #: for external commands.
 Layout/LeadingCommentSpace:
@@ -411,9 +410,9 @@ Style/InvertibleUnlessCondition:
     :zero?:
     :blank?: :present?
 
-# Reconsider once sorbet supports "it": https://github.com/sorbet/sorbet/issues/8375
+# It's confusing to the ruby novice to support both `it` and `_1`
 Style/ItBlockParameter:
-  Enabled: false
+  EnforcedStyle: only_numbered_parameters
 
 Style/MutableConstant:
   # would rather freeze too much than too little

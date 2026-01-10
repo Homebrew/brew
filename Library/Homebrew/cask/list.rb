@@ -23,9 +23,9 @@ module Cask
       elsif full_name
         puts output.map(&:full_name).sort(&tap_and_name_comparison)
       elsif versions
-        puts output.map { format_versioned(_1) }
+        puts output.map { format_versioned(it) }
       elsif !output.empty? && casks.any?
-        output.map { list_artifacts(_1) }
+        output.map { list_artifacts(it) }
       elsif !output.empty?
         puts Formatter.columns(output.map(&:to_s))
       end

@@ -265,7 +265,7 @@ RSpec.describe Tab do
       tab = described_class.from_file(path)
       source_path = "/usr/local/Library/Taps/homebrew/homebrew-core/Formula/foo.rb"
       runtime_dependencies = [{ "full_name" => "foo", "version" => "1.0" }]
-      changed_files = %w[INSTALL_RECEIPT.json bin/foo].map { Pathname.new(_1) }
+      changed_files = %w[INSTALL_RECEIPT.json bin/foo].map { Pathname.new(it) }
 
       expect(tab.used_options.sort).to eq(used_options.sort)
       expect(tab.unused_options.sort).to eq(unused_options.sort)
@@ -295,7 +295,7 @@ RSpec.describe Tab do
       tab = described_class.from_file_content(path.read, path)
       source_path = "/usr/local/Library/Taps/homebrew/homebrew-core/Formula/foo.rb"
       runtime_dependencies = [{ "full_name" => "foo", "version" => "1.0" }]
-      changed_files = %w[INSTALL_RECEIPT.json bin/foo].map { Pathname.new(_1) }
+      changed_files = %w[INSTALL_RECEIPT.json bin/foo].map { Pathname.new(it) }
 
       expect(tab.used_options.sort).to eq(used_options.sort)
       expect(tab.unused_options.sort).to eq(unused_options.sort)

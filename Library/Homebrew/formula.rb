@@ -730,7 +730,7 @@ class Formula
   def aliases
     @aliases ||= T.let(
       if (tap = self.tap)
-        tap.alias_reverse_table.fetch(full_name, []).map { _1.split("/").fetch(-1) }
+        tap.alias_reverse_table.fetch(full_name, []).map { it.split("/").fetch(-1) }
       else
         []
       end, T.nilable(T::Array[String])

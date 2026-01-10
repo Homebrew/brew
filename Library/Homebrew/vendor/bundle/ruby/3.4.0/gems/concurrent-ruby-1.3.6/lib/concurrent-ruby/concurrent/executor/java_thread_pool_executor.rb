@@ -8,6 +8,7 @@ if Concurrent.on_jruby?
     # @!macro thread_pool_options
     # @!visibility private
     class JavaThreadPoolExecutor < JavaExecutorService
+      include Concern::Deprecation
 
       # @!macro thread_pool_executor_constant_default_max_pool_size
       DEFAULT_MAX_POOL_SIZE = java.lang.Integer::MAX_VALUE # 2147483647
@@ -100,6 +101,7 @@ if Concurrent.on_jruby?
 
       # @!macro thread_pool_executor_method_prune_pool
       def prune_pool
+        deprecated "#prune_pool has no effect and will be removed in the next release."
       end
 
       private

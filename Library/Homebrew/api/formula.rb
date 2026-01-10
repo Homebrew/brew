@@ -171,7 +171,7 @@ module Homebrew
           files = hash.dig("bottle", "stable", "files") || {}
           files.map do |tag, bottle_spec|
             {
-              cellar: Formulary.convert_to_string_or_symbol(bottle_spec.fetch("cellar")),
+              cellar: Utils.convert_to_string_or_symbol(bottle_spec.fetch("cellar")),
               tag.to_sym => bottle_spec.fetch("sha256"),
             }
           end
@@ -205,7 +205,8 @@ module Homebrew
         hash["head_dependency_hash"] = hash["head_dependencies"]
 
         hash["head_url_args"] = begin
-          url = hash.dig("urls", "head", "url")
+          # Fall back to "" to satisfy the type checker. If the head URL is missing, head_present will be false.
+          url = hash.dig("urls", "head", "url") || ""
           specs = {
             branch: hash.dig("urls", "head", "branch"),
             using:  hash.dig("urls", "head", "using")&.to_sym,
@@ -214,7 +215,7 @@ module Homebrew
         end
 
         if (keg_only_hash = hash["keg_only_reason"])
-          reason = Formulary.convert_to_string_or_symbol(keg_only_hash.fetch("reason"))
+          reason = Utils.convert_to_string_or_symbol(keg_only_hash.fetch("reason"))
           explanation = keg_only_hash["explanation"]
           hash["keg_only_args"] = [reason, explanation].compact
         end

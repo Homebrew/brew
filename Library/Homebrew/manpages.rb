@@ -78,7 +78,7 @@ module Homebrew
       man_page_lines = []
 
       # preserve existing manpage order
-      cmd_paths.sort_by { sort_key_for_path(_1) }
+      cmd_paths.sort_by { sort_key_for_path(it) }
                .each do |cmd_path|
         cmd_man_page_lines = if (cmd_parser = Homebrew::CLI::Parser.from_cmd_path(cmd_path))
           next if cmd_parser.hide_from_man_page

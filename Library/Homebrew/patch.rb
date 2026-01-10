@@ -1,12 +1,21 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
 
 require "resource"
 require "erb"
 require "utils/output"
 
+Owner = T.type_alias { T.any(Formula, Resource, SoftwareSpec) }
+
 # Helper module for creating patches.
 module Patch
+  sig {
+    params(
+      strip: T.any(Symbol, String),
+      src:   T.nilable(T.any(Symbol, String)),
+      block: T.nilable(T.proc.bind(Resource::Patch).void),
+    ).returns(T.any(EmbeddedPatch, ExternalPatch))
+  }
   def self.create(strip, src, &block)
     case strip
     when :DATA
@@ -22,10 +31,6 @@ module Patch
       else
         ExternalPatch.new(strip, &block)
       end
-    when nil
-      raise ArgumentError, "nil value for strip"
-    else
-      raise ArgumentError, "Unexpected value for strip: #{strip.inspect}"
     end
   end
 end
@@ -33,12 +38,20 @@ end
 # An abstract class representing a patch embedded into a formula.
 class EmbeddedPatch
   include Utils::Output::Mixin
+  extend T::Helpers
 
+  abstract!
+
+  sig { params(owner: T.nilable(Owner)).returns(T.nilable(Owner)) }
   attr_writer :owner
+
+  sig { returns(T.any(String, Symbol)) }
   attr_reader :strip
 
+  sig { params(strip: T.any(String, Symbol)).void }
   def initialize(strip)
-    @strip = strip
+    @strip = T.let(strip, T.any(String, Symbol))
+    @owner = T.let(nil, T.nilable(Owner))
   end
 
   sig { returns(T::Boolean) }
@@ -46,8 +59,10 @@ class EmbeddedPatch
     false
   end
 
+  sig { abstract.returns(String) }
   def contents; end
 
+  sig { void }
   def apply
     data = contents.gsub("@@HOMEBREW_PREFIX@@", HOMEBREW_PREFIX)
     if data.gsub!("HOMEBREW_PREFIX", HOMEBREW_PREFIX)
@@ -66,15 +81,20 @@ end
 
 # A patch at the `__END__` of a formula file.
 class DATAPatch < EmbeddedPatch
+  sig { returns(T.nilable(Pathname)) }
   attr_accessor :path
 
+  sig { params(strip: T.any(String, Symbol)).void }
   def initialize(strip)
     super
-    @path = nil
+    @path = T.let(nil, T.nilable(Pathname))
   end
 
-  sig { returns(String) }
+  sig { override.returns(String) }
   def contents
+    path = self.path
+    raise ArgumentError, "DATAPatch#contents called before path was set!" unless path
+
     data = +""
     path.open("rb") do |f|
       loop do
@@ -91,11 +111,13 @@ end
 
 # A string containing a patch.
 class StringPatch < EmbeddedPatch
+  sig { params(strip: T.any(String, Symbol), str: String).void }
   def initialize(strip, str)
     super(strip)
-    @str = str
+    @str = T.let(str, String)
   end
 
+  sig { override.returns(String) }
   def contents
     @str
   end
@@ -107,15 +129,20 @@ class ExternalPatch
 
   extend Forwardable
 
-  attr_reader :resource, :strip
+  sig { returns(Resource::Patch) }
+  attr_reader :resource
+
+  sig { returns(T.any(String, Symbol)) }
+  attr_reader :strip
 
   def_delegators :resource,
                  :url, :fetch, :patch_files, :verify_download_integrity,
                  :cached_download, :downloaded?, :clear_cache
 
+  sig { params(strip: T.any(String, Symbol), block: T.nilable(T.proc.bind(Resource::Patch).void)).void }
   def initialize(strip, &block)
-    @strip    = strip
-    @resource = Resource::Patch.new(&block)
+    @strip    = T.let(strip, T.any(String, Symbol))
+    @resource = T.let(Resource::Patch.new(&block), Resource::Patch)
   end
 
   sig { returns(T::Boolean) }
@@ -123,11 +150,13 @@ class ExternalPatch
     true
   end
 
+  sig { params(owner: T.nilable(Owner)).void }
   def owner=(owner)
     resource.owner = owner
     resource.version(resource.checksum&.hexdigest || ERB::Util.url_encode(resource.url))
   end
 
+  sig { void }
   def apply
     base_dir = Pathname.pwd
     resource.unpack do

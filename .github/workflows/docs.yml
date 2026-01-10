@@ -46,6 +46,9 @@ jobs:
           # No ignore support (https://github.com/errata-ai/vale/issues/131).
           rm -r Library/Homebrew/vendor
 
+          # Generate latest manpage
+          brew generate-man-completions --no-exit-code
+
       - name: Run Vale
         run: vale docs/
 
