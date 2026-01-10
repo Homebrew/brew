@@ -1,0 +1,801 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title>tbaggery</title>
+  <link href="http://tbaggery.com/atom.xml" rel="self"/>
+  <link href="http://tbaggery.com/"/>
+  <updated>2020-03-30T23:15:47-04:00</updated>
+  <id>http://tbaggery.com/</id>
+  <author>
+    <name>Tim Pope</name>
+    <uri>http://tpo.pe/</uri>
+  </author>
+
+  
+  <entry>
+    <title>Effortless Ctags with Git</title>
+    <link href="http://tbaggery.com/2011/08/08/effortless-ctags-with-git.html"/>
+    <updated>2011-08-08T00:00:00-04:00</updated>
+    <id>http://tbaggery.com/2011/08/08/effortless-ctags-with-git</id>
+    <content type="html">&lt;p&gt;In case you’ve been living under a programming rock, Ctags (specifically
+&lt;a href=&quot;http://ctags.sourceforge.net/&quot;&gt;Exuberant Ctags&lt;/a&gt;, not the BSD version
+shipped with OS X) indexes source code to make it easy to jump to
+functions, variables, classes, and other identifiers in (among other
+editors) Vim (see &lt;code class=&quot;highlighter-rouge&quot;&gt;:help tags&lt;/code&gt;).  The major downside to Ctags is having
+to manually rebuild that index all the time.  That’s where the
+&lt;a href=&quot;http://smartic.us/2009/04/03/creating-ctags-with-git-hooks/&quot;&gt;not-so-novel
+idea&lt;/a&gt; of
+re-indexing from various Git commit hooks comes in.&lt;/p&gt;
+
+&lt;p&gt;Git hooks are repository specific.
+&lt;a href=&quot;http://blog.tobiascrawley.net/2009/01/01/generating-a-tags-file-from-a-git-hook/&quot;&gt;Some&lt;/a&gt;
+would recommend using a script to install said hooks into a given
+repository.  But for me, that’s too manual.  Let’s set up a default set
+of hooks that Git will use as a template when creating or cloning a
+repository (requires Git 1.7.1 or newer):&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;git config &lt;span class=&quot;nt&quot;&gt;--global&lt;/span&gt; init.templatedir &lt;span class=&quot;s1&quot;&gt;'~/.git_template'&lt;/span&gt;
+&lt;span class=&quot;nb&quot;&gt;mkdir&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;-p&lt;/span&gt; ~/.git_template/hooks&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;Now onto the first hook, which isn’t actually a hook at all, but rather
+a script the other hooks will call.  Place in
+&lt;code class=&quot;highlighter-rouge&quot;&gt;.git_template/hooks/ctags&lt;/code&gt; and mark as executable:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;&lt;span class=&quot;c&quot;&gt;#!/bin/sh&lt;/span&gt;
+&lt;span class=&quot;nb&quot;&gt;set&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;-e&lt;/span&gt;
+&lt;span class=&quot;nv&quot;&gt;PATH&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;/usr/local/bin:&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;$PATH&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt;
+&lt;span class=&quot;nb&quot;&gt;trap&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;'rm -f &quot;$$.tags&quot;'&lt;/span&gt; EXIT
+git ls-files | &lt;span class=&quot;se&quot;&gt;\&lt;/span&gt;
+  ctags &lt;span class=&quot;nt&quot;&gt;--tag-relative&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;-L&lt;/span&gt; - &lt;span class=&quot;nt&quot;&gt;-f&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;$$&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;.tags&quot;&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;--languages&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;nt&quot;&gt;-javascript&lt;/span&gt;,sql
+&lt;span class=&quot;nb&quot;&gt;mv&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;$$&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;.tags&quot;&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;tags&quot;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;&lt;strong&gt;March 2020 edit: Changed to generate tag file in work tree, not Git dir, because
+Fugitive no longer provides built-in support for the latter.&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;Making this a separate script makes it easy to invoke &lt;code class=&quot;highlighter-rouge&quot;&gt;.git/hooks/ctags&lt;/code&gt;
+for a one-off re-index (or &lt;code class=&quot;highlighter-rouge&quot;&gt;git config --global alias.ctags
+'!.git/hooks/ctags'&lt;/code&gt;, then &lt;code class=&quot;highlighter-rouge&quot;&gt;git ctags&lt;/code&gt;), as well as easy to edit for that
+special case repository that needs a different set of options to
+&lt;code class=&quot;highlighter-rouge&quot;&gt;ctags&lt;/code&gt;.  For example, I might want to re-enable indexing for JavaScript
+or SQL files, which I’ve disabled here because I’ve found both to be of
+limited value and noisy in the warning department.&lt;/p&gt;
+
+&lt;p&gt;Here come the hooks.  Mark all four of them executable and place them in
+&lt;code class=&quot;highlighter-rouge&quot;&gt;.git_template/hooks&lt;/code&gt;. Use this same content for the first three:
+&lt;code class=&quot;highlighter-rouge&quot;&gt;post-commit&lt;/code&gt;, &lt;code class=&quot;highlighter-rouge&quot;&gt;post-merge&lt;/code&gt;, and &lt;code class=&quot;highlighter-rouge&quot;&gt;post-checkout&lt;/code&gt; (actually my
+&lt;code class=&quot;highlighter-rouge&quot;&gt;post-checkout&lt;/code&gt; hook includes &lt;a href=&quot;https://github.com/tpope/hookup&quot;&gt;hookup&lt;/a&gt;
+as well).&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;&lt;span class=&quot;c&quot;&gt;#!/bin/sh&lt;/span&gt;
+.git/hooks/ctags &lt;span class=&quot;o&quot;&gt;&amp;gt;&lt;/span&gt;/dev/null 2&amp;gt;&amp;amp;1 &amp;amp;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;I’ve forked it into the background so that my Git workflow remains as
+latency-free as possible.&lt;/p&gt;
+
+&lt;p&gt;One more hook that oftentimes gets overlooked:
+&lt;code class=&quot;highlighter-rouge&quot;&gt;post-rewrite&lt;/code&gt;.  This is fired after &lt;code class=&quot;highlighter-rouge&quot;&gt;git commit --amend&lt;/code&gt; and
+&lt;code class=&quot;highlighter-rouge&quot;&gt;git rebase&lt;/code&gt;, but the former is already covered by &lt;code class=&quot;highlighter-rouge&quot;&gt;post-commit&lt;/code&gt;.
+Here’s mine:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;&lt;span class=&quot;c&quot;&gt;#!/bin/sh&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;case&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;$1&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;in
+  &lt;/span&gt;rebase&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;exec&lt;/span&gt; .git/hooks/post-merge &lt;span class=&quot;p&quot;&gt;;;&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;esac&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;Once you get this all set up, you can use &lt;code class=&quot;highlighter-rouge&quot;&gt;git init&lt;/code&gt; in existing
+repositories to copy these hooks in.&lt;/p&gt;
+
+&lt;p&gt;So what does this get you?  Any new repositories you create or clone
+will be immediately indexed with Ctags and set up to re-index every time
+you check out, commit, merge, or rebase.  Basically, you’ll never have
+to manually run Ctags on a Git repository again.&lt;/p&gt;
+</content>
+
+  </entry>
+  
+  <entry>
+    <title>Bundle While You Git</title>
+    <link href="http://tbaggery.com/2011/02/07/bundle-while-you-git.html"/>
+    <updated>2011-02-07T00:00:00-05:00</updated>
+    <id>http://tbaggery.com/2011/02/07/bundle-while-you-git</id>
+    <content type="html">&lt;p&gt;&lt;em&gt;Update: &lt;a href=&quot;https://github.com/tpope/hookup&quot;&gt;hookup&lt;/a&gt; does all this for
+you, plus migrates your database!&lt;/em&gt;&lt;/p&gt;
+
+&lt;p&gt;I recently discovered &lt;a href=&quot;http://rvm.beginrescueend.com/&quot;&gt;RVM&lt;/a&gt;’s ability to
+create a project &lt;code class=&quot;highlighter-rouge&quot;&gt;.rvmrc&lt;/code&gt; when running &lt;code class=&quot;highlighter-rouge&quot;&gt;rvm use --rvmrc&lt;/code&gt;.  Commented out
+by default is a section for automatically running Bundler when &lt;code class=&quot;highlighter-rouge&quot;&gt;cd&lt;/code&gt;ing
+to your project:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;&lt;span class=&quot;c&quot;&gt;# Bundle while reducing excess noise.&lt;/span&gt;
+&lt;span class=&quot;nb&quot;&gt;printf&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;Bundling your gems. This may take a few minutes on a fresh clone.&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\n&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt;
+bundle | &lt;span class=&quot;nb&quot;&gt;grep&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;-v&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;'^Using '&lt;/span&gt; | &lt;span class=&quot;nb&quot;&gt;grep&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;-v&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;' is complete'&lt;/span&gt; | &lt;span class=&quot;nb&quot;&gt;sed&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;'/^$/d'&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;I excitedly enabled this, as the less I have to run the &lt;code class=&quot;highlighter-rouge&quot;&gt;bundle&lt;/code&gt; command
+manually, the better.  But it quickly became apparent that this is the
+wrong time to bundle.  Nothing changes when I &lt;code class=&quot;highlighter-rouge&quot;&gt;cd&lt;/code&gt; into a project, so
+why would the bundle be out of date?  Except after the initial clone,
+this trick did nothing but eat valuable seconds (sometimes minutes).
+What I really needed was a way to bundle right after a &lt;code class=&quot;highlighter-rouge&quot;&gt;git checkout&lt;/code&gt; or
+&lt;code class=&quot;highlighter-rouge&quot;&gt;git pull --rebase&lt;/code&gt; (or throughout a &lt;code class=&quot;highlighter-rouge&quot;&gt;git bisect&lt;/code&gt;, if we want to get
+really ambitious).&lt;/p&gt;
+
+&lt;p&gt;As luck would have it, Git provides a post-checkout hook that runs in
+all those cases.  Let’s take a stab at it, shall we?  Create
+&lt;code class=&quot;highlighter-rouge&quot;&gt;.git/hooks/post-checkout&lt;/code&gt; with the following content and &lt;code class=&quot;highlighter-rouge&quot;&gt;chmod +x&lt;/code&gt; it:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;&lt;span class=&quot;c&quot;&gt;#!/bin/sh&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;[&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;-f&lt;/span&gt; Gemfile &lt;span class=&quot;o&quot;&gt;]&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;amp;&amp;amp;&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;command&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;-v&lt;/span&gt; bundle &lt;span class=&quot;o&quot;&gt;&amp;gt;&lt;/span&gt;/dev/null&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;then&lt;/span&gt;
+  &lt;span class=&quot;c&quot;&gt;# $GIT_DIR can cause chaos if Bundler in turn invokes Git.&lt;/span&gt;
+  &lt;span class=&quot;c&quot;&gt;# Unset it in a subshell so it remains set later in the hook.&lt;/span&gt;
+  &lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;unset &lt;/span&gt;GIT_DIR&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;exec &lt;/span&gt;bundle&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;
+  &lt;span class=&quot;c&quot;&gt;# Even if bundling fails, exit from `git checkout` with a zero status.&lt;/span&gt;
+  &lt;span class=&quot;nb&quot;&gt;true
+&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;fi&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;Awesome?  You bet, but it runs on every HEAD switch, which means we
+still lose valuable seconds even when the &lt;code class=&quot;highlighter-rouge&quot;&gt;Gemfile&lt;/code&gt; isn’t updated.
+Luckily, the post-checkout hook receives the old and new HEAD as
+arguments, so it’s easy to check for changes to the &lt;code class=&quot;highlighter-rouge&quot;&gt;Gemfile&lt;/code&gt;,
+&lt;code class=&quot;highlighter-rouge&quot;&gt;Gemfile.lock&lt;/code&gt;, or the project’s gem spec:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;&lt;span class=&quot;c&quot;&gt;#!/bin/sh&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;[&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;$1&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; 0000000000000000000000000000000000000000 &lt;span class=&quot;o&quot;&gt;]&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;then&lt;/span&gt;
+  &lt;span class=&quot;c&quot;&gt;# Special case for initial clone: compare to empty directory.&lt;/span&gt;
+  &lt;span class=&quot;nv&quot;&gt;old&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;4b825dc642cb6eb9a060e54bf8d69288fbee4904
+&lt;span class=&quot;k&quot;&gt;else
+  &lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;old&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;$1&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;fi
+if&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;[&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;-f&lt;/span&gt; Gemfile &lt;span class=&quot;o&quot;&gt;]&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;amp;&amp;amp;&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;command&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;-v&lt;/span&gt; bundle &lt;span class=&quot;o&quot;&gt;&amp;gt;&lt;/span&gt;/dev/null &lt;span class=&quot;o&quot;&gt;&amp;amp;&amp;amp;&lt;/span&gt;
+  git diff &lt;span class=&quot;nt&quot;&gt;--name-only&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;$old&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;$2&lt;/span&gt; | egrep &lt;span class=&quot;nt&quot;&gt;-q&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;'^Gemfile|\.gemspec$'&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;then&lt;/span&gt;
+  &lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;unset &lt;/span&gt;GIT_DIR&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;exec &lt;/span&gt;bundle&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;
+  &lt;span class=&quot;nb&quot;&gt;true
+&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;fi&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;What else?  Well, we could silence some of the noise like RVM does:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;&lt;span class=&quot;c&quot;&gt;#!/bin/sh&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;[&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;$1&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; 0000000000000000000000000000000000000000 &lt;span class=&quot;o&quot;&gt;]&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;then
+  &lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;old&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;4b825dc642cb6eb9a060e54bf8d69288fbee4904
+&lt;span class=&quot;k&quot;&gt;else
+  &lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;old&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;$1&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;fi
+if&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;[&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;-f&lt;/span&gt; Gemfile &lt;span class=&quot;o&quot;&gt;]&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;amp;&amp;amp;&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;command&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;-v&lt;/span&gt; bundle &lt;span class=&quot;o&quot;&gt;&amp;gt;&lt;/span&gt;/dev/null &lt;span class=&quot;o&quot;&gt;&amp;amp;&amp;amp;&lt;/span&gt;
+  git diff &lt;span class=&quot;nt&quot;&gt;--name-only&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;$old&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;$2&lt;/span&gt; | egrep &lt;span class=&quot;nt&quot;&gt;-q&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;'^Gemfile|\.gemspec$'&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;then&lt;/span&gt;
+  &lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;unset &lt;/span&gt;GIT_DIR&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;exec &lt;/span&gt;bundle&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt; | &lt;span class=&quot;nb&quot;&gt;grep&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;-v&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;'^Using '&lt;/span&gt; | &lt;span class=&quot;nb&quot;&gt;grep&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;-v&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;' is complete'&lt;/span&gt;
+  &lt;span class=&quot;nb&quot;&gt;true
+&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;fi&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;Left as an exercise to the reader: installing Bundler if it’s not
+already installed (personally, I still do that from the &lt;code class=&quot;highlighter-rouge&quot;&gt;.rvmrc&lt;/code&gt;), and
+&lt;a href=&quot;http://www.google.com/search?q=init.templatedir&quot;&gt;configuring Git to install that hook into new and freshly cloned
+repositories&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;Last but not least, here’s a complimentary, complementary pre-commit hook:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;&lt;span class=&quot;c&quot;&gt;#!/bin/sh&lt;/span&gt;
+git diff &lt;span class=&quot;nt&quot;&gt;--exit-code&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;--cached&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;--&lt;/span&gt; Gemfile Gemfile.lock &lt;span class=&quot;o&quot;&gt;&amp;gt;&lt;/span&gt;/dev/null &lt;span class=&quot;o&quot;&gt;||&lt;/span&gt; bundle check&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+</content>
+
+  </entry>
+  
+  <entry>
+    <title>Reduce Your Rails Schema Conflicts</title>
+    <link href="http://tbaggery.com/2010/10/24/reduce-your-rails-schema-conflicts.html"/>
+    <updated>2010-10-24T00:00:00-04:00</updated>
+    <id>http://tbaggery.com/2010/10/24/reduce-your-rails-schema-conflicts</id>
+    <content type="html">&lt;p&gt;&lt;em&gt;Update: &lt;a href=&quot;https://github.com/tpope/hookup&quot;&gt;hookup&lt;/a&gt; does all this for you
+and more!&lt;/em&gt;&lt;/p&gt;
+
+&lt;p&gt;Tired of conflicts on your schema file that boil down to the version
+specification at the top?  Me too.  After reading Will Leinweber’s
+article on &lt;a href=&quot;http://bitfission.com/blog/2010/07/auto-merge-gemfile-lock.html&quot;&gt;resolving Gemfile.lock conflicts
+automatically&lt;/a&gt;,
+I decided I could do better.  I started with a
+&lt;a href=&quot;http://twitter.com/tpope/status/28627293895&quot;&gt;tweet&lt;/a&gt; and a
+&lt;a href=&quot;http://gist.github.com/643979&quot;&gt;gist&lt;/a&gt;, but after seeing the reception it
+received, I’m expanding it to a full-on blog post.&lt;/p&gt;
+
+&lt;p&gt;The snippet below goes in your &lt;code class=&quot;highlighter-rouge&quot;&gt;~/.gitconfig&lt;/code&gt;, and is basically a simple
+algorithm that resolves a schema version conflict by picking the higher
+number.  Personally, I’d rather have an ugly mess in my Git config file
+than a second file I have to copy around everywhere or a gem I have to
+install.&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;[merge &quot;railsschema&quot;]
+	name = newer Rails schema version
+	driver = &quot;ruby -e '\n\
+		system %(git), %(merge-file), %(--marker-size=%L), %(%A), %(%O), %(%B)\n\
+		b = File.read(%(%A))\n\
+		b.sub!(/^&amp;lt;+ .*\\nActiveRecord::Schema\\.define.:version =&amp;gt; (\\d+). do\\n=+\\nActiveRecord::Schema\\.define.:version =&amp;gt; (\\d+). do\\n&amp;gt;+ .*/) do\n\
+		  %(ActiveRecord::Schema.define(:version =&amp;gt; #{[$1, $2].max}) do)\n\
+		end\n\
+		File.open(%(%A), %(w)) {|f| f.write(b)}\n\
+		exit 1 if b.include?(%(&amp;lt;)*%L)'&quot;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;Now all that’s left is to tell Git to use that algorithm for
+&lt;code class=&quot;highlighter-rouge&quot;&gt;db/schema.rb&lt;/code&gt;.  You have to do this on a per project basis.  You can
+either commit it to &lt;code class=&quot;highlighter-rouge&quot;&gt;.gitattributes&lt;/code&gt; or keep it locally in
+&lt;code class=&quot;highlighter-rouge&quot;&gt;.git/info/attributes&lt;/code&gt;.&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;db/schema.rb merge=railsschema
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;That’s it.  I haven’t beat on it too hard yet, but it’s handled simple
+conflicts beautifully.&lt;/p&gt;
+</content>
+
+  </entry>
+  
+  <entry>
+    <title>Smack a Ho.st</title>
+    <link href="http://tbaggery.com/2010/03/04/smack-a-ho-st.html"/>
+    <updated>2010-03-04T00:00:00-05:00</updated>
+    <id>http://tbaggery.com/2010/03/04/smack-a-ho-st</id>
+    <content type="html">&lt;p&gt;With
+&lt;a href=&quot;http://matthewhutchinson.net/2011/1/10/configuring-subdomains-in-development-with-lvhme&quot;&gt;lvh.me&lt;/a&gt;
+being shorter and less offensive, I’ve decided this joke has run its
+course and am letting the domain expire.&lt;/p&gt;
+</content>
+
+  </entry>
+  
+  <entry>
+    <title>Episode IV: A New Pope</title>
+    <link href="http://tbaggery.com/2010/02/28/episode-iv-a-new-pope.html"/>
+    <updated>2010-02-28T00:00:00-05:00</updated>
+    <id>http://tbaggery.com/2010/02/28/episode-iv-a-new-pope</id>
+    <content type="html">&lt;p&gt;I’ve moved my blog to Jekyll.  I think this is the post where I’m
+supposed to apologize for falling off the blog wagon and promise to post
+more in the future, though truth be told I have few regrets and make no
+promises.  My aged Drupal install had gotten to the point where I felt
+actively discouraged from posting.  Now that I’ve rectified that, I’ve
+at least enabled myself to post in the future if I have any flashes of
+inspiration.  Still, I promise nothing.  I only migrated the handful of
+posts that seemed less than completely obsolete.&lt;/p&gt;
+
+&lt;p&gt;My migration process produced two noteworthy artifacts: &lt;a href=&quot;http://github.com/tpope/vim-liquid&quot;&gt;Vim syntax
+highlighting for Liquid&lt;/a&gt; and &lt;a href=&quot;http://github.com/tpope/vim-markdown&quot;&gt;the
+same for Markdown&lt;/a&gt;.  There are
+existing implementations of both of these, but they had limitations I
+could not accept (most notably, I couldn’t combine them).  The Liquid
+set has some Jekyll specific goodies like YAML front matter highlighting
+and support for Pygments &lt;code class=&quot;highlighter-rouge&quot;&gt;highlight&lt;/code&gt; blocks.  You need to explicitly
+specify which types of &lt;code class=&quot;highlighter-rouge&quot;&gt;highlight&lt;/code&gt; blocks you want highlighted and map
+between the Pygments type and Vim type in your &lt;code class=&quot;highlighter-rouge&quot;&gt;vimrc&lt;/code&gt;:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-vim&quot; data-lang=&quot;vim&quot;&gt;&lt;span class=&quot;k&quot;&gt;let&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;g:liquid_highlight_types&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;=[&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;html&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;erb=eruby&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;html+erb=eruby.html&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+</content>
+
+  </entry>
+  
+  <entry>
+    <title>A Note About Git Commit Messages</title>
+    <link href="http://tbaggery.com/2008/04/19/a-note-about-git-commit-messages.html"/>
+    <updated>2008-04-19T00:00:00-04:00</updated>
+    <id>http://tbaggery.com/2008/04/19/a-note-about-git-commit-messages</id>
+    <content type="html">&lt;p&gt;I want to take a moment to elaborate on what makes a well formed commit
+message.  I think the best practices for commit message formatting is
+one of the little details that makes Git great.  Understandably, some of
+the first commits to rails.git have messages of the really-long-line
+variety, and I want to expand on why this is a poor practice.&lt;/p&gt;
+
+&lt;p&gt;Here’s a model Git commit message:&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;Capitalized, short (50 chars or less) summary
+
+More detailed explanatory text, if necessary.  Wrap it to about 72
+characters or so.  In some contexts, the first line is treated as the
+subject of an email and the rest of the text as the body.  The blank
+line separating the summary from the body is critical (unless you omit
+the body entirely); tools like rebase can get confused if you run the
+two together.
+
+Write your commit message in the imperative: &quot;Fix bug&quot; and not &quot;Fixed bug&quot;
+or &quot;Fixes bug.&quot;  This convention matches up with commit messages generated
+by commands like git merge and git revert.
+
+Further paragraphs come after blank lines.
+
+- Bullet points are okay, too
+
+- Typically a hyphen or asterisk is used for the bullet, followed by a
+  single space, with blank lines in between, but conventions vary here
+
+- Use a hanging indent
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;Let’s start with a few of the reasons why wrapping your commit messages
+to 72 columns is a good thing.&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;git log&lt;/code&gt; doesn’t do any special special wrapping of the commit
+messages.  With the default pager of &lt;code class=&quot;highlighter-rouge&quot;&gt;less -S&lt;/code&gt;, this means your
+paragraphs flow far off the edge of the screen, making them difficult
+to read.  On an 80 column terminal, if we subtract 4 columns for the
+indent on the left and 4 more for symmetry on the right, we’re left
+with 72 columns.&lt;/li&gt;
+  &lt;li&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;git format-patch --stdout&lt;/code&gt; converts a series of commits to a series
+of emails, using the messages for the message body.  Good email
+netiquette dictates we wrap our plain text emails such that there’s
+room for a few levels of nested reply indicators without overflow in
+an 80 column terminal.  (The current rails.git workflow doesn’t
+include email, but who knows what the future will bring.)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Vim users can meet this requirement by installing my &lt;a href=&quot;http://github.com/tpope/vim-git&quot;&gt;vim-git runtime
+files&lt;/a&gt;, or by simply setting the
+following option in your git commit message file:&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;:set textwidth=72
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;For Textmate, you can adjust the “Wrap Column” option under the view
+menu, then use &lt;code class=&quot;highlighter-rouge&quot;&gt;^Q&lt;/code&gt; to rewrap paragraphs (be sure there’s a blank line
+afterwards to avoid mixing in the comments).  Here’s a shell command to
+add 72 to the menu so you don’t have to drag to select each time:&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;$ defaults write com.macromates.textmate OakWrapColumns '( 40, 72, 78 )'
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;More important than the mechanics of formatting the body is the practice
+of having a subject line.  As the example indicates, you should shoot
+for about 50 characters (though this isn’t a hard maximum) and always,
+always follow it with a blank line.  This first line should be a concise
+summary of the changes introduced by the commit; if there are any
+technical details that cannot be expressed in these strict size
+constraints, put them in the body instead.  The subject line is used all
+over Git, oftentimes in truncated form if too long of a message was
+used.  The following are just a handful of examples of where it ends up:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;git log --pretty=oneline&lt;/code&gt; shows a terse history mapping containing
+the commit id and the summary&lt;/li&gt;
+  &lt;li&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;git rebase --interactive&lt;/code&gt; provides the summary for each commit in the
+editor it invokes&lt;/li&gt;
+  &lt;li&gt;if the config option &lt;code class=&quot;highlighter-rouge&quot;&gt;merge.summary&lt;/code&gt; is set, the summaries from all
+merged commits will make their way into the merge commit message&lt;/li&gt;
+  &lt;li&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;git shortlog&lt;/code&gt; uses summary lines in the changelog-like output it
+produces&lt;/li&gt;
+  &lt;li&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;git format-patch&lt;/code&gt;, &lt;code class=&quot;highlighter-rouge&quot;&gt;git send-email&lt;/code&gt;, and related tools use it as the
+subject for emails&lt;/li&gt;
+  &lt;li&gt;reflogs, a local history accessible with &lt;code class=&quot;highlighter-rouge&quot;&gt;git reflog&lt;/code&gt; intended to help
+you recover from stupid mistakes, get a copy of the summary&lt;/li&gt;
+  &lt;li&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;gitk&lt;/code&gt; has a column for the summary&lt;/li&gt;
+  &lt;li&gt;GitHub uses the summary in various places in their user interface&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;The subject/body distinction may seem unimportant but it’s one of many
+subtle factors that makes Git history so much more pleasant to work with
+than Subversion.&lt;/p&gt;
+</content>
+
+  </entry>
+  
+  <entry>
+    <title>Example Git Workflows: Maintaining a Long Lived Topic Branch</title>
+    <link href="http://tbaggery.com/2008/04/18/example-git-workflows-maintaining-a-long-lived-topic-branch.html"/>
+    <updated>2008-04-18T00:00:00-04:00</updated>
+    <id>http://tbaggery.com/2008/04/18/example-git-workflows-maintaining-a-long-lived-topic-branch</id>
+    <content type="html">&lt;p&gt;In our &lt;a href=&quot;/2008/04/17/example-git-workflows-merging-a-contributor-via-pull.html&quot;&gt;previous post in the series&lt;/a&gt;, we took a look at how a Rails
+core committer could best pull in a branch submitted by a contributer.
+Today, we’re going to be looking at things from the opposite side:  How
+a contributer can best maintain a branch intended for pulling.&lt;/p&gt;
+
+&lt;p&gt;Note that contrary to the initial assumptions of many, &lt;code class=&quot;highlighter-rouge&quot;&gt;git pull&lt;/code&gt; is not
+necessarily the be-all end-all solution for getting your work included
+upstream.  For simple bug fixes and features, it’s generally easier for
+all involved if you submit &lt;code class=&quot;highlighter-rouge&quot;&gt;git format-patch --stdout&lt;/code&gt; output.  The real
+gains of a merge based workflow come when you start to collaborate with
+others on a topic branch.  Having said that, let’s get on with the
+example.&lt;/p&gt;
+
+&lt;p&gt;Let’s start with the basics.  We’ll be using GitHub for the upstream
+repository in this example.  If you haven’t already done, so grab the
+clone the latest upstream over at GitHub.&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;$ git clone git://github.com/rails/rails.git
+$ cd rails
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;Next, set up a public repository.  With GitHub, this is straightforward:
+sign in and click the fork button on &lt;a href=&quot;http://github.com/rails/rails&quot;&gt;the rails/rails.git repository
+page&lt;/a&gt;.  Once that’s done, take note of
+your push URL and add it to your repository.  Here, we use the name
+&lt;code class=&quot;highlighter-rouge&quot;&gt;mine&lt;/code&gt;, to distinguish it from the &lt;code class=&quot;highlighter-rouge&quot;&gt;origin&lt;/code&gt; remote which is the upstream
+we cloned from.&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;$ git remote add mine git@github.com:yourname/rails.git
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;With that set up, we can get to work.  Start by checking out a branch
+for your feature.  Below, we use &lt;code class=&quot;highlighter-rouge&quot;&gt;git fetch&lt;/code&gt; to download the latest
+updates, then create a new branch &lt;code class=&quot;highlighter-rouge&quot;&gt;my_wonderful_feature&lt;/code&gt; based off the
+&lt;code class=&quot;highlighter-rouge&quot;&gt;master&lt;/code&gt; branch of the remote &lt;code class=&quot;highlighter-rouge&quot;&gt;origin&lt;/code&gt;, which is our upstream.&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;$ git fetch
+$ git checkout -b my_wonderful_feature origin/master
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;Obviously, unless it’s a bug fix or feature targeted for the stable
+line, we should start by building off the tip of the upstream &lt;code class=&quot;highlighter-rouge&quot;&gt;master&lt;/code&gt;
+branch, right?  Well, not necessarily; that’s really a holdover thought
+process from Subversion.  There are several advantages to picking a
+recent tag like &lt;code class=&quot;highlighter-rouge&quot;&gt;v2.0.2&lt;/code&gt; and building off of that instead:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;No churn of constantly updating to the latest.&lt;/li&gt;
+  &lt;li&gt;Not having to worry about breakages in the latest edge.  If a test
+breaks, you know (in theory) that you’re the one that broke it.&lt;/li&gt;
+  &lt;li&gt;People can easily test your changes in their application without
+testing everything else introduced by the particular revision of
+edge that you forked.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Of course, this is a trade off, as there are advantages to working on
+edge as well:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;Get to leverage the very latest infrastructure changes in Rails.&lt;/li&gt;
+  &lt;li&gt;Lesser chance of something that works in your version breaking once
+it’s merged into a later revision.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;The right choice depends both on your feature and the current state of
+the upstream.  Given that the last release of Rails happened back in
+Subversion and the next is just around the corner, it generally makes
+sense right now to base things off of a recent commit.  However, once
+2.1 hits, I’d seriously advise people to consider branching off of
+&lt;code class=&quot;highlighter-rouge&quot;&gt;v2.1.0&lt;/code&gt; instead.  Even if you do choose the edge route, don’t be afraid
+to back up a few revisions if the current one has broken tests or
+otherwise doesn’t suit your needs.&lt;/p&gt;
+
+&lt;p&gt;Okay, so you’ve thought it through and decided on &lt;code class=&quot;highlighter-rouge&quot;&gt;origin/master&lt;/code&gt; for
+the &lt;code class=&quot;highlighter-rouge&quot;&gt;my_wonderful_feature&lt;/code&gt; branch you’re implementing.  You’ve created
+your branch, done a few commits, and you’re ready to publicize it.
+Using the &lt;code class=&quot;highlighter-rouge&quot;&gt;mine&lt;/code&gt; remote we created earlier, this is a simple process:&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;$ git push mine my_wonderful_feature
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;If you want the public branch name to be named differently, that’s a
+snap too:&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;$ git push mine my_wonderful_feature:my_humble_request
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;With that done, your branch is ready to be pulled.  Here’s the command a
+core committer would use to merge your work, which can be mentioned in
+the Lighthouse ticket, or on #rails-contrib, or however you want to
+communicate it to the powers that be:&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;$ git pull git://github.com/yourname/rails.git my_wonderful_feature
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;Great.  So a few days later, you get some feedback, and decide to do
+some further work on your branch.  If you’re a Subversion veteran, your
+first reaction is probably to update to the latest edge before
+continuing:&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;$ git pull
+$ git merge origin/master
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;But wait!  Is there a reason you need to update?  Frequently updating
+complicates the history graph and adds noise to the logs:&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;Merge branch 'master' of git://github.com/rails/rails
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;There are certainly times when it’s appropriate to merge the latest
+upstream, like if there are conflicts that need to be resolved before it
+can be added upstream.  When these times come, go ahead and merge, but
+give a descriptive commit message:&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;$ git merge v2.0.3 -m 'Synchronize with 2.0.3 release'
+$ git merge origin/master -m 'Leverage new Rails.public_path method'
+$ git merge origin/master -m 'Resolve conflicts with upstream'
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;If you’d like to try merging (for example, to test that tests still
+pass) but discard it when you’re done (for example, you’re planning on
+doing more work on the branch before publishing), use the following
+pattern.  &lt;code class=&quot;highlighter-rouge&quot;&gt;HEAD@{1}&lt;/code&gt; means “the previous commit referenced by &lt;code class=&quot;highlighter-rouge&quot;&gt;HEAD&lt;/code&gt;”,
+that is, the commit before the merge.&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;$ git merge origin/master
+$ rake test
+$ git reset --hard HEAD@{1}
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;All right, you made the needed changes and your contribution was merged
+upstream.  Here’s the syntax to delete a branch from your remote
+repository so it doesn’t clutter things up:&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;$ git push mine :my_wonderful_feature
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+</content>
+
+  </entry>
+  
+  <entry>
+    <title>Example Git Workflows: Merging a Contributor via Pull</title>
+    <link href="http://tbaggery.com/2008/04/17/example-git-workflows-merging-a-contributor-via-pull.html"/>
+    <updated>2008-04-17T00:00:00-04:00</updated>
+    <id>http://tbaggery.com/2008/04/17/example-git-workflows-merging-a-contributor-via-pull</id>
+    <content type="html">&lt;p&gt;Welcome to my series of articles providing example workflows for working
+with the Rails core Git repository.  My first post is designed for Rails
+core committers and explains one way to deal with contributions that
+come in the form of a Git URL and a branch name.&lt;/p&gt;
+
+&lt;p&gt;Based on my interactions with the core, I’d deduced the following are
+common requirements when merging a contributor’s work, and modeled my
+example around them:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;Preserve history: don’t squash to a single commit&lt;/li&gt;
+  &lt;li&gt;Provide a paper trail of which core committer merged the contribution&lt;/li&gt;
+  &lt;li&gt;Add a &lt;code class=&quot;highlighter-rouge&quot;&gt;CHANGELOG&lt;/code&gt; entry on top&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;First, a recommended configuration option.  This will add a short
+summary of the changes a merge introduces to the commit message.&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;$ git config --global merge.summary true
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;On to the merge.  The first thing we want to do is bring our &lt;code class=&quot;highlighter-rouge&quot;&gt;master&lt;/code&gt;
+branch up to date.  The assumption here is that we don’t have any local
+work done in &lt;code class=&quot;highlighter-rouge&quot;&gt;master&lt;/code&gt;: it’s a clean branch tracking the upstream, so
+that &lt;code class=&quot;highlighter-rouge&quot;&gt;git pull&lt;/code&gt; will simply fast forward the latest changes.&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;$ git checkout master
+$ git pull
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;Next, let’s pull in our contributor’s branch.&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;$ git pull --no-ff --no-commit git://github.com/someone/rails.git branch
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;We use &lt;code class=&quot;highlighter-rouge&quot;&gt;--no-ff&lt;/code&gt; to disallow fast forwarding, even if the
+remote branch is up to date.  This ensures there will always be a merge
+commit, providing for the paper trail requirement mentioned earlier.
+The &lt;code class=&quot;highlighter-rouge&quot;&gt;--no-commit&lt;/code&gt; option gives us a chance to alter the work
+tree as part of the merge commit.  Putting hefty changes here would be
+confusing, but it is the perfect chance to make &lt;code class=&quot;highlighter-rouge&quot;&gt;CHANGELOG&lt;/code&gt;
+edits.&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;$ edit activesupport/CHANGELOG
+$ git add activesupport/CHANGELOG
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;Once the &lt;code class=&quot;highlighter-rouge&quot;&gt;CHANGELOG&lt;/code&gt; is to your liking, we are ready to finalize it.
+The commit message is already in place but feel free to replace it if it
+doesn’t give a clear picture of what changed.&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;$ git commit
+$ git push
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+</content>
+
+  </entry>
+  
+  <entry>
+    <title>Best Practices for Contributing to Rails with Git</title>
+    <link href="http://tbaggery.com/2008/04/13/best-practices-for-contributing-to-rails-with-git.html"/>
+    <updated>2008-04-13T00:00:00-04:00</updated>
+    <id>http://tbaggery.com/2008/04/13/best-practices-for-contributing-to-rails-with-git</id>
+    <content type="html">&lt;p&gt;The Ruby on Rails core is now &lt;a href=&quot;http://www.github.com/rails/rails&quot;&gt;hosted on Git&lt;/a&gt; This is great news for
+Git fans like myself.  For those of Rails core contributors who are
+coming late to the party, here’s a quick list of tips I’ve put together
+especially for you.  This no substitute for &lt;a href=&quot;http://www.kernel.org/pub/software/scm/git/docs/tutorial.html&quot;&gt;a proper tutorial&lt;/a&gt; but
+rather a Rails biased supplement to one.&lt;/p&gt;
+
+&lt;p&gt;The first thing you do should be configure a real name and email.  By
+default, Git chooses a default name based on the GECOS data (which is
+probably right) and a default email based on your login and hostname
+(which is almost certainly wrong).  Best practices dictate you use
+your real name and email here, not your login, IRC handle, or any
+other aliases you may have.  These fields will be immortalized in the
+repository history so make sure you get them right.&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;$ git config --global user.name &quot;Tim Pope&quot;
+$ git config --global user.email &quot;foo@gmail.com&quot;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;While you’re configuring, you may want to enable coloring for some
+commands:&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;$ git config --global color.diff auto
+$ git config --global color.status auto
+$ git config --global color.branch auto
+$ git config --global color.interactive auto
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;While Git will accept just about any commit message you feed to it,
+sticking to best practices makes the log a lot easier to work with.  A
+model commit message is shown below.&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;Short (50 chars or less) summary of changes
+
+More detailed explanatory text, if necessary.  Wrap it to about 72
+characters or so.  In some contexts, the first line is treated as the
+subject of an email and the rest of the text as the body.  The blank
+line separating the summary from the body is critical (unless you omit
+the body entirely); tools like rebase can get confused if you run the
+two together.
+
+Write your commit message in the present tense: &quot;Fix bug&quot; and not &quot;Fixed
+bug.&quot;  This convention matches up with commit messages generated by
+commands like git merge and git revert.
+
+Further paragraphs come after blank lines.
+
+- Bullet points are okay, too
+
+- Typically a hyphen or asterisk is used for the bullet, preceded by a
+  single space, with blank lines in between, but conventions vary here
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;As far as submitting your work to the Rails core, the workflow here is
+still being fleshed out.  For now, either give a public URL and branch
+where your contribution can be found, or use the following series of
+commands to get a file that can be easily applied by anyone with the
+&lt;code class=&quot;highlighter-rouge&quot;&gt;git am&lt;/code&gt; command to reconstruct your history locally.&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;$ git checkout my_funky_branch
+$ git rebase origin/master
+$ git format-patch --stdout origin/master.. &amp;gt; my_funky_patches
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;Here’s a tip for keeping up to date:  In lieu of using &lt;code class=&quot;highlighter-rouge&quot;&gt;git pull&lt;/code&gt; to
+download the latest changes, use &lt;code class=&quot;highlighter-rouge&quot;&gt;git pull --rebase&lt;/code&gt;.  Instead of
+cluttering the history with a merge commit, it reapplies your changes to
+the latest upstream.  The only caveat is that you shouldn’t use this
+method if you’ve already published the changes to another repository.
+Doing so would cause problems for anyone who has already downloaded the
+original commits.&lt;/p&gt;
+</content>
+
+  </entry>
+  
+  <entry>
+    <title>Easy Ruby Examples</title>
+    <link href="http://tbaggery.com/2007/05/03/easy-ruby-examples.html"/>
+    <updated>2007-05-03T00:00:00-04:00</updated>
+    <id>http://tbaggery.com/2007/05/03/easy-ruby-examples</id>
+    <content type="html">&lt;p&gt;Today I devised a little script to generate Ruby examples showing code
+and output.&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;% rubydemo '[1,2,3].inject {|m,o|m+o}'
+[1,2,3].inject {|m,o|m+o} #=&amp;gt; 6
+% rubydemo 1/0
+1/0 #=&amp;gt; #&amp;lt;ZeroDivisionError: divided by 0&amp;gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;Here’s the script I used for generation. (It could have been one line if
+I didn’t care so much about exception formatting.)&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-ruby&quot; data-lang=&quot;ruby&quot;&gt;&lt;span class=&quot;c1&quot;&gt;#!/usr/bin/env ruby&lt;/span&gt;
+&lt;span class=&quot;nb&quot;&gt;print&lt;/span&gt; &lt;span class=&quot;no&quot;&gt;ARGV&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;join&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot; &quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot; #=&amp;gt; &quot;&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;begin&lt;/span&gt;
+  &lt;span class=&quot;nb&quot;&gt;p&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;eval&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;no&quot;&gt;ARGV&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;join&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot; &quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;),&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;binding&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;(demo)&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;rescue&lt;/span&gt; &lt;span class=&quot;no&quot;&gt;Exception&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;e&lt;/span&gt;
+  &lt;span class=&quot;nb&quot;&gt;puts&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;#&amp;lt;&lt;/span&gt;&lt;span class=&quot;si&quot;&gt;#{&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;e&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;class&lt;/span&gt;&lt;span class=&quot;si&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;: &lt;/span&gt;&lt;span class=&quot;si&quot;&gt;#{&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;e&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;message&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;sr&quot;&gt;/.*/&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]&lt;/span&gt;&lt;span class=&quot;si&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&amp;gt;&quot;&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;The real killer app, though, is using it in conjunction with IRC. Here’s
+the alias I used in Irssi.&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;/alias rd exec -nosh - -out rubydemo $*
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;Now I need merely do &lt;code class=&quot;highlighter-rouge&quot;&gt;/rd 2+2&lt;/code&gt; to get a beautifully formatted &lt;code class=&quot;highlighter-rouge&quot;&gt;2+2 #=&amp;gt;
+4&lt;/code&gt; in any conversation.&lt;/p&gt;
+</content>
+
+  </entry>
+  
+  <entry>
+    <title>Auto-loading Ruby Code</title>
+    <link href="http://tbaggery.com/2007/02/11/auto-loading-ruby-code.html"/>
+    <updated>2007-02-11T00:00:00-05:00</updated>
+    <id>http://tbaggery.com/2007/02/11/auto-loading-ruby-code</id>
+    <content type="html">&lt;p&gt;An incredibly useful technique when using Ruby is to auto-load at
+start-up a custom library written for exactly that purpose.  This is
+easy to accomplish with a couple of environment variables, but I see
+very little discussion on the subject.  Thus, I’ve written a nice
+summary of how to go about setting this up.&lt;/p&gt;
+
+&lt;p&gt;The secret to running code at start-up is &lt;code class=&quot;highlighter-rouge&quot;&gt;RUBYOPT&lt;/code&gt;.  You’ve probably
+seen this environment variable before if you’ve used RubyGems.  It is
+recommended to set this to a value of &lt;code class=&quot;highlighter-rouge&quot;&gt;rubygems&lt;/code&gt;.  This is equivalent to
+always calling ruby as &lt;code class=&quot;highlighter-rouge&quot;&gt;ruby -rubygems&lt;/code&gt;.  The &lt;code class=&quot;highlighter-rouge&quot;&gt;-r&lt;/code&gt; option requires a
+library, so this option essentially does a &lt;code class=&quot;highlighter-rouge&quot;&gt;require 'ubygems'&lt;/code&gt; each time
+Ruby is started.  (The odd name of &lt;code class=&quot;highlighter-rouge&quot;&gt;ubygems&lt;/code&gt; was picked to look nice
+next to &lt;code class=&quot;highlighter-rouge&quot;&gt;-r&lt;/code&gt;.)&lt;/p&gt;
+
+&lt;p&gt;We’re going to be doing something similar, but with our own library.
+I’ve traditionally put this file in &lt;code class=&quot;highlighter-rouge&quot;&gt;~/.ruby/lib/tpope.rb&lt;/code&gt;, but I will
+be using the more user-agnostic &lt;code class=&quot;highlighter-rouge&quot;&gt;mine.rb&lt;/code&gt; for the purposes of this
+example.&lt;/p&gt;
+
+&lt;p&gt;The first thing we need to do is find the right place to set this
+environment variable, along with setting &lt;code class=&quot;highlighter-rouge&quot;&gt;RUBYLIB&lt;/code&gt; to a path that holds
+our file.  If you are using a bourne compatible shell, like bash, add
+this to your shell’s rc file (&lt;code class=&quot;highlighter-rouge&quot;&gt;~/.bashrc&lt;/code&gt; for bash):&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;&lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;[&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;-f&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;$HOME&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;/.ruby/lib/mine.rb&quot;&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;]&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;then
+  &lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;RUBYLIB&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;$HOME&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;/.ruby/lib&quot;&lt;/span&gt;
+  &lt;span class=&quot;nv&quot;&gt;RUBYOPT&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;rmine&quot;&lt;/span&gt;
+  &lt;span class=&quot;nb&quot;&gt;export &lt;/span&gt;RUBYLIB RUBYOPT
+&lt;span class=&quot;k&quot;&gt;fi&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;For C shells, add the following to &lt;code class=&quot;highlighter-rouge&quot;&gt;~/.cshrc&lt;/code&gt;:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-csh&quot; data-lang=&quot;csh&quot;&gt;if ( -f &quot;$HOME/.ruby/lib/mine.rb&quot; ) then
+  setenv RUBYLIB &quot;$HOME/.ruby/lib&quot;
+  setenv RUBYOPT &quot;rmine&quot;
+endif&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;If you are running under a GUI environment, you will want to make this
+variables known to the top level GUI as well.  Both Windows and Mac OS X
+have interfaces to set environment variables.  Some desktop environments
+running under X11 provide such an interface as well, or you can just add
+similar lines to &lt;code class=&quot;highlighter-rouge&quot;&gt;~/.xsession&lt;/code&gt; or &lt;code class=&quot;highlighter-rouge&quot;&gt;~/.xinitrc&lt;/code&gt;, depending on your setup.&lt;/p&gt;
+
+&lt;p&gt;So now that we have this configured, what can we add to this new file?
+Plenty of things.  Let’s start by enhancing the &lt;code class=&quot;highlighter-rouge&quot;&gt;$LOAD_PATH&lt;/code&gt; (also known
+as &lt;code class=&quot;highlighter-rouge&quot;&gt;$:&lt;/code&gt;).  My strategy here is to pop the current working directory off
+the end, add a few more directories, then restore it.&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-ruby&quot; data-lang=&quot;ruby&quot;&gt;&lt;span class=&quot;n&quot;&gt;old_current&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;vg&quot;&gt;$LOAD_PATH&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;pop&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;vg&quot;&gt;$LOAD_PATH&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;last&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;==&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;'.'&lt;/span&gt;
+&lt;span class=&quot;sx&quot;&gt;%w(.ruby/lib ruby/lib .ruby ruby)&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;each&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;do&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;dir&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;
+  &lt;span class=&quot;vg&quot;&gt;$LOAD_PATH&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;unshift&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;no&quot;&gt;File&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;expand_path&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;~/&lt;/span&gt;&lt;span class=&quot;si&quot;&gt;#{&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;dir&lt;/span&gt;&lt;span class=&quot;si&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+&lt;span class=&quot;no&quot;&gt;Dir&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;no&quot;&gt;File&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;expand_path&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s1&quot;&gt;'~/ruby/*/lib'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)].&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;each&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;do&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;dir&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;
+  &lt;span class=&quot;vg&quot;&gt;$LOAD_PATH&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;lt;&amp;lt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;dir&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+&lt;span class=&quot;vg&quot;&gt;$LOAD_PATH&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;lt;&amp;lt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;old_current&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;old_current&lt;/span&gt;
+&lt;span class=&quot;vg&quot;&gt;$LOAD_PATH&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;uniq!&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;I add a wide variety of directories here, feel free to adjust as you see
+fit.  Note the addition of every directory matching &lt;code class=&quot;highlighter-rouge&quot;&gt;~/ruby/*/lib&lt;/code&gt;,
+which makes it easy to install new libraries in &lt;code class=&quot;highlighter-rouge&quot;&gt;~/ruby&lt;/code&gt;.  This is
+something that would be tricky to do just by adjusting &lt;code class=&quot;highlighter-rouge&quot;&gt;RUBYLIB&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;Next, let’s load RubyGems.  We can do this in such a way that it won’t
+fail on systems where it’s not installed.&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-ruby&quot; data-lang=&quot;ruby&quot;&gt;&lt;span class=&quot;k&quot;&gt;begin&lt;/span&gt;
+  &lt;span class=&quot;nb&quot;&gt;require&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;'rubygems'&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;rescue&lt;/span&gt; &lt;span class=&quot;no&quot;&gt;LoadError&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;What else?  How about always keeping good old &lt;code class=&quot;highlighter-rouge&quot;&gt;Symbol#to_proc&lt;/code&gt; handy.&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-ruby&quot; data-lang=&quot;ruby&quot;&gt;&lt;span class=&quot;k&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;Symbol&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;to_proc&lt;/span&gt;
+    &lt;span class=&quot;no&quot;&gt;Proc&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;|*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;args&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;|&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;args&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;shift&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;__send__&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;args&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;One thing to be careful about is not letting your code grow dependent on
+this auto-loaded library.  For example, if you add the above snippet and
+start doing &lt;code class=&quot;highlighter-rouge&quot;&gt;pets.each(&amp;amp;:feed)&lt;/code&gt; all over the place, your code will break
+for other people without your library.  I still define &lt;code class=&quot;highlighter-rouge&quot;&gt;Symbol#to_proc&lt;/code&gt;
+because it’s handy for debug statements and quick scripts and it’s easy
+enough to avoid using where it’s important.  But I avoid something more
+invasive like &lt;code class=&quot;highlighter-rouge&quot;&gt;require 'active_support'&lt;/code&gt; because it’s harder to keep
+track of everything it provides.  Use your own best judgement.&lt;/p&gt;
+</content>
+
+  </entry>
+  
+
+</feed>
