@@ -1,4 +1,4 @@
 # typed: strict
 # frozen_string_literal: true
 
-require "extend/os/mac/sandbox" if OS.mac?
+require "extend/os/#{OS.mac? ? "mac" : "linux"}/sandbox"
