@@ -63,7 +63,7 @@ class Sandbox
           if error_pipe
             # Child side
             ENV.update(ENV.to_hash.transform_values { |v| rewrite_var_home(T.must(v), true) })
-            $stderr.puts command.map {|arg| "\"#{arg}\"" }.join(" ")
+            $stderr.puts command.map { |arg| "\"#{arg}\"" }.join(" ")
             exec(*command)
           end
         end
