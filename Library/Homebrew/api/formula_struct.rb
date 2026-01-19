@@ -29,6 +29,15 @@ module Homebrew
         :stable,
       ].freeze
 
+      SKIP_SERIALIZATION = [
+        :bottle_checksums,
+        :bottle_rebuild,
+        :tap_git_head, # This is serialized in the top-level JSON since it's not formula-specific
+      ].freeze
+
+      # :any_skip_relocation is the most common in homebrew/core
+      DEFAULT_CELLAR = :any_skip_relocation
+
       # `:codesign` and custom requirement classes are not supported.
       API_SUPPORTED_REQUIREMENTS = [:arch, :linux, :macos, :maximum_macos, :xcode].freeze
       private_constant :API_SUPPORTED_REQUIREMENTS
@@ -224,6 +233,50 @@ module Homebrew
             { req_name => req_tags }
           end
         end
+      end
+
+      public
+
+      sig { params(bottle_tag: ::Utils::Bottles::Tag).returns(T.nilable(T::Hash[String, T.untyped])) }
+      def serialize_bottle(bottle_tag: ::Utils::Bottles.tag)
+        bottle_collector = ::Utils::Bottles::Collector.new
+        bottle_checksums.each do |bottle_info|
+          bottle_info = bottle_info.dup
+          cellar = T.cast(bottle_info.delete(:cellar), T.nilable(T.any(String, Symbol))) || :any
+          tag = T.must(bottle_info.keys.first)
+          checksum = T.cast(bottle_info.values.first, String)
+
+          bottle_collector.add(
+            ::Utils::Bottles::Tag.from_symbol(tag),
+            checksum: Checksum.new(checksum),
+            cellar:,
+          )
+        end
+        return unless (bottle_spec = bottle_collector.specification_for(bottle_tag))
+
+        tag = (bottle_spec.tag if bottle_spec.tag != bottle_tag)
+        cellar = (::Utils.stringify_symbol(bottle_spec.cellar) if bottle_spec.cellar != DEFAULT_CELLAR)
+
+        {
+          "rebuild"  => bottle_rebuild,
+          "tag"      => tag,
+          "cellar"   => cellar,
+          "checksum" => bottle_spec.checksum.to_s,
+        }
+      end
+
+      sig { params(bottle_tag: ::Utils::Bottles::Tag).returns(T::Hash[String, T.untyped]) }
+      def serialize(bottle_tag: ::Utils::Bottles.tag)
+        hash = self.class.decorator.all_props.filter_map do |prop|
+          next if PREDICATES.any? { |predicate| prop == :"#{predicate}_present" }
+          next if SKIP_SERIALIZATION.include?(prop)
+
+          [prop.to_s, send(prop)]
+        end.to_h
+
+        hash["bottle"] = serialize_bottle(bottle_tag:)
+
+        ::Utils.deep_compact_blank(hash)
       end
     end
   end

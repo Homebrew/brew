@@ -159,9 +159,9 @@ module Homebrew
         Homebrew::API.write_aliases_file!(all_aliases, "formula", regenerate:)
       end
 
-      sig { params(hash: T::Hash[String, T.untyped]).returns(FormulaStruct) }
-      def self.generate_formula_struct_hash(hash)
-        hash = Homebrew::API.merge_variations(hash).dup
+      sig { params(hash: T::Hash[String, T.untyped], bottle_tag: Utils::Bottles::Tag).returns(FormulaStruct) }
+      def self.generate_formula_struct_hash(hash, bottle_tag: Utils::Bottles.tag)
+        hash = Homebrew::API.merge_variations(hash, bottle_tag:).dup
 
         if (caveats = hash["caveats"])
           hash["caveats"] = Formulary.replace_placeholders(caveats)

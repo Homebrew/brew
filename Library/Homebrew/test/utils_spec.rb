@@ -124,4 +124,50 @@ RSpec.describe Utils do
       expect(described_class.convert_to_string_or_symbol("example")).to eq("example")
     end
   end
+
+  describe ".stringify_symbol" do
+    specify(:aggregate_failures) do
+      expect(described_class.stringify_symbol(:example)).to eq(":example")
+      expect(described_class.stringify_symbol("example")).to eq("example")
+    end
+  end
+
+  describe ".deep_compact_blank" do
+    it "removes blank values from nested hashes and arrays" do
+      input = {
+        a: "",
+        b: [],
+        c: {},
+        d: {
+          e: "value",
+          f: nil,
+          g: {
+            h: "",
+            i: true,
+            j: {
+              k: nil,
+              l: "",
+            },
+          },
+          m: ["", nil],
+        },
+        n: [nil, "", 2, [], { o: nil }],
+        p: false,
+        q: 0,
+        r: 0.0,
+      }
+
+      expected_output = {
+        d: {
+          e: "value",
+          g: {
+            i: true,
+          },
+        },
+        n: [2],
+      }
+
+      expect(described_class.deep_compact_blank(input)).to eq(expected_output)
+    end
+  end
 end

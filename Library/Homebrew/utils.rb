@@ -232,4 +232,36 @@ module Utils
 
     string
   end
+
+  # Converts a symbol to a string starting with `:`, otherwise returns the input.
+  #
+  #   stringify_symbol(:example)  # => ":example"
+  #   stringify_symbol("example") # => "example"
+  sig { params(value: T.any(String, Symbol)).returns(T.nilable(String)) }
+  def self.stringify_symbol(value)
+    return ":#{value}" if value.is_a?(Symbol)
+
+    value
+  end
+
+  sig {
+    type_parameters(:U)
+      .params(obj: T.all(T.type_parameter(:U), Object))
+      .returns(T.nilable(T.type_parameter(:U)))
+  }
+  def self.deep_compact_blank(obj)
+    obj = case obj
+    when Hash
+      obj.transform_values { |v| deep_compact_blank(v) }
+         .compact
+    when Array
+      obj.filter_map { |v| deep_compact_blank(v) }
+    else
+      obj
+    end
+
+    return if obj.blank? || (obj.is_a?(Numeric) && obj.zero?)
+
+    obj
+  end
 end
