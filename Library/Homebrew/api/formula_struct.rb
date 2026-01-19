@@ -74,11 +74,13 @@ module Homebrew
             T.any(
               # Formula name: "foo"
               String,
-              # Hash like { "foo" => "build" } or { :foo => ["build", "test"] }
+              # Hash like { "foo" => :build } or { "foo" => [:build, :test] }
               T::Hash[
                 String,
-                T.any(String, T::Array[String]),
+                T.any(Symbol, T::Array[Symbol]),
               ],
+              # Hash like { since: :catalina } for uses_from_macos_bounds
+              T::Hash[Symbol, Symbol],
             ),
           ],
         ]
@@ -97,7 +99,6 @@ module Homebrew
 
       # Changes to this struct must be mirrored in Homebrew::API::Formula.generate_formula_struct_hash
       const :aliases, T::Array[String], default: []
-      const :bottle, T::Hash[String, T.anything], default: {}
       const :bottle_checksums, T::Array[T::Hash[Symbol, T.anything]], default: []
       const :bottle_rebuild, Integer, default: 0
       const :caveats, T.nilable(String)

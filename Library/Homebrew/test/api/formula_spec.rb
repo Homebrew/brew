@@ -63,4 +63,45 @@ RSpec.describe Homebrew::API::Formula do
       expect(aliases_output).to eq formulae_aliases
     end
   end
+
+  specify "::symbolize_dependency_hash" do
+    input = {
+      "dependencies"           => [
+        "foo",
+        { "bar" => "build" },
+        { "baz" => ["build", "test"] },
+      ],
+      "uses_from_macos"        => [
+        "abc",
+        { "def" => "build" },
+        { "ghi" => ["build", "test"] },
+      ],
+      "uses_from_macos_bounds" => [
+        {},
+        { "since" => "catalina" },
+        {},
+      ],
+    }
+
+    expected_output = {
+      "dependencies"           => [
+        "foo",
+        { "bar" => :build },
+        { "baz" => [:build, :test] },
+      ],
+      "uses_from_macos"        => [
+        "abc",
+        { "def" => :build },
+        { "ghi" => [:build, :test] },
+      ],
+      "uses_from_macos_bounds" => [
+        {},
+        { since: :catalina },
+        {},
+      ],
+    }
+
+    output = described_class.symbolize_dependency_hash(input)
+    expect(output).to eq expected_output
+  end
 end

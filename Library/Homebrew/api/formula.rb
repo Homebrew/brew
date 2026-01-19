@@ -202,7 +202,7 @@ module Homebrew
           hash["disable_args"] = disable_args
         end
 
-        hash["head_dependency_hash"] = hash["head_dependencies"]
+        hash["head_dependency_hash"] = symbolize_dependency_hash(hash["head_dependencies"])
 
         hash["head_url_args"] = begin
           # Fall back to "" to satisfy the type checker. If the head URL is missing, head_present will be false.
@@ -258,7 +258,7 @@ module Homebrew
 
         hash["stable_checksum"] = hash.dig("urls", "stable", "checksum")
 
-        hash["stable_dependency_hash"] = {
+        hash["stable_dependency_hash"] = symbolize_dependency_hash({
           "dependencies"             => hash["dependencies"] || [],
           "build_dependencies"       => hash["build_dependencies"] || [],
           "test_dependencies"        => hash["test_dependencies"] || [],
@@ -266,7 +266,7 @@ module Homebrew
           "optional_dependencies"    => hash["optional_dependencies"] || [],
           "uses_from_macos"          => hash["uses_from_macos"] || [],
           "uses_from_macos_bounds"   => hash["uses_from_macos_bounds"] || [],
-        }
+        })
 
         hash["stable_url_args"] = begin
           url = hash.dig("urls", "stable", "url")
@@ -294,6 +294,30 @@ module Homebrew
         hash["stable_present"] = hash.dig("urls", "stable").present?
 
         FormulaStruct.from_hash(hash)
+      end
+
+      # Convert from { "dependencies" => ["foo", { "bar" => "build" }, { "baz" => ["build", "test"] }] }
+      #           to { "dependencies" => ["foo", { "bar" => :build }, { "baz" => [:build, :test] }] }
+      sig { params(hash: T.nilable(T::Hash[String, T.untyped])).returns(T.nilable(T::Hash[String, T.untyped])) }
+      def self.symbolize_dependency_hash(hash)
+        if hash && (uses_from_macos_bounds = hash["uses_from_macos_bounds"])
+          hash["uses_from_macos_bounds"] = uses_from_macos_bounds.map(&:deep_symbolize_keys)
+        end
+
+        hash&.transform_values do |deps|
+          deps.map do |dep|
+            next dep unless dep.is_a?(Hash)
+
+            dep.transform_values do |types|
+              case types
+              when Array
+                types.map(&:to_sym)
+              else
+                types.to_sym
+              end
+            end
+          end
+        end
       end
     end
   end
