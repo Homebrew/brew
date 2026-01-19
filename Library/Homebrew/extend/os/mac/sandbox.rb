@@ -105,11 +105,11 @@ class Sandbox
             controller.winsize = if $stdout.tty?
                                    # We can only use IO#winsize if the IO object is a TTY.
                                    $stdout.winsize
-                                 else
+            else
                                    # Otherwise, default to tput, if available.
                                    # This relies on ncurses rather than the system's ioctl.
                                    [Utils.popen_read("tput", "lines").to_i, Utils.popen_read("tput", "cols").to_i]
-                                 end
+            end
           end
 
           write_to_pty = proc do
@@ -205,8 +205,6 @@ class Sandbox
       end
     end
   end
-
-  private
 
   class SandboxRule
     sig { returns(T::Boolean) }
