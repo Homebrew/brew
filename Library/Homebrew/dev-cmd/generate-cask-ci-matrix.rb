@@ -156,7 +156,7 @@ module Homebrew
 
       sig { params(cask: Cask::Cask, os: Symbol).returns(T::Array[Symbol]) }
       def architectures(cask:, os: :macos)
-        architectures = []
+        architectures = T.let([], T::Array[Symbol])
         [:arm, :intel].each do |arch|
           tag = Utils::Bottles::Tag.new(system: os, arch: arch)
           Homebrew::SimulateSystem.with_tag(tag) do
