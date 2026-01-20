@@ -136,7 +136,7 @@ module Homebrew
         filtered_runners = if filtered_macos_runners.any?
           filtered_macos_runners
         else
-          RUNNERS.dup
+          MACOS_RUNNERS.dup
         end
 
         macos_archs = architectures(cask:, os: :macos)
@@ -156,7 +156,7 @@ module Homebrew
 
       sig { params(cask: Cask::Cask, os: Symbol).returns(T::Array[Symbol]) }
       def architectures(cask:, os: :macos)
-        architectures = []
+        architectures = T.let([], T::Array[Symbol])
         [:arm, :intel].each do |arch|
           tag = Utils::Bottles::Tag.new(system: os, arch: arch)
           Homebrew::SimulateSystem.with_tag(tag) do

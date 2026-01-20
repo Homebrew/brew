@@ -330,6 +330,23 @@ RSpec.describe Cask::Cask, :cask do
     end
   end
 
+  describe "#contains_os_specific_artifacts?" do
+    it "returns false for casks without on_system blocks" do
+      cask = Cask::CaskLoader.load("local-caffeine")
+      expect(cask.contains_os_specific_artifacts?).to be false
+    end
+
+    it "returns false for casks with on_system blocks but no OS-specific artifacts" do
+      cask = Cask::CaskLoader.load("with-os-blocks-no-os-artifacts")
+      expect(cask.contains_os_specific_artifacts?).to be false
+    end
+
+    it "returns true for casks with on_system blocks that have OS-specific artifacts" do
+      cask = Cask::CaskLoader.load("with-os-specific-artifacts")
+      expect(cask.contains_os_specific_artifacts?).to be true
+    end
+  end
+
   describe "#to_hash_with_variations" do
     let!(:original_macos_version) { MacOS.full_version.to_s }
     let(:expected_versions_variations) do
