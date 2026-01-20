@@ -274,7 +274,7 @@ module Homebrew
           runners.product(architectures(cask:)).filter_map do |runner, arch|
             native_runner_arch = arch == runner.fetch(:arch)
             # we don't need to run simulated archs on Linux or macOS Sequoia
-            # because it has a GitHub hosted x86_64 runner
+            # because they exist as real GitHub hosted runner
             next if runner.fetch(:symbol) == :linux && !native_runner_arch
             next if runner.fetch(:symbol) == :sequoia && !native_runner_arch
 
