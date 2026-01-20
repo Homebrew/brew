@@ -136,7 +136,7 @@ module Homebrew
         filtered_runners = if filtered_macos_runners.any?
           filtered_macos_runners
         else
-          RUNNERS.dup
+          MACOS_RUNNERS.dup
         end
 
         macos_archs = architectures(cask:, os: :macos)
