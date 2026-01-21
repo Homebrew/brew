@@ -121,6 +121,14 @@ class Keg
     raise NotAKegError, "#{original_path} is not inside a keg"
   end
 
+  sig { params(rack: Pathname).returns(T.nilable(Keg)) }
+  def self.from_rack(rack)
+    return unless rack.directory?
+
+    kegs = rack.subdirs.map { |d| new(d) }
+    kegs.find(&:linked?) || kegs.find(&:optlinked?) || kegs.max_by(&:scheme_and_version)
+  end
+
   sig { returns(T::Array[Keg]) }
   def self.all
     Formula.racks.flat_map(&:subdirs).map { |d| new(d) }

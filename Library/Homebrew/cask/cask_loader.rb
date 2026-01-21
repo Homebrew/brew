@@ -137,6 +137,7 @@ module Cask
         @token = path.basename(path.extname).to_s
         @path = path
         @tap = Tap.from_path(path) || Homebrew::API.tap_from_source_download(path)
+        @from_installed_caskfile = false
       end
 
       sig { override.params(config: T.nilable(Config)).returns(Cask) }
@@ -151,7 +152,8 @@ module Cask
         if !self.class.invalid_path?(path, valid_extnames: %w[.json]) &&
            (from_json = JSON.parse(@content).presence) &&
            from_json.is_a?(Hash)
-          return FromAPILoader.new(token, from_json:, path:).load(config:)
+          return FromAPILoader.new(token, from_json:, path:,
+from_installed_caskfile: @from_installed_caskfile).load(config:)
         end
 
         begin
@@ -213,8 +215,8 @@ module Cask
         if ALLOWED_URL_SCHEMES.exclude?(url.scheme)
           raise UnsupportedInstallationMethod,
                 "Non-checksummed download of #{name} formula file from an arbitrary URL is unsupported! " \
-                "`brew extract` or `brew create` and `brew tap-new` to create a formula file in a tap " \
-                "on GitHub instead."
+                "`brew version-install` to install a formula file from your own custom tap " \
+                "instead."
         end
 
         begin
@@ -323,16 +325,18 @@ module Cask
 
       sig {
         params(
-          token:     String,
-          from_json: T.nilable(T::Hash[String, T.untyped]),
-          path:      T.nilable(Pathname),
+          token:                   String,
+          from_json:               T.nilable(T::Hash[String, T.untyped]),
+          path:                    T.nilable(Pathname),
+          from_installed_caskfile: T::Boolean,
         ).void
       }
-      def initialize(token, from_json: T.unsafe(nil), path: nil)
+      def initialize(token, from_json: T.unsafe(nil), path: nil, from_installed_caskfile: false)
         @token = token.sub(%r{^homebrew/(?:homebrew-)?cask/}i, "")
         @sourcefile_path = path || Homebrew::API.cached_cask_json_file_path
         @path = path || CaskLoader.default_path(@token)
         @from_json = from_json
+        @from_installed_caskfile = from_installed_caskfile
       end
 
       def load(config:)
@@ -343,6 +347,8 @@ module Cask
           Homebrew::API::Cask.all_casks.fetch(token)
         end
 
+        cask_struct = Homebrew::API::Cask.generate_cask_struct_hash(json_cask, ignore_types: @from_installed_caskfile)
+
         cask_options = {
           loaded_from_api: true,
           api_source:      json_cask,
@@ -352,154 +358,51 @@ module Cask
           loader:          self,
         }
 
-        json_cask = Homebrew::API.merge_variations(json_cask).deep_symbolize_keys.freeze
-
-        cask_options[:tap] = Tap.fetch(json_cask[:tap]) if json_cask[:tap].to_s.include?("/")
-
-        user_agent = json_cask.dig(:url_specs, :user_agent)
-        json_cask[:url_specs][:user_agent] = user_agent[1..].to_sym if user_agent && user_agent[0] == ":"
-        if (using = json_cask.dig(:url_specs, :using))
-          json_cask[:url_specs][:using] = using.to_sym
+        if (tap_string = cask_struct.tap_string)
+          cask_options[:tap] = Tap.fetch(tap_string)
         end
 
         api_cask = Cask.new(token, **cask_options) do
-          version json_cask[:version]
+          version cask_struct.version
+          sha256 cask_struct.sha256
 
-          if json_cask[:sha256] == "no_check"
-            sha256 :no_check
-          else
-            sha256 json_cask[:sha256]
-          end
-
-          url json_cask[:url], **json_cask.fetch(:url_specs, {}) if json_cask[:url].present?
-          json_cask[:name]&.each do |cask_name|
+          url(*cask_struct.url_args, **cask_struct.url_kwargs)
+          cask_struct.names.each do |cask_name|
             name cask_name
           end
-          desc json_cask[:desc]
-          homepage json_cask[:homepage]
+          desc cask_struct.desc if cask_struct.desc?
+          homepage cask_struct.homepage if cask_struct.homepage?
 
-          if (date = json_cask[:deprecation_date].presence)
-            because = DeprecateDisable.to_reason_string_or_symbol json_cask[:deprecation_reason], type: :cask
-            deprecate! date:, because:
+          deprecate!(**cask_struct.deprecate_args) if cask_struct.deprecate?
+          disable!(**cask_struct.disable_args) if cask_struct.disable?
+
+          auto_updates cask_struct.auto_updates if cask_struct.auto_updates?
+          conflicts_with(**cask_struct.conflicts_with_args) if cask_struct.conflicts?
+
+          cask_struct.renames.each do |from, to|
+            rename from, to
           end
 
-          if (date = json_cask[:disable_date].presence)
-            disable_reason = json_cask[:disable_reason].presence || json_cask[:deprecation_reason]
-            because = DeprecateDisable.to_reason_string_or_symbol disable_reason, type: :cask
-            disable! date:, because:
-          end
-
-          auto_updates json_cask[:auto_updates] unless json_cask[:auto_updates].nil?
-          conflicts_with(**json_cask[:conflicts_with]) if json_cask[:conflicts_with].present?
-
-          if json_cask[:rename].present?
-            json_cask[:rename].each do |rename_operation|
-              rename rename_operation.fetch(:from), rename_operation.fetch(:to)
-            end
-          end
-
-          if json_cask[:depends_on].present?
-            dep_hash = json_cask[:depends_on].to_h do |dep_key, dep_value|
-              # Arch dependencies are encoded like `{ type: :intel, bits: 64 }`
-              # but `depends_on arch:` only accepts `:intel` or `:arm64`
-              if dep_key == :arch
-                next [:arch, :intel] if dep_value.first[:type] == "intel"
-
-                next [:arch, :arm64]
-              end
-
-              next [dep_key, dep_value] if dep_key != :macos
-
-              dep_type = dep_value.keys.first
-              if dep_type == :==
-                version_symbols = dep_value[dep_type].filter_map do |version|
-                  MacOSVersion::SYMBOLS.key(version)
-                end
-                next [dep_key, version_symbols.presence]
-              end
-
-              version_symbol = dep_value[dep_type].first
-              version_symbol = MacOSVersion::SYMBOLS.key(version_symbol)
-              version_dep = "#{dep_type} :#{version_symbol}" if version_symbol
-              [dep_key, version_dep]
-            end.compact
+          if cask_struct.depends_on?
+            args = cask_struct.depends_on_args
             begin
-              depends_on(**dep_hash)
+              depends_on(**args)
             rescue MacOSVersion::Error => e
-              odebug "Ignored invalid macOS version dependency in cask '#{token}': #{dep_hash.inspect} (#{e.message})"
+              odebug "Ignored invalid macOS version dependency in cask '#{token}': #{args.inspect} (#{e.message})"
               nil
             end
           end
 
-          if json_cask[:container].present?
-            container_hash = json_cask[:container].to_h do |container_key, container_value|
-              next [container_key, container_value] if container_key != :type
+          container(**cask_struct.container_args) if cask_struct.container?
 
-              [container_key, container_value.to_sym]
-            end
-            container(**container_hash)
+          cask_struct.artifacts(appdir:).each do |key, args, kwargs, block|
+            send(key, *args, **kwargs, &block)
           end
 
-          json_cask[:artifacts]&.each do |artifact|
-            # convert generic string replacements into actual ones
-            artifact = cask.loader.from_h_gsubs(artifact, appdir)
-            key = artifact.keys.first
-            if artifact[key].nil?
-              # for artifacts with blocks that can't be loaded from the API
-              send(key) {} # empty on purpose
-            else
-              args = artifact[key]
-              kwargs = if args.last.is_a?(Hash)
-                args.pop
-              else
-                {}
-              end
-              send(key, *args, **kwargs)
-            end
-          end
-
-          if json_cask[:caveats].present?
-            # convert generic string replacements into actual ones
-            caveats cask.loader.from_h_string_gsubs(json_cask[:caveats], appdir)
-          end
+          caveats cask_struct.caveats(appdir:) if cask_struct.caveats?
         end
-        api_cask.populate_from_api!(json_cask)
+        api_cask.populate_from_api!(cask_struct)
         api_cask
-      end
-
-      def from_h_string_gsubs(string, appdir)
-        string.to_s
-              .gsub(HOMEBREW_HOME_PLACEHOLDER, Dir.home)
-              .gsub(HOMEBREW_PREFIX_PLACEHOLDER, HOMEBREW_PREFIX)
-              .gsub(HOMEBREW_CELLAR_PLACEHOLDER, HOMEBREW_CELLAR)
-              .gsub(HOMEBREW_CASK_APPDIR_PLACEHOLDER, appdir)
-      end
-
-      def from_h_array_gsubs(array, appdir)
-        array.to_a.map do |value|
-          from_h_gsubs(value, appdir)
-        end
-      end
-
-      def from_h_hash_gsubs(hash, appdir)
-        hash.to_h.transform_values do |value|
-          from_h_gsubs(value, appdir)
-        end
-      end
-
-      def from_h_gsubs(value, appdir)
-        return value if value.blank?
-
-        case value
-        when Hash
-          from_h_hash_gsubs(value, appdir)
-        when Array
-          from_h_array_gsubs(value, appdir)
-        when String
-          from_h_string_gsubs(value, appdir)
-        else
-          value
-        end
       end
     end
 
@@ -562,6 +465,7 @@ module Cask
 
         installed_tap = Cask.new(@token).tab.tap
         @tap = installed_tap if installed_tap
+        @from_installed_caskfile = true
       end
     end
 

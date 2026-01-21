@@ -24,6 +24,12 @@ module Homebrew
       @assertions ||= T.let(0, T.nilable(Integer))
     end
 
+    sig { params(exp: Object, act: Object, msg: T.nilable(String)).returns(TrueClass) }
+    def assert_equal(exp, act, msg = nil)
+      # odeprecated "assert_equal(nil, ...)", "assert_nil(...)"
+      exp.nil? ? assert_nil(act, msg) : super
+    end
+
     # Returns the output of running cmd and asserts the exit status.
     #
     # @api public

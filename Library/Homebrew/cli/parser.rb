@@ -663,9 +663,9 @@ module Homebrew
           end
 
           select_cli_arg = violations.count - env_var_options.count == 1
-          raise OptionConflictError, violations.map { name_to_option(_1) } unless select_cli_arg
+          raise OptionConflictError, violations.map { name_to_option(it) } unless select_cli_arg
 
-          env_var_options.each { disable_switch(_1) }
+          env_var_options.each { disable_switch(it) }
         end
       end
 

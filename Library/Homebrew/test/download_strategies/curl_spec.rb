@@ -199,6 +199,89 @@ RSpec.describe CurlDownloadStrategy do
     end
   end
 
+  describe "#resolved_time_file_size" do
+    context "when content-length header is present" do
+      let(:headers) do
+        {
+          "content-length" => "1024",
+        }
+      end
+
+      it "returns the content-length value" do
+        _, file_size = strategy.resolved_time_file_size
+        expect(file_size).to eq(1024)
+      end
+    end
+
+    context "when only content-range header is present" do
+      let(:headers) do
+        {
+          "content-range" => "bytes 0-1023/1024",
+        }
+      end
+
+      it "returns the total size from content-range" do
+        _, file_size = strategy.resolved_time_file_size
+        expect(file_size).to eq(1024)
+      end
+    end
+
+    context "when content-length is zero and content-range is present" do
+      let(:headers) do
+        {
+          "content-length" => "0",
+          "content-range"  => "bytes 0-999/1000",
+        }
+      end
+
+      it "falls back to content-range" do
+        _, file_size = strategy.resolved_time_file_size
+        expect(file_size).to eq(1000)
+      end
+    end
+
+    context "when content-range has unsatisfied range format (416 response)" do
+      let(:headers) do
+        {
+          "content-range" => "bytes */67589",
+        }
+      end
+
+      it "extracts size from unsatisfied range format" do
+        _, file_size = strategy.resolved_time_file_size
+        expect(file_size).to eq(67589)
+      end
+    end
+
+    context "when content-range has unknown size" do
+      let(:headers) do
+        {
+          "content-range" => "bytes 0-1023/*",
+        }
+      end
+
+      it "raises when size cannot be determined" do
+        expect { strategy.resolved_time_file_size }.to raise_error(TypeError)
+      end
+    end
+
+    context "when content-range has invalid format" do
+      ["invalid-format", "bytes 0-1023", "bytes 0-1023/abc", "bytes 0-1023/", ""].each do |invalid_value|
+        context "with value #{invalid_value.inspect}" do
+          let(:headers) do
+            {
+              "content-range" => invalid_value,
+            }
+          end
+
+          it "raises when size cannot be parsed" do
+            expect { strategy.resolved_time_file_size }.to raise_error(TypeError)
+          end
+        end
+      end
+    end
+  end
+
   describe "#cached_location" do
     subject(:cached_location) { strategy.cached_location }
 

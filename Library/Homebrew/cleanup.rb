@@ -175,7 +175,7 @@ module Homebrew
 
         stable = formula.stable
         if resource_name == "patch"
-          patch_hashes = stable&.patches&.filter_map { T.cast(_1, ExternalPatch).resource.version if _1.external? }
+          patch_hashes = stable&.patches&.filter_map { T.cast(it, ExternalPatch).resource.version if it.external? }
           return true unless patch_hashes&.include?(Checksum.new(version.to_s))
         elsif resource_name && stable && (resource_version = stable.resources[resource_name]&.version)
           return true if resource_version != version
@@ -770,7 +770,7 @@ module Homebrew
       formulae = Formula.installed
       # Remove formulae listed in HOMEBREW_NO_CLEANUP_FORMULAE and their dependencies.
       if Homebrew::EnvConfig.no_cleanup_formulae.present?
-        formulae -= formulae.select { skip_clean_formula?(_1) }
+        formulae -= formulae.select { skip_clean_formula?(it) }
                             .flat_map { |f| [f, *f.installed_runtime_formula_dependencies] }
       end
       casks = Cask::Caskroom.casks

@@ -17,7 +17,7 @@ module RuboCop
           resource_nodes = find_every_method_call_by_name(body_node, :resource)
           return if resource_nodes.empty?
 
-          %w[lxml pyyaml].each do |resource_name|
+          %w[lxml pynacl pyyaml].each do |resource_name|
             found = resource_nodes.find { |node| node.arguments&.first&.str_content == resource_name }
             next unless found
 
@@ -37,6 +37,9 @@ module RuboCop
             when "lxml"
               kind = depends_on?(:linux) ? "depends_on" : "uses_from_macos"
               ["libxml2", "libxslt"]
+            when "pynacl"
+              kind = "depends_on"
+              ["libsodium"]
             when "pyyaml"
               kind = "depends_on"
               ["libyaml"]

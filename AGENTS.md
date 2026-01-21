@@ -8,6 +8,7 @@ Please follow these guidelines when contributing:
 
 ### Required Before Each Commit
 
+- Run `brew lgtm` to run typecheck, style and tests in one go.
 - Run `brew typecheck` to verify types are declared correctly using Sorbet.
   Individual files/directories cannot be checked.
   `brew typecheck` is fast enough to just be run globally every time.
@@ -25,7 +26,7 @@ Please follow these guidelines when contributing:
 
 - Write new code (using Sorbet `sig` type signatures and `typed: strict` for new files, but never for RSpec/test/`*_spec.rb` files)
 - Write new tests (avoid more than one `:integration_test` per file for speed).
-  Use only one `expect` assertion per test.
+  Write fast tests by preferring a single `expect` per unit test and combine expectations in a single test when it is an integration test or has non-trivial `before` for test setup.
 - Keep comments minimal; prefer self-documenting code through strings, variable names, etc. over more comments.
 
 ## Repository Structure
@@ -50,3 +51,5 @@ Please follow these guidelines when contributing:
 5. Suggest changes to the `docs/` folder when appropriate
 6. Follow software principles such as DRY and YAGNI.
 7. Keep diffs as minimal as possible.
+8. Prefer shelling out via `HOMEBREW_BREW_FILE` instead of requiring `cmd/` or `dev-cmd` when composing brew commands.
+9. Inline one-off helpers unless they are reused or needed for tests.

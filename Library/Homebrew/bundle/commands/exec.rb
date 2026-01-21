@@ -77,6 +77,9 @@ module Homebrew
           # Enable compiler flag filtering
           ENV.refurbish_args
 
+          # Add variable to detect being inside a `brew bundle exec` environment
+          ENV["HOMEBREW_INSIDE_BUNDLE"] = "1"
+
           # Set up `nodenv`, `pyenv` and `rbenv` if present.
           env_formulae = %w[nodenv pyenv rbenv]
           ENV.deps.each do |dep|

@@ -88,9 +88,9 @@ class LinkageChecker
     display_items("Broken dependencies", @broken_deps, puts_output:)
     display_items("Unwanted system libraries", @unwanted_system_dylibs, puts_output:)
     display_items("Conflicting libraries", @version_conflict_deps, puts_output:)
+    display_items("Indirect dependencies with linkage", @indirect_deps, puts_output:)
     return unless strict
 
-    display_items("Indirect dependencies with linkage", @indirect_deps, puts_output:)
     display_items("Undeclared dependencies with linkage", @undeclared_deps, puts_output:)
     display_items("Unexpected linkage for no_linkage dependencies", @unexpected_linkage_deps, puts_output:)
     display_items("Files with missing rpath", @files_missing_rpaths, puts_output:)
@@ -103,9 +103,9 @@ class LinkageChecker
 
     issues = [@broken_deps, @broken_dylibs]
     if test
-      issues += [@unwanted_system_dylibs, @version_conflict_deps]
+      issues += [@unwanted_system_dylibs, @version_conflict_deps, @indirect_deps]
       if strict
-        issues += [@indirect_deps, @undeclared_deps, @unexpected_linkage_deps,
+        issues += [@undeclared_deps, @unexpected_linkage_deps,
                    @files_missing_rpaths, @executable_path_dylibs]
       end
     end

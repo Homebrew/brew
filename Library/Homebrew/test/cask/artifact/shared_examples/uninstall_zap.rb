@@ -273,20 +273,18 @@ RSpec.shared_examples "#uninstall_phase or #zap_phase" do
       subject.public_send(:"#{artifact_dsl_key}_phase", reinstall: true, command: fake_system_command)
     end
 
-    it "tries to quit the application for 10 seconds" do
+    it "tries to quit the application" do
       allow(User.current).to receive(:gui?).and_return true
 
       allow(subject).to receive(:running?).with(bundle_id).and_return(true)
       allow(subject).to receive(:quit).with(bundle_id)
                                       .and_return(instance_double(SystemCommand::Result, success?: false))
 
-      time = Benchmark.measure do
-        expect do
-          subject.public_send(:"#{artifact_dsl_key}_phase", command: fake_system_command)
-        end.to output(/Application 'my.fancy.package.app' did not quit\./).to_stderr
-      end
+      allow(Timeout).to receive(:timeout).and_raise(Timeout::Error)
 
-      expect(time.real).to be_within(3).of(10)
+      expect do
+        subject.public_send(:"#{artifact_dsl_key}_phase", command: fake_system_command)
+      end.to output(/Application 'my.fancy.package.app' did not quit\./).to_stderr
     end
   end
 

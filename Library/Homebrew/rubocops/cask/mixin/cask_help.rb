@@ -31,6 +31,7 @@ module RuboCop
           cask_block = RuboCop::Cask::AST::CaskBlock.new(block_node, comments)
           on_cask(cask_block)
         end
+        alias on_itblock on_block
 
         sig {
           params(
@@ -59,7 +60,7 @@ module RuboCop
 
         sig { returns(T.nilable(String)) }
         def cask_tap
-          return unless (match_obj = @file_path&.match(%r{/(homebrew-\w+)/}))
+          return unless (match_obj = @file_path&.match(%r{(?:/Taps/[\w-]+|^)/(homebrew-[\w-]+)/}))
 
           match_obj[1]
         end

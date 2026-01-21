@@ -173,6 +173,47 @@ module Homebrew
         @formula_versions_from_env = T.let(nil, T.nilable(T::Hash[String, String]))
         @upgrade_formulae = T.let(nil, T.nilable(T::Array[String]))
       end
+
+      # Marks Brewfile formulae as installed_on_request to prevent autoremove
+      # from removing them when their dependents are uninstalled.
+      sig { params(entries: T::Array[Dsl::Entry]).void }
+      def mark_as_installed_on_request!(entries)
+        return if entries.empty?
+
+        require "tab"
+
+        installed_formulae = Formula.installed_formula_names
+        return if installed_formulae.empty?
+
+        use_brew_tab = T.let(false, T::Boolean)
+
+        formulae_to_update = entries.filter_map do |entry|
+          next if entry.type != :brew
+
+          name = entry.name
+          next if installed_formulae.exclude?(name)
+
+          tab = Tab.for_name(name)
+          next if tab.tabfile.blank? || !tab.tabfile.exist?
+          next if tab.installed_on_request
+
+          next name if use_brew_tab
+
+          tab.installed_on_request = true
+
+          begin
+            tab.write
+            nil
+          rescue Errno::EACCES
+            # Some wrappers might treat `brew bundle` with lower permissions due to its execution of user code.
+            # Running through `brew tab` ensures proper privilege escalation by going through the wrapper again.
+            use_brew_tab = true
+            name
+          end
+        end
+
+        brew "tab", "--installed-on-request", *formulae_to_update if use_brew_tab
+      end
     end
   end
 end

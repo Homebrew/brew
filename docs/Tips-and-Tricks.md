@@ -8,7 +8,7 @@ redirect_from:
 
 ## Install previous versions of formulae
 
-Some formulae in `homebrew/core` are made available as [versioned formulae](Versions.md) using a special naming format, e.g. `gcc@9`. If the version you're looking for isn't available, consider using `brew extract`.
+Some formulae in `homebrew/core` are made available as [versioned formulae](Versions.md) using a special naming format, e.g. `gcc@9`. If the version you're looking for isn't available, consider using `brew version-install`.
 
 ## Quickly remove something from Homebrew's prefix
 

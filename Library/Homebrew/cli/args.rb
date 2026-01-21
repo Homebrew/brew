@@ -70,8 +70,8 @@ module Homebrew
         @processed_options += processed_options
         @processed_options.freeze
 
-        @options_only = cli_args.select { _1.start_with?("-") }.freeze
-        @flags_only = cli_args.select { _1.start_with?("--") }.freeze
+        @options_only = cli_args.select { it.start_with?("-") }.freeze
+        @flags_only = cli_args.select { it.start_with?("--") }.freeze
       end
 
       sig { returns(NamedArgs) }

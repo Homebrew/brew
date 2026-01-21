@@ -298,7 +298,14 @@ module Homebrew
         attrs << "pinned at #{formula.pinned_version}" if formula.pinned?
         attrs << "keg-only" if formula.keg_only?
 
-        puts "#{oh1_title(formula.full_name)}: #{specs * ", "}#{" [#{attrs * ", "}]" unless attrs.empty?}"
+        kegs = formula.installed_kegs
+        name_with_status = if kegs.empty?
+          pretty_uninstalled(formula.full_name)
+        else
+          pretty_installed(formula.full_name)
+        end
+
+        puts "#{oh1_title(name_with_status)}: #{specs * ", "}#{" [#{attrs * ", "}]" unless attrs.empty?}"
         puts formula.desc if formula.desc
         puts Formatter.url(formula.homepage) if formula.homepage
 
@@ -319,7 +326,6 @@ module Homebrew
           EOS
         end
 
-        kegs = formula.installed_kegs
         heads, versioned = kegs.partition { |keg| keg.version.head? }
         kegs = [
           *heads.sort_by { |keg| -keg.tab.time.to_i },

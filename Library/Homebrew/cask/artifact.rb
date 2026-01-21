@@ -40,7 +40,6 @@ module Cask
       ::Cask::Artifact::Colorpicker,
       ::Cask::Artifact::Dictionary,
       ::Cask::Artifact::InputMethod,
-      ::Cask::Artifact::Installer,
       ::Cask::Artifact::InternetPlugin,
       ::Cask::Artifact::KeyboardLayout,
       ::Cask::Artifact::Mdimporter,

@@ -107,7 +107,7 @@ module MachOShim
     lcs = macho.dylib_load_commands
     lcs.reject! { |lc| lc.flag?(except) } if except != :none
     names = lcs.map { |lc| lc.name.to_s }.uniq
-    names.map! { resolve_variable_name(_1) } if resolve_variable_references
+    names.map! { resolve_variable_name(it) } if resolve_variable_references
 
     names
   end

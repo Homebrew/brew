@@ -151,12 +151,12 @@ jobs:
           fi
 
       - name: Generate build provenance
-        uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a # v3.0.0
+        uses: actions/attest-build-provenance@00014ed6ed5efc5b1ab7f7f34a39eb55d41aa4f8 # v3.1.0
         with:
           subject-path: Homebrew-${{ steps.homebrew-version.outputs.version }}.pkg
 
       - name: Upload installer to GitHub Actions
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: Homebrew-${{ steps.homebrew-version.outputs.version }}.pkg
           path: Homebrew-${{ steps.homebrew-version.outputs.version }}.pkg
@@ -178,7 +178,7 @@ jobs:
             name: macos-26-arm64
     steps:
       - name: Download installer from GitHub Actions
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
         with:
           name: "${{ needs.build.outputs.installer_path }}"
 
@@ -248,7 +248,7 @@ jobs:
           persist-credentials: false
 
       - name: Download installer from GitHub Actions
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
         with:
           name: "${{ needs.build.outputs.installer_path }}"
 

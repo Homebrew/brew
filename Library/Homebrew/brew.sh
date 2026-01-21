@@ -657,7 +657,7 @@ else
   if [[ -r "/proc/cpuinfo" ]] &&
      [[ "${HOMEBREW_PROCESSOR}" == "x86_64" ]]
   then
-    if ! grep -E "^(flags|Features)" /proc/cpuinfo | grep -q "ssse3"
+    if ! grep -qE '^(flags|Features).*\bssse3\b' /proc/cpuinfo
     then
       odie "Homebrew's x86_64 support on Linux requires a CPU with SSSE3 support!"
     fi
@@ -970,18 +970,15 @@ then
   export HOMEBREW_DEVELOPER_COMMAND="1"
 fi
 
-if [[ -n "${HOMEBREW_DEVELOPER_COMMAND}" && -z "${HOMEBREW_DEVELOPER}" ]]
+if [[ -n "${HOMEBREW_DEVELOPER_COMMAND}" && -z "${HOMEBREW_DEVELOPER}" && -z "${HOMEBREW_DEV_CMD_RUN}" ]]
 then
-  if [[ -z "${HOMEBREW_DEV_CMD_RUN}" ]]
-  then
-    opoo <<EOS
+  opoo <<EOS
 $(bold "${HOMEBREW_COMMAND}") is a developer command, so Homebrew's
 developer mode has been automatically turned on.
 To turn developer mode off, run:
   brew developer off
 
 EOS
-  fi
 
   git config --file="${HOMEBREW_GIT_CONFIG_FILE}" --replace-all homebrew.devcmdrun true 2>/dev/null
   export HOMEBREW_DEV_CMD_RUN="1"

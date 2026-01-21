@@ -25,7 +25,7 @@ definition.resolve.for(definition.current_dependencies).each do |spec|
 
   name = dependency_require_map[name] if dependency_require_map.key?(name)
   require name
-  additional_requires_map[name]&.each { require(_1) }
+  additional_requires_map[name]&.each { require(it) }
 rescue LoadError
   raise unless name.include?("-")
 

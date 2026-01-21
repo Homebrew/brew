@@ -74,10 +74,16 @@ module Homebrew
             if args.suggest_typed?
               ohai "Checking if we can bump Sorbet `typed` sigils..."
               # --sorbet needed because of https://github.com/Shopify/spoom/issues/488
+              #
+              # Use the native sorbet binary directly to avoid Ruby version conflicts.
+              # spoom's exec uses Bundler.with_unbundled_env which can cause `#!/usr/bin/env ruby`
+              # scripts to use the wrong Ruby version (e.g., system Ruby 2.6 on macOS).
+              sorbet_path = Gem::Specification.find_by_name("sorbet-static").full_gem_path
+              sorbet_bin = File.join(sorbet_path, "libexec", "sorbet")
               system "bundle", "exec", "spoom", "srb", "bump", "--from", "false", "--to", "true",
-                     "--sorbet", "#{Gem.bin_path("sorbet", "srb")} tc"
+                     "--sorbet", sorbet_bin
               system "bundle", "exec", "spoom", "srb", "bump", "--from", "true", "--to", "strict",
-                     "--sorbet", "#{Gem.bin_path("sorbet", "srb")} tc"
+                     "--sorbet", sorbet_bin
             end
 
             return

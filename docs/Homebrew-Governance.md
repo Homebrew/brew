@@ -1,38 +1,25 @@
 ---
-last_review_date: "2025-11-26"
+last_review_date: "2026-01-13"
 ---
 
 # Homebrew Governance
 
 Homebrew’s governance is grounded in the principle that only active contributors should decide the project’s direction.
 
-**Note:** This governance structure replaces all legacy roles and bodies, including the Project Leadership Committee (PLC) and Technical Steering Committee (TSC).
-
-## Transition Plan
-
-To transition from the previous governance structure to this new model, the following process will be followed:
-
-- Effective Date: This governance structure takes effect immediately upon its merge into Homebrew/brew after a successful vote, as defined below.
-  - **Voting Procedure:** The vote to adopt this governance structure will be conducted among all current members via a public GitHub pull request.
-    A successful vote requires approval from at least two-thirds (2/3) of members who vote. The vote will be conducted using the pull request review method described in [Section 3: Decision-Making](#3-decision-making).
-- Transition of Roles:
-  - All maintainers who have demonstrated sustained, long-term impact and leadership (as defined for Lead Maintainer) will be promoted to Lead Maintainer status by the Project Leader.
-  - Although the Project Leadership Committee (PLC) will cease to exist, all non-maintainers on the PLC will retain Slack access until the end of 2025.
-
 ---
 
 ## 1. Definitions
 
 - The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this document are to be interpreted as described in [RFC 2119](https://www.ietf.org/rfc/rfc2119.txt).
-- **AGM**: Annual General Meeting, a typically in-person event hosted by the PL that all maintainers may attend.
-- **Maintainer**: Active contributors with commit access to one or more primary Homebrew repositories (defined below).
+- **AGM**: Annual General Meeting, a typically in-person event hosted by the Project Leader that all maintainers may attend.
+- **Maintainer**: Active contributors with commit access to one or more Primary Homebrew repositories (defined below).
 - **Lead Maintainer**: A Maintainer with sustained, long-term impact and leadership within the project with commit access to all Homebrew repositories.
 - **Security Team**: A security-focused subteam of Maintainers and the Project Leader, some of whom may have increased access rights than otherwise needed.
-- **Project Leader**: A Lead Maintainer elected to serve as Homebrew’s primary public representative and project-wide coordinator.
-- **Quarterly activity criteria**: Around 50 meaningful contributions or other work considered essential by the Project Leader per quarter to primary repositories to remain in good standing.
+- **Project Leader (PL)**: A Lead Maintainer elected to serve as Homebrew’s primary public representative and project-wide coordinator.
+- **Quarterly activity criteria**: Around 50 meaningful maintainer contributions or other work considered essential by the Project Leader per quarter to Primary Homebrew repositories to remain in good standing.
 - **Quarter**: A calendar quarter, defined as one of the following periods: December–February, March–May, June–August, or September–November.
-- **Meaningful contributions**: Merged pull requests, reviewed pull requests created by others, or merged co-authored commits in Homebrew’s primary repositories.
-- **Primary repositories**: The three highest-traffic, security-critical repositories in the Homebrew project:
+- **Meaningful maintainer contributions**: Merged pull requests, reviewed pull requests created by others, or merged co-authored commits in Primary Homebrew repositories.
+- **Primary Homebrew repositories**: The three highest-traffic, security-critical repositories in the Homebrew project:
   - [Homebrew/brew](https://github.com/Homebrew/brew) ([contributions](https://github.com/Homebrew/brew/graphs/contributors)),
   - [Homebrew/homebrew-core](https://github.com/Homebrew/homebrew-core) ([contributions](https://github.com/Homebrew/homebrew-core/graphs/contributors)),
   - [Homebrew/homebrew-cask](https://github.com/Homebrew/homebrew-cask) ([contributions](https://github.com/Homebrew/homebrew-cask/graphs/contributors))
@@ -51,6 +38,7 @@ To transition from the previous governance structure to this new model, the foll
 **Expectations:**
 
 - Maintains consistent quarterly contribution activity, as defined in Homebrew's activity criteria.
+- Contributions require write access e.g. review of pull requests and not just fork access e.g. opening pull requests.
 
 **Accession:**
 
@@ -77,11 +65,16 @@ No single person holds special authority beyond the Project Leader role.
 - Commit/merge access on all repositories.
 - Voting rights on governance and project direction.
 
+**Expectations:**
+
+- A higher level of consistent quarterly contribution activity than standard maintainers.
+- A higher level of responsibility and responsiveness than standard maintainers e.g. timely pull request review, timely responses in Slack, pulling weight on shared project tasks and not just whatever is personally most interesting.
+
 **Eligibility Criteria:**
 
 - 3 years tenure of continuous Maintainer status.
 - Has met the quarterly activity criteria (as defined above) in all four quarters of the preceding year.
-  - In addition, must have made at least 25 meaningful contributions per quarter in each of at least two primary repositories, reflecting the broader scope of Lead Maintainer responsibilities.
+  - In addition, must have made at least 25 meaningful maintainer contributions per quarter in each of at least two primary Homebrew repositories, reflecting the broader scope of Lead Maintainer responsibilities.
 - Must have attended at least one in-person AGM (or another official Homebrew event) to verify identity and participation within the community.
   Where this is impossible due to e.g. medical reasons, an in-person verification of government ID from another Lead Maintainer will suffice.
 - Demonstrates initiative beyond personal contributions, including leadership in review, policy, tooling, or infrastructure.
@@ -93,8 +86,6 @@ No single person holds special authority beyond the Project Leader role.
 - The Maintainer becomes a Lead Maintainer upon approval by a simple majority vote of Lead Maintainers who respond within 7 days, with a minimum quorum of 3 responses.
   If the quorum is not met, the voting period will be extended by 7 days.
   If there are still insufficient responses after the extension, the proposal will be considered unsuccessful and may be resubmitted at a later date.
-
-  _Note: This voting procedure differs from the general process described in [Section 3: Decision-Making](#3-decision-making), as it includes a quorum requirement and possible extension period. This exception is due to the importance of Lead Maintainer promotions and the need for broad consensus among current Lead Maintainers._
 - A Lead Maintainer remains a Lead Maintainer until resignation or removal for inactivity.
 
 **Removal for Inactivity:**
@@ -116,6 +107,10 @@ No single person holds special authority beyond the Project Leader role.
 - Executes and ensures decision-making processes as required by this governance document.
 - Facilitates AGM planning and/or appoints designees to do so.
 
+**Expectations:**
+
+- The highest level of responsibility and responsiveness of all maintainers e.g. timely pull request review, timely responses in Slack, pulling weight on shared project tasks and not just whatever is personally most interesting.
+
 **Term:**
 
 - The Project Leader serves a two-year term.
@@ -123,14 +118,12 @@ No single person holds special authority beyond the Project Leader role.
 - If more than one Lead Maintainer stands as a candidate, the Project Leader is chosen by a simple majority of Lead Maintainers who respond within 7 days.
 - If the position is vacant, a new election will be held within 14 days to fill the Project Leader spot for the remainder of the term.
 - If no Lead Maintainer stands as a candidate, the current Project Leader remains in office until a successor is elected.
-  If the position is vacant, an interim Project Leader will be appointed by a majority vote of Lead Maintainers who respond within 7 days.
 
 **Removal:**
 
 - The Project Leader may be removed before the end of their term by a ⅔ supermajority vote of all current Lead Maintainers.
 - A removal vote may be initiated by any Lead Maintainer submitting a non-anonymous request to all Lead Maintainers.
 - The removal vote will be conducted among all current Lead Maintainers via a public GitHub pull request or other transparent mechanism.
-- If the Project Leader is removed, the position will be considered vacant and filled according to the process described above.
 
 ---
 
@@ -190,8 +183,8 @@ All contributors, Maintainers and Lead Maintainers must follow the Homebrew [Cod
 **Code of Conduct Maintainer Enforcement Process:**
 
 - **Reporting:** Any maintainer may report a suspected violation by any other maintainer by contacting any Lead Maintainer directly on Slack.
-- **Initial Review:** Upon receiving a report, at least two Lead Maintainers not involved in the report will review the case. If fewer than two uninvolved Lead Maintainers are available, the Project Leader may appoint trusted Maintainers to assist with the review. The subject of the report will be notified and given an opportunity to respond to the Lead Maintainers or appointed reviewers.
-- **Decision:** The Lead Maintainers will determine, by simple majority excluding the accuser or the accused, whether a violation occurred. If they determine that a violation occurred, they will discuss in a private Slack channel omitting the accuser or the accused, what action is appropriate and take action. Due to the sensitive nature, there are no fixed timelines or timescales here.
+- **Initial Review:** Upon receiving a report, at least two Lead Maintainers not involved in the report will review the case. The subject of the report will be notified and given an opportunity to respond to the reviewing Lead Maintainers.
+- **Decision:** The Lead Maintainers will determine, by simple majority excluding the accuser and the accused, whether a violation occurred. If they determine that a violation occurred, they will discuss in a private Slack channel omitting the accuser and the accused, what action is appropriate and take action. Due to the sensitive nature, there are no fixed timelines or timescales here.
 - **Notification:** The outcome will be communicated to the involved parties. Where appropriate, a public statement may be made to the community.
 - **Appeals:** The subject of an enforcement action may appeal the decision by requesting a re-review by all Lead Maintainers not accused of a violation in the case. The appeal decision is final.
 

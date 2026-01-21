@@ -53,7 +53,7 @@ RSpec.describe Homebrew::Bundle::Dumper do
     expect(dumper.build_brewfile(
              describe: false, no_restart: false, formulae: true, taps: true, casks: true, mas: true,
              vscode: true, go: true, cargo: true, flatpak: false
-           )).to eql("cask \"google-chrome\"\ncask \"java\"\ncask \"iterm2-beta\"\n")
+           )).to eql("cask \"google-chrome\"\ncask \"java\"\ncask \"homebrew/cask-versions/iterm2-beta\"\n")
   end
 
   it "determines the brewfile correctly" do

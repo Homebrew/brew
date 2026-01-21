@@ -836,7 +836,7 @@ class Tap
   # An array of all {Formula} names of this {Tap}.
   sig { overridable.returns(T::Array[String]) }
   def formula_names
-    @formula_names ||= T.let(formula_files.map { formula_file_to_name(_1) }, T.nilable(T::Array[String]))
+    @formula_names ||= T.let(formula_files.map { formula_file_to_name(it) }, T.nilable(T::Array[String]))
   end
 
   # A hash of all {Formula} name prefixes to versioned {Formula} in this {Tap}.
@@ -852,7 +852,7 @@ class Tap
   # An array of all {Cask} tokens of this {Tap}.
   sig { returns(T::Array[String]) }
   def cask_tokens
-    @cask_tokens ||= T.let(cask_files.map { formula_file_to_name(_1) }, T.nilable(T::Array[String]))
+    @cask_tokens ||= T.let(cask_files.map { formula_file_to_name(it) }, T.nilable(T::Array[String]))
   end
 
   # Path to the directory of all alias files for this {Tap}.
@@ -1126,7 +1126,7 @@ class Tap
   sig { returns(T::Array[Tap]) }
   def self.installed
     cache[:installed] ||= if HOMEBREW_TAP_DIRECTORY.directory?
-      HOMEBREW_TAP_DIRECTORY.subdirs.flat_map(&:subdirs).map { from_path(_1) }
+      HOMEBREW_TAP_DIRECTORY.subdirs.flat_map(&:subdirs).map { from_path(it) }
     else
       []
     end

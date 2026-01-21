@@ -31,7 +31,7 @@ module Cask
       )
         super
 
-        return if target.ascend.none? { OS::Mac.system_dir?(_1) }
+        return if target.ascend.none? { OS::Mac.system_dir?(it) }
 
         odebug "Fixing up '#{target}' permissions for installation to '#{target.parent}'"
         # Ensure that globally installed applications can be accessed by all users.

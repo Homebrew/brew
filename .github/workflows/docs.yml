@@ -46,6 +46,9 @@ jobs:
           # No ignore support (https://github.com/errata-ai/vale/issues/131).
           rm -r Library/Homebrew/vendor
 
+          # Generate latest manpage
+          brew generate-man-completions --no-exit-code
+
       - name: Run Vale
         run: vale docs/
 
@@ -68,7 +71,7 @@ jobs:
         run: ../script/generate-api-samples.rb --template
 
       - name: Cache HTML Proofer
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        uses: actions/cache@9255dc7a253b0ccc959486e2bca901246202afeb # v5.0.1
         with:
           path: tmp/.htmlproofer
           key: ${{ runner.os }}-htmlproofer

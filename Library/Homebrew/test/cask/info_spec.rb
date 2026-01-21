@@ -21,6 +21,9 @@ RSpec.describe Cask::Info, :cask do
     allow(cask).to receive(:installed?).and_return(true)
     allow(Cask::CaskLoader).to receive(:load).and_call_original
     allow(Cask::CaskLoader).to receive(:load).with(cask_name).and_return(cask)
+    allow(described_class).to receive(:installation_info).and_wrap_original do |method, arg, **kwargs|
+      (arg.token == cask_name) ? "Installed" : method.call(arg, **kwargs)
+    end
   end
 
   before do
@@ -51,7 +54,7 @@ RSpec.describe Cask::Info, :cask do
     expect do
       described_class.info(Cask::CaskLoader.load("with-depends-on-cask-multiple"), args:)
     end.to output(<<~EOS).to_stdout
-      #{oh1_title "with-depends-on-cask-multiple"}: 1.2.3
+      #{oh1_title uninstalled("with-depends-on-cask-multiple")}: 1.2.3
       #{Formatter.url("https://brew.sh/with-depends-on-cask-multiple")}
       Not installed
       From: #{Formatter.url("https://github.com/Homebrew/homebrew-cask/blob/HEAD/Casks/w/with-depends-on-cask-multiple.rb")}
@@ -71,7 +74,7 @@ RSpec.describe Cask::Info, :cask do
     expect do
       described_class.info(Cask::CaskLoader.load("with-depends-on-everything"), args:)
     end.to output(<<~EOS).to_stdout
-      #{oh1_title "with-depends-on-everything"}: 1.2.3
+      #{oh1_title uninstalled("with-depends-on-everything")}: 1.2.3
       #{Formatter.url("https://brew.sh/with-depends-on-everything")}
       Not installed
       From: #{Formatter.url("https://github.com/Homebrew/homebrew-cask/blob/HEAD/Casks/w/with-depends-on-everything.rb")}
@@ -194,11 +197,12 @@ RSpec.describe Cask::Info, :cask do
       expect(cask).to receive(:caskroom_path).and_return(caskroom)
       expect(cask).to receive(:installed_version).and_return("2.61")
       expect(Cask::Tab).to receive(:for_cask).with(cask).and_return(tab)
+      allow_any_instance_of(StringIO).to receive(:tty?).and_return(true)
 
       expect do
         described_class.info(cask, args:)
       end.to output(<<~EOS).to_stdout
-        ==> local-transmission: 2.61
+        ==> #{installed("local-transmission")}: 2.61
         https://transmissionbt.com/
         Installed
         #{caskroom}/2.61 (0B)

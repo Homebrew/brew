@@ -208,6 +208,8 @@ If you want to start all the services in your `Brewfile` just during the executi
 brew bundle exec --services
 ```
 
+Note inside `brew bundle exec`, `brew bundle sh` and `brew bundle env` the environment variable `HOMEBREW_INSIDE_BUNDLE` is set to `1` for easy detection.
+
 ### `brew bundle sh`
 
 `brew bundle sh` is like `brew bundle exec` but it runs your interactive shell of choice, like `brew sh`:

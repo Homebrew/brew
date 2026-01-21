@@ -467,13 +467,6 @@ module Formulary
     class_name
   end
 
-  sig { params(string: String).returns(T.any(String, Symbol)) }
-  def self.convert_to_string_or_symbol(string)
-    return T.must(string[1..]).to_sym if string.start_with?(":")
-
-    string
-  end
-
   # A {FormulaLoader} returns instances of formulae.
   # Subclasses implement loaders for particular sources of formulae.
   class FormulaLoader
@@ -700,8 +693,8 @@ module Formulary
       if ALLOWED_URL_SCHEMES.exclude?(url_scheme)
         raise UnsupportedInstallationMethod,
               "Non-checksummed download of #{name} formula file from an arbitrary URL is unsupported! " \
-              "Use `brew extract` or `brew create` and `brew tap-new` to create a formula file in a tap " \
-              "on GitHub instead."
+              "Use `brew version-install` to install a formula file from your own custom tap " \
+              "instead."
       end
       HOMEBREW_CACHE_FORMULA.mkpath
       FileUtils.rm_f(path)
@@ -1105,12 +1098,10 @@ module Formulary
       alias_path:   T.nilable(T.any(Pathname, String)),
       force_bottle: T::Boolean,
       flags:        T::Array[String],
+      keg:          T.nilable(Keg),
     ).returns(Formula)
   }
-  def self.from_rack(rack, spec = nil, alias_path: nil, force_bottle: false, flags: [])
-    kegs = rack.directory? ? rack.subdirs.map { |d| Keg.new(d) } : []
-    keg = kegs.find(&:linked?) || kegs.find(&:optlinked?) || kegs.max_by(&:scheme_and_version)
-
+  def self.from_rack(rack, spec = nil, alias_path: nil, force_bottle: false, flags: [], keg: Keg.from_rack(rack))
     options = {
       alias_path:,
       force_bottle:,

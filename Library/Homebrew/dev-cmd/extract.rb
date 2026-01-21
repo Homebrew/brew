@@ -34,7 +34,7 @@ module Homebrew
 
       sig { override.void }
       def run
-        if (tap_with_name = args.named.first&.then { Tap.with_formula_name(_1) })
+        if (tap_with_name = args.named.first&.then { Tap.with_formula_name(it) })
           source_tap, name = tap_with_name
         else
           name = args.named.fetch(0).downcase

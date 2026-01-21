@@ -49,7 +49,7 @@ module Homebrew
       ruby_files = T.let([], T::Array[Pathname])
       shell_files = T.let([], T::Array[Pathname])
       actionlint_files = T.let([], T::Array[Pathname])
-      Array(files).map { Pathname(_1) }
+      Array(files).map { Pathname(it) }
                   .each do |path|
         case path.extname
         when ".rb"
@@ -160,7 +160,8 @@ module Homebrew
       end
 
       HOMEBREW_CACHE.mkpath
-      cache_env = if (cache_dir = HOMEBREW_CACHE.realpath/"style") && cache_dir.writable?
+      cache_dir = HOMEBREW_CACHE.realpath/"style"
+      cache_env = if (!cache_dir.exist? && cache_dir.parent.writable?) || cache_dir.writable?
         args << "--parallel" unless fix
 
         FileUtils.rm_rf cache_dir if reset_cache

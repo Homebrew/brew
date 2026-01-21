@@ -1,4 +1,4 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
 
 require "abstract_command"
@@ -10,6 +10,16 @@ module Homebrew
   module Cmd
     class Deps < AbstractCommand
       include DependenciesHelpers
+
+      class DepsCombineMode < T::Enum
+        enums do
+          # enum values are not mutable, and calling .freeze on them breaks Sorbet
+          # rubocop:disable Style/MutableConstant
+          Intersection = new
+          Union = new
+          # rubocop:enable Style/MutableConstant
+        end
+      end
 
       cmd_args do
         description <<~EOS
@@ -89,6 +99,12 @@ module Homebrew
         named_args [:formula, :cask]
       end
 
+      sig { override.params(argv: T::Array[String]).void }
+      def initialize(argv = ARGV.freeze)
+        super
+        @use_runtime_dependencies = T.let(true, T::Boolean)
+      end
+
       sig { override.void }
       def run
         raise UsageError, "`brew deps --os=all` is not supported." if args.os == "all"
@@ -100,8 +116,6 @@ module Homebrew
         Formulary.enable_factory_cache!
 
         SimulateSystem.with(os:, arch:) do
-          @use_runtime_dependencies = true
-
           installed = args.installed? || dependents(args.named.to_formulae_and_casks).all?(&:any_version_installed?)
           unless installed
             not_using_runtime_dependencies_reason = if args.installed?
@@ -196,9 +210,10 @@ module Homebrew
           dependents = dependents(args.named.to_formulae_and_casks)
           check_head_spec(dependents) if args.HEAD?
 
-          all_deps = deps_for_dependents(dependents, recursive:, &(args.union? ? :| : :&))
+          deps_combine_mode = args.union? ? DepsCombineMode::Union : DepsCombineMode::Intersection
+          all_deps = deps_for_dependents(dependents, deps_combine_mode:, recursive:)
           condense_requirements(all_deps)
-          all_deps.map! { |d| dep_display_name(d) }
+          all_deps.map! { dep_display_name(it) }
           all_deps.uniq!
           all_deps.sort! unless args.topological?
           puts all_deps
@@ -207,15 +222,21 @@ module Homebrew
 
       private
 
+      sig {
+        params(formulae_or_casks: T::Array[T.any(Formula, Keg, Cask::Cask)])
+          .returns(T::Array[T.any(Formula, CaskDependent)])
+      }
       def sorted_dependents(formulae_or_casks)
         dependents(formulae_or_casks).sort_by(&:name)
       end
 
+      sig { params(deps: T::Array[T.any(Dependency, Requirement)]).void }
       def condense_requirements(deps)
         deps.select! { |dep| dep.is_a?(Dependency) } unless args.include_requirements?
         deps.select! { |dep| dep.is_a?(Requirement) || dep.installed? } if args.installed?
       end
 
+      sig { params(dep: T.any(Requirement, Dependency)).returns(String) }
       def dep_display_name(dep)
         str = if dep.is_a? Requirement
           if args.include_requirements?
@@ -242,6 +263,10 @@ module Homebrew
         str
       end
 
+      sig {
+        params(dependency: T.any(Formula, CaskDependent), recursive: T::Boolean)
+          .returns(T::Array[T.any(Dependency, Requirement)])
+      }
       def deps_for_dependent(dependency, recursive: false)
         includes, ignores = args_includes_ignores(args)
 
@@ -258,32 +283,41 @@ module Homebrew
         deps + reqs.to_a
       end
 
-      def deps_for_dependents(dependents, recursive: false, &block)
-        dependents.map { |d| deps_for_dependent(d, recursive:) }.reduce(&block)
+      sig {
+        params(
+          dependents:        T::Array[T.any(Formula, CaskDependent)],
+          deps_combine_mode: DepsCombineMode,
+          recursive:         T::Boolean,
+        ).returns(T::Array[T.any(Dependency, Requirement)])
+      }
+      def deps_for_dependents(dependents, deps_combine_mode:, recursive:)
+        symbol = (deps_combine_mode == DepsCombineMode::Intersection) ? :& : :|
+        dependents.map { deps_for_dependent(it, recursive:) }.reduce(symbol)
       end
 
+      sig { params(dependents: T::Array[T.any(Formula, CaskDependent)]).void }
       def check_head_spec(dependents)
-        headless = dependents.select { |d| d.is_a?(Formula) && d.active_spec_sym != :head }
+        headless = dependents.select { it.is_a?(Formula) && it.active_spec_sym != :head }
                              .to_sentence two_words_connector: " or ", last_word_connector: " or "
         opoo "No head spec for #{headless}, using stable spec instead" unless headless.empty?
       end
 
+      sig { params(dependents: T::Array[T.any(Formula, CaskDependent)], recursive: T::Boolean).void }
       def puts_deps(dependents, recursive: false)
         check_head_spec(dependents) if args.HEAD?
         dependents.each do |dependent|
           deps = deps_for_dependent(dependent, recursive:)
           condense_requirements(deps)
           deps.sort_by!(&:name)
-          deps.map! { |d| dep_display_name(d) }
+          deps.map! { dep_display_name(it) }
           puts "#{dependent.full_name}: #{deps.join(" ")}"
         end
       end
 
+      sig { params(dependents: T::Array[T.any(Formula, CaskDependent)], recursive: T::Boolean).returns(String) }
       def dot_code(dependents, recursive:)
         dep_graph = {}
-        dependents.each do |d|
-          graph_deps(d, dep_graph:, recursive:)
-        end
+        dependents.each { graph_deps(it, dep_graph:, recursive:) }
 
         dot_code = dep_graph.map do |d, deps|
           deps.map do |dep|
@@ -302,6 +336,13 @@ module Homebrew
         "digraph {\n#{dot_code}\n}"
       end
 
+      sig {
+        params(
+          formula:   T.any(Formula, CaskDependent),
+          dep_graph: T::Hash[T.any(Formula, CaskDependent), T::Array[T.any(Dependency, Requirement)]],
+          recursive: T::Boolean,
+        ).void
+      }
       def graph_deps(formula, dep_graph:, recursive:)
         return if dep_graph.key?(formula)
 
@@ -318,6 +359,7 @@ module Homebrew
         end
       end
 
+      sig { params(dependents: T::Array[T.any(Formula, CaskDependent)], recursive: T::Boolean).void }
       def puts_deps_tree(dependents, recursive: false)
         check_head_spec(dependents) if args.HEAD?
         dependents.each do |d|
@@ -327,6 +369,7 @@ module Homebrew
         end
       end
 
+      sig { params(formula: T.any(Formula, CaskDependent)).returns(T::Array[T.any(Dependency, Requirement)]) }
       def dependables(formula)
         includes, ignores = args_includes_ignores(args)
         deps = @use_runtime_dependencies ? formula.runtime_dependencies : formula.deps
@@ -336,6 +379,13 @@ module Homebrew
         reqs + deps
       end
 
+      sig {
+        params(
+          formula: T.any(Formula, CaskDependent),
+          deps_seen: T::Hash[String, T::Boolean],
+          prefix: String, recursive: T::Boolean
+        ).void
+      }
       def recursive_deps_tree(formula, deps_seen:, prefix:, recursive:)
         dependables = dependables(formula)
         max = dependables.length - 1

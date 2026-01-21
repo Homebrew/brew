@@ -39,7 +39,7 @@ module Homebrew
         casks.map do |cask|
           description = "# #{cask.desc}\n" if describe && cask.desc.present?
           config = ", args: { #{explicit_s(cask.config)} }" if cask.config.present? && cask.config.explicit.present?
-          "#{description}cask \"#{cask}\"#{config}"
+          "#{description}cask \"#{cask.full_name}\"#{config}"
         end.join("\n")
       end
 

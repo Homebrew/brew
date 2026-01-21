@@ -1,5 +1,5 @@
 ---
-last_review_date: "1970-01-01"
+last_review_date: "2026-01-06"
 ---
 
 # How to Open a Homebrew Pull Request
@@ -143,13 +143,23 @@ To make changes on a new branch and submit it for review, create a GitHub pull r
 
 Thank you!
 
+### "Artificial Intelligence"/Large Language Model (AI/LLM) usage
+
+We allow you to create issues and pull requests with AI/LLM with the following requirements:
+
+* You must disclose in the initial issue or pull request that you used AI/LLM and what tool/model/etc. you used.
+* You must review all AI/LLM generated code, prose, etc. content before you ask anyone in Homebrew to review it for you.
+* You must be able to address all pull request review comments, manually if the AI/LLM cannot do so for you.
+* If you reach the point where you feel unwilling or unable to do the above, please close your issue or pull request.
+
 ## Following up
 
 To respond well to feedback:
 
 1. Ask for clarification of anything you don't understand and for help with anything you don't know how to do.
-2. Post a comment on your pull request if you've provided all the requested changes/information and it hasn't been merged after a week. Post a comment on your pull request if you're stuck and need help.
-   * A `needs response` label on a PR means that the Homebrew maintainers need you to respond to previous comments.
+2. Post a comment on your pull request if you've provided all the requested changes/information and it hasn't been merged after a week.
+   Post a comment on your pull request if you're stuck and need help.
+   A `needs response` label on a PR means that the Homebrew maintainers need you to respond to previous comments.
 3. Keep discussion in the pull request unless requested otherwise (i.e. do not email maintainers privately).
 4. Do not continue discussion in closed pull requests.
 5. Do not argue with Homebrew maintainers. You may disagree but unless they change their mind, please implement what they request. Ultimately they control what is included in Homebrew, as they have to support any changes that are made.
@@ -169,7 +179,7 @@ To make changes based on feedback:
    git rebase --interactive origin/HEAD
    ```
 
-   * If you are working on a PR for a single formula, `git commit --amend` is a convenient way of keeping your commits squashed as you go.
+   If you are working on a PR for a single formula, `git commit --amend` is a convenient way of keeping your commits squashed as you go.
 4. Push to your remote fork's branch and the pull request:
 
    ```sh

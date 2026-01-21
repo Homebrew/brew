@@ -110,11 +110,13 @@
   "deprecation_reason": null,
   "deprecation_replacement_formula": null,
   "deprecation_replacement_cask": null,
+  "deprecate_args": null,
   "disabled": false,
   "disable_date": null,
   "disable_reason": null,
   "disable_replacement_formula": null,
   "disable_replacement_cask": null,
+  "disable_args": null,
   "tap_git_head": "abcdef1234567890abcdef1234567890abcdef12",
   "languages": [
     "en",

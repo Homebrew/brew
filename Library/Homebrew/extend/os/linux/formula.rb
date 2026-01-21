@@ -48,7 +48,7 @@ module OS
 
       sig { returns(T::Boolean) }
       def valid_platform?
-        requirements.none?(MacOSRequirement)
+        requirements.none? { |r| r.is_a?(MacOSRequirement) && !r.version_specified? }
       end
     end
   end

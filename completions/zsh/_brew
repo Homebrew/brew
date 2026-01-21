@@ -220,6 +220,7 @@ __brew_internal_commands() {
     'setup-ruby:Installs and configures Homebrew'\''s Ruby'
     'sh:Enter an interactive shell for Homebrew'\''s build environment'
     'shellenv:Valid shells: bash|csh|fish|pwsh|sh|tcsh|zsh  Print export statements'
+    'source:Open a formula'\''s source repository in a browser, or open Homebrew'\''s own repository if no argument is provided'
     'style:Check formulae or files for conformance to Homebrew style guidelines'
     'tab:Edit tab information for installed formulae or casks'
     'tap:Tap a formula repository'
@@ -251,6 +252,7 @@ __brew_internal_commands() {
     'vendor-gems:Install and commit Homebrew'\''s vendored gems'
     'vendor-install:Install Homebrew'\''s portable Ruby'
     'verify:Verify the build provenance of bottles using GitHub'\''s attestation tools'
+    'version-install:Extract a specific version of formula into a personal tap and install it'
     'which-formula:Show which formula(e) provides the given command'
     'which-update:Database update for `brew which-formula`'
   )
@@ -1153,6 +1155,7 @@ _brew_generate_man_completions() {
   _arguments \
     '--debug[Display any debugging information]' \
     '--help[Show this message]' \
+    '--no-exit-code[Exit with code 0 even if no changes were made]' \
     '--quiet[Make some output more quiet]' \
     '--verbose[Make some output more verbose]'
 }
@@ -1998,6 +2001,17 @@ _brew_shellenv() {
     '--verbose[Make some output more verbose]'
 }
 
+# brew source
+_brew_source() {
+  _arguments \
+    '--debug[Display any debugging information]' \
+    '--help[Show this message]' \
+    '--quiet[Make some output more quiet]' \
+    '--verbose[Make some output more verbose]' \
+    - formula \
+    '*:formula:__brew_formulae'
+}
+
 # brew style
 _brew_style() {
   _arguments \
@@ -2549,6 +2563,17 @@ _brew_verify() {
     '--help[Show this message]' \
     '--json[Return JSON for the attestation data for each bottle]' \
     '(--bottle-tag)--os[Download for the given operating system. (Pass `all` to download for all operating systems.)]' \
+    '--quiet[Make some output more quiet]' \
+    '--verbose[Make some output more verbose]' \
+    - formula \
+    '*:formula:__brew_formulae'
+}
+
+# brew version-install
+_brew_version_install() {
+  _arguments \
+    '--debug[Display any debugging information]' \
+    '--help[Show this message]' \
     '--quiet[Make some output more quiet]' \
     '--verbose[Make some output more verbose]' \
     - formula \

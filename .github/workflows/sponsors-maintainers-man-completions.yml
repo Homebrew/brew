@@ -49,7 +49,7 @@ jobs:
           signing_key: ${{ secrets.BREWTESTBOT_SSH_SIGNING_KEY }}
 
       - name: Cache Bundler RubyGems
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        uses: actions/cache@9255dc7a253b0ccc959486e2bca901246202afeb # v5.0.1
         with:
           path: ${{ steps.set-up-homebrew.outputs.gems-path }}
           key: ${{ runner.os }}-rubygems-${{ steps.set-up-homebrew.outputs.gems-hash }}

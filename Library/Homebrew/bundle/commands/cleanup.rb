@@ -44,6 +44,12 @@ module Homebrew
             end
 
             if formulae.any?
+              # Mark Brewfile formulae as installed_on_request to prevent autoremove
+              # from removing them when their dependents are uninstalled
+              require "bundle/brewfile"
+              @dsl ||= Brewfile.read(global:, file:)
+              Homebrew::Bundle.mark_as_installed_on_request!(@dsl.entries)
+
               Kernel.system HOMEBREW_BREW_FILE, "uninstall", "--formula", "--force", *formulae
               puts "Uninstalled #{formulae.size} formula#{"e" if formulae.size != 1}"
             end
@@ -199,7 +205,7 @@ module Homebrew
           require "bundle/tap_dumper"
 
           @dsl ||= Brewfile.read(global:, file:)
-          kept_formulae = self.kept_formulae(global:, file:).filter_map { lookup_formula(_1) }
+          kept_formulae = self.kept_formulae(global:, file:).filter_map { lookup_formula(it) }
           kept_taps = @dsl.entries.select { |e| e.type == :tap }.map(&:name)
           kept_taps += kept_formulae.filter_map(&:tap).map(&:name)
           current_taps = Homebrew::Bundle::TapDumper.tap_names

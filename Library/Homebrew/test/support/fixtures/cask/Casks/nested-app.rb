@@ -1,11 +1,11 @@
 cask "nested-app" do
   version "1.2.3"
-  sha256 "1866dfa833b123bb8fe7fa7185ebf24d28d300d0643d75798bc23730af734216"
+  sha256 "69034d000fabf804a6e140c8c632f8ce8a3bf303f5f7db2fb0cd86e3aeed9e67"
 
-  url "file://#{TEST_FIXTURE_DIR}/cask/NestedApp.dmg.zip"
+  url "file://#{TEST_FIXTURE_DIR}/cask/NestedApp.zip.tar.gz"
   homepage "https://brew.sh/nested-app"
 
-  container nested: "NestedApp.dmg"
+  container nested: "NestedApp.zip"
 
   app "MyNestedApp.app"
 end

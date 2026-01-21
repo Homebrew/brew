@@ -511,8 +511,9 @@ module Cask
       end
 
       odebug "Auditing signing"
-
-      is_in_skiplist = cask.tap&.audit_exception(:signing_audit_skiplist, cask.token)
+      is_in_skiplist = cask.tap&.audit_exception(:signing_audit_skiplist, cask.token,
+                                                 Homebrew::SimulateSystem.current_arch.to_s) ||
+                       cask.tap&.audit_exception(:signing_audit_skiplist, cask.token, "all")
 
       extract_artifacts do |artifacts, tmpdir|
         is_container = artifacts.any? { |a| a.is_a?(Artifact::App) || a.is_a?(Artifact::Pkg) }
@@ -631,7 +632,9 @@ module Cask
         }.compact
 
         Homebrew::Install.perform_preinstall_checks_once
-        formula_installers = primary_container.dependencies.map do |dep|
+        formula_installers = primary_container.dependencies.filter_map do |dep|
+          next unless dep.is_a?(Formula)
+
           FormulaInstaller.new(
             dep,
             **install_options,
@@ -875,6 +878,27 @@ module Cask
         artifacts.each do |artifact|
           artifact_path = artifact.is_a?(Artifact::Pkg) ? artifact.path : artifact.source
           path = tmpdir/artifact_path.relative_path_from(cask.staged_path)
+
+          # Handle .pkg artifacts by expanding and checking Distribution file
+          if artifact.is_a?(Artifact::Pkg)
+            pkg_expanded_dir = tmpdir/"pkg-expanded"
+            begin
+              system_command!("pkgutil", args: ["--expand-full", path.to_s, pkg_expanded_dir.to_s])
+
+              distribution_file = pkg_expanded_dir/"Distribution"
+              if File.exist?(distribution_file)
+                distribution_content = File.read(distribution_file)
+                if (match = distribution_content.match(/<os-version\s+min="(?<version>[^"]+)"/))
+                  min_os = match[:version]
+                  break if min_os
+                end
+              end
+            rescue
+              break
+            ensure
+              FileUtils.remove_entry(pkg_expanded_dir) if pkg_expanded_dir.exist?
+            end
+          end
 
           info_plist_paths = Dir.glob("#{path}/**/Contents/Info.plist")
 

@@ -424,7 +424,7 @@ class SystemCommand
 
   sig { params(raw_stdin: IO).void }
   def write_input_to(raw_stdin)
-    input.each { raw_stdin.write(_1) }
+    input.each { raw_stdin.write(it) }
   end
 
   sig { params(sources: T::Array[IO], _block: T.proc.params(type: Symbol, line: String).void).void }

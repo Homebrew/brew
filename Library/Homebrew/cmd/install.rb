@@ -207,7 +207,7 @@ module Homebrew
 
         begin
           formulae, casks = T.cast(
-            args.named.to_formulae_and_casks(warn: false).partition { _1.is_a?(Formula) },
+            args.named.to_formulae_and_casks(warn: false).partition { it.is_a?(Formula) },
             [T::Array[Formula], T::Array[Cask::Cask]],
           )
         rescue FormulaOrCaskUnavailableError, Cask::CaskUnavailableError

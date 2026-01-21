@@ -26,7 +26,7 @@ module Homebrew
 
         # The `Regexp` used to determine if the strategy applies to the URL.
         URL_MATCH_REGEX = %r{
-          ^https?://cpan\.metacpan\.org
+          ^https?://(?:cpan\.metacpan\.org|www\.cpan\.org)
           (?<path>/authors/id(?:/[^/]+){3,}/) # Path before the filename
           (?<prefix>[^/]+) # Filename text before the version
           -v?\d+(?:\.\d+)* # The numeric version
@@ -55,7 +55,7 @@ module Homebrew
           return values if match.blank?
 
           # The directory listing page where the archive files are found
-          values[:url] = "https://cpan.metacpan.org#{match[:path]}"
+          values[:url] = "https://www.cpan.org#{match[:path]}"
 
           regex_prefix = Regexp.escape(T.must(match[:prefix])).gsub("\\-", "-")
 

@@ -78,7 +78,7 @@ module Cask
 
     sig { returns(T::Array[Pathname]) }
     def pkgutil_bom_specials
-      @pkgutil_bom_specials ||= T.let(pkgutil_bom_all.select { special?(_1) }, T.nilable(T::Array[Pathname]))
+      @pkgutil_bom_specials ||= T.let(pkgutil_bom_all.select { special?(it) }, T.nilable(T::Array[Pathname]))
     end
 
     sig { returns(T::Array[Pathname]) }

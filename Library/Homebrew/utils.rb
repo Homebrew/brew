@@ -220,4 +220,16 @@ module Utils
   def self.safe_filename(basename)
     basename.gsub(SAFE_FILENAME_REGEX, "")
   end
+
+  # Converts a string starting with `:` to a symbol, otherwise returns the
+  # string itself.
+  #
+  #   convert_to_string_or_symbol(":example") # => :example
+  #   convert_to_string_or_symbol("example")  # => "example"
+  sig { params(string: String).returns(T.any(String, Symbol)) }
+  def self.convert_to_string_or_symbol(string)
+    return T.must(string[1..]).to_sym if string.start_with?(":")
+
+    string
+  end
 end

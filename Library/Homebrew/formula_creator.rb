@@ -202,7 +202,7 @@ module Homebrew
         <% elsif @mode == :python %>
           depends_on "#{latest_versioned_formula("python")}"
         <% elsif @mode == :ruby %>
-          uses_from_macos "ruby"
+          depends_on "ruby"
         <% elsif @mode == :rust %>
           depends_on "rust" => :build
         <% elsif @mode == :zig %>

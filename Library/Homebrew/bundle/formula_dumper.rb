@@ -40,7 +40,7 @@ module Homebrew
         @formulae_by_full_name ||= {}
 
         if name.nil?
-          formulae = Formula.installed.map { add_formula(_1) }
+          formulae = Formula.installed.map { add_formula(it) }
           sort!(formulae)
           return @formulae_by_full_name
         end

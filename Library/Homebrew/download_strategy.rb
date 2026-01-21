@@ -356,6 +356,12 @@ class AbstractFileDownloadStrategy < AbstractDownloadStrategy
     cached_location.basename.sub(/^[\da-f]{64}--/, "")
   end
 
+  sig { params(target_cached_location: Pathname).void }
+  def create_symlink_to_cached_download(target_cached_location)
+    symlink_location.dirname.mkpath
+    FileUtils.ln_s target_cached_location.relative_path_from(symlink_location.dirname), symlink_location, force: true
+  end
+
   private
 
   sig { returns(String) }
@@ -511,8 +517,7 @@ class CurlDownloadStrategy < AbstractFileDownloadStrategy
           temporary_path.rename(cached_location.to_s)
         end
 
-        symlink_location.dirname.mkpath
-        FileUtils.ln_s cached_location.relative_path_from(symlink_location.dirname), symlink_location, force: true
+        create_symlink_to_cached_download(cached_location)
       rescue CurlDownloadStrategyError
         raise if urls.empty?
 
@@ -610,6 +615,15 @@ class CurlDownloadStrategy < AbstractFileDownloadStrategy
     file_size = parsed_headers
                 .flat_map { |headers| [*headers["content-length"]&.to_i] }
                 .last
+
+    # Fallback to content-range header if content-length is not available.
+    # Content-Range format: "bytes start-end/total" or "bytes */total" or "bytes start-end/*"
+    if file_size.nil? || file_size.zero?
+      file_size = parsed_headers
+                  .flat_map { |headers| [*headers["content-range"]] }
+                  .filter_map { |range| Integer(range.split("/").last, 10, exception: false) }
+                  .last
+    end
 
     content_type = parsed_headers
                    .flat_map { |headers| [*headers["content-type"]] }

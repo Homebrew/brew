@@ -4,13 +4,13 @@
 #
 #    pip-compile --allow-unsafe --generate-hashes --strip-extras requirements.in
 #
-certifi==2025.11.12 \
-    --hash=sha256:97de8790030bbd5c2d96b7ec782fc2f7820ef8dba6db909ccf95449f2d062d4b \
-    --hash=sha256:d8ab5478f2ecd78af242878415affce761ca6bc54a22a27e026d7c25357c3316
+certifi==2026.1.4 \
+    --hash=sha256:9943707519e4add1115f44c2bc244f782c0249876bf51b6599fee1ffbedd685c \
+    --hash=sha256:ac726dd470482006e014ad384921ed6438c457018f4b3d204aea4281258b2120
     # via influxdb3-python
-influxdb3-python==0.16.0 \
-    --hash=sha256:2f6d8caf671b25e0a19aeba5ed13eca6adc5bf141ef615b7e3d0f9f419a7711d \
-    --hash=sha256:3fc09330e39b4935174a327c4838f12753efd6031d6980f9a01e94d6408647c1
+influxdb3-python==0.17.0 \
+    --hash=sha256:4847a20529872a66ccddd4d14387737767694c02d4b45031f768b04a72d2d2df \
+    --hash=sha256:676358f4d8f08d02bbb94b13f03a871f7834175e70f45811bf40a56b39f38769
     # via -r requirements.in
 pyarrow==22.0.0 \
     --hash=sha256:001ea83a58024818826a9e3f89bf9310a114f7e26dfe404a4c32686f97bd7901 \
@@ -80,7 +80,7 @@ typing-extensions==4.15.0 \
     --hash=sha256:0cea48d173cc12fa28ecabc3b837ea3cf6f38c6d1136f85cbaaf598984861466 \
     --hash=sha256:f0fa19c6845758ab08074a0cfa8b7aecb71c999ca73d62883bc25cc018c4e548
     # via reactivex
-urllib3==2.6.2 \
-    --hash=sha256:016f9c98bb7e98085cb2b4b17b87d2c702975664e4f060c6532e64d1c1a5e797 \
-    --hash=sha256:ec21cddfe7724fc7cb4ba4bea7aa8e2ef36f607a4bab81aa6ce42a13dc3f03dd
+urllib3==2.6.3 \
+    --hash=sha256:1b62b6884944a57dbe321509ab94fd4d3b307075e0c2eae991ac71ee15ad38ed \
+    --hash=sha256:bf272323e553dfb2e87d9bfd225ca7b0f467b919d7bbd355436d3fd37cb0acd4
     # via influxdb3-python

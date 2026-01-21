@@ -810,10 +810,10 @@ on_request: installed_on_request?, options:)
     elsif !deps.empty?
       if deps.length > 1
         oh1 "Installing dependencies for #{formula.full_name}: " \
-            "#{deps.map { Formatter.identifier(_1) }.to_sentence}",
+            "#{deps.map { Formatter.identifier(it) }.to_sentence}",
             truncate: false
       end
-      deps.each { install_dependency(_1) }
+      deps.each { install_dependency(it) }
     end
 
     @show_header = true if deps.length > 1
@@ -1301,12 +1301,15 @@ on_request: installed_on_request?, options:)
     # (third-party taps may `require` some of their own libraries) or if there
     # is no formula present in the keg (as is the case with very old bottles),
     # use the formula from the tap.
-    keg_formula_path = formula.opt_prefix/".brew/#{formula.name}.rb"
+    tap_formula_path = T.must(formula.specified_path)
+    installed_prefix = formula.any_installed_prefix
+    return tap_formula_path if installed_prefix.nil?
+
+    keg_formula_path = installed_prefix/".brew/#{formula.name}.rb"
     return keg_formula_path if formula.loaded_from_api?
     return keg_formula_path if formula.local_bottle_path.present?
     return keg_formula_path if build_from_source?
 
-    tap_formula_path = T.must(formula.specified_path)
     return keg_formula_path unless tap_formula_path.exist?
 
     begin
@@ -1382,7 +1385,7 @@ on_request: installed_on_request?, options:)
           truncate: false
     end
 
-    deps.each { fetch_dependency(_1) }
+    deps.each { fetch_dependency(it) }
   end
 
   sig { returns(T.nilable(Formula)) }

@@ -915,6 +915,7 @@ __fish_brew_complete_arg 'generate-formula-api' -l verbose -d 'Make some output 
 __fish_brew_complete_cmd 'generate-man-completions' 'Generate Homebrew\'s manpages and shell completions'
 __fish_brew_complete_arg 'generate-man-completions' -l debug -d 'Display any debugging information'
 __fish_brew_complete_arg 'generate-man-completions' -l help -d 'Show this message'
+__fish_brew_complete_arg 'generate-man-completions' -l no-exit-code -d 'Exit with code 0 even if no changes were made'
 __fish_brew_complete_arg 'generate-man-completions' -l quiet -d 'Make some output more quiet'
 __fish_brew_complete_arg 'generate-man-completions' -l verbose -d 'Make some output more verbose'
 
@@ -1625,6 +1626,14 @@ __fish_brew_complete_arg 'shellenv' -l quiet -d 'Make some output more quiet'
 __fish_brew_complete_arg 'shellenv' -l verbose -d 'Make some output more verbose'
 
 
+__fish_brew_complete_cmd 'source' 'Open a formula\'s source repository in a browser, or open Homebrew\'s own repository if no argument is provided'
+__fish_brew_complete_arg 'source' -l debug -d 'Display any debugging information'
+__fish_brew_complete_arg 'source' -l help -d 'Show this message'
+__fish_brew_complete_arg 'source' -l quiet -d 'Make some output more quiet'
+__fish_brew_complete_arg 'source' -l verbose -d 'Make some output more verbose'
+__fish_brew_complete_arg 'source' -a '(__fish_brew_suggest_formulae_all)'
+
+
 __fish_brew_complete_cmd 'style' 'Check formulae or files for conformance to Homebrew style guidelines'
 __fish_brew_complete_arg 'style' -l cask -d 'Treat all named arguments as casks'
 __fish_brew_complete_arg 'style' -l changed -d 'Check files that were changed from the `main` branch'
@@ -2081,6 +2090,14 @@ __fish_brew_complete_arg 'verify' -l os -d 'Download for the given operating sys
 __fish_brew_complete_arg 'verify' -l quiet -d 'Make some output more quiet'
 __fish_brew_complete_arg 'verify' -l verbose -d 'Make some output more verbose'
 __fish_brew_complete_arg 'verify' -a '(__fish_brew_suggest_formulae_all)'
+
+
+__fish_brew_complete_cmd 'version-install' 'Extract a specific version of formula into a personal tap and install it'
+__fish_brew_complete_arg 'version-install' -l debug -d 'Display any debugging information'
+__fish_brew_complete_arg 'version-install' -l help -d 'Show this message'
+__fish_brew_complete_arg 'version-install' -l quiet -d 'Make some output more quiet'
+__fish_brew_complete_arg 'version-install' -l verbose -d 'Make some output more verbose'
+__fish_brew_complete_arg 'version-install' -a '(__fish_brew_suggest_formulae_all)'
 
 
 __fish_brew_complete_cmd 'which-formula' 'Show which formula(e) provides the given command'

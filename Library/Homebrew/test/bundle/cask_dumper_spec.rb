@@ -43,13 +43,14 @@ RSpec.describe Homebrew::Bundle::CaskDumper do
   end
 
   context "when casks `foo`, `bar` and `baz` are installed, with `baz` being a formula requirement" do
-    let(:foo) { instance_double(Cask::Cask, to_s: "foo", desc: nil, config: nil) }
-    let(:baz) { instance_double(Cask::Cask, to_s: "baz", desc: "Software", config: nil) }
+    let(:foo) { instance_double(Cask::Cask, to_s: "foo", full_name: "foo", desc: nil, config: nil) }
+    let(:baz) { instance_double(Cask::Cask, to_s: "baz", full_name: "baz", desc: "Software", config: nil) }
     let(:bar) do
       instance_double(
-        Cask::Cask, to_s:   "bar",
-                    desc:   nil,
-                    config: instance_double(
+        Cask::Cask, to_s:      "bar",
+                    full_name: "bar",
+                    desc:      nil,
+                    config:    instance_double(
                       Cask::Config,
                       explicit: {
                         fontdir:   "/Library/Fonts",

@@ -13,14 +13,15 @@ module Cask
     def self.get_info(cask)
       require "cask/installer"
 
-      output = "#{title_info(cask)}\n"
+      installed = cask.installed?
+      output = "#{title_info(cask, installed:)}\n"
       output << "#{Formatter.url(cask.homepage)}\n" if cask.homepage
       deprecate_disable = DeprecateDisable.message(cask)
       if deprecate_disable.present?
         deprecate_disable.tap { |message| message[0] = message[0].upcase }
         output << "#{deprecate_disable}\n"
       end
-      output << "#{installation_info(cask)}\n"
+      output << "#{installation_info(cask, installed:)}\n"
       repo = repo_info(cask)
       output << "#{repo}\n" if repo
       output << name_info(cask)
@@ -45,16 +46,21 @@ module Cask
       ::Utils::Analytics.cask_output(cask, args:)
     end
 
-    sig { params(cask: Cask).returns(String) }
-    def self.title_info(cask)
-      title = "#{oh1_title(cask.token)}: #{cask.version}"
+    sig { params(cask: Cask, installed: T::Boolean).returns(String) }
+    def self.title_info(cask, installed:)
+      name_with_status = if installed
+        pretty_installed(cask.token)
+      else
+        pretty_uninstalled(cask.token)
+      end
+      title = "#{oh1_title(name_with_status)}: #{cask.version}"
       title += " (auto_updates)" if cask.auto_updates
       title
     end
 
-    sig { params(cask: Cask).returns(String) }
-    def self.installation_info(cask)
-      return "Not installed" unless cask.installed?
+    sig { params(cask: Cask, installed: T::Boolean).returns(String) }
+    def self.installation_info(cask, installed:)
+      return "Not installed" unless installed
       return "No installed version" unless (installed_version = cask.installed_version).present?
 
       versioned_staged_path = cask.caskroom_path.join(installed_version)

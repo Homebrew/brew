@@ -92,5 +92,18 @@ RSpec.describe Homebrew::Bundle::Commands::Install do
 
       expect { described_class.run }.to raise_error(SystemExit)
     end
+
+    it "marks Brewfile formulae as installed_on_request after installing" do
+      allow(Homebrew::Bundle::TapInstaller).to receive(:preinstall!).and_return(false)
+      allow(Homebrew::Bundle::VscodeExtensionInstaller).to receive(:preinstall!).and_return(false)
+      allow(Homebrew::Bundle::FlatpakInstaller).to receive(:preinstall!).and_return(false)
+      allow(Homebrew::Bundle::FormulaInstaller).to receive_messages(preinstall!: true, install!: true)
+      allow(Homebrew::Bundle::CaskInstaller).to receive_messages(preinstall!: true, install!: true)
+      allow(Homebrew::Bundle::MacAppStoreInstaller).to receive_messages(preinstall!: true, install!: true)
+      allow_any_instance_of(Pathname).to receive(:read).and_return("brew 'test_formula'")
+
+      expect(Homebrew::Bundle).to receive(:mark_as_installed_on_request!)
+      described_class.run
+    end
   end
 end
