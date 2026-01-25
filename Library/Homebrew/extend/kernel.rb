@@ -232,17 +232,4 @@ module Kernel
       ENV.update(old_values)
     end
   end
-
-  sig { returns(T.proc.params(a: String, b: String).returns(Integer)) }
-  def tap_and_name_comparison
-    proc do |a, b|
-      if a.include?("/") && b.exclude?("/")
-        1
-      elsif a.exclude?("/") && b.include?("/")
-        -1
-      else
-        a <=> b
-      end
-    end
-  end
 end

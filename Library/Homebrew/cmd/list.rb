@@ -89,7 +89,7 @@ module Homebrew
              args.poured_from_bottle? || args.built_from_source?)
           unless args.cask?
             formula_names = args.no_named? ? Formula.installed : args.named.to_resolved_formulae
-            full_formula_names = formula_names.map(&:full_name).sort(&tap_and_name_comparison)
+            full_formula_names = formula_names.map(&:full_name).sort(&Cask::List.tap_and_name_comparison)
             full_formula_names = Formatter.columns(full_formula_names) unless args.public_send(:"1?")
             puts full_formula_names if full_formula_names.present?
           end
@@ -101,7 +101,7 @@ module Homebrew
             end
             # The cast is because `Keg`` does not define `full_name`
             full_cask_names = T.cast(cask_names, T::Array[T.any(Formula, Cask::Cask)])
-                               .map(&:full_name).sort(&tap_and_name_comparison)
+                               .map(&:full_name).sort(&Cask::List.tap_and_name_comparison)
             full_cask_names = Formatter.columns(full_cask_names) unless args.public_send(:"1?")
             puts full_cask_names if full_cask_names.present?
           end
@@ -126,7 +126,7 @@ module Homebrew
             # See https://ruby-doc.org/3.2/Kernel.html#method-i-test
             Formula.installed.sort_by { |formula| T.cast(test("M", formula.rack.to_s), Time) }.reverse!
           elsif args.full_name?
-            Formula.installed.sort { |a, b| tap_and_name_comparison.call(a.full_name, b.full_name) }
+            Formula.installed.sort { |a, b| Cask::List.tap_and_name_comparison.call(a.full_name, b.full_name) }
           else
             Formula.installed.sort
           end

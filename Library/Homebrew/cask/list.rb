@@ -50,5 +50,18 @@ module Cask
     def self.format_versioned(cask)
       "#{cask}#{cask.installed_version&.prepend(" ")}"
     end
+
+    sig { returns(T.proc.params(a: String, b: String).returns(Integer)) }
+    def self.tap_and_name_comparison
+      proc do |a, b|
+        if a.include?("/") && b.exclude?("/")
+          1
+        elsif a.exclude?("/") && b.include?("/")
+          -1
+        else
+          a <=> b
+        end
+      end
+    end
   end
 end
