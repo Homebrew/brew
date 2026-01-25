@@ -53,15 +53,18 @@ module Cask
 
     sig { returns(T.proc.params(a: String, b: String).returns(Integer)) }
     def self.tap_and_name_comparison
-      proc do |a, b|
-        if a.include?("/") && b.exclude?("/")
-          1
-        elsif a.exclude?("/") && b.include?("/")
-          -1
-        else
-          a <=> b
-        end
-      end
+      @tap_and_name_comparison ||= T.let(
+        proc do |a, b|
+          if a.include?("/") && b.exclude?("/")
+            1
+          elsif a.exclude?("/") && b.include?("/")
+            -1
+          else
+            a <=> b
+          end
+        end,
+        T.nilable(T.proc.params(a: String, b: String).returns(Integer)),
+      )
     end
   end
 end
