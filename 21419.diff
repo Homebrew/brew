@@ -1,0 +1,40 @@
+diff --git a/Library/Homebrew/bundle/cask_dumper.rb b/Library/Homebrew/bundle/cask_dumper.rb
+index 68ae1cc4de722..712a9abbd4dff 100644
+--- a/Library/Homebrew/bundle/cask_dumper.rb
++++ b/Library/Homebrew/bundle/cask_dumper.rb
+@@ -37,10 +37,9 @@ def self.cask_is_outdated_using_greedy?(cask_name)
+       sig { params(describe: T::Boolean).returns(String) }
+       def self.dump(describe: false)
+         casks.map do |cask|
+-          name = cask.respond_to?(:full_name) ? cask.full_name : cask.to_s
+           description = "# #{cask.desc}\n" if describe && cask.desc.present?
+           config = ", args: { #{explicit_s(cask.config)} }" if cask.config.present? && cask.config.explicit.present?
+-          "#{description}cask \"#{name}\"#{config}"
++          "#{description}cask \"#{cask.full_name}\"#{config}"
+         end.join("\n")
+       end
+ 
+diff --git a/Library/Homebrew/test/bundle/cask_dumper_spec.rb b/Library/Homebrew/test/bundle/cask_dumper_spec.rb
+index b5f4771d6eb63..688fb9fe7ad80 100644
+--- a/Library/Homebrew/test/bundle/cask_dumper_spec.rb
++++ b/Library/Homebrew/test/bundle/cask_dumper_spec.rb
+@@ -43,13 +43,14 @@
+   end
+ 
+   context "when casks `foo`, `bar` and `baz` are installed, with `baz` being a formula requirement" do
+-    let(:foo) { instance_double(Cask::Cask, to_s: "foo", desc: nil, config: nil) }
+-    let(:baz) { instance_double(Cask::Cask, to_s: "baz", desc: "Software", config: nil) }
++    let(:foo) { instance_double(Cask::Cask, to_s: "foo", full_name: "foo", desc: nil, config: nil) }
++    let(:baz) { instance_double(Cask::Cask, to_s: "baz", full_name: "baz", desc: "Software", config: nil) }
+     let(:bar) do
+       instance_double(
+-        Cask::Cask, to_s:   "bar",
+-                    desc:   nil,
+-                    config: instance_double(
++        Cask::Cask, to_s:      "bar",
++                    full_name: "bar",
++                    desc:      nil,
++                    config:    instance_double(
+                       Cask::Config,
+                       explicit: {
+                         fontdir:   "/Library/Fonts",
