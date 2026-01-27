@@ -1,0 +1,41 @@
+{
+  "name": "daisy-quit-alcohol",
+  "version": "1.0.0",
+  "main": "node_modules/expo/AppEntry.js",
+  "scripts": {
+    "start": "expo start",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
+    "web": "expo start --web"
+  },
+  "dependencies": {
+    "@clerk/clerk-expo": "^0.20.0",
+    "@expo/vector-icons": "^14.0.0",
+    "@neondatabase/serverless": "^0.9.0",
+    "@react-navigation/bottom-tabs": "^6.5.0",
+    "@react-navigation/native": "^6.1.0",
+    "@react-navigation/native-stack": "^6.9.0",
+    "expo": "~50.0.0",
+    "expo-apple-authentication": "~6.3.0",
+    "expo-auth-session": "~5.4.0",
+    "expo-crypto": "~12.8.0",
+    "expo-notifications": "~0.27.0",
+    "expo-secure-store": "~12.8.0",
+    "expo-status-bar": "~1.11.0",
+    "expo-web-browser": "~12.8.0",
+    "openai": "^4.28.0",
+    "react": "18.2.0",
+    "react-native": "0.73.0",
+    "react-native-purchases": "^7.0.0",
+    "react-native-safe-area-context": "4.8.2",
+    "react-native-screens": "~3.29.0",
+    "react-native-svg": "14.1.0",
+    "@react-native-async-storage/async-storage": "1.21.0",
+    "date-fns": "^3.3.0",
+    "uuid": "^9.0.0"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.20.0"
+  },
+  "private": true
+}
