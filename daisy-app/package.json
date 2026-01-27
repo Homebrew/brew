@@ -6,7 +6,12 @@
     "start": "expo start",
     "android": "expo start --android",
     "ios": "expo start --ios",
-    "web": "expo start --web"
+    "web": "expo start --web",
+    "build:ios:dev": "eas build --platform ios --profile development",
+    "build:ios:preview": "eas build --platform ios --profile preview",
+    "build:ios:prod": "eas build --platform ios --profile production",
+    "submit:ios": "eas submit --platform ios --profile production",
+    "build:submit:ios": "eas build --platform ios --profile production --auto-submit"
   },
   "dependencies": {
     "@clerk/clerk-expo": "^0.20.0",
@@ -18,10 +23,13 @@
     "expo": "~50.0.0",
     "expo-apple-authentication": "~6.3.0",
     "expo-auth-session": "~5.4.0",
+    "expo-build-properties": "~0.11.0",
     "expo-crypto": "~12.8.0",
+    "expo-dev-client": "~3.3.0",
     "expo-notifications": "~0.27.0",
     "expo-secure-store": "~12.8.0",
     "expo-status-bar": "~1.11.0",
+    "expo-updates": "~0.24.0",
     "expo-web-browser": "~12.8.0",
     "openai": "^4.28.0",
     "react": "18.2.0",
