@@ -73,6 +73,7 @@ module Homebrew
           Homebrew.install_bundler_gems!(groups: ["pry"])
           require "pry"
         else
+          Homebrew.install_bundler_gems!(groups: ["irb"])
           require "irb"
         end
 
