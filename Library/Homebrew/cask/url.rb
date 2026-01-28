@@ -19,7 +19,7 @@ module Cask
     sig { returns(T.nilable(T::Hash[String, String])) }
     attr_reader :cookies, :data
 
-    sig { returns(T.nilable(T.any(String, T::Array[String]))) }
+    sig { returns(T.nilable(T::Array[String])) }
     attr_reader :header
 
     sig { returns(T.nilable(T.any(URI::Generic, String))) }
@@ -83,7 +83,7 @@ module Cask
       specs[:cookies]    =
         @cookies = T.let(cookies&.transform_keys(&:to_s), T.nilable(T::Hash[String, String]))
       specs[:referer]    = @referer    = T.let(referer, T.nilable(T.any(URI::Generic, String)))
-      specs[:headers]    = @header     = T.let(header, T.nilable(T.any(String, T::Array[String])))
+      specs[:headers]    = @header     = T.let(header, T.nilable(T::Array[String]))
       specs[:user_agent] = @user_agent = T.let(user_agent || :default, T.nilable(T.any(Symbol, String)))
       specs[:data]       = @data       = T.let(data, T.nilable(T::Hash[String, String]))
       specs[:only_path]  = @only_path  = T.let(only_path, T.nilable(String))
