@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1284" height="2778" viewBox="0 0 1284 2778" xmlns="http://www.w3.org/2000/svg">
+  <!-- Yellow Background -->
+  <rect width="1284" height="2778" fill="#FFD60A"/>
+
+  <!-- Daisy Petals (White) - centered -->
+  <g transform="translate(642, 1200)">
+    <!-- 12 petals -->
+    <ellipse cx="0" cy="-192" rx="60" ry="140" fill="white" transform="rotate(0, 0, 0)"/>
+    <ellipse cx="0" cy="-192" rx="60" ry="140" fill="white" transform="rotate(30, 0, 0)"/>
+    <ellipse cx="0" cy="-192" rx="60" ry="140" fill="white" transform="rotate(60, 0, 0)"/>
+    <ellipse cx="0" cy="-192" rx="60" ry="140" fill="white" transform="rotate(90, 0, 0)"/>
+    <ellipse cx="0" cy="-192" rx="60" ry="140" fill="white" transform="rotate(120, 0, 0)"/>
+    <ellipse cx="0" cy="-192" rx="60" ry="140" fill="white" transform="rotate(150, 0, 0)"/>
+    <ellipse cx="0" cy="-192" rx="60" ry="140" fill="white" transform="rotate(180, 0, 0)"/>
+    <ellipse cx="0" cy="-192" rx="60" ry="140" fill="white" transform="rotate(210, 0, 0)"/>
+    <ellipse cx="0" cy="-192" rx="60" ry="140" fill="white" transform="rotate(240, 0, 0)"/>
+    <ellipse cx="0" cy="-192" rx="60" ry="140" fill="white" transform="rotate(270, 0, 0)"/>
+    <ellipse cx="0" cy="-192" rx="60" ry="140" fill="white" transform="rotate(300, 0, 0)"/>
+    <ellipse cx="0" cy="-192" rx="60" ry="140" fill="white" transform="rotate(330, 0, 0)"/>
+
+    <!-- Center of daisy -->
+    <circle cx="0" cy="0" r="100" fill="#FFA500"/>
+    <circle cx="0" cy="0" r="80" fill="#FF8C00" opacity="0.5"/>
+    <circle cx="0" cy="0" r="50" fill="#FFA500"/>
+  </g>
+
+  <!-- App Name -->
+  <text x="642" y="1550" font-family="Arial, sans-serif" font-size="80" font-weight="bold" fill="white" text-anchor="middle">Daisy</text>
+</svg>

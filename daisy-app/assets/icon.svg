@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+  <!-- Yellow Background -->
+  <rect width="1024" height="1024" fill="#FFD60A"/>
+
+  <!-- Daisy Petals (White) -->
+  <!-- Top petal -->
+  <ellipse cx="512" cy="320" rx="60" ry="140" fill="white" transform="rotate(0, 512, 512)"/>
+  <!-- Top-right petal -->
+  <ellipse cx="512" cy="320" rx="60" ry="140" fill="white" transform="rotate(30, 512, 512)"/>
+  <!-- Right-top petal -->
+  <ellipse cx="512" cy="320" rx="60" ry="140" fill="white" transform="rotate(60, 512, 512)"/>
+  <!-- Right petal -->
+  <ellipse cx="512" cy="320" rx="60" ry="140" fill="white" transform="rotate(90, 512, 512)"/>
+  <!-- Right-bottom petal -->
+  <ellipse cx="512" cy="320" rx="60" ry="140" fill="white" transform="rotate(120, 512, 512)"/>
+  <!-- Bottom-right petal -->
+  <ellipse cx="512" cy="320" rx="60" ry="140" fill="white" transform="rotate(150, 512, 512)"/>
+  <!-- Bottom petal -->
+  <ellipse cx="512" cy="320" rx="60" ry="140" fill="white" transform="rotate(180, 512, 512)"/>
+  <!-- Bottom-left petal -->
+  <ellipse cx="512" cy="320" rx="60" ry="140" fill="white" transform="rotate(210, 512, 512)"/>
+  <!-- Left-bottom petal -->
+  <ellipse cx="512" cy="320" rx="60" ry="140" fill="white" transform="rotate(240, 512, 512)"/>
+  <!-- Left petal -->
+  <ellipse cx="512" cy="320" rx="60" ry="140" fill="white" transform="rotate(270, 512, 512)"/>
+  <!-- Left-top petal -->
+  <ellipse cx="512" cy="320" rx="60" ry="140" fill="white" transform="rotate(300, 512, 512)"/>
+  <!-- Top-left petal -->
+  <ellipse cx="512" cy="320" rx="60" ry="140" fill="white" transform="rotate(330, 512, 512)"/>
+
+  <!-- Center of daisy (golden yellow) -->
+  <circle cx="512" cy="512" r="100" fill="#FFA500"/>
+
+  <!-- Inner texture circles for center -->
+  <circle cx="512" cy="512" r="80" fill="#FF8C00" opacity="0.5"/>
+  <circle cx="512" cy="512" r="50" fill="#FFA500"/>
+</svg>
