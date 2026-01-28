@@ -1,3 +1,7 @@
+---
+last_review_date: "1970-01-01"
+---
+
 # How to Build Software Outside Homebrew with Homebrew `keg_only` Dependencies
 
 ## What does "keg-only" mean?
@@ -8,11 +12,11 @@ As an example:
 
 *OpenSSL isn’t symlinked into my `PATH` and non-Homebrew builds can’t find it!*
 
-This is because Homebrew keeps it locked inside its individual prefix, rather than symlinking to the publicly-available location.
+This is because Homebrew isolates it within its individual prefix, rather than symlinking to the publicly available location.
 
 ## Advice on potential workarounds
 
-A number of people in this situation are either forcefully linking `keg_only` tools with `brew link --force` or moving default system utilities out of the `PATH` and replacing them with manually-created symlinks to the Homebrew-provided tool.
+A number of people in this situation are either forcefully linking keg-only tools with `brew link --force` or moving default system utilities out of the `PATH` and replacing them with manually created symlinks to the Homebrew-provided tool.
 
 *Please* do not remove macOS native tools and forcefully replace them with symlinks back to the Homebrew-provided tool. Doing so can and likely will cause significant breakage when attempting to build software.
 
@@ -20,20 +24,20 @@ A number of people in this situation are either forcefully linking `keg_only` to
 
 ## How do I use those tools outside of Homebrew?
 
-Useful, reliable alternatives exist should you wish to use `keg_only` tools outside of Homebrew.
+Useful, reliable alternatives exist should you wish to use keg-only tools outside of Homebrew.
 
 ### Build flags
 
 You can set flags to give configure scripts or Makefiles a nudge in the right direction. An example of flag setting:
 
 ```sh
-./configure --prefix=/Users/Dave/Downloads CFLAGS="-I$(brew --prefix)/opt/openssl/include" LDFLAGS="-L$(brew --prefix)/opt/openssl/lib"
+./configure --prefix=/Users/Dave/Downloads CFLAGS="-I$(brew --prefix openssl)/include" LDFLAGS="-L$(brew --prefix openssl)/lib"
 ```
 
 An example using `pip`:
 
 ```sh
-CFLAGS="-I$(brew --prefix)/opt/icu4c/include" LDFLAGS="-L$(brew --prefix)/opt/icu4c/lib" pip install pyicu
+CFLAGS="-I$(brew --prefix icu4c)/include" LDFLAGS="-L$(brew --prefix icu4c)/lib" pip install pyicu
 ```
 
 ### `PATH` modification
@@ -41,26 +45,26 @@ CFLAGS="-I$(brew --prefix)/opt/icu4c/include" LDFLAGS="-L$(brew --prefix)/opt/ic
 You can temporarily prepend your `PATH` with the tool’s `bin` directory, such as:
 
 ```sh
-export PATH="$(brew --prefix)/opt/openssl/bin:${PATH}"
+export PATH="$(brew --prefix openssl)/bin:${PATH}"
 ```
 
-This will prepend that folder to your `PATH`, ensuring any build script that searches the `PATH` will find it first.
+This will prepend the directory to your `PATH`, ensuring any build script that searches the `PATH` will find it first.
 
-Changing your `PATH` using that command ensures the change only exists for the duration of that shell session. Once you are no longer in that session, the `PATH` reverts to the prior state.
+Changing your `PATH` using this command ensures the change only exists for the duration of the shell session. Once the current session ends, the `PATH` reverts to its prior state.
 
 ### `pkg-config` detection
 
-If the tool you are attempting to build is [pkg-config](https://en.wikipedia.org/wiki/Pkg-config) aware, you can amend your `PKG_CONFIG_PATH` to find that `keg_only` utility’s `.pc` file, if it has them. Not all formulae ship with those files.
+If the tool you are attempting to build is [pkg-config](https://en.wikipedia.org/wiki/Pkg-config) aware, you can amend your `PKG_CONFIG_PATH` to find a keg-only utility’s `.pc` files, if it has any. Not all formulae ship with these files.
 
 An example of this is:
 
 ```sh
-export PKG_CONFIG_PATH="$(brew --prefix)/opt/openssl/lib/pkgconfig"
+export PKG_CONFIG_PATH="$(brew --prefix openssl)/lib/pkgconfig"
 ```
 
-If you’re curious about the `PKG_CONFIG_PATH` variable `man pkg-config` goes into more detail.
+If you’re curious about the `PKG_CONFIG_PATH` variable, `man pkg-config` goes into more detail.
 
-You can get `pkg-config` to detail the default search path with:
+You can get `pkg-config` to print the default search path with:
 
 ```sh
 pkg-config --variable pc_path pkg-config

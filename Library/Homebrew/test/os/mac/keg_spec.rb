@@ -1,9 +1,8 @@
-# typed: false
 # frozen_string_literal: true
 
 require "keg"
 
-describe Keg do
+RSpec.describe Keg do
   include FileUtils
 
   subject(:keg) { described_class.new(keg_path) }

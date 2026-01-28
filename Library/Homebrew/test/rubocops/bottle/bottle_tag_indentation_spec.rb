@@ -1,12 +1,11 @@
-# typed: false
 # frozen_string_literal: true
 
 require "rubocops/bottle"
 
-describe RuboCop::Cop::FormulaAudit::BottleTagIndentation do
+RSpec.describe RuboCop::Cop::FormulaAudit::BottleTagIndentation do
   subject(:cop) { described_class.new }
 
-  it "reports no offenses for `bottle :uneeded`" do
+  it "reports no offenses for `bottle :unneeded`" do
     expect_no_offenses(<<~RUBY)
       class Foo < Formula
         url "https://brew.sh/foo-1.0.tgz"
@@ -74,10 +73,10 @@ describe RuboCop::Cop::FormulaAudit::BottleTagIndentation do
         bottle do
           rebuild 4
           sha256 cellar: :any, arm64_big_sur: "aaaaaaaa"
-                               ^^^^^^^^^^^^^^^^^^^^^^^^^ Align bottle tags
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^ FormulaAudit/BottleTagIndentation: Align bottle tags
           sha256 cellar: "/usr/local/Cellar", big_sur: "faceb00c"
           sha256 catalina: "deadbeef"
-                 ^^^^^^^^^^^^^^^^^^^^ Align bottle tags
+                 ^^^^^^^^^^^^^^^^^^^^ FormulaAudit/BottleTagIndentation: Align bottle tags
         end
       end
     RUBY

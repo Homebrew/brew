@@ -1,27 +1,26 @@
-# typed: true
+# typed: strict
 # frozen_string_literal: true
 
 require "utils/user"
+require "utils/output"
 
 module Cask
   # Helper functions for staged casks.
-  #
-  # @api private
   module Staged
-    extend T::Sig
+    include ::Utils::Output::Mixin
+    extend T::Helpers
 
-    # FIXME: Enable cop again when https://github.com/sorbet/sorbet/issues/3532 is fixed.
-    # rubocop:disable Style/MutableConstant
+    requires_ancestor { ::Cask::DSL::Base }
+
     Paths = T.type_alias { T.any(String, Pathname, T::Array[T.any(String, Pathname)]) }
-    # rubocop:enable Style/MutableConstant
 
     sig { params(paths: Paths, permissions_str: String).void }
     def set_permissions(paths, permissions_str)
       full_paths = remove_nonexistent(paths)
       return if full_paths.empty?
 
-      @command.run!("/bin/chmod", args: ["-R", "--", permissions_str, *full_paths],
-                                  sudo: false)
+      command.run!("chmod", args: ["-R", "--", permissions_str, *full_paths],
+                            sudo: false)
     end
 
     sig { params(paths: Paths, user: T.any(String, User), group: String).void }
@@ -29,9 +28,9 @@ module Cask
       full_paths = remove_nonexistent(paths)
       return if full_paths.empty?
 
-      ohai "Changing ownership of paths required by #{@cask}; your password may be necessary."
-      @command.run!("/usr/sbin/chown", args: ["-R", "--", "#{user}:#{group}", *full_paths],
-                                       sudo: true)
+      ohai "Changing ownership of paths required by #{cask} with `sudo` (which may request your password)..."
+      command.run!("chown", args: ["-R", "--", "#{user}:#{group}", *full_paths],
+                            sudo: true)
     end
 
     private

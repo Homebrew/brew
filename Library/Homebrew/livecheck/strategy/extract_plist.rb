@@ -1,7 +1,8 @@
-# typed: true
+# typed: strict
 # frozen_string_literal: true
 
 require "bundle_version"
+require "livecheck/strategic"
 require "unversioned_cask_checker"
 
 module Homebrew
@@ -16,40 +17,36 @@ module Homebrew
       #
       # This strategy is not applied automatically and it's necessary to use
       # `strategy :extract_plist` in a `livecheck` block to apply it.
-      #
-      # @api private
       class ExtractPlist
-        extend T::Sig
+        extend Strategic
 
         # A priority of zero causes livecheck to skip the strategy. We do this
         # for {ExtractPlist} so we can selectively apply it when appropriate.
         PRIORITY = 0
 
         # The `Regexp` used to determine if the strategy applies to the URL.
-        URL_MATCH_REGEX = %r{^https?://}i.freeze
+        URL_MATCH_REGEX = %r{^https?://}i
 
         # Whether the strategy can be applied to the provided URL.
         #
         # @param url [String] the URL to match against
         # @return [Boolean]
-        sig { params(url: String).returns(T::Boolean) }
+        sig { override.params(url: String).returns(T::Boolean) }
         def self.match?(url)
           URL_MATCH_REGEX.match?(url)
         end
 
-        # @api private
         Item = Struct.new(
-          # @api private
           :bundle_version,
           keyword_init: true,
         ) do
-          extend T::Sig
-
           extend Forwardable
 
+          # @!attribute [r] version
           # @api public
           delegate version: :bundle_version
 
+          # @!attribute [r] short_version
           # @api public
           delegate short_version: :bundle_version
         end
@@ -58,12 +55,13 @@ module Homebrew
         # {UnversionedCaskChecker} version information.
         #
         # @param items [Hash] a hash of `Item`s containing version information
+        # @param regex [Regexp, nil] a regex for use in a strategy block
         # @return [Array]
         sig {
           params(
             items: T::Hash[String, Item],
             regex: T.nilable(Regexp),
-            block: T.untyped,
+            block: T.nilable(Proc),
           ).returns(T::Array[String])
         }
         def self.versions_from_items(items, regex = nil, &block)
@@ -72,33 +70,66 @@ module Homebrew
             return Strategy.handle_block_return(block_return_value)
           end
 
-          items.map do |_key, item|
+          items.filter_map do |_key, item|
             item.bundle_version.nice_version
-          end.compact.uniq
+          end.uniq
         end
 
         # Uses {UnversionedCaskChecker} on the provided cask to identify
         # versions from `plist` files.
         #
         # @param cask [Cask::Cask] the cask to check for version information
+        # @param url [String, nil] an alternative URL to check for version
+        #   information
+        # @param regex [Regexp, nil] a regex for use in a strategy block
+        # @param options [Options] options to modify behavior
         # @return [Hash]
         sig {
-          params(
+          override(allow_incompatible: true).params(
             cask:    Cask::Cask,
+            url:     T.nilable(String),
             regex:   T.nilable(Regexp),
-            _unused: T.nilable(T::Hash[Symbol, T.untyped]),
-            block:   T.untyped,
-          ).returns(T::Hash[Symbol, T.untyped])
+            options: Options,
+            block:   T.nilable(Proc),
+          ).returns(T::Hash[Symbol, T.anything])
         }
-        def self.find_versions(cask:, regex: nil, **_unused, &block)
-          if regex.present? && block.blank?
-            raise ArgumentError, "#{T.must(name).demodulize} only supports a regex when using a `strategy` block"
+        def self.find_versions(cask:, url: nil, regex: nil, options: Options.new, &block)
+          if regex.present? && !block_given?
+            raise ArgumentError,
+                  "#{Utils.demodulize(name)} only supports a regex when using a `strategy` block"
           end
-          raise ArgumentError, "The #{T.must(name).demodulize} strategy only supports casks." unless T.unsafe(cask)
+          raise ArgumentError, "The #{Utils.demodulize(name)} strategy only supports casks." unless T.unsafe(cask)
 
-          match_data = { matches: {} }
+          match_data = { matches: {}, regex:, url: }
 
-          unversioned_cask_checker = UnversionedCaskChecker.new(cask)
+          unversioned_cask_checker = if url.present? && url != cask.url.to_s
+            # Create a copy of the `cask` to use the `livecheck` block URL
+            cask_copy = Cask::CaskLoader.load(cask.sourcefile_path)
+            cask_copy.allow_reassignment = true
+
+            # Collect the `Cask::URL` initializer keyword parameter symbols
+            @cask_url_kw_params ||= T.let(
+              T::Utils.signature_for_method(
+                Cask::URL.instance_method(:initialize),
+              ).parameters.filter_map { |type, sym| (type == :key) ? sym : nil },
+              T.nilable(T::Array[Symbol]),
+            )
+
+            # Use `livecheck` block URL options that correspond to a `Cask::URL`
+            # keyword parameter
+            url_kwargs = {}
+            cask.livecheck.options.url_options.compact.each_key do |option_key|
+              next unless @cask_url_kw_params.include?(option_key)
+
+              url_kwargs[option_key] = cask.livecheck.options.public_send(option_key)
+            end
+            cask_copy.url(url, **url_kwargs)
+
+            UnversionedCaskChecker.new(cask_copy)
+          else
+            UnversionedCaskChecker.new(cask)
+          end
+
           items = unversioned_cask_checker.all_versions.transform_values { |v| Item.new(bundle_version: v) }
 
           versions_from_items(items, regex, &block).each do |version_text|

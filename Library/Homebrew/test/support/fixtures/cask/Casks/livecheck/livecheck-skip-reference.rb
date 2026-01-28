@@ -11,7 +11,7 @@ cask "livecheck-skip-reference" do
   homepage "http://localhost/homebrew/test/cask/audit/livecheck/livecheck-skip"
 
   livecheck do
-    cask "livecheck/livecheck-skip"
+    cask "livecheck-skip"
   end
 
   app "TestCask.app"

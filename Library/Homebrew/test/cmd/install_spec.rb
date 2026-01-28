@@ -1,75 +1,123 @@
-# typed: false
 # frozen_string_literal: true
 
+require "cmd/install"
 require "cmd/shared_examples/args_parse"
 
-describe "brew install" do
+RSpec.describe Homebrew::Cmd::InstallCmd do
+  include FileUtils
+
   it_behaves_like "parseable arguments"
 
-  it "installs formulae", :integration_test do
-    setup_test_formula "testball1"
+  context "when using a bottle" do
+    let(:formula_name) { "testball_bottle" }
+    let(:formula_prefix) { HOMEBREW_CELLAR/formula_name/"0.1" }
+    let(:formula_prefix_regex) { /#{Regexp.escape(formula_prefix)}/o }
+    let(:option_file) { formula_prefix/"foo/test" }
+    let(:bottle_file) { formula_prefix/"bin/helloworld" }
 
-    expect { brew "install", "testball1" }
-      .to output(%r{#{HOMEBREW_CELLAR}/testball1/0\.1}o).to_stdout
-      .and not_to_output.to_stderr
-      .and be_a_success
-    expect(HOMEBREW_CELLAR/"testball1/0.1/foo/test").not_to be_a_file
-  end
+    it "installs a Formula", :integration_test do
+      setup_test_formula formula_name
 
-  it "installs formulae with options", :integration_test do
-    setup_test_formula "testball1"
+      expect { brew "install", formula_name }
+        .to output(formula_prefix_regex).to_stdout
+        .and output(/✔︎.*/m).to_stderr
+        .and be_a_success
+      expect(option_file).not_to be_a_file
+      expect(bottle_file).to be_a_file
 
-    expect { brew "install", "testball1", "--with-foo" }
-      .to output(%r{#{HOMEBREW_CELLAR}/testball1/0\.1}o).to_stdout
-      .and not_to_output.to_stderr
-      .and be_a_success
-    expect(HOMEBREW_CELLAR/"testball1/0.1/foo/test").to be_a_file
-  end
+      uninstall_test_formula formula_name
 
-  it "can install keg-only Formulae", :integration_test do
-    setup_test_formula "testball1", <<~RUBY
-      version "1.0"
+      expect { brew "install", "--ask", formula_name }
+        .to output(/.*Formula\s*\(1\):\s*#{formula_name}.*/).to_stdout
+        .and output(/✔︎.*/m).to_stderr
+        .and be_a_success
+      expect(option_file).not_to be_a_file
+      expect(bottle_file).to be_a_file
 
-      keg_only "test reason"
-    RUBY
+      uninstall_test_formula formula_name
 
-    expect { brew "install", "testball1" }
-      .to output(%r{#{HOMEBREW_CELLAR}/testball1/1\.0}o).to_stdout
-      .and not_to_output.to_stderr
-      .and be_a_success
-    expect(HOMEBREW_CELLAR/"testball1/1.0/foo/test").not_to be_a_file
-  end
-
-  it "can install HEAD Formulae", :integration_test do
-    repo_path = HOMEBREW_CACHE.join("repo")
-    repo_path.join("bin").mkpath
-
-    repo_path.cd do
-      system "git", "init"
-      system "git", "remote", "add", "origin", "https://github.com/Homebrew/homebrew-foo"
-      FileUtils.touch "bin/something.bin"
-      FileUtils.touch "README"
-      system "git", "add", "--all"
-      system "git", "commit", "-m", "Initial repo commit"
+      expect { brew "install", formula_name, { "HOMEBREW_FORBIDDEN_FORMULAE" => formula_name } }
+        .to not_to_output(formula_prefix_regex).to_stdout
+        .and output(/#{formula_name} was forbidden/).to_stderr
+        .and be_a_failure
+      expect(formula_prefix).not_to exist
     end
 
-    setup_test_formula "testball1", <<~RUBY
-      version "1.0"
+    it "installs a keg-only Formula", :integration_test do
+      setup_test_formula formula_name, <<~RUBY
+        keg_only "test reason"
+      RUBY
 
-      head "file://#{repo_path}", :using => :git
+      expect { brew "install", formula_name }
+        .to output(formula_prefix_regex).to_stdout
+        .and output(/✔︎.*/m).to_stderr
+        .and be_a_success
+      expect(option_file).not_to be_a_file
+      expect(bottle_file).to be_a_file
+      expect(HOMEBREW_PREFIX/"bin/helloworld").not_to be_a_file
+    end
+  end
 
-      def install
-        prefix.install Dir["*"]
+  context "when building from source" do
+    let(:formula_name) { "testball1" }
+
+    it "installs a Formula", :integration_test do
+      formula_prefix = HOMEBREW_CELLAR/formula_name/"0.1"
+      formula_prefix_regex = /#{Regexp.escape(formula_prefix)}/o
+      option_file = formula_prefix/"foo/test"
+      always_built_file = formula_prefix/"bin/test"
+
+      setup_test_formula formula_name
+
+      expect { brew "install", formula_name, "--with-foo" }
+        .to output(formula_prefix_regex).to_stdout
+        .and output(/✔︎.*/m).to_stderr
+        .and be_a_success
+      expect(option_file).to be_a_file
+      expect(always_built_file).to be_a_file
+
+      uninstall_test_formula formula_name
+
+      expect { brew "install", formula_name, "--debug-symbols", "--build-from-source" }
+        .to output(formula_prefix_regex).to_stdout
+        .and output(/✔︎.*/m).to_stderr
+        .and be_a_success
+      expect(option_file).not_to be_a_file
+      expect(always_built_file).to be_a_file
+      expect(formula_prefix/"bin/test.dSYM/Contents/Resources/DWARF/test").to be_a_file if OS.mac?
+      expect(HOMEBREW_CACHE/"Sources/#{formula_name}").to be_a_directory
+    end
+
+    it "installs a HEAD Formula", :integration_test do
+      testball1_prefix = HOMEBREW_CELLAR/"testball1/HEAD-d5eb689"
+      repo_path = HOMEBREW_CACHE/"repo"
+      (repo_path/"bin").mkpath
+
+      repo_path.cd do
+        system "git", "-c", "init.defaultBranch=master", "init"
+        system "git", "remote", "add", "origin", "https://github.com/Homebrew/homebrew-foo"
+        FileUtils.touch "bin/something.bin"
+        FileUtils.touch "README"
+        system "git", "add", "--all"
+        system "git", "commit", "-m", "Initial repo commit"
       end
-    RUBY
 
-    # Ignore dependencies, because we'll try to resolve requirements in build.rb
-    # and there will be the git requirement, but we cannot instantiate git
-    # formula since we only have testball1 formula.
-    expect { brew "install", "testball1", "--HEAD", "--ignore-dependencies" }
-      .to output(%r{#{HOMEBREW_CELLAR}/testball1/HEAD-d5eb689}o).to_stdout
-      .and output(/Cloning into/).to_stderr
-      .and be_a_success
-    expect(HOMEBREW_CELLAR/"testball1/HEAD-d5eb689/foo/test").not_to be_a_file
+      setup_test_formula "testball1", <<~RUBY
+        version "1.0"
+
+        head "file://#{repo_path}", using: :git
+
+        def install
+          prefix.install Dir["*"]
+        end
+      RUBY
+
+      expect { brew "install", formula_name, "--HEAD", "HOMEBREW_DOWNLOAD_CONCURRENCY" => "1" }
+        .to output(/#{Regexp.escape(testball1_prefix)}/o).to_stdout
+        .and output(/Cloning into/).to_stderr
+        .and be_a_success
+      expect(testball1_prefix/"foo/test").not_to be_a_file
+      expect(testball1_prefix/"bin/something.bin").to be_a_file
+    end
   end
 end

@@ -4,22 +4,20 @@
 module Homebrew
   module Livecheck
     # A formula or cask version, split into its component sub-versions.
-    #
-    # @api private
     class LivecheckVersion
-      extend T::Sig
-
       include Comparable
 
-      sig { params(formula_or_cask: T.any(Formula, Cask::Cask), version: Version).returns(LivecheckVersion) }
-      def self.create(formula_or_cask, version)
-        versions = case formula_or_cask
-        when Formula
+      sig {
+        params(package_or_resource: T.any(Formula, Cask::Cask, Resource), version: Version).returns(LivecheckVersion)
+      }
+      def self.create(package_or_resource, version)
+        versions = case package_or_resource
+        when Formula, Resource
           [version]
         when Cask::Cask
-          version.to_s.split(/[,:]/).map { |s| Version.new(s) }
+          version.to_s.split(",").map { |s| Version.new(s) }
         else
-          T.absurd(formula_or_cask)
+          T.absurd(package_or_resource)
         end
         new(versions)
       end

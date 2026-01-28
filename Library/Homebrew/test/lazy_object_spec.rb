@@ -1,14 +1,13 @@
-# typed: false
 # frozen_string_literal: true
 
 require "lazy_object"
 
-describe LazyObject do
+RSpec.describe LazyObject do
   describe "#initialize" do
     it "does not evaluate the block" do
-      expect { |block|
+      expect do |block|
         described_class.new(&block)
-      }.not_to yield_control
+      end.not_to yield_control
     end
   end
 
@@ -20,7 +19,7 @@ describe LazyObject do
 
   describe "#!" do
     it "delegates to the underlying object" do
-      expect(!(described_class.new { false })).to be true
+      expect(!described_class.new { false }).to be true
     end
   end
 

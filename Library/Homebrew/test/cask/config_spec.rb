@@ -1,7 +1,6 @@
-# typed: false
 # frozen_string_literal: true
 
-describe Cask::Config, :cask do
+RSpec.describe Cask::Config, :cask do
   subject(:config) { described_class.new }
 
   describe "::from_json" do
@@ -60,10 +59,10 @@ describe Cask::Config, :cask do
   end
 
   describe "#explicit" do
-    let(:config) {
+    let(:config) do
       described_class.new(explicit: { appdir:    "/explicit/path/to/apps",
                                       languages: ["zh-TW", "en"] })
-    }
+    end
 
     it "returns directories explicitly given as arguments" do
       expect(config.explicit[:appdir]).to eq(Pathname("/explicit/path/to/apps"))
@@ -72,14 +71,10 @@ describe Cask::Config, :cask do
     it "returns array of preferred languages" do
       expect(config.explicit[:languages]).to eq(["zh-TW", "en"])
     end
-
-    it "returns string of explicit config keys and values" do
-      expect(config.explicit_s).to eq('appdir: "/explicit/path/to/apps", language: "zh-TW,en"')
-    end
   end
 
   context "when installing a cask and then adding a global default dir" do
-    let(:config) {
+    let(:config) do
       json = <<~EOS
         {
           "default": {
@@ -90,7 +85,7 @@ describe Cask::Config, :cask do
         }
       EOS
       described_class.from_json(json)
-    }
+    end
 
     describe "#appdir" do
       it "honors metadata of the installed cask" do

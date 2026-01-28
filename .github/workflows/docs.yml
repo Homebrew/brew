@@ -1,0 +1,138 @@
+name: Documentation
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  merge_group:
+
+permissions:
+  contents: read
+  pages: read
+
+env:
+  HOMEBREW_DEVELOPER: 1
+  HOMEBREW_NO_AUTO_UPDATE: 1
+  HOMEBREW_NO_ENV_HINTS: 1
+  HOMEBREW_NO_INSTALL_CLEANUP: 1
+
+defaults:
+  run:
+    shell: bash -xeuo pipefail {0}
+
+jobs:
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Homebrew
+        id: set-up-homebrew
+        uses: Homebrew/actions/setup-homebrew@main
+        with:
+          core: false
+          cask: false
+
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Install vale
+        run: brew install vale
+
+      - name: Cleanup Homebrew/brew docs
+        if: github.repository == 'Homebrew/brew'
+        run: |
+          # No ignore support (https://github.com/errata-ai/vale/issues/131).
+          rm -r Library/Homebrew/vendor
+
+          # Generate latest manpage
+          brew generate-man-completions --no-exit-code
+
+      - name: Run Vale
+        run: vale docs/
+
+      - name: Install Ruby
+        uses: ruby/setup-ruby@f8d7259c7a66155a7c4a157a1a10ca601f186594 # v1.271.0
+        with:
+          bundler-cache: true
+          working-directory: docs
+
+      - name: Check Markdown syntax
+        working-directory: docs
+        run: bundle exec rake lint
+
+      - name: Check code blocks conform to our Ruby style guide
+        run: brew style docs
+
+      - name: Generate formulae.brew.sh API samples
+        if: github.repository == 'Homebrew/formulae.brew.sh'
+        working-directory: docs
+        run: ../script/generate-api-samples.rb --template
+
+      - name: Cache HTML Proofer
+        uses: actions/cache@9255dc7a253b0ccc959486e2bca901246202afeb # v5.0.1
+        with:
+          path: tmp/.htmlproofer
+          key: ${{ runner.os }}-htmlproofer
+
+      - name: Build the site without YARD and check for broken links
+        working-directory: docs
+        run: bundle exec rake build test
+        env:
+          JEKYLL_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Rebuild the site with YARD
+        if: github.repository == 'Homebrew/brew'
+        working-directory: docs
+        run: bundle exec rake yard build
+        env:
+          JEKYLL_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload pages artifact
+        if: github.repository == 'Homebrew/brew'
+        uses: actions/upload-pages-artifact@7b1f4a764d45c48632c6b24a0339c27f5614fb0b # v4.0.0
+        with:
+          path: docs/_site/
+
+  deploy:
+    needs: docs
+    if: ${{ github.repository == 'Homebrew/brew' && github.ref_name == 'main' }}
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    outputs:
+      deploy_url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-slim
+    timeout-minutes: 10
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v4.0.5
+
+  deploy-issue:
+    name: Open/close deploy issue
+    needs: [docs, deploy]
+    if: ${{ github.repository == 'Homebrew/brew' && always() && github.ref_name == 'main' }}
+    env:
+      RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+    runs-on: ubuntu-slim
+    timeout-minutes: 5
+    permissions:
+      issues: write # for Homebrew/actions/create-or-update-issue
+    steps:
+      - name: Open, update, or close deploy issue
+        uses: Homebrew/actions/create-or-update-issue@main
+        with:
+          token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          title: docs.brew.sh deployment failed!
+          body: The most recent [docs.brew.sh deployment failed](${{ env.RUN_URL }}).
+          labels: deploy failure
+          update-existing: ${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') || contains(needs.*.result, 'skipped') }}
+          close-existing: ${{ needs.deploy.result == 'success' }}
+          close-from-author: github-actions[bot]
+          close-comment: The most recent [docs.brew.sh deployment succeeded](${{ env.RUN_URL }}). Closing issue.

@@ -20,35 +20,63 @@ brew(1) -- The Missing Package Manager for macOS (or Linux)
 ## SYNOPSIS
 
 `brew` `--version`<br>
-`brew` <command> [`--verbose`|`-v`] [<options>] [<formula>] ...
+`brew` <command> \[`--verbose`\|`-v`\] \[<options>\] \[<formula>\] ...
 
 ## DESCRIPTION
 
 Homebrew is the easiest and most flexible way to install the UNIX tools Apple
 didn't include with macOS. It can also install software not packaged for your
-Linux distribution to your home directory without requiring `sudo`.
+Linux distribution without requiring `sudo`.
 
 ## TERMINOLOGY
 
-**formula**: Homebrew package definition built from upstream sources
+**formula**
 
-**cask**: Homebrew package definition that installs macOS native applications
+: Homebrew package definition that builds from upstream sources
 
-**keg**: installation destination directory of a given **formula** version e.g. `/usr/local/Cellar/foo/0.1`
+**cask**
 
-**rack**: directory containing one or more versioned kegs e.g. `/usr/local/Cellar/foo`
+: Homebrew package definition that installs pre-compiled binaries built and signed by upstream
 
-**keg-only**: a **formula** is **keg-only** if it is not symlinked into Homebrew's prefix (e.g. `/usr/local`)
+**prefix**
 
-**cellar**: directory containing one or more named **racks** e.g. `/usr/local/Cellar`
+: path in which Homebrew is installed, e.g. `/opt/homebrew` or `/home/linuxbrew/.linuxbrew`
 
-**Caskroom**: directory containing one or more named **casks** e.g. `/usr/local/Caskroom`
+**keg**
 
-**external command**: `brew` subcommand defined outside of the Homebrew/brew GitHub repository
+: installation destination directory of a given **formula** version, e.g. `/opt/homebrew/Cellar/foo/0.1`
 
-**tap**: directory (and usually Git repository) of **formulae**, **casks** and/or **external commands**
+**rack**
 
-**bottle**: pre-built **keg** poured into the **cellar**/**rack** instead of building from upstream sources
+: directory containing one or more versioned **kegs**, e.g. `/opt/homebrew/Cellar/foo`
+
+**keg-only**
+
+: a **formula** is *keg-only* if it is not symlinked into Homebrew's prefix
+
+**opt prefix**
+
+: a symlink to the active version of a **keg**, e.g. `/opt/homebrew/opt/foo`
+
+**Cellar**
+
+: directory containing one or more named **racks**, e.g. `/opt/homebrew/Cellar`
+
+**Caskroom**
+
+: directory containing one or more named **casks**, e.g. `/opt/homebrew/Caskroom`
+
+**external command**
+
+: `brew` subcommand defined outside of the Homebrew/brew GitHub repository
+
+**tap**
+
+: directory (and usually Git repository) of **formulae**, **casks** and/or **external commands**
+
+**bottle**
+
+: pre-built **keg** poured into a **rack** of the **Cellar** instead of building from upstream sources
 
 ## ESSENTIAL COMMANDS
 
@@ -75,11 +103,11 @@ Uninstall <formula>.
 
 List all installed formulae.
 
-### `search` [<text>|`/`<text>`/`]
+### `search` \[<text>\|`/`<text>`/`\]
 
 Perform a substring search of cask tokens and formula names for <text>. If
-<text> is flanked by slashes, it is interpreted as a regular expression.
-The search for <text> is extended online to `homebrew/core` and `homebrew/cask`.
+<text> is flanked by slashes, it is interpreted as a regular expression. The
+search for <text> is extended online to `homebrew/core` and `homebrew/cask`.
 If no search term is provided, all locally available formulae are listed.
 
 ## COMMANDS
@@ -98,16 +126,12 @@ If no search term is provided, all locally available formulae are listed.
 
 <%= global_options %>
 
-## OFFICIAL EXTERNAL COMMANDS
-
-<%= official_external_commands %>
-
 ## CUSTOM EXTERNAL COMMANDS
 
 Homebrew, like `git`(1), supports external commands. These are executable
-scripts that reside somewhere in the `PATH`, named `brew-`<cmdname> or
-`brew-`<cmdname>`.rb`, which can be invoked like `brew` <cmdname>. This allows
-you to create your own commands without modifying Homebrew's internals.
+scripts that reside somewhere in the `$PATH`, named `brew-`<cmdname> or
+`brew-`<cmdname>`.rb`, which can be invoked like `brew` <cmdname>. This
+allows you to create your own commands without modifying Homebrew's internals.
 
 Instructions for creating your own commands can be found in the docs:
 <https://docs.brew.sh/External-Commands>
@@ -126,12 +150,6 @@ can take several different forms:
     You can still access these formulae by using a special syntax, e.g.
     `homebrew/dupes/vim` or `homebrew/versions/node4`.
 
-  * An arbitrary file:
-    Homebrew can install formulae from a local path. It can point to either a
-    formula file or a bottle.
-    Prefix relative paths with `./` to prevent them from being interpreted as a
-    formula or tap name.
-
 ## SPECIFYING CASKS
 
 Many Homebrew Cask commands accept one or more <cask> arguments. These can be
@@ -143,6 +161,23 @@ specified the same way as the <formula> arguments described in
 Note that environment variables must have a value set to be detected. For
 example, run `export HOMEBREW_NO_INSECURE_REDIRECT=1` rather than just
 `export HOMEBREW_NO_INSECURE_REDIRECT`.
+
+`HOMEBREW_*` environment variables can also be set in Homebrew's environment
+files:
+
+* `/etc/homebrew/brew.env` (system-wide)
+
+* `${HOMEBREW_PREFIX}/etc/homebrew/brew.env` (prefix-specific)
+
+* `$XDG_CONFIG_HOME/homebrew/brew.env` if `$XDG_CONFIG_HOME` is set or
+  `~/.homebrew/brew.env` otherwise (user-specific)
+
+User-specific environment files take precedence over prefix-specific files and
+prefix-specific files take precedence over system-wide files (unless
+`$HOMEBREW_SYSTEM_ENV_TAKES_PRIORITY` is set, see below).
+
+Note that these files do not support shell variable expansion (e.g. `$HOME`) or
+command execution (e.g. `$(cat file)`).
 
 <%= environment_variables %>
 
@@ -165,17 +200,15 @@ And for an authenticated HTTP proxy:
 
 Homebrew Documentation: <https://docs.brew.sh>
 
-Homebrew API: <https://rubydoc.brew.sh>
+Homebrew API: <https://docs.brew.sh/rubydoc/>
 
 `git`(1), `git-log`(1)
 
 ## AUTHORS
 
-<%= lead.concat("\n") %>
+<%= project_leader.concat("\n") %>
 
-<%= plc.concat("\n") %>
-
-<%= tsc.concat("\n") %>
+<%= lead_maintainers.concat("\n") %>
 
 <%= maintainers.concat("\n") %>
 
@@ -185,11 +218,14 @@ Homebrew API: <https://rubydoc.brew.sh>
 
 See our issues on GitHub:
 
-  * **Homebrew/brew**:
-    <br><https://github.com/Homebrew/brew/issues>
+**Homebrew/brew**
 
-  * **Homebrew/homebrew-core**:
-    <br><https://github.com/Homebrew/homebrew-core/issues>
+: <https://github.com/Homebrew/brew/issues>
 
-  * **Homebrew/homebrew-cask**:
-    <br><https://github.com/Homebrew/homebrew-cask/issues>
+**Homebrew/homebrew-core**
+
+: <https://github.com/Homebrew/homebrew-core/issues>
+
+**Homebrew/homebrew-cask**
+
+: <https://github.com/Homebrew/homebrew-cask/issues>

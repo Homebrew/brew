@@ -1,8 +1,9 @@
-# typed: true
+# typed: strict
 # frozen_string_literal: true
 
 require "extend/ENV/shared"
 require "development_tools"
+require "utils/output"
 
 # ### Why `superenv`?
 #
@@ -15,12 +16,17 @@ require "development_tools"
 # 7. Simpler formulae that *just work*
 # 8. Build-system agnostic configuration of the toolchain
 module Superenv
-  extend T::Sig
-
   include SharedEnvExtension
+  include Utils::Output::Mixin
 
-  # @private
-  attr_accessor :keg_only_deps, :deps, :run_time_deps
+  sig { returns(T::Array[Formula]) }
+  attr_accessor :keg_only_deps
+
+  sig { returns(T::Array[Formula]) }
+  attr_accessor :deps
+
+  sig { returns(T::Array[Formula]) }
+  attr_accessor :run_time_deps
 
   sig { params(base: Superenv).void }
   def self.extended(base)
@@ -29,15 +35,25 @@ module Superenv
     base.run_time_deps = []
   end
 
-  # The location of Homebrew's shims on this OS.
+  # The location of Homebrew's shims.
+  #
+  # @api public
   sig { returns(Pathname) }
   def self.shims_path
     HOMEBREW_SHIMS_PATH/"super"
   end
 
-  # @private
   sig { returns(T.nilable(Pathname)) }
   def self.bin; end
+
+  sig { void }
+  def initialize
+    @keg_only_deps = T.let([], T::Array[Formula])
+    @deps = T.let([], T::Array[Formula])
+    @run_time_deps = T.let([], T::Array[Formula])
+
+    @formula = T.let(nil, T.nilable(Formula))
+  end
 
   sig { void }
   def reset
@@ -47,7 +63,6 @@ module Superenv
     delete("as_nl")
   end
 
-  # @private
   sig {
     params(
       formula:         T.nilable(Formula),
@@ -55,19 +70,23 @@ module Superenv
       build_bottle:    T.nilable(T::Boolean),
       bottle_arch:     T.nilable(String),
       testing_formula: T::Boolean,
+      debug_symbols:   T.nilable(T::Boolean),
     ).void
   }
-  def setup_build_environment(formula: nil, cc: nil, build_bottle: false, bottle_arch: nil, testing_formula: false)
+  def setup_build_environment(formula: nil, cc: nil, build_bottle: false, bottle_arch: nil, testing_formula: false,
+                              debug_symbols: false)
     super
     send(compiler)
 
     self["HOMEBREW_ENV"] = "super"
     self["MAKEFLAGS"] ||= "-j#{determine_make_jobs}"
+    self["RUSTC_WRAPPER"] = "#{HOMEBREW_SHIMS_PATH}/shared/rustc_wrapper"
+    self["HOMEBREW_RUSTFLAGS"] = Hardware.rustflags_target_cpu(effective_arch)
     self["PATH"] = determine_path
     self["PKG_CONFIG_PATH"] = determine_pkg_config_path
-    self["PKG_CONFIG_LIBDIR"] = determine_pkg_config_libdir
+    self["PKG_CONFIG_LIBDIR"] = determine_pkg_config_libdir || ""
     self["HOMEBREW_CCCFG"] = determine_cccfg
-    self["HOMEBREW_OPTIMIZATION_LEVEL"] = "Os"
+    self["HOMEBREW_OPTIMIZATION_LEVEL"] = compiler.match?(GNU_GCC_REGEXP) ? "O2" : "Os"
     self["HOMEBREW_BREW_FILE"] = HOMEBREW_BREW_FILE.to_s
     self["HOMEBREW_PREFIX"] = HOMEBREW_PREFIX.to_s
     self["HOMEBREW_CELLAR"] = HOMEBREW_CELLAR.to_s
@@ -75,6 +94,7 @@ module Superenv
     self["HOMEBREW_TEMP"] = HOMEBREW_TEMP.to_s
     self["HOMEBREW_OPTFLAGS"] = determine_optflags
     self["HOMEBREW_ARCHFLAGS"] = ""
+    self["HOMEBREW_MAKE_JOBS"] = determine_make_jobs.to_s
     self["CMAKE_PREFIX_PATH"] = determine_cmake_prefix_path
     self["CMAKE_FRAMEWORK_PATH"] = determine_cmake_frameworks_path
     self["CMAKE_INCLUDE_PATH"] = determine_cmake_include_path
@@ -86,6 +106,21 @@ module Superenv
     self["HOMEBREW_LIBRARY_PATHS"] = determine_library_paths
     self["HOMEBREW_DEPENDENCIES"] = determine_dependencies
     self["HOMEBREW_FORMULA_PREFIX"] = @formula.prefix unless @formula.nil?
+    # Prevent the OpenSSL rust crate from building a vendored OpenSSL.
+    # https://github.com/sfackler/rust-openssl/blob/994e5ff8c63557ab2aa85c85cc6956b0b0216ca7/openssl/src/lib.rs#L65
+    self["OPENSSL_NO_VENDOR"] = "1"
+    # Prevent Go from automatically downloading a newer toolchain than the one that we have.
+    # https://tip.golang.org/doc/toolchain
+    self["GOTOOLCHAIN"] = "local"
+    # Prevent maturin from automatically downloading its own rust
+    self["MATURIN_NO_INSTALL_RUST"] = "1"
+    # Prevent Python packages from using bundled libraries by default.
+    # Currently for hidapi, pyzmq and pynacl
+    self["HIDAPI_SYSTEM_HIDAPI"] = "1"
+    self["PYZMQ_NO_BUNDLE"] = "1"
+    self["SODIUM_INSTALL"] = "system"
+
+    set_debug_symbols if debug_symbols
 
     # The HOMEBREW_CCCFG ENV variable is used by the ENV/cc tool to control
     # compiler flag stripping. It consists of a string of characters which act
@@ -99,12 +134,18 @@ module Superenv
     # K - Don't strip -arch <arch>, -m32, or -m64
     # d - Don't strip -march=<target>. Use only in formulae that
     #     have runtime detection of CPU features.
-    # w - Pass -no_weak_imports to the linker
+    # D - Generate debugging information
+    # w - Pass `-no_weak_imports` to the linker
+    # f - Pass `-no_fixup_chains` to `ld` whenever it
+    #     is invoked with `-undefined dynamic_lookup`
+    # o - Pass `-oso_prefix` to `ld` whenever it is invoked
+    # c - Pass `-ld_classic` to `ld` whenever it is invoked
+    #     with `-dead_strip_dylibs`
+    # b - Pass `-mbranch-protection=standard` to the compiler
     #
     # These flags will also be present:
     # a - apply fix for apr-1-config path
   end
-  alias generic_setup_build_environment setup_build_environment
 
   private
 
@@ -125,7 +166,11 @@ module Superenv
 
   sig { returns(T::Array[Pathname]) }
   def homebrew_extra_paths
-    []
+    # Reverse sort by version so that we prefer the newest when there are multiple.
+    deps.select { |d| d.name.match? Version.formula_optionally_versioned_regex(:python) }
+        .sort_by(&:version)
+        .reverse
+        .map { |d| d.opt_libexec/"bin" }
   end
 
   sig { returns(T.nilable(PATH)) }
@@ -214,7 +259,9 @@ module Superenv
       end
     end
 
-    paths << keg_only_deps.map(&:opt_lib)
+    # Don't add `llvm` to library paths; this leads to undesired linkage to LLVM's `libunwind`
+    paths += keg_only_deps.reject { |dep| dep.name.match?(/^llvm(@\d+)?$/) }
+                          .map(&:opt_lib)
     paths << (HOMEBREW_PREFIX/"lib")
 
     paths += homebrew_extra_library_paths
@@ -290,18 +337,21 @@ module Superenv
   # Removes the MAKEFLAGS environment variable, causing make to use a single job.
   # This is useful for makefiles with race conditions.
   # When passed a block, MAKEFLAGS is removed only for the duration of the block and is restored after its completion.
-  sig { params(block: T.proc.returns(T.untyped)).returns(T.untyped) }
+  sig { params(block: T.nilable(T.proc.returns(T.untyped))).returns(T.untyped) }
   def deparallelize(&block)
-    old = delete("MAKEFLAGS")
+    old_makeflags = delete("MAKEFLAGS")
+    old_make_jobs = delete("HOMEBREW_MAKE_JOBS")
+    self["HOMEBREW_MAKE_JOBS"] = "1"
     if block
       begin
         yield
       ensure
-        self["MAKEFLAGS"] = old
+        self["MAKEFLAGS"] = old_makeflags
+        self["HOMEBREW_MAKE_JOBS"] = old_make_jobs
       end
     end
 
-    old
+    old_makeflags
   end
 
   sig { returns(Integer) }
@@ -331,14 +381,18 @@ module Superenv
     append_to_cccfg "g" if compiler == :clang
   end
 
-  # @private
+  sig { void }
+  def set_debug_symbols
+    append_to_cccfg "D"
+  end
+
   sig { void }
   def refurbish_args
     append_to_cccfg "O"
   end
 
+  # This is an exception where we want to use this method name format.
   # rubocop: disable Naming/MethodName
-  # Fixes style error `Naming/MethodName: Use snake_case for method names.`
   sig { params(block: T.nilable(T.proc.void)).void }
   def O0(&block)
     if block
@@ -354,6 +408,15 @@ module Superenv
       with_env(HOMEBREW_OPTIMIZATION_LEVEL: "O1", &block)
     else
       self["HOMEBREW_OPTIMIZATION_LEVEL"] = "O1"
+    end
+  end
+
+  sig { params(block: T.nilable(T.proc.void)).void }
+  def O3(&block)
+    if block
+      with_env(HOMEBREW_OPTIMIZATION_LEVEL: "O3", &block)
+    else
+      self["HOMEBREW_OPTIMIZATION_LEVEL"] = "O3"
     end
   end
   # rubocop: enable Naming/MethodName

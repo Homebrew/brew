@@ -1,20 +1,19 @@
-# typed: false
 # frozen_string_literal: true
 
 require "livecheck/strategy/gnome"
 
-describe Homebrew::Livecheck::Strategy::Gnome do
+RSpec.describe Homebrew::Livecheck::Strategy::Gnome do
   subject(:gnome) { described_class }
 
   let(:gnome_url) { "https://download.gnome.org/sources/abc/1.2/abc-1.2.3.tar.xz" }
   let(:non_gnome_url) { "https://brew.sh/test" }
 
-  let(:generated) {
+  let(:generated) do
     {
       url:   "https://download.gnome.org/sources/abc/cache.json",
-      regex: /abc-(\d+(?:\.\d+)+)\.t/i,
+      regex: /abc-(\d+(?:\.\d+)*)\.t/i,
     }
-  }
+  end
 
   describe "::match?" do
     it "returns true for a GNOME URL" do

@@ -1,9 +1,8 @@
-# typed: false
 # frozen_string_literal: true
 
 require "rubocops/keg_only"
 
-describe RuboCop::Cop::FormulaAudit::KegOnly do
+RSpec.describe RuboCop::Cop::FormulaAudit::KegOnly do
   subject(:cop) { described_class.new }
 
   it "reports and corrects an offense when the `keg_only` reason is capitalized" do
@@ -14,7 +13,7 @@ describe RuboCop::Cop::FormulaAudit::KegOnly do
         homepage "https://brew.sh"
 
         keg_only "Because why not"
-                 ^^^^^^^^^^^^^^^^^ 'Because' from the `keg_only` reason should be 'because'.
+                 ^^^^^^^^^^^^^^^^^ FormulaAudit/KegOnly: 'Because' from the `keg_only` reason should be 'because'.
       end
     RUBY
 
@@ -36,7 +35,7 @@ describe RuboCop::Cop::FormulaAudit::KegOnly do
         homepage "https://brew.sh"
 
         keg_only "ending with a period."
-                 ^^^^^^^^^^^^^^^^^^^^^^^ `keg_only` reason should not end with a period.
+                 ^^^^^^^^^^^^^^^^^^^^^^^ FormulaAudit/KegOnly: `keg_only` reason should not end with a period.
       end
     RUBY
 

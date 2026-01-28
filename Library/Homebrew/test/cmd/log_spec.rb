@@ -1,15 +1,15 @@
-# typed: false
 # frozen_string_literal: true
 
+require "cmd/log"
 require "cmd/shared_examples/args_parse"
 
-describe "brew log" do
+RSpec.describe Homebrew::Cmd::Log do
   it_behaves_like "parseable arguments"
 
   it "shows the Git log for a given Formula", :integration_test do
     setup_test_formula "testball"
 
-    core_tap = CoreTap.new
+    core_tap = CoreTap.instance
     core_tap.path.cd do
       system "git", "init"
       system "git", "add", "--all"

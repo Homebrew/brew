@@ -1,12 +1,7 @@
-# typed: false
 # frozen_string_literal: true
 
-describe Cask::Installer, :cask do
+RSpec.describe Cask::Installer, :cask do
   describe "install" do
-    let(:empty_depends_on_stub) {
-      double(formula: [], cask: [], macos: nil, arch: nil)
-    }
-
     it "downloads and installs a nice fresh Cask" do
       caffeine = Cask::CaskLoader.load(cask_path("local-caffeine"))
 
@@ -63,16 +58,16 @@ describe Cask::Installer, :cask do
 
     it "blows up on a bad checksum" do
       bad_checksum = Cask::CaskLoader.load(cask_path("bad-checksum"))
-      expect {
+      expect do
         described_class.new(bad_checksum).install
-      }.to raise_error(ChecksumMismatchError)
+      end.to raise_error(ChecksumMismatchError)
     end
 
     it "blows up on a missing checksum" do
       missing_checksum = Cask::CaskLoader.load(cask_path("missing-checksum"))
-      expect {
+      expect do
         described_class.new(missing_checksum).install
-      }.to output(/Cannot verify integrity/).to_stderr
+      end.to output(/Cannot verify integrity/).to_stderr
     end
 
     it "installs fine if sha256 :no_check is used" do
@@ -85,9 +80,9 @@ describe Cask::Installer, :cask do
 
     it "fails to install if sha256 :no_check is used with --require-sha" do
       no_checksum = Cask::CaskLoader.load(cask_path("no-checksum"))
-      expect {
+      expect do
         described_class.new(no_checksum, require_sha: true).install
-      }.to raise_error(/--require-sha/)
+      end.to raise_error(/--require-sha/)
     end
 
     it "installs fine if sha256 :no_check is used with --require-sha and --force" do
@@ -101,9 +96,9 @@ describe Cask::Installer, :cask do
     it "prints caveats if they're present" do
       with_caveats = Cask::CaskLoader.load(cask_path("with-caveats"))
 
-      expect {
+      expect do
         described_class.new(with_caveats).install
-      }.to output(/Here are some things you might want to know/).to_stdout
+      end.to output(/Here are some things you might want to know/).to_stdout
 
       expect(with_caveats).to be_installed
     end
@@ -111,15 +106,14 @@ describe Cask::Installer, :cask do
     it "prints installer :manual instructions when present" do
       with_installer_manual = Cask::CaskLoader.load(cask_path("with-installer-manual"))
 
-      expect {
+      expect do
         described_class.new(with_installer_manual).install
-      }.to output(
+      end.to output(
         <<~EOS,
           ==> Downloading file://#{HOMEBREW_LIBRARY_PATH}/test/support/fixtures/cask/caffeine.zip
           ==> Installing Cask with-installer-manual
-          To complete the installation of Cask with-installer-manual, you must also
-          run the installer at:
-            #{with_installer_manual.staged_path.join("Caffeine.app")}
+          Cask with-installer-manual only provides a manual installer. To run it and complete the installation:
+            open #{with_installer_manual.staged_path.join("Caffeine.app")}
           🍺  with-installer-manual was successfully installed!
         EOS
       ).to_stdout
@@ -142,36 +136,31 @@ describe Cask::Installer, :cask do
 
       described_class.new(with_auto_updates).install
 
-      expect {
+      expect do
         described_class.new(with_auto_updates, force: true).install
-      }.not_to raise_error
-    end
-
-    # unlike the CLI, the internal interface throws exception on double-install
-    it "installer method raises an exception when already-installed Casks are attempted" do
-      transmission = Cask::CaskLoader.load(cask_path("local-transmission"))
-
-      expect(transmission).not_to be_installed
-
-      installer = described_class.new(transmission)
-
-      installer.install
-
-      expect {
-        installer.install
-      }.to raise_error(Cask::CaskAlreadyInstalledError)
+      end.not_to raise_error
     end
 
     it "allows already-installed Casks to be installed if force is provided" do
+      transmission = Cask::CaskLoader.load(cask_path("local-transmission-zip"))
+
+      expect(transmission).not_to be_installed
+
+      described_class.new(transmission).install
+
+      expect do
+        described_class.new(transmission, force: true).install
+      end.not_to raise_error
+    end
+
+    it "installs a cask from a dmg file" do
       transmission = Cask::CaskLoader.load(cask_path("local-transmission"))
 
       expect(transmission).not_to be_installed
 
       described_class.new(transmission).install
 
-      expect {
-        described_class.new(transmission, force: true).install
-      }.not_to raise_error
+      expect(transmission).to be_installed
     end
 
     it "works naked-pkg-based Casks" do
@@ -216,6 +205,58 @@ describe Cask::Installer, :cask do
       m_subdir = caffeine.metadata_subdir(subdir_name, timestamp: :now, create: true)
       expect(caffeine.metadata_subdir(subdir_name, timestamp: :latest)).to eq(m_subdir)
     end
+
+    it "don't print cask installed message with --quiet option" do
+      caffeine = Cask::CaskLoader.load(cask_path("local-caffeine"))
+      expect do
+        described_class.new(caffeine, quiet: true).install
+      end.to output(nil).to_stdout
+    end
+
+    it "does NOT generate LATEST_DOWNLOAD_SHA256 file for installed Cask without version :latest" do
+      caffeine = Cask::CaskLoader.load(cask_path("local-caffeine"))
+
+      described_class.new(caffeine).install
+
+      expect(caffeine.download_sha_path).not_to be_a_file
+    end
+
+    it "generates and finds LATEST_DOWNLOAD_SHA256 file for installed Cask with version :latest" do
+      latest_cask = Cask::CaskLoader.load(cask_path("version-latest"))
+
+      described_class.new(latest_cask).install
+
+      expect(latest_cask.download_sha_path).to be_a_file
+    end
+
+    context "when loaded from the api and caskfile is required" do
+      let(:path) { cask_path("local-caffeine") }
+      let(:content) { File.read(path) }
+
+      it "installs cask" do
+        source_caffeine = Cask::CaskLoader.load(path)
+        expect(Homebrew::API::Cask).to receive(:source_download_cask).once.and_return(source_caffeine)
+
+        caffeine = Cask::CaskLoader.load(path)
+        expect(caffeine).to receive(:loaded_from_api?).once.and_return(true)
+        expect(caffeine).to receive(:caskfile_only?).once.and_return(true)
+
+        described_class.new(caffeine).install
+        expect(Cask::CaskLoader.load(path)).to be_installed
+      end
+    end
+
+    it "zap method reinstall cask" do
+      caffeine = Cask::CaskLoader.load(cask_path("local-caffeine"))
+      described_class.new(caffeine).install
+
+      expect(caffeine).to be_installed
+
+      described_class.new(caffeine).zap
+
+      expect(caffeine).not_to be_installed
+      expect(caffeine.config.appdir.join("Caffeine.app")).not_to be_a_symlink
+    end
   end
 
   describe "uninstall" do
@@ -249,6 +290,288 @@ describe Cask::Installer, :cask do
       expect(Cask::Caskroom.path.join("local-caffeine", caffeine.version)).not_to be_a_directory
       expect(Cask::Caskroom.path.join("local-caffeine", mutated_version)).not_to be_a_directory
       expect(Cask::Caskroom.path.join("local-caffeine")).not_to be_a_directory
+    end
+
+    context "when loaded from the api, caskfile is required and installed caskfile is invalid" do
+      let(:path) { cask_path("local-caffeine") }
+      let(:content) { File.read(path) }
+      let(:invalid_path) { instance_double(Pathname) }
+
+      before do
+        allow(invalid_path).to receive(:exist?).and_return(false)
+      end
+
+      it "uninstalls cask" do
+        source_caffeine = Cask::CaskLoader.load(path)
+        expect(Homebrew::API::Cask).to receive(:source_download_cask).twice.and_return(source_caffeine)
+
+        caffeine = Cask::CaskLoader.load(path)
+        expect(caffeine).to receive(:loaded_from_api?).twice.and_return(true)
+        expect(caffeine).to receive(:caskfile_only?).twice.and_return(true)
+        expect(caffeine).to receive(:installed_caskfile).once.and_return(invalid_path)
+
+        described_class.new(caffeine).install
+        expect(Cask::CaskLoader.load(path)).to be_installed
+
+        described_class.new(caffeine).uninstall
+        expect(Cask::CaskLoader.load(path)).not_to be_installed
+      end
+    end
+  end
+
+  describe "uninstall_existing_cask" do
+    it "uninstalls when cask file is outdated" do
+      caffeine = Cask::CaskLoader.load(cask_path("local-caffeine"))
+      described_class.new(caffeine).install
+
+      expect(Cask::CaskLoader.load(cask_path("local-caffeine"))).to be_installed
+
+      expect(caffeine).to receive(:installed?).once.and_return(true)
+      outdate_caskfile = cask_path("invalid/invalid-depends-on-macos-bad-release")
+      expect(caffeine).to receive(:installed_caskfile).once.and_return(outdate_caskfile)
+      described_class.new(caffeine).uninstall_existing_cask
+
+      expect(Cask::CaskLoader.load(cask_path("local-caffeine"))).not_to be_installed
+    end
+  end
+
+  describe "#forbidden_tap_check" do
+    before do
+      allow(Tap).to receive_messages(allowed_taps: allowed_taps_set, forbidden_taps: forbidden_taps_set)
+    end
+
+    let(:homebrew_forbidden) { Tap.fetch("homebrew/forbidden") }
+    let(:allowed_third_party) { Tap.fetch("nothomebrew/allowed") }
+    let(:disallowed_third_party) { Tap.fetch("nothomebrew/notallowed") }
+    let(:allowed_taps_set) { Set.new([allowed_third_party]) }
+    let(:forbidden_taps_set) { Set.new([homebrew_forbidden]) }
+
+    it "raises on forbidden tap on cask" do
+      cask = Cask::Cask.new("homebrew-forbidden-tap", tap: homebrew_forbidden) do
+        url "file://#{TEST_FIXTURE_DIR}/cask/container.tar.gz"
+      end
+
+      expect do
+        described_class.new(cask).forbidden_tap_check
+      end.to raise_error(Cask::CaskCannotBeInstalledError, /has the tap #{homebrew_forbidden}/)
+    end
+
+    it "raises on not allowed third-party tap on cask" do
+      cask = Cask::Cask.new("homebrew-not-allowed-tap", tap: disallowed_third_party) do
+        url "file://#{TEST_FIXTURE_DIR}/cask/container.tar.gz"
+      end
+
+      expect do
+        described_class.new(cask).forbidden_tap_check
+      end.to raise_error(Cask::CaskCannotBeInstalledError, /has the tap #{disallowed_third_party}/)
+    end
+
+    it "does not raise on allowed tap on cask" do
+      cask = Cask::Cask.new("third-party-allowed-tap", tap: allowed_third_party) do
+        url "file://#{TEST_FIXTURE_DIR}/cask/container.tar.gz"
+      end
+
+      expect { described_class.new(cask).forbidden_tap_check }.not_to raise_error
+    end
+
+    it "raises on forbidden tap on dependency" do
+      dep_tap = homebrew_forbidden
+      dep_name = "homebrew-forbidden-dependency-tap"
+      dep_path = dep_tap.new_formula_path(dep_name)
+      dep_path.parent.mkpath
+      dep_path.write <<~RUBY
+        class #{Formulary.class_s(dep_name)} < Formula
+          url "foo"
+          version "0.1"
+        end
+      RUBY
+      Formulary.cache.delete(dep_path)
+
+      cask = Cask::Cask.new("homebrew-forbidden-dependent-tap") do
+        url "file://#{TEST_FIXTURE_DIR}/cask/container.tar.gz"
+        depends_on formula: dep_name
+      end
+
+      expect do
+        described_class.new(cask).forbidden_tap_check
+      end.to raise_error(Cask::CaskCannotBeInstalledError, /from the #{dep_tap} tap but/)
+    ensure
+      FileUtils.rm_r(dep_path.parent.parent)
+    end
+  end
+
+  describe "#forbidden_cask_and_formula_check" do
+    it "raises on forbidden cask" do
+      ENV["HOMEBREW_FORBIDDEN_CASKS"] = cask_name = "homebrew-forbidden-cask"
+      cask = Cask::Cask.new(cask_name) do
+        url "file://#{TEST_FIXTURE_DIR}/cask/container.tar.gz"
+      end
+
+      expect do
+        described_class.new(cask).forbidden_cask_and_formula_check
+      end.to raise_error(Cask::CaskCannotBeInstalledError, /forbidden for installation/)
+    end
+
+    it "raises on forbidden dependency" do
+      ENV["HOMEBREW_FORBIDDEN_FORMULAE"] = dep_name = "homebrew-forbidden-dependency-formula"
+      dep_path = CoreTap.instance.new_formula_path(dep_name)
+      dep_path.write <<~RUBY
+        class #{Formulary.class_s(dep_name)} < Formula
+          url "foo"
+          version "0.1"
+        end
+      RUBY
+      Formulary.cache.delete(dep_path)
+
+      cask = Cask::Cask.new("homebrew-forbidden-dependent-cask") do
+        url "file://#{TEST_FIXTURE_DIR}/cask/container.tar.gz"
+        depends_on formula: dep_name
+      end
+
+      expect do
+        described_class.new(cask).forbidden_cask_and_formula_check
+      end.to raise_error(Cask::CaskCannotBeInstalledError, /#{dep_name} formula was forbidden/)
+    end
+  end
+
+  describe "#forbidden_cask_artifacts_check" do
+    it "raises when cask contains forbidden pkg artifact" do
+      ENV["HOMEBREW_FORBIDDEN_CASK_ARTIFACTS"] = "pkg"
+      cask = Cask::Cask.new("homebrew-pkg-cask") do
+        url "file://#{TEST_FIXTURE_DIR}/cask/container.tar.gz"
+        pkg "MyInstaller.pkg"
+      end
+
+      expect do
+        described_class.new(cask).forbidden_cask_artifacts_check
+      end.to raise_error(Cask::CaskCannotBeInstalledError, /contains a 'pkg' artifact/)
+    end
+
+    it "raises when cask contains forbidden installer artifact" do
+      ENV["HOMEBREW_FORBIDDEN_CASK_ARTIFACTS"] = "installer"
+      cask = Cask::Cask.new("homebrew-installer-cask") do
+        url "file://#{TEST_FIXTURE_DIR}/cask/container.tar.gz"
+        installer script: {
+          executable: "MyInstaller.sh",
+          args:       ["--silent"],
+        }
+      end
+
+      expect do
+        described_class.new(cask).forbidden_cask_artifacts_check
+      end.to raise_error(Cask::CaskCannotBeInstalledError, /contains a 'installer' artifact/)
+    end
+
+    it "raises when cask contains multiple forbidden artifacts" do
+      ENV["HOMEBREW_FORBIDDEN_CASK_ARTIFACTS"] = "pkg installer"
+      cask = Cask::Cask.new("homebrew-multi-forbidden-cask") do
+        url "file://#{TEST_FIXTURE_DIR}/cask/container.tar.gz"
+        pkg "MyInstaller.pkg"
+      end
+
+      expect do
+        described_class.new(cask).forbidden_cask_artifacts_check
+      end.to raise_error(Cask::CaskCannotBeInstalledError, /contains a 'pkg' artifact/)
+    end
+
+    it "does not raise when cask does not contain forbidden artifacts" do
+      ENV["HOMEBREW_FORBIDDEN_CASK_ARTIFACTS"] = "pkg installer"
+      cask = Cask::Cask.new("homebrew-allowed-cask") do
+        url "file://#{TEST_FIXTURE_DIR}/cask/container.tar.gz"
+        app "MyApp.app"
+      end
+
+      expect { described_class.new(cask).forbidden_cask_artifacts_check }.not_to raise_error
+    end
+  end
+
+  describe "rename operations" do
+    let(:tmpdir) { mktmpdir }
+    let(:staged_path) { Pathname(tmpdir) }
+
+    after do
+      FileUtils.rm_rf(tmpdir) if tmpdir && File.exist?(tmpdir)
+    end
+
+    it "processes rename operations after extraction" do
+      # Create test files
+      (staged_path / "Original App.app").mkpath
+      (staged_path / "Original App.app" / "Contents").mkpath
+
+      cask = Cask::Cask.new("rename-test-cask") do
+        url "file://#{TEST_FIXTURE_DIR}/cask/caffeine.zip"
+        rename "Original App.app", "Renamed App.app"
+        app "Renamed App.app"
+      end
+
+      # Mock the staged_path to point to our test directory
+      allow(cask).to receive(:staged_path).and_return(staged_path)
+
+      installer = described_class.new(cask)
+      installer.send(:process_rename_operations)
+
+      expect(staged_path / "Renamed App.app").to be_a_directory
+      expect(staged_path / "Original App.app").not_to exist
+    end
+
+    it "handles multiple rename operations in order" do
+      # Create test file
+      (staged_path / "Original.app").mkpath
+
+      cask = Cask::Cask.new("multi-rename-test-cask") do
+        url "file://#{TEST_FIXTURE_DIR}/cask/caffeine.zip"
+        rename "Original.app", "First Rename.app"
+        rename "First Rename.app", "Final Name.app"
+        app "Final Name.app"
+      end
+
+      allow(cask).to receive(:staged_path).and_return(staged_path)
+
+      installer = described_class.new(cask)
+      installer.send(:process_rename_operations)
+
+      expect(staged_path / "Final Name.app").to be_a_directory
+      expect(staged_path / "Original.app").not_to exist
+      expect(staged_path / "First Rename.app").not_to exist
+    end
+
+    it "handles glob patterns in rename operations" do
+      # Create test file with version
+      (staged_path / "Test App v1.2.3.pkg").write("test content")
+
+      cask = Cask::Cask.new("glob-rename-test-cask") do
+        url "file://#{TEST_FIXTURE_DIR}/cask/caffeine.zip"
+        rename "Test App*.pkg", "Test App.pkg"
+        pkg "Test App.pkg"
+      end
+
+      allow(cask).to receive(:staged_path).and_return(staged_path)
+
+      installer = described_class.new(cask)
+      installer.send(:process_rename_operations)
+
+      expect(staged_path / "Test App.pkg").to be_a_file
+      expect((staged_path / "Test App.pkg").read).to eq("test content")
+      expect(staged_path / "Test App v1.2.3.pkg").not_to exist
+    end
+
+    it "does nothing when no files match rename pattern" do
+      # Create a different file
+      (staged_path / "Different.app").mkpath
+
+      cask = Cask::Cask.new("no-match-rename-test-cask") do
+        url "file://#{TEST_FIXTURE_DIR}/cask/caffeine.zip"
+        rename "NonExistent*.app", "Target.app"
+        app "Different.app"
+      end
+
+      allow(cask).to receive(:staged_path).and_return(staged_path)
+
+      installer = described_class.new(cask)
+
+      expect { installer.send(:process_rename_operations) }.not_to raise_error
+      expect(staged_path / "Different.app").to be_a_directory
+      expect(staged_path / "Target.app").not_to exist
     end
   end
 end

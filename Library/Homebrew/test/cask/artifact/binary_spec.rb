@@ -1,12 +1,11 @@
-# typed: false
 # frozen_string_literal: true
 
-describe Cask::Artifact::Binary, :cask do
-  let(:cask) {
+RSpec.describe Cask::Artifact::Binary, :cask do
+  let(:cask) do
     Cask::CaskLoader.load(cask_path("with-binary")).tap do |cask|
       InstallHelper.install_without_artifacts(cask)
     end
-  }
+  end
   let(:artifacts) { cask.artifacts.select { |a| a.is_a?(described_class) } }
   let(:binarydir) { cask.config.binarydir }
   let(:expected_path) { binarydir.join("binary") }
@@ -21,9 +20,9 @@ describe Cask::Artifact::Binary, :cask do
   end
 
   context "when --no-binaries is specified" do
-    let(:cask) {
+    let(:cask) do
       Cask::CaskLoader.load(cask_path("with-binary"))
-    }
+    end
 
     it "doesn't link the binary when --no-binaries is specified" do
       Cask::Installer.new(cask, binaries: false).install
@@ -41,11 +40,11 @@ describe Cask::Artifact::Binary, :cask do
   end
 
   context "when the binary is not executable" do
-    let(:cask) {
+    let(:cask) do
       Cask::CaskLoader.load(cask_path("with-non-executable-binary")).tap do |cask|
         InstallHelper.install_without_artifacts(cask)
       end
-    }
+    end
 
     let(:expected_path) { cask.config.binarydir.join("naked_non_executable") }
 
@@ -65,11 +64,11 @@ describe Cask::Artifact::Binary, :cask do
   it "avoids clobbering an existing binary by linking over it" do
     FileUtils.touch expected_path
 
-    expect {
+    expect do
       artifacts.each do |artifact|
         artifact.install_phase(command: NeverSudoSystemCommand, force: false)
       end
-    }.to raise_error(Cask::CaskError)
+    end.to raise_error(Cask::CaskError)
 
     expect(expected_path).not_to be :symlink?
   end
@@ -77,11 +76,11 @@ describe Cask::Artifact::Binary, :cask do
   it "avoids clobbering an existing symlink" do
     expected_path.make_symlink("/tmp")
 
-    expect {
+    expect do
       artifacts.each do |artifact|
         artifact.install_phase(command: NeverSudoSystemCommand, force: false)
       end
-    }.to raise_error(Cask::CaskError)
+    end.to raise_error(Cask::CaskError)
 
     expect(File.readlink(expected_path)).to eq("/tmp")
   end
@@ -97,11 +96,11 @@ describe Cask::Artifact::Binary, :cask do
   end
 
   context "when the binary is inside an app package" do
-    let(:cask) {
+    let(:cask) do
       Cask::CaskLoader.load(cask_path("with-embedded-binary")).tap do |cask|
         InstallHelper.install_without_artifacts(cask)
       end
-    }
+    end
 
     it "links the binary to the proper directory" do
       cask.artifacts.select { |a| a.is_a?(Cask::Artifact::App) }.each do |artifact|

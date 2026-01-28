@@ -1,119 +1,59 @@
+---
+last_review_date: "2025-02-08"
+---
+
 # Homebrew/brew Maintainer Guide
 
-This document describes a few components of the `Homebrew/brew` repository that are useful for maintainers to
-be aware of, but don't necessarily need to appear in documentation for most users and contributors.
-
-## Reviewing PRs
-
-Using `gh pr checkout NUMBER` is a super easy way to check out a PR branch using the GitHub CLI.
-
-When reviewing a PR, use "comment", "approve", or "request changes" when submitting based on the following guidelines:
-
-- Comment: if the PR isn't quite ready to be merged
-- Approve: if you feel that the PR is in a good state to be merged, even if there are
-  non-blocking changes you'd like to be made
-- Request changes: if you feel strongly that the PR is likely to cause a problem for users or
-  have another reason to oppose the PR.
+This document describes a few components of the `Homebrew/brew` repository that are useful for maintainers to be aware of, but don't necessarily need to appear in documentation for most users and contributors.
 
 ## Merging PRs
 
-Merging is done using the standard Merge button in the `Homebrew/brew` repository to preserve
-history and GPG commit signing. The Squash and Merge and Rebase and Merge buttons are disabled.
+Merging is done using the standard "Merge" button in the `Homebrew/brew` repository to preserve history and GPG commit signing. The "Squash and Merge" and "Rebase and Merge" buttons are disabled.
 
 PRs must meet the following conditions to be merged:
 
-- Have at least one maintainer (or [@BrewTestBot](https://github.com/BrewTestBot)) approval.
-  See the ["Automatic approvals" section below](#automatic-approvals).
-  for more details about how [@BrewTestBot](https://github.com/BrewTestBot) approves PRs.
-- Have passing CI. This is a _mandatory_ step. PRs with failing CI should _never_ be merged.
-  See the ["CI" section below](#ci) for more information about `Homebrew/brew` CI.
+- Have at least one maintainer approval.
+- Have passing CI (continuous integration). This is a _mandatory_ step. PRs with failing CI should _never_ be merged. See the [CI](#ci) section below for more information about `Homebrew/brew` CI.
 
-If possible, PRs should also have GPG-signed commits (see the private `ops` repository for
-instructions on setting this up).
+If possible, PRs should also have [signed commits](https://docs.github.com/en/authentication/managing-commit-signature-verification/signing-commits).
 
-## Automatic approvals
+### Automatic approvals
 
-To ensure that non-urgent PRs have the opportunity to be seen and reviewed by any other maintainers who wish
-to take a look, all PRs require an approval before they can be merged. However, not every PR is
-reviewed by another maintainer, and some PRs are urgent enough that they need to be merged without
-an approval by another maintainer.
-
-As a compromise between always needing a review and allowing maintainers to merge PRs they deem ready,
-the `Triage` CI job will ensure that PRs cannot be merged until they've been open for 24 hours
-(only counting hours that occur Monday to Friday). After the triage period has expired, the
-CI job will show up as "passed" and [@BrewTestBot](https://github.com/BrewTestBot) will approve the PR,
-allowing it to be merged. This gives all maintainers a reasonable opportunity to review every PR,
-but won't block any PR for lack of reviews.
-
-If the PR is urgent enough that it is necessary to bypass that 24 hour window, the `critical` label
-should be applied to the PR. When this label is applied, the `Triage` CI job will immediately be
-successful and [@BrewTestBot](https://github.com/BrewTestBot) will approve the PR.
+To ensure that non-urgent PRs have the opportunity to be seen and reviewed by any other maintainers who wish to take a look, all PRs require an approval before they can be merged.
 
 ## CI
 
-Every PR in `Homebrew/brew` runs a series of CI tests to try to prevent bugs from being introduced.
-**A PR _must_ have passing CI before it can be merged**.
+Every PR in `Homebrew/brew` runs a series of CI tests to try to prevent bugs from being introduced. **A PR _must_ have passing CI before it can be merged.**
 
 There are many checks that run on every PR. The following is a quick list of the various checks and what they represent:
 
-- `Vendor Gems / vendor-gems`: This is skipped except for dependabot PRs. It updates the RBI files to match
-  any new/changed dependencies. See [Type Checking With Sorbet](Typechecking.md) for more information about RBI files
-  and typechecking.
-- `Triage / review`: This verifies that the PR has been open for long enough.
-  See the ["Automatic approvals" section above](#automatic-approvals) for more information about automatic approvals.
-- `codecov/patch` and `codecov/project`: These show the Codecov report for the PR.
-  See the ["`brew tests` and Codecov" section below](#brew-tests-and-codecov) for more info about Codecov.
-- `CI / vendored gems (Linux)`: This checks whether there was a change to the vendored gems on Linux that needs to be
-  committed to the PR branch.
+- `Vendor Gems / vendor-gems`: This is skipped except for dependabot PRs. It updates the RBI files to match any new/changed dependencies. See [Type Checking With Sorbet](Typechecking.md) for more information about RBI files and typechecking.
+- `Codecov / codecov/patch` and `codecov/project`: These show the Codecov report for the PR. See the [`brew tests` and Codecov](#brew-tests-and-codecov) section below for more info about Codecov.
+- `CI / vendored gems`: This checks whether there was a change to the vendored gems on Linux that needs to be committed to the PR branch.
 - `CI / test default formula (Linux)`: This runs `brew test-bot` on Linux to ensure it still works as expected.
-- `CI / syntax`: This is run first to check whether the PR passes `brew style` and `brew typecheck`. If this job fails the
-  following jobs will not run.
-- `CI / tap syntax (Linux)`: This runs `brew style` and `brew audit` on all official taps
-  (note that although this has Linux in its name, it does check `Homebrew/homebrew-core` and all cask repos).
-- `CI / docker`: This builds and deploys a new Homebrew Docker image.
-- `CI / test everything (macOS)`: This runs several checks on macOS including `brew tests`, `brew update-tests`,
-  `brew test-bot --only-formulae --test-default-formula`, `brew readall` and `brew doctor`.
-- `CI / tests (no-compatibility mode)`, `CI / tests (generic OS)` and `CI / tests (Linux)`: These run
-  `brew tests` with various options on Linux.
+- `CI / syntax`: This is run first to check whether the PR passes `brew style` and `brew typecheck`. If this job fails the following jobs will not run.
+- `CI / tap syntax`: This runs `brew style` and `brew audit` on all official taps (note that although this runs on Linux, it does check all cask repositories).
+- `CI / docker`: This builds and deploys a new Homebrew Docker image to GitHub Packages and Docker Hub.
+- `CI / test everything (macOS)`: This runs several checks on macOS including `brew tests`, `brew update-tests`, `brew test-bot --only-formulae --test-default-formula`, `brew readall` and `brew doctor`.
+- `CI / tests (generic OS)` and `CI / tests (Linux)`: These run `brew tests` with various options on Linux.
+- `Documentation CI / linting` and `rubydoc`: These check the prose and formatting of the written documentation, and verify the [Homebrew Ruby API documentation](/rubydoc/index.html) can be built without issue.
 
 _Note that this list is non-exhaustive and can change over time._
 
 ### `brew tests` and Codecov
 
-A coverage report is generated by Codecov for every PR, and its results are shown as CI jobs.
-These reports are publicly viewable on [Homebrew/brew's Codecov page](https://app.codecov.io/gh/Homebrew/brew).
-Additionally, annotations will appear in the PR's "Files changed" tab where lines of code have been
-added that aren't being hit by `brew tests`. If the Codecov job fails, that's a sign that some
-more tests should be added to test the functionality being added in the PR.
+A coverage report is generated by Codecov for every PR, and its results are shown as CI jobs. These reports are publicly viewable on [Homebrew/brew's Codecov page](https://app.codecov.io/gh/Homebrew/brew). Additionally, annotations will appear in the PR's "Files changed" tab where lines of code have been added that aren't being hit by `brew tests`. If the Codecov job fails, that's a sign that some more tests should be added to test the functionality being added in the PR.
 
-Codecov should be used as a guide to indicate when more tests are probably needed, but it's unrealistic for
-every line of code to have a test associated with it, especially when testing would require a slow
-integration test. For this reason, it's okay to merge PRs that fail the Codecov check if necessary,
-but this should be avoided if possible.
+Codecov should be used as a guide to indicate when more tests are probably needed, but it's unrealistic for every line of code to have a test associated with it, especially when testing would require a slow integration test. For this reason, it's okay to merge PRs that fail the Codecov check if necessary, but this should be avoided if possible.
 
-### `brew tests` and BuildPulse
+CodeCov also monitors CI jobs for every push to `Homebrew/brew` to detect flaky tests and track them over time. The reports are available on [CodeCov](https://app.codecov.io/gh/Homebrew/brew/tests/main).
 
-BuildPulse monitors CI jobs for every push to `Homebrew/brew` to detect flaky tests and track them over time. The
-reports are available to Homebrew maintainers on [buildpulse.io](https://buildpulse.io/installations) and daily
-summaries are published to [`#buildpulse-health`](https://machomebrew.slack.com/archives/C0268BSJBJ8) in Slack.
+CodeCov can be used as a guide to identify which flaky tests are causing the most disruption to the CI suite. To make the biggest improvements to the reliability of the build, we can focus on the most disruptive flaky tests first (i.e. the tests causing the most intermittent failures).
 
-BuildPulse can be used as a guide to identify which flaky tests are causing the most disruption to the CI suite. To make
-the biggest improvements to the reliability of the build, we can focus on the most disruptive flaky tests first (i.e.
-the tests causing the most intermittent failures).
+To help find the root cause for a particular flaky test, CodeCov provides links to the most recent CI job and commit where the test failed and then passed with no change to the underlying code. You may want to check out the code at that commit to attempt to reproduce the failure locally. You can also see the list of recent failures on CodeCov to determine if the test always fails the same way.
 
-To help find the root cause for a particular flaky test, buildpulse.io provides links to the most recent CI job and
-commit where the test failed and then passed with no change to the underlying code. You may want to check out the code
-at that commit to attempt to reproduce the failure locally. You can also see the list of recent failures on
-[buildpulse.io](https://buildpulse.io) to determine if the test always fails the same way.
+## Manpages and Shell Completions
 
-## Manpages and shell completions
+Homebrew's manpages and shell completions are generated automatically by the `brew generate-man-completions` command. Contributors are welcome to run this command and commit the changes in a PR, but they don't have to. If they don't, a follow-up PR to make the necessary changes will be opened automatically by [@BrewTestBot](https://github.com/BrewTestBot) once the original PR is merged. These follow-up PRs can be merged immediately if the changes seem correct.
 
-Homebrew's manpages and shell completions are generated automatically by the `brew generate-man-completions` command.
-Contributors are welcome to run this command and commit the changes in a PR, but they don't have to. If they don't,
-a follow-up PR to make the necessary changes will be opened automatically by [@BrewTestBot](https://github.com/BrewTestBot)
-once the original PR is merged. These follow-up PRs can be merged immediately if the changes seem correct.
-
-An update can be requested manually by triggering the workflow from the
-[Update maintainers, manpage and completions](https://github.com/Homebrew/brew/actions/workflows/update-man-completions.yml)
-section under the "Actions" tab. Click on the "Run workflow" dropdown and then the "Run workflow" button.
-A PR will be opened shortly if there are any changes.
+An update can be requested manually by triggering the workflow from the [Update sponsors, maintainers, manpage and completions](https://github.com/Homebrew/brew/actions/workflows/sponsors-maintainers-man-completions.yml) section under the "Actions" tab. Click on the "Run workflow" dropdown and then the "Run workflow" button. A PR will be opened shortly if there are any changes.

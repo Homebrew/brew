@@ -1,9 +1,8 @@
-# typed: false
 # frozen_string_literal: true
 
 require "rubocops/conflicts"
 
-describe RuboCop::Cop::FormulaAudit::Conflicts do
+RSpec.describe RuboCop::Cop::FormulaAudit::Conflicts do
   subject(:cop) { described_class.new }
 
   context "when auditing `conflicts_with`" do
@@ -12,7 +11,7 @@ describe RuboCop::Cop::FormulaAudit::Conflicts do
         class Foo < Formula
           url "https://brew.sh/foo-1.0.tgz"
           conflicts_with "bar", :because => "Reason"
-                                            ^^^^^^^^ 'Reason' from the `conflicts_with` reason should be 'reason'.
+                                            ^^^^^^^^ FormulaAudit/Conflicts: 'Reason' from the `conflicts_with` reason should be 'reason'.
           conflicts_with "baz", :because => "Foo is the formula name which does not require downcasing"
         end
       RUBY
@@ -31,7 +30,7 @@ describe RuboCop::Cop::FormulaAudit::Conflicts do
         class Foo < Formula
           url "https://brew.sh/foo-1.0.tgz"
           conflicts_with "bar", "baz", :because => "reason."
-                                                   ^^^^^^^^^ `conflicts_with` reason should not end with a period.
+                                                   ^^^^^^^^^ FormulaAudit/Conflicts: `conflicts_with` reason should not end with a period.
         end
       RUBY
 
@@ -48,7 +47,7 @@ describe RuboCop::Cop::FormulaAudit::Conflicts do
         class FooAT20 < Formula
           url 'https://brew.sh/foo-2.0.tgz'
           conflicts_with "mysql", "mariadb"
-          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Versioned formulae should not use `conflicts_with`. Use `keg_only :versioned_formula` instead.
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ FormulaAudit/Conflicts: Versioned formulae should not use `conflicts_with`. Use `keg_only :versioned_formula` instead.
         end
       RUBY
     end

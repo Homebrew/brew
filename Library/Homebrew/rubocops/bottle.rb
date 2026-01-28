@@ -1,19 +1,18 @@
-# typed: true
+# typed: strict
 # frozen_string_literal: true
 
-require "rubocops/extend/formula"
+require "rubocops/extend/formula_cop"
 
 module RuboCop
   module Cop
     module FormulaAudit
       # This cop audits the `bottle` block in formulae.
-      #
-      # @api private
       class BottleFormat < FormulaCop
         extend AutoCorrector
 
-        def audit_formula(_node, _class_node, _parent_class_node, body_node)
-          bottle_node = find_block(body_node, :bottle)
+        sig { override.params(formula_nodes: FormulaNodes).void }
+        def audit_formula(formula_nodes)
+          bottle_node = find_block(formula_nodes.body_node, :bottle)
           return if bottle_node.nil?
 
           sha256_nodes = find_method_calls_by_name(bottle_node.body, :sha256)
@@ -54,13 +53,12 @@ module RuboCop
       end
 
       # This cop audits the indentation of the bottle tags in the `bottle` block in formulae.
-      #
-      # @api private
       class BottleTagIndentation < FormulaCop
         extend AutoCorrector
 
-        def audit_formula(_node, _class_node, _parent_class_node, body_node)
-          bottle_node = find_block(body_node, :bottle)
+        sig { override.params(formula_nodes: FormulaNodes).void }
+        def audit_formula(formula_nodes)
+          bottle_node = find_block(formula_nodes.body_node, :bottle)
           return if bottle_node.nil?
 
           sha256_nodes = find_method_calls_by_name(bottle_node.body, :sha256)
@@ -90,13 +88,12 @@ module RuboCop
       end
 
       # This cop audits the indentation of the sha256 digests in the`bottle` block in formulae.
-      #
-      # @api private
       class BottleDigestIndentation < FormulaCop
         extend AutoCorrector
 
-        def audit_formula(_node, _class_node, _parent_class_node, body_node)
-          bottle_node = find_block(body_node, :bottle)
+        sig { override.params(formula_nodes: FormulaNodes).void }
+        def audit_formula(formula_nodes)
+          bottle_node = find_block(formula_nodes.body_node, :bottle)
           return if bottle_node.nil?
 
           sha256_nodes = find_method_calls_by_name(bottle_node.body, :sha256)
@@ -126,13 +123,12 @@ module RuboCop
       end
 
       # This cop audits the order of the `bottle` block in formulae.
-      #
-      # @api private
       class BottleOrder < FormulaCop
         extend AutoCorrector
 
-        def audit_formula(_node, _class_node, _parent_class_node, body_node)
-          bottle_node = find_block(body_node, :bottle)
+        sig { override.params(formula_nodes: FormulaNodes).void }
+        def audit_formula(formula_nodes)
+          bottle_node = find_block(formula_nodes.body_node, :bottle)
           return if bottle_node.nil?
           return if bottle_node.child_nodes.blank?
 
@@ -153,37 +149,48 @@ module RuboCop
             end
           end
 
-          arm64_nodes = []
-          intel_nodes = []
+          arm64_macos_nodes = []
+          intel_macos_nodes = []
+          arm64_linux_nodes = []
+          intel_linux_nodes = []
 
           sha256_nodes.each do |node|
             version = sha256_bottle_tag node
-            if version.to_s.start_with? "arm64"
-              arm64_nodes << node
+            if version == :arm64_linux
+              arm64_linux_nodes << node
+            elsif version.to_s.start_with?("arm64")
+              arm64_macos_nodes << node
+            elsif version.to_s.end_with?("_linux")
+              intel_linux_nodes << node
             else
-              intel_nodes << node
+              intel_macos_nodes << node
             end
           end
 
-          return if sha256_order(sha256_nodes) == sha256_order(arm64_nodes + intel_nodes)
+          sorted_nodes = arm64_macos_nodes + intel_macos_nodes + arm64_linux_nodes + intel_linux_nodes
+          return if sha256_order(sha256_nodes) == sha256_order(sorted_nodes)
 
           offending_node(bottle_node)
           problem "ARM bottles should be listed before Intel bottles" do |corrector|
             lines = ["bottle do"]
             lines += non_sha256_nodes.map { |node| "    #{node.source}" }
-            lines += arm64_nodes.map { |node| "    #{node.source}" }
-            lines += intel_nodes.map { |node| "    #{node.source}" }
+            lines += arm64_macos_nodes.map { |node| "    #{node.source}" }
+            lines += intel_macos_nodes.map { |node| "    #{node.source}" }
+            lines += arm64_linux_nodes.map { |node| "    #{node.source}" }
+            lines += intel_linux_nodes.map { |node| "    #{node.source}" }
             lines << "  end"
             corrector.replace(bottle_node.source_range, lines.join("\n"))
           end
         end
 
+        sig { params(nodes: T::Array[RuboCop::AST::SendNode]).returns(T::Array[T.any(String, Symbol)]) }
         def sha256_order(nodes)
           nodes.map do |node|
             sha256_bottle_tag node
           end
         end
 
+        sig { params(node: AST::SendNode).returns(T.any(String, Symbol)) }
         def sha256_bottle_tag(node)
           hash_pair = node.last_argument.pairs.last
           if hash_pair.key.sym_type?

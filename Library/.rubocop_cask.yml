@@ -1,4 +1,0 @@
-# TODO: This file can be deleted once https://github.com/Homebrew/brew/pull/8542
-# is in a stable release and `rubocop.yml` has been removed from all cask taps.
-
-inherit_from: ./.rubocop.yml

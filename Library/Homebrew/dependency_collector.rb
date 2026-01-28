@@ -1,41 +1,61 @@
-# typed: true
+# typed: true # rubocop:todo Sorbet/StrictSigil
 # frozen_string_literal: true
 
 require "dependency"
 require "dependencies"
 require "requirement"
 require "requirements"
-require "extend/cachable"
+require "cachable"
 
-## A dependency is a formula that another formula needs to install.
-## A requirement is something other than a formula that another formula
-## needs to be present. This includes external language modules,
-## command-line tools in the path, or any arbitrary predicate.
-##
-## The `depends_on` method in the formula DSL is used to declare
-## dependencies and requirements.
+# A dependency is a formula that another formula needs to install.
+# A requirement is something other than a formula that another formula
+# needs to be present. This includes external language modules,
+# command-line tools in the path, or any arbitrary predicate.
+#
+# The `depends_on` method in the formula DSL is used to declare
+# dependencies and requirements.
 
 # This class is used by `depends_on` in the formula DSL to turn dependency
 # specifications into the proper kinds of dependencies and requirements.
 class DependencyCollector
-  extend T::Sig
-
   extend Cachable
 
   attr_reader :deps, :requirements
 
   sig { void }
   def initialize
+    # Ensure this is synced with `initialize_dup` and `freeze` (excluding simple objects like integers and booleans)
     @deps = Dependencies.new
     @requirements = Requirements.new
+
+    init_global_dep_tree_if_needed!
+  end
+
+  def initialize_dup(other)
+    super
+    @deps = @deps.dup
+    @requirements = @requirements.dup
+  end
+
+  def freeze
+    @deps.freeze
+    @requirements.freeze
+    super
   end
 
   def add(spec)
     case dep = fetch(spec)
+    when Array
+      dep.compact.each { |dep| @deps << dep }
     when Dependency
       @deps << dep
     when Requirement
       @requirements << dep
+    when nil
+      # no-op when we have a nil value
+      nil
+    else
+      raise ArgumentError, "DependencyCollector#add passed something that isn't a Dependency or Requirement!"
     end
     dep
   end
@@ -45,11 +65,14 @@ class DependencyCollector
   end
 
   def cache_key(spec)
-    if spec.is_a?(Resource) && spec.download_strategy <= CurlDownloadStrategy
-      File.extname(spec.url)
-    else
-      spec
+    if spec.is_a?(Resource)
+      if spec.download_strategy <= CurlDownloadStrategy
+        return "#{spec.download_strategy}#{File.extname(T.must(spec.url)).split("?").first}"
+      end
+
+      return spec.download_strategy
     end
+    spec
   end
 
   def build(spec)
@@ -57,40 +80,48 @@ class DependencyCollector
     parse_spec(spec, Array(tags))
   end
 
+  sig { params(related_formula_names: T::Set[String]).returns(T.nilable(Dependency)) }
+  def gcc_dep_if_needed(related_formula_names); end
+
+  sig { params(related_formula_names: T::Set[String]).returns(T.nilable(Dependency)) }
+  def glibc_dep_if_needed(related_formula_names); end
+
   def git_dep_if_needed(tags)
+    require "utils/git"
     return if Utils::Git.available?
 
-    Dependency.new("git", tags)
+    Dependency.new("git", [*tags, :implicit])
   end
 
-  def brewed_curl_dep_if_needed(tags)
-    Dependency.new("curl", tags)
+  def curl_dep_if_needed(tags)
+    Dependency.new("curl", [*tags, :implicit])
   end
 
   def subversion_dep_if_needed(tags)
+    require "utils/svn"
     return if Utils::Svn.available?
 
-    Dependency.new("subversion", tags)
+    Dependency.new("subversion", [*tags, :implicit])
   end
 
   def cvs_dep_if_needed(tags)
-    Dependency.new("cvs", tags) unless which("cvs")
+    Dependency.new("cvs", [*tags, :implicit]) unless which("cvs")
   end
 
   def xz_dep_if_needed(tags)
-    Dependency.new("xz", tags) unless which("xz")
+    Dependency.new("xz", [*tags, :implicit]) unless which("xz")
   end
 
   def zstd_dep_if_needed(tags)
-    Dependency.new("zstd", tags) unless which("zstd")
+    Dependency.new("zstd", [*tags, :implicit]) unless which("zstd")
   end
 
   def unzip_dep_if_needed(tags)
-    Dependency.new("unzip", tags) unless which("unzip")
+    Dependency.new("unzip", [*tags, :implicit]) unless which("unzip")
   end
 
   def bzip2_dep_if_needed(tags)
-    Dependency.new("bzip2", tags) unless which("bzip2")
+    Dependency.new("bzip2", [*tags, :implicit]) unless which("bzip2")
   end
 
   def self.tar_needs_xz_dependency?
@@ -99,7 +130,16 @@ class DependencyCollector
 
   private
 
+  sig { void }
+  def init_global_dep_tree_if_needed!; end
+
+  sig {
+    params(spec: T.any(String, Resource, Symbol, Requirement, Dependency, Class),
+           tags: T::Array[T.any(String, Symbol)]).returns(T.nilable(T.any(Dependency, Requirement, Array)))
+  }
   def parse_spec(spec, tags)
+    raise ArgumentError, "Implicit dependencies cannot be manually specified" if tags.include?(:implicit)
+
     case spec
     when String
       parse_string_spec(spec, tags)
@@ -111,20 +151,16 @@ class DependencyCollector
       spec
     when Class
       parse_class_spec(spec, tags)
-    else
-      raise TypeError, "Unsupported type #{spec.class.name} for #{spec.inspect}"
     end
   end
 
   def parse_string_spec(spec, tags)
-    if spec.match?(HOMEBREW_TAP_FORMULA_REGEX)
-      TapDependency.new(spec, tags)
-    else
-      Dependency.new(spec, tags)
-    end
+    Dependency.new(spec, tags)
   end
 
   def parse_symbol_spec(spec, tags)
+    # When modifying this list of supported requirements, consider
+    # whether `Homebrew::API::Formula::FormulaStructGenerator::API_SUPPORTED_REQUIREMENTS` should also be changed.
     case spec
     when :arch          then ArchRequirement.new(tags)
     when :codesign      then CodesignRequirement.new(tags)
@@ -133,7 +169,7 @@ class DependencyCollector
     when :maximum_macos then MacOSRequirement.new(tags, comparator: "<=")
     when :xcode         then XcodeRequirement.new(tags)
     else
-      raise ArgumentError, "Unsupported special dependency #{spec.inspect}"
+      raise ArgumentError, "Unsupported special dependency: #{spec.inspect}"
     end
   end
 
@@ -148,8 +184,9 @@ class DependencyCollector
     strategy = spec.download_strategy
 
     if strategy <= HomebrewCurlDownloadStrategy
-      @deps << brewed_curl_dep_if_needed(tags)
-      parse_url_spec(spec.url, tags)
+      [curl_dep_if_needed(tags), parse_url_spec(spec.url, tags)]
+    elsif strategy <= NoUnzipCurlDownloadStrategy
+      # ensure NoUnzip never adds any dependencies
     elsif strategy <= CurlDownloadStrategy
       parse_url_spec(spec.url, tags)
     elsif strategy <= GitDownloadStrategy
@@ -157,18 +194,17 @@ class DependencyCollector
     elsif strategy <= SubversionDownloadStrategy
       subversion_dep_if_needed(tags)
     elsif strategy <= MercurialDownloadStrategy
-      Dependency.new("mercurial", tags)
+      Dependency.new("mercurial", [*tags, :implicit])
     elsif strategy <= FossilDownloadStrategy
-      Dependency.new("fossil", tags)
+      Dependency.new("fossil", [*tags, :implicit])
     elsif strategy <= BazaarDownloadStrategy
-      Dependency.new("bazaar", tags)
+      Dependency.new("breezy", [*tags, :implicit])
     elsif strategy <= CVSDownloadStrategy
       cvs_dep_if_needed(tags)
     elsif strategy < AbstractDownloadStrategy
       # allow unknown strategies to pass through
     else
-      raise TypeError,
-            "#{strategy.inspect} is not an AbstractDownloadStrategy subclass"
+      raise TypeError, "#{strategy.inspect} is not an AbstractDownloadStrategy subclass"
     end
   end
 
@@ -178,10 +214,10 @@ class DependencyCollector
     when ".zst"         then zstd_dep_if_needed(tags)
     when ".zip"         then unzip_dep_if_needed(tags)
     when ".bz2"         then bzip2_dep_if_needed(tags)
-    when ".lha", ".lzh" then Dependency.new("lha", tags)
-    when ".lz"          then Dependency.new("lzip", tags)
-    when ".rar"         then Dependency.new("unrar", tags)
-    when ".7z"          then Dependency.new("p7zip", tags)
+    when ".lha", ".lzh" then Dependency.new("lha", [*tags, :implicit])
+    when ".lz"          then Dependency.new("lzip", [*tags, :implicit])
+    when ".rar"         then Dependency.new("libarchive", [*tags, :implicit])
+    when ".7z"          then Dependency.new("p7zip", [*tags, :implicit])
     end
   end
 end

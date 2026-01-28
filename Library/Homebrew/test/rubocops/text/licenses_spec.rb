@@ -1,9 +1,8 @@
-# typed: false
 # frozen_string_literal: true
 
 require "rubocops/lines"
 
-describe RuboCop::Cop::FormulaAudit::Licenses do
+RSpec.describe RuboCop::Cop::FormulaAudit::Licenses do
   subject(:cop) { described_class.new }
 
   context "when auditing licenses" do
@@ -80,7 +79,7 @@ describe RuboCop::Cop::FormulaAudit::Licenses do
           desc "foo"
           url 'https://brew.sh/foo-1.0.tgz'
           license any_of: ["MIT", all_of: ["0BSD", "Zlib"]]
-          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Split nested license declarations onto multiple lines
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ FormulaAudit/Licenses: Split nested license declarations onto multiple lines
         end
       RUBY
     end

@@ -8,5 +8,6 @@ cask "with-postflight" do
   pkg "MyFancyPkg/Fancy.pkg"
 
   postflight do
+    # do nothing
   end
 end

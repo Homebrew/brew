@@ -1,48 +1,55 @@
-# typed: true
+# typed: strict
 # frozen_string_literal: true
 
 require "json"
 
 require "lazy_object"
 require "locale"
-
-require "extend/hash_validator"
-using HashValidator
+require "extend/hash/keys"
 
 module Cask
   # Configuration for installing casks.
   #
-  # @api private
+  # @api internal
   class Config
-    extend T::Sig
+    ConfigHash = T.type_alias { T::Hash[Symbol, T.any(LazyObject, String, Pathname, T::Array[String])] }
+    DEFAULT_DIRS = T.let(
+      {
+        appdir:               "/Applications",
+        keyboard_layoutdir:   "/Library/Keyboard Layouts",
+        colorpickerdir:       "~/Library/ColorPickers",
+        prefpanedir:          "~/Library/PreferencePanes",
+        qlplugindir:          "~/Library/QuickLook",
+        mdimporterdir:        "~/Library/Spotlight",
+        dictionarydir:        "~/Library/Dictionaries",
+        fontdir:              "~/Library/Fonts",
+        servicedir:           "~/Library/Services",
+        input_methoddir:      "~/Library/Input Methods",
+        internet_plugindir:   "~/Library/Internet Plug-Ins",
+        audio_unit_plugindir: "~/Library/Audio/Plug-Ins/Components",
+        vst_plugindir:        "~/Library/Audio/Plug-Ins/VST",
+        vst3_plugindir:       "~/Library/Audio/Plug-Ins/VST3",
+        screen_saverdir:      "~/Library/Screen Savers",
+      }.freeze,
+      T::Hash[Symbol, String],
+    )
 
-    DEFAULT_DIRS = {
-      appdir:               "/Applications",
-      colorpickerdir:       "~/Library/ColorPickers",
-      prefpanedir:          "~/Library/PreferencePanes",
-      qlplugindir:          "~/Library/QuickLook",
-      mdimporterdir:        "~/Library/Spotlight",
-      dictionarydir:        "~/Library/Dictionaries",
-      fontdir:              "~/Library/Fonts",
-      servicedir:           "~/Library/Services",
-      input_methoddir:      "~/Library/Input Methods",
-      internet_plugindir:   "~/Library/Internet Plug-Ins",
-      audio_unit_plugindir: "~/Library/Audio/Plug-Ins/Components",
-      vst_plugindir:        "~/Library/Audio/Plug-Ins/VST",
-      vst3_plugindir:       "~/Library/Audio/Plug-Ins/VST3",
-      screen_saverdir:      "~/Library/Screen Savers",
-    }.freeze
-
+    # runtime recursive evaluation forces the LazyObject to be evaluated
+    T::Sig::WithoutRuntime.sig { returns(T::Hash[Symbol, T.any(LazyObject, String)]) }
     def self.defaults
       {
-        languages: LazyObject.new { MacOS.languages },
+        languages: LazyObject.new { ::OS::Mac.languages },
       }.merge(DEFAULT_DIRS).freeze
     end
 
     sig { params(args: Homebrew::CLI::Args).returns(T.attached_class) }
     def self.from_args(args)
+      # FIXME: T.unsafe is a workaround for methods that are only defined when `cask_options`
+      # is invoked on the parser. (These could be captured by a DSL compiler instead.)
+      args = T.unsafe(args)
       new(explicit: {
         appdir:               args.appdir,
+        keyboard_layoutdir:   args.keyboard_layoutdir,
         colorpickerdir:       args.colorpickerdir,
         prefpanedir:          args.prefpanedir,
         qlplugindir:          args.qlplugindir,
@@ -62,47 +69,60 @@ module Cask
 
     sig { params(json: String, ignore_invalid_keys: T::Boolean).returns(T.attached_class) }
     def self.from_json(json, ignore_invalid_keys: false)
-      config = JSON.parse(json)
+      config = JSON.parse(json, symbolize_names: true)
 
       new(
-        default:             config.fetch("default",  {}),
-        env:                 config.fetch("env",      {}),
-        explicit:            config.fetch("explicit", {}),
-        ignore_invalid_keys: ignore_invalid_keys,
+        default:             config.fetch(:default,  {}),
+        env:                 config.fetch(:env,      {}),
+        explicit:            config.fetch(:explicit, {}),
+        ignore_invalid_keys:,
       )
     end
 
-    sig {
-      params(config: T::Enumerable[[T.any(String, Symbol), T.any(String, Pathname, T::Array[String])]])
-        .returns(T::Hash[Symbol, T.any(String, Pathname, T::Array[String])])
-    }
+    sig { params(config: ConfigHash).returns(ConfigHash) }
     def self.canonicalize(config)
       config.to_h do |k, v|
-        key = k.to_sym
+        if DEFAULT_DIRS.key?(k)
+          raise TypeError, "Invalid path for default dir #{k}: #{v.inspect}" if v.is_a?(Array)
 
-        if DEFAULT_DIRS.key?(key)
-          [key, Pathname(v).expand_path]
+          [k, Pathname(v.to_s).expand_path]
         else
-          [key, v]
+          [k, v]
         end
       end
     end
 
-    sig { returns(T::Hash[Symbol, T.any(String, Pathname, T::Array[String])]) }
+    # Get the explicit configuration.
+    #
+    # @api internal
+    sig { returns(ConfigHash) }
     attr_accessor :explicit
 
     sig {
       params(
-        default:             T.nilable(T::Hash[Symbol, T.any(String, Pathname, T::Array[String])]),
-        env:                 T.nilable(T::Hash[Symbol, T.any(String, Pathname, T::Array[String])]),
-        explicit:            T::Hash[Symbol, T.any(String, Pathname, T::Array[String])],
+        default:             T.nilable(ConfigHash),
+        env:                 T.nilable(ConfigHash),
+        explicit:            ConfigHash,
         ignore_invalid_keys: T::Boolean,
       ).void
     }
     def initialize(default: nil, env: nil, explicit: {}, ignore_invalid_keys: false)
-      @default = self.class.canonicalize(self.class.defaults.merge(default)) if default
-      @env = self.class.canonicalize(env) if env
-      @explicit = self.class.canonicalize(explicit)
+      if default
+        @default = T.let(
+          self.class.canonicalize(self.class.defaults.merge(default)),
+          T.nilable(ConfigHash),
+        )
+      end
+      if env
+        @env = T.let(
+          self.class.canonicalize(env),
+          T.nilable(ConfigHash),
+        )
+      end
+      @explicit = T.let(
+        self.class.canonicalize(explicit),
+        ConfigHash,
+      )
 
       if ignore_invalid_keys
         @env&.delete_if { |key, _| self.class.defaults.keys.exclude?(key) }
@@ -110,22 +130,22 @@ module Cask
         return
       end
 
-      @env&.assert_valid_keys!(*self.class.defaults.keys)
-      @explicit.assert_valid_keys!(*self.class.defaults.keys)
+      @env&.assert_valid_keys(*self.class.defaults.keys)
+      @explicit.assert_valid_keys(*self.class.defaults.keys)
     end
 
-    sig { returns(T::Hash[Symbol, T.any(String, Pathname, T::Array[String])]) }
+    sig { returns(ConfigHash) }
     def default
       @default ||= self.class.canonicalize(self.class.defaults)
     end
 
-    sig { returns(T::Hash[Symbol, T.any(String, Pathname, T::Array[String])]) }
+    sig { returns(ConfigHash) }
     def env
       @env ||= self.class.canonicalize(
         Homebrew::EnvConfig.cask_opts
           .select { |arg| arg.include?("=") }
           .map { |arg| T.cast(arg.split("=", 2), [String, String]) }
-          .map do |(flag, value)|
+          .to_h do |(flag, value)|
             key = flag.sub(/^--/, "")
             # converts --language flag to :languages config key
             if key == "language"
@@ -133,27 +153,42 @@ module Cask
               value = value.split(",")
             end
 
-            [key, value]
+            [key.to_sym, value]
           end,
       )
     end
 
     sig { returns(Pathname) }
     def binarydir
-      @binarydir ||= HOMEBREW_PREFIX/"bin"
+      @binarydir ||= T.let(HOMEBREW_PREFIX/"bin", T.nilable(Pathname))
     end
 
     sig { returns(Pathname) }
     def manpagedir
-      @manpagedir ||= HOMEBREW_PREFIX/"share/man"
+      @manpagedir ||= T.let(HOMEBREW_PREFIX/"share/man", T.nilable(Pathname))
+    end
+
+    sig { returns(Pathname) }
+    def bash_completion
+      @bash_completion ||= T.let(HOMEBREW_PREFIX/"etc/bash_completion.d", T.nilable(Pathname))
+    end
+
+    sig { returns(Pathname) }
+    def zsh_completion
+      @zsh_completion ||= T.let(HOMEBREW_PREFIX/"share/zsh/site-functions", T.nilable(Pathname))
+    end
+
+    sig { returns(Pathname) }
+    def fish_completion
+      @fish_completion ||= T.let(HOMEBREW_PREFIX/"share/fish/vendor_completions.d", T.nilable(Pathname))
     end
 
     sig { returns(T::Array[String]) }
     def languages
       [
-        *T.cast(explicit.fetch(:languages, []), T::Array[String]),
-        *T.cast(env.fetch(:languages, []), T::Array[String]),
-        *T.cast(default.fetch(:languages, []), T::Array[String]),
+        *explicit.fetch(:languages, []),
+        *env.fetch(:languages, []),
+        *default.fetch(:languages, []),
       ].uniq.select do |lang|
         # Ensure all languages are valid.
         Locale.parse(lang)
@@ -163,16 +198,19 @@ module Cask
       end
     end
 
+    sig { params(languages: T::Array[String]).void }
     def languages=(languages)
       explicit[:languages] = languages
     end
 
     DEFAULT_DIRS.each_key do |dir|
       define_method(dir) do
+        T.bind(self, Config)
         explicit.fetch(dir, env.fetch(dir, default.fetch(dir)))
       end
 
       define_method(:"#{dir}=") do |path|
+        T.bind(self, Config)
         explicit[dir] = Pathname(path).expand_path
       end
     end
@@ -182,25 +220,15 @@ module Cask
       self.class.new(explicit: other.explicit.merge(explicit))
     end
 
-    sig { returns(String) }
-    def explicit_s
-      explicit.map do |key, value|
-        # inverse of #env - converts :languages config key back to --language flag
-        if key == :languages
-          key = "language"
-          value = T.cast(explicit.fetch(:languages, []), T::Array[String]).join(",")
-        end
-        "#{key}: \"#{value.to_s.sub(/^#{ENV['HOME']}/, "~")}\""
-      end.join(", ")
-    end
-
     sig { params(options: T.untyped).returns(String) }
-    def to_json(**options)
+    def to_json(*options)
       {
-        default:  default,
-        env:      env,
-        explicit: explicit,
-      }.to_json(**options)
+        default:,
+        env:,
+        explicit:,
+      }.to_json(*options)
     end
   end
 end
+
+require "extend/os/cask/config"

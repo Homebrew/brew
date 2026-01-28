@@ -1,25 +1,24 @@
-# typed: false
 # frozen_string_literal: true
 
 require "livecheck/strategy/hackage"
 
-describe Homebrew::Livecheck::Strategy::Hackage do
+RSpec.describe Homebrew::Livecheck::Strategy::Hackage do
   subject(:hackage) { described_class }
 
-  let(:hackage_urls) {
+  let(:hackage_urls) do
     {
       package:   "https://hackage.haskell.org/package/abc-1.2.3/abc-1.2.3.tar.gz",
       downloads: "https://downloads.haskell.org/~abc/1.2.3/abc-1.2.3-src.tar.xz",
     }
-  }
+  end
   let(:non_hackage_url) { "https://brew.sh/test" }
 
-  let(:generated) {
+  let(:generated) do
     {
       url:   "https://hackage.haskell.org/package/abc/src/",
       regex: %r{<h3>abc-(.*?)/?</h3>}i,
     }
-  }
+  end
 
   describe "::match?" do
     it "returns true for a Hackage URL" do

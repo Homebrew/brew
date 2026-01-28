@@ -1,3 +1,7 @@
+---
+last_review_date: "1970-01-01"
+---
+
 # Bottles (Binary Packages)
 
 Bottles are produced by installing a formula with `brew install --build-bottle <formula>` and then bottling it with `brew bottle <formula>`. This generates a bottle file in the current directory and outputs the bottle DSL for insertion into the formula file.
@@ -16,7 +20,7 @@ Bottles will not be used if:
 
 ## Creation
 
-Bottles for `homebrew/core` formulae are created by [Brew Test Bot](Brew-Test-Bot.md) when a pull request is submitted. If the formula builds successfully on each supported platform and a maintainer approves the change, Brew Test Bot updates its `bottle do` block and uploads each bottle to [GitHub Packages](https://github.com/orgs/Homebrew/packages).
+Bottles for `homebrew/core` formulae are created by [BrewTestBot](BrewTestBot.md) when a pull request is submitted. If the formula builds successfully on each supported platform and a maintainer approves the change, BrewTestBot updates its `bottle do` block and uploads each bottle to [GitHub Packages](https://github.com/orgs/Homebrew/packages).
 
 By default, bottles will be built for the oldest CPU supported by the OS/architecture you're building for (Core 2 for 64-bit x86 operating systems). This ensures that bottles are compatible with all computers you might distribute them to. If you *really* want your bottles to be optimised for something else, you can pass the `--bottle-arch=` option to build for another architecture; for example, `brew install foo --build-bottle --bottle-arch=penryn`. Just remember that if you build for a newer architecture, some of your users might get binaries they can't run and that would be sad!
 
@@ -32,10 +36,9 @@ A simple (and typical) example:
 
 ```ruby
 bottle do
-  sha256 arm64_big_sur: "a9ae578b05c3da46cedc07dd428d94a856aeae7f3ef80a0f405bf89b8cde893a"
-  sha256 big_sur:       "5dc376aa20241233b76e2ec2c1d4e862443a0250916b2838a1ff871e8a6dc2c5"
-  sha256 catalina:      "924afbbc16549d8c2b80544fd03104ff8c17a4b1460238e3ed17a1313391a2af"
-  sha256 mojave:        "678d338adc7d6e8c352800fe03fc56660c796bd6da23eda2b1411fed18bd0d8d"
+  sha256 arm64_tahoe: "a9ae578b05c3da46cedc07dd428d94a856aeae7f3ef80a0f405bf89b8cde893a"
+  sha256 tahoe:       "5dc376aa20241233b76e2ec2c1d4e862443a0250916b2838a1ff871e8a6dc2c5"
+  sha256 sequoia:     "924afbbc16549d8c2b80544fd03104ff8c17a4b1460238e3ed17a1313391a2af"
 end
 ```
 
@@ -45,10 +48,9 @@ A full example:
 bottle do
   root_url "https://example.com"
   rebuild 4
-  sha256 cellar: "/opt/homebrew/Cellar", arm64_big_sur: "a9ae578b05c3da46cedc07dd428d94a856aeae7f3ef80a0f405bf89b8cde893a"
-  sha256 cellar: :any,                   big_sur:       "5dc376aa20241233b76e2ec2c1d4e862443a0250916b2838a1ff871e8a6dc2c5"
-  sha256                                 catalina:      "924afbbc16549d8c2b80544fd03104ff8c17a4b1460238e3ed17a1313391a2af"
-  sha256                                 mojave:        "678d338adc7d6e8c352800fe03fc56660c796bd6da23eda2b1411fed18bd0d8d"
+  sha256 cellar: "/opt/homebrew/Cellar", arm64_tahoe: "a9ae578b05c3da46cedc07dd428d94a856aeae7f3ef80a0f405bf89b8cde893a"
+  sha256 cellar: :any,                   tahoe:       "5dc376aa20241233b76e2ec2c1d4e862443a0250916b2838a1ff871e8a6dc2c5"
+  sha256                                 sequoia:     "924afbbc16549d8c2b80544fd03104ff8c17a4b1460238e3ed17a1313391a2af"
 end
 ```
 
@@ -62,7 +64,7 @@ By default this is omitted and Homebrew's default bottle URL root is used. This 
 
 Optionally contains the value of `HOMEBREW_CELLAR` in which the bottles were built.
 
-Most compiled software contains references to its compiled location, preventing it from being simply relocated anywhere on disk. A value of `:any` or `:any_skip_relocation` means that the bottle can be safely installed in any Cellar as it did not contain any references to the Cellar in which it was originally built. This can be omitted if the bottle was compiled for the given OS/architecture's default `HOMEBREW_CELLAR`, as is done for all bottles built by Brew Test Bot.
+Most compiled software contains references to its compiled location, preventing it from being simply relocated anywhere on disk. A value of `:any` or `:any_skip_relocation` means that the bottle can be safely installed in any Cellar as it did not contain any references to the Cellar in which it was originally built. This can be omitted if the bottle was compiled for the given OS/architecture's default `HOMEBREW_CELLAR`, as is done for all bottles built by BrewTestBot.
 
 ### Rebuild version (`rebuild`)
 

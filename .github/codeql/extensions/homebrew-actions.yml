@@ -1,0 +1,7 @@
+# This file is synced from the `.github` repository, do not modify it directly.
+extensions:
+  - addsTo:
+      pack: codeql/actions-all
+      extensible: trustedActionsOwnerDataModel
+    data:
+      - ["Homebrew"]

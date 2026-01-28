@@ -1,0 +1,53 @@
+{
+  "homebrew_version": "4.3.7",
+  "loaded_from_api": false,
+  "uninstall_flight_blocks": true,
+  "installed_as_dependency": false,
+  "installed_on_request": true,
+  "time": 1719289256,
+  "runtime_dependencies": {
+    "cask": [
+      {
+        "full_name": "bar",
+        "version": "2.0",
+        "declared_directly": true
+      }
+    ],
+    "formula": [
+      {
+        "full_name": "baz",
+        "version": "3.0",
+        "revision": 0,
+        "pkg_version": "3.0",
+        "declared_directly": true
+      }
+    ],
+    "macos": {
+      ">=": [
+        "12"
+      ]
+    }
+  },
+  "source": {
+    "path": "/opt/homebrew/Library/Taps/homebrew/homebrew-cask/Casks/f/foo.rb",
+    "tap": "homebrew/cask",
+    "tap_git_head": "8b79aa759500f0ffdf65a23e12950cbe3bf8fe17",
+    "version": "1.2.3"
+  },
+  "arch": "arm64",
+  "uninstall_artifacts": [
+    {
+      "app": [
+        "Foo.app"
+      ]
+    }
+  ],
+  "built_on": {
+    "os": "Macintosh",
+    "os_version": "macOS 14",
+    "cpu_family": "arm_firestorm_icestorm",
+    "xcode": "15.4",
+    "clt": "15.3.0.0.1.1708646388",
+    "preferred_perl": "5.34"
+  }
+}

@@ -1,0 +1,9 @@
+# NOTE: We use a non-standard config file name to reduce name clashes with
+#       other IRB config files like `.irbrc`.
+# NOTE: This doesn't work with system Ruby for some reason.
+
+require 'irb/completion'
+
+IRB.conf[:HISTORY_FILE] = "#{Dir.home}/.brew_irb_history"
+IRB.conf[:IRB_NAME] = "brew"
+H = Homebrew

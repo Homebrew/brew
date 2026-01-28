@@ -1,13 +1,12 @@
-# typed: false
 # frozen_string_literal: true
 
 require "utils/git_repository"
 
-describe Utils do
+RSpec.describe Utils do
   shared_examples "git_repository helper function" do |method_name|
     context "when directory is not a Git repository" do
       it "returns nil if `safe` parameter is `false`" do
-        expect(described_class.public_send(method_name, TEST_TMPDIR, safe: false)).to eq(nil)
+        expect(described_class.public_send(method_name, TEST_TMPDIR, safe: false)).to be_nil
       end
 
       it "raises an error if `safe` parameter is `true`" do
@@ -22,7 +21,7 @@ describe Utils do
       end
 
       it "returns nil if `safe` parameter is `false`" do
-        expect(described_class.public_send(method_name, HOMEBREW_CACHE, safe: false)).to eq(nil)
+        expect(described_class.public_send(method_name, HOMEBREW_CACHE, safe: false)).to be_nil
       end
 
       it "raises an error if `safe` parameter is `true`" do

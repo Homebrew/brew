@@ -1,15 +1,26 @@
-# typed: false
 # frozen_string_literal: true
 
 require "download_strategy"
 
-describe CurlDownloadStrategy do
+RSpec.describe CurlDownloadStrategy do
   subject(:strategy) { described_class.new(url, name, version, **specs) }
 
   let(:name) { "foo" }
   let(:url) { "https://example.com/foo.tar.gz" }
   let(:version) { "1.2.3" }
   let(:specs) { { user: "download:123456" } }
+  let(:artifact_domain) { nil }
+  let(:headers) do
+    {
+      "accept-ranges"  => "bytes",
+      "content-length" => "37182",
+    }
+  end
+
+  before do
+    allow(strategy).to receive(:curl_headers).with(any_args)
+                                             .and_return({ responses: [{ headers: }] })
+  end
 
   it "parses the opts and sets the corresponding args" do
     expect(strategy.send(:_curl_args)).to eq(["--user", "download:123456"])
@@ -17,17 +28,19 @@ describe CurlDownloadStrategy do
 
   describe "#fetch" do
     before do
+      allow(Homebrew::EnvConfig).to receive(:artifact_domain).and_return(artifact_domain)
+
       strategy.temporary_path.dirname.mkpath
       FileUtils.touch strategy.temporary_path
     end
 
     it "calls curl with default arguments" do
       expect(strategy).to receive(:curl).with(
+        "--remote-time",
+        "--output", an_instance_of(String),
         # example.com supports partial requests.
         "--continue-at", "-",
         "--location",
-        "--remote-time",
-        "--output", an_instance_of(Pathname),
         url,
         an_instance_of(Hash)
       )
@@ -39,12 +52,13 @@ describe CurlDownloadStrategy do
       let(:specs) { { user_agent: "Mozilla/25.0.1" } }
 
       it "adds the appropriate curl args" do
-        expect(strategy).to receive(:system_command).with(
-          /curl/,
-          hash_including(args: array_including_cons("--user-agent", "Mozilla/25.0.1")),
-        )
-        .at_least(:once)
-        .and_return(instance_double(SystemCommand::Result, success?: true, stdout: "", assert_success!: nil))
+        expect(strategy).to receive(:system_command)
+          .with(
+            /curl/,
+            hash_including(args: array_including_cons("--user-agent", "Mozilla/25.0.1")),
+          )
+          .at_least(:once)
+          .and_return(instance_double(SystemCommand::Result, success?: true, stdout: "", assert_success!: nil))
 
         strategy.fetch
       end
@@ -56,37 +70,39 @@ describe CurlDownloadStrategy do
       let(:specs) { { user_agent: :fake } }
 
       it "adds the appropriate curl args" do
-        expect(strategy).to receive(:system_command).with(
-          /curl/,
-          hash_including(args: array_including_cons(
-            "--user-agent",
-            a_string_matching(/Mozilla.*Mac OS X 10.*AppleWebKit/),
-          )),
-        )
-        .at_least(:once)
-        .and_return(instance_double(SystemCommand::Result, success?: true, stdout: "", assert_success!: nil))
+        expect(strategy).to receive(:system_command)
+          .with(
+            /curl/,
+            hash_including(args: array_including_cons(
+              "--user-agent",
+              a_string_matching(/Mozilla.*Mac OS X 10_15_7.*AppleWebKit/),
+            )),
+          )
+          .at_least(:once)
+          .and_return(instance_double(SystemCommand::Result, success?: true, stdout: "", assert_success!: nil))
 
         strategy.fetch
       end
     end
 
     context "with cookies set" do
-      let(:specs) {
+      let(:specs) do
         {
           cookies: {
             coo: "k/e",
             mon: "ster",
           },
         }
-      }
+      end
 
       it "adds the appropriate curl args and does not URL-encode the cookies" do
-        expect(strategy).to receive(:system_command).with(
-          /curl/,
-          hash_including(args: array_including_cons("-b", "coo=k/e;mon=ster")),
-        )
-        .at_least(:once)
-        .and_return(instance_double(SystemCommand::Result, success?: true, stdout: "", assert_success!: nil))
+        expect(strategy).to receive(:system_command)
+          .with(
+            /curl/,
+            hash_including(args: array_including_cons("-b", "coo=k/e;mon=ster")),
+          )
+          .at_least(:once)
+          .and_return(instance_double(SystemCommand::Result, success?: true, stdout: "", assert_success!: nil))
 
         strategy.fetch
       end
@@ -96,12 +112,13 @@ describe CurlDownloadStrategy do
       let(:specs) { { referer: "https://somehost/also" } }
 
       it "adds the appropriate curl args" do
-        expect(strategy).to receive(:system_command).with(
-          /curl/,
-          hash_including(args: array_including_cons("-e", "https://somehost/also")),
-        )
-        .at_least(:once)
-        .and_return(instance_double(SystemCommand::Result, success?: true, stdout: "", assert_success!: nil))
+        expect(strategy).to receive(:system_command)
+          .with(
+            /curl/,
+            hash_including(args: array_including_cons("-e", "https://somehost/also")),
+          )
+          .at_least(:once)
+          .and_return(instance_double(SystemCommand::Result, success?: true, stdout: "", assert_success!: nil))
 
         strategy.fetch
       end
@@ -113,61 +130,201 @@ describe CurlDownloadStrategy do
       let(:specs) { { headers: ["foo", "bar"] } }
 
       it "adds the appropriate curl args" do
-        expect(strategy).to receive(:system_command).with(
-          /curl/,
-          hash_including(args: array_including_cons("--header", "foo").and(array_including_cons("--header", "bar"))),
-        )
-        .at_least(:once)
-        .and_return(instance_double(SystemCommand::Result, success?: true, stdout: "", assert_success!: nil))
+        expect(strategy).to receive(:system_command)
+          .with(
+            /curl/,
+            hash_including(
+              args: array_including_cons("--header", "foo").and(array_including_cons("--header", "bar")),
+            ),
+          )
+          .at_least(:once)
+          .and_return(instance_double(SystemCommand::Result, success?: true, stdout: "", assert_success!: nil))
 
         strategy.fetch
+      end
+    end
+
+    context "with artifact_domain set" do
+      let(:artifact_domain) { "https://mirror.example.com/oci" }
+
+      context "with an asset hosted under example.com" do
+        it "leaves the URL unchanged" do
+          expect(strategy).to receive(:system_command)
+            .with(
+              /curl/,
+              hash_including(args: array_including_cons(url)),
+            )
+            .at_least(:once)
+            .and_return(instance_double(SystemCommand::Result, success?: true, stdout: "", assert_success!: nil))
+
+          strategy.fetch
+        end
+      end
+
+      context "with an asset hosted under #{GitHubPackages::URL_DOMAIN} (HTTP)" do
+        let(:resource_path) { "v2/homebrew/core/spec/manifests/0.0" }
+        let(:url) { "http://#{GitHubPackages::URL_DOMAIN}/#{resource_path}" }
+        let(:status) { instance_double(Process::Status, success?: true, exitstatus: 0) }
+
+        it "rewrites the URL correctly" do
+          expect(strategy).to receive(:system_command)
+            .with(
+              /curl/,
+              hash_including(args: array_including_cons("#{artifact_domain}/#{resource_path}")),
+            )
+            .at_least(:once)
+            .and_return(SystemCommand::Result.new(["curl"], [[:stdout, ""]], status, secrets: []))
+
+          strategy.fetch
+        end
+      end
+
+      context "with an asset hosted under #{GitHubPackages::URL_DOMAIN} (HTTPS)" do
+        let(:resource_path) { "v2/homebrew/core/spec/manifests/0.0" }
+        let(:url) { "https://#{GitHubPackages::URL_DOMAIN}/#{resource_path}" }
+        let(:status) { instance_double(Process::Status, success?: true, exitstatus: 0) }
+
+        it "rewrites the URL correctly" do
+          expect(strategy).to receive(:system_command)
+            .with(
+              /curl/,
+              hash_including(args: array_including_cons("#{artifact_domain}/#{resource_path}")),
+            )
+            .at_least(:once)
+            .and_return(SystemCommand::Result.new(["curl"], [[:stdout, ""]], status, secrets: []))
+
+          strategy.fetch
+        end
+      end
+    end
+  end
+
+  describe "#resolved_time_file_size" do
+    context "when content-length header is present" do
+      let(:headers) do
+        {
+          "content-length" => "1024",
+        }
+      end
+
+      it "returns the content-length value" do
+        _, file_size = strategy.resolved_time_file_size
+        expect(file_size).to eq(1024)
+      end
+    end
+
+    context "when only content-range header is present" do
+      let(:headers) do
+        {
+          "content-range" => "bytes 0-1023/1024",
+        }
+      end
+
+      it "returns the total size from content-range" do
+        _, file_size = strategy.resolved_time_file_size
+        expect(file_size).to eq(1024)
+      end
+    end
+
+    context "when content-length is zero and content-range is present" do
+      let(:headers) do
+        {
+          "content-length" => "0",
+          "content-range"  => "bytes 0-999/1000",
+        }
+      end
+
+      it "falls back to content-range" do
+        _, file_size = strategy.resolved_time_file_size
+        expect(file_size).to eq(1000)
+      end
+    end
+
+    context "when content-range has unsatisfied range format (416 response)" do
+      let(:headers) do
+        {
+          "content-range" => "bytes */67589",
+        }
+      end
+
+      it "extracts size from unsatisfied range format" do
+        _, file_size = strategy.resolved_time_file_size
+        expect(file_size).to eq(67589)
+      end
+    end
+
+    context "when content-range has unknown size" do
+      let(:headers) do
+        {
+          "content-range" => "bytes 0-1023/*",
+        }
+      end
+
+      it "raises when size cannot be determined" do
+        expect { strategy.resolved_time_file_size }.to raise_error(TypeError)
+      end
+    end
+
+    context "when content-range has invalid format" do
+      ["invalid-format", "bytes 0-1023", "bytes 0-1023/abc", "bytes 0-1023/", ""].each do |invalid_value|
+        context "with value #{invalid_value.inspect}" do
+          let(:headers) do
+            {
+              "content-range" => invalid_value,
+            }
+          end
+
+          it "raises when size cannot be parsed" do
+            expect { strategy.resolved_time_file_size }.to raise_error(TypeError)
+          end
+        end
       end
     end
   end
 
   describe "#cached_location" do
-    subject(:cached_location) { described_class.new(url, name, version, **specs).cached_location }
+    subject(:cached_location) { strategy.cached_location }
 
     context "when URL ends with file" do
-      it {
+      it "falls back to the file name in the URL" do
         expect(cached_location).to eq(
           HOMEBREW_CACHE/"downloads/3d1c0ae7da22be9d83fb1eb774df96b7c4da71d3cf07e1cb28555cf9a5e5af70--foo.tar.gz",
         )
-      }
+      end
     end
 
     context "when URL file is in middle" do
       let(:url) { "https://example.com/foo.tar.gz/from/this/mirror" }
 
-      it {
+      it "falls back to the file name in the URL" do
         expect(cached_location).to eq(
           HOMEBREW_CACHE/"downloads/1ab61269ba52c83994510b1e28dd04167a2f2e8393a35a9c50c1f7d33fd8f619--foo.tar.gz",
         )
-      }
+      end
     end
 
     context "with a file name trailing the URL path" do
       let(:url) { "https://example.com/cask.dmg" }
 
-      it {
+      it "falls back to the file extension in the URL" do
         expect(cached_location.extname).to eq(".dmg")
-      }
+      end
     end
 
     context "with a file name trailing the first query parameter" do
       let(:url) { "https://example.com/download?file=cask.zip&a=1" }
 
-      it {
+      it "falls back to the file extension in the URL" do
         expect(cached_location.extname).to eq(".zip")
-      }
+      end
     end
 
     context "with a file name trailing the second query parameter" do
       let(:url) { "https://example.com/dl?a=1&file=cask.zip&b=2" }
 
-      it {
+      it "falls back to the file extension in the URL" do
         expect(cached_location.extname).to eq(".zip")
-      }
+      end
     end
 
     context "with an unusually long query string" do
@@ -189,10 +346,10 @@ describe CurlDownloadStrategy do
         ].join
       end
 
-      it {
+      it "falls back to the file extension in the URL" do
         expect(cached_location.extname).to eq(".zip")
         expect(cached_location.to_path.length).to be_between(0, 255)
-      }
+      end
     end
   end
 end

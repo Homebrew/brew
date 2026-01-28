@@ -1,9 +1,9 @@
-# typed: false
 # frozen_string_literal: true
 
 require "cmd/shared_examples/args_parse"
+require "dev-cmd/cat"
 
-describe "brew cat" do
+RSpec.describe Homebrew::DevCmd::Cat do
   it_behaves_like "parseable arguments"
 
   it "prints the content of a given Formula", :integration_test do

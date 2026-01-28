@@ -1,4 +1,4 @@
-# typed: true
+# typed: strict
 # frozen_string_literal: true
 
 require "unpack_strategy"
@@ -6,23 +6,17 @@ require "unpack_strategy"
 module Cask
   class DSL
     # Class corresponding to the `container` stanza.
-    #
-    # @api private
     class Container
-      VALID_KEYS = Set.new([
-        :type,
-        :nested,
-      ]).freeze
+      sig { returns(T.nilable(String)) }
+      attr_accessor :nested
 
-      attr_accessor(*VALID_KEYS, :pairs)
+      sig { returns(T.nilable(Symbol)) }
+      attr_accessor :type
 
-      def initialize(pairs = {})
-        @pairs = pairs
-        pairs.each do |key, value|
-          raise "invalid container key: #{key.inspect}" unless VALID_KEYS.include?(key)
-
-          send(:"#{key}=", value)
-        end
+      sig { params(nested: T.nilable(String), type: T.nilable(Symbol)).void }
+      def initialize(nested: nil, type: nil)
+        @nested = T.let(nested, T.nilable(String))
+        @type = T.let(type, T.nilable(Symbol))
 
         return if type.nil?
         return unless UnpackStrategy.from_type(type).nil?
@@ -30,13 +24,18 @@ module Cask
         raise "invalid container type: #{type.inspect}"
       end
 
-      def to_yaml
-        @pairs.to_yaml
+      sig { returns(T::Hash[Symbol, T.nilable(T.any(String, Symbol))]) }
+      def pairs
+        instance_variables.to_h { |ivar| [ivar[1..].to_sym, instance_variable_get(ivar)] }.compact
       end
 
-      def to_s
-        @pairs.inspect
+      sig { returns(String) }
+      def to_yaml
+        pairs.to_yaml
       end
+
+      sig { returns(String) }
+      def to_s = pairs.inspect
     end
   end
 end

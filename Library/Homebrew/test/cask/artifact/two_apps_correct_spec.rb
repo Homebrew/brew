@@ -1,15 +1,14 @@
-# typed: false
 # frozen_string_literal: true
 
-describe Cask::Artifact::App, :cask do
+RSpec.describe Cask::Artifact::App, :cask do
   describe "multiple apps" do
     let(:cask) { Cask::CaskLoader.load(cask_path("with-two-apps-correct")) }
 
-    let(:install_phase) {
+    let(:install_phase) do
       cask.artifacts.select { |a| a.is_a?(described_class) }.each do |artifact|
         artifact.install_phase(command: NeverSudoSystemCommand, force: false)
       end
-    }
+    end
 
     let(:source_path_mini) { cask.staged_path.join("Caffeine Mini.app") }
     let(:target_path_mini) { cask.config.appdir.join("Caffeine Mini.app") }
@@ -64,11 +63,11 @@ describe Cask::Artifact::App, :cask do
       it "when the first app of two already exists" do
         target_path_mini.mkpath
 
-        expect {
+        expect do
           expect { install_phase }.to output(<<~EOS).to_stdout
             ==> Moving App 'Caffeine Pro.app' to '#{target_path_pro}'
           EOS
-        }.to raise_error(Cask::CaskError, "It seems there is already an App at '#{target_path_mini}'.")
+        end.to raise_error(Cask::CaskError, "It seems there is already an App at '#{target_path_mini}'.")
 
         expect(source_path_mini).to be_a_directory
         expect(target_path_mini).to be_a_directory
@@ -78,11 +77,11 @@ describe Cask::Artifact::App, :cask do
       it "when the second app of two already exists" do
         target_path_pro.mkpath
 
-        expect {
+        expect do
           expect { install_phase }.to output(<<~EOS).to_stdout
             ==> Moving App 'Caffeine Mini.app' to '#{target_path_mini}'
           EOS
-        }.to raise_error(Cask::CaskError, "It seems there is already an App at '#{target_path_pro}'.")
+        end.to raise_error(Cask::CaskError, "It seems there is already an App at '#{target_path_pro}'.")
 
         expect(source_path_pro).to be_a_directory
         expect(target_path_pro).to be_a_directory

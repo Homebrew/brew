@@ -1,40 +1,43 @@
-# typed: false
 # frozen_string_literal: true
 
 require "test/support/fixtures/testball"
 require "formula"
 
-describe Formula do
+RSpec.describe Formula do
   describe "#uses_from_macos" do
     before do
       allow(OS).to receive(:mac?).and_return(true)
-      allow(OS::Mac).to receive(:version).and_return(OS::Mac::Version.from_symbol(:sierra))
+      allow(OS::Mac).to receive(:version).and_return(MacOSVersion.from_symbol(:sonoma))
     end
 
     it "adds a macOS dependency to all specs if the OS version meets requirements" do
       f = formula "foo" do
         url "foo-1.0"
 
-        uses_from_macos("foo", since: :el_capitan)
+        uses_from_macos("foo", since: :big_sur)
       end
 
       expect(f.class.stable.deps).to be_empty
       expect(f.class.head.deps).to be_empty
-      expect(f.class.stable.uses_from_macos_elements.first).to eq("foo")
-      expect(f.class.head.uses_from_macos_elements.first).to eq("foo")
+      expect(f.class.stable.declared_deps).not_to be_empty
+      expect(f.class.head.declared_deps).not_to be_empty
+      expect(f.class.stable.declared_deps.first.name).to eq("foo")
+      expect(f.class.head.declared_deps.first.name).to eq("foo")
     end
 
-    it "doesn't add a macOS dependency to any spec if the OS version doesn't meet requirements" do
+    it "adds a dependency to any spec if the OS version doesn't meet requirements" do
       f = formula "foo" do
         url "foo-1.0"
 
-        uses_from_macos("foo", since: :high_sierra)
+        uses_from_macos("foo", since: :tahoe)
       end
 
+      expect(f.class.stable.deps).not_to be_empty
+      expect(f.class.head.deps).not_to be_empty
       expect(f.class.stable.deps.first.name).to eq("foo")
       expect(f.class.head.deps.first.name).to eq("foo")
-      expect(f.class.stable.uses_from_macos_elements).to eq(["foo"])
-      expect(f.class.head.uses_from_macos_elements).to eq(["foo"])
+      expect(f.class.stable.declared_deps).not_to be_empty
+      expect(f.class.head.declared_deps).not_to be_empty
     end
   end
 
@@ -59,7 +62,7 @@ describe Formula do
 
       expect(f.class.stable.deps[0].name).to eq("hello_both")
       expect(f.class.stable.deps[1].name).to eq("hello_macos")
-      expect(f.class.stable.deps[2]).to eq(nil)
+      expect(f.class.stable.deps[2]).to be_nil
     end
 
     it "adds a patch on Mac only" do

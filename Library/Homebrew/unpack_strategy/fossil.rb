@@ -1,4 +1,4 @@
-# typed: true
+# typed: strict
 # frozen_string_literal: true
 
 require "system_command"
@@ -6,18 +6,15 @@ require "system_command"
 module UnpackStrategy
   # Strategy for unpacking Fossil repositories.
   class Fossil
-    extend T::Sig
-
     include UnpackStrategy
     extend SystemCommand::Mixin
 
-    using Magic
-
-    sig { returns(T::Array[String]) }
+    sig { override.returns(T::Array[String]) }
     def self.extensions
       []
     end
 
+    sig { override.params(path: Pathname).returns(T::Boolean) }
     def self.can_extract?(path)
       return false unless path.magic_number.match?(/\ASQLite format 3\000/n)
 
@@ -28,7 +25,7 @@ module UnpackStrategy
 
     private
 
-    sig { override.params(unpack_dir: Pathname, basename: Pathname, verbose: T::Boolean).returns(T.untyped) }
+    sig { override.params(unpack_dir: Pathname, basename: Pathname, verbose: T::Boolean).void }
     def extract_to_dir(unpack_dir, basename:, verbose:)
       args = if @ref_type && @ref
         [@ref]
@@ -39,8 +36,8 @@ module UnpackStrategy
       system_command! "fossil",
                       args:    ["open", path, *args],
                       chdir:   unpack_dir,
-                      env:     { "PATH" => PATH.new(Formula["fossil"].opt_bin, ENV["PATH"]) },
-                      verbose: verbose
+                      env:     { "PATH" => PATH.new(Formula["fossil"].opt_bin, ENV.fetch("PATH")) },
+                      verbose:
     end
   end
 end

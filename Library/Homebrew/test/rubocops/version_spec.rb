@@ -1,9 +1,8 @@
-# typed: false
 # frozen_string_literal: true
 
 require "rubocops/version"
 
-describe RuboCop::Cop::FormulaAudit::Version do
+RSpec.describe RuboCop::Cop::FormulaAudit::Version do
   subject(:cop) { described_class.new }
 
   context "when auditing version" do
@@ -12,7 +11,7 @@ describe RuboCop::Cop::FormulaAudit::Version do
         class Foo < Formula
           url 'https://brew.sh/foo-1.0.tgz'
           version ""
-          ^^^^^^^^^^ version is set to an empty string
+          ^^^^^^^^^^ FormulaAudit/Version: Version is set to an empty string
         end
       RUBY
     end
@@ -22,7 +21,7 @@ describe RuboCop::Cop::FormulaAudit::Version do
         class Foo < Formula
           url 'https://brew.sh/foo-1.0.tgz'
           version "v1.0"
-          ^^^^^^^^^^^^^^ version v1.0 should not have a leading 'v'
+          ^^^^^^^^^^^^^^ FormulaAudit/Version: Version v1.0 should not have a leading 'v'
         end
       RUBY
     end
@@ -32,7 +31,7 @@ describe RuboCop::Cop::FormulaAudit::Version do
         class Foo < Formula
           url 'https://brew.sh/foo-1.0.tgz'
           version "1_0"
-          ^^^^^^^^^^^^^ version 1_0 should not end with an underline and a number
+          ^^^^^^^^^^^^^ FormulaAudit/Version: Version 1_0 should not end with an underline and a number
         end
       RUBY
     end

@@ -1,4 +1,4 @@
---format NoSeedProgressFormatter
+--format QuietProgressFormatter
 --format ParallelTests::RSpec::RuntimeLogger
 --out <%= ENV["PARALLEL_RSPEC_LOG_PATH"] %>
 --format RspecJunitFormatter

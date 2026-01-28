@@ -1,9 +1,8 @@
-# typed: false
 # frozen_string_literal: true
 
 require "dependency_collector"
 
-describe DependencyCollector do
+RSpec.describe DependencyCollector do
   alias_matcher :be_a_build_requirement, :be_build
 
   subject(:collector) { described_class.new }
@@ -53,43 +52,43 @@ describe DependencyCollector do
     it "creates a resource dependency from a CVS URL" do
       resource = Resource.new
       resource.url(":pserver:anonymous:@brew.sh:/cvsroot/foo/bar", using: :cvs)
-      expect(collector.add(resource)).to eq(Dependency.new("cvs", [:build, :test]))
+      expect(collector.add(resource)).to eq(Dependency.new("cvs", [:build, :test, :implicit]))
     end
 
     it "creates a resource dependency from a '.7z' URL" do
       resource = Resource.new
       resource.url("https://brew.sh/foo.7z")
-      expect(collector.add(resource)).to eq(Dependency.new("p7zip", [:build, :test]))
+      expect(collector.add(resource)).to eq(Dependency.new("p7zip", [:build, :test, :implicit]))
     end
 
     it "creates a resource dependency from a '.gz' URL" do
       resource = Resource.new
       resource.url("https://brew.sh/foo.tar.gz")
-      expect(collector.add(resource)).to be nil
+      expect(collector.add(resource)).to be_nil
     end
 
     it "creates a resource dependency from a '.lz' URL" do
       resource = Resource.new
       resource.url("https://brew.sh/foo.lz")
-      expect(collector.add(resource)).to eq(Dependency.new("lzip", [:build, :test]))
+      expect(collector.add(resource)).to eq(Dependency.new("lzip", [:build, :test, :implicit]))
     end
 
     it "creates a resource dependency from a '.lha' URL" do
       resource = Resource.new
       resource.url("https://brew.sh/foo.lha")
-      expect(collector.add(resource)).to eq(Dependency.new("lha", [:build, :test]))
+      expect(collector.add(resource)).to eq(Dependency.new("lha", [:build, :test, :implicit]))
     end
 
     it "creates a resource dependency from a '.lzh' URL" do
       resource = Resource.new
       resource.url("https://brew.sh/foo.lzh")
-      expect(collector.add(resource)).to eq(Dependency.new("lha", [:build, :test]))
+      expect(collector.add(resource)).to eq(Dependency.new("lha", [:build, :test, :implicit]))
     end
 
     it "creates a resource dependency from a '.rar' URL" do
       resource = Resource.new
       resource.url("https://brew.sh/foo.rar")
-      expect(collector.add(resource)).to eq(Dependency.new("unrar", [:build, :test]))
+      expect(collector.add(resource)).to eq(Dependency.new("libarchive", [:build, :test, :implicit]))
     end
 
     it "raises a TypeError for unknown classes" do

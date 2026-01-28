@@ -1,9 +1,8 @@
-# typed: false
 # frozen_string_literal: true
 
 require "livecheck/strategy"
 
-describe Homebrew::Livecheck::Strategy::PageMatch do
+RSpec.describe Homebrew::Livecheck::Strategy::PageMatch do
   subject(:page_match) { described_class }
 
   let(:http_url) { "https://brew.sh/blog/" }
@@ -11,7 +10,7 @@ describe Homebrew::Livecheck::Strategy::PageMatch do
 
   let(:regex) { %r{href=.*?/homebrew[._-]v?(\d+(?:\.\d+)+)/?["' >]}i }
 
-  let(:content) {
+  let(:content) do
     <<~EOS
       <!DOCTYPE html>
       <html>
@@ -35,11 +34,11 @@ describe Homebrew::Livecheck::Strategy::PageMatch do
         </body>
       </html>
     EOS
-  }
+  end
 
   let(:content_matches) { ["2.6.0", "2.5.0", "2.4.0", "2.3.0", "2.2.0", "2.1.0", "2.0.0", "1.9.0"] }
 
-  let(:find_versions_return_hash) {
+  let(:find_versions_return_hash) do
     {
       matches: {
         "2.6.0" => Version.new("2.6.0"),
@@ -51,16 +50,16 @@ describe Homebrew::Livecheck::Strategy::PageMatch do
         "2.0.0" => Version.new("2.0.0"),
         "1.9.0" => Version.new("1.9.0"),
       },
-      regex:   regex,
+      regex:,
       url:     http_url,
     }
-  }
+  end
 
-  let(:find_versions_cached_return_hash) {
+  let(:find_versions_cached_return_hash) do
     return_hash = find_versions_return_hash
     return_hash[:cached] = true
     return_hash
-  }
+  end
 
   describe "::match?" do
     it "returns true for an HTTP URL" do
@@ -106,15 +105,15 @@ describe Homebrew::Livecheck::Strategy::PageMatch do
 
   describe "::find_versions?" do
     it "finds versions in provided_content" do
-      expect(page_match.find_versions(url: http_url, regex: regex, provided_content: content))
+      expect(page_match.find_versions(url: http_url, regex:, provided_content: content))
         .to eq(find_versions_cached_return_hash)
 
       # NOTE: Ideally, a regex should always be provided to `#find_versions`
-      # for `PageMatch` but there are currently some `livecheck` blocks in
-      # casks where `#regex` isn't used and the regex only exists within a
-      # `strategy` block. This isn't ideal but, for the moment, we allow a
-      # `strategy` block to act as a substitution for a regex and we need to
-      # test this scenario to ensure it works.
+      #       for `PageMatch` but there are currently some `livecheck` blocks in
+      #       casks where `#regex` isn't used and the regex only exists within a
+      #       `strategy` block. This isn't ideal but, for the moment, we allow a
+      #       `strategy` block to act as a substitution for a regex and we need to
+      #       test this scenario to ensure it works.
       #
       # Under normal circumstances, a regex should be established in a
       # `livecheck` block using `#regex` and passed into the `strategy` block

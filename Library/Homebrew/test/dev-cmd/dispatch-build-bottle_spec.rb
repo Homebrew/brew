@@ -1,8 +1,8 @@
-# typed: false
 # frozen_string_literal: true
 
 require "cmd/shared_examples/args_parse"
+require "dev-cmd/dispatch-build-bottle"
 
-describe "brew dispatch-build-bottle" do
+RSpec.describe Homebrew::DevCmd::DispatchBuildBottle do
   it_behaves_like "parseable arguments"
 end

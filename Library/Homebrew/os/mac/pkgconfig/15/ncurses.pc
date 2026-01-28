@@ -1,0 +1,17 @@
+homebrew_sdkroot=/Library/Developer/CommandLineTools/SDKs/MacOSX15.sdk
+prefix=${homebrew_sdkroot}/usr
+exec_prefix=/usr
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+abi_version=5.4
+major_version=6
+version=6.0.20150808
+
+Name: ncurses
+Description: ncurses 6.0 library
+Version: ${version}
+URL: http://invisible-island.net/ncurses
+Requires.private:
+Libs: -L${libdir} -lncurses
+Libs.private:
+Cflags: -D_DARWIN_C_SOURCE

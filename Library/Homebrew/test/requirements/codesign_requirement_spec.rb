@@ -1,18 +1,17 @@
-# typed: false
 # frozen_string_literal: true
 
 require "requirements/codesign_requirement"
 
-describe CodesignRequirement do
-  subject(:requirement) {
-    described_class.new([{ identity: identity, with: with, url: url }])
-  }
+RSpec.describe CodesignRequirement do
+  subject(:requirement) do
+    described_class.new([{ identity:, with:, url: }])
+  end
 
   let(:identity) { "lldb_codesign" }
   let(:with) { "LLDB" }
-  let(:url) {
+  let(:url) do
     "https://llvm.org/svn/llvm-project/lldb/trunk/docs/code-signing.txt"
-  }
+  end
 
   describe "#message" do
     it "includes all parameters" do

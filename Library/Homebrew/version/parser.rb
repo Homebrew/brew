@@ -1,21 +1,19 @@
-# typed: true
+# typed: strict
 # frozen_string_literal: true
 
 class Version
-  # @api private
   class Parser
-    extend T::Sig
     extend T::Helpers
+
     abstract!
 
     sig { abstract.params(spec: Pathname).returns(T.nilable(String)) }
     def parse(spec); end
   end
 
-  # @api private
   class RegexParser < Parser
-    extend T::Sig
     extend T::Helpers
+
     abstract!
 
     sig { params(regex: Regexp, block: T.nilable(T.proc.params(arg0: String).returns(String))).void }
@@ -41,22 +39,16 @@ class Version
     def self.process_spec(spec); end
   end
 
-  # @api private
   class UrlParser < RegexParser
-    extend T::Sig
-
     sig { override.params(spec: Pathname).returns(String) }
     def self.process_spec(spec)
       spec.to_s
     end
   end
 
-  # @api private
   class StemParser < RegexParser
-    extend T::Sig
-
-    SOURCEFORGE_DOWNLOAD_REGEX = %r{(?:sourceforge\.net|sf\.net)/.*/download$}.freeze
-    NO_FILE_EXTENSION_REGEX = /\.[^a-zA-Z]+$/.freeze
+    SOURCEFORGE_DOWNLOAD_REGEX = %r{(?:sourceforge\.net|sf\.net)/.*/download$}
+    NO_FILE_EXTENSION_REGEX = /\.[^a-zA-Z]+$/
 
     sig { override.params(spec: Pathname).returns(String) }
     def self.process_spec(spec)

@@ -1,9 +1,8 @@
-# typed: false
 # frozen_string_literal: true
 
 require "rubocops/livecheck"
 
-describe RuboCop::Cop::FormulaAudit::LivecheckRegexIfPageMatch do
+RSpec.describe RuboCop::Cop::FormulaAudit::LivecheckRegexIfPageMatch do
   subject(:cop) { described_class.new }
 
   it "reports an offense when there is no `regex` for `strategy :page_match`" do
@@ -12,7 +11,7 @@ describe RuboCop::Cop::FormulaAudit::LivecheckRegexIfPageMatch do
         url "https://brew.sh/foo-1.0.tgz"
 
         livecheck do
-        ^^^^^^^^^^^^ A `regex` is required if `strategy :page_match` is present.
+        ^^^^^^^^^^^^ FormulaAudit/LivecheckRegexIfPageMatch: A `regex` is required if `strategy :page_match` is present.
           url :stable
           strategy :page_match
         end

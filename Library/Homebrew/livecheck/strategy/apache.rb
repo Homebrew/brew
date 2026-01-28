@@ -1,5 +1,7 @@
-# typed: true
+# typed: strict
 # frozen_string_literal: true
+
+require "livecheck/strategic"
 
 module Homebrew
   module Livecheck
@@ -26,7 +28,7 @@ module Homebrew
       #
       # @api public
       class Apache
-        extend T::Sig
+        extend Strategic
 
         # The `Regexp` used to determine if the strategy applies to the URL.
         URL_MATCH_REGEX = %r{
@@ -39,13 +41,12 @@ module Homebrew
           (?<prefix>[^/]*?)  # Any text in filename or directory before version
           v?\d+(?:\.\d+)+    # The numeric version
           (?<suffix>/|[^/]*) # Any text in filename or directory after version
-        }ix.freeze
+        }ix
 
         # Whether the strategy can be applied to the provided URL.
         #
         # @param url [String] the URL to match against
-        # @return [Boolean]
-        sig { params(url: String).returns(T::Boolean) }
+        sig { override.params(url: String).returns(T::Boolean) }
         def self.match?(url)
           URL_MATCH_REGEX.match?(url)
         end
@@ -56,7 +57,6 @@ module Homebrew
         # `livecheck` block.
         #
         # @param url [String] the URL used to generate values
-        # @return [Hash]
         sig { params(url: String).returns(T::Hash[Symbol, T.untyped]) }
         def self.generate_input_values(url)
           values = {}
@@ -70,7 +70,7 @@ module Homebrew
           regex_prefix = Regexp.escape(match[:prefix] || "").gsub("\\-", "-")
 
           # Use `\.t` instead of specific tarball extensions (e.g. .tar.gz)
-          suffix = match[:suffix]&.sub(Strategy::TARBALL_EXTENSION_REGEX, "\.t")
+          suffix = match[:suffix]&.sub(Strategy::TARBALL_EXTENSION_REGEX, ".t")
           regex_suffix = Regexp.escape(suffix || "").gsub("\\-", "-")
 
           # Example directory regex: `%r{href=["']?v?(\d+(?:\.\d+)+)/}i`
@@ -87,19 +87,25 @@ module Homebrew
         #
         # @param url [String] the URL of the content to check
         # @param regex [Regexp] a regex used for matching versions in content
+        # @param options [Options] options to modify behavior
         # @return [Hash]
         sig {
-          params(
-            url:    String,
-            regex:  T.nilable(Regexp),
-            unused: T.nilable(T::Hash[Symbol, T.untyped]),
-            block:  T.untyped,
-          ).returns(T::Hash[Symbol, T.untyped])
+          override(allow_incompatible: true).params(
+            url:     String,
+            regex:   T.nilable(Regexp),
+            options: Options,
+            block:   T.nilable(Proc),
+          ).returns(T::Hash[Symbol, T.anything])
         }
-        def self.find_versions(url:, regex: nil, **unused, &block)
+        def self.find_versions(url:, regex: nil, options: Options.new, &block)
           generated = generate_input_values(url)
 
-          T.unsafe(PageMatch).find_versions(url: generated[:url], regex: regex || generated[:regex], **unused, &block)
+          PageMatch.find_versions(
+            url:     generated[:url],
+            regex:   regex || generated[:regex],
+            options:,
+            &block
+          )
         end
       end
     end

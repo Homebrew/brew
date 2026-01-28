@@ -1,16 +1,15 @@
-# typed: false
 # frozen_string_literal: true
 
 require "rubocops/homepage"
 
-describe RuboCop::Cop::FormulaAudit::Homepage do
+RSpec.describe RuboCop::Cop::FormulaAudit::Homepage do
   subject(:cop) { described_class.new }
 
   context "when auditing homepage" do
     it "reports an offense when there is no homepage" do
       expect_offense(<<~RUBY)
         class Foo < Formula
-        ^^^^^^^^^^^^^^^^^^^ Formula should have a homepage.
+        ^^^^^^^^^^^^^^^^^^^ FormulaAudit/Homepage: Formula should have a homepage.
           url 'https://brew.sh/foo-1.0.tgz'
         end
       RUBY
@@ -20,7 +19,7 @@ describe RuboCop::Cop::FormulaAudit::Homepage do
       expect_offense(<<~RUBY)
         class Foo < Formula
           homepage "ftp://brew.sh/foo"
-                   ^^^^^^^^^^^^^^^^^^^ The homepage should start with http or https.
+                   ^^^^^^^^^^^^^^^^^^^ FormulaAudit/Homepage: The `homepage` should start with http or https.
           url "https://brew.sh/foo-1.0.tgz"
         end
       RUBY
@@ -30,7 +29,7 @@ describe RuboCop::Cop::FormulaAudit::Homepage do
       expect_offense(<<~RUBY)
         class Foo < Formula
           homepage "http://www.freedesktop.org/wiki/bar"
-                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Freedesktop homepages should be styled `https://wiki.freedesktop.org/project_name`
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ FormulaAudit/Homepage: Freedesktop homepages should be styled: https://wiki.freedesktop.org/project_name
           url "https://brew.sh/foo-1.0.tgz"
         end
       RUBY
@@ -40,7 +39,7 @@ describe RuboCop::Cop::FormulaAudit::Homepage do
       expect_offense(<<~RUBY)
         class Foo < Formula
           homepage "http://www.freedesktop.org/wiki/Software/baz"
-                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Freedesktop homepages should be styled `https://wiki.freedesktop.org/www/Software/project_name`
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ FormulaAudit/Homepage: Freedesktop homepages should be styled: https://wiki.freedesktop.org/www/Software/project_name
           url "https://brew.sh/foo-1.0.tgz"
         end
       RUBY
@@ -50,7 +49,7 @@ describe RuboCop::Cop::FormulaAudit::Homepage do
       expect_offense(<<~RUBY)
         class Foo < Formula
           homepage "https://code.google.com/p/qux"
-                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Google Code homepages should end with a slash
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ FormulaAudit/Homepage: Google Code homepages should end with a slash
           url "https://brew.sh/foo-1.0.tgz"
         end
       RUBY
@@ -67,7 +66,7 @@ describe RuboCop::Cop::FormulaAudit::Homepage do
       expect_offense(<<~RUBY)
         class Foo < Formula
           homepage "https://github.com/foo/bar.git"
-                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ GitHub homepages should not end with .git
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ FormulaAudit/Homepage: GitHub homepages should not end with .git
           url "https://brew.sh/foo-1.0.tgz"
         end
       RUBY
@@ -80,19 +79,21 @@ describe RuboCop::Cop::FormulaAudit::Homepage do
       RUBY
     end
 
-    describe "for Sourceforge" do
-      correct_formula = <<~RUBY
-        class Foo < Formula
-          homepage "https://foo.sourceforge.io/"
-          url "https://brew.sh/foo-1.0.tgz"
-        end
-      RUBY
+    describe "for SourceForge" do
+      let(:correct_formula) do
+        <<~RUBY
+          class Foo < Formula
+            homepage "https://foo.sourceforge.io/"
+            url "https://brew.sh/foo-1.0.tgz"
+          end
+        RUBY
+      end
 
       it "reports and corrects [1]" do
         expect_offense(<<~RUBY)
           class Foo < Formula
             homepage "http://foo.sourceforge.net/"
-                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Sourceforge homepages should be `https://foo.sourceforge.io/`
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ FormulaAudit/Homepage: SourceForge homepages should be: https://foo.sourceforge.io/
             url "https://brew.sh/foo-1.0.tgz"
           end
         RUBY
@@ -104,7 +105,7 @@ describe RuboCop::Cop::FormulaAudit::Homepage do
         expect_offense(<<~RUBY)
           class Foo < Formula
             homepage "http://foo.sourceforge.net"
-                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Sourceforge homepages should be `https://foo.sourceforge.io/`
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^ FormulaAudit/Homepage: SourceForge homepages should be: https://foo.sourceforge.io/
             url "https://brew.sh/foo-1.0.tgz"
           end
         RUBY
@@ -116,7 +117,7 @@ describe RuboCop::Cop::FormulaAudit::Homepage do
         expect_offense(<<~RUBY)
           class Foo < Formula
             homepage "http://foo.sf.net/"
-                     ^^^^^^^^^^^^^^^^^^^^ Sourceforge homepages should be `https://foo.sourceforge.io/`
+                     ^^^^^^^^^^^^^^^^^^^^ FormulaAudit/Homepage: SourceForge homepages should be: https://foo.sourceforge.io/
             url "https://brew.sh/foo-1.0.tgz"
           end
         RUBY
@@ -129,7 +130,7 @@ describe RuboCop::Cop::FormulaAudit::Homepage do
       expect_offense(<<~RUBY)
         class Foo < Formula
           homepage "https://foo.readthedocs.org"
-                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Readthedocs homepages should be `https://foo.readthedocs.io`
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ FormulaAudit/Homepage: Readthedocs homepages should be: https://foo.readthedocs.io
           url "https://brew.sh/foo-1.0.tgz"
         end
       RUBY
@@ -160,11 +161,13 @@ describe RuboCop::Cop::FormulaAudit::Homepage do
           end
         RUBY
 
-        expected_offenses = [{  message:  "Please use https:// for #{homepage}",
-                                severity: :convention,
-                                line:     2,
-                                column:   11,
-                                source:   source }]
+        expected_offenses = [{
+          message:  "FormulaAudit/Homepage: Please use https:// for #{homepage}",
+          severity: :convention,
+          line:     2,
+          column:   11,
+          source:,
+        }]
 
         expected_offenses.zip([inspect_source(source).last]).each do |expected, actual|
           expect(actual.message).to eq(expected[:message])

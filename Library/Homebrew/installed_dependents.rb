@@ -1,14 +1,10 @@
-# typed: true
+# typed: strict
 # frozen_string_literal: true
 
 require "cask_dependent"
 
 # Helper functions for installed dependents.
-#
-# @api private
 module InstalledDependents
-  extend T::Sig
-
   module_function
 
   # Given an array of kegs, this method will try to find some other kegs
@@ -24,6 +20,9 @@ module InstalledDependents
   # parameter.
   #
   # For efficiency, we don't bother trying to get complete data.
+  sig {
+    params(kegs: T::Array[Keg], casks: T::Array[Cask::Cask]).returns(T.nilable([T::Array[Keg], T::Array[String]]))
+  }
   def find_some_installed_dependents(kegs, casks: [])
     keg_names = kegs.select(&:optlinked?).map(&:name)
     keg_formulae = []
@@ -48,18 +47,18 @@ module InstalledDependents
     dependents_to_check.each do |dependent|
       required = case dependent
       when Formula
-        dependent.missing_dependencies(hide: keg_names)
+        dependent.missing_dependencies(hide: keg_names).map(&:to_installed_formula)
       when Cask::Cask
         # When checking for cask dependents, we don't care about missing or non-runtime dependencies
-        CaskDependent.new(dependent).runtime_dependencies(ignore_missing: true).map(&:to_formula)
+        CaskDependent.new(dependent).runtime_dependencies.map(&:to_installed_formula)
       end
 
-      required_kegs = required.map do |f|
+      required_kegs = required.filter_map do |f|
         f_kegs = kegs_by_source[[f.name, f.tap]]
         next unless f_kegs
 
-        f_kegs.max_by(&:version)
-      end.compact
+        f_kegs.max_by(&:scheme_and_version)
+      end
 
       next if required_kegs.empty?
 

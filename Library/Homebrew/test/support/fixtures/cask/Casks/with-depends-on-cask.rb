@@ -5,7 +5,7 @@ cask "with-depends-on-cask" do
   url "file://#{TEST_FIXTURE_DIR}/cask/caffeine.zip"
   homepage "https://brew.sh/with-depends-on-cask"
 
-  depends_on cask: "local-transmission"
+  depends_on cask: "local-transmission-zip"
 
   app "Caffeine.app"
 end

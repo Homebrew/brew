@@ -1,18 +1,18 @@
-# typed: true
+# typed: strict
 # frozen_string_literal: true
+
+require "livecheck/strategic"
 
 module Homebrew
   module Livecheck
     module Strategy
-      # The {ElectronBuilder} strategy fetches content at a URL and parses
-      # it as an electron-builder appcast in YAML format.
+      # The {ElectronBuilder} strategy fetches content at a URL and parses it
+      # as an electron-builder appcast in YAML format.
       #
       # This strategy is not applied automatically and it's necessary to use
       # `strategy :electron_builder` in a `livecheck` block to apply it.
-      #
-      # @api private
       class ElectronBuilder
-        extend T::Sig
+        extend Strategic
 
         NICE_NAME = "electron-builder"
 
@@ -21,70 +21,46 @@ module Homebrew
         PRIORITY = 0
 
         # The `Regexp` used to determine if the strategy applies to the URL.
-        URL_MATCH_REGEX = %r{^https?://.+/[^/]+\.ya?ml(?:\?[^/?]+)?$}i.freeze
+        URL_MATCH_REGEX = %r{^https?://.+/[^/]+\.ya?ml(?:\?[^/?]+)?$}i
 
         # Whether the strategy can be applied to the provided URL.
         #
         # @param url [String] the URL to match against
-        # @return [Boolean]
-        sig { params(url: String).returns(T::Boolean) }
+        sig { override.params(url: String).returns(T::Boolean) }
         def self.match?(url)
           URL_MATCH_REGEX.match?(url)
-        end
-
-        # Parses YAML text and identifies versions in it.
-        #
-        # @param content [String] the YAML text to parse and check
-        # @return [Array]
-        sig {
-          params(
-            content: String,
-            regex:   T.nilable(Regexp),
-            block:   T.untyped,
-          ).returns(T::Array[String])
-        }
-        def self.versions_from_content(content, regex = nil, &block)
-          require "yaml"
-
-          yaml = YAML.safe_load(content)
-          return [] if yaml.blank?
-
-          if block
-            block_return_value = regex.present? ? yield(yaml, regex) : yield(yaml)
-            return Strategy.handle_block_return(block_return_value)
-          end
-
-          version = yaml["version"]
-          version.present? ? [version] : []
         end
 
         # Checks the YAML content at the URL for new versions.
         #
         # @param url [String] the URL of the content to check
+        # @param regex [Regexp, nil] a regex used for matching versions
+        # @param provided_content [String, nil] content to use in place of
+        #   fetching via `Strategy#page_content`
+        # @param options [Options] options to modify behavior
         # @return [Hash]
         sig {
-          params(
-            url:     String,
-            regex:   T.nilable(Regexp),
-            _unused: T.nilable(T::Hash[Symbol, T.untyped]),
-            block:   T.untyped,
-          ).returns(T::Hash[Symbol, T.untyped])
+          override.params(
+            url:              String,
+            regex:            T.nilable(Regexp),
+            provided_content: T.nilable(String),
+            options:          Options,
+            block:            T.nilable(Proc),
+          ).returns(T::Hash[Symbol, T.anything])
         }
-        def self.find_versions(url:, regex: nil, **_unused, &block)
-          if regex.present? && block.blank?
-            raise ArgumentError, "#{T.must(name).demodulize} only supports a regex when using a `strategy` block"
+        def self.find_versions(url:, regex: nil, provided_content: nil, options: Options.new, &block)
+          if regex.present? && !block_given?
+            raise ArgumentError,
+                  "#{Utils.demodulize(name)} only supports a regex when using a `strategy` block"
           end
 
-          match_data = { matches: {}, url: url }
-
-          match_data.merge!(Strategy.page_content(url))
-          content = match_data.delete(:content)
-
-          versions_from_content(content, regex, &block).each do |version_text|
-            match_data[:matches][version_text] = Version.new(version_text)
-          end
-
-          match_data
+          Yaml.find_versions(
+            url:,
+            regex:,
+            provided_content:,
+            options:,
+            &block || proc { |yaml| yaml["version"] }
+          )
         end
       end
     end

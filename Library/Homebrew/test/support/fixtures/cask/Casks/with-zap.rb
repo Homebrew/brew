@@ -9,11 +9,11 @@ cask "with-zap" do
 
   uninstall quit: "my.fancy.package.app.from.uninstall"
 
-  zap script:     {
-    executable: "MyFancyPkg/FancyUninstaller.tool",
-    args:       ["--please"],
-  },
-      quit:       "my.fancy.package.app",
+  zap quit:       "my.fancy.package.app",
       login_item: "Fancy",
+      script:     {
+        executable: "MyFancyPkg/FancyUninstaller.tool",
+        args:       ["--please"],
+      },
       delete:     "~/Library/Preferences/my.fancy.app.plist"
 end

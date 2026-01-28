@@ -1,58 +1,33 @@
-# typed: true
+# typed: strict
 # frozen_string_literal: true
 
 require "cli/parser"
 require "commands"
+require "utils/output"
 
 module Homebrew
   # Helper module for printing help output.
-  #
-  # @api private
   module Help
-    # NOTE: Keep the length of vanilla `--help` less than 25 lines!
-    #       This is because the default Terminal height is 25 lines. Scrolling sucks
-    #       and concision is important. If more help is needed we should start
-    #       specialising help like the gem command does.
-    # NOTE: Keep lines less than 80 characters! Wrapping is just not cricket.
-    HOMEBREW_HELP = <<~EOS
-      Example usage:
-        brew search TEXT|/REGEX/
-        brew info [FORMULA|CASK...]
-        brew install FORMULA|CASK...
-        brew update
-        brew upgrade [FORMULA|CASK...]
-        brew uninstall FORMULA|CASK...
-        brew list [FORMULA|CASK...]
+    extend Utils::Output::Mixin
 
-      Troubleshooting:
-        brew config
-        brew doctor
-        brew install --verbose --debug FORMULA|CASK
-
-      Contributing:
-        brew create URL [--no-fetch]
-        brew edit [FORMULA|CASK...]
-
-      Further help:
-        brew commands
-        brew help [COMMAND]
-        man brew
-        https://docs.brew.sh
-    EOS
-    private_constant :HOMEBREW_HELP
-
-    module_function
-
-    def help(cmd = nil, empty_argv: false, usage_error: nil, remaining_args: [])
+    sig {
+      params(
+        cmd:            T.nilable(String),
+        empty_argv:     T::Boolean,
+        usage_error:    T.nilable(String),
+        remaining_args: T::Array[String],
+      ).void
+    }
+    def self.help(cmd = nil, empty_argv: false, usage_error: nil, remaining_args: [])
       if cmd.nil?
         # Handle `brew` (no arguments).
         if empty_argv
-          $stderr.puts HOMEBREW_HELP
+          $stderr.puts HOMEBREW_HELP_MESSAGE
           exit 1
         end
 
         # Handle `brew (-h|--help|--usage|-?|help)` (no other arguments).
-        puts HOMEBREW_HELP
+        puts HOMEBREW_HELP_MESSAGE
         exit 0
       end
 
@@ -61,7 +36,7 @@ module Homebrew
 
       # Display command-specific (or generic) help in response to `UsageError`.
       if usage_error
-        $stderr.puts path ? command_help(cmd, path, remaining_args: remaining_args) : HOMEBREW_HELP
+        $stderr.puts path ? command_help(cmd, path, remaining_args:) : HOMEBREW_HELP_MESSAGE
         $stderr.puts
         onoe usage_error
         exit 1
@@ -71,30 +46,43 @@ module Homebrew
       return if path.nil?
 
       # Display help for internal command (or generic help if undocumented).
-      puts command_help(cmd, path, remaining_args: remaining_args)
+      puts command_help(cmd, path, remaining_args:)
       exit 0
     end
 
-    def command_help(cmd, path, remaining_args:)
+    sig {
+      params(
+        cmd:            String,
+        path:           Pathname,
+        remaining_args: T::Array[String],
+      ).returns(String)
+    }
+    def self.command_help(cmd, path, remaining_args:)
       # Only some types of commands can have a parser.
       output = if Commands.valid_internal_cmd?(cmd) ||
                   Commands.valid_internal_dev_cmd?(cmd) ||
                   Commands.external_ruby_v2_cmd_path(cmd)
-        parser_help(path, remaining_args: remaining_args)
+        parser_help(path, remaining_args:)
       end
 
       output ||= comment_help(path)
 
       output ||= if output.blank?
         opoo "No help text in: #{path}" if Homebrew::EnvConfig.developer?
-        HOMEBREW_HELP
+        HOMEBREW_HELP_MESSAGE
       end
 
       output
     end
     private_class_method :command_help
 
-    def parser_help(path, remaining_args:)
+    sig {
+      params(
+        path:           Pathname,
+        remaining_args: T::Array[String],
+      ).returns(T.nilable(String))
+    }
+    def self.parser_help(path, remaining_args:)
       # Let OptionParser generate help text for commands which have a parser.
       cmd_parser = CLI::Parser.from_cmd_path(path)
       return unless cmd_parser
@@ -105,20 +93,22 @@ module Homebrew
     end
     private_class_method :parser_help
 
-    def command_help_lines(path)
+    sig { params(path: Pathname).returns(T::Array[String]) }
+    def self.command_help_lines(path)
       path.read
           .lines
           .grep(/^#:/)
-          .map { |line| line.slice(2..-1).delete_prefix("  ") }
+          .filter_map { |line| line.slice(2..-1)&.delete_prefix("  ") }
     end
     private_class_method :command_help_lines
 
-    def comment_help(path)
+    sig { params(path: Pathname).returns(T.nilable(String)) }
+    def self.comment_help(path)
       # Otherwise read #: lines from the file.
       help_lines = command_help_lines(path)
       return if help_lines.blank?
 
-      Formatter.format_help_text(help_lines.join, width: COMMAND_DESC_WIDTH)
+      Formatter.format_help_text(help_lines.join, width: Formatter::COMMAND_DESC_WIDTH)
                .sub("@hide_from_man_page ", "")
                .sub(/^\* /, "#{Tty.bold}Usage: brew#{Tty.reset} ")
                .gsub(/`(.*?)`/m, "#{Tty.bold}\\1#{Tty.reset}")

@@ -1,4 +1,3 @@
-# typed: false
 # frozen_string_literal: true
 
 require "migrator"
@@ -6,8 +5,8 @@ require "test/support/fixtures/testball"
 require "tab"
 require "keg"
 
-describe Migrator do
-  subject(:migrator) { described_class.new(new_formula) }
+RSpec.describe Migrator do
+  subject(:migrator) { described_class.new(new_formula, old_formula.name) }
 
   let(:new_formula) { Testball.new("newname") }
   let(:old_formula) { Testball.new("oldname") }
@@ -21,7 +20,10 @@ describe Migrator do
   let(:old_pin) { HOMEBREW_PINNED_KEGS/"oldname" }
 
   before do |example|
-    allow(new_formula).to receive(:oldname).and_return("oldname")
+    allow(new_formula).to receive(:oldnames).and_return(["oldname"])
+    allow(Formulary).to receive(:factory).with("homebrew/core/oldname", any_args).and_return(old_formula)
+    allow(Formulary).to receive(:factory).with("oldname", any_args).and_return(old_formula)
+    allow(Formulary).to receive(:factory).with("newname", any_args).and_return(new_formula)
 
     # do not create directories for error tests
     next if example.metadata[:description].start_with?("raises an error")
@@ -56,16 +58,10 @@ describe Migrator do
   end
 
   describe "::new" do
-    it "raises an error if there is no old name" do
-      expect {
-        described_class.new(old_formula)
-      }.to raise_error(Migrator::MigratorNoOldnameError)
-    end
-
     it "raises an error if there is no old path" do
-      expect {
-        described_class.new(new_formula)
-      }.to raise_error(Migrator::MigratorNoOldpathError)
+      expect do
+        described_class.new(new_formula, "oldname")
+      end.to raise_error(Migrator::MigratorNoOldpathError)
     end
 
     it "raises an error if the Taps differ" do
@@ -76,9 +72,9 @@ describe Migrator do
       tab.source["tap"] = "homebrew/core"
       tab.write
 
-      expect {
-        described_class.new(new_formula)
-      }.to raise_error(Migrator::MigratorDifferentTapsError)
+      expect do
+        described_class.new(new_formula, "oldname")
+      end.to raise_error(Migrator::MigratorDifferentTapsError)
     end
   end
 
@@ -94,7 +90,7 @@ describe Migrator do
   end
 
   specify "#backup_oldname_cellar" do
-    old_keg_record.parent.rmtree
+    FileUtils.rm_r(old_keg_record.parent)
     (new_keg_record/"bin").mkpath
 
     migrator.backup_oldname_cellar
@@ -213,7 +209,7 @@ describe Migrator do
     tab.tabfile = HOMEBREW_CELLAR/"oldname/0.1/INSTALL_RECEIPT.json"
     tab.source["path"] = "/should/be/the/same"
     tab.write
-    migrator = described_class.new(new_formula)
+    migrator = described_class.new(new_formula, "oldname")
     tab.tabfile.delete
     migrator.backup_old_tabs
     expect(Tab.for_keg(old_keg_record).source["path"]).to eq("/should/be/the/same")

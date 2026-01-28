@@ -1,39 +1,40 @@
-# typed: false
 # frozen_string_literal: true
 
 require "utils/user"
 
-describe User do
-  subject { described_class.current }
+RSpec.describe User do
+  subject(:user) { described_class.current }
 
-  it { is_expected.to eq ENV["USER"] }
+  it { is_expected.to eq ENV.fetch("USER") }
 
   describe "#gui?" do
     before do
-      allow(SystemCommand).to receive(:run).with("who")
-        .and_return([who_output, "", instance_double(Process::Status, success?: true)])
+      allow(SystemCommand).to receive(:run)
+        .with("who", any_args)
+        .and_return(instance_double(SystemCommand::Result,
+                                    to_a: [who_output, "", instance_double(Process::Status, success?: true)]))
     end
 
     context "when the current user is in a console session" do
-      let(:who_output) {
+      let(:who_output) do
         <<~EOS
-          #{ENV["USER"]}   console  Oct  1 11:23
-          #{ENV["USER"]}   ttys001  Oct  1 11:25
+          #{ENV.fetch("USER")}   console  Oct  1 11:23
+          #{ENV.fetch("USER")}   ttys001  Oct  1 11:25
         EOS
-      }
+      end
 
-      its(:gui?) { is_expected.to be true }
+      it(:gui?) { expect(user.gui?).to be true }
     end
 
     context "when the current user is not in a console session" do
-      let(:who_output) {
+      let(:who_output) do
         <<~EOS
-          #{ENV["USER"]}   ttys001  Oct  1 11:25
-          fake_user        ttys002  Oct  1 11:27
+          #{ENV.fetch("USER")}   ttys001  Oct  1 11:25
+          fake_user              ttys002  Oct  1 11:27
         EOS
-      }
+      end
 
-      its(:gui?) { is_expected.to be false }
+      it(:gui?) { expect(user.gui?).to be false }
     end
   end
 end

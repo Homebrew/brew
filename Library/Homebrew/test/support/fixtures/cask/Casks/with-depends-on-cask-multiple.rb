@@ -6,7 +6,7 @@ cask "with-depends-on-cask-multiple" do
   homepage "https://brew.sh/with-depends-on-cask-multiple"
 
   depends_on cask: "local-caffeine"
-  depends_on cask: "local-transmission"
+  depends_on cask: "local-transmission-zip"
 
   app "Caffeine.app"
 end

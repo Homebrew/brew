@@ -1,9 +1,9 @@
-# typed: false
 # frozen_string_literal: true
 
+require "cmd/outdated"
 require "cmd/shared_examples/args_parse"
 
-describe "brew outdated" do
+RSpec.describe Homebrew::Cmd::Outdated do
   it_behaves_like "parseable arguments"
 
   it "outputs JSON", :integration_test do

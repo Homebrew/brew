@@ -1,7 +1,6 @@
-# typed: false
 # frozen_string_literal: true
 
-describe Cask::Artifact::Pkg, :cask do
+RSpec.describe Cask::Artifact::Pkg, :cask do
   let(:cask) { Cask::CaskLoader.load(cask_path("with-installable")) }
   let(:fake_system_command) { class_double(SystemCommand) }
 
@@ -17,11 +16,12 @@ describe Cask::Artifact::Pkg, :cask do
         "/usr/sbin/installer",
         args:         ["-pkg", cask.staged_path.join("MyFancyPkg", "Fancy.pkg"), "-target", "/"],
         sudo:         true,
+        sudo_as_root: true,
         print_stdout: true,
         env:          {
-          "LOGNAME"  => ENV["USER"],
-          "USER"     => ENV["USER"],
-          "USERNAME" => ENV["USER"],
+          "LOGNAME"  => ENV.fetch("USER"),
+          "USER"     => ENV.fetch("USER"),
+          "USERNAME" => ENV.fetch("USER"),
         },
       )
 
@@ -35,7 +35,7 @@ describe Cask::Artifact::Pkg, :cask do
     it "passes the choice changes xml to the system installer" do
       pkg = cask.artifacts.find { |a| a.is_a?(described_class) }
 
-      file = double(path: Pathname.new("/tmp/choices.xml"))
+      file = instance_double(Tempfile, path: Pathname.new("/tmp/choices.xml"))
 
       expect(file).to receive(:write).with <<~XML
         <?xml version="1.0" encoding="UTF-8"?>
@@ -66,11 +66,12 @@ describe Cask::Artifact::Pkg, :cask do
           cask.staged_path.join("/tmp/choices.xml")
         ],
         sudo:         true,
+        sudo_as_root: true,
         print_stdout: true,
         env:          {
-          "LOGNAME"  => ENV["USER"],
-          "USER"     => ENV["USER"],
-          "USERNAME" => ENV["USER"],
+          "LOGNAME"  => ENV.fetch("USER"),
+          "USER"     => ENV.fetch("USER"),
+          "USERNAME" => ENV.fetch("USER"),
         },
       )
 

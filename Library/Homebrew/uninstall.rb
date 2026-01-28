@@ -1,20 +1,29 @@
-# typed: true
+# typed: strict
 # frozen_string_literal: true
 
+require "dependents_message"
 require "installed_dependents"
+require "utils/output"
 
 module Homebrew
   # Helper module for uninstalling kegs.
-  #
-  # @api private
   module Uninstall
-    module_function
+    extend ::Utils::Output::Mixin
 
-    def uninstall_kegs(kegs_by_rack, casks: [], force: false, ignore_dependencies: false, named_args: [])
+    sig {
+      params(
+        kegs_by_rack:        T::Hash[Pathname, T::Array[Keg]],
+        casks:               T::Array[Cask::Cask],
+        force:               T::Boolean,
+        ignore_dependencies: T::Boolean,
+        named_args:          T::Array[String],
+      ).void
+    }
+    def self.uninstall_kegs(kegs_by_rack, casks: [], force: false, ignore_dependencies: false, named_args: [])
       handle_unsatisfied_dependents(kegs_by_rack,
-                                    casks:               casks,
-                                    ignore_dependencies: ignore_dependencies,
-                                    named_args:          named_args)
+                                    casks:,
+                                    ignore_dependencies:,
+                                    named_args:)
       return if Homebrew.failed?
 
       kegs_by_rack.each do |rack, kegs|
@@ -52,7 +61,7 @@ module Homebrew
               if rack.directory?
                 versions = rack.subdirs.map(&:basename)
                 puts <<~EOS
-                  #{keg.name} #{versions.to_sentence} #{"is".pluralize(versions.count)} still installed.
+                  #{keg.name} #{versions.to_sentence} #{versions.one? ? "is" : "are"} still installed.
                   To remove all versions, run:
                     brew uninstall --force #{keg.name}
                 EOS
@@ -71,7 +80,22 @@ module Homebrew
               end
 
               unversioned_name = f.name.gsub(/@.+$/, "")
-              maybe_paths = Dir.glob("#{f.etc}/*#{unversioned_name}*")
+              maybe_paths = Dir.glob("#{f.etc}/#{unversioned_name}*")
+              excluded_names = if Homebrew::EnvConfig.no_install_from_api?
+                Formula.names
+              else
+                Homebrew::API.formula_names
+              end
+              maybe_paths = maybe_paths.reject do |path|
+                # Remove extension only if a file
+                # (e.g. directory with name "openssl@1.1" will be trimmed to "openssl@1")
+                basename = if File.directory?(path)
+                  File.basename(path)
+                else
+                  File.basename(path, ".*")
+                end
+                excluded_names.include?(basename)
+              end
               maybe_paths -= paths if paths.present?
               if maybe_paths.present?
                 puts
@@ -97,74 +121,34 @@ module Homebrew
       end
     end
 
-    def handle_unsatisfied_dependents(kegs_by_rack, casks: [], ignore_dependencies: false, named_args: [])
+    sig {
+      params(
+        kegs_by_rack:        T::Hash[Pathname, T::Array[Keg]],
+        casks:               T::Array[Cask::Cask],
+        ignore_dependencies: T::Boolean,
+        named_args:          T::Array[String],
+      ).void
+    }
+    def self.handle_unsatisfied_dependents(kegs_by_rack, casks: [], ignore_dependencies: false, named_args: [])
       return if ignore_dependencies
 
       all_kegs = kegs_by_rack.values.flatten(1)
-      check_for_dependents(all_kegs, casks: casks, named_args: named_args)
+      check_for_dependents!(all_kegs, casks:, named_args:)
     rescue MethodDeprecatedError
       # Silently ignore deprecations when uninstalling.
       nil
     end
 
-    def check_for_dependents(kegs, casks: [], named_args: [])
-      return false unless (result = InstalledDependents.find_some_installed_dependents(kegs, casks: casks))
+    sig { params(kegs: T::Array[Keg], casks: T::Array[Cask::Cask], named_args: T::Array[String]).returns(T::Boolean) }
+    def self.check_for_dependents!(kegs, casks: [], named_args: [])
+      return false unless (result = InstalledDependents.find_some_installed_dependents(kegs, casks:))
 
-      if Homebrew::EnvConfig.developer?
-        DeveloperDependentsMessage.new(*result, named_args: named_args).output
-      else
-        NondeveloperDependentsMessage.new(*result, named_args: named_args).output
-      end
-
+      DependentsMessage.new(*result, named_args:).output
       true
     end
 
-    # @api private
-    class DependentsMessage
-      attr_reader :reqs, :deps, :named_args
-
-      def initialize(requireds, dependents, named_args: [])
-        @reqs = requireds
-        @deps = dependents
-        @named_args = named_args
-      end
-
-      protected
-
-      def sample_command
-        "brew uninstall --ignore-dependencies #{named_args.join(" ")}"
-      end
-
-      def are_required_by_deps
-        "#{"is".pluralize(reqs.count)} required by #{deps.to_sentence}, " \
-          "which #{"is".pluralize(deps.count)} currently installed"
-      end
-    end
-
-    # @api private
-    class DeveloperDependentsMessage < DependentsMessage
-      def output
-        opoo <<~EOS
-          #{reqs.to_sentence} #{are_required_by_deps}.
-          You can silence this warning with:
-            #{sample_command}
-        EOS
-      end
-    end
-
-    # @api private
-    class NondeveloperDependentsMessage < DependentsMessage
-      def output
-        ofail <<~EOS
-          Refusing to uninstall #{reqs.to_sentence}
-          because #{"it".pluralize(reqs.count)} #{are_required_by_deps}.
-          You can override this and force removal with:
-            #{sample_command}
-        EOS
-      end
-    end
-
-    def rm_pin(rack)
+    sig { params(rack: Pathname).void }
+    def self.rm_pin(rack)
       Formulary.from_rack(rack).unpin
     rescue
       nil

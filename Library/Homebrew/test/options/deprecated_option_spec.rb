@@ -1,24 +1,23 @@
-# typed: false
 # frozen_string_literal: true
 
 require "options"
 
-describe DeprecatedOption do
+RSpec.describe DeprecatedOption do
   subject(:option) { described_class.new("foo", "bar") }
 
   specify "#old" do
     expect(option.old).to eq("foo")
   end
 
-  specify "#old_flag" do
+  specify "#old_flag" do # rubocop:todo RSpec/AggregateExamples
     expect(option.old_flag).to eq("--foo")
   end
 
-  specify "#current" do
+  specify "#current" do # rubocop:todo RSpec/AggregateExamples
     expect(option.current).to eq("bar")
   end
 
-  specify "#current_flag" do
+  specify "#current_flag" do # rubocop:todo RSpec/AggregateExamples
     expect(option.current_flag).to eq("--bar")
   end
 

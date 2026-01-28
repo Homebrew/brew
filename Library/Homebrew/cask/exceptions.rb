@@ -1,18 +1,12 @@
-# typed: true
+# typed: true # rubocop:todo Sorbet/StrictSigil
 # frozen_string_literal: true
 
 module Cask
   # General cask error.
-  #
-  # @api private
   class CaskError < RuntimeError; end
 
   # Cask error containing multiple other errors.
-  #
-  # @api private
   class MultipleCaskErrors < CaskError
-    extend T::Sig
-
     def initialize(errors)
       super()
 
@@ -29,11 +23,7 @@ module Cask
   end
 
   # Abstract cask error containing a cask token.
-  #
-  # @api private
   class AbstractCaskErrorWithToken < CaskError
-    extend T::Sig
-
     sig { returns(String) }
     attr_reader :token
 
@@ -49,23 +39,30 @@ module Cask
   end
 
   # Error when a cask is not installed.
-  #
-  # @api private
   class CaskNotInstalledError < AbstractCaskErrorWithToken
-    extend T::Sig
-
     sig { returns(String) }
     def to_s
       "Cask '#{token}' is not installed."
     end
   end
 
-  # Error when a cask conflicts with another cask.
-  #
-  # @api private
-  class CaskConflictError < AbstractCaskErrorWithToken
-    extend T::Sig
+  # Error when a cask cannot be installed.
+  class CaskCannotBeInstalledError < AbstractCaskErrorWithToken
+    attr_reader :message
 
+    def initialize(token, message)
+      super(token)
+      @message = message
+    end
+
+    sig { returns(String) }
+    def to_s
+      "Cask '#{token}' has been #{message}"
+    end
+  end
+
+  # Error when a cask conflicts with another cask.
+  class CaskConflictError < AbstractCaskErrorWithToken
     attr_reader :conflicting_cask
 
     def initialize(token, conflicting_cask)
@@ -80,11 +77,7 @@ module Cask
   end
 
   # Error when a cask is not available.
-  #
-  # @api private
   class CaskUnavailableError < AbstractCaskErrorWithToken
-    extend T::Sig
-
     sig { returns(String) }
     def to_s
       "Cask '#{token}' is unavailable#{reason.empty? ? "." : ": #{reason}"}"
@@ -92,11 +85,7 @@ module Cask
   end
 
   # Error when a cask is unreadable.
-  #
-  # @api private
   class CaskUnreadableError < CaskUnavailableError
-    extend T::Sig
-
     sig { returns(String) }
     def to_s
       "Cask '#{token}' is unreadable#{reason.empty? ? "." : ": #{reason}"}"
@@ -104,11 +93,7 @@ module Cask
   end
 
   # Error when a cask in a specific tap is not available.
-  #
-  # @api private
   class TapCaskUnavailableError < CaskUnavailableError
-    extend T::Sig
-
     attr_reader :tap
 
     def initialize(tap, token)
@@ -124,41 +109,40 @@ module Cask
     end
   end
 
-  # Error when a cask already exists.
-  #
-  # @api private
-  class CaskAlreadyCreatedError < AbstractCaskErrorWithToken
-    extend T::Sig
+  # Error when a cask with the same name is found in multiple taps.
+  class TapCaskAmbiguityError < CaskError
+    sig { returns(String) }
+    attr_reader :token
 
+    sig { returns(T::Array[CaskLoader::FromNameLoader]) }
+    attr_reader :loaders
+
+    sig { params(token: String, loaders: T::Array[CaskLoader::FromNameLoader]).void }
+    def initialize(token, loaders)
+      @loaders = loaders
+
+      taps = loaders.map(&:tap)
+      casks = taps.map { |tap| "#{tap}/#{token}" }
+      cask_list = casks.sort.map { |f| "\n       * #{f}" }.join
+
+      super <<~EOS
+        Cask #{token} exists in multiple taps:#{cask_list}
+
+        Please use the fully-qualified name (e.g. #{casks.first}) to refer to a specific Cask.
+      EOS
+    end
+  end
+
+  # Error when a cask already exists.
+  class CaskAlreadyCreatedError < AbstractCaskErrorWithToken
     sig { returns(String) }
     def to_s
       %Q(Cask '#{token}' already exists. Run #{Formatter.identifier("brew edit --cask #{token}")} to edit it.)
     end
   end
 
-  # Error when a cask is already installed.
-  #
-  # @api private
-  class CaskAlreadyInstalledError < AbstractCaskErrorWithToken
-    extend T::Sig
-
-    sig { returns(String) }
-    def to_s
-      <<~EOS
-        Cask '#{token}' is already installed.
-
-        To re-install #{token}, run:
-          #{Formatter.identifier("brew reinstall --cask #{token}")}
-      EOS
-    end
-  end
-
   # Error when there is a cyclic cask dependency.
-  #
-  # @api private
   class CaskCyclicDependencyError < AbstractCaskErrorWithToken
-    extend T::Sig
-
     sig { returns(String) }
     def to_s
       "Cask '#{token}' includes cyclic dependencies on other Casks#{reason.empty? ? "." : ": #{reason}"}"
@@ -166,11 +150,7 @@ module Cask
   end
 
   # Error when a cask depends on itself.
-  #
-  # @api private
   class CaskSelfReferencingDependencyError < CaskCyclicDependencyError
-    extend T::Sig
-
     sig { returns(String) }
     def to_s
       "Cask '#{token}' depends on itself."
@@ -178,11 +158,7 @@ module Cask
   end
 
   # Error when no cask is specified.
-  #
-  # @api private
   class CaskUnspecifiedError < CaskError
-    extend T::Sig
-
     sig { returns(String) }
     def to_s
       "This command requires a Cask token."
@@ -190,11 +166,7 @@ module Cask
   end
 
   # Error when a cask is invalid.
-  #
-  # @api private
   class CaskInvalidError < AbstractCaskErrorWithToken
-    extend T::Sig
-
     sig { returns(String) }
     def to_s
       "Cask '#{token}' definition is invalid#{reason.empty? ? "." : ": #{reason}"}"
@@ -202,8 +174,6 @@ module Cask
   end
 
   # Error when a cask token does not match the file name.
-  #
-  # @api private
   class CaskTokenMismatchError < CaskInvalidError
     def initialize(token, header_token)
       super(token, "Token '#{header_token}' in header line does not match the file name.")
@@ -211,11 +181,7 @@ module Cask
   end
 
   # Error during quarantining of a file.
-  #
-  # @api private
   class CaskQuarantineError < CaskError
-    extend T::Sig
-
     attr_reader :path, :reason
 
     def initialize(path, reason)
@@ -227,7 +193,7 @@ module Cask
 
     sig { returns(String) }
     def to_s
-      s = +"Failed to quarantine #{path}."
+      s = "Failed to quarantine #{path}."
 
       unless reason.empty?
         s << " Here's the reason:\n"
@@ -240,14 +206,10 @@ module Cask
   end
 
   # Error while propagating quarantine information to subdirectories.
-  #
-  # @api private
   class CaskQuarantinePropagationError < CaskQuarantineError
-    extend T::Sig
-
     sig { returns(String) }
     def to_s
-      s = +"Failed to quarantine one or more files within #{path}."
+      s = "Failed to quarantine one or more files within #{path}."
 
       unless reason.empty?
         s << " Here's the reason:\n"
@@ -260,14 +222,10 @@ module Cask
   end
 
   # Error while removing quarantine information.
-  #
-  # @api private
   class CaskQuarantineReleaseError < CaskQuarantineError
-    extend T::Sig
-
     sig { returns(String) }
     def to_s
-      s = +"Failed to release #{path} from quarantine."
+      s = "Failed to release #{path} from quarantine."
 
       unless reason.empty?
         s << " Here's the reason:\n"

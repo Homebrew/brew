@@ -1,9 +1,8 @@
-# typed: false
 # frozen_string_literal: true
 
 require "rubocops/checksum"
 
-describe RuboCop::Cop::FormulaAudit::ChecksumCase do
+RSpec.describe RuboCop::Cop::FormulaAudit::ChecksumCase do
   subject(:cop) { described_class.new }
 
   context "when auditing spec checksums" do
@@ -14,12 +13,12 @@ describe RuboCop::Cop::FormulaAudit::ChecksumCase do
           stable do
             url "https://github.com/foo-lang/foo-compiler/archive/0.18.0.tar.gz"
             sha256 "5cf6e1ae0A645b426c0a7cc7cd3f7d1605ffa1ac5756a39a8b2268ddc7ea0e9a"
-                             ^ sha256 should be lowercase
+                             ^ FormulaAudit/ChecksumCase: `sha256` should be lowercase
 
             resource "foo-package" do
               url "https://github.com/foo-lang/foo-package/archive/0.18.0.tar.gz"
               sha256 "5cf6e1Ae0a645b426b047aa4cc7cd3f7d1605ffa1ac5756a39a8b2268ddc7ea9"
-                            ^ sha256 should be lowercase
+                            ^ FormulaAudit/ChecksumCase: `sha256` should be lowercase
             end
           end
         end
@@ -33,7 +32,7 @@ describe RuboCop::Cop::FormulaAudit::ChecksumCase do
           resource "foo-outside" do
             url "https://github.com/foo-lang/foo-outside/archive/0.18.0.tar.gz"
             sha256 "A4cc7cd3f7d1605ffa1ac5755cf6e1ae0a645b426b047a6a39a8b2268ddc7ea9"
-                    ^ sha256 should be lowercase
+                    ^ FormulaAudit/ChecksumCase: `sha256` should be lowercase
           end
           stable do
             url "https://github.com/foo-lang/foo-compiler/archive/0.18.0.tar.gz"

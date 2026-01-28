@@ -1,12 +1,11 @@
-# typed: false
 # frozen_string_literal: true
 
 require "rubocops/bottle"
 
-describe RuboCop::Cop::FormulaAudit::BottleDigestIndentation do
+RSpec.describe RuboCop::Cop::FormulaAudit::BottleDigestIndentation do
   subject(:cop) { described_class.new }
 
-  it "reports no offenses for `bottle :uneeded`" do
+  it "reports no offenses for `bottle :unneeded`" do
     expect_no_offenses(<<~RUBY)
       class Foo < Formula
         url "https://brew.sh/foo-1.0.tgz"
@@ -75,9 +74,9 @@ describe RuboCop::Cop::FormulaAudit::BottleDigestIndentation do
           rebuild 4
           sha256 arm64_big_sur: "aaaaaaaa"
           sha256 big_sur: "faceb00c"
-                          ^^^^^^^^^^ Align bottle digests
+                          ^^^^^^^^^^ FormulaAudit/BottleDigestIndentation: Align bottle digests
           sha256 catalina: "deadbeef"
-                           ^^^^^^^^^^ Align bottle digests
+                           ^^^^^^^^^^ FormulaAudit/BottleDigestIndentation: Align bottle digests
         end
       end
     RUBY
@@ -105,9 +104,9 @@ describe RuboCop::Cop::FormulaAudit::BottleDigestIndentation do
           rebuild 4
           sha256 cellar: :any,                arm64_big_sur: "aaaaaaaa"
           sha256 cellar: "/usr/local/Cellar", big_sur: "faceb00c"
-                                                       ^^^^^^^^^^ Align bottle digests
+                                                       ^^^^^^^^^^ FormulaAudit/BottleDigestIndentation: Align bottle digests
           sha256                              catalina: "deadbeef"
-                                                        ^^^^^^^^^^ Align bottle digests
+                                                        ^^^^^^^^^^ FormulaAudit/BottleDigestIndentation: Align bottle digests
         end
       end
     RUBY

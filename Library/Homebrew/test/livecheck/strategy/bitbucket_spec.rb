@@ -1,31 +1,30 @@
-# typed: false
 # frozen_string_literal: true
 
 require "livecheck/strategy"
 
-describe Homebrew::Livecheck::Strategy::Bitbucket do
+RSpec.describe Homebrew::Livecheck::Strategy::Bitbucket do
   subject(:bitbucket) { described_class }
 
-  let(:bitbucket_urls) {
+  let(:bitbucket_urls) do
     {
       get:       "https://bitbucket.org/abc/def/get/1.2.3.tar.gz",
       downloads: "https://bitbucket.org/abc/def/downloads/ghi-1.2.3.tar.gz",
     }
-  }
+  end
   let(:non_bitbucket_url) { "https://brew.sh/test" }
 
-  let(:generated) {
+  let(:generated) do
     {
       get:       {
-        url:   "https://bitbucket.org/abc/def/downloads/?tab=tags",
-        regex: /href=.*?v?(\d+(?:\.\d+)+)\.t/i,
+        url:   "https://bitbucket.org/abc/def/downloads/?tab=tags&iframe=true&spa=0",
+        regex: /<td[^>]*?class="name"[^>]*?>\s*v?(\d+(?:\.\d+)+)\s*?</im,
       },
       downloads: {
-        url:   "https://bitbucket.org/abc/def/downloads/",
+        url:   "https://bitbucket.org/abc/def/downloads/?iframe=true&spa=0",
         regex: /href=.*?ghi-v?(\d+(?:\.\d+)+)\.t/i,
       },
     }
-  }
+  end
 
   describe "::match?" do
     it "returns true for a Bitbucket URL" do

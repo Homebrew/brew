@@ -1,13 +1,17 @@
-# typed: true
+# typed: strict
 # frozen_string_literal: true
 
-class Tap
-  def self.install_default_cask_tap_if_necessary(force: false)
-    return false if default_cask_tap.installed?
-    return false if Homebrew::EnvConfig.install_from_api?
-    return false if !force && Tap.untapped_official_taps.include?(default_cask_tap.name)
-
-    default_cask_tap.install
-    true
+module OS
+  module Mac
+    module Tap
+      module ClassMethods
+        sig { returns(T::Array[::Tap]) }
+        def core_taps
+          [CoreTap.instance, CoreCaskTap.instance].freeze
+        end
+      end
+    end
   end
 end
+
+Tap.singleton_class.prepend(OS::Mac::Tap::ClassMethods)

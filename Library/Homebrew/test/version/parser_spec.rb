@@ -1,9 +1,8 @@
-# typed: false
 # frozen_string_literal: true
 
 require "version/parser"
 
-describe Version::Parser do
+RSpec.describe Version::Parser do
   specify "::new" do
     expect { described_class.new }
       .to raise_error("Version::Parser is declared as abstract; it cannot be instantiated")
@@ -11,10 +10,8 @@ describe Version::Parser do
 
   describe Version::RegexParser do
     specify "::new" do
-      # TODO: see https://github.com/sorbet/sorbet/issues/2374
-      # expect { described_class.new(/[._-](\d+(?:\.\d+)+)/) }
-      #   .to raise_error("Version::RegexParser is declared as abstract; it cannot be instantiated")
-      expect { described_class.new(/[._-](\d+(?:\.\d+)+)/) }.not_to raise_error
+      expect { described_class.new(/[._-](\d+(?:\.\d+)+)/) }
+        .to raise_error("Version::RegexParser is declared as abstract; it cannot be instantiated")
     end
 
     specify "::process_spec" do

@@ -1,3 +1,7 @@
+---
+last_review_date: "2025-02-08"
+---
+
 # Querying `brew`
 
 _In this document we will be using [jq](https://stedolan.github.io/jq/) to parse JSON, available from Homebrew using `brew install jq`._
@@ -6,17 +10,17 @@ _In this document we will be using [jq](https://stedolan.github.io/jq/) to parse
 
 `brew` provides commands for getting common types of information out of the system. `brew list` shows installed formulae. `brew deps foo` shows the dependencies that `foo` needs.
 
-Additional commands, including external commands, can of course be written to provide more detailed information. There are a couple of disadvantages here. First, it means writing Ruby against a possibly changing Homebrew codebase. There will be more code to touch during refactors, and Homebrew can't guarantee that external commands will continue to work. Second, it means designing the commands themselves, specifying input parameters and output formats.
+Additional commands, including external commands, can of course be written to provide more detailed information. There are a couple of disadvantages here. First, it requires writing Ruby against a possibly changing Homebrew codebase. There will be more code to touch during refactors, and Homebrew can't guarantee that external commands will continue to work. Second, it requires designing the commands themselves, specifying input parameters and output formats.
 
 To enable users to do rich queries without the problems above, Homebrew provides the `brew info` command.
 
 ## `brew info --json`
 
-`brew info` outputs JSON-formatted information about formulae. This JSON can then be parsed using your tools of choice. See more details in `brew info --help`.
+`brew info` can output JSON-formatted information about formulae. This JSON can then be parsed using your tools of choice. See more details in `brew info --help`.
 
-The current schema version is `v1`. Note that fields may be added to the schema as needed without incrementing the schema. Any significant breaking changes will cause a change to the schema version.
+The default schema version is `v1`, which returns info about formulae; specify `--json=v2` to include both formulae and casks. Note that fields may be added to the schema as needed without incrementing the schema. Any significant breaking changes will cause a change to the schema version.
 
-The schema itself is not currently documented outside of the code in [`formula.rb`](https://github.com/Homebrew/brew/blob/e9b9ea49a16b7879731d01ff2842460d33257a06/Library/Homebrew/formula.rb#L1594-L1680) that generates it.
+The schema itself is not currently documented outside of the code in [`formula.rb`](https://github.com/Homebrew/brew/blob/2e6b6ab3a20da503ba2a22a37fdd6bd936d818ed/Library/Homebrew/formula.rb#L1922-L2017) that generates it.
 
 ## Examples
 
@@ -31,12 +35,6 @@ brew info --json=v1 tig | jq .
 ### Installed formulae
 
 To show full JSON information about all installed formulae:
-
-```sh
-brew info --json=v1 --all | jq "map(select(.installed != []))"
-```
-
-You'll note that processing all formulae can be slow; it's quicker to let `brew` do this:
 
 ```sh
 brew info --json=v1 --installed
@@ -62,10 +60,10 @@ brew info --json=v1 --installed | jq "map(select(.keg_only == false and .linked_
 
 ## formulae.brew.sh
 
-[formulae.brew.sh](https://formulae.brew.sh) has a [documented JSON API](https://formulae.brew.sh/docs/api/) which provides access to the `brew info --json=v1` output without needing access to Homebrew.
+[formulae.brew.sh](https://formulae.brew.sh/) has a [documented JSON API](https://formulae.brew.sh/docs/api/) which provides access to the `brew info --json=v1` output without needing access to Homebrew.
 
 ## Concluding remarks
 
-Using the JSON output, queries can be made against Homebrew with less risk of being broken due to Homebrew code changes, and without needing to understand Homebrew's Ruby internals.
+By using the JSON output, queries can be made against Homebrew with less risk of being broken due to Homebrew code changes, and without needing to understand Homebrew's Ruby internals.
 
 If the JSON output does not provide some information that it ought to, please submit a request, preferably with a patch to add the desired information.

@@ -7,8 +7,8 @@ cask "invalid-depends-on-macos-conflicting-forms" do
   url "file://#{TEST_FIXTURE_DIR}/cask/caffeine.zip"
   homepage "https://brew.sh/invalid-depends-on-macos-conflicting-forms"
 
-  depends_on macos: :catalina
-  depends_on macos: ">= :mojave"
+  depends_on macos: :sequoia
+  depends_on macos: ">= :sonoma"
 
   app "Caffeine.app"
 end

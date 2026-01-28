@@ -8,5 +8,6 @@ cask "with-preflight" do
   pkg "MyFancyPkg/Fancy.pkg"
 
   preflight do
+    # do nothing
   end
 end

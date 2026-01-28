@@ -1,19 +1,22 @@
-# typed: true
+# typed: strict
 # frozen_string_literal: true
 
 require "formulary"
+require "utils/output"
 
 module Homebrew
   # Helper module for checking if there is a reason a formula is missing.
-  #
-  # @api private
   module MissingFormula
+    extend Utils::Output::Mixin
+
     class << self
+      sig { params(name: String, silent: T::Boolean, show_info: T::Boolean).returns(T.nilable(String)) }
       def reason(name, silent: false, show_info: false)
-        cask_reason(name, silent: silent, show_info: show_info) || disallowed_reason(name) ||
-          tap_migration_reason(name) || deleted_reason(name, silent: silent)
+        cask_reason(name, silent:, show_info:) || disallowed_reason(name) ||
+          tap_migration_reason(name) || deleted_reason(name, silent:)
       end
 
+      sig { params(name: String).returns(T.nilable(String)) }
       def disallowed_reason(name)
         case name.downcase
         when "gem", /^rubygems?$/ then <<~EOS
@@ -26,7 +29,7 @@ module Homebrew
         EOS
         when "pil" then <<~EOS
           Instead of PIL, consider pillow:
-            pip2 install pillow
+            brew install pillow
         EOS
         when "macruby" then <<~EOS
           MacRuby has been discontinued. Consider RubyMotion:
@@ -36,13 +39,9 @@ module Homebrew
           lzma is now part of the xz formula:
             brew install xz
         EOS
-        when "sshpass" then <<~EOS
-          We won't add sshpass because it makes it too easy for novice SSH users to
-          ruin SSH's security.
-        EOS
         when "gsutil" then <<~EOS
           gsutil is available through pip:
-            pip2 install gsutil
+            pip3 install gsutil
         EOS
         when "gfortran" then <<~EOS
           GNU Fortran is part of the GCC formula:
@@ -89,10 +88,16 @@ module Homebrew
           uconv is part of the icu4c formula:
             brew install icu4c
         EOS
+        when "postgresql", "postgres" then <<~EOS
+          postgresql breaks existing databases on upgrade without human intervention.
+
+          See a more specific version to install with:
+            brew formulae | grep postgresql@
+        EOS
         end
       end
-      alias generic_disallowed_reason disallowed_reason
 
+      sig { params(name: String).returns(T.nilable(String)) }
       def tap_migration_reason(name)
         message = T.let(nil, T.nilable(String))
 
@@ -127,6 +132,7 @@ module Homebrew
         message
       end
 
+      sig { params(name: String, silent: T::Boolean).returns(T.nilable(String)) }
       def deleted_reason(name, silent: false)
         path = Formulary.path name
         return if File.exist? path
@@ -148,13 +154,27 @@ module Homebrew
             end
           end
 
+          # Optimization for the core tap which has many monthly commits
+          if tap.core_tap?
+            # Check if the formula has been deleted in the last month.
+            diff_command = ["git", "diff", "--diff-filter=D", "--name-only",
+                            "@{'1 month ago'}", "--", relative_path]
+            deleted_formula = Utils.popen_read(*diff_command)
+
+            if deleted_formula.blank?
+              ofail "No previously deleted formula found." unless silent
+              return
+            end
+          end
+
+          # Find commit where formula was deleted in the last month.
           log_command = "git log --since='1 month ago' --diff-filter=D " \
                         "--name-only --max-count=1 " \
                         "--format=%H\\\\n%h\\\\n%B -- #{relative_path}"
-          hash, short_hash, *commit_message, relative_path =
+          hash, short_hash, *commit_message, relative_path_string =
             Utils.popen_read(log_command).gsub("\\n", "\n").lines.map(&:chomp)
 
-          if hash.blank? || short_hash.blank? || relative_path.blank?
+          if hash.blank? || short_hash.blank? || relative_path_string.blank?
             ofail "No previously deleted formula found." unless silent
             return
           end
@@ -169,7 +189,7 @@ module Homebrew
               #{commit_message}
 
             To show the formula before removal, run:
-              git -C "$(brew --repo #{tap})" show #{short_hash}^:#{relative_path}
+              git -C "$(brew --repo #{tap})" show #{short_hash}^:#{relative_path_string}
 
             If you still use this formula, consider creating your own tap:
               #{Formatter.url("https://docs.brew.sh/How-to-Create-and-Maintain-a-Tap")}
@@ -177,8 +197,10 @@ module Homebrew
         end
       end
 
+      sig { params(name: String, silent: T::Boolean, show_info: T::Boolean).returns(T.nilable(String)) }
       def cask_reason(name, silent: false, show_info: false); end
 
+      sig { params(name: String, command: String).returns(T.nilable(String)) }
       def suggest_command(name, command); end
 
       require "extend/os/missing_formula"

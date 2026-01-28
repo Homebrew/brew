@@ -1,26 +1,20 @@
-# typed: true
+# typed: true # rubocop:todo Sorbet/StrictSigil
 # frozen_string_literal: true
 
 require "cask/artifact/abstract_artifact"
-
-require "extend/hash_validator"
-using HashValidator
+require "extend/hash/keys"
 
 module Cask
   module Artifact
     # Superclass for all artifacts which have a source and a target location.
-    #
-    # @api private
     class Relocated < AbstractArtifact
-      extend T::Sig
-
       def self.from_args(cask, *args)
         source_string, target_hash = args
 
         if target_hash
-          raise CaskInvalidError unless target_hash.respond_to?(:keys)
+          raise CaskInvalidError, cask unless target_hash.respond_to?(:keys)
 
-          target_hash.assert_valid_keys!(:target)
+          target_hash.assert_valid_keys(:target)
         end
 
         target_hash ||= {}
@@ -39,21 +33,30 @@ module Cask
         target
       end
 
-      attr_reader :source, :target
-
       sig {
-        params(cask: Cask, source: T.nilable(T.any(String, Pathname)), target: T.nilable(T.any(String, Pathname)))
+        params(cask: Cask, source: T.nilable(T.any(String, Pathname)), target_hash: T.any(String, Pathname))
           .void
       }
-      def initialize(cask, source, target: nil)
-        super(cask)
+      def initialize(cask, source, **target_hash)
+        super
 
+        target = target_hash[:target]
+        @source = nil
         @source_string = source.to_s
+        @target = nil
         @target_string = target.to_s
-        source = cask.staged_path.join(source)
-        @source = source
-        target ||= source.basename
-        @target = resolve_target(target)
+      end
+
+      def source
+        @source ||= begin
+          base_path = cask.staged_path
+          base_path = base_path.join(cask.url.only_path) if cask.url&.only_path.present?
+          base_path.join(@source_string)
+        end
+      end
+
+      def target
+        @target ||= resolve_target(@target_string.presence || source.basename)
       end
 
       def to_a
@@ -62,7 +65,7 @@ module Cask
         end
       end
 
-      sig { returns(String) }
+      sig { override.returns(String) }
       def summarize
         target_string = @target_string.empty? ? "" : " -> #{@target_string}"
         "#{@source_string}#{target_string}"
@@ -71,12 +74,14 @@ module Cask
       private
 
       ALT_NAME_ATTRIBUTE = "com.apple.metadata:kMDItemAlternateNames"
+      private_constant :ALT_NAME_ATTRIBUTE
 
       # Try to make the asset searchable under the target name. Spotlight
       # respects this attribute for many filetypes, but ignores it for App
       # bundles. Alfred 2.2 respects it even for App bundles.
-      def add_altname_metadata(file, altname, command: nil)
-        return if altname.to_s.casecmp(file.basename.to_s).zero?
+      sig { params(file: Pathname, altname: Pathname, command: T.class_of(SystemCommand)).returns(T.nilable(SystemCommand::Result)) }
+      def add_altname_metadata(file, altname, command:)
+        return if altname.to_s.casecmp(file.basename.to_s)&.zero?
 
         odebug "Adding #{ALT_NAME_ATTRIBUTE} metadata"
         altnames = command.run("/usr/bin/xattr",
@@ -88,16 +93,21 @@ module Cask
         altnames = "(#{altnames})"
 
         # Some packages are shipped as u=rx (e.g. Bitcoin Core)
-        command.run!("/bin/chmod", args: ["--", "u+rw", file, file.realpath])
+        command.run!("chmod",
+                     args: ["--", "u+rw", file, file.realpath],
+                     sudo: !file.writable? || !file.realpath.writable?)
 
         command.run!("/usr/bin/xattr",
                      args:         ["-w", ALT_NAME_ATTRIBUTE, altnames, file],
-                     print_stderr: false)
+                     print_stderr: false,
+                     sudo:         !file.writable?)
       end
 
       def printable_target
-        target.to_s.sub(/^#{ENV['HOME']}(#{File::SEPARATOR}|$)/, "~/")
+        target.to_s.sub(/^#{Dir.home}(#{File::SEPARATOR}|$)/, "~/")
       end
     end
   end
 end
+
+require "extend/os/cask/artifact/relocated"

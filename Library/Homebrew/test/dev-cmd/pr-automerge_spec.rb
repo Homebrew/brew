@@ -1,8 +1,8 @@
-# typed: false
 # frozen_string_literal: true
 
 require "cmd/shared_examples/args_parse"
+require "dev-cmd/pr-automerge"
 
-describe "brew pr-automerge" do
+RSpec.describe Homebrew::DevCmd::PrAutomerge do
   it_behaves_like "parseable arguments"
 end

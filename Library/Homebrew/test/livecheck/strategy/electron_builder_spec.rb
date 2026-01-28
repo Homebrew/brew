@@ -1,15 +1,16 @@
-# typed: false
 # frozen_string_literal: true
 
 require "livecheck/strategy"
 
-describe Homebrew::Livecheck::Strategy::ElectronBuilder do
+RSpec.describe Homebrew::Livecheck::Strategy::ElectronBuilder do
   subject(:electron_builder) { described_class }
 
-  let(:yaml_url) { "https://www.example.com/example/latest-mac.yml" }
-  let(:non_yaml_url) { "https://brew.sh/test" }
+  let(:http_url) { "https://www.example.com/example/latest-mac.yml" }
+  let(:non_http_url) { "ftp://brew.sh/" }
 
-  let(:electron_builder_yaml) {
+  let(:regex) { /Example[._-]v?(\d+(?:\.\d+)+)[._-]mac\.zip/i }
+
+  let(:content) do
     <<~EOS
       version: 1.2.3
       files:
@@ -24,69 +25,82 @@ describe Homebrew::Livecheck::Strategy::ElectronBuilder do
       sha512: MDXR0pxozBJjxxbtUQJOnhiaiiQkryLAwtcVjlnNiz30asm/PtSxlxWKFYN3kV/kl+jriInJrGypuzajTF6XIA==
       releaseDate: '2000-01-01T00:00:00.000Z'
     EOS
-  }
-  let(:mac_regex) { /Example[._-]v?(\d+(?:\.\d+)+)[._-]mac\.zip/i }
+  end
 
-  let(:versions) { ["1.2.3"] }
+  let(:content_timestamp) do
+    # An electron-builder YAML file may use a timestamp instead of an explicit
+    # string value (with quotes) for `releaseDate`, so we need to make sure that
+    # `ElectronBuilder#versions_from_content` won't encounter an error in this
+    # scenario (e.g. `Tried to load unspecified class: Time`).
+    content.sub(/releaseDate:\s*'([^']+)'/, 'releaseDate: \1')
+  end
+
+  let(:content_matches) { ["1.2.3"] }
+
+  let(:find_versions_return_hash) do
+    {
+      matches: {
+        "1.2.3" => Version.new("1.2.3"),
+      },
+      regex:   nil,
+      url:     http_url,
+    }
+  end
+
+  let(:find_versions_cached_return_hash) do
+    find_versions_return_hash.merge({ cached: true })
+  end
 
   describe "::match?" do
     it "returns true for a YAML file URL" do
-      expect(electron_builder.match?(yaml_url)).to be true
+      expect(electron_builder.match?(http_url)).to be true
     end
 
     it "returns false for non-YAML URL" do
-      expect(electron_builder.match?(non_yaml_url)).to be false
+      expect(electron_builder.match?(non_http_url)).to be false
     end
   end
 
-  describe "::versions_from_content" do
-    it "returns an empty array if content is blank" do
-      expect(electron_builder.versions_from_content("")).to eq([])
+  describe "::find_versions?" do
+    it "finds versions in provided_content using a block" do
+      expect(electron_builder.find_versions(url: http_url, provided_content: content))
+        .to eq(find_versions_cached_return_hash)
+
+      expect(electron_builder.find_versions(url: http_url, regex:, provided_content: content) do |yaml, regex|
+        yaml["path"][regex, 1]
+      end).to eq(find_versions_cached_return_hash.merge({ regex: }))
+
+      expect(electron_builder.find_versions(
+        url:              http_url,
+        regex:,
+        provided_content: content_timestamp,
+      ) do |yaml, regex|
+        yaml["path"][regex, 1]
+      end).to eq(find_versions_cached_return_hash.merge({ regex: }))
+
+      # NOTE: A regex should be provided using the `#regex` method in a
+      #       `livecheck` block but we're using a regex literal in the `strategy`
+      #       block here simply to ensure this method works as expected when a
+      #       regex isn't provided.
+      expect(electron_builder.find_versions(url: http_url, provided_content: content) do |yaml|
+        regex = /^v?(\d+(?:\.\d+)+)$/i
+        yaml["version"][regex, 1]
+      end).to eq(find_versions_cached_return_hash)
     end
 
-    it "returns an array of version strings when given YAML text" do
-      expect(electron_builder.versions_from_content(electron_builder_yaml)).to eq(versions)
+    it "errors if a block is not provided" do
+      expect { electron_builder.find_versions(url: http_url, regex:, provided_content: content) }
+        .to raise_error(ArgumentError, "ElectronBuilder only supports a regex when using a `strategy` block")
     end
 
-    it "returns an array of version strings when given YAML text and a block" do
-      # Returning a string from block
-      expect(
-        electron_builder.versions_from_content(electron_builder_yaml) do |yaml|
-          yaml["version"].sub("3", "4")
-        end,
-      ).to eq(["1.2.4"])
-
-      # Returning an array of strings from block
-      expect(electron_builder.versions_from_content(electron_builder_yaml) { versions }).to eq(versions)
+    it "returns default match_data when url is blank" do
+      expect(electron_builder.find_versions(url: "") { "1.2.3" })
+        .to eq({ matches: {}, regex: nil, url: "" })
     end
 
-    it "returns an array of version strings when given YAML text, a regex, and a block" do
-      # Returning a string from block
-      expect(
-        electron_builder.versions_from_content(electron_builder_yaml, mac_regex) do |yaml, regex|
-          yaml["path"][regex, 1]
-        end,
-      ).to eq(versions)
-
-      # Returning an array of strings from block
-      expect(
-        electron_builder.versions_from_content(electron_builder_yaml, mac_regex) do |yaml, regex|
-          yaml["files"]&.map do |file|
-            next if file["url"].blank?
-
-            file["url"][regex, 1]
-          end
-        end,
-      ).to eq(versions)
-    end
-
-    it "allows a nil return from a block" do
-      expect(electron_builder.versions_from_content(electron_builder_yaml) { next }).to eq([])
-    end
-
-    it "errors on an invalid return type from a block" do
-      expect { electron_builder.versions_from_content(electron_builder_yaml) { 123 } }
-        .to raise_error(TypeError, Homebrew::Livecheck::Strategy::INVALID_BLOCK_RETURN_VALUE_MSG)
+    it "returns default match_data when content is blank" do
+      expect(electron_builder.find_versions(url: http_url, provided_content: "") { "1.2.3" })
+        .to eq({ matches: {}, regex: nil, url: http_url, cached: true })
     end
   end
 end

@@ -9,6 +9,6 @@ cask "with-conditional-caveats" do
 
   # a do block may print and use a DSL
   caveats do
-    puts "This caveat is conditional" unless String("Caffeine") == "Caffeine"
+    puts "This caveat is conditional" if String("Caffeine") != "Caffeine"
   end
 end

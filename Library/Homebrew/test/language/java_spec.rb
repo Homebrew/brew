@@ -1,9 +1,8 @@
-# typed: false
 # frozen_string_literal: true
 
 require "language/java"
 
-describe Language::Java do
+RSpec.describe Language::Java do
   let(:f) do
     formula("openjdk") do
       url "openjdk"
@@ -21,8 +20,7 @@ describe Language::Java do
 
   before do
     allow(Formula).to receive(:[]).and_return(f)
-    allow(f).to receive(:any_version_installed?).and_return(true)
-    allow(f).to receive(:any_installed_version).and_return(f.version)
+    allow(f).to receive_messages(any_version_installed?: true, any_installed_version: f.version)
   end
 
   describe "::java_home" do

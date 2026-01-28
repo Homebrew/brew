@@ -1,13 +1,11 @@
-# typed: false
 # frozen_string_literal: true
 
 require "formula_info"
 
-describe FormulaInfo, :integration_test do
+RSpec.describe FormulaInfo, :integration_test do
   it "tests the FormulaInfo class" do
-    install_test_formula "testball"
-
-    info = described_class.lookup(Formula["testball"].path)
+    formula_path = setup_test_formula "testball"
+    info = described_class.lookup(formula_path)
     expect(info).not_to be_nil
     expect(info.revision).to eq(0)
     expect(info.bottle_tags).to eq([])

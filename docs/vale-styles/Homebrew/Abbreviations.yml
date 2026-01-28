@@ -1,6 +1,6 @@
 ---
 extends: substitution
-message: Use '%s'
+message: Use '%s' instead of '%s'.
 ignorecase: false
 link: "https://github.com/Homebrew/brew/blob/HEAD/docs/Prose-Style-Guidelines.md#style-and-usage"
 level: error
@@ -10,3 +10,9 @@ swap:
   '\bie\b': i.e.
   'e\.g\.,': e.g.
   'i\.e\.,': i.e.
+  '(?<!^\{.*|\.|<)\borg\b': organisation
+  '(?<!^\{.*)\borgs\b': organisations
+  '(?<!^\{.*|<|\{#)\brepo\b': repository
+  '(?<!^\{.*)\brepos\b': repositories
+  '\bivar\b': instance variable
+  '\bivars\b': instance variables

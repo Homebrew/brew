@@ -4,18 +4,11 @@ import Foundation
 
 struct SwiftErr: TextOutputStream {
     public static var stream = SwiftErr()
-    
+
     mutating func write(_ string: String) {
         fputs(string, stderr)
     }
 }
-
-// Make sure the user is on macOS 10.10 or newer
-guard #available(macOS 10.10, *) else {
-    print("Homebrew Quarantine: user must be on macOS 10.10 or newer.", to: &SwiftErr.stream)
-    exit(5)
-}
-
 
 // TODO: tell which arguments have to be provided
 guard CommandLine.arguments.count >= 4 else {

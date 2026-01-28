@@ -1,3 +1,7 @@
+---
+last_review_date: "1970-01-01"
+---
+
 # Building Against Non-Homebrew Dependencies
 
 ## History

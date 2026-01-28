@@ -9,9 +9,9 @@ cask "with-zap-delete" do
 
   zap delete: [
     "#{TEST_TMPDIR}/absolute_path",
-    "~/path_with_tilde",
     "#{TEST_TMPDIR}/glob_path*",
-    "impermissible/relative/path",
     "/another/impermissible/../relative/path",
+    "impermissible/relative/path",
+    "~/path_with_tilde",
   ]
 end

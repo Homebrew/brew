@@ -1,9 +1,8 @@
-# typed: false
 # frozen_string_literal: true
 
 require "completions"
 
-describe Homebrew::Completions do
+RSpec.describe Homebrew::Completions do
   let(:completions_dir) { HOMEBREW_REPOSITORY/"completions" }
   let(:internal_path) { HOMEBREW_REPOSITORY/"Library/Taps/homebrew/homebrew-bar" }
   let(:external_path) { HOMEBREW_REPOSITORY/"Library/Taps/foo/homebrew-bar" }
@@ -151,12 +150,14 @@ describe Homebrew::Completions do
   end
 
   context "when generating completions" do
-    describe ".update_shell_completions!" do
-      it "generates shell completions" do
-        described_class.update_shell_completions!
-        expect(completions_dir/"bash/brew").to be_a_file
-      end
-    end
+    # TODO: re-enable this test if it can be made to take ~ 1 second or there's
+    #       an actual regression.
+    # describe ".update_shell_completions!" do
+    #   it "generates shell completions" do
+    #     described_class.update_shell_completions!
+    #     expect(completions_dir/"bash/brew").to be_a_file
+    #   end
+    # end
 
     describe ".format_description" do
       it "escapes single quotes" do
@@ -195,21 +196,22 @@ describe Homebrew::Completions do
 
       it "returns an array of options for a shell command" do
         expected_options = {
-          "--debug"      => "Display a trace of all shell commands as they are executed.",
-          "--force"      => "Always do a slower, full update check (even if unnecessary).",
-          "--help"       => "Show this message.",
-          "--merge"      => "Use `git merge` to apply updates (rather than `git rebase`).",
-          "--preinstall" => "Run on auto-updates (e.g. before `brew install`). Skips some slower steps.",
-          "--verbose"    => "Print the directories checked and `git` operations performed.",
+          "--auto-update" => "Run on auto-updates (e.g. before `brew install`). Skips some slower steps.",
+          "--debug"       => "Display a trace of all shell commands as they are executed.",
+          "--force"       => "Always do a slower, full update check (even if unnecessary).",
+          "--help"        => "Show this message.",
+          "--merge"       => "Use `git merge` to apply updates (rather than `git rebase`).",
+          "--quiet"       => "Make some output more quiet.",
+          "--verbose"     => "Print the directories checked and `git` operations performed.",
         }
         expect(described_class.command_options("update")).to eq expected_options
       end
 
       it "handles --[no]- options correctly" do
         options = described_class.command_options("audit")
-        expect(options.key?("--appcast")).to eq true
-        expect(options.key?("--no-appcast")).to eq true
-        expect(options["--appcast"] == options["--no-appcast"]).to eq true
+        expect(options.key?("--signing")).to be true
+        expect(options.key?("--no-signing")).to be true
+        expect(options["--signing"] == options["--no-signing"]).to be true
       end
 
       it "return an empty array if command is not found" do
@@ -220,23 +222,23 @@ describe Homebrew::Completions do
         expect(described_class.command_options("help")).to eq({})
       end
 
-      it "will override global options with local descriptions" do
+      it "overrides global options with local descriptions" do
         options = described_class.command_options("upgrade")
-        expect(options["--verbose"]).to eq "Print the verification and postinstall steps."
+        expect(options["--verbose"]).to eq "Print the verification and post-install steps."
       end
     end
 
     describe ".command_gets_completions?" do
       it "returns true for a non-cask command with options" do
-        expect(described_class.command_gets_completions?("install")).to eq true
+        expect(described_class.command_gets_completions?("install")).to be true
       end
 
       it "returns false for a non-cask command with no options" do
-        expect(described_class.command_gets_completions?("help")).to eq false
+        expect(described_class.command_gets_completions?("help")).to be false
       end
 
       it "returns false for a cask command" do
-        expect(described_class.command_gets_completions?("cask install")).to eq false
+        expect(described_class.command_gets_completions?("cask install")).to be false
       end
     end
 
@@ -261,7 +263,7 @@ describe Homebrew::Completions do
                 "
                 return
                 ;;
-              *)
+              *) ;;
             esac
             __brew_complete_formulae
           }
@@ -276,16 +278,17 @@ describe Homebrew::Completions do
             case "${cur}" in
               -*)
                 __brewcomp "
+                --auto-update
                 --debug
                 --force
                 --help
                 --merge
-                --preinstall
+                --quiet
                 --verbose
                 "
                 return
                 ;;
-              *)
+              *) ;;
             esac
           }
         COMPLETION
@@ -293,7 +296,7 @@ describe Homebrew::Completions do
 
       it "returns appropriate completion for a command with multiple named arg types" do
         completion = described_class.generate_bash_subcommand_completion("upgrade")
-        expect(completion).to match(/__brew_complete_outdated_formulae\n  __brew_complete_outdated_casks\n}$/)
+        expect(completion).to match(/__brew_complete_installed_formulae\n  __brew_complete_installed_casks\n}$/)
       end
     end
 
@@ -329,7 +332,7 @@ describe Homebrew::Completions do
               '--quiet[Make some output more quiet]' \\
               '--verbose[Make some output more verbose]' \\
               - formula \\
-              '*::formula:__brew_formulae'
+              '*:formula:__brew_formulae'
           }
         COMPLETION
       end
@@ -340,11 +343,12 @@ describe Homebrew::Completions do
           # brew update
           _brew_update() {
             _arguments \\
+              '--auto-update[Run on auto-updates (e.g. before `brew install`). Skips some slower steps]' \\
               '--debug[Display a trace of all shell commands as they are executed]' \\
               '--force[Always do a slower, full update check (even if unnecessary)]' \\
               '--help[Show this message]' \\
               '--merge[Use `git merge` to apply updates (rather than `git rebase`)]' \\
-              '--preinstall[Run on auto-updates (e.g. before `brew install`). Skips some slower steps]' \\
+              '--quiet[Make some output more quiet]' \\
               '--verbose[Print the directories checked and `git` operations performed]'
           }
         COMPLETION
@@ -353,10 +357,10 @@ describe Homebrew::Completions do
       it "returns appropriate completion for a command with multiple named arg types" do
         completion = described_class.generate_zsh_subcommand_completion("livecheck")
         expect(completion).to match(
-          /'*::formula:__brew_formulae'/,
+          /'*:formula:__brew_formulae'/,
         )
         expect(completion).to match(
-          /'*::cask:__brew_casks'\n}$/,
+          /'*:cask:__brew_casks'\n}$/,
         )
       end
     end
@@ -399,11 +403,12 @@ describe Homebrew::Completions do
         completion = described_class.generate_fish_subcommand_completion("update")
         expect(completion).to eq <<~COMPLETION
           __fish_brew_complete_cmd 'update' 'Fetch the newest version of Homebrew and all formulae from GitHub using `git`(1) and perform any necessary migrations'
+          __fish_brew_complete_arg 'update' -l auto-update -d 'Run on auto-updates (e.g. before `brew install`). Skips some slower steps'
           __fish_brew_complete_arg 'update' -l debug -d 'Display a trace of all shell commands as they are executed'
           __fish_brew_complete_arg 'update' -l force -d 'Always do a slower, full update check (even if unnecessary)'
           __fish_brew_complete_arg 'update' -l help -d 'Show this message'
           __fish_brew_complete_arg 'update' -l merge -d 'Use `git merge` to apply updates (rather than `git rebase`)'
-          __fish_brew_complete_arg 'update' -l preinstall -d 'Run on auto-updates (e.g. before `brew install`). Skips some slower steps'
+          __fish_brew_complete_arg 'update' -l quiet -d 'Make some output more quiet'
           __fish_brew_complete_arg 'update' -l verbose -d 'Print the directories checked and `git` operations performed'
         COMPLETION
       end
@@ -412,10 +417,10 @@ describe Homebrew::Completions do
         completion = described_class.generate_fish_subcommand_completion("upgrade")
         expected_line_start = "__fish_brew_complete_arg 'upgrade; and not __fish_seen_argument"
         expect(completion).to match(
-          /#{expected_line_start} -l cask -l casks' -a '\(__fish_brew_suggest_formulae_outdated\)'/,
+          /#{expected_line_start} -l cask -l casks' -a '\(__fish_brew_suggest_formulae_installed\)'/,
         )
         expect(completion).to match(
-          /#{expected_line_start} -l formula -l formulae' -a '\(__fish_brew_suggest_casks_outdated\)'/,
+          /#{expected_line_start} -l formula -l formulae' -a '\(__fish_brew_suggest_casks_installed\)'/,
         )
       end
     end

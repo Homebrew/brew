@@ -1,15 +1,11 @@
-# typed: true
+# typed: strict
 # frozen_string_literal: true
 
 # Settings for the build environment.
-#
-# @api private
 class BuildEnvironment
-  extend T::Sig
-
   sig { params(settings: Symbol).void }
   def initialize(*settings)
-    @settings = Set.new(settings)
+    @settings = T.let(Set.new(settings), T::Set[Symbol])
   end
 
   sig { params(args: T::Enumerable[Symbol]).returns(T.self_type) }
@@ -18,9 +14,9 @@ class BuildEnvironment
     self
   end
 
-  sig { params(o: Symbol).returns(T.self_type) }
-  def <<(o)
-    @settings << o
+  sig { params(option: Symbol).returns(T.self_type) }
+  def <<(option)
+    @settings << option
     self
   end
 
@@ -31,12 +27,19 @@ class BuildEnvironment
 
   # DSL for specifying build environment settings.
   module DSL
-    extend T::Sig
+    # Initialise @env for each class which may use this DSL (e.g. each formula subclass).
+    # `env` may never be called and it needs to be initialised before the class is frozen.
+    sig { params(child: T.untyped).void }
+    def inherited(child)
+      super
+      child.instance_eval do
+        @env = T.let(BuildEnvironment.new, T.nilable(BuildEnvironment))
+      end
+    end
 
     sig { params(settings: Symbol).returns(BuildEnvironment) }
     def env(*settings)
-      @env ||= BuildEnvironment.new
-      @env.merge(settings)
+      T.must(@env).merge(settings)
     end
   end
 
@@ -47,6 +50,7 @@ class BuildEnvironment
     CMAKE_PREFIX_PATH CMAKE_INCLUDE_PATH CMAKE_LIBRARY_PATH CMAKE_FRAMEWORK_PATH
     MACOSX_DEPLOYMENT_TARGET PKG_CONFIG_PATH PKG_CONFIG_LIBDIR
     HOMEBREW_DEBUG HOMEBREW_MAKE_JOBS HOMEBREW_VERBOSE
+    all_proxy ftp_proxy http_proxy https_proxy no_proxy
     HOMEBREW_SVN HOMEBREW_GIT
     HOMEBREW_SDKROOT
     MAKE GIT CPP
@@ -55,25 +59,26 @@ class BuildEnvironment
   ].freeze
   private_constant :KEYS
 
-  sig { params(env: T.untyped).returns(T::Array[String]) }
+  sig { params(env: T::Hash[String, T.nilable(T.any(String, Pathname))]).returns(T::Array[String]) }
   def self.keys(env)
     KEYS & env.keys
   end
 
-  sig { params(env: T.untyped, f: IO).void }
-  def self.dump(env, f = $stdout)
+  sig { params(env: T::Hash[String, T.nilable(T.any(String, Pathname))], out: IO).void }
+  def self.dump(env, out = $stdout)
     keys = self.keys(env)
     keys -= %w[CC CXX OBJC OBJCXX] if env["CC"] == env["HOMEBREW_CC"]
 
     keys.each do |key|
       value = env.fetch(key)
-      s = +"#{key}: #{value}"
+
+      string = "#{key}: #{value}"
       case key
       when "CC", "CXX", "LD"
-        s << " => #{Pathname.new(value).realpath}" if File.symlink?(value)
+        string << " => #{Pathname.new(value).realpath}" if value.present? && File.symlink?(value)
       end
-      s.freeze
-      f.puts s
+      string.freeze
+      out.puts string
     end
   end
 end

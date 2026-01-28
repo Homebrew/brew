@@ -1,5 +1,8 @@
-# typed: false
+# typed: strict
 # frozen_string_literal: true
+
+require "utils/curl"
+require "livecheck/options"
 
 module Homebrew
   module Livecheck
@@ -7,12 +10,8 @@ module Homebrew
     # as some general-purpose methods for working with them. Within the context
     # of the `brew livecheck` command, strategies are established procedures
     # for finding new software versions at a given source.
-    #
-    # @api private
     module Strategy
-      extend T::Sig
-
-      module_function
+      extend Utils::Curl
 
       # {Strategy} priorities informally range from 1 to 10, where 10 is the
       # highest priority. 5 is the default priority because it's roughly in
@@ -27,41 +26,47 @@ module Homebrew
 
       # cURL does not set a default `--max-time` value, so we provide a value
       # to ensure cURL will time out in a reasonable amount of time.
-      CURL_MAX_TIME = CURL_CONNECT_TIMEOUT + 5
+      CURL_MAX_TIME = T.let(CURL_CONNECT_TIMEOUT + 5, Integer)
 
       # The `curl` process will sometimes hang indefinitely (despite setting
       # the `--max-time` argument) and it needs to be quit for livecheck to
       # continue. This value is used to set the `timeout` argument on
       # `Utils::Curl` method calls in {Strategy}.
-      CURL_PROCESS_TIMEOUT = CURL_MAX_TIME + 5
+      CURL_PROCESS_TIMEOUT = T.let(CURL_MAX_TIME + 5, Integer)
+
+      # The maximum number of redirections that `curl` should allow.
+      MAX_REDIRECTIONS = 5
+
+      # This value is passed to `#parse_curl_output` to ensure that the limit
+      # for the number of responses it will parse corresponds to the maximum
+      # number of responses in this context. The `+ 1` here accounts for the
+      # situation where there are exactly `MAX_REDIRECTIONS` number of
+      # redirections, followed by a final `200 OK` response.
+      MAX_PARSE_ITERATIONS = T.let(MAX_REDIRECTIONS + 1, Integer)
 
       # Baseline `curl` arguments used in {Strategy} methods.
-      DEFAULT_CURL_ARGS = [
+      DEFAULT_CURL_ARGS = T.let([
         # Follow redirections to handle mirrors, relocations, etc.
         "--location",
+        "--max-redirs", MAX_REDIRECTIONS.to_s,
         # Avoid progress bar text, so we can reliably identify `curl` error
         # messages in output
-        "--silent",
-      ].freeze
-
-      # `curl` arguments used in `Strategy#page_headers` method.
-      PAGE_HEADERS_CURL_ARGS = ([
-        # We only need the response head (not the body)
-        "--head",
-        # Some servers may not allow a HEAD request, so we use GET
-        "--request", "GET"
-      ] + DEFAULT_CURL_ARGS).freeze
+        "--silent"
+      ].freeze, T::Array[String])
 
       # `curl` arguments used in `Strategy#page_content` method.
-      PAGE_CONTENT_CURL_ARGS = ([
+      PAGE_CONTENT_CURL_ARGS = T.let(([
         "--compressed",
+        # Return an error when the HTTP response code is 400 or greater but
+        # continue to return body content
+        "--fail-with-body",
         # Include HTTP response headers in output, so we can identify the
         # final URL after any redirections
         "--include",
-      ] + DEFAULT_CURL_ARGS).freeze
+      ] + DEFAULT_CURL_ARGS).freeze, T::Array[String])
 
       # Baseline `curl` options used in {Strategy} methods.
-      DEFAULT_CURL_OPTIONS = {
+      DEFAULT_CURL_OPTIONS = T.let({
         print_stdout:    false,
         print_stderr:    false,
         debug:           false,
@@ -70,12 +75,7 @@ module Homebrew
         connect_timeout: CURL_CONNECT_TIMEOUT,
         max_time:        CURL_MAX_TIME,
         retries:         0,
-      }.freeze
-
-      # HTTP response head(s) and body are typically separated by a double
-      # `CRLF` (whereas HTTP header lines are separated by a single `CRLF`).
-      # In rare cases, this can also be a double newline (`\n\n`).
-      HTTP_HEAD_BODY_SEPARATOR = "\r\n\r\n"
+      }.freeze, T::Hash[Symbol, T.untyped])
 
       # A regex used to identify a tarball extension at the end of a string.
       TARBALL_EXTENSION_REGEX = /
@@ -83,7 +83,7 @@ module Homebrew
         (?:ar(?:\.(?:bz2|gz|lz|lzma|lzo|xz|Z|zst))?|
         b2|bz2?|z2|az|gz|lz|lzma|xz|Z|aZ|zst)
         $
-      /ix.freeze
+      /ix
 
       # An error message to use when a `strategy` block returns a value of
       # an inappropriate type.
@@ -97,18 +97,14 @@ module Homebrew
       # loaded, otherwise livecheck won't be able to use them.
       # @return [Hash]
       sig { returns(T::Hash[Symbol, T.untyped]) }
-      def strategies
-        return @strategies if defined? @strategies
-
-        @strategies = {}
-        Strategy.constants.sort.each do |const_symbol|
+      def self.strategies
+        @strategies ||= T.let(Strategy.constants.sort.each_with_object({}) do |const_symbol, hash|
           constant = Strategy.const_get(const_symbol)
           next unless constant.is_a?(Class)
 
-          key = const_symbol.to_s.underscore.to_sym
-          @strategies[key] = constant
-        end
-        @strategies
+          key = Utils.underscore(const_symbol).to_sym
+          hash[key] = constant
+        end, T.nilable(T::Hash[Symbol, T.untyped]))
       end
       private_class_method :strategies
 
@@ -119,7 +115,7 @@ module Homebrew
       #   `Symbol` (e.g. `:page_match`)
       # @return [Class, nil]
       sig { params(symbol: T.nilable(Symbol)).returns(T.untyped) }
-      def from_symbol(symbol)
+      def self.from_symbol(symbol)
         strategies[symbol] if symbol.present?
       end
 
@@ -127,8 +123,6 @@ module Homebrew
       #
       # @param url [String] the URL to check for matching strategies
       # @param livecheck_strategy [Symbol] a strategy symbol from the
-      #   `livecheck` block
-      # @param url_provided [Boolean] whether a url is provided in the
       #   `livecheck` block
       # @param regex_provided [Boolean] whether a regex is provided in the
       #   `livecheck` block
@@ -139,33 +133,66 @@ module Homebrew
         params(
           url:                String,
           livecheck_strategy: T.nilable(Symbol),
-          url_provided:       T::Boolean,
           regex_provided:     T::Boolean,
           block_provided:     T::Boolean,
         ).returns(T::Array[T.untyped])
       }
-      def from_url(url, livecheck_strategy: nil, url_provided: false, regex_provided: false, block_provided: false)
-        usable_strategies = strategies.values.select do |strategy|
+      def self.from_url(url, livecheck_strategy: nil, regex_provided: false, block_provided: false)
+        usable_strategies = strategies.select do |strategy_symbol, strategy|
           if strategy == PageMatch
-            # Only treat the `PageMatch` strategy as usable if a regex is
-            # present in the `livecheck` block
+            # Only treat the strategy as usable if the `livecheck` block
+            # contains a regex and/or `strategy` block
             next if !regex_provided && !block_provided
+          elsif [Json, Xml, Yaml].include?(strategy)
+            # Only treat the strategy as usable if the `livecheck` block
+            # specifies the strategy and contains a `strategy` block
+            next if (livecheck_strategy != strategy_symbol) || !block_provided
           elsif strategy.const_defined?(:PRIORITY) &&
-                !strategy::PRIORITY.positive? &&
-                from_symbol(livecheck_strategy) != strategy
+                !strategy.const_get(:PRIORITY).positive? &&
+                livecheck_strategy != strategy_symbol
             # Ignore strategies with a priority of 0 or lower, unless the
             # strategy is specified in the `livecheck` block
             next
           end
 
           strategy.respond_to?(:match?) && strategy.match?(url)
-        end
+        end.values
 
         # Sort usable strategies in descending order by priority, using the
         # DEFAULT_PRIORITY when a strategy doesn't contain a PRIORITY constant
         usable_strategies.sort_by do |strategy|
-          (strategy.const_defined?(:PRIORITY) ? -strategy::PRIORITY : -DEFAULT_PRIORITY)
+          (strategy.const_defined?(:PRIORITY) ? -strategy.const_get(:PRIORITY) : -DEFAULT_PRIORITY)
         end
+      end
+
+      # Creates `curl` `--data` or `--json` arguments (for `POST` requests`)
+      # from related `livecheck` block `url` options.
+      #
+      # @param post_form [Hash, nil] data to encode using `URI::encode_www_form`
+      # @param post_json [Hash, nil] data to encode using `JSON::generate`
+      # @return [Array]
+      sig {
+        params(
+          post_form: T.nilable(T::Hash[Symbol, String]),
+          post_json: T.nilable(T::Hash[Symbol, T.anything]),
+        ).returns(T::Array[String])
+      }
+      def self.post_args(post_form: nil, post_json: nil)
+        args = if post_form.present?
+          require "uri"
+          ["--data", URI.encode_www_form(post_form)]
+        elsif post_json.present?
+          require "json"
+          ["--json", JSON.generate(post_json)]
+        else
+          []
+        end
+
+        if (content_length = args[1]&.length)
+          args << "--header" << "Content-Length: #{content_length}"
+        end
+
+        args
       end
 
       # Collects HTTP response headers, starting with the provided URL.
@@ -173,29 +200,46 @@ module Homebrew
       # collected into an array of hashes.
       #
       # @param url [String] the URL to fetch
-      # @param homebrew_curl [Boolean] whether to use brewed curl with the URL
+      # @param options [Options] options to modify behavior
       # @return [Array]
-      sig { params(url: String, homebrew_curl: T::Boolean).returns(T::Array[T::Hash[String, String]]) }
-      def self.page_headers(url, homebrew_curl: false)
+      sig { params(url: String, options: Options).returns(T::Array[T::Hash[String, String]]) }
+      def self.page_headers(url, options: Options.new)
         headers = []
 
-        [:default, :browser].each do |user_agent|
-          stdout, _, status = curl_with_workarounds(
-            *PAGE_HEADERS_CURL_ARGS, url,
-            **DEFAULT_CURL_OPTIONS,
-            use_homebrew_curl: homebrew_curl,
-            user_agent:        user_agent
-          )
+        if options.post_form || options.post_json
+          curl_post_args = ["--request", "POST", *post_args(
+            post_form: options.post_form,
+            post_json: options.post_json,
+          )]
+        end
 
-          while stdout.match?(/\AHTTP.*\r$/)
-            h, stdout = stdout.split("\r\n\r\n", 2)
+        user_agents = if options.user_agent
+          [options.user_agent]
+        else
+          [:default, :browser]
+        end
 
-            headers << h.split("\r\n").drop(1)
-                        .to_h { |header| header.split(/:\s*/, 2) }
-                        .transform_keys(&:downcase)
+        user_agents.each do |user_agent|
+          begin
+            parsed_output = curl_headers(
+              *curl_post_args,
+              "--max-redirs",
+              MAX_REDIRECTIONS.to_s,
+              url,
+              wanted_headers:    ["location", "content-disposition"],
+              use_homebrew_curl: options.homebrew_curl || false,
+              cookies:           options.cookies,
+              header:            options.header,
+              referer:           options.referer,
+              user_agent:,
+              **DEFAULT_CURL_OPTIONS,
+            )
+          rescue ErrorDuringExecution
+            next
           end
 
-          return headers if status.success?
+          parsed_output[:responses].each { |response| headers << response[:headers] }
+          break if headers.present?
         end
 
         headers
@@ -207,19 +251,36 @@ module Homebrew
       # array with the error message instead.
       #
       # @param url [String] the URL of the content to check
-      # @param homebrew_curl [Boolean] whether to use brewed curl with the URL
+      # @param options [Options] options to modify behavior
       # @return [Hash]
-      sig { params(url: String, homebrew_curl: T::Boolean).returns(T::Hash[Symbol, T.untyped]) }
-      def self.page_content(url, homebrew_curl: false)
-        original_url = url
+      sig { params(url: String, options: Options).returns(T::Hash[Symbol, T.untyped]) }
+      def self.page_content(url, options: Options.new)
+        if options.post_form || options.post_json
+          curl_post_args = ["--request", "POST", *post_args(
+            post_form: options.post_form,
+            post_json: options.post_json,
+          )]
+        end
 
-        stderr = nil
-        [:default, :browser].each do |user_agent|
-          stdout, stderr, status = curl_with_workarounds(
+        user_agents = if options.user_agent
+          [options.user_agent]
+        else
+          [:default, :browser]
+        end
+
+        stderr = T.let(nil, T.nilable(String))
+        user_agents.each do |user_agent|
+          stdout, stderr, status = curl_output(
+            *curl_post_args,
             *PAGE_CONTENT_CURL_ARGS, url,
             **DEFAULT_CURL_OPTIONS,
-            use_homebrew_curl: homebrew_curl,
-            user_agent:        user_agent
+            use_homebrew_curl: options.homebrew_curl ||
+                               !curl_supports_fail_with_body? ||
+                               false,
+            cookies:           options.cookies,
+            header:            options.header,
+            referer:           options.referer,
+            user_agent:
           )
           next unless status.success?
 
@@ -229,27 +290,11 @@ module Homebrew
 
           # Separate the head(s)/body and identify the final URL (after any
           # redirections)
-          max_iterations = 5
-          iterations = 0
-          output = output.lstrip
-          while output.match?(%r{\AHTTP/[\d.]+ \d+}) && output.include?(HTTP_HEAD_BODY_SEPARATOR)
-            iterations += 1
-            raise "Too many redirects (max = #{max_iterations})" if iterations > max_iterations
+          parsed_output = parse_curl_output(output, max_iterations: MAX_PARSE_ITERATIONS)
+          final_url = curl_response_last_location(parsed_output[:responses], absolutize: true, base_url: url)
 
-            head_text, _, output = output.partition(HTTP_HEAD_BODY_SEPARATOR)
-            output = output.lstrip
-
-            location = head_text[/^Location:\s*(.*)$/i, 1]
-            next if location.blank?
-
-            location.chomp!
-            # Convert a relative redirect URL to an absolute URL
-            location = URI.join(url, location) unless location.match?(PageMatch::URL_MATCH_REGEX)
-            final_url = location
-          end
-
-          data = { content: output }
-          data[:final_url] = final_url if final_url.present? && final_url != original_url
+          data = { content: parsed_output[:body] }
+          data[:final_url] = final_url if final_url.present? && final_url != url
           return data
         end
 
@@ -282,18 +327,23 @@ end
 require_relative "strategy/apache"
 require_relative "strategy/bitbucket"
 require_relative "strategy/cpan"
+require_relative "strategy/crate"
 require_relative "strategy/electron_builder"
 require_relative "strategy/extract_plist"
 require_relative "strategy/git"
 require_relative "strategy/github_latest"
+require_relative "strategy/github_releases"
 require_relative "strategy/gnome"
 require_relative "strategy/gnu"
 require_relative "strategy/hackage"
 require_relative "strategy/header_match"
+require_relative "strategy/json"
 require_relative "strategy/launchpad"
 require_relative "strategy/npm"
 require_relative "strategy/page_match"
 require_relative "strategy/pypi"
 require_relative "strategy/sourceforge"
 require_relative "strategy/sparkle"
+require_relative "strategy/xml"
 require_relative "strategy/xorg"
+require_relative "strategy/yaml"

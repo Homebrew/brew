@@ -8,5 +8,6 @@ cask "with-uninstall-preflight" do
   pkg "MyFancyPkg/Fancy.pkg"
 
   uninstall_preflight do
+    # do nothing
   end
 end

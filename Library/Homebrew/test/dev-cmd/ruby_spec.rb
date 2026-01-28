@@ -1,9 +1,9 @@
-# typed: false
 # frozen_string_literal: true
 
 require "cmd/shared_examples/args_parse"
+require "dev-cmd/ruby"
 
-describe "brew ruby" do
+RSpec.describe Homebrew::DevCmd::Ruby do
   it_behaves_like "parseable arguments"
 
   it "executes ruby code with Homebrew's libraries loaded", :integration_test do

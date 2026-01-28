@@ -1,12 +1,11 @@
-# typed: false
 # frozen_string_literal: true
 
 require "livecheck/strategy"
 
-describe Homebrew::Livecheck::Strategy::Apache do
+RSpec.describe Homebrew::Livecheck::Strategy::Apache do
   subject(:apache) { described_class }
 
-  let(:apache_urls) {
+  let(:apache_urls) do
     {
       version_dir:                    "https://www.apache.org/dyn/closer.lua?path=abc/1.2.3/def-1.2.3.tar.gz",
       version_dir_root:               "https://www.apache.org/dyn/closer.lua?path=/abc/1.2.3/def-1.2.3.tar.gz",
@@ -26,10 +25,10 @@ describe Homebrew::Livecheck::Strategy::Apache do
       mirrors_name_and_version_dir:   "https://www.apache.org/dyn/mirrors/mirrors.cgi?action=download&filename=abc/def-1.2.3/ghi-1.2.3.tar.gz",
       mirrors_name_dir_bin:           "https://www.apache.org/dyn/mirrors/mirrors.cgi?action=download&filename=abc/def/ghi-1.2.3-bin.tar.gz",
     }
-  }
+  end
   let(:non_apache_url) { "https://brew.sh/test" }
 
-  let(:generated) {
+  let(:generated) do
     values = {
       version_dir:          {
         url:   "https://archive.apache.org/dist/abc/",
@@ -60,7 +59,7 @@ describe Homebrew::Livecheck::Strategy::Apache do
     values[:mirrors_name_dir_bin] = values[:name_dir_bin]
 
     values
-  }
+  end
 
   describe "::match?" do
     it "returns true for an Apache URL" do

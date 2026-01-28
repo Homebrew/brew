@@ -1,10 +1,18 @@
 #!/bin/bash
+# vim: ft=ruby
 # Make sure this shim uses the same Ruby interpreter that is used by Homebrew.
 if [[ -z "${HOMEBREW_RUBY_PATH}" ]]
 then
   echo "${0##*/}: The build tool has reset ENV; --env=std required." >&2
   exit 1
 fi
+unset HOMEBREW_LD_LIBRARY_PATH
+if [[ -n "${LD_LIBRARY_PATH+set}" ]]
+then
+  export HOMEBREW_LD_LIBRARY_PATH="${LD_LIBRARY_PATH}"
+fi
+unset LD_LIBRARY_PATH
+unset RUBYLIB
 exec "${HOMEBREW_RUBY_PATH}" --enable-frozen-string-literal --disable=gems,did_you_mean,rubyopt -x "$0" "$@"
 #!/usr/bin/env ruby -W0
 
@@ -16,10 +24,6 @@ def mac?
   RUBY_PLATFORM[/darwin/]
 end
 
-def high_sierra_or_later?
-  mac? && ENV["HOMEBREW_MACOS_VERSION_NUMERIC"].to_s.to_i >= 101300
-end
-
 def linux?
   RUBY_PLATFORM[/linux/]
 end
@@ -28,11 +32,13 @@ class Cmd
   CXX_REGEX = /(?:c|g|clang)\+\+/.freeze
 
   attr_reader :config, :prefix, :cellar, :opt, :cachedir, :tmpdir, :sysroot, :deps
-  attr_reader :archflags, :optflags, :keg_regex, :formula_prefix
+  attr_reader :archflags, :optflags, :keg_regex, :formula_prefix, :formula_buildpath
 
   def initialize(arg0, args)
     @arg0 = arg0
-    @args = args.freeze
+    split_args = split_args_at_double_dash(args)
+    @args = split_args[0].freeze
+    @positional_args = split_args[1].freeze
     @config = ENV.fetch("HOMEBREW_CCCFG", "")
     @prefix = ENV["HOMEBREW_PREFIX"]
     @cellar = ENV["HOMEBREW_CELLAR"]
@@ -44,8 +50,18 @@ class Cmd
     @optflags = ENV.fetch("HOMEBREW_OPTFLAGS", "").split
     @deps = Set.new(ENV.fetch("HOMEBREW_DEPENDENCIES", "").split(","))
     @formula_prefix = ENV["HOMEBREW_FORMULA_PREFIX"]
-    # matches opt or cellar prefix and formula name
+    @formula_buildpath = ENV["HOMEBREW_FORMULA_BUILDPATH"]
+    # matches opt or Cellar prefix and formula name
     @keg_regex = %r{(#{Regexp.escape(opt)}|#{Regexp.escape(cellar)})/([\w+-.@]+)}
+  end
+
+  def split_args_at_double_dash(args)
+    double_dash_index = args.find_index("--")
+    if double_dash_index
+      [args[...double_dash_index], args[double_dash_index..]]
+    else
+      [args, []]
+    end
   end
 
   def mode
@@ -83,8 +99,6 @@ class Cmd
         "#{ENV["HOMEBREW_PREFIX"]}/opt/swift/libexec/bin/clang++"
       when /clang/
         "clang++"
-      when /llvm-gcc/
-        "llvm-g++-4.2"
       when /(g)?cc(-\d+(\.\d)?)?$/
         "g++#{Regexp.last_match(2)}"
       end
@@ -123,7 +137,7 @@ class Cmd
       end
     end
 
-    case mode
+    optional_args = case mode
     when :ccld
       cflags + args + cppflags + ldflags
     when :cxxld
@@ -139,6 +153,8 @@ class Cmd
     when :ld
       ldflags + args
     end
+
+    optional_args + @positional_args
   end
 
   def refurbished_args
@@ -196,7 +212,7 @@ class Cmd
       # used for -Xpreprocessor -fopenmp
       args << arg << enum.next
     when /-mmacosx-version-min=(\d+)\.(\d+)/
-      if high_sierra_or_later? && Regexp.last_match(1) == "10" && Regexp.last_match(2).to_i < 9
+      if Regexp.last_match(1) == "10" && Regexp.last_match(2).to_i < 9
         arg = "-mmacosx-version-min=10.9"
       end
       args << arg
@@ -220,7 +236,7 @@ class Cmd
       args << "-Wl,-undefined,dynamic_lookup"
     when /^-isysroot=/, /^--sysroot=/
       if mac?
-        sdk = arg.split("=")[1..-1].join("=")
+        sdk = arg.split("=", 2).last
         # We set the sysroot for macOS SDKs
         args << arg unless sdk.downcase.include? "osx"
       else
@@ -232,7 +248,7 @@ class Cmd
       if mac?
         sdk ||= enum.next
         # We set the sysroot for macOS SDKs
-        args << "-isysroot#{sdk}" unless sdk.downcase.include? "osx"
+        args << "-isysroot#{sdk}" if !sdk.downcase.include?("osx") && !sdk.empty?
       else
         args << arg
         args << enum.next unless sdk
@@ -261,7 +277,7 @@ class Cmd
       true
     # first two paths: reject references to Cellar or opt paths
     # for unspecified dependencies
-    elsif path.start_with?(cellar) || path.start_with?(opt)
+    elsif path.start_with?(cellar, opt)
       dep = path[keg_regex, 2]
       dep && @deps.include?(dep)
     elsif path.start_with?(prefix, cachedir, tmpdir)
@@ -286,12 +302,16 @@ class Cmd
 
     return args if !refurbish_args? && !configure?
 
-    args << "-pipe"
     args << "-w" unless configure?
     args << "-#{ENV["HOMEBREW_OPTIMIZATION_LEVEL"]}"
-    args.concat(optflags) unless runtime_cpu_detection?
+    optflags.each do |optflag|
+      flag = optflag.split("=").first
+      # For runtime CPU detection builds, pass our optimisation flag whenever the build hasn't provided its own.
+      args << optflag if !runtime_cpu_detection? || @args.none? { |arg| arg.start_with?(flag) }
+    end
     args.concat(archflags)
     args << "-std=#{@arg0}" if /c[89]9/.match?(@arg0)
+    args << "-g" if debug_symbols?
     args
   end
 
@@ -300,11 +320,22 @@ class Cmd
     args << "-std=c++11" if cxx11?
     args << "-stdlib=libc++" if libcxx?
     args << "-stdlib=libstdc++" if libstdcxx?
+    if ENV["HOMEBREW_CC"] == "llvm_clang" && mac?
+      args << "-I#{ENV["HOMEBREW_LIBRARY"]}/Homebrew/shims/mac/shared/include/llvm"
+    end
     args
   end
 
   def cppflags
-    path_flags("-isystem", isystem_paths) + path_flags("-I", include_paths)
+    args = []
+    args += path_flags("-isystem", isystem_paths) + path_flags("-I", include_paths)
+    # Add -nostdinc when building against versioned glibc to avoid mixing system and brewed glibc headers.
+    args << "-nostdinc" if @deps.any? { |dep| dep.match?(/^glibc@.+$/) }
+    # Ideally this would be -ffile-prefix-map, but that requires a minimum of GCC 8, LLVM Clang 10 or Apple Clang 12
+    # and detecting the version dynamically based on what `HOMEBREW_CC` may have been rewritten to point to is awkward
+    args << "-fdebug-prefix-map=#{formula_buildpath}=." if formula_buildpath && !debug_symbols?
+    args << "-mbranch-protection=standard" if branch_protection?
+    args
   end
 
   def ldflags_mac(args)
@@ -312,20 +343,38 @@ class Cmd
     when :ld
       args << "-headerpad_max_install_names"
       args << "-no_weak_imports" if no_weak_imports?
+      args << "-no_fixup_chains" if no_fixup_chains?
+      args << "-oso_prefix" << formula_buildpath if oso_prefix? && formula_buildpath
+      args << "-ld_classic" if ld_classic?
     when :ccld, :cxxld
       args << "-Wl,-headerpad_max_install_names"
       args << "-Wl,-no_weak_imports" if no_weak_imports?
+      args << "-Wl,-no_fixup_chains" if no_fixup_chains?
+      args << "-Wl,-oso_prefix,#{formula_buildpath}" if oso_prefix? && formula_buildpath
+      args << "-Wl,-ld_classic" if ld_classic?
     end
     args
   end
 
   def ldflags_linux(args)
+    versioned_glibc_dep = @deps.find { |dep| dep.match?(/^glibc@.+$/) }
     unless mode == :ld
       wl = "-Wl,"
-      args << "-B#{@opt}/glibc/lib"
+      if versioned_glibc_dep
+        args << "-B#{@opt}/#{versioned_glibc_dep}/lib"
+      else
+        args << "-B#{@opt}/glibc/lib"
+      end
     end
     args += rpath_flags("#{wl}-rpath=", rpath_paths)
     args += ["#{wl}--dynamic-linker=#{dynamic_linker_path}"] if dynamic_linker_path
+    # Use -rpath-link to make sure linker uses brew glibc rather than the system glibc for indirect
+    # dependencies because -L will only handle direct dependencies.
+    if versioned_glibc_dep
+      args << "#{wl}-rpath-link=#{@opt}/#{versioned_glibc_dep}/lib"
+    else
+      args << "#{wl}-rpath-link=#{@opt}/glibc/lib"
+    end
     args
   end
 
@@ -361,7 +410,7 @@ class Cmd
   end
 
   def system_library_paths
-    paths = ["#{sysroot}/usr/lib"]
+    paths = [canonical_path("#{sysroot}/usr/lib")]
     paths << "/usr/local/lib" if !sysroot && !ENV["SDKROOT"]
     paths
   end
@@ -399,6 +448,53 @@ class Cmd
     config.include?("w")
   end
 
+  def debug_symbols?
+    config.include?("D")
+  end
+
+  def branch_protection?
+    config.include?("b")
+  end
+
+  def linker_flags
+    @args.select { |arg| arg.start_with?("-Wl,") }
+         .flat_map { |arg| arg.delete_prefix("-Wl,").split(",") }
+  end
+
+  def no_fixup_chains?
+    return false unless config.include?("f")
+    return false unless calls_ld?
+    return true if @args.each_cons(2).include?(["-undefined", "dynamic_lookup"])
+    return true if linker_flags.each_cons(2).include?(["-undefined", "dynamic_lookup"])
+
+    # The next flag would produce an error, but we fix it in `refurbish_arg`.
+    @args.include?("-undefineddynamic_lookup")
+  end
+
+  def oso_prefix?
+    config.include?("o") && !configure? && !debug_symbols?
+  end
+
+  def ld_classic?
+    return false unless config.include?("c")
+    return false unless calls_ld?
+
+    @args.include?("-dead_strip_dylibs") || linker_flags.include?("-dead_strip_dylibs")
+  end
+
+  def calls_ld?
+    return true if mode == :ld
+    return false unless [:ccld, :cxxld].include?(mode)
+
+    fuse_ld_flags = @args.find_all { |arg| arg.match?(/^-fuse-ld=/) }
+    return true if fuse_ld_flags.empty?
+
+    fuse_ld_flag = fuse_ld_flags.last.strip
+    fuse_ld_arg = fuse_ld_flag.split("=", 2).last
+
+    (fuse_ld_arg == "ld") || fuse_ld_arg.end_with?("/usr/bin/ld")
+  end
+
   def canonical_path(path)
     path = Pathname.new(path)
     path = path.realpath if path.exist?
@@ -431,6 +527,7 @@ end
 def log(basename, argv, tool, args)
   return unless ENV.key?("HOMEBREW_CC_LOG_PATH")
 
+  log_filename = "#{ENV["HOMEBREW_CC_LOG_PATH"].delete_suffix(".log")}.cc.log"
   adds = args - argv
   dels = argv - args
 
@@ -439,7 +536,7 @@ def log(basename, argv, tool, args)
   s << "superenv removed:  #{dels.join(" ")}\n" unless dels.empty?
   s << "superenv added:    #{adds.join(" ")}\n" unless adds.empty?
   s << "superenv executed: #{tool} #{args.join(" ")}\n\n"
-  File.open("#{ENV["HOMEBREW_CC_LOG_PATH"]}.cc", "a+") { |f| f.write(s) }
+  File.open(log_filename, "a+") { |f| f.write(s) }
 end
 
 def remove_superbin_from_path(paths)
@@ -457,6 +554,8 @@ if __FILE__ == $PROGRAM_NAME
     # those values are not allowed
     ENV["HOMEBREW_CC"] = "clang"
   end
+
+  ENV["LD_LIBRARY_PATH"] = ENV["HOMEBREW_LD_LIBRARY_PATH"]
 
   ####################################################################### main
 

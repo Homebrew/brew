@@ -1,20 +1,19 @@
-# typed: true
+# typed: strict
 # frozen_string_literal: true
 
-require "rubocops/extend/formula"
+require "rubocops/extend/formula_cop"
 
 module RuboCop
   module Cop
     module FormulaAudit
       # This cop ensures that no other livecheck information is provided for
       # skipped formulae.
-      #
-      # @api private
       class LivecheckSkip < FormulaCop
         extend AutoCorrector
 
-        def audit_formula(_node, _class_node, _parent_class_node, body_node)
-          livecheck_node = find_block(body_node, :livecheck)
+        sig { override.params(formula_nodes: FormulaNodes).void }
+        def audit_formula(formula_nodes)
+          livecheck_node = find_block(formula_nodes.body_node, :livecheck)
           return if livecheck_node.blank?
 
           skip = find_every_method_call_by_name(livecheck_node, :skip).first
@@ -40,36 +39,34 @@ module RuboCop
       end
 
       # This cop ensures that a `url` is specified in the `livecheck` block.
-      #
-      # @api private
       class LivecheckUrlProvided < FormulaCop
-        def audit_formula(_node, _class_node, _parent_class_node, body_node)
-          livecheck_node = find_block(body_node, :livecheck)
-          return if livecheck_node.blank?
+        sig { override.params(formula_nodes: FormulaNodes).void }
+        def audit_formula(formula_nodes)
+          livecheck_node = find_block(formula_nodes.body_node, :livecheck)
+          return unless livecheck_node
 
-          skip = find_every_method_call_by_name(livecheck_node, :skip).first
-          return if skip.present?
+          url_node = find_every_method_call_by_name(livecheck_node, :url).first
+          return if url_node
 
-          formula_node = find_every_method_call_by_name(livecheck_node, :formula).first
-          cask_node = find_every_method_call_by_name(livecheck_node, :cask).first
-          return if formula_node.present? || cask_node.present?
-
-          livecheck_url = find_every_method_call_by_name(livecheck_node, :url).first
-          return if livecheck_url.present?
+          # A regex and/or strategy is specific to a particular URL, so we
+          # should require an explicit URL.
+          regex_node = find_every_method_call_by_name(livecheck_node, :regex).first
+          strategy_node = find_every_method_call_by_name(livecheck_node, :strategy).first
+          return if !regex_node && !strategy_node
 
           offending_node(livecheck_node)
-          problem "A `url` must be provided to livecheck."
+          problem "A `url` should be provided when `regex` or `strategy` are used."
         end
       end
 
       # This cop ensures that a supported symbol (`head`, `stable, `homepage`)
       # is used when the livecheck `url` is identical to one of these formula URLs.
-      #
-      # @api private
       class LivecheckUrlSymbol < FormulaCop
         extend AutoCorrector
 
-        def audit_formula(_node, _class_node, _parent_class_node, body_node)
+        sig { override.params(formula_nodes: FormulaNodes).void }
+        def audit_formula(formula_nodes)
+          body_node = formula_nodes.body_node
           livecheck_node = find_block(body_node, :livecheck)
           return if livecheck_node.blank?
 
@@ -121,13 +118,12 @@ module RuboCop
       end
 
       # This cop ensures that the `regex` call in the `livecheck` block uses parentheses.
-      #
-      # @api private
       class LivecheckRegexParentheses < FormulaCop
         extend AutoCorrector
 
-        def audit_formula(_node, _class_node, _parent_class_node, body_node)
-          livecheck_node = find_block(body_node, :livecheck)
+        sig { override.params(formula_nodes: FormulaNodes).void }
+        def audit_formula(formula_nodes)
+          livecheck_node = find_block(formula_nodes.body_node, :livecheck)
           return if livecheck_node.blank?
 
           skip = find_every_method_call_by_name(livecheck_node, :skip).first.present?
@@ -148,15 +144,14 @@ module RuboCop
 
       # This cop ensures that the pattern provided to livecheck's `regex` uses `\.t` instead of
       # `\.tgz`, `\.tar.gz` and variants.
-      #
-      # @api private
       class LivecheckRegexExtension < FormulaCop
         extend AutoCorrector
 
-        TAR_PATTERN = /\\?\.t(ar|(g|l|x)z$|[bz2]{2,4}$)(\\?\.((g|l|x)z)|[bz2]{2,4}|Z)?$/i.freeze
+        TAR_PATTERN = /\\?\.t(ar|(g|l|x)z$|[bz2]{2,4}$)(\\?\.((g|l|x)z)|[bz2]{2,4}|Z)?$/i
 
-        def audit_formula(_node, _class_node, _parent_class_node, body_node)
-          livecheck_node = find_block(body_node, :livecheck)
+        sig { override.params(formula_nodes: FormulaNodes).void }
+        def audit_formula(formula_nodes)
+          livecheck_node = find_block(formula_nodes.body_node, :livecheck)
           return if livecheck_node.blank?
 
           skip = find_every_method_call_by_name(livecheck_node, :skip).first.present?
@@ -181,11 +176,10 @@ module RuboCop
 
       # This cop ensures that a `regex` is provided when `strategy :page_match` is specified
       # in the `livecheck` block.
-      #
-      # @api private
       class LivecheckRegexIfPageMatch < FormulaCop
-        def audit_formula(_node, _class_node, _parent_class_node, body_node)
-          livecheck_node = find_block(body_node, :livecheck)
+        sig { override.params(formula_nodes: FormulaNodes).void }
+        def audit_formula(formula_nodes)
+          livecheck_node = find_block(formula_nodes.body_node, :livecheck)
           return if livecheck_node.blank?
 
           skip = find_every_method_call_by_name(livecheck_node, :skip).first.present?
@@ -207,17 +201,16 @@ module RuboCop
 
       # This cop ensures that the `regex` provided to livecheck is case-insensitive,
       # unless sensitivity is explicitly required for proper matching.
-      #
-      # @api private
       class LivecheckRegexCaseInsensitive < FormulaCop
         extend AutoCorrector
 
         MSG = "Regexes should be case-insensitive unless sensitivity is explicitly required for proper matching."
 
-        def audit_formula(_node, _class_node, _parent_class_node, body_node)
+        sig { override.params(formula_nodes: FormulaNodes).void }
+        def audit_formula(formula_nodes)
           return if tap_style_exception? :regex_case_sensitive_allowlist
 
-          livecheck_node = find_block(body_node, :livecheck)
+          livecheck_node = find_block(formula_nodes.body_node, :livecheck)
           return if livecheck_node.blank?
 
           skip = find_every_method_call_by_name(livecheck_node, :skip).first.present?

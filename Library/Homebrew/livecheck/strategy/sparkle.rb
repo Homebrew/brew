@@ -1,85 +1,84 @@
-# typed: true
+# typed: strict
 # frozen_string_literal: true
 
 require "bundle_version"
+require "livecheck/strategic"
 
 module Homebrew
   module Livecheck
     module Strategy
-      # The {Sparkle} strategy fetches content at a URL and parses
-      # it as a Sparkle appcast in XML format.
+      # The {Sparkle} strategy fetches content at a URL and parses it as a
+      # Sparkle appcast in XML format.
       #
       # This strategy is not applied automatically and it's necessary to use
       # `strategy :sparkle` in a `livecheck` block to apply it.
-      #
-      # @api private
       class Sparkle
-        extend T::Sig
+        extend Strategic
 
         # A priority of zero causes livecheck to skip the strategy. We do this
         # for {Sparkle} so we can selectively apply it when appropriate.
         PRIORITY = 0
 
         # The `Regexp` used to determine if the strategy applies to the URL.
-        URL_MATCH_REGEX = %r{^https?://}i.freeze
+        URL_MATCH_REGEX = %r{^https?://}i
+
+        # Common `os` values used in appcasts to refer to macOS.
+        APPCAST_MACOS_STRINGS = T.let(["macos", "osx"].freeze, T::Array[String])
 
         # Whether the strategy can be applied to the provided URL.
         #
         # @param url [String] the URL to match against
         # @return [Boolean]
-        sig { params(url: String).returns(T::Boolean) }
+        sig { override.params(url: String).returns(T::Boolean) }
         def self.match?(url)
           URL_MATCH_REGEX.match?(url)
         end
 
-        # @api private
         Item = Struct.new(
           # @api public
           :title,
-          # @api private
+          # @api public
+          :link,
+          # @api public
+          :channel,
+          # @api public
+          :release_notes_link,
+          # @api public
           :pub_date,
+          # @api public
+          :os,
           # @api public
           :url,
           # @api private
           :bundle_version,
+          # @api public
+          :minimum_system_version,
           keyword_init: true,
         ) do
-          extend T::Sig
-
           extend Forwardable
 
+          # @!attribute [r] version
           # @api public
           delegate version: :bundle_version
 
+          # @!attribute [r] short_version
           # @api public
           delegate short_version: :bundle_version
+
+          # @!attribute [r] nice_version
+          # @api public
+          delegate nice_version: :bundle_version
         end
 
-        # Identify version information from a Sparkle appcast.
+        # Identifies version information from a Sparkle appcast.
         #
         # @param content [String] the text of the Sparkle appcast
         # @return [Item, nil]
-        sig { params(content: String).returns(T.nilable(Item)) }
-        def self.item_from_content(content)
+        sig { params(content: String).returns(T::Array[Item]) }
+        def self.items_from_content(content)
           require "rexml/document"
-
-          parsing_tries = 0
-          xml = begin
-            REXML::Document.new(content)
-          rescue REXML::UndefinedNamespaceException => e
-            undefined_prefix = e.to_s[/Undefined prefix ([^ ]+) found/i, 1]
-            raise if undefined_prefix.blank?
-
-            # Only retry parsing once after removing prefix from content
-            parsing_tries += 1
-            raise if parsing_tries > 1
-
-            # When an XML document contains a prefix without a corresponding
-            # namespace, it's necessary to remove the the prefix from the
-            # content to be able to successfully parse it using REXML
-            content = content.gsub(%r{(</?| )#{Regexp.escape(undefined_prefix)}:}, '\1')
-            retry
-          end
+          xml = Xml.parse_xml(content)
+          return [] if xml.blank?
 
           # Remove prefixes, so we can reliably identify elements and attributes
           xml.root&.each_recursive do |node|
@@ -89,25 +88,38 @@ module Homebrew
             end
           end
 
-          items = xml.get_elements("//rss//channel//item").map do |item|
+          xml.get_elements("//rss//channel//item").filter_map do |item|
             enclosure = item.elements["enclosure"]
 
             if enclosure
-              url = enclosure["url"]
-              short_version = enclosure["shortVersionString"]
-              version = enclosure["version"]
-              os = enclosure["os"]
+              url = enclosure["url"].presence
+              short_version = enclosure["shortVersionString"].presence
+              version = enclosure["version"].presence
+              os = enclosure["os"].presence
             end
 
-            url ||= item.elements["link"]&.text
-            short_version ||= item.elements["shortVersionString"]&.text&.strip
-            version ||= item.elements["version"]&.text&.strip
+            title = Xml.element_text(item, "title")
+            link = Xml.element_text(item, "link")
+            url ||= link
+            channel = Xml.element_text(item, "channel")
+            release_notes_link = Xml.element_text(item, "releaseNotesLink")
+            short_version ||= Xml.element_text(item, "shortVersionString")
+            version ||= Xml.element_text(item, "version")
 
-            title = item.elements["title"]&.text&.strip
-            pub_date = item.elements["pubDate"]&.text&.strip&.presence&.yield_self do |date_string|
+            minimum_system_version_text =
+              Xml.element_text(item, "minimumSystemVersion")&.gsub(/\A\D+|\D+\z/, "")
+            if minimum_system_version_text.present?
+              minimum_system_version = begin
+                MacOSVersion.new(minimum_system_version_text)
+              rescue MacOSVersion::Error
+                nil
+              end
+            end
+
+            pub_date = Xml.element_text(item, "pubDate")&.then do |date_string|
               Time.parse(date_string)
             rescue ArgumentError
-              # Omit unparseable strings (e.g. non-English dates)
+              # Omit unparsable strings (e.g. non-English dates)
               nil
             end
 
@@ -118,73 +130,114 @@ module Homebrew
 
             bundle_version = BundleVersion.new(short_version, version) if short_version || version
 
-            next if os && os != "osx"
-
-            if (minimum_system_version = item.elements["minimumSystemVersion"]&.text&.gsub(/\A\D+|\D+\z/, ""))
-              macos_minimum_system_version = begin
-                OS::Mac::Version.new(minimum_system_version).strip_patch
-              rescue MacOSVersionError
-                nil
-              end
-
-              next if macos_minimum_system_version&.prerelease?
-            end
-
             data = {
-              title:          title,
-              pub_date:       pub_date || Time.new(0),
-              url:            url,
-              bundle_version: bundle_version,
+              title:,
+              link:,
+              channel:,
+              release_notes_link:,
+              pub_date:,
+              os:,
+              url:,
+              bundle_version:,
+              minimum_system_version:,
             }.compact
+            next if data.empty?
 
-            Item.new(**data) unless data.empty?
-          end.compact
+            # Set a default `pub_date` (for sorting) if one isn't provided
+            data[:pub_date] ||= Time.new(0)
 
-          items.max_by { |item| [item.pub_date, item.bundle_version] }
+            Item.new(**data)
+          end
         end
 
-        # Identify versions from content
+        # Filters out items that aren't suitable for Homebrew.
         #
-        # @param content [String] the content to pull version information from
+        # @param items [Array] appcast items
+        # @return [Array]
+        sig { params(items: T::Array[Item]).returns(T::Array[Item]) }
+        def self.filter_items(items)
+          items.select do |item|
+            # Omit items with an explicit `os` value that isn't macOS
+            next false if item.os && APPCAST_MACOS_STRINGS.none?(item.os)
+
+            # Omit items for prerelease macOS versions
+            next false if item.minimum_system_version&.strip_patch&.prerelease?
+
+            true
+          end.compact
+        end
+
+        # Sorts items from newest to oldest.
+        #
+        # @param items [Array] appcast items
+        # @return [Array]
+        sig { params(items: T::Array[Item]).returns(T::Array[Item]) }
+        def self.sort_items(items)
+          items.sort_by { |item| [item.pub_date, item.bundle_version] }
+               .reverse
+        end
+
+        # Uses `#items_from_content` to identify versions from the Sparkle
+        # appcast content or, if a block is provided, passes the content to
+        # the block to handle matching.
+        #
+        # @param content [String] the content to check
+        # @param regex [Regexp, nil] a regex for use in a strategy block
         # @return [Array]
         sig {
           params(
             content: String,
             regex:   T.nilable(Regexp),
-            block:   T.untyped,
+            block:   T.nilable(Proc),
           ).returns(T::Array[String])
         }
         def self.versions_from_content(content, regex = nil, &block)
-          item = item_from_content(content)
-          return [] if item.blank?
+          items = sort_items(filter_items(items_from_content(content)))
+          return [] if items.blank?
+
+          item = items.first
 
           if block
-            block_return_value = regex.present? ? yield(item, regex) : yield(item)
+            block_return_value = case block.parameters[0]
+            when [:opt, :item], [:rest], [:req]
+              regex.present? ? yield(item, regex) : yield(item)
+            when [:opt, :items]
+              regex.present? ? yield(items, regex) : yield(items)
+            else
+              raise "First argument of Sparkle `strategy` block must be `item` or `items`"
+            end
             return Strategy.handle_block_return(block_return_value)
           end
 
-          version = item.bundle_version&.nice_version
+          version = T.must(item).bundle_version&.nice_version
           version.present? ? [version] : []
         end
 
         # Checks the content at the URL for new versions.
+        #
+        # @param url [String] the URL of the content to check
+        # @param regex [Regexp, nil] a regex for use in a strategy block
+        # @param options [Options] options to modify behavior
+        # @return [Hash]
         sig {
-          params(
+          override(allow_incompatible: true).params(
             url:     String,
             regex:   T.nilable(Regexp),
-            _unused: T.nilable(T::Hash[Symbol, T.untyped]),
-            block:   T.untyped,
-          ).returns(T::Hash[Symbol, T.untyped])
+            options: Options,
+            block:   T.nilable(Proc),
+          ).returns(T::Hash[Symbol, T.anything])
         }
-        def self.find_versions(url:, regex: nil, **_unused, &block)
-          if regex.present? && block.blank?
-            raise ArgumentError, "#{T.must(name).demodulize} only supports a regex when using a `strategy` block"
+        def self.find_versions(url:, regex: nil, options: Options.new, &block)
+          if regex.present? && !block_given?
+            raise ArgumentError,
+                  "#{Utils.demodulize(name)} only supports a regex when using a `strategy` block"
           end
 
-          match_data = { matches: {}, url: url }
+          match_data = { matches: {}, regex:, url: }
 
-          match_data.merge!(Strategy.page_content(url))
+          match_data.merge!(Strategy.page_content(url, options:))
           content = match_data.delete(:content)
+          return match_data if content.blank?
 
           versions_from_content(content, regex, &block).each do |version_text|
             match_data[:matches][version_text] = Version.new(version_text)

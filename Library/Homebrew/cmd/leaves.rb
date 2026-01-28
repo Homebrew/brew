@@ -1,49 +1,53 @@
-# typed: true
+# typed: strict
 # frozen_string_literal: true
 
+require "abstract_command"
 require "formula"
-require "cli/parser"
+require "cask_dependent"
 
 module Homebrew
-  extend T::Sig
+  module Cmd
+    class Leaves < AbstractCommand
+      cmd_args do
+        description <<~EOS
+          List installed formulae that are not dependencies of another installed formula or cask.
+        EOS
+        switch "-r", "--installed-on-request",
+               description: "Only list leaves that were manually installed."
+        switch "-p", "--installed-as-dependency",
+               description: "Only list leaves that were installed as dependencies."
 
-  module_function
+        conflicts "--installed-on-request", "--installed-as-dependency"
 
-  sig { returns(CLI::Parser) }
-  def leaves_args
-    Homebrew::CLI::Parser.new do
-      description <<~EOS
-        List installed formulae that are not dependencies of another installed formula.
-      EOS
-      switch "-r", "--installed-on-request",
-             description: "Only list leaves that were manually installed."
-      switch "-p", "--installed-as-dependency",
-             description: "Only list leaves that were installed as dependencies."
+        named_args :none
+      end
 
-      conflicts "--installed-on-request", "--installed-as-dependency"
+      sig { override.void }
+      def run
+        leaves_list = Formula.installed - Formula.installed.flat_map(&:installed_runtime_formula_dependencies)
+        casks_runtime_dependencies = Cask::Caskroom.casks.flat_map do |cask|
+          CaskDependent.new(cask).runtime_dependencies.map(&:to_installed_formula)
+        end
+        leaves_list -= casks_runtime_dependencies
+        leaves_list.select! { |leaf| installed_on_request?(leaf) } if args.installed_on_request?
+        leaves_list.select! { |leaf| installed_as_dependency?(leaf) } if args.installed_as_dependency?
 
-      named_args :none
+        leaves_list.map(&:full_name)
+                   .sort
+                   .each { |leaf| puts(leaf) }
+      end
+
+      private
+
+      sig { params(formula: Formula).returns(T::Boolean) }
+      def installed_on_request?(formula)
+        formula.any_installed_keg&.tab&.installed_on_request == true
+      end
+
+      sig { params(formula: Formula).returns(T::Boolean) }
+      def installed_as_dependency?(formula)
+        formula.any_installed_keg&.tab&.installed_as_dependency == true
+      end
     end
-  end
-
-  def installed_on_request?(formula)
-    Tab.for_keg(formula.any_installed_keg).installed_on_request
-  end
-
-  def installed_as_dependency?(formula)
-    Tab.for_keg(formula.any_installed_keg).installed_as_dependency
-  end
-
-  def leaves
-    args = leaves_args.parse
-
-    leaves_list = Formula.installed_formulae_with_no_dependents
-
-    leaves_list.select!(&method(:installed_on_request?)) if args.installed_on_request?
-    leaves_list.select!(&method(:installed_as_dependency?)) if args.installed_as_dependency?
-
-    leaves_list.map(&:full_name)
-               .sort
-               .each(&method(:puts))
   end
 end

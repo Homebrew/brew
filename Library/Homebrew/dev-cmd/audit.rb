@@ -1,6 +1,7 @@
-# typed: false
+# typed: strict
 # frozen_string_literal: true
 
+require "abstract_command"
 require "formula"
 require "formula_versions"
 require "utils/curl"
@@ -14,274 +15,367 @@ require "style"
 require "date"
 require "missing_formula"
 require "digest"
-require "cli/parser"
 require "json"
 require "formula_auditor"
 require "tap_auditor"
 
 module Homebrew
-  extend T::Sig
+  module DevCmd
+    class Audit < AbstractCommand
+      cmd_args do
+        description <<~EOS
+          Check <formula> or <cask> for Homebrew coding style violations. This should be run
+          before submitting a new formula or cask. If no <formula> or <cask> are provided, check
+          all locally available formulae and casks and skip style checks. Will exit with a
+          non-zero status if any errors are found.
+        EOS
+        flag   "--os=",
+               description: "Audit the given operating system. (Pass `all` to audit all operating systems.)"
+        flag   "--arch=",
+               description: "Audit the given CPU architecture. (Pass `all` to audit all architectures.)"
+        switch "--strict",
+               description: "Run additional, stricter style checks."
+        switch "--git",
+               description: "Run additional, slower style checks that navigate the Git repository."
+        switch "--online",
+               description: "Run additional, slower style checks that require a network connection."
+        switch "--installed",
+               description: "Only check formulae and casks that are currently installed."
+        switch "--eval-all",
+               description: "Evaluate all available formulae and casks, whether installed or not, to audit them.",
+               env:         :eval_all
+        switch "--new",
+               description: "Run various additional style checks to determine if a new formula or cask is eligible " \
+                            "for Homebrew. This should be used when creating new formulae or casks and implies " \
+                            "`--strict` and `--online`."
+        switch "--[no-]signing",
+               description: "Audit for app signatures, which are required by macOS on ARM."
+        switch "--token-conflicts",
+               description: "Audit for token conflicts.",
+               hidden:      true
+        switch "--changed",
+               description: "Check files that were changed from the `main` branch."
+        flag   "--tap=",
+               description: "Check formulae and casks within the given tap, specified as <user>`/`<repo>."
+        switch "--fix",
+               description: "Fix style violations automatically using RuboCop's auto-correct feature."
+        switch "--display-cop-names",
+               description: "Include the RuboCop cop name for each violation in the output. This is the default.",
+               hidden:      true
+        switch "--display-filename",
+               description: "Prefix every line of output with the file or formula name being audited, to " \
+                            "make output easy to grep."
+        switch "--skip-style",
+               description: "Skip running non-RuboCop style checks. Useful if you plan on running " \
+                            "`brew style` separately. Enabled by default unless a formula is specified by name."
+        switch "-D", "--audit-debug",
+               description: "Enable debugging and profiling of audit methods."
+        comma_array "--only",
+                    description: "Specify a comma-separated <method> list to only run the methods named " \
+                                 "`audit_`<method>."
+        comma_array "--except",
+                    description: "Specify a comma-separated <method> list to skip running the methods named " \
+                                 "`audit_`<method>."
+        comma_array "--only-cops",
+                    description: "Specify a comma-separated <cops> list to check for violations of only the listed " \
+                                 "RuboCop cops."
+        comma_array "--except-cops",
+                    description: "Specify a comma-separated <cops> list to skip checking for violations of the " \
+                                 "listed RuboCop cops."
+        switch "--formula", "--formulae",
+               description: "Treat all named arguments as formulae."
+        switch "--cask", "--casks",
+               description: "Treat all named arguments as casks."
 
-  module_function
+        conflicts "--installed", "--eval-all", "--changed", "--tap"
+        conflicts "--only", "--except"
+        conflicts "--only-cops", "--except-cops", "--strict"
+        conflicts "--only-cops", "--except-cops", "--only"
+        conflicts "--formula", "--cask"
 
-  sig { returns(CLI::Parser) }
-  def audit_args
-    Homebrew::CLI::Parser.new do
-      description <<~EOS
-        Check <formula> for Homebrew coding style violations. This should be run before
-        submitting a new formula or cask. If no <formula>|<cask> are provided, check all
-        locally available formulae and casks and skip style checks. Will exit with a
-        non-zero status if any errors are found.
-      EOS
-      switch "--strict",
-             description: "Run additional, stricter style checks."
-      switch "--git",
-             description: "Run additional, slower style checks that navigate the Git repository."
-      switch "--online",
-             description: "Run additional, slower style checks that require a network connection."
-      switch "--new", "--new-formula", "--new-cask",
-             description: "Run various additional style checks to determine if a new formula or cask is eligible "\
-                          "for Homebrew. This should be used when creating new formula and implies "\
-                          "`--strict` and `--online`."
-      switch "--[no-]appcast",
-             description: "Audit the appcast."
-      switch "--token-conflicts",
-             description: "Audit for token conflicts."
-      flag   "--tap=",
-             description: "Check the formulae within the given tap, specified as <user>`/`<repo>."
-      switch "--fix",
-             description: "Fix style violations automatically using RuboCop's auto-correct feature."
-      switch "--display-cop-names",
-             description: "Include the RuboCop cop name for each violation in the output."
-      switch "--display-filename",
-             description: "Prefix every line of output with the file or formula name being audited, to "\
-                          "make output easy to grep."
-      switch "--display-failures-only",
-             description: "Only display casks that fail the audit. This is the default for formulae."
-      switch "--skip-style",
-             description: "Skip running non-RuboCop style checks. Useful if you plan on running "\
-                          "`brew style` separately. Enabled by default unless a formula is specified by name."
-      switch "-D", "--audit-debug",
-             description: "Enable debugging and profiling of audit methods."
-      comma_array "--only",
-                  description: "Specify a comma-separated <method> list to only run the methods named "\
-                               "`audit_`<method>."
-      comma_array "--except",
-                  description: "Specify a comma-separated <method> list to skip running the methods named "\
-                               "`audit_`<method>."
-      comma_array "--only-cops",
-                  description: "Specify a comma-separated <cops> list to check for violations of only the listed "\
-                               "RuboCop cops."
-      comma_array "--except-cops",
-                  description: "Specify a comma-separated <cops> list to skip checking for violations of the listed "\
-                               "RuboCop cops."
-      switch "--formula", "--formulae",
-             description: "Treat all named arguments as formulae."
-      switch "--cask", "--casks",
-             description: "Treat all named arguments as casks."
-
-      conflicts "--only", "--except"
-      conflicts "--only-cops", "--except-cops", "--strict"
-      conflicts "--only-cops", "--except-cops", "--only"
-      conflicts "--display-cop-names", "--skip-style"
-      conflicts "--display-cop-names", "--only-cops"
-      conflicts "--display-cop-names", "--except-cops"
-      conflicts "--formula", "--cask"
-
-      named_args [:formula, :cask]
-    end
-  end
-
-  sig { void }
-  def audit
-    args = audit_args.parse
-
-    Homebrew.auditing = true
-    inject_dump_stats!(FormulaAuditor, /^audit_/) if args.audit_debug?
-
-    formula_count = 0
-    problem_count = 0
-    corrected_problem_count = 0
-    new_formula_problem_count = 0
-    new_formula = args.new_formula?
-    strict = new_formula || args.strict?
-    online = new_formula || args.online?
-    skip_style = args.skip_style? || args.no_named? || args.tap
-    no_named_args = false
-
-    ENV.activate_extensions!
-    ENV.setup_build_environment
-
-    audit_formulae, audit_casks = if args.tap
-      Tap.fetch(args.tap).yield_self do |tap|
-        [
-          tap.formula_names.map { |name| Formula[name] },
-          tap.cask_files.map { |path| Cask::CaskLoader.load(path) },
-        ]
+        named_args [:formula, :cask], without_api: true
       end
-    elsif args.no_named?
-      no_named_args = true
-      [Formula.all, Cask::Cask.all]
-    else
-      args.named.to_formulae_and_casks
-          .partition { |formula_or_cask| formula_or_cask.is_a?(Formula) }
-    end
-    style_files = args.named.to_paths unless skip_style
 
-    only_cops = args.only_cops
-    except_cops = args.except_cops
-    style_options = { fix: args.fix?, debug: args.debug?, verbose: args.verbose? }
+      sig { override.void }
+      def run
+        odisabled "`brew audit --token-conflicts`" if args.token_conflicts?
 
-    if only_cops
-      style_options[:only_cops] = only_cops
-    elsif args.new_formula?
-      nil
-    elsif except_cops
-      style_options[:except_cops] = except_cops
-    elsif !strict
-      style_options[:except_cops] = [:FormulaAuditStrict]
-    end
+        Formulary.enable_factory_cache!
 
-    # Run tap audits first
-    tap_problem_count = 0
-    tap_count = 0
-    Tap.each do |tap|
-      next if args.tap && tap != args.tap
+        os_arch_combinations = args.os_arch_combinations
 
-      ta = TapAuditor.new(tap, strict: args.strict?)
-      ta.audit
+        Homebrew.auditing = true
+        Homebrew.inject_dump_stats!(FormulaAuditor, /^audit_/) if args.audit_debug?
 
-      next if ta.problems.blank?
+        strict = args.new? || args.strict?
+        online = args.new? || args.online?
+        tap_audit = args.tap.present?
+        skip_style = args.skip_style? || args.no_named? || tap_audit
+        no_named_args = T.let(false, T::Boolean)
 
-      tap_count += 1
-      tap_problem_count += ta.problems.size
-      tap_problem_lines = format_problem_lines(ta.problems)
+        gem_groups = ["audit"]
+        gem_groups << "style" unless skip_style
+        Homebrew.install_bundler_gems!(groups: gem_groups)
 
-      puts "#{tap.name}:", tap_problem_lines.map { |s| "  #{s}" }
-    end
+        ENV.activate_extensions!
+        ENV.setup_build_environment
 
-    # Check style in a single batch run up front for performance
-    style_offenses = Style.check_style_json(style_files, style_options) if style_files
-    # load licenses
-    spdx_license_data = SPDX.license_data
-    spdx_exception_data = SPDX.exception_data
-    new_formula_problem_lines = []
-    formula_results = audit_formulae.sort.to_h do |f|
-      only = only_cops ? ["style"] : args.only
-      options = {
-        new_formula:         new_formula,
-        strict:              strict,
-        online:              online,
-        git:                 args.git?,
-        only:                only,
-        except:              args.except,
-        spdx_license_data:   spdx_license_data,
-        spdx_exception_data: spdx_exception_data,
-        style_offenses:      style_offenses ? style_offenses.for_path(f.path) : nil,
-        display_cop_names:   args.display_cop_names?,
-      }.compact
+        audit_formulae, audit_casks = Homebrew.with_no_api_env do # audit requires full Ruby source
+          if args.changed?
+            tap = Tap.from_path(Dir.pwd)
+            odie "`brew audit --changed` must be run inside a tap!" if tap.blank?
 
-      fa = FormulaAuditor.new(f, **options)
-      fa.audit
+            no_named_args = true
 
-      if fa.problems.any? || fa.new_formula_problems.any?
-        formula_count += 1
-        problem_count += fa.problems.size
-        problem_lines = format_problem_lines(fa.problems)
-        corrected_problem_count += options.fetch(:style_offenses, []).count(&:corrected?)
-        new_formula_problem_lines += format_problem_lines(fa.new_formula_problems)
-        if args.display_filename?
-          puts problem_lines.map { |s| "#{f.path}: #{s}" }
-        else
-          puts "#{f.full_name}:", problem_lines.map { |s| "  #{s}" }
+            audit_formulae = []
+            audit_casks = []
+
+            changed_files = Utils.popen_read("git", "diff", "--name-only", "--no-relative", "main")
+            changed_files.split("\n").each do |file|
+              next unless file.end_with?(".rb")
+
+              absolute_file = File.expand_path(file, tap.path)
+              next unless File.exist?(absolute_file)
+
+              if tap.formula_file?(file)
+                audit_formulae << Formulary.factory(absolute_file)
+              elsif tap.cask_file?(file)
+                audit_casks << Cask::CaskLoader.load(absolute_file)
+              end
+            end
+
+            [audit_formulae, audit_casks]
+          elsif args.tap
+            Tap.fetch(args.tap).then do |tap|
+              [
+                tap.formula_files.map { |path| Formulary.factory(path) },
+                tap.cask_files.map { |path| Cask::CaskLoader.load(path) },
+              ]
+            end
+          elsif args.installed?
+            no_named_args = true
+            [Formula.installed, Cask::Caskroom.casks]
+          elsif args.no_named?
+            eval_all = args.eval_all?
+
+            unless eval_all
+              # This odisabled should probably stick around indefinitely.
+              odisabled "`brew audit`",
+                        "`brew audit --eval-all` or set `HOMEBREW_EVAL_ALL=1`"
+            end
+            no_named_args = true
+            [
+              Formula.all(eval_all:),
+              Cask::Cask.all(eval_all:),
+            ]
+          else
+            if args.named.any? { |named_arg| named_arg.end_with?(".rb") }
+              # This odisabled should probably stick around indefinitely,
+              # until at least we have a way to exclude error on these in the CLI parser.
+              odisabled "`brew audit [path ...]`",
+                        "`brew audit [name ...]`"
+            end
+
+            args.named.to_formulae_and_casks_with_taps
+                .partition { |formula_or_cask| formula_or_cask.is_a?(Formula) }
+          end
+        end
+
+        if audit_formulae.empty? && audit_casks.empty? && !args.tap
+          ofail "No matching formulae or casks to audit!"
+          return
+        end
+
+        style_files = args.named.to_paths unless skip_style
+
+        only_cops = args.only_cops
+        except_cops = args.except_cops
+        style_options = { fix: args.fix?, debug: args.debug?, verbose: args.verbose? }
+
+        if only_cops
+          style_options[:only_cops] = only_cops
+        elsif args.new?
+          nil
+        elsif except_cops
+          style_options[:except_cops] = except_cops
+        elsif !strict
+          style_options[:except_cops] = [:FormulaAuditStrict]
+        end
+
+        # Run tap audits first
+        named_arg_taps = [*audit_formulae, *audit_casks].map(&:tap).uniq if !args.tap && !no_named_args
+        tap_problems = Tap.installed.each_with_object({}) do |tap, problems|
+          next if args.tap && tap != args.tap
+          next if named_arg_taps&.exclude?(tap)
+
+          ta = TapAuditor.new(tap, strict: args.strict?)
+          ta.audit
+
+          problems[[tap.name, tap.path]] = ta.problems if ta.problems.any?
+        end
+
+        # Check style in a single batch run up front for performance
+        style_offenses = Style.check_style_json(style_files, **style_options) if style_files
+        # load licenses
+        spdx_license_data = SPDX.license_data
+        spdx_exception_data = SPDX.exception_data
+
+        formula_problems = audit_formulae.sort.each_with_object({}) do |f, problems|
+          path = f.path
+
+          only = only_cops ? ["style"] : args.only
+          options = {
+            new_formula:         args.new?,
+            strict:,
+            online:,
+            git:                 args.git?,
+            only:,
+            except:              args.except,
+            spdx_license_data:,
+            spdx_exception_data:,
+            style_offenses:      style_offenses&.for_path(f.path),
+            tap_audit:,
+          }.compact
+
+          errors = os_arch_combinations.flat_map do |os, arch|
+            SimulateSystem.with(os:, arch:) do
+              odebug "Auditing Formula #{f} on os #{os} and arch #{arch}"
+
+              audit_proc = proc { FormulaAuditor.new(Formulary.factory(path), **options).tap(&:audit) }
+
+              # Audit requires full Ruby source so disable API. We shouldn't do this for taps however so that we
+              # don't unnecessarily require a full Homebrew/core clone.
+              fa = if f.core_formula?
+                Homebrew.with_no_api_env(&audit_proc)
+              else
+                audit_proc.call
+              end
+
+              fa.problems + fa.new_formula_problems
+            end
+          end.uniq
+
+          problems[[f.full_name, path]] = errors if errors.any?
+        end
+
+        require "cask/auditor" if audit_casks.any?
+
+        cask_problems = audit_casks.each_with_object({}) do |cask, problems|
+          path = cask.sourcefile_path
+
+          errors = os_arch_combinations.flat_map do |os, arch|
+            next [] if os == :linux
+
+            SimulateSystem.with(os:, arch:) do
+              odebug "Auditing Cask #{cask} on os #{os} and arch #{arch}"
+
+              Cask::Auditor.audit(
+                Cask::CaskLoader.load(path),
+                # For switches, we add `|| nil` so that `nil` will be passed
+                # instead of `false` if they aren't set.
+                # This way, we can distinguish between "not set" and "set to false".
+                audit_online:   args.online? || nil,
+                audit_strict:   args.strict? || nil,
+
+                # No need for `|| nil` for `--[no-]signing`
+                # because boolean switches are already `nil` if not passed
+                audit_signing:  args.signing?,
+                audit_new_cask: args.new? || nil,
+                quarantine:     true,
+                any_named_args: !no_named_args,
+                only:           args.only || [],
+                except:         args.except || [],
+              ).to_a
+            end
+          end.uniq
+
+          problems[[cask.full_name, path]] = errors if errors.any?
+        end
+
+        print_problems(tap_problems)
+        print_problems(formula_problems)
+        print_problems(cask_problems)
+
+        tap_count = tap_problems.keys.count
+        formula_count = formula_problems.keys.count
+        cask_count = cask_problems.keys.count
+
+        corrected_problem_count = (formula_problems.values + cask_problems.values)
+                                  .sum { |problems| problems.count { |problem| problem.fetch(:corrected) } }
+
+        tap_problem_count = tap_problems.sum { |_, problems| problems.count }
+        formula_problem_count = formula_problems.sum { |_, problems| problems.count }
+        cask_problem_count = cask_problems.sum { |_, problems| problems.count }
+        total_problems_count = formula_problem_count + cask_problem_count + tap_problem_count
+
+        if total_problems_count.positive?
+          errors_summary = Utils.pluralize("problem", total_problems_count, include_count: true)
+
+          error_sources = []
+          error_sources << Utils.pluralize("formula", formula_count, include_count: true) if formula_count.positive?
+          error_sources << Utils.pluralize("cask", cask_count, include_count: true) if cask_count.positive?
+          error_sources << Utils.pluralize("tap", tap_count, include_count: true) if tap_count.positive?
+
+          errors_summary += " in #{error_sources.to_sentence}" if error_sources.any?
+
+          errors_summary += " detected"
+
+          if corrected_problem_count.positive?
+            errors_summary +=
+              ", #{Utils.pluralize("problem", corrected_problem_count, include_count: true)} corrected"
+          end
+
+          ofail "#{errors_summary}."
+        end
+
+        return unless GitHub::Actions.env_set?
+
+        annotations = formula_problems.merge(cask_problems).flat_map do |(_, path), problems|
+          problems.map do |problem|
+            GitHub::Actions::Annotation.new(
+              :error,
+              problem[:message],
+              file:   path,
+              line:   problem[:location]&.line,
+              column: problem[:location]&.column,
+            )
+          end
+        end.compact
+
+        annotations.each do |annotation|
+          puts annotation if annotation.relevant?
         end
       end
 
-      [f.path, { errors: fa.problems + fa.new_formula_problems, warnings: [] }]
-    end
+      private
 
-    cask_results = if audit_casks.empty?
-      {}
-    else
-      require "cask/cmd/abstract_command"
-      require "cask/cmd/audit"
+      sig { params(results: T::Hash[[Symbol, Pathname], T::Array[T::Hash[Symbol, T.untyped]]]).void }
+      def print_problems(results)
+        results.each do |(name, path), problems|
+          problem_lines = format_problem_lines(problems)
 
-      # For switches, we add `|| nil` so that `nil` will be passed instead of `false` if they aren't set.
-      # This way, we can distinguish between "not set" and "set to false".
-      Cask::Cmd::Audit.audit_casks(
-        *audit_casks,
-        download:              nil,
-        # No need for `|| nil` for `--[no-]appcast` because boolean switches are already `nil` if not passed
-        appcast:               args.appcast?,
-        online:                args.online? || nil,
-        strict:                args.strict? || nil,
-        new_cask:              args.new_cask? || nil,
-        token_conflicts:       args.token_conflicts? || nil,
-        quarantine:            nil,
-        any_named_args:        !no_named_args,
-        language:              nil,
-        display_passes:        args.verbose? || args.named.count == 1,
-        display_failures_only: args.display_failures_only?,
-      )
-    end
-
-    failed_casks = cask_results.reject { |_, result| result[:errors].empty? }
-
-    cask_count = failed_casks.count
-
-    cask_problem_count = failed_casks.sum { |_, result| result[:warnings].count + result[:errors].count }
-    new_formula_problem_count += new_formula_problem_lines.count
-    total_problems_count = problem_count + new_formula_problem_count + cask_problem_count + tap_problem_count
-
-    if total_problems_count.positive?
-      puts new_formula_problem_lines.map { |s| "  #{s}" }
-
-      errors_summary = "#{total_problems_count} #{"problem".pluralize(total_problems_count)}"
-
-      error_sources = []
-      error_sources << "#{formula_count} #{"formula".pluralize(formula_count)}" if formula_count.positive?
-      error_sources << "#{cask_count} #{"cask".pluralize(cask_count)}" if cask_count.positive?
-      error_sources << "#{tap_count} #{"tap".pluralize(tap_count)}" if tap_count.positive?
-
-      errors_summary += " in #{error_sources.to_sentence}" if error_sources.any?
-
-      errors_summary += " detected"
-
-      if corrected_problem_count.positive?
-        errors_summary += ", #{corrected_problem_count} #{"problem".pluralize(corrected_problem_count)} corrected"
+          if args.display_filename?
+            problem_lines.each do |l|
+              puts "#{path}: #{l}"
+            end
+          else
+            puts name, problem_lines.map { |l| l.dup.prepend("  ") }
+          end
+        end
       end
 
-      ofail errors_summary
-    end
-
-    return unless ENV["GITHUB_ACTIONS"]
-
-    annotations = formula_results.merge(cask_results).flat_map do |path, result|
-      (
-        result[:warnings].map { |w| [:warning, w] } +
-        result[:errors].map { |e| [:error, e] }
-      ).map do |type, problem|
-        GitHub::Actions::Annotation.new(
-          type,
-          problem[:message],
-          file:   path,
-          line:   problem[:location]&.line,
-          column: problem[:location]&.column,
-        )
+      sig { params(problems: T::Array[T::Hash[Symbol, T.untyped]]).returns(T::Array[String]) }
+      def format_problem_lines(problems)
+        problems.map do |problem|
+          status = " #{Formatter.success("[corrected]")}" if problem.fetch(:corrected)
+          location = problem.fetch(:location)
+          if location
+            location = "#{location.line&.to_s&.prepend("line ")}#{location.column&.to_s&.prepend(", col ")}: "
+          end
+          message = problem.fetch(:message)
+          "* #{location}#{message.chomp.gsub("\n", "\n    ")}#{status}"
+        end
       end
     end
-
-    annotations.each do |annotation|
-      puts annotation if annotation.relevant?
-    end
-  end
-
-  def format_problem_lines(problems)
-    problems.uniq
-            .map { |message:, location:| format_problem(message, location) }
-  end
-
-  def format_problem(message, location)
-    "* #{location&.to_s&.dup&.concat(": ")}#{message.chomp.gsub("\n", "\n    ")}"
   end
 end

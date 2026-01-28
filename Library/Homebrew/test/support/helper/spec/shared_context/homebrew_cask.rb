@@ -1,4 +1,3 @@
-# typed: false
 # frozen_string_literal: true
 
 require "cask/config"
@@ -11,6 +10,7 @@ module Cask
   class Config
     DEFAULT_DIRS_PATHNAMES = {
       appdir:               Pathname(TEST_TMPDIR)/"cask-appdir",
+      keyboard_layoutdir:   Pathname(TEST_TMPDIR)/"cask-keyboard-layoutdir",
       prefpanedir:          Pathname(TEST_TMPDIR)/"cask-prefpanedir",
       qlplugindir:          Pathname(TEST_TMPDIR)/"cask-qlplugindir",
       mdimporterdir:        Pathname(TEST_TMPDIR)/"cask-mdimporter",
@@ -31,29 +31,43 @@ module Cask
   end
 end
 
+# These shared contexts starting with `when` don't make sense.
 RSpec.shared_context "Homebrew Cask", :needs_macos do # rubocop:disable RSpec/ContextWording
   around do |example|
     third_party_tap = Tap.fetch("third-party", "tap")
 
     begin
-      Cask::Config::DEFAULT_DIRS_PATHNAMES.values.each(&:mkpath)
+      Cask::Config::DEFAULT_DIRS_PATHNAMES.each_value(&:mkpath)
 
-      Tap.default_cask_tap.tap do |tap|
-        FileUtils.mkdir_p tap.path.dirname
-        FileUtils.ln_sf TEST_FIXTURE_DIR.join("cask"), tap.path
+      CoreCaskTap.instance.tap do |tap|
+        fixture_cask_dir = TEST_FIXTURE_DIR/"cask/Casks"
+        fixture_cask_dir.glob("**/*.rb").each do |fixture_cask_path|
+          relative_cask_path = fixture_cask_path.relative_path_from(fixture_cask_dir)
+
+          # These are only used manually in tests since they
+          # would otherwise conflict with other casks.
+          next if relative_cask_path.dirname.basename.to_s == "outdated"
+
+          cask_dir = (tap.cask_dir/relative_cask_path.dirname).tap(&:mkpath)
+          FileUtils.ln_sf fixture_cask_path, cask_dir
+        end
+
+        tap.clear_cache
       end
 
       third_party_tap.tap do |tap|
-        FileUtils.mkdir_p tap.path.dirname
-        FileUtils.ln_sf TEST_FIXTURE_DIR.join("third-party"), tap.path
+        tap.path.parent.mkpath
+        FileUtils.ln_sf TEST_FIXTURE_DIR/"third-party", tap.path
+
+        tap.clear_cache
       end
 
       example.run
     ensure
       FileUtils.rm_rf Cask::Config::DEFAULT_DIRS_PATHNAMES.values
       FileUtils.rm_rf [Cask::Config.new.binarydir, Cask::Caskroom.path, Cask::Cache.path]
-      Tap.default_cask_tap.path.unlink
-      third_party_tap.path.unlink
+      FileUtils.rm_rf CoreCaskTap.instance.path
+      FileUtils.rm_rf third_party_tap.path
       FileUtils.rm_rf third_party_tap.path.parent
     end
   end

@@ -1,0 +1,58 @@
+---
+last_review_date: "1970-01-01"
+---
+
+# 2020 Membership
+
+- @alebcay
+- @amyspark
+- @apjanke
+- @bfontaine
+- @carlocab
+- @chenrui333
+- @claui
+- @colindean
+- @core-code
+- @danielnachun
+- @dawidd6
+- @dpo
+- @dtrodrigues
+- @EricFromCanada
+- @fxcoudert
+- @GauthamGoli
+- @gromgit
+- @igas
+- @iMichka
+- @issyl0
+- @jacobbednarz
+- @jasontedor
+- @javian
+- @jonchang
+- @ladislas
+- @lembacon
+- @maxim-belkin
+- @MikeMcQuaid
+- @mistydemeo
+- @Moisan
+- @mxcl
+- @Rylan12
+- @ran-dall
+- @reitermarkus
+- @samford
+- @scpeters
+- @Sharpie
+- @sjackman
+- @SMillerDev
+- @suschizu
+- @SeekingMeaning
+- @tschoonj
+- @tseemann
+- @victorpopkov
+- @vitorgalvao
+- @vszakats
+- @woodruffw
+- @xu-cheng
+- @youtux
+- @zachauten
+- @zbeekman
+- @zmwangx

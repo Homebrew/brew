@@ -1,17 +1,15 @@
-# typed: true
+# typed: strict
 # frozen_string_literal: true
 
 require "system_command"
+require "utils/output"
 
 module Utils
   # Helper functions for querying SVN information.
-  #
-  # @api private
   module Svn
     class << self
-      extend T::Sig
-
       include SystemCommand::Mixin
+      include Utils::Output::Mixin
 
       sig { returns(T::Boolean) }
       def available?
@@ -22,8 +20,9 @@ module Utils
       def version
         return @version if defined?(@version)
 
-        stdout, _, status = system_command(HOMEBREW_SHIMS_PATH/"shared/svn", args: ["--version"], print_stderr: false)
-        @version = status.success? ? stdout.chomp[/svn, version (\d+(?:\.\d+)*)/, 1] : nil
+        stdout, _, status = system_command(HOMEBREW_SHIMS_PATH/"shared/svn", args:         ["--version"],
+                                                                             print_stderr: false).to_a
+        @version = T.let(status.success? ? stdout.chomp[/svn, version (\d+(?:\.\d+)*)/, 1] : nil, T.nilable(String))
       end
 
       sig { params(url: String).returns(T::Boolean) }
@@ -31,23 +30,24 @@ module Utils
         return true unless available?
 
         args = ["ls", url, "--depth", "empty"]
-        _, stderr, status = system_command("svn", args: args, print_stderr: false)
-        return status.success? unless stderr.include?("certificate verification failed")
+        _, stderr, status = system_command("svn", args:, print_stderr: false).to_a
+        return !!status.success? unless stderr.include?("certificate verification failed")
 
         # OK to unconditionally trust here because we're just checking if a URL exists.
         system_command("svn", args: args.concat(invalid_cert_flags), print_stderr: false).success?
       end
 
-      sig { returns(Array) }
+      sig { returns(T::Array[String]) }
       def invalid_cert_flags
         opoo "Ignoring Subversion certificate errors!"
         args = ["--non-interactive", "--trust-server-cert"]
-        if Version.create(version || "-1") >= Version.create("1.9")
+        if Version.new(version || "-1") >= Version.new("1.9")
           args << "--trust-server-cert-failures=expired,not-yet-valid"
         end
         args
       end
 
+      sig { void }
       def clear_version_cache
         remove_instance_variable(:@version) if defined?(@version)
       end

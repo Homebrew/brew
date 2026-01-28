@@ -1,19 +1,16 @@
-# typed: true
+# typed: strict
 # frozen_string_literal: true
 
 require "utils/github"
+require "utils/output"
 require "json"
 
 # GitHub Releases client.
-#
-# @api private
 class GitHubReleases
-  extend T::Sig
-
   include Context
-  include Utils::Curl
+  include Utils::Output::Mixin
 
-  URL_REGEX = %r{https://github\.com/([\w-]+)/([\w-]+)?/releases/download/(.+)}.freeze
+  URL_REGEX = %r{https://github\.com/([\w-]+)/([\w-]+)?/releases/download/(.+)}
 
   sig { params(bottles_hash: T::Hash[String, T.untyped]).void }
   def upload_bottles(bottles_hash)
@@ -37,7 +34,7 @@ class GitHubReleases
         remote_file = tag_hash["filename"]
         local_file = tag_hash["local_filename"]
         odebug "Uploading #{remote_file}"
-        GitHub.upload_release_asset user, repo, release["id"], local_file: local_file, remote_file: remote_file
+        GitHub.upload_release_asset user, repo, release["id"], local_file:, remote_file:
       end
     end
   end

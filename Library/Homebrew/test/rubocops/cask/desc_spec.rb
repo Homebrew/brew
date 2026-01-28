@@ -1,12 +1,8 @@
-# typed: false
 # frozen_string_literal: true
 
 require "rubocops/rubocop-cask"
-require "test/rubocops/cask/shared_examples/cask_cop"
 
-describe RuboCop::Cop::Cask::Desc do
-  subject(:cop) { described_class.new }
-
+RSpec.describe RuboCop::Cop::Cask::Desc, :config do
   it "does not start with an article" do
     expect_no_offenses <<~RUBY
       cask "foo" do
@@ -17,14 +13,14 @@ describe RuboCop::Cop::Cask::Desc do
     expect_offense <<~RUBY, "/homebrew-cask/Casks/foo.rb"
       cask 'foo' do
         desc 'A bar program'
-              ^ Description shouldn\'t start with an article.
+              ^ Description shouldn't start with an article.
       end
     RUBY
 
     expect_offense <<~RUBY, "/homebrew-cask/Casks/foo.rb"
       cask 'foo' do
         desc 'The bar program'
-              ^^^ Description shouldn\'t start with an article.
+              ^^^ Description shouldn't start with an article.
       end
     RUBY
 
@@ -46,28 +42,28 @@ describe RuboCop::Cop::Cask::Desc do
     expect_offense <<~RUBY, "/homebrew-cask/Casks/foo.rb"
       cask 'foobar' do
         desc 'Foo-Bar program'
-              ^^^^^^^ Description shouldn\'t start with the cask name.
+              ^^^^^^^ Description shouldn't start with the cask name.
       end
     RUBY
 
     expect_offense <<~RUBY, "/homebrew-cask/Casks/foo.rb"
       cask 'foo-bar' do
         desc 'Foo bar program'
-              ^^^^^^^ Description shouldn\'t start with the cask name.
+              ^^^^^^^ Description shouldn't start with the cask name.
       end
     RUBY
 
     expect_offense <<~RUBY, "/homebrew-cask/Casks/foo.rb"
       cask 'foo-bar' do
         desc 'Foo-Bar program'
-              ^^^^^^^ Description shouldn\'t start with the cask name.
+              ^^^^^^^ Description shouldn't start with the cask name.
       end
     RUBY
 
     expect_offense <<~RUBY, "/homebrew-cask/Casks/foo.rb"
       cask 'foo-bar' do
         desc 'Foo Bar'
-              ^^^^^^^ Description shouldn\'t start with the cask name.
+              ^^^^^^^ Description shouldn't start with the cask name.
       end
     RUBY
   end
@@ -76,28 +72,28 @@ describe RuboCop::Cop::Cask::Desc do
     expect_offense <<~RUBY, "/homebrew-cask/Casks/foo.rb"
       cask 'foo-bar' do
         desc 'macOS status bar monitor'
-              ^^^^^ Description shouldn\'t contain the platform.
+              ^^^^^ Description shouldn't contain the platform.
       end
     RUBY
 
     expect_offense <<~RUBY, "/homebrew-cask/Casks/foo.rb"
       cask 'foo-bar' do
-        desc 'Toggles dark mode on Mac OS Mojave'
-                                   ^^^^^^ Description shouldn\'t contain the platform.
+        desc 'Toggles dark mode on macOS Catalina'
+                                   ^^^^^ Description shouldn't contain the platform.
       end
     RUBY
 
     expect_offense <<~RUBY, "/homebrew-cask/Casks/foo.rb"
       cask 'foo-bar' do
         desc 'Better input source switcher for OS X'
-                                               ^^^^ Description shouldn\'t contain the platform.
+                                               ^^^^ Description shouldn't contain the platform.
       end
     RUBY
 
     expect_offense <<~RUBY, "/homebrew-cask/Casks/foo.rb"
       cask 'foo-bar' do
         desc 'Media Manager for Mac OS X'
-                                ^^^^^^^^ Description shouldn\'t contain the platform.
+                                ^^^^^^^^ Description shouldn't contain the platform.
       end
     RUBY
 
@@ -110,7 +106,14 @@ describe RuboCop::Cop::Cask::Desc do
     expect_offense <<~RUBY
       cask 'foo' do
         desc 'Application for managing macOS virtual machines on macOS'
-                                                                 ^^^^^ Description shouldn\'t contain the platform.
+                                                                 ^^^^^ Description shouldn't contain the platform.
+      end
+    RUBY
+
+    expect_offense <<~RUBY
+      cask 'foo' do
+        desc 'Description with a 🍺 symbol'
+                                 ^ Description shouldn't contain Unicode emojis or symbols.
       end
     RUBY
 

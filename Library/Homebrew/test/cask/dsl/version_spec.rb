@@ -1,7 +1,6 @@
-# typed: false
 # frozen_string_literal: true
 
-describe Cask::DSL::Version, :cask do
+RSpec.describe Cask::DSL::Version, :cask do
   shared_examples "expectations hash" do |input_name, expectations|
     expectations.each do |input_value, expected_output|
       context "when #{input_name} is #{input_value.inspect}" do
@@ -54,9 +53,9 @@ describe Cask::DSL::Version, :cask do
 
   describe "#initialize" do
     it "raises an error when the version contains a slash" do
-      expect {
+      expect do
         described_class.new("0.1,../../directory/traversal")
-      }.to raise_error(TypeError, %r{invalid characters: /})
+      end.to raise_error(TypeError, %r{invalid characters: /})
     end
   end
 
@@ -168,22 +167,6 @@ describe Cask::DSL::Version, :cask do
                        "1.2.3,"    => "",
                        ",abc"      => "abc",
                        "1.2.3,abc" => "abc"
-    end
-
-    describe "#before_colon" do
-      include_examples "version expectations hash", :before_colon,
-                       "1.2.3"     => "1.2.3",
-                       "1.2.3:"    => "1.2.3",
-                       ":abc"      => "",
-                       "1.2.3:abc" => "1.2.3"
-    end
-
-    describe "#after_colon" do
-      include_examples "version expectations hash", :after_colon,
-                       "1.2.3"     => "",
-                       "1.2.3:"    => "",
-                       ":abc"      => "abc",
-                       "1.2.3:abc" => "abc"
     end
 
     describe "#dots_to_hyphens" do

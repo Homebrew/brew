@@ -1,22 +1,32 @@
-# typed: false
 # frozen_string_literal: true
 
 require "commands"
 
+# These shared contexts starting with `when` don't make sense.
 RSpec.shared_context "custom internal commands" do # rubocop:disable RSpec/ContextWording
+  let(:tmpdir) { mktmpdir }
+  let(:cmd_path) { tmpdir/"cmd" }
+  let(:dev_cmd_path) { tmpdir/"dev-cmd" }
   let(:cmds) do
     [
       # internal commands
-      Commands::HOMEBREW_CMD_PATH/"rbcmd.rb",
-      Commands::HOMEBREW_CMD_PATH/"shcmd.sh",
+      cmd_path/"rbcmd.rb",
+      cmd_path/"shcmd.sh",
 
       # internal developer-commands
-      Commands::HOMEBREW_DEV_CMD_PATH/"rbdevcmd.rb",
-      Commands::HOMEBREW_DEV_CMD_PATH/"shdevcmd.sh",
+      dev_cmd_path/"rbdevcmd.rb",
+      dev_cmd_path/"shdevcmd.sh",
     ]
   end
 
+  before do
+    stub_const("Commands::HOMEBREW_CMD_PATH", cmd_path)
+    stub_const("Commands::HOMEBREW_DEV_CMD_PATH", dev_cmd_path)
+  end
+
   around do |example|
+    cmd_path.mkpath
+    dev_cmd_path.mkpath
     cmds.each do |f|
       FileUtils.touch f
     end
@@ -27,7 +37,7 @@ RSpec.shared_context "custom internal commands" do # rubocop:disable RSpec/Conte
   end
 end
 
-describe Commands do
+RSpec.describe Commands do
   include_context "custom internal commands"
 
   specify "::internal_commands" do
@@ -54,7 +64,7 @@ describe Commands do
 
       FileUtils.touch "#{dir}/brew-t4"
 
-      allow(Tap).to receive(:cmd_directories).and_return([dir])
+      allow(described_class).to receive(:tap_cmd_directories).and_return([dir])
 
       cmds = described_class.external_commands
 
@@ -68,14 +78,14 @@ describe Commands do
 
   describe "::path" do
     specify "returns the path for an internal command" do
-      expect(described_class.path("rbcmd")).to eq(HOMEBREW_LIBRARY_PATH/"cmd/rbcmd.rb")
-      expect(described_class.path("shcmd")).to eq(HOMEBREW_LIBRARY_PATH/"cmd/shcmd.sh")
-      expect(described_class.path("idontexist1234")).to be nil
+      expect(described_class.path("rbcmd")).to eq(Commands::HOMEBREW_CMD_PATH/"rbcmd.rb")
+      expect(described_class.path("shcmd")).to eq(Commands::HOMEBREW_CMD_PATH/"shcmd.sh")
+      expect(described_class.path("idontexist1234")).to be_nil
     end
 
     specify "returns the path for an internal developer-command" do
-      expect(described_class.path("rbdevcmd")).to eq(HOMEBREW_LIBRARY_PATH/"dev-cmd/rbdevcmd.rb")
-      expect(described_class.path("shdevcmd")).to eq(HOMEBREW_LIBRARY_PATH/"dev-cmd/shdevcmd.sh")
+      expect(described_class.path("rbdevcmd")).to eq(Commands::HOMEBREW_DEV_CMD_PATH/"rbdevcmd.rb")
+      expect(described_class.path("shdevcmd")).to eq(Commands::HOMEBREW_DEV_CMD_PATH/"shdevcmd.sh")
     end
   end
 end

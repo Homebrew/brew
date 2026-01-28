@@ -1,192 +1,199 @@
-# typed: false
+# typed: strict
 # frozen_string_literal: true
 
+require "abstract_command"
 require "formula"
 require "fetch"
-require "cli/parser"
 require "cask/download"
+require "download_queue"
 
 module Homebrew
-  extend T::Sig
+  module Cmd
+    class FetchCmd < AbstractCommand
+      include Fetch
 
-  extend Fetch
+      FETCH_MAX_TRIES = 5
 
-  module_function
+      cmd_args do
+        description <<~EOS
+          Download a bottle (if available) or source packages for <formula>e
+          and binaries for <cask>s. For files, also print SHA-256 checksums.
+        EOS
+        flag   "--os=",
+               description: "Download for the given operating system. " \
+                            "(Pass `all` to download for all operating systems.)"
+        flag   "--arch=",
+               description: "Download for the given CPU architecture. " \
+                            "(Pass `all` to download for all architectures.)"
+        flag   "--bottle-tag=",
+               description: "Download a bottle for given tag."
+        switch "--HEAD",
+               description: "Fetch HEAD version instead of stable version."
+        switch "-f", "--force",
+               description: "Remove a previously cached version and re-fetch."
+        switch "-v", "--verbose",
+               description: "Do a verbose VCS checkout, if the URL represents a VCS. This is useful for " \
+                            "seeing if an existing VCS cache has been updated."
+        switch "--retry",
+               description: "Retry if downloading fails or re-download if the checksum of a previously cached " \
+                            "version no longer matches. Tries at most #{FETCH_MAX_TRIES} times with " \
+                            "exponential backoff."
+        switch "--deps",
+               description: "Also download dependencies for any listed <formula>."
+        switch "-s", "--build-from-source",
+               description: "Download source packages rather than a bottle."
+        switch "--build-bottle",
+               description: "Download source packages (for eventual bottling) rather than a bottle."
+        switch "--force-bottle",
+               description: "Download a bottle if it exists for the current or newest version of macOS, " \
+                            "even if it would not be used during installation."
+        switch "--[no-]quarantine",
+               env:         :cask_opts_quarantine,
+               odeprecated: true
+        switch "--formula", "--formulae",
+               description: "Treat all named arguments as formulae."
+        switch "--cask", "--casks",
+               description: "Treat all named arguments as casks."
 
-  sig { returns(CLI::Parser) }
-  def fetch_args
-    Homebrew::CLI::Parser.new do
-      description <<~EOS
-        Download a bottle (if available) or source packages for <formula>e
-        and binaries for <cask>s. For files, also print SHA-256 checksums.
-      EOS
-      flag "--bottle-tag",
-           description: "Download a bottle for given tag."
-      switch "--HEAD",
-             description: "Fetch HEAD version instead of stable version."
-      switch "-f", "--force",
-             description: "Remove a previously cached version and re-fetch."
-      switch "-v", "--verbose",
-             description: "Do a verbose VCS checkout, if the URL represents a VCS. This is useful for "\
-                          "seeing if an existing VCS cache has been updated."
-      switch "--retry",
-             description: "Retry if downloading fails or re-download if the checksum of a previously cached "\
-                          "version no longer matches."
-      switch "--deps",
-             description: "Also download dependencies for any listed <formula>."
-      switch "-s", "--build-from-source",
-             description: "Download source packages rather than a bottle."
-      switch "--build-bottle",
-             description: "Download source packages (for eventual bottling) rather than a bottle."
-      switch "--force-bottle",
-             description: "Download a bottle if it exists for the current or newest version of macOS, "\
-                          "even if it would not be used during installation."
-      switch "--[no-]quarantine",
-             description: "Disable/enable quarantining of downloads (default: enabled).",
-             env:         :cask_opts_quarantine
-      switch "--formula", "--formulae",
-             description: "Treat all named arguments as formulae."
-      switch "--cask", "--casks",
-             description: "Treat all named arguments as casks."
+        conflicts "--build-from-source", "--build-bottle", "--force-bottle", "--bottle-tag"
+        conflicts "--cask", "--HEAD"
+        conflicts "--cask", "--deps"
+        conflicts "--cask", "-s"
+        conflicts "--cask", "--build-bottle"
+        conflicts "--cask", "--force-bottle"
+        conflicts "--cask", "--bottle-tag"
+        conflicts "--formula", "--cask"
+        conflicts "--os", "--bottle-tag"
+        conflicts "--arch", "--bottle-tag"
 
-      conflicts "--build-from-source", "--build-bottle", "--force-bottle", "--bottle-tag"
-      conflicts "--cask", "--HEAD"
-      conflicts "--cask", "--deps"
-      conflicts "--cask", "-s"
-      conflicts "--cask", "--build-bottle"
-      conflicts "--cask", "--force-bottle"
-      conflicts "--cask", "--bottle-tag"
-      conflicts "--formula", "--cask"
-
-      named_args [:formula, :cask], min: 1
-    end
-  end
-
-  def fetch
-    args = fetch_args.parse
-
-    bucket = if args.deps?
-      args.named.to_formulae_and_casks.flat_map do |formula_or_cask|
-        case formula_or_cask
-        when Formula
-          f = formula_or_cask
-
-          [f, *f.recursive_dependencies.map(&:to_formula)]
-        else
-          formula_or_cask
-        end
+        named_args [:formula, :cask], min: 1
       end
-    else
-      args.named.to_formulae_and_casks
-    end.uniq
 
-    puts "Fetching: #{bucket * ", "}" if bucket.size > 1
-    bucket.each do |formula_or_cask|
-      case formula_or_cask
-      when Formula
-        f = formula_or_cask
+      sig { override.void }
+      def run
+        Formulary.enable_factory_cache!
 
-        f.print_tap_action verb: "Fetching"
+        bucket = if args.deps?
+          args.named.to_formulae_and_casks.flat_map do |formula_or_cask|
+            case formula_or_cask
+            when Formula
+              formula = formula_or_cask
+              [formula, *formula.recursive_dependencies.map(&:to_formula)]
+            else
+              formula_or_cask
+            end
+          end
+        else
+          args.named.to_formulae_and_casks
+        end.uniq
 
-        fetched_bottle = false
-        if fetch_bottle?(f, args: args)
-          begin
-            f.clear_cache if args.force?
-            f.fetch_bottle_tab
-            fetch_formula(f.bottle_for_tag(args.bottle_tag&.to_sym), args: args)
-          rescue Interrupt
-            raise
-          rescue => e
-            raise if Homebrew::EnvConfig.developer?
+        os_arch_combinations = args.os_arch_combinations
 
-            fetched_bottle = false
-            onoe e.message
-            opoo "Bottle fetch failed, fetching the source instead."
+        puts "Fetching: #{bucket * ", "}" if bucket.size > 1
+        bucket.each do |formula_or_cask|
+          case formula_or_cask
+          when Formula
+            formula = formula_or_cask
+            ref = formula.loaded_from_api? ? formula.full_name : formula.path
+
+            os_arch_combinations.each do |os, arch|
+              SimulateSystem.with(os:, arch:) do
+                formula = Formulary.factory(ref, args.HEAD? ? :head : :stable)
+
+                formula.print_tap_action verb: "Fetching"
+
+                fetched_bottle = false
+                if fetch_bottle?(
+                  formula,
+                  force_bottle:               args.force_bottle?,
+                  bottle_tag:                 args.bottle_tag&.to_sym,
+                  build_from_source_formulae: args.build_from_source_formulae,
+                  os:                         args.os&.to_sym,
+                  arch:                       args.arch&.to_sym,
+                )
+                  begin
+                    formula.clear_cache if args.force?
+
+                    bottle_tag = if (bottle_tag = args.bottle_tag&.to_sym)
+                      Utils::Bottles::Tag.from_symbol(bottle_tag)
+                    else
+                      Utils::Bottles::Tag.new(system: os, arch:)
+                    end
+
+                    bottle = formula.bottle_for_tag(bottle_tag)
+
+                    if bottle.nil?
+                      opoo "Bottle for tag #{bottle_tag.to_sym.inspect} is unavailable."
+                      next
+                    end
+
+                    if (manifest_resource = bottle.github_packages_manifest_resource)
+                      download_queue.enqueue(manifest_resource)
+                    end
+                    download_queue.enqueue(bottle)
+                  rescue Interrupt
+                    raise
+                  rescue => e
+                    raise if Homebrew::EnvConfig.developer?
+
+                    fetched_bottle = false
+                    onoe e.message
+                    opoo "Bottle fetch failed, fetching the source instead."
+                  else
+                    fetched_bottle = true
+                  end
+                end
+
+                next if fetched_bottle
+
+                if (resource = formula.resource)
+                  download_queue.enqueue(resource)
+                end
+
+                formula.enqueue_resources_and_patches(download_queue:)
+              end
+            end
           else
-            fetched_bottle = true
+            cask = formula_or_cask
+            ref = cask.loaded_from_api? ? cask.full_name : cask.sourcefile_path
+
+            os_arch_combinations.each do |os, arch|
+              SimulateSystem.with(os:, arch:) do
+                cask = Cask::CaskLoader.load(ref)
+
+                if cask.url.nil? || cask.sha256.nil?
+                  opoo "Cask #{cask} is not supported on os #{os} and arch #{arch}"
+                  next
+                end
+
+                quarantine = args.quarantine?
+                quarantine = true if quarantine.nil?
+
+                download = Cask::Download.new(cask, quarantine:)
+                download_queue.enqueue(download)
+              end
+            end
           end
         end
 
-        next if fetched_bottle
+        download_queue.fetch
+      ensure
+        download_queue.shutdown
+      end
 
-        fetch_formula(f, args: args)
+      private
 
-        f.resources.each do |r|
-          fetch_resource(r, args: args)
-          r.patches.each { |p| fetch_patch(p, args: args) if p.external? }
-        end
+      sig { returns(Integer) }
+      def retries
+        @retries ||= T.let(args.retry? ? FETCH_MAX_TRIES : 1, T.nilable(Integer))
+      end
 
-        f.patchlist.each { |p| fetch_patch(p, args: args) if p.external? }
-      else
-        cask = formula_or_cask
-
-        quarantine = args.quarantine?
-        quarantine = true if quarantine.nil?
-
-        download = Cask::Download.new(cask, quarantine: quarantine)
-        fetch_cask(download, args: args)
+      sig { returns(DownloadQueue) }
+      def download_queue
+        @download_queue ||= T.let(begin
+          DownloadQueue.new(retries:, force: args.force?)
+        end, T.nilable(DownloadQueue))
       end
     end
-  end
-
-  def fetch_resource(r, args:)
-    puts "Resource: #{r.name}"
-    fetch_fetchable r, args: args
-  rescue ChecksumMismatchError => e
-    retry if retry_fetch?(r, args: args)
-    opoo "Resource #{r.name} reports different sha256: #{e.expected}"
-  end
-
-  def fetch_formula(f, args:)
-    fetch_fetchable f, args: args
-  rescue ChecksumMismatchError => e
-    retry if retry_fetch?(f, args: args)
-    opoo "Formula reports different sha256: #{e.expected}"
-  end
-
-  def fetch_cask(cask_download, args:)
-    fetch_fetchable cask_download, args: args
-  rescue ChecksumMismatchError => e
-    retry if retry_fetch?(cask_download, args: args)
-    opoo "Cask reports different sha256: #{e.expected}"
-  end
-
-  def fetch_patch(p, args:)
-    fetch_fetchable p, args: args
-  rescue ChecksumMismatchError => e
-    opoo "Patch reports different sha256: #{e.expected}"
-    Homebrew.failed = true
-  end
-
-  def retry_fetch?(f, args:)
-    @fetch_failed ||= Set.new
-    if args.retry? && @fetch_failed.add?(f)
-      ohai "Retrying download"
-      f.clear_cache
-      true
-    else
-      Homebrew.failed = true
-      false
-    end
-  end
-
-  def fetch_fetchable(f, args:)
-    f.clear_cache if args.force?
-
-    already_fetched = f.cached_download.exist?
-
-    begin
-      download = f.fetch(verify_download_integrity: false)
-    rescue DownloadError
-      retry if retry_fetch?(f, args: args)
-      raise
-    end
-
-    return unless download.file?
-
-    puts "Downloaded to: #{download}" unless already_fetched
-    puts "SHA256: #{download.sha256}"
-
-    f.verify_download_integrity(download)
   end
 end

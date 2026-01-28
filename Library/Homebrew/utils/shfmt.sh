@@ -56,7 +56,7 @@ do
     shift
     break
   fi
-  if [[ "${arg}" == "-w" ]]
+  if [[ "${arg}" == "-w" || "${arg}" == "--write" ]]
   then
     shift
     INPLACE=1
@@ -97,7 +97,7 @@ fi
 ###
 
 # Check for specific patterns and prompt messages if detected
-no_forbidden_patten() {
+no_forbidden_pattern() {
   local file="$1"
   local tempfile="$2"
   local subject="$3"
@@ -131,7 +131,7 @@ no_tabs() {
   local file="$1"
   local tempfile="$2"
 
-  no_forbidden_patten "${file}" "${tempfile}" \
+  no_forbidden_pattern "${file}" "${tempfile}" \
     "Indent with tab" \
     'Replace tabs with 2 spaces instead.' \
     '^[[:space:]]+' \
@@ -142,7 +142,7 @@ no_tabs() {
 # for var in ... \
 #            ...; do
 #
-# Use the followings instead (keep for statements only one line):
+# Use the following instead (keep for statements only one line):
 #   ARRAY=(
 #     ...
 #   )
@@ -156,7 +156,7 @@ no_multiline_for_statements() {
   local message
   message="$(
     cat <<EOMSG
-Use the followings instead (keep for statements only one line):
+Use the following instead (keep for statements only one line):
   ARRAY=(
     ...
   )
@@ -167,7 +167,7 @@ Use the followings instead (keep for statements only one line):
 EOMSG
   )"
 
-  no_forbidden_patten "${file}" "${tempfile}" \
+  no_forbidden_pattern "${file}" "${tempfile}" \
     "Multiline for statement" \
     "${message}" \
     "${regex}"
@@ -176,7 +176,7 @@ EOMSG
 # Check pattern:
 # IFS=$'\n'
 #
-# Use the followings instead:
+# Use the following instead:
 #   while IFS='' read -r line
 #   do
 #     ...
@@ -189,7 +189,7 @@ no_IFS_newline() {
   local message
   message="$(
     cat <<EOMSG
-Use the followings instead:
+Use the following instead:
   while IFS='' read -r line
   do
     ...
@@ -197,7 +197,7 @@ Use the followings instead:
 EOMSG
   )"
 
-  no_forbidden_patten "${file}" "${tempfile}" \
+  no_forbidden_pattern "${file}" "${tempfile}" \
     "Pattern \`IFS=\$'\\n'\`" \
     "${message}" \
     "${regex}"

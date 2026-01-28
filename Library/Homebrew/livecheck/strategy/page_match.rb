@@ -1,5 +1,7 @@
-# typed: true
+# typed: strict
 # frozen_string_literal: true
+
+require "livecheck/strategic"
 
 module Homebrew
   module Livecheck
@@ -11,12 +13,12 @@ module Homebrew
       # strategies apply to a given URL. Though {PageMatch} will technically
       # match any HTTP URL, the strategy also requires a regex to function.
       #
-      # The {find_versions} method is also used within other strategies,
-      # to handle the process of identifying version text in content.
+      # The {find_versions} method can be used within other strategies, to
+      # handle the process of identifying version text in content.
       #
       # @api public
       class PageMatch
-        extend T::Sig
+        extend Strategic
 
         NICE_NAME = "Page match"
 
@@ -26,7 +28,7 @@ module Homebrew
         PRIORITY = 0
 
         # The `Regexp` used to determine if the strategy applies to the URL.
-        URL_MATCH_REGEX = %r{^https?://}i.freeze
+        URL_MATCH_REGEX = %r{^https?://}i
 
         # Whether the strategy can be applied to the provided URL.
         # {PageMatch} will technically match any HTTP URL but is only
@@ -34,7 +36,7 @@ module Homebrew
         #
         # @param url [String] the URL to match against
         # @return [Boolean]
-        sig { params(url: String).returns(T::Boolean) }
+        sig { override.params(url: String).returns(T::Boolean) }
         def self.match?(url)
           URL_MATCH_REGEX.match?(url)
         end
@@ -51,7 +53,7 @@ module Homebrew
           params(
             content: String,
             regex:   T.nilable(Regexp),
-            block:   T.untyped,
+            block:   T.nilable(Proc),
           ).returns(T::Array[String])
         }
         def self.versions_from_content(content, regex, &block)
@@ -62,14 +64,14 @@ module Homebrew
 
           return [] if regex.blank?
 
-          content.scan(regex).map do |match|
+          content.scan(regex).filter_map do |match|
             case match
             when String
               match
             when Array
               match.first
             end
-          end.compact.uniq
+          end.uniq
         end
 
         # Checks the content at the URL for new versions, using the provided
@@ -78,32 +80,31 @@ module Homebrew
         # @param url [String] the URL of the content to check
         # @param regex [Regexp, nil] a regex used for matching versions
         # @param provided_content [String, nil] page content to use in place of
-        #   fetching via Strategy#page_content
-        # @param homebrew_curl [Boolean] whether to use brewed curl with the URL
+        #   fetching via `Strategy#page_content`
+        # @param options [Options] options to modify behavior
         # @return [Hash]
         sig {
-          params(
+          override.params(
             url:              String,
             regex:            T.nilable(Regexp),
             provided_content: T.nilable(String),
-            homebrew_curl:    T::Boolean,
-            _unused:          T.nilable(T::Hash[Symbol, T.untyped]),
-            block:            T.untyped,
+            options:          Options,
+            block:            T.nilable(Proc),
           ).returns(T::Hash[Symbol, T.untyped])
         }
-        def self.find_versions(url:, regex: nil, provided_content: nil, homebrew_curl: false, **_unused, &block)
-          if regex.blank? && block.blank?
-            raise ArgumentError, "#{T.must(name).demodulize} requires a regex or `strategy` block"
+        def self.find_versions(url:, regex: nil, provided_content: nil, options: Options.new, &block)
+          if regex.blank? && !block_given?
+            raise ArgumentError, "#{Utils.demodulize(name)} requires a regex or `strategy` block"
           end
 
-          match_data = { matches: {}, regex: regex, url: url }
-          return match_data if url.blank? || (regex.blank? && block.blank?)
+          match_data = { matches: {}, regex:, url: }
+          return match_data if url.blank?
 
           content = if provided_content.is_a?(String)
             match_data[:cached] = true
             provided_content
           else
-            match_data.merge!(Strategy.page_content(url, homebrew_curl: homebrew_curl))
+            match_data.merge!(Strategy.page_content(url, options:))
             match_data[:content]
           end
           return match_data if content.blank?

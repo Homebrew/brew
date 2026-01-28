@@ -6,8 +6,6 @@ require "cask/artifact/moved"
 module Cask
   module Artifact
     # Artifact corresponding to the `service` stanza.
-    #
-    # @api private
     class Service < Moved
     end
   end

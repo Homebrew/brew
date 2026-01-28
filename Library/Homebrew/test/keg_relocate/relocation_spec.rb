@@ -1,9 +1,8 @@
-# typed: false
 # frozen_string_literal: true
 
 require "keg_relocate"
 
-describe Keg::Relocation do
+RSpec.describe Keg::Relocation do
   let(:prefix) { HOMEBREW_PREFIX.to_s }
   let(:cellar) { HOMEBREW_CELLAR.to_s }
   let(:repository) { HOMEBREW_REPOSITORY.to_s }
@@ -33,14 +32,14 @@ describe Keg::Relocation do
     expect(relocation.replacement_pair_for(:library_placeholder)).to eq [library_placeholder, library]
   end
 
-  specify "#replace_text" do
+  specify "#replace_text!" do
     relocation = setup_relocation
 
     text = +"foo"
-    relocation.replace_text(text)
+    relocation.replace_text!(text)
     expect(text).to eq "foo"
 
-    text = +<<~TEXT
+    text = <<~TEXT
       #{prefix}/foo
       #{cellar}/foo
       foo#{prefix}/bar
@@ -48,7 +47,7 @@ describe Keg::Relocation do
       #{repository_placeholder}/foo
       foo#{library_placeholder}/bar
     TEXT
-    relocation.replace_text(text)
+    relocation.replace_text!(text)
     expect(text).to eq <<~REPLACED
       #{prefix_placeholder}/foo
       #{cellar_placeholder}/foo

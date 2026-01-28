@@ -1,15 +1,10 @@
-# typed: false
+# typed: true # rubocop:todo Sorbet/StrictSigil
 # frozen_string_literal: true
 
 require "delegate"
-require "cask_dependent"
 
 # A collection of dependencies.
-#
-# @api private
 class Dependencies < SimpleDelegator
-  extend T::Sig
-
   def initialize(*args)
     super(args)
   end
@@ -17,55 +12,57 @@ class Dependencies < SimpleDelegator
   alias eql? ==
 
   def optional
-    select(&:optional?)
+    __getobj__.select(&:optional?)
   end
 
   def recommended
-    select(&:recommended?)
+    __getobj__.select(&:recommended?)
   end
 
   def build
-    select(&:build?)
+    __getobj__.select(&:build?)
   end
 
   def required
-    select(&:required?)
+    __getobj__.select(&:required?)
   end
 
   def default
     build + required + recommended
   end
 
+  def dup_without_system_deps
+    self.class.new(*__getobj__.reject { |dep| dep.uses_from_macos? && dep.use_macos_install? })
+  end
+
   sig { returns(String) }
   def inspect
-    "#<#{self.class.name}: #{to_a}>"
+    "#<#{self.class.name}: #{__getobj__}>"
   end
 end
 
 # A collection of requirements.
-#
-# @api private
 class Requirements < SimpleDelegator
-  extend T::Sig
-
   def initialize(*args)
     super(Set.new(args))
   end
 
   def <<(other)
-    if other.is_a?(Comparable)
-      grep(other.class) do |req|
+    if other.is_a?(Object) && other.is_a?(Comparable)
+      __getobj__.grep(other.class) do |req|
         return self if req > other
 
-        delete(req)
+        __getobj__.delete(req)
       end
     end
+    # see https://sorbet.org/docs/faq#how-can-i-fix-type-errors-that-arise-from-super
+    T.bind(self, T.untyped)
     super
     self
   end
 
   sig { returns(String) }
   def inspect
-    "#<#{self.class.name}: {#{to_a.join(", ")}}>"
+    "#<#{self.class.name}: {#{__getobj__.to_a.join(", ")}}>"
   end
 end

@@ -1,25 +1,24 @@
-# typed: false
 # frozen_string_literal: true
 
 require "livecheck/strategy/launchpad"
 
-describe Homebrew::Livecheck::Strategy::Launchpad do
+RSpec.describe Homebrew::Livecheck::Strategy::Launchpad do
   subject(:launchpad) { described_class }
 
-  let(:launchpad_urls) {
+  let(:launchpad_urls) do
     {
       version_dir:    "https://launchpad.net/abc/1.2/1.2.3/+download/abc-1.2.3.tar.gz",
       trunk:          "https://launchpad.net/abc/trunk/1.2.3/+download/abc-1.2.3.tar.gz",
       code_subdomain: "https://code.launchpad.net/abc/1.2/1.2.3/+download/abc-1.2.3.tar.gz",
     }
-  }
+  end
   let(:non_launchpad_url) { "https://brew.sh/test" }
 
-  let(:generated) {
+  let(:generated) do
     {
       url: "https://launchpad.net/abc/",
     }
-  }
+  end
 
   describe "::match?" do
     it "returns true for a Launchpad URL" do

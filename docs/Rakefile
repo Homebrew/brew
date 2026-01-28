@@ -1,6 +1,17 @@
+# frozen_string_literal: true
+
 require "rake"
 
+RUBYDOC_DIR = "#{__dir__}/rubydoc".freeze
+
 task default: :build
+
+desc "Generate documentation with YARD"
+task :yard do
+  cd "#{__dir__}/../Library/Homebrew" do
+    sh "bundle", "exec", "yard", "doc", "--output", RUBYDOC_DIR
+  end
+end
 
 desc "Build the site."
 task :build do
@@ -8,8 +19,10 @@ task :build do
 end
 
 desc "Run Markdownlint to validate the Markdown style."
-task lint: :build do
-  sh "mdl", "."
+task :lint do
+  sh "mdl $(git ls-files '*.md' | grep -v 'Manpage.md')"
+  sh "grep -L '^last_review_date:' $(git ls-files '*.md' | grep -v 'Manpage.md') | " \
+     "xargs -I {} echo 'File {} is missing last_review_date frontmatter.'"
 end
 
 desc "Run HTMLProofer to validate the HTML output."
@@ -17,21 +30,33 @@ task test: :build do
   require "html-proofer"
   HTMLProofer.check_directory(
     "./_site",
-    parallel: { in_threads: 4 },
-    favicon: true,
-    http_status_ignore: [0, 403],
-    assume_extension: true,
-    check_favicon: true,
-    check_opengraph: true,
-    check_html: true,
-    check_img_http: true,
-    enforce_https: true,
-    file_ignore: [
-      %r{Kickstarter-Supporters},
+    parallel:            { in_threads: 4 },
+    favicon:             true,
+    ignore_status_codes: [0, 403],
+    check_favicon:       true,
+    check_opengraph:     true,
+    check_html:          true,
+    check_img_http:      true,
+    enforce_https:       true,
+    ignore_files:        [
+      /Kickstarter-Supporters/,
     ],
-    url_ignore: [
-      "http://formulae.brew.sh",
-      %r{https://github.com/Homebrew/brew/edit/gh-pages//},
-    ]
+    ignore_urls:         [
+      "/",
+      %r{/rubydoc/},
+      %r{https://github.com/},
+      %r{https://homebrew.1password.com/},
+      %r{https://gist.github.com/},
+      "https://docs.fedoraproject.org/en-US/packaging-guidelines/#bundling",
+      "https://legacy.python.org/dev/peps/pep-0453/#recommendations-for-downstream-distributors",
+      "https://metacpan.org/pod/local::lib",
+      "https://www.gnu.org/software/bash/",
+    ],
+    cache:               {
+      timeframe: {
+        external: "1d",
+        internal: "1h",
+      },
+    },
   ).run
 end

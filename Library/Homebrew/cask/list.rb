@@ -1,0 +1,67 @@
+# typed: strict
+# frozen_string_literal: true
+
+require "cask/artifact/relocated"
+require "utils/output"
+
+module Cask
+  module List
+    extend ::Utils::Output::Mixin
+
+    TAP_AND_NAME_COMPARISON = T.let(
+      proc do |a, b|
+        if a.include?("/") && b.exclude?("/")
+          1
+        elsif a.exclude?("/") && b.include?("/")
+          -1
+        else
+          a <=> b
+        end
+      end.freeze,
+      T.proc.params(a: String, b: String).returns(Integer),
+    )
+
+    sig { params(casks: Cask, one: T::Boolean, full_name: T::Boolean, versions: T::Boolean).void }
+    def self.list_casks(*casks, one: false, full_name: false, versions: false)
+      output = if casks.any?
+        casks.each do |cask|
+          raise CaskNotInstalledError, cask unless cask.installed?
+        end
+      else
+        Caskroom.casks
+      end
+
+      if one
+        puts output.map(&:to_s)
+      elsif full_name
+        puts output.map(&:full_name).sort(&TAP_AND_NAME_COMPARISON)
+      elsif versions
+        puts output.map { format_versioned(it) }
+      elsif !output.empty? && casks.any?
+        output.map { list_artifacts(it) }
+      elsif !output.empty?
+        puts Formatter.columns(output.map(&:to_s))
+      end
+    end
+
+    sig { params(cask: Cask).void }
+    def self.list_artifacts(cask)
+      cask.artifacts.group_by(&:class).sort_by { |klass, _| klass.english_name }.each do |klass, artifacts|
+        next if [Artifact::Uninstall, Artifact::Zap].include? klass
+
+        ohai klass.english_name
+        artifacts.each do |artifact|
+          puts artifact.summarize_installed if artifact.respond_to?(:summarize_installed)
+          next if artifact.respond_to?(:summarize_installed)
+
+          puts artifact
+        end
+      end
+    end
+
+    sig { params(cask: Cask).returns(String) }
+    def self.format_versioned(cask)
+      "#{cask}#{cask.installed_version&.prepend(" ")}"
+    end
+  end
+end

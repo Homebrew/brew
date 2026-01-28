@@ -6,8 +6,6 @@ require "cask/artifact/abstract_flight_block"
 module Cask
   module Artifact
     # Artifact corresponding to the `preflight` stanza.
-    #
-    # @api private
     class PreflightBlock < AbstractFlightBlock
     end
   end

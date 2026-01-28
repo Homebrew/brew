@@ -1,16 +1,10 @@
 name: New issue for Reproducible Bug
 description: "If you're sure it's reproducible and not just your machine: submit an issue so we can investigate."
-labels: [bug]
+type: "Bug"
 body:
   - type: markdown
     attributes:
-      value: Please note we will close your issue without comment if you do not fill out the issue checklist below and provide ALL the requested information. If you repeatedly fail to use the issue template, we will block you from ever submitting issues to Homebrew again.
-  - type: textarea
-    attributes:
-      render: shell
-      label: "`brew config` output"
-    validations:
-      required: true
+      value: Please note we may close your issue without comment if you do not fill out the issue checklist below and provide ALL the requested information (even if you consider them irrelevant). If you are unwilling to use the issue template, we may block you from ever submitting future issues to Homebrew.
   - type: textarea
     attributes:
       render: shell
@@ -20,12 +14,20 @@ body:
   - type: checkboxes
     attributes:
       label: Verification
-      description: Please verify that you've followed these steps.
+      description: Please verify that you've followed these steps. If you cannot truthfully check these boxes, open a discussion at https://github.com/orgs/Homebrew/discussions instead.
       options:
-        - label: I ran `brew update` and am still able to reproduce my issue.
+        - label: I ran `brew update` twice and am still able to reproduce my issue.
           required: true
-        - label: I have resolved all warnings from `brew doctor` and that did not fix my problem.
+        - label: My "`brew doctor` output" above says `Your system is ready to brew` or a definitely unrelated `Tier` message.
           required: true
+        - label: This issue's title and/or description do not reference a single formula e.g. `brew install wget`. If they do, open an issue at https://github.com/Homebrew/homebrew-core/issues/new/choose instead.
+          required: true
+  - type: textarea
+    attributes:
+      render: shell
+      label: "`brew config` output"
+    validations:
+      required: true
   - type: textarea
     attributes:
       label: What were you trying to do (and why)?

@@ -1,6 +1,11 @@
+---
+last_review_date: 2025-05-22
+---
+
+# Prose Style Guidelines
+
 <!-- vale off -->
 <!-- Disable vale linting for the whole of the style guide, because it contains deliberately bad examples. -->
-# Prose Style Guidelines
 
 This is a set of style and usage guidelines for Homebrew's prose documentation aimed at users, contributors, and maintainers (as opposed to executable computer code). It applies to documents like those in `docs` in the `Homebrew/brew` repository, announcement emails, and other communications with the Homebrew community.
 
@@ -18,7 +23,7 @@ Homebrew's audience includes users with a wide range of education and experience
 
 We strive for "correct" but not "fancy" usage. Think newspaper article, not academic paper.
 
-This is a set of guidelines to be applied using human judgement, not a set of hard and fast rules. It is like [The Economist's Style Guide](https://web.archive.org/web/20170830001125/https://www.economist.com/styleguide/introduction) or [Garner's Modern American Usage](https://en.wikipedia.org/wiki/Garner's_Modern_American_Usage). It is less like the [Ruby Style Guide](https://github.com/rubocop-hq/ruby-style-guide#the-ruby-style-guide). All guidelines here are open to interpretation and discussion. 100% conformance to these guidelines is *not* a goal.
+This is a set of guidelines to be applied using human judgement, not a set of hard and fast rules. It is more like [Garner's Modern American Usage](https://en.wikipedia.org/wiki/Garner's_Modern_American_Usage) and less like the [Ruby Style Guide](https://github.com/rubocop-hq/ruby-style-guide#the-ruby-style-guide). All guidelines here are open to interpretation and discussion. 100% conformance to these guidelines is *not* a goal.
 
 The intent of this document is to help authors make decisions about clarity, style, and consistency. It is not to help settle arguments about who knows English better. Don't use this document to be a jerk.
 
@@ -48,6 +53,8 @@ We prefer:
 * Use a subordinate list item instead of dropping a multi-sentence paragraph-long item into a list of sentence fragments
 * Prefer Markdown over other markup formats unless their specific features are needed
   * GitHub Flavoured Markdown. GitHub's implementation is the standard, period.
+* Link to other documentation pages with relative links to the Markdown filename rather than the full URL
+  * e.g. `FAQ.md` instead of `https://docs.brew.sh/FAQ`
 
 ### Typographical conventions
 

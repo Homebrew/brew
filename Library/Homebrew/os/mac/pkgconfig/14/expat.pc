@@ -1,0 +1,13 @@
+homebrew_sdkroot=/Library/Developer/CommandLineTools/SDKs/MacOSX14.sdk
+prefix=${homebrew_sdkroot}/usr
+exec_prefix=/usr
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+
+Name: expat
+Version: 2.5.0
+Description: expat XML parser
+URL: https://libexpat.github.io/
+Libs: -L${libdir} -lexpat
+Libs.private:
+Cflags:

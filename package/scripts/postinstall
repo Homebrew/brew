@@ -1,0 +1,104 @@
+#!/bin/bash
+# $1 Full path to the installer (unused)
+# $2 Location of the Homebrew installation we may need to move into place
+# $3 Target install location (unused)
+# $4 System root directory (unused)
+set -euo pipefail
+
+# disable analytics while installing
+export HOMEBREW_NO_ANALYTICS_THIS_RUN=1
+export HOMEBREW_NO_ANALYTICS_MESSAGE_OUTPUT=1
+
+# verify the installation exists
+# default to /opt/homebrew to make development/testing easier
+homebrew_directory="${2:-/opt/homebrew}"
+if [[ ! -d "${homebrew_directory:?}" ]]
+then
+  echo "No directory at ${homebrew_directory}!" >&2
+  exit 1
+fi
+
+# add Git to path
+export PATH="/Library/Developer/CommandLineTools/usr/bin:/Applications/Xcode.app/Contents/Developer/usr/bin:${PATH}"
+
+# avoid writing to user's global config file by overriding HOME
+# https://git-scm.com/docs/git-config#SCOPES
+unset XDG_CONFIG_HOME
+export HOME="${homebrew_directory}"
+
+# reset Git repository
+cd "${homebrew_directory}"
+git config --global --add safe.directory "${homebrew_directory}"
+git checkout --force -B stable
+git reset --hard "$(git tag --list --sort="-version:refname" | head -n1)"
+git clean -f -d
+rm "${homebrew_directory}/.gitconfig"
+
+# move to /usr/local if on x86_64
+if [[ $(uname -m) == "x86_64" ]]
+then
+  if [[ -f "/usr/local/bin/brew" && -d "/usr/local/Homebrew" ]]
+  then
+    cp -pRL "${homebrew_directory}/.git" "/usr/local/Homebrew/"
+    mv "${homebrew_directory}/cache_api" "/usr/local/Homebrew/"
+
+    export HOME="/usr/local/Homebrew"
+    git config --global --add safe.directory /usr/local/Homebrew
+    git -C /usr/local/Homebrew checkout --force -B stable
+    git -C /usr/local/Homebrew reset --hard
+    git -C /usr/local/Homebrew clean -f -d
+    rm /usr/local/Homebrew/.gitconfig
+  else
+    mkdir -vp /usr/local/bin
+    mv "${homebrew_directory}" "/usr/local/Homebrew/"
+
+    # create symlink to /usr/local/bin/brew
+    ln -svf "../Homebrew/bin/brew" "/usr/local/bin/brew"
+  fi
+
+  rm -rf "${homebrew_directory}"
+  homebrew_directory="/usr/local/Homebrew"
+  cd /usr/local
+fi
+
+# create missing directories
+mkdir -vp Caskroom Cellar Frameworks etc include lib opt sbin share var/homebrew/linked
+
+# optionally define an install user at /var/tmp/.homebrew_pkg_user.plist
+homebrew_pkg_user_plist="/var/tmp/.homebrew_pkg_user.plist"
+if [[ -f "${homebrew_pkg_user_plist}" ]] && [[ -n $(defaults read "${homebrew_pkg_user_plist}" HOMEBREW_PKG_USER) ]]
+then
+  homebrew_pkg_user=$(defaults read /var/tmp/.homebrew_pkg_user HOMEBREW_PKG_USER)
+# otherwise, get valid logged in user
+else
+  homebrew_pkg_user=$(echo "show State:/Users/ConsoleUser" | scutil | awk '/Name :/ { print $3 }')
+fi
+
+# set permissions
+chmod ug=rwx Caskroom Cellar Frameworks bin etc include lib opt sbin share var var/homebrew var/homebrew/linked
+if [[ "${homebrew_directory}" == "/usr/local/Homebrew" ]]
+then
+  chown -h "${homebrew_pkg_user}:admin" bin bin/brew etc include lib opt sbin share var
+  chown -h -R "${homebrew_pkg_user}:admin" Caskroom Cellar Frameworks Homebrew var/homebrew
+  chown -h -R "${homebrew_pkg_user}" etc include share var
+else
+  chown -R "${homebrew_pkg_user}:admin" .
+fi
+
+# move API cache to ~/Library/Caches/Homebrew
+user_home_dir=$(dscl . read /Users/"${homebrew_pkg_user}" NFSHomeDirectory | awk '{ print $2 }')
+user_cache_dir="${user_home_dir}/Library/Caches/Homebrew"
+user_api_cache_dir="${user_cache_dir}/api"
+mkdir -vp "${user_api_cache_dir}"
+mv -v "${homebrew_directory}/cache_api/"* "${user_api_cache_dir}"
+chown -R "${homebrew_pkg_user}:staff" "${user_cache_dir}"
+rm -vrf "${homebrew_directory}/cache_api"
+
+# create paths.d file for /opt/homebrew installs
+# (/usr/local/bin is already in the PATH)
+if [[ -d "/etc/paths.d" && "${homebrew_directory}" == "/opt/homebrew" ]]
+then
+  mkdir -vp /etc/paths.d
+  echo "/opt/homebrew/bin" >/etc/paths.d/homebrew
+  chown root:wheel /etc/paths.d/homebrew
+fi

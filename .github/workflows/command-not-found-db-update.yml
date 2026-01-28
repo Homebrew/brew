@@ -1,0 +1,90 @@
+name: Command-not-found scheduled database updates
+
+on:
+  pull_request:
+    paths:
+      - .github/workflows/command-not-found-db-update.yml
+      - Library/Homebrew/dev-cmd/which-update.rb
+      - Library/Homebrew/executables_db.rb
+  schedule:
+    - cron: "0 0 * * *"
+  workflow_dispatch:
+    inputs:
+      max-downloads:
+        description: Maximum number of formulae to download when updating
+        required: false
+
+jobs:
+  update-database:
+    if: startsWith( github.repository, 'Homebrew/' )
+    runs-on: macos-latest
+    permissions:
+      packages: write
+    steps:
+      - name: Set up Homebrew
+        id: set-up-homebrew
+        uses: Homebrew/actions/setup-homebrew@main
+
+      - name: Install oras for interacting with GitHub Packages
+        run: brew install oras
+
+      - name: Pull executables.txt from GitHub Packages
+        run: oras pull ghcr.io/homebrew/command-not-found/executables:latest
+
+      - name: Update database
+        env:
+          MAX_DOWNLOADS: ${{ github.event.inputs.max-downloads }}
+        run: |
+          set -eo pipefail
+
+          if [[ -n "$MAX_DOWNLOADS" ]]
+          then
+            MAX_DOWNLOADS_ARGS="--max-downloads $MAX_DOWNLOADS"
+          fi
+
+          # Need to intentionally leave MAX_DOWNLOADS_ARGS unquoted.
+          # shellcheck disable=SC2086
+          brew which-update --update-existing --install-missing $MAX_DOWNLOADS_ARGS executables.txt --summary-file=$GITHUB_STEP_SUMMARY
+
+      - name: Output database stats
+        run: brew which-update --stats executables.txt
+
+      - name: Log in to GitHub Packages
+        if: github.ref == 'refs/heads/main'
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | oras login ghcr.io --username brewtestbot --password-stdin
+
+      - name: Push to GitHub Packages
+        if: github.ref == 'refs/heads/main'
+        run: |
+          oras push --artifact-type application/vnd.homebrew.command-not-found.executables \
+            ghcr.io/homebrew/command-not-found/executables:latest \
+            executables.txt:text/plain
+
+      - name: Check upload
+        if: github.ref == 'refs/heads/main'
+        run: |
+          shasum --algorithm=256 executables.txt > executables.txt.sha256
+          rm -f executables.txt
+          oras pull ghcr.io/homebrew/command-not-found/executables:latest
+          shasum --algorithm=256 --check executables.txt.sha256
+
+      - name: Upload database artifact
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: executables-database
+          path: executables.txt
+
+  delete-old-versions:
+    needs: update-database
+    runs-on: ubuntu-slim
+    if: github.ref == 'refs/heads/main'
+    permissions:
+      packages: write
+    steps:
+      - name: Delete old versions from GitHub Packages
+        uses: actions/delete-package-versions@e5bc658cc4c965c472efe991f8beea3981499c55 # v5.0.0
+        with:
+          package-name: command-not-found/executables
+          package-type: container
+          min-versions-to-keep: 0
+          delete-only-untagged-versions: true

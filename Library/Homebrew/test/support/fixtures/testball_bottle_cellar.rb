@@ -3,18 +3,26 @@
 
 class TestballBottleCellar < Formula
   def initialize(name = "testball_bottle", path = Pathname.new(__FILE__).expand_path, spec = :stable,
-                 alias_path: nil, force_bottle: false)
-    self.class.instance_eval do
-      stable.url "file://#{TEST_FIXTURE_DIR}/tarballs/testball-0.1.tbz"
-      stable.sha256 TESTBALL_SHA256
-      hexdigest = "8f9aecd233463da6a4ea55f5f88fc5841718c013f3e2a7941350d6130f1dc149"
-      stable.bottle do
-        root_url "file://#{TEST_FIXTURE_DIR}/bottles"
-        sha256 cellar: :any_skip_relocation, Utils::Bottles.tag.to_sym => hexdigest
-      end
-      cxxstdlib_check :skip
-    end
+                 alias_path: nil, tap: nil, force_bottle: false)
     super
+  end
+
+  DSL_PROC = proc do
+    url "file://#{TEST_FIXTURE_DIR}/tarballs/testball-0.1.tbz"
+    sha256 TESTBALL_SHA256
+
+    bottle do
+      root_url "file://#{TEST_FIXTURE_DIR}/bottles"
+      sha256 cellar: :any_skip_relocation, Utils::Bottles.tag.to_sym => "d7b9f4e8bf83608b71fe958a99f19f2e5e68bb2582965d32e41759c24f1aef97"
+    end
+  end.freeze
+  private_constant :DSL_PROC
+
+  DSL_PROC.call
+
+  def self.inherited(other)
+    super
+    other.instance_eval(&DSL_PROC)
   end
 
   def install

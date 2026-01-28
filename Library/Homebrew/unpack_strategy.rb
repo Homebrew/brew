@@ -1,49 +1,40 @@
-# typed: false
+# typed: strict
 # frozen_string_literal: true
 
+require "mktemp"
 require "system_command"
+require "utils/output"
 
 # Module containing all available strategies for unpacking archives.
-#
-# @api private
 module UnpackStrategy
-  extend T::Sig
   extend T::Helpers
-
+  extend Utils::Output::Mixin
   include SystemCommand::Mixin
+  include Utils::Output::Mixin
 
-  # Helper module for identifying the file type.
-  module Magic
-    # Length of the longest regex (currently Tar).
-    MAX_MAGIC_NUMBER_LENGTH = 262
-    private_constant :MAX_MAGIC_NUMBER_LENGTH
+  abstract!
 
-    refine Pathname do
-      def magic_number
-        @magic_number ||= if directory?
-          ""
-        else
-          binread(MAX_MAGIC_NUMBER_LENGTH) || ""
-        end
-      end
+  requires_ancestor { Kernel }
 
-      def file_type
-        @file_type ||= system_command("file", args: ["-b", self], print_stderr: false)
-                       .stdout.chomp
-      end
+  UnpackStrategyType = T.type_alias { T.all(T::Class[UnpackStrategy], UnpackStrategy::ClassMethods) }
 
-      def zipinfo
-        @zipinfo ||= system_command("zipinfo", args: ["-1", self], print_stderr: false)
-                     .stdout
-                     .encode(Encoding::UTF_8, invalid: :replace)
-                     .split("\n")
-      end
-    end
+  module ClassMethods
+    extend T::Helpers
+
+    abstract!
+
+    sig { abstract.returns(T::Array[String]) }
+    def extensions; end
+
+    sig { abstract.params(path: Pathname).returns(T::Boolean) }
+    def can_extract?(path); end
   end
-  private_constant :Magic
 
+  mixes_in_class_methods(ClassMethods)
+
+  sig { returns(T::Array[UnpackStrategyType]) }
   def self.strategies
-    @strategies ||= [
+    @strategies ||= T.let([
       Tar, # Needs to be before Bzip2/Gzip/Xz/Lzma/Zstd.
       Pax,
       Gzip,
@@ -76,10 +67,11 @@ module UnpackStrategy
       Sit,
       Rar,
       Lha,
-    ].freeze
+    ].freeze, T.nilable(T::Array[UnpackStrategyType]))
   end
   private_class_method :strategies
 
+  sig { params(type: Symbol).returns(T.nilable(UnpackStrategyType)) }
   def self.from_type(type)
     type = {
       naked:     :uncompressed,
@@ -94,23 +86,29 @@ module UnpackStrategy
     end
   end
 
+  sig { params(extension: String).returns(T.nilable(UnpackStrategyType)) }
   def self.from_extension(extension)
     strategies.sort_by { |s| s.extensions.map(&:length).max || 0 }
               .reverse
-              .find { |s| s.extensions.any? { |ext| extension.end_with?(ext) } }
+              .find { |s| extension.end_with?(*s.extensions) }
   end
 
+  sig { params(path: Pathname).returns(T.nilable(UnpackStrategyType)) }
   def self.from_magic(path)
     strategies.find { |s| s.can_extract?(path) }
   end
 
-  def self.detect(path, prioritise_extension: false, type: nil, ref_type: nil, ref: nil, merge_xattrs: nil)
+  sig {
+    params(path: Pathname, prioritize_extension: T::Boolean, type: T.nilable(Symbol), ref_type: T.nilable(Symbol),
+           ref: T.nilable(String), merge_xattrs: T::Boolean).returns(UnpackStrategy)
+  }
+  def self.detect(path, prioritize_extension: false, type: nil, ref_type: nil, ref: nil, merge_xattrs: false)
     strategy = from_type(type) if type
 
-    if prioritise_extension && path.extname.present?
+    if prioritize_extension && path.extname.present?
       strategy ||= from_extension(path.extname)
-      strategy ||= strategies.select { |s| s < Directory || s == Fossil }
-                             .find { |s| s.can_extract?(path) }
+
+      strategy ||= strategies.find { |s| (s < Directory || s == Fossil) && s.can_extract?(path) }
     else
       strategy ||= from_magic(path)
       strategy ||= from_extension(path.extname)
@@ -118,55 +116,96 @@ module UnpackStrategy
 
     strategy ||= Uncompressed
 
-    strategy.new(path, ref_type: ref_type, ref: ref, merge_xattrs: merge_xattrs)
+    strategy.new(path, ref_type:, ref:, merge_xattrs:)
   end
 
-  attr_reader :path, :merge_xattrs
+  sig { returns(Pathname) }
+  attr_reader :path
 
-  def initialize(path, ref_type: nil, ref: nil, merge_xattrs: nil)
-    @path = Pathname(path).expand_path
-    @ref_type = ref_type
-    @ref = ref
+  sig { returns(T::Boolean) }
+  attr_reader :merge_xattrs
+
+  sig {
+    params(path: T.any(String, Pathname), ref_type: T.nilable(Symbol), ref: T.nilable(String),
+           merge_xattrs: T::Boolean).void
+  }
+  def initialize(path, ref_type: nil, ref: nil, merge_xattrs: false)
+    @path = T.let(Pathname(path).expand_path, Pathname)
+    @ref_type = T.let(ref_type, T.nilable(Symbol))
+    @ref = T.let(ref, T.nilable(String))
     @merge_xattrs = merge_xattrs
   end
 
-  abstract!
-  sig { abstract.params(unpack_dir: Pathname, basename: Pathname, verbose: T::Boolean).returns(T.untyped) }
+  sig { abstract.params(unpack_dir: Pathname, basename: Pathname, verbose: T::Boolean).void }
   def extract_to_dir(unpack_dir, basename:, verbose:); end
   private :extract_to_dir
 
-  def extract(to: nil, basename: nil, verbose: nil)
+  sig {
+    params(
+      to: T.nilable(Pathname), basename: T.nilable(T.any(String, Pathname)), verbose: T::Boolean,
+    ).void
+  }
+  def extract(to: nil, basename: nil, verbose: false)
     basename ||= path.basename
     unpack_dir = Pathname(to || Dir.pwd).expand_path
     unpack_dir.mkpath
-    extract_to_dir(unpack_dir, basename: Pathname(basename), verbose: verbose || false)
+    extract_to_dir(unpack_dir, basename: Pathname(basename), verbose:)
   end
 
-  def extract_nestedly(to: nil, basename: nil, verbose: false, prioritise_extension: false)
-    Dir.mktmpdir do |tmp_unpack_dir|
-      tmp_unpack_dir = Pathname(tmp_unpack_dir)
+  sig {
+    params(
+      to:                   T.nilable(Pathname),
+      basename:             T.nilable(T.any(String, Pathname)),
+      verbose:              T::Boolean,
+      prioritize_extension: T::Boolean,
+    ).void
+  }
+  def extract_nestedly(to: nil, basename: nil, verbose: false, prioritize_extension: false)
+    Mktemp.new("homebrew-unpack").run(chdir: false) do |unpack_dir|
+      tmp_unpack_dir = T.must(unpack_dir.tmpdir)
 
-      extract(to: tmp_unpack_dir, basename: basename, verbose: verbose)
+      extract(to: tmp_unpack_dir, basename:, verbose:)
 
       children = tmp_unpack_dir.children
 
-      if children.count == 1 && !children.first.directory?
-        FileUtils.chmod "+rw", children.first, verbose: verbose
+      if children.size == 1 && !children.fetch(0).directory?
+        first_child = children.first
+        next if first_child.nil?
 
-        s = UnpackStrategy.detect(children.first, prioritise_extension: prioritise_extension)
+        s = UnpackStrategy.detect(first_child, prioritize_extension:)
 
-        s.extract_nestedly(to: to, verbose: verbose, prioritise_extension: prioritise_extension)
+        s.extract_nestedly(to:, verbose:, prioritize_extension:)
+
         next
       end
 
-      Directory.new(tmp_unpack_dir).extract(to: to, verbose: verbose)
+      # Ensure all extracted directories are writable.
+      each_directory(tmp_unpack_dir) do |path|
+        next if path.writable?
 
-      FileUtils.chmod_R "+w", tmp_unpack_dir, force: true, verbose: verbose
+        FileUtils.chmod "u+w", path, verbose:
+      end
+
+      Directory.new(tmp_unpack_dir, move: true).extract(to:, verbose:)
     end
   end
 
+  sig { returns(T.any(T::Array[Cask::Cask], T::Array[Formula])) }
   def dependencies
     []
+  end
+
+  # Helper method for iterating over directory trees.
+  sig {
+    params(
+      pathname: Pathname,
+      _block:   T.proc.params(path: Pathname).void,
+    ).void
+  }
+  def each_directory(pathname, &_block)
+    pathname.find do |path|
+      yield path if path.directory?
+    end
   end
 end
 

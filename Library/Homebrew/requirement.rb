@@ -1,23 +1,26 @@
-# typed: true
+# typed: true # rubocop:todo Sorbet/StrictSigil
 # frozen_string_literal: true
 
 require "dependable"
 require "dependency"
 require "dependencies"
 require "build_environment"
+require "utils/output"
 
 # A base class for non-formula requirements needed by formulae.
 # A fatal requirement is one that will fail the build if it is not present.
 # By default, requirements are non-fatal.
-#
-# @api private
 class Requirement
-  extend T::Sig
-
   include Dependable
+  include Utils::Output::Mixin
   extend Cachable
+  extend T::Helpers
 
-  attr_reader :tags, :name, :cask, :download
+  # This base class enforces no constraints on its own.
+  # Individual subclasses use the `satisfy` DSL to define those constraints.
+  abstract!
+
+  attr_reader :name, :cask, :download
 
   def initialize(tags = [])
     @cask = self.class.cask
@@ -60,12 +63,20 @@ class Requirement
 
   # Overriding {#satisfied?} is unsupported.
   # Pass a block or boolean to the satisfy DSL method instead.
+  sig {
+    params(
+      env:          T.nilable(String),
+      cc:           T.nilable(String),
+      build_bottle: T::Boolean,
+      bottle_arch:  T.nilable(String),
+    ).returns(T::Boolean)
+  }
   def satisfied?(env: nil, cc: nil, build_bottle: false, bottle_arch: nil)
     satisfy = self.class.satisfy
     return true unless satisfy
 
     @satisfied_result =
-      satisfy.yielder(env: env, cc: cc, build_bottle: build_bottle, bottle_arch: bottle_arch) do |p|
+      satisfy.yielder(env:, cc:, build_bottle:, bottle_arch:) do |p|
         instance_eval(&p)
       end
     return false unless @satisfied_result
@@ -75,6 +86,7 @@ class Requirement
 
   # Overriding {#fatal?} is unsupported.
   # Pass a boolean to the fatal DSL method instead.
+  sig { returns(T::Boolean) }
   def fatal?
     self.class.fatal || false
   end
@@ -89,10 +101,17 @@ class Requirement
     parent
   end
 
-  # Overriding {#modify_build_environment} is unsupported.
-  # Pass a block to the env DSL method instead.
+  # Pass a block to the env DSL method instead of overriding.
+  sig(:final) {
+    params(
+      env:          T.nilable(String),
+      cc:           T.nilable(String),
+      build_bottle: T::Boolean,
+      bottle_arch:  T.nilable(String),
+    ).void
+  }
   def modify_build_environment(env: nil, cc: nil, build_bottle: false, bottle_arch: nil)
-    satisfied?(env: env, cc: cc, build_bottle: build_bottle, bottle_arch: bottle_arch)
+    satisfied?(env:, cc:, build_bottle:, bottle_arch:)
     instance_eval(&env_proc) if env_proc
 
     # XXX If the satisfy block returns a Pathname, then make sure that it
@@ -103,7 +122,7 @@ class Requirement
     parent = satisfied_result_parent
     return unless parent
     return if ["#{HOMEBREW_PREFIX}/bin", "#{HOMEBREW_PREFIX}/bin"].include?(parent.to_s)
-    return if PATH.new(ENV["PATH"]).include?(parent.to_s)
+    return if PATH.new(ENV.fetch("PATH")).include?(parent.to_s)
 
     ENV.prepend_path("PATH", parent)
   end
@@ -122,7 +141,7 @@ class Requirement
   alias eql? ==
 
   def hash
-    name.hash ^ tags.hash
+    [self.class, name, tags].hash
   end
 
   sig { returns(String) }
@@ -141,9 +160,9 @@ class Requirement
   private
 
   def infer_name
-    klass = self.class.name || self.class.to_s
-    klass = klass.sub(/(Dependency|Requirement)$/, "")
-                 .sub(/^(\w+::)*/, "")
+    klass = self.class.name
+    klass = klass&.sub(/(Dependency|Requirement)$/, "")
+                 &.sub(/^(\w+::)*/, "")
     return klass.downcase if klass.present?
 
     return @cask if @cask.present?
@@ -155,18 +174,25 @@ class Requirement
     super(cmd, PATH.new(ORIGINAL_PATHS))
   end
 
-  def which_all(cmd)
-    super(cmd, PATH.new(ORIGINAL_PATHS))
-  end
-
   class << self
-    extend T::Sig
-
     include BuildEnvironment::DSL
 
     attr_reader :env_proc, :build
 
-    attr_rw :fatal, :cask, :download
+    sig { params(val: String).returns(T.nilable(String)) }
+    def cask(val = T.unsafe(nil))
+      val.nil? ? @cask : @cask = val
+    end
+
+    sig { params(val: String).returns(T.nilable(String)) }
+    def download(val = T.unsafe(nil))
+      val.nil? ? @download : @download = val
+    end
+
+    sig { params(val: T::Boolean).returns(T.nilable(T::Boolean)) }
+    def fatal(val = T.unsafe(nil))
+      val.nil? ? @fatal : @fatal = val
+    end
 
     def satisfy(options = nil, &block)
       return @satisfied if options.nil? && !block
@@ -203,7 +229,7 @@ class Requirement
       elsif @options[:build_env]
         require "extend/ENV"
         ENV.with_build_environment(
-          env: env, cc: cc, build_bottle: build_bottle, bottle_arch: bottle_arch,
+          env:, cc:, build_bottle:, bottle_arch:,
         ) do
           yield @proc
         end
@@ -219,7 +245,7 @@ class Requirement
     # `[dependent, req]` pairs to allow callers to apply arbitrary filters to
     # the list.
     # The default filter, which is applied when a block is not given, omits
-    # optionals and recommendeds based on what the dependent has asked for.
+    # optionals and recommends based on what the dependent has asked for.
     def expand(dependent, cache_key: nil, &block)
       if cache_key.present?
         cache[cache_key] ||= {}
@@ -239,7 +265,13 @@ class Requirement
         end
       end
 
-      cache[cache_key][cache_id dependent] = reqs.dup if cache_key.present?
+      if cache_key.present?
+        # Even though we setup the cache above
+        # 'dependent.recursive_dependencies.map(&:to_formula)'
+        # is invalidating the singleton cache
+        cache[cache_key] ||= {}
+        cache[cache_key][cache_id dependent] = reqs.dup
+      end
       reqs
     end
 

@@ -1,4 +1,4 @@
-# typed: true
+# typed: true # rubocop:todo Sorbet/StrictSigil
 # frozen_string_literal: true
 
 require "cask/artifact/symlinked"
@@ -6,8 +6,6 @@ require "cask/artifact/symlinked"
 module Cask
   module Artifact
     # Artifact corresponding to the `manpage` stanza.
-    #
-    # @api private
     class Manpage < Symlinked
       attr_reader :section
 

@@ -1,329 +1,127 @@
-# typed: false
 # frozen_string_literal: true
 
-describe "globally-scoped helper methods" do
-  let(:dir) { mktmpdir }
+require "utils"
 
-  def esc(code)
-    /(\e\[\d+m)*\e\[#{code}m/
-  end
+RSpec.describe Utils do
+  describe ".deconstantize" do
+    it "removes the rightmost segment from the constant expression in the string" do
+      expect(described_class.deconstantize("Net::HTTP")).to eq("Net")
+      expect(described_class.deconstantize("::Net::HTTP")).to eq("::Net")
+      expect(described_class.deconstantize("String")).to eq("")
+      expect(described_class.deconstantize("::String")).to eq("")
+    end
 
-  describe "#ofail" do
-    it "sets Homebrew.failed to true" do
-      expect {
-        ofail "foo"
-      }.to output("Error: foo\n").to_stderr
-
-      expect(Homebrew).to have_failed
+    it "returns an empty string if the namespace is empty" do
+      expect(described_class.deconstantize("")).to eq("")
+      expect(described_class.deconstantize("::")).to eq("")
     end
   end
 
-  describe "#odie" do
-    it "exits with 1" do
-      expect(self).to receive(:exit).and_return(1)
-      expect {
-        odie "foo"
-      }.to output("Error: foo\n").to_stderr
+  describe ".demodulize" do
+    it "removes the module part from the expression in the string" do
+      expect(described_class.demodulize("Foo::Bar")).to eq("Bar")
+    end
+
+    it "returns the string if it does not contain a module expression" do
+      expect(described_class.demodulize("FooBar")).to eq("FooBar")
+    end
+
+    it "returns an empty string if the namespace is empty" do
+      expect(described_class.demodulize("")).to eq("")
+      expect(described_class.demodulize("::")).to eq("")
+    end
+
+    it "raise an ArgumentError when passed nil" do
+      expect { described_class.demodulize(nil) }.to raise_error(ArgumentError)
     end
   end
 
-  describe "#pretty_installed" do
-    subject(:pretty_installed_output) { pretty_installed("foo") }
-
-    context "when $stdout is a TTY" do
-      before { allow($stdout).to receive(:tty?).and_return(true) }
-
-      context "with HOMEBREW_NO_EMOJI unset" do
-        it "returns a string with a colored checkmark" do
-          expect(pretty_installed_output)
-            .to match(/#{esc 1}foo #{esc 32}✔#{esc 0}/)
-        end
-      end
-
-      context "with HOMEBREW_NO_EMOJI set" do
-        before { ENV["HOMEBREW_NO_EMOJI"] = "1" }
-
-        it "returns a string with colored info" do
-          expect(pretty_installed_output)
-            .to match(/#{esc 1}foo \(installed\)#{esc 0}/)
-        end
-      end
-    end
-
-    context "when $stdout is not a TTY" do
-      before { allow($stdout).to receive(:tty?).and_return(false) }
-
-      it "returns plain text" do
-        expect(pretty_installed_output).to eq("foo")
-      end
-    end
-  end
-
-  describe "#pretty_uninstalled" do
-    subject(:pretty_uninstalled_output) { pretty_uninstalled("foo") }
-
-    context "when $stdout is a TTY" do
-      before { allow($stdout).to receive(:tty?).and_return(true) }
-
-      context "with HOMEBREW_NO_EMOJI unset" do
-        it "returns a string with a colored checkmark" do
-          expect(pretty_uninstalled_output)
-            .to match(/#{esc 1}foo #{esc 31}✘#{esc 0}/)
-        end
-      end
-
-      context "with HOMEBREW_NO_EMOJI set" do
-        before { ENV["HOMEBREW_NO_EMOJI"] = "1" }
-
-        it "returns a string with colored info" do
-          expect(pretty_uninstalled_output)
-            .to match(/#{esc 1}foo \(uninstalled\)#{esc 0}/)
-        end
-      end
-    end
-
-    context "when $stdout is not a TTY" do
-      before { allow($stdout).to receive(:tty?).and_return(false) }
-
-      it "returns plain text" do
-        expect(pretty_uninstalled_output).to eq("foo")
-      end
-    end
-  end
-
-  describe "#interactive_shell" do
-    let(:shell) { dir/"myshell" }
-
-    it "starts an interactive shell session" do
-      File.write shell, <<~SH
-        #!/bin/sh
-        echo called > "#{dir}/called"
-      SH
-
-      FileUtils.chmod 0755, shell
-
-      ENV["SHELL"] = shell
-
-      expect { interactive_shell }.not_to raise_error
-      expect(dir/"called").to exist
-    end
-  end
-
-  describe "#with_custom_locale" do
-    it "temporarily overrides the system locale" do
-      ENV["LC_ALL"] = "en_US.UTF-8"
-
-      with_custom_locale("C") do
-        expect(ENV["LC_ALL"]).to eq("C")
-      end
-
-      expect(ENV["LC_ALL"]).to eq("en_US.UTF-8")
-    end
-  end
-
-  describe "#which" do
-    let(:cmd) { dir/"foo" }
-
-    before { FileUtils.touch cmd }
-
-    it "returns the first executable that is found" do
-      cmd.chmod 0744
-      expect(which(File.basename(cmd), File.dirname(cmd))).to eq(cmd)
-    end
-
-    it "skips non-executables" do
-      expect(which(File.basename(cmd), File.dirname(cmd))).to be nil
-    end
-
-    it "skips malformed path and doesn't fail" do
-      # 'which' should not fail if a path is malformed
-      # see https://github.com/Homebrew/legacy-homebrew/issues/32789 for an example
-      cmd.chmod 0744
-
-      # ~~ will fail because ~foo resolves to foo's home and there is no '~' user
-      path = ["~~", File.dirname(cmd)].join(File::PATH_SEPARATOR)
-      expect(which(File.basename(cmd), path)).to eq(cmd)
-    end
-  end
-
-  describe "#which_all" do
-    let(:cmd1) { dir/"foo" }
-    let(:cmd2) { dir/"bar/foo" }
-    let(:cmd3) { dir/"bar/baz/foo" }
-
-    before do
-      (dir/"bar/baz").mkpath
-
-      FileUtils.touch cmd2
-
-      [cmd1, cmd3].each do |cmd|
-        FileUtils.touch cmd
-        cmd.chmod 0744
-      end
-    end
-
-    it "returns an array of all executables that are found" do
-      path = [
-        "#{dir}/bar/baz",
-        "#{dir}/baz:#{dir}",
-        "~baduserpath",
-      ].join(File::PATH_SEPARATOR)
-      expect(which_all("foo", path)).to eq([cmd3, cmd1])
-    end
-  end
-
-  specify "#which_editor" do
-    ENV["HOMEBREW_EDITOR"] = "vemate -w"
-    ENV["HOMEBREW_PATH"] = dir
-
-    editor = "#{dir}/vemate"
-    FileUtils.touch editor
-    FileUtils.chmod 0755, editor
-
-    expect(which_editor).to eq("vemate -w")
-  end
-
-  specify "#gzip" do
-    mktmpdir do |path|
-      somefile = path/"somefile"
-      FileUtils.touch somefile
-      expect(gzip(somefile)[0].to_s).to eq("#{somefile}.gz")
-      expect(Pathname.new("#{somefile}.gz")).to exist
-    end
-  end
-
-  specify "#capture_stderr" do
-    err = capture_stderr do
-      $stderr.print "test"
-    end
-
-    expect(err).to eq("test")
-  end
-
-  describe "#pretty_duration" do
-    it "converts seconds to a human-readable string" do
-      expect(pretty_duration(1)).to eq("1 second")
-      expect(pretty_duration(2.5)).to eq("2 seconds")
-      expect(pretty_duration(42)).to eq("42 seconds")
-      expect(pretty_duration(240)).to eq("4 minutes")
-      expect(pretty_duration(252.45)).to eq("4 minutes 12 seconds")
-    end
-  end
-
-  specify "#parse_author!" do
+  specify ".parse_author!" do
     parse_error_msg = /Unable to parse name and email/
 
-    expect(parse_author!("John Doe <john.doe@example.com>"))
+    expect(described_class.parse_author!("John Doe <john.doe@example.com>"))
       .to eq({ name: "John Doe", email: "john.doe@example.com" })
-    expect { parse_author!("") }
+    expect { described_class.parse_author!("") }
       .to raise_error(parse_error_msg)
-    expect { parse_author!("John Doe") }
+    expect { described_class.parse_author!("John Doe") }
       .to raise_error(parse_error_msg)
-    expect { parse_author!("<john.doe@example.com>") }
+    expect { described_class.parse_author!("<john.doe@example.com>") }
       .to raise_error(parse_error_msg)
   end
 
-  specify "#disk_usage_readable" do
-    expect(disk_usage_readable(1)).to eq("1B")
-    expect(disk_usage_readable(1000)).to eq("1000B")
-    expect(disk_usage_readable(1024)).to eq("1KB")
-    expect(disk_usage_readable(1025)).to eq("1KB")
-    expect(disk_usage_readable(4_404_020)).to eq("4.2MB")
-    expect(disk_usage_readable(4_509_715_660)).to eq("4.2GB")
-  end
+  describe ".pluralize" do
+    it "combines the stem with the default suffix based on the count" do
+      expect(described_class.pluralize("foo", 0)).to eq("foos")
+      expect(described_class.pluralize("foo", 1)).to eq("foo")
+      expect(described_class.pluralize("foo", 2)).to eq("foos")
+    end
 
-  describe "#number_readable" do
-    it "returns a string with thousands separators" do
-      expect(number_readable(1)).to eq("1")
-      expect(number_readable(1_000)).to eq("1,000")
-      expect(number_readable(1_000_000)).to eq("1,000,000")
+    it "combines the stem with the singular suffix based on the count" do
+      expect(described_class.pluralize("foo", 0, singular: "o")).to eq("foos")
+      expect(described_class.pluralize("foo", 1, singular: "o")).to eq("fooo")
+      expect(described_class.pluralize("foo", 2, singular: "o")).to eq("foos")
+    end
+
+    it "combines the stem with the plural suffix based on the count" do
+      expect(described_class.pluralize("foo", 0, plural: "es")).to eq("fooes")
+      expect(described_class.pluralize("foo", 1, plural: "es")).to eq("foo")
+      expect(described_class.pluralize("foo", 2, plural: "es")).to eq("fooes")
+    end
+
+    it "combines the stem with the singular and plural suffix based on the count" do
+      expect(described_class.pluralize("foo", 0, singular: "o", plural: "es")).to eq("fooes")
+      expect(described_class.pluralize("foo", 1, singular: "o", plural: "es")).to eq("fooo")
+      expect(described_class.pluralize("foo", 2, singular: "o", plural: "es")).to eq("fooes")
+    end
+
+    it "includes the count when requested" do
+      expect(described_class.pluralize("foo", 0, include_count: true)).to eq("0 foos")
+      expect(described_class.pluralize("foo", 1, include_count: true)).to eq("1 foo")
+      expect(described_class.pluralize("foo", 2, include_count: true)).to eq("2 foos")
     end
   end
 
-  specify "#truncate_text_to_approximate_size" do
-    glue = "\n[...snip...]\n" # hard-coded copy from truncate_text_to_approximate_size
-    n = 20
-    long_s = "x" * 40
-
-    s = truncate_text_to_approximate_size(long_s, n)
-    expect(s.length).to eq(n)
-    expect(s).to match(/^x+#{Regexp.escape(glue)}x+$/)
-
-    s = truncate_text_to_approximate_size(long_s, n, front_weight: 0.0)
-    expect(s).to eq(glue + ("x" * (n - glue.length)))
-
-    s = truncate_text_to_approximate_size(long_s, n, front_weight: 1.0)
-    expect(s).to eq(("x" * (n - glue.length)) + glue)
-  end
-
-  describe "#odeprecated" do
-    it "raises a MethodDeprecatedError when `disable` is true" do
-      ENV.delete("HOMEBREW_DEVELOPER")
-      expect {
-        odeprecated(
-          "method", "replacement",
-          caller:  ["#{HOMEBREW_LIBRARY}/Taps/homebrew/homebrew-core/"],
-          disable: true
-        )
-      }.to raise_error(
-        MethodDeprecatedError,
-        %r{method.*replacement.*homebrew/core.*/Taps/homebrew/homebrew-core/}m,
-      )
+  describe ".underscore" do
+    # commented out entries require acronyms inflections
+    let(:words) do
+      [
+        ["API", "api"],
+        ["APIController", "api_controller"],
+        ["Nokogiri::HTML", "nokogiri/html"],
+        # ["HTTPAPI", "http_api"],
+        ["HTTP::Get", "http/get"],
+        ["SSLError", "ssl_error"],
+        # ["RESTful", "restful"],
+        # ["RESTfulController", "restful_controller"],
+        # ["Nested::RESTful", "nested/restful"],
+        # ["IHeartW3C", "i_heart_w3c"],
+        # ["PhDRequired", "phd_required"],
+        # ["IRoRU", "i_ror_u"],
+        # ["RESTfulHTTPAPI", "restful_http_api"],
+        # ["HTTP::RESTful", "http/restful"],
+        # ["HTTP::RESTfulAPI", "http/restful_api"],
+        # ["APIRESTful", "api_restful"],
+        ["Capistrano", "capistrano"],
+        ["CapiController", "capi_controller"],
+        ["HttpsApis", "https_apis"],
+        ["Html5", "html5"],
+        ["Restfully", "restfully"],
+        ["RoRails", "ro_rails"],
+      ]
     end
-  end
 
-  describe "#with_env" do
-    it "sets environment variables within the block" do
-      expect(ENV["PATH"]).not_to eq("/bin")
-      with_env(PATH: "/bin") do
-        expect(ENV["PATH"]).to eq("/bin")
+    it "converts strings to underscore case" do
+      words.each do |camel, under|
+        expect(described_class.underscore(camel)).to eq(under)
+        expect(described_class.underscore(under)).to eq(under)
       end
-    end
-
-    it "restores ENV after the block" do
-      with_env(PATH: "/bin") do
-        expect(ENV["PATH"]).to eq("/bin")
-      end
-      expect(ENV["PATH"]).not_to eq("/bin")
-    end
-
-    it "restores ENV if an exception is raised" do
-      expect {
-        with_env(PATH: "/bin") do
-          raise StandardError, "boom"
-        end
-      }.to raise_error(StandardError)
-
-      expect(ENV["PATH"]).not_to eq("/bin")
     end
   end
 
-  describe "#tap_and_name_comparison" do
-    describe "both strings are only names" do
-      it "alphabetizes the strings" do
-        expect(%w[a b].sort(&tap_and_name_comparison)).to eq(%w[a b])
-        expect(%w[b a].sort(&tap_and_name_comparison)).to eq(%w[a b])
-      end
-    end
-
-    describe "both strings include tap" do
-      it "alphabetizes the strings" do
-        expect(%w[a/z/z b/z/z].sort(&tap_and_name_comparison)).to eq(%w[a/z/z b/z/z])
-        expect(%w[b/z/z a/z/z].sort(&tap_and_name_comparison)).to eq(%w[a/z/z b/z/z])
-
-        expect(%w[z/a/z z/b/z].sort(&tap_and_name_comparison)).to eq(%w[z/a/z z/b/z])
-        expect(%w[z/b/z z/a/z].sort(&tap_and_name_comparison)).to eq(%w[z/a/z z/b/z])
-
-        expect(%w[z/z/a z/z/b].sort(&tap_and_name_comparison)).to eq(%w[z/z/a z/z/b])
-        expect(%w[z/z/b z/z/a].sort(&tap_and_name_comparison)).to eq(%w[z/z/a z/z/b])
-      end
-    end
-
-    describe "only one string includes tap" do
-      it "prefers the string without tap" do
-        expect(%w[a/z/z z].sort(&tap_and_name_comparison)).to eq(%w[z a/z/z])
-        expect(%w[z a/z/z].sort(&tap_and_name_comparison)).to eq(%w[z a/z/z])
-      end
+  describe ".convert_to_string_or_symbol" do
+    specify(:aggregate_failures) do
+      expect(described_class.convert_to_string_or_symbol(":example")).to eq(:example)
+      expect(described_class.convert_to_string_or_symbol("example")).to eq("example")
     end
   end
 end

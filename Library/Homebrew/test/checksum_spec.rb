@@ -1,9 +1,8 @@
-# typed: false
 # frozen_string_literal: true
 
 require "checksum"
 
-describe Checksum do
+RSpec.describe Checksum do
   describe "#empty?" do
     subject { described_class.new("") }
 
@@ -16,8 +15,10 @@ describe Checksum do
     let(:other) { described_class.new(TEST_SHA256) }
     let(:other_reversed) { described_class.new(TEST_SHA256.reverse) }
 
-    it { is_expected.to eq(other) }
-    it { is_expected.not_to eq(other_reversed) }
-    it { is_expected.not_to eq(nil) }
+    specify(:aggregate_failures) do
+      expect(subject).to eq(other) # rubocop:todo RSpec/NamedSubject
+      expect(subject).not_to eq(other_reversed) # rubocop:todo RSpec/NamedSubject
+      expect(subject).not_to be_nil # rubocop:todo RSpec/NamedSubject
+    end
   end
 end

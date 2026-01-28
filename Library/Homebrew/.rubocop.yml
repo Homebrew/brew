@@ -1,61 +1,102 @@
 inherit_from:
-  - ../.rubocop_rspec.yml
-  - .rubocop_todo.yml
+  - ../.rubocop.yml
 
-# make rspec formatting more flexible
-Layout/MultilineMethodCallIndentation:
-  Exclude:
-    - "**/*_spec.rb"
+Bundler/GemFilename:
+  Enabled: false
 
-# `formula do` uses nested method definitions
-Lint/NestedMethodDefinition:
+Homebrew/MoveToExtendOS:
+  Enabled: true
   Exclude:
-    - "test/**/*"
+    - "{extend,test,requirements}/**/*"
+    - "os.rb"
 
-# TODO: Try to bring down all metrics maximums.
-Metrics/AbcSize:
-  Max: 280
-Metrics/BlockLength:
-  Max: 106
+# We don't use Sorbet for RSpec tests so let's disable this there.
+Sorbet/BlockMethodDefinition:
   Exclude:
-    # TODO: extract more of the bottling logic
-    - "dev-cmd/bottle.rb"
-    - "test/**/*"
-Metrics/BlockNesting:
-  Max: 5
-Metrics/ClassLength:
-  Max: 800
-  Exclude:
-    - "formula.rb"
-    - "formula_installer.rb"
-Metrics/CyclomaticComplexity:
-  Max: 80
-Metrics/PerceivedComplexity:
-  Max: 90
-Metrics/MethodLength:
-  Max: 260
-Metrics/ModuleLength:
-  Max: 500
-  Exclude:
-    # TODO: extract more of the bottling logic
-    - "dev-cmd/bottle.rb"
-    - "test/**/*"
+    - test/**/*
 
-Naming/PredicateName:
-  # Can't rename these.
+# Want to preserve our own API for these methods for now.
+Naming/PredicatePrefix:
+  inherit_mode:
+    merge:
+      - AllowedMethods
   AllowedMethods:
-    - is_a?
     - is_32_bit?
     - is_64_bit?
 
-Style/HashAsLastArrayItem:
-  Exclude:
-    - "test/utils/spdx_spec.rb"
+Naming/PredicateMethod:
+  inherit_mode:
+    merge:
+      - WaywardPredicates
+  WaywardPredicates:
+    - size?
 
-Style/BlockDelimiters:
-  BracesRequiredMethods:
-    - "sig"
+Naming/MethodParameterName:
+  AllowedNames:
+    - go
 
-Bundler/GemFilename:
+# Only enforce documentation for public APIs.
+# Checked by the tests.yml syntax job
+Style/Documentation:
+  AllowedConstants:
+    - Homebrew
+  Include:
+    - abstract_command.rb
+    - autobump_constants.rb
+    - cask/cask.rb
+    - cask/dsl.rb
+    - cask/dsl/version.rb
+    - cask/url.rb
+    - development_tools.rb
+    - download_strategy.rb
+    - extend/ENV/super.rb
+    - extend/kernel.rb
+    - extend/pathname.rb
+    - formula.rb
+    - formula_assertions.rb
+    - formula_free_port.rb
+    - language/java.rb
+    - language/node.rb
+    - language/perl.rb
+    - language/php.rb
+    - language/python.rb
+    - livecheck/strategy/apache.rb
+    - livecheck/strategy/bitbucket.rb
+    - livecheck/strategy/cpan.rb
+    - livecheck/strategy/crate.rb
+    - livecheck/strategy/extract_plist.rb
+    - livecheck/strategy/git.rb
+    - livecheck/strategy/github_latest.rb
+    - livecheck/strategy/github_releases.rb
+    - livecheck/strategy/gnome.rb
+    - livecheck/strategy/gnu.rb
+    - livecheck/strategy/hackage.rb
+    - livecheck/strategy/json.rb
+    - livecheck/strategy/launchpad.rb
+    - livecheck/strategy/npm.rb
+    - livecheck/strategy/page_match.rb
+    - livecheck/strategy/pypi.rb
+    - livecheck/strategy/sourceforge.rb
+    - livecheck/strategy/sparkle.rb
+    - livecheck/strategy/xml.rb
+    - livecheck/strategy/xorg.rb
+    - livecheck/strategy/yaml.rb
+    - os.rb
+    - os/mac.rb
+    - resource.rb
+    - startup/config.rb
+    - utils/inreplace.rb
+    - utils/output.rb
+    - utils/shebang.rb
+    - utils/string_inreplace_extension.rb
+    - version.rb
+    - tap.rb
+
+Homebrew/NegateInclude:
   Exclude:
-    - "utils/gems.rb"
+    # YARD runs stand-alone.
+    - yard/docstring_parser.rb
+
+Style/DocumentationMethod:
+  Include:
+    - "formula.rb"

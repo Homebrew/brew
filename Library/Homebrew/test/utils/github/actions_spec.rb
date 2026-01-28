@@ -1,16 +1,15 @@
-# typed: false
 # frozen_string_literal: true
 
 require "utils/github/actions"
 
-describe GitHub::Actions::Annotation do
+RSpec.describe GitHub::Actions::Annotation do
   let(:message) { "lorem ipsum" }
 
   describe "#new" do
     it "fails when the type is wrong" do
-      expect {
+      expect do
         described_class.new(:fatal, message, file: "file.txt")
-      }.to raise_error(ArgumentError)
+      end.to raise_error(ArgumentError)
     end
   end
 

@@ -1,10 +1,22 @@
-# typed: false
 # frozen_string_literal: true
 
 require "resource"
+require "livecheck"
 
-describe Resource do
+RSpec.describe Resource do
   subject(:resource) { described_class.new("test") }
+
+  let(:livecheck_resource) do
+    described_class.new do
+      url "https://brew.sh/foo-1.0.tar.gz"
+      sha256 "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+
+      livecheck do
+        url "https://brew.sh/test/releases"
+        regex(/foo[._-]v?(\d+(?:\.\d+)+)\.t/i)
+      end
+    end
+  end
 
   describe "#url" do
     it "sets the URL" do
@@ -45,10 +57,27 @@ describe Resource do
 
     it "does not mutate the specifications hash" do
       specs = { using: :git, branch: "master" }
-      resource.url("foo", specs)
+      resource.url("foo", **specs)
       expect(resource.specs).to eq(branch: "master")
       expect(resource.using).to eq(:git)
       expect(specs).to eq(using: :git, branch: "master")
+    end
+  end
+
+  describe "#livecheck" do
+    specify "when `livecheck` block is set" do
+      expect(livecheck_resource.livecheck.url).to eq("https://brew.sh/test/releases")
+      expect(livecheck_resource.livecheck.regex).to eq(/foo[._-]v?(\d+(?:\.\d+)+)\.t/i)
+    end
+  end
+
+  describe "#livecheck_defined?" do
+    it "returns false if `livecheck` block is not set in resource" do
+      expect(resource.livecheck_defined?).to be false
+    end
+
+    specify "`livecheck` block defined in resources" do # rubocop:todo RSpec/AggregateExamples
+      expect(livecheck_resource.livecheck_defined?).to be true
     end
   end
 
@@ -85,7 +114,7 @@ describe Resource do
     end
 
     it "returns nil if unset" do
-      expect(resource.version).to be nil
+      expect(resource.version).to be_nil
     end
   end
 
@@ -103,7 +132,7 @@ describe Resource do
 
   describe "#checksum" do
     it "returns nil if unset" do
-      expect(resource.checksum).to be nil
+      expect(resource.checksum).to be_nil
     end
 
     it "returns the checksum set with #sha256" do
@@ -114,7 +143,7 @@ describe Resource do
 
   describe "#download_strategy" do
     it "returns the download strategy" do
-      strategy = Object.new
+      strategy = Class.new(AbstractDownloadStrategy)
       expect(DownloadStrategyDetector)
         .to receive(:detect).with("foo", nil).and_return(strategy)
       resource.url("foo")
@@ -123,15 +152,15 @@ describe Resource do
   end
 
   describe "#owner" do
+    let(:owner) { described_class.new("test-owner") }
+
     it "sets the owner" do
-      owner = Object.new
       resource.owner = owner
       expect(resource.owner).to eq(owner)
     end
 
     it "sets its owner to be the patches' owner" do
       resource.patch(:p1) { url "file:///my.patch" }
-      owner = Object.new
       resource.owner = owner
       resource.patches.each do |p|
         expect(p.resource.owner).to eq(owner)
@@ -158,14 +187,15 @@ describe Resource do
   end
 
   specify "#verify_download_integrity_mismatch" do
-    fn = double(file?: true, basename: "foo")
+    fn = instance_double(Pathname, file?: true, basename: "foo")
     checksum = resource.sha256(TEST_SHA256)
 
-    expect(fn).to receive(:verify_checksum).with(checksum)
+    expect(fn).to receive(:verify_checksum)
+      .with(checksum)
       .and_raise(ChecksumMismatchError.new(fn, checksum, Object.new))
 
-    expect {
+    expect do
       resource.verify_download_integrity(fn)
-    }.to raise_error(ChecksumMismatchError)
+    end.to raise_error(ChecksumMismatchError)
   end
 end

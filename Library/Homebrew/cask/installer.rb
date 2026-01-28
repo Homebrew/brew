@@ -1,55 +1,96 @@
-# typed: false
+# typed: true # rubocop:todo Sorbet/StrictSigil
 # frozen_string_literal: true
 
 require "formula_installer"
 require "unpack_strategy"
 require "utils/topological_hash"
+require "utils/analytics"
+require "utils/output"
 
 require "cask/config"
 require "cask/download"
-require "cask/staged"
+require "cask/migrator"
 require "cask/quarantine"
-
-require "cgi"
+require "cask/tab"
 
 module Cask
   # Installer for a {Cask}.
-  #
-  # @api private
   class Installer
-    extend T::Sig
+    extend ::Utils::Output::Mixin
+    include ::Utils::Output::Mixin
 
-    extend Predicable
-    # TODO: it is unwise for Cask::Staged to be a module, when we are
-    #       dealing with both staged and unstaged casks here. This should
-    #       either be a class which is only sometimes instantiated, or there
-    #       should be explicit checks on whether staged state is valid in
-    #       every method.
-    include Staged
-
-    def initialize(cask, command: SystemCommand, force: false,
+    sig {
+      params(
+        cask: ::Cask::Cask, command: T.class_of(SystemCommand), force: T::Boolean, adopt: T::Boolean,
+        skip_cask_deps: T::Boolean, binaries: T::Boolean, verbose: T::Boolean, zap: T::Boolean,
+        require_sha: T::Boolean, upgrade: T::Boolean, reinstall: T::Boolean, installed_as_dependency: T::Boolean,
+        installed_on_request: T::Boolean, quarantine: T::Boolean, verify_download_integrity: T::Boolean,
+        quiet: T::Boolean, download_queue: T.nilable(Homebrew::DownloadQueue)
+      ).void
+    }
+    def initialize(cask, command: SystemCommand, force: false, adopt: false,
                    skip_cask_deps: false, binaries: true, verbose: false,
-                   require_sha: false, upgrade: false,
-                   installed_as_dependency: false, quarantine: true,
-                   verify_download_integrity: true, quiet: false)
+                   zap: false, require_sha: false, upgrade: false, reinstall: false,
+                   installed_as_dependency: false, installed_on_request: true,
+                   quarantine: true, verify_download_integrity: true, quiet: false, download_queue: nil)
       @cask = cask
       @command = command
       @force = force
+      @adopt = adopt
       @skip_cask_deps = skip_cask_deps
       @binaries = binaries
       @verbose = verbose
+      @zap = zap
       @require_sha = require_sha
-      @reinstall = false
+      @reinstall = reinstall
       @upgrade = upgrade
       @installed_as_dependency = installed_as_dependency
+      @installed_on_request = installed_on_request
       @quarantine = quarantine
       @verify_download_integrity = verify_download_integrity
       @quiet = quiet
+      @download_queue = download_queue
+      @ran_prelude = T.let(false, T::Boolean)
     end
 
-    attr_predicate :binaries?, :force?, :skip_cask_deps?, :require_sha?,
-                   :reinstall?, :upgrade?, :verbose?, :installed_as_dependency?,
-                   :quarantine?, :quiet?
+    sig { returns(T::Boolean) }
+    def adopt? = @adopt
+
+    sig { returns(T::Boolean) }
+    def binaries? = @binaries
+
+    sig { returns(T::Boolean) }
+    def force? = @force
+
+    sig { returns(T::Boolean) }
+    def installed_as_dependency? = @installed_as_dependency
+
+    sig { returns(T::Boolean) }
+    def installed_on_request? = @installed_on_request
+
+    sig { returns(T::Boolean) }
+    def quarantine? = @quarantine
+
+    sig { returns(T::Boolean) }
+    def quiet? = @quiet
+
+    sig { returns(T::Boolean) }
+    def reinstall? = @reinstall
+
+    sig { returns(T::Boolean) }
+    def require_sha? = @require_sha
+
+    sig { returns(T::Boolean) }
+    def skip_cask_deps? = @skip_cask_deps
+
+    sig { returns(T::Boolean) }
+    def upgrade? = @upgrade
+
+    sig { returns(T::Boolean) }
+    def verbose? = @verbose
+
+    sig { returns(T::Boolean) }
+    def zap? = @zap
 
     def self.caveats(cask)
       odebug "Printing caveats"
@@ -69,37 +110,44 @@ module Cask
     def fetch(quiet: nil, timeout: nil)
       odebug "Cask::Installer#fetch"
 
+      load_cask_from_source_api! if cask_from_source_api?
       verify_has_sha if require_sha? && !force?
+      check_requirements
 
-      download(quiet: quiet, timeout: timeout)
+      forbidden_tap_check
+      forbidden_cask_and_formula_check
+      forbidden_cask_artifacts_check
 
-      satisfy_dependencies
+      download(quiet:, timeout:) if @download_queue.nil?
+
+      satisfy_cask_and_formula_dependencies
     end
 
+    sig { void }
     def stage
       odebug "Cask::Installer#stage"
 
       Caskroom.ensure_caskroom_exists
 
       extract_primary_container
+      process_rename_operations
       save_caskfile
     rescue => e
       purge_versioned_files
       raise e
     end
 
+    sig { void }
     def install
       start_time = Time.now
       odebug "Cask::Installer#install"
 
+      Migrator.migrate_if_needed(@cask)
+
       old_config = @cask.config
-      if @cask.installed? && !force? && !reinstall? && !upgrade?
-        return if quiet?
+      predecessor = @cask if reinstall? && @cask.installed?
 
-        raise CaskAlreadyInstalledError, @cask
-      end
-
-      check_conflicts
+      prelude
 
       print caveats
       fetch
@@ -108,14 +156,26 @@ module Cask
       backup if force? && @cask.staged_path.exist? && @cask.metadata_versioned_path.exist?
 
       oh1 "Installing Cask #{Formatter.identifier(@cask)}"
-      opoo "macOS's Gatekeeper has been disabled for this Cask" unless quarantine?
+      # GitHub Actions globally disables Gatekeeper.
+      unless quarantine?
+        opoo_outside_github_actions "--no-quarantine bypasses macOS’s Gatekeeper, reducing system security. " \
+                                    "Do not use this flag unless you understand the risks."
+      end
       stage
 
       @cask.config = @cask.default_config.merge(old_config)
 
-      install_artifacts
+      install_artifacts(predecessor:)
 
-      ::Utils::Analytics.report_event("cask_install", @cask.token) unless @cask.tap&.private?
+      tab = Tab.create(@cask)
+      tab.installed_as_dependency = installed_as_dependency?
+      tab.installed_on_request = installed_on_request?
+      tab.write
+
+      if (tap = @cask.tap) && tap.should_report_analytics?
+        ::Utils::Analytics.report_package_event(:cask_install, package_name: @cask.token, tap_name: tap.name,
+on_request: true)
+      end
 
       purge_backed_up_versioned_files
 
@@ -127,12 +187,30 @@ module Cask
       raise
     end
 
+    sig { void }
+    def check_deprecate_disable
+      deprecate_disable_type = DeprecateDisable.type(@cask)
+      return if deprecate_disable_type.nil?
+
+      message = DeprecateDisable.message(@cask).to_s
+      message_full = "#{@cask.token} has been #{message}"
+
+      case deprecate_disable_type
+      when :deprecated
+        opoo message_full
+      when :disabled
+        GitHub::Actions.puts_annotation_if_env_set!(:error, message)
+        raise CaskCannotBeInstalledError.new(@cask, message)
+      end
+    end
+
+    sig { void }
     def check_conflicts
       return unless @cask.conflicts_with
 
       @cask.conflicts_with[:cask].each do |conflicting_cask|
-        if (match = conflicting_cask.match(HOMEBREW_TAP_CASK_REGEX))
-          conflicting_cask_tap = Tap.fetch(match[1], match[2])
+        if (conflicting_cask_tap_with_token = Tap.with_cask_token(conflicting_cask))
+          conflicting_cask_tap, = conflicting_cask_tap_with_token
           next unless conflicting_cask_tap.installed?
         end
 
@@ -143,21 +221,13 @@ module Cask
       end
     end
 
-    def reinstall
-      odebug "Cask::Installer#reinstall"
-      @reinstall = true
-      install
-    end
-
+    sig { void }
     def uninstall_existing_cask
       return unless @cask.installed?
 
-      # use the same cask file that was used for installation, if possible
-      installed_caskfile = @cask.installed_caskfile
-      installed_cask = installed_caskfile.exist? ? CaskLoader.load(installed_caskfile) : @cask
-
       # Always force uninstallation, ignore method parameter
-      Installer.new(installed_cask, verbose: verbose?, force: true, upgrade: upgrade?).uninstall
+      cask_installer = Installer.new(@cask, verbose: verbose?, force: true, upgrade: upgrade?, reinstall: true)
+      zap? ? cask_installer.zap : cask_installer.uninstall(successor: @cask)
     end
 
     sig { returns(String) }
@@ -175,17 +245,19 @@ module Cask
 
     sig { params(quiet: T.nilable(T::Boolean), timeout: T.nilable(T.any(Integer, Float))).returns(Pathname) }
     def download(quiet: nil, timeout: nil)
-      @download ||= downloader.fetch(quiet: quiet, verify_download_integrity: @verify_download_integrity,
-                                     timeout: timeout)
+      # Store cask download path in cask to prevent multiple downloads in a row when checking if it's outdated
+      @cask.download ||= downloader.fetch(quiet:, verify_download_integrity: @verify_download_integrity,
+                                          timeout:)
     end
 
+    sig { void }
     def verify_has_sha
       odebug "Checking cask has checksum"
-      return unless @cask.sha256 == :no_check
+      return if @cask.sha256 != :no_check
 
       raise CaskError, <<~EOS
         Cask '#{@cask}' does not have a sha256 checksum defined and was not installed.
-        This means you have the #{Formatter.identifier("--require-sha")} option set, perhaps in your HOMEBREW_CASK_OPTS.
+        This means you have the #{Formatter.identifier("--require-sha")} option set, perhaps in your `$HOMEBREW_CASK_OPTS`.
       EOS
     end
 
@@ -196,6 +268,12 @@ module Cask
       end
     end
 
+    sig { returns(ArtifactSet) }
+    def artifacts
+      @cask.artifacts
+    end
+
+    sig { params(to: Pathname).void }
     def extract_primary_container(to: @cask.staged_path)
       odebug "Extracting primary container"
 
@@ -204,31 +282,43 @@ module Cask
       basename = downloader.basename
 
       if (nested_container = @cask.container&.nested)
-        Dir.mktmpdir do |tmpdir|
+        Dir.mktmpdir("cask-installer", HOMEBREW_TEMP) do |tmpdir|
           tmpdir = Pathname(tmpdir)
-          primary_container.extract(to: tmpdir, basename: basename, verbose: verbose?)
+          primary_container.extract(to: tmpdir, basename:, verbose: verbose?)
 
           FileUtils.chmod_R "+rw", tmpdir/nested_container, force: true, verbose: verbose?
 
           UnpackStrategy.detect(tmpdir/nested_container, merge_xattrs: true)
-                        .extract_nestedly(to: to, verbose: verbose?)
+                        .extract_nestedly(to:, verbose: verbose?)
         end
       else
-        primary_container.extract_nestedly(to: to, basename: basename, verbose: verbose?)
+        primary_container.extract_nestedly(to:, basename:, verbose: verbose?)
       end
 
       return unless quarantine?
       return unless Quarantine.available?
 
-      Quarantine.propagate(from: primary_container.path, to: to)
+      Quarantine.propagate(from: primary_container.path, to:)
     end
 
-    def install_artifacts
-      artifacts = @cask.artifacts
+    sig { params(target_dir: T.nilable(Pathname)).void }
+    def process_rename_operations(target_dir: nil)
+      return if @cask.rename.empty?
+
+      working_dir = target_dir || @cask.staged_path
+      odebug "Processing rename operations in #{working_dir}"
+
+      @cask.rename.each do |rename_operation|
+        odebug "Renaming #{rename_operation.from} to #{rename_operation.to}"
+        rename_operation.perform_rename(working_dir)
+      end
+    end
+
+    sig { params(predecessor: T.nilable(Cask)).void }
+    def install_artifacts(predecessor: nil)
       already_installed_artifacts = []
 
       odebug "Installing artifacts"
-      odebug "#{artifacts.length} #{"artifact".pluralize(artifacts.length)} defined", artifacts
 
       artifacts.each do |artifact|
         next unless artifact.respond_to?(:install_phase)
@@ -237,14 +327,32 @@ module Cask
 
         next if artifact.is_a?(Artifact::Binary) && !binaries?
 
-        artifact.install_phase(command: @command, verbose: verbose?, force: force?)
+        artifact = T.cast(
+          artifact,
+          T.any(
+            Artifact::AbstractFlightBlock,
+            Artifact::Installer,
+            Artifact::KeyboardLayout,
+            Artifact::Mdimporter,
+            Artifact::Moved,
+            Artifact::Pkg,
+            Artifact::Qlplugin,
+            Artifact::Symlinked,
+          ),
+        )
+
+        artifact.install_phase(
+          command: @command, verbose: verbose?, adopt: adopt?, auto_updates: @cask.auto_updates,
+          force: force?, predecessor:
+        )
         already_installed_artifacts.unshift(artifact)
       end
 
       save_config_file
+      save_download_sha if @cask.version.latest?
     rescue => e
       begin
-        already_installed_artifacts.each do |artifact|
+        already_installed_artifacts&.each do |artifact|
           if artifact.respond_to?(:uninstall_phase)
             odebug "Reverting installation of artifact of class #{artifact.class}"
             artifact.uninstall_phase(command: @command, verbose: verbose?, force: force?)
@@ -261,25 +369,27 @@ module Cask
       end
     end
 
-    # TODO: move dependencies to a separate class,
-    #       dependencies should also apply for `brew cask stage`,
-    #       override dependencies with `--force` or perhaps `--force-deps`
-    def satisfy_dependencies
-      return unless @cask.depends_on
-
-      macos_dependencies
-      arch_dependencies
-      cask_and_formula_dependencies
+    sig { void }
+    def check_requirements
+      check_stanza_os_requirements
+      check_macos_requirements
+      check_arch_requirements
     end
 
-    def macos_dependencies
+    sig { void }
+    def check_stanza_os_requirements
+      nil
+    end
+
+    def check_macos_requirements
       return unless @cask.depends_on.macos
       return if @cask.depends_on.macos.satisfied?
 
       raise CaskError, @cask.depends_on.macos.message(type: :cask)
     end
 
-    def arch_dependencies
+    sig { void }
+    def check_arch_requirements
       return if @cask.depends_on.arch.nil?
 
       @current_arch ||= { type: Hardware::CPU.type, bits: Hardware::CPU.bits }
@@ -294,12 +404,13 @@ module Cask
             "but you are running #{@current_arch}."
     end
 
-    def collect_cask_and_formula_dependencies
+    sig { returns(T::Array[T.untyped]) }
+    def cask_and_formula_dependencies
       return @cask_and_formula_dependencies if @cask_and_formula_dependencies
 
       graph = ::Utils::TopologicalHash.graph_package_dependencies(@cask)
 
-      raise CaskSelfReferencingDependencyError, cask.token if graph[@cask].include?(@cask)
+      raise CaskSelfReferencingDependencyError, @cask.token if graph.fetch(@cask).include?(@cask)
 
       ::Utils::TopologicalHash.graph_package_dependencies(primary_container.dependencies, graph)
 
@@ -313,31 +424,34 @@ module Cask
     end
 
     def missing_cask_and_formula_dependencies
-      collect_cask_and_formula_dependencies.reject do |cask_or_formula|
-        installed = if cask_or_formula.respond_to?(:any_version_installed?)
-          cask_or_formula.any_version_installed?
-        else
-          cask_or_formula.try(:installed?)
+      cask_and_formula_dependencies.reject do |cask_or_formula|
+        case cask_or_formula
+        when Formula
+          cask_or_formula.any_version_installed? && cask_or_formula.optlinked?
+        when Cask
+          cask_or_formula.installed?
         end
-        installed && (cask_or_formula.respond_to?(:optlinked?) ? cask_or_formula.optlinked? : true)
       end
     end
 
-    def cask_and_formula_dependencies
+    def satisfy_cask_and_formula_dependencies
       return if installed_as_dependency?
 
-      formulae_and_casks = collect_cask_and_formula_dependencies
+      formulae_and_casks = cask_and_formula_dependencies
 
       return if formulae_and_casks.empty?
 
       missing_formulae_and_casks = missing_cask_and_formula_dependencies
 
       if missing_formulae_and_casks.empty?
-        puts "All formula dependencies satisfied."
+        puts "All dependencies satisfied."
         return
       end
 
       ohai "Installing dependencies: #{missing_formulae_and_casks.map(&:to_s).join(", ")}"
+      cask_installers = T.let([], T::Array[Installer])
+      formula_installers = T.let([], T::Array[FormulaInstaller])
+
       missing_formulae_and_casks.each do |cask_or_formula|
         if cask_or_formula.is_a?(Cask)
           if skip_cask_deps?
@@ -345,15 +459,20 @@ module Cask
             next
           end
 
-          Installer.new(
+          cask_installers << Installer.new(
             cask_or_formula,
+            adopt:                   adopt?,
             binaries:                binaries?,
-            verbose:                 verbose?,
-            installed_as_dependency: true,
             force:                   false,
-          ).install
+            installed_as_dependency: true,
+            installed_on_request:    false,
+            quarantine:              quarantine?,
+            quiet:                   quiet?,
+            require_sha:             require_sha?,
+            verbose:                 verbose?,
+          )
         else
-          fi = FormulaInstaller.new(
+          formula_installers << FormulaInstaller.new(
             cask_or_formula,
             **{
               show_header:             true,
@@ -362,11 +481,17 @@ module Cask
               verbose:                 verbose?,
             }.compact,
           )
-          fi.prelude
-          fi.fetch
-          fi.install
-          fi.finish
         end
+      end
+
+      cask_installers.each(&:install)
+      return if formula_installers.blank?
+
+      Homebrew::Install.perform_preinstall_checks_once
+      valid_formula_installers = Homebrew::Install.fetch_formulae(formula_installers)
+      valid_formula_installers.each do |formula_installer|
+        formula_installer.install
+        formula_installer.finish
       end
     end
 
@@ -374,26 +499,46 @@ module Cask
       self.class.caveats(@cask)
     end
 
+    def metadata_subdir
+      @metadata_subdir ||= @cask.metadata_subdir("Casks", timestamp: :now, create: true)
+    end
+
     def save_caskfile
       old_savedir = @cask.metadata_timestamped_path
 
       return if @cask.source.blank?
 
-      savedir = @cask.metadata_subdir("Casks", timestamp: :now, create: true)
-      (savedir/"#{@cask.token}.rb").write @cask.source
-      old_savedir&.rmtree
+      extension = @cask.loaded_from_api? ? "json" : "rb"
+      (metadata_subdir/"#{@cask.token}.#{extension}").write @cask.source
+      FileUtils.rm_r(old_savedir) if old_savedir
     end
 
     def save_config_file
       @cask.config_path.atomic_write(@cask.config.to_json)
     end
 
-    def uninstall
+    def save_download_sha
+      @cask.download_sha_path.atomic_write(@cask.new_download_sha) if @cask.checksumable?
+    end
+
+    sig { params(successor: T.nilable(Cask)).void }
+    def uninstall(successor: nil)
+      load_installed_caskfile!
       oh1 "Uninstalling Cask #{Formatter.identifier(@cask)}"
-      uninstall_artifacts(clear: true)
-      remove_config_file if !reinstall? && !upgrade?
+      uninstall_artifacts(clear: true, successor:)
+      if !reinstall? && !upgrade?
+        remove_tabfile
+        remove_download_sha
+        remove_config_file
+      end
       purge_versioned_files
       purge_caskroom_path if force?
+    end
+
+    def remove_tabfile
+      tabfile = @cask.tab.tabfile
+      FileUtils.rm_f tabfile if tabfile
+      @cask.config_path.parent.rmdir_if_possible
     end
 
     def remove_config_file
@@ -401,8 +546,14 @@ module Cask
       @cask.config_path.parent.rmdir_if_possible
     end
 
-    def start_upgrade
-      uninstall_artifacts
+    def remove_download_sha
+      FileUtils.rm_f @cask.download_sha_path
+      @cask.download_sha_path.parent.rmdir_if_possible
+    end
+
+    sig { params(successor: T.nilable(Cask)).void }
+    def start_upgrade(successor:)
+      uninstall_artifacts(successor:)
       backup
     end
 
@@ -414,17 +565,18 @@ module Cask
     def restore_backup
       return if !backup_path.directory? || !backup_metadata_path.directory?
 
-      Pathname.new(@cask.staged_path).rmtree if @cask.staged_path.exist?
-      Pathname.new(@cask.metadata_versioned_path).rmtree if @cask.metadata_versioned_path.exist?
+      FileUtils.rm_r(@cask.staged_path) if @cask.staged_path.exist?
+      FileUtils.rm_r(@cask.metadata_versioned_path) if @cask.metadata_versioned_path.exist?
 
       backup_path.rename @cask.staged_path
       backup_metadata_path.rename @cask.metadata_versioned_path
     end
 
-    def revert_upgrade
+    sig { params(predecessor: Cask).void }
+    def revert_upgrade(predecessor:)
       opoo "Reverting upgrade for Cask #{@cask}"
       restore_backup
-      install_artifacts
+      install_artifacts(predecessor:)
     end
 
     def finalize_upgrade
@@ -435,31 +587,54 @@ module Cask
       puts summary
     end
 
-    def uninstall_artifacts(clear: false)
-      artifacts = @cask.artifacts
-
+    sig { params(clear: T::Boolean, successor: T.nilable(Cask)).void }
+    def uninstall_artifacts(clear: false, successor: nil)
       odebug "Uninstalling artifacts"
-      odebug "#{artifacts.length} #{"artifact".pluralize(artifacts.length)} defined", artifacts
+      odebug "#{::Utils.pluralize("artifact", artifacts.length, include_count: true)} defined", artifacts
 
       artifacts.each do |artifact|
         if artifact.respond_to?(:uninstall_phase)
+          artifact = T.cast(
+            artifact,
+            T.any(
+              Artifact::AbstractFlightBlock,
+              Artifact::KeyboardLayout,
+              Artifact::Moved,
+              Artifact::Qlplugin,
+              Artifact::Symlinked,
+              Artifact::Uninstall,
+            ),
+          )
+
           odebug "Uninstalling artifact of class #{artifact.class}"
           artifact.uninstall_phase(
-            command: @command, verbose: verbose?, skip: clear, force: force?, upgrade: upgrade?,
+            command:   @command,
+            verbose:   verbose?,
+            skip:      clear,
+            force:     force?,
+            successor:,
+            upgrade:   upgrade?,
+            reinstall: reinstall?,
           )
         end
 
         next unless artifact.respond_to?(:post_uninstall_phase)
 
+        artifact = T.cast(artifact, Artifact::Uninstall)
+
         odebug "Post-uninstalling artifact of class #{artifact.class}"
         artifact.post_uninstall_phase(
-          command: @command, verbose: verbose?, skip: clear, force: force?, upgrade: upgrade?,
+          command:   @command,
+          verbose:   verbose?,
+          skip:      clear,
+          force:     force?,
+          successor:,
         )
       end
     end
 
     def zap
-      ohai "Implied `brew uninstall --cask #{@cask}`"
+      load_installed_caskfile!
       uninstall_artifacts
       if (zap_stanzas = @cask.artifacts.select { |a| a.is_a?(Artifact::Zap) }).empty?
         opoo "No zap stanza present for Cask '#{@cask}'"
@@ -520,11 +695,211 @@ module Cask
 
       # toplevel staged distribution
       @cask.caskroom_path.rmdir_if_possible unless upgrade?
+
+      # Remove symlinks for renamed casks if they are now broken.
+      @cask.old_tokens.each do |old_token|
+        old_caskroom_path = Caskroom.path/old_token
+        FileUtils.rm old_caskroom_path if old_caskroom_path.symlink? && !old_caskroom_path.exist?
+      end
     end
 
     def purge_caskroom_path
       odebug "Purging all staged versions of Cask #{@cask}"
       gain_permissions_remove(@cask.caskroom_path)
     end
+
+    sig { void }
+    def forbidden_tap_check
+      return if Tap.allowed_taps.blank? && Tap.forbidden_taps.blank?
+
+      owner = Homebrew::EnvConfig.forbidden_owner
+      owner_contact = if (contact = Homebrew::EnvConfig.forbidden_owner_contact.presence)
+        "\n#{contact}"
+      end
+
+      unless skip_cask_deps?
+        cask_and_formula_dependencies.each do |cask_or_formula|
+          dep_tap = cask_or_formula.tap
+          next if dep_tap.blank? || (dep_tap.allowed_by_env? && !dep_tap.forbidden_by_env?)
+
+          dep_full_name = cask_or_formula.full_name
+          error_message = "The installation of #{@cask} has a dependency #{dep_full_name}\n" \
+                          "from the #{dep_tap} tap but #{owner} "
+          error_message << "has not allowed this tap in `$HOMEBREW_ALLOWED_TAPS`" unless dep_tap.allowed_by_env?
+          error_message << " and\n" if !dep_tap.allowed_by_env? && dep_tap.forbidden_by_env?
+          error_message << "has forbidden this tap in `$HOMEBREW_FORBIDDEN_TAPS`" if dep_tap.forbidden_by_env?
+          error_message << ".#{owner_contact}"
+
+          raise CaskCannotBeInstalledError.new(@cask, error_message)
+        end
+      end
+
+      cask_tap = @cask.tap
+      return if cask_tap.blank? || (cask_tap.allowed_by_env? && !cask_tap.forbidden_by_env?)
+
+      error_message = "The installation of #{@cask.full_name} has the tap #{cask_tap}\n" \
+                      "but #{owner} "
+      error_message << "has not allowed this tap in `$HOMEBREW_ALLOWED_TAPS`" unless cask_tap.allowed_by_env?
+      error_message << " and\n" if !cask_tap.allowed_by_env? && cask_tap.forbidden_by_env?
+      error_message << "has forbidden this tap in `$HOMEBREW_FORBIDDEN_TAPS`" if cask_tap.forbidden_by_env?
+      error_message << ".#{owner_contact}"
+
+      raise CaskCannotBeInstalledError.new(@cask, error_message)
+    end
+
+    sig { void }
+    def forbidden_cask_and_formula_check
+      forbid_casks = Homebrew::EnvConfig.forbid_casks?
+      forbidden_formulae = Set.new(Homebrew::EnvConfig.forbidden_formulae.to_s.split)
+      forbidden_casks = Set.new(Homebrew::EnvConfig.forbidden_casks.to_s.split)
+      return if !forbid_casks && forbidden_formulae.blank? && forbidden_casks.blank?
+
+      owner = Homebrew::EnvConfig.forbidden_owner
+      owner_contact = if (contact = Homebrew::EnvConfig.forbidden_owner_contact.presence)
+        "\n#{contact}"
+      end
+
+      unless skip_cask_deps?
+        cask_and_formula_dependencies.each do |dep_cask_or_formula|
+          dep_name, dep_type, variable = if dep_cask_or_formula.is_a?(Cask) && forbidden_casks.present?
+            dep_cask = dep_cask_or_formula
+            env_variable = "HOMEBREW_FORBIDDEN_CASKS"
+            dep_cask_name = if forbid_casks
+              env_variable = "HOMEBREW_FORBID_CASKS"
+              dep_cask.token
+            elsif forbidden_casks.include?(dep_cask.full_name)
+              dep_cask.token
+            elsif dep_cask.tap.present? &&
+                  forbidden_casks.include?(dep_cask.full_name)
+              dep_cask.full_name
+            end
+            [dep_cask_name, "cask", env_variable]
+          elsif dep_cask_or_formula.is_a?(Formula) && forbidden_formulae.present?
+            dep_formula = dep_cask_or_formula
+            formula_name = if forbidden_formulae.include?(dep_formula.name)
+              dep_formula.name
+            elsif dep_formula.tap.present? &&
+                  forbidden_formulae.include?(dep_formula.full_name)
+              dep_formula.full_name
+            end
+            [formula_name, "formula", "HOMEBREW_FORBIDDEN_FORMULAE"]
+          end
+          next if dep_name.blank?
+
+          raise CaskCannotBeInstalledError.new(@cask, <<~EOS
+            has a dependency #{dep_name} but the
+            #{dep_name} #{dep_type} was forbidden for installation by #{owner} in `#{variable}`.#{owner_contact}
+          EOS
+          )
+        end
+      end
+      return if !forbid_casks && forbidden_casks.blank?
+
+      variable = "HOMEBREW_FORBIDDEN_CASKS"
+      if forbid_casks
+        variable = "HOMEBREW_FORBID_CASKS"
+        @cask.token
+      elsif forbidden_casks.include?(@cask.token)
+        @cask.token
+      elsif forbidden_casks.include?(@cask.full_name)
+        @cask.full_name
+      else
+        return
+      end
+
+      raise CaskCannotBeInstalledError.new(@cask, <<~EOS
+        forbidden for installation by #{owner} in `#{variable}`.#{owner_contact}
+      EOS
+      )
+    end
+
+    sig { void }
+    def forbidden_cask_artifacts_check
+      forbidden_artifacts = Set.new(Homebrew::EnvConfig.forbidden_cask_artifacts.to_s.split)
+      return if forbidden_artifacts.blank?
+
+      owner = Homebrew::EnvConfig.forbidden_owner
+      owner_contact = if (contact = Homebrew::EnvConfig.forbidden_owner_contact.presence)
+        "\n#{contact}"
+      end
+
+      artifacts.each do |artifact|
+        # Get the artifact class name (e.g., "Pkg", "Installer", "App")
+        artifact_name = artifact.class.name
+        next if artifact_name.nil?
+
+        artifact_type = artifact_name.split("::").last&.downcase
+        next if artifact_type.nil?
+
+        next unless forbidden_artifacts.include?(artifact_type)
+
+        raise CaskCannotBeInstalledError.new(@cask, <<~EOS
+          contains a '#{artifact_type}' artifact, which is forbidden for installation by #{owner} in `HOMEBREW_FORBIDDEN_CASK_ARTIFACTS`.#{owner_contact}
+        EOS
+        )
+      end
+    end
+
+    sig { void }
+    def prelude
+      return if @ran_prelude
+
+      check_deprecate_disable
+      check_conflicts
+
+      @ran_prelude = true
+    end
+
+    sig { void }
+    def enqueue_downloads
+      download_queue = @download_queue
+      return if download_queue.nil?
+
+      # FIXME: We need to load Cask source before enqueuing to support
+      # language-specific URLs, but this will block the main process.
+      if cask_from_source_api?
+        if @cask.languages.any?
+          load_cask_from_source_api!
+        else
+          Homebrew::API::Cask.source_download(@cask, download_queue:)
+        end
+      end
+
+      download_queue.enqueue(downloader)
+    end
+
+    private
+
+    # load the same cask file that was used for installation, if possible
+    sig { void }
+    def load_installed_caskfile!
+      Migrator.migrate_if_needed(@cask)
+
+      installed_caskfile = @cask.installed_caskfile
+
+      if installed_caskfile&.exist?
+        begin
+          @cask = CaskLoader.load_from_installed_caskfile(installed_caskfile)
+          return
+        rescue CaskInvalidError, CaskUnavailableError
+          # could be caused by trying to load outdated or deleted caskfile
+        end
+      end
+
+      load_cask_from_source_api! if cask_from_source_api?
+      # otherwise we default to the current cask
+    end
+
+    sig { void }
+    def load_cask_from_source_api!
+      @cask = Homebrew::API::Cask.source_download_cask(@cask)
+    end
+
+    sig { returns(T::Boolean) }
+    def cask_from_source_api?
+      @cask.loaded_from_api? && @cask.caskfile_only?
+    end
   end
 end
+
+require "extend/os/cask/installer"

@@ -1,25 +1,24 @@
-# typed: false
 # frozen_string_literal: true
 
-describe Cask::Artifact::Manpage, :cask do
-  let(:cask) { Cask::CaskLoader.load(cask_path(cask_token)) }
+RSpec.describe Cask::Artifact::Manpage, :cask do
+  let(:cask) { Cask::CaskLoader.load(cask_token) }
 
   context "without section" do
-    let(:cask_token) { "invalid/invalid-manpage-no-section" }
+    let(:cask_token) { "invalid-manpage-no-section" }
 
-    it "fails to load a cask without section" do
+    it "fails to load a cask without section", :no_api do
       expect { cask }.to raise_error(Cask::CaskInvalidError, /is not a valid man page name/)
     end
   end
 
   context "with install" do
-    let(:install_phase) {
+    let(:install_phase) do
       lambda do
         cask.artifacts.select { |a| a.is_a?(described_class) }.each do |artifact|
           artifact.install_phase(command: NeverSudoSystemCommand, force: false)
         end
       end
-    }
+    end
 
     let(:source_path) { cask.staged_path.join("manpage.1") }
     let(:target_path) { cask.config.manpagedir.join("man1/manpage.1") }

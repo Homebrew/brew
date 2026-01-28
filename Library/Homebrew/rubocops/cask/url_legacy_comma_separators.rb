@@ -1,24 +1,22 @@
-# typed: true
+# typed: strict
 # frozen_string_literal: true
-
-require "forwardable"
-require "uri"
 
 module RuboCop
   module Cop
     module Cask
-      # This cop checks for version.before_comma and version.after_comma
-      class UrlLegacyCommaSeparators < Base
+      # This cop checks for `version.before_comma` and `version.after_comma`.
+      class UrlLegacyCommaSeparators < Url
         include OnUrlStanza
         extend AutoCorrector
 
-        MSG_CSV = "Use 'version.csv.first' instead of 'version.before_comma' " \
-                  "and 'version.csv.second' instead of 'version.after_comma'"
+        MSG_CSV = "Use `version.csv.first` instead of `version.before_comma` " \
+                  "and `version.csv.second` instead of `version.after_comma`."
 
+        sig { override.params(stanza: RuboCop::Cask::AST::Stanza).void }
         def on_url_stanza(stanza)
-          return if stanza.stanza_node.type == :block
+          return if stanza.stanza_node.block_type?
 
-          url_node = stanza.stanza_node.first_argument
+          url_node = T.cast(stanza.stanza_node, RuboCop::AST::SendNode).first_argument
 
           legacy_comma_separator_pattern = /version\.(before|after)_comma/
 
@@ -28,7 +26,7 @@ module RuboCop
 
           corrected_url = url.sub("before_comma", "csv.first")&.sub("after_comma", "csv.second")
 
-          add_offense(url_node.loc.expression, message: format(MSG_CSV, url: url)) do |corrector|
+          add_offense(url_node.loc.expression, message: format(MSG_CSV, url:)) do |corrector|
             corrector.replace(url_node.source_range, corrected_url)
           end
         end

@@ -1,6 +1,13 @@
+---
+last_review_date: "1970-01-01"
+---
+
 # Common Issues
 
 This is a list of commonly encountered problems, known issues, and their solutions.
+
+* Table of Contents
+{:toc}
 
 ## Running `brew`
 
@@ -34,7 +41,7 @@ cd "$(brew --repository)/Library"
 git clean -fd
 ```
 
-### `launchctl` refuses to load launchd plist files
+### `launchctl` refuses to load `launchd` plist files
 
 When trying to load a plist file with `launchctl`, you receive an error that resembles either:
 
@@ -99,12 +106,29 @@ Don't follow the advice here but fix by using
 `Language::Python.setup_install_args` in the formula as described in
 [Python for Formula Authors](Python-for-Formula-Authors.md).
 
+## Installation fails with "unknown revision or path not in the working tree"
+
+When installing Homebrew, if the initial download fails with something like:
+
+    error: Not a valid ref: refs/remotes/origin/main
+    fatal: ambiguous argument 'refs/remotes/origin/main': unknown revision or path not in the working tree.
+    Use '--' to separate paths from revisions, like this:
+    'git <command> [<revision>...] -- [<file>...]'
+
+or:
+
+    fatal: the remote end hung up unexpectedly
+    fatal: early EOF
+    fatal: index-pack failed
+
+This is an issue in the connection between your machine and GitHub, rather than a bug in Homebrew itself. See this [discussion topic](https://github.com/orgs/Homebrew/discussions/666) for a number of solutions others have found, such as using a wired connection or a VPN, or disabling network monitoring tools.
+
 ## Upgrading macOS
 
 Upgrading macOS can cause errors like the following:
 
-- `dyld: Library not loaded: /usr/local/opt/icu4c/lib/libicui18n.54.dylib`
-- `configure: error: Cannot find libz`
+* `dyld: Library not loaded: /opt/homebrew/opt/icu4c/lib/libicui18n.76.dylib`
+* `configure: error: Cannot find libz`
 
 Following a macOS upgrade it may be necessary to reinstall the Xcode Command Line Tools and then `brew upgrade` all installed formulae:
 
@@ -113,7 +137,47 @@ xcode-select --install
 brew upgrade
 ```
 
-## Cask - cURL error
+## Unintentional dual Homebrew installations
+
+When using tools such as Apple's *Migration Assistant* (MA), it's possible to have two Homebrew installations unintentionally.
+This most commonly results in MA copying `/usr/local` and `/Applications` from an Intel-based Mac to these same paths on an Apple Silicon-based Mac.
+This is problematic because `/Applications` may contain x86_64-only apps.
+Using an x86_64 terminal emulator will cause the shell to use the `/usr/local` installation of Homebrew
+instead of a new installation in `/opt/homebrew`, which is the correct path for an arm64 Homebrew installation on macOS.
+
+Continuing with this setup may eventually cause problems, so it's best to migrate your Homebrew installation.
+Follow these steps to do this.
+
+1. Run `arch -x86_64 /usr/local/bin/brew bundle dump --global` to dump your current installed formulae list to `~/.Brewfile`.
+1. Review the contents of `~/.Brewfile` to remove things you no longer want to have installed.
+1. Verify that your terminal emulator is running in arm64 mode by checking that the output of `arch` is `arm64`.
+
+   If it is not, use a different terminal emulator, such as Apple's Terminal.app, that will run in `arm64` mode.
+
+1. Install Homebrew under the correct prefix (`/opt/homebrew`),
+   which will happen by default when the terminal is running in arm64 mode.
+
+   **Follow the *Next Steps* instructions** listed at the end of the installation process;
+    failing to adjust your shell configuration accordingly could break your Homebrew installation.
+
+1. Run `/opt/homebrew/bin/brew bundle install --global` to replicate your original formulae installation using your new Homebrew installation in `/opt/homebrew`.
+
+Expect to spend some time [searching Homebrew's formulae and cask list](https://formulae.brew.sh/)
+for replacements for deprecated, disabled, or removed formulae.
+
+Once you are satisfied with the state of your new `/opt/homebrew` Homebrew installation,
+you can uninstall the old `/usr/local` installation.
+Download and run the [uninstaller script](https://github.com/Homebrew/install/#uninstall-homebrew):
+
+```sh
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/uninstall.sh)" -- --path=/usr/local
+```
+
+For more information, see [this discussion](https://github.com/orgs/Homebrew/discussions/4397#discussioncomment-5567441).
+
+## Homebrew Cask issues
+
+### Cask - cURL error
 
 First, let's tackle a common problem: do you have a `.curlrc` file? Check with `ls -A ~ | grep .curlrc` (if you get a result, the file exists). Those are a frequent cause of issues of this nature. Before anything else, remove that file and try again. If it now works, do not open an issue. Incompatible `.curlrc` configurations must be fixed on your side.
 
@@ -122,81 +186,83 @@ If, however, you do not have a `.curlrc` or removing it did not work, let’s se
 1. Go to the vendor’s website (`brew home <cask_name>`).
 2. Find the download link for the app and click on it.
 
-### If the download works
+#### If the download works
 
 The cask is outdated. Let’s fix it:
 
-1. Look around the app’s website and find out what the latest version is. It will likely be expressed in the URL used to download it.
-2. Take a look at the cask’s version (`brew cat <cask_name>`) and verify it is indeed outdated. If the app’s version is `:latest`, it means the `url` itself is outdated. It will need to be changed to the new one.
+1. Look around the app’s website and find out what the latest version is. It may be expressed in the URL used to download it.
+2. Take a look at the cask’s version (`brew info <cask_name>`) and verify it is indeed outdated. If the app’s version is `:latest`, it means the `url` itself is outdated. It will need to be changed to the new one.
 
 Help us by [submitting a fix](https://github.com/Homebrew/homebrew-cask/blob/HEAD/CONTRIBUTING.md#updating-a-cask). If you get stumped, [open an issue](https://github.com/Homebrew/homebrew-cask/issues/new?template=01_bug_report.md) explaining your steps so far and where you’re having trouble.
 
-### If the download does not work
+#### If the download does not work
 
 The issue isn’t in any way related to Homebrew Cask, but with the vendor or your connection.
 
-Start by diagnosing your connection (try to download other casks, go around the web). If the problem is with your connection, try a website like [Ask Different](https://apple.stackexchange.com/) to ask for advice.
+Start by diagnosing your connection (try to download other casks, or browse around the web). If the problem is with your connection, try a website like [Ask Different](https://apple.stackexchange.com/) to ask for advice.
 
 If you’re sure the issue is not with your connection, contact the app’s vendor and let them know their link is down, so they can fix it.
 
 **Do not open an issue.**
 
-## Cask - checksum does not match
+### Cask - checksum does not match
 
 First, check if the problem was with your download. Delete the downloaded file (its location will be pointed out in the error message) and try again.
 
-If the problem persists, the cask must be outdated. It’ll likely need a new version, but it’s possible the version has remained the same (happens occasionally when the vendor updates the app in place).
+If the problem persists, the cask must be outdated. It’ll likely need a new version, but it’s possible the version has remained the same (this happens occasionally when the vendor updates the app in-place).
 
 1. Go to the vendor’s website (`brew home <cask_name>`).
 2. Find out what the latest version is. It may be expressed in the URL used to download it.
-3. Take a look at the cask’s version (`brew info <cask_name>`) and verify it is indeed outdated. If it is:
+3. Take a look at the cask’s version (`brew info <cask_name>`) and verify it is indeed outdated. If so, it will need to be updated.
 
 Help us by [submitting a fix](https://github.com/Homebrew/homebrew-cask/blob/HEAD/CONTRIBUTING.md#updating-a-cask). If you get stumped, [open an issue](https://github.com/Homebrew/homebrew-cask/issues/new?template=01_bug_report.md) explaining your steps so far and where you’re having trouble.
 
-## Cask - permission denied
+### Cask - permission denied
 
-In this case, it’s likely your user account has no admin rights so you don’t have permissions to write to `/Applications` (which is the default). You can use [`--appdir`](https://github.com/Homebrew/homebrew-cask/blob/HEAD/USAGE.md#options) to choose where to install your applications.
+In this case, it’s likely your user account has no admin rights and therefore lacks permissions for writing to `/Applications`, which is the default install location. You can use [`--appdir`](https://github.com/Homebrew/homebrew-cask/blob/HEAD/USAGE.md#options) to choose where to install your applications.
 
-If `--appdir` doesn’t fix the issue or you do have write permissions to `/Applications`, verify you’re the owner of the `Caskroom` directory by running `ls -dl "$(brew --prefix)/Caskroom"` and checking the third field. If you are not the owner, fix it with `sudo chown -R "$(whoami)" "$(brew --prefix)/Caskroom"`. If you are, the problem may lie in the app bundle itself.
+If `--appdir` doesn’t fix the issue or you do have write permissions to `/Applications`, verify you’re the owner of the `Caskroom` directory by running `ls -dl "$(brew --caskroom)"` and checking the third field. If you are not the owner, fix it with `sudo chown -R "$(whoami)" "$(brew --caskroom)"`. If you are, the problem may lie in the app bundle itself.
 
-Some app bundles don’t have certain permissions that are necessary for us to move them to the appropriate location. You may check such permissions with `ls -ls <path_to_app_bundle>`. If you see something like `dr-xr-xr-x` at the start of the output, that may be the cause. To fix it, we change the app bundle’s permission to allow us to move it, and then set it back to what it was (in case the developer set those permissions deliberately). See [`litecoin`](https://github.com/Homebrew/homebrew-cask/blob/0cde71f1fea8ad62d6ec4732fcf35ac0c52d8792/Casks/litecoin.rb#L14L20) for an example of such a cask.
-
-Help us by [submitting a fix](https://github.com/Homebrew/homebrew-cask/blob/HEAD/CONTRIBUTING.md#updating-a-cask). If you get stumped, [open an issue](https://github.com/Homebrew/homebrew-cask/issues/new?template=01_bug_report.md) explaining your steps so far and where you’re having trouble.
-
-## Cask - source is not there
-
-First, you need to identify which artifact is not being handled correctly anymore. It’s explicit in the error message: if it says `It seems the App source…'` the problem is [`app`](https://docs.brew.sh/Cask-Cookbook#stanza-app). The pattern is the same across [all artifacts](https://docs.brew.sh/Cask-Cookbook#at-least-one-artifact-stanza-is-also-required).
-
-Fixing this error is typically easy, and requires only a bit of time on your part. Start by downloading the package for the cask: `brew fetch <cask_name>`. The last line of output will inform you of the location of the download. Navigate there and manually unpack it. As an example, lets say the structure inside the archive is as follows:
-
-```
-.
-├─ Files/SomeApp.app
-├─ Files/script.sh
-└─ README.md
-```
-
-Now, let's look at the cask (`brew cat <cask_name>`):
-
-```
-(…)
-app "SomeApp.app"
-(…)
-```
-
-The cask was expecting `SomeApp.app` to be in the top directory of the archive (see how it says simply `SomeApp.app`) but the developer changed it to inside a `Files` directory. All we have to do is update that line of the cask to follow the new structure: `app 'Files/SomeApp.app'`.
-
-Note that occasionally the app’s name changes completely (from `SomeApp.app` to `OtherApp.app`, let's say). In these instances, the filename of the cask itself, as well as its token, must also change. Consult the [`token reference`](https://docs.brew.sh/Cask-Cookbook#token-reference) for complete instructions on the new name.
+Some app bundles don’t have certain permissions that are necessary for us to move them to the appropriate location. You may check such permissions with `ls -ls '/path/to/application.app'`. If you see something like `dr-xr-xr-x` at the start of the output, that may be the cause. To fix it, we need to change the app bundle’s permission to allow us to move it, and then set it back to what it was (in case the developer set those permissions deliberately). See [litecoin.rb](https://github.com/Homebrew/homebrew-cask/blob/aa461148bbb5119af26b82cccf5003e2b4e50d95/Casks/l/litecoin.rb#L17-L27) for an example of such a cask.
 
 Help us by [submitting a fix](https://github.com/Homebrew/homebrew-cask/blob/HEAD/CONTRIBUTING.md#updating-a-cask). If you get stumped, [open an issue](https://github.com/Homebrew/homebrew-cask/issues/new?template=01_bug_report.md) explaining your steps so far and where you’re having trouble.
 
-## Cask - wrong number of arguments
+### Cask - source is not there
 
-Make sure the issue really lies with your macOS version. To do so, try to install the software manually. If it is incompatible with your macOS version, it will tell you. In that case, there is nothing we can do to help you install the software, but we can add a [`depends_on macos:`](https://docs.brew.sh/Cask-Cookbook#depends_on-macos) stanza to prevent the cask from trying to install on incompatible macOS versions.
+First, you need to identify which artifact is not being handled correctly anymore. It’s explicit in the error message: if it says `It seems the App source…'` then the problem is with the [`app`](Cask-Cookbook.md#stanza-app) stanza. This pattern is the same across [all artifacts](Cask-Cookbook.md#at-least-one-artifact-stanza-is-also-required).
+
+Fixing this error is typically easy, and requires only a bit of time on your part. Start by downloading the package for the cask: `brew fetch <cask_name>`. The last line of output will inform you of the location of the download. Navigate there and manually unpack it. As an example, let's say the structure inside the archive is as follows:
+
+    .
+    ├─ Files/SomeApp.app
+    ├─ Files/script.sh
+    └─ README.md
+
+Now, if we find this when looking at the cask with `brew cat <cask_name>`:
+
+    (…)
+    app "SomeApp.app"
+    (…)
+
+The cask expects `SomeApp.app` to be in the top directory of the archive (see how it says simply `SomeApp.app`) but the developer has since moved it to be inside a `Files` directory. All we have to do is update that line of the cask to follow the new structure: `app "Files/SomeApp.app"`.
+
+Note that occasionally the app’s name changes completely (from `SomeApp.app` to `OtherApp.app`, let's say). In these instances, the filename of the cask itself, as well as its token, must also change. Consult the [`token reference`](Cask-Cookbook.md#token-reference) for complete instructions on the new name.
 
 Help us by [submitting a fix](https://github.com/Homebrew/homebrew-cask/blob/HEAD/CONTRIBUTING.md#updating-a-cask). If you get stumped, [open an issue](https://github.com/Homebrew/homebrew-cask/issues/new?template=01_bug_report.md) explaining your steps so far and where you’re having trouble.
 
+### Cask - wrong number of arguments
+
+Make sure the issue really lies with your macOS version. To do so, try to install the software manually. If it is incompatible with your macOS version, it will tell you. In that case, there is nothing we can do to help you install the software, but we can add a [`depends_on macos:`](Cask-Cookbook.md#depends_on-macos) stanza to prevent the cask from being installed on incompatible macOS versions.
+
+Help us by [submitting a fix](https://github.com/Homebrew/homebrew-cask/blob/HEAD/CONTRIBUTING.md#updating-a-cask). If you get stumped, [open an issue](https://github.com/Homebrew/homebrew-cask/issues/new?template=01_bug_report.md) explaining your steps so far and where you’re having trouble.
 
 ## Other local issues
 
-If your Homebrew installation gets messed up (and fixing the issues found by `brew doctor` doesn't solve the problem), reinstalling Homebrew may help to reset to a normal state. To easily reinstall Homebrew, use [Homebrew Bundle](https://github.com/Homebrew/homebrew-bundle) to automatically restore your installed formulae and casks. To do so, run `brew bundle dump`, [uninstall](https://docs.brew.sh/FAQ#how-do-i-uninstall-homebrew), [reinstall](https://docs.brew.sh/Installation) and run `brew bundle install`.
+If your Homebrew installation gets messed up (and fixing the issues found by `brew doctor` doesn't solve the problem), reinstalling Homebrew may help to reset to a normal state. To easily reinstall Homebrew, use `brew bundle` to automatically restore your installed formulae and casks. To do so, run `brew bundle dump`, [uninstall](FAQ.md#how-do-i-uninstall-homebrew), [reinstall](Installation.md) and run `brew bundle install`.
+
+## Possible `curl` issues
+
+Sometimes, the user's computer, configuration or network connection may cause issues downloading with `curl` which are outside Homebrew's control. Homebrew requires good internet connectivity and correct configuration to function correctly. Here some links that could help you identify cURL issues based on `curl`'s and `libcurl`'s exit codes:
+
+* <https://everything.curl.dev/cmdline/exitcode.html>
+* <https://curl.se/libcurl/c/libcurl-errors.html>

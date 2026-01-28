@@ -1,3 +1,7 @@
+---
+last_review_date: "1970-01-01"
+---
+
 # C++ Standard Libraries
 
 There are two C++ standard libraries supported by Apple compilers.
@@ -20,9 +24,9 @@ dependencies that you built on 10.8 or earlier. If you're reading this page beca
 you were directed here by a build error, you can most likely fix the issue if
 you reinstall all the dependencies of the package you're trying to build.
 
-Example install using GCC 7:
+Example install using GCC 9:
 
 ```sh
-brew install gcc@7
-brew install --cc=gcc-7 <formula>
+brew install gcc@9
+brew install --cc=gcc-9 <formula>
 ```

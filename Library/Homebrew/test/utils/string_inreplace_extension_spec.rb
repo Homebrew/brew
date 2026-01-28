@@ -1,9 +1,8 @@
-# typed: false
 # frozen_string_literal: true
 
 require "utils/string_inreplace_extension"
 
-describe StringInreplaceExtension do
+RSpec.describe StringInreplaceExtension do
   subject(:string_extension) { described_class.new(string.dup) }
 
   describe "#change_make_var!" do
@@ -250,11 +249,19 @@ describe StringInreplaceExtension do
     it "replaces the first occurrence" do
       string_extension.sub!("o", "e")
       expect(string_extension.inreplace_string).to eq("feo")
+      expect(string_extension.errors).to be_empty
     end
 
     it "adds an error to #errors when no replacement was made" do
       string_extension.sub! "not here", "test"
+      expect(string_extension.inreplace_string).to eq(string)
       expect(string_extension.errors).to eq(['expected replacement of "not here" with "test"'])
+    end
+
+    it "doesn't add an error to #errors when no replace was made and `audit_result: false`" do
+      string_extension.sub! "not here", "test", audit_result: false
+      expect(string_extension.inreplace_string).to eq(string)
+      expect(string_extension.errors).to be_empty
     end
   end
 
@@ -262,6 +269,7 @@ describe StringInreplaceExtension do
     let(:string) { "foo" }
 
     it "replaces all occurrences" do
+      # Using `gsub!` here is what we want, and it's only a test.
       string_extension.gsub!("o", "e") # rubocop:disable Performance/StringReplacement
       expect(string_extension.inreplace_string).to eq("fee")
     end

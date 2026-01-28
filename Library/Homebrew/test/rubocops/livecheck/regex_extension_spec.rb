@@ -1,9 +1,8 @@
-# typed: false
 # frozen_string_literal: true
 
 require "rubocops/livecheck"
 
-describe RuboCop::Cop::FormulaAudit::LivecheckRegexExtension do
+RSpec.describe RuboCop::Cop::FormulaAudit::LivecheckRegexExtension do
   subject(:cop) { described_class.new }
 
   it "reports an offense when the `regex` does not use `\\.t` for archive file extensions" do
@@ -14,7 +13,7 @@ describe RuboCop::Cop::FormulaAudit::LivecheckRegexExtension do
         livecheck do
           url :stable
           regex(%r{href=.*?/formula[._-]v?(\\d+(?:\\.\\d+)+)\\.tgz}i)
-                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Use `\\.t` instead of `\\.tgz`
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ FormulaAudit/LivecheckRegexExtension: Use `\\.t` instead of `\\.tgz`
         end
       end
     RUBY

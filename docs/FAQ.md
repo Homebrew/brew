@@ -1,4 +1,11 @@
-# FAQ
+---
+last_review_date: "2026-01-23"
+---
+
+# FAQ (Frequently Asked Questions)
+
+* Table of Contents
+{:toc}
 
 ## Is there a glossary of terms around?
 
@@ -32,7 +39,7 @@ To allow that formulae to update again:
 
     brew unpin <formula>
 
-Note that pinned, outdated formulae that another formula depends on need to be upgraded when required, as we do not allow formulae to be built against outdated versions. If this is not desired, you can instead use `brew extract` to [maintain your own copy of the formula in a tap](How-to-Create-and-Maintain-a-Tap.md).
+Note that pinned, outdated formulae that another formula depends on need to be upgraded when required, as we do not allow formulae to be built against outdated versions. If this is not desired, you can instead use `brew version-install` to install your own copy of the formula from [your own tap](How-to-Create-and-Maintain-a-Tap.md).
 
 ## How do I uninstall Homebrew?
 
@@ -64,9 +71,9 @@ Homebrew doesn't support arbitrary mixing and matching of formula versions, so e
 
 Which is usually: `~/Library/Caches/Homebrew`
 
-## My Mac `.app`s don’t find Homebrew utilities!
+## My Mac `.app`s don’t find Homebrew utilities
 
-GUI apps on macOS don’t have Homebrew's prefix in their `PATH` by default. If you're on Mountain Lion or later, you can fix this by running `sudo launchctl config user path "$(brew --prefix)/bin:${PATH}"` and then rebooting, as documented in `man launchctl`. Note that this sets the `launchctl` `PATH` for *all users*. For earlier versions of macOS, see [this page](https://developer.apple.com/legacy/library/qa/qa1067/_index.html).
+GUI apps on macOS don't have Homebrew's prefix in their `PATH` by default. You can fix this by running `sudo launchctl config user path "$(brew --prefix)/bin:${PATH}"` and then rebooting, as documented in `man launchctl`. Note that this sets the `launchctl` `PATH` for *all users*.
 
 ## How do I contribute to Homebrew?
 
@@ -78,29 +85,19 @@ Homebrew provides pre-built binary packages for many formulae. These are referre
 
 If available, bottled binaries will be used by default except under the following conditions:
 
-* Options were passed to the install command, i.e. `brew install <formula>` will use a bottled version of the formula, but `brew install --enable-bar <formula>` will trigger a source build.
 * The `--build-from-source` option is invoked.
 * No bottle is available for the machine's currently running OS version. (Bottles for macOS are generated only for supported macOS versions.)
 * Homebrew is installed to a prefix other than the default (although some bottles support this).
+* Formula options were passed to the install command. For example, `brew install <formula>` will try to find a bottled binary, but `brew install --with-foo <formula>` will trigger a source build.
 
 We aim to bottle everything.
-
-## How do I get a formula from someone else’s pull request?
-
-```sh
-brew install hub
-brew update
-cd "$(brew --repository homebrew/core)"
-hub fetch github_username
-hub pr checkout pull_request_number
-```
 
 ## Why should I install Homebrew in the default location?
 
 Homebrew's pre-built binary packages (known as [bottles](Bottles.md)) of many formulae can only be used if you install in the default installation prefix, otherwise they have to be built from source. Building from source takes a long time, is prone to failure, and is not supported. The default prefix is:
 
-* `/usr/local` for macOS on Intel,
-* `/opt/homebrew` for macOS on Apple Silicon/ARM, and
+* `/opt/homebrew` for macOS on Apple Silicon,
+* `/usr/local` for macOS on Intel, and
 * `/home/linuxbrew/.linuxbrew` for Linux.
 
 Do yourself a favour and install to the default prefix so that you can use our pre-built binary packages. *Pick another prefix at your peril!*
@@ -115,7 +112,7 @@ The prefix `/home/linuxbrew/.linuxbrew` was chosen so that users without admin a
 
 ## Why does Homebrew say sudo is bad?
 
-**tl;dr** Sudo is dangerous, and you installed TextMate.app without sudo anyway.
+__tl;dr__ Sudo is dangerous, and you installed TextMate.app without sudo anyway.
 
 Homebrew refuses to work using sudo.
 
@@ -125,7 +122,21 @@ We use the macOS sandbox to stop this but this doesn't work when run as the `roo
 
 Did you `chown root /Applications/TextMate.app`? Probably not. So is it that important to `chown root wget`?
 
-If you need to run Homebrew in a multi-user environment, consider creating a separate user account specifically for use of Homebrew.
+Note: Homebrew is primarily designed for single-user use and does not work well in multi-user configurations.
+
+## What is the default ownership and permissions used by Homebrew?
+
+First, see previous question regarding sudo.
+
+Ownership on macOS, all subdirectories and files use a forced default of `admin` user group (instead of lower default user group `staff`) and the current user that executed the installation.
+
+Ownership on Linux, all subdirectories and files default to the current user and the user group that executed the installation.
+
+By default, permissions for Homebrew-managed directories and files are `0755 (u=rwx,g=rx,o=rx)` on both macOS and Linux. This means that only the owning user (typically the installing user) can modify or replace files within the Homebrew prefix, while all users are allowed to read and execute installed binaries.
+
+When a Homebrew-installed binary is executed, it runs with the privileges of the user who launched it.
+
+Note: Homebrew is primarily designed for single-user use and does not work well in multi-user configurations.
 
 ## Why isn’t a particular command documented?
 
@@ -137,13 +148,34 @@ If all maintainer feedback has been addressed and all tests are passing, bump it
 
 ## Can I edit formulae myself?
 
-Yes! It’s easy! Just `brew edit <formula>`. You don’t have to submit modifications back to `homebrew/core`, just edit the formula to what you personally need and `brew install <formula>`. As a bonus, `brew update` will merge your changes with upstream so you can still keep the formula up-to-date **with** your personal modifications!
+Yes! It’s easy! If `brew tap` doesn't show `homebrew/core`, set yourself up to edit a local copy:
+
+1. Set `HOMEBREW_NO_INSTALL_FROM_API=1` in your shell environment,
+2. Run `brew tap --force homebrew/core` and wait for the clone to complete, then
+3. Run `brew edit <formula>` to open the formula in `EDITOR`.
+
+You don’t have to submit modifications back to `homebrew/core`, just edit the formula to what you personally need and `brew install <formula>`. As a bonus, `brew update` will merge your changes with upstream so you can still keep the formula up-to-date __with__ your personal modifications!
+
+Note that if you are editing a core formula or cask you must set `HOMEBREW_NO_INSTALL_FROM_API=1` before using `brew install` or `brew update` otherwise they will ignore your local changes and default to the API.
+
+To undo all changes you have made to any of Homebrew's repositories, run `brew update-reset`. It will revert to the upstream state on all Homebrew's repositories.
 
 ## Can I make new formulae?
 
-Yes! It’s easy! Just `brew create URL`. Homebrew will then open the formula in `EDITOR` so you can edit it, but it probably already installs; try it: `brew install <formula>`. If you encounter any issues, run the command with the `--debug` switch like so: `brew install --debug <formula>`, which drops you into a debugging shell.
+Yes! It’s easy! If you already have a local copy of `homebrew/core` (see above), just use the [`brew create` command](Manpage.md#create-options-url). Homebrew will then open the formula in `EDITOR` so you can edit it, but it probably already installs; try it: `brew install <formula>`. If you encounter any issues, run the command with the `--debug` switch like so: `brew install --debug <formula>`, which drops you into a debugging shell.
 
 If you want your new formula to be part of `homebrew/core` or want to learn more about writing formulae, then please read the [Formula Cookbook](Formula-Cookbook.md).
+
+## How do I get a formula from someone else’s pull request?
+
+Ensure you have a [local copy of `homebrew/core`](#can-i-edit-formulae-myself), then:
+
+```sh
+brew update
+brew install gh
+cd "$(brew --repository homebrew/core)"
+gh pr checkout pull_request_number
+```
 
 ## Why was a formula deleted or disabled?
 
@@ -169,21 +201,19 @@ You can [modify a tool's build configuration](How-to-Build-Software-Outside-Home
 
 Chances are that certain apps will give you a popup message like this:
 
-<img src="https://i.imgur.com/CnEEATG.png" width="532" alt="Gatekeeper message">
+<img src="assets/img/docs/gatekeeper-unidentified-message.png" width="532" alt="Gatekeeper unidentified developer message">
 
-This is a [security feature from Apple](https://support.apple.com/en-us/HT202491). The single most important thing to know is that **you can allow individual apps to be exempt from this feature.** This allows the app to run while the rest of the system remains under protection.
+This is a [security feature from Apple](https://support.apple.com/en-us/HT202491). The single most important thing to know is that __you can allow individual apps to be exempt from this feature.__ This allows the app to run while the rest of the system remains under protection.
 
-**Always leave system-wide protection enabled,** and disable it only for specific apps as needed.
+__Always leave system-wide protection enabled,__ and disable it only for specific apps as needed.
 
 If you're sure you want to trust the app, you can disable protection for it by right-clicking its icon and choosing *Open*:
 
-<img src="https://i.imgur.com/69xc2WK.png" width="312" alt="Right-click the app and choose Open">
+<img src="assets/img/docs/right-click-choose-open.png" width="312" style="margin-left:60px" alt="Right-click the app and choose Open">
 
-In the resulting dialog, click the *Open* button to have macOS permanently allow the app to run on this Mac. **Don’t do this unless you’re sure you trust the app.**
+In the resulting dialog, click the *Open* button to have macOS permanently allow the app to run on this Mac. __Don’t do this unless you’re sure you trust the app.__
 
-<img src="https://i.imgur.com/xppa4Qv.png" width="532" alt="Gatekeeper message">
-
-Alternatively, you may provide the [`--no-quarantine` flag](https://github.com/Homebrew/homebrew-cask/blob/HEAD/USAGE.md#options) at install time to not add this feature to a specific app.
+<img src="assets/img/docs/gatekeeper-unidentified-open.png" width="532" alt="Gatekeeper unidentified developer open prompt">
 
 ## Why aren’t some apps included during `brew upgrade`?
 
@@ -191,7 +221,7 @@ After running `brew upgrade`, you may notice some casks you think should be upgr
 
 As you’re likely aware, a lot of macOS software can upgrade itself:
 
-<img src="https://upload.wikimedia.org/wikipedia/commons/c/c0/Sparkle_Test_App_Software_Update.png" width="532" alt="Sparkle update window">
+<img src="assets/img/docs/sparkle-test-app-software-update.png" width="600" alt="Sparkle update window">
 
 That could cause conflicts when used in tandem with Homebrew Cask’s `upgrade` mechanism.
 
@@ -202,16 +232,22 @@ There are a few ideas to fix this problem:
 * Try to prevent the software’s automated updates. It wouldn’t be a universal solution and may cause it to break. Most software on Homebrew Cask is closed-source, so we’d be guessing. This is also why pinning casks to a version isn’t available.
 * Try to extract the installed software’s version and compare it to the cask, deciding what to do at that time. It’d be a complicated solution that would break other parts of our methodology, such as using versions to interpolate `url` values (a definite win for maintainability). This solution also isn’t universal, as many software developers are inconsistent in their versioning schemes (and app bundles are meant to have two version strings) and it doesn’t work for all types of software we support.
 
-So we let software be. Anything installed with Homebrew Cask should behave the same as if it were installed manually. But since we also want to support software that doesn’t self-upgrade, we add [`auto_updates true`](https://github.com/Homebrew/homebrew-cask/blob/62c0495b254845a481dacac6ea7c8005e27a3fb0/Casks/alfred.rb#L10) to casks for software that does, which excludes them from `brew upgrade`.
+So we let software be. Anything installed with Homebrew Cask should behave the same as if it were installed manually. But since we also want to support software that doesn’t self-upgrade, we add [`auto_updates true`](https://github.com/Homebrew/homebrew-cask/blob/aa461148bbb5119af26b82cccf5003e2b4e50d95/Casks/a/alfred.rb#L18) to casks for software that does, which excludes them from `brew upgrade`.
 
-Casks which use [`version :latest`](https://docs.brew.sh/Cask-Cookbook#version-latest) are also excluded, because we have no way to track their installed version. It helps to ask the developers of such software to provide versioned releases (i.e. include the version in the path of the download `url`).
+Casks which use [`version :latest`](Cask-Cookbook.md#special-value-latest) are also excluded, because we have no way to track their installed version. It helps to ask the developers of such software to provide versioned releases (i.e. include the version in the path of the download `url`).
 
 If you still want to force software to be upgraded via Homebrew Cask, you can reference it specifically in the `upgrade` command:
 
     brew upgrade <cask>
 
-Or use the `--greedy` flag:
+Or use the `--greedy` switch:
 
     brew upgrade --greedy
 
 Refer to the `upgrade` section of the [`brew` manual page](Manpage.md) for more details.
+
+## Why do my cask apps lose their Dock position / Launchpad position / permission settings when I run `brew upgrade`?
+
+Homebrew has two possible strategies to update cask apps: uninstalling the old version and reinstalling the new one, or replacing the contents of the app with the new contents. With the uninstall/reinstall strategy, [macOS thinks the app is being deleted without any intent to reinstall it](https://github.com/Homebrew/brew/pull/15138), and so it removes some internal metadata for the old app, including where it appears in the Dock and Launchpad and which permissions it's been granted. The content replacement strategy works around this by treating the upgrade as an in-place upgrade. However, starting in macOS Ventura, these in-place upgrades are only allowed when the updater application (in this case, the terminal running Homebrew) has [certain permissions granted](https://github.com/Homebrew/brew/pull/15483). Either the "App Management" or "Full Disk Access" permission will suffice.
+
+Homebrew defaults to in-place upgrades when it has the necessary permissions. Otherwise, it will use the uninstall/reinstall strategy.

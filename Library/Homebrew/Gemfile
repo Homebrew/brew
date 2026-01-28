@@ -2,46 +2,96 @@
 
 source "https://rubygems.org"
 
+# The default case (no envs), should always be a restrictive bound on the lowest supported minor version.
+# This is the branch that Dependabot will use.
+if ENV.fetch("HOMEBREW_USE_RUBY_FROM_PATH", "").empty?
+  ruby "~> 3.4.0"
+else
+  ruby ">= 3.4.0"
+end
+
 # disallowed gems (should not be used)
 # * nokogiri - use rexml instead for XML parsing
 
 # installed gems (should all be require: false)
-gem "bootsnap", require: false
-gem "byebug", require: false
-gem "json_schemer", require: false
-gem "minitest", require: false
-gem "parallel_tests", require: false
-gem "ronn", require: false
-gem "rspec", require: false
-gem "rspec-github", require: false
-gem "rspec-its", require: false
-gem "rspec_junit_formatter", require: false
-gem "rspec-retry", require: false
-gem "rspec-wait", require: false
-gem "rubocop", require: false
-gem "rubocop-ast", require: false
-gem "simplecov", require: false
-gem "simplecov-cobertura", require: false
-gem "warning", require: false
-
-group :sorbet, optional: true do
-  gem "parlour", require: false
+# ALL gems that are not vendored should be in a group
+group :doc, optional: true do
+  gem "redcarpet", require: false
+  gem "yard", require: false
+  gem "yard-sorbet", require: false
+end
+group :ast, optional: true do
+  gem "rubocop-ast", require: false
+end
+group :formula_test, optional: true do
+  gem "minitest", require: false
+end
+group :livecheck, optional: true do
+  gem "ruby-progressbar", require: false
+end
+group :man, optional: true do
+  gem "kramdown", require: false
+end
+group :pr_upload, :bottle, optional: true do
+  gem "json_schemer", require: false
+end
+group :prof, optional: true do
+  gem "ruby-prof", require: false
+  gem "stackprof", require: false
+  gem "vernier", require: false
+end
+group :pry, optional: true do
+  gem "pry", require: false
+end
+group :style, optional: true do
+  gem "rubocop", require: false
+  gem "rubocop-md", require: false
+  gem "rubocop-performance", require: false
+  gem "rubocop-rspec", require: false
+  gem "rubocop-sorbet", require: false
+end
+group :style, :tests, optional: true do
+  gem "test-prof", require: false
+end
+group :tests, optional: true do
+  gem "parallel_tests", require: false
+  gem "rspec", require: false
+  gem "rspec-core", require: false
+  gem "rspec-expectations", require: false
+  gem "rspec-github", require: false
+  gem "rspec_junit_formatter", require: false
+  gem "rspec-retry", require: false
   gem "rspec-sorbet", require: false
-  gem "sorbet", require: false
-  gem "sorbet-runtime", require: false
+  gem "simplecov", require: false
+  gem "simplecov-cobertura", require: false
+end
+group :typecheck, optional: true do
+  gem "method_source", require: false
+  gem "sorbet-static-and-runtime", require: false
+  gem "spoom", require: false
   gem "tapioca", require: false
 end
+group :vscode, optional: true do
+  gem "ruby-lsp", require: false
+end
+group :formula_analytics, optional: true do
+  gem "pycall", require: false
+end
+group :contributions, optional: true do
+  gem "csv", require: false
+end
 
-# vendored gems
-gem "activesupport", "< 7" # 7 requires Ruby 2.7
+# shared gems (used by multiple groups)
+group :audit, :bump_unversioned_casks, :livecheck, optional: true do
+  gem "rexml", require: false
+end
+
+# vendored gems (no group)
+gem "addressable"
+gem "base64"
 gem "concurrent-ruby"
-gem "did_you_mean" # remove when HOMEBREW_REQUIRED_RUBY_VERSION >= 2.7
-gem "mechanize"
 gem "patchelf"
 gem "plist"
-gem "rubocop-performance"
-gem "rubocop-rails"
-gem "rubocop-rspec"
-gem "rubocop-sorbet"
 gem "ruby-macho"
-gem "sorbet-runtime-stub"
+gem "sorbet-runtime"
+gem "warning"

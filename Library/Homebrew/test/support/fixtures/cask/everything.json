@@ -1,0 +1,129 @@
+{
+  "token": "everything",
+  "full_token": "everything",
+  "old_tokens": [],
+  "tap": "homebrew/cask",
+  "name": [
+    "Everything"
+  ],
+  "desc": "Little bit of everything",
+  "homepage": "https://www.everything.app/",
+  "url": "https://cachefly.everything.app/releases/Everything_1.2.3.zip",
+  "url_specs": {
+    "cookies": {
+      "ALL": "1234"
+    },
+    "user_agent": ":fake"
+  },
+  "version": "1.2.3",
+  "autobump": true,
+  "no_autobump_message": null,
+  "skip_livecheck": false,
+  "installed": null,
+  "installed_time": null,
+  "bundle_version": null,
+  "bundle_short_version": null,
+  "outdated": false,
+  "sha256": "c64c05bdc0be845505d6e55e69e696a7f50d40846e76155f0c85d5ff5e7bbb84",
+  "artifacts": [
+    {
+      "uninstall": [
+        {
+          "launchctl": "com.every.thing.agent",
+          "signal": [
+            [
+              "TERM",
+              "com.every.thing.controller1"
+            ],
+            [
+              "TERM",
+              "com.every.thing.bin"
+            ]
+          ],
+          "kext": "com.every.thing.driver",
+          "delete": "/Library/EverythingHelperTools"
+        }
+      ]
+    },
+    {
+      "installer": [
+        {
+          "script": {
+            "executable": "~/just/another/path/install.sh",
+            "args": [
+              "--mode=silent"
+            ],
+            "sudo": true,
+            "print_stderr": false
+          }
+        }
+      ]
+    },
+    {
+      "app": [
+        "Everything.app"
+      ]
+    },
+    {
+      "zap": [
+        {
+          "trash": [
+            "~/.everything",
+            "~/Library/Everything"
+          ]
+        }
+      ]
+    }
+  ],
+  "caveats": "Installing everything might take a while...\n\neverything requires a kernel extension to work.\nIf the installation fails, retry after you enable it in:\n  System Settings → Privacy & Security\n\nFor more information, refer to vendor documentation or this Apple Technical Note:\n  https://developer.apple.com/library/content/technotes/tn2459/_index.html\n",
+  "depends_on": {
+    "cask": [
+      "something"
+    ],
+    "macos": {
+      ">=": [
+        "10.15"
+      ]
+    }
+  },
+  "conflicts_with": {
+    "cask": [
+      "nothing"
+    ]
+  },
+  "container": {
+    "type": "naked"
+  },
+  "rename": [
+    {
+      "from": "Foobar.app",
+      "to": "Foo.app"
+    },
+    {
+      "from": "Foo.app",
+      "to": "Bar.app"
+    }
+  ],
+  "auto_updates": true,
+  "deprecated": false,
+  "deprecation_date": null,
+  "deprecation_reason": null,
+  "deprecation_replacement_formula": null,
+  "deprecation_replacement_cask": null,
+  "deprecate_args": null,
+  "disabled": false,
+  "disable_date": null,
+  "disable_reason": null,
+  "disable_replacement_formula": null,
+  "disable_replacement_cask": null,
+  "disable_args": null,
+  "tap_git_head": "abcdef1234567890abcdef1234567890abcdef12",
+  "languages": [
+    "en",
+    "eo"
+  ],
+  "ruby_source_path": "Casks/everything.rb",
+  "ruby_source_checksum": {
+    "sha256": "d3c19b564ee5a17f22191599ad795a6cc9c4758d0e1269f2d13207155b378dea"
+  }
+}

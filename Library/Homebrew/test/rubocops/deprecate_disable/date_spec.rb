@@ -1,9 +1,8 @@
-# typed: false
 # frozen_string_literal: true
 
 require "rubocops/deprecate_disable"
 
-describe RuboCop::Cop::FormulaAudit::DeprecateDisableDate do
+RSpec.describe RuboCop::Cop::FormulaAudit::DeprecateDisableDate do
   subject(:cop) { described_class.new }
 
   context "when auditing `deprecate!`" do
@@ -12,7 +11,7 @@ describe RuboCop::Cop::FormulaAudit::DeprecateDisableDate do
         class Foo < Formula
           url 'https://brew.sh/foo-1.0.tgz'
           deprecate! date: "June 25, 2020"
-                           ^^^^^^^^^^^^^^^ Use `2020-06-25` to comply with ISO 8601
+                           ^^^^^^^^^^^^^^^ FormulaAudit/DeprecateDisableDate: Use `2020-06-25` to comply with ISO 8601
         end
       RUBY
 
@@ -29,7 +28,7 @@ describe RuboCop::Cop::FormulaAudit::DeprecateDisableDate do
         class Foo < Formula
           url 'https://brew.sh/foo-1.0.tgz'
           deprecate! because: "is broken", date: "June 25, 2020"
-                                                 ^^^^^^^^^^^^^^^ Use `2020-06-25` to comply with ISO 8601
+                                                 ^^^^^^^^^^^^^^^ FormulaAudit/DeprecateDisableDate: Use `2020-06-25` to comply with ISO 8601
         end
       RUBY
 
@@ -84,7 +83,7 @@ describe RuboCop::Cop::FormulaAudit::DeprecateDisableDate do
         class Foo < Formula
           url 'https://brew.sh/foo-1.0.tgz'
           disable! date: "June 25, 2020"
-                         ^^^^^^^^^^^^^^^ Use `2020-06-25` to comply with ISO 8601
+                         ^^^^^^^^^^^^^^^ FormulaAudit/DeprecateDisableDate: Use `2020-06-25` to comply with ISO 8601
         end
       RUBY
 
@@ -101,7 +100,7 @@ describe RuboCop::Cop::FormulaAudit::DeprecateDisableDate do
         class Foo < Formula
           url 'https://brew.sh/foo-1.0.tgz'
           disable! because: "is broken", date: "June 25, 2020"
-                                               ^^^^^^^^^^^^^^^ Use `2020-06-25` to comply with ISO 8601
+                                               ^^^^^^^^^^^^^^^ FormulaAudit/DeprecateDisableDate: Use `2020-06-25` to comply with ISO 8601
         end
       RUBY
 

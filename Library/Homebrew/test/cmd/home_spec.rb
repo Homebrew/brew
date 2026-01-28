@@ -1,20 +1,20 @@
-# typed: false
 # frozen_string_literal: true
 
+require "cmd/home"
 require "cmd/shared_examples/args_parse"
 
-describe "brew home" do
-  let(:testballhome_homepage) {
+RSpec.describe Homebrew::Cmd::Home do
+  let(:testballhome_homepage) do
     Formula["testballhome"].homepage
-  }
+  end
 
-  let(:local_caffeine_path) {
+  let(:local_caffeine_path) do
     cask_path("local-caffeine")
-  }
+  end
 
-  let(:local_caffeine_homepage) {
+  let(:local_caffeine_homepage) do
     Cask::CaskLoader.load(local_caffeine_path).homepage
-  }
+  end
 
   it_behaves_like "parseable arguments"
 
@@ -34,7 +34,7 @@ describe "brew home" do
       .and be_a_success
   end
 
-  it "opens the homepage for a given Cask", :integration_test do
+  it "opens the homepage for a given Cask", :integration_test, :needs_macos do
     expect { brew "home", local_caffeine_path, "HOMEBREW_BROWSER" => "echo" }
       .to output(/#{local_caffeine_homepage}/).to_stdout
       .and output(/Treating #{Regexp.escape(local_caffeine_path)} as a cask/).to_stderr
@@ -45,7 +45,7 @@ describe "brew home" do
       .and be_a_success
   end
 
-  it "opens the homepages for a given formula and Cask", :integration_test do
+  it "opens the homepages for a given formula and Cask", :integration_test, :needs_macos do
     setup_test_formula "testballhome"
 
     expect { brew "home", "testballhome", local_caffeine_path, "HOMEBREW_BROWSER" => "echo" }

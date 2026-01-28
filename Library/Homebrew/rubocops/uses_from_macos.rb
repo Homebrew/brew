@@ -1,7 +1,7 @@
-# typed: true
+# typed: strict
 # frozen_string_literal: true
 
-require "rubocops/extend/formula"
+require "rubocops/extend/formula_cop"
 
 module RuboCop
   module Cop
@@ -11,6 +11,8 @@ module RuboCop
         PROVIDED_BY_MACOS_FORMULAE = %w[
           apr
           bc
+          bc-gh
+          berkeley-db
           bison
           bzip2
           cups
@@ -21,7 +23,6 @@ module RuboCop
           expat
           file-formula
           flex
-          gnu-getopt
           gperf
           icu4c
           krb5
@@ -31,6 +32,7 @@ module RuboCop
           libiconv
           libpcap
           libressl
+          libxcrypt
           libxml2
           libxslt
           llvm
@@ -41,15 +43,14 @@ module RuboCop
           net-snmp
           netcat
           openldap
+          pax
           pcsc-lite
           pod2man
-          rpcgen
           ruby
           sqlite
           ssh-copy-id
           swift
           tcl-tk
-          texinfo
           unifdef
           unzip
           whois
@@ -57,12 +58,15 @@ module RuboCop
           zlib
         ].freeze
 
-        def audit_formula(_node, _class_node, _parent_class_node, body_node)
+        sig { override.params(formula_nodes: FormulaNodes).void }
+        def audit_formula(formula_nodes)
+          return if (body_node = formula_nodes.body_node).nil?
+
           find_method_with_args(body_node, :keg_only, :provided_by_macos) do
             return if PROVIDED_BY_MACOS_FORMULAE.include? @formula_name
 
-            problem "Formulae that are `keg_only :provided_by_macos` should be "\
-                    "added to the `PROVIDED_BY_MACOS_FORMULAE` list (in the Homebrew/brew repo)"
+            problem "Formulae that are `keg_only :provided_by_macos` should be " \
+                    "added to the `PROVIDED_BY_MACOS_FORMULAE` list (in the Homebrew/brew repository)"
           end
         end
       end
@@ -79,6 +83,9 @@ module RuboCop
           git
           groff
           gzip
+          jq
+          less
+          mandoc
           openssl
           perl
           php
@@ -89,8 +96,16 @@ module RuboCop
           zsh
         ].freeze
 
-        def audit_formula(_node, _class_node, _parent_class_node, body_node)
+        sig { override.params(formula_nodes: FormulaNodes).void }
+        def audit_formula(formula_nodes)
+          return if (body_node = formula_nodes.body_node).nil?
+
+          depends_on_linux = depends_on?(:linux)
+
           find_method_with_args(body_node, :uses_from_macos, /^"(.+)"/).each do |method|
+            @offensive_node = method
+            problem "`uses_from_macos` should not be used when Linux is required." if depends_on_linux
+
             dep = if parameters(method).first.instance_of?(RuboCop::AST::StrNode)
               parameters(method).first
             elsif parameters(method).first.instance_of?(RuboCop::AST::HashNode)
@@ -101,7 +116,7 @@ module RuboCop
             next if ALLOWED_USES_FROM_MACOS_DEPS.include? dep_name
             next if ProvidedByMacos::PROVIDED_BY_MACOS_FORMULAE.include? dep_name
 
-            problem "`uses_from_macos` should only be used for macOS dependencies, not #{dep_name}."
+            problem "`uses_from_macos` should only be used for macOS dependencies, not '#{dep_name}'."
           end
         end
       end

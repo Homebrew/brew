@@ -1,41 +1,40 @@
-# typed: false
 # frozen_string_literal: true
 
 require "messages"
 require "spec_helper"
 
-describe Messages do
+RSpec.describe Messages do
   let(:messages) { described_class.new }
   let(:test_formula) { formula("foo") { url("https://brew.sh/foo-0.1.tgz") } }
   let(:elapsed_time) { 1.1 }
 
   describe "#record_caveats" do
     it "adds a caveat" do
-      expect {
-        messages.record_caveats(test_formula, "Zsh completions were installed")
-      }.to change { messages.caveats.count }.by(1)
+      expect do
+        messages.record_caveats(test_formula.name, "Zsh completions were installed")
+      end.to change(messages.caveats, :count).by(1)
     end
   end
 
   describe "#package_installed" do
     it "increases the package count" do
-      expect {
-        messages.package_installed(test_formula, elapsed_time)
-      }.to change(messages, :package_count).by(1)
+      expect do
+        messages.package_installed(test_formula.name, elapsed_time)
+      end.to change(messages, :package_count).by(1)
     end
 
     it "adds to install_times" do
-      expect {
-        messages.package_installed(test_formula, elapsed_time)
-      }.to change { messages.install_times.count }.by(1)
+      expect do
+        messages.package_installed(test_formula.name, elapsed_time)
+      end.to change(messages.install_times, :count).by(1)
     end
   end
 
   describe "#display_messages" do
     context "when package_count is less than two" do
       before do
-        messages.record_caveats(test_formula, "Zsh completions were installed")
-        messages.package_installed(test_formula, elapsed_time)
+        messages.record_caveats(test_formula.name, "Zsh completions were installed")
+        messages.package_installed(test_formula.name, elapsed_time)
       end
 
       it "doesn't print caveat details" do
@@ -45,7 +44,7 @@ describe Messages do
 
     context "when caveats is empty" do
       before do
-        messages.package_installed(test_formula, elapsed_time)
+        messages.package_installed(test_formula.name, elapsed_time)
       end
 
       it "doesn't print caveat details" do
@@ -57,9 +56,9 @@ describe Messages do
       let(:test_formula2) { formula("bar") { url("https://brew.sh/bar-0.1.tgz") } }
 
       before do
-        messages.record_caveats(test_formula, "Zsh completions were installed")
-        messages.package_installed(test_formula, elapsed_time)
-        messages.package_installed(test_formula2, elapsed_time)
+        messages.record_caveats(test_formula.name, "Zsh completions were installed")
+        messages.package_installed(test_formula.name, elapsed_time)
+        messages.package_installed(test_formula2.name, elapsed_time)
       end
 
       it "prints caveat details" do
@@ -82,7 +81,7 @@ describe Messages do
 
       context "when `install_times` is present" do
         before do
-          messages.package_installed(test_formula, elapsed_time)
+          messages.package_installed(test_formula.name, elapsed_time)
         end
 
         it "prints installation times" do

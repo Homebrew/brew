@@ -1,10 +1,9 @@
-# typed: false
 # frozen_string_literal: true
 
 require "extend/pathname"
 require "install_renamed"
 
-describe Pathname do
+RSpec.describe Pathname do
   include FileUtils
 
   let(:src) { mktmpdir }
@@ -93,9 +92,11 @@ describe Pathname do
     end
 
     it "preserves permissions" do
-      File.open(file, "w", 0100777) {}
+      File.open(file, "w", 0100777) do
+        # do nothing
+      end
       file.atomic_write("CONTENT")
-      expect(file.stat.mode.to_s(8)).to eq((0100777 & ~File.umask).to_s(8))
+      expect(file.stat.mode.to_s(8)).to eq((~File.umask & 0100777).to_s(8))
     end
 
     it "preserves default permissions" do
@@ -125,13 +126,13 @@ describe Pathname do
       expect(described_class.new("foo-0.1.cpio.gz").extname).to eq(".cpio.gz")
     end
 
-    it "does not treat version numbers as extensions" do
+    it "does not treat version numbers as extensions" do # rubocop:todo RSpec/AggregateExamples
       expect(described_class.new("foo-0.1").extname).to eq("")
       expect(described_class.new("foo-1.0-rc1").extname).to eq("")
       expect(described_class.new("foo-1.2.3").extname).to eq ""
     end
 
-    it "supports `.7z` with version numbers" do
+    it "supports `.7z` with version numbers" do # rubocop:todo RSpec/AggregateExamples
       expect(described_class.new("snap7-full-1.4.2.7z").extname).to eq ".7z"
     end
   end

@@ -1,6 +1,10 @@
+---
+last_review_date: "1970-01-01"
+---
+
 # License Guidelines
 
-We only accept formulae that use a [Debian Free Software Guidelines license](https://wiki.debian.org/DFSGLicenses) or are released into the public domain following [DFSG Guidelines on Public Domain software](https://wiki.debian.org/DFSGLicenses#Public_Domain).
+We only accept formulae that use a [Debian Free Software Guidelines license](https://wiki.debian.org/DFSGLicenses) or are released into the public domain following [DFSG Guidelines on Public Domain software](https://wiki.debian.org/DFSGLicenses#Public_Domain) into `homebrew/core`.
 
 ## Specifying a License
 
@@ -26,7 +30,7 @@ license :cannot_represent
 
 ## Complex SPDX License Expressions
 
-Some formulae have multiple licenses that need to be combined in different ways. In these cases, a more complex license expression can be used. These expressions are based on the [SPDX License Expression Guidelines](https://spdx.github.io/spdx-spec/appendix-IV-SPDX-license-expressions/).
+Some formulae have multiple licenses that need to be combined in different ways. In these cases, a more complex license expression can be used. These expressions are based on the [SPDX License Expression Guidelines](https://spdx.github.io/spdx-spec/latest/annexes/spdx-license-expressions/).
 
 Add a `+` to indicate that the user can choose a later version of the same license:
 
@@ -68,8 +72,8 @@ These expressions can be nested as needed:
 license any_of: [
   "MIT",
   :public_domain,
-  all_of: ["0BSD", "Zlib", "Artistic-1.0+"],
-  "Apache-2.0" => { with: "LLVM-exception" },
+  { all_of: ["0BSD", "Zlib", "Artistic-1.0+"],
+  "Apache-2.0" => { with: "LLVM-exception" } },
 ]
 ```
 
@@ -77,7 +81,7 @@ license any_of: [
 
 The `HOMEBREW_FORBIDDEN_LICENSES` environment variable can be set to forbid installation of formulae that require or have dependencies that require certain licenses.
 
-The `HOMEBREW_FORBIDDEN_LICENSES` should be set to a space separated list of licenses. Use `public_domain` to forbid installation of formulae with a `:public_domain` license.
+The `HOMEBREW_FORBIDDEN_LICENSES` should be set to a space-separated list of licenses. Use `public_domain` to forbid installation of formulae with a `:public_domain` license.
 
 For example, the following forbids installation of `MIT`, `Artistic-1.0` and `:public_domain` licenses:
 
@@ -109,7 +113,7 @@ license any_of: ["MIT", "0BSD"]
 export HOMEBREW_FORBIDDEN_LICENSES="Artistic-1.0+"
 ```
 
-For GNU licenses (such as `GPL`, `LGPL`, `AGPL` and `GFDL`), use `-only` or `-or-later`. For example, the following would forbid `GPL-2.0`, `LGPL-2.1` and `LGPL-3.0` formulae from being installed, but would allow `GPL-3.0`
+For GNU licenses (such as `GPL`, `LGPL`, `AGPL` and `GFDL`), use `-only` or `-or-later`. For example, the following would forbid `GPL-2.0`, `LGPL-2.1` and `LGPL-3.0` formulae from being installed, but would allow `GPL-3.0`:
 
 ```bash
 export HOMEBREW_FORBIDDEN_LICENSES="GPL-2.0-only LGPL-2.1-or-later"

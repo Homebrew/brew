@@ -1,38 +1,37 @@
-# typed: false
 # frozen_string_literal: true
 
 require "livecheck/strategy/gnu"
 
-describe Homebrew::Livecheck::Strategy::Gnu do
+RSpec.describe Homebrew::Livecheck::Strategy::Gnu do
   subject(:gnu) { described_class }
 
-  let(:gnu_urls) {
+  let(:gnu_urls) do
     {
-      no_version_dir: "https://ftp.gnu.org/gnu/abc/abc-1.2.3.tar.gz",
+      no_version_dir: "https://ftpmirror.gnu.org/gnu/abc/abc-1.2.3.tar.gz",
       software_page:  "https://www.gnu.org/software/abc/",
       subdomain:      "https://abc.gnu.org",
       savannah:       "https://download.savannah.gnu.org/releases/abc/abc-1.2.3.tar.gz",
     }
-  }
+  end
   let(:non_gnu_url) { "https://brew.sh/test" }
 
-  let(:generated) {
+  let(:generated) do
     {
       no_version_dir: {
-        url:   "https://ftp.gnu.org/gnu/abc/",
+        url:   "https://ftpmirror.gnu.org/gnu/abc/",
         regex: %r{href=.*?abc[._-]v?(\d+(?:\.\d+)*)(?:\.[a-z]+|/)}i,
       },
       software_page:  {
-        url:   "https://ftp.gnu.org/gnu/abc/",
+        url:   "https://ftpmirror.gnu.org/gnu/abc/",
         regex: %r{href=.*?abc[._-]v?(\d+(?:\.\d+)*)(?:\.[a-z]+|/)}i,
       },
       subdomain:      {
-        url:   "https://ftp.gnu.org/gnu/abc/",
+        url:   "https://ftpmirror.gnu.org/gnu/abc/",
         regex: %r{href=.*?abc[._-]v?(\d+(?:\.\d+)*)(?:\.[a-z]+|/)}i,
       },
       savannah:       {},
     }
-  }
+  end
 
   describe "::match?" do
     it "returns true for a [non-Savannah] GNU URL" do

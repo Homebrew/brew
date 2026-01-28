@@ -1,9 +1,8 @@
-# typed: false
 # frozen_string_literal: true
 
 require "rubocops/lines"
 
-describe RuboCop::Cop::FormulaAudit::Lines do
+RSpec.describe RuboCop::Cop::FormulaAudit::Lines do
   subject(:cop) { described_class.new }
 
   context "when auditing deprecated special dependencies" do
@@ -12,7 +11,7 @@ describe RuboCop::Cop::FormulaAudit::Lines do
         class Foo < Formula
           url 'https://brew.sh/foo-1.0.tgz'
           depends_on :automake
-          ^^^^^^^^^^^^^^^^^^^^ :automake is deprecated. Usage should be \"automake\".
+          ^^^^^^^^^^^^^^^^^^^^ FormulaAudit/Lines: :automake is deprecated. Usage should be "automake".
         end
       RUBY
     end
@@ -22,7 +21,7 @@ describe RuboCop::Cop::FormulaAudit::Lines do
         class Foo < Formula
           url 'https://brew.sh/foo-1.0.tgz'
           depends_on :autoconf
-          ^^^^^^^^^^^^^^^^^^^^ :autoconf is deprecated. Usage should be \"autoconf\".
+          ^^^^^^^^^^^^^^^^^^^^ FormulaAudit/Lines: :autoconf is deprecated. Usage should be "autoconf".
         end
       RUBY
     end
@@ -32,7 +31,7 @@ describe RuboCop::Cop::FormulaAudit::Lines do
         class Foo < Formula
           url 'https://brew.sh/foo-1.0.tgz'
           depends_on :libtool
-          ^^^^^^^^^^^^^^^^^^^ :libtool is deprecated. Usage should be \"libtool\".
+          ^^^^^^^^^^^^^^^^^^^ FormulaAudit/Lines: :libtool is deprecated. Usage should be "libtool".
         end
       RUBY
     end
@@ -42,7 +41,7 @@ describe RuboCop::Cop::FormulaAudit::Lines do
         class Foo < Formula
           url 'https://brew.sh/foo-1.0.tgz'
           depends_on :apr
-          ^^^^^^^^^^^^^^^ :apr is deprecated. Usage should be \"apr-util\".
+          ^^^^^^^^^^^^^^^ FormulaAudit/Lines: :apr is deprecated. Usage should be "apr-util".
         end
       RUBY
     end
@@ -52,7 +51,7 @@ describe RuboCop::Cop::FormulaAudit::Lines do
         class Foo < Formula
           url 'https://brew.sh/foo-1.0.tgz'
           depends_on :tex
-          ^^^^^^^^^^^^^^^ :tex is deprecated.
+          ^^^^^^^^^^^^^^^ FormulaAudit/Lines: :tex is deprecated.
         end
       RUBY
     end

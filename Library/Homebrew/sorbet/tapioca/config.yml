@@ -1,0 +1,47 @@
+---
+# see https://github.com/Shopify/tapioca?tab=readme-ov-file#configuration
+gem:
+  doc: false
+  loc: false
+  exclude:
+    # These conflict with the rbi files provided by sorbet:
+    - base64
+    - benchmark
+    - bigdecimal
+    - json
+    - logger
+    - racc
+    - rexml
+    # These aren't needed:
+    - coderay
+    - diff-lcs
+    - docile
+    - hana
+    - language_server-protocol
+    - netrc
+    - parallel
+    - public_suffix
+    - redcarpet
+    - rspec-github
+    - rspec-mocks
+    - rspec-retry
+    - rspec
+    - rspec_junit_formatter
+    - rubocop-md
+    - rubocop-performance
+    - rubocop-sorbet
+    - ruby-prof
+    - simplecov_json_formatter
+    - simpleidn
+    - unicode-display_width
+    - unicode-emoji
+    - yard-sorbet
+    # The tapioca generated gem is not correct or sufficient for pycall
+    # so we need to generate our own:
+    - pycall
+    # Skipping rbi generation for parser results in a 7x performance
+    # improvement in `brew typecheck --update--all`, so we just persist it
+    # instead. (This gem is only needed by rubocop, which is in the process of
+    # migrating to prism.)
+    - parser
+  prerequire: sorbet/tapioca/prerequire.rb

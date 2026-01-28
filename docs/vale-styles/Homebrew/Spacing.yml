@@ -5,5 +5,5 @@ link: "https://github.com/Homebrew/brew/blob/HEAD/docs/Prose-Style-Guidelines.md
 level: error
 nonword: true
 tokens:
-  - "[a-z][.?!][A-Z]"
-  - "[.?!] {2,}[A-Z]"
+  - '(?<!^\{.*)[a-z][.?!][A-Z]' # FIXME: https://github.com/errata-ai/vale/issues/818
+  - '[.?!] {2,}[A-Z]'

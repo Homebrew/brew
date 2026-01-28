@@ -1,9 +1,8 @@
-# typed: false
 # frozen_string_literal: true
 
 require "options"
 
-describe Options do
+RSpec.describe Options do
   subject(:options) { described_class.new }
 
   it "removes duplicate options" do
@@ -88,6 +87,14 @@ describe Options do
     option1 = Option.new("foo")
     option2 = Option.new("bar")
     expect(described_class.create(array).sort).to eq([option1, option2].sort)
+  end
+
+  specify "#to_s" do
+    expect(options.to_s).to eq("")
+    options << Option.new("first")
+    expect(options.to_s).to eq("--first")
+    options << Option.new("second")
+    expect(options.to_s).to eq("--first --second")
   end
 
   specify "#inspect" do

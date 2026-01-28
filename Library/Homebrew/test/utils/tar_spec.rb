@@ -1,9 +1,8 @@
-# typed: false
 # frozen_string_literal: true
 
 require "utils/tar"
 
-describe Utils::Tar do
+RSpec.describe Utils::Tar do
   before do
     described_class.clear_executable_cache
   end

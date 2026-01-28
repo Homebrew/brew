@@ -1,12 +1,18 @@
-# Interesting Taps & Forks
+---
+last_review_date: "2025-02-08"
+---
+
+# Interesting Taps and Forks
 
 A [tap](Taps.md) is Homebrew-speak for a Git repository containing additional formulae.
 
-Homebrew has the capability to add (and remove) multiple taps to your local installation with the `brew tap` and `brew untap` commands; run `man brew` in your terminal for usage information. The main repository at <https://github.com/Homebrew/homebrew-core>, often called `homebrew/core`, is always built-in.
+Homebrew has the capability to add (and remove) multiple taps to your local installation with the `brew tap` and `brew untap` commands; run `man brew` in your terminal for usage information.
 
-Your taps are Git repositories located at `$(brew --repository)/Library/Taps`.
+Your taps are Git repositories located at `$(brew --repository)/Library/Taps`. As a normal user, you usually won't see `homebrew/core` here anymore and that's OK - [normal usage is via the JSON API](https://brew.sh/2023/02/16/homebrew-4.0.0/).
 
 ## Unsupported interesting taps
+
+* [DomT4/autoupdate](https://github.com/DomT4/homebrew-autoupdate): An external command to automatically run `brew update` (and optionally `brew upgrade` or `brew cleanup`) in the background with `launchd`.
 
 * [homebrew-ffmpeg/ffmpeg](https://github.com/homebrew-ffmpeg/homebrew-ffmpeg): A tap for FFmpeg with additional options, including nonfree additions.
 
@@ -29,6 +35,8 @@ Your taps are Git repositories located at `$(brew --repository)/Library/Taps`.
 * [gromgit/fuse](https://github.com/gromgit/homebrew-fuse): macOS FUSE formulae that are no longer available in `homebrew/core`.
 
 * [cloudflare/cloudflare](https://github.com/cloudflare/homebrew-cloudflare): Formulae for the applications by Cloudflare, including curl with HTTP/3 support.
+
+* [apple/apple](https://github.com/apple/homebrew-apple): Formulae from Apple, including the Game Porting Toolkit.
 
 ## Unsupported interesting forks
 

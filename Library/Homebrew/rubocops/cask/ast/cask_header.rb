@@ -1,4 +1,4 @@
-# typed: true
+# typed: true # rubocop:todo Sorbet/StrictSigil
 # frozen_string_literal: true
 
 module RuboCop
@@ -7,17 +7,11 @@ module RuboCop
       # This class wraps the AST method node that represents the cask header. It
       # includes various helper methods to aid cops in their analysis.
       class CaskHeader
-        extend T::Sig
-
         def initialize(method_node)
           @method_node = method_node
         end
 
         attr_reader :method_node
-
-        def dsl_version?
-          hash_node
-        end
 
         def header_str
           @header_str ||= source_range.source
@@ -33,11 +27,7 @@ module RuboCop
         end
 
         def cask_token
-          @cask_token ||= if dsl_version?
-            pair_node.val_node.children.first
-          else
-            method_node.first_argument.str_content
-          end
+          @cask_token ||= method_node.first_argument.str_content
         end
 
         def hash_node

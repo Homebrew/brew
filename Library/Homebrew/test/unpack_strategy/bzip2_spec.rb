@@ -1,9 +1,8 @@
-# typed: false
 # frozen_string_literal: true
 
 require_relative "shared_examples"
 
-describe UnpackStrategy::Bzip2 do
+RSpec.describe UnpackStrategy::Bzip2 do
   let(:path) { TEST_FIXTURE_DIR/"cask/container.bz2" }
 
   include_examples "UnpackStrategy::detect"

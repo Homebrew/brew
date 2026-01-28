@@ -1,10 +1,9 @@
-# typed: false
 # frozen_string_literal: true
 
 require "formula"
 require "cxxstdlib"
 
-describe CxxStdlib do
+RSpec.describe CxxStdlib do
   let(:clang) { described_class.create(:libstdcxx, :clang) }
   let(:lcxx) { described_class.create(:libcxx, :clang) }
 

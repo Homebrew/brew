@@ -1,9 +1,8 @@
-# typed: false
 # frozen_string_literal: true
 
 require "requirements"
 
-describe Requirements do
+RSpec.describe Requirements do
   subject(:requirements) { described_class.new }
 
   describe "#<<" do
@@ -12,7 +11,8 @@ describe Requirements do
     end
 
     it "merges duplicate requirements" do
-      requirements << Requirement.new << Requirement.new
+      klass = Class.new(Requirement)
+      requirements << klass.new << klass.new
       expect(requirements.count).to eq(1)
     end
   end

@@ -1,5 +1,7 @@
-# typed: true
+# typed: strict
 # frozen_string_literal: true
+
+require "livecheck/strategic"
 
 module Homebrew
   module Livecheck
@@ -14,6 +16,7 @@ module Homebrew
       # * `https://www.x.org/archive/individual/lib/libexample-1.2.3.tar.bz2`
       # * `https://ftp.x.org/archive/individual/lib/libexample-1.2.3.tar.bz2`
       # * `https://www.x.org/pub/individual/doc/example-1.2.3.tar.gz`
+      # * `https://xorg.freedesktop.org/archive/individual/util/example-1.2.3.tar.xz`
       #
       # The notable differences between URLs are as follows:
       #
@@ -38,33 +41,35 @@ module Homebrew
       #
       # @api public
       class Xorg
-        extend T::Sig
+        extend Strategic
 
         NICE_NAME = "X.Org"
 
         # A `Regexp` used in determining if the strategy applies to the URL and
         # also as part of extracting the module name from the URL basename.
-        MODULE_REGEX = /(?<module_name>.+)-\d+/i.freeze
+        MODULE_REGEX = /(?<module_name>.+)-\d+/i
 
         # A `Regexp` used to extract the module name from the URL basename.
-        FILENAME_REGEX = /^#{MODULE_REGEX.source.strip}/i.freeze
+        FILENAME_REGEX = /^#{MODULE_REGEX.source.strip}/i
 
         # The `Regexp` used to determine if the strategy applies to the URL.
         URL_MATCH_REGEX = %r{
           ^https?://(?:[^/]+?\.)* # Scheme and any leading subdomains
-          (?:x\.org/(?:[^/]+/)*individual/(?:[^/]+/)*#{MODULE_REGEX.source.strip}
-          |freedesktop\.org/(?:archive|dist|software)/(?:[^/]+/)*#{MODULE_REGEX.source.strip})
-        }ix.freeze
+          (?:x\.org/(?:[^/]+/)*individual
+            |freedesktop\.org/(?:archive|dist|software)
+            |archive\.mesa3d\.org)
+          /(?:[^/]+/)*#{MODULE_REGEX.source.strip}
+        }ix
 
         # Used to cache page content, so we don't fetch the same pages
         # repeatedly.
-        @page_data = {}
+        @page_data = T.let({}, T::Hash[String, String])
 
         # Whether the strategy can be applied to the provided URL.
         #
         # @param url [String] the URL to match against
         # @return [Boolean]
-        sig { params(url: String).returns(T::Boolean) }
+        sig { override.params(url: String).returns(T::Boolean) }
         def self.match?(url)
           URL_MATCH_REGEX.match?(url)
         end
@@ -108,31 +113,34 @@ module Homebrew
         #
         # @param url [String] the URL of the content to check
         # @param regex [Regexp] a regex used for matching versions in content
+        # @param options [Options] options to modify behavior
         # @return [Hash]
         sig {
-          params(
-            url:    String,
-            regex:  T.nilable(Regexp),
-            unused: T.nilable(T::Hash[Symbol, T.untyped]),
-            block:  T.untyped,
-          ).returns(T::Hash[Symbol, T.untyped])
+          override(allow_incompatible: true).params(
+            url:     String,
+            regex:   T.nilable(Regexp),
+            options: Options,
+            block:   T.nilable(Proc),
+          ).returns(T::Hash[Symbol, T.anything])
         }
-        def self.find_versions(url:, regex: nil, **unused, &block)
+        def self.find_versions(url:, regex: nil, options: Options.new, &block)
           generated = generate_input_values(url)
           generated_url = generated[:url]
 
           # Use the cached page content to avoid duplicate fetches
           cached_content = @page_data[generated_url]
-          match_data = T.unsafe(PageMatch).find_versions(
+          match_data = PageMatch.find_versions(
             url:              generated_url,
             regex:            regex || generated[:regex],
             provided_content: cached_content,
-            **unused,
+            options:,
             &block
           )
+          content = match_data[:content]
+          return match_data if content.blank?
 
           # Cache any new page content
-          @page_data[generated_url] = match_data[:content] if match_data[:content].present?
+          @page_data[generated_url] = content unless cached_content
 
           match_data
         end

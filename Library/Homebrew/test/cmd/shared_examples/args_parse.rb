@@ -1,18 +1,20 @@
-# typed: false
 # frozen_string_literal: true
 
-shared_examples "parseable arguments" do
-  subject(:method_name) { "#{command_name.tr("-", "_")}_args" }
-
-  let(:command_name) do |example|
-    example.metadata[:example_group][:parent_example_group][:description].delete_prefix("brew ")
+RSpec.shared_examples "parseable arguments" do |command_name: nil|
+  let(:command) do |example|
+    example.metadata.dig(:example_group, :parent_example_group, :description)
   end
 
   it "can parse arguments" do
-    require "dev-cmd/#{command_name}" unless require? "cmd/#{command_name}"
-
-    parser = Homebrew.public_send(method_name)
-
-    expect(parser).to respond_to(:parse)
+    if described_class
+      klass = described_class
+    else
+      # for tests of remote taps, we need to load the command class
+      require(Commands.external_ruby_v2_cmd_path(command_name))
+      klass = Object.const_get(command)
+    end
+    argv = klass.parser.instance_variable_get(:@min_named_args)&.times&.map { "argument" } || []
+    cmd = klass.new(argv)
+    expect(cmd.args).to be_a Homebrew::CLI::Args
   end
 end

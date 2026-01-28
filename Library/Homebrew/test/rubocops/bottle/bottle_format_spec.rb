@@ -1,12 +1,11 @@
-# typed: false
 # frozen_string_literal: true
 
 require "rubocops/bottle"
 
-describe RuboCop::Cop::FormulaAudit::BottleFormat do
+RSpec.describe RuboCop::Cop::FormulaAudit::BottleFormat do
   subject(:cop) { described_class.new }
 
-  it "reports no offenses for `bottle :uneeded`" do
+  it "reports no offenses for `bottle :unneeded`" do
     expect_no_offenses(<<~RUBY)
       class Foo < Formula
         url "https://brew.sh/foo-1.0.tgz"
@@ -23,7 +22,7 @@ describe RuboCop::Cop::FormulaAudit::BottleFormat do
 
         bottle do
           sha256 "faceb00c" => :big_sur
-          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ `sha256` should use new syntax
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ FormulaAudit/BottleFormat: `sha256` should use new syntax
         end
       end
     RUBY
@@ -45,9 +44,9 @@ describe RuboCop::Cop::FormulaAudit::BottleFormat do
         bottle do
           rebuild 4
           sha256 "faceb00c" => :big_sur
-          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ `sha256` should use new syntax
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ FormulaAudit/BottleFormat: `sha256` should use new syntax
           sha256 "deadbeef" => :catalina
-          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ `sha256` should use new syntax
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ FormulaAudit/BottleFormat: `sha256` should use new syntax
         end
       end
     RUBY
@@ -72,12 +71,12 @@ describe RuboCop::Cop::FormulaAudit::BottleFormat do
 
         bottle do
           cellar :any
-          ^^^^^^^^^^^ `cellar` should be a parameter to `sha256`
+          ^^^^^^^^^^^ FormulaAudit/BottleFormat: `cellar` should be a parameter to `sha256`
           rebuild 4
           sha256 "faceb00c" => :big_sur
-          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ `sha256` should use new syntax
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ FormulaAudit/BottleFormat: `sha256` should use new syntax
           sha256 "deadbeef" => :catalina
-          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ `sha256` should use new syntax
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ FormulaAudit/BottleFormat: `sha256` should use new syntax
         end
       end
     RUBY
@@ -100,9 +99,9 @@ describe RuboCop::Cop::FormulaAudit::BottleFormat do
 
         bottle do
           cellar :any
-          ^^^^^^^^^^^ `cellar` should be a parameter to `sha256`
+          ^^^^^^^^^^^ FormulaAudit/BottleFormat: `cellar` should be a parameter to `sha256`
           sha256 "faceb00c" => :big_sur
-          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ `sha256` should use new syntax
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ FormulaAudit/BottleFormat: `sha256` should use new syntax
         end
       end
     RUBY
@@ -123,12 +122,12 @@ describe RuboCop::Cop::FormulaAudit::BottleFormat do
 
         bottle do
           cellar "/usr/local/Cellar"
-          ^^^^^^^^^^^^^^^^^^^^^^^^^^ `cellar` should be a parameter to `sha256`
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^ FormulaAudit/BottleFormat: `cellar` should be a parameter to `sha256`
           rebuild 4
           sha256 "faceb00c" => :big_sur
-          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ `sha256` should use new syntax
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ FormulaAudit/BottleFormat: `sha256` should use new syntax
           sha256 "deadbeef" => :catalina
-          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ `sha256` should use new syntax
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ FormulaAudit/BottleFormat: `sha256` should use new syntax
         end
       end
     RUBY

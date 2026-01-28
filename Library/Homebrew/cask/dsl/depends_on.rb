@@ -1,4 +1,4 @@
-# typed: false
+# typed: strict
 # frozen_string_literal: true
 
 require "delegate"
@@ -8,67 +8,92 @@ require "requirements/macos_requirement"
 module Cask
   class DSL
     # Class corresponding to the `depends_on` stanza.
-    #
-    # @api private
     class DependsOn < SimpleDelegator
-      VALID_KEYS = Set.new([
+      VALID_KEYS = T.let(Set.new([
         :formula,
         :cask,
         :macos,
         :arch,
-      ]).freeze
+      ]).freeze, T::Set[Symbol])
 
-      VALID_ARCHES = {
+      VALID_ARCHES = T.let({
         intel:  { type: :intel, bits: 64 },
         # specific
         x86_64: { type: :intel, bits: 64 },
         arm64:  { type: :arm, bits: 64 },
-      }.freeze
+      }.freeze, T::Hash[Symbol, T::Hash[Symbol, T.any(Symbol, Integer)]])
 
-      attr_reader :arch, :cask, :formula, :macos
+      sig { returns(T.nilable(T::Array[T::Hash[Symbol, T.any(Symbol, Integer)]])) }
+      attr_reader :arch
 
+      sig { returns(T.nilable(MacOSRequirement)) }
+      attr_reader :macos
+
+      sig { void }
       def initialize
         super({})
+        @arch = T.let(nil, T.nilable(T::Array[T::Hash[Symbol, T.any(Symbol, Integer)]]))
+        @cask = T.let(nil, T.nilable(T::Array[String]))
+        @formula = T.let(nil, T.nilable(T::Array[String]))
+        @macos = T.let(nil, T.nilable(MacOSRequirement))
+      end
+
+      sig { returns(T::Array[String]) }
+      def cask
         @cask ||= []
+      end
+
+      sig { returns(T::Array[String]) }
+      def formula
         @formula ||= []
       end
 
-      def load(**pairs)
+      sig { params(pairs: T::Hash[Symbol, T.any(String, Symbol, T::Array[T.any(String, Symbol)])]).void }
+      def load(pairs)
         pairs.each do |key, value|
           raise "invalid depends_on key: '#{key.inspect}'" unless VALID_KEYS.include?(key)
 
-          self[key] = send(:"#{key}=", *value)
+          __getobj__[key] = send(:"#{key}=", *value)
         end
       end
 
+      sig { params(args: String).returns(T::Array[String]) }
       def formula=(*args)
-        @formula.concat(args)
+        formula.concat(args)
       end
 
+      sig { params(args: String).returns(T::Array[String]) }
       def cask=(*args)
-        @cask.concat(args)
+        cask.concat(args)
       end
 
+      sig { params(args: T.any(String, Symbol)).returns(T.nilable(MacOSRequirement)) }
       def macos=(*args)
-        raise "Only a single 'depends_on macos' is allowed." if defined?(@macos)
+        raise "Only a single 'depends_on macos' is allowed." if @macos
+
+        # workaround for https://github.com/sorbet/sorbet/issues/6860
+        first_arg = args.first
+        first_arg_s = first_arg&.to_s
 
         begin
           @macos = if args.count > 1
             MacOSRequirement.new([args], comparator: "==")
-          elsif MacOS::Version::SYMBOLS.key?(args.first)
+          elsif first_arg.is_a?(Symbol) && MacOSVersion::SYMBOLS.key?(first_arg)
             MacOSRequirement.new([args.first], comparator: "==")
-          elsif /^\s*(?<comparator><|>|[=<>]=)\s*:(?<version>\S+)\s*$/ =~ args.first
-            MacOSRequirement.new([version.to_sym], comparator: comparator)
-          elsif /^\s*(?<comparator><|>|[=<>]=)\s*(?<version>\S+)\s*$/ =~ args.first
-            MacOSRequirement.new([version], comparator: comparator)
+          elsif (md = /^\s*(?<comparator><|>|[=<>]=)\s*:(?<version>\S+)\s*$/.match(first_arg_s))
+            MacOSRequirement.new([T.must(md[:version]).to_sym], comparator: md[:comparator])
+          elsif (md = /^\s*(?<comparator><|>|[=<>]=)\s*(?<version>\S+)\s*$/.match(first_arg_s))
+            MacOSRequirement.new([md[:version]], comparator: md[:comparator])
+          # This is not duplicate of the first case: see `args.first` and a different comparator.
           else # rubocop:disable Lint/DuplicateBranch
             MacOSRequirement.new([args.first], comparator: "==")
           end
-        rescue MacOSVersionError => e
+        rescue MacOSVersion::Error, TypeError => e
           raise "invalid 'depends_on macos' value: #{e}"
         end
       end
 
+      sig { params(args: Symbol).returns(T::Array[T::Hash[Symbol, T.any(Symbol, Integer)]]) }
       def arch=(*args)
         @arch ||= []
         arches = args.map do |elt|
@@ -77,8 +102,14 @@ module Cask
         invalid_arches = arches - VALID_ARCHES.keys
         raise "invalid 'depends_on arch' values: #{invalid_arches.inspect}" unless invalid_arches.empty?
 
-        @arch.concat(arches.map { |arch| VALID_ARCHES[arch] })
+        @arch.concat(arches.map { |arch| VALID_ARCHES.fetch(arch) })
       end
+
+      sig { returns(T::Boolean) }
+      def empty? = T.let(__getobj__, T::Hash[Symbol, T.untyped]).empty?
+
+      sig { returns(T::Boolean) }
+      def present? = !empty?
     end
   end
 end

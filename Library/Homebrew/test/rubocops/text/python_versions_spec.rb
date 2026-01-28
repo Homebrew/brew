@@ -1,9 +1,8 @@
-# typed: false
 # frozen_string_literal: true
 
 require "rubocops/lines"
 
-describe RuboCop::Cop::FormulaAudit::PythonVersions do
+RSpec.describe RuboCop::Cop::FormulaAudit::PythonVersions do
   subject(:cop) { described_class.new }
 
   context "when auditing Python versions" do
@@ -96,7 +95,7 @@ describe RuboCop::Cop::FormulaAudit::PythonVersions do
 
           def install
             puts "python@3.8"
-                 ^^^^^^^^^^^^ References to `python@3.8` should match the specified python dependency (`python@3.9`)
+                 ^^^^^^^^^^^^ FormulaAudit/PythonVersions: References to `python@3.8` should match the specified python dependency (`python@3.9`)
           end
         end
       RUBY
@@ -119,7 +118,7 @@ describe RuboCop::Cop::FormulaAudit::PythonVersions do
 
           def install
             puts "python3.8"
-                 ^^^^^^^^^^^ References to `python3.8` should match the specified python dependency (`python3.9`)
+                 ^^^^^^^^^^^ FormulaAudit/PythonVersions: References to `python3.8` should match the specified python dependency (`python3.9`)
           end
         end
       RUBY
@@ -142,7 +141,7 @@ describe RuboCop::Cop::FormulaAudit::PythonVersions do
 
           def install
             puts "python@3.10"
-                 ^^^^^^^^^^^^^ References to `python@3.10` should match the specified python dependency (`python@3.11`)
+                 ^^^^^^^^^^^^^ FormulaAudit/PythonVersions: References to `python@3.10` should match the specified python dependency (`python@3.11`)
           end
         end
       RUBY
@@ -165,7 +164,7 @@ describe RuboCop::Cop::FormulaAudit::PythonVersions do
 
           def install
             puts "python3.10"
-                 ^^^^^^^^^^^^ References to `python3.10` should match the specified python dependency (`python3.11`)
+                 ^^^^^^^^^^^^ FormulaAudit/PythonVersions: References to `python3.10` should match the specified python dependency (`python3.11`)
           end
         end
       RUBY
@@ -176,6 +175,46 @@ describe RuboCop::Cop::FormulaAudit::PythonVersions do
 
           def install
             puts "python3.11"
+          end
+        end
+      RUBY
+    end
+
+    it "reports no offenses for multiple non-runtime Python dependencies" do
+      expect_no_offenses(<<~RUBY)
+        class Foo < Formula
+          depends_on "python@3.9" => :build
+          depends_on "python@3.10" => :test
+
+          def install
+            puts "python3.9"
+          end
+
+          test do
+            puts "python3.10"
+          end
+        end
+      RUBY
+    end
+
+    it "reports and corrects Python references that mismatch single non-runtime Python dependency" do
+      expect_offense(<<~RUBY)
+        class Foo < Formula
+          depends_on "python@3.9" => :build
+
+          def install
+            puts "python@3.8"
+                 ^^^^^^^^^^^^ FormulaAudit/PythonVersions: References to `python@3.8` should match the specified python dependency (`python@3.9`)
+          end
+        end
+      RUBY
+
+      expect_correction(<<~RUBY)
+        class Foo < Formula
+          depends_on "python@3.9" => :build
+
+          def install
+            puts "python@3.9"
           end
         end
       RUBY

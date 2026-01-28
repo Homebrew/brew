@@ -1,4 +1,4 @@
-# typed: false
+# typed: true # rubocop:todo Sorbet/StrictSigil
 # frozen_string_literal: true
 
 require "cask/artifact/moved"
@@ -6,18 +6,14 @@ require "cask/artifact/moved"
 module Cask
   module Artifact
     # Artifact corresponding to the `mdimporter` stanza.
-    #
-    # @api private
     class Mdimporter < Moved
-      extend T::Sig
-
       sig { returns(String) }
       def self.english_name
         "Spotlight metadata importer"
       end
 
       def install_phase(**options)
-        super(**options)
+        super
         reload_spotlight(**options)
       end
 

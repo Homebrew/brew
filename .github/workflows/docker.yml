@@ -1,66 +1,280 @@
 name: Docker
+
 on:
+  pull_request:
   push:
-    paths:
-      - .github/workflows/docker.yml
-      - Dockerfile
-    branches-ignore:
-      - master
+    branches:
+      - main
+  merge_group:
   release:
     types:
       - published
+
 permissions:
   contents: read
+
+defaults:
+  run:
+    shell: bash -xeuo pipefail {0}
+
+env:
+  VERSIONS: '["22.04", "24.04"]'
+
 jobs:
-  ubuntu:
-    if: startsWith(github.repository, 'Homebrew/')
+  generate-tags:
+    if: github.repository_owner == 'Homebrew'
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        version: ["16.04", "18.04", "20.04"]
+    outputs:
+      matrix: ${{ steps.attributes.outputs.matrix }}
+      tags: ${{ steps.attributes.outputs.tags }}
+      labels: ${{ steps.attributes.outputs.labels }}
+      push: ${{ steps.attributes.outputs.push }}
+      merge: ${{ steps.attributes.outputs.merge }}
     steps:
       - name: Checkout
-        uses: actions/checkout@main
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 0
           persist-credentials: false
-      - name: Fetch origin/master from Git
-        run: git fetch origin master
+
+      - name: Fetch origin/HEAD from Git
+        run: git fetch origin HEAD
+
+      - name: Determine build attributes
+        id: attributes
+        run: |
+          date="$(date --rfc-3339=seconds --utc)"
+          brew_version="$(git describe --tags --dirty --abbrev=7)"
+
+          DELIMITER="END_LABELS_$(uuidgen)"
+          cat <<EOS | tee -a "${GITHUB_OUTPUT}"
+          labels<<${DELIMITER}
+          org.opencontainers.image.created=${date}
+          org.opencontainers.image.url=https://brew.sh
+          org.opencontainers.image.documentation=https://docs.brew.sh
+          org.opencontainers.image.source=https://github.com/${GITHUB_REPOSITORY}
+          org.opencontainers.image.version=${brew_version}
+          org.opencontainers.image.revision=${GITHUB_SHA}
+          org.opencontainers.image.vendor=${GITHUB_REPOSITORY_OWNER}
+          org.opencontainers.image.licenses=BSD-2-Clause
+          ${DELIMITER}
+          EOS
+
+          typeset -A tag_hash
+          typeset -A push_hash
+          matrix=()
+          merge=false
+          while IFS=$'\n' read -r version; do
+            tags=()
+            if [[ "${GITHUB_EVENT_NAME}" == "release" ]]; then
+              tags+=(
+                "ghcr.io/homebrew/ubuntu${version}:${brew_version}"
+                "ghcr.io/homebrew/ubuntu${version}:latest"
+              )
+              if [[ "${version}" == "22.04" ]]; then
+                tags+=(
+                  "ghcr.io/homebrew/brew:${brew_version}"
+                  "ghcr.io/homebrew/brew:latest"
+                )
+              fi
+            elif [[ "${GITHUB_EVENT_NAME}" == "push" &&
+                    ("${GITHUB_REF}" == "refs/heads/main") &&
+                    "${version}" == "22.04" ]]; then
+              tags+=(
+                "ghcr.io/homebrew/brew:main"
+                "ghcr.io/homebrew/ubuntu${version}:main"
+              )
+            fi
+
+            if [[ "${#tags[@]}" -ne 0 ]]; then
+              tags_as_json_array="$(
+                jq --null-input --compact-output '$ARGS.positional' --args "${tags[@]}"
+              )"
+              tag_hash["${version}"]="${tags_as_json_array}"
+              push_hash["${version}"]=true
+              merge=true
+              matrix+=("${version}")
+            else
+              push_hash["${version}"]=false
+            fi
+          done <<<"$(jq --raw-output '.[]' <<<"${VERSIONS}")"
+
+          # Transform the `matrix` variable into a JSON array.
+          echo "matrix=$(jq --null-input --compact-output '$ARGS.positional' --args "${matrix[@]}")" >>"${GITHUB_OUTPUT}"
+          echo "merge=${merge}" >>"${GITHUB_OUTPUT}"
+
+          {
+            DELIMITER="END_TAGS_$(uuidgen)"
+            has_previous=
+            echo "tags<<${DELIMITER}"
+            printf '{'
+            for version in "${!tag_hash[@]}"; do
+              [[ -n "${has_previous:-}" ]] && printf ','
+              printf '"%s": %s' "${version}" "${tag_hash[$version]}"
+              has_previous=1
+            done
+            echo '}'
+            echo "${DELIMITER}"
+          } | tee -a "${GITHUB_OUTPUT}"
+
+          {
+            DELIMITER="END_PUSH_$(uuidgen)"
+            has_previous=
+            echo "push<<${DELIMITER}"
+            printf '{'
+            for version in "${!push_hash[@]}"; do
+              [[ -n "${has_previous:-}" ]] && printf ','
+              printf '"%s": %s' "${version}" "${push_hash[$version]}"
+              has_previous=1
+            done
+            echo '}'
+            echo "${DELIMITER}"
+          } | tee -a "${GITHUB_OUTPUT}"
+
+  build:
+    needs: generate-tags
+    if: github.repository_owner == 'Homebrew'
+    name: docker (${{ matrix.arch }} Ubuntu ${{ matrix.version }})
+    runs-on: ${{ matrix.arch == 'arm64' && 'ubuntu-24.04-arm' || 'ubuntu-latest' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        version: ["22.04", "24.04"]
+        arch: ["x86_64", "arm64"]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Fetch origin/HEAD from Git
+        run: git fetch origin HEAD
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
+        with:
+          cache-binary: false
+
+      - name: Retrieve build attributes
+        id: attributes
+        env:
+          VERSION: ${{ matrix.version }}
+          PUSH: ${{ needs.generate-tags.outputs.push }}
+        run: |
+          filter="$(printf '.["%s"]' "${VERSION}")"
+          echo "push=$(jq --raw-output "${filter}" <<<"${PUSH}")" >>"${GITHUB_OUTPUT}"
+
+      - name: Log in to GitHub Packages (github-actions[bot])
+        uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # v3.6.0
+        with:
+          registry: ghcr.io
+          username: github-actions[bot]
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build Docker image
-        run: docker build -t brew --build-arg=version=${{matrix.version}} .
+        uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
+        with:
+          context: .
+          load: true
+          tags: brew
+          cache-from: type=registry,ref=ghcr.io/homebrew/ubuntu${{ matrix.version }}:cache
+          build-args: version=${{ matrix.version }}
+          labels: ${{ needs.generate-tags.outputs.labels }}
 
       - name: Run brew test-bot --only-setup
         run: docker run --rm brew brew test-bot --only-setup
 
-      - name: Deploy the tagged Docker image to GitHub Packages
-        if: startsWith(github.ref, 'refs/tags/')
-        run: |
-          brew_version="${GITHUB_REF:10}"
-          echo "brew_version=${brew_version}" >> "${GITHUB_ENV}"
-          echo ${{secrets.HOMEBREW_BREW_GITHUB_PACKAGES_TOKEN}} | docker login ghcr.io -u BrewTestBot --password-stdin
-          docker tag brew "ghcr.io/homebrew/ubuntu${{matrix.version}}:${brew_version}"
-          docker push "ghcr.io/homebrew/ubuntu${{matrix.version}}:${brew_version}"
-          docker tag brew "ghcr.io/homebrew/ubuntu${{matrix.version}}:latest"
-          docker push "ghcr.io/homebrew/ubuntu${{matrix.version}}:latest"
+      - name: Log in to GitHub Packages (BrewTestBot)
+        if: fromJSON(steps.attributes.outputs.push)
+        uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # v3.6.0
+        with:
+          registry: ghcr.io
+          username: BrewTestBot
+          password: ${{ secrets.HOMEBREW_BREW_GITHUB_PACKAGES_TOKEN }}
 
-      - name: Deploy the tagged Docker image to Docker Hub
-        if: startsWith(github.ref, 'refs/tags/')
-        run: |
-          echo ${{secrets.HOMEBREW_BREW_DOCKER_TOKEN}} | docker login -u brewtestbot --password-stdin
-          docker tag brew "homebrew/ubuntu${{matrix.version}}:${brew_version}"
-          docker push "homebrew/ubuntu${{matrix.version}}:${brew_version}"
-          docker tag brew "homebrew/ubuntu${{matrix.version}}:latest"
-          docker push "homebrew/ubuntu${{matrix.version}}:latest"
+      - name: Deploy the Docker image by digest
+        id: digest
+        if: fromJSON(steps.attributes.outputs.push)
+        uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
+        with:
+          context: .
+          cache-from: type=registry,ref=ghcr.io/homebrew/ubuntu${{ matrix.version }}:cache
+          cache-to: type=registry,ref=ghcr.io/homebrew/ubuntu${{ matrix.version }}:cache,mode=max
+          build-args: version=${{ matrix.version }}
+          labels: ${{ needs.generate-tags.outputs.labels }}
+          outputs: type=image,name=ghcr.io/homebrew/ubuntu${{ matrix.version }},name-canonical=true,push=true,push-by-digest=true
 
-      - name: Deploy the homebrew/brew Docker image to GitHub Packages and Docker Hub
-        if: startsWith(github.ref, 'refs/tags/') && matrix.version == '20.04'
+      - name: Export the Docker image digest
+        if: fromJSON(steps.attributes.outputs.push)
         run: |
-          docker tag brew "ghcr.io/homebrew/brew:${brew_version}"
-          docker push "ghcr.io/homebrew/brew:${brew_version}"
-          docker tag brew "ghcr.io/homebrew/brew:latest"
-          docker push "ghcr.io/homebrew/brew:latest"
-          docker tag brew "homebrew/brew:${brew_version}"
-          docker push "homebrew/brew:${brew_version}"
-          docker tag brew "homebrew/brew:latest"
-          docker push "homebrew/brew:latest"
+          mkdir -p "${RUNNER_TEMP}"/digests
+          echo "${DIGEST#sha256:}" >"${RUNNER_TEMP}/digests/${VERSION}-${ARCH}"
+        env:
+          DIGEST: ${{ steps.digest.outputs.digest }}
+          VERSION: ${{ matrix.version }}
+          ARCH: ${{ matrix.arch }}
+
+      - name: Upload the Docker image digest
+        if: fromJSON(steps.attributes.outputs.push)
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: digest-${{ matrix.version }}-${{ matrix.arch }}
+          path: ${{ runner.temp }}/digests/*
+
+  merge:
+    needs: [generate-tags, build]
+    if: github.repository_owner == 'Homebrew' && fromJSON(needs.generate-tags.outputs.merge)
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        version: ${{ fromJSON(needs.generate-tags.outputs.matrix) }}
+    steps:
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
+        with:
+          cache-binary: false
+
+      - name: Download Docker image digests
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+        with:
+          path: ${{ runner.temp }}/digests
+          pattern: digest-${{ matrix.version }}-*
+          merge-multiple: true
+
+      - name: Log in to GitHub Packages (BrewTestBot)
+        uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # v3.6.0
+        with:
+          registry: ghcr.io
+          username: BrewTestBot
+          password: ${{ secrets.HOMEBREW_BREW_GITHUB_PACKAGES_TOKEN }}
+
+      - name: Merge and push Docker image
+        env:
+          TAGS: ${{ needs.generate-tags.outputs.tags }}
+          VERSION: ${{ matrix.version }}
+        run: |
+          filter="$(printf '.["%s"].[]' "${VERSION}")"
+          tag_args=()
+          while IFS=$'\n' read -r tag; do
+            [[ -n "${tag}" ]] || continue
+            tag_args+=("--tag=${tag}")
+          done <<<"$(jq --raw-output "${filter}" <<<"${TAGS}")"
+
+          image_args=("ghcr.io/homebrew/ubuntu${VERSION}@sha256:$(<"${RUNNER_TEMP}/digests/${VERSION}-x86_64")")
+          image_args+=("ghcr.io/homebrew/ubuntu${VERSION}@sha256:$(<"${RUNNER_TEMP}/digests/${VERSION}-arm64")")
+
+          attempts=0
+          until docker buildx imagetools create "${tag_args[@]}" "${image_args[@]}"; do
+            attempts=$((attempts + 1))
+            if [[ $attempts -ge 3 ]]; then
+              echo "[$(date -u)] ERROR: Failed after 3 attempts." >&2
+              exit 1
+            fi
+            delay=$((2 ** attempts))
+            if [[ $delay -gt 15 ]]; then delay=15; fi
+            echo "Push failed (attempt $attempts). Retrying in ${delay} seconds..."
+            sleep ${delay}
+          done

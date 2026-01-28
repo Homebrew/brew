@@ -1,7 +1,7 @@
-# typed: false
+# typed: true # rubocop:todo Sorbet/StrictSigil
 # frozen_string_literal: true
 
-require "rubocops/extend/formula"
+require "rubocops/extend/formula_cop"
 
 module RuboCop
   module Cop
@@ -13,10 +13,13 @@ module RuboCop
       class DependencyOrder < FormulaCop
         extend AutoCorrector
 
-        def audit_formula(_node, _class_node, _parent_class_node, body_node)
+        sig { override.params(formula_nodes: FormulaNodes).void }
+        def audit_formula(formula_nodes)
+          body_node = formula_nodes.body_node
+
           check_dependency_nodes_order(body_node)
           check_uses_from_macos_nodes_order(body_node)
-          [:head, :stable].each do |block_name|
+          ([:head, :stable] + on_system_methods).each do |block_name|
             block = find_block(body_node, block_name)
             next unless block
 
@@ -65,15 +68,17 @@ module RuboCop
         # `depends_on :apple if build.with? "foo"` should always be defined
         #  after `depends_on :foo`.
         # This method reorders the dependencies array according to the above rule.
+        sig { params(ordered: T::Array[RuboCop::AST::Node]).returns(T::Array[RuboCop::AST::Node]) }
         def sort_conditional_dependencies!(ordered)
           length = ordered.size
           idx = 0
           while idx < length
-            idx1, idx2 = nil
+            idx1 = T.let(nil, T.nilable(Integer))
+            idx2 = T.let(nil, T.nilable(Integer))
             ordered.each_with_index do |dep, pos|
               idx = pos+1
               match_nodes = build_with_dependency_name(dep)
-              next if !match_nodes || match_nodes.empty?
+              next if match_nodes.blank?
 
               idx1 = pos
               ordered.drop(idx1+1).each_with_index do |dep2, pos2|
@@ -83,7 +88,7 @@ module RuboCop
               end
               break if idx2
             end
-            insert_after!(ordered, idx1, idx2+idx1) if idx2
+            insert_after!(ordered, idx1, idx2 + T.must(idx1)) if idx2
           end
           ordered
         end
@@ -93,8 +98,8 @@ module RuboCop
         def verify_order_in_source(ordered)
           ordered.each_with_index do |node_1, idx|
             l1 = line_number(node_1)
-            l2 = nil
-            node_2 = nil
+            l2 = T.let(nil, T.nilable(Integer))
+            node_2 = T.let(nil, T.nilable(RuboCop::AST::Node))
             ordered.drop(idx + 1).each do |test_node|
               l2 = line_number(test_node)
               node_2 = test_node if l2 < l1
@@ -103,8 +108,8 @@ module RuboCop
 
             offending_node(node_1)
 
-            problem "dependency \"#{dependency_name(node_1)}\" (line #{l1}) should be put before dependency "\
-                    "\"#{dependency_name(node_2)}\" (line #{l2})" do |corrector|
+            problem "`dependency \"#{dependency_name(node_1)}\"` (line #{l1}) should be put before " \
+                    "`dependency \"#{dependency_name(node_2)}\"` (line #{l2})" do |corrector|
               indentation = " " * (start_column(node_2) - line_start_column(node_2))
               line_breaks = "\n"
               corrector.insert_before(node_2.source_range,
@@ -153,7 +158,7 @@ module RuboCop
 
         def build_with_dependency_name(node)
           match_nodes = build_with_dependency_node(node)
-          match_nodes = match_nodes.to_a.delete_if(&:nil?)
+          match_nodes = match_nodes.to_a.compact
           match_nodes.map { |n| string_content(n) } unless match_nodes.empty?
         end
 

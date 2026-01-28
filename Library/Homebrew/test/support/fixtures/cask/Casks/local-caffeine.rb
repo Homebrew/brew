@@ -6,4 +6,6 @@ cask "local-caffeine" do
   homepage "https://brew.sh/"
 
   app "Caffeine.app"
+
+  zap trash: "#{TEST_FIXTURE_DIR}/cask/caffeine/org.example.caffeine.plist"
 end

@@ -1,36 +1,25 @@
-# typed: false
+# typed: true # rubocop:todo Sorbet/StrictSigil
 # frozen_string_literal: true
 
 require "cask/artifact/abstract_artifact"
-
-require "extend/hash_validator"
-using HashValidator
+require "extend/hash/keys"
 
 module Cask
   module Artifact
     # Artifact corresponding to the `installer` stanza.
-    #
-    # @api private
     class Installer < AbstractArtifact
       VALID_KEYS = Set.new([
         :manual,
         :script,
       ]).freeze
 
-      # Extension module for manual installers.
-      module ManualInstaller
-        def install_phase(**)
+      def install_phase(command: nil, **_)
+        if manual_install
           puts <<~EOS
-            To complete the installation of Cask #{cask}, you must also
-            run the installer at:
-              #{cask.staged_path.join(path)}
+            Cask #{cask} only provides a manual installer. To run it and complete the installation:
+              open #{cask.staged_path.join(path).to_s.shellescape}
           EOS
-        end
-      end
-
-      # Extension module for script installers.
-      module ScriptInstaller
-        def install_phase(command: nil, **_)
+        else
           ohai "Running #{self.class.dsl_key} script '#{path}'"
 
           executable_path = staged_path_join_executable(path)
@@ -38,9 +27,10 @@ module Cask
           command.run!(
             executable_path,
             **args,
-            env: { "PATH" => PATH.new(
-              HOMEBREW_PREFIX/"bin", HOMEBREW_PREFIX/"sbin", ENV["PATH"]
+            env:       { "PATH" => PATH.new(
+              HOMEBREW_PREFIX/"bin", HOMEBREW_PREFIX/"sbin", ENV.fetch("PATH")
             ) },
+            reset_uid: !args[:sudo],
           )
         end
       end
@@ -58,45 +48,46 @@ module Cask
           args = { script: args }
         end
 
-        unless args.keys.count == 1
+        if args.keys.count != 1
           raise CaskInvalidError.new(
             cask,
             "invalid 'installer' stanza: Only one of #{VALID_KEYS.inspect} is permitted.",
           )
         end
 
-        args.assert_valid_keys!(*VALID_KEYS)
+        args.assert_valid_keys(*VALID_KEYS)
         new(cask, **args)
       end
 
       attr_reader :path, :args
 
+      sig { returns(T::Boolean) }
+      attr_reader :manual_install
+
       def initialize(cask, **args)
-        super(cask)
+        super
 
         if args.key?(:manual)
           @path = Pathname(args[:manual])
           @args = []
-          extend(ManualInstaller)
-          return
+          @manual_install = true
+        else
+          path, @args = self.class.read_script_arguments(
+            args[:script], self.class.dsl_key.to_s, { must_succeed: true, sudo: false }, print_stdout: true
+          )
+          raise CaskInvalidError.new(cask, "#{self.class.dsl_key} missing executable") if path.nil?
+
+          @path = Pathname(path)
+          @manual_install = false
         end
-
-        path, @args = self.class.read_script_arguments(
-          args[:script], self.class.dsl_key.to_s, { must_succeed: true, sudo: false }, print_stdout: true
-        )
-        raise CaskInvalidError.new(cask, "#{self.class.dsl_key} missing executable") if path.nil?
-
-        @path = Pathname(path)
-        extend(ScriptInstaller)
       end
 
-      def summarize
-        path.to_s
-      end
+      sig { override.returns(String) }
+      def summarize = path.to_s
 
       def to_h
-        { path: path }.tap do |h|
-          h[:args] = args unless is_a?(ManualInstaller)
+        { path: }.tap do |h|
+          h[:args] = args unless manual_install
         end
       end
     end

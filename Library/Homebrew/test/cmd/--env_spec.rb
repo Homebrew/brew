@@ -1,9 +1,9 @@
-# typed: false
 # frozen_string_literal: true
 
+require "cmd/--env"
 require "cmd/shared_examples/args_parse"
 
-describe "brew --env" do
+RSpec.describe Homebrew::Cmd::Env do
   it_behaves_like "parseable arguments"
 
   describe "--shell=bash", :integration_test do

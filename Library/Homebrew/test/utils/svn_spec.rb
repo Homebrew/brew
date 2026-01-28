@@ -1,9 +1,8 @@
-# typed: false
 # frozen_string_literal: true
 
 require "utils/svn"
 
-describe Utils::Svn do
+RSpec.describe Utils::Svn do
   before do
     described_class.clear_version_cache
   end
@@ -48,7 +47,7 @@ describe Utils::Svn do
       end
 
       it "returns true when remote exists", :needs_network, :needs_svn do
-        expect(described_class).to be_remote_exists("https://github.com/Homebrew/install")
+        expect(described_class).to be_remote_exists("https://svn.apache.org/repos/asf/openoffice/trunk")
       end
     end
   end

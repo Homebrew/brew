@@ -1,9 +1,8 @@
-# typed: false
 # frozen_string_literal: true
 
 require_relative "shared_examples"
 
-describe UnpackStrategy::Zip do
+RSpec.describe UnpackStrategy::Zip do
   let(:path) { TEST_FIXTURE_DIR/"cask/MyFancyApp.zip" }
 
   include_examples "UnpackStrategy::detect"
@@ -13,11 +12,11 @@ describe UnpackStrategy::Zip do
   end
 
   context "when ZIP archive is corrupted" do
-    let(:path) {
+    let(:path) do
       (mktmpdir/"test.zip").tap do |path|
         FileUtils.touch path
       end
-    }
+    end
 
     include_examples "UnpackStrategy::detect"
   end

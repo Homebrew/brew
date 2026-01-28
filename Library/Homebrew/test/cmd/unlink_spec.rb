@@ -1,9 +1,9 @@
-# typed: false
 # frozen_string_literal: true
 
 require "cmd/shared_examples/args_parse"
+require "cmd/unlink"
 
-describe "brew unlink" do
+RSpec.describe Homebrew::Cmd::UnlinkCmd do
   it_behaves_like "parseable arguments"
 
   it "unlinks a Formula", :integration_test do

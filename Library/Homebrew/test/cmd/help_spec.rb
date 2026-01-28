@@ -1,7 +1,11 @@
-# typed: false
 # frozen_string_literal: true
 
-describe "brew", :integration_test do
+require "cmd/help"
+require "cmd/shared_examples/args_parse"
+
+RSpec.describe Homebrew::Cmd::HelpCmd, :integration_test do
+  it_behaves_like "parseable arguments"
+
   describe "help" do
     it "prints help for a documented Ruby command" do
       expect { brew "help", "cat" }

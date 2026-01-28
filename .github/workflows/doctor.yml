@@ -8,32 +8,61 @@ on:
       - Library/Homebrew/extend/os/diagnostic.rb
       - Library/Homebrew/extend/os/mac/diagnostic.rb
       - Library/Homebrew/os/mac/xcode.rb
+
 permissions:
   contents: read
+
 env:
   HOMEBREW_DEVELOPER: 1
   HOMEBREW_NO_AUTO_UPDATE: 1
-  HOMEBREW_CHANGE_ARCH_TO_ARM: 1
+
+defaults:
+  run:
+    shell: bash -xeuo pipefail {0}
+
 jobs:
+  determine-runners:
+    runs-on: ubuntu-latest
+    outputs:
+      runners: ${{ steps.determine-runners.outputs.runners }}
+    steps:
+      - name: Set up Homebrew
+        id: set-up-homebrew
+        uses: Homebrew/actions/setup-homebrew@main
+        with:
+          core: false
+          cask: false
+
+      - name: Determine runners to use for this job
+        id: determine-runners
+        env:
+          HOMEBREW_MACOS_TIMEOUT: 30
+        run: brew determine-test-runners --all-supported
+
   tests:
+    needs: determine-runners
     strategy:
       matrix:
-        version: ["12-arm64", "12", "11-arm64", "11", "10.15"]
+        include: ${{ fromJson(needs.determine-runners.outputs.runners) }}
       fail-fast: false
-    runs-on: ${{ matrix.version }}
-    env:
-      PATH: "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: ${{ matrix.timeout }}
     defaults:
       run:
         working-directory: /tmp
     steps:
       - name: Set up Homebrew
         id: set-up-homebrew
-        uses: Homebrew/actions/setup-homebrew@master
+        uses: Homebrew/actions/setup-homebrew@main
+        with:
+          core: false
+          cask: false
 
       - run: brew test-bot --only-cleanup-before
+        if: matrix.cleanup
 
-      - run: brew test-bot --only-setup
+      - run: brew doctor
 
       - run: brew test-bot --only-cleanup-after
-        if: always()
+        if: always() && matrix.cleanup

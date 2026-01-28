@@ -1,5 +1,7 @@
-# typed: true
+# typed: strict
 # frozen_string_literal: true
+
+require "livecheck/strategic"
 
 module Homebrew
   module Livecheck
@@ -23,7 +25,7 @@ module Homebrew
       # Usually we address this situation by adding a `livecheck` block to
       # the formula/cask that checks the page for the relevant directory in the
       # project instead. In this situation, it's necessary to use
-      # `strategy :page_match` to prevent the {Sourceforge} stratgy from
+      # `strategy :page_match` to prevent the {Sourceforge} strategy from
       # being used.
       #
       # The default regex matches within `url` attributes in the RSS feed
@@ -31,7 +33,7 @@ module Homebrew
       #
       # @api public
       class Sourceforge
-        extend T::Sig
+        extend Strategic
 
         NICE_NAME = "SourceForge"
 
@@ -41,13 +43,13 @@ module Homebrew
           (?:/projects?/(?<project_name>[^/]+)/
           |/p/(?<project_name>[^/]+)/
           |(?::/cvsroot)?/(?<project_name>[^/]+))
-        }ix.freeze
+        }ix
 
         # Whether the strategy can be applied to the provided URL.
         #
         # @param url [String] the URL to match against
         # @return [Boolean]
-        sig { params(url: String).returns(T::Boolean) }
+        sig { override.params(url: String).returns(T::Boolean) }
         def self.match?(url)
           URL_MATCH_REGEX.match?(url)
         end
@@ -86,22 +88,23 @@ module Homebrew
         #
         # @param url [String] the URL of the content to check
         # @param regex [Regexp] a regex used for matching versions in content
+        # @param options [Options] options to modify behavior
         # @return [Hash]
         sig {
-          params(
-            url:    String,
-            regex:  T.nilable(Regexp),
-            unused: T.nilable(T::Hash[Symbol, T.untyped]),
-            block:  T.untyped,
-          ).returns(T::Hash[Symbol, T.untyped])
+          override(allow_incompatible: true).params(
+            url:     String,
+            regex:   T.nilable(Regexp),
+            options: Options,
+            block:   T.nilable(Proc),
+          ).returns(T::Hash[Symbol, T.anything])
         }
-        def self.find_versions(url:, regex: nil, **unused, &block)
+        def self.find_versions(url:, regex: nil, options: Options.new, &block)
           generated = generate_input_values(url)
 
-          T.unsafe(PageMatch).find_versions(
-            url:   generated[:url] || url,
-            regex: regex || generated[:regex],
-            **unused,
+          PageMatch.find_versions(
+            url:     generated[:url] || url,
+            regex:   regex || generated[:regex],
+            options:,
             &block
           )
         end

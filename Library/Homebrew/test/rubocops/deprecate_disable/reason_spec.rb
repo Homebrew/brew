@@ -1,9 +1,8 @@
-# typed: false
 # frozen_string_literal: true
 
 require "rubocops/deprecate_disable"
 
-describe RuboCop::Cop::FormulaAudit::DeprecateDisableReason do
+RSpec.describe RuboCop::Cop::FormulaAudit::DeprecateDisableReason do
   subject(:cop) { described_class.new }
 
   context "when auditing `deprecate!`" do
@@ -48,7 +47,7 @@ describe RuboCop::Cop::FormulaAudit::DeprecateDisableReason do
         class Foo < Formula
           url 'https://brew.sh/foo-1.0.tgz'
           deprecate!
-          ^^^^^^^^^^ Add a reason for deprecation: `deprecate! because: "..."`
+          ^^^^^^^^^^ FormulaAudit/DeprecateDisableReason: Add a reason for deprecation: `deprecate! because: "..."`
         end
       RUBY
     end
@@ -58,7 +57,7 @@ describe RuboCop::Cop::FormulaAudit::DeprecateDisableReason do
         class Foo < Formula
           url 'https://brew.sh/foo-1.0.tgz'
           deprecate! date: "2020-08-28"
-          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Add a reason for deprecation: `deprecate! because: "..."`
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ FormulaAudit/DeprecateDisableReason: Add a reason for deprecation: `deprecate! because: "..."`
         end
       RUBY
     end
@@ -68,7 +67,7 @@ describe RuboCop::Cop::FormulaAudit::DeprecateDisableReason do
         class Foo < Formula
           url 'https://brew.sh/foo-1.0.tgz'
           deprecate! because: "it is broken"
-                              ^^^^^^^^^^^^^^ Do not start the reason with `it`
+                              ^^^^^^^^^^^^^^ FormulaAudit/DeprecateDisableReason: Do not start the reason with `it`
         end
       RUBY
 
@@ -85,7 +84,7 @@ describe RuboCop::Cop::FormulaAudit::DeprecateDisableReason do
         class Foo < Formula
           url 'https://brew.sh/foo-1.0.tgz'
           deprecate! date: "2020-08-28", because: "it is broken"
-                                                  ^^^^^^^^^^^^^^ Do not start the reason with `it`
+                                                  ^^^^^^^^^^^^^^ FormulaAudit/DeprecateDisableReason: Do not start the reason with `it`
         end
       RUBY
 
@@ -102,7 +101,7 @@ describe RuboCop::Cop::FormulaAudit::DeprecateDisableReason do
         class Foo < Formula
           url 'https://brew.sh/foo-1.0.tgz'
           deprecate! because: "is broken."
-                              ^^^^^^^^^^^^ Do not end the reason with a punctuation mark
+                              ^^^^^^^^^^^^ FormulaAudit/DeprecateDisableReason: Do not end the reason with a punctuation mark
         end
       RUBY
 
@@ -119,7 +118,7 @@ describe RuboCop::Cop::FormulaAudit::DeprecateDisableReason do
         class Foo < Formula
           url 'https://brew.sh/foo-1.0.tgz'
           deprecate! because: "is broken!"
-                              ^^^^^^^^^^^^ Do not end the reason with a punctuation mark
+                              ^^^^^^^^^^^^ FormulaAudit/DeprecateDisableReason: Do not end the reason with a punctuation mark
         end
       RUBY
 
@@ -136,7 +135,7 @@ describe RuboCop::Cop::FormulaAudit::DeprecateDisableReason do
         class Foo < Formula
           url 'https://brew.sh/foo-1.0.tgz'
           deprecate! because: "is broken?"
-                              ^^^^^^^^^^^^ Do not end the reason with a punctuation mark
+                              ^^^^^^^^^^^^ FormulaAudit/DeprecateDisableReason: Do not end the reason with a punctuation mark
         end
       RUBY
 
@@ -153,7 +152,7 @@ describe RuboCop::Cop::FormulaAudit::DeprecateDisableReason do
         class Foo < Formula
           url 'https://brew.sh/foo-1.0.tgz'
           deprecate! date: "2020-08-28", because: "is broken."
-                                                  ^^^^^^^^^^^^ Do not end the reason with a punctuation mark
+                                                  ^^^^^^^^^^^^ FormulaAudit/DeprecateDisableReason: Do not end the reason with a punctuation mark
         end
       RUBY
 
@@ -208,7 +207,7 @@ describe RuboCop::Cop::FormulaAudit::DeprecateDisableReason do
         class Foo < Formula
           url 'https://brew.sh/foo-1.0.tgz'
           disable!
-          ^^^^^^^^ Add a reason for disabling: `disable! because: "..."`
+          ^^^^^^^^ FormulaAudit/DeprecateDisableReason: Add a reason for disabling: `disable! because: "..."`
         end
       RUBY
     end
@@ -218,7 +217,7 @@ describe RuboCop::Cop::FormulaAudit::DeprecateDisableReason do
         class Foo < Formula
           url 'https://brew.sh/foo-1.0.tgz'
           disable! date: "2020-08-28"
-          ^^^^^^^^^^^^^^^^^^^^^^^^^^^ Add a reason for disabling: `disable! because: "..."`
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^ FormulaAudit/DeprecateDisableReason: Add a reason for disabling: `disable! because: "..."`
         end
       RUBY
     end
@@ -228,7 +227,7 @@ describe RuboCop::Cop::FormulaAudit::DeprecateDisableReason do
         class Foo < Formula
           url 'https://brew.sh/foo-1.0.tgz'
           disable! because: "it is broken"
-                            ^^^^^^^^^^^^^^ Do not start the reason with `it`
+                            ^^^^^^^^^^^^^^ FormulaAudit/DeprecateDisableReason: Do not start the reason with `it`
         end
       RUBY
 
@@ -245,7 +244,7 @@ describe RuboCop::Cop::FormulaAudit::DeprecateDisableReason do
         class Foo < Formula
           url 'https://brew.sh/foo-1.0.tgz'
           disable! date: "2020-08-28", because: "it is broken"
-                                                ^^^^^^^^^^^^^^ Do not start the reason with `it`
+                                                ^^^^^^^^^^^^^^ FormulaAudit/DeprecateDisableReason: Do not start the reason with `it`
         end
       RUBY
 
@@ -262,7 +261,7 @@ describe RuboCop::Cop::FormulaAudit::DeprecateDisableReason do
         class Foo < Formula
           url 'https://brew.sh/foo-1.0.tgz'
           disable! because: "is broken."
-                            ^^^^^^^^^^^^ Do not end the reason with a punctuation mark
+                            ^^^^^^^^^^^^ FormulaAudit/DeprecateDisableReason: Do not end the reason with a punctuation mark
         end
       RUBY
 
@@ -279,7 +278,7 @@ describe RuboCop::Cop::FormulaAudit::DeprecateDisableReason do
         class Foo < Formula
           url 'https://brew.sh/foo-1.0.tgz'
           disable! because: "is broken!"
-                            ^^^^^^^^^^^^ Do not end the reason with a punctuation mark
+                            ^^^^^^^^^^^^ FormulaAudit/DeprecateDisableReason: Do not end the reason with a punctuation mark
         end
       RUBY
 
@@ -296,7 +295,7 @@ describe RuboCop::Cop::FormulaAudit::DeprecateDisableReason do
         class Foo < Formula
           url 'https://brew.sh/foo-1.0.tgz'
           disable! because: "is broken?"
-                            ^^^^^^^^^^^^ Do not end the reason with a punctuation mark
+                            ^^^^^^^^^^^^ FormulaAudit/DeprecateDisableReason: Do not end the reason with a punctuation mark
         end
       RUBY
 
@@ -313,7 +312,7 @@ describe RuboCop::Cop::FormulaAudit::DeprecateDisableReason do
         class Foo < Formula
           url 'https://brew.sh/foo-1.0.tgz'
           disable! date: "2020-08-28", because: "is broken."
-                                                ^^^^^^^^^^^^ Do not end the reason with a punctuation mark
+                                                ^^^^^^^^^^^^ FormulaAudit/DeprecateDisableReason: Do not end the reason with a punctuation mark
         end
       RUBY
 

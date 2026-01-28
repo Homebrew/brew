@@ -1,7 +1,7 @@
-# typed: true
+# typed: strict
 # frozen_string_literal: true
 
-require "rubocops/extend/formula"
+require "rubocops/extend/formula_cop"
 
 module RuboCop
   module Cop
@@ -10,7 +10,10 @@ module RuboCop
       class DeprecateDisableDate < FormulaCop
         extend AutoCorrector
 
-        def audit_formula(_node, _class_node, _parent_class_node, body_node)
+        sig { override.params(formula_nodes: FormulaNodes).void }
+        def audit_formula(formula_nodes)
+          body_node = formula_nodes.body_node
+
           [:deprecate!, :disable!].each do |method|
             node = find_node_method_by_name(body_node, method)
 
@@ -39,7 +42,10 @@ module RuboCop
 
         PUNCTUATION_MARKS = %w[. ! ?].freeze
 
-        def audit_formula(_node, _class_node, _parent_class_node, body_node)
+        sig { override.params(formula_nodes: FormulaNodes).void }
+        def audit_formula(formula_nodes)
+          body_node = formula_nodes.body_node
+
           [:deprecate!, :disable!].each do |method|
             node = find_node_method_by_name(body_node, method)
 
@@ -55,13 +61,13 @@ module RuboCop
 
               if reason_string.start_with?("it ")
                 problem "Do not start the reason with `it`" do |corrector|
-                  corrector.replace(@offensive_node.source_range, "\"#{reason_string[3..]}\"")
+                  corrector.replace(T.must(@offensive_node).source_range, "\"#{reason_string[3..]}\"")
                 end
               end
 
               if PUNCTUATION_MARKS.include?(reason_string[-1])
                 problem "Do not end the reason with a punctuation mark" do |corrector|
-                  corrector.replace(@offensive_node.source_range, "\"#{reason_string.chop}\"")
+                  corrector.replace(T.must(@offensive_node).source_range, "\"#{reason_string.chop}\"")
                 end
               end
             end

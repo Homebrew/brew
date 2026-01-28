@@ -1,9 +1,30 @@
-# typed: false
 # frozen_string_literal: true
 
 require "bundle_version"
 
-describe Homebrew::BundleVersion do
+RSpec.describe Homebrew::BundleVersion do
+  describe "#<=>" do
+    it "compares both the `short_version` and `version`" do
+      expect(described_class.new("1.2.3", "3000")).to be < described_class.new("1.2.3", "4000")
+      expect(described_class.new("1.2.3", "4000")).to be <= described_class.new("1.2.3", "4000")
+      expect(described_class.new("1.2.3", "4000")).to be >= described_class.new("1.2.3", "4000")
+      expect(described_class.new("1.2.4", "4000")).to be > described_class.new("1.2.3", "4000")
+    end
+
+    it "compares `version` first" do
+      expect(described_class.new("1.2.4", "3000")).to be < described_class.new("1.2.3", "4000")
+    end
+
+    it "does not fail when `short_version` or `version` is missing" do
+      expect(described_class.new("1.06", nil)).to be < described_class.new("1.12", "1.12")
+      expect(described_class.new("1.06", "471")).to be > described_class.new(nil, "311")
+      expect(described_class.new("1.2.3", nil)).to be < described_class.new("1.2.4", nil)
+      expect(described_class.new(nil, "1.2.3")).to be < described_class.new(nil, "1.2.4")
+      expect(described_class.new("1.2.3", nil)).to be < described_class.new(nil, "1.2.3")
+      expect(described_class.new(nil, "1.2.3")).to be > described_class.new("1.2.3", nil)
+    end
+  end
+
   describe "#nice_version" do
     expected_mappings = {
       ["1.2", nil]            => "1.2",
@@ -24,12 +45,6 @@ describe Homebrew::BundleVersion do
         expect(described_class.new(short_version, version).nice_version)
           .to eq expected_version
       end
-    end
-  end
-
-  describe "#<=>" do
-    it "does not fail when a `version` is nil" do
-      expect(described_class.new("1.06", nil)).to be < described_class.new("1.12", "1.12")
     end
   end
 end

@@ -1,5 +1,7 @@
-# typed: true
+# typed: strict
 # frozen_string_literal: true
+
+require "livecheck/strategic"
 
 module Homebrew
   module Livecheck
@@ -28,7 +30,7 @@ module Homebrew
       #
       # @api public
       class Bitbucket
-        extend T::Sig
+        extend Strategic
 
         # The `Regexp` used to determine if the strategy applies to the URL.
         URL_MATCH_REGEX = %r{
@@ -38,13 +40,12 @@ module Homebrew
           /(?<prefix>(?:[^/]+?[_-])?) # Filename text before the version
           v?\d+(?:\.\d+)+ # The numeric version
           (?<suffix>[^/]+) # Filename text after the version
-        }ix.freeze
+        }ix
 
         # Whether the strategy can be applied to the provided URL.
         #
         # @param url [String] the URL to match against
-        # @return [Boolean]
-        sig { params(url: String).returns(T::Boolean) }
+        sig { override.params(url: String).returns(T::Boolean) }
         def self.match?(url)
           URL_MATCH_REGEX.match?(url)
         end
@@ -55,7 +56,6 @@ module Homebrew
         # `livecheck` block.
         #
         # @param url [String] the URL used to generate values
-        # @return [Hash]
         sig { params(url: String).returns(T::Hash[Symbol, T.untyped]) }
         def self.generate_input_values(url)
           values = {}
@@ -63,24 +63,29 @@ module Homebrew
           match = url.match(URL_MATCH_REGEX)
           return values if match.blank?
 
-          # `/get/` archives are Git tag snapshots, so we need to check that tab
-          # instead of the main `/downloads/` page
-          values[:url] = if match[:dl_type] == "get"
-            "https://bitbucket.org/#{match[:path]}/downloads/?tab=tags"
-          else
-            "https://bitbucket.org/#{match[:path]}/downloads/"
-          end
-
           regex_prefix = Regexp.escape(T.must(match[:prefix])).gsub("\\-", "-")
 
-          # Use `\.t` instead of specific tarball extensions (e.g. .tar.gz)
-          suffix = T.must(match[:suffix]).sub(Strategy::TARBALL_EXTENSION_REGEX, "\.t")
-          regex_suffix = Regexp.escape(suffix).gsub("\\-", "-")
+          # `/get/` archives are Git tag snapshots, so we need to check that tab
+          # instead of the main `/downloads/` page
+          if match[:dl_type] == "get"
+            values[:url] = "https://bitbucket.org/#{match[:path]}/downloads/?tab=tags&iframe=true&spa=0"
 
-          # Example regexes:
-          # * `/href=.*?v?(\d+(?:\.\d+)+)\.t/i`
-          # * `/href=.*?example-v?(\d+(?:\.\d+)+)\.t/i`
-          values[:regex] = /href=.*?#{regex_prefix}v?(\d+(?:\.\d+)+)#{regex_suffix}/i
+            # Example tag regexes:
+            # * `/<td[^>]*?class="name"[^>]*?>\s*v?(\d+(?:\.\d+)+)\s*?</im`
+            # * `/<td[^>]*?class="name"[^>]*?>\s*abc-v?(\d+(?:\.\d+)+)\s*?</im`
+            values[:regex] = /<td[^>]*?class="name"[^>]*?>\s*#{regex_prefix}v?(\d+(?:\.\d+)+)\s*?</im
+          else
+            values[:url] = "https://bitbucket.org/#{match[:path]}/downloads/?iframe=true&spa=0"
+
+            # Use `\.t` instead of specific tarball extensions (e.g. .tar.gz)
+            suffix = T.must(match[:suffix]).sub(Strategy::TARBALL_EXTENSION_REGEX, ".t")
+            regex_suffix = Regexp.escape(suffix).gsub("\\-", "-")
+
+            # Example file regexes:
+            # * `/href=.*?v?(\d+(?:\.\d+)+)\.t/i`
+            # * `/href=.*?abc-v?(\d+(?:\.\d+)+)\.t/i`
+            values[:regex] = /href=.*?#{regex_prefix}v?(\d+(?:\.\d+)+)#{regex_suffix}/i
+          end
 
           values
         end
@@ -90,19 +95,25 @@ module Homebrew
         #
         # @param url [String] the URL of the content to check
         # @param regex [Regexp] a regex used for matching versions in content
+        # @param options [Options] options to modify behavior
         # @return [Hash]
         sig {
-          params(
-            url:    String,
-            regex:  T.nilable(Regexp),
-            unused: T.nilable(T::Hash[Symbol, T.untyped]),
-            block:  T.untyped,
-          ).returns(T::Hash[Symbol, T.untyped])
+          override(allow_incompatible: true).params(
+            url:     String,
+            regex:   T.nilable(Regexp),
+            options: Options,
+            block:   T.nilable(Proc),
+          ).returns(T::Hash[Symbol, T.anything])
         }
-        def self.find_versions(url:, regex: nil, **unused, &block)
+        def self.find_versions(url:, regex: nil, options: Options.new, &block)
           generated = generate_input_values(url)
 
-          T.unsafe(PageMatch).find_versions(url: generated[:url], regex: regex || generated[:regex], **unused, &block)
+          PageMatch.find_versions(
+            url:     generated[:url],
+            regex:   regex || generated[:regex],
+            options:,
+            &block
+          )
         end
       end
     end

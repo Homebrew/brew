@@ -1,10 +1,9 @@
-# typed: false
 # frozen_string_literal: true
 
 require "build_options"
 require "options"
 
-describe BuildOptions do
+RSpec.describe BuildOptions do
   alias_matcher :be_built_with, :be_with
   alias_matcher :be_built_without, :be_without
 
@@ -21,17 +20,17 @@ describe BuildOptions do
     expect(build_options).to be_built_with("baz")
   end
 
-  specify "#without?" do
+  specify "#without?" do # rubocop:todo RSpec/AggregateExamples
     expect(build_options).to be_built_without("qux")
     expect(build_options).to be_built_without("xyz")
   end
 
-  specify "#used_options" do
+  specify "#used_options" do # rubocop:todo RSpec/AggregateExamples
     expect(build_options.used_options).to include("--with-foo")
     expect(build_options.used_options).to include("--with-bar")
   end
 
-  specify "#unused_options" do
+  specify "#unused_options" do # rubocop:todo RSpec/AggregateExamples
     expect(build_options.unused_options).to include("--without-baz")
   end
 end

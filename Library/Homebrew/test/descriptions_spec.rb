@@ -1,9 +1,8 @@
-# typed: false
 # frozen_string_literal: true
 
 require "descriptions"
 
-describe Descriptions do
+RSpec.describe Descriptions do
   subject(:descriptions) { described_class.new(descriptions_hash) }
 
   let(:descriptions_hash) { {} }
@@ -42,5 +41,10 @@ describe Descriptions do
         somedev/external/foo: External foo
       EOS
     ).to_stdout
+  end
+
+  it "can print description for a cask" do
+    descriptions_hash["homebrew/cask/foo"] = ["Foo", "Cask foo"]
+    expect { descriptions.print }.to output("foo: (Foo) Cask foo\n").to_stdout
   end
 end

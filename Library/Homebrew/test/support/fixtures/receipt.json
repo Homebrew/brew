@@ -10,6 +10,9 @@
   ],
   "built_as_bottle": false,
   "poured_from_bottle": true,
+  "loaded_from_api": false,
+  "installed_as_dependency": false,
+  "installed_on_request": true,
   "changed_files": [
     "INSTALL_RECEIPT.json",
     "bin/foo"
@@ -27,12 +30,12 @@
     }
   ],
   "source": {
-      "path": "/usr/local/Library/Taps/homebrew/homebrew-core/Formula/foo.rb",
-      "tap": "homebrew/core",
-      "spec": "stable",
-      "versions": {
-        "stable": "2.14",
-        "head": "HEAD-0000000"
-      }
+    "path": "/usr/local/Library/Taps/homebrew/homebrew-core/Formula/foo.rb",
+    "tap": "homebrew/core",
+    "spec": "stable",
+    "versions": {
+      "stable": "2.14",
+      "head": "HEAD-0000000"
+    }
   }
 }

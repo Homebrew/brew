@@ -1,18 +1,15 @@
-# typed: true
+# typed: strict
 # frozen_string_literal: true
 
 module OS
   module Linux
     # Helper functions for querying `glibc` information.
-    #
-    # @api private
     module Glibc
-      extend T::Sig
-
       module_function
 
       sig { returns(Version) }
       def system_version
+        @system_version ||= T.let(nil, T.nilable(Version))
         @system_version ||= begin
           version = Utils.popen_read("/usr/bin/ldd", "--version")[/ (\d+\.\d+)/, 1]
           if version
@@ -25,6 +22,7 @@ module OS
 
       sig { returns(Version) }
       def version
+        @version ||= T.let(nil, T.nilable(Version))
         @version ||= begin
           version = Utils.popen_read(HOMEBREW_PREFIX/"opt/glibc/bin/ldd", "--version")[/ (\d+\.\d+)/, 1]
           if version
@@ -43,6 +41,11 @@ module OS
       sig { returns(T::Boolean) }
       def below_minimum_version?
         system_version < minimum_version
+      end
+
+      sig { returns(T::Boolean) }
+      def below_ci_version?
+        system_version < LINUX_GLIBC_CI_VERSION
       end
     end
   end

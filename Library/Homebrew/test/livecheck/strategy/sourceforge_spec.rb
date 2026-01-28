@@ -1,21 +1,20 @@
-# typed: false
 # frozen_string_literal: true
 
 require "livecheck/strategy/sourceforge"
 
-describe Homebrew::Livecheck::Strategy::Sourceforge do
+RSpec.describe Homebrew::Livecheck::Strategy::Sourceforge do
   subject(:sourceforge) { described_class }
 
-  let(:sourceforge_urls) {
+  let(:sourceforge_urls) do
     {
       typical:       "https://downloads.sourceforge.net/project/abc/def-1.2.3.tar.gz",
       rss:           "https://sourceforge.net/projects/abc/rss",
       rss_with_path: "https://sourceforge.net/projects/abc/rss?path=/def",
     }
-  }
+  end
   let(:non_sourceforge_url) { "https://brew.sh/test" }
 
-  let(:generated) {
+  let(:generated) do
     {
       typical: {
         url:   "https://sourceforge.net/projects/abc/rss",
@@ -25,7 +24,7 @@ describe Homebrew::Livecheck::Strategy::Sourceforge do
         regex: %r{url=.*?/abc/files/.*?[-_/](\d+(?:[-.]\d+)+)[-_/%.]}i,
       },
     }
-  }
+  end
 
   describe "::match?" do
     it "returns true for a SourceForge URL" do

@@ -1,20 +1,21 @@
-# typed: false
 # frozen_string_literal: true
 
 require "system_command"
 
-describe SystemCommand::Result do
-  subject(:result) {
+RSpec.describe SystemCommand::Result do
+  RSpec::Matchers.alias_matcher :a_string_containing, :include
+
+  subject(:result) do
     described_class.new([], output_array, instance_double(Process::Status, exitstatus: 0, success?: true),
                         secrets: [])
-  }
+  end
 
-  let(:output_array) {
+  let(:output_array) do
     [
       [:stdout, "output\n"],
       [:stderr, "error\n"],
     ]
-  }
+  end
 
   describe "#to_ary" do
     it "can be destructed like `Open3.capture3`" do
@@ -48,7 +49,7 @@ describe SystemCommand::Result do
     subject(:result_plist) { result.plist }
 
     let(:output_array) { [[:stdout, stdout]] }
-    let(:garbage) {
+    let(:garbage) do
       <<~EOS
         Hello there! I am in no way XML am I?!?!
 
@@ -58,8 +59,8 @@ describe SystemCommand::Result do
 
         Hopefully <not> explode!
       EOS
-    }
-    let(:plist) {
+    end
+    let(:plist) do
       <<~XML
         <?xml version="1.0" encoding="UTF-8"?>
         <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -105,15 +106,15 @@ describe SystemCommand::Result do
         </dict>
         </plist>
       XML
-    }
+    end
 
     context "when stdout contains garbage before XML" do
-      let(:stdout) {
+      let(:stdout) do
         <<~EOS
           #{garbage}
           #{plist}
         EOS
-      }
+      end
 
       it "ignores garbage" do
         expect(result_plist["system-entities"].length).to eq(3)
@@ -132,12 +133,12 @@ describe SystemCommand::Result do
     end
 
     context "when stdout contains garbage after XML" do
-      let(:stdout) {
+      let(:stdout) do
         <<~EOS
           #{plist}
           #{garbage}
         EOS
-      }
+      end
 
       it "ignores garbage" do
         expect(result_plist["system-entities"].length).to eq(3)
@@ -170,7 +171,7 @@ describe SystemCommand::Result do
       let(:stdout) { "" }
 
       it "returns nil" do
-        expect(result_plist).to be nil
+        expect(result_plist).to be_nil
       end
     end
   end

@@ -1,29 +1,82 @@
+# This file is synced from the `.github` repository, do not modify it directly.
+---
 version: 2
-
 updates:
-  - package-ecosystem: github-actions
-    directory: /
-    schedule:
-      interval: daily
-    # The actions in triage-issues.yml are updated in the Homebrew/.github repo
-    ignore:
-      - dependency-name: actions/stale
-      - dependency-name: dessant/lock-threads
+- package-ecosystem: bundler
+  directories:
+  - "/Library/Homebrew"
+  schedule:
+    interval: weekly
+    day: friday
+    time: '08:00'
+    timezone: Etc/UTC
+  groups:
+    bundler:
+      patterns:
+      - "*"
+  allow:
+  - dependency-type: all
+  cooldown:
+    default-days: 7
+- package-ecosystem: devcontainers
+  directory: "/"
+  schedule:
+    interval: weekly
+    day: friday
+    time: '08:00'
+    timezone: Etc/UTC
+  groups:
+    devcontainers:
+      patterns:
+      - "*"
+  allow:
+  - dependency-type: all
+  cooldown:
+    default-days: 7
+- package-ecosystem: docker
+  directory: "/"
+  schedule:
+    interval: weekly
+    day: friday
+    time: '08:00'
+    timezone: Etc/UTC
+  groups:
+    docker:
+      patterns:
+      - "*"
+  allow:
+  - dependency-type: all
+  cooldown:
+    default-days: 7
+- package-ecosystem: github-actions
+  directory: "/"
+  schedule:
+    interval: weekly
+    day: friday
+    time: '08:00'
+    timezone: Etc/UTC
+  groups:
+    github-actions:
+      patterns:
+      - "*"
+  allow:
+  - dependency-type: all
+  cooldown:
+    default-days: 7
+- package-ecosystem: pip
+  directories:
+  - "/Library/Homebrew/formula-analytics/"
+  schedule:
+    interval: weekly
+    day: friday
+    time: '08:00'
+    timezone: Etc/UTC
+  groups:
+    pip:
+      patterns:
+      - "*"
+  allow:
+  - dependency-type: all
+  cooldown:
+    default-days: 7
 
-  - package-ecosystem: bundler
-    directory: /docs
-    schedule:
-      interval: weekly
-    allow:
-      - dependency-type: all
-    versioning-strategy: lockfile-only
-
-  - package-ecosystem: bundler
-    directory: /Library/Homebrew
-    schedule:
-      interval: daily
-    allow:
-      - dependency-type: all
-    ignore:
-      - dependency-name: sorbet-runtime
-    versioning-strategy: lockfile-only

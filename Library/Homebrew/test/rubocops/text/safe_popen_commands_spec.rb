@@ -1,9 +1,8 @@
-# typed: false
 # frozen_string_literal: true
 
 require "rubocops/lines"
 
-describe RuboCop::Cop::FormulaAudit::SafePopenCommands do
+RSpec.describe RuboCop::Cop::FormulaAudit::SafePopenCommands do
   subject(:cop) { described_class.new }
 
   context "when auditing popen commands" do
@@ -12,7 +11,7 @@ describe RuboCop::Cop::FormulaAudit::SafePopenCommands do
         class Foo < Formula
           def install
             Utils.popen_read "foo"
-            ^^^^^^^^^^^^^^^^^^^^^^ Use `Utils.safe_popen_read` instead of `Utils.popen_read`
+            ^^^^^^^^^^^^^^^^^^^^^^ FormulaAudit/SafePopenCommands: Use `Utils.safe_popen_read` instead of `Utils.popen_read`
           end
         end
       RUBY
@@ -31,7 +30,7 @@ describe RuboCop::Cop::FormulaAudit::SafePopenCommands do
         class Foo < Formula
           def install
             Utils.popen_write "foo"
-            ^^^^^^^^^^^^^^^^^^^^^^^ Use `Utils.safe_popen_write` instead of `Utils.popen_write`
+            ^^^^^^^^^^^^^^^^^^^^^^^ FormulaAudit/SafePopenCommands: Use `Utils.safe_popen_write` instead of `Utils.popen_write`
           end
         end
       RUBY

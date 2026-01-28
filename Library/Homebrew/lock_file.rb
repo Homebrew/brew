@@ -1,66 +1,113 @@
-# typed: true
+# typed: strict
 # frozen_string_literal: true
 
 require "fcntl"
+require "utils/output"
 
-# A lock file.
-#
-# @api private
+# A lock file to prevent multiple Homebrew processes from modifying the same path.
 class LockFile
+  include Utils::Output::Mixin
+
+  class OpenFileChangedOnDisk < RuntimeError; end
+  private_constant :OpenFileChangedOnDisk
+
+  sig { returns(Pathname) }
   attr_reader :path
 
-  def initialize(name)
-    @name = name.to_s
-    @path = HOMEBREW_LOCKS/"#{@name}.lock"
-    @lockfile = nil
+  sig { params(type: Symbol, locked_path: Pathname).void }
+  def initialize(type, locked_path)
+    @locked_path = locked_path
+    lock_name = locked_path.basename.to_s
+    @path = T.let(HOMEBREW_LOCKS/"#{lock_name}.#{type}.lock", Pathname)
+    @lockfile = T.let(nil, T.nilable(File))
   end
 
+  sig { void }
   def lock
-    @path.parent.mkpath
-    create_lockfile
-    return if @lockfile.flock(File::LOCK_EX | File::LOCK_NB)
+    ignore_interrupts do
+      next if @lockfile.present?
 
-    raise OperationInProgressError, @name
+      path.dirname.mkpath
+
+      begin
+        lockfile = begin
+          File.open(path, File::RDWR | File::CREAT)
+        rescue Errno::EMFILE
+          odie "The maximum number of open files on this system has been reached. " \
+               "Use `ulimit -n` to increase this limit."
+        end
+        lockfile.fcntl(Fcntl::F_SETFD, Fcntl::FD_CLOEXEC)
+
+        if lockfile.flock(File::LOCK_EX | File::LOCK_NB)
+          # This prevents a race condition in case the file we locked doesn't exist on disk anymore, e.g.:
+          #
+          # 1. Process A creates and opens the file.
+          # 2. Process A locks the file.
+          # 3. Process B opens the file.
+          # 4. Process A unlinks the file.
+          # 5. Process A unlocks the file.
+          # 6. Process B locks the file.
+          # 7. Process C creates and opens the file.
+          # 8. Process C locks the file.
+          # 9. Process B and C hold locks to files with different inode numbers. 💥
+          if !path.exist? || lockfile.stat.ino != path.stat.ino
+            lockfile.close
+            raise OpenFileChangedOnDisk
+          end
+
+          @lockfile = lockfile
+          next
+        end
+      rescue OpenFileChangedOnDisk
+        retry
+      end
+
+      lockfile.close
+      raise OperationInProgressError, @locked_path
+    end
   end
 
-  def unlock
-    return if @lockfile.nil? || @lockfile.closed?
+  sig { params(unlink: T::Boolean).void }
+  def unlock(unlink: false)
+    ignore_interrupts do
+      next if @lockfile.nil?
 
-    @lockfile.flock(File::LOCK_UN)
-    @lockfile.close
+      @path.unlink if unlink
+      @lockfile.flock(File::LOCK_UN)
+      @lockfile.close
+      @lockfile = nil
+    end
   end
 
-  def with_lock
+  sig { params(_block: T.proc.void).void }
+  def with_lock(&_block)
     lock
     yield
   ensure
     unlock
   end
-
-  private
-
-  def create_lockfile
-    return if @lockfile.present? && !@lockfile.closed?
-
-    @lockfile = @path.open(File::RDWR | File::CREAT)
-    @lockfile.fcntl(Fcntl::F_SETFD, Fcntl::FD_CLOEXEC)
-  end
 end
 
 # A lock file for a formula.
-#
-# @api private
 class FormulaLock < LockFile
-  def initialize(name)
-    super("#{name}.formula")
+  sig { params(rack_name: String).void }
+  def initialize(rack_name)
+    super(:formula, HOMEBREW_CELLAR/rack_name)
   end
 end
 
 # A lock file for a cask.
-#
-# @api private
 class CaskLock < LockFile
-  def initialize(name)
-    super("#{name}.cask")
+  sig { params(cask_token: String).void }
+  def initialize(cask_token)
+    super(:cask, HOMEBREW_PREFIX/"Caskroom/#{cask_token}")
+  end
+end
+
+# A lock file for a download.
+class DownloadLock < LockFile
+  sig { params(download_path: Pathname).void }
+  def initialize(download_path)
+    super(:download, download_path)
   end
 end

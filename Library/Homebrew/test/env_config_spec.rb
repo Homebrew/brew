@@ -1,10 +1,15 @@
-# typed: false
 # frozen_string_literal: true
 
 require "diagnostic"
 
-describe Homebrew::EnvConfig do
+RSpec.describe Homebrew::EnvConfig do
   subject(:env_config) { described_class }
+
+  describe "ENVS" do
+    it "sorts alphabetically" do
+      expect(env_config::ENVS.keys).to eql(env_config::ENVS.keys.sort)
+    end
+  end
 
   describe ".env_method_name" do
     it "generates method names" do
@@ -28,15 +33,15 @@ describe Homebrew::EnvConfig do
     end
   end
 
-  describe ".auto_update_secs" do
+  describe ".cleanup_periodic_full_days" do
     it "returns value if set" do
-      ENV["HOMEBREW_AUTO_UPDATE_SECS"] = "360"
-      expect(env_config.auto_update_secs).to eql("360")
+      ENV["HOMEBREW_CLEANUP_PERIODIC_FULL_DAYS"] = "360"
+      expect(env_config.cleanup_periodic_full_days).to eql("360")
     end
 
     it "returns default if unset" do
-      ENV["HOMEBREW_AUTO_UPDATE_SECS"] = nil
-      expect(env_config.auto_update_secs).to eql("300")
+      ENV["HOMEBREW_CLEANUP_PERIODIC_FULL_DAYS"] = nil
+      expect(env_config.cleanup_periodic_full_days).to eql("30")
     end
   end
 
@@ -62,6 +67,36 @@ describe Homebrew::EnvConfig do
       ENV["HOMEBREW_MAKE_JOBS"] = "-1"
       expect(Hardware::CPU).to receive(:cores).and_return(16)
       expect(env_config.make_jobs).to eql("16")
+    end
+  end
+
+  describe ".forbid_packages_from_paths?" do
+    before do
+      ENV["HOMEBREW_FORBID_PACKAGES_FROM_PATHS"] = nil
+      ENV["HOMEBREW_DEVELOPER"] = nil
+      ENV["HOMEBREW_TESTS"] = nil
+    end
+
+    it "returns true if HOMEBREW_FORBID_PACKAGES_FROM_PATHS is set" do
+      ENV["HOMEBREW_FORBID_PACKAGES_FROM_PATHS"] = "1"
+      expect(env_config.forbid_packages_from_paths?).to be(true)
+    end
+
+    it "returns true if HOMEBREW_DEVELOPER is not set" do
+      ENV["HOMEBREW_DEVELOPER"] = nil
+      expect(env_config.forbid_packages_from_paths?).to be(true)
+    end
+
+    it "returns false if HOMEBREW_DEVELOPER is set and HOMEBREW_FORBID_PACKAGES_FROM_PATHS is not set" do
+      ENV["HOMEBREW_DEVELOPER"] = "1"
+      ENV["HOMEBREW_FORBID_PACKAGES_FROM_PATHS"] = nil
+      expect(env_config.forbid_packages_from_paths?).to be(false)
+    end
+
+    it "returns true if both HOMEBREW_DEVELOPER and HOMEBREW_FORBID_PACKAGES_FROM_PATHS are set" do
+      ENV["HOMEBREW_DEVELOPER"] = "1"
+      ENV["HOMEBREW_FORBID_PACKAGES_FROM_PATHS"] = "1"
+      expect(env_config.forbid_packages_from_paths?).to be(true)
     end
   end
 end

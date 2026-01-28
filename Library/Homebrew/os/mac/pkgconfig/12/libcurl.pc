@@ -34,7 +34,7 @@ supported_features="alt-svc AsynchDNS GSS-API HSTS HTTP2 HTTPS-proxy IPv6 Kerber
 Name: libcurl
 URL: https://curl.se/
 Description: Library to transfer files with ftp, http, etc.
-Version: 7.77.0
+Version: 7.79.1
 Libs: -L${libdir} -lcurl
 Libs.private: -lldap -lz
 Cflags:
