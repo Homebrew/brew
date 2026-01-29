@@ -30,6 +30,7 @@ module Homebrew
       @tty = T.let($stdout.tty?, T::Boolean)
       @spinner = T.let(nil, T.nilable(Spinner))
       @symlink_targets = T.let({}, T::Hash[Pathname, T::Set[Downloadable]])
+      @downloads_by_location = T.let({}, T::Hash[Pathname, Concurrent::Promises::Future])
     end
 
     sig {
@@ -45,7 +46,7 @@ module Homebrew
       targets = @symlink_targets.fetch(cached_location)
       targets << downloadable
 
-      downloads[downloadable] ||= Concurrent::Promises.future_on(
+      @downloads_by_location[cached_location] ||= Concurrent::Promises.future_on(
         pool, RetryableDownload.new(downloadable, tries:, pour:),
         force, quiet, check_attestation
       ) do |download, force, quiet, check_attestation|
@@ -56,6 +57,8 @@ module Homebrew
         end
         create_symlinks_for_shared_download(cached_location)
       end
+
+      downloads[downloadable] = @downloads_by_location.fetch(cached_location)
     end
 
     sig { void }
@@ -173,6 +176,7 @@ module Homebrew
       Context.current = context_before_fetch
 
       downloads.clear
+      @downloads_by_location.clear
     end
 
     sig { params(message: String).void }
