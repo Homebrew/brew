@@ -175,6 +175,13 @@ module Cask
       @dsl.os.present?
     end
 
+    # Mark that this cask has architecture-specific behavior,
+    # which triggers variation computation for different architectures.
+    sig { void }
+    def mark_on_system_blocks_exist!
+      @dsl.instance_variable_set(:@on_system_blocks_exist, true)
+    end
+
     # The caskfile is needed during installation when there are
     # `*flight` blocks or the cask has multiple languages
     def caskfile_only?
