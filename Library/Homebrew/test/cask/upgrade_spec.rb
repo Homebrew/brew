@@ -25,21 +25,20 @@ RSpec.describe Cask::Upgrade, :cask do
     parser.args
   end
 
-  before do
-    installed.each do |cask|
-      Cask::Installer.new(Cask::CaskLoader.load(cask_path(cask))).install
-    end
-  end
-
   context "when the upgrade is a dry run" do
-    let(:installed) do
+    # Use stub installation for dry-run tests since they mock upgrade_cask
+    # and only need to verify installation state, not perform real upgrades.
+    # This avoids downloading and extracting archives, significantly speeding up tests.
+    before do
       [
         "outdated/local-caffeine",
         "outdated/local-transmission-zip",
         "outdated/auto-updates",
         "outdated/version-latest",
         "outdated/renamed-app",
-      ]
+      ].each do |cask_name|
+        InstallHelper.stub_cask_installation(Cask::CaskLoader.load(cask_path(cask_name)))
+      end
     end
 
     describe 'without --greedy it ignores the Casks with "version latest" or "auto_updates true"' do
@@ -214,11 +213,15 @@ RSpec.describe Cask::Upgrade, :cask do
   end
 
   context "when an upgrade failed" do
-    let(:installed) do
+    # These tests perform actual upgrades and test rollback behavior,
+    # so they need full real installations.
+    before do
       [
         "outdated/bad-checksum",
         "outdated/will-fail-if-upgraded",
-      ]
+      ].each do |cask|
+        Cask::Installer.new(Cask::CaskLoader.load(cask_path(cask))).install
+      end
     end
 
     let(:output_reverted) do
@@ -265,12 +268,16 @@ RSpec.describe Cask::Upgrade, :cask do
   end
 
   context "when there were multiple failures" do
-    let(:installed) do
+    # These tests perform actual upgrades and test error handling,
+    # so they need full real installations.
+    before do
       [
         "outdated/bad-checksum",
         "outdated/local-transmission-zip",
         "outdated/bad-checksum2",
-      ]
+      ].each do |cask|
+        Cask::Installer.new(Cask::CaskLoader.load(cask_path(cask))).install
+      end
     end
 
     it "does not end the upgrade process" do
