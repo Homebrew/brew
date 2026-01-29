@@ -913,13 +913,21 @@ module Homebrew
 
       missing_compatibility_bumps = changed_dependency_paths.filter_map do |path|
         changed_formula = Formulary.factory(path)
-        # Each changed dependency must raise its compatibility_version by exactly one.
+        # Each changed dependency that updates its version must raise its compatibility_version by exactly one.
         _, origin_head_dependency_version_info = committed_version_info(formula: changed_formula)
+        previous_dependency_version = origin_head_dependency_version_info[:version]
+        current_dependency_version = changed_formula.stable&.version
+        if previous_dependency_version.present? && current_dependency_version.present? &&
+           current_dependency_version == previous_dependency_version
+          next
+        end
+
         previous_compatibility_version = origin_head_dependency_version_info[:compatibility_version] || 0
         current_compatibility_version = changed_formula.compatibility_version || 0
         next if current_compatibility_version == previous_compatibility_version + 1
 
-        "#{changed_formula.name} (#{previous_compatibility_version} to #{current_compatibility_version})"
+        expected_compatibility_version = previous_compatibility_version + 1
+        "#{changed_formula.name} (#{previous_compatibility_version} to #{expected_compatibility_version})"
       end
       return if missing_compatibility_bumps.empty? || !formula.core_formula?
 
@@ -1156,10 +1164,9 @@ module Homebrew
       return changed_paths if only_names.blank?
 
       expected_paths = only_names.filter_map do |name|
-        relative_path = Pathname(name.to_s.delete_prefix("#{tap.name}/"))
-        relative_path = relative_path.sub_ext(".rb") if relative_path.extname.empty?
-        absolute_path = tap.formula_dir/relative_path
-        absolute_path.expand_path if absolute_path.exist?
+        formula_name = name.to_s.delete_prefix("#{tap.name}/")
+        formula_name = formula_name.delete_suffix(".rb")
+        tap.formula_files_by_name[formula_name]&.expand_path
       end.map(&:to_s)
 
       changed_paths.select { |path| expected_paths.include?(path.expand_path.to_s) }

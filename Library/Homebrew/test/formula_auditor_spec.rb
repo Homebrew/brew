@@ -1285,6 +1285,42 @@ RSpec.describe Homebrew::FormulaAuditor do
     end
   end
 
+  describe "#changed_formulae_paths" do
+    let(:tap_path) { Pathname("#{dir}/changed-paths-tap") }
+    let(:tap) do
+      instance_double(
+        Tap,
+        git?:        true,
+        core_tap?:   false,
+        path:        tap_path,
+        formula_dir: tap_path/"Formula",
+        name:        "homebrew/core",
+      )
+    end
+    let(:target_formula) do
+      build_formula_for_audit(
+        tap:,
+        tap_path:,
+        name:     "bar",
+      )
+    end
+    let(:auditor) { described_class.new(target_formula, git: true) }
+
+    it "resolves sharded formula paths when filtering by names" do
+      sharded_path = tap_path/"Formula/f/foo.rb"
+      sharded_path.dirname.mkpath
+      sharded_path.write(test_formula_source(name: "foo"))
+      allow(tap).to receive(:formula_files_by_name)
+        .and_return({ "foo" => sharded_path, "bar" => tap_path/"Formula/bar.rb" })
+      allow(Utils::Git).to receive(:git).and_return("git")
+      allow(Utils).to receive(:safe_popen_read).and_return("Formula/f/foo.rb\n")
+
+      paths = auditor.send(:changed_formulae_paths, tap, only_names: ["foo"])
+
+      expect(paths).to eq([sharded_path])
+    end
+  end
+
   describe "#audit_compatibility_version" do
     let(:tap_path) { Pathname("#{dir}/compat-tap") }
     let(:tap) do
@@ -1511,11 +1547,25 @@ RSpec.describe Homebrew::FormulaAuditor do
           stub_changed_paths(auditor, all_paths: [foo_path], filtered_paths: [foo_path])
         end
 
+        it "ignores dependency changes without a version bump" do
+          stub_committed_info(
+            auditor,
+            default:   [{ revision: current_revision - 1 }, { revision: current_revision - 1 }],
+            overrides: { dependency_formula => [{ version: "1.0" }, { version: "1.0" }] },
+          )
+          allow(dependency_formula).to receive(:compatibility_version).and_return(0)
+
+          auditor.audit_revision
+
+          expect(auditor.problems).to be_empty
+        end
+
         it "flags missing compatibility_version bumps" do
           stub_committed_info(
             auditor,
             default:   [{ revision: current_revision - 1 }, { revision: current_revision - 1 }],
-            overrides: { dependency_formula => [{ compatibility_version: 1 }, { compatibility_version: 1 }] },
+            overrides: { dependency_formula => [{ version: "0.9", compatibility_version: 1 },
+                                                { version: "0.9", compatibility_version: 1 }] },
           )
           allow(dependency_formula).to receive(:compatibility_version).and_return(1)
 
@@ -1523,7 +1573,7 @@ RSpec.describe Homebrew::FormulaAuditor do
 
           expect(auditor.problems).to include(
             a_hash_including(
-              message: a_string_matching(/must increase `compatibility_version` by 1: foo \(1 to 1\)/),
+              message: a_string_matching(/must increase `compatibility_version` by 1: foo \(1 to 2\)/),
             ),
           )
         end

@@ -1,4 +1,6 @@
-# Copilot Instructions for Homebrew/brew
+# Agent Instructions for Homebrew/brew
+
+Most importantly, run `brew lgtm` to verify any file edits before prompting for input to run all style checks and tests.
 
 This is a Ruby based repository with Bash scripts for faster execution.
 It is primarily responsible for providing the `brew` command for the Homebrew package manager.
@@ -8,7 +10,6 @@ Please follow these guidelines when contributing:
 
 ### Required Before Each Commit
 
-- ALWAYS run `brew lgtm` to verify changes; it runs typecheck, style and tests in one go.
 - Run `brew typecheck` to verify types are declared correctly using Sorbet.
   Individual files/directories cannot be checked.
   `brew typecheck` is fast enough to just be run globally every time.
