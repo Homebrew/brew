@@ -155,8 +155,8 @@ module Homebrew
       end
 
       sig { params(cask: Cask::Cask, os: Symbol).returns(T::Array[Symbol]) }
-      def architectures(cask:, os: :macos)
-        architectures = []
+      def architectures(cask:, os:)
+        architectures = T.let([], T::Array[Symbol])
         [:arm, :intel].each do |arch|
           tag = Utils::Bottles::Tag.new(system: os, arch: arch)
           Homebrew::SimulateSystem.with_tag(tag) do
@@ -271,10 +271,10 @@ module Homebrew
           cask = Cask::CaskLoader.load(path.expand_path)
 
           runners, multi_os = runners(cask:)
-          runners.product(architectures(cask:)).filter_map do |runner, arch|
+          runners.product(architectures(cask:, os: :macos)).filter_map do |runner, arch|
             native_runner_arch = arch == runner.fetch(:arch)
             # we don't need to run simulated archs on Linux or macOS Sequoia
-            # because it has a GitHub hosted x86_64 runner
+            # because they exist as real GitHub hosted runner
             next if runner.fetch(:symbol) == :linux && !native_runner_arch
             next if runner.fetch(:symbol) == :sequoia && !native_runner_arch
 

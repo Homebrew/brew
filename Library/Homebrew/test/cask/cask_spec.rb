@@ -299,6 +299,68 @@ RSpec.describe Cask::Cask, :cask do
     end
   end
 
+  describe "#contains_os_specific_artifacts?" do
+    it "returns false when there are no OSes defined" do
+      cask = described_class.new("test-no-os") do
+        version "0.0.1,2"
+
+        url "https://brew.sh/test-0.0.1.dmg"
+        name "Test"
+        desc "Test cask"
+        homepage "https://brew.sh"
+      end
+
+      expect(cask.contains_os_specific_artifacts?).to be false
+    end
+
+    it "returns false when there are no artifacts" do
+      cask = described_class.new("test-os-no-artifacts") do
+        os macos: "mac", linux: "Linux"
+        version "0.0.1,2"
+
+        url "https://brew.sh/test-0.0.1.dmg"
+        name "Test"
+        desc "Test cask"
+        homepage "https://brew.sh"
+      end
+
+      expect(cask.contains_os_specific_artifacts?).to be false
+    end
+
+    it "returns false when there are scoped app" do
+      cask = described_class.new("test-macos-app-artifact") do
+        version "0.0.1,2"
+
+        url "https://brew.sh/test-0.0.1.dmg"
+        name "Test"
+        desc "Test cask"
+        homepage "https://brew.sh"
+
+        on_macos do
+          app "Test.app"
+        end
+      end
+
+      expect(cask.contains_os_specific_artifacts?).to be false
+    end
+
+    it "returns true when there are unscoped app artifacts" do
+      cask = described_class.new("test-os-app-artifact") do
+        os macos: "mac", linux: "Linux"
+        version "0.0.1,2"
+
+        url "https://brew.sh/test-0.0.1.dmg"
+        name "Test"
+        desc "Test cask"
+        homepage "https://brew.sh"
+
+        app "Test.app"
+      end
+
+      expect(cask.contains_os_specific_artifacts?).to be true
+    end
+  end
+
   describe "#to_h" do
     let(:expected_json) { (TEST_FIXTURE_DIR/"cask/everything.json").read.strip }
 
