@@ -232,20 +232,9 @@ class LinkageChecker
     false
   end
 
-  sig { params(dylib: String).returns(T::Boolean) }
-  def dylib_found_in_shared_cache?(dylib)
-    require "fiddle"
-    @dyld_shared_cache_contains_path ||= T.let(begin
-      libc = Fiddle.dlopen("/usr/lib/libSystem.B.dylib")
-
-      Fiddle::Function.new(
-        libc["_dyld_shared_cache_contains_path"],
-        [Fiddle::TYPE_CONST_STRING],
-        Fiddle::TYPE_BOOL,
-      )
-    end, T.nilable(Fiddle::Function))
-
-    @dyld_shared_cache_contains_path.call(dylib)
+  sig { params(_dylib: String).returns(T::Boolean) }
+  def dylib_found_in_shared_cache?(_dylib)
+    false
   end
 
   sig {
