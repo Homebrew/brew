@@ -172,7 +172,7 @@ module Homebrew
         with_monkey_patch { Formulary.from_contents(name, file, contents, ignore_errors: true) }
       end
 
-      sig { params(_block: T.proc.void).returns(T.untyped) }
+      sig { type_parameters(:U).params(_block: T.proc.returns(T.type_parameter(:U))).returns(T.type_parameter(:U)) }
       def with_monkey_patch(&_block)
         # Since `method_defined?` is not a supported type guard, the use of `alias_method` below is not typesafe:
         BottleSpecification.class_eval do

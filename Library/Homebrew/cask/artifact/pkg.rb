@@ -1,4 +1,4 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
 
 require "plist"
@@ -11,30 +11,48 @@ module Cask
   module Artifact
     # Artifact corresponding to the `pkg` stanza.
     class Pkg < AbstractArtifact
-      attr_reader :path, :stanza_options
+      Choices = T.type_alias { T.nilable(T.any(T::Array[T::Hash[T.anything, T.anything]], T::Hash[Symbol, T.anything])) }
+      private_constant :Choices
+      StanzaOptions = T.type_alias { { allow_untrusted: T.nilable(T::Boolean), choices: Choices } }
+      private_constant :StanzaOptions
 
+      sig { returns(Pathname) }
+      attr_reader :path
+
+      sig { returns(T::Hash[Symbol, T.anything]) }
+      attr_reader :stanza_options
+
+      # sig { params(cask: Cask, path: String, allow_untrusted: T.nilable(T::Boolean), choices: Choices).returns(Pkg) }
+      # def self.from_args(cask, path, allow_untrusted: nil, choices: nil)
+      sig { params(cask: Cask, path: String, stanza_options: T.anything).returns(Pkg) }
       def self.from_args(cask, path, **stanza_options)
         stanza_options.assert_valid_keys(:allow_untrusted, :choices)
         new(cask, path, **stanza_options)
       end
 
+      # sig { params(cask: Cask, path: String, allow_untrusted: T.nilable(T::Boolean), choices: Choices).void }
+      # def initialize(cask, path, allow_untrusted: nil, choices: nil)
+      sig { params(cask: Cask, path: String, stanza_options: T.anything).void }
       def initialize(cask, path, **stanza_options)
         super
-        @path = cask.staged_path.join(path)
-        @stanza_options = stanza_options
+        @path = T.let(cask.staged_path.join(path), Pathname)
+        @stanza_options = T.let(stanza_options, T::Hash[Symbol, T.anything])
       end
 
+      sig { override.returns(String) }
       def summarize
         path.relative_path_from(cask.staged_path).to_s
       end
 
-      def install_phase(**options)
-        run_installer(**options)
+      sig { params(command: T.class_of(SystemCommand), options: T.anything).void }
+      def install_phase(command:, **options)
+        run_installer(command:, **options)
       end
 
       private
 
-      def run_installer(command: nil, verbose: false, **_options)
+      sig { params(command: T.class_of(SystemCommand), verbose: T::Boolean, _options: T.anything).void }
+      def run_installer(command:, verbose: false, **_options)
         ohai "Running installer for #{cask} with `sudo` (which may request your password)..."
         unless path.exist?
           pkg = path.relative_path_from(cask.staged_path)
@@ -71,9 +89,10 @@ module Cask
         end
       end
 
-      def with_choices_file
+      sig { params(_block: T.proc.params(file_path: T.nilable(String)).void).void }
+      def with_choices_file(&_block)
         choices = stanza_options.fetch(:choices, {})
-        return yield nil if choices.empty?
+        return yield nil if T.unsafe(choices).empty?
 
         Tempfile.open(["choices", ".xml"]) do |file|
           file.write Plist::Emit.dump(choices)

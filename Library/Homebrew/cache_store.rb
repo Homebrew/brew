@@ -22,9 +22,9 @@ class CacheStoreDatabase
       .returns(T.type_parameter(:U))
   }
   def self.use(type, &_blk)
-    @db_type_reference_hash ||= T.let({}, T.nilable(T::Hash[T.untyped, T.untyped]))
-    @db_type_reference_hash[type] ||= {}
-    type_ref = @db_type_reference_hash[type]
+    @db_type_reference_hash ||= T.let({}, T.nilable(T::Hash[Symbol, { count: Integer, db: CacheStoreDatabase }]))
+    @db_type_reference_hash[type] ||= { count: 0, db: CacheStoreDatabase.new(type) }
+    type_ref = @db_type_reference_hash.fetch(type)
 
     type_ref[:count] ||= 0
     type_ref[:count]  += 1

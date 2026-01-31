@@ -8,7 +8,7 @@ module Cask
     # Artifact corresponding to the `app` stanza.
     class App < Moved
       sig {
-        params(
+        override.params(
           adopt:        T::Boolean,
           auto_updates: T.nilable(T::Boolean),
           force:        T::Boolean,

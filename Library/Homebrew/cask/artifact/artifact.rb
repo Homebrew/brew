@@ -12,20 +12,21 @@ module Cask
         "Generic Artifact"
       end
 
-      sig { params(cask: Cask, args: T.untyped).returns(T.attached_class) }
-      def self.from_args(cask, *args)
-        source, options = args
-
+      sig { params(cask: Cask, source: T.nilable(String), target_hash: T.anything).returns(Relocated) }
+      def self.from_args(cask, source = nil, **target_hash)
         raise CaskInvalidError.new(cask.token, "No source provided for #{english_name}.") if source.blank?
 
-        unless options&.key?(:target)
+        unless target_hash.key?(:target)
           raise CaskInvalidError.new(cask.token, "#{english_name} '#{source}' requires a target.")
         end
 
-        new(cask, source, **options)
+        new(cask, source, **target_hash)
       end
 
-      sig { params(target: T.any(String, Pathname)).returns(Pathname) }
+      # FIXME: This is a pre-existing violation
+      # rubocop:disable Sorbet/AllowIncompatibleOverride
+      sig { override(allow_incompatible: true).params(target: T.any(String, Pathname)).returns(Pathname) }
+      # rubocop:enable Sorbet/AllowIncompatibleOverride
       def resolve_target(target)
         super(target, base_dir: nil)
       end

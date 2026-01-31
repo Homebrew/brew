@@ -8,7 +8,7 @@ module Cask
 
     Elem = type_member(:out) { { fixed: Artifact::AbstractArtifact } }
 
-    sig { params(block: T.nilable(T.proc.params(arg0: Elem).returns(T.untyped))).void }
+    sig { override.params(block: T.nilable(T.proc.params(arg0: Elem).returns(BasicObject))).returns(T.untyped) }
     def each(&block)
       return enum_for(T.must(__method__)) { size } unless block
 
