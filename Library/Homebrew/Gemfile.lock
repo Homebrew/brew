@@ -160,7 +160,7 @@ GEM
       spoom (>= 1.7.9)
       thor (>= 1.2.0)
       yard-sorbet
-    test-prof (1.5.0)
+    test-prof (1.5.1)
     thor (1.5.0)
     tsort (0.2.0)
     unicode-display_width (3.2.0)

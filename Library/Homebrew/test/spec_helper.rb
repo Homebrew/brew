@@ -31,8 +31,7 @@ Warnings.ignore :parser_syntax do
   require "rubocop"
 end
 
-# TODO: Remove this workaround once TestProf fixes their RuboCop plugin.
-# This is needed because the RuboCop RSpec plugin attempts to load TestProf's RuboCop plugin.
+# Load the test-prof RuboCop plugin manually to avoid issues with auto-loading (see test_prof_rubocop_stub.rb)
 require "utils/test_prof_rubocop_stub"
 
 require "rspec/github"

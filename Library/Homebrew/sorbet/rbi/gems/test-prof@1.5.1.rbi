@@ -105,6 +105,146 @@ module Process
   end
 end
 
+module RuboCop; end
+module RuboCop::Cop; end
+module RuboCop::Cop::RSpec; end
+
+class RuboCop::Cop::RSpec::AggregateExamples < ::RuboCop::Cop::Base
+  include ::RuboCop::Cop::RSpec::AggregateExamples::Its
+  include ::RuboCop::Cop::RSpec::Language
+  include ::RuboCop::Cop::RSpec::AggregateExamples::MatchersWithSideEffects
+  include ::RuboCop::Cop::RangeHelp
+  include ::RuboCop::Cop::RSpec::AggregateExamples::LineRangeHelpers
+  include ::RuboCop::Cop::RSpec::AggregateExamples::MetadataHelpers
+  include ::RuboCop::Cop::RSpec::AggregateExamples::NodeMatchers
+  extend ::RuboCop::Cop::AutoCorrector
+
+  def on_block(node); end
+
+  private
+
+  def aggregated_example(examples, metadata); end
+  def drop_example(corrector, example); end
+  def example_clusters(all_examples); end
+  def example_clusters_for_autocorrect(example_node); end
+  def message_for(example, first_example); end
+  def new_body(node); end
+  def transform_body(node, base_indent); end
+end
+
+module RuboCop::Cop::RSpec::AggregateExamples::Its
+  extend ::RuboCop::AST::NodePattern::Macros
+
+  def example_for_autocorrect?(param0 = T.unsafe(nil)); end
+  def its_with_multi_element_array_argument?(param0 = T.unsafe(nil)); end
+  def its_with_send_or_var_argument?(param0 = T.unsafe(nil)); end
+
+  private
+
+  def example_metadata(example); end
+  def its?(node); end
+  def new_body(node); end
+  def transform_its(body, arguments); end
+end
+
+module RuboCop::Cop::RSpec::AggregateExamples::LineRangeHelpers
+  include ::RuboCop::Cop::RangeHelp
+
+  private
+
+  def adjacent?(range, another_range); end
+  def range_for_replace(examples); end
+end
+
+RuboCop::Cop::RSpec::AggregateExamples::MSG = T.let(T.unsafe(nil), String)
+
+module RuboCop::Cop::RSpec::AggregateExamples::MatchersWithSideEffects
+  include ::RuboCop::Cop::RSpec::Language
+  extend ::RuboCop::AST::NodePattern::Macros
+
+  def example_for_autocorrect?(param0 = T.unsafe(nil)); end
+  def example_with_side_effects?(param0 = T.unsafe(nil)); end
+  def expectation_with_side_effects?(param0 = T.unsafe(nil)); end
+  def matcher_with_side_effects?(param0); end
+
+  private
+
+  def matcher_with_side_effects_name?(matcher_name); end
+  def matcher_with_side_effects_names; end
+  def message_for(example, first_example); end
+end
+
+RuboCop::Cop::RSpec::AggregateExamples::MatchersWithSideEffects::MSG_FOR_EXPECTATIONS_WITH_SIDE_EFFECTS = T.let(T.unsafe(nil), String)
+
+module RuboCop::Cop::RSpec::AggregateExamples::MetadataHelpers
+  private
+
+  def add_aggregate_failures_metadata?; end
+  def example_metadata(example); end
+  def metadata_for_aggregated_example(metadata); end
+  def metadata_pairs_without_aggegate_failures(metadata); end
+  def metadata_symbols_without_aggregate_failures(metadata); end
+  def metadata_without_aggregate_failures(example); end
+end
+
+module RuboCop::Cop::RSpec::AggregateExamples::NodeMatchers
+  include ::RuboCop::Cop::RSpec::Language
+  extend ::RuboCop::AST::NodePattern::Macros
+
+  def example_for_autocorrect?(param0 = T.unsafe(nil)); end
+  def example_group_with_several_examples(param0 = T.unsafe(nil)); end
+  def example_has_title?(param0 = T.unsafe(nil)); end
+  def example_with_expectations_only?(param0 = T.unsafe(nil)); end
+  def expectation?(param0 = T.unsafe(nil)); end
+  def single_expectation?(param0 = T.unsafe(nil)); end
+  def subject_with_no_args?(param0 = T.unsafe(nil)); end
+
+  private
+
+  def contains_heredoc?(node); end
+  def example_method?(method_name); end
+end
+
+module RuboCop::Cop::RSpec::Language; end
+module RuboCop::Cop::RSpec::Language::ExampleGroups; end
+RuboCop::Cop::RSpec::Language::ExampleGroups::ALL = T.let(T.unsafe(nil), RuboCop::Cop::RSpec::Language::SelectorSet)
+RuboCop::Cop::RSpec::Language::ExampleGroups::FOCUSED = T.let(T.unsafe(nil), RuboCop::Cop::RSpec::Language::SelectorSet)
+RuboCop::Cop::RSpec::Language::ExampleGroups::GROUPS = T.let(T.unsafe(nil), RuboCop::Cop::RSpec::Language::SelectorSet)
+RuboCop::Cop::RSpec::Language::ExampleGroups::SKIPPED = T.let(T.unsafe(nil), RuboCop::Cop::RSpec::Language::SelectorSet)
+module RuboCop::Cop::RSpec::Language::Examples; end
+RuboCop::Cop::RSpec::Language::Examples::ALL = T.let(T.unsafe(nil), RuboCop::Cop::RSpec::Language::SelectorSet)
+RuboCop::Cop::RSpec::Language::Examples::EXAMPLES = T.let(T.unsafe(nil), RuboCop::Cop::RSpec::Language::SelectorSet)
+RuboCop::Cop::RSpec::Language::Examples::FOCUSED = T.let(T.unsafe(nil), RuboCop::Cop::RSpec::Language::SelectorSet)
+RuboCop::Cop::RSpec::Language::Examples::PENDING = T.let(T.unsafe(nil), RuboCop::Cop::RSpec::Language::SelectorSet)
+RuboCop::Cop::RSpec::Language::Examples::SKIPPED = T.let(T.unsafe(nil), RuboCop::Cop::RSpec::Language::SelectorSet)
+RuboCop::Cop::RSpec::Language::RSPEC = T.let(T.unsafe(nil), String)
+module RuboCop::Cop::RSpec::Language::Runners; end
+RuboCop::Cop::RSpec::Language::Runners::ALL = T.let(T.unsafe(nil), RuboCop::Cop::RSpec::Language::SelectorSet)
+
+class RuboCop::Cop::RSpec::Language::SelectorSet
+  def initialize(selectors); end
+
+  def +(other); end
+  def ==(other); end
+  def block_pattern; end
+  def include?(selector); end
+  def node_pattern; end
+  def node_pattern_union; end
+  def send_pattern; end
+
+  protected
+
+  def selectors; end
+end
+
+module RuboCop::TestProf; end
+
+class RuboCop::TestProf::Plugin < ::LintRoller::Plugin
+  def about; end
+  def rules(_context); end
+  def supported?(context); end
+end
+
 module TestProf
   extend ::TestProf::Logging
 

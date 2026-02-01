@@ -19,13 +19,13 @@ RSpec.describe "RuboCop" do
     end
 
     it "loads all Formula cops without errors" do
-      # TODO: Remove these args once TestProf fixes their RuboCop plugin.
+      # Work around the test-prof plugin's RuboCop version check, which is incompatible with Homebrew's ruby setup.
       test_prof_rubocop_args = [
         # Require "sorbet-runtime" to bring T into scope for warnings.rb
         "-r", "sorbet-runtime",
         # Require "extend/module" to include T::Sig in Module for warnings.rb
         "-r", HOMEBREW_LIBRARY_PATH/"extend/module.rb",
-        # Work around TestProf RuboCop plugin issues
+        # Load the test-prof RuboCop plugin manually to avoid issues with auto-loading (see test_prof_rubocop_stub.rb)
         "-r", HOMEBREW_LIBRARY_PATH/"utils/test_prof_rubocop_stub.rb"
       ]
 
