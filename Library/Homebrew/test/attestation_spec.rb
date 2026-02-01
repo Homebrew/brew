@@ -19,7 +19,8 @@ RSpec.describe Homebrew::Attestation do
   let(:fake_bottle_tag) { instance_double(Utils::Bottles::Tag, to_sym: :faketag) }
   let(:fake_all_bottle_tag) { instance_double(Utils::Bottles::Tag, to_sym: :all) }
   let(:fake_digest) { "a" * 64 }
-  let(:fake_bundle_url_template) { "https://mirror.internal/bundles/{digest}.jsonl" }
+  let(:fake_bundle_url_template) { "https://mirror.internal/bundles/{hexdigest}.jsonl" }
+  let(:fake_oci_bundle_url_template) { "https://mirror.internal/bundles/{digest}.jsonl" }
   let(:fake_trusted_root_url) { "https://mirror.internal/trusted_root.json" }
   let(:fake_checksum) { instance_double(Checksum, hexdigest: fake_digest) }
   let(:fake_resource) { instance_double(Resource, checksum: fake_checksum) }
@@ -144,6 +145,32 @@ RSpec.describe Homebrew::Attestation do
     end
   end
 
+  describe "::detect_digest_algorithm" do
+    it "detects SHA256 from 64-character hex strings" do
+      expect(described_class.detect_digest_algorithm("a" * 64)).to eq :sha256
+      expect(described_class.detect_digest_algorithm("0123456789abcdef" * 4)).to eq :sha256
+    end
+
+    it "is case-insensitive" do
+      expect(described_class.detect_digest_algorithm("A" * 64)).to eq :sha256
+    end
+
+    it "returns nil for invalid lengths" do
+      expect(described_class.detect_digest_algorithm("a" * 32)).to be_nil
+      expect(described_class.detect_digest_algorithm("a" * 63)).to be_nil
+      expect(described_class.detect_digest_algorithm("a" * 65)).to be_nil
+      expect(described_class.detect_digest_algorithm("a" * 128)).to be_nil
+    end
+
+    it "returns nil for non-hex characters" do
+      expect(described_class.detect_digest_algorithm("g" * 64)).to be_nil
+    end
+
+    it "returns nil for empty strings" do
+      expect(described_class.detect_digest_algorithm("")).to be_nil
+    end
+  end
+
   describe "::valid_digest?" do
     it "returns true for valid 64-character lowercase hex strings" do
       expect(described_class.valid_digest?("a" * 64)).to be true
@@ -245,7 +272,7 @@ RSpec.describe Homebrew::Attestation do
 
       expect do
         described_class.fetch_attestation_bundle("invalid-digest")
-      end.to raise_error(described_class::BundleFetchError, /Invalid digest format/)
+      end.to raise_error(described_class::BundleFetchError, /Invalid sha256 digest format/)
     end
 
     it "raises BundleFetchError for digest that is too short" do
@@ -254,10 +281,19 @@ RSpec.describe Homebrew::Attestation do
 
       expect do
         described_class.fetch_attestation_bundle("abc123")
-      end.to raise_error(described_class::BundleFetchError, /Invalid digest format/)
+      end.to raise_error(described_class::BundleFetchError, /Invalid sha256 digest format/)
     end
 
-    it "fetches bundle with digest substituted in URL" do
+    it "raises BundleFetchError for unsupported algorithm" do
+      allow(Homebrew::EnvConfig).to receive(:attestation_bundle_url)
+        .and_return(fake_bundle_url_template)
+
+      expect do
+        described_class.fetch_attestation_bundle(fake_digest, algorithm: :md5)
+      end.to raise_error(described_class::BundleFetchError, /Unsupported digest algorithm/)
+    end
+
+    it "substitutes {hexdigest} with raw hex string in URL" do
       allow(Homebrew::EnvConfig).to receive(:attestation_bundle_url)
         .and_return(fake_bundle_url_template)
 
@@ -270,7 +306,48 @@ RSpec.describe Homebrew::Attestation do
 
       result = described_class.fetch_attestation_bundle(fake_digest)
       expect(result).to be_a(Pathname)
-      expect(result.basename.to_s).to eq "#{fake_digest}.jsonl"
+      expect(result.basename.to_s).to eq "sha256_#{fake_digest}.jsonl"
+    end
+
+    it "substitutes {digest} with OCI-format (algorithm:hexdigest) in URL" do
+      allow(Homebrew::EnvConfig).to receive(:attestation_bundle_url)
+        .and_return(fake_oci_bundle_url_template)
+
+      expected_url = "https://mirror.internal/bundles/sha256:#{fake_digest}.jsonl"
+
+      expect(Utils::Curl).to receive(:curl_download) do |url, to:, **_opts|
+        expect(url).to eq expected_url
+        to.write('{"attestation": "data"}')
+      end
+
+      result = described_class.fetch_attestation_bundle(fake_digest)
+      expect(result).to be_a(Pathname)
+    end
+
+    it "substitutes {algorithm} with algorithm name in URL" do
+      allow(Homebrew::EnvConfig).to receive(:attestation_bundle_url)
+        .and_return("https://mirror.internal/{algorithm}/{hexdigest}.jsonl")
+
+      expected_url = "https://mirror.internal/sha256/#{fake_digest}.jsonl"
+
+      expect(Utils::Curl).to receive(:curl_download) do |url, to:, **_opts|
+        expect(url).to eq expected_url
+        to.write('{"attestation": "data"}')
+      end
+
+      described_class.fetch_attestation_bundle(fake_digest)
+    end
+
+    it "uses filesystem-safe cache naming (algorithm_hexdigest)" do
+      allow(Homebrew::EnvConfig).to receive(:attestation_bundle_url)
+        .and_return(fake_oci_bundle_url_template)
+
+      expect(Utils::Curl).to receive(:curl_download) do |_url, to:, **_opts|
+        to.write('{"attestation": "data"}')
+      end
+
+      result = described_class.fetch_attestation_bundle(fake_digest)
+      expect(result.basename.to_s).to eq "sha256_#{fake_digest}.jsonl"
     end
 
     it "uses cached bundle if within 24 hours" do
@@ -279,7 +356,7 @@ RSpec.describe Homebrew::Attestation do
 
       bundle_cache_dir = HOMEBREW_CACHE/"attestation-bundles"
       bundle_cache_dir.mkpath
-      bundle_path = bundle_cache_dir/"#{fake_digest}.jsonl"
+      bundle_path = bundle_cache_dir/"sha256_#{fake_digest}.jsonl"
       bundle_path.write('{"cached": "bundle"}')
 
       # Should not call curl_download
@@ -295,7 +372,7 @@ RSpec.describe Homebrew::Attestation do
 
       bundle_cache_dir = HOMEBREW_CACHE/"attestation-bundles"
       bundle_cache_dir.mkpath
-      bundle_path = bundle_cache_dir/"#{fake_digest}.jsonl"
+      bundle_path = bundle_cache_dir/"sha256_#{fake_digest}.jsonl"
       bundle_path.write('{"old": "bundle"}')
       # Set mtime to 25 hours ago (past the 24h cache duration)
       FileUtils.touch(bundle_path, mtime: Time.now - (25 * 3600))
@@ -626,8 +703,9 @@ RSpec.describe Homebrew::Attestation do
       let(:fake_root_path) { Pathname.new("/fake/trusted/root.json") }
 
       before do
-        allow(described_class).to receive_messages(offline_verification?: true,
-                                                   fetch_attestation_bundle: fake_bundle_path, trusted_root_path: fake_root_path)
+        allow(described_class).to receive_messages(offline_verification?:    true,
+                                                   fetch_attestation_bundle: fake_bundle_path,
+                                                   trusted_root_path:        fake_root_path)
       end
 
       it "does not require GitHub credentials" do

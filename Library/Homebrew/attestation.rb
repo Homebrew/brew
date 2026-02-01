@@ -39,6 +39,12 @@ module Homebrew
     # @api private
     TRUSTED_ROOT_CACHE_DURATION = T.let(86400, Integer) # 24 hours
 
+    # Supported digest algorithms with their expected hex lengths
+    # @api private
+    DIGEST_ALGORITHMS = T.let({
+      sha256: 64,
+    }.freeze, T::Hash[Symbol, Integer])
+
     # Raised when the attestation was not found.
     #
     # @api private
@@ -132,12 +138,23 @@ module Homebrew
       str.match?(%r{\A[a-z][a-z0-9+.-]*://}i)
     end
 
-    # Validate that a digest is a valid hex string.
+    # Detect the algorithm of a digest from its length.
+    #
+    # @param digest [String] The hex digest string
+    # @return [Symbol, nil] The algorithm symbol (:sha256, :sha512) or nil if unknown
+    #
+    # @api private
+    sig { params(digest: String).returns(T.nilable(Symbol)) }
+    def self.detect_digest_algorithm(digest)
+      DIGEST_ALGORITHMS.find { |_, len| digest.match?(/\A[0-9a-f]{#{len}}\z/i) }&.first
+    end
+
+    # Validate that a digest is a valid hex string for a supported algorithm.
     #
     # @api private
     sig { params(digest: String).returns(T::Boolean) }
     def self.valid_digest?(digest)
-      digest.match?(/\A[0-9a-f]{64}\z/i)
+      detect_digest_algorithm(digest).present?
     end
 
     # Atomically write content to a file path.
@@ -163,30 +180,46 @@ module Homebrew
 
     # Fetches an attestation bundle from the configured bundle URL.
     #
-    # @param digest [String] The SHA256 digest of the bottle (hex string, no algorithm prefix)
+    # @param digest [String] The digest of the bottle (hex string)
+    # @param algorithm [Symbol] The digest algorithm (defaults to :sha256)
     # @return [Pathname, nil] Path to the downloaded bundle, or nil if not configured
     # @raise [BundleFetchError] if the fetch fails
     #
     # @api private
-    sig { params(digest: String).returns(T.nilable(Pathname)) }
-    def self.fetch_attestation_bundle(digest)
+    sig { params(digest: String, algorithm: Symbol).returns(T.nilable(Pathname)) }
+    def self.fetch_attestation_bundle(digest, algorithm: :sha256)
       bundle_url_template = Homebrew::EnvConfig.attestation_bundle_url
       return if bundle_url_template.blank?
 
-      # Validate digest to prevent URL injection
-      raise BundleFetchError, "Invalid digest format: #{digest}" unless valid_digest?(digest)
+      # Validate algorithm
+      expected_length = DIGEST_ALGORITHMS[algorithm]
+      raise BundleFetchError, "Unsupported digest algorithm: #{algorithm}" unless expected_length
 
-      # Substitute {digest} placeholder in URL template
-      bundle_url = bundle_url_template.gsub("{digest}", digest)
+      # Validate digest format for the specified algorithm
+      unless digest.match?(/\A[0-9a-f]{#{expected_length}}\z/i)
+        raise BundleFetchError, "Invalid #{algorithm} digest format: #{digest}"
+      end
+
+      # Build OCI-format digest string (e.g., "sha256:abc123...")
+      oci_digest = "#{algorithm}:#{digest}"
+
+      # Substitute placeholders in URL template:
+      # - {digest} -> OCI format with algorithm prefix (e.g., "sha256:abc123...")
+      # - {hexdigest} -> raw hex string (backwards compatibility)
+      # - {algorithm} -> algorithm name only (e.g., "sha256")
+      bundle_url = bundle_url_template
+                   .gsub("{digest}", oci_digest)
+                   .gsub("{hexdigest}", digest)
+                   .gsub("{algorithm}", algorithm.to_s)
 
       bundle_cache_dir = HOMEBREW_CACHE/"attestation-bundles"
       bundle_cache_dir.mkpath
-      # Use .jsonl extension - bundles may contain multiple attestations
-      bundle_path = bundle_cache_dir/"#{digest}.jsonl"
+      # Use filesystem-safe naming (algorithm_hexdigest.jsonl)
+      bundle_path = bundle_cache_dir/"#{algorithm}_#{digest}.jsonl"
 
       # Use cached bundle if it exists and is recent
       if bundle_path.exist? && (Time.now - bundle_path.mtime) < BUNDLE_CACHE_DURATION
-        odebug "Using cached attestation bundle for #{digest}"
+        odebug "Using cached attestation bundle for #{oci_digest}"
         return bundle_path
       end
 

@@ -65,8 +65,12 @@ module Homebrew
       },
       HOMEBREW_ATTESTATION_BUNDLE_URL:           {
         description: "URL template for fetching attestation bundles for offline verification. " \
-                     "Use `{digest}` as a placeholder for the bottle's SHA256 hash (without algorithm prefix). " \
-                     "For example, `https://mirror.internal/bundles/{digest}.jsonl`. " \
+                     "Supports the following placeholders: " \
+                     "`{digest}` for OCI-format digest with algorithm prefix (e.g., `sha256:abc123...`), " \
+                     "`{hexdigest}` for raw hex digest without prefix, " \
+                     "`{algorithm}` for algorithm name only (e.g., `sha256`). " \
+                     "For example, `https://mirror.internal/bundles/{digest}.jsonl` or " \
+                     "`https://mirror.internal/{algorithm}/{hexdigest}.jsonl`. " \
                      "The bundle should be in Sigstore bundle format (JSON or JSON Lines for multiple bundles) " \
                      "as produced by `gh attestation download`. " \
                      "When set, attestation bundles are fetched from this URL instead of GitHub's API.",
