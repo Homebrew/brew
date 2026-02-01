@@ -7,7 +7,7 @@ module Cask
   module Artifact
     # Artifact corresponding to the `vst_plugin` stanza.
     class VstPlugin < Moved
-      sig { returns(String) }
+      sig { override.returns(String) }
       def self.english_name
         "VST Plugin"
       end

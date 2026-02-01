@@ -1,4 +1,4 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
 
 require "extend/object/deep_dup"
@@ -16,25 +16,35 @@ module Cask
       include Comparable
       include ::Utils::Output::Mixin
 
+      # T.anything or the union of all possible argument types would be better choice, but it's convenient to be
+      # able to invoke `.inspect`, `.to_s`, etc. without the overhead of type guards.
+      DirectivesType = T.type_alias { Object }
+
+      sig { overridable.returns(String) }
       def self.english_name
-        @english_name ||= T.must(name).sub(/^.*:/, "").gsub(/(.)([A-Z])/, '\1 \2')
+        @english_name ||= T.let(T.must(name).sub(/^.*:/, "").gsub(/(.)([A-Z])/, '\1 \2'), T.nilable(String))
       end
 
+      sig { returns(String) }
       def self.english_article
-        @english_article ||= /^[aeiou]/i.match?(english_name) ? "an" : "a"
+        @english_article ||= T.let(/^[aeiou]/i.match?(english_name) ? "an" : "a", T.nilable(String))
       end
 
+      sig { overridable.returns(Symbol) }
       def self.dsl_key
-        @dsl_key ||= T.must(name).sub(/^.*:/, "").gsub(/(.)([A-Z])/, '\1_\2').downcase.to_sym
+        @dsl_key ||= T.let(T.must(name).sub(/^.*:/, "").gsub(/(.)([A-Z])/, '\1_\2').downcase.to_sym,
+                           T.nilable(Symbol))
       end
 
+      sig { overridable.returns(Symbol) }
       def self.dirmethod
-        @dirmethod ||= :"#{dsl_key}dir"
+        @dirmethod ||= T.let(:"#{dsl_key}dir", T.nilable(Symbol))
       end
 
       sig { abstract.returns(String) }
       def summarize; end
 
+      sig { params(path: T.any(String, Pathname)).returns(Pathname) }
       def staged_path_join_executable(path)
         path = Pathname(path)
         path = path.expand_path if path.to_s.start_with?("~")
@@ -54,64 +64,79 @@ module Cask
         end
       end
 
+      sig { returns(T::Hash[T.class_of(AbstractArtifact), Integer]) }
       def sort_order
-        @sort_order ||= [
-          PreflightBlock,
-          # The `uninstall` stanza should be run first, as it may
-          # depend on other artifacts still being installed.
-          Uninstall,
-          Installer,
-          # `pkg` should be run before `binary`, so
-          # targets are created prior to linking.
-          # `pkg` should be run before `app`, since an `app` could
-          # contain a nested installer (e.g. `wireshark`).
-          Pkg,
+        @sort_order ||= T.let(
           [
-            App,
-            Suite,
-            Artifact,
-            Colorpicker,
-            Prefpane,
-            Qlplugin,
-            Mdimporter,
-            Dictionary,
-            Font,
-            Service,
-            InputMethod,
-            InternetPlugin,
-            KeyboardLayout,
-            AudioUnitPlugin,
-            VstPlugin,
-            Vst3Plugin,
-            ScreenSaver,
-          ],
-          Binary,
-          Manpage,
-          PostflightBlock,
-          Zap,
-        ].each_with_index.flat_map { |classes, i| Array(classes).map { |c| [c, i] } }.to_h
+            PreflightBlock,
+            # The `uninstall` stanza should be run first, as it may
+            # depend on other artifacts still being installed.
+            Uninstall,
+            Installer,
+            # `pkg` should be run before `binary`, so
+            # targets are created prior to linking.
+            # `pkg` should be run before `app`, since an `app` could
+            # contain a nested installer (e.g. `wireshark`).
+            Pkg,
+            [
+              App,
+              Suite,
+              Artifact,
+              Colorpicker,
+              Prefpane,
+              Qlplugin,
+              Mdimporter,
+              Dictionary,
+              Font,
+              Service,
+              InputMethod,
+              InternetPlugin,
+              KeyboardLayout,
+              AudioUnitPlugin,
+              VstPlugin,
+              Vst3Plugin,
+              ScreenSaver,
+            ],
+            Binary,
+            Manpage,
+            PostflightBlock,
+            Zap,
+          ].each_with_index.flat_map { |classes, i| Array(classes).map { |c| [c, i] } }.to_h,
+          T.nilable(T::Hash[T.class_of(AbstractArtifact), Integer]),
+        )
       end
 
+      sig { override.params(other: BasicObject).returns(T.nilable(Integer)) }
       def <=>(other)
-        return unless other.class < AbstractArtifact
-        return 0 if instance_of?(other.class)
+        case other
+        when AbstractArtifact
+          return 0 if instance_of?(other.class)
 
-        (sort_order[self.class] <=> sort_order[other.class]).to_i
+          # Safe once https://github.com/sorbet/sorbet/pull/9864 lands
+          (T.unsafe(sort_order[self.class]) <=> T.unsafe(sort_order[other.class])).to_i
+        end
       end
 
       # TODO: this sort of logic would make more sense in dsl.rb, or a
       #       constructor called from dsl.rb, so long as that isn't slow.
+      sig {
+        params(
+          arguments:          DirectivesType,
+          stanza:             T.any(String, Symbol),
+          default_arguments:  T::Hash[Symbol, T.anything],
+          override_arguments: T::Hash[Symbol, T.anything],
+          key:                T.nilable(Symbol),
+        ).returns([T.nilable(String), T::Hash[Symbol, T.untyped]])
+      }
       def self.read_script_arguments(arguments, stanza, default_arguments = {}, override_arguments = {}, key = nil)
         # TODO: when stanza names are harmonized with class names,
         #       stanza may not be needed as an explicit argument
         description = key ? "#{stanza} #{key.inspect}" : stanza.to_s
 
-        # backward-compatible string value
-        arguments = if arguments.is_a?(String)
-          { executable: arguments }
-        else
-          # Avoid mutating the original argument
-          arguments.dup
+        arguments = case arguments
+        when String then { executable: arguments } # backward-compatible string value
+        when Hash then arguments.dup # Avoid mutating the original argument
+        else odie "Unsupported arguments type #{arguments.class}"
         end
 
         # key sanity
@@ -140,18 +165,21 @@ module Cask
         [executable, arguments]
       end
 
+      sig { returns(Cask) }
       attr_reader :cask
 
+      sig { params(cask: Cask, dsl_args: T.anything).void }
       def initialize(cask, *dsl_args)
         @cask = cask
-        @dirmethod = nil
-        @dsl_args = dsl_args.deep_dup
-        @dsl_key = nil
-        @english_article = nil
-        @english_name = nil
-        @sort_order = nil
+        @dirmethod = T.let(nil, T.nilable(Symbol))
+        @dsl_args = T.let(dsl_args.deep_dup, T::Array[T.anything])
+        @dsl_key = T.let(nil, T.nilable(Symbol))
+        @english_article = T.let(nil, T.nilable(String))
+        @english_name = T.let(nil, T.nilable(String))
+        @sort_order = T.let(nil, T.nilable(T::Hash[T.class_of(AbstractArtifact), Integer]))
       end
 
+      sig { returns(Config) }
       def config
         cask.config
       end
@@ -161,6 +189,7 @@ module Cask
         "#{summarize} (#{self.class.english_name})"
       end
 
+      sig { returns(T::Array[T.anything]) }
       def to_args
         @dsl_args.compact_blank
       end

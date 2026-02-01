@@ -50,7 +50,7 @@ module Cask
       def source
         @source ||= begin
           base_path = cask.staged_path
-          base_path = base_path.join(cask.url.only_path) if cask.url&.only_path.present?
+          base_path = base_path.join(T.must(cask.url).only_path) if cask.url&.only_path.present?
           base_path.join(@source_string)
         end
       end
