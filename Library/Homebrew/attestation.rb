@@ -3,6 +3,7 @@
 
 require "date"
 require "json"
+require "fileutils"
 require "utils/popen"
 require "utils/github/api"
 require "exceptions"
@@ -32,6 +33,12 @@ module Homebrew
     # @api private
     BACKFILL_CUTOFF = T.let(DateTime.new(2024, 3, 14).freeze, DateTime)
 
+    # Cache durations for offline verification
+    # @api private
+    BUNDLE_CACHE_DURATION = T.let(86400, Integer) # 24 hours - bundles are immutable
+    # @api private
+    TRUSTED_ROOT_CACHE_DURATION = T.let(86400, Integer) # 24 hours
+
     # Raised when the attestation was not found.
     #
     # @api private
@@ -60,6 +67,11 @@ module Homebrew
     # @api private
     class GhIncompatible < RuntimeError; end
 
+    # Raised when bundle fetch fails during offline verification.
+    #
+    # @api private
+    class BundleFetchError < RuntimeError; end
+
     # Returns whether attestation verification is enabled.
     #
     # @api private
@@ -68,6 +80,14 @@ module Homebrew
       return false if Homebrew::EnvConfig.no_verify_attestations?
 
       Homebrew::EnvConfig.verify_attestations?
+    end
+
+    # Returns whether offline verification is configured.
+    #
+    # @api private
+    sig { returns(T::Boolean) }
+    def self.offline_verification?
+      Homebrew::EnvConfig.attestation_bundle_url.present?
     end
 
     # Returns a path to a suitable `gh` executable for attestation verification.
@@ -104,6 +124,148 @@ module Homebrew
       end
     end
 
+    # Check if a string looks like a URL (has a scheme).
+    #
+    # @api private
+    sig { params(str: String).returns(T::Boolean) }
+    def self.url?(str)
+      str.match?(%r{\A[a-z][a-z0-9+.-]*://}i)
+    end
+
+    # Validate that a digest is a valid hex string.
+    #
+    # @api private
+    sig { params(digest: String).returns(T::Boolean) }
+    def self.valid_digest?(digest)
+      digest.match?(/\A[0-9a-f]{64}\z/i)
+    end
+
+    # Atomically write content to a file path.
+    #
+    # @api private
+    # Sorbet requires explicit block parameter with yield
+    # rubocop:disable Lint/UnusedMethodArgument
+    sig { params(path: Pathname, blk: T.proc.params(tmp: Pathname).void).void }
+    def self.atomic_write(path, &blk)
+      # rubocop:enable Lint/UnusedMethodArgument
+      tmp_path = path.dirname/"#{path.basename}.#{Process.pid}.tmp"
+      begin
+        yield(tmp_path)
+        FileUtils.mv(tmp_path, path)
+      # Sorbet requires explicit exception class
+      # rubocop:disable Style/RescueStandardError
+      rescue StandardError
+        # rubocop:enable Style/RescueStandardError
+        tmp_path.unlink if tmp_path.exist?
+        raise
+      end
+    end
+
+    # Fetches an attestation bundle from the configured bundle URL.
+    #
+    # @param digest [String] The SHA256 digest of the bottle (hex string, no algorithm prefix)
+    # @return [Pathname, nil] Path to the downloaded bundle, or nil if not configured
+    # @raise [BundleFetchError] if the fetch fails
+    #
+    # @api private
+    sig { params(digest: String).returns(T.nilable(Pathname)) }
+    def self.fetch_attestation_bundle(digest)
+      bundle_url_template = Homebrew::EnvConfig.attestation_bundle_url
+      return if bundle_url_template.blank?
+
+      # Validate digest to prevent URL injection
+      raise BundleFetchError, "Invalid digest format: #{digest}" unless valid_digest?(digest)
+
+      # Substitute {digest} placeholder in URL template
+      bundle_url = bundle_url_template.gsub("{digest}", digest)
+
+      bundle_cache_dir = HOMEBREW_CACHE/"attestation-bundles"
+      bundle_cache_dir.mkpath
+      # Use .jsonl extension - bundles may contain multiple attestations
+      bundle_path = bundle_cache_dir/"#{digest}.jsonl"
+
+      # Use cached bundle if it exists and is recent
+      if bundle_path.exist? && (Time.now - bundle_path.mtime) < BUNDLE_CACHE_DURATION
+        odebug "Using cached attestation bundle for #{digest}"
+        return bundle_path
+      end
+
+      odebug "Fetching attestation bundle from #{bundle_url}"
+
+      begin
+        # Download to temp file then atomically move to cache
+        atomic_write(bundle_path) do |tmp_path|
+          Utils::Curl.curl_download(bundle_url, to: tmp_path, try_partial: false)
+        end
+      rescue ErrorDuringExecution => e
+        raise BundleFetchError, "Failed to fetch attestation bundle: #{e.message}"
+      end
+
+      bundle_path
+    end
+
+    # Returns the path to the trusted root, fetching it if necessary.
+    #
+    # @return [Pathname, nil] Path to the trusted root file, or nil if not configured
+    # @raise [InvalidAttestationError] if trusted root cannot be obtained
+    #
+    # @api private
+    sig { returns(T.nilable(Pathname)) }
+    def self.trusted_root_path
+      trusted_root = Homebrew::EnvConfig.attestation_trusted_root
+      return if trusted_root.blank?
+
+      # If it's a URL, fetch and cache it
+      return fetch_trusted_root_from_url(trusted_root) if url?(trusted_root)
+
+      # Otherwise, treat it as a local file path
+      path = Pathname.new(trusted_root)
+      raise InvalidAttestationError, "Trusted root file not found: #{trusted_root}" unless path.exist?
+
+      path
+    end
+
+    # Fetches trusted root from a URL with caching.
+    #
+    # @api private
+    sig { params(url: String).returns(Pathname) }
+    def self.fetch_trusted_root_from_url(url)
+      trusted_root_cache = HOMEBREW_CACHE/"attestation-trusted-root.json"
+
+      # Check if cached version is recent enough
+      if trusted_root_cache.exist?
+        cache_age = Time.now - trusted_root_cache.mtime
+        if cache_age < TRUSTED_ROOT_CACHE_DURATION
+          odebug "Using cached trusted root (age: #{cache_age.to_i}s)"
+          return trusted_root_cache
+        end
+      end
+
+      odebug "Fetching trusted root from #{url}"
+
+      begin
+        atomic_write(trusted_root_cache) do |tmp_path|
+          Utils::Curl.curl_download(url, to: tmp_path, try_partial: false)
+        end
+        trusted_root_cache
+      rescue ErrorDuringExecution => e
+        # Fail-closed by default: don't use stale trusted roots
+        if trusted_root_cache.exist? && Homebrew::EnvConfig.attestation_allow_stale_root?
+          opoo "Failed to refresh trusted root, using cached version: #{e.message}"
+          opoo "WARNING: Cached trusted root may contain revoked key material"
+          return trusted_root_cache
+        end
+
+        if trusted_root_cache.exist?
+          raise InvalidAttestationError,
+                "Failed to refresh trusted root and stale roots are not allowed. " \
+                "Set HOMEBREW_ATTESTATION_ALLOW_STALE_ROOT=1 to use cached version. Error: #{e.message}"
+        end
+
+        raise InvalidAttestationError, "Failed to fetch trusted root: #{e.message}"
+      end
+    end
+
     # Verifies the given bottle against a cryptographic attestation of build provenance.
     #
     # The provenance is verified as originating from `signing_repository`, which is a `String`
@@ -123,20 +285,54 @@ module Homebrew
              signing_workflow: T.nilable(String), subject: T.nilable(String)).returns(T::Hash[T.untyped, T.untyped])
     }
     def self.check_attestation(bottle, signing_repo, signing_workflow = nil, subject = nil)
-      cmd = ["attestation", "verify", bottle.cached_download, "--repo", signing_repo, "--format",
-             "json"]
+      cmd = ["attestation", "verify", bottle.cached_download, "--repo", signing_repo, "--format", "json"]
+
+      # Determine if we're doing offline verification
+      if offline_verification?
+        # Get the bottle's digest for bundle lookup (hex string, no prefix)
+        digest = bottle.resource.checksum&.hexdigest
+        raise InvalidAttestationError, "Bottle has no checksum for bundle lookup" if digest.blank?
+
+        # Fetch attestation bundle
+        begin
+          bundle_path = fetch_attestation_bundle(digest)
+          if bundle_path.present?
+            cmd += ["--bundle", bundle_path.to_s]
+            odebug "Using attestation bundle: #{bundle_path}"
+          end
+        rescue BundleFetchError => e
+          raise InvalidAttestationError, "Offline verification failed: #{e.message}"
+        end
+
+        # Get trusted root (required for offline verification)
+        root_path = trusted_root_path
+        if root_path.present?
+          cmd += ["--custom-trusted-root", root_path.to_s]
+          odebug "Using trusted root: #{root_path}"
+        else
+          raise InvalidAttestationError,
+                "HOMEBREW_ATTESTATION_TRUSTED_ROOT must be set for offline verification"
+        end
+      end
 
       cmd += ["--cert-identity", signing_workflow] if signing_workflow.present?
 
-      # Fail early if we have no credentials. The command below invariably
-      # fails without them, so this saves us an unnecessary subshell.
-      credentials = GitHub::API.credentials
-      raise GhAuthNeeded, "missing credentials" if credentials.blank?
+      # Set up environment
+      env = { "GH_HOST" => "github.com" }
+      secrets = T.let([], T::Array[String])
+
+      # Online verification requires GitHub credentials
+      unless offline_verification?
+        credentials = GitHub::API.credentials
+        raise GhAuthNeeded, "missing credentials" if credentials.blank?
+
+        env["GH_TOKEN"] = credentials
+        secrets = [credentials]
+      end
 
       begin
-        result = system_command!(gh_executable, args: cmd,
-                                 env: { "GH_TOKEN" => credentials, "GH_HOST" => "github.com" },
-                                 secrets: [credentials], print_stderr: false, chdir: HOMEBREW_TEMP)
+        result = system_command!(gh_executable, args: cmd, env: env,
+                                 secrets: secrets, print_stderr: false, chdir: HOMEBREW_TEMP)
       rescue ErrorDuringExecution => e
         if e.status.exitstatus == 1 && e.stderr.include?("unknown command")
           raise GhIncompatible, "gh CLI is incompatible with attestations"

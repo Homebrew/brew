@@ -31,6 +31,15 @@ module Homebrew::EnvConfig
     sig { returns(T::Boolean) }
     def ask?; end
 
+    sig { returns(T::Boolean) }
+    def attestation_allow_stale_root?; end
+
+    sig { returns(T.nilable(::String)) }
+    def attestation_bundle_url; end
+
+    sig { returns(T.nilable(::String)) }
+    def attestation_trusted_root; end
+
     sig { returns(T.nilable(::String)) }
     def auto_update_secs; end
 

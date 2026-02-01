@@ -58,6 +58,28 @@ module Homebrew
                      "commands.",
         boolean:     true,
       },
+      HOMEBREW_ATTESTATION_ALLOW_STALE_ROOT:     {
+        description: "If set, allow using a cached trusted root even when it cannot be refreshed " \
+                     "and may contain revoked key material. Not recommended for security-sensitive environments.",
+        boolean:     true,
+      },
+      HOMEBREW_ATTESTATION_BUNDLE_URL:           {
+        description: "URL template for fetching attestation bundles for offline verification. " \
+                     "Use `{digest}` as a placeholder for the bottle's SHA256 hash (without algorithm prefix). " \
+                     "For example, `https://mirror.internal/bundles/{digest}.jsonl`. " \
+                     "The bundle should be in Sigstore bundle format (JSON or JSON Lines for multiple bundles) " \
+                     "as produced by `gh attestation download`. " \
+                     "When set, attestation bundles are fetched from this URL instead of GitHub's API.",
+      },
+      HOMEBREW_ATTESTATION_TRUSTED_ROOT:         {
+        description: "Path or URL to a Sigstore trusted root for offline attestation verification. " \
+                     "If set to a URL (starting with `http://`, `https://`, or `file://`), the trusted root " \
+                     "will be fetched and cached for 24 hours. " \
+                     "If set to a local file path, that file will be used directly. " \
+                     "The trusted root should be in Sigstore's trusted_root.jsonl format " \
+                     "(generate using `gh attestation trusted-root > trusted_root.jsonl`). " \
+                     "Required when using `$HOMEBREW_ATTESTATION_BUNDLE_URL` for fully offline verification.",
+      },
       HOMEBREW_AUTO_UPDATE_SECS:                 {
         description:  "Run `brew update` once every `$HOMEBREW_AUTO_UPDATE_SECS` seconds before some commands, " \
                       "e.g. `brew install`, `brew upgrade` or `brew tap`. Alternatively, " \
