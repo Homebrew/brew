@@ -15,7 +15,7 @@ RSpec.describe Homebrew::API::FormulaStruct do
       )
     end
 
-    specify :aggregate_failures do
+    specify :aggregate_failures, :needs_macos do
       struct = build_formula_struct([
         { cellar: :any, arm64_sequoia: "checksum1" },
         { cellar: :any_skip_relocation, sequoia: "checksum2" },
