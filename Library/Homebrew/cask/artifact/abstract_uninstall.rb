@@ -209,7 +209,7 @@ module Cask
       end
 
       # :quit/:signal must come before :kext so the kext will not be in use by a running process
-      sig { params(bundle_ids: String, command: T.nilable(SystemCommand), _kwargs: T.anything).void }
+      sig { params(bundle_ids: String, command: T.nilable(T.class_of(SystemCommand)), _kwargs: T.anything).void }
       def uninstall_quit(*bundle_ids, command: nil, **_kwargs)
         bundle_ids.each do |bundle_id|
           next unless running?(bundle_id)
@@ -321,7 +321,7 @@ module Cask
       sig {
         params(
           login_items: T.any(String, T::Hash[Symbol, T.any(String, Pathname)]),
-          command:     T.nilable(SystemCommand),
+          command:     T.nilable(T.class_of(SystemCommand)),
           successor:   T.nilable(Cask),
           _kwargs:     T.anything,
         ).void
@@ -356,7 +356,7 @@ module Cask
       end
 
       # :kext should be unloaded before attempting to delete the relevant file
-      sig { params(kexts: String, command: T.nilable(SystemCommand), _kwargs: T.anything).void }
+      sig { params(kexts: String, command: T.nilable(T.class_of(SystemCommand)), _kwargs: T.anything).void }
       def uninstall_kext(*kexts, command: nil, **_kwargs)
         kexts.each do |kext|
           ohai "Unloading kernel extension #{kext}"
