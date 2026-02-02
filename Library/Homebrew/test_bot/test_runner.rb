@@ -1,4 +1,4 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
 
 require "test_bot/junit"
@@ -17,9 +17,21 @@ require "test_bot/tap_syntax"
 module Homebrew
   module TestBot
     module TestRunner
-      module_function
+      TestRunnerTypes = T.type_alias do
+        {
+          setup:               T.nilable(Setup),
+          tap_syntax:          T.nilable(TapSyntax),
+          formulae_detect:     T.nilable(FormulaeDetect),
+          formulae:            T.nilable(Formulae),
+          formulae_dependents: T.nilable(FormulaeDependents),
+          cleanup_before:      T.nilable(CleanupBefore),
+          cleanup_after:       T.nilable(CleanupAfter),
+          bottles_fetch:       T.nilable(BottlesFetch),
+        }
+      end
 
-      def ensure_blank_file_exists!(file)
+      sig { params(file: Pathname).void }
+      def self.ensure_blank_file_exists!(file)
         if file.exist?
           file.truncate(0)
         else
@@ -27,25 +39,27 @@ module Homebrew
         end
       end
 
-      def run!(tap, git:, args:)
+      sig { params(tap: T.nilable(Tap), git: String, args: Homebrew::Cmd::TestBotCmd::Args).returns(T::Boolean) }
+      def self.run!(tap, git:, args:)
         tests = T.let([], T::Array[Test])
         skip_setup = args.skip_setup?
         skip_cleanup_before = T.let(false, T::Boolean)
 
         bottle_output_path = Pathname.new("bottle_output.txt")
         linkage_output_path = Pathname.new("linkage_output.txt")
-        @skipped_or_failed_formulae_output_path = Pathname.new("skipped_or_failed_formulae-#{Utils::Bottles.tag}.txt")
+        skipped_or_failed_formulae_output_path = Pathname.new("skipped_or_failed_formulae-#{Utils::Bottles.tag}.txt")
+        @skipped_or_failed_formulae_output_path = T.let(skipped_or_failed_formulae_output_path, T.nilable(Pathname))
 
         if no_only_args?(args) || args.only_formulae?
           ensure_blank_file_exists!(bottle_output_path)
           ensure_blank_file_exists!(linkage_output_path)
-          ensure_blank_file_exists!(@skipped_or_failed_formulae_output_path)
+          ensure_blank_file_exists!(skipped_or_failed_formulae_output_path)
         end
 
         output_paths = {
           bottle:                     bottle_output_path,
           linkage:                    linkage_output_path,
-          skipped_or_failed_formulae: @skipped_or_failed_formulae_output_path,
+          skipped_or_failed_formulae: skipped_or_failed_formulae_output_path,
         }
 
         test_bot_args = args.named.dup
@@ -107,7 +121,8 @@ module Homebrew
         failed_steps.empty?
       end
 
-      def no_only_args?(args)
+      sig { params(args: Homebrew::Cmd::TestBotCmd::Args).returns(T::Boolean) }
+      def self.no_only_args?(args)
         any_only = args.only_cleanup_before? ||
                    args.only_setup? ||
                    args.only_tap_syntax? ||
@@ -119,84 +134,96 @@ module Homebrew
         !any_only
       end
 
-      def build_tests(argument, tap:, git:, output_paths:, skip_setup:,
-                      skip_cleanup_before:, skip_cleanup_after:, args:)
-        tests = {}
-
+      sig {
+        params(
+          argument:            String,
+          tap:                 T.nilable(Tap),
+          git:                 String,
+          output_paths:        T::Hash[Symbol, Pathname],
+          skip_setup:          T::Boolean,
+          skip_cleanup_before: T::Boolean,
+          skip_cleanup_after:  T::Boolean,
+          args:                Homebrew::Cmd::TestBotCmd::Args,
+        ).returns(TestRunnerTypes)
+      }
+      def self.build_tests(argument, tap:, git:, output_paths:, skip_setup:,
+                           skip_cleanup_before:, skip_cleanup_after:, args:)
         no_only_args = no_only_args?(args)
 
         if !skip_setup && (no_only_args || args.only_setup?)
-          tests[:setup] = Setup.new(dry_run:   args.dry_run?,
-                                    fail_fast: args.fail_fast?,
-                                    verbose:   args.verbose?)
+          setup = Setup.new(dry_run:   args.dry_run?,
+                            fail_fast: args.fail_fast?,
+                            verbose:   args.verbose?)
         end
 
         if no_only_args || args.only_tap_syntax?
-          tests[:tap_syntax] = TapSyntax.new(tap:       tap || CoreTap.instance,
-                                             dry_run:   args.dry_run?,
-                                             git:,
-                                             fail_fast: args.fail_fast?,
-                                             verbose:   args.verbose?)
+          tap_syntax = TapSyntax.new(tap:       tap || CoreTap.instance,
+                                     dry_run:   args.dry_run?,
+                                     git:,
+                                     fail_fast: args.fail_fast?,
+                                     verbose:   args.verbose?)
         end
 
         no_formulae_flags = args.testing_formulae.nil? &&
                             args.added_formulae.nil? &&
                             args.deleted_formulae.nil?
         if no_formulae_flags && (no_only_args || args.only_formulae? || args.only_formulae_detect?)
-          tests[:formulae_detect] = FormulaeDetect.new(argument, tap:,
-                                                                 git:,
-                                                                 dry_run:   args.dry_run?,
-                                                                 fail_fast: args.fail_fast?,
-                                                                 verbose:   args.verbose?)
+          formulae_detect = FormulaeDetect.new(argument, tap:,
+                                                         git:,
+                                                         dry_run:   args.dry_run?,
+                                                         fail_fast: args.fail_fast?,
+                                                         verbose:   args.verbose?)
         end
 
         if no_only_args || args.only_formulae?
-          tests[:formulae] = Formulae.new(tap:,
-                                          git:,
-                                          dry_run:      args.dry_run?,
-                                          fail_fast:    args.fail_fast?,
-                                          verbose:      args.verbose?,
-                                          output_paths:)
+          formulae = Formulae.new(tap:,
+                                  git:,
+                                  dry_run:      args.dry_run?,
+                                  fail_fast:    args.fail_fast?,
+                                  verbose:      args.verbose?,
+                                  output_paths:)
         end
 
         if !args.skip_dependents? && (no_only_args || args.only_formulae? || args.only_formulae_dependents?)
-          tests[:formulae_dependents] = FormulaeDependents.new(tap:,
-                                                               git:,
-                                                               dry_run:   args.dry_run?,
-                                                               fail_fast: args.fail_fast?,
-                                                               verbose:   args.verbose?)
-        end
-
-        if Homebrew::TestBot.cleanup?(args)
-          if !skip_cleanup_before && (no_only_args || args.only_cleanup_before?)
-            tests[:cleanup_before] = CleanupBefore.new(tap:,
+          formulae_dependents = FormulaeDependents.new(tap:,
                                                        git:,
                                                        dry_run:   args.dry_run?,
                                                        fail_fast: args.fail_fast?,
                                                        verbose:   args.verbose?)
+        end
+
+        if Homebrew::TestBot.cleanup?(args)
+          if !skip_cleanup_before && (no_only_args || args.only_cleanup_before?)
+            cleanup_before = CleanupBefore.new(tap:,
+                                               git:,
+                                               dry_run:   args.dry_run?,
+                                               fail_fast: args.fail_fast?,
+                                               verbose:   args.verbose?)
           end
 
           if !skip_cleanup_after && (no_only_args || args.only_cleanup_after?)
-            tests[:cleanup_after] = CleanupAfter.new(tap:,
-                                                     git:,
-                                                     dry_run:   args.dry_run?,
-                                                     fail_fast: args.fail_fast?,
-                                                     verbose:   args.verbose?)
+            cleanup_after = CleanupAfter.new(tap:,
+                                             git:,
+                                             dry_run:   args.dry_run?,
+                                             fail_fast: args.fail_fast?,
+                                             verbose:   args.verbose?)
           end
         end
 
         if args.only_bottles_fetch?
-          tests[:bottles_fetch] = BottlesFetch.new(tap:,
-                                                   git:,
-                                                   dry_run:   args.dry_run?,
-                                                   fail_fast: args.fail_fast?,
-                                                   verbose:   args.verbose?)
+          bottles_fetch = BottlesFetch.new(tap:,
+                                           git:,
+                                           dry_run:   args.dry_run?,
+                                           fail_fast: args.fail_fast?,
+                                           verbose:   args.verbose?)
         end
 
-        tests
+        { setup:, tap_syntax:, formulae_detect:, formulae:, formulae_dependents:, cleanup_before:, cleanup_after:,
+bottles_fetch: }
       end
 
-      def run_tests(tests, args:)
+      sig { params(tests: TestRunnerTypes, args: Homebrew::Cmd::TestBotCmd::Args).void }
+      def self.run_tests(tests, args:)
         tests[:cleanup_before]&.run!(args:)
         begin
           tests[:setup]&.run!(args:)
@@ -227,9 +254,9 @@ module Homebrew
 
             formulae_test.skipped_or_failed_formulae
           elsif args.skipped_or_failed_formulae.present?
-            Array.new(args.skipped_or_failed_formulae)
-          elsif @skipped_or_failed_formulae_output_path.exist?
-            @skipped_or_failed_formulae_output_path.read.chomp.split(",")
+            Array.new(T.must(args.skipped_or_failed_formulae))
+          elsif T.must(@skipped_or_failed_formulae_output_path).exist?
+            T.must(@skipped_or_failed_formulae_output_path).read.chomp.split(",")
           else
             []
           end

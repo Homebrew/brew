@@ -17,9 +17,9 @@ module Homebrew
       def reset_if_needed(repository)
         default_ref = default_origin_ref(repository)
 
-        return if system(git, "-C", repository, "diff", "--quiet", default_ref)
+        return if system(git.to_s, "-C", repository, "diff", "--quiet", default_ref)
 
-        test git, "-C", repository, "reset", "--hard", default_ref
+        test git.to_s, "-C", repository, "reset", "--hard", default_ref
       end
 
       # Moving files is faster than removing them,
@@ -146,7 +146,7 @@ module Homebrew
         ).strip
         return if default_branch == current_branch
 
-        test git, "-C", repository, "checkout", "-f", default_branch
+        test git.to_s, "-C", repository, "checkout", "-f", default_branch
       end
 
       def cleanup_git_meta(repository)
@@ -168,7 +168,7 @@ module Homebrew
           git, "-C", repository, "clean", "--dry-run", *clean_args
         ).strip.empty?
 
-        test git, "-C", repository, "clean", "-ff", *clean_args
+        test git.to_s, "-C", repository, "clean", "-ff", *clean_args
       end
 
       def prune_if_needed(repository)
@@ -176,7 +176,7 @@ module Homebrew
           "#{git} -C '#{repository}' -c gc.autoDetach=false gc --auto 2>&1",
         ).include?("git prune")
 
-        test git, "-C", repository, "prune"
+        test git.to_s, "-C", repository, "prune"
       end
     end
   end
