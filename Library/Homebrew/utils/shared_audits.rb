@@ -7,6 +7,10 @@ require "utils/github/api"
 # Auditing functions for rules common to both casks and formulae.
 module SharedAudits
   URL_TYPE_HOMEPAGE = "homepage URL"
+  REQUIRED_AGE = 30 # days
+  REQUIRED_FORKS = 30
+  REQUIRED_SUBSCRIBERS = 30
+  REQUIRED_STARS = 75
 
   sig { params(product: String, cycle: String).returns(T.nilable(T::Hash[String, T.untyped])) }
   def self.eol_data(product, cycle)
@@ -177,14 +181,26 @@ module SharedAudits
 
     return "GitHub fork (not canonical repository)" if metadata["fork"]
 
-    if (metadata["forks_count"] < 30) && (metadata["subscribers_count"] < 30) &&
-       (metadata["stargazers_count"] < 75)
-      return "GitHub repository not notable enough (<30 forks, <30 watchers and <75 stars)"
+    ENV.each do |key, value|
+      puts "#{key}=#{value}"
+    end
+    if ENV.fetch("GITHUB_EVENT_NAME", nil) == "pull_request" &&
+       ENV.fetch("GITHUB_TRIGGERING_ACTOR", nil) == user &&
+       (metadata["forks_count"] < REQUIRED_FORKS.div(2)) &&
+       (metadata["subscribers_count"] < REQUIRED_SUBSCRIBERS.div(2)) &&
+       (metadata["stargazers_count"] < REQUIRED_STARS.div(2))
+      return "Pull Request is self-submitted and unpopular"
     end
 
-    return if Date.parse(metadata["created_at"]) <= (Date.today - 30)
+    if (metadata["forks_count"] < REQUIRED_FORKS) && (metadata["subscribers_count"] < REQUIRED_SUBSCRIBERS) &&
+       (metadata["stargazers_count"] < REQUIRED_STARS)
+      return "GitHub repository not notable enough" \
+             "(<#{REQUIRED_FORKS} forks, <#{REQUIRED_SUBSCRIBERS} watchers and <#{REQUIRED_STARS} stars)"
+    end
 
-    "GitHub repository too new (<30 days old)"
+    return if Date.parse(metadata["created_at"]) <= (Date.today - REQUIRED_AGE)
+
+    "GitHub repository too new (<#{REQUIRED_AGE} days old)"
   end
 
   sig { params(user: String, repo: String).returns(T.nilable(String)) }
@@ -194,13 +210,13 @@ module SharedAudits
     return if metadata.nil?
 
     return "GitLab fork (not canonical repository)" if metadata["fork"]
-    if (metadata["forks_count"] < 30) && (metadata["star_count"] < 75)
-      return "GitLab repository not notable enough (<30 forks and <75 stars)"
+    if (metadata["forks_count"] < REQUIRED_FORKS) && (metadata["star_count"] < REQUIRED_STARS)
+      return "GitLab repository not notable enough (<#{REQUIRED_FORKS} forks and <#{REQUIRED_STARS} stars)"
     end
 
-    return if Date.parse(metadata["created_at"]) <= (Date.today - 30)
+    return if Date.parse(metadata["created_at"]) <= (Date.today - REQUIRED_AGE)
 
-    "GitLab repository too new (<30 days old)"
+    "GitLab repository too new (<#{REQUIRED_AGE} days old)"
   end
 
   sig { params(user: String, repo: String).returns(T.nilable(String)) }
@@ -216,7 +232,9 @@ module SharedAudits
 
     return "Bitbucket fork (not canonical repository)" unless metadata["parent"].nil?
 
-    return "Bitbucket repository too new (<30 days old)" if Date.parse(metadata["created_on"]) >= (Date.today - 30)
+    if Date.parse(metadata["created_on"]) >= (Date.today - REQUIRED_AGE)
+      return "Bitbucket repository too new (<#{REQUIRED_AGE} days old)"
+    end
 
     forks_result = Utils::Curl.curl_output("--request", "GET", "#{api_url}/forks")
     return unless forks_result.status.success?
@@ -230,9 +248,9 @@ module SharedAudits
     watcher_metadata = JSON.parse(watcher_result.stdout)
     return if watcher_metadata.nil?
 
-    return if forks_metadata["size"] >= 30 || watcher_metadata["size"] >= 75
+    return if forks_metadata["size"] >= REQUIRED_FORKS || watcher_metadata["size"] >= REQUIRED_STARS
 
-    "Bitbucket repository not notable enough (<30 forks and <75 watchers)"
+    "Bitbucket repository not notable enough (<#{REQUIRED_FORKS} forks and <#{REQUIRED_STARS} watchers)"
   end
 
   sig { params(user: String, repo: String).returns(T.nilable(String)) }
@@ -242,14 +260,15 @@ module SharedAudits
 
     return "Forgejo fork (not canonical repository)" if metadata["fork"]
 
-    if (metadata["forks_count"] < 30) && (metadata["watchers_count"] < 30) &&
-       (metadata["stars_count"] < 75)
-      return "Forgejo repository not notable enough (<30 forks, <30 watchers and <75 stars)"
+    if (metadata["forks_count"] < REQUIRED_FORKS) && (metadata["watchers_count"] < REQUIRED_SUBSCRIBERS) &&
+       (metadata["stars_count"] < REQUIRED_STARS)
+      return "Forgejo repository not notable enough" \
+             "(<#{REQUIRED_FORKS} forks, <#{REQUIRED_SUBSCRIBERS} watchers and <#{REQUIRED_STARS} stars)"
     end
 
-    return if Date.parse(metadata["created_at"]) <= (Date.today - 30)
+    return if Date.parse(metadata["created_at"]) <= (Date.today - REQUIRED_AGE)
 
-    "Forgejo repository too new (<30 days old)"
+    "Forgejo repository too new (<#{REQUIRED_AGE} days old)"
   end
 
   sig { params(url: String).returns(T.nilable(String)) }
