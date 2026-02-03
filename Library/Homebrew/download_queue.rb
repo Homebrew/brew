@@ -4,11 +4,15 @@
 require "downloadable"
 require "concurrent/promises"
 require "concurrent/executors"
+require "concurrent/cancellation"
 require "retryable_download"
 require "resource"
 require "utils/output"
 
 module Homebrew
+  # Manages concurrent downloads with progress display and cancellation support.
+  #
+  # @api internal
   class DownloadQueue
     include Utils::Output::Mixin
 
@@ -31,6 +35,9 @@ module Homebrew
       @spinner = T.let(nil, T.nilable(Spinner))
       @symlink_targets = T.let({}, T::Hash[Pathname, T::Set[Downloadable]])
       @downloads_by_location = T.let({}, T::Hash[Pathname, Concurrent::Promises::Future])
+      @cancellation_origin, @cancellation = T.let(
+        Concurrent::Cancellation.new, [Concurrent::Cancellation::Origin, Concurrent::Cancellation]
+      )
     end
 
     sig {
@@ -158,13 +165,14 @@ module Homebrew
                 end
               end
 
-              sleep 0.05
+              # Wait for any download to complete or timeout for UI refresh
+              pending_futures = remaining_downloads.map { |_, future| future }
+              Concurrent::Promises.any_resolved_of(*pending_futures).wait(0.05) unless pending_futures.empty?
             # We want to catch all exceptions to ensure we can cancel any
             # running downloads and flush the TTY.
             rescue Exception # rubocop:disable Lint/RescueException
-              remaining_downloads.each do |_, future|
-                # FIXME: Implement cancellation of running downloads.
-              end
+              # Signal cancellation to all running downloads
+              @cancellation_origin.resolve
 
               cancel
 
@@ -230,14 +238,18 @@ module Homebrew
 
     sig { void }
     def cancel
-      # FIXME: Implement graceful cancellation of running downloads based on
-      #        https://ruby-concurrency.github.io/concurrent-ruby/master/Concurrent/Cancellation.html
-      #        instead of killing the whole thread pool.
-      pool.kill
+      # Signal cancellation and attempt graceful shutdown with a timeout.
+      # If downloads don't complete within the timeout, force termination.
+      @cancellation_origin.resolve unless @cancellation_origin.resolved?
+      pool.shutdown
+      pool.kill unless pool.wait_for_termination(2)
     end
 
     sig { returns(Concurrent::FixedThreadPool) }
     attr_reader :pool
+
+    sig { returns(Concurrent::Cancellation) }
+    attr_reader :cancellation
 
     sig { returns(Integer) }
     attr_reader :concurrency
@@ -345,6 +357,7 @@ module Homebrew
       "#{message[0, message_length].to_s.ljust(message_length)}#{progress}"
     end
 
+    # Animated spinner for indicating download progress in the terminal.
     class Spinner
       FRAMES = [
         "⠋",
