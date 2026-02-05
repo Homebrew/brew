@@ -9,6 +9,10 @@ RSpec.shared_examples "#uninstall_phase or #zap_phase" do
   let(:artifact) { cask.artifacts.find { |a| a.is_a?(described_class) } }
   let(:fake_system_command) { class_double(SystemCommand) }
 
+  before do
+    allow(fake_system_command).to receive(:is_a?) { |val| SystemCommand.is_a?(val) }
+  end
+
   context "when using :launchctl" do
     let(:cask) { Cask::CaskLoader.load(cask_path("with-#{artifact_dsl_key}-launchctl")) }
     let(:launchctl_list_cmd) { %w[/bin/launchctl list my.fancy.package.service] }
@@ -79,10 +83,40 @@ RSpec.shared_examples "#uninstall_phase or #zap_phase" do
 
       expect(fake_system_command).to receive(:run)
         .with("/bin/launchctl", args: ["remove", "my.fancy.package.service"],
-        must_succeed: true, sudo: true, sudo_as_root: true)
+        must_succeed: false, sudo: true, sudo_as_root: true)
         .and_return(instance_double(SystemCommand::Result, success?: true))
 
       subject.public_send(:"#{artifact_dsl_key}_phase", command: fake_system_command)
+    end
+
+    it "does not fail when sudo removal fails" do
+      allow(fake_system_command).to receive(:run)
+        .with(
+          "/bin/launchctl",
+          args:         ["list", "my.fancy.package.service"],
+          print_stderr: false,
+          sudo:         false,
+          sudo_as_root: false,
+        )
+        .and_return(instance_double(SystemCommand::Result, stdout: unknown_response))
+      allow(fake_system_command).to receive(:run)
+        .with(
+          "/bin/launchctl",
+          args:         ["list", "my.fancy.package.service"],
+          print_stderr: false,
+          sudo:         true,
+          sudo_as_root: true,
+        )
+        .and_return(instance_double(SystemCommand::Result, stdout: service_info))
+
+      expect(fake_system_command).to receive(:run)
+        .with("/bin/launchctl", args: ["remove", "my.fancy.package.service"],
+        must_succeed: false, sudo: true, sudo_as_root: true)
+        .and_return(instance_double(SystemCommand::Result, success?: false))
+
+      expect do
+        subject.public_send(:"#{artifact_dsl_key}_phase", command: fake_system_command)
+      end.not_to raise_error
     end
   end
 
@@ -140,7 +174,7 @@ RSpec.shared_examples "#uninstall_phase or #zap_phase" do
 
       expect(fake_system_command).to receive(:run)
         .with("/bin/launchctl", args: ["remove", "my.fancy.package.service.12345"],
-        must_succeed: true, sudo: true, sudo_as_root: true)
+        must_succeed: false, sudo: true, sudo_as_root: true)
         .and_return(instance_double(SystemCommand::Result, success?: true))
 
       subject.public_send(:"#{artifact_dsl_key}_phase", command: fake_system_command)
@@ -243,20 +277,18 @@ RSpec.shared_examples "#uninstall_phase or #zap_phase" do
       subject.public_send(:"#{artifact_dsl_key}_phase", reinstall: true, command: fake_system_command)
     end
 
-    it "tries to quit the application for 10 seconds" do
+    it "tries to quit the application" do
       allow(User.current).to receive(:gui?).and_return true
 
       allow(subject).to receive(:running?).with(bundle_id).and_return(true)
       allow(subject).to receive(:quit).with(bundle_id)
                                       .and_return(instance_double(SystemCommand::Result, success?: false))
 
-      time = Benchmark.measure do
-        expect do
-          subject.public_send(:"#{artifact_dsl_key}_phase", command: fake_system_command)
-        end.to output(/Application 'my.fancy.package.app' did not quit\./).to_stderr
-      end
+      allow(Timeout).to receive(:timeout).and_raise(Timeout::Error)
 
-      expect(time.real).to be_within(3).of(10)
+      expect do
+        subject.public_send(:"#{artifact_dsl_key}_phase", command: fake_system_command)
+      end.to output(/Application 'my.fancy.package.app' did not quit\./).to_stderr
     end
   end
 

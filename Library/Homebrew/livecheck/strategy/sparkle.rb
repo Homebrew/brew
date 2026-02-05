@@ -78,7 +78,6 @@ module Homebrew
         def self.items_from_content(content)
           require "rexml/document"
           xml = Xml.parse_xml(content)
-          return [] if xml.blank?
 
           # Remove prefixes, so we can reliably identify elements and attributes
           xml.root&.each_recursive do |node|

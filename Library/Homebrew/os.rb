@@ -49,14 +49,15 @@ module OS
   LINUX_CI_OS_VERSION = "Ubuntu 22.04"
   LINUX_GLIBC_CI_VERSION = "2.35"
   LINUX_GLIBC_NEXT_CI_VERSION = "2.39"
-  LINUX_GCC_CI_VERSION = "11.0"
-  LINUX_PREFERRED_GCC_COMPILER_FORMULA = "gcc@11" # https://packages.ubuntu.com/jammy/gcc
+  LINUX_GCC_CI_VERSION = "12" # https://packages.ubuntu.com/jammy/gcc-12
+  LINUX_LIBSTDCXX_CI_VERSION = "6.0.30" # https://packages.ubuntu.com/jammy/libstdc++6
+  LINUX_PREFERRED_GCC_COMPILER_FORMULA = T.let("gcc@#{LINUX_GCC_CI_VERSION}".freeze, String)
   LINUX_PREFERRED_GCC_RUNTIME_FORMULA = "gcc"
 
   if OS.mac?
     require "os/mac"
     require "hardware"
-    # Don't tell people to report issues on unsupported configurations.
+    # Don't tell people to report issues on non-Tier 1 configurations.
     if !OS::Mac.version.prerelease? &&
        !OS::Mac.version.outdated_release? &&
        ARGV.none? { |v| v.start_with?("--cc=") } &&
@@ -76,7 +77,7 @@ module OS
   end
 
   sig { returns(T::Boolean) }
-  def self.unsupported_configuration?
+  def self.not_tier_one_configuration?
     !defined?(OS::ISSUES_URL)
   end
 end

@@ -2,7 +2,6 @@
 # frozen_string_literal: true
 
 require "abstract_command"
-require "utils/pypi"
 
 module Homebrew
   module DevCmd
@@ -38,6 +37,9 @@ module Homebrew
 
       sig { override.void }
       def run
+        Homebrew.install_bundler_gems!(groups: ["ast"])
+        require "utils/pypi"
+
         args.named.to_formulae.each do |formula|
           ignore_errors = if formula.tap&.official?
             false

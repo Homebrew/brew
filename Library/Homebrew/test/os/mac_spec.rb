@@ -16,40 +16,27 @@ RSpec.describe OS::Mac do
     end
   end
 
-  describe "::sdk_path_if_needed" do
-    it "calls sdk_path on Xcode-only systems" do
+  describe "::sdk_path" do
+    let(:clt_sdk_path) { Pathname("/tmp/clt/MacOS.sdk") }
+    let(:clt_sdk) { OS::Mac::SDK.new(MacOSVersion.new("26"), clt_sdk_path, :clt) }
+    let(:xcode_sdk_path) { Pathname("/tmp/xcode/MacOS.sdk") }
+    let(:xcode_sdk) { OS::Mac::SDK.new(MacOSVersion.new("26"), xcode_sdk_path, :xcode) }
+
+    before do
+      allow_any_instance_of(OS::Mac::CLTSDKLocator).to receive(:sdk_if_applicable).and_return(clt_sdk)
+      allow_any_instance_of(OS::Mac::XcodeSDKLocator).to receive(:sdk_if_applicable).and_return(xcode_sdk)
+    end
+
+    it "returns the Xcode SDK path on Xcode-only systems" do
       allow(OS::Mac::Xcode).to receive(:installed?).and_return(true)
       allow(OS::Mac::CLT).to receive(:installed?).and_return(false)
-      expect(described_class).to receive(:sdk_path)
-      described_class.sdk_path_if_needed
+      expect(described_class.sdk_path).to eq(xcode_sdk_path)
     end
 
-    it "does not call sdk_path on Xcode-and-CLT systems with system headers" do
-      allow(OS::Mac::Xcode).to receive(:installed?).and_return(true)
-      allow(OS::Mac::CLT).to receive_messages(installed?: true, separate_header_package?: false)
-      expect(described_class).not_to receive(:sdk_path)
-      described_class.sdk_path_if_needed
-    end
-
-    it "does not call sdk_path on CLT-only systems with no CLT SDK" do
+    it "returns the CLT SDK path on CLT-only systems" do
       allow(OS::Mac::Xcode).to receive(:installed?).and_return(false)
-      allow(OS::Mac::CLT).to receive_messages(installed?: true, provides_sdk?: false)
-      expect(described_class).not_to receive(:sdk_path)
-      described_class.sdk_path_if_needed
-    end
-
-    it "does not call sdk_path on CLT-only systems with a CLT SDK if the system provides headers" do
-      allow(OS::Mac::Xcode).to receive(:installed?).and_return(false)
-      allow(OS::Mac::CLT).to receive_messages(installed?: true, provides_sdk?: true, separate_header_package?: false)
-      expect(described_class).not_to receive(:sdk_path)
-      described_class.sdk_path_if_needed
-    end
-
-    it "calls sdk_path on CLT-only systems with a CLT SDK if the system does not provide headers" do
-      allow(OS::Mac::Xcode).to receive(:installed?).and_return(false)
-      allow(OS::Mac::CLT).to receive_messages(installed?: true, provides_sdk?: true, separate_header_package?: true)
-      expect(described_class).to receive(:sdk_path)
-      described_class.sdk_path_if_needed
+      allow(OS::Mac::CLT).to receive(:installed?).and_return(true)
+      expect(described_class.sdk_path).to eq(clt_sdk_path)
     end
   end
 end

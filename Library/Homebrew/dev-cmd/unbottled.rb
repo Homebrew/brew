@@ -9,6 +9,15 @@ require "os/mac/xcode"
 module Homebrew
   module DevCmd
     class Unbottled < AbstractCommand
+      PORTABLE_FORMULAE = T.let(%w[
+        portable-libffi
+        portable-libxcrypt
+        portable-libyaml
+        portable-openssl
+        portable-ruby
+        portable-zlib
+      ].freeze, T::Array[String])
+
       cmd_args do
         description <<~EOS
           Show the unbottled dependents of formulae.
@@ -22,8 +31,8 @@ module Homebrew
         switch "--lost",
                description: "Print the `homebrew/core` commits where bottles were lost in the last week."
         switch "--eval-all",
-               description: "Evaluate all available formulae and casks, whether installed or not, to check them. " \
-                            "Implied if `HOMEBREW_EVAL_ALL` is set."
+               description: "Evaluate all available formulae and casks, whether installed or not, to check them.",
+               env:         :eval_all
 
         conflicts "--dependents", "--total", "--lost"
 
@@ -65,22 +74,19 @@ module Homebrew
         end
 
         Homebrew::SimulateSystem.with(os:, arch:) do
-          all = args.eval_all?
-          if args.total?
-            if !all && !Homebrew::EnvConfig.eval_all?
-              raise UsageError, "`brew unbottled --total` needs `--eval-all` passed or `HOMEBREW_EVAL_ALL` set!"
-            end
+          eval_all = args.eval_all?
 
-            all = true
+          if args.total? && !eval_all
+            raise UsageError, "`brew unbottled --total` needs `--eval-all` passed or `HOMEBREW_EVAL_ALL=1` set!"
           end
 
           if args.named.blank?
             ohai "Getting formulae..."
-          elsif all
+          elsif eval_all
             raise UsageError, "Cannot specify formulae when using `--eval-all`/`--total`."
           end
 
-          formulae, all_formulae, formula_installs = formulae_all_installs_from_args(all)
+          formulae, all_formulae, formula_installs = formulae_all_installs_from_args(eval_all)
           deps_hash, uses_hash = deps_uses_from_formulae(all_formulae)
 
           if args.dependents?
@@ -89,7 +95,7 @@ module Homebrew
               dependents = uses_hash[f.name]&.length || 0
               formula_dependents[f.name] ||= dependents
             end.reverse
-          elsif all
+          elsif eval_all
             output_total(formulae)
             return
           end
@@ -111,22 +117,22 @@ module Homebrew
       private
 
       sig {
-        params(all: T::Boolean).returns([T::Array[Formula], T::Array[Formula], T.nilable(T::Hash[Symbol, Integer])])
+        params(eval_all: T::Boolean).returns([T::Array[Formula], T::Array[Formula],
+                                              T.nilable(T::Hash[Symbol, Integer])])
       }
-      def formulae_all_installs_from_args(all)
+      def formulae_all_installs_from_args(eval_all)
         if args.named.present?
           formulae = all_formulae = args.named.to_formulae
         elsif args.dependents?
-          if !args.eval_all? && !Homebrew::EnvConfig.eval_all?
-            raise UsageError,
-                  "`brew unbottled --dependents` needs `--eval-all` passed or `HOMEBREW_EVAL_ALL` set!"
+          unless eval_all
+            raise UsageError, "`brew unbottled --dependents` needs `--eval-all` passed or `HOMEBREW_EVAL_ALL=1` set!"
           end
 
-          formulae = all_formulae = Formula.all(eval_all: args.eval_all?)
+          formulae = all_formulae = Formula.all(eval_all:)
 
           @sort = T.let(" (sorted by number of dependents)", T.nilable(String))
-        elsif all
-          formulae = all_formulae = Formula.all(eval_all: args.eval_all?)
+        elsif eval_all
+          formulae = all_formulae = Formula.all(eval_all:)
         else
           formula_installs = {}
 
@@ -136,7 +142,7 @@ module Homebrew
           if analytics.blank?
             raise UsageError,
                   "default sort by analytics data requires " \
-                  "`HOMEBREW_NO_GITHUB_API` and `HOMEBREW_NO_ANALYTICS` to be unset"
+                  "`$HOMEBREW_NO_GITHUB_API` and `$HOMEBREW_NO_ANALYTICS` to be unset."
           end
 
           formulae = analytics["items"].filter_map do |i|
@@ -153,12 +159,16 @@ module Homebrew
           end
           @sort = T.let(" (sorted by installs in the last 90 days; top 10,000 only)", T.nilable(String))
 
-          all_formulae = Formula.all(eval_all: args.eval_all?)
+          all_formulae = Formula.all(eval_all:)
         end
 
         # Remove deprecated and disabled formulae as we do not care if they are unbottled
         formulae = Array(formulae).reject { |f| f.deprecated? || f.disabled? } if formulae.present?
         all_formulae = Array(all_formulae).reject { |f| f.deprecated? || f.disabled? } if all_formulae.present?
+
+        # Remove portable formulae as they are are handled differently
+        formulae = formulae.reject { |f| PORTABLE_FORMULAE.include?(f.name) } if formulae.present?
+        all_formulae = all_formulae.reject { |f| PORTABLE_FORMULAE.include?(f.name) } if all_formulae.present?
 
         [T.let(formulae, T::Array[Formula]), T.let(all_formulae, T::Array[Formula]),
          T.let(formula_installs, T.nilable(T::Hash[Symbol, Integer]))]
@@ -223,6 +233,11 @@ module Homebrew
           if @bottle_tag.linux?
             if requirements.any? { |r| r.is_a?(MacOSRequirement) && !r.version }
               puts "#{Tty.bold}#{Tty.red}#{name}#{Tty.reset}: requires macOS" if any_named_args
+              next
+            elsif requirements.any? { |r| r.is_a?(ArchRequirement) && r.arch != @bottle_tag.arch }
+              if any_named_args
+                puts "#{Tty.bold}#{Tty.red}#{name}#{Tty.reset}: doesn't support #{@bottle_tag.arch} Linux"
+              end
               next
             end
           elsif requirements.any?(LinuxRequirement)
@@ -309,7 +324,7 @@ module Homebrew
                 formula = nil
               when %r{^diff --git a/Formula/}
                 # Example match: `diff --git a/Formula/a/aws-cdk.rb b/Formula/a/aws-cdk.rb`
-                formula = line.split("/").last.chomp(".rb\n")
+                formula = line.split("/").fetch(-1).chomp(".rb\n")
                 formula = CoreTap.instance.formula_renames.fetch(formula, formula)
                 lost_bottles = 0
               when bottle_tag_sha_regex

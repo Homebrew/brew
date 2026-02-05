@@ -12,7 +12,7 @@ RSpec.describe Homebrew::Livecheck::SkipConditions do
         desc "Test formula"
         homepage "https://brew.sh"
         url "https://brew.sh/test-0.0.1.tgz"
-        head "https://github.com/Homebrew/brew.git"
+        head "https://github.com/Homebrew/brew.git", branch: "main"
 
         livecheck do
           url "https://formulae.brew.sh/api/formula/ruby.json"
@@ -34,7 +34,7 @@ RSpec.describe Homebrew::Livecheck::SkipConditions do
       head_only:           formula("test_head_only") do
         desc "HEAD-only test formula"
         homepage "https://brew.sh"
-        head "https://github.com/Homebrew/brew.git"
+        head "https://github.com/Homebrew/brew.git", branch: "main"
       end,
       gist:                formula("test_gist") do
         desc "Gist test formula"
@@ -79,10 +79,10 @@ RSpec.describe Homebrew::Livecheck::SkipConditions do
 
   let(:casks) do
     {
-      basic:             Cask::Cask.new("test") do
+      basic:                                 Cask::Cask.new("test") do
         version "0.0.1,2"
 
-        url "https://brew.sh/test-0.0.1.tgz"
+        url "https://brew.sh/test-#{version.csv.first}.tgz"
         name "Test"
         desc "Test cask"
         homepage "https://brew.sh"
@@ -92,32 +92,42 @@ RSpec.describe Homebrew::Livecheck::SkipConditions do
           regex(/"stable":"(\d+(?:\.\d+)+)"/i)
         end
       end,
-      deprecated:        Cask::Cask.new("test_deprecated") do
+      deprecated:                            Cask::Cask.new("test_deprecated") do
         version "0.0.1"
         sha256 :no_check
 
-        url "https://brew.sh/test-0.0.1.tgz"
+        url "https://brew.sh/test-#{version}.tgz"
         name "Test Deprecate"
         desc "Deprecated test cask"
         homepage "https://brew.sh"
 
         deprecate! date: "2020-06-25", because: :discontinued
       end,
-      disabled:          Cask::Cask.new("test_disabled") do
+      disabled:                              Cask::Cask.new("test_disabled") do
         version "0.0.1"
         sha256 :no_check
 
-        url "https://brew.sh/test-0.0.1.tgz"
+        url "https://brew.sh/test-#{version}.tgz"
         name "Test Disable"
         desc "Disabled test cask"
         homepage "https://brew.sh"
 
         disable! date: "2020-06-25", because: :discontinued
       end,
-      extract_plist:     Cask::Cask.new("test_extract_plist_skip") do
+      future_disable_fails_gatekeeper_check: Cask::Cask.new("test_future_disable_fails_gatekeeper_check") do
         version "0.0.1"
 
-        url "https://brew.sh/test-0.0.1.tgz"
+        url "https://brew.sh/test-#{version}.tgz"
+        name "Test Future Disabled Fails Gatekeeper Check"
+        desc "Future Disable Fails Gatekeeper Check test cask"
+        homepage "https://brew.sh"
+
+        disable! date: "3000-06-25", because: :fails_gatekeeper_check
+      end,
+      extract_plist:                         Cask::Cask.new("test_extract_plist_skip") do
+        version "0.0.1"
+
+        url "https://brew.sh/test-#{version}.tgz"
         name "Test ExtractPlist Skip"
         desc "Skipped test cask"
         homepage "https://brew.sh"
@@ -126,7 +136,7 @@ RSpec.describe Homebrew::Livecheck::SkipConditions do
           strategy :extract_plist
         end
       end,
-      latest:            Cask::Cask.new("test_latest") do
+      latest:                                Cask::Cask.new("test_latest") do
         version :latest
         sha256 :no_check
 
@@ -135,7 +145,7 @@ RSpec.describe Homebrew::Livecheck::SkipConditions do
         desc "Latest test cask"
         homepage "https://brew.sh"
       end,
-      unversioned:       Cask::Cask.new("test_unversioned") do
+      unversioned:                           Cask::Cask.new("test_unversioned") do
         version "1.2.3"
         sha256 :no_check
 
@@ -144,10 +154,10 @@ RSpec.describe Homebrew::Livecheck::SkipConditions do
         desc "Unversioned test cask"
         homepage "https://brew.sh"
       end,
-      skip:              Cask::Cask.new("test_skip") do
+      skip:                                  Cask::Cask.new("test_skip") do
         version "0.0.1"
 
-        url "https://brew.sh/test-0.0.1.tgz"
+        url "https://brew.sh/test-#{version}.tgz"
         name "Test Skip"
         desc "Skipped test cask"
         homepage "https://brew.sh"
@@ -156,10 +166,10 @@ RSpec.describe Homebrew::Livecheck::SkipConditions do
           skip
         end
       end,
-      skip_with_message: Cask::Cask.new("test_skip_with_message") do
+      skip_with_message:                     Cask::Cask.new("test_skip_with_message") do
         version "0.0.1"
 
-        url "https://brew.sh/test-0.0.1.tgz"
+        url "https://brew.sh/test-#{version}.tgz"
         name "Test Skip"
         desc "Skipped test cask"
         homepage "https://brew.sh"
@@ -371,6 +381,13 @@ RSpec.describe Homebrew::Livecheck::SkipConditions do
       it "skips" do
         expect(skip_conditions.skip_information(casks[:disabled]))
           .to eq(status_hashes[:cask][:disabled])
+      end
+    end
+
+    context "when a cask without a `livecheck` block is deprecated" \
+            "with a future disable date because `:fails_gatekeeper_check`" do
+      it "does not skip" do
+        expect(skip_conditions.skip_information(casks[:future_disable_fails_gatekeeper_check])).to eq({})
       end
     end
 

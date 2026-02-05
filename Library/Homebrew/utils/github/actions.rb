@@ -45,7 +45,7 @@ module GitHub
         line: T.nilable(Integer)
       ).returns(T::Boolean)
     }
-    def self.puts_annotation_if_env_set(type, message, file: nil, line: nil)
+    def self.puts_annotation_if_env_set!(type, message, file: nil, line: nil)
       # Don't print annotations during tests, too messy to handle these.
       return false if ENV.fetch("HOMEBREW_TESTS", false)
       return false unless env_set?
@@ -98,7 +98,7 @@ module GitHub
 
       sig { returns(String) }
       def to_s
-        metadata = @type.to_s
+        metadata = @type.to_s.dup
         if @file
           metadata << " file=#{Actions.escape(@file.to_s)}"
 

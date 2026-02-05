@@ -2,11 +2,13 @@
 # frozen_string_literal: true
 
 require "utils/github"
+require "utils/output"
 require "json"
 
 # GitHub Releases client.
 class GitHubReleases
   include Context
+  include Utils::Output::Mixin
 
   URL_REGEX = %r{https://github\.com/([\w-]+)/([\w-]+)?/releases/download/(.+)}
 

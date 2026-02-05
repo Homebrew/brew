@@ -61,6 +61,9 @@ module Homebrew
           named_args:          args.named,
         )
 
+        Cask::Uninstall.check_dependent_casks(*casks, named_args: args.named) unless args.ignore_dependencies?
+        return if Homebrew.failed?
+
         if args.zap?
           casks.each do |cask|
             odebug "Zapping Cask #{cask}"
@@ -78,8 +81,8 @@ module Homebrew
         end
 
         if ENV["HOMEBREW_AUTOREMOVE"].present?
-          opoo "HOMEBREW_AUTOREMOVE is now a no-op as it is the default behaviour. " \
-               "Set HOMEBREW_NO_AUTOREMOVE=1 to disable it."
+          opoo "`$HOMEBREW_AUTOREMOVE` is now a no-op as it is the default behaviour. " \
+               "Set `HOMEBREW_NO_AUTOREMOVE=1` to disable it."
         end
         Cleanup.autoremove unless Homebrew::EnvConfig.no_autoremove?
       end

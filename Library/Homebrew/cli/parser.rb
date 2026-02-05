@@ -10,11 +10,14 @@ require "commands"
 require "optparse"
 require "utils/tty"
 require "utils/formatter"
+require "utils/output"
 
 module Homebrew
   module CLI
     class Parser
-      ArgType = T.type_alias { T.any(NilClass, Symbol, T::Array[String], T::Array[Symbol]) }
+      include Utils::Output::Mixin
+
+      ArgType = T.type_alias { T.nilable(T.any(Symbol, T::Array[String], T::Array[Symbol])) }
       HIDDEN_DESC_PLACEHOLDER = "@@HIDDEN@@"
       SYMBOL_TO_USAGE_MAPPING = T.let({
         text_or_regex: "<text>|`/`<regex>`/`",
@@ -40,7 +43,7 @@ module Homebrew
         cmd_name = cmd_args_method_name.to_s.delete_suffix("_args").tr("_", "-")
 
         begin
-          if require?(cmd_path)
+          if Homebrew.require?(cmd_path)
             cmd = Homebrew::AbstractCommand.command(cmd_name)
             if cmd
               cmd.parser
@@ -165,11 +168,11 @@ module Homebrew
             T.must(location.path).exclude?("/gems/sorbet-runtime-")
           end.fetch(1)
           @command_name = T.let(T.must(cmd_location.label).chomp("_args").tr("_", "-"), String)
-          @is_dev_cmd = T.let(T.must(cmd_location.absolute_path).start_with?(Commands::HOMEBREW_DEV_CMD_PATH),
+          @is_dev_cmd = T.let(T.must(cmd_location.absolute_path).start_with?(Commands::HOMEBREW_DEV_CMD_PATH.to_s),
                               T::Boolean)
-          odeprecated(
+          odisabled(
             "`brew #{@command_name}'. This command needs to be refactored, as it is written in a style that",
-            "inherits from `Homebrew::AbstractCommand' ( see https://docs.brew.sh/External-Commands )",
+            "subclassing of `Homebrew::AbstractCommand' ( see https://docs.brew.sh/External-Commands )",
             disable_for_developers: false,
           )
         end
@@ -199,24 +202,48 @@ module Homebrew
       end
 
       sig {
-        params(names: String, description: T.nilable(String), replacement: T.untyped, env: T.untyped,
-               depends_on: T.nilable(String), method: Symbol, hidden: T::Boolean, disable: T::Boolean).void
+        params(names: String, description: T.nilable(String), env: T.untyped,
+               depends_on: T.nilable(String), method: Symbol,
+               hidden: T::Boolean, replacement: T.nilable(T.any(String, FalseClass)),
+               odeprecated: T::Boolean, odisabled: T::Boolean, disable: T::Boolean).void
       }
-      def switch(*names, description: nil, replacement: nil, env: nil, depends_on: nil,
-                 method: :on, hidden: false, disable: false)
+      def switch(*names, description: nil, env: nil,
+                 depends_on: nil, method: :on,
+                 hidden: false, replacement: nil,
+                 odeprecated: false, odisabled: false, disable: false)
         global_switch = names.first.is_a?(Symbol)
         return if global_switch
 
-        description = option_description(description, *names, hidden:)
-        process_option(*names, description, type: :switch, hidden:) unless disable
-
-        if replacement || disable
-          description += " (#{disable ? "disabled" : "deprecated"}#{"; replaced by #{replacement}" if replacement})"
+        if disable
+          # this odeprecated should turn into odisabled in 5.1.0
+          odeprecated "disable:", "odisabled:"
+          odisabled = disable
         end
+        if !odeprecated && !odisabled && replacement
+          # this odeprecated should turn into odisabled in 5.1.0
+          odeprecated "replacement: without :odeprecated or :odisabled",
+                      "replacement: with :odeprecated or :odisabled"
+          odeprecated = true
+        end
+        hidden = true if odisabled || odeprecated
+
+        description = option_description(description, *names, hidden:)
+        env, counterpart = env
+        if env && @non_global_processed_options.any?
+          affix = counterpart ? " and `#{counterpart}` is passed." : "."
+          description += " Enabled by default if `$HOMEBREW_#{env.upcase}` is set#{affix}"
+        end
+        if odeprecated || odisabled
+          description += " (#{odisabled ? "disabled" : "deprecated"}#{"; replaced by #{replacement}" if replacement})"
+        end
+        process_option(*names, description, type: :switch, hidden:) unless odisabled
 
         @parser.public_send(method, *names, *wrap_option_desc(description)) do |value|
           # This odeprecated should stick around indefinitely.
-          odeprecated "the `#{names.first}` switch", replacement, disable: disable if !replacement.nil? || disable
+          replacement_string = replacement if replacement
+          if odeprecated || odisabled
+            odeprecated "the `#{names.first}` switch", replacement_string, disable: odisabled
+          end
           value = true if names.none? { |name| name.start_with?("--[no-]") }
 
           set_switch(*names, value:, from: :args)
@@ -227,7 +254,8 @@ module Homebrew
         end
 
         env_value = value_for_env(env)
-        set_switch(*names, value: env_value, from: :env) unless env_value.nil?
+        value = env_value&.present?
+        set_switch(*names, value:, from: :env) unless value.nil?
       end
       alias switch_option switch
 
@@ -257,7 +285,7 @@ module Homebrew
       end
 
       sig {
-        params(names: String, description: T.nilable(String), replacement: T.any(Symbol, String, NilClass),
+        params(names: String, description: T.nilable(String), replacement: T.nilable(T.any(Symbol, String)),
                depends_on: T.nilable(String), hidden: T::Boolean).void
       }
       def flag(*names, description: nil, replacement: nil, depends_on: nil, hidden: false)
@@ -352,7 +380,7 @@ module Homebrew
               i += 1
             end
           rescue OptionParser::InvalidOption
-            if ignore_invalid_options || (allow_commands && Commands.path(arg))
+            if ignore_invalid_options || (allow_commands && arg && Commands.path(arg))
               remaining << arg
             else
               $stderr.puts generate_help_text
@@ -441,7 +469,7 @@ module Homebrew
                  .gsub(/`(.*?)`/m, "#{Tty.bold}\\1#{Tty.reset}")
                  .gsub(%r{<([^\s]+?://[^\s]+?)>}) { |url| Formatter.url(url) }
                  .gsub(/\*(.*?)\*|<(.*?)>/m) do |underlined|
-                   underlined[1...-1].gsub(/^(\s*)(.*?)$/, "\\1#{Tty.underline}\\2#{Tty.reset}")
+                   T.must(underlined[1...-1]).gsub(/^(\s*)(.*?)$/, "\\1#{Tty.underline}\\2#{Tty.reset}")
                  end
       end
 
@@ -635,9 +663,9 @@ module Homebrew
           end
 
           select_cli_arg = violations.count - env_var_options.count == 1
-          raise OptionConflictError, violations.map { name_to_option(_1) } unless select_cli_arg
+          raise OptionConflictError, violations.map { name_to_option(it) } unless select_cli_arg
 
-          env_var_options.each { disable_switch(_1) }
+          env_var_options.each { disable_switch(it) }
         end
       end
 
@@ -737,7 +765,7 @@ module Homebrew
         argv.include?("--casks") || argv.include?("--cask")
       end
 
-      sig { params(env: T.any(NilClass, String, Symbol)).returns(T.untyped) }
+      sig { params(env: T.nilable(T.any(String, Symbol))).returns(T.untyped) }
       def value_for_env(env)
         return if env.blank?
 
@@ -751,5 +779,3 @@ module Homebrew
     end
   end
 end
-
-require "extend/os/parser"

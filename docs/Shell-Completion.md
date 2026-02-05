@@ -77,7 +77,7 @@ end
 
 ## Configuring Completions in `pwsh`
 
-To make Homebrew's completions available in `pwsh` (PowerShell), you must source the definitions as part of your shell's startup. Add the following to your `$PROFILE`, for example: `~/.config/powershell/Microsoft.PowerShell_profile.ps1`:
+To make Homebrew's completions available in `pwsh` (PowerShell), you must source the definitions as part of your shell's startup. Add the following to your `PROFILE`, for example: `~/.config/powershell/Microsoft.PowerShell_profile.ps1`:
 
 ```pwsh
 if ((Get-Command brew) -and (Test-Path ($completions = "$(brew --prefix)/share/pwsh/completions"))) {

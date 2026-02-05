@@ -112,4 +112,50 @@ RSpec.describe Dependency do
     dependency = described_class.new("foo/bar/dog")
     expect(dependency.option_names).to eq(%w[dog])
   end
+
+  describe "with no_linkage tag" do
+    it "marks dependency as no_linkage" do
+      dep = described_class.new("foo", [:no_linkage])
+      expect(dep).to be_no_linkage
+      expect(dep).to be_required
+      expect(dep).not_to be_build
+      expect(dep).not_to be_test
+    end
+  end
+
+  describe "Dependency#installed? with bottle_os_version" do
+    subject(:dependency) { described_class.new("foo") }
+
+    it "accepts macOS bottle_os_version parameter" do
+      expect { dependency.installed?(bottle_os_version: "macOS 14") }.not_to raise_error
+    end
+
+    it "accepts Ubuntu bottle_os_version parameter" do
+      expect { dependency.installed?(bottle_os_version: "Ubuntu 22.04") }.not_to raise_error
+    end
+  end
+
+  describe "Dependency#satisfied? with bottle_os_version" do
+    subject(:dependency) { described_class.new("foo") }
+
+    it "accepts bottle_os_version parameter" do
+      expect { dependency.satisfied?(bottle_os_version: "macOS 14") }.not_to raise_error
+    end
+
+    it "accepts Ubuntu bottle_os_version parameter" do
+      expect { dependency.installed?(bottle_os_version: "Ubuntu 22.04") }.not_to raise_error
+    end
+  end
+
+  describe "UsesFromMacOSDependency#installed? with bottle_os_version" do
+    subject(:uses_from_macos) { described_class.new("foo", bounds: { since: :sonoma }) }
+
+    it "accepts macOS bottle_os_version parameter" do
+      expect { uses_from_macos.installed?(bottle_os_version: "macOS 14") }.not_to raise_error
+    end
+
+    it "accepts Ubuntu bottle_os_version parameter" do
+      expect { uses_from_macos.installed?(bottle_os_version: "Ubuntu 22.04") }.not_to raise_error
+    end
+  end
 end

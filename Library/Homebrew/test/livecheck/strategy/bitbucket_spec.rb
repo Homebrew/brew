@@ -16,11 +16,11 @@ RSpec.describe Homebrew::Livecheck::Strategy::Bitbucket do
   let(:generated) do
     {
       get:       {
-        url:   "https://bitbucket.org/abc/def/downloads/?tab=tags",
+        url:   "https://bitbucket.org/abc/def/downloads/?tab=tags&iframe=true&spa=0",
         regex: /<td[^>]*?class="name"[^>]*?>\s*v?(\d+(?:\.\d+)+)\s*?</im,
       },
       downloads: {
-        url:   "https://bitbucket.org/abc/def/downloads/",
+        url:   "https://bitbucket.org/abc/def/downloads/?iframe=true&spa=0",
         regex: /href=.*?ghi-v?(\d+(?:\.\d+)+)\.t/i,
       },
     }

@@ -3,52 +3,37 @@
 
 require "env_config"
 require "cask/config"
+require "utils/output"
 
 module Cask
   class Upgrade
-    sig {
-      params(
-        casks:               Cask,
-        args:                Homebrew::CLI::Args,
-        force:               T.nilable(T::Boolean),
-        greedy:              T.nilable(T::Boolean),
-        greedy_latest:       T.nilable(T::Boolean),
-        greedy_auto_updates: T.nilable(T::Boolean),
-        dry_run:             T.nilable(T::Boolean),
-        skip_cask_deps:      T.nilable(T::Boolean),
-        verbose:             T.nilable(T::Boolean),
-        quiet:               T.nilable(T::Boolean),
-        binaries:            T.nilable(T::Boolean),
-        quarantine:          T.nilable(T::Boolean),
-        require_sha:         T.nilable(T::Boolean),
-      ).returns(T::Boolean)
-    }
-    def self.upgrade_casks(
-      *casks,
-      args:,
-      force: false,
-      greedy: false,
-      greedy_latest: false,
-      greedy_auto_updates: false,
-      dry_run: false,
-      skip_cask_deps: false,
-      verbose: false,
-      quiet: false,
-      binaries: nil,
-      quarantine: nil,
-      require_sha: nil
-    )
-      quarantine = true if quarantine.nil?
+    extend ::Utils::Output::Mixin
 
-      greedy = true if Homebrew::EnvConfig.upgrade_greedy?
-
-      greedy_casks = if (upgrade_greedy_casks = Homebrew::EnvConfig.upgrade_greedy_casks.presence)
+    sig { returns(T::Array[String]) }
+    def self.greedy_casks
+      if (upgrade_greedy_casks = Homebrew::EnvConfig.upgrade_greedy_casks.presence)
         upgrade_greedy_casks.split
       else
         []
       end
+    end
 
-      outdated_casks = if casks.empty?
+    sig {
+      params(
+        casks:               T::Array[Cask],
+        args:                Homebrew::CLI::Args,
+        force:               T.nilable(T::Boolean),
+        quiet:               T.nilable(T::Boolean),
+        greedy:              T.nilable(T::Boolean),
+        greedy_latest:       T.nilable(T::Boolean),
+        greedy_auto_updates: T.nilable(T::Boolean),
+      ).returns(T::Array[Cask])
+    }
+    def self.outdated_casks(casks, args:, force:, quiet:,
+                            greedy: false, greedy_latest: false, greedy_auto_updates: false)
+      greedy = true if Homebrew::EnvConfig.upgrade_greedy?
+
+      if casks.empty?
         Caskroom.casks(config: Config.from_args(args)).select do |cask|
           cask_greedy = greedy || greedy_casks.include?(cask.token)
           cask.outdated?(greedy: cask_greedy, greedy_latest:,
@@ -69,6 +54,44 @@ module Cask
           end
         end
       end
+    end
+
+    sig {
+      params(
+        casks:               Cask,
+        args:                Homebrew::CLI::Args,
+        force:               T.nilable(T::Boolean),
+        greedy:              T.nilable(T::Boolean),
+        greedy_latest:       T.nilable(T::Boolean),
+        greedy_auto_updates: T.nilable(T::Boolean),
+        dry_run:             T.nilable(T::Boolean),
+        skip_cask_deps:      T.nilable(T::Boolean),
+        verbose:             T.nilable(T::Boolean),
+        quiet:               T.nilable(T::Boolean),
+        binaries:            T.nilable(T::Boolean),
+        quarantine:          T.nilable(T::Boolean),
+        require_sha:         T.nilable(T::Boolean),
+      ).returns(T::Boolean)
+    }
+    def self.upgrade_casks!(
+      *casks,
+      args:,
+      force: false,
+      greedy: false,
+      greedy_latest: false,
+      greedy_auto_updates: false,
+      dry_run: false,
+      skip_cask_deps: false,
+      verbose: false,
+      quiet: false,
+      binaries: nil,
+      quarantine: nil,
+      require_sha: nil
+    )
+      quarantine = true if quarantine.nil?
+
+      outdated_casks =
+        self.outdated_casks(casks, args:, greedy:, greedy_latest:, greedy_auto_updates:, force:, quiet:)
 
       manual_installer_casks = outdated_casks.select do |cask|
         cask.artifacts.any? do |artifact|
@@ -98,11 +121,6 @@ module Cask
         end
       end
 
-      verb = dry_run ? "Would upgrade" : "Upgrading"
-      oh1 "#{verb} #{outdated_casks.count} outdated #{::Utils.pluralize("package", outdated_casks.count)}:"
-
-      caught_exceptions = []
-
       upgradable_casks = outdated_casks.map do |c|
         unless c.installed?
           odie <<~EOS
@@ -114,6 +132,36 @@ module Cask
         [CaskLoader.load(c.installed_caskfile), c]
       end
 
+      return false if upgradable_casks.empty?
+
+      if !dry_run && Homebrew::EnvConfig.download_concurrency > 1
+        download_queue = Homebrew::DownloadQueue.new(pour: true)
+
+        fetchable_casks = upgradable_casks.map(&:last)
+        fetchable_cask_installers = fetchable_casks.map do |cask|
+          # This is significantly easier given the weird difference in Sorbet signatures here.
+          # rubocop:disable Style/DoubleNegation
+          Installer.new(cask, binaries: !!binaries, verbose: !!verbose, force: !!force,
+                                               skip_cask_deps: !!skip_cask_deps, require_sha: !!require_sha,
+                                               upgrade: true, quarantine:, download_queue:)
+          # rubocop:enable Style/DoubleNegation
+        end
+
+        fetchable_cask_installers.each(&:prelude)
+
+        fetchable_casks_sentence = fetchable_casks.map { |cask| Formatter.identifier(cask.full_name) }.to_sentence
+        oh1 "Fetching downloads for: #{fetchable_casks_sentence}", truncate: false
+
+        fetchable_cask_installers.each(&:enqueue_downloads)
+
+        download_queue.fetch
+      end
+
+      verb = dry_run ? "Would upgrade" : "Upgrading"
+      oh1 "#{verb} #{upgradable_casks.count} outdated #{::Utils.pluralize("package", upgradable_casks.count)}:"
+
+      caught_exceptions = []
+
       puts upgradable_casks
         .map { |(old_cask, new_cask)| "#{new_cask.full_name} #{old_cask.version} -> #{new_cask.version}" }
         .join("\n")
@@ -123,7 +171,7 @@ module Cask
         upgrade_cask(
           old_cask, new_cask,
           binaries:, force:, skip_cask_deps:, verbose:,
-          quarantine:, require_sha:
+          quarantine:, require_sha:, download_queue:
         )
       rescue => e
         new_exception = e.exception("#{new_cask.full_name}: #{e}")
@@ -134,7 +182,7 @@ module Cask
 
       return true if caught_exceptions.empty?
       raise MultipleCaskErrors, caught_exceptions if caught_exceptions.count > 1
-      raise caught_exceptions.fetch(0) if caught_exceptions.count == 1
+      raise caught_exceptions.fetch(0) if caught_exceptions.one?
 
       false
     end
@@ -149,11 +197,12 @@ module Cask
         require_sha:    T.nilable(T::Boolean),
         skip_cask_deps: T.nilable(T::Boolean),
         verbose:        T.nilable(T::Boolean),
+        download_queue: T.nilable(Homebrew::DownloadQueue),
       ).void
     }
     def self.upgrade_cask(
       old_cask, new_cask,
-      binaries:, force:, quarantine:, require_sha:, skip_cask_deps:, verbose:
+      binaries:, force:, quarantine:, require_sha:, skip_cask_deps:, verbose:, download_queue:
     )
       require "cask/installer"
 
@@ -181,6 +230,7 @@ module Cask
         require_sha:,
         upgrade:        true,
         quarantine:,
+        download_queue:,
       }.compact
 
       new_cask_installer =

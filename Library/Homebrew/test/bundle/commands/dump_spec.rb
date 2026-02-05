@@ -3,15 +3,15 @@
 require "bundle"
 require "bundle/commands/dump"
 require "bundle/cask_dumper"
-require "bundle/brew_dumper"
+require "bundle/formula_dumper"
 require "bundle/tap_dumper"
-require "bundle/whalebrew_dumper"
 require "bundle/vscode_extension_dumper"
+require "bundle/cargo_dumper"
 
 RSpec.describe Homebrew::Bundle::Commands::Dump do
   subject(:dump) do
-    described_class.run(global:, file: nil, describe: false, force:, no_restart: false, taps: true, brews: true,
-                        casks: true, mas: true, whalebrew: true, vscode: true)
+    described_class.run(global:, file: nil, describe: false, force:, no_restart: false, taps: true, formulae: true,
+                        casks: true, mas: true, vscode: true, go: true, cargo: true, flatpak: false)
   end
 
   let(:force) { false }
@@ -19,10 +19,14 @@ RSpec.describe Homebrew::Bundle::Commands::Dump do
 
   before do
     Homebrew::Bundle::CaskDumper.reset!
-    Homebrew::Bundle::BrewDumper.reset!
+    Homebrew::Bundle::FormulaDumper.reset!
     Homebrew::Bundle::TapDumper.reset!
-    Homebrew::Bundle::WhalebrewDumper.reset!
     Homebrew::Bundle::VscodeExtensionDumper.reset!
+    allow(Homebrew::Bundle::CargoDumper).to receive(:dump).and_return("")
+    allow(Formulary).to receive(:factory).and_call_original
+    allow(Formulary).to receive(:factory).with("rust").and_return(
+      instance_double(Formula, opt_bin: Pathname.new("/tmp/rust/bin")),
+    )
   end
 
   context "when files existed" do
@@ -39,9 +43,8 @@ RSpec.describe Homebrew::Bundle::Commands::Dump do
 
     it "exits before doing any work" do
       expect(Homebrew::Bundle::TapDumper).not_to receive(:dump)
-      expect(Homebrew::Bundle::BrewDumper).not_to receive(:dump)
+      expect(Homebrew::Bundle::FormulaDumper).not_to receive(:dump)
       expect(Homebrew::Bundle::CaskDumper).not_to receive(:dump)
-      expect(Homebrew::Bundle::WhalebrewDumper).not_to receive(:dump)
       expect do
         dump
       end.to raise_error(RuntimeError)
@@ -62,7 +65,6 @@ RSpec.describe Homebrew::Bundle::Commands::Dump do
       allow(DevelopmentTools).to receive_messages(needs_libc_formula?: false, needs_compiler_formula?: false)
 
       stub_formula_loader formula("mas") { url "mas-1.0" }
-      stub_formula_loader formula("whalebrew") { url "whalebrew-1.0" }
     end
 
     it "doesn't raise error" do

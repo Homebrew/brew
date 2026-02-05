@@ -19,10 +19,10 @@ module RuboCop
       def audit_homepage(type, content, homepage_node, homepage_parameter_node)
         @offensive_node = T.let(homepage_node, T.nilable(RuboCop::AST::Node))
 
-        problem "#{type.to_s.capitalize} should have a homepage." if content.empty?
+        problem "#{type.to_s.capitalize} should have a `homepage`." if content.empty?
 
         @offensive_node = homepage_parameter_node
-        problem "The homepage should start with http or https." unless content.match?(%r{^https?://})
+        problem "The `homepage` should start with http or https." unless content.match?(%r{^https?://})
 
         case content
           # Freedesktop is complicated to handle - It has SSL/TLS, but only on certain subdomains.
@@ -31,10 +31,9 @@ module RuboCop
           # "Software" is redirected to https://wiki.freedesktop.org/www/Software/project_name
         when %r{^http://((?:www|nice|libopenraw|liboil|telepathy|xorg)\.)?freedesktop\.org/(?:wiki/)?}
           if content.include?("Software")
-            problem "Freedesktop homepages should be styled " \
-                    "`https://wiki.freedesktop.org/www/Software/project_name`"
+            problem "Freedesktop homepages should be styled: https://wiki.freedesktop.org/www/Software/project_name"
           else
-            problem "Freedesktop homepages should be styled `https://wiki.freedesktop.org/project_name`"
+            problem "Freedesktop homepages should be styled: https://wiki.freedesktop.org/project_name"
           end
 
           # Google Code homepages should end in a slash
@@ -45,13 +44,13 @@ module RuboCop
 
         when %r{^http://([^/]*)\.(sf|sourceforge)\.net(/|$)}
           fixed = "https://#{Regexp.last_match(1)}.sourceforge.io/"
-          problem "Sourceforge homepages should be `#{fixed}`" do |corrector|
+          problem "SourceForge homepages should be: #{fixed}" do |corrector|
             corrector.replace(homepage_parameter_node.source_range, "\"#{fixed}\"")
           end
 
         when /readthedocs\.org/
           fixed = content.sub("readthedocs.org", "readthedocs.io")
-          problem "Readthedocs homepages should be `#{fixed}`" do |corrector|
+          problem "Readthedocs homepages should be: #{fixed}" do |corrector|
             corrector.replace(homepage_parameter_node.source_range, "\"#{fixed}\"")
           end
 

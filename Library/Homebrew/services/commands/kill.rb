@@ -11,7 +11,7 @@ module Homebrew
 
         sig { params(targets: T::Array[Services::FormulaWrapper], verbose: T::Boolean).void }
         def self.run(targets, verbose:)
-          Services::Cli.check(targets)
+          Services::Cli.check!(targets)
           Services::Cli.kill(targets, verbose:)
         end
       end

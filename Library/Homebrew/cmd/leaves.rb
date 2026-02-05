@@ -24,17 +24,17 @@ module Homebrew
 
       sig { override.void }
       def run
-        leaves_list = Formula.installed - Formula.installed.flat_map(&:runtime_formula_dependencies)
+        leaves_list = Formula.installed - Formula.installed.flat_map(&:installed_runtime_formula_dependencies)
         casks_runtime_dependencies = Cask::Caskroom.casks.flat_map do |cask|
-          CaskDependent.new(cask).runtime_dependencies.map(&:to_formula)
+          CaskDependent.new(cask).runtime_dependencies.map(&:to_installed_formula)
         end
         leaves_list -= casks_runtime_dependencies
-        leaves_list.select! { installed_on_request?(_1) } if args.installed_on_request?
-        leaves_list.select! { installed_as_dependency?(_1) } if args.installed_as_dependency?
+        leaves_list.select! { |leaf| installed_on_request?(leaf) } if args.installed_on_request?
+        leaves_list.select! { |leaf| installed_as_dependency?(leaf) } if args.installed_as_dependency?
 
         leaves_list.map(&:full_name)
                    .sort
-                   .each { puts(_1) }
+                   .each { |leaf| puts(leaf) }
       end
 
       private

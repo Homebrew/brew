@@ -47,4 +47,15 @@ RSpec.describe Homebrew::BundleVersion do
       end
     end
   end
+
+  describe "#to_h" do
+    it "returns a hash containing non-nil instance variables" do
+      expect(described_class.new("1.2.3", "3000").to_h)
+        .to eq({ short_version: "1.2.3", version: "3000" })
+      expect(described_class.new(nil, "3000").to_h)
+        .to eq({ version: "3000" })
+      expect(described_class.new("1.2.3", nil).to_h)
+        .to eq({ short_version: "1.2.3" })
+    end
+  end
 end

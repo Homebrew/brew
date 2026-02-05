@@ -29,8 +29,8 @@ module UnpackStrategy
       return false unless [Bzip2, Gzip, Lzip, Xz, Zstd].any? { |s| s.can_extract?(path) }
 
       # Check if `tar` can list the contents, then it can also extract it.
-      stdout, _, status = system_command("tar", args: ["--list", "--file", path], print_stderr: false)
-      status.success? && !stdout.empty?
+      stdout, _, status = system_command("tar", args: ["--list", "--file", path], print_stderr: false).to_a
+      (status.success? && !stdout.empty?) || false
     end
 
     private
@@ -59,7 +59,7 @@ module UnpackStrategy
     }
     def subextract(extractor, dir, verbose)
       extractor.new(path).extract(to: dir, verbose:)
-      T.must(dir.children.first)
+      dir.children.fetch(0)
     end
   end
 end

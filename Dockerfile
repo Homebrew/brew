@@ -18,7 +18,7 @@ RUN touch /var/mail/ubuntu && chown ubuntu /var/mail/ubuntu && userdel -r ubuntu
 # /etc/lsb-release is checked inside the container and sets DISTRIB_RELEASE.
 # We need `[` instead of `[[` because the shell is `/bin/sh`.
 # shellcheck disable=SC1091,SC2154,SC2292
-RUN apt-get update \
+RUN bash -c "for i in {1..5}; do apt-get update && break || sleep \$((i)); done" \
   && apt-get install -y --no-install-recommends software-properties-common gnupg-agent \
   && if [ "$(uname -m)" != aarch64 ]; then add-apt-repository -y ppa:git-core/ppa; fi \
   && apt-get update \
@@ -44,7 +44,7 @@ RUN apt-get update \
   uuid-runtime \
   tzdata \
   jq \
-  && if [ "$(. /etc/lsb-release; echo "${DISTRIB_RELEASE}" | cut -d. -f1)" -ge 22 ]; then apt-get install -y --no-install-recommends skopeo; fi \
+  && if [ "$(. /etc/lsb-release; echo "${DISTRIB_RELEASE}" | cut -d. -f1)" -ge 22 ]; then apt-get install -y --no-install-recommends g++-12 skopeo; fi \
   && mkdir -p /etc/apt/keyrings \
   && chmod 0755 /etc /etc/apt /etc/apt/keyrings \
   && curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | tee /etc/apt/keyrings/githubcli-archive-keyring.gpg >/dev/null \
@@ -69,15 +69,15 @@ WORKDIR /home/linuxbrew
 
 
 RUN --mount=type=cache,target=/tmp/homebrew-core,uid="${USER_ID}",sharing=locked \
-    # Clone the homebre-core repo into /tmp/homebrew-core or pull latest changes if it exists
-    git clone https://github.com/homebrew/homebrew-core /tmp/homebrew-core || { cd /tmp/homebrew-core && git pull; } \
-    && mkdir -p /home/linuxbrew/.linuxbrew/Homebrew/Library/Taps/homebrew/homebrew-core \
-    && cp -r /tmp/homebrew-core /home/linuxbrew/.linuxbrew/Homebrew/Library/Taps/homebrew/
+  # Clone the homebrew-core repo into /tmp/homebrew-core or pull latest changes if it exists
+  git clone https://github.com/homebrew/homebrew-core /tmp/homebrew-core || { cd /tmp/homebrew-core && git pull; } \
+  && mkdir -p /home/linuxbrew/.linuxbrew/Homebrew/Library/Taps/homebrew/homebrew-core \
+  && cp -r /tmp/homebrew-core /home/linuxbrew/.linuxbrew/Homebrew/Library/Taps/homebrew/
 
 
 RUN --mount=type=cache,target=/home/linuxbrew/.cache,uid="${USER_ID}" \
-   --mount=type=cache,target=/home/linuxbrew/.bundle,uid="${USER_ID}" \
-   mkdir -p \
+  --mount=type=cache,target=/home/linuxbrew/.bundle,uid="${USER_ID}" \
+  mkdir -p \
   .linuxbrew/bin \
   .linuxbrew/etc \
   .linuxbrew/include \

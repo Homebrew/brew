@@ -24,8 +24,5 @@ class Homebrew::Cmd::TapCmd::Args < Homebrew::CLI::Args
   def force?; end
 
   sig { returns(T::Boolean) }
-  def force_auto_update?; end
-
-  sig { returns(T::Boolean) }
   def repair?; end
 end

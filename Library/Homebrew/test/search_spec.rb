@@ -65,6 +65,59 @@ RSpec.describe Homebrew::Search do
     end
   end
 
+  describe "#search_formulae" do
+    let(:formula) do
+      instance_double(Formula, full_name: "testball", any_version_installed?: false,
+                              valid_platform?: true, deprecated?: false, disabled?: false)
+    end
+
+    before do
+      allow($stdout).to receive(:tty?).and_return(true)
+      allow(Formula).to receive_messages(full_names: ["testball"], alias_full_names: [])
+      allow(Formulary).to receive(:factory).with("testball").and_return(formula)
+    end
+
+    it "annotates deprecated formulae" do
+      allow(formula).to receive(:deprecated?).and_return(true)
+      expect(described_class.search_formulae(/testball/)).to contain_exactly(match(/\(deprecated\)/))
+    end
+
+    it "annotates disabled formulae" do
+      allow(formula).to receive(:disabled?).and_return(true)
+      expect(described_class.search_formulae(/testball/)).to contain_exactly(match(/\(disabled\)/))
+    end
+
+    it "does not annotate normal formulae" do
+      expect(described_class.search_formulae(/testball/)).to eq(["testball"])
+    end
+  end
+
+  describe "#search_casks" do
+    let(:cask) do
+      instance_double(Cask::Cask, full_name: "testball", installed?: false, deprecated?: false, disabled?: false)
+    end
+
+    before do
+      allow($stdout).to receive(:tty?).and_return(true)
+      allow(Tap).to receive(:each_with_object).and_return(["testball"])
+      allow(Cask::CaskLoader).to receive(:load).with("testball").and_return(cask)
+    end
+
+    it "annotates deprecated casks", :needs_macos do
+      allow(cask).to receive(:deprecated?).and_return(true)
+      expect(described_class.search_casks(/testball/)).to contain_exactly(match(/\(deprecated\)/))
+    end
+
+    it "annotates disabled casks", :needs_macos do
+      allow(cask).to receive(:disabled?).and_return(true)
+      expect(described_class.search_casks(/testball/)).to contain_exactly(match(/\(disabled\)/))
+    end
+
+    it "does not annotate normal casks", :needs_macos do
+      expect(described_class.search_casks(/testball/)).to eq(["testball"])
+    end
+  end
+
   describe "#search_descriptions" do
     let(:args) { Homebrew::Cmd::Desc.new(["min_arg_placeholder"]).args }
 

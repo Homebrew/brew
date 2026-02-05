@@ -15,13 +15,13 @@ module RuboCop
 
           version = string_content(parameters(version_node).first)
 
-          problem "version is set to an empty string" if version.empty?
+          problem "Version is set to an empty string" if version.empty?
 
-          problem "version #{version} should not have a leading 'v'" if version.start_with?("v")
+          problem "Version #{version} should not have a leading 'v'" if version.start_with?("v")
 
           return unless version.match?(/_\d+$/)
 
-          problem "version #{version} should not end with an underline and a number"
+          problem "Version #{version} should not end with an underline and a number"
         end
       end
     end

@@ -8,10 +8,10 @@ last_review_date: "2025-02-08"
 **General Homebrew users might find it interesting but there's nothing here _users_ should have to know.**
 
 - [Homebrew Maintainers](#maintainers)
-- [Project Leadership Committee](#plc)
-- [Technical Steering Committee](#tsc)
+- [Lead Maintainers](#lead-maintainers)
+- [Ops Team](#ops-team)
+- [Security Team](#security-team)
 - [Owners](#owners)
-- [General Members](#members)
 
 ## Maintainers
 
@@ -66,64 +66,51 @@ Thanks for all your work so far!
 
 If they accept, follow a few steps to get them set up:
 
-- Invite them to the [**@Homebrew/maintainers** team](https://github.com/orgs/Homebrew/teams/maintainers) (or any relevant [subteams](https://github.com/orgs/Homebrew/teams/maintainers/teams)) to give them write access to relevant repositories (but don't make them owners). They will need to enable [GitHub's Two Factor Authentication](https://help.github.com/articles/about-two-factor-authentication/).
+- Invite them to the [**@Homebrew/maintainers** team](https://github.com/Homebrew/private/blob/main/user-management/.tfvars#L23) (or any relevant subteams) by making a pull request to linked file. This gives them write access to relevant repositories (but doesn't make them owners). They will need to enable [GitHub's Two Factor Authentication](https://help.github.com/articles/about-two-factor-authentication/).
 - Invite them as a full member to the [`machomebrew` private Slack](https://machomebrew.slack.com/admin/invites) (and ensure they've read the [communication guidelines](Maintainer-Guidelines.md#communication)) and ask them to use their real name there (rather than a pseudonym they may use on e.g. GitHub).
 - Ask them to disable SMS as a 2FA device or fallback on their GitHub account in favour of using one of the other authentication methods.
 - Ask them to (regularly) review remove any unneeded [GitHub personal access tokens](https://github.com/settings/tokens).
-- Start the process to [add them as Homebrew members](#members), for formal voting rights and the ability to hold office for Homebrew.
 
 If there are problems, ask them to step down as a maintainer.
 
-When they cease to be a maintainer for any reason, revoke their access to all of the above.
+When they cease to be a maintainer for any reason, revoke their access to all of the above, and don't forget to remove them from the [user-management tooling](https://github.com/Homebrew/private/blob/main/user-management/.tfvars#L23).
 
 In the interests of loosely verifying maintainer identity and building camaraderie, if you find yourself in the same town (e.g living, visiting or at a conference) as another Homebrew maintainer you should make the effort to meet up. If you do so, you can [expense your meal](https://docs.opencollective.com/help/expenses-and-getting-paid/submitting-expenses) (within [Homebrew's reimbursable expense policies](https://opencollective.com/homebrew/expenses)). This is a more relaxed version of similar policies used by other projects, e.g. the Debian system to meet in person to sign keys with legal ID verification.
 
 Now sit back, relax and let the new maintainers handle more of our contributions.
 
-## PLC
+## Lead Maintainers
 
-If a maintainer or member is elected to the Homebrew's [Project Leadership Committee](https://docs.brew.sh/Homebrew-Governance#4-project-leadership-committee):
+If a maintainer or member is elected to the Homebrew's Lead Maintainers:
 
-- Invite them to the [**@Homebrew/plc** team](https://github.com/orgs/Homebrew/teams/plc/members)
-- Make them [billing managers](https://github.com/organizations/Homebrew/settings/billing) and [moderators](https://github.com/organizations/Homebrew/settings/moderators) on the Homebrew GitHub organisation
-- Invite them to the [`homebrew` private 1Password](https://homebrew.1password.com/people) and add them to the "plc" group.
+- Invite them to the [**@Homebrew/lead-maintainers** team](https://github.com/orgs/Homebrew/teams/lead-maintainers/members)
 
-When they cease to be a PLC member, revoke or downgrade their access to all of the above.
+When they cease to be a Lead Maintainer member, remove them from this team.
 
-## TSC
+## Ops Team
 
-If a maintainer is elected to the Homebrew's [Technical Steering Committee](https://docs.brew.sh/Homebrew-Governance#7-technical-steering-committee):
+If maintainers are interested in doing ops/infrastructure/system administration work:
 
-- Invite them to the [**@Homebrew/tsc** team](https://github.com/orgs/Homebrew/teams/tsc/members)
-- Make them [billing managers](https://github.com/organizations/Homebrew/settings/billing) and [moderators](https://github.com/organizations/Homebrew/settings/moderators) on the Homebrew GitHub organisation
+- Invite them to the [**@Homebrew/ops** team](https://github.com/orgs/Homebrew/teams/ops)
+- Invite them to the [`homebrew` private 1Password](https://homebrew.1password.com/people) and add them to the "ops" group.
 
-When they cease to be a TSC member, revoke or downgrade their access to all of the above.
+When they cease to be doing ops work, revoke or downgrade their access to all of the above.
+
+## Security Team
+
+If maintainers are interested in doing security work:
+
+- Invite them to the [**@Homebrew/security** team](https://github.com/orgs/Homebrew/teams/security)
+- Invite them to the [`homebrew` private 1Password](https://homebrew.1password.com/people) and add them to the "security" group.
+
+When they cease to be doing security work, revoke or downgrade their access to all of the above.
 
 ## Owners
 
-The Project Leader, one other PLC member (ideally a maintainer) and one other TSC member should be made owners on GitHub and Slack:
+The Project Leader and two other Lead Maintainers (ideally on the Security Team) should be made owners on GitHub and Slack:
 
 - Make them owners on the [Homebrew GitHub organisation](https://github.com/orgs/Homebrew/people)
 - Make them owners on the [`machomebrew` private Slack](https://machomebrew.slack.com/admin)
 - Make them owners on the [`homebrew` private 1Password](https://homebrew.1password.com/people)
 
 When they cease to be an owner, revoke or downgrade their access to all of the above.
-
-## Members
-
-People who are either not eligible or willing to be Homebrew maintainers but have shown continued involvement in the Homebrew community may be admitted by a majority vote of the [Project Leadership Committee](https://docs.brew.sh/Homebrew-Governance#4-project-leadership-committee).
-
-When admitted as members:
-
-- Invite them as a single-channel guest to the #members channel on the [`machomebrew` private Slack](https://machomebrew.slack.com/admin/invites) (and ensure they've read the [communication guidelines](Maintainer-Guidelines.md#communication)) and ask them to use their real name there (rather than a pseudonym they may use on e.g. GitHub).
-- Add them to the current year's membership list in the [governance archives](https://github.com/Homebrew/brew/tree/master/docs/governance).
-
-If they are interested in doing ops/infrastructure/system administration work:
-
-- Invite them to the [`homebrew` private 1Password](https://homebrew.1password.com/people) and add them to the "ops" group.
-
-If they are interested in doing security work:
-
-- Invite them to the [`homebrew` private 1Password](https://homebrew.1password.com/people) and add them to the "security" group.
-
-See [Homebrew Governance](Homebrew-Governance.md) for when an individual's membership expires.

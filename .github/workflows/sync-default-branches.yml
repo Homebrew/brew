@@ -1,0 +1,64 @@
+name: Sync default branches
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+    paths:
+      - .github/workflows/sync-default-branches.yml
+
+permissions: {}
+
+defaults:
+  run:
+    shell: bash -xeuo pipefail {0}
+
+concurrency:
+  group: "sync-default-branches-${{ github.ref }}"
+  cancel-in-progress: true
+
+jobs:
+  sync:
+    runs-on: ubuntu-slim
+    permissions:
+      contents: write
+    steps:
+      - name: Configure Git user
+        uses: Homebrew/actions/git-user-config@main
+        with:
+          username: github-actions[bot]
+
+      - name: Determine source and target branches
+        id: branches
+        run: |
+          if [[ "${GITHUB_REF_NAME}" == "main" ]]; then
+            target="master"
+            source="main"
+          else
+            target="main"
+            source="master"
+          fi
+          echo "target=${target}" >> "$GITHUB_OUTPUT"
+          echo "source=${source}" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 1
+          persist-credentials: true
+
+      - name: Get target SHA
+        id: sha
+        run: |
+          TARGET_SHA=$(git ls-remote origin "refs/heads/${SOURCE_BRANCH}" | cut -f1)
+          echo "target=${TARGET_SHA}" >> "$GITHUB_OUTPUT"
+        env:
+          SOURCE_BRANCH: ${{ steps.branches.outputs.source }}
+
+      - name: Push target branch
+        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+        run: git push origin "${TARGET_SHA}:refs/heads/${TARGET_BRANCH}" --force
+        env:
+          TARGET_SHA: ${{ steps.sha.outputs.target }}
+          TARGET_BRANCH: ${{ steps.branches.outputs.target }}

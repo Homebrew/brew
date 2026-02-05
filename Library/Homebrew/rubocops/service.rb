@@ -46,7 +46,7 @@ module RuboCop
             end
           end
 
-          # This check ensures that cellar paths like `bin` are not referenced
+          # This check ensures that Cellar paths like `bin` are not referenced
           # because their `opt_` variants are more portable and work with the API.
           CELLAR_PATH_AUDIT_CORRECTIONS.each do |path, opt_path|
             next unless method_calls.key?(path)

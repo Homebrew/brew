@@ -15,16 +15,16 @@ RSpec.describe Cask::DSL::Caveats, :cask do
   describe "#kext" do
     let(:cask) { instance_double(Cask::Cask) }
 
-    it "points to System Preferences on macOS Monterey and earlier" do
-      allow(MacOS).to receive(:version).and_return(MacOSVersion.new("12"))
+    it "returns System Settings on macOS Ventura or later" do
+      allow(MacOS).to receive(:version).and_return(MacOSVersion.from_symbol(:ventura))
       caveats.eval_caveats do
         kext
       end
-      expect(caveats.to_s).to include("System Preferences → Security & Privacy → General")
+      expect(caveats.to_s).to be_empty
     end
 
-    it "points to System Settings on macOS Ventura and later" do
-      allow(MacOS).to receive(:version).and_return(MacOSVersion.new("13"))
+    it "returns System Preferences on macOS Sonoma and earlier" do
+      allow(MacOS).to receive(:version).and_return(MacOSVersion.from_symbol(:sonoma))
       caveats.eval_caveats do
         kext
       end

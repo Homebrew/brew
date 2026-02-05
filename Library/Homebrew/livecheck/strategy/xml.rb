@@ -54,8 +54,8 @@ module Homebrew
 
         # Parses XML text and returns an `REXML::Document` object.
         # @param content [String] the XML text to parse
-        # @return [REXML::Document, nil]
-        sig { params(content: String).returns(T.nilable(REXML::Document)) }
+        # @return [REXML::Document]
+        sig { params(content: String).returns(REXML::Document) }
         def self.parse_xml(content)
           parsing_tries = 0
           begin
@@ -102,7 +102,7 @@ module Homebrew
 
         # Parses XML text and identifies versions using a `strategy` block.
         # If a regex is provided, it will be passed as the second argument to
-        # the  `strategy` block (after the parsed XML data).
+        # the `strategy` block (after the parsed XML data).
         # @param content [String] the XML text to parse and check
         # @param regex [Regexp, nil] a regex used for matching versions in the
         #   content
@@ -117,9 +117,8 @@ module Homebrew
         def self.versions_from_content(content, regex = nil, &block)
           return [] if content.blank? || !block_given?
 
-          require "rexml"
+          require "rexml/document"
           xml = parse_xml(content)
-          return [] if xml.blank?
 
           block_return_value = if regex.present?
             yield(xml, regex)

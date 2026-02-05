@@ -10,6 +10,6 @@ RSpec.describe HeadSoftwareSpec do
   end
 
   specify "#verify_download_integrity" do
-    expect(head_spec.verify_download_integrity(Object.new)).to be_nil
+    expect(head_spec.verify_download_integrity(Pathname.new("head.zip"))).to be_nil
   end
 end

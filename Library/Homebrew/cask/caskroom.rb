@@ -2,12 +2,15 @@
 # frozen_string_literal: true
 
 require "utils/user"
+require "utils/output"
 
 module Cask
   # Helper functions for interacting with the `Caskroom` directory.
   #
   # @api internal
   module Caskroom
+    extend ::Utils::Output::Mixin
+
     sig { returns(Pathname) }
     def self.path
       @path ||= T.let(HOMEBREW_PREFIX/"Caskroom", T.nilable(Pathname))
@@ -44,10 +47,16 @@ module Cask
              "We'll set permissions properly so we won't need sudo in the future."
       end
 
-      SystemCommand.run("/bin/mkdir", args: ["-p", path], sudo:)
-      SystemCommand.run("/bin/chmod", args: ["g+rwx", path], sudo:)
-      SystemCommand.run("/usr/sbin/chown", args: [User.current, path], sudo:)
-      SystemCommand.run("/usr/bin/chgrp", args: ["admin", path], sudo:)
+      SystemCommand.run("mkdir", args: ["-p", path], sudo:)
+      SystemCommand.run("chmod", args: ["g+rwx", path], sudo:)
+      SystemCommand.run("chown", args: [User.current.to_s, path], sudo:)
+
+      chgrp_path(path, sudo)
+    end
+
+    sig { params(path: Pathname, sudo: T::Boolean).void }
+    def self.chgrp_path(path, sudo)
+      SystemCommand.run("chgrp", args: ["admin", path], sudo:)
     end
 
     # Get all installed casks.
@@ -58,7 +67,7 @@ module Cask
       tokens.sort.filter_map do |token|
         CaskLoader.load_prefer_installed(token, config:, warn: false)
       rescue TapCaskAmbiguityError => e
-        T.must(e.loaders.first).load(config:)
+        e.loaders.fetch(0).load(config:)
       rescue
         # Don't blow up because of a single unavailable cask.
         nil
@@ -66,3 +75,5 @@ module Cask
     end
   end
 end
+
+require "extend/os/cask/caskroom"

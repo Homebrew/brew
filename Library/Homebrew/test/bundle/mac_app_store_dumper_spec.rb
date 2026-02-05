@@ -16,7 +16,7 @@ RSpec.describe Homebrew::Bundle::MacAppStoreDumper do
       expect(dumper.apps).to be_empty
     end
 
-    it "dumps as empty string" do
+    it "dumps as empty string" do # rubocop:todo RSpec/AggregateExamples
       expect(dumper.dump).to eql("")
     end
   end
@@ -32,7 +32,7 @@ RSpec.describe Homebrew::Bundle::MacAppStoreDumper do
       expect(dumper.apps).to be_empty
     end
 
-    it "dumps as empty string" do
+    it "dumps as empty string" do # rubocop:todo RSpec/AggregateExamples
       expect(dumper.dump).to eql("")
     end
   end
@@ -49,13 +49,25 @@ RSpec.describe Homebrew::Bundle::MacAppStoreDumper do
     end
   end
 
+  context "when apps `foo`, `bar`, `baz` and `qux` are installed including right-justified IDs" do
+    before do
+      described_class.reset!
+      allow(Homebrew::Bundle).to receive(:mas_installed?).and_return(true)
+      allow(described_class).to receive(:`).and_return("123 foo (1.0)\n456 bar (2.0)\n789 baz (3.0)")
+      allow(described_class).to receive(:`).and_return("123 foo (1.0)\n456 bar (2.0)\n789 baz (3.0)\n 10 qux (4.0)")
+    end
+
+    it "returns list %w[foo bar baz qux]" do
+      expect(dumper.apps).to eql([["123", "foo"], ["456", "bar"], ["789", "baz"], ["10", "qux"]])
+    end
+  end
+
   context "with invalid app details" do
     let(:invalid_mas_output) do
       <<~HEREDOC
         497799835 Xcode (9.2)
         425424353 The Unarchiver (4.0.0)
         08981434 iMovie (10.1.8)
-         Install macOS High Sierra (13105)
         409201541 Pages (7.1)
         123456789 123AppNameWithNumbers (1.0)
         409203825 Numbers (5.1)
@@ -133,7 +145,7 @@ RSpec.describe Homebrew::Bundle::MacAppStoreDumper do
       expect(dumper.apps).to eql(expected_app_details_array)
     end
 
-    it "dumps excluding invalid apps" do
+    it "dumps excluding invalid apps" do # rubocop:todo RSpec/AggregateExamples
       expect(dumper.dump).to eq(expected_mas_dumped_output.strip)
     end
   end

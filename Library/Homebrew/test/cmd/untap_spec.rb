@@ -18,7 +18,7 @@ RSpec.describe Homebrew::Cmd::Untap do
   end
 
   describe "#installed_formulae_for", :integration_test do
-    shared_examples "finds installed formulae in tap" do
+    shared_examples "finds installed formulae in tap", :no_api do
       def load_formula(name:, with_formula_file: false, mock_install: false)
         formula = if with_formula_file
           path = setup_test_formula(name, tap:)
@@ -84,7 +84,7 @@ RSpec.describe Homebrew::Cmd::Untap do
   end
 
   describe "#installed_casks_for", :cask do
-    shared_examples "finds installed casks in tap" do
+    shared_examples "finds installed casks in tap", :no_api do
       def load_cask(token:, with_cask_file: false, mock_install: false)
         cask_loader = Cask::CaskLoader::FromContentLoader.new(<<~RUBY, tap:)
           cask '#{token}' do

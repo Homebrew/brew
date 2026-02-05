@@ -45,10 +45,6 @@ RSpec.describe Cask::CaskLoader, :cask do
       end
 
       context "when using the API" do
-        before do
-          ENV.delete("HOMEBREW_NO_INSTALL_FROM_API")
-        end
-
         it "warns when using the short token" do
           expect do
             expect(described_class.for("version-newest")).to be_a Cask::CaskLoader::FromAPILoader
@@ -238,6 +234,75 @@ RSpec.describe Cask::CaskLoader, :cask do
       expect(described_class).to receive(:load).with("test-cask", load_args)
 
       expect(described_class.load_prefer_installed("test-cask").tap).to eq(foo_tap)
+    end
+  end
+
+  describe "FromPathLoader with symlinked taps" do
+    let(:cask_token) { "testcask" }
+    let(:tmpdir) { mktmpdir }
+    let(:real_tap_path) { tmpdir / "real_tap" }
+    let(:homebrew_prefix) { tmpdir / "homebrew" }
+    let(:taps_dir) { homebrew_prefix / "Library" / "Taps" / "testuser" }
+    let(:symlinked_tap_path) { taps_dir / "homebrew-testtap" }
+    let(:cask_file_path) { symlinked_tap_path / "Casks" / "#{cask_token}.rb" }
+    let(:cask_content) do
+      <<~RUBY
+        cask "#{cask_token}" do
+          version "1.0.0"
+          sha256 "1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef"
+
+          url "https://example.com/#{cask_token}-\#{version}.dmg"
+          name "Test Cask"
+          desc "A test cask for symlink testing"
+          homepage "https://example.com"
+
+          app "TestCask.app"
+        end
+      RUBY
+    end
+
+    after do
+      tmpdir.rmtree if tmpdir.exist?
+    end
+
+    before do
+      # Create real tap directory structure
+      (real_tap_path / "Casks").mkpath
+      (real_tap_path / "Casks" / "#{cask_token}.rb").write(cask_content)
+
+      # Create homebrew prefix structure
+      taps_dir.mkpath
+
+      # Create symlink to the tap (this simulates what setup-homebrew does)
+      symlinked_tap_path.make_symlink(real_tap_path)
+
+      # Set HOMEBREW_LIBRARY to our test prefix for the security check
+      stub_const("HOMEBREW_LIBRARY", homebrew_prefix / "Library")
+      allow(Homebrew::EnvConfig).to receive(:forbid_packages_from_paths?).and_return(true)
+    end
+
+    context "when HOMEBREW_FORBID_PACKAGES_FROM_PATHS is enabled" do
+      it "allows loading casks from symlinked taps" do
+        loader = Cask::CaskLoader::FromPathLoader.try_new(cask_file_path)
+        expect(loader).not_to be_nil
+        expect(loader).to be_a(Cask::CaskLoader::FromPathLoader)
+
+        cask = loader.load(config: nil)
+        expect(cask.token).to eq(cask_token)
+        expect(cask.version).to eq(Version.new("1.0.0"))
+      end
+    end
+
+    context "when HOMEBREW_FORBID_PACKAGES_FROM_PATHS is disabled" do
+      before do
+        allow(Homebrew::EnvConfig).to receive(:forbid_packages_from_paths?).and_return(false)
+      end
+
+      it "allows loading casks from symlinked taps" do
+        loader = Cask::CaskLoader::FromPathLoader.try_new(cask_file_path)
+        expect(loader).not_to be_nil
+        expect(loader).to be_a(Cask::CaskLoader::FromPathLoader)
+      end
     end
   end
 end

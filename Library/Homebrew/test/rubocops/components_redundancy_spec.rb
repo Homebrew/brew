@@ -25,7 +25,7 @@ RSpec.describe RuboCop::Cop::FormulaAudit::ComponentsRedundancy do
     it "reports an offense if both `head` and `head do` are present" do
       expect_offense(<<~RUBY)
         class Foo < Formula
-          head "https://brew.sh/foo.git"
+          head "https://brew.sh/foo.git", branch: "develop"
           head do
           ^^^^^^^ FormulaAudit/ComponentsRedundancy: `head` and `head do` should not be simultaneously present
             # stuff
@@ -50,7 +50,7 @@ RSpec.describe RuboCop::Cop::FormulaAudit::ComponentsRedundancy do
     it "reports no offenses if `stable do` is present with a `head` method" do
       expect_no_offenses(<<~RUBY)
         class Foo < Formula
-          head "https://brew.sh/foo.git"
+          head "https://brew.sh/foo.git", branch: "develop"
 
           stable do
             # stuff
@@ -82,8 +82,21 @@ RSpec.describe RuboCop::Cop::FormulaAudit::ComponentsRedundancy do
           end
 
           head do
-          ^^^^^^^ FormulaAudit/ComponentsRedundancy: `head do` should not be present with only `url`
+          ^^^^^^^ FormulaAudit/ComponentsRedundancy: `head do` should not be present with only url/branch
             url "https://brew.sh/foo.git"
+          end
+        end
+      RUBY
+    end
+
+    it "reports an offense if `head do` is present with only `url` and `branch`" do
+      expect_offense(<<~RUBY)
+        class Foo < Formula
+          url "https://brew.sh/foo-1.0.tgz"
+
+          head do
+          ^^^^^^^ FormulaAudit/ComponentsRedundancy: `head do` should not be present with only url/branch
+            url "https://brew.sh/foo.git", branch: "develop"
           end
         end
       RUBY
@@ -92,7 +105,7 @@ RSpec.describe RuboCop::Cop::FormulaAudit::ComponentsRedundancy do
     it "reports no offenses if `stable do` is present with `url` and `depends_on`" do
       expect_no_offenses(<<~RUBY)
         class Foo < Formula
-          head "https://brew.sh/foo.git"
+          head "https://brew.sh/foo.git", branch: "trunk"
 
           stable do
             url "https://brew.sh/foo-1.0.tgz"
@@ -109,6 +122,7 @@ RSpec.describe RuboCop::Cop::FormulaAudit::ComponentsRedundancy do
 
           head do
             url "https://brew.sh/foo.git"
+            branch "develop"
             depends_on "bar"
           end
         end

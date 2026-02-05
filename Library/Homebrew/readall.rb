@@ -4,11 +4,13 @@
 require "formula"
 require "cask/cask_loader"
 require "system_command"
+require "utils/output"
 
 # Helper module for validating syntax in taps.
 module Readall
   extend Cachable
   extend SystemCommand::Mixin
+  extend Utils::Output::Mixin
 
   # TODO: remove this once the `MacOS` module is undefined on Linux
   MACOS_MODULE_REGEX = /\b(MacOS|OS::Mac)(\.|::)\b/
@@ -90,7 +92,7 @@ module Readall
 
   sig {
     params(
-      tap: Tap, aliases: T::Boolean, no_simulate: T::Boolean, os_arch_combinations: T::Array[T::Array[String]],
+      tap: Tap, aliases: T::Boolean, no_simulate: T::Boolean, os_arch_combinations: T::Array[[Symbol, Symbol]],
     ).returns(T::Boolean)
   }
   def self.valid_tap?(tap, aliases: false, no_simulate: false,
@@ -123,7 +125,7 @@ module Readall
   sig { params(filename: Pathname).returns(T::Boolean) }
   private_class_method def self.syntax_errors_or_warnings?(filename)
     # Retrieve messages about syntax errors/warnings printed to `$stderr`.
-    _, err, status = system_command(RUBY_PATH, args: ["-c", "-w", filename], print_stderr: false)
+    _, err, status = system_command(RUBY_PATH, args: ["-c", "-w", filename], print_stderr: false).to_a
 
     # Ignore unnecessary warning about named capture conflicts.
     # See https://bugs.ruby-lang.org/issues/12359.

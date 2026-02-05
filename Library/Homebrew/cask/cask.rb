@@ -8,13 +8,15 @@ require "cask/dsl"
 require "cask/metadata"
 require "cask/tab"
 require "utils/bottles"
-require "extend/api_hashable"
+require "utils/output"
+require "api_hashable"
 
 module Cask
   # An instance of a cask.
   class Cask
     extend Forwardable
     extend APIHashable
+    extend ::Utils::Output::Mixin
     include Metadata
 
     # The token of this {Cask}.
@@ -32,7 +34,7 @@ module Cask
 
     def self.all(eval_all: false)
       if !eval_all && !Homebrew::EnvConfig.eval_all?
-        raise ArgumentError, "Cask::Cask#all cannot be used without `--eval-all` or HOMEBREW_EVAL_ALL"
+        raise ArgumentError, "Cask::Cask#all cannot be used without `--eval-all` or `HOMEBREW_EVAL_ALL=1`"
       end
 
       # Load core casks from tokens so they load from the API when the core cask is not tapped.
@@ -60,13 +62,14 @@ module Cask
         source:             T.nilable(String),
         tap:                T.nilable(Tap),
         loaded_from_api:    T::Boolean,
+        api_source:         T.nilable(T::Hash[String, T.untyped]),
         config:             T.nilable(Config),
         allow_reassignment: T::Boolean,
         loader:             T.nilable(CaskLoader::ILoader),
         block:              T.nilable(T.proc.bind(DSL).void),
       ).void
     }
-    def initialize(token, sourcefile_path: nil, source: nil, tap: nil, loaded_from_api: false,
+    def initialize(token, sourcefile_path: nil, source: nil, tap: nil, loaded_from_api: false, api_source: nil,
                    config: nil, allow_reassignment: false, loader: nil, &block)
       @token = token
       @sourcefile_path = sourcefile_path
@@ -74,6 +77,7 @@ module Cask
       @tap = tap
       @allow_reassignment = allow_reassignment
       @loaded_from_api = loaded_from_api
+      @api_source = api_source
       @loader = loader
       # Sorbet has trouble with bound procs assigned to instance variables:
       # https://github.com/sorbet/sorbet/issues/6843
@@ -90,6 +94,9 @@ module Cask
 
     sig { returns(T::Boolean) }
     def loaded_from_api? = @loaded_from_api
+
+    sig { returns(T.nilable(T::Hash[String, T.untyped])) }
+    attr_reader :api_source
 
     # An old name for the cask.
     sig { returns(T::Array[String]) }
@@ -121,10 +128,8 @@ module Cask
 
     sig { params(caskroom_path: Pathname).returns(T::Array[[String, String]]) }
     def timestamped_versions(caskroom_path: self.caskroom_path)
-      relative_paths = Pathname.glob(metadata_timestamped_path(
-                                       version: "*", timestamp: "*",
-                                       caskroom_path:
-                                     ))
+      pattern = metadata_timestamped_path(version: "*", timestamp: "*", caskroom_path:).to_s
+      relative_paths = Pathname.glob(pattern)
                                .map { |p| p.relative_path_from(p.parent.parent) }
       # Sorbet is unaware that Pathname is sortable: https://github.com/sorbet/sorbet/issues/6844
       T.unsafe(relative_paths).sort_by(&:basename) # sort by timestamp
@@ -149,6 +154,25 @@ module Cask
     sig { returns(T::Boolean) }
     def installed?
       installed_caskfile&.exist? || false
+    end
+
+    sig { returns(T::Boolean) }
+    def font?
+      artifacts.all?(Artifact::Font)
+    end
+
+    sig { returns(T::Boolean) }
+    def supports_macos? = true
+
+    sig { returns(T::Boolean) }
+    def supports_linux?
+      return true if font?
+
+      return false if artifacts.any? do |artifact|
+        ::Cask::Artifact::MACOS_ONLY_ARTIFACTS.include?(artifact.class)
+      end
+
+      @dsl.os.present?
     end
 
     # The caskfile is needed during installation when there are
@@ -327,18 +351,14 @@ module Cask
       nil
     end
 
-    def populate_from_api!(json_cask)
+    sig { params(cask_struct: Homebrew::API::CaskStruct).void }
+    def populate_from_api!(cask_struct)
       raise ArgumentError, "Expected cask to be loaded from the API" unless loaded_from_api?
 
-      @languages = json_cask.fetch(:languages, [])
-      @tap_git_head = json_cask.fetch(:tap_git_head, "HEAD")
-
-      @ruby_source_path = json_cask[:ruby_source_path]
-
-      # TODO: Clean this up when we deprecate the current JSON API and move to the internal JSON v3.
-      ruby_source_sha256 = json_cask.dig(:ruby_source_checksum, :sha256)
-      ruby_source_sha256 ||= json_cask[:ruby_source_sha256]
-      @ruby_source_checksum = { sha256: ruby_source_sha256 }
+      @languages = cask_struct.languages
+      @tap_git_head = cask_struct.tap_git_head
+      @ruby_source_path = cask_struct.ruby_source_path
+      @ruby_source_checksum = cask_struct.ruby_source_checksum
     end
 
     # @api public
@@ -361,40 +381,48 @@ module Cask
 
     def to_h
       {
-        "token"                   => token,
-        "full_token"              => full_name,
-        "old_tokens"              => old_tokens,
-        "tap"                     => tap&.name,
-        "name"                    => name,
-        "desc"                    => desc,
-        "homepage"                => homepage,
-        "url"                     => url,
-        "url_specs"               => url_specs,
-        "version"                 => version,
-        "installed"               => installed_version,
-        "installed_time"          => install_time&.to_i,
-        "bundle_version"          => bundle_long_version,
-        "bundle_short_version"    => bundle_short_version,
-        "outdated"                => outdated?,
-        "sha256"                  => sha256,
-        "artifacts"               => artifacts_list,
-        "caveats"                 => (caveats unless caveats.empty?),
-        "depends_on"              => depends_on,
-        "conflicts_with"          => conflicts_with,
-        "container"               => container&.pairs,
-        "auto_updates"            => auto_updates,
-        "deprecated"              => deprecated?,
-        "deprecation_date"        => deprecation_date,
-        "deprecation_reason"      => deprecation_reason,
-        "deprecation_replacement" => deprecation_replacement,
-        "disabled"                => disabled?,
-        "disable_date"            => disable_date,
-        "disable_reason"          => disable_reason,
-        "disable_replacement"     => disable_replacement,
-        "tap_git_head"            => tap_git_head,
-        "languages"               => languages,
-        "ruby_source_path"        => ruby_source_path,
-        "ruby_source_checksum"    => ruby_source_checksum,
+        "token"                           => token,
+        "full_token"                      => full_name,
+        "old_tokens"                      => old_tokens,
+        "tap"                             => tap&.name,
+        "name"                            => name,
+        "desc"                            => desc,
+        "homepage"                        => homepage,
+        "url"                             => url,
+        "url_specs"                       => url_specs,
+        "version"                         => version,
+        "autobump"                        => autobump?,
+        "no_autobump_message"             => no_autobump_message,
+        "skip_livecheck"                  => livecheck.skip?,
+        "installed"                       => installed_version,
+        "installed_time"                  => install_time&.to_i,
+        "bundle_version"                  => bundle_long_version,
+        "bundle_short_version"            => bundle_short_version,
+        "outdated"                        => outdated?,
+        "sha256"                          => sha256,
+        "artifacts"                       => artifacts_list,
+        "caveats"                         => (Tty.strip_ansi(caveats) unless caveats.empty?),
+        "depends_on"                      => depends_on,
+        "conflicts_with"                  => conflicts_with,
+        "container"                       => container&.pairs,
+        "rename"                          => rename_list,
+        "auto_updates"                    => auto_updates,
+        "deprecated"                      => deprecated?,
+        "deprecation_date"                => deprecation_date,
+        "deprecation_reason"              => deprecation_reason,
+        "deprecation_replacement_formula" => deprecation_replacement_formula,
+        "deprecation_replacement_cask"    => deprecation_replacement_cask,
+        "deprecate_args"                  => deprecate_args,
+        "disabled"                        => disabled?,
+        "disable_date"                    => disable_date,
+        "disable_reason"                  => disable_reason,
+        "disable_replacement_formula"     => disable_replacement_formula,
+        "disable_replacement_cask"        => disable_replacement_cask,
+        "disable_args"                    => disable_args,
+        "tap_git_head"                    => tap_git_head,
+        "languages"                       => languages,
+        "ruby_source_path"                => ruby_source_path,
+        "ruby_source_checksum"            => ruby_source_checksum,
       }
     end
 
@@ -402,8 +430,8 @@ module Cask
     private_constant :HASH_KEYS_TO_SKIP
 
     def to_hash_with_variations
-      if loaded_from_api? && !Homebrew::EnvConfig.no_install_from_api?
-        return api_to_local_hash(Homebrew::API::Cask.all_casks[token].dup)
+      if loaded_from_api? && (json_cask = api_source) && !Homebrew::EnvConfig.no_install_from_api?
+        return api_to_local_hash(json_cask.dup)
       end
 
       hash = to_h
@@ -411,16 +439,14 @@ module Cask
 
       if @dsl.on_system_blocks_exist?
         begin
-          OnSystem::ALL_OS_ARCH_COMBINATIONS.each do |os, arch|
-            bottle_tag = ::Utils::Bottles::Tag.new(system: os, arch:)
-            next unless bottle_tag.valid_combination?
+          OnSystem::VALID_OS_ARCH_TAGS.each do |bottle_tag|
             next if bottle_tag.linux? && @dsl.os.nil?
             next if bottle_tag.macos? &&
                     depends_on.macos &&
                     !@dsl.depends_on_set_in_block? &&
                     !depends_on.macos.allows?(bottle_tag.to_macos_version)
 
-            Homebrew::SimulateSystem.with(os:, arch:) do
+            Homebrew::SimulateSystem.with_tag(bottle_tag) do
               refresh
 
               to_h.each do |key, value|
@@ -458,6 +484,12 @@ module Cask
 
           { artifact.class.dsl_key => artifact.to_args }
         end
+      end
+    end
+
+    def rename_list(uninstall_only: false)
+      rename.filter_map do |rename|
+        { from: rename.from, to: rename.to }
       end
     end
 

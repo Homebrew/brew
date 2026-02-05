@@ -68,14 +68,14 @@ module Homebrew
           # `/get/` archives are Git tag snapshots, so we need to check that tab
           # instead of the main `/downloads/` page
           if match[:dl_type] == "get"
-            values[:url] = "https://bitbucket.org/#{match[:path]}/downloads/?tab=tags"
+            values[:url] = "https://bitbucket.org/#{match[:path]}/downloads/?tab=tags&iframe=true&spa=0"
 
             # Example tag regexes:
             # * `/<td[^>]*?class="name"[^>]*?>\s*v?(\d+(?:\.\d+)+)\s*?</im`
             # * `/<td[^>]*?class="name"[^>]*?>\s*abc-v?(\d+(?:\.\d+)+)\s*?</im`
             values[:regex] = /<td[^>]*?class="name"[^>]*?>\s*#{regex_prefix}v?(\d+(?:\.\d+)+)\s*?</im
           else
-            values[:url] = "https://bitbucket.org/#{match[:path]}/downloads/"
+            values[:url] = "https://bitbucket.org/#{match[:path]}/downloads/?iframe=true&spa=0"
 
             # Use `\.t` instead of specific tarball extensions (e.g. .tar.gz)
             suffix = T.must(match[:suffix]).sub(Strategy::TARBALL_EXTENSION_REGEX, ".t")

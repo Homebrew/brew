@@ -12,7 +12,7 @@ module OS
 
           requires_ancestor { ::Cask::Artifact::AbstractUninstall }
 
-          sig { params(target: Pathname).returns(T::Boolean) }
+          sig { params(target: ::Pathname).returns(T::Boolean) }
           def undeletable?(target)
             MacOS.undeletable?(target)
           end

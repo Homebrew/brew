@@ -3,9 +3,12 @@
 
 require "cask/cask_loader"
 require "utils/inreplace"
+require "utils/output"
 
 module Cask
   class Migrator
+    include ::Utils::Output::Mixin
+
     sig { returns(Cask) }
     attr_reader :old_cask, :new_cask
 

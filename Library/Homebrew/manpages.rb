@@ -1,4 +1,4 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
 
 require "cli/parser"
@@ -14,18 +14,17 @@ module Homebrew
       :environment_variables,
       :global_cask_options,
       :global_options,
-      :lead,
+      :project_leader,
+      :lead_maintainers,
       :maintainers,
-      :official_external_commands,
-      :plc,
-      :tsc,
       keyword_init: true,
     )
 
-    SOURCE_PATH = (HOMEBREW_LIBRARY_PATH/"manpages").freeze
-    TARGET_MAN_PATH = (HOMEBREW_REPOSITORY/"manpages").freeze
-    TARGET_DOC_PATH = (HOMEBREW_REPOSITORY/"docs").freeze
+    SOURCE_PATH = T.let((HOMEBREW_LIBRARY_PATH/"manpages").freeze, Pathname)
+    TARGET_MAN_PATH = T.let((HOMEBREW_REPOSITORY/"manpages").freeze, Pathname)
+    TARGET_DOC_PATH = T.let((HOMEBREW_REPOSITORY/"docs").freeze, Pathname)
 
+    sig { params(quiet: T::Boolean).void }
     def self.regenerate_man_pages(quiet:)
       require "kramdown"
       require "manpages/parser/ronn"
@@ -45,41 +44,41 @@ module Homebrew
       File.write(TARGET_MAN_PATH/"brew.1", roff)
     end
 
+    sig { params(quiet: T::Boolean).returns(String) }
     def self.build_man_page(quiet:)
       template = (SOURCE_PATH/"brew.1.md.erb").read
       readme = HOMEBREW_REPOSITORY/"README.md"
       variables = Variables.new(
-        commands:                   generate_cmd_manpages(Commands.internal_commands_paths),
-        developer_commands:         generate_cmd_manpages(Commands.internal_developer_commands_paths),
-        official_external_commands: generate_cmd_manpages(Commands.official_external_commands_paths(quiet:)),
-        global_cask_options:        global_cask_options_manpage,
-        global_options:             global_options_manpage,
-        environment_variables:      env_vars_manpage,
-        lead:                       readme.read[/(Homebrew's \[Project Leader.*\.)/, 1]
-                                      .gsub(/\[([^\]]+)\]\([^)]+\)/, '\1'),
-        plc:                        readme.read[/(Homebrew's \[Project Leadership Committee.*\.)/, 1]
-                                      .gsub(/\[([^\]]+)\]\([^)]+\)/, '\1'),
-        tsc:                        readme.read[/(Homebrew's \[Technical Steering Committee.*\.)/, 1]
-                                      .gsub(/\[([^\]]+)\]\([^)]+\)/, '\1'),
-        maintainers:                readme.read[/(Homebrew's maintainers .*\.)/, 1]
-                                      .gsub(/\[([^\]]+)\]\([^)]+\)/, '\1'),
-        alumni:                     readme.read[/(Former maintainers .*\.)/, 1]
-                                      .gsub(/\[([^\]]+)\]\([^)]+\)/, '\1'),
+        commands:              generate_cmd_manpages(Commands.internal_commands_paths),
+        developer_commands:    generate_cmd_manpages(Commands.internal_developer_commands_paths),
+        global_cask_options:   global_cask_options_manpage,
+        global_options:        global_options_manpage,
+        environment_variables: env_vars_manpage,
+        project_leader:        readme.read[/(Homebrew's \[Project Leader.*\.)/, 1]
+                                     .gsub(/\[([^\]]+)\]\([^)]+\)/, '\1'),
+        lead_maintainers:      readme.read[/(Homebrew's \[Lead Maintainers.*\.)/, 1]
+                                     .gsub(/\[([^\]]+)\]\([^)]+\)/, '\1'),
+        maintainers:           readme.read[/(Homebrew's other Maintainers .*\.)/, 1]
+                                     .gsub(/\[([^\]]+)\]\([^)]+\)/, '\1'),
+        alumni:                readme.read[/(Former Maintainers .*\.)/, 1]
+                                     .gsub(/\[([^\]]+)\]\([^)]+\)/, '\1'),
       )
 
       ERB.new(template, trim_mode: ">").result(variables.instance_eval { binding })
     end
 
+    sig { params(path: Pathname).returns(String) }
     def self.sort_key_for_path(path)
       # Options after regular commands (`~` comes after `z` in ASCII table).
       path.basename.to_s.sub(/\.(rb|sh)$/, "").sub(/^--/, "~~")
     end
 
+    sig { params(cmd_paths: T::Array[Pathname]).returns(String) }
     def self.generate_cmd_manpages(cmd_paths)
       man_page_lines = []
 
       # preserve existing manpage order
-      cmd_paths.sort_by { sort_key_for_path(_1) }
+      cmd_paths.sort_by { sort_key_for_path(it) }
                .each do |cmd_path|
         cmd_man_page_lines = if (cmd_parser = Homebrew::CLI::Parser.from_cmd_path(cmd_path))
           next if cmd_parser.hide_from_man_page
@@ -99,7 +98,9 @@ module Homebrew
 
     sig { params(cmd_parser: CLI::Parser).returns(T::Array[String]) }
     def self.cmd_parser_manpage_lines(cmd_parser)
-      lines = [format_usage_banner(cmd_parser.usage_banner_text)]
+      lines = []
+      usage_banner_text = cmd_parser.usage_banner_text
+      lines << format_usage_banner(usage_banner_text) if usage_banner_text
       lines += cmd_parser.processed_options.filter_map do |short, long, desc, hidden|
         next if hidden
 
@@ -115,14 +116,21 @@ module Homebrew
       lines
     end
 
+    sig { params(cmd_path: Pathname).returns(T.nilable(T::Array[String])) }
     def self.cmd_comment_manpage_lines(cmd_path)
       comment_lines = cmd_path.read.lines.grep(/^#:/)
       return if comment_lines.empty?
-      return if comment_lines.first.include?("@hide_from_man_page")
 
-      lines = [format_usage_banner(comment_lines.first).chomp]
-      comment_lines.slice(1..-1)
-                   .each do |line|
+      first_comment_line = comment_lines.first
+      return unless first_comment_line
+      return if first_comment_line.include?("@hide_from_man_page")
+
+      lines = [format_usage_banner(first_comment_line).chomp]
+      all_but_first_comment_lines = comment_lines.slice(1..-1)
+      return unless all_but_first_comment_lines
+      return if all_but_first_comment_lines.empty?
+
+      all_but_first_comment_lines.each do |line|
         line = line.slice(4..-2)
         unless line
           lines.last << "\n"
@@ -174,10 +182,18 @@ module Homebrew
       lines.join("\n")
     end
 
+    sig { params(opt: T.nilable(String)).returns(T.nilable(String)) }
     def self.format_opt(opt)
       "`#{opt}`" unless opt.nil?
     end
 
+    sig {
+      params(
+        short: T.nilable(String),
+        long:  T.nilable(String),
+        desc:  String,
+      ).returns(String)
+    }
     def self.generate_option_doc(short, long, desc)
       comma = (short && long) ? ", " : ""
       <<~EOS
@@ -188,9 +204,10 @@ module Homebrew
       EOS
     end
 
+    sig { params(usage_banner: String).returns(String) }
     def self.format_usage_banner(usage_banner)
-      usage_banner&.sub(/^(#: *\* )?/, "### ")
-                  &.gsub(/(?<!`)\[([^\[\]]*)\](?!`)/, "\\[\\1\\]") # escape [] character (except those in code spans)
+      usage_banner.sub(/^(#: *\* )?/, "### ")
+                  .gsub(/(?<!`)\[([^\[\]]*)\](?!`)/, "\\[\\1\\]") # escape [] character (except those in code spans)
     end
   end
 end

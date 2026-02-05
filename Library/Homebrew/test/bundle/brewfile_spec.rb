@@ -13,9 +13,12 @@ RSpec.describe Homebrew::Bundle::Brewfile do
     let(:env_bundle_file_global_value) { nil }
     let(:env_bundle_file_value) { nil }
     let(:env_user_config_home_value) { "/Users/username/.homebrew" }
+    let(:env_home_value) { "/Users/username" }
     let(:file_value) { nil }
     let(:has_global) { false }
+    let(:config_dir_exist) { false }
     let(:config_dir_brewfile_exist) { false }
+    let(:home_dir_brewfile_exist) { false }
 
     before do
       allow(ENV).to receive(:fetch).and_return(nil)
@@ -28,6 +31,11 @@ RSpec.describe Homebrew::Bundle::Brewfile do
                                    .and_return(env_user_config_home_value)
       allow(File).to receive(:exist?).with("/Users/username/.homebrew/Brewfile")
                                      .and_return(config_dir_brewfile_exist)
+      allow(File).to receive(:exist?).with("/Users/username/.Brewfile")
+                                     .and_return(home_dir_brewfile_exist)
+      allow(Dir).to receive(:home).and_return(env_home_value)
+      allow(Dir).to receive(:exist?).with("/Users/username/.homebrew")
+                                    .and_return(config_dir_exist)
     end
 
     context "when `file` is specified with a relative path" do
@@ -165,7 +173,28 @@ RSpec.describe Homebrew::Bundle::Brewfile do
 
       context "when HOMEBREW_USER_CONFIG_HOME/Brewfile exists" do
         let(:config_dir_brewfile_exist) { true }
+        let(:config_dir_exist) { true }
+        let(:home_dir_brewfile_exist) { true }
         let(:expected_pathname) { Pathname.new("#{env_user_config_home_value}/Brewfile") }
+
+        it "returns the expected path" do
+          expect(path).to eq(expected_pathname)
+        end
+      end
+
+      context "when empty HOMEBREW_USER_CONFIG_HOME exists, and .Brewfile does not" do
+        let(:config_dir_exist) { true }
+        let(:expected_pathname) { Pathname.new("#{env_user_config_home_value}/Brewfile") }
+
+        it "returns the expected path" do
+          expect(path).to eq(expected_pathname)
+        end
+      end
+
+      context "when empty HOMEBREW_USER_CONFIG_HOME and .Brewfile exist" do
+        let(:config_dir_exist) { true }
+        let(:home_dir_brewfile_exist) { true }
+        let(:expected_pathname) { Pathname.new("#{env_home_value}/.Brewfile") }
 
         it "returns the expected path" do
           expect(path).to eq(expected_pathname)

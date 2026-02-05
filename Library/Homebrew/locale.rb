@@ -1,4 +1,4 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
 
 # Representation of a system locale.
@@ -24,6 +24,7 @@ class Locale
   LOCALE_REGEX = /\A((?:#{LANGUAGE_REGEX}|#{REGION_REGEX}|#{SCRIPT_REGEX})(?:-|$)){1,3}\Z/
   private_constant :LOCALE_REGEX
 
+  sig { params(string: String).returns(T.attached_class) }
   def self.parse(string)
     if (locale = try_parse(string))
       return locale
@@ -55,25 +56,42 @@ class Locale
     new(language, script, region)
   end
 
-  attr_reader :language, :script, :region
+  sig { returns(T.nilable(String)) }
+  attr_reader :language
 
+  sig { returns(T.nilable(String)) }
+  attr_reader :script
+
+  sig { returns(T.nilable(String)) }
+  attr_reader :region
+
+  sig { params(language: T.nilable(String), script: T.nilable(String), region: T.nilable(String)).void }
   def initialize(language, script, region)
     raise ArgumentError, "#{self.class} cannot be empty" if language.nil? && region.nil? && script.nil?
 
-    {
-      language:,
-      script:,
-      region:,
-    }.each do |key, value|
-      next if value.nil?
+    unless language.nil?
+      regex = LANGUAGE_REGEX
+      raise ParserError, "'language' does not match #{regex}" unless language.match?(regex)
 
-      regex = self.class.const_get(:"#{key.upcase}_REGEX")
-      raise ParserError, "'#{value}' does not match #{regex}" unless value&.match?(regex)
-
-      instance_variable_set(:"@#{key}", value)
+      @language = T.let(language, T.nilable(String))
     end
+
+    unless script.nil?
+      regex = SCRIPT_REGEX
+      raise ParserError, "'script' does not match #{regex}" unless script.match?(regex)
+
+      @script = T.let(script, T.nilable(String))
+    end
+
+    return if region.nil?
+
+    regex = REGION_REGEX
+    raise ParserError, "'region' does not match #{regex}" unless region.match?(regex)
+
+    @region = T.let(region, T.nilable(String))
   end
 
+  sig { params(other: T.any(String, Locale)).returns(T::Boolean) }
   def include?(other)
     unless other.is_a?(self.class)
       other = self.class.try_parse(other)
@@ -87,6 +105,7 @@ class Locale
     end
   end
 
+  sig { params(other: T.any(String, Locale)).returns(T::Boolean) }
   def eql?(other)
     unless other.is_a?(self.class)
       other = self.class.try_parse(other)
@@ -99,6 +118,13 @@ class Locale
   end
   alias == eql?
 
+  sig {
+    params(
+      locale_groups: T::Enumerable[T::Enumerable[T.any(String, Locale)]],
+    ).returns(
+      T.nilable(T::Enumerable[T.any(String, Locale)]),
+    )
+  }
   def detect(locale_groups)
     locale_groups.find { |locales| locales.any? { |locale| eql?(locale) } } ||
       locale_groups.find { |locales| locales.any? { |locale| include?(locale) } }

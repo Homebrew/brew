@@ -19,8 +19,8 @@ module RuboCop
           ).void
         }
         def initialize(method_node, all_comments)
-          @method_node = T.let(method_node, RuboCop::AST::Node)
-          @all_comments = T.let(all_comments, T::Array[T.any(String, Parser::Source::Comment)])
+          @method_node = method_node
+          @all_comments = all_comments
         end
 
         sig { returns(RuboCop::AST::Node) }
@@ -83,11 +83,11 @@ module RuboCop
           )
         end
 
-        sig { returns(T::Hash[Parser::Source::Range, T::Array[Parser::Source::Comment]]) }
+        sig { returns(T::Hash[Parser::Source::Map, T::Array[Parser::Source::Comment]]) }
         def comments_hash
           @comments_hash ||= T.let(
             Parser::Source::Comment.associate_locations(stanza_node.parent, all_comments),
-            T.nilable(T::Hash[Parser::Source::Range, T::Array[Parser::Source::Comment]]),
+            T.nilable(T::Hash[Parser::Source::Map, T::Array[Parser::Source::Comment]]),
           )
         end
 

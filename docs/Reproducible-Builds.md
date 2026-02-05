@@ -4,7 +4,7 @@ last_review_date: "1970-01-01"
 
 # Reproducible Builds
 
-The Homebrew build environment is designed with [reproducible builds](https://reproducible-builds.org) as a goal where possible. Some convenience tools are also available to formula authors to help achieve deterministic builds.
+The Homebrew build environment is designed with [reproducible builds](https://reproducible-builds.org/) as a goal where possible. Some convenience tools are also available to formula authors to help achieve deterministic builds.
 
 ## Build time
 

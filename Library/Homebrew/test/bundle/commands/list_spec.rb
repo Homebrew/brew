@@ -3,15 +3,46 @@
 require "bundle"
 require "bundle/commands/list"
 
-RSpec.describe Homebrew::Bundle::Commands::List do
-  subject(:list) { described_class.run(global: false, file: nil, brews:, casks:, taps:, mas:, whalebrew:, vscode:) }
+TYPES_AND_DEPS = {
+  taps:     "phinze/cask",
+  formulae: "mysql",
+  casks:    "google-chrome",
+  mas:      "1Password",
+  vscode:   "shopify.ruby-lsp",
+  go:       "github.com/charmbracelet/crush",
+  cargo:    "ripgrep",
+}.freeze
 
-  let(:brews) { true }
-  let(:casks) { false }
-  let(:taps) { false }
-  let(:mas) { false }
-  let(:whalebrew) { false }
-  let(:vscode) { false }
+COMBINATIONS = begin
+  keys = TYPES_AND_DEPS.keys
+  1.upto(keys.length).flat_map do |i|
+    keys.combination(i).take((1..keys.length).reduce(:*) || 1)
+  end.sort
+end.freeze
+
+RSpec.describe Homebrew::Bundle::Commands::List do
+  subject(:list) do
+    described_class.run(
+      global:   false,
+      file:     nil,
+      formulae: formulae,
+      casks:    casks,
+      taps:     taps,
+      mas:      mas,
+      vscode:   vscode,
+      go:       go,
+      cargo:    cargo,
+      flatpak:  false,
+    )
+  end
+
+  let(:formulae) { true }
+  let(:casks)    { false }
+  let(:taps)     { false }
+  let(:mas)      { false }
+  let(:vscode)   { false }
+  let(:go)       { false }
+  let(:cargo)    { false }
 
   before do
     allow_any_instance_of(IO).to receive(:puts)
@@ -25,8 +56,9 @@ RSpec.describe Homebrew::Bundle::Commands::List do
           brew 'mysql', conflicts_with: ['mysql56']
           cask 'google-chrome'
           mas '1Password', id: 443987910
-          whalebrew 'whalebrew/imagemagick'
           vscode 'shopify.ruby-lsp'
+          go 'github.com/charmbracelet/crush'
+          cargo 'ripgrep'
         EOS
       )
     end
@@ -36,35 +68,22 @@ RSpec.describe Homebrew::Bundle::Commands::List do
     end
 
     describe "limiting when certain options are passed" do
-      types_and_deps = {
-        taps:      "phinze/cask",
-        brews:     "mysql",
-        casks:     "google-chrome",
-        mas:       "1Password",
-        whalebrew: "whalebrew/imagemagick",
-        vscode:    "shopify.ruby-lsp",
-      }
-
-      combinations = 1.upto(types_and_deps.length).flat_map do |i|
-        types_and_deps.keys.combination(i).take((1..types_and_deps.length).reduce(:*) || 1)
-      end.sort
-
-      combinations.each do |options_list|
-        args_hash = options_list.to_h { |arg| [arg, true] }
+      COMBINATIONS.each do |options_list|
+        opts_string = options_list.map { |o| "`#{o}`" }.join(" and ")
+        verb = (options_list.length == 1) ? "is" : "are"
         words = options_list.join(" and ")
-        opts = options_list.map { |o| "`#{o}`" }.join(" and ")
-        verb = (options_list.length == 1 && "is") || "are"
 
-        context "when #{opts} #{verb} passed" do
-          let(:brews) { args_hash[:brews] }
-          let(:casks) { args_hash[:casks] }
-          let(:taps) { args_hash[:taps] }
-          let(:mas) { args_hash[:mas] }
-          let(:whalebrew) { args_hash[:whalebrew] }
-          let(:vscode) { args_hash[:vscode] }
+        context "when #{opts_string} #{verb} passed" do
+          let(:formulae) { options_list.include?(:formulae) }
+          let(:casks)    { options_list.include?(:casks) }
+          let(:taps)     { options_list.include?(:taps) }
+          let(:mas)      { options_list.include?(:mas) }
+          let(:vscode)   { options_list.include?(:vscode) }
+          let(:go)       { options_list.include?(:go) }
+          let(:cargo)    { options_list.include?(:cargo) }
 
           it "shows only #{words}" do
-            expected = options_list.map { |opt| types_and_deps[opt] }.join("\n")
+            expected = options_list.map { |opt| TYPES_AND_DEPS[opt] }.join("\n")
             expect { list }.to output("#{expected}\n").to_stdout
           end
         end

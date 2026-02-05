@@ -40,7 +40,6 @@
       "id": "default",
       "name": "Brew Typecheck",
       "description": "Default configuration",
-      "cwd": "${workspaceFolder}",
       "command": [
         "./bin/brew",
         "typecheck",

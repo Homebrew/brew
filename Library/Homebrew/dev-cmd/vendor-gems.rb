@@ -3,6 +3,8 @@
 
 require "abstract_command"
 require "utils/git"
+require "fileutils"
+require "utils/github"
 
 module Homebrew
   module DevCmd
@@ -11,22 +13,20 @@ module Homebrew
         description <<~EOS
           Install and commit Homebrew's vendored gems.
         EOS
-
         comma_array "--update",
                     description: "Update the specified list of vendored gems to the latest version."
-        switch      "--no-commit",
-                    description: "Do not generate a new commit upon completion."
-        switch     "--non-bundler-gems",
-                   description: "Update vendored gems that aren't using Bundler.",
-                   hidden:      true
+        switch "--no-commit",
+               description: "Do not generate a new commit upon completion."
+        switch "--non-bundler-gems",
+               description: "Update vendored gems that aren't using Bundler.",
+               hidden:      true
 
         named_args :none
       end
 
       sig { override.void }
       def run
-        Homebrew.install_bundler!
-
+        Homebrew.setup_gem_environment!
         ENV["BUNDLE_WITH"] = Homebrew.valid_gem_groups.join(":")
 
         ohai "cd #{HOMEBREW_LIBRARY_PATH}"
@@ -44,6 +44,11 @@ module Homebrew
           ohai "bundle install --standalone"
           run_bundle "install", "--standalone"
 
+          if GitHub::Actions.env_set? && HOMEBREW_PREFIX.to_s == HOMEBREW_LINUX_DEFAULT_PREFIX
+            ohai "chmod +t -R /home/linuxbrew/"
+            system "sudo", "chmod", "+t", "-R", "/home/linuxbrew/"
+          end
+
           ohai "bundle pristine"
           run_bundle "pristine"
 
@@ -53,7 +58,7 @@ module Homebrew
           # Workaround Bundler 2.4.21 issue where platforms may be removed.
           # Although we don't use 2.4.21, Dependabot does as it currently ignores your lockfile version.
           # https://github.com/rubygems/rubygems/issues/7169
-          run_bundle "lock", "--add-platform", "aarch64-linux", "arm-linux"
+          run_bundle "lock", "--add-platform", "aarch64-linux"
           system "git", "add", "Gemfile.lock" unless args.no_commit?
 
           if args.non_bundler_gems?

@@ -23,7 +23,7 @@ RSpec.describe CompilerSelector do
     end
   end
 
-  describe "#compiler" do
+  describe "#compiler", :no_api do
     it "defaults to cc" do
       expect(selector.compiler).to eq(cc)
     end
@@ -49,7 +49,7 @@ RSpec.describe CompilerSelector do
     it "returns gcc-10 if gcc formula offers gcc-10 on linux", :needs_linux do
       software_spec.fails_with(:clang)
       allow(Formulary).to receive(:factory)
-        .with("gcc@11")
+        .with(OS::LINUX_PREFERRED_GCC_COMPILER_FORMULA)
         .and_return(instance_double(Formula, version: Version.new("10.0")))
       expect(selector.compiler).to eq("gcc-10")
     end
@@ -59,7 +59,7 @@ RSpec.describe CompilerSelector do
       software_spec.fails_with(gcc: "10")
       software_spec.fails_with(gcc: "12")
       allow(Formulary).to receive(:factory)
-        .with("gcc@11")
+        .with(OS::LINUX_PREFERRED_GCC_COMPILER_FORMULA)
         .and_return(instance_double(Formula, version: Version.new("10.0")))
       expect(selector.compiler).to eq("gcc-11")
     end
@@ -68,7 +68,7 @@ RSpec.describe CompilerSelector do
       software_spec.fails_with(:clang)
       software_spec.fails_with(:gcc) { version "11" }
       allow(Formulary).to receive(:factory)
-        .with("gcc@11")
+        .with(OS::LINUX_PREFERRED_GCC_COMPILER_FORMULA)
         .and_return(instance_double(Formula, version: Version.new("11.0")))
       expect(selector.compiler).to eq("gcc-12")
     end

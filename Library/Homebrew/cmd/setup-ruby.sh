@@ -34,8 +34,5 @@ homebrew-setup-ruby() {
 
   setup-gem-home-bundle-gemfile
 
-  if ! bundle check &>/dev/null
-  then
-    "${HOMEBREW_BREW_FILE}" install-bundler-gems
-  fi
+  ensure-bundle-dependencies
 }

@@ -38,7 +38,7 @@ module Homebrew
         # Identify versions from HTTP headers.
         #
         # @param headers [Hash] a hash of HTTP headers to check for versions
-        # @param regex [Regexp, nil] a regex for matching versions
+        # @param regex [Regexp, nil] a regex for matching versions in content
         # @return [Array]
         sig {
           params(
@@ -47,7 +47,7 @@ module Homebrew
             block:   T.nilable(Proc),
           ).returns(T::Array[String])
         }
-        def self.versions_from_headers(headers, regex = nil, &block)
+        def self.versions_from_content(headers, regex = nil, &block)
           if block
             block_return_value = regex.present? ? yield(headers, regex) : yield(headers)
             return Strategy.handle_block_return(block_return_value)
@@ -70,30 +70,43 @@ module Homebrew
         # using the provided regex for matching.
         #
         # @param url [String] the URL to fetch
-        # @param regex [Regexp, nil] a regex used for matching versions
+        # @param regex [Regexp, nil] a regex for matching versions
+        # @param provided_content [String, nil] content to check instead of
+        #   fetching
         # @param options [Options] options to modify behavior
         # @return [Hash]
         sig {
-          override(allow_incompatible: true).params(
-            url:     String,
-            regex:   T.nilable(Regexp),
-            options: Options,
-            block:   T.nilable(Proc),
+          override.params(
+            url:              String,
+            regex:            T.nilable(Regexp),
+            provided_content: T.nilable(String),
+            options:          Options,
+            block:            T.nilable(Proc),
           ).returns(T::Hash[Symbol, T.anything])
         }
-        def self.find_versions(url:, regex: nil, options: Options.new, &block)
+        def self.find_versions(url:, regex: nil, provided_content: nil, options: Options.new, &block)
           match_data = { matches: {}, regex:, url: }
+          match_data[:cached] = true if provided_content
+          return match_data if url.blank?
 
-          headers = Strategy.page_headers(url, options:)
+          if match_data[:cached]
+            content = Json.parse_json(T.must(provided_content))
+          else
+            match_data[:content] = Strategy.page_headers(url, options:)
+            content = match_data[:content]
+          end
+          return match_data if content.blank?
 
           # Merge the headers from all responses into one hash
-          merged_headers = headers.reduce(&:merge)
+          merged_headers = content.reduce(&:merge)
           return match_data if merged_headers.blank?
 
-          versions_from_headers(merged_headers, regex, &block).each do |version_text|
+          versions_from_content(merged_headers, regex, &block).each do |version_text|
             match_data[:matches][version_text] = Version.new(version_text)
           end
 
+          require "json"
+          match_data[:content] = JSON.generate(match_data[:content]) unless match_data[:cached]
           match_data
         end
       end

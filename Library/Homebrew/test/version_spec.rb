@@ -14,7 +14,7 @@ RSpec.describe Version do
       expect(described_class.create("foo").inspect).to eq('#<Version::StringToken "foo">')
     end
 
-    specify "#to_s" do
+    specify "#to_s" do # rubocop:todo RSpec/AggregateExamples
       expect(described_class.create("foo").to_s).to eq("foo")
     end
 
@@ -82,11 +82,11 @@ RSpec.describe Version do
       expect(null_version).to be < described_class.new("1")
     end
 
-    it "is never greater" do
+    it "is never greater" do # rubocop:todo RSpec/AggregateExamples
       expect(null_version).not_to be > described_class.new("0")
     end
 
-    it "isn't equal to itself" do
+    it "isn't equal to itself" do # rubocop:todo RSpec/AggregateExamples
       expect(null_version).not_to eql(null_version)
     end
 
@@ -104,7 +104,7 @@ RSpec.describe Version do
       it "raises an error" do
         expect do
           null_version.to_str
-        end.to raise_error NoMethodError, "undefined method `to_str' for Version:NULL"
+        end.to raise_error NoMethodError, "undefined method `to_str` for Version:NULL"
       end
     end
 
@@ -132,7 +132,7 @@ RSpec.describe Version do
       expect(null_version.inspect).to eq("#<Version::NullToken>")
     end
 
-    it "is equal to itself" do
+    it "is equal to itself" do # rubocop:todo RSpec/AggregateExamples
       expect(null_version).to eq described_class::NULL_TOKEN
     end
   end
@@ -507,14 +507,6 @@ RSpec.describe Version do
     specify "codeload style" do
       expect(described_class.new("0.7.1"))
         .to be_detected_from("https://codeload.github.com/gsamokovarov/jump/tar.gz/v0.7.1")
-    end
-
-    specify "elasticsearch alpha style" do
-      expect(described_class.new("5.0.0-alpha5"))
-        .to be_detected_from(
-          "https://download.elastic.co/elasticsearch/release/org/elasticsearch" \
-          "/distribution/tar/elasticsearch/5.0.0-alpha5/elasticsearch-5.0.0-alpha5.tar.gz",
-        )
     end
 
     specify "gloox beta style" do

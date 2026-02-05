@@ -12,10 +12,10 @@ module Homebrew
       cmd_args do
         description <<~EOS
           Run a test of `brew update` with a new repository clone.
-          If no options are passed, use `origin/master` as the start commit.
+          If no options are passed, use `origin/main` as the start commit.
         EOS
         switch "--to-tag",
-               description: "Set `HOMEBREW_UPDATE_TO_TAG` to test updating between tags."
+               description: "Set `$HOMEBREW_UPDATE_TO_TAG` to test updating between tags."
         switch "--keep-tmp",
                description: "Retain the temporary directory containing the new repository clone."
         flag   "--commit=",
@@ -47,7 +47,7 @@ module Homebrew
           "stable"
         else
           ENV["HOMEBREW_DEV_CMD_RUN"] = "1"
-          "master"
+          "main"
         end
 
         # Utils.popen_read returns a String without a block argument, but that isn't easily typed. We thus label this
@@ -58,7 +58,7 @@ module Homebrew
           start_commit = if (commit = args.commit)
             commit
           elsif (date = args.before)
-            Utils.popen_read("git", "rev-list", "-n1", "--before=#{date}", "origin/master").chomp
+            Utils.popen_read("git", "rev-list", "-n1", "--before=#{date}", "origin/main").chomp
           elsif args.to_tag?
             tags = git_tags
             current_tag, previous_tag, = tags.lines
@@ -72,18 +72,18 @@ module Homebrew
             # ^0 ensures this points to the commit rather than the tag object.
             "#{previous_tag}^0"
           else
-            Utils.popen_read("git", "merge-base", "origin/master", end_commit).chomp
+            Utils.popen_read("git", "merge-base", "origin/main", end_commit).chomp
           end
           odie "Could not find start commit!" if start_commit.empty?
 
           start_commit = Utils.popen_read("git", "rev-parse", start_commit).chomp
           odie "Could not find start commit!" if start_commit.empty?
 
-          end_commit = T.cast(Utils.popen_read("git", "rev-parse", end_commit).chomp, String)
+          end_commit = Utils.popen_read("git", "rev-parse", end_commit).chomp
           odie "Could not find end commit!" if end_commit.empty?
 
-          if Utils.popen_read("git", "branch", "--list", "master").blank?
-            safe_system "git", "branch", "master", "origin/master"
+          if Utils.popen_read("git", "branch", "--list", "main").blank?
+            safe_system "git", "branch", "main", "origin/HEAD"
           end
         end
 
@@ -99,17 +99,17 @@ module Homebrew
           oh1 "Preparing test environment..."
           # copy Homebrew installation
           safe_system "git", "clone", "#{HOMEBREW_REPOSITORY}/.git", ".",
-                      "--branch", "master", "--single-branch"
+                      "--branch", "main", "--single-branch"
 
           # set git origin to another copy
           safe_system "git", "clone", "#{HOMEBREW_REPOSITORY}/.git", "remote.git",
-                      "--bare", "--branch", "master", "--single-branch"
+                      "--bare", "--branch", "main", "--single-branch"
           safe_system "git", "config", "remote.origin.url", "#{curdir}/remote.git"
           ENV["HOMEBREW_BREW_GIT_REMOTE"] = "#{curdir}/remote.git"
 
           # force push origin to end_commit
-          safe_system "git", "checkout", "-B", "master", end_commit
-          safe_system "git", "push", "--force", "origin", "master"
+          safe_system "git", "checkout", "-B", "main", end_commit
+          safe_system "git", "push", "--force", "origin", "main"
 
           # set test copy to start_commit
           safe_system "git", "reset", "--hard", start_commit
@@ -142,6 +142,7 @@ module Homebrew
 
       private
 
+      sig { returns(String) }
       def git_tags
         tags = Utils.popen_read("git", "tag", "--list", "--sort=-version:refname")
         if tags.blank?
@@ -150,6 +151,7 @@ module Homebrew
             Utils.popen_read("git", "tag", "--list", "--sort=-version:refname")
           end
         end
+        odie "Could not find git tags!" if tags.blank?
         tags
       end
     end

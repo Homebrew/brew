@@ -36,10 +36,9 @@ A simple (and typical) example:
 
 ```ruby
 bottle do
-  sha256 arm64_big_sur: "a9ae578b05c3da46cedc07dd428d94a856aeae7f3ef80a0f405bf89b8cde893a"
-  sha256 big_sur:       "5dc376aa20241233b76e2ec2c1d4e862443a0250916b2838a1ff871e8a6dc2c5"
-  sha256 catalina:      "924afbbc16549d8c2b80544fd03104ff8c17a4b1460238e3ed17a1313391a2af"
-  sha256 mojave:        "678d338adc7d6e8c352800fe03fc56660c796bd6da23eda2b1411fed18bd0d8d"
+  sha256 arm64_tahoe: "a9ae578b05c3da46cedc07dd428d94a856aeae7f3ef80a0f405bf89b8cde893a"
+  sha256 tahoe:       "5dc376aa20241233b76e2ec2c1d4e862443a0250916b2838a1ff871e8a6dc2c5"
+  sha256 sequoia:     "924afbbc16549d8c2b80544fd03104ff8c17a4b1460238e3ed17a1313391a2af"
 end
 ```
 
@@ -49,10 +48,9 @@ A full example:
 bottle do
   root_url "https://example.com"
   rebuild 4
-  sha256 cellar: "/opt/homebrew/Cellar", arm64_big_sur: "a9ae578b05c3da46cedc07dd428d94a856aeae7f3ef80a0f405bf89b8cde893a"
-  sha256 cellar: :any,                   big_sur:       "5dc376aa20241233b76e2ec2c1d4e862443a0250916b2838a1ff871e8a6dc2c5"
-  sha256                                 catalina:      "924afbbc16549d8c2b80544fd03104ff8c17a4b1460238e3ed17a1313391a2af"
-  sha256                                 mojave:        "678d338adc7d6e8c352800fe03fc56660c796bd6da23eda2b1411fed18bd0d8d"
+  sha256 cellar: "/opt/homebrew/Cellar", arm64_tahoe: "a9ae578b05c3da46cedc07dd428d94a856aeae7f3ef80a0f405bf89b8cde893a"
+  sha256 cellar: :any,                   tahoe:       "5dc376aa20241233b76e2ec2c1d4e862443a0250916b2838a1ff871e8a6dc2c5"
+  sha256                                 sequoia:     "924afbbc16549d8c2b80544fd03104ff8c17a4b1460238e3ed17a1313391a2af"
 end
 ```
 

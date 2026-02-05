@@ -109,7 +109,7 @@ module Utils
         raise Interrupt if $CHILD_STATUS.termsig == Signal.list["INT"]
 
         if data.present?
-          error_hash = JSON.parse(T.must(data.lines.first))
+          error_hash = JSON.parse(data.lines.fetch(0))
           raise rewrite_child_error(error_hash)
         end
 

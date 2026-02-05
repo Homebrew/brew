@@ -10,7 +10,7 @@ RSpec.describe Homebrew::DevCmd::TapNew do
     # To ensure that Utils::Git.setup_gpg! doesn't raise an error
     setup_test_formula "gnupg"
 
-    expect { brew "tap-new", "homebrew/foo", "--verbose" }
+    expect { brew "tap-new", "--no-git", "--verbose", "homebrew/foo" }
       .to be_a_success
       .and output(%r{homebrew/foo}).to_stdout
       .and not_to_output.to_stderr

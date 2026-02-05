@@ -17,12 +17,13 @@ RSpec.describe Homebrew::Services::Commands::Info do
     it "fails with empty list" do
       expect do
         described_class.run([], verbose: false, json: false)
-      end.to raise_error UsageError, "Invalid usage: Formula(e) missing, please provide a formula name or use --all"
+      end.to raise_error UsageError,
+                         "Invalid usage: Formula(e) missing, please provide a formula name or use `--all`."
     end
 
     it "succeeds with items" do
       out = "service ()\nRunning: true\nLoaded: true\nSchedulable: false\n"
-      formula = {
+      formula_wrapper = instance_double(Homebrew::Services::FormulaWrapper, to_hash: {
         name:        "service",
         user:        "user",
         status:      :started,
@@ -30,9 +31,9 @@ RSpec.describe Homebrew::Services::Commands::Info do
         running:     true,
         loaded:      true,
         schedulable: false,
-      }
+      })
       expect do
-        described_class.run([formula], verbose: false, json: false)
+        described_class.run([formula_wrapper], verbose: false, json: false)
       end.to output(out).to_stdout
     end
 
@@ -47,8 +48,9 @@ RSpec.describe Homebrew::Services::Commands::Info do
         schedulable: false,
       }
       out = "#{JSON.pretty_generate([formula])}\n"
+      formula_wrapper = instance_double(Homebrew::Services::FormulaWrapper, to_hash: formula)
       expect do
-        described_class.run([formula], verbose: false, json: true)
+        described_class.run([formula_wrapper], verbose: false, json: true)
       end.to output(out).to_stdout
     end
   end
@@ -89,7 +91,7 @@ RSpec.describe Homebrew::Services::Commands::Info do
     it "returns verbose output" do
       out = "service ()\nRunning: true\n"
       out += "Loaded: true\nSchedulable: false\n"
-      out += "User: user\nPID: 42\nFile: /dev/null true\nCommand: /bin/command\n"
+      out += "User: user\nPID: 42\nFile: /dev/null true\nRegistered at login: true\nCommand: /bin/command\n"
       out += "Working directory: /working/dir\nRoot directory: /root/dir\nLog: /log/dir\nError log: /log/dir/error\n"
       out += "Interval: 3600s\nCron: 5 * * * *\n"
       formula = {
@@ -97,6 +99,7 @@ RSpec.describe Homebrew::Services::Commands::Info do
         user:           "user",
         status:         :started,
         file:           "/dev/null",
+        registered:     true,
         running:        true,
         loaded:         true,
         schedulable:    false,

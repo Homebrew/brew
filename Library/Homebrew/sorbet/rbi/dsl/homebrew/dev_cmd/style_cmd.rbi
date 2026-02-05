@@ -18,6 +18,9 @@ class Homebrew::DevCmd::StyleCmd::Args < Homebrew::CLI::Args
   def casks?; end
 
   sig { returns(T::Boolean) }
+  def changed?; end
+
+  sig { returns(T::Boolean) }
   def display_cop_names?; end
 
   sig { returns(T.nilable(T::Array[String])) }

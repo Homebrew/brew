@@ -23,9 +23,9 @@ module Utils
 
       sig { params(regex: Regexp, max_length: Integer, replacement: T.any(String, Pathname)).void }
       def initialize(regex, max_length, replacement)
-        @regex = T.let(regex, Regexp)
-        @max_length = T.let(max_length, Integer)
-        @replacement = T.let(replacement, T.any(String, Pathname))
+        @regex = regex
+        @max_length = max_length
+        @replacement = replacement
       end
     end
 

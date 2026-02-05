@@ -1,6 +1,8 @@
 # typed: strict
 # frozen_string_literal: true
 
+require "utils/output"
+
 # Cleans a newly installed keg.
 # By default:
 #
@@ -13,6 +15,7 @@
 # * removes unresolved symlinks
 class Cleaner
   include Context
+  include Utils::Output::Mixin
 
   # Create a cleaner for the given formula.
   sig { params(formula: Formula).void }

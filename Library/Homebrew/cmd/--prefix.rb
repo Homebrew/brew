@@ -52,6 +52,7 @@ module Homebrew
                description: "List files in Homebrew's prefix not installed by Homebrew."
         switch "--installed",
                description: "Outputs nothing and returns a failing status code if <formula> is not installed."
+
         conflicts "--unbrewed", "--installed"
 
         named_args :formula

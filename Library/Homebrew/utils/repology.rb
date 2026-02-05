@@ -2,9 +2,12 @@
 # frozen_string_literal: true
 
 require "utils/curl"
+require "utils/output"
 
 # Repology API client.
 module Repology
+  extend Utils::Output::Mixin
+
   HOMEBREW_CORE = "homebrew"
   HOMEBREW_CASK = "homebrew_casks"
   MAX_PAGINATION = 15
@@ -24,7 +27,7 @@ module Repology
     if Homebrew::EnvConfig.developer?
       $stderr.puts result&.stderr
     else
-      odebug result&.stderr
+      odebug result&.stderr.to_s
     end
 
     raise

@@ -5,8 +5,12 @@ require "test_runner_formula"
 require "github_runner"
 
 class GitHubRunnerMatrix
-  NEWEST_HOMEBREW_CORE_MACOS_RUNNER = :sequoia
-  OLDEST_HOMEBREW_CORE_MACOS_RUNNER = :ventura
+  # When bumping newest runner, run e.g. `git log -p --reverse -G "sha256 tahoe"`
+  # on homebrew/core and tag the first commit with a bottle e.g.
+  # `git tag 15-sequoia f42c4a659e4da887fc714f8f41cc26794a4bb320`
+  # to allow people to jump to specific commits based on their macOS version.
+  NEWEST_HOMEBREW_CORE_MACOS_RUNNER = :tahoe
+  OLDEST_HOMEBREW_CORE_MACOS_RUNNER = :sonoma
   NEWEST_HOMEBREW_CORE_INTEL_MACOS_RUNNER = :sonoma
 
   RunnerSpec = T.type_alias { T.any(LinuxRunnerSpec, MacOSRunnerSpec) }
@@ -54,10 +58,10 @@ class GitHubRunnerMatrix
       raise ArgumentError, "all_supported is mutually exclusive to other arguments"
     end
 
-    @testing_formulae = T.let(testing_formulae, T::Array[TestRunnerFormula])
-    @deleted_formulae = T.let(deleted_formulae, T::Array[String])
-    @all_supported = T.let(all_supported, T::Boolean)
-    @dependent_matrix = T.let(dependent_matrix, T::Boolean)
+    @testing_formulae = testing_formulae
+    @deleted_formulae = deleted_formulae
+    @all_supported = all_supported
+    @dependent_matrix = dependent_matrix
     @compatible_testing_formulae = T.let({}, T::Hash[GitHubRunner, T::Array[TestRunnerFormula]])
     @formulae_with_untested_dependents = T.let({}, T::Hash[GitHubRunner, T::Array[TestRunnerFormula]])
 
@@ -87,7 +91,7 @@ class GitHubRunnerMatrix
   def linux_runner_spec(arch)
     linux_runner = case arch
     when :arm64 then "ubuntu-22.04-arm"
-    when :x86_64 then ENV.fetch("HOMEBREW_LINUX_RUNNER")
+    when :x86_64 then ENV.fetch("HOMEBREW_LINUX_RUNNER", "ubuntu-latest")
     else raise "Unknown Linux architecture: #{arch}"
     end
 
@@ -95,7 +99,7 @@ class GitHubRunnerMatrix
       name:      "Linux #{arch}",
       runner:    linux_runner,
       container: {
-        image:   "ghcr.io/homebrew/ubuntu22.04:master",
+        image:   "ghcr.io/homebrew/ubuntu22.04:main",
         options: "--user=linuxbrew -e GITHUB_ACTIONS_HOMEBREW_SELF_HOSTED",
       },
       workdir:   "/github/home",
@@ -134,8 +138,8 @@ class GitHubRunnerMatrix
   end
 
   NEWEST_GITHUB_ACTIONS_INTEL_MACOS_RUNNER = :ventura
-  OLDEST_GITHUB_ACTIONS_INTEL_MACOS_RUNNER = :monterey
-  NEWEST_GITHUB_ACTIONS_ARM_MACOS_RUNNER = :sequoia
+  OLDEST_GITHUB_ACTIONS_INTEL_MACOS_RUNNER = :ventura
+  NEWEST_GITHUB_ACTIONS_ARM_MACOS_RUNNER = :tahoe
   OLDEST_GITHUB_ACTIONS_ARM_MACOS_RUNNER = :sonoma
   GITHUB_ACTIONS_RUNNER_TIMEOUT = 360
   private_constant :NEWEST_GITHUB_ACTIONS_INTEL_MACOS_RUNNER, :OLDEST_GITHUB_ACTIONS_INTEL_MACOS_RUNNER,
@@ -146,16 +150,45 @@ class GitHubRunnerMatrix
   def generate_runners!
     return if @runners.present?
 
-    if !@all_supported || ENV.key?("HOMEBREW_LINUX_RUNNER")
-      @runners << create_runner(:linux, :x86_64)
-
-      if !@dependent_matrix &&
-         @testing_formulae.any? { |tf| tf.formula.bottle_specification.tag?(Utils::Bottles.tag(:arm64_linux)) }
-        @runners << create_runner(:linux, :arm64)
-      end
+    # gracefully handle non-GitHub Actions environments
+    github_run_id = if ENV.key?("GITHUB_ACTIONS")
+      ENV.fetch("GITHUB_RUN_ID")
+    else
+      ENV.fetch("GITHUB_RUN_ID", "")
     end
 
-    github_run_id      = ENV.fetch("GITHUB_RUN_ID")
+    # Portable Ruby logic
+    if @testing_formulae.any? { |tf| tf.name.start_with?("portable-") }
+      @runners << create_runner(:linux, :x86_64)
+      @runners << create_runner(:linux, :arm64)
+
+      x86_64_spec = MacOSRunnerSpec.new(
+        name:    "macOS 10.15 x86_64",
+        runner:  "10.15-#{github_run_id}",
+        timeout: GITHUB_ACTIONS_LONG_TIMEOUT,
+        cleanup: true,
+      )
+      x86_64_macos_version = MacOSVersion.new("10.15")
+      @runners << create_runner(:macos, :x86_64, x86_64_spec, x86_64_macos_version)
+
+      # odisabled: remove support for Big Sur September (or later) 2027
+      arm64_spec = MacOSRunnerSpec.new(
+        name:    "macOS 11-arm64-cross",
+        runner:  "11-arm64-cross-#{github_run_id}",
+        timeout: GITHUB_ACTIONS_LONG_TIMEOUT,
+        cleanup: true,
+      )
+      arm64_macos_version = MacOSVersion.new("11")
+      @runners << create_runner(:macos, :arm64, arm64_spec, arm64_macos_version)
+      return
+    end
+
+    if !@all_supported || ENV.key?("HOMEBREW_LINUX_RUNNER")
+      self_hosted_deps = @dependent_matrix && ENV["HOMEBREW_LINUX_RUNNER"] == SELF_HOSTED_LINUX_RUNNER
+      @runners << create_runner(:linux, :x86_64)
+      @runners << create_runner(:linux, :arm64) unless self_hosted_deps
+    end
+
     long_timeout       = ENV.fetch("HOMEBREW_MACOS_LONG_TIMEOUT", "false") == "true"
     use_github_runner  = ENV.fetch("HOMEBREW_MACOS_BUILD_ON_GITHUB_RUNNER", "false") == "true"
 
@@ -253,10 +286,13 @@ class GitHubRunnerMatrix
       macos_version = runner.macos_version
 
       @testing_formulae.select do |formula|
-        next false if macos_version && !formula.compatible_with?(macos_version)
+        Homebrew::SimulateSystem.with(os: platform, arch: Homebrew::SimulateSystem.arch_symbols.fetch(arch)) do
+          simulated_formula = TestRunnerFormula.new(Formulary.factory(formula.name))
+          next false if macos_version && !simulated_formula.compatible_with?(macos_version)
 
-        formula.public_send(:"#{platform}_compatible?") &&
-          formula.public_send(:"#{arch}_compatible?")
+          simulated_formula.public_send(:"#{platform}_compatible?") &&
+            simulated_formula.public_send(:"#{arch}_compatible?")
+        end
       end
     end
   end
@@ -271,10 +307,13 @@ class GitHubRunnerMatrix
       compatible_testing_formulae(runner).select do |formula|
         compatible_dependents = formula.dependents(platform:, arch:, macos_version: macos_version&.to_sym)
                                        .select do |dependent_f|
-          next false if macos_version && !dependent_f.compatible_with?(macos_version)
+          Homebrew::SimulateSystem.with(os: platform, arch: Homebrew::SimulateSystem.arch_symbols.fetch(arch)) do
+            simulated_dependent_f = TestRunnerFormula.new(Formulary.factory(dependent_f.name))
+            next false if macos_version && !simulated_dependent_f.compatible_with?(macos_version)
 
-          dependent_f.public_send(:"#{platform}_compatible?") &&
-            dependent_f.public_send(:"#{arch}_compatible?")
+            simulated_dependent_f.public_send(:"#{platform}_compatible?") &&
+              simulated_dependent_f.public_send(:"#{arch}_compatible?")
+          end
         end
 
         # These arrays will generally have been generated by different Formulary caches,

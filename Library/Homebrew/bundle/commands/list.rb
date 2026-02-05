@@ -1,4 +1,4 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
 
 require "bundle/brewfile"
@@ -8,11 +8,16 @@ module Homebrew
   module Bundle
     module Commands
       module List
-        def self.run(global:, file:, brews:, casks:, taps:, mas:, whalebrew:, vscode:)
+        sig {
+          params(global: T::Boolean, file: T.nilable(String), formulae: T::Boolean, casks: T::Boolean,
+                 taps: T::Boolean, mas: T::Boolean, vscode: T::Boolean,
+                 go: T::Boolean, cargo: T::Boolean, flatpak: T::Boolean).void
+        }
+        def self.run(global:, file:, formulae:, casks:, taps:, mas:, vscode:, go:, cargo:, flatpak:)
           parsed_entries = Brewfile.read(global:, file:).entries
           Homebrew::Bundle::Lister.list(
             parsed_entries,
-            brews:, casks:, taps:, mas:, whalebrew:, vscode:,
+            formulae:, casks:, taps:, mas:, vscode:, go:, cargo:, flatpak:,
           )
         end
       end

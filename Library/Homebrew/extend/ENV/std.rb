@@ -34,7 +34,8 @@ module Stdenv
     self["PKG_CONFIG_LIBDIR"] = determine_pkg_config_libdir
 
     self["MAKEFLAGS"] = "-j#{make_jobs}"
-    self["RUSTFLAGS"] = Hardware.rustflags_target_cpu(effective_arch)
+    self["RUSTC_WRAPPER"] = "#{HOMEBREW_SHIMS_PATH}/shared/rustc_wrapper"
+    self["HOMEBREW_RUSTFLAGS"] = Hardware.rustflags_target_cpu(effective_arch)
 
     if HOMEBREW_PREFIX.to_s != "/usr/local"
       # /usr/local is already an -isystem and -L directory so we skip it
@@ -68,7 +69,6 @@ module Stdenv
     gcc_formula = gcc_version_formula(cc)
     append_path "PATH", gcc_formula.opt_bin.to_s
   end
-  alias generic_setup_build_environment setup_build_environment
 
   sig { returns(T.nilable(PATH)) }
   def determine_pkg_config_libdir
@@ -108,6 +108,12 @@ module Stdenv
   sig { returns(T.any(String, Pathname)) }
   def determine_cc
     s = super
+    begin
+      return Formulary.factory("llvm").opt_bin/"clang" if s == "llvm_clang"
+    rescue FormulaUnavailableError
+      # Don't fail and just let callee handle Pathname("llvm_clang")
+    end
+
     DevelopmentTools.locate(s) || Pathname(s)
   end
   private :determine_cc

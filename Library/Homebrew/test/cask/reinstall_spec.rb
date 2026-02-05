@@ -10,8 +10,7 @@ RSpec.describe Cask::Reinstall, :cask do
     Cask::Installer.new(caffeine).install
 
     output = Regexp.new <<~EOS
-      ==> Downloading file:.*caffeine.zip
-      Already downloaded: .*--caffeine.zip
+      ==> Fetching downloads for:.*caffeine
       ==> Uninstalling Cask local-caffeine
       ==> Backing App 'Caffeine.app' up to '.*Caffeine.app'
       ==> Removing App '.*Caffeine.app'
@@ -32,9 +31,7 @@ RSpec.describe Cask::Reinstall, :cask do
     Cask::Installer.new(caffeine).install
 
     output = Regexp.new <<~EOS
-      ==> Downloading file:.*caffeine.zip
-      Already downloaded: .*--caffeine.zip
-      ==> Implied `brew uninstall --cask local-caffeine`
+      ==> Fetching downloads for:.*caffeine
       ==> Backing App 'Caffeine.app' up to '.*Caffeine.app'
       ==> Removing App '.*Caffeine.app'
       ==> Dispatching zap stanza
@@ -52,18 +49,18 @@ RSpec.describe Cask::Reinstall, :cask do
   end
 
   it "allows reinstalling a Cask" do
-    Cask::Installer.new(Cask::CaskLoader.load(cask_path("local-transmission"))).install
+    Cask::Installer.new(Cask::CaskLoader.load(cask_path("local-transmission-zip"))).install
 
-    expect(Cask::CaskLoader.load(cask_path("local-transmission"))).to be_installed
+    expect(Cask::CaskLoader.load(cask_path("local-transmission-zip"))).to be_installed
 
-    described_class.reinstall_casks(Cask::CaskLoader.load("local-transmission"))
-    expect(Cask::CaskLoader.load(cask_path("local-transmission"))).to be_installed
+    described_class.reinstall_casks(Cask::CaskLoader.load("local-transmission-zip"))
+    expect(Cask::CaskLoader.load(cask_path("local-transmission-zip"))).to be_installed
   end
 
   it "allows reinstalling a non installed Cask" do
-    expect(Cask::CaskLoader.load(cask_path("local-transmission"))).not_to be_installed
+    expect(Cask::CaskLoader.load(cask_path("local-transmission-zip"))).not_to be_installed
 
-    described_class.reinstall_casks(Cask::CaskLoader.load("local-transmission"))
-    expect(Cask::CaskLoader.load(cask_path("local-transmission"))).to be_installed
+    described_class.reinstall_casks(Cask::CaskLoader.load("local-transmission-zip"))
+    expect(Cask::CaskLoader.load(cask_path("local-transmission-zip"))).to be_installed
   end
 end

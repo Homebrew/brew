@@ -11,6 +11,7 @@ module Homebrew
         description <<~EOS
           Remove aliases.
         EOS
+
         named_args :alias, min: 1
       end
 

@@ -11,7 +11,7 @@ Homebrew will install the necessary Python 3 version that is needed to make your
 ## Python 3
 
 Homebrew provides formulae for the newest and maintained releases of Python 3 (`python@3.y`) (<https://devguide.python.org/versions/>).
-We keep older `python@3.y` versions according to our [versioned formulae guidelines](https://docs.brew.sh/Versions).
+We keep older `python@3.y` versions according to our [versioned formulae guidelines](Versions.md).
 
 **Important:** Python may be upgraded to a newer version at any time. Consider using a version
 manager such as `pyenv` if you require stability of minor or patch versions for virtual environments.

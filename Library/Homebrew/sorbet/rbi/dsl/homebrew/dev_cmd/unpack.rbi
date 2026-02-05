@@ -11,6 +11,12 @@ class Homebrew::DevCmd::Unpack
 end
 
 class Homebrew::DevCmd::Unpack::Args < Homebrew::CLI::Args
+  sig { returns(T::Boolean) }
+  def cask?; end
+
+  sig { returns(T::Boolean) }
+  def casks?; end
+
   sig { returns(T.nilable(String)) }
   def destdir; end
 
@@ -19,6 +25,12 @@ class Homebrew::DevCmd::Unpack::Args < Homebrew::CLI::Args
 
   sig { returns(T::Boolean) }
   def force?; end
+
+  sig { returns(T::Boolean) }
+  def formula?; end
+
+  sig { returns(T::Boolean) }
+  def formulae?; end
 
   sig { returns(T::Boolean) }
   def g?; end

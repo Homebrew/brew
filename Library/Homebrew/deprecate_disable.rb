@@ -27,7 +27,8 @@ module DeprecateDisable
     no_longer_available:      "is no longer available upstream",
     no_longer_meets_criteria: "no longer meets the criteria for acceptable casks",
     unmaintained:             "is not maintained upstream",
-    unsigned:                 "is unsigned or does not meet signature requirements",
+    fails_gatekeeper_check:   "does not pass the macOS Gatekeeper check",
+    unreachable:              "is no longer reliably reachable upstream",
   }.freeze, T::Hash[Symbol, String])
 
   # One year when << or >> to Date.today.
@@ -39,6 +40,22 @@ module DeprecateDisable
     return :deprecated if formula_or_cask.deprecated?
 
     :disabled if formula_or_cask.disabled?
+  end
+
+  sig {
+    params(
+      formula: T.nilable(String),
+      cask:    T.nilable(String),
+    ).returns(T.nilable(String))
+  }
+  def replacement_with_type(formula, cask)
+    if formula && formula == cask
+      formula
+    elsif formula
+      "--formula #{formula}"
+    elsif cask
+      "--cask #{cask}"
+    end
   end
 
   sig { params(formula_or_cask: T.any(Formula, Cask::Cask)).returns(T.nilable(String)) }
@@ -77,10 +94,16 @@ module DeprecateDisable
       end
     end
 
-    replacement = if formula_or_cask.deprecated?
-      formula_or_cask.deprecation_replacement
-    elsif formula_or_cask.disabled?
-      formula_or_cask.disable_replacement
+    replacement = if formula_or_cask.disabled?
+      replacement_with_type(
+        formula_or_cask.disable_replacement_formula,
+        formula_or_cask.disable_replacement_cask,
+      )
+    elsif formula_or_cask.deprecated?
+      replacement_with_type(
+        formula_or_cask.deprecation_replacement_formula,
+        formula_or_cask.deprecation_replacement_cask,
+      )
     end
 
     if replacement.present?

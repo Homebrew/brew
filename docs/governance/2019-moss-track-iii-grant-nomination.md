@@ -44,7 +44,7 @@ Homebrew aims to be the missing package manager for macOS (and Linux). Its prima
 
 ### What copyright license or licenses cover the project's source code?
 
-Homebrew's code is licensed under a BSD 2-clause license. Homebrew also vendors three dependencies, which are all MIT licensed (<https://github.com/Homebrew/brew/tree/master/Library/Homebrew/vendor>).
+Homebrew's code is licensed under a BSD 2-clause license. Homebrew also vendors three dependencies, which are all MIT licensed (<https://github.com/Homebrew/brew/tree/HEAD/Library/Homebrew/vendor>).
 
 ### Does the project contain any proprietary code, or depend on or use a proprietary web service? If so, please give details
 

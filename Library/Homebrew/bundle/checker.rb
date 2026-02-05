@@ -1,4 +1,4 @@
-# typed: false # rubocop:todo Sorbet/TrueSigil
+# typed: true
 # frozen_string_literal: true
 
 module Homebrew
@@ -18,12 +18,12 @@ module Homebrew
         end
 
         def failure_reason(name, no_upgrade:)
-          reason = if no_upgrade
+          reason = if no_upgrade && Bundle.upgrade_formulae.exclude?(name)
             "needs to be installed."
           else
             "needs to be installed or updated."
           end
-          "#{self.class::PACKAGE_TYPE_NAME} #{name} #{reason}"
+          "#{self.class.const_get(:PACKAGE_TYPE_NAME)} #{name} #{reason}"
         end
 
         def full_check(packages, no_upgrade:)
@@ -33,7 +33,7 @@ module Homebrew
 
         def checkable_entries(all_entries)
           require "bundle/skipper"
-          all_entries.select { |e| e.type == self.class::PACKAGE_TYPE }
+          all_entries.select { |e| e.type == self.class.const_get(:PACKAGE_TYPE) }
                      .reject(&Bundle::Skipper.method(:skip?))
         end
 
@@ -59,12 +59,15 @@ module Homebrew
       CheckResult = Struct.new :work_to_be_done, :errors
 
       CHECKS = {
-        taps_to_tap:           "Taps",
-        casks_to_install:      "Casks",
-        extensions_to_install: "VSCode Extensions",
-        apps_to_install:       "Apps",
-        formulae_to_install:   "Formulae",
-        formulae_to_start:     "Services",
+        taps_to_tap:               "Taps",
+        casks_to_install:          "Casks",
+        extensions_to_install:     "VSCode Extensions",
+        apps_to_install:           "Apps",
+        formulae_to_install:       "Formulae",
+        formulae_to_start:         "Services",
+        go_packages_to_install:    "Go Packages",
+        cargo_packages_to_install: "Cargo Packages",
+        flatpaks_to_install:       "Flatpaks",
       }.freeze
 
       def self.check(global: false, file: nil, exit_on_first_error: false, no_upgrade: false, verbose: false)
@@ -137,16 +140,40 @@ module Homebrew
         )
       end
 
+      def self.go_packages_to_install(exit_on_first_error: false, no_upgrade: false, verbose: false)
+        require "bundle/go_checker"
+        Homebrew::Bundle::Checker::GoChecker.new.find_actionable(
+          @dsl.entries,
+          exit_on_first_error:, no_upgrade:, verbose:,
+        )
+      end
+
+      def self.cargo_packages_to_install(exit_on_first_error: false, no_upgrade: false, verbose: false)
+        require "bundle/cargo_checker"
+        Homebrew::Bundle::Checker::CargoChecker.new.find_actionable(
+          @dsl.entries,
+          exit_on_first_error:, no_upgrade:, verbose:,
+        )
+      end
+
+      def self.flatpaks_to_install(exit_on_first_error: false, no_upgrade: false, verbose: false)
+        require "bundle/flatpak_checker"
+        Homebrew::Bundle::Checker::FlatpakChecker.new.find_actionable(
+          @dsl.entries,
+          exit_on_first_error:, no_upgrade:, verbose:,
+        )
+      end
+
       def self.reset!
         require "bundle/cask_dumper"
-        require "bundle/brew_dumper"
+        require "bundle/formula_dumper"
         require "bundle/mac_app_store_dumper"
         require "bundle/tap_dumper"
         require "bundle/brew_services"
 
         @dsl = nil
         Homebrew::Bundle::CaskDumper.reset!
-        Homebrew::Bundle::BrewDumper.reset!
+        Homebrew::Bundle::FormulaDumper.reset!
         Homebrew::Bundle::MacAppStoreDumper.reset!
         Homebrew::Bundle::TapDumper.reset!
         Homebrew::Bundle::BrewServices.reset!

@@ -1,12 +1,15 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
 
 require "services/formula_wrapper"
+require "fileutils"
+require "utils/output"
 
 module Homebrew
   module Services
     module Cli
       extend FileUtils
+      extend Utils::Output::Mixin
 
       sig { returns(T.nilable(String)) }
       def self.sudo_service_user
@@ -15,7 +18,7 @@ module Homebrew
 
       sig { params(sudo_service_user: String).void }
       def self.sudo_service_user=(sudo_service_user)
-        @sudo_service_user = sudo_service_user
+        @sudo_service_user = T.let(sudo_service_user, T.nilable(String))
       end
 
       # Binary name.
@@ -41,13 +44,15 @@ module Homebrew
       end
 
       # Check if formula has been found.
-      def self.check(targets)
-        raise UsageError, "Formula(e) missing, please provide a formula name or use --all" if targets.empty?
+      sig { params(targets: T::Array[Services::FormulaWrapper]).returns(T::Boolean) }
+      def self.check!(targets)
+        raise UsageError, "Formula(e) missing, please provide a formula name or use `--all`." if targets.empty?
 
         true
       end
 
       # Kill services that don't have a service file
+      sig { returns(T::Array[String]) }
       def self.kill_orphaned_services
         cleaned_labels = []
         cleaned_services = []
@@ -65,12 +70,13 @@ module Homebrew
         cleaned_labels
       end
 
+      sig { returns(T::Array[String]) }
       def self.remove_unused_service_files
         cleaned = []
         Dir["#{System.path}homebrew.*.{plist,service}"].each do |file|
           next if running.include?(File.basename(file).sub(/\.(plist|service)$/i, ""))
 
-          puts "Removing unused service file #{file}"
+          puts "Removing unused service file: #{file}"
           rm file
           cleaned << file
         end
@@ -89,7 +95,7 @@ module Homebrew
       def self.run(targets, service_file = nil, verbose: false)
         if service_file.present?
           file = Pathname.new service_file
-          raise UsageError, "Provided service file does not exist" unless file.exist?
+          raise UsageError, "Provided service file does not exist." unless file.exist?
         end
 
         targets.each do |service|
@@ -118,7 +124,7 @@ module Homebrew
 
         if service_file.present?
           file = Pathname.new service_file
-          raise UsageError, "Provided service file does not exist" unless file.exist?
+          raise UsageError, "Provided service file does not exist." unless file.exist?
         end
 
         targets.each do |service|
@@ -146,7 +152,7 @@ module Homebrew
             puts
           end
 
-          next if take_root_ownership(service).nil? && System.root?
+          next if !take_root_ownership?(service) && System.root?
 
           service_load(service, nil, enable: true)
         end
@@ -159,12 +165,13 @@ module Homebrew
           verbose:  T::Boolean,
           no_wait:  T::Boolean,
           max_wait: T.nilable(T.any(Integer, Float)),
+          keep:     T::Boolean,
         ).void
       }
-      def self.stop(targets, verbose: false, no_wait: false, max_wait: 0)
+      def self.stop(targets, verbose: false, no_wait: false, max_wait: 0, keep: false)
         targets.each do |service|
           unless service.loaded?
-            rm service.dest if service.dest.exist? # get rid of installed service file anyway, dude
+            rm service.dest if !keep && service.dest.exist? # get rid of installed service file anyway, dude
             if service.service_file_present?
               odie <<~EOS
                 Service `#{service.name}` is started as `#{service.owner}`. Try:
@@ -188,27 +195,46 @@ module Homebrew
           end
 
           if System.systemctl?
-            System::Systemctl.quiet_run(*systemctl_args, "disable", "--now", service.service_name)
-          elsif System.launchctl?
-            quiet_system System.launchctl, "bootout", "#{System.domain_target}/#{service.service_name}"
-            unless no_wait
-              time_slept = 0
-              sleep_time = 1
-              max_wait = T.must(max_wait)
-              while ($CHILD_STATUS.to_i == 9216 || service.loaded?) && (max_wait.zero? || time_slept < max_wait)
-                sleep(sleep_time)
-                time_slept += sleep_time
-                quiet_system System.launchctl, "bootout", "#{System.domain_target}/#{service.service_name}"
-              end
+            if keep
+              System::Systemctl.quiet_run(*systemctl_args, "stop", service.service_name)
+            else
+              System::Systemctl.quiet_run(*systemctl_args, "disable", "--now", service.service_name)
             end
-            quiet_system System.launchctl, "stop", "#{System.domain_target}/#{service.service_name}" if service.pid?
+          elsif System.launchctl?
+            dont_wait_statuses = [
+              Errno::ESRCH::Errno,
+              System::LAUNCHCTL_DOMAIN_ACTION_NOT_SUPPORTED,
+            ]
+            System.candidate_domain_targets.each do |domain_target|
+              break unless service.loaded?
+
+              quiet_system System.launchctl, "bootout", "#{domain_target}/#{service.service_name}"
+              unless no_wait
+                time_slept = 0
+                sleep_time = 1
+                max_wait = T.must(max_wait)
+                exit_status = $CHILD_STATUS.exitstatus
+                while dont_wait_statuses.exclude?(exit_status) &&
+                      (exit_status == Errno::EINPROGRESS::Errno || service.loaded?) &&
+                      (max_wait.zero? || time_slept < max_wait)
+                  sleep(sleep_time)
+                  time_slept += sleep_time
+                  quiet_system System.launchctl, "bootout", "#{domain_target}/#{service.service_name}"
+                  exit_status = $CHILD_STATUS.exitstatus
+                end
+              end
+              service.reset_cache!
+              quiet_system System.launchctl, "stop", "#{domain_target}/#{service.service_name}" if service.pid?
+            end
           end
 
-          rm service.dest if service.dest.exist?
-          # Run daemon-reload on systemctl to finish unloading stopped and deleted service.
-          System::Systemctl.run(*systemctl_args, "daemon-reload") if System.systemctl?
+          unless keep
+            rm service.dest if service.dest.exist?
+            # Run daemon-reload on systemctl to finish unloading stopped and deleted service.
+            System::Systemctl.run(*systemctl_args, "daemon-reload") if System.systemctl?
+          end
 
-          if service.pid? || service.loaded?
+          if service.loaded? || service.pid?
             opoo "Unable to stop `#{service.name}` (label: #{service.service_name})"
           else
             ohai "Successfully stopped `#{service.name}` (label: #{service.service_name})"
@@ -229,7 +255,12 @@ module Homebrew
             if System.systemctl?
               System::Systemctl.quiet_run("stop", service.service_name)
             elsif System.launchctl?
-              quiet_system System.launchctl, "stop", "#{System.domain_target}/#{service.service_name}"
+              System.candidate_domain_targets.each do |domain_target|
+                break unless service.pid?
+
+                quiet_system System.launchctl, "stop", "#{domain_target}/#{service.service_name}"
+                service.reset_cache!
+              end
             end
 
             if service.pid?
@@ -242,9 +273,10 @@ module Homebrew
       end
 
       # protections to avoid users editing root services
-      def self.take_root_ownership(service)
-        return unless System.root?
-        return if sudo_service_user
+      sig { params(service: Services::FormulaWrapper).returns(T::Boolean) }
+      def self.take_root_ownership?(service)
+        return false unless System.root?
+        return false if sudo_service_user
 
         root_paths = T.let([], T::Array[Pathname])
 
@@ -259,7 +291,7 @@ module Homebrew
           rescue
             nil
           end
-          return unless plist
+          return false unless plist
 
           program_location = plist["ProgramArguments"]&.first
           key = "first ProgramArguments value"
@@ -304,6 +336,7 @@ module Homebrew
         EOS
         chown "root", group, root_paths
         chmod "+t", root_paths
+        true
       end
 
       sig {
@@ -346,12 +379,13 @@ module Homebrew
         ohai("Successfully #{function} `#{service.name}` (label: #{service.service_name})")
       end
 
+      sig { params(service: Services::FormulaWrapper, file: T.nilable(Pathname)).void }
       def self.install_service_file(service, file)
-        raise UsageError, "Formula `#{service.name}` is not installed" unless service.installed?
+        raise UsageError, "Formula `#{service.name}` is not installed." unless service.installed?
 
         unless service.service_file.exist?
           raise UsageError,
-                "Formula `#{service.name}` has not implemented #plist, #service or installed a locatable service file"
+                "Formula `#{service.name}` has not implemented #plist, #service or provided a locatable service file."
         end
 
         temp = Tempfile.new(service.service_name)
@@ -360,7 +394,7 @@ module Homebrew
 
           if sudo_service_user && System.launchctl?
             # set the username in the new plist file
-            ohai "Setting username in #{service.service_name} to #{System.user}"
+            ohai "Setting username in #{service.service_name} to: #{System.user}"
             plist_data = Plist.parse_xml(contents, marshal: false)
             plist_data["UserName"] = sudo_service_user
             plist_data.to_plist

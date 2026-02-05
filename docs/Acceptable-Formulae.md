@@ -40,7 +40,7 @@ Software that can upgrade itself does not integrate well with Homebrew formulae'
 
 ### We don’t like install scripts that download unversioned things
 
-We don't like install scripts that are pulling from the master branch of Git repositories or unversioned, unchecksummed tarballs. These should ideally use `resource` blocks with specific revisions or checksummed tarballs instead. Note that we now allow tools like `cargo`, `gem` and `pip` to download versioned libraries during installation. There's no need to reproduce the functionality of any language package manager with `resource` blocks when we can call it instead.
+We don't like install scripts that are pulling from the default branch of Git repositories or unversioned, unchecksummed tarballs. These should ideally use `resource` blocks with specific revisions or checksummed tarballs instead. Note that we now allow tools like `cargo`, `gem` and `pip` to download versioned libraries during installation. There's no need to reproduce the functionality of any language package manager with `resource` blocks when we can call it instead.
 
 ### We don’t like binary formulae
 
@@ -58,15 +58,11 @@ We don’t accept software without a tagged version because they regularly break
 
 The software in question must:
 
-* be maintained (i.e. the last release wasn't ages ago, it works without patching on all Homebrew-supported OS versions and has no outstanding, unpatched security vulnerabilities)
 * be stable (e.g. not declared "unstable" or "beta" by upstream)
+* be maintainable (i.e. the new formula must be a stable release that works without patching on all Homebrew-supported OS versions and has no outstanding and unpatched security vulnerabilities)
 * be known (e.g. GitHub repositories should have >=30 forks, >=30 watchers or >=75 stars)
-* be used
-* have a homepage
-
-We will reject formulae that seem too obscure, partly because they won’t get maintained and partly because we have to draw the line somewhere.
-
-We frown on authors submitting their own work unless it is very popular.
+* be used by someone other than the author (e.g. someone other than the author submitted the pull request or opened an issue with us or them to add it to Homebrew)
+* have a homepage (e.g. somewhere on the internet, can be a GitHub repository with a README, which can be accessed in a browser to learn about the project)
 
 Don’t forget Homebrew is all Git underneath! [Maintain your own tap](How-to-Create-and-Maintain-a-Tap.md) if you have to!
 
@@ -102,6 +98,19 @@ Homebrew formulae should avoid having multiple, separate, upstream projects bund
 For more info see [Debian's](https://www.debian.org/doc/debian-policy/ch-source.html#s-embeddedfiles) and [Fedora's](https://docs.fedoraproject.org/en-US/packaging-guidelines/#bundling) stances on this.
 
 Increasingly, though: this can be (too) hard. Homebrew's primary mission is to be useful rather than ideologically pure. If we cannot package something without using vendored upstream versions: so be it; better to have packaged software in Homebrew than not.
+
+### Adult Content
+
+Homebrew is a tool where the vast majority of users are adults.
+We have users all over the world with different views on sex, violence, etc.
+As a result, we do not see it as our role to enforce any particular culture's views on adult content onto our users.
+That said, we want to ensure our maintainers don't have to interact with adult content unless they choose to.
+
+We will accept formulae with adult content but require the `homepage` and root of the `url` domain to be "safe for work" e.g. not display any images of violence or adult content.
+It is acceptable for these pages to have textual descriptions of adult content.
+
+Homebrew reserves the right to add or remove formulae based on how it affects the wider Homebrew ecosystem.
+For a hypothetical example, if a critical infrastructure host said we needed to remove the formula to maintain our infrastructure: we may begrudgingly remove it to maintain continuity for our users.
 
 ## Sometimes there are exceptions
 

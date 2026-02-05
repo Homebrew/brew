@@ -18,12 +18,12 @@ RSpec.describe Option do
     expect(option).not_to eql(bar)
   end
 
-  specify "#description" do
+  specify "#description" do # rubocop:todo RSpec/AggregateExamples
     expect(option.description).to be_empty
     expect(described_class.new("foo", "foo").description).to eq("foo")
   end
 
-  specify "#inspect" do
+  specify "#inspect" do # rubocop:todo RSpec/AggregateExamples
     expect(option.inspect).to eq("#<Option: \"--foo\">")
   end
 end

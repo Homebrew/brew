@@ -126,13 +126,13 @@ RSpec.describe Pathname do
       expect(described_class.new("foo-0.1.cpio.gz").extname).to eq(".cpio.gz")
     end
 
-    it "does not treat version numbers as extensions" do
+    it "does not treat version numbers as extensions" do # rubocop:todo RSpec/AggregateExamples
       expect(described_class.new("foo-0.1").extname).to eq("")
       expect(described_class.new("foo-1.0-rc1").extname).to eq("")
       expect(described_class.new("foo-1.2.3").extname).to eq ""
     end
 
-    it "supports `.7z` with version numbers" do
+    it "supports `.7z` with version numbers" do # rubocop:todo RSpec/AggregateExamples
       expect(described_class.new("snap7-full-1.4.2.7z").extname).to eq ".7z"
     end
   end

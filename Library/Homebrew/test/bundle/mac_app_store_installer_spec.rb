@@ -30,7 +30,7 @@ RSpec.describe Homebrew::Bundle::MacAppStoreInstaller do
     it "tries to install mas" do
       expect(Homebrew::Bundle).to receive(:system).with(HOMEBREW_BREW_FILE, "install", "mas",
                                                         verbose: false).and_return(true)
-      expect { described_class.preinstall("foo", 123) }.to raise_error(RuntimeError)
+      expect { described_class.preinstall!("foo", 123) }.to raise_error(RuntimeError)
     end
 
     describe ".outdated_app_ids" do
@@ -62,7 +62,7 @@ RSpec.describe Homebrew::Bundle::MacAppStoreInstaller do
 
       it "skips" do
         expect(Homebrew::Bundle).not_to receive(:system)
-        expect(described_class.preinstall("foo", 123)).to be(false)
+        expect(described_class.preinstall!("foo", 123)).to be(false)
       end
     end
 
@@ -73,8 +73,8 @@ RSpec.describe Homebrew::Bundle::MacAppStoreInstaller do
 
       it "upgrades" do
         expect(Homebrew::Bundle).to receive(:system).with("mas", "upgrade", "123", verbose: false).and_return(true)
-        expect(described_class.preinstall("foo", 123)).to be(true)
-        expect(described_class.install("foo", 123)).to be(true)
+        expect(described_class.preinstall!("foo", 123)).to be(true)
+        expect(described_class.install!("foo", 123)).to be(true)
       end
     end
 
@@ -85,8 +85,8 @@ RSpec.describe Homebrew::Bundle::MacAppStoreInstaller do
 
       it "installs app" do
         expect(Homebrew::Bundle).to receive(:system).with("mas", "install", "123", verbose: false).and_return(true)
-        expect(described_class.preinstall("foo", 123)).to be(true)
-        expect(described_class.install("foo", 123)).to be(true)
+        expect(described_class.preinstall!("foo", 123)).to be(true)
+        expect(described_class.install!("foo", 123)).to be(true)
       end
     end
   end

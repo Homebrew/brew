@@ -9,7 +9,7 @@ module Homebrew
       cmd_args do
         description <<~EOS
           Control Homebrew's developer mode. When developer mode is enabled,
-          `brew update` will update Homebrew to the latest commit on the `master`
+          `brew update` will update Homebrew to the latest commit on the `main`
           branch instead of the latest stable version along with some other behaviour changes.
 
           `brew developer` [`state`]:
@@ -38,7 +38,7 @@ module Homebrew
               puts "However, `brew update` will update to the latest stable tag because " \
                    "#{Tty.bold}HOMEBREW_UPDATE_TO_TAG#{Tty.reset} is set."
             else
-              puts "`brew update` will update to the latest commit on the `master` branch."
+              puts "`brew update` will update to the latest commit on the `main` branch."
             end
           else
             puts "`brew update` will update to the latest stable tag."

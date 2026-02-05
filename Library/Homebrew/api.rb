@@ -1,20 +1,27 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
 
 require "api/analytics"
 require "api/cask"
 require "api/formula"
-require "base64" # TODO: vendor this for Ruby 3.4.
+require "api/internal"
+require "api/formula_struct"
+require "api/cask_struct"
+require "base64"
+require "utils/output"
 
 module Homebrew
   # Helper functions for using Homebrew's formulae.brew.sh API.
   module API
+    extend Utils::Output::Mixin
+
     extend Cachable
 
-    HOMEBREW_CACHE_API = (HOMEBREW_CACHE/"api").freeze
-    HOMEBREW_CACHE_API_SOURCE = (HOMEBREW_CACHE/"api-source").freeze
+    HOMEBREW_CACHE_API = T.let((HOMEBREW_CACHE/"api").freeze, Pathname)
+    HOMEBREW_CACHE_API_SOURCE = T.let((HOMEBREW_CACHE/"api-source").freeze, Pathname)
+    DEFAULT_API_STALE_SECONDS = T.let(7 * 24 * 60 * 60, Integer) # 7 days
 
-    sig { params(endpoint: String).returns(Hash) }
+    sig { params(endpoint: String).returns(T::Hash[String, T.untyped]) }
     def self.fetch(endpoint)
       return cache[endpoint] if cache.present? && cache.key?(endpoint)
 
@@ -25,18 +32,32 @@ module Homebrew
         api_url = "#{HOMEBREW_API_DEFAULT_DOMAIN}/#{endpoint}"
         output = Utils::Curl.curl_output("--fail", api_url)
       end
-      raise ArgumentError, "No file found at #{Tty.underline}#{api_url}#{Tty.reset}" unless output.success?
+      raise ArgumentError, "No file found at: #{Tty.underline}#{api_url}#{Tty.reset}" unless output.success?
 
       cache[endpoint] = JSON.parse(output.stdout, freeze: true)
     rescue JSON::ParserError
       raise ArgumentError, "Invalid JSON file: #{Tty.underline}#{api_url}#{Tty.reset}"
     end
 
+    sig { params(target: Pathname, stale_seconds: T.nilable(Integer)).returns(T::Boolean) }
+    def self.skip_download?(target:, stale_seconds:)
+      return true if Homebrew.running_as_root_but_not_owned_by_root?
+      return false if !target.exist? || target.empty?
+      return true unless stale_seconds
+
+      (Time.now - stale_seconds) < target.mtime
+    end
+
     sig {
-      params(endpoint: String, target: Pathname, stale_seconds: Integer).returns([T.any(Array, Hash), T::Boolean])
+      params(
+        endpoint:       String,
+        target:         Pathname,
+        stale_seconds:  T.nilable(Integer),
+        download_queue: T.nilable(DownloadQueue),
+      ).returns([T.any(T::Array[T.untyped], T::Hash[String, T.untyped]), T::Boolean])
     }
     def self.fetch_json_api_file(endpoint, target: HOMEBREW_CACHE_API/endpoint,
-                                 stale_seconds: Homebrew::EnvConfig.api_auto_update_secs.to_i)
+                                 stale_seconds: nil, download_queue: nil)
       # Lazy-load dependency.
       require "development_tools"
 
@@ -57,12 +78,16 @@ module Homebrew
 
       insecure_download = DevelopmentTools.ca_file_substitution_required? ||
                           DevelopmentTools.curl_substitution_required?
-      skip_download = target.exist? &&
-                      !target.empty? &&
-                      (!Homebrew.auto_update_command? ||
-                        (Homebrew::EnvConfig.no_auto_update? && !Homebrew::EnvConfig.force_api_auto_update?) ||
-                      ((Time.now - stale_seconds) < target.mtime))
-      skip_download ||= Homebrew.running_as_root_but_not_owned_by_root?
+      skip_download = skip_download?(target:, stale_seconds:)
+
+      if download_queue
+        unless skip_download
+          require "api/json_download"
+          download = Homebrew::API::JSONDownload.new(endpoint, target:, stale_seconds:)
+          download_queue.enqueue(download)
+        end
+        return [{}, false]
+      end
 
       json_data = begin
         begin
@@ -96,7 +121,8 @@ module Homebrew
 
         mtime = insecure_download ? Time.new(1970, 1, 1) : Time.now
         FileUtils.touch(target, mtime:) unless skip_download
-        JSON.parse(target.read, freeze: true)
+        # Can use `target.read` again when/if https://github.com/sorbet/sorbet/pull/8999 is merged/released.
+        JSON.parse(File.read(target, encoding: Encoding::UTF_8), freeze: true)
       rescue JSON::ParserError
         target.unlink
         retry_count += 1
@@ -122,32 +148,102 @@ module Homebrew
       end
     end
 
-    sig { params(json: Hash).returns(Hash) }
-    def self.merge_variations(json)
+    sig {
+      params(json:       T::Hash[String, T.untyped],
+             bottle_tag: ::Utils::Bottles::Tag).returns(T::Hash[String, T.untyped])
+    }
+    def self.merge_variations(json, bottle_tag: T.unsafe(nil))
       return json unless json.key?("variations")
 
-      bottle_tag = ::Utils::Bottles::Tag.new(system: Homebrew::SimulateSystem.current_os,
-                                             arch:   Homebrew::SimulateSystem.current_arch)
+      bottle_tag ||= Homebrew::SimulateSystem.current_tag
 
-      if (variation = json.dig("variations", bottle_tag.to_s).presence)
+      if (variation = json.dig("variations", bottle_tag.to_s).presence) ||
+         (variation = json.dig("variations", bottle_tag.to_sym).presence)
         json = json.merge(variation)
       end
 
       json.except("variations")
     end
 
+    sig { void }
+    def self.fetch_api_files!
+      download_queue = if Homebrew::EnvConfig.download_concurrency > 1
+        require "download_queue"
+        Homebrew::DownloadQueue.new
+      end
+
+      stale_seconds = if ENV["HOMEBREW_API_UPDATED"].present? ||
+                         (Homebrew::EnvConfig.no_auto_update? && !Homebrew::EnvConfig.force_api_auto_update?)
+        nil
+      elsif Homebrew.auto_update_command?
+        Homebrew::EnvConfig.api_auto_update_secs.to_i
+      else
+        DEFAULT_API_STALE_SECONDS
+      end
+
+      if Homebrew::EnvConfig.use_internal_api?
+        Homebrew::API::Internal.fetch_formula_api!(download_queue:, stale_seconds:)
+        Homebrew::API::Internal.fetch_cask_api!(download_queue:, stale_seconds:)
+      else
+        Homebrew::API::Formula.fetch_api!(download_queue:, stale_seconds:)
+        Homebrew::API::Formula.fetch_tap_migrations!(download_queue:, stale_seconds: DEFAULT_API_STALE_SECONDS)
+        Homebrew::API::Cask.fetch_api!(download_queue:, stale_seconds:)
+        Homebrew::API::Cask.fetch_tap_migrations!(download_queue:, stale_seconds: DEFAULT_API_STALE_SECONDS)
+      end
+
+      ENV["HOMEBREW_API_UPDATED"] = "1"
+
+      return unless download_queue
+
+      begin
+        download_queue.fetch
+      ensure
+        download_queue.shutdown
+      end
+    end
+
+    sig { void }
+    def self.write_names_and_aliases
+      if Homebrew::EnvConfig.use_internal_api?
+        Homebrew::API::Internal.write_formula_names_and_aliases
+        Homebrew::API::Internal.write_cask_names
+      else
+        Homebrew::API::Formula.write_names_and_aliases
+        Homebrew::API::Cask.write_names
+      end
+    end
+
     sig { params(names: T::Array[String], type: String, regenerate: T::Boolean).returns(T::Boolean) }
-    def self.write_names_file(names, type, regenerate:)
+    def self.write_names_file!(names, type, regenerate:)
       names_path = HOMEBREW_CACHE_API/"#{type}_names.txt"
       if !names_path.exist? || regenerate
-        names_path.write(names.join("\n"))
+        names_path.unlink if names_path.exist?
+        names_path.write(names.sort.join("\n"))
         return true
       end
 
       false
     end
 
-    sig { params(json_data: Hash).returns([T::Boolean, T.any(String, Array, Hash)]) }
+    sig { params(aliases: T::Hash[String, String], type: String, regenerate: T::Boolean).returns(T::Boolean) }
+    def self.write_aliases_file!(aliases, type, regenerate:)
+      aliases_path = HOMEBREW_CACHE_API/"#{type}_aliases.txt"
+      if !aliases_path.exist? || regenerate
+        aliases_text = aliases.map do |alias_name, real_name|
+          "#{alias_name}|#{real_name}"
+        end
+        aliases_path.unlink if aliases_path.exist?
+        aliases_path.write(aliases_text.sort.join("\n"))
+        return true
+      end
+
+      false
+    end
+
+    sig {
+      params(json_data: T::Hash[String, T.untyped])
+        .returns([T::Boolean, T.any(String, T::Array[T.untyped], T::Hash[String, T.untyped])])
+    }
     private_class_method def self.verify_and_parse_jws(json_data)
       signatures = json_data["signatures"]
       homebrew_signature = signatures&.find { |sig| sig.dig("header", "kid") == "homebrew-1" }
@@ -184,16 +280,102 @@ module Homebrew
 
       Tap.fetch(org, repo)
     end
+
+    sig { returns(T::Array[String]) }
+    def self.formula_names
+      if Homebrew::EnvConfig.use_internal_api?
+        Homebrew::API::Internal.formula_hashes.keys
+      else
+        Homebrew::API::Formula.all_formulae.keys
+      end
+    end
+
+    sig { returns(T::Hash[String, String]) }
+    def self.formula_aliases
+      if Homebrew::EnvConfig.use_internal_api?
+        Homebrew::API::Internal.formula_aliases
+      else
+        Homebrew::API::Formula.all_aliases
+      end
+    end
+
+    sig { returns(T::Hash[String, String]) }
+    def self.formula_renames
+      if Homebrew::EnvConfig.use_internal_api?
+        Homebrew::API::Internal.formula_renames
+      else
+        Homebrew::API::Formula.all_renames
+      end
+    end
+
+    sig { returns(T::Hash[String, String]) }
+    def self.formula_tap_migrations
+      if Homebrew::EnvConfig.use_internal_api?
+        Homebrew::API::Internal.formula_tap_migrations
+      else
+        Homebrew::API::Formula.tap_migrations
+      end
+    end
+
+    sig { returns(Pathname) }
+    def self.cached_formula_json_file_path
+      if Homebrew::EnvConfig.use_internal_api?
+        Homebrew::API::Internal.cached_formula_json_file_path
+      else
+        Homebrew::API::Formula.cached_json_file_path
+      end
+    end
+
+    sig { returns(T::Array[String]) }
+    def self.cask_tokens
+      if Homebrew::EnvConfig.use_internal_api?
+        Homebrew::API::Internal.cask_hashes.keys
+      else
+        Homebrew::API::Cask.all_casks.keys
+      end
+    end
+
+    sig { returns(T::Hash[String, String]) }
+    def self.cask_renames
+      if Homebrew::EnvConfig.use_internal_api?
+        Homebrew::API::Internal.cask_renames
+      else
+        Homebrew::API::Cask.all_renames
+      end
+    end
+
+    sig { returns(T::Hash[String, String]) }
+    def self.cask_tap_migrations
+      if Homebrew::EnvConfig.use_internal_api?
+        Homebrew::API::Internal.cask_tap_migrations
+      else
+        Homebrew::API::Cask.tap_migrations
+      end
+    end
+
+    sig { returns(Pathname) }
+    def self.cached_cask_json_file_path
+      if Homebrew::EnvConfig.use_internal_api?
+        Homebrew::API::Internal.cached_cask_json_file_path
+      else
+        Homebrew::API::Cask.cached_json_file_path
+      end
+    end
   end
 
-  sig { params(block: T.proc.returns(T.untyped)).returns(T.untyped) }
+  sig { type_parameters(:U).params(block: T.proc.returns(T.type_parameter(:U))).returns(T.type_parameter(:U)) }
   def self.with_no_api_env(&block)
     return yield if Homebrew::EnvConfig.no_install_from_api?
 
     with_env(HOMEBREW_NO_INSTALL_FROM_API: "1", HOMEBREW_AUTOMATICALLY_SET_NO_INSTALL_FROM_API: "1", &block)
   end
 
-  sig { params(condition: T::Boolean, block: T.proc.returns(T.untyped)).returns(T.untyped) }
+  sig {
+    type_parameters(:U).params(
+      condition: T::Boolean,
+      block:     T.proc.returns(T.type_parameter(:U)),
+    ).returns(T.type_parameter(:U))
+  }
   def self.with_no_api_env_if_needed(condition, &block)
     return yield unless condition
 

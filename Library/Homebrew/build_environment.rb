@@ -1,11 +1,11 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
 
 # Settings for the build environment.
 class BuildEnvironment
   sig { params(settings: Symbol).void }
   def initialize(*settings)
-    @settings = Set.new(settings)
+    @settings = T.let(Set.new(settings), T::Set[Symbol])
   end
 
   sig { params(args: T::Enumerable[Symbol]).returns(T.self_type) }
@@ -29,16 +29,17 @@ class BuildEnvironment
   module DSL
     # Initialise @env for each class which may use this DSL (e.g. each formula subclass).
     # `env` may never be called and it needs to be initialised before the class is frozen.
+    sig { params(child: T.untyped).void }
     def inherited(child)
       super
       child.instance_eval do
-        @env = BuildEnvironment.new
+        @env = T.let(BuildEnvironment.new, T.nilable(BuildEnvironment))
       end
     end
 
     sig { params(settings: Symbol).returns(BuildEnvironment) }
     def env(*settings)
-      @env.merge(settings)
+      T.must(@env).merge(settings)
     end
   end
 

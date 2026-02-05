@@ -3,12 +3,16 @@
 require "bundle"
 require "bundle/commands/check"
 require "bundle/brew_checker"
+require "bundle/cask_checker"
 require "bundle/mac_app_store_checker"
 require "bundle/vscode_extension_checker"
-require "bundle/brew_installer"
+require "bundle/formula_installer"
+require "bundle/cask_installer"
 require "bundle/mac_app_store_installer"
+require "bundle/dsl"
+require "bundle/skipper"
 
-RSpec.describe Homebrew::Bundle::Commands::Check do
+RSpec.describe Homebrew::Bundle::Commands::Check, :no_api do
   let(:do_check) do
     described_class.run(no_upgrade:, verbose:)
   end
@@ -46,23 +50,35 @@ RSpec.describe Homebrew::Bundle::Commands::Check do
     it "raises an error" do
       allow(Homebrew::Bundle).to receive(:cask_installed?).and_return(true)
       allow(Homebrew::Bundle::CaskDumper).to receive(:casks).and_return([])
-      allow(Homebrew::Bundle::BrewInstaller).to receive(:upgradable_formulae).and_return([])
+      allow(Homebrew::Bundle::FormulaInstaller).to receive(:upgradable_formulae).and_return([])
       allow_any_instance_of(Pathname).to receive(:read).and_return("cask 'abc'")
       expect { do_check }.to raise_error(SystemExit)
     end
   end
 
   context "when formulae are not installed" do
-    it "raises an error" do
+    let(:verbose) { true }
+
+    it "raises an error and outputs to stdout" do
       allow(Homebrew::Bundle::CaskDumper).to receive(:casks).and_return([])
-      allow(Homebrew::Bundle::BrewInstaller).to receive(:upgradable_formulae).and_return([])
+      allow(Homebrew::Bundle::FormulaInstaller).to receive(:upgradable_formulae).and_return([])
       allow_any_instance_of(Pathname).to receive(:read).and_return("brew 'abc'")
-      expect { do_check }.to raise_error(SystemExit)
+      expect { do_check }.to raise_error(SystemExit).and \
+        output(/brew bundle can't satisfy your Brewfile's dependencies/).to_stdout
+    end
+
+    it "partially outputs when HOMEBREW_BUNDLE_CHECK_ALREADY_OUTPUT_FORMULAE_ERRORS is set" do
+      allow(Homebrew::Bundle::CaskDumper).to receive(:casks).and_return([])
+      allow(Homebrew::Bundle::FormulaInstaller).to receive(:upgradable_formulae).and_return([])
+      allow_any_instance_of(Pathname).to receive(:read).and_return("brew 'abc'")
+      ENV["HOMEBREW_BUNDLE_CHECK_ALREADY_OUTPUT_FORMULAE_ERRORS"] = "abc"
+      expect { do_check }.to raise_error(SystemExit).and \
+        output("Satisfy missing dependencies with `brew bundle install`.\n").to_stdout
     end
 
     it "does not raise error on skippable formula" do
       allow(Homebrew::Bundle::CaskDumper).to receive(:casks).and_return([])
-      allow(Homebrew::Bundle::BrewInstaller).to receive(:upgradable_formulae).and_return([])
+      allow(Homebrew::Bundle::FormulaInstaller).to receive(:upgradable_formulae).and_return([])
       allow(Homebrew::Bundle::Skipper).to receive(:skip?).and_return(true)
       allow_any_instance_of(Pathname).to receive(:read).and_return("brew 'abc'")
       expect { do_check }.not_to raise_error
@@ -72,7 +88,7 @@ RSpec.describe Homebrew::Bundle::Commands::Check do
   context "when taps are not tapped" do
     it "raises an error" do
       allow(Homebrew::Bundle::CaskDumper).to receive(:casks).and_return([])
-      allow(Homebrew::Bundle::BrewInstaller).to receive(:upgradable_formulae).and_return([])
+      allow(Homebrew::Bundle::FormulaInstaller).to receive(:upgradable_formulae).and_return([])
       allow_any_instance_of(Pathname).to receive(:read).and_return("tap 'abc/def'")
       expect { do_check }.to raise_error(SystemExit)
     end
@@ -81,7 +97,7 @@ RSpec.describe Homebrew::Bundle::Commands::Check do
   context "when apps are not installed", :needs_macos do
     it "raises an error" do
       allow(Homebrew::Bundle::MacAppStoreDumper).to receive(:app_ids).and_return([])
-      allow(Homebrew::Bundle::BrewInstaller).to receive(:upgradable_formulae).and_return([])
+      allow(Homebrew::Bundle::FormulaInstaller).to receive(:upgradable_formulae).and_return([])
       allow_any_instance_of(Pathname).to receive(:read).and_return("mas 'foo', id: 123")
       expect { do_check }.to raise_error(SystemExit)
     end
@@ -102,8 +118,8 @@ RSpec.describe Homebrew::Bundle::Commands::Check do
       Homebrew::Bundle::Checker.reset!
       allow_any_instance_of(Homebrew::Bundle::Checker::MacAppStoreChecker).to \
         receive(:installed_and_up_to_date?).and_return(false)
-      allow(Homebrew::Bundle::BrewInstaller).to receive_messages(installed_formulae:  ["abc", "def"],
-                                                                 upgradable_formulae: [])
+      allow(Homebrew::Bundle::FormulaInstaller).to receive_messages(installed_formulae:  ["abc", "def"],
+                                                                    upgradable_formulae: [])
       allow(Homebrew::Bundle::BrewServices).to receive(:started?).with("abc").and_return(true)
       allow(Homebrew::Bundle::BrewServices).to receive(:started?).with("def").and_return(false)
     end
@@ -112,7 +128,7 @@ RSpec.describe Homebrew::Bundle::Commands::Check do
       Homebrew::Bundle::Checker.reset!
       allow_any_instance_of(Pathname).to receive(:read).and_return("brew 'abc'")
 
-      expect(Homebrew::Bundle::BrewInstaller.installed_formulae).to include("abc")
+      expect(Homebrew::Bundle::FormulaInstaller.installed_formulae).to include("abc")
       expect(Homebrew::Bundle::CaskInstaller.installed_casks).not_to include("abc")
       expect(Homebrew::Bundle::BrewServices.started?("abc")).to be(true)
 
@@ -155,7 +171,7 @@ RSpec.describe Homebrew::Bundle::Commands::Check do
       Homebrew::Bundle::Checker.reset!
       allow_any_instance_of(Homebrew::Bundle::Checker::MacAppStoreChecker).to \
         receive(:installed_and_up_to_date?).and_return(false)
-      allow(Homebrew::Bundle::BrewInstaller).to receive(:installed_formulae).and_return(["abc", "def"])
+      allow(Homebrew::Bundle::FormulaInstaller).to receive(:installed_formulae).and_return(["abc", "def"])
     end
 
     it "raises an error that doesn't mention upgrade" do
@@ -246,7 +262,7 @@ RSpec.describe Homebrew::Bundle::Commands::Check do
   context "when verbose mode is not enabled" do
     it "stops checking after the first missing formula" do
       allow(Homebrew::Bundle::CaskDumper).to receive(:casks).and_return([])
-      allow(Homebrew::Bundle::BrewInstaller).to receive(:upgradable_formulae).and_return([])
+      allow(Homebrew::Bundle::FormulaInstaller).to receive(:upgradable_formulae).and_return([])
       allow_any_instance_of(Pathname).to receive(:read).and_return("brew 'abc'\nbrew 'def'")
 
       expect_any_instance_of(Homebrew::Bundle::Checker::BrewChecker).to \

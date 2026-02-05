@@ -15,4 +15,16 @@ RSpec.describe Homebrew::DevCmd::Linkage do
       .and not_to_output.to_stdout
       .and not_to_output.to_stderr
   end
+
+  it "accepts no_linkage dependency tag", :integration_test do
+    setup_test_formula "testball" do
+      url "file://#{TEST_FIXTURE_DIR}/tarballs/testball-0.1.tbz"
+      sha256 TESTBALL_SHA256
+
+      depends_on "foo" => :no_linkage
+    end
+
+    expect { brew "info", "testball" }
+      .to be_a_success
+  end
 end

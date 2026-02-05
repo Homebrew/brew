@@ -13,6 +13,8 @@ module OS
     raise "Loaded OS::Linux on macOS!" if OS.mac?
     # rubocop:enable Homebrew/MoveToExtendOS
 
+    extend Utils::Output::Mixin
+
     @languages = T.let([], T::Array[String])
 
     # Get the OS version.
@@ -22,15 +24,16 @@ module OS
     def self.os_version
       if which("lsb_release")
         lsb_info = Utils.popen_read("lsb_release", "-a")
-        description = lsb_info[/^Description:\s*(.*)$/, 1].force_encoding("UTF-8")
+        description = lsb_info[/^Description:\s*(.*)$/, 1]&.force_encoding("UTF-8")
+
+        odie "Failed to parse lsb_release output: #{lsb_info.inspect}" unless description
+
         codename = lsb_info[/^Codename:\s*(.*)$/, 1]
         if codename.blank? || (codename == "n/a")
           description
         else
           "#{description} (#{codename})"
         end
-      elsif (redhat_release = Pathname.new("/etc/redhat-release")).readable?
-        redhat_release.read.chomp
       elsif ::OS_VERSION.present?
         ::OS_VERSION
       else
@@ -65,8 +68,9 @@ module OS
 
       locale_variables = ENV.keys.grep(/^(?:LC_\S+|LANG|LANGUAGE)\Z/).sort
       ctl_ret = Utils.popen_read("localectl", "list-locales")
+      list = T.let([], T::Array[String])
       if ctl_ret.present?
-        list = ctl_ret.scan(/[^ \n"(),]+/)
+        list = T.cast(ctl_ret.scan(/[^ \n"(),]+/), T::Array[String])
       elsif locale_variables.present?
         keys = locale_variables.select { |var| ENV.fetch(var) }
         list = keys.map { |key| ENV.fetch(key) }
@@ -74,7 +78,7 @@ module OS
         list = ["en_US.utf8"]
       end
 
-      @languages = list.map { |item| item.split(".").first.tr("_", "-") }
+      @languages = list.map { |item| item.split(".").fetch(0).tr("_", "-") }
     end
 
     sig { returns(T.nilable(String)) }

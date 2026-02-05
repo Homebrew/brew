@@ -1,4 +1,4 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
 
 require "resource"
@@ -12,7 +12,7 @@ require "utils/bottles"
 require "patch"
 require "compilers"
 require "macos_version"
-require "extend/on_system"
+require "on_system"
 
 class SoftwareSpec
   include Downloadable
@@ -20,37 +20,71 @@ class SoftwareSpec
   extend Forwardable
   include OnSystem::MacOSAndLinux
 
-  PREDEFINED_OPTIONS = {
-    universal: Option.new("universal", "Build a universal binary"),
-    cxx11:     Option.new("c++11",     "Build using C++11 mode"),
-  }.freeze
+  sig { returns(T.nilable(String)) }
+  attr_reader :name
 
-  attr_reader :name, :full_name, :owner, :build, :resources, :patches, :options, :deprecated_flags,
-              :deprecated_options, :dependency_collector, :bottle_specification, :compiler_failures
+  sig { returns(T.nilable(String)) }
+  attr_reader :full_name
 
-  def_delegators :@resource, :stage, :fetch, :verify_download_integrity, :source_modified_time, :download_name,
+  sig { returns(T.nilable(T.any(Formula, Cask::Cask))) }
+  attr_reader :owner
+
+  sig { returns(BuildOptions) }
+  attr_reader :build
+
+  sig { returns(T::Hash[String, Resource]) }
+  attr_reader :resources
+
+  sig { returns(T::Array[T.any(EmbeddedPatch, ExternalPatch)]) }
+  attr_reader :patches
+
+  sig { returns(Options) }
+  attr_reader :options
+
+  sig { returns(T::Array[DeprecatedOption]) }
+  attr_reader :deprecated_flags
+
+  sig { returns(T::Array[DeprecatedOption]) }
+  attr_reader :deprecated_options
+
+  sig { returns(DependencyCollector) }
+  attr_reader :dependency_collector
+
+  sig { returns(BottleSpecification) }
+  attr_reader :bottle_specification
+
+  sig { returns(T::Array[CompilerFailure]) }
+  attr_reader :compiler_failures
+
+  def_delegators :@resource, :stage, :fetch, :verify_download_integrity, :source_modified_time,
                  :cached_download, :clear_cache, :checksum, :mirrors, :specs, :using, :version, :mirror,
-                 :downloader
+                 :downloader, :download_queue_name, :download_queue_type
 
   def_delegators :@resource, :sha256
 
+  sig { params(flags: T::Array[String]).void }
   def initialize(flags: [])
     super()
 
+    @name = T.let(nil, T.nilable(String))
+    @full_name = T.let(nil, T.nilable(String))
+    @owner = T.let(nil, T.nilable(T.any(Formula, Cask::Cask)))
+
     # Ensure this is synced with `initialize_dup` and `freeze` (excluding simple objects like integers and booleans)
-    @resource = Resource::Formula.new
-    @resources = {}
-    @dependency_collector = DependencyCollector.new
-    @bottle_specification = BottleSpecification.new
-    @patches = []
-    @options = Options.new
+    @resource = T.let(Resource::Formula.new, Resource::Formula)
+    @resources = T.let({}, T::Hash[String, Resource])
+    @dependency_collector = T.let(DependencyCollector.new, DependencyCollector)
+    @bottle_specification = T.let(BottleSpecification.new, BottleSpecification)
+    @patches = T.let([], T::Array[T.any(EmbeddedPatch, ExternalPatch)])
+    @options = T.let(Options.new, Options)
     @flags = flags
-    @deprecated_flags = []
-    @deprecated_options = []
-    @build = BuildOptions.new(Options.create(@flags), options)
-    @compiler_failures = []
+    @deprecated_flags = T.let([], T::Array[DeprecatedOption])
+    @deprecated_options = T.let([], T::Array[DeprecatedOption])
+    @build = T.let(BuildOptions.new(Options.create(@flags), options), BuildOptions)
+    @compiler_failures = T.let([], T::Array[CompilerFailure])
   end
 
+  sig { override.params(other: T.any(SoftwareSpec, Downloadable)).void }
   def initialize_dup(other)
     super
     @resource = @resource.dup
@@ -66,6 +100,7 @@ class SoftwareSpec
     @compiler_failures = @compiler_failures.dup
   end
 
+  sig { override.returns(T.self_type) }
   def freeze
     @resource.freeze
     @resources.freeze
@@ -81,11 +116,7 @@ class SoftwareSpec
     super
   end
 
-  sig { override.returns(String) }
-  def download_type
-    "formula"
-  end
-
+  sig { params(owner: T.any(Formula, Cask::Cask)).void }
   def owner=(owner)
     @name = owner.name
     @full_name = owner.full_name
@@ -102,30 +133,44 @@ class SoftwareSpec
     patches.each { |p| p.owner = self }
   end
 
+  sig { override.params(val: T.nilable(String), specs: T::Hash[Symbol, T.anything]).returns(T.nilable(String)) }
   def url(val = nil, specs = {})
-    return @resource.url if val.nil?
-
-    @resource.url(val, **specs)
-    dependency_collector.add(@resource)
+    if val
+      @resource.url(val, **specs)
+      dependency_collector.add(@resource)
+    end
+    @resource.url
   end
 
+  sig { returns(T::Boolean) }
   def bottle_defined?
     !bottle_specification.collector.tags.empty?
   end
 
+  sig { params(tag: T.nilable(T.any(Utils::Bottles::Tag, Symbol))).returns(T::Boolean) }
   def bottle_tag?(tag = nil)
     bottle_specification.tag?(Utils::Bottles.tag(tag))
   end
 
+  sig { params(tag: T.nilable(T.any(Utils::Bottles::Tag, Symbol))).returns(T::Boolean) }
   def bottled?(tag = nil)
-    bottle_tag?(tag) &&
-      (tag.present? || bottle_specification.compatible_locations? || owner.force_bottle)
+    return false unless bottle_tag?(tag)
+
+    return true if tag.present?
+    return true if bottle_specification.compatible_locations?
+
+    owner = self.owner
+    return false unless owner.is_a?(Formula)
+
+    owner.force_bottle
   end
 
+  sig { params(block: T.proc.bind(BottleSpecification).void).void }
   def bottle(&block)
     bottle_specification.instance_eval(&block)
   end
 
+  sig { params(name: String).returns(T::Boolean) }
   def resource_defined?(name)
     resources.key?(name)
   end
@@ -152,29 +197,21 @@ class SoftwareSpec
     end
   end
 
-  def go_resource(name, &block)
-    odisabled "`SoftwareSpec#go_resource`", "Go modules"
-    resource name, Resource::Go, &block
-  end
-
+  sig { params(name: T.any(Option, String)).returns(T::Boolean) }
   def option_defined?(name)
     options.include?(name)
   end
 
+  sig { params(name: String, description: String).void }
   def option(name, description = "")
-    opt = PREDEFINED_OPTIONS.fetch(name) do
-      unless name.is_a?(String)
-        raise ArgumentError, "option name must be string or symbol; got a #{name.class}: #{name}"
-      end
-      raise ArgumentError, "option name is required" if name.empty?
-      raise ArgumentError, "option name must be longer than one character: #{name}" if name.length <= 1
-      raise ArgumentError, "option name must not start with dashes: #{name}" if name.start_with?("-")
+    raise ArgumentError, "option name is required" if name.empty?
+    raise ArgumentError, "option name must be longer than one character: #{name}" if name.length <= 1
+    raise ArgumentError, "option name must not start with dashes: #{name}" if name.start_with?("-")
 
-      Option.new(name, description)
-    end
-    options << opt
+    options << Option.new(name, description)
   end
 
+  sig { params(hash: T::Hash[T.any(String, T::Array[String]), T.any(String, T::Array[String])]).void }
   def deprecated_option(hash)
     raise ArgumentError, "deprecated_option hash must not be empty" if hash.empty?
 
@@ -197,6 +234,7 @@ class SoftwareSpec
     @build = BuildOptions.new(Options.create(@flags), options)
   end
 
+  sig { params(spec: T.any(String, Symbol, T::Hash[T.any(String, Symbol, T::Class[Requirement]), T.untyped], T::Class[Requirement], Dependable)).void }
   def depends_on(spec)
     dep = dependency_collector.add(spec)
     add_dep_option(dep) if dep
@@ -222,14 +260,17 @@ class SoftwareSpec
     depends_on UsesFromMacOSDependency.new(dep, tags, bounds:)
   end
 
+  sig { returns(Dependencies) }
   def deps
     dependency_collector.deps.dup_without_system_deps
   end
 
+  sig { returns(Dependencies) }
   def declared_deps
     dependency_collector.deps
   end
 
+  sig { returns(T::Array[Dependable]) }
   def recursive_dependencies
     deps_f = []
     recursive_dependencies = deps.filter_map do |dep|
@@ -247,15 +288,21 @@ class SoftwareSpec
     recursive_dependencies
   end
 
+  sig { returns(Requirements) }
   def requirements
     dependency_collector.requirements
   end
 
+  sig { returns(Requirements) }
   def recursive_requirements
     Requirement.expand(self)
   end
 
-  def patch(strip = :p1, src = nil, &block)
+  sig {
+    params(strip: T.any(Symbol, String), src: T.nilable(T.any(String, Symbol)),
+           block: T.nilable(T.proc.bind(Patch).void)).void
+  }
+  def patch(strip = :p1, src = T.unsafe(nil), &block)
     p = Patch.create(strip, src, &block)
     return if p.is_a?(ExternalPatch) && p.url.blank?
 
@@ -263,16 +310,12 @@ class SoftwareSpec
     patches << p
   end
 
+  sig { params(compiler: T.any(T::Hash[Symbol, String], Symbol), block: T.nilable(T.proc.bind(CompilerFailure).void)).void }
   def fails_with(compiler, &block)
     compiler_failures << CompilerFailure.create(compiler, &block)
   end
 
-  def needs(*standards)
-    standards.each do |standard|
-      compiler_failures.concat CompilerFailure.for_standard(standard)
-    end
-  end
-
+  sig { params(dep: Dependable).void }
   def add_dep_option(dep)
     dep.option_names.each do |name|
       if dep.optional? && !option_defined?("with-#{name}")

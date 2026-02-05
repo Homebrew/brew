@@ -16,6 +16,9 @@
     "user_agent": ":fake"
   },
   "version": "1.2.3",
+  "autobump": true,
+  "no_autobump_message": null,
+  "skip_livecheck": false,
   "installed": null,
   "installed_time": null,
   "bundle_version": null,
@@ -79,27 +82,41 @@
     ],
     "macos": {
       ">=": [
-        "10.11"
+        "10.15"
       ]
     }
   },
   "conflicts_with": {
-    "formula": [
+    "cask": [
       "nothing"
     ]
   },
   "container": {
     "type": "naked"
   },
+  "rename": [
+    {
+      "from": "Foobar.app",
+      "to": "Foo.app"
+    },
+    {
+      "from": "Foo.app",
+      "to": "Bar.app"
+    }
+  ],
   "auto_updates": true,
   "deprecated": false,
   "deprecation_date": null,
   "deprecation_reason": null,
-  "deprecation_replacement": null,
+  "deprecation_replacement_formula": null,
+  "deprecation_replacement_cask": null,
+  "deprecate_args": null,
   "disabled": false,
   "disable_date": null,
   "disable_reason": null,
-  "disable_replacement": null,
+  "disable_replacement_formula": null,
+  "disable_replacement_cask": null,
+  "disable_args": null,
   "tap_git_head": "abcdef1234567890abcdef1234567890abcdef12",
   "languages": [
     "en",
@@ -107,6 +124,6 @@
   ],
   "ruby_source_path": "Casks/everything.rb",
   "ruby_source_checksum": {
-    "sha256": "d8d0d6b2e5ff65388eccb82236fd3aa157b4a29bb043a1f72b97f0e9b70e8320"
+    "sha256": "d3c19b564ee5a17f22191599ad795a6cc9c4758d0e1269f2d13207155b378dea"
   }
 }

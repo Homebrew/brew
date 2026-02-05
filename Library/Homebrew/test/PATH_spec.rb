@@ -41,31 +41,22 @@ RSpec.describe PATH do
   end
 
   describe "#prepend" do
-    it "prepends a path to a PATH" do
+    specify(:aggregate_failures) do
       expect(described_class.new("/path1").prepend("/path2").to_str).to eq("/path2:/path1")
-    end
-
-    it "removes duplicates" do
       expect(described_class.new("/path1").prepend("/path1").to_str).to eq("/path1")
     end
   end
 
   describe "#append" do
-    it "prepends a path to a PATH" do
+    specify(:aggregate_failures) do
       expect(described_class.new("/path1").append("/path2").to_str).to eq("/path1:/path2")
-    end
-
-    it "removes duplicates" do
       expect(described_class.new("/path1").append("/path1").to_str).to eq("/path1")
     end
   end
 
   describe "#insert" do
-    it "inserts a path at a given index" do
+    specify(:aggregate_failures) do
       expect(described_class.new("/path1").insert(0, "/path2").to_str).to eq("/path2:/path1")
-    end
-
-    it "can insert multiple paths" do
       expect(described_class.new("/path1").insert(0, "/path2", "/path3")).to eq("/path2:/path3:/path1")
     end
   end
@@ -77,18 +68,15 @@ RSpec.describe PATH do
   end
 
   describe "#include?" do
-    it "returns true if a path is included" do
+    it "returns true if a path is included", :aggregate_failures do
       path = described_class.new("/path1", "/path2")
       expect(path).to include("/path1")
       expect(path).to include("/path2")
+      expect(described_class.new("/path1", "/path2")).not_to include("/path1:")
     end
 
     it "returns false if a path is not included" do
       expect(described_class.new("/path1")).not_to include("/path2")
-    end
-
-    it "returns false if the given string contains a separator" do
-      expect(described_class.new("/path1", "/path2")).not_to include("/path1:")
     end
   end
 
@@ -114,7 +102,7 @@ RSpec.describe PATH do
   end
 
   describe "#existing" do
-    it "returns a new PATH without non-existent paths" do
+    it "returns a new PATH without non-existent paths", :aggregate_failures do
       allow(File).to receive(:directory?).with("/path1").and_return(true)
       allow(File).to receive(:directory?).with("/path2").and_return(false)
 

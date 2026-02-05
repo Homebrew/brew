@@ -8,9 +8,7 @@
 #       and concision is important. If more help is needed we should start
 #       specialising help like the gem command does.
 # NOTE: Keep lines less than 80 characters! Wrapping is just not cricket.
-HOMEBREW_HELP_MESSAGE=$(
-  cat <<'EOS'
-Example usage:
+HOMEBREW_HELP_MESSAGE='Example usage:
   brew search TEXT|/REGEX/
   brew info [FORMULA|CASK...]
   brew install FORMULA|CASK...
@@ -32,9 +30,7 @@ Further help:
   brew commands
   brew help [COMMAND]
   man brew
-  https://docs.brew.sh
-EOS
-)
+  https://docs.brew.sh'
 
 homebrew-help() {
   if [[ -z "$*" ]]

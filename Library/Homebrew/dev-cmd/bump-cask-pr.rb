@@ -49,9 +49,8 @@ module Homebrew
                description: "Use the specified GitHub organization for forking."
 
         conflicts "--dry-run", "--write"
-        conflicts "--no-audit", "--online"
-        conflicts "--version=", "--version-arm="
-        conflicts "--version=", "--version-intel="
+        conflicts "--version", "--version-arm"
+        conflicts "--version", "--version-intel"
 
         named_args :cask, number: 1, without_api: true
       end
@@ -72,7 +71,16 @@ module Homebrew
         # Use the user's browser, too.
         ENV["BROWSER"] = EnvConfig.browser
 
-        cask = args.named.to_casks.fetch(0)
+        @cask_retried = T.let(false, T.nilable(T::Boolean))
+        cask = begin
+          args.named.to_casks.fetch(0)
+        rescue Cask::CaskUnavailableError
+          raise if @cask_retried
+
+          CoreCaskTap.instance.install(force: true)
+          @cask_retried = true
+          retry
+        end
 
         odie "This cask is not in a tap!" if cask.tap.blank?
         odie "This cask's tap is not a Git repository!" unless cask.tap.git?
@@ -81,11 +89,13 @@ module Homebrew
           Whoops, the #{cask.token} cask has its version update
           pull requests automatically opened by BrewTestBot every ~3 hours!
           We'd still love your contributions, though, so try another one
-          that's not in the autobump list:
-            #{Formatter.url("#{cask.tap.remote}/blob/master/.github/autobump.txt")}
+          that is excluded from autobump list (i.e. it has 'no_autobump!'
+          method or 'livecheck' block with 'skip'.)
         EOS
 
-        odie "You have too many PRs open: close or merge some first!" if GitHub.too_many_open_prs?(cask.tap)
+        if !args.write_only? && GitHub.too_many_open_prs?(cask.tap)
+          odie "You have too many PRs open: close or merge some first!"
+        end
 
         new_version = BumpVersionParser.new(
           general: args.version,
@@ -113,7 +123,7 @@ module Homebrew
           raise UsageError, "No `--version`, `--url` or `--sha256` argument specified!"
         end
 
-        check_pull_requests(cask, new_version:)
+        check_pull_requests(cask, new_version:) unless args.write_only?
 
         replacement_pairs ||= []
         branch_name = "bump-#{cask.token}"
@@ -136,7 +146,7 @@ module Homebrew
         end
 
         if new_version.present?
-          # For simplicity, our naming defers to the arm version if we multiple architectures are specified
+          # For simplicity, our naming defers to the arm version if multiple architectures are specified
           branch_version = new_version.arm || new_version.general
           if branch_version.is_a?(Cask::DSL::Version)
             commit_version = shortened_version(branch_version, cask:)
@@ -156,17 +166,23 @@ module Homebrew
                                          read_only_run: args.dry_run?,
                                          silent:        args.quiet?)
 
-        run_cask_audit(cask, old_contents)
+        audit_exceptions = []
+        audit_exceptions << ["min_os", "rosetta", "signing"] if ENV["HOMEBREW_TEST_BOT_AUTOBUMP"].present?
+        run_cask_audit(cask, old_contents, audit_exceptions)
         run_cask_style(cask, old_contents)
 
         pr_info = {
+          commits:     [{
+            commit_message:,
+            old_contents:,
+            sourcefile_path: cask.sourcefile_path,
+          }],
           branch_name:,
-          commit_message:,
-          old_contents:,
-          pr_message:      "Created with `brew bump-cask-pr`.",
-          sourcefile_path: cask.sourcefile_path,
-          tap:             cask.tap,
+          pr_message:  "Created with `brew bump-cask-pr`.",
+          tap:         cask.tap,
+          pr_title:    commit_message,
         }
+
         GitHub.create_bump_pr(pr_info, args:)
       end
 
@@ -181,21 +197,62 @@ module Homebrew
         end
       end
 
+      sig { params(cask: Cask::Cask).returns(T::Array[[Symbol, Symbol]]) }
+      def generate_system_options(cask)
+        current_os = Homebrew::SimulateSystem.current_os
+        current_os_is_macos = MacOSVersion::SYMBOLS.include?(current_os)
+        newest_macos = MacOSVersion.new(HOMEBREW_MACOS_NEWEST_SUPPORTED).to_sym
+
+        depends_on_archs = cask.depends_on.arch&.filter_map { |arch| arch[:type] }&.uniq
+
+        # NOTE: We substitute the newest macOS (e.g. `:sequoia`) in place of
+        # `:macos` values (when used), as a generic `:macos` value won't apply
+        # to on_system blocks referencing macOS versions.
+        os_values = []
+        arch_values = depends_on_archs.presence || []
+        if cask.on_system_blocks_exist?
+          OnSystem::BASE_OS_OPTIONS.each do |os|
+            os_values << if os == :macos
+              (current_os_is_macos ? current_os : newest_macos)
+            else
+              os
+            end
+          end
+
+          arch_values = OnSystem::ARCH_OPTIONS if arch_values.empty?
+        else
+          # Architecture is only relevant if on_system blocks are present or
+          # the cask uses `depends_on arch`, otherwise we default to ARM for
+          # consistency.
+          os_values << (current_os_is_macos ? current_os : newest_macos)
+          arch_values << :arm if arch_values.empty?
+        end
+
+        os_values.product(arch_values)
+      end
+
       sig {
         params(
           cask:              Cask::Cask,
-          new_hash:          T.any(NilClass, String, Symbol),
+          new_hash:          T.nilable(T.any(String, Symbol)),
           new_version:       BumpVersionParser,
           replacement_pairs: T::Array[[T.any(Regexp, String), T.any(Pathname, String)]],
         ).returns(T::Array[[T.any(Regexp, String), T.any(Pathname, String)]])
       }
       def replace_version_and_checksum(cask, new_hash, new_version, replacement_pairs)
-        # When blocks are absent, arch is not relevant. For consistency, we simulate the arm architecture.
-        arch_options = cask.on_system_blocks_exist? ? OnSystem::ARCH_OPTIONS : [:arm]
-        arch_options.each do |arch|
-          SimulateSystem.with(arch:) do
-            old_cask     = Cask::CaskLoader.load(cask.sourcefile_path)
-            old_version  = old_cask.version
+        generate_system_options(cask).each do |os, arch|
+          SimulateSystem.with(os:, arch:) do
+            # Handle the cask being invalid for specific os/arch combinations
+            old_cask = begin
+              Cask::CaskLoader.load(cask.sourcefile_path)
+            rescue Cask::CaskInvalidError, Cask::CaskUnreadableError
+              raise unless cask.on_system_blocks_exist?
+            end
+            next if old_cask.nil?
+
+            old_version = old_cask.version
+            next unless old_version
+
             bump_version = new_version.send(arch) || new_version.general
 
             old_version_regex = old_version.latest? ? ":latest" : %Q(["']#{Regexp.escape(old_version.to_s)}["'])
@@ -227,6 +284,8 @@ module Homebrew
               end
               languages.each do |language|
                 new_cask        = Cask::CaskLoader.load(tmp_contents)
+                next unless new_cask.url
+
                 new_cask.config = if language.blank?
                   tmp_cask.config
                 else
@@ -252,8 +311,9 @@ module Homebrew
 
         file = cask.sourcefile_path.relative_path_from(cask.tap.path).to_s
         quiet = args.quiet?
+        official_tap = cask.tap.official?
         GitHub.check_for_duplicate_pull_requests(cask.token, tap_remote_repo,
-                                                 state: "open", file:, quiet:)
+                                                 state: "open", file:, quiet:, official_tap:)
 
         # if we haven't already found open requests, try for an exact match across all pull requests
         new_version.instance_variables.each do |version_type|
@@ -261,12 +321,13 @@ module Homebrew
           next if version_type_version.blank?
 
           version = shortened_version(version_type_version, cask:)
-          GitHub.check_for_duplicate_pull_requests(cask.token, tap_remote_repo, version:, file:, quiet:)
+          GitHub.check_for_duplicate_pull_requests(cask.token, tap_remote_repo, version:,
+                                                   file:, quiet:, official_tap:)
         end
       end
 
-      sig { params(cask: Cask::Cask, old_contents: String).void }
-      def run_cask_audit(cask, old_contents)
+      sig { params(cask: Cask::Cask, old_contents: String, audit_exceptions: T::Array[String]).void }
+      def run_cask_audit(cask, old_contents, audit_exceptions = [])
         if args.dry_run?
           if args.no_audit?
             ohai "Skipping `brew audit`"
@@ -279,7 +340,8 @@ module Homebrew
         if args.no_audit?
           ohai "Skipping `brew audit`"
         else
-          system HOMEBREW_BREW_FILE, "audit", "--cask", "--online", cask.full_name
+          system HOMEBREW_BREW_FILE, "audit", "--cask", "--online", cask.full_name,
+                 "--except=#{audit_exceptions.join(",")}"
           failed_audit = !$CHILD_STATUS.success?
         end
         return unless failed_audit

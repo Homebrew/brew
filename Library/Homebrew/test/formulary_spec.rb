@@ -4,6 +4,7 @@ require "formula"
 require "formula_installer"
 require "utils/bottles"
 
+# rubocop:todo RSpec/AggregateExamples
 RSpec.describe Formulary do
   let(:formula_name) { "testball_bottle" }
   let(:formula_path) { CoreTap.instance.new_formula_path(formula_name) }
@@ -55,7 +56,7 @@ RSpec.describe Formulary do
   end
 
   describe "::factory" do
-    context "without the API" do
+    context "without the API", :no_api do
       before do
         formula_path.dirname.mkpath
         formula_path.write formula_content
@@ -126,10 +127,10 @@ RSpec.describe Formulary do
           described_class.factory(temp_formula_path)
         ensure
           temp_formula_path.unlink
-        end.to raise_error(FormulaUnavailableError)
+        end.to raise_error(RuntimeError, /requires formulae to be in a tap, rejecting/)
       end
 
-      it "returns a Formula when given a URL", :needs_utils_curl, :no_api do
+      it "returns a Formula when given a URL", :needs_utils_curl do
         formula = described_class.factory("file://#{formula_path}")
         expect(formula).to be_a(Formula)
       end
@@ -139,6 +140,28 @@ RSpec.describe Formulary do
         expect do
           described_class.factory("file://#{formula_path}")
         end.to raise_error(FormulaUnavailableError)
+      end
+
+      context "when given a cache path" do
+        let(:cache_dir) { HOMEBREW_CACHE/"test_formula_cache" }
+        let(:cache_formula_path) { cache_dir/formula_path.basename }
+
+        before do
+          cache_dir.mkpath
+          FileUtils.cp formula_path, cache_formula_path
+        end
+
+        after do
+          cache_formula_path.unlink if cache_formula_path.exist?
+          cache_dir.rmdir if cache_dir.exist?
+        end
+
+        it "disallows cache paths when paths are explicitly disabled" do
+          ENV["HOMEBREW_FORBID_PACKAGES_FROM_PATHS"] = "1"
+          expect do
+            described_class.factory(cache_formula_path)
+          end.to raise_error(/requires formulae to be in a tap/)
+        end
       end
 
       context "when given a bottle" do
@@ -292,8 +315,12 @@ RSpec.describe Formulary do
       def formula_json_contents(extra_items = {})
         {
           formula_name => {
+            "name"                     => formula_name,
             "desc"                     => "testball",
             "homepage"                 => "https://example.com",
+            "installed"                => [],
+            "outdated"                 => false,
+            "pinned"                   => false,
             "license"                  => "MIT",
             "revision"                 => 0,
             "version_scheme"           => 0,
@@ -335,11 +362,13 @@ RSpec.describe Formulary do
                 "download" => nil,
                 "version"  => "1.0",
                 "contexts" => ["build"],
+                "specs"    => ["stable"],
               },
             ],
             "conflicts_with"           => ["conflicting_formula"],
             "conflicts_with_reasons"   => ["it does"],
             "link_overwrite"           => ["bin/abc"],
+            "linked_keg"               => nil,
             "caveats"                  => "example caveat string\n/$HOME\n$HOMEBREW_PREFIX",
             "service"                  => {
               "name"        => { macos: "custom.launchd.name", linux: "custom.systemd.name" },
@@ -349,21 +378,68 @@ RSpec.describe Formulary do
             },
             "ruby_source_path"         => "Formula/#{formula_name}.rb",
             "ruby_source_checksum"     => { "sha256" => "ABCDEFGHIJKLMNOPQRSTUVWXYZ" },
+            "tap_git_head"             => "0000000000000000000000000000000000000000",
           }.merge(extra_items),
         }
       end
 
       let(:deprecate_json) do
         {
-          "deprecation_date"   => "2022-06-15",
-          "deprecation_reason" => "repo_archived",
+          "deprecated"                      => true,
+          "deprecation_date"                => "2022-06-15",
+          "deprecation_reason"              => "repo_archived",
+          "deprecation_replacement_formula" => nil,
+          "deprecation_replacement_cask"    => nil,
+          "deprecate_args"                  => { date: "2022-06-15", because: :repo_archived },
         }
       end
 
       let(:disable_json) do
         {
-          "disable_date"   => "2022-06-15",
-          "disable_reason" => "requires something else",
+          "disabled"                    => true,
+          "disable_date"                => "2022-06-15",
+          "disable_reason"              => "requires something else",
+          "disable_replacement_formula" => nil,
+          "disable_replacement_cask"    => nil,
+          "disable_args"                => { date: "2022-06-15", because: "requires something else" },
+        }
+      end
+
+      let(:future_date) { Date.today + 365 }
+
+      let(:deprecate_future_json) do
+        {
+          "deprecated"                      => true,
+          "deprecation_date"                => future_date.to_s,
+          "deprecation_reason"              => nil,
+          "deprecation_replacement_formula" => nil,
+          "deprecation_replacement_cask"    => nil,
+          "deprecate_args"                  => {
+            date:             future_date.to_s,
+            because:          :repo_archived,
+            replacement_cask: "bar",
+          },
+        }
+      end
+
+      let(:disable_future_json) do
+        {
+          "deprecated"                      => true,
+          "deprecation_date"                => nil,
+          "deprecation_reason"              => "requires something else",
+          "deprecation_replacement_formula" => "foo",
+          "deprecation_replacement_cask"    => nil,
+          "deprecate_args"                  => nil,
+          "disabled"                        => false,
+          "disable_date"                    => future_date.to_s,
+          "disable_reason"                  => nil,
+          "disable_replacement_formula"     => nil,
+          "disable_replacement_cask"        => nil,
+          "disable_args"                    => {
+            date:                future_date.to_s,
+            because:             "requires something else",
+            replacement_formula: "foo",
+          },
         }
       end
 
@@ -391,15 +467,13 @@ RSpec.describe Formulary do
         {
           "variations" => {
             "x86_64_linux" => {
-              "dependencies" => ["dep", "uses_from_macos_dep"],
+              "dependencies" => ["dep"],
             },
           },
         }
       end
 
       before do
-        ENV.delete("HOMEBREW_NO_INSTALL_FROM_API")
-
         # avoid unnecessary network calls
         allow(Homebrew::API::Formula).to receive_messages(all_aliases: {}, all_renames: {})
         allow(CoreTap.instance).to receive(:tap_migrations).and_return({})
@@ -449,12 +523,25 @@ RSpec.describe Formulary do
         end.to raise_error("Cannot build from source from abstract formula.")
       end
 
+      it "returns a Formula that can regenerate its JSON API" do
+        allow(Homebrew::API::Formula).to receive(:all_formulae).and_return formula_json_contents
+
+        formula = described_class.factory(formula_name)
+        expect(formula).to be_a(Formula)
+        expect(formula.loaded_from_api?).to be true
+
+        expected_hash = formula_json_contents[formula_name]
+        expect(formula.to_hash_with_variations).to eq(expected_hash)
+      end
+
       it "returns a deprecated Formula when given a name" do
         allow(Homebrew::API::Formula).to receive(:all_formulae).and_return formula_json_contents(deprecate_json)
 
         formula = described_class.factory(formula_name)
         expect(formula).to be_a(Formula)
         expect(formula.deprecated?).to be true
+        expect(formula.deprecation_date).to eq(Date.parse("2022-06-15"))
+        expect(formula.deprecation_reason).to eq :repo_archived
         expect do
           formula.install
         end.to raise_error("Cannot build from source from abstract formula.")
@@ -466,6 +553,44 @@ RSpec.describe Formulary do
         formula = described_class.factory(formula_name)
         expect(formula).to be_a(Formula)
         expect(formula.disabled?).to be true
+        expect(formula.disable_date).to eq(Date.parse("2022-06-15"))
+        expect(formula.disable_reason).to eq("requires something else")
+        expect do
+          formula.install
+        end.to raise_error("Cannot build from source from abstract formula.")
+      end
+
+      it "returns a future-deprecated Formula when given a name" do
+        contents = formula_json_contents(deprecate_future_json)
+        allow(Homebrew::API::Formula).to receive(:all_formulae).and_return contents
+
+        formula = described_class.factory(formula_name)
+        expect(formula).to be_a(Formula)
+        expect(formula.deprecated?).to be false
+        expect(formula.deprecation_date).to eq(future_date)
+        expect(formula.deprecation_reason).to be_nil
+        expect(formula.deprecation_replacement_formula).to be_nil
+        expect(formula.deprecation_replacement_cask).to be_nil
+        expect do
+          formula.install
+        end.to raise_error("Cannot build from source from abstract formula.")
+      end
+
+      it "returns a future-disabled Formula when given a name" do
+        allow(Homebrew::API::Formula).to receive(:all_formulae).and_return formula_json_contents(disable_future_json)
+
+        formula = described_class.factory(formula_name)
+        expect(formula).to be_a(Formula)
+        expect(formula.deprecated?).to be true
+        expect(formula.deprecation_date).to be_nil
+        expect(formula.deprecation_reason).to eq("requires something else")
+        expect(formula.deprecation_replacement_formula).to eq("foo")
+        expect(formula.deprecation_replacement_cask).to be_nil
+        expect(formula.disabled?).to be false
+        expect(formula.disable_date).to eq(future_date)
+        expect(formula.disable_reason).to be_nil
+        expect(formula.disable_replacement_formula).to be_nil
+        expect(formula.disable_replacement_cask).to be_nil
         expect do
           formula.install
         end.to raise_error("Cannot build from source from abstract formula.")
@@ -567,10 +692,10 @@ RSpec.describe Formulary do
         end.to raise_error(UnsupportedInstallationMethod)
       end
 
-      it "does not raise an error when given a file URL" do
+      it "does not raise an error when given a file URL", :needs_utils_curl do
         expect do
           described_class.factory("file://#{TEST_FIXTURE_DIR}/testball.rb")
-        end.not_to raise_error(UnsupportedInstallationMethod)
+        end.not_to raise_error
       end
     end
 
@@ -623,16 +748,6 @@ RSpec.describe Formulary do
     end
   end
 
-  describe "::convert_to_string_or_symbol" do
-    it "returns the original string if it doesn't start with a colon" do
-      expect(described_class.convert_to_string_or_symbol("foo")).to eq "foo"
-    end
-
-    it "returns a symbol if the original string starts with a colon" do
-      expect(described_class.convert_to_string_or_symbol(":foo")).to eq :foo
-    end
-  end
-
   describe "::loader_for" do
     context "when given a relative path with two slashes" do
       it "returns a `FromPathLoader`" do
@@ -645,16 +760,12 @@ RSpec.describe Formulary do
     end
 
     context "when given a tapped name" do
-      it "returns a `FromTapLoader`" do
+      it "returns a `FromTapLoader`", :no_api do
         expect(described_class.loader_for("homebrew/core/gcc")).to be_a Formulary::FromTapLoader
       end
     end
 
-    context "when not using the API" do
-      before do
-        ENV["HOMEBREW_NO_INSTALL_FROM_API"] = "1"
-      end
-
+    context "when not using the API", :no_api do
       context "when a formula is migrated" do
         let(:token) { "foo" }
 
@@ -782,3 +893,4 @@ RSpec.describe Formulary do
     end
   end
 end
+# rubocop:enable RSpec/AggregateExamples

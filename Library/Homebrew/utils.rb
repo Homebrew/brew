@@ -1,4 +1,4 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
 
 require "context"
@@ -6,37 +6,81 @@ require "context"
 module Homebrew
   extend Context
 
-  def self._system(cmd, *args, **options)
+  sig { params(path: T.nilable(T.any(String, Pathname))).returns(T::Boolean) }
+  def self.require?(path)
+    return false if path.nil?
+
+    if defined?(Warnings)
+      # Work around require warning when done repeatedly:
+      # https://bugs.ruby-lang.org/issues/21091
+      Warnings.ignore(/already initialized constant/, /previous definition of/) do
+        require path.to_s
+      end
+    else
+      require path.to_s
+    end
+    true
+  rescue LoadError
+    false
+  end
+
+  # Need to keep this naming as-is for backwards compatibility.
+  # rubocop:disable Naming/PredicateMethod
+  sig {
+    params(
+      cmd:     T.nilable(T.any(Pathname, String, [String, String], T::Hash[String, T.nilable(String)])),
+      argv0:   T.nilable(T.any(Pathname, String, [String, String])),
+      args:    T.any(Pathname, String),
+      options: T.untyped,
+      _block:  T.nilable(T.proc.void),
+    ).returns(T::Boolean)
+  }
+  def self._system(cmd, argv0 = nil, *args, **options, &_block)
     pid = fork do
       yield if block_given?
       args.map!(&:to_s)
       begin
-        exec(cmd, *args, **options)
+        if argv0
+          exec(cmd, argv0, *args, **options)
+        else
+          exec(cmd, *args, **options)
+        end
       rescue
         nil
       end
       exit! 1 # never gets here unless exec failed
     end
-    Process.wait(T.must(pid))
+    Process.wait(pid)
     $CHILD_STATUS.success?
   end
+  # TODO: make private_class_method when possible
+  # private_class_method :_system
+  # rubocop:enable Naming/PredicateMethod
 
-  def self.system(cmd, *args, **options)
+  sig {
+    params(
+      cmd:     T.any(Pathname, String, [String, String], T::Hash[String, T.nilable(String)]),
+      argv0:   T.nilable(T.any(Pathname, String, [String, String])),
+      args:    T.any(Pathname, String),
+      options: T.untyped,
+    ).returns(T::Boolean)
+  }
+  def self.system(cmd, argv0 = nil, *args, **options)
     if verbose?
       out = (options[:out] == :err) ? $stderr : $stdout
       out.puts "#{cmd} #{args * " "}".gsub(RUBY_PATH, "ruby")
                                      .gsub($LOAD_PATH.join(File::PATH_SEPARATOR).to_s, "$LOAD_PATH")
     end
-    _system(cmd, *args, **options)
+    _system(cmd, argv0, *args, **options)
   end
 
   # `Module` and `Regexp` are global variables used as types here so they don't need to be imported
   # rubocop:disable Style/GlobalVars
-  sig { params(the_module: Module, pattern: Regexp).void }
+  sig { params(the_module: T::Module[T.anything], pattern: Regexp).void }
   def self.inject_dump_stats!(the_module, pattern)
-    @injected_dump_stat_modules ||= {}
+    @injected_dump_stat_modules ||= T.let({}, T.nilable(T::Hash[T::Module[T.anything], T::Array[String]]))
     @injected_dump_stat_modules[the_module] ||= []
-    injected_methods = @injected_dump_stat_modules[the_module]
+    injected_methods = @injected_dump_stat_modules.fetch(the_module)
     the_module.module_eval do
       instance_methods.grep(pattern).each do |name|
         next if injected_methods.include? name
@@ -116,6 +160,15 @@ module Utils
     params(stem: String, count: Integer, plural: String, singular: String, include_count: T::Boolean).returns(String)
   }
   def self.pluralize(stem, count, plural: "s", singular: "", include_count: false)
+    case stem
+    when "formula"
+      plural = "e"
+    when "dependency", "try"
+      stem = stem.delete_suffix("y")
+      plural = "ies"
+      singular = "y"
+    end
+
     prefix = include_count ? "#{count} " : ""
     suffix = (count == 1) ? singular : plural
     "#{prefix}#{stem}#{suffix}"
@@ -166,5 +219,17 @@ module Utils
   sig { params(basename: String).returns(String) }
   def self.safe_filename(basename)
     basename.gsub(SAFE_FILENAME_REGEX, "")
+  end
+
+  # Converts a string starting with `:` to a symbol, otherwise returns the
+  # string itself.
+  #
+  #   convert_to_string_or_symbol(":example") # => :example
+  #   convert_to_string_or_symbol("example")  # => "example"
+  sig { params(string: String).returns(T.any(String, Symbol)) }
+  def self.convert_to_string_or_symbol(string)
+    return T.must(string[1..]).to_sym if string.start_with?(":")
+
+    string
   end
 end

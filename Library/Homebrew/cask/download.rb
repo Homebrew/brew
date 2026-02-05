@@ -1,4 +1,4 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
 
 require "downloadable"
@@ -13,8 +13,10 @@ module Cask
 
     include Context
 
+    sig { returns(::Cask::Cask) }
     attr_reader :cask
 
+    sig { params(cask: ::Cask::Cask, quarantine: T.nilable(T::Boolean)).void }
     def initialize(cask, quarantine: nil)
       super()
 
@@ -22,16 +24,11 @@ module Cask
       @quarantine = quarantine
     end
 
-    sig { override.returns(String) }
-    def name
-      cask.token
-    end
-
     sig { override.returns(T.nilable(::URL)) }
     def url
-      return if cask.url.nil?
+      return if (cask_url = cask.url).nil?
 
-      @url ||= ::URL.new(cask.url.to_s, cask.url.specs)
+      @url ||= ::URL.new(cask_url.to_s, cask_url.specs)
     end
 
     sig { override.returns(T.nilable(::Checksum)) }
@@ -70,12 +67,14 @@ module Cask
       downloaded_path
     end
 
+    sig { params(timeout: T.nilable(T.any(Float, Integer))).returns([T.nilable(Time), Integer]) }
     def time_file_size(timeout: nil)
       raise ArgumentError, "not supported for this download strategy" unless downloader.is_a?(CurlDownloadStrategy)
 
       T.cast(downloader, CurlDownloadStrategy).resolved_time_file_size(timeout:)
     end
 
+    sig { returns(Pathname) }
     def basename
       downloader.basename
     end
@@ -91,17 +90,14 @@ module Cask
     end
 
     sig { override.returns(String) }
-    def download_name
-      cask.token
-    end
+    def download_queue_name = "#{cask.token} (#{version})"
 
     sig { override.returns(String) }
-    def download_type
-      "cask"
-    end
+    def download_queue_type = "Cask"
 
     private
 
+    sig { params(path: Pathname).void }
     def quarantine(path)
       return if @quarantine.nil?
       return unless Quarantine.available?
@@ -139,6 +135,24 @@ module Cask
     sig { override.returns(Pathname) }
     def cache
       Cache.path
+    end
+
+    sig { override.returns(String) }
+    def download_name
+      url_basename = super
+      version = self.version
+      url = self.url
+      return url_basename if version.nil? || url.nil?
+
+      temp_downloader = download_strategy.new(url.to_s, url_basename, version, mirrors: [], cache:, **url.specs)
+      return url_basename unless temp_downloader.is_a?(AbstractFileDownloadStrategy)
+
+      potential_symlink_length = temp_downloader.symlink_location.basename.to_s.length
+      max_filesystem_symlink_length = 255
+
+      return url_basename if potential_symlink_length < max_filesystem_symlink_length
+
+      cask.full_token.gsub("/", "--")
     end
   end
 end

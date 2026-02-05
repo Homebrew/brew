@@ -4,11 +4,13 @@
 require "development_tools"
 require "cask/exceptions"
 require "system_command"
+require "utils/output"
 
 module Cask
   # Helper module for quarantining files.
   module Quarantine
     extend SystemCommand::Mixin
+    extend ::Utils::Output::Mixin
 
     QUARANTINE_ATTRIBUTE = "com.apple.quarantine"
 
@@ -40,11 +42,12 @@ module Cask
     end
     private_class_method :swift_target_args
 
-    sig { returns(Symbol) }
+    sig { returns([Symbol, T.nilable(String)]) }
     def self.check_quarantine_support
       odebug "Checking quarantine support"
 
-      if xattr.nil? || !system_command(xattr, args: ["-h"], print_stderr: false).success?
+      check_output = nil
+      status = if xattr.nil? || !system_command(xattr, args: ["-h"], print_stderr: false).success?
         odebug "There's no working version of `xattr` on this system."
         :xattr_broken
       elsif swift.nil?
@@ -55,21 +58,41 @@ module Cask
                                    args:         [*swift_target_args, QUARANTINE_SCRIPT],
                                    print_stderr: false)
 
-        case api_check.exit_status
+        exit_status = api_check.exit_status
+        check_output = api_check.merged_output.to_s.strip
+        error_output = api_check.stderr.to_s.strip
+
+        case exit_status
         when 2
           odebug "Quarantine is available."
           :quarantine_available
+        when 1
+          # Swift script ran but failed (likely due to CLT issues)
+          odebug "Swift quarantine script failed: #{error_output}"
+          if error_output.include?("does not exist") || error_output.include?("No such file")
+            :swift_broken_clt
+          elsif error_output.include?("compiler") || error_output.include?("SDK")
+            :swift_compilation_failed
+          else
+            :swift_runtime_error
+          end
+        when 127
+          # Command not found or execution failed
+          odebug "Swift execution failed with exit status 127"
+          :swift_not_executable
         else
-          odebug "Unknown support status"
-          :unknown
+          odebug "Swift returned unexpected exit status: #{exit_status}"
+          :swift_unexpected_error
         end
       end
+      [status, check_output]
     end
 
+    sig { returns(T::Boolean) }
     def self.available?
-      @status ||= check_quarantine_support
+      @quarantine_support ||= check_quarantine_support
 
-      @status == :quarantine_available
+      @quarantine_support[0] == :quarantine_available
     end
 
     def self.detect(file)
@@ -162,7 +185,7 @@ module Cask
                       args:  [
                         "-0",
                         "--",
-                        "/bin/chmod",
+                        "chmod",
                         "-h",
                         "u+w",
                       ],

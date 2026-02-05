@@ -11,6 +11,8 @@ module Utils
   module Curl
     include SystemCommand::Mixin
     extend SystemCommand::Mixin
+    include Utils::Output::Mixin
+    extend Utils::Output::Mixin
     extend T::Helpers
 
     requires_ancestor { Kernel }
@@ -58,9 +60,11 @@ module Utils
     sig { returns(String) }
     def curl_path
       @curl_path ||= T.let(
-        Utils.popen_read(curl_executable, "--homebrew=print-path").chomp.presence,
+        Utils.popen_read(curl_executable, "--homebrew=print-path").chomp,
         T.nilable(String),
       )
+      odie("Failed to get curl path") if @curl_path.blank?
+      @curl_path
     end
 
     sig { void }
@@ -71,14 +75,16 @@ module Utils
     sig {
       params(
         extra_args:      String,
-        connect_timeout: T.any(Integer, Float, NilClass),
-        max_time:        T.any(Integer, Float, NilClass),
+        connect_timeout: T.nilable(T.any(Integer, Float)),
+        max_time:        T.nilable(T.any(Integer, Float)),
         retries:         T.nilable(Integer),
-        retry_max_time:  T.any(Integer, Float, NilClass),
+        retry_max_time:  T.nilable(T.any(Integer, Float)),
         show_output:     T.nilable(T::Boolean),
         show_error:      T.nilable(T::Boolean),
-        user_agent:      T.any(String, Symbol, NilClass),
+        cookies:         T.nilable(T::Hash[String, String]),
+        header:          T.nilable(T.any(String, T::Array[String])),
         referer:         T.nilable(String),
+        user_agent:      T.nilable(T.any(String, Symbol)),
       ).returns(T::Array[String])
     }
     def curl_args(
@@ -89,8 +95,10 @@ module Utils
       retry_max_time: nil,
       show_output: false,
       show_error: true,
-      user_agent: nil,
-      referer: nil
+      cookies: nil,
+      header: nil,
+      referer: nil,
+      user_agent: nil
     )
       args = []
 
@@ -106,25 +114,37 @@ module Utils
         args << "--disable"
       end
 
-      # echo any cookies received on a redirect
-      args << "--cookie" << File::NULL
+      args << "--cookie" << if cookies
+        cookies.map { |k, v| "#{k}=#{v}" }.join(";")
+      else
+        # Echo any cookies received on a redirect
+        File::NULL
+      end
 
       args << "--globoff"
 
       args << "--show-error" if show_error
 
-      args << "--user-agent" << case user_agent
-      when :browser, :fake
-        HOMEBREW_USER_AGENT_FAKE_SAFARI
-      when :default, nil
-        HOMEBREW_USER_AGENT_CURL
-      when String
-        user_agent
-      else
-        raise TypeError, ":user_agent must be :browser/:fake, :default, or a String"
+      if user_agent != :curl
+        args << "--user-agent" << case user_agent
+        when :browser, :fake
+          HOMEBREW_USER_AGENT_FAKE_SAFARI
+        when :default, nil
+          HOMEBREW_USER_AGENT_CURL
+        when String
+          user_agent
+        else
+          raise TypeError, ":user_agent must be :browser/:fake, :default, :curl, or a String"
+        end
       end
 
       args << "--header" << "Accept-Language: en"
+      case header
+      when String
+        args << "--header" << header
+      when Array
+        header.each { |h| args << "--header" << h.strip }
+      end
 
       if show_output != true
         args << "--fail"
@@ -183,7 +203,7 @@ module Utils
 
       return result if result.success? || args.include?("--http1.1")
 
-      raise Timeout::Error, result.stderr.lines.last.chomp if timeout && result.status.exitstatus == 28
+      raise Timeout::Error, result.stderr.lines.fetch(-1).chomp if timeout && result.status.exitstatus == 28
 
       # Error in the HTTP2 framing layer
       if result.exit_status == 16
@@ -442,7 +462,7 @@ module Utils
       end
 
       if url.start_with?("https://") && Homebrew::EnvConfig.no_insecure_redirect? &&
-         (details[:final_url].present? && !details[:final_url].start_with?("https://"))
+         details[:final_url].present? && !details[:final_url].start_with?("https://")
         return "The #{url_type} #{url} redirects back to HTTP"
       end
 
@@ -459,7 +479,7 @@ module Utils
 
       http_with_https_available =
         url.start_with?("http://") &&
-        (secure_details[:final_url].present? && secure_details[:final_url].start_with?("https://"))
+        secure_details[:final_url].present? && secure_details[:final_url].start_with?("https://")
 
       if (etag_match || content_length_match || file_match) && http_with_https_available
         return "The #{url_type} #{url} should use HTTPS rather than HTTP"
@@ -472,7 +492,7 @@ module Utils
       https_content = secure_details[:file]&.scrub&.gsub(no_protocol_file_contents, "/")
 
       # Check for the same content after removing all protocols
-      if (http_content && https_content) && (http_content == https_content) && http_with_https_available
+      if http_content && https_content && (http_content == https_content) && http_with_https_available
         return "The #{url_type} #{url} should use HTTPS rather than HTTP"
       end
 
@@ -540,27 +560,34 @@ module Utils
       etag = headers["etag"][ETAG_VALUE_REGEX, 1] if headers["etag"].present?
       content_length = headers["content-length"]
 
-      if status.success?
-        open_args = {}
-        content_type = headers["content-type"]
+      if status.success? && (file_path = file.path)
+        file_hash = Digest::SHA256.file(file_path).hexdigest if hash_needed
 
-        # Use the last `Content-Type` header if there is more than one instance
-        # in the response
-        content_type = content_type.last if content_type.is_a?(Array)
+        # Only load file contents for text-based content comparison on small files.
+        # Large binary files don't benefit from content comparison.
+        max_read_size = 100 * 1024 * 1024
+        if File.size(file_path) <= max_read_size
+          open_args = {}
+          content_type = headers["content-type"]
 
-        # Try to get encoding from Content-Type header
-        # TODO: add guessing encoding by <meta http-equiv="Content-Type" ...> tag
-        if content_type &&
-           (match = content_type.match(/;\s*charset\s*=\s*([^\s]+)/)) &&
-           (charset = match[1])
-          begin
-            open_args[:encoding] = Encoding.find(charset)
-          rescue ArgumentError
-            # Unknown charset in Content-Type header
+          # Use the last `Content-Type` header if there is more than one instance
+          # in the response
+          content_type = content_type.last if content_type.is_a?(Array)
+
+          # Try to get encoding from Content-Type header
+          # TODO: add guessing encoding by <meta http-equiv="Content-Type" ...> tag
+          if content_type &&
+             (match = content_type.match(/;\s*charset\s*=\s*([^\s]+)/)) &&
+             (charset = match[1])
+            begin
+              open_args[:encoding] = Encoding.find(charset)
+            rescue ArgumentError
+              # Unknown charset in Content-Type header
+            end
           end
+
+          file_contents = File.read(file_path, **open_args)
         end
-        file_contents = File.read(T.must(file.path), **open_args)
-        file_hash = Digest::SHA256.hexdigest(file_contents) if hash_needed
       end
 
       {
@@ -582,7 +609,13 @@ module Utils
     sig { returns(Version) }
     def curl_version
       @curl_version ||= T.let({}, T.nilable(T::Hash[String, Version]))
-      @curl_version[curl_path] ||= Version.new(T.must(curl_output("-V").stdout[/curl (\d+(\.\d+)+)/, 1]))
+      curl_v_stdout = curl_output("-V").stdout
+      version = curl_v_stdout[/curl (\d+(?:\.\d+)+)/, 1]
+      if version
+        @curl_version[curl_path] ||= Version.new(version)
+      else
+        odie("Failed to parse curl version from #{curl_v_stdout}")
+      end
     end
 
     sig { returns(T::Boolean) }

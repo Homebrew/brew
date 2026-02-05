@@ -7,21 +7,26 @@ module Homebrew
   module Livecheck
     module Strategy
       # The {Npm} strategy identifies versions of software at
-      # registry.npmjs.org by checking the listed versions for a package.
+      # registry.npmjs.org by checking the latest version for a package.
       #
       # npm URLs take one of the following formats:
       #
       # * `https://registry.npmjs.org/example/-/example-1.2.3.tgz`
       # * `https://registry.npmjs.org/@example/example/-/example-1.2.3.tgz`
       #
-      # The default regex matches URLs in the `href` attributes of version tags
-      # on the "Versions" tab of the package page.
-      #
       # @api public
       class Npm
         extend Strategic
 
         NICE_NAME = "npm"
+
+        # The default `strategy` block used to extract version information when
+        # a `strategy` block isn't provided.
+        DEFAULT_BLOCK = T.let(proc do |json|
+          json["version"]
+        end.freeze, T.proc.params(
+          arg0: T::Hash[String, T.anything],
+        ).returns(T.any(String, T::Array[String])))
 
         # The `Regexp` used to determine if the strategy applies to the URL.
         URL_MATCH_REGEX = %r{
@@ -40,54 +45,59 @@ module Homebrew
 
         # Extracts information from a provided URL and uses it to generate
         # various input values used by the strategy to check for new versions.
-        # Some of these values act as defaults and can be overridden in a
-        # `livecheck` block.
         #
         # @param url [String] the URL used to generate values
         # @return [Hash]
         sig { params(url: String).returns(T::Hash[Symbol, T.untyped]) }
         def self.generate_input_values(url)
           values = {}
+          return values unless (match = url.match(URL_MATCH_REGEX))
 
-          match = url.match(URL_MATCH_REGEX)
-          return values if match.blank?
-
-          values[:url] = "https://www.npmjs.com/package/#{match[:package_name]}?activeTab=versions"
-
-          regex_name = Regexp.escape(T.must(match[:package_name])).gsub("\\-", "-")
-
-          # Example regexes:
-          # * `%r{href=.*?/package/example/v/(\d+(?:\.\d+)+)"}i`
-          # * `%r{href=.*?/package/@example/example/v/(\d+(?:\.\d+)+)"}i`
-          values[:regex] = %r{href=.*?/package/#{regex_name}/v/(\d+(?:\.\d+)+)"}i
+          values[:url] = "https://registry.npmjs.org/#{URI.encode_www_form_component(match[:package_name])}/latest"
 
           values
         end
 
-        # Generates a URL and regex (if one isn't provided) and passes them
-        # to {PageMatch.find_versions} to identify versions in the content.
+        # Generates a URL and checks the content at the URL for new versions
+        # using {Json.versions_from_content}.
         #
         # @param url [String] the URL of the content to check
-        # @param regex [Regexp] a regex used for matching versions in content
+        # @param regex [Regexp, nil] a regex for matching versions in content
+        # @param provided_content [String, nil] content to check instead of
+        #   fetching
         # @param options [Options] options to modify behavior
         # @return [Hash]
         sig {
-          override(allow_incompatible: true).params(
-            url:     String,
-            regex:   T.nilable(Regexp),
-            options: Options,
-            block:   T.nilable(Proc),
+          override.params(
+            url:              String,
+            regex:            T.nilable(Regexp),
+            provided_content: T.nilable(String),
+            options:          Options,
+            block:            T.nilable(Proc),
           ).returns(T::Hash[Symbol, T.anything])
         }
-        def self.find_versions(url:, regex: nil, options: Options.new, &block)
-          generated = generate_input_values(url)
+        def self.find_versions(url:, regex: nil, provided_content: nil, options: Options.new, &block)
+          match_data = { matches: {}, regex:, url: }
+          match_data[:cached] = true if provided_content.is_a?(String)
 
-          PageMatch.find_versions(
-            url:     generated[:url],
-            regex:   regex || generated[:regex],
-            options:,
-            &block
-          )
+          generated = generate_input_values(url)
+          return match_data if generated.blank?
+
+          match_data[:url] = generated[:url]
+
+          content = if provided_content
+            provided_content
+          else
+            match_data.merge!(Strategy.page_content(match_data[:url], options:))
+            match_data[:content]
+          end
+          return match_data unless content
+
+          Json.versions_from_content(content, regex, &block || DEFAULT_BLOCK).each do |match_text|
+            match_data[:matches][match_text] = Version.new(match_text)
+          end
+
+          match_data
         end
       end
     end

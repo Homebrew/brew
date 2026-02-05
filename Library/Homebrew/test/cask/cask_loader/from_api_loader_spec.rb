@@ -6,6 +6,8 @@ RSpec.describe Cask::CaskLoader::FromAPILoader, :cask do
     let(:cask_from_source) { Cask::CaskLoader.load(local_token) }
     let(:cask_json) do
       hash = cask_from_source.to_hash_with_variations
+      # This value will always be present in the json API, but is skipped in tests
+      hash["tap_git_head"] = "abcdef1234567890abcdef1234567890abcdef12"
       json = JSON.pretty_generate(hash)
       JSON.parse(json)
     end
@@ -31,10 +33,6 @@ RSpec.describe Cask::CaskLoader::FromAPILoader, :cask do
     end
 
     context "when using the API" do
-      before do
-        ENV.delete("HOMEBREW_NO_INSTALL_FROM_API")
-      end
-
       it "returns a loader for valid token" do
         expect(described_class.try_new(api_token))
           .to be_a(described_class)

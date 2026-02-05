@@ -77,12 +77,6 @@ RSpec.describe SoftwareSpec do
       end.to raise_error(ArgumentError)
     end
 
-    it "special cases the cxx11 option" do
-      spec.option(:cxx11)
-      expect(spec).to have_defined_option("c++11")
-      expect(spec).not_to have_defined_option("cxx11")
-    end
-
     it "supports options with descriptions" do
       spec.option("bar", "description")
       expect(spec.options.first.description).to eq("description")
@@ -180,8 +174,8 @@ RSpec.describe SoftwareSpec do
       end
 
       it "ignores OS version specifications" do
-        spec.uses_from_macos("foo", since: :mojave)
-        spec.uses_from_macos("bar" => :build, :since => :mojave)
+        spec.uses_from_macos("foo", since: :sequoia)
+        spec.uses_from_macos("bar" => :build, :since => :sequoia)
 
         expect(spec.deps.count).to eq 2
         expect(spec.deps.first.name).to eq("foo")
@@ -198,11 +192,11 @@ RSpec.describe SoftwareSpec do
     context "when running on macOS", :needs_macos do
       before do
         allow(OS).to receive(:mac?).and_return(true)
-        allow(OS::Mac).to receive(:version).and_return(MacOSVersion.from_symbol(:sierra))
+        allow(OS::Mac).to receive(:version).and_return(MacOSVersion.from_symbol(:sonoma))
       end
 
       it "adds a macOS dependency if the OS version meets requirements" do
-        spec.uses_from_macos("foo", since: :el_capitan)
+        spec.uses_from_macos("foo", since: :sonoma)
 
         expect(spec.deps).to be_empty
         expect(spec.declared_deps).not_to be_empty
@@ -211,7 +205,7 @@ RSpec.describe SoftwareSpec do
       end
 
       it "adds a macOS dependency if the OS version doesn't meet requirements" do
-        spec.uses_from_macos("foo", since: :high_sierra)
+        spec.uses_from_macos("foo", since: :big_sur)
 
         expect(spec.declared_deps).not_to be_empty
         expect(spec.deps).not_to be_empty
@@ -221,7 +215,7 @@ RSpec.describe SoftwareSpec do
       end
 
       it "works with tags" do
-        spec.uses_from_macos("foo" => :build, :since => :high_sierra)
+        spec.uses_from_macos("foo" => :build, :since => :big_sur)
 
         expect(spec.declared_deps).not_to be_empty
         expect(spec.deps).not_to be_empty

@@ -41,14 +41,16 @@ module Cask
         super
 
         target = target_hash[:target]
+        @source = nil
         @source_string = source.to_s
+        @target = nil
         @target_string = target.to_s
       end
 
       def source
         @source ||= begin
           base_path = cask.staged_path
-          base_path = base_path.join(cask.url.only_path) if cask.url&.only_path.present?
+          base_path = base_path.join(T.must(cask.url).only_path) if cask.url&.only_path.present?
           base_path.join(@source_string)
         end
       end
@@ -77,8 +79,9 @@ module Cask
       # Try to make the asset searchable under the target name. Spotlight
       # respects this attribute for many filetypes, but ignores it for App
       # bundles. Alfred 2.2 respects it even for App bundles.
-      def add_altname_metadata(file, altname, command: nil)
-        return if altname.to_s.casecmp(file.basename.to_s).zero?
+      sig { params(file: Pathname, altname: Pathname, command: T.class_of(SystemCommand)).returns(T.nilable(SystemCommand::Result)) }
+      def add_altname_metadata(file, altname, command:)
+        return if altname.to_s.casecmp(file.basename.to_s)&.zero?
 
         odebug "Adding #{ALT_NAME_ATTRIBUTE} metadata"
         altnames = command.run("/usr/bin/xattr",
@@ -90,7 +93,7 @@ module Cask
         altnames = "(#{altnames})"
 
         # Some packages are shipped as u=rx (e.g. Bitcoin Core)
-        command.run!("/bin/chmod",
+        command.run!("chmod",
                      args: ["--", "u+rw", file, file.realpath],
                      sudo: !file.writable? || !file.realpath.writable?)
 
@@ -106,3 +109,5 @@ module Cask
     end
   end
 end
+
+require "extend/os/cask/artifact/relocated"

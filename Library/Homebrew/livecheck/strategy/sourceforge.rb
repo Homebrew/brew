@@ -25,7 +25,7 @@ module Homebrew
       # Usually we address this situation by adding a `livecheck` block to
       # the formula/cask that checks the page for the relevant directory in the
       # project instead. In this situation, it's necessary to use
-      # `strategy :page_match` to prevent the {Sourceforge} stratgy from
+      # `strategy :page_match` to prevent the {Sourceforge} strategy from
       # being used.
       #
       # The default regex matches within `url` attributes in the RSS feed

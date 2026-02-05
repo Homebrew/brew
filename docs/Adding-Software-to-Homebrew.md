@@ -6,7 +6,7 @@ last_review_date: "1970-01-01"
 
 Is your favourite software missing from Homebrew? Then you're the perfect person to resolve this problem.
 
-If you want to add software that is either closed source or a GUI-only program, you will want to follow the guide for [Casks](#casks). Otherwise follow the guide for [Formulae](#formulae) (see also: [Homebrew Terminology](Formula-Cookbook.md#homebrew-terminology)).
+If you want to add software that is either closed source or a GUI-only program, you will want to follow the guide for [Casks](#casks). Otherwise follow the guide for [Formulae](#formulae) (see also: [Homebrew terminology](Formula-Cookbook.md#homebrew-terminology)).
 
 Before you start, please check the open pull requests for [Homebrew/homebrew-core](https://github.com/Homebrew/homebrew-core/pulls) or [Homebrew/homebrew-cask](https://github.com/Homebrew/homebrew-cask/pulls) to make sure no one else beat you to the punch.
 
@@ -55,7 +55,7 @@ Making a new cask is easy. Follow the directions in [How to Open a Homebrew Pull
 
 #### Examples
 
-Here’s a cask for `dixa` as an example. Note the `verified` parameter below the `url`, which is needed when [the url and homepage hostnames differ](Cask-Cookbook.md#when-url-and-homepage-domains-differ-add-verified).
+Here’s a cask for `dixa` as an example. Note the `verified` parameter below the `url`, which is needed when [the URL and homepage hostnames differ](Cask-Cookbook.md#when-url-and-homepage-domains-differ-add-verified).
 
 ```ruby
 cask "dixa" do
@@ -115,9 +115,9 @@ cask "pomello" do
 end
 ```
 
-Here is a last example for `fabfilter-one`, which uses a `pkg` installer to install the application instead of a stand-alone application bundle (`.app`). Note the [`uninstall pkgutil` stanza](Cask-Cookbook.md#uninstall-pkgutil), which is needed to uninstall all files that were installed using the installer.
+Here is a last example for `fabfilter-one`, which uses a `pkg` installer to install the application instead of a stand-alone application bundle (`.app`). Note the [`uninstall pkgutil:`](Cask-Cookbook.md#uninstall-pkgutil) stanza, which is needed to uninstall all files that were installed using the installer.
 
-You will also see how to adapt `version` to the download `url`. Use [our custom `version` methods](Cask-Cookbook.md#version-methods) to do so, resorting to the standard [Ruby String methods](https://ruby-doc.org/core/String.html) when they don’t suffice.
+You will also see how to adapt `version` to the download `url`. Use [our custom `version` methods](Cask-Cookbook.md#version-methods) to do so, resorting to the standard [Ruby `String` methods](https://ruby-doc.org/core/String.html) when they don’t suffice.
 
 ```ruby
 cask "fabfilter-one" do
@@ -139,7 +139,7 @@ cask "fabfilter-one" do
     end
   end
 
-  depends_on macos: ">= :sierra"
+  depends_on macos: ">= :sonoma"
 
   pkg "FabFilter One #{version} Installer.pkg"
 
@@ -185,7 +185,7 @@ Fill in the following stanzas for your cask:
 | ------------------ | ----------- |
 | `version`          | application version |
 | `sha256`           | SHA-256 checksum of the file downloaded from `url`, calculated by the command `shasum -a 256 <file>`. Can be suppressed by using the special value `:no_check`. (see [`sha256` Stanza Details](Cask-Cookbook.md#stanza-sha256)) |
-| `url`              | URL to the `.dmg`/`.zip`/`.tgz`/`.tbz2` file that contains the application.<br />A [`verified` parameter](Cask-Cookbook.md#when-url-and-homepage-domains-differ-add-verified) must be added if the hostnames in the `url` and `homepage` stanzas differ. [Block syntax](Cask-Cookbook.md#using-a-block-to-defer-code-execution) is available for URLs that change on every visit. |
+| `url`              | URL to the `.dmg`/`.zip`/`.tgz` file (or other common archive formats) that contains the application.<br />A [`verified` parameter](Cask-Cookbook.md#when-url-and-homepage-domains-differ-add-verified) must be added if the hostnames in the `url` and `homepage` stanzas differ. |
 | `name`             | the full and proper name defined by the vendor, and any useful alternate names (see [`name` Stanza Details](Cask-Cookbook.md#stanza-name)) |
 | `desc`             | one-line description of the software (see [`desc` Stanza Details](Cask-Cookbook.md#stanza-desc)) |
 | `homepage`         | application homepage; used for the `brew home` command |
@@ -201,7 +201,7 @@ Other commonly used stanzas are:
 | `caveats`          | string or Ruby block providing the user with cask-specific information at install time (see [`caveats` Stanza Details](Cask-Cookbook.md#stanza-caveats)) |
 | `uninstall`        | procedures to uninstall a cask; optional unless the `pkg` stanza is used (see [`uninstall` Stanza Details](Cask-Cookbook.md#stanza-uninstall)) |
 
-Additional [`artifact` stanzas](Cask-Cookbook.md#at-least-one-artifact-stanza-is-also-required) may be needed for special use cases. Even more special-use stanzas are listed at [Optional Stanzas](Cask-Cookbook.md#optional-stanzas).
+Additional [artifact stanzas](Cask-Cookbook.md#at-least-one-artifact-stanza-is-also-required) may be needed for special use cases. Even more special-use stanzas are listed at [Optional stanzas](Cask-Cookbook.md#optional-stanzas).
 
 #### Cask token details
 
@@ -209,7 +209,7 @@ If a token conflicts with an already-existing cask, authors should manually make
 
 If possible, avoid creating tokens that differ only by the placement of hyphens.
 
-To generate a token manually, or to learn about exceptions for unusual cases, see the [Token Reference](Cask-Cookbook.md#token-reference).
+To generate a token manually, or to learn about exceptions for unusual cases, see the [Token reference](Cask-Cookbook.md#token-reference).
 
 #### Archives with subfolders
 
@@ -222,9 +222,9 @@ Example:
 1. The folder `Simple Floating Clock` contains the application `SimpleFloatingClock.app`.
 1. So, the `app` stanza should include the subfolder as a relative path:
 
-   ```ruby
+```ruby
 app "Simple Floating Clock/SimpleFloatingClock.app"
-   ```
+```
 
 ### Testing and auditing the cask
 
@@ -264,14 +264,14 @@ If your application and Homebrew Cask do not work well together, feel free to [f
 
 #### Finding a home for your cask
 
-See the [Acceptable Casks documentation](Acceptable-Casks.md#finding-a-home-for-your-cask).
+See the [Acceptable Casks](Acceptable-Casks.md#finding-a-home-for-your-cask) documentation.
 
 Hop into your tap and check to make sure your new cask is there:
 
 ```console
 $ cd "$(brew --repository)"/Library/Taps/homebrew/homebrew-cask
 $ git status
-On branch master
+On branch main
 Untracked files:
   (use "git add <file>..." to include in what will be committed)
         Casks/m/my-new-cask.rb
@@ -353,19 +353,19 @@ Now go to the [`homebrew-cask` GitHub repository](https://github.com/Homebrew/ho
 
 ##### c) manually create a pull request on GitHub
 
-Otherwise, click the `Contribute > Open pull request` button and choose to `compare across forks`. The base fork should be `Homebrew/homebrew-cask @ master`, and the head fork should be `my-github-username/homebrew-cask @ my-new-cask-branch`. You can also add any further comments to your pull request at this stage.
+Otherwise, click the `Contribute > Open pull request` button and choose to `compare across forks`. The base fork should be `Homebrew/homebrew-cask @ main`, and the head fork should be `my-github-username/homebrew-cask @ my-new-cask-branch`. You can also add any further comments to your pull request at this stage.
 
-##### Congratulations!
+#### Congratulations
 
 You are done now, and your cask should be pulled in or otherwise noticed in a while. If a maintainer suggests some changes, just make them on the `my-new-cask-branch` branch locally and [push](#pushing).
 
 ### Cleaning up
 
-After your pull request is submitted, you should get yourself back onto `master`, so that `brew update` will pull down new casks properly:
+After your pull request is submitted, you should get yourself back onto `main`, so that `brew update` will pull down new casks properly:
 
 ```bash
 cd "$(brew --repository)"/Library/Taps/homebrew/homebrew-cask
-git checkout master
+git checkout main
 ```
 
 If earlier you set the variable `HOMEBREW_NO_AUTO_UPDATE` and `HOMEBREW_NO_INSTALL_FROM_API` then clean it up with:

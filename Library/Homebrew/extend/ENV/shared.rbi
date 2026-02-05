@@ -5,7 +5,7 @@ module SharedEnvExtension
   sig {
     type_parameters(:U).params(
       key:   String,
-      value: T.all(T.type_parameter(:U), T.nilable(T.any(String, PATH))),
+      value: T.all(T.type_parameter(:U), T.nilable(T.any(String, Pathname, PATH))),
     ).returns(T.type_parameter(:U))
   }
   def []=(key, value); end

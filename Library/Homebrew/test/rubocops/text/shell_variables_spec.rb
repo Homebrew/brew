@@ -64,19 +64,19 @@ RSpec.describe RuboCop::Cop::FormulaAudit::ShellVariables do
     end
 
     it "reports and corrects unexpanded shell variables while preserving string interpolation" do
-      expect_offense(<<~RUBY)
+      expect_offense(<<~'RUBY')
         class Foo < Formula
           def install
-            Utils.popen "SHELL=bash \#{bin}/foo"
-                        ^^^^^^^^^^^^^^^^^^^^^^^ FormulaAudit/ShellVariables: Use `Utils.popen({ "SHELL" => "bash" }, "\#{bin}/foo")` instead of `Utils.popen "SHELL=bash \#{bin}/foo"`
+            Utils.popen "SHELL=bash #{bin}/foo"
+                        ^^^^^^^^^^^^^^^^^^^^^^^ FormulaAudit/ShellVariables: Use `Utils.popen({ "SHELL" => "bash" }, "#{bin}/foo")` instead of `Utils.popen "SHELL=bash #{bin}/foo"`
           end
         end
       RUBY
 
-      expect_correction(<<~RUBY)
+      expect_correction(<<~'RUBY')
         class Foo < Formula
           def install
-            Utils.popen({ "SHELL" => "bash" }, "\#{bin}/foo")
+            Utils.popen({ "SHELL" => "bash" }, "#{bin}/foo")
           end
         end
       RUBY

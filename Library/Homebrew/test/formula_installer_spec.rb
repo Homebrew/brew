@@ -255,6 +255,28 @@ RSpec.describe FormulaInstaller do
         fi.forbidden_license_check
       end.to raise_error(CannotInstallFormulaError, /dependency on #{dep_name} where all/)
     end
+
+    it "raises on forbidden symbol license on formula" do
+      ENV["HOMEBREW_FORBIDDEN_LICENSES"] = "public_domain"
+
+      f_name = "homebrew-forbidden-license"
+      f_path = CoreTap.instance.new_formula_path(f_name)
+      f_path.write <<~RUBY
+        class #{Formulary.class_s(f_name)} < Formula
+          url "foo"
+          version "0.1"
+          license :public_domain
+        end
+      RUBY
+      Formulary.cache.delete(f_path)
+
+      f = Formulary.factory(f_name)
+      fi = described_class.new(f)
+
+      expect do
+        fi.forbidden_license_check
+      end.to raise_error(CannotInstallFormulaError, /#{f_name}'s licenses are all forbidden/)
+    end
   end
 
   describe "#forbidden_tap_check" do

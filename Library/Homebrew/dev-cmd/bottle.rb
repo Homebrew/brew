@@ -181,8 +181,9 @@ module Homebrew
       end
 
       sig {
-        params(old_keys: T::Array[String], old_bottle_spec: BottleSpecification,
-               new_bottle_hash: T::Hash[String, T.untyped]).returns(T::Array[T::Array[String]])
+        params(old_keys: T::Array[Symbol], old_bottle_spec: BottleSpecification,
+               new_bottle_hash: T::Hash[String, T.untyped])
+          .returns([T::Array[String], T::Array[T::Hash[Symbol, T.any(String, Symbol)]]])
       }
       def merge_bottle_spec(old_keys, old_bottle_spec, new_bottle_hash)
         mismatches = []
@@ -209,6 +210,8 @@ module Homebrew
 
         old_bottle_spec.collector.each_tag do |tag|
           old_tag_spec = old_bottle_spec.collector.specification_for(tag)
+          odie "Specification for tag #{tag} is nil" if old_tag_spec.nil?
+
           old_hexdigest = old_tag_spec.checksum.hexdigest
           old_cellar = old_tag_spec.cellar
           new_value = new_bottle_hash.dig("tags", tag.to_s)
@@ -227,7 +230,7 @@ module Homebrew
       private
 
       sig {
-        params(string: String, keg: Keg, ignores: T::Array[String],
+        params(string: String, keg: Keg, ignores: T::Array[Regexp],
                formula_and_runtime_deps_names: T.nilable(T::Array[String])).returns(T::Boolean)
       }
       def keg_contain?(string, keg, ignores, formula_and_runtime_deps_names = nil)
@@ -354,9 +357,7 @@ module Homebrew
         end
         return if gnu_tar_formula.blank?
 
-        ensure_formula_installed!(gnu_tar_formula, reason: "bottling")
-
-        gnu_tar_formula
+        gnu_tar_formula.ensure_installed!(reason: "bottling")
       end
 
       sig { params(mtime: String, default_tar: T::Boolean).returns([String, T::Array[String]]) }
@@ -373,35 +374,17 @@ module Homebrew
         [gnu_tar(gnu_tar_formula), reproducible_gnutar_args(mtime)].freeze
       end
 
-      sig { params(formula: T.untyped).returns(T::Array[T.untyped]) }
+      sig { params(formula: Formula).returns(T::Array[Regexp]) }
       def formula_ignores(formula)
-        ignores = []
-        cellar_regex = Regexp.escape(HOMEBREW_CELLAR)
-        prefix_regex = Regexp.escape(HOMEBREW_PREFIX)
-
         # Ignore matches to go keg, because all go binaries are statically linked.
         any_go_deps = formula.deps.any? do |dep|
           Version.formula_optionally_versioned_regex(:go).match?(dep.name)
         end
-        if any_go_deps
-          go_regex = Version.formula_optionally_versioned_regex(:go, full: false)
-          ignores << %r{#{cellar_regex}/#{go_regex}/[\d.]+/libexec}
-        end
+        return [] unless any_go_deps
 
-        # TODO: Refactor and move to extend/os
-        # rubocop:disable Homebrew/MoveToExtendOS
-        ignores << case formula.name
-        # On Linux, GCC installation can be moved so long as the whole directory tree is moved together:
-        # https://gcc-help.gcc.gnu.narkive.com/GnwuCA7l/moving-gcc-from-the-installation-path-is-it-allowed.
-        when Version.formula_optionally_versioned_regex(:gcc)
-          Regexp.union(%r{#{cellar_regex}/gcc}, %r{#{prefix_regex}/opt/gcc}) if OS.linux?
-        # binutils is relocatable for the same reason: https://github.com/Homebrew/brew/pull/11899#issuecomment-906804451.
-        when Version.formula_optionally_versioned_regex(:binutils)
-          %r{#{cellar_regex}/binutils} if OS.linux?
-        end
-        # rubocop:enable Homebrew/MoveToExtendOS
-
-        ignores.compact
+        cellar_regex = Regexp.escape(HOMEBREW_CELLAR)
+        go_regex = Version.formula_optionally_versioned_regex(:go, full: false)
+        Array(%r{#{cellar_regex}/#{go_regex}/[\d.]+/libexec})
       end
 
       sig { params(formula: Formula).void }
@@ -429,7 +412,7 @@ module Homebrew
 
         bottle_tag, rebuild = if local_bottle_json
           _, tag_string, rebuild_string = Utils::Bottles.extname_tag_rebuild(formula.local_bottle_path.to_s)
-          [tag_string.to_sym, rebuild_string.to_i]
+          [T.must(tag_string).to_sym, rebuild_string.to_i]
         end
 
         bottle_tag = if bottle_tag
@@ -525,7 +508,7 @@ module Homebrew
             tab.time = nil
             tab.changed_files = changed_files.dup
             if args.only_json_tab?
-              tab.changed_files.delete(Pathname.new(AbstractTab::FILENAME))
+              tab.changed_files&.delete(Pathname.new(AbstractTab::FILENAME))
               tab.tabfile.unlink
             else
               tab.write
@@ -539,7 +522,11 @@ module Homebrew
             cd cellar do
               sudo_purge
               # Tar then gzip for reproducible bottles.
-              tar_mtime = tab.source_modified_time.strftime("%Y-%m-%d %H:%M:%S")
+              # GNU tar fails to create a bottle if modification time is unsigned integer
+              # (i.e. before 1970)
+              time_at_epoch = Time.at(1)
+              tab_source_modified_time = [time_at_epoch, tab.source_modified_time].max
+              tar_mtime = tab_source_modified_time.strftime("%Y-%m-%d %H:%M:%S")
               tar, tar_args = setup_tar_and_args!(tar_mtime, default_tar: formula.name == "gnu-tar")
               safe_system tar, "--create", "--numeric-owner",
                           *tar_args,
@@ -559,8 +546,9 @@ module Homebrew
 
             ohai "Detecting if #{local_filename} is relocatable..." if bottle_path.size > 1 * 1024 * 1024
 
-            prefix_check = if prefix == HOMEBREW_DEFAULT_PREFIX
-              File.join(prefix, "opt")
+            is_usr_local_prefix = prefix == "/usr/local"
+            prefix_check = if is_usr_local_prefix
+              "#{prefix}/opt"
             else
               prefix
             end
@@ -588,11 +576,17 @@ module Homebrew
               relocatable = false if keg_contain?(prefix_check, keg, ignores, formula_and_runtime_deps_names)
               relocatable = false if keg_contain?(cellar, keg, ignores, formula_and_runtime_deps_names)
               relocatable = false if keg_contain?(HOMEBREW_LIBRARY.to_s, keg, ignores, formula_and_runtime_deps_names)
-              if prefix != prefix_check
+              if is_usr_local_prefix
                 relocatable = false if keg_contain_absolute_symlink_starting_with?(prefix, keg)
-                relocatable = false if keg_contain?("#{prefix}/etc", keg, ignores)
-                relocatable = false if keg_contain?("#{prefix}/var", keg, ignores)
-                relocatable = false if keg_contain?("#{prefix}/share/vim", keg, ignores)
+                if tap.disabled_new_usr_local_relocation_formulae.exclude?(formula.name)
+                  keg.new_usr_local_replacement_pairs.each_value do |value|
+                    relocatable = false if keg_contain?(value.fetch(:old), keg, ignores)
+                  end
+                else
+                  relocatable = false if keg_contain?("#{prefix}/etc", keg, ignores)
+                  relocatable = false if keg_contain?("#{prefix}/var", keg, ignores)
+                  relocatable = false if keg_contain?("#{prefix}/share/vim", keg, ignores)
+                end
               end
               skip_relocation = relocatable && !keg.require_relocation?
             end
@@ -603,7 +597,7 @@ module Homebrew
           ensure
             ignore_interrupts do
               original_tab&.write
-              keg.replace_placeholders_with_locations changed_files unless args.skip_relocation?
+              keg.replace_placeholders_with_locations(changed_files) if changed_files && !args.skip_relocation?
             end
           end
         end
@@ -669,8 +663,8 @@ module Homebrew
             "formula" => {
               "name"             => formula.name,
               "pkg_version"      => formula.pkg_version.to_s,
-              "path"             => formula.path.to_s.delete_prefix("#{HOMEBREW_REPOSITORY}/"),
-              "tap_git_path"     => formula.path.to_s.delete_prefix("#{tap_path}/"),
+              "path"             => formula.tap_path.to_s.delete_prefix("#{HOMEBREW_REPOSITORY}/"),
+              "tap_git_path"     => formula.tap_path.to_s.delete_prefix("#{tap_path}/"),
               "tap_git_revision" => tap_git_revision,
               "tap_git_remote"   => tap_git_remote,
               # descriptions can contain emoji. sigh.
@@ -693,7 +687,7 @@ module Homebrew
                   "filename"        => filename.url_encode,
                   "local_filename"  => filename.to_s,
                   "sha256"          => sha256,
-                  "tab"             => tab.to_bottle_hash,
+                  "tab"             => T.must(tab).to_bottle_hash,
                   "path_exec_files" => path_exec_files,
                   "all_files"       => all_files,
                   "installed_size"  => installed_size,
@@ -741,7 +735,7 @@ module Homebrew
           all_bottle = !args.no_all_checks? &&
                        (!old_bottle_spec_matches || bottle.rebuild != old_bottle_spec.rebuild) &&
                        tag_hashes.count > 1 &&
-                       tag_hashes.uniq { |tag_hash| "#{tag_hash["cellar"]}-#{tag_hash["sha256"]}" }.count == 1
+                       tag_hashes.uniq { |tag_hash| "#{tag_hash["cellar"]}-#{tag_hash["sha256"]}" }.one?
 
           old_all_bottle = old_bottle_spec.tag?(Utils::Bottles.tag(:all))
           if !all_bottle && old_all_bottle && !args.no_all_checks?
@@ -873,8 +867,8 @@ module Homebrew
       end
 
       sig {
-        params(formula: Formula, formula_ast: Utils::AST::FormulaAST,
-               bottle_hash: T::Hash[String, T.untyped]).returns(T.nilable(T::Array[String]))
+        params(formula: Formula, formula_ast: Utils::AST::FormulaAST, bottle_hash: T::Hash[String, T.untyped])
+          .returns(T.nilable(T::Array[T::Hash[Symbol, T.any(String, Symbol)]]))
       }
       def old_checksums(formula, formula_ast, bottle_hash)
         bottle_node = T.cast(formula_ast.bottle_block, T.nilable(RuboCop::AST::BlockNode))

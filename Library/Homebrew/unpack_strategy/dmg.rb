@@ -3,6 +3,7 @@
 
 require "tempfile"
 require "system_command"
+require "utils/output"
 
 module UnpackStrategy
   # Strategy for unpacking disk images.
@@ -12,6 +13,7 @@ module UnpackStrategy
 
     # Helper module for listing the contents of a volume mounted from a disk image.
     module Bom
+      extend Utils::Output::Mixin
       extend SystemCommand::Mixin
 
       DMG_METADATA = T.let(Set.new([
@@ -153,7 +155,7 @@ module UnpackStrategy
             filelist.close
 
             system_command! "mkbom",
-                            args:    ["-s", "-i", filelist.path, "--", bomfile.path],
+                            args:    ["-s", "-i", T.must(filelist.path), "--", T.must(bomfile.path)],
                             verbose:
           end
 
@@ -177,8 +179,8 @@ module UnpackStrategy
 
     sig { override.params(path: Pathname).returns(T::Boolean) }
     def self.can_extract?(path)
-      stdout, _, status = system_command("hdiutil", args: ["imageinfo", "-format", path], print_stderr: false)
-      status.success? && !stdout.empty?
+      stdout, _, status = system_command("hdiutil", args: ["imageinfo", "-format", path], print_stderr: false).to_a
+      (status.success? && !stdout.empty?) || false
     end
 
     private

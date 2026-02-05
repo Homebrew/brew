@@ -18,21 +18,22 @@ module Homebrew
                description: "Show options for formulae that are currently installed."
         switch "--eval-all",
                description: "Evaluate all available formulae and casks, whether installed or not, to show their " \
-                            "options."
+                            "options.",
+               env:         :eval_all
         flag   "--command=",
                description: "Show options for the specified <command>."
 
-        conflicts "--installed", "--all", "--command"
+        conflicts "--command", "--installed", "--eval-all"
 
         named_args :formula
       end
 
       sig { override.void }
       def run
-        all = args.eval_all?
+        eval_all = args.eval_all?
 
-        if all
-          puts_options(Formula.all(eval_all: args.eval_all?).sort)
+        if eval_all
+          puts_options(Formula.all(eval_all:).sort)
         elsif args.installed?
           puts_options(Formula.installed.sort)
         elsif args.command.present?
@@ -46,7 +47,7 @@ module Homebrew
             puts
           end
         elsif args.no_named?
-          raise FormulaUnspecifiedError
+          raise UsageError, "`brew options` needs a formula or `--eval-all` passed or `HOMEBREW_EVAL_ALL=1` set!"
         else
           puts_options args.named.to_formulae
         end

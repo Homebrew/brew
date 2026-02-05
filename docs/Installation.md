@@ -1,10 +1,10 @@
 ---
-last_review_date: "1970-01-01"
+last_review_date: "2025-09-12"
 ---
 
 # Installation
 
-Instructions for a supported install of Homebrew are on the [homepage](https://brew.sh).
+Instructions for a supported install of Homebrew are on the [homepage](https://brew.sh/).
 
 The script installs Homebrew to its default, supported, best prefix (`/opt/homebrew` for Apple Silicon, `/usr/local` for macOS Intel and `/home/linuxbrew/.linuxbrew` for Linux) so that [you don’t need *sudo* after Homebrew's initial installation](FAQ.md#why-does-homebrew-say-sudo-is-bad) when you `brew install`. This prefix is required for most bottles (binary packages) to be used. It is a careful script; it can be run even if you have stuff installed in the preferred prefix already. It tells you exactly what it will do before it does it too. You have to confirm everything it will do before it starts.
 
@@ -13,8 +13,7 @@ The macOS `.pkg` installer also installs Homebrew to its default prefix (`/opt/h
 ## macOS Requirements
 
 * An Apple Silicon CPU or 64-bit Intel CPU <sup>[1](#1)</sup>
-* macOS Ventura (13) (or higher) installed on officially supported hardware<sup>[2](#2)</sup>
-  * **Note:** Devices using OpenCore Legacy Patcher are not supported
+* macOS Sonoma (14) (or higher) installed on officially supported hardware<sup>[2](#2)</sup>
 * Command Line Tools (CLT) for Xcode (from `xcode-select --install` or
   [https://developer.apple.com/download/all/](https://developer.apple.com/download/all/)) or
   [Xcode](https://itunes.apple.com/us/app/xcode/id497799835) <sup>[3](#3)</sup>
@@ -22,7 +21,7 @@ The macOS `.pkg` installer also installs Homebrew to its default prefix (`/opt/h
 
 ## Advanced Configuration
 
-The Homebrew installer offers various advanced configuration settings. **Most users can skip this section and instead follow the instructions on the [homepage](https://brew.sh)!**
+The Homebrew installer offers various advanced configuration settings. **Most users can skip this section and instead follow the instructions on the [homepage](https://brew.sh/)!**
 
 ### Git Remote Mirroring
 
@@ -57,7 +56,7 @@ If you want a non-interactive run of the Homebrew installer that doesn't prompt 
 
 ### Linux or Windows 10 Subsystem for Linux
 
-Check out [the Homebrew on Linux installation documentation](Homebrew-on-Linux.md).
+Check out the documentation for installing [Homebrew on Linux](Homebrew-on-Linux.md).
 
 ### Untar anywhere (unsupported)
 
@@ -66,7 +65,7 @@ Technically, you can just extract (or `git clone`) Homebrew wherever you want. H
 **TL;DR: pick another prefix at your peril!**
 
 ```sh
-mkdir homebrew && curl -L https://github.com/Homebrew/brew/tarball/master | tar xz --strip-components 1 -C homebrew
+mkdir homebrew && curl -L https://github.com/Homebrew/brew/tarball/main | tar xz --strip-components 1 -C homebrew
 ```
 
 or:
@@ -105,22 +104,20 @@ eval "$(<Homebrew prefix path>/bin/brew shellenv)"
 ```
 
 Replace `<Homebrew prefix path>` with the directory where Homebrew is installed on your system.
-You can find Homebrew's default install location [in this FAQ entry](https://docs.brew.sh/FAQ#why-should-i-install-homebrew-in-the-default-location).
+You can find Homebrew's default install location in [this FAQ entry](FAQ.md#why-should-i-install-homebrew-in-the-default-location).
 
-For more insight, re-run the installer or inspect [the installer's source](https://github.com/Homebrew/install/blob/deacfa6a6e62e5f4002baf9e1fac7a96e9aa5d41/install.sh#L1072-L1088)
-to see how the installer constructs the path it recommends.
+For more insight, re-run the installer or inspect the [installer's source](https://github.com/Homebrew/install/blob/700c9a145d37a3f0f3bd3b7c208d7adab31bd278/install.sh#L1104-L1120) to see how the installer constructs the path it recommends.
 
-See [Tips N' Tricks > Loading Homebrew from the same dotfiles on different operating systems](Tips-N'-Tricks.md#loading-homebrew-from-the-same-dotfiles-on-different-operating-systems)
-for another way to handle this across multiple operating systems.
+See [this tip in Tips and Tricks](Tips-and-Tricks.md#load-homebrew-from-the-same-dotfiles-on-different-operating-systems) for another way to handle this across multiple operating systems.
 
 ## Uninstallation
 
 Uninstallation is documented in the [FAQ](FAQ.md#how-do-i-uninstall-homebrew).
 
-<a data-proofer-ignore name="1"><sup>1</sup></a> For 32-bit or PPC support see [Tigerbrew](https://github.com/mistydemeo/tigerbrew).
+<a data-proofer-ignore name="1"><sup>1</sup></a> For 32-bit or PPC support see [MacPorts](https://www.macports.org) or [Tigerbrew](https://github.com/mistydemeo/tigerbrew).
 
-<a data-proofer-ignore name="2"><sup>2</sup></a> macOS 13 (Ventura) or higher is best and supported, 10.11 (El Capitan) – 12 (Monterey) are unsupported but may work and 10.10 (Yosemite) and older will not run Homebrew at all. For 10.4 (Tiger) – 10.6 (Snow Leopard) see [Tigerbrew](https://github.com/mistydemeo/tigerbrew).
+<a data-proofer-ignore name="2"><sup>2</sup></a> macOS 14 (Sonoma) or higher is best and supported, 10.15 (Catalina) – 13 (Ventura) are unsupported but may work and 10.14 (Mojave) and older will not run Homebrew at all. Using OpenCore Legacy Patcher is a [Tier 2](Support-Tiers.md#tier-2) or [Tier 3](Support-Tiers.md#tier-3) configuration depending on CPU generation.
 
 <a data-proofer-ignore name="3"><sup>3</sup></a> You may need to install Xcode, the CLT, or both depending on the formula, to install a bottle (binary package) which is the only supported configuration. Downloading Xcode may require an Apple Developer account on older versions of Mac OS X. Sign up for free at [Apple's website](https://developer.apple.com/account/).
 
-<a data-proofer-ignore name="4"><sup>4</sup></a> The one-liner installation method found on [brew.sh](https://brew.sh) uses the Bourne-again shell at `/bin/bash`. Notably, `zsh`, `fish`, `tcsh` and `csh` will not work.
+<a data-proofer-ignore name="4"><sup>4</sup></a> The one-liner installation method found on [brew.sh](https://brew.sh/) uses the Bourne-again shell at `/bin/bash`. Notably, `zsh`, `fish`, `tcsh` and `csh` will not work.

@@ -118,7 +118,7 @@ module Homebrew
                 Utils.safe_popen_read("git", "-C", tap.path, "merge-base", "origin/HEAD",
                                       current_branch_head).strip
               else
-                current_branch_head
+                current_branch_head || odie("Failed to get current branch head")
               end
               odebug "Pull request merge-base: #{original_commit}"
 
@@ -207,9 +207,8 @@ module Homebrew
 
         if pull_request
           # This is a tap pull request and approving reviewers should also sign-off.
-          tap = Tap.from_path(git_repo.pathname)
-          review_trailers = GitHub.approved_reviews(tap.user, tap.full_name.split("/").last,
-                                                    pull_request).map do |r|
+          tap = T.must(Tap.from_path(git_repo.pathname))
+          review_trailers = GitHub.repository_approved_reviews(tap.user, tap.full_repository, pull_request).map do |r|
             "Signed-off-by: #{r["name"]} <#{r["email"]}>"
           end
           trailers = trailers.lines.concat(review_trailers).map(&:strip).uniq.join("\n")
@@ -253,7 +252,7 @@ module Homebrew
       }
       def determine_bump_subject(old_contents, new_contents, subject_path, reason: nil)
         subject_path = Pathname(subject_path)
-        tap          = Tap.from_path(subject_path)
+        tap          = T.must(Tap.from_path(subject_path))
         subject_name = subject_path.basename.to_s.chomp(".rb")
         is_cask      = subject_path.to_s.start_with?("#{tap.cask_dir}/")
         name         = is_cask ? "cask" : "formula"
@@ -376,15 +375,15 @@ module Homebrew
                                         "--reverse", "#{original_commit}..HEAD").lines.map(&:strip)
 
         # Generate a bidirectional mapping of commits <=> formula/cask files.
-        files_to_commits = {}
+        files_to_commits = T.let({}, T::Hash[String, T::Array[String]])
         commits_to_files = commits.to_h do |commit|
           files = Utils.safe_popen_read("git", "-C", tap.path, "diff-tree", "--diff-filter=AMD",
                                         "-r", "--name-only", "#{commit}^", commit).lines.map(&:strip)
           files.each do |file|
             files_to_commits[file] ||= []
-            files_to_commits[file] << commit
+            files_to_commits.fetch(file) << commit
             tap_file = (tap.path/file).to_s
-            if (tap_file.start_with?("#{tap.formula_dir}/") || tap_file.start_with?("#{tap.cask_dir}/")) &&
+            if tap_file.start_with?("#{tap.formula_dir}/", "#{tap.cask_dir}/") &&
                File.extname(file) == ".rb"
               next
             end
@@ -407,17 +406,17 @@ module Homebrew
         commits.each do |commit|
           next if processed_commits.include? commit
 
-          files = commits_to_files[commit]
-          if files.length == 1 && files_to_commits[files.first].length == 1
+          files = commits_to_files.fetch(commit)
+          if files.length == 1 && files_to_commits.fetch(files.fetch(0)).length == 1
             # If there's a 1:1 mapping of commits to files, just cherry pick and (maybe) reword.
             reword_package_commit(
-              commit, files.first, git_repo:, reason:, verbose:, resolve:
+              commit, files.fetch(0), git_repo:, reason:, verbose:, resolve:
             )
             processed_commits << commit
-          elsif files.length == 1 && files_to_commits[files.first].length > 1
+          elsif files.length == 1 && files_to_commits.fetch(files.fetch(0)).length > 1
             # If multiple commits modify a single file, squash them down into a single commit.
-            file = files.first
-            commits = files_to_commits[file]
+            file = files.fetch(0)
+            commits = files_to_commits.fetch(file)
             squash_package_commits(commits, file, git_repo:, reason:, verbose:, resolve:)
             processed_commits += commits
           else
@@ -481,8 +480,8 @@ module Homebrew
 
           name = "#{tap.name}/#{File.basename(line.chomp, ".rb")}"
           if Homebrew::EnvConfig.disable_load_formula?
-            opoo "Can't check if updated bottles are necessary as HOMEBREW_DISABLE_LOAD_FORMULA is set!"
-            break
+            opoo "Can't check if updated bottles are necessary as `$HOMEBREW_DISABLE_LOAD_FORMULA` is set!"
+            break []
           end
           begin
             Formulary.resolve(name)

@@ -6,11 +6,13 @@ require "io/console"
 require "pty"
 require "tempfile"
 require "utils/fork"
+require "utils/output"
 
 # Helper class for running a sub-process inside of a sandboxed environment.
 class Sandbox
+  include Utils::Output::Mixin
+
   SANDBOX_EXEC = "/usr/bin/sandbox-exec"
-  private_constant :SANDBOX_EXEC
 
   # This is defined in the macOS SDK but Ruby unfortunately does not expose it.
   # This value can be found by compiling a C program that prints TIOCSCTTY.
@@ -259,7 +261,7 @@ class Sandbox
     invalid_char = ['"', "'", "(", ")", "\n", "\\"].find do |c|
       path.to_s.include?(c)
     end
-    raise ArgumentError, "Invalid character #{invalid_char} in path: #{path}" if invalid_char
+    raise ArgumentError, "Invalid character '#{invalid_char}' in path: #{path}" if invalid_char
 
     case type
     when :regex   then "regex #\"#{path}\""

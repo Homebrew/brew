@@ -197,7 +197,10 @@ module Cask
         end
       end
 
-      def undeletable?(target); end
+      sig { params(target: Pathname).returns(T::Boolean) }
+      def undeletable?(target)
+        !target.parent.writable?
+      end
     end
   end
 end

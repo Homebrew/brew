@@ -8,6 +8,7 @@ module Homebrew
     # method implementations here.
     module Strategic
       extend T::Helpers
+
       interface!
 
       # Whether the strategy can be applied to the provided URL.

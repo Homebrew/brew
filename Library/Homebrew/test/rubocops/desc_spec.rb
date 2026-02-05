@@ -9,7 +9,7 @@ RSpec.describe RuboCop::Cop::FormulaAudit::Desc do
     it "reports an offense when there is no `desc`" do
       expect_offense(<<~RUBY)
         class Foo < Formula
-        ^^^^^^^^^^^^^^^^^^^ FormulaAudit/Desc: Formula should have a desc (Description).
+        ^^^^^^^^^^^^^^^^^^^ FormulaAudit/Desc: Formula should have a `desc` (description).
           url 'https://brew.sh/foo-1.0.tgz'
         end
       RUBY
@@ -20,7 +20,7 @@ RSpec.describe RuboCop::Cop::FormulaAudit::Desc do
         class Foo < Formula
           url 'https://brew.sh/foo-1.0.tgz'
           desc ''
-          ^^^^^^^ FormulaAudit/Desc: The desc (description) should not be an empty string.
+          ^^^^^^^ FormulaAudit/Desc: The `desc` (description) should not be an empty string.
         end
       RUBY
     end

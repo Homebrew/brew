@@ -11,6 +11,8 @@ module Utils
         quiet_system(launchctl, "list", formula.plist_name)
       elsif systemctl?
         quiet_system(systemctl, "is-active", "--quiet", formula.service_name)
+      else
+        false
       end
     end
 

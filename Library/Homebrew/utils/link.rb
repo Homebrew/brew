@@ -1,9 +1,13 @@
 # typed: strict
 # frozen_string_literal: true
 
+require "utils/output"
+
 module Utils
   # Helper functions for creating symlinks.
   module Link
+    extend Utils::Output::Mixin
+
     sig { params(src_dir: Pathname, dst_dir: Pathname, command: String, link_dir: T::Boolean).void }
     def self.link_src_dst_dirs(src_dir, dst_dir, command, link_dir: false)
       return unless src_dir.exist?

@@ -1,8 +1,8 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
 
 require "cask/utils"
-require "extend/on_system"
+require "on_system"
 
 module Cask
   class DSL
@@ -10,20 +10,29 @@ module Cask
     class Base
       extend Forwardable
 
+      sig { returns(Cask) }
+      attr_reader :cask
+
+      sig { returns(T.class_of(SystemCommand)) }
+      attr_reader :command
+
+      sig { params(cask: Cask, command: T.class_of(SystemCommand)).void }
       def initialize(cask, command = SystemCommand)
         @cask = cask
-        @command = command
+        @command = T.let(command, T.class_of(SystemCommand))
       end
 
       def_delegators :@cask, :token, :version, :caskroom_path, :staged_path, :appdir, :language, :arch
 
+      sig { params(executable: String, options: T.untyped).returns(T.nilable(SystemCommand::Result)) }
       def system_command(executable, **options)
         @command.run!(executable, **options)
       end
 
       # No need to define it as it's the default/superclass implementation.
       # rubocop:disable Style/MissingRespondToMissing
-      def method_missing(method, *)
+      sig { params(method: T.nilable(Symbol), args: T.untyped).returns(T.nilable(Object)) }
+      def method_missing(method, *args)
         if method
           underscored_class = T.must(self.class.name).gsub(/([[:lower:]])([[:upper:]][[:lower:]])/, '\1_\2').downcase
           section = underscored_class.split("::").last

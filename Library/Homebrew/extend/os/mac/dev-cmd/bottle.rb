@@ -7,11 +7,7 @@ module OS
       module Bottle
         sig { returns(T::Array[String]) }
         def tar_args
-          if MacOS.version >= :catalina
-            ["--no-mac-metadata", "--no-acls", "--no-xattrs"].freeze
-          else
-            [].freeze
-          end
+          ["--no-mac-metadata", "--no-acls", "--no-xattrs"].freeze
         end
 
         sig { params(gnu_tar_formula: Formula).returns(String) }

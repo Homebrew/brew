@@ -3,7 +3,7 @@
 
 require "utils/shell"
 
-# Checks to perform on a formula's cellar.
+# Checks to perform on a formula's keg (versioned Cellar path).
 module FormulaCellarChecks
   extend T::Helpers
 
@@ -84,7 +84,6 @@ module FormulaCellarChecks
   def valid_library_extension?(filename)
     VALID_LIBRARY_EXTENSIONS.include? filename.extname
   end
-  alias generic_valid_library_extension? valid_library_extension?
 
   sig { returns(T.nilable(String)) }
   def check_non_libraries
@@ -235,7 +234,7 @@ module FormulaCellarChecks
     keg = Keg.new(prefix)
 
     matches = []
-    keg.each_unique_file_matching(HOMEBREW_SHIMS_PATH) do |f|
+    keg.each_unique_file_matching(HOMEBREW_SHIMS_PATH.to_s) do |f|
       match = f.relative_path_from(keg.to_path)
 
       next if match.to_s.match? %r{^share/doc/.+?/INFO_BIN$}
@@ -307,7 +306,7 @@ module FormulaCellarChecks
     return unless formula.service?
     return unless formula.service.command?
 
-    "Service command does not exist" unless File.exist?(T.must(formula.service.command).first)
+    "Service command does not exist" unless File.exist?(formula.service.command.first)
   end
 
   sig { params(formula: Formula).returns(T.nilable(String)) }
@@ -320,6 +319,7 @@ module FormulaCellarChecks
     return unless dot_brew_formula.exist?
 
     return unless dot_brew_formula.read.include? "ENV.runtime_cpu_detection"
+    return if formula.tap&.audit_exception(:no_cpuid_allowlist, formula.name)
 
     # macOS `objdump` is a bit slow, so we prioritise llvm's `llvm-objdump` (~5.7x faster)
     # or binutils' `objdump` (~1.8x faster) if they are installed.
@@ -358,7 +358,8 @@ module FormulaCellarChecks
     keg = Keg.new(formula.prefix)
     mismatches = {}
     keg.binary_executable_or_library_files.each do |file|
-      farch = file.arch
+      # we know this has an `arch` method because it's a `MachOShim` or `ELFShim`
+      farch = T.unsafe(file).arch
       mismatches[file] = farch if farch != Hardware::CPU.arch
     end
     return if mismatches.empty?
@@ -371,7 +372,10 @@ module FormulaCellarChecks
     mismatches = mismatches.to_h
 
     universal_binaries_expected = if (formula_tap = formula.tap).present? && formula_tap.core_tap?
-      formula_tap.audit_exception(:universal_binary_allowlist, formula.name)
+      formula_name = formula.name
+      # Apply audit exception to versioned formulae too from the unversioned name.
+      formula_name = formula_name.gsub(/@\d+(\.\d+)*$/, "") if formula.versioned_formula?
+      formula_tap.audit_exception(:universal_binary_allowlist, formula_name)
     else
       true
     end
@@ -436,7 +440,6 @@ module FormulaCellarChecks
     problem_if_output(check_cpuid_instruction(formula))
     problem_if_output(check_binary_arches(formula))
   end
-  alias generic_audit_installed audit_installed
 
   private
 
@@ -448,21 +451,20 @@ module FormulaCellarChecks
   sig { params(file: T.any(Pathname, String), objdump: Pathname).returns(T::Boolean) }
   def cpuid_instruction?(file, objdump)
     @instruction_column_index ||= T.let({}, T.nilable(T::Hash[Pathname, Integer]))
-    @instruction_column_index[objdump] ||= begin
+    instruction_column_index_objdump = @instruction_column_index[objdump] ||= begin
       objdump_version = Utils.popen_read(objdump, "--version")
 
-      if (objdump_version.match?(/^Apple LLVM/) && MacOS.version <= :mojave) ||
-         objdump_version.exclude?("LLVM")
-        2 # Mojave `objdump` or GNU Binutils `objdump`
+      if objdump_version.include?("LLVM")
+        1 # `llvm-objdump` or macOS `objdump`
       else
-        1 # `llvm-objdump` or Catalina+ `objdump`
+        2 # GNU Binutils `objdump`
       end
     end
 
     has_cpuid_instruction = T.let(false, T::Boolean)
     Utils.popen_read(objdump, "--disassemble", file) do |io|
       until io.eof?
-        instruction = io.readline.split("\t")[@instruction_column_index[objdump]]&.strip
+        instruction = io.readline.split("\t")[instruction_column_index_objdump]&.strip
         has_cpuid_instruction = instruction == "cpuid" if instruction.present?
         break if has_cpuid_instruction
       end

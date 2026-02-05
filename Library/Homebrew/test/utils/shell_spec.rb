@@ -105,4 +105,42 @@ RSpec.describe Utils::Shell do
         .to eq("fish_add_path #{path}")
     end
   end
+
+  describe "::shell_with_prompt" do
+    let(:home) { HOMEBREW_TEMP }
+    let(:notice) { "" }
+    let(:prompt) { "test" }
+    let(:path) { "/some/path" }
+
+    it "returns zsh-specific prompt configuration" do
+      preferred_path = "/bin/zsh"
+      ENV["SHELL"] = preferred_path
+      ENV["PATH"] = path
+      zdotdir = "#{HOMEBREW_TEMP}/brew-zsh-prompt-#{Process.euid}"
+      expect(described_class.shell_with_prompt(prompt, preferred_path:, notice:, home:)).to eq \
+        "BREW_PROMPT_PATH=\"#{path}\" BREW_PROMPT_TYPE=\"#{prompt}\" ZDOTDIR=\"#{zdotdir}\" #{preferred_path}"
+    end
+
+    it "returns bash-specific prompt configuration" do
+      preferred_path = "/bin/bash"
+      ENV["SHELL"] = "/bin/bash"
+      ENV["PATH"] = path
+      rcfile = "#{HOMEBREW_LIBRARY_PATH}/utils/bash/brew-sh-prompt-bashrc.bash"
+      expect(described_class.shell_with_prompt(prompt, preferred_path:, notice:, home:)).to eq \
+        "BREW_PROMPT_PATH=\"#{path}\" BREW_PROMPT_TYPE=\"#{prompt}\" #{preferred_path} --rcfile \"#{rcfile}\""
+    end
+
+    it "returns generic shell prompt configuration" do
+      preferred_path = "/bin/dash"
+      ENV["SHELL"] = preferred_path
+      expect(described_class.shell_with_prompt(prompt, preferred_path:, notice:, home:)).to eq \
+        "PS1=\"\\[\\033[1;32m\\]#{prompt} \\[\\033[1;31m\\]\\w \\[\\033[1;34m\\]$\\[\\033[0m\\] \" #{preferred_path}"
+    end
+
+    it "outputs notice when provided" do
+      notice = "Test Notice"
+      expect { described_class.shell_with_prompt("test", preferred_path: "/bin/bash", notice: notice) }
+        .to output("#{notice}\n").to_stdout
+    end
+  end
 end

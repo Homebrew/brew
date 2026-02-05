@@ -26,12 +26,12 @@ Versioned formulae we include in [homebrew/core](https://github.com/homebrew/hom
 
 Homebrew's versions should not be used to "pin" formulae to your personal requirements. You should instead [create your own tap](How-to-Create-and-Maintain-a-Tap.md) for formulae you or your organisation wish to control the versioning of, or those that do not meet the above standards. Software that has regular API or ABI breaking releases still needs to meet all the above requirements; that a `brew upgrade` has broken something for you is not an argument for us to add and maintain a formula for you.
 
-If there is a formula that currently exists in the Homebrew/homebrew-core repository or has existed in the past (i.e. was migrated or deleted), you can recover it for your own use with the `brew extract` command. This will copy the desired version of the formula into a custom tap. For example, if your project depends on `automake` 1.12 instead of the most recent version, you can obtain the `automake` formula at version 1.12 by running:
+If there is a formula that currently exists in the Homebrew/homebrew-core repository or has existed in the past (i.e. was migrated or deleted), you can recover it for your own use with the `brew version-install` command. This will install the desired version of the formula from your own custom tap. For example, if your project depends on `automake` 1.12 instead of the most recent version, you can obtain the `automake` formula at version 1.12 by running:
 
 ```sh
-brew extract automake --version=1.12 <YOUR_GITHUB_USER>/<YOUR_TAP_REPOSITORY_NAME>
+brew version-install automake@1.12
 ```
 
-Formulae obtained this way may contain deprecated, disabled or removed Homebrew syntax (e.g. checksums may be `sha1` instead of `sha256`); the `brew extract` command does not edit or update formulae to meet current standards and style requirements.
+Formulae obtained this way may contain deprecated, disabled or removed Homebrew syntax (e.g. checksums may be `sha1` instead of `sha256`); the `brew version-install` command does not edit or update formulae to meet current standards and style requirements.
 
 We may temporarily add versioned formulae for our own needs that do not meet these standards in [homebrew/core](https://github.com/homebrew/homebrew-core). The presence of a versioned formula there does not imply it will be maintained indefinitely or that we are willing to accept any more versions that do not meet the requirements above.

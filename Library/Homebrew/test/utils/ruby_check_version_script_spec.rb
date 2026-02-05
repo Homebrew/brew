@@ -7,7 +7,9 @@ RSpec.describe Utils do
       Bundler.with_unbundled_env do
         ENV.delete_if { |key,| key.start_with?("HOMEBREW_") }
         ENV.update(homebrew_env)
-        quiet_system "#{HOMEBREW_LIBRARY_PATH}/utils/ruby_check_version_script.rb", required_ruby_version
+        # We intentionally don't use the shebang in this script as portable Ruby
+        # is usually not in PATH. This aligns with how we run the script in brew.
+        quiet_system RUBY_PATH, "#{HOMEBREW_LIBRARY_PATH}/utils/ruby_check_version_script.rb", required_ruby_version
       end
     end
 

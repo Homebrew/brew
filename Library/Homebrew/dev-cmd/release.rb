@@ -15,12 +15,19 @@ module Homebrew
           The command will fail if the previous major or minor release was made less than
           one month ago.
 
+          Without `--force`, this command will just output the release notes without creating
+          the release or triggering the workflow.
+
           *Note:* Requires write access to the Homebrew/brew repository.
         EOS
         switch "--major",
                description: "Create a major release."
         switch "--minor",
                description: "Create a minor release."
+        switch "--force",
+               description: "Actually create the release and trigger the workflow. Without this, just show " \
+                            "what would be done."
+
         conflicts "--major", "--minor"
 
         named_args :none
@@ -76,8 +83,7 @@ module Homebrew
           puts blog_post_notes
         end
 
-        ohai "Creating draft release for version #{new_version}"
-
+        ohai "Generating release notes for #{new_version}"
         release_notes = if args.major? || args.minor?
           "Release notes for this release can be found on the [Homebrew blog](https://brew.sh/blog/#{new_version}).\n"
         else
@@ -86,14 +92,151 @@ module Homebrew
         release_notes += GitHub.generate_release_notes("Homebrew", "brew", new_version,
                                                        previous_tag: latest_version)["body"]
 
-        begin
-          release = GitHub.create_or_update_release "Homebrew", "brew", new_version, body: release_notes, draft: true
-        rescue *GitHub::API::ERRORS => e
-          odie "Unable to create release: #{e.message}!"
+        puts release_notes
+        puts
+
+        unless args.force?
+          opoo "Use `brew release --force` to trigger the release workflow and create the draft release."
+          return
         end
 
-        puts release["html_url"]
-        exec_browser release["html_url"]
+        # Not actually useless, needed for Sorbet.
+        # rubocop:disable Lint/UselessAssignment
+        e = T.let(nil, T.nilable(Exception))
+        # rubocop:enable Lint/UselessAssignment
+
+        existing_releases = begin
+          matching_releases(new_version)
+        rescue *GitHub::API::ERRORS => e
+          odie "Unable to check existing releases: #{e.message}!"
+        end
+
+        if existing_releases.present?
+          draft_releases, published_releases = existing_releases.partition { |release| release["draft"] }
+          error_message = +""
+
+          if draft_releases.present?
+            error_message << "Draft releases already exist for #{new_version}. " \
+                             "Delete them in the web interface first:\n"
+            error_message << release_urls(draft_releases).join("\n")
+          end
+
+          if published_releases.present?
+            error_message << "\n" if error_message.present?
+            error_message << "Published releases already exist for #{new_version}. " \
+                             "Run `brew update` instead:\n"
+            error_message << release_urls(published_releases).join("\n")
+          end
+
+          odie error_message
+        end
+
+        # Get the current commit SHA
+        current_sha = Utils.safe_popen_read("git", "-C", HOMEBREW_REPOSITORY, "rev-parse", "origin/main").strip
+        release_workflow = "release.yml"
+
+        dispatch_time = Time.now
+        ohai "Triggering release workflow for #{new_version}..."
+        begin
+          GitHub.workflow_dispatch_event("Homebrew", "brew", release_workflow, "main", tag: new_version)
+        # Cannot use `e` as Sorbet needs it used below instead.
+        # rubocop:disable Naming/RescuedExceptionsVariableName
+        rescue *GitHub::API::ERRORS => error
+          odie "Unable to trigger workflow: #{error.message}!"
+        end
+        # rubocop:enable Naming/RescuedExceptionsVariableName
+
+        # Poll for workflow completion
+        initial_sleep_time = 15
+        sleep_time = 5
+        max_attempts = 180 # 15 minutes (5 seconds * 180 attempts)
+        attempt = 0
+        run_conclusion = T.let(nil, T.nilable(String))
+
+        while attempt < max_attempts
+          sleep attempt.zero? ? initial_sleep_time : sleep_time
+          attempt += 1
+
+          # Check workflow runs for the commit SHA
+          begin
+            runs_url = "#{GitHub::API_URL}/repos/Homebrew/brew/actions/workflows/#{release_workflow}/runs"
+            response = GitHub::API.open_rest("#{runs_url}?event=workflow_dispatch&per_page=5")
+            run = response["workflow_runs"]&.find do |r|
+              r["head_sha"] == current_sha && Time.parse(r["created_at"]) >= dispatch_time
+            end
+
+            if run
+              if run["status"] == "completed"
+                run_conclusion = run["conclusion"]
+                puts if attempt > 1
+                break
+              end
+
+              if attempt == 1
+                puts "This will take a few minutes. You can monitor progress at:"
+                puts "  #{Formatter.url(run["html_url"])}"
+                print "Waiting for workflow to complete..."
+              else
+                print "."
+              end
+            else
+              puts
+              odie "Unable to find workflow for commit: #{current_sha}!"
+            end
+          rescue *GitHub::API::ERRORS => e
+            puts
+            odie "Unable to check workflow status: #{e.message}!"
+          end
+        end
+
+        odie "Workflow completed with status: #{run_conclusion}!" if run_conclusion != "success"
+
+        puts
+        ohai "Release created at:"
+        releases_page_url = "https://github.com/Homebrew/brew/releases"
+        release_url = begin
+          latest_matching_release(new_version)&.fetch("html_url", nil) || releases_page_url
+        rescue *GitHub::API::ERRORS => e
+          opoo "Unable to locate created release: #{e.message}"
+          releases_page_url
+        end
+        puts "  #{Formatter.url(release_url)}"
+        exec_browser release_url
+      end
+
+      private
+
+      sig { params(name: String).returns(T::Array[T::Hash[String, T.untyped]]) }
+      def matching_releases(name)
+        releases_url = "#{GitHub::API_URL}/repos/Homebrew/brew/releases?per_page=#{GitHub::MAX_PER_PAGE}"
+        releases = T.cast(GitHub::API.open_rest(releases_url,
+                                                request_method: :GET,
+                                                scopes:         GitHub::CREATE_ISSUE_FORK_OR_PR_SCOPES),
+                          T::Array[T::Hash[String, T.untyped]])
+        releases.select do |release|
+          release_name = release["name"].to_s
+          release_name = release.fetch("tag_name", "").to_s if release_name.blank?
+          release_name == name
+        end
+      end
+
+      sig { params(name: String).returns(T.nilable(T::Hash[String, T.untyped])) }
+      def latest_matching_release(name)
+        matching_releases(name).max_by do |release|
+          Time.parse(release.fetch("created_at", ""))
+        rescue ArgumentError, TypeError
+          Time.at(0)
+        end
+      end
+
+      sig { params(releases: T::Array[T::Hash[String, T.untyped]]).returns(T::Array[String]) }
+      def release_urls(releases)
+        releases.filter_map do |release|
+          url = release["html_url"].to_s
+          next if url.blank?
+
+          "  #{Formatter.url(url)}"
+        end
       end
     end
   end

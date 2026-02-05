@@ -5,6 +5,9 @@ require "livecheck/options"
 RSpec.describe Homebrew::Livecheck::Options do
   subject(:options) { described_class }
 
+  let(:cookies) { { "cookie_key" => "cookie_value" } }
+  let(:header_string) { "Accept: */*" }
+  let(:referer_url) { "https://example.com/referer" }
   let(:post_hash) do
     {
       empty:   "",
@@ -13,11 +16,16 @@ RSpec.describe Homebrew::Livecheck::Options do
       string:  "a + b = c",
     }
   end
+
   let(:args) do
     {
+      cookies:       cookies,
+      header:        header_string,
       homebrew_curl: true,
       post_form:     post_hash,
       post_json:     post_hash,
+      referer:       referer_url,
+      user_agent:    :browser,
     }
   end
   let(:other_args) do
@@ -34,9 +42,13 @@ RSpec.describe Homebrew::Livecheck::Options do
   describe "#url_options" do
     it "returns a Hash of the options that are provided as arguments to the `url` DSL method" do
       expect(options.new.url_options).to eq({
+        cookies:       nil,
+        header:        nil,
         homebrew_curl: nil,
         post_form:     nil,
         post_json:     nil,
+        referer:       nil,
+        user_agent:    nil,
       })
     end
   end
@@ -131,7 +143,7 @@ RSpec.describe Homebrew::Livecheck::Options do
       expect(options.new.empty?).to be true
     end
 
-    it "returns false if object has any non-default values" do
+    it "returns false if object has any non-default values" do # rubocop:todo RSpec/AggregateExamples
       expect(options.new(**args).empty?).to be false
     end
   end
@@ -141,7 +153,7 @@ RSpec.describe Homebrew::Livecheck::Options do
       expect(options.new.present?).to be false
     end
 
-    it "returns true if object has any non-default values" do
+    it "returns true if object has any non-default values" do # rubocop:todo RSpec/AggregateExamples
       expect(options.new(**args).present?).to be true
     end
   end

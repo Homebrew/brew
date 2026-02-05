@@ -1,0 +1,4 @@
+# frozen_string_literal: true
+
+brew "ruby@3.4", version_file: ".ruby-version"
+brew "xz"

@@ -36,7 +36,7 @@ module UnpackStrategy
         quiet_flags = verbose ? [] : ["-qq"]
         result = system_command! "unzip",
                                  args:         [*quiet_flags, "-o", path, "-d", unpack_dir],
-                                 env:          { "PATH" => PATH.new(unzip&.opt_bin, ENV.fetch("PATH")) },
+                                 env:          { "PATH" => PATH.new(unzip&.opt_bin, ENV.fetch("PATH")).to_s },
                                  verbose:,
                                  print_stderr: false
 

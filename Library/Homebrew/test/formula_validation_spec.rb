@@ -68,7 +68,7 @@ RSpec.describe Formula do
       end.to fail_with_invalid :version
     end
 
-    specify "head-only is valid" do
+    specify "HEAD-only is valid" do
       f = formula do
         head "foo"
       end

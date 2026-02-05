@@ -14,40 +14,54 @@ class Caveats
   sig { params(formula: Formula).void }
   def initialize(formula)
     @formula = formula
+    @caveats = T.let(nil, T.nilable(String))
+    @completions_and_elisp = T.let(nil, T.nilable(T::Array[String]))
   end
 
   sig { returns(String) }
   def caveats
-    caveats = []
-    build = formula.build
-    begin
-      formula.build = Tab.for_formula(formula)
-      string = formula.caveats.to_s
-      caveats << "#{string.chomp}\n" unless string.empty?
-    ensure
-      formula.build = build
+    @caveats ||= begin
+      caveats = []
+      build = formula.build
+      begin
+        formula.build = Tab.for_formula(formula)
+        string = formula.caveats.to_s
+        caveats << "#{string.chomp}\n" unless string.empty?
+      ensure
+        formula.build = build
+      end
+      caveats << keg_only_text
+      caveats << service_caveats
+      caveats.compact.join("\n")
     end
-    caveats << keg_only_text
-
-    valid_shells = [:bash, :zsh, :fish, :pwsh].freeze
-    current_shell = Utils::Shell.preferred || Utils::Shell.parent
-    shells = if current_shell.present? &&
-                (shell_sym = current_shell.to_sym) &&
-                valid_shells.include?(shell_sym)
-      [shell_sym]
-    else
-      valid_shells
-    end
-    shells.each do |shell|
-      caveats << function_completion_caveats(shell)
-    end
-
-    caveats << service_caveats
-    caveats << elisp_caveats
-    caveats.compact.join("\n")
   end
 
-  delegate [:empty?, :to_s] => :caveats
+  sig { returns(T::Boolean) }
+  def empty?
+    caveats.blank? && completions_and_elisp.blank?
+  end
+
+  delegate [:to_s] => :caveats
+
+  sig { returns(T::Array[String]) }
+  def completions_and_elisp
+    @completions_and_elisp ||= begin
+      valid_shells = [:bash, :zsh, :fish, :pwsh].freeze
+      current_shell = Utils::Shell.preferred || Utils::Shell.parent
+      shells = if current_shell.present? &&
+                  (shell_sym = current_shell.to_sym) &&
+                  valid_shells.include?(shell_sym)
+        [shell_sym]
+      else
+        valid_shells
+      end
+      completions_and_elisp = shells.map do |shell|
+        function_completion_caveats(shell)
+      end
+      completions_and_elisp << elisp_caveats
+      completions_and_elisp.compact
+    end
+  end
 
   sig { params(skip_reason: T::Boolean).returns(T.nilable(String)) }
   def keg_only_text(skip_reason: false)
@@ -81,11 +95,11 @@ class Caveats
 
       s << "  #{Utils::Shell.export_value("CPPFLAGS", "-I#{formula.opt_include}")}\n" if formula.include.directory?
 
-      if which("pkg-config", ORIGINAL_PATHS) &&
+      if which("pkgconf", ORIGINAL_PATHS) &&
          ((formula.lib/"pkgconfig").directory? || (formula.share/"pkgconfig").directory?)
         s << <<~EOS
 
-          For pkg-config to find #{formula.name} you may need to set:
+          For pkgconf to find #{formula.name} you may need to set:
         EOS
 
         if (formula.lib/"pkgconfig").directory?
@@ -95,6 +109,15 @@ class Caveats
         if (formula.share/"pkgconfig").directory?
           s << "  #{Utils::Shell.export_value("PKG_CONFIG_PATH", "#{formula.opt_share}/pkgconfig")}\n"
         end
+      end
+
+      if which("cmake", ORIGINAL_PATHS) &&
+         ((formula.lib/"cmake").directory? || (formula.share/"cmake").directory?)
+        s << <<~EOS
+
+          For cmake to find #{formula.name} you may need to set:
+            #{Utils::Shell.export_value("CMAKE_PREFIX_PATH", formula.opt_prefix.to_s)}
+        EOS
       end
     end
     s << "\n" unless s.end_with?("\n")
@@ -180,7 +203,7 @@ class Caveats
     startup = formula.service.requires_root?
     if Utils::Service.running?(formula)
       s << "To restart #{formula.full_name} after an upgrade:"
-      s << "  #{startup ? "sudo " : ""}brew services restart #{formula.full_name}"
+      s << "  #{"sudo " if startup}brew services restart #{formula.full_name}"
     elsif startup
       s << "To start #{formula.full_name} now and restart at startup:"
       s << "  sudo brew services start #{formula.full_name}"

@@ -13,11 +13,12 @@ module Cask
     # to the output by the caller, but that feature is only for the
     # convenience of cask authors.
     class Caveats < Base
+      sig { params(args: T.anything).void }
       def initialize(*args)
         super
-        @built_in_caveats = {}
-        @custom_caveats = []
-        @discontinued = false
+        @built_in_caveats = T.let({}, T::Hash[Symbol, String])
+        @custom_caveats = T.let([], T::Array[String])
+        @discontinued = T.let(false, T::Boolean)
       end
 
       def self.caveat(name, &block)
@@ -40,11 +41,13 @@ module Cask
       end
 
       # Override `puts` to collect caveats.
+      sig { params(args: String).returns(Symbol) }
       def puts(*args)
         @custom_caveats += args
         :built_in_caveat
       end
 
+      sig { params(block: T.proc.returns(T.nilable(T.any(Symbol, String)))).void }
       def eval_caveats(&block)
         result = instance_eval(&block)
         return unless result
@@ -54,7 +57,7 @@ module Cask
       end
 
       caveat :kext do
-        next if MacOS.version < :high_sierra
+        next if MacOS.version < :sonoma
 
         navigation_path = if MacOS.version >= :ventura
           "System Settings → Privacy & Security"
@@ -157,15 +160,6 @@ module Cask
       caveat :reboot do
         <<~EOS
           You must reboot for the installation of #{@cask} to take effect.
-        EOS
-      end
-
-      caveat :discontinued do
-        odisabled "`caveats :discontinued`", "`deprecate!`"
-        @discontinued = true
-        <<~EOS
-          #{@cask} has been officially discontinued upstream.
-          It may stop working correctly (or at all) in recent versions of macOS.
         EOS
       end
 

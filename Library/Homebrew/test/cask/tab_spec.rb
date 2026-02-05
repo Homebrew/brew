@@ -97,7 +97,7 @@ RSpec.describe Cask::Tab, :cask do
 
       expected_hash = {
         cask: [
-          { "full_name"=>"local-transmission", "version"=>"2.61", "declared_directly"=>true },
+          { "full_name"=>"local-transmission-zip", "version"=>"2.61", "declared_directly"=>true },
         ],
       }
       expect(described_class.runtime_deps_hash(cask)).to eq(expected_hash)
@@ -134,7 +134,7 @@ RSpec.describe Cask::Tab, :cask do
         cask:    [
           { "full_name"=>"local-caffeine", "version"=>"1.2.3", "declared_directly"=>true },
           { "full_name"=>"with-depends-on-cask", "version"=>"1.2.3", "declared_directly"=>true },
-          { "full_name"=>"local-transmission", "version"=>"2.61", "declared_directly"=>false },
+          { "full_name"=>"local-transmission-zip", "version"=>"2.61", "declared_directly"=>false },
         ],
         formula: [
           { "full_name"=>"unar", "version"=>"1.2", "revision"=>0, "pkg_version"=>"1.2", "declared_directly"=>true },

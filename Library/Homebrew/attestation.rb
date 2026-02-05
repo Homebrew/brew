@@ -7,10 +7,12 @@ require "utils/popen"
 require "utils/github/api"
 require "exceptions"
 require "system_command"
+require "utils/output"
 
 module Homebrew
   module Attestation
     extend SystemCommand::Mixin
+    extend Utils::Output::Mixin
 
     # @api private
     HOMEBREW_CORE_REPO = "Homebrew/homebrew-core"
@@ -64,12 +66,8 @@ module Homebrew
     sig { returns(T::Boolean) }
     def self.enabled?
       return false if Homebrew::EnvConfig.no_verify_attestations?
-      return true if Homebrew::EnvConfig.verify_attestations?
-      return false if ENV.fetch("CI", false)
-      return false if OS.unsupported_configuration?
 
-      # Always check credentials last to avoid unnecessary credential extraction.
-      (Homebrew::EnvConfig.developer? || Homebrew::EnvConfig.devcmdrun?) && GitHub::API.credentials.present?
+      Homebrew::EnvConfig.verify_attestations?
     end
 
     # Returns a path to a suitable `gh` executable for attestation verification.
@@ -83,11 +81,9 @@ module Homebrew
       # NOTE: We set HOMEBREW_NO_VERIFY_ATTESTATIONS when installing `gh` itself,
       #       to prevent a cycle during bootstrapping. This can eventually be resolved
       #       by vendoring a pure-Ruby Sigstore verifier client.
-      with_env(HOMEBREW_NO_VERIFY_ATTESTATIONS: "1") do
-        @gh_executable = ensure_executable!("gh", reason: "verifying attestations", latest: true)
+      @gh_executable = with_env(HOMEBREW_NO_VERIFY_ATTESTATIONS: "1") do
+        ensure_executable!("gh", reason: "verifying attestations", latest: true)
       end
-
-      T.must(@gh_executable)
     end
 
     # Prioritize installing `gh` first if it's in the formula list
@@ -100,8 +96,8 @@ module Homebrew
     # @api private
     sig { params(formulae: T::Array[Formula]).returns(T::Array[Formula]) }
     def self.sort_formulae_for_install(formulae)
-      if formulae.include?(Formula["gh"])
-        [Formula["gh"]] | formulae
+      if (gh = formulae.find { |f| f.full_name == "gh" })
+        [gh] | formulae
       else
         Homebrew::Attestation.gh_executable
         formulae
@@ -226,7 +222,7 @@ module Homebrew
         attestation = check_attestation bottle, HOMEBREW_CORE_REPO
         return attestation
       rescue MissingAttestationError
-        odebug "falling back on backfilled attestation for #{bottle}"
+        odebug "falling back on backfilled attestation for #{bottle.filename}"
 
         # Our backfilled attestation is a little unique: the subject is not just the bottle
         # filename, but also has the bottle's hosted URL hash prepended to it.
@@ -238,8 +234,10 @@ module Homebrew
         else
           # If our bottle is coming from a mirror, we need to recompute the expected
           # non-mirror URL to make the hash match.
+          checksum = bottle.resource.checksum
+          odie "#{bottle.resource.name} checksum is nil" if checksum.nil?
           path, = Utils::Bottles.path_resolved_basename HOMEBREW_BOTTLE_DEFAULT_DOMAIN, bottle.name,
-                                                        bottle.resource.checksum, bottle.filename
+                                                        checksum, bottle.filename
           url = "#{HOMEBREW_BOTTLE_DEFAULT_DOMAIN}/#{path}"
 
           Digest::SHA256.hexdigest(url)

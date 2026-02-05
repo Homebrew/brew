@@ -17,7 +17,7 @@ class CaskDependent
 
   sig { params(cask: Cask::Cask).void }
   def initialize(cask)
-    @cask = T.let(cask, Cask::Cask)
+    @cask = cask
   end
 
   sig { returns(String) }
@@ -32,7 +32,7 @@ class CaskDependent
 
   sig { returns(T::Array[Dependency]) }
   def runtime_dependencies
-    deps.flat_map { |dep| [dep, *dep.to_formula.runtime_dependencies] }.uniq
+    deps.flat_map { |dep| [dep, *dep.to_installed_formula.runtime_dependencies] }.uniq
   end
 
   sig { returns(T::Array[Dependency]) }
@@ -45,7 +45,7 @@ class CaskDependent
     )
   end
 
-  sig { returns(T::Array[CaskDependent::Requirement]) }
+  sig { returns(T::Array[::Requirement]) }
   def requirements
     @requirements ||= T.let(
       begin
@@ -73,7 +73,7 @@ class CaskDependent
 
         requirements
       end,
-      T.nilable(T::Array[CaskDependent::Requirement]),
+      T.nilable(T::Array[::Requirement]),
     )
   end
 

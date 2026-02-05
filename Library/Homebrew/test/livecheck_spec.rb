@@ -8,7 +8,7 @@ RSpec.describe Livecheck do
     formula do
       homepage "https://brew.sh"
       url "https://brew.sh/test-0.0.1.tgz"
-      head "https://github.com/Homebrew/brew.git"
+      head "https://github.com/Homebrew/brew.git", branch: "main"
     end
   end
   let(:livecheck_f) { described_class.new(f.class) }
@@ -99,7 +99,9 @@ RSpec.describe Livecheck do
   end
 
   describe "#strategy" do
-    block = proc { |page, regex| page.scan(regex).map { |match| match[0].tr("_", ".") } }
+    let(:block) do
+      proc { |page, regex| page.scan(regex).map { |match| match[0].tr("_", ".") } }
+    end
 
     it "returns nil if not set" do
       expect(livecheck_f.strategy).to be_nil
@@ -132,6 +134,7 @@ RSpec.describe Livecheck do
 
   describe "#url" do
     let(:url_string) { "https://brew.sh" }
+    let(:referer_url) { "https://example.com/referer" }
 
     it "returns nil if not set" do
       expect(livecheck_f.url).to be_nil
@@ -162,11 +165,28 @@ RSpec.describe Livecheck do
       # (i.e. existing values aren't reset to `nil`). [We only call `url` once
       # in a `livecheck` block but this should technically work due to how it's
       # implemented.]
-      livecheck_f.url(url_string, homebrew_curl: true, post_form: post_hash)
+      livecheck_f.url(
+        url_string,
+        cookies:       { "cookie_key" => "cookie_value" },
+        header:        "Accept: */*",
+        homebrew_curl: true,
+        post_form:     post_hash,
+        referer:       referer_url,
+        user_agent:    :browser,
+      )
       livecheck_f.url(url_string, post_json: post_hash)
       expect(livecheck_f.options.homebrew_curl).to be(true)
       expect(livecheck_f.options.post_form).to eq(post_hash)
       expect(livecheck_f.options.post_json).to eq(post_hash)
+      expect(livecheck_f.options.referer).to eq(referer_url)
+      expect(livecheck_f.options.user_agent).to eq(:browser)
+
+      header_array = ["Accept: */*", "X-Requested-With: XMLHttpRequest"]
+      livecheck_f.url(url_string, header: header_array)
+      expect(livecheck_f.options.header).to eq(header_array)
+
+      livecheck_f.url(url_string, user_agent: "Example")
+      expect(livecheck_f.options.user_agent).to eq("Example")
     end
 
     it "raises an ArgumentError if the argument isn't a valid Symbol" do
@@ -179,6 +199,108 @@ RSpec.describe Livecheck do
       expect do
         livecheck_f.url(:stable, post_form: post_hash, post_json: post_hash)
       end.to raise_error ArgumentError
+    end
+  end
+
+  describe "#arch" do
+    let(:c_arch) do
+      Cask::Cask.new("c-arch") do
+        arch arm: "arm", intel: "intel"
+
+        version "0.0.1"
+
+        url "https://brew.sh/test-0.0.1.dmg"
+        name "Test"
+        desc "Test cask"
+        homepage "https://brew.sh"
+
+        livecheck do
+          url "https://brew.sh/#{arch}"
+        end
+      end
+    end
+
+    {
+      needs_arm:   "arm",
+      needs_intel: "intel",
+    }.each do |metadata, expected_arch|
+      it "delegates `arch` in `livecheck` block to `package_or_resource`", metadata do
+        expect(c_arch.livecheck.url).to eq("https://brew.sh/#{expected_arch}")
+      end
+    end
+  end
+
+  describe "#os" do
+    let(:c_os) do
+      Cask::Cask.new("c-os") do
+        os macos: "macos", linux: "linux"
+
+        version "0.0.1"
+
+        url "https://brew.sh/test-0.0.1.dmg"
+        name "Test"
+        desc "Test cask"
+        homepage "https://brew.sh"
+
+        livecheck do
+          url "https://brew.sh/#{os}"
+        end
+      end
+    end
+
+    {
+      needs_macos: "macos",
+      needs_linux: "linux",
+    }.each do |metadata, expected_os|
+      it "delegates `os` in `livecheck` block to `package_or_resource`", metadata do
+        expect(c_os.livecheck.url).to eq("https://brew.sh/#{expected_os}")
+      end
+    end
+  end
+
+  describe "#version" do
+    let(:url_with_version) { "https://brew.sh/0.0.1" }
+
+    let(:f_version) do
+      formula do
+        homepage "https://brew.sh"
+        url "https://brew.sh/test-0.0.1.tgz"
+
+        livecheck do
+          url "https://brew.sh/#{version}"
+        end
+      end
+    end
+
+    let(:c_version) do
+      Cask::Cask.new("c-version") do
+        version "0.0.1"
+
+        url "https://brew.sh/test-0.0.1.dmg"
+        name "Test"
+        desc "Test cask"
+        homepage "https://brew.sh"
+
+        livecheck do
+          url "https://brew.sh/#{version}"
+        end
+      end
+    end
+
+    let(:r_version) do
+      Resource.new do
+        url "https://brew.sh/test-0.0.1.tgz"
+
+        livecheck do
+          url "https://brew.sh/#{version}"
+        end
+      end
+    end
+
+    it "delegates `version` in `livecheck` block to `package_or_resource`" do
+      expect(f_version.livecheck.url).to eq(url_with_version)
+      expect(c_version.livecheck.url).to eq(url_with_version)
+      expect(r_version.livecheck.url).to eq(url_with_version)
     end
   end
 

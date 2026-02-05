@@ -17,8 +17,8 @@ Since Homebrew 1.0.0 most Homebrew users (those who haven't run a `dev-cmd` or s
 2. Ensure that:
    - no code changes have happened for at least a couple of hours (ideally 4 hours),
    - at least one Homebrew/homebrew-core pull request CI job has completed successfully,
-   - the state of the Homebrew/brew `master` CI job is clear (i.e. main jobs green or green after rerunning)
-   - you are confident there are no major regressions on the current `master` branch.
+   - the state of the Homebrew/brew `main` CI job is clear (i.e. main jobs green or green after rerunning)
+   - you are confident there are no major regressions on the current `main` branch.
 
 3. Run `brew release` to create a new draft release. For major or minor version bumps, pass `--major` or `--minor`, respectively.
 
@@ -42,4 +42,4 @@ If this is a major or minor release (e.g. X.0.0 or X.Y.0) then there are a few m
    - Pros: gets a wider reach and user feedback
    - Cons: negative comments are common and people take this as a chance to complain about Homebrew (regardless of their usage)
 
-Please do not manually create a release based on older commits on the `master` branch. It's very hard to judge whether these have been sufficiently tested by users or if they will cause negative side effects with the current state of Homebrew/homebrew-core. If a new branch is needed ASAP but there are things on `master` that cannot be released yet (e.g. new deprecations and you want to make a patch release) then revert the relevant PRs, follow the process above and then revert the reverted PRs to reapply them on `master`.
+Please do not manually create a release based on older commits on the `main` branch. It's very hard to judge whether these have been sufficiently tested by users or if they will cause negative side effects with the current state of Homebrew/homebrew-core. If a new branch is needed ASAP but there are things on `main` that cannot be released yet (e.g. new deprecations and you want to make a patch release) then revert the relevant PRs, follow the process above and then revert the reverted PRs to reapply them on `main`.

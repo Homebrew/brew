@@ -58,12 +58,12 @@ RSpec.describe Homebrew::BumpVersionParser do
       expect(new_version_version.general).to eq(Cask::DSL::Version.new(general_version.to_s))
     end
 
-    it "correctly parses arm version" do
+    it "correctly parses arm version" do # rubocop:todo RSpec/AggregateExamples
       expect(new_version.arm).to eq(Cask::DSL::Version.new(arm_version.to_s))
       expect(new_version_version.arm).to eq(Cask::DSL::Version.new(arm_version.to_s))
     end
 
-    it "correctly parses intel version" do
+    it "correctly parses intel version" do # rubocop:todo RSpec/AggregateExamples
       expect(new_version.intel).to eq(Cask::DSL::Version.new(intel_version.to_s))
       expect(new_version_version.intel).to eq(Cask::DSL::Version.new(intel_version.to_s))
     end

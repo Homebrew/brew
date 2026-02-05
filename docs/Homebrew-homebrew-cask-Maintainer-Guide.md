@@ -30,4 +30,4 @@ Finally, make sure to thank the contributor for submitting a PR!
 
 ## Other Tips
 
-A maintainer can easily rebase a PR onto the latest `master` branch by adding a `/rebase` comment. `BrewTestBot` will automatically rebase the PR and add a reaction to the comment once the rebase is in progress and complete.
+A maintainer can easily rebase a PR onto the latest default branch by adding a `/rebase` comment. `BrewTestBot` will automatically rebase the PR and add a reaction to the comment once the rebase is in progress and complete.

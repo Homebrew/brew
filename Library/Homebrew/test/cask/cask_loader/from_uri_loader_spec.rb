@@ -46,11 +46,11 @@ RSpec.describe Cask::CaskLoader::FromURILoader do
       end.to raise_error(UnsupportedInstallationMethod)
     end
 
-    it "does not raise an error when given a file URL" do
+    it "does not raise an error when given a file URL", :needs_utils_curl do
       loader = described_class.new("file://#{TEST_FIXTURE_DIR}/cask/Casks/local-caffeine.rb")
       expect do
         loader.load(config: nil)
-      end.not_to raise_error(UnsupportedInstallationMethod)
+      end.not_to raise_error
     end
   end
 end

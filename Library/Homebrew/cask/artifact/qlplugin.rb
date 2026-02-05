@@ -7,7 +7,7 @@ module Cask
   module Artifact
     # Artifact corresponding to the `qlplugin` stanza.
     class Qlplugin < Moved
-      sig { returns(String) }
+      sig { override.returns(String) }
       def self.english_name
         "Quick Look Plugin"
       end

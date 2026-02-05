@@ -20,7 +20,7 @@ module Homebrew
     class OptionConflictError < UsageError
       sig { params(args: T::Array[String]).void }
       def initialize(args)
-        args_list = args.map { Formatter.option(_1) }.join(" and ")
+        args_list = args.map { Formatter.option(it) }.join(" and ")
         super "Options #{args_list} are mutually exclusive."
       end
     end

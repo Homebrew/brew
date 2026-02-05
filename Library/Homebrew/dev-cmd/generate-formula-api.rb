@@ -20,8 +20,8 @@ module Homebrew
           Generate `homebrew/core` API data files for <#{HOMEBREW_API_WWW}>.
           The generated files are written to the current directory.
         EOS
-
-        switch "-n", "--dry-run", description: "Generate API data without writing it to files."
+        switch "-n", "--dry-run",
+               description: "Generate API data without writing it to files."
 
         named_args :none
       end
@@ -32,7 +32,7 @@ module Homebrew
         raise TapUnavailableError, tap.name unless tap.installed?
 
         unless args.dry_run?
-          directories = ["_data/formula", "api/formula", "formula", "api/internal/v3"]
+          directories = ["_data/formula", "api/formula", "formula", "api/internal"]
           FileUtils.rm_rf directories + ["_data/formula_canonical.json"]
           FileUtils.mkdir_p directories
         end
@@ -44,24 +44,47 @@ module Homebrew
           Formulary.enable_factory_cache!
           Formula.generating_hash!
 
-          tap.formula_names.each do |name|
-            formula = Formulary.factory(name)
-            name = formula.name
-            json = JSON.pretty_generate(formula.to_hash_with_variations)
-            html_template_name = html_template(name)
+          all_formulae = {}
+          latest_macos = MacOSVersion.new((HOMEBREW_MACOS_NEWEST_UNSUPPORTED.to_i - 1).to_s).to_sym
+          Homebrew::SimulateSystem.with(os: latest_macos, arch: :arm) do
+            tap.formula_names.each do |name|
+              formula = Formulary.factory(name)
+              name = formula.name
+              all_formulae[name] = formula.to_hash_with_variations
+              json = JSON.pretty_generate(all_formulae[name])
+              html_template_name = html_template(name)
 
-            unless args.dry_run?
-              File.write("_data/formula/#{name.tr("+", "_")}.json", "#{json}\n")
-              File.write("api/formula/#{name}.json", FORMULA_JSON_TEMPLATE)
-              File.write("formula/#{name}.html", html_template_name)
+              unless args.dry_run?
+                File.write("_data/formula/#{name.tr("+", "_")}.json", "#{json}\n")
+                File.write("api/formula/#{name}.json", FORMULA_JSON_TEMPLATE)
+                File.write("formula/#{name}.html", html_template_name)
+              end
+            rescue
+              onoe "Error while generating data for formula '#{name}'."
+              raise
             end
-          rescue
-            onoe "Error while generating data for formula '#{name}'."
-            raise
           end
 
           canonical_json = JSON.pretty_generate(tap.formula_renames.merge(tap.alias_table))
           File.write("_data/formula_canonical.json", "#{canonical_json}\n") unless args.dry_run?
+
+          OnSystem::VALID_OS_ARCH_TAGS.each do |bottle_tag|
+            formulae = all_formulae.to_h do |name, hash|
+              hash = Homebrew::API::Formula::FormulaStructGenerator.generate_formula_struct_hash(hash, bottle_tag:)
+                                                                   .serialize(bottle_tag:)
+              [name, hash]
+            end
+
+            json_contents = {
+              formulae:,
+              aliases:        tap.alias_table,
+              renames:        tap.formula_renames,
+              tap_git_head:   tap.git_head,
+              tap_migrations: tap.tap_migrations,
+            }
+
+            File.write("api/internal/formula.#{bottle_tag}.json", JSON.generate(json_contents)) unless args.dry_run?
+          end
         end
       end
 

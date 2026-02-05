@@ -7,12 +7,15 @@ require "livecheck/livecheck_version"
 require "livecheck/skip_conditions"
 require "livecheck/strategy"
 require "addressable"
+require "utils/output"
 
 module Homebrew
   # The {Livecheck} module consists of methods used by the `brew livecheck`
   # command. These methods print the requested livecheck information
   # for formulae.
   module Livecheck
+    extend Utils::Output::Mixin
+
     NO_CURRENT_VERSION_MSG = "Unable to identify current version"
     NO_VERSIONS_MSG = "Unable to get versions"
 
@@ -58,7 +61,7 @@ module Homebrew
 
       other_taps.each_value do |tap|
         tap_strategy_path = "#{tap.path}/livecheck/strategy"
-        Dir["#{tap_strategy_path}/*.rb"].each { require(_1) } if Dir.exist?(tap_strategy_path)
+        Dir["#{tap_strategy_path}/*.rb"].each { require(it) } if Dir.exist?(tap_strategy_path)
       end
     end
 
@@ -245,7 +248,7 @@ module Homebrew
         end
 
         # Use the `stable` version for comparison except for installed
-        # head-only formulae. A formula with `stable` and `head` that's
+        # HEAD-only formulae. A formula with `stable` and `head` that's
         # installed using `--head` will still use the `stable` version for
         # comparison.
         current = if formula
@@ -370,9 +373,9 @@ module Homebrew
           progress&.increment
           info.delete(:meta) unless verbose
           if check_for_resources && !verbose
-            resource_version_info.map! do |info|
-              info.delete(:meta)
-              info
+            resource_version_info.map! do |resource_info|
+              resource_info.delete(:meta)
+              resource_info
             end
           end
           next info

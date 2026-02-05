@@ -44,8 +44,8 @@ module Homebrew
         switch "--examples",
                description: "Show several examples."
         switch "--pry",
-               env:         :pry,
-               description: "Use Pry instead of IRB. Implied if `HOMEBREW_PRY` is set."
+               description: "Use Pry instead of IRB.",
+               env:         :pry
       end
 
       # work around IRB modifying ARGV.

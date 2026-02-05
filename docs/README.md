@@ -6,7 +6,7 @@ last_review_date: "1970-01-01"
 
 These are the source files for the [Homebrew documentation site](https://docs.brew.sh/).
 
-A [GitHub Action](https://github.com/Homebrew/brew/blob/master/.github/workflows/docs.yml) is run to validate each change before the site is deployed to GitHub Pages.
+A [GitHub Action](https://github.com/Homebrew/brew/blob/HEAD/.github/workflows/docs.yml) is run to validate each change before the site is deployed to GitHub Pages.
 
 ## Usage
 

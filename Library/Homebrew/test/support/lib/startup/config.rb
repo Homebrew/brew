@@ -32,6 +32,7 @@ HOMEBREW_CACHE_FORMULA = (HOMEBREW_PREFIX.parent/"formula_cache").freeze
 HOMEBREW_LINKED_KEGS   = (HOMEBREW_PREFIX/"var/homebrew/linked").freeze
 HOMEBREW_PINNED_KEGS   = (HOMEBREW_PREFIX/"var/homebrew/pinned").freeze
 HOMEBREW_LOCKS         = (HOMEBREW_PREFIX/"var/homebrew/locks").freeze
+HOMEBREW_TEMP_CELLAR   = (HOMEBREW_PREFIX/"var/homebrew/tmp/.cellar").freeze
 HOMEBREW_CELLAR        = (HOMEBREW_PREFIX/"Cellar").freeze
 HOMEBREW_LOGS          = (HOMEBREW_PREFIX.parent/"logs").freeze
 HOMEBREW_TEMP          = (HOMEBREW_PREFIX.parent/"temp").freeze

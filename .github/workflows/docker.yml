@@ -4,7 +4,7 @@ on:
   pull_request:
   push:
     branches:
-      - master
+      - main
   merge_group:
   release:
     types:
@@ -18,7 +18,7 @@ defaults:
     shell: bash -xeuo pipefail {0}
 
 env:
-  VERSIONS: '["18.04", "20.04", "22.04", "24.04"]'
+  VERSIONS: '["22.04", "24.04"]'
 
 jobs:
   generate-tags:
@@ -32,13 +32,13 @@ jobs:
       merge: ${{ steps.attributes.outputs.merge }}
     steps:
       - name: Checkout
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 0
           persist-credentials: false
 
-      - name: Fetch origin/master from Git
-        run: git fetch origin master
+      - name: Fetch origin/HEAD from Git
+        run: git fetch origin HEAD
 
       - name: Determine build attributes
         id: attributes
@@ -70,25 +70,19 @@ jobs:
               tags+=(
                 "ghcr.io/homebrew/ubuntu${version}:${brew_version}"
                 "ghcr.io/homebrew/ubuntu${version}:latest"
-                "homebrew/ubuntu${version}:${brew_version}"
-                "homebrew/ubuntu${version}:latest"
               )
               if [[ "${version}" == "22.04" ]]; then
                 tags+=(
                   "ghcr.io/homebrew/brew:${brew_version}"
                   "ghcr.io/homebrew/brew:latest"
-                  "homebrew/brew:${brew_version}"
-                  "homebrew/brew:latest"
                 )
               fi
             elif [[ "${GITHUB_EVENT_NAME}" == "push" &&
-                    "${GITHUB_REF}" == "refs/heads/master" &&
+                    ("${GITHUB_REF}" == "refs/heads/main") &&
                     "${version}" == "22.04" ]]; then
               tags+=(
-                "ghcr.io/homebrew/brew:master"
-                "ghcr.io/homebrew/ubuntu${version}:master"
-                "homebrew/brew:master"
-                "homebrew/ubuntu${version}:master"
+                "ghcr.io/homebrew/brew:main"
+                "ghcr.io/homebrew/ubuntu${version}:main"
               )
             fi
 
@@ -145,24 +139,21 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        version: ["18.04", "20.04", "22.04", "24.04"]
+        version: ["22.04", "24.04"]
         arch: ["x86_64", "arm64"]
-        exclude:
-          - version: "18.04"
-            arch: "arm64"
-          - arch: ${{ github.event_name == 'release' && 'arm64' }}
+
     steps:
       - name: Checkout
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 0
           persist-credentials: false
 
-      - name: Fetch origin/master from Git
-        run: git fetch origin master
+      - name: Fetch origin/HEAD from Git
+        run: git fetch origin HEAD
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@b5ca514318bd6ebac0fb2aedd5d36ec1b5c232a2 # v3.10.0
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
         with:
           cache-binary: false
 
@@ -172,23 +163,18 @@ jobs:
           VERSION: ${{ matrix.version }}
           PUSH: ${{ needs.generate-tags.outputs.push }}
         run: |
-          if [[ "${VERSION}" == "18.04" ]]; then
-            # odeprecated: remove this in Homebrew >=4.5
-            echo "The homebrew/ubuntu18.04 image is deprecated and will soon be retired. Use homebrew/ubuntu22.04 or homebrew/ubuntu24.04 or homebrew/ubuntu20.04 or homebrew/brew." > .docker-deprecate
-          fi
-
           filter="$(printf '.["%s"]' "${VERSION}")"
           echo "push=$(jq --raw-output "${filter}" <<<"${PUSH}")" >>"${GITHUB_OUTPUT}"
 
       - name: Log in to GitHub Packages (github-actions[bot])
-        uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3.4.0
+        uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # v3.6.0
         with:
           registry: ghcr.io
           username: github-actions[bot]
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build Docker image
-        uses: docker/build-push-action@471d1dc4e07e5cdedd4c2171150001c434f0b7a4 # v6.15.0
+        uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
         with:
           context: .
           load: true
@@ -198,13 +184,11 @@ jobs:
           labels: ${{ needs.generate-tags.outputs.labels }}
 
       - name: Run brew test-bot --only-setup
-        run: docker run --env HOMEBREW_ARM64_TESTING --rm brew brew test-bot --only-setup
-        env:
-          HOMEBREW_ARM64_TESTING: 1
+        run: docker run --rm brew brew test-bot --only-setup
 
       - name: Log in to GitHub Packages (BrewTestBot)
         if: fromJSON(steps.attributes.outputs.push)
-        uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3.4.0
+        uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # v3.6.0
         with:
           registry: ghcr.io
           username: BrewTestBot
@@ -213,7 +197,7 @@ jobs:
       - name: Deploy the Docker image by digest
         id: digest
         if: fromJSON(steps.attributes.outputs.push)
-        uses: docker/build-push-action@471d1dc4e07e5cdedd4c2171150001c434f0b7a4 # v6.15.0
+        uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
         with:
           context: .
           cache-from: type=registry,ref=ghcr.io/homebrew/ubuntu${{ matrix.version }}:cache
@@ -234,7 +218,7 @@ jobs:
 
       - name: Upload the Docker image digest
         if: fromJSON(steps.attributes.outputs.push)
-        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.1
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: digest-${{ matrix.version }}-${{ matrix.arch }}
           path: ${{ runner.temp }}/digests/*
@@ -249,25 +233,19 @@ jobs:
         version: ${{ fromJSON(needs.generate-tags.outputs.matrix) }}
     steps:
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@b5ca514318bd6ebac0fb2aedd5d36ec1b5c232a2 # v3.10.0
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
         with:
           cache-binary: false
 
       - name: Download Docker image digests
-        uses: actions/download-artifact@cc203385981b70ca67e1cc392babf9cc229d5806 # v4.1.9
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
         with:
           path: ${{ runner.temp }}/digests
           pattern: digest-${{ matrix.version }}-*
           merge-multiple: true
 
-      - name: Log in to Docker Hub
-        uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3.4.0
-        with:
-          username: brewtestbot
-          password: ${{ secrets.HOMEBREW_BREW_DOCKER_TOKEN }}
-
       - name: Log in to GitHub Packages (BrewTestBot)
-        uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3.4.0
+        uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # v3.6.0
         with:
           registry: ghcr.io
           username: BrewTestBot
@@ -286,8 +264,17 @@ jobs:
           done <<<"$(jq --raw-output "${filter}" <<<"${TAGS}")"
 
           image_args=("ghcr.io/homebrew/ubuntu${VERSION}@sha256:$(<"${RUNNER_TEMP}/digests/${VERSION}-x86_64")")
-          if [[ "${VERSION}" != 18.04 ]]; then
-            image_args+=("ghcr.io/homebrew/ubuntu${VERSION}@sha256:$(<"${RUNNER_TEMP}/digests/${VERSION}-arm64")")
-          fi
+          image_args+=("ghcr.io/homebrew/ubuntu${VERSION}@sha256:$(<"${RUNNER_TEMP}/digests/${VERSION}-arm64")")
 
-          docker buildx imagetools create "${tag_args[@]}" "${image_args[@]}"
+          attempts=0
+          until docker buildx imagetools create "${tag_args[@]}" "${image_args[@]}"; do
+            attempts=$((attempts + 1))
+            if [[ $attempts -ge 3 ]]; then
+              echo "[$(date -u)] ERROR: Failed after 3 attempts." >&2
+              exit 1
+            fi
+            delay=$((2 ** attempts))
+            if [[ $delay -gt 15 ]]; then delay=15; fi
+            echo "Push failed (attempt $attempts). Retrying in ${delay} seconds..."
+            sleep ${delay}
+          done

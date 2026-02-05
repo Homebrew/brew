@@ -10,6 +10,55 @@ require "extend/module"
 # There are mechanisms to achieve a middle ground (`default_checked_level`).
 if ENV["HOMEBREW_SORBET_RUNTIME"]
   T::Configuration.enable_final_checks_on_hooks
+  if ENV["HOMEBREW_SORBET_RECURSIVE"] == "1"
+    module T
+      module Types
+        class FixedArray < Base
+          def valid?(obj) = recursively_valid?(obj)
+        end
+
+        class FixedHash < Base
+          def valid?(obj) = recursively_valid?(obj)
+        end
+
+        class Intersection < Base
+          def valid?(obj) = recursively_valid?(obj)
+        end
+
+        class TypedArray < TypedEnumerable
+          def valid?(obj) = recursively_valid?(obj)
+        end
+
+        class TypedEnumerable < Base
+          def valid?(obj) = recursively_valid?(obj)
+        end
+
+        class TypedEnumeratorChain < TypedEnumerable
+          def valid?(obj) = recursively_valid?(obj)
+        end
+
+        class TypedEnumeratorLazy < TypedEnumerable
+          def valid?(obj) = recursively_valid?(obj)
+        end
+
+        class TypedHash < TypedEnumerable
+          def valid?(obj) = recursively_valid?(obj)
+        end
+
+        class TypedRange < TypedEnumerable
+          def valid?(obj) = recursively_valid?(obj)
+        end
+
+        class TypedSet < TypedEnumerable
+          def valid?(obj) = recursively_valid?(obj)
+        end
+
+        class Union < Base
+          def valid?(obj) = recursively_valid?(obj)
+        end
+      end
+    end
+  end
 else
   # Redefine `T.let`, etc. to make the `checked` parameter default to `false` rather than `true`.
   # @private

@@ -8,7 +8,7 @@ RSpec.describe Homebrew::Cmd::List do
 
   it_behaves_like "parseable arguments"
 
-  it "prints all installed Formulae", :integration_test do
+  it "prints all installed formulae", :integration_test do
     formulae.each do |f|
       (HOMEBREW_CELLAR/f/"1.0/somedir").mkpath
     end
@@ -19,5 +19,9 @@ RSpec.describe Homebrew::Cmd::List do
       .and be_a_success
   end
 
-  # TODO: add a test for the shell fast-path (`brew_sh`)
+  it "prints all installed formulae and casks", :integration_test do
+    expect { brew_sh "list" }
+      .to be_a_success
+      .and not_to_output.to_stderr
+  end
 end

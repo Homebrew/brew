@@ -118,7 +118,7 @@ RSpec.describe Cask::Pkg, :cask do
       pkg.uninstall
 
       expect(fake_dir).to be_a_directory
-      expect((fake_dir.stat.mode % 01000)).to eq(0)
+      expect(fake_dir.stat.mode % 01000).to eq(0)
 
       fake_dir.chmod(0777)
       expect(fake_file).to be_a_file

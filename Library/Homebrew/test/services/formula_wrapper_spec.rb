@@ -50,9 +50,12 @@ RSpec.describe Homebrew::Services::FormulaWrapper do
       expect(service.service_file.to_s).to eq("/usr/local/opt/mysql/homebrew.mysql.service")
     end
 
-    it "Other - outputs no service file" do
+    it "Other - raises an error" do
       allow(Homebrew::Services::System).to receive_messages(launchctl?: false, systemctl?: false)
-      expect(service.service_file).to be_nil
+      expect do
+        service.service_file
+      end.to raise_error(UsageError,
+                         "Invalid usage: `brew services` is supported only on macOS or Linux (with systemd)!")
     end
   end
 
@@ -73,9 +76,12 @@ RSpec.describe Homebrew::Services::FormulaWrapper do
       expect(service.service_name).to eq("plist-mysql-test")
     end
 
-    it "Other - outputs no service name" do
+    it "Other - raises an error" do
       allow(Homebrew::Services::System).to receive_messages(launchctl?: false, systemctl?: false)
-      expect(service.service_name).to be_nil
+      expect do
+        service.service_name
+      end.to raise_error(UsageError,
+                         "Invalid usage: `brew services` is supported only on macOS or Linux (with systemd)!")
     end
   end
 
@@ -144,9 +150,12 @@ RSpec.describe Homebrew::Services::FormulaWrapper do
       expect(service.loaded?).to be(false)
     end
 
-    it "Other - outputs no status" do
+    it "Other - raises an error" do
       allow(Homebrew::Services::System).to receive_messages(launchctl?: false, systemctl?: false)
-      expect(service.loaded?).to be_nil
+      expect do
+        service.loaded?
+      end.to raise_error(UsageError,
+                         "Invalid usage: `brew services` is supported only on macOS or Linux (with systemd)!")
     end
   end
 
@@ -167,7 +176,6 @@ RSpec.describe Homebrew::Services::FormulaWrapper do
       allow(service).to receive_messages(installed?:   true,
                                          service_file: Pathname.new(File::NULL),
                                          formula:      instance_double(Formula,
-                                                                       plist:      nil,
                                                                        opt_prefix: Pathname.new("/dfslkfhjdsolshlk")))
       expect(service.plist?).to be(false)
     end
@@ -369,8 +377,10 @@ RSpec.describe Homebrew::Services::FormulaWrapper do
         exit_code:    nil,
         file:         Pathname.new("/usr/local/opt/mysql/homebrew.mysql.plist"),
         loaded:       false,
+        loaded_file:  nil,
         name:         "mysql",
         pid:          nil,
+        registered:   false,
         running:      false,
         schedulable:  nil,
         service_name: "plist-mysql-test",
@@ -384,13 +394,15 @@ RSpec.describe Homebrew::Services::FormulaWrapper do
       ENV["HOME"] = "/tmp_home"
       allow(Homebrew::Services::System).to receive_messages(launchctl?: true, systemctl?: false)
       expect(service).to receive(:service?).twice.and_return(false)
-      expect(service).to receive(:service_file_present?).and_return(true)
+      expect(service).to receive(:service_file_present?).twice.and_return(true)
       expected = {
         exit_code:    nil,
         file:         Pathname.new("/tmp_home/Library/LaunchAgents/homebrew.mysql.plist"),
         loaded:       false,
+        loaded_file:  nil,
         name:         "mysql",
         pid:          nil,
+        registered:   true,
         running:      false,
         schedulable:  nil,
         service_name: "plist-mysql-test",
@@ -404,7 +416,7 @@ RSpec.describe Homebrew::Services::FormulaWrapper do
       ENV["HOME"] = "/tmp_home"
       allow(Homebrew::Services::System).to receive_messages(launchctl?: true, systemctl?: false)
       expect(service).to receive(:service?).twice.and_return(true)
-      expect(service).to receive(:service_file_present?).and_return(true)
+      expect(service).to receive(:service_file_present?).twice.and_return(true)
       expect(service).to receive(:load_service).twice.and_return(service_object)
       expected = {
         command:        "/bin/cmd",
@@ -414,9 +426,11 @@ RSpec.describe Homebrew::Services::FormulaWrapper do
         file:           Pathname.new("/tmp_home/Library/LaunchAgents/homebrew.mysql.plist"),
         interval:       nil,
         loaded:         false,
+        loaded_file:    nil,
         log_path:       nil,
         name:           "mysql",
         pid:            nil,
+        registered:     true,
         root_dir:       nil,
         running:        false,
         schedulable:    false,

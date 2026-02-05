@@ -27,7 +27,7 @@ homebrew-items() {
       -regex "${find_exclude_filter}" -o \
       -name cmd -o \
       -name .github -o \
-      -name lib -o \
+      \( -name lib -a ! -path '*/Formula/*' -a ! -path '*/Casks/*' \) -o \
       -name spec -o \
       -name vendor -o \
       -name .git \

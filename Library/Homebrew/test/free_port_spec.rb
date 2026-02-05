@@ -4,7 +4,10 @@ require "socket"
 require "formula_free_port"
 
 RSpec.describe Homebrew::FreePort do
-  include described_class
+  # Sorbet and rubocop-rspec disagree here.
+  # rubocop:disable RSpec/DescribedClass
+  include Homebrew::FreePort
+  # rubocop:enable RSpec/DescribedClass
 
   describe "#free_port" do
     it "returns a free TCP/IP port" do

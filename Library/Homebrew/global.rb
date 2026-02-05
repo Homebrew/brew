@@ -32,10 +32,10 @@ HOMEBREW_USER_AGENT_RUBY =
   "#{ENV.fetch("HOMEBREW_USER_AGENT")} ruby/#{RUBY_VERSION}-p#{RUBY_PATCHLEVEL}".freeze
 HOMEBREW_USER_AGENT_FAKE_SAFARI =
   # Don't update this beyond 10.15.7 until Safari actually updates their
-  # user agent to be beyond 10.15.7 (not the case as-of macOS 14)
+  # user agent to be beyond 10.15.7 (not the case as-of macOS 26)
   "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 " \
-  "(KHTML, like Gecko) Version/17.0 Safari/605.1.15"
-HOMEBREW_GITHUB_PACKAGES_AUTH = ENV.fetch("HOMEBREW_GITHUB_PACKAGES_AUTH").freeze
+  "(KHTML, like Gecko) Version/26.0 Safari/605.1.15"
+HOMEBREW_GITHUB_PACKAGES_AUTH = ENV.fetch("HOMEBREW_GITHUB_PACKAGES_AUTH", "").freeze
 HOMEBREW_DEFAULT_PREFIX = ENV.fetch("HOMEBREW_GENERIC_DEFAULT_PREFIX").freeze
 HOMEBREW_DEFAULT_REPOSITORY = ENV.fetch("HOMEBREW_GENERIC_DEFAULT_REPOSITORY").freeze
 
@@ -51,6 +51,7 @@ HOMEBREW_HOME_PLACEHOLDER = "/$HOME"
 HOMEBREW_CASK_APPDIR_PLACEHOLDER = "$APPDIR"
 
 HOMEBREW_MACOS_NEWEST_UNSUPPORTED = ENV.fetch("HOMEBREW_MACOS_NEWEST_UNSUPPORTED").freeze
+HOMEBREW_MACOS_NEWEST_SUPPORTED = ENV.fetch("HOMEBREW_MACOS_NEWEST_SUPPORTED").freeze
 HOMEBREW_MACOS_OLDEST_SUPPORTED = ENV.fetch("HOMEBREW_MACOS_OLDEST_SUPPORTED").freeze
 HOMEBREW_MACOS_OLDEST_ALLOWED = ENV.fetch("HOMEBREW_MACOS_OLDEST_ALLOWED").freeze
 
@@ -61,8 +62,6 @@ HOMEBREW_PULL_OR_COMMIT_URL_REGEX =
 HOMEBREW_BOTTLES_EXTNAME_REGEX = /\.([a-z0-9_]+)\.bottle\.(?:(\d+)\.)?tar\.gz$/
 
 module Homebrew
-  extend FileUtils
-
   DEFAULT_PREFIX = T.let(ENV.fetch("HOMEBREW_DEFAULT_PREFIX").freeze, String)
   DEFAULT_REPOSITORY = T.let(ENV.fetch("HOMEBREW_DEFAULT_REPOSITORY").freeze, String)
   DEFAULT_CELLAR = "#{DEFAULT_PREFIX}/Cellar".freeze
@@ -140,7 +139,7 @@ require "extend/kernel"
 require "os"
 
 require "extend/array"
-require "extend/cachable"
+require "cachable"
 require "extend/enumerable"
 require "extend/string"
 require "extend/pathname"

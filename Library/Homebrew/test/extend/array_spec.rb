@@ -32,15 +32,15 @@ RSpec.describe Array do
       expect(elements.to_sentence.object_id).not_to eq(elements[0].object_id)
     end
 
-    it "converts a non-String to a sentence" do
+    it "converts a non-String to a sentence" do # rubocop:todo RSpec/AggregateExamples
       expect([1].to_sentence).to eq("1")
     end
 
-    it "converts an array with blank elements to a sentence" do
+    it "converts an array with blank elements to a sentence" do # rubocop:todo RSpec/AggregateExamples
       expect([nil, "one", "", "two", "three"].to_sentence).to eq(", one, , two and three")
     end
 
-    it "does not return a frozen string" do
+    it "does not return a frozen string" do # rubocop:todo RSpec/AggregateExamples
       expect([""].to_sentence).not_to be_frozen
       expect(["one"].to_sentence).not_to be_frozen
       expect(["one", "two"].to_sentence).not_to be_frozen

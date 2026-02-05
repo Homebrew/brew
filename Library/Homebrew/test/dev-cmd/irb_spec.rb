@@ -29,8 +29,8 @@ RSpec.describe Homebrew::DevCmd::Irb do
         .and be_a_success
 
       # TODO: newer Ruby only supports history saving in interactive sessions
-      # and not if you feed in data from a file or stdin like we are doing here.
-      # The test will need to be adjusted for this to work.
+      #       and not if you feed in data from a file or stdin like we are doing here.
+      #       The test will need to be adjusted for this to work.
       # expect(history_file).to exist
     end
   end

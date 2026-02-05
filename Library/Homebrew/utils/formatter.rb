@@ -1,4 +1,4 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
 
 require "utils/tty"
@@ -10,6 +10,7 @@ module Formatter
   COMMAND_DESC_WIDTH = 80
   OPTION_DESC_WIDTH = 45
 
+  sig { params(string: String, color: T.nilable(Symbol)).returns(String) }
   def self.arrow(string, color: nil)
     prefix("==>", string, color)
   end
@@ -17,21 +18,30 @@ module Formatter
   # Format a string as headline.
   #
   # @api internal
+  sig { params(string: String, color: T.nilable(Symbol)).returns(String) }
   def self.headline(string, color: nil)
     arrow("#{Tty.bold}#{string}#{Tty.reset}", color:)
   end
 
+  sig { params(string: Object).returns(String) }
   def self.identifier(string)
     "#{Tty.green}#{string}#{Tty.default}"
   end
 
-  def self.option(string)
+  sig { params(string: String).returns(String) }
+  def self.bold(string)
     "#{Tty.bold}#{string}#{Tty.reset}"
+  end
+
+  sig { params(string: String).returns(String) }
+  def self.option(string)
+    bold(string)
   end
 
   # Format a string as success, with an optional label.
   #
   # @api internal
+  sig { params(string: String, label: T.nilable(String)).returns(String) }
   def self.success(string, label: nil)
     label(label, string, :green)
   end
@@ -39,6 +49,7 @@ module Formatter
   # Format a string as warning, with an optional label.
   #
   # @api internal
+  sig { params(string: T.any(String, Exception), label: T.nilable(String)).returns(String) }
   def self.warning(string, label: nil)
     label(label, string, :yellow)
   end
@@ -46,8 +57,22 @@ module Formatter
   # Format a string as error, with an optional label.
   #
   # @api internal
+  sig { params(string: T.any(String, Exception), label: T.nilable(String)).returns(String) }
   def self.error(string, label: nil)
     label(label, string, :red)
+  end
+
+  # Truncate a string to a specific length.
+  #
+  # @api internal
+  sig { params(string: String, max: Integer, omission: String).returns(String) }
+  def self.truncate(string, max: 30, omission: "...")
+    return string if string.length <= max
+
+    length_with_room_for_omission = max - omission.length
+    truncated = string[0, length_with_room_for_omission]
+
+    "#{truncated}#{omission}"
   end
 
   # Wraps text to fit within a given number of columns using regular expressions that:
@@ -63,6 +88,7 @@ module Formatter
   # so we always wrap one word before an option.
   # @see https://github.com/Homebrew/brew/pull/12672
   # @see https://macromates.com/blog/2006/wrapping-text-with-regular-expressions/
+  sig { params(string: String, width: Integer).returns(String) }
   def self.format_help_text(string, width: 172)
     desc = OPTION_DESC_WIDTH
     indent = width - desc
@@ -73,21 +99,26 @@ module Formatter
           .gsub(/(.{1,#{width}})( +|$)(?!-)\n?/, "\\1\n")
   end
 
+  sig { params(string: T.nilable(T.any(String, URI::Generic))).returns(String) }
   def self.url(string)
     "#{Tty.underline}#{string}#{Tty.no_underline}"
   end
 
+  sig { params(label: T.nilable(String), string: T.any(String, Exception), color: Symbol).returns(String) }
   def self.label(label, string, color)
     label = "#{label}:" unless label.nil?
     prefix(label, string, color)
   end
   private_class_method :label
 
+  sig {
+    params(prefix: T.nilable(String), string: T.any(String, Exception), color: T.nilable(Symbol)).returns(String)
+  }
   def self.prefix(prefix, string, color)
     if prefix.nil? && color.nil?
-      string
+      string.to_s
     elsif prefix.nil?
-      "#{Tty.send(color)}#{string}#{Tty.reset}"
+      "#{Tty.send(T.must(color))}#{string}#{Tty.reset}"
     elsif color.nil?
       "#{prefix} #{string}"
     else
@@ -99,7 +130,8 @@ module Formatter
   # Layout objects in columns that fit the current terminal width.
   #
   # @api internal
-  def self.columns(*objects, gap_size: 2)
+  sig { params(objects: T::Array[String], gap_size: Integer).returns(String) }
+  def self.columns(objects, gap_size: 2)
     objects = objects.flatten.map(&:to_s)
 
     fallback = proc do
@@ -128,7 +160,7 @@ module Formatter
       item_indices_for_row = T.cast(row_index.step(objects.size - 1, rows).to_a, T::Array[Integer])
 
       first_n = T.must(item_indices_for_row[0...-1]).map do |index|
-        objects[index] + "".rjust(col_width - object_lengths.fetch(index))
+        objects.fetch(index) + "".rjust(col_width - object_lengths.fetch(index))
       end
 
       # don't add trailing whitespace to last column
@@ -140,5 +172,48 @@ module Formatter
     end
 
     output.freeze
+  end
+
+  sig {
+    params(
+      size_in_bytes: T.any(Integer, Float),
+      precision:     T.nilable(Integer),
+    ).returns([T.any(Integer, Float), String])
+  }
+  def self.disk_usage_readable_size_unit(size_in_bytes, precision: nil)
+    size = size_in_bytes
+    unit = "B"
+    %w[KB MB GB].each do |next_unit|
+      break if (precision ? size.abs.round(precision) : size.abs) < 1000
+
+      size /= 1000.0
+      unit = next_unit
+    end
+    [size, unit]
+  end
+
+  sig { params(size_in_bytes: T.any(Integer, Float)).returns(String) }
+  def self.disk_usage_readable(size_in_bytes)
+    size, unit = disk_usage_readable_size_unit(size_in_bytes)
+    # avoid trailing zero after decimal point
+    if ((size * 10).to_i % 10).zero?
+      "#{size.to_i}#{unit}"
+    else
+      "#{format("%<size>.1f", size:)}#{unit}"
+    end
+  end
+
+  sig { params(number: Integer).returns(String) }
+  def self.number_readable(number)
+    numstr = number.to_i.to_s
+    (numstr.size - 3).step(1, -3) { |i| numstr.insert(i.to_i, ",") }
+    numstr
+  end
+
+  sig { params(input: String, secrets: T::Array[String]).returns(String) }
+  def self.redact_secrets(input, secrets)
+    secrets.compact
+           .reduce(input) { |str, secret| str.gsub secret, "******" }
+           .freeze
   end
 end

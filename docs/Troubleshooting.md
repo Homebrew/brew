@@ -26,7 +26,7 @@ This document will help you check for common issues and make sure your issue has
 If your problem hasn't been solved or reported, then create an issue:
 
 1. Collect debugging information:
-  * If you have a problem with installing a formula: run `brew gist-logs <formula>` (where `<formula>` is the name of the formula) to upload the logs to a new [Gist](https://gist.github.com).
+  * If you have a problem with installing a formula: run `brew gist-logs <formula>` (where `<formula>` is the name of the formula) to upload the logs to a new [Gist](https://gist.github.com/).
   * If your have a non-formula problem: collect the output of `brew config` and `brew doctor`.
 
 1. Create a new issue on the issue tracker for [Homebrew/homebrew-core](https://github.com/Homebrew/homebrew-core/issues/new/choose), [Homebrew/homebrew-cask](https://github.com/Homebrew/homebrew-cask/issues/new/choose) or [Homebrew/brew](https://github.com/Homebrew/brew/issues/new/choose) and follow the instructions:

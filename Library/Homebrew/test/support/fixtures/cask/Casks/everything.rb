@@ -19,9 +19,12 @@ cask "everything" do
   homepage "https://www.everything.app/"
 
   auto_updates true
-  conflicts_with formula: "nothing"
+  conflicts_with cask: "nothing"
   depends_on cask: "something"
   container type: :naked
+
+  rename "Foobar.app", "Foo.app"
+  rename "Foo.app", "Bar.app"
 
   app "Everything.app"
   installer script: {

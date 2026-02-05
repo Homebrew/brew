@@ -42,18 +42,19 @@ RSpec.describe Homebrew::Services::Cli do
     end
   end
 
-  describe "#check" do
+  describe "#check!" do
     it "checks the input does not exist" do
       expect do
-        services_cli.check([])
-      end.to raise_error(UsageError, "Invalid usage: Formula(e) missing, please provide a formula name or use --all")
+        services_cli.check!([])
+      end.to raise_error(UsageError,
+                         "Invalid usage: Formula(e) missing, please provide a formula name or use `--all`.")
     end
 
     it "checks the input exists" do
+      service = instance_double(Homebrew::Services::FormulaWrapper, name: "name", installed?: false)
       expect do
-        services_cli.check("hello")
-      end.not_to raise_error(UsageError,
-                             "Invalid usage: Formula(e) missing, please provide a formula name or use --all")
+        services_cli.check!([service])
+      end.not_to raise_error
     end
   end
 
@@ -68,12 +69,13 @@ RSpec.describe Homebrew::Services::Cli do
     it "tries but is unable to kill a non existing service" do
       service = instance_double(
         service_string,
-        name:        "example_service",
-        pid?:        true,
-        dest:        Pathname("this_path_does_not_exist"),
-        keep_alive?: false,
+        name:         "example_service",
+        service_name: "homebrew.example_service",
+        pid?:         true,
+        dest:         Pathname("this_path_does_not_exist"),
+        keep_alive?:  false,
       )
-      allow(service).to receive(:service_name)
+      allow(service).to receive(:reset_cache!)
       allow(Homebrew::Services::FormulaWrapper).to receive(:from).and_return(service)
       allow(services_cli).to receive(:running).and_return(["example_service"])
       expect do
@@ -85,9 +87,10 @@ RSpec.describe Homebrew::Services::Cli do
   describe "#run" do
     it "checks missing file causes error" do
       expect(Homebrew::Services::System).not_to receive(:root?)
+      service = instance_double(Homebrew::Services::FormulaWrapper, name: "service_name")
       expect do
-        services_cli.start(["service_name"], "/non/existent/path")
-      end.to raise_error(UsageError, "Invalid usage: Provided service file does not exist")
+        services_cli.start([service], "/non/existent/path")
+      end.to raise_error(UsageError, "Invalid usage: Provided service file does not exist.")
     end
 
     it "checks empty targets cause no error" do
@@ -108,9 +111,10 @@ RSpec.describe Homebrew::Services::Cli do
   describe "#start" do
     it "checks missing file causes error" do
       expect(Homebrew::Services::System).not_to receive(:root?)
+      service = instance_double(Homebrew::Services::FormulaWrapper, name: "service_name")
       expect do
-        services_cli.start(["service_name"], "/hfdkjshksdjhfkjsdhf/fdsjghsdkjhb")
-      end.to raise_error(UsageError, "Invalid usage: Provided service file does not exist")
+        services_cli.start([service], "/hfdkjshksdjhfkjsdhf/fdsjghsdkjhb")
+      end.to raise_error(UsageError, "Invalid usage: Provided service file does not exist.")
     end
 
     it "checks empty targets cause no error" do
@@ -163,7 +167,7 @@ RSpec.describe Homebrew::Services::Cli do
       service = instance_double(Homebrew::Services::FormulaWrapper, name: "name", installed?: false)
       expect do
         services_cli.install_service_file(service, nil)
-      end.to raise_error(UsageError, "Invalid usage: Formula `name` is not installed")
+      end.to raise_error(UsageError, "Invalid usage: Formula `name` is not installed.")
     end
 
     it "checks service file exists" do
@@ -177,7 +181,7 @@ RSpec.describe Homebrew::Services::Cli do
         services_cli.install_service_file(service, nil)
       end.to raise_error(
         UsageError,
-        "Invalid usage: Formula `name` has not implemented #plist, #service or installed a locatable service file",
+        "Invalid usage: Formula `name` has not implemented #plist, #service or provided a locatable service file.",
       )
     end
   end

@@ -9,6 +9,12 @@ module Homebrew
     # Option values use a `nil` default to indicate that the value has not been
     # set.
     class Options < T::Struct
+      # Cookies for curl to use when making a request.
+      prop :cookies, T.nilable(T::Hash[String, String])
+
+      # Header(s) for curl to use when making a request.
+      prop :header, T.nilable(T.any(String, T::Array[String]))
+
       # Whether to use brewed curl.
       prop :homebrew_curl, T.nilable(T::Boolean)
 
@@ -18,13 +24,24 @@ module Homebrew
       # JSON data to use when making a `POST` request.
       prop :post_json, T.nilable(T::Hash[Symbol, T.anything])
 
+      # Referer for curl to use when making a request.
+      prop :referer, T.nilable(String)
+
+      # User agent for curl to use when making a request. Symbol arguments
+      # should use a value supported by {Utils::Curl.curl_args}.
+      prop :user_agent, T.nilable(T.any(String, Symbol))
+
       # Returns a `Hash` of options that are provided as arguments to `url`.
       sig { returns(T::Hash[Symbol, T.untyped]) }
       def url_options
         {
+          cookies:,
+          header:,
           homebrew_curl:,
           post_form:,
           post_json:,
+          referer:,
+          user_agent:,
         }
       end
 
@@ -87,9 +104,13 @@ module Homebrew
       def ==(other)
         return false unless other.is_a?(Options)
 
-        @homebrew_curl == other.homebrew_curl &&
+        @cookies == other.cookies &&
+          @header == other.header &&
+          @homebrew_curl == other.homebrew_curl &&
           @post_form == other.post_form &&
-          @post_json == other.post_json
+          @post_json == other.post_json &&
+          @referer == other.referer &&
+          @user_agent == other.user_agent
       end
       alias eql? ==
 

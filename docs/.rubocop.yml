@@ -37,6 +37,8 @@ Style/TopLevelMethodDefinition:
 Lint/NonAtomicFileOperation:
   Enabled: false
 
-# The markdown linter config files don't need to be typed strict.
+# We're not using Sorbet for the documentation.
 Sorbet/StrictSigil:
+  Enabled: false
+Sorbet/BlockMethodDefinition:
   Enabled: false

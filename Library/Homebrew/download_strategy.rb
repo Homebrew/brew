@@ -5,9 +5,9 @@ require "json"
 require "time"
 require "unpack_strategy"
 require "lazy_object"
-require "cgi"
 require "lock_file"
 require "system_command"
+require "utils/output"
 
 # Need to define this before requiring Mechanize to avoid:
 #   uninitialized constant Mechanize
@@ -28,21 +28,9 @@ class AbstractDownloadStrategy
   include FileUtils
   include Context
   include SystemCommand::Mixin
+  include Utils::Output::Mixin
 
   abstract!
-
-  # Extension for bottle downloads.
-  module Pourable
-    extend T::Helpers
-
-    requires_ancestor { AbstractDownloadStrategy }
-
-    sig { params(block: T.nilable(T.proc.params(arg0: String).returns(T.anything))).returns(T.nilable(T.anything)) }
-    def stage(&block)
-      ohai "Pouring #{basename}"
-      super
-    end
-  end
 
   # The download URL.
   #
@@ -59,12 +47,12 @@ class AbstractDownloadStrategy
   sig { returns(String) }
   attr_reader :name
 
-  sig { returns(T.any(NilClass, String, Version)) }
+  sig { returns(T.nilable(T.any(String, Version))) }
   attr_reader :version
 
   private :meta, :name, :version
 
-  sig { params(url: String, name: String, version: T.any(NilClass, String, Version), meta: T.untyped).void }
+  sig { params(url: String, name: String, version: T.nilable(T.any(String, Version)), meta: T.untyped).void }
   def initialize(url, name, version, **meta)
     @cached_location = T.let(nil, T.nilable(Pathname))
     @ref_type = T.let(nil, T.nilable(Symbol))
@@ -75,14 +63,21 @@ class AbstractDownloadStrategy
     @cache = T.let(meta.fetch(:cache, HOMEBREW_CACHE), Pathname)
     @meta = T.let(meta, T::Hash[Symbol, T.untyped])
     @quiet = T.let(false, T.nilable(T::Boolean))
-    extend Pourable if meta[:bottle]
   end
 
   # Download and cache the resource at {#cached_location}.
   #
   # @api public
-  sig { overridable.params(timeout: T.any(Float, Integer, NilClass)).void }
+  sig { overridable.params(timeout: T.nilable(T.any(Float, Integer))).void }
   def fetch(timeout: nil); end
+
+  # Total bytes downloaded if available.
+  sig { overridable.returns(T.nilable(Integer)) }
+  def fetched_size; end
+
+  # Total download size if available.
+  sig { overridable.returns(T.nilable(Integer)) }
+  def total_size; end
 
   # Location of the cached download.
   #
@@ -112,7 +107,7 @@ class AbstractDownloadStrategy
   # directory.
   #
   # @api public
-  sig { overridable.params(block: T.untyped).void }
+  sig { overridable.params(block: T.nilable(T.proc.void)).void }
   def stage(&block)
     UnpackStrategy.detect(cached_location,
                           prioritize_extension: true,
@@ -123,7 +118,7 @@ class AbstractDownloadStrategy
     chdir(&block) if block
   end
 
-  sig { params(block: T.untyped).void }
+  sig { params(block: T.proc.void).void }
   def chdir(&block)
     entries = Dir["*"]
     raise "Empty archive" if entries.empty?
@@ -134,7 +129,9 @@ class AbstractDownloadStrategy
     end
 
     if File.directory? entries.fetch(0)
-      Dir.chdir(entries.fetch(0), &block)
+      # chdir yields the directory name as an argument, which is unused in our case
+      # However, sorbet requires us to pass a block with matching arity, so we use T.unsafe here
+      Dir.chdir(entries.fetch(0), &T.unsafe(block))
     else
       yield
     end
@@ -163,15 +160,15 @@ class AbstractDownloadStrategy
     cached_location.basename
   end
 
+  sig { override.params(title: T.any(String, Exception), sput: T.anything).void }
+  def ohai(title, *sput)
+    super unless quiet?
+  end
+
   private
 
   sig { params(args: T.anything).void }
   def puts(*args)
-    super unless quiet?
-  end
-
-  sig { params(args: T.anything).void }
-  def ohai(*args)
     super unless quiet?
   end
 
@@ -214,7 +211,7 @@ class VCSDownloadStrategy < AbstractDownloadStrategy
 
   REF_TYPES = [:tag, :branch, :revisions, :revision].freeze
 
-  sig { params(url: String, name: String, version: T.any(NilClass, String, Version), meta: T.untyped).void }
+  sig { params(url: String, name: String, version: T.nilable(T.any(String, Version)), meta: T.untyped).void }
   def initialize(url, name, version, **meta)
     super
     extracted_ref = extract_ref(meta)
@@ -227,7 +224,7 @@ class VCSDownloadStrategy < AbstractDownloadStrategy
   # Download and cache the repository at {#cached_location}.
   #
   # @api public
-  sig { override.params(timeout: T.any(Float, Integer, NilClass)).void }
+  sig { override.params(timeout: T.nilable(T.any(Float, Integer))).void }
   def fetch(timeout: nil)
     end_time = Time.now + timeout if timeout
 
@@ -342,7 +339,7 @@ class AbstractFileDownloadStrategy < AbstractDownloadStrategy
                         .reject { |path| path.extname.end_with?(".incomplete") }
 
     @cached_location = T.let(
-      if downloads.count == 1
+      if downloads.one?
         downloads.fetch(0)
       else
         HOMEBREW_CACHE/"downloads/#{url_sha256}--#{Utils.safe_filename(resolved_basename)}"
@@ -351,9 +348,20 @@ class AbstractFileDownloadStrategy < AbstractDownloadStrategy
     T.must(@cached_location)
   end
 
+  sig { override.returns(T.nilable(Integer)) }
+  def fetched_size
+    File.size?(temporary_path) || File.size?(cached_location)
+  end
+
   sig { returns(Pathname) }
   def basename
     cached_location.basename.sub(/^[\da-f]{64}--/, "")
+  end
+
+  sig { params(target_cached_location: Pathname).void }
+  def create_symlink_to_cached_download(target_cached_location)
+    symlink_location.dirname.mkpath
+    FileUtils.ln_s target_cached_location.relative_path_from(symlink_location.dirname), symlink_location, force: true
   end
 
   private
@@ -381,12 +389,15 @@ class AbstractFileDownloadStrategy < AbstractDownloadStrategy
   def parse_basename(url, search_query: true)
     components = { path: T.let([], T::Array[String]), query: T.let([], T::Array[String]) }
 
-    if url.match?(URI::DEFAULT_PARSER.make_regexp)
+    if url.match?(URI::RFC2396_PARSER.make_regexp)
       uri = URI(url)
 
-      if uri.query
-        query_params = CGI.parse(uri.query)
-        query_params["response-content-disposition"].each do |param|
+      if (uri_query = uri.query.presence)
+        URI.decode_www_form(uri_query).each do |key, param|
+          components[:query] << param if search_query
+
+          next if key != "response-content-disposition"
+
           query_basename = param[/attachment;\s*filename=(["']?)(.+)\1/i, 2]
           return File.basename(query_basename) if query_basename
         end
@@ -394,12 +405,8 @@ class AbstractFileDownloadStrategy < AbstractDownloadStrategy
 
       if (uri_path = uri.path.presence)
         components[:path] = uri_path.split("/").filter_map do |part|
-          URI::DEFAULT_PARSER.unescape(part).presence
+          URI::RFC2396_PARSER.unescape(part).presence
         end
-      end
-
-      if search_query && (uri_query = uri.query.presence)
-        components[:query] = URI.decode_www_form(uri_query).map { _2 }
       end
     else
       components[:path] = [url]
@@ -427,16 +434,17 @@ end
 class CurlDownloadStrategy < AbstractFileDownloadStrategy
   include Utils::Curl
 
-  # url, basename, time, file_size, is_redirection
-  URLMetadata = T.type_alias { [String, String, T.nilable(Time), T.nilable(Integer), T::Boolean] }
+  # url, basename, time, file_size, content_type, is_redirection
+  URLMetadata = T.type_alias { [String, String, T.nilable(Time), T.nilable(Integer), T.nilable(String), T::Boolean] }
 
   sig { returns(T::Array[String]) }
   attr_reader :mirrors
 
-  sig { params(url: String, name: String, version: T.any(NilClass, String, Version), meta: T.untyped).void }
+  sig { params(url: String, name: String, version: T.nilable(T.any(String, Version)), meta: T.untyped).void }
   def initialize(url, name, version, **meta)
     @try_partial = T.let(true, T::Boolean)
     @mirrors = T.let(meta.fetch(:mirrors, []), T::Array[String])
+    @file_size = T.let(nil, T.nilable(Integer))
 
     # Merge `:header` with `:headers`.
     if (header = meta.delete(:header))
@@ -450,7 +458,7 @@ class CurlDownloadStrategy < AbstractFileDownloadStrategy
   # Download and cache the file at {#cached_location}.
   #
   # @api public
-  sig { override.params(timeout: T.any(Float, Integer, NilClass)).void }
+  sig { override.params(timeout: T.nilable(T.any(Float, Integer))).void }
   def fetch(timeout: nil)
     end_time = Time.now + timeout if timeout
 
@@ -471,10 +479,8 @@ class CurlDownloadStrategy < AbstractFileDownloadStrategy
         ohai "Downloading #{url}"
 
         cached_location_valid = cached_location.exist?
-        v = version
-        cached_location_valid = false if v.is_a?(Cask::DSL::Version) && v.latest?
 
-        resolved_url, _, last_modified, file_size, is_redirection = begin
+        resolved_url, _, last_modified, @file_size, content_type, is_redirection = begin
           resolve_url_basename_time_file_size(url, timeout: Utils::Timer.remaining!(end_time))
         rescue ErrorDuringExecution
           raise unless cached_location_valid
@@ -486,10 +492,19 @@ class CurlDownloadStrategy < AbstractFileDownloadStrategy
         # The cached location is no longer fresh if either:
         # - Last-Modified value is newer than the file's timestamp
         # - Content-Length value is different than the file's size
-        cached_location_valid = if cached_location_valid
-          newer_last_modified = last_modified && last_modified > cached_location.mtime
-          different_file_size = file_size&.nonzero? && file_size != cached_location.size
-          !(newer_last_modified || different_file_size)
+        if cached_location_valid && (!content_type.is_a?(String) || !content_type.start_with?("text/"))
+          if last_modified && last_modified > cached_location.mtime
+            ohai "Ignoring #{cached_location}",
+                 "Cached modified time #{cached_location.mtime.iso8601} is before " \
+                 "Last-Modified header: #{last_modified.iso8601}"
+            cached_location_valid = false
+          end
+          if @file_size&.nonzero? && @file_size != cached_location.size
+            ohai "Ignoring #{cached_location}",
+                 "Cached size #{cached_location.size} differs from " \
+                 "Content-Length header: #{@file_size}"
+            cached_location_valid = false
+          end
         end
 
         if cached_location_valid
@@ -504,8 +519,7 @@ class CurlDownloadStrategy < AbstractFileDownloadStrategy
           temporary_path.rename(cached_location.to_s)
         end
 
-        symlink_location.dirname.mkpath
-        FileUtils.ln_s cached_location.relative_path_from(symlink_location.dirname), symlink_location, force: true
+        create_symlink_to_cached_download(cached_location)
       rescue CurlDownloadStrategyError
         raise if urls.empty?
 
@@ -519,27 +533,32 @@ class CurlDownloadStrategy < AbstractFileDownloadStrategy
     end
   end
 
+  sig { override.returns(T.nilable(Integer)) }
+  def total_size
+    @file_size
+  end
+
   sig { override.void }
   def clear_cache
     super
     rm_rf(temporary_path)
   end
 
-  sig { params(timeout: T.any(Float, Integer, NilClass)).returns([T.nilable(Time), Integer]) }
+  sig { params(timeout: T.nilable(T.any(Float, Integer))).returns([T.nilable(Time), Integer]) }
   def resolved_time_file_size(timeout: nil)
-    _, _, time, file_size = resolve_url_basename_time_file_size(url, timeout:)
+    _, _, time, file_size, = resolve_url_basename_time_file_size(url, timeout:)
     [time, T.must(file_size)]
   end
 
   private
 
-  sig { params(timeout: T.any(Float, Integer, NilClass)).returns([String, String]) }
+  sig { params(timeout: T.nilable(T.any(Float, Integer))).returns([String, String]) }
   def resolved_url_and_basename(timeout: nil)
     resolved_url, basename, = resolve_url_basename_time_file_size(url, timeout: nil)
     [resolved_url, basename]
   end
 
-  sig { overridable.params(url: String, timeout: T.any(Float, Integer, NilClass)).returns(URLMetadata) }
+  sig { overridable.params(url: String, timeout: T.nilable(T.any(Float, Integer))).returns(URLMetadata) }
   def resolve_url_basename_time_file_size(url, timeout: nil)
     @resolved_info_cache ||= T.let({}, T.nilable(T::Hash[String, URLMetadata]))
     return @resolved_info_cache.fetch(url) if @resolved_info_cache.include?(url)
@@ -547,7 +566,7 @@ class CurlDownloadStrategy < AbstractFileDownloadStrategy
     begin
       parsed_output = curl_headers(url.to_s, wanted_headers: ["content-disposition"], timeout:)
     rescue ErrorDuringExecution
-      return [url, parse_basename(url), nil, nil, false]
+      return [url, parse_basename(url), nil, nil, nil, false]
     end
 
     parsed_headers = parsed_output.fetch(:responses).map { |r| r.fetch(:headers) }
@@ -599,14 +618,27 @@ class CurlDownloadStrategy < AbstractFileDownloadStrategy
                 .flat_map { |headers| [*headers["content-length"]&.to_i] }
                 .last
 
+    # Fallback to content-range header if content-length is not available.
+    # Content-Range format: "bytes start-end/total" or "bytes */total" or "bytes start-end/*"
+    if file_size.nil? || file_size.zero?
+      file_size = parsed_headers
+                  .flat_map { |headers| [*headers["content-range"]] }
+                  .filter_map { |range| Integer(range.split("/").last, 10, exception: false) }
+                  .last
+    end
+
+    content_type = parsed_headers
+                   .flat_map { |headers| [*headers["content-type"]] }
+                   .last
+
     is_redirection = url != final_url
     basename = filenames.last || parse_basename(final_url, search_query: !is_redirection)
 
-    @resolved_info_cache[url] = [final_url, basename, time.last, file_size, is_redirection]
+    @resolved_info_cache[url] = [final_url, basename, time.last, file_size, content_type, is_redirection]
   end
 
   sig {
-    overridable.params(url: String, resolved_url: String, timeout: T.any(Float, Integer, NilClass))
+    overridable.params(url: String, resolved_url: String, timeout: T.nilable(T.any(Float, Integer)))
                .returns(T.nilable(SystemCommand::Result))
   }
   def _fetch(url:, resolved_url:, timeout:)
@@ -614,7 +646,7 @@ class CurlDownloadStrategy < AbstractFileDownloadStrategy
 
     if Homebrew::EnvConfig.no_insecure_redirect? &&
        url.start_with?("https://") && !resolved_url.start_with?("https://")
-      $stderr.puts "HTTPS to HTTP redirect detected and HOMEBREW_NO_INSECURE_REDIRECT is set."
+      $stderr.puts "HTTPS to HTTP redirect detected and `$HOMEBREW_NO_INSECURE_REDIRECT` is set."
       raise CurlDownloadStrategyError, url
     end
 
@@ -622,7 +654,7 @@ class CurlDownloadStrategy < AbstractFileDownloadStrategy
   end
 
   sig {
-    params(resolved_url: String, to: T.any(Pathname, String), timeout: T.any(Float, Integer, NilClass))
+    params(resolved_url: String, to: T.any(Pathname, String), timeout: T.nilable(T.any(Float, Integer)))
       .returns(T.nilable(SystemCommand::Result))
   }
   def _curl_download(resolved_url, to, timeout)
@@ -646,11 +678,9 @@ class CurlDownloadStrategy < AbstractFileDownloadStrategy
     args
   end
 
-  sig { returns(T::Hash[Symbol, String]) }
+  sig { returns(T::Hash[Symbol, T.any(String, Symbol)]) }
   def _curl_opts
-    return { user_agent: meta.fetch(:user_agent) } if meta.key?(:user_agent)
-
-    {}
+    meta.slice(:user_agent)
   end
 
   sig { override.params(args: String, options: T.untyped).returns(SystemCommand::Result) }
@@ -668,14 +698,14 @@ class CurlDownloadStrategy < AbstractFileDownloadStrategy
   end
 end
 
-# Strategy for downloading a file using homebrew's curl.
+# Strategy for downloading a file using Homebrew's `curl`.
 #
 # @api public
 class HomebrewCurlDownloadStrategy < CurlDownloadStrategy
   private
 
   sig {
-    params(resolved_url: String, to: T.any(Pathname, String), timeout: T.any(Float, Integer, NilClass))
+    params(resolved_url: String, to: T.any(Pathname, String), timeout: T.nilable(T.any(Float, Integer)))
       .returns(T.nilable(SystemCommand::Result))
   }
   def _curl_download(resolved_url, to, timeout)
@@ -700,22 +730,30 @@ class CurlGitHubPackagesDownloadStrategy < CurlDownloadStrategy
   sig { params(resolved_basename: String).returns(T.nilable(String)) }
   attr_writer :resolved_basename
 
-  sig { params(url: String, name: String, version: T.any(NilClass, String, Version), meta: T.untyped).void }
+  sig { params(url: String, name: String, version: T.nilable(T.any(String, Version)), meta: T.untyped).void }
   def initialize(url, name, version, **meta)
     meta[:headers] ||= []
     # GitHub Packages authorization header.
     # HOMEBREW_GITHUB_PACKAGES_AUTH set in brew.sh
-    meta[:headers] << "Authorization: #{HOMEBREW_GITHUB_PACKAGES_AUTH}"
+    # If using a private GHCR mirror with no Authentication set or HOMEBREW_GITHUB_PACKAGES_AUTH is empty
+    # then do not add the header. In all other cases add it.
+    if HOMEBREW_GITHUB_PACKAGES_AUTH.presence && (
+       !Homebrew::EnvConfig.artifact_domain.presence ||
+       Homebrew::EnvConfig.docker_registry_basic_auth_token.presence ||
+       Homebrew::EnvConfig.docker_registry_token.presence
+     )
+      meta[:headers] << "Authorization: #{HOMEBREW_GITHUB_PACKAGES_AUTH}"
+    end
     super
   end
 
   private
 
-  sig { override.params(url: String, timeout: T.any(Float, Integer, NilClass)).returns(URLMetadata) }
+  sig { override.params(url: String, timeout: T.nilable(T.any(Float, Integer))).returns(URLMetadata) }
   def resolve_url_basename_time_file_size(url, timeout: nil)
     return super if @resolved_basename.blank?
 
-    [url, @resolved_basename, nil, nil, false]
+    [url, @resolved_basename, nil, nil, nil, false]
   end
 end
 
@@ -742,7 +780,7 @@ class CurlApacheMirrorDownloadStrategy < CurlDownloadStrategy
     T.must(@combined_mirrors = T.let([*@mirrors, *backup_mirrors], T.nilable(T::Array[String])))
   end
 
-  sig { override.params(url: String, timeout: T.any(Float, Integer, NilClass)).returns(URLMetadata) }
+  sig { override.params(url: String, timeout: T.nilable(T.any(Float, Integer))).returns(URLMetadata) }
   def resolve_url_basename_time_file_size(url, timeout: nil)
     if url == self.url
       preferred = if apache_mirrors["in_attic"]
@@ -775,7 +813,7 @@ class CurlPostDownloadStrategy < CurlDownloadStrategy
   private
 
   sig {
-    override.params(url: String, resolved_url: String, timeout: T.any(Float, Integer, NilClass))
+    override.params(url: String, resolved_url: String, timeout: T.nilable(T.any(Float, Integer)))
             .returns(T.nilable(SystemCommand::Result))
   }
   def _fetch(url:, resolved_url:, timeout:)
@@ -796,7 +834,7 @@ end
 #
 # @api public
 class NoUnzipCurlDownloadStrategy < CurlDownloadStrategy
-  sig { override.params(_block: T.untyped).void }
+  sig { override.params(_block: T.nilable(T.proc.void)).void }
   def stage(&_block)
     UnpackStrategy::Uncompressed.new(cached_location)
                                 .extract(basename:,
@@ -812,7 +850,6 @@ class LocalBottleDownloadStrategy < AbstractFileDownloadStrategy
   sig { params(path: Pathname).void }
   def initialize(path)
     @cached_location = T.let(path, Pathname)
-    extend Pourable
   end
   # rubocop:enable Lint/MissingSuper
 
@@ -826,7 +863,7 @@ end
 #
 # @api public
 class SubversionDownloadStrategy < VCSDownloadStrategy
-  sig { params(url: String, name: String, version: T.any(NilClass, String, Version), meta: T.untyped).void }
+  sig { params(url: String, name: String, version: T.nilable(T.any(String, Version)), meta: T.untyped).void }
   def initialize(url, name, version, **meta)
     super
     @url = @url.sub("svn+http://", "")
@@ -835,7 +872,7 @@ class SubversionDownloadStrategy < VCSDownloadStrategy
   # Download and cache the repository at {#cached_location}.
   #
   # @api public
-  sig { override.params(timeout: T.any(Float, Integer, NilClass)).void }
+  sig { override.params(timeout: T.nilable(T.any(Float, Integer))).void }
   def fetch(timeout: nil)
     if @url.chomp("/") != repo_url || !silent_command("svn", args: ["switch", @url, cached_location]).success?
       clear_cache
@@ -945,7 +982,9 @@ end
 #
 # @api public
 class GitDownloadStrategy < VCSDownloadStrategy
-  sig { params(url: String, name: String, version: T.any(NilClass, String, Version), meta: T.untyped).void }
+  MINIMUM_COMMIT_HASH_LENGTH = 7
+
+  sig { params(url: String, name: String, version: T.nilable(T.any(String, Version)), meta: T.untyped).void }
   def initialize(url, name, version, **meta)
     # Needs to be before the call to `super`, as the VCSDownloadStrategy's
     # constructor calls `cache_tag` and sets the cache path.
@@ -970,12 +1009,14 @@ class GitDownloadStrategy < VCSDownloadStrategy
     Time.parse(silent_command("git", args: ["--git-dir", git_dir, "show", "-s", "--format=%cD"]).stdout)
   end
 
-  # Return last commit's unique identifier for the repository.
+  # Return last commit's unique identifier for the repository if fetched locally.
   #
   # @api public
   sig { override.returns(String) }
   def last_commit
-    silent_command("git", args: ["--git-dir", git_dir, "rev-parse", "--short=7", "HEAD"]).stdout.chomp
+    args = ["--git-dir", git_dir, "rev-parse", "--short=#{MINIMUM_COMMIT_HASH_LENGTH}", "HEAD"]
+    @last_commit ||= silent_command("git", args:).stdout.chomp.presence
+    @last_commit || ""
   end
 
   private
@@ -1107,20 +1148,25 @@ class GitDownloadStrategy < VCSDownloadStrategy
     # Convert any shallow clone to full clone
     if shallow_dir?
       command! "git",
-               args:    ["fetch", "origin", "--unshallow"],
-               chdir:   cached_location,
-               timeout: Utils::Timer.remaining(timeout)
+               args:      ["fetch", "origin", "--unshallow"],
+               chdir:     cached_location,
+               timeout:   Utils::Timer.remaining(timeout),
+               reset_uid: true
     else
       command! "git",
-               args:    ["fetch", "origin"],
-               chdir:   cached_location,
-               timeout: Utils::Timer.remaining(timeout)
+               args:      ["fetch", "origin"],
+               chdir:     cached_location,
+               timeout:   Utils::Timer.remaining(timeout),
+               reset_uid: true
     end
   end
 
   sig { override.params(timeout: T.nilable(Time)).void }
   def clone_repo(timeout: nil)
-    command! "git", args: clone_args, timeout: Utils::Timer.remaining(timeout)
+    command! "git",
+             args:      clone_args,
+             timeout:   Utils::Timer.remaining(timeout),
+             reset_uid: true
 
     command! "git",
              args:    ["config", "homebrew.cacheversion", cache_version],
@@ -1235,21 +1281,23 @@ class GitHubGitDownloadStrategy < GitDownloadStrategy
     @repo = T.let(match_data[:repo], T.nilable(String))
   end
 
+  sig { override.returns(String) }
+  def last_commit
+    @last_commit ||= GitHub.last_commit(@user, @repo, @ref, version, length: MINIMUM_COMMIT_HASH_LENGTH)
+    @last_commit || super
+  end
+
   sig { override.params(commit: T.nilable(String)).returns(T::Boolean) }
   def commit_outdated?(commit)
-    @last_commit ||= GitHub.last_commit(@user, @repo, @ref, version)
-    if @last_commit
-      return true unless commit
-      return true unless @last_commit.start_with?(commit)
+    return true unless commit
+    return super if last_commit.blank?
+    return true unless last_commit.start_with?(commit)
 
-      if GitHub.multiple_short_commits_exist?(@user, @repo, commit)
-        true
-      else
-        T.must(@version).update_commit(commit)
-        false
-      end
+    if GitHub.multiple_short_commits_exist?(@user, @repo, commit)
+      true
     else
-      super
+      T.must(@version).update_commit(commit)
+      false
     end
   end
 
@@ -1282,7 +1330,7 @@ end
 #
 # @api public
 class CVSDownloadStrategy < VCSDownloadStrategy
-  sig { params(url: String, name: String, version: T.any(NilClass, String, Version), meta: T.untyped).void }
+  sig { params(url: String, name: String, version: T.nilable(T.any(String, Version)), meta: T.untyped).void }
   def initialize(url, name, version, **meta)
     super
     @url = T.let(@url.sub(%r{^cvs://}, ""), String)
@@ -1349,7 +1397,7 @@ class CVSDownloadStrategy < VCSDownloadStrategy
     end
 
     command! "cvs",
-             args:    [*quiet_flag, "-d", @url, "checkout", "-d", cached_location.basename, @module],
+             args:    [*quiet_flag, "-d", @url, "checkout", "-d", basename.to_s, @module],
              chdir:   cached_location.dirname,
              timeout: Utils::Timer.remaining(timeout)
   end
@@ -1375,7 +1423,7 @@ end
 #
 # @api public
 class MercurialDownloadStrategy < VCSDownloadStrategy
-  sig { params(url: String, name: String, version: T.any(NilClass, String, Version), meta: T.untyped).void }
+  sig { params(url: String, name: String, version: T.nilable(T.any(String, Version)), meta: T.untyped).void }
   def initialize(url, name, version, **meta)
     super
     @url = T.let(@url.sub(%r{^hg://}, ""), String)
@@ -1463,7 +1511,7 @@ end
 #
 # @api public
 class BazaarDownloadStrategy < VCSDownloadStrategy
-  sig { params(url: String, name: String, version: T.any(NilClass, String, Version), meta: T.untyped).void }
+  sig { params(url: String, name: String, version: T.nilable(T.any(String, Version)), meta: T.untyped).void }
   def initialize(url, name, version, **meta)
     super
     @url = T.let(@url.sub(%r{^bzr://}, ""), String)
@@ -1529,7 +1577,7 @@ end
 #
 # @api public
 class FossilDownloadStrategy < VCSDownloadStrategy
-  sig { params(url: String, name: String, version: T.any(NilClass, String, Version), meta: T.untyped).void }
+  sig { params(url: String, name: String, version: T.nilable(T.any(String, Version)), meta: T.untyped).void }
   def initialize(url, name, version, **meta)
     super
     @url = T.let(@url.sub(%r{^fossil://}, ""), String)
@@ -1541,7 +1589,7 @@ class FossilDownloadStrategy < VCSDownloadStrategy
   sig { override.returns(Time) }
   def source_modified_time
     out = silent_command("fossil", args: ["info", "tip", "-R", cached_location]).stdout
-    Time.parse(T.must(out[/^uuid: +\h+ (.+)$/, 1]))
+    Time.parse(T.must(out[/^(hash|uuid): +\h+ (.+)$/, 1]))
   end
 
   # Return last commit's unique identifier for the repository.
@@ -1550,7 +1598,7 @@ class FossilDownloadStrategy < VCSDownloadStrategy
   sig { override.returns(String) }
   def last_commit
     out = silent_command("fossil", args: ["info", "tip", "-R", cached_location]).stdout
-    T.must(out[/^uuid: +(\h+) .+$/, 1])
+    T.must(out[/^(hash|uuid): +(\h+) .+$/, 1])
   end
 
   sig { override.returns(T::Boolean) }
@@ -1584,7 +1632,7 @@ end
 # Helper class for detecting a download strategy from a URL.
 class DownloadStrategyDetector
   sig {
-    params(url: String, using: T.any(NilClass, Symbol, T::Class[AbstractDownloadStrategy]))
+    params(url: String, using: T.nilable(T.any(Symbol, T::Class[AbstractDownloadStrategy])))
       .returns(T::Class[AbstractDownloadStrategy])
   }
   def self.detect(url, using = nil)
@@ -1596,7 +1644,7 @@ class DownloadStrategyDetector
       detect_from_symbol(using)
     else
       raise TypeError,
-            "Unknown download strategy specification #{using.inspect}"
+            "Unknown download strategy specification: #{using.inspect}"
     end
   end
 
@@ -1610,6 +1658,7 @@ class DownloadStrategyDetector
     when %r{^https?://.+\.git$},
          %r{^git://},
          %r{^https?://git\.sr\.ht/[^/]+/[^/]+$},
+         %r{^https?://tangled\.sh/[^/]+/[^/]+$},
          %r{^ssh://git}
       GitDownloadStrategy
     when %r{^https?://www\.apache\.org/dyn/closer\.cgi},

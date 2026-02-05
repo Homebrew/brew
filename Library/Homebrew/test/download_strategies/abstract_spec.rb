@@ -19,18 +19,4 @@ RSpec.describe AbstractDownloadStrategy do
       expect(strategy.source_modified_time).to eq(File.mtime("foo"))
     end
   end
-
-  context "when specs[:bottle]" do
-    let(:specs) { { bottle: true } }
-
-    it "extends Pourable" do
-      expect(strategy).to be_a(AbstractDownloadStrategy::Pourable)
-    end
-  end
-
-  context "without specs[:bottle]" do
-    it "is does not extend Pourable" do
-      expect(strategy).not_to be_a(AbstractDownloadStrategy::Pourable)
-    end
-  end
 end

@@ -111,7 +111,7 @@ RSpec.describe Sandbox, :needs_macos do
       mktmpdir do |path|
         FileUtils.touch path/"foo"
         sandbox.allow_write_path(path)
-        expect { sandbox.run "chmod", "ug-w", path/"foo" }.not_to raise_error(ErrorDuringExecution)
+        expect { sandbox.run "chmod", "ug-w", path/"foo" }.not_to raise_error
       end
     end
   end
@@ -125,7 +125,7 @@ RSpec.describe Sandbox, :needs_macos do
       mktmpdir do |path|
         FileUtils.touch path/"foo"
         sandbox.allow_write_path(path)
-        expect { sandbox.run "chmod", "4000", path/"foo" }.not_to raise_error(ErrorDuringExecution)
+        expect { sandbox.run "chmod", "4000", path/"foo" }.not_to raise_error
       end
     end
   end

@@ -89,9 +89,12 @@ RSpec.describe Homebrew::Services::System do
       expect(described_class.boot_path.to_s).to eq("/usr/lib/systemd/system")
     end
 
-    it "Unknown - returns no boot path" do
+    it "Unknown - raises an error" do
       allow(described_class).to receive_messages(launchctl?: false, systemctl?: false)
-      expect(described_class.boot_path.to_s).to eq("")
+      expect do
+        described_class.boot_path.to_s
+      end.to raise_error(UsageError,
+                         "Invalid usage: `brew services` is supported only on macOS or Linux (with systemd)!")
     end
   end
 
@@ -108,10 +111,13 @@ RSpec.describe Homebrew::Services::System do
       expect(described_class.user_path.to_s).to eq("/tmp_home/.config/systemd/user")
     end
 
-    it "Unknown - returns no user path" do
+    it "Unknown - raises an error" do
       ENV["HOME"] = "/tmp_home"
       allow(described_class).to receive_messages(launchctl?: false, systemctl?: false)
-      expect(described_class.user_path.to_s).to eq("")
+      expect do
+        described_class.user_path.to_s
+      end.to raise_error(UsageError,
+                         "Invalid usage: `brew services` is supported only on macOS or Linux (with systemd)!")
     end
   end
 

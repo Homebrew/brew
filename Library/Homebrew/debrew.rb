@@ -1,23 +1,26 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
 
-require "mutex_m"
 require "ignorable"
 
 # Helper module for debugging formulae.
 module Debrew
-  extend Mutex_m
-
   # Module for allowing to debug formulae.
   module Formula
+    sig { void }
     def install
       Debrew.debrew { super }
     end
 
+    sig { void }
     def patch
       Debrew.debrew { super }
     end
 
+    sig {
+      # TODO: replace `returns(BasicObject)` with `void` after dropping `return false` handling in test
+      returns(BasicObject)
+    }
     def test
       Debrew.debrew { super }
     end
@@ -25,20 +28,29 @@ module Debrew
 
   # Module for displaying a debugging menu.
   class Menu
-    Entry = Struct.new(:name, :action)
+    class Entry < T::Struct
+      const :name, String
+      const :action, T.proc.void
+    end
 
-    attr_accessor :prompt, :entries
+    sig { returns(T.nilable(String)) }
+    attr_accessor :prompt
+
+    sig { returns(T::Array[Entry]) }
+    attr_accessor :entries
 
     sig { void }
     def initialize
-      @entries = []
+      @entries = T.let([], T::Array[Entry])
     end
 
+    sig { params(name: Symbol, action: T.proc.void).void }
     def choice(name, &action)
-      entries << Entry.new(name.to_s, action)
+      entries << Entry.new(name: name.to_s, action:)
     end
 
-    def self.choose
+    sig { params(_block: T.proc.params(menu: Menu).void).void }
+    def self.choose(&_block)
       menu = new
       yield menu
 
@@ -64,22 +76,28 @@ module Debrew
         end
       end
 
-      choice[:action].call
+      choice.action.call
     end
   end
 
-  @active = false
-  @debugged_exceptions = Set.new
+  @mutex = T.let(nil, T.nilable(Mutex))
+  @debugged_exceptions = T.let(Set.new, T::Set[Exception])
 
   class << self
+    sig { returns(T::Set[Exception]) }
     attr_reader :debugged_exceptions
 
     sig { returns(T::Boolean) }
-    def active? = @active
+    def active? = !@mutex.nil?
   end
 
-  def self.debrew
-    @active = true
+  sig {
+    type_parameters(:U)
+      .params(_block: T.proc.returns(T.type_parameter(:U)))
+      .returns(T.type_parameter(:U))
+  }
+  def self.debrew(&_block)
+    @mutex = Mutex.new
     Ignorable.hook_raise
 
     begin
@@ -90,15 +108,16 @@ module Debrew
       e.ignore if debug(e) == :ignore # execution jumps back to where the exception was thrown
     ensure
       Ignorable.unhook_raise
-      @active = false
+      @mutex = nil
     end
   end
 
+  sig { params(exception: Exception).returns(Symbol) }
   def self.debug(exception)
-    raise(exception) if !active? || !debugged_exceptions.add?(exception) || !mu_try_lock
+    raise(exception) if !active? || !debugged_exceptions.add?(exception) || !@mutex&.try_lock
 
     begin
-      puts exception.backtrace.first
+      puts exception.backtrace&.first
       puts Formatter.error(exception, label: exception.class.name)
 
       loop do
@@ -115,7 +134,7 @@ module Debrew
               set_trace_func proc { |event, _, _, id, binding, klass|
                 if klass == Object && id == :raise && event == "return"
                   set_trace_func(nil)
-                  mu_synchronize do
+                  @mutex.synchronize do
                     require "debrew/irb"
                     IRB.start_within(binding)
                   end
@@ -133,7 +152,7 @@ module Debrew
         end
       end
     ensure
-      mu_unlock
+      @mutex.unlock
     end
   end
 end

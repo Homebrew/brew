@@ -110,8 +110,8 @@ Don't follow the advice here but fix by using
 
 When installing Homebrew, if the initial download fails with something like:
 
-    error: Not a valid ref: refs/remotes/origin/master
-    fatal: ambiguous argument 'refs/remotes/origin/master': unknown revision or path not in the working tree.
+    error: Not a valid ref: refs/remotes/origin/main
+    fatal: ambiguous argument 'refs/remotes/origin/main': unknown revision or path not in the working tree.
     Use '--' to separate paths from revisions, like this:
     'git <command> [<revision>...] -- [<file>...]'
 
@@ -167,7 +167,7 @@ for replacements for deprecated, disabled, or removed formulae.
 
 Once you are satisfied with the state of your new `/opt/homebrew` Homebrew installation,
 you can uninstall the old `/usr/local` installation.
-Download and run [the uninstaller](https://github.com/Homebrew/install/#uninstall-homebrew) script:
+Download and run the [uninstaller script](https://github.com/Homebrew/install/#uninstall-homebrew):
 
 ```sh
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/uninstall.sh)" -- --path=/usr/local
@@ -229,7 +229,7 @@ Help us by [submitting a fix](https://github.com/Homebrew/homebrew-cask/blob/HEA
 
 ### Cask - source is not there
 
-First, you need to identify which artifact is not being handled correctly anymore. It’s explicit in the error message: if it says `It seems the App source…'` then the problem is with the [`app`](https://docs.brew.sh/Cask-Cookbook#stanza-app) stanza. This pattern is the same across [all artifacts](https://docs.brew.sh/Cask-Cookbook#at-least-one-artifact-stanza-is-also-required).
+First, you need to identify which artifact is not being handled correctly anymore. It’s explicit in the error message: if it says `It seems the App source…'` then the problem is with the [`app`](Cask-Cookbook.md#stanza-app) stanza. This pattern is the same across [all artifacts](Cask-Cookbook.md#at-least-one-artifact-stanza-is-also-required).
 
 Fixing this error is typically easy, and requires only a bit of time on your part. Start by downloading the package for the cask: `brew fetch <cask_name>`. The last line of output will inform you of the location of the download. Navigate there and manually unpack it. As an example, let's say the structure inside the archive is as follows:
 
@@ -246,19 +246,19 @@ Now, if we find this when looking at the cask with `brew cat <cask_name>`:
 
 The cask expects `SomeApp.app` to be in the top directory of the archive (see how it says simply `SomeApp.app`) but the developer has since moved it to be inside a `Files` directory. All we have to do is update that line of the cask to follow the new structure: `app "Files/SomeApp.app"`.
 
-Note that occasionally the app’s name changes completely (from `SomeApp.app` to `OtherApp.app`, let's say). In these instances, the filename of the cask itself, as well as its token, must also change. Consult the [`token reference`](https://docs.brew.sh/Cask-Cookbook#token-reference) for complete instructions on the new name.
+Note that occasionally the app’s name changes completely (from `SomeApp.app` to `OtherApp.app`, let's say). In these instances, the filename of the cask itself, as well as its token, must also change. Consult the [`token reference`](Cask-Cookbook.md#token-reference) for complete instructions on the new name.
 
 Help us by [submitting a fix](https://github.com/Homebrew/homebrew-cask/blob/HEAD/CONTRIBUTING.md#updating-a-cask). If you get stumped, [open an issue](https://github.com/Homebrew/homebrew-cask/issues/new?template=01_bug_report.md) explaining your steps so far and where you’re having trouble.
 
 ### Cask - wrong number of arguments
 
-Make sure the issue really lies with your macOS version. To do so, try to install the software manually. If it is incompatible with your macOS version, it will tell you. In that case, there is nothing we can do to help you install the software, but we can add a [`depends_on macos:`](https://docs.brew.sh/Cask-Cookbook#depends_on-macos) stanza to prevent the cask from being installed on incompatible macOS versions.
+Make sure the issue really lies with your macOS version. To do so, try to install the software manually. If it is incompatible with your macOS version, it will tell you. In that case, there is nothing we can do to help you install the software, but we can add a [`depends_on macos:`](Cask-Cookbook.md#depends_on-macos) stanza to prevent the cask from being installed on incompatible macOS versions.
 
 Help us by [submitting a fix](https://github.com/Homebrew/homebrew-cask/blob/HEAD/CONTRIBUTING.md#updating-a-cask). If you get stumped, [open an issue](https://github.com/Homebrew/homebrew-cask/issues/new?template=01_bug_report.md) explaining your steps so far and where you’re having trouble.
 
 ## Other local issues
 
-If your Homebrew installation gets messed up (and fixing the issues found by `brew doctor` doesn't solve the problem), reinstalling Homebrew may help to reset to a normal state. To easily reinstall Homebrew, use `brew bundle` to automatically restore your installed formulae and casks. To do so, run `brew bundle dump`, [uninstall](https://docs.brew.sh/FAQ#how-do-i-uninstall-homebrew), [reinstall](https://docs.brew.sh/Installation) and run `brew bundle install`.
+If your Homebrew installation gets messed up (and fixing the issues found by `brew doctor` doesn't solve the problem), reinstalling Homebrew may help to reset to a normal state. To easily reinstall Homebrew, use `brew bundle` to automatically restore your installed formulae and casks. To do so, run `brew bundle dump`, [uninstall](FAQ.md#how-do-i-uninstall-homebrew), [reinstall](Installation.md) and run `brew bundle install`.
 
 ## Possible `curl` issues
 

@@ -7,14 +7,14 @@ RSpec.describe Formula do
   describe "#uses_from_macos" do
     before do
       allow(OS).to receive(:mac?).and_return(true)
-      allow(OS::Mac).to receive(:version).and_return(MacOSVersion.from_symbol(:sierra))
+      allow(OS::Mac).to receive(:version).and_return(MacOSVersion.from_symbol(:sonoma))
     end
 
     it "adds a macOS dependency to all specs if the OS version meets requirements" do
       f = formula "foo" do
         url "foo-1.0"
 
-        uses_from_macos("foo", since: :el_capitan)
+        uses_from_macos("foo", since: :big_sur)
       end
 
       expect(f.class.stable.deps).to be_empty
@@ -29,7 +29,7 @@ RSpec.describe Formula do
       f = formula "foo" do
         url "foo-1.0"
 
-        uses_from_macos("foo", since: :high_sierra)
+        uses_from_macos("foo", since: :tahoe)
       end
 
       expect(f.class.stable.deps).not_to be_empty

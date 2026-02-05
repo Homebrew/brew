@@ -13,12 +13,12 @@ class User < SimpleDelegator
   # Return whether the user has an active GUI session.
   sig { returns(T::Boolean) }
   def gui?
-    out, _, status = system_command "who"
+    out, _, status = system_command("who").to_a
     return false unless status.success?
 
     out.lines
        .map(&:split)
-       .any? { |user, type,| user == self && type == "console" }
+       .any? { |user, type,| to_s == user && type == "console" }
   end
 
   # Return the current user.
@@ -31,4 +31,8 @@ class User < SimpleDelegator
 
     @current = T.let(new(pwuid.name), T.nilable(T.attached_class))
   end
+
+  # This explicit delegator exists to make to_s visible to sorbet.
+  sig { returns(String) }
+  def to_s = __getobj__.to_s
 end

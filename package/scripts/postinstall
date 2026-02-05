@@ -93,3 +93,12 @@ mkdir -vp "${user_api_cache_dir}"
 mv -v "${homebrew_directory}/cache_api/"* "${user_api_cache_dir}"
 chown -R "${homebrew_pkg_user}:staff" "${user_cache_dir}"
 rm -vrf "${homebrew_directory}/cache_api"
+
+# create paths.d file for /opt/homebrew installs
+# (/usr/local/bin is already in the PATH)
+if [[ -d "/etc/paths.d" && "${homebrew_directory}" == "/opt/homebrew" ]]
+then
+  mkdir -vp /etc/paths.d
+  echo "/opt/homebrew/bin" >/etc/paths.d/homebrew
+  chown root:wheel /etc/paths.d/homebrew
+fi

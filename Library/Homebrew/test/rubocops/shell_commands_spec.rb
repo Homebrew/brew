@@ -26,19 +26,19 @@ RSpec.describe RuboCop::Cop::Homebrew::ShellCommands do
     end
 
     it "reports and corrects an offense when `system` arguments involving interpolation should be separated" do
-      expect_offense(<<~RUBY)
+      expect_offense(<<~'RUBY')
         class Foo < Formula
           def install
-            system "\#{bin}/foo bar"
-                   ^^^^^^^^^^^^^^^^ Homebrew/ShellCommands: Separate `system` commands into `"\#{bin}/foo", "bar"`
+            system "#{bin}/foo bar"
+                   ^^^^^^^^^^^^^^^^ Homebrew/ShellCommands: Separate `system` commands into `"#{bin}/foo", "bar"`
           end
         end
       RUBY
 
-      expect_correction(<<~RUBY)
+      expect_correction(<<~'RUBY')
         class Foo < Formula
           def install
-            system "\#{bin}/foo", "bar"
+            system "#{bin}/foo", "bar"
           end
         end
       RUBY
@@ -151,19 +151,19 @@ RSpec.describe RuboCop::Cop::Homebrew::ShellCommands do
     end
 
     it "reports and corrects an offense when `Utils.popen_read` arguments with interpolation are unseparated" do
-      expect_offense(<<~RUBY)
+      expect_offense(<<~'RUBY')
         class Foo < Formula
           def install
-            Utils.popen_read("\#{bin}/foo bar")
-                             ^^^^^^^^^^^^^^^^ Homebrew/ShellCommands: Separate `Utils.popen_read` commands into `"\#{bin}/foo", "bar"`
+            Utils.popen_read("#{bin}/foo bar")
+                             ^^^^^^^^^^^^^^^^ Homebrew/ShellCommands: Separate `Utils.popen_read` commands into `"#{bin}/foo", "bar"`
           end
         end
       RUBY
 
-      expect_correction(<<~RUBY)
+      expect_correction(<<~'RUBY')
         class Foo < Formula
           def install
-            Utils.popen_read("\#{bin}/foo", "bar")
+            Utils.popen_read("#{bin}/foo", "bar")
           end
         end
       RUBY

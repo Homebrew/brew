@@ -332,7 +332,7 @@ RSpec.describe Homebrew::Completions do
               '--quiet[Make some output more quiet]' \\
               '--verbose[Make some output more verbose]' \\
               - formula \\
-              '*::formula:__brew_formulae'
+              '*:formula:__brew_formulae'
           }
         COMPLETION
       end
@@ -357,10 +357,10 @@ RSpec.describe Homebrew::Completions do
       it "returns appropriate completion for a command with multiple named arg types" do
         completion = described_class.generate_zsh_subcommand_completion("livecheck")
         expect(completion).to match(
-          /'*::formula:__brew_formulae'/,
+          /'*:formula:__brew_formulae'/,
         )
         expect(completion).to match(
-          /'*::cask:__brew_casks'\n}$/,
+          /'*:cask:__brew_casks'\n}$/,
         )
       end
     end

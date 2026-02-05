@@ -49,7 +49,7 @@ module Homebrew
       sig { params(tap: Tap).returns(T::Array[Formula]) }
       def installed_formulae_for(tap:)
         tap.formula_names.filter_map do |formula_name|
-          next unless installed_formulae_names.include?(T.must(formula_name.split("/").last))
+          next unless installed_formulae_names.include?(formula_name.split("/").fetch(-1))
 
           formula = begin
             Formulary.factory(formula_name)
@@ -68,7 +68,7 @@ module Homebrew
       sig { params(tap: Tap).returns(T::Array[Cask::Cask]) }
       def installed_casks_for(tap:)
         tap.cask_tokens.filter_map do |cask_token|
-          next unless installed_cask_tokens.include?(T.must(cask_token.split("/").last))
+          next unless installed_cask_tokens.include?(cask_token.split("/").fetch(-1))
 
           cask = begin
             Cask::CaskLoader.load(cask_token)

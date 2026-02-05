@@ -42,7 +42,7 @@ RSpec.describe MachOShim do
     end
 
     specify "Mach-O executable" do
-      pn = Pathname.new("#{TEST_FIXTURE_DIR}/mach/a.out")
+      pn = MachOPathname.wrap("#{TEST_FIXTURE_DIR}/mach/a.out")
       expect(pn).to be_universal
       expect(pn).not_to be_i386
       expect(pn).not_to be_x86_64
@@ -94,7 +94,7 @@ RSpec.describe MachOShim do
     end
 
     specify "non-Mach-O" do
-      pn = Pathname.new("#{TEST_FIXTURE_DIR}/tarballs/testball-0.1.tbz")
+      pn = MachOPathname.wrap("#{TEST_FIXTURE_DIR}/tarballs/testball-0.1.tbz")
       expect(pn).not_to be_universal
       expect(pn).not_to be_i386
       expect(pn).not_to be_x86_64
@@ -109,7 +109,7 @@ RSpec.describe MachOShim do
   end
 
   describe "text executables" do
-    let(:pn) { HOMEBREW_PREFIX/"an_executable" }
+    let(:pn) { MachOPathname.wrap(HOMEBREW_PREFIX/"an_executable") }
 
     after { pn.unlink }
 

@@ -24,10 +24,6 @@ def mac?
   RUBY_PLATFORM[/darwin/]
 end
 
-def high_sierra_or_later?
-  mac? && ENV["HOMEBREW_MACOS_VERSION_NUMERIC"].to_s.to_i >= 101300
-end
-
 def linux?
   RUBY_PLATFORM[/linux/]
 end
@@ -55,7 +51,7 @@ class Cmd
     @deps = Set.new(ENV.fetch("HOMEBREW_DEPENDENCIES", "").split(","))
     @formula_prefix = ENV["HOMEBREW_FORMULA_PREFIX"]
     @formula_buildpath = ENV["HOMEBREW_FORMULA_BUILDPATH"]
-    # matches opt or cellar prefix and formula name
+    # matches opt or Cellar prefix and formula name
     @keg_regex = %r{(#{Regexp.escape(opt)}|#{Regexp.escape(cellar)})/([\w+-.@]+)}
   end
 
@@ -216,7 +212,7 @@ class Cmd
       # used for -Xpreprocessor -fopenmp
       args << arg << enum.next
     when /-mmacosx-version-min=(\d+)\.(\d+)/
-      if high_sierra_or_later? && Regexp.last_match(1) == "10" && Regexp.last_match(2).to_i < 9
+      if Regexp.last_match(1) == "10" && Regexp.last_match(2).to_i < 9
         arg = "-mmacosx-version-min=10.9"
       end
       args << arg
@@ -281,7 +277,7 @@ class Cmd
       true
     # first two paths: reject references to Cellar or opt paths
     # for unspecified dependencies
-    elsif path.start_with?(cellar) || path.start_with?(opt)
+    elsif path.start_with?(cellar, opt)
       dep = path[keg_regex, 2]
       dep && @deps.include?(dep)
     elsif path.start_with?(prefix, cachedir, tmpdir)
@@ -324,6 +320,9 @@ class Cmd
     args << "-std=c++11" if cxx11?
     args << "-stdlib=libc++" if libcxx?
     args << "-stdlib=libstdc++" if libstdcxx?
+    if ENV["HOMEBREW_CC"] == "llvm_clang" && mac?
+      args << "-I#{ENV["HOMEBREW_LIBRARY"]}/Homebrew/shims/mac/shared/include/llvm"
+    end
     args
   end
 
@@ -369,9 +368,13 @@ class Cmd
     end
     args += rpath_flags("#{wl}-rpath=", rpath_paths)
     args += ["#{wl}--dynamic-linker=#{dynamic_linker_path}"] if dynamic_linker_path
-    # Use -rpath-link to make sure linker uses versioned glibc rather than the system glibc for indirect
+    # Use -rpath-link to make sure linker uses brew glibc rather than the system glibc for indirect
     # dependencies because -L will only handle direct dependencies.
-    args << "#{wl}-rpath-link=#{@opt}/#{versioned_glibc_dep}/lib" if versioned_glibc_dep
+    if versioned_glibc_dep
+      args << "#{wl}-rpath-link=#{@opt}/#{versioned_glibc_dep}/lib"
+    else
+      args << "#{wl}-rpath-link=#{@opt}/glibc/lib"
+    end
     args
   end
 
@@ -407,7 +410,7 @@ class Cmd
   end
 
   def system_library_paths
-    paths = ["#{sysroot}/usr/lib"]
+    paths = [canonical_path("#{sysroot}/usr/lib")]
     paths << "/usr/local/lib" if !sysroot && !ENV["SDKROOT"]
     paths
   end
@@ -524,6 +527,7 @@ end
 def log(basename, argv, tool, args)
   return unless ENV.key?("HOMEBREW_CC_LOG_PATH")
 
+  log_filename = "#{ENV["HOMEBREW_CC_LOG_PATH"].delete_suffix(".log")}.cc.log"
   adds = args - argv
   dels = argv - args
 
@@ -532,7 +536,7 @@ def log(basename, argv, tool, args)
   s << "superenv removed:  #{dels.join(" ")}\n" unless dels.empty?
   s << "superenv added:    #{adds.join(" ")}\n" unless adds.empty?
   s << "superenv executed: #{tool} #{args.join(" ")}\n\n"
-  File.open("#{ENV["HOMEBREW_CC_LOG_PATH"]}.cc", "a+") { |f| f.write(s) }
+  File.open(log_filename, "a+") { |f| f.write(s) }
 end
 
 def remove_superbin_from_path(paths)

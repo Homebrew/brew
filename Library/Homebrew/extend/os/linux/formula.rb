@@ -1,4 +1,4 @@
-# typed: true # rubocop:disable Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
 
 module OS
@@ -23,13 +23,14 @@ module OS
         "$ORIGIN"
       end
 
-      sig { params(targets: T.nilable(T.any(Pathname, String))).void }
+      sig { params(targets: T.nilable(T.any(::Pathname, String))).void }
       def deuniversalize_machos(*targets); end
 
       sig { params(spec: SoftwareSpec).void }
       def add_global_deps_to_spec(spec)
         return unless ::DevelopmentTools.needs_build_formulae?
 
+        @global_deps ||= T.let(nil, T.nilable(T::Array[Dependency]))
         @global_deps ||= begin
           dependency_collector = spec.dependency_collector
           related_formula_names = Set.new([
@@ -47,7 +48,7 @@ module OS
 
       sig { returns(T::Boolean) }
       def valid_platform?
-        requirements.none?(MacOSRequirement)
+        requirements.none? { |r| r.is_a?(MacOSRequirement) && !r.version_specified? }
       end
     end
   end

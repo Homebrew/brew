@@ -13,7 +13,7 @@ RSpec.describe Cask::Upgrade, :cask do
   let(:auto_updates_path) { auto_updates.config.appdir.join("MyFancyApp.app") }
   let(:auto_updates) { Cask::CaskLoader.load("auto-updates") }
   let(:local_transmission_path) { local_transmission.config.appdir.join("Transmission.app") }
-  let(:local_transmission) { Cask::CaskLoader.load("local-transmission") }
+  let(:local_transmission) { Cask::CaskLoader.load("local-transmission-zip") }
   let(:local_caffeine_path) { local_caffeine.config.appdir.join("Caffeine.app") }
   let(:local_caffeine) { Cask::CaskLoader.load("local-caffeine") }
   let(:renamed_app) { Cask::CaskLoader.load("renamed-app") }
@@ -25,21 +25,20 @@ RSpec.describe Cask::Upgrade, :cask do
     parser.args
   end
 
-  before do
-    installed.each do |cask|
-      Cask::Installer.new(Cask::CaskLoader.load(cask_path(cask))).install
-    end
-  end
-
   context "when the upgrade is a dry run" do
-    let(:installed) do
+    # Use stub installation for dry-run tests since they mock upgrade_cask
+    # and only need to verify installation state, not perform real upgrades.
+    # This avoids downloading and extracting archives, significantly speeding up tests.
+    before do
       [
         "outdated/local-caffeine",
-        "outdated/local-transmission",
+        "outdated/local-transmission-zip",
         "outdated/auto-updates",
         "outdated/version-latest",
         "outdated/renamed-app",
-      ]
+      ].each do |cask_name|
+        InstallHelper.stub_cask_installation(Cask::CaskLoader.load(cask_path(cask_name)))
+      end
     end
 
     describe 'without --greedy it ignores the Casks with "version latest" or "auto_updates true"' do
@@ -59,7 +58,7 @@ RSpec.describe Cask::Upgrade, :cask do
         expect(renamed_app_new_path).not_to be_a_directory
         expect(renamed_app.installed_version).to eq "1.0.0"
 
-        described_class.upgrade_casks(dry_run: true, args:)
+        described_class.upgrade_casks!(dry_run: true, args:)
 
         expect(local_caffeine).to be_installed
         expect(local_caffeine_path).to be_a_directory
@@ -86,7 +85,7 @@ RSpec.describe Cask::Upgrade, :cask do
         expect(local_transmission_path).to be_a_directory
         expect(local_transmission.installed_version).to eq "2.60"
 
-        described_class.upgrade_casks(local_caffeine, dry_run: true, args:)
+        described_class.upgrade_casks!(local_caffeine, dry_run: true, args:)
 
         expect(local_caffeine).to be_installed
         expect(local_caffeine_path).to be_a_directory
@@ -113,7 +112,7 @@ RSpec.describe Cask::Upgrade, :cask do
         expect(renamed_app_new_path).not_to be_a_directory
         expect(renamed_app.installed_version).to eq "1.0.0"
 
-        described_class.upgrade_casks(local_caffeine, auto_updates, dry_run: true, args:)
+        described_class.upgrade_casks!(local_caffeine, auto_updates, dry_run: true, args:)
 
         expect(local_caffeine).to be_installed
         expect(local_caffeine_path).to be_a_directory
@@ -156,7 +155,7 @@ RSpec.describe Cask::Upgrade, :cask do
         version_latest.download_sha_path.write("fake download sha")
         expect(version_latest.outdated_download_sha?).to be(true)
 
-        described_class.upgrade_casks(greedy: true, dry_run: true, args:)
+        described_class.upgrade_casks!(greedy: true, dry_run: true, args:)
 
         expect(local_caffeine).to be_installed
         expect(local_caffeine_path).to be_a_directory
@@ -186,7 +185,7 @@ RSpec.describe Cask::Upgrade, :cask do
         expect(auto_updates_path).to be_a_directory
         expect(auto_updates.installed_version).to eq "2.57"
 
-        described_class.upgrade_casks(auto_updates, dry_run: true, greedy: true, args:)
+        described_class.upgrade_casks!(auto_updates, dry_run: true, greedy: true, args:)
 
         expect(auto_updates).to be_installed
         expect(auto_updates_path).to be_a_directory
@@ -203,7 +202,7 @@ RSpec.describe Cask::Upgrade, :cask do
         version_latest.download_sha_path.write("fake download sha")
         expect(version_latest.outdated_download_sha?).to be(true)
 
-        described_class.upgrade_casks(version_latest, dry_run: true, greedy: true, args:)
+        described_class.upgrade_casks!(version_latest, dry_run: true, greedy: true, args:)
 
         expect(version_latest).to be_installed
         expect(version_latest_paths).to all be_a_directory
@@ -214,16 +213,22 @@ RSpec.describe Cask::Upgrade, :cask do
   end
 
   context "when an upgrade failed" do
-    let(:installed) do
+    # These tests perform actual upgrades and test rollback behavior,
+    # so they need full real installations.
+    before do
       [
         "outdated/bad-checksum",
         "outdated/will-fail-if-upgraded",
-      ]
+      ].each do |cask|
+        Cask::Installer.new(Cask::CaskLoader.load(cask_path(cask))).install
+      end
     end
 
-    output_reverted = Regexp.new <<~EOS
-      Warning: Reverting upgrade for Cask .*
-    EOS
+    let(:output_reverted) do
+      Regexp.new <<~EOS
+        Warning: Reverting upgrade for Cask .*
+      EOS
+    end
 
     it "restores the old Cask if the upgrade failed" do
       will_fail_if_upgraded = Cask::CaskLoader.load("will-fail-if-upgraded")
@@ -234,7 +239,7 @@ RSpec.describe Cask::Upgrade, :cask do
       expect(will_fail_if_upgraded.installed_version).to eq "1.2.2"
 
       expect do
-        described_class.upgrade_casks(will_fail_if_upgraded, args:)
+        described_class.upgrade_casks!(will_fail_if_upgraded, args:)
       end.to raise_error(Cask::CaskError).and output(output_reverted).to_stderr
 
       expect(will_fail_if_upgraded).to be_installed
@@ -252,7 +257,7 @@ RSpec.describe Cask::Upgrade, :cask do
       expect(bad_checksum.installed_version).to eq "1.2.2"
 
       expect do
-        described_class.upgrade_casks(bad_checksum, args:)
+        described_class.upgrade_casks!(bad_checksum, args:)
       end.to raise_error(ChecksumMismatchError).and(not_to_output(output_reverted).to_stderr)
 
       expect(bad_checksum).to be_installed
@@ -263,12 +268,16 @@ RSpec.describe Cask::Upgrade, :cask do
   end
 
   context "when there were multiple failures" do
-    let(:installed) do
+    # These tests perform actual upgrades and test error handling,
+    # so they need full real installations.
+    before do
       [
         "outdated/bad-checksum",
-        "outdated/local-transmission",
+        "outdated/local-transmission-zip",
         "outdated/bad-checksum2",
-      ]
+      ].each do |cask|
+        Cask::Installer.new(Cask::CaskLoader.load(cask_path(cask))).install
+      end
     end
 
     it "does not end the upgrade process" do
@@ -291,7 +300,7 @@ RSpec.describe Cask::Upgrade, :cask do
       expect(bad_checksum_2.installed_version).to eq "1.2.2"
 
       expect do
-        described_class.upgrade_casks(args:)
+        described_class.upgrade_casks!(args:)
       end.to raise_error(Cask::MultipleCaskErrors)
 
       expect(bad_checksum).to be_installed

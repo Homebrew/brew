@@ -5,13 +5,9 @@
 # work as the first item in `brew.rb` so we can load gems with Bundler when
 # needed before anything else is loaded (e.g. `json`).
 
-require "English"
+Homebrew::FastBootRequire.from_rubylibdir("English")
 
 module Homebrew
-  # Keep in sync with the `Gemfile.lock`'s BUNDLED WITH.
-  # After updating this, run `brew vendor-gems --update=--bundler`.
-  HOMEBREW_BUNDLER_VERSION = "2.5.20"
-
   # Bump this whenever a committed vendored gem is later added to or exclusion removed from gitignore.
   # This will trigger it to reinstall properly if `brew install-bundler-gems` needs it.
   VENDOR_VERSION = 7
@@ -41,7 +37,6 @@ module Homebrew
   private_class_method :bundler_definition
 
   def self.valid_gem_groups
-    install_bundler!
     require "bundler"
 
     Bundler.with_unbundled_env do
@@ -58,7 +53,7 @@ module Homebrew
 
   def self.ohai_if_defined(message)
     if defined?(ohai)
-      $stderr.ohai message
+      ohai message
     else
       $stderr.puts "==> #{message}"
     end
@@ -66,7 +61,7 @@ module Homebrew
 
   def self.opoo_if_defined(message)
     if defined?(opoo)
-      $stderr.opoo message
+      opoo message
     else
       $stderr.puts "Warning: #{message}"
     end
@@ -89,10 +84,14 @@ module Homebrew
 
     # Match where our bundler gems are.
     gem_home = "#{RUBY_BUNDLE_VENDOR_DIRECTORY}/#{RbConfig::CONFIG["ruby_version"]}"
+    homebrew_cache = ENV.fetch("HOMEBREW_CACHE", nil)
+    gem_cache = "#{homebrew_cache}/gem-spec-cache" if homebrew_cache
+
     Gem.paths = {
-      "GEM_HOME" => gem_home,
-      "GEM_PATH" => gem_home,
-    }
+      "GEM_HOME"       => gem_home,
+      "GEM_PATH"       => gem_home,
+      "GEM_SPEC_CACHE" => gem_cache,
+    }.compact
 
     # Set TMPDIR so Xcode's `make` doesn't fall back to `/var/tmp/`,
     # which may be not user-writable.
@@ -110,6 +109,7 @@ module Homebrew
     # We don't do this unless requested as some formulae may invoke system Ruby instead of ours.
     ENV["GEM_HOME"] = gem_home
     ENV["GEM_PATH"] = gem_home
+    ENV["GEM_SPEC_CACHE"] = gem_cache if gem_cache
   end
 
   def self.install_gem!(name, version: nil, setup_gem_environment: true)
@@ -155,22 +155,6 @@ module Homebrew
     end
   end
   private_class_method :find_in_path
-
-  def self.install_bundler!
-    old_bundler_version = ENV.fetch("BUNDLER_VERSION", nil)
-
-    setup_gem_environment!
-
-    ENV["BUNDLER_VERSION"] = HOMEBREW_BUNDLER_VERSION # Set so it correctly finds existing installs
-    install_gem_setup_path!(
-      "bundler",
-      version:               HOMEBREW_BUNDLER_VERSION,
-      executable:            "bundle",
-      setup_gem_environment: false,
-    )
-  ensure
-    ENV["BUNDLER_VERSION"] = old_bundler_version
-  end
 
   def self.user_gem_groups
     @user_gem_groups ||= if GEM_GROUPS_FILE.exist?
@@ -222,6 +206,7 @@ module Homebrew
     old_path = ENV.fetch("PATH", nil)
     old_gem_path = ENV.fetch("GEM_PATH", nil)
     old_gem_home = ENV.fetch("GEM_HOME", nil)
+    old_gem_spec_cache = ENV.fetch("GEM_SPEC_CACHE", nil)
     old_bundle_gemfile = ENV.fetch("BUNDLE_GEMFILE", nil)
     old_bundle_with = ENV.fetch("BUNDLE_WITH", nil)
     old_bundle_frozen = ENV.fetch("BUNDLE_FROZEN", nil)
@@ -229,13 +214,9 @@ module Homebrew
     invalid_groups = groups - valid_gem_groups
     raise ArgumentError, "Invalid gem groups: #{invalid_groups.join(", ")}" unless invalid_groups.empty?
 
+    setup_gem_environment!
     # Tests should not modify the state of the repository.
-    if ENV["HOMEBREW_TESTS"]
-      setup_gem_environment!
-      return
-    end
-
-    install_bundler!
+    return if ENV["HOMEBREW_TESTS"]
 
     # Combine the passed groups with the ones stored in settings.
     groups |= (user_gem_groups & valid_gem_groups)
@@ -303,6 +284,7 @@ module Homebrew
           exec bundle, "install", out: :err
         end)
         if $CHILD_STATUS.success?
+          Homebrew::Bootsnap.reset! if defined?(Homebrew::Bootsnap) # Gem install can run before Bootsnap loads
           true
         else
           message = <<~EOS
@@ -342,6 +324,7 @@ module Homebrew
       ENV["PATH"] = old_path
       ENV["GEM_PATH"] = old_gem_path
       ENV["GEM_HOME"] = old_gem_home
+      ENV["GEM_SPEC_CACHE"] = old_gem_spec_cache
       ENV["BUNDLE_GEMFILE"] = old_bundle_gemfile
       ENV["BUNDLE_WITH"] = old_bundle_with
       ENV["BUNDLE_FROZEN"] = old_bundle_frozen

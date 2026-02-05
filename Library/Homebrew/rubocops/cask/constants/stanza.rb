@@ -26,6 +26,7 @@ module RuboCop
           [:language],
           [:url, :appcast, :name, :desc, :homepage],
           [:livecheck],
+          [:no_autobump!],
           [:deprecate!, :disable!],
           [
             :auto_updates,
@@ -34,12 +35,18 @@ module RuboCop
             :container,
           ],
           [
+            :rename,
+          ],
+          [
             :suite,
             :app,
             :pkg,
             :installer,
             :binary,
             :manpage,
+            :bash_completion,
+            :fish_completion,
+            :zsh_completion,
             :colorpicker,
             :dictionary,
             :font,

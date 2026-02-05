@@ -2,6 +2,7 @@
 
 require "livecheck/strategy"
 require "rexml/document"
+require "rexml/undefinednamespaceexception"
 
 RSpec.describe Homebrew::Livecheck::Strategy::Xml do
   subject(:xml) { described_class }
@@ -97,27 +98,11 @@ RSpec.describe Homebrew::Livecheck::Strategy::Xml do
     EOS
   end
 
-  let(:content_matches) { ["1.1.2", "1.1.1", "1.1.0", "1.0.3", "1.0.2", "1.0.1", "1.0.0"] }
-  let(:content_simple_matches) { ["1.2.3"] }
-
-  let(:find_versions_return_hash) do
+  let(:matches) do
     {
-      matches: {
-        "1.1.2" => Version.new("1.1.2"),
-        "1.1.1" => Version.new("1.1.1"),
-        "1.1.0" => Version.new("1.1.0"),
-        "1.0.3" => Version.new("1.0.3"),
-        "1.0.2" => Version.new("1.0.2"),
-        "1.0.1" => Version.new("1.0.1"),
-        "1.0.0" => Version.new("1.0.0"),
-      },
-      regex:,
-      url:     http_url,
+      content: ["1.1.2", "1.1.1", "1.1.0", "1.0.3", "1.0.2", "1.0.1", "1.0.0"],
+      simple:  ["1.2.3"],
     }
-  end
-
-  let(:find_versions_cached_return_hash) do
-    find_versions_return_hash.merge({ cached: true })
   end
 
   describe "::match?" do
@@ -138,6 +123,20 @@ RSpec.describe Homebrew::Livecheck::Strategy::Xml do
 
     it "returns an REXML::Document when given XML content with an undefined namespace" do
       expect(xml.parse_xml(content_undefined_namespace)).to be_an_instance_of(REXML::Document)
+    end
+
+    it "errors if an undefined prefix name is not provided in the UndefinedNamespaceException" do
+      allow(REXML::Document).to receive(:new).and_raise(REXML::UndefinedNamespaceException.new(nil, nil, nil))
+
+      expect { xml.parse_xml(content_undefined_namespace) }
+        .to raise_error("Could not identify undefined prefix.")
+    end
+
+    it "errors if XML cannot be parsed after removing undefined prefix" do
+      allow(REXML::Document).to receive(:new).and_raise(REXML::UndefinedNamespaceException.new("something", nil, nil))
+
+      expect { xml.parse_xml(content_undefined_namespace) }
+        .to raise_error("Could not parse XML after removing undefined prefix.")
     end
   end
 
@@ -173,18 +172,18 @@ RSpec.describe Homebrew::Livecheck::Strategy::Xml do
       # Returning a string from block
       expect(xml.versions_from_content(content_simple) do |xml|
         xml.elements["version"]&.text
-      end).to eq(content_simple_matches)
+      end).to eq(matches[:simple])
       expect(xml.versions_from_content(content_simple, regex) do |xml|
         version = xml.elements["version"]&.text
         next if version.blank?
 
         version[regex, 1]
-      end).to eq(content_simple_matches)
+      end).to eq(matches[:simple])
 
       # Returning an array of strings from block
       expect(xml.versions_from_content(content_version_text, regex) do |xml, regex|
         xml.get_elements("/versions/version").map { |item| item.text[regex, 1] }
-      end).to eq(content_matches)
+      end).to eq(matches[:content])
 
       expect(xml.versions_from_content(content_version_attr, regex) do |xml, regex|
         xml.get_elements("/items/item").map do |item|
@@ -193,7 +192,7 @@ RSpec.describe Homebrew::Livecheck::Strategy::Xml do
 
           version[regex, 1]
         end
-      end).to eq(content_matches)
+      end).to eq(matches[:content])
     end
 
     it "allows a nil return from a block" do
@@ -211,20 +210,44 @@ RSpec.describe Homebrew::Livecheck::Strategy::Xml do
     end
   end
 
-  describe "::find_versions?" do
-    it "finds versions in provided_content using a block" do
+  describe "::find_versions" do
+    let(:match_data) do
+      base = {
+        matches: matches[:content].to_h { |v| [v, Version.new(v)] },
+        regex:,
+        url:     http_url,
+      }
+      default = base.merge(matches: {})
+
+      {
+        fetched:        base.merge({ content: content_version_text }),
+        default:,
+        cached:         base.merge({ cached: true }),
+        cached_default: default.merge({ cached: true }),
+      }
+    end
+
+    it "finds versions in fetched content" do
+      allow(Homebrew::Livecheck::Strategy).to receive(:page_content).and_return({ content: content_version_text })
+
+      expect(xml.find_versions(url: http_url, regex:) do |xml, regex|
+        xml.get_elements("/versions/version").map { |item| item.text[regex, 1] }
+      end).to eq(match_data[:fetched])
+    end
+
+    it "finds versions in content using a block" do
       expect(xml.find_versions(url: http_url, regex:, provided_content: content_version_text) do |xml, regex|
         xml.get_elements("/versions/version").map { |item| item.text[regex, 1] }
-      end).to eq(find_versions_cached_return_hash)
+      end).to eq(match_data[:cached])
 
       # NOTE: A regex should be provided using the `#regex` method in a
-      #       `livecheck` block but we're using a regex literal in the `strategy`
-      #       block here simply to ensure this method works as expected when a
-      #       regex isn't provided.
+      #       `livecheck` block but we're using a regex literal in the
+      #       `strategy` block here simply to ensure this method works as
+      #       expected when a regex isn't provided.
       expect(xml.find_versions(url: http_url, provided_content: content_version_text) do |xml|
         regex = /^v?(\d+(?:\.\d+)+)$/i
         xml.get_elements("/versions/version").map { |item| item.text[regex, 1] }
-      end).to eq(find_versions_cached_return_hash.merge({ regex: nil }))
+      end).to eq(match_data[:cached].merge({ regex: nil }))
     end
 
     it "errors if a block is not provided" do
@@ -233,13 +256,13 @@ RSpec.describe Homebrew::Livecheck::Strategy::Xml do
     end
 
     it "returns default match_data when url is blank" do
-      expect(xml.find_versions(url: "") { "1.2.3" })
-        .to eq({ matches: {}, regex: nil, url: "" })
+      expect(xml.find_versions(url: "", regex:, provided_content: content_simple) { "1.2.3" })
+        .to eq(match_data[:default].merge({ url: "" }))
     end
 
     it "returns default match_data when content is blank" do
-      expect(xml.find_versions(url: http_url, provided_content: "") { "1.2.3" })
-        .to eq({ matches: {}, regex: nil, url: http_url, cached: true })
+      expect(xml.find_versions(url: http_url, regex:, provided_content: "") { "1.2.3" })
+        .to eq(match_data[:cached_default])
     end
   end
 end

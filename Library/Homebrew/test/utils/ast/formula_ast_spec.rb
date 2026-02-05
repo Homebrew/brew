@@ -54,7 +54,7 @@ RSpec.describe Utils::AST::FormulaAST do
             license :cannot_represent
 
             bottle do
-              sha256 "f7b1fc772c79c20fddf621ccc791090bc1085fcef4da6cca03399424c66e06ca" => :sierra
+              sha256 "f7b1fc772c79c20fddf621ccc791090bc1085fcef4da6cca03399424c66e06ca" => :sonoma
             end
           end
         RUBY
@@ -66,7 +66,7 @@ RSpec.describe Utils::AST::FormulaAST do
             url "https://brew.sh/foo-1.0.tar.gz"
 
             bottle do
-              sha256 "f7b1fc772c79c20fddf621ccc791090bc1085fcef4da6cca03399424c66e06ca" => :sierra
+              sha256 "f7b1fc772c79c20fddf621ccc791090bc1085fcef4da6cca03399424c66e06ca" => :sonoma
             end
           end
         RUBY
@@ -90,7 +90,7 @@ RSpec.describe Utils::AST::FormulaAST do
             ]
 
             bottle do
-              sha256 "f7b1fc772c79c20fddf621ccc791090bc1085fcef4da6cca03399424c66e06ca" => :sierra
+              sha256 "f7b1fc772c79c20fddf621ccc791090bc1085fcef4da6cca03399424c66e06ca" => :sonoma
             end
           end
         RUBY
@@ -102,7 +102,7 @@ RSpec.describe Utils::AST::FormulaAST do
             url "https://brew.sh/foo-1.0.tar.gz"
 
             bottle do
-              sha256 "f7b1fc772c79c20fddf621ccc791090bc1085fcef4da6cca03399424c66e06ca" => :sierra
+              sha256 "f7b1fc772c79c20fddf621ccc791090bc1085fcef4da6cca03399424c66e06ca" => :sonoma
             end
           end
         RUBY
@@ -122,7 +122,7 @@ RSpec.describe Utils::AST::FormulaAST do
             license :cannot_represent # comment
 
             bottle do
-              sha256 "f7b1fc772c79c20fddf621ccc791090bc1085fcef4da6cca03399424c66e06ca" => :sierra
+              sha256 "f7b1fc772c79c20fddf621ccc791090bc1085fcef4da6cca03399424c66e06ca" => :sonoma
             end
           end
         RUBY
@@ -135,7 +135,7 @@ RSpec.describe Utils::AST::FormulaAST do
              # comment
 
             bottle do
-              sha256 "f7b1fc772c79c20fddf621ccc791090bc1085fcef4da6cca03399424c66e06ca" => :sierra
+              sha256 "f7b1fc772c79c20fddf621ccc791090bc1085fcef4da6cca03399424c66e06ca" => :sonoma
             end
           end
         RUBY
@@ -156,7 +156,7 @@ RSpec.describe Utils::AST::FormulaAST do
             # comment
 
             bottle do
-              sha256 "f7b1fc772c79c20fddf621ccc791090bc1085fcef4da6cca03399424c66e06ca" => :sierra
+              sha256 "f7b1fc772c79c20fddf621ccc791090bc1085fcef4da6cca03399424c66e06ca" => :sonoma
             end
           end
         RUBY
@@ -169,7 +169,7 @@ RSpec.describe Utils::AST::FormulaAST do
             # comment
 
             bottle do
-              sha256 "f7b1fc772c79c20fddf621ccc791090bc1085fcef4da6cca03399424c66e06ca" => :sierra
+              sha256 "f7b1fc772c79c20fddf621ccc791090bc1085fcef4da6cca03399424c66e06ca" => :sonoma
             end
           end
         RUBY
@@ -188,11 +188,12 @@ RSpec.describe Utils::AST::FormulaAST do
             url "https://brew.sh/foo-1.0.tar.gz"
 
             bottle do
-              sha256 "f7b1fc772c79c20fddf621ccc791090bc1085fcef4da6cca03399424c66e06ca" => :sierra
+              sha256 "f7b1fc772c79c20fddf621ccc791090bc1085fcef4da6cca03399424c66e06ca" => :sonoma
             end
 
             head do
               url "https://brew.sh/foo.git"
+              branch "develop"
             end
           end
         RUBY
@@ -205,6 +206,7 @@ RSpec.describe Utils::AST::FormulaAST do
 
             head do
               url "https://brew.sh/foo.git"
+              branch "develop"
             end
           end
         RUBY
@@ -224,7 +226,7 @@ RSpec.describe Utils::AST::FormulaAST do
             license :cannot_represent
 
             bottle do
-              sha256 "f7b1fc772c79c20fddf621ccc791090bc1085fcef4da6cca03399424c66e06ca" => :sierra
+              sha256 "f7b1fc772c79c20fddf621ccc791090bc1085fcef4da6cca03399424c66e06ca" => :sonoma
             end
           end
         RUBY
@@ -250,7 +252,7 @@ RSpec.describe Utils::AST::FormulaAST do
     let(:bottle_output) do
       <<-RUBY
   bottle do
-    sha256 "f7b1fc772c79c20fddf621ccc791090bc1085fcef4da6cca03399424c66e06ca" => :sierra
+    sha256 "f7b1fc772c79c20fddf621ccc791090bc1085fcef4da6cca03399424c66e06ca" => :sonoma
   end
       RUBY
     end
@@ -272,7 +274,7 @@ RSpec.describe Utils::AST::FormulaAST do
             license "MIT"
 
             bottle do
-              sha256 "f7b1fc772c79c20fddf621ccc791090bc1085fcef4da6cca03399424c66e06ca" => :sierra
+              sha256 "f7b1fc772c79c20fddf621ccc791090bc1085fcef4da6cca03399424c66e06ca" => :sonoma
             end
           end
         RUBY
@@ -301,7 +303,7 @@ RSpec.describe Utils::AST::FormulaAST do
             license :cannot_represent
 
             bottle do
-              sha256 "f7b1fc772c79c20fddf621ccc791090bc1085fcef4da6cca03399424c66e06ca" => :sierra
+              sha256 "f7b1fc772c79c20fddf621ccc791090bc1085fcef4da6cca03399424c66e06ca" => :sonoma
             end
           end
         RUBY
@@ -338,7 +340,7 @@ RSpec.describe Utils::AST::FormulaAST do
             ]
 
             bottle do
-              sha256 "f7b1fc772c79c20fddf621ccc791090bc1085fcef4da6cca03399424c66e06ca" => :sierra
+              sha256 "f7b1fc772c79c20fddf621ccc791090bc1085fcef4da6cca03399424c66e06ca" => :sonoma
             end
           end
         RUBY
@@ -355,7 +357,7 @@ RSpec.describe Utils::AST::FormulaAST do
         described_class.new <<~RUBY.chomp
           class Foo < Formula
             url "https://brew.sh/foo-1.0.tar.gz"
-            head "https://brew.sh/foo.git"
+            head "https://brew.sh/foo.git", branch: "develop"
           end
         RUBY
       end
@@ -364,10 +366,10 @@ RSpec.describe Utils::AST::FormulaAST do
         <<~RUBY.chomp
           class Foo < Formula
             url "https://brew.sh/foo-1.0.tar.gz"
-            head "https://brew.sh/foo.git"
+            head "https://brew.sh/foo.git", branch: "develop"
 
             bottle do
-              sha256 "f7b1fc772c79c20fddf621ccc791090bc1085fcef4da6cca03399424c66e06ca" => :sierra
+              sha256 "f7b1fc772c79c20fddf621ccc791090bc1085fcef4da6cca03399424c66e06ca" => :sonoma
             end
           end
         RUBY
@@ -387,6 +389,7 @@ RSpec.describe Utils::AST::FormulaAST do
 
             head do
               url "https://brew.sh/foo.git"
+              branch "develop"
             end
           end
         RUBY
@@ -398,11 +401,12 @@ RSpec.describe Utils::AST::FormulaAST do
             url "https://brew.sh/foo-1.0.tar.gz"
 
             bottle do
-              sha256 "f7b1fc772c79c20fddf621ccc791090bc1085fcef4da6cca03399424c66e06ca" => :sierra
+              sha256 "f7b1fc772c79c20fddf621ccc791090bc1085fcef4da6cca03399424c66e06ca" => :sonoma
             end
 
             head do
               url "https://brew.sh/foo.git"
+              branch "develop"
             end
           end
         RUBY
@@ -429,7 +433,7 @@ RSpec.describe Utils::AST::FormulaAST do
             url "https://brew.sh/foo-1.0.tar.gz" # comment
 
             bottle do
-              sha256 "f7b1fc772c79c20fddf621ccc791090bc1085fcef4da6cca03399424c66e06ca" => :sierra
+              sha256 "f7b1fc772c79c20fddf621ccc791090bc1085fcef4da6cca03399424c66e06ca" => :sonoma
             end
           end
         RUBY
@@ -458,7 +462,7 @@ RSpec.describe Utils::AST::FormulaAST do
             # comment
 
             bottle do
-              sha256 "f7b1fc772c79c20fddf621ccc791090bc1085fcef4da6cca03399424c66e06ca" => :sierra
+              sha256 "f7b1fc772c79c20fddf621ccc791090bc1085fcef4da6cca03399424c66e06ca" => :sonoma
             end
           end
         RUBY
@@ -487,7 +491,7 @@ RSpec.describe Utils::AST::FormulaAST do
             url "https://brew.sh/foo-1.0.tar.gz"
 
             bottle do
-              sha256 "f7b1fc772c79c20fddf621ccc791090bc1085fcef4da6cca03399424c66e06ca" => :sierra
+              sha256 "f7b1fc772c79c20fddf621ccc791090bc1085fcef4da6cca03399424c66e06ca" => :sonoma
             end
 
             # comment

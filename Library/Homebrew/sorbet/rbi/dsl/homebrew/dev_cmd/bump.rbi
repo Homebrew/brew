@@ -15,6 +15,9 @@ class Homebrew::DevCmd::Bump::Args < Homebrew::CLI::Args
   def auto?; end
 
   sig { returns(T::Boolean) }
+  def bump_synced?; end
+
+  sig { returns(T::Boolean) }
   def cask?; end
 
   sig { returns(T::Boolean) }
@@ -34,6 +37,9 @@ class Homebrew::DevCmd::Bump::Args < Homebrew::CLI::Args
 
   sig { returns(T::Boolean) }
   def installed?; end
+
+  sig { returns(T::Boolean) }
+  def no_autobump?; end
 
   sig { returns(T::Boolean) }
   def no_fork?; end

@@ -41,6 +41,7 @@ RSpec.describe Homebrew::DevCmd::DetermineTestRunners do
     end
 
     out << linux_runner
+    out << "#{linux_runner}-arm"
 
     out
   end

@@ -16,7 +16,10 @@ class SoftwareSpec
   def clear_cache(*args, &block); end
 
   sig { params(args: T.untyped, block: T.untyped).returns(T.untyped) }
-  def download_name(*args, &block); end
+  def download_queue_name(*args, &block); end
+
+  sig { params(args: T.untyped, block: T.untyped).returns(T.untyped) }
+  def download_queue_type(*args, &block); end
 
   sig { params(args: T.untyped, block: T.untyped).returns(T.untyped) }
   def downloader(*args, &block); end

@@ -17,7 +17,7 @@ RSpec.describe Homebrew::Bundle::CaskDumper do
       expect(dumper.cask_names).to be_empty
     end
 
-    it "dumps as empty string" do
+    it "dumps as empty string" do # rubocop:todo RSpec/AggregateExamples
       expect(dumper.dump).to eql("")
     end
   end
@@ -33,7 +33,7 @@ RSpec.describe Homebrew::Bundle::CaskDumper do
       expect(dumper.cask_names).to be_empty
     end
 
-    it "dumps as empty string" do
+    it "dumps as empty string" do # rubocop:todo RSpec/AggregateExamples
       expect(dumper.dump).to eql("")
     end
 
@@ -43,13 +43,14 @@ RSpec.describe Homebrew::Bundle::CaskDumper do
   end
 
   context "when casks `foo`, `bar` and `baz` are installed, with `baz` being a formula requirement" do
-    let(:foo) { instance_double(Cask::Cask, to_s: "foo", desc: nil, config: nil) }
-    let(:baz) { instance_double(Cask::Cask, to_s: "baz", desc: "Software", config: nil) }
+    let(:foo) { instance_double(Cask::Cask, to_s: "foo", full_name: "foo", desc: nil, config: nil) }
+    let(:baz) { instance_double(Cask::Cask, to_s: "baz", full_name: "baz", desc: "Software", config: nil) }
     let(:bar) do
       instance_double(
-        Cask::Cask, to_s:   "bar",
-                    desc:   nil,
-                    config: instance_double(
+        Cask::Cask, to_s:      "bar",
+                    full_name: "bar",
+                    desc:      nil,
+                    config:    instance_double(
                       Cask::Config,
                       explicit: {
                         fontdir:   "/Library/Fonts",
@@ -92,6 +93,27 @@ RSpec.describe Homebrew::Bundle::CaskDumper do
     it "does not want to greedily update bar if there is no update available" do
       expect(bar).to receive(:outdated?).with(greedy: true).and_return(false)
       expect(dumper.cask_is_outdated_using_greedy?("bar")).to be(false)
+    end
+  end
+
+  describe "#cask_oldnames" do
+    before do
+      described_class.reset!
+    end
+
+    it "returns an empty string when no casks are installed" do
+      expect(dumper.cask_oldnames).to eql({})
+    end
+
+    it "returns a hash with installed casks old names" do
+      foo = instance_double(Cask::Cask, to_s: "foo", old_tokens: ["oldfoo"], full_name: "qux/quuz/foo")
+      bar = instance_double(Cask::Cask, to_s: "bar", old_tokens: [], full_name: "bar")
+      allow(Cask::Caskroom).to receive(:casks).and_return([foo, bar])
+      allow(Homebrew::Bundle).to receive(:cask_installed?).and_return(true)
+      expect(dumper.cask_oldnames).to eql({
+        "qux/quuz/oldfoo" => "qux/quuz/foo",
+        "oldfoo"          => "qux/quuz/foo",
+      })
     end
   end
 

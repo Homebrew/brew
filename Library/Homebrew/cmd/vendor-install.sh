@@ -12,7 +12,6 @@ source "${HOMEBREW_LIBRARY}/Homebrew/utils/ruby.sh"
 
 VENDOR_DIR="${HOMEBREW_LIBRARY}/Homebrew/vendor"
 
-# Built from https://github.com/Homebrew/homebrew-portable-ruby.
 set_ruby_variables() {
   # Handle the case where /usr/local/bin/brew is run under arm64.
   # It's a x86_64 installation there (we refuse to install arm64 binaries) so
@@ -48,7 +47,7 @@ set_ruby_variables() {
     ruby_URLs=()
     if [[ -n "${HOMEBREW_ARTIFACT_DOMAIN}" ]]
     then
-      ruby_URLs+=("${HOMEBREW_ARTIFACT_DOMAIN}/v2/homebrew/portable-ruby/portable-ruby/blobs/sha256:${ruby_SHA}")
+      ruby_URLs+=("${HOMEBREW_ARTIFACT_DOMAIN}/v2/homebrew/core/portable-ruby/blobs/sha256:${ruby_SHA}")
       if [[ -n "${HOMEBREW_ARTIFACT_DOMAIN_NO_FALLBACK}" ]]
       then
         ruby_URL="${ruby_URLs[0]}"
@@ -57,11 +56,10 @@ set_ruby_variables() {
     fi
     if [[ -n "${HOMEBREW_BOTTLE_DOMAIN}" ]]
     then
-      ruby_URLs+=("${HOMEBREW_BOTTLE_DOMAIN}/bottles-portable-ruby/${ruby_FILENAME}")
+      ruby_URLs+=("${HOMEBREW_BOTTLE_DOMAIN}/${ruby_FILENAME}")
     fi
     ruby_URLs+=(
-      "https://ghcr.io/v2/homebrew/portable-ruby/portable-ruby/blobs/sha256:${ruby_SHA}"
-      "https://github.com/Homebrew/homebrew-portable-ruby/releases/download/${HOMEBREW_PORTABLE_RUBY_VERSION}/${ruby_FILENAME}"
+      "https://ghcr.io/v2/homebrew/core/portable-ruby/blobs/sha256:${ruby_SHA}"
     )
     ruby_URL="${ruby_URLs[0]}"
   fi
@@ -101,6 +99,7 @@ fetch() {
   local first_try=1
   local vendor_locations
   local temporary_path
+  local curl_exit_code=0
 
   curl_args=()
 
@@ -121,8 +120,13 @@ fetch() {
     --remote-time
     --location
     --user-agent "${HOMEBREW_USER_AGENT_CURL}"
-    --header "Authorization: ${HOMEBREW_GITHUB_PACKAGES_AUTH}"
   )
+
+  if [[ -n "${HOMEBREW_GITHUB_PACKAGES_AUTH}" ]]
+  then
+    curl_args[${#curl_args[*]}]="--header"
+    curl_args[${#curl_args[*]}]="Authorization: ${HOMEBREW_GITHUB_PACKAGES_AUTH}"
+  fi
 
   if [[ -n "${HOMEBREW_QUIET}" ]]
   then
@@ -149,18 +153,26 @@ fetch() {
         # HOMEBREW_CURL is set by brew.sh (and isn't misspelt here)
         # shellcheck disable=SC2153
         "${HOMEBREW_CURL}" "${curl_args[@]}" -C - "${url}" -o "${temporary_path}"
-        if [[ $? -eq 33 ]]
+        curl_exit_code="$?"
+        if [[ "${curl_exit_code}" -eq 33 ]]
         then
           [[ -n "${HOMEBREW_QUIET}" ]] || echo "Trying a full download" >&2
           rm -f "${temporary_path}"
           "${HOMEBREW_CURL}" "${curl_args[@]}" "${url}" -o "${temporary_path}"
+          curl_exit_code="$?"
         fi
       else
         "${HOMEBREW_CURL}" "${curl_args[@]}" "${url}" -o "${temporary_path}"
+        curl_exit_code="$?"
       fi
 
       [[ -f "${temporary_path}" ]] && break
     done
+
+    if [[ "${curl_exit_code}" -ne 0 ]]
+    then
+      rm -f "${temporary_path}"
+    fi
 
     if [[ ! -f "${temporary_path}" ]]
     then

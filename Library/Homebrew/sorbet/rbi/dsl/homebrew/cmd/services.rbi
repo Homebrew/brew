@@ -20,6 +20,9 @@ class Homebrew::Cmd::Services::Args < Homebrew::CLI::Args
   sig { returns(T::Boolean) }
   def json?; end
 
+  sig { returns(T::Boolean) }
+  def keep?; end
+
   sig { returns(T.nilable(String)) }
   def max_wait; end
 

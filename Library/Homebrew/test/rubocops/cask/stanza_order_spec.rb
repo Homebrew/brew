@@ -397,17 +397,18 @@ RSpec.describe RuboCop::Cop::Cask::StanzaOrder, :config do
           url "https://foo.brew.sh/foo-ventura.zip"
         end
         on_catalina do
+        ^^^^^^^^^^^^^^ `on_catalina` stanza out of order
           sha256 "def456"
           ^^^^^^^^^^^^^^^ `sha256` stanza out of order
           version "0.7"
           ^^^^^^^^^^^^^ `version` stanza out of order
           url "https://foo.brew.sh/foo-catalina.zip"
         end
-        on_mojave do
-        ^^^^^^^^^^^^ `on_mojave` stanza out of order
+        on_sequoia do
+        ^^^^^^^^^^^^^ `on_sequoia` stanza out of order
           version :latest
           sha256 "ghi789"
-          url "https://foo.brew.sh/foo-mojave.zip"
+          url "https://foo.brew.sh/foo-sequoia.zip"
         end
         on_big_sur do
         ^^^^^^^^^^^^^ `on_big_sur` stanza out of order
@@ -423,11 +424,6 @@ RSpec.describe RuboCop::Cop::Cask::StanzaOrder, :config do
 
     expect_correction <<~CASK
       cask "foo" do
-        on_mojave do
-          version :latest
-          sha256 "ghi789"
-          url "https://foo.brew.sh/foo-mojave.zip"
-        end
         on_catalina do
           version "0.7"
           sha256 "def456"
@@ -443,6 +439,11 @@ RSpec.describe RuboCop::Cop::Cask::StanzaOrder, :config do
           version :latest
           sha256 "abc123"
           url "https://foo.brew.sh/foo-ventura.zip"
+        end
+        on_sequoia do
+          version :latest
+          sha256 "ghi789"
+          url "https://foo.brew.sh/foo-sequoia.zip"
         end
       end
     CASK

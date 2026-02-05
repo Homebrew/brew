@@ -21,7 +21,8 @@ module Homebrew
                             "dependents.",
                env:         :eval_all
         switch "--dependents",
-               description: "Determine runners for testing dependents. Requires `--eval-all` or `HOMEBREW_EVAL_ALL`.",
+               description: "Determine runners for testing dependents. " \
+                            "Requires `--eval-all` or `HOMEBREW_EVAL_ALL=1` to be set.",
                depends_on:  "--eval-all"
 
         named_args max: 2
@@ -50,7 +51,14 @@ module Homebrew
 
         ohai "Runners", JSON.pretty_generate(runners)
 
-        github_output = ENV.fetch("GITHUB_OUTPUT")
+        # gracefully handle non-GitHub Actions environments
+        github_output = if ENV.key?("GITHUB_ACTIONS")
+          ENV.fetch("GITHUB_OUTPUT")
+        else
+          ENV.fetch("GITHUB_OUTPUT", nil)
+        end
+        return unless github_output
+
         File.open(github_output, "a") do |f|
           f.puts("runners=#{runners.to_json}")
           f.puts("runners_present=#{runners.present?}")

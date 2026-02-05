@@ -59,7 +59,7 @@ module Homebrew
       raise ArgumentError, "`short_version` and `version` cannot both be `nil` or empty"
     end
 
-    sig { params(other: BundleVersion).returns(T.any(Integer, NilClass)) }
+    sig { params(other: BundleVersion).returns(T.nilable(Integer)) }
     def <=>(other)
       return super unless instance_of?(other.class)
 
@@ -116,5 +116,13 @@ module Homebrew
       [short_version, version].compact
     end
     private :nice_parts
+
+    sig { returns(T::Hash[Symbol, String]) }
+    def to_h
+      {
+        short_version:,
+        version:,
+      }.compact
+    end
   end
 end

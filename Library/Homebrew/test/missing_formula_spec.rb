@@ -16,17 +16,20 @@ RSpec.describe Homebrew::MissingFormula do
       end
     end
 
-    it { is_expected.to disallow("gem") }
-    it { is_expected.to disallow("pip") }
-    it { is_expected.to disallow("pil") }
-    it { is_expected.to disallow("macruby") }
-    it { is_expected.to disallow("lzma") }
-    it { is_expected.to disallow("gsutil") }
-    it { is_expected.to disallow("gfortran") }
-    it { is_expected.to disallow("play") }
-    it { is_expected.to disallow("haskell-platform") }
-    it { is_expected.to disallow("mysqldump-secure") }
-    it { is_expected.to disallow("ngrok") }
+    specify(:aggregate_failures) do
+      expect(subject).to disallow("gem") # rubocop:todo RSpec/NamedSubject
+      expect(subject).to disallow("pip") # rubocop:todo RSpec/NamedSubject
+      expect(subject).to disallow("pil") # rubocop:todo RSpec/NamedSubject
+      expect(subject).to disallow("macruby") # rubocop:todo RSpec/NamedSubject
+      expect(subject).to disallow("lzma") # rubocop:todo RSpec/NamedSubject
+      expect(subject).to disallow("gsutil") # rubocop:todo RSpec/NamedSubject
+      expect(subject).to disallow("gfortran") # rubocop:todo RSpec/NamedSubject
+      expect(subject).to disallow("play") # rubocop:todo RSpec/NamedSubject
+      expect(subject).to disallow("haskell-platform") # rubocop:todo RSpec/NamedSubject
+      expect(subject).to disallow("mysqldump-secure") # rubocop:todo RSpec/NamedSubject
+      expect(subject).to disallow("ngrok") # rubocop:todo RSpec/NamedSubject
+    end
+
     it("disallows Xcode", :needs_macos) { is_expected.to disallow("xcode") }
   end
 
@@ -105,8 +108,10 @@ RSpec.describe Homebrew::MissingFormula do
       let(:formula) { "local-caffeine" }
       let(:show_info) { false }
 
-      it { is_expected.to match(/Found a cask named "local-caffeine" instead./) }
-      it { is_expected.to match(/Try\n  brew install --cask local-caffeine/) }
+      specify(:aggregate_failures) do
+        expect(subject).to match(/Found a cask named "local-caffeine" instead./) # rubocop:todo RSpec/NamedSubject
+        expect(subject).to match(/Try\n  brew install --cask local-caffeine/) # rubocop:todo RSpec/NamedSubject
+      end
     end
 
     context "with a formula name that is a cask and show_info: true" do
@@ -131,8 +136,10 @@ RSpec.describe Homebrew::MissingFormula do
       let(:name) { "local-caffeine" }
       let(:command) { "install" }
 
-      it { is_expected.to match(/Found a cask named "local-caffeine" instead./) }
-      it { is_expected.to match(/Try\n  brew install --cask local-caffeine/) }
+      specify(:aggregate_failures) do
+        expect(subject).to match(/Found a cask named "local-caffeine" instead./) # rubocop:todo RSpec/NamedSubject
+        expect(subject).to match(/Try\n  brew install --cask local-caffeine/) # rubocop:todo RSpec/NamedSubject
+      end
     end
 
     context "when uninstalling" do
@@ -146,8 +153,10 @@ RSpec.describe Homebrew::MissingFormula do
           allow(Cask::Caskroom).to receive(:casks).and_return(["local-caffeine"])
         end
 
-        it { is_expected.to match(/Found a cask named "local-caffeine" instead./) }
-        it { is_expected.to match(/Try\n  brew uninstall --cask local-caffeine/) }
+        specify(:aggregate_failures) do
+          expect(subject).to match(/Found a cask named "local-caffeine" instead./) # rubocop:todo RSpec/NamedSubject
+          expect(subject).to match(/Try\n  brew uninstall --cask local-caffeine/) # rubocop:todo RSpec/NamedSubject
+        end
       end
     end
 
@@ -155,8 +164,10 @@ RSpec.describe Homebrew::MissingFormula do
       let(:name) { "local-caffeine" }
       let(:command) { "info" }
 
-      it { is_expected.to match(/Found a cask named "local-caffeine" instead./) }
-      it { is_expected.to match(/local-caffeine: 1.2.3/) }
+      specify(:aggregate_failures) do
+        expect(subject).to match(/Found a cask named "local-caffeine" instead./) # rubocop:todo RSpec/NamedSubject
+        expect(subject).to match(/local-caffeine: 1.2.3/) # rubocop:todo RSpec/NamedSubject
+      end
     end
   end
 end

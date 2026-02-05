@@ -16,10 +16,10 @@ class TestRunnerFormula
   sig { params(formula: Formula, eval_all: T::Boolean).void }
   def initialize(formula, eval_all: Homebrew::EnvConfig.eval_all?)
     Formulary.enable_factory_cache!
-    @formula = T.let(formula, Formula)
+    @formula = formula
     @name = T.let(formula.name, String)
     @dependent_hash = T.let({}, T::Hash[Symbol, T::Array[TestRunnerFormula]])
-    @eval_all = T.let(eval_all, T::Boolean)
+    @eval_all = eval_all
     freeze
   end
 
@@ -77,8 +77,6 @@ class TestRunnerFormula
     macos_version.public_send(requirement.comparator, requirement.version)
   end
 
-  SIMULATE_SYSTEM_SYMBOLS = T.let({ arm64: :arm, x86_64: :intel }.freeze, T::Hash[Symbol, Symbol])
-
   sig {
     params(
       platform:      Symbol,
@@ -98,7 +96,7 @@ class TestRunnerFormula
 
       with_env(HOMEBREW_EVAL_ALL: eval_all_env) do
         os = macos_version || platform
-        arch = SIMULATE_SYSTEM_SYMBOLS.fetch(arch)
+        arch = Homebrew::SimulateSystem.arch_symbols.fetch(arch)
 
         Homebrew::SimulateSystem.with(os:, arch:) do
           Formula.public_send(formula_selector)

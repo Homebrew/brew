@@ -3,10 +3,13 @@
 
 require "cli/parser"
 require "commands"
+require "utils/output"
 
 module Homebrew
   # Helper module for printing help output.
   module Help
+    extend Utils::Output::Mixin
+
     sig {
       params(
         cmd:            T.nilable(String),

@@ -1,4 +1,4 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
 
 require "timeout"
@@ -29,14 +29,21 @@ module Cask
         :rmdir,
       ].freeze
 
+      METADATA_KEYS = [
+        :on_upgrade,
+      ].freeze
+
+      sig { params(cask: Cask, directives: DirectivesType).returns(AbstractUninstall) }
       def self.from_args(cask, **directives)
         new(cask, **directives)
       end
 
+      sig { returns(T::Hash[Symbol, DirectivesType]) }
       attr_reader :directives
 
+      sig { params(cask: Cask, directives: DirectivesType).void }
       def initialize(cask, **directives)
-        directives.assert_valid_keys(*ORDERED_DIRECTIVES)
+        directives.assert_valid_keys(*ORDERED_DIRECTIVES, *METADATA_KEYS)
 
         super
         directives[:signal] = Array(directives[:signal]).flatten.each_slice(2).to_a
@@ -52,6 +59,7 @@ module Cask
         end
       end
 
+      sig { returns(T::Hash[Symbol, DirectivesType]) }
       def to_h
         directives.to_h
       end
@@ -63,12 +71,14 @@ module Cask
 
       private
 
+      sig { params(options: DirectivesType).void }
       def dispatch_uninstall_directives(**options)
         ORDERED_DIRECTIVES.each do |directive_sym|
           dispatch_uninstall_directive(directive_sym, **options)
         end
       end
 
+      sig { params(directive_sym: Symbol, options: T.anything).void }
       def dispatch_uninstall_directive(directive_sym, **options)
         return unless directives.key?(directive_sym)
 
@@ -77,6 +87,7 @@ module Cask
         send(:"uninstall_#{directive_sym}", *(args.is_a?(Hash) ? [args] : args), **options)
       end
 
+      sig { returns(Symbol) }
       def stanza
         self.class.dsl_key
       end
@@ -84,12 +95,14 @@ module Cask
       # Preserve prior functionality of script which runs first. Should rarely be needed.
       # :early_script should not delete files, better defer that to :script.
       # If cask writers never need :early_script it may be removed in the future.
+      sig { params(directives: DirectivesType, options: T.anything).void }
       def uninstall_early_script(directives, **options)
         uninstall_script(directives, directive_name: :early_script, **options)
       end
 
       # :launchctl must come before :quit/:signal for cases where app would instantly re-launch
-      def uninstall_launchctl(*services, command: nil, **_)
+      sig { params(services: String, command: T.class_of(SystemCommand), _kwargs: T.anything).void }
+      def uninstall_launchctl(*services, command:, **_kwargs)
         booleans = [false, true]
 
         all_services = []
@@ -119,11 +132,11 @@ module Cask
               result = command.run(
                 "/bin/launchctl",
                 args:         ["remove", service],
-                must_succeed: sudo,
+                must_succeed: false,
                 sudo:,
                 sudo_as_root: sudo,
               )
-              next if !sudo && !result.success?
+              next unless result.success?
 
               sleep 1
             end
@@ -134,20 +147,22 @@ module Cask
             paths.each { |elt| elt.prepend(Dir.home).freeze } unless sudo
             paths = paths.map { |elt| Pathname(elt) }.select(&:exist?)
             paths.each do |path|
-              command.run!("/bin/rm", args: ["-f", "--", path], sudo:, sudo_as_root: sudo)
+              command.run("/bin/rm", args: ["-f", "--", path], must_succeed: false, sudo:, sudo_as_root: sudo)
             end
             # undocumented and untested: pass a path to uninstall :launchctl
             next unless Pathname(service).exist?
 
-            command.run!(
+            command.run(
               "/bin/launchctl",
               args:         ["unload", "-w", "--", service],
+              must_succeed: false,
               sudo:,
               sudo_as_root: sudo,
             )
-            command.run!(
+            command.run(
               "/bin/rm",
               args:         ["-f", "--", service],
+              must_succeed: false,
               sudo:,
               sudo_as_root: sudo,
             )
@@ -156,6 +171,7 @@ module Cask
         end
       end
 
+      sig { params(bundle_id: String).returns(T::Array[[Integer, Integer, T.nilable(String)]]) }
       def running_processes(bundle_id)
         system_command!("/bin/launchctl", args: ["list"])
           .stdout.lines.drop(1)
@@ -166,13 +182,14 @@ module Cask
           end
       end
 
+      sig { params(search: String).returns(T::Array[String]) }
       def find_launchctl_with_wildcard(search)
         regex = Regexp.escape(search).gsub("\\*", ".*")
         system_command!("/bin/launchctl", args: ["list"])
           .stdout.lines.drop(1) # skip stdout column headers
           .filter_map do |line|
             pid, _state, id = line.chomp.split(/\s+/)
-            id if pid.to_i.nonzero? && id.match?(regex)
+            id if pid.to_i.nonzero? && T.must(id).match?(regex)
           end
       end
 
@@ -192,7 +209,8 @@ module Cask
       end
 
       # :quit/:signal must come before :kext so the kext will not be in use by a running process
-      def uninstall_quit(*bundle_ids, command: nil, **_)
+      sig { params(bundle_ids: String, command: T.nilable(T.class_of(SystemCommand)), _kwargs: T.anything).void }
+      def uninstall_quit(*bundle_ids, command: nil, **_kwargs)
         bundle_ids.each do |bundle_id|
           next unless running?(bundle_id)
 
@@ -220,6 +238,7 @@ module Cask
         end
       end
 
+      sig { params(bundle_id: String).returns(T::Boolean) }
       def running?(bundle_id)
         script = <<~JAVASCRIPT
           'use strict';
@@ -239,9 +258,10 @@ module Cask
         JAVASCRIPT
 
         system_command("osascript", args:         ["-l", "JavaScript", "-e", script, bundle_id],
-                                    print_stderr: true).status.success?
+                                    print_stderr: true).status.success? || false
       end
 
+      sig { params(bundle_id: String).returns(SystemCommand::Result) }
       def quit(bundle_id)
         script = <<~JAVASCRIPT
           'use strict';
@@ -269,7 +289,10 @@ module Cask
       private :quit
 
       # :signal should come after :quit so it can be used as a backup when :quit fails
-      def uninstall_signal(*signals, command: nil, **_)
+      sig {
+        params(signals: [String, String], command: T.nilable(T.class_of(SystemCommand)), _kwargs: T.anything).void
+      }
+      def uninstall_signal(*signals, command: nil, **_kwargs)
         signals.each do |pair|
           raise CaskInvalidError.new(cask, "Each #{stanza} :signal must consist of 2 elements.") if pair.size != 2
 
@@ -295,7 +318,15 @@ module Cask
         end
       end
 
-      def uninstall_login_item(*login_items, command: nil, successor: nil, **_)
+      sig {
+        params(
+          login_items: T.any(String, T::Hash[Symbol, T.any(String, Pathname)]),
+          command:     T.nilable(T.class_of(SystemCommand)),
+          successor:   T.nilable(Cask),
+          _kwargs:     T.anything,
+        ).void
+      }
+      def uninstall_login_item(*login_items, command: nil, successor: nil, **_kwargs)
         return if successor
 
         apps = cask.artifacts.select { |a| a.class.dsl_key == :app }
@@ -325,7 +356,8 @@ module Cask
       end
 
       # :kext should be unloaded before attempting to delete the relevant file
-      def uninstall_kext(*kexts, command: nil, **_)
+      sig { params(kexts: String, command: T.nilable(T.class_of(SystemCommand)), _kwargs: T.anything).void }
+      def uninstall_kext(*kexts, command: nil, **_kwargs)
         kexts.each do |kext|
           ohai "Unloading kernel extension #{kext}"
           is_loaded = system_command!(
@@ -362,7 +394,16 @@ module Cask
       end
 
       # :script must come before :pkgutil, :delete, or :trash so that the script file is not already deleted
-      def uninstall_script(directives, directive_name: :script, force: false, command: nil, **_)
+      sig {
+        params(
+          directives:     DirectivesType,
+          command:        T.class_of(SystemCommand),
+          directive_name: Symbol,
+          force:          T::Boolean,
+          _kwargs:        T.anything,
+        ).void
+      }
+      def uninstall_script(directives, command:, directive_name: :script, force: false, **_kwargs)
         # TODO: Create a common `Script` class to run this and Artifact::Installer.
         executable, script_arguments = self.class.read_script_arguments(directives,
                                                                         "uninstall",
@@ -376,7 +417,7 @@ module Cask
         executable_path = staged_path_join_executable(executable)
 
         if (executable_path.absolute? && !executable_path.exist?) ||
-           (!executable_path.absolute? && (which executable_path).nil?)
+           (!executable_path.absolute? && which(executable_path.to_s).nil?)
           message = "uninstall script #{executable} does not exist"
           raise CaskError, "#{message}." unless force
 
@@ -388,8 +429,9 @@ module Cask
         sleep 1
       end
 
-      def uninstall_pkgutil(*pkgs, command: nil, **_)
-        ohai "Uninstalling packages with sudo; the password may be necessary:"
+      sig { params(pkgs: String, command: T.class_of(SystemCommand), _kwargs: T.anything).void }
+      def uninstall_pkgutil(*pkgs, command:, **_kwargs)
+        ohai "Uninstalling packages with `sudo` (which may request your password)..."
         pkgs.each do |regex|
           ::Cask::Pkg.all_matching(regex, command).each do |pkg|
             puts pkg.package_id
@@ -398,7 +440,16 @@ module Cask
         end
       end
 
-      def each_resolved_path(action, paths)
+      # This returns T::Enumerable[[Pathname, T::Array[Pathname]]] when called without a block,
+      # but sorbet doesn't support overloads.
+      sig {
+        params(
+          action: Symbol,
+          paths:  T::Array[T.any(Pathname, String)],
+          _block: T.nilable(T.proc.params(path: T.any(Pathname, String), resolved_paths: T::Array[Pathname]).void),
+        ).returns(T.untyped)
+      }
+      def each_resolved_path(action, paths, &_block)
         return enum_for(:each_resolved_path, action, paths) unless block_given?
 
         paths.each do |path|
@@ -433,7 +484,8 @@ module Cask
         end
       end
 
-      def uninstall_delete(*paths, command: nil, **_)
+      sig { params(paths: T.any(Pathname, String), command: T.class_of(SystemCommand), _kwargs: T.anything).void }
+      def uninstall_delete(*paths, command:, **_kwargs)
         return if paths.empty?
 
         ohai "Removing files:"
@@ -448,6 +500,7 @@ module Cask
         end
       end
 
+      sig { params(paths: T.any(Pathname, String), options: T.anything).void }
       def uninstall_trash(*paths, **options)
         return if paths.empty?
 
@@ -457,19 +510,23 @@ module Cask
         trash_paths(*resolved_paths.flat_map(&:last), **options)
       end
 
-      def trash_paths(*paths, command: nil, **_)
+      sig {
+        params(paths: Pathname, command: T.nilable(T.class_of(SystemCommand)), _kwargs: T.anything)
+          .returns(T.nilable([T::Array[String], T::Array[String]]))
+      }
+      def trash_paths(*paths, command: nil, **_kwargs)
         return if paths.empty?
 
-        stdout, = system_command HOMEBREW_LIBRARY_PATH/"cask/utils/trash.swift",
-                                 args:         paths,
-                                 print_stderr: Homebrew::EnvConfig.developer?
+        stdout = system_command(HOMEBREW_LIBRARY_PATH/"cask/utils/trash.swift",
+                                args:         paths,
+                                print_stderr: Homebrew::EnvConfig.developer?).stdout
 
         trashed, _, untrashable = stdout.partition("\n")
         trashed = trashed.split(":")
         untrashable = untrashable.split(":")
 
         trashed_with_permissions, untrashable = untrashable.partition do |path|
-          Utils.gain_permissions(path, ["-R"], SystemCommand) do
+          Utils.gain_permissions(Pathname(path), ["-R"], SystemCommand) do
             system_command! HOMEBREW_LIBRARY_PATH/"cask/utils/trash.swift",
                             args:         [path],
                             print_stderr: Homebrew::EnvConfig.developer?
@@ -490,11 +547,13 @@ module Cask
         [trashed, untrashable]
       end
 
+      sig { params(directories: Pathname).returns(T::Boolean) }
       def all_dirs?(*directories)
         directories.all?(&:directory?)
       end
 
-      def recursive_rmdir(*directories, command: nil, **_)
+      sig { params(directories: Pathname, command: T.class_of(SystemCommand), _kwargs: T.anything).void }
+      def recursive_rmdir(*directories, command:, **_kwargs)
         directories.all? do |resolved_path|
           puts resolved_path.sub(Dir.home, "~")
 
@@ -514,19 +573,24 @@ module Cask
           end
 
           # Directory counts as empty if it only contains a `.DS_Store`.
-          if children.include?((ds_store = resolved_path/".DS_Store"))
+          if children.include?(ds_store = resolved_path/".DS_Store")
             Utils.gain_permissions_remove(ds_store, command:)
             children.delete(ds_store)
           end
 
           next false unless recursive_rmdir(*children, command:)
 
-          Utils.gain_permissions_rmdir(resolved_path, command:)
+          begin
+            Utils.gain_permissions_rmdir(resolved_path, command:)
+          rescue Errno::ENOTEMPTY, ErrorDuringExecution
+            next false
+          end
 
           true
         end
       end
 
+      sig { params(directories: T.any(Pathname, String), kwargs: T.anything).void }
       def uninstall_rmdir(*directories, **kwargs)
         return if directories.empty?
 
@@ -539,7 +603,10 @@ module Cask
         end
       end
 
-      def undeletable?(target); end
+      sig { params(target: Pathname).returns(T::Boolean) }
+      def undeletable?(target)
+        !target.parent.writable?
+      end
     end
   end
 end

@@ -6,12 +6,15 @@ require "formula_versions"
 require "formula_name_cask_token_auditor"
 require "resource_auditor"
 require "utils/shared_audits"
+require "utils/output"
+require "utils/git"
 
 module Homebrew
   # Auditor for checking common violations in {Formula}e.
   class FormulaAuditor
     include FormulaCellarChecks
     include Utils::Curl
+    include Utils::Output::Mixin
 
     attr_reader :formula, :text, :problems, :new_formula_problems
 
@@ -37,8 +40,7 @@ module Homebrew
       @spdx_license_data = options[:spdx_license_data]
       @spdx_exception_data = options[:spdx_exception_data]
       @tap_audit = options[:tap_audit]
-      @previous_committed = {}
-      @newest_committed = {}
+      @committed_version_info_cache = {}
     end
 
     def audit_style
@@ -114,7 +116,7 @@ module Homebrew
                 ln -s #{formula.path.to_s.gsub(formula.tap.path, "..")} #{alias_name}
             EOS
           else
-            problem "Formula has other versions so create an alias named #{alias_name}."
+            problem "Formula has other versions so create an alias named '#{alias_name}'."
           end
         end
 
@@ -153,7 +155,7 @@ module Homebrew
           next if synced_formula == name
 
           if (synced_version = Formulary.factory(synced_formula).version) != version
-            problem "Version of `#{synced_formula}` (#{synced_version}) should match version of `#{name}` (#{version})"
+            problem "Version of #{synced_formula} (#{synced_version}) should match version of #{name} (#{version})"
           end
         end
 
@@ -170,8 +172,8 @@ module Homebrew
                                                                               last_word_connector: " or ")}."
       end
 
-      return unless @strict
       return unless @core_tap
+      return unless @strict
 
       problem "'#{name}' is not allowed in homebrew/core." if MissingFormula.disallowed_reason(name)
 
@@ -185,10 +187,18 @@ module Homebrew
         return
       end
 
+      cask_tokens = CoreCaskTap.instance.cask_tokens.presence
+      cask_tokens ||= Homebrew::API.cask_tokens
+
+      if cask_tokens.include?(name)
+        problem "Formula name conflicts with an existing Homebrew/cask cask's token."
+        return
+      end
+
       return if formula.core_formula?
       return unless Formula.core_names.include?(name)
 
-      problem "Formula name conflicts with existing core formula."
+      problem "Formula name conflicts with an existing formula in homebrew/core."
     end
 
     PERMITTED_LICENSE_MISMATCHES = {
@@ -203,7 +213,7 @@ module Homebrew
     INCOMPATIBLE_LICENSES = [
       "Aladdin",    # https://www.gnu.org/licenses/license-list.html#Aladdin
       "CPOL-1.02",  # https://www.gnu.org/licenses/license-list.html#cpol
-      "gSOAP-1.3b", # https://salsa.debian.org/ellert/gsoap/-/blob/master/debian/copyright
+      "gSOAP-1.3b", # https://salsa.debian.org/ellert/gsoap/-/blob/HEAD/debian/copyright
       "JSON",       # https://wiki.debian.org/DFSGLicenses#JSON_evil_license
       "MS-LPL",     # https://github.com/spdx/license-list-XML/issues/1432#issuecomment-1077680709
       "OPL-1.0",    # https://wiki.debian.org/DFSGLicenses#Open_Publication_License_.28OPL.29_v1.0
@@ -226,7 +236,7 @@ module Homebrew
           problem <<~EOS
             Formula #{formula.name} contains incompatible licenses: #{incompatible_licenses}.
             Formulae in homebrew/core must either use a Debian Free Software Guidelines license
-            or be released into the public domain. See #{Formatter.url("https://docs.brew.sh/License-Guidelines")}
+            or be released into the public domain: #{Formatter.url("https://docs.brew.sh/License-Guidelines")}
           EOS
         end
 
@@ -327,12 +337,18 @@ module Homebrew
               end
             end
 
-            problem "Dependency '#{dep}' does not define option #{opt.name.inspect}"
+            problem "Dependency '#{dep}' does not define option: #{opt.name.inspect}"
           end
 
           problem "Don't use 'git' as a dependency (it's always available)" if @new_formula && dep.name == "git"
 
-          problem "Dependency '#{dep.name}' is marked as :run. Remove :run; it is a no-op." if dep.tags.include?(:run)
+          dep.tags.each do |tag|
+            if [:run, :linked].include?(tag)
+              problem "Dependency '#{dep.name}' is marked as :#{tag}. Remove :#{tag}; it is a no-op."
+            elsif tag.is_a?(Symbol) && Dependable::RESERVED_TAGS.exclude?(tag)
+              problem "Dependency '#{dep.name}' is marked as :#{tag} which is not a valid tag."
+            end
+          end
 
           next unless @core_tap
 
@@ -396,7 +412,7 @@ module Homebrew
           base_info = event_payload.dig("pull_request", "base").to_h # handle `nil`
 
           # We need to read the head ref from `GITHUB_EVENT_PATH` because
-          # `git branch --show-current` returns `master` on PR branches.
+          # `git branch --show-current` returns the default branch on PR branches.
           staging_branch = base_info["ref"]&.end_with?("-staging")
           homebrew_owned_repo = base_info.dig("repo", "owner", "login") == "Homebrew"
           homebrew_core_pr = base_info.dig("repo", "name") == "homebrew-core"
@@ -448,7 +464,7 @@ module Homebrew
 
         if T.must(tap).formula_renames.key?(conflict.name) || T.must(tap).aliases.include?(conflict.name)
           problem "Formula conflict should be declared using " \
-                  "canonical name (#{conflicting_formula.name}) instead of #{conflict.name}"
+                  "canonical name (#{conflicting_formula.name}) instead of '#{conflict.name}'"
         end
 
         reverse_conflict_found = T.let(false, T::Boolean)
@@ -457,7 +473,7 @@ module Homebrew
           if T.must(tap).formula_renames.key?(reverse_conflict.name) ||
              T.must(tap).aliases.include?(reverse_conflict.name)
             problem "Formula #{conflicting_formula.name} conflict should be declared using " \
-                    "canonical name (#{reverse_conflict_formula.name}) instead of #{reverse_conflict.name}"
+                    "canonical name (#{reverse_conflict_formula.name}) instead of '#{reverse_conflict.name}'"
           end
 
           reverse_conflict_found ||= reverse_conflict_formula == formula
@@ -486,21 +502,6 @@ module Homebrew
       problem "Formulae in homebrew/core should not have a Linux-only dependency on GCC."
     end
 
-    def audit_postgresql
-      return if formula.name != "postgresql"
-      return unless @core_tap
-
-      major_version = formula.version.major.to_i
-      previous_major_version = major_version - 1
-      previous_formula_name = "postgresql@#{previous_major_version}"
-      begin
-        Formula[previous_formula_name]
-      rescue FormulaUnavailableError
-        problem "Versioned #{previous_formula_name} in homebrew/core must be created for " \
-                "`brew postgresql-upgrade-database` and `pg_upgrade` to work."
-      end
-    end
-
     def audit_glibc
       return unless @core_tap
       return if formula.name != "glibc"
@@ -512,27 +513,12 @@ module Homebrew
               "which allows them to use our Linux bottles, which were compiled against system glibc on CI."
     end
 
-    RELICENSED_FORMULAE_VERSIONS = {
-      "boundary"           => "0.14",
-      "consul"             => "1.17",
-      "elasticsearch"      => "7.11",
-      "kibana"             => "7.11",
-      "nomad"              => "1.7",
-      "packer"             => "1.10",
-      "redis"              => "7.4",
-      "terraform"          => "1.6",
-      "vagrant"            => "2.4",
-      "vagrant-completion" => "2.4",
-      "vault"              => "1.15",
-      "waypoint"           => "0.12",
-    }.freeze
-
     def audit_relicensed_formulae
-      return unless RELICENSED_FORMULAE_VERSIONS.key? formula.name
       return unless @core_tap
 
-      relicensed_version = Version.new(RELICENSED_FORMULAE_VERSIONS[formula.name])
-      return if formula.version < relicensed_version
+      relicensed_version = formula.tap&.audit_exception :relicensed_formulae_versions, formula.name
+      return unless relicensed_version
+      return if formula.version < Version.new(relicensed_version)
 
       problem "#{formula.name} was relicensed to a non-open-source license from version #{relicensed_version}. " \
               "It must not be upgraded to version #{relicensed_version} or newer."
@@ -565,7 +551,7 @@ module Homebrew
 
       # Skip gnu.org and nongnu.org audit on GitHub runners
       # See issue: https://github.com/Homebrew/homebrew-core/issues/206757
-      github_runner = ENV.fetch("GITHUB_ACTIONS", nil) && !ENV["GITHUB_ACTIONS_HOMEBREW_SELF_HOSTED"]
+      github_runner = GitHub::Actions.env_set? && !ENV["GITHUB_ACTIONS_HOMEBREW_SELF_HOSTED"]
       return if homepage.match?(%r{^https?://www\.(?:non)?gnu\.org/.+}) && github_runner
 
       use_homebrew_curl = [:stable, :head].any? do |spec_name|
@@ -613,11 +599,10 @@ module Homebrew
       metadata = SharedAudits.eol_data(name, formula.version.major.to_s)
       metadata ||= SharedAudits.eol_data(name, formula.version.major_minor.to_s)
 
-      return if metadata.blank? || (eol = metadata["eol"]).blank?
+      return if metadata.blank? || (metadata.dig("result", "isEol") != true)
 
-      is_eol = eol == true
-      is_eol ||= eol.is_a?(String) && (eol_date = Date.parse(eol)) <= Date.today
-      return unless is_eol
+      eol_from = metadata.dig("result", "eolFrom")
+      eol_date = Date.parse(eol_from) if eol_from.present?
 
       message = "Product is EOL"
       message += " since #{eol_date}" if eol_date.present?
@@ -655,7 +640,7 @@ module Homebrew
       metadata = SharedAudits.github_repo_data(user, repo)
       return if metadata.nil?
 
-      problem "GitHub repo is archived" if metadata["archived"]
+      problem "GitHub repository is archived" if metadata["archived"]
     end
 
     def audit_gitlab_repository_archived
@@ -667,7 +652,20 @@ module Homebrew
       metadata = SharedAudits.gitlab_repo_data(user, repo)
       return if metadata.nil?
 
-      problem "GitLab repo is archived" if metadata["archived"]
+      problem "GitLab repository is archived" if metadata["archived"]
+    end
+
+    sig { void }
+    def audit_forgejo_repository_archived
+      return if formula.deprecated? || formula.disabled?
+
+      user, repo = get_repo_data(%r{https?://codeberg\.org/([^/]+)/([^/]+)/?.*}) if @online
+      return if user.blank?
+
+      metadata = SharedAudits.forgejo_repo_data(user, repo)
+      return if metadata.nil?
+
+      problem "Forgejo repository is archived since #{metadata["archived_at"]}" if metadata["archived"]
     end
 
     def audit_github_repository
@@ -675,7 +673,8 @@ module Homebrew
 
       return if user.blank?
 
-      warning = SharedAudits.github(user, repo)
+      self_submission = self_submission?(user)
+      warning = SharedAudits.github(user, repo, self_submission:)
       return if warning.nil?
 
       new_formula_problem warning
@@ -685,7 +684,8 @@ module Homebrew
       user, repo = get_repo_data(%r{https?://gitlab\.com/([^/]+)/([^/]+)/?.*}) if @new_formula
       return if user.blank?
 
-      warning = SharedAudits.gitlab(user, repo)
+      self_submission = self_submission?(user)
+      warning = SharedAudits.gitlab(user, repo, self_submission:)
       return if warning.nil?
 
       new_formula_problem warning
@@ -695,7 +695,20 @@ module Homebrew
       user, repo = get_repo_data(%r{https?://bitbucket\.org/([^/]+)/([^/]+)/?.*}) if @new_formula
       return if user.blank?
 
-      warning = SharedAudits.bitbucket(user, repo)
+      self_submission = self_submission?(user)
+      warning = SharedAudits.bitbucket(user, repo, self_submission:)
+      return if warning.nil?
+
+      new_formula_problem warning
+    end
+
+    sig { void }
+    def audit_forgejo_repository
+      user, repo = get_repo_data(%r{https?://codeberg\.org/([^/]+)/([^/]+)/?.*}) if @new_formula
+      return if user.blank?
+
+      self_submission = self_submission?(user)
+      warning = SharedAudits.forgejo(user, repo, self_submission:)
       return if warning.nil?
 
       new_formula_problem warning
@@ -716,7 +729,7 @@ module Homebrew
     end
 
     def audit_specs
-      problem "Head-only (no stable download)" if head_only?(formula)
+      problem "HEAD-only (no stable download)" if head_only?(formula) && @core_tap
 
       %w[Stable HEAD].each do |name|
         spec_name = name.downcase.to_sym
@@ -730,7 +743,7 @@ module Homebrew
 
         ra = ResourceAuditor.new(
           spec, spec_name,
-          online: @online, strict: @strict, only: @only, except:,
+          online: @online, strict: @strict, only: @only, core_tap: @core_tap, except:,
           use_homebrew_curl: spec.using == :homebrew_curl
         ).audit
         ra.problems.each do |message|
@@ -763,7 +776,7 @@ module Homebrew
 
       if formula.head && @versioned_formula &&
          !formula.tap&.audit_exception(:versioned_head_spec_allowlist, formula.name)
-        problem "Versioned formulae should not have a `HEAD` spec"
+        problem "Versioned formulae should not have a `head` spec"
       end
 
       stable = formula.stable
@@ -775,7 +788,7 @@ module Homebrew
 
       stable_version_string = version.to_s
       if stable_version_string.start_with?("HEAD")
-        problem "Stable: non-HEAD version name (#{stable_version_string}) should not begin with HEAD"
+        problem "Stable: non-HEAD version (#{stable_version_string}) should not begin with `HEAD`"
       end
 
       stable_url_version = Version.parse(stable.url)
@@ -784,7 +797,7 @@ module Homebrew
       formula_suffix = stable.version.patch.to_i
       throttled_rate = formula.livecheck.throttle
       if throttled_rate && formula_suffix.modulo(throttled_rate).nonzero?
-        problem "should only be updated every #{throttled_rate} releases on multiples of #{throttled_rate}"
+        problem "Should only be updated every #{throttled_rate} releases on multiples of #{throttled_rate}"
       end
 
       case (url = stable.url)
@@ -794,21 +807,22 @@ module Homebrew
         return if formula.tap&.audit_exception :unstable_allowlist, formula.name, version_prefix
         return if formula.tap&.audit_exception :unstable_devel_allowlist, formula.name, version_prefix
 
-        problem "Stable version URLs should not contain #{matched}"
+        problem "Stable: version URLs should not contain `#{matched}`"
       when %r{download\.gnome\.org/sources}, %r{ftp\.gnome\.org/pub/GNOME/sources}i
         version_prefix = stable.version.major_minor
         return if formula.tap&.audit_exception :gnome_devel_allowlist, formula.name, version_prefix
+        return if formula.tap&.audit_exception :gnome_devel_allowlist, formula.name, "all"
         return if stable_url_version < Version.new("1.0")
         # All minor versions are stable in the new GNOME version scheme (which starts at version 40.0)
         # https://discourse.gnome.org/t/new-gnome-versioning-scheme/4235
         return if stable_url_version >= Version.new("40.0")
         return if stable_url_minor_version.even?
 
-        problem "#{stable.version} is a development release"
+        problem "Stable: version (#{stable.version}) is a development release"
       when %r{isc.org/isc/bind\d*/}i
         return if stable_url_minor_version.even?
 
-        problem "#{stable.version} is a development release"
+        problem "Stable: version (#{stable.version}) is a development release"
 
       when %r{https?://gitlab\.com/([\w-]+)/([\w-]+)}
         owner = T.must(Regexp.last_match(1))
@@ -832,6 +846,16 @@ module Homebrew
           error = SharedAudits.github_release(owner, repo, tag, formula:)
           problem error if error
         end
+      when %r{^https://codeberg\.org/([\w-]+)/([\w-]+)}
+        owner = T.must(Regexp.last_match(1))
+        repo = T.must(Regexp.last_match(2))
+        tag = SharedAudits.forgejo_tag_from_url(url)
+        tag ||= formula.stable.specs[:tag]
+
+        if @online && !tag.nil?
+          error = SharedAudits.forgejo_release(owner, repo, tag, formula:)
+          problem error if error
+        end
       end
     end
 
@@ -844,12 +868,12 @@ module Homebrew
       current_version = formula.stable.version
       current_version_scheme = formula.version_scheme
 
-      previous_committed, newest_committed = committed_version_info
+      previous_version_info, origin_head_version_info = committed_version_info
 
-      if !newest_committed[:version].nil? &&
-         current_version < newest_committed[:version] &&
-         current_version_scheme == previous_committed[:version_scheme]
-        problem "stable version should not decrease (from #{newest_committed[:version]} to #{current_version})"
+      if (origin_head_version = origin_head_version_info[:version]) &&
+         current_version < origin_head_version &&
+         current_version_scheme == previous_version_info[:version_scheme]
+        problem "Stable: version should not decrease (from #{origin_head_version} to #{current_version})"
       end
     end
 
@@ -857,29 +881,109 @@ module Homebrew
       new_formula_problem("New formulae should not define a revision.") if @new_formula && !formula.revision.zero?
 
       return unless @git
-      return unless formula.tap # skip formula not from core or any taps
-      return unless formula.tap.git? # git log is required
+
+      tap = formula.tap
+      return if tap.nil?
+      return unless tap.git?
       return if formula.stable.blank?
 
       current_version = formula.stable.version
       current_revision = formula.revision
 
-      previous_committed, newest_committed = committed_version_info
+      previous_version_info, origin_head_version_info = committed_version_info
 
-      if (previous_committed[:version] != newest_committed[:version] ||
-         current_version != newest_committed[:version]) &&
-         !current_revision.zero? &&
-         current_revision == newest_committed[:revision] &&
-         current_revision == previous_committed[:revision]
-        problem "'revision #{current_revision}' should be removed"
-      elsif current_version == previous_committed[:version] &&
-            !previous_committed[:revision].nil? &&
-            current_revision < previous_committed[:revision]
-        problem "revision should not decrease (from #{previous_committed[:revision]} to #{current_revision})"
-      elsif newest_committed[:revision] &&
-            current_revision > (newest_committed[:revision] + 1)
-        problem "revisions should only increment by 1"
+      previous_version = previous_version_info[:version]
+      previous_revision = previous_version_info[:revision]
+      origin_head_version = origin_head_version_info[:version]
+      origin_head_revision = origin_head_version_info[:revision]
+
+      if (previous_version != origin_head_version || current_version != origin_head_version) &&
+         !current_revision.zero? && current_revision == origin_head_revision && current_revision == previous_revision
+        problem "`revision #{current_revision}` should be removed"
+      elsif current_version == previous_version && previous_revision && current_revision < previous_revision
+        problem "`revision` should not decrease (from #{previous_revision} to #{current_revision})"
+      elsif origin_head_revision && current_revision > (origin_head_revision + 1)
+        problem "`revision` should only increment by 1"
       end
+
+      revision_increment = current_revision - previous_revision.to_i
+      return if revision_increment != 1
+
+      dependency_names = formula.recursive_dependencies.map(&:name)
+      return if dependency_names.empty?
+
+      changed_dependency_paths = changed_formulae_paths(tap, only_names: dependency_names)
+      return if changed_dependency_paths.empty?
+
+      missing_compatibility_bumps = changed_dependency_paths.filter_map do |path|
+        changed_formula = Formulary.factory(path)
+        # Each changed dependency that updates its version must raise its compatibility_version by exactly one.
+        _, origin_head_dependency_version_info = committed_version_info(formula: changed_formula)
+        previous_dependency_version = origin_head_dependency_version_info[:version]
+        current_dependency_version = changed_formula.stable&.version
+        if previous_dependency_version.present? && current_dependency_version.present? &&
+           current_dependency_version == previous_dependency_version
+          next
+        end
+
+        previous_compatibility_version = origin_head_dependency_version_info[:compatibility_version] || 0
+        current_compatibility_version = changed_formula.compatibility_version || 0
+        next if current_compatibility_version == previous_compatibility_version + 1
+
+        expected_compatibility_version = previous_compatibility_version + 1
+        "#{changed_formula.name} (#{previous_compatibility_version} to #{expected_compatibility_version})"
+      end
+      return if missing_compatibility_bumps.empty? || !formula.core_formula?
+
+      problem "`revision` increased but recursive dependencies must increase `compatibility_version` by 1: " \
+              "#{missing_compatibility_bumps.join(", ")}."
+    end
+
+    def audit_compatibility_version
+      return unless @git
+
+      tap = formula.tap
+      return if tap.nil?
+      return unless tap.git?
+
+      _, origin_head_version_info = committed_version_info
+      return if origin_head_version_info.empty?
+
+      previous_compatibility_version = origin_head_version_info[:compatibility_version] || 0
+      current_compatibility_version = formula.compatibility_version || previous_compatibility_version
+
+      if current_compatibility_version < previous_compatibility_version
+        problem "`compatibility_version` should not decrease " \
+                "from #{previous_compatibility_version} to #{current_compatibility_version}"
+        return
+      elsif current_compatibility_version > (previous_compatibility_version + 1)
+        problem "`compatibility_version` should only increment by 1"
+        return
+      end
+
+      compatibility_increment = current_compatibility_version - previous_compatibility_version
+      return if compatibility_increment.zero?
+
+      dependent_revision_bumps = changed_formulae_paths(tap).filter_map do |path|
+        changed_formula = Formulary.factory(path)
+        next if changed_formula.name == formula.name
+
+        dependencies = changed_formula.recursive_dependencies.map(&:name)
+        # Only formulae that depend (recursively) on the audited formula can justify the bump.
+        next unless dependencies.include?(formula.name)
+
+        _, origin_head_dependent_version_info = committed_version_info(formula: changed_formula)
+        previous_revision = origin_head_dependent_version_info[:revision] || 0
+        current_revision = changed_formula.revision
+        next if current_revision != previous_revision + 1
+
+        changed_formula.name
+      end
+      return if dependent_revision_bumps.any?
+
+      problem "`compatibility_version` increased from #{previous_compatibility_version} to " \
+              "#{current_compatibility_version} but no recursive dependent formulae increased " \
+              "`revision` by 1 in this PR."
     end
 
     def audit_version_scheme
@@ -890,15 +994,14 @@ module Homebrew
 
       current_version_scheme = formula.version_scheme
 
-      previous_committed, = committed_version_info
+      _, origin_head_version_info = committed_version_info
+      previous_version_scheme = origin_head_version_info[:version_scheme]
+      return if previous_version_scheme.nil?
 
-      return if previous_committed[:version_scheme].nil?
-
-      if current_version_scheme < previous_committed[:version_scheme]
-        problem "version_scheme should not decrease (from #{previous_committed[:version_scheme]} " \
-                "to #{current_version_scheme})"
-      elsif current_version_scheme > (previous_committed[:version_scheme] + 1)
-        problem "version_schemes should only increment by 1"
+      if current_version_scheme < previous_version_scheme
+        problem "`version_scheme` should not decrease (from #{previous_version_scheme} to #{current_version_scheme})"
+      elsif current_version_scheme > (previous_version_scheme + 1)
+        problem "`version_scheme` should only increment by 1"
       end
     end
 
@@ -912,12 +1015,13 @@ module Homebrew
       current_checksum = formula.stable.checksum
       current_url = formula.stable.url
 
-      _, newest_committed = committed_version_info
+      _, origin_head_version_info = committed_version_info
+      origin_head_checksum = origin_head_version_info[:checksum]
 
-      if current_version == newest_committed[:version] &&
-         current_url == newest_committed[:url] &&
-         current_checksum != newest_committed[:checksum] &&
-         current_checksum.present? && newest_committed[:checksum].present?
+      if current_version == origin_head_version_info[:version] &&
+         current_url == origin_head_version_info[:url] &&
+         current_checksum.present? && origin_head_checksum.present? &&
+         current_checksum != origin_head_checksum
         problem(
           "stable sha256 changed without the url/version also changing; " \
           "please create an issue upstream to rule out malicious " \
@@ -939,7 +1043,7 @@ module Homebrew
       bin_names.each do |name|
         shell_commands.each do |cmd|
           if text.to_s.match?(/test do.*#{cmd}[(\s]+['"]#{Regexp.escape(name)}[\s'"]/m)
-            problem %Q(fully scope test #{cmd} calls, e.g. #{cmd} "\#{bin}/#{name}")
+            problem %Q(Fully scope test `#{cmd}` calls, e.g.: #{cmd} "\#{bin}/#{name}")
           end
         end
       end
@@ -974,6 +1078,15 @@ module Homebrew
       problem error if error
     end
 
+    def audit_no_autobump
+      return if formula.autobump?
+
+      return unless @new_formula_inclusive
+
+      error = SharedAudits.no_autobump_new_package_message(formula.no_autobump_message)
+      new_formula_problem error if error
+    end
+
     def quote_dep(dep)
       dep.is_a?(Symbol) ? dep.inspect : "'#{dep}'"
     end
@@ -1003,6 +1116,12 @@ module Homebrew
 
     def new_formula_problem(message, location: nil, corrected: false)
       @new_formula_problems << ({ message:, location:, corrected: })
+    end
+
+    def self_submission?(repo_owner)
+      return false if repo_owner.blank?
+
+      SharedAudits.self_submission_for_repo_owner?(repo_owner)
     end
 
     def head_only?(formula)
@@ -1035,12 +1154,46 @@ module Homebrew
       true
     end
 
-    def committed_version_info
-      return [] unless @git
-      return [] unless formula.tap # skip formula not from core or any taps
-      return [] unless formula.tap.git? # git log is required
-      return [] if formula.stable.blank?
-      return [@previous_committed, @newest_committed] if @previous_committed.present? || @newest_committed.present?
+    sig { params(tap: Tap, only_names: T::Array[String]).returns(T::Array[Pathname]) }
+    def changed_formulae_paths(tap, only_names: [].freeze)
+      return [] unless tap.git?
+
+      base_ref = "origin/HEAD"
+      changed_paths = Utils.safe_popen_read(Utils::Git.git, "-C", tap.path, "diff", "--name-only", base_ref)
+                           .lines
+                           .filter_map do |line|
+        relative_path = line.chomp
+        next unless relative_path.end_with?(".rb")
+
+        absolute_path = tap.path/relative_path
+        next unless absolute_path.exist?
+        next unless absolute_path.to_s.start_with?(tap.formula_dir.to_s)
+
+        absolute_path
+      end
+      return changed_paths if only_names.blank?
+
+      expected_paths = only_names.filter_map do |name|
+        formula_name = name.to_s.delete_prefix("#{tap.name}/")
+        formula_name = formula_name.delete_suffix(".rb")
+        tap.formula_files_by_name[formula_name]&.expand_path
+      end.map(&:to_s)
+
+      changed_paths.select { |path| expected_paths.include?(path.expand_path.to_s) }
+    end
+
+    sig { params(formula: Formula).returns([T::Hash[Symbol, T.untyped], T::Hash[Symbol, T.untyped]]) }
+    def committed_version_info(formula: @formula)
+      empty_result = [{}, {}]
+      return empty_result unless @git
+      return empty_result unless formula.tap # skip formula not from core or any taps
+      return empty_result unless formula.tap.git? # git log is required
+      return empty_result if formula.stable.blank?
+
+      return @committed_version_info_cache[formula.full_name] if @committed_version_info_cache.key?(formula.full_name)
+
+      previous_version_info = {}
+      origin_head_version_info = {}
 
       current_version = formula.stable.version
       current_revision = formula.revision
@@ -1052,28 +1205,31 @@ module Homebrew
             stable = f.stable
             next if stable.blank?
 
-            @previous_committed[:version] = stable.version
-            @previous_committed[:checksum] = stable.checksum
-            @previous_committed[:version_scheme] = f.version_scheme
-            @previous_committed[:revision] = f.revision
+            previous_version_info[:version]  = stable.version
+            previous_version_info[:checksum] = stable.checksum
+            previous_version_info[:revision] = f.revision
+            previous_version_info[:version_scheme] = f.version_scheme
+            previous_version_info[:compatibility_version] = f.compatibility_version
 
-            @newest_committed[:version] ||= @previous_committed[:version]
-            @newest_committed[:checksum] ||= @previous_committed[:checksum]
-            @newest_committed[:revision] ||= @previous_committed[:revision]
-            @newest_committed[:url] ||= stable.url
+            origin_head_version_info[:url] ||= stable.url
+            origin_head_version_info[:version]  ||= previous_version_info[:version]
+            origin_head_version_info[:checksum] ||= previous_version_info[:checksum]
+            origin_head_version_info[:revision] ||= previous_version_info[:revision]
+            origin_head_version_info[:version_scheme] ||= previous_version_info[:version_scheme]
+            origin_head_version_info[:compatibility_version] ||= previous_version_info[:compatibility_version]
           end
         rescue MacOSVersion::Error
           break
         end
 
-        break if @previous_committed[:version] && current_version != @previous_committed[:version]
-        break if @previous_committed[:revision] && current_revision != @previous_committed[:revision]
+        break if previous_version_info[:version]  && current_version  != previous_version_info[:version]
+        break if previous_version_info[:revision] && current_revision != previous_version_info[:revision]
       end
 
-      @previous_committed.compact!
-      @newest_committed.compact!
+      previous_version_info.compact!
+      origin_head_version_info.compact!
 
-      [@previous_committed, @newest_committed]
+      @committed_version_info_cache[formula.full_name] = [previous_version_info, origin_head_version_info]
     end
   end
 end

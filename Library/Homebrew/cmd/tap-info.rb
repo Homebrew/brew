@@ -57,12 +57,14 @@ module Homebrew
           end
           info = Utils.pluralize("tap", tap_count, include_count: true)
           info += ", #{private_count} private"
-          info += ", #{Utils.pluralize("formula", formula_count, plural: "e", include_count: true)}"
+          info += ", #{Utils.pluralize("formula", formula_count, include_count: true)}"
           info += ", #{Utils.pluralize("command", command_count, include_count: true)}"
           info += ", #{HOMEBREW_TAP_DIRECTORY.dup.abv}" if HOMEBREW_TAP_DIRECTORY.directory?
           puts info
         else
           info = ""
+          default_branches = %w[main master].freeze
+
           taps.each_with_index do |tap, i|
             puts unless i.zero?
             info = "#{tap}: "
@@ -79,9 +81,10 @@ module Homebrew
               info += "\norigin: #{tap.remote}" if tap.remote != tap.default_remote
               info += "\nHEAD: #{tap.git_head || "(none)"}"
               info += "\nlast commit: #{tap.git_last_commit || "never"}"
-              info += "\nbranch: #{tap.git_branch || "(none)"}" if tap.git_branch != "master"
+              info += "\nbranch: #{tap.git_branch || "(none)"}" if default_branches.exclude?(tap.git_branch)
             else
               info += "Not installed"
+              Homebrew.failed = true
             end
             puts info
           end

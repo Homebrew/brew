@@ -19,7 +19,7 @@ RSpec.describe LazyObject do
 
   describe "#!" do
     it "delegates to the underlying object" do
-      expect(!(described_class.new { false })).to be true
+      expect(!described_class.new { false }).to be true
     end
   end
 

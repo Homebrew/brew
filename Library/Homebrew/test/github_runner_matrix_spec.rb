@@ -3,23 +3,25 @@
 require "github_runner_matrix"
 require "test/support/fixtures/testball"
 
-RSpec.describe GitHubRunnerMatrix do
+RSpec.describe GitHubRunnerMatrix, :no_api do
   before do
+    allow(ENV).to receive(:fetch).and_call_original
     allow(ENV).to receive(:fetch).with("HOMEBREW_LINUX_RUNNER").and_return("ubuntu-latest")
     allow(ENV).to receive(:fetch).with("HOMEBREW_MACOS_LONG_TIMEOUT", "false").and_return("false")
     allow(ENV).to receive(:fetch).with("HOMEBREW_MACOS_BUILD_ON_GITHUB_RUNNER", "false").and_return("false")
     allow(ENV).to receive(:fetch).with("GITHUB_RUN_ID").and_return("12345")
-    allow(ENV).to receive(:fetch).with("HOMEBREW_NO_INSTALL_FROM_API", nil).and_call_original
     allow(ENV).to receive(:fetch).with("HOMEBREW_EVAL_ALL", nil).and_call_original
     allow(ENV).to receive(:fetch).with("HOMEBREW_SIMULATE_MACOS_ON_LINUX", nil).and_call_original
     allow(ENV).to receive(:fetch).with("HOMEBREW_FORBID_PACKAGES_FROM_PATHS", nil).and_call_original
+    allow(ENV).to receive(:fetch).with("HOMEBREW_DEVELOPER", nil).and_call_original
+    allow(ENV).to receive(:fetch).with("HOMEBREW_NO_INSTALL_FROM_API", nil).and_call_original
   end
 
   let(:newest_supported_macos) do
     MacOSVersion::SYMBOLS.find { |k, _| k == described_class::NEWEST_HOMEBREW_CORE_MACOS_RUNNER }
   end
 
-  let(:testball) { TestRunnerFormula.new(Testball.new) }
+  let(:testball) { setup_test_runner_formula("testball") }
   let(:testball_depender) { setup_test_runner_formula("testball-depender", ["testball"]) }
   let(:testball_depender_linux) { setup_test_runner_formula("testball-depender-linux", ["testball", :linux]) }
   let(:testball_depender_macos) { setup_test_runner_formula("testball-depender-macos", ["testball", :macos]) }
@@ -30,6 +32,13 @@ RSpec.describe GitHubRunnerMatrix do
   let(:testball_depender_newest) do
     symbol, = newest_supported_macos
     setup_test_runner_formula("testball-depender-newest", ["testball", { macos: symbol }])
+  end
+
+  describe "OLDEST_HOMEBREW_CORE_MACOS_RUNNER" do
+    it "is not newer than HOMEBREW_MACOS_OLDEST_SUPPORTED" do
+      oldest_macos_runner = MacOSVersion.from_symbol(described_class::OLDEST_HOMEBREW_CORE_MACOS_RUNNER)
+      expect(oldest_macos_runner).to be <= HOMEBREW_MACOS_OLDEST_SUPPORTED
+    end
   end
 
   describe "#active_runner_specs_hash" do
@@ -83,14 +92,14 @@ RSpec.describe GitHubRunnerMatrix do
       end
 
       context "when testing formulae require Linux" do
-        it "activates only the Linux runner" do
+        it "activates only the Linux runners" do
           runner_matrix = described_class.new([testball_depender_linux], [],
                                               all_supported:    false,
                                               dependent_matrix: false)
 
           expect(runner_matrix.runners.all?(&:active)).to be(false)
           expect(runner_matrix.runners.any?(&:active)).to be(true)
-          expect(get_runner_names(runner_matrix)).to eq(["Linux x86_64"])
+          expect(get_runner_names(runner_matrix)).to eq(["Linux x86_64", "Linux arm64"])
         end
       end
 
@@ -131,7 +140,7 @@ RSpec.describe GitHubRunnerMatrix do
       end
 
       context "when testing formulae require a macOS version" do
-        it "activates the Linux runner and suitable macOS runners" do
+        it "activates the Linux runners and suitable macOS runners" do
           _, v = newest_supported_macos
           runner_matrix = described_class.new([testball_depender_newest], [],
                                               all_supported:    false,
@@ -139,7 +148,7 @@ RSpec.describe GitHubRunnerMatrix do
 
           expect(runner_matrix.runners.all?(&:active)).to be(false)
           expect(runner_matrix.runners.any?(&:active)).to be(true)
-          expect(get_runner_names(runner_matrix).sort).to eq(["Linux x86_64", "macOS #{v}-arm64"])
+          expect(get_runner_names(runner_matrix).sort).to eq(["Linux arm64", "Linux x86_64", "macOS #{v}-arm64"])
         end
       end
     end
@@ -276,6 +285,10 @@ RSpec.describe GitHubRunnerMatrix do
               allow(Formula).to receive(:all).and_return([testball, testball_depender_linux].map(&:formula))
 
               matrix = described_class.new([testball], ["deleted"], all_supported: false, dependent_matrix: true)
+              expect(get_runner_names(matrix)).to eq(["Linux x86_64", "Linux arm64"])
+
+              allow(ENV).to receive(:[]).with("HOMEBREW_LINUX_RUNNER").and_return("linux-self-hosted-1")
+              matrix = described_class.new([testball], ["deleted"], all_supported: false, dependent_matrix: true)
               expect(get_runner_names(matrix)).to eq(["Linux x86_64"])
             end
           end
@@ -314,6 +327,7 @@ RSpec.describe GitHubRunnerMatrix do
       end
     end
 
+    stub_formula_loader f
     TestRunnerFormula.new(f)
   end
 end

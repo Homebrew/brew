@@ -4,7 +4,8 @@
 require "context"
 require "erb"
 require "settings"
-require "extend/cachable"
+require "cachable"
+require "utils/output"
 
 module Utils
   # Helper module for fetching and reporting analytics data.
@@ -14,6 +15,7 @@ module Utils
     INFLUX_HOST = "https://eu-central-1-1.aws.cloud2.influxdata.com"
     INFLUX_ORG = "d81a3e6d582d485f"
 
+    extend Utils::Output::Mixin
     extend Cachable
 
     class << self
@@ -267,7 +269,7 @@ module Utils
               table_output(category, days.to_s, results)
             else
               total_count = results.values.inject("+")
-              analytics << "#{number_readable(total_count)} (#{days} days)"
+              analytics << "#{Formatter.number_readable(total_count)} (#{days} days)"
             end
           end
 
@@ -311,7 +313,7 @@ module Utils
           )
           next if last_thirty_days_match.blank?
 
-          last_thirty_days_downloads = T.must(last_thirty_days_match.captures.first).tr(",", "")
+          last_thirty_days_downloads = last_thirty_days_match.captures.fetch(0).tr(",", "")
           thirty_day_download_count += if (millions_match = last_thirty_days_downloads.match(/(\d+\.\d+)M/).presence)
             (millions_match.captures.first.to_f * 1_000_000).to_i
           else
@@ -320,7 +322,7 @@ module Utils
         end
 
         ohai "GitHub Packages Downloads"
-        puts "#{number_readable(thirty_day_download_count)} (30 days)"
+        puts "#{Formatter.number_readable(thirty_day_download_count)} (30 days)"
       end
 
       sig { params(formula: Formula, args: Homebrew::Cmd::Info::Args).void }
@@ -329,7 +331,9 @@ module Utils
 
         require "api"
 
-        json = Homebrew::API::Formula.fetch formula.name
+        return unless Homebrew::API.formula_names.include? formula.name
+
+        json = Homebrew::API::Formula.formula_json formula.name
         return if json.blank? || json["analytics"].blank?
 
         output_analytics(json, args:)
@@ -345,7 +349,9 @@ module Utils
 
         require "api"
 
-        json = Homebrew::API::Cask.fetch cask.token
+        return unless Homebrew::API.cask_tokens.include? cask.token
+
+        json = Homebrew::API::Cask.cask_json cask.token
         return if json.blank? || json["analytics"].blank?
 
         output_analytics(json, args:)
@@ -354,7 +360,7 @@ module Utils
         nil
       end
 
-      sig { returns(T::Hash[Symbol, String]) }
+      sig { returns(T::Hash[Symbol, T.any(T::Boolean, String)]) }
       def default_package_tags
         cache[:default_package_tags] ||= begin
           # Only display default prefixes to reduce cardinality and improve privacy
@@ -445,7 +451,7 @@ module Utils
           format "%#{index_width}s", index_header
         formatted_name_with_options_header =
           format "%-#{name_with_options_width}s",
-                 name_with_options_header[0..name_with_options_width-1]
+                 name_with_options_header[0..(name_with_options_width-1)]
         formatted_count_header =
           format "%#{count_width}s", count_header
         formatted_percent_header =
@@ -464,7 +470,7 @@ module Utils
           formatted_index = format "%-#{index_width}s", formatted_index
           formatted_name_with_options =
             format "%-#{name_with_options_width}s",
-                   name_with_options[0..name_with_options_width-1]
+                   name_with_options[0..(name_with_options_width-1)]
           formatted_count = format "%#{count_width}s", format_count(count)
           formatted_percent = if total_count.zero?
             format "%#{percent_width}s", format_percent(0)

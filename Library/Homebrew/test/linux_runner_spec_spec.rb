@@ -7,7 +7,7 @@ RSpec.describe LinuxRunnerSpec do
     described_class.new(
       name:      "Linux",
       runner:    "ubuntu-latest",
-      container: { image: "ghcr.io/homebrew/ubuntu22.04:master", options: "--user=linuxbrew" },
+      container: { image: "ghcr.io/homebrew/ubuntu22.04:main", options: "--user=linuxbrew" },
       workdir:   "/github/home",
       timeout:   360,
       cleanup:   false,

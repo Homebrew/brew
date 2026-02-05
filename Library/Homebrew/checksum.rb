@@ -13,9 +13,14 @@ class Checksum
     @hexdigest = T.let(hexdigest.downcase, String)
   end
 
+  sig { returns(String) }
+  def inspect
+    "#<Checksum #{hexdigest}>"
+  end
+
   delegate [:empty?, :to_s, :length, :[]] => :@hexdigest
 
-  sig { params(other: T.any(String, Checksum, Symbol)).returns(T::Boolean) }
+  sig { params(other: T.anything).returns(T::Boolean) }
   def ==(other)
     case other
     when String

@@ -11,11 +11,11 @@ module GitHub
   # @param artifact_id [String] a value that uniquely identifies the downloaded artifact
   sig { params(url: String, artifact_id: String).void }
   def self.download_artifact(url, artifact_id)
-    raise API::MissingAuthenticationError if API.credentials == :none
+    token = API.credentials
+    raise API::MissingAuthenticationError if token.blank?
 
     # We use a download strategy here to leverage the Homebrew cache
     # to avoid repeated downloads of (possibly large) bottles.
-    token = API.credentials
     downloader = GitHubArtifactDownloadStrategy.new(url, artifact_id, token:)
     downloader.fetch
     downloader.stage
@@ -28,10 +28,10 @@ class GitHubArtifactDownloadStrategy < AbstractFileDownloadStrategy
   def initialize(url, artifact_id, token:)
     super(url, "artifact", artifact_id)
     @cache = T.let(HOMEBREW_CACHE/"gh-actions-artifact", Pathname)
-    @token = T.let(token, String)
+    @token = token
   end
 
-  sig { override.params(timeout: T.any(Float, Integer, NilClass)).void }
+  sig { override.params(timeout: T.nilable(T.any(Float, Integer))).void }
   def fetch(timeout: nil)
     ohai "Downloading #{url}"
     if cached_location.exist?

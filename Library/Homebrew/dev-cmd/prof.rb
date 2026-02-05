@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 require "abstract_command"
+require "fileutils"
 
 module Homebrew
   module DevCmd
@@ -24,7 +25,7 @@ module Homebrew
 
         brew_rb = (HOMEBREW_LIBRARY_PATH/"brew.rb").resolved_path
         FileUtils.mkdir_p "prof"
-        cmd = args.named.first
+        cmd = T.must(args.named.first)
 
         case Commands.path(cmd)&.extname
         when ".rb"

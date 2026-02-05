@@ -24,8 +24,8 @@ module Homebrew
         switch "--syntax",
                description: "Syntax-check all of Homebrew's Ruby files (if no <tap> is passed)."
         switch "--eval-all",
-               description: "Evaluate all available formulae and casks, whether installed or not. " \
-                            "Implied if `$HOMEBREW_EVAL_ALL` is set."
+               description: "Evaluate all available formulae and casks, whether installed or not.",
+               env:         :eval_all
         switch "--no-simulate",
                description: "Don't simulate other system configurations when checking formulae and casks."
 
@@ -49,8 +49,8 @@ module Homebrew
           options[:os_arch_combinations] = args.os_arch_combinations if args.os || args.arch
 
           taps = if args.no_named?
-            if !args.eval_all? && !Homebrew::EnvConfig.eval_all?
-              raise UsageError, "`brew readall` needs a tap or `--eval-all` passed or `$HOMEBREW_EVAL_ALL` set!"
+            unless args.eval_all?
+              raise UsageError, "`brew readall` needs a tap or `--eval-all` passed or `HOMEBREW_EVAL_ALL=1` set!"
             end
 
             Tap.installed

@@ -24,7 +24,7 @@ RSpec.describe Cask::CaskLoader::FromTapLoader do
       expect { described_class.new("foo/bar/baz").load(config: nil) }.to raise_error(Cask::CaskUnavailableError)
     end
 
-    context "with sharded Cask directory" do
+    context "with sharded Cask directory", :no_api do
       let(:cask_path) { tap.cask_dir/cask_name[0]/"#{cask_name}.rb" }
 
       it "returns a Cask" do

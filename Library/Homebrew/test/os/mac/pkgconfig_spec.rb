@@ -10,6 +10,7 @@
 # - uuid (not a standalone library)
 #
 # Additionally, libffi version detection cannot be performed on systems running Mojave or earlier.
+# TODO: we no longer support Mojave or earlier, so we can fix this now.
 #
 # For indeterminable cases, consult https://opensource.apple.com for the version used.
 RSpec.describe "pkg-config", :needs_ci, type: :system do
@@ -30,7 +31,7 @@ RSpec.describe "pkg-config", :needs_ci, type: :system do
     version
   end
 
-  let(:sdk) { MacOS.sdk_path_if_needed }
+  let(:sdk) { MacOS.sdk_path }
 
   it "returns the correct version for bzip2" do
     version = File.foreach("#{sdk}/usr/include/bzlib.h")

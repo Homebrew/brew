@@ -1,68 +1,110 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
 
 require "digest"
 require "erb"
+require "utils/github"
+require "utils/output"
 
 module Homebrew
   # Class for generating a formula from a template.
   class FormulaCreator
+    include Utils::Output::Mixin
+
+    sig { returns(String) }
     attr_accessor :name
 
+    sig { returns(Version) }
+    attr_reader :version
+
+    sig { returns(String) }
+    attr_reader :url
+
+    sig { returns(T::Boolean) }
+    attr_reader :head
+
     sig {
-      params(name: T.nilable(String), version: T.nilable(String), tap: T.nilable(String), url: String,
+      params(url: String, name: T.nilable(String), version: T.nilable(String), tap: T.nilable(String),
              mode: T.nilable(Symbol), license: T.nilable(String), fetch: T::Boolean, head: T::Boolean).void
     }
-    def initialize(name, version, tap:, url:, mode:, license:, fetch:, head:)
-      @name = name
-      @version = Version.new(version) if version
-      @tap = Tap.fetch(tap || "homebrew/core")
+    def initialize(url:, name: nil, version: nil, tap: nil, mode: nil, license: nil, fetch: false, head: false)
       @url = url
       @mode = mode
       @license = license
       @fetch = fetch
-      @head = head
-    end
 
-    sig { void }
-    def verify
-      raise TapUnavailableError, @tap.name unless @tap.installed?
-    end
-
-    sig { params(url: String).returns(T.nilable(String)) }
-    def self.name_from_url(url)
-      stem = Pathname.new(url).stem
-      # special cases first
-      if stem.start_with? "index.cgi"
-        # gitweb URLs e.g. http://www.codesrc.com/gitweb/index.cgi?p=libzipper.git;a=summary
-        stem.rpartition("=").last
-      elsif url =~ %r{github\.com/\S+/(\S+)/(archive|releases)/}
-        # e.g. https://github.com/stella-emu/stella/releases/download/6.7/stella-6.7-src.tar.xz
-        Regexp.last_match(1)
+      tap = if tap.blank?
+        CoreTap.instance
       else
-        # e.g. http://digit-labs.org/files/tools/synscan/releases/synscan-5.02.tar.gz
-        pathver = Version.parse(stem).to_s
-        stem.sub(/[-_.]?#{Regexp.escape(pathver)}$/, "")
+        Tap.fetch(tap)
       end
+      @tap = T.let(tap, Tap)
+
+      if (match_github = url.match %r{github\.com/(?<user>[^/]+)/(?<repo>[^/]+).*})
+        user = T.must(match_github[:user])
+        repository = T.must(match_github[:repo])
+        if repository.end_with?(".git")
+          # e.g. https://github.com/Homebrew/brew.git
+          repository.delete_suffix!(".git")
+          head = true
+        end
+        odebug "github: #{user} #{repository} head:#{head}"
+        if name.blank?
+          name = repository
+          odebug "name from github: #{name}"
+        end
+      elsif name.blank?
+        stem = Pathname.new(url).stem
+        name = if stem.start_with?("index.cgi") && stem.include?("=")
+          # special cases first
+          # gitweb URLs e.g. http://www.codesrc.com/gitweb/index.cgi?p=libzipper.git;a=summary
+          stem.rpartition("=").last
+        else
+          # e.g. http://digit-labs.org/files/tools/synscan/releases/synscan-5.02.tar.gz
+          pathver = Version.parse(stem).to_s
+          stem.sub(/[-_.]?#{Regexp.escape(pathver)}$/, "")
+        end
+        odebug "name from url: #{name}"
+      end
+      @name = T.let(name, String)
+      @head = head
+
+      if version.present?
+        version = Version.new(version)
+        odebug "version from user: #{version}"
+      else
+        version = Version.detect(url)
+        odebug "version from url: #{version}"
+      end
+
+      if fetch && user && repository
+        github = GitHub.repository(user, repository)
+
+        if version.null? && !head
+          begin
+            latest_release = GitHub.get_latest_release(user, repository)
+            version = Version.new(latest_release.fetch("tag_name"))
+            odebug "github: version from latest_release: #{version}"
+
+            @url = "https://github.com/#{user}/#{repository}/archive/refs/tags/#{version}.tar.gz"
+            odebug "github: url changed to source archive #{@url}"
+          rescue GitHub::API::HTTPNotFoundError
+            odebug "github: latest_release lookup failed: #{url}"
+          end
+        end
+      end
+      @github = T.let(github, T.untyped)
+      @version = T.let(version, Version)
+
+      @sha256 = T.let(nil, T.nilable(String))
+      @desc = T.let(nil, T.nilable(String))
+      @homepage = T.let(nil, T.nilable(String))
+      @license = T.let(nil, T.nilable(String))
     end
 
     sig { void }
-    def parse_url
-      @name = FormulaCreator.name_from_url(@url) if @name.blank?
-      odebug "name_from_url: #{@name}"
-      @version = Version.detect(@url) if @version.nil?
-
-      case @url
-      when %r{github\.com/(\S+)/(\S+)\.git}
-        @head = true
-        user = Regexp.last_match(1)
-        repo = Regexp.last_match(2)
-        @github = GitHub.repository(user, repo) if @fetch
-      when %r{github\.com/(\S+)/(\S+)/(archive|releases)/}
-        user = Regexp.last_match(1)
-        repo = Regexp.last_match(2)
-        @github = GitHub.repository(user, repo) if @fetch
-      end
+    def verify_tap_available!
+      raise TapUnavailableError, @tap.name unless @tap.installed?
     end
 
     sig { returns(Pathname) }
@@ -82,12 +124,21 @@ module Homebrew
           r = Resource.new
           r.url(@url)
           r.owner = self
-          @sha256 = r.fetch.sha256 if r.download_strategy == CurlDownloadStrategy
+          filepath = r.fetch
+          html_doctype_prefix = "<!doctype html"
+          # Number of bytes to read from file start to ensure it is not HTML.
+          # HTML may start with arbitrary number of whitespace lines.
+          bytes_to_read = 100
+          if File.read(filepath, bytes_to_read).strip.downcase.start_with?(html_doctype_prefix)
+            raise "Downloaded URL is not archive"
+          end
+
+          @sha256 = T.let(filepath.sha256, T.nilable(String))
         end
 
         if @github
           @desc = @github["description"]
-          @homepage = @github["homepage"]
+          @homepage = @github["homepage"].presence || "https://github.com/#{@github["full_name"]}"
           @license = @github["license"]["spdx_id"] if @github["license"]
         end
       end
@@ -96,6 +147,8 @@ module Homebrew
       path.write ERB.new(template, trim_mode: ">").result(binding)
       path
     end
+
+    private
 
     sig { params(name: String).returns(String) }
     def latest_versioned_formula(name)
@@ -107,11 +160,9 @@ module Homebrew
 
     sig { returns(String) }
     def template
-      # FIXME: https://github.com/errata-ai/vale/issues/818
-      # <!-- vale off -->
       <<~ERB
         # Documentation: https://docs.brew.sh/Formula-Cookbook
-        #                https://rubydoc.brew.sh/Formula
+        #                https://docs.brew.sh/rubydoc/Formula
         # PLEASE REMOVE ALL GENERATED COMMENTS BEFORE SUBMITTING YOUR PULL REQUEST!
         class #{Formulary.class_s(name)} < Formula
         <% if @mode == :python %>
@@ -123,7 +174,7 @@ module Homebrew
         <% unless @head %>
           url "#{@url}"
         <% unless @version.detected_from_url? %>
-          version "#{@version}"
+          version "#{@version.to_s.delete_prefix("v")}"
         <% end %>
           sha256 "#{@sha256}"
         <% end %>
@@ -132,7 +183,13 @@ module Homebrew
           head "#{@url}"
         <% end %>
 
-        <% if @mode == :cmake %>
+        <% if @mode == :cabal %>
+          depends_on "cabal-install" => :build
+          depends_on "ghc" => :build
+          depends_on "gmp"
+
+          uses_from_macos "libffi"
+        <% elsif @mode == :cmake %>
           depends_on "cmake" => :build
         <% elsif @mode == :crystal %>
           depends_on "crystal" => :build
@@ -148,7 +205,7 @@ module Homebrew
         <% elsif @mode == :python %>
           depends_on "#{latest_versioned_formula("python")}"
         <% elsif @mode == :ruby %>
-          uses_from_macos "ruby"
+          depends_on "ruby"
         <% elsif @mode == :rust %>
           depends_on "rust" => :build
         <% elsif @mode == :zig %>
@@ -166,13 +223,16 @@ module Homebrew
 
         <% end %>
           def install
-        <% if @mode == :cmake %>
+        <% if @mode == :cabal %>
+            system "cabal", "v2-update"
+            system "cabal", "v2-install", *std_cabal_v2_args
+        <% elsif @mode == :cmake %>
             system "cmake", "-S", ".", "-B", "build", *std_cmake_args
             system "cmake", "--build", "build"
             system "cmake", "--install", "build"
         <% elsif @mode == :autotools %>
             # Remove unrecognized options if they cause configure to fail
-            # https://rubydoc.brew.sh/Formula.html#std_configure_args-instance_method
+            # https://docs.brew.sh/rubydoc/Formula.html#std_configure_args-instance_method
             system "./configure", "--disable-silent-rules", *std_configure_args
             system "make", "install" # if this fails, try separate make/make install steps
         <% elsif @mode == :crystal %>
@@ -186,7 +246,7 @@ module Homebrew
             system "meson", "install", "-C", "build"
         <% elsif @mode == :node %>
             system "npm", "install", *std_npm_args
-            bin.install_symlink Dir["\#{libexec}/bin/*"]
+            bin.install_symlink libexec.glob("bin/*")
         <% elsif @mode == :perl %>
             ENV.prepend_create_path "PERL5LIB", libexec/"lib/perl5"
             ENV.prepend_path "PERL5LIB", libexec/"lib"
@@ -210,11 +270,15 @@ module Homebrew
         <% elsif @mode == :python %>
             virtualenv_install_with_resources
         <% elsif @mode == :ruby %>
+            ENV["BUNDLE_FORCE_RUBY_PLATFORM"] = "1"
+            ENV["BUNDLE_WITHOUT"] = "development test"
+            ENV["BUNDLE_VERSION"] = "system" # Avoid installing Bundler into the keg
             ENV["GEM_HOME"] = libexec
 
-            system "bundle", "install", "-without", "development", "test"
+            system "bundle", "install"
             system "gem", "build", "\#{name}.gemspec"
             system "gem", "install", "\#{name}-\#{version}.gem"
+
             bin.install libexec/"bin/\#{name}"
             bin.env_script_all_files(libexec/"bin", GEM_HOME: ENV["GEM_HOME"])
         <% elsif @mode == :rust %>
@@ -223,7 +287,7 @@ module Homebrew
             system "zig", "build", *std_zig_args
         <% else %>
             # Remove unrecognized options if they cause configure to fail
-            # https://rubydoc.brew.sh/Formula.html#std_configure_args-instance_method
+            # https://docs.brew.sh/rubydoc/Formula.html#std_configure_args-instance_method
             system "./configure", "--disable-silent-rules", *std_configure_args
             # system "cmake", "-S", ".", "-B", "build", *std_cmake_args
         <% end %>
@@ -243,7 +307,6 @@ module Homebrew
           end
         end
       ERB
-      # <!-- vale on -->
     end
   end
 end

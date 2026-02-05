@@ -49,28 +49,34 @@ RSpec.describe Locale do
   describe "#include?" do
     subject { described_class.new("zh", "Hans", "CN") }
 
-    it { is_expected.to include("zh") }
-    it { is_expected.to include("zh-CN") }
-    it { is_expected.to include("CN") }
-    it { is_expected.to include("Hans-CN") }
-    it { is_expected.to include("Hans") }
-    it { is_expected.to include("zh-Hans-CN") }
+    specify(:aggregate_failures) do
+      expect(subject).to include("zh") # rubocop:todo RSpec/NamedSubject
+      expect(subject).to include("zh-CN") # rubocop:todo RSpec/NamedSubject
+      expect(subject).to include("CN") # rubocop:todo RSpec/NamedSubject
+      expect(subject).to include("Hans-CN") # rubocop:todo RSpec/NamedSubject
+      expect(subject).to include("Hans") # rubocop:todo RSpec/NamedSubject
+      expect(subject).to include("zh-Hans-CN") # rubocop:todo RSpec/NamedSubject
+    end
   end
 
   describe "#eql?" do
     subject(:locale) { described_class.new("zh", "Hans", "CN") }
 
     context "when all parts match" do
-      it { is_expected.to eql("zh-Hans-CN") }
-      it { is_expected.to eql(locale) }
+      specify(:aggregate_failures) do
+        expect(subject).to eql("zh-Hans-CN") # rubocop:todo RSpec/NamedSubject
+        expect(subject).to eql(locale) # rubocop:todo RSpec/NamedSubject
+      end
     end
 
     context "when only some parts match" do
-      it { is_expected.not_to eql("zh") }
-      it { is_expected.not_to eql("zh-CN") }
-      it { is_expected.not_to eql("CN") }
-      it { is_expected.not_to eql("Hans-CN") }
-      it { is_expected.not_to eql("Hans") }
+      specify(:aggregate_failures) do
+        expect(subject).not_to eql("zh") # rubocop:todo RSpec/NamedSubject
+        expect(subject).not_to eql("zh-CN") # rubocop:todo RSpec/NamedSubject
+        expect(subject).not_to eql("CN") # rubocop:todo RSpec/NamedSubject
+        expect(subject).not_to eql("Hans-CN") # rubocop:todo RSpec/NamedSubject
+        expect(subject).not_to eql("Hans") # rubocop:todo RSpec/NamedSubject
+      end
     end
 
     it "does not raise if 'other' cannot be parsed" do

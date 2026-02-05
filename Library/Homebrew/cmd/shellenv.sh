@@ -11,11 +11,20 @@ homebrew-shellenv() {
     return
   fi
 
-  if [[ -n "$1" ]]
+  # Use specified shell name parameter, if available.
+  HOMEBREW_SHELL_NAME="${1:-}"
+
+  # Use the parent process name, if possible.
+  # This is known to fail under some sandboxes.
+  if [[ -z "${HOMEBREW_SHELL_NAME}" ]]
   then
-    HOMEBREW_SHELL_NAME="$1"
-  else
-    HOMEBREW_SHELL_NAME="$(/bin/ps -p "${PPID}" -c -o comm=)"
+    HOMEBREW_SHELL_NAME="$(/bin/ps -p "${PPID}" -c -o comm= 2>/dev/null)"
+  fi
+
+  # Fall back to the (login) shell name from the environment.
+  if [[ -z "${HOMEBREW_SHELL_NAME}" ]]
+  then
+    HOMEBREW_SHELL_NAME="${SHELL##*/}"
   fi
 
   if [[ -n "${HOMEBREW_MACOS}" ]] &&
@@ -50,7 +59,7 @@ homebrew-shellenv() {
       echo "setenv HOMEBREW_REPOSITORY ${HOMEBREW_REPOSITORY};"
       if [[ -n "${PATH_HELPER_ROOT}" ]]
       then
-        PATH_HELPER_ROOT="${PATH_HELPER_ROOT}" PATH="${HOMEBREW_PATH}" /usr/libexec/path_helper -c
+        echo "eval \`/usr/bin/env PATH_HELPER_ROOT=\"${PATH_HELPER_ROOT}\" /usr/libexec/path_helper -c\`;"
       else
         echo "setenv PATH ${HOMEBREW_PREFIX}/bin:${HOMEBREW_PREFIX}/sbin:\$PATH;"
       fi
@@ -75,7 +84,7 @@ homebrew-shellenv() {
       fi
       if [[ -n "${PATH_HELPER_ROOT}" ]]
       then
-        PATH_HELPER_ROOT="${PATH_HELPER_ROOT}" PATH="${HOMEBREW_PATH}" /usr/libexec/path_helper -s
+        echo "eval \"\$(/usr/bin/env PATH_HELPER_ROOT=\"${PATH_HELPER_ROOT}\" /usr/libexec/path_helper -s)\""
       else
         echo "export PATH=\"${HOMEBREW_PREFIX}/bin:${HOMEBREW_PREFIX}/sbin\${PATH+:\$PATH}\";"
       fi

@@ -1,7 +1,7 @@
 ---
-last_review_date: "1970-01-01"
+last_review_date: 2025-05-22
 ---
 
 # Vale Styles
 
-Based on Homebrew's [Prose Style Guidelines](http://docs.brew.sh/Prose-Style-Guidelines.html).
+Based on Homebrew's [Prose Style Guidelines](/docs/Prose-Style-Guidelines.md).

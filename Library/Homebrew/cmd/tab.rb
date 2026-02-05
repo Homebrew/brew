@@ -17,7 +17,6 @@ module Homebrew
           To prevent removal, mark the formula as installed on request;
           to allow removal, mark the formula as not installed on request.
         EOS
-
         switch "--installed-on-request",
                description: "Mark <installed_formula> or <installed_cask> as installed on request."
         switch "--no-installed-on-request",

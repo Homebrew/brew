@@ -1,4 +1,4 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
 
 require "json"
@@ -6,10 +6,12 @@ require "json"
 module Homebrew
   module Bundle
     module TapDumper
+      sig { void }
       def self.reset!
         @taps = nil
       end
 
+      sig { returns(String) }
       def self.dump
         taps.map do |tap|
           remote = if tap.custom_remote? && (tap_remote = tap.remote)
@@ -27,11 +29,14 @@ module Homebrew
         end.sort.uniq.join("\n")
       end
 
+      sig { returns(T::Array[String]) }
       def self.tap_names
         taps.map(&:name)
       end
 
+      sig { returns(T::Array[Tap]) }
       private_class_method def self.taps
+        @taps ||= T.let(nil, T.nilable(T::Array[Tap]))
         @taps ||= begin
           require "tap"
           Tap.select(&:installed?).to_a

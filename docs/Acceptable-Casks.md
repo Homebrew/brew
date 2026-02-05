@@ -11,7 +11,7 @@ Some casks should not go in [homebrew/cask](https://github.com/Homebrew/homebrew
 
 ## Finding a Home For Your Cask
 
-We maintain separate taps for different types of binaries. Our nomenclature is:
+Our nomenclature is:
 
 * **Stable**: The latest version provided by the developer defined by them as such.
 * **Beta, Development, Unstable**: Subsequent versions to **stable**, yet incomplete and under development, aiming to eventually become the new **stable**. Also includes alternate versions specifically targeted at developers.
@@ -36,7 +36,7 @@ These versions also live in the main repository at [Homebrew/homebrew-cask](http
 
 ### Regional and Localized
 
-When an app exists in more than one language or has different regional editions, [the `language` stanza should be used to switch between languages or regions](https://docs.brew.sh/Cask-Cookbook#stanza-language).
+When an app exists in more than one language or has different regional editions, [the `language` stanza should be used to switch between languages or regions](Cask-Cookbook.md#stanza-language).
 
 ### Trial and Freemium versions
 
@@ -61,9 +61,9 @@ Unfortunately, in the world of software there are bad actors that bundle malware
 
 But we’d still like for users to enjoy some kind of protection while minimising occurrences of legitimate developers being branded as malware carriers. To do so, we evaluate casks on a case-by-case basis and any user is free to bring a potential malware case to our attention. However, it is important to never forget the last line of defence is *always* the user.
 
-If an app that bundles malware was not signed with an Apple Developer ID and you purposefully disabled or bypassed Gatekeeper, no action will be taken on our part. When you disable security features, you do so at your own risk. If, however, an app that bundles malware is signed, Apple can revoke its permissions and it will no longer run on the computers of users that keep security features on—we all benefit, Homebrew Cask users or not. To report a signed app that bundles malware, use [Apple’s Feedback Assistant](https://feedbackassistant.apple.com).
+If an app that bundles malware was not signed with an Apple Developer ID and you purposefully disabled or bypassed Gatekeeper, no action will be taken on our part. When you disable security features, you do so at your own risk. If, however, an app that bundles malware is signed, Apple can revoke its permissions and it will no longer run on the computers of users that keep security features on—we all benefit, Homebrew Cask users or not. To report a signed app that bundles malware, use [Apple’s Feedback Assistant](https://feedbackassistant.apple.com/).
 
-We are also open to removing casks where we feel there is enough evidence that the app is malicious. To suggest a cask for removal, submit a pull request to delete it along with your reasoning. Typically, this will mean presenting a [VirusTotal](https://www.virustotal.com) scan of the app showing it is malicious, ideally with some other reporting indicating it’s not a false positive.
+We are also open to removing casks where we feel there is enough evidence that the app is malicious. To suggest a cask for removal, submit a pull request to delete it along with your reasoning. Typically, this will mean presenting a [VirusTotal](https://www.virustotal.com/) scan of the app showing it is malicious, ideally with some other reporting indicating it’s not a false positive.
 
 Likewise, software which provides both “clean” and malware-infested versions might be removed from the repository; even if we could have access to the *good* version—if its developers push for users to install the *bad* version. We do so because in these cases there’s a higher than normal risk that both versions are (or will soon become) compromised in some manner.
 
@@ -111,24 +111,33 @@ Common reasons to reject a cask entirely:
   * An app from a code repository that is not notable enough (under 30 forks, 30 watchers, 75 stars).
   * [Electronic Identification (eID) software](https://github.com/Homebrew/homebrew-cask/issues/59021).
 * App requires [SIP to be disabled](https://github.com/Homebrew/homebrew-cask/pull/41890) to be installed and/or used.
-* App installer is a `pkg` that requires [`allow_untrusted: true`](https://docs.brew.sh/Cask-Cookbook#pkg-allow_untrusted).
+* App installer is a `pkg` that requires [`allow_untrusted: true`](Cask-Cookbook.md#pkg-allow_untrusted).
 * App is a trial version, and the only way to acquire the full version is through the Mac App Store.
   * Similarly (and trickier to spot), the app has moved to the Mac App Store but still provides old versions via direct download. We reject these in all official repositories so users don’t get stuck using an old version, wrongly thinking they’re using the most up-to-date one (which, amongst other things, might be a security risk).
-* App is unmaintained, i.e. no releases in the last year, or [explicitly discontinued](https://github.com/Homebrew/homebrew-cask/pull/22699).
+* App is unmaintained, i.e. requires patching, has known and unpatched outstanding security vulnerabilities or [explicitly discontinued](https://github.com/Homebrew/homebrew-cask/pull/22699).
 * App has no information on its homepage (example: a GitHub repository without a README).
 * Cask has no public presence so `brew install` would be the only way to install the software, meaning users can’t easily verify its authenticity.
   * Or if the Cask has a download URL that is both behind a login/registration form and from a host that differs from the homepage.
 * Cask is unreasonably difficult to maintain. Examples have included [Audacity](https://github.com/Homebrew/homebrew-cask/pull/27517) and [older Java development casks](https://github.com/Homebrew/homebrew-cask/issues/57387).
 * Cask has been rejected before due to an issue we cannot fix, and the new submission doesn’t fix that. An example would be the [first submission of `soapui`](https://github.com/Homebrew/homebrew-cask/pull/4939), whose installation problems were not fixed in the two [subsequent](https://github.com/Homebrew/homebrew-cask/pull/9969) [submissions](https://github.com/Homebrew/homebrew-cask/pull/10606).
-* Cask is a duplicate. These submissions mostly occur when the [token reference](https://docs.brew.sh/Cask-Cookbook#token-reference) was not followed.
-* The author has [specifically asked us not to include it](https://github.com/Homebrew/homebrew-cask/pull/5342).
+* Cask is a duplicate. These submissions mostly occur when the [token reference](Cask-Cookbook.md#token-reference) was not followed.
 * App is both open-source and CLI-only (i.e. it only uses the `binary` artifact). In that case, and [in the spirit of deduplication](https://github.com/Homebrew/homebrew-cask/issues/15603), submit it first to [homebrew/core](https://github.com/Homebrew/homebrew-core) as a formula that builds from source. If it is rejected, you may then try again as a cask (link to the issue from your pull request so we can see the discussion and reasoning for rejection).
 * App is open-source and has a GUI but no compiled versions (or only old ones) are provided. It’s better to have them in [homebrew/core](https://github.com/Homebrew/homebrew-core) so users don’t get perpetually outdated versions. See [`gedit`](https://github.com/Homebrew/homebrew-cask/pull/23360) for example.
 * We have strong reasons to believe including the cask can put the whole project at risk. Happened only once so far, [with Popcorn Time](https://github.com/Homebrew/homebrew-cask/pull/3954).
+* Casks that do not work on the latest macOS version will be rejected e.g. [when Apple drops support for Rosetta with macOS 28](https://developer.apple.com/documentation/apple-silicon/about-the-rosetta-translation-environment/) this will include x86-only software.
 
-Common reasons to reject a cask from the main `homebrew/cask` repository:
+### Adult Content
 
-* Cask was submitted to the wrong repository. When drafting a cask, consult [Finding a Home For Your Cask](#finding-a-home-for-your-cask) to see where it belongs.
+Homebrew is a tool where the vast majority of users are adults.
+We have users all over the world with different views on sex, violence, etc.
+As a result, we do not see it as our role to enforce any particular culture's views on adult content onto our users.
+That said, we want to ensure our maintainers don't have to interact with adult content unless they choose to.
+
+We will accept casks with adult content but require the `homepage` and root of the `url` domain to be "safe for work" e.g. not display any images of violence or adult content.
+It is acceptable for these pages to have textual descriptions of adult content.
+
+Homebrew reserves the right to add or remove casks based on how it affects the wider Homebrew ecosystem.
+For a hypothetical example, if a critical infrastructure host said we needed to remove the cask to maintain our infrastructure: we may begrudgingly remove it to maintain continuity for our users.
 
 ### No cask is guaranteed to be accepted
 

@@ -13,8 +13,8 @@ class Dependencies < SimpleDelegator
   sig { returns(T::Enumerator[Dependency]) }
   def each(&blk); end
 
-  sig { params(blk: T.proc.params(arg0: Dependency).returns(T::Boolean)).returns(T::Array[Dependency]) }
-  sig { returns(T::Enumerator[Dependency]) }
+  sig { override.params(blk: T.proc.params(arg0: Dependency).returns(T.anything)).returns(T::Array[Dependency]) }
+  sig { override.returns(T::Enumerator[Dependency]) }
   def select(&blk); end
 end
 
@@ -26,7 +26,7 @@ class Requirements < SimpleDelegator
   sig { returns(T::Enumerator[Requirement]) }
   def each(&blk); end
 
-  sig { params(blk: T.proc.params(arg0: Requirement).returns(T::Boolean)).returns(T::Array[Requirement]) }
-  sig { returns(T::Enumerator[Requirement]) }
+  sig { override.params(blk: T.proc.params(arg0: Requirement).returns(T.anything)).returns(T::Array[Requirement]) }
+  sig { override.returns(T::Enumerator[Requirement]) }
   def select(&blk); end
 end

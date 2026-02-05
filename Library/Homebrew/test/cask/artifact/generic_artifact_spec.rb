@@ -19,7 +19,7 @@ RSpec.describe Cask::Artifact::Artifact, :cask do
   end
 
   context "without target" do
-    it "fails to load" do
+    it "fails to load", :no_api do
       expect do
         Cask::CaskLoader.load("invalid-generic-artifact-no-target")
       end.to raise_error(Cask::CaskInvalidError, /Generic Artifact.*requires.*target/)

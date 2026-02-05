@@ -142,7 +142,7 @@ no_tabs() {
 # for var in ... \
 #            ...; do
 #
-# Use the followings instead (keep for statements only one line):
+# Use the following instead (keep for statements only one line):
 #   ARRAY=(
 #     ...
 #   )
@@ -156,7 +156,7 @@ no_multiline_for_statements() {
   local message
   message="$(
     cat <<EOMSG
-Use the followings instead (keep for statements only one line):
+Use the following instead (keep for statements only one line):
   ARRAY=(
     ...
   )
@@ -176,7 +176,7 @@ EOMSG
 # Check pattern:
 # IFS=$'\n'
 #
-# Use the followings instead:
+# Use the following instead:
 #   while IFS='' read -r line
 #   do
 #     ...
@@ -189,7 +189,7 @@ no_IFS_newline() {
   local message
   message="$(
     cat <<EOMSG
-Use the followings instead:
+Use the following instead:
   while IFS='' read -r line
   do
     ...

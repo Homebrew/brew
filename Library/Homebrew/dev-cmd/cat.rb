@@ -13,7 +13,6 @@ module Homebrew
         description <<~EOS
           Display the source of a <formula> or <cask>.
         EOS
-
         switch "--formula", "--formulae",
                description: "Treat all named arguments as formulae."
         switch "--cask", "--casks",
@@ -30,8 +29,8 @@ module Homebrew
           pager = if Homebrew::EnvConfig.bat?
             ENV["BAT_CONFIG_PATH"] = Homebrew::EnvConfig.bat_config_path
             ENV["BAT_THEME"] = Homebrew::EnvConfig.bat_theme
-            ensure_formula_installed!(
-              "bat",
+            require "formula"
+            Formula["bat"].ensure_installed!(
               reason:           "displaying <formula>/<cask> source",
               # The user might want to capture the output of `brew cat ...`
               # Redirect stdout to stderr

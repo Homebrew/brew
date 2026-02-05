@@ -23,7 +23,7 @@ RSpec.shared_examples Cask::Staged do
     allow(staged).to receive(:Pathname).and_return(fake_pathname)
 
     expect(fake_system_command).to receive(:run!)
-      .with("/bin/chmod", args: ["-R", "--", "777", fake_pathname], sudo: false)
+      .with("chmod", args: ["-R", "--", "777", fake_pathname], sudo: false)
 
     staged.set_permissions(fake_pathname.to_s, "777")
   end
@@ -33,7 +33,7 @@ RSpec.shared_examples Cask::Staged do
     allow(staged).to receive(:Pathname).and_return(fake_pathname)
 
     expect(fake_system_command).to receive(:run!)
-      .with("/bin/chmod", args: ["-R", "--", "777", fake_pathname, fake_pathname], sudo: false)
+      .with("chmod", args: ["-R", "--", "777", fake_pathname, fake_pathname], sudo: false)
 
     staged.set_permissions([fake_pathname.to_s, fake_pathname.to_s], "777")
   end
@@ -52,7 +52,7 @@ RSpec.shared_examples Cask::Staged do
     allow(staged).to receive(:Pathname).and_return(fake_pathname)
 
     expect(fake_system_command).to receive(:run!)
-      .with("/usr/sbin/chown", args: ["-R", "--", "fake_user:staff", fake_pathname], sudo: true)
+      .with("chown", args: ["-R", "--", "fake_user:staff", fake_pathname], sudo: true)
 
     staged.set_ownership(fake_pathname.to_s)
   end
@@ -65,7 +65,7 @@ RSpec.shared_examples Cask::Staged do
 
     expect(fake_system_command).to receive(:run!)
       .with(
-        "/usr/sbin/chown",
+        "chown",
         args: ["-R", "--", "fake_user:staff", fake_pathname, fake_pathname],
         sudo: true,
       )
@@ -80,7 +80,7 @@ RSpec.shared_examples Cask::Staged do
 
     expect(fake_system_command).to receive(:run!)
       .with(
-        "/usr/sbin/chown",
+        "chown",
         args: ["-R", "--", "other_user:other_group", fake_pathname],
         sudo: true,
       )

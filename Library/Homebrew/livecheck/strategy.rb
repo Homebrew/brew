@@ -213,7 +213,13 @@ module Homebrew
           )]
         end
 
-        [:default, :browser].each do |user_agent|
+        user_agents = if options.user_agent
+          [options.user_agent]
+        else
+          [:default, :browser]
+        end
+
+        user_agents.each do |user_agent|
           begin
             parsed_output = curl_headers(
               *curl_post_args,
@@ -222,6 +228,9 @@ module Homebrew
               url,
               wanted_headers:    ["location", "content-disposition"],
               use_homebrew_curl: options.homebrew_curl || false,
+              cookies:           options.cookies,
+              header:            options.header,
+              referer:           options.referer,
               user_agent:,
               **DEFAULT_CURL_OPTIONS,
             )
@@ -253,8 +262,14 @@ module Homebrew
           )]
         end
 
+        user_agents = if options.user_agent
+          [options.user_agent]
+        else
+          [:default, :browser]
+        end
+
         stderr = T.let(nil, T.nilable(String))
-        [:default, :browser].each do |user_agent|
+        user_agents.each do |user_agent|
           stdout, stderr, status = curl_output(
             *curl_post_args,
             *PAGE_CONTENT_CURL_ARGS, url,
@@ -262,6 +277,9 @@ module Homebrew
             use_homebrew_curl: options.homebrew_curl ||
                                !curl_supports_fail_with_body? ||
                                false,
+            cookies:           options.cookies,
+            header:            options.header,
+            referer:           options.referer,
             user_agent:
           )
           next unless status.success?

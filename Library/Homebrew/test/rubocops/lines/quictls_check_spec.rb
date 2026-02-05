@@ -13,7 +13,7 @@ RSpec.describe RuboCop::Cop::FormulaAudit::QuicTLSCheck do
           url 'https://brew.sh/foo-1.0.tgz'
 
           depends_on "quictls"
-          ^^^^^^^^^^^^^^^^^^^^ FormulaAudit/QuicTLSCheck: Formulae in homebrew/core should use 'depends_on "openssl@3"' instead of 'depends_on "quictls"'.
+          ^^^^^^^^^^^^^^^^^^^^ FormulaAudit/QuicTLSCheck: Formulae in homebrew/core should use `depends_on "openssl@3"` instead of `depends_on "quictls"`.
         end
       RUBY
     end

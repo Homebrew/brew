@@ -24,8 +24,8 @@ module Homebrew
         end
 
         def entry_to_formula(entry)
-          require "bundle/brew_installer"
-          Homebrew::Bundle::BrewInstaller.new(entry.name, entry.options)
+          require "bundle/formula_installer"
+          Homebrew::Bundle::FormulaInstaller.new(entry.name, entry.options)
         end
 
         def formula_needs_to_start?(formula)
@@ -38,8 +38,8 @@ module Homebrew
         end
 
         def lookup_old_name(service_name)
-          require "bundle/brew_dumper"
-          @old_names ||= Homebrew::Bundle::BrewDumper.formula_oldnames
+          require "bundle/formula_dumper"
+          @old_names ||= Homebrew::Bundle::FormulaDumper.formula_oldnames
           old_name = @old_names[service_name]
           old_name ||= @old_names[service_name.split("/").last]
           old_name

@@ -3,21 +3,25 @@
 
 require "json"
 require "cmd/info"
+require "utils/output"
 
 module Cask
   class Info
+    extend ::Utils::Output::Mixin
+
     sig { params(cask: Cask).returns(String) }
     def self.get_info(cask)
       require "cask/installer"
 
-      output = "#{title_info(cask)}\n"
+      installed = cask.installed?
+      output = "#{title_info(cask, installed:)}\n"
       output << "#{Formatter.url(cask.homepage)}\n" if cask.homepage
       deprecate_disable = DeprecateDisable.message(cask)
       if deprecate_disable.present?
         deprecate_disable.tap { |message| message[0] = message[0].upcase }
         output << "#{deprecate_disable}\n"
       end
-      output << "#{installation_info(cask)}\n"
+      output << "#{installation_info(cask, installed:)}\n"
       repo = repo_info(cask)
       output << "#{repo}\n" if repo
       output << name_info(cask)
@@ -36,20 +40,27 @@ module Cask
     def self.info(cask, args:)
       puts get_info(cask)
 
+      return unless cask.tap.core_cask_tap?
+
       require "utils/analytics"
       ::Utils::Analytics.cask_output(cask, args:)
     end
 
-    sig { params(cask: Cask).returns(String) }
-    def self.title_info(cask)
-      title = "#{oh1_title(cask.token)}: #{cask.version}"
+    sig { params(cask: Cask, installed: T::Boolean).returns(String) }
+    def self.title_info(cask, installed:)
+      name_with_status = if installed
+        pretty_installed(cask.token)
+      else
+        pretty_uninstalled(cask.token)
+      end
+      title = "#{oh1_title(name_with_status)}: #{cask.version}"
       title += " (auto_updates)" if cask.auto_updates
       title
     end
 
-    sig { params(cask: Cask).returns(String) }
-    def self.installation_info(cask)
-      return "Not installed" unless cask.installed?
+    sig { params(cask: Cask, installed: T::Boolean).returns(String) }
+    def self.installation_info(cask, installed:)
+      return "Not installed" unless installed
       return "No installed version" unless (installed_version = cask.installed_version).present?
 
       versioned_staged_path = cask.caskroom_path.join(installed_version)
@@ -61,7 +72,7 @@ module Cask
       tab = Tab.for_cask(cask)
 
       info = ["Installed"]
-      info << "#{versioned_staged_path} (#{disk_usage_readable(path_details)})"
+      info << "#{versioned_staged_path} (#{Formatter.disk_usage_readable(path_details)})"
       info << "  #{tab}" if tab.tabfile&.exist?
       info.join("\n")
     end
@@ -86,8 +97,25 @@ module Cask
     def self.deps_info(cask)
       depends_on = cask.depends_on
 
-      formula_deps = Array(depends_on[:formula]).map(&:to_s)
-      cask_deps = Array(depends_on[:cask]).map { |dep| "#{dep} (cask)" }
+      formula_deps = Array(depends_on[:formula]).map do |dep|
+        name = dep.to_s
+        installed = begin
+          Formula[name].any_version_installed?
+        rescue FormulaUnavailableError
+          false
+        end
+        decorate_dependency(name, installed:)
+      end
+
+      cask_deps = Array(depends_on[:cask]).map do |dep|
+        name = dep.to_s
+        installed = begin
+          CaskLoader.load(name).installed?
+        rescue CaskUnavailableError
+          false
+        end
+        decorate_dependency("#{name} (cask)", installed:)
+      end
 
       all_deps = formula_deps + cask_deps
       return if all_deps.empty?
@@ -96,6 +124,11 @@ module Cask
         #{ohai_title("Dependencies")}
         #{all_deps.join(", ")}
       EOS
+    end
+
+    sig { params(dep: String, installed: T::Boolean).returns(String) }
+    def self.decorate_dependency(dep, installed:)
+      installed ? pretty_installed(dep) : pretty_uninstalled(dep)
     end
 
     sig { params(cask: Cask).returns(T.nilable(String)) }

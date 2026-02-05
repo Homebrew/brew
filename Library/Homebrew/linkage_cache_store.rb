@@ -55,7 +55,7 @@ class LinkageCacheStore < CacheStore
     fetch_hash_values(type)
   end
 
-  # Delete the keg from the {LinkageCacheStore}
+  # Delete the keg from the {LinkageCacheStore}.
   #
   # @return [nil]
   def delete!

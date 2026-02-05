@@ -117,7 +117,6 @@ RSpec.describe Homebrew::Diagnostic::Checks do
 
   specify "#check_for_unnecessary_core_tap" do
     ENV.delete("HOMEBREW_DEVELOPER")
-    ENV.delete("HOMEBREW_NO_INSTALL_FROM_API")
 
     expect_any_instance_of(CoreTap).to receive(:installed?).and_return(true)
 
@@ -126,7 +125,6 @@ RSpec.describe Homebrew::Diagnostic::Checks do
 
   specify "#check_for_unnecessary_cask_tap" do
     ENV.delete("HOMEBREW_DEVELOPER")
-    ENV.delete("HOMEBREW_NO_INSTALL_FROM_API")
 
     expect_any_instance_of(CoreCaskTap).to receive(:installed?).and_return(true)
 

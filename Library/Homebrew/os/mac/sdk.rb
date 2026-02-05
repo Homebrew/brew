@@ -1,4 +1,4 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
 
 require "system_command"
@@ -13,16 +13,16 @@ module OS
       sig { returns(MacOSVersion) }
       attr_reader :version
 
-      sig { returns(Pathname) }
+      sig { returns(::Pathname) }
       attr_reader :path
 
       sig { returns(Symbol) }
       attr_reader :source
 
-      sig { params(version: MacOSVersion, path: T.any(String, Pathname), source: Symbol).void }
+      sig { params(version: MacOSVersion, path: T.any(String, ::Pathname), source: Symbol).void }
       def initialize(version, path, source)
         @version = version
-        @path = Pathname.new(path)
+        @path = T.let(Pathname(path), ::Pathname)
         @source = source
       end
     end
@@ -35,6 +35,12 @@ module OS
       abstract!
 
       class NoSDKError < StandardError; end
+
+      sig { void }
+      def initialize
+        @all_sdks = T.let(nil, T.nilable(T::Array[SDK]))
+        @sdk_prefix = T.let(nil, T.nilable(String))
+      end
 
       sig { params(version: MacOSVersion).returns(SDK) }
       def sdk_for(version)
@@ -58,7 +64,7 @@ module OS
         Dir["#{sdk_prefix}/MacOSX*.sdk"].each do |sdk_path|
           next unless sdk_path.match?(SDK::VERSIONED_SDK_REGEX)
 
-          version = read_sdk_version(Pathname.new(sdk_path))
+          version = read_sdk_version(::Pathname.new(sdk_path))
           next if version.nil?
 
           @all_sdks << SDK.new(version, sdk_path, source)
@@ -66,7 +72,7 @@ module OS
         end
 
         # Use unversioned SDK only if we don't have one matching that version.
-        sdk_path = Pathname.new("#{sdk_prefix}/MacOSX.sdk")
+        sdk_path = ::Pathname.new("#{sdk_prefix}/MacOSX.sdk")
         if (version = read_sdk_version(sdk_path)) && found_versions.exclude?(version)
           @all_sdks << SDK.new(version, sdk_path, source)
         end
@@ -107,17 +113,10 @@ module OS
         all_sdks.max_by(&:version)
       end
 
-      sig { params(sdk_path: Pathname).returns(T.nilable(MacOSVersion)) }
+      sig { params(sdk_path: ::Pathname).returns(T.nilable(MacOSVersion)) }
       def read_sdk_version(sdk_path)
         sdk_settings = sdk_path/"SDKSettings.json"
         sdk_settings_string = sdk_settings.read if sdk_settings.exist?
-
-        # Pre-10.14 SDKs
-        sdk_settings = sdk_path/"SDKSettings.plist"
-        if sdk_settings_string.blank? && sdk_settings.exist?
-          result = system_command("plutil", args: ["-convert", "json", "-o", "-", sdk_settings])
-          sdk_settings_string = result.stdout if result.success?
-        end
 
         return if sdk_settings_string.blank?
 
@@ -150,9 +149,12 @@ module OS
         @sdk_prefix ||= begin
           # Xcode.prefix is pretty smart, so let's look inside to find the sdk
           sdk_prefix = "#{Xcode.prefix}/Platforms/MacOSX.platform/Developer/SDKs"
+
           # Finally query Xcode itself (this is slow, so check it last)
-          sdk_platform_path = Utils.popen_read(::DevelopmentTools.locate("xcrun"), "--show-sdk-platform-path").chomp
-          sdk_prefix = File.join(sdk_platform_path, "Developer", "SDKs") unless File.directory? sdk_prefix
+          if !File.directory?(sdk_prefix) && (xcrun = ::DevelopmentTools.locate("xcrun"))
+            sdk_platform_path = Utils.popen_read(xcrun, "--show-sdk-platform-path").chomp
+            sdk_prefix = File.join(sdk_platform_path, "Developer", "SDKs")
+          end
 
           sdk_prefix
         end
@@ -168,20 +170,11 @@ module OS
 
       private
 
-      # While CLT SDKs existed prior to Xcode 10, those packages also
-      # installed a traditional Unix-style header layout and we prefer
-      # using that.
       # As of Xcode 10, the Unix-style headers are installed via a
       # separate package, so we can't rely on their being present.
-      # This will only look up SDKs on Xcode 10 or newer and still
-      # return `nil` SDKs for Xcode 9 and older.
       sig { override.returns(String) }
       def sdk_prefix
-        @sdk_prefix ||= if CLT.provides_sdk?
-          "#{CLT::PKG_PATH}/SDKs"
-        else
-          ""
-        end
+        @sdk_prefix ||= "#{CLT::PKG_PATH}/SDKs"
       end
     end
   end

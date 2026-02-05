@@ -7,14 +7,14 @@ class URL
   sig { returns(T::Hash[Symbol, T.untyped]) }
   attr_reader :specs
 
-  sig { returns(T.any(NilClass, Symbol, T::Class[AbstractDownloadStrategy])) }
+  sig { returns(T.nilable(T.any(Symbol, T::Class[AbstractDownloadStrategy]))) }
   attr_reader :using
 
   sig { params(url: String, specs: T::Hash[Symbol, T.untyped]).void }
   def initialize(url, specs = {})
     @url = T.let(url.freeze, String)
     @specs = T.let(specs.dup, T::Hash[Symbol, T.untyped])
-    @using = T.let(@specs.delete(:using), T.any(NilClass, Symbol, T::Class[AbstractDownloadStrategy]))
+    @using = T.let(@specs.delete(:using), T.nilable(T.any(Symbol, T::Class[AbstractDownloadStrategy])))
     @specs.freeze
   end
 

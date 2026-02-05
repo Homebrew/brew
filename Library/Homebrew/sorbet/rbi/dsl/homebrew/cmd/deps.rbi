@@ -81,6 +81,9 @@ class Homebrew::Cmd::Deps::Args < Homebrew::CLI::Args
   def os; end
 
   sig { returns(T::Boolean) }
+  def prune?; end
+
+  sig { returns(T::Boolean) }
   def skip_recommended?; end
 
   sig { returns(T::Boolean) }

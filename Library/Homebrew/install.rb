@@ -1,4 +1,4 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
 
 require "diagnostic"
@@ -6,38 +6,46 @@ require "fileutils"
 require "hardware"
 require "development_tools"
 require "upgrade"
+require "download_queue"
+require "utils/output"
 
 module Homebrew
   # Helper module for performing (pre-)install checks.
   module Install
+    extend Utils::Output::Mixin
+
     class << self
       sig { params(all_fatal: T::Boolean).void }
       def perform_preinstall_checks_once(all_fatal: false)
-        @perform_preinstall_checks_once ||= {}
+        @perform_preinstall_checks_once ||= T.let({}, T.nilable(T::Hash[T::Boolean, TrueClass]))
         @perform_preinstall_checks_once[all_fatal] ||= begin
           perform_preinstall_checks(all_fatal:)
           true
         end
       end
 
+      sig { params(cc: T.nilable(String)).void }
       def check_cc_argv(cc)
         return unless cc
 
-        @checks ||= Diagnostic::Checks.new
+        @checks ||= T.let(Diagnostic::Checks.new, T.nilable(Homebrew::Diagnostic::Checks))
         opoo <<~EOS
           You passed `--cc=#{cc}`.
-          #{@checks.please_create_pull_requests}
+
+          #{@checks.support_tier_message(tier: 3)}
         EOS
       end
 
+      sig { params(all_fatal: T::Boolean).void }
       def perform_build_from_source_checks(all_fatal: false)
         Diagnostic.checks(:fatal_build_from_source_checks)
         Diagnostic.checks(:build_from_source_checks, fatal: all_fatal)
       end
 
+      sig { void }
       def global_post_install; end
-      alias generic_global_post_install global_post_install
 
+      sig { void }
       def check_prefix
         if (Hardware::CPU.intel? || Hardware::CPU.in_rosetta2?) &&
            HOMEBREW_PREFIX.to_s == HOMEBREW_MACOS_ARM_DEFAULT_PREFIX
@@ -63,6 +71,11 @@ module Homebrew
         end
       end
 
+      sig {
+        params(formula: Formula, head: T::Boolean, fetch_head: T::Boolean,
+               only_dependencies: T::Boolean, force: T::Boolean, quiet: T::Boolean,
+               skip_link: T::Boolean, overwrite: T::Boolean).returns(T::Boolean)
+      }
       def install_formula?(
         formula,
         head: false,
@@ -73,10 +86,10 @@ module Homebrew
         skip_link: false,
         overwrite: false
       )
-        # head-only without --HEAD is an error
+        # HEAD-only without --HEAD is an error
         if !head && formula.stable.nil?
           odie <<~EOS
-            #{formula.full_name} is a head-only formula.
+            #{formula.full_name} is a HEAD-only formula.
             To install it, run:
               brew install --HEAD #{formula.full_name}
           EOS
@@ -91,6 +104,24 @@ module Homebrew
           new_head_installed = true
         end
         prefix_installed = formula.prefix.exist? && !formula.prefix.children.empty?
+
+        # Check if the installed formula is from a different tap
+        if formula.any_version_installed? &&
+           (current_tap_name = formula.tap&.name.presence) &&
+           (installed_keg_tab = formula.any_installed_keg&.tab.presence) &&
+           (installed_tap_name = installed_keg_tab.tap&.name.presence) &&
+           installed_tap_name != current_tap_name
+          odie <<~EOS
+            #{formula.name} was installed from the #{Formatter.identifier(installed_tap_name)} tap
+            but you are trying to install it from the #{Formatter.identifier(current_tap_name)} tap.
+            Formulae with the same name from different taps cannot be installed at the same time.
+
+            To install this version, you must first uninstall the existing formula:
+              brew uninstall #{formula.name}
+            Then you can install the desired version:
+              brew install #{formula.full_name}
+          EOS
+        end
 
         if formula.keg_only? && formula.any_version_installed? && formula.optlinked? && !force
           # keg-only install is only possible when no other version is
@@ -231,7 +262,17 @@ module Homebrew
         false
       end
 
-      def install_formulae(
+      sig {
+        params(formulae_to_install: T::Array[Formula], installed_on_request: T::Boolean,
+               installed_as_dependency: T::Boolean, build_bottle: T::Boolean, force_bottle: T::Boolean,
+               bottle_arch: T.nilable(String), ignore_deps: T::Boolean, only_deps: T::Boolean,
+               include_test_formulae: T::Array[String], build_from_source_formulae: T::Array[String],
+               cc: T.nilable(String), git: T::Boolean, interactive: T::Boolean, keep_tmp: T::Boolean,
+               debug_symbols: T::Boolean, force: T::Boolean, overwrite: T::Boolean, debug: T::Boolean,
+               quiet: T::Boolean, verbose: T::Boolean, dry_run: T::Boolean, skip_post_install: T::Boolean,
+               skip_link: T::Boolean).returns(T::Array[FormulaInstaller])
+      }
+      def formula_installers(
         formulae_to_install,
         installed_on_request: true,
         installed_as_dependency: false,
@@ -256,11 +297,11 @@ module Homebrew
         skip_post_install: false,
         skip_link: false
       )
-        formula_installers = formulae_to_install.filter_map do |formula|
+        formulae_to_install.filter_map do |formula|
           Migrator.migrate_if_needed(formula, force:, dry_run:)
           build_options = formula.build
 
-          formula_installer = FormulaInstaller.new(
+          FormulaInstaller.new(
             formula,
             options:                    build_options.used_options,
             installed_on_request:,
@@ -285,68 +326,195 @@ module Homebrew
             skip_post_install:,
             skip_link:,
           )
+        end
+      end
 
-          begin
-            unless dry_run
-              formula_installer.prelude
-              formula_installer.fetch
-            end
-            formula_installer
-          rescue CannotInstallFormulaError => e
-            ofail e.message
-            nil
-          rescue UnsatisfiedRequirements, DownloadError, ChecksumMismatchError => e
-            ofail "#{formula}: #{e}"
-            nil
+      sig { params(formula_installers: T::Array[FormulaInstaller]).returns(T::Array[FormulaInstaller]) }
+      def fetch_formulae(formula_installers)
+        formulae_names_to_install = formula_installers.map { |fi| fi.formula.name }
+        return formula_installers if formulae_names_to_install.empty?
+
+        formula_sentence = formulae_names_to_install.map { |name| Formatter.identifier(name) }.to_sentence
+        oh1 "Fetching downloads for: #{formula_sentence}", truncate: false
+        if EnvConfig.download_concurrency > 1
+          download_queue = Homebrew::DownloadQueue.new(pour: true)
+          formula_installers.each do |fi|
+            fi.download_queue = download_queue
           end
         end
 
-        if dry_run
-          if (formulae_name_to_install = formulae_to_install.map(&:name))
-            ohai "Would install #{Utils.pluralize("formula", formulae_name_to_install.count,
-                                                  plural: "e", include_count: true)}:"
-            puts formulae_name_to_install.join(" ")
+        valid_formula_installers = formula_installers.dup
 
-            formula_installers.each do |fi|
-              print_dry_run_dependencies(fi.formula, fi.compute_dependencies, &:name)
+        begin
+          [:prelude_fetch, :prelude, :fetch].each do |step|
+            valid_formula_installers.select! do |fi|
+              fi.public_send(step)
+              true
+            rescue CannotInstallFormulaError => e
+              ofail e.message
+              false
+            rescue UnsatisfiedRequirements, DownloadError, ChecksumMismatchError => e
+              ofail "#{fi.formula}: #{e}"
+              false
             end
+            download_queue&.fetch
+          end
+        ensure
+          download_queue&.shutdown
+        end
+
+        valid_formula_installers
+      end
+
+      sig {
+        params(formula_installers: T::Array[FormulaInstaller], installed_on_request: T::Boolean,
+               installed_as_dependency: T::Boolean, build_bottle: T::Boolean, force_bottle: T::Boolean,
+               bottle_arch: T.nilable(String), ignore_deps: T::Boolean, only_deps: T::Boolean,
+               include_test_formulae: T::Array[String], build_from_source_formulae: T::Array[String],
+               cc: T.nilable(String), git: T::Boolean, interactive: T::Boolean, keep_tmp: T::Boolean,
+               debug_symbols: T::Boolean, force: T::Boolean, overwrite: T::Boolean, debug: T::Boolean,
+               quiet: T::Boolean, verbose: T::Boolean, dry_run: T::Boolean,
+               skip_post_install: T::Boolean, skip_link: T::Boolean).void
+      }
+      def install_formulae(
+        formula_installers,
+        installed_on_request: true,
+        installed_as_dependency: false,
+        build_bottle: false,
+        force_bottle: false,
+        bottle_arch: nil,
+        ignore_deps: false,
+        only_deps: false,
+        include_test_formulae: [],
+        build_from_source_formulae: [],
+        cc: nil,
+        git: false,
+        interactive: false,
+        keep_tmp: false,
+        debug_symbols: false,
+        force: false,
+        overwrite: false,
+        debug: false,
+        quiet: false,
+        verbose: false,
+        dry_run: false,
+        skip_post_install: false,
+        skip_link: false
+      )
+        formulae_names_to_install = formula_installers.map { |fi| fi.formula.name }
+        return if formulae_names_to_install.empty?
+
+        if dry_run
+          ohai "Would install #{Utils.pluralize("formula", formulae_names_to_install.count, include_count: true)}:"
+          puts formulae_names_to_install.join(" ")
+
+          formula_installers.each do |fi|
+            print_dry_run_dependencies(fi.formula, fi.compute_dependencies, &:name)
           end
           return
         end
 
         formula_installers.each do |fi|
-          install_formula(fi)
-          Cleanup.install_formula_clean!(fi.formula)
+          formula = fi.formula
+          upgrade = formula.linked? && formula.outdated? && !formula.head? && !Homebrew::EnvConfig.no_install_upgrade?
+          install_formula(fi, upgrade:)
+          Cleanup.install_formula_clean!(formula)
         end
       end
 
-      def print_dry_run_dependencies(formula, dependencies)
+      sig {
+        params(
+          formula:      Formula,
+          dependencies: T::Array[Dependency],
+          _block:       T.proc.params(arg0: Formula).returns(String),
+        ).void
+      }
+      def print_dry_run_dependencies(formula, dependencies, &_block)
         return if dependencies.empty?
 
-        ohai "Would install #{Utils.pluralize("dependenc", dependencies.count, plural: "ies", singular: "y",
-                                            include_count: true)} for #{formula.name}:"
-        formula_names = dependencies.map { |(dep, _options)| yield dep.to_formula }
+        ohai "Would install #{Utils.pluralize("dependency", dependencies.count, include_count: true)} " \
+             "for #{formula.name}:"
+        formula_names = dependencies.map { |dep| yield dep.to_formula }
         puts formula_names.join(" ")
       end
 
       # If asking the user is enabled, show dependency and size information.
-      def ask(formulae, args:)
+      sig { params(formulae_installer: T::Array[FormulaInstaller], dependants: Homebrew::Upgrade::Dependents, args: Homebrew::CLI::Args).void }
+      def ask_formulae(formulae_installer, dependants, args:)
+        return if formulae_installer.empty?
+
+        formulae = collect_dependencies(formulae_installer, dependants)
+
         ohai "Looking for bottles..."
 
-        sized_formulae = compute_sized_formulae(formulae, args: args)
-        sizes = compute_total_sizes(sized_formulae, debug: args.debug?)
+        sizes = compute_total_sizes(formulae, debug: args.debug?)
 
-        puts "#{::Utils.pluralize("Formula", sized_formulae.count, plural: "e")} \
-(#{sized_formulae.count}): #{sized_formulae.join(", ")}\n\n"
-        puts "Download Size: #{disk_usage_readable(sizes[:download])}"
-        puts "Install Size:  #{disk_usage_readable(sizes[:installed])}"
-        puts "Net Install Size: #{disk_usage_readable(sizes[:net])}" if sizes[:net] != 0
+        puts "#{::Utils.pluralize("Formula", formulae.count)} \
+(#{formulae.count}): #{formulae.join(", ")}\n\n"
+        puts "Download Size: #{Formatter.disk_usage_readable(sizes.fetch(:download))}"
+        puts "Install Size:  #{Formatter.disk_usage_readable(sizes.fetch(:installed))}"
+        if (net_install_size = sizes[:net]) && net_install_size != 0
+          puts "Net Install Size: #{Formatter.disk_usage_readable(net_install_size)}"
+        end
 
         ask_input
       end
 
+      sig { params(casks: T::Array[Cask::Cask]).void }
+      def ask_casks(casks)
+        return if casks.empty?
+
+        puts "#{::Utils.pluralize("Cask", casks.count, plural: "s")} \
+(#{casks.count}): #{casks.join(", ")}\n\n"
+
+        ask_input
+      end
+
+      sig { params(formula_installer: FormulaInstaller, upgrade: T::Boolean).void }
+      def install_formula(formula_installer, upgrade:)
+        formula = formula_installer.formula
+
+        formula_installer.check_installation_already_attempted
+
+        if upgrade
+          Upgrade.print_upgrade_message(formula, formula_installer.options)
+
+          kegs = Upgrade.outdated_kegs(formula)
+          linked_kegs = kegs.select(&:linked?)
+        else
+          formula.print_tap_action
+        end
+
+        # first we unlink the currently active keg for this formula otherwise it is
+        # possible for the existing build to interfere with the build we are about to
+        # do! Seriously, it happens!
+        kegs.each(&:unlink) if kegs.present?
+
+        formula_installer.install
+        formula_installer.finish
+      rescue FormulaInstallationAlreadyAttemptedError
+        # We already attempted to upgrade f as part of the dependency tree of
+        # another formula. In that case, don't generate an error, just move on.
+        nil
+      ensure
+        # restore previous installation state if build failed
+        begin
+          linked_kegs&.each(&:link) unless formula&.latest_version_installed?
+        rescue
+          nil
+        end
+      end
+
       private
 
+      sig { params(formula: Formula).returns(T::Array[Keg]) }
+      def outdated_kegs(formula)
+        [formula, *formula.old_installed_formulae].map(&:linked_keg)
+                                                  .select(&:directory?)
+                                                  .map { |k| Keg.new(k.resolved_path) }
+      end
+
+      sig { params(all_fatal: T::Boolean).void }
       def perform_preinstall_checks(all_fatal: false)
         check_prefix
         check_cpu
@@ -354,8 +522,8 @@ module Homebrew
         Diagnostic.checks(:supported_configuration_checks, fatal: all_fatal)
         Diagnostic.checks(:fatal_preinstall_checks)
       end
-      alias generic_perform_preinstall_checks perform_preinstall_checks
 
+      sig { void }
       def attempt_directory_creation
         Keg.must_exist_directories.each do |dir|
           FileUtils.mkdir_p(dir) unless dir.exist?
@@ -364,6 +532,7 @@ module Homebrew
         end
       end
 
+      sig { void }
       def check_cpu
         return unless Hardware::CPU.ppc?
 
@@ -374,14 +543,7 @@ module Homebrew
         EOS
       end
 
-      def install_formula(formula_installer)
-        formula = formula_installer.formula
-
-        upgrade = formula.linked? && formula.outdated? && !formula.head? && !Homebrew::EnvConfig.no_install_upgrade?
-
-        Upgrade.install_formula(formula_installer, upgrade:)
-      end
-
+      sig { void }
       def ask_input
         ohai "Do you want to proceed with the installation? [Y/y/yes/N/n/no]"
         accepted_inputs = %w[y yes]
@@ -401,49 +563,17 @@ module Homebrew
         end
       end
 
-      # Build a unique list of formulae to size by including:
-      # 1. The original formulae to install.
-      # 2. Their outdated dependents (subject to pruning criteria).
-      # 3. Optionally, any installed formula that depends on one of these and is outdated.
-      def compute_sized_formulae(formulae, args:)
-        sized_formulae = formulae.flat_map do |formula|
-          # Always include the formula itself.
-          formula_list = [formula]
-
-          deps = args.build_from_source? ? formula.deps.build : formula.deps.required
-
-          outdated_dependents = deps.map(&:to_formula).reject(&:pinned?).select do |dep|
-            dep.installed_kegs.empty? || (dep.bottled? && dep.outdated?)
-          end
-          deps.map(&:to_formula).each do |f|
-            outdated_dependents.concat(f.recursive_dependencies.map(&:to_formula).reject(&:pinned?).select do |dep|
-              dep.installed_kegs.empty? || (dep.bottled? && dep.outdated?)
-            end)
-          end
-          formula_list.concat(outdated_dependents)
-
-          formula_list
-        end
-
-        # Add any installed formula that depends on one of the sized formulae and is outdated.
-        unless Homebrew::EnvConfig.no_installed_dependents_check?
-          sized_formulae.concat(Formula.installed.select do |installed_formula|
-            installed_formula.bottled? && installed_formula.outdated? &&
-              installed_formula.deps.required.map(&:to_formula).intersect?(sized_formulae)
-          end)
-        end
-
-        sized_formulae.uniq(&:to_s).compact
-      end
-
       # Compute the total sizes (download, installed, and net) for the given formulae.
+      sig { params(sized_formulae: T::Array[Formula], debug: T::Boolean).returns(T::Hash[Symbol, Integer]) }
       def compute_total_sizes(sized_formulae, debug: false)
         total_download_size  = 0
         total_installed_size = 0
         total_net_size       = 0
 
-        sized_formulae.select(&:bottle).each do |formula|
+        sized_formulae.each do |formula|
           bottle = formula.bottle
+          next unless bottle
+
           # Fetch additional bottle metadata (if necessary).
           bottle.fetch_tab(quiet: !debug)
 
@@ -460,6 +590,18 @@ module Homebrew
         { download:  total_download_size,
           installed: total_installed_size,
           net:       total_net_size }
+      end
+
+      sig {
+        params(formulae_installer: T::Array[FormulaInstaller],
+               dependants:         Homebrew::Upgrade::Dependents).returns(T::Array[Formula])
+      }
+      def collect_dependencies(formulae_installer, dependants)
+        formulae_dependencies = formulae_installer.flat_map do |f|
+          [f.formula, f.compute_dependencies.flatten.grep(Dependency).flat_map(&:to_formula)]
+        end.flatten.uniq
+        formulae_dependencies.concat(dependants.upgradeable) if dependants.upgradeable
+        formulae_dependencies.uniq
       end
     end
   end

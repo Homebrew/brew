@@ -1,4 +1,4 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
 
 require "utils/popen"
@@ -6,6 +6,10 @@ require "utils/popen"
 module Homebrew
   # Helper functions for reading and writing settings.
   module Settings
+    sig {
+      params(setting: T.any(String, Symbol), repo: Pathname)
+        .returns(T.nilable(String))
+    }
     def self.read(setting, repo: HOMEBREW_REPOSITORY)
       return unless (repo/".git/config").exist?
 
@@ -16,6 +20,7 @@ module Homebrew
       value
     end
 
+    sig { params(setting: T.any(String, Symbol), value: T.any(String, T::Boolean), repo: Pathname).void }
     def self.write(setting, value, repo: HOMEBREW_REPOSITORY)
       return unless (repo/".git/config").exist?
 
@@ -26,6 +31,7 @@ module Homebrew
       Kernel.system("git", "-C", repo.to_s, "config", "--replace-all", "homebrew.#{setting}", value, exception: true)
     end
 
+    sig { params(setting: T.any(String, Symbol), repo: Pathname).void }
     def self.delete(setting, repo: HOMEBREW_REPOSITORY)
       return unless (repo/".git/config").exist?
 

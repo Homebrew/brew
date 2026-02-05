@@ -40,7 +40,7 @@
 # Ignore Ruby gems for versions other than we explicitly vendor.
 # Keep this in sync with the list in standalone/init.rb.
 **/vendor/bundle/ruby/*/
-!**/vendor/bundle/ruby/3.3.0/
+!**/vendor/bundle/ruby/3.4.0/
 
 # Ignore Bundler binary files
 **/vendor/bundle/ruby/*/gems/**/*.bundle
@@ -79,12 +79,14 @@
 **/vendor/bundle/ruby/*/gems/coderay-*/
 **/vendor/bundle/ruby/*/gems/colorize-*/
 **/vendor/bundle/ruby/*/gems/commander-*/
+**/vendor/bundle/ruby/*/gems/csv-*/
 **/vendor/bundle/ruby/*/gems/diff-lcs-*/
 **/vendor/bundle/ruby/*/gems/docile-*/
 **/vendor/bundle/ruby/*/gems/ecma-re-validator-*/
 **/vendor/bundle/ruby/*/gems/erubi-*/
 **/vendor/bundle/ruby/*/gems/hana-*/
 **/vendor/bundle/ruby/*/gems/highline-*/
+**/vendor/bundle/ruby/*/gems/io-console-*/
 **/vendor/bundle/ruby/*/gems/jaro_winkler-*/
 **/vendor/bundle/ruby/*/gems/json-*/
 **/vendor/bundle/ruby/*/gems/json_schemer-*/
@@ -115,6 +117,8 @@
 **/vendor/bundle/ruby/*/gems/rdoc-*/
 **/vendor/bundle/ruby/*/gems/redcarpet-*/
 **/vendor/bundle/ruby/*/gems/regexp_parser-*/
+**/vendor/bundle/ruby/*/gems/reline-*/
+**/vendor/bundle/ruby/*/gems/require-hooks-*/
 **/vendor/bundle/ruby/*/gems/rexml-*/
 **/vendor/bundle/ruby/*/gems/rspec-*/
 **/vendor/bundle/ruby/*/gems/rspec-core-*/
@@ -139,7 +143,9 @@
 **/vendor/bundle/ruby/*/gems/strscan-*/
 **/vendor/bundle/ruby/*/gems/syntax_tree-*/
 **/vendor/bundle/ruby/*/gems/tapioca-*/
+**/vendor/bundle/ruby/*/gems/test-prof-*/
 **/vendor/bundle/ruby/*/gems/thor-*/
+**/vendor/bundle/ruby/*/gems/tsort-*/
 **/vendor/bundle/ruby/*/gems/unicode-display_width-*/
 **/vendor/bundle/ruby/*/gems/unicode-emoji-*/
 **/vendor/bundle/ruby/*/gems/unparser-*/
@@ -163,6 +169,7 @@
 !/completions
 !/docs
 !/manpages
+!/CODEOWNERS
 
 # Unignore our packaging files
 !/package
@@ -170,10 +177,10 @@
 
 # Ignore generated documentation site
 /docs/_site
-/docs/bin
 /docs/.jekyll-metadata
 /docs/vendor
 /docs/Gemfile.lock
+/docs/rubydoc
 
 # Unignore our root-level metadata files.
 !/.dockerignore
@@ -198,3 +205,13 @@
 !/.sublime
 /.sublime/homebrew.sublime-workspace
 !/.vscode
+
+# Unignore AI configuration
+!/.cursor
+!/.claude
+
+# Ignore local AI configuration
+/.claude/settings.local.json
+
+# Ignore tmp files
+**/tmp/

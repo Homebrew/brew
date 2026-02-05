@@ -20,9 +20,9 @@ module Tapioca
         },
       }.freeze, T::Hash[String, T::Hash[String, String]])
 
-      ConstantType = type_member { { fixed: Module } }
+      ConstantType = type_member { { fixed: T::Module[T.anything] } }
 
-      sig { override.returns(T::Enumerable[Module]) }
+      sig { override.returns(T::Enumerable[T::Module[T.anything]]) }
       def self.gather_constants
         Homebrew::Tapioca::Utils.named_objects_with_module(Forwardable).reject do |obj|
           # Avoid duplicate stubs for forwardables that are defined in vendored gems

@@ -8,10 +8,10 @@ RSpec.describe BottleSpecification do
   describe "#sha256" do
     it "works without cellar" do
       checksums = {
-        arm64_big_sur: "deadbeef" * 8,
-        big_sur:       "faceb00c" * 8,
-        catalina:      "baadf00d" * 8,
-        mojave:        "8badf00d" * 8,
+        arm64_tahoe: "deadbeef" * 8,
+        tahoe:       "faceb00c" * 8,
+        sequoia:     "baadf00d" * 8,
+        sonoma:      "8badf00d" * 8,
       }
 
       checksums.each_pair do |cat, digest|
@@ -23,10 +23,10 @@ RSpec.describe BottleSpecification do
 
     it "works with cellar" do
       checksums = [
-        { cellar: :any_skip_relocation, tag: :arm64_big_sur,  digest: "deadbeef" * 8 },
-        { cellar: :any, tag: :big_sur, digest: "faceb00c" * 8 },
-        { cellar: "/usr/local/Cellar", tag: :catalina, digest: "baadf00d" * 8 },
-        { cellar: Homebrew::DEFAULT_CELLAR, tag: :mojave, digest: "8badf00d" * 8 },
+        { cellar: :any_skip_relocation, tag: :arm64_tahoe, digest: "deadbeef" * 8 },
+        { cellar: :any, tag: :tahoe, digest: "faceb00c" * 8 },
+        { cellar: "/usr/local/Cellar", tag: :sequoia, digest: "baadf00d" * 8 },
+        { cellar: Homebrew::DEFAULT_CELLAR, tag: :sonoma, digest: "8badf00d" * 8 },
       ]
 
       checksums.each do |checksum|

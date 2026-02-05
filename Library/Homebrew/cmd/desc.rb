@@ -25,7 +25,8 @@ module Homebrew
                             "it is interpreted as a regular expression."
         switch "--eval-all",
                description: "Evaluate all available formulae and casks, whether installed or not, to search their " \
-                            "descriptions. Implied if `$HOMEBREW_EVAL_ALL` is set."
+                            "descriptions.",
+               env:         :eval_all
         switch "--formula", "--formulae",
                description: "Treat all named arguments as formulae."
         switch "--cask", "--casks",
@@ -39,16 +40,16 @@ module Homebrew
       sig { override.void }
       def run
         search_type = if args.search?
-          :either
+          Descriptions::SearchField::Either
         elsif args.name?
-          :name
+          Descriptions::SearchField::Name
         elsif args.description?
-          :desc
+          Descriptions::SearchField::Description
         end
 
-        if search_type.present?
-          if !args.eval_all? && !Homebrew::EnvConfig.eval_all? && Homebrew::EnvConfig.no_install_from_api?
-            raise UsageError, "`brew desc --search` needs `--eval-all` passed or `$HOMEBREW_EVAL_ALL` set!"
+        if search_type
+          if !args.eval_all? && Homebrew::EnvConfig.no_install_from_api?
+            raise UsageError, "`brew desc --search` needs `--eval-all` passed or `HOMEBREW_EVAL_ALL=1` set!"
           end
 
           query = args.named.join(" ")

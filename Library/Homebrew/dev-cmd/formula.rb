@@ -23,7 +23,7 @@ module Homebrew
                                        .any?(&:exist?)
           odie "Found casks but did not find formulae!"
         end
-        formula_paths.each { puts _1 }
+        formula_paths.each { puts it }
       end
     end
   end

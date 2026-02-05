@@ -19,11 +19,10 @@ jobs:
     steps:
       - name: Set up Homebrew
         id: set-up-homebrew
-        uses: Homebrew/actions/setup-homebrew@master
+        uses: Homebrew/actions/setup-homebrew@main
         with:
           core: false
           cask: false
-          test-bot: false
 
       - name: Install Bundler RubyGems
         run: brew install-bundler-gems --groups=all
@@ -46,13 +45,16 @@ jobs:
       - name: Compare to base ref
         working-directory: ${{ steps.set-up-homebrew.outputs.gems-path }}/${{ steps.ruby-abi.outputs.version }}
         env:
+          ABI_VERSION: ${{ steps.ruby-abi.outputs.version }}
           VENDOR_VERSION: ${{ steps.gem-info.outputs.vendor-version }}
           IGNORED_GEMS: ${{ steps.gem-info.outputs.ignored }}
         run: |
           git checkout "origin/${GITHUB_BASE_REF}"
           rm .homebrew_vendor_version
           brew install-bundler-gems --groups=all
-          if [[ "$(<.homebrew_vendor_version)" == "${VENDOR_VERSION}" ]]; then
+          if [[ "$(brew ruby -e "puts Gem.ruby_api_version")" == "${ABI_VERSION}" && \
+                "$(<.homebrew_vendor_version)" == "${VENDOR_VERSION}" ]]
+          then
             while IFS= read -r gem; do
               gem_dir="./gems/${gem}"
               [[ -d "${gem_dir}" ]] || continue

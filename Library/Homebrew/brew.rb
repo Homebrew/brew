@@ -16,6 +16,7 @@ end
 std_trap = trap("INT") { exit! 130 } # no backtrace thanks
 
 require_relative "global"
+require "utils/output"
 
 begin
   trap("INT", std_trap) # restore default CTRL-C handler
@@ -83,11 +84,17 @@ begin
     # `Homebrew::Help.help` never returns, except for unknown commands.
   end
 
-  if internal_cmd || Commands.external_ruby_v2_cmd_path(cmd)
-    cmd = T.must(cmd)
+  if cmd.nil?
+    raise UsageError, "Unknown command: brew #{ARGV.join(" ")}"
+  elsif internal_cmd || Commands.external_ruby_v2_cmd_path(cmd)
     cmd_class = Homebrew::AbstractCommand.command(cmd)
     Homebrew.running_command = cmd
     if cmd_class
+      if !Homebrew::EnvConfig.no_install_from_api? && Homebrew::EnvConfig.download_concurrency > 1
+        require "api"
+        Homebrew::API.fetch_api_files!
+      end
+
       command_instance = cmd_class.new
 
       require "utils/analytics"
@@ -100,14 +107,14 @@ begin
         converted_cmd = cmd.downcase.tr("-", "_")
         case_error = "undefined method `#{converted_cmd}' for module Homebrew"
         private_method_error = "private method `#{converted_cmd}' called for module Homebrew"
-        odie "Unknown command: brew #{cmd}" if [case_error, private_method_error].include?(e.message)
+        Utils::Output.odie "Unknown command: brew #{cmd}" if [case_error, private_method_error].include?(e.message)
 
         raise
       end
     end
   elsif (path = Commands.external_ruby_cmd_path(cmd))
     Homebrew.running_command = cmd
-    require?(path)
+    Homebrew.require?(path)
     exit Homebrew.failed? ? 1 : 0
   elsif Commands.external_cmd_path(cmd)
     %w[CACHE LIBRARY_PATH].each do |env|
@@ -115,48 +122,13 @@ begin
     end
     exec "brew-#{cmd}", *ARGV
   else
-    require "tap"
-
-    possible_tap = OFFICIAL_CMD_TAPS.find { |_, cmds| cmds.include?(cmd) }
-    possible_tap = Tap.fetch(possible_tap.first) if possible_tap
-
-    if !possible_tap ||
-       possible_tap.installed? ||
-       (blocked_tap = Tap.untapped_official_taps.include?(possible_tap.name))
-      if blocked_tap
-        onoe <<~EOS
-          `brew #{cmd}` is unavailable because #{possible_tap.name} was manually untapped.
-          Run `brew tap #{possible_tap.name}` to reenable `brew #{cmd}`.
-        EOS
-      end
-      # Check for cask explicitly because it's very common in old guides
-      odie "`brew cask` is no longer a `brew` command. Use `brew <command> --cask` instead." if cmd == "cask"
-      odie "Unknown command: brew #{cmd}"
-    end
-
-    # Unset HOMEBREW_HELP to avoid confusing the tap
-    with_env HOMEBREW_HELP: nil do
-      tap_commands = []
-      if (File.exist?("/.dockerenv") ||
-         Homebrew.running_as_root? ||
-         ((cgroup = Utils.popen_read("cat", "/proc/1/cgroup").presence) &&
-          %w[azpl_job actions_job docker garden kubepods].none? { |type| cgroup.include?(type) })) &&
-         Homebrew.running_as_root_but_not_owned_by_root?
-        tap_commands += %W[/usr/bin/sudo -u ##{Homebrew.owner_uid}]
-      end
-      quiet_arg = args.quiet? ? "--quiet" : nil
-      tap_commands += [HOMEBREW_BREW_FILE, "tap", *quiet_arg, possible_tap.name]
-      safe_system(*tap_commands)
-    end
-
-    ARGV << "--help" if help_flag
-    exec HOMEBREW_BREW_FILE, cmd, *ARGV
+    raise UsageError, "Unknown command: brew #{cmd}"
   end
 rescue UsageError => e
   require "help"
   Homebrew::Help.help cmd, remaining_args: args&.remaining || [], usage_error: e.message
 rescue SystemExit => e
-  onoe "Kernel.exit" if args&.debug? && !e.success?
+  Utils::Output.onoe "Kernel.exit" if args&.debug? && !e.success?
   if args&.debug? || ARGV.include?("--debug")
     require "utils/backtrace"
     $stderr.puts Utils::Backtrace.clean(e)
@@ -169,8 +141,13 @@ rescue BuildError => e
   Utils::Analytics.report_build_error(e)
   e.dump(verbose: args&.verbose? || false)
 
-  if OS.unsupported_configuration?
-    $stderr.puts "#{Tty.bold}Do not report this issue: you are running in an unsupported configuration.#{Tty.reset}"
+  if OS.not_tier_one_configuration?
+    $stderr.puts <<~EOS
+      This build failure was expected, as this is not a Tier 1 configuration:
+        #{Formatter.url("https://docs.brew.sh/Support-Tiers")}
+      #{Formatter.bold("Do not report any issues to Homebrew/* repositories!")}
+      Read the above document instead before opening any issues or PRs.
+    EOS
   elsif e.formula.head? || e.formula.deprecated? || e.formula.disabled?
     reason = if e.formula.head?
       "was built from an unstable upstream --HEAD"
@@ -182,21 +159,14 @@ rescue BuildError => e
     $stderr.puts <<~EOS
       #{e.formula.name}'s formula #{reason}.
       This build failure is expected behaviour.
-      Do not create issues about this on Homebrew's GitHub repositories.
-      Any opened issues will be immediately closed without response.
-      Do not ask for help from Homebrew or its maintainers on social media.
-      You may ask for help in Homebrew's discussions but are unlikely to receive a response.
-      Try to figure out the problem yourself and submit a fix as a pull request.
-      We will review it but may or may not accept it.
     EOS
-
   end
 
   exit 1
 rescue RuntimeError, SystemCallError => e
   raise if e.message.empty?
 
-  onoe e
+  Utils::Output.onoe e
   if args&.debug? || ARGV.include?("--debug")
     require "utils/backtrace"
     $stderr.puts Utils::Backtrace.clean(e)
@@ -205,23 +175,28 @@ rescue RuntimeError, SystemCallError => e
   exit 1
 # Catch any other types of exceptions.
 rescue Exception => e # rubocop:disable Lint/RescueException
-  onoe e
+  Utils::Output.onoe e
 
   method_deprecated_error = e.is_a?(MethodDeprecatedError)
   require "utils/backtrace"
   $stderr.puts Utils::Backtrace.clean(e) if args&.debug? || ARGV.include?("--debug") || !method_deprecated_error
 
-  if OS.unsupported_configuration?
-    $stderr.puts "#{Tty.bold}Do not report this issue: you are running in an unsupported configuration.#{Tty.reset}"
+  if OS.not_tier_one_configuration?
+    $stderr.puts <<~EOS
+      This error was expected, as this is not a Tier 1 configuration:
+        #{Formatter.url("https://docs.brew.sh/Support-Tiers")}
+      #{Formatter.bold("Do not report any issues to Homebrew/* repositories!")}
+      Read the above document instead before opening any issues or PRs.
+    EOS
   elsif Homebrew::EnvConfig.no_auto_update? &&
         (fetch_head = HOMEBREW_REPOSITORY/".git/FETCH_HEAD") &&
         (!fetch_head.exist? || (fetch_head.mtime.to_date < Date.today))
     $stderr.puts "#{Tty.bold}You have disabled automatic updates and have not updated today.#{Tty.reset}"
     $stderr.puts "#{Tty.bold}Do not report this issue until you've run `brew update` and tried again.#{Tty.reset}"
   elsif (issues_url = (method_deprecated_error && e.issues_url) || Utils::Backtrace.tap_error_url(e))
-    $stderr.puts "If reporting this issue please do so at (not Homebrew/brew or Homebrew/homebrew-core):"
+    $stderr.puts "If reporting this issue please do so at (not Homebrew/* repositories):"
     $stderr.puts "  #{Formatter.url(issues_url)}"
-  elsif internal_cmd
+  elsif internal_cmd && !method_deprecated_error
     $stderr.puts "#{Tty.bold}Please report this issue:#{Tty.reset}"
     $stderr.puts "  #{Formatter.url(OS::ISSUES_URL)}"
   end

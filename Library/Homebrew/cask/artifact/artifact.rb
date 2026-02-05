@@ -7,7 +7,7 @@ module Cask
   module Artifact
     # Generic artifact corresponding to the `artifact` stanza.
     class Artifact < Moved
-      sig { returns(String) }
+      sig { override.returns(String) }
       def self.english_name
         "Generic Artifact"
       end

@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-require "ostruct"
 require "bundle"
 require "bundle/skipper"
 require "bundle/dsl"
@@ -11,7 +10,6 @@ RSpec.describe Homebrew::Bundle::Skipper do
   before do
     allow(ENV).to receive(:[]).and_return(nil)
     allow(ENV).to receive(:[]).with("HOMEBREW_BUNDLE_BREW_SKIP").and_return("mysql")
-    allow(ENV).to receive(:[]).with("HOMEBREW_BUNDLE_WHALEBREW_SKIP").and_return("whalebrew/imagemagick")
     allow(ENV).to receive(:[]).with("HOMEBREW_BUNDLE_TAP_SKIP").and_return("org/repo")
     allow(Formatter).to receive(:warning)
     skipper.instance_variable_set(:@skipped_entries, nil)
@@ -27,19 +25,16 @@ RSpec.describe Homebrew::Bundle::Skipper do
       end
     end
 
-    context "with an unbottled formula on ARM", :needs_macos do
+    context "with an unbottled formula on ARM" do
       let(:entry) { Homebrew::Bundle::Dsl::Entry.new(:brew, "mysql") }
 
-      # TODO: remove OpenStruct usage
-      # rubocop:todo Style/OpenStructUse
       it "returns true" do
         allow(Hardware::CPU).to receive(:arm?).and_return(true)
-        allow_any_instance_of(Formula).to receive(:stable).and_return(OpenStruct.new(bottled?:        false,
-                                                                                     bottle_defined?: true))
+        allow(Homebrew).to receive(:default_prefix?).and_return(true)
+        stub_formula_loader formula("mysql") { url "mysql-1.0" }
 
         expect(skipper.skip?(entry)).to be true
       end
-      # rubocop:enable Style/OpenStructUse
     end
 
     context "with an unlisted cask", :needs_macos do
@@ -50,11 +45,27 @@ RSpec.describe Homebrew::Bundle::Skipper do
       end
     end
 
-    context "with a listed whalebrew image" do
-      let(:entry) { Homebrew::Bundle::Dsl::Entry.new(:whalebrew, "whalebrew/imagemagick") }
+    context "with a flatpak entry", :needs_macos do
+      let(:entry) { Homebrew::Bundle::Dsl::Entry.new(:flatpak, "org.gnome.Calculator") }
 
-      it "returns true" do
+      it "skips on macOS with warning" do
+        expect($stdout).to receive(:puts).with(
+          Formatter.warning("Skipping flatpak org.gnome.Calculator (unsupported on macOS)"),
+        )
         expect(skipper.skip?(entry)).to be true
+      end
+
+      it "skips silently when silent flag is set" do
+        expect($stdout).not_to receive(:puts)
+        expect(skipper.skip?(entry, silent: true)).to be true
+      end
+    end
+
+    context "with a flatpak entry on Linux", :needs_linux do
+      let(:entry) { Homebrew::Bundle::Dsl::Entry.new(:flatpak, "org.gnome.Calculator") }
+
+      it "does not skip" do
+        expect(skipper.skip?(entry)).to be false
       end
     end
 

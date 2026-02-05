@@ -3,16 +3,16 @@
 
 class Hash
   sig {
-    type_parameters(:out).params(
-      block: T.proc.params(o: K).returns(T.type_parameter(:out)),
-    ).returns(T::Hash[T.type_parameter(:out), V])
+    type_parameters(:Out).params(
+      block: T.proc.params(o: K).returns(T.type_parameter(:Out)),
+    ).returns(T::Hash[T.type_parameter(:Out), V])
   }
   def deep_transform_keys(&block); end
 
   sig {
-    type_parameters(:out).params(
-      block: T.proc.params(o: K).returns(T.type_parameter(:out)),
-    ).returns(T::Hash[T.type_parameter(:out), V])
+    type_parameters(:Out).params(
+      block: T.proc.params(o: K).returns(T.type_parameter(:Out)),
+    ).returns(T::Hash[T.type_parameter(:Out), V])
   }
   def deep_transform_keys!(&block); end
 

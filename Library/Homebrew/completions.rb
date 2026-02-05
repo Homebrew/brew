@@ -8,6 +8,8 @@ require "erb"
 module Homebrew
   # Helper functions for generating shell completions.
   module Completions
+    extend Utils::Output::Mixin
+
     Variables = Struct.new(
       :aliases,
       :builtin_command_descriptions,
@@ -170,7 +172,7 @@ module Homebrew
       if (types = Commands.named_args_type(command))
         named_args_strings, named_args_types = types.partition { |type| type.is_a? String }
 
-        named_args_types.each do |type|
+        T.cast(named_args_types, T::Array[Symbol]).each do |type|
           next unless BASH_NAMED_ARGS_COMPLETION_FUNCTION_MAPPING.key? type
 
           named_completion_string += "\n  #{BASH_NAMED_ARGS_COMPLETION_FUNCTION_MAPPING[type]}"
@@ -221,7 +223,7 @@ module Homebrew
       if (types = Commands.named_args_type(command))
         named_args_strings, named_args_types = types.partition { |type| type.is_a? String }
 
-        named_args_types.each do |type|
+        T.cast(named_args_types, T::Array[Symbol]).each do |type|
           next unless ZSH_NAMED_ARGS_COMPLETION_FUNCTION_MAPPING.key? type
 
           args_options << "- #{type}"
@@ -238,12 +240,12 @@ module Homebrew
 
             options.delete(opt)
           end
-          args_options << "*::#{type}:#{ZSH_NAMED_ARGS_COMPLETION_FUNCTION_MAPPING[type]}"
+          args_options << "*:#{type}:#{ZSH_NAMED_ARGS_COMPLETION_FUNCTION_MAPPING[type]}"
         end
 
         if named_args_strings.any?
           args_options << "- subcommand"
-          args_options << "*::subcommand:(#{named_args_strings.join(" ")})"
+          args_options << "*:subcommand:(#{named_args_strings.join(" ")})"
         end
       end
 
@@ -267,7 +269,7 @@ module Homebrew
     sig { params(command: String, option: String).returns(String) }
     def self.generate_zsh_option_exclusions(command, option)
       conflicts = Commands.option_conflicts(command, option.gsub(/^--?/, ""))
-      return "" unless conflicts.presence
+      return "" if conflicts.blank?
 
       "(#{conflicts.map { |conflict| "-#{"-" if conflict.size > 1}#{conflict}" }.join(" ")})"
     end
@@ -303,7 +305,7 @@ module Homebrew
     def self.generate_fish_subcommand_completion(command)
       return unless command_gets_completions? command
 
-      command_description = format_description Commands.command_description(command, short: true), fish: true
+      command_description = format_description Commands.command_description(command, short: true).to_s, fish: true
       lines = if COMPLETIONS_EXCLUSION_LIST.include?(command)
         []
       else
@@ -321,7 +323,7 @@ module Homebrew
       if (types = Commands.named_args_type(command))
         named_args_strings, named_args_types = types.partition { |type| type.is_a? String }
 
-        named_args_types.each do |type|
+        T.cast(named_args_types, T::Array[Symbol]).each do |type|
           next unless FISH_NAMED_ARGS_COMPLETION_FUNCTION_MAPPING.key? type
 
           named_arg_function = FISH_NAMED_ARGS_COMPLETION_FUNCTION_MAPPING[type]

@@ -1,12 +1,12 @@
 {
   "$schema" : "https://json-schema.org/draft/2019-09/schema",
   "$id" : "http://spdx.org/rdf/terms/2.3",
-  "title" : "SPDX 2.3",
+  "title" : "SPDX 2.3.1-dev",
   "type" : "object",
   "properties" : {
     "$schema": {
       "type": "string",
-      "description": "Reference the SPDX 2.3 JSON schema."
+      "description": "Reference the SPDX 2.3.1 JSON schema."
     },
     "SPDXID" : {
       "type" : "string",
@@ -90,7 +90,7 @@
                 "enum" : [ "SHA1", "BLAKE3", "SHA3-384", "SHA256", "SHA384", "BLAKE2b-512", "BLAKE2b-256", "SHA3-512", "MD2", "ADLER32", "MD4", "SHA3-256", "BLAKE2b-384", "SHA512", "MD6", "MD5", "SHA224" ]
               },
               "checksumValue" : {
-                "description" : "The checksumValue property provides a lower case hexidecimal encoded digest value produced using a specific algorithm.",
+                "description" : "The checksumValue property provides a lower case hexadecimal encoded digest value produced using a specific algorithm.",
                 "type" : "string"
               }
             },
@@ -270,10 +270,10 @@
             }
           },
           "attributionTexts" : {
-            "description" : "This field provides a place for the SPDX data creator to record acknowledgements that may be required to be communicated in some contexts. This is not meant to include the actual complete license text (see licenseConculded and licenseDeclared), and may or may not include copyright notices (see also copyrightText). The SPDX data creator may use this field to record other acknowledgements, such as particular clauses from license texts, which may be necessary or desirable to reproduce.",
+            "description" : "This field provides a place for the SPDX data creator to record acknowledgements that may be required to be communicated in some contexts. This is not meant to include the actual complete license text (see licenseConcluded and licenseDeclared), and may or may not include copyright notices (see also copyrightText). The SPDX data creator may use this field to record other acknowledgements, such as particular clauses from license texts, which may be necessary or desirable to reproduce.",
             "type" : "array",
             "items" : {
-              "description" : "This field provides a place for the SPDX data creator to record acknowledgements that may be required to be communicated in some contexts. This is not meant to include the actual complete license text (see licenseConculded and licenseDeclared), and may or may not include copyright notices (see also copyrightText). The SPDX data creator may use this field to record other acknowledgements, such as particular clauses from license texts, which may be necessary or desirable to reproduce.",
+              "description" : "This field provides a place for the SPDX data creator to record acknowledgements that may be required to be communicated in some contexts. This is not meant to include the actual complete license text (see licenseConcluded and licenseDeclared), and may or may not include copyright notices (see also copyrightText). The SPDX data creator may use this field to record other acknowledgements, such as particular clauses from license texts, which may be necessary or desirable to reproduce.",
               "type" : "string"
             }
           },
@@ -293,7 +293,7 @@
                   "enum" : [ "SHA1", "BLAKE3", "SHA3-384", "SHA256", "SHA384", "BLAKE2b-512", "BLAKE2b-256", "SHA3-512", "MD2", "ADLER32", "MD4", "SHA3-256", "BLAKE2b-384", "SHA512", "MD6", "MD5", "SHA224" ]
                 },
                 "checksumValue" : {
-                  "description" : "The checksumValue property provides a lower case hexidecimal encoded digest value produced using a specific algorithm.",
+                  "description" : "The checksumValue property provides a lower case hexadecimal encoded digest value produced using a specific algorithm.",
                   "type" : "string"
                 }
               },
@@ -375,10 +375,10 @@
             "type" : "string"
           },
           "licenseInfoFromFiles" : {
-            "description" : "The licensing information that was discovered directly within the package. There will be an instance of this property for each distinct value of alllicenseInfoInFile properties of all files contained in the package.\n\nIf the licenseInfoFromFiles field is not present for a package and filesAnalyzed property for that same package is true or omitted, it implies an equivalent meaning to NOASSERTION.",
+            "description" : "The licensing information that was discovered directly within the package. There will be an instance of this property for each distinct value of all licenseInfoInFile properties of all files contained in the package.\n\nIf the licenseInfoFromFiles field is not present for a package and filesAnalyzed property for that same package is true or omitted, it implies an equivalent meaning to NOASSERTION.",
             "type" : "array",
             "items" : {
-              "description" : "License expression for licenseInfoFromFiles. See SPDX Annex D for the license expression syntax.  The licensing information that was discovered directly within the package. There will be an instance of this property for each distinct value of alllicenseInfoInFile properties of all files contained in the package.\n\nIf the licenseInfoFromFiles field is not present for a package and filesAnalyzed property for that same package is true or omitted, it implies an equivalent meaning to NOASSERTION.",
+              "description" : "License expression for licenseInfoFromFiles. See SPDX Annex D for the license expression syntax.  The licensing information that was discovered directly within the package. There will be an instance of this property for each distinct value of all licenseInfoInFile properties of all files contained in the package.\n\nIf the licenseInfoFromFiles field is not present for a package and filesAnalyzed property for that same package is true or omitted, it implies an equivalent meaning to NOASSERTION.",
               "type" : "string"
             }
           },
@@ -417,7 +417,7 @@
           "primaryPackagePurpose" : {
             "description" : "This field provides information about the primary purpose of the identified package. Package Purpose is intrinsic to how the package is being used rather than the content of the package.",
             "type" : "string",
-            "enum" : [ "OTHER", "INSTALL", "ARCHIVE", "FIRMWARE", "APPLICATION", "FRAMEWORK", "LIBRARY", "CONTAINER", "SOURCE", "DEVICE", "OPERATING_SYSTEM", "FILE" ]
+            "enum" : [ "OTHER", "INSTALL", "ARCHIVE", "FIRMWARE", "APPLICATION", "FRAMEWORK", "LIBRARY", "CONTAINER", "SOURCE", "DEVICE", "OPERATING-SYSTEM", "FILE" ]
           },
           "releaseDate" : {
             "description" : "This field provides a place for recording the date the package was released.",
@@ -494,10 +494,10 @@
             }
           },
           "attributionTexts" : {
-            "description" : "This field provides a place for the SPDX data creator to record acknowledgements that may be required to be communicated in some contexts. This is not meant to include the actual complete license text (see licenseConculded and licenseDeclared), and may or may not include copyright notices (see also copyrightText). The SPDX data creator may use this field to record other acknowledgements, such as particular clauses from license texts, which may be necessary or desirable to reproduce.",
+            "description" : "This field provides a place for the SPDX data creator to record acknowledgements that may be required to be communicated in some contexts. This is not meant to include the actual complete license text (see licenseConcluded and licenseDeclared), and may or may not include copyright notices (see also copyrightText). The SPDX data creator may use this field to record other acknowledgements, such as particular clauses from license texts, which may be necessary or desirable to reproduce.",
             "type" : "array",
             "items" : {
-              "description" : "This field provides a place for the SPDX data creator to record acknowledgements that may be required to be communicated in some contexts. This is not meant to include the actual complete license text (see licenseConculded and licenseDeclared), and may or may not include copyright notices (see also copyrightText). The SPDX data creator may use this field to record other acknowledgements, such as particular clauses from license texts, which may be necessary or desirable to reproduce.",
+              "description" : "This field provides a place for the SPDX data creator to record acknowledgements that may be required to be communicated in some contexts. This is not meant to include the actual complete license text (see licenseConcluded and licenseDeclared), and may or may not include copyright notices (see also copyrightText). The SPDX data creator may use this field to record other acknowledgements, such as particular clauses from license texts, which may be necessary or desirable to reproduce.",
               "type" : "string"
             }
           },
@@ -514,7 +514,7 @@
                   "enum" : [ "SHA1", "BLAKE3", "SHA3-384", "SHA256", "SHA384", "BLAKE2b-512", "BLAKE2b-256", "SHA3-512", "MD2", "ADLER32", "MD4", "SHA3-256", "BLAKE2b-384", "SHA512", "MD6", "MD5", "SHA224" ]
                 },
                 "checksumValue" : {
-                  "description" : "The checksumValue property provides a lower case hexidecimal encoded digest value produced using a specific algorithm.",
+                  "description" : "The checksumValue property provides a lower case hexadecimal encoded digest value produced using a specific algorithm.",
                   "type" : "string"
                 }
               },
@@ -624,10 +624,10 @@
             }
           },
           "attributionTexts" : {
-            "description" : "This field provides a place for the SPDX data creator to record acknowledgements that may be required to be communicated in some contexts. This is not meant to include the actual complete license text (see licenseConculded and licenseDeclared), and may or may not include copyright notices (see also copyrightText). The SPDX data creator may use this field to record other acknowledgements, such as particular clauses from license texts, which may be necessary or desirable to reproduce.",
+            "description" : "This field provides a place for the SPDX data creator to record acknowledgements that may be required to be communicated in some contexts. This is not meant to include the actual complete license text (see licenseConcluded and licenseDeclared), and may or may not include copyright notices (see also copyrightText). The SPDX data creator may use this field to record other acknowledgements, such as particular clauses from license texts, which may be necessary or desirable to reproduce.",
             "type" : "array",
             "items" : {
-              "description" : "This field provides a place for the SPDX data creator to record acknowledgements that may be required to be communicated in some contexts. This is not meant to include the actual complete license text (see licenseConculded and licenseDeclared), and may or may not include copyright notices (see also copyrightText). The SPDX data creator may use this field to record other acknowledgements, such as particular clauses from license texts, which may be necessary or desirable to reproduce.",
+              "description" : "This field provides a place for the SPDX data creator to record acknowledgements that may be required to be communicated in some contexts. This is not meant to include the actual complete license text (see licenseConcluded and licenseDeclared), and may or may not include copyright notices (see also copyrightText). The SPDX data creator may use this field to record other acknowledgements, such as particular clauses from license texts, which may be necessary or desirable to reproduce.",
               "type" : "string"
             }
           },
@@ -709,11 +709,11 @@
             }
           },
           "snippetFromFile" : {
-            "description" : "SPDX ID for File.  File containing the SPDX element (e.g. the file contaning a snippet).",
+            "description" : "SPDX ID for File.  File containing the SPDX element (e.g. the file containing a snippet).",
             "type" : "string"
           }
         },
-        "required" : [ "SPDXID", "name", "ranges", "snippetFromFile" ],
+        "required" : [ "SPDXID", "ranges", "snippetFromFile" ],
         "additionalProperties" : false
       }
     },

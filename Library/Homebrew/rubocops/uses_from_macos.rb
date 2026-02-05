@@ -66,7 +66,7 @@ module RuboCop
             return if PROVIDED_BY_MACOS_FORMULAE.include? @formula_name
 
             problem "Formulae that are `keg_only :provided_by_macos` should be " \
-                    "added to the `PROVIDED_BY_MACOS_FORMULAE` list (in the Homebrew/brew repo)"
+                    "added to the `PROVIDED_BY_MACOS_FORMULAE` list (in the Homebrew/brew repository)"
           end
         end
       end
@@ -116,7 +116,7 @@ module RuboCop
             next if ALLOWED_USES_FROM_MACOS_DEPS.include? dep_name
             next if ProvidedByMacos::PROVIDED_BY_MACOS_FORMULAE.include? dep_name
 
-            problem "`uses_from_macos` should only be used for macOS dependencies, not #{dep_name}."
+            problem "`uses_from_macos` should only be used for macOS dependencies, not '#{dep_name}'."
           end
         end
       end

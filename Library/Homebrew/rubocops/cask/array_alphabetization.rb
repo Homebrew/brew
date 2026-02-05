@@ -9,7 +9,7 @@ module RuboCop
 
         sig { params(node: RuboCop::AST::SendNode).void }
         def on_send(node)
-          return unless [:zap, :uninstall].include?(node.method_name)
+          return unless [:conflicts_with, :uninstall, :zap].include?(node.method_name)
 
           node.each_descendant(:pair).each do |pair|
             symbols = pair.children.select(&:sym_type?).map(&:value)

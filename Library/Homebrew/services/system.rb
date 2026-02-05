@@ -2,11 +2,18 @@
 # frozen_string_literal: true
 
 require_relative "system/systemctl"
+require "utils/output"
 
 module Homebrew
   module Services
     module System
-      extend FileUtils
+      extend Utils::Output::Mixin
+
+      LAUNCHCTL_DOMAIN_ACTION_NOT_SUPPORTED = T.let(125, Integer)
+      MISSING_DAEMON_MANAGER_EXCEPTION_MESSAGE = T.let(
+        "`brew services` is supported only on macOS or Linux (with systemd)!",
+        String,
+      )
 
       # Path to launchctl binary.
       sig { returns(T.nilable(Pathname)) }
@@ -48,27 +55,31 @@ module Homebrew
       end
 
       # Run at boot.
-      sig { returns(T.nilable(Pathname)) }
+      sig { returns(Pathname) }
       def self.boot_path
         if launchctl?
           Pathname.new("/Library/LaunchDaemons")
         elsif systemctl?
           Pathname.new("/usr/lib/systemd/system")
+        else
+          raise UsageError, MISSING_DAEMON_MANAGER_EXCEPTION_MESSAGE
         end
       end
 
       # Run at login.
-      sig { returns(T.nilable(Pathname)) }
+      sig { returns(Pathname) }
       def self.user_path
         if launchctl?
           Pathname.new("#{Dir.home}/Library/LaunchAgents")
         elsif systemctl?
           Pathname.new("#{Dir.home}/.config/systemd/user")
+        else
+          raise UsageError, MISSING_DAEMON_MANAGER_EXCEPTION_MESSAGE
         end
       end
 
       # If root, return `boot_path`, else return `user_path`.
-      sig { returns(T.nilable(Pathname)) }
+      sig { returns(Pathname) }
       def self.path
         root? ? boot_path : user_path
       end
@@ -90,8 +101,8 @@ module Homebrew
               opoo "uid and euid do not match, using user/* instead of gui/* domain!"
             end
             unless Homebrew::EnvConfig.no_env_hints?
-              puts "Hide this warning by setting HOMEBREW_SERVICES_NO_DOMAIN_WARNING."
-              puts "Hide these hints with HOMEBREW_NO_ENV_HINTS (see `man brew`)."
+              puts "Hide this warning by setting `HOMEBREW_SERVICES_NO_DOMAIN_WARNING=1`."
+              puts "Hide these hints with `HOMEBREW_NO_ENV_HINTS=1` (see `man brew`)."
             end
             @output_warning = T.let(true, T.nilable(TrueClass))
           end
@@ -99,6 +110,13 @@ module Homebrew
         else
           "gui/#{Process.uid}"
         end
+      end
+
+      sig { returns(T::Array[String]) }
+      def self.candidate_domain_targets
+        candidates = [domain_target]
+        candidates += ["user/#{Process.euid}", "gui/#{Process.uid}"] unless root?
+        candidates.uniq
       end
     end
   end

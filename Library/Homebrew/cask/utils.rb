@@ -1,35 +1,41 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
 
 require "utils/user"
 require "open3"
+require "utils/output"
 
 module Cask
   # Helper functions for various cask operations.
   module Utils
+    extend ::Utils::Output::Mixin
+
     BUG_REPORTS_URL = "https://github.com/Homebrew/homebrew-cask#reporting-bugs"
 
+    sig { params(path: Pathname, command: T.class_of(SystemCommand)).void }
     def self.gain_permissions_mkpath(path, command: SystemCommand)
       dir = path.ascend.find(&:directory?)
       return if path == dir
 
-      if dir.writable?
+      if dir&.writable?
         path.mkpath
       else
-        command.run!("/bin/mkdir", args: ["-p", "--", path], sudo: true, print_stderr: false)
+        command.run!("mkdir", args: ["-p", "--", path], sudo: true, print_stderr: false)
       end
     end
 
+    sig { params(path: Pathname, command: T.class_of(SystemCommand)).void }
     def self.gain_permissions_rmdir(path, command: SystemCommand)
       gain_permissions(path, [], command) do |p|
         if p.parent.writable?
           FileUtils.rmdir p
         else
-          command.run!("/bin/rmdir", args: ["--", p], sudo: true, print_stderr: false)
+          command.run!("rmdir", args: ["--", p], sudo: true, print_stderr: false)
         end
       end
     end
 
+    sig { params(path: Pathname, command: T.class_of(SystemCommand)).void }
     def self.gain_permissions_remove(path, command: SystemCommand)
       directory = false
       permission_flags = if path.symlink?
@@ -58,7 +64,15 @@ module Cask
       end
     end
 
-    def self.gain_permissions(path, command_args, command)
+    sig {
+      params(
+        path:         Pathname,
+        command_args: T::Array[String],
+        command:      T.class_of(SystemCommand),
+        _block:       T.proc.params(path: Pathname).void,
+      ).void
+    }
+    def self.gain_permissions(path, command_args, command, &_block)
       tried_permissions = false
       tried_ownership = false
       begin
@@ -74,10 +88,10 @@ module Cask
           command.run("/usr/bin/chflags",
                       print_stderr:,
                       args:         command_args + ["--", "000", path])
-          command.run("/bin/chmod",
+          command.run("chmod",
                       print_stderr:,
                       args:         command_args + ["--", "u+rwx", path])
-          command.run("/bin/chmod",
+          command.run("chmod",
                       print_stderr:,
                       args:         command_args + ["-N", path])
           tried_permissions = true
@@ -89,8 +103,8 @@ module Cask
           # TODO: Further examine files to see if ownership is the problem
           #       before using `sudo` and `chown`.
           ohai "Using sudo to gain ownership of path '#{path}'"
-          command.run("/usr/sbin/chown",
-                      args: command_args + ["--", User.current, path],
+          command.run("chown",
+                      args: command_args + ["--", User.current.to_s, path],
                       sudo: true)
           tried_ownership = true
           # retry chflags/chmod after chown
@@ -126,6 +140,7 @@ module Cask
       EOS
     end
 
+    sig { params(method: Symbol, token: String, section: T.nilable(String)).void }
     def self.method_missing_message(method, token, section = nil)
       message = "Unexpected method '#{method}' called "
       message << "during #{section} " if section

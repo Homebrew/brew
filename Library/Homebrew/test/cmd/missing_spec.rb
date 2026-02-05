@@ -6,7 +6,7 @@ require "cmd/shared_examples/args_parse"
 RSpec.describe Homebrew::Cmd::Missing do
   it_behaves_like "parseable arguments"
 
-  it "prints missing dependencies", :integration_test do
+  it "prints missing dependencies", :integration_test, :no_api do
     setup_test_formula "foo"
     setup_test_formula "bar"
 

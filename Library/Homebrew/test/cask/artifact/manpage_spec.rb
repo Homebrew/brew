@@ -6,7 +6,7 @@ RSpec.describe Cask::Artifact::Manpage, :cask do
   context "without section" do
     let(:cask_token) { "invalid-manpage-no-section" }
 
-    it "fails to load a cask without section" do
+    it "fails to load a cask without section", :no_api do
       expect { cask }.to raise_error(Cask::CaskInvalidError, /is not a valid man page name/)
     end
   end

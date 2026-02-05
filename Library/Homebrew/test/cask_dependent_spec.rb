@@ -11,7 +11,7 @@ RSpec.describe CaskDependent, :needs_macos do
       cask "testing" do
         depends_on formula: "baz"
         depends_on cask: "foo-cask"
-        depends_on macos: ">= :mojave"
+        depends_on macos: ">= :sequoia"
       end
     RUBY
   end
@@ -30,7 +30,7 @@ RSpec.describe CaskDependent, :needs_macos do
     end
   end
 
-  describe "#recursive_dependencies", :integration_test do
+  describe "#recursive_dependencies", :integration_test, :no_api do
     it "is all the dependencies of the cask" do
       setup_test_formula "foo"
       setup_test_formula "bar"

@@ -1,15 +1,19 @@
-# typed: true # rubocop:disable Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
+
+require "extend/os/mac/pkgconf"
 
 module OS
   module Mac
     module Diagnostic
       class Volumes
+        sig { void }
         def initialize
-          @volumes = get_mounts
+          @volumes = T.let(get_mounts, T::Array[String])
         end
 
-        def which(path)
+        sig { params(path: T.nilable(::Pathname)).returns(Integer) }
+        def index_of(path)
           vols = get_mounts path
 
           # no volume found
@@ -22,12 +26,13 @@ module OS
           vol_index
         end
 
+        sig { params(path: T.nilable(::Pathname)).returns(T::Array[String]) }
         def get_mounts(path = nil)
           vols = []
           # get the volume of path, if path is nil returns all volumes
 
           args = %w[/bin/df -P]
-          args << path if path
+          args << path.to_s if path
 
           Utils.popen_read(*args) do |io|
             io.each_line do |line|
@@ -47,6 +52,13 @@ module OS
 
         requires_ancestor { Homebrew::Diagnostic::Checks }
 
+        sig { params(verbose: T::Boolean).void }
+        def initialize(verbose: true)
+          super
+          @found = T.let([], T::Array[String])
+        end
+
+        sig { returns(T::Array[String]) }
         def fatal_preinstall_checks
           checks = %w[
             check_access_directories
@@ -58,6 +70,7 @@ module OS
           checks.freeze
         end
 
+        sig { returns(T::Array[String]) }
         def fatal_build_from_source_checks
           %w[
             check_xcode_license_approved
@@ -69,6 +82,7 @@ module OS
           ].freeze
         end
 
+        sig { returns(T::Array[String]) }
         def fatal_setup_build_environment_checks
           %w[
             check_xcode_minimum_version
@@ -77,12 +91,14 @@ module OS
           ].freeze
         end
 
+        sig { returns(T::Array[String]) }
         def supported_configuration_checks
           %w[
             check_for_unsupported_macos
           ].freeze
         end
 
+        sig { returns(T::Array[String]) }
         def build_from_source_checks
           %w[
             check_for_installed_developer_tools
@@ -91,6 +107,7 @@ module OS
           ].freeze
         end
 
+        sig { returns(T.nilable(String)) }
         def check_for_non_prefixed_findutils
           findutils = ::Formula["findutils"]
           return unless findutils.any_version_installed?
@@ -106,16 +123,23 @@ module OS
           nil
         end
 
+        sig { returns(T.nilable(String)) }
         def check_for_unsupported_macos
           return if Homebrew::EnvConfig.developer?
           return if ENV["HOMEBREW_INTEGRATION_TEST"]
 
+          tier = 2
           who = +"We"
           what = if OS::Mac.version.prerelease?
-            "pre-release version"
+            "pre-release version."
           elsif OS::Mac.version.outdated_release?
+            tier = 3
             who << " (and Apple)"
-            "old version"
+            <<~EOS.chomp
+              old version.
+              You may have better luck with MacPorts which supports older versions of macOS:
+                #{Formatter.url("https://www.macports.org")}
+            EOS
           end
           return if what.blank?
 
@@ -123,11 +147,13 @@ module OS
 
           <<~EOS
             You are using macOS #{MacOS.version}.
-            #{who} do not provide support for this #{what}.
-            #{please_create_pull_requests(what)}
+            #{who} do not provide support for this #{what}
+
+            #{support_tier_message(tier:)}
           EOS
         end
 
+        sig { returns(T.nilable(String)) }
         def check_for_opencore
           return if ::Hardware::CPU.physical_cpu_arm64?
 
@@ -142,13 +168,17 @@ module OS
             return
           end
 
+          oclp_support_tier = ::Hardware::CPU.features.include?(:pclmulqdq) ? 2 : 3
+
           <<~EOS
             You have booted macOS using OpenCore Legacy Patcher.
             We do not provide support for this configuration.
-            #{please_create_pull_requests}
+
+            #{support_tier_message(tier: oclp_support_tier)}
           EOS
         end
 
+        sig { returns(T.nilable(String)) }
         def check_xcode_up_to_date
           return unless MacOS::Xcode.outdated?
 
@@ -161,14 +191,12 @@ module OS
           # Homebrew/brew is currently using.
           return if GitHub::Actions.env_set?
 
-          # With fake El Capitan for Portable Ruby, we are intentionally not using Xcode 8.
-          # This is because we are not using the CLT and Xcode 8 has the 10.12 SDK.
-          return if ENV["HOMEBREW_FAKE_MACOS"]
-
           message = <<~EOS
             Your Xcode (#{MacOS::Xcode.version}) is outdated.
             Please update to Xcode #{MacOS::Xcode.latest_version} (or delete it).
             #{MacOS::Xcode.update_instructions}
+
+            #{support_tier_message(tier: 2)}
           EOS
 
           if OS::Mac.version.prerelease?
@@ -183,6 +211,7 @@ module OS
           message
         end
 
+        sig { returns(T.nilable(String)) }
         def check_clt_up_to_date
           return unless MacOS::CLT.outdated?
 
@@ -198,9 +227,12 @@ module OS
           <<~EOS
             A newer Command Line Tools release is available.
             #{MacOS::CLT.update_instructions}
+
+            #{support_tier_message(tier: 2)}
           EOS
         end
 
+        sig { returns(T.nilable(String)) }
         def check_xcode_minimum_version
           return unless MacOS::Xcode.below_minimum_version?
 
@@ -214,6 +246,7 @@ module OS
           EOS
         end
 
+        sig { returns(T.nilable(String)) }
         def check_clt_minimum_version
           return unless MacOS::CLT.below_minimum_version?
 
@@ -223,6 +256,7 @@ module OS
           EOS
         end
 
+        sig { returns(T.nilable(String)) }
         def check_if_xcode_needs_clt_installed
           return unless MacOS::Xcode.needs_clt_installed?
 
@@ -232,6 +266,7 @@ module OS
           EOS
         end
 
+        sig { returns(T.nilable(String)) }
         def check_xcode_prefix
           prefix = MacOS::Xcode.prefix
           return if prefix.nil?
@@ -243,6 +278,7 @@ module OS
           EOS
         end
 
+        sig { returns(T.nilable(String)) }
         def check_xcode_prefix_exists
           prefix = MacOS::Xcode.prefix
           return if prefix.nil? || prefix.exist?
@@ -254,6 +290,7 @@ module OS
           EOS
         end
 
+        sig { returns(T.nilable(String)) }
         def check_xcode_select_path
           return if MacOS::CLT.installed?
           return unless MacOS::Xcode.installed?
@@ -268,6 +305,7 @@ module OS
           EOS
         end
 
+        sig { returns(T.nilable(String)) }
         def check_xcode_license_approved
           # If the user installs Xcode-only, they have to approve the
           # license or no "xc*" tool will work.
@@ -281,6 +319,7 @@ module OS
           EOS
         end
 
+        sig { returns(T.nilable(String)) }
         def check_filesystem_case_sensitive
           dirs_to_check = [
             HOMEBREW_PREFIX,
@@ -296,8 +335,8 @@ module OS
             # dir (e.g. /TMP and /tmp) this check falsely thinks it is case-insensitive
             # but we don't care because: 1. there is more than one dir checked, 2. the
             # check is not vital and 3. we would have to touch files otherwise.
-            upcased = Pathname.new(dir.to_s.upcase)
-            downcased = Pathname.new(dir.to_s.downcase)
+            upcased = ::Pathname.new(dir.to_s.upcase)
+            downcased = ::Pathname.new(dir.to_s.downcase)
             dir.exist? && !(upcased.exist? && downcased.exist?)
           end
           return if case_sensitive_dirs.empty?
@@ -314,6 +353,7 @@ module OS
           EOS
         end
 
+        sig { returns(T.nilable(String)) }
         def check_for_gettext
           find_relative_paths("lib/libgettextlib.dylib",
                               "lib/libintl.dylib",
@@ -337,8 +377,8 @@ module OS
             end
 
             return if @found.all? do |path|
-              realpath = Pathname.new(path).realpath.to_s
-              allowlist.any? { |rack| realpath.start_with?(rack) }
+              realpath = ::Pathname.new(path).realpath.to_s
+              realpath.start_with?(*allowlist)
             end
           end
 
@@ -349,6 +389,7 @@ module OS
           EOS
         end
 
+        sig { returns(T.nilable(String)) }
         def check_for_iconv
           find_relative_paths("lib/libiconv.dylib", "include/iconv.h")
           return if @found.empty?
@@ -379,6 +420,7 @@ module OS
           end
         end
 
+        sig { returns(T.nilable(String)) }
         def check_for_multiple_volumes
           return unless HOMEBREW_CELLAR.exist?
 
@@ -386,13 +428,13 @@ module OS
 
           # Find the volumes for the TMP folder & HOMEBREW_CELLAR
           real_cellar = HOMEBREW_CELLAR.realpath
-          where_cellar = volumes.which real_cellar
+          where_cellar = volumes.index_of real_cellar
 
           begin
-            tmp = Pathname.new(Dir.mktmpdir("doctor", HOMEBREW_TEMP))
+            tmp = ::Pathname.new(Dir.mktmpdir("doctor", HOMEBREW_TEMP))
             begin
               real_tmp = tmp.realpath.parent
-              where_tmp = volumes.which real_tmp
+              where_tmp = volumes.index_of real_tmp
             ensure
               Dir.delete tmp.to_s
             end
@@ -405,28 +447,18 @@ module OS
           <<~EOS
             Your Cellar and TEMP directories are on different volumes.
             macOS won't move relative symlinks across volumes unless the target file already
-            exists. Brews known to be affected by this are Git and Narwhal.
+            exists. Formulae known to be affected by this are Git and Narwhal.
 
-            You should set the "HOMEBREW_TEMP" environment variable to a suitable
+            You should set the `$HOMEBREW_TEMP` environment variable to a suitable
             directory on the same volume as your Cellar.
+
+            #{support_tier_message(tier: 2)}
           EOS
         end
 
-        def check_deprecated_caskroom_taps
-          tapped_caskroom_taps = Tap.select { |t| t.user == "caskroom" || t.name == "phinze/cask" }
-                                    .map(&:name)
-          return if tapped_caskroom_taps.empty?
-
-          <<~EOS
-            You have the following deprecated, cask taps tapped:
-              #{tapped_caskroom_taps.join("\n  ")}
-            Untap them with `brew untap`.
-          EOS
-        end
-
+        sig { returns(T.nilable(String)) }
         def check_if_supported_sdk_available
           return unless ::DevelopmentTools.installed?
-          return unless MacOS.sdk_root_needed?
           return if MacOS.sdk
 
           locator = MacOS.sdk_locator
@@ -454,6 +486,7 @@ module OS
         # The CLT 10.x -> 11.x upgrade process on 10.14 contained a bug which broke the SDKs.
         # Notably, MacOSX10.14.sdk would indirectly symlink to MacOSX10.15.sdk.
         # This diagnostic was introduced to check for this and recommend a full reinstall.
+        sig { returns(T.nilable(String)) }
         def check_broken_sdks
           locator = MacOS.sdk_locator
 
@@ -483,6 +516,84 @@ module OS
 
             #{installation_instructions}
           EOS
+        end
+
+        sig { returns(T.nilable(String)) }
+        def check_cask_software_versions
+          super
+          add_info "macOS", MacOS.full_version
+          add_info "SIP", begin
+            csrutil = "/usr/bin/csrutil"
+            if File.executable?(csrutil)
+              Open3.capture2(csrutil, "status")
+                   .first
+                   .gsub("This is an unsupported configuration, likely to break in " \
+                         "the future and leave your machine in an unknown state.", "")
+                   .gsub("System Integrity Protection status: ", "")
+                   .delete("\t.")
+                   .capitalize
+                   .strip
+            else
+              "N/A"
+            end
+          end
+
+          nil
+        end
+
+        sig { returns(T.nilable(String)) }
+        def check_pkgconf_macos_sdk_mismatch
+          mismatch = Homebrew::Pkgconf.macos_sdk_mismatch
+          return unless mismatch
+
+          Homebrew::Pkgconf.mismatch_warning_message(mismatch)
+        end
+
+        sig { returns(T.nilable(String)) }
+        def check_cask_quarantine_support
+          status, check_output = ::Cask::Quarantine.check_quarantine_support
+
+          case status
+          when :quarantine_available
+            nil
+          when :xattr_broken
+            "No Cask quarantine support available: there's no working version of `xattr` on this system."
+          when :no_swift
+            "No Cask quarantine support available: there's no available version of `swift` on this system."
+          when :swift_broken_clt
+            <<~EOS
+              No Cask quarantine support available: Swift is not working due to missing Command Line Tools.
+              #{MacOS::CLT.installation_then_reinstall_instructions}
+            EOS
+          when :swift_compilation_failed
+            <<~EOS
+              No Cask quarantine support available: Swift compilation failed.
+              This is usually due to a broken or incompatible Command Line Tools installation.
+              #{MacOS::CLT.installation_then_reinstall_instructions}
+            EOS
+          when :swift_runtime_error
+            <<~EOS
+              No Cask quarantine support available: Swift runtime error.
+              Your Command Line Tools installation may be broken or incomplete.
+              #{MacOS::CLT.installation_then_reinstall_instructions}
+            EOS
+          when :swift_not_executable
+            <<~EOS
+              No Cask quarantine support available: Swift is not executable.
+              Your Command Line Tools installation may be incomplete.
+              #{MacOS::CLT.installation_then_reinstall_instructions}
+            EOS
+          when :swift_unexpected_error
+            <<~EOS
+              No Cask quarantine support available: Swift returned an unexpected error:
+              #{check_output}
+            EOS
+          else
+            <<~EOS
+              No Cask quarantine support available: unknown reason: #{status.inspect}:
+              #{check_output}
+            EOS
+          end
         end
       end
     end

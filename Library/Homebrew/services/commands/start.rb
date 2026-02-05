@@ -17,7 +17,7 @@ module Homebrew
           ).void
         }
         def self.run(targets, custom_plist, verbose:)
-          Services::Cli.check(targets)
+          Services::Cli.check!(targets)
           Services::Cli.start(targets, custom_plist, verbose:)
         end
       end

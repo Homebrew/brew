@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "hooks": {
+    "afterFileEdit": [
+      {
+        "command": "brew style --changed --fix"
+      },
+      {
+        "command": "brew typecheck"
+      }
+    ],
+    "stop": [
+      {
+        "command": "brew tests --changed"
+      }
+    ]
+  }
+}

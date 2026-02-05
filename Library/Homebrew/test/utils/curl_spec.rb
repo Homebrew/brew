@@ -90,7 +90,7 @@ RSpec.describe "Utils::Curl" do
     details[:cloudflare][:wrong_server][:headers]["server"] = "nginx 1.2.3"
 
     # TODO: Make the Incapsula test data more realistic once we can find an
-    # example website to reference.
+    #       example website to reference.
     details[:incapsula][:single_cookie_visid_incap] = details[:normal][:no_cookie].deep_dup
     details[:incapsula][:single_cookie_visid_incap][:headers]["set-cookie"] = "visid_incap_something=something"
 
@@ -323,7 +323,7 @@ RSpec.describe "Utils::Curl" do
   end
 
   describe "::curl_executable" do
-    it "returns `HOMEBREW_BREWED_CURL_PATH` when `use_homebrew_curl` is `true`" do
+    it "returns HOMEBREW_BREWED_CURL_PATH when `use_homebrew_curl` is `true`" do
       expect(curl_executable(use_homebrew_curl: true)).to eq(HOMEBREW_BREWED_CURL_PATH)
     end
 
@@ -429,12 +429,31 @@ RSpec.describe "Utils::Curl" do
       expect(curl_args(*args, show_error: false)).not_to include("--show-error")
     end
 
+    it "uses `--cookie` with argument when :cookies is present" do
+      cookies = { "cookie_key" => "cookie_value" }
+      expect(curl_args(*args, cookies:).join(" "))
+        .not_to include("--cookie #{File::NULL}")
+      expect(curl_args(*args, cookies:).join(" "))
+        .to include("--cookie cookie_key=cookie_value")
+    end
+
+    it "uses `--header` with argument when :header is present" do
+      expect(curl_args(*args, header: "Accept: */*").join(" "))
+        .to include("--header Accept: */*")
+      expect(curl_args(*args, header: ["Accept: */*", "X-Requested-With: XMLHttpRequest"]).join(" "))
+        .to include("--header Accept: */* --header X-Requested-With: XMLHttpRequest")
+    end
+
     it "uses `--referer` when :referer is present" do
       expect(curl_args(*args, referer: "https://brew.sh").join(" ")).to include("--referer https://brew.sh")
     end
 
     it "doesn't use `--referer` when :referer is nil" do
       expect(curl_args(*args, referer: nil).join(" ")).not_to include("--referer")
+    end
+
+    it "omits `--user-agent` when `:user_agent` is `:curl`" do
+      expect(curl_args(*args, user_agent: :curl).join(" ")).not_to include("--user-agent")
     end
 
     it "uses HOMEBREW_USER_AGENT_FAKE_SAFARI when `:user_agent` is `:browser` or `:fake`" do
@@ -457,7 +476,7 @@ RSpec.describe "Utils::Curl" do
 
     it "errors when `:user_agent` is not a String or supported Symbol" do
       expect { curl_args(*args, user_agent: :an_unsupported_symbol) }
-        .to raise_error(TypeError, ":user_agent must be :browser/:fake, :default, or a String")
+        .to raise_error(TypeError, ":user_agent must be :browser/:fake, :default, :curl, or a String")
       expect { curl_args(*args, user_agent: 123) }.to raise_error(TypeError)
     end
 

@@ -6,9 +6,6 @@
 
 
 class Caveats
-  sig { params(args: T.untyped, block: T.untyped).returns(T::Boolean) }
-  def empty?(*args, &block); end
-
   sig { params(args: T.untyped, block: T.untyped).returns(String) }
   def to_s(*args, &block); end
 end

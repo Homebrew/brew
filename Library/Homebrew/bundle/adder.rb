@@ -1,4 +1,4 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
 
 require "bundle/brewfile"
@@ -9,7 +9,11 @@ module Homebrew
     module Adder
       module_function
 
+      sig { params(args: String, type: Symbol, global: T::Boolean, file: String).void }
       def add(*args, type:, global:, file:)
+        brewfile_path = Brewfile.path(global:, file:)
+        brewfile_path.write("") unless brewfile_path.exist?
+
         brewfile = Brewfile.read(global:, file:)
         content = brewfile.input
         # TODO: - support `:describe`

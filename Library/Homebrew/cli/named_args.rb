@@ -2,11 +2,13 @@
 # frozen_string_literal: true
 
 require "cli/args"
+require "utils/output"
 
 module Homebrew
   module CLI
     # Helper class for loading formulae/casks from named arguments.
     class NamedArgs < Array
+      include Utils::Output::Mixin
       extend T::Generic
 
       Elem = type_member(:out) { { fixed: String } }
@@ -79,8 +81,7 @@ module Homebrew
           {}, T.nilable(T::Hash[T.nilable(Symbol), T::Array[T.any(Formula, Keg, Cask::Cask)]])
         )
         @to_formulae_and_casks[only] ||= downcased_unique_named.flat_map do |name|
-          options = { warn: }.compact
-          load_formula_or_cask(name, only:, method:, **options)
+          load_formula_or_cask(name, only:, method:, warn:)
         rescue FormulaUnreadableError, FormulaClassUnavailableError,
                TapFormulaUnreadableError, TapFormulaClassUnavailableError,
                Cask::CaskUnreadableError
@@ -147,7 +148,7 @@ module Homebrew
           {},
           T.nilable(T::Hash[
             T.nilable(Symbol),
-            T::Array[T.any(Formula, Keg, Cask::Cask, T::Array[Keg], FormulaOrCaskUnavailableError)]
+            T::Array[T.any(Formula, Keg, Cask::Cask, T::Array[Keg], FormulaOrCaskUnavailableError)],
           ]),
         )
         @to_formulae_casks_unknowns[method] = downcased_unique_named.map do |name|
@@ -207,13 +208,13 @@ module Homebrew
               if formula_path.exist? ||
                  (!Homebrew::EnvConfig.no_install_from_api? &&
                  !CoreTap.instance.installed? &&
-                 Homebrew::API::Formula.all_formulae.key?(path.basename.to_s))
+                 Homebrew::API.formula_names.include?(path.basename.to_s))
                 paths << formula_path
               end
               if cask_path.exist? ||
                  (!Homebrew::EnvConfig.no_install_from_api? &&
                  !CoreCaskTap.instance.installed? &&
-                 Homebrew::API::Cask.all_casks.key?(path.basename.to_s))
+                 Homebrew::API.cask_tokens.include?(path.basename.to_s))
                 paths << cask_path
               end
 
@@ -274,11 +275,23 @@ module Homebrew
       }
       def to_kegs_to_casks(only: parent.only_formula_or_cask, ignore_unavailable: false, all_kegs: nil)
         method = all_kegs ? :kegs : :default_kegs
-        @to_kegs_to_casks ||= T.let({}, T.nilable(T::Hash[T.nilable(Symbol), [T::Array[Keg], T::Array[Cask::Cask]]]))
-        @to_kegs_to_casks[method] ||=
-          T.cast(to_formulae_and_casks(only:, ignore_unavailable:, method:)
-          .partition { |o| o.is_a?(Keg) }
-          .map(&:freeze).freeze, [T::Array[Keg], T::Array[Cask::Cask]])
+        key = [method, only, ignore_unavailable]
+
+        @to_kegs_to_casks ||= T.let(
+          {},
+          T.nilable(
+            T::Hash[
+              [T.nilable(Symbol), T.nilable(Symbol), T::Boolean],
+              [T::Array[Keg], T::Array[Cask::Cask]],
+            ],
+          ),
+        )
+        @to_kegs_to_casks[key] ||= T.cast(
+          to_formulae_and_casks(only:, ignore_unavailable:, method:)
+            .partition { |o| o.is_a?(Keg) }
+            .map(&:freeze).freeze,
+          [T::Array[Keg], T::Array[Cask::Cask]],
+        )
       end
 
       sig { returns(T::Array[Tap]) }
@@ -313,10 +326,10 @@ module Homebrew
       end
 
       sig {
-        params(name: String, only: T.nilable(Symbol), method: T.nilable(Symbol), warn: T.nilable(T::Boolean))
+        params(name: String, only: T.nilable(Symbol), method: T.nilable(Symbol), warn: T::Boolean)
           .returns(T.any(Formula, Keg, Cask::Cask, T::Array[Keg]))
       }
-      def load_formula_or_cask(name, only: nil, method: nil, warn: nil)
+      def load_formula_or_cask(name, only: nil, method: nil, warn: false)
         Homebrew.with_no_api_env_if_needed(@without_api) do
           unreadable_error = nil
 
@@ -324,8 +337,7 @@ module Homebrew
             begin
               case method
               when nil, :factory
-                options = { warn:, force_bottle: @force_bottle, flags: @flags }.compact
-                Formulary.factory(name, *@override_spec, **options)
+                Formulary.factory(name, *@override_spec, warn:, force_bottle: @force_bottle, flags: @flags)
               when :resolve
                 resolve_formula(name)
               when :latest_kegs
@@ -445,7 +457,7 @@ module Homebrew
 
       sig { params(name: String).returns(Formula) }
       def resolve_formula(name)
-        Formulary.resolve(name, **{ spec: @override_spec, force_bottle: @force_bottle, flags: @flags }.compact)
+        Formulary.resolve(name, spec: @override_spec, force_bottle: @force_bottle, flags: @flags)
       end
 
       sig { params(name: String).returns([Pathname, T::Array[Keg]]) }
@@ -529,7 +541,7 @@ module Homebrew
       sig {
         params(
           ref: String, loaded_type: String,
-          package: T.any(T::Array[T.any(Formula, Keg)], Cask::Cask, Formula, Keg, NilClass)
+          package: T.nilable(T.any(T::Array[T.any(Formula, Keg)], Cask::Cask, Formula, Keg))
         ).returns(String)
       }
       def package_conflicts_message(ref, loaded_type, package)
@@ -571,6 +583,7 @@ module Homebrew
         end
         return unless available
         return if Context.current.quiet?
+        return if cask&.old_tokens&.include?(ref)
 
         opoo package_conflicts_message(ref, loaded_type, cask)
       end

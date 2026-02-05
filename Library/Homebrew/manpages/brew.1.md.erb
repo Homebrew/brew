@@ -36,7 +36,7 @@ Linux distribution without requiring `sudo`.
 
 **cask**
 
-: Homebrew package definition that installs macOS native applications
+: Homebrew package definition that installs pre-compiled binaries built and signed by upstream
 
 **prefix**
 
@@ -126,14 +126,10 @@ If no search term is provided, all locally available formulae are listed.
 
 <%= global_options %>
 
-## OFFICIAL EXTERNAL COMMANDS
-
-<%= official_external_commands %>
-
 ## CUSTOM EXTERNAL COMMANDS
 
 Homebrew, like `git`(1), supports external commands. These are executable
-scripts that reside somewhere in the `PATH`, named `brew-`<cmdname> or
+scripts that reside somewhere in the `$PATH`, named `brew-`<cmdname> or
 `brew-`<cmdname>`.rb`, which can be invoked like `brew` <cmdname>. This
 allows you to create your own commands without modifying Homebrew's internals.
 
@@ -153,12 +149,6 @@ can take several different forms:
     `homebrew/core`.
     You can still access these formulae by using a special syntax, e.g.
     `homebrew/dupes/vim` or `homebrew/versions/node4`.
-
-  * An arbitrary file:
-    Homebrew can install formulae from a local path. It can point to either a
-    formula file or a bottle.
-    Prefix relative paths with `./` to prevent them from being interpreted as a
-    formula or tap name.
 
 ## SPECIFYING CASKS
 
@@ -184,10 +174,10 @@ files:
 
 User-specific environment files take precedence over prefix-specific files and
 prefix-specific files take precedence over system-wide files (unless
-`HOMEBREW_SYSTEM_ENV_TAKES_PRIORITY` is set, see below).
+`$HOMEBREW_SYSTEM_ENV_TAKES_PRIORITY` is set, see below).
 
-Note that these files do not support shell variable expansion e.g. `$HOME` or
-command execution e.g. `$(cat file)`.
+Note that these files do not support shell variable expansion (e.g. `$HOME`) or
+command execution (e.g. `$(cat file)`).
 
 <%= environment_variables %>
 
@@ -210,17 +200,15 @@ And for an authenticated HTTP proxy:
 
 Homebrew Documentation: <https://docs.brew.sh>
 
-Homebrew API: <https://rubydoc.brew.sh>
+Homebrew API: <https://docs.brew.sh/rubydoc/>
 
 `git`(1), `git-log`(1)
 
 ## AUTHORS
 
-<%= lead.concat("\n") %>
+<%= project_leader.concat("\n") %>
 
-<%= plc.concat("\n") %>
-
-<%= tsc.concat("\n") %>
+<%= lead_maintainers.concat("\n") %>
 
 <%= maintainers.concat("\n") %>
 

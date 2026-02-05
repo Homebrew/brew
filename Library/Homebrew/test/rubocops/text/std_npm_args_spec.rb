@@ -22,7 +22,7 @@ RSpec.describe RuboCop::Cop::FormulaAudit::StdNpmArgs do
         class Foo < Formula
           def install
             system "npm", "install", *Language::Node.local_npm_install_args, "--production"
-                                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ FormulaAudit/StdNpmArgs: Use 'std_npm_args' instead of 'local_npm_install_args'.
+                                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ FormulaAudit/StdNpmArgs: Use `std_npm_args` instead of `local_npm_install_args`.
           end
         end
       RUBY
@@ -41,7 +41,7 @@ RSpec.describe RuboCop::Cop::FormulaAudit::StdNpmArgs do
         class Foo < Formula
           def install
             system "npm", "install", *Language::Node.std_npm_install_args(libexec), "--production"
-                                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ FormulaAudit/StdNpmArgs: Use 'std_npm_args' instead of 'std_npm_install_args'.
+                                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ FormulaAudit/StdNpmArgs: Use `std_npm_args` instead of `std_npm_install_args`.
           end
         end
       RUBY
@@ -60,7 +60,7 @@ RSpec.describe RuboCop::Cop::FormulaAudit::StdNpmArgs do
         class Foo < Formula
           def install
             system "npm", "install", *Language::Node.std_npm_install_args(buildpath), "--production"
-                                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ FormulaAudit/StdNpmArgs: Use 'std_npm_args' instead of 'std_npm_install_args'.
+                                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ FormulaAudit/StdNpmArgs: Use `std_npm_args` instead of `std_npm_install_args`.
           end
         end
       RUBY

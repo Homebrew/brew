@@ -2,6 +2,8 @@
 
 require "bundle"
 require "bundle/commands/exec"
+require "bundle/brewfile"
+require "bundle/brew_services"
 
 RSpec.describe Homebrew::Bundle::Commands::Exec do
   context "when a Brewfile is not found" do
@@ -10,7 +12,7 @@ RSpec.describe Homebrew::Bundle::Commands::Exec do
     end
   end
 
-  context "when a Brewfile is found" do
+  context "when a Brewfile is found", :no_api do
     let(:brewfile_contents) { "brew 'openssl'" }
 
     before do
@@ -29,6 +31,7 @@ RSpec.describe Homebrew::Bundle::Commands::Exec do
     context "with valid command setup" do
       before do
         allow(described_class).to receive(:exec).and_return(nil)
+        Homebrew::Bundle.reset!
       end
 
       it "does not raise an error" do
@@ -44,7 +47,7 @@ RSpec.describe Homebrew::Bundle::Commands::Exec do
         openssl_version = "1.1.1"
         ENV["PATH"] = "/opt/homebrew/opt/openssl/bin:/usr/bin:/bin"
         ENV["MANPATH"] = "/opt/homebrew/opt/openssl/man"
-        ENV["HOMEBREW_BUNDLE_EXEC_FORMULA_VERSION_OPENSSL"] = openssl_version
+        ENV["HOMEBREW_BUNDLE_FORMULA_VERSION_OPENSSL"] = openssl_version
         allow(described_class).to receive(:which).and_return(Pathname("/usr/bin/bundle"))
         described_class.run("bundle", "install")
         expect(ENV.fetch("PATH")).to include("/Cellar/openssl/1.1.1/bin")
@@ -58,16 +61,41 @@ RSpec.describe Homebrew::Bundle::Commands::Exec do
       it "raises an exception if called without a command" do
         expect { described_class.run }.to raise_error(RuntimeError)
       end
+
+      describe "--no-secrets" do
+        around do |example|
+          original_env = ENV.to_hash
+          begin
+            example.run
+          ensure
+            ENV.replace(original_env)
+          end
+        end
+
+        it "removes sensitive environment variables when requested" do
+          ENV["SECRET_TOKEN"] = "password"
+
+          described_class.run("/usr/bin/true", subcommand: "exec", no_secrets: true)
+
+          expect(ENV).not_to have_key("SECRET_TOKEN")
+        end
+
+        it "preserves non-sensitive environment variables when removing secrets" do
+          ENV["NORMAL_VAR"] = "value"
+
+          described_class.run("/usr/bin/true", subcommand: "exec", no_secrets: true)
+
+          expect(ENV.fetch("NORMAL_VAR")).to eq("value")
+        end
+      end
     end
 
     context "with env command" do
       it "outputs the environment variables" do
-        ENV["HOMEBREW_PREFIX"] = "/opt/homebrew"
-        ENV["HOMEBREW_PATH"] = "/usr/bin"
         allow(OS).to receive(:linux?).and_return(true)
 
         expect { described_class.run("env", subcommand: "env") }.to \
-          output(/HOMEBREW_PREFIX="#{ENV.fetch("HOMEBREW_PREFIX")}"/).to_stdout
+          output(/export PATH=".+:\${PATH:-}"/).to_stdout
       end
     end
 
@@ -121,6 +149,144 @@ RSpec.describe Homebrew::Bundle::Commands::Exec do
         expect(ENV).to receive(:fetch).with("HOMEBREW_RBENV_ROOT", "#{Dir.home}/.rbenv").once.and_call_original
         expect(ENV).to receive(:prepend_path).with("PATH", rbenv_root/"shims").once.and_call_original
         described_class.run("/usr/bin/true")
+      end
+    end
+
+    describe "--services" do
+      let(:brewfile_contents) { "brew 'nginx'\nbrew 'redis'" }
+
+      let(:nginx_formula) do
+        instance_double(
+          Formula,
+          name:                     "nginx",
+          any_version_installed?:   true,
+          any_installed_prefix:     HOMEBREW_PREFIX/"opt/nginx",
+          plist_name:               "homebrew.mxcl.nginx",
+          service_name:             "nginx",
+          versioned_formulae_names: [],
+          conflicts:                [instance_double(Formula::FormulaConflict, name: "httpd")],
+          keg_only?:                false,
+        )
+      end
+
+      let(:redis_formula) do
+        instance_double(
+          Formula,
+          name:                     "redis",
+          any_version_installed?:   true,
+          any_installed_prefix:     HOMEBREW_PREFIX/"opt/redis",
+          plist_name:               "homebrew.mxcl.redis",
+          service_name:             "redis",
+          versioned_formulae_names: ["redis@6.2"],
+          conflicts:                [],
+          keg_only?:                false,
+        )
+      end
+
+      let(:services_info_pre) do
+        [
+          { "name" => "nginx", "running" => true, "loaded" => true },
+          { "name" => "httpd", "running" => true, "loaded" => true },
+          { "name" => "redis", "running" => false, "loaded" => false },
+          { "name" => "redis@6.2", "running" => true, "loaded" => true, "registered" => true },
+        ]
+      end
+
+      let(:services_info_post) do
+        [
+          { "name" => "nginx", "running" => true, "loaded" => true },
+          { "name" => "httpd", "running" => false, "loaded" => false },
+          { "name" => "redis", "running" => true, "loaded" => true },
+          { "name" => "redis@6.2", "running" => false, "loaded" => false, "registered" => true },
+        ]
+      end
+
+      before do
+        stub_formula_loader(nginx_formula, "nginx")
+        stub_formula_loader(redis_formula, "redis")
+
+        pkgconf = formula("pkgconf") { url "pkgconf-1.0" }
+        stub_formula_loader(pkgconf)
+        allow(pkgconf).to receive(:any_version_installed?).and_return(false)
+
+        allow_any_instance_of(Pathname).to receive(:file?).and_return(true)
+        allow_any_instance_of(Pathname).to receive(:realpath) { |path| path }
+
+        allow(described_class).to receive(:exit!).and_return(nil)
+      end
+
+      shared_examples "handles service lifecycle correctly" do
+        it "handles service lifecycle correctly" do
+          # The order of operations is important. This unweildly looking test is so it tests that.
+
+          # Return original service state
+          expect(Utils).to receive(:safe_popen_read)
+            .with(HOMEBREW_BREW_FILE, "services", "info", "--json", "nginx", "httpd", "redis", "redis@6.2")
+            .and_return(services_info_pre.to_json)
+
+          # Stop original nginx
+          expect(Homebrew::Bundle::BrewServices).to receive(:stop)
+            .with("nginx", keep: true).and_return(true).ordered
+
+          # Stop nginx conflicts
+          expect(Homebrew::Bundle::BrewServices).to receive(:stop)
+            .with("httpd", keep: true).and_return(true).ordered
+
+          # Start new nginx
+          expect(Homebrew::Bundle::BrewServices).to receive(:run)
+            .with("nginx", file: nginx_service_file).and_return(true).ordered
+
+          # No need to stop original redis (not started)
+
+          # Stop redis conflicts
+          expect(Homebrew::Bundle::BrewServices).to receive(:stop)
+            .with("redis@6.2", keep: true).and_return(true).ordered
+
+          # Start new redis
+          expect(Homebrew::Bundle::BrewServices).to receive(:run)
+            .with("redis", file: redis_service_file).and_return(true).ordered
+
+          # Run exec commands
+          expect(Kernel).to receive(:system).with("/usr/bin/true").and_return(true).ordered
+
+          # Return new service state
+          expect(Utils).to receive(:safe_popen_read)
+            .with(HOMEBREW_BREW_FILE, "services", "info", "--json", "nginx", "httpd", "redis", "redis@6.2")
+            .and_return(services_info_post.to_json)
+
+          # Stop new services
+          expect(Homebrew::Bundle::BrewServices).to receive(:stop)
+            .with("nginx", keep: true).and_return(true).ordered
+          expect(Homebrew::Bundle::BrewServices).to receive(:stop)
+            .with("redis", keep: true).and_return(true).ordered
+
+          # Restart registered services we stopped due to conflicts (skip httpd as not registered)
+          expect(Homebrew::Bundle::BrewServices).to receive(:run).with("redis@6.2").and_return(true).ordered
+
+          described_class.run("/usr/bin/true", services: true)
+        end
+      end
+
+      context "with launchctl" do
+        before do
+          allow(Homebrew::Services::System).to receive(:launchctl?).and_return(true)
+        end
+
+        let(:nginx_service_file) { nginx_formula.any_installed_prefix/"#{nginx_formula.plist_name}.plist" }
+        let(:redis_service_file) { redis_formula.any_installed_prefix/"#{redis_formula.plist_name}.plist" }
+
+        include_examples "handles service lifecycle correctly"
+      end
+
+      context "with systemd" do
+        before do
+          allow(Homebrew::Services::System).to receive(:launchctl?).and_return(false)
+        end
+
+        let(:nginx_service_file) { nginx_formula.any_installed_prefix/"#{nginx_formula.service_name}.service" }
+        let(:redis_service_file) { redis_formula.any_installed_prefix/"#{redis_formula.service_name}.service" }
+
+        include_examples "handles service lifecycle correctly"
       end
     end
   end

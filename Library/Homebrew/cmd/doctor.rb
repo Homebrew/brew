@@ -59,7 +59,7 @@ module Homebrew
           out = checks.send(method)
           next if out.blank?
 
-          if first_warning
+          if first_warning && !args.quiet?
             $stderr.puts <<~EOS
               #{Tty.bold}Please note that these warnings are just used to help the Homebrew maintainers
               with debugging if you file an issue. If everything you use Homebrew for is

@@ -4,9 +4,8 @@
 raise "HOMEBREW_BREW_FILE was not exported! Please call bin/brew directly!" unless ENV["HOMEBREW_BREW_FILE"]
 
 # The path to the executable that should be used to run `brew`.
-# This may be HOMEBREW_ORIGINAL_BREW_FILE or HOMEBREW_BREW_WRAPPER depending on
-# the system configuration. Favour this instead of running `brew` and expecting
-# it to be in the `PATH`.
+# This may be HOMEBREW_ORIGINAL_BREW_FILE depending on the system configuration.
+# Favour this instead of running `brew` and expecting it to be in the `PATH`.
 # @api public
 HOMEBREW_BREW_FILE = Pathname(ENV.fetch("HOMEBREW_BREW_FILE")).freeze
 
@@ -56,6 +55,9 @@ HOMEBREW_PINNED_KEGS = (HOMEBREW_PREFIX/"var/homebrew/pinned").freeze
 
 # Where we store lock files
 HOMEBREW_LOCKS = (HOMEBREW_PREFIX/"var/homebrew/locks").freeze
+
+# Where we store temporary cellar files that must be in the prefix
+HOMEBREW_TEMP_CELLAR = (HOMEBREW_PREFIX/"var/homebrew/tmp/.cellar").freeze
 
 # Where we store Casks
 HOMEBREW_CASKROOM = Pathname(ENV.fetch("HOMEBREW_CASKROOM")).freeze

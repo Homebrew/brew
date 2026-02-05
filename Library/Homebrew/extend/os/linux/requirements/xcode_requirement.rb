@@ -5,7 +5,7 @@ require "requirement"
 
 class XcodeRequirement < Requirement
   sig { returns(T::Boolean) }
-  def xcode_installed_version
+  def xcode_installed_version!
     true
   end
 end

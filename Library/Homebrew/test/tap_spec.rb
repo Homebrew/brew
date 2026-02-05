@@ -22,6 +22,9 @@ RSpec.describe Tap do
     path.mkpath
     (path/"audit_exceptions").mkpath
     (path/"style_exceptions").mkpath
+
+    # requiring utils/output in tap.rb should be enough but it's not for no apparent reason.
+    $stderr.extend(Utils::Output::Mixin)
   end
 
   def setup_tap_files
@@ -54,17 +57,6 @@ RSpec.describe Tap do
         { "foo": "foo1", "bar": "bar1" }
       JSON
     end
-
-    (path/"pypi_formula_mappings.json").write <<~JSON
-      {
-        "formula1": "foo",
-        "formula2": {
-          "package_name": "foo",
-          "extra_packages": ["bar"],
-          "exclude_packages": ["baz"]
-        }
-      }
-    JSON
 
     [
       cmd_file,
@@ -500,7 +492,6 @@ RSpec.describe Tap do
       end
 
       it "includes the core tap with the api" do
-        ENV.delete("HOMEBREW_NO_INSTALL_FROM_API")
         expect(described_class.to_a).to include(CoreTap.instance)
       end
 
@@ -580,7 +571,7 @@ RSpec.describe Tap do
         let(:cask_tap) { CoreCaskTap.instance }
         let(:core_tap) { CoreTap.instance }
 
-        it "returns expected renames" do
+        it "returns expected renames", :no_api do
           [
             [cask_tap, "gimp", []],
             [core_tap, "schism-tracker", []],
@@ -614,22 +605,6 @@ RSpec.describe Tap do
           formula_hash: { "foo" => "foo1", "bar" => "bar1" },
         }
         expect(homebrew_foo_tap.style_exceptions).to eq expected_result
-      end
-    end
-
-    describe "#pypi_formula_mappings" do
-      it "returns the pypi_formula_mappings hash" do
-        setup_tap_files
-
-        expected_result = {
-          "formula1" => "foo",
-          "formula2" => {
-            "package_name"     => "foo",
-            "extra_packages"   => ["bar"],
-            "exclude_packages" => ["baz"],
-          },
-        }
-        expect(homebrew_foo_tap.pypi_formula_mappings).to eq expected_result
       end
     end
 
@@ -744,11 +719,11 @@ RSpec.describe Tap do
       expect(core_tap).to be_a_core_tap
     end
 
-    specify "forbidden operations" do
+    specify "forbidden operations", :no_api do
       expect { core_tap.uninstall }.to raise_error(RuntimeError)
     end
 
-    specify "files" do
+    specify "files", :no_api do
       path = HOMEBREW_TAP_DIRECTORY/"homebrew/homebrew-core"
       formula_file = core_tap.formula_dir/"foo.rb"
       core_tap.formula_dir.mkpath
@@ -765,7 +740,6 @@ RSpec.describe Tap do
         tap_migrations.json
         audit_exceptions/formula_list.json
         style_exceptions/formula_hash.json
-        pypi_formula_mappings.json
       ].each do |file|
         (path/file).dirname.mkpath
         (path/file).write formula_list_file_json
@@ -786,7 +760,6 @@ RSpec.describe Tap do
       expect(core_tap.tap_migrations).to eq formula_list_file_contents
       expect(core_tap.audit_exceptions).to eq({ formula_list: formula_list_file_contents })
       expect(core_tap.style_exceptions).to eq({ formula_hash: formula_list_file_contents })
-      expect(core_tap.pypi_formula_mappings).to eq formula_list_file_contents
     end
   end
 
@@ -795,7 +768,7 @@ RSpec.describe Tap do
       expect(CoreTap.instance.repository_var_suffix).to eq "_HOMEBREW_HOMEBREW_CORE"
     end
 
-    it "converts non-alphanumeric characters to underscores" do
+    it "converts non-alphanumeric characters to underscores" do # rubocop:todo RSpec/AggregateExamples
       expect(described_class.fetch("my",
                                    "tap-with-dashes").repository_var_suffix).to eq "_MY_HOMEBREW_TAP_WITH_DASHES"
       expect(described_class.fetch("my",

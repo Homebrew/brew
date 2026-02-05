@@ -242,7 +242,7 @@ RSpec.describe Homebrew::DevCmd::Bottle do
         setup_test_formula "testball", bottle_block: <<~EOS
 
           bottle do
-            sha256 cellar: :any, high_sierra: "6971b6eebf4c00eaaed72a1104a49be63861eabc95d679a0c84040398e320059"
+            sha256 cellar: :any, sonoma: "6971b6eebf4c00eaaed72a1104a49be63861eabc95d679a0c84040398e320059"
           end
         EOS
         system "git", "add", "--all"
@@ -263,9 +263,9 @@ RSpec.describe Homebrew::DevCmd::Bottle do
         ==> testball
           bottle do
             sha256 cellar: :any_skip_relocation, arm64_big_sur: "8f9aecd233463da6a4ea55f5f88fc5841718c013f3e2a7941350d6130f1dc149"
+            sha256 cellar: :any,                 sonoma:        "6971b6eebf4c00eaaed72a1104a49be63861eabc95d679a0c84040398e320059"
             sha256 cellar: :any_skip_relocation, big_sur:       "a0af7dcbb5c83f6f3f7ecd507c2d352c1a018f894d51ad241ce8492fa598010f"
             sha256 cellar: :any_skip_relocation, catalina:      "5334dd344986e46b2aa4f0471cac7b0914bd7de7cb890a34415771788d03f2ac"
-            sha256 cellar: :any,                 high_sierra:   "6971b6eebf4c00eaaed72a1104a49be63861eabc95d679a0c84040398e320059"
           end
         \[master [0-9a-f]{4,40}\] testball: update 1\.0 bottle\.
          1 file changed, 4 insertions\(\+\), 1 deletion\(\-\)
@@ -285,9 +285,9 @@ RSpec.describe Homebrew::DevCmd::Bottle do
 
           bottle do
             sha256 cellar: :any_skip_relocation, arm64_big_sur: "8f9aecd233463da6a4ea55f5f88fc5841718c013f3e2a7941350d6130f1dc149"
+            sha256 cellar: :any,                 sonoma:        "6971b6eebf4c00eaaed72a1104a49be63861eabc95d679a0c84040398e320059"
             sha256 cellar: :any_skip_relocation, big_sur:       "a0af7dcbb5c83f6f3f7ecd507c2d352c1a018f894d51ad241ce8492fa598010f"
             sha256 cellar: :any_skip_relocation, catalina:      "5334dd344986e46b2aa4f0471cac7b0914bd7de7cb890a34415771788d03f2ac"
-            sha256 cellar: :any,                 high_sierra:   "6971b6eebf4c00eaaed72a1104a49be63861eabc95d679a0c84040398e320059"
           end
 
           def install
@@ -414,8 +414,8 @@ RSpec.describe Homebrew::DevCmd::Bottle do
       end
 
       # TODO: add deduplication tests e.g.
-      # it "deduplicates JSON files with matching macOS checksums"
-      # it "deduplicates JSON files with matching OS checksums" do
+      #       it "deduplicates JSON files with matching macOS checksums"
+      #       it "deduplicates JSON files with matching OS checksums" do
     end
 
     describe "#merge_bottle_spec" do
@@ -448,15 +448,15 @@ RSpec.describe Homebrew::DevCmd::Bottle do
 
       it "checks for conflicting checksums" do
         old_spec = BottleSpecification.new
-        old_catalina_sha256 = "109c0cb581a7b5d84da36d84b221fb9dd0f8a927b3044d82611791c9907e202e"
-        old_spec.sha256(catalina: old_catalina_sha256)
-        old_spec.sha256(mojave: "7571772bf7a0c9fe193e70e521318b53993bee6f351976c9b6e01e00d13d6c3f")
-        new_catalina_sha256 = "ec6d7f08412468f28dee2be17ad8cd8b883b16b34329efcecce019b8c9736428"
-        new_hash = { "tags" => { "catalina" => { "sha256" => new_catalina_sha256 } } }
-        expected_checksum_hash = { mojave: "7571772bf7a0c9fe193e70e521318b53993bee6f351976c9b6e01e00d13d6c3f" }
+        old_sequoia_sha256 = "109c0cb581a7b5d84da36d84b221fb9dd0f8a927b3044d82611791c9907e202e"
+        old_spec.sha256(sequoia: old_sequoia_sha256)
+        old_spec.sha256(sonoma: "7571772bf7a0c9fe193e70e521318b53993bee6f351976c9b6e01e00d13d6c3f")
+        new_sequoia_sha256 = "ec6d7f08412468f28dee2be17ad8cd8b883b16b34329efcecce019b8c9736428"
+        new_hash = { "tags" => { "sequoia" => { "sha256" => new_sequoia_sha256 } } }
+        expected_checksum_hash = { sonoma: "7571772bf7a0c9fe193e70e521318b53993bee6f351976c9b6e01e00d13d6c3f" }
         expected_checksum_hash[:cellar] = Homebrew::DEFAULT_MACOS_CELLAR
         expect(homebrew.merge_bottle_spec([:sha256], old_spec, new_hash)).to eq [
-          ["sha256 catalina: old: #{old_catalina_sha256.inspect}, new: #{new_catalina_sha256.inspect}"],
+          ["sha256 sequoia: old: #{old_sequoia_sha256.inspect}, new: #{new_sequoia_sha256.inspect}"],
           [expected_checksum_hash],
         ]
       end
@@ -464,66 +464,66 @@ RSpec.describe Homebrew::DevCmd::Bottle do
 
     describe "::generate_sha256_line" do
       it "generates a string without cellar" do
-        expect(homebrew.generate_sha256_line(:catalina, "deadbeef", nil, 0, 10)).to eq(
+        expect(homebrew.generate_sha256_line(:sequoia, "deadbeef", nil, 0, 10)).to eq(
           <<~RUBY.chomp,
-            sha256 catalina: "deadbeef"
+            sha256 sequoia:  "deadbeef"
           RUBY
         )
       end
 
       it "generates a string with cellar symbol" do
-        expect(homebrew.generate_sha256_line(:catalina, "deadbeef", :any, 14, 24)).to eq(
+        expect(homebrew.generate_sha256_line(:sequoia, "deadbeef", :any, 14, 24)).to eq(
           <<~RUBY.chomp,
-            sha256 cellar: :any, catalina: "deadbeef"
+            sha256 cellar: :any, sequoia:  "deadbeef"
           RUBY
         )
       end
 
       it "generates a string with default cellar path" do
-        expect(homebrew.generate_sha256_line(:catalina, "deadbeef", Homebrew::DEFAULT_LINUX_CELLAR, 0, 10)).to eq(
+        expect(homebrew.generate_sha256_line(:sequoia, "deadbeef", Homebrew::DEFAULT_LINUX_CELLAR, 0, 10)).to eq(
           <<~RUBY.chomp,
-            sha256 catalina: "deadbeef"
+            sha256 sequoia:  "deadbeef"
           RUBY
         )
       end
 
       it "generates a string with non-default cellar path" do
-        expect(homebrew.generate_sha256_line(:catalina, "deadbeef", "/home/test", 22, 32)).to eq(
+        expect(homebrew.generate_sha256_line(:sequoia, "deadbeef", "/home/test", 22, 32)).to eq(
           <<~RUBY.chomp,
-            sha256 cellar: "/home/test", catalina: "deadbeef"
+            sha256 cellar: "/home/test", sequoia:  "deadbeef"
           RUBY
         )
       end
 
       context "with offsets" do
         it "generates a string without cellar" do
-          expect(homebrew.generate_sha256_line(:catalina, "deadbeef", nil, 0, 15)).to eq(
+          expect(homebrew.generate_sha256_line(:sequoia, "deadbeef", nil, 0, 15)).to eq(
             <<~RUBY.chomp,
-              sha256 catalina:      "deadbeef"
+              sha256 sequoia:       "deadbeef"
             RUBY
           )
         end
 
         it "generates a string with cellar symbol" do
-          expect(homebrew.generate_sha256_line(:catalina, "deadbeef", :any, 20, 35)).to eq(
+          expect(homebrew.generate_sha256_line(:sequoia, "deadbeef", :any, 20, 35)).to eq(
             <<~RUBY.chomp,
-              sha256 cellar: :any,       catalina:      "deadbeef"
+              sha256 cellar: :any,       sequoia:       "deadbeef"
             RUBY
           )
         end
 
         it "generates a string with default cellar path" do
-          expect(homebrew.generate_sha256_line(:catalina, "deadbeef", Homebrew::DEFAULT_LINUX_CELLAR, 14, 30)).to eq(
+          expect(homebrew.generate_sha256_line(:sequoia, "deadbeef", Homebrew::DEFAULT_LINUX_CELLAR, 14, 30)).to eq(
             <<~RUBY.chomp,
-              sha256               catalina:       "deadbeef"
+              sha256               sequoia:        "deadbeef"
             RUBY
           )
         end
 
         it "generates a string with non-default cellar path" do
-          expect(homebrew.generate_sha256_line(:catalina, "deadbeef", "/home/test", 25, 36)).to eq(
+          expect(homebrew.generate_sha256_line(:sequoia, "deadbeef", "/home/test", 25, 36)).to eq(
             <<~RUBY.chomp,
-              sha256 cellar: "/home/test",    catalina:  "deadbeef"
+              sha256 cellar: "/home/test",    sequoia:   "deadbeef"
             RUBY
           )
         end

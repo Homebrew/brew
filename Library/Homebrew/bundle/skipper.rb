@@ -1,4 +1,4 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
 
 require "hardware"
@@ -7,22 +7,10 @@ module Homebrew
   module Bundle
     module Skipper
       class << self
+        sig { params(entry: Dsl::Entry, silent: T::Boolean).returns(T::Boolean) }
         def skip?(entry, silent: false)
-          require "bundle/brew_dumper"
+          require "bundle/formula_dumper"
 
-          # TODO: use extend/OS here
-          # rubocop:todo Homebrew/MoveToExtendOS
-          if (Hardware::CPU.arm? || OS.linux?) &&
-             Homebrew.default_prefix? &&
-             entry.type == :brew && entry.name.exclude?("/") &&
-             (formula = BrewDumper.formulae_by_full_name(entry.name)) &&
-             formula[:official_tap] &&
-             !formula[:bottled]
-            reason = Hardware::CPU.arm? ? "Apple Silicon" : "Linux"
-            puts Formatter.warning "Skipping #{entry.name} (no bottle for #{reason})" unless silent
-            return true
-          end
-          # rubocop:enable Homebrew/MoveToExtendOS
           return true if @failed_taps&.any? do |tap|
             prefix = "#{tap}/"
             entry.name.start_with?(prefix) || entry.options[:full_name]&.start_with?(prefix)
@@ -41,18 +29,20 @@ module Homebrew
           true
         end
 
+        sig { params(tap_name: String).void }
         def tap_failed!(tap_name)
-          @failed_taps ||= []
+          @failed_taps ||= T.let([], T.nilable(T::Array[String]))
           @failed_taps << tap_name
         end
 
         private
 
+        sig { returns(T::Hash[Symbol, T.nilable(T::Array[String])]) }
         def skipped_entries
           return @skipped_entries if @skipped_entries
 
-          @skipped_entries = {}
-          [:brew, :cask, :mas, :tap, :whalebrew].each do |type|
+          @skipped_entries ||= T.let({}, T.nilable(T::Hash[Symbol, T.nilable(T::Array[String])]))
+          [:brew, :cask, :mas, :tap, :flatpak].each do |type|
             @skipped_entries[type] =
               ENV["HOMEBREW_BUNDLE_#{type.to_s.upcase}_SKIP"]&.split
           end

@@ -4,6 +4,7 @@
 class Version
   class Parser
     extend T::Helpers
+
     abstract!
 
     sig { abstract.params(spec: Pathname).returns(T.nilable(String)) }
@@ -12,6 +13,7 @@ class Version
 
   class RegexParser < Parser
     extend T::Helpers
+
     abstract!
 
     sig { params(regex: Regexp, block: T.nilable(T.proc.params(arg0: String).returns(String))).void }

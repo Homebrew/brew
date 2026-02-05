@@ -1,28 +1,38 @@
 # typed: strict
 # frozen_string_literal: true
 
+require "utils/output"
+
 # A {Messages} object collects messages that may need to be displayed together
 # at the end of a multi-step `brew` command run.
 class Messages
-  sig { returns(T::Array[T::Hash[Symbol, Symbol]]) }
+  include ::Utils::Output::Mixin
+
+  sig { returns(T::Array[{ package: String, caveats: T.any(String, Caveats) }]) }
   attr_reader :caveats
 
   sig { returns(Integer) }
   attr_reader :package_count
 
-  sig { returns(T::Array[T::Hash[String, Float]]) }
+  sig { returns(T::Array[{ package: String, time: Float }]) }
   attr_reader :install_times
 
   sig { void }
   def initialize
-    @caveats = T.let([], T::Array[T::Hash[Symbol, Symbol]])
+    @caveats = T.let([], T::Array[{ package: String, caveats: T.any(String, Caveats) }])
+    @completions_and_elisp = T.let(Set.new, T::Set[String])
     @package_count = T.let(0, Integer)
-    @install_times = T.let([], T::Array[T::Hash[String, Float]])
+    @install_times = T.let([], T::Array[{ package: String, time: Float }])
   end
 
   sig { params(package: String, caveats: T.any(String, Caveats)).void }
   def record_caveats(package, caveats)
     @caveats.push(package:, caveats:)
+  end
+
+  sig { params(completions_and_elisp: T::Array[String]).void }
+  def record_completions_and_elisp(completions_and_elisp)
+    @completions_and_elisp.merge(completions_and_elisp)
   end
 
   sig { params(package: String, elapsed_time: Float).void }
@@ -40,13 +50,14 @@ class Messages
   sig { params(force: T::Boolean).void }
   def display_caveats(force: false)
     return if @package_count.zero?
-    return if @package_count == 1 && !force
-    return if @caveats.empty?
+    return if @caveats.empty? && @completions_and_elisp.empty?
 
-    oh1 "Caveats"
-    @caveats.each do |c|
-      ohai c[:package], c[:caveats]
-    end
+    oh1 "Caveats" unless @completions_and_elisp.empty?
+    @completions_and_elisp.each { |c| puts c }
+    return if @package_count == 1 && !force
+
+    oh1 "Caveats" if @completions_and_elisp.empty?
+    @caveats.each { |c| ohai c.fetch(:package), c.fetch(:caveats) }
   end
 
   sig { void }

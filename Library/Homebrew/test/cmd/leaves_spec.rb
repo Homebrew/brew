@@ -20,9 +20,8 @@ RSpec.describe Homebrew::Cmd::Leaves do
 
   context "when there are only installed Formulae without dependencies", :integration_test do
     it "prints all installed Formulae" do
-      setup_test_formula "foo"
+      setup_test_formula "foo", tab_attributes: { installed_on_request: true }
       setup_test_formula "bar"
-      (HOMEBREW_CELLAR/"foo/0.1/somedir").mkpath
 
       expect { brew "leaves" }
         .to output("foo\n").to_stdout
@@ -31,7 +30,7 @@ RSpec.describe Homebrew::Cmd::Leaves do
     end
   end
 
-  context "when there are installed Formulae", :integration_test do
+  context "when there are installed Formulae", :integration_test, :no_api do
     it "prints all installed Formulae that are not dependencies of another installed Formula" do
       setup_test_formula "foo"
       setup_test_formula "bar"

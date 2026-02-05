@@ -19,6 +19,9 @@ module Ignorable
   end
 
   def self.hook_raise
+    # TODO: migrate away from this inline class here, they don't play nicely with
+    #       Sorbet, when we migrate to `typed: strict`
+    # rubocop:todo Sorbet/BlockMethodDefinition
     Object.class_eval do
       alias_method :original_raise, :raise
 
@@ -37,6 +40,7 @@ module Ignorable
 
       alias_method :fail, :raise
     end
+    # rubocop:enable Sorbet/BlockMethodDefinition
 
     return unless block_given?
 

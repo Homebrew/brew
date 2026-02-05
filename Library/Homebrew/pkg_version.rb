@@ -28,8 +28,8 @@ class PkgVersion
 
   sig { params(version: Version, revision: Integer).void }
   def initialize(version, revision)
-    @version = T.let(version, Version)
-    @revision = T.let(revision, Integer)
+    @version = version
+    @revision = revision
   end
 
   sig { returns(T::Boolean) }

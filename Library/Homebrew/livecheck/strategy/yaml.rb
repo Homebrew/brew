@@ -63,7 +63,7 @@ module Homebrew
 
         # Parses YAML text and identifies versions using a `strategy` block.
         # If a regex is provided, it will be passed as the second argument to
-        # the  `strategy` block (after the parsed YAML data).
+        # the `strategy` block (after the parsed YAML data).
         # @param content [String] the YAML text to parse and check
         # @param regex [Regexp, nil] a regex used for matching versions in the
         #   content

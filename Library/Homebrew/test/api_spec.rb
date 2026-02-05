@@ -90,4 +90,84 @@ RSpec.describe Homebrew::API do
       end
     end
   end
+
+  describe "::merge_variations" do
+    let(:arm64_sequoia_tag) { Utils::Bottles::Tag.new(system: :sequoia, arch: :arm) }
+    let(:sonoma_tag) { Utils::Bottles::Tag.new(system: :sonoma, arch: :intel) }
+    let(:x86_64_linux_tag) { Utils::Bottles::Tag.new(system: :linux, arch: :intel) }
+
+    let(:json) do
+      {
+        "name"       => "foo",
+        "foo"        => "bar",
+        "baz"        => ["test1", "test2"],
+        "variations" => {
+          "arm64_sequoia" => { "foo" => "new" },
+          :sonoma         => { "baz" => ["new1", "new2", "new3"] },
+        },
+      }
+    end
+
+    let(:arm64_sequoia_result) do
+      {
+        "name" => "foo",
+        "foo"  => "new",
+        "baz"  => ["test1", "test2"],
+      }
+    end
+
+    let(:sonoma_result) do
+      {
+        "name" => "foo",
+        "foo"  => "bar",
+        "baz"  => ["new1", "new2", "new3"],
+      }
+    end
+
+    it "returns the original JSON if no variations are found" do
+      result = described_class.merge_variations(arm64_sequoia_result, bottle_tag: arm64_sequoia_tag)
+      expect(result).to eq arm64_sequoia_result
+    end
+
+    it "returns the original JSON if no variations are found for the current system" do
+      result = described_class.merge_variations(arm64_sequoia_result)
+      expect(result).to eq arm64_sequoia_result
+    end
+
+    it "returns the original JSON without the variations if no matching variation is found" do
+      result = described_class.merge_variations(json, bottle_tag: x86_64_linux_tag)
+      expect(result).to eq json.except("variations")
+    end
+
+    it "returns the original JSON without the variations if no matching variation is found for the current system" do
+      Homebrew::SimulateSystem.with(os: :linux, arch: :intel) do
+        result = described_class.merge_variations(json)
+        expect(result).to eq json.except("variations")
+      end
+    end
+
+    it "returns the JSON with the matching variation applied from a string key" do
+      result = described_class.merge_variations(json, bottle_tag: arm64_sequoia_tag)
+      expect(result).to eq arm64_sequoia_result
+    end
+
+    it "returns the JSON with the matching variation applied from a string key for the current system" do
+      Homebrew::SimulateSystem.with(os: :sequoia, arch: :arm) do
+        result = described_class.merge_variations(json)
+        expect(result).to eq arm64_sequoia_result
+      end
+    end
+
+    it "returns the JSON with the matching variation applied from a symbol key" do
+      result = described_class.merge_variations(json, bottle_tag: sonoma_tag)
+      expect(result).to eq sonoma_result
+    end
+
+    it "returns the JSON with the matching variation applied from a symbol key for the current system" do
+      Homebrew::SimulateSystem.with(os: :sonoma, arch: :intel) do
+        result = described_class.merge_variations(json)
+        expect(result).to eq sonoma_result
+      end
+    end
+  end
 end

@@ -1,4 +1,4 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strong
 # frozen_string_literal: true
 
 require "version"
@@ -10,6 +10,7 @@ class MacOSVersion < Version
     sig { returns(T.nilable(T.any(String, Symbol))) }
     attr_reader :version
 
+    sig { params(version: T.nilable(T.any(String, Symbol))).void }
     def initialize(version)
       @version = version
       super "unknown or unsupported macOS version: #{version.inspect}"
@@ -18,23 +19,25 @@ class MacOSVersion < Version
 
   # NOTE: When removing symbols here, ensure that they are added
   #       to `DEPRECATED_MACOS_VERSIONS` in `MacOSRequirement`.
-  SYMBOLS = {
-    sequoia:     "15",
-    sonoma:      "14",
-    ventura:     "13",
-    monterey:    "12",
-    big_sur:     "11",
-    catalina:    "10.15",
-    mojave:      "10.14",
-    high_sierra: "10.13",
-    sierra:      "10.12",
-    el_capitan:  "10.11",
-  }.freeze
+  # NOTE: Changes to this list must match `macos_version_name` in `cmd/update.sh`.
+  SYMBOLS = T.let({
+    tahoe:    "26",
+    sequoia:  "15",
+    sonoma:   "14",
+    ventura:  "13",
+    monterey: "12",
+    # odisabled: remove support for Big Sur and macOS x86_64 September (or later) 2027
+    big_sur:  "11",
+    # odisabled: remove support for Catalina September (or later) 2026
+    catalina: "10.15",
+  }.freeze, T::Hash[Symbol, String])
 
   sig { params(macos_version: MacOSVersion).returns(Version) }
   def self.kernel_major_version(macos_version)
     version_major = macos_version.major.to_i
-    if version_major > 10
+    if version_major >= 26
+      Version.new((version_major - 1).to_s)
+    elsif version_major > 10
       Version.new((version_major + 9).to_s)
     else
       version_minor = macos_version.minor.to_i
@@ -50,11 +53,13 @@ class MacOSVersion < Version
 
   sig { params(version: T.nilable(String)).void }
   def initialize(version)
-    raise MacOSVersion::Error, version unless /\A1\d+(?:\.\d+){0,2}\Z/.match?(version)
+    raise MacOSVersion::Error, version unless /\A\d{2,}(?:\.\d+){0,2}\z/.match?(version)
 
     super(T.must(version))
 
-    @comparison_cache = {}
+    @comparison_cache = T.let({}, T::Hash[T.untyped, T.nilable(Integer)])
+    @pretty_name = T.let(nil, T.nilable(String))
+    @sym = T.let(nil, T.nilable(Symbol))
   end
 
   sig { override.params(other: T.untyped).returns(T.nilable(Integer)) }
@@ -92,7 +97,7 @@ class MacOSVersion < Version
 
   sig { returns(Symbol) }
   def to_sym
-    return @sym if defined?(@sym)
+    return @sym if @sym
 
     sym = SYMBOLS.invert.fetch(strip_patch.to_s, :dunno)
 
@@ -103,7 +108,7 @@ class MacOSVersion < Version
 
   sig { returns(String) }
   def pretty_name
-    return @pretty_name if defined?(@pretty_name)
+    return @pretty_name if @pretty_name
 
     pretty_name = to_sym.to_s.split("_").map(&:capitalize).join(" ").freeze
 
@@ -151,5 +156,7 @@ class MacOSVersion < Version
   # Represents the absence of a version.
   #
   # NOTE: Constructor needs to called with an arbitrary macOS-like version which is then set to `nil`.
-  NULL = MacOSVersion.new("10.0").tap { |v| v.instance_variable_set(:@version, nil) }.freeze
+  NULL = T.let(MacOSVersion.new("10.0").tap do |v|
+    T.let(v, MacOSVersion).instance_variable_set(:@version, nil)
+  end.freeze, MacOSVersion)
 end

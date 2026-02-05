@@ -15,6 +15,7 @@ class Version
   # A part of a {Version}.
   class Token
     extend T::Helpers
+
     abstract!
 
     include Comparable
@@ -346,7 +347,8 @@ class Version
 
   sig { params(spec: T.any(String, Pathname), detected_from_url: T::Boolean).returns(Version) }
   def self.parse(spec, detected_from_url: false)
-    spec = CGI.unescape(spec.to_s) if detected_from_url
+    # This type of full-URL decoding is not technically correct but we only need a rough decode for version parsing.
+    spec = URI.decode_www_form_component(spec.to_s) if detected_from_url
 
     spec = Pathname(spec)
 
@@ -631,7 +633,7 @@ class Version
     0
   end
 
-  sig { override.params(other: T.untyped).returns(T::Boolean) }
+  sig { override.params(other: T.anything).returns(T::Boolean) }
   def ==(other)
     # Makes sure that the same instance of Version::NULL
     # will never equal itself; normally Comparable#==
@@ -721,7 +723,7 @@ class Version
   # @api public
   sig { returns(String) }
   def to_str
-    raise NoMethodError, "undefined method `to_str' for #{self.class}:NULL" if null?
+    raise NoMethodError, "undefined method `to_str` for #{self.class}:NULL" if null?
 
     T.must(version).to_str
   end
@@ -744,7 +746,7 @@ class Version
   def inspect
     return "#<Version::NULL>" if null?
 
-    super
+    "#<Version #{self}>"
   end
 
   sig { returns(T.self_type) }
@@ -775,6 +777,6 @@ class Version
 
   sig { params(first: Integer, second: Integer).returns(Integer) }
   def max(first, second)
-    (first > second) ? first : second
+    [first, second].max
   end
 end

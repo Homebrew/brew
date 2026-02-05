@@ -29,8 +29,8 @@ module Homebrew
                description: "Show the cache file used when building from source."
         switch "--force-bottle",
                description: "Show the cache file used when pouring a bottle."
-        flag "--bottle-tag=",
-             description: "Show the cache file used when pouring a bottle for the given tag."
+        flag   "--bottle-tag=",
+               description: "Show the cache file used when pouring a bottle for the given tag."
         switch "--HEAD",
                description: "Show the cache file used when building from HEAD."
         switch "--formula", "--formulae",

@@ -1,6 +1,54 @@
 # frozen_string_literal: true
 
 RSpec.describe Cask::Download, :cask do
+  describe "#download_name" do
+    subject(:download_name) { described_class.new(cask).send(:download_name) }
+
+    let(:download) { described_class.new(cask) }
+    let(:token) { "example-cask" }
+    let(:full_token) { token }
+    let(:url) { instance_double(URL, to_s: url_to_s, specs: {}) }
+    let(:url_to_s) { "https://example.com/app.dmg" }
+    let(:cask) { instance_double(Cask::Cask, token:, full_token:, version:, url:) }
+
+    before { allow(download).to receive(:determine_url).and_return(url) }
+
+    context "when cask has no version" do
+      let(:version) { nil }
+
+      it "returns the URL basename" do
+        expect(download_name).to eq "app.dmg"
+      end
+    end
+
+    context "when the URL basename would create a short symlink name" do
+      let(:version) { "1.0.0" }
+
+      it "returns the URL basename" do
+        expect(download_name).to eq "app.dmg"
+      end
+    end
+
+    context "when the URL basename would create a long symlink name" do
+      let(:version) do
+        "1.2.3,kch23dmbz6whmoogcbss45yi4c2kkq15gmemwys0hgwd3l7cahmx2ciagrlrgppatxaxarzazmdoerzmiisuf7mul4lgcays2dl3nl"
+      end
+      let(:url_to_s) { "https://example.com/app.dmg?#{Array.new(50) { |i| "param#{i}=value#{i}" }.join("&")}" }
+
+      it "returns the cask token when symlink would be too long" do
+        expect(download_name).to eq "example-cask"
+      end
+
+      context "when the cask is in a third-party tap" do
+        let(:full_token) { "third-party/tap/example-cask" }
+
+        it "returns the full token with slashes replaced by dashes" do
+          expect(download_name).to eq "third-party--tap--example-cask"
+        end
+      end
+    end
+  end
+
   describe "#verify_download_integrity" do
     subject(:verification) { described_class.new(cask).verify_download_integrity(downloaded_path) }
 

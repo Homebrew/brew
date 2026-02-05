@@ -32,15 +32,21 @@ module Homebrew
                description: "If brewing fails, open an interactive debugging session with access to IRB " \
                             "or a shell inside the temporary build directory."
         switch "--display-times",
-               env:         :display_install_times,
-               description: "Print install times for each package at the end of the run."
+               description: "Print install times for each package at the end of the run.",
+               env:         :display_install_times
         switch "-f", "--force",
                description: "Install without checking for previously installed keg-only or " \
                             "non-migrated versions."
         switch "-v", "--verbose",
                description: "Print the verification and post-install steps."
+        switch "--ask",
+               description: "Ask for confirmation before downloading and upgrading formulae. " \
+                            "Print download, install and net install sizes of bottles and dependencies.",
+               env:         :ask
         [
-          [:switch, "--formula", "--formulae", { description: "Treat all named arguments as formulae." }],
+          [:switch, "--formula", "--formulae", {
+            description: "Treat all named arguments as formulae.",
+          }],
           [:switch, "-s", "--build-from-source", {
             description: "Compile <formula> from source even if a bottle is available.",
           }],
@@ -63,11 +69,6 @@ module Homebrew
           [:switch, "-g", "--git", {
             description: "Create a Git repository, useful for creating patches to the software.",
           }],
-          [:switch, "--ask", {
-            description: "Ask for confirmation before downloading and upgrading formulae. " \
-                         "Print bottles and dependencies download size, install and net install size.",
-            env:         :ask,
-          }],
         ].each do |args|
           options = args.pop
           send(*args, **options)
@@ -75,18 +76,20 @@ module Homebrew
         end
         formula_options
         [
-          [:switch, "--cask", "--casks", { description: "Treat all named arguments as casks." }],
+          [:switch, "--cask", "--casks", {
+            description: "Treat all named arguments as casks.",
+          }],
           [:switch, "--[no-]binaries", {
             description: "Disable/enable linking of helper executables (default: enabled).",
             env:         :cask_opts_binaries,
           }],
-          [:switch, "--require-sha",  {
+          [:switch, "--require-sha", {
             description: "Require all casks to have a checksum.",
             env:         :cask_opts_require_sha,
           }],
           [:switch, "--[no-]quarantine", {
-            description: "Disable/enable quarantining of downloads (default: enabled).",
             env:         :cask_opts_quarantine,
+            odeprecated: true,
           }],
           [:switch, "--adopt", {
             description: "Adopt existing artifacts in the destination that are identical to those being installed. " \
@@ -131,17 +134,14 @@ module Homebrew
         unless formulae.empty?
           Install.perform_preinstall_checks_once
 
-          # If asking the user is enabled, show dependency and size information.
-          Install.ask(formulae, args: args) if args.ask?
-
-          formulae.each do |formula|
+          reinstall_contexts = formulae.filter_map do |formula|
             if formula.pinned?
               onoe "#{formula.full_name} is pinned. You must unpin it to reinstall."
               next
             end
             Migrator.migrate_if_needed(formula, force: args.force?)
-            Homebrew::Reinstall.reinstall_formula(
-              formula,
+            Homebrew::Reinstall.build_install_context(
+              formula.latest_formula,
               flags:                      args.flags_only,
               force_bottle:               args.force_bottle?,
               build_from_source_formulae: args.build_from_source_formulae,
@@ -154,12 +154,12 @@ module Homebrew
               verbose:                    args.verbose?,
               git:                        args.git?,
             )
-            Cleanup.install_formula_clean!(formula)
           end
 
-          Upgrade.check_installed_dependents(
+          dependants = Upgrade.dependants(
             formulae,
             flags:                      args.flags_only,
+            ask:                        args.ask?,
             force_bottle:               args.force_bottle?,
             build_from_source_formulae: args.build_from_source_formulae,
             interactive:                args.interactive?,
@@ -170,9 +170,40 @@ module Homebrew
             quiet:                      args.quiet?,
             verbose:                    args.verbose?,
           )
+
+          formulae_installers = reinstall_contexts.map(&:formula_installer)
+
+          # Main block: if asking the user is enabled, show dependency and size information.
+          Install.ask_formulae(formulae_installers, dependants, args: args) if args.ask?
+
+          valid_formula_installers = Install.fetch_formulae(formulae_installers)
+
+          exit 1 if Homebrew.failed?
+
+          reinstall_contexts.each do |reinstall_context|
+            next unless valid_formula_installers.include?(reinstall_context.formula_installer)
+
+            Homebrew::Reinstall.reinstall_formula(reinstall_context)
+            Cleanup.install_formula_clean!(reinstall_context.formula)
+          end
+
+          Upgrade.upgrade_dependents(
+            dependants, formulae,
+            flags:                      args.flags_only,
+            force_bottle:               args.force_bottle?,
+            build_from_source_formulae: args.build_from_source_formulae,
+            interactive:                args.interactive?,
+            keep_tmp:                   args.keep_tmp?,
+            debug_symbols:              args.debug_symbols?,
+            force:                      args.force?,
+            debug:                      args.debug?,
+            quiet:                      args.quiet?,
+            verbose:                    args.verbose?
+          )
         end
 
         if casks.any?
+          Install.ask_casks casks if args.ask?
           Cask::Reinstall.reinstall_casks(
             *casks,
             binaries:       args.binaries?,

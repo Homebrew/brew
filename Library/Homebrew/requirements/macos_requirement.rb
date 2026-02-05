@@ -9,12 +9,15 @@ class MacOSRequirement < Requirement
 
   attr_reader :comparator, :version
 
-  # TODO: when Yosemite is removed here, keep these around as empty arrays so we
-  # can keep the deprecation/disabling code the same.
-  DISABLED_MACOS_VERSIONS = [
-    :yosemite,
-  ].freeze
-  DEPRECATED_MACOS_VERSIONS = [].freeze
+  # Keep these around as empty arrays so we can keep the deprecation/disabling code the same.
+  # Treat these like odeprecated/odisabled in terms of deprecation/disabling.
+  DISABLED_MACOS_VERSIONS = T.let([].freeze, T::Array[Symbol])
+  DEPRECATED_MACOS_VERSIONS = T.let([
+    :mojave,
+    :high_sierra,
+    :sierra,
+    :el_capitan,
+  ].freeze, T::Array[Symbol])
 
   def initialize(tags = [], comparator: ">=")
     @version = begin
@@ -64,6 +67,13 @@ class MacOSRequirement < Requirement
   def minimum_version
     return MacOSVersion.new(HOMEBREW_MACOS_OLDEST_ALLOWED) if @comparator == "<=" || !version_specified?
     return @version.min if @version.respond_to?(:to_ary)
+
+    @version
+  end
+
+  def maximum_version
+    return MacOSVersion.new(HOMEBREW_MACOS_NEWEST_UNSUPPORTED) if @comparator == ">=" || !version_specified?
+    return @version.max if @version.respond_to?(:to_ary)
 
     @version
   end

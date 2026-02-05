@@ -54,7 +54,7 @@ module Homebrew
                description: "List formulae and/or casks in long format. " \
                             "Has no effect when a formula or cask name is passed as an argument."
         switch "-r",
-               description: "Reverse the order of the formulae and/or casks sort to list the oldest entries first. " \
+               description: "Reverse the order of formula and/or cask sorting to list the oldest entries first. " \
                             "Has no effect when a formula or cask name is passed as an argument."
         switch "-t",
                description: "Sort formulae and/or casks by time modified, listing most recently modified first. " \
@@ -89,7 +89,7 @@ module Homebrew
              args.poured_from_bottle? || args.built_from_source?)
           unless args.cask?
             formula_names = args.no_named? ? Formula.installed : args.named.to_resolved_formulae
-            full_formula_names = formula_names.map(&:full_name).sort(&tap_and_name_comparison)
+            full_formula_names = formula_names.map(&:full_name).sort(&Cask::List::TAP_AND_NAME_COMPARISON)
             full_formula_names = Formatter.columns(full_formula_names) unless args.public_send(:"1?")
             puts full_formula_names if full_formula_names.present?
           end
@@ -101,7 +101,7 @@ module Homebrew
             end
             # The cast is because `Keg`` does not define `full_name`
             full_cask_names = T.cast(cask_names, T::Array[T.any(Formula, Cask::Cask)])
-                               .map(&:full_name).sort(&tap_and_name_comparison)
+                               .map(&:full_name).sort(&Cask::List::TAP_AND_NAME_COMPARISON)
             full_cask_names = Formatter.columns(full_cask_names) unless args.public_send(:"1?")
             puts full_cask_names if full_cask_names.present?
           end
@@ -126,7 +126,7 @@ module Homebrew
             # See https://ruby-doc.org/3.2/Kernel.html#method-i-test
             Formula.installed.sort_by { |formula| T.cast(test("M", formula.rack.to_s), Time) }.reverse!
           elsif args.full_name?
-            Formula.installed.sort { |a, b| tap_and_name_comparison.call(a.full_name, b.full_name) }
+            Formula.installed.sort { |a, b| Cask::List::TAP_AND_NAME_COMPARISON.call(a.full_name, b.full_name) }
           else
             Formula.installed.sort
           end
@@ -159,12 +159,12 @@ module Homebrew
 
           if !args.cask? && HOMEBREW_CELLAR.exist? && HOMEBREW_CELLAR.children.any?
             ohai "Formulae" if $stdout.tty? && !args.formula?
-            safe_system "ls", *ls_args, HOMEBREW_CELLAR
+            system_command! "ls", args: [*ls_args, HOMEBREW_CELLAR], print_stdout: true
             puts if $stdout.tty? && !args.formula?
           end
           if !args.formula? && Cask::Caskroom.any_casks_installed?
             ohai "Casks" if $stdout.tty? && !args.cask?
-            safe_system "ls", *ls_args, Cask::Caskroom.path
+            system_command! "ls", args: [*ls_args, Cask::Caskroom.path], print_stdout: true
           end
         else
           kegs, casks = args.named.to_kegs_to_casks
@@ -215,7 +215,7 @@ module Homebrew
       sig { void }
       def list_casks
         casks = if args.no_named?
-          cask_paths = Cask::Caskroom.path.children.map do |path|
+          cask_paths = Cask::Caskroom.path.children.reject(&:file?).map do |path|
             if path.symlink?
               real_path = path.realpath
               real_path.basename.to_s

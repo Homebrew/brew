@@ -71,7 +71,7 @@ RSpec.describe "Exception" do
     end
 
     context "without a dependent" do
-      it(:to_s) { expect(error.to_s).to eq('No available formula with the name "foo".') }
+      it(:to_s) { expect(error.to_s).to match(/^No available formula with the name "foo"\./) }
     end
 
     context "with a dependent" do
@@ -80,7 +80,7 @@ RSpec.describe "Exception" do
       end
 
       it(:to_s) do
-        expect(error.to_s).to eq('No available formula with the name "foo" (dependency of foobar).')
+        expect(error.to_s).to match(/^No available formula with the name "foo" \(dependency of foobar\)\./)
       end
     end
   end
@@ -176,7 +176,7 @@ RSpec.describe "Exception" do
     subject(:error) { described_class.new(formula, [conflict]) }
 
     let(:formula) { instance_double(Formula, full_name: "foo/qux") }
-    let(:conflict) { instance_double(FormulaConflict, name: "bar", reason: "I decided to") }
+    let(:conflict) { instance_double(Formula::FormulaConflict, name: "bar", reason: "I decided to") }
 
     it(:to_s) { expect(error.to_s).to match(/Please `brew unlink bar` before continuing\./) }
   end
@@ -217,7 +217,7 @@ RSpec.describe "Exception" do
     let(:expected_checksum) { instance_double(Checksum, to_s: "deadbeef") }
     let(:actual_checksum) { instance_double(Checksum, to_s: "deadcafe") }
 
-    it(:to_s) { expect(error.to_s).to match(/SHA256 mismatch/) }
+    it(:to_s) { expect(error.to_s).to match(/SHA-256 mismatch/) }
   end
 
   describe ResourceMissingError do

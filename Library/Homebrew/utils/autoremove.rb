@@ -23,10 +23,16 @@ module Utils
       # @private
       sig { params(casks: T::Array[Cask::Cask]).returns(T::Array[Formula]) }
       def formulae_with_cask_dependents(casks)
-        casks.flat_map { |cask| cask.depends_on[:formula] }
-             .compact
-             .map { |f| Formula[f] }
-             .flat_map { |f| [f, *f.runtime_formula_dependencies].compact }
+        casks.flat_map { |cask| cask.depends_on[:formula] }.compact.flat_map do |name|
+          f = begin
+            Formulary.resolve(name)
+          rescue FormulaUnavailableError
+            nil
+          end
+          next [] unless f
+
+          [f, *f.installed_runtime_formula_dependencies].compact
+        end
       end
 
       # An array of all installed bottled {Formula} without runtime {Formula}
@@ -37,7 +43,7 @@ module Utils
       def bottled_formulae_with_no_formula_dependents(formulae)
         formulae_to_keep = T.let([], T::Array[Formula])
         formulae.each do |formula|
-          formulae_to_keep += formula.runtime_formula_dependencies
+          formulae_to_keep += formula.installed_runtime_formula_dependencies
 
           if (tab = formula.any_installed_keg&.tab)
             # Ignore build dependencies when the formula is a bottle
@@ -62,7 +68,11 @@ module Utils
       sig { params(formulae: T::Array[Formula]).returns(T::Array[Formula]) }
       def unused_formulae_with_no_formula_dependents(formulae)
         unused_formulae = bottled_formulae_with_no_formula_dependents(formulae).select do |f|
-          f.any_installed_keg&.tab&.installed_on_request == false
+          tab = f.any_installed_keg&.tab
+          next unless tab
+          next unless tab.installed_on_request_present?
+
+          tab.installed_on_request == false
         end
 
         unless unused_formulae.empty?

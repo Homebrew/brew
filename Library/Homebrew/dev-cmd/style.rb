@@ -24,6 +24,8 @@ module Homebrew
                hidden:      true
         switch "--reset-cache",
                description: "Reset the RuboCop cache."
+        switch "--changed",
+               description: "Check files that were changed from the `main` branch."
         switch "--formula", "--formulae",
                description: "Treat all named arguments as formulae."
         switch "--cask", "--casks",
@@ -45,10 +47,21 @@ module Homebrew
       def run
         Homebrew.install_bundler_gems!(groups: ["style"])
 
-        target = if args.no_named?
+        if args.changed? && !args.no_named?
+          raise UsageError, "`--changed` and named arguments are mutually exclusive!"
+        end
+
+        target = if args.changed?
+          changed_ruby_or_shell_files
+        elsif args.no_named?
           nil
         else
           args.named.to_paths
+        end
+
+        if target.blank? && args.changed?
+          opoo "No style checks are available for the changed files!"
+          return
         end
 
         only_cops = args.only_cops
@@ -69,6 +82,19 @@ module Homebrew
         end
 
         Homebrew.failed = !Style.check_style_and_print(target, **options)
+      end
+
+      sig { returns(T::Array[Pathname]) }
+      def changed_ruby_or_shell_files
+        repo = Utils.popen_read("git", "rev-parse", "--show-toplevel").chomp
+        odie "`brew style --changed` must be run inside a git repository!" unless $CHILD_STATUS.success?
+
+        changed_files = Utils.popen_read("git", "diff", "--name-only", "--no-relative", "main")
+        changed_files.split("\n").filter_map do |file|
+          next if !file.end_with?(".rb", ".sh", ".yml", ".rbi") && file != "bin/brew"
+
+          Pathname(file).expand_path(repo)
+        end.select(&:exist?)
       end
     end
   end

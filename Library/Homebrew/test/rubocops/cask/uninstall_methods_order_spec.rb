@@ -78,6 +78,143 @@ RSpec.describe RuboCop::Cop::Cask::UninstallMethodsOrder, :config do
           end
         CASK
       end
+
+      context "when methods are correctly ordered and on_upgrade is present" do
+        it "ignores on_upgrade when checking method order" do
+          expect_no_offenses(<<~CASK)
+            cask "foo" do
+              url "https://example.com/foo.zip"
+
+              uninstall quit:       "com.example.foo",
+                        signal:     ["TERM", "com.example.foo"],
+                        on_upgrade: [:quit, :signal],
+                        script:     {
+                          executable: "/usr/local/bin/foo",
+                          sudo:       false,
+                        },
+                        pkgutil:    "org.foo.bar",
+                        delete:     [
+                          "/usr/local/bin/foo",
+                          "/usr/local/bin/foobar",
+                        ]
+            end
+          CASK
+        end
+      end
+
+      context "when on_upgrade is fully useless (no quit: or signal:)" do
+        it "registers offense and autocorrects to remove on_upgrade when 1 other key exists" do
+          expect_offense(<<~CASK)
+            cask "foo" do
+              url "https://example.com/foo.zip"
+
+              uninstall pkgutil:    "org.foo.bar",
+                        on_upgrade: :quit
+                        ^^^^^^^^^^ `on_upgrade` has no effect without matching `uninstall quit:` or `uninstall signal:` directives
+            end
+          CASK
+
+          expect_correction(<<~CASK)
+            cask "foo" do
+              url "https://example.com/foo.zip"
+
+              uninstall pkgutil:    "org.foo.bar"
+            end
+          CASK
+        end
+      end
+
+      it "registers offense and autocorrects to remove on_upgrade when between other keys" do
+        expect_offense(<<~CASK)
+          cask "foo" do
+            url "https://example.com/foo.zip"
+
+            uninstall login_item: "FooApp",
+                      on_upgrade: :quit,
+                      ^^^^^^^^^^ `on_upgrade` has no effect without matching `uninstall quit:` or `uninstall signal:` directives
+                      pkgutil:    "org.foo.bar"
+          end
+        CASK
+
+        expect_correction(<<~CASK)
+          cask "foo" do
+            url "https://example.com/foo.zip"
+
+            uninstall login_item: "FooApp",
+                      pkgutil:    "org.foo.bar"
+          end
+        CASK
+      end
+    end
+
+    it "registers offense but does not autocorrect when on_upgrade is the only key" do
+      expect_offense(<<~CASK)
+        cask "foo" do
+          url "https://example.com/foo.zip"
+
+          uninstall on_upgrade: :quit
+                    ^^^^^^^^^^ `on_upgrade` has no effect without matching `uninstall quit:` or `uninstall signal:` directives
+        end
+      CASK
+    end
+
+    context "when only on_upgrade is present" do
+      it "registers offense but does not autocorrect" do
+        expect_offense(<<~CASK)
+          cask "foo" do
+            url "https://example.com/foo.zip"
+
+            uninstall on_upgrade: :quit
+                      ^^^^^^^^^^ `on_upgrade` has no effect without matching `uninstall quit:` or `uninstall signal:` directives
+          end
+        CASK
+      end
+    end
+
+    context "when on_upgrade includes symbols without matching directives" do
+      it "registers offense on the value but does not autocorrect" do
+        expect_offense(<<~CASK)
+          cask "foo" do
+            url "https://example.com/foo.zip"
+
+            uninstall quit:       "com.example.foo",
+                      on_upgrade: [:quit, :signal]
+                                  ^^^^^^^^^^^^^^^^ `on_upgrade` lists :signal without matching `uninstall` directives
+          end
+        CASK
+      end
+    end
+
+    context "when on_upgrade matches available directives (quit: or signal:)" do
+      it "does not register offense for :quit, :signal, or [:quit, :signal]" do
+        expect_no_offenses(<<~CASK)
+          cask "foo" do
+            url "https://example.com/foo.zip"
+
+            uninstall quit:       "com.example.app",
+                      on_upgrade: :quit
+          end
+        CASK
+
+        expect_no_offenses(<<~CASK)
+          cask "foo" do
+            url "https://example.com/foo.zip"
+
+            uninstall signal:     [["TERM", "com.example.app"]],
+                      on_upgrade: :signal
+          end
+        CASK
+
+        expect_no_offenses(<<~CASK)
+          cask "foo" do
+            url "https://example.com/foo.zip"
+
+            uninstall quit:       "com.example.foo",
+                      signal:     ["TERM", "com.example.foo"],
+                      on_upgrade: [:quit, :signal]
+          end
+        CASK
+      end
     end
 
     context "with a single method" do

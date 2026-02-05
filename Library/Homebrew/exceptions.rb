@@ -1,6 +1,8 @@
 # typed: true # rubocop:todo Sorbet/StrictSigil
 # frozen_string_literal: true
 
+require "utils/output"
+
 # Raised when a command is used wrong.
 #
 # @api internal
@@ -331,9 +333,9 @@ end
 class TapCoreRemoteMismatchError < TapRemoteMismatchError
   def message
     <<~EOS
-      Tap #{name} remote does not match HOMEBREW_CORE_GIT_REMOTE.
+      Tap #{name} remote does not match `$HOMEBREW_CORE_GIT_REMOTE`.
       #{expected_remote} != #{actual_remote}
-      Please set HOMEBREW_CORE_GIT_REMOTE="#{actual_remote}" and run `brew update` instead.
+      Please set `HOMEBREW_CORE_GIT_REMOTE="#{actual_remote}"` and run `brew update` instead.
     EOS
   end
 end
@@ -463,6 +465,8 @@ end
 
 # Raised when an error occurs during a formula build.
 class BuildError < RuntimeError
+  include Utils::Output::Mixin
+
   attr_reader :cmd, :args, :env
   attr_accessor :formula, :options
 
@@ -521,23 +525,31 @@ class BuildError < RuntimeError
       end
     end
 
-    if formula.tap && !OS.unsupported_configuration?
-      if formula.tap.official?
+    if formula.tap
+      if OS.not_tier_one_configuration?
+        <<~EOS
+          This is not a Tier 1 configuration:
+            #{Formatter.url("https://docs.brew.sh/Support-Tiers")}
+          #{Formatter.bold("Do not report any issues to Homebrew/* repositories!")}
+          Read the above document instead before opening any issues or PRs.
+        EOS
+      elsif formula.tap.official?
         puts Formatter.error(Formatter.url(OS::ISSUES_URL), label: "READ THIS")
       elsif (issues_url = formula.tap.issues_url)
         puts <<~EOS
-          If reporting this issue please do so at (not Homebrew/brew or Homebrew/homebrew-core):
+          If reporting this issue please do so at (not Homebrew/* repositories):
             #{Formatter.url(issues_url)}
         EOS
       else
         puts <<~EOS
-          If reporting this issue please do so to (not Homebrew/brew or Homebrew/homebrew-core):
+          If reporting this issue please do so to (not Homebrew/* repositories):
             #{formula.tap}
         EOS
       end
     else
-      puts <<~EOS
-        Do not report this issue to Homebrew/brew or Homebrew/homebrew-core!
+      <<~EOS
+        We cannot detect the correct tap to report this issue to.
+        Do not report this issue to Homebrew/* repositories!
       EOS
     end
 
@@ -567,7 +579,7 @@ class UnbottledError < RuntimeError
     require "utils"
 
     msg = <<~EOS
-      The following #{Utils.pluralize("formula", formulae.count, plural: "e")} cannot be installed from #{Utils.pluralize("bottle", formulae.count)} and must be
+      The following #{Utils.pluralize("formula", formulae.count)} cannot be installed from #{Utils.pluralize("bottle", formulae.count)} and must be
       built from source.
         #{formulae.to_sentence}
     EOS
@@ -624,7 +636,7 @@ class DownloadError < RuntimeError
 
   def initialize(downloadable, cause)
     super <<~EOS
-      Failed to download resource #{downloadable.download_name.inspect}
+      Failed to download resource #{downloadable.download_queue_name.inspect}
       #{cause.message}
     EOS
     @cause = cause
@@ -680,7 +692,7 @@ class ErrorDuringExecution < RuntimeError
       status.termsig
     end
 
-    redacted_cmd = redact_secrets(cmd.shelljoin.gsub('\=', "="), secrets)
+    redacted_cmd = Formatter.redact_secrets(cmd.shelljoin.gsub('\=', "="), secrets)
 
     reason = if exitstatus
       "exited with #{exitstatus}"
@@ -727,7 +739,7 @@ class ChecksumMismatchError < RuntimeError
     @expected = expected
 
     super <<~EOS
-      SHA256 mismatch
+      SHA-256 mismatch
       Expected: #{Formatter.success(expected.to_s)}
         Actual: #{Formatter.error(actual.to_s)}
           File: #{path}

@@ -2,9 +2,13 @@
 # frozen_string_literal: true
 
 require "utils/inreplace"
+require "utils/output"
+require "utils/ast"
 
 # Helper functions for updating PyPI resources.
 module PyPI
+  extend Utils::Output::Mixin
+
   PYTHONHOSTED_URL_PREFIX = "https://files.pythonhosted.org/packages/"
   private_constant :PYTHONHOSTED_URL_PREFIX
 
@@ -12,6 +16,8 @@ module PyPI
   # This package can be a PyPI package (either by name/version or PyPI distribution URL),
   # or it can be a non-PyPI URL.
   class Package
+    include Utils::Output::Mixin
+
     sig { params(package_string: String, is_url: T::Boolean, python_name: String).void }
     def initialize(package_string, is_url: false, python_name: "python")
       @pypi_info = T.let(nil, T.nilable(T::Array[String]))
@@ -82,10 +88,10 @@ module PyPI
         url["packagetype"] == "sdist"
       end
 
-      # If there isn't an sdist, we use the first universal wheel.
+      # If there isn't an sdist, we use the first pure Python3 or universal wheel
       if dist.nil?
         dist = json["urls"].find do |url|
-          url["filename"].end_with?("-none-any.whl")
+          url["filename"].match?("[.-]py3[^-]*-none-any.whl$")
         end
       end
 
@@ -123,9 +129,14 @@ module PyPI
     end
 
     # Compare only names so we can use .include? and .uniq on a Package array
-    sig { params(other: Package).returns(T::Boolean) }
+    sig { params(other: T.anything).returns(T::Boolean) }
     def ==(other)
-      same_package?(other)
+      case other
+      when Package
+        same_package?(other)
+      else
+        false
+      end
     end
     alias eql? ==
 
@@ -152,7 +163,8 @@ module PyPI
         @extras ||= T.let([], T.nilable(T::Array[String]))
         @version ||= T.let(match[2], T.nilable(String))
       elsif @is_url
-        ensure_formula_installed!(@python_name)
+        require "formula"
+        Formula[@python_name].ensure_installed!
 
         # The URL might be a source distribution hosted somewhere;
         # try and use `pip install -q --no-deps --dry-run --report ...` to get its
@@ -231,24 +243,13 @@ module PyPI
                                     exclude_packages: nil, dependencies: nil, install_dependencies: false,
                                     print_only: false, silent: false, verbose: false,
                                     ignore_errors: false, ignore_non_pypi_packages: false)
-    auto_update_list = formula.tap&.pypi_formula_mappings
-    if auto_update_list.present? && auto_update_list.key?(formula.full_name) &&
-       package_name.blank? && extra_packages.blank? && exclude_packages.blank?
+    if [package_name, extra_packages, exclude_packages, dependencies].all?(&:blank?)
+      list_entry = formula.pypi_packages_info
 
-      list_entry = auto_update_list[formula.full_name]
-      case list_entry
-      when false
-        unless print_only
-          odie "The resources for \"#{formula.name}\" need special attention. Please update them manually."
-        end
-      when String
-        package_name = list_entry
-      when Hash
-        package_name = list_entry["package_name"]
-        extra_packages = list_entry["extra_packages"]
-        exclude_packages = list_entry["exclude_packages"]
-        dependencies = list_entry["dependencies"]
-      end
+      package_name = list_entry.package_name
+      extra_packages = list_entry.extra_packages
+      exclude_packages = list_entry.exclude_packages
+      dependencies = list_entry.dependencies
     end
 
     missing_dependencies = Array(dependencies).reject do |dependency|
@@ -260,7 +261,8 @@ module PyPI
       missing_msg = "formulae required to update \"#{formula.name}\" resources: #{missing_dependencies.join(", ")}"
       odie "Missing #{missing_msg}" unless install_dependencies
       ohai "Installing #{missing_msg}"
-      missing_dependencies.each(&:ensure_formula_installed!)
+      require "formula"
+      missing_dependencies.each { |dep| Formula[dep].ensure_installed! }
     end
 
     python_deps = formula.deps
@@ -285,7 +287,7 @@ module PyPI
       url = if stable.specs[:tag].present?
         "git+#{stable.url}@#{stable.specs[:tag]}"
       else
-        stable.url
+        T.must(stable.url)
       end
       Package.new(url, is_url: true, python_name:)
     end
@@ -334,7 +336,12 @@ module PyPI
       end
     end
 
-    ensure_formula_installed!(python_name)
+    existing_resources_by_name = formula.resources.to_h { |resource| [resource.name, resource] }
+    formula_contents = formula.path.read
+    existing_resource_blocks = resource_blocks_from_formula(formula_contents)
+
+    require "formula"
+    Formula[python_name].ensure_installed!
 
     # Resolve the dependency tree of all input packages
     show_info = !print_only && !silent
@@ -346,8 +353,12 @@ module PyPI
     found_packages = pip_report(input_packages, python_name:, print_stderr:)
     # Resolve the dependency tree of excluded packages to prune the above
     exclude_packages.delete_if { |package| found_packages.exclude? package }
-    ohai "Retrieving PyPI dependencies for excluded \"#{exclude_packages.join(" ")}\"..." if show_info
-    exclude_packages = pip_report(exclude_packages, python_name:, print_stderr:)
+    if exclude_packages.present?
+      ohai "Retrieving PyPI dependencies for excluded \"#{exclude_packages.join(" ")}\"..." if show_info
+      exclude_packages = pip_report(exclude_packages, python_name:, print_stderr:)
+    end
+    # Keep extra_packages even if they are dependencies of exclude_packages
+    exclude_packages.delete_if { |package| extra_packages.include? package }
     if (main_package_name = main_package&.name)
       exclude_packages += [Package.new(main_package_name)]
     end
@@ -384,6 +395,16 @@ module PyPI
       end
 
       if package_error.blank?
+        if (existing_resource = existing_resources_by_name[T.must(name)]) &&
+           existing_resource.url == url &&
+           existing_resource.checksum&.hexdigest == checksum &&
+           (existing_block = existing_resource_blocks[T.must(name)])
+          new_resource_blocks += <<-EOS
+  #{existing_block.dup}
+
+          EOS
+          next
+        end
         # Append indented resource block
         new_resource_blocks += <<-EOS
   resource "#{name}" do
@@ -433,7 +454,7 @@ module PyPI
 
     ohai "Updating resource blocks" unless silent
     Utils::Inreplace.inreplace formula.path do |s|
-      if T.must(s.inreplace_string.split(/^  test do\b/, 2).first).scan(inreplace_regex).length > 1
+      if s.inreplace_string.split(/^  test do\b/, 2).fetch(0).scan(inreplace_regex).length > 1
         odie "Unable to update resource blocks for \"#{formula.name}\" automatically. Please update them manually."
       end
       s.sub! inreplace_regex, resource_section
@@ -444,6 +465,26 @@ module PyPI
     end
 
     true
+  end
+
+  sig { params(contents: String).returns(T::Hash[String, String]) }
+  def self.resource_blocks_from_formula(contents)
+    blocks = {}
+    _processed_source, root_node = Utils::AST.process_source(contents)
+    return blocks if root_node.nil?
+
+    root_node.each_node(:block) do |node|
+      next unless Utils::AST.call_node_match?(node, name: :resource, type: :block_call)
+
+      send_node = node.send_node
+      name_node = send_node.arguments.first
+      next if name_node.blank? || !name_node.str_type?
+
+      resource_name = name_node.str_content
+      blocks[resource_name] = node.location.expression.source
+    end
+
+    blocks
   end
 
   sig { params(name: String).returns(String) }

@@ -17,7 +17,7 @@ class DevelopmentTools
       # Give the name of the binary you look for as a string to this method
       # in order to get the full path back as a Pathname.
       (@locate ||= T.let({}, T.nilable(T::Hash[T.any(String, Symbol), T.untyped]))).fetch(tool) do |key|
-        @locate[key] = if File.executable?((path = "/usr/bin/#{tool}"))
+        @locate[key] = if File.executable?(path = "/usr/bin/#{tool}")
           Pathname.new path
         # Homebrew GCCs most frequently; much faster to check this before xcrun
         elsif (path = HOMEBREW_PREFIX/"bin/#{tool}").executable?
@@ -55,6 +55,11 @@ class DevelopmentTools
     sig { returns(Symbol) }
     def default_compiler
       :clang
+    end
+
+    sig { returns(Version) }
+    def ld64_version
+      Version::NULL
     end
 
     # Get the Clang version.
@@ -99,14 +104,21 @@ class DevelopmentTools
         else
           Version::NULL
         end
+      rescue FormulaUnavailableError
+        Version::NULL
       end, T.nilable(Version))
+    end
+
+    sig { returns(Pathname) }
+    def host_gcc_path
+      Pathname.new("/usr/bin/gcc")
     end
 
     # Get the GCC version.
     #
-    # @api internal
+    # @api public
     sig { params(cc: String).returns(Version) }
-    def gcc_version(cc)
+    def gcc_version(cc = host_gcc_path.to_s)
       (@gcc_version ||= T.let({}, T.nilable(T::Hash[String, Version]))).fetch(cc) do
         path = HOMEBREW_PREFIX/"opt/#{CompilerSelector.preferred_gcc}/bin"/cc
         path = locate(cc) unless path.exist?
@@ -162,11 +174,6 @@ class DevelopmentTools
     sig { returns(T::Boolean) }
     def curl_substitution_required?
       !curl_handles_most_https_certificates? && !HOMEBREW_BREWED_CURL_PATH.exist?
-    end
-
-    sig { returns(T::Boolean) }
-    def subversion_handles_most_https_certificates?
-      true
     end
 
     sig { returns(T::Hash[String, T.nilable(String)]) }

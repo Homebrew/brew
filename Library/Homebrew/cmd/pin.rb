@@ -25,7 +25,7 @@ module Homebrew
           if f.pinned?
             opoo "#{f.name} already pinned"
           elsif !f.pinnable?
-            onoe "#{f.name} not installed"
+            ofail "#{f.name} not installed"
           else
             f.pin
           end

@@ -39,7 +39,7 @@ module RuboCop
 
             if on_method_blocks.length > 1
               @offensive_node = on_method_blocks.second
-              problem "there can only be one `#{on_method}` block in a formula."
+              problem "There can only be one `#{on_method}` block in a formula."
             end
 
             check_on_system_block_content(component_precedence_list, on_method_blocks.first)
@@ -112,7 +112,7 @@ module RuboCop
 
             on_system_blocks.each do |on_method, blocks|
               if blocks.length > 1
-                problem "there can only be one `#{on_method}` block in a resource block."
+                problem "There can only be one `#{on_method}` block in a resource block."
                 next
               end
             end
@@ -125,7 +125,8 @@ module RuboCop
         end
 
         def check_on_system_block_content(component_precedence_list, on_system_block)
-          if on_system_block.body.block_type? && !on_system_methods.include?(on_system_block.body.method_name)
+          if on_system_block.body.block_type? && !on_system_methods.include?(on_system_block.body.method_name) &&
+             on_system_block.body.method_name != :fails_with
             offending_node(on_system_block)
             problem "Nest `#{on_system_block.method_name}` blocks inside `#{on_system_block.body.method_name}` " \
                     "blocks when there is only one inner block." do |corrector|
@@ -144,6 +145,7 @@ module RuboCop
             fails_with
             resource
             patch
+            pour_bottle?
           ]
           on_system_allowed_methods += on_system_methods.map(&:to_s)
           _, offensive_node = check_order(component_precedence_list, on_system_block.body)

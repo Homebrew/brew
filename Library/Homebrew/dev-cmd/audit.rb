@@ -42,24 +42,19 @@ module Homebrew
         switch "--installed",
                description: "Only check formulae and casks that are currently installed."
         switch "--eval-all",
-               description: "Evaluate all available formulae and casks, whether installed or not, to audit them. " \
-                            "Implied if `HOMEBREW_EVAL_ALL` is set."
+               description: "Evaluate all available formulae and casks, whether installed or not, to audit them.",
+               env:         :eval_all
         switch "--new",
                description: "Run various additional style checks to determine if a new formula or cask is eligible " \
                             "for Homebrew. This should be used when creating new formulae or casks and implies " \
                             "`--strict` and `--online`."
-        switch "--new-formula",
-               replacement: "--new",
-               disable:     true,
-               hidden:      true
-        switch "--new-cask",
-               replacement: "--new",
-               disable:     true,
-               hidden:      true
         switch "--[no-]signing",
                description: "Audit for app signatures, which are required by macOS on ARM."
         switch "--token-conflicts",
-               description: "Audit for token conflicts."
+               description: "Audit for token conflicts.",
+               hidden:      true
+        switch "--changed",
+               description: "Check files that were changed from the `main` branch."
         flag   "--tap=",
                description: "Check formulae and casks within the given tap, specified as <user>`/`<repo>."
         switch "--fix",
@@ -92,17 +87,19 @@ module Homebrew
         switch "--cask", "--casks",
                description: "Treat all named arguments as casks."
 
+        conflicts "--installed", "--eval-all", "--changed", "--tap"
         conflicts "--only", "--except"
         conflicts "--only-cops", "--except-cops", "--strict"
         conflicts "--only-cops", "--except-cops", "--only"
         conflicts "--formula", "--cask"
-        conflicts "--installed", "--all"
 
         named_args [:formula, :cask], without_api: true
       end
 
       sig { override.void }
       def run
+        odisabled "`brew audit --token-conflicts`" if args.token_conflicts?
+
         Formulary.enable_factory_cache!
 
         os_arch_combinations = args.os_arch_combinations
@@ -124,7 +121,31 @@ module Homebrew
         ENV.setup_build_environment
 
         audit_formulae, audit_casks = Homebrew.with_no_api_env do # audit requires full Ruby source
-          if args.tap
+          if args.changed?
+            tap = Tap.from_path(Dir.pwd)
+            odie "`brew audit --changed` must be run inside a tap!" if tap.blank?
+
+            no_named_args = true
+
+            audit_formulae = []
+            audit_casks = []
+
+            changed_files = Utils.popen_read("git", "diff", "--name-only", "--no-relative", "main")
+            changed_files.split("\n").each do |file|
+              next unless file.end_with?(".rb")
+
+              absolute_file = File.expand_path(file, tap.path)
+              next unless File.exist?(absolute_file)
+
+              if tap.formula_file?(file)
+                audit_formulae << Formulary.factory(absolute_file)
+              elsif tap.cask_file?(file)
+                audit_casks << Cask::CaskLoader.load(absolute_file)
+              end
+            end
+
+            [audit_formulae, audit_casks]
+          elsif args.tap
             Tap.fetch(args.tap).then do |tap|
               [
                 tap.formula_files.map { |path| Formulary.factory(path) },
@@ -135,22 +156,24 @@ module Homebrew
             no_named_args = true
             [Formula.installed, Cask::Caskroom.casks]
           elsif args.no_named?
-            if !args.eval_all? && !Homebrew::EnvConfig.eval_all?
+            eval_all = args.eval_all?
+
+            unless eval_all
               # This odisabled should probably stick around indefinitely.
-              odisabled "brew audit",
-                        "brew audit --eval-all or HOMEBREW_EVAL_ALL"
+              odisabled "`brew audit`",
+                        "`brew audit --eval-all` or set `HOMEBREW_EVAL_ALL=1`"
             end
             no_named_args = true
             [
-              Formula.all(eval_all: args.eval_all?),
-              Cask::Cask.all(eval_all: args.eval_all?),
+              Formula.all(eval_all:),
+              Cask::Cask.all(eval_all:),
             ]
           else
             if args.named.any? { |named_arg| named_arg.end_with?(".rb") }
               # This odisabled should probably stick around indefinitely,
               # until at least we have a way to exclude error on these in the CLI parser.
-              odisabled "brew audit [path ...]",
-                        "brew audit [name ...]"
+              odisabled "`brew audit [path ...]`",
+                        "`brew audit [name ...]`"
             end
 
             args.named.to_formulae_and_casks_with_taps
@@ -251,18 +274,17 @@ module Homebrew
                 # For switches, we add `|| nil` so that `nil` will be passed
                 # instead of `false` if they aren't set.
                 # This way, we can distinguish between "not set" and "set to false".
-                audit_online:          args.online? || nil,
-                audit_strict:          args.strict? || nil,
+                audit_online:   args.online? || nil,
+                audit_strict:   args.strict? || nil,
 
                 # No need for `|| nil` for `--[no-]signing`
                 # because boolean switches are already `nil` if not passed
-                audit_signing:         args.signing?,
-                audit_new_cask:        args.new? || nil,
-                audit_token_conflicts: args.token_conflicts? || nil,
-                quarantine:            true,
-                any_named_args:        !no_named_args,
-                only:                  args.only || [],
-                except:                args.except || [],
+                audit_signing:  args.signing?,
+                audit_new_cask: args.new? || nil,
+                quarantine:     true,
+                any_named_args: !no_named_args,
+                only:           args.only || [],
+                except:         args.except || [],
               ).to_a
             end
           end.uniq
@@ -290,9 +312,7 @@ module Homebrew
           errors_summary = Utils.pluralize("problem", total_problems_count, include_count: true)
 
           error_sources = []
-          if formula_count.positive?
-            error_sources << Utils.pluralize("formula", formula_count, plural: "e", include_count: true)
-          end
+          error_sources << Utils.pluralize("formula", formula_count, include_count: true) if formula_count.positive?
           error_sources << Utils.pluralize("cask", cask_count, include_count: true) if cask_count.positive?
           error_sources << Utils.pluralize("tap", tap_count, include_count: true) if tap_count.positive?
 

@@ -1,7 +1,7 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
 
-require "bundle/brew_installer"
+require "bundle/formula_installer"
 
 module Homebrew
   module Bundle
@@ -10,8 +10,9 @@ module Homebrew
         PACKAGE_TYPE = :brew
         PACKAGE_TYPE_NAME = "Formula"
 
+        sig { params(formula: String, no_upgrade: T::Boolean).returns(T::Boolean) }
         def installed_and_up_to_date?(formula, no_upgrade: false)
-          Homebrew::Bundle::BrewInstaller.formula_installed_and_up_to_date?(formula, no_upgrade:)
+          Homebrew::Bundle::FormulaInstaller.formula_installed_and_up_to_date?(formula, no_upgrade:)
         end
       end
     end

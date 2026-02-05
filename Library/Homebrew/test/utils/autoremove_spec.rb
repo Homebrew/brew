@@ -43,20 +43,20 @@ RSpec.describe Utils::Autoremove do
 
     before do
       allow(formula_with_deps).to receive_messages(
-        runtime_formula_dependencies: [first_formula_dep, second_formula_dep],
-        any_installed_keg:            instance_double(Keg, tab: tab_from_keg),
+        installed_runtime_formula_dependencies: [first_formula_dep, second_formula_dep],
+        any_installed_keg:                      instance_double(Keg, tab: tab_from_keg),
       )
       allow(first_formula_dep).to receive_messages(
-        runtime_formula_dependencies: [second_formula_dep],
-        any_installed_keg:            instance_double(Keg, tab: tab_from_keg),
+        installed_runtime_formula_dependencies: [second_formula_dep],
+        any_installed_keg:                      instance_double(Keg, tab: tab_from_keg),
       )
       allow(second_formula_dep).to receive_messages(
-        runtime_formula_dependencies: [],
-        any_installed_keg:            instance_double(Keg, tab: tab_from_keg),
+        installed_runtime_formula_dependencies: [],
+        any_installed_keg:                      instance_double(Keg, tab: tab_from_keg),
       )
       allow(formula_is_build_dep).to receive_messages(
-        runtime_formula_dependencies: [],
-        any_installed_keg:            instance_double(Keg, tab: tab_from_keg),
+        installed_runtime_formula_dependencies: [],
+        any_installed_keg:                      instance_double(Keg, tab: tab_from_keg),
       )
     end
   end
@@ -65,7 +65,8 @@ RSpec.describe Utils::Autoremove do
     include_context "with formulae for dependency testing"
 
     before do
-      allow(Formulary).to receive(:factory).with("three", { warn: false }).and_return(formula_is_build_dep)
+      allow(Formulary).to receive(:factory).with("three", { warn: false })
+                                           .and_return(formula_is_build_dep)
     end
 
     context "when formulae are bottles" do
@@ -95,21 +96,21 @@ RSpec.describe Utils::Autoremove do
     end
 
     specify "installed on request" do
-      allow(tab_from_keg).to receive(:installed_on_request).and_return(true)
+      allow(tab_from_keg).to receive_messages(installed_on_request: true, installed_on_request_present?: true)
 
       expect(described_class.send(:unused_formulae_with_no_formula_dependents, formulae))
         .to eq([])
     end
 
     specify "not installed on request" do
-      allow(tab_from_keg).to receive(:installed_on_request).and_return(false)
+      allow(tab_from_keg).to receive_messages(installed_on_request: false, installed_on_request_present?: true)
 
       expect(described_class.send(:unused_formulae_with_no_formula_dependents, formulae))
         .to match_array(formulae)
     end
 
     specify "installed on request is null" do
-      allow(tab_from_keg).to receive(:installed_on_request).and_return(nil)
+      allow(tab_from_keg).to receive_messages(installed_on_request: false, installed_on_request_present?: false)
 
       expect(described_class.send(:unused_formulae_with_no_formula_dependents, formulae))
         .to eq([])
@@ -156,9 +157,9 @@ RSpec.describe Utils::Autoremove do
     let(:casks_multiple_deps) { [first_cask_no_deps, second_cask_no_deps, cask_multiple_deps] }
 
     before do
-      allow(Formula).to receive("[]").with("zero").and_return(formula_with_deps)
-      allow(Formula).to receive("[]").with("one").and_return(first_formula_dep)
-      allow(Formula).to receive("[]").with("two").and_return(second_formula_dep)
+      allow(Formulary).to receive(:resolve).with("zero").and_return(formula_with_deps)
+      allow(Formulary).to receive(:resolve).with("one").and_return(first_formula_dep)
+      allow(Formulary).to receive(:resolve).with("two").and_return(second_formula_dep)
     end
   end
 

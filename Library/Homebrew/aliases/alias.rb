@@ -1,9 +1,14 @@
 # typed: strict
 # frozen_string_literal: true
 
+require "fileutils"
+require "utils/output"
+
 module Homebrew
   module Aliases
     class Alias
+      include ::Utils::Output::Mixin
+
       sig { returns(String) }
       attr_accessor :name
 
@@ -73,14 +78,16 @@ module Homebrew
           EOS
         else
           <<~EOS
-            #
+            #:  * `#{name}` [args...]
+            #:    `brew #{name}` is an alias for *command*
+
             # This is a Homebrew alias script. It'll be called when the user
             # types `brew #{name}`. Any remaining arguments are passed to
             # this script. You can retrieve those with $*, or only the first
             # one with $1. Please keep your script on one line.
 
-            # TODO Replace the line below with your script
-            echo "Hello I'm brew alias "#{name}" and my args are:" $1
+            # TODO: Replace the line below with your script
+            echo "Hello I'm 'brew "#{name}"' and my args are:" $*
           EOS
         end
 

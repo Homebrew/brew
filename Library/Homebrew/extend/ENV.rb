@@ -7,16 +7,6 @@ require "extend/ENV/shared"
 require "extend/ENV/std"
 require "extend/ENV/super"
 
-module Kernel
-  sig { params(env: T.nilable(String)).returns(T::Boolean) }
-  def superenv?(env)
-    return false if env == "std"
-
-    !Superenv.bin.nil?
-  end
-  private :superenv?
-end
-
 # <!-- vale off -->
 # @!parse
 #   # `ENV` is not actually a class, but this makes YARD happy
@@ -38,14 +28,14 @@ module EnvActivation
   end
 
   sig {
-    params(
+    type_parameters(:U).params(
       env:           T.nilable(String),
       cc:            T.nilable(String),
       build_bottle:  T::Boolean,
       bottle_arch:   T.nilable(String),
       debug_symbols: T.nilable(T::Boolean),
-      _block:        T.proc.returns(T.untyped),
-    ).returns(T.untyped)
+      _block:        T.proc.returns(T.type_parameter(:U)),
+    ).returns(T.type_parameter(:U))
   }
   def with_build_environment(env: nil, cc: nil, build_bottle: false, bottle_arch: nil, debug_symbols: false, &_block)
     old_env = to_hash.dup

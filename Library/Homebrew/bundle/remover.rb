@@ -1,9 +1,14 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
+
+require "utils/output"
 
 module Homebrew
   module Bundle
     module Remover
+      extend ::Utils::Output::Mixin
+
+      sig { params(args: String, type: Symbol, global: T::Boolean, file: T.nilable(String)).void }
       def self.remove(*args, type:, global:, file:)
         require "bundle/brewfile"
         require "bundle/dumper"
@@ -37,11 +42,14 @@ module Homebrew
         Dumper.write_file path, new_content
       end
 
+      sig { params(formula_name: String, raise_error: T::Boolean).returns(T::Array[String]) }
       def self.possible_names(formula_name, raise_error: true)
         formula = Formulary.factory(formula_name)
         [formula_name, formula.name, formula.full_name, *formula.aliases, *formula.oldnames].compact.uniq
       rescue FormulaUnavailableError
         raise if raise_error
+
+        []
       end
     end
   end

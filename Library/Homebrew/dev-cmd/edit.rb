@@ -9,10 +9,9 @@ module Homebrew
     class Edit < AbstractCommand
       cmd_args do
         description <<~EOS
-          Open a <formula>, <cask> or <tap> in the editor set by `EDITOR` or `HOMEBREW_EDITOR`,
+          Open a <formula>, <cask> or <tap> in the editor set by `$EDITOR` or `$HOMEBREW_EDITOR`,
           or open the Homebrew repository for editing if no argument is provided.
         EOS
-
         switch "--formula", "--formulae",
                description: "Treat all named arguments as formulae."
         switch "--cask", "--casks",
@@ -30,6 +29,11 @@ module Homebrew
         ENV["COLORTERM"] = ENV.fetch("HOMEBREW_COLORTERM", nil)
         # Recover $TMPDIR for emacsclient
         ENV["TMPDIR"] = ENV.fetch("HOMEBREW_TMPDIR", nil)
+
+        # VS Code remote development relies on this env var to work
+        if which_editor(silent: true) == "code" && ENV.include?("HOMEBREW_VSCODE_IPC_HOOK_CLI")
+          ENV["VSCODE_IPC_HOOK_CLI"] = ENV.fetch("HOMEBREW_VSCODE_IPC_HOOK_CLI", nil)
+        end
 
         unless (HOMEBREW_REPOSITORY/".git").directory?
           odie <<~EOS
@@ -57,22 +61,24 @@ module Homebrew
         end
 
         if args.print_path?
-          paths.each { puts _1 }
+          paths.each { puts it }
           return
         end
 
         exec_editor(*paths)
 
-        if paths.any? do |path|
+        is_formula = T.let(false, T::Boolean)
+        if !Homebrew::EnvConfig.no_env_hints? && paths.any? do |path|
              next if path == "--project"
 
-             !Homebrew::EnvConfig.no_install_from_api? &&
-             !Homebrew::EnvConfig.no_env_hints? &&
-             (core_formula_path?(path) || core_cask_path?(path) || core_formula_tap?(path) || core_cask_tap?(path))
+             is_formula = core_formula_path?(path)
+             is_formula || core_cask_path?(path) || core_formula_tap?(path) || core_cask_tap?(path)
            end
-          opoo <<~EOS
-            `brew install` ignores locally edited casks and formulae if
-            HOMEBREW_NO_INSTALL_FROM_API is not set.
+          from_source = " --build-from-source" if is_formula
+          no_api = "HOMEBREW_NO_INSTALL_FROM_API=1 " unless Homebrew::EnvConfig.no_install_from_api?
+          puts <<~EOS
+            To test your local edits, run:
+              #{no_api}brew install#{from_source} --verbose --debug #{args.named.join(" ")}
           EOS
         end
       end
@@ -109,7 +115,7 @@ module Homebrew
 
           raise TapUnavailableError, "#{tap_match[:user]}/#{tap_match[:repo]}"
         elsif cask || core_cask_path?(path)
-          if !CoreCaskTap.instance.installed? && Homebrew::API::Cask.all_casks.key?(name)
+          if !CoreCaskTap.instance.installed? && Homebrew::API.cask_tokens.include?(name)
             command = "brew tap --force #{CoreCaskTap.instance.name}"
             action = "tap #{CoreCaskTap.instance.name}"
           else
@@ -118,7 +124,7 @@ module Homebrew
           end
         elsif core_formula_path?(path) &&
               !CoreTap.instance.installed? &&
-              Homebrew::API::Formula.all_formulae.key?(name)
+              Homebrew::API.formula_names.include?(name)
           command = "brew tap --force #{CoreTap.instance.name}"
           action = "tap #{CoreTap.instance.name}"
         else

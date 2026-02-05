@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 require "cli/parser"
+require "utils/output"
 
 UNDEFINED_CONSTANTS = %w[
   AbstractDownloadStrategy
@@ -54,6 +55,8 @@ UNDEFINED_CONSTANTS = %w[
 module Homebrew
   module Cmd
     class VerifyUndefined < AbstractCommand
+      sig { override.void }
+      def run; end
     end
   end
 end
@@ -74,7 +77,7 @@ parser.parse
 
 UNDEFINED_CONSTANTS.each do |constant_name|
   Object.const_get(constant_name)
-  ofail "#{constant_name} should not be defined at startup"
+  Utils::Output.ofail "#{constant_name} should not be defined at startup"
 rescue NameError
   # We expect this to error as it should not be defined.
 end

@@ -10,12 +10,17 @@ RSpec.describe Homebrew::CLI::Parser do
       described_class.new(Cmd) do
         switch "--more-verbose", description: "Flag for higher verbosity"
         switch "--pry", env: :pry
+        switch "--foo", env: :foo
+        switch "--bar", env: :bar
         switch "--hidden", hidden: true
       end
     end
 
     before do
       allow(Homebrew::EnvConfig).to receive(:pry?).and_return(true)
+      allow(ENV).to receive(:fetch).and_call_original
+      allow(ENV).to receive(:fetch).with("HOMEBREW_FOO", nil).and_return("")
+      allow(ENV).to receive(:fetch).with("HOMEBREW_BAR", nil).and_return("1")
     end
 
     context "when using binary options" do
@@ -113,6 +118,8 @@ RSpec.describe Homebrew::CLI::Parser do
     it "maps environment var to an option" do
       args = parser.parse([])
       expect(args.pry?).to be true
+      expect(args.foo?).to be false
+      expect(args.bar?).to be true
     end
   end
 
@@ -168,7 +175,7 @@ RSpec.describe Homebrew::CLI::Parser do
         flag      "--flag2=", depends_on: "--flag1="
         flag      "--flag3="
 
-        conflicts "--flag1=", "--flag3="
+        conflicts "--flag1", "--flag3"
       end
     end
 
@@ -197,7 +204,8 @@ RSpec.describe Homebrew::CLI::Parser do
       described_class.new(Cmd) do
         flag      "--flag1="
         flag      "--flag2=", depends_on: "--flag1="
-        conflicts "--flag1=", "--flag2="
+
+        conflicts "--flag1", "--flag2"
       end
     end
 
@@ -606,12 +614,12 @@ RSpec.describe Homebrew::CLI::Parser do
       expect(args.respond_to?(:formula?)).to be(false)
     end
 
-    it "sets --formula to true when defined" do
+    it "doesn't set --formula when defined" do
       parser = described_class.new(Cmd) do
         switch "--formula"
       end
       args = parser.parse([])
-      expect(args.formula?).to be(true)
+      expect(args.formula?).to be(false)
     end
 
     it "does not set --formula to true when --cask" do

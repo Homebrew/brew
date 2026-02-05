@@ -52,6 +52,8 @@ homebrew-update-reset() {
 
   if [[ -z "${REPOS[*]}" ]]
   then
+    # HOMEBREW_REPOSITORY is set by bin/brew
+    # shellcheck disable=SC2154
     REPOS+=("${HOMEBREW_REPOSITORY}" "${HOMEBREW_LIBRARY}"/Taps/*/*)
   fi
 
@@ -71,7 +73,7 @@ homebrew-update-reset() {
     echo
 
     ohai "Resetting ${DIR}..."
-    # HOMEBREW_* variables here may all set by bin/brew or the user
+    # HOMEBREW_* variables here may all be set by bin/brew or the user
     # shellcheck disable=SC2154
     if [[ "${DIR}" == "${HOMEBREW_REPOSITORY}" &&
        (-n "${HOMEBREW_UPDATE_TO_TAG}" ||

@@ -24,6 +24,9 @@ class Homebrew::DevCmd::Tests::Args < Homebrew::CLI::Args
   def generic?; end
 
   sig { returns(T::Boolean) }
+  def no_parallel?; end
+
+  sig { returns(T::Boolean) }
   def online?; end
 
   sig { returns(T.nilable(String)) }
@@ -32,6 +35,15 @@ class Homebrew::DevCmd::Tests::Args < Homebrew::CLI::Args
   sig { returns(T.nilable(String)) }
   def profile; end
 
+  sig { returns(T::Boolean) }
+  def ruby_prof?; end
+
   sig { returns(T.nilable(String)) }
   def seed; end
+
+  sig { returns(T::Boolean) }
+  def stackprof?; end
+
+  sig { returns(T::Boolean) }
+  def vernier?; end
 end

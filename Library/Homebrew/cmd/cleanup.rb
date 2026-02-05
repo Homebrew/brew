@@ -52,7 +52,7 @@ module Homebrew
         cleanup.clean!(quiet: args.quiet?, periodic: false)
 
         unless cleanup.disk_cleanup_size.zero?
-          disk_space = disk_usage_readable(cleanup.disk_cleanup_size)
+          disk_space = Formatter.disk_usage_readable(cleanup.disk_cleanup_size)
           if args.dry_run?
             ohai "This operation would free approximately #{disk_space} of disk space."
           else

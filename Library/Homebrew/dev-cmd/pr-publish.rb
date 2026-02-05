@@ -19,7 +19,7 @@ module Homebrew
         switch "--large-runner",
                description: "Run the upload job on a large runner."
         flag   "--branch=",
-               description: "Branch to use the workflow from (default: `master`)."
+               description: "Branch to use the workflow from (default: `main`)."
         flag   "--message=",
                depends_on:  "--autosquash",
                description: "Message to include when autosquashing revision bumps, deletions and rebuilds."
@@ -35,7 +35,7 @@ module Homebrew
       def run
         tap = Tap.fetch(args.tap || CoreTap.instance.name)
         workflow = args.workflow || "publish-commit-bottles.yml"
-        ref = args.branch || "master"
+        ref = args.branch || "main"
 
         inputs = {
           autosquash:   args.autosquash?,

@@ -1,21 +1,25 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
 
 require "fcntl"
+require "utils/output"
 
 # A lock file to prevent multiple Homebrew processes from modifying the same path.
 class LockFile
+  include Utils::Output::Mixin
+
   class OpenFileChangedOnDisk < RuntimeError; end
   private_constant :OpenFileChangedOnDisk
 
+  sig { returns(Pathname) }
   attr_reader :path
 
   sig { params(type: Symbol, locked_path: Pathname).void }
   def initialize(type, locked_path)
     @locked_path = locked_path
     lock_name = locked_path.basename.to_s
-    @path = HOMEBREW_LOCKS/"#{lock_name}.#{type}.lock"
-    @lockfile = nil
+    @path = T.let(HOMEBREW_LOCKS/"#{lock_name}.#{type}.lock", Pathname)
+    @lockfile = T.let(nil, T.nilable(File))
   end
 
   sig { void }
@@ -27,7 +31,7 @@ class LockFile
 
       begin
         lockfile = begin
-          path.open(File::RDWR | File::CREAT)
+          File.open(path, File::RDWR | File::CREAT)
         rescue Errno::EMFILE
           odie "The maximum number of open files on this system has been reached. " \
                "Use `ulimit -n` to increase this limit."
@@ -75,7 +79,8 @@ class LockFile
     end
   end
 
-  def with_lock
+  sig { params(_block: T.proc.void).void }
+  def with_lock(&_block)
     lock
     yield
   ensure

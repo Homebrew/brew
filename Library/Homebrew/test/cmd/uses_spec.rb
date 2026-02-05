@@ -10,7 +10,7 @@ RSpec.describe Homebrew::Cmd::Uses do
 
   it_behaves_like "parseable arguments"
 
-  it "prints the Formulae a given Formula is used by", :integration_test do
+  it "prints the Formulae a given Formula is used by", :integration_test, :no_api do
     # Included in output
     setup_test_formula "bar"
     setup_test_formula "optional", <<~RUBY
@@ -46,7 +46,7 @@ RSpec.describe Homebrew::Cmd::Uses do
       .and be_a_success
   end
 
-  it "handles unavailable formula", :integration_test do
+  it "handles unavailable formula", :integration_test, :no_api do
     setup_test_formula "foo"
     setup_test_formula "bar"
     setup_test_formula "optional", <<~RUBY

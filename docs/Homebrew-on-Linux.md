@@ -5,7 +5,7 @@ redirect_from:
   - /linux
   - /Linux
   - /Linuxbrew
-last_review_date: "1970-01-01"
+last_review_date: "2025-04-02"
 ---
 
 # Homebrew on Linux
@@ -22,7 +22,7 @@ The Homebrew package manager may be used on Linux and [Windows Subsystem for Lin
 
 ## Install
 
-Instructions for the best, supported install of Homebrew on Linux are on the [homepage](https://brew.sh).
+Instructions for the best, supported install of Homebrew on Linux are on the [homepage](https://brew.sh/).
 
 The installation script installs Homebrew to `/home/linuxbrew/.linuxbrew` using *sudo*. Homebrew does not use *sudo* after installation. Using `/home/linuxbrew/.linuxbrew` allows the use of most binary packages (bottles) which will not work when installing in e.g. your personal home directory.
 
@@ -51,9 +51,7 @@ If you're using an older distribution of Linux, installing your first package wi
 
 ## Requirements
 
-- **Linux** 3.2 or newer
-- **Glibc** 2.13 or newer
-- **64-bit x86_64** CPU
+See [Support Tiers](Support-Tiers.md#linux) for the full list of Linux requirements.
 
 To install build tools, paste at a terminal prompt:
 
@@ -63,11 +61,18 @@ To install build tools, paste at a terminal prompt:
   sudo apt-get install build-essential procps curl file git
   ```
 
-- **Fedora, CentOS, or Red Hat**
+- **Fedora**
 
   ```sh
-  sudo yum groupinstall 'Development Tools'
-  sudo yum install procps-ng curl file git
+  sudo dnf group install development-tools
+  sudo dnf install procps-ng curl file
+  ```
+
+- **CentOS Stream or RHEL**
+
+  ```sh
+  sudo dnf group install 'Development Tools'
+  sudo dnf install procps-ng curl file
   ```
 
 - **Arch Linux**
@@ -76,17 +81,17 @@ To install build tools, paste at a terminal prompt:
   sudo pacman -S base-devel procps-ng curl file git
   ```
 
-### ARM (unsupported)
+### ARM32 (Tier 3 Support)
 
-Homebrew can run on 32-bit ARM (e.g. Raspberry Pi and others) and 64-bit ARM (ARM64, also known as AArch64), but as they lack bottles (binary packages) they are unsupported. Pull requests are welcome to improve the experience on ARM platforms.
+Homebrew can run on 32-bit ARM systems (e.g. Raspberry Pi and others), but as they lack bottles (binary packages) they are a [Tier 3 supported platform](Support-Tiers.md#tier-3).
 
-You may need to install your own Ruby using your system package manager, a PPA, or `rbenv/ruby-build` as we no longer distribute a Homebrew Portable Ruby for ARM.
+You may need to install your own Ruby using your system package manager, a PPA, or `rbenv/ruby-build` as we don't distribute a Homebrew Portable Ruby for ARM32.
 
-### 32-bit x86 (incompatible)
+### 32-bit x86 (Unsupported)
 
 Homebrew does not run at all on 32-bit x86 platforms.
 
-### Windows Subsystem for Linux (WSL) 1
+### Windows Subsystem for Linux 1 (Tier 3 Support)
 
 Due to [known issues](https://github.com/microsoft/WSL/issues/8219) with WSL 1, you may experience issues running various executables installed by Homebrew. We recommend you switch to WSL 2 instead.
 

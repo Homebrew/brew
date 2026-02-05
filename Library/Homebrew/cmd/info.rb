@@ -1,4 +1,4 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
 
 require "abstract_command"
@@ -16,9 +16,15 @@ require "api"
 module Homebrew
   module Cmd
     class Info < AbstractCommand
+      class NameSize < T::Struct
+        const :name, String
+        const :size, Integer
+      end
+      private_constant :NameSize
+
       VALID_DAYS = %w[30 90 365].freeze
       VALID_FORMULA_CATEGORIES = %w[install install-on-request build-error].freeze
-      VALID_CATEGORIES = (VALID_FORMULA_CATEGORIES + %w[cask-install os-version]).freeze
+      VALID_CATEGORIES = T.let((VALID_FORMULA_CATEGORIES + %w[cask-install os-version]).freeze, T::Array[String])
 
       cmd_args do
         description <<~EOS
@@ -57,7 +63,7 @@ module Homebrew
         switch "--eval-all",
                depends_on:  "--json",
                description: "Evaluate all available formulae and casks, whether installed or not, to print their " \
-                            "JSON. Implied if `$HOMEBREW_EVAL_ALL` is set."
+                            "JSON."
         switch "--variations",
                depends_on:  "--json",
                description: "Include the variations hash in each formula's JSON output."
@@ -67,9 +73,10 @@ module Homebrew
                description: "Treat all named arguments as formulae."
         switch "--cask", "--casks",
                description: "Treat all named arguments as casks."
+        switch "--sizes",
+               description: "Show the size of installed formulae and casks."
 
         conflicts "--installed", "--eval-all"
-        conflicts "--installed", "--all"
         conflicts "--formula", "--cask"
         conflicts "--fetch-manifest", "--cask"
         conflicts "--fetch-manifest", "--json"
@@ -79,7 +86,15 @@ module Homebrew
 
       sig { override.void }
       def run
-        if args.analytics?
+        if args.sizes?
+          if args.no_named?
+            print_sizes
+          else
+            formulae, casks = args.named.to_formulae_to_casks
+            formulae = T.cast(formulae, T::Array[Formula])
+            print_sizes(formulae:, casks:)
+          end
+        elsif args.analytics?
           if args.days.present? && VALID_DAYS.exclude?(args.days)
             raise UsageError, "`--days` must be one of #{VALID_DAYS.join(", ")}."
           end
@@ -96,14 +111,15 @@ module Homebrew
           end
 
           print_analytics
-        elsif args.json
-          all = args.eval_all?
-
-          print_json(all)
+        elsif (json = args.json)
+          print_json(json, args.eval_all?)
         elsif args.github?
           raise FormulaOrCaskUnspecifiedError if args.no_named?
 
-          exec_browser(*args.named.to_formulae_and_casks.map { |f| github_info(f) })
+          exec_browser(*args.named.to_formulae_and_casks.map do |formula_keg_or_cask|
+            formula_or_cask = T.cast(formula_keg_or_cask, T.any(Formula, Cask::Cask))
+            github_info(formula_or_cask)
+          end)
         elsif args.no_named?
           print_statistics
         else
@@ -111,6 +127,7 @@ module Homebrew
         end
       end
 
+      sig { params(remote: String, path: String).returns(String) }
       def github_remote_path(remote, path)
         if remote =~ %r{^(?:https?://|git(?:@|://))github\.com[:/](.+)/(.+?)(?:\.git)?$}
           "https://github.com/#{Regexp.last_match(1)}/#{Regexp.last_match(2)}/blob/HEAD/#{path}"
@@ -141,9 +158,9 @@ module Homebrew
 
           case obj
           when Formula
-            Utils::Analytics.formula_output(obj, args:)
+            Utils::Analytics.formula_output(obj, args:) if obj.core_formula?
           when Cask::Cask
-            Utils::Analytics.cask_output(obj, args:)
+            Utils::Analytics.cask_output(obj, args:) if obj.tap.core_cask_tap?
           when FormulaOrCaskUnavailableError
             Utils::Analytics.output(filter: obj.name, args:)
           else
@@ -175,6 +192,7 @@ module Homebrew
         end
       end
 
+      sig { params(version: T.any(T::Boolean, String)).returns(Symbol) }
       def json_version(version)
         version_hash = {
           true => :default,
@@ -187,16 +205,16 @@ module Homebrew
         version_hash[version]
       end
 
-      sig { params(all: T::Boolean).void }
-      def print_json(all)
-        raise FormulaOrCaskUnspecifiedError if !(all || args.installed?) && args.no_named?
+      sig { params(json: T.any(T::Boolean, String), eval_all: T::Boolean).void }
+      def print_json(json, eval_all)
+        raise FormulaOrCaskUnspecifiedError if !(eval_all || args.installed?) && args.no_named?
 
-        json = case json_version(args.json)
+        json = case json_version(json)
         when :v1, :default
           raise UsageError, "Cannot specify `--cask` when using `--json=v1`!" if args.cask?
 
-          formulae = if all
-            Formula.all(eval_all: args.eval_all?).sort
+          formulae = if eval_all
+            Formula.all(eval_all:).sort
           elsif args.installed?
             Formula.installed.sort
           else
@@ -210,10 +228,10 @@ module Homebrew
           end
         when :v2
           formulae, casks = T.let(
-            if all
+            if eval_all
               [
-                Formula.all(eval_all: args.eval_all?).sort,
-                Cask::Cask.all(eval_all: args.eval_all?).sort_by(&:full_name),
+                Formula.all(eval_all:).sort,
+                Cask::Cask.all(eval_all:).sort_by(&:full_name),
               ]
             elsif args.installed?
               [Formula.installed.sort, Cask::Caskroom.casks.sort_by(&:full_name)]
@@ -240,25 +258,31 @@ module Homebrew
         puts JSON.pretty_generate(json)
       end
 
+      sig { params(formula_or_cask: T.any(Formula, Cask::Cask)).returns(String) }
       def github_info(formula_or_cask)
-        return formula_or_cask.path if formula_or_cask.tap.blank? || formula_or_cask.tap.remote.blank?
-
         path = case formula_or_cask
         when Formula
           formula = formula_or_cask
-          formula.path.relative_path_from(T.must(formula.tap).path)
+          tap = formula.tap
+          return formula.path.to_s if tap.blank? || tap.remote.blank?
+
+          formula.path.relative_path_from(tap.path)
         when Cask::Cask
           cask = formula_or_cask
+          tap = cask.tap
+          return cask.sourcefile_path.to_s if tap.blank? || tap.remote.blank?
+
           if cask.sourcefile_path.blank? || cask.sourcefile_path.extname != ".rb"
-            return "#{cask.tap.default_remote}/blob/HEAD/#{cask.tap.relative_cask_path(cask.token)}"
+            return "#{tap.default_remote}/blob/HEAD/#{tap.relative_cask_path(cask.token)}"
           end
 
-          cask.sourcefile_path.relative_path_from(cask.tap.path)
+          cask.sourcefile_path.relative_path_from(tap.path)
         end
 
-        github_remote_path(formula_or_cask.tap.remote, path)
+        github_remote_path(tap.remote, path.to_s)
       end
 
+      sig { params(formula: Formula).void }
       def info_formula(formula)
         specs = []
 
@@ -274,7 +298,14 @@ module Homebrew
         attrs << "pinned at #{formula.pinned_version}" if formula.pinned?
         attrs << "keg-only" if formula.keg_only?
 
-        puts "#{oh1_title(formula.full_name)}: #{specs * ", "}#{" [#{attrs * ", "}]" unless attrs.empty?}"
+        kegs = formula.installed_kegs
+        name_with_status = if kegs.empty?
+          pretty_uninstalled(formula.full_name)
+        else
+          pretty_installed(formula.full_name)
+        end
+
+        puts "#{oh1_title(name_with_status)}: #{specs * ", "}#{" [#{attrs * ", "}]" unless attrs.empty?}"
         puts formula.desc if formula.desc
         puts Formatter.url(formula.homepage) if formula.homepage
 
@@ -295,7 +326,6 @@ module Homebrew
           EOS
         end
 
-        kegs = formula.installed_kegs
         heads, versioned = kegs.partition { |keg| keg.version.head? }
         kegs = [
           *heads.sort_by { |keg| -keg.tab.time.to_i },
@@ -308,8 +338,8 @@ module Homebrew
               bottle.fetch_tab(quiet: !args.debug?) if args.fetch_manifest?
               bottle_size = bottle.bottle_size
               installed_size = bottle.installed_size
-              puts "Bottle Size: #{disk_usage_readable(bottle_size)}" if bottle_size
-              puts "Installed Size: #{disk_usage_readable(installed_size)}" if installed_size
+              puts "Bottle Size: #{Formatter.disk_usage_readable(bottle_size)}" if bottle_size
+              puts "Installed Size: #{Formatter.disk_usage_readable(installed_size)}" if installed_size
             rescue RuntimeError => e
               odebug e
             end
@@ -351,14 +381,19 @@ module Homebrew
         end
 
         caveats = Caveats.new(formula)
-        ohai "Caveats", caveats.to_s unless caveats.empty?
+        if (caveats_string = caveats.to_s.presence)
+          ohai "Caveats", caveats_string
+        end
+
+        return unless formula.core_formula?
 
         Utils::Analytics.formula_output(formula, args:)
       end
 
+      sig { params(dependencies: T::Array[Dependency]).returns(String) }
       def decorate_dependencies(dependencies)
         deps_status = dependencies.map do |dep|
-          if dep.satisfied?([])
+          if dep.satisfied?
             pretty_installed(dep_display_s(dep))
           else
             pretty_uninstalled(dep_display_s(dep))
@@ -367,6 +402,7 @@ module Homebrew
         deps_status.join(", ")
       end
 
+      sig { params(requirements: T::Array[Requirement]).returns(String) }
       def decorate_requirements(requirements)
         req_status = requirements.map do |req|
           req_s = req.display_s
@@ -375,16 +411,78 @@ module Homebrew
         req_status.join(", ")
       end
 
+      sig { params(dep: Dependency).returns(String) }
       def dep_display_s(dep)
         return dep.name if dep.option_tags.empty?
 
         "#{dep.name} #{dep.option_tags.map { |o| "--#{o}" }.join(" ")}"
       end
 
+      sig { params(cask: Cask::Cask).void }
       def info_cask(cask)
         require "cask/info"
 
         Cask::Info.info(cask, args:)
+      end
+
+      sig { params(title: String, items: T::Array[NameSize]).void }
+      def print_sizes_table(title, items)
+        return if items.blank?
+
+        ohai title
+
+        total_size = items.sum(&:size)
+        total_size_str = Formatter.disk_usage_readable(total_size)
+
+        name_width = (items.map { |item| item.name.length } + [5]).max
+        size_width = (items.map do |item|
+ Formatter.disk_usage_readable(item.size).length
+        end + [total_size_str.length]).max
+
+        items.each do |item|
+          puts format("%-#{name_width}s %#{size_width}s", item.name,
+                      Formatter.disk_usage_readable(item.size))
+        end
+
+        puts format("%-#{name_width}s %#{size_width}s", "Total", total_size_str)
+      end
+
+      sig { params(formulae: T::Array[Formula], casks: T::Array[Cask::Cask]).void }
+      def print_sizes(formulae: [], casks: [])
+        if formulae.blank? &&
+           (args.formulae? || (!args.casks? && args.no_named?))
+          formulae = Formula.installed
+        end
+
+        if casks.blank? &&
+           (args.casks? || (!args.formulae? && args.no_named?))
+          casks = Cask::Caskroom.casks
+        end
+
+        unless args.casks?
+          formula_sizes = formulae.map do |formula|
+            kegs = formula.installed_kegs
+            size = kegs.sum(&:disk_usage)
+            NameSize.new(name: formula.full_name, size:)
+          end
+          formula_sizes.sort_by! { |f| -f.size }
+          print_sizes_table("Formulae sizes:", formula_sizes)
+        end
+
+        return if casks.blank? || args.formulae?
+
+        cask_sizes = casks.filter_map do |cask|
+          installed_version = cask.installed_version
+          next unless installed_version.present?
+
+          versioned_staged_path = cask.caskroom_path.join(installed_version)
+          next unless versioned_staged_path.exist?
+
+          size = versioned_staged_path.children.sum(&:disk_usage)
+          NameSize.new(name: cask.full_name, size:)
+        end
+        cask_sizes.sort_by! { |c| -c.size }
+        print_sizes_table("Casks sizes:", cask_sizes)
       end
     end
   end

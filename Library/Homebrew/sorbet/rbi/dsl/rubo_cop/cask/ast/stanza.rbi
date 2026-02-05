@@ -28,6 +28,9 @@ class RuboCop::Cask::AST::Stanza
   def auto_updates?; end
 
   sig { returns(T::Boolean) }
+  def bash_completion?; end
+
+  sig { returns(T::Boolean) }
   def binary?; end
 
   sig { returns(T::Boolean) }
@@ -50,6 +53,9 @@ class RuboCop::Cask::AST::Stanza
 
   sig { returns(T::Boolean) }
   def dictionary?; end
+
+  sig { returns(T::Boolean) }
+  def fish_completion?; end
 
   sig { returns(T::Boolean) }
   def font?; end
@@ -97,16 +103,7 @@ class RuboCop::Cask::AST::Stanza
   def on_catalina?; end
 
   sig { returns(T::Boolean) }
-  def on_el_capitan?; end
-
-  sig { returns(T::Boolean) }
-  def on_high_sierra?; end
-
-  sig { returns(T::Boolean) }
   def on_intel?; end
-
-  sig { returns(T::Boolean) }
-  def on_mojave?; end
 
   sig { returns(T::Boolean) }
   def on_monterey?; end
@@ -115,13 +112,13 @@ class RuboCop::Cask::AST::Stanza
   def on_sequoia?; end
 
   sig { returns(T::Boolean) }
-  def on_sierra?; end
-
-  sig { returns(T::Boolean) }
   def on_sonoma?; end
 
   sig { params(args: T.untyped, block: T.untyped).returns(T::Boolean) }
   def on_system_block?(*args, &block); end
+
+  sig { returns(T::Boolean) }
+  def on_tahoe?; end
 
   sig { returns(T::Boolean) }
   def on_ventura?; end
@@ -146,6 +143,9 @@ class RuboCop::Cask::AST::Stanza
 
   sig { returns(T::Boolean) }
   def qlplugin?; end
+
+  sig { returns(T::Boolean) }
+  def rename?; end
 
   sig { returns(T::Boolean) }
   def screen_saver?; end
@@ -191,4 +191,7 @@ class RuboCop::Cask::AST::Stanza
 
   sig { returns(T::Boolean) }
   def zap?; end
+
+  sig { returns(T::Boolean) }
+  def zsh_completion?; end
 end

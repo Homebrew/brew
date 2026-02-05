@@ -50,7 +50,7 @@ Node modules should be installed to `libexec`. This prevents the Node modules fr
 
 In the following we distinguish between two types of Node modules installed using formulae:
 
-- formulae for standard Node modules compatible with npm's global module format which should use [`std_npm_args`](#installing-global-style-modules-with-std_npm_args-to-libexec) (like [`angular-cli`](https://github.com/Homebrew/homebrew-core/blob/master/Formula/a/angular-cli.rb) or [`webpack`](https://github.com/Homebrew/homebrew-core/blob/HEAD/Formula/w/webpack.rb))
+- formulae for standard Node modules compatible with npm's global module format which should use [`std_npm_args`](#installing-global-style-modules-with-std_npm_args-to-libexec) (like [`angular-cli`](https://github.com/Homebrew/homebrew-core/blob/HEAD/Formula/a/angular-cli.rb) or [`webpack`](https://github.com/Homebrew/homebrew-core/blob/HEAD/Formula/w/webpack.rb))
 - formulae where the `npm install` call is not the only required install step (e.g. need to also compile non-JavaScript sources) which have to use [`std_npm_args`](#installing-module-dependencies-locally-with-std_npm_args) (like [`emscripten`](https://github.com/Homebrew/homebrew-core/blob/HEAD/Formula/e/emscripten.rb) or [`grunt-cli`](https://github.com/Homebrew/homebrew-core/blob/HEAD/Formula/g/grunt-cli.rb))
 
 What both methods have in common is that they are setting the correct environment for using npm inside Homebrew and are returning the arguments for invoking `npm install` for their specific use cases. This includes fixing an important edge case with the npm cache (caused by Homebrew's redirection of `HOME` during the build and test process) by using our own custom `npm_cache` inside `HOMEBREW_CACHE`, which would otherwise result in very long build times and high disk space usage.
@@ -66,7 +66,7 @@ system "npm", "install", *std_npm_args
 This will install your Node module in npm's global module style with a custom prefix to `libexec`. All your modules' executables will be automatically resolved by npm into `libexec/bin` for you, which are not symlinked into Homebrew's prefix. To make sure these are installed, we need to symlink all executables to `bin` with:
 
 ```ruby
-bin.install_symlink Dir["#{libexec}/bin/*"]
+bin.install_symlink libexec.glob("bin/*")
 ```
 
 ### Installing module dependencies locally with `std_npm_args`
@@ -96,7 +96,7 @@ class Foo < Formula
 
   def install
     system "npm", "install", *std_npm_args
-    bin.install_symlink Dir["#{libexec}/bin/*"]
+    bin.install_symlink libexec.glob("bin/*")
   end
 
   test do

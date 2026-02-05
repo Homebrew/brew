@@ -17,8 +17,23 @@ class Homebrew::DevCmd::Contributions::Args < Homebrew::CLI::Args
   sig { returns(T.nilable(String)) }
   def from; end
 
+  sig { returns(T.nilable(String)) }
+  def org; end
+
+  sig { returns(T.nilable(String)) }
+  def organisation; end
+
+  sig { returns(T.nilable(String)) }
+  def organization; end
+
+  sig { returns(T.nilable(String)) }
+  def quarter; end
+
   sig { returns(T.nilable(T::Array[String])) }
   def repositories; end
+
+  sig { returns(T.nilable(String)) }
+  def team; end
 
   sig { returns(T.nilable(String)) }
   def to; end

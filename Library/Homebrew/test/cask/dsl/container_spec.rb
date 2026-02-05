@@ -17,7 +17,7 @@ RSpec.describe Cask::DSL::Container do
     let(:params) { { nested: "NestedApp.dmg", type: :naked } }
 
     it "returns the stringified attributes" do
-      expect(container.to_s).to eq('{:nested=>"NestedApp.dmg", :type=>:naked}')
+      expect(container.to_s).to eq(params.inspect)
     end
   end
 
