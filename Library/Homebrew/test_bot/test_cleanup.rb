@@ -101,9 +101,9 @@ module Homebrew
         end
 
         if tap
-          checkout_branch_if_needed(HOMEBREW_REPOSITORY)
-          reset_if_needed(HOMEBREW_REPOSITORY)
-          clean_if_needed(HOMEBREW_REPOSITORY)
+          checkout_branch_if_needed(HOMEBREW_REPOSITORY.to_s)
+          reset_if_needed(HOMEBREW_REPOSITORY.to_s)
+          clean_if_needed(HOMEBREW_REPOSITORY.to_s)
         end
 
         # Keep all "brew" invocations after HOMEBREW_REPOSITORY operations
