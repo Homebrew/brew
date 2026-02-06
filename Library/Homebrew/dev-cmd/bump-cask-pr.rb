@@ -72,6 +72,7 @@ module Homebrew
         ENV["BROWSER"] = EnvConfig.browser
 
         @cask_retried = T.let(false, T.nilable(T::Boolean))
+        @git_audited_for_download = T.let(false, T.nilable(T::Boolean))
         cask = begin
           args.named.to_casks.fetch(0)
         rescue Cask::CaskUnavailableError
@@ -161,10 +162,12 @@ module Homebrew
 
         # Remove nested arrays where elements are identical
         replacement_pairs = replacement_pairs.reject { |pair| pair[0] == pair[1] }.uniq.compact
-        Utils::Inreplace.inreplace_pairs(cask.sourcefile_path,
-                                         replacement_pairs,
-                                         read_only_run: args.dry_run?,
-                                         silent:        args.quiet?)
+        if replacement_pairs.present?
+          Utils::Inreplace.inreplace_pairs(cask.sourcefile_path,
+                                           replacement_pairs,
+                                           read_only_run: args.dry_run?,
+                                           silent:        args.quiet?)
+        end
 
         audit_exceptions = []
         audit_exceptions << ["min_os", "rosetta", "signing"] if ENV["HOMEBREW_TEST_BOT_AUTOBUMP"].present?
@@ -291,6 +294,13 @@ module Homebrew
                 else
                   tmp_cask.config.merge(Cask::Config.new(explicit: { languages: [language] }))
                 end
+                if !args.dry_run? && !@git_audited_for_download
+                  Utils::Inreplace.inreplace_pairs(cask.sourcefile_path,
+                                                   replacement_pairs.uniq.compact,
+                                                   silent: args.quiet?)
+                  replacement_pairs = []
+                end
+                run_git_audit_before_download(cask)
                 download = Cask::Download.new(new_cask, quarantine: true).fetch(verify_download_integrity: false)
                 Utils::Tar.validate_file(download)
 
@@ -348,6 +358,30 @@ module Homebrew
 
         cask.sourcefile_path.atomic_write(old_contents)
         odie "`brew audit` failed!"
+      end
+
+      sig { params(cask: Cask::Cask).void }
+      def run_git_audit_before_download(cask)
+        return if @git_audited_for_download
+
+        @git_audited_for_download = true
+
+        if args.dry_run?
+          if args.no_audit?
+            ohai "Skipping `brew audit --git`"
+          else
+            ohai "brew audit --git --cask #{cask.full_name}"
+          end
+          return
+        end
+
+        if args.no_audit?
+          ohai "Skipping `brew audit --git`"
+          return
+        end
+
+        system HOMEBREW_BREW_FILE, "audit", "--git", "--cask", cask.full_name
+        odie "`brew audit --git` failed!" unless $CHILD_STATUS.success?
       end
 
       sig { params(cask: Cask::Cask, old_contents: String).void }
