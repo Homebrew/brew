@@ -8,6 +8,8 @@ module Homebrew
     class Junit
       sig { params(tests: T::Array[Test]).void }
       def initialize(tests)
+        require "rexml/document"
+
         @tests = tests
         @xml_document = T.let(nil, T.nilable(REXML::Document))
       end
