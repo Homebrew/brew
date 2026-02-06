@@ -174,8 +174,9 @@ module Homebrew
         end
         return if wanted_artifacts.empty?
 
+        downloaded_for_sha = @downloaded_artifacts.fetch(sha) { |k| @downloaded_artifacts[k] = [] }
         if (attempted_artifact = wanted_artifacts.find do |artifact|
-              @downloaded_artifacts.fetch(sha).include?(artifact.fetch("name"))
+              downloaded_for_sha.include?(artifact.fetch("name"))
             end)
           opoo "Already tried #{attempted_artifact.fetch("name")} from #{sha}, giving up"
           return
@@ -191,7 +192,7 @@ module Homebrew
           wanted_artifacts.each do |artifact|
             name = artifact.fetch("name")
             ohai "Downloading artifact #{name} from #{sha}"
-            @downloaded_artifacts.fetch(sha) << name
+            downloaded_for_sha << name
 
             download_url = artifact.fetch("archive_download_url")
             artifact_id = artifact.fetch("id")
