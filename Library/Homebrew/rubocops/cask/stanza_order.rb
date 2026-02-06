@@ -1,4 +1,4 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
 
 require "forwardable"
@@ -15,6 +15,7 @@ module RuboCop
 
         MESSAGE = "`%<stanza>s` stanza out of order"
 
+        sig { override.params(stanza_block: RuboCop::Cask::AST::StanzaBlock).void }
         def on_cask_stanza_block(stanza_block)
           stanzas = stanza_block.stanzas
           ordered_stanzas = sort_stanzas(stanzas)
@@ -32,7 +33,7 @@ module RuboCop
 
               corrector.replace(
                 stanza_before.source_range_with_comments,
-                stanza_after.source_with_comments,
+                T.must(stanza_after).source_with_comments,
               )
 
               # Ignore node so that nested content is not auto-corrected and clobbered.
@@ -41,6 +42,7 @@ module RuboCop
           end
         end
 
+        sig { override.void }
         def on_new_investigation
           super
 
@@ -49,6 +51,7 @@ module RuboCop
 
         private
 
+        sig { params(stanzas: T::Array[RuboCop::Cask::AST::Stanza]).returns(T::Array[RuboCop::Cask::AST::Stanza]) }
         def sort_stanzas(stanzas)
           stanzas.sort do |stanza1, stanza2|
             i1 = stanza1.stanza_index
@@ -59,13 +62,8 @@ module RuboCop
               i2 = stanzas.index(stanza2)
             end
 
-            i1 - i2
+            T.must(i1) - T.must(i2)
           end
-        end
-
-        def stanza_order_index(stanza)
-          stanza_name = stanza.respond_to?(:method_name) ? stanza.method_name : stanza.stanza_name
-          RuboCop::Cask::Constants::STANZA_ORDER.index(stanza_name)
         end
       end
     end

@@ -27,23 +27,23 @@ module RuboCop
             Firefox
           ].freeze
 
-          reason = parameters(keg_only_node).first
-          offending_node(reason)
+          reason = parameters(keg_only_node).fetch(0)
+          @offensive_node = reason
           name = Regexp.new(T.must(@formula_name), Regexp::IGNORECASE)
           reason = string_content(reason).sub(name, "")
-          first_word = reason.split.first
+          first_word = reason.split.fetch(0)
 
           if /\A[A-Z]/.match?(reason) && !reason.start_with?(*allowlist)
             problem "'#{first_word}' from the `keg_only` reason should be '#{first_word.downcase}'." do |corrector|
-              reason[0] = reason[0].downcase
-              corrector.replace(T.must(@offensive_node).source_range, "\"#{reason}\"")
+              reason[0] = T.must(reason[0]).downcase
+              corrector.replace(@offensive_node.source_range, "\"#{reason}\"")
             end
           end
 
           return unless reason.end_with?(".")
 
           problem "`keg_only` reason should not end with a period." do |corrector|
-            corrector.replace(T.must(@offensive_node).source_range, "\"#{reason.chop}\"")
+            corrector.replace(@offensive_node.source_range, "\"#{reason.chop}\"")
           end
         end
 
@@ -51,7 +51,7 @@ module RuboCop
         def autocorrect(node)
           lambda do |corrector|
             reason = string_content(node)
-            reason[0] = reason[0].downcase
+            reason[0] = T.must(reason[0]).downcase
             reason = reason.delete_suffix(".")
             corrector.replace(node.source_range, "\"#{reason}\"")
           end

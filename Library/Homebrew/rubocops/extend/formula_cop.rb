@@ -51,12 +51,12 @@ module RuboCop
       sig {
         params(
           urls: T::Array[RuboCop::AST::Node], regex: Regexp,
-          _block: T.proc.params(arg0: T::Array[RuboCop::AST::Node], arg1: String, arg2: Integer).void
+          _block: T.proc.params(arg0: MatchData, arg1: String, arg2: Integer).void
         ).void
       }
       def audit_urls(urls, regex, &_block)
         urls.each_with_index do |url_node, index|
-          url_string_node = parameters(url_node).first
+          url_string_node = parameters(url_node).fetch(0)
           url_string = string_content(url_string_node)
           match_object = regex_match_group(url_string_node, regex)
           next unless match_object
@@ -145,20 +145,21 @@ module RuboCop
       def get_checksum_node(call)
         return if parameters(call).empty? || parameters(call).nil?
 
-        if parameters(call).first.str_type?
+        if parameters(call).fetch(0).str_type?
           parameters(call).first
         # sha256 is passed as a key-value pair in bottle blocks
-        elsif parameters(call).first.hash_type?
-          if parameters(call).first.keys.first.value == :cellar
+        elsif parameters(call).fetch(0).hash_type?
+          hash_node = T.cast(parameters(call).fetch(0), RuboCop::AST::HashNode)
+          if hash_node.keys.first.value == :cellar
             # sha256 :cellar :any, :tag "hexdigest"
-            parameters(call).first.values.last
-          elsif parameters(call).first.keys.first.is_a?(RuboCop::AST::SymbolNode)
+            hash_node.values.last
+          elsif hash_node.keys.first.is_a?(RuboCop::AST::SymbolNode)
             # sha256 :tag "hexdigest"
-            parameters(call).first.values.first
+            hash_node.values.first
           else
             # Legacy bottle block syntax
             # sha256 "hexdigest" => :tag
-            parameters(call).first.keys.first
+            hash_node.keys.first
           end
         end
       end

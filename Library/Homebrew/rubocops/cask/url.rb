@@ -37,7 +37,7 @@ module RuboCop
           url_stanza = stanza_node.first_argument
           hash_node = stanza_node.last_argument
 
-          audit_url(:cask, [stanza.stanza_node], [], livecheck_url: false)
+          audit_url(:cask, [stanza_node], [], livecheck_url: false)
 
           # Check for http:// URLs in homebrew-cask (skip deprecated/disabled casks)
           # TODO: Remove the deprecated/disabled check after Homebrew/cask has no more

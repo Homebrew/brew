@@ -20,16 +20,16 @@ module RuboCop
           find_method_calls_by_name(body_node, :conflicts_with).each do |conflicts_with_call|
             next unless parameters(conflicts_with_call).last.respond_to? :values
 
-            reason = parameters(conflicts_with_call).last.values.first
+            reason = T.cast(parameters(conflicts_with_call).fetch(-1), RuboCop::AST::HashNode).values.first
             offending_node(reason)
             name = Regexp.new(T.must(@formula_name), Regexp::IGNORECASE)
             reason_text = string_content(reason).sub(name, "")
-            first_word = reason_text.split.first
+            first_word = reason_text.split.fetch(0)
 
             if reason_text.match?(/\A[A-Z]/)
               problem "'#{first_word}' from the `conflicts_with` reason " \
                       "should be '#{first_word.downcase}'." do |corrector|
-                reason_text[0] = reason_text[0].downcase
+                reason_text[0] = T.must(reason_text[0]).downcase
                 corrector.replace(reason.source_range, "\"#{reason_text}\"")
               end
             end

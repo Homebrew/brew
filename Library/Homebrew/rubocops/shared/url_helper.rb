@@ -1,4 +1,4 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
 
 require "rubocops/shared/helper_functions"
@@ -13,13 +13,20 @@ module RuboCop
       #
       # @param urls [Array] url/mirror method call nodes
       # @param regex [Regexp] pattern to match URLs
-      def audit_urls(urls, regex)
+      sig {
+        params(
+          urls:   T::Array[T.any(RuboCop::AST::BlockNode, RuboCop::AST::SendNode)],
+          regex:  T.any(Regexp, String),
+          _block: T.proc.params(match_object: MatchData, url: String, index: Integer).void,
+        ).void
+      }
+      def audit_urls(urls, regex, &_block)
         urls.each_with_index do |url_node, index|
           if @type == :cask
-            url_string_node = url_node.first_argument
+            url_string_node = T.cast(url_node, RuboCop::AST::SendNode).first_argument
             url_string = url_node.source
           else
-            url_string_node = parameters(url_node).first
+            url_string_node = parameters(url_node).fetch(0)
             url_string = string_content(url_string_node)
           end
 
@@ -32,8 +39,16 @@ module RuboCop
         end
       end
 
+      sig {
+        params(
+          type:          Symbol,
+          urls:          T::Array[T.any(RuboCop::AST::BlockNode, RuboCop::AST::SendNode)],
+          mirrors:       T::Array[T.any(RuboCop::AST::BlockNode, RuboCop::AST::SendNode)],
+          livecheck_url: T.nilable(T.any(FalseClass, String)),
+        ).void
+      }
       def audit_url(type, urls, mirrors, livecheck_url: false)
-        @type = type
+        @type = T.let(type, T.nilable(Symbol))
 
         # URLs must be ASCII; IDNs must be punycode
         ascii_pattern = /[^\p{ASCII}]+/
@@ -73,7 +88,7 @@ module RuboCop
 
         audit_urls(mirrors, /.*/) do |_, mirror|
           urls.each do |url|
-            url_string = string_content(parameters(url).first)
+            url_string = string_content(parameters(url).fetch(0))
             next unless url_string.eql?(mirror)
 
             problem "URL should not be duplicated as a mirror: #{url_string}"
