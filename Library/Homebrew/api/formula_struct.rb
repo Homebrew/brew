@@ -167,13 +167,13 @@ module Homebrew
           hash = hash.merge(bottle_hash)
         end
 
-        hash = self.class.deep_stringify_symbols(hash)
-        self.class.deep_compact_blank(hash)
+        hash = ::Utils.deep_stringify_symbols(hash)
+        ::Utils.deep_compact_blank(hash)
       end
 
       sig { params(hash: T::Hash[String, T.untyped], bottle_tag: ::Utils::Bottles::Tag).returns(FormulaStruct) }
       def self.deserialize(hash, bottle_tag: ::Utils::Bottles.tag)
-        hash = deep_unstringify_symbols(hash)
+        hash = ::Utils.deep_unstringify_symbols(hash)
 
         # Items that don't follow the `hash["foo_present"] = hash["foo_args"].present?` pattern are overridden below
         PREDICATES.each do |name|
@@ -240,81 +240,6 @@ module Homebrew
 
         # The case above is exhaustive so args will never be nil, but sorbet cannot infer that.
         T.must(args)
-      end
-
-      # Converts a symbol to a string starting with `:`, otherwise returns the input.
-      #
-      #   stringify_symbol(:example)  # => ":example"
-      #   stringify_symbol("example") # => "example"
-      sig { params(value: T.any(String, Symbol)).returns(T.nilable(String)) }
-      def self.stringify_symbol(value)
-        return ":#{value}" if value.is_a?(Symbol)
-
-        value
-      end
-
-      sig { params(obj: T.untyped).returns(T.untyped) }
-      def self.deep_stringify_symbols(obj)
-        case obj
-        when String
-          # Escape leading : or \ to avoid confusion with stringified symbols
-          # ":foo" -> "\:foo"
-          # "\foo" -> "\\foo"
-          if obj.start_with?(":", "\\")
-            "\\#{obj}"
-          else
-            obj
-          end
-        when Symbol
-          ":#{obj}"
-        when Hash
-          obj.to_h { |k, v| [deep_stringify_symbols(k), deep_stringify_symbols(v)] }
-        when Array
-          obj.map { |v| deep_stringify_symbols(v) }
-        else
-          obj
-        end
-      end
-
-      sig { params(obj: T.untyped).returns(T.untyped) }
-      def self.deep_unstringify_symbols(obj)
-        case obj
-        when String
-          if obj.start_with?("\\")
-            obj[1..]
-          elsif obj.start_with?(":")
-            T.must(obj[1..]).to_sym
-          else
-            obj
-          end
-        when Hash
-          obj.to_h { |k, v| [deep_unstringify_symbols(k), deep_unstringify_symbols(v)] }
-        when Array
-          obj.map { |v| deep_unstringify_symbols(v) }
-        else
-          obj
-        end
-      end
-
-      sig {
-        type_parameters(:U)
-          .params(obj: T.all(T.type_parameter(:U), Object))
-          .returns(T.nilable(T.type_parameter(:U)))
-      }
-      def self.deep_compact_blank(obj)
-        obj = case obj
-        when Hash
-          obj.transform_values { |v| deep_compact_blank(v) }
-             .compact
-        when Array
-          obj.filter_map { |v| deep_compact_blank(v) }
-        else
-          obj
-        end
-
-        return if obj.blank? || (obj.is_a?(Numeric) && obj.zero?)
-
-        obj
       end
     end
   end

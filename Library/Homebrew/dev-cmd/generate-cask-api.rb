@@ -71,21 +71,17 @@ module Homebrew
           File.write("_data/cask_canonical.json", "#{canonical_json}\n") unless args.dry_run?
 
           OnSystem::VALID_OS_ARCH_TAGS.each do |bottle_tag|
-            renames = {}
-            variation_casks = all_casks.to_h do |token, cask|
-              cask = Homebrew::API.merge_variations(cask, bottle_tag:)
-
-              cask["old_tokens"]&.each do |old_token|
-                renames[old_token] = token
-              end
-
-              [token, cask]
+            casks = all_casks.to_h do |token, hash|
+              hash = Homebrew::API::Cask::CaskStructGenerator.generate_cask_struct_hash(hash, bottle_tag:)
+                                                             .serialize
+              [token, hash]
             end
 
             json_contents = {
-              casks:          variation_casks,
-              renames:        renames,
-              tap_migrations: CoreCaskTap.instance.tap_migrations,
+              casks:,
+              renames:        tap.cask_renames,
+              tap_git_head:   tap.git_head,
+              tap_migrations: tap.tap_migrations,
             }
 
             File.write("api/internal/cask.#{bottle_tag}.json", JSON.generate(json_contents)) unless args.dry_run?

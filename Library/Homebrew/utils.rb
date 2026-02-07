@@ -232,4 +232,68 @@ module Utils
 
     string
   end
+
+  sig { params(obj: T.untyped).returns(T.untyped) }
+  def self.deep_stringify_symbols(obj)
+    case obj
+    when String
+      # Escape leading : or \ to avoid confusion with stringified symbols
+      # ":foo" -> "\:foo"
+      # "\foo" -> "\\foo"
+      if obj.start_with?(":", "\\")
+        "\\#{obj}"
+      else
+        obj
+      end
+    when Symbol
+      ":#{obj}"
+    when Hash
+      obj.to_h { |k, v| [deep_stringify_symbols(k), deep_stringify_symbols(v)] }
+    when Array
+      obj.map { |v| deep_stringify_symbols(v) }
+    else
+      obj
+    end
+  end
+
+  sig { params(obj: T.untyped).returns(T.untyped) }
+  def self.deep_unstringify_symbols(obj)
+    case obj
+    when String
+      if obj.start_with?("\\")
+        obj[1..]
+      elsif obj.start_with?(":")
+        T.must(obj[1..]).to_sym
+      else
+        obj
+      end
+    when Hash
+      obj.to_h { |k, v| [deep_unstringify_symbols(k), deep_unstringify_symbols(v)] }
+    when Array
+      obj.map { |v| deep_unstringify_symbols(v) }
+    else
+      obj
+    end
+  end
+
+  sig {
+    type_parameters(:U)
+      .params(obj: T.all(T.type_parameter(:U), Object))
+      .returns(T.nilable(T.type_parameter(:U)))
+  }
+  def self.deep_compact_blank(obj)
+    obj = case obj
+    when Hash
+      obj.transform_values { |v| deep_compact_blank(v) }
+         .compact
+    when Array
+      obj.filter_map { |v| deep_compact_blank(v) }
+    else
+      obj
+    end
+
+    return if obj.blank? || (obj.is_a?(Numeric) && obj.zero?)
+
+    obj
+  end
 end
