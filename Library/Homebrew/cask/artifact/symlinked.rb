@@ -1,4 +1,4 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
 
 require "cask/artifact/relocated"
@@ -17,14 +17,17 @@ module Cask
         "#{english_name} #{link_type_english_name}s"
       end
 
+      sig { params(options: T.anything).void }
       def install_phase(**options)
         link(**options)
       end
 
+      sig { params(options: T.anything).void }
       def uninstall_phase(**options)
         unlink(**options)
       end
 
+      sig { returns(String) }
       def summarize_installed
         if target.symlink? && target.exist? && target.readlink.exist?
           "#{printable_target} -> #{target.readlink} (#{target.readlink.abv})"
@@ -41,7 +44,8 @@ module Cask
 
       private
 
-      def link(force: false, adopt: false, command: nil, **_options)
+      sig { overridable.params(command: T.class_of(SystemCommand), force: T::Boolean, adopt: T::Boolean, _options: T.anything).void }
+      def link(command:, force: false, adopt: false, **_options)
         unless source.exist?
           raise CaskError,
                 "It seems the #{self.class.link_type_english_name.downcase} " \
@@ -68,7 +72,8 @@ module Cask
         create_filesystem_link(command)
       end
 
-      def unlink(command: nil, **)
+      sig { params(command: T.class_of(SystemCommand), _options: T.anything).void }
+      def unlink(command:, **_options)
         return unless target.symlink?
 
         ohai "Unlinking #{self.class.english_name} '#{target}'"

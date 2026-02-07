@@ -1,4 +1,4 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
 
 require "cask/artifact/relocated"
@@ -13,14 +13,37 @@ module Cask
         "#{english_name}s"
       end
 
-      def install_phase(**options)
-        move(**options)
+      sig {
+        overridable.params(
+          adopt:        T::Boolean,
+          auto_updates: T.nilable(T::Boolean),
+          force:        T::Boolean,
+          verbose:      T::Boolean,
+          predecessor:  T.nilable(Cask),
+          successor:    T.nilable(Cask),
+          reinstall:    T::Boolean,
+          command:      T.class_of(SystemCommand),
+        ).void
+      }
+      def install_phase(
+        adopt: false,
+        auto_updates: false,
+        force: false,
+        verbose: false,
+        predecessor: nil,
+        successor: nil,
+        reinstall: false,
+        command: SystemCommand
+      )
+        move(adopt:, auto_updates:, force:, verbose:, predecessor:, successor:, reinstall:, command:)
       end
 
-      def uninstall_phase(**options)
-        move_back(**options)
+      sig { overridable.params(command: T.class_of(SystemCommand), options: T.anything).void }
+      def uninstall_phase(command:, **options)
+        move_back(command:, **options)
       end
 
+      sig { overridable.returns(String) }
       def summarize_installed
         if target.exist?
           "#{printable_target} (#{target.abv})"
@@ -31,8 +54,13 @@ module Cask
 
       private
 
-      def move(adopt: false, auto_updates: false, force: false, verbose: false, predecessor: nil, reinstall: false,
-               command: nil, **options)
+      sig {
+        params(command: T.class_of(SystemCommand), adopt: T::Boolean, auto_updates: T.nilable(T::Boolean),
+               force: T::Boolean, verbose: T::Boolean, predecessor: T.nilable(Cask), reinstall: T::Boolean,
+               options: T.anything).void
+      }
+      def move(command:, adopt: false, auto_updates: false, force: false, verbose: false, predecessor: nil,
+               reinstall: false, **options)
         unless source.exist?
           raise CaskError, "It seems the #{self.class.english_name} source '#{source}' is not there."
         end
@@ -128,12 +156,14 @@ module Cask
       end
 
       # Performs any actions necessary after the source has been moved to the target location.
+      sig { params(command: T.class_of(SystemCommand)).void }
       def post_move(command)
         FileUtils.ln_sf target, source
 
         add_altname_metadata(target, source.basename, command:)
       end
 
+      sig { params(cask: T.nilable(Cask)).returns(T::Boolean) }
       def matching_artifact?(cask)
         return false unless cask
 
@@ -142,7 +172,8 @@ module Cask
         end
       end
 
-      def move_back(skip: false, force: false, adopt: false, command: nil, **options)
+      sig { params(command: T.class_of(SystemCommand), skip: T::Boolean, force: T::Boolean, adopt: T::Boolean, options: T.anything).void }
+      def move_back(command:, skip: false, force: false, adopt: false, **options)
         FileUtils.rm source if source.symlink? && source.dirname.join(source.readlink) == target
 
         if Utils.path_occupied?(source)
@@ -178,7 +209,8 @@ module Cask
         delete(target, force:, command:, **options)
       end
 
-      def delete(target, force: false, successor: nil, command: nil, **_)
+      sig { params(target: Pathname, command: T.class_of(SystemCommand), force: T::Boolean, successor: T.nilable(Cask), _options: T.anything).void }
+      def delete(target, command:, force: false, successor: nil, **_options)
         ohai "Removing #{self.class.english_name} '#{target}'"
         raise CaskError, "Cannot remove undeletable #{self.class.english_name}." if undeletable?(target)
 
