@@ -629,7 +629,7 @@ module GitHub
 
     confidence = version ? "are" : "might be"
     duplicates_message = <<~EOS
-      These #{state} pull requests #{confidence} duplicates:
+      These #{"#{state} " if state}pull requests #{confidence} duplicates:
       #{pull_requests.map { |pr| "#{pr["title"]} #{pr["html_url"]}" }.join("\n")}
     EOS
     error_message = <<~EOS
