@@ -108,6 +108,7 @@ module Homebrew
         ENV["BROWSER"] = Homebrew::EnvConfig.browser
 
         @tap_retried = T.let(false, T.nilable(T::Boolean))
+        @git_audited_for_fetch = T.let([], T.nilable(T::Array[String]))
         begin
           formula = args.named.to_formulae.first
           raise FormulaUnspecifiedError if formula.blank?
@@ -175,6 +176,7 @@ module Homebrew
           odie "#{commit_formula}: no stable specification found!" if commit_formula_spec.blank?
 
           formula_pr_message = ""
+          old_contents = commit_formula.path.read
 
           new_url = args.url
           new_version = args.version
@@ -203,6 +205,8 @@ module Homebrew
           old_formula_version = formula_version(commit_formula)
           old_version = old_formula_version.to_s
           forced_version = new_version.present?
+          url_written_before_fetch = false
+          tag_written_before_fetch = false
           new_url_hash = if new_url.present? && new_hash.present?
             check_new_version(commit_formula, tap_remote_repo, url: new_url) if new_version.blank?
             true
@@ -223,6 +227,13 @@ module Homebrew
                 EOS
               end
               check_new_version(commit_formula, tap_remote_repo, url: old_url, tag: new_tag) if new_version.blank?
+              unless args.dry_run?
+                Utils::Inreplace.inreplace_pairs(commit_formula.path,
+                                                 [[/tag:(\s+")#{Regexp.escape(old_tag)}"/, "tag:\\1#{new_tag}\""]],
+                                                 silent: args.quiet?)
+                tag_written_before_fetch = true
+              end
+              run_git_audit_before_fetch(commit_formula)
               resource_path, forced_version = fetch_resource_and_forced_version(commit_formula, new_version, old_url,
                                                                                 tag: new_tag)
               new_revision = Utils.popen_read("git", "-C", resource_path.to_s, "rev-parse", "-q", "--verify", "HEAD")
@@ -255,6 +266,13 @@ module Homebrew
               odie "There was an issue generating the updated url, you may need to create the PR manually"
             end
             check_new_version(commit_formula, tap_remote_repo, url: new_url) if new_version.blank?
+            unless args.dry_run?
+              Utils::Inreplace.inreplace_pairs(commit_formula.path,
+                                               [[/#{Regexp.escape(old_url)}/, new_url]],
+                                               silent: args.quiet?)
+              url_written_before_fetch = true
+            end
+            run_git_audit_before_fetch(commit_formula)
             resource_path, forced_version = fetch_resource_and_forced_version(commit_formula, new_version, new_url)
             Utils::Tar.validate_file(resource_path)
             new_hash = resource_path.sha256
@@ -276,38 +294,44 @@ module Homebrew
           end
 
           replacement_pairs += if new_url_hash.present?
-            [
-              [
+            pairs = []
+            unless url_written_before_fetch
+              pairs << [
                 /#{Regexp.escape(T.must(commit_formula_spec.url))}/,
                 new_url,
-              ],
-              [
-                old_hash,
-                new_hash,
-              ],
+              ]
+            end
+            pairs << [
+              old_hash,
+              new_hash,
             ]
+            pairs
           elsif new_tag.present?
-            [
-              [
+            pairs = []
+            unless tag_written_before_fetch
+              pairs << [
                 /tag:(\s+")#{commit_formula_spec.specs[:tag]}(?=")/,
                 "tag:\\1#{new_tag}\\2",
-              ],
-              [
-                commit_formula_spec.specs[:revision],
-                new_revision,
-              ],
+              ]
+            end
+            pairs << [
+              commit_formula_spec.specs[:revision],
+              new_revision,
             ]
+            pairs
           elsif new_url.present?
-            [
-              [
+            pairs = []
+            unless url_written_before_fetch
+              pairs << [
                 /#{Regexp.escape(T.must(commit_formula_spec.url))}/,
                 new_url,
-              ],
-              [
-                commit_formula_spec.specs[:revision],
-                new_revision,
-              ],
+              ]
+            end
+            pairs << [
+              commit_formula_spec.specs[:revision],
+              new_revision,
             ]
+            pairs
           else
             [
               [
@@ -316,8 +340,6 @@ module Homebrew
               ],
             ]
           end
-
-          old_contents = commit_formula.path.read
 
           if new_mirrors.present? && new_url.present?
             replacement_pairs << [
@@ -354,10 +376,15 @@ module Homebrew
               "",
             ]
           end
-          new_contents = Utils::Inreplace.inreplace_pairs(commit_formula.path,
-                                                          replacement_pairs.uniq.compact,
-                                                          read_only_run: args.dry_run?,
-                                                          silent:        args.quiet?)
+          replacement_pairs = replacement_pairs.uniq.compact
+          new_contents = if replacement_pairs.present?
+            Utils::Inreplace.inreplace_pairs(commit_formula.path,
+                                             replacement_pairs,
+                                             read_only_run: args.dry_run?,
+                                             silent:        args.quiet?)
+          else
+            old_contents
+          end
 
           new_formula_version = formula_version(commit_formula, new_contents)
 
@@ -541,6 +568,31 @@ module Homebrew
         new_url.gsub(%r{/(v?)#{Regexp.escape(partial_old_version)}/}, "/\\1#{partial_new_version}/")
       end
 
+      sig { params(formula: Formula).void }
+      def run_git_audit_before_fetch(formula)
+        audited_formulae = T.must(@git_audited_for_fetch)
+        return if audited_formulae.include?(formula.full_name)
+
+        audited_formulae << formula.full_name
+
+        if args.dry_run?
+          if args.no_audit?
+            ohai "Skipping `brew audit --git`"
+          else
+            ohai "brew audit --git --formula #{formula.full_name}"
+          end
+          return
+        end
+
+        if args.no_audit?
+          ohai "Skipping `brew audit --git`"
+          return
+        end
+
+        system HOMEBREW_BREW_FILE, "audit", "--git", "--formula", formula.full_name
+        odie "`brew audit --git` failed for #{formula.full_name}!" unless $CHILD_STATUS.success?
+      end
+
       sig {
         params(formula_or_resource: T.any(Formula, Resource), new_version: T.nilable(String), url: String,
                specs: String).returns(T::Array[T.untyped])
@@ -581,6 +633,7 @@ module Homebrew
           new_mirrors = resource.mirrors.map do |mirror|
             update_url(mirror, resource.version.to_s, version)
           end
+          run_git_audit_before_fetch(formula)
           resource_path, forced_version = fetch_resource_and_forced_version(resource, version, new_url)
           Utils::Tar.validate_file(resource_path)
           new_hash = resource_path.sha256
