@@ -13,7 +13,7 @@ module RuboCop
           version_node = find_node_method_by_name(formula_nodes.body_node, :version)
           return unless version_node
 
-          version = string_content(parameters(version_node).first)
+          version = string_content(parameters(version_node).fetch(0))
 
           problem "Version is set to an empty string" if version.empty?
 

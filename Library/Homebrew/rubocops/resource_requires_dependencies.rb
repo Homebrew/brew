@@ -48,7 +48,7 @@ module RuboCop
             end
             next if required_deps.all? { |dep| uses_from_macos_or_depends_on.include?(dep) }
 
-            offending_node(found)
+            @offensive_node = found
             problem "Add `#{kind}` lines above for #{required_deps.map { |req| "`\"#{req}\"`" }.join(" and ")}."
           end
         end

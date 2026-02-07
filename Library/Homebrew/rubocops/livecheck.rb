@@ -16,15 +16,16 @@ module RuboCop
           livecheck_node = find_block(formula_nodes.body_node, :livecheck)
           return if livecheck_node.blank?
 
-          skip = find_every_method_call_by_name(livecheck_node, :skip).first
+          skip = T.let(find_every_method_call_by_name(livecheck_node, :skip).first,
+                       T.nilable(T.any(RuboCop::AST::Node, String)))
           return if skip.blank?
 
           return if find_every_method_call_by_name(livecheck_node).length < 3
 
           offending_node(livecheck_node)
           problem "Skipped formulae must not contain other livecheck information." do |corrector|
-            skip = find_every_method_call_by_name(livecheck_node, :skip).first
-            skip = find_strings(skip).first
+            skip = find_every_method_call_by_name(livecheck_node, :skip).fetch(0)
+            skip = find_strings(skip).fetch(0)
             skip = string_content(skip) if skip.present?
             corrector.replace(
               livecheck_node.source_range,
@@ -74,6 +75,8 @@ module RuboCop
           return if skip.present?
 
           livecheck_url_node = find_every_method_call_by_name(livecheck_node, :url).first
+          return if livecheck_url_node.blank?
+
           livecheck_url = find_strings(livecheck_url_node).first
           return if livecheck_url.blank?
 
@@ -101,7 +104,7 @@ module RuboCop
           stable_url = string_content(stable_url) if stable_url.present?
 
           homepage = find_every_method_call_by_name(body_node, :homepage).first
-          homepage_url = string_content(find_strings(homepage).first) if homepage.present?
+          homepage_url = string_content(find_strings(homepage).fetch(0)) if homepage.present?
 
           formula_urls = { head: head_url, stable: stable_url, homepage: homepage_url }.compact
 
@@ -161,13 +164,13 @@ module RuboCop
           return if livecheck_regex_node.blank?
 
           regex_node = livecheck_regex_node.descendants.first
-          pattern = string_content(find_strings(regex_node).first)
+          pattern = string_content(find_strings(regex_node).fetch(0))
           match = pattern.match(TAR_PATTERN)
           return if match.blank?
 
           offending_node(regex_node)
           problem "Use `\\.t` instead of `#{match}`" do |corrector|
-            node = find_strings(regex_node).first
+            node = find_strings(regex_node).fetch(0)
             correct = node.source.gsub(TAR_PATTERN, "\\.t")
             corrector.replace(node.source_range, correct)
           end
