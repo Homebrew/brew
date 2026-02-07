@@ -28,6 +28,7 @@ RSpec.describe Homebrew::Bundle::Commands::Cleanup do
         mas 'appstoreapp1', id: 1
         vscode 'VsCodeExtension1'
       EOS
+      described_class.read_dsl_from_brewfile!
       %w[a b d2 homebrew/tap/f homebrew/tap/g homebrew/tap/h homebrew/tap/i2
          homebrew/tap/hasdependency hasbuilddependency1 hasbuilddependency2].each do |full_name|
         tap_name, _, name = full_name.rpartition("/")
@@ -133,6 +134,7 @@ RSpec.describe Homebrew::Bundle::Commands::Cleanup do
       allow_any_instance_of(Pathname).to receive(:read).and_return <<~EOS
         flatpak 'org.gnome.Calculator'
       EOS
+      described_class.read_dsl_from_brewfile!
       allow(Homebrew::Bundle).to receive(:flatpak_installed?).and_return(true)
       allow(Homebrew::Bundle::FlatpakDumper).to receive(:packages).and_return(%w[org.gnome.Calculator
                                                                                  org.mozilla.firefox])
@@ -143,6 +145,7 @@ RSpec.describe Homebrew::Bundle::Commands::Cleanup do
   context "when there are no formulae to uninstall and no taps to untap" do
     before do
       described_class.reset!
+      allow_any_instance_of(Pathname).to receive(:read).and_return("")
       allow(described_class).to receive_messages(casks_to_uninstall:             [],
                                                  formulae_to_uninstall:          [],
                                                  taps_to_untap:                  [],
@@ -160,6 +163,7 @@ RSpec.describe Homebrew::Bundle::Commands::Cleanup do
   context "when there are casks to uninstall" do
     before do
       described_class.reset!
+      allow_any_instance_of(Pathname).to receive(:read).and_return("")
       allow(described_class).to receive_messages(casks_to_uninstall:             %w[a b],
                                                  formulae_to_uninstall:          [],
                                                  taps_to_untap:                  [],
@@ -183,6 +187,7 @@ RSpec.describe Homebrew::Bundle::Commands::Cleanup do
   context "when there are casks to zap" do
     before do
       described_class.reset!
+      allow_any_instance_of(Pathname).to receive(:read).and_return("")
       allow(described_class).to receive_messages(casks_to_uninstall:             %w[a b],
                                                  formulae_to_uninstall:          [],
                                                  taps_to_untap:                  [],
@@ -231,6 +236,7 @@ RSpec.describe Homebrew::Bundle::Commands::Cleanup do
   context "when there are taps to untap" do
     before do
       described_class.reset!
+      allow_any_instance_of(Pathname).to receive(:read).and_return("")
       allow(described_class).to receive_messages(casks_to_uninstall:             [],
                                                  formulae_to_uninstall:          [],
                                                  taps_to_untap:                  %w[a b],
@@ -254,6 +260,7 @@ RSpec.describe Homebrew::Bundle::Commands::Cleanup do
   context "when there are VSCode extensions to uninstall" do
     before do
       described_class.reset!
+      allow_any_instance_of(Pathname).to receive(:read).and_return("")
       allow(Homebrew::Bundle).to receive(:which_vscode).and_return(Pathname("code"))
       allow(described_class).to receive_messages(casks_to_uninstall:             [],
                                                  formulae_to_uninstall:          [],
@@ -278,6 +285,7 @@ RSpec.describe Homebrew::Bundle::Commands::Cleanup do
   context "when there are flatpaks to uninstall", :needs_linux do
     before do
       described_class.reset!
+      allow_any_instance_of(Pathname).to receive(:read).and_return("")
       allow(described_class).to receive_messages(casks_to_uninstall:             [],
                                                  formulae_to_uninstall:          [],
                                                  taps_to_untap:                  [],
@@ -301,6 +309,7 @@ RSpec.describe Homebrew::Bundle::Commands::Cleanup do
   context "when there are casks and formulae to uninstall and taps to untap but without passing `--force`" do
     before do
       described_class.reset!
+      allow_any_instance_of(Pathname).to receive(:read).and_return("")
       allow(described_class).to receive_messages(casks_to_uninstall:             %w[a b],
                                                  formulae_to_uninstall:          %w[a b],
                                                  taps_to_untap:                  %w[a b],
@@ -327,6 +336,7 @@ RSpec.describe Homebrew::Bundle::Commands::Cleanup do
   context "when there is brew cleanup output" do
     before do
       described_class.reset!
+      allow_any_instance_of(Pathname).to receive(:read).and_return("")
       allow(described_class).to receive_messages(casks_to_uninstall:             [],
                                                  formulae_to_uninstall:          [],
                                                  taps_to_untap:                  [],
