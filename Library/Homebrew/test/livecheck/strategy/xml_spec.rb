@@ -217,13 +217,11 @@ RSpec.describe Homebrew::Livecheck::Strategy::Xml do
         regex:,
         url:     http_url,
       }
-      default = base.merge(matches: {})
 
       {
         fetched:        base.merge({ content: content_version_text }),
-        default:,
         cached:         base.merge({ cached: true }),
-        cached_default: default.merge({ cached: true }),
+        cached_default: base.merge({ matches: {}, cached: true }),
       }
     end
 
@@ -236,7 +234,7 @@ RSpec.describe Homebrew::Livecheck::Strategy::Xml do
     end
 
     it "finds versions in content using a block" do
-      expect(xml.find_versions(url: http_url, regex:, provided_content: content_version_text) do |xml, regex|
+      expect(xml.find_versions(url: http_url, regex:, content: content_version_text) do |xml, regex|
         xml.get_elements("/versions/version").map { |item| item.text[regex, 1] }
       end).to eq(match_data[:cached])
 
@@ -244,24 +242,24 @@ RSpec.describe Homebrew::Livecheck::Strategy::Xml do
       #       `livecheck` block but we're using a regex literal in the
       #       `strategy` block here simply to ensure this method works as
       #       expected when a regex isn't provided.
-      expect(xml.find_versions(url: http_url, provided_content: content_version_text) do |xml|
+      expect(xml.find_versions(url: http_url, content: content_version_text) do |xml|
         regex = /^v?(\d+(?:\.\d+)+)$/i
         xml.get_elements("/versions/version").map { |item| item.text[regex, 1] }
       end).to eq(match_data[:cached].merge({ regex: nil }))
     end
 
     it "errors if a block is not provided" do
-      expect { xml.find_versions(url: http_url, provided_content: content_simple) }
+      expect { xml.find_versions(url: http_url, content: content_simple) }
         .to raise_error(ArgumentError, "Xml requires a `strategy` block")
     end
 
     it "returns default match_data when url is blank" do
-      expect(xml.find_versions(url: "", regex:, provided_content: content_simple) { "1.2.3" })
-        .to eq(match_data[:default].merge({ url: "" }))
+      expect(xml.find_versions(url: "", regex:, content: content_simple) { "1.2.3" })
+        .to eq(match_data[:cached_default].merge({ url: "" }))
     end
 
     it "returns default match_data when content is blank" do
-      expect(xml.find_versions(url: http_url, regex:, provided_content: "") { "1.2.3" })
+      expect(xml.find_versions(url: http_url, regex:, content: "") { "1.2.3" })
         .to eq(match_data[:cached_default])
     end
   end

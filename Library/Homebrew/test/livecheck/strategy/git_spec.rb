@@ -307,29 +307,29 @@ RSpec.describe Homebrew::Livecheck::Strategy::Git do
     end
 
     it "finds versions in provided content" do
-      expect(git.find_versions(url: git_url, regex: regexes[:brew], provided_content: content[:normal]))
+      expect(git.find_versions(url: git_url, regex: regexes[:brew], content: content[:normal]))
         .to eq(match_data[:cached])
 
       # A regex should be passed into a `strategy` block (instead of using a
       # regex literal within the `strategy` block) but we're using this
       # approach for the sake of testing.
-      expect(git.find_versions(url: git_url, provided_content: content[:normal]) do |tags|
+      expect(git.find_versions(url: git_url, content: content[:normal]) do |tags|
         tags.map { |tag| tag[%r{^brew/v?(\d+(?:\.\d+)+)$}i, 1] }
       end).to eq(match_data[:cached].merge({ regex: nil }))
     end
 
     it "returns default match_data when url is blank" do
-      expect(git.find_versions(url: "", regex: regexes[:brew], provided_content: content[:normal]))
-        .to eq({ matches: {}, regex: regexes[:brew], url: "" })
+      expect(git.find_versions(url: "", regex: regexes[:brew], content: content[:normal]))
+        .to eq(match_data[:cached_default].merge({ url: "" }))
     end
 
     it "returns default match_data when content doesn't contain tags" do
-      expect(git.find_versions(url: git_url, regex: regexes[:brew], provided_content: "abc"))
+      expect(git.find_versions(url: git_url, regex: regexes[:brew], content: "abc"))
         .to eq(match_data[:cached_default])
     end
 
     it "returns default match_data when content is blank" do
-      expect(git.find_versions(url: git_url, regex: regexes[:brew], provided_content: ""))
+      expect(git.find_versions(url: git_url, regex: regexes[:brew], content: ""))
         .to eq(match_data[:cached_default])
     end
 
@@ -340,7 +340,7 @@ RSpec.describe Homebrew::Livecheck::Strategy::Git do
       # to test this safeguard.
       allow(git).to receive(:versions_from_content).and_return([1, *matches[:brew_regex], nil])
 
-      expect(git.find_versions(url: git_url, regex: regexes[:brew], provided_content: content[:normal]))
+      expect(git.find_versions(url: git_url, regex: regexes[:brew], content: content[:normal]))
         .to eq(match_data[:cached])
     end
   end

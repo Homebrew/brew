@@ -40,27 +40,11 @@ RSpec.describe Homebrew::Livecheck::Strategy::Json do
   end
   let(:content_simple) { '{"version":"1.2.3"}' }
 
-  let(:content_matches) { ["1.1.2", "1.1.1", "1.1.0", "1.0.3", "1.0.2", "1.0.1", "1.0.0"] }
-  let(:content_simple_matches) { ["1.2.3"] }
-
-  let(:find_versions_return_hash) do
+  let(:matches) do
     {
-      matches: {
-        "1.1.2" => Version.new("1.1.2"),
-        "1.1.1" => Version.new("1.1.1"),
-        "1.1.0" => Version.new("1.1.0"),
-        "1.0.3" => Version.new("1.0.3"),
-        "1.0.2" => Version.new("1.0.2"),
-        "1.0.1" => Version.new("1.0.1"),
-        "1.0.0" => Version.new("1.0.0"),
-      },
-      regex:,
-      url:     http_url,
+      content: ["1.1.2", "1.1.1", "1.1.0", "1.0.3", "1.0.2", "1.0.1", "1.0.0"],
+      simple:  ["1.2.3"],
     }
-  end
-
-  let(:find_versions_cached_return_hash) do
-    find_versions_return_hash.merge({ cached: true })
   end
 
   describe "::match?" do
@@ -91,16 +75,16 @@ RSpec.describe Homebrew::Livecheck::Strategy::Json do
 
     it "returns an array of version strings when given content and a block" do
       # Returning a string from block
-      expect(json.versions_from_content(content_simple) { |json| json["version"] }).to eq(content_simple_matches)
+      expect(json.versions_from_content(content_simple) { |json| json["version"] }).to eq(matches[:simple])
       expect(json.versions_from_content(content_simple, regex) do |json|
         json["version"][regex, 1]
-      end).to eq(content_simple_matches)
+      end).to eq(matches[:simple])
 
       # Returning an array of strings from block
       expect(json.versions_from_content(content, regex) do |json, regex|
         json["versions"].select { |item| item["version"]&.match?(regex) }
                         .map { |item| item["version"][regex, 1] }
-      end).to eq(content_matches)
+      end).to eq(matches[:content])
     end
 
     it "allows a nil return from a block" do
@@ -113,37 +97,60 @@ RSpec.describe Homebrew::Livecheck::Strategy::Json do
     end
   end
 
-  describe "::find_versions?" do
-    it "finds versions in provided_content using a block" do
-      expect(json.find_versions(url: http_url, regex:, provided_content: content) do |json, regex|
+  describe "::find_versions" do
+    let(:match_data) do
+      base = {
+        matches: matches[:content].to_h { |v| [v, Version.new(v)] },
+        regex:,
+        url:     http_url,
+      }
+
+      {
+        fetched:        base.merge({ content: }),
+        cached:         base.merge({ cached: true }),
+        cached_default: base.merge({ matches: {}, cached: true }),
+      }
+    end
+
+    it "finds versions in fetched content" do
+      allow(Homebrew::Livecheck::Strategy).to receive(:page_content).and_return({ content: })
+
+      expect(json.find_versions(url: http_url, regex:) do |json, regex|
         json["versions"].select { |item| item["version"]&.match?(regex) }
                         .map { |item| item["version"][regex, 1] }
-      end).to eq(find_versions_cached_return_hash)
+      end).to eq(match_data[:fetched])
+    end
+
+    it "finds versions in content using a block" do
+      expect(json.find_versions(url: http_url, regex:, content:) do |json, regex|
+        json["versions"].select { |item| item["version"]&.match?(regex) }
+                        .map { |item| item["version"][regex, 1] }
+      end).to eq(match_data[:cached])
 
       # NOTE: A regex should be provided using the `#regex` method in a
-      #       `livecheck` block but we're using a regex literal in the `strategy`
-      #       block here simply to ensure this method works as expected when a
-      #       regex isn't provided.
-      expect(json.find_versions(url: http_url, provided_content: content) do |json|
+      #       `livecheck` block but we're using a regex literal in the
+      #       `strategy` block here simply to ensure this method works as
+      #       expected when a regex isn't provided.
+      expect(json.find_versions(url: http_url, content:) do |json|
         regex = /^v?(\d+(?:\.\d+)+)$/i
         json["versions"].select { |item| item["version"]&.match?(regex) }
                         .map { |item| item["version"][regex, 1] }
-      end).to eq(find_versions_cached_return_hash.merge({ regex: nil }))
+      end).to eq(match_data[:cached].merge({ regex: nil }))
     end
 
     it "errors if a block is not provided" do
-      expect { json.find_versions(url: http_url, provided_content: content) }
+      expect { json.find_versions(url: http_url, content:) }
         .to raise_error(ArgumentError, "Json requires a `strategy` block")
     end
 
     it "returns default match_data when url is blank" do
-      expect(json.find_versions(url: "") { "1.2.3" })
-        .to eq({ matches: {}, regex: nil, url: "" })
+      expect(json.find_versions(url: "", regex:, content:) { "1.2.3" })
+        .to eq(match_data[:cached_default].merge({ url: "" }))
     end
 
     it "returns default match_data when content is blank" do
-      expect(json.find_versions(url: http_url, provided_content: "") { "1.2.3" })
-        .to eq({ matches: {}, regex: nil, url: http_url, cached: true })
+      expect(json.find_versions(url: http_url, regex:, content: "") { "1.2.3" })
+        .to eq(match_data[:cached_default])
     end
   end
 end

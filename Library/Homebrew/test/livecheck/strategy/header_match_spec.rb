@@ -148,16 +148,16 @@ RSpec.describe Homebrew::Livecheck::Strategy::HeaderMatch do
     end
 
     it "finds versions in provided content" do
-      expect(header_match.find_versions(url: http_url, provided_content: content))
+      expect(header_match.find_versions(url: http_url, content:))
         .to eq(match_data[:cached])
 
       # This `strategy` block is unnecessary but it's intended to test using a
       # regex in a `strategy` block.
       expect(
         header_match.find_versions(
-          url:              http_url,
-          regex:            regexes[:latest],
-          provided_content: content,
+          url:     http_url,
+          regex:   regexes[:latest],
+          content:,
         ) do |headers, regex|
           match = headers["location"]&.match(regex)
           next if match.blank?
@@ -168,14 +168,14 @@ RSpec.describe Homebrew::Livecheck::Strategy::HeaderMatch do
     end
 
     it "returns default match_data when url is blank" do
-      expect(header_match.find_versions(url: "", provided_content: content))
+      expect(header_match.find_versions(url: "", content:))
         .to eq(match_data[:cached_default].merge({ url: "" }))
     end
 
     it "returns default match_data when content is blank" do
-      expect(header_match.find_versions(url: http_url, provided_content: "[]"))
+      expect(header_match.find_versions(url: http_url, content: "[]"))
         .to eq(match_data[:cached_default])
-      expect(header_match.find_versions(url: http_url, provided_content: "[{}]"))
+      expect(header_match.find_versions(url: http_url, content: "[{}]"))
         .to eq(match_data[:cached_default])
     end
   end

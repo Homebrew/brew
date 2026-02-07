@@ -162,10 +162,10 @@ module Homebrew
           end
 
           match_data = { matches: {}, regex:, url: }
-          match_data[:cached] = true if content
 
-          if match_data[:cached]
-            items = Json.parse_json(T.must(content)).transform_values do |obj|
+          items = if content
+            match_data[:cached] = true
+            Json.parse_json(content).transform_values do |obj|
               short_version = obj.dig("bundle_version", "short_version")
               version = obj.dig("bundle_version", "version")
               Item.new(bundle_version: BundleVersion.new(short_version, version))
@@ -177,7 +177,7 @@ module Homebrew
               UnversionedCaskChecker.new(cask)
             end
 
-            items = unversioned_cask_checker.all_versions.transform_values { |v| Item.new(bundle_version: v) }
+            unversioned_cask_checker.all_versions.transform_values { |v| Item.new(bundle_version: v) }
           end
           return match_data if items.blank?
 

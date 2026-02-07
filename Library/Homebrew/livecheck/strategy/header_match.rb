@@ -71,29 +71,27 @@ module Homebrew
         #
         # @param url [String] the URL to fetch
         # @param regex [Regexp, nil] a regex for matching versions
-        # @param provided_content [String, nil] content to check instead of
-        #   fetching
+        # @param content [String, nil] content to check instead of fetching
         # @param options [Options] options to modify behavior
         # @return [Hash]
         sig {
           override.params(
-            url:              String,
-            regex:            T.nilable(Regexp),
-            provided_content: T.nilable(String),
-            options:          Options,
-            block:            T.nilable(Proc),
+            url:     String,
+            regex:   T.nilable(Regexp),
+            content: T.nilable(String),
+            options: Options,
+            block:   T.nilable(Proc),
           ).returns(T::Hash[Symbol, T.anything])
         }
-        def self.find_versions(url:, regex: nil, provided_content: nil, options: Options.new, &block)
+        def self.find_versions(url:, regex: nil, content: nil, options: Options.new, &block)
           match_data = { matches: {}, regex:, url: }
-          match_data[:cached] = true if provided_content
+          match_data[:cached] = true if content
           return match_data if url.blank?
 
-          if match_data[:cached]
-            content = Json.parse_json(T.must(provided_content))
+          content = if content
+            Json.parse_json(content)
           else
             match_data[:content] = Strategy.page_headers(url, options:)
-            content = match_data[:content]
           end
           return match_data if content.blank?
 

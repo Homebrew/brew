@@ -62,7 +62,7 @@ module Homebrew
           match = url.delete_suffix(".git").match(GithubReleases::URL_MATCH_REGEX)
           return values if match.blank?
 
-          values[:url] = "https://api.github.com/repos/#{match[:username]}/#{match[:repository]}/releases/latest"
+          values[:url] = "#{GitHub::API_URL}/repos/#{match[:username]}/#{match[:repository]}/releases/latest"
           values[:username] = match[:username]
           values[:repository] = match[:repository]
 
@@ -73,27 +73,36 @@ module Homebrew
         # and identifies the version from the JSON response.
         #
         # @param url [String] the URL of the content to check
-        # @param regex [Regexp] a regex used for matching versions in content
+        # @param regex [Regexp] a regex for matching versions in content
+        # @param content [Hash, nil] content to check instead of fetching
         # @param options [Options] options to modify behavior
         # @return [Hash]
         sig {
-          override(allow_incompatible: true).params(
+          override.params(
             url:     String,
-            regex:   Regexp,
+            regex:   T.nilable(Regexp),
+            content: T.nilable(String),
             options: Options,
             block:   T.nilable(Proc),
           ).returns(T::Hash[Symbol, T.anything])
         }
-        def self.find_versions(url:, regex: GithubReleases::DEFAULT_REGEX, options: Options.new, &block)
+        def self.find_versions(url:, regex: nil, content: nil, options: Options.new, &block)
+          regex ||= GithubReleases::DEFAULT_REGEX
           match_data = { matches: {}, regex:, url: }
+          match_data[:cached] = true if content
 
           generated = generate_input_values(url)
           return match_data if generated.blank?
 
           match_data[:url] = generated[:url]
 
-          release = GitHub.get_latest_release(generated[:username], generated[:repository])
-          GithubReleases.versions_from_content(release, regex, &block).each do |match_text|
+          unless match_data[:cached]
+            match_data[:content] = GitHub::API.open_rest(generated[:url], parse_json: false)
+            content = match_data[:content]
+          end
+          return match_data if content.blank?
+
+          GithubReleases.versions_from_content(content, regex, &block).each do |match_text|
             match_data[:matches][match_text] = Version.new(match_text)
           end
 

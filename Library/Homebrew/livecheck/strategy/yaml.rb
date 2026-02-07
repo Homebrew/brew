@@ -65,8 +65,7 @@ module Homebrew
         # If a regex is provided, it will be passed as the second argument to
         # the `strategy` block (after the parsed YAML data).
         # @param content [String] the YAML text to parse and check
-        # @param regex [Regexp, nil] a regex used for matching versions in the
-        #   content
+        # @param regex [Regexp, nil] a regex for use in a strategy block
         # @return [Array]
         sig {
           params(
@@ -79,8 +78,6 @@ module Homebrew
           return [] if content.blank? || !block_given?
 
           yaml = parse_yaml(content)
-          return [] if yaml.blank?
-
           block_return_value = if regex.present?
             yield(yaml, regex)
           elsif block.arity == 2
@@ -95,32 +92,29 @@ module Homebrew
         # `strategy` block to extract version information.
         #
         # @param url [String] the URL of the content to check
-        # @param regex [Regexp, nil] a regex used for matching versions
-        # @param provided_content [String, nil] page content to use in place of
-        #   fetching via `Strategy#page_content`
+        # @param regex [Regexp, nil] a regex for matching versions in content
+        # @param content [String, nil] content to check instead of fetching
         # @param options [Options] options to modify behavior
         # @return [Hash]
         sig {
           override.params(
-            url:              String,
-            regex:            T.nilable(Regexp),
-            provided_content: T.nilable(String),
-            options:          Options,
-            block:            T.nilable(Proc),
+            url:     String,
+            regex:   T.nilable(Regexp),
+            content: T.nilable(String),
+            options: Options,
+            block:   T.nilable(Proc),
           ).returns(T::Hash[Symbol, T.anything])
         }
-        def self.find_versions(url:, regex: nil, provided_content: nil, options: Options.new, &block)
+        def self.find_versions(url:, regex: nil, content: nil, options: Options.new, &block)
           raise ArgumentError, "#{Utils.demodulize(name)} requires a `strategy` block" unless block_given?
 
           match_data = { matches: {}, regex:, url: }
+          match_data[:cached] = true if content
           return match_data if url.blank?
 
-          content = if provided_content.is_a?(String)
-            match_data[:cached] = true
-            provided_content
-          else
+          unless match_data[:cached]
             match_data.merge!(Strategy.page_content(url, options:))
-            match_data[:content]
+            content = match_data[:content]
           end
           return match_data if content.blank?
 

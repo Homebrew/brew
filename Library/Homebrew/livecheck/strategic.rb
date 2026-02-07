@@ -22,20 +22,19 @@ module Homebrew
       #
       # @param url the URL of the content to check
       # @param regex a regex for matching versions in content
-      # @param provided_content content to check instead of
-      #   fetching
+      # @param content content to check instead of fetching
       # @param options options to modify behavior
       # @param block a block to match the content
       sig {
         abstract.params(
-          url:              String,
-          regex:            T.nilable(Regexp),
-          provided_content: T.nilable(String),
-          options:          Options,
-          block:            T.nilable(Proc),
+          url:     String,
+          regex:   T.nilable(Regexp),
+          content: T.nilable(String),
+          options: Options,
+          block:   T.nilable(Proc),
         ).returns(T::Hash[Symbol, T.anything])
       }
-      def find_versions(url:, regex: nil, provided_content: nil, options: Options.new, &block); end
+      def find_versions(url:, regex: nil, content: nil, options: Options.new, &block); end
     end
   end
 end

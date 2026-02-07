@@ -61,34 +61,41 @@ RSpec.describe Homebrew::Livecheck::Strategy::Npm do
 
   describe "::find_versions" do
     let(:match_data) do
-      cached = {
+      base = {
         matches: matches.to_h { |v| [v, Version.new(v)] },
         regex:   nil,
         url:     generated[:typical][:url],
-        cached:  true,
       }
 
       {
-        cached:,
-        cached_default: cached.merge({ matches: {} }),
+        fetched:        base.merge({ content: }),
+        cached:         base.merge({ cached: true }),
+        cached_default: base.merge({ matches: {}, cached: true }),
       }
     end
 
+    it "finds versions in fetched content" do
+      allow(Homebrew::Livecheck::Strategy).to receive(:page_content).and_return({ content: })
+
+      expect(npm.find_versions(url: npm_urls[:typical]))
+        .to eq(match_data[:fetched])
+    end
+
     it "finds versions in provided content" do
-      expect(npm.find_versions(url: npm_urls[:typical], provided_content: content))
+      expect(npm.find_versions(url: npm_urls[:typical], content:))
         .to eq(match_data[:cached])
     end
 
     it "finds versions in provided content using a block" do
       # This `strategy` block is unnecessary but it's only intended to test
       # using a provided `strategy` block.
-      expect(npm.find_versions(url: npm_urls[:typical], provided_content: content) do |json|
+      expect(npm.find_versions(url: npm_urls[:typical], content:) do |json|
         json["version"]
       end).to eq(match_data[:cached])
     end
 
     it "returns default match_data when block doesn't return version information" do
-      expect(npm.find_versions(url: npm_urls[:typical], provided_content: content) do |json|
+      expect(npm.find_versions(url: npm_urls[:typical], content:) do |json|
         json["nonexistentValue"]
       end).to eq(match_data[:cached_default])
     end
@@ -99,7 +106,7 @@ RSpec.describe Homebrew::Livecheck::Strategy::Npm do
     end
 
     it "returns default match_data when content is blank" do
-      expect(npm.find_versions(url: npm_urls[:typical], provided_content: ""))
+      expect(npm.find_versions(url: npm_urls[:typical], content: ""))
         .to eq(match_data[:cached_default])
     end
   end

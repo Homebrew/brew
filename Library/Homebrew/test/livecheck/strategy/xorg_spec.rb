@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require "livecheck/strategy/xorg"
+require "livecheck/strategy"
 
 RSpec.describe Homebrew::Livecheck::Strategy::Xorg do
   subject(:xorg) { described_class }
@@ -51,6 +51,73 @@ RSpec.describe Homebrew::Livecheck::Strategy::Xorg do
     }
   end
 
+  let(:content) do
+    <<~EOS
+      <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+      <html>
+      <head>
+        <title>Index of /archive/individual/app</title>
+      </head>
+      <body>
+        <h1>Index of /archive/individual/app</h1>
+        <table>
+          <tr>
+            <th valign="top"><img src="/icons/blank.gif" alt="[ICO]"></th>
+            <th><a href="?C=N;O=D">Name</a></th>
+            <th><a href="?C=M;O=A">Last modified</a></th>
+            <th><a href="?C=S;O=A">Size</a></th>
+            <th><a href="?C=D;O=A">Description</a></th>
+          </tr>
+          <tr>
+            <th colspan="5"><hr></th>
+          </tr>
+          <tr>
+            <td valign="top"><img src="/icons/back.gif" alt="[PARENTDIR]"></td>
+            <td><a href="/archive/individual/">Parent Directory</a></td>
+            <td>&nbsp;</td>
+            <td align="right">  - </td>
+            <td>&nbsp;</td>
+          </tr>
+          <tr>
+            <td valign="top"><img src="/icons/unknown.gif" alt="[   ]"></td>
+            <td><a href="abc-1.2.2.tar.xz">abc-1.2.2.tar.xz</a></td>
+            <td align="right">2022-01-22 01:22  </td>
+            <td align="right">122K</td>
+            <td>&nbsp;</td>
+          </tr>
+          <tr>
+            <td valign="top"><img src="/icons/unknown.gif" alt="[   ]"></td>
+            <td><a href="abc-1.2.2.tar.xz.sha1">abc-1.2.2.tar.xz.sha1</a></td>
+            <td align="right">2022-01-22 01:22  </td>
+            <td align="right"> 12 </td>
+            <td>&nbsp;</td>
+          </tr>
+          <tr>
+            <td valign="top"><img src="/icons/unknown.gif" alt="[   ]"></td>
+            <td><a href="abc-1.2.3.tar.xz">abc-1.2.3.tar.xz</a></td>
+            <td align="right">2022-01-23 01:23  </td>
+            <td align="right">123K</td>
+            <td>&nbsp;</td>
+          </tr>
+          <tr>
+            <td valign="top"><img src="/icons/unknown.gif" alt="[   ]"></td>
+            <td><a href="abc-1.2.3.tar.xz.sha1">abc-1.2.3.tar.xz.sha1</a></td>
+            <td align="right">2022-01-23 01:23  </td>
+            <td align="right"> 12 </td>
+            <td>&nbsp;</td>
+          </tr>
+          <tr>
+            <th colspan="5"><hr></th>
+          </tr>
+        </table>
+        <address>Apache/2.4.38 (Debian) Server at www.x.org Port 443</address>
+      </body>
+      </html>
+    EOS
+  end
+
+  let(:matches) { ["1.2.2", "1.2.3"] }
+
   describe "::match?" do
     it "returns true for an X.Org URL" do
       expect(xorg.match?(xorg_urls[:app])).to be true
@@ -80,6 +147,54 @@ RSpec.describe Homebrew::Livecheck::Strategy::Xorg do
 
     it "returns an empty hash for a non-X.org URL" do
       expect(xorg.generate_input_values(non_xorg_url)).to eq({})
+    end
+  end
+
+  describe "::find_versions" do
+    let(:match_data) do
+      base = {
+        matches: matches.to_h { |v| [v, Version.new(v)] },
+        regex:   generated[:app][:regex],
+        url:     generated[:app][:url],
+      }
+
+      {
+        fetched:        base.merge({ content: }),
+        cached:         base.merge({ cached: true }),
+        cached_default: base.merge({ matches: {}, cached: true }),
+      }
+    end
+
+    before { xorg.instance_variable_set(:@page_data, {}) }
+
+    it "finds versions in fetched content" do
+      allow(Homebrew::Livecheck::Strategy).to receive(:page_content).and_return({ content: })
+
+      expect(xorg.find_versions(url: xorg_urls[:app])).to eq(match_data[:fetched])
+    end
+
+    it "finds versions in cached content" do
+      xorg.instance_variable_set(
+        :@page_data,
+        { generated[:app][:url] => content },
+      )
+      expect(xorg.find_versions(url: xorg_urls[:app])).to eq(match_data[:cached])
+    end
+
+    it "finds versions in provided content" do
+      expect(xorg.find_versions(url: xorg_urls[:app], content:))
+        .to eq(match_data[:cached])
+
+      # This `strategy` block is unnecessary but it's intended to test using a
+      # generated regex in a `strategy` block.
+      expect(xorg.find_versions(url: xorg_urls[:app], content:) do |page, regex|
+        page.scan(regex).map(&:first)
+      end).to eq(match_data[:cached])
+    end
+
+    it "returns default match_data when content is blank" do
+      expect(xorg.find_versions(url: xorg_urls[:app], content: ""))
+        .to eq(match_data[:cached_default])
     end
   end
 end

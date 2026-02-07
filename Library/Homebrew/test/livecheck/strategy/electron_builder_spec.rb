@@ -35,21 +35,7 @@ RSpec.describe Homebrew::Livecheck::Strategy::ElectronBuilder do
     content.sub(/releaseDate:\s*'([^']+)'/, 'releaseDate: \1')
   end
 
-  let(:content_matches) { ["1.2.3"] }
-
-  let(:find_versions_return_hash) do
-    {
-      matches: {
-        "1.2.3" => Version.new("1.2.3"),
-      },
-      regex:   nil,
-      url:     http_url,
-    }
-  end
-
-  let(:find_versions_cached_return_hash) do
-    find_versions_return_hash.merge({ cached: true })
-  end
+  let(:matches) { ["1.2.3"] }
 
   describe "::match?" do
     it "returns true for a YAML file URL" do
@@ -61,46 +47,57 @@ RSpec.describe Homebrew::Livecheck::Strategy::ElectronBuilder do
     end
   end
 
-  describe "::find_versions?" do
-    it "finds versions in provided_content using a block" do
-      expect(electron_builder.find_versions(url: http_url, provided_content: content))
-        .to eq(find_versions_cached_return_hash)
+  describe "::find_versions" do
+    let(:match_data) do
+      cached = {
+        matches: matches.to_h { |v| [v, Version.new(v)] },
+        regex:   nil,
+        url:     http_url,
+        cached:  true,
+      }
 
-      expect(electron_builder.find_versions(url: http_url, regex:, provided_content: content) do |yaml, regex|
-        yaml["path"][regex, 1]
-      end).to eq(find_versions_cached_return_hash.merge({ regex: }))
+      {
+        cached:,
+        cached_default: cached.merge({ matches: {} }),
+        cached_regex:   cached.merge({ regex: }),
+      }
+    end
 
-      expect(electron_builder.find_versions(
-        url:              http_url,
-        regex:,
-        provided_content: content_timestamp,
-      ) do |yaml, regex|
+    it "finds versions in content using a block" do
+      expect(electron_builder.find_versions(url: http_url, content:))
+        .to eq(match_data[:cached])
+
+      expect(electron_builder.find_versions(url: http_url, regex:, content:) do |yaml, regex|
         yaml["path"][regex, 1]
-      end).to eq(find_versions_cached_return_hash.merge({ regex: }))
+      end).to eq(match_data[:cached_regex])
+
+      expect(electron_builder.find_versions(url: http_url, regex:, content: content_timestamp) do |yaml, regex|
+        yaml["path"][regex, 1]
+      end).to eq(match_data[:cached_regex])
 
       # NOTE: A regex should be provided using the `#regex` method in a
-      #       `livecheck` block but we're using a regex literal in the `strategy`
-      #       block here simply to ensure this method works as expected when a
-      #       regex isn't provided.
-      expect(electron_builder.find_versions(url: http_url, provided_content: content) do |yaml|
+      #       `livecheck` block but we're using a regex literal in the
+      #       `strategy` block here simply to ensure this method works as
+      #       expected when a regex isn't provided.
+      expect(electron_builder.find_versions(url: http_url, content:) do |yaml|
         regex = /^v?(\d+(?:\.\d+)+)$/i
         yaml["version"][regex, 1]
-      end).to eq(find_versions_cached_return_hash)
+      end).to eq(match_data[:cached])
     end
 
     it "errors if a block is not provided" do
-      expect { electron_builder.find_versions(url: http_url, regex:, provided_content: content) }
+      expect { electron_builder.find_versions(url: http_url, regex:, content:) }
         .to raise_error(ArgumentError, "ElectronBuilder only supports a regex when using a `strategy` block")
     end
 
     it "returns default match_data when url is blank" do
-      expect(electron_builder.find_versions(url: "") { "1.2.3" })
-        .to eq({ matches: {}, regex: nil, url: "" })
+      expect(electron_builder.find_versions(url: "", content:))
+        .to eq(match_data[:cached_default].merge({ url: "" }))
     end
 
     it "returns default match_data when content is blank" do
-      expect(electron_builder.find_versions(url: http_url, provided_content: "") { "1.2.3" })
-        .to eq({ matches: {}, regex: nil, url: http_url, cached: true })
+      expect(electron_builder.find_versions(url: http_url, content: ""))
+        .to eq(match_data[:cached_default])
     end
   end
 end

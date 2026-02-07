@@ -70,8 +70,8 @@ module Homebrew
           regex_prefix = Regexp.escape(match[:prefix] || "").gsub("\\-", "-")
 
           # Use `\.t` instead of specific tarball extensions (e.g. .tar.gz)
-          suffix = match[:suffix]&.sub(Strategy::TARBALL_EXTENSION_REGEX, ".t")
-          regex_suffix = Regexp.escape(suffix || "").gsub("\\-", "-")
+          suffix = T.must(match[:suffix]).sub(Strategy::TARBALL_EXTENSION_REGEX, ".t")
+          regex_suffix = Regexp.escape(suffix).gsub("\\-", "-")
 
           # Example directory regex: `%r{href=["']?v?(\d+(?:\.\d+)+)/}i`
           # Example file regexes:
@@ -86,23 +86,26 @@ module Homebrew
         # to {PageMatch.find_versions} to identify versions in the content.
         #
         # @param url [String] the URL of the content to check
-        # @param regex [Regexp] a regex used for matching versions in content
+        # @param regex [Regexp, nil] a regex for matching versions in content
+        # @param content [String, nil] content to check instead of fetching
         # @param options [Options] options to modify behavior
         # @return [Hash]
         sig {
-          override(allow_incompatible: true).params(
+          override.params(
             url:     String,
             regex:   T.nilable(Regexp),
+            content: T.nilable(String),
             options: Options,
             block:   T.nilable(Proc),
           ).returns(T::Hash[Symbol, T.anything])
         }
-        def self.find_versions(url:, regex: nil, options: Options.new, &block)
+        def self.find_versions(url:, regex: nil, content: nil, options: Options.new, &block)
           generated = generate_input_values(url)
 
           PageMatch.find_versions(
             url:     generated[:url],
             regex:   regex || generated[:regex],
+            content:,
             options:,
             &block
           )

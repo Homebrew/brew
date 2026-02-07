@@ -80,30 +80,29 @@ module Homebrew
         # versions using {Json#find_versions} with a block.
         #
         # @param url [String] the URL of the content to check
-        # @param regex [Regexp] a regex used for matching versions in content
-        # @param provided_content [String, nil] content to check instead of
-        #   fetching
+        # @param regex [Regexp, nil] a regex for matching versions in content
+        # @param content [String, nil] content to check instead of fetching
         # @param options [Options] options to modify behavior
         # @return [Hash]
         sig {
           override.params(
-            url:              String,
-            regex:            T.nilable(Regexp),
-            provided_content: T.nilable(String),
-            options:          Options,
-            block:            T.nilable(Proc),
+            url:     String,
+            regex:   T.nilable(Regexp),
+            content: T.nilable(String),
+            options: Options,
+            block:   T.nilable(Proc),
           ).returns(T::Hash[Symbol, T.anything])
         }
-        def self.find_versions(url:, regex: nil, provided_content: nil, options: Options.new, &block)
+        def self.find_versions(url:, regex: nil, content: nil, options: Options.new, &block)
           match_data = { matches: {}, regex:, url: }
 
           generated = generate_input_values(url)
           return match_data if generated.blank?
 
           Json.find_versions(
-            url:              generated[:url],
+            url:     generated[:url],
             regex:,
-            provided_content:,
+            content:,
             options:,
             &block || DEFAULT_BLOCK
           )

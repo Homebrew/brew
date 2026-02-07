@@ -160,7 +160,10 @@ module Homebrew
             next false if item.os && APPCAST_MACOS_STRINGS.none?(item.os)
 
             # Omit items for prerelease macOS versions
-            next false if item.minimum_system_version&.strip_patch&.prerelease?
+            if (minimum_system_version = item.minimum_system_version) &&
+               minimum_system_version.strip_patch.prerelease?
+              next false
+            end
 
             true
           end.compact
@@ -192,9 +195,9 @@ module Homebrew
         }
         def self.versions_from_content(content, regex = nil, &block)
           items = sort_items(filter_items(items_from_content(content)))
-          return [] if items.blank?
+          return [] if items.empty?
 
-          item = items.first
+          item = T.must(items.first)
 
           if block
             block_return_value = case block.parameters[0]
@@ -208,7 +211,7 @@ module Homebrew
             return Strategy.handle_block_return(block_return_value)
           end
 
-          version = T.must(item).bundle_version&.nice_version
+          version = item.bundle_version&.nice_version
           version.present? ? [version] : []
         end
 
@@ -216,26 +219,32 @@ module Homebrew
         #
         # @param url [String] the URL of the content to check
         # @param regex [Regexp, nil] a regex for use in a strategy block
+        # @param content [String, nil] content to check instead of fetching
         # @param options [Options] options to modify behavior
         # @return [Hash]
         sig {
-          override(allow_incompatible: true).params(
+          override.params(
             url:     String,
             regex:   T.nilable(Regexp),
+            content: T.nilable(String),
             options: Options,
             block:   T.nilable(Proc),
           ).returns(T::Hash[Symbol, T.anything])
         }
-        def self.find_versions(url:, regex: nil, options: Options.new, &block)
+        def self.find_versions(url:, regex: nil, content: nil, options: Options.new, &block)
           if regex.present? && !block_given?
             raise ArgumentError,
                   "#{Utils.demodulize(name)} only supports a regex when using a `strategy` block"
           end
 
           match_data = { matches: {}, regex:, url: }
+          match_data[:cached] = true if content
+          return match_data if url.blank?
 
-          match_data.merge!(Strategy.page_content(url, options:))
-          content = match_data.delete(:content)
+          unless match_data[:cached]
+            match_data.merge!(Strategy.page_content(url, options:))
+            content = match_data[:content]
+          end
           return match_data if content.blank?
 
           versions_from_content(content, regex, &block).each do |version_text|

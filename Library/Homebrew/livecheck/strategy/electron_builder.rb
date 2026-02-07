@@ -34,21 +34,20 @@ module Homebrew
         # Checks the YAML content at the URL for new versions.
         #
         # @param url [String] the URL of the content to check
-        # @param regex [Regexp, nil] a regex used for matching versions
-        # @param provided_content [String, nil] content to use in place of
-        #   fetching via `Strategy#page_content`
+        # @param regex [Regexp, nil] a regex for matching versions in content
+        # @param content [String, nil] content to check instead of fetching
         # @param options [Options] options to modify behavior
         # @return [Hash]
         sig {
           override.params(
-            url:              String,
-            regex:            T.nilable(Regexp),
-            provided_content: T.nilable(String),
-            options:          Options,
-            block:            T.nilable(Proc),
+            url:     String,
+            regex:   T.nilable(Regexp),
+            content: T.nilable(String),
+            options: Options,
+            block:   T.nilable(Proc),
           ).returns(T::Hash[Symbol, T.anything])
         }
-        def self.find_versions(url:, regex: nil, provided_content: nil, options: Options.new, &block)
+        def self.find_versions(url:, regex: nil, content: nil, options: Options.new, &block)
           if regex.present? && !block_given?
             raise ArgumentError,
                   "#{Utils.demodulize(name)} only supports a regex when using a `strategy` block"
@@ -57,7 +56,7 @@ module Homebrew
           Yaml.find_versions(
             url:,
             regex:,
-            provided_content:,
+            content:,
             options:,
             &block || proc { |yaml| yaml["version"] }
           )

@@ -73,35 +73,32 @@ module Homebrew
         #
         # @param url [String] the URL of the content to check
         # @param regex [Regexp, nil] a regex for matching versions in content
-        # @param provided_content [String, nil] content to check instead of
-        #   fetching
+        # @param content [String, nil] content to check instead of fetching
         # @param options [Options] options to modify behavior
         # @return [Hash]
         sig {
           override.params(
-            url:              String,
-            regex:            T.nilable(Regexp),
-            provided_content: T.nilable(String),
-            options:          Options,
-            block:            T.nilable(Proc),
+            url:     String,
+            regex:   T.nilable(Regexp),
+            content: T.nilable(String),
+            options: Options,
+            block:   T.nilable(Proc),
           ).returns(T::Hash[Symbol, T.anything])
         }
-        def self.find_versions(url:, regex: nil, provided_content: nil, options: Options.new, &block)
+        def self.find_versions(url:, regex: nil, content: nil, options: Options.new, &block)
           match_data = { matches: {}, regex:, url: }
-          match_data[:cached] = true if provided_content.is_a?(String)
+          match_data[:cached] = true if content
 
           generated = generate_input_values(url)
           return match_data if generated.blank?
 
           match_data[:url] = generated[:url]
 
-          content = if provided_content
-            provided_content
-          else
+          unless match_data[:cached]
             match_data.merge!(Strategy.page_content(match_data[:url], options:))
-            match_data[:content]
+            content = match_data[:content]
           end
-          return match_data unless content
+          return match_data if content.blank?
 
           Json.versions_from_content(content, regex || DEFAULT_REGEX, &block || DEFAULT_BLOCK).each do |match_text|
             match_data[:matches][match_text] = Version.new(match_text)

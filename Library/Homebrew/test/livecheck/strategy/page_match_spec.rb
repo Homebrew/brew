@@ -36,30 +36,7 @@ RSpec.describe Homebrew::Livecheck::Strategy::PageMatch do
     EOS
   end
 
-  let(:content_matches) { ["2.6.0", "2.5.0", "2.4.0", "2.3.0", "2.2.0", "2.1.0", "2.0.0", "1.9.0"] }
-
-  let(:find_versions_return_hash) do
-    {
-      matches: {
-        "2.6.0" => Version.new("2.6.0"),
-        "2.5.0" => Version.new("2.5.0"),
-        "2.4.0" => Version.new("2.4.0"),
-        "2.3.0" => Version.new("2.3.0"),
-        "2.2.0" => Version.new("2.2.0"),
-        "2.1.0" => Version.new("2.1.0"),
-        "2.0.0" => Version.new("2.0.0"),
-        "1.9.0" => Version.new("1.9.0"),
-      },
-      regex:,
-      url:     http_url,
-    }
-  end
-
-  let(:find_versions_cached_return_hash) do
-    return_hash = find_versions_return_hash
-    return_hash[:cached] = true
-    return_hash
-  end
+  let(:matches) { ["2.6.0", "2.5.0", "2.4.0", "2.3.0", "2.2.0", "2.1.0", "2.0.0", "1.9.0"] }
 
   describe "::match?" do
     it "returns true for an HTTP URL" do
@@ -76,12 +53,16 @@ RSpec.describe Homebrew::Livecheck::Strategy::PageMatch do
       expect(page_match.versions_from_content("", regex)).to eq([])
     end
 
+    it "returns an empty array if regex is blank" do
+      expect(page_match.versions_from_content(content, nil)).to eq([])
+    end
+
     it "returns an array of version strings when given content" do
-      expect(page_match.versions_from_content(content, regex)).to eq(content_matches)
+      expect(page_match.versions_from_content(content, regex)).to eq(matches)
 
       # Regexes should use a capture group around the version but a regex
       # without one should still be handled
-      expect(page_match.versions_from_content(content, /\d+(?:\.\d+)+/i)).to eq(content_matches)
+      expect(page_match.versions_from_content(content, /\d+(?:\.\d+)+/i)).to eq(matches)
     end
 
     it "returns an array of version strings when given content and a block" do
@@ -90,7 +71,7 @@ RSpec.describe Homebrew::Livecheck::Strategy::PageMatch do
 
       # Returning an array of strings from block
       expect(page_match.versions_from_content(content, regex) { |page, regex| page.scan(regex).map(&:first) })
-        .to eq(content_matches)
+        .to eq(matches)
     end
 
     it "allows a nil return from a block" do
@@ -103,10 +84,29 @@ RSpec.describe Homebrew::Livecheck::Strategy::PageMatch do
     end
   end
 
-  describe "::find_versions?" do
-    it "finds versions in provided_content" do
-      expect(page_match.find_versions(url: http_url, regex:, provided_content: content))
-        .to eq(find_versions_cached_return_hash)
+  describe "::find_versions" do
+    let(:match_data) do
+      base = {
+        matches: matches.to_h { |v| [v, Version.new(v)] },
+        regex:,
+        url:     http_url,
+      }
+
+      {
+        fetched:        base.merge({ content: }),
+        cached:         base.merge({ cached: true }),
+        cached_default: base.merge({ matches: {}, cached: true }),
+      }
+    end
+
+    it "finds versions in fetched content" do
+      allow(Homebrew::Livecheck::Strategy).to receive(:page_content).and_return({ content: })
+
+      expect(page_match.find_versions(url: http_url, regex:)).to eq(match_data[:fetched])
+    end
+
+    it "finds versions in provided content" do
+      expect(page_match.find_versions(url: http_url, regex:, content:)).to eq(match_data[:cached])
 
       # NOTE: Ideally, a regex should always be provided to `#find_versions`
       #       for `PageMatch` but there are currently some `livecheck` blocks in
@@ -120,10 +120,24 @@ RSpec.describe Homebrew::Livecheck::Strategy::PageMatch do
       # using `do |page, regex|`. Hopefully over time we can address related
       # issues and get to a point where regexes are always established using
       # `#regex`.
-      expect(page_match.find_versions(url: http_url, provided_content: content) do |page|
+      expect(page_match.find_versions(url: http_url, content:) do |page|
         page.scan(%r{href=.*?/homebrew[._-]v?(\d+(?:\.\d+)+)/?["' >]}i).map(&:first)
-      end)
-        .to eq(find_versions_cached_return_hash.merge({ regex: nil }))
+      end).to eq(match_data[:cached].merge({ regex: nil }))
+    end
+
+    it "returns default match_data when url is blank" do
+      expect(page_match.find_versions(url: "", regex:, content:))
+        .to eq(match_data[:cached_default].merge({ url: "" }))
+    end
+
+    it "returns default match_data when content is blank" do
+      expect(page_match.find_versions(url: http_url, regex:, content: ""))
+        .to eq(match_data[:cached_default])
+    end
+
+    it "errors if a regex or `strategy` block is not provided" do
+      expect { page_match.find_versions(url: http_url, content:) }
+        .to raise_error(ArgumentError, "PageMatch requires a regex or `strategy` block")
     end
   end
 end

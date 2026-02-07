@@ -153,7 +153,7 @@ module Homebrew
         # group around the version text.
         #
         # @param content [String] the content to check
-        # @param regex [Regexp, nil] a regex to identify versions
+        # @param regex [Regexp, nil] a regex for matching versions in content
         # @return [Array]
         sig {
           params(
@@ -187,29 +187,26 @@ module Homebrew
         #
         # @param url [String] the URL of the Git repository to check
         # @param regex [Regexp, nil] a regex for matching versions in content
-        # @param provided_content [String, nil] content to check instead of
-        #   fetching
+        # @param content [String, nil] content to check instead of fetching
         # @param options [Options] options to modify behavior
         # @return [Hash]
         sig {
           override.params(
-            url:              String,
-            regex:            T.nilable(Regexp),
-            provided_content: T.nilable(String),
-            options:          Options,
-            block:            T.nilable(Proc),
+            url:     String,
+            regex:   T.nilable(Regexp),
+            content: T.nilable(String),
+            options: Options,
+            block:   T.nilable(Proc),
           ).returns(T::Hash[Symbol, T.anything])
         }
-        def self.find_versions(url:, regex: nil, provided_content: nil, options: Options.new, &block)
+        def self.find_versions(url:, regex: nil, content: nil, options: Options.new, &block)
           match_data = { matches: {}, regex:, url: }
+          match_data[:cached] = true if content
           return match_data if url.blank?
 
-          content = if provided_content.is_a?(String)
-            match_data[:cached] = true
-            provided_content
-          else
+          unless match_data[:cached]
             match_data.merge!(ls_remote_tags(url))
-            match_data[:content]
+            content = match_data[:content]
           end
           return match_data if content.blank?
 

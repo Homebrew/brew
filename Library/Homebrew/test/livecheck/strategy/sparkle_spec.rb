@@ -24,6 +24,8 @@ RSpec.describe Homebrew::Livecheck::Strategy::Sparkle do
   let(:appcast_url) { "https://www.example.com/example/appcast.xml" }
   let(:non_http_url) { "ftp://brew.sh/" }
 
+  let(:title_regex) { /Version\s+v?(\d+(?:\.\d+)+)\s*$/i }
+
   # The `item_hashes` data is used to create test appcast XML and expected
   # `Sparkle::Item` objects.
   let(:item_hashes) do
@@ -140,12 +142,14 @@ RSpec.describe Homebrew::Livecheck::Strategy::Sparkle do
     EOS
 
     # Set the first item in a copy of `appcast` to a bad `minimumSystemVersion`
-    # value, to test `MacOSVersion::Error` handling.
+    # value, to test `MacOSVersion::Error` handling. The version string needs
+    # to be something that cannot be adequately cleaned up by the related
+    # `#gsub` call in `items_from_content`.
     bad_macos_version = appcast.sub(
       v123_item,
       v123_item.sub(
         /(<sparkle:minimumSystemVersion>)[^<]+?</m,
-        '\1Not a macOS version<',
+        '\1a1b2c3d<',
       ),
     )
 
@@ -183,8 +187,6 @@ RSpec.describe Homebrew::Livecheck::Strategy::Sparkle do
       undefined_namespace:,
     }
   end
-
-  let(:title_regex) { /Version\s+v?(\d+(?:\.\d+)+)\s*$/i }
 
   let(:items) do
     {
@@ -293,7 +295,7 @@ RSpec.describe Homebrew::Livecheck::Strategy::Sparkle do
     item_arrays
   end
 
-  let(:versions) { [items[:v123].nice_version] }
+  let(:matches) { ["1.2.3,123"] }
 
   describe "::match?" do
     it "returns true for an HTTP URL" do
@@ -359,6 +361,7 @@ RSpec.describe Homebrew::Livecheck::Strategy::Sparkle do
   # For example, the version 122 item doesn't have a parseable `pub_date` and
   # the substituted default will cause it to be sorted last.
   describe "::versions_from_content" do
+    let(:versions) { [items[:v123].nice_version] }
     let(:subbed_items) { item_arrays[:appcast_sorted].map { |item| item.nice_version.sub("1", "0") } }
 
     it "returns an array of version strings when given content" do
@@ -453,6 +456,60 @@ RSpec.describe Homebrew::Livecheck::Strategy::Sparkle do
     it "errors if the first block argument uses an unhandled name" do
       expect { sparkle.versions_from_content(xml[:appcast]) { |something| something } }
         .to raise_error("First argument of Sparkle `strategy` block must be `item` or `items`")
+    end
+  end
+
+  describe "::find_versions" do
+    let(:match_data) do
+      base = {
+        matches: matches.to_h { |v| [v, Version.new(v)] },
+        regex:   nil,
+        url:     appcast_url,
+      }
+
+      {
+        fetched:        base.merge({ content: xml[:appcast] }),
+        cached:         base.merge({ cached: true }),
+        cached_default: base.merge({ matches: {}, cached: true }),
+      }
+    end
+
+    let(:appcast_regex) { %r{/example[._-]v?(\d+(?:\.\d+)+)\.t}i }
+
+    it "finds versions in fetched content" do
+      allow(Homebrew::Livecheck::Strategy).to receive(:page_content).and_return({ content: xml[:appcast] })
+
+      expect(sparkle.find_versions(url: appcast_url))
+        .to eq(match_data[:fetched])
+    end
+
+    it "finds versions in provided content" do
+      expect(sparkle.find_versions(url: appcast_url, content: xml[:appcast]))
+        .to eq(match_data[:cached])
+
+      # This `strategy` block is unnecessary but it's intended to test using a
+      # regex in a `strategy` block.
+      expect(sparkle.find_versions(url: appcast_url, regex: appcast_regex, content: xml[:appcast]) do |item, regex|
+        match = item.url.match(regex)
+        next if match.blank?
+
+        "#{match[1]},#{match[1].tr(".", "")}"
+      end).to eq(match_data[:cached].merge({ regex: appcast_regex }))
+    end
+
+    it "returns default match_data when url is blank" do
+      expect(sparkle.find_versions(url: "", content: xml[:appcast]))
+        .to eq(match_data[:cached_default].merge({ url: "" }))
+    end
+
+    it "returns default match_data when content is blank" do
+      expect(sparkle.find_versions(url: appcast_url, content: ""))
+        .to eq(match_data[:cached_default])
+    end
+
+    it "errors if a regex is provided without a `strategy` block" do
+      expect { sparkle.find_versions(url: appcast_url, regex: appcast_regex, content: xml[:appcast]) }
+        .to raise_error(ArgumentError, "Sparkle only supports a regex when using a `strategy` block")
     end
   end
 end

@@ -85,24 +85,24 @@ RSpec.describe Homebrew::Livecheck::Strategy::Pypi do
     end
 
     it "finds versions in provided content" do
-      expect(pypi.find_versions(url: pypi_url, regex:, provided_content: content))
+      expect(pypi.find_versions(url: pypi_url, regex:, content: content))
         .to eq(match_data[:cached_regex])
 
-      expect(pypi.find_versions(url: pypi_url, provided_content: content))
+      expect(pypi.find_versions(url: pypi_url, content: content))
         .to eq(match_data[:cached])
     end
 
     it "finds versions in provided content using a block" do
       # NOTE: We only use a regex here to make sure it can be passed into the
       # block, if necessary.
-      expect(pypi.find_versions(url: pypi_url, regex:, provided_content: content) do |json, regex|
+      expect(pypi.find_versions(url: pypi_url, regex:, content: content) do |json, regex|
         match = json.dig("info", "version")&.match(regex)
         next if match.blank?
 
         match[1]
       end).to eq(match_data[:cached_regex])
 
-      expect(pypi.find_versions(url: pypi_url, provided_content: content) do |json|
+      expect(pypi.find_versions(url: pypi_url, content: content) do |json|
         json.dig("info", "version").presence
       end).to eq(match_data[:cached])
     end
@@ -110,11 +110,11 @@ RSpec.describe Homebrew::Livecheck::Strategy::Pypi do
     it "returns default match_data when block doesn't return version information" do
       no_match_regex = /will_not_match/i
 
-      expect(pypi.find_versions(url: pypi_url, provided_content: '{"info":{"version":""}}'))
+      expect(pypi.find_versions(url: pypi_url, content: '{"info":{"version":""}}'))
         .to eq(match_data[:cached_default])
-      expect(pypi.find_versions(url: pypi_url, provided_content: '{"other":true}'))
+      expect(pypi.find_versions(url: pypi_url, content: '{"other":true}'))
         .to eq(match_data[:cached_default])
-      expect(pypi.find_versions(url: pypi_url, regex: no_match_regex, provided_content: content))
+      expect(pypi.find_versions(url: pypi_url, regex: no_match_regex, content: content))
         .to eq(match_data[:cached_default].merge({ regex: no_match_regex }))
     end
 
@@ -124,9 +124,9 @@ RSpec.describe Homebrew::Livecheck::Strategy::Pypi do
     end
 
     it "returns default match_data when content is blank" do
-      expect(pypi.find_versions(url: pypi_url, provided_content: "{}") { "1.2.3" })
+      expect(pypi.find_versions(url: pypi_url, content: "{}") { "1.2.3" })
         .to eq(match_data[:cached_default])
-      expect(pypi.find_versions(url: pypi_url, provided_content: "") { "1.2.3" })
+      expect(pypi.find_versions(url: pypi_url, content: "") { "1.2.3" })
         .to eq(match_data[:cached_default])
     end
   end
