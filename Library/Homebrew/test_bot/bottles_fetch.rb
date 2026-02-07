@@ -4,8 +4,10 @@
 module Homebrew
   module TestBot
     class BottlesFetch < TestFormulae
+      sig { returns(T::Array[String]) }
       attr_accessor :testing_formulae
 
+      sig { params(args: Homebrew::Cmd::TestBotCmd::Args).void }
       def run!(args:)
         info_header "Testing formulae:"
         puts testing_formulae
@@ -19,6 +21,7 @@ module Homebrew
 
       private
 
+      sig { returns(T::Hash[Symbol, T::Set[String]]) }
       def formulae_by_tag
         tags = Hash.new { |hash, key| hash[key] = Set.new }
 
@@ -38,6 +41,7 @@ module Homebrew
         tags
       end
 
+      sig { params(tag: Symbol, formulae: T::Set[String], args: Homebrew::Cmd::TestBotCmd::Args).void }
       def fetch_bottles!(tag, formulae, args:)
         test_header(:BottlesFetch, method: "fetch_bottles!(#{tag})")
 
