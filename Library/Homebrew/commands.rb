@@ -59,13 +59,6 @@ module Commands
        .to_sym
   end
 
-  sig { params(cmd_path: Pathname).returns(Symbol) }
-  def self.args_method_name(cmd_path)
-    cmd_path_basename = basename_without_extension(cmd_path)
-    cmd_method_prefix = method_name(cmd_path_basename)
-    :"#{cmd_method_prefix}_args"
-  end
-
   sig { params(cmd: String).returns(T.nilable(Pathname)) }
   def self.internal_cmd_path(cmd)
     [
