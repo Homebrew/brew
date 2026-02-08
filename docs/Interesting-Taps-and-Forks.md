@@ -38,6 +38,8 @@ Your taps are Git repositories located at `$(brew --repository)/Library/Taps`. A
 
 * [apple/apple](https://github.com/apple/homebrew-apple): Formulae from Apple, including the Game Porting Toolkit.
 
+* [pavel-voronin/homebrew-changelog](https://github.com/pavel-voronin/homebrew-changelog): Find upstream changelogs for Homebrew packages
+
 ## Unsupported interesting forks
 
 * [mistydemeo/tigerbrew](https://github.com/mistydemeo/tigerbrew): Experimental Tiger/Leopard PowerPC version.
