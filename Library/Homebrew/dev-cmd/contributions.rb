@@ -17,8 +17,8 @@ module Homebrew
         committer:          "commit author or committer",
         coauthor:           "commit coauthor",
       }.freeze, T::Hash[Symbol, String])
-      MAX_COMMITS = T.let(1000, Integer)
-      MAX_PR_SEARCH = T.let(100, Integer)
+      MAX_COMMITS = 1000
+      MAX_PR_SEARCH = 100
 
       cmd_args do
         usage_banner "`contributions` [`--user=`] [`--repositories=`] [`--quarter=`] [`--from=`] [`--to=`] [`--csv`]"

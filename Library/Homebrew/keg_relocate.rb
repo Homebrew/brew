@@ -6,17 +6,17 @@ require "utils/output"
 class Keg
   extend Utils::Output::Mixin
 
-  PREFIX_PLACEHOLDER = T.let("@@HOMEBREW_PREFIX@@", String)
-  CELLAR_PLACEHOLDER = T.let("@@HOMEBREW_CELLAR@@", String)
-  REPOSITORY_PLACEHOLDER = T.let("@@HOMEBREW_REPOSITORY@@", String)
-  LIBRARY_PLACEHOLDER = T.let("@@HOMEBREW_LIBRARY@@", String)
-  PERL_PLACEHOLDER = T.let("@@HOMEBREW_PERL@@", String)
-  JAVA_PLACEHOLDER = T.let("@@HOMEBREW_JAVA@@", String)
-  NULL_BYTE = T.let("\x00", String)
-  NULL_BYTE_STRING = T.let("\\x00", String)
+  PREFIX_PLACEHOLDER = "@@HOMEBREW_PREFIX@@"
+  CELLAR_PLACEHOLDER = "@@HOMEBREW_CELLAR@@"
+  REPOSITORY_PLACEHOLDER = "@@HOMEBREW_REPOSITORY@@"
+  LIBRARY_PLACEHOLDER = "@@HOMEBREW_LIBRARY@@"
+  PERL_PLACEHOLDER = "@@HOMEBREW_PERL@@"
+  JAVA_PLACEHOLDER = "@@HOMEBREW_JAVA@@"
+  NULL_BYTE = "\x00"
+  NULL_BYTE_STRING = "\\x00"
 
   class Relocation
-    RELOCATABLE_PATH_REGEX_PREFIX = T.let(/(?:(?<=-F|-I|-L|-isystem)|(?<![a-zA-Z0-9]))/, Regexp)
+    RELOCATABLE_PATH_REGEX_PREFIX = /(?:(?<=-F|-I|-L|-isystem)|(?<![a-zA-Z0-9]))/
 
     sig { void }
     def initialize

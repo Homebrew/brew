@@ -12,7 +12,7 @@ module RuboCop
         extend AutoCorrector
         include HelperFunctions
 
-        MSG = T.let("`%<method>s` method out of order", String)
+        MSG = "`%<method>s` method out of order"
 
         # These keys are ignored when checking method order.
         # Mirrors AbstractUninstall::METADATA_KEYS.
@@ -21,15 +21,10 @@ module RuboCop
           T::Array[Symbol],
         )
 
-        USELESS_METADATA_MSG = T.let(
-          "`on_upgrade` has no effect without matching `uninstall quit:` or `uninstall signal:` directives",
-          String,
-        )
+        USELESS_METADATA_MSG =
+          "`on_upgrade` has no effect without matching `uninstall quit:` or `uninstall signal:` directives"
 
-        PARTIAL_METADATA_MSG = T.let(
-          "`on_upgrade` lists %<symbols>s without matching `uninstall` directives",
-          String,
-        )
+        PARTIAL_METADATA_MSG = "`on_upgrade` lists %<symbols>s without matching `uninstall` directives"
 
         sig { params(node: AST::SendNode).void }
         def on_send(node)

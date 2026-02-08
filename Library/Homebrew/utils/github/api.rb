@@ -18,12 +18,12 @@ module GitHub
     EOS
   end
 
-  API_URL = T.let("https://api.github.com", String)
-  API_MAX_PAGES = T.let(50, Integer)
+  API_URL = "https://api.github.com"
+  API_MAX_PAGES = 50
   private_constant :API_MAX_PAGES
-  API_MAX_ITEMS = T.let(5000, Integer)
+  API_MAX_ITEMS = 5000
   private_constant :API_MAX_ITEMS
-  PAGINATE_RETRY_COUNT = T.let(3, Integer)
+  PAGINATE_RETRY_COUNT = 3
   private_constant :PAGINATE_RETRY_COUNT
 
   CREATE_GIST_SCOPES = T.let(["gist"].freeze, T::Array[String])
@@ -32,7 +32,7 @@ module GitHub
   ALL_SCOPES = T.let((CREATE_GIST_SCOPES + CREATE_ISSUE_FORK_OR_PR_SCOPES + CREATE_WORKFLOW_SCOPES).freeze,
                      T::Array[String])
   private_constant :ALL_SCOPES
-  GITHUB_PERSONAL_ACCESS_TOKEN_REGEX = T.let(/^(?:[a-f0-9]{40}|(?:gh[pousr]|github_pat)_\w{36,251})$/, Regexp)
+  GITHUB_PERSONAL_ACCESS_TOKEN_REGEX = /^(?:[a-f0-9]{40}|(?:gh[pousr]|github_pat)_\w{36,251})$/
   private_constant :GITHUB_PERSONAL_ACCESS_TOKEN_REGEX
 
   # Helper functions for accessing the GitHub API.
@@ -96,7 +96,7 @@ module GitHub
       Regexp,
     )
 
-    NO_CREDENTIALS_MESSAGE = T.let <<~MESSAGE.freeze, String
+    NO_CREDENTIALS_MESSAGE = T.let(<<~MESSAGE.freeze, String)
       No GitHub credentials found in macOS Keychain, GitHub CLI or the environment.
       #{GitHub.pat_blurb}
     MESSAGE

@@ -9,11 +9,8 @@ module Homebrew
     module System
       extend Utils::Output::Mixin
 
-      LAUNCHCTL_DOMAIN_ACTION_NOT_SUPPORTED = T.let(125, Integer)
-      MISSING_DAEMON_MANAGER_EXCEPTION_MESSAGE = T.let(
-        "`brew services` is supported only on macOS or Linux (with systemd)!",
-        String,
-      )
+      LAUNCHCTL_DOMAIN_ACTION_NOT_SUPPORTED = 125
+      MISSING_DAEMON_MANAGER_EXCEPTION_MESSAGE = "`brew services` is supported only on macOS or Linux (with systemd)!"
 
       # Path to launchctl binary.
       sig { returns(T.nilable(Pathname)) }

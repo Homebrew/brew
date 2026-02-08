@@ -15,9 +15,9 @@ module Homebrew
   class McpServer
     HOMEBREW_BREW_FILE = T.let(ENV.fetch("HOMEBREW_BREW_FILE").freeze, String)
     HOMEBREW_VERSION = T.let(ENV.fetch("HOMEBREW_VERSION").freeze, String)
-    JSON_RPC_VERSION = T.let("2.0", String)
-    MCP_PROTOCOL_VERSION = T.let("2025-03-26", String)
-    ERROR_CODE = T.let(-32601, Integer)
+    JSON_RPC_VERSION = "2.0"
+    MCP_PROTOCOL_VERSION = "2025-03-26"
+    ERROR_CODE = -32601
 
     SERVER_INFO = T.let({
       name:    "brew-mcp-server",

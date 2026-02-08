@@ -15,7 +15,7 @@ module GitHub
   extend SystemCommand::Mixin
   extend Utils::Output::Mixin
 
-  MAX_PER_PAGE = T.let(100, Integer)
+  MAX_PER_PAGE = 100
 
   def self.issues(repo:, **filters)
     uri = url_to("repos", repo, "issues")

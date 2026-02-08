@@ -139,7 +139,7 @@ module OS
         end
       end
 
-      VARIABLE_REFERENCE_RX = T.let(/^@(loader_|executable_|r)path/, Regexp)
+      VARIABLE_REFERENCE_RX = /^@(loader_|executable_|r)path/
 
       sig { params(file: MachOShim, linkage_type: Symbol, resolve_variable_references: T::Boolean, block: T.proc.params(arg0: String).void).void }
       def each_linkage_for(file, linkage_type, resolve_variable_references: false, &block)
@@ -265,7 +265,7 @@ module OS
 
       private
 
-      CELLAR_RX = T.let(%r{\A#{HOMEBREW_CELLAR}/(?<formula_name>[^/]+)/[^/]+}, Regexp)
+      CELLAR_RX = %r{\A#{HOMEBREW_CELLAR}/(?<formula_name>[^/]+)/[^/]+}
       private_constant :CELLAR_RX
 
       # Replace HOMEBREW_CELLAR references with HOMEBREW_PREFIX/opt references
