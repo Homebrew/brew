@@ -39,24 +39,10 @@ module Homebrew
 
       sig { params(cmd_path: Pathname).returns(T.nilable(CLI::Parser)) }
       def self.from_cmd_path(cmd_path)
-        cmd_args_method_name = Commands.args_method_name(cmd_path)
-        cmd_name = cmd_args_method_name.to_s.delete_suffix("_args").tr("_", "-")
+        cmd_name = Commands.basename_without_extension(cmd_path).tr("_", "-")
+        return unless Homebrew.require?(cmd_path)
 
-        begin
-          if Homebrew.require?(cmd_path)
-            cmd = Homebrew::AbstractCommand.command(cmd_name)
-            if cmd
-              cmd.parser
-            else
-              # FIXME: remove once commands are all subclasses of `AbstractCommand`:
-              Homebrew.send(cmd_args_method_name)
-            end
-          end
-        rescue NoMethodError => e
-          raise if e.name.to_sym != cmd_args_method_name
-
-          nil
-        end
+        Homebrew::AbstractCommand.command(cmd_name)&.parser
       end
 
       sig { returns(T::Array[[Symbol, String, { description: String }]]) }
@@ -146,9 +132,9 @@ module Homebrew
       end
 
       sig {
-        params(cmd: T.nilable(T.class_of(Homebrew::AbstractCommand)), block: T.nilable(T.proc.bind(Parser).void)).void
+        params(cmd: T.class_of(Homebrew::AbstractCommand), block: T.nilable(T.proc.bind(Parser).void)).void
       }
-      def initialize(cmd = nil, &block)
+      def initialize(cmd, &block)
         @parser = T.let(OptionParser.new, OptionParser)
         @parser.summary_indent = "  "
         # Disable default handling of `--version` switch.
@@ -156,26 +142,10 @@ module Homebrew
         # Disable default handling of `--help` switch.
         @parser.base.long.delete("help")
 
-        @args = T.let((cmd&.args_class || Args).new, Args)
+        @args = T.let((cmd.args_class || Args).new, Args)
 
-        if cmd
-          @command_name = T.let(cmd.command_name, String)
-          @is_dev_cmd = T.let(cmd.dev_cmd?, T::Boolean)
-        else
-          # FIXME: remove once commands are all subclasses of `AbstractCommand`:
-          # Filter out Sorbet runtime type checking method calls.
-          cmd_location = caller_locations.select do |location|
-            T.must(location.path).exclude?("/gems/sorbet-runtime-")
-          end.fetch(1)
-          @command_name = T.let(T.must(cmd_location.label).chomp("_args").tr("_", "-"), String)
-          @is_dev_cmd = T.let(T.must(cmd_location.absolute_path).start_with?(Commands::HOMEBREW_DEV_CMD_PATH.to_s),
-                              T::Boolean)
-          odisabled(
-            "`brew #{@command_name}'. This command needs to be refactored, as it is written in a style that",
-            "subclassing of `Homebrew::AbstractCommand' ( see https://docs.brew.sh/External-Commands )",
-            disable_for_developers: false,
-          )
-        end
+        @command_name = T.let(cmd.command_name, String)
+        @is_dev_cmd = T.let(cmd.dev_cmd?, T::Boolean)
 
         @constraints = T.let([], T::Array[[String, String]])
         @conflicts = T.let([], T::Array[T::Array[String]])

@@ -88,8 +88,9 @@ begin
     raise UsageError, "Unknown command: brew #{ARGV.join(" ")}"
   elsif internal_cmd || Commands.external_ruby_v2_cmd_path(cmd)
     cmd_class = Homebrew::AbstractCommand.command(cmd)
-    Homebrew.running_command = cmd
     if cmd_class
+      Homebrew.running_command = cmd
+
       if !Homebrew::EnvConfig.no_install_from_api? && Homebrew::EnvConfig.download_concurrency > 1
         require "api"
         Homebrew::API.fetch_api_files!
@@ -101,16 +102,7 @@ begin
       Utils::Analytics.report_command_run(command_instance)
       command_instance.run
     else
-      begin
-        Homebrew.public_send Commands.method_name(cmd)
-      rescue NoMethodError => e
-        converted_cmd = cmd.downcase.tr("-", "_")
-        case_error = "undefined method `#{converted_cmd}' for module Homebrew"
-        private_method_error = "private method `#{converted_cmd}' called for module Homebrew"
-        Utils::Output.odie "Unknown command: brew #{cmd}" if [case_error, private_method_error].include?(e.message)
-
-        raise
-      end
+      Utils::Output.odie "Unknown command: brew #{cmd}"
     end
   elsif (path = Commands.external_ruby_cmd_path(cmd))
     Homebrew.running_command = cmd
