@@ -368,10 +368,12 @@ module SharedAudits
     "#{reason} is not a valid deprecate! or disable! reason" unless reasons.include?(reason)
   end
 
-  sig { params(message: T.any(String, Symbol)).returns(T.nilable(String)) }
-  def self.no_autobump_new_package_message(message)
+  sig { params(message: T.any(String, Symbol), new_package: T::Boolean).returns(T.nilable(String)) }
+  def self.no_autobump_audit_message(message, new_package: false)
     return if message.is_a?(String) || message != :requires_manual_review
 
-    "`:requires_manual_review` is a temporary reason intended for existing packages, use a different reason instead."
+    msg = new_package ? "use a different reason instead" : "change or remove autobump exclusion reason"
+
+    "`:requires_manual_review` is a temporary to-be deprecated reason, #{msg}."
   end
 end
