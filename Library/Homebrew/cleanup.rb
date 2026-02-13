@@ -333,24 +333,10 @@ module Homebrew
 
     sig { returns(T::Array[Formula]) }
     def installed_formulae
-      # Get all standard installed Formula instances
-      all_formulae = Formula.installed.sort_by(&:name).grep(Formula)
-
-      # Determine which formulae are dependencies of others.
-      # This effectively builds the "reverse dependency" check by scanning the tree once.
-      required_formulae = Set.new
-
-      all_formulae.each do |f|
-        f.runtime_dependencies.each do |dep|
-          required_formulae.add(dep.to_formula.full_name)
-        rescue FormulaUnavailableError
-          # If we can't resolve a dependency, we ignore it.
-          next
-        end
-      end
-
-      # Return only formulae that are NOT required by other installed formulae.
-      all_formulae.reject { |f| required_formulae.include?(f.full_name) }
+      # Return all standard installed Formula instances.
+      # Dependency handling is performed during autoremove/uninstall,
+      # so we avoid doing additional, expensive dependency scans here.
+      Formula.installed.sort_by(&:name).grep(Formula)
     end
 
     sig { params(quiet: T::Boolean, periodic: T::Boolean).void }
