@@ -342,12 +342,10 @@ module Homebrew
 
       all_formulae.each do |f|
         f.runtime_dependencies.each do |dep|
-          begin
-            required_formulae.add(dep.to_formula.full_name)
-          rescue FormulaUnavailableError
-            # If we can't resolve a dependency, we ignore it.
-            next
-          end
+          required_formulae.add(dep.to_formula.full_name)
+        rescue FormulaUnavailableError
+          # If we can't resolve a dependency, we ignore it.
+          next
         end
       end
 
@@ -360,10 +358,10 @@ module Homebrew
       if args.empty?
         # Use installed_formulae to respect dependency filtering
         installed_formulae
-               .reject { |f| Cleanup.skip_clean_formula?(f) }
-               .each do |formula|
-          cleanup_formula(formula, quiet:, ds_store: false, cache_db: false)
-        end
+          .reject { |f| Cleanup.skip_clean_formula?(f) }
+          .each do |formula|
+            cleanup_formula(formula, quiet:, ds_store: false, cache_db: false)
+          end
 
         if ENV["HOMEBREW_AUTOREMOVE"].present?
           opoo "`$HOMEBREW_AUTOREMOVE` is now a no-op as it is the default behaviour. " \
