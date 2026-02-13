@@ -105,6 +105,7 @@ module Cask
         Utils.gain_permissions_mkpath(target.dirname, command:) unless target.dirname.exist?
 
         if target.directory? && Quarantine.app_management_permissions_granted?(app: target, command:)
+          ohai "Moving #{self.class.english_name} contents of '#{source.basename}' into '#{target}'"
           if target.writable?
             source.children.each { |child| FileUtils.move(child, target/child.basename) }
           else
