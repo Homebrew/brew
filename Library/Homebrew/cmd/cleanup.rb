@@ -3,6 +3,8 @@
 
 require "abstract_command"
 require "cleanup"
+require "formula"
+require "utils"
 
 module Homebrew
   module Cmd
@@ -47,6 +49,35 @@ module Homebrew
         if args.prune_prefix?
           cleanup.prune_prefix_symlinks_and_directories
           return
+        end
+
+        # Patch: Override unneeded_formulae to use deep reverse-dependency check
+        original_unneeded_formulae = cleanup.method(:unneeded_formulae)
+        cleanup.define_singleton_method(:unneeded_formulae) do
+          installed = Formula.installed
+          return [] if installed.empty?
+
+          # Step 1: Get all direct runtime dependencies of installed formulae
+          required = Set.new
+          installed.each do |f|
+            required.merge(f.runtime_dependencies.map(&:to_formula).select(&:installed?))
+          end
+
+          # Step 2: Add self + reverse dependencies (formulae that depend on each installed formula)
+          installed.each do |f|
+            # Critical Fix: Add the formula itself to required set (prevents top-level formulae like git from being marked unneeded)
+            required.add(f)
+            
+            # Use `brew uses --installed --recursive` (same as uninstall logic)
+            reverse_deps = Utils.safe_popen_read(
+              "brew", "uses", "--installed", "--recursive", f.name
+            ).lines(chomp: true).map { |n| Formula[n] rescue nil }.compact
+
+            required.merge(reverse_deps)
+          end
+
+          # Step 3: Formulae that are installed but NOT required by any other installed formula
+          (installed - required).uniq
         end
 
         cleanup.clean!(quiet: args.quiet?, periodic: false)
