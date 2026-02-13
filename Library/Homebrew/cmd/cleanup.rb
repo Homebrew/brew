@@ -33,43 +33,48 @@ module Homebrew
       end
 
       # compatible with non-standard Formula instances, filtering invalid dependencies.
+      sig { returns(T::Set[Formula]) }
       def self.required_formulae
         # Only standard installed Formula instances are used(exclude NamespaceAPI)
-        installed_formulae = Formula.installed.select { |f| f.is_a?(Formula) }
+        installed_formulae = Formula.installed.grep(Formula)
         return Set.new if installed_formulae.empty?
 
         required = Set.new
 
-        # Collect direct runtime dependencies
+        # Collect direct runtime dependencies and reverse dependencies
         installed_formulae.each do |f|
           required.add(f)
           f.runtime_dependencies.each do |dep|
             next if dep.to_formula.nil? # Skip invalid dependencies
+
             dep_formula = dep.to_formula
             # Only standard Formula instances are processed + already installed.
-            next unless dep_formula.is_a?(Formula) && dep_formula.installed?
+            next if !dep_formula.is_a?(Formula) || !dep_formula.any_version_installed?
+
             required.add(dep_formula)
           rescue
-            #If a dependency resolution exception (such as the NamespaceAPI class) is caught, skip it directly.
+            # If a dependency resolution exception (such as the NamespaceAPI class) is caught, skip it directly.
             next
           end
-        end
 
-        # Collect reverse dependencies
-        installed_formulae.each do |f|
           next if required.include?(f)
+
           begin
-            #The `brew uses` function looks up installed reverse dependencies.
+            # The `brew uses` function looks up installed reverse dependencies.
             reverse_deps = Utils.safe_popen_read(
               "brew", "uses", "--installed", "--recursive", f.name
-            ).lines(chomp: true).map do |name|
-              formula = Formula[name] rescue nil
+            ).lines(chomp: true).filter_map do |name|
+              formula = begin
+                Formula[name]
+              rescue
+                nil
+              end
               # Only keep standard Formula instances + already installed
-              formula if formula.is_a?(Formula) && formula.installed?
-            end.compact
+              formula if formula.is_a?(Formula) && formula.any_version_installed?
+            end
             required.merge(reverse_deps) unless reverse_deps.empty?
           rescue
-            #Catching reverse dependency lookup exceptions and skipping the current formula.
+            # Catching reverse dependency lookup exceptions and skipping the current formula.
             next
           end
         end
@@ -92,11 +97,11 @@ module Homebrew
 
         # Fix the hook cleanup instance
         cleanup = Cleanup.new(*args.named, dry_run: args.dry_run?, scrub: args.s?, days:)
-        #Get the formulaes that needed to be kept
+        # Get the formulaes that needed to be kept
         required_formulae = self.class.required_formulae
         # overwrite the moethod
         cleanup.define_singleton_method(:installed_formulae) do
-          super().select { |f| f.is_a?(Formula) } - required_formulae
+          super().grep(Formula) - required_formulae
         end
         # ========== Hook end ==========
 
