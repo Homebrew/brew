@@ -32,6 +32,51 @@ module Homebrew
         named_args [:formula, :cask]
       end
 
+      # compatible with non-standard Formula instances, filtering invalid dependencies.
+      def self.required_formulae
+        # Only standard installed Formula instances are used(exclude NamespaceAPI)
+        installed_formulae = Formula.installed.select { |f| f.is_a?(Formula) }
+        return Set.new if installed_formulae.empty?
+
+        required = Set.new
+
+        # Collect direct runtime dependencies
+        installed_formulae.each do |f|
+          required.add(f)
+          f.runtime_dependencies.each do |dep|
+            next if dep.to_formula.nil? # Skip invalid dependencies
+            dep_formula = dep.to_formula
+            # Only standard Formula instances are processed + already installed.
+            next unless dep_formula.is_a?(Formula) && dep_formula.installed?
+            required.add(dep_formula)
+          rescue
+            #If a dependency resolution exception (such as the NamespaceAPI class) is caught, skip it directly.
+            next
+          end
+        end
+
+        # Collect reverse dependencies
+        installed_formulae.each do |f|
+          next if required.include?(f)
+          begin
+            #The `brew uses` function looks up installed reverse dependencies.
+            reverse_deps = Utils.safe_popen_read(
+              "brew", "uses", "--installed", "--recursive", f.name
+            ).lines(chomp: true).map do |name|
+              formula = Formula[name] rescue nil
+              # Only keep standard Formula instances + already installed
+              formula if formula.is_a?(Formula) && formula.installed?
+            end.compact
+            required.merge(reverse_deps) unless reverse_deps.empty?
+          rescue
+            #Catching reverse dependency lookup exceptions and skipping the current formula.
+            next
+          end
+        end
+
+        required
+      end
+
       sig { override.void }
       def run
         days = args.prune.presence&.then do |prune|
@@ -45,39 +90,19 @@ module Homebrew
           end
         end
 
+        # Fix the hook cleanup instance
         cleanup = Cleanup.new(*args.named, dry_run: args.dry_run?, scrub: args.s?, days:)
+        #Get the formulaes that needed to be kept
+        required_formulae = self.class.required_formulae
+        # overwrite the moethod
+        cleanup.define_singleton_method(:installed_formulae) do
+          super().select { |f| f.is_a?(Formula) } - required_formulae
+        end
+        # ========== Hook end ==========
+
         if args.prune_prefix?
           cleanup.prune_prefix_symlinks_and_directories
           return
-        end
-
-        # Patch: Override unneeded_formulae to use deep reverse-dependency check
-        original_unneeded_formulae = cleanup.method(:unneeded_formulae)
-        cleanup.define_singleton_method(:unneeded_formulae) do
-          installed = Formula.installed
-          return [] if installed.empty?
-
-          # Step 1: Get all direct runtime dependencies of installed formulae
-          required = Set.new
-          installed.each do |f|
-            required.merge(f.runtime_dependencies.map(&:to_formula).select(&:installed?))
-          end
-
-          # Step 2: Add self + reverse dependencies (formulae that depend on each installed formula)
-          installed.each do |f|
-            # Critical Fix: Add the formula itself to required set (prevents top-level formulae like git from being marked unneeded)
-            required.add(f)
-            
-            # Use `brew uses --installed --recursive` (same as uninstall logic)
-            reverse_deps = Utils.safe_popen_read(
-              "brew", "uses", "--installed", "--recursive", f.name
-            ).lines(chomp: true).map { |n| Formula[n] rescue nil }.compact
-
-            required.merge(reverse_deps)
-          end
-
-          # Step 3: Formulae that are installed but NOT required by any other installed formula
-          (installed - required).uniq
         end
 
         cleanup.clean!(quiet: args.quiet?, periodic: false)
