@@ -54,6 +54,10 @@ Install any `gem` package into a self-contained Homebrew Cellar location: <https
 
 Note this can also be installed with `brew install brew-gem`.
 
+### brew-new-formulae
+
+List formulae and casks added to Homebrew taps within a date range. Also provides `brew first-installs` (packages first installed in a date range) and `brew rebuild-index` (rebuild the installs index). Install with `brew tap newalexandria/brew-new-formula` and `brew install newalexandria/brew-new-formula/brew-new-formulae`. <https://github.com/NewAlexandria/homebrew-brew-new-formula>
+
 ## External commands in taps
 
 External commands can be hosted in a [tap](Taps.md) to allow users to easily install and use them. See [How to Create and Maintain a Tap](How-to-Create-and-Maintain-a-Tap.md) for more details about creating and maintaining a tap.
