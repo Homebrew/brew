@@ -8,6 +8,7 @@ require "utils"
 
 module Homebrew
   module Cmd
+    # Command to remove stale lock files and outdated downloads.
     class CleanupCmd < AbstractCommand
       cmd_args do
         days = Homebrew::EnvConfig::ENVS[:HOMEBREW_CLEANUP_MAX_AGE_DAYS]&.dig(:default)
@@ -45,7 +46,6 @@ module Homebrew
           end
         end
 
-        # Initialize Cleanup without the monkey-patch
         cleanup = Cleanup.new(*args.named, dry_run: args.dry_run?, scrub: args.s?, days:)
 
         if args.prune_prefix?
