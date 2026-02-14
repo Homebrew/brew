@@ -80,7 +80,7 @@ module Homebrew
 
       sig {
         params(
-          arguments:        String,
+          arguments:        T.any(String, Pathname),
           named_args:       T.nilable(T.any(String, T::Array[String])),
           env:              T::Hash[String, String],
           verbose:          T::Boolean,
@@ -91,7 +91,7 @@ module Homebrew
       def test(*arguments, named_args: nil, env: {}, verbose: @verbose, ignore_failures: false,
                report_analytics: false)
         step = Step.new(
-          arguments,
+          arguments.map(&:to_s),
           named_args:,
           env:,
           verbose:,

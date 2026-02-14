@@ -292,7 +292,7 @@ module Homebrew
 
         install_args = []
         install_args += %w[--ignore-dependencies --skip-post-install] if testing_formulae_dependents
-        test "brew", "install", *install_args, bottle_filename
+        test "brew", "install", *install_args, bottle_filename.to_s
         install_step = steps.fetch(-1)
 
         if !dry_run && !testing_formulae_dependents && install_step.passed?
