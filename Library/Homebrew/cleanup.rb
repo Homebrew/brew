@@ -39,8 +39,6 @@ module Homebrew
 
       sig { params(pathname: Pathname).returns(T::Boolean) }
       def go_cache_directory?(pathname)
-        # Go makes its cache contents read-only to ensure cache integrity,
-        # which makes sense but is something we need to undo for cleanup.
         pathname.directory? && %w[go_cache go_mod_cache].include?(pathname.basename.to_s)
       end
 

@@ -3,9 +3,9 @@
 
 require "abstract_command"
 require "cleanup"
-
 module Homebrew
   module Cmd
+    # Command to remove stale lock files and outdated downloads.
     class CleanupCmd < AbstractCommand
       cmd_args do
         days = Homebrew::EnvConfig::ENVS[:HOMEBREW_CLEANUP_MAX_AGE_DAYS]&.dig(:default)
