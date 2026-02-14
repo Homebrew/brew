@@ -2,15 +2,8 @@
 # frozen_string_literal: true
 
 module Utils
-  # Helper function for finding autoremovable formulae.
-  #
-  # @private
   module Autoremove
     class << self
-      # An array of {Formula} without {Formula} or {Cask}
-      # dependents that weren't installed on request and without
-      # build dependencies for {Formula} installed from source.
-      # @private
       sig { params(formulae: T::Array[Formula], casks: T::Array[Cask::Cask]).returns(T::Array[Formula]) }
       def removable_formulae(formulae, casks)
         unused_formulae = unused_formulae_with_no_formula_dependents(formulae)
@@ -19,8 +12,6 @@ module Utils
 
       private
 
-      # An array of all installed {Formula} with {Cask} dependents.
-      # @private
       sig { params(casks: T::Array[Cask::Cask]).returns(T::Array[Formula]) }
       def formulae_with_cask_dependents(casks)
         casks.flat_map { |cask| cask.depends_on[:formula] }.compact.flat_map do |name|
@@ -35,17 +26,12 @@ module Utils
         end
       end
 
-      # An array of all installed bottled {Formula} without runtime {Formula}
-      # dependents for bottles and without build {Formula} dependents
-      # for those built from source.
-      # @private
       sig { params(formulae: T::Array[Formula]).returns(T::Array[Formula]) }
       def bottled_formulae_with_no_formula_dependents(formulae)
         formulae_to_keep = T.let([], T::Array[Formula])
         formulae.each do |formula|
           formulae_to_keep += formula.installed_runtime_formula_dependencies
 
-          # Include current runtime dependencies to align with brew uninstall
           formulae_to_keep += formula.runtime_dependencies.filter_map do |dep|
             dep.to_formula
           rescue FormulaUnavailableError
@@ -53,10 +39,8 @@ module Utils
           end
 
           if (tab = formula.any_installed_keg&.tab)
-            # Ignore build dependencies when the formula is a bottle
             next if tab.poured_from_bottle
 
-            # Keep the formula if it was built from source
             formulae_to_keep << formula
 
             formulae_to_keep += formula.deps.select(&:build?).filter_map do |dep|
@@ -70,15 +54,12 @@ module Utils
         formulae.reject { |f| names_to_keep.include?(f.name) }
       end
 
-      # Recursive function that returns an array of {Formula} without
-      # {Formula} dependents that weren't installed on request.
-      # @private
       sig { params(formulae: T::Array[Formula]).returns(T::Array[Formula]) }
       def unused_formulae_with_no_formula_dependents(formulae)
         unused_formulae = bottled_formulae_with_no_formula_dependents(formulae).select do |f|
           tab = f.any_installed_keg&.tab
-          next unless tab
-          next unless tab.installed_on_request_present?
+          next false unless tab
+          next false unless tab.installed_on_request_present?
 
           tab.installed_on_request == false
         end
