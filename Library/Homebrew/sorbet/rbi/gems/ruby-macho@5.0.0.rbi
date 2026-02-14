@@ -114,8 +114,8 @@ module MachO::Headers; end
 MachO::Headers::COMPRESSED_MAGIC = T.let(T.unsafe(nil), Integer)
 MachO::Headers::COMP_TYPE_FASTLIB = T.let(T.unsafe(nil), Integer)
 MachO::Headers::COMP_TYPE_LZSS = T.let(T.unsafe(nil), Integer)
-MachO::Headers::CPU_ARCH_ABI32 = T.let(T.unsafe(nil), Integer)
 MachO::Headers::CPU_ARCH_ABI64 = T.let(T.unsafe(nil), Integer)
+MachO::Headers::CPU_ARCH_ABI64_32 = T.let(T.unsafe(nil), Integer)
 MachO::Headers::CPU_SUBTYPES = T.let(T.unsafe(nil), Hash)
 MachO::Headers::CPU_SUBTYPE_486 = T.let(T.unsafe(nil), Integer)
 MachO::Headers::CPU_SUBTYPE_486SX = T.let(T.unsafe(nil), Integer)
@@ -223,6 +223,8 @@ MachO::Headers::MH_FILESET = T.let(T.unsafe(nil), Integer)
 MachO::Headers::MH_FILETYPES = T.let(T.unsafe(nil), Hash)
 MachO::Headers::MH_FLAGS = T.let(T.unsafe(nil), Hash)
 MachO::Headers::MH_FVMLIB = T.let(T.unsafe(nil), Integer)
+MachO::Headers::MH_GPU_DYLIB = T.let(T.unsafe(nil), Integer)
+MachO::Headers::MH_GPU_EXECUTE = T.let(T.unsafe(nil), Integer)
 MachO::Headers::MH_KEXT_BUNDLE = T.let(T.unsafe(nil), Integer)
 MachO::Headers::MH_MAGIC = T.let(T.unsafe(nil), Integer)
 MachO::Headers::MH_MAGICS = T.let(T.unsafe(nil), Hash)
@@ -615,6 +617,12 @@ class MachO::LoadCommands::SymtabCommand < ::MachO::LoadCommands::LoadCommand
   def strsize; end
   def symoff; end
   def to_h; end
+end
+
+class MachO::LoadCommands::TargetTripleCommand < ::MachO::LoadCommands::LoadCommand
+  def to_h; end
+  def to_s; end
+  def triple; end
 end
 
 class MachO::LoadCommands::ThreadCommand < ::MachO::LoadCommands::LoadCommand; end

@@ -66,6 +66,9 @@ module MachO
       (LC_REQ_DYLD | 0x34) => :LC_DYLD_CHAINED_FIXUPS,
       (LC_REQ_DYLD | 0x35) => :LC_FILESET_ENTRY,
       0x36 => :LC_ATOM_INFO,
+      0x37 => :LC_FUNCTION_VARIANTS,
+      0x38 => :LC_FUNCTION_VARIANT_FIXUPS,
+      0x39 => :LC_TARGET_TRIPLE,
     }.freeze
 
     # association of symbol representations to load command constants
@@ -155,6 +158,9 @@ module MachO
       :LC_DYLD_CHAINED_FIXUPS => "LinkeditDataCommand",
       :LC_FILESET_ENTRY => "FilesetEntryCommand",
       :LC_ATOM_INFO => "LinkeditDataCommand",
+      :LC_FUNCTION_VARIANTS => "LinkeditDataCommand",
+      :LC_FUNCTION_VARIANT_FIXUPS => "LinkeditDataCommand",
+      :LC_TARGET_TRIPLE => "TargetTripleCommand",
     }.freeze
 
     # association of segment name symbols to names
@@ -488,7 +494,7 @@ module MachO
         align = 0
         segalign = 1
 
-        while (segalign & vmaddr).zero?
+        while segalign.nobits?(vmaddr)
           segalign <<= 1
           align += 1
         end
@@ -610,7 +616,7 @@ module MachO
 
         if dylib_command.timestamp == DYLIB_USE_MARKER &&
            dylib_command.name.to_i == DylibUseCommand.bytesize
-          super(view)
+          super
         else
           dylib_command
         end
@@ -1053,11 +1059,26 @@ module MachO
       end
     end
 
+    # A load command containing the target triple used when compiling the binary.
+    # Corresponds to LC_TARGET_TRIPLE.
+    class TargetTripleCommand < LoadCommand
+      # @return [LCStr] the target triple used when compiling the binary
+      field :triple, :lcstr, :to_s => true
+
+      # @return [Hash] a hash representation of this {TargetTripleCommand}
+      def to_h
+        {
+          "triple" => triple.to_h,
+        }.merge super
+      end
+    end
+
     # A load command representing the offsets and sizes of a blob of data in
     # the __LINKEDIT segment. Corresponds to LC_CODE_SIGNATURE,
     # LC_SEGMENT_SPLIT_INFO, LC_FUNCTION_STARTS, LC_DATA_IN_CODE,
     # LC_DYLIB_CODE_SIGN_DRS, LC_LINKER_OPTIMIZATION_HINT, LC_DYLD_EXPORTS_TRIE,
-    # LC_DYLD_CHAINED_FIXUPS, or LC_ATOM_INFO.
+    # LC_DYLD_CHAINED_FIXUPS, LC_ATOM_INFO, LC_FUNCTION_VARIANTS,
+    # or LC_FUNCTION_VARIANT_FIXUPS.
     class LinkeditDataCommand < LoadCommand
       # @return [Integer] offset to the data in the __LINKEDIT segment
       field :dataoff, :uint32

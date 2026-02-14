@@ -37,7 +37,7 @@ module MachO
   # Raised when a file is too short to be a valid Mach-O file.
   class TruncatedFileError < NotAMachOError
     def initialize
-      super "File is too short to be a valid Mach-O"
+      super("File is too short to be a valid Mach-O")
     end
   end
 
@@ -45,21 +45,21 @@ module MachO
   class MagicError < NotAMachOError
     # @param num [Integer] the unknown number
     def initialize(magic)
-      super "Unrecognized Mach-O magic: 0x%02<magic>x" % { :magic => magic }
+      super("Unrecognized Mach-O magic: 0x%02<magic>x" % { :magic => magic })
     end
   end
 
   # Raised when a file is a Java classfile instead of a fat Mach-O.
   class JavaClassFileError < NotAMachOError
     def initialize
-      super "File is a Java class file"
+      super("File is a Java class file")
     end
   end
 
   # Raised when a a fat Mach-O file has zero architectures
   class ZeroArchitectureError < NotAMachOError
     def initialize
-      super "Fat file has zero internal architectures"
+      super("Fat file has zero internal architectures")
     end
   end
 
@@ -71,24 +71,24 @@ module MachO
       # @param cpusubtype_fat [Integer] the CPU subtype in the fat header
       # @param cputype_macho [Integer] the CPU type in the macho header
       # @param cpusubtype_macho [Integer] the CPU subtype in the macho header
-      super ("Mismatch between cputypes >> 0x%08<fat_cputype>x and 0x%08<macho_cputype>x\n" \
-             "and/or cpusubtypes >> 0x%08<fat_cpusubtype>x and 0x%08<macho_cpusubtype>x" %
-            { :fat_cputype => fat_cputype, :macho_cputype => macho_cputype,
-              :fat_cpusubtype => fat_cpusubtype, :macho_cpusubtype => macho_cpusubtype })
+      super("Mismatch between cputypes >> 0x%08<fat_cputype>x and 0x%08<macho_cputype>x\n" \
+            "and/or cpusubtypes >> 0x%08<fat_cpusubtype>x and 0x%08<macho_cpusubtype>x" %
+        { :fat_cputype => fat_cputype, :macho_cputype => macho_cputype,
+          :fat_cpusubtype => fat_cpusubtype, :macho_cpusubtype => macho_cpusubtype })
     end
   end
 
   # Raised when a fat binary is loaded with MachOFile.
   class FatBinaryError < MachOError
     def initialize
-      super "Fat binaries must be loaded with MachO::FatFile"
+      super("Fat binaries must be loaded with MachO::FatFile")
     end
   end
 
   # Raised when a Mach-O is loaded with FatFile.
   class MachOBinaryError < MachOError
     def initialize
-      super "Normal binaries must be loaded with MachO::MachOFile"
+      super("Normal binaries must be loaded with MachO::MachOFile")
     end
   end
 
@@ -96,7 +96,7 @@ module MachO
   class CPUTypeError < MachOError
     # @param cputype [Integer] the unknown CPU type
     def initialize(cputype)
-      super "Unrecognized CPU type: 0x%08<cputype>x" % { :cputype => cputype }
+      super("Unrecognized CPU type: 0x%08<cputype>x" % { :cputype => cputype })
     end
   end
 
@@ -105,8 +105,8 @@ module MachO
     # @param cputype [Integer] the CPU type of the unknown pair
     # @param cpusubtype [Integer] the CPU sub-type of the unknown pair
     def initialize(cputype, cpusubtype)
-      super "Unrecognized CPU sub-type: 0x%08<cpusubtype>x " \
-            "(for CPU type: 0x%08<cputype>x" % { :cputype => cputype, :cpusubtype => cpusubtype }
+      super("Unrecognized CPU sub-type: 0x%08<cpusubtype>x " \
+            "(for CPU type: 0x%08<cputype>x" % { :cputype => cputype, :cpusubtype => cpusubtype })
     end
   end
 
@@ -114,7 +114,7 @@ module MachO
   class FiletypeError < MachOError
     # @param num [Integer] the unknown number
     def initialize(num)
-      super "Unrecognized Mach-O filetype code: 0x%02<num>x" % { :num => num }
+      super("Unrecognized Mach-O filetype code: 0x%02<num>x" % { :num => num })
     end
   end
 
@@ -122,7 +122,7 @@ module MachO
   class LoadCommandError < MachOError
     # @param num [Integer] the unknown number
     def initialize(num)
-      super "Unrecognized Mach-O load command: 0x%02<num>x" % { :num => num }
+      super("Unrecognized Mach-O load command: 0x%02<num>x" % { :num => num })
     end
   end
 
@@ -130,7 +130,7 @@ module MachO
   class LoadCommandNotCreatableError < MachOError
     # @param cmd_sym [Symbol] the uncreatable load command's symbol
     def initialize(cmd_sym)
-      super "Load commands of type #{cmd_sym} cannot be created manually"
+      super("Load commands of type #{cmd_sym} cannot be created manually")
     end
   end
 
@@ -141,8 +141,8 @@ module MachO
     # @param expected_arity [Integer] the number of arguments expected
     # @param actual_arity [Integer] the number of arguments received
     def initialize(cmd_sym, expected_arity, actual_arity)
-      super "Expected #{expected_arity} arguments for #{cmd_sym} creation, " \
-            "got #{actual_arity}"
+      super("Expected #{expected_arity} arguments for #{cmd_sym} creation, " \
+            "got #{actual_arity}")
     end
   end
 
@@ -150,7 +150,7 @@ module MachO
   class LoadCommandNotSerializableError < MachOError
     # @param cmd_sym [Symbol] the load command's symbol
     def initialize(cmd_sym)
-      super "Load commands of type #{cmd_sym} cannot be serialized"
+      super("Load commands of type #{cmd_sym} cannot be serialized")
     end
   end
 
@@ -158,8 +158,8 @@ module MachO
   class LCStrMalformedError < MachOError
     # @param lc [MachO::LoadCommand] the load command containing the string
     def initialize(lc)
-      super "Load command #{lc.type} at offset #{lc.view.offset} contains a " \
-            "malformed string"
+      super("Load command #{lc.type} at offset #{lc.view.offset} contains a " \
+            "malformed string")
     end
   end
 
@@ -167,7 +167,7 @@ module MachO
   class OffsetInsertionError < ModificationError
     # @param offset [Integer] the invalid offset
     def initialize(offset)
-      super "Insertion at offset #{offset} is not valid"
+      super("Insertion at offset #{offset} is not valid")
     end
   end
 
@@ -175,9 +175,9 @@ module MachO
   class HeaderPadError < ModificationError
     # @param filename [String] the filename
     def initialize(filename)
-      super "Updated load commands do not fit in the header of " \
+      super("Updated load commands do not fit in the header of " \
             "#{filename}. #{filename} needs to be relinked, possibly with " \
-            "-headerpad or -headerpad_max_install_names"
+            "-headerpad or -headerpad_max_install_names")
     end
   end
 
@@ -185,14 +185,14 @@ module MachO
   class DylibUnknownError < RecoverableModificationError
     # @param dylib [String] the unknown shared library name
     def initialize(dylib)
-      super "No such dylib name: #{dylib}"
+      super("No such dylib name: #{dylib}")
     end
   end
 
   # Raised when a dylib is missing an ID
   class DylibIdMissingError < RecoverableModificationError
     def initialize
-      super "Dylib is missing a dylib ID"
+      super("Dylib is missing a dylib ID")
     end
   end
 
@@ -200,7 +200,7 @@ module MachO
   class RpathUnknownError < RecoverableModificationError
     # @param path [String] the unknown runtime path
     def initialize(path)
-      super "No such runtime path: #{path}"
+      super("No such runtime path: #{path}")
     end
   end
 
@@ -208,7 +208,7 @@ module MachO
   class RpathExistsError < RecoverableModificationError
     # @param path [String] the extant path
     def initialize(path)
-      super "#{path} already exists"
+      super("#{path} already exists")
     end
   end
 
@@ -216,7 +216,7 @@ module MachO
   class UnimplementedError < MachOError
     # @param thing [String] the thing that is unimplemented
     def initialize(thing)
-      super "Unimplemented: #{thing}"
+      super("Unimplemented: #{thing}")
     end
   end
 
@@ -225,8 +225,8 @@ module MachO
   class FatArchOffsetOverflowError < MachOError
     # @param offset [Integer] the offending offset
     def initialize(offset)
-      super "Offset #{offset} exceeds the 32-bit width of a fat_arch offset. " \
-            "Consider merging with `fat64: true`"
+      super("Offset #{offset} exceeds the 32-bit width of a fat_arch offset. " \
+            "Consider merging with `fat64: true`")
     end
   end
 

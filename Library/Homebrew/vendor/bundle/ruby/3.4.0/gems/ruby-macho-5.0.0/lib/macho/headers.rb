@@ -60,14 +60,14 @@ module MachO
       MH_CIGAM_64 => "MH_CIGAM_64",
     }.freeze
 
-    # mask for CPUs with 64-bit architectures (when running a 64-bit ABI?)
+    # mask for 64-bit CPU architectures with 64-bit types
     # @api private
     CPU_ARCH_ABI64 = 0x01000000
 
-    # mask for CPUs with 64-bit architectures (when running a 32-bit ABI?)
+    # mask for 64-bit CPU architectures with 32-bit types (ILP32)
     # @see https://github.com/Homebrew/ruby-macho/issues/113
     # @api private
-    CPU_ARCH_ABI32 = 0x02000000
+    CPU_ARCH_ABI64_32 = 0x02000000
 
     # any CPU (unused?)
     # @api private
@@ -97,9 +97,10 @@ module MachO
     # @api private
     CPU_TYPE_ARM64 = (CPU_TYPE_ARM | CPU_ARCH_ABI64)
 
-    # 64-bit ARM compatible CPUs (running in 32-bit mode?)
+    # 64-bit ARM compatible CPUs (with 32-bit types)
     # @see https://github.com/Homebrew/ruby-macho/issues/113
-    CPU_TYPE_ARM64_32 = (CPU_TYPE_ARM | CPU_ARCH_ABI32)
+    # @api private
+    CPU_TYPE_ARM64_32 = (CPU_TYPE_ARM | CPU_ARCH_ABI64_32)
 
     # PowerPC compatible CPUs
     # @api private
@@ -450,6 +451,14 @@ module MachO
     # @api private
     MH_FILESET = 0xc
 
+    # gpu program
+    # @api private
+    MH_GPU_EXECUTE = 0xd
+
+    # gpu support functions
+    # @api private
+    MH_GPU_DYLIB = 0xe
+
     # association of filetypes to Symbol representations
     # @api private
     MH_FILETYPES = {
@@ -465,6 +474,8 @@ module MachO
       MH_DSYM => :dsym,
       MH_KEXT_BUNDLE => :kext_bundle,
       MH_FILESET => :fileset,
+      MH_GPU_EXECUTE => :gpu_execute,
+      MH_GPU_DYLIB => :gpu_dylib,
     }.freeze
 
     # association of mach header flag symbols to values
@@ -480,7 +491,7 @@ module MachO
       :MH_TWOLEVEL => 0x80,
       :MH_FORCE_FLAT => 0x100,
       :MH_NOMULTIDEFS => 0x200,
-      :MH_NOPREFIXBINDING => 0x400,
+      :MH_NOFIXPREBINDING => 0x400,
       :MH_PREBINDABLE => 0x800,
       :MH_ALLMODSBOUND => 0x1000,
       :MH_SUBSECTIONS_VIA_SYMBOLS => 0x2000,
@@ -495,9 +506,10 @@ module MachO
       :MH_DEAD_STRIPPABLE_DYLIB => 0x400000,
       :MH_HAS_TLV_DESCRIPTORS => 0x800000,
       :MH_NO_HEAP_EXECUTION => 0x1000000,
-      :MH_APP_EXTENSION_SAFE => 0x02000000,
-      :MH_NLIST_OUTOFSYNC_WITH_DYLDINFO => 0x04000000,
-      :MH_SIM_SUPPORT => 0x08000000,
+      :MH_APP_EXTENSION_SAFE => 0x2000000,
+      :MH_NLIST_OUTOFSYNC_WITH_DYLDINFO => 0x4000000,
+      :MH_SIM_SUPPORT => 0x8000000,
+      :MH_IMPLICIT_PAGEZERO => 0x10000000,
       :MH_DYLIB_IN_CACHE => 0x80000000,
     }.freeze
 

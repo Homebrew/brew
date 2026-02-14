@@ -150,6 +150,10 @@ Layout/LineLength:
       " was verified as official when first introduced to the cask",
     ]
 
+# Disabling until RuboCop 1.84.1 is merged
+Layout/MultilineMethodCallIndentation:
+  Enabled: false
+
 # conflicts with DSL-style path concatenation with `/`
 Layout/SpaceAroundOperators:
   Enabled: false

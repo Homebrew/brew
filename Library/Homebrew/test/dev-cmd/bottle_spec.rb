@@ -112,7 +112,7 @@ RSpec.describe Homebrew::DevCmd::Bottle do
       end
 
       # RuboCop would align the `.and` with `.to_stdout` which is too floaty.
-      # rubocop:disable Layout/MultilineMethodCallIndentation
+      # Temporarily removing this RuboCop disable until RuboCop 1.84.1 is merged.
       expect do
         brew "bottle",
              "--merge",

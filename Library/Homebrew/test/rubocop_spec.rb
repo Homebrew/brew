@@ -19,18 +19,14 @@ RSpec.describe "RuboCop" do
     end
 
     it "loads all Formula cops without errors" do
-      # Work around the test-prof plugin's RuboCop version check, which is incompatible with Homebrew's ruby setup.
-      test_prof_rubocop_args = [
+      stdout, stderr, status = Open3.capture3(
+        RUBY_PATH, "-W0", "-S", "rubocop", TEST_FIXTURE_DIR/"testball.rb",
         # Require "sorbet-runtime" to bring T into scope for warnings.rb
         "-r", "sorbet-runtime",
         # Require "extend/module" to include T::Sig in Module for warnings.rb
         "-r", HOMEBREW_LIBRARY_PATH/"extend/module.rb",
-        # Load the test-prof RuboCop plugin manually to avoid issues with auto-loading (see test_prof_rubocop_stub.rb)
-        "-r", HOMEBREW_LIBRARY_PATH/"utils/test_prof_rubocop_stub.rb"
-      ]
-
-      stdout, stderr, status = Open3.capture3(RUBY_PATH, "-W0", "-S", "rubocop", TEST_FIXTURE_DIR/"testball.rb",
-                                              *test_prof_rubocop_args)
+        "-r", "rubocop/test_prof"
+      )
       expect(stderr).to be_empty
       expect(stdout).to include("no offenses detected")
       expect(status).to be_a_success

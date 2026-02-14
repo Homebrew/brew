@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module MachO
-  # A general purpose pseudo-structure. Described in detail in docs/machostructure-dsl.md.
+  # A general purpose pseudo-structure. Described in detail in machostructure-dsl-docs.md.
   # @abstract
   class MachOStructure
     # Constants used for parsing MachOStructure fields
