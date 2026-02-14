@@ -1,4 +1,4 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
 
 require "system_command"
@@ -11,24 +11,48 @@ module Homebrew
     class Step
       include SystemCommand::Mixin
 
-      attr_reader :command, :name, :status, :output, :start_time, :end_time
+      sig { returns(T::Array[String]) }
+      attr_reader :command
+
+      sig { returns(T.nilable(String)) }
+      attr_reader :name
+
+      sig { returns(Symbol) }
+      attr_reader :status
+
+      sig { returns(T.nilable(String)) }
+      attr_reader :output
+
+      sig { returns(T.nilable(Time)) }
+      attr_reader :start_time, :end_time
 
       # Instantiates a Step object.
-      # @param command [Array<String>] Command to execute and arguments.
-      # @param env [Hash] Environment variables to set when running command.
+      # @param command Command to execute and arguments.
+      # @param env Environment variables to set when running command.
+      sig {
+        params(
+          command:         T::Array[String],
+          env:             T::Hash[String, String],
+          verbose:         T::Boolean,
+          named_args:      T.nilable(T.any(String, T::Array[String])),
+          ignore_failures: T::Boolean,
+          repository:      T.nilable(Pathname),
+        ).void
+      }
       def initialize(command, env:, verbose:, named_args: nil, ignore_failures: false, repository: nil)
-        @named_args = [named_args].flatten.compact.map(&:to_s)
-        @command = command + @named_args
+        @named_args = T.let([named_args].flatten.compact.map(&:to_s), T::Array[String])
+        @command = T.let(command + @named_args, T::Array[String])
         @env = env
         @verbose = verbose
         @ignore_failures = ignore_failures
         @repository = repository
 
-        @name = command[1]&.delete("-")
-        @status = :running
-        @output = nil
+        @name = T.let(command[1]&.delete("-"), T.nilable(String))
+        @status = T.let(:running, Symbol)
+        @output = T.let(nil, T.nilable(String))
       end
 
+      sig { returns(String) }
       def command_trimmed
         command.reject { |arg| arg.to_s.start_with?("--exclude") }
                .join(" ")
@@ -37,6 +61,7 @@ module Homebrew
                .delete_prefix("/usr/bin/")
       end
 
+      sig { returns(String) }
       def command_short
         (@command - %W[
           brew
@@ -56,26 +81,32 @@ module Homebrew
           .gsub(Dir.pwd, "")
       end
 
+      sig { returns(T::Boolean) }
       def passed?
         @status == :passed
       end
 
+      sig { returns(T::Boolean) }
       def failed?
         @status == :failed
       end
 
+      sig { returns(T::Boolean) }
       def ignored?
         @status == :ignored
       end
 
+      sig { void }
       def puts_command
         puts Formatter.headline(command_trimmed, color: :blue)
       end
 
+      sig { void }
       def puts_result
         puts Formatter.headline(Formatter.error("FAILED"), color: :red) unless passed?
       end
 
+      sig { params(message: String, title: String, file: String, line: T.nilable(Integer)).void }
       def puts_github_actions_annotation(message, title, file, line)
         return unless GitHub::Actions.env_set?
 
@@ -91,23 +122,27 @@ module Homebrew
         puts annotation
       end
 
-      def puts_in_github_actions_group(title)
+      sig { params(title: String, _block: T.proc.void).void }
+      def puts_in_github_actions_group(title, &_block)
         puts "::group::#{title}" if GitHub::Actions.env_set?
         yield
         puts "::endgroup::" if GitHub::Actions.env_set?
       end
 
+      sig { returns(T::Boolean) }
       def output?
         @output.present?
       end
 
       # The execution time of the task.
       # Precondition: Step#run has been called.
-      # @return [Float] execution time in seconds
+      # @return execution time in seconds
+      sig { returns(Float) }
       def time
-        end_time - start_time
+        T.must(end_time) - T.must(start_time)
       end
 
+      sig { void }
       def puts_full_output
         return if @output.blank? || @verbose
 
@@ -116,20 +151,23 @@ module Homebrew
         end
       end
 
+      sig { params(name: String).returns([T.nilable(String), T.nilable(Integer)]) }
       def annotation_location(name)
         formula = Formulary.factory(name)
-        method_sym = command.second.to_sym
+        method_sym = command.fetch(1).to_sym
         method_location = formula.method(method_sym).source_location if formula.respond_to?(method_sym)
 
         if method_location.present? && (method_location.first == formula.path.to_s)
           method_location
         else
-          [formula.path, nil]
+          [formula.path.to_s, nil]
         end
       rescue FormulaUnavailableError
-        [@repository.glob("**/#{name}*").first, nil]
+        glob_result = @repository ? @repository.glob("**/#{name}*").first&.to_s : nil
+        [glob_result, nil]
       end
 
+      sig { params(output: String, max_kb: Integer, context_lines: Integer).returns(String) }
       def truncate_output(output, max_kb:, context_lines:)
         output_lines = output.lines
         first_error_index = output_lines.find_index do |line|
@@ -152,12 +190,13 @@ module Homebrew
         else
           start = [first_error_index - context_lines, 0].max
           # Let GitHub Actions truncate us to 4KB if needed.
-          output_lines[start..].join
+          T.must(output_lines[start..]).join
         end
       end
 
+      sig { params(dry_run: T::Boolean, fail_fast: T::Boolean).void }
       def run(dry_run: false, fail_fast: false)
-        @start_time = Time.now
+        @start_time = T.let(Time.now, T.nilable(Time))
 
         puts_command
         if dry_run
@@ -170,12 +209,12 @@ module Homebrew
 
         executable, *args = command
 
-        result = system_command executable, args:,
-                                            print_stdout: @verbose,
-                                            print_stderr: @verbose,
-                                            env:          @env
+        result = system_command T.must(executable), args:,
+                                                    print_stdout: @verbose,
+                                                    print_stderr: @verbose,
+                                                    env:          @env
 
-        @end_time = Time.now
+        @end_time = T.let(Time.now, T.nilable(Time))
 
         @status = if result.success?
           :passed
@@ -236,7 +275,7 @@ module Homebrew
           annotation_output = truncate_output(@output, max_kb: 4, context_lines: 5)
 
           annotation_title = "`#{command_trimmed}` failed on #{os_string}!"
-          file = path.to_s.delete_prefix("#{@repository}/")
+          file = path.delete_prefix("#{@repository}/")
           puts_in_github_actions_group("Truncated #{command_short} output") do
             puts_github_actions_annotation(annotation_output, annotation_title, file, line)
           end
