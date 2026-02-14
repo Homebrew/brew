@@ -45,7 +45,7 @@ module Utils
         formulae.each do |formula|
           formulae_to_keep += formula.installed_runtime_formula_dependencies
 
-          # Fix for #21519: Include current runtime dependencies to align with brew uninstall
+          # Include current runtime dependencies to align with brew uninstall
           formula.runtime_dependencies.each do |dep|
             formulae_to_keep << dep.to_formula
           rescue FormulaUnavailableError
