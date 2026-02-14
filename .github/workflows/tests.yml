@@ -49,7 +49,9 @@ jobs:
         run: brew install-bundler-gems --groups=style,typecheck
 
       - name: Install shellcheck and shfmt
-        run: brew install shellcheck shfmt
+        uses: Homebrew/actions/cache-homebrew-prefix@main
+        with:
+          install: shellcheck shfmt
 
       - name: Cache style cache
         uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
@@ -263,14 +265,16 @@ jobs:
 
       - name: Install brew tests --online dependencies
         if: matrix.name == 'tests (online)'
-        run: brew install subversion curl
+        uses: Homebrew/actions/cache-homebrew-prefix@main
+        with:
+          install: subversion curl
 
       - name: Install brew tests macOS dependencies
         if: runner.os != 'Linux'
-        run: |
-          # Workaround GitHub Actions Python issues
-          brew unlink python && brew link --overwrite python
-          brew install subversion
+        uses: Homebrew/actions/cache-homebrew-prefix@main
+        with:
+          install: subversion gnupg
+          uninstall: true
 
         # brew tests doesn't like world writable directories
       - name: Cleanup permissions
@@ -333,7 +337,6 @@ jobs:
             runs-on: macos-26
     env:
       HOMEBREW_TEST_BOT_ANALYTICS: 1
-      HOMEBREW_ENFORCE_SBOM: 1
     steps:
       - name: Install Homebrew and Homebrew's dependencies
         # All other images are built from our Homebrew Dockerfile.
@@ -374,7 +377,10 @@ jobs:
           core: true
           cask: false
 
-      - run: brew test-bot --only-cleanup-before
+      - uses: Homebrew/actions/cache-homebrew-prefix@main
+        with:
+          install: gnu-tar
+          uninstall: true
 
       - name: Setup environment variables
         run: |
@@ -385,9 +391,9 @@ jobs:
         env:
           MATRIX_NAME: ${{ matrix.name }}
 
-      - run: brew test-bot --only-setup
+      - run: brew test-bot --only-cleanup-before
 
-      - run: brew install gnu-tar
+      - run: brew test-bot --only-setup
 
       - run: brew test-bot --only-formulae --only-json-tab --test-default-formula
 

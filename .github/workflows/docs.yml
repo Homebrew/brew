@@ -37,8 +37,10 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Install vale
-        run: brew install vale
+      - name: Install Vale and Ruby
+        uses: Homebrew/actions/cache-homebrew-prefix@main
+        with:
+          install: vale ruby
 
       - name: Cleanup Homebrew/brew docs
         if: github.repository == 'Homebrew/brew'
@@ -52,10 +54,11 @@ jobs:
       - name: Run Vale
         run: vale docs/
 
-      - name: Install Ruby
-        uses: ruby/setup-ruby@09a7688d3b55cf0e976497ff046b70949eeaccfd # v1.288.0
+      - name: Setup Ruby
+        uses: Homebrew/actions/setup-ruby@main
         with:
           bundler-cache: true
+          portable-ruby: true
           working-directory: docs
 
       - name: Check Markdown syntax

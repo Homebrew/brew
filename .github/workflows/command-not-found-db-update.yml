@@ -26,7 +26,10 @@ jobs:
         uses: Homebrew/actions/setup-homebrew@main
 
       - name: Install oras for interacting with GitHub Packages
-        run: brew install oras
+        uses: Homebrew/actions/cache-homebrew-prefix@main
+        with:
+          install: oras
+          uninstall: true
 
       - name: Pull executables.txt from GitHub Packages
         run: oras pull ghcr.io/homebrew/command-not-found/executables:latest

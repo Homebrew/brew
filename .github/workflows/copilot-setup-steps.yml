@@ -25,7 +25,9 @@ jobs:
       - run: brew install-bundler-gems --groups=all
 
       # install Homebrew formulae we might need
-      - run: brew install shellcheck shfmt gh gnu-tar subversion curl
+      - uses: Homebrew/actions/cache-homebrew-prefix@main
+        with:
+          install: shellcheck shfmt gh gnu-tar subversion curl
 
       # brew tests doesn't like world writable directories
       - run: sudo chmod -R g-w,o-w /home/linuxbrew/.linuxbrew/Homebrew
