@@ -46,10 +46,10 @@ module Utils
           formulae_to_keep += formula.installed_runtime_formula_dependencies
 
           # Include current runtime dependencies to align with brew uninstall
-          formula.runtime_dependencies.each do |dep|
-            formulae_to_keep << dep.to_formula
+          formulae_to_keep += formula.runtime_dependencies.filter_map do |dep|
+            dep.to_formula
           rescue FormulaUnavailableError
-            # do nothing
+            nil
           end
 
           if (tab = formula.any_installed_keg&.tab)
