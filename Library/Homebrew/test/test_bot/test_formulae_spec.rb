@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require "dev-cmd/test-bot"
+require "test_bot"
 require "utils/github/artifacts"
 
 RSpec.describe Homebrew::TestBot::TestFormulae do

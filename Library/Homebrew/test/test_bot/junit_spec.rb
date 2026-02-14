@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require "dev-cmd/test-bot"
+require "test_bot"
 
 RSpec.describe Homebrew::TestBot::Junit do
   # Regression test: Junit requires REXML before use. Without the require calls in #initialize,
