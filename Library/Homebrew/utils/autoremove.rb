@@ -58,12 +58,12 @@ module Utils
 
             # Keep the formula if it was built from source
             formulae_to_keep << formula
-          end
 
-          formula.deps.select(&:build?).each do |dep|
-            formulae_to_keep << dep.to_formula
-          rescue FormulaUnavailableError
-            # do nothing
+            formula.deps.select(&:build?).each do |dep|
+              formulae_to_keep << dep.to_formula
+            rescue FormulaUnavailableError
+              # do nothing
+            end
           end
         end
         names_to_keep = formulae_to_keep.to_set(&:name)
