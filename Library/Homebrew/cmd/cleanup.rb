@@ -3,9 +3,6 @@
 
 require "abstract_command"
 require "cleanup"
-require "formula"
-require "utils"
-
 module Homebrew
   module Cmd
     # Command to remove stale lock files and outdated downloads.
