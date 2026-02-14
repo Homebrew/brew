@@ -42,20 +42,25 @@ RSpec.describe Utils::Autoremove do
     let(:tab_from_keg) { instance_double(Tab) }
 
     before do
+      # Fix for #21519: Tests must now mock `runtime_dependencies` to avoid InstanceDouble errors
       allow(formula_with_deps).to receive_messages(
         installed_runtime_formula_dependencies: [first_formula_dep, second_formula_dep],
+        runtime_dependencies:                   [],
         any_installed_keg:                      instance_double(Keg, tab: tab_from_keg),
       )
       allow(first_formula_dep).to receive_messages(
         installed_runtime_formula_dependencies: [second_formula_dep],
+        runtime_dependencies:                   [],
         any_installed_keg:                      instance_double(Keg, tab: tab_from_keg),
       )
       allow(second_formula_dep).to receive_messages(
         installed_runtime_formula_dependencies: [],
+        runtime_dependencies:                   [],
         any_installed_keg:                      instance_double(Keg, tab: tab_from_keg),
       )
       allow(formula_is_build_dep).to receive_messages(
         installed_runtime_formula_dependencies: [],
+        runtime_dependencies:                   [],
         any_installed_keg:                      instance_double(Keg, tab: tab_from_keg),
       )
     end
