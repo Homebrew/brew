@@ -331,23 +331,15 @@ module Homebrew
       Cleanup.new.clean!(quiet: true, periodic: true)
     end
 
-    sig { returns(T::Array[Formula]) }
-    def installed_formulae
-      # Return all standard installed Formula instances.
-      # Dependency handling is performed during autoremove/uninstall,
-      # so we avoid doing additional, expensive dependency scans here.
-      Formula.installed.sort_by(&:name).grep(Formula)
-    end
-
     sig { params(quiet: T::Boolean, periodic: T::Boolean).void }
     def clean!(quiet: false, periodic: false)
       if args.empty?
-        # Use installed_formulae to respect dependency filtering
-        installed_formulae
-          .reject { |f| Cleanup.skip_clean_formula?(f) }
-          .each do |formula|
-            cleanup_formula(formula, quiet:, ds_store: false, cache_db: false)
-          end
+        Formula.installed
+               .sort_by(&:name)
+               .reject { |f| Cleanup.skip_clean_formula?(f) }
+               .each do |formula|
+          cleanup_formula(formula, quiet:, ds_store: false, cache_db: false)
+        end
 
         if ENV["HOMEBREW_AUTOREMOVE"].present?
           opoo "`$HOMEBREW_AUTOREMOVE` is now a no-op as it is the default behaviour. " \
