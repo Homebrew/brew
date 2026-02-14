@@ -59,10 +59,10 @@ module Utils
             # Keep the formula if it was built from source
             formulae_to_keep << formula
 
-            formula.deps.select(&:build?).each do |dep|
-              formulae_to_keep << dep.to_formula
+            formulae_to_keep += formula.deps.select(&:build?).filter_map do |dep|
+              dep.to_formula
             rescue FormulaUnavailableError
-              # do nothing
+              nil
             end
           end
         end
