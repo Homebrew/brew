@@ -1,4 +1,4 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
 
 module RuboCop
@@ -97,26 +97,36 @@ module RuboCop
 
         private
 
+        sig {
+          params(node: RuboCop::AST::IfNode, receiver: RuboCop::AST::Node, other: T.nilable(RuboCop::AST::Node)).void
+        }
         def register_offense(node, receiver, other)
           add_offense(node, message: message(node, receiver, other)) do |corrector|
             corrector.replace(node, replacement(receiver, other, node.left_sibling))
           end
         end
 
+        sig { params(node: RuboCop::AST::IfNode).returns(T::Boolean) }
         def ignore_if_node?(node)
           node.elsif?
         end
 
+        sig { params(node: T.nilable(RuboCop::AST::Node)).returns(T::Boolean) }
         def ignore_other_node?(node)
-          node && (node.if_type? || node.rescue_type? || node.while_type?)
+          !!node && (node.if_type? || node.rescue_type? || node.while_type?)
         end
 
+        sig {
+          params(node: RuboCop::AST::IfNode, receiver: RuboCop::AST::Node, other: T.nilable(RuboCop::AST::Node))
+            .returns(String)
+        }
         def message(node, receiver, other)
           prefer = replacement(receiver, other, node.left_sibling).gsub(/^\s*|\n/, "")
           current = current(node).gsub(/^\s*|\n/, "")
           format(MSG, prefer:, current:)
         end
 
+        sig { params(node: RuboCop::AST::IfNode).returns(String) }
         def current(node)
           if !node.ternary? && node.source.include?("\n")
             "#{node.loc.keyword.with(end_pos: node.condition.loc.selector.end_pos).source} ... end"
@@ -125,8 +135,15 @@ module RuboCop
           end
         end
 
+        sig {
+          params(
+            receiver:     RuboCop::AST::Node,
+            other:        T.nilable(RuboCop::AST::Node),
+            left_sibling: T.nilable(T.any(RuboCop::AST::Node, Symbol)),
+          ).returns(String)
+        }
         def replacement(receiver, other, left_sibling)
-          or_source = if other&.send_type?
+          or_source = if other.is_a?(RuboCop::AST::SendNode)
             build_source_for_or_method(other)
           elsif other.nil? || other.nil_type?
             ""
@@ -138,6 +155,7 @@ module RuboCop
           left_sibling ? "(#{replaced})" : replaced
         end
 
+        sig { params(other: RuboCop::AST::SendNode).returns(String) }
         def build_source_for_or_method(other)
           if other.parenthesized? || other.method?("[]") || other.arithmetic_operation? || !other.arguments?
             " || #{other.source}"
@@ -149,6 +167,7 @@ module RuboCop
           end
         end
 
+        sig { params(node: RuboCop::AST::SendNode).returns(Parser::Source::Range) }
         def method_range(node)
           range_between(node.source_range.begin_pos, node.first_argument.source_range.begin_pos - 1)
         end

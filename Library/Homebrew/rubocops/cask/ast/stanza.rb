@@ -14,7 +14,7 @@ module RuboCop
 
         sig {
           params(
-            method_node:  RuboCop::AST::Node,
+            method_node:  T.any(RuboCop::AST::AsgnNode, RuboCop::AST::BlockNode, RuboCop::AST::SendNode),
             all_comments: T::Array[T.any(String, Parser::Source::Comment)],
           ).void
         }
@@ -23,7 +23,7 @@ module RuboCop
           @all_comments = all_comments
         end
 
-        sig { returns(RuboCop::AST::Node) }
+        sig { returns(T.any(RuboCop::AST::AsgnNode, RuboCop::AST::BlockNode, RuboCop::AST::SendNode)) }
         attr_reader :method_node
         alias stanza_node method_node
 
