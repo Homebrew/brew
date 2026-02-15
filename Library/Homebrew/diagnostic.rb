@@ -59,6 +59,9 @@ module Homebrew
       include SystemCommand::Mixin
       include Utils::Output::Mixin
 
+      # 2 months
+      DEFAULT_API_AND_REPO_STALE_SECONDS = T.let(60 * 24 * 60 * 60, Integer)
+
       sig { params(verbose: T::Boolean).void }
       def initialize(verbose: true)
         @verbose = verbose
@@ -164,6 +167,7 @@ module Homebrew
         return if !Utils::Git.available? || !repository_path.git_repository?
 
         current_origin = repository_path.origin_url
+        last_commit_date = repository_path.last_commit_date
 
         if current_origin.nil?
           <<~EOS
@@ -183,6 +187,40 @@ module Homebrew
             You can solve this by setting the origin remote:
               git -C "#{repository_path}" remote set-url origin #{Formatter.url(desired_origin)}
           EOS
+        elsif last_commit_date.blank?
+          <<~EOS
+            Repository has no commit history.
+
+            You can fix this by fetching changes:
+              git -C "#{repository_path}" fetch origin
+          EOS
+        elsif (Time.now - (last_commit_time = Time.parse(last_commit_date))) > DEFAULT_API_AND_REPO_STALE_SECONDS
+          urls_to_match = [
+            HOMEBREW_CORE_DEFAULT_GIT_REMOTE,
+            "https://github.com/Homebrew/homebrew-cask", # There's no `HOMEBREW_CASK_DEFAULT_GIT_REMOTE`
+          ]
+
+          # Ignore core and cask taps if `HOMEBREW_NO_INSTALL_FROM_API` is not set.
+          if ENV["HOMEBREW_NO_INSTALL_FROM_API"].nil? && urls_to_match.any? { |url| current_origin.match?(url) }
+            return
+          end
+
+          urls_to_match << HOMEBREW_BREW_DEFAULT_GIT_REMOTE
+
+          message = "Last commit in #{current_origin} was made on #{last_commit_time.strftime("%B %d %Y")}.\n"
+          message += if urls_to_match.any? { |url| current_origin.match?(url) }
+            <<~EOS
+              Try to update Homebrew and repositories:
+                brew update-reset
+            EOS
+          else
+            <<~EOS
+              This might be caused by using mirrors for Homebrew repositories.
+              Check if the mirror you use is up to date.
+            EOS
+          end
+
+          message
         end
       end
 
@@ -206,6 +244,37 @@ module Homebrew
         return if tap_head != repo.head_ref
 
         message
+      end
+
+      sig { returns(T.nilable(String)) }
+      def check_outdated_api
+        return if Homebrew::EnvConfig.no_install_from_api?
+
+        formula_api_file = Homebrew::API.cached_formula_json_file_path
+        missing_files = !formula_api_file.exist?
+        outdated_api = if formula_api_file.exist?
+          (Time.now - formula_api_file.mtime) > DEFAULT_API_AND_REPO_STALE_SECONDS
+        end
+
+        return if [missing_files, outdated_api].none?
+
+        suggested_fix = if Homebrew::EnvConfig.api_domain == HOMEBREW_API_DEFAULT_DOMAIN
+          <<~EOS
+            Try to update Homebrew and its API:
+              brew update-reset
+          EOS
+        else
+          <<~EOS
+            This might be caused by using mirrors for Homebrew repositories.
+            Check if the mirror you use is up to date.
+          EOS
+        end
+
+        <<~EOS
+          Homebrew API files are #{missing_files ? "missing" : "out of date"}!
+
+          #{suggested_fix}
+        EOS
       end
 
       sig { returns(T.nilable(String)) }
