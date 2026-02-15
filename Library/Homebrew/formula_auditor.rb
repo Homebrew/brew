@@ -1081,10 +1081,27 @@ module Homebrew
     def audit_no_autobump
       return if formula.autobump?
 
-      return unless @new_formula_inclusive
+      if @new_formula_inclusive
+        error = SharedAudits.no_autobump_audit_message(formula.no_autobump_message, new_package: true)
+        new_formula_problem error if error
+        return
+      end
 
-      error = SharedAudits.no_autobump_new_package_message(formula.no_autobump_message)
-      new_formula_problem error if error
+      return unless @git
+      return unless formula.tap
+      return unless formula.tap.git?
+      return if formula.stable.blank?
+
+      current_version = formula.stable.version
+
+      _, origin_head_version_info = committed_version_info
+      return if origin_head_version_info.empty?
+
+      # Check `no_autobump!` if on version change
+      return if current_version == origin_head_version_info[:version]
+
+      error = SharedAudits.no_autobump_audit_message(formula.no_autobump_message)
+      problem error if error
     end
 
     def quote_dep(dep)

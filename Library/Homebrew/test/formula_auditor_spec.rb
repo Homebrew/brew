@@ -1728,32 +1728,81 @@ RSpec.describe Homebrew::FormulaAuditor do
   end
 
   describe "#audit_no_autobump" do
-    it "warns when autobump exclusion reason is not suitable for new formula" do
-      fa = formula_auditor "foo", <<~RUBY, new_formula: true
-        class Foo < Formula
-          url "https://brew.sh/foo-1.0.tgz"
-
-          no_autobump! because: :requires_manual_review
-        end
-      RUBY
-
+    subject(:no_autobump_audit) do
+      fa = described_class.new(Formulary.factory(formula_path), git: true)
       fa.audit_no_autobump
-      expect(fa.new_formula_problems.first[:message])
-        .to match("`:requires_manual_review` is a temporary reason intended for existing packages, " \
-                  "use a different reason instead.")
+      fa.problems.first&.fetch(:message)
     end
 
-    it "does not warn when autobump exclusion reason is allowed" do
-      fa = formula_auditor "foo", <<~RUBY, new_formula: true
-        class Foo < Formula
-          url "https://brew.sh/foo-1.0.tgz"
+    before do
+      origin_formula_path.dirname.mkpath
+      origin_formula_path.write <<~RUBY
+        class Foo#{foo_version} < Formula
+          url "https://brew.sh/foo-1.0.tar.gz"
+          sha256 "31cccfc6630528db1c8e3a06f6decf2a370060b982841cfab2b8677400a5092e"
 
-          no_autobump! because: "foo bar"
+          no_autobump! because: "no_autobump_placeholder"
         end
       RUBY
 
-      fa.audit_no_autobump
-      expect(fa.new_formula_problems).to be_empty
+      origin_tap_path.mkpath
+      origin_tap_path.cd do
+        system "git", "init"
+        system "git", "add", "--all"
+        system "git", "commit", "-m", "init"
+      end
+
+      tap_path.mkpath
+      tap_path.cd do
+        system "git", "clone", origin_tap_path, "."
+      end
+    end
+
+    describe "no_autobump" do
+      context "when version is changed" do
+        before do
+          formula_gsub "foo-1.0.tar.gz", "foo-1.1.tar.gz"
+          formula_gsub '"no_autobump_placeholder"', ":requires_manual_review"
+        end
+
+        it do
+          expect(no_autobump_audit).to match("`:requires_manual_review` is a temporary to-be deprecated reason, " \
+                                             "change or remove autobump exclusion reason.")
+        end
+      end
+
+      context "when version is not changed" do
+        before { formula_gsub '"no_autobump_placeholder"', ":requires_manual_review" }
+
+        it { is_expected.to be_nil }
+      end
+
+      context "when version is changed but the autobump exclusion reason is not `:requires_manual_review`" do
+        before { formula_gsub "foo-1.0.tar.gz", "foo-1.1.tar.gz" }
+
+        it { is_expected.to be_nil }
+      end
+
+      context "when autobump exclusion reason is not `:requires_manual_review`" do
+        it { is_expected.to be_nil }
+      end
+
+      context "when a new formula is created" do
+        it "warns when autobump exclusion reason is not suitable for new formula" do
+          fa = formula_auditor "foo", <<~RUBY, new_formula: true
+            class Foo < Formula
+              url "https://brew.sh/foo-1.0.tgz"
+
+              no_autobump! because: :requires_manual_review
+            end
+          RUBY
+
+          fa.audit_no_autobump
+          expect(fa.new_formula_problems.first[:message])
+            .to match("`:requires_manual_review` is a temporary to-be deprecated reason, " \
+                      "use a different reason instead.")
+        end
+      end
     end
   end
 end

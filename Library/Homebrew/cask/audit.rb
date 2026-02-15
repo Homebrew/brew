@@ -1242,7 +1242,7 @@ module Cask
       return if cask.autobump?
       return unless new_cask?
 
-      error = SharedAudits.no_autobump_new_package_message(cask.no_autobump_message)
+      error = SharedAudits.no_autobump_audit_message(cask.no_autobump_message, new_package: true)
       add_error error if error
     end
 
