@@ -141,6 +141,7 @@ module Cask
       end
 
       caveat :requires_rosetta do
+        @cask.mark_on_system_blocks_exist!
         next if Homebrew::SimulateSystem.current_arch != :arm
 
         <<~EOS
