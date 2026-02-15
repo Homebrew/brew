@@ -2,7 +2,6 @@
 # frozen_string_literal: true
 
 require "fileutils"
-require "pathname"
 
 module Homebrew
   module Bundle
