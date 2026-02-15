@@ -93,6 +93,65 @@ module Homebrew
         deep_remove_placeholders(raw_caveats, appdir.to_s)
       end
 
+      sig { params(bottle_tag: ::Utils::Bottles::Tag).returns(T::Hash[String, T.untyped]) }
+      def serialize(bottle_tag: ::Utils::Bottles.tag)
+        hash = self.class.decorator.all_props.filter_map do |prop|
+          next if PREDICATES.any? { |predicate| prop == :"#{predicate}_present" }
+
+          [prop.to_s, send(prop)]
+        end.to_h
+
+        hash = ::Utils.deep_stringify_symbols(hash)
+        ::Utils.deep_compact_blank(hash)
+      end
+
+      sig { params(hash: T::Hash[String, T.untyped]).returns(CaskStruct) }
+      def self.deserialize(hash)
+        hash = ::Utils.deep_unstringify_symbols(hash)
+
+        # Items that don't follow the `hash["foo_present"] = hash["foo_args"].present?` pattern are overridden below
+        PREDICATES.each do |name|
+          hash["#{name}_present"] = hash["#{name}_args"].present?
+        end
+
+        hash["raw_artifacts"] = if (raw_artifacts = hash["raw_artifacts"])
+          raw_artifacts.map { |artifact| deserialize_artifact_args(artifact) }
+        end
+
+        from_hash(hash)
+      end
+
+      # Format artifact args pairs into proper [key, args, kwargs, block] format since serialization removed blanks.
+      sig {
+          params(
+            args: T.any(
+              [Symbol],
+              [Symbol, T::Array[T.anything]],
+              [Symbol, T::Hash[Symbol, T.anything]],
+              [Symbol, T.proc.void],
+              [Symbol, T::Array[T.anything], T::Hash[Symbol, T.anything]],
+              [Symbol, T::Array[T.anything], T.proc.void],
+              [Symbol, T::Hash[Symbol, T.anything], T.proc.void],
+              [Symbol, T::Array[T.anything], T::Hash[Symbol, T.anything], T.proc.void],
+            ),
+          ).returns(ArtifactArgs)
+      }
+      def self.deserialize_artifact_args(args)
+        args = case args
+        in [key]                                              then [key, [], {}, nil]
+        in [key, Array => array]                              then [key, array, {}, nil]
+        in [key, Hash => hash]                                then [key, [], hash, nil]
+        in [key, Proc => block]                               then [key, [], {}, block]
+        in [key, Array => array, Hash => hash]                then [key, array, hash, nil]
+        in [key, Array => array, Proc => block]               then [key, array, {}, block]
+        in [key, Hash => hash, Proc => block]                 then [key, [], hash, block]
+        in [key, Array => array, Hash => hash, Proc => block] then [key, array, hash, block]
+        end
+
+        # The case above is exhaustive so args will never be nil, but sorbet cannot infer that.
+        T.must(args)
+      end
+
       private
 
       const :raw_artifacts, T::Array[ArtifactArgs], default: []
