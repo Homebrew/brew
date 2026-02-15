@@ -170,7 +170,7 @@ to one or more of the following environment variables:
 This workflow is useful for maintainers or testers who regularly install lots of
 formulae.
 
-Unless `--force` is passed, this returns a 1 exit code if anything would be
+Unless `--force` is passed, this returns a `1` exit code if anything would be
 removed.
 
 `brew bundle check`
@@ -210,7 +210,7 @@ By default, only Homebrew formula dependencies are listed.
 This sanitized build environment ignores unrequested dependencies, which makes
 sure that things you didn't specify in your `Brewfile` won't get picked up by
 commands like `bundle install`, `npm install`, etc. It will also add compiler
-flags which will help with finding keg-only dependencies like `openssl`,
+flags, which will help with finding keg-only dependencies like `openssl`,
 `icu4c`, etc.
 
 `brew bundle sh` \[`--check`\] \[`--no-secrets`\]
@@ -580,7 +580,7 @@ first search, making that search slower than subsequent ones.
 
 Control Homebrew's developer mode. When developer mode is enabled, `brew update`
 will update Homebrew to the latest commit on the `main` branch instead of the
-latest stable version along with some other behaviour changes.
+latest stable version, along with some other behaviour changes.
 
 `brew developer` \[`state`\]
 
@@ -836,7 +836,7 @@ upgrade *`formula`* if it is already installed but outdated.
 
 : An unsupported Homebrew development option to skip installing any dependencies
   of any kind. If the dependencies are not already present, the formula will
-  have issues. If you're not developing Homebrew, consider adjusting your PATH
+  have issues. If you're not developing Homebrew, consider adjusting your `PATH`
   rather than using this option.
 
 `--only-dependencies`
@@ -869,8 +869,8 @@ upgrade *`formula`* if it is already installed but outdated.
 
 `--HEAD`
 
-: If *`formula`* defines it, install the HEAD version, aka. main, trunk,
-  unstable, master.
+: If *`formula`* defines it, install the HEAD version (aka: main, trunk,
+  unstable, master).
 
 `--fetch-HEAD`
 
@@ -1134,7 +1134,7 @@ to be missing dependencies.
 Create symlinks for Homebrew's installed NodeJS versions in
 `~/.nodenv/versions`.
 
-Note that older version symlinks will also be created so e.g. NodeJS 19.1.0 will
+Note that older version symlinks will also be created, so e.g. NodeJS 19.1.0 will
 also be symlinked to 19.0.0.
 
 ### `options` \[*`options`*\] \[*`formula`* ...\]
@@ -1222,13 +1222,13 @@ Rerun the post-install steps for *`formula`*.
 Create symlinks for Homebrew's installed Python versions in `~/.pyenv/versions`.
 
 Note that older patch version symlinks will be created and linked to the minor
-version so e.g. Python 3.11.0 will also be symlinked to 3.11.3.
+version, so e.g. Python 3.11.0 will also be symlinked to 3.11.3.
 
 ### `rbenv-sync`
 
 Create symlinks for Homebrew's installed Ruby versions in `~/.rbenv/versions`.
 
-Note that older version symlinks will also be created so e.g. Ruby 3.2.1 will
+Note that older version symlinks will also be created, so e.g. Ruby 3.2.1 will
 also be symlinked to 3.2.0.
 
 ### `readall` \[*`options`*\] \[*`tap`* ...\]
@@ -1300,7 +1300,7 @@ for the reinstalled formulae or, every 30 days, for all formulae.
 `--ask`
 
 : Ask for confirmation before downloading and upgrading formulae. Print
-  download, install and net install sizes of bottles and dependencies. Enabled
+  download, install, and net install sizes of bottles and dependencies. Enabled
   by default if `$HOMEBREW_ASK` is set.
 
 `--formula`
@@ -1521,12 +1521,12 @@ Valid shells: bash\|csh\|fish\|pwsh\|sh\|tcsh\|zsh
 Print export statements. When run in a shell, this installation of Homebrew will
 be added to your `$PATH`, `$MANPATH`, and `$INFOPATH`.
 
-The variables `$HOMEBREW_PREFIX`, `$HOMEBREW_CELLAR` and `$HOMEBREW_REPOSITORY`
+The variables `$HOMEBREW_PREFIX`, `$HOMEBREW_CELLAR`, and `$HOMEBREW_REPOSITORY`
 are also exported to avoid querying them multiple times. To help guarantee
 idempotence, this command produces no output when Homebrew's `bin` and `sbin`
 directories are first and second respectively in your `$PATH`. Consider adding
 evaluation of this command's output to your dotfiles (e.g. `~/.bash_profile` or
-~/.zprofile` on macOS and ~/.bashrc` or ~/.zshrc` on Linux)
+`~/.zprofile` on macOS, or `~/.bashrc` or `~/.zshrc` on Linux)
 with e.g.:
   `eval "$(brew shellenv zsh)"` or `eval "$(brew shellenv bash)"\`
 
@@ -1540,7 +1540,7 @@ Open a *`formula`*'s source repository in a browser, or open Homebrew's own
 repository if no argument is provided.
 
 The repository URL is determined from the formula's head URL, stable URL, or
-homepage. Supports GitHub, GitLab, Bitbucket, Codeberg and SourceHut
+homepage. Supports GitHub, GitLab, Bitbucket, Codeberg, and SourceHut
 repositories.
 
 ### `tab` \[*`options`*\] *`installed_formula`*\|*`installed_cask`* \[...\]
@@ -2478,7 +2478,7 @@ Summarise contributions to Homebrew repositories.
 : Specify a comma-separated list of repositories to search. All repositories
   must be under the same user or organisation. Omitting this flag, or specifying
   `--repositories=primary`, searches only the main repositories:
-  `Homebrew/brew`, `Homebrew/homebrew-core`, `Homebrew/homebrew-cask`.
+  `Homebrew/brew`, `Homebrew/homebrew-core`, and `Homebrew/homebrew-cask`.
 
 `--organisation`
 
@@ -2497,12 +2497,12 @@ Summarise contributions to Homebrew repositories.
 
 `--from`
 
-: Date (ISO 8601 format) to start searching contributions. Omitting this flag
+: Date (in ISO 8601 format) to start searching contributions. Omitting this flag
   searches the past year.
 
 `--to`
 
-: Date (ISO 8601 format) to stop searching contributions.
+: Date (in ISO 8601 format) to stop searching contributions.
 
 `--csv`
 
@@ -2620,7 +2620,7 @@ Build bottles for these formulae with GitHub Actions.
 
 `--timeout`
 
-: Build timeout (in minutes, default: 60).
+: Build timeout in minutes (default: 60).
 
 `--issue`
 
@@ -2937,7 +2937,7 @@ Find pull requests that can be automatically merged using `brew pr-publish`.
 `--without-labels`
 
 : Pull requests must not have these labels (default: `do not merge`, `new
-  formula`, `automerge-skip`, `pre-release`, `CI-published-bottle-commits`).
+  formula`, `automerge-skip`, `pre-release`, and `CI-published-bottle-commits`).
 
 `--without-approval`
 
@@ -2976,7 +2976,7 @@ the repository.
 
 `--message`
 
-: Message to include when autosquashing revision bumps, deletions and rebuilds.
+: Message to include when autosquashing revision bumps, deletions, and rebuilds.
 
 `--tap`
 
@@ -3160,7 +3160,7 @@ creating the release or triggering the workflow.
 
 ### `rubocop`
 
-Installs, configures and runs Homebrew's `rubocop`.
+Installs, configures, and runs Homebrew's `rubocop`.
 
 ### `ruby` \[*`options`*\] (`-e` *`text`*\|*`file`*)
 
@@ -3195,12 +3195,12 @@ Enter an interactive shell for Homebrew's build environment. Use
 years-battle-hardened build logic to help your `./configure && make && make
 install` and even your `gem install` succeed. Especially handy if you run
 Homebrew in an Xcode-only configuration since it adds tools like `make` to your
-`$PATH` which build systems would not find otherwise.
+`$PATH`, which build systems would not find otherwise.
 
 With `--ruby`, enter an interactive shell for Homebrew's Ruby environment. This
 sets up the correct Ruby paths, `$GEM_HOME` and bundle configuration used by
 Homebrew's development tools. The environment includes gems from the installed
-groups, making tools like RuboCop, Sorbet and RSpec available via `bundle exec`.
+groups, making tools like RuboCop, Sorbet, and RSpec available via `bundle exec`.
 
 `-r`, `--ruby`
 
@@ -3218,7 +3218,7 @@ groups, making tools like RuboCop, Sorbet and RSpec available via `bundle exec`.
 
 Check formulae or files for conformance to Homebrew style guidelines.
 
-Lists of *`file`*, *`tap`* and *`formula`* may not be combined. If none are
+Lists of *`file`*, *`tap`*, and *`formula`* may not be combined. If none are
 provided, `style` will run style checks on the whole Homebrew library, including
 core code and all formulae.
 
@@ -3303,7 +3303,7 @@ Tests the full lifecycle of a Homebrew change to a tap (Git repository). For
 example, for a GitHub Actions pull request that changes a formula `brew
 test-bot` will ensure the system is cleaned and set up to test the formula,
 install the formula, run various tests and checks on it, bottle (package) the
-binaries and test formulae that depend on it to ensure they aren't broken by
+binaries, and test formulae that depend on it to ensure they aren't broken by
 these changes.
 
 Only supports GitHub Actions as a CI provider. This is because Homebrew uses
@@ -3881,7 +3881,7 @@ subcommands with the `--cask` switch.
 `--language`
 
 : Comma-separated list of language codes to prefer for cask installation. The
-  first matching language is used, otherwise it reverts to the cask's default
+  first matching language is used; otherwise it reverts to the cask's default
   language. The default value is the language of your system.
 
 ## GLOBAL OPTIONS
@@ -4450,14 +4450,14 @@ command execution (e.g. `$(cat file)`).
 `HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK`
 
 : If set, do not check for broken linkage of dependents or outdated dependents
-  after installing, upgrading or reinstalling formulae. This will result in
-  fewer dependents (and their dependencies) being upgraded or reinstalled but
+  after installing, upgrading, or reinstalling formulae. This will result in
+  fewer dependents (and their dependencies) being upgraded or reinstalled, but
   may result in more breakage from running `brew install` *`formula`* or `brew
   upgrade` *`formula`*.
 
 `HOMEBREW_NO_INSTALL_CLEANUP`
 
-: If set, `brew install`, `brew upgrade` and `brew reinstall` will never
+: If set, `brew install`, `brew upgrade`, and `brew reinstall` will never
   automatically cleanup installed/upgraded/reinstalled formulae or all formulae
   every `$HOMEBREW_CLEANUP_PERIODIC_FULL_DAYS` days. Alternatively,
   `$HOMEBREW_NO_CLEANUP_FORMULAE` allows specifying specific formulae to not
@@ -4588,32 +4588,32 @@ command execution (e.g. `$(cat file)`).
 
 `all_proxy`
 
-: Use this SOCKS5 proxy for `curl`(1), `git`(1) and `svn`(1) when downloading
+: Use this SOCKS5 proxy for `curl`(1), `git`(1), and `svn`(1) when downloading
   through Homebrew.
 
 `ftp_proxy`
 
-: Use this FTP proxy for `curl`(1), `git`(1) and `svn`(1) when downloading
+: Use this FTP proxy for `curl`(1), `git`(1), and `svn`(1) when downloading
   through Homebrew.
 
 `http_proxy`
 
-: Use this HTTP proxy for `curl`(1), `git`(1) and `svn`(1) when downloading
+: Use this HTTP proxy for `curl`(1), `git`(1), and `svn`(1) when downloading
   through Homebrew.
 
 `https_proxy`
 
-: Use this HTTPS proxy for `curl`(1), `git`(1) and `svn`(1) when downloading
+: Use this HTTPS proxy for `curl`(1), `git`(1), and `svn`(1) when downloading
   through Homebrew.
 
 `no_proxy`
 
 : A comma-separated list of hostnames and domain names excluded from proxying by
-  `curl`(1), `git`(1) and `svn`(1) when downloading through Homebrew.
+  `curl`(1), `git`(1), and `svn`(1) when downloading through Homebrew.
 
 ## USING HOMEBREW BEHIND A PROXY
 
-Set the `http_proxy`, `https_proxy`, `all_proxy`, `ftp_proxy` and/or `no_proxy`
+Set the `http_proxy`, `https_proxy`, `all_proxy`, `ftp_proxy`, and/or `no_proxy`
 environment variables documented above.
 
 For example, to use an unauthenticated HTTP or SOCKS5 proxy:
@@ -4641,18 +4641,18 @@ Homebrew's Project Leader is Mike McQuaid.
 Homebrew's Lead Maintainers are Bevan Kay, Bo Anderson, Branch Vincent, Carlo
 Cabrera, Dustin Rodrigues, FX Coudert, Issy Long, Justin Krehel, Michael Cho,
 Michka Popoff, Mike McQuaid, Nanda H Krishna, Patrick Linnane, Rui Chen, Ruoyu
-Zhong, Sam Ford, Sean Molenaar and Thierry Moisan.
+Zhong, Sam Ford, Sean Molenaar, and Thierry Moisan.
 
 Homebrew's other Maintainers are Anton Melnikov, Caleb Xu, Daeho Ro, Douglas
 Eichelberger, Eric Knibbe, Klaus Hipp, Markus Reiter, Rylan Polster, Štefan
-Baebler and William Woodruff.
+Baebler, and William Woodruff.
 
 Former Maintainers with significant contributions include Alexander Bayandin,
 Miccal Matthews, Misty De Méo, Shaun Jackman, Vítor Galvão, Claudia Pellegrino,
 Seeker, Jan Viljanen, JCount, commitay, Dominyk Tiller, Tim Smith, Baptiste
 Fontaine, Xu Cheng, Martin Afanasjew, Brett Koonce, Charlie Sharpsteen, Jack
 Nagel, Adam Vandenberg, Andrew Janke, Alex Dunn, neutric, Tomasz Pajor,
-Uladzislau Shablinski, Alyssa Ross, ilovezfs, Chongyu Zhu and Homebrew's
+Uladzislau Shablinski, Alyssa Ross, ilovezfs, Chongyu Zhu, and Homebrew's
 creator: Max Howell.
 
 ## BUGS
