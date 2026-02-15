@@ -32,10 +32,9 @@ module Utils
         formulae.each do |formula|
           formulae_to_keep += formula.installed_runtime_formula_dependencies
 
-          formulae_to_keep += formula.runtime_dependencies.filter_map do |dep|
-            dep.to_formula
+          formula.runtime_dependencies.each do |dep|
+            formulae_to_keep << dep.to_formula
           rescue FormulaUnavailableError
-            nil
           end
 
           if (tab = formula.any_installed_keg&.tab)
@@ -43,10 +42,9 @@ module Utils
 
             formulae_to_keep << formula
 
-            formulae_to_keep += formula.deps.select(&:build?).filter_map do |dep|
-              dep.to_formula
+            formula.deps.select(&:build?).each do |dep|
+              formulae_to_keep << dep.to_formula
             rescue FormulaUnavailableError
-              nil
             end
           end
         end
@@ -59,9 +57,8 @@ module Utils
         unused_formulae = bottled_formulae_with_no_formula_dependents(formulae).select do |f|
           tab = f.any_installed_keg&.tab
           next false unless tab
-          next false unless tab.installed_on_request_present?
 
-          tab.installed_on_request == false
+          tab.installed_on_request_present? ? tab.installed_on_request == false : false
         end
 
         unless unused_formulae.empty?
