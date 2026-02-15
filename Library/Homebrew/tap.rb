@@ -951,6 +951,9 @@ class Tap
       end,
       T.nilable(T::Hash[String, String]),
     )
+  rescue JSON::ParserError
+    opoo "#{path/HOMEBREW_TAP_CASK_RENAMES_FILE} contains invalid JSON"
+    {}
   end
 
   # Mapping from new to old cask tokens. Reverse of {#cask_renames}.
@@ -973,6 +976,9 @@ class Tap
       end,
       T.nilable(T::Hash[String, String]),
     )
+  rescue JSON::ParserError
+    opoo "#{path/HOMEBREW_TAP_FORMULA_RENAMES_FILE} contains invalid JSON"
+    {}
   end
 
   # Mapping from new to old formula names. Reverse of {#formula_renames}.
@@ -994,6 +1000,9 @@ class Tap
         {}
       end, T.nilable(T::Hash[String, String])
     )
+  rescue JSON::ParserError
+    opoo "#{path/HOMEBREW_TAP_MIGRATIONS_FILE} contains invalid JSON"
+    {}
   end
 
   sig { returns(T::Hash[String, T::Array[String]]) }
@@ -1088,6 +1097,9 @@ class Tap
       end,
       T.nilable(T::Array[T::Array[String]]),
     )
+  rescue JSON::ParserError
+    opoo "#{path/HOMEBREW_TAP_SYNCED_VERSIONS_FORMULAE_FILE} contains invalid JSON"
+    []
   end
 
   # Array with formulae that should not be relocated to new /usr/local
@@ -1101,6 +1113,9 @@ class Tap
       end,
       T.nilable(T::Array[String]),
     )
+  rescue JSON::ParserError
+    opoo "#{path/HOMEBREW_TAP_DISABLED_NEW_USR_LOCAL_RELOCATION_FORMULAE_FILE} contains invalid JSON"
+    []
   end
 
   sig { returns(T::Boolean) }
