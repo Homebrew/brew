@@ -1,4 +1,4 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
 
 require "cask/artifact/abstract_artifact"
@@ -8,20 +8,16 @@ module Cask
   module Artifact
     # Superclass for all artifacts which have a source and a target location.
     class Relocated < AbstractArtifact
-      def self.from_args(cask, *args)
-        source_string, target_hash = args
-
-        if target_hash
-          raise CaskInvalidError, cask unless target_hash.respond_to?(:keys)
-
-          target_hash.assert_valid_keys(:target)
-        end
-
-        target_hash ||= {}
+      sig {
+        params(cask: Cask, source_string: T.nilable(String), target_hash: DirectivesType).returns(Relocated)
+      }
+      def self.from_args(cask, source_string = nil, **target_hash)
+        target_hash.assert_valid_keys(:target)
 
         new(cask, source_string, **target_hash)
       end
 
+      sig { overridable.params(target: T.any(String, Pathname), base_dir: T.nilable(Pathname)).returns(Pathname) }
       def resolve_target(target, base_dir: config.public_send(self.class.dirmethod))
         target = Pathname(target)
 
@@ -33,20 +29,18 @@ module Cask
         target
       end
 
-      sig {
-        params(cask: Cask, source: T.nilable(T.any(String, Pathname)), target_hash: T.any(String, Pathname))
-          .void
-      }
+      sig { params(cask: Cask, source: T.nilable(T.any(String, Pathname)), target_hash: DirectivesType).void }
       def initialize(cask, source, **target_hash)
         super
 
         target = target_hash[:target]
-        @source = nil
-        @source_string = source.to_s
-        @target = nil
-        @target_string = target.to_s
+        @source = T.let(nil, T.nilable(Pathname))
+        @source_string = T.let(source.to_s, String)
+        @target = T.let(nil, T.nilable(Pathname))
+        @target_string = T.let(target.to_s, String)
       end
 
+      sig { returns(Pathname) }
       def source
         @source ||= begin
           base_path = cask.staged_path
@@ -55,10 +49,12 @@ module Cask
         end
       end
 
+      sig { returns(Pathname) }
       def target
         @target ||= resolve_target(@target_string.presence || source.basename)
       end
 
+      sig { returns(T::Array[T.anything]) }
       def to_a
         [@source_string].tap do |ary|
           ary << { target: @target_string } unless @target_string.empty?
@@ -103,6 +99,7 @@ module Cask
                      sudo:         !file.writable?)
       end
 
+      sig { returns(String) }
       def printable_target
         target.to_s.sub(/^#{Dir.home}(#{File::SEPARATOR}|$)/, "~/")
       end

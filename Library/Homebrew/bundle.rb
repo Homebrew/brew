@@ -101,7 +101,7 @@ module Homebrew
         which(name).present?
       end
 
-      sig { params(block: T.proc.returns(T.anything)).returns(T.untyped) }
+      sig { type_parameters(:U).params(block: T.proc.returns(T.type_parameter(:U))).returns(T.type_parameter(:U)) }
       def exchange_uid_if_needed!(&block)
         euid = Process.euid
         uid = Process.uid

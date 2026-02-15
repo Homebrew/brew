@@ -1,4 +1,4 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
 
 require "cask/artifact/abstract_uninstall"
@@ -9,10 +9,8 @@ module Cask
     class Uninstall < AbstractUninstall
       UPGRADE_REINSTALL_SKIP_DIRECTIVES = [:quit, :signal].freeze
 
-      def uninstall_phase(**options)
-        upgrade   = options.fetch(:upgrade, false)
-        reinstall = options.fetch(:reinstall, false)
-
+      sig { params(upgrade: T::Boolean, reinstall: T::Boolean, options: T.anything).void }
+      def uninstall_phase(upgrade: false, reinstall: false, **options)
         raw_on_upgrade = directives[:on_upgrade]
         on_upgrade_syms =
           case raw_on_upgrade
@@ -42,6 +40,7 @@ module Cask
         end
       end
 
+      sig { params(options: T.anything).void }
       def post_uninstall_phase(**options)
         dispatch_uninstall_directive(:rmdir, **options)
       end
