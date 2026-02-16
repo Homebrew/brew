@@ -35,17 +35,19 @@ module Utils
           formula.runtime_dependencies.each do |dep|
             formulae_to_keep << dep.to_formula
           rescue FormulaUnavailableError
+            nil
           end
 
-          if (tab = formula.any_installed_keg&.tab)
-            next if tab.poured_from_bottle
+          tab = formula.any_installed_keg&.tab
+          next unless tab
+          next if tab.poured_from_bottle
 
-            formulae_to_keep << formula
+          formulae_to_keep << formula
 
-            formula.deps.select(&:build?).each do |dep|
-              formulae_to_keep << dep.to_formula
-            rescue FormulaUnavailableError
-            end
+          formula.deps.select(&:build?).each do |dep|
+            formulae_to_keep << dep.to_formula
+          rescue FormulaUnavailableError
+            nil
           end
         end
         names_to_keep = formulae_to_keep.to_set(&:name)
