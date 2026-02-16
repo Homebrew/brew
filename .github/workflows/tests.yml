@@ -363,7 +363,8 @@ jobs:
         with:
           core: true
           cask: false
-
+          uninstall: true
+          
       - uses: Homebrew/actions/cache-homebrew-prefix@main
         with:
           install: gnu-tar
