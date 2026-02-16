@@ -76,6 +76,18 @@ RSpec.describe Utils::Autoremove do
     before do
       allow(Formulary).to receive(:factory).with("three", { warn: false })
                                            .and_return(formula_is_build_dep)
+      allow(formula_with_deps).to receive(:runtime_dependencies)
+        .with(read_from_tab: false, undeclared: false)
+        .and_return([])
+      allow(first_formula_dep).to receive(:runtime_dependencies)
+        .with(read_from_tab: false, undeclared: false)
+        .and_return([])
+      allow(second_formula_dep).to receive(:runtime_dependencies)
+        .with(read_from_tab: false, undeclared: false)
+        .and_return([])
+      allow(formula_is_build_dep).to receive(:runtime_dependencies)
+        .with(read_from_tab: false, undeclared: false)
+        .and_return([])
     end
 
     context "when formulae are bottles" do
@@ -113,6 +125,18 @@ RSpec.describe Utils::Autoremove do
 
     before do
       allow(tab_from_keg).to receive(:poured_from_bottle).and_return(true)
+      allow(formula_with_deps).to receive(:runtime_dependencies)
+        .with(read_from_tab: false, undeclared: false)
+        .and_return([])
+      allow(first_formula_dep).to receive(:runtime_dependencies)
+        .with(read_from_tab: false, undeclared: false)
+        .and_return([])
+      allow(second_formula_dep).to receive(:runtime_dependencies)
+        .with(read_from_tab: false, undeclared: false)
+        .and_return([])
+      allow(formula_is_build_dep).to receive(:runtime_dependencies)
+        .with(read_from_tab: false, undeclared: false)
+        .and_return([])
     end
 
     specify "installed on request" do
