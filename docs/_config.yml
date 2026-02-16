@@ -1,5 +1,6 @@
 title: Homebrew Documentation
 description: Documentation for the missing package manager for macOS (or Linux).
+url: https://docs.brew.sh
 
 remote_theme: Homebrew/brew.sh
 
