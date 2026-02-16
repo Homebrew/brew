@@ -1,6 +1,8 @@
 # typed: strict
 # frozen_string_literal: true
 
+require "installed_dependents"
+
 module Utils
   # Helper function for finding autoremovable formulae.
   #
@@ -32,8 +34,11 @@ module Utils
       sig { params(formulae: T::Array[Formula]).returns(T::Array[Formula]) }
       def bottled_formulae_with_no_formula_dependents(formulae)
         formulae_to_keep = T.let([], T::Array[Formula])
+        kegs = formulae.filter_map(&:any_installed_keg)
+        required_kegs = InstalledDependents.find_some_installed_dependents(kegs)&.first || []
         formulae.each do |formula|
-          if formula.any_installed_keg && formula.runtime_installed_formula_dependents.any?
+          keg = formula.any_installed_keg
+          if keg && required_kegs.include?(keg)
             formulae_to_keep << formula
           end
           formulae_to_keep += formula.installed_runtime_formula_dependencies
@@ -44,7 +49,7 @@ module Utils
             # do nothing
           end
 
-          tab = formula.any_installed_keg&.tab
+          tab = keg&.tab
           next unless tab
           next if tab.poured_from_bottle
 
