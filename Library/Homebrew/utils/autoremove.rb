@@ -4,9 +4,6 @@
 require "installed_dependents"
 
 module Utils
-  # Helper function for finding autoremovable formulae.
-  #
-  # @private
   module Autoremove
     class << self
       sig { params(formulae: T::Array[Formula], casks: T::Array[Cask::Cask]).returns(T::Array[Formula]) }
@@ -46,7 +43,6 @@ module Utils
           formula.runtime_dependencies(read_from_tab: false, undeclared: false).each do |dep|
             formulae_to_keep << dep.to_formula
           rescue FormulaUnavailableError
-            # do nothing
           end
 
           tab = keg&.tab
@@ -58,24 +54,19 @@ module Utils
           formula.deps.select(&:build?).each do |dep|
             formulae_to_keep << dep.to_formula
           rescue FormulaUnavailableError
-            # do nothing
           end
         end
         names_to_keep = formulae_to_keep.to_set(&:name)
         formulae.reject { |f| names_to_keep.include?(f.name) }
       end
 
-      # An array of {Formula} without {Formula} or {Cask}
-      # dependents that weren't installed on request and without
-      # build dependencies for {Formula} installed from source.
-      # @private
       sig { params(formulae: T::Array[Formula]).returns(T::Array[Formula]) }
       def unused_formulae_with_no_formula_dependents(formulae)
         unused_formulae = bottled_formulae_with_no_formula_dependents(formulae).select do |f|
           tab = f.any_installed_keg&.tab
           next false unless tab
 
-          tab.installed_on_request_present? ? tab.installed_on_request == false : false
+          tab.installed_on_request_present? ? !tab.installed_on_request : false
         end
 
         unless unused_formulae.empty?
