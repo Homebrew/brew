@@ -44,18 +44,22 @@ RSpec.describe Utils::Autoremove do
     before do
       allow(formula_with_deps).to receive_messages(
         installed_runtime_formula_dependencies: [first_formula_dep, second_formula_dep],
+        runtime_installed_formula_dependents:   [],
         any_installed_keg:                      instance_double(Keg, tab: tab_from_keg),
       )
       allow(first_formula_dep).to receive_messages(
         installed_runtime_formula_dependencies: [second_formula_dep],
+        runtime_installed_formula_dependents:   [],
         any_installed_keg:                      instance_double(Keg, tab: tab_from_keg),
       )
       allow(second_formula_dep).to receive_messages(
         installed_runtime_formula_dependencies: [],
+        runtime_installed_formula_dependents:   [],
         any_installed_keg:                      instance_double(Keg, tab: tab_from_keg),
       )
       allow(formula_is_build_dep).to receive_messages(
         installed_runtime_formula_dependencies: [],
+        runtime_installed_formula_dependents:   [],
         any_installed_keg:                      instance_double(Keg, tab: tab_from_keg),
       )
     end
@@ -75,6 +79,17 @@ RSpec.describe Utils::Autoremove do
 
         expect(described_class.send(:bottled_formulae_with_no_formula_dependents, formulae))
           .to eq([formula_with_deps, formula_is_build_dep])
+      end
+    end
+
+    context "when a formula has installed dependents" do
+      it "filters out the formula" do
+        allow(tab_from_keg).to receive(:poured_from_bottle).and_return(true)
+        allow(second_formula_dep).to receive(:runtime_installed_formula_dependents)
+          .and_return([formula_with_deps])
+
+        expect(described_class.send(:bottled_formulae_with_no_formula_dependents, formulae))
+          .not_to include(second_formula_dep)
       end
     end
 

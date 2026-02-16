@@ -2,6 +2,8 @@
 # frozen_string_literal: true
 
 module Utils
+  # Helper function for finding autoremovable formulae.
+  #
   # @private
   module Autoremove
     class << self
@@ -31,9 +33,12 @@ module Utils
       def bottled_formulae_with_no_formula_dependents(formulae)
         formulae_to_keep = T.let([], T::Array[Formula])
         formulae.each do |formula|
+          if formula.any_installed_keg && formula.runtime_installed_formula_dependents.any?
+            formulae_to_keep << formula
+          end
           formulae_to_keep += formula.installed_runtime_formula_dependencies
 
-          formula.runtime_dependencies.each do |dep|
+          formula.runtime_dependencies(read_from_tab: false, undeclared: false).each do |dep|
             formulae_to_keep << dep.to_formula
           rescue FormulaUnavailableError
             # do nothing
@@ -55,6 +60,10 @@ module Utils
         formulae.reject { |f| names_to_keep.include?(f.name) }
       end
 
+      # An array of {Formula} without {Formula} or {Cask}
+      # dependents that weren't installed on request and without
+      # build dependencies for {Formula} installed from source.
+      # @private
       sig { params(formulae: T::Array[Formula]).returns(T::Array[Formula]) }
       def unused_formulae_with_no_formula_dependents(formulae)
         unused_formulae = bottled_formulae_with_no_formula_dependents(formulae).select do |f|
