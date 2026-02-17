@@ -40,10 +40,10 @@ RSpec.describe Utils::Autoremove do
     end
 
     let(:tab_from_keg) { instance_double(Tab) }
-    let(:keg_for_formula_with_deps) { instance_double(Keg, tab: tab_from_keg) }
-    let(:keg_for_first_dep) { instance_double(Keg, tab: tab_from_keg) }
-    let(:keg_for_second_dep) { instance_double(Keg, tab: tab_from_keg) }
-    let(:keg_for_build_dep) { instance_double(Keg, tab: tab_from_keg) }
+    let(:keg_for_formula_with_deps) { instance_double(Keg, tab: tab_from_keg, optlinked?: true) }
+    let(:keg_for_first_dep) { instance_double(Keg, tab: tab_from_keg, optlinked?: true) }
+    let(:keg_for_second_dep) { instance_double(Keg, tab: tab_from_keg, optlinked?: true) }
+    let(:keg_for_build_dep) { instance_double(Keg, tab: tab_from_keg, optlinked?: true) }
 
     before do
       allow(InstalledDependents).to receive(:find_some_installed_dependents).and_return(nil)
