@@ -38,9 +38,7 @@ module Utils
         required_kegs = InstalledDependents.find_some_installed_dependents(kegs.select(&:optlinked?))&.first || []
         formulae.each do |formula|
           keg = formula.any_installed_keg
-          if keg && required_kegs.include?(keg)
-            formulae_to_keep << formula
-          end
+          formulae_to_keep << formula if keg && required_kegs.include?(keg)
           formulae_to_keep += formula.installed_runtime_formula_dependencies
 
           formula.runtime_dependencies(read_from_tab: false, undeclared: false).each do |dep|
