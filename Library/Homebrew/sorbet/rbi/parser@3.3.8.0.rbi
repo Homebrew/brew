@@ -1536,8 +1536,8 @@ class Parser::Builders::Default
 end
 
 # {Parser::ClobberingError} is raised when {Parser::Source::Rewriter}
-# detects a clobbering rewrite action. This class inherits {RuntimeError}
-# rather than {StandardError} for backward compatibility.
+# detects a clobbering rewrite action. This class inherits RuntimeError
+# rather than StandardError for backward compatibility.
 #
 # @api public
 #
@@ -7295,7 +7295,7 @@ end
 
 # {Parser::UnknownEncodingInMagicComment} is raised when a magic encoding
 # comment is encountered that the currently running Ruby version doesn't
-# recognize. It inherits from {ArgumentError} since that is the exception
+# recognize. It inherits from ArgumentError since that is the exception
 # Ruby itself raises when trying to execute a file with an unknown encoding.
 # As such, it is also not a {Parser::SyntaxError}.
 #
