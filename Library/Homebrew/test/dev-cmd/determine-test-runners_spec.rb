@@ -4,12 +4,16 @@ require "dev-cmd/determine-test-runners"
 require "cmd/shared_examples/args_parse"
 
 RSpec.describe Homebrew::DevCmd::DetermineTestRunners do
-  def get_runners(file)
-    runner_line = File.open(file).first
-    json_text = runner_line[/runners=(.*)/, 1]
-    runner_hash = JSON.parse(json_text)
+  define_method(:get_runners) do |file|
+    runner_hash = get_runner_hash(file)
     runner_hash.map { |item| item["runner"].delete_suffix(ephemeral_suffix) }
                .sort
+  end
+
+  define_method(:get_runner_hash) do |file|
+    runner_line = File.open(file).first
+    json_text = runner_line[/runners=(.*)/, 1]
+    JSON.parse(json_text)
   end
 
   after do
@@ -58,8 +62,59 @@ RSpec.describe Homebrew::DevCmd::DetermineTestRunners do
     expect(File.read(github_output)).not_to be_empty
     expect(get_runners(github_output).sort).to eq(all_runners.sort)
   end
+
+  it "rejects dependent shard max runners without `--dependents`", :integration_test do
+    expect do
+      brew "determine-test-runners", "testball", "--dependent-shard-max-runners=2",
+           runner_env.merge({ "GITHUB_OUTPUT" => github_output })
+    end.to output(/(?:can only be used with|cannot be passed without) `--dependents`/).to_stderr
+                                                                                      .and be_a_failure
+  end
+
+  it "rejects dependent shard min dependents per runner without `--dependents`", :integration_test do
+    expect do
+      brew "determine-test-runners", "testball", "--dependent-shard-min-dependents-per-runner=2",
+           runner_env.merge({ "GITHUB_OUTPUT" => github_output })
+    end.to output(/(?:can only be used with|cannot be passed without) `--dependents`/).to_stderr
+                                                                                      .and be_a_failure
+  end
+
+  it "rejects dependent shard runner load factor without `--dependents`", :integration_test do
+    expect do
+      brew "determine-test-runners", "testball", "--dependent-shard-runner-load-factor=0.8",
+           runner_env.merge({ "GITHUB_OUTPUT" => github_output })
+    end.to output(/(?:can only be used with|cannot be passed without) `--dependents`/).to_stderr
+                                                                                      .and be_a_failure
+  end
+
+  it "validates dependent shard max runners as a positive integer", :integration_test do
+    expect do
+      brew "determine-test-runners", "testball", "--dependents", "--eval-all", "--dependent-shard-max-runners=0",
+           runner_env.merge({ "GITHUB_OUTPUT" => github_output })
+    end.to output(/must be an integer greater than or equal to 1/).to_stderr
+                                                                  .and be_a_failure
+  end
+
+  it "validates dependent shard min dependents per runner as a positive integer", :integration_test do
+    expect do
+      brew "determine-test-runners", "testball", "--dependents", "--eval-all",
+           "--dependent-shard-min-dependents-per-runner=0",
+           runner_env.merge({ "GITHUB_OUTPUT" => github_output })
+    end.to output(/must be an integer greater than or equal to 1/).to_stderr
+                                                                  .and be_a_failure
+  end
+
+  it "validates dependent shard runner load factor as (0,1]", :integration_test do
+    expect do
+      brew "determine-test-runners", "testball", "--dependents", "--eval-all",
+           "--dependent-shard-runner-load-factor=0",
+           runner_env.merge({ "GITHUB_OUTPUT" => github_output })
+    end.to output(/must be a number greater than 0 and less than or equal to 1/).to_stderr
+                                                                                .and be_a_failure
+  end
 end
 
+# Generates a unique index for temporary test files.
 class DetermineRunnerTestHelper
   @instances = 0
 

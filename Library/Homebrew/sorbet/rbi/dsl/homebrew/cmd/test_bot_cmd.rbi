@@ -26,6 +26,12 @@ class Homebrew::Cmd::TestBotCmd::Args < Homebrew::CLI::Args
   sig { returns(T.nilable(T::Array[String])) }
   def deleted_formulae; end
 
+  sig { returns(T.nilable(String)) }
+  def dependent_shard_count; end
+
+  sig { returns(T.nilable(String)) }
+  def dependent_shard_index; end
+
   sig { returns(T::Boolean) }
   def dry_run?; end
 

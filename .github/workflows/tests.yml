@@ -48,10 +48,10 @@ jobs:
       - name: Install Bundler RubyGems
         run: brew install-bundler-gems --groups=style,typecheck
 
+      # Do not restore a cached Homebrew prefix in this job: that cache includes
+      # the Homebrew repository and can overwrite the PR checkout with stale code.
       - name: Install shellcheck and shfmt
-        uses: Homebrew/actions/cache-homebrew-prefix@main
-        with:
-          install: shellcheck shfmt
+        run: brew install shellcheck shfmt
 
       - name: Cache style cache
         uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
@@ -377,10 +377,9 @@ jobs:
           core: true
           cask: false
 
-      - uses: Homebrew/actions/cache-homebrew-prefix@main
-        with:
-          install: gnu-tar
-          uninstall: true
+      # Avoid restoring cached Homebrew prefix here; restoring can overwrite
+      # the checked out PR state and make `brew doctor` report uncommitted files.
+      - run: brew install gnu-tar
 
       - name: Setup environment variables
         run: |

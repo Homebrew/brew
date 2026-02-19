@@ -1,8 +1,11 @@
 # typed: true # rubocop:todo Sorbet/StrictSigil
 # frozen_string_literal: true
 
+require "test_bot/dependent_shard_assigner"
+
 module Homebrew
   module TestBot
+    # Runs dependent formula installation and tests for changed formulae.
     class FormulaeDependents < TestFormulae
       attr_writer :testing_formulae, :tested_formulae
 
@@ -205,8 +208,30 @@ module Homebrew
               .include?(formula)
         end
 
+        all_dependents_with_dependencies = source_dependents + dependents
+        dependent_full_names = all_dependents_with_dependencies.to_set { |dependent, _| dependent.full_name }
+
+        dependency_features = T.let({}, T::Hash[String, T::Array[String]])
+        dependency_graph = T.let({}, T::Hash[String, T::Array[String]])
+        all_dependents_with_dependencies.each do |dependent, dependencies|
+          dependency_full_names = dependencies.map { |dependency| dependency.to_formula.full_name }
+                                              .uniq
+                                              .sort
+          dependency_features[dependent.full_name] = dependency_full_names
+          dependency_graph[dependent.full_name] = dependency_full_names.select do |dependency_full_name|
+            dependent_full_names.include?(dependency_full_name)
+          end
+        end
+
         dependents = dependents.transpose.first.to_a
         source_dependents = source_dependents.transpose.first.to_a
+
+        sharded_dependents = sharded_dependent_testing_formulae(source_dependents + dependents, args:,
+                                                                                                dependency_features:,
+                                                                                                dependency_graph:)
+        sharded_dependent_names = sharded_dependents.to_set(&:full_name)
+        source_dependents.select! { |dependent| sharded_dependent_names.include?(dependent.full_name) }
+        dependents.select! { |dependent| sharded_dependent_names.include?(dependent.full_name) }
 
         testable_dependents = source_dependents.select(&:test_defined?)
         bottled_dependents = dependents.select { |dep| bottled?(dep) }
@@ -410,6 +435,15 @@ module Homebrew
         conflicts.each do |conflict|
           test "brew", "unlink", conflict.name
         end
+      end
+
+      def sharded_dependent_testing_formulae(formulae, args:, dependency_features: {}, dependency_graph: {})
+        shard_count = args.dependent_shard_count&.to_i
+        shard_index = args.dependent_shard_index&.to_i
+        return formulae if shard_count.blank? || shard_index.blank? || shard_count <= 1
+
+        DependentShardAssigner.new(shard_count:, dependency_features:, dependency_graph:)
+                              .shard_formulae(formulae, shard_index:)
       end
     end
   end

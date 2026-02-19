@@ -14,6 +14,15 @@ class Homebrew::DevCmd::DetermineTestRunners::Args < Homebrew::CLI::Args
   sig { returns(T::Boolean) }
   def all_supported?; end
 
+  sig { returns(T.nilable(String)) }
+  def dependent_shard_max_runners; end
+
+  sig { returns(T.nilable(String)) }
+  def dependent_shard_min_dependents_per_runner; end
+
+  sig { returns(T.nilable(String)) }
+  def dependent_shard_runner_load_factor; end
+
   sig { returns(T::Boolean) }
   def dependents?; end
 

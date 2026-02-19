@@ -25,6 +25,22 @@ RSpec.describe Utils::TopologicalHash do
     end
   end
 
+  describe "::strongly_connected_components_from_adjacency" do
+    it "returns strongly connected components for arbitrary adjacency maps" do
+      adjacency = {
+        1 => [2],
+        2 => [3, 4],
+        3 => [2],
+        4 => [],
+      }
+
+      components = described_class.strongly_connected_components_from_adjacency(adjacency)
+      normalized = components.map(&:sort).sort_by(&:first)
+
+      expect(normalized).to eq([[1], [2, 3], [4]])
+    end
+  end
+
   describe "::graph_package_dependencies" do
     it "returns a topological hash" do
       formula1 = formula "homebrew-test-formula1" do

@@ -56,6 +56,18 @@ module Utils
       accumulator
     end
 
+    sig {
+      type_parameters(:Node).params(
+        adjacency: T::Hash[T.type_parameter(:Node), T::Array[T.type_parameter(:Node)]],
+      ).returns(T::Array[T::Array[T.type_parameter(:Node)]])
+    }
+    def self.strongly_connected_components_from_adjacency(adjacency)
+      each_node = proc { |&block| adjacency.each_key(&block) }
+      each_child = proc { |node, &block| adjacency.fetch(node).each(&block) }
+
+      T.unsafe(TSort).strongly_connected_components(each_node, each_child)
+    end
+
     private
 
     sig { params(block: T.proc.params(arg0: K).void).void }

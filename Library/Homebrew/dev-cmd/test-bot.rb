@@ -6,6 +6,7 @@ require "test_bot"
 
 module Homebrew
   module Cmd
+    # Tests the lifecycle of Homebrew tap changes in CI.
     class TestBotCmd < AbstractCommand
       cmd_args do
         usage_banner <<~EOS
@@ -36,8 +37,8 @@ module Homebrew
                description: "Run `brew bottle --only-json-tab` to build new bottles that do not contain a tab."
         switch "--local",
                description: "Ask Homebrew to write verbose logs under `./logs/` and set `$HOME` to `./home/`"
-        flag   "--tap=",
-               description: "Use the Git repository of the given tap. Defaults to the core tap for syntax checking."
+        flag "--tap=",
+             description: "Use the Git repository of the given tap. Defaults to the core tap for syntax checking."
         switch "--fail-fast",
                description: "Immediately exit on a failing step."
         switch "-v", "--verbose",
@@ -46,12 +47,12 @@ module Homebrew
         switch "--test-default-formula",
                description: "Use a default testing formula when not building " \
                             "a tap and no other formulae are specified."
-        flag   "--root-url=",
-               description: "Use the specified <URL> as the root of the bottle's URL instead of Homebrew's default."
-        flag   "--git-name=",
-               description: "Set the Git author/committer names to the given name."
-        flag   "--git-email=",
-               description: "Set the Git author/committer email to the given email."
+        flag "--root-url=",
+             description: "Use the specified <URL> as the root of the bottle's URL instead of Homebrew's default."
+        flag "--git-name=",
+             description: "Set the Git author/committer names to the given name."
+        flag "--git-email=",
+             description: "Set the Git author/committer email to the given email."
         switch "--publish",
                description: "Publish the uploaded bottles."
         switch "--skip-online-checks",
@@ -106,6 +107,12 @@ module Homebrew
                                  "formulae dependents step."
         comma_array "--tested-formulae=",
                     description: "Use these tested formulae from formulae steps for a formulae dependents step."
+        flag "--dependent-shard-count=",
+             description: "Split formulae dependents testing into this many shards.",
+             depends_on:  "--only-formulae-dependents"
+        flag "--dependent-shard-index=",
+             description: "Run formulae dependents testing for this shard index (1-based).",
+             depends_on:  "--only-formulae-dependents"
         conflicts "--only-formulae-detect", "--testing-formulae"
         conflicts "--only-formulae-detect", "--added-formulae"
         conflicts "--only-formulae-detect", "--deleted-formulae"
@@ -123,7 +130,33 @@ module Homebrew
         end
         ENV["HOMEBREW_TEST_BOT"] = "1"
 
+        validate_dependent_sharding_args!
+
         TestBot.run!(args)
+      end
+
+      private
+
+      sig { void }
+      def validate_dependent_sharding_args!
+        dependent_shard_count = args.dependent_shard_count
+        dependent_shard_index = args.dependent_shard_index
+        return if dependent_shard_count.blank? && dependent_shard_index.blank?
+
+        if dependent_shard_count.blank? || dependent_shard_index.blank?
+          raise UsageError, "`--dependent-shard-count` and `--dependent-shard-index` must be provided together."
+        end
+
+        shard_count = T.let(Integer(dependent_shard_count, exception: false), T.nilable(Integer))
+        if shard_count.nil? || shard_count < 1
+          raise UsageError,
+                "`--dependent-shard-count` must be an integer greater than or equal to 1."
+        end
+        shard_index = T.let(Integer(dependent_shard_index, exception: false), T.nilable(Integer))
+        invalid_shard_index = shard_index.nil? || shard_index < 1 || shard_index > shard_count
+        return unless invalid_shard_index
+
+        raise UsageError, "`--dependent-shard-index` must be between 1 and `--dependent-shard-count`."
       end
     end
   end
