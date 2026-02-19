@@ -13,6 +13,7 @@ module Homebrew
 
       class VersionBumpInfo < T::Struct
         const :type, Symbol
+        const :deprecated, T::Hash[Symbol, T::Boolean], default: {}
         const :multiple_versions, T::Boolean
         const :version_name, String
         const :current_version, BumpVersionParser
@@ -320,6 +321,7 @@ module Homebrew
           [:cask, "cask version:   "]
         end
 
+        deprecated = {}
         old_versions = {}
         new_versions = {}
 
@@ -341,6 +343,8 @@ module Homebrew
               loaded_formula_or_cask = Cask::CaskLoader.load(formula_or_cask.sourcefile_path)
               current_version_value = Version.new(loaded_formula_or_cask.version)
             end
+
+            deprecated[version_key] = loaded_formula_or_cask.deprecated?
             formula_or_cask_has_livecheck = loaded_formula_or_cask.livecheck_defined?
 
             livecheck_latest = livecheck_result(loaded_formula_or_cask)
@@ -383,6 +387,7 @@ module Homebrew
 
         multiple_versions = old_versions.values_at(:arm, :intel).all?(&:present?) ||
                             new_versions.values_at(:arm, :intel).all?(&:present?)
+        deprecated[:general] ||= deprecated[:arm] || deprecated[:intel] || false unless multiple_versions
 
         current_version = BumpVersionParser.new(general: old_versions[:general],
                                                 arm:     old_versions[:arm],
@@ -435,6 +440,7 @@ module Homebrew
 
         VersionBumpInfo.new(
           type:,
+          deprecated:,
           multiple_versions:,
           version_name:,
           current_version:,
@@ -459,6 +465,7 @@ module Homebrew
                                                  repositories:,
                                                  name:)
 
+        deprecated = version_info.deprecated
         current_version = version_info.current_version
         new_version = version_info.new_version
         repology_latest = version_info.repology_latest
@@ -477,14 +484,17 @@ module Homebrew
         current_versions = if version_info.multiple_versions
           "arm:   #{current_version.arm || current_version.general}" \
             "#{NEWER_THAN_UPSTREAM_MSG if version_info.newer_than_upstream[:arm]}" \
+            "#{" (deprecated)" if deprecated[:arm]}" \
             "\n                          " \
             "intel: #{current_version.intel || current_version.general}" \
-            "#{NEWER_THAN_UPSTREAM_MSG if version_info.newer_than_upstream[:intel]}"
+            "#{NEWER_THAN_UPSTREAM_MSG if version_info.newer_than_upstream[:intel]}" \
+            "#{" (deprecated)" if deprecated[:intel]}"
         else
           newer_than_upstream_general = version_info.newer_than_upstream[:general]
-          "#{current_version.general}#{NEWER_THAN_UPSTREAM_MSG if newer_than_upstream_general}"
+          "#{current_version.general}" \
+            "#{NEWER_THAN_UPSTREAM_MSG if newer_than_upstream_general}" \
+            "#{" (deprecated)" if deprecated[:general]}"
         end
-        current_versions << " (deprecated)" if formula_or_cask.deprecated?
 
         new_versions = if version_info.multiple_versions && new_version.arm && new_version.intel
           "arm:   #{new_version.arm}
