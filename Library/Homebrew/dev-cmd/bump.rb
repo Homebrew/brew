@@ -475,9 +475,10 @@ module Homebrew
 
         # Conditionally format output based on type of formula_or_cask
         current_versions = if version_info.multiple_versions
-          "arm:   #{current_version.arm}" \
+          "arm:   #{current_version.arm || current_version.general}" \
             "#{NEWER_THAN_UPSTREAM_MSG if version_info.newer_than_upstream[:arm]}" \
-            "\n                          intel: #{current_version.intel}" \
+            "\n                          " \
+            "intel: #{current_version.intel || current_version.general}" \
             "#{NEWER_THAN_UPSTREAM_MSG if version_info.newer_than_upstream[:intel]}"
         else
           newer_than_upstream_general = version_info.newer_than_upstream[:general]
