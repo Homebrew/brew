@@ -17,8 +17,8 @@ module Homebrew
         const :multiple_versions, T::Boolean
         const :version_name, String
         const :current_version, BumpVersionParser
-        const :repology_latest, T.any(String, Version)
         const :new_version, BumpVersionParser
+        const :repology_latest, T.any(String, Version)
         const :newer_than_upstream, T::Hash[Symbol, T::Boolean], default: {}
         const :duplicate_pull_requests, T.nilable(T.any(T::Array[String], String))
         const :maybe_duplicate_pull_requests, T.nilable(T.any(T::Array[String], String))
@@ -444,8 +444,8 @@ module Homebrew
           multiple_versions:,
           version_name:,
           current_version:,
-          repology_latest:,
           new_version:,
+          repology_latest:,
           newer_than_upstream:,
           duplicate_pull_requests:,
           maybe_duplicate_pull_requests:,
@@ -466,12 +466,16 @@ module Homebrew
                                                  name:)
 
         deprecated = version_info.deprecated
+        multiple_versions = version_info.multiple_versions
         current_version = version_info.current_version
         new_version = version_info.new_version
         repology_latest = version_info.repology_latest
+        newer_than_upstream = version_info.newer_than_upstream
+        duplicate_pull_requests = version_info.duplicate_pull_requests
+        maybe_duplicate_pull_requests = version_info.maybe_duplicate_pull_requests
 
         versions_equal = (new_version == current_version)
-        all_newer_than_upstream = version_info.newer_than_upstream.all? { |_k, v| v == true }
+        all_newer_than_upstream = newer_than_upstream.all? { |_k, v| v == true }
 
         title_name = ambiguous_cask ? "#{name} (cask)" : name
         title = if (repology_latest == current_version.general || !repology_latest.is_a?(Version)) && versions_equal
@@ -481,35 +485,30 @@ module Homebrew
         end
 
         # Conditionally format output based on type of formula_or_cask
-        current_versions = if version_info.multiple_versions
+        current_versions = if multiple_versions
           "arm:   #{current_version.arm || current_version.general}" \
-            "#{NEWER_THAN_UPSTREAM_MSG if version_info.newer_than_upstream[:arm]}" \
+            "#{NEWER_THAN_UPSTREAM_MSG if newer_than_upstream[:arm]}" \
             "#{" (deprecated)" if deprecated[:arm]}" \
             "\n                          " \
             "intel: #{current_version.intel || current_version.general}" \
-            "#{NEWER_THAN_UPSTREAM_MSG if version_info.newer_than_upstream[:intel]}" \
+            "#{NEWER_THAN_UPSTREAM_MSG if newer_than_upstream[:intel]}" \
             "#{" (deprecated)" if deprecated[:intel]}"
         else
-          newer_than_upstream_general = version_info.newer_than_upstream[:general]
           "#{current_version.general}" \
-            "#{NEWER_THAN_UPSTREAM_MSG if newer_than_upstream_general}" \
+            "#{NEWER_THAN_UPSTREAM_MSG if newer_than_upstream[:general]}" \
             "#{" (deprecated)" if deprecated[:general]}"
         end
 
-        new_versions = if version_info.multiple_versions && new_version.arm && new_version.intel
+        new_versions = if multiple_versions && new_version.arm && new_version.intel
           "arm:   #{new_version.arm}
                           intel: #{new_version.intel}"
         else
           new_version.general
         end
 
-        version_label = version_info.version_name
-        duplicate_pull_requests = version_info.duplicate_pull_requests
-        maybe_duplicate_pull_requests = version_info.maybe_duplicate_pull_requests
-
         ohai title
         puts <<~EOS
-          Current #{version_label}  #{current_versions}
+          Current #{version_info.version_name}  #{current_versions}
           Latest livecheck version: #{new_versions}#{" (throttled)" if formula_or_cask.livecheck.throttle}
         EOS
         puts <<~EOS unless skip_repology?(formula_or_cask)
@@ -563,13 +562,13 @@ module Homebrew
           puts "#{title_name} was not bumped to the Repology version because it has a `livecheck` block."
         end
         if new_version.blank? || versions_equal ||
-           (!new_version.general.is_a?(Version) && !version_info.multiple_versions)
+           (!new_version.general.is_a?(Version) && !multiple_versions)
           return
         end
 
         return if duplicate_pull_requests.present?
 
-        version_args = if version_info.multiple_versions
+        version_args = if multiple_versions
           %W[--version-arm=#{new_version.arm} --version-intel=#{new_version.intel}]
         else
           "--version=#{new_version.general}"
