@@ -14,7 +14,7 @@ module Homebrew
       class VersionBumpInfo < T::Struct
         const :type, Symbol
         const :deprecated, T::Hash[Symbol, T::Boolean], default: {}
-        const :multiple_versions, T::Boolean
+        const :multiple_versions, T::Hash[Symbol, T::Boolean], default: {}
         const :version_name, String
         const :current_version, BumpVersionParser
         const :new_version, BumpVersionParser
@@ -385,9 +385,13 @@ module Homebrew
           new_versions = { general: new_versions[:arm] }
         end
 
-        multiple_versions = old_versions.values_at(:arm, :intel).all?(&:present?) ||
-                            new_versions.values_at(:arm, :intel).all?(&:present?)
-        deprecated[:general] ||= deprecated[:arm] || deprecated[:intel] || false unless multiple_versions
+        multiple_versions = {}
+        multiple_versions[:current] = old_versions.values_at(:arm, :intel).all?(&:present?)
+        multiple_versions[:new] = new_versions.values_at(:arm, :intel).all?(&:present?)
+
+        if !multiple_versions[:current] && deprecated[:general].nil?
+          deprecated = { general: deprecated[:arm] || deprecated[:intel] || false }
+        end
 
         current_version = BumpVersionParser.new(general: old_versions[:general],
                                                 arm:     old_versions[:arm],
@@ -421,7 +425,7 @@ module Homebrew
            !newer_than_upstream.all? { |_k, v| v == true }
           # We use the ARM version for the pull request version. This is
           # consistent with the behavior of bump-cask-pr.
-          pull_request_version = if multiple_versions
+          pull_request_version = if multiple_versions[:new]
             new_version.arm.to_s
           else
             new_version.general.to_s
@@ -485,7 +489,7 @@ module Homebrew
         end
 
         # Conditionally format output based on type of formula_or_cask
-        current_versions = if multiple_versions
+        current_versions = if multiple_versions[:current]
           "arm:   #{current_version.arm || current_version.general}" \
             "#{NEWER_THAN_UPSTREAM_MSG if newer_than_upstream[:arm]}" \
             "#{" (deprecated)" if deprecated[:arm]}" \
@@ -499,7 +503,7 @@ module Homebrew
             "#{" (deprecated)" if deprecated[:general]}"
         end
 
-        new_versions = if multiple_versions && new_version.arm && new_version.intel
+        new_versions = if multiple_versions[:new] && new_version.arm && new_version.intel
           "arm:   #{new_version.arm}
                           intel: #{new_version.intel}"
         else
@@ -562,13 +566,13 @@ module Homebrew
           puts "#{title_name} was not bumped to the Repology version because it has a `livecheck` block."
         end
         if new_version.blank? || versions_equal ||
-           (!new_version.general.is_a?(Version) && !multiple_versions)
+           (!new_version.general.is_a?(Version) && !multiple_versions[:new])
           return
         end
 
         return if duplicate_pull_requests.present?
 
-        version_args = if multiple_versions
+        version_args = if multiple_versions[:new]
           %W[--version-arm=#{new_version.arm} --version-intel=#{new_version.intel}]
         else
           "--version=#{new_version.general}"
