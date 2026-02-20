@@ -177,51 +177,51 @@ module Homebrew
             end
           end.reject(&:optional?)
         end)
+        dependency_formulae_by_dependent = {}
+        runtime_or_test_dependency_formulae_by_dependent = {}
+        dependency_full_names_by_dependent = {}
+        dependents.each do |dependent, dependencies|
+          dependency_formulae = dependencies.map(&:to_formula)
+          dependency_formulae_by_dependent[dependent] = dependency_formulae
+          runtime_or_test_dependency_formulae_by_dependent[dependent] = dependencies.reject do |dependency|
+            dependency.build? && !dependency.test?
+          end.map(&:to_formula)
+          dependency_full_names_by_dependent[dependent] = dependency_formulae.map(&:full_name).uniq.sort
+        end
 
         # Defer formulae which could be tested later
         # i.e. formulae that also depend on something else yet to be built in this test run.
-        dependents.reject! do |_, deps|
+        dependents.reject! do |dependent, _deps|
           still_to_test = @dependent_testing_formulae - @testing_formulae_with_tested_dependents
-          deps.map { |d| d.to_formula.full_name }.intersect?(still_to_test)
+          dependency_full_names_by_dependent.fetch(dependent).intersect?(still_to_test)
         end
 
         # Split into dependents that we could potentially be building from source and those
         # we should not. The criteria is that a dependent must have bottled dependencies, and
         # either the `--build-dependents-from-source` flag was passed or a dependent has no
         # bottle on the current OS.
-        source_dependents, dependents = dependents.partition do |dependent, deps|
+        source_dependents, dependents = dependents.partition do |dependent, _deps|
           # TODO: move to extend/os
           # rubocop:todo Homebrew/MoveToExtendOS
           next false if OS.linux? && dependent.requirements.exclude?(LinuxRequirement.new)
           # rubocop:enable Homebrew/MoveToExtendOS
 
-          all_deps_bottled_or_built = deps.all? do |d|
-            bottled_or_built?(d.to_formula, @dependent_testing_formulae)
+          all_deps_bottled_or_built = dependency_formulae_by_dependent.fetch(dependent).all? do |dependency_formula|
+            bottled_or_built?(dependency_formula, @dependent_testing_formulae)
           end
           args.build_dependents_from_source? && all_deps_bottled_or_built
         end
 
         # From the non-source list, get rid of any dependents we are only a build dependency to
-        dependents.select! do |_, deps|
-          deps.reject { |d| d.build? && !d.test? }
-              .map(&:to_formula)
-              .include?(formula)
+        dependents.select! do |dependent, _deps|
+          runtime_or_test_dependency_formulae_by_dependent.fetch(dependent).include?(formula)
         end
 
         all_dependents_with_dependencies = source_dependents + dependents
-        dependent_full_names = all_dependents_with_dependencies.to_set { |dependent, _| dependent.full_name }
-
-        dependency_features = T.let({}, T::Hash[String, T::Array[String]])
-        dependency_graph = T.let({}, T::Hash[String, T::Array[String]])
-        all_dependents_with_dependencies.each do |dependent, dependencies|
-          dependency_full_names = dependencies.map { |dependency| dependency.to_formula.full_name }
-                                              .uniq
-                                              .sort
-          dependency_features[dependent.full_name] = dependency_full_names
-          dependency_graph[dependent.full_name] = dependency_full_names.select do |dependency_full_name|
-            dependent_full_names.include?(dependency_full_name)
-          end
-        end
+        dependency_features, dependency_graph = dependency_sharding_data(
+          all_dependents_with_dependencies,
+          dependency_full_names_by_dependent:,
+        )
 
         dependents = dependents.transpose.first.to_a
         source_dependents = source_dependents.transpose.first.to_a
@@ -438,12 +438,43 @@ module Homebrew
       end
 
       def sharded_dependent_testing_formulae(formulae, args:, dependency_features: {}, dependency_graph: {})
+        formulae = unique_formulae_by_full_name(formulae)
         shard_count = args.dependent_shard_count&.to_i
         shard_index = args.dependent_shard_index&.to_i
         return formulae if shard_count.blank? || shard_index.blank? || shard_count <= 1
 
         DependentShardAssigner.new(shard_count:, dependency_features:, dependency_graph:)
                               .shard_formulae(formulae, shard_index:)
+      end
+
+      def dependency_sharding_data(dependents_with_dependencies, dependency_full_names_by_dependent:)
+        dependent_full_names = dependents_with_dependencies.to_set { |dependent, _| dependent.full_name }
+
+        dependency_features = {}
+        dependency_graph = {}
+        dependents_with_dependencies.each do |dependent,|
+          dependency_full_names = dependency_full_names_by_dependent.fetch(dependent, [])
+          dependency_features[dependent.full_name] = dependency_full_names
+          dependency_graph[dependent.full_name] = dependency_full_names.select do |dependency_full_name|
+            dependent_full_names.include?(dependency_full_name)
+          end
+        end
+
+        [dependency_features, dependency_graph]
+      end
+
+      def unique_formulae_by_full_name(formulae)
+        seen_full_names = Set.new
+        formulae.select do |formula|
+          seen_full_names.add?(formula_full_name(formula))
+        end
+      end
+
+      def formula_full_name(formula_or_name)
+        return formula_or_name.full_name if formula_or_name.respond_to?(:full_name)
+        return formula_or_name if formula_or_name.is_a?(String) && formula_or_name.include?("/")
+
+        Formulary.factory(formula_or_name).full_name
       end
     end
   end

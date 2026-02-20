@@ -8,7 +8,7 @@ class LinuxRunnerSpec < T::Struct
   const :workdir, String
   const :timeout, Integer
   const :cleanup, T::Boolean
-  prop  :testing_formulae, T::Array[String], default: []
+  prop :testing_formulae, T::Array[String], default: []
 
   sig {
     returns({

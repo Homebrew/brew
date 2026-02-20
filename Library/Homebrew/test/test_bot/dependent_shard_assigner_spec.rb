@@ -24,6 +24,14 @@ RSpec.describe Homebrew::TestBot::DependentShardAssigner do
     end
   end
 
+  define_method(:shard_loads) do |assignments, dependency_features, shard_count|
+    loads = Array.new(shard_count, 0)
+    assignments.each do |formula_name, shard_index|
+      loads[shard_index] += [dependency_features.fetch(formula_name, []).length, 1].max
+    end
+    loads
+  end
+
   before do
     allow(Formulary).to receive(:factory) do |formula_name|
       instance_double(Formula, full_name: full_name(formula_name))
@@ -112,6 +120,50 @@ RSpec.describe Homebrew::TestBot::DependentShardAssigner do
       expected_full_names = %w[alpha beta gamma delta epsilon].map { |formula_name| full_name(formula_name) }.sort
       expect(assignments.keys.sort).to eq(expected_full_names)
     end
+
+    it "balances runtime-heavy dependents across shards" do
+      dependency_features = {
+        full_name("hot-a")  => (1..30).map { |index| "hot-shared-#{index}" } + ["hot-a-only"],
+        full_name("hot-b")  => (1..30).map { |index| "hot-shared-#{index}" } + ["hot-b-only"],
+        full_name("hot-c")  => (1..30).map { |index| "hot-shared-#{index}" } + ["hot-c-only"],
+        full_name("cold-a") => %w[cold-shared cold-a-only],
+        full_name("cold-b") => %w[cold-shared cold-b-only],
+        full_name("cold-c") => %w[cold-shared cold-c-only],
+      }
+      formulae = %w[hot-a hot-b hot-c cold-a cold-b cold-c]
+
+      assigner = described_class.new(shard_count: 2, dependency_features:)
+      assignments = assigner.assignments(formulae)
+      loads = shard_loads(assignments, dependency_features, 2)
+
+      hot_shards = %w[hot-a hot-b hot-c].map { |formula_name| assignments.fetch(full_name(formula_name)) }.uniq
+      expect(hot_shards.length).to be > 1
+      expect(loads.max - loads.min).to be <= 31
+    end
+
+    it "supports full-name string inputs without Formulary lookups" do
+      dependency_features = {
+        full_name("alpha") => ["dep-alpha"],
+        full_name("beta")  => ["dep-beta"],
+      }
+      assigner = described_class.new(shard_count: 2, dependency_features:)
+
+      expect(Formulary).not_to receive(:factory)
+      assignments = assigner.assignments([full_name("alpha"), full_name("beta")])
+
+      expect(assignments.keys.sort).to eq([full_name("alpha"), full_name("beta")])
+    end
+
+    it "deduplicates repeated dependent full names at assignment time" do
+      dependency_features = {
+        full_name("alpha") => ["dep-alpha"],
+        full_name("beta")  => ["dep-beta"],
+      }
+      assigner = described_class.new(shard_count: 2, dependency_features:)
+      assignments = assigner.assignments([full_name("alpha"), full_name("alpha"), full_name("beta")])
+
+      expect(assignments.keys.sort).to eq([full_name("alpha"), full_name("beta")])
+    end
   end
 
   describe "#shard_formulae" do
@@ -137,6 +189,19 @@ RSpec.describe Homebrew::TestBot::DependentShardAssigner do
       expect(shard_1 & shard_2).to eq([])
       expect((shard_1 + shard_2).sort_by(&:full_name))
         .to eq(dependent_formulae.sort_by(&:full_name))
+    end
+
+    it "deduplicates repeated dependent full names" do
+      dependent_formulae = [
+        instance_double(Formula, full_name: full_name("duplicate")),
+        instance_double(Formula, full_name: full_name("duplicate")),
+        instance_double(Formula, full_name: full_name("unique")),
+      ]
+
+      assigner = described_class.new(shard_count: 2, dependency_features: {})
+      shards = (1..2).flat_map { |shard_index| assigner.shard_formulae(dependent_formulae, shard_index:) }
+
+      expect(shards.map(&:full_name).sort).to eq([full_name("duplicate"), full_name("unique")])
     end
 
     it "keeps shard membership balanced for highly overlapping feature sets" do

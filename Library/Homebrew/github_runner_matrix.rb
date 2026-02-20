@@ -3,14 +3,9 @@
 
 require "test_runner_formula"
 require "github_runner"
-require "dependent_shard_matrix"
 
 # Builds the GitHub Actions runner matrix used for formula and dependent testing.
 class GitHubRunnerMatrix
-  DEFAULT_DEPENDENT_SHARD_MAX_RUNNERS = 1
-  DEFAULT_DEPENDENT_SHARD_MIN_DEPENDENTS_PER_RUNNER = 200
-  DEFAULT_DEPENDENT_SHARD_RUNNER_LOAD_FACTOR = 1.0
-
   # When bumping newest runner, run e.g. `git log -p --reverse -G "sha256 tahoe"`
   # on homebrew/core and tag the first commit with a bottle e.g.
   # `git tag 15-sequoia f42c4a659e4da887fc714f8f41cc26794a4bb320`
@@ -22,100 +17,29 @@ class GitHubRunnerMatrix
   RunnerSpec = T.type_alias { T.any(LinuxRunnerSpec, MacOSRunnerSpec) }
   private_constant :RunnerSpec
 
-  MacOSRunnerSpecHash = T.type_alias do
-    {
-      name:             String,
-      runner:           String,
-      timeout:          Integer,
-      cleanup:          T::Boolean,
-      testing_formulae: String,
-    }
-  end
-  private_constant :MacOSRunnerSpecHash
-
-  DependentMacOSRunnerSpecHash = T.type_alias do
-    {
-      name:                  String,
-      runner:                String,
-      timeout:               Integer,
-      cleanup:               T::Boolean,
-      testing_formulae:      String,
-      dependent_shard_count: Integer,
-      dependent_shard_index: Integer,
-    }
-  end
-  private_constant :DependentMacOSRunnerSpecHash
-
-  LinuxRunnerSpecHash = T.type_alias do
-    {
-      name:             String,
-      runner:           String,
-      container:        T::Hash[Symbol, String],
-      workdir:          String,
-      timeout:          Integer,
-      cleanup:          T::Boolean,
-      testing_formulae: String,
-    }
-  end
-  private_constant :LinuxRunnerSpecHash
-
-  DependentLinuxRunnerSpecHash = T.type_alias do
-    {
-      name:                  String,
-      runner:                String,
-      container:             T::Hash[Symbol, String],
-      workdir:               String,
-      timeout:               Integer,
-      cleanup:               T::Boolean,
-      testing_formulae:      String,
-      dependent_shard_count: Integer,
-      dependent_shard_index: Integer,
-    }
-  end
-  private_constant :DependentLinuxRunnerSpecHash
-
-  RunnerSpecHash = T.type_alias do
-    T.any(LinuxRunnerSpecHash, MacOSRunnerSpecHash, DependentLinuxRunnerSpecHash, DependentMacOSRunnerSpecHash)
-  end
+  RunnerSpecHash = T.type_alias { T::Hash[Symbol, T.untyped] }
   private_constant :RunnerSpecHash
+
   sig { returns(T::Array[GitHubRunner]) }
   attr_reader :runners
 
   sig {
     params(
-      testing_formulae:                          T::Array[TestRunnerFormula],
-      deleted_formulae:                          T::Array[String],
-      all_supported:                             T::Boolean,
-      dependent_matrix:                          T::Boolean,
-      dependent_shard_max_runners:               Integer,
-      dependent_shard_min_dependents_per_runner: Integer,
-      dependent_shard_runner_load_factor:        Float,
+      testing_formulae: T::Array[TestRunnerFormula],
+      deleted_formulae: T::Array[String],
+      all_supported:    T::Boolean,
+      dependent_matrix: T::Boolean,
     ).void
   }
-  def initialize(testing_formulae, deleted_formulae, all_supported:, dependent_matrix:,
-                 dependent_shard_max_runners: DEFAULT_DEPENDENT_SHARD_MAX_RUNNERS,
-                 dependent_shard_min_dependents_per_runner: DEFAULT_DEPENDENT_SHARD_MIN_DEPENDENTS_PER_RUNNER,
-                 dependent_shard_runner_load_factor: DEFAULT_DEPENDENT_SHARD_RUNNER_LOAD_FACTOR)
+  def initialize(testing_formulae, deleted_formulae, all_supported:, dependent_matrix:)
     if all_supported && (testing_formulae.present? || deleted_formulae.present? || dependent_matrix)
       raise ArgumentError, "all_supported is mutually exclusive to other arguments"
-    end
-    if dependent_shard_max_runners < 1
-      raise ArgumentError, "dependent_shard_max_runners must be an integer greater than or equal to 1."
-    end
-    if dependent_shard_min_dependents_per_runner < 1
-      raise ArgumentError, "dependent_shard_min_dependents_per_runner must be an integer greater than or equal to 1."
-    end
-    unless DependentShardMatrix.valid_shard_runner_load_factor?(dependent_shard_runner_load_factor)
-      raise ArgumentError, "dependent_shard_runner_load_factor must be greater than 0 and less than or equal to 1."
     end
 
     @testing_formulae = testing_formulae
     @deleted_formulae = deleted_formulae
     @all_supported = all_supported
     @dependent_matrix = dependent_matrix
-    @dependent_shard_max_runners = dependent_shard_max_runners
-    @dependent_shard_min_dependents_per_runner = dependent_shard_min_dependents_per_runner
-    @dependent_shard_runner_load_factor = dependent_shard_runner_load_factor
     @compatible_testing_formulae = T.let({}, T::Hash[GitHubRunner, T::Array[TestRunnerFormula]])
     @formulae_with_untested_dependents = T.let({}, T::Hash[GitHubRunner, T::Array[TestRunnerFormula]])
     @compatible_dependent_names = T.let({}, T::Hash[GitHubRunner, T::Array[String]])
@@ -129,28 +53,10 @@ class GitHubRunnerMatrix
   sig { returns(T::Array[RunnerSpecHash]) }
   def active_runner_specs_hash
     active_runners = runners.select(&:active)
-    return active_runners.map { |runner| runner.spec.to_h } unless @dependent_matrix
-
-    dependent_runner_specs_hash(active_runners)
+    active_runners.map { |runner| runner.spec.to_h }
   end
 
   private
-
-  sig { params(active_runners: T::Array[GitHubRunner]).returns(T::Array[RunnerSpecHash]) }
-  def dependent_runner_specs_hash(active_runners)
-    # Shard sizing should only consider dependents runnable on each specific runner.
-    dependent_count_by_runner = active_runners.to_h do |runner|
-      [runner, compatible_dependent_names(runner).size]
-    end
-
-    DependentShardMatrix.new(
-      active_runners:,
-      dependent_count_by_runner:,
-      shard_max_runners:               @dependent_shard_max_runners,
-      shard_min_dependents_per_runner: @dependent_shard_min_dependents_per_runner,
-      shard_runner_load_factor:        @dependent_shard_runner_load_factor,
-    ).runner_specs_hash
-  end
 
   SELF_HOSTED_LINUX_RUNNER = "linux-self-hosted-1"
   # ARM macOS timeout, keep this under 1/2 of GitHub's job execution time limit for self-hosted runners.
@@ -402,5 +308,14 @@ class GitHubRunnerMatrix
                                             .flat_map { |formula| compatible_dependents_for_formula(formula, runner) }
                                             .uniq
                                             .sort
+  end
+
+  sig { params(runner: GitHubRunner).returns(T::Array[String]) }
+  def compatible_matrix_item_names(runner)
+    if @dependent_matrix
+      compatible_dependent_names(runner)
+    else
+      compatible_testing_formulae(runner).map(&:name).uniq.sort
+    end
   end
 end

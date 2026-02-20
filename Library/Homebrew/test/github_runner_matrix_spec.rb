@@ -41,12 +41,6 @@ RSpec.describe GitHubRunnerMatrix, :no_api do
     end
   end
 
-  describe "DEFAULT_DEPENDENT_SHARD_MAX_RUNNERS" do
-    it "defaults to one so dependent sharding is opt-in" do
-      expect(described_class::DEFAULT_DEPENDENT_SHARD_MAX_RUNNERS).to eq(1)
-    end
-  end
-
   describe "#active_runner_specs_hash" do
     it "returns an object that responds to `#to_json`" do
       expect(
@@ -56,85 +50,19 @@ RSpec.describe GitHubRunnerMatrix, :no_api do
       ).to be(true)
     end
 
-    it "expands dependent matrix rows using per-runner dependent shard counts" do
-      allow(Homebrew::EnvConfig).to receive(:eval_all?).and_return(true)
-      allow(Formula).to receive(:all).and_return(
-        [testball, testball_depender, testball_depender_macos, testball_depender_newest].map(&:formula),
-      )
-
+    it "returns active runner specs without sharding metadata" do
       runner_specs = described_class.new(
         [testball], [],
-        all_supported:                             false,
-        dependent_matrix:                          true,
-        dependent_shard_max_runners:               3,
-        dependent_shard_min_dependents_per_runner: 1
-      ).active_runner_specs_hash
-
-      grouped_runner_specs = runner_specs.group_by { |runner_spec| runner_spec.fetch(:runner) }
-      per_runner_counts = grouped_runner_specs.values.map(&:count)
-      expect(per_runner_counts).to include(3)
-
-      grouped_runner_specs.each_value do |runner_spec_rows|
-        expected_count = runner_spec_rows.count
-        expect(runner_spec_rows).to all(include(dependent_shard_count: expected_count))
-        expect(runner_spec_rows.map { |runner_spec| runner_spec.fetch(:dependent_shard_index) }.sort)
-          .to eq((1..expected_count).to_a)
-      end
-    end
-
-    it "clamps dependent shard counts to the configured maximum" do
-      allow(Homebrew::EnvConfig).to receive(:eval_all?).and_return(true)
-      allow(Formula).to receive(:all).and_return(
-        [testball, testball_depender, testball_depender_linux, testball_depender_macos].map(&:formula),
-      )
-
-      runner_specs = described_class.new(
-        [testball], [],
-        all_supported:                             false,
-        dependent_matrix:                          true,
-        dependent_shard_max_runners:               2,
-        dependent_shard_min_dependents_per_runner: 1
-      ).active_runner_specs_hash
-
-      grouped_runner_specs = runner_specs.group_by { |runner_spec| runner_spec.fetch(:runner) }
-      expect(grouped_runner_specs.values).to all(satisfy { |runner_spec_rows| runner_spec_rows.count == 2 })
-      expect(runner_specs.map { |runner_spec| runner_spec.fetch(:dependent_shard_count) }.uniq).to eq([2])
-    end
-
-    it "keeps non-dependent matrix output unchanged" do
-      runner_specs = described_class.new(
-        [testball], [],
-        all_supported:                             false,
-        dependent_matrix:                          false,
-        dependent_shard_max_runners:               3,
-        dependent_shard_min_dependents_per_runner: 1
+        all_supported:    false,
+        dependent_matrix: false
       ).active_runner_specs_hash
 
       expect(runner_specs).to all(satisfy do |runner_spec|
-        runner_spec.exclude?(:dependent_shard_count) && runner_spec.exclude?(:dependent_shard_index)
+        runner_spec.exclude?(:dependent_shard_count) &&
+          runner_spec.exclude?(:dependent_shard_index) &&
+          runner_spec.exclude?(:shard_count) &&
+          runner_spec.exclude?(:shard_index)
       end)
-    end
-
-    it "raises for invalid dependent shard max runners values" do
-      expect do
-        described_class.new(
-          [], ["deleted"],
-          all_supported:               false,
-          dependent_matrix:            true,
-          dependent_shard_max_runners: 0
-        )
-      end.to raise_error(ArgumentError, /dependent_shard_max_runners/)
-    end
-
-    it "raises for invalid dependent shard min dependents per runner values" do
-      expect do
-        described_class.new(
-          [], ["deleted"],
-          all_supported:                             false,
-          dependent_matrix:                          true,
-          dependent_shard_min_dependents_per_runner: 0
-        )
-      end.to raise_error(ArgumentError, /dependent_shard_min_dependents_per_runner/)
     end
   end
 

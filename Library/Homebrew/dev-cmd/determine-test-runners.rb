@@ -4,6 +4,7 @@
 require "abstract_command"
 require "test_runner_formula"
 require "github_runner_matrix"
+require "sharded_runner_matrix"
 
 module Homebrew
   module DevCmd
@@ -49,20 +50,32 @@ module Homebrew
           raise UsageError, "`--all-supported` is mutually exclusive to other arguments."
         end
 
-        dependent_shard_max_runners = dependent_shard_max_runners_value
-        dependent_shard_min_dependents_per_runner = dependent_shard_min_dependents_per_runner_value
-        dependent_shard_runner_load_factor = dependent_shard_runner_load_factor_value
+        shard_max_runners = dependent_shard_max_runners_value
+        shard_min_items_per_runner = dependent_shard_min_dependents_per_runner_value
+        shard_runner_load_factor = dependent_shard_runner_load_factor_value
 
         testing_formulae = args.named.first&.split(",").to_a.map do |name|
           TestRunnerFormula.new(Formulary.factory(name), eval_all: args.eval_all?)
         end.freeze
         deleted_formulae = args.named.second&.split(",").to_a.freeze
-        runner_matrix = GitHubRunnerMatrix.new(testing_formulae, deleted_formulae,
-                                               all_supported:                             args.all_supported?,
-                                               dependent_matrix:                          args.dependents?,
-                                               dependent_shard_max_runners:,
-                                               dependent_shard_min_dependents_per_runner:,
-                                               dependent_shard_runner_load_factor:)
+
+        runner_matrix_class = if args.dependents?
+          ShardedRunnerMatrix
+        else
+          GitHubRunnerMatrix
+        end
+        runner_matrix_args = {
+          all_supported:    args.all_supported?,
+          dependent_matrix: args.dependents?,
+        }
+        if args.dependents?
+          runner_matrix_args[:shard_max_runners] = shard_max_runners
+          runner_matrix_args[:shard_min_items_per_runner] = shard_min_items_per_runner
+          runner_matrix_args[:shard_runner_load_factor] = shard_runner_load_factor
+          runner_matrix_args[:shard_count_key] = ShardedRunnerMatrix::ShardCountKey::DependentShardCount
+          runner_matrix_args[:shard_index_key] = ShardedRunnerMatrix::ShardIndexKey::DependentShardIndex
+        end
+        runner_matrix = runner_matrix_class.new(testing_formulae, deleted_formulae, **runner_matrix_args)
         runners = runner_matrix.active_runner_specs_hash
 
         ohai "Runners", JSON.pretty_generate(runners)
@@ -88,7 +101,7 @@ module Homebrew
         parse_positive_integer_option(
           args.dependent_shard_max_runners,
           "--dependent-shard-max-runners",
-          default_value: GitHubRunnerMatrix::DEFAULT_DEPENDENT_SHARD_MAX_RUNNERS,
+          default_value: ShardedRunnerMatrix::DEFAULT_SHARD_MAX_RUNNERS,
         )
       end
 
@@ -97,7 +110,7 @@ module Homebrew
         parse_positive_integer_option(
           args.dependent_shard_min_dependents_per_runner,
           "--dependent-shard-min-dependents-per-runner",
-          default_value: GitHubRunnerMatrix::DEFAULT_DEPENDENT_SHARD_MIN_DEPENDENTS_PER_RUNNER,
+          default_value: ShardedRunnerMatrix::DEFAULT_SHARD_MIN_ITEMS_PER_RUNNER,
         )
       end
 
@@ -106,7 +119,7 @@ module Homebrew
         parse_load_factor_option(
           args.dependent_shard_runner_load_factor,
           "--dependent-shard-runner-load-factor",
-          default_value: GitHubRunnerMatrix::DEFAULT_DEPENDENT_SHARD_RUNNER_LOAD_FACTOR,
+          default_value: ShardedRunnerMatrix::DEFAULT_SHARD_RUNNER_LOAD_FACTOR,
         )
       end
 
@@ -123,7 +136,7 @@ module Homebrew
       def parse_load_factor_option(raw_value, flag_name, default_value:)
         value = raw_value.presence || default_value.to_s
         parsed_value = T.let(Float(value, exception: false), T.nilable(Float))
-        return parsed_value if parsed_value && DependentShardMatrix.valid_shard_runner_load_factor?(parsed_value)
+        return parsed_value if parsed_value && ShardedRunnerMatrix.valid_shard_runner_load_factor?(parsed_value)
 
         raise UsageError, "`#{flag_name}` must be a number greater than 0 and less than or equal to 1."
       end

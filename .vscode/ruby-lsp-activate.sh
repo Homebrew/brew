@@ -1,13 +1,15 @@
 #!/bin/bash
 # This might be sourced from zsh, so support both
-if [[ -n "${BASH_SOURCE[0]}" ]]; then
-    SCRIPT_PATH="${BASH_SOURCE[0]}"
-elif [[ -n "${ZSH_VERSION}" ]]; then
-    # This is zsh-specific syntax.
-    # shellcheck disable=SC2296
-    SCRIPT_PATH="${(%):-%x}"
+if [[ -n "${BASH_SOURCE[0]}" ]]
+then
+  SCRIPT_PATH="${BASH_SOURCE[0]}"
+elif [[ -n "${ZSH_VERSION}" ]]
+then
+  # This is zsh-specific syntax.
+  # shellcheck disable=SC2296,SC2016
+  SCRIPT_PATH="$(eval 'printf "%s" "${(%):-%x}"')"
 else
-    SCRIPT_PATH="$0"
+  SCRIPT_PATH="$0"
 fi
 HOMEBREW_PREFIX="$(cd "$(dirname "${SCRIPT_PATH}")"/../ && pwd)"
 
@@ -26,3 +28,5 @@ ensure-bundle-dependencies
 # setup-ruby-path doesn't add Homebrew's ruby to PATH
 homebrew_ruby_bin="$(dirname "${HOMEBREW_RUBY_PATH}")"
 export PATH="${homebrew_ruby_bin}:${PATH}"
+
+"$@"
