@@ -382,6 +382,12 @@ jobs:
           install: gnu-tar
           uninstall: true
 
+      - name: Re-checkout Homebrew/brew after prefix cache restore
+        working-directory: ${{ steps.set-up-homebrew.outputs.repository-path }}
+        run: |
+          git fetch origin "$GITHUB_SHA"
+          git checkout --force -B main FETCH_HEAD
+
       - name: Setup environment variables
         run: |
           # Set enviroment variables to bypass `brew doctor` failures on Tier >=2 configurations
