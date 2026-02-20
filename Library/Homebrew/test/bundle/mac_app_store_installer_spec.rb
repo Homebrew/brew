@@ -84,7 +84,7 @@ RSpec.describe Homebrew::Bundle::MacAppStoreInstaller do
       end
 
       it "installs app" do
-        expect(Homebrew::Bundle).to receive(:system).with("mas", "install", "123", verbose: false).and_return(true)
+        expect(Homebrew::Bundle).to receive(:system).with("mas", "get", "123", verbose: false).and_return(true)
         expect(described_class.preinstall!("foo", 123)).to be(true)
         expect(described_class.install!("foo", 123)).to be(true)
       end

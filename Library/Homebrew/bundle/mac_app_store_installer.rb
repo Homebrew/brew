@@ -51,7 +51,7 @@ module Homebrew
 
         puts "Installing #{name} app. It is not currently installed." if verbose
 
-        return false unless Bundle.system "mas", "install", id.to_s, verbose: verbose
+        return false unless Bundle.system "mas", "get", id.to_s, verbose: verbose
 
         installed_app_ids << id
         true
