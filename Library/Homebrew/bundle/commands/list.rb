@@ -11,13 +11,13 @@ module Homebrew
         sig {
           params(global: T::Boolean, file: T.nilable(String), formulae: T::Boolean, casks: T::Boolean,
                  taps: T::Boolean, mas: T::Boolean, vscode: T::Boolean,
-                 go: T::Boolean, cargo: T::Boolean, flatpak: T::Boolean).void
+                 go: T::Boolean, cargo: T::Boolean, uv: T::Boolean, flatpak: T::Boolean).void
         }
-        def self.run(global:, file:, formulae:, casks:, taps:, mas:, vscode:, go:, cargo:, flatpak:)
+        def self.run(global:, file:, formulae:, casks:, taps:, mas:, vscode:, go:, cargo:, uv:, flatpak:)
           parsed_entries = Brewfile.read(global:, file:).entries
           Homebrew::Bundle::Lister.list(
             parsed_entries,
-            formulae:, casks:, taps:, mas:, vscode:, go:, cargo:, flatpak:,
+            formulae:, casks:, taps:, mas:, vscode:, go:, cargo:, uv:, flatpak:,
           )
         end
       end

@@ -78,6 +78,16 @@ module Homebrew
       end
 
       sig { returns(T.nilable(Pathname)) }
+      def which_uv
+        @which_uv ||= which("uv", ORIGINAL_PATHS)
+      end
+
+      sig { returns(T::Boolean) }
+      def uv_installed?
+        @uv_installed ||= which_uv.present?
+      end
+
+      sig { returns(T.nilable(Pathname)) }
       def which_flatpak
         @which_flatpak ||= which("flatpak", ORIGINAL_PATHS)
       end
@@ -167,6 +177,8 @@ module Homebrew
         @go_installed = T.let(nil, T.nilable(T::Boolean))
         @which_cargo = T.let(nil, T.nilable(Pathname))
         @cargo_installed = T.let(nil, T.nilable(T::Boolean))
+        @which_uv = T.let(nil, T.nilable(Pathname))
+        @uv_installed = T.let(nil, T.nilable(T::Boolean))
         @which_flatpak = T.let(nil, T.nilable(Pathname))
         @flatpak_installed = T.let(nil, T.nilable(T::Boolean))
         @cask_installed = T.let(nil, T.nilable(T::Boolean))

@@ -690,12 +690,14 @@ _brew_bundle() {
       --no-restart
       --no-secrets
       --no-upgrade
+      --no-uv
       --no-vscode
       --quiet
       --services
       --tap
       --upgrade
       --upgrade-formulae
+      --uv
       --verbose
       --vscode
       --zap

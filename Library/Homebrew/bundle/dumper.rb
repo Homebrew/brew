@@ -25,10 +25,12 @@ module Homebrew
           vscode:     T::Boolean,
           go:         T::Boolean,
           cargo:      T::Boolean,
+          uv:         T::Boolean,
           flatpak:    T::Boolean,
         ).returns(String)
       }
-      def self.build_brewfile(describe:, no_restart:, formulae:, taps:, casks:, mas:, vscode:, go:, cargo:, flatpak:)
+      def self.build_brewfile(describe:, no_restart:, formulae:, taps:, casks:, mas:, vscode:, go:, cargo:,
+                              uv:, flatpak:)
         require "bundle/tap_dumper"
         require "bundle/formula_dumper"
         require "bundle/cask_dumper"
@@ -36,6 +38,7 @@ module Homebrew
         require "bundle/vscode_extension_dumper"
         require "bundle/go_dumper"
         require "bundle/cargo_dumper"
+        require "bundle/uv_dumper"
         require "bundle/flatpak_dumper"
 
         content = []
@@ -46,6 +49,7 @@ module Homebrew
         content << VscodeExtensionDumper.dump if vscode
         content << GoDumper.dump if go
         content << CargoDumper.dump if cargo
+        content << UvDumper.dump if uv
         content << FlatpakDumper.dump if flatpak
         "#{content.reject(&:empty?).join("\n")}\n"
       end
@@ -64,15 +68,16 @@ module Homebrew
           vscode:     T::Boolean,
           go:         T::Boolean,
           cargo:      T::Boolean,
+          uv:         T::Boolean,
           flatpak:    T::Boolean,
         ).void
       }
       def self.dump_brewfile(global:, file:, describe:, force:, no_restart:, formulae:, taps:, casks:, mas:,
-                             vscode:, go:, cargo:, flatpak:)
+                             vscode:, go:, cargo:, uv:, flatpak:)
         path = brewfile_path(global:, file:)
         can_write_to_brewfile?(path, force:)
         content = build_brewfile(
-          describe:, no_restart:, taps:, formulae:, casks:, mas:, vscode:, go:, cargo:, flatpak:,
+          describe:, no_restart:, taps:, formulae:, casks:, mas:, vscode:, go:, cargo:, uv:, flatpak:,
         )
         write_file path, content
       end

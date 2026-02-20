@@ -26,6 +26,7 @@ RSpec.describe Homebrew::Bundle::Dsl do
         vscode 'GitHub.codespaces'
         go 'github.com/charmbracelet/crush'
         cargo 'ripgrep'
+        uv 'mkdocs', specifier: '<2.0', with: ['mkdocs-material<10']
       EOS
     end
 
@@ -56,6 +57,8 @@ RSpec.describe Homebrew::Bundle::Dsl do
       expect(dsl.entries[10].name).to eql("GitHub.codespaces")
       expect(dsl.entries[11].name).to eql("github.com/charmbracelet/crush")
       expect(dsl.entries[12].name).to eql("ripgrep")
+      expect(dsl.entries[13].name).to eql("mkdocs")
+      expect(dsl.entries[13].options).to eql(specifier: "<2.0", with: ["mkdocs-material<10"])
     end
   end
 
