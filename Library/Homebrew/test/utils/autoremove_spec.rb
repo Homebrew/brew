@@ -46,7 +46,6 @@ RSpec.describe Utils::Autoremove do
     let(:keg_for_build_dep) { instance_double(Keg, tab: tab_from_keg, optlinked?: true) }
 
     before do
-      allow(InstalledDependents).to receive(:find_some_installed_dependents).and_return(nil)
       allow(formula_with_deps).to receive_messages(
         installed_runtime_formula_dependencies: [first_formula_dep, second_formula_dep],
         runtime_installed_formula_dependents:   [],
