@@ -1,8 +1,6 @@
 # typed: strict
 # frozen_string_literal: true
 
-require "installed_dependents"
-
 module Utils
   # Helper function for finding autoremovable formulae.
   #
@@ -36,10 +34,7 @@ module Utils
         formulae_to_keep = T.let([], T::Array[Formula])
         formulae.each do |formula|
           keg = formula.any_installed_keg
-          # Include current runtime dependencies to align with brew uninstall
-          formulae_to_keep += formula.installed_runtime_formula_dependencies
-
-          # Also include runtime deps from the current formula definition.
+          # Include runtime deps from the current formula definition.
           formulae_to_keep += formula.runtime_dependencies(read_from_tab: false,
                                                            undeclared:    false).filter_map do |dep|
             dep.to_formula

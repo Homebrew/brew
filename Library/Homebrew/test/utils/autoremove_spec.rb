@@ -77,7 +77,10 @@ RSpec.describe Utils::Autoremove do
                                            .and_return(formula_is_build_dep)
       allow(formula_with_deps).to receive(:runtime_dependencies)
         .with(read_from_tab: false, undeclared: false)
-        .and_return([])
+        .and_return([
+          instance_double(Dependency, to_formula: first_formula_dep),
+          instance_double(Dependency, to_formula: second_formula_dep),
+        ])
       allow(first_formula_dep).to receive(:runtime_dependencies)
         .with(read_from_tab: false, undeclared: false)
         .and_return([])
@@ -101,6 +104,8 @@ RSpec.describe Utils::Autoremove do
     context "when a formula has install dependencies" do
       it "keeps the dependency" do
         allow(tab_from_keg).to receive(:poured_from_bottle).and_return(true)
+        allow(formula_with_deps).to receive(:installed_runtime_formula_dependencies)
+          .and_return([])
         # Set up pango-like scenario: formula_with_deps depends on second_formula_dep
         dep_requirement = instance_double(Dependency)
         allow(dep_requirement).to receive(:to_formula).and_return(second_formula_dep)
