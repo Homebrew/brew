@@ -74,7 +74,7 @@ module Utils
           tab = f.any_installed_keg&.tab
           next false unless tab
 
-          tab.installed_on_request_present? ? tab.installed_on_request == false : false
+          tab.installed_on_request_present? && tab.installed_on_request == false
         end
 
         unless unused_formulae.empty?
