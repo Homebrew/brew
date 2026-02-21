@@ -30,6 +30,10 @@ module Utils
       end
 
       sig { params(formulae: T::Array[Formula]).returns(T::Array[Formula]) }
+      # Returns the subset of the given formulae that are bottled and have no
+      # other formulae depending on them, based on current formula definitions.
+      # Formulae that are runtime dependencies, or that were built from source
+      # (and their build dependencies), are filtered out and kept.
       def bottled_formulae_with_no_formula_dependents(formulae)
         formulae_to_keep = T.let([], T::Array[Formula])
         formulae.each do |formula|
