@@ -101,7 +101,7 @@ RSpec.describe Utils::Autoremove do
       end
     end
 
-    context "when a formula has install dependencies" do
+    context "when a formula has runtime dependencies according to current definition" do
       it "keeps the dependency" do
         allow(tab_from_keg).to receive(:poured_from_bottle).and_return(true)
         allow(formula_with_deps).to receive(:installed_runtime_formula_dependencies)
