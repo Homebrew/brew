@@ -49,22 +49,14 @@ begin
   ENV.setup_build_environment(formula:, testing_formula: true)
   Pathname.activate_extensions!
 
-  # tests can also return false to indicate failure
-  run_test = proc do |_|
-    # TODO: Replace proc usage with direct `formula.run_test` when removing this.
-    # Also update formula.rb 'TODO: replace `returns(BasicObject)` with `void`'
-    if formula.run_test(keep_tmp: args.keep_tmp?) == false
-      require "utils/output"
-      Utils::Output.odeprecated "`return false` in test", "`raise \"<reason for failure>\"`"
-      raise "test returned false"
-    end
-  end
   if args.debug? # --debug is interactive
-    run_test.call(nil)
+    formula.run_test(keep_tmp: args.keep_tmp?)
   else
     # HOMEBREW_TEST_TIMEOUT_SECS is private API and subject to change.
     timeout = ENV["HOMEBREW_TEST_TIMEOUT_SECS"]&.to_i || DEFAULT_TEST_TIMEOUT_SECONDS
-    Timeout.timeout(timeout, &run_test)
+    Timeout.timeout(timeout) do
+      formula.run_test(keep_tmp: args.keep_tmp?)
+    end
   end
 # Any exceptions during the test run are reported.
 rescue Exception => e # rubocop:disable Lint/RescueException

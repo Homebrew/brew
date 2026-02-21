@@ -10,6 +10,7 @@ require "formula"
 
 module Homebrew
   module DevCmd
+    # `brew pr-pull` command.
     class PrPull < AbstractCommand
       include FileUtils
 
@@ -363,12 +364,11 @@ module Homebrew
         ohai bump_subject
       end
 
-      # TODO: fix test in `test/dev-cmd/pr-pull_spec.rb` and assume `cherry_picked: false`.
       sig {
         params(original_commit: String, tap: Tap, reason: T.nilable(String), verbose: T::Boolean, resolve: T::Boolean,
                cherry_picked: T::Boolean).void
       }
-      def autosquash!(original_commit, tap:, reason: "", verbose: false, resolve: false, cherry_picked: true)
+      def autosquash!(original_commit, tap:, reason: "", verbose: false, resolve: false, cherry_picked: false)
         git_repo = tap.git_repository
 
         commits = Utils.safe_popen_read("git", "-C", tap.path, "rev-list",
