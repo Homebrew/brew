@@ -328,14 +328,16 @@ module Homebrew
         repology_latest = repositories.present? ? Repology.latest_version(repositories) : "not found"
         repology_latest_is_a_version = repology_latest.is_a?(Version)
 
-        # When blocks are absent, arch is not relevant. For consistency, we simulate the arm architecture.
+        # When blocks are absent, arch is not relevant. For consistency, we
+        # simulate the arm architecture.
         arch_options = is_cask_with_blocks ? OnSystem::ARCH_OPTIONS : [:arm]
 
         arch_options.each do |arch|
           SimulateSystem.with(arch:) do
             version_key = is_cask_with_blocks ? arch : :general
 
-            # We reload the formula/cask here to ensure we're getting the correct version for the current arch
+            # We reload the formula/cask here to ensure we're getting the
+            # correct version for the current arch
             if formula_or_cask.is_a?(Formula)
               loaded_formula_or_cask = formula_or_cask
               current_version_value = T.must(loaded_formula_or_cask.stable).version
@@ -376,8 +378,9 @@ module Homebrew
           end
         end
 
-        # If arm and intel versions are identical, as it happens with casks where only the checksums differ,
-        # we consolidate them into a single version.
+        # If arm and intel versions are identical, as it happens with casks
+        # where only the checksums differ, we consolidate them into a single
+        # version.
         if old_versions[:arm].present? && old_versions[:arm] == old_versions[:intel]
           old_versions = { general: old_versions[:arm] }
         end
@@ -402,8 +405,8 @@ module Homebrew
                                               arm:     new_versions[:arm],
                                               intel:   new_versions[:intel])
         rescue
-          # When livecheck fails, we fail gracefully. Otherwise VersionParser will
-          # raise a usage error
+          # When livecheck fails, we fail gracefully. Otherwise VersionParser
+          # will raise a usage error
           new_version = BumpVersionParser.new(general: "unable to get versions")
         end
 
