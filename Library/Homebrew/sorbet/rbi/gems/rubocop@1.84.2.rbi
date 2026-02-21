@@ -40,6 +40,7 @@ class RuboCop::CLI
   def set_options_to_pending_cops_reporter; end
   def suggest_extensions; end
   def validate_options_vs_config; end
+  def warn_if_cache_root_changed(early, desired); end
 end
 
 module RuboCop::CLI::Command
@@ -371,7 +372,7 @@ class RuboCop::ConfigLoader
     def add_loaded_features(loaded_features); end
     def add_loaded_plugins(loaded_plugins); end
     def add_missing_namespaces(path, hash); end
-    def cache_root; end
+    def cache_root(cache_root_override = T.unsafe(nil)); end
     def cache_root=(_arg0); end
     def clear_options; end
     def configuration_file_for(target_dir); end
@@ -2161,6 +2162,8 @@ RuboCop::Cop::Offense::COMPARISON_ATTRIBUTES = T.let(T.unsafe(nil), Array)
 RuboCop::Cop::Offense::NO_LOCATION = T.let(T.unsafe(nil), RuboCop::Cop::Offense::PseudoSourceRange)
 
 class RuboCop::Cop::Offense::PseudoSourceRange < ::Struct
+  def initialize(line, column, source_line, begin_pos, end_pos); end
+
   def begin_pos; end
   def begin_pos=(_); end
   def column; end
@@ -2175,6 +2178,7 @@ class RuboCop::Cop::Offense::PseudoSourceRange < ::Struct
   def line; end
   def line=(_); end
   def size; end
+  def source_buffer; end
   def source_line; end
   def source_line=(_); end
 
@@ -2945,8 +2949,6 @@ RuboCop::Cop::Style::MultilineBlockChain::MSG = T.let(T.unsafe(nil), String)
 RuboCop::Cop::Style::MultilineIfModifier::MSG = T.let(T.unsafe(nil), String)
 
 RuboCop::Cop::Style::MultilineIfThen::MSG = T.let(T.unsafe(nil), String)
-
-RuboCop::Cop::Style::MultilineIfThen::NON_MODIFIER_THEN = T.let(T.unsafe(nil), Regexp)
 
 RuboCop::Cop::Style::MultilineInPatternThen::MSG = T.let(T.unsafe(nil), String)
 

@@ -346,8 +346,8 @@ class Keg
 
     dirs = []
 
-    keg_directories = self.class.keg_link_directories.map { |d| path/d }
-                          .select(&:exist?)
+    keg_directories = self.class.keg_link_directories.map { |d| path/d }.select(&:exist?)
+
     keg_directories.each do |dir|
       dir.find do |src|
         dst = HOMEBREW_PREFIX + src.relative_path_from(path)

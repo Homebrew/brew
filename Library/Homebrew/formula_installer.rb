@@ -345,10 +345,8 @@ class FormulaInstaller
     # bottle_built_os_version for dependency resolution.
     begin
       bottle_tab_attributes = formula.bottle_tab_attributes
-      @bottle_tab_runtime_dependencies = bottle_tab_attributes
-                                         .fetch("runtime_dependencies", []).then { |deps| deps || [] }
-                                         .each_with_object({}) { |dep, h| h[dep["full_name"]] = dep }
-                                         .freeze
+      raw_deps = bottle_tab_attributes.fetch("runtime_dependencies", []).then { |deps| deps || [] }
+      @bottle_tab_runtime_dependencies = raw_deps.each_with_object({}) { |dep, h| h[dep["full_name"]] = dep }.freeze
 
       if (bottle_tag = formula.bottle_for_tag(Utils::Bottles.tag)&.tag) &&
          bottle_tag.system != :all

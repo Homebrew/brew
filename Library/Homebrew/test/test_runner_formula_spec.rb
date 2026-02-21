@@ -7,9 +7,9 @@ RSpec.describe TestRunnerFormula do
   let(:testball) { Testball.new }
   let(:xcode_helper) { setup_test_runner_formula("xcode-helper", [:macos]) }
   let(:linux_kernel_requirer) { setup_test_runner_formula("linux-kernel-requirer", [:linux]) }
-  let(:old_non_portable_software) { setup_test_runner_formula("old-non-portable-software", [arch: :x86_64]) }
-  let(:fancy_new_software) { setup_test_runner_formula("fancy-new-software", [arch: :arm64]) }
-  let(:needs_modern_compiler) { setup_test_runner_formula("needs-modern-compiler", [macos: :ventura]) }
+  let(:old_non_portable_software) { setup_test_runner_formula("old-non-portable-software", [{ arch: :x86_64 }]) }
+  let(:fancy_new_software) { setup_test_runner_formula("fancy-new-software", [{ arch: :arm64 }]) }
+  let(:needs_modern_compiler) { setup_test_runner_formula("needs-modern-compiler", [{ macos: :ventura }]) }
 
   describe "#initialize" do
     it "enables the Formulary factory cache" do

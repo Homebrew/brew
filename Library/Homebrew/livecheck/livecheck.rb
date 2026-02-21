@@ -170,11 +170,8 @@ module Homebrew
 
       ambiguous_names = []
       unless full_name
-        ambiguous_names =
-          (formulae_and_casks_to_check - ambiguous_casks).group_by { |item| package_or_resource_name(item) }
-          .values
-          .select { |items| items.length > 1 }
-          .flatten
+        grouped = (formulae_and_casks_to_check - ambiguous_casks).group_by { |item| package_or_resource_name(item) }
+        ambiguous_names = grouped.values.select { |items| items.length > 1 }.flatten
       end
 
       has_a_newer_upstream_version = T.let(false, T::Boolean)
