@@ -99,11 +99,15 @@ RSpec.describe Utils::Autoremove do
       end
     end
 
-    context "when a formula has installed dependents" do
-      it "filters out the formula" do
+    context "when a formula has install dependencies" do
+      it "keeps the dependency" do
         allow(tab_from_keg).to receive(:poured_from_bottle).and_return(true)
-        allow(InstalledDependents).to receive(:find_some_installed_dependents)
-          .and_return([[keg_for_second_dep], ["zero"]])
+        # Set up pango-like scenario: formula_with_deps depends on second_formula_dep
+        dep_requirement = instance_double(Dependency)
+        allow(dep_requirement).to receive(:to_formula).and_return(second_formula_dep)
+        allow(formula_with_deps).to receive(:runtime_dependencies)
+          .with(read_from_tab: false, undeclared: false)
+          .and_return([dep_requirement])
 
         expect(described_class.send(:bottled_formulae_with_no_formula_dependents, formulae))
           .not_to include(second_formula_dep)

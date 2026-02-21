@@ -34,29 +34,29 @@ module Utils
       sig { params(formulae: T::Array[Formula]).returns(T::Array[Formula]) }
       def bottled_formulae_with_no_formula_dependents(formulae)
         formulae_to_keep = T.let([], T::Array[Formula])
-        kegs = formulae.filter_map(&:any_installed_keg)
-        required_kegs = InstalledDependents.find_some_installed_dependents(kegs.select(&:optlinked?))&.first || []
         formulae.each do |formula|
           keg = formula.any_installed_keg
-          formulae_to_keep << formula if keg && required_kegs.include?(keg)
+          # Include current runtime dependencies to align with brew uninstall
           formulae_to_keep += formula.installed_runtime_formula_dependencies
 
-          formula.runtime_dependencies(read_from_tab: false, undeclared: false).each do |dep|
-            formulae_to_keep << dep.to_formula
+          formulae_to_keep += formula.runtime_dependencies(read_from_tab: false,
+                                                           undeclared:    false).filter_map do |dep|
+            dep.to_formula
           rescue FormulaUnavailableError
-            # do nothing
+            nil
           end
 
           tab = keg&.tab
           next unless tab
           next if tab.poured_from_bottle
 
+          # Keep non-bottled formulae and their build dependencies
           formulae_to_keep << formula
 
-          formula.deps.select(&:build?).each do |dep|
-            formulae_to_keep << dep.to_formula
+          formulae_to_keep += formula.deps.select(&:build?).filter_map do |dep|
+            dep.to_formula
           rescue FormulaUnavailableError
-            # do nothing
+            nil
           end
         end
         names_to_keep = formulae_to_keep.to_set(&:name)
