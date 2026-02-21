@@ -1,8 +1,6 @@
 # typed: strict
 # frozen_string_literal: true
 
-require "installed_dependents"
-
 module Utils
   # Helper function for finding autoremovable formulae.
   #
