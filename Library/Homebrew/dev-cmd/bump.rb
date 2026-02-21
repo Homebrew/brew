@@ -410,13 +410,35 @@ module Homebrew
           new_version = BumpVersionParser.new(general: "unable to get versions")
         end
 
+        comparison_pairs = []
+        if !multiple_versions[:current] && !multiple_versions[:new]
+          comparison_pairs << [:general, :general]
+        elsif multiple_versions[:current] && multiple_versions[:new]
+          comparison_pairs << [:arm, :arm]
+          comparison_pairs << [:intel, :intel]
+        elsif multiple_versions[:current]
+          comparison_pairs << [:arm, :general]
+          comparison_pairs << [:intel, :general]
+        elsif multiple_versions[:new]
+          comparison_pairs << [:general, :arm]
+          comparison_pairs << [:general, :intel]
+        end
+
         newer_than_upstream = {}
-        BumpVersionParser::VERSION_SYMBOLS.each do |version_type|
-          new_version_value = new_version.send(version_type)
+        comparison_pairs.each do |current_version_type, new_version_type|
+          current_version_value = current_version.send(current_version_type)
+          next unless current_version_value.is_a?(Version)
+
+          new_version_value = new_version.send(new_version_type)
           next unless new_version_value.is_a?(Version)
 
+          version_type = if !multiple_versions[:current] && multiple_versions[:new]
+            new_version_type
+          else
+            current_version_type
+          end
+
           newer_than_upstream[version_type] =
-            (current_version_value = current_version.send(version_type)).is_a?(Version) &&
             (Livecheck::LivecheckVersion.create(formula_or_cask, current_version_value) >
               Livecheck::LivecheckVersion.create(formula_or_cask, new_version_value))
         end
@@ -502,7 +524,7 @@ module Homebrew
             "#{" (deprecated)" if deprecated[:intel]}"
         else
           "#{current_version.general}" \
-            "#{NEWER_THAN_UPSTREAM_MSG if newer_than_upstream[:general]}" \
+            "#{NEWER_THAN_UPSTREAM_MSG if newer_than_upstream[:general] || newer_than_upstream[:arm]}" \
             "#{" (deprecated)" if deprecated[:general]}"
         end
 
