@@ -104,9 +104,12 @@ module Cask
       @root ||= T.let(Pathname.new(info.fetch("volume")).join(info.fetch("install-location")), T.nilable(Pathname))
     end
 
-    sig { returns(T.untyped) }
+    sig { returns(T::Hash[String, T.untyped]) }
     def info
-      @info ||= T.let(@command.run!("/usr/sbin/pkgutil", args: ["--pkg-info-plist", package_id]).plist, T.untyped)
+      @info ||= T.let(
+        @command.run!("/usr/sbin/pkgutil", args: ["--pkg-info-plist", package_id]).plist,
+        T.nilable(T::Hash[String, T.untyped]),
+      )
     end
 
     private

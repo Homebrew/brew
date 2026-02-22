@@ -1,4 +1,4 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
 
 require "cask/artifact/abstract_artifact"
@@ -8,12 +8,13 @@ module Cask
   module Artifact
     # Artifact corresponding to the `installer` stanza.
     class Installer < AbstractArtifact
-      VALID_KEYS = Set.new([
-        :manual,
-        :script,
-      ]).freeze
+      VALID_KEYS = T.let(
+        Set.new([:manual, :script]).freeze,
+        T::Set[Symbol],
+      )
 
-      def install_phase(command: nil, **_)
+      sig { params(command: T.class_of(SystemCommand), _options: T.anything).void }
+      def install_phase(command:, **_options)
         if manual_install
           puts <<~EOS
             Cask #{cask} only provides a manual installer. To run it and complete the installation:
@@ -35,6 +36,7 @@ module Cask
         end
       end
 
+      sig { params(cask: Cask, args: DirectivesType).returns(Installer) }
       def self.from_args(cask, **args)
         raise CaskInvalidError.new(cask, "'installer' stanza requires an argument.") if args.empty?
 
@@ -59,18 +61,23 @@ module Cask
         new(cask, **args)
       end
 
-      attr_reader :path, :args
+      sig { returns(Pathname) }
+      attr_reader :path
+
+      sig { returns(T::Hash[Symbol, DirectivesType]) }
+      attr_reader :args
 
       sig { returns(T::Boolean) }
       attr_reader :manual_install
 
+      sig { params(cask: Cask, args: DirectivesType).void }
       def initialize(cask, **args)
         super
 
-        if args.key?(:manual)
-          @path = Pathname(args[:manual])
-          @args = []
-          @manual_install = true
+        if (manual = T.cast(args[:manual], T.nilable(String)))
+          @path = T.let(Pathname(manual), Pathname)
+          @args = T.let({}, T::Hash[Symbol, DirectivesType])
+          @manual_install = T.let(true, T::Boolean)
         else
           path, @args = self.class.read_script_arguments(
             args[:script], self.class.dsl_key.to_s, { must_succeed: true, sudo: false }, print_stdout: true
@@ -85,10 +92,9 @@ module Cask
       sig { override.returns(String) }
       def summarize = path.to_s
 
+      sig { returns(T::Hash[Symbol, T.anything]) }
       def to_h
-        { path: }.tap do |h|
-          h[:args] = args unless manual_install
-        end
+        manual_install ? { path: } : { path:, args: }
       end
     end
   end
