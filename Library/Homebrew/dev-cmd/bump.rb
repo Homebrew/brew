@@ -9,6 +9,7 @@ require "utils/repology"
 module Homebrew
   module DevCmd
     class Bump < AbstractCommand
+      LIVECHECK_MESSAGE_REGEX = /^error:|skipped|unable to get(?: throttled)? versions/i
       NEWER_THAN_UPSTREAM_MSG = " (newer than upstream)"
 
       class VersionBumpInfo < T::Struct
@@ -388,14 +389,6 @@ module Homebrew
           new_versions = { general: new_versions[:arm] }
         end
 
-        multiple_versions = {}
-        multiple_versions[:current] = old_versions.values_at(:arm, :intel).all?(&:present?)
-        multiple_versions[:new] = new_versions.values_at(:arm, :intel).all?(&:present?)
-
-        if !multiple_versions[:current] && deprecated[:general].nil?
-          deprecated = { general: deprecated[:arm] || deprecated[:intel] || false }
-        end
-
         current_version = BumpVersionParser.new(general: old_versions[:general],
                                                 arm:     old_versions[:arm],
                                                 intel:   old_versions[:intel])
@@ -410,37 +403,10 @@ module Homebrew
           new_version = BumpVersionParser.new(general: "unable to get versions")
         end
 
-        comparison_pairs = []
-        if !multiple_versions[:current] && !multiple_versions[:new]
-          comparison_pairs << [:general, :general]
-        elsif multiple_versions[:current] && multiple_versions[:new]
-          comparison_pairs << [:arm, :arm]
-          comparison_pairs << [:intel, :intel]
-        elsif multiple_versions[:current]
-          comparison_pairs << [:arm, :general]
-          comparison_pairs << [:intel, :general]
-        elsif multiple_versions[:new]
-          comparison_pairs << [:general, :arm]
-          comparison_pairs << [:general, :intel]
-        end
-
-        newer_than_upstream = {}
-        comparison_pairs.each do |current_version_type, new_version_type|
-          current_version_value = current_version.send(current_version_type)
-          next unless current_version_value.is_a?(Version)
-
-          new_version_value = new_version.send(new_version_type)
-          next unless new_version_value.is_a?(Version)
-
-          version_type = if !multiple_versions[:current] && multiple_versions[:new]
-            new_version_type
-          else
-            current_version_type
-          end
-
-          newer_than_upstream[version_type] =
-            (Livecheck::LivecheckVersion.create(formula_or_cask, current_version_value) >
-              Livecheck::LivecheckVersion.create(formula_or_cask, new_version_value))
+        compare_versions(current_version, new_version, formula_or_cask) =>
+          { multiple_versions:, newer_than_upstream: }
+        if !multiple_versions[:current] && deprecated[:general].nil?
+          deprecated = { general: deprecated[:arm] || deprecated[:intel] || false }
         end
 
         if !args.no_pull_requests? &&
@@ -524,7 +490,7 @@ module Homebrew
             "#{" (deprecated)" if deprecated[:intel]}"
         else
           "#{current_version.general}" \
-            "#{NEWER_THAN_UPSTREAM_MSG if newer_than_upstream[:general] || newer_than_upstream[:arm]}" \
+            "#{NEWER_THAN_UPSTREAM_MSG if newer_than_upstream[:general]}" \
             "#{" (deprecated)" if deprecated[:general]}"
         end
 
@@ -619,6 +585,81 @@ module Homebrew
 
         result = system HOMEBREW_BREW_FILE, *bump_pr_args
         Homebrew.failed = true unless result
+      end
+
+      sig {
+        params(
+          current_version: BumpVersionParser,
+          new_version:     BumpVersionParser,
+          formula_or_cask: T.any(Formula, Cask::Cask),
+        ).returns(T::Hash[Symbol, T::Hash[Symbol, T::Boolean]])
+      }
+      def compare_versions(current_version, new_version, formula_or_cask)
+        current_versions = {}
+        new_versions = {}
+        BumpVersionParser::VERSION_SYMBOLS.each do |type|
+          current_version_value = current_version.send(type)
+          if current_version_value
+            current_versions[type] = Livecheck::LivecheckVersion.create(formula_or_cask, current_version_value)
+          end
+
+          new_version_value = new_version.send(type)
+          if new_version_value.is_a?(String) &&
+             new_version_value.match?(LIVECHECK_MESSAGE_REGEX)
+            # Store a string, so we can easily tell when a value is a message
+            # rather than a version
+            new_versions[type] = new_version_value.to_s
+          elsif new_version_value
+            new_versions[type] = Livecheck::LivecheckVersion.create(formula_or_cask, new_version_value)
+          end
+        end
+
+        multiple_versions = {
+          current: current_versions.length > 1,
+          new:     new_versions.length > 1,
+        }
+
+        current_version_types = current_versions.keys
+        new_version_types = new_versions.keys
+        comparison_pairs = {}
+
+        # Compare the same version types when shared by current/new versions
+        (current_version_types & new_version_types).each do |type|
+          comparison_pairs[type] = [current_versions[type], new_versions[type]]
+        end
+
+        # Compare current versions to `new_version.general` when the current
+        # version differs by arch but the new version does not
+        if multiple_versions[:current] && new_versions.key?(:general)
+          (current_version_types - new_version_types).each do |type|
+            comparison_pairs[type] ||= [current_versions[type], new_versions[:general]]
+          end
+        end
+
+        # Compare `current_version.general` to the highest new version when the
+        # current version does not differ by arch but the new version does
+        if !comparison_pairs.key?(:general) &&
+           current_versions.key?(:general) &&
+           multiple_versions[:new]
+          highest_new_version = (new_version_types - current_version_types).filter_map do |type|
+            version = new_versions[type]
+            next unless version.is_a?(Livecheck::LivecheckVersion)
+
+            version
+          end.max
+          comparison_pairs[:general] = [current_versions[:general], highest_new_version]
+        end
+
+        newer_than_upstream = {}
+        comparison_pairs.each do |version_type, (current_value, new_value)|
+          newer_than_upstream[version_type] = if new_value.is_a?(Livecheck::LivecheckVersion)
+            (current_value > new_value)
+          else
+            false
+          end
+        end
+
+        { multiple_versions:, newer_than_upstream: }
       end
 
       sig {
