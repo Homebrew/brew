@@ -9,15 +9,17 @@ require "utils/repology"
 module Homebrew
   module DevCmd
     class Bump < AbstractCommand
+      LIVECHECK_MESSAGE_REGEX = /^error:|skipped|unable to get(?: throttled)? versions/i
       NEWER_THAN_UPSTREAM_MSG = " (newer than upstream)"
 
       class VersionBumpInfo < T::Struct
         const :type, Symbol
-        const :multiple_versions, T::Boolean
+        const :deprecated, T::Hash[Symbol, T::Boolean], default: {}
+        const :multiple_versions, T::Hash[Symbol, T::Boolean], default: {}
         const :version_name, String
         const :current_version, BumpVersionParser
-        const :repology_latest, T.any(String, Version)
         const :new_version, BumpVersionParser
+        const :repology_latest, T.any(String, Version)
         const :newer_than_upstream, T::Hash[Symbol, T::Boolean], default: {}
         const :duplicate_pull_requests, T.nilable(T.any(T::Array[String], String))
         const :maybe_duplicate_pull_requests, T.nilable(T.any(T::Array[String], String))
@@ -320,20 +322,23 @@ module Homebrew
           [:cask, "cask version:   "]
         end
 
-        old_versions = {}
+        deprecated = {}
+        current_versions = {}
         new_versions = {}
 
         repology_latest = repositories.present? ? Repology.latest_version(repositories) : "not found"
         repology_latest_is_a_version = repology_latest.is_a?(Version)
 
-        # When blocks are absent, arch is not relevant. For consistency, we simulate the arm architecture.
+        # When blocks are absent, arch is not relevant. For consistency, we
+        # simulate the arm architecture.
         arch_options = is_cask_with_blocks ? OnSystem::ARCH_OPTIONS : [:arm]
 
         arch_options.each do |arch|
           SimulateSystem.with(arch:) do
             version_key = is_cask_with_blocks ? arch : :general
 
-            # We reload the formula/cask here to ensure we're getting the correct version for the current arch
+            # We reload the formula/cask here to ensure we're getting the
+            # correct version for the current arch
             if formula_or_cask.is_a?(Formula)
               loaded_formula_or_cask = formula_or_cask
               current_version_value = T.must(loaded_formula_or_cask.stable).version
@@ -341,6 +346,8 @@ module Homebrew
               loaded_formula_or_cask = Cask::CaskLoader.load(formula_or_cask.sourcefile_path)
               current_version_value = Version.new(loaded_formula_or_cask.version)
             end
+
+            deprecated[version_key] = loaded_formula_or_cask.deprecated?
             formula_or_cask_has_livecheck = loaded_formula_or_cask.livecheck_defined?
 
             livecheck_latest = livecheck_result(loaded_formula_or_cask)
@@ -367,46 +374,39 @@ module Homebrew
             new_version_value ||= repology_latest if repology_latest_is_a_version && !formula_or_cask_has_livecheck
 
             # Store old and new versions
-            old_versions[version_key] = current_version_value
+            current_versions[version_key] = current_version_value
             new_versions[version_key] = new_version_value
           end
         end
 
-        # If arm and intel versions are identical, as it happens with casks where only the checksums differ,
-        # we consolidate them into a single version.
-        if old_versions[:arm].present? && old_versions[:arm] == old_versions[:intel]
-          old_versions = { general: old_versions[:arm] }
+        # If arm and intel versions are identical, as it happens with casks
+        # where only the checksums differ, we consolidate them into a single
+        # version.
+        if current_versions[:arm].present? && current_versions[:arm] == current_versions[:intel]
+          current_versions = { general: current_versions[:arm] }
         end
         if new_versions[:arm].present? && new_versions[:arm] == new_versions[:intel]
           new_versions = { general: new_versions[:arm] }
         end
 
-        multiple_versions = old_versions.values_at(:arm, :intel).all?(&:present?) ||
-                            new_versions.values_at(:arm, :intel).all?(&:present?)
-
-        current_version = BumpVersionParser.new(general: old_versions[:general],
-                                                arm:     old_versions[:arm],
-                                                intel:   old_versions[:intel])
+        current_version = BumpVersionParser.new(general: current_versions[:general],
+                                                arm:     current_versions[:arm],
+                                                intel:   current_versions[:intel])
 
         begin
           new_version = BumpVersionParser.new(general: new_versions[:general],
                                               arm:     new_versions[:arm],
                                               intel:   new_versions[:intel])
         rescue
-          # When livecheck fails, we fail gracefully. Otherwise VersionParser will
-          # raise a usage error
+          # When livecheck fails, we fail gracefully. Otherwise VersionParser
+          # will raise a usage error
           new_version = BumpVersionParser.new(general: "unable to get versions")
         end
 
-        newer_than_upstream = {}
-        BumpVersionParser::VERSION_SYMBOLS.each do |version_type|
-          new_version_value = new_version.send(version_type)
-          next unless new_version_value.is_a?(Version)
-
-          newer_than_upstream[version_type] =
-            (current_version_value = current_version.send(version_type)).is_a?(Version) &&
-            (Livecheck::LivecheckVersion.create(formula_or_cask, current_version_value) >
-              Livecheck::LivecheckVersion.create(formula_or_cask, new_version_value))
+        compare_versions(current_version, new_version, formula_or_cask) =>
+          { multiple_versions:, newer_than_upstream: }
+        if !multiple_versions[:current] && deprecated[:general].nil?
+          deprecated = { general: deprecated[:arm] || deprecated[:intel] || false }
         end
 
         if !args.no_pull_requests? &&
@@ -416,7 +416,7 @@ module Homebrew
            !newer_than_upstream.all? { |_k, v| v == true }
           # We use the ARM version for the pull request version. This is
           # consistent with the behavior of bump-cask-pr.
-          pull_request_version = if multiple_versions
+          pull_request_version = if multiple_versions[:new]
             new_version.arm.to_s
           else
             new_version.general.to_s
@@ -435,11 +435,12 @@ module Homebrew
 
         VersionBumpInfo.new(
           type:,
+          deprecated:,
           multiple_versions:,
           version_name:,
           current_version:,
-          repology_latest:,
           new_version:,
+          repology_latest:,
           newer_than_upstream:,
           duplicate_pull_requests:,
           maybe_duplicate_pull_requests:,
@@ -459,12 +460,17 @@ module Homebrew
                                                  repositories:,
                                                  name:)
 
+        deprecated = version_info.deprecated
+        multiple_versions = version_info.multiple_versions
         current_version = version_info.current_version
         new_version = version_info.new_version
         repology_latest = version_info.repology_latest
+        newer_than_upstream = version_info.newer_than_upstream
+        duplicate_pull_requests = version_info.duplicate_pull_requests
+        maybe_duplicate_pull_requests = version_info.maybe_duplicate_pull_requests
 
         versions_equal = (new_version == current_version)
-        all_newer_than_upstream = version_info.newer_than_upstream.all? { |_k, v| v == true }
+        all_newer_than_upstream = newer_than_upstream.all? { |_k, v| v == true }
 
         title_name = ambiguous_cask ? "#{name} (cask)" : name
         title = if (repology_latest == current_version.general || !repology_latest.is_a?(Version)) && versions_equal
@@ -474,31 +480,30 @@ module Homebrew
         end
 
         # Conditionally format output based on type of formula_or_cask
-        current_versions = if version_info.multiple_versions
-          "arm:   #{current_version.arm}" \
-            "#{NEWER_THAN_UPSTREAM_MSG if version_info.newer_than_upstream[:arm]}" \
-            "\n                          intel: #{current_version.intel}" \
-            "#{NEWER_THAN_UPSTREAM_MSG if version_info.newer_than_upstream[:intel]}"
+        current_versions = if multiple_versions[:current]
+          "arm:   #{current_version.arm || current_version.general}" \
+            "#{NEWER_THAN_UPSTREAM_MSG if newer_than_upstream[:arm]}" \
+            "#{" (deprecated)" if deprecated[:arm]}" \
+            "\n                          " \
+            "intel: #{current_version.intel || current_version.general}" \
+            "#{NEWER_THAN_UPSTREAM_MSG if newer_than_upstream[:intel]}" \
+            "#{" (deprecated)" if deprecated[:intel]}"
         else
-          newer_than_upstream_general = version_info.newer_than_upstream[:general]
-          "#{current_version.general}#{NEWER_THAN_UPSTREAM_MSG if newer_than_upstream_general}"
+          "#{current_version.general}" \
+            "#{NEWER_THAN_UPSTREAM_MSG if newer_than_upstream[:general]}" \
+            "#{" (deprecated)" if deprecated[:general]}"
         end
-        current_versions << " (deprecated)" if formula_or_cask.deprecated?
 
-        new_versions = if version_info.multiple_versions && new_version.arm && new_version.intel
+        new_versions = if multiple_versions[:new] && new_version.arm && new_version.intel
           "arm:   #{new_version.arm}
                           intel: #{new_version.intel}"
         else
           new_version.general
         end
 
-        version_label = version_info.version_name
-        duplicate_pull_requests = version_info.duplicate_pull_requests
-        maybe_duplicate_pull_requests = version_info.maybe_duplicate_pull_requests
-
         ohai title
         puts <<~EOS
-          Current #{version_label}  #{current_versions}
+          Current #{version_info.version_name}  #{current_versions}
           Latest livecheck version: #{new_versions}#{" (throttled)" if formula_or_cask.livecheck.throttle}
         EOS
         puts <<~EOS unless skip_repology?(formula_or_cask)
@@ -552,13 +557,13 @@ module Homebrew
           puts "#{title_name} was not bumped to the Repology version because it has a `livecheck` block."
         end
         if new_version.blank? || versions_equal ||
-           (!new_version.general.is_a?(Version) && !version_info.multiple_versions)
+           (!new_version.general.is_a?(Version) && !multiple_versions[:new])
           return
         end
 
         return if duplicate_pull_requests.present?
 
-        version_args = if version_info.multiple_versions
+        version_args = if multiple_versions[:new]
           %W[--version-arm=#{new_version.arm} --version-intel=#{new_version.intel}]
         else
           "--version=#{new_version.general}"
@@ -580,6 +585,81 @@ module Homebrew
 
         result = system HOMEBREW_BREW_FILE, *bump_pr_args
         Homebrew.failed = true unless result
+      end
+
+      sig {
+        params(
+          current_version: BumpVersionParser,
+          new_version:     BumpVersionParser,
+          formula_or_cask: T.any(Formula, Cask::Cask),
+        ).returns(T::Hash[Symbol, T::Hash[Symbol, T::Boolean]])
+      }
+      def compare_versions(current_version, new_version, formula_or_cask)
+        current_versions = {}
+        new_versions = {}
+        BumpVersionParser::VERSION_SYMBOLS.each do |type|
+          current_version_value = current_version.send(type)
+          if current_version_value
+            current_versions[type] = Livecheck::LivecheckVersion.create(formula_or_cask, current_version_value)
+          end
+
+          new_version_value = new_version.send(type)
+          if new_version_value.is_a?(String) &&
+             new_version_value.match?(LIVECHECK_MESSAGE_REGEX)
+            # Store a string, so we can easily tell when a value is a message
+            # rather than a version
+            new_versions[type] = new_version_value.to_s
+          elsif new_version_value
+            new_versions[type] = Livecheck::LivecheckVersion.create(formula_or_cask, new_version_value)
+          end
+        end
+
+        multiple_versions = {
+          current: current_versions.length > 1,
+          new:     new_versions.length > 1,
+        }
+
+        current_version_types = current_versions.keys
+        new_version_types = new_versions.keys
+        comparison_pairs = {}
+
+        # Compare the same version types when shared by current/new versions
+        (current_version_types & new_version_types).each do |type|
+          comparison_pairs[type] = [current_versions[type], new_versions[type]]
+        end
+
+        # Compare current versions to `new_version.general` when the current
+        # version differs by arch but the new version does not
+        if multiple_versions[:current] && new_versions.key?(:general)
+          (current_version_types - new_version_types).each do |type|
+            comparison_pairs[type] ||= [current_versions[type], new_versions[:general]]
+          end
+        end
+
+        # Compare `current_version.general` to the highest new version when the
+        # current version does not differ by arch but the new version does
+        if !comparison_pairs.key?(:general) &&
+           current_versions.key?(:general) &&
+           multiple_versions[:new]
+          highest_new_version = (new_version_types - current_version_types).filter_map do |type|
+            version = new_versions[type]
+            next unless version.is_a?(Livecheck::LivecheckVersion)
+
+            version
+          end.max
+          comparison_pairs[:general] = [current_versions[:general], highest_new_version]
+        end
+
+        newer_than_upstream = {}
+        comparison_pairs.each do |version_type, (current_value, new_value)|
+          newer_than_upstream[version_type] = if new_value.is_a?(Livecheck::LivecheckVersion)
+            (current_value > new_value)
+          else
+            false
+          end
+        end
+
+        { multiple_versions:, newer_than_upstream: }
       end
 
       sig {
