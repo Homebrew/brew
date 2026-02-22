@@ -190,36 +190,15 @@ end
 # storage mechanism.
 #
 class CacheStore
+  extend T::Helpers
+
+  abstract!
+
   # @param  [CacheStoreDatabase] database
   # @return [nil]
   sig { params(database: CacheStoreDatabase).void }
   def initialize(database)
     @database = T.let(database, CacheStoreDatabase)
-  end
-
-  # Inserts new values or updates existing cached values to persistent storage.
-  #
-  # @abstract
-  sig { params(args: T.anything).void }
-  def update!(*args)
-    raise NotImplementedError
-  end
-
-  # Fetches cached values in persistent storage according to the type of data
-  # stored.
-  #
-  # @abstract
-  sig { params(args: T.anything).returns(T.untyped) }
-  def fetch(*args)
-    raise NotImplementedError
-  end
-
-  # Deletes data from the cache based on a condition defined in a concrete class.
-  #
-  # @abstract
-  sig { params(args: T.anything).void }
-  def delete!(*args)
-    raise NotImplementedError
   end
 
   protected

@@ -1,4 +1,4 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
 
 require "cache_store"
@@ -11,14 +11,16 @@ class LinkageCacheStore < CacheStore
   # @param keg_path [String]
   # @param database [CacheStoreDatabase]
   # @return [nil]
+  sig { params(keg_path: String, database: CacheStoreDatabase).void }
   def initialize(keg_path, database)
-    @keg_path = keg_path
+    @keg_path = T.let(keg_path, String)
     super(database)
   end
 
   # Returns `true` if the database has any value for the current `keg_path`.
   #
   # @return [Boolean]
+  sig { returns(T::Boolean) }
   def keg_exists?
     !database.get(@keg_path).nil?
   end
@@ -28,6 +30,7 @@ class LinkageCacheStore < CacheStore
   #
   # @param hash_values [Hash] hash containing KVPs of { :type => Hash }
   # @return [nil]
+  sig { params(hash_values: T::Hash[Symbol, T.untyped]).void }
   def update!(hash_values)
     hash_values.each_key do |type|
       next if HASH_LINKAGE_TYPES.include?(type)
@@ -43,6 +46,7 @@ class LinkageCacheStore < CacheStore
   # @param type [Symbol] the type to fetch from the {LinkageCacheStore}
   # @raise  [TypeError] error if the type is not in `HASH_LINKAGE_TYPES`
   # @return [Hash]
+  sig { params(type: Symbol).returns(T.untyped) }
   def fetch(type)
     unless HASH_LINKAGE_TYPES.include?(type)
       raise TypeError, <<~EOS
@@ -58,6 +62,7 @@ class LinkageCacheStore < CacheStore
   # Delete the keg from the {LinkageCacheStore}.
   #
   # @return [nil]
+  sig { void }
   def delete!
     database.delete(@keg_path)
   end
@@ -69,6 +74,7 @@ class LinkageCacheStore < CacheStore
 
   # @param type [Symbol]
   # @return [Hash]
+  sig { params(type: Symbol).returns(T.untyped) }
   def fetch_hash_values(type)
     keg_cache = database.get(@keg_path)
     return {} unless keg_cache
