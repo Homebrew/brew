@@ -323,7 +323,7 @@ module Homebrew
         end
 
         deprecated = {}
-        old_versions = {}
+        current_versions = {}
         new_versions = {}
 
         repology_latest = repositories.present? ? Repology.latest_version(repositories) : "not found"
@@ -374,7 +374,7 @@ module Homebrew
             new_version_value ||= repology_latest if repology_latest_is_a_version && !formula_or_cask_has_livecheck
 
             # Store old and new versions
-            old_versions[version_key] = current_version_value
+            current_versions[version_key] = current_version_value
             new_versions[version_key] = new_version_value
           end
         end
@@ -382,16 +382,16 @@ module Homebrew
         # If arm and intel versions are identical, as it happens with casks
         # where only the checksums differ, we consolidate them into a single
         # version.
-        if old_versions[:arm].present? && old_versions[:arm] == old_versions[:intel]
-          old_versions = { general: old_versions[:arm] }
+        if current_versions[:arm].present? && current_versions[:arm] == current_versions[:intel]
+          current_versions = { general: current_versions[:arm] }
         end
         if new_versions[:arm].present? && new_versions[:arm] == new_versions[:intel]
           new_versions = { general: new_versions[:arm] }
         end
 
-        current_version = BumpVersionParser.new(general: old_versions[:general],
-                                                arm:     old_versions[:arm],
-                                                intel:   old_versions[:intel])
+        current_version = BumpVersionParser.new(general: current_versions[:general],
+                                                arm:     current_versions[:arm],
+                                                intel:   current_versions[:intel])
 
         begin
           new_version = BumpVersionParser.new(general: new_versions[:general],
