@@ -4523,6 +4523,12 @@ class Formula
         raise ArgumentError, "'because' argument should use valid symbol or a string!"
       end
 
+      # TODO: deprecate `no_autobump! because: :requires_manual_review` once we have no formulae in core
+      # that use this stanza. Do not forget to remove related audit from `utils/shared_audits.rb`
+      # and key from `autobump_constants.rb`!
+      #
+      # odeprecated "no_autobump! because: :requires_manual_review" if because == :requires_manual_review
+
       @no_autobump_defined = T.let(true, T.nilable(T::Boolean))
       @no_autobump_message = T.let(because, T.nilable(T.any(String, Symbol)))
       @autobump = T.let(false, T.nilable(T::Boolean))
