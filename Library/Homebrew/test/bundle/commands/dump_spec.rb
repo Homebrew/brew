@@ -7,11 +7,12 @@ require "bundle/formula_dumper"
 require "bundle/tap_dumper"
 require "bundle/vscode_extension_dumper"
 require "bundle/cargo_dumper"
+require "bundle/uv_dumper"
 
 RSpec.describe Homebrew::Bundle::Commands::Dump do
   subject(:dump) do
     described_class.run(global:, file: nil, describe: false, force:, no_restart: false, taps: true, formulae: true,
-                        casks: true, mas: true, vscode: true, go: true, cargo: true, flatpak: false)
+                        casks: true, mas: true, vscode: true, go: true, cargo: true, uv: true, flatpak: false)
   end
 
   let(:force) { false }
@@ -23,6 +24,7 @@ RSpec.describe Homebrew::Bundle::Commands::Dump do
     Homebrew::Bundle::TapDumper.reset!
     Homebrew::Bundle::VscodeExtensionDumper.reset!
     allow(Homebrew::Bundle::CargoDumper).to receive(:dump).and_return("")
+    allow(Homebrew::Bundle::UvDumper).to receive(:dump).and_return("")
     allow(Formulary).to receive(:factory).and_call_original
     allow(Formulary).to receive(:factory).with("rust").and_return(
       instance_double(Formula, opt_bin: Pathname.new("/tmp/rust/bin")),

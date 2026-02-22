@@ -87,6 +87,9 @@ class Homebrew::Cmd::Bundle::Args < Homebrew::CLI::Args
   def no_upgrade?; end
 
   sig { returns(T::Boolean) }
+  def no_uv?; end
+
+  sig { returns(T::Boolean) }
   def no_vscode?; end
 
   sig { returns(T::Boolean) }
@@ -106,6 +109,9 @@ class Homebrew::Cmd::Bundle::Args < Homebrew::CLI::Args
 
   sig { returns(T.nilable(String)) }
   def upgrade_formulae; end
+
+  sig { returns(T::Boolean) }
+  def uv?; end
 
   sig { returns(T::Boolean) }
   def vscode?; end

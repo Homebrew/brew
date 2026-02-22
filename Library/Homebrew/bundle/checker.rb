@@ -67,6 +67,7 @@ module Homebrew
         formulae_to_start:         "Services",
         go_packages_to_install:    "Go Packages",
         cargo_packages_to_install: "Cargo Packages",
+        uv_packages_to_install:    "uv Tools",
         flatpaks_to_install:       "Flatpaks",
       }.freeze
 
@@ -159,6 +160,14 @@ module Homebrew
       def self.flatpaks_to_install(exit_on_first_error: false, no_upgrade: false, verbose: false)
         require "bundle/flatpak_checker"
         Homebrew::Bundle::Checker::FlatpakChecker.new.find_actionable(
+          @dsl.entries,
+          exit_on_first_error:, no_upgrade:, verbose:,
+        )
+      end
+
+      def self.uv_packages_to_install(exit_on_first_error: false, no_upgrade: false, verbose: false)
+        require "bundle/uv_checker"
+        Homebrew::Bundle::Checker::UvChecker.new.find_actionable(
           @dsl.entries,
           exit_on_first_error:, no_upgrade:, verbose:,
         )

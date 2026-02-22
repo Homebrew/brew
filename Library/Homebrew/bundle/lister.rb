@@ -7,19 +7,23 @@ module Homebrew
       sig {
         params(entries: T::Array[Homebrew::Bundle::Dsl::Entry], formulae: T::Boolean, casks: T::Boolean,
                taps: T::Boolean, mas: T::Boolean, vscode: T::Boolean, go: T::Boolean, cargo: T::Boolean,
-               flatpak: T::Boolean).void
+               uv: T::Boolean, flatpak: T::Boolean).void
       }
-      def self.list(entries, formulae:, casks:, taps:, mas:, vscode:, go:, cargo:, flatpak:)
+      def self.list(entries, formulae:, casks:, taps:, mas:, vscode:, go:, cargo:, uv:, flatpak:)
         entries.each do |entry|
-          puts entry.name if show?(entry.type, formulae:, casks:, taps:, mas:, vscode:, go:, cargo:, flatpak:)
+          puts entry.name if show?(entry.type, formulae:, casks:, taps:, mas:, vscode:, go:, cargo:,
+                                              uv:, flatpak:)
         end
       end
 
       sig {
         params(type: Symbol, formulae: T::Boolean, casks: T::Boolean, taps: T::Boolean, mas: T::Boolean,
-               vscode: T::Boolean, go: T::Boolean, cargo: T::Boolean, flatpak: T::Boolean).returns(T::Boolean)
+               vscode: T::Boolean, go: T::Boolean, cargo: T::Boolean, uv: T::Boolean,
+               flatpak: T::Boolean)
+          .returns(T::Boolean)
       }
-      private_class_method def self.show?(type, formulae:, casks:, taps:, mas:, vscode:, go:, cargo:, flatpak:)
+      private_class_method def self.show?(type, formulae:, casks:, taps:, mas:, vscode:, go:, cargo:,
+                                          uv:, flatpak:)
         return true if formulae && type == :brew
         return true if casks && type == :cask
         return true if taps && type == :tap
@@ -27,6 +31,7 @@ module Homebrew
         return true if vscode && type == :vscode
         return true if go && type == :go
         return true if cargo && type == :cargo
+        return true if uv && type == :uv
         return true if flatpak && type == :flatpak
 
         false

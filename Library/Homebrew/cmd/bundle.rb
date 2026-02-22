@@ -10,7 +10,7 @@ module Homebrew
         usage_banner <<~EOS
           `bundle` [<subcommand>]
 
-          Bundler for non-Ruby dependencies from Homebrew, Homebrew Cask, Mac App Store, Visual Studio Code (and forks/variants), Go packages, Cargo packages and Flatpak.
+          Bundler for non-Ruby dependencies from Homebrew, Homebrew Cask, Mac App Store, Visual Studio Code (and forks/variants), Go packages, Cargo packages, uv tools and Flatpak.
 
           Note: Flatpak support is only available on Linux.
 
@@ -48,10 +48,10 @@ module Homebrew
           Edit the `Brewfile` in your editor.
 
           `brew bundle add` <name> [...]:
-          Add entries to your `Brewfile`. Adds formulae by default. Use `--cask`, `--tap` or `--vscode` to add the corresponding entry instead.
+          Add entries to your `Brewfile`. Adds formulae by default. Use `--cask`, `--tap`, `--vscode` or `--uv` to add the corresponding entry instead.
 
           `brew bundle remove` <name> [...]:
-          Remove entries that match `name` from your `Brewfile`. Use `--formula`, `--cask`, `--tap`, `--mas` or `--vscode` to remove only entries of the corresponding type. Passing `--formula` also removes matches against formula aliases and old formula names.
+          Remove entries that match `name` from your `Brewfile`. Use `--formula`, `--cask`, `--tap`, `--mas`, `--vscode` or `--uv` to remove only entries of the corresponding type. Passing `--formula` also removes matches against formula aliases and old formula names.
 
           `brew bundle exec` [`--check`] [`--no-secrets`] <command>:
           Run an external command in an isolated build environment based on the `Brewfile` dependencies.
@@ -113,6 +113,8 @@ module Homebrew
                description: "`list` or `dump` Go packages."
         switch "--cargo",
                description: "`list` or `dump` Cargo packages."
+        switch "--uv",
+               description: "`list` or `dump` uv tools."
         switch "--flatpak",
                description: "`list` or `dump` Flatpak packages. Note: Linux only."
         switch "--no-vscode",
@@ -124,6 +126,9 @@ module Homebrew
         switch "--no-cargo",
                description: "`dump` without Cargo packages.",
                env:         :bundle_dump_no_cargo
+        switch "--no-uv",
+               description: "`dump` without uv tools.",
+               env:         :bundle_dump_no_uv
         switch "--no-flatpak",
                description: "`dump` without Flatpak packages.",
                env:         :bundle_dump_no_flatpak
@@ -149,6 +154,8 @@ module Homebrew
         conflicts "--go", "--no-go"
         conflicts "--all", "--no-cargo"
         conflicts "--cargo", "--no-cargo"
+        conflicts "--all", "--no-uv"
+        conflicts "--uv", "--no-uv"
         conflicts "--all", "--no-flatpak"
         conflicts "--flatpak", "--no-flatpak"
         conflicts "--install", "--upgrade"
@@ -193,7 +200,7 @@ module Homebrew
         Homebrew::Bundle.upgrade_formulae = args.upgrade_formulae
 
         no_type_args = [args.formulae?, args.casks?, args.taps?, args.mas?, args.vscode?, args.go?,
-                        args.cargo?, args.flatpak?].none?
+                        args.cargo?, args.uv?, args.flatpak?].none?
 
         if args.install?
           if [nil, "install", "upgrade"].include?(subcommand)
@@ -252,6 +259,14 @@ module Homebrew
             no_type_args
           end
 
+          uv = if args.no_uv?
+            false
+          elsif args.uv?
+            true
+          else
+            no_type_args
+          end
+
           flatpak = if args.no_flatpak?
             false
           elsif args.flatpak?
@@ -272,6 +287,7 @@ module Homebrew
             vscode:,
             go:,
             cargo:,
+            uv:,
             flatpak:
           )
         when "edit"
@@ -302,6 +318,7 @@ module Homebrew
             vscode:   args.vscode? || args.all?,
             go:       args.go? || args.all?,
             cargo:    args.cargo? || args.all?,
+            uv:       args.uv? || args.all?,
             flatpak:  args.flatpak? || args.all?,
           )
         when "add", "remove"
@@ -314,6 +331,7 @@ module Homebrew
             vscode:  args.vscode?,
             go:      args.go?,
             cargo:   args.cargo?,
+            uv:      args.uv?,
             flatpak: args.flatpak?,
             none:    no_type_args,
           }

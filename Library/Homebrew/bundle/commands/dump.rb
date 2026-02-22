@@ -11,13 +11,13 @@ module Homebrew
           params(global: T::Boolean, file: T.nilable(String), describe: T::Boolean, force: T::Boolean,
                  no_restart: T::Boolean, taps: T::Boolean, formulae: T::Boolean, casks: T::Boolean,
                  mas: T::Boolean, vscode: T::Boolean, go: T::Boolean, cargo: T::Boolean,
-                 flatpak: T::Boolean).void
+                 uv: T::Boolean, flatpak: T::Boolean).void
         }
         def self.run(global:, file:, describe:, force:, no_restart:, taps:, formulae:, casks:, mas:,
-                     vscode:, go:, cargo:, flatpak:)
+                     vscode:, go:, cargo:, uv:, flatpak:)
           Homebrew::Bundle::Dumper.dump_brewfile(
             global:, file:, describe:, force:, no_restart:, taps:, formulae:, casks:, mas:, vscode:,
-            go:, cargo:, flatpak:
+            go:, cargo:, uv:, flatpak:
           )
         end
       end

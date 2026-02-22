@@ -11,6 +11,7 @@ TYPES_AND_DEPS = {
   vscode:   "shopify.ruby-lsp",
   go:       "github.com/charmbracelet/crush",
   cargo:    "ripgrep",
+  uv:       "mkdocs",
 }.freeze
 
 COMBINATIONS = begin
@@ -32,6 +33,7 @@ RSpec.describe Homebrew::Bundle::Commands::List do
       vscode:   vscode,
       go:       go,
       cargo:    cargo,
+      uv:       uv,
       flatpak:  false,
     )
   end
@@ -43,6 +45,7 @@ RSpec.describe Homebrew::Bundle::Commands::List do
   let(:vscode)   { false }
   let(:go)       { false }
   let(:cargo)    { false }
+  let(:uv)       { false }
 
   before do
     allow_any_instance_of(IO).to receive(:puts)
@@ -59,6 +62,7 @@ RSpec.describe Homebrew::Bundle::Commands::List do
           vscode 'shopify.ruby-lsp'
           go 'github.com/charmbracelet/crush'
           cargo 'ripgrep'
+          uv 'mkdocs'
         EOS
       )
     end
@@ -81,6 +85,7 @@ RSpec.describe Homebrew::Bundle::Commands::List do
           let(:vscode)   { options_list.include?(:vscode) }
           let(:go)       { options_list.include?(:go) }
           let(:cargo)    { options_list.include?(:cargo) }
+          let(:uv)       { options_list.include?(:uv) }
 
           it "shows only #{words}" do
             expected = options_list.map { |opt| TYPES_AND_DEPS[opt] }.join("\n")
