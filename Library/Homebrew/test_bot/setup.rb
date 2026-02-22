@@ -1,9 +1,10 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
 
 module Homebrew
   module TestBot
     class Setup < Test
+      sig { params(args: Homebrew::Cmd::TestBotCmd::Args).returns(Step) }
       def run!(args:)
         test_header(:Setup)
 

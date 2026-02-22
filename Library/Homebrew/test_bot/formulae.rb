@@ -1,21 +1,48 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
 
 module Homebrew
   module TestBot
     class Formulae < TestFormulae
-      attr_writer :testing_formulae, :added_formulae, :deleted_formulae
+      sig { params(testing_formulae: T::Array[String]).void }
+      attr_writer :testing_formulae
 
+      sig { params(added_formulae: T::Array[String]).void }
+      attr_writer :added_formulae
+
+      sig { params(deleted_formulae: T::Array[String]).void }
+      attr_writer :deleted_formulae
+
+      sig {
+        params(
+          tap:          T.nilable(Tap),
+          git:          String,
+          dry_run:      T::Boolean,
+          fail_fast:    T::Boolean,
+          verbose:      T::Boolean,
+          output_paths: T::Hash[Symbol, Pathname],
+        ).void
+      }
       def initialize(tap:, git:, dry_run:, fail_fast:, verbose:, output_paths:)
         super(tap:, git:, dry_run:, fail_fast:, verbose:)
 
-        @built_formulae = []
-        @bottle_checksums = {}
-        @bottle_output_path = output_paths[:bottle]
-        @linkage_output_path = output_paths[:linkage]
-        @skipped_or_failed_formulae_output_path = output_paths[:skipped_or_failed_formulae]
+        @built_formulae = T.let([], T::Array[String])
+        @bottle_checksums = T.let({}, T::Hash[Pathname, String])
+        @bottle_output_path = T.let(output_paths.fetch(:bottle), Pathname)
+        @linkage_output_path = T.let(output_paths.fetch(:linkage), Pathname)
+        @skipped_or_failed_formulae_output_path = T.let(output_paths.fetch(:skipped_or_failed_formulae), Pathname)
+        @testing_formulae = T.let([], T::Array[String])
+        @added_formulae = T.let([], T::Array[String])
+        @deleted_formulae = T.let([], T::Array[String])
+        @testing_formulae_count = T.let(0, Integer)
+        @tested_formulae_count = T.let(0, Integer)
+        @unchanged_dependencies = T.let([], T::Array[String])
+        @unchanged_build_dependencies = T.let([], T::Array[String])
+        @bottle_filename = T.let(nil, T.nilable(Pathname))
+        @bottle_json_filename = T.let(nil, T.nilable(Pathname))
       end
 
+      sig { params(args: Homebrew::Cmd::TestBotCmd::Args).void }
       def run!(args:)
         test_header(:Formulae)
 
@@ -87,6 +114,7 @@ module Homebrew
 
       private
 
+      sig { params(deps: T::Array[Dependency]).void }
       def tap_needed_taps(deps)
         deps.each { |d| d.to_formula.recursive_dependencies }
       rescue TapFormulaUnavailableError => e
@@ -97,6 +125,7 @@ module Homebrew
         retry
       end
 
+      sig { void }
       def install_ca_certificates_if_needed
         return if DevelopmentTools.ca_file_handles_most_https_certificates?
 
@@ -104,6 +133,7 @@ module Homebrew
              env: { "HOMEBREW_DEVELOPER" => nil }
       end
 
+      sig { params(formula: Formula, formula_name: String, args: Homebrew::Cmd::TestBotCmd::Args).void }
       def setup_formulae_deps_instances(formula, formula_name, args:)
         conflicts = formula.conflicts
         formula_recursive_dependencies = formula.recursive_dependencies.map(&:to_formula)
@@ -191,14 +221,16 @@ module Homebrew
         @unchanged_build_dependencies = build_dependencies - @testing_formulae
       end
 
+      sig { params(formula: Formula).void }
       def cleanup_bottle_etc_var(formula)
         # Restore etc/var files from bottle so dependents can use them.
         formula.install_etc_var
       end
 
+      sig { returns(T::Boolean) }
       def verify_local_bottles
         # Portable Ruby bottles are handled differently.
-        return if testing_portable_ruby?
+        return false if testing_portable_ruby?
 
         # Setting `HOMEBREW_DISABLE_LOAD_FORMULA` probably doesn't do anything here but let's set it just to be safe.
         with_env(HOMEBREW_DISABLE_LOAD_FORMULA: "1") do
@@ -245,17 +277,18 @@ module Homebrew
         end
       end
 
+      sig { params(formula: Formula, new_formula: T.nilable(T::Boolean), args: Homebrew::Cmd::TestBotCmd::Args).void }
       def bottle_reinstall_formula(formula, new_formula, args:)
         unless build_bottle?(formula, args:)
-          @bottle_filename = nil
+          @bottle_filename = T.let(nil, T.nilable(Pathname))
           return
         end
 
         root_url = args.root_url
 
         # GitHub Releases url
-        root_url ||= if tap.present? && !tap.core_tap? && !args.test_default_formula?
-          "#{tap.default_remote}/releases/download/#{formula.name}-#{formula.pkg_version}"
+        root_url ||= if tap.present? && !T.must(tap).core_tap? && !args.test_default_formula?
+          "#{T.must(tap).default_remote}/releases/download/#{formula.name}-#{formula.pkg_version}"
         end
 
         # This is needed where sparse files may be handled (bsdtar >=3.0).
@@ -275,7 +308,7 @@ module Homebrew
 
         verify_local_bottles
         test "brew", "bottle", *bottle_args
-        bottle_step = steps.last
+        bottle_step = steps.fetch(-1)
 
         if !bottle_step.passed? || !bottle_step.output?
           failed formula.full_name, "bottling failed" unless args.dry_run?
@@ -283,8 +316,8 @@ module Homebrew
         end
 
         @bottle_filename = Pathname.new(
-          bottle_step.output
-                    .gsub(%r{.*(\./\S+#{HOMEBREW_BOTTLES_EXTNAME_REGEX}).*}om, '\1'),
+          T.must(bottle_step.output)
+           .gsub(%r{.*(\./\S+#{HOMEBREW_BOTTLES_EXTNAME_REGEX}).*}om, '\1'),
         )
         @bottle_json_filename = Pathname.new(
           @bottle_filename.to_s.gsub(/\.(\d+\.)?tar\.gz$/, ".json"),
@@ -296,7 +329,7 @@ module Homebrew
         @bottle_output_path.write(bottle_step.output, mode: "a")
 
         bottle_merge_args =
-          ["--merge", "--write", "--no-commit", "--no-all-checks", @bottle_json_filename]
+          ["--merge", "--write", "--no-commit", "--no-all-checks", @bottle_json_filename.to_s]
         bottle_merge_args << "--keep-old" if args.keep_old? && !new_formula
 
         test "brew", "bottle", *bottle_merge_args
@@ -314,12 +347,13 @@ module Homebrew
         else
           ENV.fetch("HOMEBREW_VERIFY_ATTESTATIONS", nil)
         end
-        test "brew", "install", "--only-dependencies", @bottle_filename,
+        test "brew", "install", "--only-dependencies", @bottle_filename.to_s,
              env: { "HOMEBREW_VERIFY_ATTESTATIONS" => verify_attestations }
-        test "brew", "install", @bottle_filename,
+        test "brew", "install", @bottle_filename.to_s,
              env: { "HOMEBREW_VERIFY_ATTESTATIONS" => verify_attestations }
       end
 
+      sig { params(formula: Formula, args: Homebrew::Cmd::TestBotCmd::Args).returns(T::Boolean) }
       def build_bottle?(formula, args:)
         # Build and runtime dependencies must be bottled on the current OS,
         # but accept an older compatible bottle for test dependencies.
@@ -334,6 +368,7 @@ module Homebrew
         !args.build_from_source?
       end
 
+      sig { params(formula: Formula).void }
       def livecheck(formula)
         return unless formula.livecheck_defined?
         return if formula.livecheck.skip?
@@ -344,7 +379,7 @@ module Homebrew
         return if livecheck_step.failed?
         return unless livecheck_step.output?
 
-        livecheck_info = JSON.parse(livecheck_step.output)&.first
+        livecheck_info = JSON.parse(T.must(livecheck_step.output)).first
 
         if livecheck_info["status"] == "error"
           error_msg = if livecheck_info["messages"].present? && livecheck_info["messages"].length.positive?
@@ -395,231 +430,236 @@ module Homebrew
         end
       end
 
+      sig { params(formula_name: String, args: Homebrew::Cmd::TestBotCmd::Args).void }
       def formula!(formula_name, args:)
         cleanup_during!(@testing_formulae, args:)
 
         test_header(:Formulae, method: "formula!(#{formula_name})")
 
         formula = Formulary.factory(formula_name)
-        if formula.disabled?
-          skipped formula_name, "#{formula.full_name} has been disabled!"
-          return
-        end
+        begin
+          if formula.disabled?
+            skipped formula_name, "#{formula.full_name} has been disabled!"
+            return
+          end
 
-        test "brew", "deps", "--tree", "--prune", "--annotate", "--include-build", "--include-test",
-             named_args: formula_name
+          test "brew", "deps", "--tree", "--prune", "--annotate", "--include-build", "--include-test",
+               named_args: formula_name
 
-        deps_without_compatible_bottles = formula.deps.map(&:to_formula)
-        deps_without_compatible_bottles.reject! do |dep|
-          bottled_or_built?(dep, @built_formulae - @skipped_or_failed_formulae)
-        end
-        bottled_on_current_version = bottled?(formula, no_older_versions: true)
+          deps_without_compatible_bottles = formula.deps.map(&:to_formula)
+          deps_without_compatible_bottles.reject! do |dep|
+            bottled_or_built?(dep, @built_formulae - @skipped_or_failed_formulae)
+          end
+          bottled_on_current_version = bottled?(formula, no_older_versions: true)
 
-        if deps_without_compatible_bottles.present? && !bottled_on_current_version
-          message = <<~EOS
-            #{formula_name} has dependencies without compatible bottles:
-              #{deps_without_compatible_bottles * "\n  "}
-          EOS
-          skipped formula_name, message
-          return
-        end
+          if deps_without_compatible_bottles.present? && !bottled_on_current_version
+            message = <<~EOS
+              #{formula_name} has dependencies without compatible bottles:
+                #{deps_without_compatible_bottles * "\n  "}
+            EOS
+            skipped formula_name, message
+            return
+          end
 
-        new_formula = @added_formulae.include?(formula_name)
-        ignore_failures = !args.test_default_formula? && !bottled_on_current_version && !new_formula
+          new_formula = @added_formulae.include?(formula_name)
+          ignore_failures = !args.test_default_formula? && !bottled_on_current_version && !new_formula
 
-        deps = []
-        reqs = []
+          deps = []
+          reqs = []
 
-        build_flag = if build_bottle?(formula, args:)
-          "--build-bottle"
-        else
-          if GitHub::Actions.env_set?
-            puts GitHub::Actions::Annotation.new(
-              :warning,
-              "#{formula} has unbottled dependencies, so a bottle will not be built.",
-              title: "No bottle built for #{formula}!",
-              file:  formula.path.to_s.delete_prefix("#{repository}/"),
-            )
+          build_flag = if build_bottle?(formula, args:)
+            "--build-bottle"
           else
-            onoe "Not building a bottle for #{formula} because it has unbottled dependencies."
+            if GitHub::Actions.env_set?
+              puts GitHub::Actions::Annotation.new(
+                :warning,
+                "#{formula} has unbottled dependencies, so a bottle will not be built.",
+                title: "No bottle built for #{formula}!",
+                file:  formula.path.to_s.delete_prefix("#{repository}/"),
+              )
+            else
+              onoe "Not building a bottle for #{formula} because it has unbottled dependencies."
+            end
+
+            skipped formula_name, "No bottle built."
+            return
           end
 
-          skipped formula_name, "No bottle built."
-          return
-        end
+          # Online checks are a bit flaky and less useful for PRs that modify multiple formulae.
+          skip_online_checks = args.skip_online_checks? || (@testing_formulae_count > 5)
 
-        # Online checks are a bit flaky and less useful for PRs that modify multiple formulae.
-        skip_online_checks = args.skip_online_checks? || (@testing_formulae_count > 5)
+          fetch_args = [formula_name]
+          fetch_args << build_flag
+          fetch_args << "--force" if cleanup?(args)
 
-        fetch_args = [formula_name]
-        fetch_args << build_flag
-        fetch_args << "--force" if cleanup?(args)
-
-        audit_args = [formula_name]
-        audit_args << "--online" unless skip_online_checks
-        if new_formula
-          if !args.skip_new?
-            audit_args << "--new"
-          elsif !args.skip_new_strict?
-            audit_args << "--strict"
+          audit_args = [formula_name]
+          audit_args << "--online" unless skip_online_checks
+          if new_formula
+            if !args.skip_new?
+              audit_args << "--new"
+            elsif !args.skip_new_strict?
+              audit_args << "--strict"
+            end
+          else
+            audit_args << "--git" << "--skip-style"
+            audit_args << "--except=unconfirmed_checksum_change" if args.skip_checksum_only_audit?
+            audit_args << "--except=stable_version" if args.skip_stable_version_audit?
+            audit_args << "--except=revision" if args.skip_revision_audit?
           end
-        else
-          audit_args << "--git" << "--skip-style"
-          audit_args << "--except=unconfirmed_checksum_change" if args.skip_checksum_only_audit?
-          audit_args << "--except=stable_version" if args.skip_stable_version_audit?
-          audit_args << "--except=revision" if args.skip_revision_audit?
-        end
 
-        # This needs to be done before any network operation.
-        install_ca_certificates_if_needed
+          # This needs to be done before any network operation.
+          install_ca_certificates_if_needed
 
-        if (messages = unsatisfied_requirements_messages(formula))
+          if (messages = unsatisfied_requirements_messages(formula))
+            test "brew", "fetch", "--formula", "--retry", *fetch_args
+            test "brew", "audit", "--formula", *audit_args
+
+            skipped formula_name, messages
+            return
+          end
+
+          deps |= formula.deps.to_a.reject(&:optional?)
+          reqs |= formula.requirements.to_a.reject(&:optional?)
+
+          tap_needed_taps(deps)
+          install_curl_if_needed(formula)
+          install_mercurial_if_needed(deps, reqs)
+          install_subversion_if_needed(deps, reqs)
+          setup_formulae_deps_instances(formula, formula_name, args:)
+
+          test "brew", "uninstall", "--formula", "--force", formula_name if formula.latest_version_installed?
+
+          install_args = ["--verbose", "--formula"]
+          install_args << build_flag
+
+          # We can't verify attestations if we're building `gh`.
+          verify_attestations = if formula_name == "gh"
+            nil
+          else
+            ENV.fetch("HOMEBREW_VERIFY_ATTESTATIONS", nil)
+          end
+          # Don't care about e.g. bottle failures for dependencies.
+          test "brew", "install", "--only-dependencies", *install_args, formula_name,
+               env: { "HOMEBREW_DEVELOPER"           => nil,
+                      "HOMEBREW_VERIFY_ATTESTATIONS" => verify_attestations }
+
+          info_header "Starting tests for #{formula_name}"
+
           test "brew", "fetch", "--formula", "--retry", *fetch_args
-          test "brew", "audit", "--formula", *audit_args
 
-          skipped formula_name, messages
-          return
-        end
-
-        deps |= formula.deps.to_a.reject(&:optional?)
-        reqs |= formula.requirements.to_a.reject(&:optional?)
-
-        tap_needed_taps(deps)
-        install_curl_if_needed(formula)
-        install_mercurial_if_needed(deps, reqs)
-        install_subversion_if_needed(deps, reqs)
-        setup_formulae_deps_instances(formula, formula_name, args:)
-
-        test "brew", "uninstall", "--formula", "--force", formula_name if formula.latest_version_installed?
-
-        install_args = ["--verbose", "--formula"]
-        install_args << build_flag
-
-        # We can't verify attestations if we're building `gh`.
-        verify_attestations = if formula_name == "gh"
-          nil
-        else
-          ENV.fetch("HOMEBREW_VERIFY_ATTESTATIONS", nil)
-        end
-        # Don't care about e.g. bottle failures for dependencies.
-        test "brew", "install", "--only-dependencies", *install_args, formula_name,
-             env: { "HOMEBREW_DEVELOPER"           => nil,
-                    "HOMEBREW_VERIFY_ATTESTATIONS" => verify_attestations }
-
-        info_header "Starting tests for #{formula_name}"
-
-        test "brew", "fetch", "--formula", "--retry", *fetch_args
-
-        env = {}
-        env["HOMEBREW_GIT_PATH"] = nil if deps.any? do |d|
-          d.name == "git" && (!d.test? || d.build?)
-        end
-
-        install_step_passed = formula_installed_from_bottle =
-          artifact_cache_valid?(formula) &&
-          verify_local_bottles && # Checking the artifact cache loads formulae, so do this check second.
-          install_formula_from_bottle!(formula_name,
-                                       bottle_dir:                  artifact_cache,
-                                       testing_formulae_dependents: false,
-                                       dry_run:                     args.dry_run?)
-
-        install_step_passed ||= begin
-          test("brew", "install", *install_args,
-               named_args:      formula_name,
-               env:             env.merge({ "HOMEBREW_DEVELOPER"           => nil,
-                                            "HOMEBREW_VERIFY_ATTESTATIONS" => verify_attestations }),
-               ignore_failures:, report_analytics: true)
-          steps.last.passed?
-        end
-
-        livecheck(formula) if !args.skip_livecheck? && !skip_online_checks
-
-        test "brew", "style", "--formula", formula_name, report_analytics: true
-        test "brew", "audit", "--formula", *audit_args, report_analytics: true unless formula.deprecated?
-        unless install_step_passed
-          if ignore_failures
-            skipped formula_name, "install failed"
-          else
-            failed formula_name, "install failed"
-          end
-
-          return
-        end
-
-        if formula_installed_from_bottle
-          moved_artifacts = bottle_glob(formula_name, artifact_cache, ".{json,tar.gz}").map(&:realpath)
-          Pathname.pwd.install moved_artifacts
-
-          moved_artifacts.each do |old_location|
-            new_location = old_location.basename.realpath
-            @bottle_checksums[new_location] = @bottle_checksums.fetch(old_location)
-            @bottle_checksums.delete(old_location)
-          end
-        else
-          bottle_reinstall_formula(formula, new_formula, args:)
-        end
-        @built_formulae << formula.full_name
-        test("brew", "linkage", "--test", named_args: formula_name, ignore_failures:, report_analytics: true)
-        failed_linkage_or_test_messages ||= []
-        failed_linkage_or_test_messages << "linkage failed" unless steps.last.passed?
-
-        if steps.last.passed?
-          # Check for opportunistic linkage. Ignore failures because
-          # they can be unavoidable but we still want to know about them.
-          test "brew", "linkage", "--cached", "--test", "--strict",
-               named_args:      formula_name,
-               ignore_failures: !args.test_default_formula?
-        end
-
-        test "brew", "linkage", "--cached", formula_name
-        @linkage_output_path.write(Formatter.headline(steps.last.command_trimmed, color: :blue), mode: "a")
-        @linkage_output_path.write("\n", mode: "a")
-        @linkage_output_path.write(steps.last.output, mode: "a")
-
-        test "brew", "install", "--formula", "--only-dependencies", "--include-test", formula_name
-
-        if formula.test_defined?
           env = {}
           env["HOMEBREW_GIT_PATH"] = nil if deps.any? do |d|
-            d.name == "git" && (!d.build? || d.test?)
+            d.name == "git" && (!d.test? || d.build?)
           end
 
-          # Intentionally not passing --retry here to avoid papering over
-          # flaky tests when a formula isn't being pulled in as a dependent.
-          test("brew", "test", "--verbose", named_args: formula_name, env:, ignore_failures:,
-report_analytics: true)
-          failed_linkage_or_test_messages << "test failed" unless steps.last.passed?
-        end
+          install_step_passed = formula_installed_from_bottle =
+            artifact_cache_valid?(formula) &&
+            verify_local_bottles && # Checking the artifact cache loads formulae, so do this check second.
+            install_formula_from_bottle!(formula_name,
+                                         bottle_dir:                  artifact_cache,
+                                         testing_formulae_dependents: false,
+                                         dry_run:                     args.dry_run?)
 
-        # Move bottle and don't test dependents if the formula linkage or test failed.
-        if failed_linkage_or_test_messages.present?
-          if @bottle_filename
-            failed_dir = @bottle_filename.dirname/"failed"
-            moved_artifacts = [@bottle_filename, @bottle_json_filename].map(&:realpath)
-            failed_dir.install moved_artifacts
+          install_step_passed ||= begin
+            test("brew", "install", *install_args,
+                 named_args:      formula_name,
+                 env:             env.merge({ "HOMEBREW_DEVELOPER"           => nil,
+                                              "HOMEBREW_VERIFY_ATTESTATIONS" => verify_attestations }),
+                 ignore_failures:, report_analytics: true)
+            steps.fetch(-1).passed?
+          end
+
+          livecheck(formula) if !args.skip_livecheck? && !skip_online_checks
+
+          test "brew", "style", "--formula", formula_name, report_analytics: true
+          test "brew", "audit", "--formula", *audit_args, report_analytics: true unless formula.deprecated?
+          unless install_step_passed
+            if ignore_failures
+              skipped formula_name, "install failed"
+            else
+              failed formula_name, "install failed"
+            end
+
+            return
+          end
+
+          if formula_installed_from_bottle
+            moved_artifacts = bottle_glob(formula_name, artifact_cache, ".{json,tar.gz}").map(&:realpath)
+            Pathname.pwd.install moved_artifacts
 
             moved_artifacts.each do |old_location|
-              new_location = (failed_dir/old_location.basename).realpath
+              new_location = old_location.basename.realpath
               @bottle_checksums[new_location] = @bottle_checksums.fetch(old_location)
               @bottle_checksums.delete(old_location)
             end
-          end
-
-          if ignore_failures
-            skipped formula_name, failed_linkage_or_test_messages.join(", ")
           else
-            failed formula_name, failed_linkage_or_test_messages.join(", ")
+            bottle_reinstall_formula(formula, new_formula, args:)
           end
-        end
-      ensure
-        @tested_formulae_count += 1
-        cleanup_bottle_etc_var(formula) if cleanup?(args)
+          @built_formulae << formula.full_name
+          test("brew", "linkage", "--test", named_args: formula_name, ignore_failures:, report_analytics: true)
+          failed_linkage_or_test_messages ||= []
+          failed_linkage_or_test_messages << "linkage failed" unless steps.fetch(-1).passed?
 
-        if @unchanged_dependencies.present?
-          test "brew", "uninstall", "--formulae", "--force", "--ignore-dependencies", *@unchanged_dependencies
+          if steps.fetch(-1).passed?
+            # Check for opportunistic linkage. Ignore failures because
+            # they can be unavoidable but we still want to know about them.
+            test "brew", "linkage", "--cached", "--test", "--strict",
+                 named_args:      formula_name,
+                 ignore_failures: !args.test_default_formula?
+          end
+
+          test "brew", "linkage", "--cached", formula_name
+          @linkage_output_path.write(Formatter.headline(steps.fetch(-1).command_trimmed, color: :blue), mode: "a")
+          @linkage_output_path.write("\n", mode: "a")
+          @linkage_output_path.write(steps.fetch(-1).output, mode: "a")
+
+          test "brew", "install", "--formula", "--only-dependencies", "--include-test", formula_name
+
+          if formula.test_defined?
+            env = {}
+            env["HOMEBREW_GIT_PATH"] = nil if deps.any? do |d|
+              d.name == "git" && (!d.build? || d.test?)
+            end
+
+            # Intentionally not passing --retry here to avoid papering over
+            # flaky tests when a formula isn't being pulled in as a dependent.
+            test(
+              "brew", "test", "--verbose", named_args: formula_name, env:, ignore_failures:, report_analytics: true
+            )
+            failed_linkage_or_test_messages << "test failed" unless steps.fetch(-1).passed?
+          end
+
+          # Move bottle and don't test dependents if the formula linkage or test failed.
+          if failed_linkage_or_test_messages.present?
+            if @bottle_filename
+              failed_dir = @bottle_filename.dirname/"failed"
+              moved_artifacts = [@bottle_filename, T.must(@bottle_json_filename)].map(&:realpath)
+              failed_dir.install moved_artifacts
+
+              moved_artifacts.each do |old_location|
+                new_location = (failed_dir/old_location.basename).realpath
+                @bottle_checksums[new_location] = @bottle_checksums.fetch(old_location)
+                @bottle_checksums.delete(old_location)
+              end
+            end
+
+            if ignore_failures
+              skipped formula_name, failed_linkage_or_test_messages.join(", ")
+            else
+              failed formula_name, failed_linkage_or_test_messages.join(", ")
+            end
+          end
+        ensure
+          @tested_formulae_count += 1
+          cleanup_bottle_etc_var(formula) if cleanup?(args)
+
+          if @unchanged_dependencies.present?
+            test "brew", "uninstall", "--formulae", "--force", "--ignore-dependencies", *@unchanged_dependencies
+          end
         end
       end
 
+      sig { params(formula_name: String).void }
       def portable_formula!(formula_name)
         test_header(:Formulae, method: "portable_formula!(#{formula_name})")
 
@@ -655,6 +695,7 @@ report_analytics: true)
         test "brew", "bottle", "--skip-relocation", "--json", "--no-rebuild", formula_name
       end
 
+      sig { params(formula_name: String).void }
       def deleted_formula!(formula_name)
         test_header(:Formulae, method: "deleted_formula!(#{formula_name})")
 
@@ -667,8 +708,9 @@ report_analytics: true)
              formula_name
       end
 
+      sig { returns(T::Boolean) }
       def testing_portable_ruby?
-        tap&.core_tap? && @testing_formulae.include?("portable-ruby")
+        !!tap&.core_tap? && @testing_formulae.include?("portable-ruby")
       end
     end
   end

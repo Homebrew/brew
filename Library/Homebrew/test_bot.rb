@@ -1,4 +1,4 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
 
 require "test_bot/step"
@@ -23,14 +23,17 @@ module Homebrew
 
     HOMEBREW_TAP_REGEX = %r{^([\w-]+)/homebrew-([\w-]+)$}
 
+    sig { params(args: Homebrew::Cmd::TestBotCmd::Args).returns(T::Boolean) }
     def cleanup?(args)
       args.cleanup? || GitHub::Actions.env_set?
     end
 
+    sig { params(args: Homebrew::Cmd::TestBotCmd::Args).returns(T::Boolean) }
     def local?(args)
       args.local? || GitHub::Actions.env_set?
     end
 
+    sig { params(tap: T.nilable(String)).returns(T.nilable(Tap)) }
     def resolve_test_tap(tap = nil)
       return Tap.fetch(tap) if tap
 
@@ -52,6 +55,7 @@ module Homebrew
       end
     end
 
+    sig { params(args: Homebrew::Cmd::TestBotCmd::Args).void }
     def run!(args)
       $stdout.sync = true
       $stderr.sync = true
