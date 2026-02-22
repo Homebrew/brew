@@ -347,7 +347,9 @@ from_installed_caskfile: @from_installed_caskfile).load(config:)
           Homebrew::API::Cask.all_casks.fetch(token)
         end
 
-        cask_struct = Homebrew::API::Cask.generate_cask_struct_hash(json_cask, ignore_types: @from_installed_caskfile)
+        cask_struct = Homebrew::API::Cask::CaskStructGenerator.generate_cask_struct_hash(
+          json_cask, ignore_types: @from_installed_caskfile
+        )
 
         cask_options = {
           loaded_from_api: true,
