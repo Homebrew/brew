@@ -68,16 +68,16 @@ module RuboCop
               end
             end
 
-            offending_node(on_system_node)
+            @offensive_node = on_system_node
             problem "Instead of using `#{on_system_node.source}` in `#{parent_string}`, " \
                     "use `#{if_statement_string}#{if_conditional}`." do |corrector|
-              block_node = offending_node.parent
+              block_node = @offensive_node.parent
               next if block_node.type != :block
 
               # TODO: could fix corrector to handle this but punting for now.
               next if block_node.single_line?
 
-              source_range = offending_node.source_range.join(offending_node.parent.loc.begin)
+              source_range = @offensive_node.source_range.join(@offensive_node.parent.loc.begin)
               corrector.replace(source_range, "#{if_statement_string}#{if_conditional}")
             end
           end

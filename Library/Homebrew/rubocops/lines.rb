@@ -112,25 +112,25 @@ module RuboCop
 
           find_every_method_call_by_name(body_node, :assert_predicate).each do |method|
             args = parameters(method)
-            next if args[1].source != ":exist?"
+            next if args.fetch(1).source != ":exist?"
 
-            offending_node(method)
+            @offensive_node = method
             problem "Use `assert_path_exists <path_to_file>` instead of `#{method.source}`" do |corrector|
-              correct = "assert_path_exists #{args.first.source}"
-              correct += ", #{args[2].source}" if args.length == 3
-              corrector.replace(T.must(@offensive_node).source_range, correct)
+              correct = "assert_path_exists #{args.fetch(0).source}"
+              correct += ", #{args.fetch(2).source}" if args.length == 3
+              corrector.replace(@offensive_node.source_range, correct)
             end
           end
 
           find_every_method_call_by_name(body_node, :refute_predicate).each do |method|
             args = parameters(method)
-            next if args[1].source != ":exist?"
+            next if args.fetch(1).source != ":exist?"
 
-            offending_node(method)
+            @offensive_node = method
             problem "Use `refute_path_exists <path_to_file>` instead of `#{method.source}`" do |corrector|
-              correct = "refute_path_exists #{args.first.source}"
-              correct += ", #{args[2].source}" if args.length == 3
-              corrector.replace(T.must(@offensive_node).source_range, correct)
+              correct = "refute_path_exists #{args.fetch(0).source}"
+              correct += ", #{args.fetch(2).source}" if args.length == 3
+              corrector.replace(@offensive_node.source_range, correct)
             end
           end
         end
@@ -188,7 +188,7 @@ module RuboCop
           end
 
           find_instance_method_call(body_node, :build, :without?) do |method|
-            arg = parameters(method).first
+            arg = parameters(method).fetch(0)
             next unless (match = regex_match_group(arg, /^-?-?without-(.*)/))
 
             problem "Instead of duplicating `without`, " \
@@ -196,7 +196,7 @@ module RuboCop
           end
 
           find_instance_method_call(body_node, :build, :with?) do |method|
-            arg = parameters(method).first
+            arg = parameters(method).fetch(0)
             next unless (match = regex_match_group(arg, /^-?-?with-(.*)/))
 
             problem "Instead of duplicating `with`, " \
@@ -262,7 +262,7 @@ module RuboCop
           find_method_with_args(body_node, :std_npm_install_args) do |method|
             problem "Use `std_npm_args` instead of `#{T.cast(@offensive_node,
                                                              RuboCop::AST::SendNode).method_name}`." do |corrector|
-              if (param = parameters(method).first.source) == "libexec"
+              if (param = parameters(method).fetch(0).source) == "libexec"
                 corrector.replace(T.must(@offensive_node).source_range, "std_npm_args")
               else
                 corrector.replace(T.must(@offensive_node).source_range, "std_npm_args(prefix: #{param})")
@@ -329,7 +329,7 @@ module RuboCop
               next if dependency.empty?
               next unless dependency.end_with?("-full")
 
-              offending_node(node)
+              @offensive_node = node
               problem "Formulae in homebrew/core should not depend on `#{dependency}`."
               break
             end
@@ -386,7 +386,7 @@ module RuboCop
 
           popen_commands.each do |command|
             find_instance_method_call(body_node, "Utils", command) do |method|
-              next unless (match = regex_match_group(parameters(method).first, /^([^"' ]+)=([^"' ]+)(?: (.*))?$/))
+              next unless (match = regex_match_group(parameters(method).fetch(0), /^([^"' ]+)=([^"' ]+)(?: (.*))?$/))
 
               good_args = "Utils.#{command}({ \"#{match[1]}\" => \"#{match[2]}\" }, \"#{match[3]}\")"
 
@@ -409,11 +409,12 @@ module RuboCop
           license_node = find_node_method_by_name(body_node, :license)
           return unless license_node
 
-          license = parameters(license_node).first
+          license = parameters(license_node).fetch(0)
           return unless license.array_type?
 
           problem "Use `license any_of: #{license.source}` instead of `license #{license.source}`" do |corrector|
-            corrector.replace(license_node.source_range, "license any_of: #{parameters(license_node).first.source}")
+            corrector.replace(license_node.source_range,
+                              "license any_of: #{parameters(license_node).fetch(0).source}")
           end
         end
       end
@@ -428,7 +429,7 @@ module RuboCop
           return unless license_node
           return if license_node.source.include?("\n")
 
-          parameters(license_node).first.each_descendant(:hash).each do |license_hash|
+          parameters(license_node).fetch(0).each_descendant(:hash).each do |license_hash|
             next if license_exception? license_hash
 
             problem "Split nested license declarations onto multiple lines"
@@ -449,19 +450,20 @@ module RuboCop
           return if (body_node = formula_nodes.body_node).nil?
 
           python_formula_node = find_every_method_call_by_name(body_node, :depends_on).find do |dep|
-            string_content(parameters(dep).first).start_with? "python@"
+            string_content(parameters(dep).fetch(0)).start_with? "python@"
           end
 
           python_version = if python_formula_node.blank?
             other_python_nodes = find_every_method_call_by_name(body_node, :depends_on).select do |dep|
-              parameters(dep).first.instance_of?(RuboCop::AST::HashNode) &&
-                string_content(parameters(dep).first.keys.first).start_with?("python@")
+              first_param = parameters(dep).first
+              first_param.instance_of?(RuboCop::AST::HashNode) &&
+                string_content(first_param.keys.first).start_with?("python@")
             end
             return if other_python_nodes.size != 1
 
-            string_content(parameters(other_python_nodes.first).first.keys.first).split("@").last
+            string_content(T.cast(parameters(other_python_nodes.fetch(0)).fetch(0), RuboCop::AST::HashNode).keys.first).split("@").last
           else
-            string_content(parameters(python_formula_node).first).split("@").last
+            string_content(parameters(python_formula_node).fetch(0)).split("@").last
           end
 
           find_strings(body_node).each do |str|
@@ -583,11 +585,11 @@ module RuboCop
               replacement_args << "shell_parameter_format: #{shell_parameter_format.inspect}"
             end
 
-            offending_node(node)
+            @offensive_node = node
             replacement = "generate_completions_from_executable(#{replacement_args.join(", ")})"
 
-            problem "Use `#{replacement}` instead of `#{T.must(@offensive_node).source}`." do |corrector|
-              corrector.replace(T.must(@offensive_node).source_range, replacement)
+            problem "Use `#{replacement}` instead of `#{@offensive_node.source}`." do |corrector|
+              corrector.replace(@offensive_node.source_range, replacement)
             end
           end
 
@@ -661,30 +663,30 @@ module RuboCop
               next
             end
 
-            offending_node(node)
+            @offensive_node = node
             problem "Use a single `generate_completions_from_executable` " \
                     "call combining all specified shells." do |corrector|
               # adjust range by -4 and +1 to also include & remove leading spaces and trailing \n
-              corrector.replace(T.must(@offensive_node).source_range.adjust(begin_pos: -4, end_pos: 1), "")
+              corrector.replace(@offensive_node.source_range.adjust(begin_pos: -4, end_pos: 1), "")
             end
           end
 
           return if shells.length <= 1 # no shells to combine left
 
-          offending_node(offenses.last)
+          @offensive_node = offenses.fetch(-1)
           replacement = if (%w[:bash :zsh :fish] - shells).empty?
-            T.must(@offensive_node).source
-             .sub(/shells: \[(:bash|:zsh|:fish)\]/, "")
-             .sub(", )", ")") # clean up dangling trailing comma
-             .sub("(, ", "(") # clean up dangling leading comma
-             .sub(", , ", ", ") # clean up dangling enclosed comma
+            @offensive_node.source
+                           .sub(/shells: \[(:bash|:zsh|:fish)\]/, "")
+                           .sub(", )", ")") # clean up dangling trailing comma
+                           .sub("(, ", "(") # clean up dangling leading comma
+                           .sub(", , ", ", ") # clean up dangling enclosed comma
           else
-            T.must(@offensive_node).source.sub(/shells: \[(:bash|:zsh|:fish)\]/,
-                                               "shells: [#{shells.join(", ")}]")
+            @offensive_node.source.sub(/shells: \[(:bash|:zsh|:fish)\]/,
+                                       "shells: [#{shells.join(", ")}]")
           end
 
-          problem "Use `#{replacement}` instead of `#{T.must(@offensive_node).source}`." do |corrector|
-            corrector.replace(T.must(@offensive_node).source_range, replacement)
+          problem "Use `#{replacement}` instead of `#{@offensive_node.source}`." do |corrector|
+            corrector.replace(@offensive_node.source_range, replacement)
           end
         end
       end
@@ -720,14 +722,14 @@ module RuboCop
           end
 
           find_instance_method_call(body_node, :man, :+) do |method|
-            next unless (match = regex_match_group(parameters(method).first, /^man[1-8]$/))
+            next unless (match = regex_match_group(parameters(method).fetch(0), /^man[1-8]$/))
 
             problem "`#{method.source}` should be `#{match[0]}`"
           end
 
           # Avoid hard-coding compilers
           find_every_method_call_by_name(body_node, :system).each do |method|
-            param = parameters(method).first
+            param = parameters(method).fetch(0)
             if (match = regex_match_group(param, %r{^(/usr/bin/)?(gcc|clang|cc|c[89]9)(\s|$)}))
               problem "Use `\#{ENV.cc}` instead of hard-coding `#{match[2]}`"
             elsif (match = regex_match_group(param, %r{^(/usr/bin/)?((g|clang|c)\+\+)(\s|$)}))
@@ -736,7 +738,7 @@ module RuboCop
           end
 
           find_instance_method_call(body_node, "ENV", :[]=) do |method|
-            param = parameters(method)[1]
+            param = parameters(method).fetch(1)
             if (match = regex_match_group(param, %r{^(/usr/bin/)?(gcc|clang|cc|c[89]9)(\s|$)}))
               problem "Use `\#{ENV.cc}` instead of hard-coding `#{match[2]}`"
             elsif (match = regex_match_group(param, %r{^(/usr/bin/)?((g|clang|c)\+\+)(\s|$)}))
@@ -759,12 +761,12 @@ module RuboCop
               problem ["`#", "{prefix}", match[1], '` should be `#{', match[3], "}`"].join
             end
             if (match = regex_match_group(p, %r{^(/(bin|include|libexec|lib|sbin|share|Frameworks))}i))
-              problem ["`#", "{prefix}", match[1], '` should be `#{', match[2].downcase, "}`"].join
+              problem ["`#", "{prefix}", match[1], '` should be `#{', T.must(match[2]).downcase, "}`"].join
             end
           end
 
           find_every_method_call_by_name(body_node, :depends_on).each do |method|
-            key, value = destructure_hash(parameters(method).first)
+            key, value = destructure_hash(parameters(method).fetch(0))
             next if key.nil? || value.nil?
             next unless (match = regex_match_group(value, /^(lua|perl|python|ruby)(\d*)/))
 
@@ -772,13 +774,13 @@ module RuboCop
           end
 
           find_every_method_call_by_name(body_node, :system).each do |method|
-            next unless (match = regex_match_group(parameters(method).first, /^(env|export)(\s+)?/))
+            next unless (match = regex_match_group(parameters(method).fetch(0), /^(env|export)(\s+)?/))
 
             problem "Use `ENV` instead of invoking `#{match[1]}` to modify the environment"
           end
 
           find_every_method_call_by_name(body_node, :depends_on).each do |method|
-            param = parameters(method).first
+            param = parameters(method).fetch(0)
             dep, option_child_nodes = hash_dep(param)
             next if dep.nil? || option_child_nodes.empty?
 
@@ -848,7 +850,7 @@ module RuboCop
           end
 
           if find_method_def(processed_source.ast)
-            problem "Define method `#{method_name(@offensive_node)}` in the class body, not at the top-level"
+            problem "Define method `#{method_name(T.must(@offensive_node))}` in the class body, not at the top-level"
           end
 
           find_instance_method_call(body_node, "ENV", :runtime_cpu_detection) do
@@ -876,7 +878,7 @@ module RuboCop
           find_instance_method_call(body_node, "Dir", :[]) do |method|
             next if parameters(method).size != 1
 
-            path = parameters(method).first
+            path = parameters(method).fetch(0)
             next unless path.str_type?
             next unless (match = regex_match_group(path, /^[^*{},]+$/))
 
@@ -889,7 +891,7 @@ module RuboCop
                      .join("|"),
           )
           find_every_method_call_by_name(body_node, :system).each do |method|
-            param = parameters(method).first
+            param = parameters(method).fetch(0)
             next unless (match = regex_match_group(param, fileutils_methods))
 
             problem "Use the `#{match}` Ruby method instead of `#{method.source}`"
@@ -941,10 +943,10 @@ module RuboCop
             params = parameters(method)
             next unless node_equals?(params[0], "make")
 
-            params[1..].each do |arg|
+            params[1..]&.each do |arg|
               next unless regex_match_group(arg, /^(checks?|tests?)$/)
 
-              offending_node(method)
+              @offensive_node = method
               problem "Formulae in homebrew/core (except e.g. cryptography, libraries) " \
                       "should not run build-time checks"
             end

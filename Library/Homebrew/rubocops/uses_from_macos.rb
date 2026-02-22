@@ -106,10 +106,11 @@ module RuboCop
             @offensive_node = method
             problem "`uses_from_macos` should not be used when Linux is required." if depends_on_linux
 
-            dep = if parameters(method).first.instance_of?(RuboCop::AST::StrNode)
-              parameters(method).first
-            elsif parameters(method).first.instance_of?(RuboCop::AST::HashNode)
-              parameters(method).first.keys.first
+            first_argument = parameters(method).first
+            dep = if first_argument.instance_of?(RuboCop::AST::StrNode)
+              first_argument
+            elsif first_argument.instance_of?(RuboCop::AST::HashNode)
+              first_argument.keys.first
             end
 
             dep_name = string_content(dep)

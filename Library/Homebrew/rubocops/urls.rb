@@ -21,7 +21,7 @@ module RuboCop
           # Identify livecheck URLs, to skip some checks for them
           livecheck_url = if (livecheck = find_every_func_call_by_name(body_node, :livecheck).first) &&
                              (livecheck_url = find_every_func_call_by_name(livecheck.parent, :url).first)
-            string_content(parameters(livecheck_url).first)
+            string_content(parameters(livecheck_url).fetch(0))
           end
 
           audit_url(:formula, urls, mirrors, livecheck_url:)
@@ -58,11 +58,11 @@ module RuboCop
           # Identify livecheck URL to skip checking it (symbols like :homepage are implicitly skipped)
           livecheck_url = if (livecheck = find_every_func_call_by_name(body_node, :livecheck).first) &&
                              (livecheck_url_node = find_every_func_call_by_name(livecheck.parent, :url).first)
-            string_content(parameters(livecheck_url_node).first)
+            string_content(parameters(livecheck_url_node).fetch(0))
           end
 
           urls.each do |url_node|
-            url_string_node = parameters(url_node).first
+            url_string_node = parameters(url_node).fetch(0)
             url_string = string_content(url_string_node)
 
             next unless url_string.start_with?("http://")
@@ -115,8 +115,8 @@ module RuboCop
           return if formula_tap != "homebrew-core"
 
           find_method_calls_by_name(body_node, :url).each do |url|
-            next unless string_content(parameters(url).first).match?(/\.git$/)
-            next if url_has_revision?(parameters(url).last)
+            next unless string_content(parameters(url).fetch(0)).match?(/\.git$/)
+            next if url_has_revision?(parameters(url).fetch(-1))
 
             offending_node(url)
             problem "Formulae in homebrew/core should specify a revision for Git URLs"
@@ -138,8 +138,8 @@ module RuboCop
           return if formula_tap != "homebrew-core"
 
           find_method_calls_by_name(body_node, :url).each do |url|
-            next unless string_content(parameters(url).first).match?(/\.git$/)
-            next if url_has_tag?(parameters(url).last)
+            next unless string_content(parameters(url).fetch(0)).match?(/\.git$/)
+            next if url_has_tag?(parameters(url).fetch(-1))
 
             offending_node(url)
             problem "Formulae in homebrew/core should specify a tag for Git URLs"

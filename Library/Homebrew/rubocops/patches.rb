@@ -19,8 +19,8 @@ module RuboCop
 
           external_patches = find_all_blocks(body_node, :patch)
           external_patches.each do |patch_block|
-            url_node = find_every_method_call_by_name(patch_block, :url).first
-            url_string = parameters(url_node).first
+            url_node = find_every_method_call_by_name(patch_block, :url).fetch(0)
+            url_string = parameters(url_node).fetch(0)
             sha256_node = find_every_method_call_by_name(patch_block, :sha256).first
             sha256_string = parameters(sha256_node).first if sha256_node
             patch_problems(url_string, sha256_string)
