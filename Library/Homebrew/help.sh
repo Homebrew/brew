@@ -20,7 +20,7 @@ HOMEBREW_HELP_MESSAGE='Example usage:
 Troubleshooting:
   brew config
   brew doctor
-  brew install --verbose --debug FORMULA|CASK
+  brew install --verbose --debug [FORMULA|CASK...]
 
 Contributing:
   brew create URL [--no-fetch]
