@@ -14,7 +14,7 @@ HOMEBREW_HELP_MESSAGE='Example usage:
   brew install FORMULA|CASK...
   brew update
   brew upgrade [FORMULA|CASK...]
-  brew uninstall FORMULA|CASK...
+  brew uninstall [FORMULA|CASK...]
   brew list [FORMULA|CASK...]
 
 Troubleshooting:
