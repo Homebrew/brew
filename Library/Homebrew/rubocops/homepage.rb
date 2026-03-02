@@ -23,7 +23,7 @@ module RuboCop
             return
           end
 
-          homepage_parameter_node = parameters(homepage_node).first
+          homepage_parameter_node = parameters(homepage_node).fetch(0)
           offending_node(homepage_parameter_node)
           content = string_content(homepage_parameter_node)
 
