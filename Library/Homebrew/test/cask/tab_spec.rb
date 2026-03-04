@@ -21,6 +21,12 @@ RSpec.describe Cask::Tab, :cask do
     end
   end
 
+  matcher :be_loaded_from_internal_api do
+    match do |actual|
+      actual.loaded_from_internal_api == true
+    end
+  end
+
   matcher :have_uninstall_flight_blocks do
     match do |actual|
       actual.uninstall_flight_blocks == true
@@ -29,24 +35,25 @@ RSpec.describe Cask::Tab, :cask do
 
   subject(:tab) do
     described_class.new(
-      "homebrew_version"        => HOMEBREW_VERSION,
-      "loaded_from_api"         => false,
-      "uninstall_flight_blocks" => true,
-      "installed_as_dependency" => false,
-      "installed_on_request"    => true,
-      "time"                    => time,
-      "runtime_dependencies"    => {
+      "homebrew_version"         => HOMEBREW_VERSION,
+      "loaded_from_api"          => false,
+      "loaded_from_internal_api" => false,
+      "uninstall_flight_blocks"  => true,
+      "installed_as_dependency"  => false,
+      "installed_on_request"     => true,
+      "time"                     => time,
+      "runtime_dependencies"     => {
         "cask" => [{ "full_name" => "bar", "version" => "2.0", "declared_directly" => false }],
       },
-      "source"                  => {
+      "source"                   => {
         "path"         => CoreCaskTap.instance.path.to_s,
         "tap"          => CoreCaskTap.instance.to_s,
         "tap_git_head" => "8b79aa759500f0ffdf65a23e12950cbe3bf8fe17",
         "version"      => "1.2.3",
       },
-      "arch"                    => Hardware::CPU.arch,
-      "uninstall_artifacts"     => [{ "app" => ["Foo.app"] }],
-      "built_on"                => DevelopmentTools.build_system_info,
+      "arch"                     => Hardware::CPU.arch,
+      "uninstall_artifacts"      => [{ "app" => ["Foo.app"] }],
+      "built_on"                 => DevelopmentTools.build_system_info,
     )
   end
 
@@ -65,6 +72,7 @@ RSpec.describe Cask::Tab, :cask do
     expect(tab).not_to be_installed_as_dependency
     expect(tab).not_to be_installed_on_request
     expect(tab).not_to be_loaded_from_api
+    expect(tab).not_to be_loaded_from_internal_api
     expect(tab).not_to have_uninstall_flight_blocks
     expect(tab.tap).to be_nil
     expect(tab.time).to be_nil
@@ -152,10 +160,10 @@ RSpec.describe Cask::Tab, :cask do
     expect(tab.tap.name).to eq("homebrew/cask")
     expect(tab.time).to eq(time)
     expect(tab).not_to be_loaded_from_api
+    expect(tab).not_to be_loaded_from_internal_api
     expect(tab).to have_uninstall_flight_blocks
     expect(tab).not_to be_installed_as_dependency
     expect(tab).to be_installed_on_request
-    expect(tab).not_to be_loaded_from_api
   end
 
   describe "::from_file" do
@@ -188,6 +196,7 @@ RSpec.describe Cask::Tab, :cask do
       }
 
       expect(tab).not_to be_loaded_from_api
+      expect(tab).not_to be_loaded_from_internal_api
       expect(tab).to have_uninstall_flight_blocks
       expect(tab).not_to be_installed_as_dependency
       expect(tab).to be_installed_on_request
@@ -229,6 +238,7 @@ RSpec.describe Cask::Tab, :cask do
       }
 
       expect(tab).not_to be_loaded_from_api
+      expect(tab).not_to be_loaded_from_internal_api
       expect(tab).to have_uninstall_flight_blocks
       expect(tab).not_to be_installed_as_dependency
       expect(tab).to be_installed_on_request
@@ -258,6 +268,7 @@ RSpec.describe Cask::Tab, :cask do
 
       tab = described_class.create(cask)
       expect(tab).not_to be_loaded_from_api
+      expect(tab).not_to be_loaded_from_internal_api
       expect(tab).not_to have_uninstall_flight_blocks
       expect(tab).not_to be_installed_as_dependency
       expect(tab).not_to be_installed_on_request
@@ -302,6 +313,7 @@ RSpec.describe Cask::Tab, :cask do
     json_tab = described_class.new(JSON.parse(tab.to_json))
     expect(json_tab.homebrew_version).to eq(tab.homebrew_version)
     expect(json_tab.loaded_from_api).to eq(tab.loaded_from_api)
+    expect(json_tab.loaded_from_internal_api).to eq(tab.loaded_from_internal_api)
     expect(json_tab.uninstall_flight_blocks).to eq(tab.uninstall_flight_blocks)
     expect(json_tab.installed_as_dependency).to eq(tab.installed_as_dependency)
     expect(json_tab.installed_on_request).to eq(tab.installed_on_request)
@@ -328,6 +340,16 @@ RSpec.describe Cask::Tab, :cask do
       expect(tab.to_s).to eq(output)
     end
 
+    it "returns install information for a Tab with a time that was loaded from the internal API" do
+      tab = described_class.new(
+        loaded_from_api:          true,
+        loaded_from_internal_api: true,
+        time:                     1_720_189_863,
+      )
+      output = "Installed using the internal formulae.brew.sh API on #{time_string}"
+      expect(tab.to_s).to eq(output)
+    end
+
     it "returns install information for a Tab with a time that was not loaded from the API" do
       tab = described_class.new(
         loaded_from_api: false,
@@ -343,6 +365,16 @@ RSpec.describe Cask::Tab, :cask do
         time:            nil,
       )
       output = "Installed using the formulae.brew.sh API"
+      expect(tab.to_s).to eq(output)
+    end
+
+    it "returns install information for a Tab without a time that was loaded from the internal API" do
+      tab = described_class.new(
+        loaded_from_api:          true,
+        loaded_from_internal_api: true,
+        time:                     nil,
+      )
+      output = "Installed using the internal formulae.brew.sh API"
       expect(tab.to_s).to eq(output)
     end
 

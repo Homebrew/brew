@@ -361,27 +361,43 @@ module Cask
       end
 
       def load(config:)
-        json_cask = from_json
-        json_cask ||= if Homebrew::EnvConfig.use_internal_api?
-          Homebrew::API::Internal.cask_hashes.fetch(token)
+        if !from_json && Homebrew::EnvConfig.use_internal_api?
+          cask_struct = Homebrew::API::Internal.cask_struct(token)
+          api_source = Homebrew::API::Internal.cask_hashes.fetch(token)
+          tap_git_head = Homebrew::API::Internal.cask_tap_git_head
+
+          load_from_struct(config:, cask_struct:, api_source:, tap_git_head:, internal_api: true)
         else
-          Homebrew::API::Cask.all_casks.fetch(token)
+          api_source = from_json || Homebrew::API::Cask.all_casks.fetch(token)
+          tap_git_head = api_source["tap_git_head"]
+          cask_struct = Homebrew::API::Cask::CaskStructGenerator.generate_cask_struct_hash(
+            api_source, ignore_types: @from_installed_caskfile
+          )
+          load_from_struct(config:, cask_struct:, api_source:, tap_git_head:)
         end
+      end
 
-        cask_struct = Homebrew::API::Cask::CaskStructGenerator.generate_cask_struct_hash(
-          json_cask, ignore_types: @from_installed_caskfile
-        )
+      private
 
+      sig {
+        params(
+          config:       T.nilable(Config),
+          cask_struct:  Homebrew::API::CaskStruct,
+          api_source:   T::Hash[String, T.untyped],
+          tap_git_head: T.nilable(String),
+          internal_api: T::Boolean,
+        ).returns(Cask)
+      }
+      def load_from_struct(config:, cask_struct:, api_source:, tap_git_head:, internal_api: false)
         cask_options = {
-          loaded_from_api: true,
-          api_source:      json_cask,
-          sourcefile_path: @sourcefile_path,
-          source:          JSON.pretty_generate(json_cask),
+          loaded_from_api:          true,
+          loaded_from_internal_api: internal_api,
+          api_source:,
+          sourcefile_path:          @sourcefile_path,
+          source:                   JSON.pretty_generate(api_source),
           config:,
-          loader:          self,
+          loader:                   self,
         }
-
-        tap_git_head = json_cask["tap_git_head"]
 
         if (tap_string = cask_struct.tap_string)
           cask_options[:tap] = Tap.fetch(tap_string)

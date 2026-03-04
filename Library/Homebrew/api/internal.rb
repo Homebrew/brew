@@ -39,6 +39,21 @@ module Homebrew
         struct
       end
 
+      sig { params(name: String).returns(Homebrew::API::CaskStruct) }
+      def self.cask_struct(name)
+        return cache["cask_structs"][name] if cache.key?("cask_structs") && cache["cask_structs"].key?(name)
+
+        hash = cask_hashes[name]
+        raise "No cask found for #{name}" unless hash
+
+        struct = Homebrew::API::CaskStruct.deserialize(hash)
+
+        cache["cask_structs"] ||= {}
+        cache["cask_structs"][name] = struct
+
+        struct
+      end
+
       sig { returns(Pathname) }
       def self.cached_formula_json_file_path
         HOMEBREW_CACHE_API/formula_endpoint
@@ -88,8 +103,9 @@ module Homebrew
       sig { returns(T::Boolean) }
       def self.download_and_cache_cask_data!
         json_contents, updated = fetch_cask_api!
-        cache["cask_stubs"] = {}
+        cache["cask_structs"] = {}
         cache["cask_renames"] = json_contents["renames"]
+        cache["cask_tap_git_head"] = json_contents["tap_git_head"]
         cache["cask_tap_migrations"] = json_contents["tap_migrations"]
         cache["cask_hashes"] = json_contents["casks"]
 
@@ -190,6 +206,16 @@ module Homebrew
         end
 
         cache["cask_tap_migrations"]
+      end
+
+      sig { returns(String) }
+      def self.cask_tap_git_head
+        unless cache.key?("cask_tap_git_head")
+          updated = download_and_cache_cask_data!
+          write_cask_names(regenerate: updated)
+        end
+
+        cache["cask_tap_git_head"]
       end
     end
   end
