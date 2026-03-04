@@ -529,6 +529,7 @@ RSpec.describe Formulary do
         formula = described_class.factory(formula_name)
         expect(formula).to be_a(Formula)
         expect(formula.loaded_from_api?).to be true
+        expect(formula.loaded_from_internal_api?).to be false
 
         expected_hash = formula_json_contents[formula_name]
         expect(formula.to_hash_with_variations).to eq(expected_hash)
