@@ -47,6 +47,7 @@ Style/Documentation:
     - cask/cask.rb
     - cask/dsl.rb
     - cask/dsl/version.rb
+    - cask/staged.rb
     - cask/url.rb
     - development_tools.rb
     - download_strategy.rb
