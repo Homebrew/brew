@@ -14,6 +14,14 @@ Features, usage and installation instructions are [summarised on the homepage](h
 
 `brew help`, `man brew` or check [our documentation](https://docs.brew.sh/).
 
+## Genesis Workflow (Local)
+
+For local Genesis rollout in this worktree, use the scripts under `.claude/genesis/`:
+
+- `./.claude/genesis/worktree-first-loop.sh <feature-branch-name>`
+- `./.claude/genesis/health-check-sync.sh`
+- `./.claude/genesis/daily-sync-report.sh`
+
 ## Troubleshooting
 
 First, please run `brew update` and `brew doctor`.
