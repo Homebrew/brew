@@ -27,6 +27,21 @@ RSpec.describe Cask::DSL, :cask, :no_api do
     end
   end
 
+  describe "when a Cask includes a historically-removed method" do
+    let(:attempt_removed_method) do
+      Cask::Cask.new("removed-method-cask") do
+        gpg "https://example.com/gpg-key"
+      end
+    end
+
+    it "raises a CaskInvalidError for the removed method" do
+      expect { attempt_removed_method }.to raise_error(
+        Cask::CaskInvalidError,
+        /undefined method 'gpg' for Cask 'removed-method-cask'/,
+      )
+    end
+  end
+
   describe "header line" do
     context "when invalid" do
       let(:token) { "invalid-header-format" }

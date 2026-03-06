@@ -306,6 +306,17 @@ RSpec.describe Homebrew::CLI::NamedArgs do
       expect(kegs.map(&:name)).to eq ["foo"]
       expect(casks).to eq [baz]
     end
+
+    it "returns a stub cask when cask is unreadable and method is keg-like", :needs_macos do
+      setup_unredable_cask "baz"
+      (Cask::Caskroom.path/"baz/1.0").mkpath
+
+      _kegs, casks = described_class.new("baz").to_kegs_to_casks
+
+      expect(casks.length).to eq 1
+      expect(casks.first).to be_a Cask::Cask
+      expect(casks.first.token).to eq "baz"
+    end
   end
 
   describe "#homebrew_tap_cask_names" do
