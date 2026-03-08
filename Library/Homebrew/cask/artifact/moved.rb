@@ -102,11 +102,10 @@ module Cask
           end
         end
 
-        ohai "Moving #{self.class.english_name} '#{source.basename}' to '#{target}'"
-
         Utils.gain_permissions_mkpath(target.dirname, command:) unless target.dirname.exist?
 
         if target.directory? && Quarantine.app_management_permissions_granted?(app: target, command:)
+          ohai "Moving #{self.class.english_name} contents of '#{source.basename}' into '#{target}'"
           if target.writable?
             source.children.each { |child| FileUtils.move(child, target/child.basename) }
           else
@@ -116,8 +115,10 @@ module Cask
           Quarantine.copy_xattrs(source, target, command:)
           FileUtils.rm_r(source)
         elsif target.dirname.writable?
+          ohai "Moving #{self.class.english_name} '#{source.basename}' to '#{target}'"
           FileUtils.move(source, target)
         else
+          ohai "Moving #{self.class.english_name} '#{source.basename}' to '#{target}'"
           # default sudo user isn't necessarily able to write to Homebrew's locations
           # e.g. with runas_default set in the sudoers (5) file.
           command.run!("/bin/cp", args: ["-pR", source, target], sudo: true)
@@ -179,7 +180,6 @@ module Cask
       end
 
       def delete(target, force: false, successor: nil, command: nil, **_)
-        ohai "Removing #{self.class.english_name} '#{target}'"
         raise CaskError, "Cannot remove undeletable #{self.class.english_name}." if undeletable?(target)
 
         return unless Utils.path_occupied?(target)
@@ -187,12 +187,14 @@ module Cask
         if target.directory? && matching_artifact?(successor) && Quarantine.app_management_permissions_granted?(
           app: target, command:,
         )
+          ohai "Upgrading #{self.class.english_name} '#{target}' in-place"
           # If an app folder is deleted, macOS considers the app uninstalled and removes some data.
           # Remove only the contents to handle this case.
           target.children.each do |child|
             Utils.gain_permissions_remove(child, command:)
           end
         else
+          ohai "Removing #{self.class.english_name} '#{target}'"
           Utils.gain_permissions_remove(target, command:)
         end
       end
