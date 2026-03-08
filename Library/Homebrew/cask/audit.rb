@@ -1242,15 +1242,6 @@ module Cask
       add_error error if error
     end
 
-    sig { void }
-    def audit_no_autobump
-      return if cask.autobump?
-      return unless new_cask?
-
-      error = SharedAudits.no_autobump_new_package_message(cask.no_autobump_message)
-      add_error error if error
-    end
-
     sig {
       params(
         url_to_check: T.any(String, URL),

@@ -1739,34 +1739,4 @@ RSpec.describe Homebrew::FormulaAuditor do
       expect(fa.problems).to be_empty
     end
   end
-
-  describe "#audit_no_autobump" do
-    it "warns when autobump exclusion reason is not suitable for new formula" do
-      fa = formula_auditor "foo", <<~RUBY, new_formula: true
-        class Foo < Formula
-          url "https://brew.sh/foo-1.0.tgz"
-
-          no_autobump! because: :requires_manual_review
-        end
-      RUBY
-
-      fa.audit_no_autobump
-      expect(fa.new_formula_problems.first[:message])
-        .to match("`:requires_manual_review` is a temporary reason intended for existing packages, " \
-                  "use a different reason instead.")
-    end
-
-    it "does not warn when autobump exclusion reason is allowed" do
-      fa = formula_auditor "foo", <<~RUBY, new_formula: true
-        class Foo < Formula
-          url "https://brew.sh/foo-1.0.tgz"
-
-          no_autobump! because: "foo bar"
-        end
-      RUBY
-
-      fa.audit_no_autobump
-      expect(fa.new_formula_problems).to be_empty
-    end
-  end
 end

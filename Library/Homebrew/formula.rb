@@ -4618,6 +4618,8 @@ class Formula
         raise ArgumentError, "'because' argument should use valid symbol or a string!"
       end
 
+      odeprecated "no_autobump! because: :requires_manual_review" if because == :requires_manual_review
+
       @no_autobump_defined = T.let(true, T.nilable(T::Boolean))
       @no_autobump_message = T.let(because, T.nilable(T.any(String, Symbol)))
       @autobump = T.let(false, T.nilable(T::Boolean))

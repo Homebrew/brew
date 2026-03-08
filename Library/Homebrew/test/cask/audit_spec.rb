@@ -1303,53 +1303,5 @@ RSpec.describe Cask::Audit, :cask do
         end
       end
     end
-
-    describe "checking `no_autobump!` message" do
-      let(:new_cask) { true }
-      let(:only) { ["no_autobump"] }
-      let(:cask_token) { "test-cask" }
-
-      context "when `no_autobump!` reason is not suitable for new cask" do
-        let(:cask) do
-          tmp_cask cask_token.to_s, <<~RUBY
-            cask '#{cask_token}' do
-              version "1.0"
-              sha256 "8dd95daa037ac02455435446ec7bc737b34567afe9156af7d20b2a83805c1d8a"
-              url "https://brew.sh/foo.zip"
-              name "Audit"
-              desc "Cask Auditor"
-              homepage "https://brew.sh/"
-              app "Audit.app"
-              no_autobump! because: :requires_manual_review
-            end
-          RUBY
-        end
-
-        it "fails" do
-          expect(run).to error_with(/use a different reason instead/)
-        end
-      end
-
-      context "when `no_autobump!` reason is allowed" do
-        let(:cask) do
-          tmp_cask cask_token.to_s, <<~RUBY
-            cask '#{cask_token}' do
-              version "1.0"
-              sha256 "8dd95daa037ac02455435446ec7bc737b34567afe9156af7d20b2a83805c1d8a"
-              url "https://brew.sh/foo.zip"
-              name "Audit"
-              desc "Cask Auditor"
-              homepage "https://brew.sh/"
-              app "Audit.app"
-              no_autobump! because: "foo bar"
-            end
-          RUBY
-        end
-
-        it "passes" do
-          expect(run).to pass
-        end
-      end
-    end
   end
 end

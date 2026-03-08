@@ -1079,15 +1079,6 @@ module Homebrew
       problem error if error
     end
 
-    def audit_no_autobump
-      return if formula.autobump?
-
-      return unless @new_formula_inclusive
-
-      error = SharedAudits.no_autobump_new_package_message(formula.no_autobump_message)
-      new_formula_problem error if error
-    end
-
     def quote_dep(dep)
       dep.is_a?(Symbol) ? dep.inspect : "'#{dep}'"
     end
