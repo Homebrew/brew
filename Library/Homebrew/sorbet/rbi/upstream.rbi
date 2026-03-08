@@ -30,3 +30,21 @@ class RSpec::Core::ExampleGroup
   include RSpec::Matchers
   include RSpec::Mocks::ExampleMethods
 end
+
+# `MatcherDelegator` forwards unknown method calls to its wrapped `base_matcher`
+# via `method_missing`. Sorbet cannot follow that delegation, so we declare the
+# methods from `RSpec::Matchers::BuiltIn::Output` here so that aliased/negated
+# wrappers of `output` (e.g. `not_to_output`) expose them to the type-checker.
+class RSpec::Matchers::MatcherDelegator
+  sig { returns(T.self_type) }
+  def to_stdout; end
+
+  sig { returns(T.self_type) }
+  def to_stderr; end
+
+  sig { returns(T.self_type) }
+  def to_stdout_from_any_process; end
+
+  sig { returns(T.self_type) }
+  def to_stderr_from_any_process; end
+end
