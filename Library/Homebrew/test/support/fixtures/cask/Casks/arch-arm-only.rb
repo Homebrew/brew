@@ -1,3 +1,5 @@
+# typed: true
+
 cask "arch-arm-only" do
   arch arm: "-arm"
 

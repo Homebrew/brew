@@ -1,3 +1,5 @@
+# typed: true
+
 cask "latest-with-livecheck-skip" do
   version :latest
   sha256 :no_check

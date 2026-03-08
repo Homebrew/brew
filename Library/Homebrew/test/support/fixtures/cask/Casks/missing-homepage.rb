@@ -1,3 +1,5 @@
+# typed: true
+
 cask "missing-homepage" do
   version "1.2.3"
 

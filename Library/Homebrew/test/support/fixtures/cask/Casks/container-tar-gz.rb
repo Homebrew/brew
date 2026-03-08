@@ -1,3 +1,5 @@
+# typed: true
+
 cask "container-tar-gz" do
   version "1.2.3"
   sha256 "fab685fabf73d5a9382581ce8698fce9408f5feaa49fa10d9bc6c510493300f5"

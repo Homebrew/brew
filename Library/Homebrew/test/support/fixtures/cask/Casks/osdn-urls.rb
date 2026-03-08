@@ -1,3 +1,5 @@
+# typed: true
+
 cask "osdn-urls" do
   version "1.2.3"
 

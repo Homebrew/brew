@@ -1,3 +1,5 @@
+# typed: true
+
 cask "missing-url" do
   version "1.2.3"
 

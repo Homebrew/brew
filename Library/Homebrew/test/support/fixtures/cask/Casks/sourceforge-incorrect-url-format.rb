@@ -1,3 +1,5 @@
+# typed: true
+
 cask "sourceforge-incorrect-url-format" do
   version "1.2.3"
 

@@ -1,3 +1,5 @@
+# typed: true
+
 cask "with-many-languages" do
   version "1.2.3"
 
