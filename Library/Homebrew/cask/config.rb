@@ -183,6 +183,11 @@ module Cask
       @fish_completion ||= T.let(HOMEBREW_PREFIX/"share/fish/vendor_completions.d", T.nilable(Pathname))
     end
 
+    sig { returns(Pathname) }
+    def pwsh_completion
+      @pwsh_completion ||= T.let(HOMEBREW_PREFIX/"share/pwsh/completions", T.nilable(Pathname))
+    end
+
     sig { returns(T::Array[String]) }
     def languages
       [
