@@ -96,6 +96,7 @@ RSpec.describe Cask::CaskLoader::FromAPILoader, :cask do
         expect(cask_from_api).to be_a(Cask::Cask)
         expect(cask_from_api.token).to eq(api_token)
         expect(cask_from_api.loaded_from_api?).to be(true)
+        expect(cask_from_api.loaded_from_internal_api?).to be(false)
         expect(cask_from_api.caskfile_only?).to be(caskfile_only)
         expect(cask_from_api.sourcefile_path).to eq(Homebrew::API::Cask.cached_json_file_path)
       end

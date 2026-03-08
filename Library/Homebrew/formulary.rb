@@ -208,9 +208,10 @@ module Formulary
       api_source:     T::Hash[String, T.untyped],
       tap_git_head:   String,
       flags:          T::Array[String],
+      internal_api:   T::Boolean,
     ).returns(T.class_of(Formula))
   }
-  def self.load_formula_from_struct!(name, formula_struct, api_source:, tap_git_head:, flags:)
+  def self.load_formula_from_struct!(name, formula_struct, api_source:, tap_git_head:, flags:, internal_api: false)
     namespace = :"FormulaNamespaceAPI#{namespace_key(api_source.to_json)}"
 
     mod = Module.new
@@ -224,6 +225,7 @@ module Formulary
 
     klass = Class.new(::Formula) do
       @loaded_from_api = T.let(true, T.nilable(T::Boolean))
+      @loaded_from_internal_api = T.let(internal_api, T.nilable(T::Boolean))
       @api_source = T.let(api_source, T.nilable(T::Hash[String, T.untyped]))
 
       desc formula_struct.desc
@@ -893,7 +895,8 @@ module Formulary
 
       raise FormulaUnavailableError, name if api_source.nil?
 
-      Formulary.load_formula_from_struct!(name, formula_struct, api_source:, tap_git_head:, flags:)
+      Formulary.load_formula_from_struct!(name, formula_struct, api_source:, tap_git_head:, flags:,
+                                          internal_api: true)
     end
   end
 

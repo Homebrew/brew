@@ -2184,6 +2184,16 @@ RSpec.describe Formula do
         expect(f.specified_path).to eq(Homebrew::API::Formula.cached_json_file_path)
       end
     end
+
+    context "when loaded from the internal API" do
+      before do
+        allow(f).to receive(:loaded_from_internal_api?).and_return(true)
+      end
+
+      it "returns the internal API path" do
+        expect(f.specified_path).to eq(Homebrew::API::Internal.cached_formula_json_file_path)
+      end
+    end
   end
 
   describe "#preserve_rpath" do

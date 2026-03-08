@@ -101,17 +101,18 @@ module Cask
     sig { params(_args: T.untyped).returns(String) }
     def to_json(*_args)
       attributes = {
-        "homebrew_version"        => homebrew_version,
-        "loaded_from_api"         => loaded_from_api,
-        "uninstall_flight_blocks" => uninstall_flight_blocks,
-        "installed_as_dependency" => installed_as_dependency,
-        "installed_on_request"    => installed_on_request,
-        "time"                    => time,
-        "runtime_dependencies"    => runtime_dependencies,
-        "source"                  => source,
-        "arch"                    => arch,
-        "uninstall_artifacts"     => uninstall_artifacts,
-        "built_on"                => built_on,
+        "homebrew_version"         => homebrew_version,
+        "loaded_from_api"          => loaded_from_api,
+        "loaded_from_internal_api" => loaded_from_internal_api,
+        "uninstall_flight_blocks"  => uninstall_flight_blocks,
+        "installed_as_dependency"  => installed_as_dependency,
+        "installed_on_request"     => installed_on_request,
+        "time"                     => time,
+        "runtime_dependencies"     => runtime_dependencies,
+        "source"                   => source,
+        "arch"                     => arch,
+        "uninstall_artifacts"      => uninstall_artifacts,
+        "built_on"                 => built_on,
       }
 
       JSON.pretty_generate(attributes)
@@ -120,7 +121,11 @@ module Cask
     sig { returns(String) }
     def to_s
       s = ["Installed"]
-      s << "using the formulae.brew.sh API" if loaded_from_api
+      if loaded_from_internal_api
+        s << "using the internal formulae.brew.sh API"
+      elsif loaded_from_api
+        s << "using the formulae.brew.sh API"
+      end
       s << Time.at(time).strftime("on %Y-%m-%d at %H:%M:%S") if time
       s.join(" ")
     end

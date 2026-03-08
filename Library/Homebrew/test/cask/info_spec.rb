@@ -186,7 +186,7 @@ RSpec.describe Cask::Info, :cask do
     EOS
   end
 
-  it "prints install information for an installed Cask" do
+  it "prints install information for an installed Cask loaded from the API" do
     mktmpdir do |caskroom|
       FileUtils.mkdir caskroom/"2.61"
 
@@ -207,6 +207,43 @@ RSpec.describe Cask::Info, :cask do
         Installed
         #{caskroom}/2.61 (0B)
           Installed using the formulae.brew.sh API on #{Time.at(time).strftime("%Y-%m-%d at %H:%M:%S")}
+        From: https://github.com/Homebrew/homebrew-cask/blob/HEAD/Casks/l/local-transmission.rb
+        ==> Name
+        Transmission
+        ==> Description
+        BitTorrent client
+        ==> Artifacts
+        Transmission.app (App)
+      EOS
+    end
+  end
+
+  it "prints install information for an installed Cask loaded from the internal API" do
+    mktmpdir do |caskroom|
+      FileUtils.mkdir caskroom/"2.61"
+
+      cask = Cask::CaskLoader.load("local-transmission")
+      time = 1_720_189_863
+      tab = Cask::Tab.new(
+        loaded_from_api:          true,
+        loaded_from_internal_api: true,
+        tabfile:                  TEST_FIXTURE_DIR/"cask_receipt.json",
+        time:,
+      )
+      expect(cask).to receive(:installed?).and_return(true)
+      expect(cask).to receive(:caskroom_path).and_return(caskroom)
+      expect(cask).to receive(:installed_version).and_return("2.61")
+      expect(Cask::Tab).to receive(:for_cask).with(cask).and_return(tab)
+      allow_any_instance_of(StringIO).to receive(:tty?).and_return(true)
+
+      expect do
+        described_class.info(cask, args:)
+      end.to output(<<~EOS).to_stdout
+        ==> #{installed("local-transmission")}: 2.61
+        https://transmissionbt.com/
+        Installed
+        #{caskroom}/2.61 (0B)
+          Installed using the internal formulae.brew.sh API on #{Time.at(time).strftime("%Y-%m-%d at %H:%M:%S")}
         From: https://github.com/Homebrew/homebrew-cask/blob/HEAD/Casks/l/local-transmission.rb
         ==> Name
         Transmission

@@ -1,6 +1,7 @@
 {
   "homebrew_version": "4.3.7",
   "loaded_from_api": false,
+  "loaded_from_internal_api": false,
   "uninstall_flight_blocks": true,
   "installed_as_dependency": false,
   "installed_on_request": true,

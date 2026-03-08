@@ -584,6 +584,7 @@ RSpec.describe Cask::Cask, :cask do
         hash = cask.to_hash_with_variations
 
         expect(cask.loaded_from_api?).to be true
+        expect(cask.loaded_from_internal_api?).to be false
         expect(hash).to be_a(Hash)
         expect(JSON.pretty_generate(hash)).to eq(expected_json)
       end

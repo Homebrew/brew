@@ -446,6 +446,7 @@ class Formula
   # The path that was specified to find this formula.
   sig { returns(T.nilable(Pathname)) }
   def specified_path
+    return Homebrew::API::Internal.cached_formula_json_file_path if loaded_from_internal_api?
     return Homebrew::API::Formula.cached_json_file_path if loaded_from_api?
     return alias_path if alias_path&.exist?
 
@@ -589,6 +590,11 @@ class Formula
   # @!method loaded_from_api?
   # @see .loaded_from_api?
   delegate loaded_from_api?: :"self.class"
+
+  # Whether this formula was loaded using the internal formulae.brew.sh API.
+  # @!method loaded_from_internal_api?
+  # @see .loaded_from_internal_api?
+  delegate loaded_from_internal_api?: :"self.class"
 
   # The API source data used to load this formula.
   # Returns `nil` if the formula was not loaded from the API.
@@ -2892,6 +2898,10 @@ class Formula
 
   sig { returns(T::Hash[String, T.untyped]) }
   def to_hash_with_variations
+    if loaded_from_internal_api?
+      raise UsageError, "Cannot call #to_hash_with_variations on formulae loaded from the internal API"
+    end
+
     hash = to_hash
 
     # Take from API, merging in local install status.
@@ -3642,6 +3652,7 @@ class Formula
         @skip_clean_paths = T.let(Set.new, T.nilable(T::Set[T.any(String, Symbol)]))
         @link_overwrite_paths = T.let(Set.new, T.nilable(T::Set[String]))
         @loaded_from_api = T.let(false, T.nilable(T::Boolean))
+        @loaded_from_internal_api = T.let(false, T.nilable(T::Boolean))
         @api_source = T.let(nil, T.nilable(T::Hash[String, T.untyped]))
         @on_system_blocks_exist = T.let(false, T.nilable(T::Boolean))
         @network_access_allowed = T.let(SUPPORTED_NETWORK_ACCESS_PHASES.to_h do |phase|
@@ -3669,6 +3680,10 @@ class Formula
     # Whether this formula was loaded using the formulae.brew.sh API.
     sig { returns(T::Boolean) }
     def loaded_from_api? = !!@loaded_from_api
+
+    # Whether this formula was loaded using the internal formulae.brew.sh API.
+    sig { returns(T::Boolean) }
+    def loaded_from_internal_api? = !!@loaded_from_internal_api
 
     # Whether this formula was loaded using the formulae.brew.sh API.
     sig { returns(T.nilable(T::Hash[String, T.untyped])) }
