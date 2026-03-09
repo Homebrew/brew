@@ -18,6 +18,7 @@ defaults:
     shell: bash -xeuo pipefail {0}
 
 env:
+  # odeprecated: remove 22.04 image in Homebrew >=5.4
   VERSIONS: '["22.04", "24.04"]'
 
 jobs:
@@ -71,7 +72,7 @@ jobs:
                 "ghcr.io/homebrew/ubuntu${version}:${brew_version}"
                 "ghcr.io/homebrew/ubuntu${version}:latest"
               )
-              if [[ "${version}" == "22.04" ]]; then
+              if [[ "${version}" == "24.04" ]]; then
                 tags+=(
                   "ghcr.io/homebrew/brew:${brew_version}"
                   "ghcr.io/homebrew/brew:latest"
@@ -79,7 +80,7 @@ jobs:
               fi
             elif [[ "${GITHUB_EVENT_NAME}" == "push" &&
                     ("${GITHUB_REF}" == "refs/heads/main") ]]; then
-              if [[ "${version}" == "22.04" ]]; then
+              if [[ "${version}" == "24.04" ]]; then
                 tags+=("ghcr.io/homebrew/brew:main")
               fi
               tags+=("ghcr.io/homebrew/ubuntu${version}:main")
@@ -138,6 +139,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        # odeprecated: remove 22.04 image in Homebrew >=5.4
         version: ["22.04", "24.04"]
         arch: ["x86_64", "arm64"]
 
@@ -162,6 +164,11 @@ jobs:
           VERSION: ${{ matrix.version }}
           PUSH: ${{ needs.generate-tags.outputs.push }}
         run: |
+          # odeprecated: remove 22.04 image in Homebrew >=5.4
+          if [[ "${VERSION}" == "22.04" ]]; then
+            echo "The homebrew/ubuntu22.04 image is deprecated and will soon be retired. Use homebrew/brew." > .docker-deprecate
+          fi
+
           filter="$(printf '.["%s"]' "${VERSION}")"
           echo "push=$(jq --raw-output "${filter}" <<<"${PUSH}")" >>"${GITHUB_OUTPUT}"
 
@@ -182,8 +189,17 @@ jobs:
           build-args: version=${{ matrix.version }}
           labels: ${{ needs.generate-tags.outputs.labels }}
 
+      - name: Set environment variables
+        run: |
+          # odeprecated: remove 22.04 in Homebrew >=5.4
+          if [[ "${VERSION}" == "22.04" ]]; then
+            echo "HOMEBREW_GLIBC_TESTING=1" >> "$GITHUB_ENV"
+          fi
+        env:
+          VERSION: ${{ matrix.version }}
+
       - name: Run brew test-bot --only-setup
-        run: docker run --rm brew brew test-bot --only-setup
+        run: docker run --env HOMEBREW_GLIBC_TESTING --rm brew brew test-bot --only-setup
 
       - name: Log in to GitHub Packages (BrewTestBot)
         if: fromJSON(steps.attributes.outputs.push)

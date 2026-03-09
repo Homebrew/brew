@@ -43,7 +43,7 @@ To qualify as Tier 1, a Linux configuration must meet all of the following:
 - Running on:
   - Ubuntu within its [standard support window](https://ubuntu.com/about/release-cycle) or
   - a Homebrew-provided Docker image
-- Using a system `glibc` version ≥ 2.35
+- Using a system `glibc` version ≥ 2.39
 - Using a Linux kernel version ≥ 3.2
 - Installed in the default prefix: `/home/linuxbrew/.linuxbrew`
 - Using a supported architecture (ARM64/AArch64 or Intel x86_64 with SSSE3 support)
@@ -67,7 +67,7 @@ Tier 2 configurations include:
 
 - macOS prerelease versions before they are promoted to Tier 1
 - macOS systems with outdated versions of Xcode Command Line Tools
-- Linux systems with `glibc` versions between 2.13 and 2.34 (Homebrew’s own `glibc` formula will be installed automatically)
+- Linux systems with `glibc` versions between 2.13 and 2.38 (Homebrew’s own `glibc` formula will be installed automatically)
 - Homebrew installed outside the default prefix, requiring source builds for official packages (i.e. installing outside `/opt/homebrew`, `/usr/local`, or `/home/linuxbrew/.linuxbrew`)
 - Architectures not yet officially supported by Homebrew
 - Macs using OpenCore Legacy Patcher with a Westmere or newer Intel CPU
