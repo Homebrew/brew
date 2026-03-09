@@ -4,6 +4,7 @@
 require "abstract_command"
 require "fileutils"
 require "formula"
+require "utils/commit_message"
 require "utils/inreplace"
 require "utils/tar"
 
@@ -437,7 +438,7 @@ module Homebrew
           {
             sourcefile_path:    commit_formula.path,
             old_contents:,
-            commit_message:     "#{commit_formula.name} #{new_formula_version}",
+            commit_message:     Utils::CommitMessage.normalize("#{commit_formula.name}: #{new_formula_version}"),
             additional_files:   alias_rename,
             formula_pr_message:,
             formula_name:       commit_formula.name,
@@ -469,11 +470,13 @@ module Homebrew
         new_formula_version = commits.fetch(0)[:new_version]
 
         pr_title = if args.bump_synced.nil?
-          "#{formula.name} #{new_formula_version}"
+          Utils::CommitMessage.normalize("#{formula.name}: #{new_formula_version}")
         else
           maximum_characters_in_title = 72
           max = maximum_characters_in_title - new_formula_version.to_s.length - 1
-          "#{Formatter.truncate(Array(args.bump_synced).join(" "), max:)} #{new_formula_version}"
+          Utils::CommitMessage.normalize(
+            "#{Formatter.truncate(Array(args.bump_synced).join(" "), max:)}: #{new_formula_version}",
+          )
         end
 
         pr_message = "Created with `brew bump-formula-pr`."

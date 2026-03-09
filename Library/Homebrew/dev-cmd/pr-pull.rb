@@ -3,6 +3,7 @@
 
 require "abstract_command"
 require "fileutils"
+require "utils/commit_message"
 require "utils/github"
 require "utils/github/artifacts"
 require "tmpdir"
@@ -259,7 +260,7 @@ module Homebrew
 
         new_package = get_package(tap, subject_name, subject_path, new_contents)
 
-        return "#{subject_name}: delete #{reason}".strip if new_package.blank?
+        return Utils::CommitMessage.normalize("#{subject_name}: delete #{reason}") if new_package.blank?
 
         old_package = get_package(tap, subject_name, subject_path, old_contents)
 
@@ -268,11 +269,11 @@ module Homebrew
         elsif old_package.version != new_package.version
           "#{subject_name} #{new_package.version}"
         elsif !is_cask && old_package.revision != new_package.revision
-          "#{subject_name}: revision #{reason}".strip
+          Utils::CommitMessage.normalize("#{subject_name}: revision #{reason}")
         elsif is_cask && old_package.sha256 != new_package.sha256
-          "#{subject_name}: checksum update #{reason}".strip
+          Utils::CommitMessage.normalize("#{subject_name}: checksum update #{reason}")
         else
-          "#{subject_name}: #{reason || "rebuild"}".strip
+          Utils::CommitMessage.normalize("#{subject_name}: #{reason || "rebuild"}")
         end
       end
 
@@ -292,7 +293,7 @@ module Homebrew
         old_package = Utils::Git.file_at_commit(git_repo.to_s, file, "HEAD^")
         new_package = Utils::Git.file_at_commit(git_repo.to_s, file, "HEAD")
 
-        bump_subject = determine_bump_subject(old_package, new_package, package_file, reason:).strip
+        bump_subject = determine_bump_subject(old_package, new_package, package_file, reason:)
         msg = git_repo.commit_message
         return if msg.blank?
 

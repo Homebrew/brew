@@ -3,6 +3,7 @@
 
 require "abstract_command"
 require "formula"
+require "utils/commit_message"
 
 module Homebrew
   module DevCmd
@@ -61,7 +62,9 @@ module Homebrew
             formula.path.atomic_write(formula_ast.process)
           end
 
-          message = "#{formula.name}: revision bump #{args.message}"
+          message = Utils::CommitMessage.normalize(
+            "#{formula.name}: revision bump#{" #{args.message}" if args.message}",
+          )
           if args.dry_run?
             ohai "git commit --no-edit --verbose --message=#{message} -- #{formula.path}"
           elsif !args.write_only?

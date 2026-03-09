@@ -5,6 +5,7 @@ require "abstract_command"
 require "bump_version_parser"
 require "cask"
 require "cask/download"
+require "utils/commit_message"
 require "utils/tar"
 
 module Homebrew
@@ -133,7 +134,7 @@ module Homebrew
         old_contents = File.read(cask.sourcefile_path)
 
         if new_base_url
-          commit_message ||= "#{cask.token}: update URL"
+          commit_message ||= Utils::CommitMessage.normalize("#{cask.token}: update URL")
 
           m = /^ +url "(.+?)"\n/m.match(old_contents)
           odie "Could not find old URL in cask!" if m.nil?
@@ -152,13 +153,13 @@ module Homebrew
           if branch_version.is_a?(Cask::DSL::Version)
             commit_version = shortened_version(branch_version, cask:)
             branch_name = "bump-#{cask.token}-#{branch_version.tr(",:", "-")}"
-            commit_message ||= "#{cask.token} #{commit_version}"
+            commit_message ||= Utils::CommitMessage.normalize("#{cask.token}: #{commit_version}")
           end
           replacement_pairs = replace_version_and_checksum(cask, new_hash, new_version, replacement_pairs)
         end
         # Now that we have all replacement pairs, we will replace them further down
 
-        commit_message ||= "#{cask.token}: update checksum" if new_hash
+        commit_message ||= Utils::CommitMessage.normalize("#{cask.token}: update checksum") if new_hash
 
         # Remove nested arrays where elements are identical
         replacement_pairs = replacement_pairs.reject { |pair| pair[0] == pair[1] }.uniq.compact

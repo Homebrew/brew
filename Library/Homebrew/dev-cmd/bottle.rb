@@ -5,6 +5,7 @@ require "abstract_command"
 require "fileutils"
 require "formula"
 require "utils/bottles"
+require "utils/commit_message"
 require "tab"
 require "sbom"
 require "keg"
@@ -858,10 +859,12 @@ module Homebrew
           short_name = formula_name.split("/", -1).last
           pkg_version = bottle_hash["formula"]["pkg_version"]
 
+          commit_message = Utils::CommitMessage.normalize(
+            "#{short_name}: #{update_or_add} #{pkg_version} bottle",
+          )
           path.parent.cd do
             safe_system "git", "commit", "--no-edit", "--verbose",
-                        "--message=#{short_name}: #{update_or_add} #{pkg_version} bottle.",
-                        "--", path
+                        "--message=#{commit_message}", "--", path
           end
         end
       end
