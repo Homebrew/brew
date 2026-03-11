@@ -172,6 +172,7 @@ module Homebrew
           RuboCop::Formatter::PathUtil
           RuboCop::Options
           RuboCop::ResultCache
+          RuboCop::RSpec::ExpectOffense
           RuboCop::Runner
           RuboCop::TargetFinder
           RuboCop::Version

@@ -4117,6 +4117,37 @@ RuboCop::Plugin::OBSOLETE_INTERNAL_AFFAIRS_PLUGIN_NAME = T.let(T.unsafe(nil), St
 
 RuboCop::ProcessedSource = RuboCop::AST::ProcessedSource
 
+module RuboCop::RSpec::ExpectOffense
+  def expect_correction(correction, loop: T.unsafe(nil), source: T.unsafe(nil)); end
+  def expect_no_corrections; end
+  def expect_no_offenses(source, file = T.unsafe(nil)); end
+  def expect_offense(source, file = T.unsafe(nil), severity: T.unsafe(nil), chomp: T.unsafe(nil), **replacements); end
+  def format_offense(source, **replacements); end
+  def parse_annotations(source, raise_error: T.unsafe(nil), **replacements); end
+  def parse_processed_source(source, file = T.unsafe(nil)); end
+  def set_formatter_options; end
+end
+
+class RuboCop::RSpec::ExpectOffense::AnnotatedSource
+  def initialize(lines, annotations); end
+
+  def ==(other); end
+  def inspect; end
+  def match_annotations?(other); end
+  def plain_source; end
+  def to_s; end
+  def with_offense_annotations(offenses); end
+
+  protected
+
+  def annotations; end
+  def lines; end
+
+  class << self
+    def parse(annotated_source); end
+  end
+end
+
 RuboCop::RSpec::ExpectOffense::AnnotatedSource::ABBREV = T.let(T.unsafe(nil), String)
 
 RuboCop::RSpec::ExpectOffense::AnnotatedSource::ANNOTATION_PATTERN = T.let(T.unsafe(nil), Regexp)
