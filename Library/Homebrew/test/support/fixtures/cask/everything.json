@@ -18,6 +18,7 @@
   "version": "1.2.3",
   "autobump": true,
   "no_autobump_message": null,
+  "livecheck_defined": false,
   "skip_livecheck": false,
   "installed": null,
   "installed_time": null,
