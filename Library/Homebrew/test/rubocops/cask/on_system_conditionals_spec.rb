@@ -141,7 +141,6 @@ RSpec.describe RuboCop::Cop::Cask::OnSystemConditionals, :config do
 
       expect_correction <<~CASK
         cask 'foo' do
-        #{"  "}
           sha256 arm: "8c62a2b791cf5f0da6066a0a4b6e85f62949cd60975da062df44adf887f4370b", intel: "67cdb8a02803ef37fdbf7e0be205863172e41a561ca446cd84f0d7ab35a99d94"
         end
       CASK
@@ -195,7 +194,6 @@ RSpec.describe RuboCop::Cop::Cask::OnSystemConditionals, :config do
 
       expect_correction <<~CASK
         cask 'foo' do
-        #{"  "}
           version "1.0.0"
           sha256 arm: "8c62a2b791cf5f0da6066a0a4b6e85f62949cd60975da062df44adf887f4370b", intel: "67cdb8a02803ef37fdbf7e0be205863172e41a561ca446cd84f0d7ab35a99d94"
         end
@@ -219,7 +217,6 @@ RSpec.describe RuboCop::Cop::Cask::OnSystemConditionals, :config do
 
       expect_correction <<~CASK
         cask 'foo' do
-        #{"  "}
           version "1.0.0"
           sha256 "67cdb8a02803ef37fdbf7e0be205863172e41a561ca446cd84f0d7ab35a99d94"
         end

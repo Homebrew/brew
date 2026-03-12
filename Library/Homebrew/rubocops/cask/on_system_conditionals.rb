@@ -73,7 +73,7 @@ module RuboCop
 
           problem "Don't nest only the `sha256` stanzas in `on_intel` and `on_arm` blocks" do |corrector|
             corrector.replace(nodes[:arm][:node].source_range, replacement_string)
-            corrector.replace(nodes[:intel][:node].source_range, "")
+            corrector.remove(range_by_whole_lines(nodes[:intel][:node].source_range, include_final_newline: true))
           end
         end
 
@@ -111,7 +111,7 @@ module RuboCop
           problem "Don't nest identical `version` stanzas, or only `sha256` " \
                   "stanzas, in `on_intel` and `on_arm` blocks" do |corrector|
             corrector.replace(arm_node.source_range, replacement)
-            corrector.replace(intel_node.source_range, "")
+            corrector.remove(range_by_whole_lines(intel_node.source_range, include_final_newline: true))
           end
         end
 
