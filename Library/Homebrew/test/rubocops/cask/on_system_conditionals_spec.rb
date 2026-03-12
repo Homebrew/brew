@@ -133,7 +133,7 @@ RSpec.describe RuboCop::Cop::Cask::OnSystemConditionals, :config do
             sha256 "67cdb8a02803ef37fdbf7e0be205863172e41a561ca446cd84f0d7ab35a99d94"
           end
           on_arm do
-          ^^^^^^^^^ Use `sha256 arm: "8c62a2b791cf5f0da6066a0a4b6e85f62949cd60975da062df44adf887f4370b", intel: "67cdb8a02803ef37fdbf7e0be205863172e41a561ca446cd84f0d7ab35a99d94"` instead of nesting the `sha256` stanzas in `on_intel` and `on_arm` blocks
+          ^^^^^^^^^ Don't nest only the `sha256` stanzas in `on_intel` and `on_arm` blocks
             sha256 "8c62a2b791cf5f0da6066a0a4b6e85f62949cd60975da062df44adf887f4370b"
           end
         end
@@ -186,7 +186,7 @@ RSpec.describe RuboCop::Cop::Cask::OnSystemConditionals, :config do
             sha256 "67cdb8a02803ef37fdbf7e0be205863172e41a561ca446cd84f0d7ab35a99d94"
           end
           on_arm do
-          ^^^^^^^^^ Use `version "1.0.0"` and `sha256 arm: "8c62a2b791cf5f0da6066a0a4b6e85f62949cd60975da062df44adf887f4370b", intel: "67cdb8a02803ef37fdbf7e0be205863172e41a561ca446cd84f0d7ab35a99d94"` instead of nesting the `version` and `sha256` stanzas in `on_intel` and `on_arm` blocks
+          ^^^^^^^^^ Don't nest identical `version` stanzas, or only `sha256` stanzas, in `on_intel` and `on_arm` blocks
             version "1.0.0"
             sha256 "8c62a2b791cf5f0da6066a0a4b6e85f62949cd60975da062df44adf887f4370b"
           end
@@ -210,7 +210,7 @@ RSpec.describe RuboCop::Cop::Cask::OnSystemConditionals, :config do
             sha256 "67cdb8a02803ef37fdbf7e0be205863172e41a561ca446cd84f0d7ab35a99d94"
           end
           on_arm do
-          ^^^^^^^^^ Use `version "1.0.0"` and `sha256 "67cdb8a02803ef37fdbf7e0be205863172e41a561ca446cd84f0d7ab35a99d94"` instead of nesting the `version` and `sha256` stanzas in `on_intel` and `on_arm` blocks
+          ^^^^^^^^^ Don't nest identical `version` stanzas, or only `sha256` stanzas, in `on_intel` and `on_arm` blocks
             version "1.0.0"
             sha256 "67cdb8a02803ef37fdbf7e0be205863172e41a561ca446cd84f0d7ab35a99d94"
           end

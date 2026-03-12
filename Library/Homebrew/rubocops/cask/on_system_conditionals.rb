@@ -71,8 +71,7 @@ module RuboCop
           offending_node(nodes[:arm][:node])
           replacement_string = "sha256 arm: #{nodes[:arm][:value].inspect}, intel: #{nodes[:intel][:value].inspect}"
 
-          problem "Use `#{replacement_string}` instead of nesting the `sha256` stanzas in " \
-                  "`on_intel` and `on_arm` blocks" do |corrector|
+          problem "Don't nest only the `sha256` stanzas in `on_intel` and `on_arm` blocks" do |corrector|
             corrector.replace(nodes[:arm][:node].source_range, replacement_string)
             corrector.replace(nodes[:intel][:node].source_range, "")
           end
@@ -109,8 +108,8 @@ module RuboCop
           replacement = "#{version_str}\n#{indent}#{sha256_str}"
 
           offending_node(arm_node)
-          problem "Use `#{version_str}` and `#{sha256_str}` instead of nesting the `version` and `sha256` " \
-                  "stanzas in `on_intel` and `on_arm` blocks" do |corrector|
+          problem "Don't nest identical `version` stanzas, or only `sha256` " \
+                  "stanzas, in `on_intel` and `on_arm` blocks" do |corrector|
             corrector.replace(arm_node.source_range, replacement)
             corrector.replace(intel_node.source_range, "")
           end
