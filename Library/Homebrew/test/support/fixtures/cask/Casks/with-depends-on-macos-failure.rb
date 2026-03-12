@@ -1,3 +1,5 @@
+# typed: true
+
 cask "with-depends-on-macos-failure" do
   # guarantee a mismatched release
   on_big_sur :or_older do

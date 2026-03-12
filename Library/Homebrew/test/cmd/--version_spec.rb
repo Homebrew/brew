@@ -1,3 +1,4 @@
+# typed: true
 # frozen_string_literal: true
 
 RSpec.describe "brew --version", type: :system do

@@ -1,3 +1,5 @@
+# typed: true
+
 cask "generic-artifact-user-relative-target" do
   version "1.2.3"
   sha256 "d5b2dfbef7ea28c25f7a77cd7fa14d013d82b626db1d82e00e25822464ba19e2"

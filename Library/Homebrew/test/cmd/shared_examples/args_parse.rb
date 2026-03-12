@@ -1,3 +1,4 @@
+# typed: true
 # frozen_string_literal: true
 
 RSpec.shared_examples "parseable arguments" do |command_name: nil|

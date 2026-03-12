@@ -1,3 +1,4 @@
+# typed: true
 # frozen_string_literal: true
 
 require "pkg_version"

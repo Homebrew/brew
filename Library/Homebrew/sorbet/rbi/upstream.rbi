@@ -24,3 +24,9 @@ class IO
   sig { params(timeout: T.nilable(T.any(Float, Integer, Rational))).returns(T.nilable(T.any(IO, T::Boolean))) }
   def wait_readable(timeout = nil); end
 end
+
+class RSpec::Core::ExampleGroup
+  include RSpec::SharedContext
+  include RSpec::Matchers
+  include RSpec::Mocks::ExampleMethods
+end

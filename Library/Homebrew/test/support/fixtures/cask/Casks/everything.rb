@@ -1,3 +1,5 @@
+# typed: true
+
 # Used to test cask hash generation.
 cask "everything" do
   version "1.2.3"

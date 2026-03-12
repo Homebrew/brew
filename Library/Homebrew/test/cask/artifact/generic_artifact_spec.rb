@@ -1,3 +1,4 @@
+# typed: true
 # frozen_string_literal: true
 
 RSpec.describe Cask::Artifact::Artifact, :cask do

@@ -1,3 +1,5 @@
+# typed: true
+
 cask "with-shellcompletion-long" do
   version "1.2.3"
   sha256 "957978d9b30adfda8e1f914ba8c8019e016545c8f7e16c6ab0234d189fac8146"
