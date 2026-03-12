@@ -47,6 +47,7 @@ module RuboCop
           audit_arch_conditionals(cask_body, allowed_blocks: FLIGHT_STANZA_NAMES)
           audit_macos_version_conditionals(cask_body, recommend_on_system: false)
           simplify_sha256_stanzas
+          simplify_arch_version_stanzas
           audit_identical_sha256_across_architectures
         end
 
@@ -74,6 +75,44 @@ module RuboCop
                   "`on_intel` and `on_arm` blocks" do |corrector|
             corrector.replace(nodes[:arm][:node].source_range, replacement_string)
             corrector.replace(nodes[:intel][:node].source_range, "")
+          end
+        end
+
+        sig { void }
+        def simplify_arch_version_stanzas
+          nodes = {}
+
+          version_and_sha256_on_arch_stanzas(cask_body) do |block_node, arch_method, version_value, sha256_value|
+            arch = arch_method.to_s.delete_prefix("on_").to_sym
+            nodes[arch] = { node: block_node, version_value:, sha256_value: }
+          end
+
+          return if !nodes.key?(:arm) || !nodes.key?(:intel)
+
+          arm_version = nodes[:arm][:version_value]
+          intel_version = nodes[:intel][:version_value]
+
+          return if arm_version != intel_version
+
+          arm_sha = nodes[:arm][:sha256_value]
+          intel_sha = nodes[:intel][:sha256_value]
+          arm_node = nodes[:arm][:node]
+          intel_node = nodes[:intel][:node]
+
+          indent = " " * arm_node.loc.column
+          version_str = "version #{arm_version.inspect}"
+          sha256_str = if arm_sha == intel_sha
+            "sha256 #{arm_sha.inspect}"
+          else
+            "sha256 arm: #{arm_sha.inspect}, intel: #{intel_sha.inspect}"
+          end
+          replacement = "#{version_str}\n#{indent}#{sha256_str}"
+
+          offending_node(arm_node)
+          problem "Use `#{version_str}` and `#{sha256_str}` instead of nesting the `version` and `sha256` " \
+                  "stanzas in `on_intel` and `on_arm` blocks" do |corrector|
+            corrector.replace(arm_node.source_range, replacement)
+            corrector.replace(intel_node.source_range, "")
           end
         end
 
@@ -120,6 +159,15 @@ module RuboCop
             (args)
             (send nil? :sha256
               (str $_)))
+        PATTERN
+
+        def_node_search :version_and_sha256_on_arch_stanzas, <<~PATTERN
+          $(block
+            (send nil? ${:on_intel :on_arm})
+            (args)
+            (begin
+              (send nil? :version (str $_))
+              (send nil? :sha256 (str $_))))
         PATTERN
       end
     end
