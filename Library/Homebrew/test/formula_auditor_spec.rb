@@ -580,7 +580,7 @@ RSpec.describe Homebrew::FormulaAuditor do
     end
   end
 
-  describe "#audit_resource_name_matches_pypi_package_name_in_url" do
+  describe "#audit_pypi_resources" do
     it "reports a problem if the resource name does not match the python sdist name" do
       fa = formula_auditor "foo", <<~RUBY
         class Foo < Formula
@@ -617,6 +617,68 @@ RSpec.describe Homebrew::FormulaAuditor do
       fa.audit_specs
       expect(fa.problems.first[:message])
         .to match("`resource` name should be 'FooSomething' to match the PyPI package name")
+    end
+
+    it "reports a problem if the resource should be replaced with a dependency" do
+      fa = formula_auditor "foo", <<~RUBY
+        class Foo < Formula
+          url "https://brew.sh/foo-1.0.tgz"
+          sha256 "abc123"
+          homepage "https://brew.sh"
+
+          resource "cryptography" do
+            url "https://files.pythonhosted.org/packages/00/00/aaaa/cryptography-1.0.0.tar.gz"
+            sha256 "def456"
+          end
+
+          resource "pydantic" do
+            url "https://files.pythonhosted.org/packages/00/00/aaaa/pydantic-1.0.0.tar.gz"
+            sha256 "ghi789"
+          end
+        end
+      RUBY
+
+      fa.audit_specs
+      expect(fa.problems.count).to eq(2)
+      expect(fa.problems.first[:message])
+        .to match("PyPI package should be replaced with Homebrew dependency and excluded using `pypi_package` method")
+    end
+
+    it "doesn't report a problem if there is an exception to a PyPI resource that should be a dependency" do
+      tap_audit_exceptions = { pypi_resources_allowlist: { "foo" => "cryptography pydantic" } }
+      fa = formula_auditor("foo", <<~RUBY, tap_audit_exceptions:)
+        class Foo < Formula
+          url "https://brew.sh/foo-1.0.tgz"
+          sha256 "abc123"
+          homepage "https://brew.sh"
+
+          resource "cryptography" do
+            url "https://files.pythonhosted.org/packages/60/04/aaaa/cryptography-1.0.0.tar.gz"
+            sha256 "def456"
+          end
+
+          resource "pydantic" do
+            url "https://files.pythonhosted.org/packages/00/00/aaaa/pydantic-1.0.0.tar.gz"
+            sha256 "ghi789"
+          end
+        end
+      RUBY
+
+      fa.audit_specs
+      expect(fa.problems).to be_empty
+    end
+
+    it "doesn't audit PyPI package if it is not a resource" do
+      fa = formula_auditor "cryptography", <<~RUBY
+        class Cryptography < Formula
+          url "https://files.pythonhosted.org/packages/60/04/aaaa/cryptography-1.0.0.tar.gz"
+          sha256 "abc123"
+          homepage "https://brew.sh"
+        end
+      RUBY
+
+      fa.audit_specs
+      expect(fa.problems).to be_empty
     end
   end
 
