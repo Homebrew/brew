@@ -124,7 +124,7 @@ module Utils
 
         if (tab_attributes = formula.bottle_tab_attributes.presence)
           tab = Tab.from_file_content(tab_attributes.to_json, tabfile)
-          return tab if tab.built_on["os"] == HOMEBREW_SYSTEM
+          return tab if tab.built_on&.[]("os") == HOMEBREW_SYSTEM
         elsif !tabfile.exist? && bottle_json_path&.exist?
           _, tag, = Utils::Bottles.extname_tag_rebuild(formula.local_bottle_path.to_s)
           bottle_hash = JSON.parse(File.read(bottle_json_path))

@@ -15,6 +15,31 @@ RSpec.describe Utils::Bottles do
   end
 
   describe ".load_tab" do
+    context "when bottle_tab_attributes are present but built_on is nil" do
+      before do
+        formula_name = "testball1"
+        formula_path = CoreTap.instance.new_formula_path(formula_name)
+        formula_path.write <<~RUBY
+          class #{Formulary.class_s(formula_name)} < Formula
+            url "testball1"
+            version "0.1"
+          end
+        RUBY
+        Formulary.cache.delete(formula_path)
+      end
+
+      it "does not raise when built_on is nil" do
+        formula = Formula["testball1"]
+        formula.prefix.mkpath
+
+        # Simulate API-served tab attributes that lack a built_on key
+        tab_attributes = { "homebrew_version" => "4.0.0" }
+        allow(formula).to receive(:bottle_tab_attributes).and_return(tab_attributes)
+
+        expect { described_class.load_tab(formula) }.not_to raise_error
+      end
+    end
+
     context "when tab_attributes and tabfile are missing" do
       before do
         # setup a testball1
