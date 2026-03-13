@@ -117,6 +117,124 @@ RSpec.describe Utils::Autoremove do
     end
   end
 
+  describe "::removable_formulae" do
+    include_context "with formulae for dependency testing"
+
+    let(:requesting_formula) do
+      formula "main_app" do
+        url "main_app-1.0"
+      end
+    end
+
+    let(:requesting_tab) { instance_double(Tab) }
+
+    let(:all_formulae) { formulae + [requesting_formula] }
+
+    before do
+      allow(tab_from_keg).to receive_messages(
+        poured_from_bottle:            true,
+        installed_on_request:          false,
+        installed_on_request_present?: true,
+      )
+      allow(requesting_tab).to receive_messages(
+        poured_from_bottle:            true,
+        installed_on_request:          true,
+        installed_on_request_present?: true,
+      )
+      allow(requesting_formula).to receive_messages(
+        installed_runtime_formula_dependencies: [],
+        any_installed_keg:                      instance_double(Keg, tab: requesting_tab),
+      )
+
+      # Default: no formula-definition deps for cross-check
+      all_formulae.each do |f|
+        allow(f).to receive(:runtime_formula_dependencies)
+          .with(read_from_tab: false, undeclared: false)
+          .and_return([])
+      end
+    end
+
+    context "when no candidates survive forward-check" do
+      before do
+        allow(tab_from_keg).to receive_messages(
+          poured_from_bottle:            true,
+          installed_on_request:          true,
+          installed_on_request_present?: true,
+        )
+      end
+
+      it "returns empty without cross-checking formula definitions" do
+        expect(described_class.removable_formulae(all_formulae, [])).to eq([])
+      end
+    end
+
+    context "when no formula-definition conflicts exist" do
+      it "returns all forward-check candidates" do
+        expect(described_class.removable_formulae(all_formulae, [])).to match_array(formulae)
+      end
+    end
+
+    context "when stale tab misses a dependency that the formula definition catches" do
+      before do
+        allow(requesting_formula).to receive(:runtime_formula_dependencies)
+          .with(read_from_tab: false, undeclared: false)
+          .and_return([second_formula_dep])
+      end
+
+      it "excludes the formula needed by the current formula definition" do
+        result = described_class.removable_formulae(all_formulae, [])
+        expect(result).not_to include(second_formula_dep)
+      end
+
+      it "keeps formulae not required by any formula definition" do
+        result = described_class.removable_formulae(all_formulae, [])
+        expect(result).to include(formula_with_deps, first_formula_dep, formula_is_build_dep)
+      end
+    end
+
+    context "when excluding a candidate cascades to keep another" do
+      before do
+        allow(requesting_formula).to receive(:runtime_formula_dependencies)
+          .with(read_from_tab: false, undeclared: false)
+          .and_return([first_formula_dep])
+        allow(first_formula_dep).to receive(:runtime_formula_dependencies)
+          .with(read_from_tab: false, undeclared: false)
+          .and_return([second_formula_dep])
+      end
+
+      it "cascades to exclude transitively needed formulae" do
+        result = described_class.removable_formulae(all_formulae, [])
+        expect(result).not_to include(first_formula_dep)
+        expect(result).not_to include(second_formula_dep)
+        expect(result).to include(formula_with_deps, formula_is_build_dep)
+      end
+    end
+
+    context "when a formula definition is unavailable during cross-check" do
+      before do
+        allow(requesting_formula).to receive(:runtime_formula_dependencies)
+          .with(read_from_tab: false, undeclared: false)
+          .and_raise(FormulaUnavailableError, "main_app")
+      end
+
+      it "skips that formula and continues cross-checking" do
+        expect(described_class.removable_formulae(all_formulae, [])).to match_array(formulae)
+      end
+    end
+
+    context "when cross-check raises an error" do
+      before do
+        allow(requesting_formula).to receive(:runtime_formula_dependencies)
+          .with(read_from_tab: false, undeclared: false)
+          .and_raise(RuntimeError, "unexpected error")
+      end
+
+      it "falls back to forward-check candidates" do
+        expect(described_class.removable_formulae(all_formulae, [])).to match_array(formulae)
+      end
+    end
+  end
+
   shared_context "with formulae and casks for dependency testing" do
     include_context "with formulae for dependency testing"
 

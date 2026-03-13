@@ -1,11 +1,15 @@
 # typed: strict
 # frozen_string_literal: true
 
+require "utils/output"
+
 module Utils
   # Helper function for finding autoremovable formulae.
   #
   # @private
   module Autoremove
+    extend ::Utils::Output::Mixin
+
     class << self
       # An array of {Formula} without {Formula} or {Cask}
       # dependents that weren't installed on request and without
@@ -14,7 +18,38 @@ module Utils
       sig { params(formulae: T::Array[Formula], casks: T::Array[Cask::Cask]).returns(T::Array[Formula]) }
       def removable_formulae(formulae, casks)
         unused_formulae = unused_formulae_with_no_formula_dependents(formulae)
-        unused_formulae - formulae_with_cask_dependents(casks)
+        candidates = unused_formulae - formulae_with_cask_dependents(casks)
+
+        return candidates if candidates.empty?
+
+        # Cross-check candidates against current formula definitions.
+        # The forward check uses tab data (INSTALL_RECEIPT.json) which can
+        # become stale after upgrades. Formula definitions are always current.
+        begin
+          loop do
+            non_candidates = formulae - candidates
+
+            required_names = T.let(Set.new, T::Set[String])
+            non_candidates.each do |f|
+              f.runtime_formula_dependencies(read_from_tab: false, undeclared: false).each do |dep|
+                required_names << dep.name
+              end
+            rescue FormulaUnavailableError
+              odebug "Cross-check: skipping unavailable formula #{f.name}"
+              next
+            end
+
+            new_candidates = candidates.reject { |f| required_names.include?(f.name) }
+            break if new_candidates.length == candidates.length
+
+            candidates = new_candidates
+          end
+        rescue => e
+          # If the cross-check fails, keep whatever candidates remain.
+          odebug "Formula-definition cross-check failed: #{e.message}"
+        end
+
+        candidates
       end
 
       private
