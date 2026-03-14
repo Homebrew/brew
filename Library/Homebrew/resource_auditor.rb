@@ -8,8 +8,6 @@ module Homebrew
   class ResourceAuditor
     include Utils::Curl
 
-    DEPENDENCY_PACKAGES = Set.new(%w[certifi cffi cryptography numpy pillow pydantic rpds-py scipy torch]).freeze
-
     attr_reader :name, :version, :checksum, :url, :mirrors, :using, :specs, :owner, :spec_name, :problems
 
     def initialize(resource, spec_name, options = {})
@@ -27,6 +25,7 @@ module Homebrew
       @only      = options[:only]
       @except    = options[:except]
       @core_tap  = options[:core_tap]
+      @pypi_formulae = options[:pypi_formulae] || []
       @use_homebrew_curl = options[:use_homebrew_curl]
       @problems = []
     end
@@ -130,9 +129,12 @@ module Homebrew
         problem "`resource` name should be '#{pypi_package_name}' to match the PyPI package name"
       end
 
-      return if DEPENDENCY_PACKAGES.exclude?(pypi_package_name.to_s.downcase)
+      pypi_package_name = pypi_package_name.to_s.downcase
 
-      problem "PyPI package should be replaced with Homebrew dependency and excluded using `pypi_package` method"
+      return if @pypi_formulae.exclude?(pypi_package_name)
+
+      problem "PyPI package should be replaced with `depends_on \"#{pypi_package_name}\"` " \
+              "and excluded using `pypi_package` method"
     end
 
     def audit_urls
