@@ -26,9 +26,20 @@ module Homebrew
           names.uniq.map { |a| Regexp.escape(a) }
         end
 
-        new_content = content.split("\n")
-                             .grep_v(/#{entry_type}(\s+|\(\s*)"(#{escaped_args.join("|")})"/)
-                             .join("\n") << "\n"
+        entry_regex = /#{entry_type}(\s+|\(\s*)"(#{escaped_args.join("|")})"/
+        new_lines = T.let([], T::Array[String])
+
+        content.split("\n").each do |line|
+          if line&.match?(entry_regex)
+            # Remove any directly preceding comment - it could be a description
+            # for the removed entry.
+            new_lines.pop if new_lines.last&.match?(/^\s*#\s+\w+/)
+          else
+            new_lines << line
+          end
+        end
+
+        new_content = "#{new_lines.join("\n")}\n"
 
         if content.chomp == new_content.chomp &&
            type == :none &&

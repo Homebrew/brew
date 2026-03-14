@@ -32,6 +32,26 @@ RSpec.describe Homebrew::Bundle::Commands::Remove do
       expect { remove }.not_to raise_error
       expect(File.read(file)).not_to include("#{type} \"#{args.first}\"")
     end
+
+    context "when the entry has a preceding description comment" do
+      let(:content) do
+        <<~BREWFILE
+          # Program providing model for GNU coding standards and practices
+          brew "hello"
+          # Get a file from an HTTP, HTTPS or FTP server
+          brew "curl"
+        BREWFILE
+      end
+
+      it "removes both the entry and its description comment" do
+        expect { remove }.not_to raise_error
+
+        expect(File.read(file)).to eq <<~BREWFILE
+          # Get a file from an HTTP, HTTPS or FTP server
+          brew "curl"
+        BREWFILE
+      end
+    end
   end
 
   context "when called with no type" do
