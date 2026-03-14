@@ -29,6 +29,8 @@ class Tap
   private_constant :HOMEBREW_TAP_SYNCED_VERSIONS_FORMULAE_FILE
   HOMEBREW_TAP_DISABLED_NEW_USR_LOCAL_RELOCATION_FORMULAE_FILE = "disabled_new_usr_local_relocation_formulae.json"
   private_constant :HOMEBREW_TAP_DISABLED_NEW_USR_LOCAL_RELOCATION_FORMULAE_FILE
+  HOMEBREW_TAP_PYPI_DEPENDENCIES_FORMULAE = "pypi_dependencies_formulae.json"
+  private_constant :HOMEBREW_TAP_PYPI_DEPENDENCIES_FORMULAE
   HOMEBREW_TAP_AUDIT_EXCEPTIONS_DIR = "audit_exceptions"
   private_constant :HOMEBREW_TAP_AUDIT_EXCEPTIONS_DIR
   HOMEBREW_TAP_STYLE_EXCEPTIONS_DIR = "style_exceptions"
@@ -40,6 +42,7 @@ class Tap
     #{HOMEBREW_TAP_MIGRATIONS_FILE}
     #{HOMEBREW_TAP_SYNCED_VERSIONS_FORMULAE_FILE}
     #{HOMEBREW_TAP_DISABLED_NEW_USR_LOCAL_RELOCATION_FORMULAE_FILE}
+    #{HOMEBREW_TAP_PYPI_DEPENDENCIES_FORMULAE}
     #{HOMEBREW_TAP_AUDIT_EXCEPTIONS_DIR}/*.json
     #{HOMEBREW_TAP_STYLE_EXCEPTIONS_DIR}/*.json
   ].freeze, T::Array[String])
@@ -1094,6 +1097,19 @@ class Tap
   def disabled_new_usr_local_relocation_formulae
     @disabled_new_usr_local_relocation_formulae ||= T.let(
       if (synced_file = path/HOMEBREW_TAP_DISABLED_NEW_USR_LOCAL_RELOCATION_FORMULAE_FILE).file?
+        JSON.parse(synced_file.read)
+      else
+        []
+      end,
+      T.nilable(T::Array[String]),
+    )
+  end
+
+  # Array with PyPI packages that should be used as dependencies
+  sig { overridable.returns(T::Array[String]) }
+  def pypi_dependencies_formulae
+    @pypi_dependencies_formulae ||= T.let(
+      if (synced_file = path/HOMEBREW_TAP_PYPI_DEPENDENCIES_FORMULAE).file?
         JSON.parse(synced_file.read)
       else
         []

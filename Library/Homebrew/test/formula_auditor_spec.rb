@@ -30,7 +30,10 @@ RSpec.describe Homebrew::FormulaAuditor do
 
     if options.key? :tap_audit_exceptions
       tap = Tap.fetch("test/tap")
-      allow(tap).to receive(:audit_exceptions).and_return(options[:tap_audit_exceptions])
+      allow(tap).to receive_messages(
+        audit_exceptions:           options[:tap_audit_exceptions],
+        pypi_dependencies_formulae: options[:pypi_dependencies_formulae] || [],
+      )
       allow(formula).to receive(:tap).and_return(tap)
       options.delete :tap_audit_exceptions
     end
@@ -581,6 +584,8 @@ RSpec.describe Homebrew::FormulaAuditor do
   end
 
   describe "#audit_pypi_resources" do
+    let(:pypi_dependencies_formulae) { ["bar", "baz"] }
+
     it "reports a problem if the resource name does not match the python sdist name" do
       fa = formula_auditor "foo", <<~RUBY
         class Foo < Formula
@@ -620,19 +625,19 @@ RSpec.describe Homebrew::FormulaAuditor do
     end
 
     it "reports a problem if the resource should be replaced with a dependency" do
-      fa = formula_auditor "foo", <<~RUBY
+      fa = formula_auditor("foo", <<~RUBY, tap_audit_exceptions: {}, pypi_dependencies_formulae:)
         class Foo < Formula
           url "https://brew.sh/foo-1.0.tgz"
           sha256 "abc123"
           homepage "https://brew.sh"
 
-          resource "cryptography" do
-            url "https://files.pythonhosted.org/packages/00/00/aaaa/cryptography-1.0.0.tar.gz"
+          resource "bar" do
+            url "https://files.pythonhosted.org/packages/00/00/aaaa/bar-1.0.0.tar.gz"
             sha256 "def456"
           end
 
-          resource "pydantic" do
-            url "https://files.pythonhosted.org/packages/00/00/aaaa/pydantic-1.0.0.tar.gz"
+          resource "baz" do
+            url "https://files.pythonhosted.org/packages/00/00/aaaa/baz-1.0.0.tar.gz"
             sha256 "ghi789"
           end
         end
@@ -641,24 +646,25 @@ RSpec.describe Homebrew::FormulaAuditor do
       fa.audit_specs
       expect(fa.problems.count).to eq(2)
       expect(fa.problems.first[:message])
-        .to match("PyPI package should be replaced with Homebrew dependency and excluded using `pypi_package` method")
+        .to match("PyPI package should be replaced with `depends_on \"bar\"` " \
+                  "and excluded using `pypi_package` method")
     end
 
     it "doesn't report a problem if there is an exception to a PyPI resource that should be a dependency" do
-      tap_audit_exceptions = { pypi_resources_allowlist: { "foo" => "cryptography pydantic" } }
-      fa = formula_auditor("foo", <<~RUBY, tap_audit_exceptions:)
+      tap_audit_exceptions = { pypi_resources_allowlist: { "foo" => "bar baz" } }
+      fa = formula_auditor("foo", <<~RUBY, tap_audit_exceptions:, pypi_dependencies_formulae:)
         class Foo < Formula
           url "https://brew.sh/foo-1.0.tgz"
           sha256 "abc123"
           homepage "https://brew.sh"
 
-          resource "cryptography" do
-            url "https://files.pythonhosted.org/packages/60/04/aaaa/cryptography-1.0.0.tar.gz"
+          resource "bar" do
+            url "https://files.pythonhosted.org/packages/00/00/aaaa/bar-1.0.0.tar.gz"
             sha256 "def456"
           end
 
-          resource "pydantic" do
-            url "https://files.pythonhosted.org/packages/00/00/aaaa/pydantic-1.0.0.tar.gz"
+          resource "baz" do
+            url "https://files.pythonhosted.org/packages/00/00/aaaa/baz-1.0.0.tar.gz"
             sha256 "ghi789"
           end
         end
@@ -669,9 +675,9 @@ RSpec.describe Homebrew::FormulaAuditor do
     end
 
     it "doesn't audit PyPI package if it is not a resource" do
-      fa = formula_auditor "cryptography", <<~RUBY
-        class Cryptography < Formula
-          url "https://files.pythonhosted.org/packages/60/04/aaaa/cryptography-1.0.0.tar.gz"
+      fa = formula_auditor("bar", <<~RUBY, tap_audit_exceptions: {}, pypi_dependencies_formulae:)
+        class Bar < Formula
+          url "https://files.pythonhosted.org/packages/00/00/aaaa/bar-1.0.0.tar.gz"
           sha256 "abc123"
           homepage "https://brew.sh"
         end
