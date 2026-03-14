@@ -43,7 +43,14 @@ quiet_cd() {
 symlink_target_directory() {
   local target target_dirname
   target="$(readlink "$1")"
-  target_dirname="$(dirname "${target}")"
+  target_dirname="${target%/*}"
+  if [[ "${target_dirname}" == "${target}" ]]
+  then
+    target_dirname="."
+  elif [[ -z "${target_dirname}" ]]
+  then
+    target_dirname="/"
+  fi
   local directory="$2"
   quiet_cd "${directory}" && quiet_cd "${target_dirname}" && pwd -P
 }
@@ -109,19 +116,17 @@ BIN_BREW_EXPORTED_VARS=(
   HOMEBREW_USER_CONFIG_HOME
   HOMEBREW_ORIGINAL_BREW_FILE
 )
+BIN_BREW_EXPORTED_VARS_REGEX="^($(
+  IFS='|'
+  echo "${BIN_BREW_EXPORTED_VARS[*]}"
+))(=|$)"
 
 # Load Homebrew's variable configuration files from disk.
 export_homebrew_env_file() {
   local env_file
-  local bin_brew_exported_vars_regex
 
   env_file="${1}"
   [[ -r "${env_file}" ]] || return 0
-
-  bin_brew_exported_vars_regex="^($(
-    IFS='|'
-    echo "${BIN_BREW_EXPORTED_VARS[*]}"
-  ))(=|$)"
 
   while read -r line
   do
@@ -129,7 +134,7 @@ export_homebrew_env_file() {
     [[ "${line}" =~ ^(HOMEBREW_|SUDO_ASKPASS=|(all|no|ftp|https?)_proxy=) ]] || continue
 
     # forbid overriding variables that are set in this file
-    [[ "${line}" =~ ${bin_brew_exported_vars_regex} ]] && continue
+    [[ "${line}" =~ ${BIN_BREW_EXPORTED_VARS_REGEX} ]] && continue
 
     export "${line?}"
   done <"${env_file}"

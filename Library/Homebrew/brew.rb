@@ -40,9 +40,7 @@ begin
       help_flag = true
       help_cmd_index = i
     elsif !cmd && help_flag_list.exclude?(arg)
-      require "commands"
       cmd = ARGV.delete_at(i)
-      cmd = Commands::HOMEBREW_INTERNAL_COMMAND_ALIASES.fetch(cmd, cmd)
     end
   end
 
@@ -64,14 +62,26 @@ begin
   require "commands"
   require "warnings"
 
-  internal_cmd = Commands.valid_internal_cmd?(cmd) || Commands.valid_internal_dev_cmd?(cmd) if cmd
+  internal_cmd = T.let(false, T::Boolean)
+  external_ruby_v2_cmd = T.let(false, T::Boolean)
+  external_ruby_cmd_path = T.let(nil, T.nilable(Pathname))
+  external_cmd_path = T.let(nil, T.nilable(Pathname))
 
-  unless internal_cmd
-    # Add contributed commands to PATH before checking.
-    homebrew_path.append(Commands.tap_cmd_directories)
+  if cmd
+    cmd = Commands::HOMEBREW_INTERNAL_COMMAND_ALIASES.fetch(cmd, cmd)
+    internal_cmd = Commands.valid_internal_cmd?(cmd) || Commands.valid_internal_dev_cmd?(cmd)
 
-    # External commands expect a normal PATH
-    ENV["PATH"] = homebrew_path.to_s
+    unless internal_cmd
+      # Add contributed commands to PATH before checking.
+      homebrew_path.append(Commands.tap_cmd_directories)
+
+      # External commands expect a normal PATH
+      ENV["PATH"] = homebrew_path.to_s
+
+      external_ruby_v2_cmd = Commands.external_ruby_v2_cmd_path(cmd).present?
+      external_ruby_cmd_path = Commands.external_ruby_cmd_path(cmd) unless external_ruby_v2_cmd
+      external_cmd_path = Commands.external_cmd_path(cmd) if !external_ruby_v2_cmd && external_ruby_cmd_path.nil?
+    end
   end
 
   # Usage instructions should be displayed if and only if one of:
@@ -86,8 +96,11 @@ begin
 
   if cmd.nil?
     raise UsageError, "Unknown command: brew #{ARGV.join(" ")}"
-  elsif internal_cmd || Commands.external_ruby_v2_cmd_path(cmd)
+  elsif internal_cmd || external_ruby_v2_cmd
     cmd_class = Homebrew::AbstractCommand.command(cmd)
+    if cmd_class&.include?(Homebrew::ShellCommand)
+      exec (HOMEBREW_LIBRARY_PATH.parent.parent/"bin/brew").to_s, cmd, *ARGV
+    end
     Homebrew.running_command = cmd
     if cmd_class
       unless Homebrew::EnvConfig.no_install_from_api?
@@ -115,15 +128,15 @@ begin
         raise
       end
     end
-  elsif (path = Commands.external_ruby_cmd_path(cmd))
+  elsif external_ruby_cmd_path
     Homebrew.running_command = cmd
-    Homebrew.require?(path)
+    Homebrew.require?(external_ruby_cmd_path)
     exit Homebrew.failed? ? 1 : 0
-  elsif Commands.external_cmd_path(cmd)
+  elsif external_cmd_path
     %w[CACHE LIBRARY_PATH].each do |env|
       ENV["HOMEBREW_#{env}"] = Object.const_get(:"HOMEBREW_#{env}").to_s
     end
-    exec "brew-#{cmd}", *ARGV
+    exec external_cmd_path.to_s, *ARGV
   else
     raise UsageError, "Unknown command: brew #{cmd}"
   end

@@ -129,7 +129,7 @@ RSpec.describe RuboCop::Cop::Cask::OnSystemConditionals, :config do
             sha256 "67cdb8a02803ef37fdbf7e0be205863172e41a561ca446cd84f0d7ab35a99d94"
           end
           on_arm do
-          ^^^^^^^^^ Use `sha256 arm: "8c62a2b791cf5f0da6066a0a4b6e85f62949cd60975da062df44adf887f4370b", intel: "67cdb8a02803ef37fdbf7e0be205863172e41a561ca446cd84f0d7ab35a99d94"` instead of nesting the `sha256` stanzas in `on_intel` and `on_arm` blocks
+          ^^^^^^^^^ Don't nest only the `sha256` stanzas in `on_intel` and `on_arm` blocks
             sha256 "8c62a2b791cf5f0da6066a0a4b6e85f62949cd60975da062df44adf887f4370b"
           end
         end
@@ -137,13 +137,29 @@ RSpec.describe RuboCop::Cop::Cask::OnSystemConditionals, :config do
 
       expect_correction <<~CASK
         cask 'foo' do
-        #{"  "}
           sha256 arm: "8c62a2b791cf5f0da6066a0a4b6e85f62949cd60975da062df44adf887f4370b", intel: "67cdb8a02803ef37fdbf7e0be205863172e41a561ca446cd84f0d7ab35a99d94"
         end
       CASK
     end
 
-    it "accepts when there is also a `version` stanza inside the `on_arch` blocks" do
+    it "reports an offense but does not autocorrect when an `on_arch` block includes comments" do
+      expect_offense <<~CASK
+        cask 'foo' do
+          on_intel do
+            # comment
+            sha256 "67cdb8a02803ef37fdbf7e0be205863172e41a561ca446cd84f0d7ab35a99d94"
+          end
+          on_arm do
+          ^^^^^^^^^ Don't nest only the `sha256` stanzas in `on_intel` and `on_arm` blocks
+            sha256 "8c62a2b791cf5f0da6066a0a4b6e85f62949cd60975da062df44adf887f4370b"
+          end
+        end
+      CASK
+
+      expect_no_corrections
+    end
+
+    it "accepts when there is also a `version` stanza inside the `on_arch` blocks with different versions" do
       expect_no_offenses <<~CASK
         cask 'foo' do
           on_intel do
@@ -167,6 +183,211 @@ RSpec.describe RuboCop::Cop::Cask::OnSystemConditionals, :config do
           end
           on_arm do
             sha256 "8c62a2b791cf5f0da6066a0a4b6e85f62949cd60975da062df44adf887f4370b"
+          end
+        end
+      CASK
+    end
+  end
+
+  context "when auditing identical `version` stanzas inside `on_arch` blocks" do
+    it "reports an offense when `version` is identical in both arch blocks but `sha256` differs" do
+      expect_offense <<~CASK
+        cask 'foo' do
+          on_intel do
+            version "1.0.0"
+            sha256 "67cdb8a02803ef37fdbf7e0be205863172e41a561ca446cd84f0d7ab35a99d94"
+          end
+          on_arm do
+          ^^^^^^^^^ Don't nest identical `version` stanzas in `on_intel` and `on_arm` blocks
+            version "1.0.0"
+            sha256 "8c62a2b791cf5f0da6066a0a4b6e85f62949cd60975da062df44adf887f4370b"
+          end
+        end
+      CASK
+
+      expect_correction <<~CASK
+        cask 'foo' do
+          version "1.0.0"
+          sha256 arm: "8c62a2b791cf5f0da6066a0a4b6e85f62949cd60975da062df44adf887f4370b", intel: "67cdb8a02803ef37fdbf7e0be205863172e41a561ca446cd84f0d7ab35a99d94"
+        end
+      CASK
+    end
+
+    it "reports an offense when both `version` and `sha256` are identical in both arch blocks" do
+      expect_offense <<~CASK
+        cask 'foo' do
+          on_intel do
+            version "1.0.0"
+            sha256 "67cdb8a02803ef37fdbf7e0be205863172e41a561ca446cd84f0d7ab35a99d94"
+          end
+          on_arm do
+          ^^^^^^^^^ Don't nest identical `version` stanzas in `on_intel` and `on_arm` blocks
+            version "1.0.0"
+            sha256 "67cdb8a02803ef37fdbf7e0be205863172e41a561ca446cd84f0d7ab35a99d94"
+          end
+        end
+      CASK
+
+      expect_correction <<~CASK
+        cask 'foo' do
+          version "1.0.0"
+          sha256 "67cdb8a02803ef37fdbf7e0be205863172e41a561ca446cd84f0d7ab35a99d94"
+        end
+      CASK
+    end
+
+    it "reports an offense but does not autocorrect when an `on_arch` block includes comments" do
+      expect_offense <<~CASK
+        cask 'foo' do
+          on_intel do
+            version "1.0.0"
+            # comment
+            sha256 "67cdb8a02803ef37fdbf7e0be205863172e41a561ca446cd84f0d7ab35a99d94"
+          end
+          on_arm do
+          ^^^^^^^^^ Don't nest identical `version` stanzas in `on_intel` and `on_arm` blocks
+            version "1.0.0"
+            sha256 "8c62a2b791cf5f0da6066a0a4b6e85f62949cd60975da062df44adf887f4370b"
+          end
+        end
+      CASK
+
+      expect_no_corrections
+    end
+  end
+
+  context "when `on_arch` blocks are nested inside `on_os` blocks" do
+    it "reports an offense when `on_arch` blocks with identical versions are inside an `on_os` block" do
+      expect_offense <<~CASK
+        cask 'foo' do
+          on_sonoma :or_newer do
+            on_intel do
+              version "1.0.0"
+              sha256 "67cdb8a02803ef37fdbf7e0be205863172e41a561ca446cd84f0d7ab35a99d94"
+            end
+            on_arm do
+            ^^^^^^^^^ Don't nest identical `version` stanzas in `on_intel` and `on_arm` blocks
+              version "1.0.0"
+              sha256 "8c62a2b791cf5f0da6066a0a4b6e85f62949cd60975da062df44adf887f4370b"
+            end
+          end
+        end
+      CASK
+
+      expect_correction <<~CASK
+        cask 'foo' do
+          on_sonoma :or_newer do
+            version "1.0.0"
+            sha256 arm: "8c62a2b791cf5f0da6066a0a4b6e85f62949cd60975da062df44adf887f4370b", intel: "67cdb8a02803ef37fdbf7e0be205863172e41a561ca446cd84f0d7ab35a99d94"
+          end
+        end
+      CASK
+    end
+
+    it "reports an offense when `on_arch` blocks with only `sha256` are inside an `on_os` block" do
+      expect_offense <<~CASK
+        cask 'foo' do
+          on_sonoma :or_newer do
+            on_intel do
+              sha256 "67cdb8a02803ef37fdbf7e0be205863172e41a561ca446cd84f0d7ab35a99d94"
+            end
+            on_arm do
+            ^^^^^^^^^ Don't nest only the `sha256` stanzas in `on_intel` and `on_arm` blocks
+              sha256 "8c62a2b791cf5f0da6066a0a4b6e85f62949cd60975da062df44adf887f4370b"
+            end
+          end
+        end
+      CASK
+
+      expect_correction <<~CASK
+        cask 'foo' do
+          on_sonoma :or_newer do
+            sha256 arm: "8c62a2b791cf5f0da6066a0a4b6e85f62949cd60975da062df44adf887f4370b", intel: "67cdb8a02803ef37fdbf7e0be205863172e41a561ca446cd84f0d7ab35a99d94"
+          end
+        end
+      CASK
+    end
+
+    it "reports offenses for every eligible `on_arch` pair across sibling `on_os` blocks" do
+      expect_offense <<~CASK
+        cask 'foo' do
+          on_sonoma :or_newer do
+            on_intel do
+              version "1.0.0"
+              sha256 "67cdb8a02803ef37fdbf7e0be205863172e41a561ca446cd84f0d7ab35a99d94"
+            end
+            on_arm do
+            ^^^^^^^^^ Don't nest identical `version` stanzas in `on_intel` and `on_arm` blocks
+              version "1.0.0"
+              sha256 "8c62a2b791cf5f0da6066a0a4b6e85f62949cd60975da062df44adf887f4370b"
+            end
+          end
+
+          on_sequoia :or_newer do
+            on_intel do
+              version "2.0.0"
+              sha256 "d72f430f8f4e71cbce4d3648f364f95f8f422bcdd668a8d3260f39ee3f6f3cec"
+            end
+            on_arm do
+            ^^^^^^^^^ Don't nest identical `version` stanzas in `on_intel` and `on_arm` blocks
+              version "2.0.0"
+              sha256 "7686f28e546238da94ce4dc89be623f7dc801f7e44e7011fdb7f3f471675f5ee"
+            end
+          end
+        end
+      CASK
+
+      expect_correction <<~CASK
+        cask 'foo' do
+          on_sonoma :or_newer do
+            version "1.0.0"
+            sha256 arm: "8c62a2b791cf5f0da6066a0a4b6e85f62949cd60975da062df44adf887f4370b", intel: "67cdb8a02803ef37fdbf7e0be205863172e41a561ca446cd84f0d7ab35a99d94"
+          end
+
+          on_sequoia :or_newer do
+            version "2.0.0"
+            sha256 arm: "7686f28e546238da94ce4dc89be623f7dc801f7e44e7011fdb7f3f471675f5ee", intel: "d72f430f8f4e71cbce4d3648f364f95f8f422bcdd668a8d3260f39ee3f6f3cec"
+          end
+        end
+      CASK
+    end
+
+    it "still autocorrects a matching pair when a later `on_os` block has only one arch block" do
+      expect_offense <<~CASK
+        cask 'foo' do
+          on_sonoma :or_newer do
+            on_intel do
+              version "1.0.0"
+              sha256 "67cdb8a02803ef37fdbf7e0be205863172e41a561ca446cd84f0d7ab35a99d94"
+            end
+            on_arm do
+            ^^^^^^^^^ Don't nest identical `version` stanzas in `on_intel` and `on_arm` blocks
+              version "1.0.0"
+              sha256 "8c62a2b791cf5f0da6066a0a4b6e85f62949cd60975da062df44adf887f4370b"
+            end
+          end
+
+          on_sequoia :or_newer do
+            on_arm do
+              version "3.0.0"
+              sha256 "5f42cb017dd07270409eaee7c3b4a164ffa7c0f21d85c65840c4f81aab21d457"
+            end
+          end
+        end
+      CASK
+
+      expect_correction <<~CASK
+        cask 'foo' do
+          on_sonoma :or_newer do
+            version "1.0.0"
+            sha256 arm: "8c62a2b791cf5f0da6066a0a4b6e85f62949cd60975da062df44adf887f4370b", intel: "67cdb8a02803ef37fdbf7e0be205863172e41a561ca446cd84f0d7ab35a99d94"
+          end
+
+          on_sequoia :or_newer do
+            on_arm do
+              version "3.0.0"
+              sha256 "5f42cb017dd07270409eaee7c3b4a164ffa7c0f21d85c65840c4f81aab21d457"
+            end
           end
         end
       CASK

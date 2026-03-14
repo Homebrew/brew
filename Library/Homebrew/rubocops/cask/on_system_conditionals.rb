@@ -47,6 +47,7 @@ module RuboCop
           audit_arch_conditionals(cask_body, allowed_blocks: FLIGHT_STANZA_NAMES)
           audit_macos_version_conditionals(cask_body, recommend_on_system: false, allowed_blocks: FLIGHT_STANZA_NAMES)
           simplify_sha256_stanzas
+          simplify_arch_version_stanzas
           audit_identical_sha256_across_architectures
         end
 
@@ -59,21 +60,89 @@ module RuboCop
 
         sig { void }
         def simplify_sha256_stanzas
-          nodes = {}
+          grouped_nodes = Hash.new { |hash, key| hash[key] = {} }
 
           sha256_on_arch_stanzas(cask_body) do |node, method, value|
-            nodes[method.to_s.delete_prefix("on_").to_sym] = { node:, value: }
+            arch = method.to_s.delete_prefix("on_").to_sym
+            ast_node = T.cast(node, RuboCop::AST::Node)
+            grouped_nodes[ast_node.parent][arch] = { node: ast_node, value: }
           end
 
-          return if !nodes.key?(:arm) || !nodes.key?(:intel)
+          grouped_nodes.each_value do |nodes|
+            next if !nodes.key?(:arm) || !nodes.key?(:intel)
 
-          offending_node(nodes[:arm][:node])
-          replacement_string = "sha256 arm: #{nodes[:arm][:value].inspect}, intel: #{nodes[:intel][:value].inspect}"
+            offending_node(nodes[:arm][:node])
+            replacement_string = "sha256 arm: #{nodes[:arm][:value].inspect}, intel: #{nodes[:intel][:value].inspect}"
+            if comments_in_node_ranges?(nodes[:arm][:node], nodes[:intel][:node])
+              problem "Don't nest only the `sha256` stanzas in `on_intel` and `on_arm` blocks"
+              next
+            end
 
-          problem "Use `#{replacement_string}` instead of nesting the `sha256` stanzas in " \
-                  "`on_intel` and `on_arm` blocks" do |corrector|
-            corrector.replace(nodes[:arm][:node].source_range, replacement_string)
-            corrector.replace(nodes[:intel][:node].source_range, "")
+            problem "Don't nest only the `sha256` stanzas in `on_intel` and `on_arm` blocks" do |corrector|
+              corrector.replace(nodes[:arm][:node].source_range, replacement_string)
+              corrector.remove(range_by_whole_lines(nodes[:intel][:node].source_range, include_final_newline: true))
+            end
+          end
+        end
+
+        sig { void }
+        def simplify_arch_version_stanzas
+          grouped_nodes = Hash.new { |hash, key| hash[key] = {} }
+
+          version_and_sha256_on_arch_stanzas(cask_body) do |block_node, arch_method, version_value, sha256_value|
+            arch = arch_method.to_s.delete_prefix("on_").to_sym
+            ast_block_node = T.cast(block_node, RuboCop::AST::Node)
+            grouped_nodes[ast_block_node.parent][arch] = {
+              node:          ast_block_node,
+              version_value:,
+              sha256_value:,
+            }
+          end
+
+          grouped_nodes.each_value do |nodes|
+            next if !nodes.key?(:arm) || !nodes.key?(:intel)
+
+            arm_version = nodes[:arm][:version_value]
+            intel_version = nodes[:intel][:version_value]
+
+            next if arm_version != intel_version
+
+            arm_sha = nodes[:arm][:sha256_value]
+            intel_sha = nodes[:intel][:sha256_value]
+            arm_node = nodes[:arm][:node]
+            intel_node = nodes[:intel][:node]
+
+            indent = " " * arm_node.loc.column
+            version_str = "version #{arm_version.inspect}"
+            sha256_str = if arm_sha == intel_sha
+              "sha256 #{arm_sha.inspect}"
+            else
+              "sha256 arm: #{arm_sha.inspect}, intel: #{intel_sha.inspect}"
+            end
+            replacement = "#{version_str}\n#{indent}#{sha256_str}"
+
+            offending_node(arm_node)
+            if comments_in_node_ranges?(arm_node, intel_node)
+              problem "Don't nest identical `version` stanzas in `on_intel` and `on_arm` blocks"
+              next
+            end
+
+            problem "Don't nest identical `version` stanzas in `on_intel` and `on_arm` blocks" do |corrector|
+              corrector.replace(arm_node.source_range, replacement)
+              corrector.remove(range_by_whole_lines(intel_node.source_range, include_final_newline: true))
+            end
+          end
+        end
+
+        sig { params(nodes: RuboCop::AST::Node).returns(T::Boolean) }
+        def comments_in_node_ranges?(*nodes)
+          processed_source.comments.any? do |comment|
+            comment_range = comment.loc.expression
+
+            nodes.any? do |node|
+              node_range = node.source_range
+              node_range.begin_pos <= comment_range.begin_pos && comment_range.end_pos <= node_range.end_pos
+            end
           end
         end
 
@@ -120,6 +189,15 @@ module RuboCop
             (args)
             (send nil? :sha256
               (str $_)))
+        PATTERN
+
+        def_node_search :version_and_sha256_on_arch_stanzas, <<~PATTERN
+          $(block
+            (send nil? ${:on_intel :on_arm})
+            (args)
+            (begin
+              (send nil? :version (str $_))
+              (send nil? :sha256 (str $_))))
         PATTERN
       end
     end
