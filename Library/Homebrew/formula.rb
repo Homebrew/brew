@@ -2864,6 +2864,7 @@ class Formula
       "compatibility_version"           => compatibility_version,
       "autobump"                        => autobump?,
       "no_autobump_message"             => no_autobump_message,
+      "livecheck_defined"               => livecheck_defined?,
       "skip_livecheck"                  => livecheck.skip?,
       "bottle"                          => {},
       "pour_bottle_only_if"             => self.class.pour_bottle_only_if&.to_s,
