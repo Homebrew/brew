@@ -23,25 +23,20 @@ module Homebrew
         [
           "Homebrew",
           "Homebrew Cask",
-          "Mac App Store",
-          "Visual Studio Code (and forks/variants)",
           *BUNDLE_EXTENSIONS.map(&:banner_name),
-          "Cargo packages",
-          "Flatpak",
         ].to_sentence.freeze,
         String,
       )
       BUNDLE_ADD_FLAGS_DESCRIPTION = T.let(
-        ["`--cask`", "`--tap`", "`--vscode`", *BUNDLE_EXTENSIONS.select(&:add_supported?).map do |extension|
+        ["`--cask`", "`--tap`", *BUNDLE_EXTENSIONS.select(&:add_supported?).map do |extension|
           "`--#{extension.flag}`"
         end].to_sentence.freeze,
         String,
       )
       BUNDLE_REMOVE_FLAGS_DESCRIPTION = T.let(
-        ["`--formula`", "`--cask`", "`--tap`", "`--mas`", "`--vscode`", "`--cargo`", "`--flatpak`",
-         *BUNDLE_EXTENSIONS.select(&:remove_supported?).map do |extension|
- "`--#{extension.flag}`"
-         end].to_sentence.freeze,
+        ["`--formula`", "`--cask`", "`--tap`", *BUNDLE_EXTENSIONS.select(&:remove_supported?).map do |extension|
+          "`--#{extension.flag}`"
+        end].to_sentence.freeze,
         String,
       )
 
@@ -144,28 +139,11 @@ module Homebrew
                description: "`list`, `dump` or `cleanup` Homebrew cask dependencies."
         switch "--tap", "--taps",
                description: "`list`, `dump` or `cleanup` Homebrew tap dependencies."
-        switch "--mas",
-               description: "`list` or `dump` Mac App Store dependencies."
-        switch "--vscode",
-               description: "`list`, `dump` or `cleanup` VSCode (and forks/variants) extensions."
-        switch "--cargo",
-               description: "`list` or `dump` Cargo packages."
-        switch "--flatpak",
-               description: "`list` or `dump` Flatpak packages. Note: Linux only."
         BUNDLE_EXTENSIONS.each do |extension|
           switch "--#{extension.flag}",
                  description: extension.switch_description
         end
-        switch "--no-vscode",
-               description: "`dump` without VSCode (and forks/variants) extensions.",
-               env:         :bundle_dump_no_vscode
-        switch "--no-cargo",
-               description: "`dump` without Cargo packages.",
-               env:         :bundle_dump_no_cargo
-        switch "--no-flatpak",
-               description: "`dump` without Flatpak packages.",
-               env:         :bundle_dump_no_flatpak
-        BUNDLE_EXTENSIONS.each do |extension|
+        BUNDLE_EXTENSIONS.select(&:dump_disable_supported?).each do |extension|
           switch "--no-#{extension.flag}",
                  description: extension.dump_disable_description,
                  env:         extension.dump_disable_env
@@ -186,13 +164,7 @@ module Homebrew
                description: "Attempt to remove secrets from the environment before `exec`, `sh`, or `env`.",
                env:         :bundle_no_secrets
 
-        conflicts "--all", "--no-vscode"
-        conflicts "--vscode", "--no-vscode"
-        conflicts "--all", "--no-cargo"
-        conflicts "--cargo", "--no-cargo"
-        conflicts "--all", "--no-flatpak"
-        conflicts "--flatpak", "--no-flatpak"
-        BUNDLE_EXTENSIONS.each do |extension|
+        BUNDLE_EXTENSIONS.select(&:dump_disable_supported?).each do |extension|
           conflicts "--all", "--no-#{extension.flag}"
           conflicts "--#{extension.flag}", "--no-#{extension.flag}"
         end
@@ -237,8 +209,7 @@ module Homebrew
         zap = args.zap?
         Homebrew::Bundle.upgrade_formulae = args.upgrade_formulae
 
-        no_type_args = ([args.formulae?, args.casks?, args.taps?, args.mas?, args.vscode?, args.cargo?,
-                         args.flatpak?] +
+        no_type_args = ([args.formulae?, args.casks?, args.taps?] +
                         BUNDLE_EXTENSIONS.map { |extension| self.class.extension_selected?(args, extension) }).none?
 
         if args.install?
@@ -274,30 +245,6 @@ module Homebrew
             )
           end
         when "dump"
-          vscode = if args.no_vscode?
-            false
-          elsif args.vscode?
-            true
-          else
-            no_type_args
-          end
-
-          cargo = if args.no_cargo?
-            false
-          elsif args.cargo?
-            true
-          else
-            no_type_args
-          end
-
-          flatpak = if args.no_flatpak?
-            false
-          elsif args.flatpak?
-            true
-          else
-            no_type_args
-          end
-
           require "bundle/commands/dump"
           Homebrew::Bundle::Commands::Dump.run(
             global:, file:, force:,
@@ -306,12 +253,8 @@ module Homebrew
             taps:       args.taps? || no_type_args,
             formulae:   args.formulae? || no_type_args,
             casks:      args.casks? || no_type_args,
-            mas:        args.mas? || no_type_args,
-            vscode:,
-            cargo:,
-            flatpak:,
             extension_types: BUNDLE_EXTENSIONS.select(&:dump_supported?).to_h do |extension|
-              disabled = self.class.extension_dump_disabled?(args, extension)
+              disabled = extension.dump_disable_supported? && self.class.extension_dump_disabled?(args, extension)
               enabled = !disabled && (self.class.extension_selected?(args, extension) || no_type_args)
               [extension.type, enabled]
             end
@@ -326,8 +269,9 @@ module Homebrew
             formulae:        args.formulae? || no_type_args,
             casks:           args.casks? || no_type_args,
             taps:            args.taps? || no_type_args,
-            vscode:          args.vscode? || no_type_args,
-            flatpak:         args.flatpak? || no_type_args
+            extension_types: BUNDLE_EXTENSIONS.select(&:cleanup_supported?).to_h do |extension|
+              [extension.type, self.class.extension_selected?(args, extension) || no_type_args]
+            end
           )
         when "check"
           require "bundle/commands/check"
@@ -344,22 +288,14 @@ module Homebrew
             formulae:        args.formulae? || args.all? || no_type_args,
             casks:           args.casks? || args.all?,
             taps:            args.taps? || args.all?,
-            mas:             args.mas? || args.all?,
-            vscode:          args.vscode? || args.all?,
-            cargo:           args.cargo? || args.all?,
-            flatpak:         args.flatpak? || args.all?,
             extension_types: extension_list_options,
           )
         when "add", "remove"
           # We intentionally omit the s from `brews`, `casks`, and `taps` for ease of handling later.
           type_hash = {
-            brew:    args.formulae?,
-            cask:    args.casks?,
-            tap:     args.taps?,
-            mas:     args.mas?,
-            vscode:  args.vscode?,
-            cargo:   args.cargo?,
-            flatpak: args.flatpak?,
+            brew: args.formulae?,
+            cask: args.casks?,
+            tap:  args.taps?,
           }
           BUNDLE_EXTENSIONS.each do |extension|
             type_hash[extension.type] = self.class.extension_selected?(args, extension)

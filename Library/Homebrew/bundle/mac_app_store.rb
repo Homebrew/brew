@@ -2,4 +2,4 @@
 # frozen_string_literal: true
 
 require "bundle/dsl"
-require "bundle/extensions/go"
+require "bundle/extensions/mac_app_store"

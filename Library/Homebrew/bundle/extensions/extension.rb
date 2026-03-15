@@ -113,11 +113,19 @@ module Homebrew
 
       sig { returns(String) }
       def self.switch_description
-        "`list` or `dump` #{banner_name}."
+        if cleanup_supported?
+          "`list`, `dump` or `cleanup` #{banner_name}."
+        else
+          "`list` or `dump` #{banner_name}."
+        end
       end
 
-      sig { abstract.params(name: String, options: EntryOptions).returns(Dsl::Entry) }
-      def self.entry(name, options = {}); end
+      sig { params(name: String, options: EntryOptions).returns(Dsl::Entry) }
+      def self.entry(name, options = {})
+        raise "unknown options(#{options.keys.inspect}) for #{type}" if options.present?
+
+        Dsl::Entry.new(type, name)
+      end
 
       sig { returns(String) }
       def self.flag
@@ -259,6 +267,11 @@ module Homebrew
         []
       end
 
+      sig { returns(T.nilable(Symbol)) }
+      def self.legacy_cleanup_method
+        nil
+      end
+
       sig { params(_items: T::Array[String]).void }
       def self.cleanup!(_items); end
 
@@ -287,9 +300,16 @@ module Homebrew
 
         unless package_manager_installed?
           puts "Installing #{package_manager_name}. It is not currently installed." if verbose
-          Bundle.brew("install", "--formula", package_manager_name, verbose:)
+          Bundle.system(HOMEBREW_BREW_FILE, "install", "--formula", package_manager_name, verbose:)
+          # `formula_versions_from_env` consumes the env vars once at startup, so
+          # keep the cached values across reset when bootstrapping a manager.
+          formula_versions_from_env = T.let(
+            Bundle.formula_versions_from_env_cache,
+            T.nilable(T::Hash[String, String]),
+          )
           upgrade_formulae = Bundle.upgrade_formulae
           Bundle.reset!
+          Bundle.formula_versions_from_env_cache = formula_versions_from_env
           Bundle.upgrade_formulae = upgrade_formulae.join(",")
           unless package_manager_installed?
             raise "Unable to install #{name} #{package_description}. " \
@@ -341,13 +361,19 @@ module Homebrew
       end
 
       sig {
-        abstract.params(
+        overridable.params(
           name:    String,
           with:    T.nilable(T::Array[String]),
           verbose: T::Boolean,
         ).returns(T::Boolean)
       }
-      def self.install_package!(name, with: nil, verbose: false); end
+      def self.install_package!(name, with: nil, verbose: false)
+        _ = name
+        _ = with
+        _ = verbose
+
+        raise NotImplementedError, "#{self} must override `install_package!` or `install!`."
+      end
     end
 
     class << self

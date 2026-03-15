@@ -17,44 +17,29 @@ module Homebrew
 
       sig {
         params(
-          describe:        T::Boolean,
-          no_restart:      T::Boolean,
-          formulae:        T::Boolean,
-          taps:            T::Boolean,
-          casks:           T::Boolean,
-          mas:             T::Boolean,
-          vscode:          T::Boolean,
-          cargo:           T::Boolean,
-          flatpak:         T::Boolean,
-          extension_types: Homebrew::Bundle::ExtensionTypes,
-        ).returns(String)
+          describe:              T::Boolean,
+          no_restart:            T::Boolean,
+          formulae:              T::Boolean,
+          taps:                  T::Boolean,
+          casks:                 T::Boolean,
+          extension_types:       Homebrew::Bundle::ExtensionTypes,
+          extra_extension_types: Homebrew::Bundle::ExtensionTypes,
+        ).returns(String).checked(:never)
       }
-      def self.build_brewfile(describe:, no_restart:, formulae:, taps:, casks:, mas:, vscode:, cargo:, flatpak:,
-                              extension_types: {})
+      def self.build_brewfile(describe:, no_restart:, formulae:, taps:, casks:, extension_types: {},
+                              **extra_extension_types)
         require "bundle/tap_dumper"
         require "bundle/formula_dumper"
         require "bundle/cask_dumper"
-        require "bundle/mac_app_store_dumper"
-        require "bundle/vscode_extension_dumper"
-        require "bundle/cargo_dumper"
-        require "bundle/flatpak_dumper"
 
+        # TODO: Remove `extra_extension_types` once all callers pass a single
+        # `extension_types:` hash instead of legacy per-extension keywords.
+        extension_types = extension_types.merge(extra_extension_types)
         content = []
         content << TapDumper.dump if taps
         content << FormulaDumper.dump(describe:, no_restart:) if formulae
         content << CaskDumper.dump(describe:) if casks
-        content << MacAppStoreDumper.dump if mas
-        content << VscodeExtensionDumper.dump if vscode
-        if extension_types.fetch(:go, false) && (go = Homebrew::Bundle.extension(:go))
-          content << go.dump
-        end
-        content << CargoDumper.dump if cargo
-        if extension_types.fetch(:uv, false) && (uv = Homebrew::Bundle.extension(:uv))
-          content << uv.dump
-        end
-        content << FlatpakDumper.dump if flatpak
         Homebrew::Bundle.extensions.select(&:dump_supported?).each do |extension|
-          next if [:go, :uv].include?(extension.type)
           next unless extension_types.fetch(extension.type, false)
 
           content << extension.dump
@@ -64,27 +49,24 @@ module Homebrew
 
       sig {
         params(
-          global:          T::Boolean,
-          file:            T.nilable(String),
-          describe:        T::Boolean,
-          force:           T::Boolean,
-          no_restart:      T::Boolean,
-          formulae:        T::Boolean,
-          taps:            T::Boolean,
-          casks:           T::Boolean,
-          mas:             T::Boolean,
-          vscode:          T::Boolean,
-          cargo:           T::Boolean,
-          flatpak:         T::Boolean,
-          extension_types: Homebrew::Bundle::ExtensionTypes,
-        ).void
+          global:                T::Boolean,
+          file:                  T.nilable(String),
+          describe:              T::Boolean,
+          force:                 T::Boolean,
+          no_restart:            T::Boolean,
+          formulae:              T::Boolean,
+          taps:                  T::Boolean,
+          casks:                 T::Boolean,
+          extension_types:       Homebrew::Bundle::ExtensionTypes,
+          extra_extension_types: Homebrew::Bundle::ExtensionTypes,
+        ).void.checked(:never)
       }
-      def self.dump_brewfile(global:, file:, describe:, force:, no_restart:, formulae:, taps:, casks:, mas:,
-                             vscode:, cargo:, flatpak:, extension_types: {})
+      def self.dump_brewfile(global:, file:, describe:, force:, no_restart:, formulae:, taps:, casks:,
+                             extension_types: {}, **extra_extension_types)
         path = brewfile_path(global:, file:)
         can_write_to_brewfile?(path, force:)
         content = build_brewfile(
-          describe:, no_restart:, taps:, formulae:, casks:, mas:, vscode:, cargo:, flatpak:, extension_types:,
+          describe:, no_restart:, taps:, formulae:, casks:, extension_types:, **extra_extension_types,
         )
         write_file path, content
       end

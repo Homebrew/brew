@@ -4,10 +4,6 @@
 require "bundle/dsl"
 require "bundle/formula_installer"
 require "bundle/cask_installer"
-require "bundle/mac_app_store_installer"
-require "bundle/vscode_extension_installer"
-require "bundle/cargo_installer"
-require "bundle/flatpak_installer"
 require "bundle/tap_installer"
 require "bundle/extensions"
 require "bundle/skipper"
@@ -49,16 +45,6 @@ module Homebrew
             options = entry.options
             verb = "Upgrading" if Homebrew::Bundle::CaskInstaller.cask_upgradable?(name)
             Homebrew::Bundle::CaskInstaller
-          when :mas
-            args << entry.options[:id]
-            Homebrew::Bundle::MacAppStoreInstaller
-          when :vscode
-            Homebrew::Bundle::VscodeExtensionInstaller
-          when :cargo
-            Homebrew::Bundle::CargoInstaller
-          when :flatpak
-            options = entry.options
-            Homebrew::Bundle::FlatpakInstaller
           when :tap
             verb = "Tapping"
             options = entry.options
