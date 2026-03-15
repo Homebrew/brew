@@ -1,4 +1,4 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
 
 require "cask/artifact/symlinked"
@@ -7,7 +7,8 @@ module Cask
   module Artifact
     # Artifact corresponding to the `binary` stanza.
     class Binary < Symlinked
-      def link(command: nil, **options)
+      sig { params(command: T.class_of(SystemCommand), options: T.anything).void }
+      def link(command:, **options)
         super
         return if source.executable?
 
