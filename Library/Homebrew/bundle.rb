@@ -39,6 +39,8 @@ module Homebrew
         system(HOMEBREW_BREW_FILE, *args, verbose:)
       end
 
+      # TODO: Move these extension-specific executable helpers into the
+      # extension classes once the remaining direct spec stubs can be removed.
       sig { returns(T::Boolean) }
       def mas_installed?
         @mas_installed ||= which_mas.present?
@@ -172,6 +174,16 @@ module Homebrew
                                        .tr("-", "_")
 
         @formula_versions_from_env[formula_env_name]
+      end
+
+      sig { returns(T.nilable(T::Hash[String, String])) }
+      def formula_versions_from_env_cache
+        @formula_versions_from_env
+      end
+
+      sig { params(formula_versions: T.nilable(T::Hash[String, String])).void }
+      def formula_versions_from_env_cache=(formula_versions)
+        @formula_versions_from_env = formula_versions
       end
 
       sig { void }

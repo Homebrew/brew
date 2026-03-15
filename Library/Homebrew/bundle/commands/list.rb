@@ -10,14 +10,15 @@ module Homebrew
       module List
         sig {
           params(global: T::Boolean, file: T.nilable(String), formulae: T::Boolean, casks: T::Boolean,
-                 taps: T::Boolean, mas: T::Boolean, vscode: T::Boolean, cargo: T::Boolean,
-                 flatpak: T::Boolean, extension_types: Homebrew::Bundle::ExtensionTypes).void
+                 taps: T::Boolean, extension_types: Homebrew::Bundle::ExtensionTypes,
+                 extra_extension_types: Homebrew::Bundle::ExtensionTypes).void.checked(:never)
         }
-        def self.run(global:, file:, formulae:, casks:, taps:, mas:, vscode:, cargo:, flatpak:, extension_types: {})
+        def self.run(global:, file:, formulae:, casks:, taps:, extension_types: {}, **extra_extension_types)
+          # TODO: Remove `extra_extension_types` once all callers pass a single
+          # `extension_types:` hash instead of legacy per-extension keywords.
           parsed_entries = Brewfile.read(global:, file:).entries
           Homebrew::Bundle::Lister.list(
-            parsed_entries,
-            formulae:, casks:, taps:, mas:, vscode:, cargo:, flatpak:, extension_types:,
+            parsed_entries, formulae:, casks:, taps:, extension_types:, **extra_extension_types
           )
         end
       end

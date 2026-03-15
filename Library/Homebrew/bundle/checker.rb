@@ -14,13 +14,9 @@ module Homebrew
       CORE_CHECKS = T.let([
         :taps_to_tap,
         :casks_to_install,
-        :extensions_to_install,
-        :apps_to_install,
+        :registered_extensions_to_install,
         :formulae_to_install,
         :formulae_to_start,
-        :registered_extensions_to_install,
-        :cargo_packages_to_install,
-        :flatpaks_to_install,
       ].freeze, T::Array[CheckStep])
 
       def self.check(global: false, file: nil, exit_on_first_error: false, no_upgrade: false, verbose: false)
@@ -67,40 +63,28 @@ module Homebrew
       end
 
       def self.apps_to_install(exit_on_first_error: false, no_upgrade: false, verbose: false)
-        require "bundle/mac_app_store_checker"
-        Homebrew::Bundle::Checker::MacAppStoreChecker.new.find_actionable(
-          @dsl.entries,
-          exit_on_first_error:, no_upgrade:, verbose:,
-        )
+        _ = exit_on_first_error
+        _ = no_upgrade
+        _ = verbose
+
+        # TODO: Remove this legacy no-op once callers and tests stop referencing
+        # the old dedicated app check phase.
+        []
       end
 
       def self.extensions_to_install(exit_on_first_error: false, no_upgrade: false, verbose: false)
-        require "bundle/vscode_extension_checker"
-        Homebrew::Bundle::Checker::VscodeExtensionChecker.new.find_actionable(
-          @dsl.entries,
-          exit_on_first_error:, no_upgrade:, verbose:,
-        )
+        _ = exit_on_first_error
+        _ = no_upgrade
+        _ = verbose
+
+        # TODO: Remove this legacy no-op once callers and tests stop referencing
+        # the old dedicated extension check phase.
+        []
       end
 
       def self.formulae_to_start(exit_on_first_error: false, no_upgrade: false, verbose: false)
         require "bundle/brew_service_checker"
         Homebrew::Bundle::Checker::BrewServiceChecker.new.find_actionable(
-          @dsl.entries,
-          exit_on_first_error:, no_upgrade:, verbose:,
-        )
-      end
-
-      def self.cargo_packages_to_install(exit_on_first_error: false, no_upgrade: false, verbose: false)
-        require "bundle/cargo_checker"
-        Homebrew::Bundle::Checker::CargoChecker.new.find_actionable(
-          @dsl.entries,
-          exit_on_first_error:, no_upgrade:, verbose:,
-        )
-      end
-
-      def self.flatpaks_to_install(exit_on_first_error: false, no_upgrade: false, verbose: false)
-        require "bundle/flatpak_checker"
-        Homebrew::Bundle::Checker::FlatpakChecker.new.find_actionable(
           @dsl.entries,
           exit_on_first_error:, no_upgrade:, verbose:,
         )
@@ -127,14 +111,12 @@ module Homebrew
       def self.reset!
         require "bundle/cask_dumper"
         require "bundle/formula_dumper"
-        require "bundle/mac_app_store_dumper"
         require "bundle/tap_dumper"
         require "bundle/brew_services"
 
         @dsl = nil
         Homebrew::Bundle::CaskDumper.reset!
         Homebrew::Bundle::FormulaDumper.reset!
-        Homebrew::Bundle::MacAppStoreDumper.reset!
         Homebrew::Bundle::TapDumper.reset!
         Homebrew::Bundle::BrewServices.reset!
         Homebrew::Bundle.extensions.each(&:reset!)

@@ -11,13 +11,6 @@ module Homebrew
       BANNER_NAME = "Go packages"
 
       class << self
-        sig { override.params(name: String, options: Homebrew::Bundle::Extension::EntryOptions).returns(Dsl::Entry) }
-        def entry(name, options = {})
-          raise "unknown options(#{options.keys.inspect}) for go" if options.present?
-
-          Dsl::Entry.new(:go, name)
-        end
-
         sig { override.void }
         def reset!
           @packages = T.let(nil, T.nilable(T::Array[String]))

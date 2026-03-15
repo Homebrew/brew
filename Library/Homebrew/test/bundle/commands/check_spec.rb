@@ -229,7 +229,7 @@ RSpec.describe Homebrew::Bundle::Commands::Check, :no_api do
   context "when there are VSCode extensions to install" do
     before do
       allow_any_instance_of(Pathname).to receive(:read).and_return("")
-      allow(Homebrew::Bundle::Checker).to receive(:extensions_to_install).and_return(["asdf"])
+      allow(Homebrew::Bundle::Checker).to receive(:registered_extensions_to_install).and_return(["asdf"])
     end
 
     it "does not check for formulae" do

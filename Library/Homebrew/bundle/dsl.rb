@@ -63,38 +63,6 @@ module Homebrew
         @entries << Entry.new(:cask, name, options)
       end
 
-      def mas(name, options = {})
-        id = options[:id]
-        raise "name(#{name.inspect}) should be a String object" unless name.is_a? String
-        raise "options[:id](#{id}) should be an Integer object" unless id.is_a? Integer
-
-        @entries << Entry.new(:mas, name, id:)
-      end
-
-      def vscode(name)
-        raise "name(#{name.inspect}) should be a String object" unless name.is_a? String
-
-        @entries << Entry.new(:vscode, name)
-      end
-
-      sig { params(name: String).void }
-      def cargo(name)
-        @entries << Entry.new(:cargo, name)
-      end
-
-      sig { params(name: String, options: T::Hash[Symbol, String]).void }
-      def flatpak(name, options = {})
-        # Validate: url: can only be used with a named remote (not a URL remote)
-        if options[:url] && options[:remote]&.start_with?("http://", "https://")
-          raise "url: parameter cannot be used when remote: is already a URL"
-        end
-
-        # Default remote to "flathub"
-        options[:remote] ||= "flathub"
-
-        @entries << Entry.new(:flatpak, name, options)
-      end
-
       def tap(name, clone_target = nil, options = {})
         raise "name(#{name.inspect}) should be a String object" unless name.is_a? String
         if clone_target && !clone_target.is_a?(String)

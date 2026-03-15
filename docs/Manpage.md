@@ -136,9 +136,9 @@ and are now no longer needed.
 
 ### `bundle` \[*`subcommand`*\]
 
-Bundler for non-Ruby dependencies from Homebrew, Homebrew Cask, Mac App Store,
-Visual Studio Code (and forks/variants), Go packages, uv tools, Cargo packages
-and Flatpak.
+Bundler for non-Ruby dependencies from Homebrew, Homebrew Cask, Mac App Store
+dependencies, VSCode (and forks/variants) extensions, Go packages, Cargo
+packages, uv tools and Flatpak packages.
 
 Note: Flatpak support is only available on Linux.
 
@@ -193,14 +193,16 @@ By default, only Homebrew formula dependencies are listed.
 `brew bundle add` *`name`* \[...\]
 
 : Add entries to your `Brewfile`. Adds formulae by default. Use `--cask`,
-  `--tap`, `--vscode`, `--go` and `--uv` to add the corresponding entry instead.
+  `--tap`, `--vscode`, `--go`, `--cargo`, `--uv` and `--flatpak` to add the
+  corresponding entry instead.
 
 `brew bundle remove` *`name`* \[...\]
 
 : Remove entries that match `name` from your `Brewfile`. Use `--formula`,
-  `--cask`, `--tap`, `--mas`, `--vscode`, `--cargo`, `--flatpak`, `--go` and
-  `--uv` to remove only entries of the corresponding type. Passing `--formula`
-  also removes matches against formula aliases and old formula names.
+  `--cask`, `--tap`, `--mas`, `--vscode`, `--go`, `--cargo`, `--uv` and
+  `--flatpak` to remove only entries of the corresponding type. Passing
+  `--formula` also removes matches against formula aliases and old formula
+  names.
 
 `brew bundle exec` \[`--check`\] \[`--no-secrets`\] *`command`*
 
@@ -299,46 +301,46 @@ flags which will help with finding keg-only dependencies like `openssl`,
 
 : `list`, `dump` or `cleanup` VSCode (and forks/variants) extensions.
 
-`--cargo`
-
-: `list` or `dump` Cargo packages.
-
-`--flatpak`
-
-: `list` or `dump` Flatpak packages. Note: Linux only.
-
 `--go`
 
 : `list` or `dump` Go packages.
 
+`--cargo`
+
+: `list` or `dump` Cargo packages.
+
 `--uv`
 
 : `list` or `dump` uv tools.
+
+`--flatpak`
+
+: `list`, `dump` or `cleanup` Flatpak packages.
 
 `--no-vscode`
 
 : `dump` without VSCode (and forks/variants) extensions. Enabled by default if
   `$HOMEBREW_BUNDLE_DUMP_NO_VSCODE` is set.
 
-`--no-cargo`
-
-: `dump` without Cargo packages. Enabled by default if
-  `$HOMEBREW_BUNDLE_DUMP_NO_CARGO` is set.
-
-`--no-flatpak`
-
-: `dump` without Flatpak packages. Enabled by default if
-  `$HOMEBREW_BUNDLE_DUMP_NO_FLATPAK` is set.
-
 `--no-go`
 
 : `dump` without Go packages. Enabled by default if
   `$HOMEBREW_BUNDLE_DUMP_NO_GO` is set.
 
+`--no-cargo`
+
+: `dump` without Cargo packages. Enabled by default if
+  `$HOMEBREW_BUNDLE_DUMP_NO_CARGO` is set.
+
 `--no-uv`
 
 : `dump` without uv tools. Enabled by default if `$HOMEBREW_BUNDLE_DUMP_NO_UV`
   is set.
+
+`--no-flatpak`
+
+: `dump` without Flatpak packages. Enabled by default if
+  `$HOMEBREW_BUNDLE_DUMP_NO_FLATPAK` is set.
 
 `--describe`
 
