@@ -4817,29 +4817,33 @@ class Formula
         raise ArgumentError, "more than one of replacement, replacement_formula and/or replacement_cask specified!"
       end
 
+      @deprecate_args = T.let(
+        { date:, because:, replacement_formula:, replacement_cask: },
+        T.nilable(T::Hash[Symbol, T.nilable(T.any(String, Symbol))]),
+      )
+
       if replacement
+        replacement_formula ||= replacement
+        replacement_cask ||= replacement
         odeprecated(
           "deprecate!(:replacement)",
           "deprecate!(:replacement_formula) or deprecate!(:replacement_cask)",
         )
       end
 
-      @deprecate_args = T.let(
-        { date:, because:, replacement_formula:, replacement_cask: },
-        T.nilable(T::Hash[Symbol, T.nilable(T.any(String, Symbol))]),
-      )
+      deprecation_date = Date.parse(date)
+      @deprecation_date = T.let(deprecation_date, T.nilable(Date))
+      @deprecated = T.let(deprecation_date <= Date.today, T.nilable(T::Boolean))
 
-      @deprecation_date = T.let(Date.parse(date), T.nilable(Date))
-      @deprecated = T.let(T.must(@deprecation_date) <= Date.today, T.nilable(T::Boolean))
       if @deprecated
-        @deprecation_reason = T.let(because, T.nilable(T.any(String, Symbol)))
-        @deprecation_replacement_formula = T.let(replacement_formula.presence || replacement, T.nilable(String))
-        @deprecation_replacement_cask = T.let(replacement_cask.presence || replacement, T.nilable(String))
+        @deprecation_reason = because if because
+        @deprecation_replacement_formula = replacement_formula if replacement_formula
+        @deprecation_replacement_cask = replacement_cask if replacement_cask
       else
         # Reset these to handle disable! before deprecate!
-        @deprecation_reason = nil
-        @deprecation_replacement_formula = nil
-        @deprecation_replacement_cask = nil
+        @deprecation_reason = T.let(nil, T.nilable(T.any(String, Symbol)))
+        @deprecation_replacement_formula = T.let(nil, T.nilable(String))
+        @deprecation_replacement_cask = T.let(nil, T.nilable(String))
       end
     end
 
@@ -4927,27 +4931,31 @@ class Formula
         raise ArgumentError, "more than one of replacement, replacement_formula and/or replacement_cask specified!"
       end
 
+      @disable_args = T.let(
+        { date:, because:, replacement_formula:, replacement_cask: },
+        T.nilable(T::Hash[Symbol, T.nilable(T.any(String, Symbol))]),
+      )
+
       if replacement
+        replacement_formula ||= replacement
+        replacement_cask ||= replacement
         odeprecated(
           "disable!(:replacement)",
           "disable!(:replacement_formula) or disable!(:replacement_cask)",
         )
       end
 
-      @disable_args = T.let(
-        { date:, because:, replacement_formula:, replacement_cask: },
-        T.nilable(T::Hash[Symbol, T.nilable(T.any(String, Symbol))]),
-      )
+      disable_date = Date.parse(date)
+      @disable_date = T.let(disable_date, T.nilable(Date))
 
-      @disable_date = T.let(Date.parse(date), T.nilable(Date))
+      if disable_date > Date.today
+        return if @deprecation_date.present? && !@deprecated
 
-      if T.must(@disable_date) > Date.today
-        return if @deprecation_date.present?
-
-        @deprecation_reason = T.let(because, T.nilable(T.any(String, Symbol)))
-        @deprecation_replacement_formula = T.let(replacement_formula.presence || replacement, T.nilable(String))
-        @deprecation_replacement_cask = T.let(replacement_cask.presence || replacement, T.nilable(String))
-        @deprecated = T.let(true, T.nilable(T::Boolean))
+        # Use `disable!` information if not set in `deprecate!`
+        @deprecation_reason ||= because
+        @deprecation_replacement_formula ||= replacement_formula
+        @deprecation_replacement_cask ||= replacement_cask
+        @deprecated ||= true
         return
       end
 
