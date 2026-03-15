@@ -731,6 +731,15 @@ module Homebrew
     def audit_specs
       problem "HEAD-only (no stable download)" if head_only?(formula) && @core_tap
 
+      allowed_pypi_packages = if (resources_allowlist = formula
+        .tap
+        &.audit_exception(:pypi_resources_allowlist, formula.name)
+        .presence)
+        Set.new(resources_allowlist.split(/\s+/i))
+      else
+        Set.new
+      end
+
       %w[Stable HEAD].each do |name|
         spec_name = name.downcase.to_sym
         next unless (spec = formula.send(spec_name))
@@ -753,9 +762,13 @@ module Homebrew
         spec.resources.each_value do |resource|
           problem "Resource name should be different from the formula name" if resource.name == formula.name
 
+          except = @except
+          except = [*Array(except), "pypi_resources"] if allowed_pypi_packages.include?(resource.name)
+
           ra = ResourceAuditor.new(
             resource, spec_name,
-            online: @online, strict: @strict, only: @only, except: @except,
+            online: @online, strict: @strict, only: @only, except:,
+            pypi_formulae: formula.tap&.pypi_dependencies_formulae,
             use_homebrew_curl: resource.using == :homebrew_curl
           ).audit
           ra.problems.each do |message|
