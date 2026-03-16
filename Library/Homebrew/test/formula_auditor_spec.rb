@@ -674,6 +674,31 @@ RSpec.describe Homebrew::FormulaAuditor do
       expect(fa.problems).to be_empty
     end
 
+    it "doesn't report a problem if formula is deprecated" do
+      fa = formula_auditor("foo", <<~RUBY, tap_audit_exceptions: {}, pypi_dependencies_formulae:)
+        class Foo < Formula
+          url "https://brew.sh/foo-1.0.tgz"
+          sha256 "abc123"
+          homepage "https://brew.sh"
+
+          deprecate! date: "2026-01-01", because: "some reasone"
+
+          resource "bar" do
+            url "https://files.pythonhosted.org/packages/00/00/aaaa/bar-1.0.0.tar.gz"
+            sha256 "def456"
+          end
+
+          resource "baz" do
+            url "https://files.pythonhosted.org/packages/00/00/aaaa/baz-1.0.0.tar.gz"
+            sha256 "ghi789"
+          end
+        end
+      RUBY
+
+      fa.audit_specs
+      expect(fa.problems).to be_empty
+    end
+
     it "doesn't audit PyPI package if it is not a resource" do
       fa = formula_auditor("bar", <<~RUBY, tap_audit_exceptions: {}, pypi_dependencies_formulae:)
         class Bar < Formula

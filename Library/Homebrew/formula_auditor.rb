@@ -786,7 +786,9 @@ module Homebrew
           problem "Resource name should be different from the formula name" if resource.name == formula.name
 
           except = @except
-          except = [*Array(except), "pypi_resources"] if allowed_pypi_packages.include?(resource.name)
+          if allowed_pypi_packages.include?(resource.name) || formula.deprecated?
+            except = [*Array(except), "pypi_resources"]
+          end
 
           ra = ResourceAuditor.new(
             resource, spec_name,
