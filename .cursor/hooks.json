@@ -1,6 +1,12 @@
 {
   "version": 1,
   "hooks": {
+    "beforeShellExecution": [
+      {
+        "command": "npx block-no-verify@1.1.2",
+        "event": "beforeShellExecution"
+      }
+    ],
     "afterFileEdit": [
       {
         "command": "./bin/brew style --changed --fix"
