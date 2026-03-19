@@ -71,7 +71,7 @@ jobs:
                 "ghcr.io/homebrew/ubuntu${version}:${brew_version}"
                 "ghcr.io/homebrew/ubuntu${version}:latest"
               )
-              if [[ "${version}" == "22.04" ]]; then
+              if [[ "${version}" == "24.04" ]]; then
                 tags+=(
                   "ghcr.io/homebrew/brew:${brew_version}"
                   "ghcr.io/homebrew/brew:latest"
@@ -79,7 +79,7 @@ jobs:
               fi
             elif [[ "${GITHUB_EVENT_NAME}" == "push" &&
                     ("${GITHUB_REF}" == "refs/heads/main") ]]; then
-              if [[ "${version}" == "22.04" ]]; then
+              if [[ "${version}" == "24.04" ]]; then
                 tags+=("ghcr.io/homebrew/brew:main")
               fi
               tags+=("ghcr.io/homebrew/ubuntu${version}:main")
