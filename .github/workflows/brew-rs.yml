@@ -46,7 +46,7 @@ jobs:
           install: hyperfine rust
           workflow-key: brew-rs
 
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
 
@@ -99,7 +99,7 @@ jobs:
         run: brew update --quiet --force
 
       - name: Upload brew-rs artifact
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
           name: brew-rs-${{ runner.os }}-${{ runner.arch }}
           path: Library/Homebrew/vendor/brew-rs/brew-rs
