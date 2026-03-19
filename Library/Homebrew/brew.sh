@@ -286,6 +286,54 @@ check-array-membership() {
   fi
 }
 
+rust-frontend-enabled() {
+  if [[ -z "${HOMEBREW_DEVELOPER:-}" ]]
+  then
+    return 1
+  elif [[ -z "${HOMEBREW_RUST_FRONTEND:-}" ]]
+  then
+    return 1
+  fi
+
+  if [[ -n "${HOMEBREW_RUST_FRONTEND_INTERNAL:-}" ]]
+  then
+    return 1
+  fi
+
+  if [[ -n "${HOMEBREW_NO_INSTALL_FROM_API:-}" ]]
+  then
+    return 1
+  fi
+
+  case "${HOMEBREW_COMMAND}" in
+    search | info | list | install | update | upgrade | uninstall) ;;
+    *) return 1 ;;
+  esac
+
+  if [[ -z "${HOMEBREW_INTEGRATION_TEST:-}" && "${HOMEBREW_PREFIX}" != "${HOMEBREW_DEFAULT_PREFIX}" ]]
+  then
+    return 1
+  fi
+
+  if [[ -n "${HOMEBREW_MACOS}" ]]
+  then
+    if [[ "${HOMEBREW_PROCESSOR}" != "arm64" ]]
+    then
+      return 1
+    fi
+  elif [[ -n "${HOMEBREW_LINUX}" ]]
+  then
+    if [[ "${HOMEBREW_PROCESSOR}" != "arm64" && "${HOMEBREW_PROCESSOR}" != "x86_64" ]]
+    then
+      return 1
+    fi
+  else
+    return 1
+  fi
+
+  return 0
+}
+
 # These variables are set from various Homebrew scripts.
 # shellcheck disable=SC2154
 auto-update() {
@@ -1073,6 +1121,22 @@ unset SUDO
 
 # Remove internal variables
 unset HOMEBREW_INTERNAL_ALLOW_PACKAGES_FROM_PATHS
+
+if rust-frontend-enabled
+then
+  source "${HOMEBREW_LIBRARY}/Homebrew/cmd/vendor-install.sh"
+  homebrew-vendor-install brew-rs || exit $?
+
+  HOMEBREW_RUST_BREW_FILE="${HOMEBREW_LIBRARY}/Homebrew/vendor/brew-rs/brew-rs"
+  [[ -x "${HOMEBREW_RUST_BREW_FILE}" ]] || exit 1
+
+  [[ "${HOMEBREW_ARG_COUNT}" -gt 0 ]] && set -- "${HOMEBREW_COMMAND}" "$@"
+
+  auto-update "$@"
+
+  export HOMEBREW_RUST_FRONTEND_INTERNAL="1"
+  exec "${HOMEBREW_RUST_BREW_FILE}" "$@"
+fi
 
 if [[ -n "${HOMEBREW_BASH_COMMAND}" ]]
 then

@@ -291,6 +291,10 @@ homebrew-vendor-install() {
   local option
   local url_var
   local sha_var
+  local cargo_lock_path
+  local cargo_path
+  local vendor_binary
+  local vendor_root
 
   unset VENDOR_PHYSICAL_PROCESSOR
   unset VENDOR_PROCESSOR
@@ -335,6 +339,42 @@ homebrew-vendor-install() {
 
   [[ -z "${VENDOR_NAME}" ]] && odie "This command requires a vendor target!"
   [[ -n "${HOMEBREW_DEBUG}" ]] && set -x
+
+  if [[ "${VENDOR_NAME}" == "brew-rs" ]]
+  then
+    [[ -n "${HOMEBREW_DEVELOPER:-}" && -n "${HOMEBREW_RUST_FRONTEND:-}" ]] ||
+      odie "brew-rs vendor-install requires HOMEBREW_DEVELOPER=1 and HOMEBREW_RUST_FRONTEND=1."
+
+    cargo_path="$(PATH="${HOMEBREW_PATH:-${PATH}}" command -v cargo)"
+    [[ -x "${cargo_path}" ]] || odie "brew-rs vendor-install requires 'cargo' from the 'rust' formula."
+
+    vendor_root="${VENDOR_DIR}/brew-rs"
+    vendor_binary="${vendor_root}/bin/brew-rs"
+    cargo_lock_path="${HOMEBREW_LIBRARY}/Homebrew/rust/brew-rs/Cargo.lock"
+
+    lock "vendor-install ${VENDOR_NAME}"
+
+    if [[ -x "${vendor_binary}" &&
+       "${HOMEBREW_LIBRARY}/Homebrew/rust/brew-rs/Cargo.toml" -ot "${vendor_binary}" &&
+       (! -f "${cargo_lock_path}" || "${cargo_lock_path}" -ot "${vendor_binary}") &&
+          -z "$(find "${HOMEBREW_LIBRARY}/Homebrew/rust/brew-rs/src" -type f -newer "${vendor_binary}" -print -quit)" ]]
+    then
+      ln -sfn "bin/brew-rs" "${vendor_root}/brew-rs"
+      return 0
+    fi
+
+    [[ -n "${HOMEBREW_QUIET}" ]] || ohai "Building brew-rs" >&2
+    if [[ -n "${HOMEBREW_QUIET}" ]]
+    then
+      PATH="${HOMEBREW_PATH:-${PATH}}" "${cargo_path}" install --path "${HOMEBREW_LIBRARY}/Homebrew/rust/brew-rs" --locked --force --root "${vendor_root}" \
+        --quiet || odie "Failed to build brew-rs!"
+    else
+      PATH="${HOMEBREW_PATH:-${PATH}}" "${cargo_path}" install --path "${HOMEBREW_LIBRARY}/Homebrew/rust/brew-rs" --locked --force --root "${vendor_root}" ||
+        odie "Failed to build brew-rs!"
+    fi
+    ln -sfn "bin/brew-rs" "${vendor_root}/brew-rs"
+    return 0
+  fi
 
   if [[ -z "${VENDOR_PHYSICAL_PROCESSOR}" ]]
   then

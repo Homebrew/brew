@@ -1,0 +1,47 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+script_dir="$(cd "${0%/*}" &>/dev/null && pwd -P)"
+repository_root="$(cd "${script_dir}/../../../.." &>/dev/null && pwd -P)"
+
+export HOMEBREW_BREW_FILE="${repository_root}/bin/brew"
+export HOMEBREW_LIBRARY="${repository_root}/Library"
+export HOMEBREW_COMMAND="rake"
+export HOMEBREW_LINUX=""
+export HOMEBREW_MACOS=""
+export HOMEBREW_PATH="${PATH}"
+
+if [[ "$(uname -s)" == "Darwin" ]]
+then
+  export HOMEBREW_MACOS="1"
+elif [[ "$(uname -s)" == "Linux" ]]
+then
+  export HOMEBREW_LINUX="1"
+fi
+
+source "${HOMEBREW_LIBRARY}/Homebrew/utils/ruby.sh"
+
+set +e
+setup-ruby-path
+setup_ruby_path_status="$?"
+set -e
+
+if [[ "${setup_ruby_path_status}" -ne 0 && ! -x "${HOMEBREW_RUBY_PATH:-}" ]]
+then
+  exit "${setup_ruby_path_status}"
+fi
+
+exec "${HOMEBREW_RUBY_PATH}" -I"${HOMEBREW_LIBRARY}/Homebrew" -e '
+  require "rbconfig"
+  require "rubygems"
+
+  rake_version = Gem::Requirement.default
+
+  unless Gem::Specification.find_all_by_name("rake", rake_version).any?
+    gem = File.join(RbConfig::CONFIG["prefix"], "bin", "gem")
+    system(gem, "install", "rake", "--no-document", exception: true)
+    Gem.clear_paths
+  end
+
+  exec RbConfig.ruby, "-S", "rake", *ARGV
+' -- "$@"

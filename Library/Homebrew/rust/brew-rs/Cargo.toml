@@ -1,0 +1,17 @@
+[package]
+name = "brew-rs"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.85"
+
+[dependencies]
+# Ergonomic error propagation for the CLI and command dispatch layers.
+anyhow = "1.0.100"
+# Supports `brew search /REGEX/` matching.
+regex = "1.12.2"
+# Deserialize structured Homebrew API and metadata payloads.
+serde = { version = "1.0.228", features = ["derive"] }
+# Read and write JSON API cache entries and command output.
+serde_json = "1.0.145"
+# Traverse installed formula and cask state under existing Homebrew paths.
+walkdir = "2.5.0"

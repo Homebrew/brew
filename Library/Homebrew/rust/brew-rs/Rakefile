@@ -1,0 +1,207 @@
+# frozen_string_literal: true
+
+require "fileutils"
+require "open3"
+require "pathname"
+require "rake"
+require "shellwords"
+
+ROOT = Pathname(__dir__).join("../../../..").realpath.freeze
+RUST_DIR = Pathname(__dir__).realpath.freeze
+BREW = (ROOT/"bin/brew").to_s.freeze
+
+def executable_on_path?(command)
+  ENV.fetch("PATH", "").split(File::PATH_SEPARATOR).any? do |directory|
+    path = File.join(directory, command)
+    File.file?(path) && File.executable?(path)
+  end
+end
+
+def run_command(*command, env: {}, chdir: ROOT)
+  success = Dir.chdir(chdir) do
+    system(env, *command, exception: false)
+  end
+
+  return if success
+
+  raise "Command failed: #{Shellwords.join(command)}"
+end
+
+def capture_command(*command, env: {}, chdir: ROOT)
+  output, status = Dir.chdir(chdir) do
+    Open3.capture2e(env, *command)
+  end
+
+  return output.strip if status.success?
+
+  raise "Command failed: #{Shellwords.join(command)}\n#{output}"
+end
+
+def shell_command(*command, env: {})
+  Shellwords.join(["env"] + env.map { |key, value| "#{key}=#{value}" } + command)
+end
+
+def frontend_env
+  {
+    "HOMEBREW_DEVELOPER"     => "1",
+    "HOMEBREW_RUST_FRONTEND" => "1",
+  }
+end
+
+def benchmark_env(current_prefix:, default_prefix:)
+  env = {
+    "HOMEBREW_DEVELOPER"          => "1",
+    "HOMEBREW_NO_AUTO_UPDATE"     => "1",
+    "HOMEBREW_NO_INSTALL_CLEANUP" => "1",
+  }
+  env["HOMEBREW_INTEGRATION_TEST"] = "1" if current_prefix != default_prefix
+  env
+end
+
+def default_prefix
+  system_name = capture_command("uname", "-s")
+  machine = capture_command("uname", "-m")
+
+  if system_name == "Darwin" && machine == "arm64"
+    "/opt/homebrew"
+  elsif system_name == "Linux"
+    "/home/linuxbrew/.linuxbrew"
+  else
+    "/usr/local"
+  end
+end
+
+def run_benchmark(title, ruby_command:, rust_command:, prepare: nil, cleanup: nil, runs: 3, warmup: 1)
+  command = ["hyperfine", "--show-output", "--runs", runs.to_s, "--warmup", warmup.to_s]
+  command += ["--prepare", prepare] if prepare
+  command += ["--cleanup", cleanup] if cleanup
+  command += [ruby_command, rust_command]
+
+  puts
+  puts "==> #{title}"
+  run_command(*command)
+end
+
+desc "Build and vendor brew-rs through Homebrew vendor-install"
+task :build do
+  run_command(BREW, "vendor-install", "brew-rs", env: frontend_env)
+end
+
+desc "Check brew-rs formatting"
+task :fmt do
+  run_command("cargo", "fmt", "--manifest-path", (RUST_DIR/"Cargo.toml").to_s, "--check")
+end
+
+desc "Lint brew-rs"
+task :clippy do
+  run_command("cargo", "clippy", "--manifest-path", (RUST_DIR/"Cargo.toml").to_s, "--all-targets", "--locked", "--", "-D", "warnings")
+end
+
+desc "Run brew-rs Rust tests"
+task :test do
+  run_command("cargo", "test", "--manifest-path", (RUST_DIR/"Cargo.toml").to_s, "--locked")
+end
+
+desc "Run brew-rs build, formatting, lint, and Rust tests"
+task check: [:build, :fmt, :clippy, :test]
+
+desc "Benchmark brew-rs against the existing frontend"
+task :benchmark do
+  unless executable_on_path?("hyperfine")
+    abort "hyperfine is required. Install it with: brew install hyperfine"
+  end
+
+  binary_path = ROOT/"Library/Homebrew/vendor/brew-rs/brew-rs"
+  Rake::Task["build"].invoke unless binary_path.executable?
+
+  abort "Rust frontend binary is missing at #{binary_path}" unless binary_path.executable?
+
+  current_prefix = capture_command(BREW, "--prefix")
+  current_default_prefix = default_prefix
+  common_env = benchmark_env(current_prefix: current_prefix, default_prefix: current_default_prefix)
+  rust_env = common_env.merge("HOMEBREW_RUST_FRONTEND" => "1")
+  formula_name = ENV.fetch("BREW_RS_BENCHMARK_FORMULA", "hello")
+
+  run_benchmark(
+    "brew search jq",
+    ruby_command: shell_command(BREW, "search", "jq", env: common_env),
+    rust_command: shell_command(BREW, "search", "jq", env: rust_env),
+    runs: 5,
+    warmup: 2,
+  )
+
+  run_benchmark(
+    "brew info git",
+    ruby_command: shell_command(BREW, "info", "git", env: common_env),
+    rust_command: shell_command(BREW, "info", "git", env: rust_env),
+    runs: 5,
+    warmup: 2,
+  )
+
+  run_benchmark(
+    "brew list",
+    ruby_command: shell_command(BREW, "list", env: common_env),
+    rust_command: shell_command(BREW, "list", env: rust_env),
+    runs: 5,
+    warmup: 2,
+  )
+
+  if current_prefix != current_default_prefix
+    puts
+    puts "==> Skipping write benchmarks outside the default prefix (#{current_default_prefix})"
+    next
+  end
+
+  cleanup_command = shell_command(BREW, "uninstall", "--force", formula_name, env: common_env) + " &>/dev/null || true"
+  ensure_installed_command = shell_command(BREW, "list", "--versions", formula_name, env: common_env) +
+                             " &>/dev/null || " +
+                             shell_command(BREW, "install", formula_name, env: common_env) + " &>/dev/null"
+
+  run_benchmark(
+    "brew install #{formula_name}",
+    ruby_command: shell_command(BREW, "install", formula_name, env: common_env),
+    rust_command: shell_command(BREW, "install", formula_name, env: rust_env),
+    prepare: cleanup_command,
+    cleanup: cleanup_command,
+    runs: 2,
+    warmup: 0,
+  )
+
+  run_benchmark(
+    "brew upgrade #{formula_name}",
+    ruby_command: shell_command(BREW, "upgrade", formula_name, env: common_env),
+    rust_command: shell_command(BREW, "upgrade", formula_name, env: rust_env),
+    prepare: ensure_installed_command,
+    runs: 2,
+    warmup: 0,
+  )
+
+  run_benchmark(
+    "brew uninstall #{formula_name}",
+    ruby_command: shell_command(BREW, "uninstall", formula_name, env: common_env),
+    rust_command: shell_command(BREW, "uninstall", formula_name, env: rust_env),
+    prepare: ensure_installed_command,
+    runs: 2,
+    warmup: 0,
+  )
+
+  run_benchmark(
+    "brew update --quiet --force",
+    ruby_command: shell_command(BREW, "update", "--quiet", "--force", env: common_env),
+    rust_command: shell_command(BREW, "update", "--quiet", "--force", env: rust_env),
+    runs: 1,
+    warmup: 0,
+  )
+end
+
+desc "Stage brew-rs into another Homebrew checkout and build it there"
+task :stage do
+  repository = Pathname(ENV.fetch("BREW_RS_STAGE_REPOSITORY")).realpath
+
+  FileUtils.install(ROOT/"Library/Homebrew/brew.sh", repository/"Library/Homebrew/brew.sh", mode: 0o644)
+  FileUtils.install(ROOT/"Library/Homebrew/cmd/vendor-install.sh", repository/"Library/Homebrew/cmd/vendor-install.sh", mode: 0o755)
+  FileUtils.mkdir_p(repository/"Library/Homebrew/rust")
+  FileUtils.rm_rf(repository/"Library/Homebrew/rust/brew-rs")
+  run_command("rsync", "-a", "--delete", "--exclude", "target", "#{RUST_DIR}/", "#{repository}/Library/Homebrew/rust/brew-rs/")
+  run_command((repository/"bin/brew").to_s, "vendor-install", "brew-rs", env: frontend_env, chdir: repository)
+end
