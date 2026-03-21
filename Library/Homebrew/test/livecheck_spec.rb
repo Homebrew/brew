@@ -119,6 +119,11 @@ RSpec.describe Livecheck do
       expect(livecheck_f.strategy).to eq(:page_match)
       expect(livecheck_f.strategy_block).to eq(block)
     end
+
+    it "normalizes a trailing slash from the server URL" do
+      livecheck_f.strategy(:github_releases, server: "https://github.example.com/")
+      expect(livecheck_f.options.github_server_url).to eq("https://github.example.com")
+    end
   end
 
   describe "#throttle" do

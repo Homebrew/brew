@@ -130,11 +130,16 @@ class Livecheck
     params(
       # Symbol for the desired strategy.
       symbol: Symbol,
+      # Base URL of the GitHub server (e.g. `https://github.example.com` for
+      # GitHub Enterprise Server). Used with the `github_releases` and
+      # `github_latest` strategies.
+      server: T.nilable(String),
       block:  T.nilable(Proc),
     ).returns(T.nilable(Symbol))
   }
-  def strategy(symbol = T.unsafe(nil), &block)
+  def strategy(symbol = T.unsafe(nil), server: nil, &block)
     @strategy_block = block if block
+    @options.github_server_url = server.sub(%r{/*$}, "") unless server.nil?
 
     case symbol
     when nil

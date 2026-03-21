@@ -135,9 +135,11 @@ module Homebrew
           livecheck_strategy: T.nilable(Symbol),
           regex_provided:     T::Boolean,
           block_provided:     T::Boolean,
+          github_server_url:  T.nilable(String),
         ).returns(T::Array[T.untyped])
       }
-      def self.from_url(url, livecheck_strategy: nil, regex_provided: false, block_provided: false)
+      def self.from_url(url, livecheck_strategy: nil, regex_provided: false, block_provided: false,
+                        github_server_url: nil)
         usable_strategies = strategies.select do |strategy_symbol, strategy|
           if strategy == PageMatch
             # Only treat the strategy as usable if the `livecheck` block
@@ -155,7 +157,17 @@ module Homebrew
             next
           end
 
-          strategy.respond_to?(:match?) && strategy.match?(url)
+          next unless strategy.respond_to?(:match?)
+
+          if github_server_url.present?
+            begin
+              strategy.match?(url, server: github_server_url)
+            rescue ArgumentError
+              strategy.match?(url)
+            end
+          else
+            strategy.match?(url)
+          end
         end.values
 
         # Sort usable strategies in descending order by priority, using the

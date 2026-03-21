@@ -665,6 +665,7 @@ module Homebrew
           livecheck_strategy:,
           regex_provided:     livecheck_regex.present?,
           block_provided:     livecheck_strategy_block.present?,
+          github_server_url:  livecheck_options.github_server_url,
         )
         strategy = Strategy.from_symbol(livecheck_strategy) || strategies.first
         next unless strategy
@@ -893,6 +894,7 @@ module Homebrew
           livecheck_strategy:,
           regex_provided:     livecheck_regex.present?,
           block_provided:     livecheck_strategy_block.present?,
+          github_server_url:  livecheck_options.github_server_url,
         )
         strategy = Strategy.from_symbol(livecheck_strategy) || strategies.first
         next if strategy.blank? && livecheck_reference != :parent

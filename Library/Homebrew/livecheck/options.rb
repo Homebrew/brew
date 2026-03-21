@@ -31,6 +31,11 @@ module Homebrew
       # should use a value supported by {Utils::Curl.curl_args}.
       prop :user_agent, T.nilable(T.any(String, Symbol))
 
+      # The base URL of the GitHub server (e.g. `https://github.example.com`
+      # for GitHub Enterprise Server). Defaults to `https://github.com` when
+      # not set. Used by the {GithubReleases} and {GithubLatest} strategies.
+      prop :github_server_url, T.nilable(String)
+
       # Returns a `Hash` of options that are provided as arguments to `url`.
       sig { returns(T::Hash[Symbol, T.untyped]) }
       def url_options
@@ -110,7 +115,8 @@ module Homebrew
           @post_form == other.post_form &&
           @post_json == other.post_json &&
           @referer == other.referer &&
-          @user_agent == other.user_agent
+          @user_agent == other.user_agent &&
+          @github_server_url == other.github_server_url
       end
       alias eql? ==
 
