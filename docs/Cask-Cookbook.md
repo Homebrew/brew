@@ -1073,6 +1073,35 @@ Artifacts may also be distributed via Git repositories. URLs that end in `.git` 
 | `branch:`          | string identifying the Git branch to download |
 | `only_path:`       | path within the repository to limit the checkout to. If only a single directory of a large repository is required, using this option can significantly speed up downloads. If provided, artifact paths are relative to this path. (Example: [font-geo.rb](https://github.com/Homebrew/homebrew-cask/blob/a6348a1710928bf43510098725c2068ffe3adc69/Casks/font/font-g/font-geo.rb#L5-L8)) |
 
+#### GitHub Enterprise URLs
+
+Cask artifacts hosted on a **GitHub Enterprise** (custom GitHub) server can be downloaded using a plain HTTPS release asset URL — no special `using:` parameter is required:
+
+```ruby
+url "https://github.example.com/myorg/myapp/releases/download/v#{version}/MyApp-#{version}.dmg"
+```
+
+> **Note:** Downloading **private** release assets via the direct `/releases/download/…` URL does not work: GitHub (and GitHub Enterprise when backed by external storage) redirects that URL to a storage backend (e.g. AWS S3), and HTTP clients drop the `Authorization` header on redirect, resulting in a "Not Found" response.
+>
+> Use `using: :github_private_release` to download private assets. This strategy performs a two-step lookup — it resolves the numeric asset ID via the GitHub API and then downloads the binary through the API endpoint, keeping authentication intact:
+>
+> ```ruby
+> url "https://github.com/myorg/myapp/releases/download/v#{version}/MyApp-#{version}.dmg",
+>     using: :github_private_release
+> ```
+>
+> For a **GitHub Enterprise** private asset, the server is auto-detected from the URL, but you can also supply it explicitly:
+>
+> ```ruby
+> url "https://github.example.com/myorg/myapp/releases/download/v#{version}/MyApp-#{version}.dmg",
+>     using:             :github_private_release,
+>     github_server_url: "https://github.example.com"
+> ```
+>
+> Set the `HOMEBREW_GITHUB_API_TOKEN` environment variable (or the `HOMEBREW_GITHUB_API_TOKEN` credential in your keychain) to supply the personal access token used for authentication.
+
+For automatic version checking of public assets, add a `livecheck` block using `strategy :github_releases` or `strategy :github_latest` with the `server:` parameter. Refer to the [`brew livecheck`](Brew-Livecheck.md) documentation for details and examples.
+
 #### SourceForge/OSDN URLs
 
 SourceForge and OSDN (formerly `SourceForge.JP`) projects are common ways to distribute binaries, but they provide many different styles of URLs to get to the goods.

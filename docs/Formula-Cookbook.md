@@ -814,11 +814,27 @@ Homebrew offers these anonymous download strategies.
 | `:cvs`           | fetch from CVS repository        | `cvs` installed |
 | `:fossil`        | fetch from Fossil repository     | `fossil` installed |
 | `:git`           | fetch from Git repository        | `git` installed |
+| `:github_git`    | fetch from a GitHub (or GitHub Enterprise) Git repository; accepts an optional `github_server_url:` parameter | `git` installed |
 | `:hg`            | fetch from Mercurial repository  | `hg` installed |
 | `:homebrew_curl` | download using brewed `curl`     | `curl` installed |
 | `:nounzip`       | download without decompressing   | |
 | `:post`          | download using `curl` via POST   | `data:` [hash of parameters](Cask-Cookbook.md#additional-url-parameters) |
 | `:svn`           | fetch from Subversion repository | `svn` installed |
+
+When a repository is hosted on a **GitHub Enterprise** (custom GitHub) server, use `using: :github_git`. The server URL is auto-detected from the URL, so no additional parameters are needed:
+
+```ruby
+url "https://github.example.com/myorg/myapp.git",
+    using: :github_git
+```
+
+If you need to override the auto-detected server (e.g. the URL host differs from the API host), pass `github_server_url:` explicitly:
+
+```ruby
+url "https://github.example.com/myorg/myapp.git",
+    using:             :github_git,
+    github_server_url: "https://github.example.com"
+```
 
 If you need more control over the way files are downloaded and staged, you can create a custom download strategy and specify it with the `:using` option:
 

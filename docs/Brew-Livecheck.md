@@ -249,6 +249,15 @@ end
 
 You can find more information on the response JSON from this API endpoint in the related [GitHub REST API documentation](https://docs.github.com/en/rest/releases/releases?apiVersion=latest#get-the-latest-release).
 
+When the repository is hosted on a **GitHub Enterprise** (custom GitHub) server rather than `github.com`, pass the `server:` keyword to the `strategy` call to point livecheck at the custom server's `/api/v3` endpoint:
+
+```ruby
+livecheck do
+  url :stable
+  strategy :github_latest, server: "https://github.example.com"
+end
+```
+
 #### `GithubReleases` `strategy` block
 
 A `strategy` block for `GithubReleases` receives the parsed JSON data from the GitHub API for a repository's most recent releases, along with a regex. When a regex is not provided in a `livecheck` block, the strategy's default regex is passed into the `strategy` block instead.
@@ -275,6 +284,33 @@ end
 The strategy's default logic skips releases marked as draft or pre-release but this can be modified by using a `strategy` block. Removing the `release["prerelease"]` condition from the previous example would allow us to work with pre-release releases, though the regex may also need to be adapted to handle unstable version formats.
 
 You can find more information on the response JSON from this API endpoint in the related [GitHub REST API documentation](https://docs.github.com/en/rest/releases/releases?apiVersion=latest#list-releases).
+
+When the repository is hosted on a **GitHub Enterprise** (custom GitHub) server rather than `github.com`, pass the `server:` keyword to the `strategy` call to point livecheck at the custom server's `/api/v3` endpoint:
+
+```ruby
+livecheck do
+  url :stable
+  strategy :github_releases, server: "https://github.example.com"
+end
+```
+
+A `strategy` block can be combined with `server:` in the same call:
+
+```ruby
+livecheck do
+  url :stable
+  strategy :github_releases, server: "https://github.example.com" do |json, regex|
+    json.map do |release|
+      next if release["draft"] || release["prerelease"]
+
+      match = release["tag_name"]&.match(regex)
+      next if match.blank?
+
+      match[1]
+    end
+  end
+end
+```
 
 #### `Crate` `strategy` block
 
