@@ -16,6 +16,15 @@ RSpec.describe Homebrew::Livecheck::Strategy::GithubReleases do
   end
   let(:non_github_url) { "https://brew.sh/test" }
 
+  let(:custom_server) { "https://github.example.com" }
+  let(:github_enterprise_urls) do
+    {
+      release_asset:     "https://github.example.com/abc/def/releases/download/1.2.3/ghi-1.2.3.tar.gz",
+      short_tag_archive: "https://github.example.com/abc/def/archive/v1.2.3.tar.gz",
+      brew_tag_archive:  "https://github.example.com/Homebrew/brew/archive/1.2.3.tar.gz",
+    }
+  end
+
   let(:regex) { github_releases::DEFAULT_REGEX }
 
   let(:generated) do
@@ -27,6 +36,21 @@ RSpec.describe Homebrew::Livecheck::Strategy::GithubReleases do
       },
       brew: {
         url:        "https://api.github.com/repos/Homebrew/brew/releases",
+        username:   "Homebrew",
+        repository: "brew",
+      },
+    }
+  end
+
+  let(:generated_enterprise) do
+    {
+      def:  {
+        url:        "https://github.example.com/api/v3/repos/abc/def/releases",
+        username:   "abc",
+        repository: "def",
+      },
+      brew: {
+        url:        "https://github.example.com/api/v3/repos/Homebrew/brew/releases",
         username:   "Homebrew",
         repository: "brew",
       },
@@ -105,6 +129,26 @@ RSpec.describe Homebrew::Livecheck::Strategy::GithubReleases do
     end
   end
 
+  describe "::match? with enterprise server" do
+    it "matches a GitHub Enterprise release asset URL when server is provided" do
+      expect(
+        github_releases.match?(github_enterprise_urls[:release_asset], server: custom_server),
+      ).to be true
+    end
+
+    it "matches a GitHub Enterprise URL when server has a trailing slash" do
+      expect(
+        github_releases.match?(github_enterprise_urls[:release_asset], server: "#{custom_server}/"),
+      ).to be true
+    end
+
+    it "does not match a standard GitHub URL when an enterprise server is provided" do
+      expect(
+        github_releases.match?(github_urls[:release_asset], server: custom_server),
+      ).to be false
+    end
+  end
+
   describe "::generate_input_values" do
     it "returns a hash containing a url and regex for a GitHub release artifact URL" do
       expect(github_releases.generate_input_values(github_urls[:release_asset])).to eq(generated[:def])
@@ -121,6 +165,39 @@ RSpec.describe Homebrew::Livecheck::Strategy::GithubReleases do
 
     it "returns an empty hash for a non-GitHub URL" do
       expect(github_releases.generate_input_values(non_github_url)).to eq({})
+    end
+
+    it "returns a hash using the custom server's API URL when server is provided" do
+      expect(github_releases.generate_input_values(
+               github_enterprise_urls[:release_asset], server: custom_server
+             )).to eq(generated_enterprise[:def])
+      expect(github_releases.generate_input_values(
+               github_enterprise_urls[:short_tag_archive], server: custom_server
+             )).to eq(generated_enterprise[:def])
+    end
+
+    it "returns a hash using the custom server's API URL when server has a trailing slash" do
+      expect(github_releases.generate_input_values(
+               github_enterprise_urls[:release_asset], server: "#{custom_server}/"
+             )).to eq(generated_enterprise[:def])
+      expect(github_releases.generate_input_values(
+               github_enterprise_urls[:short_tag_archive], server: "#{custom_server}/"
+             )).to eq(generated_enterprise[:def])
+    end
+
+    it "returns an empty hash for a non-matching URL when server is provided" do
+      expect(github_releases.generate_input_values(github_urls[:release_asset], server: custom_server)).to eq({})
+    end
+  end
+
+  describe "Strategy.from_url with enterprise server" do
+    it "includes GithubReleases when called with a matching enterprise URL and github_server_url" do
+      strategies = Homebrew::Livecheck::Strategy.from_url(
+        github_enterprise_urls[:release_asset],
+        livecheck_strategy: :github_releases,
+        github_server_url:  custom_server,
+      )
+      expect(strategies).to include(github_releases)
     end
   end
 
@@ -217,6 +294,36 @@ RSpec.describe Homebrew::Livecheck::Strategy::GithubReleases do
     it "returns default match_data when content is blank" do
       expect(github_releases.find_versions(url: github_urls[:brew_tag_archive], content: ""))
         .to eq(match_data[:cached_default])
+    end
+
+    it "finds versions using a custom GitHub server" do
+      enterprise_options = Homebrew::Livecheck::Options.new(github_server_url: custom_server)
+
+      expect(github_releases.find_versions(
+               url:     github_enterprise_urls[:brew_tag_archive],
+               content:,
+               options: enterprise_options,
+             )).to eq({
+               matches: matches.to_h { |v| [v, Version.new(v)] },
+               regex:,
+               url:     generated_enterprise[:brew][:url],
+               cached:  true,
+             })
+    end
+
+    it "finds versions using a custom GitHub server with a trailing slash" do
+      enterprise_options = Homebrew::Livecheck::Options.new(github_server_url: "#{custom_server}/")
+
+      expect(github_releases.find_versions(
+               url:     github_enterprise_urls[:brew_tag_archive],
+               content:,
+               options: enterprise_options,
+             )).to eq({
+               matches: matches.to_h { |v| [v, Version.new(v)] },
+               regex:,
+               url:     generated_enterprise[:brew][:url],
+               cached:  true,
+             })
     end
   end
 end
