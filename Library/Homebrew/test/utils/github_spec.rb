@@ -149,4 +149,63 @@ to:)).to eq(10)
 to:)).to eq(5)
     end
   end
+
+  describe "::last_commit" do
+    let(:etag_response) { "HTTP/2 200\r\nETag: \"abc123def456\"\r\n\r\n" }
+
+    def stub_curl(url, response_body)
+      result = instance_double(SystemCommand::Result,
+                               status: instance_double(Process::Status, success?: true),
+                               stdout: response_body)
+      allow(Utils::Curl).to receive(:curl_output)
+        .with("--silent", "--head", "--location", "--header", "Accept: application/vnd.github.sha", url)
+        .and_return(result)
+      result
+    end
+
+    it "uses the default API URL for github.com" do
+      stub_curl("https://api.github.com/repos/user/repo/commits/main", etag_response)
+      version = Version.new("HEAD")
+      expect(described_class.last_commit("user", "repo", "main", version)).to eq("abc123def456")
+    end
+
+    it "uses /api/v3 for a custom GitHub server" do
+      stub_curl("https://github.example.com/api/v3/repos/user/repo/commits/main", etag_response)
+      version = Version.new("HEAD")
+      expect(
+        described_class.last_commit("user", "repo", "main", version,
+                                    github_server_url: "https://github.example.com"),
+      ).to eq("abc123def456")
+    end
+  end
+
+  describe "::multiple_short_commits_exist?" do
+    def stub_curl_status(url, http_code)
+      result = instance_double(SystemCommand::Result,
+                               status: instance_double(Process::Status, success?: true),
+                               stdout: http_code)
+      allow(Utils::Curl).to receive(:curl_output)
+        .with("--silent", "--head", "--location", "--header", "Accept: application/vnd.github.sha",
+              "--output", File::NULL,
+              # This is a Curl format token, not a Ruby one.
+              # rubocop:disable Style/FormatStringToken
+              "--write-out", "%{http_code}",
+              # rubocop:enable Style/FormatStringToken
+              url)
+        .and_return(result)
+    end
+
+    it "uses the default API URL for github.com" do
+      stub_curl_status("https://api.github.com/repos/user/repo/commits/abc123", "200")
+      expect(described_class.multiple_short_commits_exist?("user", "repo", "abc123")).to be false
+    end
+
+    it "uses /api/v3 for a custom GitHub server" do
+      stub_curl_status("https://github.example.com/api/v3/repos/user/repo/commits/abc123", "200")
+      expect(
+        described_class.multiple_short_commits_exist?("user", "repo", "abc123",
+                                                      github_server_url: "https://github.example.com"),
+      ).to be false
+    end
+  end
 end

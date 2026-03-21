@@ -824,14 +824,23 @@ module GitHub
     pr_data["labels"].map { |label| label["name"] }
   end
 
-  def self.last_commit(user, repo, ref, version, length: nil)
+  def self.last_commit(user, repo, ref, version, length: nil, github_server_url: nil)
     return if Homebrew::EnvConfig.no_github_api?
 
     require "utils/curl"
+
+    server = github_server_url.present? ? github_server_url.to_s.sub(%r{/*$}, "") : nil
+    server_host = server.present? ? URI.parse(server).host : nil
+    api_base = if server_host && server_host != "github.com"
+      "#{server}/api/v3"
+    else
+      API_URL
+    end
+
     result = Utils::Curl.curl_output(
       "--silent", "--head", "--location",
       "--header", "Accept: application/vnd.github.sha",
-      url_to("repos", user, repo, "commits", ref).to_s
+      URI.parse([api_base, "repos", user, repo, "commits", ref].join("/")).to_s
     )
 
     return unless result.status.success?
@@ -848,17 +857,26 @@ module GitHub
       # determine the reason for the failure. This means we can't distinguish a
       # GitHub API rate limit from a non-unique short commit where the latter
       # needs (n+1) or more characters to match `git rev-parse --short=n`.
-      return if multiple_short_commits_exist?(user, repo, commit)
+      return if multiple_short_commits_exist?(user, repo, commit, github_server_url:)
     end
 
     version.update_commit(commit)
     commit
   end
 
-  def self.multiple_short_commits_exist?(user, repo, commit)
+  def self.multiple_short_commits_exist?(user, repo, commit, github_server_url: nil)
     return false if Homebrew::EnvConfig.no_github_api?
 
     require "utils/curl"
+
+    server = github_server_url.present? ? github_server_url.to_s.sub(%r{/*$}, "") : nil
+    server_host = server.present? ? URI.parse(server).host : nil
+    api_base = if server_host && server_host != "github.com"
+      "#{server}/api/v3"
+    else
+      API_URL
+    end
+
     result = Utils::Curl.curl_output(
       "--silent", "--head", "--location",
       "--header", "Accept: application/vnd.github.sha",
@@ -867,7 +885,7 @@ module GitHub
       # rubocop:disable Style/FormatStringToken
       "--write-out", "%{http_code}",
       # rubocop:enable Style/FormatStringToken
-      url_to("repos", user, repo, "commits", commit).to_s
+      URI.parse([api_base, "repos", user, repo, "commits", commit].join("/")).to_s
     )
 
     return true unless result.status.success?
