@@ -35,7 +35,7 @@ module Cask
     attr_reader :using
 
     sig { returns(T.nilable(String)) }
-    attr_reader :tag, :branch, :revision, :only_path, :verified
+    attr_reader :tag, :branch, :revision, :only_path, :verified, :github_server_url
 
     extend Forwardable
 
@@ -46,27 +46,28 @@ module Cask
     # @api public
     sig {
       params(
-        uri:             T.any(URI::Generic, String),
-        verified:        T.nilable(String),
-        using:           T.nilable(T.any(T::Class[AbstractDownloadStrategy], Symbol)),
-        tag:             T.nilable(String),
-        branch:          T.nilable(String),
-        revisions:       T.nilable(T::Hash[T.any(Symbol, String), String]),
-        revision:        T.nilable(String),
-        trust_cert:      T.nilable(T::Boolean),
-        cookies:         T.nilable(T::Hash[T.any(String, Symbol), String]),
-        referer:         T.nilable(T.any(URI::Generic, String)),
-        header:          T.nilable(T.any(String, T::Array[String])),
-        user_agent:      T.nilable(T.any(Symbol, String)),
-        data:            T.nilable(T::Hash[String, String]),
-        only_path:       T.nilable(String),
-        caller_location: Thread::Backtrace::Location,
+        uri:               T.any(URI::Generic, String),
+        verified:          T.nilable(String),
+        using:             T.nilable(T.any(T::Class[AbstractDownloadStrategy], Symbol)),
+        tag:               T.nilable(String),
+        branch:            T.nilable(String),
+        revisions:         T.nilable(T::Hash[T.any(Symbol, String), String]),
+        revision:          T.nilable(String),
+        trust_cert:        T.nilable(T::Boolean),
+        cookies:           T.nilable(T::Hash[T.any(String, Symbol), String]),
+        referer:           T.nilable(T.any(URI::Generic, String)),
+        header:            T.nilable(T.any(String, T::Array[String])),
+        user_agent:        T.nilable(T.any(Symbol, String)),
+        data:              T.nilable(T::Hash[String, String]),
+        only_path:         T.nilable(String),
+        github_server_url: T.nilable(String),
+        caller_location:   Thread::Backtrace::Location,
       ).void
     }
     def initialize(
       uri, verified: nil, using: nil, tag: nil, branch: nil, revisions: nil, revision: nil, trust_cert: nil,
       cookies: nil, referer: nil, header: nil, user_agent: nil, data: nil, only_path: nil,
-      caller_location: caller_locations.fetch(0)
+      github_server_url: nil, caller_location: caller_locations.fetch(0)
     )
       @uri = T.let(URI(uri), URI::Generic)
 
@@ -87,6 +88,7 @@ module Cask
       specs[:user_agent] = @user_agent = T.let(user_agent || :default, T.nilable(T.any(Symbol, String)))
       specs[:data]       = @data       = T.let(data, T.nilable(T::Hash[String, String]))
       specs[:only_path]  = @only_path  = T.let(only_path, T.nilable(String))
+      specs[:github_server_url] = @github_server_url = T.let(github_server_url, T.nilable(String))
 
       @specs = T.let(specs.compact, T::Hash[Symbol, T.untyped])
       @caller_location = caller_location
