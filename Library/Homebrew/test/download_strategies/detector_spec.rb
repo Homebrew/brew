@@ -27,6 +27,13 @@ RSpec.describe DownloadStrategyDetector do
       it { is_expected.to eq(GitHubGitDownloadStrategy) }
     end
 
+    context "when using the :github_git symbol" do
+      let(:url) { "https://github.example.com/homebrew/brew.git" }
+      let(:strategy) { :github_git }
+
+      it { is_expected.to eq(GitHubGitDownloadStrategy) }
+    end
+
     it "defaults to curl" do
       expect(strategy_detector).to eq(CurlDownloadStrategy)
     end

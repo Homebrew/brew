@@ -829,6 +829,96 @@ class CurlPostDownloadStrategy < CurlDownloadStrategy # rubocop:todo Style/OneCl
   end
 end
 
+# Strategy for downloading a private GitHub or GitHub Enterprise release asset.
+#
+# This strategy performs a two-step download: first it resolves the numeric
+# asset ID via the GitHub API, then downloads the binary asset through the API
+# endpoint (`/releases/assets/:id`). This avoids the auth-header-stripping
+# problem that occurs when following the redirect from a direct
+# `/releases/download/` URL to the underlying storage backend.
+#
+# The URL must have the form:
+#   https://<host>/<owner>/<repo>/releases/download/<tag>/<filename>
+#
+# The `github_server_url:` option can be used to override the server, but is
+# auto-detected from the URL when omitted.
+#
+# @example cask usage
+#   url "https://github.example.com/org/app/releases/download/v1.2/app.tar.gz",
+#       using: :github_private_release
+#
+# @api public
+class GitHubPrivateReleaseAssetDownloadStrategy < CurlDownloadStrategy # rubocop:todo Style/OneClassPerFile
+  URL_MATCH_REGEX = %r{
+    ^https?://(?<host>[^/]+)
+    /(?<owner>[^/]+)
+    /(?<repo>[^/]+)
+    /releases/download
+    /(?<tag>[^/]+)
+    /(?<filename>.+)
+  }x
+
+  sig { params(url: String, name: String, version: T.nilable(T.any(String, Version)), meta: T.untyped).void }
+  def initialize(url, name, version, **meta)
+    super
+    uri = URI.parse(url)
+    provided_server = meta[:github_server_url]
+    @github_server_url = T.let(
+      if provided_server.present?
+        provided_server.to_s.sub(%r{/*$}, "")
+      else
+        origin = "#{uri.scheme}://#{uri.host}"
+        origin << ":#{uri.port}" if uri.port != uri.default_port
+        origin
+      end,
+      String,
+    )
+
+    match = url.match(URL_MATCH_REGEX)
+    return unless match
+
+    @owner    = T.let(match[:owner],    T.nilable(String))
+    @repo     = T.let(match[:repo],     T.nilable(String))
+    @tag      = T.let(match[:tag],      T.nilable(String))
+    @filename = T.let(URI.decode_www_form_component(T.must(match[:filename])), T.nilable(String))
+  end
+
+  private
+
+  sig {
+    override.params(url: String, resolved_url: String, timeout: T.nilable(T.any(Float, Integer)))
+            .returns(T.nilable(SystemCommand::Result))
+  }
+  def _fetch(url:, resolved_url:, timeout:)
+    return super if @owner.nil? || @repo.nil? || @tag.nil? || @filename.nil?
+
+    api_base = if @github_server_url == "https://github.com"
+      GitHub::API_URL
+    else
+      "#{@github_server_url}/api/v3"
+    end
+
+    release_url = "#{api_base}/repos/#{@owner}/#{@repo}/releases/tags/#{@tag}"
+    release_data = GitHub::API.open_rest(release_url)
+
+    asset = T.cast(release_data, T::Hash[String, T.untyped])
+             .fetch("assets", [])
+             .find { |a| a["name"] == @filename }
+    if asset.nil?
+      raise CurlDownloadStrategyError,
+            "Asset #{@filename} not found in release #{@tag} for #{@owner}/#{@repo} on #{@github_server_url}"
+    end
+
+    asset_url = "#{api_base}/repos/#{@owner}/#{@repo}/releases/assets/#{asset["id"]}"
+
+    extra_args = ["--header", "Accept: application/octet-stream"]
+    if GitHub::API.credentials_type != :none
+      extra_args += ["--header", "Authorization: token #{GitHub::API.credentials}"]
+    end
+    curl_download(asset_url, *extra_args, to: temporary_path, timeout:)
+  end
+end
+
 # Strategy for downloading archives without automatically extracting them.
 # (Useful for downloading `.jar` files.)
 #
@@ -1273,8 +1363,21 @@ class GitHubGitDownloadStrategy < GitDownloadStrategy # rubocop:todo Style/OneCl
   def initialize(url, name, version, **meta)
     super
     @version = T.let(version, T.nilable(Version))
+    provided_server = meta[:github_server_url]
+    uri = URI.parse(url)
+    @github_server_url = T.let(
+      if provided_server.present?
+        provided_server.to_s.sub(%r{/*$}, "")
+      else
+        origin = "#{uri.scheme}://#{uri.host}"
+        origin << ":#{uri.port}" if uri.port != uri.default_port
+        origin
+      end,
+      String,
+    )
 
-    match_data = %r{^https?://github\.com/(?<user>[^/]+)/(?<repo>[^/]+)\.git$}.match(@url)
+    server_host = @github_server_url.sub(%r{^https?://}, "")
+    match_data = %r{^https?://#{Regexp.escape(server_host)}/(?<user>[^/]+)/(?<repo>[^/]+)\.git$}.match(@url)
     return unless match_data
 
     @user = T.let(match_data[:user], T.nilable(String))
@@ -1283,17 +1386,21 @@ class GitHubGitDownloadStrategy < GitDownloadStrategy # rubocop:todo Style/OneCl
 
   sig { override.returns(String) }
   def last_commit
-    @last_commit ||= GitHub.last_commit(@user, @repo, @ref, version, length: MINIMUM_COMMIT_HASH_LENGTH)
+    return super if @user.nil? || @repo.nil?
+
+    @last_commit ||= GitHub.last_commit(@user, @repo, @ref, version, length:            MINIMUM_COMMIT_HASH_LENGTH,
+                                                                     github_server_url: @github_server_url)
     @last_commit || super
   end
 
   sig { override.params(commit: T.nilable(String)).returns(T::Boolean) }
   def commit_outdated?(commit)
+    return super if @user.nil? || @repo.nil?
     return true unless commit
     return super if last_commit.blank?
     return true unless last_commit.start_with?(commit)
 
-    if GitHub.multiple_short_commits_exist?(@user, @repo, commit)
+    if GitHub.multiple_short_commits_exist?(@user, @repo, commit, github_server_url: @github_server_url)
       true
     else
       T.must(@version).update_commit(commit)
@@ -1692,6 +1799,8 @@ class DownloadStrategyDetector # rubocop:todo Style/OneClassPerFile
     when :hg                     then MercurialDownloadStrategy
     when :nounzip                then NoUnzipCurlDownloadStrategy
     when :git                    then GitDownloadStrategy
+    when :github_git             then GitHubGitDownloadStrategy
+    when :github_private_release then GitHubPrivateReleaseAssetDownloadStrategy
     when :bzr                    then BazaarDownloadStrategy
     when :svn                    then SubversionDownloadStrategy
     when :curl                   then CurlDownloadStrategy
