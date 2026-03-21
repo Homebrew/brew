@@ -31,69 +31,50 @@ module Homebrew
         formula = Formulary.factory(name)
         line = db_line(formula)
         if db_path
-          upsert_entry(db_path, formula.full_name, line)
+          existing = db_path.exist? ? db_path.readlines(chomp: true).reject(&:empty?) : []
+          lines = existing.reject { |l| l.start_with?("#{formula.full_name}(") }
+          lines << line if line
+          db_path.write("#{lines.sort.join("\n")}\n")
         else
           puts line if line
         end
       rescue FormulaUnavailableError
-        remove_entry(db_path, name) if db_path
+        return unless db_path&.exist?
+
+        lines = db_path.readlines(chomp: true).reject { |l| l.start_with?("#{name}(") }
+        db_path.write("#{lines.sort.join("\n")}\n")
       end
 
       sig { params(formula: Formula).returns(T.nilable(String)) }
       def db_line(formula)
         return if formula.disabled? || formula.deprecated?
 
-        "#{formula.full_name}(#{formula.pkg_version}):#{executables_from_manifest(formula).join(" ")}"
+        exes = executables_from_manifest(formula)
+        "#{formula.full_name}(#{formula.pkg_version}):#{exes.join(" ")}"
       end
 
       sig { params(formula: Formula).returns(T::Array[String]) }
       def executables_from_manifest(formula)
         return [] unless formula.bottled?
 
-        manifest_path = cached_manifest(formula) || fetch_manifest(formula)
-        return [] unless manifest_path
+        manifest_path = HOMEBREW_CACHE.glob("#{formula.name}_bottle_manifest--*").first
+        if manifest_path.blank?
+          bottle = formula.bottle
+          return [] unless bottle
 
-        manifest = JSON.parse(manifest_path.read)
+          bottle.fetch
+          manifest_path = HOMEBREW_CACHE.glob("#{formula.name}_bottle_manifest--*").first
+        end
+        return [] if manifest_path.blank?
+
+        manifest = JSON.parse(T.must(manifest_path).read)
         exec_files = manifest.dig("manifests", 0, "annotations", "sh.brew.path_exec_files")
         return [] if exec_files.blank?
 
         exec_files.split.map { |f| File.basename(f) }.sort
-      rescue JSON::ParserError
+      rescue JSON::ParserError => e
+        opoo "Failed to parse bottle manifest for #{formula.name}: #{e.message}"
         []
-      end
-
-      sig { params(formula: Formula).returns(T.nilable(Pathname)) }
-      def cached_manifest(formula)
-        HOMEBREW_CACHE.glob("#{formula.name}_bottle_manifest--*").first
-      end
-
-      sig { params(formula: Formula).returns(T.nilable(Pathname)) }
-      def fetch_manifest(formula)
-        return unless (bottle = formula.bottle)
-
-        bottle.fetch
-        cached_manifest(formula)
-      end
-
-      sig { params(db_path: Pathname).returns(T::Array[String]) }
-      def read_db(db_path)
-        return [] unless db_path.exist?
-
-        db_path.readlines(chomp: true).reject(&:empty?)
-      end
-
-      sig { params(db_path: Pathname, name: String, line: T.nilable(String)).void }
-      def upsert_entry(db_path, name, line)
-        lines = read_db(db_path).reject { |l| l.start_with?("#{name}(") }
-        lines << line if line
-        db_path.write("#{lines.sort.join("\n")}\n")
-      end
-
-      sig { params(db_path: T.nilable(Pathname), name: String).void }
-      def remove_entry(db_path, name)
-        return unless db_path
-
-        upsert_entry(db_path, name, nil)
       end
     end
   end
