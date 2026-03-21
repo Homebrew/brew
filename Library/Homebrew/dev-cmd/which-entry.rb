@@ -20,7 +20,7 @@ module Homebrew
 
       sig { override.void }
       def run
-        db_path = args.output_db&.then { Pathname(_1) }
+        db_path = args.output_db&.then { |path| Pathname(path) }
         args.named.each { |name| process(name, db_path:) }
       end
 
@@ -28,19 +28,15 @@ module Homebrew
 
       sig { params(name: String, db_path: T.nilable(Pathname)).void }
       def process(name, db_path:)
-        formula = begin
-          Formulary.factory(name)
-        rescue FormulaUnavailableError
-          remove_entry(db_path, name) if db_path
-          return
-        end
-
+        formula = Formulary.factory(name)
         line = db_line(formula)
         if db_path
           upsert_entry(db_path, formula.full_name, line)
         else
           puts line if line
         end
+      rescue FormulaUnavailableError
+        remove_entry(db_path, name) if db_path
       end
 
       sig { params(formula: Formula).returns(T.nilable(String)) }
@@ -88,7 +84,7 @@ module Homebrew
 
       sig { params(db_path: Pathname, name: String, line: T.nilable(String)).void }
       def upsert_entry(db_path, name, line)
-        lines = read_db(db_path).reject { _1.start_with?("#{name}(") }
+        lines = read_db(db_path).reject { |l| l.start_with?("#{name}(") }
         lines << line if line
         db_path.write("#{lines.sort.join("\n")}\n")
       end
