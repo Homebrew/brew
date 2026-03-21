@@ -880,7 +880,7 @@ class GitHubPrivateReleaseAssetDownloadStrategy < CurlDownloadStrategy # rubocop
     @owner    = T.let(match[:owner],    T.nilable(String))
     @repo     = T.let(match[:repo],     T.nilable(String))
     @tag      = T.let(match[:tag],      T.nilable(String))
-    @filename = T.let(URI.decode_www_form_component(T.must(match[:filename])), T.nilable(String))
+    @filename = T.let(T.unsafe(URI).decode_uri_component(T.must(match[:filename])), T.nilable(String))
   end
 
   private
@@ -892,7 +892,7 @@ class GitHubPrivateReleaseAssetDownloadStrategy < CurlDownloadStrategy # rubocop
   def _fetch(url:, resolved_url:, timeout:)
     return super if @owner.nil? || @repo.nil? || @tag.nil? || @filename.nil?
 
-    api_base = if @github_server_url == "https://github.com"
+    api_base = if URI.parse(@github_server_url).host == "github.com"
       GitHub::API_URL
     else
       "#{@github_server_url}/api/v3"
