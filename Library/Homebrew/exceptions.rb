@@ -449,7 +449,7 @@ class FormulaConflictError < RuntimeError
   end
 end
 
-# Raise when the Python version cannot be detected automatically.
+# Raised when the Python version cannot be detected automatically.
 class FormulaUnknownPythonError < RuntimeError
   def initialize(formula)
     super <<~EOS
@@ -462,7 +462,7 @@ class FormulaUnknownPythonError < RuntimeError
   end
 end
 
-# Raise when two Python versions are detected simultaneously.
+# Raised when two Python versions are detected simultaneously.
 class FormulaAmbiguousPythonError < RuntimeError
   def initialize(formula)
     super <<~EOS

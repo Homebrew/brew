@@ -13,7 +13,7 @@ module Homebrew
           # Disable HTML parsing and replace it with variable parsing.
           # Also disable table parsing too because it depends on HTML parsing
           # and existing command descriptions may get misinterpreted as tables.
-          # Typographic symbols is disabled as it detects `--` as en-dash.
+          # Typographic symbols are disabled as they detect `--` as en-dash.
           @block_parsers.delete(:block_html)
           @block_parsers.delete(:table)
           @span_parsers.delete(:span_html)
