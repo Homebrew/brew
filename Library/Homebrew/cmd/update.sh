@@ -618,7 +618,10 @@ EOS
   fi
 
   export GIT_TERMINAL_PROMPT="0"
-  export GIT_SSH_COMMAND="${GIT_SSH_COMMAND:-ssh} -oBatchMode=yes"
+  # Set GIT_SSH_COMMAND only when user haven't set custom SSH command
+  if [[ -z "${GIT_SSH_COMMAND}" ]] && ! git config --get core.sshCommand &>/dev/null; then
+    export GIT_SSH_COMMAND="ssh -oBatchMode=yes"
+  fi
 
   if [[ -n "${HOMEBREW_GIT_NAME}" ]]
   then
