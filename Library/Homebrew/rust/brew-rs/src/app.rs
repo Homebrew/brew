@@ -21,6 +21,7 @@ fn run() -> BrewResult<ExitCode> {
     }
 
     match args[0].as_str() {
+        "config" => commands::config::run(&args),
         "search" => commands::search::run(&args),
         "info" => commands::info::run(&args),
         "list" => commands::list::run(&args),
