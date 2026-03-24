@@ -619,7 +619,8 @@ EOS
 
   export GIT_TERMINAL_PROMPT="0"
   # Set GIT_SSH_COMMAND only when user haven't set custom SSH command
-  if [[ -z "${GIT_SSH_COMMAND}" ]] && ! git config --get core.sshCommand &>/dev/null; then
+  if [[ -z "${GIT_SSH_COMMAND}" ]] && ! git config --get core.sshCommand &>/dev/null
+  then
     export GIT_SSH_COMMAND="ssh -oBatchMode=yes"
   fi
 
