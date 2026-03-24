@@ -292,7 +292,7 @@ PATH="/usr/bin:/bin:/usr/sbin:/sbin"
 FILTERED_ENV=()
 ENV_VAR_NAMES=(
   HOME SHELL PATH TERM TERMINFO TERMINFO_DIRS COLUMNS DISPLAY LOGNAME USER CI SSH_AUTH_SOCK SUDO_ASKPASS
-  http_proxy https_proxy ftp_proxy no_proxy all_proxy HTTPS_PROXY FTP_PROXY ALL_PROXY
+  http_proxy https_proxy ftp_proxy no_proxy all_proxy HTTPS_PROXY FTP_PROXY ALL_PROXY GIT_SSH_COMMAND
 )
 # Filter all but the specific variables.
 for VAR in "${ENV_VAR_NAMES[@]}" "${!HOMEBREW_@}"
