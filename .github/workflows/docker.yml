@@ -190,13 +190,9 @@ jobs:
           labels: ${{ needs.generate-tags.outputs.labels }}
 
       - name: Set environment variables
-        run: |
-          # odeprecated: remove 22.04 in Homebrew >=5.4
-          if [[ "${VERSION}" == "22.04" ]]; then
-            echo "HOMEBREW_GLIBC_TESTING=1" >> "$GITHUB_ENV"
-          fi
-        env:
-          VERSION: ${{ matrix.version }}
+        if: matrix.version == '22.04'
+        # odeprecated: remove 22.04 in Homebrew >=5.4
+        run: echo "HOMEBREW_GLIBC_TESTING=1" >> "$GITHUB_ENV"
 
       - name: Run brew test-bot --only-setup
         run: docker run --env HOMEBREW_GLIBC_TESTING --rm brew brew test-bot --only-setup
