@@ -59,10 +59,10 @@ module Homebrew
           end
 
           def started_services
-            @started_services ||= begin
-              if !Homebrew::Services::System.launchctl? && !Homebrew::Services::System.systemctl?
-                odie Homebrew::Services::System::MISSING_DAEMON_MANAGER_EXCEPTION_MESSAGE
-              end
+            @started_services ||= if !Homebrew::Services::System.launchctl? && !Homebrew::Services::System.systemctl?
+              opoo "Skipping `brew services list` due to missing launchctl/systemctl"
+              []
+            else
               states_to_skip = %w[stopped none]
 
               services_list = JSON.parse(Utils.safe_popen_read(HOMEBREW_BREW_FILE, "services", "list", "--json"))

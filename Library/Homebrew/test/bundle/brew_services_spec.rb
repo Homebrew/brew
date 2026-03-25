@@ -34,12 +34,9 @@ RSpec.describe Homebrew::Bundle::Brew::Services do
       expect(described_class.started_services).to eq([])
     end
 
-    it "exits with error when no daemon manager is available" do
+    it "returns empty array when no daemon manager is available" do
       allow(Homebrew::Services::System).to receive_messages(launchctl?: false, systemctl?: false)
-      expect do
-        described_class.started_services
-      end.to raise_error(SystemExit)
-        .and output(/supported only on macOS or Linux/).to_stderr
+      expect(described_class.started_services).to eq([])
     end
   end
 
