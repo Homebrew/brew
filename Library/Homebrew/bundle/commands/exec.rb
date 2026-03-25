@@ -312,10 +312,11 @@ module Homebrew
             end
 
             conflicting_services.each do |conflict|
-              if Bundle::Brew::Services.stop(conflict["name"], keep: true)
-                services_to_restart << conflict["name"] if conflict["registered"]
+              name = T.cast(conflict["name"], String)
+              if Bundle::Brew::Services.stop(name, keep: true)
+                services_to_restart << name if conflict["registered"]
               else
-                opoo "Failed to stop #{conflict["name"]} service"
+                opoo "Failed to stop #{name} service"
               end
             end
 
