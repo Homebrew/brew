@@ -5,10 +5,34 @@ use crate::matcher::Matcher;
 use rust_fuzzy_search::fuzzy_search_threshold;
 use std::process::ExitCode;
 
+#[derive(Default)]
+struct Args<'a> {
+    formula: bool,
+    cask: bool,
+    package_name: Option<&'a str>,
+}
+
 pub fn run(args: &[String]) -> BrewResult<ExitCode> {
-    if args.len() != 2 || args[1].starts_with('-') {
-        return delegate::run(args);
-    }
+    let parsed_args = {
+        let mut result = Args::default();
+        let mut args_iter = args.iter();
+        args_iter.next(); // Skip `search`
+        for arg in args_iter {
+            match arg.as_str() {
+                "--formula" | "--formulae" => result.formula = true,
+                "--cask" | "--casks" => result.cask = true,
+                s if !s.starts_with('-') && result.package_name.is_none() => {
+                    result.package_name = Some(s)
+                }
+                _ => return delegate::run(args),
+            }
+        }
+        if !result.formula && !result.cask {
+            result.formula = true;
+            result.cask = true;
+        }
+        result
+    };
 
     let api_cache = homebrew::cache_api_path()?;
     let formula_names = match homebrew::read_lines(&api_cache.join("formula_names.txt")) {
@@ -20,12 +44,33 @@ pub fn run(args: &[String]) -> BrewResult<ExitCode> {
         Err(_) => return delegate::run(args),
     };
 
-    let matcher = Matcher::try_from(args[1].as_str())?;
-    let matched_formulae = matched_names(&formula_names, &matcher);
-    let matched_casks = matched_names(&cask_names, &matcher);
+    let package_name = match parsed_args.package_name {
+        Some(package_name) => package_name,
+        _ => return delegate::run(args),
+    };
+
+    let matcher = Matcher::try_from(package_name)?;
+    let matched_formulae = if parsed_args.formula {
+        matched_names(&formula_names, &matcher)
+    } else {
+        Vec::new()
+    };
+    let matched_casks = if parsed_args.cask {
+        matched_names(&cask_names, &matcher)
+    } else {
+        Vec::new()
+    };
+
+    let formulae_or_casks = if parsed_args.formula && parsed_args.cask {
+        "formulae or casks"
+    } else if parsed_args.formula {
+        "formulae"
+    } else {
+        "casks"
+    };
 
     if matched_formulae.is_empty() && matched_casks.is_empty() {
-        eprintln!("No formulae or casks found for {:?}.", args[1]);
+        eprintln!("No {formulae_or_casks} found for {:?}.", package_name);
         return Ok(ExitCode::FAILURE);
     }
 

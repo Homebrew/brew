@@ -1,26 +1,67 @@
 use crate::BrewResult;
 use crate::delegate;
 use crate::homebrew;
+use anyhow::anyhow;
 use std::fs;
 use std::io;
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 
+#[derive(Default)]
+struct Args<'a> {
+    formula: bool,
+    cask: bool,
+    packages: Vec<&'a str>,
+}
+
 pub fn run(args: &[String]) -> BrewResult<ExitCode> {
-    if args[1..]
-        .iter()
-        .any(|arg| arg.starts_with('-') || arg.contains('/'))
-    {
-        return delegate::run(args);
-    }
+    let parsed_args = {
+        if let Some(formula_flag) = args
+            .iter()
+            .find(|s| matches!(s.as_str(), "--formula" | "--formulae"))
+            && let Some(cask_flag) = args
+                .iter()
+                .find(|s| matches!(s.as_str(), "--cask" | "--casks"))
+        {
+            return Err(anyhow!(
+                "Conflicting flags: `{}` and `{}`",
+                formula_flag,
+                cask_flag,
+            ));
+        }
+        let mut result = Args::default();
+        let mut args_iter = args.iter();
+        args_iter.next(); // Skip `list`
+        for arg in args_iter {
+            match arg.as_str() {
+                "--formula" | "--formulae" => result.formula = true,
+                "--cask" | "--casks" => result.cask = true,
+                s if !s.starts_with('-') && !s.contains('/') => result.packages.push(s),
+                _ => return delegate::run(args),
+            }
+        }
+        if !result.formula && !result.cask {
+            result.formula = true;
+            result.cask = true;
+        }
+        result
+    };
 
     let cellar = homebrew::cellar_path()?;
     let prefix = homebrew::prefix_path()?;
     let caskroom = homebrew::caskroom_path()?;
 
-    if args.len() == 1 {
-        let formulae = homebrew::installed_names(&cellar)?;
-        let casks = homebrew::installed_names(&caskroom)?;
+    if parsed_args.packages.is_empty() {
+        let formulae = if parsed_args.formula {
+            homebrew::installed_names(&cellar)?
+        } else {
+            Vec::new()
+        };
+        let casks = if parsed_args.cask {
+            homebrew::installed_names(&caskroom)?
+        } else {
+            Vec::new()
+        };
         homebrew::print_sections(&formulae, &casks);
         return Ok(ExitCode::SUCCESS);
     }
@@ -28,21 +69,25 @@ pub fn run(args: &[String]) -> BrewResult<ExitCode> {
     let mut missing = Vec::new();
     let mut listed_any = false;
 
-    for name in &args[1..] {
-        match list_formula_paths(&cellar, &prefix, name)? {
-            FormulaPaths::Paths(paths) => {
-                if listed_any {
-                    println!();
+    for name in parsed_args.packages {
+        if parsed_args.formula {
+            match list_formula_paths(&cellar, &prefix, name)? {
+                FormulaPaths::Paths(paths) => {
+                    if listed_any {
+                        println!();
+                    }
+                    println!("{}", paths.join("\n"));
+                    listed_any = true;
+                    continue;
                 }
-                println!("{}", paths.join("\n"));
-                listed_any = true;
-                continue;
+                FormulaPaths::Delegate => return delegate::run(args),
+                FormulaPaths::Missing => {}
             }
-            FormulaPaths::Delegate => return delegate::run(args),
-            FormulaPaths::Missing => {}
         }
 
-        if let Some(paths) = list_cask_paths(&caskroom, name)? {
+        if parsed_args.cask
+            && let Some(paths) = list_cask_paths(&caskroom, name)?
+        {
             if listed_any {
                 println!();
             }
@@ -51,12 +96,20 @@ pub fn run(args: &[String]) -> BrewResult<ExitCode> {
             continue;
         }
 
-        missing.push(name.clone());
+        missing.push(name);
     }
+
+    let keg_or_cask = if parsed_args.formula && parsed_args.cask {
+        "keg or cask"
+    } else if parsed_args.formula {
+        "keg"
+    } else {
+        "cask"
+    };
 
     if !missing.is_empty() {
         for name in missing {
-            eprintln!("No such keg or cask: {name}");
+            eprintln!("No such {keg_or_cask}: {name}");
         }
         return Ok(ExitCode::FAILURE);
     }
