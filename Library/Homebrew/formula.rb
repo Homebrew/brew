@@ -365,6 +365,9 @@ class Formula
   sig { returns(T::Boolean) }
   def preserve_rpath? = self.class.preserve_rpath?
 
+  sig { returns(T::Boolean) }
+  def skip_relocation? = self.class.skip_relocation?
+
   private
 
   # Allow full name logic to be re-used between names, aliases and installed aliases.
@@ -3657,6 +3660,7 @@ class Formula
           [phase, DEFAULT_NETWORK_ACCESS_ALLOWED]
         end, T.nilable(T::Hash[Symbol, T::Boolean]))
         @preserve_rpath = T.let(false, T.nilable(T::Boolean))
+        @skip_relocation = T.let(false, T.nilable(T::Boolean))
         @pypi_packages_info = T.let(nil, T.nilable(PypiPackages))
       end
     end
@@ -3669,6 +3673,7 @@ class Formula
       @skip_clean_paths.freeze
       @link_overwrite_paths.freeze
       @preserve_rpath&.freeze
+      @skip_relocation&.freeze
       super
     end
 
@@ -4461,6 +4466,28 @@ class Formula
     sig { returns(T::Boolean) }
     def preserve_rpath?
       @preserve_rpath == true
+    end
+
+    # Call this method to skip rewriting dynamic linkage after install.
+    #
+    # ### Example
+    #
+    # ```ruby
+    # skip_relocation
+    # ```
+    #
+    # @api public
+    sig { params(value: T::Boolean).returns(T::Boolean) }
+    def skip_relocation(value: true)
+      @skip_relocation = value
+    end
+
+    # Check if dynamic linkage rewriting should be skipped after install.
+    #
+    # @api internal
+    sig { returns(T::Boolean) }
+    def skip_relocation?
+      @skip_relocation == true
     end
 
     # Software that will not be symlinked into the `brew --prefix` and will

@@ -977,7 +977,9 @@ on_request: installed_on_request?, options:)
 
     install_service
 
-    fix_dynamic_linkage(keg) if !@poured_bottle || !formula.bottle_specification.skip_relocation?
+    if (!@poured_bottle || !formula.bottle_specification.skip_relocation?) && !formula.skip_relocation?
+      fix_dynamic_linkage(keg)
+    end
 
     require "install"
     Homebrew::Install.global_post_install
