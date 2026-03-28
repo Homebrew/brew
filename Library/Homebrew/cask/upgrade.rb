@@ -176,6 +176,7 @@ module Cask
       caught_exceptions = []
 
       puts upgradable_casks
+        .sort_by { |(_, new_cask)| new_cask.full_name }
         .map { |(old_cask, new_cask)| "#{new_cask.full_name} #{old_cask.version} -> #{new_cask.version}" }
         .join("\n")
       return true if dry_run

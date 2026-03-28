@@ -282,7 +282,7 @@ module Homebrew
           verb = args.dry_run? ? "Would upgrade" : "Upgrading"
           oh1 "#{verb} #{formulae_to_install.count} outdated #{Utils.pluralize("package",
                                                                                formulae_to_install.count)}:"
-          formulae_upgrades = formulae_to_install.map do |f|
+          formulae_upgrades = formulae_to_install.sort_by(&:full_specified_name).map do |f|
             if f.optlinked?
               "#{f.full_specified_name} #{Keg.new(f.opt_prefix).version} -> #{f.pkg_version}"
             else

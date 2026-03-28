@@ -255,7 +255,7 @@ module Homebrew
           ohai "#{upgrade_verb} #{Utils.pluralize("dependent", upgradeable.count,
                                                   include_count: true)} of upgraded #{formula_plural}:"
           puts_no_installed_dependents_check_disable_message_if_not_already!
-          formulae_upgrades = upgradeable.map do |f|
+          formulae_upgrades = upgradeable.sort_by(&:full_specified_name).map do |f|
             name = f.full_specified_name
             if f.optlinked?
               "#{name} #{Keg.new(f.opt_prefix).version} -> #{f.pkg_version}"
