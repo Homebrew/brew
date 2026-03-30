@@ -292,6 +292,34 @@ RSpec.describe GitHubRunnerMatrix, :no_api do
               matrix = described_class.new([testball], ["deleted"], all_supported: false, dependent_matrix: true)
               expect(get_runner_names(matrix)).to eq(["Linux x86_64"])
             end
+
+            it "shards dependent runners using the most specific sharding settings" do
+              allow(Homebrew::EnvConfig).to receive(:eval_all?).and_return(true)
+              allow(Formula).to receive(:all).and_return([
+                testball,
+                testball_depender_linux,
+                setup_test_runner_formula("testball-depender-linux-two", ["testball", :linux]),
+              ].map(&:formula))
+              allow(ENV).to receive(:[]).with("HOMEBREW_LINUX_RUNNER").and_return("linux-self-hosted-1")
+              env_fetch_overrides = {
+                ["HOMEBREW_DEPS_SHARDING", "false"]                      => "1",
+                ["HOMEBREW_DEPS_SHARD_BASE_THRESHOLD_LINUX_X86_64", nil] => "1",
+                ["HOMEBREW_DEPS_SHARD_BASE_THRESHOLD_LINUX", nil]        => "10",
+                ["HOMEBREW_DEPS_SHARD_RUNNER_PENALTY", nil]              => "0",
+                ["HOMEBREW_DEPS_SHARD_MAX_RUNNERS_LINUX", nil]           => "2",
+              }
+              allow(ENV).to receive(:fetch).and_wrap_original do |original, key, default = nil|
+                if env_fetch_overrides.key?([key, default])
+                  env_fetch_overrides[[key, default]]
+                else
+                  original.call(key, default)
+                end
+              end
+              matrix = described_class.new([testball], [], all_supported: false, dependent_matrix: true)
+
+              expect(matrix.active_runner_specs_hash.map { |spec| spec.fetch(:name) })
+                .to eq(["Linux x86_64 (shard 1/2)", "Linux x86_64 (shard 2/2)"])
+            end
           end
 
           context "when dependent formulae require macOS" do

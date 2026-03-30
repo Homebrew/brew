@@ -4,6 +4,8 @@
 module Homebrew
   module TestBot
     class FormulaeDependents < TestFormulae
+      DEPS_SHARD_INDEX_ENV = "HOMEBREW_DEPS_SHARD_INDEX"
+      DEPS_SHARD_TOTAL_ENV = "HOMEBREW_DEPS_SHARD_TOTAL"
       sig { params(testing_formulae: T::Array[String]).returns(T::Array[String]) }
       attr_writer :testing_formulae
 
@@ -24,6 +26,8 @@ module Homebrew
         @testing_formulae_with_tested_dependents = T.let([], T::Array[String])
         @tested_dependents_list = T.let(nil, T.nilable(Pathname))
         @dependent_testing_formulae = T.let([], T::Array[String])
+        @assigned_dependent_formula_names = T.let(nil, T.nilable(T::Set[String]))
+        @handled_dependent_formula_names = T.let(Set.new, T::Set[String])
       end
 
       sig { params(args: Homebrew::Cmd::TestBotCmd::Args).void }
@@ -41,6 +45,7 @@ module Homebrew
         @tested_dependents_list = Pathname("tested-dependents-#{Utils::Bottles.tag}.txt")
 
         @dependent_testing_formulae = sorted_formulae - skipped_or_failed_formulae
+        configure_dependent_sharding!(args:)
 
         install_formulae_if_needed_from_bottles!(installable_bottles, args:)
 
@@ -145,25 +150,34 @@ module Homebrew
         bottled_dependents.each do |dependent|
           install_dependent(dependent, testable_dependents, args:)
         end
+        return if @assigned_dependent_formula_names.nil?
+
+        (source_dependents + bottled_dependents).each do |dependent|
+          @handled_dependent_formula_names.add(dependent.full_name)
+        end
       end
 
       sig {
-        params(formula: Formula, formula_name: String, args: Homebrew::Cmd::TestBotCmd::Args)
-          .returns([T::Array[Formula], T::Array[Formula], T::Array[Formula]])
+        params(formula: Formula, args: Homebrew::Cmd::TestBotCmd::Args)
+          .returns(T::Boolean)
       }
-      def dependents_for_formula(formula, formula_name, args:)
-        info_header "Determining dependents..."
-
+      def skip_recursive_dependents_for(formula, args:)
         # Always skip recursive dependents on Intel. It's really slow.
         # Also skip recursive dependents on Linux unless it's a Linux-only formula.
         #
         # TODO: move to extend/os
         # rubocop:todo Homebrew/MoveToExtendOS
-        skip_recursive_dependents = args.skip_recursive_dependents? ||
-                                    (OS.mac? && Hardware::CPU.intel?) ||
-                                    (OS.linux? && formula.requirements.exclude?(LinuxRequirement.new))
+        args.skip_recursive_dependents? ||
+          (OS.mac? && Hardware::CPU.intel?) ||
+          (OS.linux? && formula.requirements.exclude?(LinuxRequirement.new))
         # rubocop:enable Homebrew/MoveToExtendOS
+      end
 
+      sig {
+        params(formula_name: String, skip_recursive_dependents: T::Boolean)
+          .returns(T::Array[String])
+      }
+      def dependent_formula_names(formula_name, skip_recursive_dependents:)
         uses_args = %w[--formula --eval-all]
         uses_include_test_args = [*uses_args, "--include-test"]
         uses_include_test_args << "--recursive" unless skip_recursive_dependents
@@ -171,7 +185,6 @@ module Homebrew
           Utils.safe_popen_read("brew", "uses", *uses_include_test_args, formula_name)
                .split("\n")
         end
-
         # TODO: Consider handling the following case better.
         #       `foo` has a build dependency on `bar`, and `bar` has a runtime dependency on
         #       `baz`. When testing `baz` with `--build-dependents-from-source`, `foo` is
@@ -182,9 +195,21 @@ module Homebrew
         end
         dependents.uniq!
         dependents.sort!
+        dependents
+      end
 
+      sig {
+        params(formula: Formula, formula_name: String, args: Homebrew::Cmd::TestBotCmd::Args)
+          .returns([T::Array[Formula], T::Array[Formula], T::Array[Formula]])
+      }
+      def dependents_for_formula(formula, formula_name, args:)
+        info_header "Determining dependents..."
+
+        skip_recursive_dependents = skip_recursive_dependents_for(formula, args:)
+        dependents = dependent_formula_names(formula_name, skip_recursive_dependents:)
         dependents -= @tested_formulae
         dependents = dependents.map { |d| Formulary.factory(d) }
+        dependents = sharded_dependents(dependents)
 
         dependents = dependents.zip(dependents.map do |f|
           if skip_recursive_dependents
@@ -254,6 +279,41 @@ module Homebrew
         puts testable_dependents
 
         [source_dependents, bottled_dependents, testable_dependents]
+      end
+
+      sig { params(args: Homebrew::Cmd::TestBotCmd::Args).void }
+      def configure_dependent_sharding!(args:)
+        shard_index = (env_value = ENV.fetch(DEPS_SHARD_INDEX_ENV, nil)).blank? ? 0 : Integer(env_value, 10)
+        shard_total = (env_value = ENV.fetch(DEPS_SHARD_TOTAL_ENV, nil)).blank? ? 1 : Integer(env_value, 10)
+        raise ArgumentError, "#{DEPS_SHARD_TOTAL_ENV} must be positive" unless shard_total.positive?
+        raise ArgumentError, "#{DEPS_SHARD_INDEX_ENV} must be between 0 and #{shard_total - 1}" unless
+          (0...shard_total).cover?(shard_index)
+
+        @assigned_dependent_formula_names = nil
+        @handled_dependent_formula_names.clear
+        return if shard_total == 1
+
+        all_dependent_formula_names = @dependent_testing_formulae.flat_map do |formula_name|
+          formula = Formulary.factory(formula_name)
+          skip_recursive_dependents = skip_recursive_dependents_for(formula, args:)
+          dependent_formula_names(formula_name, skip_recursive_dependents:)
+        end.uniq.sort
+        @assigned_dependent_formula_names = Set.new(
+          all_dependent_formula_names.each_with_index.filter_map do |name, position|
+            name if position % shard_total == shard_index
+          end,
+        )
+      end
+
+      sig { params(dependents: T::Array[Formula]).returns(T::Array[Formula]) }
+      def sharded_dependents(dependents)
+        assigned_dependent_formula_names = @assigned_dependent_formula_names
+        return dependents if assigned_dependent_formula_names.nil?
+
+        dependents.select do |dependent|
+          assigned_dependent_formula_names.include?(dependent.full_name) &&
+            @handled_dependent_formula_names.exclude?(dependent.full_name)
+        end
       end
 
       sig {
