@@ -713,9 +713,9 @@ module Homebrew
         next unless dir.directory?
 
         dir.find do |path|
-          path.extend(ObserverPathnameExtension)
           if path.symlink?
             unless path.resolved_path_exists?
+              path.extend(ObserverPathnameExtension) unless dry_run?
               path.uninstall_info if path.to_s.match?(Keg::INFOFILE_RX) && !dry_run?
 
               if dry_run?
@@ -734,6 +734,7 @@ module Homebrew
 
       dirs.reverse_each do |d|
         if !dry_run?
+          d.extend(ObserverPathnameExtension)
           d.rmdir_if_possible
         elsif children_count[d].zero?
           puts "Would remove (empty directory): #{d}"
@@ -744,12 +745,12 @@ module Homebrew
       require "cask/caskroom"
       if Cask::Caskroom.path.directory?
         Cask::Caskroom.path.each_child do |path|
-          path.extend(ObserverPathnameExtension)
           next if !path.symlink? || path.resolved_path_exists?
 
           if dry_run?
             puts "Would remove (broken link): #{path}"
           else
+            path.extend(ObserverPathnameExtension)
             path.unlink
           end
         end
