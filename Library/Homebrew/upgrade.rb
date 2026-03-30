@@ -60,7 +60,7 @@ module Homebrew
           end
         end
 
-        dependency_graph = Utils::TopologicalHash.graph_package_dependencies(formulae_to_install)
+        dependency_graph = build_dependency_graph(formulae_to_install)
         begin
           formulae_to_install = dependency_graph.tsort & formulae_to_install
         rescue TSort::Cyclic
@@ -111,6 +111,19 @@ module Homebrew
           end
         end
       end
+
+      sig { params(formulae: T::Array[Formula]).returns(Utils::TopologicalHash) }
+      def build_dependency_graph(formulae)
+        Utils::TopologicalHash.graph_package_dependencies(formulae)
+      rescue TapFormulaUnavailableError => e
+        raise if e.tap.installed?
+
+        e.tap.ensure_installed!
+        retry if e.tap.installed? # It may have not installed if it's a core tap.
+
+        raise
+      end
+      private :build_dependency_graph
 
       sig {
         params(formula_installers: T::Array[FormulaInstaller], dry_run: T::Boolean, verbose: T::Boolean,
