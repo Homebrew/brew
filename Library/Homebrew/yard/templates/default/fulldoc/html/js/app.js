@@ -343,52 +343,68 @@ window.__app = function () {
 };
 window.__app();
 
+function isInlineJavaScript(script) {
+  return (
+    !script.type ||
+    (script.type.includes("text/javascript") && !script.src)
+  );
+}
+
+function replaceMainContent(doc) {
+  const content = doc.querySelector("#main").innerHTML;
+  document.querySelector("#main").innerHTML = content;
+  document.title = doc.head.querySelector("title").innerText;
+}
+
+function refreshHeadScripts(doc) {
+  document.head.querySelectorAll("script").forEach((script) => {
+    if (isInlineJavaScript(script)) {
+      script.remove();
+    }
+  });
+
+  doc.head.querySelectorAll("script").forEach((script) => {
+    if (isInlineJavaScript(script)) {
+      const newScript = document.createElement("script");
+      newScript.type = "text/javascript";
+      newScript.textContent = script.textContent;
+      document.head.appendChild(newScript);
+    }
+  });
+}
+
+function restoreClassList(classListLink) {
+  document.getElementById("class_list_link").classList = classListLink;
+}
+
+function scrollToDecodedHash(rawUrl) {
+  const url = new URL(rawUrl, "https://localhost");
+  const hash = decodeURIComponent(url.hash ?? "");
+  if (hash) {
+    document.getElementById(hash.substring(1)).scrollIntoView();
+  }
+}
+
+async function handleNavigate(url) {
+  const response = await fetch(url);
+  const text = await response.text();
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(text, "text/html");
+  const classListLink = document.getElementById("class_list_link").classList;
+
+  replaceMainContent(doc);
+  refreshHeadScripts(doc);
+  window.__app();
+  restoreClassList(classListLink);
+  scrollToDecodedHash(url);
+  history.pushState({}, document.title, url);
+}
+
 window.addEventListener(
   "message",
   async (e) => {
     if (e.data.action === "navigate") {
-      const response = await fetch(e.data.url);
-      const text = await response.text();
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(text, "text/html");
-
-      const classListLink =
-        document.getElementById("class_list_link").classList;
-
-      const content = doc.querySelector("#main").innerHTML;
-      document.querySelector("#main").innerHTML = content;
-      document.title = doc.head.querySelector("title").innerText;
-      document.head.querySelectorAll("script").forEach((script) => {
-        if (
-          !script.type ||
-          (script.type.includes("text/javascript") && !script.src)
-        ) {
-          script.remove();
-        }
-      });
-
-      doc.head.querySelectorAll("script").forEach((script) => {
-        if (
-          !script.type ||
-          (script.type.includes("text/javascript") && !script.src)
-        ) {
-          const newScript = document.createElement("script");
-          newScript.type = "text/javascript";
-          newScript.textContent = script.textContent;
-          document.head.appendChild(newScript);
-        }
-      });
-
-      window.__app();
-
-      document.getElementById("class_list_link").classList = classListLink;
-
-      const url = new URL(e.data.url, "https://localhost");
-      const hash = decodeURIComponent(url.hash ?? "");
-      if (hash) {
-        document.getElementById(hash.substring(1)).scrollIntoView();
-      }
-      history.pushState({}, document.title, e.data.url);
+      await handleNavigate(e.data.url);
     }
   },
   false
