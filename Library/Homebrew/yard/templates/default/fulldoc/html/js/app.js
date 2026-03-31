@@ -100,141 +100,163 @@ window.__app = function () {
     });
   }
 
-  function summaryToggle() {
-    $(".summary_toggle").click(function (e) {
+  function initializeSummaryToggle(
+    toggleSelector,
+    summarySelector,
+    expandedClass,
+    buildCompactList
+  ) {
+    $(toggleSelector).click(function (e) {
       e.preventDefault();
       localStorage.summaryCollapsed = $(this).text();
-      $(".summary_toggle").each(function () {
+      $(toggleSelector).each(function () {
         $(this).text($(this).text() == "collapse" ? "expand" : "collapse");
-        var next = $(this).parent().parent().nextAll("ul.summary").first();
+        var next = $(this).parent().parent().nextAll(summarySelector).first();
         if (next.hasClass("compact")) {
           next.toggle();
-          next.nextAll("ul.summary").first().toggle();
-        } else if (next.hasClass("summary")) {
-          var list = $('<ul class="summary compact" />');
-          list.html(next.html());
-          list.find(".summary_desc, .note").remove();
-          list.find("a").each(function () {
-            $(this).html($(this).find("strong").html());
-            $(this).parent().html($(this)[0].outerHTML);
-          });
+          next.nextAll(summarySelector).first().toggle();
+        } else if (next.hasClass(expandedClass)) {
+          var list = buildCompactList(next);
           next.before(list);
           next.toggle();
         }
       });
       return false;
     });
+
     if (localStorage.summaryCollapsed == "collapse") {
-      $(".summary_toggle").first().click();
+      $(toggleSelector).first().click();
     } else {
       localStorage.summaryCollapsed = "expand";
     }
+  }
+
+  function buildCompactSummaryList(next) {
+    var list = $('<ul class="summary compact" />');
+    list.html(next.html());
+    list.find(".summary_desc, .note").remove();
+    list.find("a").each(function () {
+      $(this).html($(this).find("strong").html());
+      $(this).parent().html($(this)[0].outerHTML);
+    });
+    return list;
+  }
+
+  function buildCompactConstantsList(next) {
+    var list = $('<dl class="constants compact" />');
+    list.html(next.html());
+    list.find("dt").each(function () {
+      $(this).addClass("summary_signature");
+      $(this).text($(this).text().split("=")[0]);
+      if ($(this).has(".deprecated").length) {
+        $(this).addClass("deprecated");
+      }
+    });
+    list.find("pre.code").each(function () {
+      var dt_element = $(this).parent().prev();
+      var tooltip = $(this).text();
+      if (dt_element.hasClass("deprecated")) {
+        tooltip = "Deprecated. " + tooltip;
+      }
+      dt_element.attr("title", tooltip);
+    });
+    list.find(".docstring, .tags, dd").remove();
+    return list;
+  }
+
+  function summaryToggle() {
+    initializeSummaryToggle(
+      ".summary_toggle",
+      "ul.summary",
+      "summary",
+      buildCompactSummaryList
+    );
   }
 
   function constantSummaryToggle() {
-    $(".constants_summary_toggle").click(function (e) {
-      e.preventDefault();
-      localStorage.summaryCollapsed = $(this).text();
-      $(".constants_summary_toggle").each(function () {
-        $(this).text($(this).text() == "collapse" ? "expand" : "collapse");
-        var next = $(this).parent().parent().nextAll("dl.constants").first();
-        if (next.hasClass("compact")) {
-          next.toggle();
-          next.nextAll("dl.constants").first().toggle();
-        } else if (next.hasClass("constants")) {
-          var list = $('<dl class="constants compact" />');
-          list.html(next.html());
-          list.find("dt").each(function () {
-            $(this).addClass("summary_signature");
-            $(this).text($(this).text().split("=")[0]);
-            if ($(this).has(".deprecated").length) {
-              $(this).addClass("deprecated");
-            }
-          });
-          // Add the value of the constant as "Tooltip" to the summary object
-          list.find("pre.code").each(function () {
-            var dt_element = $(this).parent().prev();
-            var tooltip = $(this).text();
-            if (dt_element.hasClass("deprecated")) {
-              tooltip = "Deprecated. " + tooltip;
-            }
-            dt_element.attr("title", tooltip);
-          });
-          list.find(".docstring, .tags, dd").remove();
-          next.before(list);
-          next.toggle();
+    initializeSummaryToggle(
+      ".constants_summary_toggle",
+      "dl.constants",
+      "constants",
+      buildCompactConstantsList
+    );
+  }
+
+  function buildTOCTags() {
+    var tags = ["h2", "h3", "h4", "h5", "h6"];
+    if ($("#filecontents h1").length > 1) tags.unshift("h1");
+    return tags;
+  }
+
+  function buildTOCSelectors(tags) {
+    var selectors = [];
+    for (var i = 0; i < tags.length; i++) {
+      selectors.push("#filecontents " + tags[i]);
+    }
+    return selectors;
+  }
+
+  function shouldSkipTOCElement(element) {
+    if ($(element).parents(".method_details .docstring").length != 0) return true;
+    if (element.id == "filecontents") return true;
+    return false;
+  }
+
+  function ensureTOCElementId(element, counter) {
+    if (element.id.length !== 0) return;
+    var proposedId = $(element).attr("toc-id");
+    if (typeof proposedId != "undefined") {
+      element.id = proposedId;
+      return;
+    }
+
+    proposedId = $(element)
+      .text()
+      .replace(/[^a-z0-9-]/gi, "_");
+    if ($("#" + proposedId).length > 0) {
+      proposedId += counter.value;
+      counter.value++;
+    }
+    element.id = proposedId;
+  }
+
+  function normalizeTOCLevel(state, thisTag) {
+    var i;
+    if (thisTag > state.lastTag) {
+      for (i = 0; i < thisTag - state.lastTag; i++) {
+        if (typeof state.curli == "undefined") {
+          state.curli = $("<li/>");
+          state.toc.append(state.curli);
         }
-      });
-      return false;
-    });
-    if (localStorage.summaryCollapsed == "collapse") {
-      $(".constants_summary_toggle").first().click();
-    } else {
-      localStorage.summaryCollapsed = "expand";
+        state.toc = $("<ol/>");
+        state.curli.append(state.toc);
+        state.curli = undefined;
+      }
+    }
+
+    if (thisTag < state.lastTag) {
+      for (i = 0; i < state.lastTag - thisTag; i++) {
+        state.toc = state.toc.parent();
+        state.toc = state.toc.parent();
+      }
     }
   }
 
-  function generateTOC() {
-    if ($("#filecontents").length === 0) return;
-    var _toc = $('<ol class="top"></ol>');
-    var show = false;
-    var toc = _toc;
-    var counter = 0;
-    var tags = ["h2", "h3", "h4", "h5", "h6"];
-    var i;
-    var curli;
-    if ($("#filecontents h1").length > 1) tags.unshift("h1");
-    for (i = 0; i < tags.length; i++) {
-      tags[i] = "#filecontents " + tags[i];
-    }
-    var lastTag = parseInt(tags[0][1], 10);
-    $(tags.join(", ")).each(function () {
-      if ($(this).parents(".method_details .docstring").length != 0) return;
-      if (this.id == "filecontents") return;
-      show = true;
-      var thisTag = parseInt(this.tagName[1], 10);
-      if (this.id.length === 0) {
-        var proposedId = $(this).attr("toc-id");
-        if (typeof proposedId != "undefined") this.id = proposedId;
-        else {
-          var proposedId = $(this)
-            .text()
-            .replace(/[^a-z0-9-]/gi, "_");
-          if ($("#" + proposedId).length > 0) {
-            proposedId += counter;
-            counter++;
-          }
-          this.id = proposedId;
-        }
-      }
-      if (thisTag > lastTag) {
-        for (i = 0; i < thisTag - lastTag; i++) {
-          if (typeof curli == "undefined") {
-            curli = $("<li/>");
-            toc.append(curli);
-          }
-          toc = $("<ol/>");
-          curli.append(toc);
-          curli = undefined;
-        }
-      }
-      if (thisTag < lastTag) {
-        for (i = 0; i < lastTag - thisTag; i++) {
-          toc = toc.parent();
-          toc = toc.parent();
-        }
-      }
-      var title = $(this).attr("toc-title");
-      if (typeof title == "undefined") title = $(this).text();
-      curli = $('<li><a href="#' + this.id + '">' + title + "</a></li>");
-      toc.append(curli);
-      lastTag = thisTag;
-    });
-    if (!show) return;
-    html =
+  function appendTOCEntry(state, element) {
+    var thisTag = parseInt(element.tagName[1], 10);
+    normalizeTOCLevel(state, thisTag);
+    var title = $(element).attr("toc-title");
+    if (typeof title == "undefined") title = $(element).text();
+    state.curli = $('<li><a href="#' + element.id + '">' + title + "</a></li>");
+    state.toc.append(state.curli);
+    state.lastTag = thisTag;
+  }
+
+  function renderTOC(tocList) {
+    var html =
       '<div id="toc"><p class="title hide_toc"><a href="#"><strong>Table of Contents</strong></a></p></div>';
     $("#content").prepend(html);
-    $("#toc").append(_toc);
+    $("#toc").append(tocList);
     $("#toc .hide_toc").toggle(
       function () {
         $("#toc .top").slideUp("fast");
@@ -247,6 +269,29 @@ window.__app = function () {
         $("#toc .title small").toggle();
       }
     );
+  }
+
+  function generateTOC() {
+    if ($("#filecontents").length === 0) return;
+    var tags = buildTOCTags();
+    var selectors = buildTOCSelectors(tags);
+    var tocList = $('<ol class="top"></ol>');
+    var state = {
+      toc: tocList,
+      curli: undefined,
+      lastTag: parseInt(tags[0][1], 10),
+    };
+    var counter = { value: 0 };
+    var show = false;
+
+    $(selectors.join(", ")).each(function () {
+      if (shouldSkipTOCElement(this)) return;
+      show = true;
+      ensureTOCElementId(this, counter);
+      appendTOCEntry(state, this);
+    });
+    if (!show) return;
+    renderTOC(tocList);
   }
 
   function navResizer() {
