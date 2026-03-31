@@ -296,12 +296,22 @@ window.__app = function () {
 
   function navResizer() {
     const resizer = document.getElementById("resizer");
+    const minimumNavWidth = 200;
+
+    function consumePointerEvent(e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+
+    function applyNavWidth(width) {
+      $(".nav_wrap").css("width", Math.max(minimumNavWidth, width));
+    }
+
     resizer.addEventListener(
       "pointerdown",
       function (e) {
         resizer.setPointerCapture(e.pointerId);
-        e.preventDefault();
-        e.stopPropagation();
+        consumePointerEvent(e);
       },
       false
     );
@@ -309,8 +319,7 @@ window.__app = function () {
       "pointerup",
       function (e) {
         resizer.releasePointerCapture(e.pointerId);
-        e.preventDefault();
-        e.stopPropagation();
+        consumePointerEvent(e);
       },
       false
     );
@@ -322,18 +331,14 @@ window.__app = function () {
         }
 
         sessionStorage.navWidth = e.pageX.toString();
-        $(".nav_wrap").css("width", Math.max(200, e.pageX));
-        e.preventDefault();
-        e.stopPropagation();
+        applyNavWidth(e.pageX);
+        consumePointerEvent(e);
       },
       false
     );
 
     if (sessionStorage.navWidth) {
-      $(".nav_wrap").css(
-        "width",
-        Math.max(200, parseInt(sessionStorage.navWidth, 10))
-      );
+      applyNavWidth(parseInt(sessionStorage.navWidth, 10));
     }
   }
 
@@ -351,10 +356,7 @@ window.__app = function () {
   }
 
   function mainFocus() {
-    var hash = window.location.hash;
-    if (hash !== "" && $(hash)[0]) {
-      $(hash)[0].scrollIntoView();
-    }
+    scrollToHash(window.location.hash);
 
     setTimeout(function () {
       $("#main").focus();
@@ -364,11 +366,14 @@ window.__app = function () {
   function navigationChange() {
     // This works around the broken anchor navigation with the YARD template.
     window.onpopstate = function () {
-      var hash = window.location.hash;
-      if (hash !== "" && $(hash)[0]) {
-        $(hash)[0].scrollIntoView();
-      }
+      scrollToHash(window.location.hash);
     };
+  }
+
+  function scrollToHash(hash) {
+    if (hash !== "" && $(hash)[0]) {
+      $(hash)[0].scrollIntoView();
+    }
   }
 
   $(document).ready(function () {
