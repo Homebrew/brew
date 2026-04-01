@@ -6,11 +6,6 @@
 # Please do not submit PRs to remove it!
 # shellcheck disable=SC2154
 homebrew-shellenv() {
-  if [[ "${HOMEBREW_PATH%%:"${HOMEBREW_PREFIX}"/sbin*}" == "${HOMEBREW_PREFIX}/bin" ]]
-  then
-    return
-  fi
-
   # Use specified shell name parameter, if available.
   HOMEBREW_SHELL_NAME="${1:-}"
 
@@ -25,6 +20,16 @@ homebrew-shellenv() {
   if [[ -z "${HOMEBREW_SHELL_NAME}" ]]
   then
     HOMEBREW_SHELL_NAME="${SHELL##*/}"
+  fi
+
+  if [[ "${HOMEBREW_PATH%%:"${HOMEBREW_PREFIX}"/sbin*}" == "${HOMEBREW_PREFIX}/bin" ]]
+  then
+    # Still emit fpath for zsh: unlike PATH, fpath is not inherited by child shells.
+    if [[ "${HOMEBREW_SHELL_NAME}" == "zsh" ]] || [[ "${HOMEBREW_SHELL_NAME}" == "-zsh" ]]
+    then
+      echo "fpath[1,0]=\"${HOMEBREW_PREFIX}/share/zsh/site-functions\";"
+    fi
+    return
   fi
 
   if [[ -n "${HOMEBREW_MACOS}" ]] &&
