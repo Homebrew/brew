@@ -10,6 +10,8 @@ RSpec.describe "brew shellenv", type: :system do
   end
 
   it "sets zsh fpath idempotently at the front across repeated evals", :integration_test do
+    skip "zsh is not installed." unless which("zsh")
+
     prefix = ENV.fetch("HOMEBREW_PREFIX")
     site_functions = "#{prefix}/share/zsh/site-functions"
     brew_sh_path = "#{prefix}/bin/brew"
