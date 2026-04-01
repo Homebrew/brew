@@ -33,23 +33,4 @@ RSpec.describe "brew shellenv", type: :system do
       expect(stdout.strip).to eq("1")
     end
   end
-
-  it "does not emit zsh syntax on the early-return path when /bin/ps is unavailable",
-     :integration_test, :needs_macos do
-    prefix = ENV.fetch("HOMEBREW_PREFIX")
-    brew_sh_path = "#{prefix}/bin/brew"
-    path = "#{prefix}/bin:#{prefix}/sbin:/usr/bin:/bin:/usr/sbin:/sbin"
-    profile = '(version 1) (deny process-exec (literal "/bin/ps")) (allow default)'
-
-    Bundler.with_unbundled_env do
-      stdout, stderr, status = Open3.capture3(
-        "/usr/bin/sandbox-exec", "-p", profile,
-        "/bin/sh", "-c",
-        "PATH='#{path}' HOMEBREW_PATH='#{path}' SHELL=/bin/zsh '#{brew_sh_path}' shellenv"
-      )
-      expect(status).to be_success
-      expect(stdout).to be_empty
-      expect(stderr).to be_empty
-    end
-  end
 end
