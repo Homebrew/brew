@@ -21,7 +21,7 @@ homebrew-shellenv() {
     # Still emit fpath for zsh: unlike PATH, fpath is not inherited by child shells.
     if [[ "${HOMEBREW_SHELL_NAME}" == "zsh" ]] || [[ "${HOMEBREW_SHELL_NAME}" == "-zsh" ]]
     then
-      echo "fpath=(\"${HOMEBREW_PREFIX}/share/zsh/site-functions\" \"\${(@)fpath:#${HOMEBREW_PREFIX}/share/zsh/site-functions}\");"
+      echo "if (( \${#fpath} )); then fpath=(\"${HOMEBREW_PREFIX}/share/zsh/site-functions\" \"\${(@)fpath:#${HOMEBREW_PREFIX}/share/zsh/site-functions}\"); else fpath=(\"${HOMEBREW_PREFIX}/share/zsh/site-functions\"); fi;"
     fi
     return
   fi
@@ -85,7 +85,7 @@ homebrew-shellenv() {
       echo "export HOMEBREW_REPOSITORY=\"${HOMEBREW_REPOSITORY}\";"
       if [[ "${HOMEBREW_SHELL_NAME}" == "zsh" ]] || [[ "${HOMEBREW_SHELL_NAME}" == "-zsh" ]]
       then
-        echo "fpath=(\"${HOMEBREW_PREFIX}/share/zsh/site-functions\" \"\${(@)fpath:#${HOMEBREW_PREFIX}/share/zsh/site-functions}\");"
+        echo "if (( \${#fpath} )); then fpath=(\"${HOMEBREW_PREFIX}/share/zsh/site-functions\" \"\${(@)fpath:#${HOMEBREW_PREFIX}/share/zsh/site-functions}\"); else fpath=(\"${HOMEBREW_PREFIX}/share/zsh/site-functions\"); fi;"
       fi
       if [[ -n "${PATH_HELPER_ROOT}" ]]
       then
