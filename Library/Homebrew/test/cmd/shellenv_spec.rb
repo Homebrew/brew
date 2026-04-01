@@ -39,14 +39,16 @@ RSpec.describe "brew shellenv", type: :system do
         /tmp/homebrew-shellenv-test-2
       EOS
 
-      stdout, _, status = Open3.capture3(
+      stdout, stderr, status = Open3.capture3(
         { "PATH" => "/usr/bin:/bin:/usr/sbin:/sbin" },
         "zsh", "-f", "-c",
+        "set -u && " \
         "unset fpath && " \
         "eval \"$(#{brew_sh_path} shellenv zsh)\" && " \
         "printf '%s\\n' \"${fpath[@]}\""
       )
       expect(status).to be_success
+      expect(stderr).to be_empty
       expect(stdout).to eq <<~EOS
         #{site_functions}
       EOS
