@@ -16,12 +16,6 @@ homebrew-shellenv() {
     HOMEBREW_SHELL_NAME="$(/bin/ps -p "${PPID}" -c -o comm= 2>/dev/null)"
   fi
 
-  # Fall back to the (login) shell name from the environment.
-  if [[ -z "${HOMEBREW_SHELL_NAME}" ]]
-  then
-    HOMEBREW_SHELL_NAME="${SHELL##*/}"
-  fi
-
   if [[ "${HOMEBREW_PATH%%:"${HOMEBREW_PREFIX}"/sbin*}" == "${HOMEBREW_PREFIX}/bin" ]]
   then
     # Still emit fpath for zsh: unlike PATH, fpath is not inherited by child shells.
@@ -30,6 +24,12 @@ homebrew-shellenv() {
       echo "fpath=(\"${HOMEBREW_PREFIX}/share/zsh/site-functions\" \${fpath:#${HOMEBREW_PREFIX}/share/zsh/site-functions});"
     fi
     return
+  fi
+
+  # Fall back to the (login) shell name from the environment.
+  if [[ -z "${HOMEBREW_SHELL_NAME}" ]]
+  then
+    HOMEBREW_SHELL_NAME="${SHELL##*/}"
   fi
 
   if [[ -n "${HOMEBREW_MACOS}" ]] &&
