@@ -18,12 +18,12 @@ homebrew-shellenv() {
 
   if [[ "${HOMEBREW_PATH%%:"${HOMEBREW_PREFIX}"/sbin*}" == "${HOMEBREW_PREFIX}/bin" ]]
   then
-    # Still emit fpath for zsh: unlike PATH, fpath is not inherited by child shells.
-    if [[ "${HOMEBREW_SHELL_NAME}" == "zsh" ]] || [[ "${HOMEBREW_SHELL_NAME}" == "-zsh" ]]
+    # zsh's fpath is not inherited by child processes, so skip the early
+    # return for zsh to always emit the full output including fpath setup.
+    if [[ "${HOMEBREW_SHELL_NAME}" != "zsh" ]] && [[ "${HOMEBREW_SHELL_NAME}" != "-zsh" ]]
     then
-      echo "if (( \${+fpath} )); then fpath=(\"${HOMEBREW_PREFIX}/share/zsh/site-functions\" \"\${(@)fpath:#${HOMEBREW_PREFIX}/share/zsh/site-functions}\"); else fpath=(\"${HOMEBREW_PREFIX}/share/zsh/site-functions\"); fi;"
+      return
     fi
-    return
   fi
 
   # Fall back to the (login) shell name from the environment.
