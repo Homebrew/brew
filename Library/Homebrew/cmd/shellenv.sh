@@ -16,14 +16,16 @@ homebrew-shellenv() {
     HOMEBREW_SHELL_NAME="$(/bin/ps -p "${PPID}" -c -o comm= 2>/dev/null)"
   fi
 
+  # zsh's fpath is not inherited by child processes and cannot be checked
+  # from here (not exported, filtered by bin/brew's env -i), so always emit it.
+  if [[ "${HOMEBREW_SHELL_NAME}" == "zsh" ]] || [[ "${HOMEBREW_SHELL_NAME}" == "-zsh" ]]
+  then
+    echo "if (( \${+fpath} )); then fpath=(\"${HOMEBREW_PREFIX}/share/zsh/site-functions\" \"\${(@)fpath:#${HOMEBREW_PREFIX}/share/zsh/site-functions}\"); else fpath=(\"${HOMEBREW_PREFIX}/share/zsh/site-functions\"); fi;"
+  fi
+
   if [[ "${HOMEBREW_PATH%%:"${HOMEBREW_PREFIX}"/sbin*}" == "${HOMEBREW_PREFIX}/bin" ]]
   then
-    # zsh's fpath is not inherited by child processes, so skip the early
-    # return for zsh to always emit the full output including fpath setup.
-    if [[ "${HOMEBREW_SHELL_NAME}" != "zsh" ]] && [[ "${HOMEBREW_SHELL_NAME}" != "-zsh" ]]
-    then
-      return
-    fi
+    return
   fi
 
   # Fall back to the (login) shell name from the environment.
@@ -83,10 +85,6 @@ homebrew-shellenv() {
       echo "export HOMEBREW_PREFIX=\"${HOMEBREW_PREFIX}\";"
       echo "export HOMEBREW_CELLAR=\"${HOMEBREW_CELLAR}\";"
       echo "export HOMEBREW_REPOSITORY=\"${HOMEBREW_REPOSITORY}\";"
-      if [[ "${HOMEBREW_SHELL_NAME}" == "zsh" ]] || [[ "${HOMEBREW_SHELL_NAME}" == "-zsh" ]]
-      then
-        echo "if (( \${+fpath} )); then fpath=(\"${HOMEBREW_PREFIX}/share/zsh/site-functions\" \"\${(@)fpath:#${HOMEBREW_PREFIX}/share/zsh/site-functions}\"); else fpath=(\"${HOMEBREW_PREFIX}/share/zsh/site-functions\"); fi;"
-      fi
       if [[ -n "${PATH_HELPER_ROOT}" ]]
       then
         echo "eval \"\$(/usr/bin/env PATH_HELPER_ROOT=\"${PATH_HELPER_ROOT}\" /usr/libexec/path_helper -s)\""

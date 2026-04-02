@@ -19,7 +19,7 @@ RSpec.describe "brew shellenv", type: :system do
     Bundler.with_unbundled_env do
       # Start with site-functions in the middle of fpath and an empty entry, then
       # eval shellenv twice. This exercises all four concerns in one session:
-      #   1. fpath is emitted even when PATH is already set (zsh skips the early return)
+      #   1. fpath is emitted even when PATH is already set (emitted before the early return)
       #   2. site-functions is moved to the front
       #   3. site-functions appears exactly once (no duplicates)
       #   4. empty fpath entries are preserved
