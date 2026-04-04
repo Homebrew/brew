@@ -337,6 +337,7 @@ module RuboCop
         def audit_formula(formula_nodes)
           return if (body_node = formula_nodes.body_node).nil?
           return if formula_tap != "homebrew-core"
+          return if tap_style_exception? :full_dependency_allowlist
 
           find_every_method_call_by_name(body_node, :depends_on).each do |node|
             node.each_descendant(:str, :sym) do |dependency_node|
