@@ -43,5 +43,22 @@ RSpec.describe Homebrew::Cmd::Leaves do
         .and not_to_output.to_stderr
         .and be_a_success
     end
+
+    it "does not list a renamed formula as a leaf when a stale tab records its old name" do
+      # Simulate: "foo" was renamed to "newname"; "bar" depends on it but its tab
+      # still records the old dependency name under a tap-qualified full_name
+      # (not yet regenerated after rename). Also exercises the tap-prefix strip path.
+      setup_test_formula "newname"
+      setup_test_formula "bar", tab_attributes: { runtime_dependencies: [{ "full_name" => "homebrew/core/foo" }] }
+      (HOMEBREW_CELLAR/"newname/1.0/somedir").mkpath
+
+      CoreTap.instance.path.join("formula_renames.json").write('{"foo":"newname"}')
+      CoreTap.instance.clear_cache
+
+      expect { brew "leaves" }
+        .to output("bar\n").to_stdout
+        .and not_to_output.to_stderr
+        .and be_a_success
+    end
   end
 end

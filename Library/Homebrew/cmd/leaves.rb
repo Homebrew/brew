@@ -24,11 +24,35 @@ module Homebrew
 
       sig { override.void }
       def run
-        leaves_list = Formula.installed - Formula.installed.flat_map(&:installed_runtime_formula_dependencies)
-        casks_runtime_dependencies = Cask::Caskroom.casks.flat_map do |cask|
-          CaskDependent.new(cask).runtime_dependencies.map(&:to_installed_formula)
+        installed = Formula.installed
+
+        # Build a set of dependency names from tab data to avoid loading full Formula objects
+        # via Formulary.resolve for each dependency (which is expensive I/O).
+        formula_dep_names = installed.flat_map do |f|
+          if (tab_deps = f.any_installed_keg&.runtime_dependencies)
+            tab_deps.filter_map do |dep|
+              full_name = dep["full_name"]
+              next unless full_name
+
+              full_name.include?("/") ? full_name.rpartition("/").last : full_name
+            end
+          else
+            # Fallback for installations without tab runtime_dependencies.
+            f.installed_runtime_formula_dependencies.map(&:name)
+          end
         end
-        leaves_list -= casks_runtime_dependencies
+
+        # Add direct cask formula dependency names; their transitive deps are already in dep_names.
+        cask_dep_names = Cask::Caskroom.casks.flat_map do |cask|
+          CaskDependent.new(cask).deps.map do |dep|
+            name = dep.name
+            name.include?("/") ? name.rpartition("/").last : name
+          end
+        end
+
+        dep_names = T.let((formula_dep_names + cask_dep_names).to_set, T::Set[String])
+
+        leaves_list = installed.reject { |f| f.possible_names.any? { dep_names.include?(it) } }
         leaves_list.select! { |leaf| installed_on_request?(leaf) } if args.installed_on_request?
         leaves_list.select! { |leaf| installed_as_dependency?(leaf) } if args.installed_as_dependency?
 
