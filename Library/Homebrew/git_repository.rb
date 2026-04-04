@@ -91,8 +91,25 @@ class GitRepository
   end
 
   # Returns true if the repository's current branch matches the default origin branch.
+  # Reads git files directly to avoid spawning two subprocesses per call.
   sig { returns(T.nilable(T::Boolean)) }
   def default_origin_branch?
+    git_dir = pathname/".git"
+    return origin_branch_name == branch_name unless git_dir.directory?
+
+    head_content = (git_dir/"HEAD").read.chomp
+    head_prefix = "ref: refs/heads/"
+    return origin_branch_name == branch_name unless head_content.start_with?(head_prefix)
+
+    origin_head_path = git_dir/"refs/remotes/origin/HEAD"
+    return false unless origin_head_path.exist?
+
+    origin_head_content = origin_head_path.read.chomp
+    origin_prefix = "ref: refs/remotes/origin/"
+    return false unless origin_head_content.start_with?(origin_prefix)
+
+    head_content.delete_prefix(head_prefix) == origin_head_content.delete_prefix(origin_prefix)
+  rescue Errno::ENOENT
     origin_branch_name == branch_name
   end
 

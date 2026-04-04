@@ -2762,14 +2762,21 @@ class Formula
     tab_deps = any_installed_keg&.runtime_dependencies
     return [] if tab_deps.blank?
 
+    # Build a set of all installed possible names (includes oldnames for rename support) once per
+    # process. Avoids Formulary.resolve per dependency, which is expensive I/O.
+    installed_names = Formula.cache[:installed_possible_names] ||=
+      Formula.installed.flat_map(&:possible_names).to_set
+
     tab_deps.filter_map do |d|
       full_name = d["full_name"]
       next if full_name.blank?
 
+      base_name = full_name.include?("/") ? full_name.rpartition("/").last : full_name
       dep = Dependency.new(full_name)
-      dep if hide.include?(dep.name) || dep.to_installed_formula.installed_prefixes.none?
-    rescue FormulaUnavailableError
-      nil
+      # A dep is missing if it's explicitly hidden or not among installed possible names.
+      # The cellar check handles deleted-but-installed formulas whose Formula objects can't load.
+      dep if hide.include?(dep.name) ||
+             (installed_names.exclude?(base_name) && !(HOMEBREW_CELLAR/base_name).directory?)
     end
   end
 
