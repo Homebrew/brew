@@ -10,6 +10,9 @@ class Cask::Cask
   def app(*args, &block); end
 
   sig { params(args: T.untyped, block: T.untyped).returns(T.untyped) }
+  def app_image(*args, &block); end
+
+  sig { params(args: T.untyped, block: T.untyped).returns(T.untyped) }
   def appdir(*args, &block); end
 
   sig { params(args: T.untyped, block: T.untyped).returns(T.untyped) }

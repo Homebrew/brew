@@ -20,6 +20,9 @@ class Homebrew::Cmd::InstallCmd::Args < Homebrew::CLI::Args
   sig { returns(T.nilable(String)) }
   def appdir; end
 
+  sig { returns(T.nilable(String)) }
+  def appimagedir; end
+
   sig { returns(T::Boolean) }
   def as_dependency?; end
 
