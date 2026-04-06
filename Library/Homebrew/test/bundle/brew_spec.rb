@@ -6,6 +6,7 @@ require "bundle/brew"
 require "bundle/brew_services"
 require "tsort"
 require "formula"
+require "services/formulae"
 require "tab"
 require "utils/bottles"
 
@@ -225,7 +226,7 @@ RSpec.describe Homebrew::Bundle::Brew do
     describe "#dump" do
       it "returns a dump string with installed formulae" do
         expect(Formula).to receive(:installed).and_return([foo, bar, baz])
-        allow(Utils).to receive(:safe_popen_read).and_return("[]")
+        allow(Homebrew::Services::Formulae).to receive(:services_list).and_return([])
         expected = <<~EOS
           # barfoo
           brew "bar"

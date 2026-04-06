@@ -3,6 +3,7 @@
 
 require "bundle"
 require "bundle/brew_services"
+require "services/formulae"
 
 RSpec.describe Homebrew::Bundle::Brew::Services do
   describe ".started_services" do
@@ -11,27 +12,27 @@ RSpec.describe Homebrew::Bundle::Brew::Services do
     end
 
     it "returns started services" do
-      allow(Utils).to receive(:safe_popen_read).and_return <<~EOS
+      allow(Homebrew::Services::Formulae).to receive(:services_list).and_return(
         [
           {
-            "name": "nginx",
-            "status": "started"
+            name:   "nginx",
+            status: :started,
           },
           {
-            "name": "apache",
-            "status": "stopped"
+            name:   "apache",
+            status: :stopped,
           },
           {
-            "name": "mysql",
-            "status": "started"
-          }
-        ]
-      EOS
+            name:   "mysql",
+            status: :started,
+          },
+        ],
+      )
       expect(described_class.started_services).to contain_exactly("nginx", "mysql")
     end
 
     it "returns empty array when no services exist" do
-      allow(Utils).to receive(:safe_popen_read).and_return("[]\n")
+      allow(Homebrew::Services::Formulae).to receive(:services_list).and_return([])
       expect(described_class.started_services).to eq([])
     end
 

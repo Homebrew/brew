@@ -63,11 +63,11 @@ module Homebrew
               if !Homebrew::Services::System.launchctl? && !Homebrew::Services::System.systemctl?
                 odie Homebrew::Services::System::MISSING_DAEMON_MANAGER_EXCEPTION_MESSAGE
               end
-              states_to_skip = %w[stopped none]
+              states_to_skip = [:stopped, :none]
 
-              services_list = JSON.parse(Utils.safe_popen_read(HOMEBREW_BREW_FILE, "services", "list", "--json"))
-              services_list.filter_map do |hash|
-                hash.fetch("name") if states_to_skip.exclude?(hash.fetch("status"))
+              require "services/formulae"
+              Homebrew::Services::Formulae.services_list.filter_map do |hash|
+                hash.fetch(:name) if states_to_skip.exclude?(hash.fetch(:status))
               end
             end
           end
