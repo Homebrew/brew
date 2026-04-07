@@ -56,46 +56,6 @@ module Repology
     nil
   end
 
-  sig {
-    params(
-      limit:        T.nilable(Integer),
-      last_package: T.nilable(String),
-      repository:   String,
-    ).returns(T::Hash[String, T.untyped])
-  }
-  def self.parse_api_response(limit = nil, last_package = "", repository:)
-    package_term = case repository
-    when HOMEBREW_CORE
-      "formulae"
-    when HOMEBREW_CASK
-      "casks"
-    else
-      "packages"
-    end
-
-    ohai "Querying outdated #{package_term} from Repology"
-
-    page_no = 1
-    outdated_packages = {}
-
-    while page_no <= MAX_PAGINATION
-      odebug "Paginating Repology API page: #{page_no}"
-
-      response = query_api(last_package, repository:)
-      outdated_packages.merge!(response)
-      last_package = response.keys.max
-
-      page_no += 1
-      break if (limit && outdated_packages.size >= limit) || response.size <= 1
-    end
-
-    package_term = package_term.chop if outdated_packages.size == 1
-    puts "#{outdated_packages.size} outdated #{package_term} found"
-    puts
-
-    outdated_packages.sort.to_h
-  end
-
   sig { params(repositories: T::Array[String]).returns(T.any(String, Version)) }
   def self.latest_version(repositories)
     # The status is "unique" when the package is present only in Homebrew, so

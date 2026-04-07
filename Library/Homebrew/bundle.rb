@@ -46,13 +46,6 @@ module Homebrew
                              !Homebrew::EnvConfig.no_install_from_api?)
       end
 
-      sig { params(name: String).returns(T::Boolean) }
-      def which_formula?(name)
-        formula = Formulary.factory(name)
-        ENV["PATH"] = "#{formula.opt_bin}:#{ENV.fetch("PATH", nil)}" if formula.any_version_installed?
-        which(name).present?
-      end
-
       sig { params(block: T.proc.returns(T.anything)).returns(T.untyped) }
       def exchange_uid_if_needed!(&block)
         euid = Process.euid

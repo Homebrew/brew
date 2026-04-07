@@ -368,6 +368,7 @@ class AbstractFileDownloadStrategy < AbstractDownloadStrategy # rubocop:todo Sty
 
   sig { returns(String) }
   def resolved_url
+    odeprecated "resolved_url"
     resolved_url, = resolved_url_and_basename
     resolved_url
   end

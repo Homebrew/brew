@@ -680,12 +680,6 @@ on_request: installed_on_request?, options:)
     end
   end
 
-  sig { void }
-  def compute_and_install_dependencies
-    deps = compute_dependencies
-    install_dependencies(deps)
-  end
-
   sig { params(req_map: T::Hash[Formula, T::Array[Requirement]]).void }
   def check_requirements(req_map)
     @requirement_messages = []

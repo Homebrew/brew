@@ -398,10 +398,6 @@ module Homebrew
         @location = SourceLocation.new(location.fetch("line"), location["column"])
       end
 
-      def severity_code
-        @severity[0].upcase
-      end
-
       def corrected?
         @corrected
       end

@@ -1,6 +1,8 @@
 # typed: strict
 # frozen_string_literal: true
 
+require "utils/output"
+
 class Hash
   # Returns a new hash with all values converted by the block operation.
   # This includes the values from the root hash and from all
@@ -19,7 +21,10 @@ class Hash
   # Destructively converts all values by using the block operation.
   # This includes the values from the root hash and from all
   # nested hashes and arrays.
-  def deep_transform_values!(&block) = _deep_transform_values_in_object!(self, &block)
+  def deep_transform_values!(&block)
+    Utils::Output.odeprecated "deep_transform_values!", "deep_transform_values(&block)"
+    _deep_transform_values_in_object!(self, &block)
+  end
 
   private
 

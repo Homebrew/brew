@@ -61,12 +61,6 @@ module GitHub
     API.open_rest("#{API_URL}/repos/#{repo}/collaborators/#{user}/permission")
   end
 
-  sig { params(repo: String, user: T.nilable(String)).returns(T::Boolean) }
-  def self.write_access?(repo, user = nil)
-    user ||= self.user["login"]
-    ["admin", "write"].include?(permission(repo, user)["permission"])
-  end
-
   def self.print_pull_requests_matching(query, only = nil)
     open_or_closed_prs = search_issues(query, is: only, type: "pr", user: "Homebrew")
 

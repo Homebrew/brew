@@ -3,6 +3,7 @@
 
 require "hardware"
 require "software_spec"
+require "utils/output"
 require "development_tools"
 require "extend/ENV"
 require "system_command"
@@ -75,6 +76,7 @@ module SystemConfig
 
     sig { params(path: T.nilable(Pathname)).returns(String) }
     def describe_path(path)
+      Utils::Output.odeprecated "describe_path"
       return "N/A" if path.nil?
 
       realpath = path.realpath

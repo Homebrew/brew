@@ -1105,10 +1105,6 @@ module Homebrew
       problem error if error
     end
 
-    def quote_dep(dep)
-      dep.is_a?(Symbol) ? dep.inspect : "'#{dep}'"
-    end
-
     def problem_if_output(output)
       problem(output) if output
     end

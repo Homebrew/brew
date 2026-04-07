@@ -78,11 +78,6 @@ module Homebrew
           installed_extensions.include?(name.downcase)
         end
 
-        sig { params(name: String).returns(T::Boolean) }
-        def extension_installed?(name)
-          package_installed?(name)
-        end
-
         sig {
           override.params(
             name:       String,

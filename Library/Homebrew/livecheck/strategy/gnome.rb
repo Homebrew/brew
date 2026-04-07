@@ -29,8 +29,6 @@ module Homebrew
       class Gnome
         extend Strategic
 
-        NICE_NAME = "GNOME"
-
         # The `Regexp` used to determine if the strategy applies to the URL.
         URL_MATCH_REGEX = %r{
           ^https?://download\.gnome\.org

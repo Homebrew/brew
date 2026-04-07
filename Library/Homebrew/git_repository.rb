@@ -26,14 +26,6 @@ class GitRepository
     popen_git("config", "--get", "remote.origin.url")
   end
 
-  # Sets the URL of the Git origin remote.
-  sig { params(origin: String).void }
-  def origin_url=(origin)
-    return if !git_repository? || !Utils::Git.available?
-
-    safe_system Utils::Git.git, "remote", "set-url", "origin", origin, chdir: pathname
-  end
-
   # Gets the full commit hash of the HEAD commit.
   sig { params(safe: T::Boolean).returns(T.nilable(String)) }
   def head_ref(safe: false)

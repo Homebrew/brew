@@ -27,7 +27,6 @@ class GitHubPackages
   # Valid OCI tag characters
   # https://github.com/opencontainers/distribution-spec/blob/main/spec.md#workflow-categories
   VALID_OCI_TAG_REGEX = /^[a-zA-Z0-9_][a-zA-Z0-9._-]{0,127}$/
-  INVALID_OCI_TAG_CHARS_REGEX = /[^a-zA-Z0-9._-]/
 
   # Translate Homebrew tab.arch to OCI platform.architecture
   TAB_ARCH_TO_PLATFORM_ARCHITECTURE = T.let(

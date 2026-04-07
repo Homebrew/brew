@@ -27,8 +27,6 @@ module Homebrew
       class Json
         extend Strategic
 
-        NICE_NAME = "JSON"
-
         # A priority of zero causes livecheck to skip the strategy. We do this
         # for {Json} so we can selectively apply it only when a strategy block
         # is provided in a `livecheck` block.

@@ -1,6 +1,8 @@
 # typed: strict
 # frozen_string_literal: true
 
+require "utils/output"
+
 class Hash
   # Validates all keys in a hash match `*valid_keys`, raising
   # `ArgumentError` on a mismatch.
@@ -64,7 +66,10 @@ class Hash
   # Destructively converts all keys to strings.
   # This includes the keys from the root hash and from all
   # nested hashes and arrays.
-  def deep_stringify_keys! = T.unsafe(self).deep_transform_keys!(&:to_s)
+  def deep_stringify_keys!
+    Utils::Output.odeprecated "deep_stringify_keys!", "deep_transform_keys!(&:to_s)"
+    T.unsafe(self).deep_transform_keys!(&:to_s)
+  end
 
   # Returns a new hash with all keys converted to symbols, as long as
   # they respond to `to_sym`. This includes the keys from the root hash
@@ -90,6 +95,7 @@ class Hash
   # to `to_sym`. This includes the keys from the root hash and from all
   # nested hashes and arrays.
   def deep_symbolize_keys!
+    Utils::Output.odeprecated "deep_symbolize_keys!", "deep_transform_keys! { |key| key.to_sym rescue key }"
     deep_transform_keys! do |key|
       T.unsafe(key).to_sym
     rescue

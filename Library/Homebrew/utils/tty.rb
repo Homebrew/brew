@@ -1,6 +1,8 @@
 # typed: strict
 # frozen_string_literal: true
 
+require "utils/output"
+
 # Various helper functions for interacting with TTYs.
 module Tty
   @stream = T.let($stdout, T.nilable(T.any(IO, StringIO)))
@@ -62,6 +64,7 @@ module Tty
 
     sig { params(line_count: Integer).returns(String) }
     def move_cursor_up(line_count)
+      Utils::Output.odeprecated "Tty.move_cursor_up", %Q("\\033[#{line_count}A")
       "\033[#{line_count}A"
     end
 

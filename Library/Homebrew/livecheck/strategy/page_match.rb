@@ -20,8 +20,6 @@ module Homebrew
       class PageMatch
         extend Strategic
 
-        NICE_NAME = "Page match"
-
         # A priority of zero causes livecheck to skip the strategy. We do this
         # for {PageMatch} so we can selectively apply it only when a regex is
         # provided in a `livecheck` block.

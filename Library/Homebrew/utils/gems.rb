@@ -139,16 +139,6 @@ module Homebrew
     odie_if_defined "failed to install the '#{name}' gem."
   end
 
-  def self.install_gem_setup_path!(name, version: nil, executable: name, setup_gem_environment: true)
-    install_gem!(name, version:, setup_gem_environment:)
-    return if find_in_path(executable)
-
-    odie_if_defined <<~EOS
-      the '#{name}' gem is installed but couldn't find '#{executable}' in the PATH:
-        #{ENV.fetch("PATH")}
-    EOS
-  end
-
   def self.find_in_path(executable)
     ENV.fetch("PATH").split(":").find do |path|
       File.executable?(File.join(path, executable))

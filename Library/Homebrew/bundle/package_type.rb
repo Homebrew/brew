@@ -200,19 +200,6 @@ module Homebrew
         core_package_types = [:tap, :brew, :cask].filter_map { |type| package_type(type) }
         (core_package_types + (package_types - core_package_types)).uniq
       end
-
-      sig { returns(T::Array[T.class_of(PackageType)]) }
-      def check_package_types
-        taps = package_type(:tap)
-        casks = package_type(:cask)
-        formulae = package_type(:brew)
-        leading_package_types = [taps, casks].compact
-        trailing_package_types = [formulae].compact
-
-        leading_package_types +
-          (package_types - leading_package_types - trailing_package_types) +
-          trailing_package_types
-      end
     end
   end
 end

@@ -139,16 +139,6 @@ module Homebrew
         string.freeze
       end
 
-      # Causes some terminals to display secure password entry indicators.
-      sig { void }
-      def noecho_gets
-        system "stty", "-echo"
-        result = $stdin.gets
-        system "stty", "echo"
-        puts
-        result
-      end
-
       sig { params(dir: Pathname, basedir: Pathname).returns(T::Hash[String, T::Hash[Symbol, String]]) }
       def load_logs(dir, basedir = dir)
         logs = {}

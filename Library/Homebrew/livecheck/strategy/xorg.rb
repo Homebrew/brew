@@ -43,8 +43,6 @@ module Homebrew
       class Xorg
         extend Strategic
 
-        NICE_NAME = "X.Org"
-
         # A `Regexp` used in determining if the strategy applies to the URL and
         # also as part of extracting the module name from the URL basename.
         MODULE_REGEX = /(?<module_name>.+)-\d+/i

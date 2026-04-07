@@ -20,8 +20,6 @@ module Homebrew
       class Pypi
         extend Strategic
 
-        NICE_NAME = "PyPI"
-
         # The default `strategy` block used to extract version information when
         # a `strategy` block isn't provided.
         DEFAULT_BLOCK = T.let(proc do |json, regex|

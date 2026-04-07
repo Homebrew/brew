@@ -562,11 +562,6 @@ class Formula
   # @see .autobump?
   delegate autobump?: :"self.class"
 
-  # Is a `no_autobump!` method defined?
-  # @!method no_autobump_defined?
-  # @see .no_autobump_defined?
-  delegate no_autobump_defined?: :"self.class"
-
   delegate no_autobump_message: :"self.class"
 
   # Is a service specification defined for the software?
@@ -4647,10 +4642,6 @@ class Formula
     def autobump?
       @autobump != false # @autobump may be `nil`
     end
-
-    # Is a `no_autobump!` method defined?
-    sig { returns(T::Boolean) }
-    def no_autobump_defined? = @no_autobump_defined == true
 
     # Message that explains why the formula was excluded from the autobump list.
     # Returns `nil` if no message is specified.

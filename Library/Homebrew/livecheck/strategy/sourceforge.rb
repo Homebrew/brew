@@ -35,8 +35,6 @@ module Homebrew
       class Sourceforge
         extend Strategic
 
-        NICE_NAME = "SourceForge"
-
         # The `Regexp` used to determine if the strategy applies to the URL.
         URL_MATCH_REGEX = %r{
           ^https?://(?:[^/]+?\.)*(?:sourceforge|sf)\.net

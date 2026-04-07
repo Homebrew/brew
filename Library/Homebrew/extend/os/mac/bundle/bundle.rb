@@ -5,10 +5,6 @@ module OS
   module Mac
     module Bundle
       module ClassMethods
-        sig { returns(T::Boolean) }
-        def flatpak_installed?
-          false
-        end
       end
     end
   end

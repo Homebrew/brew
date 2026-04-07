@@ -33,8 +33,6 @@ module Homebrew
       class Gnu
         extend Strategic
 
-        NICE_NAME = "GNU"
-
         # The `Regexp` used to determine if the strategy applies to the URL.
         URL_MATCH_REGEX = %r{
           ^https?://

@@ -173,9 +173,6 @@ module Cask
     end
 
     sig { returns(T::Boolean) }
-    def supports_macos? = true
-
-    sig { returns(T::Boolean) }
     def supports_linux?
       return true if font?
 

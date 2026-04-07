@@ -610,11 +610,6 @@ module Cask
       @autobump == true
     end
 
-    # Is no_autobump! method defined?
-    def no_autobump_defined?
-      @no_autobump_defined == true
-    end
-
     # Declare that a cask is no longer functional or supported.
     #
     # NOTE: A warning will be shown when trying to install this cask.
