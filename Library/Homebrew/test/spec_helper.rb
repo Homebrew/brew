@@ -287,6 +287,7 @@ RSpec.configure do |config|
       example.example.set_exception(e)
     ensure
       ENV.replace(@__env)
+      Homebrew::SimulateSystem.clear
       Context.current = Context::ContextStruct.new
 
       $stdout.reopen(@__stdout)

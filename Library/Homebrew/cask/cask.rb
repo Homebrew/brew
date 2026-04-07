@@ -123,6 +123,7 @@ module Cask
 
     def refresh
       @dsl = DSL.new(self)
+      @contains_os_specific_artifacts = nil
       return unless @block
 
       @dsl.instance_eval(&@block)
@@ -192,28 +193,27 @@ module Cask
     def contains_os_specific_artifacts?
       return false unless @dsl.on_system_blocks_exist?
 
+      return @contains_os_specific_artifacts unless @contains_os_specific_artifacts.nil?
+
       any_loaded = T.let(false, T::Boolean)
-      @contains_os_specific_artifacts ||= begin
-        OnSystem::VALID_OS_ARCH_TAGS.each do |bottle_tag|
-          Homebrew::SimulateSystem.with_tag(bottle_tag) do
-            refresh
-
-            any_loaded = true if artifacts.any? do |artifact|
-              (bottle_tag.linux? && ::Cask::Artifact::MACOS_ONLY_ARTIFACTS.include?(artifact.class)) ||
-              (bottle_tag.macos? && ::Cask::Artifact::LINUX_ONLY_ARTIFACTS.include?(artifact.class))
-            end
-          end
-        rescue CaskInvalidError
-          # Invalid for this OS/arch tag; treat as having no OS-specific artifacts.
-          next
-        ensure
+      OnSystem::VALID_OS_ARCH_TAGS.each do |bottle_tag|
+        Homebrew::SimulateSystem.with_tag(bottle_tag) do
           refresh
-        end
 
-        any_loaded
+          any_loaded = true if artifacts.any? do |artifact|
+            (bottle_tag.linux? && ::Cask::Artifact::MACOS_ONLY_ARTIFACTS.include?(artifact.class)) ||
+            (bottle_tag.macos? && ::Cask::Artifact::LINUX_ONLY_ARTIFACTS.include?(artifact.class))
+          end
+        end
+      rescue CaskInvalidError
+        # Invalid for this OS/arch tag; treat as having no OS-specific artifacts.
+        next
+      ensure
+        refresh
       end
 
-      @contains_os_specific_artifacts
+      @contains_os_specific_artifacts = T.let(any_loaded, T.nilable(T::Boolean))
+      any_loaded
     end
 
     # The caskfile is needed during installation when there are
