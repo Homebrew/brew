@@ -26,6 +26,7 @@ module Homebrew
       @except    = options[:except]
       @core_tap  = options[:core_tap]
       @pypi_formulae = options[:pypi_formulae] || []
+      @old_python = options[:old_python] || false
       @use_homebrew_curl = options[:use_homebrew_curl]
       @problems = []
     end
@@ -131,9 +132,9 @@ module Homebrew
 
       pypi_package_name = pypi_package_name.to_s.downcase
 
-      return if @pypi_formulae.exclude?(pypi_package_name)
+      return if @pypi_formulae.exclude?(pypi_package_name) || @old_python
 
-      problem "PyPI package should be replaced with `depends_on \"#{pypi_package_name}\"` "
+      problem "PyPI package should be replaced with `depends_on \"#{pypi_package_name}\"`"
     end
 
     def audit_urls
