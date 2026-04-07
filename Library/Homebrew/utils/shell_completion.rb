@@ -25,7 +25,7 @@ module Utils
       ).returns(T.nilable(T.any(String, T::Array[String])))
     }
     def self.completion_shell_parameter(format, shell, executable, env)
-      # Go's cobra and Rust's clap accept "powershell".
+      # Converts :pwsh to "powershell" for formats that expect the full shell name.
       shell_parameter = (shell == :pwsh) ? "powershell" : shell.to_s
 
       case format
@@ -49,8 +49,10 @@ module Utils
       when :typer
         env["_TYPER_COMPLETE_TEST_DISABLE_SHELL_DETECTION"] = "1"
         ["--show-completion", shell_parameter]
+      when :urfave
+        ["completion", shell.to_s]
       else
-        "#{format}#{shell}"
+        "#{format}#{shell_parameter}"
       end
     end
 
