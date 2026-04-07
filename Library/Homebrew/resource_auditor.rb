@@ -133,8 +133,7 @@ module Homebrew
 
       return if @pypi_formulae.exclude?(pypi_package_name)
 
-      problem "PyPI package should be replaced with `depends_on \"#{pypi_package_name}\"` " \
-              "and excluded using `pypi_package` method"
+      problem "PyPI package should be replaced with `depends_on \"#{pypi_package_name}\"` "
     end
 
     def audit_urls

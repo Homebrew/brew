@@ -754,10 +754,8 @@ module Homebrew
     def audit_specs
       problem "HEAD-only (no stable download)" if head_only?(formula) && @core_tap
 
-      allowed_pypi_packages = if (resources_allowlist = formula
-        .tap
-        &.audit_exception(:pypi_resources_allowlist, formula.name)
-        .presence)
+      allowed_pypi_packages = if (tap = formula.tap) &&
+        (tap.audit_exception(:pypi_resources_allowlist, formula.name).presence)
         Set.new(resources_allowlist.split(/\s+/i))
       else
         Set.new
