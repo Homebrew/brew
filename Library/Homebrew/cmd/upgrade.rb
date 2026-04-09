@@ -96,14 +96,15 @@ module Homebrew
             description: "Skip installing cask dependencies.",
           }],
           [:switch, "-g", "--greedy", {
-            description: "Also include casks with `auto_updates true` or `version :latest`.",
+            description: "Also include casks with `version :latest` and `auto_updates true` casks " \
+                         "that would otherwise be skipped.",
             env:         :upgrade_greedy,
           }],
           [:switch, "--greedy-latest", {
             description: "Also include casks with `version :latest`.",
           }],
           [:switch, "--greedy-auto-updates", {
-            description: "Also include casks with `auto_updates true`.",
+            description: "Also include `auto_updates true` casks that would otherwise be skipped.",
           }],
           [:switch, "--[no-]binaries", {
             description: "Disable/enable linking of helper executables (default: enabled).",

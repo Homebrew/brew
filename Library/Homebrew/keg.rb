@@ -1,10 +1,11 @@
 # typed: strict
 # frozen_string_literal: true
 
+require "cachable"
 require "keg_relocate"
 require "language/python"
 require "lock_file"
-require "cachable"
+require "pkg_version"
 require "utils/output"
 
 # Installation prefix of a formula.
@@ -442,7 +443,6 @@ class Keg
 
   sig { returns(PkgVersion) }
   def version
-    require "pkg_version"
     PkgVersion.parse(path.basename.to_s)
   end
 
