@@ -62,6 +62,116 @@ RSpec.describe Cask::Upgrade, :cask do
     end
 
     describe "without --greedy" do
+      it "recovers unreadable metadata for auto-updating casks during bulk upgrade" do
+        auto_updates.installed_caskfile.write <<~RUBY
+          cask "auto-updates" do
+            on_el_capitan do
+            end
+          end
+        RUBY
+
+        # Simulate app self-update to a newer version than metadata, but still behind tap.
+        write_info_plist(auto_updates_path, short_version: "2.60", bundle_version: "2060")
+
+        expect(described_class).not_to receive(:upgrade_cask)
+        expect(described_class).to receive(:show_upgrade_summary) do |cask_upgrades, dry_run:|
+          expect(dry_run).to be(true)
+          expect(cask_upgrades).to include(
+            "local-caffeine 1.2.2 -> 1.2.3",
+            "local-transmission-zip 2.60 -> 2.61",
+            "auto-updates 2.57 -> 2.61",
+            "renamed-app 1.0.0 -> 2.0.0",
+          )
+        end
+
+        expect do
+          described_class.upgrade_casks!(dry_run: true, args:)
+        end.to output(/Recovered unreadable installed metadata for auto-updates/).to_stderr
+      end
+
+      it "recovers casks with unreadable installed metadata when upgrading all casks" do
+        local_caffeine.installed_caskfile.write <<~RUBY
+          cask "local-caffeine" do
+            on_el_capitan do
+            end
+          end
+        RUBY
+
+        expect(described_class).not_to receive(:upgrade_cask)
+        expect(described_class).to receive(:show_upgrade_summary) do |cask_upgrades, dry_run:|
+          expect(dry_run).to be(true)
+          expect(cask_upgrades).to include(
+            "local-caffeine 1.2.2 -> 1.2.3",
+            "local-transmission-zip 2.60 -> 2.61",
+            "auto-updates 2.57 -> 2.61",
+            "renamed-app 1.0.0 -> 2.0.0",
+          )
+        end
+
+        expect do
+          described_class.upgrade_casks!(dry_run: true, args:)
+        end.to output(/Recovered unreadable installed metadata for local-caffeine/).to_stderr
+      end
+
+      it "recovers explicit casks with unreadable installed metadata" do
+        unreadable = Cask::CaskUnreadableError.new("local-caffeine", "undefined method 'on_el_capitan'")
+
+        allow(described_class).to receive(:outdated_casks).and_return([local_caffeine])
+        allow(Cask::CaskLoader).to receive(:load_from_installed_caskfile).and_call_original
+        allow(Cask::CaskLoader).to receive(:load_from_installed_caskfile)
+          .with(local_caffeine.installed_caskfile)
+          .and_raise(unreadable)
+
+        expect(described_class).not_to receive(:upgrade_cask)
+        expect(described_class).to receive(:show_upgrade_summary)
+          .with(["local-caffeine 1.2.2 -> 1.2.3"], dry_run: true)
+        expect do
+          described_class.upgrade_casks!(local_caffeine, dry_run: true, args:)
+        end.to output(/Recovered unreadable installed metadata for local-caffeine/).to_stderr
+      end
+
+      it "skips non-explicit casks when metadata is unreadable and cannot be recovered" do
+        unreadable = Cask::CaskUnreadableError.new("local-caffeine", "undefined method 'on_el_capitan'")
+
+        allow(described_class).to receive(:outdated_casks).and_return([local_caffeine, local_transmission])
+        allow(Cask::CaskLoader).to receive(:load_from_installed_caskfile).and_call_original
+        allow(Cask::CaskLoader).to receive(:load_from_installed_caskfile)
+          .with(local_caffeine.installed_caskfile)
+          .and_raise(unreadable)
+        allow(described_class).to receive(:recover_old_cask_from_current_definition).and_call_original
+        allow(described_class).to receive(:recover_old_cask_from_current_definition)
+          .with(local_caffeine)
+          .and_return(nil)
+
+        expect(described_class).not_to receive(:upgrade_cask)
+        expect(described_class).to receive(:show_upgrade_summary)
+          .with(["local-transmission-zip 2.60 -> 2.61"], dry_run: true)
+
+        expect do
+          described_class.upgrade_casks!(dry_run: true, args:)
+        end.to output(/Skipping local-caffeine\./).to_stderr
+      end
+
+      it "fails for explicit casks when metadata is unreadable and cannot be recovered" do
+        unreadable = Cask::CaskUnreadableError.new("local-caffeine", "undefined method 'on_el_capitan'")
+
+        allow(described_class).to receive(:outdated_casks).and_return([local_caffeine])
+        allow(Cask::CaskLoader).to receive(:load_from_installed_caskfile).and_call_original
+        allow(Cask::CaskLoader).to receive(:load_from_installed_caskfile)
+          .with(local_caffeine.installed_caskfile)
+          .and_raise(unreadable)
+        allow(described_class).to receive(:recover_old_cask_from_current_definition).and_call_original
+        allow(described_class).to receive(:recover_old_cask_from_current_definition)
+          .with(local_caffeine)
+          .and_return(nil)
+
+        expect(described_class).not_to receive(:upgrade_cask)
+        expect do
+          described_class.upgrade_casks!(local_caffeine, dry_run: true, args:)
+        end.to raise_error(SystemExit)
+          .and output(/brew reinstall --cask --force local-caffeine/).to_stderr
+      end
+
       it 'includes "auto_updates true" casks when the installed bundle version is older than the tap version' do
         expect(described_class).not_to receive(:upgrade_cask)
         expect(described_class).to receive(:show_upgrade_summary) do |cask_upgrades, dry_run:|
@@ -319,6 +429,40 @@ RSpec.describe Cask::Upgrade, :cask do
       expect(bad_checksum_path).to be_a_directory
       expect(bad_checksum.installed_version).to eq "1.2.2"
       expect(bad_checksum.staged_path).not_to exist
+    end
+  end
+
+  context "when upgrading an auto-updating cask with unreadable metadata" do
+    # This test performs a real upgrade to verify end-to-end metadata recovery.
+    before do
+      Cask::Installer.new(Cask::CaskLoader.load(cask_path("outdated/auto-updates"))).install
+    end
+
+    it "upgrades successfully and refreshes metadata" do
+      expect(auto_updates).to be_installed
+      expect(auto_updates.installed_version).to eq "2.57"
+      expect(auto_updates_path).to be_a_directory
+
+      auto_updates.installed_caskfile.write <<~RUBY
+        cask "auto-updates" do
+          on_el_capitan do
+          end
+        end
+      RUBY
+
+      # Simulate app self-update outside Homebrew while metadata remains old.
+      write_info_plist(auto_updates_path, short_version: "2.60", bundle_version: "2060")
+
+      expect do
+        described_class.upgrade_casks!(args:)
+      end.to output(/Recovered unreadable installed metadata for auto-updates/).to_stderr
+
+      expect(auto_updates).to be_installed
+      expect(auto_updates.installed_version).to eq "2.61"
+
+      expect do
+        Cask::CaskLoader.load_from_installed_caskfile(auto_updates.installed_caskfile)
+      end.not_to raise_error
     end
   end
 
