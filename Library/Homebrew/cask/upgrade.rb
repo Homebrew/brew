@@ -136,15 +136,8 @@ module Cask
         end
       end
 
-      upgradable_casks = outdated_casks.map do |c|
-        unless c.installed?
-          odie <<~EOS
-            The cask '#{c.token}' was affected by a bug and cannot be upgraded as-is. To fix this, run:
-              brew reinstall --cask --force #{c.token}
-          EOS
-        end
-
-        [CaskLoader.load(c.installed_caskfile), c]
+      upgradable_casks = outdated_casks.filter_map do |c|
+        load_old_cask_for_upgrade(c, explicit: casks.present?)&.then { |old_cask| [old_cask, c] }
       end
 
       return false if upgradable_casks.empty?
@@ -300,6 +293,77 @@ module Cask
 
       end_time = Time.now
       Homebrew.messages.package_installed(new_cask.token, end_time - start_time)
+    end
+
+    sig { params(cask: Cask, explicit: T::Boolean).returns(T.nilable(Cask)) }
+    def self.load_old_cask_for_upgrade(cask, explicit:)
+      odie cannot_upgrade_as_is_message(cask) unless cask.installed?
+
+      installed_caskfile = cask.installed_caskfile
+      odie cannot_upgrade_as_is_message(cask) unless installed_caskfile
+
+      CaskLoader.load_from_installed_caskfile(installed_caskfile)
+    rescue CaskUnreadableError, CaskInvalidError, CaskUnavailableError => e
+      if (recovered_cask = recover_old_cask_from_current_definition(cask))
+        opoo <<~EOS
+          Recovered unreadable installed metadata for #{cask.token}; using the current cask definition for upgrade.
+          #{e}
+        EOS
+
+        return recovered_cask
+      end
+
+      message = unreadable_installed_metadata_message(cask, e)
+
+      odie message if explicit
+
+      opoo <<~EOS
+        Skipping #{cask.token}.
+        #{message}
+      EOS
+
+      nil
+    end
+
+    sig { params(cask: Cask).returns(T.nilable(Cask)) }
+    def self.recover_old_cask_from_current_definition(cask)
+      installed_version = cask.installed_version.to_s
+      return if installed_version.blank?
+
+      recovered_cask = CaskLoader.load(cask.full_name, config: cask.config)
+      recovered_cask.allow_reassignment = true
+      recovered_cask.version(installed_version)
+      recovered_cask
+    rescue CaskUnavailableError, CaskInvalidError, CaskUnreadableError
+      nil
+    ensure
+      recovered_cask&.allow_reassignment = false
+    end
+
+    sig { params(cask: Cask).returns(String) }
+    def self.cannot_upgrade_as_is_message(cask)
+      <<~EOS
+        The cask '#{cask.token}' was affected by a bug and cannot be upgraded as-is.
+        #{reinstall_instructions(cask)}
+      EOS
+    end
+
+    sig { params(cask: Cask, error: Exception).returns(String) }
+    def self.unreadable_installed_metadata_message(cask, error)
+      <<~EOS
+        The cask '#{cask.token}' cannot be upgraded because its installed metadata is unreadable.
+        #{error}
+
+        #{reinstall_instructions(cask)}
+      EOS
+    end
+
+    sig { params(cask: Cask).returns(String) }
+    def self.reinstall_instructions(cask)
+      <<~EOS
+        To fix this, run:
+          brew reinstall --cask --force #{cask.token}
+      EOS
     end
   end
 end
