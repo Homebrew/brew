@@ -132,6 +132,7 @@ module Language
         )
       end
 
+      # @api public
       sig { params(formula: Formula, use_python_from_path: T::Boolean).returns(Utils::Shebang::RewriteInfo) }
       def detected_python_shebang(formula = T.cast(self, Formula), use_python_from_path: false)
         python_path = if use_python_from_path
