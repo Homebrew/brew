@@ -457,12 +457,21 @@ module Homebrew
           return
         end
 
+        formulae_to_clean = T.let([], T::Array[Formula])
         formula_installers.each do |fi|
           formula = fi.formula
           upgrade = formula.linked? && formula.outdated? && !formula.head? && !Homebrew::EnvConfig.no_install_upgrade?
           install_formula(fi, upgrade:)
-          Cleanup.install_formula_clean!(formula)
+          clean_formula = Cleanup.install_formula_clean!(formula, collect_only: true)
+          formulae_to_clean << clean_formula if clean_formula
         end
+
+        return if formulae_to_clean.none?
+
+        oh1 "Cleaning up #{formulae_to_clean.length} installed " \
+            "#{Utils.pluralize("formula", formulae_to_clean.length)}..."
+        Cleanup.puts_no_install_cleanup_disable_message_if_not_already!
+        Cleanup.new.parallel_cleanup_formulae(formulae_to_clean)
       end
 
       sig {
