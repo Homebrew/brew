@@ -233,11 +233,20 @@ module Homebrew
 
           exit 1 if Homebrew.failed?
 
+          formulae_to_clean = T.let([], T::Array[Formula])
           reinstall_contexts.each do |reinstall_context|
             next unless valid_formula_installers.include?(reinstall_context.formula_installer)
 
             Homebrew::Reinstall.reinstall_formula(reinstall_context)
-            Cleanup.install_formula_clean!(reinstall_context.formula)
+            formula = Cleanup.install_formula_clean!(reinstall_context.formula, collect_only: true)
+            formulae_to_clean << formula if formula
+          end
+
+          if formulae_to_clean.any?
+            oh1 "Cleaning up #{formulae_to_clean.length} reinstalled " \
+                "#{Utils.pluralize("formula", formulae_to_clean.length)}..."
+            Cleanup.puts_no_install_cleanup_disable_message_if_not_already!
+            Cleanup.new.parallel_cleanup_formulae(formulae_to_clean)
           end
 
           Upgrade.upgrade_dependents(
