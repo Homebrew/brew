@@ -4,6 +4,8 @@
 require "utils/bottles"
 require "utils/output"
 require "installed_dependents"
+require "concurrent/promises"
+require "concurrent/executors"
 
 require "formula"
 require "cask/cask_loader"
@@ -247,6 +249,7 @@ module Homebrew
       @days = T.let(days || Homebrew::EnvConfig.cleanup_max_age_days.to_i, Integer)
       @cache = cache
       @cleaned_up_paths = T.let(Set.new, T::Set[Pathname])
+      @mutex = T.let(Mutex.new, Mutex)
     end
 
     sig { returns(T::Boolean) }
@@ -258,11 +261,16 @@ module Homebrew
     sig { returns(T::Boolean) }
     def scrub? = @scrub
 
-    sig { params(formula: Formula, dry_run: T::Boolean).void }
-    def self.install_formula_clean!(formula, dry_run: false)
+    sig { params(formula: Formula, dry_run: T::Boolean, collect_only: T::Boolean).returns(T.nilable(Formula)) }
+    def self.install_formula_clean!(formula, dry_run: false, collect_only: false)
       return if Homebrew::EnvConfig.no_install_cleanup?
       return unless formula.latest_version_installed?
       return if skip_clean_formula?(formula)
+
+      if collect_only
+        puts_no_install_cleanup_disable_message_if_not_already!
+        return formula
+      end
 
       if dry_run
         ohai "Would run `brew cleanup #{formula}`"
@@ -274,6 +282,7 @@ module Homebrew
       return if dry_run
 
       Cleanup.new.cleanup_formula(formula)
+      nil
     end
 
     sig { void }
@@ -335,11 +344,16 @@ module Homebrew
     sig { params(quiet: T::Boolean, periodic: T::Boolean).void }
     def clean!(quiet: false, periodic: false)
       if args.empty?
-        Formula.installed
-               .sort_by(&:name)
-               .reject { |f| Cleanup.skip_clean_formula?(f) }
-               .each do |formula|
-          cleanup_formula(formula, quiet:, ds_store: false, cache_db: false)
+        formulae = Formula.installed
+                          .sort_by(&:name)
+                          .reject { |f| Cleanup.skip_clean_formula?(f) }
+
+        if formulae.length > 1
+          parallel_cleanup_formulae(formulae, quiet:)
+        else
+          formulae.each do |formula|
+            cleanup_formula(formula, quiet:, ds_store: false, cache_db: false)
+          end
         end
 
         if ENV["HOMEBREW_AUTOREMOVE"].present?
@@ -395,6 +409,110 @@ module Homebrew
         end
       end
     end
+
+    sig { params(formulae: T::Array[Formula], quiet: T::Boolean).void }
+    def parallel_cleanup_formulae(formulae, quiet: false)
+      return if formulae.empty?
+
+      concurrency = [Homebrew::EnvConfig.download_concurrency, formulae.length].min
+
+      if concurrency <= 1 || dry_run?
+        formulae.each do |formula|
+          cleanup_formula(formula, quiet:, ds_store: false, cache_db: false)
+        end
+        return
+      end
+
+      pool = Concurrent::FixedThreadPool.new(concurrency)
+      results_mutex = Mutex.new
+      results = T.let([], T::Array[T::Hash[Symbol, T.untyped]])
+
+      formulae.each do |formula|
+        future = Concurrent::Promises.future_on(pool, formula) do |f|
+          cleanup_formula_thread(f)
+        end
+        future.on_fulfillment! { |result| results_mutex.synchronize { results << result } }
+      end
+
+      pool.shutdown
+      pool.wait_for_termination
+
+      display_cleanup_results(results, quiet:)
+    end
+
+    private
+
+    sig { params(formula: Formula).returns(T::Hash[Symbol, T.untyped]) }
+    def cleanup_formula_thread(formula)
+      removed_paths = T.let([], T::Array[Pathname])
+      errors = T.let([], T::Array[T::Hash[Symbol, T.untyped]])
+      size = 0
+
+      formula.eligible_kegs_for_cleanup(quiet: true).each do |keg|
+        path = Pathname.new(keg)
+        next unless path.exist?
+
+        disk_usage = path.disk_usage
+        keg.uninstall(raise_failures: true)
+        removed_paths << path
+        size += disk_usage
+      rescue Errno::EACCES, Errno::ENOTEMPTY => e
+        errors << { path: path, error: e.message }
+      end
+
+      Pathname.glob(cache/"#{formula.name}{_bottle_manifest,}--*").each do |path|
+        next unless path.exist?
+        next unless self.class.stale?({ path:, type: nil }, scrub: scrub?)
+
+        disk_usage = path.disk_usage
+        path.unlink
+        removed_paths << path
+        size += disk_usage
+      end
+
+      { formula: formula, removed: removed_paths, errors:, size: }
+    rescue => e
+      T.must(errors) << { path: Pathname.new(formula.name), error: e.message }
+      { formula: formula, removed: T.must(removed_paths), errors: T.must(errors), size: }
+    end
+
+    sig { params(results: T::Array[T::Hash[Symbol, T.untyped]], quiet: T::Boolean).void }
+    def display_cleanup_results(results, quiet: false)
+      tty = $stdout.tty?
+      total_removed = 0
+
+      results.each do |result|
+        @mutex.synchronize { @disk_cleanup_size += result[:size] }
+
+        formula = result[:formula]
+
+        T.cast(result[:removed], T::Array[Pathname]).each do |path|
+          total_removed += 1
+          if tty
+            puts "#{Tty.green}✔︎#{Tty.reset} Cleaned #{formula.name}: #{path} (#{path.exist? ? "0B" : "removed"})"
+          else
+            puts "Removing: #{path}..."
+          end
+        end
+
+        T.cast(result[:errors], T::Array[T::Hash[Symbol, T.untyped]]).each do |err|
+          if tty
+            puts "#{Tty.red}✘#{Tty.reset} #{formula.name}: #{err[:error]}"
+          else
+            opoo "#{formula.name}: #{err[:error]}"
+          end
+          @mutex.synchronize { unremovable_kegs << Keg.new(err[:path]) } if err[:path].directory?
+        end
+      end
+
+      return if quiet
+      return unless total_removed.positive?
+
+      puts "Cleaned up #{total_removed} #{Utils.pluralize("item", total_removed)} " \
+           "across #{results.length} #{Utils.pluralize("formula", results.length)}."
+    end
+
+    public
 
     sig { returns(T::Array[Keg]) }
     def unremovable_kegs
@@ -530,9 +648,11 @@ module Homebrew
     sig { params(path: Pathname, _block: T.proc.void).void }
     def cleanup_path(path, &_block)
       return unless path.exist?
-      return unless @cleaned_up_paths.add?(path)
 
-      @disk_cleanup_size += path.disk_usage
+      added = @mutex.synchronize { @cleaned_up_paths.add?(path) }
+      return unless added
+
+      @mutex.synchronize { @disk_cleanup_size += path.disk_usage }
 
       if dry_run?
         puts "Would remove: #{path} (#{path.abv})"
