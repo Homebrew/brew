@@ -123,10 +123,19 @@ module Homebrew
           Install.fetch_formulae(formula_installers)
         end
 
+        formulae_to_clean = T.let([], T::Array[Formula])
         valid_formula_installers.each do |fi|
           upgrade_formula(fi, dry_run:, verbose:)
-          Cleanup.install_formula_clean!(fi.formula, dry_run:)
+          formula = Cleanup.install_formula_clean!(fi.formula, dry_run:, collect_only: !dry_run)
+          formulae_to_clean << formula if formula
         end
+
+        return if formulae_to_clean.empty?
+
+        oh1 "Cleaning up #{formulae_to_clean.length} upgraded #{Utils.pluralize("formula",
+                                                                                formulae_to_clean.length)}..."
+        Cleanup.puts_no_install_cleanup_disable_message_if_not_already!
+        Cleanup.new.parallel_cleanup_formulae(formulae_to_clean)
       end
 
       sig { params(formula: Formula).returns(T::Array[Keg]) }
