@@ -138,10 +138,10 @@ module Homebrew
     sig { override.params(filename: Pathname).void }
     def verify_download_integrity(filename) = downloadable.verify_download_integrity(filename)
 
-    private
-
     sig { returns(Downloadable) }
     attr_reader :downloadable
+
+    private
 
     sig { returns(T::Boolean) }
     attr_reader :pour
