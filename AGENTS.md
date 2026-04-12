@@ -22,6 +22,10 @@ When running commands in this repository, use `./bin/brew` (not a system `brew` 
 - Shortcut: `./bin/brew lgtm --online` runs all of the required checks above in one command.
 - All of the above can be run via the Homebrew MCP Server (launch with `./bin/brew mcp-server`).
 
+### Sandbox Setup
+
+- When working in a sandboxed environment e.g. OpenAI Codex, copy the contents of `$(./bin/brew --cache)/api/` to a writable location inside the repository (for example, `tmp/cache/api/`) and `export HOMEBREW_CACHE` to that writable directory before running `./bin/brew tests`. This avoids permission errors when the suite tries to write API cache or runtime logs.
+
 ### Development Flow
 
 - Write new code (using Sorbet `sig` type signatures and `typed: strict` for new files, but never for RSpec/test/`*_spec.rb` files)
