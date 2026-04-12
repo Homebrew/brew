@@ -4,8 +4,7 @@
 require "utils/bottles"
 require "utils/output"
 require "installed_dependents"
-require "concurrent/promises"
-require "concurrent/executors"
+require "work_pool"
 
 require "formula"
 require "cask/cask_loader"
@@ -423,21 +422,51 @@ module Homebrew
         return
       end
 
-      pool = Concurrent::FixedThreadPool.new(concurrency)
-      results_mutex = Mutex.new
-      results = T.let([], T::Array[T::Hash[Symbol, T.untyped]])
-
+      work_pool = Homebrew::WorkPool.new(concurrency:)
       formulae.each do |formula|
-        future = Concurrent::Promises.future_on(pool, formula) do |f|
+        work_pool.submit(formula) do |f|
           cleanup_formula_thread(f)
         end
-        future.on_fulfillment! { |result| results_mutex.synchronize { results << result } }
       end
 
-      pool.shutdown
-      pool.wait_for_termination
+      work_pool.wait_with_progress(
+        quiet:,
+        message_block: lambda { |formula, future, _final|
+          if future.fulfilled?
+            result = future.value
+            removed = T.cast(result[:removed], T::Array[Pathname])
+            if removed.any?
+              "Cleaned #{formula.name}: #{removed.first} (#{removed.first&.exist? ? "0B" : "removed"})"
+            else
+              "Cleaned #{formula.name}"
+            end
+          elsif future.rejected?
+            "#{formula.name}: #{future.reason}"
+          else
+            "Cleaning #{formula.name}..."
+          end
+        },
+      )
 
-      display_cleanup_results(results, quiet:)
+      # Update disk cleanup size and report summary
+      total_removed = 0
+      work_pool.futures.each_value do |future|
+        next unless future.fulfilled?
+
+        result = future.value
+        @mutex.synchronize { @disk_cleanup_size += result[:size] }
+        total_removed += T.cast(result[:removed], T::Array[Pathname]).length
+
+        T.cast(result[:errors], T::Array[T::Hash[Symbol, T.untyped]]).each do |err|
+          @mutex.synchronize { unremovable_kegs << Keg.new(err[:path]) } if err[:path].directory?
+        end
+      end
+
+      return if quiet
+      return unless total_removed.positive?
+
+      puts "Cleaned up #{total_removed} #{Utils.pluralize("item", total_removed)} " \
+           "across #{formulae.length} #{Utils.pluralize("formula", formulae.length)}."
     end
 
     private
@@ -474,42 +503,6 @@ module Homebrew
     rescue => e
       T.must(errors) << { path: Pathname.new(formula.name), error: e.message }
       { formula: formula, removed: T.must(removed_paths), errors: T.must(errors), size: }
-    end
-
-    sig { params(results: T::Array[T::Hash[Symbol, T.untyped]], quiet: T::Boolean).void }
-    def display_cleanup_results(results, quiet: false)
-      tty = $stdout.tty?
-      total_removed = 0
-
-      results.each do |result|
-        @mutex.synchronize { @disk_cleanup_size += result[:size] }
-
-        formula = result[:formula]
-
-        T.cast(result[:removed], T::Array[Pathname]).each do |path|
-          total_removed += 1
-          if tty
-            puts "#{Tty.green}✔︎#{Tty.reset} Cleaned #{formula.name}: #{path} (#{path.exist? ? "0B" : "removed"})"
-          else
-            puts "Removing: #{path}..."
-          end
-        end
-
-        T.cast(result[:errors], T::Array[T::Hash[Symbol, T.untyped]]).each do |err|
-          if tty
-            puts "#{Tty.red}✘#{Tty.reset} #{formula.name}: #{err[:error]}"
-          else
-            opoo "#{formula.name}: #{err[:error]}"
-          end
-          @mutex.synchronize { unremovable_kegs << Keg.new(err[:path]) } if err[:path].directory?
-        end
-      end
-
-      return if quiet
-      return unless total_removed.positive?
-
-      puts "Cleaned up #{total_removed} #{Utils.pluralize("item", total_removed)} " \
-           "across #{results.length} #{Utils.pluralize("formula", results.length)}."
     end
 
     public
