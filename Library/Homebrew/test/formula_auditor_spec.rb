@@ -30,7 +30,10 @@ RSpec.describe Homebrew::FormulaAuditor do
 
     if options.key? :tap_audit_exceptions
       tap = Tap.fetch("test/tap")
-      allow(tap).to receive(:audit_exceptions).and_return(options[:tap_audit_exceptions])
+      allow(tap).to receive_messages(
+        audit_exceptions:           options[:tap_audit_exceptions],
+        pypi_dependencies_formulae: options[:pypi_dependencies_formulae] || [],
+      )
       allow(formula).to receive(:tap).and_return(tap)
       options.delete :tap_audit_exceptions
     end
@@ -580,7 +583,9 @@ RSpec.describe Homebrew::FormulaAuditor do
     end
   end
 
-  describe "#audit_resource_name_matches_pypi_package_name_in_url" do
+  describe "#audit_pypi_resources" do
+    let(:pypi_dependencies_formulae) { ["bar", "baz"] }
+
     it "reports a problem if the resource name does not match the python sdist name" do
       fa = formula_auditor "foo", <<~RUBY
         class Foo < Formula
@@ -617,6 +622,119 @@ RSpec.describe Homebrew::FormulaAuditor do
       fa.audit_specs
       expect(fa.problems.first[:message])
         .to match("`resource` name should be 'FooSomething' to match the PyPI package name")
+    end
+
+    it "reports a problem if the resource should be replaced with a dependency" do
+      fa = formula_auditor("foo", <<~RUBY, tap_audit_exceptions: {}, pypi_dependencies_formulae:)
+        class Foo < Formula
+          url "https://brew.sh/foo-1.0.tgz"
+          sha256 "abc123"
+          homepage "https://brew.sh"
+
+          resource "bar" do
+            url "https://files.pythonhosted.org/packages/00/00/aaaa/bar-1.0.0.tar.gz"
+            sha256 "def456"
+          end
+
+          resource "baz" do
+            url "https://files.pythonhosted.org/packages/00/00/aaaa/baz-1.0.0.tar.gz"
+            sha256 "ghi789"
+          end
+        end
+      RUBY
+
+      fa.audit_specs
+      expect(fa.problems.count).to eq(2)
+      expect(fa.problems.first[:message])
+        .to match("PyPI package should be replaced with `depends_on \"bar\"`")
+    end
+
+    it "doesn't report a problem if there is an exception to a PyPI resource that should be a dependency" do
+      tap_audit_exceptions = { pypi_resources_allowlist: { "foo" => "bar baz" } }
+      fa = formula_auditor("foo", <<~RUBY, tap_audit_exceptions:, pypi_dependencies_formulae:)
+        class Foo < Formula
+          url "https://brew.sh/foo-1.0.tgz"
+          sha256 "abc123"
+          homepage "https://brew.sh"
+
+          resource "bar" do
+            url "https://files.pythonhosted.org/packages/00/00/aaaa/bar-1.0.0.tar.gz"
+            sha256 "def456"
+          end
+
+          resource "baz" do
+            url "https://files.pythonhosted.org/packages/00/00/aaaa/baz-1.0.0.tar.gz"
+            sha256 "ghi789"
+          end
+        end
+      RUBY
+
+      fa.audit_specs
+      expect(fa.problems).to be_empty
+    end
+
+    it "doesn't report a problem if formula is deprecated" do
+      fa = formula_auditor("foo", <<~RUBY, tap_audit_exceptions: {}, pypi_dependencies_formulae:)
+        class Foo < Formula
+          url "https://brew.sh/foo-1.0.tgz"
+          sha256 "abc123"
+          homepage "https://brew.sh"
+
+          deprecate! date: "2026-01-01", because: "some reasone"
+
+          resource "bar" do
+            url "https://files.pythonhosted.org/packages/00/00/aaaa/bar-1.0.0.tar.gz"
+            sha256 "def456"
+          end
+
+          resource "baz" do
+            url "https://files.pythonhosted.org/packages/00/00/aaaa/baz-1.0.0.tar.gz"
+            sha256 "ghi789"
+          end
+        end
+      RUBY
+
+      fa.audit_specs
+      expect(fa.problems).to be_empty
+    end
+
+    it "doesn't report a problem if formula uses old Python" do
+      old_python_version = Formula["python"].version.minor.to_i - 2
+      fa = formula_auditor("foo", <<~RUBY, tap_audit_exceptions: {}, pypi_dependencies_formulae:)
+        class Foo < Formula
+          url "https://brew.sh/foo-1.0.tgz"
+          sha256 "abc123"
+          homepage "https://brew.sh"
+
+          depends_on "python@3.#{old_python_version}"
+
+          resource "bar" do
+            url "https://files.pythonhosted.org/packages/00/00/aaaa/bar-1.0.0.tar.gz"
+            sha256 "def456"
+          end
+
+          resource "baz" do
+            url "https://files.pythonhosted.org/packages/00/00/aaaa/baz-1.0.0.tar.gz"
+            sha256 "ghi789"
+          end
+        end
+      RUBY
+
+      fa.audit_specs
+      expect(fa.problems).to be_empty
+    end
+
+    it "doesn't audit PyPI package if it is not a resource" do
+      fa = formula_auditor("bar", <<~RUBY, tap_audit_exceptions: {}, pypi_dependencies_formulae:)
+        class Bar < Formula
+          url "https://files.pythonhosted.org/packages/00/00/aaaa/bar-1.0.0.tar.gz"
+          sha256 "abc123"
+          homepage "https://brew.sh"
+        end
+      RUBY
+
+      fa.audit_specs
+      expect(fa.problems).to be_empty
     end
   end
 

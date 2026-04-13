@@ -755,6 +755,26 @@ module Homebrew
     def audit_specs
       problem "HEAD-only (no stable download)" if head_only?(formula) && @core_tap
 
+      allowed_pypi_packages = if (tap = formula.tap) &&
+                                 (resources_allowlist = tap&.audit_exception(:pypi_resources_allowlist, formula.name)
+                                 .presence)
+        Set.new(resources_allowlist.split(/\s+/i))
+      else
+        Set.new
+      end
+
+      # Skip PyPI audit if formula uses old Python (2 minor versions behind the latest release)
+      python_minor_version = formula
+                             .deps
+                             .select { |dep| dep.name.start_with?("python@") }
+                             .map { |dep| dep.to_formula.version.minor&.to_i }
+                             .max
+      old_python = if python_minor_version.nil?
+        false
+      else
+        (Formula["python"].version.minor.to_i - python_minor_version) >= 2
+      end
+
       %w[Stable HEAD].each do |name|
         spec_name = name.downcase.to_sym
         next unless (spec = formula.send(spec_name))
@@ -777,10 +797,16 @@ module Homebrew
         spec.resources.each_value do |resource|
           problem "Resource name should be different from the formula name" if resource.name == formula.name
 
+          except = @except
+          if allowed_pypi_packages.include?(resource.name) || formula.deprecated?
+            except = [*Array(except), "pypi_resources"]
+          end
+
           ra = ResourceAuditor.new(
             resource, spec_name,
-            online: @online, strict: @strict, only: @only, except: @except,
-            use_homebrew_curl: resource.using == :homebrew_curl
+            online: @online, strict: @strict, only: @only, except:,
+            pypi_formulae: formula.tap&.pypi_dependencies_formulae,
+            use_homebrew_curl: resource.using == :homebrew_curl, old_python:
           ).audit
           ra.problems.each do |message|
             problem "#{name} resource #{resource.name.inspect}: #{message}"
