@@ -41,8 +41,8 @@ module Homebrew
 
       sig { params(db_path: Pathname, name: String, line: T.nilable(String)).void }
       def write_db(db_path, name, line)
-        lines = db_path.readlines(chomp: true).reject(&:blank?) if db_path.exist?
-        lines = (lines || []).filter_map { |l| l unless l.start_with?("#{name}(") }
+        lines = db_path.readlines(chomp: true).compact_blank if db_path.exist?
+        lines = (lines || []).reject { |l| l.start_with?("#{name}(") }
         lines << line if line
         db_path.write("#{lines.sort.join("\n")}\n")
       end
