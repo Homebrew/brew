@@ -20,7 +20,7 @@ module Homebrew
 
       sig { override.void }
       def run
-        db_path = Pathname(args.output_db) if args.output_db
+        db_path = Pathname(T.unsafe(args).output_db) if T.unsafe(args).output_db
         args.named.each { |name| process(name, db_path:) }
       end
 
@@ -69,7 +69,7 @@ module Homebrew
         end
         return [] if manifest_path.blank?
 
-        manifest = JSON.parse(T.must(manifest_path).read)
+        manifest = JSON.parse(manifest_path.read)
         exec_files = manifest.dig("manifests", 0, "annotations", "sh.brew.path_exec_files")
         return [] if exec_files.blank?
 
