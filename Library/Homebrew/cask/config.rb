@@ -16,7 +16,6 @@ module Cask
     DEFAULT_DIRS = T.let(
       {
         appdir:               "/Applications",
-        appimagedir:          "~/Applications",
         keyboard_layoutdir:   "/Library/Keyboard Layouts",
         colorpickerdir:       "~/Library/ColorPickers",
         prefpanedir:          "~/Library/PreferencePanes",
