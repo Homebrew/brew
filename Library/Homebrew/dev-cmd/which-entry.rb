@@ -20,7 +20,7 @@ module Homebrew
 
       sig { override.void }
       def run
-        db_path = args.output_db&.then { |path| Pathname(path) }
+        db_path = Pathname(args.output_db) if args.output_db
         args.named.each { |name| process(name, db_path:) }
       end
 
@@ -31,17 +31,19 @@ module Homebrew
         formula = Formulary.factory(name)
         line = db_line(formula)
         if db_path
-          existing = db_path.exist? ? db_path.readlines(chomp: true).reject(&:empty?) : []
-          lines = existing.reject { |l| l.start_with?("#{formula.full_name}(") }
-          lines << line if line
-          db_path.write("#{lines.sort.join("\n")}\n")
-        else
-          puts line if line
+          write_db(db_path, formula.full_name, line)
+        elsif line
+          puts line
         end
       rescue FormulaUnavailableError
-        return unless db_path&.exist?
+        write_db(db_path, name, nil) if db_path&.exist?
+      end
 
-        lines = db_path.readlines(chomp: true).reject { |l| l.start_with?("#{name}(") }
+      sig { params(db_path: Pathname, name: String, line: T.nilable(String)).void }
+      def write_db(db_path, name, line)
+        lines = db_path.readlines(chomp: true).reject(&:blank?) if db_path.exist?
+        lines = (lines || []).filter_map { |l| l unless l.start_with?("#{name}(") }
+        lines << line if line
         db_path.write("#{lines.sort.join("\n")}\n")
       end
 
