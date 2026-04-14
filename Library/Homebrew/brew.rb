@@ -163,16 +163,16 @@ rescue BuildError => e
       #{Formatter.bold("Do not report any issues to Homebrew/* repositories!")}
       Read the above document instead before opening any issues or PRs.
     EOS
-  elsif (formula = e.formula) && (formula.head? || formula.deprecated? || formula.disabled?)
-    reason = if formula.head?
+  elsif e.formula.head? || e.formula.deprecated? || e.formula.disabled?
+    reason = if e.formula.head?
       "was built from an unstable upstream --HEAD"
-    elsif formula.deprecated?
+    elsif e.formula.deprecated?
       "is deprecated"
-    elsif formula.disabled?
+    elsif e.formula.disabled?
       "is disabled"
     end
     $stderr.puts <<~EOS
-      #{formula.name}'s formula #{reason}.
+      #{e.formula.name}'s formula #{reason}.
       This build failure is expected behaviour.
     EOS
   end

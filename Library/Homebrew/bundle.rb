@@ -140,8 +140,7 @@ module Homebrew
           next if installed_formulae.exclude?(name)
 
           tab = Tab.for_name(name)
-          tabfile = tab.tabfile
-          next if tabfile.blank? || !tabfile.exist?
+          next if tab.tabfile.blank? || !tab.tabfile.exist?
           next if tab.installed_on_request
 
           next name if use_brew_tab

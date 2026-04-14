@@ -43,8 +43,6 @@ module Homebrew
       def run
         tap = Tap.fetch(args.tap || CoreTap.instance.name)
         user, repo = tap.full_name.split("/")
-        raise "Unexpected tap name: #{tap.full_name}" if user.nil? || repo.nil?
-
         ref = "main"
         workflow = args.workflow || "dispatch-build-bottle.yml"
 

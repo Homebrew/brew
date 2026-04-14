@@ -237,7 +237,6 @@ module GitHub
       env_token:                  "HOMEBREW_GITHUB_API_TOKEN",
       github_cli_token:           "GitHub CLI login",
       keychain_username_password: "macOS Keychain GitHub",
-      none:                       "none",
     }.freeze, T::Hash[Symbol, String])
 
     # Given an API response from GitHub, warn the user if their credentials
@@ -276,7 +275,11 @@ module GitHub
         request_method:   Symbol,
         scopes:           T::Array[String],
         parse_json:       T::Boolean,
-        _block:           T.nilable(T.proc.params(data: T::Hash[String, T.untyped]).returns(T.untyped)),
+        _block:           T.nilable(
+          T.proc
+                          .params(data: T::Hash[String, T.untyped])
+                          .returns(T.untyped),
+        ),
       ).returns(T.untyped)
     }
     def self.open_rest(url, data: T.unsafe(nil), data_binary_path: T.unsafe(nil), request_method: T.unsafe(nil),

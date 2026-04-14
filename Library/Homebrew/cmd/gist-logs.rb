@@ -118,9 +118,8 @@ module Homebrew
         end
 
         if args.new_issue?
-          tap = formula.tap
-          odie "Formula #{formula.name} is not associated with a tap!" unless tap
-          url = GitHub.create_issue(tap.full_name, "#{formula.name} failed to build on #{OS_VERSION}", url)
+          url = GitHub.create_issue(formula.tap, "#{formula.name} failed to build on #{OS_VERSION}",
+                                    url)
         end
 
         puts url if url
@@ -140,7 +139,7 @@ module Homebrew
         string.freeze
       end
 
-      sig { params(dir: Pathname, basedir: Pathname).returns(T::Hash[String, { content: String }]) }
+      sig { params(dir: Pathname, basedir: Pathname).returns(T::Hash[String, T::Hash[Symbol, String]]) }
       def load_logs(dir, basedir = dir)
         logs = {}
         if dir.exist?

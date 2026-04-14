@@ -535,11 +535,11 @@ class Tap
 
     require "description_cache_store"
     CacheStoreDatabase.use(:descriptions) do |db|
-      DescriptionCacheStore.new(T.cast(db, CacheStoreDatabase[String, T.anything]))
+      DescriptionCacheStore.new(db)
                            .update_from_formula_names!(formula_names)
     end
     CacheStoreDatabase.use(:cask_descriptions) do |db|
-      CaskDescriptionCacheStore.new(T.cast(db, CacheStoreDatabase[String, T.anything]))
+      CaskDescriptionCacheStore.new(db)
                                .update_from_cask_tokens!(cask_tokens)
     end
 
@@ -638,11 +638,11 @@ class Tap
 
     require "description_cache_store"
     CacheStoreDatabase.use(:descriptions) do |db|
-      DescriptionCacheStore.new(T.cast(db, CacheStoreDatabase[String, T.anything]))
+      DescriptionCacheStore.new(db)
                            .delete_from_formula_names!(formula_names)
     end
     CacheStoreDatabase.use(:cask_descriptions) do |db|
-      CaskDescriptionCacheStore.new(T.cast(db, CacheStoreDatabase[String, T.anything]))
+      CaskDescriptionCacheStore.new(db)
                                .delete_from_cask_tokens!(cask_tokens)
     end
 

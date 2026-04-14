@@ -25,13 +25,7 @@ class LinkageChecker
   sig { returns(T::Set[String]) }
   attr_reader :system_dylibs
 
-  sig {
-    params(
-      keg: Keg, formula: T.nilable(Formula),
-      cache_db: CacheStoreDatabase[String, T::Hash[T.any(String, Symbol), T.anything]],
-      rebuild_cache: T::Boolean
-    ).void
-  }
+  sig { params(keg: Keg, formula: T.nilable(Formula), cache_db: CacheStoreDatabase, rebuild_cache: T::Boolean).void }
   def initialize(keg, formula = nil, cache_db:, rebuild_cache: false)
     @keg = keg
     @formula = T.let(formula || resolve_formula(keg), T.nilable(Formula))

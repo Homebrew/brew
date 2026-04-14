@@ -199,7 +199,7 @@ module Homebrew
           next false unless tab_deps
 
           tab_deps.any? do |dep|
-            dep_full_name = T.cast(dep, T::Hash[String, T.untyped])["full_name"]
+            dep_full_name = dep["full_name"]
             dep_full_name == full_name || dep_full_name&.split("/")&.last == name
           end
         end
@@ -284,7 +284,7 @@ module Homebrew
 
           tab_deps = Tab.for_keg(keg).runtime_dependencies
           tab_deps&.each do |runtime_dep|
-            dep_full_name = T.cast(runtime_dep, T::Hash[String, T.untyped])["full_name"]
+            dep_full_name = runtime_dep["full_name"]
             formula_dependencies << dep_full_name if dep_full_name
           end
         end

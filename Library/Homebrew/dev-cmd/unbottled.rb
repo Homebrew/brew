@@ -250,7 +250,7 @@ module Homebrew
               when MacOSRequirement
                 next true unless r.version_specified?
 
-                macos_version.compare(r.comparator, T.cast(r.version, MacOSVersion))
+                macos_version.compare(r.comparator, r.version)
               when XcodeRequirement
                 next true unless r.version
 

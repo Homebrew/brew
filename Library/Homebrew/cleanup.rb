@@ -629,14 +629,10 @@ module Homebrew
         break unless db.created?
 
         db.each_key do |keg|
-          keg = T.cast(keg, String)
           next if rack.present? && !keg.start_with?("#{rack}/")
           next if File.directory?(keg)
 
-          LinkageCacheStore.new(
-            keg,
-            T.cast(db, CacheStoreDatabase[String, T::Hash[T.any(String, Symbol), T.anything]]),
-          ).delete!
+          LinkageCacheStore.new(keg, db).delete!
         end
       end
     end

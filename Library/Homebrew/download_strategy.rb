@@ -1277,8 +1277,7 @@ class GitHubGitDownloadStrategy < GitDownloadStrategy # rubocop:todo Style/OneCl
 
   sig { override.returns(String) }
   def last_commit
-    @last_commit ||= GitHub.last_commit(T.must(@user), T.must(@repo), @ref, T.cast(T.must(version), Version),
-                                        length: MINIMUM_COMMIT_HASH_LENGTH)
+    @last_commit ||= GitHub.last_commit(@user, @repo, @ref, version, length: MINIMUM_COMMIT_HASH_LENGTH)
     @last_commit || super
   end
 
@@ -1288,7 +1287,7 @@ class GitHubGitDownloadStrategy < GitDownloadStrategy # rubocop:todo Style/OneCl
     return super if last_commit.blank?
     return true unless last_commit.start_with?(commit)
 
-    if GitHub.multiple_short_commits_exist?(T.must(@user), T.must(@repo), commit)
+    if GitHub.multiple_short_commits_exist?(@user, @repo, commit)
       true
     else
       T.must(@version).update_commit(commit)

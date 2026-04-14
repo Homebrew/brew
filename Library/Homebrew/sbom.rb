@@ -43,15 +43,14 @@ class SBOM
       source_modified_time: tab.source_modified_time.to_i,
       compiler:             tab.compiler,
       stdlib:               tab.stdlib,
-      runtime_dependencies: SBOM.runtime_deps_hash(T.cast(Array(tab.runtime_dependencies),
-                                                          T::Array[T::Hash[String, T.untyped]])),
+      runtime_dependencies: SBOM.runtime_deps_hash(Array(tab.runtime_dependencies)),
       license:              SPDX.license_expression_to_string(formula.license),
       built_on:             DevelopmentTools.build_system_info,
       source:               Source.new(
         path:         formula.specified_path.to_s,
         tap_name:     formula.tap&.name,
         # We can only get `tap_git_head` if the tap is installed locally
-        tap_git_head: (formula.tap!.git_head if formula.tap&.installed?),
+        tap_git_head: (T.must(formula.tap).git_head if formula.tap&.installed?),
         spec:         active_spec_sym,
         patches:      active_spec.patches,
         bottle:       formula.bottle_hash,

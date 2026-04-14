@@ -193,7 +193,7 @@ RSpec.describe Resource do
 
     expect(fn).to receive(:verify_checksum)
       .with(checksum)
-      .and_raise(ChecksumMismatchError.new(fn, checksum, Checksum.new(Digest::SHA256.new.hexdigest)))
+      .and_raise(ChecksumMismatchError.new(fn, checksum, Object.new))
 
     expect do
       resource.verify_download_integrity(fn)

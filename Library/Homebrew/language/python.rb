@@ -197,7 +197,7 @@ module Language
         formula.recursive_dependencies do |dependent, dep|
           Dependency.prune if dep.build? || dep.test?
           # Apply default filter
-          Dependency.prune if (dep.optional? || dep.recommended?) && !T.cast(dependent, Formula).build.with?(dep)
+          Dependency.prune if (dep.optional? || dep.recommended?) && !dependent.build.with?(dep)
           # Do not add the main site-package provided by the brewed
           # Python formula, to keep the virtual-env's site-package pristine
           Dependency.prune if python_names.include? dep.name

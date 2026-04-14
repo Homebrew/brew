@@ -436,11 +436,6 @@ class Formula
   sig { returns(T.nilable(String)) }
   def full_installed_alias_name = full_name_with_optional_tap(installed_alias_name)
 
-  sig { returns(Tap) }
-  def tap!
-    tap || raise("Formula tap is nil")
-  end
-
   sig { returns(Pathname) }
   def tap_path
     return path unless (t = tap)
@@ -2626,10 +2621,7 @@ class Formula
   # means if `a` depends on `b` then `b` will be ordered before `a` in this list.
   #
   # @api internal
-  T::Sig::WithoutRuntime.sig {
-    # CaskDependent may not be initialized yet, so we don't use a runtime sig
-    params(block: T.nilable(T.proc.params(arg0: T.any(Formula, CaskDependent), arg1: Dependency).void)).returns(T::Array[Dependency])
-  }
+  sig { params(block: T.nilable(T.proc.params(arg0: Formula, arg1: Dependency).void)).returns(T::Array[Dependency]) }
   def recursive_dependencies(&block)
     cache_key = "Formula#recursive_dependencies"
     if block
@@ -2644,7 +2636,7 @@ class Formula
   # The full set of {Requirements} for this formula's dependency tree.
   #
   # @api internal
-  sig { params(block: T.untyped).returns(Requirements) }
+  sig { params(block: T.nilable(T.proc.params(arg0: Formula, arg1: Requirement).void)).returns(Requirements) }
   def recursive_requirements(&block)
     cache_key = "Formula#recursive_requirements" unless block
     Requirement.expand(self, cache_key:, &block)
@@ -3281,8 +3273,7 @@ class Formula
     return [] unless keg
 
     CacheStoreDatabase.use(:linkage) do |db|
-      typed_db = T.cast(db, CacheStoreDatabase[String, T::Hash[T.any(String, Symbol), T.anything]])
-      linkage_checker = LinkageChecker.new(keg, self, cache_db: typed_db)
+      linkage_checker = LinkageChecker.new(keg, self, cache_db: db)
       linkage_checker.undeclared_deps.map { |n| Dependency.new(n) }
     end
   end

@@ -135,7 +135,7 @@ module Homebrew
 
       sig { params(formula: Formula, formula_name: String, args: Homebrew::Cmd::TestBotCmd::Args).void }
       def setup_formulae_deps_instances(formula, formula_name, args:)
-        conflicts = T.let(formula.conflicts, T::Array[T.any(Formula, Formula::FormulaConflict)])
+        conflicts = formula.conflicts
         formula_recursive_dependencies = formula.recursive_dependencies.map(&:to_formula)
         formula_recursive_dependencies.each do |dependency|
           conflicts += dependency.conflicts

@@ -1,4 +1,4 @@
-# typed: strict
+# typed: true # rubocop:todo Sorbet/StrictSigil
 # frozen_string_literal: true
 
 require "kramdown/converter/man"
@@ -10,7 +10,6 @@ module Homebrew
       class Roff < ::Kramdown::Converter::Man
         # Override that adds Homebrew metadata for the top level header
         # and doesn't escape the text inside subheaders.
-        sig { override.params(element: ::Kramdown::Element, options: T::Hash[Symbol, T.untyped]).void }
         def convert_header(element, options)
           if element.options[:level] == 1
             element.attr["data-date"] = Date.today.strftime("%B %Y")
@@ -29,12 +28,10 @@ module Homebrew
           end
         end
 
-        sig { params(element: ::Kramdown::Element, options: T::Hash[Symbol, T.untyped]).void }
         def convert_variable(element, options)
           options[:result] << "\\fI#{escape(element.value)}\\fP"
         end
 
-        sig { override.params(element: ::Kramdown::Element, options: T::Hash[Symbol, T.untyped]).void }
         def convert_a(element, options)
           if element.attr["href"].chr == "#"
             # Hide internal links - just make them italicised

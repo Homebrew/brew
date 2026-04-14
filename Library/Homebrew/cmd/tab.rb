@@ -65,8 +65,7 @@ module Homebrew
           [formula_or_cask.token, formula_or_cask.tab]
         end
 
-        tabfile = tab.tabfile
-        if tabfile.blank? || !tabfile.exist?
+        if tab.tabfile.blank? || !tab.tabfile.exist?
           raise ArgumentError,
                 "Tab file for #{name} does not exist."
         end

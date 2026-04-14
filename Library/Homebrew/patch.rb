@@ -5,6 +5,8 @@ require "resource"
 require "erb"
 require "utils/output"
 
+Owner = T.type_alias { T.any(Formula, Resource, SoftwareSpec) }
+
 # Helper module for creating patches.
 module Patch
   sig {
@@ -40,7 +42,7 @@ class EmbeddedPatch # rubocop:todo Style/OneClassPerFile
 
   abstract!
 
-  sig { params(owner: T.nilable(Resource::Owner)).returns(T.nilable(Resource::Owner)) }
+  sig { params(owner: T.nilable(Owner)).returns(T.nilable(Owner)) }
   attr_writer :owner
 
   sig { returns(T.any(String, Symbol)) }
@@ -49,7 +51,7 @@ class EmbeddedPatch # rubocop:todo Style/OneClassPerFile
   sig { params(strip: T.any(String, Symbol)).void }
   def initialize(strip)
     @strip = strip
-    @owner = T.let(nil, T.nilable(Resource::Owner))
+    @owner = T.let(nil, T.nilable(Owner))
   end
 
   sig { returns(T::Boolean) }
@@ -148,7 +150,7 @@ class ExternalPatch # rubocop:todo Style/OneClassPerFile
     true
   end
 
-  sig { params(owner: T.nilable(Resource::Owner)).void }
+  sig { params(owner: T.nilable(Owner)).void }
   def owner=(owner)
     resource.owner = owner
     resource.version(resource.checksum&.hexdigest || ERB::Util.url_encode(resource.url))
@@ -171,7 +173,7 @@ class ExternalPatch # rubocop:todo Style/OneClassPerFile
         patch_files << children.fetch(0).basename
       end
       dir = base_dir
-      dir /= T.must(resource.directory) if resource.directory.present?
+      dir /= resource.directory if resource.directory.present?
       dir.cd do
         patch_files.each do |patch_file|
           ohai "Applying #{patch_file}"
@@ -187,8 +189,7 @@ class ExternalPatch # rubocop:todo Style/OneClassPerFile
     end
   rescue ErrorDuringExecution => e
     onoe e
-    spec_owner = T.cast(T.must(resource.owner), SoftwareSpec).owner
-    f = spec_owner.is_a?(::Formula) ? spec_owner : nil
+    f = resource.owner.owner
     cmd, *args = e.cmd
     raise BuildError.new(f, cmd, args, ENV.to_hash)
   end

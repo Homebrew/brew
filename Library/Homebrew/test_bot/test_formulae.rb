@@ -149,8 +149,6 @@ module Homebrew
 
         github_repository = ENV.fetch("GITHUB_REPOSITORY")
         owner, repo = *github_repository.split("/")
-        raise "github_repository #{github_repository} is invalid" if owner.nil? || repo.nil?
-
         pr_labels = GitHub.pull_request_labels(owner, repo, pull_number)
         # Also disable bottle cache for PRs modifying workflows to avoid cache poisoning.
         return if pr_labels.include?("CI-no-bottle-cache") || pr_labels.include?("workflows")

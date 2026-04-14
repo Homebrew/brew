@@ -80,21 +80,12 @@ class CaskDependent
     )
   end
 
-  sig {
-    params(
-      block: T.nilable(T.proc.params(arg0: T.any(Formula, CaskDependent, SoftwareSpec), arg1: ::Dependency).void),
-    ).returns(T::Array[::Dependency])
-  }
+  sig { params(block: T.nilable(T.proc.returns(T::Array[Dependency]))).returns(T::Array[Dependency]) }
   def recursive_dependencies(&block)
     Dependency.expand(self, &block)
   end
 
-  sig {
-    params(
-      block: T.nilable(T.proc.params(arg0: T.any(Formula, CaskDependent, SoftwareSpec), arg1: ::Requirement)
-             .returns(CaskDependent::Requirement)),
-    ).returns(Requirements)
-  }
+  sig { params(block: T.nilable(T.proc.returns(CaskDependent::Requirement))).returns(Requirements) }
   def recursive_requirements(&block)
     Requirement.expand(self, &block)
   end

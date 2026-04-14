@@ -1,4 +1,4 @@
-# typed: strict
+# typed: true # rubocop:todo Sorbet/StrictSigil
 # frozen_string_literal: true
 
 require "shellwords"
@@ -15,7 +15,6 @@ module Homebrew
 
     # Checks style for a list of files, printing simple RuboCop output.
     # Returns true if violations were found, false otherwise.
-    sig { params(files: T::Array[Pathname], options: T.untyped).returns(T::Boolean) }
     def self.check_style_and_print(files, **options)
       success = check_style_impl(files, :print, **options)
 
@@ -31,30 +30,15 @@ module Homebrew
         end
       end
 
-      T.cast(success, T::Boolean)
+      success
     end
 
     # Checks style for a list of files, returning results as an {Offenses}
     # object parsed from its JSON output.
-    sig { params(files: T::Array[Pathname], options: T.untyped).returns(Offenses) }
     def self.check_style_json(files, **options)
-      T.cast(check_style_impl(files, :json, **options), Offenses)
+      check_style_impl(files, :json, **options)
     end
 
-    sig {
-      params(
-        files:             T::Array[Pathname],
-        output_type:       Symbol,
-        fix:               T::Boolean,
-        todo:              T::Boolean,
-        except_cops:       T.nilable(T::Array[String]),
-        only_cops:         T.nilable(T::Array[String]),
-        display_cop_names: T::Boolean,
-        reset_cache:       T::Boolean,
-        debug:             T::Boolean,
-        verbose:           T::Boolean,
-      ).returns(T.any(Offenses, T::Boolean))
-    }
     def self.check_style_impl(files, output_type,
                               fix: false,
                               todo: false,
@@ -118,31 +102,14 @@ module Homebrew
       actionlint_result ||= run_actionlint!(actionlint_files)
 
       if output_type == :json
-        Offenses.new(
-          T.cast(rubocop_result, T::Array[T::Hash[String, T.untyped]]) +
-          T.cast(shellcheck_result, T::Array[T::Hash[String, T.untyped]]),
-        )
+        Offenses.new(rubocop_result + shellcheck_result)
       else
-        rubocop_result && !!shellcheck_result && shfmt_result && actionlint_result
+        rubocop_result && shellcheck_result && shfmt_result && actionlint_result
       end
     end
 
-    RUBOCOP = T.let((HOMEBREW_LIBRARY_PATH/"utils/rubocop.rb").freeze, Pathname)
+    RUBOCOP = (HOMEBREW_LIBRARY_PATH/"utils/rubocop.rb").freeze
 
-    sig {
-      params(
-        files:             T::Array[Pathname],
-        output_type:       Symbol,
-        fix:               T::Boolean,
-        todo:              T::Boolean,
-        except_cops:       T.nilable(T::Array[String]),
-        only_cops:         T.nilable(T::Array[String]),
-        display_cop_names: T::Boolean,
-        reset_cache:       T::Boolean,
-        debug:             T::Boolean,
-        verbose:           T::Boolean,
-      ).returns(T.any(T::Boolean, T::Array[T::Hash[String, T.untyped]]))
-    }
     def self.run_rubocop(files, output_type,
                          fix: false, todo: false, except_cops: nil, only_cops: nil, display_cop_names: false,
                          reset_cache: false,
@@ -183,7 +150,7 @@ module Homebrew
         args << "--only" << cops_to_include.join(",")
       end
 
-      files.map!(&:expand_path)
+      files&.map!(&:expand_path)
       base_dir = Dir.pwd
       if files.blank? || files == [HOMEBREW_REPOSITORY]
         files = [HOMEBREW_LIBRARY_PATH]
@@ -238,10 +205,6 @@ module Homebrew
       end
     end
 
-    sig {
-      params(files: T::Array[Pathname], output_type: Symbol, fix: T::Boolean)
-        .returns(T.nilable(T.any(T::Boolean, T::Array[T::Hash[String, T.untyped]])))
-    }
     def self.run_shellcheck(files, output_type, fix: false)
       files = shell_scripts if files.blank?
 
@@ -312,7 +275,6 @@ module Homebrew
       end
     end
 
-    sig { params(files: T::Array[Pathname], fix: T::Boolean).returns(T::Boolean) }
     def self.run_shfmt!(files, fix: false)
       files = shell_scripts if files.blank?
       # Do not format completions and Dockerfile
@@ -326,7 +288,6 @@ module Homebrew
       $CHILD_STATUS.success?
     end
 
-    sig { params(files: T::Array[Pathname]).returns(T::Boolean) }
     def self.run_actionlint!(files)
       files = github_workflow_files if files.blank?
 
@@ -353,7 +314,6 @@ module Homebrew
       $CHILD_STATUS.success?
     end
 
-    sig { params(result: SystemCommand::Result).returns(T.untyped) }
     def self.json_result!(result)
       # An exit status of 1 just means violations were found; other numbers mean
       # execution errors.
@@ -363,7 +323,6 @@ module Homebrew
       JSON.parse(result.stdout)
     end
 
-    sig { returns(T::Array[Pathname]) }
     def self.shell_scripts
       [
         HOMEBREW_ORIGINAL_BREW_FILE.realpath,
@@ -383,25 +342,21 @@ module Homebrew
       ]
     end
 
-    sig { returns(T::Array[Pathname]) }
     def self.github_workflow_files
       HOMEBREW_REPOSITORY.glob(".github/workflows/*.yml")
     end
 
-    sig { returns(Pathname) }
     def self.shellcheck
       require "formula"
       Formula["shellcheck"].ensure_installed!(latest: true, reason: "shell style checks").opt_bin/"shellcheck"
     end
 
-    sig { returns(Pathname) }
     def self.shfmt
       require "formula"
       Formula["shfmt"].ensure_installed!(latest: true, reason: "formatting shell scripts")
       HOMEBREW_LIBRARY/"Homebrew/utils/shfmt.sh"
     end
 
-    sig { returns(Pathname) }
     def self.actionlint
       require "formula"
       Formula["actionlint"].ensure_installed!(latest: true, reason: "GitHub Actions checks").opt_bin/"actionlint"
@@ -410,13 +365,9 @@ module Homebrew
     # Collection of style offenses.
     class Offenses
       include Enumerable
-      extend T::Generic
 
-      Elem = type_member(:out) { { fixed: Offense } }
-
-      sig { params(paths: T::Array[T::Hash[String, T.untyped]]).void }
       def initialize(paths)
-        @offenses = T.let({}, T::Hash[Pathname, T::Array[Offense]])
+        @offenses = {}
         paths.each do |f|
           next if f["offenses"].empty?
 
@@ -425,50 +376,28 @@ module Homebrew
         end
       end
 
-      sig { params(path: T.any(String, Pathname)).returns(T::Array[Offense]) }
       def for_path(path)
         @offenses.fetch(Pathname(path), [])
       end
 
-      # `Enumerable#each` has a generic block type incompatible with the specific
-      # `[Pathname, T::Array[Offense]]` pairs this Hash-backed class yields.
-      # rubocop:disable Sorbet/AllowIncompatibleOverride
-      sig {
-        override(allow_incompatible: true)
-          .params(block: T.proc.params(arg0: [Pathname, T::Array[Homebrew::Style::Offense]]).returns(BasicObject))
-          .returns(T.untyped)
-      }
-      # rubocop:enable Sorbet/AllowIncompatibleOverride
-      def each(&block)
-        @offenses.each(&block)
+      def each(*args, &block)
+        @offenses.each(*args, &block)
       end
     end
 
     # A style offense.
     class Offense
-      sig { returns(String) }
-      attr_reader :message
+      attr_reader :severity, :message, :corrected, :location, :cop_name
 
-      sig { returns(T.nilable(String)) }
-      attr_reader :severity, :cop_name
-
-      sig { returns(T::Boolean) }
-      attr_reader :corrected
-
-      sig { returns(SourceLocation) }
-      attr_reader :location
-
-      sig { params(json: T::Hash[String, T.untyped]).void }
       def initialize(json)
-        @severity = T.let(json["severity"], T.nilable(String))
-        @message = T.let(json.fetch("message"), String)
-        @cop_name = T.let(json["cop_name"], T.nilable(String))
-        @corrected = T.let(json["corrected"], T::Boolean)
-        location = json.fetch("location")
-        @location = T.let(SourceLocation.new(location.fetch("line"), location["column"]), SourceLocation)
+        @severity = json["severity"]
+        @message = json["message"]
+        @cop_name = json["cop_name"]
+        @corrected = json["corrected"]
+        location = json["location"]
+        @location = SourceLocation.new(location.fetch("line"), location["column"])
       end
 
-      sig { returns(T::Boolean) }
       def corrected?
         @corrected
       end

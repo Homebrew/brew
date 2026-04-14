@@ -186,11 +186,11 @@ module Homebrew
             hub.reporters.each { |r| r.migrate_formula_rename(force: args.force?, verbose: args.verbose?) }
 
             CacheStoreDatabase.use(:descriptions) do |db|
-              DescriptionCacheStore.new(T.cast(db, CacheStoreDatabase[String, T.anything]))
+              DescriptionCacheStore.new(db)
                                    .update_from_report!(hub)
             end
             CacheStoreDatabase.use(:cask_descriptions) do |db|
-              CaskDescriptionCacheStore.new(T.cast(db, CacheStoreDatabase[String, T.anything]))
+              CaskDescriptionCacheStore.new(db)
                                        .update_from_report!(hub)
             end
           end

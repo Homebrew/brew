@@ -316,9 +316,7 @@ class Keg
     CacheStoreDatabase.use(:linkage) do |db|
       break unless db.created?
 
-      LinkageCacheStore.new(path.to_s,
-                            T.cast(db,
-                                   CacheStoreDatabase[String, T::Hash[T.any(String, Symbol), T.anything]])).delete!
+      LinkageCacheStore.new(path.to_s, db).delete!
     end
 
     FileUtils.rm_r(path)

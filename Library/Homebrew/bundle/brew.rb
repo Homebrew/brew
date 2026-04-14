@@ -287,7 +287,8 @@ module Homebrew
             installed_as_dependency = tab.installed_as_dependency
             installed_on_request = tab.installed_on_request
             runtime_dependencies = if (runtime_deps = tab.runtime_dependencies)
-              T.cast(runtime_deps, T::Array[T::Hash[String, T.untyped]]).filter_map { |d| d["full_name"] }
+              runtime_deps.filter_map { |d| d["full_name"] }
+
             end
             poured_from_bottle = tab.poured_from_bottle
           end

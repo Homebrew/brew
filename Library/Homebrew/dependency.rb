@@ -1,4 +1,4 @@
-# typed: strict
+# typed: true # rubocop:todo Sorbet/StrictSigil
 # frozen_string_literal: true
 
 require "dependable"
@@ -16,43 +16,32 @@ class Dependency
   sig { returns(T.nilable(Tap)) }
   attr_reader :tap
 
-  sig { override.returns(T::Array[T.any(Symbol, String, T::Array[T.untyped])]) }
-  attr_reader :tags
-
-  sig { params(name: String, tags: T.any(String, Symbol, T::Array[T.untyped], T::Hash[Symbol, T.anything])).void }
   def initialize(name, tags = [])
+    raise ArgumentError, "Dependency must have a name!" unless name
+
     @name = name
-    @tags = T.let(Array(tags), T::Array[T.any(Symbol, String)])
-    @tap = T.let(nil, T.nilable(Tap))
+    @tags = tags
 
     return unless (tap_with_name = Tap.with_formula_name(name))
 
     @tap, = tap_with_name
   end
 
-  sig { override.params(other: BasicObject).returns(T::Boolean) }
   def ==(other)
-    case other
-    when Dependency
-      name == other.name && tags == other.tags
-    else false
-    end
+    instance_of?(other.class) && name == other.name && tags == other.tags
   end
   alias eql? ==
 
-  sig { override.returns(Integer) }
   def hash
     [name, tags].hash
   end
 
-  sig { returns(Formula) }
   def to_installed_formula
     formula = Formulary.resolve(name)
     formula.build = BuildOptions.new(options, formula.options)
     formula
   end
 
-  sig { returns(Formula) }
   def to_formula
     formula = Formulary.factory(name, warn: false)
     formula.build = BuildOptions.new(options, formula.options)
@@ -95,7 +84,7 @@ class Dependency
     # and they match, the dependency is satisfied regardless of version/revision.
     if minimum_compatibility_version.present? && formula.compatibility_version.present?
       installed_tab = Tab.for_keg(installed_keg)
-      installed_compatibility_version = installed_tab.source.dig("versions", "compatibility_version")
+      installed_compatibility_version = installed_tab.source&.dig("versions", "compatibility_version")
 
       # If installed version has same compatibility_version as required, it's compatible
       return true if installed_compatibility_version == minimum_compatibility_version &&
@@ -116,21 +105,12 @@ class Dependency
     end
   end
 
-  sig {
-    params(
-      minimum_version:               T.nilable(Version),
-      minimum_revision:              T.nilable(Integer),
-      minimum_compatibility_version: T.nilable(Integer),
-      bottle_os_version:             T.nilable(String),
-    ).returns(T::Boolean)
-  }
   def satisfied?(minimum_version: nil, minimum_revision: nil,
                  minimum_compatibility_version: nil, bottle_os_version: nil)
     installed?(minimum_version:, minimum_revision:, minimum_compatibility_version:, bottle_os_version:) &&
       missing_options.empty?
   end
 
-  sig { returns(Options) }
   def missing_options
     formula = to_installed_formula
     required = options
@@ -139,7 +119,6 @@ class Dependency
     required
   end
 
-  sig { override.returns(T::Array[String]) }
   def option_names
     [Utils.name_from_full_name(name)].freeze
   end
@@ -170,78 +149,58 @@ class Dependency
     # optionals and recommends based on what the dependent has asked for
     #
     # @api internal
-    T::Sig::WithoutRuntime.sig {
-      params(
-        # CaskDependent may not be initialized yet, so we don't use a runtime sig
-        dependent:       T.any(Formula, CaskDependent),
-        deps:            T::Array[Dependency],
-        cache_key:       T.nilable(String),
-        cache_timestamp: T.nilable(Time),
-        block:           T.nilable(T.proc.params(arg0: T.any(Formula, CaskDependent), arg1: Dependency).void),
-      ).returns(T::Array[Dependency])
-    }
     def expand(dependent, deps = dependent.deps, cache_key: nil, cache_timestamp: nil, &block)
       # Keep track dependencies to avoid infinite cyclic dependency recursion.
-      @expand_stack ||= T.let([], T.nilable(T::Array[T.any(String, Symbol)]))
+      @expand_stack ||= []
       @expand_stack.push dependent.name
 
-      begin
-        if cache_key.present?
-          cache_key = "#{cache_key}-#{cache_timestamp}" if cache_timestamp
+      if cache_key.present?
+        cache_key = "#{cache_key}-#{cache_timestamp}" if cache_timestamp
 
-          if (entry = cache(cache_key, cache_timestamp:)[cache_id dependent])
-            return entry.dup
-          end
+        if (entry = cache(cache_key, cache_timestamp:)[cache_id dependent])
+          return entry.dup
         end
-
-        expanded_deps = []
-
-        deps.each do |dep|
-          next if dependent.name == dep.name
-
-          case action(dependent, dep, &block)
-          when :prune
-            next
-          when :skip
-            next if @expand_stack.include? dep.name
-
-            expanded_deps.concat(expand(dep.to_formula, cache_key:, &block))
-          when :keep_but_prune_recursive_deps
-            expanded_deps << dep
-          else
-            next if @expand_stack.include? dep.name
-
-            dep_formula = dep.to_formula
-            expanded_deps.concat(expand(dep_formula, cache_key:, &block))
-
-            # Fixes names for renamed/aliased formulae.
-            dep = dep.dup_with_formula_name(dep_formula)
-            expanded_deps << dep
-          end
-        end
-
-        expanded_deps = merge_repeats(expanded_deps)
-        cache(cache_key, cache_timestamp:)[cache_id dependent] = expanded_deps.dup if cache_key.present?
-        expanded_deps
-      ensure
-        @expand_stack.pop
       end
+
+      expanded_deps = []
+
+      deps.each do |dep|
+        next if dependent.name == dep.name
+
+        case action(dependent, dep, &block)
+        when :prune
+          next
+        when :skip
+          next if @expand_stack.include? dep.name
+
+          expanded_deps.concat(expand(dep.to_formula, cache_key:, &block))
+        when :keep_but_prune_recursive_deps
+          expanded_deps << dep
+        else
+          next if @expand_stack.include? dep.name
+
+          dep_formula = dep.to_formula
+          expanded_deps.concat(expand(dep_formula, cache_key:, &block))
+
+          # Fixes names for renamed/aliased formulae.
+          dep = dep.dup_with_formula_name(dep_formula)
+          expanded_deps << dep
+        end
+      end
+
+      expanded_deps = merge_repeats(expanded_deps)
+      cache(cache_key, cache_timestamp:)[cache_id dependent] = expanded_deps.dup if cache_key.present?
+      expanded_deps
+    ensure
+      @expand_stack.pop
     end
 
-    # CaskDependent may not be initialized yet, so we don't use a runtime sig
-    T::Sig::WithoutRuntime.sig {
-      params(
-        dependent: T.any(Formula, CaskDependent),
-        dep:       Dependency,
-        block:     T.nilable(T.proc.params(arg0: T.any(Formula, CaskDependent), arg1: Dependency).void),
-      ).returns(T.nilable(T.any(Integer, Symbol)))
-    }
     def action(dependent, dep, &block)
       catch(:action) do
         if block
           yield dependent, dep
         elsif dep.optional? || dep.recommended?
-          prune unless T.cast(dependent, Formula).build.with?(dep)
+          prune unless dependent.build.with?(dep)
         end
       end
     end
@@ -266,25 +225,20 @@ class Dependency
       throw(:action, :keep_but_prune_recursive_deps)
     end
 
-    sig { params(all: T::Array[Dependency]).returns(T::Array[Dependency]) }
     def merge_repeats(all)
       grouped = all.group_by(&:name)
 
-      all.map(&:name).uniq.filter_map do |name|
+      all.map(&:name).uniq.map do |name|
         deps = grouped.fetch(name)
         dep  = deps.first
-        next unless dep
-
         tags = merge_tags(deps)
         kwargs = {}
-        kwargs[:bounds] = T.cast(dep, UsesFromMacOSDependency).bounds if dep.uses_from_macos?
+        kwargs[:bounds] = dep.bounds if dep.uses_from_macos?
         dep.class.new(name, tags, **kwargs)
       end
     end
 
-    sig { params(key: T.nilable(String), cache_timestamp: T.nilable(Time)).returns(T::Hash[T.any(String, Symbol), T.untyped]) }
     def cache(key, cache_timestamp: nil)
-      @cache = T.let(@cache, T.nilable(T::Hash[Symbol, T.untyped]))
       @cache ||= { timestamped: {}, not_timestamped: {} }
 
       if cache_timestamp
@@ -295,7 +249,6 @@ class Dependency
       end
     end
 
-    sig { void }
     def clear_cache
       return unless @cache
 
@@ -304,7 +257,6 @@ class Dependency
       @cache[:not_timestamped].clear
     end
 
-    sig { params(key: T.nilable(String), cache_timestamp: T.nilable(Time)).void }
     def delete_timestamped_cache_entry(key, cache_timestamp)
       return unless @cache
       return unless (timestamp_entry = @cache[:timestamped][cache_timestamp])
@@ -315,20 +267,16 @@ class Dependency
 
     private
 
-    # CaskDependent may not be initialized yet, so we don't use a runtime sig
-    T::Sig::WithoutRuntime.sig { params(dependent: T.any(Formula, CaskDependent)).returns(String) }
     def cache_id(dependent)
       "#{dependent.full_name}_#{dependent.class}"
     end
 
-    sig { params(deps: T::Array[Dependency]).returns(T::Array[T.any(String, Symbol)]) }
     def merge_tags(deps)
-      other_tags = T.let(deps.flat_map(&:option_tags).uniq, T::Array[T.any(String, Symbol)])
+      other_tags = deps.flat_map(&:option_tags).uniq
       other_tags << :test if deps.flat_map(&:tags).include?(:test)
       merge_necessity(deps) + merge_temporality(deps) + other_tags
     end
 
-    sig { params(deps: T::Array[Dependency]).returns(T::Array[Symbol]) }
     def merge_necessity(deps)
       # Cannot use `deps.any?(&:required?)` here due to its definition.
       if deps.any? { |dep| !dep.recommended? && !dep.optional? }
@@ -340,7 +288,6 @@ class Dependency
       end
     end
 
-    sig { params(deps: T::Array[Dependency]).returns(T::Array[Symbol]) }
     def merge_temporality(deps)
       new_tags = []
       new_tags << :build if deps.all?(&:build?)
@@ -352,26 +299,19 @@ end
 
 # A dependency that's marked as "installed" on macOS
 class UsesFromMacOSDependency < Dependency # rubocop:todo Style/OneClassPerFile
-  sig { returns(T::Hash[Symbol, Symbol]) }
   attr_reader :bounds
 
-  sig { params(name: String, tags: T::Array[T.any(String, Symbol, T::Array[T.untyped])], bounds: T::Hash[Symbol, Symbol]).void }
+  sig { params(name: String, tags: T::Array[Symbol], bounds: T::Hash[Symbol, Symbol]).void }
   def initialize(name, tags = [], bounds:)
     super(name, tags)
 
     @bounds = bounds
   end
 
-  sig { override.params(other: BasicObject).returns(T::Boolean) }
   def ==(other)
-    case other
-    when UsesFromMacOSDependency
-      name == other.name && tags == other.tags && bounds == other.bounds
-    else false
-    end
+    instance_of?(other.class) && name == other.name && tags == other.tags && bounds == other.bounds
   end
 
-  sig { override.returns(Integer) }
   def hash
     [name, tags, bounds].hash
   end

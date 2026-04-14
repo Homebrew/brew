@@ -747,7 +747,6 @@ on_request: installed_on_request?, options:)
     # Cache for this expansion only. FormulaInstaller has a lot of inputs which can alter expansion.
     cache_key = "FormulaInstaller-#{formula.full_name}-#{Time.now.to_f}"
     Dependency.expand(formula, cache_key:) do |dependent, dep|
-      dependent = T.cast(dependent, Formula)
       build = effective_build_options_for(dependent)
 
       keep_build_test = false
@@ -757,7 +756,7 @@ on_request: installed_on_request?, options:)
 
       minimum_version = @bottle_tab_runtime_dependencies.dig(dep.name, "version").presence
       minimum_version = Version.new(minimum_version) if minimum_version
-      minimum_revision = @bottle_tab_runtime_dependencies.dig(dep.name, "revision")&.to_i
+      minimum_revision = @bottle_tab_runtime_dependencies.dig(dep.name, "revision")
       bottle_os_version = @bottle_built_os_version
 
       if dep.prune_from_option?(build) || ((dep.build? || dep.test?) && !keep_build_test)
@@ -991,8 +990,7 @@ on_request: installed_on_request?, options:)
     CacheStoreDatabase.use(:linkage) do |db|
       break unless db.created?
 
-      typed_db = T.cast(db, CacheStoreDatabase[String, T::Hash[T.any(String, Symbol), T.anything]])
-      LinkageChecker.new(keg, formula, cache_db: typed_db, rebuild_cache: true)
+      LinkageChecker.new(keg, formula, cache_db: db, rebuild_cache: true)
     end
 
     # Update tab with actual runtime dependencies
@@ -1474,7 +1472,7 @@ on_request: installed_on_request?, options:)
   sig { returns(Downloadable) }
   def downloadable
     if (bottle_path = formula.local_bottle_path)
-      Resource::Local.new(bottle_path.to_s)
+      Resource::Local.new(bottle_path)
     elsif pour_bottle?
       T.must(formula.bottle)
     else

@@ -432,7 +432,7 @@ module Homebrew
       when Cask::Cask
         cask_name(package_or_resource, full_name:)
       when Resource
-        package_or_resource.name.to_s
+        package_or_resource.name
       else
         T.absurd(package_or_resource)
       end
@@ -952,15 +952,7 @@ module Homebrew
           puts "Strategy:         #{strategy_name}" if strategy.present?
           puts "Regex:            #{livecheck_regex.inspect}" if livecheck_regex.present?
           if livecheck_reference == :parent
-            resource_owner = resource.owner
-            raise "Resource owner is nil" if resource_owner.nil?
-
-            formula = if full_name
-              T.cast(resource_owner, ::Formula).full_name
-            else
-              resource_owner.name
-            end
-            puts "Formula Ref:      #{formula} (parent)"
+            puts "Formula Ref:      #{full_name ? resource.owner.full_name : resource.owner.name} (parent)"
           end
         end
 
@@ -1065,16 +1057,8 @@ module Homebrew
           livecheck_defined: livecheck_defined,
         }
         if livecheck_reference == :parent
-          resource_owner = resource.owner
-          raise "Resource owner is nil" if resource_owner.nil?
-
-          formula = if full_name
-            T.cast(resource_owner, ::Formula).full_name
-          else
-            resource_owner.name
-          end
           resource_version_info[:meta][:references] =
-            [{ formula:, symbol: :parent }]
+            [{ formula: full_name ? resource.owner.full_name : resource.owner.name, symbol: :parent }]
         end
         if url != "None"
           resource_version_info[:meta][:url] = {}

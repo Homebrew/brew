@@ -69,7 +69,7 @@ module Homebrew
         ohai "Formulae"
         if eval_all
           CacheStoreDatabase.use(:descriptions) do |db|
-            cache_store = DescriptionCacheStore.new(T.cast(db, CacheStoreDatabase[String, T.anything]))
+            cache_store = DescriptionCacheStore.new(db)
             Descriptions.search(string_or_regex, search_type, cache_store, eval_all:).print
           end
         else
@@ -93,7 +93,7 @@ module Homebrew
       ohai "Casks"
       if eval_all
         CacheStoreDatabase.use(:cask_descriptions) do |db|
-          cache_store = CaskDescriptionCacheStore.new(T.cast(db, CacheStoreDatabase[String, T.anything]))
+          cache_store = CaskDescriptionCacheStore.new(db)
           Descriptions.search(string_or_regex, search_type, cache_store, eval_all:).print
         end
       else

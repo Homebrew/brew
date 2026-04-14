@@ -61,7 +61,7 @@ module DependenciesHelpers
 
       # If a tap isn't installed, we can't find the dependencies of one of
       # its formulae and an exception will be thrown if we try.
-      Dependency.keep_but_prune_recursive_deps if klass == Dependency && (tap = dep.tap) && !tap.installed?
+      Dependency.keep_but_prune_recursive_deps if klass == Dependency && dep.tap && !dep.tap.installed?
     end
   end
 

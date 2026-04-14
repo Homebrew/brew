@@ -35,7 +35,7 @@ RSpec.describe Homebrew::FormulaAuditor do
       options.delete :tap_audit_exceptions
     end
 
-    described_class.new(formula, **options)
+    described_class.new(formula, options)
   end
 
   def formula_gsub(before, after = "")

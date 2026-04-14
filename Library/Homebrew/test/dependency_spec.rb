@@ -28,7 +28,7 @@ RSpec.describe Dependency do
     end
 
     it "rejects nil names" do
-      expect { described_class.new(nil) }.to raise_error(TypeError)
+      expect { described_class.new(nil) }.to raise_error(ArgumentError)
     end
   end
 
