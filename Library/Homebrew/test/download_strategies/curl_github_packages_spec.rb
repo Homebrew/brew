@@ -11,6 +11,9 @@ RSpec.describe CurlGitHubPackagesDownloadStrategy do
   let(:version) { "1.2.3" }
   let(:specs) { { headers: ["Accept: application/vnd.oci.image.index.v1+json"] } }
   let(:authorization) { nil }
+  let(:artifact_domain) { nil }
+  let(:bearer_prefix) { "Bearer" }
+  let(:anonymous_authorization) { "#{bearer_prefix} QQ==" }
   let(:head_response) do
     <<~HTTP
       HTTP/2 200\r
@@ -27,6 +30,11 @@ RSpec.describe CurlGitHubPackagesDownloadStrategy do
   describe "#fetch" do
     before do
       stub_const("HOMEBREW_GITHUB_PACKAGES_AUTH", authorization) if authorization.present?
+      allow(Homebrew::EnvConfig).to receive_messages(
+        artifact_domain:                  artifact_domain,
+        docker_registry_basic_auth_token: nil,
+        docker_registry_token:            nil,
+      )
 
       allow(strategy).to receive(:curl_version).and_return(Version.new("8.7.1"))
 
@@ -51,7 +59,7 @@ RSpec.describe CurlGitHubPackagesDownloadStrategy do
       expect(strategy).to receive(:system_command)
         .with(
           /curl/,
-          hash_including(args: array_including_cons("--header", "Authorization: Bearer QQ==")),
+          hash_including(args: array_including_cons("--header", "Authorization: #{anonymous_authorization}")),
         )
         .at_least(:once)
         .and_return(instance_double(SystemCommand::Result, success?: true, stdout: "", assert_success!: nil))
@@ -60,7 +68,7 @@ RSpec.describe CurlGitHubPackagesDownloadStrategy do
     end
 
     context "with GitHub Packages authentication defined" do
-      let(:authorization) { "Bearer dead-beef-cafe" }
+      let(:authorization) { "#{bearer_prefix} dead-beef-cafe" }
 
       it "calls curl with the provided header value" do
         expect(strategy).to receive(:system_command)
@@ -72,6 +80,34 @@ RSpec.describe CurlGitHubPackagesDownloadStrategy do
           .and_return(instance_double(SystemCommand::Result, success?: true, stdout: "", assert_success!: nil))
 
         strategy.fetch
+      end
+    end
+
+    context "with artifact_domain set" do
+      let(:artifact_domain) { "https://mirror.example.com/oci" }
+
+      it "restores GitHub Packages authentication for ghcr.io requests" do
+        expect(strategy).to receive(:system_command)
+          .with(
+            /curl/,
+            hash_including(
+              args: array_including_cons("--header", "Authorization: #{anonymous_authorization}").and(include(url)),
+            ),
+          )
+          .and_return(instance_double(SystemCommand::Result, success?: true, stdout: "", assert_success!: nil))
+
+        strategy.send(:curl_output, url)
+      end
+
+      it "does not add GitHub Packages authentication to artifact mirror requests" do
+        mirror_url = url.sub("https://#{GitHubPackages::URL_DOMAIN}", artifact_domain)
+
+        expect(strategy).to receive(:system_command) do |_, options|
+          expect(options[:args]).to include(mirror_url)
+          expect(options[:args]).not_to include("Authorization: #{anonymous_authorization}")
+        end.and_return(instance_double(SystemCommand::Result, success?: true, stdout: "", assert_success!: nil))
+
+        strategy.send(:curl_output, mirror_url)
       end
     end
   end

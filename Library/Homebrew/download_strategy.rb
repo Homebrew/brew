@@ -468,13 +468,21 @@ class CurlDownloadStrategy < AbstractFileDownloadStrategy # rubocop:todo Style/O
 
       urls = [url, *mirrors]
 
+      if (domain = Homebrew::EnvConfig.artifact_domain)
+        artifact_urls = urls.filter_map do |download_url|
+          rewritten_url = download_url.sub(%r{^https?://#{GitHubPackages::URL_DOMAIN}/}o, "#{domain.chomp("/")}/")
+          rewritten_url if rewritten_url != download_url
+        end
+
+        urls = if Homebrew::EnvConfig.artifact_domain_no_fallback?
+          artifact_urls.presence || urls
+        else
+          [*artifact_urls, *urls].uniq
+        end
+      end
+
       begin
         url = T.must(urls.shift)
-
-        if (domain = Homebrew::EnvConfig.artifact_domain)
-          url = url.sub(%r{^https?://#{GitHubPackages::URL_DOMAIN}/}o, "#{domain.chomp("/")}/")
-          urls = [] if Homebrew::EnvConfig.artifact_domain_no_fallback?
-        end
 
         ohai "Downloading #{url}"
 
@@ -755,6 +763,33 @@ class CurlGitHubPackagesDownloadStrategy < CurlDownloadStrategy # rubocop:todo S
     return super if @resolved_basename.blank?
 
     [url, @resolved_basename, nil, nil, nil, false]
+  end
+
+  sig { override.params(args: String, options: T.untyped).returns(SystemCommand::Result) }
+  def curl_output(*args, **options)
+    with_github_packages_auth(args) { super }
+  end
+
+  sig {
+    override.params(args: String, print_stdout: T.any(T::Boolean, Symbol), options: T.untyped)
+            .returns(SystemCommand::Result)
+  }
+  def curl(*args, print_stdout: true, **options)
+    with_github_packages_auth(args) { super }
+  end
+
+  sig { params(args: T::Array[String], _block: T.proc.returns(SystemCommand::Result)).returns(SystemCommand::Result) }
+  def with_github_packages_auth(args, &_block)
+    auth_header = "Authorization: #{HOMEBREW_GITHUB_PACKAGES_AUTH}"
+    return yield if HOMEBREW_GITHUB_PACKAGES_AUTH.blank?
+    return yield unless args.any? { |arg| arg.match?(%r{^https?://#{GitHubPackages::URL_DOMAIN}/}o) }
+    return yield if meta.fetch(:headers, []).include?(auth_header)
+
+    meta[:headers] ||= []
+    meta[:headers] << auth_header
+    yield
+  ensure
+    meta[:headers]&.delete(auth_header)
   end
 end
 
