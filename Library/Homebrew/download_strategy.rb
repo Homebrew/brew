@@ -781,15 +781,17 @@ class CurlGitHubPackagesDownloadStrategy < CurlDownloadStrategy # rubocop:todo S
   sig { params(args: T::Array[String], _block: T.proc.returns(SystemCommand::Result)).returns(SystemCommand::Result) }
   def with_github_packages_auth(args, &_block)
     auth_header = "Authorization: #{HOMEBREW_GITHUB_PACKAGES_AUTH}"
+    added_auth_header = false
     return yield if HOMEBREW_GITHUB_PACKAGES_AUTH.blank?
     return yield unless args.any? { |arg| arg.match?(%r{^https?://#{GitHubPackages::URL_DOMAIN}/}o) }
     return yield if meta.fetch(:headers, []).include?(auth_header)
 
     meta[:headers] ||= []
     meta[:headers] << auth_header
+    added_auth_header = true
     yield
   ensure
-    meta[:headers]&.delete(auth_header)
+    meta[:headers]&.delete(auth_header) if added_auth_header
   end
 end
 

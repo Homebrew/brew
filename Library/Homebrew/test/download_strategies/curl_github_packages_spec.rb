@@ -109,6 +109,29 @@ RSpec.describe CurlGitHubPackagesDownloadStrategy do
 
         strategy.send(:curl_output, mirror_url)
       end
+
+      context "when authorization is already present in headers" do
+        let(:authorization) { "#{bearer_prefix} dead-beef-cafe" }
+        let(:specs) do
+          {
+            headers: [
+              "Accept: application/vnd.oci.image.index.v1+json",
+              "Authorization: #{authorization}",
+            ],
+          }
+        end
+
+        it "preserves the existing authorization header for artifact mirror requests" do
+          mirror_url = url.sub("https://#{GitHubPackages::URL_DOMAIN}", artifact_domain)
+
+          expect(strategy).to receive(:system_command) do |_, options|
+            expect(options[:args]).to include("--header", "Authorization: #{authorization}", mirror_url)
+          end.and_return(instance_double(SystemCommand::Result, success?: true, stdout: "", assert_success!: nil))
+
+          strategy.send(:curl_output, mirror_url)
+          expect(strategy.send(:meta).fetch(:headers)).to include("Authorization: #{authorization}")
+        end
+      end
     end
   end
 end
