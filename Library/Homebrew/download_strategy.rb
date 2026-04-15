@@ -468,7 +468,7 @@ class CurlDownloadStrategy < AbstractFileDownloadStrategy # rubocop:todo Style/O
 
       urls = [url, *mirrors]
 
-      if (domain = Homebrew::EnvConfig.artifact_domain)
+      if (domain = Homebrew::EnvConfig.artifact_domain.presence)
         artifact_urls = urls.filter_map do |download_url|
           rewritten_url = download_url.sub(%r{^https?://#{GitHubPackages::URL_DOMAIN}/}o, "#{domain.chomp("/")}/")
           rewritten_url if rewritten_url != download_url
@@ -482,7 +482,8 @@ class CurlDownloadStrategy < AbstractFileDownloadStrategy # rubocop:todo Style/O
       end
 
       begin
-        url = T.must(urls.shift)
+        url = urls.fetch(0)
+        urls = urls.drop(1)
 
         ohai "Downloading #{url}"
 
@@ -760,30 +761,29 @@ class CurlGitHubPackagesDownloadStrategy < CurlDownloadStrategy # rubocop:todo S
 
   sig { override.params(url: String, timeout: T.nilable(T.any(Float, Integer))).returns(URLMetadata) }
   def resolve_url_basename_time_file_size(url, timeout: nil)
-    return super if @resolved_basename.blank?
-
-    [url, @resolved_basename, nil, nil, nil, false]
-  end
-
-  sig { override.params(args: String, options: T.untyped).returns(SystemCommand::Result) }
-  def curl_output(*args, **options)
-    with_github_packages_auth(args) { super }
+    with_github_packages_auth(url) do
+      if @resolved_basename.blank?
+        super(url, timeout:)
+      else
+        [url, @resolved_basename, nil, nil, nil, false]
+      end
+    end
   end
 
   sig {
-    override.params(args: String, print_stdout: T.any(T::Boolean, Symbol), options: T.untyped)
-            .returns(SystemCommand::Result)
+    override.params(url: String, resolved_url: String, timeout: T.nilable(T.any(Float, Integer)))
+             .returns(T.nilable(SystemCommand::Result))
   }
-  def curl(*args, print_stdout: true, **options)
-    with_github_packages_auth(args) { super }
+  def _fetch(url:, resolved_url:, timeout:)
+    with_github_packages_auth(resolved_url) { super }
   end
 
-  sig { params(args: T::Array[String], _block: T.proc.returns(SystemCommand::Result)).returns(SystemCommand::Result) }
-  def with_github_packages_auth(args, &_block)
+  sig { params(url: String, _block: T.proc.returns(T.untyped)).returns(T.untyped) }
+  def with_github_packages_auth(url, &_block)
     auth_header = "Authorization: #{HOMEBREW_GITHUB_PACKAGES_AUTH}"
     added_auth_header = false
     return yield if HOMEBREW_GITHUB_PACKAGES_AUTH.blank?
-    return yield unless args.any? { |arg| arg.match?(%r{^https?://#{GitHubPackages::URL_DOMAIN}/}o) }
+    return yield unless url.match?(%r{^https?://#{GitHubPackages::URL_DOMAIN}/}o)
     return yield if meta.fetch(:headers, []).include?(auth_header)
 
     meta[:headers] ||= []
