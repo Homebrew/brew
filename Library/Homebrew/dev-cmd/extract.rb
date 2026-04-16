@@ -119,7 +119,7 @@ module Homebrew
             result = Utils::Git.last_revision_of_file(repo, file)
           else
             file = files.fetch(0).realpath
-            rev = T.let("HEAD", T.nilable(String))
+            rev = "HEAD"
             version = Formulary.factory(file).version
             result = File.read(file)
           end
@@ -135,7 +135,7 @@ module Homebrew
                                 .gsub(/\D+/, ".")
 
         # Remove any existing version suffixes, as a new one will be added later.
-        name.sub!(/\b@(.*)\z\b/i, "")
+        name.sub!(/\b@(.*)\z/i, "")
         versioned_name = Formulary.class_s("#{name}@#{version_string}")
         result.sub!("class #{class_name} < Formula", "class #{versioned_name} < Formula")
 
@@ -172,68 +172,69 @@ module Homebrew
         with_monkey_patch { Formulary.from_contents(name, file, contents, ignore_errors: true) }
       end
 
-      sig { params(_block: T.proc.void).returns(T.untyped) }
+      sig { params(klass: T::Module[T.anything], method_name: Symbol).returns(T.nilable(Symbol)) }
+      def method_visibility(klass, method_name)
+        if klass.private_method_defined?(method_name, false)
+          :private
+        elsif klass.method_defined?(method_name, false)
+          klass.public_method_defined?(method_name) ? :public : :protected
+        end
+      end
+
+      sig { type_parameters(:U).params(_block: T.proc.returns(T.type_parameter(:U))).returns(T.type_parameter(:U)) }
       def with_monkey_patch(&_block)
-        # Since `method_defined?` is not a supported type guard, the use of `alias_method` below is not typesafe:
-        BottleSpecification.class_eval do
-          T.unsafe(self).alias_method :old_method_missing, :method_missing if method_defined?(:method_missing)
-          define_method(:method_missing) do |*_|
-            # do nothing
-          end
-        end
+        bs_vis = method_visibility(BottleSpecification, :method_missing)
+        mod_vis = method_visibility(Module, :method_missing)
+        res_vis = method_visibility(Resource, :method_missing)
+        dc_vis = method_visibility(DependencyCollector, :parse_symbol_spec)
 
-        Module.class_eval do
-          T.unsafe(self).alias_method :old_method_missing, :method_missing if method_defined?(:method_missing)
-          define_method(:method_missing) do |*_|
-            # do nothing
-          end
-        end
+        bs_mm = BottleSpecification.instance_method(:method_missing) if bs_vis
+        mod_mm = Module.instance_method(:method_missing) if mod_vis
+        res_mm = Resource.instance_method(:method_missing) if res_vis
+        dc_pss = DependencyCollector.instance_method(:parse_symbol_spec) if dc_vis
 
-        Resource.class_eval do
-          T.unsafe(self).alias_method :old_method_missing, :method_missing if method_defined?(:method_missing)
-          define_method(:method_missing) do |*_|
-            # do nothing
-          end
-        end
-
-        DependencyCollector.class_eval do
-          if method_defined?(:parse_symbol_spec)
-            T.unsafe(self).alias_method :old_parse_symbol_spec,
-                                        :parse_symbol_spec
-          end
-          define_method(:parse_symbol_spec) do |*_|
-            # do nothing
-          end
-        end
+        BottleSpecification.class_eval { private define_method(:method_missing) { |*_| nil } }
+        Module.class_eval { private define_method(:method_missing) { |*_| nil } }
+        Resource.class_eval { private define_method(:method_missing) { |*_| nil } }
+        DependencyCollector.class_eval { private define_method(:parse_symbol_spec) { |*_| nil } }
 
         yield
       ensure
-        BottleSpecification.class_eval do
-          if method_defined?(:old_method_missing)
-            T.unsafe(self).alias_method :method_missing, :old_method_missing
-            T.unsafe(self).undef :old_method_missing
+        if (mm = bs_mm) && (vis = bs_vis)
+          BottleSpecification.class_eval do
+            define_method(:method_missing, mm)
+            private(:method_missing) if vis == :private
+            protected(:method_missing) if vis == :protected
           end
+        else
+          BottleSpecification.class_eval { remove_method(:method_missing) }
         end
-
-        Module.class_eval do
-          if method_defined?(:old_method_missing)
-            T.unsafe(self).alias_method :method_missing, :old_method_missing
-            T.unsafe(self).undef :old_method_missing
+        if (mm = mod_mm) && (vis = mod_vis)
+          Module.class_eval do
+            define_method(:method_missing, mm)
+            private(:method_missing) if vis == :private
+            protected(:method_missing) if vis == :protected
           end
+        else
+          Module.class_eval { remove_method(:method_missing) }
         end
-
-        Resource.class_eval do
-          if method_defined?(:old_method_missing)
-            T.unsafe(self).alias_method :method_missing, :old_method_missing
-            T.unsafe(self).undef :old_method_missing
+        if (mm = res_mm) && (vis = res_vis)
+          Resource.class_eval do
+            define_method(:method_missing, mm)
+            private(:method_missing) if vis == :private
+            protected(:method_missing) if vis == :protected
           end
+        else
+          Resource.class_eval { remove_method(:method_missing) }
         end
-
-        DependencyCollector.class_eval do
-          if method_defined?(:old_parse_symbol_spec)
-            T.unsafe(self).alias_method :parse_symbol_spec, :old_parse_symbol_spec
-            T.unsafe(self).undef :old_parse_symbol_spec
+        if (pss = dc_pss) && (vis = dc_vis)
+          DependencyCollector.class_eval do
+            define_method(:parse_symbol_spec, pss)
+            private(:parse_symbol_spec) if vis == :private
+            protected(:parse_symbol_spec) if vis == :protected
           end
+        else
+          DependencyCollector.class_eval { remove_method(:parse_symbol_spec) }
         end
       end
     end
