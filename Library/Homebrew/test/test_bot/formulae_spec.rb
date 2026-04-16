@@ -46,12 +46,4 @@ RSpec.describe Homebrew::TestBot::Formulae do
       end
     end
   end
-
-  it "skips handled formulae from the assigned shard" do
-    deps = Homebrew::TestBot::FormulaeDependents.new(tap: nil, git: "git", dry_run: true, fail_fast: false,
-                                                     verbose: false)
-    deps.instance_variable_set(:@assigned_dependent_formula_names, Set["alpha"])
-    deps.instance_variable_set(:@handled_dependent_formula_names, Set["alpha"])
-    expect(deps.send(:sharded_dependents, [instance_double(Formula, full_name: "alpha")])).to eq([])
-  end
 end

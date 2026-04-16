@@ -6,6 +6,7 @@ require "test/support/fixtures/testball"
 
 RSpec.describe GitHubRunnerMatrix, :no_api do
   before do
+    allow(ENV).to receive(:[]).and_call_original
     allow(ENV).to receive(:fetch).and_call_original
     allow(ENV).to receive(:fetch).with("HOMEBREW_LINUX_RUNNER").and_return("ubuntu-latest")
     allow(ENV).to receive(:fetch).with("HOMEBREW_MACOS_LONG_TIMEOUT", "false").and_return("false")
@@ -302,6 +303,7 @@ RSpec.describe GitHubRunnerMatrix, :no_api do
               ].map(&:formula))
               allow(ENV).to receive(:[]).with("HOMEBREW_LINUX_RUNNER").and_return("linux-self-hosted-1")
               env_fetch_overrides = {
+                ["HOMEBREW_LINUX_RUNNER", "ubuntu-latest"]               => "linux-self-hosted-1",
                 ["HOMEBREW_DEPS_SHARDING", "false"]                      => "1",
                 ["HOMEBREW_DEPS_SHARD_BASE_THRESHOLD_LINUX_X86_64", nil] => "1",
                 ["HOMEBREW_DEPS_SHARD_BASE_THRESHOLD_LINUX", nil]        => "10",
@@ -317,8 +319,68 @@ RSpec.describe GitHubRunnerMatrix, :no_api do
               end
               matrix = described_class.new([testball], [], all_supported: false, dependent_matrix: true)
 
-              expect(matrix.active_runner_specs_hash.map { |spec| spec.fetch(:name) })
-                .to eq(["Linux x86_64 (shard 1/2)", "Linux x86_64 (shard 2/2)"])
+              expect(matrix.active_runner_specs_hash)
+                .to eq([
+                  {
+                    name:             "Linux x86_64 (shard 1/2)",
+                    runner:           "linux-self-hosted-1",
+                    container:        {
+                      image:   "ghcr.io/homebrew/brew:main",
+                      options: "--user=linuxbrew -e GITHUB_ACTIONS_HOMEBREW_SELF_HOSTED",
+                    },
+                    workdir:          "/github/home",
+                    timeout:          2160,
+                    cleanup:          true,
+                    testing_formulae: "testball",
+                    shard_index:      0,
+                    shard_total:      2,
+                  },
+                  {
+                    name:             "Linux x86_64 (shard 2/2)",
+                    runner:           "linux-self-hosted-1",
+                    container:        {
+                      image:   "ghcr.io/homebrew/brew:main",
+                      options: "--user=linuxbrew -e GITHUB_ACTIONS_HOMEBREW_SELF_HOSTED",
+                    },
+                    workdir:          "/github/home",
+                    timeout:          2160,
+                    cleanup:          true,
+                    testing_formulae: "testball",
+                    shard_index:      1,
+                    shard_total:      2,
+                  },
+                ])
+            end
+
+            it "counts shared dependents once when sizing shards" do
+              shared_testing_formula = setup_test_runner_formula("testball-user")
+              allow(Homebrew::EnvConfig).to receive(:eval_all?).and_return(true)
+              allow(Formula).to receive(:all).and_return([
+                testball,
+                shared_testing_formula,
+                setup_test_runner_formula("testball-shared-depender-linux", ["testball", "testball-user", :linux]),
+                setup_test_runner_formula("testball-unique-depender-linux", ["testball", :linux]),
+              ].map(&:formula))
+              allow(ENV).to receive(:[]).with("HOMEBREW_LINUX_RUNNER").and_return("linux-self-hosted-1")
+              env_fetch_overrides = {
+                ["HOMEBREW_LINUX_RUNNER", "ubuntu-latest"]        => "linux-self-hosted-1",
+                ["HOMEBREW_DEPS_SHARDING", "false"]               => "1",
+                ["HOMEBREW_DEPS_SHARD_BASE_THRESHOLD_LINUX", nil] => "1",
+                ["HOMEBREW_DEPS_SHARD_RUNNER_PENALTY", nil]       => "0",
+                ["HOMEBREW_DEPS_SHARD_MAX_RUNNERS_LINUX", nil]    => "3",
+              }
+              allow(ENV).to receive(:fetch).and_wrap_original do |original, key, default = nil|
+                if env_fetch_overrides.key?([key, default])
+                  env_fetch_overrides[[key, default]]
+                else
+                  original.call(key, default)
+                end
+              end
+
+              matrix = described_class.new([testball, shared_testing_formula], [], all_supported:    false,
+                                                                                   dependent_matrix: true)
+
+              expect(matrix.active_runner_specs_hash.count).to eq(2)
             end
           end
 

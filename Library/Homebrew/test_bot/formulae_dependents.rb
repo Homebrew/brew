@@ -298,6 +298,7 @@ module Homebrew
           skip_recursive_dependents = skip_recursive_dependents_for(formula, args:)
           dependent_formula_names(formula_name, skip_recursive_dependents:)
         end.uniq.sort
+        # TODO: Consider sharding strategies that reduce duplicated dependency installs across shards.
         @assigned_dependent_formula_names = Set.new(
           all_dependent_formula_names.each_with_index.filter_map do |name, position|
             name if position % shard_total == shard_index
